@@ -82,7 +82,6 @@ LDFLAGS += -L/usr/local/lib
 LDFLAGS += -L$(CURDIR)/../install/lib
 LDFLAGS += -L/usr/X11R6/lib 
 
-
 #
 # Locally compiled libs
 # 
@@ -140,10 +139,9 @@ CFLAGS 	+= ${LIBEXIF_CFLAGS}
 # ffmpeg
 #
 
-DLIBS += -lavformat -lavcodec -lavutil 
-DLIBS += $(LIBA52_DLIBS) $(LIBVORBIS_DLIBS) $(LIBOGG_DLIBS) $(LIBFAAD_DLIBS)
-SLIBS += $(LIBA52_SLIBS) $(LIBVORBIS_SLIBS) $(LIBOGG_SLIBS) $(LIBFAAD_SLIBS)
-
+DLIBS  += $(FFMPEG_DLIBS)
+SLIBS  += $(FFMPEG_SLIBS)
+CFLAGS += $(FFMPEG_CFLAGS)
 # OpenGL 
 
 CFLAGS += -DGL_GLEXT_PROTOTYPES
@@ -170,7 +168,6 @@ ${PROG}: $(.OBJDIR) $(OBJS) Makefile
 	cd $(.OBJDIR) && $(CC) $(LDFLAGS) -o $@ $(OBJS) \
 	-Wl,-Bstatic $(SLIBS) -Wl,-Bdynamic $(DLIBS)
 
-
 $(.OBJDIR):
 	mkdir $(.OBJDIR)
 
@@ -179,7 +176,7 @@ $(.OBJDIR):
 
 
 clean:
-	rm -rf  *~ core $(.OBJDIR)
+	rm -rf *~ core $(.OBJDIR)
 
 vpath %.o ${.OBJDIR}
 vpath %.S ${.OBJDIR}
