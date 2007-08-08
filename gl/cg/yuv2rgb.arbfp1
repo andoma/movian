@@ -1,0 +1,45 @@
+/*
+ *  YUV to RGB vertex shader
+ *  Copyright (C) 2007 Andreas Öman
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+
+/*
+	ctrl.x == alpha
+	ctrl.y == texture y shift (for deinterlace) 
+*/
+
+
+half4 main(	half2 uv,
+		uniform sampler2D lum : TEXUNIT0,
+		uniform sampler2D Cr : TEXUNIT1,
+		uniform sampler2D Cb : TEXUNIT2,
+		uniform float4 ctrl,
+		uniform float3 r_vec,
+		uniform float3 g_vec,
+		uniform float3 b_vec
+	) : COLOR
+{
+	const half3 t = {-0.0625, -0.5, -0.5};
+	half3 yuv, rgb;
+
+	uv.y = uv.y + ctrl.y;
+
+	yuv = half3(tex2D(lum, uv).x, tex2D(Cb, uv).x, tex2D(Cr, uv).x) + t;
+	rgb = half3(dot(yuv, r_vec), dot(yuv, g_vec), dot(yuv, b_vec));
+	return half4(rgb, ctrl.x);
+			 
+}
