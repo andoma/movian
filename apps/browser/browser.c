@@ -248,7 +248,7 @@ browser_make_widget_10_1(glw_t *p, b_dir_t *bd, b_entry_t *be, int flags)
   dvd:
     glw_create(GLW_BITMAP,
 	       GLW_ATTRIB_PARENT, x,
-	       GLW_ATTRIB_FILENAME, "icon://cd-dvd.png",
+	       GLW_ATTRIB_FILENAME, "icon://cd.png",
 	       NULL);
 
     glw_create(GLW_TEXT_BITMAP,
@@ -431,7 +431,7 @@ browser_make_widget_16_9(glw_t *p, b_dir_t *bd, b_entry_t *be)
 
     glw_create(GLW_BITMAP, 
 	       GLW_ATTRIB_PARENT, x,
-	       GLW_ATTRIB_FILENAME, "icon://cd-dvd.png",
+	       GLW_ATTRIB_FILENAME, "icon://cd.png",
 	       NULL);
     break;
 

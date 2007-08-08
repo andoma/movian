@@ -218,7 +218,7 @@ cd_spawn(appi_t *ai)
 
 app_t app_cd = {
   .app_name = "CD/DVD Player",
-  .app_icon = "icon://cd-unloaded.png",
+  .app_icon = "icon://cd.png",
   .app_spawn = cd_spawn,
   .app_max_instances = 1,
   .app_auto_spawn = 1,
