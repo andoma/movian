@@ -57,30 +57,24 @@ static glw_t *dvd_menu_audio_setup(glw_t *p, dvd_player_t *dp);
 glw_t *
 dvd_create_miw(dvd_player_t *dp, media_pipe_t *mp, const char *title)
 {
-  glw_t *y, *x, *c, *z;
-  const float rw = 0.03;
+  glw_t *y, *x, *c;
 
-  c = glw_create(GLW_CONTAINER, NULL);
+  c = glw_create(GLW_BITMAP,
+		 GLW_ATTRIB_FILENAME, "icon://plate-wide.png",
+		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
+		 NULL);
 
   x = glw_create(GLW_CONTAINER_X,
 		 GLW_ATTRIB_PARENT, c,
 		 NULL);
 
-  glw_create(GLW_BITMAP,
-	     GLW_ATTRIB_PARENT, x,
-	     GLW_ATTRIB_FILENAME, "icon://cd.png",
-	     NULL);
-
-  glw_create(GLW_RULER, 
-	     GLW_ATTRIB_PARENT, x,
-	     GLW_ATTRIB_WEIGHT, rw,
-	     NULL);
-
   miw_playstatus_create(x, mp);
 
-  glw_create(GLW_RULER, 
+  glw_create(GLW_TEXT_BITMAP,
+	     GLW_ATTRIB_WEIGHT, 20.0f,
+	     GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
 	     GLW_ATTRIB_PARENT, x,
-	     GLW_ATTRIB_WEIGHT, rw,
+	     GLW_ATTRIB_CAPTION, title,
 	     NULL);
 
   y = glw_create(GLW_CONTAINER_Y,
@@ -88,61 +82,28 @@ dvd_create_miw(dvd_player_t *dp, media_pipe_t *mp, const char *title)
 		 GLW_ATTRIB_WEIGHT, 3.0f,
 		 NULL);
  
-  dp->dp_widget_time = glw_create(GLW_TEXT_VECTOR,
-				  GLW_ATTRIB_PARENT, y,
-				  GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
-				  GLW_ATTRIB_CAPTION, "",
-				  NULL);
-  glw_create(GLW_RULER, 
-	     GLW_ATTRIB_PARENT, y,
-	     GLW_ATTRIB_WEIGHT, 0.1,
-	     NULL);
 
-  glw_create(GLW_DUMMY,
-	     GLW_ATTRIB_PARENT, y,
-	     NULL);
-
-
-  glw_create(GLW_RULER, 
-	     GLW_ATTRIB_PARENT, x,
-	     GLW_ATTRIB_WEIGHT, rw,
-	     NULL);
-
-  /* Title */
+  dp->dp_widget_title   = glw_create(GLW_TEXT_BITMAP,
+				     GLW_ATTRIB_PARENT, y,
+				     GLW_ATTRIB_CAPTION, "",
+				     NULL);
+ 
+  dp->dp_widget_chapter = glw_create(GLW_TEXT_BITMAP,
+				     GLW_ATTRIB_PARENT, y,
+				     GLW_ATTRIB_CAPTION, "",
+				     NULL);
 
   y = glw_create(GLW_CONTAINER_Y,
-		 GLW_ATTRIB_WEIGHT, 10.0f,
 		 GLW_ATTRIB_PARENT, x,
+		 GLW_ATTRIB_WEIGHT, 3.0f,
 		 NULL);
 
-
-  glw_create(GLW_TEXT_VECTOR,
-	     GLW_ATTRIB_PARENT, y,
-	     GLW_ATTRIB_CAPTION, title,
-	     NULL);
-
-  glw_create(GLW_RULER, 
-	     GLW_ATTRIB_PARENT, y,
-	     GLW_ATTRIB_WEIGHT, 0.1,
-	     NULL);
-
-  z = glw_create(GLW_CONTAINER_X,
-		 GLW_ATTRIB_PARENT, y,
-		 NULL);
-
-  dp->dp_widget_title   = glw_create(GLW_TEXT_VECTOR,
-				     GLW_ATTRIB_PARENT, z,
+  dp->dp_widget_time    = glw_create(GLW_TEXT_BITMAP,
+				     GLW_ATTRIB_PARENT, y,
+				     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
 				     GLW_ATTRIB_CAPTION, "",
 				     NULL);
-  glw_create(GLW_RULER, 
-	     GLW_ATTRIB_PARENT, z,
-	     GLW_ATTRIB_WEIGHT, rw / 4,
-	     NULL);
 
-  dp->dp_widget_chapter = glw_create(GLW_TEXT_VECTOR,
-				     GLW_ATTRIB_PARENT, z,
-				     GLW_ATTRIB_CAPTION, "",
-				     NULL);
   return c;
 }
 
