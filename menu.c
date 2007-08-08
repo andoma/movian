@@ -272,7 +272,7 @@ menu_init_app(appi_t *ai)
 {
   glw_t *c;
 
-  c = menu_create_menu(NULL, "Main menu");
+  c = menu_create_menu(NULL, "Menu");
   settings_menu_create(c);
   ai->ai_menu = c;
 }
