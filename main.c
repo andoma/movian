@@ -159,7 +159,18 @@ main(int argc, char **argv)
     }
   }
 
-  config_read_file(cfgfile);
+  if(config_read_file(cfgfile) < 0) {
+    fprintf(stderr, 
+	    "configfile \"%s\" not found, trying from build structure\n",
+	    cfgfile);
+
+    cfgfile = "../etc/showtime.cfg";
+    if(config_read_file(cfgfile) < 0) {
+      fprintf(stderr, 
+	      "configfile \"%s\" not found, running with defaults\n",
+	      cfgfile);
+    }
+  }
 
   hid_init();
 
