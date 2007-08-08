@@ -144,6 +144,8 @@ main(int argc, char **argv)
   struct timeval tv;
   char *cfgfile;
 
+  setenv("__GL_SYNC_TO_VBLANK", "1", 1); // make nvidia sync to vblank
+
   gettimeofday(&tv, NULL);
   srand(tv.tv_usec);
 
