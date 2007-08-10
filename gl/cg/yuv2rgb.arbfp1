@@ -1,5 +1,5 @@
 /*
- *  YUV to RGB vertex shader
+ *  YUV to RGB fragment shader
  *  Copyright (C) 2007 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
