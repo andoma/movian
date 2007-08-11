@@ -147,9 +147,10 @@ setup_gl(void)
 
   s = glGetString(GL_EXTENSIONS);
 
-  check_gl_ext(s, "GL_ARB_pixel_buffer_object",  1);
-  check_gl_ext(s, "GL_ARB_vertex_buffer_object", 1);
-  check_gl_ext(s, "GL_ARB_fragment_program",     1);
+  check_gl_ext(s, "GL_ARB_pixel_buffer_object",      1);
+  check_gl_ext(s, "GL_ARB_vertex_buffer_object",     1);
+  check_gl_ext(s, "GL_ARB_fragment_program",         1);
+  check_gl_ext(s, "GL_ARB_texture_non_power_of_two", 1);
 
   gl_input_setup();
 
