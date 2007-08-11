@@ -1192,7 +1192,7 @@ pvr_2dnav_render(pvr_t *pvr, glw_rctx_t *rc)
 {
 
   GLdouble clip_top[4] = {0.0, -1.0, 0.0, 1.0};
-  GLdouble clip_left[4] = {1.0, 0.0, 0.0, 0.6};
+  GLdouble clip_left[4] = {1.0, 0.0, 0.0, 0.75};
   GLdouble clip_right[4] = {-1.0, 0.0, 0.0, 1.0};
 
   //  glClipPlane(GL_CLIP_PLANE0, clip_top);
@@ -1211,7 +1211,7 @@ pvr_2dnav_render(pvr_t *pvr, glw_rctx_t *rc)
 
   glClipPlane(GL_CLIP_PLANE1, clip_left);
   glClipPlane(GL_CLIP_PLANE2, clip_right);
-  //  glEnable(GL_CLIP_PLANE1);
+  glEnable(GL_CLIP_PLANE1);
   //  glEnable(GL_CLIP_PLANE2);
   
   render_list(&pvr->pvr_rlist_3, rc);
@@ -1247,7 +1247,7 @@ pvr_2dnav_layout(pvr_t *pvr, glw_rctx_t *rc)
     pvr->pvr_zoomv -= 0.02;
     
   zo = GLW_S(GLW_MIN(pvr->pvr_zoomv * 2, 1.0));
-  a2 = GLW_LERP(zo, 0.3, 0.0);
+  a2 = GLW_LERP(zo, 0.2, 0.0);
 
   glDisable(GL_DEPTH_TEST);
 
@@ -1310,15 +1310,18 @@ pvr_2dnav_layout(pvr_t *pvr, glw_rctx_t *rc)
     w->glw_rctx = *rc;
     w->glw_rctx.rc_alpha = pvc->pvc_alpha;
 
-    w->glw_pos.x = -0.8;
+    w->glw_pos.x = -0.88;
     w->glw_pos.y = GLW_LERP(za, 2 * -t / 5, 0.0);
     w->glw_pos.z = 0;
 
-    w->glw_scale.x = 0.2;
+    w->glw_scale.x = 0.1;
     w->glw_scale.y = 0.2;
     w->glw_scale.z = 0.2;
     
     w->glw_extra = 0;
+
+    w->glw_rctx.rc_aspect = 
+      rc->rc_aspect * w->glw_scale.x / w->glw_scale.y;
 
     glw_layout(w, &w->glw_rctx);
     LIST_INSERT_HEAD(&pvr->pvr_rlist_2, w, glw_tmp_link);
