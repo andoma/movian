@@ -1113,9 +1113,6 @@ pvr_thread(void *aux)
 	       GLW_ATTRIB_SIDEKICK, bar_title("Scheduled recordings"),
 	       NULL);
 
-  w = add_sub_app(ai->ai_widget, "Varför finns jag?", "icon://clock.png",
-		  PVR_SA_hm);
-
   pvr_create_bar(pvr);
 
   tvh_init(tvh, &ai->ai_ic);
