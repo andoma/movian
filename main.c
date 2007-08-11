@@ -237,7 +237,7 @@ main(int argc, char **argv)
   APP_REGISTER(app_radio);
   APP_REGISTER(app_pl);
   APP_REGISTER(app_pvr);
-  //  APP_REGISTER(app_rss);
+  APP_REGISTER(app_rss);
 
 #if 0
   APP_REGISTER(app_trailers);
