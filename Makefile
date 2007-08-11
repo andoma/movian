@@ -158,11 +158,12 @@ DEPFLAG = -M
 
 OBJS = $(patsubst %.c,%.o, $(SRCS))
 DEPS= ${OBJS:%.o=%.d}
-
+INSTDIR= $(CURDIR)/../install/bin
 all:	$(PROG)
 
 install:
-	cd $(.OBJDIR) && install ${PROG} $(CURDIR)/../bin
+	mkdir -p $(INSTDIR)
+	cd $(.OBJDIR) && install ${PROG} $(INSTDIR)
 
 ${PROG}: $(.OBJDIR) $(OBJS) Makefile
 	cd $(.OBJDIR) && $(CC) $(LDFLAGS) -o $@ $(OBJS) \
