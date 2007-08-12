@@ -1034,7 +1034,7 @@ add_sub_app(glw_t *p, const char *title, const char *icon, pvr_subapp_t said)
 
   glw_create(GLW_DUMMY,
 	     GLW_ATTRIB_PARENT, x,
-	     GLW_ATTRIB_WEIGHT, 0.5,
+	     GLW_ATTRIB_WEIGHT, 0.2,
 	     NULL);
 
   glw_create(GLW_BITMAP,
@@ -1044,7 +1044,7 @@ add_sub_app(glw_t *p, const char *title, const char *icon, pvr_subapp_t said)
 
   glw_create(GLW_DUMMY,
 	     GLW_ATTRIB_PARENT, x,
-	     GLW_ATTRIB_WEIGHT, 0.5,
+	     GLW_ATTRIB_WEIGHT, 0.2,
 	     NULL);
 
   return w;
@@ -1094,7 +1094,7 @@ pvr_thread(void *aux)
 	       GLW_ATTRIB_SIDEKICK, bar_title("Video Recorder"),
 	       NULL);
 
-  w = add_sub_app(ai->ai_widget, "Program guide", "icon://loading.png", 
+  w = add_sub_app(ai->ai_widget, "Program guide", "icon://epg.png", 
 		  PVR_SA_2DNAV);
 
 
