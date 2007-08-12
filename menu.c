@@ -24,8 +24,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <ffmpeg/avcodec.h>
-#include <ffmpeg/avformat.h>
+#include <ffmpeg/avstring.h>
 #include <libglw/glw.h>
 
 #include "showtime.h"
@@ -271,10 +270,14 @@ menu_create_submenu(glw_t *p, const char *icon, const char *title, int first)
 glw_t *
 menu_push_top_menu(appi_t *ai, const char *title)
 {
+  char menutitle[32];
   glw_t *c;
   menu_t *m;
 
-  c = menu_create_menu(NULL, title);
+  av_strlcpy(menutitle, title, sizeof(menutitle));
+  memcpy(menutitle + sizeof(menutitle) - 4, "...", 4);
+
+  c = menu_create_menu(NULL, menutitle);
   m = glw_get_opaque(c);
 
   settings_menu_create(c);

@@ -172,8 +172,6 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
   media_pipe_t *mp = &ai->ai_mp;
   gvp_conf_t gc;
   char albumpath[500];
-  char menutitle[32];
-
   char *s, *albumart;
   struct stat st;
   glw_t *gvpw = NULL;
@@ -216,12 +214,7 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
     cwvec[i] = wrap_codec_create(ctx->codec_id, ctx->codec_type, 0, fw, ctx);
   }
 
-  
-  av_strlcpy(menutitle, mi->mi_title, sizeof(menutitle));
-
-  memcpy(menutitle + sizeof(menutitle) - 4, "...", 4);
-
-  menu_push_top_menu(ai, menutitle);
+  menu_push_top_menu(ai, mi->mi_title);
 
   ai->ai_fctx = fctx;
   mp->mp_format = fctx;
