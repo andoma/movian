@@ -42,6 +42,7 @@ typedef struct menu {
   int m_expanded;
   glw_t *m_plate;
   glw_t *m_array;
+  glw_t *m_stack;
 
   glw_vertex_anim_t m_pos;
   glw_vertex_anim_t m_alpha;
@@ -263,6 +264,42 @@ menu_create_submenu(glw_t *p, const char *icon, const char *title, int first)
 }
 
 
+/*
+ *
+ */
+
+glw_t *
+menu_push_top_menu(appi_t *ai, const char *title)
+{
+  glw_t *c;
+  menu_t *m;
+
+  c = menu_create_menu(NULL, title);
+  m = glw_get_opaque(c);
+
+  settings_menu_create(c);
+
+  glw_lock();
+  m->m_stack = ai->ai_menu;
+  ai->ai_menu = c;
+  glw_unlock();
+
+  return c;
+}
+
+
+void
+menu_pop_top_menu(appi_t *ai)
+{
+  glw_t *c = ai->ai_menu;
+  menu_t *m = glw_get_opaque(c);
+
+  glw_lock();
+  ai->ai_menu = m->m_stack;
+  glw_destroy(c);
+  glw_unlock();
+}
+
 
 /*
  *
@@ -271,11 +308,7 @@ menu_create_submenu(glw_t *p, const char *icon, const char *title, int first)
 void
 menu_init_app(appi_t *ai)
 {
-  glw_t *c;
-
-  c = menu_create_menu(NULL, "Menu");
-  settings_menu_create(c);
-  ai->ai_menu = c;
+  menu_push_top_menu(ai, ai->ai_app->app_name);
 }
 
 

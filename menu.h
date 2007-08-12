@@ -38,6 +38,10 @@ glw_t *menu_create_item(glw_t *p, const char *icon, const char *title,
 			glw_callback_t *cb, void *opaque, uint32_t u32,
 			int first);
 
+glw_t *menu_push_top_menu(appi_t *ai, const char *title);
+
+void menu_pop_top_menu(appi_t *ai);
+
 appi_t *menu_find_ai(glw_t *w);
 
 int menu_post_key_pop_and_hide(glw_t *w, glw_signal_t signal, ...);
