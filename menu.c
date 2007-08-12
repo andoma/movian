@@ -356,7 +356,7 @@ menu_init_app(appi_t *ai)
 int 
 menu_post_key_pop_and_hide(glw_t *w, glw_signal_t signal, ...)
 {
-  appi_t *ai = glw_get_opaque2(w);
+  appi_t *ai = glw_get_opaque(w);
   menu_t *m = glw_get_opaque2(w->glw_parent);
 
   switch(signal) {
