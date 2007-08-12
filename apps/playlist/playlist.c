@@ -818,18 +818,18 @@ playlist_menu_setup(glw_t *p, play_list_t *pl)
 {
   glw_t *v;
 
-  v = menu_create_submenu(p, "icon://playlist.png", "Playlist control");
+  v = menu_create_submenu(p, "icon://playlist.png", "Playlist control", 0);
   
   menu_create_item(v, "icon://clear.png", "Clear all",
 		   menu_post_key_pop_and_hide, pl->pl_ai, 
-		   INPUT_KEY_CLEAR);
+		   INPUT_KEY_CLEAR, 0);
 
   menu_create_item(v, "icon://clear.png", "Clear but current",
 		   menu_post_key_pop_and_hide, pl->pl_ai,
-		   INPUT_KEY_CLEAR_BUT_CURRENT);
+		   INPUT_KEY_CLEAR_BUT_CURRENT, 0);
 
   menu_create_item(v, "icon://playlist.png", "Playmode",
-		   playlist_menu_mode, pl, 0);
+		   playlist_menu_mode, pl, 0, 0);
 
   return v;
 }

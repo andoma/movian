@@ -163,14 +163,14 @@ menu_input(appi_t *ai, inputevent_t *ie)
  */
 glw_t *
 menu_create_item(glw_t *p, const char *icon, const char *title,
-		 glw_callback_t *cb, void *opaque, uint32_t u32)
+		 glw_callback_t *cb, void *opaque, uint32_t u32, int first)
 {
   glw_t *x;
   menu_t *m = glw_get_opaque(p);
   p = m->m_array;
 
   x = glw_create(GLW_CONTAINER_X,
-		 GLW_ATTRIB_PARENT, p,
+		 first ? GLW_ATTRIB_PARENT_HEAD : GLW_ATTRIB_PARENT, p,
 		 GLW_ATTRIB_CALLBACK, cb,
 		 GLW_ATTRIB_OPAQUE, opaque,
 		 GLW_ATTRIB_U32, u32,
@@ -252,11 +252,12 @@ menu_create_menu(glw_t *p, const char *title)
  *
  */
 glw_t *
-menu_create_submenu(glw_t *p, const char *icon, const char *title)
+menu_create_submenu(glw_t *p, const char *icon, const char *title, int first)
 {
   glw_t *x;
 
-  x = menu_create_item(p, icon, title, menu_submenu_item_event, NULL, 0);
+  x = menu_create_item(p, icon, title, menu_submenu_item_event, NULL, 0,
+		       first);
   menu_create_menu(x, title);
   return x;
 }

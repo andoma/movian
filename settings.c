@@ -66,7 +66,8 @@ settings_menu_create(glw_t *parent)
 {
   glw_t *v;
 
-  v = menu_create_submenu(parent, "icon://settings.png", "General settings");
+  v = menu_create_submenu(parent, "icon://settings.png", "General settings",
+			  0);
 
-  menu_create_item(v, NULL, "Extra info", general_extra_info, NULL, 0);
+  menu_create_item(v, NULL, "Extra info", general_extra_info, NULL, 0, 0);
 }

@@ -1668,38 +1668,38 @@ gvp_menu_setup(glw_t *p, gvp_conf_t *gc)
 {
   glw_t *v, *s;
   
-  v = menu_create_submenu(p, "icon://tv.png", "Video settings");
+  v = menu_create_submenu(p, "icon://tv.png", "Video settings", 1);
 
 
   /*** Post processor */
 
-  s = menu_create_submenu(v, "icon://tv.png", "Postprocessor");
+  s = menu_create_submenu(v, "icon://tv.png", "Postprocessor", 0);
 
   menu_create_item(s, "icon://menu-current.png", "No postprocessing", 
-		   gvp_menu_pp, gc, GVP_PP_NONE);
+		   gvp_menu_pp, gc, GVP_PP_NONE, 0);
 
   menu_create_item(s, "icon://menu-current.png", "Automatic", 
-		   gvp_menu_pp, gc, GVP_PP_AUTO);
+		   gvp_menu_pp, gc, GVP_PP_AUTO, 0);
 
   menu_create_item(s, "icon://menu-current.png", "Deinterlace (bob)", 
-		   gvp_menu_pp, gc, GVP_PP_DEINTERLACER);
+		   gvp_menu_pp, gc, GVP_PP_DEINTERLACER, 0);
 
   menu_create_item(s, "icon://menu-current.png", "Crasy test", 
-		   gvp_menu_pp, gc, GVP_PP_TEST);
+		   gvp_menu_pp, gc, GVP_PP_TEST, 0);
 
 
  /*** AV sync */
 
-  s = menu_create_submenu(v, "icon://audio.png", "A/V Sync");
+  s = menu_create_submenu(v, "icon://audio.png", "A/V Sync", 0);
 
-  menu_create_item(s, NULL, "", gvp_menu_avsync, gc, 0);
+  menu_create_item(s, NULL, "", gvp_menu_avsync, gc, 0, 0);
 
 
  /*** Video zoom */
 
-  s = menu_create_submenu(v, "icon://zoom.png", "Video zoom");
+  s = menu_create_submenu(v, "icon://zoom.png", "Video zoom", 0);
 
-  menu_create_item(s, NULL, "", gvp_menu_video_zoom, gc, 0);
+  menu_create_item(s, NULL, "", gvp_menu_video_zoom, gc, 0, 0);
 
   return v;
 }

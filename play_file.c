@@ -530,16 +530,16 @@ play_file_menu_audio_setup(glw_t *p, media_pipe_t *mp)
   glw_t *v, *w;
   int i;
 
-  v = menu_create_submenu(p, "icon://audio.png", "Audio tracks");
+  v = menu_create_submenu(p, "icon://audio.png", "Audio tracks", 0);
 
   for(i = 0; i < 16; i++) {
     w = menu_create_item(v, "icon://menu-current.png", "",
-			 audio_menu_atrack, mp, i);
+			 audio_menu_atrack, mp, i, 0);
     w->glw_flags |= GLW_HIDDEN;
   }
   
   menu_create_item(v, "icon://menu-current.png", "(off)",
-		   audio_menu_atrack, mp, -1);
+		   audio_menu_atrack, mp, -1, 0);
 
   return v;
 }
