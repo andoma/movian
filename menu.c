@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <assert.h>
 
 #include <ffmpeg/avstring.h>
 #include <libglw/glw.h>
@@ -50,13 +51,15 @@ typedef struct menu {
 
 #define MENU_Z_MAX 3.0
 
+#define menu_is_submenu(c) ((c)->glw_callback[0] == menu_submenu_item_event)
+
 /*
  * Callback for sub menus
  */
 static int 
 menu_submenu_item_event(glw_t *w, glw_signal_t signal, ...)
 {
-  menu_t *m = glw_get_opaque(w);
+  menu_t *m = glw_get_opaque2(w);
   inputevent_t *ie;
   va_list ap;
   va_start(ap, signal);
@@ -82,7 +85,7 @@ menu_submenu_item_event(glw_t *w, glw_signal_t signal, ...)
 static int 
 menu_control(glw_t *w, glw_signal_t signal, ...)
 {
-  menu_t *m = glw_get_opaque(w);
+  menu_t *m = glw_get_opaque2(w);
 
   switch(signal) {
   case GLW_SIGNAL_DESTROY:
@@ -103,6 +106,7 @@ menu_input(appi_t *ai, inputevent_t *ie)
 {
   glw_t *w, *c;
   menu_t *m = NULL, *mm;
+  int i;
 
   w = ai->ai_menu;
   if(w == NULL)
@@ -117,9 +121,9 @@ menu_input(appi_t *ai, inputevent_t *ie)
     if(c == NULL)
       return 0;
 
-    if(c->glw_callback == menu_submenu_item_event) {
+    if(menu_is_submenu(c)) {
       /* This is a sub menu */
-      mm = c->glw_opaque;
+      mm = c->glw_opaque2;
 
       if(mm->m_expanded) {
 	/* It's expanded, continue down */
@@ -151,9 +155,11 @@ menu_input(appi_t *ai, inputevent_t *ie)
     }
   }
   if(ie->type == INPUT_KEY && ie->u.key == INPUT_KEY_ENTER)
-    c->glw_callback(c, GLW_SIGNAL_CLICK);
+    for(i = 0; i < c->glw_ncallbacks; i++)
+      c->glw_callback[i](c, GLW_SIGNAL_CLICK);
 
-  c->glw_callback(c, GLW_SIGNAL_INPUT_EVENT, ie);
+  for(i = 0; i < c->glw_ncallbacks; i++)
+    c->glw_callback[i](c, GLW_SIGNAL_INPUT_EVENT, ie);
   return 0;
 }
 
@@ -161,17 +167,19 @@ menu_input(appi_t *ai, inputevent_t *ie)
 /*
  *
  */
-glw_t *
-menu_create_item(glw_t *p, const char *icon, const char *title,
-		 glw_callback_t *cb, void *opaque, uint32_t u32, int first)
+static glw_t *
+menu_create_item0(glw_t *p, const char *icon, const char *title,
+		 glw_callback_t *cb, glw_callback_t *cb2, void *opaque,
+		  uint32_t u32, int first)
 {
   glw_t *x;
-  menu_t *m = glw_get_opaque(p);
+  menu_t *m = glw_get_opaque2(p);
   p = m->m_array;
 
   x = glw_create(GLW_CONTAINER_X,
 		 first ? GLW_ATTRIB_PARENT_HEAD : GLW_ATTRIB_PARENT, p,
 		 GLW_ATTRIB_CALLBACK, cb,
+		 GLW_ATTRIB_CALLBACK, cb2,
 		 GLW_ATTRIB_OPAQUE, opaque,
 		 GLW_ATTRIB_U32, u32,
 		 NULL);
@@ -192,6 +200,17 @@ menu_create_item(glw_t *p, const char *icon, const char *title,
   return x;
 }
 
+
+/*
+ *
+ */
+glw_t *
+menu_create_item(glw_t *p, const char *icon, const char *title,
+		 glw_callback_t *cb, void *opaque, uint32_t u32, int first)
+{
+  return menu_create_item0(p, icon, title, cb, NULL, opaque, u32, first);
+}
+
 /*
  *
  */
@@ -206,7 +225,7 @@ menu_create_menu(glw_t *p, const char *title)
 
   b = glw_create(GLW_BITMAP,
 		 GLW_ATTRIB_FILENAME, "icon://plate-titled.png",
-		 GLW_ATTRIB_OPAQUE, m,
+		 GLW_ATTRIB_OPAQUE2, m,
 		 GLW_ATTRIB_CALLBACK, menu_control,
 		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
 		 GLW_ATTRIB_BORDER_WIDTH, 0.27,
@@ -231,13 +250,13 @@ menu_create_menu(glw_t *p, const char *title)
   w = glw_create(GLW_ARRAY,
 		 GLW_ATTRIB_BORDER_WIDTH, 0.25f,
 		 GLW_ATTRIB_PARENT, y,
-		 GLW_ATTRIB_OPAQUE, m,
+		 GLW_ATTRIB_OPAQUE2, m,
 		 GLW_ATTRIB_X_SLICES, 1,
 		 GLW_ATTRIB_Y_SLICES, 9,
 		 NULL);
 
   if(p != NULL)
-    p->glw_opaque = m;
+    p->glw_opaque2 = m;
   else
     m->m_expanded = 1;
 
@@ -262,6 +281,21 @@ menu_create_submenu(glw_t *p, const char *icon, const char *title, int first)
   return x;
 }
 
+/*
+ *
+ */
+glw_t *
+menu_create_submenu_cb(glw_t *p, const char *icon, const char *title,
+		       int first, glw_callback_t *cb, void *opaque)
+{
+  glw_t *x;
+
+  x = menu_create_item0(p, icon, title, menu_submenu_item_event, cb, opaque, 0,
+		       first);
+  menu_create_menu(x, title);
+  return x;
+}
+
 
 /*
  *
@@ -278,7 +312,7 @@ menu_push_top_menu(appi_t *ai, const char *title)
   memcpy(menutitle + sizeof(menutitle) - 4, "...", 4);
 
   c = menu_create_menu(NULL, menutitle);
-  m = glw_get_opaque(c);
+  m = glw_get_opaque2(c);
 
   settings_menu_create(c);
 
@@ -295,9 +329,10 @@ void
 menu_pop_top_menu(appi_t *ai)
 {
   glw_t *c = ai->ai_menu;
-  menu_t *m = glw_get_opaque(c);
+  menu_t *m = glw_get_opaque2(c);
 
   glw_lock();
+  assert(m->m_stack != NULL);
   ai->ai_menu = m->m_stack;
   glw_destroy(c);
   glw_unlock();
@@ -321,8 +356,8 @@ menu_init_app(appi_t *ai)
 int 
 menu_post_key_pop_and_hide(glw_t *w, glw_signal_t signal, ...)
 {
-  appi_t *ai = glw_get_opaque(w);
-  menu_t *m = glw_get_opaque(w->glw_parent);
+  appi_t *ai = glw_get_opaque2(w);
+  menu_t *m = glw_get_opaque2(w->glw_parent);
 
   switch(signal) {
   case GLW_SIGNAL_CLICK:
@@ -360,18 +395,18 @@ menu_layout(appi_t *ai)
 
 
   w = ai->ai_menu;
-  m = glw_get_opaque(w);
+  m = glw_get_opaque2(w);
   m->m_alpha2 = GLW_LP(16, m->m_alpha2, !!ai->ai_menu_display);
 
   while(w != NULL) {
-    m = glw_get_opaque(w);
+    m = glw_get_opaque2(w);
 
     LIST_INSERT_HEAD(&list, m, m_link);
     if((c = glw_find_by_class(w, GLW_ARRAY)->glw_selected) == NULL)
       break;
-    if(c->glw_callback != menu_submenu_item_event)
+    if(!menu_is_submenu(c))
       break;
-    m = glw_get_opaque(c);
+    m = glw_get_opaque2(c);
     w = m->m_plate;
   }
 
@@ -406,7 +441,7 @@ menu_render(appi_t *ai, float alpha)
   glw_vertex_t xyz;
   menu_t *m;
 
-  m = glw_get_opaque(w);
+  m = glw_get_opaque2(w);
 
   alpha *= m->m_alpha2;
 
@@ -423,7 +458,7 @@ menu_render(appi_t *ai, float alpha)
   rc.rc_aspect = MENU_ASPECT * (16.0f / 9.0f);
 
   while(w != NULL) {
-    m = glw_get_opaque(w);
+    m = glw_get_opaque2(w);
 
     glw_vertex_anim_read(&m->m_alpha, &xyz);
     rc.rc_alpha = alpha * xyz.x;
@@ -439,10 +474,10 @@ menu_render(appi_t *ai, float alpha)
 
     if((c = glw_find_by_class(w, GLW_ARRAY)->glw_selected) == NULL)
       break;
-    if(c->glw_callback != menu_submenu_item_event)
+    if(!menu_is_submenu(c))
       break;
     
-    m = glw_get_opaque(c);
+    m = glw_get_opaque2(c);
     w = m->m_plate;
   }
 

@@ -26,6 +26,9 @@ void menu_init_app(appi_t *ai);
 glw_t *menu_create_submenu(glw_t *p, const char *icon, const char *title,
 			   int first);
 
+glw_t *menu_create_submenu_cb(glw_t *p, const char *icon, const char *title,
+			      int first, glw_callback_t *cb, void *opaque);
+
 int menu_input(appi_t *ai, inputevent_t *ie);
 
 void menu_render(appi_t *ai, float alpha);
