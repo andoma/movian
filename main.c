@@ -286,12 +286,9 @@ render_scene(void)
 
 
 void
-power_off(void *aux)
+showtime_exit(int suspend)
 {
-  if(open("/tmp/suspendme", O_WRONLY|O_CREAT, 0777) < 0)
-    perror("open");
-
-   _exit(0);
+  _exit(suspend ? 10 : 11);
 }
 
 
@@ -308,7 +305,7 @@ main_input_event(inputevent_t *ie)
       break;
 
     case INPUT_KEY_POWER:
-      power_off(NULL);
+      showtime_exit(1);
       return 1;
     }
     break;

@@ -75,7 +75,7 @@ average_update(average_t *avg, int value)
   avg->values[avg->ptr] += value;
 }
 
-void power_off(void *aux);
+void showtime_exit(int suspend);
 
 extern int has_analogue_pad;
 extern int mp_show_extra_info;
