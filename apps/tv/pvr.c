@@ -27,11 +27,13 @@
 #include <math.h>
 
 #include <libglw/glw.h>
+#include <libhts/htstv.h>
 
 #include "showtime.h"
 #include "input.h"
 #include "tv_headend.h"
 #include "app.h"
+#include "menu.h"
 #include "layout/layout.h"
 
 typedef enum {
@@ -120,10 +122,9 @@ typedef struct pvr {
 
   pvrprog_t *pvr_selected;
 
-  int pvr_zoomed;
-  float pvr_zoomv;
-
   glw_t *pvr_bar;
+
+  float pvr_zoomv;
 
 
   appi_t *pvr_ai;
@@ -140,20 +141,63 @@ typedef struct pvr {
 
 } pvr_t;
 
-typedef enum {
-  PVR_RECORD_ONCE,
-  PVR_RECORD_DAILY,
-  PVR_RECORD_WEEKLY,
-  PVR_RECORD_TITLE,
-  PVR_RECORD_CANCEL,
-
-} pvr_rec_cmd_t;
-
-
-
 static void pvr_create_bar(pvr_t *pvr);
 
 static int pvr_2dnav_callback(glw_t *w, glw_signal_t signal, ...);
+
+
+/*
+ *
+ */
+static int
+pvr_menu_recording_cb(glw_t *w, glw_signal_t signal, ...)
+{
+  pvr_t *pvr = glw_get_opaque(w);
+  int showme;
+
+  switch(signal) {
+  case GLW_SIGNAL_PRE_LAYOUT:
+    showme = pvr->pvr_cur_sa == PVR_SA_2DNAV && pvr->pvr_selected;
+    if(showme)
+      w->glw_flags &= ~GLW_HIDDEN;
+    else
+      w->glw_flags |= GLW_HIDDEN;
+    break;
+
+  default:
+    break;
+  }
+  return 0;
+}
+
+/*
+ *
+ */
+static void
+pvr_create_recording_submenu(pvr_t *pvr)
+{
+ glw_t *v;
+ appi_t *ai = pvr->pvr_ai;
+
+  v = menu_create_submenu_cb(ai->ai_menu, "icon://rec.png", "Record...", 1,
+			     pvr_menu_recording_cb, pvr);
+  
+  menu_create_item(v, "icon://rec.png", "Record once",
+		   menu_post_key_pop_and_hide, ai,
+		   INPUT_KEY_RECORD_ONCE, 0);
+
+  menu_create_item(v, "icon://rec.png", "Record daily",
+		   menu_post_key_pop_and_hide, ai,
+		   INPUT_KEY_RECORD_DAILY, 0);
+
+  menu_create_item(v, "icon://rec.png", "Record weekly",
+		   menu_post_key_pop_and_hide, ai,
+		   INPUT_KEY_RECORD_WEEKLY, 0);
+
+  menu_create_item(v, "icon://no.png", "Cancel recording",
+		   menu_post_key_pop_and_hide, ai,
+		   INPUT_KEY_RECORD_CANCEL, 0);
+}
 
 /*
  *
@@ -163,13 +207,16 @@ static glw_color_t
 pvp_plate_color_by_meta(tvprogramme_t *tvp)
 {
   switch(tvp->tvp_pvrstatus) {
-  case 'R':
+default:
     return GLW_COLOR_RED;
 
-  case 'S':
+  case HTSTV_PVR_STATUS_SCHEDULED:
     return GLW_COLOR_GREEN;
 
-  default:
+  case HTSTV_PVR_STATUS_DONE:
+    return GLW_COLOR_LIGHT_BLUE;
+
+  case HTSTV_PVR_STATUS_NONE:
     return GLW_COLOR_WHITE;
   }
 }
@@ -390,158 +437,6 @@ pvp_update_front_status(pvrprog_t *pvp)
 
 
 
-static void
-pvp_create_zoomed_widgets(pvr_t *pvr, pvrprog_t *pvp)
-{
-  glw_t *b, *y;
-
-  if(pvp->pvp_w_desc == NULL) {
-    b = glw_create(GLW_BITMAP,
-		   GLW_ATTRIB_FLAGS, GLW_NOASPECT,
-		   GLW_ATTRIB_FILENAME, "icon://plate.png",
-		   NULL);
-    
-    glw_text_multiline(b, GLW_TEXT_BITMAP, pvp->pvp_meta->tvp_desc,
-		       90, 7, GLW_TEXT_UTF8);
-    pvp->pvp_w_desc = b;
-  }
-
-  if(pvp->pvp_w_status_container == NULL) {
-    b = glw_create(GLW_BITMAP,
-		   GLW_ATTRIB_FLAGS, GLW_NOASPECT,
-		   GLW_ATTRIB_FILENAME, "icon://plate-titled.png",
-		   NULL);
-    pvp->pvp_w_status_container = b;
-
-    y = glw_create(GLW_CONTAINER_Y,
-		   GLW_ATTRIB_PARENT, b,
-		   NULL);
-
-    glw_create(GLW_TEXT_BITMAP,
-	       GLW_ATTRIB_WEIGHT, 0.15,
-	       GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
-	       GLW_ATTRIB_CAPTION, "Recording status",
-	       GLW_ATTRIB_PARENT, y,
-	       NULL);
-    
-
-    glw_create(GLW_DUMMY,
-	       GLW_ATTRIB_PARENT, y,
-	       GLW_ATTRIB_WEIGHT, 0.1,
-	       NULL);
-
-    b = glw_create(GLW_XFADER,
-		   GLW_ATTRIB_WEIGHT, 0.9,
-		   GLW_ATTRIB_PARENT, y,
-		   NULL);
-
-    pvp->pvp_w_status_xfader = b;
-
-    if(pvp->pvp_meta)
-      tvh_create_pvrstatus(b, pvp->pvp_meta->tvp_pvrstatus, 1.0f);
-
-  }
-
-  if(pvp->pvp_w_menu_container == NULL) {
-    
-    b = glw_create(GLW_BITMAP,
-		   GLW_ATTRIB_FLAGS, GLW_NOASPECT,
-		   GLW_ATTRIB_FILENAME, "icon://plate-titled.png",
-		   NULL);
-    pvp->pvp_w_menu_container = b;
-
-
-
-    y = glw_create(GLW_CONTAINER_Y,
-		   GLW_ATTRIB_PARENT, b,
-		   NULL);
-
-    glw_create(GLW_TEXT_BITMAP,
-	       GLW_ATTRIB_WEIGHT, 0.15,
-	       GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
-	       GLW_ATTRIB_CAPTION, "Select action...",
-	       GLW_ATTRIB_PARENT, y,
-	       NULL);
-    
-
-    glw_create(GLW_DUMMY,
-	       GLW_ATTRIB_PARENT, y,
-	       GLW_ATTRIB_WEIGHT, 0.1,
-	       NULL);
-
-    b = glw_create(GLW_ARRAY,
-		   GLW_ATTRIB_PARENT, y,
-		   GLW_ATTRIB_WEIGHT, 0.9,
-		   GLW_ATTRIB_BORDER_WIDTH, 0.25,
-		   GLW_ATTRIB_X_SLICES, 1,
-		   GLW_ATTRIB_Y_SLICES, 9,
-		   NULL);
-
-    pvp->pvp_w_menu = b;
-    
-    glw_create(GLW_TEXT_BITMAP,
-	       GLW_ATTRIB_PARENT, b,
-	       GLW_ATTRIB_U32, PVR_RECORD_ONCE,
-	       GLW_ATTRIB_CAPTION, "Record once",
-	       NULL);
-
-#if 0
-
-    glw_create(GLW_TEXT_BITMAP,
-	       GLW_ATTRIB_PARENT, b,
-	       GLW_ATTRIB_CAPTION, "Record daily",
-	       GLW_ATTRIB_U32, PVR_RECORD_DAILY,
-	       NULL);
-
-    glw_create(GLW_TEXT_BITMAP,
-	       GLW_ATTRIB_PARENT, b,
-	       GLW_ATTRIB_CAPTION, "Record weekly",
-	       GLW_ATTRIB_U32, PVR_RECORD_WEEKLY,
-	       NULL);
-
-    glw_create(GLW_TEXT_BITMAP,
-	       GLW_ATTRIB_PARENT, b,
-	       GLW_ATTRIB_CAPTION, "Record by title",
-	       GLW_ATTRIB_U32, PVR_RECORD_TITLE,
-	       NULL);
-#endif
-
-    glw_create(GLW_TEXT_BITMAP,
-	       GLW_ATTRIB_PARENT, b,
-	       GLW_ATTRIB_CAPTION, "Cancel recording",
-	       GLW_ATTRIB_U32, PVR_RECORD_CANCEL,
-	       NULL);
-  }
-}
-
-/*
- *
- */
-
-static void
-pvr_flip_up(pvr_t *pvr)
-{
-  pvrprog_t *pvp;
-
-  pvp = pvr->pvr_selected;
-  if(pvp == NULL)
-    return;
-
-  pvp_create_zoomed_widgets(pvr, pvp);
-
-  pvr->pvr_zoomed = 1;
-}
-
-/*
- *
- */
-
-static void
-pvr_flip_back(pvr_t *pvr)
-{
-  pvr->pvr_zoomed = 0;
-}
-
 
 /*
  *
@@ -736,66 +631,23 @@ pvr_tag_refresh(pvr_t *pvr, int tag)
  *
  */
 static void
-pvr_rec_cmd(pvr_t *pvr, pvrprog_t *pvp, pvr_rec_cmd_t icmd)
+pvr_rec_cmd(pvr_t *pvr, pvrprog_t *pvp, const char *cmd)
 {
-  const char *cmd;
-
-  switch(icmd) {
-  case PVR_RECORD_ONCE:
-    cmd = "once";
-    break;
-
-  case PVR_RECORD_CANCEL:
-    cmd = "cancel";
-    break;
-  default:
+  if(pvp == NULL)
     return;
-  }
 
   tvh_int(tvh_query(&pvr->pvr_tvh, "programme.record %d %d %s",
 		    pvp->pvp_chan->pvc_id, pvp->pvp_index, cmd));
-}
-
-
-/*
- *
- */
-static void
-pvr_keystrike_zoomed(pvr_t *pvr, inputevent_t *ie)
-{
-  pvrprog_t *pvp = pvr->pvr_selected;
-
-  switch(ie->u.key) {
-  case INPUT_KEY_BACK:
-    pvr_flip_back(pvr);
-    break;
-
-  case INPUT_KEY_UP:
-    if(pvp != NULL)
-      glw_nav_signal(pvp->pvp_w_menu, GLW_SIGNAL_UP);
-    break;
-
-  case INPUT_KEY_DOWN:
-    if(pvp != NULL)
-      glw_nav_signal(pvp->pvp_w_menu, GLW_SIGNAL_DOWN);
-    break;
-
-  case INPUT_KEY_ENTER:
-    if(pvp != NULL && pvp->pvp_w_menu->glw_selected != NULL)
-      pvr_rec_cmd(pvr, pvp, pvp->pvp_w_menu->glw_selected->glw_u32);
-    break;
-
-  default:
-    break;
-  }
 }
 
 /*
  *
  */
 static int
-pvr_keystrike_unzoomed(pvr_t *pvr, inputevent_t *ie)
+pvr_sa_2dnav_keystrike(pvr_t *pvr, inputevent_t *ie)
 {
+  appi_t *ai = pvr->pvr_ai;
+
   switch(ie->u.key) {
   default:
     break;
@@ -806,7 +658,7 @@ pvr_keystrike_unzoomed(pvr_t *pvr, inputevent_t *ie)
     break;
     
   case INPUT_KEY_ENTER:
-    pvr_flip_up(pvr);
+    ai->ai_menu_display = !ai->ai_menu_display;
     break;
 
   case INPUT_KEY_UP:
@@ -855,6 +707,27 @@ pvr_keystrike_unzoomed(pvr_t *pvr, inputevent_t *ie)
   case INPUT_KEY_SEEK_BACKWARD:
     pvr->pvr_timeptr -= 7200;
     return 1;
+
+
+  case INPUT_KEY_RECORD_ONCE:
+    pvr_rec_cmd(pvr, pvr->pvr_selected, "once");
+    return 1;
+
+  case INPUT_KEY_RECORD_DAILY:
+    pvr_rec_cmd(pvr, pvr->pvr_selected, "daily");
+    return 1;
+
+  case INPUT_KEY_RECORD_WEEKLY:
+    pvr_rec_cmd(pvr, pvr->pvr_selected, "weekly");
+    return 1;
+
+  case INPUT_KEY_RECORD_CANCEL:
+    pvr_rec_cmd(pvr, pvr->pvr_selected, "cancel");
+    return 1;
+
+  case INPUT_KEY_RECORD_TOGGLE:
+    pvr_rec_cmd(pvr, pvr->pvr_selected, "toggle");
+    return 1;
   }
   return 0;
 }
@@ -874,9 +747,6 @@ pvr_sa_2dnav_ie(pvr_t *pvr, inputevent_t *ie)
     break;
 
   case INPUT_PAD:
-    if(pvr->pvr_zoomed)
-      break;
-
     pvr->pvr_ty += ie->u.xy.y / 50.0;
     pvr->pvr_timeptr += ie->u.xy.x * 60;
 
@@ -885,10 +755,7 @@ pvr_sa_2dnav_ie(pvr_t *pvr, inputevent_t *ie)
     break;
 
   case INPUT_KEY:
-    if(pvr->pvr_zoomed)
-      pvr_keystrike_zoomed(pvr, ie);
-    else
-      reload = pvr_keystrike_unzoomed(pvr, ie);
+    reload = pvr_sa_2dnav_keystrike(pvr, ie);
     break;
   }
 
@@ -907,38 +774,6 @@ pvr_sa_2dnav_ie(pvr_t *pvr, inputevent_t *ie)
 static void
 pvr_sa_sched_ie(pvr_t *pvr, inputevent_t *ie)
 {
-  int reload = 0;
-
-  switch(ie->type) {
-
-  default:
-    break;
-
-  case INPUT_PAD:
-    if(pvr->pvr_zoomed)
-      break;
-
-    pvr->pvr_ty += ie->u.xy.y / 50.0;
-    pvr->pvr_timeptr += ie->u.xy.x * 60;
-
-    if(ie->u.xy.x != 0)
-      reload = 1;
-    break;
-
-  case INPUT_KEY:
-    if(pvr->pvr_zoomed)
-      pvr_keystrike_zoomed(pvr, ie);
-    else
-      reload = pvr_keystrike_unzoomed(pvr, ie);
-    break;
-  }
-
-  if(reload) {
-    pthread_mutex_lock(&pvr->pvr_loader_lock);
-    pvr->pvr_loader_work = 1;
-    pthread_cond_signal(&pvr->pvr_loader_cond);
-    pthread_mutex_unlock(&pvr->pvr_loader_lock);
-  }
 }
 
 /*
@@ -1115,6 +950,8 @@ pvr_thread(void *aux)
 
   pvr_create_bar(pvr);
 
+  pvr_create_recording_submenu(pvr);
+
   tvh_init(tvh, &ai->ai_ic);
 
   while(1) {
@@ -1227,6 +1064,7 @@ pvr_2dnav_render(pvr_t *pvr, glw_rctx_t *rc)
 static void 
 pvr_2dnav_layout(pvr_t *pvr, glw_rctx_t *rc)
 {
+  appi_t *ai = pvr->pvr_ai;
   pvrchan_t *pvc;
   pvrprog_t *pvp;
   float t, a0, a1, x1, x2, c, s, y;
@@ -1238,9 +1076,9 @@ pvr_2dnav_layout(pvr_t *pvr, glw_rctx_t *rc)
   glw_t *w;
 
 
-  if(pvr->pvr_zoomed && pvr->pvr_zoomv < 1.0)
+  if(ai->ai_menu_display && pvr->pvr_zoomv < 1.0)
     pvr->pvr_zoomv += 0.02;
-  else if(!pvr->pvr_zoomed && pvr->pvr_zoomv > 0.0)
+  else if(!ai->ai_menu_display && pvr->pvr_zoomv > 0.0)
     pvr->pvr_zoomv -= 0.02;
     
   zo = GLW_S(GLW_MIN(pvr->pvr_zoomv * 2, 1.0));
@@ -1364,7 +1202,7 @@ pvr_2dnav_layout(pvr_t *pvr, glw_rctx_t *rc)
       w->glw_pos.y = GLW_LERP(za, 0.4 * -t,  0.0);
       w->glw_pos.z = 0;
 
-      w->glw_scale.x = GLW_LERP(za, 0.4 * s, 0.5);
+      w->glw_scale.x = GLW_LERP(za, 0.4 * s, 0.65);
       w->glw_scale.y = 0.19f;
       w->glw_scale.z = GLW_MIN(w->glw_scale.x, w->glw_scale.y);
 
@@ -1378,7 +1216,7 @@ pvr_2dnav_layout(pvr_t *pvr, glw_rctx_t *rc)
     }
   }
 
-  if(!pvr->pvr_zoomed)
+  if(!ai->ai_menu_display)
     pvr->pvr_selected = sel;
 
   if((pvp = pvr->pvr_selected) != NULL) {
