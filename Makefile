@@ -75,12 +75,10 @@ SRCS  += movt.c
 PROG = showtime
 CFLAGS += -g -Wall -Werror -funsigned-char -O2
 
-CFLAGS += -I/usr/local/include -I$(CURDIR)/../install/include -I$(CURDIR)
+CFLAGS += -I/usr/local/include -I$(INCLUDES_INSTALL_BASE) -I$(CURDIR)
 CFLAGS += -Wno-deprecated-declarations
 
-LDFLAGS += -L/usr/local/lib
-LDFLAGS += -L$(CURDIR)/../install/lib
-LDFLAGS += -L/usr/X11R6/lib 
+LDFLAGS += -L/usr/local/lib -L$(LIBS_INSTALL_BASE) -L/usr/X11R6/lib 
 
 #
 # Locally compiled libs
@@ -167,7 +165,7 @@ install:
 
 ${PROG}: $(.OBJDIR) $(OBJS) Makefile
 	cd $(.OBJDIR) && $(CC) $(LDFLAGS) -o $@ $(OBJS) \
-	-Wl,-Bstatic $(SLIBS) -Wl,-Bdynamic $(DLIBS)
+	$(STATIC_LINKFLAGS) $(SLIBS) $(DYNAMIC_LINKFLAGS) $(DLIBS)
 
 $(.OBJDIR):
 	mkdir $(.OBJDIR)
