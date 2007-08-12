@@ -531,7 +531,7 @@ play_file_menu_audio_setup(glw_t *p, media_pipe_t *mp)
   glw_t *v, *w;
   int i;
 
-  v = menu_create_submenu(p, "icon://audio.png", "Audio tracks", 0);
+  v = menu_create_submenu(p, "icon://audio.png", "Audio tracks", 1);
 
   for(i = 0; i < 16; i++) {
     w = menu_create_item(v, "icon://menu-current.png", "",
