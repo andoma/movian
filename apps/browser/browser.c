@@ -1458,10 +1458,7 @@ browser_slideshow(browser_t *b, b_dir_t *bd, b_entry_t *be)
 			     NULL);
 
   while(run) {
-    printf("waiting for event\n");
-
     input_getevent(&ai->ai_ic, 1, &ie, NULL);
-    printf("event!, curx = %f\n", curx);
 
     switch(ie.type) {
     default:
