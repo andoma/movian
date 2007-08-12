@@ -28,6 +28,7 @@
 
 #include <ffmpeg/avcodec.h>
 #include <ffmpeg/avformat.h>
+#include <ffmpeg/avstring.h>
 #include <libglw/glw.h>
 
 #include "showtime.h"
@@ -166,11 +167,13 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
   media_queue_t *mq;
   int64_t pts4seek = 0;
   int seekdur = 50000;
-  glw_t *meta, *xmeta, *amenu, *vmenu;
+  glw_t *meta, *xmeta;
   int streams;
   media_pipe_t *mp = &ai->ai_mp;
   gvp_conf_t gc;
   char albumpath[500];
+  char menutitle[32];
+
   char *s, *albumart;
   struct stat st;
   glw_t *gvpw = NULL;
@@ -213,12 +216,15 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
     cwvec[i] = wrap_codec_create(ctx->codec_id, ctx->codec_type, 0, fw, ctx);
   }
 
+  
+  av_strlcpy(menutitle, mi->mi_title, sizeof(menutitle));
 
-  //  ai->ai_postproc_type = MM_PP_AUTO;
+  memcpy(menutitle + sizeof(menutitle) - 4, "...", 4);
+
+  menu_push_top_menu(ai, menutitle);
 
   ai->ai_fctx = fctx;
   mp->mp_format = fctx;
-
 
   audio_sched_mp_activate(mp);
 
@@ -226,9 +232,7 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
     gvp_conf_init(&gc);
     gvpw = gvp_create(parent, &ai->ai_mp, &gc, 0);
     ai->ai_req_fullscreen = AI_FS_BLANK;
-    vmenu = gvp_menu_setup(appi_menu_top(ai), &gc);
-  } else {
-    vmenu = NULL;
+    gvp_menu_setup(appi_menu_top(ai), &gc);
   }
 
   wrap_lock_all_codecs(fw);
@@ -249,7 +253,7 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
 
   xmeta = mp->mp_info_extra_widget = play_file_create_extra_miw(mp);
 
-  amenu = play_file_menu_audio_setup(appi_menu_top(ai), mp);
+  play_file_menu_audio_setup(appi_menu_top(ai), mp);
   
   mp->mp_playstatus_update_callback = play_file_playstatus_widget_update;
   mp->mp_playstatus_update_opaque = psc;
@@ -426,11 +430,8 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
   glw_destroy(meta);
   glw_destroy(xmeta);
 
-  if(vmenu != NULL)
-    glw_destroy(vmenu);
 
-  if(amenu != NULL)
-    glw_destroy(amenu);
+  menu_pop_top_menu(ai);
 
   mp_set_playstatus(mp, MP_PLAY);
 
