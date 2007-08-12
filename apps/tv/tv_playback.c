@@ -773,10 +773,11 @@ static void
 iptv_tag_refresh(iptv_player_t *iptv, int tag)
 {
   glw_t *w;
-
+  int i;
   LIST_FOREACH(w, &iptv->iptv_tag_hash[tag & GLW_TAG_HASH_MASK], glw_tag_link)
     if(w->glw_tag == tag)
-      w->glw_callback(w, GLW_SIGNAL_RETHINK);
+      for(i = 0; i < w->glw_ncallbacks; i++)
+	w->glw_callback[i](w, GLW_SIGNAL_RETHINK);
 }
 
 /*****************************************************************************
