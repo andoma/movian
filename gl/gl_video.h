@@ -241,12 +241,6 @@ void gvp_conf_init(gvp_conf_t *gc);
 
 glw_t *gvp_menu_setup(glw_t *p, gvp_conf_t *gc);
 
-static inline int
-gvp_get_idle_frames(glw_t *w)
-{
-  gl_video_pipe_t *gvp = glw_get_opaque(w);
-  return gvp->gvp_idle;
-
-}
+int gvp_get_idle_frames(glw_t *w);
 
 #endif /* VIDEO_GL_H */

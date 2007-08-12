@@ -68,6 +68,12 @@ typedef struct rssbrowser {
 
 } rssbrowser_t;
 
+static int 
+rssfeed_entry_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  return 0;
+}
+
 /*
  *
  */
@@ -207,7 +213,7 @@ feed_add(rssbrowser_t *rb, const char *caption, const char *url,
   re->re_url = strdup(url);
 
   v = glw_create(GLW_ZOOM_SELECTOR,
-		 GLW_ATTRIB_OPAQUE, re,
+		 GLW_ATTRIB_SIGNAL_HANDLER, rssfeed_entry_callback, re, 0,
 		 GLW_ATTRIB_PARENT, rb->rb_list,
 		 NULL);
 
@@ -372,29 +378,6 @@ rssfeeds_configure(rssbrowser_t *rb)
 /*
  *
  */
-static glw_t *
-rss_title(void)
-{
-  glw_t *r;
-
-  r = glw_create(GLW_BITMAP,
-		 GLW_ATTRIB_FILENAME, "icon://plate-wide.png",
-		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
-		 NULL);
-
-  glw_create(GLW_TEXT_BITMAP,
-	     GLW_ATTRIB_PARENT, r,
-	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
-	     GLW_ATTRIB_CAPTION, "Really Simple Syndication",
-	     NULL);
-
-  return r;
-}
-
-
-/*
- *
- */
 
 static void *
 rssbrowser_thread(void *aux)
@@ -408,20 +391,19 @@ rssbrowser_thread(void *aux)
 
   ai->ai_widget = rb->rb_list = 
     glw_create(GLW_ARRAY,
-	       GLW_ATTRIB_OPAQUE, ai,
-	       GLW_ATTRIB_CALLBACK, appi_widget_post_key,
-	       GLW_ATTRIB_SIDEKICK, rss_title(),
+	       GLW_ATTRIB_SIGNAL_HANDLER, appi_widget_post_key, ai, 0,
+	       GLW_ATTRIB_SIDEKICK, bar_title("Really Simple Syndication"),
 	       NULL);
 
   rssfeeds_configure(rb);
 
   if(TAILQ_FIRST(&rb->rb_list->glw_childs) == NULL) {
     glw_destroy(ai->ai_widget);
-    ai->ai_widget = glw_create(GLW_TEXT_BITMAP,
-			       GLW_ATTRIB_OPAQUE, ai,
-			       GLW_ATTRIB_CALLBACK, appi_widget_post_key,
-			       GLW_ATTRIB_CAPTION, "No feeds configured",
-			       NULL);
+    ai->ai_widget = 
+      glw_create(GLW_TEXT_BITMAP,
+		 GLW_ATTRIB_SIGNAL_HANDLER, appi_widget_post_key, ai, 0,
+		 GLW_ATTRIB_CAPTION, "No feeds configured",
+		 NULL);
     while(1) 
       sleep(1);
   }
@@ -435,10 +417,6 @@ rssbrowser_thread(void *aux)
     default:
       break;
       
-    case INPUT_PAD:
-      pad_nav_slist(re ? re->re_item_list : rb->rb_list, &ie);
-      break;
-
     case INPUT_KEY:
       if(ie.u.key == INPUT_KEY_CLOSE) {
 	layout_hide(ai);
@@ -501,7 +479,8 @@ rssbrowser_thread(void *aux)
 
 	case INPUT_KEY_ENTER:
 	  glw_nav_signal(rb->rb_list, GLW_SIGNAL_ENTER);
-	  re = glw_get_opaque(rb->rb_list->glw_selected);
+	  re = glw_get_opaque(rb->rb_list->glw_selected,
+			      rssfeed_entry_callback);
 	  break;
 	
 	case INPUT_KEY_BACK:

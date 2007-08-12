@@ -38,12 +38,12 @@ int mp_show_extra_info;
 
 
 static int 
-general_extra_info(glw_t *w, glw_signal_t signal, ...)
+general_extra_info(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
   char buf[50];
 
   switch(signal) {
-  case GLW_SIGNAL_PRE_LAYOUT:
+  case GLW_SIGNAL_PREPARE:
     snprintf(buf, sizeof(buf), "Extra media info: %s",
 	     mp_show_extra_info ? "Yes" : "No");
 
@@ -64,7 +64,7 @@ general_extra_info(glw_t *w, glw_signal_t signal, ...)
 
 
 static int 
-general_menu_exit(glw_t *w, glw_signal_t signal, ...)
+general_menu_exit(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
   switch(signal) {
   case GLW_SIGNAL_CLICK:

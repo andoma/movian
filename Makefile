@@ -67,8 +67,8 @@ SRCS +=	tv_headend.c tv_playback.c pvr.c
 
 # Apple Movie Trailer Application
 
-VPATH += apps/apple_movie_trailers
-SRCS  += movt.c
+#VPATH += apps/apple_movie_trailers
+#SRCS  += movt.c
 
 
 

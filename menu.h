@@ -47,7 +47,8 @@ void menu_pop_top_menu(appi_t *ai);
 
 appi_t *menu_find_ai(glw_t *w);
 
-int menu_post_key_pop_and_hide(glw_t *w, glw_signal_t signal, ...);
+int menu_post_key_pop_and_hide(glw_t *w, void *opaque, 
+			       glw_signal_t signal, ...);
 
 #define MENU_ASPECT 0.4
 

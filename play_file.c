@@ -470,17 +470,17 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
 
 
 static int
-audio_menu_atrack(glw_t *w, glw_signal_t signal, ...)
+audio_menu_atrack(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
   time_t t;
   glw_t *c;
-  media_pipe_t *mp = glw_get_opaque(w);
+  media_pipe_t *mp = opaque;
   AVFormatContext *fctx = mp->mp_format;
   AVStream *st;
   char buf[256], *p;
 
   switch(signal) {
-  case GLW_SIGNAL_PRE_LAYOUT:
+  case GLW_SIGNAL_PREPARE:
     time(&t);
 
     if(t == w->glw_holdtime)

@@ -96,6 +96,12 @@ typedef struct play_list {
 static void pl_flush(play_list_t *pl, play_list_entry_t *notme);
 static glw_t *playlist_menu_setup(glw_t *p, play_list_t *pl);
 
+static int 
+playlist_entry_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  return 0;
+}
+
 
 /*
  * .pls -playlist format loader
@@ -211,7 +217,7 @@ playlist_enqueue(const char *path, mediainfo_t *mi, int flush)
 
 
   w = glw_create(GLW_BITMAP,
-		 GLW_ATTRIB_OPAQUE, ple,
+		 GLW_ATTRIB_SIGNAL_HANDLER, playlist_entry_callback, ple, 0,
 		 GLW_ATTRIB_PARENT, pl->pl_list,
 		 GLW_ATTRIB_FILENAME, "icon://plate-wide.png",
 		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
@@ -411,9 +417,9 @@ pl_flush(play_list_t *pl, play_list_entry_t *notme)
 
 
 static int 
-plextra_callback(glw_t *w, glw_signal_t signal, ...)
+plextra_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  play_list_t *pl = glw_get_opaque(w);
+  play_list_t *pl = opaque;
   play_list_entry_t *ple = pl->pl_cur;
   char tmp[30];
 
@@ -421,7 +427,7 @@ plextra_callback(glw_t *w, glw_signal_t signal, ...)
   va_start(ap, signal);
 
   switch(signal) {
-  case GLW_SIGNAL_PRE_LAYOUT:
+  case GLW_SIGNAL_PREPARE:
 
     if(ple == NULL) {
       glw_set(w, GLW_ATTRIB_CAPTION, "", NULL);
@@ -461,8 +467,7 @@ plxtra(play_list_t *pl)
   glw_create(GLW_TEXT_BITMAP,
 	     GLW_ATTRIB_PARENT, y,
 	     GLW_ATTRIB_CAPTION, "",
-	     GLW_ATTRIB_OPAQUE, pl,
-	     GLW_ATTRIB_CALLBACK, plextra_callback,
+	     GLW_ATTRIB_SIGNAL_HANDLER, plextra_callback, pl, 0,
 	     NULL);
 
   return y;
@@ -537,7 +542,8 @@ play_list_play_thread(void *aux)
       break;
 
     case INPUT_KEY_ENTER:
-      pl->pl_cur = glw_get_opaque(pl->pl_list->glw_selected);
+      pl->pl_cur = glw_get_opaque(pl->pl_list->glw_selected,
+				  playlist_entry_callback);
       break;
     case INPUT_KEY_NEXT:
       pl->pl_cur = play_list_next(pl, 1);
@@ -750,13 +756,13 @@ playlist_spawn(appi_t *ai)
   TAILQ_INIT(&pl->pl_queue);
   TAILQ_INIT(&pl->pl_shuffle_queue);
 
-  pl->pl_list = glw_create(GLW_ARRAY, 
-			   GLW_ATTRIB_X_SLICES, 1,
-			   GLW_ATTRIB_Y_SLICES, 13,
-			   GLW_ATTRIB_SIDEKICK, bar_title("Playlist"),
-			   GLW_ATTRIB_OPAQUE, ai,
-			   GLW_ATTRIB_CALLBACK, appi_widget_post_key,
-			   NULL);
+  pl->pl_list = 
+    glw_create(GLW_ARRAY, 
+	       GLW_ATTRIB_X_SLICES, 1,
+	       GLW_ATTRIB_Y_SLICES, 13,
+	       GLW_ATTRIB_SIDEKICK, bar_title("Playlist"),
+	       GLW_ATTRIB_SIGNAL_HANDLER, appi_widget_post_key, ai, 0,
+	       NULL);
 
   ai->ai_widget = pl->pl_list;
 
@@ -790,12 +796,12 @@ playlist_mode_switch(play_list_t *pl)
 }
 
 static int 
-playlist_menu_mode(glw_t *w, glw_signal_t signal, ...)
+playlist_menu_mode(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  play_list_t *pl = glw_get_opaque(w);
+  play_list_t *pl = opaque;
   char buf[50];
   switch(signal) {
-  case GLW_SIGNAL_PRE_LAYOUT:
+  case GLW_SIGNAL_PREPARE:
     snprintf(buf, sizeof(buf), "Playmode: %s", playlistmodes[pl->pl_playmode]);
 
     w = glw_find_by_class(w, GLW_TEXT_BITMAP);

@@ -51,15 +51,15 @@ typedef struct menu {
 
 #define MENU_Z_MAX 3.0
 
-#define menu_is_submenu(c) ((c)->glw_callback[0] == menu_submenu_item_event)
+#define menu_opaque(c) (glw_get_opaque(c, menu_submenu_item_event))
 
 /*
  * Callback for sub menus
  */
 static int 
-menu_submenu_item_event(glw_t *w, glw_signal_t signal, ...)
+menu_submenu_item_event(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  menu_t *m = glw_get_opaque2(w);
+  menu_t *m = opaque;
   inputevent_t *ie;
   va_list ap;
   va_start(ap, signal);
@@ -80,21 +80,30 @@ menu_submenu_item_event(glw_t *w, glw_signal_t signal, ...)
 }
 
 /*
- * Callback for the GLW_ARRAY component
+ * Callback for the GLW_BITMAP component
  */
 static int 
-menu_control(glw_t *w, glw_signal_t signal, ...)
+menu_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  menu_t *m = glw_get_opaque2(w);
+  menu_t *m = opaque;
 
   switch(signal) {
-  case GLW_SIGNAL_DESTROY:
+  case GLW_SIGNAL_DTOR:
     free(m);
     return 1;
 
   default:
     return 0;
   }
+}
+
+/*
+ * Callback for the GLW_ARRAY component
+ */
+static int 
+menu_array_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  return 0;
 }
 
 
@@ -106,7 +115,6 @@ menu_input(appi_t *ai, inputevent_t *ie)
 {
   glw_t *w, *c;
   menu_t *m = NULL, *mm;
-  int i;
 
   w = ai->ai_menu;
   if(w == NULL)
@@ -121,10 +129,8 @@ menu_input(appi_t *ai, inputevent_t *ie)
     if(c == NULL)
       return 0;
 
-    if(menu_is_submenu(c)) {
+    if((mm = menu_opaque(c)) != NULL) {
       /* This is a sub menu */
-      mm = c->glw_opaque2;
-
       if(mm->m_expanded) {
 	/* It's expanded, continue down */
 	m = mm;
@@ -155,11 +161,9 @@ menu_input(appi_t *ai, inputevent_t *ie)
     }
   }
   if(ie->type == INPUT_KEY && ie->u.key == INPUT_KEY_ENTER)
-    for(i = 0; i < c->glw_ncallbacks; i++)
-      c->glw_callback[i](c, GLW_SIGNAL_CLICK);
+    glw_drop_signal(c, GLW_SIGNAL_CLICK, NULL);
 
-  for(i = 0; i < c->glw_ncallbacks; i++)
-    c->glw_callback[i](c, GLW_SIGNAL_INPUT_EVENT, ie);
+  glw_drop_signal(c, GLW_SIGNAL_INPUT_EVENT, ie);
   return 0;
 }
 
@@ -169,18 +173,22 @@ menu_input(appi_t *ai, inputevent_t *ie)
  */
 static glw_t *
 menu_create_item0(glw_t *p, const char *icon, const char *title,
-		 glw_callback_t *cb, glw_callback_t *cb2, void *opaque,
+		  glw_callback_t *cb, void *opaque, int pri,
 		  uint32_t u32, int first)
 {
   glw_t *x;
-  menu_t *m = glw_get_opaque2(p);
+  menu_t *m;
+
+  m = glw_get_opaque(p, menu_bitmap_callback);
+  if(m == NULL)
+    m = glw_get_opaque(p, menu_submenu_item_event);
+
   p = m->m_array;
+  assert(p != NULL);
 
   x = glw_create(GLW_CONTAINER_X,
 		 first ? GLW_ATTRIB_PARENT_HEAD : GLW_ATTRIB_PARENT, p,
-		 GLW_ATTRIB_CALLBACK, cb,
-		 GLW_ATTRIB_CALLBACK, cb2,
-		 GLW_ATTRIB_OPAQUE, opaque,
+		 GLW_ATTRIB_SIGNAL_HANDLER, cb, opaque, pri,
 		 GLW_ATTRIB_U32, u32,
 		 NULL);
 
@@ -208,7 +216,7 @@ glw_t *
 menu_create_item(glw_t *p, const char *icon, const char *title,
 		 glw_callback_t *cb, void *opaque, uint32_t u32, int first)
 {
-  return menu_create_item0(p, icon, title, cb, NULL, opaque, u32, first);
+  return menu_create_item0(p, icon, title, cb, opaque, 0, u32, first);
 }
 
 /*
@@ -225,8 +233,7 @@ menu_create_menu(glw_t *p, const char *title)
 
   b = glw_create(GLW_BITMAP,
 		 GLW_ATTRIB_FILENAME, "icon://plate-titled.png",
-		 GLW_ATTRIB_OPAQUE2, m,
-		 GLW_ATTRIB_CALLBACK, menu_control,
+		 GLW_ATTRIB_SIGNAL_HANDLER, menu_bitmap_callback, m, 0,
 		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
 		 GLW_ATTRIB_BORDER_WIDTH, 0.27,
 		 NULL);
@@ -250,13 +257,15 @@ menu_create_menu(glw_t *p, const char *title)
   w = glw_create(GLW_ARRAY,
 		 GLW_ATTRIB_BORDER_WIDTH, 0.25f,
 		 GLW_ATTRIB_PARENT, y,
-		 GLW_ATTRIB_OPAQUE2, m,
+		 GLW_ATTRIB_SIGNAL_HANDLER, menu_array_callback, m, 0,
 		 GLW_ATTRIB_X_SLICES, 1,
 		 GLW_ATTRIB_Y_SLICES, 9,
 		 NULL);
 
   if(p != NULL)
-    p->glw_opaque2 = m;
+    glw_set(p, 
+	    GLW_ATTRIB_SIGNAL_HANDLER, menu_submenu_item_event, m, 0,
+	    NULL);
   else
     m->m_expanded = 1;
 
@@ -290,7 +299,7 @@ menu_create_submenu_cb(glw_t *p, const char *icon, const char *title,
 {
   glw_t *x;
 
-  x = menu_create_item0(p, icon, title, menu_submenu_item_event, cb, opaque, 0,
+  x = menu_create_item0(p, icon, title, menu_submenu_item_event, cb, 0, 0,
 		       first);
   menu_create_menu(x, title);
   return x;
@@ -312,7 +321,7 @@ menu_push_top_menu(appi_t *ai, const char *title)
   memcpy(menutitle + sizeof(menutitle) - 4, "...", 4);
 
   c = menu_create_menu(NULL, menutitle);
-  m = glw_get_opaque2(c);
+  m = glw_get_opaque(c, menu_bitmap_callback);
 
   settings_menu_create(c);
 
@@ -329,9 +338,10 @@ void
 menu_pop_top_menu(appi_t *ai)
 {
   glw_t *c = ai->ai_menu;
-  menu_t *m = glw_get_opaque2(c);
+  menu_t *m;
 
   glw_lock();
+  m = glw_get_opaque(c, menu_bitmap_callback);
   assert(m->m_stack != NULL);
   ai->ai_menu = m->m_stack;
   glw_destroy(c);
@@ -354,10 +364,10 @@ menu_init_app(appi_t *ai)
  *
  */
 int 
-menu_post_key_pop_and_hide(glw_t *w, glw_signal_t signal, ...)
+menu_post_key_pop_and_hide(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  appi_t *ai = glw_get_opaque(w);
-  menu_t *m = glw_get_opaque2(w->glw_parent);
+  appi_t *ai = opaque;
+  menu_t *m = glw_get_opaque(w->glw_parent, menu_array_callback);
 
   switch(signal) {
   case GLW_SIGNAL_CLICK:
@@ -393,20 +403,19 @@ menu_layout(appi_t *ai)
   memset(&rc, 0, sizeof(rc));
   rc.rc_aspect = MENU_ASPECT * (16.0f / 9.0f);
 
-
   w = ai->ai_menu;
-  m = glw_get_opaque2(w);
+  m = glw_get_opaque(w, menu_bitmap_callback);
+
   m->m_alpha2 = GLW_LP(16, m->m_alpha2, !!ai->ai_menu_display);
 
   while(w != NULL) {
-    m = glw_get_opaque2(w);
+    m = glw_get_opaque(w, menu_bitmap_callback);
 
     LIST_INSERT_HEAD(&list, m, m_link);
     if((c = glw_find_by_class(w, GLW_ARRAY)->glw_selected) == NULL)
       break;
-    if(!menu_is_submenu(c))
+    if((m = menu_opaque(c)) == NULL)
       break;
-    m = glw_get_opaque2(c);
     w = m->m_plate;
   }
 
@@ -441,7 +450,7 @@ menu_render(appi_t *ai, float alpha)
   glw_vertex_t xyz;
   menu_t *m;
 
-  m = glw_get_opaque2(w);
+  m = glw_get_opaque(w, menu_bitmap_callback);
 
   alpha *= m->m_alpha2;
 
@@ -458,7 +467,7 @@ menu_render(appi_t *ai, float alpha)
   rc.rc_aspect = MENU_ASPECT * (16.0f / 9.0f);
 
   while(w != NULL) {
-    m = glw_get_opaque2(w);
+    m = glw_get_opaque(w, menu_bitmap_callback);
 
     glw_vertex_anim_read(&m->m_alpha, &xyz);
     rc.rc_alpha = alpha * xyz.x;
@@ -474,10 +483,9 @@ menu_render(appi_t *ai, float alpha)
 
     if((c = glw_find_by_class(w, GLW_ARRAY)->glw_selected) == NULL)
       break;
-    if(!menu_is_submenu(c))
+    if((m = menu_opaque(c)) == NULL)
       break;
-    
-    m = glw_get_opaque2(c);
+
     w = m->m_plate;
   }
 

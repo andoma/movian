@@ -47,6 +47,13 @@ static int menu_input_event(inputevent_t *ie);
 static void layout_apps(void);
 
 
+static int 
+layout_top_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  return 0;
+}
+
+
 static appi_t *
 layout_get_cur_app(void)
 {
@@ -56,12 +63,12 @@ layout_get_cur_app(void)
     return NULL;
 
   w = w->glw_selected;  // the zoomer widget
-  return glw_get_opaque(w); 
+  return glw_get_opaque(w, layout_top_callback); 
 }
 
 
 static int 
-layout_array_callback(glw_t *w, glw_signal_t signal, ...)
+layout_array_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
   int r = 0;
   inputevent_t *ie;
@@ -72,7 +79,6 @@ layout_array_callback(glw_t *w, glw_signal_t signal, ...)
   switch(signal) {
   case GLW_SIGNAL_INPUT_EVENT:
     ie = va_arg(ap, void *);
-
     switch(ie->type) {
     default:
       break;
@@ -142,7 +148,8 @@ layout_std_create(void)
  
     root_array[i] = glw_create(GLW_ARRAY,
 			       GLW_ATTRIB_PARENT, y,
-			       GLW_ATTRIB_CALLBACK, layout_array_callback,
+			       GLW_ATTRIB_SIGNAL_HANDLER, 
+			       layout_array_callback, NULL, 0,
 			       GLW_ATTRIB_SIDEKICK, z,
 			       NULL);
   }
@@ -473,11 +480,11 @@ layout_apps(void)
 
 
 static int 
-appi_portal_callback(glw_t *w, glw_signal_t signal, ...)
+appi_portal_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
   va_list ap;
   va_start(ap, signal);
-  appi_t *ai = glw_get_opaque(w);
+  appi_t *ai = opaque;
   glw_t *c = ai->ai_widget;
   glw_rctx_t *rc;
   inputevent_t *ie;
@@ -491,7 +498,7 @@ appi_portal_callback(glw_t *w, glw_signal_t signal, ...)
       glw_drop_signal(c, GLW_SIGNAL_INPUT_EVENT, ie);
       break;
 
-    case GLW_SIGNAL_EXT_RENDER:
+    case GLW_SIGNAL_RENDER:
       rc = va_arg(ap, void *);
       glw_render(c, rc);
       
@@ -517,7 +524,7 @@ layout_register_app(app_t *a)
 
     w = glw_create(GLW_ZOOM_SELECTOR,
 		   GLW_ATTRIB_PARENT, root_array[i],
-		   GLW_ATTRIB_OPAQUE, ai,
+		   GLW_ATTRIB_SIGNAL_HANDLER, layout_top_callback, ai, 0,
 		   NULL);
   
  
@@ -569,8 +576,7 @@ layout_register_app(app_t *a)
 
     glw_create(GLW_EXT,
 	       GLW_ATTRIB_PARENT, w,
-	       GLW_ATTRIB_CALLBACK, appi_portal_callback,
-	       GLW_ATTRIB_OPAQUE, ai, 
+	       GLW_ATTRIB_SIGNAL_HANDLER, appi_portal_callback, ai, 0,
 	       NULL);
   }
 }
@@ -592,8 +598,7 @@ miw_render(void)
   static float a0, a1;
   float a;
   glw_rctx_t rc0;
-  glw_t *w = root_array[curface & 3]->glw_selected;
-  appi_t *ai = w->glw_opaque;
+  appi_t *ai = layout_get_cur_app();
   const float size = 0.05f;
 
   //  if(ai != NULL)

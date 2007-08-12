@@ -904,16 +904,16 @@ dvd_spu_set_track(dvd_player_t *dp, int track)
 
 
 static int
-dvd_menu_spu(glw_t *w, glw_signal_t signal, ...)
+dvd_menu_spu(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  dvd_player_t *dp = glw_get_opaque(w);
+  dvd_player_t *dp = opaque;
   char str[40];
   glw_t *c;
   int u32, iscur;
   time_t t;
 
   switch(signal) {
-  case GLW_SIGNAL_PRE_LAYOUT:
+  case GLW_SIGNAL_PREPARE:
     time(&t);
 
     if(t == w->glw_holdtime)
@@ -943,13 +943,13 @@ dvd_menu_spu(glw_t *w, glw_signal_t signal, ...)
 
 
 static int
-dvd_menu_spu_off(glw_t *w, glw_signal_t signal, ...)
+dvd_menu_spu_off(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  dvd_player_t *dp = glw_get_opaque(w);
+  dvd_player_t *dp = opaque;
   glw_t *c;
 
   switch(signal) {
-  case GLW_SIGNAL_PRE_LAYOUT:
+  case GLW_SIGNAL_PREPARE:
     if(dp == NULL)
       return 1;
     
@@ -1083,16 +1083,16 @@ dvd_audio_set_track(dvd_player_t *dp, int track)
 
 
 static int
-dvd_menu_atrack(glw_t *w, glw_signal_t signal, ...)
+dvd_menu_atrack(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
   char str[40];
-  dvd_player_t *dp = glw_get_opaque(w);
+  dvd_player_t *dp = opaque;
   int u32, iscur;
   time_t t;
   glw_t *c;
 
   switch(signal) {
-  case GLW_SIGNAL_PRE_LAYOUT:
+  case GLW_SIGNAL_PREPARE:
     time(&t);
 
     if(t == w->glw_holdtime)
@@ -1121,13 +1121,13 @@ dvd_menu_atrack(glw_t *w, glw_signal_t signal, ...)
 
 
 static int
-dvd_menu_atrack_off(glw_t *w, glw_signal_t signal, ...)
+dvd_menu_atrack_off(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  dvd_player_t *dp = glw_get_opaque(w);
+  dvd_player_t *dp = opaque;
   glw_t *c;
 
   switch(signal) {
-  case GLW_SIGNAL_PRE_LAYOUT:
+  case GLW_SIGNAL_PREPARE:
     if(dp == NULL)
       return 1;
     

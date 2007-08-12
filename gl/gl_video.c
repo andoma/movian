@@ -652,7 +652,8 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
  *
  */
 
-static int gl_video_widget_callback(glw_t *w, glw_signal_t signal, ...);
+static int gl_video_widget_callback(glw_t *w, void *opaque, 
+				    glw_signal_t signal, ...);
 
 
 
@@ -708,8 +709,8 @@ gvp_create(glw_t *p, media_pipe_t *mp, gvp_conf_t *gc, int flags)
 
   gvp->gvp_widget = glw_create(GLW_EXT,
 			       GLW_ATTRIB_PARENT, p, 
-			       GLW_ATTRIB_OPAQUE, gvp,
-			       GLW_ATTRIB_CALLBACK, gl_video_widget_callback,
+			       GLW_ATTRIB_SIGNAL_HANDLER, 
+			       gl_video_widget_callback, gvp, 0,
 			       NULL);
 
   return gvp->gvp_widget;
@@ -719,7 +720,7 @@ gvp_create(glw_t *p, media_pipe_t *mp, gvp_conf_t *gc, int flags)
 void
 gvp_set_dvd(glw_t *w, struct dvd_player *dvd)
 {
-  gl_video_pipe_t *gvp = glw_get_opaque(w);
+  gl_video_pipe_t *gvp = glw_get_opaque(w, gl_video_widget_callback);
   gvp->gvp_dvd = dvd;
 }
 
@@ -1339,9 +1340,9 @@ render_video_pipe(gl_video_pipe_t *gvp, glw_rctx_t *rc)
 
 
 static int 
-gl_video_widget_callback(glw_t *w, glw_signal_t signal, ...)
+gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  gl_video_pipe_t *gvp = glw_get_opaque(w);
+  gl_video_pipe_t *gvp = opaque;
   media_pipe_t *mp = gvp->gvp_mp;
   float t;
 
@@ -1354,7 +1355,7 @@ gl_video_widget_callback(glw_t *w, glw_signal_t signal, ...)
     gvp->gvp_state = GVP_ZOMBIE;
     return 0;
 
-  case GLW_SIGNAL_PRE_LAYOUT:
+  case GLW_SIGNAL_PREPARE:
     t = 0.0f;
     if(mp_get_playstatus(gvp->gvp_mp) != MP_STOP)
       t = 1.0f;
@@ -1363,11 +1364,11 @@ gl_video_widget_callback(glw_t *w, glw_signal_t signal, ...)
 
     return 0;
 
-  case GLW_SIGNAL_EXT_RENDER:
+  case GLW_SIGNAL_RENDER:
     render_video_pipe(gvp, va_arg(ap, void *));
     return 0;
 
-  case GLW_SIGNAL_EXT_LAYOUT:
+  case GLW_SIGNAL_LAYOUT:
     layout_video_pipe(gvp, va_arg(ap, void *));
     return 0;
 
@@ -1520,14 +1521,14 @@ gvp_every_frame(void)
 
 
 static int 
-gvp_menu_pp(glw_t *w, glw_signal_t signal, ...)
+gvp_menu_pp(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  gvp_conf_t *gc = glw_get_opaque(w);
+  gvp_conf_t *gc = opaque;
   glw_t *b;
   float v;
 
   switch(signal) {
-  case GLW_SIGNAL_PRE_LAYOUT:
+  case GLW_SIGNAL_PREPARE:
     if((b = glw_find_by_class(w, GLW_BITMAP)) == NULL)
       return 0;
     
@@ -1550,10 +1551,10 @@ gvp_menu_pp(glw_t *w, glw_signal_t signal, ...)
 
 
 static int 
-gvp_menu_avsync(glw_t *w, glw_signal_t signal, ...)
+gvp_menu_avsync(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
   inputevent_t *ie;
-  gvp_conf_t *gc = glw_get_opaque(w);
+  gvp_conf_t *gc = opaque;
   char buf[50];
   glw_t *b;
 
@@ -1562,7 +1563,7 @@ gvp_menu_avsync(glw_t *w, glw_signal_t signal, ...)
 
 
   switch(signal) {
-  case GLW_SIGNAL_PRE_LAYOUT:
+  case GLW_SIGNAL_PREPARE:
     if((b = glw_find_by_class(w, GLW_TEXT_BITMAP)) == NULL)
       return 0;
     snprintf(buf, sizeof(buf), "Video output delay: %dms", gc->gc_avcomp);
@@ -1609,10 +1610,10 @@ gvp_menu_avsync(glw_t *w, glw_signal_t signal, ...)
 
 
 static int 
-gvp_menu_video_zoom(glw_t *w, glw_signal_t signal, ...)
+gvp_menu_video_zoom(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
   inputevent_t *ie;
-  gvp_conf_t *gc = glw_get_opaque(w);
+  gvp_conf_t *gc = opaque;
   char buf[50];
   glw_t *b;
 
@@ -1621,7 +1622,7 @@ gvp_menu_video_zoom(glw_t *w, glw_signal_t signal, ...)
 
 
   switch(signal) {
-  case GLW_SIGNAL_PRE_LAYOUT:
+  case GLW_SIGNAL_PREPARE:
     if((b = glw_find_by_class(w, GLW_TEXT_BITMAP)) == NULL)
       return 0;
     snprintf(buf, sizeof(buf), "Video zoom: %d%%", gc->gc_zoom);

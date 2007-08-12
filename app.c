@@ -150,11 +150,11 @@ appi_spawn2(app_t *a, glw_t *p)
  */
 
 int 
-appi_widget_post_key(glw_t *w, glw_signal_t signal, ...)
+appi_widget_post_key(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
   int r = 0;
   inputevent_t *ie;
-  appi_t *ai = glw_get_opaque(w);
+  appi_t *ai = opaque;
 
   va_list ap;
   va_start(ap, signal);

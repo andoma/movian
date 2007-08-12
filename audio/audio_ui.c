@@ -84,12 +84,12 @@ audio_ui_vol_changed(void)
  */
 
 static int 
-miw_mastervol_callback(glw_t *w, glw_signal_t signal, ...)
+miw_mastervol_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
   float x, a, vol;
   glw_rctx_t *rc;
   int mute;
-  asched_t *as = glw_get_opaque(w);
+  asched_t *as = opaque;
 
   va_list ap;
   va_start(ap, signal);
@@ -97,7 +97,7 @@ miw_mastervol_callback(glw_t *w, glw_signal_t signal, ...)
   switch(signal) {
     return 0;
 
-  case GLW_SIGNAL_EXT_RENDER:
+  case GLW_SIGNAL_RENDER:
     vol = as->as_mastervol;
     mute = as->as_mute;
 
@@ -177,7 +177,6 @@ audio_widget_make(asched_t *as)
 
   glw_create(GLW_EXT,
 	     GLW_ATTRIB_PARENT, y,
-	     GLW_ATTRIB_OPAQUE, as,
-	     GLW_ATTRIB_CALLBACK, miw_mastervol_callback,
+	     GLW_ATTRIB_SIGNAL_HANDLER, miw_mastervol_callback, as, 0,
 	     NULL);
 }

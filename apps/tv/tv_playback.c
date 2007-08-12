@@ -46,6 +46,12 @@
 #include "miw.h"
 #include "audio/audio_sched.h"
 
+static int 
+ich_entry_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  return 0;
+}
+
 /*****************************************************************************
  *****************************************************************************
  *
@@ -150,9 +156,9 @@ iptv_miw_rethink(iptv_player_t *iptv, glw_t *parent, iptv_channel_t *ich)
 
 
 static int 
-iptv_miw_callback(glw_t *w, glw_signal_t signal, ...)
+iptv_miw_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  iptv_channel_t *ich = glw_get_opaque(w);
+  iptv_channel_t *ich = opaque;
 
   switch(signal) {
   case GLW_SIGNAL_RETHINK:
@@ -176,8 +182,7 @@ iptv_create_miw(iptv_player_t *iptv, iptv_channel_t *ich)
 			  ich->ich_index));
 
   c = glw_create(GLW_XFADER,
-		 GLW_ATTRIB_CALLBACK, iptv_miw_callback,
-		 GLW_ATTRIB_OPAQUE, ich,
+		 GLW_ATTRIB_SIGNAL_HANDLER, iptv_miw_callback, ich, 0, 
 		 GLW_ATTRIB_TAG, iptv->iptv_tag_hash, tag,
 		 NULL);
 
@@ -187,14 +192,14 @@ iptv_create_miw(iptv_player_t *iptv, iptv_channel_t *ich)
 
 
 static int 
-iptv_feed_errors_callback(glw_t *w, glw_signal_t signal, ...)
+iptv_feed_errors_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  iptv_channel_t *ich = glw_get_opaque(w);
+  iptv_channel_t *ich = opaque;
   pes_player_t *pp;
   char buf[20];
 
   switch(signal) {
-  case GLW_SIGNAL_PRE_LAYOUT:
+  case GLW_SIGNAL_PREPARE:
     pp = &ich->ich_pp;
     snprintf(buf, sizeof(buf), "%d errors/m", 
 	     avgstat_read(&pp->pp_cc_errors, 60, wallclock / 1000000));
@@ -268,9 +273,8 @@ iptv_feed_info(glw_t *y, iptv_channel_t *ich)
 	     NULL);
 
   glw_create(GLW_TEXT_BITMAP,
-	     GLW_ATTRIB_CALLBACK, iptv_feed_errors_callback,
+	     GLW_ATTRIB_SIGNAL_HANDLER, iptv_feed_errors_callback, ich, 0,
 	     GLW_ATTRIB_PARENT, w,
-	     GLW_ATTRIB_OPAQUE, ich, 
 	     GLW_ATTRIB_CAPTION, "",
 	     NULL);
 
@@ -519,9 +523,10 @@ iptv_widget_channel_container_fill(iptv_player_t *iptv, glw_t *y, int channel)
 
 
 static int 
-iptv_widget_channel_container_callback(glw_t *w, glw_signal_t signal, ...)
+iptv_widget_channel_container_callback(glw_t *w, void *opaque, 
+				       glw_signal_t signal, ...)
 {
-  iptv_player_t *iptv = glw_get_opaque(w);
+  iptv_player_t *iptv = opaque;
 
   switch(signal) {
   case GLW_SIGNAL_RETHINK:
@@ -575,25 +580,6 @@ ich_callback(glw_t *w, glw_signal_t signal, ...)
 /*
  *
  */
-static glw_t *
-tv_title(void)
-{
-  glw_t *r;
-
-  r = glw_create(GLW_BITMAP,
-		 GLW_ATTRIB_FILENAME, "icon://plate-wide.png",
-		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
-		 NULL);
-
-  glw_create(GLW_TEXT_BITMAP,
-	     GLW_ATTRIB_PARENT, r,
-	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
-	     GLW_ATTRIB_CAPTION, "TV",
-	     NULL);
-
-  return r;
-}
-
 
 static void
 iptv_widget_create_chlist(iptv_player_t *iptv)
@@ -604,11 +590,11 @@ iptv_widget_create_chlist(iptv_player_t *iptv)
   uint32_t tag;
   iptv_channel_t *ich;
   tvchannel_t tvc;
+  appi_t *ai = iptv->iptv_appi;
 
   chlist = glw_create(GLW_ARRAY,
-		      GLW_ATTRIB_SIDEKICK, tv_title(),
-		      GLW_ATTRIB_OPAQUE, iptv->iptv_appi,
-		      GLW_ATTRIB_CALLBACK, appi_widget_post_key,
+		      GLW_ATTRIB_SIDEKICK, bar_title("TV"),
+		      GLW_ATTRIB_SIGNAL_HANDLER, appi_widget_post_key, ai, 0,
 		      NULL);
 
   iptv->iptv_appi->ai_widget = iptv->iptv_chlist = chlist;
@@ -621,9 +607,8 @@ iptv_widget_create_chlist(iptv_player_t *iptv)
 
     s = glw_create(GLW_ZOOM_SELECTOR,
 		   GLW_ATTRIB_PARENT, chlist,
-		   GLW_ATTRIB_OPAQUE, ich,
+		   GLW_ATTRIB_SIGNAL_HANDLER, ich_entry_callback, ich, 0,
 		   NULL);
- 
 
     c = glw_create(GLW_BITMAP,
 		   GLW_ATTRIB_PARENT, s,
@@ -665,11 +650,12 @@ iptv_widget_create_chlist(iptv_player_t *iptv)
 
     w = glw_create(GLW_XFADER,
 		   GLW_ATTRIB_PARENT, z,
-		   GLW_ATTRIB_CALLBACK, iptv_widget_channel_container_callback,
-		   GLW_ATTRIB_OPAQUE, iptv, 
+		   GLW_ATTRIB_SIGNAL_HANDLER,
+		   iptv_widget_channel_container_callback, iptv, 0,
 		   GLW_ATTRIB_TAG, iptv->iptv_tag_hash, tag,
 		   GLW_ATTRIB_U32, i,
 		   NULL);
+
     iptv_widget_channel_container_fill(iptv, w, i);
     
     /* video widget */
@@ -695,7 +681,7 @@ iptv_key_event_unzoomed(iptv_player_t *iptv, int key)
   if(w == NULL)
     return;
 
-  ich = glw_get_opaque(w);
+  ich = glw_get_opaque(w, ich_entry_callback);
 
   switch(key) {
 
@@ -743,7 +729,7 @@ iptv_key_event_zoomed(iptv_player_t *iptv, int key)
   if(w == NULL)
     return;
 
-  ich = glw_get_opaque(w);
+  ich = glw_get_opaque(w, ich_entry_callback);
 
   switch(key) {
 
@@ -773,11 +759,9 @@ static void
 iptv_tag_refresh(iptv_player_t *iptv, int tag)
 {
   glw_t *w;
-  int i;
   LIST_FOREACH(w, &iptv->iptv_tag_hash[tag & GLW_TAG_HASH_MASK], glw_tag_link)
     if(w->glw_tag == tag)
-      for(i = 0; i < w->glw_ncallbacks; i++)
-	w->glw_callback[i](w, GLW_SIGNAL_RETHINK);
+      glw_drop_signal(w, GLW_SIGNAL_RETHINK, NULL);
 }
 
 /*****************************************************************************

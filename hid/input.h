@@ -136,16 +136,4 @@ void input_root_event(inputevent_t *ie);
 
 void inputhandler_register(int pri, int (*callback)(inputevent_t *ie));
 
-
-/* Not perfect to keep here, but works for now */
-
-#include <libglw/glw.h>
-#include <libglw/glw_slist.h>
-
-extern inline void
-pad_nav_slist(glw_t *w, inputevent_t *ie)
-{
-  glw_slist_pressure(w, (float)ie->u.xy.y / 10.0f);
-}
-
 #endif /* INPUT_H */

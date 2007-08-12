@@ -88,6 +88,12 @@ typedef struct radio {
 
 } radio_t;
 
+static int 
+radio_channel_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  return 0;
+}
+
 
 static void *radio_player_loop(void *aux);
 
@@ -160,7 +166,7 @@ radio_channel_add(radio_t *r, rc_type_t type, const char *provider,
 		 GLW_ATTRIB_PARENT, p,
 		 GLW_ATTRIB_FILENAME, "icon://plate-titled.png",
 		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
-		 GLW_ATTRIB_OPAQUE, rc,
+		 GLW_ATTRIB_SIGNAL_HANDLER, radio_channel_callback, rc, 0,
 		 NULL);
 
   y = glw_create(GLW_CONTAINER_Y,
@@ -291,32 +297,6 @@ radio_channels_configure(radio_t *r)
   }
 }
 
-
-
-
-/*
- *
- */
-static glw_t *
-radio_title(void)
-{
-  glw_t *r;
-
-  r = glw_create(GLW_BITMAP,
-		 GLW_ATTRIB_FILENAME, "icon://plate-wide.png",
-		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
-		 NULL);
-
-  glw_create(GLW_TEXT_BITMAP,
-	     GLW_ATTRIB_PARENT, r,
-	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
-	     GLW_ATTRIB_CAPTION, "Radio",
-	     NULL);
-
-  return r;
-}
-
-
 /*
  *
  */
@@ -337,9 +317,8 @@ radio_thread(void *aux)
 
   ai->ai_widget = r->r_list = 
     glw_create(GLW_ARRAY,
-	       GLW_ATTRIB_OPAQUE, ai,
-	       GLW_ATTRIB_CALLBACK, appi_widget_post_key,
-	       GLW_ATTRIB_SIDEKICK, radio_title(),
+	       GLW_ATTRIB_SIGNAL_HANDLER, appi_widget_post_key, ai, 0,
+	       GLW_ATTRIB_SIDEKICK, bar_title("Radio"),
 	       NULL);
   
   radio_channels_configure(r);
@@ -400,7 +379,8 @@ radio_thread(void *aux)
 
       case INPUT_KEY_ENTER:
 	pthread_mutex_lock(&r->r_mutex);
-	r->r_req_channel = glw_get_opaque(r->r_list->glw_selected);
+	r->r_req_channel = glw_get_opaque(r->r_list->glw_selected,
+					  radio_channel_callback);
 	radio_channel_update_status(r->r_req_channel, RC_LOADING);
 	pthread_cond_signal(&r->r_cond);
 	pthread_mutex_unlock(&r->r_mutex);

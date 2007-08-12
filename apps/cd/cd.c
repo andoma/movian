@@ -108,10 +108,10 @@ cd_start(void *aux)
 
   ai->ai_no_input_events = 1;
 
-  ai->ai_widget = glw_create(GLW_XFADER,
-			     GLW_ATTRIB_CALLBACK, appi_widget_post_key,
-			     GLW_ATTRIB_OPAQUE, ai,
-			     NULL);
+  ai->ai_widget =
+    glw_create(GLW_XFADER,
+	       GLW_ATTRIB_SIGNAL_HANDLER, appi_widget_post_key, ai,
+	       NULL);
 
   devname = config_get_str("dvd-device", "/dev/dvd");
 

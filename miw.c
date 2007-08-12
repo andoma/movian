@@ -41,12 +41,12 @@
 
 
 static int 
-miw_codec_callback(glw_t *w, glw_signal_t signal, ...)
+miw_codec_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  media_queue_t *mq = glw_get_opaque(w);
+  media_queue_t *mq = opaque;
 
   switch(signal) {
-  case GLW_SIGNAL_PRE_LAYOUT:
+  case GLW_SIGNAL_PREPARE:
     glw_set(w, GLW_ATTRIB_CAPTION, mq->mq_info_codec, NULL);
     return 0;
     
@@ -57,12 +57,12 @@ miw_codec_callback(glw_t *w, glw_signal_t signal, ...)
 
 
 static int 
-miw_output_type_callback(glw_t *w, glw_signal_t signal, ...)
+miw_output_type_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  media_queue_t *mq = glw_get_opaque(w);
+  media_queue_t *mq = opaque;
 
   switch(signal) {
-  case GLW_SIGNAL_PRE_LAYOUT:
+  case GLW_SIGNAL_PREPARE:
     glw_set(w, GLW_ATTRIB_CAPTION, mq->mq_info_output_type, NULL);
     return 0;
     
@@ -72,12 +72,12 @@ miw_output_type_callback(glw_t *w, glw_signal_t signal, ...)
 }
 
 static int 
-miw_rate_callback(glw_t *w, glw_signal_t signal, ...)
+miw_rate_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  media_queue_t *mq = glw_get_opaque(w);
+  media_queue_t *mq = opaque;
   char buf[20];
   switch(signal) {
-  case GLW_SIGNAL_PRE_LAYOUT:
+  case GLW_SIGNAL_PREPARE:
     if(mq->mq_info_rate > 0)
       snprintf(buf, sizeof(buf), "%d kb/s", mq->mq_info_rate);
     else
@@ -92,12 +92,12 @@ miw_rate_callback(glw_t *w, glw_signal_t signal, ...)
 
 
 static int 
-miw_buffer_depth_callback(glw_t *w, glw_signal_t signal, ...)
+miw_buffer_depth_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  media_queue_t *mq = glw_get_opaque(w);
+  media_queue_t *mq = opaque;
   char buf[20];
   switch(signal) {
-  case GLW_SIGNAL_PRE_LAYOUT:
+  case GLW_SIGNAL_PREPARE:
     snprintf(buf, sizeof(buf), "Buffers: %d", mq->mq_len);
     glw_set(w, GLW_ATTRIB_CAPTION, buf, NULL);
     return 0;
@@ -129,8 +129,7 @@ miw_add_queue(glw_t *y, media_queue_t *mq, const char *icon)
 
   glw_create(GLW_TEXT_BITMAP,
 	     GLW_ATTRIB_PARENT, x,
-	     GLW_ATTRIB_CALLBACK, miw_codec_callback,
-	     GLW_ATTRIB_OPAQUE, mq,
+	     GLW_ATTRIB_SIGNAL_HANDLER, miw_codec_callback, mq, 0,
 	     GLW_ATTRIB_CAPTION, "",
 	     GLW_ATTRIB_WEIGHT, 3.0,
 	     NULL);
@@ -142,8 +141,7 @@ miw_add_queue(glw_t *y, media_queue_t *mq, const char *icon)
 
   glw_create(GLW_TEXT_BITMAP,
 	     GLW_ATTRIB_PARENT, x,
-	     GLW_ATTRIB_CALLBACK, miw_rate_callback,
-	     GLW_ATTRIB_OPAQUE, mq,
+	     GLW_ATTRIB_SIGNAL_HANDLER, miw_rate_callback, mq, 0,
 	     GLW_ATTRIB_CAPTION, "",
 	     GLW_ATTRIB_WEIGHT, 3.0,
 	     NULL);
@@ -155,8 +153,7 @@ miw_add_queue(glw_t *y, media_queue_t *mq, const char *icon)
 
   glw_create(GLW_TEXT_BITMAP,
 	     GLW_ATTRIB_PARENT, x,
-	     GLW_ATTRIB_CALLBACK, miw_output_type_callback,
-	     GLW_ATTRIB_OPAQUE, mq, 
+	     GLW_ATTRIB_SIGNAL_HANDLER, miw_output_type_callback, mq, 0,
 	     GLW_ATTRIB_CAPTION, "",
 	     GLW_ATTRIB_WEIGHT, 8.0,
 	     NULL);
@@ -169,8 +166,7 @@ miw_add_queue(glw_t *y, media_queue_t *mq, const char *icon)
 
   glw_create(GLW_TEXT_BITMAP,
 	     GLW_ATTRIB_PARENT, x,
-	     GLW_ATTRIB_CALLBACK, miw_buffer_depth_callback,
-	     GLW_ATTRIB_OPAQUE, mq, 
+	     GLW_ATTRIB_SIGNAL_HANDLER, miw_buffer_depth_callback, mq, 0,
 	     GLW_ATTRIB_CAPTION, "",
 	     GLW_ATTRIB_WEIGHT, 3.0,
 	     NULL);
@@ -195,9 +191,9 @@ miw_add_queue(glw_t *y, media_queue_t *mq, const char *icon)
  */
 
 static int 
-miw_playstatus_callback(glw_t *w, glw_signal_t signal, ...)
+miw_playstatus_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  media_pipe_t *mp = glw_get_opaque(w);
+  media_pipe_t *mp = opaque;
   glw_t *c;
   int x;
 
@@ -205,7 +201,7 @@ miw_playstatus_callback(glw_t *w, glw_signal_t signal, ...)
   va_start(ap, signal);
 
   switch(signal) {
-  case GLW_SIGNAL_PRE_LAYOUT:
+  case GLW_SIGNAL_PREPARE:
     x = mp->mp_playstatus;
     
     if(w->glw_u32 == x)
@@ -236,12 +232,12 @@ miw_playstatus_callback(glw_t *w, glw_signal_t signal, ...)
     }
     break;
 
-  case GLW_SIGNAL_EXT_RENDER:
+  case GLW_SIGNAL_RENDER:
     c = TAILQ_FIRST(&w->glw_childs);
     if(c != NULL) {
       glw_render(c, va_arg(ap, void *));
     }
-    break;
+    return 1;
 
   default:
     break;
@@ -256,8 +252,7 @@ miw_playstatus_create(glw_t *parent, media_pipe_t *mp)
 {
   return glw_create(GLW_EXT,
 		    GLW_ATTRIB_PARENT, parent,
-		    GLW_ATTRIB_OPAQUE, mp,
-		    GLW_ATTRIB_CALLBACK, miw_playstatus_callback,
+		    GLW_ATTRIB_SIGNAL_HANDLER, miw_playstatus_callback, mp, 0,
 		    NULL);
 }
 
@@ -266,9 +261,9 @@ miw_playstatus_create(glw_t *parent, media_pipe_t *mp)
 
 
 static int 
-miw_audiotime_callback(glw_t *w, glw_signal_t signal, ...)
+miw_audiotime_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  media_pipe_t *mp = glw_get_opaque(w);
+  media_pipe_t *mp = opaque;
   char tmp[30];
   uint32_t t;
 
@@ -276,7 +271,7 @@ miw_audiotime_callback(glw_t *w, glw_signal_t signal, ...)
   va_start(ap, signal);
 
   switch(signal) {
-  case GLW_SIGNAL_PRE_LAYOUT:
+  case GLW_SIGNAL_PREPARE:
     if(mp == NULL || mp->mp_total_time == 0) {
       glw_set(w, GLW_ATTRIB_CAPTION, "", NULL);
       return 0;
@@ -311,11 +306,10 @@ miw_audiotime_create(glw_t *parent, media_pipe_t *mp, float weight,
 
   w = glw_create(GLW_TEXT_BITMAP,
 		 GLW_ATTRIB_PARENT, parent,
-		 GLW_ATTRIB_OPAQUE, mp,
+		 GLW_ATTRIB_SIGNAL_HANDLER, miw_audiotime_callback, mp, 0,
 		 GLW_ATTRIB_WEIGHT, weight,
 		 GLW_ATTRIB_ALIGNMENT, align,
 		 GLW_ATTRIB_CAPTION, "",
-		 GLW_ATTRIB_CALLBACK, miw_audiotime_callback,
 		 NULL);
   return w;
 }

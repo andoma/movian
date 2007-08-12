@@ -115,6 +115,6 @@ void appi_hide(appi_t *ai);
 
 appi_t *appi_spawn2(app_t *a, glw_t *p);
 
-int appi_widget_post_key(glw_t *w, glw_signal_t signal, ...);
+int appi_widget_post_key(glw_t *w, void *opaque, glw_signal_t signal, ...);
 
 #endif /* APP_H */

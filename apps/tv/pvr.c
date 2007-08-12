@@ -143,20 +143,21 @@ typedef struct pvr {
 
 static void pvr_create_bar(pvr_t *pvr);
 
-static int pvr_2dnav_callback(glw_t *w, glw_signal_t signal, ...);
+static int pvr_2dnav_callback(glw_t *w, void *opaque, 
+			      glw_signal_t signal, ...);
 
 
 /*
  *
  */
 static int
-pvr_menu_recording_cb(glw_t *w, glw_signal_t signal, ...)
+pvr_menu_recording_cb(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  pvr_t *pvr = glw_get_opaque(w);
+  pvr_t *pvr = opaque;
   int showme;
 
   switch(signal) {
-  case GLW_SIGNAL_PRE_LAYOUT:
+  case GLW_SIGNAL_PREPARE:
     showme = pvr->pvr_cur_sa == PVR_SA_2DNAV && pvr->pvr_selected;
     if(showme)
       w->glw_flags &= ~GLW_HIDDEN;
@@ -924,8 +925,7 @@ pvr_thread(void *aux)
 
   ai->ai_widget = 
     glw_create(GLW_ARRAY,
-	       GLW_ATTRIB_OPAQUE, ai,
-	       GLW_ATTRIB_CALLBACK, appi_widget_post_key,
+	       GLW_ATTRIB_SIGNAL_HANDLER, appi_widget_post_key, ai, 0,
 	       GLW_ATTRIB_SIDEKICK, bar_title("Video Recorder"),
 	       NULL);
 
@@ -935,8 +935,7 @@ pvr_thread(void *aux)
 
   glw_create(GLW_EXT,
 	     GLW_ATTRIB_PARENT, w,
-	     GLW_ATTRIB_CALLBACK, pvr_2dnav_callback,
-	     GLW_ATTRIB_OPAQUE, pvr,
+	     GLW_ATTRIB_SIGNAL_HANDLER, pvr_2dnav_callback, pvr, 0,
 	     NULL);
 
   w = add_sub_app(ai->ai_widget, "Scheduled Recordings", "icon://clock.png",
@@ -1291,19 +1290,19 @@ pvr_2dnav_layout(pvr_t *pvr, glw_rctx_t *rc)
 
 
 static int
-pvr_2dnav_callback(glw_t *w, glw_signal_t signal, ...)
+pvr_2dnav_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  pvr_t *pvr = glw_get_opaque(w);
+  pvr_t *pvr = opaque;
   inputevent_t *ie;
   va_list ap;
   va_start(ap, signal);
 
   switch(signal) {
-  case GLW_SIGNAL_EXT_RENDER:
+  case GLW_SIGNAL_RENDER:
     pvr_2dnav_render(pvr, va_arg(ap, void *));
     return 0;
 
-  case GLW_SIGNAL_EXT_LAYOUT:
+  case GLW_SIGNAL_LAYOUT:
     pvr_2dnav_layout(pvr, va_arg(ap, void *));
     return 0;
 
@@ -1331,9 +1330,9 @@ const char *pvr_wdays[7] = {
 
 
 static int
-pvr_curdate_callback(glw_t *w, glw_signal_t signal, ...)
+pvr_curdate_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  pvr_t *pvr = glw_get_opaque(w);
+  pvr_t *pvr = opaque;
   struct tm *tm, tm0;
   char tmp[30];
 
@@ -1341,7 +1340,7 @@ pvr_curdate_callback(glw_t *w, glw_signal_t signal, ...)
   va_start(ap, signal);
 
   switch(signal) {
-  case GLW_SIGNAL_PRE_LAYOUT:
+  case GLW_SIGNAL_PREPARE:
     tm = localtime_r(&pvr->pvr_timeptr, &tm0);
 
     snprintf(tmp, sizeof(tmp),
@@ -1378,8 +1377,7 @@ pvr_create_bar(pvr_t *pvr)
 		 NULL);
 
   glw_create(GLW_TEXT_BITMAP,
-	     GLW_ATTRIB_CALLBACK, pvr_curdate_callback,
-	     GLW_ATTRIB_OPAQUE, pvr,
+	     GLW_ATTRIB_SIGNAL_HANDLER, pvr_curdate_callback, pvr, 0,
 	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
 	     GLW_ATTRIB_PARENT, x,
 	     NULL);

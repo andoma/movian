@@ -132,6 +132,13 @@ static void peep_add(browser_t *b, const char *path, glw_t *parent,
 
 static void browser_slideshow(browser_t *b, b_dir_t *bd, b_entry_t *be);
 
+static int 
+browser_entry_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  return 0;
+}
+
+
 static void
 browser_free_entry(b_dir_t *bd, b_entry_t *be)
 {
@@ -204,10 +211,11 @@ browser_make_widget_10_1(glw_t *p, b_dir_t *bd, b_entry_t *be, int flags)
   mediainfo_t *mi = &be->be_mi;
   char tmp[500];
 
-  be->be_widget = p = glw_create(GLW_ZOOM_SELECTOR,
-				 GLW_ATTRIB_PARENT, p,
-				 GLW_ATTRIB_OPAQUE, be,
-				 NULL);
+  be->be_widget = p = 
+    glw_create(GLW_ZOOM_SELECTOR,
+	       GLW_ATTRIB_PARENT, p,
+	       GLW_ATTRIB_SIGNAL_HANDLER, browser_entry_callback, be, 0,
+	       NULL);
  
   z = glw_create(GLW_BITMAP,
 		 GLW_ATTRIB_PARENT, p,
@@ -368,10 +376,11 @@ browser_make_widget_16_9(glw_t *p, b_dir_t *bd, b_entry_t *be)
   mediainfo_t *mi = &be->be_mi;
   char tmp[500];
 
-  be->be_widget = p = glw_create(GLW_ZOOM_SELECTOR,
-				 GLW_ATTRIB_PARENT, p,
-				 GLW_ATTRIB_OPAQUE, be,
-				 NULL);
+  be->be_widget = p =
+    glw_create(GLW_ZOOM_SELECTOR,
+	       GLW_ATTRIB_PARENT, p,
+	       GLW_ATTRIB_SIGNAL_HANDLER, browser_entry_callback, be, 0,
+	       NULL);
  
   z = glw_create(GLW_BITMAP,
 		 GLW_ATTRIB_PARENT, p,
@@ -524,9 +533,9 @@ browser_make_widget_16_9(glw_t *p, b_dir_t *bd, b_entry_t *be)
 
 
 static int 
-loaderbar_callback(glw_t *w, glw_signal_t signal, ...)
+loaderbar_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  b_dir_t *bd = glw_get_opaque(w);
+  b_dir_t *bd = opaque;
   float x, a, v;
   glw_rctx_t *rc;
 
@@ -535,7 +544,7 @@ loaderbar_callback(glw_t *w, glw_signal_t signal, ...)
 
   switch(signal) {
 
-  case GLW_SIGNAL_EXT_RENDER:
+  case GLW_SIGNAL_RENDER:
 
     v = bd->bd_load_progress;
 
@@ -577,11 +586,11 @@ loaderbar_callback(glw_t *w, glw_signal_t signal, ...)
 
 
 static int 
-browser_array_callback(glw_t *w, glw_signal_t signal, ...)
+browser_array_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
   int r = 0;
   inputevent_t *ie;
-  b_dir_t *bd = glw_get_opaque(w);
+  b_dir_t *bd = opaque;
   browser_t *b = bd->bd_b;
 
   va_list ap;
@@ -656,8 +665,7 @@ browser_dir_title(browser_t *b, b_dir_t *bd, glw_t **zapp)
 
   *zapp = glw_create(GLW_EXT,
 		     GLW_ATTRIB_PARENT, sk,
-		     GLW_ATTRIB_CALLBACK, loaderbar_callback,
-		     GLW_ATTRIB_OPAQUE, bd, 
+		     GLW_ATTRIB_SIGNAL_HANDLER, loaderbar_callback, bd,
 		     NULL);
 
   buf[0] = 0;
@@ -712,14 +720,14 @@ browser_load_dir(browser_t *b, b_entry_t *src, char *path, int enq, glw_t *p)
 
     glw_destroy_auto(p); // destroy any lingering directories
 
-    bd->bd_list = glw_create(GLW_ARRAY,
-			     GLW_ATTRIB_PARENT, p,
-			     GLW_ATTRIB_CALLBACK, browser_array_callback,
-			     GLW_ATTRIB_OPAQUE, bd,
-			     GLW_ATTRIB_SIDEKICK, sk2,
-			     GLW_ATTRIB_X_SLICES, 3,
-			     GLW_ATTRIB_Y_SLICES, 4,
-			     NULL);
+    bd->bd_list =
+      glw_create(GLW_ARRAY,
+		 GLW_ATTRIB_PARENT, p,
+		 GLW_ATTRIB_SIGNAL_HANDLER, browser_array_callback, bd, 0,
+		 GLW_ATTRIB_SIDEKICK, sk2,
+		 GLW_ATTRIB_X_SLICES, 3,
+		 GLW_ATTRIB_Y_SLICES, 4,
+		 NULL);
   }
 
   if((dir = opendir(path)) != NULL) {
@@ -874,7 +882,7 @@ browser_click(appi_t *ai, browser_t *b, int sel)
   w = bd->bd_list->glw_selected;
   if(w == NULL)
     return;
-  be = glw_get_opaque(w);
+  be = glw_get_opaque(w, browser_entry_callback);
   
   snprintf(fbuf, sizeof(fbuf), "%s/%s", bd->bd_name, be->be_filename);
 
@@ -931,7 +939,7 @@ browser_enter_by_name(appi_t *ai, browser_t *b, char *name)
   b_entry_t *be;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-    be = glw_get_opaque(c);
+    be = glw_get_opaque(c, browser_entry_callback);
     if(!strcasecmp(be->be_filename, name))
       break;
   }
@@ -956,7 +964,7 @@ browser_rotate(browser_t *b)
   w = bd->bd_list->glw_selected;
   if(w == NULL)
     return;
-  be = glw_get_opaque(w);
+  be = glw_get_opaque(w, browser_entry_callback);
   if(be->be_image == NULL)
     return;
 
@@ -1279,9 +1287,9 @@ peep_thread(void *aux)
 
 
 static int 
-peep_widget_callback(glw_t *w, glw_signal_t signal, ...)
+peep_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  peep_work_t *pw = glw_get_opaque(w);
+  peep_work_t *pw = opaque;
   browser_t *b = pw->pw_b;
   va_list ap;
   va_start(ap, signal);
@@ -1310,12 +1318,12 @@ peep_add(browser_t *b, const char *path, glw_t *parent, float weight)
   pw->pw_b = b;
   pw->pw_refcount = 2;
 
-  pw->pw_container = glw_create(GLW_CONTAINER_X,
-				GLW_ATTRIB_WEIGHT, weight,
-				GLW_ATTRIB_PARENT, parent,
-				GLW_ATTRIB_OPAQUE, pw,
-				GLW_ATTRIB_CALLBACK, peep_widget_callback,
-				NULL);
+  pw->pw_container =
+    glw_create(GLW_CONTAINER_X,
+	       GLW_ATTRIB_WEIGHT, weight,
+	       GLW_ATTRIB_PARENT, parent,
+	       GLW_ATTRIB_SIGNAL_HANDLER, peep_widget_callback, pw, 0,
+	       NULL);
 
   pthread_mutex_lock(&b->b_peep_lock);
   TAILQ_INSERT_TAIL(&b->b_peep_queue, pw, pw_link);
@@ -1385,19 +1393,19 @@ slideshow_render(b_dir_t *bd, glw_rctx_t *rc)
 
 
 static int
-slideshow_ext_callback(glw_t *w, glw_signal_t signal, ...)
+slideshow_ext_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  b_dir_t *bd = glw_get_opaque(w);
+  b_dir_t *bd = opaque;
   inputevent_t *ie;
   va_list ap;
   va_start(ap, signal);
 
   switch(signal) {
-  case GLW_SIGNAL_EXT_RENDER:
+  case GLW_SIGNAL_RENDER:
     slideshow_render(bd, va_arg(ap, void *));
     return 0;
 
-  case GLW_SIGNAL_EXT_LAYOUT:
+  case GLW_SIGNAL_LAYOUT:
     slideshow_layout(bd, va_arg(ap, void *));
     return 0;
 
@@ -1452,10 +1460,10 @@ browser_slideshow(browser_t *b, b_dir_t *bd, b_entry_t *be)
   xpos_max = xpos - SLIDE_DISTANCE;
   glw_vertex_anim_init(&bd->bd_s_pos, curx, 0, 0, GLW_VERTEX_ANIM_SIN_LERP);
 
-  ai->ai_widget = glw_create(GLW_EXT,
-			     GLW_ATTRIB_OPAQUE, bd,
-			     GLW_ATTRIB_CALLBACK, slideshow_ext_callback,
-			     NULL);
+  ai->ai_widget =
+    glw_create(GLW_EXT,
+	       GLW_ATTRIB_SIGNAL_HANDLER, slideshow_ext_callback, bd, 0,
+	       NULL);
 
   while(run) {
     input_getevent(&ai->ai_ic, 1, &ie, NULL);
