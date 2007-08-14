@@ -93,6 +93,7 @@ typedef struct b_dir {
   b_entry_t *bd_s_cur;
   glw_vertex_anim_t bd_s_pos;
   float bd_s_xpos_max;
+  glw_t *bd_s_saved;
 
 } b_dir_t;
 
@@ -701,6 +702,7 @@ browser_load_dir(browser_t *b, b_entry_t *src, char *path, int enq, glw_t *p)
   b_dir_t *bd;
   int cnt = 0, tot, i, cur;
   int images = 0;
+  int imagemode;
   int hastrack = 0;
   int music = 0;
   glw_t *sk2, *zap = NULL;
@@ -796,14 +798,18 @@ browser_load_dir(browser_t *b, b_entry_t *src, char *path, int enq, glw_t *p)
   cnt = 0;
   TAILQ_FOREACH(be, &bd->bd_entries, be_link) {
     vec[cnt++] = be;
-    if(be->be_mi.mi_type == MI_IMAGE)
-      TAILQ_INSERT_TAIL(&bd->bd_images, be, be_image_link);
   }
 
   if(hastrack == cnt) {
     qsort(vec, cnt, sizeof(void *), sort_b_entry_trackwise);
   } else {
     qsort(vec, cnt, sizeof(void *), sort_b_entry);
+  }
+
+  for(i = 0; i < cnt; i++) {
+    be = vec[i];
+    if(be->be_mi.mi_type == MI_IMAGE)
+      TAILQ_INSERT_TAIL(&bd->bd_images, be, be_image_link);
   }
 
   if(enq) {
@@ -835,6 +841,8 @@ browser_load_dir(browser_t *b, b_entry_t *src, char *path, int enq, glw_t *p)
 
   glw_destroy(zap);
 
+  imagemode = images > cnt / 2;
+
   if(music == cnt) {
 
     glw_set(bd->bd_list,
@@ -848,7 +856,7 @@ browser_load_dir(browser_t *b, b_entry_t *src, char *path, int enq, glw_t *p)
      
   } else {
 
-    if(images > cnt / 2) {
+    if(imagemode) {
       glw_set(bd->bd_list,
 	      GLW_ATTRIB_X_SLICES, 4,
 	      NULL);
@@ -862,6 +870,9 @@ browser_load_dir(browser_t *b, b_entry_t *src, char *path, int enq, glw_t *p)
   TAILQ_INSERT_HEAD(&b->b_dir_stack, bd, bd_link);
   pthread_mutex_unlock(&b->b_lock);
   free(vec);
+
+  if(imagemode)
+    browser_slideshow(b, bd, NULL);
 }
 
 
@@ -924,7 +935,6 @@ browser_click(appi_t *ai, browser_t *b, int sel)
 
     case MI_IMAGE:
       browser_slideshow(b, bd, be);
-      //      glw_child_next(bd->bd_list);
       break;
     }
     break;
@@ -1364,9 +1374,13 @@ slideshow_layout(b_dir_t *bd, glw_rctx_t *rc)
   TAILQ_FOREACH(be, &bd->bd_images, be_image_link) {
     v = be->be_xpos - xyz.x;
     if(fabs(v) < SLIDE_DISTANCE * 2) {
+      if(fabs(v) < 0.1)
+	bd->bd_s_cur = be;
       glw_layout(be->be_image, rc);
     }
   }
+
+  glw_layout(bd->bd_s_saved, rc);
 }
 
 
@@ -1384,7 +1398,7 @@ slideshow_render(b_dir_t *bd, glw_rctx_t *rc)
     v = be->be_xpos - xyz.x;
     if(fabs(v) < SLIDE_DISTANCE * 2) {
       glPushMatrix();
-      glTranslatef(-v, 0, 0);
+      glTranslatef(v, 0, 0);
       glw_render(be->be_image, rc);
       glPopMatrix();
     }
@@ -1426,8 +1440,8 @@ static void
 browser_slideshow(browser_t *b, b_dir_t *bd, b_entry_t *be)
 {
   appi_t *ai = b->b_ai;
-  glw_t *aiw_save;
   char tmp[500];
+  glw_t *saved;
   float xpos = 0.0f;
   float curx = 0.0f;
   int run = 1;
@@ -1436,8 +1450,8 @@ browser_slideshow(browser_t *b, b_dir_t *bd, b_entry_t *be)
 
   ai->ai_req_fullscreen = AI_FS_BLANK;
 
-  be = be ?: TAILQ_FIRST(&bd->bd_entries);
-  aiw_save = ai->ai_widget;
+  be = be ?: TAILQ_FIRST(&bd->bd_images);
+  saved = bd->bd_s_saved = ai->ai_widget;
   bd->bd_s_cur = be;
 
   /* Create full scale images, notice that the actual load wont take
@@ -1451,8 +1465,9 @@ browser_slideshow(browser_t *b, b_dir_t *bd, b_entry_t *be)
 			      GLW_ATTRIB_BORDER_WIDTH, 0.01,
 			      GLW_ATTRIB_FILENAME, tmp,
 			      NULL);
-    if(be == bd->bd_s_cur)
+    if(be == bd->bd_s_cur) {
       curx = xpos;
+    }
 
     xpos += SLIDE_DISTANCE;
   }
@@ -1477,18 +1492,23 @@ browser_slideshow(browser_t *b, b_dir_t *bd, b_entry_t *be)
       switch(ie.u.key) {
 
       case INPUT_KEY_RIGHT:
-	curx = GLW_MAX(curx - SLIDE_DISTANCE, 0);
-	glw_vertex_anim_set3f(&bd->bd_s_pos, curx, 0, 0);
-	break;
-
-      case INPUT_KEY_LEFT:
 	curx = GLW_MIN(curx + SLIDE_DISTANCE, xpos_max);
 	glw_vertex_anim_set3f(&bd->bd_s_pos, curx, 0, 0);
 	break;
 
+      case INPUT_KEY_LEFT:
+	curx = GLW_MAX(curx - SLIDE_DISTANCE, 0);
+	glw_vertex_anim_set3f(&bd->bd_s_pos, curx, 0, 0);
+	break;
+
       case INPUT_KEY_BACK:
+	if(browser_back(b) == 0)
+      case INPUT_KEY_CLOSE:
+	  layout_hide(ai);
+      case INPUT_KEY_SELECT:
 	run = 0;
 	break;
+
       default:
 	break;
       }
@@ -1500,6 +1520,8 @@ browser_slideshow(browser_t *b, b_dir_t *bd, b_entry_t *be)
 
   glw_lock();
   glw_destroy(ai->ai_widget);
-  ai->ai_widget = aiw_save;
+  ai->ai_widget = saved;
   glw_unlock();
+
+  bd->bd_list->glw_selected = bd->bd_s_cur->be_widget;
 }
