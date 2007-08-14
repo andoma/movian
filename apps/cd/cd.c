@@ -78,10 +78,10 @@ cd_make_idle_widget(glw_t *p, const char *caption)
 
   glw_create(GLW_DUMMY, 
 	     GLW_ATTRIB_PARENT, y,
-	     GLW_ATTRIB_WEIGHT, 5.0f,
+	     GLW_ATTRIB_WEIGHT, 9.0f,
 	     NULL);
 
-  glw_create(GLW_TEXT_VECTOR,
+  glw_create(GLW_TEXT_BITMAP,
 	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
 	     GLW_ATTRIB_PARENT, y,
 	     GLW_ATTRIB_CAPTION, caption,
