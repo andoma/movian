@@ -29,7 +29,6 @@
 #include <math.h>
 
 #include <libglw/glw.h>
-#include <libglw/glw_slist.h>
 
 #include <curl/curl.h>
 

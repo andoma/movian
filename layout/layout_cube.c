@@ -26,7 +26,6 @@
 #include <math.h>
 
 #include <libglw/glw.h>
-#include <libglw/glw_slist.h>
 
 #include "audio/audio_sched.h"
 #include "audio/audio_ui.h"

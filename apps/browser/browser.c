@@ -29,7 +29,6 @@
 #include <ffmpeg/avcodec.h>
 #include <ffmpeg/avformat.h>
 #include <libglw/glw.h>
-#include <libglw/glw_slist.h>
 
 #include "showtime.h"
 #include "input.h"

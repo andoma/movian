@@ -27,7 +27,6 @@
 #include <math.h>
 
 #include <libglw/glw.h>
-#include <libglw/glw_slist.h>
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
