@@ -299,8 +299,7 @@ menu_create_submenu_cb(glw_t *p, const char *icon, const char *title,
 {
   glw_t *x;
 
-  x = menu_create_item0(p, icon, title, menu_submenu_item_event, cb, 0, 0,
-		       first);
+  x = menu_create_item0(p, icon, title, cb, opaque, 0, 0, first);
   menu_create_menu(x, title);
   return x;
 }
