@@ -286,7 +286,6 @@ render_scene(void)
 
   glutSwapBuffers();
   glw_reaper();
-  gvp_every_frame();
 }
 
 

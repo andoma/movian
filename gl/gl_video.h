@@ -92,15 +92,16 @@ typedef struct gl_video_frame {
 } gl_video_frame_t;
 
 
+typedef enum {
+  GVP_STATE_IDLE = 0,           /* No action */
+  GVP_STATE_THREAD_RUNNING,     /* Thread is running */
+  GVP_STATE_THREAD_DESTROYING,  /* Thread is beeing destroyed */
+} gvp_state_t;
 
 
 typedef struct gl_video_pipe {
 
-  enum {
-    GVP_RUNNING = 0,
-    GVP_ZOMBIE,
-    GVP_DEAD,
-  } gvp_state;
+  gvp_state_t gvp_state;
 
   int gvp_rendered;
   int gvp_idle;           /* number of consecutive frames for which
@@ -115,10 +116,7 @@ typedef struct gl_video_pipe {
   LIST_ENTRY(gl_video_pipe) gvp_global_link;
 
   glw_t *gvp_widget;
-  glw_t *gvp_info_widget;
-  glw_t *gvp_autocontainer;
 
-  int gvp_info_holdtime;
   gvp_pp_type_t gvp_postproc_type; /* Actual postprocessor running */
 
   media_pipe_t *gvp_mp;
@@ -183,7 +181,7 @@ typedef struct gl_video_pipe {
 
   int gvp_interlaced;
 
-  pthread_t gvp_decode_thrid;
+  pthread_t gvp_decode_thrid; /* Set if thread is running */
   
   int64_t gvp_nextpts;
   int64_t gvp_lastpts;
@@ -230,8 +228,6 @@ typedef struct gl_video_pipe {
 } gl_video_pipe_t;
 
 void gvp_init(void);
-
-void gvp_every_frame(void);
 
 glw_t *gvp_create(glw_t *p, media_pipe_t *mp, gvp_conf_t *gc, int flags);
 
