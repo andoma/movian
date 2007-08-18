@@ -130,22 +130,7 @@ layout_std_create(void)
     y = wroot[i] = glw_create(GLW_CONTAINER_Y, 
 			      NULL);
   
-  
-    z = glw_create(GLW_CONTAINER_Z,
-		   NULL);
-  
-    glw_create(GLW_BITMAP,
-	       GLW_ATTRIB_PARENT, z,
-	       GLW_ATTRIB_FILENAME, "icon://plate-wide.png",
-	       GLW_ATTRIB_FLAGS, GLW_NOASPECT,
-	       NULL);
-  
-
-    glw_create(GLW_TEXT_BITMAP,
-	       GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
-	       GLW_ATTRIB_CAPTION, "Showtime Mediacenter - Main Menu",
-	       GLW_ATTRIB_PARENT, z,
-	       NULL);
+    z = bar_title("Showtime Mediacenter - Main Menu");
  
     root_array[i] = glw_create(GLW_ARRAY,
 			       GLW_ATTRIB_PARENT, y,
