@@ -132,7 +132,7 @@ tvh_int(char *r)
  */
 
 static void
-tvp_fixup_times(tvprogramme_t *tvp)
+tve_fixup_times(tvevent_t *tve)
 {
   struct tm tm1, tm2;
   int l;
@@ -140,68 +140,85 @@ tvp_fixup_times(tvprogramme_t *tvp)
   const char *wdays[7] = {
     "Söndag", "Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag"};
 
-  if(tvp->tvp_start == 0) {
-    tvp->tvp_weekday[0] = 0;
-    tvp->tvp_timetxt[0] = 0;
-    tvp->tvp_lentxt[0] = 0;
+  if(tve->tve_start == 0) {
+    tve->tve_weekday[0] = 0;
+    tve->tve_timetxt[0] = 0;
+    tve->tve_lentxt[0] = 0;
     return;
   }
-  localtime_r(&tvp->tvp_start, &tm1);
-  localtime_r(&tvp->tvp_stop, &tm2);
+  localtime_r(&tve->tve_start, &tm1);
+  localtime_r(&tve->tve_stop, &tm2);
 
-  strcpy(tvp->tvp_weekday, wdays[tm1.tm_wday % 7]);
+  strcpy(tve->tve_weekday, wdays[tm1.tm_wday % 7]);
 
-  sprintf(tvp->tvp_timetxt, "%02d:%02d - %02d:%02d", 
+  sprintf(tve->tve_timetxt, "%02d:%02d - %02d:%02d", 
 	  tm1.tm_hour, tm1.tm_min, tm2.tm_hour, tm2.tm_min);
 
-  l = (tvp->tvp_stop - tvp->tvp_start) / 60;
-  sprintf(tvp->tvp_lentxt, "%d min", l);
+  l = (tve->tve_stop - tve->tve_start) / 60;
+  sprintf(tve->tve_lentxt, "%d min", l);
 }
 
 
 
-int
-tvh_get_programme(tvheadend_t *tvh, tvprogramme_t *tvp, int channel, int prog)
-{
-  void *r;
-  const char *v, *x;
 
-  if(prog == -1)
-    r = tvh_query(tvh, "programme.info %d", channel);
-  else
-    r = tvh_query(tvh, "programme.info %d %d", channel, prog);
+
+static int
+tvh_parse_event(tvevent_t *tve, void *r)
+{
+  const char *v, *x;
 
   if(r == NULL)
     return -1;
 
-  memset(tvp, 0, sizeof(tvprogramme_t));
+  memset(tve, 0, sizeof(tvevent_t));
 
   for(x = r; x != NULL; x = nextline(x)) {
-    if((v = propcmp(x, "index")) != NULL)
-      tvp->tvp_index = atoi(v);
-    else if((v = propcmp(x, "title")) != NULL) 
-      eolcpy(tvp->tvp_title, v, sizeof(tvp->tvp_title));
+    if((v = propcmp(x, "title")) != NULL) 
+      eolcpy(tve->tve_title, v, sizeof(tve->tve_title));
     else if((v = propcmp(x, "start")) != NULL) 
-      tvp->tvp_start = atoi(v);
+      tve->tve_start = atoi(v);
     else if((v = propcmp(x, "stop")) != NULL) 
-      tvp->tvp_stop = atoi(v);
+      tve->tve_stop = atoi(v);
     else if((v = propcmp(x, "desc")) != NULL) 
-      eolcpy(tvp->tvp_desc, v, sizeof(tvp->tvp_desc));
-    else if((v = propcmp(x, "reftag")) != NULL) 
-      tvp->tvp_reftag = atoi(v);
+      eolcpy(tve->tve_desc, v, sizeof(tve->tve_desc));
+    else if((v = propcmp(x, "tag")) != NULL) 
+      tve->tve_tag = atoi(v);
+    else if((v = propcmp(x, "next")) != NULL) 
+      tve->tve_next_tag = atoi(v);
+    else if((v = propcmp(x, "prev")) != NULL) 
+      tve->tve_prev_tag = atoi(v);
     else if((v = propcmp(x, "pvrstatus")) != NULL) 
-      tvp->tvp_pvrstatus = v[0];
+      tve->tve_pvrstatus = v[0];
   }
-  tvp_fixup_times(tvp);
+  tve_fixup_times(tve);
   free(r);
   return 0;
 }
 
+int
+tvh_get_event_current(tvheadend_t *tvh, tvevent_t *tve, int chindex)
+{
+  return tvh_parse_event(tve, tvh_query(tvh, "event.info now %d", chindex));
+}
+
+int
+tvh_get_event_by_time(tvheadend_t *tvh, tvevent_t *tve, 
+		      int chindex, time_t when)
+{
+  return tvh_parse_event(tve, tvh_query(tvh, "event.info at %d %ld", 
+					chindex, when));
+}
+
+int
+tvh_get_event_by_tag(tvheadend_t *tvh, tvevent_t *tve, int tag)
+{
+  return tvh_parse_event(tve, tvh_query(tvh, "event.info tag %d", tag));
+}
 
 
 
 int
-tvh_get_pvrlog(tvheadend_t *tvh, tvprogramme_t *tvp, int val, int istag)
+tvh_get_pvrlog(tvheadend_t *tvh, tvevent_t *tve, int val, int istag)
 {
   void *r;
   const char *v, *x;
@@ -214,29 +231,27 @@ tvh_get_pvrlog(tvheadend_t *tvh, tvprogramme_t *tvp, int val, int istag)
   if(r == NULL)
     return 1;
 
-  memset(tvp, 0, sizeof(tvprogramme_t));
+  memset(tve, 0, sizeof(tvevent_t));
 
   for(x = r; x != NULL; x = nextline(x)) {
-    if((v = propcmp(x, "index")) != NULL)
-      tvp->tvp_index = atoi(v);
-    else if((v = propcmp(x, "title")) != NULL) 
-      eolcpy(tvp->tvp_title, v, sizeof(tvp->tvp_title));
+    if((v = propcmp(x, "title")) != NULL) 
+      eolcpy(tve->tve_title, v, sizeof(tve->tve_title));
     else if((v = propcmp(x, "start")) != NULL) 
-      tvp->tvp_start = atoi(v);
+      tve->tve_start = atoi(v);
     else if((v = propcmp(x, "stop")) != NULL) 
-      tvp->tvp_stop = atoi(v);
+      tve->tve_stop = atoi(v);
     else if((v = propcmp(x, "desc")) != NULL) 
-      eolcpy(tvp->tvp_desc, v, sizeof(tvp->tvp_desc));
+      eolcpy(tve->tve_desc, v, sizeof(tve->tve_desc));
     else if((v = propcmp(x, "reftag")) != NULL) 
-      tvp->tvp_reftag = atoi(v);
+      tve->tve_tag = atoi(v);
     else if((v = propcmp(x, "pvrstatus")) != NULL) 
-      tvp->tvp_pvrstatus = v[0];
+      tve->tve_pvrstatus = v[0];
     else if((v = propcmp(x, "filename")) != NULL) 
-      eolcpy(tvp->tvp_filename, v, sizeof(tvp->tvp_filename));
+      eolcpy(tve->tve_filename, v, sizeof(tve->tve_filename));
     else if((v = propcmp(x, "channel")) != NULL) 
-      tvp->tvp_channel = atoi(v);
+      tve->tve_channel = atoi(v);
   }
-  tvp_fixup_times(tvp);
+  tve_fixup_times(tve);
   free(r);
   return 0;
 }
@@ -244,12 +259,12 @@ tvh_get_pvrlog(tvheadend_t *tvh, tvprogramme_t *tvp, int val, int istag)
 
 
 int
-tvh_get_channel(tvheadend_t *tvh, tvchannel_t *tvc, int channel)
+tvh_get_channel(tvheadend_t *tvh, tvchannel_t *tvc, int chindex)
 {
   void *r;
   const char *v, *x;
 
-  if((r = tvh_query(tvh, "channel.info %d", channel)) == NULL)
+  if((r = tvh_query(tvh, "channel.info %d", chindex)) == NULL)
     return 1;
 
   memset(tvc, 0, sizeof(tvchannel_t));
@@ -259,7 +274,7 @@ tvh_get_channel(tvheadend_t *tvh, tvchannel_t *tvc, int channel)
     if((v = propcmp(x, "icon")) != NULL)
       eolcpy(tvc->tvc_icon, v, sizeof(tvc->tvc_icon));
     else if((v = propcmp(x, "reftag")) != NULL) 
-      tvc->tvc_reftag = atoi(v);
+      tvc->tvc_tag = atoi(v);
   }
   free(r);
   return 0;
@@ -466,6 +481,7 @@ tvh_create_chicon(tvchannel_t *tvc, glw_t *parent, float weight)
 		      NULL);
   } else {
     return glw_create(GLW_TEXT_BITMAP,
+		      GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
 		      GLW_ATTRIB_CAPTION, tvc->tvc_displayname,
 		      GLW_ATTRIB_WEIGHT, weight,
 		      GLW_ATTRIB_PARENT, parent,

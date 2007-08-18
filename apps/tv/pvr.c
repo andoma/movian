@@ -48,13 +48,13 @@ typedef struct pvrprog {
   LIST_ENTRY(pvrprog) pvp_link;
   TAILQ_ENTRY(pvrprog) pvp_linkq;
   
-  tvprogramme_t *pvp_meta;
-  int pvp_index;
+  tvevent_t pvp_eventinfo;
+  int pvp_tag;
 
   int pvp_keepme; /* temporary flag used for expunge */
 
   glw_t *pvp_widget;
-  glw_t *pvp_metacontainer;
+  glw_t *pvp_eventinfocontainer;
 
 
   glw_t *pvp_w_desc;
@@ -83,7 +83,7 @@ typedef struct pvrchan {
   glw_t *pvc_widget;
   float pvc_ypos;
   float pvc_alpha;
-  int pvc_id;
+  int pvc_index;
 
   LIST_HEAD(, pvrprog) pvc_programs;
   pvrprog_t *pvc_center;
@@ -139,6 +139,9 @@ typedef struct pvr {
 
   glw_t *pvr_w_sched;
 
+  glw_vertex_t pvr_cursor_pos;
+  glw_vertex_t pvr_cursor_scale;
+
 } pvr_t;
 
 static void pvr_create_bar(pvr_t *pvr);
@@ -154,13 +157,57 @@ static int
 pvr_menu_recording_cb(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
   pvr_t *pvr = opaque;
+  pvrprog_t *pvp;
+
   int showme;
 
   switch(signal) {
   case GLW_SIGNAL_PREPARE:
-    showme = pvr->pvr_cur_sa == PVR_SA_2DNAV && pvr->pvr_selected;
+    pvp = pvr->pvr_cur_sa == PVR_SA_2DNAV ? pvr->pvr_selected : NULL;
+    showme = pvp && 
+      pvp->pvp_eventinfo.tve_pvrstatus == HTSTV_PVR_STATUS_NONE && 
+      pvp->pvp_eventinfo.tve_stop > walltime;
     glw_set(w, GLW_ATTRIB_HIDDEN, !showme, NULL);
     break;
+
+  default:
+    break;
+  }
+  return 0;
+}
+
+/*
+ *
+ */
+static int
+pvr_menu_cancel_cb(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  pvr_t *pvr = opaque;
+  pvrprog_t *pvp;
+  va_list ap;
+  int showme = 0;
+
+  va_start(ap, signal);
+
+  switch(signal) {
+  case GLW_SIGNAL_PREPARE:
+    pvp = pvr->pvr_cur_sa == PVR_SA_2DNAV ? pvr->pvr_selected : NULL;
+    if(pvp != NULL && pvp->pvp_eventinfo.tve_stop > walltime) {
+      switch(pvp->pvp_eventinfo.tve_pvrstatus) {
+	
+      case HTSTV_PVR_STATUS_SCHEDULED:
+      case HTSTV_PVR_STATUS_RECORDING:
+	showme = 1;
+	break;
+      }
+    }
+    glw_set(w, GLW_ATTRIB_HIDDEN, !showme, NULL);
+    break;
+
+  case GLW_SIGNAL_CLICK:
+    menu_post_key_pop_and_hide(w, pvr->pvr_ai, GLW_SIGNAL_CLICK, 
+			       va_arg(ap, void *));
+    return 1;
 
   default:
     break;
@@ -174,10 +221,15 @@ pvr_menu_recording_cb(glw_t *w, void *opaque, glw_signal_t signal, ...)
 static void
 pvr_create_recording_submenu(pvr_t *pvr)
 {
- glw_t *v;
- appi_t *ai = pvr->pvr_ai;
+  glw_t *v;
+  appi_t *ai = pvr->pvr_ai;
 
-  v = menu_create_submenu_cb(ai->ai_menu, "icon://rec.png", "Record...", 1,
+  menu_create_item(ai->ai_menu, "icon://no.png", "Cancel recording",
+		   pvr_menu_cancel_cb, pvr,
+		   INPUT_KEY_RECORD_CANCEL, 1);
+
+  v = menu_create_submenu_cb(ai->ai_menu, "icon://rec.png", 
+			     "Record...", 1,
 			     pvr_menu_recording_cb, pvr);
   
   menu_create_item(v, "icon://rec.png", "Record once",
@@ -192,9 +244,6 @@ pvr_create_recording_submenu(pvr_t *pvr)
 		   menu_post_key_pop_and_hide, ai,
 		   INPUT_KEY_RECORD_WEEKLY, 0);
 
-  menu_create_item(v, "icon://no.png", "Cancel recording",
-		   menu_post_key_pop_and_hide, ai,
-		   INPUT_KEY_RECORD_CANCEL, 0);
 }
 
 /*
@@ -202,9 +251,9 @@ pvr_create_recording_submenu(pvr_t *pvr)
  */
 
 static glw_color_t
-pvp_plate_color_by_meta(tvprogramme_t *tvp)
+pvp_plate_color_by_meta(tvevent_t *tve)
 {
-  switch(tvp->tvp_pvrstatus) {
+  switch(tve->tve_pvrstatus) {
 default:
     return GLW_COLOR_RED;
 
@@ -228,11 +277,11 @@ static void
 pvl_create_widget(pvr_t *pvr, pvrprog_t *pvp)
 {
   glw_t *x, *c, *y;
-  tvprogramme_t *tvp = pvp->pvp_meta;
+  tvevent_t *tve = &pvp->pvp_eventinfo;
 
   c = glw_create(GLW_BITMAP,
 		 GLW_ATTRIB_PARENT, pvp->pvp_widget,
-		 GLW_ATTRIB_COLOR, pvp_plate_color_by_meta(pvp->pvp_meta),
+		 GLW_ATTRIB_COLOR, pvp_plate_color_by_meta(tve),
 		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
 		 GLW_ATTRIB_FILENAME, "icon://plate.png",
 		 NULL);
@@ -251,16 +300,16 @@ pvl_create_widget(pvr_t *pvr, pvrprog_t *pvp)
   glw_create(GLW_TEXT_BITMAP,
 	     GLW_ATTRIB_PARENT, y,
 	     GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
-	     GLW_ATTRIB_CAPTION, tvp->tvp_title,
+	     GLW_ATTRIB_CAPTION, tve->tve_title,
 	     NULL);
 
   glw_create(GLW_TEXT_BITMAP,
 	     GLW_ATTRIB_PARENT, y,
 	     GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
-	     GLW_ATTRIB_CAPTION, tvp->tvp_timetxt,
+	     GLW_ATTRIB_CAPTION, tve->tve_timetxt,
 	     NULL);
 
-  tvh_create_pvrstatus(x, tvp->tvp_pvrstatus, 1.0f);
+  tvh_create_pvrstatus(x, tve->tve_pvrstatus, 1.0f);
 
   pvp->pvp_widget = c;
 
@@ -270,8 +319,8 @@ static void
 pvrprog_refresh(pvr_t *pvr, pvrprog_t *pvp)
 {
   glw_t *p;
-  if(tvh_get_pvrlog(&pvr->pvr_tvh, pvp->pvp_meta, 
-		    pvp->pvp_meta->tvp_reftag, 1)) {
+  tvevent_t *tve = &pvp->pvp_eventinfo;
+  if(tvh_get_pvrlog(&pvr->pvr_tvh, tve, tve->tve_tag, 1)) {
     return;
   }
 
@@ -289,17 +338,14 @@ pvrprog_update(pvr_t *pvr)
 {
   int e = 0;
   pvrprog_t *pvp, *next;
-  tvprogramme_t *tvp = NULL;
+  tvevent_t tve;
   pvrchan_t *pvc;
 
 
   pvp = TAILQ_FIRST(&pvr->pvr_log);
   
   while(1) {
-    if(tvp == NULL)
-      tvp = calloc(1, sizeof(tvprogramme_t));
-    
-    if(tvh_get_pvrlog(&pvr->pvr_tvh, tvp, e, 0))
+    if(tvh_get_pvrlog(&pvr->pvr_tvh, &tve, e, 0))
       break;
 
     glw_lock();
@@ -312,18 +358,15 @@ pvrprog_update(pvr_t *pvr)
 				   NULL);
       
       TAILQ_INSERT_TAIL(&pvr->pvr_log, pvp, pvp_linkq);
-    } else {
-      free(pvp->pvp_meta);
     }
 
     TAILQ_FOREACH(pvc, &pvr->pvr_channels, pvc_link)
-      if(pvc->pvc_id == tvp->tvp_channel)
+      if(pvc->pvc_index == tve.tve_channel)
 	break;
     
     pvp->pvp_chan = pvc;
-    pvp->pvp_meta = tvp;
-    pvp->pvp_index = tvp->tvp_index;
-    tvp = NULL;
+    memcpy(&pvp->pvp_eventinfo, &tve, sizeof(tvevent_t));
+    pvp->pvp_tag = tve.tve_tag;
 
     pvl_create_widget(pvr, pvp);
     
@@ -332,8 +375,6 @@ pvrprog_update(pvr_t *pvr)
     pvp = TAILQ_NEXT(pvp, pvp_linkq);
     e++;
   }
-  
-  free(tvp);
   
   for(; pvp ; pvp = next) {
     next = TAILQ_NEXT(pvp, pvp_linkq);
@@ -360,24 +401,41 @@ pvrprog_update(pvr_t *pvr)
  */
 
 static void
-pvr_load_chans(pvr_t *pvr)
+pvr_connect(pvr_t *pvr)
 {
-  int i;
+  int i = 0, id;
   tvheadend_t *tvh = &pvr->pvr_tvh;
   pvrchan_t *pvc;
 
-  for(i = 0; i < pvr->pvr_num_chan; i++) {
-    pvc = calloc(1, sizeof(pvrchan_t));
-    pvc->pvc_pvr = pvr;
+  void *r;
+  const char *v, *x;
 
-    tvh_get_channel(tvh, &pvc->pvc_tvc, i);
-
-    pvc->pvc_widget = tvh_create_chicon(&pvc->pvc_tvc, NULL, 1.0f);
-    pvc->pvc_ypos = i;
-    pvc->pvc_id = i;
-    TAILQ_INSERT_TAIL(&pvr->pvr_channels, pvc, pvc_link);
-    LIST_INIT(&pvc->pvc_programs);
+ while(1) {
+    r = tvh_query(tvh, "channels.list");
+    if(r == NULL) {
+      printf("Unable to connect to tvheadend\n");
+      sleep(1);
+    } else {
+      break;
+    }
   }
+
+ for(x = r; x != NULL; x = nextline(x)) {
+    if((v = propcmp(x, "channel")) != NULL) {
+      id = atoi(v);
+
+      pvc = calloc(1, sizeof(pvrchan_t));
+      pvc->pvc_pvr = pvr;
+
+      tvh_get_channel(tvh, &pvc->pvc_tvc, id);
+
+      pvc->pvc_widget = tvh_create_chicon(&pvc->pvc_tvc, NULL, 1.0f);
+      pvc->pvc_ypos = i++;
+      pvc->pvc_index = id;
+      TAILQ_INSERT_TAIL(&pvr->pvr_channels, pvc, pvc_link);
+      LIST_INIT(&pvc->pvc_programs);
+    }
+ }
 }
 
 
@@ -389,11 +447,11 @@ pvr_load_chans(pvr_t *pvr)
 static glw_t *
 pvp_create_widget(pvrprog_t *pvp)
 {
-  tvprogramme_t *tvp = pvp->pvp_meta;
+  tvevent_t *tve = &pvp->pvp_eventinfo;
   glw_t *r, *c;
 
   r = glw_create(GLW_BITMAP,
-		 GLW_ATTRIB_COLOR, pvp_plate_color_by_meta(pvp->pvp_meta),
+		 GLW_ATTRIB_COLOR, pvp_plate_color_by_meta(tve),
 		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
 		 GLW_ATTRIB_FILENAME, "icon://plate.png",
 		 NULL);
@@ -406,33 +464,20 @@ pvp_create_widget(pvrprog_t *pvp)
 	     GLW_ATTRIB_PARENT, c,
 	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
 	     GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
-	     GLW_ATTRIB_CAPTION, tvp->tvp_title,
+	     GLW_ATTRIB_CAPTION, tve->tve_title,
 	     NULL);
 
   glw_create(GLW_TEXT_BITMAP,
 	     GLW_ATTRIB_PARENT, c,
 	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
 	     GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
-	     GLW_ATTRIB_CAPTION, tvp->tvp_timetxt,
+	     GLW_ATTRIB_CAPTION, tve->tve_timetxt,
 	     NULL);
 
   return r;
 }
 
 
-/*
- *
- */
-
-static void
-pvp_update_front_status(pvrprog_t *pvp)
-{
-  glw_set(pvp->pvp_widget, 
-	  GLW_ATTRIB_COLOR, pvp_plate_color_by_meta(pvp->pvp_meta),
-	  NULL);
-}
-
-
 
 
 
@@ -440,62 +485,6 @@ pvp_update_front_status(pvrprog_t *pvp)
  *
  */
 
-static int
-pvp_sort(pvrprog_t *a, pvrprog_t *b)
-{
-  return a->pvp_index - b->pvp_index;
-}
-
-
-static pvrprog_t *
-pvp_load(tvheadend_t *tvh, pvr_t *pvr, pvrchan_t *pvc, int index)
-{
-  pvrprog_t *pvp;
-  int r;
-
-  LIST_FOREACH(pvp, &pvc->pvc_programs, pvp_link)
-    if(pvp->pvp_index == index)
-      return pvp;
-  
-  pvp = calloc(1, sizeof(pvrprog_t));
-  pvp->pvp_meta = malloc(sizeof(tvprogramme_t));
-  pvp->pvp_index = index;
-  pvp->pvp_chan = pvc;
-  pvp->pvp_type = PVP_PROG;
-
-  r = tvh_get_programme(tvh, pvp->pvp_meta, pvc->pvc_id, pvp->pvp_index);
-
-  if(r) {
-    free(pvp->pvp_meta);
-    free(pvp);
-    return NULL;
-  }
-
-  pvp->pvp_widget = pvp_create_widget(pvp);
-  
-  glw_lock();
-  LIST_INSERT_SORTED(&pvc->pvc_programs, pvp, pvp_link, pvp_sort);
-  glw_unlock();
-
-  return pvp;
-}
-
-
-static pvrprog_t *
-pvp_load_by_time(tvheadend_t *tvh, pvr_t *pvr, pvrchan_t *pvc, time_t t)
-{
-  int p;
-  pvrprog_t *pvp;
-
-  LIST_FOREACH(pvp, &pvc->pvc_programs, pvp_link)
-    if(pvp->pvp_meta->tvp_start <= t && pvp->pvp_meta->tvp_stop > t)
-      return pvp;
-
-  p = tvh_int(tvh_query(tvh, "programme.bytime %d %d",
-			pvc->pvc_id, pvr->pvr_timeptr));
-
-  return pvp_load(tvh, pvr, pvc, p);
-}
 
 static void
 pvp_destroy(pvrprog_t *pvp)
@@ -513,10 +502,93 @@ pvp_destroy(pvrprog_t *pvp)
 
   glw_destroy(pvp->pvp_widget);
   LIST_REMOVE(pvp, pvp_link);
-  free(pvp->pvp_meta);
   free(pvp);
   glw_unlock();
 }
+
+
+static int
+pvp_sort(pvrprog_t *a, pvrprog_t *b)
+{
+  return a->pvp_eventinfo.tve_start - b->pvp_eventinfo.tve_start;
+}
+
+
+static pvrprog_t *
+pvp_insert(pvr_t *pvr, pvrchan_t *pvc, pvrprog_t *pvp, tvevent_t *tve)
+{
+  int tag = tve->tve_tag;
+
+  glw_lock();
+
+  if(pvp == NULL) {
+    pvp = calloc(1, sizeof(pvrprog_t));
+    pvp->pvp_tag = tag;
+    pvp->pvp_chan = pvc;
+    pvp->pvp_type = PVP_PROG;
+  } else {
+    LIST_REMOVE(pvp, pvp_link);
+    glw_destroy(pvp->pvp_widget);
+  }
+
+  memcpy(&pvp->pvp_eventinfo, tve, sizeof(tvevent_t));
+
+  pvp->pvp_widget = pvp_create_widget(pvp);
+  
+  LIST_INSERT_SORTED(&pvc->pvc_programs, pvp, pvp_link, pvp_sort);
+  glw_unlock();
+
+  return pvp;
+}
+
+
+static pvrprog_t *
+pvp_load_by_time(tvheadend_t *tvh, pvr_t *pvr, pvrchan_t *pvc, time_t t)
+{
+  pvrprog_t *pvp;
+  tvevent_t tve;
+  int tag;
+
+  LIST_FOREACH(pvp, &pvc->pvc_programs, pvp_link)
+    if(pvp->pvp_eventinfo.tve_start <= t && pvp->pvp_eventinfo.tve_stop > t)
+      return pvp;
+
+  if(tvh_get_event_by_time(tvh, &tve, pvc->pvc_index, pvr->pvr_timeptr) < 0)
+    return NULL;
+  
+  tag = tve.tve_tag;
+
+  LIST_FOREACH(pvp, &pvc->pvc_programs, pvp_link)
+    if(pvp->pvp_tag == tag)
+      break;
+
+  return pvp_insert(pvr, pvc, pvp, &tve);
+}
+
+
+static pvrprog_t *
+pvp_load_by_tag(tvheadend_t *tvh, pvr_t *pvr, pvrchan_t *pvc, uint32_t tag,
+		int update)
+{
+  pvrprog_t *pvp;
+  tvevent_t tve;
+
+  LIST_FOREACH(pvp, &pvc->pvc_programs, pvp_link)
+    if(pvp->pvp_tag == tag)
+      break;
+
+  if(pvp != NULL && update == 0)
+    return pvp;
+
+  if(pvp == NULL && update == 1)
+    return NULL;
+
+  if(tvh_get_event_by_tag(tvh, &tve, tag) < 0)
+    return NULL;
+
+  return pvp_insert(pvr, pvc, pvp, &tve);
+}
+
 
 
 /*
@@ -532,7 +604,7 @@ pvr_update_thread(void *aux)
   tvheadend_t *tvh = &pvr->pvr_tvh;
   pvrchan_t *pvc;
   pvrprog_t *center, *pvp, *nxt;
-  int i;
+  int tag;
 
   pthread_mutex_lock(&pvr->pvr_loader_lock);
 
@@ -549,22 +621,25 @@ pvr_update_thread(void *aux)
 
       center->pvp_keepme = 1;
 
-      for(i = center->pvp_index - 1; ; i--) {
-	pvp = pvp_load(tvh, pvr, pvc, i);
-	if(pvp == NULL)
+      tag = center->pvp_eventinfo.tve_prev_tag;
+
+      while(tag) {
+	if((pvp = pvp_load_by_tag(tvh, pvr, pvc, tag, 0)) == NULL) 
 	  break;
 	pvp->pvp_keepme = 1;
-	if(pvp->pvp_meta->tvp_stop < pvr->pvr_timeptr - PVR_TIME_MARGINS)
+	if(pvp->pvp_eventinfo.tve_stop < pvr->pvr_timeptr - PVR_TIME_MARGINS)
 	  break;
+	tag = pvp->pvp_eventinfo.tve_prev_tag;
       }
 
-      for(i = center->pvp_index + 1; ; i++) {
-	pvp = pvp_load(tvh, pvr, pvc, i);
-	if(pvp == NULL)
+      tag = center->pvp_eventinfo.tve_next_tag;
+      while(tag) {
+	if((pvp = pvp_load_by_tag(tvh, pvr, pvc, tag, 0)) == NULL)
 	  break;
 	pvp->pvp_keepme = 1;
-	if(pvp->pvp_meta->tvp_start > pvr->pvr_timeptr + PVR_TIME_MARGINS)
+	if(pvp->pvp_eventinfo.tve_start > pvr->pvr_timeptr + PVR_TIME_MARGINS)
 	  break;
+	tag = pvp->pvp_eventinfo.tve_next_tag;
       }
       
       for(pvp = LIST_FIRST(&pvc->pvc_programs) ; pvp != NULL; pvp = nxt) {
@@ -598,28 +673,22 @@ pvr_tag_refresh(pvr_t *pvr, int tag)
 
   } else {
 
+    /* Update an event in the pvr log */
+
     TAILQ_FOREACH(pvp, &pvr->pvr_log, pvp_linkq) {
-      if(pvp->pvp_meta->tvp_reftag == tag)
+      if(pvp->pvp_eventinfo.tve_tag == tag)
 	pvrprog_refresh(pvr, pvp);
 
       if(pvp->pvp_w_status_xfader != NULL)
 	tvh_create_pvrstatus(pvp->pvp_w_status_xfader, 
-			     pvp->pvp_meta->tvp_pvrstatus, 1.0f);
+			     pvp->pvp_eventinfo.tve_pvrstatus, 1.0f);
     }
 
-    TAILQ_FOREACH(pvc, &pvr->pvr_channels, pvc_link) {
-      LIST_FOREACH(pvp, &pvc->pvc_programs, pvp_link) {
-	if(pvp->pvp_meta->tvp_reftag == tag) {
-	  tvh_get_programme(tvh, pvp->pvp_meta, pvc->pvc_id, pvp->pvp_index);
+    /* Update an event in the program guide */
 
-	  if(pvp->pvp_w_status_xfader != NULL)
-	    tvh_create_pvrstatus(pvp->pvp_w_status_xfader, 
-				 pvp->pvp_meta->tvp_pvrstatus, 1.0f);
+    TAILQ_FOREACH(pvc, &pvr->pvr_channels, pvc_link)
+      pvp_load_by_tag(tvh, pvr, pvc, tag, 1);
 
-	  pvp_update_front_status(pvp);
-	}
-      }
-    }
   }
   pthread_mutex_unlock(&pvr->pvr_loader_lock);
 }
@@ -634,8 +703,7 @@ pvr_rec_cmd(pvr_t *pvr, pvrprog_t *pvp, const char *cmd)
   if(pvp == NULL)
     return;
 
-  tvh_int(tvh_query(&pvr->pvr_tvh, "programme.record %d %d %s",
-		    pvp->pvp_chan->pvc_id, pvp->pvp_index, cmd));
+  tvh_int(tvh_query(&pvr->pvr_tvh, "event.record %d %s", pvp->pvp_tag, cmd));
 }
 
 /*
@@ -645,6 +713,7 @@ static int
 pvr_sa_2dnav_keystrike(pvr_t *pvr, inputevent_t *ie)
 {
   appi_t *ai = pvr->pvr_ai;
+  pvrprog_t *pvp;
 
   switch(ie->u.key) {
   default:
@@ -689,6 +758,17 @@ pvr_sa_2dnav_keystrike(pvr_t *pvr, inputevent_t *ie)
       return 1;
     }
 
+
+  case INPUT_KEY_SELECT:
+    if((pvp = pvr->pvr_selected) == NULL)
+      return 0;
+    pvp = LIST_NEXT(pvp, pvp_link);
+    if(pvp == NULL)
+      return 0;
+
+    pvr->pvr_timeptr = pvp->pvp_eventinfo.tve_start + 
+      (pvp->pvp_eventinfo.tve_stop - pvp->pvp_eventinfo.tve_start) / 2;
+    return 1;
 
   case INPUT_KEY_NEXT:
     pvr->pvr_timeptr += 86400;
@@ -940,6 +1020,7 @@ pvr_thread(void *aux)
 
   pvr->pvr_w_sched = 
     glw_create(GLW_ARRAY,
+	       GLW_ATTRIB_X_SLICES, 1,
 	       GLW_ATTRIB_PARENT, w,
 	       GLW_ATTRIB_SIDEKICK, bar_title("Scheduled recordings"),
 	       NULL);
@@ -952,8 +1033,7 @@ pvr_thread(void *aux)
 
   while(1) {
 
-    pvr->pvr_num_chan = tvh_int(tvh_query(tvh, "channels.total"));
-    pvr_load_chans(pvr);
+    pvr_connect(pvr);
     pvrprog_update(pvr);
 
     pthread_create(&ptid, NULL, pvr_update_thread, pvr);
@@ -1020,14 +1100,10 @@ render_list(struct glw_head *head, glw_rctx_t *rc)
 static void 
 pvr_2dnav_render(pvr_t *pvr, glw_rctx_t *rc)
 {
+  glw_rctx_t rc0;
 
   GLdouble clip_top[4] = {0.0, -1.0, 0.0, 1.0};
   GLdouble clip_left[4] = {1.0, 0.0, 0.0, 0.75};
-  GLdouble clip_right[4] = {-1.0, 0.0, 0.0, 1.0};
-
-  //  glClipPlane(GL_CLIP_PLANE0, clip_top);
-  //  glEnable(GL_CLIP_PLANE0);
-  
 
   render_list(&pvr->pvr_rlist_1, rc);
 
@@ -1040,16 +1116,30 @@ pvr_2dnav_render(pvr_t *pvr, glw_rctx_t *rc)
   render_list(&pvr->pvr_rlist_2, rc);
 
   glClipPlane(GL_CLIP_PLANE1, clip_left);
-  glClipPlane(GL_CLIP_PLANE2, clip_right);
   glEnable(GL_CLIP_PLANE1);
-  //  glEnable(GL_CLIP_PLANE2);
   
   render_list(&pvr->pvr_rlist_3, rc);
 
+  if(pvr->pvr_selected != NULL) {
+
+    glPushMatrix();
+    glTranslatef(pvr->pvr_cursor_pos.x,
+		 pvr->pvr_cursor_pos.y,
+		 pvr->pvr_cursor_pos.z);
+  
+    glScalef(pvr->pvr_cursor_scale.x,
+	     pvr->pvr_cursor_scale.y,
+	     pvr->pvr_cursor_scale.z);
+  
+    rc0 = *rc;
+    rc0.rc_aspect = rc->rc_aspect * 
+      pvr->pvr_cursor_scale.x / pvr->pvr_cursor_scale.y;
+    glw_cursor_render(&rc0, 0.1);
+    glPopMatrix();
+
+  }
   glDisable(GL_CLIP_PLANE0);
   glDisable(GL_CLIP_PLANE1);
-  glDisable(GL_CLIP_PLANE2);
-
 }
 
 
@@ -1066,7 +1156,6 @@ pvr_2dnav_layout(pvr_t *pvr, glw_rctx_t *rc)
   float t, a0, a1, x1, x2, c, s, y;
   int timeptr;
   pvrprog_t *sel = NULL;
-  float angle;
   float a2;
   float zo, za;
   glw_t *w;
@@ -1159,8 +1248,8 @@ pvr_2dnav_layout(pvr_t *pvr, glw_rctx_t *rc)
     w->glw_flags |= GLW_TMP_LINKED;
 
     LIST_FOREACH(pvp, &pvc->pvc_programs, pvp_link) {
-      x1 = (pvp->pvp_meta->tvp_start - timeptr) / pvr->pvr_autoscaler;
-      x2 = (pvp->pvp_meta->tvp_stop -  timeptr) / pvr->pvr_autoscaler;
+      x1 = (pvp->pvp_eventinfo.tve_start - timeptr) / pvr->pvr_autoscaler;
+      x2 = (pvp->pvp_eventinfo.tve_stop -  timeptr) / pvr->pvr_autoscaler;
   
 
       s = x2 - x1;
@@ -1169,8 +1258,8 @@ pvr_2dnav_layout(pvr_t *pvr, glw_rctx_t *rc)
       if(x1 > 2 || x2 < -2)
 	continue;
 
-      if(pvp->pvp_meta->tvp_start <= pvr->pvr_timeptr &&
-	 pvp->pvp_meta->tvp_stop > pvr->pvr_timeptr &&
+      if(pvp->pvp_eventinfo.tve_start <= pvr->pvr_timeptr &&
+	 pvp->pvp_eventinfo.tve_stop > pvr->pvr_timeptr &&
 	 fabs(t) < 0.5) {
 	a1 = 1.0f;
 
@@ -1187,8 +1276,6 @@ pvr_2dnav_layout(pvr_t *pvr, glw_rctx_t *rc)
       if(pvp->pvp_alpha < 0.01)
 	continue;
 
-      angle = 0 * 180.0f;
-
       w = pvp->pvp_widget;
 
       w->glw_rctx = *rc;
@@ -1204,7 +1291,10 @@ pvr_2dnav_layout(pvr_t *pvr, glw_rctx_t *rc)
 
       w->glw_rctx.rc_aspect = rc->rc_aspect * w->glw_scale.x / w->glw_scale.y;
       
-      w->glw_extra = angle > 90 ? 180 - angle : angle;
+      if(a1 == 1.0f) {
+	pvr->pvr_cursor_pos = w->glw_pos;
+	pvr->pvr_cursor_scale = w->glw_scale;
+      }
 
       glw_layout(w, &w->glw_rctx);
       LIST_INSERT_HEAD(&pvr->pvr_rlist_3, w, glw_tmp_link);

@@ -69,7 +69,7 @@ iptv_miw_rethink(iptv_player_t *iptv, glw_t *parent, iptv_channel_t *ich)
   const float rw = 0.03;
   glw_t *y;
   tvchannel_t tvc;
-  tvprogramme_t tvp;
+  tvevent_t tve;
 
   parent = glw_create(GLW_CONTAINER_X, 
 		      GLW_ATTRIB_PARENT, parent, 
@@ -79,7 +79,7 @@ iptv_miw_rethink(iptv_player_t *iptv, glw_t *parent, iptv_channel_t *ich)
 
   tvh_create_chicon(&tvc, parent, 1.0f);
 
-  if(tvh_get_programme(tvh, &tvp, channel, -1)) { /* -1 == current program */
+  if(tvh_get_event_current(tvh, &tve, channel)) {
     glw_create(GLW_DUMMY,
 	       GLW_ATTRIB_PARENT, parent,
 	       GLW_ATTRIB_WEIGHT, 1.3f,
@@ -113,7 +113,7 @@ iptv_miw_rethink(iptv_player_t *iptv, glw_t *parent, iptv_channel_t *ich)
 	     GLW_ATTRIB_PARENT, y,
 	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
 	     GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
-	     GLW_ATTRIB_CAPTION, tvp.tvp_timetxt,
+	     GLW_ATTRIB_CAPTION, tve.tve_timetxt,
 	     NULL);
 
   glw_create(GLW_RULER, 
@@ -137,7 +137,7 @@ iptv_miw_rethink(iptv_player_t *iptv, glw_t *parent, iptv_channel_t *ich)
 	     GLW_ATTRIB_PARENT, parent,
 	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
 	     GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
-	     GLW_ATTRIB_CAPTION, tvp.tvp_title,
+	     GLW_ATTRIB_CAPTION, tve.tve_title,
 	     NULL);
 
   glw_create(GLW_RULER, 
@@ -173,13 +173,9 @@ iptv_miw_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
 
 glw_t *
-iptv_create_miw(iptv_player_t *iptv, iptv_channel_t *ich)
+iptv_create_miw(iptv_player_t *iptv, iptv_channel_t *ich, uint32_t tag)
 {
   glw_t *c;
-  uint32_t tag;
-
-  tag = tvh_int(tvh_query(&iptv->iptv_tvh, "channel.reftag %d", 
-			  ich->ich_index));
 
   c = glw_create(GLW_XFADER,
 		 GLW_ATTRIB_SIGNAL_HANDLER, iptv_miw_callback, ich, 0, 
@@ -408,7 +404,7 @@ ich_compute_weight(iptv_channel_t *ich)
 #endif
 
 static iptv_channel_t *
-ich_create(iptv_player_t *iptv, int channel)
+ich_create(iptv_player_t *iptv, int channel, uint32_t tag)
 {
   iptv_channel_t *ich;
   pes_player_t *pp;
@@ -436,7 +432,7 @@ ich_create(iptv_player_t *iptv, int channel)
 
   mp_set_playstatus(mp, MP_PLAY);
 
-  mp->mp_info_widget = iptv_create_miw(iptv, ich);
+  mp->mp_info_widget = iptv_create_miw(iptv, ich, tag);
   mp->mp_info_extra_widget = iptv_create_extra_miw(iptv, ich);
   iptv->iptv_channels[channel] = ich;
   
@@ -484,9 +480,9 @@ iptv_widget_channel_container_fill(iptv_player_t *iptv, glw_t *y, int channel)
   tvheadend_t *tvh = &iptv->iptv_tvh;
 
   //  tvchannel_t tvc;
-  tvprogramme_t tvp;
+  tvevent_t tve;
 
-  if(tvh_get_programme(tvh, &tvp, channel, -1) < 0 ) {
+  if(tvh_get_event_current(tvh, &tve, channel) < 0 ) {
      /* -1 == nothing is on */
     return;
   }
@@ -505,7 +501,7 @@ iptv_widget_channel_container_fill(iptv_player_t *iptv, glw_t *y, int channel)
 	     GLW_ATTRIB_WEIGHT, 2.0f,
 	     GLW_ATTRIB_PARENT, y,
 	     GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
-	     GLW_ATTRIB_CAPTION, tvp.tvp_title,
+	     GLW_ATTRIB_CAPTION, tve.tve_title,
 	     NULL);
 
   glw_create(GLW_RULER, 
@@ -517,7 +513,7 @@ iptv_widget_channel_container_fill(iptv_player_t *iptv, glw_t *y, int channel)
 	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
 	     GLW_ATTRIB_PARENT, y,
 	     GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
-	     GLW_ATTRIB_CAPTION, tvp.tvp_timetxt,
+	     GLW_ATTRIB_CAPTION, tve.tve_timetxt,
 	     NULL);
 }
 
@@ -582,15 +578,30 @@ ich_callback(glw_t *w, glw_signal_t signal, ...)
  */
 
 static void
-iptv_widget_create_chlist(iptv_player_t *iptv)
+iptv_connect(iptv_player_t *iptv)
 {
-  int i;
-  glw_t *c, *y, *z, *w, *s;
-  glw_t *chlist;
-  uint32_t tag;
-  iptv_channel_t *ich;
-  tvchannel_t tvc;
+  tvheadend_t *tvh = &iptv->iptv_tvh;
   appi_t *ai = iptv->iptv_appi;
+  glw_t *chlist;
+  iptv_channel_t *ich;
+  int id;
+  void *r;
+  const char *v, *x;
+  glw_t *s, *c, *y, *z, *w;
+  tvchannel_t tvc;
+
+  while(1) {
+
+    r = tvh_query(tvh, "channels.list");
+
+    if(r == NULL) {
+      printf("Unable to connect to tvheadend\n");
+      sleep(1);
+    } else {
+      break;
+    }
+  }
+
 
   chlist = glw_create(GLW_ARRAY,
 		      GLW_ATTRIB_SIDEKICK, bar_title("TV"),
@@ -599,69 +610,73 @@ iptv_widget_create_chlist(iptv_player_t *iptv)
 
   iptv->iptv_appi->ai_widget = iptv->iptv_chlist = chlist;
 
-  for(i = 0; i < iptv->iptv_num_chan; i++) {
+  for(x = r; x != NULL; x = nextline(x)) {
+    if((v = propcmp(x, "channel")) != NULL) {
+      
+      id = atoi(v);
 
-    ich = ich_create(iptv, i);
+      tvh_get_channel(&iptv->iptv_tvh, &tvc, id);
 
-    tag = tvh_int(tvh_query(&iptv->iptv_tvh, "channel.reftag %d", i));
+      ich = ich_create(iptv, id, tvc.tvc_tag);
 
-    s = glw_create(GLW_ZOOM_SELECTOR,
-		   GLW_ATTRIB_PARENT, chlist,
-		   GLW_ATTRIB_SIGNAL_HANDLER, ich_entry_callback, ich, 0,
-		   NULL);
+      s = glw_create(GLW_ZOOM_SELECTOR,
+		     GLW_ATTRIB_PARENT, chlist,
+		     GLW_ATTRIB_SIGNAL_HANDLER, ich_entry_callback, ich, 0,
+		     NULL);
 
-    c = glw_create(GLW_BITMAP,
-		   GLW_ATTRIB_PARENT, s,
-		   GLW_ATTRIB_FILENAME, "icon://plate-titled.png",
-		   GLW_ATTRIB_FLAGS, GLW_NOASPECT,
-		   NULL);
+      c = glw_create(GLW_BITMAP,
+		     GLW_ATTRIB_PARENT, s,
+		     GLW_ATTRIB_FILENAME, "icon://plate-titled.png",
+		     GLW_ATTRIB_FLAGS, GLW_NOASPECT,
+		     NULL);
 
 
-    y = glw_create(GLW_CONTAINER_Y,
-		   GLW_ATTRIB_PARENT, c,
-		   NULL);
+      y = glw_create(GLW_CONTAINER_Y,
+		     GLW_ATTRIB_PARENT, c,
+		     NULL);
 
-    tvh_get_channel(&iptv->iptv_tvh, &tvc, i);
+      glw_create(GLW_TEXT_BITMAP,
+		 GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
+		 GLW_ATTRIB_CAPTION, tvc.tvc_displayname,
+		 GLW_ATTRIB_WEIGHT, 0.4,
+		 GLW_ATTRIB_PARENT, y,
+		 GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
+		 NULL);
 
-    glw_create(GLW_TEXT_BITMAP,
-	       GLW_ATTRIB_CAPTION, tvc.tvc_displayname,
-	       GLW_ATTRIB_WEIGHT, 0.4,
-	       GLW_ATTRIB_PARENT, y,
-	       GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
-	       NULL);
+      glw_create(GLW_DUMMY,
+		 GLW_ATTRIB_PARENT, y,
+		 GLW_ATTRIB_WEIGHT, 0.1,
+		 NULL);
 
-    glw_create(GLW_DUMMY,
-	       GLW_ATTRIB_PARENT, y,
-	       GLW_ATTRIB_WEIGHT, 0.1,
-	       NULL);
-
-    z = glw_create(GLW_CONTAINER_Z,
-		   GLW_ATTRIB_PARENT, y,
-		   GLW_ATTRIB_WEIGHT, 2.1,
-		   GLW_ATTRIB_PARENT, y,
-		   NULL);
+      z = glw_create(GLW_CONTAINER_Z,
+		     GLW_ATTRIB_PARENT, y,
+		     GLW_ATTRIB_WEIGHT, 2.1,
+		     NULL);
 		   
-    glw_create(GLW_BITMAP,
-	       GLW_ATTRIB_FILENAME, tvc.tvc_icon[0] ? tvc.tvc_icon :
-	       "icon://tv.png",
-	       GLW_ATTRIB_ALPHA, 0.25,
-	       GLW_ATTRIB_PARENT, z,
-	       NULL);
+      glw_create(GLW_BITMAP,
+		 GLW_ATTRIB_FILENAME, tvc.tvc_icon[0] ? tvc.tvc_icon :
+		 "icon://tv.png",
+		 GLW_ATTRIB_ALPHA, 0.25,
+		 GLW_ATTRIB_PARENT, z,
+		 NULL);
 
-    w = glw_create(GLW_XFADER,
-		   GLW_ATTRIB_PARENT, z,
-		   GLW_ATTRIB_SIGNAL_HANDLER,
-		   iptv_widget_channel_container_callback, iptv, 0,
-		   GLW_ATTRIB_TAG, iptv->iptv_tag_hash, tag,
-		   GLW_ATTRIB_U32, i,
-		   NULL);
+      w = glw_create(GLW_XFADER,
+		     GLW_ATTRIB_PARENT, z,
+		     GLW_ATTRIB_SIGNAL_HANDLER,
+		     iptv_widget_channel_container_callback, iptv, 0,
+		     GLW_ATTRIB_TAG, iptv->iptv_tag_hash, tvc.tvc_tag,
+		     GLW_ATTRIB_U32, id,
+		     NULL);
 
-    iptv_widget_channel_container_fill(iptv, w, i);
+      iptv_widget_channel_container_fill(iptv, w, id);
     
-    /* video widget */
+      /* video widget */
 
-    ich->ich_gvp = gvp_create(s, &ich->ich_mp, &iptv->iptv_gvp_conf,
-			      GVPF_AUTO_FLUSH);
+      ich->ich_gvp = gvp_create(s, &ich->ich_mp, &iptv->iptv_gvp_conf,
+				GVPF_AUTO_FLUSH);
+      
+
+    }
   }
 }
 
@@ -907,8 +922,6 @@ iptv_loop(void *aux)
   tvheadend_t *tvh = &iptv->iptv_tvh;
   appi_t *ai = iptv->iptv_appi;
   inputevent_t ie;
-  glw_t *w;
-  char *r;
 
   iptv->iptv_tag_hash = glw_taghash_create();
   gvp_conf_init(&iptv->iptv_gvp_conf);
@@ -922,22 +935,9 @@ iptv_loop(void *aux)
 
   while(1) {
 
-    r = tvh_query(tvh, "channels.total");
-
-    if(r == NULL) {
-      w = glw_create(GLW_TEXT_BITMAP, 
-		     GLW_ATTRIB_PARENT, iptv->iptv_appi->ai_widget,
-		     GLW_ATTRIB_CAPTION, "Unable to connect to TV headend",
-		     NULL);    
-      sleep(1);
-      glw_destroy(w);
-      continue;
-    }
-
-    iptv->iptv_num_chan = atoi(r);
-    free(r);
-
-    iptv_widget_create_chlist(iptv);
+    iptv_connect(iptv);
+    
+    //    iptv_widget_create_chlist(iptv);
  
     while(tvh->tvh_fp != NULL) {
 

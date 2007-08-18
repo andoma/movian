@@ -63,26 +63,27 @@ typedef struct tvheadend {
 
 } tvheadend_t;
 
-typedef struct tvprogramme {
-  int tvp_index;
-  char tvp_title[100];
-  time_t tvp_start;
-  time_t tvp_stop;
-  char tvp_desc[1000];
-  int tvp_reftag;
-  char tvp_pvrstatus;
-  char tvp_timetxt[20];
-  char tvp_lentxt[20];
-  char tvp_weekday[20];
-  char tvp_filename[300];
-  int tvp_channel;
+typedef struct tvevent {
+  char tve_title[100];
+  time_t tve_start;
+  time_t tve_stop;
+  char tve_desc[1000];
+  int tve_tag;
+  int tve_next_tag;
+  int tve_prev_tag;
+  char tve_pvrstatus;
+  char tve_timetxt[20];
+  char tve_lentxt[20];
+  char tve_weekday[20];
+  char tve_filename[300];
+  int tve_channel;
 
-} tvprogramme_t;
+} tvevent_t;
 
 typedef struct tvchannel {
   char tvc_displayname[40];
   char tvc_icon[200];
-  int tvc_reftag;
+  int tvc_tag;
 } tvchannel_t;
 
 typedef struct tvhpkt {
@@ -100,10 +101,14 @@ void tvh_init(tvheadend_t *tvh, ic_t *input);
 
 int tvh_int(char *r);
 
-int tvh_get_channel(tvheadend_t *tvh, tvchannel_t *tvc, int channel);
+int tvh_get_channel(tvheadend_t *tvh, tvchannel_t *tvc, int chtag);
 
-int tvh_get_programme(tvheadend_t *tvh, tvprogramme_t *tvp, int channel, 
-		      int prog);
+int tvh_get_event_current(tvheadend_t *tvh, tvevent_t *tve, int chindex);
+
+int tvh_get_event_by_time(tvheadend_t *tvh, tvevent_t *tve, 
+			  int chindex, time_t when);
+
+int tvh_get_event_by_tag(tvheadend_t *tvh, tvevent_t *tve, int tag);
 
 glw_t *tvh_create_chicon(tvchannel_t *tvc, glw_t *parent, float weight);
 
@@ -111,9 +116,8 @@ void tvh_create_meta(tvheadend_t *tvh, glw_t *parent);
 
 glw_t *tvh_create_pvrstatus(glw_t *parent, char pvrstatus, float weight);
 
-int tvh_get_pvrlog(tvheadend_t *tvh, tvprogramme_t *tvp, int entry, 
+int tvh_get_pvrlog(tvheadend_t *tvh, tvevent_t *tve, int entry, 
 		   int istag);
-
 
 
 extern inline const char *
