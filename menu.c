@@ -404,6 +404,7 @@ menu_layout(appi_t *ai)
 
   w = ai->ai_menu;
   m = glw_get_opaque(w, menu_bitmap_callback);
+  m->m_expanded = 1;
 
   m->m_alpha2 = GLW_LP(16, m->m_alpha2, !!ai->ai_menu_display);
 
