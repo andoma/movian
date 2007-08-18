@@ -374,9 +374,6 @@ pvrprog_update(pvr_t *pvr)
     if(tvh_get_pvrlog(&pvr->pvr_tvh, &tve, e, 0))
       break;
 
-    printf("pvrprog_update, e = %d\n", e);
-    printf("\ttitle = %s\n", tve.tve_title);
-
     LIST_FOREACH(pvp, &pvr->pvr_log, pvp_link)
       if(pvp->pvp_eventinfo.tve_pvr_tag == tve.tve_pvr_tag)
 	break;
@@ -682,8 +679,6 @@ pvr_tag_refresh(pvr_t *pvr, int tag)
 {
   tvheadend_t *tvh = &pvr->pvr_tvh;
   pvrchan_t *pvc;
-
-  printf("tag = %d\n", tag);
 
   pthread_mutex_lock(&pvr->pvr_loader_lock);
 
