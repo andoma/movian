@@ -1320,7 +1320,8 @@ render_video_pipe(gl_video_pipe_t *gvp, glw_rctx_t *rc)
 
   if(width > 0) {
     glPolygonOffset(0, rc->rc_polyoffset - 2);
-    gl_dvdspu_display(gvp->gvp_dvd, gvp->gvp_dvdspu, width, height);
+    gl_dvdspu_display(gvp->gvp_dvd, gvp->gvp_dvdspu, width, height,
+		      rc->rc_alpha);
   }
 
   if(gvp->gvp_zoom > 100) {

@@ -521,7 +521,7 @@ gl_dvdspu_flush(gl_dvdspu_t *gd)
 
 void
 gl_dvdspu_display(struct dvd_player *dp, struct gl_dvdspu *gd, 
-		  float xsize, float ysize)
+		  float xsize, float ysize, float alpha)
 {
   gl_dvdspu_pic_t *gdp;
   int x;
@@ -584,7 +584,7 @@ gl_dvdspu_display(struct dvd_player *dp, struct gl_dvdspu *gd,
   glScalef(2.0f / xsize, -2.0f / ysize, 0.0f);
   glTranslatef(-xsize / 2, -ysize / 2, 0.0f);
 
-  glColor4f(1.0, 1.0, 1.0, 1.0f);
+  glColor4f(1.0, 1.0, 1.0, alpha);
 
   glBegin(GL_QUADS);
 
