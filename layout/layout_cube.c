@@ -45,6 +45,8 @@ static int mirror_input_event(inputevent_t *ie);
 static int menu_input_event(inputevent_t *ie);
 
 static void layout_apps(void);
+static void layout_gadgets(void);
+static void render_gadgets(float alpha);
 
 
 static int 
@@ -163,9 +165,7 @@ void
 layout_hide(appi_t *ai)
 {
   glw_t *w = root_array[curface & 3];
-
-  //  if(ai->ai_widget == w->glw_selected)
-    w->glw_flags &= ~GLW_ZOOMED;
+  w->glw_flags &= ~GLW_ZOOMED;
 }
 
 
@@ -258,6 +258,8 @@ draw_world(float ca, float rot, float alpha)
   if(ai != NULL)
     menu_render(ai, alpha);
 
+  render_gadgets(alpha);
+
   glDisable(GL_CLIP_PLANE5);
 }
 
@@ -316,6 +318,7 @@ layout_std_draw(void)
   }
 
   layout_apps();
+  layout_gadgets();
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -717,4 +720,117 @@ bar_title(const char *str)
 	     NULL);
 
   return r;
+}
+
+
+/*
+ *
+ */
+
+glw_t *gadget_clock;
+
+const char *months[] = {
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+static int
+clock_date_update(glw_t *w, void *opaque, glw_signal_t sig, ...)
+{
+  char buf[30];
+  struct tm tm;
+
+  switch(sig) {
+  default:
+    break;
+  case GLW_SIGNAL_PREPARE:
+    localtime_r(&walltime, &tm);
+    
+    snprintf(buf, sizeof(buf), "%d %s", tm.tm_mday, months[tm.tm_mon]);
+    glw_set(w, GLW_ATTRIB_CAPTION, buf, NULL);
+    break;
+  }
+  return 0;
+}
+
+
+
+static int
+clock_time_update(glw_t *w, void *opaque, glw_signal_t sig, ...)
+{
+  char buf[30];
+  struct tm tm;
+
+  switch(sig) {
+  default:
+    break;
+  case GLW_SIGNAL_PREPARE:
+    localtime_r(&walltime, &tm);
+    
+    snprintf(buf, sizeof(buf), "%d:%02d",
+	     tm.tm_hour, tm.tm_min);
+    glw_set(w, GLW_ATTRIB_CAPTION, buf, NULL);
+    break;
+  }
+  return 0;
+}
+
+
+
+
+
+
+
+static void
+layout_gadgets(void)
+{
+  glw_rctx_t rc;
+  glw_t *y;
+
+  if(gadget_clock == NULL) {
+
+    gadget_clock = glw_create(GLW_BITMAP,
+			      GLW_ATTRIB_FILENAME, "icon://plate.png",
+			      GLW_ATTRIB_FLAGS, GLW_NOASPECT,
+			      NULL);
+    
+    y = glw_create(GLW_CONTAINER_Y,
+		   GLW_ATTRIB_PARENT, gadget_clock,
+		   NULL);
+
+    glw_create(GLW_TEXT_BITMAP,
+	       GLW_ATTRIB_PARENT, y,
+	       GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
+	       GLW_ATTRIB_SIGNAL_HANDLER, clock_date_update, NULL, 0,
+	       NULL);
+
+    glw_create(GLW_TEXT_BITMAP,
+	       GLW_ATTRIB_PARENT, y,
+	       GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
+	       GLW_ATTRIB_SIGNAL_HANDLER, clock_time_update, NULL, 0,
+	       NULL);
+  }
+  memset(&rc, 0, sizeof(rc));
+  rc.rc_aspect = 16.0f / 9.0f;
+
+  glw_layout(gadget_clock, &rc);
+}
+
+
+static void
+render_gadgets(float alpha)
+{
+  glw_rctx_t rc;
+
+  memset(&rc, 0, sizeof(rc));
+  rc.rc_aspect = 16.0f / 9.0f;
+  rc.rc_alpha = alpha * 0.5;
+
+  glPushMatrix();
+  glTranslatef(-1.0, 0.1, 1.4);
+  glScalef(0.1, 0.1, 0.1);
+  glRotatef(45, 0, 1, 0);
+  glw_render(gadget_clock, &rc);
+  glPopMatrix();
+
+
 }
