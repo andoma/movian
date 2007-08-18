@@ -536,44 +536,11 @@ static int
 loaderbar_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
   b_dir_t *bd = opaque;
-  float x, a, v;
-  glw_rctx_t *rc;
-
-  va_list ap;
-  va_start(ap, signal);
 
   switch(signal) {
-
-  case GLW_SIGNAL_RENDER:
-
-    v = bd->bd_load_progress;
-
-    rc = va_arg(ap, void *);
-    a = 0.7 * rc->rc_alpha;
-    x = (2.0 * v) - 1.0f;
-
-    glPushMatrix();
-
-    glScalef(1.0, 0.8, 1.0f);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glBegin(GL_QUADS);
-
-    glColor4f(0.5f, 0.5f, 0.5f, a);
-
-    glVertex3f(-1.0f, -1.0f, 0.0f);
-    glVertex3f(    x, -1.0f, 0.0f);
-    glVertex3f(    x,  1.0f, 0.0f);
-    glVertex3f(-1.0f,  1.0f, 0.0f);
-
-    glEnd();
-    glDisable(GL_BLEND);
-
-    glPopMatrix();
-
+  case GLW_SIGNAL_PREPARE:
+    w->glw_extra = bd->bd_load_progress;
     return 0;
-
   default:
     return 0;
   }
@@ -649,24 +616,24 @@ sort_b_entry(const void *A, const void *B)
 
 
 static glw_t *
-browser_dir_title(browser_t *b, b_dir_t *bd, glw_t **zapp)
+browser_dir_title(browser_t *b, b_dir_t *bd)
 {
-  glw_t *sk;
+  glw_t *sk, *f;
   char buf[300];
   b_dir_t *bd0;
 
   sk = glw_create(GLW_CONTAINER_Z, NULL);
 
-  glw_create(GLW_BITMAP,
-	     GLW_ATTRIB_PARENT, sk,
-	     GLW_ATTRIB_FILENAME, "icon://plate-wide.png",
-	     GLW_ATTRIB_FLAGS, GLW_NOASPECT,
-	     NULL);
 
-  *zapp = glw_create(GLW_EXT,
-		     GLW_ATTRIB_PARENT, sk,
-		     GLW_ATTRIB_SIGNAL_HANDLER, loaderbar_callback, bd,
-		     NULL);
+  f = glw_create(GLW_XFADER,
+		 GLW_ATTRIB_PARENT, sk,
+		 NULL);
+
+  glw_create(GLW_BAR,
+	     GLW_ATTRIB_COLOR, GLW_COLOR_LIGHT_BLUE,
+	     GLW_ATTRIB_PARENT, f,
+	     GLW_ATTRIB_SIGNAL_HANDLER, loaderbar_callback, bd, 0,
+	     NULL);
 
   buf[0] = 0;
 
@@ -704,7 +671,7 @@ browser_load_dir(browser_t *b, b_entry_t *src, char *path, int enq, glw_t *p)
   int imagemode;
   int hastrack = 0;
   int music = 0;
-  glw_t *sk2, *zap = NULL;
+  glw_t *sk2 = NULL;
   
   bd = malloc(sizeof(b_dir_t));
   bd->bd_load_progress = 0;
@@ -717,7 +684,7 @@ browser_load_dir(browser_t *b, b_entry_t *src, char *path, int enq, glw_t *p)
   bd->bd_parent = src;
 
   if(!enq) {
-    sk2 = browser_dir_title(b, bd, &zap);
+    sk2 = browser_dir_title(b, bd);
 
     glw_destroy_auto(p); // destroy any lingering directories
 
@@ -838,7 +805,12 @@ browser_load_dir(browser_t *b, b_entry_t *src, char *path, int enq, glw_t *p)
     return;
   }
 
-  glw_destroy(zap);
+
+  glw_create(GLW_BITMAP,
+	     GLW_ATTRIB_PARENT, glw_find_by_class(sk2, GLW_XFADER),
+	     GLW_ATTRIB_FILENAME, "icon://plate-wide.png",
+	     GLW_ATTRIB_FLAGS, GLW_NOASPECT,
+	     NULL);
 
   imagemode = images > cnt / 2;
 
