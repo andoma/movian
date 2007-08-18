@@ -46,6 +46,7 @@ static float root_aspect;
 static void render_scene(void);
 
 int64_t wallclock;
+time_t walltime;
 
 glw_t *wroot;
 
@@ -261,8 +262,12 @@ render_scene(void)
 {
   int64_t frame_time;
   static float frame_rate;
+  struct timeval tv;
 
-  wallclock = showtime_get_ts();
+  gettimeofday(&tv, NULL);
+
+  wallclock = (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
+  walltime = tv.tv_sec;
 
   if(last_frame_time != 0) {
     frame_time = wallclock - last_frame_time;

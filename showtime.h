@@ -31,6 +31,7 @@ extern pthread_mutex_t ffmutex;
 #define ffunlock() pthread_mutex_unlock(&ffmutex)
 
 extern int64_t wallclock;
+extern time_t walltime;
 
 static inline int64_t
 showtime_get_ts(void)
