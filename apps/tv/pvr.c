@@ -1107,7 +1107,7 @@ pvr_thread(void *aux)
 	     GLW_ATTRIB_SIGNAL_HANDLER, pvr_2dnav_callback, pvr, 0,
 	     NULL);
 
-  w = add_sub_app(ai->ai_widget, "Scheduled Recordings", "icon://clock.png",
+  w = add_sub_app(ai->ai_widget, "Scheduled & Recorded", "icon://clock.png",
 		  PVR_SA_SCHED);
 
   pvr->pvr_w_sched = 
