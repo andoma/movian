@@ -229,28 +229,20 @@ feed_add(rssbrowser_t *rb, const char *caption, const char *url,
 		 GLW_ATTRIB_PARENT, c,
 		 NULL);
 
-  z = glw_create(GLW_CONTAINER_Z,
+  x = glw_create(GLW_CONTAINER_X,
 		 GLW_ATTRIB_PARENT, y,
 		 GLW_ATTRIB_WEIGHT, 0.3,
 		 NULL);
+  
 
   re->re_title_widget1 = glw_create(GLW_TEXT_BITMAP,
-				    GLW_ATTRIB_PARENT, z,
-				    GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
+				    GLW_ATTRIB_PARENT, x,
+				    GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_LEFT,
 				    GLW_ATTRIB_CAPTION, caption,
 				    NULL);
 
-  x = glw_create(GLW_CONTAINER_X,
-		 GLW_ATTRIB_PARENT, z,
-		 NULL);
-  
-
-  glw_create(GLW_DUMMY,
-	     GLW_ATTRIB_PARENT, x,
-	     GLW_ATTRIB_WEIGHT, 10.0f,
-	     NULL);
-
   re->re_status_container = glw_create(GLW_XFADER,
+				       GLW_ATTRIB_WEIGHT, 0.1f,
 				       GLW_ATTRIB_PARENT, x,
 				       NULL);
 
