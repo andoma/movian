@@ -165,7 +165,7 @@ menu_input(appi_t *ai, inputevent_t *ie)
 
     case INPUT_KEY_BACK:
       if(m != NULL)
-	menu_collapse(m);
+	m->m_expanded = 0;
       else
 	return 1; /* Close menu view */
     default:
