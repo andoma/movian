@@ -34,10 +34,13 @@ static int show_audio;
 static glw_t *audio_widget;
 
 void
-audio_render(glw_rctx_t *rc)
+audio_render(float alpha)
 {
-  glw_rctx_t rc0;
+  glw_rctx_t rc;
   asched_t *as = &audio_scheduler;
+
+  memset(&rc, 0, sizeof(rc));
+  rc.rc_aspect = 16.0 / 9.0 * 20.0f;
 
   if(show_audio > 0)
     show_audio--;
@@ -48,26 +51,27 @@ audio_render(glw_rctx_t *rc)
   if(audio_alpha < 0.01 || audio_widget == NULL)
     return;
 
-  rc0 = *rc;
-  rc0.rc_alpha = audio_alpha;
-
-  glDisable(GL_DEPTH_TEST);
+  rc.rc_alpha = audio_alpha * alpha;
 
   glPushMatrix();
 
-  glTranslatef(0.5, 0.9, 0.0f);
-  glScalef(0.2, 0.05, 1.0f);
+  glTranslatef(0.0, 0.5, 2.0f);
+  glScalef(0.8 * 0.6, 0.6 * 0.04, 1.0f);
   
-  rc0.rc_aspect *= 4;
-
-  glw_render(audio_widget, &rc0);
+  glw_render(audio_widget, &rc);
 
   glPopMatrix();
-
-  glEnable(GL_DEPTH_TEST);
-
 }
 
+void
+audio_layout(void)
+{
+  glw_rctx_t rc;
+  memset(&rc, 0, sizeof(rc));
+  rc.rc_aspect = 16.0 / 9.0 * 20.0f;
+
+  glw_layout(audio_widget, &rc);
+}
 
 void
 audio_ui_vol_changed(void)
@@ -84,60 +88,43 @@ audio_ui_vol_changed(void)
  */
 
 static int 
-miw_mastervol_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+audio_mastervol_bar_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  float x, a, vol;
-  glw_rctx_t *rc;
-  int mute;
   asched_t *as = opaque;
-
-  va_list ap;
-  va_start(ap, signal);
 
   switch(signal) {
     return 0;
 
-  case GLW_SIGNAL_RENDER:
-    vol = as->as_mastervol;
-    mute = as->as_mute;
+  case GLW_SIGNAL_PREPARE:
+    w->glw_extra = GLW_LP(3, w->glw_extra, as->as_mastervol);
 
-    rc = va_arg(ap, void *);
-    a = 0.7 * rc->rc_alpha;
-
-    x = (2.0 * vol) - 1.0f;
-
-    glPushMatrix();
-
-    glScalef(0.8, 0.8, 1.0f);
-
-    glEnable(GL_BLEND);
-    glBegin(GL_QUADS);
-
-    if(mute)
-      glColor4f(1.0f, 0.0f, 0.0f, a);
+    if(as->as_mute)
+      glw_set(w, GLW_ATTRIB_COLOR, GLW_COLOR_LIGHT_RED, NULL);
     else
-      glColor4f(0.5f, 1.0f, 0.5f, a);
+      glw_set(w, GLW_ATTRIB_COLOR, GLW_COLOR_LIGHT_GREEN, NULL);
 
-    glVertex3f(-1.0f, -1.0f, 0.0f);
-    glVertex3f(    x, -1.0f, 0.0f);
-    glVertex3f(    x,  1.0f, 0.0f);
-    glVertex3f(-1.0f,  1.0f, 0.0f);
+    return 0;
 
-    if(mute)
-      glColor4f(0.6f, 0.0f, 0.0f, a);
+  default:
+    return 0;
+  }
+}
+
+
+static int 
+audio_mastervol_txt_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  asched_t *as = opaque;
+  char buf[30];
+
+  switch(signal) {
+  case GLW_SIGNAL_PREPARE:
+    if(as->as_mute)
+      snprintf(buf, sizeof(buf), "Master volume: Muted");
     else
-      glColor4f(0.3f, 0.6f, 0.3f, a);
-
-    glVertex3f(    x, -1.0f, 0.0f);
-    glVertex3f( 1.0f, -1.0f, 0.0f);
-    glVertex3f( 1.0f,  1.0f, 0.0f);
-    glVertex3f(    x,  1.0f, 0.0f);
-
-    glEnd();
-    glDisable(GL_BLEND);
-
-    glPopMatrix();
-
+      snprintf(buf, sizeof(buf), "Master volume: %d%%", 
+	       (int)(as->as_mastervol * 100));
+    glw_set(w, GLW_ATTRIB_CAPTION, buf, NULL);
     return 0;
 
   default:
@@ -150,33 +137,29 @@ miw_mastervol_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 void
 audio_widget_make(asched_t *as)
 {
-  glw_t *w, *y;
+  glw_t *w, *z;
 
 
-  w = glw_create(GLW_CONTAINER,
-		 GLW_ATTRIB_COLOR, GLW_COLOR_BLACK,
-		 GLW_ATTRIB_ALPHA_SELF, 0.7f,
+  w = glw_create(GLW_BITMAP,
+		 GLW_ATTRIB_FILENAME, "icon://plate-wide.png",
+		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
 		 NULL);
 
   audio_widget = w;
 
-  y = glw_create(GLW_CONTAINER_Y,
+  z = glw_create(GLW_CONTAINER_Z,
 		 GLW_ATTRIB_PARENT, w,
 		 NULL);
 		 
-  glw_create(GLW_TEXT_VECTOR,
-	     GLW_ATTRIB_PARENT, y,
+  glw_create(GLW_BAR,
+	     GLW_ATTRIB_PARENT, z,
 	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
-	     GLW_ATTRIB_CAPTION, "Master volume",
+	     GLW_ATTRIB_SIGNAL_HANDLER, audio_mastervol_bar_callback, as, 0,
 	     NULL);
 
-  glw_create(GLW_RULER,
-	     GLW_ATTRIB_PARENT, y,
-	     GLW_ATTRIB_WEIGHT, 0.1,
-	     NULL);
-
-  glw_create(GLW_EXT,
-	     GLW_ATTRIB_PARENT, y,
-	     GLW_ATTRIB_SIGNAL_HANDLER, miw_mastervol_callback, as, 0,
+  glw_create(GLW_TEXT_BITMAP,
+	     GLW_ATTRIB_PARENT, z,
+	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
+	     GLW_ATTRIB_SIGNAL_HANDLER, audio_mastervol_txt_callback, as, 0,
 	     NULL);
 }

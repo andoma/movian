@@ -243,6 +243,7 @@ draw_world(float ca, float rot, float alpha)
     menu_render(ai, alpha);
 
   render_gadgets(alpha);
+  audio_render(alpha);
 
   glDisable(GL_CLIP_PLANE5);
 }
@@ -307,6 +308,7 @@ layout_std_draw(void)
 
   layout_apps();
   layout_gadgets();
+  audio_layout();
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();

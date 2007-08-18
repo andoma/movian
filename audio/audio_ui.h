@@ -21,7 +21,9 @@
 
 void audio_widget_make(asched_t *as);
 
-void audio_render(glw_rctx_t *rc);
+void audio_layout(void);
+
+void audio_render(float alpha);
 
 void audio_ui_vol_changed(void);
 
