@@ -298,20 +298,60 @@ miw_audiotime_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 }
 
 
+
+
+static int 
+miw_audiobar_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  media_pipe_t *mp = opaque;
+
+  va_list ap;
+  va_start(ap, signal);
+
+  switch(signal) {
+  case GLW_SIGNAL_PREPARE:
+    if(mp == NULL || mp->mp_total_time == 0)
+       return 0;
+ 
+    w->glw_extra = (float)mp->mp_time_feedback / (float)mp->mp_total_time;
+    break;
+
+  default:
+    break;
+  }
+  va_end(ap);
+  return 0;
+}
+
+
 glw_t *
 miw_audiotime_create(glw_t *parent, media_pipe_t *mp, float weight, 
 		     glw_alignment_t align)
 {
-  glw_t *w;
-
-  w = glw_create(GLW_TEXT_BITMAP,
-		 GLW_ATTRIB_PARENT, parent,
-		 GLW_ATTRIB_SIGNAL_HANDLER, miw_audiotime_callback, mp, 0,
+  glw_t *z;
+  
+  z = glw_create(GLW_CONTAINER_Y,
 		 GLW_ATTRIB_WEIGHT, weight,
-		 GLW_ATTRIB_ALIGNMENT, align,
-		 GLW_ATTRIB_CAPTION, "",
+		 GLW_ATTRIB_PARENT, parent,
 		 NULL);
-  return w;
+
+  glw_create(GLW_TEXT_BITMAP,
+	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_RIGHT,
+	     GLW_ATTRIB_WEIGHT, 2.0f,
+	     GLW_ATTRIB_PARENT, z,
+	     GLW_ATTRIB_SIGNAL_HANDLER, miw_audiotime_callback, mp, 0,
+	     NULL);
+
+
+  glw_create(GLW_BAR,
+	     GLW_ATTRIB_COLOR, GLW_COLOR_LIGHT_GREEN,
+	     GLW_ATTRIB_PARENT, z,
+	     GLW_ATTRIB_SIGNAL_HANDLER, miw_audiobar_callback, mp, 0,
+	     NULL);
+ 
+
+
+  return z;
 }
 
 

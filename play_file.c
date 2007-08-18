@@ -81,7 +81,7 @@ play_file_create_miw(media_pipe_t *mp, mediainfo_t *mi, glw_t **pscp)
 	     GLW_ATTRIB_CAPTION, s,
 	     NULL);
 
-  miw_audiotime_create(x, mp, 4.0f, GLW_ALIGN_RIGHT);
+  miw_audiotime_create(x, mp, 3.0f, GLW_ALIGN_RIGHT);
 
   return c;
 }
