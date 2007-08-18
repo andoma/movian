@@ -159,10 +159,7 @@ pvr_menu_recording_cb(glw_t *w, void *opaque, glw_signal_t signal, ...)
   switch(signal) {
   case GLW_SIGNAL_PREPARE:
     showme = pvr->pvr_cur_sa == PVR_SA_2DNAV && pvr->pvr_selected;
-    if(showme)
-      w->glw_flags &= ~GLW_HIDDEN;
-    else
-      w->glw_flags |= GLW_HIDDEN;
+    glw_set(w, GLW_ATTRIB_HIDDEN, !showme, NULL);
     break;
 
   default:

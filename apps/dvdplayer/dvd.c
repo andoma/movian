@@ -910,26 +910,26 @@ dvd_menu_spu(glw_t *w, void *opaque, glw_signal_t signal, ...)
   char str[40];
   glw_t *c;
   int u32, iscur;
-  time_t t;
 
   switch(signal) {
   case GLW_SIGNAL_PREPARE:
-    time(&t);
+    
+    if(walltime == w->glw_holdtime)
+      return 0;
+    w->glw_holdtime = walltime;
 
-    if(t == w->glw_holdtime)
-      return w->glw_flags & GLW_HIDDEN ? 1 : 0;
-    w->glw_holdtime = t;
+    if(dvd_subtitle_get_spu_name(dp, str, glw_get_u32(w), &u32, &iscur)) {
+      glw_set(w, GLW_ATTRIB_HIDDEN, 1, NULL);
+    } else {
+      glw_set(w, GLW_ATTRIB_HIDDEN, 0, NULL);
 
-    if(dvd_subtitle_get_spu_name(dp, str, glw_get_u32(w), &u32, &iscur))
-      return 1;
-
-    if((c = glw_find_by_class(w, GLW_TEXT_BITMAP)) != NULL)
-      glw_set(c, GLW_ATTRIB_CAPTION, str, NULL);
-
-    if((c = glw_find_by_class(w, GLW_BITMAP)) != NULL)
-      c->glw_alpha = iscur ? 1.0 : 0.0;
-
-    return 0;
+      if((c = glw_find_by_class(w, GLW_TEXT_BITMAP)) != NULL)
+	glw_set(c, GLW_ATTRIB_CAPTION, str, NULL);
+      
+      if((c = glw_find_by_class(w, GLW_BITMAP)) != NULL)
+	c->glw_alpha = iscur ? 1.0 : 0.0;
+    }
+    return 1;
 
   case GLW_SIGNAL_CLICK:
     dvd_spu_set_track(dp, glw_get_u32(w));
@@ -979,11 +979,9 @@ dvd_menu_spu_setup(glw_t *p, dvd_player_t *dp)
 
   v = menu_create_submenu(p, "icon://subtitles.png", "Subtitles", 0);
 
-  for(i = 0; i < 32; i++) {
+  for(i = 0; i < 32; i++)
     w = menu_create_item(v, "icon://menu-current.png", "",
 			 dvd_menu_spu, dp, i, 0);
-    w->glw_flags |= GLW_HIDDEN;
-  }
   
   menu_create_item(v, "icon://menu-current.png", "(off)",
 		   dvd_menu_spu_off, dp, -1, 0);
@@ -1088,26 +1086,26 @@ dvd_menu_atrack(glw_t *w, void *opaque, glw_signal_t signal, ...)
   char str[40];
   dvd_player_t *dp = opaque;
   int u32, iscur;
-  time_t t;
   glw_t *c;
 
   switch(signal) {
   case GLW_SIGNAL_PREPARE:
-    time(&t);
+    if(walltime == w->glw_holdtime)
+      return 0;
+    w->glw_holdtime = walltime;
 
-    if(t == w->glw_holdtime)
-      return w->glw_flags & GLW_HIDDEN ? 1 : 0;
-    w->glw_holdtime = t;
+    if(dvd_audio_get_track_name(dp, str, glw_get_u32(w), &u32, &iscur)) {
+      glw_set(w, GLW_ATTRIB_HIDDEN, 1, NULL);
+    } else {
+      glw_set(w, GLW_ATTRIB_HIDDEN, 0, NULL);
 
-    if(dvd_audio_get_track_name(dp, str, glw_get_u32(w), &u32, &iscur))
-      return 1;
-
-    if((c = glw_find_by_class(w, GLW_TEXT_BITMAP)) != NULL)
-      glw_set(c, GLW_ATTRIB_CAPTION, str, NULL);
-
-    if((c = glw_find_by_class(w, GLW_BITMAP)) != NULL)
-      c->glw_alpha = iscur ? 1.0 : 0.0;
-    return 0;
+      if((c = glw_find_by_class(w, GLW_TEXT_BITMAP)) != NULL)
+	glw_set(c, GLW_ATTRIB_CAPTION, str, NULL);
+      
+      if((c = glw_find_by_class(w, GLW_BITMAP)) != NULL)
+	c->glw_alpha = iscur ? 1.0 : 0.0;
+    }
+    return 1;
 
   case GLW_SIGNAL_CLICK:
     dvd_audio_set_track(dp, glw_get_u32(w));
@@ -1156,11 +1154,9 @@ dvd_menu_audio_setup(glw_t *p, dvd_player_t *dp)
 
   v = menu_create_submenu(p, "icon://audio.png", "Audio tracks", 0);
 
-  for(i = 0; i < 8; i++) {
+  for(i = 0; i < 8; i++)
     w = menu_create_item(v, "icon://menu-current.png", "",
 			 dvd_menu_atrack, dp, i, 0);
-    w->glw_flags |= GLW_HIDDEN;
-  }
   
   menu_create_item(v, "icon://menu-current.png", "(off)",
 		   dvd_menu_atrack_off, dp, -1, 0);

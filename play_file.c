@@ -467,45 +467,48 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
  *
  */
 
-
-
 static int
 audio_menu_atrack(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  time_t t;
   glw_t *c;
   media_pipe_t *mp = opaque;
-  AVFormatContext *fctx = mp->mp_format;
-  AVStream *st;
   char buf[256], *p;
+  AVStream *st;
+  AVFormatContext *fctx;
+  int stream_index = glw_get_u32(w);
 
   switch(signal) {
   case GLW_SIGNAL_PREPARE:
-    time(&t);
 
-    if(t == w->glw_holdtime)
-      return w->glw_flags & GLW_HIDDEN ? 1 : 0;
-    w->glw_holdtime = t;
-
-    if((c = glw_find_by_class(w, GLW_BITMAP)) != NULL)
-      c->glw_alpha = (mp->mp_audio.mq_stream == glw_get_u32(w)) ? 1 : 0;
-
-    if(glw_get_u32(w) == -1)
+    if(walltime == w->glw_holdtime)
       return 0;
 
-    if(glw_get_u32(w) >= fctx->nb_streams)
-      return 1;
+    w->glw_holdtime = walltime;
+    fctx = mp->mp_format;
 
-    st = fctx->streams[glw_get_u32(w)];
-    if(st->codec->codec_type != CODEC_TYPE_AUDIO)
+    if((c = glw_find_by_class(w, GLW_BITMAP)) != NULL)
+      c->glw_alpha = (mp->mp_audio.mq_stream == stream_index) ? 1 : 0;
+
+    if(stream_index < 0)
       return 1;
  
-    avcodec_string(buf, sizeof(buf), st->codec, 0);
-    p = strncasecmp(buf, "audio: ", 7) ? buf : buf + 7;
-    if((c = glw_find_by_class(w, GLW_TEXT_BITMAP)) != NULL)
-      glw_set(c, GLW_ATTRIB_CAPTION, p, NULL);
+    if(stream_index < fctx->nb_streams) {
 
-    return 0;
+      st = fctx->streams[stream_index];
+      if(st->codec->codec_type != CODEC_TYPE_AUDIO) {
+	glw_set(w, GLW_ATTRIB_HIDDEN, 1, NULL);
+      } else {
+	glw_set(w, GLW_ATTRIB_HIDDEN, 0, NULL);
+
+	avcodec_string(buf, sizeof(buf), st->codec, 0);
+	p = strncasecmp(buf, "audio: ", 7) ? buf : buf + 7;
+	if((c = glw_find_by_class(w, GLW_TEXT_BITMAP)) != NULL)
+	  glw_set(c, GLW_ATTRIB_CAPTION, p, NULL);
+      }
+    } else {
+      glw_set(w, GLW_ATTRIB_HIDDEN, 1, NULL);
+    }
+    return 1;
 
   case GLW_SIGNAL_CLICK:
     mp->mp_audio.mq_stream = glw_get_u32(w);
@@ -529,7 +532,6 @@ play_file_menu_audio_setup(glw_t *p, media_pipe_t *mp)
   for(i = 0; i < 16; i++) {
     w = menu_create_item(v, "icon://menu-current.png", "",
 			 audio_menu_atrack, mp, i, 0);
-    w->glw_flags |= GLW_HIDDEN;
   }
   
   menu_create_item(v, "icon://menu-current.png", "(off)",
