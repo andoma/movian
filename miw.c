@@ -486,7 +486,6 @@ glw_t *
 meta_container(glw_t *p, float weight)
 {
   p = glw_create(GLW_CONTAINER,
-		 GLW_ATTRIB_FLAGS, GLW_NOFILL,
 		 GLW_ATTRIB_WEIGHT, weight,
 		 GLW_ATTRIB_PARENT, p,
 		 NULL);
