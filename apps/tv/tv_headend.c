@@ -182,11 +182,11 @@ tvh_parse_event(tvevent_t *tve, void *r)
     else if((v = propcmp(x, "desc")) != NULL) 
       eolcpy(tve->tve_desc, v, sizeof(tve->tve_desc));
     else if((v = propcmp(x, "tag")) != NULL) 
-      tve->tve_tag = atoi(v);
+      tve->tve_event_tag = atoi(v);
     else if((v = propcmp(x, "next")) != NULL) 
-      tve->tve_next_tag = atoi(v);
+      tve->tve_event_tag_next = atoi(v);
     else if((v = propcmp(x, "prev")) != NULL) 
-      tve->tve_prev_tag = atoi(v);
+      tve->tve_event_tag_prev = atoi(v);
     else if((v = propcmp(x, "pvrstatus")) != NULL) 
       tve->tve_pvrstatus = v[0];
   }
@@ -242,8 +242,10 @@ tvh_get_pvrlog(tvheadend_t *tvh, tvevent_t *tve, int val, int istag)
       tve->tve_stop = atoi(v);
     else if((v = propcmp(x, "desc")) != NULL) 
       eolcpy(tve->tve_desc, v, sizeof(tve->tve_desc));
-    else if((v = propcmp(x, "reftag")) != NULL) 
-      tve->tve_tag = atoi(v);
+    else if((v = propcmp(x, "pvr_tag")) != NULL) 
+      tve->tve_pvr_tag = atoi(v);
+    else if((v = propcmp(x, "event_tag")) != NULL) 
+      tve->tve_event_tag = atoi(v);
     else if((v = propcmp(x, "pvrstatus")) != NULL) 
       tve->tve_pvrstatus = v[0];
     else if((v = propcmp(x, "filename")) != NULL) 

@@ -49,20 +49,12 @@ typedef struct pvrprog {
   TAILQ_ENTRY(pvrprog) pvp_linkq;
   
   tvevent_t pvp_eventinfo;
-  int pvp_tag;
 
   int pvp_keepme; /* temporary flag used for expunge */
 
+  glw_t *pvp_xfader;
   glw_t *pvp_widget;
-  glw_t *pvp_eventinfocontainer;
 
-
-  glw_t *pvp_w_desc;
-  glw_t *pvp_w_status_container;
-  glw_t *pvp_w_status_xfader;
-
-  glw_t *pvp_w_menu_container;
-  glw_t *pvp_w_menu;
 
   float pvp_alpha;
 
@@ -129,7 +121,7 @@ typedef struct pvr {
 
   appi_t *pvr_ai;
 
-  TAILQ_HEAD(, pvrprog) pvr_log;
+  LIST_HEAD(, pvrprog) pvr_log;
 
   pvr_subapp_t pvr_cur_sa;
 
@@ -153,6 +145,33 @@ static int pvr_2dnav_callback(glw_t *w, void *opaque,
 /*
  *
  */
+static int 
+pvl_entry_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  return 0;
+}
+
+/*
+ *
+ */
+static pvrprog_t *
+pvr_get_sel_pvp(pvr_t *pvr)
+{
+  glw_t *w;
+  switch(pvr->pvr_cur_sa) {
+  case PVR_SA_2DNAV:
+    return pvr->pvr_selected;
+  case PVR_SA_SCHED:
+    w = pvr->pvr_w_sched->glw_selected;
+    return w ? glw_get_opaque(w, pvl_entry_callback) : NULL;
+  default:
+    return NULL;
+  }
+}
+
+/*
+ *
+ */
 static int
 pvr_menu_recording_cb(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
@@ -163,7 +182,7 @@ pvr_menu_recording_cb(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
   switch(signal) {
   case GLW_SIGNAL_PREPARE:
-    pvp = pvr->pvr_cur_sa == PVR_SA_2DNAV ? pvr->pvr_selected : NULL;
+    pvp = pvr_get_sel_pvp(pvr);
     showme = pvp && 
       pvp->pvp_eventinfo.tve_pvrstatus == HTSTV_PVR_STATUS_NONE && 
       pvp->pvp_eventinfo.tve_stop > walltime;
@@ -191,7 +210,7 @@ pvr_menu_cancel_cb(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
   switch(signal) {
   case GLW_SIGNAL_PREPARE:
-    pvp = pvr->pvr_cur_sa == PVR_SA_2DNAV ? pvr->pvr_selected : NULL;
+    pvp = pvr_get_sel_pvp(pvr);
     if(pvp != NULL && pvp->pvp_eventinfo.tve_stop > walltime) {
       switch(pvp->pvp_eventinfo.tve_pvrstatus) {
 	
@@ -280,7 +299,7 @@ pvl_create_widget(pvr_t *pvr, pvrprog_t *pvp)
   tvevent_t *tve = &pvp->pvp_eventinfo;
 
   c = glw_create(GLW_BITMAP,
-		 GLW_ATTRIB_PARENT, pvp->pvp_widget,
+		 GLW_ATTRIB_PARENT, pvp->pvp_xfader,
 		 GLW_ATTRIB_COLOR, pvp_plate_color_by_meta(tve),
 		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
 		 GLW_ATTRIB_FILENAME, "icon://plate.png",
@@ -309,6 +328,11 @@ pvl_create_widget(pvr_t *pvr, pvrprog_t *pvp)
 	     GLW_ATTRIB_CAPTION, tve->tve_timetxt,
 	     NULL);
 
+  glw_create(GLW_DUMMY,
+	     GLW_ATTRIB_PARENT, y,
+	     NULL);
+
+
   tvh_create_pvrstatus(x, tve->tve_pvrstatus, 1.0f);
 
   pvp->pvp_widget = c;
@@ -316,19 +340,23 @@ pvl_create_widget(pvr_t *pvr, pvrprog_t *pvp)
 }
 
 static void
-pvrprog_refresh(pvr_t *pvr, pvrprog_t *pvp)
+pvrprog_refresh(pvr_t *pvr, int tag)
 {
-  glw_t *p;
-  tvevent_t *tve = &pvp->pvp_eventinfo;
-  if(tvh_get_pvrlog(&pvr->pvr_tvh, tve, tve->tve_tag, 1)) {
+  tvevent_t tve;
+  pvrprog_t *pvp;
+
+  LIST_FOREACH(pvp, &pvr->pvr_log, pvp_link)
+    if(pvp->pvp_eventinfo.tve_pvr_tag == tag)
+      break;
+
+  if(pvp == NULL)
     return;
-  }
 
-  p = pvp->pvp_widget;
-
+  if(tvh_get_pvrlog(&pvr->pvr_tvh, &tve, tag, 1))
+    return;
+ 
+  memcpy(&pvp->pvp_eventinfo, &tve, sizeof(tvevent_t));
   pvl_create_widget(pvr, pvp);
-
-  glw_destroy(p);
 }
 
 
@@ -341,50 +369,53 @@ pvrprog_update(pvr_t *pvr)
   tvevent_t tve;
   pvrchan_t *pvc;
 
-
-  pvp = TAILQ_FIRST(&pvr->pvr_log);
   
   while(1) {
     if(tvh_get_pvrlog(&pvr->pvr_tvh, &tve, e, 0))
       break;
 
-    glw_lock();
+    printf("pvrprog_update, e = %d\n", e);
+    printf("\ttitle = %s\n", tve.tve_title);
+
+    LIST_FOREACH(pvp, &pvr->pvr_log, pvp_link)
+      if(pvp->pvp_eventinfo.tve_pvr_tag == tve.tve_pvr_tag)
+	break;
     
     if(pvp == NULL) {
       pvp = calloc(1, sizeof(pvrprog_t));
       pvp->pvp_type = PVP_LOG;
-      pvp->pvp_widget = glw_create(GLW_XFADER,
-				   GLW_ATTRIB_PARENT, pvr->pvr_w_sched,
-				   NULL);
-      
-      TAILQ_INSERT_TAIL(&pvr->pvr_log, pvp, pvp_linkq);
-    }
+      pvp->pvp_xfader =
+	glw_create(GLW_XFADER,
+		   GLW_ATTRIB_PARENT, pvr->pvr_w_sched,
+		   GLW_ATTRIB_SIGNAL_HANDLER, pvl_entry_callback, pvp, 0,
+		   NULL);
 
-    TAILQ_FOREACH(pvc, &pvr->pvr_channels, pvc_link)
-      if(pvc->pvc_index == tve.tve_channel)
-	break;
-    
-    pvp->pvp_chan = pvc;
+      LIST_INSERT_HEAD(&pvr->pvr_log, pvp, pvp_link);
+
+      TAILQ_FOREACH(pvc, &pvr->pvr_channels, pvc_link)
+	if(pvc->pvc_index == tve.tve_channel)
+	  break;
+      
+      pvp->pvp_chan = pvc;
+    }
     memcpy(&pvp->pvp_eventinfo, &tve, sizeof(tvevent_t));
-    pvp->pvp_tag = tve.tve_tag;
 
     pvl_create_widget(pvr, pvp);
-    
-    glw_unlock();
-
-    pvp = TAILQ_NEXT(pvp, pvp_linkq);
+    pvp->pvp_keepme = 1;
     e++;
   }
   
-  for(; pvp ; pvp = next) {
-    next = TAILQ_NEXT(pvp, pvp_linkq);
-    glw_lock();
-    if(pvp->pvp_widget)
-      glw_destroy(pvp->pvp_widget);
-    TAILQ_REMOVE(&pvr->pvr_log, pvp, pvp_linkq);
-    glw_unlock();
+  for(pvp = LIST_FIRST(&pvr->pvr_log); pvp != NULL; pvp = next) {
+    next = LIST_NEXT(pvp, pvp_link);
 
-    free(pvp);
+    if(pvp->pvp_keepme == 0) {
+      
+      glw_destroy(pvp->pvp_xfader);
+      LIST_REMOVE(pvp, pvp_link);
+      free(pvp);
+    } else {
+      pvp->pvp_keepme = 0;
+    }
   }
 }
 
@@ -491,15 +522,6 @@ pvp_destroy(pvrprog_t *pvp)
 {
   glw_lock();
 
-  if(pvp->pvp_w_desc)
-    glw_destroy(pvp->pvp_w_desc);
-
-  if(pvp->pvp_w_status_container)
-    glw_destroy(pvp->pvp_w_status_container);
-
-  if(pvp->pvp_w_menu_container)
-    glw_destroy(pvp->pvp_w_menu_container);
-
   glw_destroy(pvp->pvp_widget);
   LIST_REMOVE(pvp, pvp_link);
   free(pvp);
@@ -517,13 +539,10 @@ pvp_sort(pvrprog_t *a, pvrprog_t *b)
 static pvrprog_t *
 pvp_insert(pvr_t *pvr, pvrchan_t *pvc, pvrprog_t *pvp, tvevent_t *tve)
 {
-  int tag = tve->tve_tag;
-
   glw_lock();
 
   if(pvp == NULL) {
     pvp = calloc(1, sizeof(pvrprog_t));
-    pvp->pvp_tag = tag;
     pvp->pvp_chan = pvc;
     pvp->pvp_type = PVP_PROG;
   } else {
@@ -556,10 +575,10 @@ pvp_load_by_time(tvheadend_t *tvh, pvr_t *pvr, pvrchan_t *pvc, time_t t)
   if(tvh_get_event_by_time(tvh, &tve, pvc->pvc_index, pvr->pvr_timeptr) < 0)
     return NULL;
   
-  tag = tve.tve_tag;
+  tag = tve.tve_event_tag;
 
   LIST_FOREACH(pvp, &pvc->pvc_programs, pvp_link)
-    if(pvp->pvp_tag == tag)
+    if(pvp->pvp_eventinfo.tve_event_tag == tag)
       break;
 
   return pvp_insert(pvr, pvc, pvp, &tve);
@@ -574,7 +593,7 @@ pvp_load_by_tag(tvheadend_t *tvh, pvr_t *pvr, pvrchan_t *pvc, uint32_t tag,
   tvevent_t tve;
 
   LIST_FOREACH(pvp, &pvc->pvc_programs, pvp_link)
-    if(pvp->pvp_tag == tag)
+    if(pvp->pvp_eventinfo.tve_event_tag == tag)
       break;
 
   if(pvp != NULL && update == 0)
@@ -621,7 +640,7 @@ pvr_update_thread(void *aux)
 
       center->pvp_keepme = 1;
 
-      tag = center->pvp_eventinfo.tve_prev_tag;
+      tag = center->pvp_eventinfo.tve_event_tag_prev;
 
       while(tag) {
 	if((pvp = pvp_load_by_tag(tvh, pvr, pvc, tag, 0)) == NULL) 
@@ -629,17 +648,17 @@ pvr_update_thread(void *aux)
 	pvp->pvp_keepme = 1;
 	if(pvp->pvp_eventinfo.tve_stop < pvr->pvr_timeptr - PVR_TIME_MARGINS)
 	  break;
-	tag = pvp->pvp_eventinfo.tve_prev_tag;
+	tag = pvp->pvp_eventinfo.tve_event_tag_prev;
       }
 
-      tag = center->pvp_eventinfo.tve_next_tag;
+      tag = center->pvp_eventinfo.tve_event_tag_next;
       while(tag) {
 	if((pvp = pvp_load_by_tag(tvh, pvr, pvc, tag, 0)) == NULL)
 	  break;
 	pvp->pvp_keepme = 1;
 	if(pvp->pvp_eventinfo.tve_start > pvr->pvr_timeptr + PVR_TIME_MARGINS)
 	  break;
-	tag = pvp->pvp_eventinfo.tve_next_tag;
+	tag = pvp->pvp_eventinfo.tve_event_tag_next;
       }
       
       for(pvp = LIST_FIRST(&pvc->pvc_programs) ; pvp != NULL; pvp = nxt) {
@@ -663,7 +682,8 @@ pvr_tag_refresh(pvr_t *pvr, int tag)
 {
   tvheadend_t *tvh = &pvr->pvr_tvh;
   pvrchan_t *pvc;
-  pvrprog_t *pvp;
+
+  printf("tag = %d\n", tag);
 
   pthread_mutex_lock(&pvr->pvr_loader_lock);
 
@@ -675,14 +695,7 @@ pvr_tag_refresh(pvr_t *pvr, int tag)
 
     /* Update an event in the pvr log */
 
-    TAILQ_FOREACH(pvp, &pvr->pvr_log, pvp_linkq) {
-      if(pvp->pvp_eventinfo.tve_tag == tag)
-	pvrprog_refresh(pvr, pvp);
-
-      if(pvp->pvp_w_status_xfader != NULL)
-	tvh_create_pvrstatus(pvp->pvp_w_status_xfader, 
-			     pvp->pvp_eventinfo.tve_pvrstatus, 1.0f);
-    }
+    pvrprog_refresh(pvr, tag);
 
     /* Update an event in the program guide */
 
@@ -698,12 +711,13 @@ pvr_tag_refresh(pvr_t *pvr, int tag)
  *
  */
 static void
-pvr_rec_cmd(pvr_t *pvr, pvrprog_t *pvp, const char *cmd)
+pvr_rec_cmd(pvr_t *pvr, const char *cmd)
 {
-  if(pvp == NULL)
-    return;
+  pvrprog_t *pvp;
+  pvp = pvr_get_sel_pvp(pvr);
 
-  tvh_int(tvh_query(&pvr->pvr_tvh, "event.record %d %s", pvp->pvp_tag, cmd));
+  tvh_int(tvh_query(&pvr->pvr_tvh, "event.record %d %s",
+		    pvp->pvp_eventinfo.tve_event_tag, cmd));
 }
 
 /*
@@ -788,23 +802,23 @@ pvr_sa_2dnav_keystrike(pvr_t *pvr, inputevent_t *ie)
 
 
   case INPUT_KEY_RECORD_ONCE:
-    pvr_rec_cmd(pvr, pvr->pvr_selected, "once");
+    pvr_rec_cmd(pvr, "once");
     return 1;
 
   case INPUT_KEY_RECORD_DAILY:
-    pvr_rec_cmd(pvr, pvr->pvr_selected, "daily");
+    pvr_rec_cmd(pvr, "daily");
     return 1;
 
   case INPUT_KEY_RECORD_WEEKLY:
-    pvr_rec_cmd(pvr, pvr->pvr_selected, "weekly");
+    pvr_rec_cmd(pvr, "weekly");
     return 1;
 
   case INPUT_KEY_RECORD_CANCEL:
-    pvr_rec_cmd(pvr, pvr->pvr_selected, "cancel");
+    pvr_rec_cmd(pvr, "cancel");
     return 1;
 
   case INPUT_KEY_RECORD_TOGGLE:
-    pvr_rec_cmd(pvr, pvr->pvr_selected, "toggle");
+    pvr_rec_cmd(pvr, "toggle");
     return 1;
   }
   return 0;
@@ -845,6 +859,69 @@ pvr_sa_2dnav_ie(pvr_t *pvr, inputevent_t *ie)
   }
 }
 
+
+/*
+ *
+ */
+static int
+pvr_sa_sched_keystrike(pvr_t *pvr, inputevent_t *ie)
+{
+  appi_t *ai = pvr->pvr_ai;
+
+
+  switch(ie->u.key) {
+  default:
+    break;
+
+  case INPUT_KEY_BACK:
+    pvr->pvr_ai->ai_widget->glw_flags &= ~GLW_ZOOMED; /* XXX: fix locking */
+    pvr->pvr_cur_sa = 0;
+    break;
+    
+  case INPUT_KEY_ENTER:
+    ai->ai_menu_display = !ai->ai_menu_display;
+    break;
+
+  case INPUT_KEY_UP:
+    glw_nav_signal(pvr->pvr_w_sched, GLW_SIGNAL_UP);
+    break;
+
+  case INPUT_KEY_DOWN:
+    glw_nav_signal(pvr->pvr_w_sched, GLW_SIGNAL_DOWN);
+    break;
+
+  case INPUT_KEY_LEFT:
+    glw_nav_signal(pvr->pvr_w_sched, GLW_SIGNAL_LEFT);
+    break;
+
+  case INPUT_KEY_RIGHT:
+    glw_nav_signal(pvr->pvr_w_sched, GLW_SIGNAL_RIGHT);
+    break;
+
+  case INPUT_KEY_RECORD_ONCE:
+    pvr_rec_cmd(pvr, "once");
+    return 1;
+
+  case INPUT_KEY_RECORD_DAILY:
+    pvr_rec_cmd(pvr, "daily");
+    return 1;
+
+  case INPUT_KEY_RECORD_WEEKLY:
+    pvr_rec_cmd(pvr, "weekly");
+    return 1;
+
+  case INPUT_KEY_RECORD_CANCEL:
+    pvr_rec_cmd(pvr, "cancel");
+    return 1;
+
+  case INPUT_KEY_RECORD_TOGGLE:
+    pvr_rec_cmd(pvr, "toggle");
+    return 1;
+  }
+  return 0;
+}
+
+
 /*
  *
  */
@@ -852,6 +929,26 @@ pvr_sa_2dnav_ie(pvr_t *pvr, inputevent_t *ie)
 static void
 pvr_sa_sched_ie(pvr_t *pvr, inputevent_t *ie)
 {
+
+  int reload = 0;
+
+  switch(ie->type) {
+
+  default:
+    break;
+
+  case INPUT_KEY:
+    reload = pvr_sa_sched_keystrike(pvr, ie);
+    break;
+  }
+
+  if(reload) {
+    pthread_mutex_lock(&pvr->pvr_loader_lock);
+    pvr->pvr_loader_work = 1;
+    pthread_cond_signal(&pvr->pvr_loader_cond);
+    pthread_mutex_unlock(&pvr->pvr_loader_lock);
+  }
+
 }
 
 /*
@@ -993,7 +1090,7 @@ pvr_thread(void *aux)
   pvr->pvr_autoscaler = 3600;
 
   TAILQ_INIT(&pvr->pvr_channels);
-  TAILQ_INIT(&pvr->pvr_log);
+
   pvr->pvr_tag_hash = glw_taghash_create();
   pvr->pvr_yzoom = 5.0f;
   pvr->pvr_xzoom = 5.0f;
@@ -1021,6 +1118,7 @@ pvr_thread(void *aux)
   pvr->pvr_w_sched = 
     glw_create(GLW_ARRAY,
 	       GLW_ATTRIB_X_SLICES, 1,
+	       GLW_ATTRIB_Y_SLICES, 7,
 	       GLW_ATTRIB_PARENT, w,
 	       GLW_ATTRIB_SIDEKICK, bar_title("Scheduled recordings"),
 	       NULL);
@@ -1304,72 +1402,6 @@ pvr_2dnav_layout(pvr_t *pvr, glw_rctx_t *rc)
 
   if(!ai->ai_menu_display)
     pvr->pvr_selected = sel;
-
-  if((pvp = pvr->pvr_selected) != NULL) {
-    
-    zo = GLW_S(GLW_MAX(pvr->pvr_zoomv * 2, 1.0) - 1.0f);
-
-    w = pvp->pvp_w_desc;
-    if(w != NULL && zo > 0.0) {
-
-      w->glw_pos.x = 0;
-      w->glw_pos.y = GLW_LERP(zo, -1, -2.0/3.0);
-      w->glw_pos.z = 0;
-
-      w->glw_scale.x = 1.0f;
-      w->glw_scale.y = 1.0/3.0;
-      w->glw_scale.z = 1.0f;
-
-      w->glw_rctx = *rc;
-      w->glw_rctx.rc_alpha = zo;
-      w->glw_rctx.rc_aspect = rc->rc_aspect * w->glw_scale.x / w->glw_scale.y;
-      
-      glw_layout(w, &w->glw_rctx);
-      LIST_INSERT_HEAD(&pvr->pvr_rlist_1, w, glw_tmp_link);
-      w->glw_flags |= GLW_TMP_LINKED;
-    }
-
-    w = pvp->pvp_w_status_container;
-    if(w != NULL && zo > 0.0) {
-
-      w->glw_pos.x = 0;
-      w->glw_pos.y = GLW_LERP(zo, 1.0f, 2.0/3.0);
-      w->glw_pos.z = 0;
-
-      w->glw_scale.x = 1.0/3.0;
-      w->glw_scale.y = 1.0/3.0;
-      w->glw_scale.z = 1.0f;
-
-      w->glw_rctx = *rc;
-      w->glw_rctx.rc_alpha = zo;
-      w->glw_rctx.rc_aspect = rc->rc_aspect * w->glw_scale.x / w->glw_scale.y;
-      
-      glw_layout(w, &w->glw_rctx);
-      LIST_INSERT_HEAD(&pvr->pvr_rlist_1, w, glw_tmp_link);
-      w->glw_flags |= GLW_TMP_LINKED;
-    }
-
-
-    w = pvp->pvp_w_menu_container;
-    if(w != NULL && zo > 0.0) {
-
-      w->glw_pos.x = 0.8;
-      w->glw_pos.y = GLW_LERP(zo, 1.0f, 2.0/3.0);
-      w->glw_pos.z = 0;
-
-      w->glw_scale.x = 0.19f;
-      w->glw_scale.y = 1.0/3.0;
-      w->glw_scale.z = 1.0f;
-
-      w->glw_rctx = *rc;
-      w->glw_rctx.rc_alpha = zo;
-      w->glw_rctx.rc_aspect = rc->rc_aspect * w->glw_scale.x / w->glw_scale.y;
-      
-      glw_layout(w, &w->glw_rctx);
-      LIST_INSERT_HEAD(&pvr->pvr_rlist_1, w, glw_tmp_link);
-      w->glw_flags |= GLW_TMP_LINKED;
-    }
-  }
 }
 
 

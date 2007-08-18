@@ -68,9 +68,10 @@ typedef struct tvevent {
   time_t tve_start;
   time_t tve_stop;
   char tve_desc[1000];
-  int tve_tag;
-  int tve_next_tag;
-  int tve_prev_tag;
+  int tve_pvr_tag;
+  int tve_event_tag;
+  int tve_event_tag_next;
+  int tve_event_tag_prev;
   char tve_pvrstatus;
   char tve_timetxt[20];
   char tve_lentxt[20];
