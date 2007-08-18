@@ -347,9 +347,9 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
       title = make_nice_title(title + 1);
   }
 
-  vmenu = gvp_menu_setup(appi_menu_top(ai), &gc);
-  amenu = dvd_menu_audio_setup(appi_menu_top(ai), dp);
   smenu = dvd_menu_spu_setup(appi_menu_top(ai), dp);
+  amenu = dvd_menu_audio_setup(appi_menu_top(ai), dp);
+  vmenu = gvp_menu_setup(appi_menu_top(ai), &gc);
 
   
   mp = &ai->ai_mp;
@@ -977,7 +977,7 @@ dvd_menu_spu_setup(glw_t *p, dvd_player_t *dp)
   glw_t *v, *w;
   int i;
 
-  v = menu_create_submenu(p, "icon://subtitles.png", "Subtitles", 0);
+  v = menu_create_submenu(p, "icon://subtitles.png", "Subtitles", 1);
 
   for(i = 0; i < 32; i++)
     w = menu_create_item(v, "icon://menu-current.png", "",
@@ -1152,7 +1152,7 @@ dvd_menu_audio_setup(glw_t *p, dvd_player_t *dp)
   glw_t *v, *w;
   int i;
 
-  v = menu_create_submenu(p, "icon://audio.png", "Audio tracks", 0);
+  v = menu_create_submenu(p, "icon://audio.png", "Audio tracks", 1);
 
   for(i = 0; i < 8; i++)
     w = menu_create_item(v, "icon://menu-current.png", "",
