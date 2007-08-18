@@ -106,6 +106,18 @@ menu_array_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
   return 0;
 }
 
+/*
+ *
+ */
+void
+menu_collapse(menu_t *m)
+{
+  m->m_expanded = 0;
+  glw_vertex_anim_set3f(&m->m_pos,   0.0, 0.0, MENU_Z_MAX);
+  glw_vertex_anim_set3f(&m->m_alpha, 0.0, 0.0, 0.0);
+  glw_vertex_anim_fwd(&m->m_pos,   1.0);
+  glw_vertex_anim_fwd(&m->m_alpha, 1.0);
+}
 
 /*
  *
@@ -153,7 +165,7 @@ menu_input(appi_t *ai, inputevent_t *ie)
 
     case INPUT_KEY_BACK:
       if(m != NULL)
-	m->m_expanded = 0;
+	menu_collapse(m);
       else
 	return 1; /* Close menu view */
     default:
@@ -371,7 +383,7 @@ menu_post_key_pop_and_hide(glw_t *w, void *opaque, glw_signal_t signal, ...)
   switch(signal) {
   case GLW_SIGNAL_CLICK:
     input_keystrike(&ai->ai_ic, glw_get_u32(w));
-    m->m_expanded = 0;
+    menu_collapse(m);
     ai->ai_menu_display = 0;
     return 1;
     
