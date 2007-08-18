@@ -40,6 +40,7 @@
 typedef struct menu {
   LIST_ENTRY(menu) m_link;
   int m_expanded;
+  int m_istop;
   glw_t *m_plate;
   glw_t *m_array;
   glw_t *m_stack;
@@ -112,7 +113,8 @@ menu_array_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 void
 menu_collapse(menu_t *m)
 {
-  m->m_expanded = 0;
+  if(m->m_istop)
+    return;
   glw_vertex_anim_set3f(&m->m_pos,   0.0, 0.0, MENU_Z_MAX);
   glw_vertex_anim_set3f(&m->m_alpha, 0.0, 0.0, 0.0);
   glw_vertex_anim_fwd(&m->m_pos,   1.0);
@@ -278,8 +280,10 @@ menu_create_menu(glw_t *p, const char *title)
     glw_set(p, 
 	    GLW_ATTRIB_SIGNAL_HANDLER, menu_submenu_item_event, m, 0,
 	    NULL);
-  else
+  else {
     m->m_expanded = 1;
+    m->m_istop = 1;
+  }
 
   m->m_plate = b;
   m->m_array = w;
@@ -416,7 +420,6 @@ menu_layout(appi_t *ai)
 
   w = ai->ai_menu;
   m = glw_get_opaque(w, menu_bitmap_callback);
-  m->m_expanded = 1;
 
   m->m_alpha2 = GLW_LP(16, m->m_alpha2, !!ai->ai_menu_display);
 
