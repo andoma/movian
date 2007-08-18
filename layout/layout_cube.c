@@ -38,7 +38,7 @@ static int curface;
 
 float face_alpha[4];
 
-static void miw_render(void);
+static float miw_render(void);
 
 static int mirror_input_event(inputevent_t *ie);
 static int menu_input_event(inputevent_t *ie);
@@ -247,10 +247,12 @@ draw_world(float ca, float rot, float alpha)
   glDisable(GL_CLIP_PLANE5);
 }
 
+#define CAMZ 4.2
+
 static glw_vertex_anim_t ctgt = 
  GLW_VERTEX_ANIM_SIN_INITIALIZER(0, 1, 1);
 static glw_vertex_anim_t cpos = 
- GLW_VERTEX_ANIM_SIN_INITIALIZER(0, 1.5, 4);
+ GLW_VERTEX_ANIM_SIN_INITIALIZER(0, 1.5, CAMZ);
 static glw_vertex_anim_t fcol = 
  GLW_VERTEX_ANIM_SIN_INITIALIZER(0.09, 0.11, 0.2);
 static glw_vertex_anim_t malpha = 
@@ -265,6 +267,8 @@ layout_std_draw(void)
   static float ca; /* cube alpha */
   static float rot; /* cube rotation */
   int i;
+  float cz;
+  static float topinfospace;
 
   glw_vertex_t cpos_xyz;
   glw_vertex_t ctgt_xyz;
@@ -312,8 +316,10 @@ layout_std_draw(void)
   ai = layout_get_cur_app();
   b = ca < 0.01 && ai != NULL && ai->ai_got_fullscreen;
     
+  cz = 4.0;
+
   if(ai && ai->ai_menu_display) {
-    glw_vertex_anim_set3f(&cpos,   0,    1.5,  4);
+    glw_vertex_anim_set3f(&cpos,   0,    1.5,  CAMZ);
     glw_vertex_anim_set3f(&ctgt,   -0.5, 1.0, 1.0);
     glw_vertex_anim_set3f(&fcol,   0.09, 0.11, 0.2);
     glw_vertex_anim_set3f(&malpha, 0.1,  0,    0);
@@ -323,7 +329,7 @@ layout_std_draw(void)
     glw_vertex_anim_set3f(&fcol,   0, 0,   0);
     glw_vertex_anim_set3f(&malpha, 0, 0,   0);
   } else {
-    glw_vertex_anim_set3f(&cpos,   0,    1.5,  4);
+    glw_vertex_anim_set3f(&cpos,   0,    1.5,  CAMZ);
     glw_vertex_anim_set3f(&ctgt,   0, 1.0, 1.0);
     glw_vertex_anim_set3f(&fcol,   0.09, 0.11, 0.2);
     glw_vertex_anim_set3f(&malpha, 0.1,  0,    0);
@@ -388,7 +394,7 @@ layout_std_draw(void)
   	    0, 0, 0,
 	    0, 1, 0);
 
-  miw_render();
+  topinfospace = miw_render();
 }
 
 
@@ -578,7 +584,7 @@ layout_register_app(app_t *a)
  *
  */
 
-static void
+static float
 miw_render(void)
 {
   media_pipe_t *mp = audio_sched_mp_get();
@@ -587,6 +593,7 @@ miw_render(void)
   glw_rctx_t rc0;
   appi_t *ai = layout_get_cur_app();
   const float size = 0.05f;
+  float space = 0;
 
   //  if(ai != NULL)
   //    printf("active appi = %p, %s\n", ai, ai->ai_app->app_name);
@@ -596,7 +603,7 @@ miw_render(void)
   rc0.rc_aspect = 16.0f / 9.0f;
 
   if(mp == NULL)
-    return;
+    return 0;
 
   rc0.rc_aspect *= 1 / size;
   rc0.rc_polyoffset -= 2;
@@ -642,7 +649,7 @@ miw_render(void)
       glw_layout(mp->mp_info_widget, &rc0);
       glw_render(mp->mp_info_widget, &rc0);
       glPopMatrix();
-
+      space++;
     }
   }
 
@@ -676,8 +683,10 @@ miw_render(void)
 
       glw_render(mp->mp_info_extra_widget, &rc0);
       glPopMatrix();
+      space++;
     }
   }
+  return space;
 }
 
 
