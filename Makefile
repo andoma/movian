@@ -73,7 +73,7 @@ SRCS +=	tv_headend.c tv_playback.c pvr.c
 
 
 PROG = showtime
-CFLAGS += -g -Wall -Werror -funsigned-char -O2
+CFLAGS += -g -Wall -Werror -funsigned-char -O2 $(HTS_CFLAGS)
 
 CFLAGS += -I/usr/local/include -I$(INCLUDES_INSTALL_BASE) -I$(CURDIR)
 CFLAGS += -Wno-deprecated-declarations
