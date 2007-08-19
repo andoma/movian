@@ -225,6 +225,11 @@ typedef struct gl_video_pipe {
 
   float gvp_cmatrix[9];
 
+  /* Subtitles */
+
+  glw_t *gvp_subtitle_widget;
+  int gvp_last_subtitle_index;
+
 } gl_video_pipe_t;
 
 void gvp_init(void);

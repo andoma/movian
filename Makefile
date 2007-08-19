@@ -3,7 +3,7 @@ include ../config.mak
 # core
 
 SRCS = 	main.c app.c input.c media.c mpeg_support.c play_file.c miw.c \
-	mediaprobe.c coms.c menu.c settings.c
+	mediaprobe.c coms.c menu.c settings.c subtitles.c
 
 # audio subsys
 

@@ -34,6 +34,7 @@
 #include "input.h"
 #include "miw.h"
 #include "menu.h"
+#include "subtitles.h"
 
 static GLuint yuv2rbg_prog;
 static const char *yuv2rbg_code =
@@ -132,6 +133,7 @@ gvp_init_timings(gl_video_pipe_t *gvp)
   gvp->gvp_lastpts = AV_NOPTS_VALUE;
   gvp->gvp_nextpts = AV_NOPTS_VALUE;
   gvp->gvp_estimated_duration = 0;
+  gvp->gvp_last_subtitle_index = -1;
 }
 
 
@@ -417,10 +419,10 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
     duration = gvp->gvp_estimated_duration;
   }
 
-  if(pts == AV_NOPTS_VALUE)
+  if(pts == AV_NOPTS_VALUE && gvp->gvp_nextpts != AV_NOPTS_VALUE)
     pts = gvp->gvp_nextpts; /* no pts set, use estimated pts */
 
-  if(gvp->gvp_lastpts != AV_NOPTS_VALUE) {
+  if(pts != AV_NOPTS_VALUE && gvp->gvp_lastpts != AV_NOPTS_VALUE) {
     /* we know pts of last frame */
     t = pts - gvp->gvp_lastpts;
 
@@ -439,13 +441,27 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
   /* compensate for frame repeat */
   
   duration += frame->repeat_pict * (duration * 0.5);
-
  
-  gvp->gvp_lastpts = pts;
-  gvp->gvp_nextpts = pts + duration;
+  if(pts != AV_NOPTS_VALUE) {
+    gvp->gvp_lastpts = pts;
+    gvp->gvp_nextpts = pts + duration;
+  }
 
-  if(duration == 0)
+  if(duration == 0 || pts == AV_NOPTS_VALUE)
     return;
+
+  if(gvp->gvp_mp->mp_subtitles) {
+    i = subtitles_index_by_pts(gvp->gvp_mp->mp_subtitles, pts);
+    if(i != gvp->gvp_last_subtitle_index) {
+
+      if(gvp->gvp_subtitle_widget != NULL)
+	glw_destroy(gvp->gvp_subtitle_widget);
+      
+      gvp->gvp_subtitle_widget =
+	subtitles_make_widget(gvp->gvp_mp->mp_subtitles, i);
+      gvp->gvp_last_subtitle_index = i;
+    }
+  }
 
  /* deinterlacer will generate two frames */
 
@@ -1050,6 +1066,9 @@ layout_video_pipe(gl_video_pipe_t *gvp, glw_rctx_t *rc)
   gvp_conf_t *gc = gvp->gvp_conf;
   struct gl_video_frame_queue *dq;
 
+  if(gvp->gvp_subtitle_widget)
+    glw_layout(gvp->gvp_subtitle_widget, rc);
+
   gvp->gvp_zoom = (gvp->gvp_zoom * 7.0f + gc->gc_zoom) / 8.0f;
 
 
@@ -1329,6 +1348,10 @@ render_video_pipe(gl_video_pipe_t *gvp, glw_rctx_t *rc)
   }
 
   glPopMatrix();
+
+  if(gvp->gvp_subtitle_widget)
+    glw_render(gvp->gvp_subtitle_widget, rc);
+
 }
 
 /*

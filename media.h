@@ -107,6 +107,8 @@ typedef struct media_buf {
 
   void *mb_ptr;
 
+  int mb_subtitle_index;
+
 } media_buf_t;
 
 /*
@@ -183,6 +185,8 @@ typedef struct media_pipe {
 
   void (*mp_playstatus_update_callback)(struct media_pipe *mp);
   void *mp_playstatus_update_opaque;
+
+  struct subtitles *mp_subtitles;
 
 } media_pipe_t;
 
