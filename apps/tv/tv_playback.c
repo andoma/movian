@@ -748,6 +748,7 @@ iptv_key_event_zoomed(iptv_player_t *iptv, int key)
   switch(key) {
 
   case INPUT_KEY_BACK:
+  case INPUT_KEY_STOP:
     tvh_int(tvh_query(&iptv->iptv_tvh, "channel.unsubscribe %d",
 		      ich->ich_index));
     
