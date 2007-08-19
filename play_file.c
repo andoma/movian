@@ -43,6 +43,10 @@
 
 static glw_t *play_file_menu_audio_setup(glw_t *p, media_pipe_t *mp);
 
+static int play_file_pre_launch_menu(appi_t *ai, mediainfo_t *mi,
+				     AVFormatContext *fctx,
+				     media_pipe_t *mp);
+
 
 glw_t *
 play_file_create_miw(media_pipe_t *mp, mediainfo_t *mi, glw_t **pscp)
@@ -214,6 +218,20 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
     cwvec[i] = wrap_codec_create(ctx->codec_id, ctx->codec_type, 0, fw, ctx);
   }
 
+  if(mp->mp_video.mq_stream != -1) {
+
+    switch((key = play_file_pre_launch_menu(ai, mi, fctx, mp))) {
+    case INPUT_KEY_BACK:
+    case INPUT_KEY_STOP:
+      goto noplay;
+  default:
+    break;
+    }
+  }
+
+
+
+
   menu_push_top_menu(ai, mi->mi_title);
 
   ai->ai_fctx = fctx;
@@ -250,6 +268,8 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
   
   mp->mp_playstatus_update_callback = play_file_playstatus_widget_update;
   mp->mp_playstatus_update_opaque = psc;
+
+
 
   mp_set_playstatus(mp, MP_PLAY);
 
@@ -435,6 +455,8 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
   ai->ai_fctx = NULL;
   ai->ai_req_fullscreen = AI_FS_NONE;
 
+ noplay:
+
   streams = fctx->nb_streams;
 
   for(i = 0; i < streams; i++) {
@@ -454,6 +476,7 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
   printf("fileplay deactivate done\n");
 
   printf("video deactivate\n");
+
 
   if(gvpw != NULL)
     glw_destroy(gvpw);
@@ -541,5 +564,232 @@ play_file_menu_audio_setup(glw_t *p, media_pipe_t *mp)
 
   return v;
 }
+
+
+
+/******************************************************************************
+ *
+ * Pre launch menu
+ *
+ */
+
+typedef struct pre_launch {
+  glw_t *menu;
+  appi_t *ai;
+
+  glw_vertex_anim_t anim;
+
+} pre_launch_t;
+
+
+static int 
+pre_launch_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  pre_launch_t *pla = opaque;
+  glw_rctx_t *rc, rc0;
+  glw_vertex_t v;
+  inputevent_t *ie;
+
+  va_list ap;
+  va_start(ap, signal);
+
+  switch(signal) {
+  case GLW_SIGNAL_INPUT_EVENT:
+    ie = va_arg(ap, void *);
+    input_postevent(&pla->ai->ai_ic, ie);
+    break;
+
+  case GLW_SIGNAL_LAYOUT:
+    rc = va_arg(ap, void *);
+    glw_vertex_anim_fwd(&pla->anim, 0.02);
+    glw_layout(pla->menu, rc);
+    break;
+
+  case GLW_SIGNAL_RENDER:
+    rc = va_arg(ap, void *);
+    glw_vertex_anim_read(&pla->anim, &v);
+    rc0 = *rc;
+    rc0.rc_alpha = rc->rc_alpha * v.z;
+    glw_render(pla->menu, &rc0);
+    break;
+
+  default:
+    break;
+  }
+
+  return 0;
+}
+
+static glw_t *
+menu_entry_header(glw_t *p)
+{
+  glw_t *y, *r;
+
+  y = glw_create(GLW_CONTAINER_Y,
+		 GLW_ATTRIB_PARENT, p,
+		 NULL);
+		 
+		 
+  r = glw_create(GLW_BITMAP,
+		 GLW_ATTRIB_FILENAME, "icon://plate-wide.png",
+		 GLW_ATTRIB_PARENT, y,
+		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
+		 GLW_ATTRIB_WEIGHT, 0.35,
+		 NULL);
+  
+  glw_create(GLW_TEXT_BITMAP,
+	     GLW_ATTRIB_PARENT, r,
+	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
+	     GLW_ATTRIB_CAPTION, "Select audio track",
+	     NULL);
+  return y;
+}
+
+
+
+static glw_t *
+pre_launch_audio_select(glw_t *parent, AVFormatContext *fctx)
+{
+  AVStream *st;
+  AVCodecContext *ctx;
+  int i, nstreams = 0;
+  glw_t *hlist, *y;
+  char *p, buf[50];
+
+  for(i = 0; i < fctx->nb_streams; i++) {
+    st = fctx->streams[i];
+    ctx = st->codec;
+
+    if(ctx->codec_type == CODEC_TYPE_AUDIO)
+      nstreams++;
+  }
+
+  if(nstreams < 0)
+    return NULL;
+
+  y = menu_entry_header(parent);
+
+  hlist = glw_create(GLW_HLIST,
+		     GLW_ATTRIB_PARENT, y,
+		     NULL);
+
+  for(i = 0; i < fctx->nb_streams; i++) {
+    st = fctx->streams[i];
+    ctx = st->codec;
+
+    if(ctx->codec_type != CODEC_TYPE_AUDIO)
+      continue;
+
+    avcodec_string(buf, sizeof(buf), ctx, 0);
+    p = strncasecmp(buf, "audio: ", 7) ? buf : buf + 7;
+
+    glw_create(GLW_TEXT_BITMAP,
+	       GLW_ATTRIB_PARENT, hlist,
+	       GLW_ATTRIB_U32, i,
+	       GLW_ATTRIB_CAPTION, p,
+	       NULL);
+  }
+  return y;
+}
+
+
+
+
+static int
+play_file_pre_launch_menu(appi_t *ai, mediainfo_t *mi, AVFormatContext *fctx,
+			  media_pipe_t *mp)
+{
+  pre_launch_t pla;
+  inputevent_t ie;
+  int done = 0;
+  char title[100];
+  glw_t *sel, *wsave;
+  glw_t *amenu;
+
+  snprintf(title, sizeof(title), "%s - %d:%02d",
+	   mi->mi_title, mi->mi_duration / 60, mi->mi_duration % 60);
+
+  glw_vertex_anim_init(&pla.anim, 1.0f, 0.0f, 0.0f, 
+		       GLW_VERTEX_ANIM_SIN_LERP);
+  glw_lock();
+
+  pla.ai = ai;
+  wsave = ai->ai_widget;
+
+  ai->ai_widget = 
+    glw_create(GLW_EXT,
+	       GLW_ATTRIB_SIGNAL_HANDLER, pre_launch_widget_callback, &pla, 0,
+	       NULL);
+
+  pla.menu = glw_create(GLW_ARRAY,
+			GLW_ATTRIB_X_SLICES, 1,
+			GLW_ATTRIB_Y_SLICES, 5,
+			GLW_ATTRIB_SIDEKICK, bar_title(title),
+			NULL);
+  glw_unlock();
+
+  glw_vertex_anim_set3f(&pla.anim, 0.2, 0.0, 1.0);
+
+  amenu = pre_launch_audio_select(pla.menu, fctx);
+
+  while(!done) {
+ 
+    input_getevent(&ai->ai_ic, 1, &ie, NULL);
+
+    sel = pla.menu->glw_selected;
+    if(sel)
+      sel = glw_find_by_class(sel, GLW_HLIST);
+
+    switch(ie.type) {
+    default:
+      break;
+
+    case INPUT_KEY:
+
+      switch(ie.u.key) {
+
+      default:
+	break;
+
+      case INPUT_KEY_UP:
+	glw_nav_signal(pla.menu, GLW_SIGNAL_UP);
+	break;
+
+      case INPUT_KEY_DOWN:
+	glw_nav_signal(pla.menu, GLW_SIGNAL_DOWN);
+	break;
+
+      case INPUT_KEY_LEFT:
+	if(sel != NULL)
+	  glw_nav_signal(sel, GLW_SIGNAL_LEFT);
+	break;
+	
+      case INPUT_KEY_RIGHT:
+	if(sel != NULL)
+	  glw_nav_signal(sel, GLW_SIGNAL_RIGHT);
+	break;
+
+      case INPUT_KEY_ENTER:
+      case INPUT_KEY_BACK:
+	done = ie.u.key;
+	break;
+      }
+    }
+  }
+
+  if(amenu != NULL) {
+    sel = glw_find_by_class(amenu, GLW_HLIST);
+    sel = sel ? sel->glw_selected : NULL;
+    if(sel)
+      mp->mp_audio.mq_stream = glw_get_u32(sel);
+  }
+
+  ai->ai_widget = wsave;
+  glw_destroy(pla.menu);
+
+  return done;
+}
+
+
 
 
