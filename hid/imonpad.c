@@ -25,11 +25,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdarg.h>
-
-
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include <math.h>
 
 #include "imonpad.h"
 #include "input.h"
@@ -75,21 +71,17 @@ static const struct {
   { 0x2a9315b7, INPUT_KEY_SELECT },
 };
 
-
-static int adx, ady;
-average_t avdx, avdy;
-
-
-static int hym, hyp, hxm, hxp;
-
 static void *
 imonpad_thread(void *aux)
 {
-  int fd = -1, i;
+  int fd = -1, i, l;
   uint8_t buf[4];
   uint32_t v;
   int dx, dy;
   inputevent_t ie;
+  float angle;
+  int repeat_thres = 0;
+  int64_t down_nav_ts = 0, last_nav_ts = 0, ts;
 
   while(1) {
     if(fd == -1) {
@@ -107,7 +99,7 @@ imonpad_thread(void *aux)
       continue;
     }
 
-    v = ntohl(*(uint32_t *)buf);
+    v = buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
     
     if(buf[0] & 0x40 && buf[3] == 0xb7) {
       dx = (buf[1] & 0x08) | (buf[1] & 0x10) >> 2 | 
@@ -115,41 +107,63 @@ imonpad_thread(void *aux)
       dy = (buf[2] & 0x08) | (buf[2] & 0x10) >> 2 | 
 	(buf[2] & 0x20) >> 4 | (buf[2] & 0x40) >> 6;
 
-
       if(buf[0] & 0x02) dx |= ~0x10+1;
       if(buf[0] & 0x01) dy |= ~0x10+1;
 
-      adx += dx;
-      ady += dy;
+      ie.u.xy.x = dx;
+      ie.u.xy.y = dy;
+      ie.type = INPUT_PAD;
+      input_root_event(&ie);
 
-      //      printf("%3d, %3d\n", dx, dy);
+      /* */
 
-      if(0) {
-	ie.u.xy.x = dx;
-	ie.u.xy.y = dy;
-	ie.type = INPUT_PAD;
-	input_root_event(&ie);
+      ts = showtime_get_ts();
+
+      if(ts - last_nav_ts > 100000)
+	down_nav_ts = ts;
+
+      last_nav_ts = ts;
+      ts = last_nav_ts - down_nav_ts;
+
+      if(ts == 0 || ts > 250000) {
+
+	if(dx < 0) {
+	  angle = atanf((float)dy / (float)dx);
+	} else if(dx == 0) {
+	    angle = (dy > 0 ? M_PI : 0) + M_PI * 0.5;
+	} else {
+	  angle = M_PI + atanf((float)dy / (float)dx);
+	}
+	angle *= 360.0f / (M_PI * 2);
+	if(angle < 0)
+	  angle = angle + 360;
+
+	l = sqrt(dx * dx + dy * dy);
+
+	if(ts == 0 && l < 2)
+	  continue;
+	else if(ts != 0) {
+	  repeat_thres += l;
+	  if(repeat_thres < 10)
+	    continue;
+	  repeat_thres -= 10;
+	}
+
+#define ALIMIT 30
+
+	if(angle > 360 - ALIMIT || angle < 0 + ALIMIT)
+	  input_key_down(INPUT_KEY_LEFT);
+
+	if(angle > 90 - ALIMIT && angle < 90 + ALIMIT)
+	  input_key_down(INPUT_KEY_UP);
+	
+	if(angle > 180 - ALIMIT && angle < 180 + ALIMIT)
+	  input_key_down(INPUT_KEY_RIGHT);
+		
+	if(angle > 270 - ALIMIT && angle < 270 + ALIMIT)
+	  input_key_down(INPUT_KEY_DOWN);
       }
 
-      if(dx < -2 && hxm < 1) {
-	hxm = 30 - -dx * 3;
-	input_key_down(INPUT_KEY_LEFT);
-      }
-
-      if(dy < -2 && hym < 1) {
-	hym = 30 - -dy * 3;
-	input_key_down(INPUT_KEY_UP);
-      }
-
-      if(dx > 2 && hxp < 1) {
-	hxp = 30 - dx * 3;
-	input_key_down(INPUT_KEY_RIGHT);
-      }
-
-      if(dy > 2 && hyp < 1 ) {
-	hyp = 30 - dy * 3;
-	input_key_down(INPUT_KEY_DOWN);
-      }
       continue;
     }
 
@@ -163,45 +177,6 @@ imonpad_thread(void *aux)
 
 
 
-static void *
-imonpad_thread2(void *aux)
-{
-  float x = 0, y = 0;
-  int xx, yy;
-  inputevent_t ie;
-
-  while(1) {
-    usleep(20000);
-
-
-    x = (x * 2.0 + (float)adx) / 3.0f;
-    y = (y * 2.0 + (float)ady) / 3.0f;
-
-    adx = 0;
-    ady = 0;
-
-    xx = x;
-    yy = y;
-
-    if(xx || yy) {
-      ie.u.xy.x = xx;
-      ie.u.xy.y = yy;
-      ie.type = INPUT_PAD;
-      input_root_event(&ie);
-    }
-
-    if(hxm > 0)
-      hxm--;
-    if(hym > 0)
-      hym--;
-
-    if(hxp > 0)
-      hxp--;
-    if(hyp > 0)
-      hyp--;
-  }
-}
-
 
 
 
@@ -211,7 +186,5 @@ imonpad_init(void)
   static pthread_t ptid;
 
   has_analogue_pad = 1;
-
   pthread_create(&ptid, NULL, imonpad_thread, NULL);
-  pthread_create(&ptid, NULL, imonpad_thread2, NULL);
 }
