@@ -118,4 +118,6 @@ appi_t *appi_spawn2(app_t *a, glw_t *p);
 
 int appi_widget_post_key(glw_t *w, void *opaque, glw_signal_t signal, ...);
 
+void app_init(void);
+
 #endif /* APP_H */

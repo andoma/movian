@@ -231,6 +231,8 @@ main(int argc, char **argv)
 
   audio_sched_init();
 
+  
+  app_init();
 
   APP_REGISTER(app_iptv);
   APP_REGISTER(app_cd);

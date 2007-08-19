@@ -21,9 +21,17 @@
 #include "layout/layout.h"
 #include "menu.h"
 
-struct app_queue apps = TAILQ_HEAD_INITIALIZER(apps);
-struct appi_queue appis = TAILQ_HEAD_INITIALIZER(appis);
-struct appi_queue appis_hidden = TAILQ_HEAD_INITIALIZER(appis_hidden);
+struct app_queue apps;
+struct appi_queue appis;
+struct appi_queue appis_hidden;
+
+void
+app_init(void)
+{
+  TAILQ_INIT(&apps);
+  TAILQ_INIT(&appis);
+  TAILQ_INIT(&appis_hidden);
+}
 
 void
 app_register(app_t *a)

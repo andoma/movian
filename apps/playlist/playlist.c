@@ -275,10 +275,11 @@ playlist_enqueue(const char *path, mediainfo_t *mi, int flush)
   while(o-- && prev != NULL)
     prev = TAILQ_NEXT(prev, ple_shuffle_link);
 
-  if(prev != NULL)
+  if(prev != NULL) {
     TAILQ_INSERT_AFTER(&pl->pl_shuffle_queue, prev, ple, ple_shuffle_link);
-  else
+  } else {
     TAILQ_INSERT_TAIL(&pl->pl_shuffle_queue, ple, ple_shuffle_link);
+  }
 
   pl->pl_entries++;
   pl->pl_stopped = 0;
