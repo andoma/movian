@@ -253,7 +253,6 @@ browser_make_widget_10_1(glw_t *p, b_dir_t *bd, b_entry_t *be, int flags)
     /* DVD directory */
 
   case BE_DVD:
-  dvd:
     glw_create(GLW_BITMAP,
 	       GLW_ATTRIB_PARENT, x,
 	       GLW_ATTRIB_FILENAME, "icon://cd.png",
@@ -355,7 +354,17 @@ browser_make_widget_10_1(glw_t *p, b_dir_t *bd, b_entry_t *be, int flags)
       break;
 
     case MI_ISO:
-      goto dvd;
+      glw_create(GLW_BITMAP,
+		 GLW_ATTRIB_PARENT, x,
+		 GLW_ATTRIB_FILENAME, "icon://cd.png",
+		 NULL);
+
+      glw_create(GLW_TEXT_BITMAP,
+		 GLW_ATTRIB_PARENT, x,
+		 GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_LEFT,
+		 GLW_ATTRIB_WEIGHT, 20.0,
+		 GLW_ATTRIB_CAPTION, mi->mi_title,
+		 NULL);
     }
     break;
   }
@@ -422,7 +431,6 @@ browser_make_widget_16_9(glw_t *p, b_dir_t *bd, b_entry_t *be)
     /* DVD directory */
 
   case BE_DVD:
-  dvd:
     y = glw_create(GLW_CONTAINER_Y,
 		   GLW_ATTRIB_PARENT, z,
 		   NULL);
@@ -448,9 +456,9 @@ browser_make_widget_16_9(glw_t *p, b_dir_t *bd, b_entry_t *be)
 
   case BE_FILE:
 
-  y = glw_create(GLW_CONTAINER_Y,
-		 GLW_ATTRIB_PARENT, z,
-		 NULL);
+    y = glw_create(GLW_CONTAINER_Y,
+		   GLW_ATTRIB_PARENT, z,
+		   NULL);
 
     switch(mi->mi_type) {
 
@@ -520,7 +528,21 @@ browser_make_widget_16_9(glw_t *p, b_dir_t *bd, b_entry_t *be)
       break;
 
     case MI_ISO:
-      goto dvd;
+      glw_create(GLW_TEXT_BITMAP,
+		 GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
+		 GLW_ATTRIB_PARENT, y,
+		 GLW_ATTRIB_CAPTION, mi->mi_title,
+		 NULL);
+
+      x = glw_create(GLW_CONTAINER_X,
+		     GLW_ATTRIB_WEIGHT, 2.0,
+		     GLW_ATTRIB_PARENT, y,
+		     NULL);
+
+      glw_create(GLW_BITMAP, 
+		 GLW_ATTRIB_PARENT, x,
+		 GLW_ATTRIB_FILENAME, "icon://cd.png",
+		 NULL);
     }
     break;
   }
