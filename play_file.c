@@ -165,7 +165,7 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
   int i, key;
   media_buf_t *mb;
   media_queue_t *mq;
-  int64_t pts4seek = 0;
+  int64_t pts4seek = 0, t;
   int seekdur = 50000;
   glw_t *meta, *xmeta;
   int streams;
@@ -385,9 +385,11 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
 
       ctx = cwvec[mp->mp_audio.mq_stream]->codec_ctx;
 
-      mb->mb_time = (pkt.pts * 
-		       av_q2d(fctx->streams[pkt.stream_index]->time_base)) -
-	  fctx->start_time / AV_TIME_BASE;
+      t = av_rescale_q(pkt.pts, fctx->streams[pkt.stream_index]->time_base,
+		       AV_TIME_BASE_Q);
+      if(fctx->start_time != AV_NOPTS_VALUE)
+	t -= fctx->start_time;
+      mb->mb_time = t / AV_TIME_BASE;
 	
 
       mb->mb_data_type = MB_AUDIO;
