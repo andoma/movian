@@ -166,7 +166,7 @@ install:
 
 ${PROG}: $(.OBJDIR) $(OBJS) Makefile
 	cd $(.OBJDIR) && $(CC) $(LDFLAGS) -o $@ $(OBJS) \
-	$(DYNAMIC_LINKFLAGS) $(DLIBS)	$(STATIC_LINKFLAGS) $(SLIBS) 
+	$(STATIC_LINKFLAGS) $(SLIBS) $(DYNAMIC_LINKFLAGS) $(DLIBS) 
 
 $(.OBJDIR):
 	mkdir $(.OBJDIR)
