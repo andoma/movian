@@ -53,9 +53,11 @@ void gl_dvdspu_deinit(gl_dvdspu_t *gd);
 
 void gl_dvdspu_dispatch(dvd_player_t *dp, gl_dvdspu_t *gd, media_buf_t *hmb);
 
-void gl_dvdspu_display(dvd_player_t *dp, gl_dvdspu_t *gd, 
-		       float xsize, float ysize, float alpha);
-
 void gl_dvdspu_flush(gl_dvdspu_t *gd);
+
+void gl_dvdspu_layout(struct dvd_player *dp, struct gl_dvdspu *gd);
+
+void gl_dvdspu_render(struct gl_dvdspu *gd, float xsize, float ysize,
+		      float alpha);
 
 #endif /* GL_DVDSPU_H */

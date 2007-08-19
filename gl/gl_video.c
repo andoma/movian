@@ -646,7 +646,6 @@ static int gl_video_widget_callback(glw_t *w, void *opaque,
 static void
 gvp_destroy(gl_video_pipe_t *gvp)
 {
-  gl_dvdspu_deinit(gvp->gvp_dvdspu);
   av_free(gvp->gvp_frame);
   free(gvp);
 }
@@ -1107,9 +1106,8 @@ layout_video_pipe(gl_video_pipe_t *gvp, glw_rctx_t *rc)
     pts -= frame_duration * 6;
     gvp_compute_avdiff(gvp, mp, pts);
   }
-  //if(gvp->gvp_fra)   render_video_upload(gvp, gvp->gvp_fra);
-  //  if(gvp->gvp_frb)   render_video_upload(gvp, gvp->gvp_frb);
 
+  gl_dvdspu_layout(gvp->gvp_dvd, gvp->gvp_dvdspu);
 }
 
 
@@ -1320,8 +1318,7 @@ render_video_pipe(gl_video_pipe_t *gvp, glw_rctx_t *rc)
 
   if(width > 0) {
     glPolygonOffset(0, rc->rc_polyoffset - 2);
-    gl_dvdspu_display(gvp->gvp_dvd, gvp->gvp_dvdspu, width, height,
-		      rc->rc_alpha);
+    gl_dvdspu_render(gvp->gvp_dvdspu, width, height, rc->rc_alpha);
   }
 
   if(gvp->gvp_zoom > 100) {
@@ -1433,6 +1430,8 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
   case GLW_SIGNAL_DTOR:
 
     gvp_purge(gvp);
+
+    gl_dvdspu_deinit(gvp->gvp_dvdspu);
 
     switch(gvp->gvp_state) {
     case GVP_STATE_IDLE:

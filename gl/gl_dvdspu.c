@@ -58,7 +58,7 @@ typedef struct gl_dvdspu_pic {
 
   int64_t gdp_loadtime;
 
-  int gdp_deprecated;
+  int gdp_destroyme;
 
 } gl_dvdspu_pic_t;
 
@@ -376,15 +376,15 @@ spu_repaint(dvd_player_t *dp, gl_dvdspu_t *gd, gl_dvdspu_pic_t *gdp)
 
 
 static void
-gl_dvdspu_destroy(gl_dvdspu_t *gd, gl_dvdspu_pic_t *gdp)
+gl_dvdspu_destroy_pic(gl_dvdspu_t *gd, gl_dvdspu_pic_t *gdp)
 {
-
   pthread_mutex_lock(&gd->gd_mutex);
   TAILQ_REMOVE(&gd->gd_pics, gdp, gdp_link);
   pthread_mutex_unlock(&gd->gd_mutex);
 
   if(gdp->gdp_tex != 0)
     glDeleteTextures(1, &gdp->gdp_tex);
+  gdp->gdp_tex = 0;
 
   free(gdp->gdp_spu);
   free(gdp->gdp_bitmap);
@@ -490,9 +490,8 @@ gl_dvdspu_deinit(gl_dvdspu_t *gd)
 
     TAILQ_REMOVE(&gd->gd_pics, gdp, gdp_link);
 
-    if(gdp->gdp_tex != 0) {
-      printf("WARNING: LEAKING TEXTURE!!!\n");
-    }
+    if(gdp->gdp_tex != 0)
+      glDeleteTextures(1, &gdp->gdp_tex);
 
     free(gdp->gdp_spu);
     free(gdp->gdp_bitmap);
@@ -512,16 +511,16 @@ gl_dvdspu_flush(gl_dvdspu_t *gd)
   gl_dvdspu_pic_t *gdp;
 
   TAILQ_FOREACH(gdp, &gd->gd_pics, gdp_link) 
-    gdp->gdp_deprecated = 1;
+    gdp->gdp_destroyme = 1;
 }
 
 
 
-
-
+/*
+ *
+ */
 void
-gl_dvdspu_display(struct dvd_player *dp, struct gl_dvdspu *gd, 
-		  float xsize, float ysize, float alpha)
+gl_dvdspu_layout(struct dvd_player *dp, struct gl_dvdspu *gd)
 {
   gl_dvdspu_pic_t *gdp;
   int x;
@@ -532,11 +531,8 @@ gl_dvdspu_display(struct dvd_player *dp, struct gl_dvdspu *gd,
   if(gdp == NULL)
     return;
 
-  if(gdp->gdp_deprecated == 1)
+  if(gdp->gdp_destroyme == 1)
     goto destroy;
-
-
-  
 
   glActiveTextureARB(GL_TEXTURE0_ARB);
 
@@ -545,7 +541,7 @@ gl_dvdspu_display(struct dvd_player *dp, struct gl_dvdspu *gd,
   switch(x) {
   case -1:
   destroy:
-    gl_dvdspu_destroy(gd, gdp);
+    gl_dvdspu_destroy_pic(gd, gdp);
     goto again;
 
   case 0:
@@ -568,13 +564,27 @@ gl_dvdspu_display(struct dvd_player *dp, struct gl_dvdspu *gd,
       glBindTexture(GL_TEXTURE_2D, gdp->gdp_tex);
     }
     spu_repaint(dp, gd, gdp);
-
     break;
- }
+  }
+}
 
-  if(gdp->gdp_tex == 0)
+
+/*
+ *
+ */
+void
+gl_dvdspu_render(struct gl_dvdspu *gd, float xsize, float ysize, float alpha)
+{
+  gl_dvdspu_pic_t *gdp;
+
+  gdp = TAILQ_FIRST(&gd->gd_pics);
+
+  if(gdp == NULL || gdp->gdp_tex == 0)
     return;
 
+  glActiveTextureARB(GL_TEXTURE0_ARB);
+
+  glBindTexture(GL_TEXTURE_2D, gdp->gdp_tex);
 
   glEnable(GL_TEXTURE_2D);
   glEnable(GL_BLEND); 
