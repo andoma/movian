@@ -761,11 +761,8 @@ browser_load_dir(browser_t *b, b_entry_t *src, char *path, int enq, glw_t *p)
       if(browser_check_dvd(bd, be))
 	be->be_type = BE_DVD;
     }
-
     
-
- 
-   if(be->be_type == BE_FILE) {
+    if(be->be_type == BE_FILE) {
       snprintf(fbuf, sizeof(fbuf), "%s/%s", bd->bd_name, be->be_filename);
       
       if(mediaprobe(fbuf, &be->be_mi, 0)) {
