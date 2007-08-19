@@ -939,8 +939,6 @@ iptv_loop(void *aux)
     
     ai->ai_visible = 1;
 
-    //    iptv_widget_create_chlist(iptv);
- 
     while(tvh->tvh_fp != NULL) {
 
       input_getevent(&ai->ai_ic, 1, &ie, NULL);
