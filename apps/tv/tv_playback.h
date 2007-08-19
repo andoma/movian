@@ -59,6 +59,9 @@ typedef struct iptv_channel {
   glw_t *ich_transport_widget;
   glw_t *ich_feed_errors_widget;
 
+  time_t ich_event_start_time;
+  int ich_event_duration;
+
 } iptv_channel_t;
 
 

@@ -60,96 +60,118 @@ ich_entry_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
  */
 
 
+static int 
+iptv_miw_bar_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  iptv_channel_t *ich = opaque;
+  switch(signal) {
+  case GLW_SIGNAL_PREPARE:
+     w->glw_extra = (float)(walltime - ich->ich_event_start_time) / 
+      (float)ich->ich_event_duration;
+    break;
+
+  default:
+    break;
+  }
+  return 0;
+}
+
+
 
 static void
-iptv_miw_rethink(iptv_player_t *iptv, glw_t *parent, iptv_channel_t *ich)
+iptv_miw_fill(iptv_player_t *iptv, glw_t *parent, iptv_channel_t *ich)
 {
   tvheadend_t *tvh = &iptv->iptv_tvh;
   int channel = ich->ich_index;
-  const float rw = 0.03;
-  glw_t *y;
+  glw_t *y, *c;
   tvchannel_t tvc;
   tvevent_t tve;
+  char buf[100];
+  char *title;
 
-  parent = glw_create(GLW_CONTAINER_X, 
-		      GLW_ATTRIB_PARENT, parent, 
-		      NULL);
+  c = glw_create(GLW_BITMAP,
+		 GLW_ATTRIB_PARENT, parent,
+		 GLW_ATTRIB_FILENAME, "icon://plate-wide.png",
+		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
+		 NULL);
+
+  c = glw_create(GLW_CONTAINER_X,
+		 GLW_ATTRIB_PARENT, c,
+		 NULL);
 
   tvh_get_channel(tvh, &tvc, channel);
 
-  tvh_create_chicon(&tvc, parent, 1.0f);
+
+
+  if(tvc.tvc_icon[0]) {
+    glw_create(GLW_BITMAP,
+	       GLW_ATTRIB_FILENAME, tvc.tvc_icon,
+	       GLW_ATTRIB_WEIGHT, 1.0,
+	       GLW_ATTRIB_PARENT, c,
+	       GLW_ATTRIB_FLAGS, GLW_BORDER_BLEND,
+	       GLW_ATTRIB_BORDER_WIDTH, 0.05,
+	       NULL);
+    title = NULL;
+  } else {
+    title = tvc.tvc_displayname;
+  }
 
   if(tvh_get_event_current(tvh, &tve, channel)) {
-    glw_create(GLW_DUMMY,
-	       GLW_ATTRIB_PARENT, parent,
-	       GLW_ATTRIB_WEIGHT, 1.3f,
-	       NULL);
+
+    /* Nothing is currently on... */
+
+    if(title == NULL)
+      glw_create(GLW_DUMMY,
+		 GLW_ATTRIB_PARENT, parent,
+		 GLW_ATTRIB_WEIGHT, 24.0f,
+		 NULL);
+    else
+      glw_create(GLW_TEXT_BITMAP,
+		 GLW_ATTRIB_WEIGHT, 24.0f,
+		 GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
+		 GLW_ATTRIB_PARENT, c,
+		 GLW_ATTRIB_CAPTION, title,
+		 NULL);
     return;
   }
 
 
-  glw_create(GLW_RULER, 
-	     GLW_ATTRIB_PARENT, parent,
-	     GLW_ATTRIB_WEIGHT, rw,
+  if(title) {
+    snprintf(buf, sizeof(buf), "%s - %s", title, tve.tve_title);
+    title = buf;
+  } else {
+    title = tve.tve_title;
+  }
+
+  glw_create(GLW_TEXT_BITMAP,
+	     GLW_ATTRIB_WEIGHT, 20.0f,
+	     GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
+	     GLW_ATTRIB_PARENT, c,
+	     GLW_ATTRIB_CAPTION, title,
 	     NULL);
-
-  /* Playstatus */
-
-  miw_playstatus_create(parent, &ich->ich_mp);
-
-  glw_create(GLW_RULER, 
-	     GLW_ATTRIB_PARENT, parent,
-	     GLW_ATTRIB_WEIGHT, rw,
-	     NULL);
-
-  /* Program time */
 
   y = glw_create(GLW_CONTAINER_Y,
-		 GLW_ATTRIB_PARENT, parent,
+		 GLW_ATTRIB_PARENT, c,
 		 GLW_ATTRIB_WEIGHT, 4.0f,
 		 NULL);
   
+ 
   glw_create(GLW_TEXT_BITMAP,
 	     GLW_ATTRIB_PARENT, y,
-	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
-	     GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
+	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_RIGHT,
+	     GLW_ATTRIB_WEIGHT, 2.0f,
 	     GLW_ATTRIB_CAPTION, tve.tve_timetxt,
 	     NULL);
 
-  glw_create(GLW_RULER, 
+  ich->ich_event_start_time = tve.tve_start;
+  ich->ich_event_duration = tve.tve_stop - tve.tve_start;
+  
+
+  glw_create(GLW_BAR,
+	     GLW_ATTRIB_COLOR, GLW_COLOR_LIGHT_GREEN,
 	     GLW_ATTRIB_PARENT, y,
-	     GLW_ATTRIB_WEIGHT, 0.1,
+	     GLW_ATTRIB_SIGNAL_HANDLER, iptv_miw_bar_callback, ich, 0,
 	     NULL);
-
-  glw_create(GLW_DUMMY,
-	     GLW_ATTRIB_PARENT, y,
-	     NULL);
-
-  glw_create(GLW_RULER, 
-	     GLW_ATTRIB_PARENT, parent,
-	     GLW_ATTRIB_WEIGHT, rw,
-	     NULL);
-
-  /* Title */
-
-  glw_create(GLW_TEXT_BITMAP,
-	     GLW_ATTRIB_WEIGHT, 10.0f,
-	     GLW_ATTRIB_PARENT, parent,
-	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
-	     GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
-	     GLW_ATTRIB_CAPTION, tve.tve_title,
-	     NULL);
-
-  glw_create(GLW_RULER, 
-	     GLW_ATTRIB_PARENT, parent,
-	     GLW_ATTRIB_WEIGHT, rw,
-	     NULL);
-
-  glw_create(GLW_DUMMY,
-	     GLW_ATTRIB_PARENT, parent,
-	     GLW_ATTRIB_WEIGHT, 1.0f,
-	     NULL);
-
 
 }
 
@@ -162,8 +184,7 @@ iptv_miw_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
   switch(signal) {
   case GLW_SIGNAL_RETHINK:
-    glw_destroy_childs(w);
-    iptv_miw_rethink(ich->ich_iptv, w, ich);
+    iptv_miw_fill(ich->ich_iptv, w, ich);
     return 0;
 
   default:
@@ -182,7 +203,7 @@ iptv_create_miw(iptv_player_t *iptv, iptv_channel_t *ich, uint32_t tag)
 		 GLW_ATTRIB_TAG, iptv->iptv_tag_hash, tag,
 		 NULL);
 
-  iptv_miw_rethink(iptv, c, ich);
+  iptv_miw_fill(iptv, c, ich);
   return c;
 }
 
