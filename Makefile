@@ -84,7 +84,8 @@ LDFLAGS += -L/usr/local/lib -L$(LIBS_INSTALL_BASE) -L/usr/X11R6/lib
 # Locally compiled libs
 # 
 
-DLIBS += -lglw -lhts -ldvdnav 
+SLIBS += ${LIBHTS_SLIBS} ${LIBGLW_SLIBS} ${LIBDVDNAV_SLIBS}
+DLIBS += ${LIBHTS_DLIBS} ${LIBGLW_DLIBS} ${LIBDVDNAV_DLIBS}
 
 #
 # curl
@@ -165,7 +166,7 @@ install:
 
 ${PROG}: $(.OBJDIR) $(OBJS) Makefile
 	cd $(.OBJDIR) && $(CC) $(LDFLAGS) -o $@ $(OBJS) \
-	$(STATIC_LINKFLAGS) $(SLIBS) $(DYNAMIC_LINKFLAGS) $(DLIBS)
+	$(DYNAMIC_LINKFLAGS) $(DLIBS)	$(STATIC_LINKFLAGS) $(SLIBS) 
 
 $(.OBJDIR):
 	mkdir $(.OBJDIR)
