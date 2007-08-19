@@ -51,6 +51,16 @@ static void render_gadgets(float alpha);
 static int 
 layout_top_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
+  appi_t *ai = opaque;
+
+  switch(signal) {
+  default:
+    break;
+
+  case GLW_SIGNAL_PREPARE:
+    glw_set(w, GLW_ATTRIB_HIDDEN, !ai->ai_visible, NULL);
+    break;
+  }
   return 0;
 }
 

@@ -1013,6 +1013,8 @@ browser(appi_t *ai, char *rootpath)
 
   browser_load_dir(b, NULL, b->b_rootpath, 0, ai->ai_widget);
 
+  ai->ai_visible = 1;
+
   while(1) {
  
     input_getevent(&ai->ai_ic, 1, &ie, NULL);

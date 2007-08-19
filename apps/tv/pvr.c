@@ -441,12 +441,13 @@ pvr_connect(pvr_t *pvr)
  while(1) {
     r = tvh_query(tvh, "channels.list");
     if(r == NULL) {
-      printf("Unable to connect to tvheadend\n");
       sleep(1);
     } else {
       break;
     }
   }
+
+ pvr->pvr_ai->ai_visible = 1;
 
  for(x = r; x != NULL; x = nextline(x)) {
     if((v = propcmp(x, "channel")) != NULL) {

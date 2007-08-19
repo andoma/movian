@@ -656,6 +656,8 @@ play_list_main(appi_t *ai, play_list_t *pl)
 
   pthread_mutex_lock(&pl->pl_mutex);
 
+  ai->ai_visible = 1;
+
   while(1) {
     pthread_mutex_unlock(&pl->pl_mutex);
     input_getevent(&ai->ai_ic, 1, &ie, NULL);

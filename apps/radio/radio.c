@@ -323,14 +323,13 @@ radio_thread(void *aux)
   radio_channels_configure(r);
 
   if(TAILQ_FIRST(&r->r_list->glw_childs) == NULL) {
-    ai->ai_widget = glw_create(GLW_TEXT_BITMAP,
-			       GLW_ATTRIB_CAPTION, "No feeds configured",
-			       NULL);
     while(1) 
       sleep(1);
   }
 
   pthread_create(&ptid, NULL, radio_player_loop, r);
+
+  ai->ai_visible = 1;
 
   while(1) {
 

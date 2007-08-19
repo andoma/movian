@@ -142,6 +142,8 @@ cd_start(void *aux)
       if(do_eject == 1)
 	break;
 
+      ai->ai_visible = 1;
+
       discstatus = ioctl(fd, CDROM_DISC_STATUS, NULL);
       switch(discstatus) {
       case CDS_AUDIO:
@@ -191,6 +193,7 @@ cd_start(void *aux)
 	}
       }
 
+      ai->ai_visible = 0;
       break;
       
     case CDS_TRAY_OPEN:

@@ -66,6 +66,7 @@ typedef struct appi {
   int ai_no_input_events;      /* This instance does not react
 				  to input events at all */
 
+  int ai_visible;
 
   /* These are stupid */
 

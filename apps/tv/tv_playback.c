@@ -595,7 +595,6 @@ iptv_connect(iptv_player_t *iptv)
     r = tvh_query(tvh, "channels.list");
 
     if(r == NULL) {
-      printf("Unable to connect to tvheadend\n");
       sleep(1);
     } else {
       break;
@@ -937,6 +936,8 @@ iptv_loop(void *aux)
 
     iptv_connect(iptv);
     
+    ai->ai_visible = 1;
+
     //    iptv_widget_create_chlist(iptv);
  
     while(tvh->tvh_fp != NULL) {
@@ -960,6 +961,8 @@ iptv_loop(void *aux)
 	break;
       }
     }
+
+    ai->ai_visible = 0;
 
     glw_destroy(iptv->iptv_chlist);
   }

@@ -389,15 +389,11 @@ rssbrowser_thread(void *aux)
   rssfeeds_configure(rb);
 
   if(TAILQ_FIRST(&rb->rb_list->glw_childs) == NULL) {
-    glw_destroy(ai->ai_widget);
-    ai->ai_widget = 
-      glw_create(GLW_TEXT_BITMAP,
-		 GLW_ATTRIB_SIGNAL_HANDLER, appi_widget_post_key, ai, 0,
-		 GLW_ATTRIB_CAPTION, "No feeds configured",
-		 NULL);
     while(1) 
       sleep(1);
   }
+
+  ai->ai_visible = 1;
 
   while(1) {
 
