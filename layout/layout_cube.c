@@ -263,7 +263,7 @@ draw_world(float ca, float rot, float alpha)
 static glw_vertex_anim_t ctgt = 
  GLW_VERTEX_ANIM_SIN_INITIALIZER(0, 1, 1);
 static glw_vertex_anim_t cpos = 
- GLW_VERTEX_ANIM_SIN_INITIALIZER(0, 1.5, CAMZ);
+ GLW_VERTEX_ANIM_SIN_INITIALIZER(0, 2.5, CAMZ);
 static glw_vertex_anim_t fcol = 
  GLW_VERTEX_ANIM_SIN_INITIALIZER(0.09, 0.11, 0.2);
 static glw_vertex_anim_t malpha = 
@@ -341,7 +341,7 @@ layout_std_draw(void)
     glw_vertex_anim_set3f(&fcol,   0, 0,   0);
     glw_vertex_anim_set3f(&malpha, 0, 0,   0);
   } else {
-    glw_vertex_anim_set3f(&cpos,   0,    1.5,  CAMZ);
+    glw_vertex_anim_set3f(&cpos,   0,    1.0,  CAMZ);
     glw_vertex_anim_set3f(&ctgt,   0, 1.0, 1.0);
     glw_vertex_anim_set3f(&fcol,   0.09, 0.11, 0.2);
     glw_vertex_anim_set3f(&malpha, 0.1,  0,    0);
@@ -831,9 +831,9 @@ render_gadgets(float alpha)
   rc.rc_alpha = alpha * 0.5;
 
   glPushMatrix();
-  glTranslatef(-1.0, 0.1, 1.4);
+  glTranslatef(-0.95, 0.1, 1.6);
   glScalef(0.1, 0.1, 0.1);
-  glRotatef(45, 0, 1, 0);
+  //  glRotatef(45, 0, 1, 0);
   glw_render(gadget_clock, &rc);
   glPopMatrix();
 
