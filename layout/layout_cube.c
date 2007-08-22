@@ -168,8 +168,10 @@ draw_cube(float alpha)
 {
   glLineWidth(2.0);
   glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    //glBlendFunc(GL_ONE, GL_ONE);
+  //  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    
+  alpha *= 0.3;
 
   glColor4f(1, 1, 1, alpha * face_alpha[0]);
   glBegin(GL_LINE_LOOP);
