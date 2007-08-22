@@ -542,6 +542,7 @@ play_list_play_thread(void *aux)
       break;
 
     case INPUT_KEY_ENTER:
+      glw_nav_signal(pl->pl_list, GLW_SIGNAL_CLICK);
       pl->pl_cur = glw_get_opaque(pl->pl_list->glw_selected,
 				  playlist_entry_callback);
       break;

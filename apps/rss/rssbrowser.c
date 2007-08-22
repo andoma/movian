@@ -434,6 +434,7 @@ rssbrowser_thread(void *aux)
 
 
 	case INPUT_KEY_ENTER:
+	  glw_nav_signal(re->re_item_list, GLW_SIGNAL_CLICK);
 	  break;
 	
 	case INPUT_KEY_BACK:

@@ -889,10 +889,12 @@ browser_click(appi_t *ai, browser_t *b, int sel)
 
   switch(be->be_type) {
   case BE_DIR:
-    if(sel)
+    if(sel) {
+      glw_nav_signal(bd->bd_list, GLW_SIGNAL_CLICK);
       playlist_flush();
-    else
+    } else {
       glw_nav_signal(bd->bd_list, GLW_SIGNAL_ENTER);
+    }
     browser_load_dir(b, be, fbuf, sel, be->be_widget);
     break;
 
@@ -904,6 +906,9 @@ browser_click(appi_t *ai, browser_t *b, int sel)
     break;
 
   case BE_FILE:
+
+    glw_nav_signal(bd->bd_list, GLW_SIGNAL_CLICK);
+
     switch(be->be_mi.mi_type) {
 
     case MI_ISO:

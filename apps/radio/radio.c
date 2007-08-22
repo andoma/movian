@@ -376,6 +376,7 @@ radio_thread(void *aux)
 
 
       case INPUT_KEY_ENTER:
+	glw_nav_signal(r->r_list, GLW_SIGNAL_CLICK);
 	pthread_mutex_lock(&r->r_mutex);
 	r->r_req_channel = glw_get_opaque(r->r_list->glw_selected,
 					  radio_channel_callback);
