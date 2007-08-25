@@ -22,7 +22,8 @@
 #include "media.h"
 #include <libhts/avg.h>
 
-typedef int (pes_filter_callback_t)(void *aux, uint32_t startcode);
+typedef int (pes_filter_callback_t)(void *aux, uint32_t startcode,
+				    int codec_id);
 
 typedef struct pes_stream {
 

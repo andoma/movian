@@ -133,7 +133,7 @@ pes_do_block(pes_player_t *pp, uint32_t sc, uint8_t *buf, int len, int w,
 
     ps = &pp->pp_audio;
 
-    if(ps->ps_filter_cb != NULL && !ps->ps_filter_cb(ps->ps_aux, sc))
+    if(ps->ps_filter_cb != NULL && !ps->ps_filter_cb(ps->ps_aux, sc, pkt_type))
       return; 
 
     type = CODEC_TYPE_AUDIO;
@@ -168,7 +168,7 @@ pes_do_block(pes_player_t *pp, uint32_t sc, uint8_t *buf, int len, int w,
     
     ps = &pp->pp_spu;
 
-    if(ps->ps_filter_cb != NULL && !ps->ps_filter_cb(ps->ps_aux, sc))
+    if(ps->ps_filter_cb != NULL && !ps->ps_filter_cb(ps->ps_aux, sc, pkt_type))
       return; 
 
     data_type = MB_DVD_SPU;

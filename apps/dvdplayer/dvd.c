@@ -112,7 +112,7 @@ dvd_create_miw(dvd_player_t *dp, media_pipe_t *mp, const char *title)
 
 
 static int
-dvd_filter_audio(void *aux, uint32_t sc)
+dvd_filter_audio(void *aux, uint32_t sc, int codec_id)
 {
   dvd_player_t *dp = aux;
 
@@ -124,7 +124,7 @@ dvd_filter_audio(void *aux, uint32_t sc)
 }
 
 static int
-dvd_filter_spu(void *aux, uint32_t sc)
+dvd_filter_spu(void *aux, uint32_t sc, int codec_id)
 {
   dvd_player_t *dp = aux;
 
@@ -882,7 +882,7 @@ dvd_subtitle_get_spu_name(dvd_player_t *dp, char *buf, int track, int *phys,
  
   *phys = s;
   sprintf(buf, "%s", lc);
-  *iscurp = dvd_filter_spu(dp, s);
+  *iscurp = dvd_filter_spu(dp, s, 0);
   return 0;
 }
 
@@ -1061,7 +1061,7 @@ dvd_audio_get_track_name(dvd_player_t *dp, char *buf, int track, int *phys,
   *phys = s;
   sprintf(buf, "%s (%s - %s)", lc, fmtxt, chtxt);
 
-  *iscurp = dvd_filter_audio(dp, track);
+  *iscurp = dvd_filter_audio(dp, track, 0);
   return 0;
 }
 

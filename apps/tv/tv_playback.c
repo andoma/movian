@@ -367,7 +367,7 @@ iptv_create_extra_miw(iptv_player_t *iptv, iptv_channel_t *ich)
 
 
 static int
-iptv_filter_audio(void *aux, uint32_t sc)
+iptv_filter_audio(void *aux, uint32_t sc, int codec_id)
 {
   iptv_channel_t *ich = aux;
   media_pipe_t *mp = &ich->ich_mp, *cur;
@@ -376,7 +376,7 @@ iptv_filter_audio(void *aux, uint32_t sc)
   if(mp != cur)
     return 0;
 
-  if(sc == 0x80) {
+  if(codec_id == CODEC_ID_AC3) {
     ich->ich_ac3_ctd = 10;
     return 1;
   }
