@@ -277,7 +277,9 @@ alsa_thread(void *aux)
     mixer_output_matrix[MIXER_CHANNEL_SR_LEFT][2] = 1.0f;
     mixer_output_matrix[MIXER_CHANNEL_SR_RIGHT][3] = 1.0f;
 
-    mixer_output_matrix[MIXER_CHANNEL_LFE][5] = 1.0f;
+    mixer_output_matrix[MIXER_CHANNEL_LEFT][5]  = 0.5f;
+    mixer_output_matrix[MIXER_CHANNEL_RIGHT][5] = 0.5;
+    mixer_output_matrix[MIXER_CHANNEL_LFE][5]   = 1.0f;
 
     if(config_get_bool("alsa-phantom-center", 0)) {
       mixer_output_matrix[MIXER_CHANNEL_CENTER][0] =  0.707f;
