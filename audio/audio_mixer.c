@@ -311,7 +311,8 @@ audio_source_destroy(audio_source_t *as)
   LIST_REMOVE(as, as_link);
   pthread_mutex_unlock(&audio_source_lock);
 
-  av_resample_close(as->as_resampler);
+  if(as->as_resampler != NULL)
+    av_resample_close(as->as_resampler);
 }
 
 
