@@ -201,6 +201,7 @@ menu_create_item0(glw_t *p, const char *icon, const char *title,
   assert(p != NULL);
 
   x = glw_create(GLW_CONTAINER_X,
+		 GLW_ATTRIB_ASPECT, 10.0f,
 		 first ? GLW_ATTRIB_PARENT_HEAD : GLW_ATTRIB_PARENT, p,
 		 GLW_ATTRIB_SIGNAL_HANDLER, cb, opaque, pri,
 		 GLW_ATTRIB_U32, u32,
@@ -254,6 +255,7 @@ menu_create_container0(glw_t *p, glw_callback_t *cb, void *opaque, int pri,
   assert(p != NULL);
 
   x = glw_create(GLW_CONTAINER_Y,
+		 GLW_ATTRIB_ASPECT, 10.0f,
 		 first ? GLW_ATTRIB_PARENT_HEAD : GLW_ATTRIB_PARENT, p,
 		 GLW_ATTRIB_SIGNAL_HANDLER, cb, opaque, pri,
 		 GLW_ATTRIB_U32, u32,
