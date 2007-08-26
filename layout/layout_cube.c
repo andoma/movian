@@ -27,7 +27,6 @@
 
 #include <libglw/glw.h>
 
-#include "audio/audio_sched.h"
 #include "audio/audio_ui.h"
 
 
@@ -65,7 +64,7 @@ layout_top_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 }
 
 
-static appi_t *
+appi_t *
 layout_get_cur_app(void)
 {
   glw_t *w = root_array[curface & 3];
@@ -598,10 +597,12 @@ layout_register_app(app_t *a)
  *
  */
 
+extern media_pipe_t *mixer_primary_audio;
+
 static float
 miw_render(void)
 {
-  media_pipe_t *mp = audio_sched_mp_get();
+  media_pipe_t *mp = mixer_primary_audio;
   static float a0, a1;
   float a;
   glw_rctx_t rc0;

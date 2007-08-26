@@ -1,5 +1,5 @@
 /*
- *  Audio scheduling
+ *  Audio framework
  *  Copyright (C) 2007 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,41 +16,23 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef AUDIO_SCHED_H
-#define AUDIO_SCHED_H
+#include <math.h>
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
-#include "media.h"
+#include "showtime.h"
+#include "audio.h"
+#include "audio_ui.h"
 
-typedef struct asched {
-  
-  struct media_pipe_list as_inactive;
-  media_pipe_t *as_active;
+extern void audio_alsa_init(void);
 
-  pthread_mutex_t as_lock;
-  pthread_cond_t as_cond;
+void
+audio_init(void)
+{
+  audio_alsa_init();
+  audio_widget_make();
 
-  int as_mute;
-  float as_mastervol;
-
-} asched_t;
-
-
-extern asched_t audio_scheduler;
-
-/*
- * Audio scheduler api
- */ 
-
-void audio_sched_mp_activate(media_pipe_t *mp);
-
-void audio_sched_mp_deactivate(media_pipe_t *mp, int departing);
-
-void audio_sched_mp_init(media_pipe_t *mp);
-
-void audio_sched_mp_deinit(media_pipe_t *mp);
-
-media_pipe_t *audio_sched_mp_get(void);
-
-void audio_sched_init(void);
-
-#endif /* AUDIO_SCHED_H */
+}

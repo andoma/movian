@@ -32,6 +32,8 @@ void layout_register_app(app_t *a);
 
 glw_t *bar_title(const char *str);
 
+appi_t *layout_get_cur_app(void);
+
 #endif /* LAYOUT_H */
 
 

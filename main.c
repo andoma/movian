@@ -37,7 +37,7 @@
 #include "gl/gl_video.h"
 #include "gl/gl_input.h"
 #include "hid/hid.h"
-#include "audio/audio_sched.h"
+#include "audio/audio.h"
 
 pthread_mutex_t ffmutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -217,8 +217,7 @@ main(int argc, char **argv)
 
   layout_std_create();
 
-  audio_sched_init();
-
+  audio_init();
   
   app_init();
 

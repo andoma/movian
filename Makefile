@@ -8,7 +8,11 @@ SRCS = 	main.c app.c input.c media.c mpeg_support.c play_file.c miw.c \
 # audio subsys
 
 VPATH += audio
-SRCS  += audio_ui.c audio_sched.c
+SRCS  += audio.c audio_decoder.c audio_fifo.c audio_mixer.c audio_ui.c
+
+# ALSA Audio support
+VPATH += audio/alsa
+SRCS  += alsa_audio.c
 
 # layout engine(s)
 
@@ -25,10 +29,6 @@ SRCS  += gl_video.c gl_dvdspu.c gl_input.c
 VPATH += hid
 SRCS  += hid.c lircd.c imonpad.c lcdd.c 
 
-# ALSA Audio support
-
-VPATH += audio/alsa
-SRCS  += alsa_mixer.c alsa_audio.c
 
 # Browser application
 

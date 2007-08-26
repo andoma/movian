@@ -1,5 +1,5 @@
 /*
- *  Audio user interface
+ *  Audio decoderuling
  *  Copyright (C) 2007 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,15 +16,31 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef AUDIO_UI_H
-#define AUDIO_UI_H
+#ifndef AUDIO_DECODER_H
+#define AUDIO_DECODER_H
 
-void audio_widget_make(void);
+#include "media.h"
+#include "audio_mixer.h"
 
-void audio_layout(void);
+typedef struct audio_decoder {
+  pthread_t ad_ptid;  /* Thread id */
 
-void audio_render(float alpha);
+  media_pipe_t *ad_mp;
 
-void audio_ui_vol_changed(float vol, int mute);
+  int ad_run; 
 
-#endif /* AUDIO_UI_H */
+  int16_t *ad_outbuf;
+
+  audio_source_t *ad_output;
+
+  int ad_rate;
+  int ad_channels;
+  int ad_codec;
+
+} audio_decoder_t;
+
+
+void audio_decoder_change_play_status(media_pipe_t *mp);
+
+
+#endif /* AUDIO_DECODER_H */

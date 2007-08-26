@@ -22,7 +22,7 @@
 #include "media.h"
 #include "hid/input.h"
 #include "showtime.h"
-#include "audio/audio_sched.h"
+#include "audio/audio_decoder.h"
 
 static void
 mq_mutex_init(pthread_mutex_t *mutex)
@@ -62,8 +62,6 @@ mp_init(media_pipe_t *mp, const char *name, struct appi *ai, int flags)
   
   mq_init(&mp->mp_audio);
   mq_init(&mp->mp_video);
-  
-  audio_sched_mp_init(mp);
 }
 
 
@@ -74,7 +72,7 @@ mp_init(media_pipe_t *mp, const char *name, struct appi *ai, int flags)
 void
 mp_deinit(media_pipe_t *mp)
 {
-  audio_sched_mp_deinit(mp);
+  mp_set_playstatus(mp, MP_STOP);
   if(mp->mp_info_widget != NULL)
     glw_destroy(mp->mp_info_widget);
   if(mp->mp_info_extra_widget != NULL)
@@ -113,11 +111,12 @@ media_buf_t *
 mb_dequeue_wait(media_pipe_t *mp, media_queue_t *mq)
 {
   media_buf_t *mb;
-
   pthread_mutex_lock(&mp->mp_mutex);
 
-  while((mb = TAILQ_FIRST(&mq->mq_q)) == NULL)
+  while((mb = TAILQ_FIRST(&mq->mq_q)) == NULL ||
+	mp->mp_playstatus == MP_PAUSE) {
     pthread_cond_wait(&mq->mq_avail, &mp->mp_mutex);
+  }
 
   TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
   mq->mq_len--;
@@ -508,9 +507,12 @@ wrap_format_create(AVFormatContext *fctx, int refcount)
 void
 wrap_format_wait(formatwrap_t *fw)
 {
+  codecwrap_t *cw;
+  
   pthread_mutex_lock(&fw->mutex);
 
-  while(LIST_FIRST(&fw->codecs) != NULL) {
+  while((cw = LIST_FIRST(&fw->codecs)) != NULL) {
+    printf("cw %s is still around (ref=%d)\n", cw->codec->name, cw->refcount);
     pthread_mutex_unlock(&fw->mutex);
     usleep(100000);
     pthread_mutex_lock(&fw->mutex);
@@ -527,13 +529,22 @@ wrap_format_wait(formatwrap_t *fw)
 void
 mp_set_playstatus(media_pipe_t *mp, int status)
 {
-  if(mp->mp_playstatus == status)
-    return;
+  printf("%s -> status = %d\n", mp->mp_name, status);
+  if(mp->mp_playstatus != status) {
 
-  mp->mp_playstatus = status;
+    pthread_mutex_lock(&mp->mp_mutex);
 
-  if(mp->mp_playstatus_update_callback != NULL)
-    mp->mp_playstatus_update_callback(mp);
+    mp->mp_playstatus = status;
+    pthread_cond_signal(&mp->mp_audio.mq_avail);
+    pthread_cond_signal(&mp->mp_video.mq_avail);
+
+    pthread_mutex_unlock(&mp->mp_mutex);
+
+    if(mp->mp_playstatus_update_callback != NULL)
+      mp->mp_playstatus_update_callback(mp);
+  }
+  audio_decoder_change_play_status(mp);
+
 }
 
 
@@ -563,6 +574,12 @@ mp_playpause(struct media_pipe *mp, int key)
   mp_set_playstatus(mp, t);
 }
 
+void
+media_pipe_reacquire_audio(struct media_pipe *mp)
+{
+  if(mp->mp_playstatus == MP_PLAY)
+    audio_decoder_change_play_status(mp);
+}
 
 
 void
@@ -584,3 +601,4 @@ nice_codec_name(char *buf, int len, AVCodecContext *ctx)
   }
   snprintf(buf, len, "%s", fill);
 }
+

@@ -1121,8 +1121,8 @@ layout_video_pipe(gl_video_pipe_t *gvp, glw_rctx_t *rc)
   }
 
   if(pts != AV_NOPTS_VALUE) {
-    pts -= output_duration;
-    pts -= frame_duration * 6;
+    //    pts -= 250000;
+    //    pts -= output_duration * 4;
     gvp_compute_avdiff(gvp, mp, pts);
   }
 

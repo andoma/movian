@@ -233,6 +233,46 @@ menu_create_item(glw_t *p, const char *icon, const char *title,
   return menu_create_item0(p, icon, title, cb, opaque, 0, u32, first);
 }
 
+
+
+
+/*
+ *
+ */
+static glw_t *
+menu_create_container0(glw_t *p, glw_callback_t *cb, void *opaque, int pri,
+		       uint32_t u32, int first)
+{
+  glw_t *x;
+  menu_t *m;
+
+  m = glw_get_opaque(p, menu_bitmap_callback);
+  if(m == NULL)
+    m = glw_get_opaque(p, menu_submenu_item_event);
+
+  p = m->m_array;
+  assert(p != NULL);
+
+  x = glw_create(GLW_CONTAINER_Y,
+		 first ? GLW_ATTRIB_PARENT_HEAD : GLW_ATTRIB_PARENT, p,
+		 GLW_ATTRIB_SIGNAL_HANDLER, cb, opaque, pri,
+		 GLW_ATTRIB_U32, u32,
+		 NULL);
+  return x;
+}
+
+
+/*
+ *
+ */
+glw_t *
+menu_create_container(glw_t *p, glw_callback_t *cb, void *opaque,
+		      uint32_t u32, int first)
+{
+  return menu_create_container0(p, cb, opaque, 0, u32, first);
+}
+
+
 /*
  *
  */

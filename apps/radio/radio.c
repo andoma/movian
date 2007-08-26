@@ -39,7 +39,6 @@
 #include "miw.h"
 #include "radio.h"
 #include "layout/layout.h"
-#include "audio/audio_sched.h"
 
 typedef enum {
     RC_ICECAST
@@ -383,6 +382,7 @@ radio_thread(void *aux)
 	radio_channel_update_status(r->r_req_channel, RC_LOADING);
 	pthread_cond_signal(&r->r_cond);
 	pthread_mutex_unlock(&r->r_mutex);
+	media_pipe_reacquire_audio(&ai->ai_mp);
 	break;
 	
       case INPUT_KEY_BACK:
@@ -698,7 +698,6 @@ icecast_play(radio_t *r, radio_channel_t *rc, media_pipe_t *mp)
     curl_easy_setopt(curl_handle, CURLOPT_ERRORBUFFER, errbuf);
 
     mp_set_playstatus(mp, MP_PLAY);
-    audio_sched_mp_activate(mp);
 
     err = curl_easy_perform(curl_handle);
 

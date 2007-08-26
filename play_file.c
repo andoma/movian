@@ -40,7 +40,6 @@
 #include "gl/gl_video.h"
 #include "miw.h"
 #include "mediaprobe.h"
-#include "audio/audio_sched.h"
 #include "subtitles.h"
 
 static glw_t *play_file_menu_audio_setup(glw_t *p, media_pipe_t *mp);
@@ -239,8 +238,6 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
   ai->ai_fctx = fctx;
   mp->mp_format = fctx;
 
-  audio_sched_mp_activate(mp);
-
   if(mp->mp_video.mq_stream != -1) {
     gvp_conf_init(&gc);
     gvpw = gvp_create(parent, &ai->ai_mp, &gc, 0);
@@ -318,7 +315,12 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
       break;
 
     case INPUT_KEY_STOP:
+      wrap_unlock_all_codecs(fw);
+      mp_flush(mp, 1);
       mp_set_playstatus(mp, MP_STOP);
+      wrap_lock_all_codecs(fw);
+      break;
+
       /* FALLTHRU */
     case INPUT_KEY_BACK:
     case INPUT_KEY_NEXT:
@@ -433,7 +435,6 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
     }
 
     if(mq != NULL) {
-      audio_sched_mp_activate(mp);
       wrap_unlock_all_codecs(fw);
       mb_enqueue(mp, mq, mb);
       av_free_packet(&pkt);
@@ -457,9 +458,6 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
 
 
   menu_pop_top_menu(ai);
-
-  mp_set_playstatus(mp, MP_PLAY);
-
   mp->mp_total_time = 0;
 
   ai->ai_fctx = NULL;
@@ -479,11 +477,10 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
     }
   }
 
-  wrap_format_wait(fw);
+  if(gvpw != NULL)
+    glw_destroy(gvpw);
 
-  printf("fileplay deactivate\n");
-  audio_sched_mp_deactivate(mp, 1);
-  printf("fileplay deactivate done\n");
+  wrap_format_wait(fw);
 
   printf("video deactivate\n");
 
@@ -491,9 +488,6 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
     subtitles_free(mp->mp_subtitles);
     mp->mp_subtitles = NULL;
   }
-
-  if(gvpw != NULL)
-    glw_destroy(gvpw);
 
   mp_set_playstatus(mp, MP_STOP);
   return key;

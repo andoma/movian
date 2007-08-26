@@ -44,7 +44,6 @@
 #include "tv_playback.h"
 #include "gl/gl_video.h"
 #include "miw.h"
-#include "audio/audio_sched.h"
 
 static int 
 ich_entry_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
@@ -370,11 +369,6 @@ static int
 iptv_filter_audio(void *aux, uint32_t sc, int codec_id)
 {
   iptv_channel_t *ich = aux;
-  media_pipe_t *mp = &ich->ich_mp, *cur;
-  cur = audio_sched_mp_get();
-
-  if(mp != cur)
-    return 0;
 
   if(codec_id == CODEC_ID_AC3) {
     ich->ich_ac3_ctd = 10;
@@ -690,12 +684,8 @@ iptv_connect(iptv_player_t *iptv)
 
       iptv_widget_channel_container_fill(iptv, w, id);
     
-      /* video widget */
-
       ich->ich_gvp = gvp_create(s, &ich->ich_mp, &iptv->iptv_gvp_conf,
 				GVPF_AUTO_FLUSH);
-      
-
     }
   }
 }
@@ -740,9 +730,10 @@ iptv_key_event_unzoomed(iptv_player_t *iptv, int key)
     tvh_int(tvh_query(&iptv->iptv_tvh, "channel.subscribe %d %d", 
 		      ich->ich_index, 500));
     
+    media_pipe_reacquire_audio(&ich->ich_mp);
+    
     glw_nav_signal(iptv->iptv_chlist, GLW_SIGNAL_ENTER);
     iptv->iptv_appi->ai_req_fullscreen = AI_FS_BLANK;
-    audio_sched_mp_activate(&ich->ich_mp);
     break;
 
   case INPUT_KEY_BACK:
@@ -775,7 +766,11 @@ iptv_key_event_zoomed(iptv_player_t *iptv, int key)
     
     iptv->iptv_chlist->glw_flags &= ~GLW_ZOOMED;
     iptv->iptv_appi->ai_req_fullscreen = 0;
-    audio_sched_mp_deactivate(&ich->ich_mp, 0);
+
+  case INPUT_KEY_ENTER:
+  case INPUT_KEY_PLAY:
+  case INPUT_KEY_PLAYPAUSE:
+    media_pipe_reacquire_audio(&ich->ich_mp);
     break;
 
   default:
@@ -863,7 +858,7 @@ iptv_demux(iptv_player_t *iptv, uint8_t *buf, int len, int pkttype,
     ich->ich_avg_aqlen = (ich->ich_avg_aqlen * 31.0 + 
 			  ich->ich_mp.mp_audio.mq_len) / 32.0f;
 
-
+#if 0
     if(audio_sched_mp_get() != &ich->ich_mp) {
 
       if(ich->ich_avg_vqlen < 10)
@@ -873,6 +868,7 @@ iptv_demux(iptv_player_t *iptv, uint8_t *buf, int len, int pkttype,
     } else {
       ich->ich_mp.mp_speed_gain = 1.0f;
     }
+#endif
 
     break;
 

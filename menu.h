@@ -50,6 +50,9 @@ appi_t *menu_find_ai(glw_t *w);
 int menu_post_key_pop_and_hide(glw_t *w, void *opaque, 
 			       glw_signal_t signal, ...);
 
+
+glw_t *menu_create_container(glw_t *p, glw_callback_t *cb, void *opaque,
+			     uint32_t u32, int first);
 #define MENU_ASPECT 0.4
 
 #endif /* MENU_H */

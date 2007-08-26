@@ -26,27 +26,23 @@
 #include "input.h"
 #include "layout/layout.h"
 #include "showtime.h"
-#include "audio_sched.h"
 #include "audio_ui.h"
 
 static float audio_alpha;
 static int show_audio;
 static glw_t *audio_widget;
 
+static float audio_vol;
+static int audio_mute;
+
 void
 audio_render(float alpha)
 {
   glw_rctx_t rc;
-  asched_t *as = &audio_scheduler;
+
 
   memset(&rc, 0, sizeof(rc));
   rc.rc_aspect = 16.0 / 9.0 * 20.0f;
-
-  if(show_audio > 0)
-    show_audio--;
-
-  audio_alpha = (audio_alpha * 15 + 
-		 (show_audio || as->as_mute ? 1 : 0)) / 16.0f;
 
   if(audio_alpha < 0.01 || audio_widget == NULL)
     return;
@@ -67,16 +63,25 @@ void
 audio_layout(void)
 {
   glw_rctx_t rc;
+
+  if(show_audio > 0)
+    show_audio--;
+
+  audio_alpha = (audio_alpha * 15 + 
+		 (show_audio || audio_mute ? 1 : 0)) / 16.0f;
+  
   memset(&rc, 0, sizeof(rc));
   rc.rc_aspect = 16.0 / 9.0 * 20.0f;
-
+  
   glw_layout(audio_widget, &rc);
 }
 
 void
-audio_ui_vol_changed(void)
+audio_ui_vol_changed(float vol, int mute)
 {
   show_audio = 100;
+  audio_vol = vol;
+  audio_mute = mute;
 }
 
 
@@ -90,15 +95,13 @@ audio_ui_vol_changed(void)
 static int 
 audio_mastervol_bar_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  asched_t *as = opaque;
-
   switch(signal) {
     return 0;
 
   case GLW_SIGNAL_PREPARE:
-    w->glw_extra = GLW_LP(3, w->glw_extra, as->as_mastervol);
+    w->glw_extra = GLW_LP(3, w->glw_extra, audio_vol);
 
-    if(as->as_mute)
+    if(audio_mute)
       glw_set(w, GLW_ATTRIB_COLOR, GLW_COLOR_LIGHT_RED, NULL);
     else
       glw_set(w, GLW_ATTRIB_COLOR, GLW_COLOR_LIGHT_GREEN, NULL);
@@ -114,16 +117,15 @@ audio_mastervol_bar_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 static int 
 audio_mastervol_txt_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  asched_t *as = opaque;
   char buf[30];
 
   switch(signal) {
   case GLW_SIGNAL_PREPARE:
-    if(as->as_mute)
+    if(audio_mute)
       snprintf(buf, sizeof(buf), "Master volume: Muted");
     else
       snprintf(buf, sizeof(buf), "Master volume: %d%%", 
-	       (int)(as->as_mastervol * 100));
+	       (int)(audio_vol * 100));
     glw_set(w, GLW_ATTRIB_CAPTION, buf, NULL);
     return 0;
 
@@ -135,7 +137,7 @@ audio_mastervol_txt_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
 
 void
-audio_widget_make(asched_t *as)
+audio_widget_make(void)
 {
   glw_t *w, *z;
 
@@ -154,12 +156,12 @@ audio_widget_make(asched_t *as)
   glw_create(GLW_BAR,
 	     GLW_ATTRIB_PARENT, z,
 	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
-	     GLW_ATTRIB_SIGNAL_HANDLER, audio_mastervol_bar_callback, as, 0,
+	     GLW_ATTRIB_SIGNAL_HANDLER, audio_mastervol_bar_callback, NULL, 0,
 	     NULL);
 
   glw_create(GLW_TEXT_BITMAP,
 	     GLW_ATTRIB_PARENT, z,
 	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
-	     GLW_ATTRIB_SIGNAL_HANDLER, audio_mastervol_txt_callback, as, 0,
+	     GLW_ATTRIB_SIGNAL_HANDLER, audio_mastervol_txt_callback, NULL, 0,
 	     NULL);
 }

@@ -77,14 +77,15 @@ general_menu_exit(glw_t *w, void *opaque, glw_signal_t signal, ...)
 }
 
 
+extern void audio_mixer_menu_setup(glw_t *parent);
 
 void
 settings_menu_create(glw_t *parent)
 {
   glw_t *v;
 
-  v = menu_create_submenu(parent, "icon://settings.png", "General settings",
-			  0);
+  v = menu_create_submenu(parent, "icon://settings.png", 
+			  "General settings...", 0);
 
   menu_create_item(parent, "icon://power.png", "Suspend",
 		   general_menu_exit, NULL, 1, 0);
@@ -93,4 +94,7 @@ settings_menu_create(glw_t *parent)
 		   general_menu_exit, NULL, 0, 0);
 
   menu_create_item(v, NULL, "Extra info", general_extra_info, NULL, 0, 0);
+
+  audio_mixer_menu_setup(v);
+
 }

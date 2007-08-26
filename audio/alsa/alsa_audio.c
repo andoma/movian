@@ -23,122 +23,46 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include <sys/time.h>
-
 #include <errno.h>
+#include <sys/time.h>
+#include <alsa/asoundlib.h>
 
 #include "showtime.h"
-#include "alsa_audio.h"
-#include "alsa_mixer.h"
-#include "audio/audio_sched.h"
+#include "hid/input.h"
+#include "audio/audio_mixer.h"
+#include "audio/audio_ui.h"
 
-audio_ctx_t actx0;
+static snd_pcm_t *alsa_handle;
+static int alsa_channels;
+static unsigned int alsa_rate;
+static int alsa_period_size;
 
-static void
-audio_reset(audio_ctx_t *actx)
-{
-  if(actx->handle == NULL)
-    return;
+extern int mixer_hw_output_delay;
 
-  actx->reset = 1;
-  pthread_cond_signal(&actx->fifo_cond);
+extern float mixer_output_matrix[AUDIO_MIXER_MAX_CHANNELS]
+                                [AUDIO_MIXER_MAX_CHANNELS];
 
-  pthread_mutex_lock(&actx->cfg_mutex);
-  while(actx->handle != NULL) 
-    pthread_cond_wait(&actx->cfg_cond, &actx->cfg_mutex);
-  pthread_mutex_unlock(&actx->cfg_mutex);
-}
+
+static int mixer_setup(void);
 
 static void
-audio_fifo_clear(audio_ctx_t *actx)
-{
-  pthread_mutex_lock(&actx->fifo_mutex);
-  actx->fifo_wp = 0;
-  actx->fifo_rp = 0;
-  actx->fifo_len = 0;
-  actx->resampler_spill_size = 0;
-  pthread_mutex_unlock(&actx->fifo_mutex);
-  
-}
-
-static void
-audio_configure(audio_ctx_t *actx, int channels, int rate, int period_hint)
+alsa_configure(void)
 {
   snd_pcm_hw_params_t *hwp;
   snd_pcm_sw_params_t *swp;
   snd_pcm_t *h;
   const char *dev;
   int r, dir;
-  actx_mode_t mode;
   snd_pcm_uframes_t period_size_min;
   snd_pcm_uframes_t period_size_max;
   snd_pcm_uframes_t buffer_size_min;
   snd_pcm_uframes_t buffer_size_max;
   snd_pcm_uframes_t period_size;
   snd_pcm_uframes_t buffer_size;
+  int channels;
 
-  switch(channels) {
-  case 1:
-    mode = ACTX_ANALOG_MONO;
-    break;
-  case 2:
-    mode = ACTX_ANALOG_STEREO;
-    break;
-  case 5:
-    mode = ACTX_ANALOG_5CHAN;
-    break;
-  case 6:
-    mode = ACTX_ANALOG_5DOT1;
-    break;
-  default:
-    printf("Warning: cannot handle # of channels: %d\n", channels);
-
-    mode = ACTX_NONE;
-    break;
-  }
-
-  if(actx->handle != NULL && actx->mode == mode && actx->rate == rate)
-    return;
-
-  /* Clear fifo */
-
-  audio_fifo_clear(actx);
-  actx->fifo_channels = channels;
-
-
-  if(actx->resampler != NULL) {
-    av_resample_close(actx->resampler);
-    actx->resampler = NULL;
-  }
-
-
-  actx->mode = 0;  
-  actx->rate = rate;
-
-  audio_reset(actx);
-  
-  switch(mode) {
-  case ACTX_NONE:
-  default:
-    return;
-
-  case ACTX_ANALOG_MONO:
-    dev = "pcm.hts_mono";
-    channels = 1;
-    break;
-  case ACTX_ANALOG_STEREO:
-    dev = "pcm.hts_stereo";
-    channels = 2;
-    break;
-  case ACTX_ANALOG_5CHAN:
-    dev = "pcm.hts_5chan";
-    channels = 5;
-    break;
-  case ACTX_ANALOG_5DOT1:
-    dev = "pcm.hts_5dot1";
-    channels = 6;
-    break;
-  }
+  channels = 2;
+  dev = "default";
 
   if((r = snd_pcm_open(&h, dev, SND_PCM_STREAM_PLAYBACK, 0) < 0)) {
     fprintf(stderr, "audio: Cannot open audio device %s (%s)\n",
@@ -152,21 +76,21 @@ audio_configure(audio_ctx_t *actx, int channels, int rate, int period_hint)
   snd_pcm_hw_params_set_access(h, hwp, SND_PCM_ACCESS_RW_INTERLEAVED);
   snd_pcm_hw_params_set_format(h, hwp, SND_PCM_FORMAT_S16_LE);
 
-  actx->orate = 48000;
+  alsa_rate = 48000;
 
-  if((r = snd_pcm_hw_params_set_rate_near(h, hwp, &actx->orate, 0)) < 0) {
+  if((r = snd_pcm_hw_params_set_rate_near(h, hwp, &alsa_rate, 0)) < 0) {
     fprintf(stderr, "audio: Cannot set rate to %d (%s)\n", 
-	    rate, snd_strerror(r));
+	    alsa_rate, snd_strerror(r));
     snd_pcm_close(h);
     return;
   }
 
-  fprintf(stderr, "audio: rate = %d\n", actx->orate);
+  fprintf(stderr, "audio: rate = %d\n", alsa_rate);
 
 
   if((r = snd_pcm_hw_params_set_channels(h, hwp, channels)) < 0) {
     fprintf(stderr, "audio: Cannot set # of channels to %d (%s)\n",
-	    rate, snd_strerror(r));
+	    alsa_rate, snd_strerror(r));
 
     snd_pcm_close(h);
     return;
@@ -177,7 +101,6 @@ audio_configure(audio_ctx_t *actx, int channels, int rate, int period_hint)
   snd_pcm_hw_params_get_buffer_size_min(hwp, &buffer_size_min);
   snd_pcm_hw_params_get_buffer_size_max(hwp, &buffer_size_max);
   buffer_size = buffer_size_max;
-  buffer_size = 5460 * 2;
 
   fprintf(stderr, "audio: attainable buffer size %lu - %lu, trying %lu\n",
 	  buffer_size_min, buffer_size_max, buffer_size);
@@ -192,14 +115,14 @@ audio_configure(audio_ctx_t *actx, int channels, int rate, int period_hint)
     return;
   }
 
-  r = snd_pcm_hw_params_get_buffer_size(hwp, &actx->buffer_size);
+  r = snd_pcm_hw_params_get_buffer_size(hwp, &buffer_size);
   if(r < 0) {
     fprintf(stderr, "audio: Unable to get buffer size (%s)\n",
 	    snd_strerror(r));
     snd_pcm_close(h);
     return;
   }
-  fprintf(stderr, "audio: Buffer size = %lu\n", actx->buffer_size);
+  fprintf(stderr, "audio: Buffer size = %lu\n", buffer_size);
 
 
   /* Configurue period */
@@ -209,8 +132,6 @@ audio_configure(audio_ctx_t *actx, int channels, int rate, int period_hint)
   snd_pcm_hw_params_get_period_size_min(hwp, &period_size_min, &dir);
   dir = 0;
   snd_pcm_hw_params_get_period_size_max(hwp, &period_size_max, &dir);
-
-  printf("audio: period_hint = %d\n", period_hint);
 
   period_size = 1365;
 
@@ -229,7 +150,7 @@ audio_configure(audio_ctx_t *actx, int channels, int rate, int period_hint)
 
 
   dir = 0;
-  r = snd_pcm_hw_params_get_period_size(hwp, &actx->buffer_size, &dir);
+  r = snd_pcm_hw_params_get_period_size(hwp, &period_size, &dir);
   if(r < 0) {
     fprintf(stderr, "audio: Unable to get period size (%s)\n",
 	    snd_strerror(r));
@@ -255,7 +176,7 @@ audio_configure(audio_ctx_t *actx, int channels, int rate, int period_hint)
   snd_pcm_sw_params_current(h, swp);
 
   
-  r = snd_pcm_sw_params_set_avail_min(h, swp, actx->buffer_size / 2);
+  r = snd_pcm_sw_params_set_avail_min(h, swp, buffer_size / 2);
 
   if(r < 0) {
     fprintf(stderr, "audio: Unable to configure wakeup threshold (%s)\n",
@@ -297,489 +218,267 @@ audio_configure(audio_ctx_t *actx, int channels, int rate, int period_hint)
     return;
   }
 
-  pthread_mutex_lock(&actx->cfg_mutex);
+  alsa_channels = channels;
+  alsa_handle = h;
 
-  actx->channels = channels;
-  actx->handle = h;
-  actx->mode = mode;
+  alsa_period_size = period_size;
 
-  actx->resampler = av_resample_init(actx->orate, actx->rate, 
-				     16, 10, 0, 1.0);
+  printf("audio: period size = %ld\n", period_size);
+  printf("audio: buffer size = %ld\n", buffer_size);
+  printf("audio:        rate = %dHz\n", alsa_rate);
 
-  printf("audio: period size = %ld\n", actx->period_size);
-  printf("audio: buffer size = %ld\n", actx->buffer_size);
-
-  printf("rate : %ld, orate = %u\n", actx->rate, actx->orate);
-
-  pthread_cond_signal(&actx->cfg_cond);
-
-  pthread_mutex_unlock(&actx->cfg_mutex);
 
 
 }
 
 
 
+extern audio_fifo_t mixer_output_fifo;
+
 static void *
-audio_fifo_thread(void *aux)
+alsa_thread(void *aux)
 {
-  audio_ctx_t *actx = aux;
-  int c, w, x, i, j, v;
-  int16_t *d;
-  int peak[ACTX_MAX_CHANNELS];
-  float peakf[ACTX_MAX_CHANNELS];
+  int c, x;
+  int16_t *outbuf;
+  audio_buf_t *buf;
+  snd_pcm_sframes_t delay;
+
+  alsa_configure();
+
+  audio_mixer_setup_output(alsa_channels, alsa_period_size, alsa_rate);
+
+  outbuf = calloc(1, alsa_period_size * alsa_channels * sizeof(uint16_t));
+
+  mixer_output_matrix[MIXER_CHANNEL_LEFT] [0] = 1.0f;
+  mixer_output_matrix[MIXER_CHANNEL_RIGHT][1] = 1.0f;
+
+  mixer_output_matrix[MIXER_CHANNEL_SR_LEFT][0] =  0.707f;
+  mixer_output_matrix[MIXER_CHANNEL_SR_LEFT][1] = -0.707f;
+
+  mixer_output_matrix[MIXER_CHANNEL_SR_RIGHT][0] = -0.707f;
+  mixer_output_matrix[MIXER_CHANNEL_SR_RIGHT][1] =  0.707f;
+
+  mixer_output_matrix[MIXER_CHANNEL_CENTER][0] =  0.707f;
+  mixer_output_matrix[MIXER_CHANNEL_CENTER][1] =  0.707f;
+
+  mixer_output_matrix[MIXER_CHANNEL_LFE][0] =  0.707f;
+  mixer_output_matrix[MIXER_CHANNEL_LFE][1] =  0.707f;
+
 
   while(1) {
 
-    if(actx->handle == NULL) {
+    buf = af_deq(&mixer_output_fifo, 1);
 
-      pthread_mutex_lock(&actx->cfg_mutex);
-      while(actx->handle == NULL) 
-	pthread_cond_wait(&actx->cfg_cond, &actx->cfg_mutex);
-      pthread_mutex_unlock(&actx->cfg_mutex);
-    }
-
-    c = snd_pcm_wait(actx->handle, 100);
-
-    if(actx->reset) {
-    reset:
-      pthread_mutex_lock(&actx->cfg_mutex);
-      snd_pcm_close(actx->handle);
-      actx->handle = NULL; 
-      actx->reset = 0;
-      pthread_cond_signal(&actx->cfg_cond);
-      pthread_mutex_unlock(&actx->cfg_mutex);
-      continue;
-    }
-    
-    if(c == 0)
-      continue;
+    c = snd_pcm_wait(alsa_handle, 100);
 
     if(c >= 0) 
-      c = snd_pcm_avail_update(actx->handle);
+      c = snd_pcm_avail_update(alsa_handle);
+
     if(c == -EPIPE) {
-      printf("fifo underrun\n");
-      snd_pcm_prepare(actx->handle);
+      snd_pcm_prepare(alsa_handle);
       continue;
     }
-
-    pthread_mutex_lock(&actx->fifo_mutex);
-
-    while(actx->fifo_len < ACTX_FIFO_LEN / 2 && actx->reset == 0)
-      pthread_cond_wait(&actx->fifo_cond, &actx->fifo_mutex);
-
-    if(actx->reset) {
-      pthread_mutex_unlock(&actx->fifo_mutex);
-      goto reset;
-    }
-
-    w = FFMIN(actx->fifo_len, ACTX_FIFO_LEN - actx->fifo_rp);
-    w = FFMIN(w, c);
-
-    d = actx->fifo + actx->fifo_rp * actx->fifo_channels;
-
-    x = snd_pcm_writei(actx->handle, d, w);
-
-    memset(peak, 0, sizeof(peak));
-
-    for(i = 0; i < w; i++) {
-      for(j = 0; j < actx->channels; j++) {
-	v = *d++;
-	peak[j] += v < 0 ? -v : v;
-      }
-    }
-
-    for(j = 0; j < actx->channels; j++) {
-      peakf[j] = log10((float)peak[j] / (float)w / 2.0f) / 4.0f;
-    }
-
-
-    switch(actx->channels) {
-    case 1:
-      actx->peak[0] = 0;
-      actx->peak[1] = 0;
-      actx->peak[2] = 0;
-      actx->peak[3] = 0;
-      actx->peak[4] = peakf[0];
-      actx->peak[5] = 0;
-      break;
-
-    case 2:
-      actx->peak[0] = peakf[0];
-      actx->peak[1] = peakf[1];
-      actx->peak[2] = 0;
-      actx->peak[3] = 0;
-      actx->peak[4] = 0;
-      actx->peak[5] = 0;
-      break;
-
-    case 5:
-      actx->peak[0] = peakf[0];
-      actx->peak[1] = peakf[2];
-      actx->peak[2] = peakf[3];
-      actx->peak[3] = peakf[4];
-      actx->peak[4] = peakf[1];
-      actx->peak[5] = 0;
-      break;
-
-    case 6:
-      actx->peak[0] = peakf[1];
-      actx->peak[1] = peakf[3];
-      actx->peak[2] = peakf[4];
-      actx->peak[3] = peakf[5];
-      actx->peak[4] = peakf[2];
-      actx->peak[5] = peakf[0];
-      break;
-    }
-
-
-    actx->fifo_len -= x;
-    actx->fifo_rp = (actx->fifo_rp + x) & ACTX_FIFO_MASK;
-
-    pthread_cond_signal(&actx->fifo_cond);
-    pthread_mutex_unlock(&actx->fifo_mutex);
-  }
-}
-
-
-
-
-
-
-
-
-
-static int
-actx_resample(audio_ctx_t *actx, int16_t *dstmix, int dstavail,
-	      int *writtenp, int16_t *srcmix, int srcframes)
-{
-  int c, i, j;
-  int16_t *src;
-  int16_t *dst;
-  int written = 0;
-  int consumed;
-  int srcsize;
-  int channels = actx->channels;
-  int spill = actx->resampler_spill_size;
-  
-
-  if(spill > srcframes)
-    srcframes = 0;
-    
-  dst = malloc(dstavail * sizeof(uint16_t));
-
-  for(c = 0; c < channels; c++) {
-
-    if(actx->resampler_spill[c].data != NULL) {
-
-      srcsize = spill + srcframes;
-
-      src = malloc(srcsize * sizeof(uint16_t));
-
-      j = 0;
-
-      for(i = 0; i < spill; i++)
-	src[j++] = actx->resampler_spill[c].data[i];
-
-      for(i = 0; i < srcframes; i++)
-	src[j++] = srcmix[i * channels + c];
-
-      free(actx->resampler_spill[c].data);
-      actx->resampler_spill[c].data = NULL;
-
-    } else {
-
-      srcsize = srcframes;
-
-      src = malloc(srcsize * sizeof(uint16_t));
-
-      for(i = 0; i < srcframes; i++)
-	src[i] = srcmix[i * channels + c];
-
-    }
-
-    written = av_resample(actx->resampler, dst, src, &consumed, 
-			  srcsize, dstavail, c == channels - 1);
-
-    if(consumed != srcsize) {
-      actx->resampler_spill_size = srcsize - consumed;
-
-      actx->resampler_spill[c].data = 
-	malloc(actx->resampler_spill_size * sizeof(uint16_t));
-
-      memcpy(actx->resampler_spill[c].data, src + consumed, 
-	     actx->resampler_spill_size * sizeof(uint16_t));
-    }
-
-    for(i = 0; i < written; i++)
-      dstmix[i * channels + c] = dst[i];
-
-    free(src);
-  }
-
-  *writtenp = written;
-
-  free(dst);
-
-  return srcframes;
-}
-
-
-
-static int
-audio_bitrate_by_ctx(AVCodecContext *ctx)
-{
-  int bitrate;
-  /* for PCM codecs, compute bitrate directly */
-  switch(ctx->codec_id) {
-  case CODEC_ID_PCM_S32LE:
-  case CODEC_ID_PCM_S32BE:
-  case CODEC_ID_PCM_U32LE:
-  case CODEC_ID_PCM_U32BE:
-    bitrate = ctx->sample_rate * ctx->channels * 32;
-    break;
-  case CODEC_ID_PCM_S24LE:
-  case CODEC_ID_PCM_S24BE:
-  case CODEC_ID_PCM_U24LE:
-  case CODEC_ID_PCM_U24BE:
-  case CODEC_ID_PCM_S24DAUD:
-    bitrate = ctx->sample_rate * ctx->channels * 24;
-    break;
-  case CODEC_ID_PCM_S16LE:
-  case CODEC_ID_PCM_S16BE:
-  case CODEC_ID_PCM_U16LE:
-  case CODEC_ID_PCM_U16BE:
-    bitrate = ctx->sample_rate * ctx->channels * 16;
-    break;
-  case CODEC_ID_PCM_S8:
-  case CODEC_ID_PCM_U8:
-  case CODEC_ID_PCM_ALAW:
-  case CODEC_ID_PCM_MULAW:
-    bitrate = ctx->sample_rate * ctx->channels * 8;
-    break;
-  default:
-    bitrate = ctx->bit_rate;
-    break;
-  }
-  return bitrate;
-}
-
-
-static void
-audio_decode(asched_t *as, audio_ctx_t *actx, media_pipe_t *mp,
-	     media_buf_t *mb)
-{
-  uint8_t *buf;
-  int16_t *data = actx->data;
-  int buf_size, r, data_size, frames, channels, rate;
-  snd_pcm_sframes_t delay;
-  AVCodecContext *ctx;
-  codecwrap_t *cw = mb->mb_cw;
-  int s, f, c;
-  int16_t *dst;
-  media_queue_t *mq = &mp->mp_audio;
-  time_t now;
-  const char *chantxt;
-
-  ctx = cw->codec_ctx;
-
-  buf = mb->mb_data;
-  buf_size = mb->mb_size;
-
-  while(1) {
-    wrap_lock_codec(cw);
-
-    r = avcodec_decode_audio(ctx, data, &data_size, buf, buf_size);
-    channels = ctx->channels;
-    rate = ctx->sample_rate;
-
-    time(&now);
-    if(now != mq->mq_info_last_time) {
-      mq->mq_info_rate = mq->mq_info_rate_acc / 125;
-      mq->mq_info_last_time = now;
-      mq->mq_info_rate_acc = 0;
-    }
-    mq->mq_info_rate_acc += buf_size;
-
-    mq->mq_info_rate = audio_bitrate_by_ctx(ctx) / 1000;
-
-    nice_codec_name(mq->mq_info_codec, sizeof(mq->mq_info_codec), ctx);
  
-    switch(channels) {
-    case 1:
-      chantxt = "Mono";
-      break;
-    case 2:
-      chantxt = "Stereo";
-      break;
-    case 5:
-      chantxt = "5.0";
-      break;
-    case 6:
-      chantxt = "5.1";
-      break;
-    default:
-      chantxt = "???";
+    outbuf = ab_dataptr(buf);
+    x = snd_pcm_writei(alsa_handle, outbuf, alsa_period_size);
 
-    }
-
-    snprintf(mq->mq_info_output_type, sizeof(mq->mq_info_output_type),
-	     "%s %.1fkHz",
-	     chantxt,
-	     (float)rate / 1000.0f);
-
-    wrap_unlock_codec(cw);
-  
-    if(r == -1 || data_size == 0)
-      break;
-
-    frames = data_size / sizeof(uint16_t) / channels;
-    audio_configure(actx, channels, rate, frames);
-    if(actx->handle == NULL)
-      break;
+    if(snd_pcm_delay(alsa_handle, &delay))
+      delay = 0;
     
-    mp->mp_time_feedback = mb->mb_time;
-
-    while(frames > 0) {
- 
-      /* */
-      
-      if(mb->mb_pts != actx->last_ts) {
-	actx->ts = mb->mb_pts;
-	actx->last_ts = mb->mb_pts;
-      }
-
-      if(snd_pcm_delay(actx->handle, &delay))
-	delay = 0;
-      delay += actx->fifo_len;
-
-      delay = (delay * 1000 / actx->rate) * 1000;
-      
-      mp->mp_clock = actx->ts - delay;
-      mp->mp_clock_valid = 1;
-
-       /* Fill fifo */
-
-      pthread_mutex_lock(&actx->fifo_mutex);
-      while(actx->fifo_len == ACTX_FIFO_LEN)
-	pthread_cond_wait(&actx->fifo_cond, &actx->fifo_mutex);
-
-      f = FFMIN(ACTX_FIFO_LEN - actx->fifo_len, 
-		ACTX_FIFO_LEN - actx->fifo_wp);
-
-      dst = actx->fifo + actx->fifo_wp * actx->fifo_channels;
-
-      if(actx->rate == actx->orate) {
-	s = FFMIN(f, frames);
-	memcpy(dst, data, s * sizeof(uint16_t) * actx->fifo_channels);
-	
-	c = s;
-
-      } else {
-	c = actx_resample(actx, dst, f, &s, data, frames);
-      }
-
-      actx->fifo_wp = (actx->fifo_wp + s) & ACTX_FIFO_MASK;
-      actx->fifo_len += s;
-
-  
-      /* */
-
-      pthread_cond_signal(&actx->fifo_cond);
-      pthread_mutex_unlock(&actx->fifo_mutex);
-      
-      
-      actx->ts += (1000000 * c / actx->rate);
-      frames -= c;
-      data += c * channels;
-    }
-
-    buf += r;
-    buf_size -= r;
-  }
-
-  /* If paused, keep holding lock to freeze audio deliver thread */
-
-  if(as->as_active != NULL && 
-     mp_get_playstatus(as->as_active) == MP_PAUSE) {
-    pthread_mutex_lock(&actx->fifo_mutex);
-    while(as->as_active != NULL &&
-	  mp_get_playstatus(as->as_active) == MP_PAUSE) {
-      usleep(100000);
-    }
-    pthread_mutex_unlock(&actx->fifo_mutex);
-  }
-
-}
-
-
-static void *
-audio_decode_thread(void *aux)
-{
-  asched_t *as = aux;
-  media_pipe_t *mp;
-  media_buf_t *mb;
-  audio_ctx_t *actx = &actx0;
-  pthread_t ptid;
-  int i;
-
-  actx->data = malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE);
-  actx->fifo = malloc(sizeof(uint16_t) * ACTX_MAX_CHANNELS * ACTX_FIFO_LEN);
-
-  actx->fifo_wp = 0;
-  actx->fifo_rp = 0;
-
-  pthread_mutex_init(&actx->fifo_mutex, NULL);
-  pthread_cond_init(&actx->fifo_cond, NULL);
-		    
-
-  pthread_create(&ptid, NULL, audio_fifo_thread, actx);
-
-  while(1) {
-
-    pthread_mutex_lock(&as->as_lock);
-    while((mp = as->as_active) == NULL) {
-      pthread_mutex_unlock(&as->as_lock);
-      usleep(250000);
-      pthread_mutex_lock(&as->as_lock);
-    }
-    pthread_mutex_unlock(&as->as_lock);
-
-    mb = mb_dequeue_wait(mp, &mp->mp_audio);
-
-    switch(mb->mb_data_type) {
-    case MB_RESET:
-      audio_reset(actx);
-      goto audio_flush;
-
-    case MB_AUDIO:
-      audio_decode(as, actx, mp, mb);
-      break;
-
-    case MB_FLUSH:
-      audio_fifo_clear(actx);
-
-    audio_flush:
-      for(i = 0; i < ACTX_MAX_CHANNELS; i++)
-	actx->peak[i] = 0;
-
-      mp->mp_clock_valid = 0;
-      break;
-
-    default:
-      break;
-    }
-    media_buf_free(mb);
+    /* convert delay from sample rates to µs */
+    mixer_hw_output_delay = 0; // (delay * 1000 / alsa_rate) * 1000;
+    af_free(buf);
   }
 }
+
+
+
+
+
 
 
 
 
 void
-alsa_audio_init(asched_t *as)
+audio_alsa_init(void)
 {
   pthread_t ptid;
+  pthread_create(&ptid, NULL, alsa_thread, NULL);
+  mixer_setup();
+}
 
-  pthread_create(&ptid, NULL, audio_decode_thread, as);
+
+
+
+static ic_t  alsa_master_volume_input;
+static float alsa_master_volume;
+static int   alsa_master_mute;
+static snd_mixer_elem_t *alsa_mixer_element;
+
+
+
+/**
+ * Mixer update
+ */
+
+static void
+mixer_write(float vol, int mute)
+{
+  snd_mixer_elem_t *e = alsa_mixer_element;
+
+  if(e == NULL)
+    return;
+
+  /* Mute flag */
+
+  if(snd_mixer_selem_has_playback_switch_joined(e)) {
+    snd_mixer_selem_set_playback_switch_all(e, !mute);
+  } else {
+    snd_mixer_selem_set_playback_switch(e, SND_MIXER_SCHN_FRONT_LEFT,  !mute);
+    snd_mixer_selem_set_playback_switch(e, SND_MIXER_SCHN_FRONT_RIGHT, !mute);
+  }
+
+  vol = 100.0f * vol;
+
+  /* Volume */
+
+  snd_mixer_selem_set_playback_volume(e, SND_MIXER_SCHN_FRONT_LEFT,  vol);
+  snd_mixer_selem_set_playback_volume(e, SND_MIXER_SCHN_FRONT_RIGHT, vol);
+}
+
+
+
+
+/**
+ *
+ */
+
+
+static void *
+alsa_master_volume_thread(void *aux)
+{
+  int key;
+  float v;
+
+  while(1) {
+    key = input_getkey(&alsa_master_volume_input, 1);
+
+    v = alsa_master_volume / 10.0;
+    if(v < 0.01)
+      v = 0.01;
+
+    switch(key) {
+    case INPUT_KEY_VOLUME_UP:
+      alsa_master_volume += v;
+      break;
+
+    case INPUT_KEY_VOLUME_DOWN:
+      alsa_master_volume -= v;
+      break;
+
+    case INPUT_KEY_VOLUME_MUTE:
+      alsa_master_mute = !alsa_master_mute;
+      break;
+    }
+
+    if(alsa_master_volume > 1.0f)
+      alsa_master_volume = 1.0f;
+    else if(alsa_master_volume < 0.0f)
+      alsa_master_volume = 0.0f;
+
+    mixer_write(alsa_master_volume, alsa_master_mute);
+    audio_ui_vol_changed(alsa_master_volume, alsa_master_mute);
+  }
+}
+
+
+/**
+ *
+ */
+
+static int
+alsa_mixer_input_event(inputevent_t *ie)
+{
+  switch(ie->type) {
+  default:
+    break;
+
+  case INPUT_KEY:
+
+    switch(ie->u.key) {
+    default:
+      break;
+
+    case INPUT_KEY_VOLUME_UP:
+    case INPUT_KEY_VOLUME_DOWN:
+    case INPUT_KEY_VOLUME_MUTE:
+      input_keystrike(&alsa_master_volume_input, ie->u.key);
+      return 1;
+    }
+    break;
+  }
+  return 0;
+}
+
+
+
+
+
+
+
+static int
+mixer_setup(void)
+{
+  snd_mixer_t *mixer;
+  const char *mixerdev = "hw:0";
+  snd_mixer_selem_id_t *sid;
+  snd_mixer_elem_t *e;
+  long v;
+  int r;
+  pthread_t ptid;
+
+  /* Open mixer */
+
+  if((r = snd_mixer_open(&mixer, 0)) < 0) {
+    fprintf(stderr, "Cannot open mixer\n");
+    return 1;
+  }
+
+  if((r = snd_mixer_attach(mixer, mixerdev)) < 0) {
+    fprintf(stderr, "Cannot attach mixer\n");
+    snd_mixer_close(mixer);
+    return 1;
+  }
+  
+  if((r = snd_mixer_selem_register(mixer, NULL, NULL)) < 0) {
+    fprintf(stderr, "Cannot register mixer\n");
+    snd_mixer_close(mixer);
+    return 1;
+  }
+
+  if((r = snd_mixer_load(mixer)) < 0) {
+    fprintf(stderr, "Cannot load mixer\n");
+    snd_mixer_close(mixer);
+    return 1;
+  }
+
+
+  snd_mixer_selem_id_alloca(&sid);
+  snd_mixer_selem_id_set_name(sid,
+			      config_get_str("alsa-mixer-element", "Master"));
+
+  e = snd_mixer_find_selem(mixer, sid);
+  if(e != NULL) {
+    snd_mixer_selem_set_playback_volume_range(e, 0, 100);
+    snd_mixer_selem_get_playback_volume(e, SND_MIXER_SCHN_FRONT_LEFT, &v);
+    alsa_master_volume = v / 100.0;
+  }
+
+  input_init(&alsa_master_volume_input);
+  pthread_create(&ptid, NULL, &alsa_master_volume_thread, NULL);
+  inputhandler_register(200, alsa_mixer_input_event);
+
+  alsa_mixer_element = e;
+  return 0;
+
 }

@@ -40,7 +40,6 @@
 #include "gl/gl_video.h"
 #include "menu.h"
 #include "miw.h"
-#include "audio/audio_sched.h"
 
 static glw_t *dvd_menu_spu_setup(glw_t *p, dvd_player_t *dp);
 static glw_t *dvd_menu_audio_setup(glw_t *p, dvd_player_t *dp);
@@ -446,7 +445,6 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
       }
 
       dvd_ps_block(dp, block, len);
-      audio_sched_mp_activate(mp);
       break;
 
     case DVDNAV_NOP:
@@ -547,7 +545,6 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
   free(dp);
   free(title);
 
-  audio_sched_mp_deactivate(mp, 1);
   glw_destroy(w);
 
   glw_destroy(mp->mp_info_widget);
