@@ -31,6 +31,7 @@
 #include "hid/input.h"
 #include "audio/audio_mixer.h"
 #include "audio/audio_ui.h"
+#include "libhts/htscfg.h"
 
 static snd_pcm_t *alsa_handle;
 static int alsa_channels;
@@ -61,8 +62,10 @@ alsa_configure(void)
   snd_pcm_uframes_t buffer_size;
   int channels;
 
-  channels = 2;
-  dev = "default";
+  const char *str = config_get_str("alsa-channels", "2");
+
+  channels = atoi(str);
+  dev = config_get_str("alsa-pcm-device", "default");
 
   if((r = snd_pcm_open(&h, dev, SND_PCM_STREAM_PLAYBACK, 0) < 0)) {
     fprintf(stderr, "audio: Cannot open audio device %s (%s)\n",
@@ -248,23 +251,43 @@ alsa_thread(void *aux)
   audio_mixer_setup_output(alsa_channels, alsa_period_size, alsa_rate);
 
   outbuf = calloc(1, alsa_period_size * alsa_channels * sizeof(uint16_t));
+  
+  switch(alsa_channels) {
+  case 2:
+    mixer_output_matrix[MIXER_CHANNEL_LEFT] [0] = 1.0f;
+    mixer_output_matrix[MIXER_CHANNEL_RIGHT][1] = 1.0f;
 
-  mixer_output_matrix[MIXER_CHANNEL_LEFT] [0] = 1.0f;
-  mixer_output_matrix[MIXER_CHANNEL_RIGHT][1] = 1.0f;
+    mixer_output_matrix[MIXER_CHANNEL_SR_LEFT][0] =  0.707f;
+    mixer_output_matrix[MIXER_CHANNEL_SR_LEFT][1] = -0.707f;
 
-  mixer_output_matrix[MIXER_CHANNEL_SR_LEFT][0] =  0.707f;
-  mixer_output_matrix[MIXER_CHANNEL_SR_LEFT][1] = -0.707f;
+    mixer_output_matrix[MIXER_CHANNEL_SR_RIGHT][0] = -0.707f;
+    mixer_output_matrix[MIXER_CHANNEL_SR_RIGHT][1] =  0.707f;
 
-  mixer_output_matrix[MIXER_CHANNEL_SR_RIGHT][0] = -0.707f;
-  mixer_output_matrix[MIXER_CHANNEL_SR_RIGHT][1] =  0.707f;
+    mixer_output_matrix[MIXER_CHANNEL_CENTER][0] =  0.707f;
+    mixer_output_matrix[MIXER_CHANNEL_CENTER][1] =  0.707f;
 
-  mixer_output_matrix[MIXER_CHANNEL_CENTER][0] =  0.707f;
-  mixer_output_matrix[MIXER_CHANNEL_CENTER][1] =  0.707f;
+    mixer_output_matrix[MIXER_CHANNEL_LFE][0] =  0.707f;
+    mixer_output_matrix[MIXER_CHANNEL_LFE][1] =  0.707f;
+    break;
 
-  mixer_output_matrix[MIXER_CHANNEL_LFE][0] =  0.707f;
-  mixer_output_matrix[MIXER_CHANNEL_LFE][1] =  0.707f;
+  case 6:
+    mixer_output_matrix[MIXER_CHANNEL_LEFT] [0] = 1.0f;
+    mixer_output_matrix[MIXER_CHANNEL_RIGHT][1] = 1.0f;
 
+    mixer_output_matrix[MIXER_CHANNEL_SR_LEFT][2] = 1.0f;
+    mixer_output_matrix[MIXER_CHANNEL_SR_RIGHT][3] = 1.0f;
 
+    mixer_output_matrix[MIXER_CHANNEL_LFE][5] = 1.0f;
+
+    if(config_get_bool("alsa-phantom-center", 0)) {
+      mixer_output_matrix[MIXER_CHANNEL_CENTER][0] =  0.707f;
+      mixer_output_matrix[MIXER_CHANNEL_CENTER][1] =  0.707f;
+    } else {
+      mixer_output_matrix[MIXER_CHANNEL_CENTER][4] =  1.0f;
+    }
+    break;
+  }
+ 
   while(1) {
 
     buf = af_deq(&mixer_output_fifo, 1);
