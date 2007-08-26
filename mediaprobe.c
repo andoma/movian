@@ -220,7 +220,11 @@ mediaprobe(const char *filename, mediainfo_t *mi, int fast)
   mi->mi_album = strcpy_and_trim(fctx->album);
 
   mi->mi_track = fctx->track;
-  mi->mi_duration = fctx->duration / AV_TIME_BASE;
+  if(fctx->duration == AV_NOPTS_VALUE) {
+    mi->mi_duration = 0;
+  } else {
+    mi->mi_duration = fctx->duration / AV_TIME_BASE;
+  }
   av_close_input_file(fctx);  
   ffunlock();
 

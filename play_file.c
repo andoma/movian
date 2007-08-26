@@ -273,8 +273,12 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
   mp_set_playstatus(mp, MP_PLAY);
 
   while(1) {
-    mp->mp_total_time = fctx->duration / AV_TIME_BASE;
 
+    if(fctx->duration == AV_NOPTS_VALUE) {
+      mp->mp_total_time = -1;
+    } else {
+      mp->mp_total_time = fctx->duration / AV_TIME_BASE;
+    }
 
     if(mp_is_paused(mp)) {
       wrap_unlock_all_codecs(fw);
