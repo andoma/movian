@@ -445,8 +445,6 @@ ich_create(iptv_player_t *iptv, int channel, uint32_t tag)
   pp->pp_audio.ps_filter_cb = iptv_filter_audio;
   pp->pp_audio.ps_aux = ich;
 
-  mp_set_playstatus(mp, MP_PLAY);
-
   mp->mp_info_widget = iptv_create_miw(iptv, ich, tag);
   mp->mp_info_extra_widget = iptv_create_extra_miw(iptv, ich);
   iptv->iptv_channels[channel] = ich;
@@ -730,7 +728,7 @@ iptv_key_event_unzoomed(iptv_player_t *iptv, int key)
     tvh_int(tvh_query(&iptv->iptv_tvh, "channel.subscribe %d %d", 
 		      ich->ich_index, 500));
     
-    media_pipe_reacquire_audio(&ich->ich_mp);
+    mp_set_playstatus(&ich->ich_mp, MP_PLAY);
     
     glw_nav_signal(iptv->iptv_chlist, GLW_SIGNAL_ENTER);
     iptv->iptv_appi->ai_req_fullscreen = AI_FS_BLANK;
@@ -761,6 +759,8 @@ iptv_key_event_zoomed(iptv_player_t *iptv, int key)
 
   case INPUT_KEY_BACK:
   case INPUT_KEY_STOP:
+    mp_set_playstatus(&ich->ich_mp, MP_STOP);
+
     tvh_int(tvh_query(&iptv->iptv_tvh, "channel.unsubscribe %d",
 		      ich->ich_index));
     
