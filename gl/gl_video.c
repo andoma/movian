@@ -186,14 +186,16 @@ gl_decode_thread(void *aux)
       /* FALLTHRU */
 
     case MB_RESET_SPU:
-      gl_dvdspu_flush(gvp->gvp_dvdspu);
+      if(gvp->gvp_dvdspu != NULL)
+	gl_dvdspu_flush(gvp->gvp_dvdspu);
       break;
 
     case MB_DVD_SPU:
     case MB_CLUT:
     case MB_DVD_PCI:
     case MB_DVD_HILITE:
-      gl_dvdspu_dispatch(gvp->gvp_dvd, gvp->gvp_dvdspu, mb);
+      if(gvp->gvp_dvdspu != NULL)
+	gl_dvdspu_dispatch(gvp->gvp_dvd, gvp->gvp_dvdspu, mb);
       break;
 
     default:
@@ -215,7 +217,6 @@ gl_decode_thread(void *aux)
   }
 
   glw_unlock();
-  printf("Video thread exited\n");
   return NULL;
 }
 
@@ -228,8 +229,12 @@ gvp_dequeue_for_decode(gl_video_pipe_t *gvp, int w[3], int h[3])
 
   pthread_mutex_lock(&gvp->gvp_queue_mutex);
   
-  while((gvf = TAILQ_FIRST(&gvp->gvp_avail_queue)) == NULL)
+  while((gvf = TAILQ_FIRST(&gvp->gvp_avail_queue)) == NULL &&
+	gvp->gvp_purged == 0) {
     pthread_cond_wait(&gvp->gvp_avail_queue_cond, &gvp->gvp_queue_mutex);
+  }
+  if(gvf == NULL)
+    return NULL;
 
   TAILQ_REMOVE(&gvp->gvp_avail_queue, gvf, link);
 
@@ -253,9 +258,12 @@ gvp_dequeue_for_decode(gl_video_pipe_t *gvp, int w[3], int h[3])
 
   TAILQ_INSERT_TAIL(&gvp->gvp_bufalloc_queue, gvf, link);
 
-  while((gvf = TAILQ_FIRST(&gvp->gvp_bufalloced_queue)) == NULL)
+  while((gvf = TAILQ_FIRST(&gvp->gvp_bufalloced_queue)) == NULL &&
+	gvp->gvp_purged == 0 )
     pthread_cond_wait(&gvp->gvp_bufalloced_queue_cond, &gvp->gvp_queue_mutex);
 
+  if(gvf == NULL)
+    return 0;
 
   TAILQ_REMOVE(&gvp->gvp_bufalloced_queue, gvf, link);
 
@@ -557,7 +565,8 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
     if(!display_or_skip(gvp, duration))
       return;
 
-    gvf = gvp_dequeue_for_decode(gvp, wvec, hvec);
+    if((gvf = gvp_dequeue_for_decode(gvp, wvec, hvec)) == NULL)
+      return;
 
     for(i = 0; i < 3; i++) {
       h = gvf->gvf_height[i];
@@ -594,7 +603,8 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
     hvec[2] = hvec[2] / 2;
 
     if(display_or_skip(gvp, duration)) {
-      gvf = gvp_dequeue_for_decode(gvp, wvec, hvec);
+      if((gvf = gvp_dequeue_for_decode(gvp, wvec, hvec)) == NULL)
+	return;
 
       for(i = 0; i < 3; i++) {
 
@@ -620,7 +630,8 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
 
     if(display_or_skip(gvp, duration)) {
 
-      gvf = gvp_dequeue_for_decode(gvp, wvec, hvec);
+      if((gvf = gvp_dequeue_for_decode(gvp, wvec, hvec)) == NULL)
+	return;
 
       for(i = 0; i < 3; i++) {
       
@@ -755,7 +766,6 @@ gvp_buffer_allocator(gl_video_pipe_t *gvp)
   }
 
   while((gvf = TAILQ_FIRST(&gvp->gvp_bufalloc_queue)) != NULL) {
-
     TAILQ_REMOVE(&gvp->gvp_bufalloc_queue, gvf, link);
 
     if(gvf->gvf_pbo != 0)
@@ -1415,7 +1425,10 @@ gvp_purge(gl_video_pipe_t *gvp)
     TAILQ_REMOVE(&gvp->gvp_display_queue, gvf, link);
     gvf_purge(gvp, gvf);
   }
-
+  gvp->gvp_purged = 1;
+  pthread_cond_signal(&gvp->gvp_avail_queue_cond);
+  pthread_cond_signal(&gvp->gvp_bufalloced_queue_cond);
+  
   pthread_mutex_unlock(&gvp->gvp_queue_mutex);
 }
 
@@ -1449,12 +1462,13 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
   va_list ap;
   va_start(ap, signal);
 
+
   switch(signal) {
   case GLW_SIGNAL_DTOR:
-
     gvp_purge(gvp);
 
     gl_dvdspu_deinit(gvp->gvp_dvdspu);
+    gvp->gvp_dvdspu = NULL;
 
     switch(gvp->gvp_state) {
     case GVP_STATE_IDLE:

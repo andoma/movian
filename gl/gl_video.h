@@ -109,6 +109,8 @@ typedef struct gl_video_pipe {
 
   int gvp_flags;
 
+  int gvp_purged;
+
   int gvp_compensate_thres;
 
   gvp_conf_t *gvp_conf;
