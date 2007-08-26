@@ -61,6 +61,7 @@ pes_do_block(pes_player_t *pp, uint32_t sc, uint8_t *buf, int len, int w,
   AVCodecContext *ctx;
   media_pipe_t *mp = pp->pp_mp;
   enum CodecID codec_id;
+  AVRational mpeg_tc = {1, 90000};
 
   x = getu8(buf, len);
   flags = getu8(buf, len);
@@ -194,11 +195,13 @@ pes_do_block(pes_player_t *pp, uint32_t sc, uint8_t *buf, int len, int w,
   }
 
 
+  
+
   if(dts != AV_NOPTS_VALUE)
-    ps->ps_dts = dts * 11111LL / 1000LL;
+    dts = av_rescale_q(dts, mpeg_tc, AV_TIME_BASE_Q);
   
   if(pts != AV_NOPTS_VALUE)
-    ps->ps_pts = pts * 11111LL / 1000LL;
+    pts = av_rescale_q(pts, mpeg_tc, AV_TIME_BASE_Q);
 
   cw = ps->ps_cw;
   ctx = cw->codec_ctx;
@@ -230,7 +233,7 @@ pes_do_block(pes_player_t *pp, uint32_t sc, uint8_t *buf, int len, int w,
   while(len > 0) {
 
     rlen = av_parser_parse(cw->parser_ctx, ctx, &outbuf, &outlen, buf, len, 
-			   ps->ps_pts, ps->ps_dts);
+			   pts, dts);
 
     if(outlen) {
 	
@@ -247,7 +250,8 @@ pes_do_block(pes_player_t *pp, uint32_t sc, uint8_t *buf, int len, int w,
       mb->mb_rate = rate;
 
       mb->mb_keyframe = cw->parser_ctx->pict_type == FF_I_TYPE;
-      mb->mb_pts = ps->ps_pts;
+      mb->mb_pts = cw->parser_ctx->pts;
+
       mb->mb_cw = wrap_codec_ref(cw);
 
       wrap_unlock_codec(cw);
