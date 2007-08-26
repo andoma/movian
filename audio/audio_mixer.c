@@ -281,7 +281,7 @@ audio_source_create(media_pipe_t *mp)
   while(mixer_words == 0)
     sleep(1);
 
-  audio_fifo_init(&as->as_fifo, 4, mixer_words * sizeof(float), 2);
+  audio_fifo_init(&as->as_fifo, 10, mixer_words * sizeof(float), 7);
 
   pthread_mutex_lock(&audio_source_lock);
   LIST_INSERT_HEAD(&audio_sources, as, as_link);
