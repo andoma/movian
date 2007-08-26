@@ -454,8 +454,6 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
 
   }
 
-  mp_set_playstatus(mp, MP_STOP);
-
   mp->mp_playstatus_update_callback = NULL;
   mp->mp_info_widget = NULL;
   mp->mp_info_extra_widget = NULL;
@@ -494,6 +492,8 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
     subtitles_free(mp->mp_subtitles);
     mp->mp_subtitles = NULL;
   }
+
+  mp_set_playstatus(mp, MP_STOP);
 
   return key;
 }
