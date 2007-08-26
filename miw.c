@@ -264,8 +264,11 @@ static int
 miw_audiotime_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
   media_pipe_t *mp = opaque;
-  char tmp[30];
+  char tmp[100];
+  char tot[30];
   uint32_t t;
+
+  int s, m, h;
 
   va_list ap;
   va_start(ap, signal);
@@ -283,12 +286,34 @@ miw_audiotime_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
     w->glw_u32 = t;
 
-    snprintf(tmp, sizeof(tmp), "%d:%02d / %d:%02d", 
-	     w->glw_u32 / 60, w->glw_u32 % 60,
-	     mp->mp_total_time / 60, mp->mp_total_time % 60);
+    s = w->glw_u32;
+    m = s / 60;
+    h = s / 3600;
 
-    glw_set(w, GLW_ATTRIB_CAPTION, tmp, NULL);
-    break;
+    if(h > 0) {
+      snprintf(tmp, sizeof(tmp), "%d:%02d:%02d", h, m % 60, s % 60);
+    } else {
+      snprintf(tmp, sizeof(tmp), "%d:%02d", m % 60, s % 60);
+    }
+
+    if(mp->mp_total_time > 0) {
+      s = mp->mp_total_time;
+      m = s / 60;
+      h = s / 3600;
+
+      if(h > 0) {
+	snprintf(tot, sizeof(tot), 
+		 "%s / %d:%02d:%02d", tmp, h, m % 60, s % 60);
+      } else {
+	snprintf(tot, sizeof(tot), 
+		 "%s / %d:%02d", tmp, m % 60, s % 60);
+      }
+      glw_set(w, GLW_ATTRIB_CAPTION, tot, NULL);
+    } else {
+      glw_set(w, GLW_ATTRIB_CAPTION, tmp, NULL);
+    }
+
+     break;
 
   default:
     break;
@@ -310,9 +335,13 @@ miw_audiobar_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
   switch(signal) {
   case GLW_SIGNAL_PREPARE:
-    if(mp == NULL || mp->mp_total_time == 0)
-       return 0;
- 
+    if(mp->mp_total_time < 1) {
+      w->glw_alpha = 0.0;
+      break;
+    } else {
+      w->glw_alpha = 1.0;
+    }
+
     w->glw_extra = (float)mp->mp_time_feedback / (float)mp->mp_total_time;
     break;
 
