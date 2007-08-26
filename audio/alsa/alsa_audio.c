@@ -310,7 +310,7 @@ alsa_thread(void *aux)
     if(snd_pcm_delay(alsa_handle, &delay))
       delay = 0;
     
-    delay /= alsa_channels;
+    //    delay /= alsa_channels;
 
     /* convert delay from sample rates to µs */
     mixer_hw_output_delay = (delay * 1000 / alsa_rate) * 1000;
