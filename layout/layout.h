@@ -23,6 +23,8 @@
 #include "hid/input.h"
 #include "app.h"
 
+extern int layout_menu_display;
+
 void layout_hide(appi_t *ai);
 
 glw_t *layout_win_create(const char *name, const char *icon,

@@ -125,14 +125,10 @@ menu_collapse(menu_t *m)
  *
  */
 int
-menu_input(appi_t *ai, inputevent_t *ie)
+menu_input(glw_t *w, inputevent_t *ie)
 {
-  glw_t *w, *c;
+  glw_t *c;
   menu_t *m = NULL, *mm;
-
-  w = ai->ai_menu;
-  if(w == NULL)
-    return 0;
 
   w = glw_find_by_class(w, GLW_ARRAY);
   if(w == NULL)
@@ -382,10 +378,12 @@ menu_push_top_menu(appi_t *ai, const char *title)
 
   settings_menu_create(c);
 
-  glw_lock();
-  m->m_stack = ai->ai_menu;
-  ai->ai_menu = c;
-  glw_unlock();
+  if(ai != NULL) {
+    glw_lock();
+    m->m_stack = ai->ai_menu;
+    ai->ai_menu = c;
+    glw_unlock();
+  }
 
   return c;
 }
@@ -430,7 +428,7 @@ menu_post_key_pop_and_hide(glw_t *w, void *opaque, glw_signal_t signal, ...)
   case GLW_SIGNAL_CLICK:
     input_keystrike(&ai->ai_ic, glw_get_u32(w));
     menu_collapse(m);
-    ai->ai_menu_display = 0;
+    layout_menu_display = 0;
     return 1;
     
   default:
@@ -446,9 +444,9 @@ menu_post_key_pop_and_hide(glw_t *w, void *opaque, glw_signal_t signal, ...)
  *
  */
 void
-menu_layout(appi_t *ai)
+menu_layout(glw_t *w)
 {
-  glw_t *c, *w;
+  glw_t *c;
   menu_t *m;
   glw_rctx_t rc;
   int d = 0;
@@ -460,10 +458,9 @@ menu_layout(appi_t *ai)
   memset(&rc, 0, sizeof(rc));
   rc.rc_aspect = MENU_ASPECT * (16.0f / 9.0f);
 
-  w = ai->ai_menu;
   m = glw_get_opaque(w, menu_bitmap_callback);
 
-  m->m_alpha2 = GLW_LP(16, m->m_alpha2, !!ai->ai_menu_display);
+  m->m_alpha2 = GLW_LP(16, m->m_alpha2, layout_menu_display);
 
   while(w != NULL) {
     m = glw_get_opaque(w, menu_bitmap_callback);
@@ -500,10 +497,10 @@ menu_layout(appi_t *ai)
  *
  */
 void
-menu_render(appi_t *ai, float alpha)
+menu_render(glw_t *w, float alpha)
 {
   glw_rctx_t rc;
-  glw_t *c, *w = ai->ai_menu;
+  glw_t *c;
   glw_vertex_t xyz;
   menu_t *m;
 

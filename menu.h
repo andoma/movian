@@ -29,11 +29,11 @@ glw_t *menu_create_submenu(glw_t *p, const char *icon, const char *title,
 glw_t *menu_create_submenu_cb(glw_t *p, const char *icon, const char *title,
 			      int first, glw_callback_t *cb, void *opaque);
 
-int menu_input(appi_t *ai, inputevent_t *ie);
+int menu_input(glw_t *w, inputevent_t *ie);
 
-void menu_render(appi_t *ai, float alpha);
+void menu_render(glw_t *w, float alpha);
 
-void menu_layout(appi_t *ai);
+void menu_layout(glw_t *w);
 
 void menu_destroy(appi_t *ai);
 

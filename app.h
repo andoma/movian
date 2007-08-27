@@ -31,8 +31,6 @@ extern struct appi_queue appis;
 
 #define appi_menu_top(ai) ((ai)->ai_menu)
 
-#define appi_menu_display(ai) ((ai)->ai_menu_display = 1)
-
 typedef struct appi {
   LIST_ENTRY(appi) ai_app_link;
   TAILQ_ENTRY(appi) ai_global_link;
@@ -53,7 +51,6 @@ typedef struct appi {
   glw_t *ai_widget;             /* Created by spawn() function */
 
   glw_t *ai_menu;               /* Top level menu */
-  int ai_menu_display; 
 
   pthread_t ai_tid;
 

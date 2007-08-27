@@ -722,7 +722,6 @@ pvr_rec_cmd(pvr_t *pvr, const char *cmd)
 static int
 pvr_sa_2dnav_keystrike(pvr_t *pvr, inputevent_t *ie)
 {
-  appi_t *ai = pvr->pvr_ai;
   pvrprog_t *pvp;
 
   switch(ie->u.key) {
@@ -735,7 +734,7 @@ pvr_sa_2dnav_keystrike(pvr_t *pvr, inputevent_t *ie)
     break;
     
   case INPUT_KEY_ENTER:
-    ai->ai_menu_display = !ai->ai_menu_display;
+    layout_menu_display = !layout_menu_display;
     break;
 
   case INPUT_KEY_UP:
@@ -862,9 +861,6 @@ pvr_sa_2dnav_ie(pvr_t *pvr, inputevent_t *ie)
 static int
 pvr_sa_sched_keystrike(pvr_t *pvr, inputevent_t *ie)
 {
-  appi_t *ai = pvr->pvr_ai;
-
-
   switch(ie->u.key) {
   default:
     break;
@@ -875,7 +871,7 @@ pvr_sa_sched_keystrike(pvr_t *pvr, inputevent_t *ie)
     break;
     
   case INPUT_KEY_ENTER:
-    ai->ai_menu_display = !ai->ai_menu_display;
+    layout_menu_display = !layout_menu_display;
     break;
 
   case INPUT_KEY_UP:
@@ -1244,7 +1240,6 @@ pvr_2dnav_render(pvr_t *pvr, glw_rctx_t *rc)
 static void 
 pvr_2dnav_layout(pvr_t *pvr, glw_rctx_t *rc)
 {
-  appi_t *ai = pvr->pvr_ai;
   pvrchan_t *pvc;
   pvrprog_t *pvp;
   float t, a0, a1, x1, x2, c, s, y;
@@ -1255,9 +1250,9 @@ pvr_2dnav_layout(pvr_t *pvr, glw_rctx_t *rc)
   glw_t *w;
 
 
-  if(ai->ai_menu_display && pvr->pvr_zoomv < 1.0)
+  if(layout_menu_display && pvr->pvr_zoomv < 1.0)
     pvr->pvr_zoomv += 0.02;
-  else if(!ai->ai_menu_display && pvr->pvr_zoomv > 0.0)
+  else if(!layout_menu_display && pvr->pvr_zoomv > 0.0)
     pvr->pvr_zoomv -= 0.02;
     
   zo = GLW_S(GLW_MIN(pvr->pvr_zoomv * 2, 1.0));
@@ -1396,7 +1391,7 @@ pvr_2dnav_layout(pvr_t *pvr, glw_rctx_t *rc)
     }
   }
 
-  if(!ai->ai_menu_display)
+  if(!layout_menu_display)
     pvr->pvr_selected = sel;
 }
 

@@ -29,7 +29,8 @@
 
 #include "audio/audio_ui.h"
 
-
+int layout_menu_display;
+glw_t *root_menu;
 glw_t *wroot[4];
 glw_t *root_array[4];
 
@@ -133,6 +134,8 @@ layout_std_create(void)
 
   inputhandler_register(200,   menu_input_event);
   inputhandler_register(100, mirror_input_event);
+
+  root_menu = menu_push_top_menu(NULL, "Showtime");
 
   for(i = 0; i < 4; i++) {
   
@@ -250,8 +253,7 @@ draw_world(float ca, float rot, float alpha)
   }
 
   ai = layout_get_cur_app();
-  if(ai != NULL)
-    menu_render(ai, alpha);
+  menu_render(ai ? ai->ai_menu : root_menu, alpha);
 
   render_gadgets(alpha);
 
@@ -330,7 +332,7 @@ layout_std_draw(void)
     
   cz = 4.0;
 
-  if(ai && ai->ai_menu_display) {
+  if(layout_menu_display) {
     glw_vertex_anim_set3f(&cpos,   0,    1.5,  CAMZ);
     glw_vertex_anim_set3f(&ctgt,   -0.5, 1.0, 1.0);
     glw_vertex_anim_set3f(&fcol,   0.09, 0.11, 0.2);
@@ -419,19 +421,18 @@ menu_input_event(inputevent_t *ie)
 {
   appi_t *ai;
 
-  if((ai = layout_get_cur_app()) == NULL)
-    return 0;
+  ai = layout_get_cur_app();
 
   if(ie->type == INPUT_KEY && ie->u.key == INPUT_KEY_MENU) {
-    ai->ai_menu_display = !ai->ai_menu_display;
+    layout_menu_display = !layout_menu_display;
     return 1;
   }
 
-  if(ai->ai_menu_display == 0)
+  if(layout_menu_display == 0)
     return 0;
 
-  if(menu_input(ai, ie))
-    ai->ai_menu_display = 0;
+  if(menu_input(ai ? ai->ai_menu : root_menu, ie))
+    layout_menu_display = 0;
 
   return 1;
 }
@@ -482,8 +483,9 @@ layout_apps(void)
     if(ai->ai_widget != NULL)
       glw_layout(ai->ai_widget, &rc);
     
-    menu_layout(ai);
+    menu_layout(ai->ai_menu);
   }
+  menu_layout(root_menu);
 }
 
 
@@ -629,7 +631,7 @@ miw_render(void)
     if(mp->mp_info_widget_auto_display > 0)
       mp->mp_info_widget_auto_display--;
 
-    if(ai != NULL && ai->ai_got_fullscreen && ai->ai_menu_display == 0 &&
+    if(ai != NULL && ai->ai_got_fullscreen && layout_menu_display == 0 &&
        mp->mp_info_widget_auto_display == 0 && mp->mp_playstatus == MP_PLAY)
       a = 0;
     else
