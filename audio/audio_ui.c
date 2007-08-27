@@ -51,8 +51,8 @@ audio_render(float alpha)
 
   glPushMatrix();
 
-  glTranslatef(0.0, 0.5, 2.0f);
-  glScalef(0.8 * 0.6, 0.6 * 0.04, 1.0f);
+  glTranslatef(0.0, -0.95, 0.0f);
+  glScalef(0.75, 0.04, 1.0f);
   
   glw_render(audio_widget, &rc);
 

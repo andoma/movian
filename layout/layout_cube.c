@@ -254,7 +254,6 @@ draw_world(float ca, float rot, float alpha)
     menu_render(ai, alpha);
 
   render_gadgets(alpha);
-  audio_render(alpha);
 
   glDisable(GL_CLIP_PLANE5);
 }
@@ -408,6 +407,9 @@ layout_std_draw(void)
 	    0, 1, 0);
 
   topinfospace = miw_render();
+
+  audio_render(1.0f);
+
 }
 
 
