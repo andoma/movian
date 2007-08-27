@@ -93,8 +93,6 @@ int
 mediaprobe(const char *filename, mediainfo_t *mi, int fast)
 {
   int i, fd;
-  //  rpc_t *rpc = &b->b_rpc;
-  //  static const char *midhost;
   AVFormatContext *fctx;
   const char *t;
   char probebuf[128];
