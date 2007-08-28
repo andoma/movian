@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config.h"
+
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <pthread.h>
@@ -27,6 +29,12 @@
 #include <ffmpeg/avcodec.h>
 #include <ffmpeg/avformat.h>
 #include <ffmpeg/common.h>
+
+#ifdef HAVE_LIBEXIF
+#include <exif-data.h>
+#include <exif-utils.h>
+#include <exif-loader.h>
+#endif
 
 #include "showtime.h"
 #include "mediaprobe.h"
@@ -99,9 +107,16 @@ mediaprobe(const char *filename, mediainfo_t *mi, int fast)
   char tmp1[300];
   char *p;
 
+#ifdef HAVE_LIBEXIF
+  ExifLoader *l;
+  ExifData *ed;
+#endif
+
   fd = open(filename, O_RDONLY);
   if(fd == -1)
     return 1;
+
+  mi->mi_time = 0;
 
   i = read(fd, probebuf, sizeof(probebuf));
 
@@ -126,6 +141,42 @@ mediaprobe(const char *filename, mediainfo_t *mi, int fast)
       close(fd);
       return 0;
     }
+
+#ifdef HAVE_LIBEXIF
+
+    l = exif_loader_new();
+    exif_loader_write_file(l, filename);
+
+    ed = exif_loader_get_data(l);
+    exif_loader_unref (l);
+    if(ed != NULL) {
+      ExifEntry *e;
+      
+      e = exif_content_get_entry(ed->ifd[EXIF_IFD_EXIF],
+				 EXIF_TAG_DATE_TIME_ORIGINAL);
+      if(e != NULL) {
+	char tid[100];
+	struct tm tm;
+	time_t t;
+
+	exif_entry_get_value(e, tid, sizeof(tid));
+
+	if(sscanf(tid, "%04d:%02d:%02d %02d:%02d:%02d",
+		  &tm.tm_year, &tm.tm_mon, &tm.tm_mday,
+		  &tm.tm_hour, &tm.tm_min, &tm.tm_sec) == 6) {
+	  tm.tm_year -= 1900;
+	  tm.tm_mon--;
+	  t = mktime(&tm);
+	  if(t != (time_t)-1) {
+	    mi->mi_time = t;
+	  }
+	}
+      }
+      exif_data_unref(ed);
+    }
+
+
+#endif
 
     if(
        (probebuf[6] == 'J' && probebuf[7] == 'F' &&

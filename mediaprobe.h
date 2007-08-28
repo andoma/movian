@@ -33,6 +33,7 @@ typedef struct mediainfo {
   const char *mi_album;
   int mi_track;
   int mi_duration;
+  time_t mi_time;
 
 } mediainfo_t;
 
