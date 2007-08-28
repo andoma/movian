@@ -631,6 +631,9 @@ sort_b_entry(const void *A, const void *B)
     if(a->be_type != BE_FILE)
       return strcasecmp(a->be_filename, b->be_filename);
       
+    if(a->be_mi.mi_time != 0 && b->be_mi.mi_time != 0)
+      return a->be_mi.mi_time - b->be_mi.mi_time;
+
     return strcasecmp(a->be_mi.mi_title, b->be_mi.mi_title);
   }
   return a->be_type - b->be_type;
