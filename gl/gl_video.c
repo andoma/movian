@@ -342,6 +342,7 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
   media_queue_t *mq = &mp->mp_video;
   time_t now;
   int hvec[3], wvec[3];
+  int tff;
 
   got_pic = 0;
 
@@ -545,6 +546,8 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
   }
 
 
+  tff = !!frame->top_field_first ^ gc->gc_field_parity;
+
   switch(gvp->gvp_postproc_type) {
 
   case GVP_PP_AUTO:
@@ -621,7 +624,7 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
       }
 
       gvf->gvf_interlaced = 1;
-      gvf->gvf_bottom_frame = !frame->top_field_first;
+      gvf->gvf_bottom_frame = !tff;
       
       gvf->gvf_pts = pts;
       gvf->gvf_duration = duration;
@@ -649,7 +652,7 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
 
  
       gvf->gvf_interlaced = 1;
-      gvf->gvf_bottom_frame = frame->top_field_first;
+      gvf->gvf_bottom_frame = tff;
 
       gvf->gvf_pts = pts + duration;
       gvf->gvf_duration = duration;
@@ -1566,6 +1569,34 @@ gvp_menu_pp(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
 
 
+static int 
+gvp_menu_pp_field_parity(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  gvp_conf_t *gc = opaque;
+  glw_t *b;
+  char txt[30];
+
+  switch(signal) {
+  case GLW_SIGNAL_PREPARE:
+    if((b = glw_find_by_class(w, GLW_TEXT_BITMAP)) == NULL)
+      return 0;
+
+    snprintf(txt, sizeof(txt), "Field parity: %s",
+	     gc->gc_field_parity ? "Inverted" : "Normal");
+    glw_set(b, GLW_ATTRIB_CAPTION, txt, NULL);
+    return 0;
+
+  case GLW_SIGNAL_CLICK:
+    gc->gc_field_parity = !gc->gc_field_parity;
+    return 1;
+    
+  default:
+    return 0;
+  }
+}
+
+
+
 
 
 
@@ -1704,8 +1735,8 @@ gvp_menu_setup(glw_t *p, gvp_conf_t *gc)
   menu_create_item(s, "icon://menu-current.png", "Deinterlace (bob)", 
 		   gvp_menu_pp, gc, GVP_PP_DEINTERLACER, 0);
 
-  menu_create_item(s, "icon://menu-current.png", "Crasy test", 
-		   gvp_menu_pp, gc, GVP_PP_TEST, 0);
+  menu_create_item(s, NULL, "Field Parity", 
+		   gvp_menu_pp_field_parity, gc, 0, 0);
 
 
  /*** AV sync */

@@ -49,7 +49,8 @@ typedef struct gvp_conf {
   gvp_pp_type_t gc_postproc_type;
   int gc_avcomp;
   int gc_zoom;
-
+  int gc_field_parity;
+  
 } gvp_conf_t;
 
 
