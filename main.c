@@ -208,6 +208,8 @@ main(int argc, char **argv)
     exit(0);
   }
 
+  audio_init();
+  
   setup_gl();
 
   gvp_init();
@@ -217,8 +219,6 @@ main(int argc, char **argv)
 
   layout_std_create();
 
-  audio_init();
-  
   app_init();
 
   APP_REGISTER(app_iptv);
@@ -281,6 +281,8 @@ render_scene(void)
 void
 showtime_exit(int suspend)
 {
+  settings_write();
+
   _exit(suspend ? 10 : 11);
 }
 
