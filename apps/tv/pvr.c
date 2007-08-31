@@ -178,14 +178,20 @@ pvr_menu_recording_cb(glw_t *w, void *opaque, glw_signal_t signal, ...)
   pvr_t *pvr = opaque;
   pvrprog_t *pvp;
 
-  int showme;
+  int showme = 1;
 
   switch(signal) {
   case GLW_SIGNAL_PREPARE:
     pvp = pvr_get_sel_pvp(pvr);
-    showme = pvp && 
-      pvp->pvp_eventinfo.tve_pvrstatus == HTSTV_PVR_STATUS_NONE && 
-      pvp->pvp_eventinfo.tve_stop > walltime;
+    if(pvp != NULL && pvp->pvp_eventinfo.tve_stop > walltime) {
+
+      switch(pvp->pvp_eventinfo.tve_pvrstatus) {
+      case HTSTV_PVR_STATUS_SCHEDULED:
+      case HTSTV_PVR_STATUS_RECORDING:
+	showme = 0;
+	break;
+      }
+    }
     glw_set(w, GLW_ATTRIB_HIDDEN, !showme, NULL);
     break;
 
@@ -273,17 +279,24 @@ static glw_color_t
 pvp_plate_color_by_meta(tvevent_t *tve)
 {
   switch(tve->tve_pvrstatus) {
-default:
+  case HTSTV_PVR_STATUS_FILE_ERROR:
+  case HTSTV_PVR_STATUS_DISK_FULL:
+  case HTSTV_PVR_STATUS_ABORTED:
+  case HTSTV_PVR_STATUS_BUFFER_ERROR:
     return GLW_COLOR_RED;
 
-  case HTSTV_PVR_STATUS_SCHEDULED:
+  case HTSTV_PVR_STATUS_RECORDING:    
     return GLW_COLOR_GREEN;
 
-  case HTSTV_PVR_STATUS_DONE:
+  case HTSTV_PVR_STATUS_SCHEDULED:
     return GLW_COLOR_LIGHT_BLUE;
 
-  case HTSTV_PVR_STATUS_NONE:
+  case HTSTV_PVR_STATUS_DONE:
+    return GLW_COLOR_LIGHT_GREEN;
+
+  default:
     return GLW_COLOR_WHITE;
+
   }
 }
 
