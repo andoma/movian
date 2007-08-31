@@ -440,9 +440,12 @@ audio_compressor_menu_setup(glw_t *a)
 		 GLW_ATTRIB_PARENT, w,
 		 NULL);
 
-  audio_compressor_add_mode_selection(h, comp, "Off", AUDIO_COMPRESSOR_OFF);
-  audio_compressor_add_mode_selection(h, comp, "Soft", AUDIO_COMPRESSOR_SOFT);
-  audio_compressor_add_mode_selection(h, comp, "Hard", AUDIO_COMPRESSOR_HARD);
+  audio_compressor_add_mode_selection(h, comp, "Off",
+				      AUDIO_COMPRESSOR_OFF);
+  audio_compressor_add_mode_selection(h, comp, "Soft compressor",
+				      AUDIO_COMPRESSOR_SOFT);
+  audio_compressor_add_mode_selection(h, comp, "Hard limiter",
+				      AUDIO_COMPRESSOR_HARD);
   audio_compressor_add_mode_selection(h, comp, "User configurable",
 				      AUDIO_COMPRESSOR_USER_SETTINGS);
 
