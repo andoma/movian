@@ -338,7 +338,11 @@ menu_create_submenu(glw_t *p, const char *icon, const char *title, int first)
 {
   glw_t *x;
 
-  x = menu_create_item(p, icon, title, menu_submenu_item_event, NULL, 0,
+  char title2[40];
+
+  snprintf(title2, sizeof(title2), "%s...", title);
+
+  x = menu_create_item(p, icon, title2, menu_submenu_item_event, NULL, 0,
 		       first);
   menu_create_menu(x, title);
   return x;

@@ -85,7 +85,7 @@ settings_menu_create(glw_t *parent)
   glw_t *v;
 
   v = menu_create_submenu(parent, "icon://settings.png", 
-			  "General settings...", 0);
+			  "General settings", 0);
 
   menu_create_item(parent, "icon://power.png", "Suspend",
 		   general_menu_exit, NULL, 1, 0);

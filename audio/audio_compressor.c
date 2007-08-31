@@ -320,8 +320,7 @@ audio_compressor_menu_setup(glw_t *a)
 {
   glw_t *c;
 
-  c = menu_create_submenu(a, "icon://audio.png", 
-			  "Range Compressor...", 0);
+  c = menu_create_submenu(a, "icon://audio.png", "Range Compressor", 0);
 
   add_audio_mixer_control(c, comp_holdtime,  &post_mixer_compressor);
   add_audio_mixer_control(c, comp_postgain,  &post_mixer_compressor);

@@ -253,8 +253,7 @@ pvr_create_recording_submenu(pvr_t *pvr)
 		   pvr_menu_cancel_cb, pvr,
 		   INPUT_KEY_RECORD_CANCEL, 1);
 
-  v = menu_create_submenu_cb(ai->ai_menu, "icon://rec.png", 
-			     "Record...", 1,
+  v = menu_create_submenu_cb(ai->ai_menu, "icon://rec.png", "Record", 1,
 			     pvr_menu_recording_cb, pvr);
   
   menu_create_item(v, "icon://rec.png", "Record once",

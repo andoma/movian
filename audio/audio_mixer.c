@@ -429,8 +429,7 @@ audio_mixer_menu_setup(glw_t *parent)
 {
   glw_t *a;
 
-  a = menu_create_submenu(parent, "icon://audio.png", 
-			  "Audio settings...", 0);
+  a = menu_create_submenu(parent, "icon://audio.png", "Audio settings", 0);
 
   audio_compressor_menu_setup(a);
 }
