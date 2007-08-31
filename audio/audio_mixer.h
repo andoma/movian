@@ -70,7 +70,15 @@ typedef struct audio_source {
 
 } audio_source_t;
 
+typedef struct audio_mixer {
+  int period_size;
+  int channels;
+  int rate;
+  int words;   /* period_size * output_channels */
 
+} audio_mixer_t;
+
+extern audio_mixer_t mixer_output;
 
 
 void audio_mixer_setup_output(int channels, int period_size, int rate);

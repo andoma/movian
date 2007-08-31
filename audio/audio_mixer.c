@@ -25,7 +25,7 @@
 
 #include "showtime.h"
 #include "audio_mixer.h"
-#include "audio_fifo.h"
+#include "audio_compressor.h"
 #include "menu.h"
 #include "layout/layout.h"
 
@@ -38,103 +38,13 @@ int mixer_hw_output_delay;
 float mixer_output_matrix[AUDIO_MIXER_MAX_CHANNELS]
                          [AUDIO_MIXER_MAX_CHANNELS];
 
-static int mixer_period_size;
-static int mixer_output_channels;
-static int mixer_output_rate;
-static int mixer_words;
+audio_mixer_t output_mixer;
 
 pthread_mutex_t audio_source_lock = PTHREAD_MUTEX_INITIALIZER;
 
+audio_mixer_t mixer_output;
+
 LIST_HEAD(, audio_source) audio_sources;
-
-
-
-struct compressor_data {
-  int enable;
-  int holdtime;    /* in ms */
-  float thresdb;
-  float postgaindb;
-  float ratiocfg;
-
-
-  float lp;
-
-  float ratio;
-  float thres;
-  float postgain;
-  int holdsamples;  /* holdtime, but in mixer samples */
-  float hpeak;
-  float gain;
-  int hold;
-};
-
-struct compressor_data final_compressor;
-
-static void
-mixer_compressor(float *data, struct compressor_data *comp)
-{
-  float peak = 0;
-  float *d0;
-
-  float g;
-  int m, v, c;
-
-  int i = mixer_period_size;
-
-  d0 = data;
-
-  while(i--) {
-    m = 0;
-    for(c = 0; c < mixer_output_channels; c++) {
-      v = data[c];
-      if(v < 0)
-	v = -v;
-      if(v > m)
-	m = v;
-    }
-
-    peak = (float)m / 32768.;
-
-    if(peak > comp->thres) {
-      comp->hpeak = peak;
-      comp->hold = comp->holdsamples;
-    } else if(comp->hold > 0) {
-      comp->hold--;
-    } else {
-      comp->hpeak = peak;
-    }
-
-    if(comp->hpeak > comp->thres) {
-      g = comp->postgain * ((comp->hpeak - comp->thres) * 
-			    comp->ratio + comp->thres) / comp->hpeak;
-    } else {
-      g = comp->postgain;
-    }
-    
-    comp->gain = (comp->gain * (comp->lp - 1) + g) / comp->lp;
-
-    for(c = 0; c < mixer_output_channels; c++) {
-      *data *= comp->gain;
-      data++;
-    }
-  }
-}
-
-
-static void
-compressor_update_config(struct compressor_data *comp)
-{
-  comp->holdsamples = mixer_output_rate * comp->holdtime / 1000;
-  comp->postgain    = pow(10, comp->postgaindb / 10.);
-  comp->thres       = pow(10, comp->thresdb / 10.);
-  comp->ratio       = 1 / comp->ratiocfg;
-
-  printf("postgain = %f, thres = %f, ratio = %f\n",
-	 comp->postgain, comp->thres, comp->ratio);
-}
-
-
-
 
 
 static void *
@@ -158,8 +68,8 @@ mixer_thread(void *aux)
 
   LIST_HEAD(, audio_source) mixlist;
   
-  mixbuf = malloc(sizeof(float) * mixer_output_channels * 
-		  mixer_period_size);
+  mixbuf = malloc(sizeof(float) * mixer_output.channels * 
+		  mixer_output.period_size);
 
   while(1) {
 
@@ -201,10 +111,10 @@ mixer_thread(void *aux)
     as = LIST_FIRST(&mixlist);
 
     if(as == NULL) {
-      memset(dst, 0, sizeof(float) * mixer_words);
+      memset(dst, 0, sizeof(float) * mixer_output.words);
     } else {
-      for(i = 0; i < mixer_period_size; i++) {
-	for(j = 0; j < mixer_output_channels; j++) {
+      for(i = 0; i < mixer_output.period_size; i++) {
+	for(j = 0; j < mixer_output.channels; j++) {
 	  *dst++ = *as->as_src++ * as->as_gain;
 	}
 	as->as_gain = (as->as_gain * 999. + as->as_target_gain) / 1000.;
@@ -213,8 +123,8 @@ mixer_thread(void *aux)
       as = LIST_NEXT(as, as_tmplink);
       for(; as != NULL; as = LIST_NEXT(as, as_tmplink)) {
 	dst = mixbuf;
-	for(i = 0; i < mixer_period_size; i++) {
-	  for(j = 0; j < mixer_output_channels; j++) {
+	for(i = 0; i < mixer_output.period_size; i++) {
+	  for(j = 0; j < mixer_output.channels; j++) {
 	    *dst++ += *as->as_src++ * as->as_gain;
 	  }
 	  as->as_gain = (as->as_gain * 999. + as->as_target_gain) / 1000.;
@@ -234,8 +144,8 @@ mixer_thread(void *aux)
 
     pthread_mutex_unlock(&audio_source_lock);
 
-    if(final_compressor.enable)
-      mixer_compressor(mixbuf, &final_compressor);
+    if(post_mixer_compressor.enable)
+      audio_compressor(mixbuf, &post_mixer_compressor, &output_mixer);
 
     dst = mixbuf;
 
@@ -243,7 +153,7 @@ mixer_thread(void *aux)
     dst_buf->pts = pts;
     dst16 = ab_dataptr(dst_buf);
 
-    for(i = 0; i < mixer_words; i++) {
+    for(i = 0; i < mixer_output.words; i++) {
       o = *dst++;
       if(o >= INT16_MAX)
 	v = INT16_MAX;
@@ -278,10 +188,10 @@ audio_source_create(media_pipe_t *mp)
 {
   audio_source_t *as = calloc(1, sizeof(audio_source_t));
 
-  while(mixer_words == 0)
+  while(mixer_output.words == 0)
     sleep(1);
 
-  audio_fifo_init(&as->as_fifo, 10, mixer_words * sizeof(float), 7);
+  audio_fifo_init(&as->as_fifo, 10, mixer_output.words * sizeof(float), 7);
 
   pthread_mutex_lock(&audio_source_lock);
   LIST_INSERT_HEAD(&audio_sources, as, as_link);
@@ -301,7 +211,7 @@ audio_source_create(media_pipe_t *mp)
 void
 audio_source_destroy(audio_source_t *as)
 {
-  assert(mixer_words != 0);
+  assert(mixer_output.words != 0);
 
   if(as->as_mp == mixer_primary_audio)
     mixer_primary_audio = NULL;
@@ -335,7 +245,7 @@ audio_mixer_source_config(audio_source_t *as, int rate, int srcchannels,
   if(as->as_resampler != NULL)
     av_resample_close(as->as_resampler);
   as->as_resampler =
-    av_resample_init(mixer_output_rate, as->as_rate, 16, 10, 0, 1.0);
+    av_resample_init(mixer_output.rate, as->as_rate, 16, 10, 0, 1.0);
 
   as->as_channels = srcchannels;
 
@@ -373,7 +283,7 @@ audio_mixer_matrix(audio_source_t *as, int16_t *src[], int stride,
   float o;
 
   for(i = 0; i < frames * stride; i += stride) {
-    for(och = 0; och < mixer_output_channels; och++) {
+    for(och = 0; och < mixer_output.channels; och++) {
       o = 0;
       
       for(j = 0; j < as->as_channels; j++)
@@ -409,7 +319,7 @@ audio_mixer_source_int16(audio_source_t *as, int16_t *data, int frames,
       dst = ab_dataptr(as->as_dst_buf);
     }
 
-    wrmax = mixer_period_size - as->as_fullness;
+    wrmax = mixer_output.period_size - as->as_fullness;
 
     if(as->as_resampler != NULL) {
       
@@ -471,7 +381,7 @@ audio_mixer_source_int16(audio_source_t *as, int16_t *data, int frames,
       data += w * as->as_channels;
     }
 
-    if(as->as_fullness == mixer_period_size) {
+    if(as->as_fullness == mixer_output.period_size) {
       af_enq(&as->as_fifo, as->as_dst_buf);
       as->as_fullness = 0;
     }
@@ -493,265 +403,34 @@ audio_mixer_setup_output(int channels, int period_size, int rate)
 {
   pthread_t ptid;
 
-  mixer_words = period_size * channels;
+  mixer_output.words = period_size * channels;
 
-  mixer_period_size     = period_size;
-  mixer_output_channels = channels;
-  mixer_output_rate     = rate;
+  mixer_output.period_size     = period_size;
+  mixer_output.channels = channels;
+  mixer_output.rate     = rate;
 
-  audio_fifo_init(&mixer_output_fifo, 1, mixer_words * sizeof(float), 0);
+  audio_fifo_init(&mixer_output_fifo, 1,
+		  mixer_output.words * sizeof(float), 0);
 
   pthread_create(&ptid, NULL, mixer_thread, NULL);
 
-  final_compressor.enable = 0;
-  final_compressor.holdtime = 300; /* ms */
-  final_compressor.thresdb = 0;
-  final_compressor.ratiocfg = 1;
-  final_compressor.lp = 1000;
-  final_compressor.postgain = 1.0f;
+  post_mixer_compressor.enable = 0;
+  post_mixer_compressor.holdtime = 300; /* ms */
+  post_mixer_compressor.thresdb = 0;
+  post_mixer_compressor.ratiocfg = 1;
+  post_mixer_compressor.lp = 1000;
+  post_mixer_compressor.postgain = 1.0f;
 
-  compressor_update_config(&final_compressor);
-}
-
-
-
-
-
-
-
-static int 
-comp_holdtime(glw_t *w, void *opaque, glw_signal_t signal, ...)
-{
-  struct compressor_data *comp = opaque;
-  char buf[50];
-  inputevent_t *ie;
-  va_list ap;
-  glw_t *c;
-  va_start(ap, signal);
-
-  switch(signal) {
-  case GLW_SIGNAL_PREPARE:
-    snprintf(buf, sizeof(buf), "Holdtime: %d ms", comp->holdtime);
-
-    c = glw_find_by_class(w, GLW_TEXT_BITMAP);
-    if(c != NULL)
-      glw_set(c, GLW_ATTRIB_CAPTION, buf, NULL);
-
-    c = glw_find_by_class(w, GLW_BAR);
-    if(c != NULL)
-      c->glw_extra = (float)comp->holdtime / 1000.;
-    return 0;
-
-  case GLW_SIGNAL_INPUT_EVENT:
-    ie = va_arg(ap, void *);
-
-    if(ie->type == INPUT_KEY) {
-      switch(ie->u.key) {
-      default:
-	break;
-      case INPUT_KEY_LEFT:
-	comp->holdtime = GLW_MAX(0, comp->holdtime - 10);
-	break;
-      case INPUT_KEY_RIGHT:
-	comp->holdtime = GLW_MIN(1000, comp->holdtime + 10);
-	break;
-      }
-      compressor_update_config(&final_compressor);
-    }
-    return 1;
-
-  default:
-    return 0;
-  }
-}
-
-
-
-
-static int 
-comp_postgain(glw_t *w, void *opaque, glw_signal_t signal, ...)
-{
-  struct compressor_data *comp = opaque;
-  char buf[50];
-  inputevent_t *ie;
-  va_list ap;
-  glw_t *c;
-  va_start(ap, signal);
-
-  switch(signal) {
-  case GLW_SIGNAL_PREPARE:
-    snprintf(buf, sizeof(buf), "Postgain: %.2f dB", comp->postgaindb);
-
-    c = glw_find_by_class(w, GLW_TEXT_BITMAP);
-    if(c != NULL)
-      glw_set(c, GLW_ATTRIB_CAPTION, buf, NULL);
-
-    c = glw_find_by_class(w, GLW_BAR);
-    if(c != NULL)
-      c->glw_extra = (comp->postgaindb + 50.) / 100.;
-    return 0;
-
-  case GLW_SIGNAL_INPUT_EVENT:
-    ie = va_arg(ap, void *);
-
-    if(ie->type == INPUT_KEY) {
-      switch(ie->u.key) {
-      default:
-	break;
-      case INPUT_KEY_LEFT:
-	comp->postgaindb = GLW_MAX(-50, comp->postgaindb - 1);
-	break;
-      case INPUT_KEY_RIGHT:
-	comp->postgaindb = GLW_MIN(50,  comp->postgaindb + 1);
-	break;
-      }
-      compressor_update_config(&final_compressor);
-    }
-    return 1;
-
-  default:
-    return 0;
-  }
-}
-
-
-
-
-
-static int 
-comp_threshold(glw_t *w, void *opaque, glw_signal_t signal, ...)
-{
-  struct compressor_data *comp = opaque;
-  char buf[50];
-  inputevent_t *ie;
-  va_list ap;
-  glw_t *c;
-  va_start(ap, signal);
-
-  switch(signal) {
-  case GLW_SIGNAL_PREPARE:
-    snprintf(buf, sizeof(buf), "Threshold: %.2f dB", comp->thresdb);
-
-    c = glw_find_by_class(w, GLW_TEXT_BITMAP);
-    if(c != NULL)
-      glw_set(c, GLW_ATTRIB_CAPTION, buf, NULL);
-
-    c = glw_find_by_class(w, GLW_BAR);
-    if(c != NULL)
-      c->glw_extra = (comp->thresdb + 50.) / 50.;
-    return 0;
-
-  case GLW_SIGNAL_INPUT_EVENT:
-    ie = va_arg(ap, void *);
-
-    if(ie->type == INPUT_KEY) {
-      switch(ie->u.key) {
-      default:
-	break;
-      case INPUT_KEY_LEFT:
-	comp->thresdb = GLW_MAX(-50, comp->thresdb - 1);
-	break;
-      case INPUT_KEY_RIGHT:
-	comp->thresdb = GLW_MIN(0,   comp->thresdb + 1);
-	break;
-      }
-      compressor_update_config(&final_compressor);
-    }
-    return 1;
-
-  default:
-    return 0;
-  }
-}
-
-
-
-
-
-
-static int 
-comp_ratio(glw_t *w, void *opaque, glw_signal_t signal, ...)
-{
-  struct compressor_data *comp = opaque;
-  char buf[50];
-  inputevent_t *ie;
-  va_list ap;
-  glw_t *c;
-
-  va_start(ap, signal);
-
-  switch(signal) {
-  case GLW_SIGNAL_PREPARE:
-    snprintf(buf, sizeof(buf), "Ratio: 1:%.1f", comp->ratiocfg);
-
-    c = glw_find_by_class(w, GLW_TEXT_BITMAP);
-    if(c != NULL)
-      glw_set(c, GLW_ATTRIB_CAPTION, buf, NULL);
-
-    c = glw_find_by_class(w, GLW_BAR);
-    if(c != NULL)
-      c->glw_extra = comp->ratiocfg / 10.;
-    return 0;
-
-  case GLW_SIGNAL_INPUT_EVENT:
-    ie = va_arg(ap, void *);
-
-    if(ie->type == INPUT_KEY) {
-      switch(ie->u.key) {
-      default:
-	break;
-      case INPUT_KEY_LEFT:
-	comp->ratiocfg = GLW_MAX(1,  comp->ratiocfg - 0.5f);
-	break;
-      case INPUT_KEY_RIGHT:
-	comp->ratiocfg = GLW_MIN(10, comp->ratiocfg + 0.5f);
-	break;
-      }
-      compressor_update_config(&final_compressor);
-    }
-    return 1;
-
-  default:
-    return 0;
-  }
-}
-
-
-
-
-
-void
-add_audio_mixer_control(glw_t *parent, glw_callback_t *cb, void *opaque)
-{
-  glw_t *y;
-
-  y = menu_create_container(parent, cb, opaque, 0, 0);
-  
-  glw_create(GLW_TEXT_BITMAP,
-	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
-	     GLW_ATTRIB_PARENT, y,
-	     NULL);
-
-  glw_create(GLW_BAR,
-	     GLW_ATTRIB_COLOR, GLW_COLOR_LIGHT_BLUE,
-	     GLW_ATTRIB_PARENT, y,
-	     NULL);
+  audio_compressor_update_config(&post_mixer_compressor, &mixer_output);
 }
 
 void
 audio_mixer_menu_setup(glw_t *parent)
 {
-  glw_t *a, *c;
+  glw_t *a;
 
   a = menu_create_submenu(parent, "icon://audio.png", 
 			  "Audio settings...", 0);
 
-  c = menu_create_submenu(a, "icon://audio.png", 
-			  "Range Compressor...", 0);
- 
-
-  add_audio_mixer_control(c, comp_holdtime,  &final_compressor);
-  add_audio_mixer_control(c, comp_postgain,  &final_compressor);
-  add_audio_mixer_control(c, comp_threshold, &final_compressor);
-  add_audio_mixer_control(c, comp_ratio,     &final_compressor);
+  audio_compressor_menu_setup(a);
 }
