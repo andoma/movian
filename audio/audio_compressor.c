@@ -33,15 +33,9 @@ struct compressor_data post_mixer_compressor;
 void
 audio_compressor(float *data, struct compressor_data *comp, audio_mixer_t *mi)
 {
-  float peak = 0;
-  float *d0;
-
-  float g;
+  float g, peak = 0;
   int m, v, c;
-
   int i = mi->period_size;
-
-  d0 = data;
 
   while(i--) {
     m = 0;
@@ -84,11 +78,42 @@ audio_compressor(float *data, struct compressor_data *comp, audio_mixer_t *mi)
 void
 audio_compressor_update_config(struct compressor_data *comp, audio_mixer_t *mi)
 {
-  comp->holdsamples = mi->rate * comp->holdtime / 1000;
-  comp->postgain    = pow(10, comp->postgaindb / 10.);
-  comp->thres       = pow(10, comp->thresdb / 10.);
-  comp->ratio       = 1 / comp->ratiocfg;
+
+  switch(comp->mode) {
+  case AUDIO_COMPRESSOR_OFF:
+    break;
+
+  case AUDIO_COMPRESSOR_SOFT:
+    comp->holdsamples = mi->rate * 300 / 1000;
+    comp->postgain    = pow(10, 0.  / 10.);
+    comp->thres       = pow(10, -10. / 10.);
+    comp->ratio       = 1. / 4.;
+    break;
+
+  case AUDIO_COMPRESSOR_HARD:
+    comp->holdsamples = mi->rate * 300 / 1000;
+    comp->postgain    = pow(10, 0.  / 10.);
+    comp->thres       = pow(10, -20. / 10.);
+    comp->ratio       = 1. / 10.;
+    break;
+
+  case AUDIO_COMPRESSOR_USER_SETTINGS:
+    comp->holdsamples = mi->rate * comp->holdtime / 1000;
+    comp->postgain    = pow(10, comp->postgaindb / 10.);
+    comp->thres       = pow(10, comp->thresdb / 10.);
+    comp->ratio       = 1. / comp->ratiocfg;
+    break;
+  }
+
+  settings_setf("post-mixer-compressor-mode",     "%d", comp->mode);
+  settings_setf("post-mixer-compressor-holdtime", "%d", comp->holdtime);
+  settings_setf("post-mixer-compressor-postgain", "%f", comp->postgaindb);
+  settings_setf("post-mixer-compressor-thres",    "%f", comp->thresdb);
+  settings_setf("post-mixer-compressor-ratio",    "%f", comp->ratiocfg);
 }
+
+
+
 
 
 
@@ -108,6 +133,9 @@ comp_holdtime(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
   switch(signal) {
   case GLW_SIGNAL_PREPARE:
+    glw_set(w, GLW_ATTRIB_HIDDEN, 
+	    comp->mode != AUDIO_COMPRESSOR_USER_SETTINGS, NULL);
+
     snprintf(buf, sizeof(buf), "Holdtime: %d ms", comp->holdtime);
 
     c = glw_find_by_class(w, GLW_TEXT_BITMAP);
@@ -133,7 +161,7 @@ comp_holdtime(glw_t *w, void *opaque, glw_signal_t signal, ...)
 	comp->holdtime = GLW_MIN(1000, comp->holdtime + 10);
 	break;
       }
-      audio_compressor_update_config(&post_mixer_compressor, &mixer_output);
+      audio_compressor_update_config(comp, &mixer_output);
     }
     return 1;
 
@@ -157,6 +185,9 @@ comp_postgain(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
   switch(signal) {
   case GLW_SIGNAL_PREPARE:
+    glw_set(w, GLW_ATTRIB_HIDDEN, 
+	    comp->mode != AUDIO_COMPRESSOR_USER_SETTINGS, NULL);
+
     snprintf(buf, sizeof(buf), "Postgain: %.2f dB", comp->postgaindb);
 
     c = glw_find_by_class(w, GLW_TEXT_BITMAP);
@@ -182,7 +213,7 @@ comp_postgain(glw_t *w, void *opaque, glw_signal_t signal, ...)
 	comp->postgaindb = GLW_MIN(50,  comp->postgaindb + 1);
 	break;
       }
-      audio_compressor_update_config(&post_mixer_compressor, &mixer_output);
+      audio_compressor_update_config(comp, &mixer_output);
     }
     return 1;
 
@@ -207,6 +238,9 @@ comp_threshold(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
   switch(signal) {
   case GLW_SIGNAL_PREPARE:
+    glw_set(w, GLW_ATTRIB_HIDDEN, 
+	    comp->mode != AUDIO_COMPRESSOR_USER_SETTINGS, NULL);
+
     snprintf(buf, sizeof(buf), "Threshold: %.2f dB", comp->thresdb);
 
     c = glw_find_by_class(w, GLW_TEXT_BITMAP);
@@ -232,7 +266,7 @@ comp_threshold(glw_t *w, void *opaque, glw_signal_t signal, ...)
 	comp->thresdb = GLW_MIN(0,   comp->thresdb + 1);
 	break;
       }
-      audio_compressor_update_config(&post_mixer_compressor, &mixer_output);
+      audio_compressor_update_config(comp, &mixer_output);
     }
     return 1;
 
@@ -259,6 +293,9 @@ comp_ratio(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
   switch(signal) {
   case GLW_SIGNAL_PREPARE:
+    glw_set(w, GLW_ATTRIB_HIDDEN, 
+	    comp->mode != AUDIO_COMPRESSOR_USER_SETTINGS, NULL);
+
     snprintf(buf, sizeof(buf), "Ratio: 1:%.1f", comp->ratiocfg);
 
     c = glw_find_by_class(w, GLW_TEXT_BITMAP);
@@ -284,7 +321,7 @@ comp_ratio(glw_t *w, void *opaque, glw_signal_t signal, ...)
 	comp->ratiocfg = GLW_MIN(10, comp->ratiocfg + 0.5f);
 	break;
       }
-      audio_compressor_update_config(&post_mixer_compressor, &mixer_output);
+      audio_compressor_update_config(comp, &mixer_output);
     }
     return 1;
 
@@ -292,6 +329,60 @@ comp_ratio(glw_t *w, void *opaque, glw_signal_t signal, ...)
     return 0;
   }
 }
+
+
+
+
+
+static int 
+comp_mode(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  glw_t *c, *d;
+  struct compressor_data *comp = opaque;
+  inputevent_t *ie;
+  va_list ap;
+
+  va_start(ap, signal);
+
+  switch(signal) {
+  case GLW_SIGNAL_PREPARE:
+    c = glw_find_by_class(w, GLW_HLIST);
+
+    TAILQ_FOREACH(d, &c->glw_childs, glw_parent_link)
+      if(glw_get_u32(d) == comp->mode)
+	break;
+    if(d != NULL)
+      c->glw_selected = d;
+
+    return 0;
+
+  case GLW_SIGNAL_INPUT_EVENT:
+    ie = va_arg(ap, void *);
+
+    c = glw_find_by_class(w, GLW_HLIST);
+
+    if(c != NULL && ie->type == INPUT_KEY) {
+      switch(ie->u.key) {
+      default:
+	break;
+      case INPUT_KEY_LEFT:
+	glw_nav_signal(c, GLW_SIGNAL_LEFT);
+	break;
+      case INPUT_KEY_RIGHT:
+	glw_nav_signal(c, GLW_SIGNAL_RIGHT);
+	break;
+      }
+      c = c->glw_selected;
+      comp->mode = glw_get_u32(c);
+      audio_compressor_update_config(comp, &mixer_output);
+    }
+    return 1;
+
+  default:
+    return 0;
+  }
+}
+
 
 
 
@@ -315,15 +406,71 @@ add_audio_mixer_control(glw_t *parent, glw_callback_t *cb, void *opaque)
 	     NULL);
 }
 
+
+void
+audio_compressor_add_mode_selection(glw_t *p, struct compressor_data *comp,
+				    const char *str, int mode)
+{
+  glw_t *c;
+  
+  c = glw_create(GLW_TEXT_BITMAP,
+		 GLW_ATTRIB_PARENT, p,
+		 GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
+		 GLW_ATTRIB_U32, mode,
+		 GLW_ATTRIB_CAPTION, str,
+		 NULL);
+
+  if(comp->mode == mode)
+    p->glw_selected = c;
+}
+
+
+
 void
 audio_compressor_menu_setup(glw_t *a)
 {
-  glw_t *c;
+  glw_t *c, *w, *h;
+  struct compressor_data *comp = &post_mixer_compressor;
 
   c = menu_create_submenu(a, "icon://audio.png", "Range Compressor", 0);
+
+  w = menu_create_container(c, comp_mode, comp, 0, 0);
+
+  h = glw_create(GLW_HLIST,
+		 GLW_ATTRIB_PARENT, w,
+		 NULL);
+
+  audio_compressor_add_mode_selection(h, comp, "Off", AUDIO_COMPRESSOR_OFF);
+  audio_compressor_add_mode_selection(h, comp, "Soft", AUDIO_COMPRESSOR_SOFT);
+  audio_compressor_add_mode_selection(h, comp, "Hard", AUDIO_COMPRESSOR_HARD);
+  audio_compressor_add_mode_selection(h, comp, "User configurable",
+				      AUDIO_COMPRESSOR_USER_SETTINGS);
 
   add_audio_mixer_control(c, comp_holdtime,  &post_mixer_compressor);
   add_audio_mixer_control(c, comp_postgain,  &post_mixer_compressor);
   add_audio_mixer_control(c, comp_threshold, &post_mixer_compressor);
   add_audio_mixer_control(c, comp_ratio,     &post_mixer_compressor);
+}
+
+void
+audio_compressor_setup(void)
+{
+  post_mixer_compressor.mode = 
+    settings_get_int("post-mixer-compressor-mode", 0);
+
+  post_mixer_compressor.holdtime = 
+    settings_get_int("post-mixer-compressor-holdtime", 300);
+
+  post_mixer_compressor.postgaindb =
+    settings_get_float("post-mixer-compressor-postgain", 1.0);
+
+  post_mixer_compressor.thresdb =
+    settings_get_float("post-mixer-compressor-thres", 0.0);
+
+  post_mixer_compressor.ratiocfg = 
+    settings_get_float("post-mixer-compressor-ratio", 1.0);
+
+  post_mixer_compressor.lp = 1000;
+
+  audio_compressor_update_config(&post_mixer_compressor, &mixer_output);
 }

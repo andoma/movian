@@ -38,8 +38,6 @@ int mixer_hw_output_delay;
 float mixer_output_matrix[AUDIO_MIXER_MAX_CHANNELS]
                          [AUDIO_MIXER_MAX_CHANNELS];
 
-audio_mixer_t output_mixer;
-
 pthread_mutex_t audio_source_lock = PTHREAD_MUTEX_INITIALIZER;
 
 audio_mixer_t mixer_output;
@@ -144,8 +142,8 @@ mixer_thread(void *aux)
 
     pthread_mutex_unlock(&audio_source_lock);
 
-    if(post_mixer_compressor.enable)
-      audio_compressor(mixbuf, &post_mixer_compressor, &output_mixer);
+    if(post_mixer_compressor.mode)
+      audio_compressor(mixbuf, &post_mixer_compressor, &mixer_output);
 
     dst = mixbuf;
 
@@ -405,23 +403,16 @@ audio_mixer_setup_output(int channels, int period_size, int rate)
 
   mixer_output.words = period_size * channels;
 
-  mixer_output.period_size     = period_size;
-  mixer_output.channels = channels;
-  mixer_output.rate     = rate;
+  mixer_output.period_size = period_size;
+  mixer_output.channels   = channels;
+  mixer_output.rate       = rate;
 
   audio_fifo_init(&mixer_output_fifo, 1,
 		  mixer_output.words * sizeof(float), 0);
 
   pthread_create(&ptid, NULL, mixer_thread, NULL);
 
-  post_mixer_compressor.enable = 0;
-  post_mixer_compressor.holdtime = 300; /* ms */
-  post_mixer_compressor.thresdb = 0;
-  post_mixer_compressor.ratiocfg = 1;
-  post_mixer_compressor.lp = 1000;
-  post_mixer_compressor.postgain = 1.0f;
-
-  audio_compressor_update_config(&post_mixer_compressor, &mixer_output);
+  audio_compressor_setup();
 }
 
 void

@@ -22,7 +22,13 @@
 #include "audio_mixer.h"
 
 struct compressor_data {
-  int enable;
+  enum {
+    AUDIO_COMPRESSOR_OFF,
+    AUDIO_COMPRESSOR_SOFT,
+    AUDIO_COMPRESSOR_HARD,
+    AUDIO_COMPRESSOR_USER_SETTINGS,
+  } mode;
+
   int holdtime;    /* in ms */
   float thresdb;
   float postgaindb;
@@ -49,5 +55,7 @@ void audio_compressor_update_config(struct compressor_data *comp,
 				    audio_mixer_t *mi);
 
 void audio_compressor_menu_setup(glw_t *a);
+
+void audio_compressor_setup(void);
 
 #endif /* AUDIO_COMPRESSOR_H */
