@@ -54,13 +54,9 @@ mixer_thread(void *aux)
   audio_buf_t *dst_buf;
   int16_t *dst16;
   
-  float *dst;
-
-  float *mixbuf;
-  int d;
+  float *dst, *mixbuf, o;
   int64_t pts;
-  float o;
-  int i, j, v;
+  int i, j, v, d;
 
   pthread_mutex_lock(&audio_source_lock);
 
