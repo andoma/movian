@@ -19,6 +19,10 @@
 #ifndef AUDIO_MIXER_H
 #define AUDIO_MIXER_H
 
+#define AUDIO_OUTPUT_PCM 0x1
+#define AUDIO_OUTPUT_AC3 0x2
+#define AUDIO_OUTPUT_DTS 0x4
+
 #include "audio_fifo.h"
 
 #define MIXER_CHANNEL_NONE     -1
@@ -75,6 +79,7 @@ typedef struct audio_mixer {
   int channels;
   int rate;
   int words;   /* period_size * output_channels */
+  float *buffer;
 
 } audio_mixer_t;
 

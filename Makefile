@@ -9,7 +9,7 @@ SRCS = 	main.c app.c input.c media.c mpeg_support.c play_file.c miw.c \
 
 VPATH += audio
 SRCS  += audio.c audio_decoder.c audio_fifo.c audio_mixer.c audio_ui.c \
-	 audio_compressor.c
+	 audio_compressor.c audio_iec958.c
 
 # ALSA Audio support
 VPATH += audio/alsa

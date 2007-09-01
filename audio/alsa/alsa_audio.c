@@ -31,6 +31,7 @@
 #include "hid/input.h"
 #include "audio/audio_mixer.h"
 #include "audio/audio_ui.h"
+#include "audio/audio_iec958.h"
 #include "libhts/htscfg.h"
 
 static snd_pcm_t *alsa_handle;
@@ -39,15 +40,18 @@ static unsigned int alsa_rate;
 static int alsa_period_size;
 
 extern int mixer_hw_output_delay;
+extern int mixer_hw_output_formats;
 
 extern float mixer_output_matrix[AUDIO_MIXER_MAX_CHANNELS]
                                 [AUDIO_MIXER_MAX_CHANNELS];
 
+extern audio_fifo_t mixer_output_fifo;
 
-static int mixer_setup(void);
+
+static int alsa_mixer_setup(void);
 
 static void
-alsa_configure(void)
+alsa_configure(int format)
 {
   snd_pcm_hw_params_t *hwp;
   snd_pcm_sw_params_t *swp;
@@ -62,16 +66,41 @@ alsa_configure(void)
   snd_pcm_uframes_t buffer_size;
   int channels;
 
-  const char *str = config_get_str("alsa-channels", "2");
+  if(alsa_handle != NULL) {
+    snd_pcm_close(alsa_handle);
+    alsa_handle = NULL;
+  }
 
-  channels = atoi(str);
-  dev = config_get_str("alsa-pcm-device", "default");
+  switch(format) {
+  case AUDIO_OUTPUT_PCM:
+    channels = atoi(config_get_str("alsa-channels", "2"));
+    dev = config_get_str("alsa-pcm-device", "default");
+    fprintf(stderr, "audio: configuring for PCM; %d channels\n", channels);
+    break;
+
+  case AUDIO_OUTPUT_AC3:
+    channels = 2;
+    dev = config_get_str("alsa-ac3-device", NULL);
+    fprintf(stderr, "audio: configuring for AC3 output\n");
+    break;
+
+  case AUDIO_OUTPUT_DTS:
+    channels = 2;
+    dev = config_get_str("alsa-dts-device", NULL);
+    fprintf(stderr, "audio: configuring for DTS output\n");
+    break;
+
+  default:
+    return;
+  }
 
   if((r = snd_pcm_open(&h, dev, SND_PCM_STREAM_PLAYBACK, 0) < 0)) {
     fprintf(stderr, "audio: Cannot open audio device %s (%s)\n",
 		dev, snd_strerror(r));
     return;
   }
+
+  fprintf(stderr, "audio: using device \"%s\"\n", dev);
 
   snd_pcm_hw_params_alloca(&hwp);
 
@@ -125,18 +154,15 @@ alsa_configure(void)
     snd_pcm_close(h);
     return;
   }
-  fprintf(stderr, "audio: Buffer size = %lu\n", buffer_size);
-
 
   /* Configurue period */
-
 
   dir = 0;
   snd_pcm_hw_params_get_period_size_min(hwp, &period_size_min, &dir);
   dir = 0;
   snd_pcm_hw_params_get_period_size_max(hwp, &period_size_max, &dir);
 
-  period_size = 1365;
+  period_size = period_size_max;
 
   fprintf(stderr, "audio: attainable period size %lu - %lu, trying %lu\n",
 	  period_size_min, period_size_max, period_size);
@@ -232,27 +258,10 @@ alsa_configure(void)
 
 
 
-}
-
-
-
-extern audio_fifo_t mixer_output_fifo;
-
-static void *
-alsa_thread(void *aux)
-{
-  int c, x;
-  int16_t *outbuf;
-  audio_buf_t *buf;
-  snd_pcm_sframes_t delay;
-
-  alsa_configure();
-
-  audio_mixer_setup_output(alsa_channels, alsa_period_size, alsa_rate);
-
-  outbuf = calloc(1, alsa_period_size * alsa_channels * sizeof(uint16_t));
-  
   switch(alsa_channels) {
+  case 0:
+    break;
+
   case 2:
     mixer_output_matrix[MIXER_CHANNEL_LEFT] [0] = 1.0f;
     mixer_output_matrix[MIXER_CHANNEL_RIGHT][1] = 1.0f;
@@ -289,32 +298,102 @@ alsa_thread(void *aux)
     }
     break;
   }
- 
+
+  audio_mixer_setup_output(alsa_channels, alsa_period_size, alsa_rate);
+}
+
+
+
+
+
+
+static void *
+alsa_thread(void *aux)
+{
+  int c, x;
+  int16_t *outbuf;
+  int outlen;
+  audio_buf_t *buf;
+  snd_pcm_sframes_t delay;
+  int current_output_type = AUDIO_OUTPUT_PCM;
+  void *iec958buf;
+  int f = AUDIO_OUTPUT_PCM;
+
+  iec958buf = calloc(1, IEC968_MAX_FRAME_SIZE);
+
+  if(config_get_str("alsa-ac3-device", NULL)) f |= AUDIO_OUTPUT_AC3;
+  if(config_get_str("alsa-dts-device", NULL)) f |= AUDIO_OUTPUT_DTS;
+
+  /* tell mixer which formats we support */
+
+  mixer_hw_output_formats = f;
+
   while(1) {
 
-    buf = af_deq(&mixer_output_fifo, 1);
+    alsa_configure(current_output_type);
 
-    c = snd_pcm_wait(alsa_handle, 100);
+    while(1) {
 
-    if(c >= 0) 
-      c = snd_pcm_avail_update(alsa_handle);
+      buf = af_deq(&mixer_output_fifo, 1);
 
-    if(c == -EPIPE) {
-      snd_pcm_prepare(alsa_handle);
-      continue;
-    }
+      if(buf->payload_type != current_output_type) {
+	current_output_type = buf->payload_type;
+	af_free(buf);
+	break;
+      }
+
+      switch(current_output_type) {
+
+      case AUDIO_OUTPUT_PCM:
+	outbuf = ab_dataptr(buf);
+	outlen = alsa_period_size;
+	break;
+
+      case AUDIO_OUTPUT_AC3:
+	outlen = iec958_build_ac3frame(ab_dataptr(buf), iec958buf);
+	outbuf = iec958buf;
+	break;
+
+      case AUDIO_OUTPUT_DTS:
+	outlen = iec958_build_dtsframe(ab_dataptr(buf), buf->size, iec958buf);
+	outbuf = iec958buf;
+	break;
+
+      default:
+	outbuf = NULL;
+	outlen = 0;
+	break;
+      }
+
+      if(alsa_handle == NULL) {
+	af_free(buf);
+	continue;
+      }
+
+      c = snd_pcm_wait(alsa_handle, 100);
+      if(c >= 0) 
+	c = snd_pcm_avail_update(alsa_handle);
+
+      if(c == -EPIPE) {
+	snd_pcm_prepare(alsa_handle);
+	continue;
+      }
  
-    outbuf = ab_dataptr(buf);
-    x = snd_pcm_writei(alsa_handle, outbuf, alsa_period_size);
+      if(outlen > 0) {
 
-    if(snd_pcm_delay(alsa_handle, &delay))
-      delay = 0;
-    
-    //    delay /= alsa_channels;
+	x = snd_pcm_writei(alsa_handle, outbuf, outlen);
 
-    /* convert delay from sample rates to µs */
-    mixer_hw_output_delay = (delay * 1000 / alsa_rate) * 1000;
-    af_free(buf);
+	if(snd_pcm_delay(alsa_handle, &delay))
+	  delay = 0;
+      
+	delay /= alsa_channels;
+      
+      /* convert delay from sample rates to µs */
+	mixer_hw_output_delay = (delay * 1000 / alsa_rate) * 1000;
+      }
+
+      af_free(buf);
+    }
   }
 }
 
@@ -331,7 +410,7 @@ audio_alsa_init(void)
 {
   pthread_t ptid;
   pthread_create(&ptid, NULL, alsa_thread, NULL);
-  mixer_setup();
+  alsa_mixer_setup();
 }
 
 
@@ -454,7 +533,7 @@ alsa_mixer_input_event(inputevent_t *ie)
 
 
 static int
-mixer_setup(void)
+alsa_mixer_setup(void)
 {
   snd_mixer_t *mixer;
   const char *mixerdev = "hw:0";

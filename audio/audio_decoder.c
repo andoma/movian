@@ -1,5 +1,5 @@
 /*
- *  Audio decoder
+ *  Audio decoder thread
  *  Copyright (C) 2007 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -24,6 +24,8 @@
 #include "showtime.h"
 #include "audio_decoder.h"
 #include "audio_mixer.h"
+
+extern int mixer_hw_output_formats;
 
 static channel_offset_t layout_mono[] = {
   {MIXER_CHANNEL_CENTER, 0},
@@ -75,15 +77,43 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
   channel_offset_t *chlayout;
   codecwrap_t *cw = mb->mb_cw;
   AVCodecContext *ctx;
+  audio_buf_t *ab;
 
   ctx = cw->codec_ctx;
 
   buf = mb->mb_data;
   size = mb->mb_size;
 
+  if(primary_audio == mp) switch(ctx->codec_id) {
+  case CODEC_ID_AC3:
+    if(mixer_hw_output_formats & AUDIO_OUTPUT_AC3) {
+      ab = af_alloc_dynamic(size);
+      memcpy(ab_dataptr(ab), buf, size);
+      ab->payload_type = AUDIO_OUTPUT_AC3;
+      af_enq(&ad->ad_output->as_fifo, ab);
+      return;
+    }
+    break;
+
+  case CODEC_ID_DTS:
+    if(mixer_hw_output_formats & AUDIO_OUTPUT_DTS) {
+      ab = af_alloc_dynamic(size);
+      ab->size = size;
+      memcpy(ab_dataptr(ab), buf, size);
+      ab->payload_type = AUDIO_OUTPUT_DTS;
+      af_enq(&ad->ad_output->as_fifo, ab);
+      return;
+    }
+    break;
+
+  default:
+    break;
+  }
+ 
   while(size > 0) {
 
     wrap_lock_codec(cw);
+
     r = avcodec_decode_audio(ctx, ad->ad_outbuf, &data_size, buf, size);
 
     if(ad->ad_channels != ctx->channels || ad->ad_rate != ctx->sample_rate || 
@@ -98,52 +128,53 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
 
     wrap_unlock_codec(cw);
 
-
-    frames = data_size / sizeof(uint16_t) / ad->ad_channels;
-
-    if(r == -1 || data_size == 0)
+    if(r == -1)
       break;
 
-    switch(ad->ad_channels) {
-    case 1:
-      chlayout = layout_mono;
-      break;
-    case 2:
-      chlayout = layout_stereo;
-      break;
-    case 6:
-      switch(ctx->codec_id) {
-      case CODEC_ID_DTS:
-      case CODEC_ID_AAC:
-	chlayout = layout_5dot1_b;
+    if(data_size > 0) {
+      frames = data_size / sizeof(uint16_t) / ad->ad_channels;
+
+      switch(ad->ad_channels) {
+      case 1:
+	chlayout = layout_mono;
 	break;
+      case 2:
+	chlayout = layout_stereo;
+	break;
+      case 6:
+	switch(ctx->codec_id) {
+	case CODEC_ID_DTS:
+	case CODEC_ID_AAC:
+	  chlayout = layout_5dot1_b;
+	  break;
+	default:
+	  chlayout = layout_5dot1_a;
+	  break;
+	}
+	break;
+
       default:
-	chlayout = layout_5dot1_a;
-	break;
+	chlayout = NULL;
       }
-      break;
-
-    default:
-      chlayout = NULL;
-    }
  
-    if(chlayout != NULL) {
+      if(chlayout != NULL) {
 
-      if(reconfigure)
-	audio_mixer_source_config(ad->ad_output, ad->ad_rate,
-				  ad->ad_channels, chlayout);
+	if(reconfigure)
+	  audio_mixer_source_config(ad->ad_output, ad->ad_rate,
+				    ad->ad_channels, chlayout);
 
-      d = ad->ad_outbuf;
+	d = ad->ad_outbuf;
 
-      mp->mp_time_feedback = mb->mb_time; /* low resolution informational
-					     time */
+	mp->mp_time_feedback = mb->mb_time; /* low resolution informational
+					       time */
 
-      audio_mixer_source_int16(ad->ad_output, ad->ad_outbuf, frames,
-			       mb->mb_pts);
+	audio_mixer_source_int16(ad->ad_output, ad->ad_outbuf, frames,
+				 mb->mb_pts);
 
-      if(mb->mb_pts != AV_NOPTS_VALUE) {
-	mp->mp_clock = mb->mb_pts - ad->ad_output->as_avg_delay;
-	mp->mp_clock_valid = 1;
+	if(mb->mb_pts != AV_NOPTS_VALUE) {
+	  mp->mp_clock = mb->mb_pts - ad->ad_output->as_avg_delay;
+	  mp->mp_clock_valid = 1;
+	}
       }
     }
     buf += r;
