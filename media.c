@@ -589,7 +589,8 @@ media_pipe_acquire_audio(struct media_pipe *mp)
 void
 media_pipe_release_audio(struct media_pipe *mp)
 {
-  primary_audio = NULL;
+  if(primary_audio == mp)
+    primary_audio = NULL;
 }
 
 
