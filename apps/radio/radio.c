@@ -519,7 +519,8 @@ icecast_write(void *ptr, size_t size, size_t nmemb, void *aux)
   media_pipe_t *mp = &ai->ai_mp;
   codecwrap_t *cw = ip->ip_cw;
   
-  if(mp_get_playstatus(mp) != MP_PLAY) {
+  if(primary_audio != mp) {
+    /* we are no longer active, pointless to continue playback */
     r->r_req_channel = NULL;
     return 0;
   }
