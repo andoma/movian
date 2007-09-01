@@ -699,7 +699,9 @@ icecast_play(radio_t *r, radio_channel_t *rc, media_pipe_t *mp)
 
     mp_set_playstatus(mp, MP_PLAY);
 
+    media_pipe_acquire_audio(mp);
     err = curl_easy_perform(curl_handle);
+    media_pipe_release_audio(mp);
 
     w = mp->mp_info_widget;
 
