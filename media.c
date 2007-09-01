@@ -583,8 +583,13 @@ mp_playpause(struct media_pipe *mp, int key)
 void
 media_pipe_acquire_audio(struct media_pipe *mp)
 {
-  if(mp->mp_playstatus == MP_PLAY)
-    primary_audio = mp;
+  primary_audio = mp;
+}
+
+void
+media_pipe_release_audio(struct media_pipe *mp)
+{
+  primary_audio = NULL;
 }
 
 

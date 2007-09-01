@@ -287,6 +287,8 @@ mp_auto_display(media_pipe_t *mp)
 
 void media_pipe_acquire_audio(struct media_pipe *mp);
 
+void media_pipe_release_audio(struct media_pipe *mp);
+
 void nice_codec_name(char *buf, int len, AVCodecContext *ctx);
 
 extern media_pipe_t *primary_audio;
