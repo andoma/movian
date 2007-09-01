@@ -162,7 +162,7 @@ alsa_configure(int format)
   dir = 0;
   snd_pcm_hw_params_get_period_size_max(hwp, &period_size_max, &dir);
 
-  period_size = period_size_min;
+  period_size = 1024;
 
   fprintf(stderr, "audio: attainable period size %lu - %lu, trying %lu\n",
 	  period_size_min, period_size_max, period_size);
