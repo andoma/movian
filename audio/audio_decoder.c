@@ -71,9 +71,6 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
   uint8_t *buf;
   size_t size;
   int r, data_size, frames, reconfigure;
-  
-  //  float v, i, j;
-  float peak[6];
   int16_t *d;
   channel_offset_t *chlayout;
   codecwrap_t *cw = mb->mb_cw;
@@ -129,9 +126,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
     default:
       chlayout = NULL;
     }
-
-    //    printf("channels = %d, layout = %p\n", channels, chlayout);
-
+ 
     if(chlayout != NULL) {
 
       if(reconfigure)
@@ -140,40 +135,6 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
 
       d = ad->ad_outbuf;
 
-      peak[0] = 0;
-      peak[1] = 0;
-      peak[2] = 0;
-      peak[3] = 0;
-      peak[4] = 0;
-      peak[5] = 0;
-#if 0
-
-#if 1
-      for(i = 0; i < frames; i++) {
-	for(j = 0; j < channels; j++) {
-	  v = *d++;
-	  if(v < 0) v = -v;
-	  v /= 32768.;
-	  if(v > peak[j])
-	    peak[j] = v;
-	}
-      }
-
-      for(j = 0; j < channels; j++) {
-	printf("%f\t", peak[j]);
-      }
-      printf("\n");
-#else
-      v = v;
-
-      if(channels == 6) {
-	for(i = 0; i < frames; i++) {
-	  j = i * channels + 5;
-	  printf("%d\n", d[j]);
-	}
-      }
-#endif
-#endif
       mp->mp_time_feedback = mb->mb_time; /* low resolution informational
 					     time */
 
