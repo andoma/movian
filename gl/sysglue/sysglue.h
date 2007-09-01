@@ -1,5 +1,5 @@
 /*
- *  GLUT input
+ *  glue for system dependent gl stuff
  *  Copyright (C) 2007 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,11 +16,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef GL_INPUT_H
-#define GL_INPUT_H
+#ifndef SYSGLUE_H
+#define SYSGLUE_H
 
-void gl_input_setup(void);
+void gl_sysglue_init(int argc, char **argv);
 
-#endif /* GL_INPUT_H */
+void gl_common_init(void);
+
+void gl_sysglue_mainloop(void);
+
+#endif /* SYSGLUE_H */
 
 

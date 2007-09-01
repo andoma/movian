@@ -1,5 +1,5 @@
 /*
- *  GLUT input
+ *  Code for using GLUT as system glue
  *  Copyright (C) 2007 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -21,15 +21,21 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include <libglw/glw.h>
+#include <GL/glut.h>
+
 
 #include "showtime.h"
 #include "hid/input.h"
+#include "layout/layout.h"
+#include "sysglue.h"
 
+static void glut_render_scene(void);
 
 static void
-gl_special_key(int key, int x, int y)
+glut_special_key(int key, int x, int y)
 {
   switch(key) {
   case GLUT_KEY_UP:
@@ -107,7 +113,7 @@ gl_special_key(int key, int x, int y)
 }
 
 static void
-gl_key(unsigned char key, int x, int y)
+glut_key(unsigned char key, int x, int y)
 {
   switch(key) {
   case 9:
@@ -144,7 +150,7 @@ gl_key(unsigned char key, int x, int y)
 
 
 static void
-mousefunc(int button, int state, int x, int y)
+glut_mousefunc(int button, int state, int x, int y)
 {
 
   if(state == GLUT_DOWN) {
@@ -153,10 +159,10 @@ mousefunc(int button, int state, int x, int y)
       input_key_down(INPUT_KEY_ENTER);
       break;
     case 3:
-      gl_special_key(GLUT_KEY_UP, x, y);
+      glut_special_key(GLUT_KEY_UP, x, y);
       break;
     case 4:
-      gl_special_key(GLUT_KEY_DOWN, x, y);
+      glut_special_key(GLUT_KEY_DOWN, x, y);
       break;
     }
   }
@@ -165,14 +171,14 @@ mousefunc(int button, int state, int x, int y)
 static int lx, ly;
 
 void 
-mousemotion_passive(int x, int y)
+glut_mousemotion_passive(int x, int y)
 {
   lx = x;
   ly = y;
 }
 
 void 
-mousemotion(int x, int y)
+glut_mousemotion(int x, int y)
 {
   int dx, dy;
   inputevent_t ie;
@@ -190,15 +196,75 @@ mousemotion(int x, int y)
   input_root_event(&ie);
 }
 
-
 void
-gl_input_setup(void)
+gl_sysglue_init(int argc, char **argv)
 {
-  glutSpecialFunc(gl_special_key);
-  glutKeyboardFunc(gl_key);
-  glutMouseFunc(mousefunc);
-  glutMotionFunc(mousemotion);
-  glutPassiveMotionFunc(mousemotion_passive);
+  const char *fullscreen = config_get_str("fullscreen", NULL);
+  char *x;
+
+  glutInit(&argc, argv);
+
+  glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+
+  if(fullscreen == NULL) {
+    glutInitWindowPosition(100,100);
+    glutInitWindowSize(1280, 720);
+    showtime_fps = 60;
+
+    glutCreateWindow("Showtime Mediacenter");
+  } else {
+
+    glutGameModeString(fullscreen);
+
+    x = strchr(fullscreen, '@');
+    if(x != NULL)
+      showtime_fps = atoi(x + 1);
+    else
+      showtime_fps = 60;
+      
+    if (glutGameModeGet(GLUT_GAME_MODE_POSSIBLE)) {
+      glutEnterGameMode();
+    } else {
+      printf("The select mode is not available\n");
+      exit(1);	
+    }
+  }
+    
+
+  glutSpecialFunc(glut_special_key);
+  glutKeyboardFunc(glut_key);
+  glutMouseFunc(glut_mousefunc);
+  glutMotionFunc(glut_mousemotion);
+  glutPassiveMotionFunc(glut_mousemotion_passive);
+  glutDisplayFunc(glut_render_scene);
+  glutIdleFunc(glut_render_scene);
+
+  glutSetCursor(GLUT_CURSOR_NONE);
+
+  gl_common_init();
+
 }
 
+void
+gl_sysglue_mainloop(void)
+{
+  glutMainLoop();
+}
+
+
+
+static void 
+glut_render_scene(void)
+{
+  struct timeval tv;
+
+  gettimeofday(&tv, NULL);
+
+  wallclock = (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
+  walltime = tv.tv_sec;
+
+  layout_std_draw();
+  glutSwapBuffers();
+  glw_reaper();
+}
 

@@ -23,8 +23,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <GL/glut.h> 
-
 #include "showtime.h"
 #include "input.h"
 

@@ -23,7 +23,10 @@ SRCS  += layout_cube.c
 # OpenGL support
 
 VPATH += gl
-SRCS  += gl_video.c gl_dvdspu.c gl_input.c
+SRCS  += gl_video.c gl_dvdspu.c
+
+VPATH += gl/sysglue
+SRCS  += gl_common.c sysglue_glut.c
 
 # Human Interface Devices
 

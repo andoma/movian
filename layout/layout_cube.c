@@ -19,13 +19,13 @@
 #include <string.h>
 #include <math.h>
 
+#include <GL/glu.h>
+#include <libglw/glw.h>
+
 #include "showtime.h"
 #include "app.h"
 #include "layout.h"
 #include "menu.h"
-#include <math.h>
-
-#include <libglw/glw.h>
 
 #include "audio/audio_ui.h"
 

@@ -35,15 +35,11 @@
 #include "app.h"
 
 #include "gl/gl_video.h"
-#include "gl/gl_input.h"
+#include "gl/sysglue/sysglue.h"
 #include "hid/hid.h"
 #include "audio/audio.h"
 
 pthread_mutex_t ffmutex = PTHREAD_MUTEX_INITIALIZER;
-
-static float root_aspect;
-
-static void render_scene(void);
 
 int64_t wallclock;
 time_t walltime;
@@ -57,7 +53,6 @@ int has_analogue_pad;
 float framerate_measured;
 
 void layout_std_create(void);
-void layout_std_draw(void);
 
 static int main_input_event(inputevent_t *ie);
 
@@ -71,99 +66,6 @@ ffmpeglockmgr(int lock)
     ffunlock();
 }
 
-/*
- *
- */
-
-static int
-check_gl_ext(const uint8_t *s, const char *func, int fail)
-{
-  int l = strlen(func);
-  int found;
-  char *v;
-
-  v = strstr((const char *)s, func);
-  found = v != NULL && v[l] < 33;
-  
-  fprintf(stderr, "Checking OpenGL extension \"%s\" : %svailable", func,
-	  found ? "A" : "Not a");
-
-  if(!found && fail) {
-    fprintf(stderr, ", but is required, exiting\n");
-    exit(1);
-  }
-  fprintf(stderr, "\n");
-  return found ? 0 : -1;
-}
-
-
-
-/*
- *
- */
-
-static void
-setup_gl(void)
-{
-  const char *fullscreen = config_get_str("fullscreen", NULL);
-  char *x;
-  const	GLubyte	*s;
-
-  glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-
-
-  if(fullscreen == NULL) {
-    glutInitWindowPosition(100,100);
-    glutInitWindowSize(1280, 720);
-    root_aspect = (float)1280 / (float)720;
-    showtime_fps = 60;
-
-    glutCreateWindow("Showtime Mediacenter");
-  } else {
-
-    glutGameModeString(fullscreen);
-
-    x = strchr(fullscreen, '@');
-    if(x != NULL)
-      showtime_fps = atoi(x + 1);
-    else
-      showtime_fps = 60;
-      
-    root_aspect = (float)1280 / (float)720;
-
-    if (glutGameModeGet(GLUT_GAME_MODE_POSSIBLE)) {
-      glutEnterGameMode();
-    } else {
-      printf("The select mode is not available\n");
-      exit(1);	
-    }
-  }
- 
-  //  printf("System FPS: %d\n", showtime_fps);
-
-  fprintf(stderr, "OpenGL library: %s on %s, version %s\n",
-	  glGetString(GL_VENDOR),
-	  glGetString(GL_RENDERER),
-	  glGetString(GL_VERSION));
-
-  s = glGetString(GL_EXTENSIONS);
-
-  check_gl_ext(s, "GL_ARB_pixel_buffer_object",      1);
-  check_gl_ext(s, "GL_ARB_vertex_buffer_object",     1);
-  check_gl_ext(s, "GL_ARB_fragment_program",         1);
-  check_gl_ext(s, "GL_ARB_texture_non_power_of_two", 1);
-
-  gl_input_setup();
-
-  glutSetCursor(GLUT_CURSOR_NONE);
-  glDisable(GL_CULL_FACE);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-  glShadeModel(GL_SMOOTH);
-  glEnable(GL_LINE_SMOOTH);
-
-  glEnable(GL_POLYGON_OFFSET_FILL);
-}
 
 
 /*
@@ -199,9 +101,7 @@ main(int argc, char **argv)
   //  av_log_set_level(AV_LOG_DEBUG);
   av_register_all();
 
-
-
-  glutInit(&argc, argv);
+  gl_sysglue_init(argc, argv);
 
   if(glw_init(&config_list, ffmpeglockmgr)) {
     fprintf(stderr, "libglw user interface failed to initialize, exiting\n");
@@ -209,13 +109,8 @@ main(int argc, char **argv)
   }
 
   audio_init();
-  
-  setup_gl();
 
   gvp_init();
-
-  glutDisplayFunc(render_scene);
-  glutIdleFunc(render_scene);
 
   layout_std_create();
 
@@ -234,49 +129,13 @@ main(int argc, char **argv)
 #endif
   inputhandler_register(200, main_input_event);
 
-  glutMainLoop();
+  gl_sysglue_mainloop();
   return 0;
 }
 
 /*
  *
  */
-
-int do_shut_down;
-
-static int64_t last_frame_time;
-
-static void 
-render_scene(void)
-{
-  int64_t frame_time;
-  static float frame_rate;
-  struct timeval tv;
-
-  gettimeofday(&tv, NULL);
-
-  wallclock = (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
-  walltime = tv.tv_sec;
-
-  if(last_frame_time != 0) {
-    frame_time = wallclock - last_frame_time;
-
-    if(frame_rate == 0) {
-      frame_rate = 1e6 / (float)frame_time;
-    } else {
-      frame_rate = (frame_rate * 7.0f + (1e6 / (float)frame_time)) / 8.0f;
-    }
-  }
-  last_frame_time = wallclock;
-
-  framerate_measured = frame_rate;
-
-  layout_std_draw();
-
-  glutSwapBuffers();
-  glw_reaper();
-}
-
 
 void
 showtime_exit(int suspend)

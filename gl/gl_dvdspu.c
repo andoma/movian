@@ -27,8 +27,6 @@
 #include <stdio.h>
 #include <math.h>
 
-#include <GL/glut.h> 
-
 #include <inttypes.h>
 
 #include <dvdnav/dvdnav.h>
