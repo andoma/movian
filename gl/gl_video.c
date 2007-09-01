@@ -1133,7 +1133,7 @@ layout_video_pipe(gl_video_pipe_t *gvp, glw_rctx_t *rc)
   }
 
   if(pts != AV_NOPTS_VALUE) {
-    pts -= output_duration * 2;
+    pts -= frame_duration * 2;
     gvp_compute_avdiff(gvp, mp, pts);
   }
   gl_dvdspu_layout(gvp->gvp_dvd, gvp->gvp_dvdspu);
