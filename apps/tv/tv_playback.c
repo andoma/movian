@@ -761,12 +761,14 @@ iptv_key_event_zoomed(iptv_player_t *iptv, int key)
   case INPUT_KEY_BACK:
   case INPUT_KEY_STOP:
     mp_set_playstatus(&ich->ich_mp, MP_STOP);
+    media_pipe_release_audio(&ich->ich_mp);
 
     tvh_int(tvh_query(&iptv->iptv_tvh, "channel.unsubscribe %d",
 		      ich->ich_index));
     
     iptv->iptv_chlist->glw_flags &= ~GLW_ZOOMED;
     iptv->iptv_appi->ai_req_fullscreen = 0;
+    break;
 
   case INPUT_KEY_ENTER:
   case INPUT_KEY_PLAY:
