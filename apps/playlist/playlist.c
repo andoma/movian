@@ -183,12 +183,33 @@ playlist_flush(void)
  *
  */
 
+static int 
+playlist_slot_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  play_list_entry_t *ple = opaque;
+  char buf[20];
+  switch(signal) {
+  case GLW_SIGNAL_PREPARE:
+    snprintf(buf, sizeof(buf), "#%d", ple->ple_slot);
+    glw_set(w, GLW_ATTRIB_CAPTION, buf, NULL);
+    return 0;
+    
+  default:
+    return 0;
+  }
+}
+
+
+/*
+ *
+ */
+
 int
 playlist_enqueue(const char *path, mediainfo_t *mi, int flush)
 {
   play_list_t *pl;
   play_list_entry_t *ple, *prev;
-  glw_t *w;
+  glw_t *w, *y;
   int o, slot = 1;
   char tmp[40];
   appi_t *ai;
@@ -236,22 +257,44 @@ playlist_enqueue(const char *path, mediainfo_t *mi, int flush)
 	       NULL);
 
   glw_create(GLW_TEXT_BITMAP,
+	     GLW_ATTRIB_ASPECT, 18.0f,
+	     GLW_ATTRIB_WEIGHT, 8.0f,
+	     GLW_ATTRIB_PARENT, w,
+	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_LEFT,
+	     GLW_ATTRIB_CAPTION, mi->mi_author,
+	     GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
+	     NULL);
+
+  glw_create(GLW_TEXT_BITMAP,
+	     GLW_ATTRIB_ASPECT, 18.0f,
+	     GLW_ATTRIB_WEIGHT, 9.0f,
+	     GLW_ATTRIB_PARENT, w,
+	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_LEFT,
 	     GLW_ATTRIB_CAPTION, mi->mi_title,
 	     GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
-	     GLW_ATTRIB_WEIGHT, 10.0f,
-	     GLW_ATTRIB_PARENT, w,
+	     NULL);
+
+
+  y = glw_create(GLW_CONTAINER_Y,
+		 GLW_ATTRIB_PARENT, w,
+		 GLW_ATTRIB_WEIGHT, 1.0f,
+		 NULL);
+  
+
+  glw_create(GLW_TEXT_BITMAP,
+	     GLW_ATTRIB_PARENT, y,
+	     GLW_ATTRIB_SIGNAL_HANDLER, playlist_slot_callback, ple, 0,
+	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_RIGHT,
 	     NULL);
 
 
   snprintf(tmp, sizeof(tmp), "%d:%02d",
 	   mi->mi_duration / 60, mi->mi_duration % 60);
 
-
   glw_create(GLW_TEXT_BITMAP,
 	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_RIGHT,
 	     GLW_ATTRIB_CAPTION, tmp,
-	     GLW_ATTRIB_WEIGHT, 1.0f,
-	     GLW_ATTRIB_PARENT, w,
+	     GLW_ATTRIB_PARENT, y,
 	     NULL);
 
   pthread_mutex_lock(&pl->pl_mutex);

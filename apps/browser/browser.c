@@ -207,7 +207,7 @@ browser_check_dvd(b_dir_t *bd, b_entry_t *be)
 static void
 browser_make_widget_10_1(glw_t *p, b_dir_t *bd, b_entry_t *be, int flags)
 {
-  glw_t *x, *z;
+  glw_t *x, *y, *z;
   mediainfo_t *mi = &be->be_mi;
   char tmp[500];
 
@@ -278,18 +278,51 @@ browser_make_widget_10_1(glw_t *p, b_dir_t *bd, b_entry_t *be, int flags)
 
       glw_create(GLW_BITMAP, 
 		 GLW_ATTRIB_PARENT, x,
+		 GLW_ATTRIB_WEIGHT, 0.5,
 		 GLW_ATTRIB_FILENAME, mi->mi_type == MI_AUDIO ? 
 		 "icon://audio.png" : "icon://video.png",
 		 NULL);
 
+      
       glw_create(GLW_TEXT_BITMAP,
-		 GLW_ATTRIB_PARENT, x, 
-
+		 GLW_ATTRIB_ASPECT, 18.0f,
+		 GLW_ATTRIB_WEIGHT, 8.0f,
+		 GLW_ATTRIB_PARENT, x,
 		 GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_LEFT,
-		 GLW_ATTRIB_WEIGHT, 17.0,
+		 GLW_ATTRIB_CAPTION, mi->mi_author,
+		 GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
+		 NULL);
+
+      glw_create(GLW_TEXT_BITMAP,
+		 GLW_ATTRIB_ASPECT, 18.0f,
+		 GLW_ATTRIB_WEIGHT, 9.0f,
+		 GLW_ATTRIB_PARENT, x,
+		 GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_LEFT,
 		 GLW_ATTRIB_CAPTION, mi->mi_title,
 		 GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
 		 NULL);
+
+
+      y = glw_create(GLW_CONTAINER_Y,
+		     GLW_ATTRIB_PARENT, x,
+		     GLW_ATTRIB_WEIGHT, 1.0f,
+		     NULL);
+
+      if(flags & BROWSER_INCLUDE_TRACK) {
+
+	snprintf(tmp, sizeof(tmp), "#%d", mi->mi_track);
+
+	glw_create(GLW_TEXT_BITMAP,
+		   GLW_ATTRIB_PARENT, y,
+		   GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_RIGHT,
+		   GLW_ATTRIB_CAPTION, tmp,
+		   NULL);
+      } else {
+	glw_create(GLW_DUMMY,
+		   GLW_ATTRIB_PARENT, y,
+		   NULL);
+      }
+
 
       snprintf(tmp, sizeof(tmp), "%d:%02d",
 	       mi->mi_duration / 60, mi->mi_duration % 60);
@@ -297,21 +330,8 @@ browser_make_widget_10_1(glw_t *p, b_dir_t *bd, b_entry_t *be, int flags)
       glw_create(GLW_TEXT_BITMAP,
 		 GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_RIGHT,
 		 GLW_ATTRIB_CAPTION, tmp,
-		 GLW_ATTRIB_WEIGHT, 3.0f,
-		 GLW_ATTRIB_PARENT, x,
+		 GLW_ATTRIB_PARENT, y,
 		 NULL);
-
-      if(flags & BROWSER_INCLUDE_TRACK) {
-
-	snprintf(tmp, sizeof(tmp), "#%d", mi->mi_track);
-
-	glw_create(GLW_TEXT_BITMAP,
-		   GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_RIGHT,
-		   GLW_ATTRIB_CAPTION, tmp,
-		   GLW_ATTRIB_WEIGHT, 2.0f,
-		   GLW_ATTRIB_PARENT, x,
-		   NULL);
-      }
       break;
 
       /* Picture */
