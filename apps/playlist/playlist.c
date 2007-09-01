@@ -870,7 +870,7 @@ playlist_menu_setup(glw_t *p, play_list_t *pl)
 {
   glw_t *v;
 
-  v = menu_create_submenu(p, "icon://playlist.png", "Playlist control", 0);
+  v = menu_create_submenu(p, "icon://playlist.png", "Playlist control", 1);
   
   menu_create_item(v, "icon://clear.png", "Clear all",
 		   menu_post_key_pop_and_hide, pl->pl_ai, 
