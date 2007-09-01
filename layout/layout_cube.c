@@ -333,16 +333,19 @@ layout_std_draw(void)
   cz = 4.0;
 
   if(layout_menu_display) {
+    /* displaying menu */
     glw_vertex_anim_set3f(&cpos,   0,    1.5,  CAMZ);
     glw_vertex_anim_set3f(&ctgt,   -0.5, 1.0, 1.0);
     glw_vertex_anim_set3f(&fcol,   0.09, 0.11, 0.2);
     glw_vertex_anim_set3f(&malpha, 0.1,  0,    0);
   } else if(b) {
+    /* fullscreen mode */
     glw_vertex_anim_set3f(&cpos,   0, 1.0, 3.4);
     glw_vertex_anim_set3f(&ctgt,   0, 1.0, 1.0);
     glw_vertex_anim_set3f(&fcol,   0, 0,   0);
     glw_vertex_anim_set3f(&malpha, 0, 0,   0);
   } else {
+    /* normal */
     glw_vertex_anim_set3f(&cpos,   0,    1.0,  CAMZ);
     glw_vertex_anim_set3f(&ctgt,   0, 1.0, 1.0);
     glw_vertex_anim_set3f(&fcol,   0.09, 0.11, 0.2);
