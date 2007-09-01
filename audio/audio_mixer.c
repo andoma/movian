@@ -69,7 +69,6 @@ mixer_thread(void *aux)
   audio_buf_t *dst_buf, *passthru;
   int16_t *dst16;
   float *dst, o;
-  int64_t pts;
   int i, j, v;
 
   pthread_mutex_lock(&audio_source_lock);
@@ -77,8 +76,6 @@ mixer_thread(void *aux)
   LIST_HEAD(, audio_source) mixlist;
 
   while(1) {
-
-    pts = 0; /* remove me */
 
      /* Check which audio sources that actually has something
        to deliver for us */
@@ -178,7 +175,6 @@ mixer_thread(void *aux)
 
       dst_buf = af_alloc(dst_fifo);
       dst_buf->payload_type = AUDIO_OUTPUT_PCM;
-      dst_buf->pts = pts;
       dst16 = ab_dataptr(dst_buf);
 
       for(i = 0; i < mixer_output.words; i++) {
@@ -323,7 +319,6 @@ audio_mixer_source_int16(audio_source_t *as, int16_t *data, int frames,
 
     if(as->as_fullness == 0) {
       as->as_dst_buf = af_alloc(&as->as_fifo);
-      as->as_dst_buf->pts = pts;
       dst = ab_dataptr(as->as_dst_buf);
     }
 

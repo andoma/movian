@@ -26,7 +26,6 @@ TAILQ_HEAD(audio_buf_queue, audio_buf);
 typedef struct audio_buf {
   TAILQ_ENTRY(audio_buf) link;
   int64_t ts;
-  int64_t pts;
   int payload_type;
   size_t size;
   char data[0];
