@@ -62,9 +62,33 @@ static channel_offset_t layout_5dot1_b[] = {
 };
 
 
+static void
+ad_update_clock(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
+{
+  if(ad->ad_output->as_avg_delay > 0) {
+    if(mb->mb_pts != AV_NOPTS_VALUE)
+      mp->mp_clock = mb->mb_pts - ad->ad_output->as_avg_delay;
+    mp->mp_clock_valid = 1;
+  } else {
+    mp->mp_clock_valid = 0;
+  }
+
+}
 
 
 
+static void
+ab_enq_passthru(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb,
+		int format)
+{
+  audio_buf_t *ab;
+
+  ab = af_alloc_dynamic(mb->mb_size);
+  memcpy(ab_dataptr(ab), mb->mb_data, mb->mb_size);
+  ab->payload_type = format;
+  af_enq(&ad->ad_output->as_fifo, ab);
+  ad_update_clock(ad, mp, mb);
+}
 
 
 static void
@@ -77,31 +101,20 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
   channel_offset_t *chlayout;
   codecwrap_t *cw = mb->mb_cw;
   AVCodecContext *ctx;
-  audio_buf_t *ab;
 
   ctx = cw->codec_ctx;
-
-  buf = mb->mb_data;
-  size = mb->mb_size;
 
   if(primary_audio == mp) switch(ctx->codec_id) {
   case CODEC_ID_AC3:
     if(mixer_hw_output_formats & AUDIO_OUTPUT_AC3) {
-      ab = af_alloc_dynamic(size);
-      memcpy(ab_dataptr(ab), buf, size);
-      ab->payload_type = AUDIO_OUTPUT_AC3;
-      af_enq(&ad->ad_output->as_fifo, ab);
+      ab_enq_passthru(ad, mp, mb, AUDIO_OUTPUT_AC3);
       return;
     }
     break;
 
   case CODEC_ID_DTS:
     if(mixer_hw_output_formats & AUDIO_OUTPUT_DTS) {
-      ab = af_alloc_dynamic(size);
-      ab->size = size;
-      memcpy(ab_dataptr(ab), buf, size);
-      ab->payload_type = AUDIO_OUTPUT_DTS;
-      af_enq(&ad->ad_output->as_fifo, ab);
+      ab_enq_passthru(ad, mp, mb, AUDIO_OUTPUT_DTS);
       return;
     }
     break;
@@ -110,6 +123,10 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
     break;
   }
  
+  buf = mb->mb_data;
+  size = mb->mb_size;
+
+
   while(size > 0) {
 
     wrap_lock_codec(cw);
@@ -171,10 +188,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
 	audio_mixer_source_int16(ad->ad_output, ad->ad_outbuf, frames,
 				 mb->mb_pts);
 
-	if(mb->mb_pts != AV_NOPTS_VALUE) {
-	  mp->mp_clock = mb->mb_pts - ad->ad_output->as_avg_delay;
-	  mp->mp_clock_valid = 1;
-	}
+	ad_update_clock(ad, mp, mb);
       }
     }
     buf += r;
