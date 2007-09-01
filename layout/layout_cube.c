@@ -407,7 +407,7 @@ layout_std_draw(void)
   glAccum(GL_RETURN, 1.0f);
 #endif
 
-  /* reset project, model matrix and render status widgets */
+  /* reset projection-, model- matrix and render status widgets */
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
