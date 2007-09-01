@@ -171,7 +171,7 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
   media_buf_t *mb;
   media_queue_t *mq;
   int64_t pts4seek = 0;
-  glw_t *meta, *xmeta;
+  glw_t *meta, *xmeta, *amenu, *vmenu;
   int streams;
   int64_t cur_pos_pts = AV_NOPTS_VALUE;
   media_pipe_t *mp = &ai->ai_mp;
@@ -230,11 +230,6 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
     }
   }
 
-
-
-
-  menu_push_top_menu(ai, mi->mi_title);
-
   ai->ai_fctx = fctx;
   mp->mp_format = fctx;
 
@@ -242,7 +237,9 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
     gvp_conf_init(&gc);
     gvpw = gvp_create(parent, &ai->ai_mp, &gc, 0);
     ai->ai_req_fullscreen = AI_FS_BLANK;
-    gvp_menu_setup(appi_menu_top(ai), &gc);
+    vmenu = gvp_menu_setup(appi_menu_top(ai), &gc);
+  } else {
+    vmenu = NULL;
   }
 
   wrap_lock_all_codecs(fw);
@@ -263,12 +260,10 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
 
   xmeta = mp->mp_info_extra_widget = play_file_create_extra_miw(mp);
 
-  play_file_menu_audio_setup(appi_menu_top(ai), mp);
+  amenu = play_file_menu_audio_setup(appi_menu_top(ai), mp);
   
   mp->mp_playstatus_update_callback = play_file_playstatus_widget_update;
   mp->mp_playstatus_update_opaque = psc;
-
-
 
   mp_set_playstatus(mp, MP_PLAY);
   media_pipe_acquire_audio(mp);
@@ -461,9 +456,10 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
   mp->mp_info_extra_widget = NULL;
   glw_destroy(meta);
   glw_destroy(xmeta);
+  glw_destroy(amenu);
+  if(vmenu != NULL)
+    glw_destroy(vmenu);
 
-
-  menu_pop_top_menu(ai);
   mp->mp_total_time = 0;
 
   ai->ai_fctx = NULL;
