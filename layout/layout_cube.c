@@ -43,9 +43,9 @@ static float miw_render(void);
 static int mirror_input_event(inputevent_t *ie);
 static int menu_input_event(inputevent_t *ie);
 
-static void layout_apps(void);
-static void layout_gadgets(void);
-static void render_gadgets(float alpha);
+static void layout_apps(float aspect);
+static void layout_gadgets(float aspect);
+static void render_gadgets(float alpha, float aspect, float displace);
 
 
 static int 
@@ -212,15 +212,15 @@ draw_cube(float alpha)
 
 
 static void
-draw_world(float ca, float rot, float alpha)
+draw_world(float ca, float rot, float alpha, float aspect,
+	   float gadget_displace)
 {
   int i;
   glw_rctx_t rc;
   appi_t *ai;
 
   memset(&rc, 0, sizeof(rc));
-  rc.rc_aspect = 16.0f / 9.0f;
-
+  rc.rc_aspect = aspect;
   glPushMatrix();
   glTranslatef(0, 1, 0);
   glRotatef(rot, 0.0f, 1.0f, 0.0f);
@@ -255,7 +255,7 @@ draw_world(float ca, float rot, float alpha)
   ai = layout_get_cur_app();
   menu_render(ai ? ai->ai_menu : root_menu, alpha);
 
-  render_gadgets(alpha);
+  render_gadgets(alpha, aspect, gadget_displace);
 
   glDisable(GL_CLIP_PLANE5);
 }
@@ -268,8 +268,8 @@ static glw_vertex_anim_t cpos =
  GLW_VERTEX_ANIM_SIN_INITIALIZER(0, 2.5, CAMZ);
 static glw_vertex_anim_t fcol = 
  GLW_VERTEX_ANIM_SIN_INITIALIZER(0.09, 0.11, 0.2);
-static glw_vertex_anim_t malpha = 
- GLW_VERTEX_ANIM_SIN_INITIALIZER(0.1, 0.0, 0.0);
+static glw_vertex_anim_t wextra =  /* x = mirror_alpha, y = aspect */
+ GLW_VERTEX_ANIM_SIN_INITIALIZER(0.1, 1.0, -0.7);
 
 void
 layout_std_draw(void)
@@ -282,11 +282,12 @@ layout_std_draw(void)
   int i;
   float cz;
   static float topinfospace;
+  float aspect;
 
   glw_vertex_t cpos_xyz;
   glw_vertex_t ctgt_xyz;
   glw_vertex_t fcol_xyz;
-  glw_vertex_t malpha_xyz;
+  glw_vertex_t wextra_xyz;
 
   GLdouble clip_mirror1[4] = {0.0,  1.0, 0.0, 0.0};
   GLdouble clip_mirror2[4] = {0.0, -1.0, 0.0, 0.0};
@@ -306,10 +307,44 @@ layout_std_draw(void)
   rot = b;
   
 
+  /* Camera and "world" animation */
+
+  ai = layout_get_cur_app();
+  cz = 4.0;
+
+  if(layout_menu_display) {
+    /* displaying menu */
+    glw_vertex_anim_set3f(&cpos,   0,    1.5,  CAMZ);
+    glw_vertex_anim_set3f(&ctgt,   -0.5, 1.0, 1.0);
+    glw_vertex_anim_set3f(&fcol,   0.09, 0.11, 0.2);
+    glw_vertex_anim_set3f(&wextra, 0.1,  1.0,  -0.95);
+  } else if(ca < 0.01 && ai != NULL && ai->ai_got_fullscreen) {
+    /* fullscreen mode */
+    glw_vertex_anim_set3f(&cpos,   0, 1.0, 3.4);
+    glw_vertex_anim_set3f(&ctgt,   0, 1.0, 1.0);
+    glw_vertex_anim_set3f(&fcol,   0, 0,   0);
+    glw_vertex_anim_set3f(&wextra, 0, 1.0,   -0.95);
+  } else {
+    /* normal */
+    glw_vertex_anim_set3f(&cpos,   0,    1.0,  CAMZ);
+    glw_vertex_anim_set3f(&ctgt,   0, 1.0, 1.0);
+    glw_vertex_anim_set3f(&fcol,   0.09, 0.11, 0.2);
+    glw_vertex_anim_set3f(&wextra, 0.1,  0.8,    -0.7);
+  }
+
+  glw_vertex_anim_fwd(&cpos,   0.02);
+  glw_vertex_anim_fwd(&ctgt,   0.02);
+  glw_vertex_anim_fwd(&fcol,   0.02);
+  glw_vertex_anim_fwd(&wextra, 0.02);
+  
+  glw_vertex_anim_read(&wextra, &wextra_xyz);
+
+  aspect = 16.0f / 9.0f / wextra_xyz.y;
+
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
   memset(&rc, 0, sizeof(rc));
-  rc.rc_aspect = 16.0f / 9.0f;
+  rc.rc_aspect = aspect;
 
   for(i = 0; i < 4; i++) {
     face_alpha[i] = cos((b - i * 90) / 360.0f * M_PI * 2);
@@ -318,44 +353,13 @@ layout_std_draw(void)
     glw_layout(wroot[i], &rc);
   }
 
-  layout_apps();
-  layout_gadgets();
-  audio_layout();
+  layout_apps(aspect);
+  layout_gadgets(aspect);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(45, 1.0, 1.0, 60.0);
+  gluPerspective(45, wextra_xyz.y, 1.0, 60.0);
 
-
-  ai = layout_get_cur_app();
-  b = ca < 0.01 && ai != NULL && ai->ai_got_fullscreen;
-    
-  cz = 4.0;
-
-  if(layout_menu_display) {
-    /* displaying menu */
-    glw_vertex_anim_set3f(&cpos,   0,    1.5,  CAMZ);
-    glw_vertex_anim_set3f(&ctgt,   -0.5, 1.0, 1.0);
-    glw_vertex_anim_set3f(&fcol,   0.09, 0.11, 0.2);
-    glw_vertex_anim_set3f(&malpha, 0.1,  0,    0);
-  } else if(b) {
-    /* fullscreen mode */
-    glw_vertex_anim_set3f(&cpos,   0, 1.0, 3.4);
-    glw_vertex_anim_set3f(&ctgt,   0, 1.0, 1.0);
-    glw_vertex_anim_set3f(&fcol,   0, 0,   0);
-    glw_vertex_anim_set3f(&malpha, 0, 0,   0);
-  } else {
-    /* normal */
-    glw_vertex_anim_set3f(&cpos,   0,    1.0,  CAMZ);
-    glw_vertex_anim_set3f(&ctgt,   0, 1.0, 1.0);
-    glw_vertex_anim_set3f(&fcol,   0.09, 0.11, 0.2);
-    glw_vertex_anim_set3f(&malpha, 0.1,  0,    0);
-  }
-
-  glw_vertex_anim_fwd(&cpos,   0.02);
-  glw_vertex_anim_fwd(&ctgt,   0.02);
-  glw_vertex_anim_fwd(&fcol,   0.02);
-  glw_vertex_anim_fwd(&malpha, 0.02);
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -387,15 +391,14 @@ layout_std_draw(void)
 
 
   glClipPlane(GL_CLIP_PLANE5, clip_mirror1);
-  draw_world(ca, rot, 1.0);
+  draw_world(ca, rot, 1.0, rc.rc_aspect, wextra_xyz.z);
 
-  glw_vertex_anim_read(&malpha, &malpha_xyz);
 
-  if(malpha_xyz.x > 0.01) {
+  if(wextra_xyz.x > 0.01) {
     /* invert model matrix along XZ plane for mirror effect */
     glClipPlane(GL_CLIP_PLANE5, clip_mirror2);
     glScalef(1.0f, -1.0f, 1.0f);
-    draw_world(ca, rot, malpha_xyz.x);
+    draw_world(ca, rot, wextra_xyz.x, rc.rc_aspect, wextra_xyz.z);
   }
 
 #if 0
@@ -403,7 +406,12 @@ layout_std_draw(void)
   glAccum(GL_ACCUM, 0.2);
   glAccum(GL_RETURN, 1.0f);
 #endif
-  /* reset model matrix and render status widgets */
+
+  /* reset project, model matrix and render status widgets */
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective(45, 1.0, 1.0, 60.0);
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -412,6 +420,8 @@ layout_std_draw(void)
 	    0, 1, 0);
 
   topinfospace = miw_render();
+
+  audio_layout();
 
   audio_render(1.0f);
 
@@ -472,13 +482,13 @@ mirror_input_event(inputevent_t *ie)
 
 
 static void
-layout_apps(void)
+layout_apps(float aspect)
 {
   appi_t *ai;
   glw_rctx_t rc;
 
   memset(&rc, 0, sizeof(rc));
-  rc.rc_aspect = 16.0f / 9.0f;
+  rc.rc_aspect = aspect;
   rc.rc_alpha = 1.0f;
 
   TAILQ_FOREACH(ai, &appis, ai_global_link) {
@@ -796,7 +806,7 @@ clock_time_update(glw_t *w, void *opaque, glw_signal_t sig, ...)
 
 
 static void
-layout_gadgets(void)
+layout_gadgets(float aspect)
 {
   glw_rctx_t rc;
   glw_t *y;
@@ -825,27 +835,24 @@ layout_gadgets(void)
 	       NULL);
   }
   memset(&rc, 0, sizeof(rc));
-  rc.rc_aspect = 16.0f / 9.0f;
+  rc.rc_aspect = aspect;
 
   glw_layout(gadget_clock, &rc);
 }
 
 
 static void
-render_gadgets(float alpha)
+render_gadgets(float alpha, float aspect, float displace)
 {
   glw_rctx_t rc;
 
   memset(&rc, 0, sizeof(rc));
-  rc.rc_aspect = 16.0f / 9.0f;
+  rc.rc_aspect = aspect;
   rc.rc_alpha = alpha * 0.5;
 
   glPushMatrix();
-  glTranslatef(-0.95, 0.1, 1.6);
+  glTranslatef(displace, 0.1, 1.7);
   glScalef(0.1, 0.1, 0.1);
-  //  glRotatef(45, 0, 1, 0);
   glw_render(gadget_clock, &rc);
   glPopMatrix();
-
-
 }
