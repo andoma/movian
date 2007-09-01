@@ -359,6 +359,13 @@ audio_mixer_source_int16(audio_source_t *as, int16_t *data, int frames,
   as->as_saved_dst = dst;
 }
 
+
+void
+audio_mixer_source_flush(audio_source_t *as)
+{
+  audio_fifo_purge(&as->as_fifo);
+}
+
 /*****************************************************************************
  *
  * Mixer setup

@@ -93,6 +93,8 @@ void audio_mixer_source_int16(audio_source_t *as, int16_t *data, int frames,
 void audio_mixer_source_config(audio_source_t *as, int rate, int srcchannels,
 			       channel_offset_t *chlayout);
 
+void audio_mixer_source_flush(audio_source_t *as);
+
 void audio_source_prio(audio_source_t *as);
 
 #endif /* AUDIO_MIXER_H */
