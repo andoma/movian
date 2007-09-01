@@ -60,4 +60,6 @@ void audio_fifo_init(audio_fifo_t *af, int maxlen, size_t size,
 
 void audio_fifo_destroy(audio_fifo_t *af);
 
+void audio_fifo_purge(audio_fifo_t *af);
+
 #endif /* AUDIO_FIFO_H */

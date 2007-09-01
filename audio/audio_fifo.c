@@ -115,13 +115,20 @@ audio_fifo_init(audio_fifo_t *af, int maxlen, size_t size, int hysteresis)
   af->bufsize = size;
 }
 
-
 void 
-audio_fifo_destroy(audio_fifo_t *af)
+audio_fifo_purge(audio_fifo_t *af)
 {
   audio_buf_t *ab;
   while((ab = TAILQ_FIRST(&af->queue)) != NULL) {
     TAILQ_REMOVE(&af->queue, ab, link);
     free(ab);
   }
+  af->len = 0;
+}
+
+
+void 
+audio_fifo_destroy(audio_fifo_t *af)
+{
+  audio_fifo_purge(af);
 }
