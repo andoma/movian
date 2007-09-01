@@ -165,6 +165,11 @@ ad_thread(void *aux)
     switch(mb->mb_data_type) {
     default:
       break;
+
+    case MB_FLUSH:
+      audio_mixer_source_flush(ad->ad_output);
+      break;
+
     case MB_AUDIO:
       ad_decode_buf(ad, mp, mb);
       break;
