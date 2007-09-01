@@ -117,7 +117,7 @@ mixer_thread(void *aux)
 	  for(j = 0; j < mixer_output.channels; j++) {
 	    *dst++ += *as->as_src++ * as->as_gain;
 	  }
-	  as->as_gain = (as->as_gain * 999. + as->as_target_gain) / 1000.;
+	  as->as_gain = (as->as_gain * 1999. + as->as_target_gain) / 2000.;
 	}
       }
     }
