@@ -24,6 +24,8 @@
 #include "showtime.h"
 #include "audio/audio_decoder.h"
 
+media_pipe_t *primary_audio;
+
 static void
 mq_mutex_init(pthread_mutex_t *mutex)
 {
@@ -72,6 +74,9 @@ mp_init(media_pipe_t *mp, const char *name, struct appi *ai, int flags)
 void
 mp_deinit(media_pipe_t *mp)
 {
+  if(primary_audio == mp)
+    primary_audio = NULL;
+
   mp_set_playstatus(mp, MP_STOP);
   if(mp->mp_info_widget != NULL)
     glw_destroy(mp->mp_info_widget);
@@ -529,22 +534,23 @@ wrap_format_wait(formatwrap_t *fw)
 void
 mp_set_playstatus(media_pipe_t *mp, int status)
 {
+  if(mp->mp_playstatus == status)
+    return;
+
   printf("%s -> status = %d\n", mp->mp_name, status);
-  if(mp->mp_playstatus != status) {
 
-    pthread_mutex_lock(&mp->mp_mutex);
+  pthread_mutex_lock(&mp->mp_mutex);
 
-    mp->mp_playstatus = status;
-    pthread_cond_signal(&mp->mp_audio.mq_avail);
-    pthread_cond_signal(&mp->mp_video.mq_avail);
+  mp->mp_playstatus = status;
+  pthread_cond_signal(&mp->mp_audio.mq_avail);
+  pthread_cond_signal(&mp->mp_video.mq_avail);
+  
+  pthread_mutex_unlock(&mp->mp_mutex);
+  
+  if(mp->mp_playstatus_update_callback != NULL)
+    mp->mp_playstatus_update_callback(mp);
 
-    pthread_mutex_unlock(&mp->mp_mutex);
-
-    if(mp->mp_playstatus_update_callback != NULL)
-      mp->mp_playstatus_update_callback(mp);
-  }
   audio_decoder_change_play_status(mp);
-
 }
 
 
@@ -575,10 +581,10 @@ mp_playpause(struct media_pipe *mp, int key)
 }
 
 void
-media_pipe_reacquire_audio(struct media_pipe *mp)
+media_pipe_acquire_audio(struct media_pipe *mp)
 {
   if(mp->mp_playstatus == MP_PLAY)
-    audio_decoder_change_play_status(mp);
+    primary_audio = mp;
 }
 
 

@@ -382,7 +382,7 @@ radio_thread(void *aux)
 	radio_channel_update_status(r->r_req_channel, RC_LOADING);
 	pthread_cond_signal(&r->r_cond);
 	pthread_mutex_unlock(&r->r_mutex);
-	media_pipe_reacquire_audio(&ai->ai_mp);
+	media_pipe_acquire_audio(&ai->ai_mp);
 	break;
 	
       case INPUT_KEY_BACK:

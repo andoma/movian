@@ -271,6 +271,7 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
 
 
   mp_set_playstatus(mp, MP_PLAY);
+  media_pipe_acquire_audio(mp);
 
   while(1) {
 
@@ -284,6 +285,7 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
       wrap_unlock_all_codecs(fw);
       key = input_getkey(ic, 1);
       wrap_lock_all_codecs(fw);
+      media_pipe_acquire_audio(mp);
     } else {
       key = input_getkey(ic, 0);
     }

@@ -729,6 +729,7 @@ iptv_key_event_unzoomed(iptv_player_t *iptv, int key)
 		      ich->ich_index, 500));
     
     mp_set_playstatus(&ich->ich_mp, MP_PLAY);
+    media_pipe_acquire_audio(&ich->ich_mp);
     
     glw_nav_signal(iptv->iptv_chlist, GLW_SIGNAL_ENTER);
     iptv->iptv_appi->ai_req_fullscreen = AI_FS_BLANK;
@@ -770,7 +771,7 @@ iptv_key_event_zoomed(iptv_player_t *iptv, int key)
   case INPUT_KEY_ENTER:
   case INPUT_KEY_PLAY:
   case INPUT_KEY_PLAYPAUSE:
-    media_pipe_reacquire_audio(&ich->ich_mp);
+    media_pipe_acquire_audio(&ich->ich_mp);
     break;
 
   default:

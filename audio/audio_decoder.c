@@ -257,9 +257,6 @@ audio_decoder_change_play_status(media_pipe_t *mp)
   printf("audio_decode_change_play_status %d\n", mp->mp_playstatus);
   switch(mp->mp_playstatus) {
   case MP_PLAY:
-    if(mp->mp_audio_decoder != NULL)
-      audio_source_prio(mp->mp_audio_decoder->ad_output);
-    /* FALLTHRU */
   case MP_PAUSE:
     if(mp->mp_audio_decoder == NULL)
       ad_create(mp);

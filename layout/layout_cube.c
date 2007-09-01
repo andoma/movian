@@ -606,7 +606,7 @@ extern media_pipe_t *mixer_primary_audio;
 static float
 miw_render(void)
 {
-  media_pipe_t *mp = mixer_primary_audio;
+  media_pipe_t *mp = primary_audio;
   static float a0, a1;
   float a;
   glw_rctx_t rc0;

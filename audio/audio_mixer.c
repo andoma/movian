@@ -29,8 +29,6 @@
 #include "menu.h"
 #include "layout/layout.h"
 
-media_pipe_t *mixer_primary_audio;
-
 audio_fifo_t mixer_output_fifo;
 
 int mixer_hw_output_delay;
@@ -45,10 +43,13 @@ audio_mixer_t mixer_output;
 LIST_HEAD(, audio_source) audio_sources;
 
 
+
+
+
 static void *
 mixer_thread(void *aux)
 {
-  media_pipe_t *mp, *prim;
+  media_pipe_t *prim;
   audio_source_t *as;
   audio_fifo_t *dst_fifo = &mixer_output_fifo;
   audio_buf_t *dst_buf;
@@ -73,32 +74,27 @@ mixer_thread(void *aux)
 
     prim = NULL;
 
+    /* Set target gain of currently selected audio source to 1.0 */
+
+    LIST_FOREACH(as, &audio_sources, as_link) {
+      if(as->as_mp == primary_audio) {
+	as->as_target_gain = 1.0f;
+      } else {
+	as->as_target_gain = 0.0f;
+      }
+    }
+
+    /* Check which audio sources that actually has something
+       to deliver for us */
+
     LIST_FOREACH(as, &audio_sources, as_link) {
       if((as->as_src_buf = af_deq(&as->as_fifo, 0)) != NULL) {
 	LIST_INSERT_HEAD(&mixlist, as, as_tmplink);
 	as->as_src = ab_dataptr(as->as_src_buf);
-	pts = as->as_src_buf->pts;
-
-	if(as->as_mp == NULL) {
-	  as->as_target_gain = 1.0f;
-	  continue;
-	}
-
-	mp = as->as_mp;
-
-	if(mp->mp_playstatus != MP_PLAY)
-	  continue;
-
-	if(prim == NULL) {
-	  prim = mp;
-	  as->as_target_gain = 1.0f;
-	} else {
-	  as->as_target_gain = 0.0f;
-	}
       }
     }
 
-    mixer_primary_audio = prim;
+    /* Do actual mixing */
 
     dst = mixbuf;
 
@@ -166,17 +162,6 @@ mixer_thread(void *aux)
 
 
 
-void
-audio_source_prio(audio_source_t *as)
-{
-  pthread_mutex_lock(&audio_source_lock);
-  LIST_REMOVE(as, as_link);
-  LIST_INSERT_HEAD(&audio_sources, as, as_link);
-  pthread_mutex_unlock(&audio_source_lock);
-}
-
-
-
 audio_source_t *
 audio_source_create(media_pipe_t *mp)
 {
@@ -206,9 +191,6 @@ void
 audio_source_destroy(audio_source_t *as)
 {
   assert(mixer_output.words != 0);
-
-  if(as->as_mp == mixer_primary_audio)
-    mixer_primary_audio = NULL;
 
   pthread_mutex_lock(&audio_source_lock);
   audio_fifo_destroy(&as->as_fifo);
