@@ -1,5 +1,5 @@
 /*
- *  Audio mixer
+ *  Audio fifos
  *  Copyright (C) 2007 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -31,10 +32,18 @@ af_alloc(audio_fifo_t *af)
   return malloc(af->bufsize + sizeof(audio_buf_t));
 }
 
+
+audio_buf_t *
+af_alloc_dynamic(size_t size)
+{
+  return malloc(size + sizeof(audio_buf_t));
+}
+
 void
 af_enq(audio_fifo_t *af, audio_buf_t *ab)
 {
   ab->ts = wallclock;
+  assert(ab->payload_type != 0);
 
   pthread_mutex_lock(&af->lock);
 
@@ -119,11 +128,17 @@ void
 audio_fifo_purge(audio_fifo_t *af)
 {
   audio_buf_t *ab;
+
+  pthread_mutex_lock(&af->lock);
+
   while((ab = TAILQ_FIRST(&af->queue)) != NULL) {
     TAILQ_REMOVE(&af->queue, ab, link);
     free(ab);
   }
   af->len = 0;
+
+  pthread_cond_signal(&af->cond);
+  pthread_mutex_unlock(&af->lock);
 }
 
 

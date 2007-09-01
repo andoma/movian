@@ -27,6 +27,8 @@ typedef struct audio_buf {
   TAILQ_ENTRY(audio_buf) link;
   int64_t ts;
   int64_t pts;
+  int payload_type;
+  size_t size;
   char data[0];
 } audio_buf_t;
 
@@ -51,6 +53,7 @@ typedef struct audio_fifo {
 #define ab_dataptr(ab) ((void *)&(ab)->data[0])
 
 audio_buf_t *af_alloc(audio_fifo_t *af);
+audio_buf_t *af_alloc_dynamic(size_t size);
 void af_enq(audio_fifo_t *af, audio_buf_t *ab);
 audio_buf_t *af_deq(audio_fifo_t *af, int wait);
 void af_free(audio_buf_t *ab);
