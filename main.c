@@ -41,16 +41,11 @@
 
 pthread_mutex_t ffmutex = PTHREAD_MUTEX_INITIALIZER;
 
+int frame_duration;
+
 int64_t wallclock;
 time_t walltime;
-
-glw_t *wroot;
-
-int showtime_fps;
-
 int has_analogue_pad;
-
-float framerate_measured;
 
 void layout_std_create(void);
 

@@ -272,7 +272,7 @@ static glw_vertex_anim_t wextra =  /* x = mirror_alpha, y = aspect */
  GLW_VERTEX_ANIM_SIN_INITIALIZER(0.1, 1.0, -0.7);
 
 void
-layout_std_draw(void)
+layout_std_draw(float aspect)
 {
   glw_rctx_t rc;
   float a, b;
@@ -282,7 +282,6 @@ layout_std_draw(void)
   int i;
   float cz;
   static float topinfospace;
-  float aspect;
 
   glw_vertex_t cpos_xyz;
   glw_vertex_t ctgt_xyz;
@@ -339,7 +338,7 @@ layout_std_draw(void)
   
   glw_vertex_anim_read(&wextra, &wextra_xyz);
 
-  aspect = 16.0f / 9.0f / wextra_xyz.y;
+  aspect /= wextra_xyz.y;
 
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 

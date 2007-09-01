@@ -26,7 +26,7 @@ VPATH += gl
 SRCS  += gl_video.c gl_dvdspu.c
 
 VPATH += gl/sysglue
-SRCS  += gl_common.c sysglue_glut.c
+SRCS  += gl_common.c sysglue_$(GL_GLUE).c
 
 # Human Interface Devices
 
@@ -145,11 +145,10 @@ CFLAGS 	+= ${LIBEXIF_CFLAGS}
 DLIBS  += $(FFMPEG_DLIBS)
 SLIBS  += $(FFMPEG_SLIBS)
 CFLAGS += $(FFMPEG_CFLAGS)
+
 # OpenGL 
-
 CFLAGS += -DGL_GLEXT_PROTOTYPES
-DLIBS += -lGL -lglut
-
+DLIBS  += $(LIBGL_DLIBS)
 
 # Misc
 

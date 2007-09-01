@@ -1072,7 +1072,6 @@ layout_video_pipe(gl_video_pipe_t *gvp, glw_rctx_t *rc)
 {
   gl_video_frame_t *fra, *frb;
   media_pipe_t *mp = gvp->gvp_mp;
-  int frame_duration = 1000000 / showtime_fps;
   int output_duration;
   int width = 0, height = 0;
   int64_t pts = 0;

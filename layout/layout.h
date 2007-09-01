@@ -36,7 +36,7 @@ glw_t *bar_title(const char *str);
 
 appi_t *layout_get_cur_app(void);
 
-void layout_std_draw(void);
+void layout_std_draw(float aspect);
 
 #endif /* LAYOUT_H */
 

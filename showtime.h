@@ -41,11 +41,7 @@ showtime_get_ts(void)
   return (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
 }
 
-extern int showtime_fps;
-
-extern float framerate_measured;
-
-extern int do_shut_down;
+extern int frame_duration;
 
 #define AVG_BUFSIZE 4
 
