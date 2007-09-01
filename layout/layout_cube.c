@@ -38,7 +38,7 @@ static int curface;
 
 float face_alpha[4];
 
-static float miw_render(void);
+static float miw_render(float aspect);
 
 static int mirror_input_event(inputevent_t *ie);
 static int menu_input_event(inputevent_t *ie);
@@ -272,7 +272,7 @@ static glw_vertex_anim_t wextra =  /* x = mirror_alpha, y = aspect */
  GLW_VERTEX_ANIM_SIN_INITIALIZER(0.1, 1.0, -0.7);
 
 void
-layout_std_draw(float aspect)
+layout_std_draw(float aspect0)
 {
   glw_rctx_t rc;
   float a, b;
@@ -282,6 +282,7 @@ layout_std_draw(float aspect)
   int i;
   float cz;
   static float topinfospace;
+  float aspect;
 
   glw_vertex_t cpos_xyz;
   glw_vertex_t ctgt_xyz;
@@ -338,7 +339,7 @@ layout_std_draw(float aspect)
   
   glw_vertex_anim_read(&wextra, &wextra_xyz);
 
-  aspect /= wextra_xyz.y;
+  aspect = aspect0 / wextra_xyz.y;
 
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
@@ -418,7 +419,7 @@ layout_std_draw(float aspect)
   	    0, 0, 0,
 	    0, 1, 0);
 
-  topinfospace = miw_render();
+  topinfospace = miw_render(aspect0);
 
   audio_layout();
 
@@ -616,7 +617,7 @@ layout_register_app(app_t *a)
 extern media_pipe_t *mixer_primary_audio;
 
 static float
-miw_render(void)
+miw_render(float aspect)
 {
   media_pipe_t *mp = primary_audio;
   static float a0, a1;
@@ -626,12 +627,9 @@ miw_render(void)
   const float size = 0.05f;
   float space = 0;
 
-  //  if(ai != NULL)
-  //    printf("active appi = %p, %s\n", ai, ai->ai_app->app_name);
-
   memset(&rc0, 0, sizeof(rc0));
   rc0.rc_alpha = 1.0f;
-  rc0.rc_aspect = 16.0f / 9.0f;
+  rc0.rc_aspect = aspect;
 
   if(mp == NULL)
     return 0;
