@@ -293,10 +293,11 @@ display_or_skip(gl_video_pipe_t *gvp, int duration)
 }
 
 typedef struct {
+  int refcount;
   int64_t pts;
   int duration;
 
-} frame_timing_info_t;
+} frame_meta_t;
 
 
 static int
@@ -304,20 +305,27 @@ gvp_get_buffer(struct AVCodecContext *c, AVFrame *pic)
 {
   media_buf_t *mb = c->opaque;
   int ret = avcodec_default_get_buffer(c, pic);
-  frame_timing_info_t *fti = malloc(sizeof(frame_timing_info_t));
+  frame_meta_t *fm = malloc(sizeof(frame_meta_t));
 
-  fti->pts = mb->mb_pts;
-  fti->duration = mb->mb_duration;
-
-  pic->opaque = fti;
+  fm->pts = mb->mb_pts;
+  fm->duration = mb->mb_duration;
+  fm->refcount = 1;
+  pic->opaque = fm;
   return ret;
 }
 
 static void
 gvp_release_buffer(struct AVCodecContext *c, AVFrame *pic)
 {
-  if(pic)
-    free(pic->opaque);
+  frame_meta_t *fm = pic->opaque;
+
+  if(fm != NULL) {
+    if(fm->refcount > 1) {
+      fm->refcount--;
+      return;
+    }
+    free(fm);
+  }
 
   avcodec_default_release_buffer(c, pic);
 }
@@ -338,7 +346,7 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
   AVCodecContext *ctx = cw->codec_ctx;
   AVFrame *frame = gvp->gvp_frame;
   gvp_conf_t *gc = gvp->gvp_conf;
-  frame_timing_info_t *fti;
+  frame_meta_t *fm;
   media_queue_t *mq = &mp->mp_video;
   time_t now;
   int hvec[3], wvec[3];
@@ -416,12 +424,12 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
   
   /* Compute duration and PTS of frame */
 
-  fti = frame->opaque;
-  if(fti == NULL)
+  fm = frame->opaque;
+  if(fm == NULL)
     return;
 
-  pts = fti->pts;
-  duration = fti->duration;
+  pts = fm->pts;
+  duration = fm->duration;
 
   if(!gvp_valid_duration(duration)) {
     /* duration is zero or very invalid, use duration from last output */
@@ -557,13 +565,8 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
      *  No post processing
      */
 
-  case GVP_PP_TEST:
-    gvp->gvp_active_frames_needed = 4;
-    goto enq;
-
   case GVP_PP_NONE:
     gvp->gvp_active_frames_needed = 3;
-  enq:
     gvp->gvp_interlaced = 0;
     if(!display_or_skip(gvp, duration))
       return;

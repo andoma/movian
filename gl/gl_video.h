@@ -38,7 +38,6 @@ typedef enum {
   GVP_PP_NONE,
   GVP_PP_AUTO,
   GVP_PP_DEINTERLACER,
-  GVP_PP_TEST,
 } gvp_pp_type_t;
 
 
