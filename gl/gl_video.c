@@ -487,7 +487,7 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
 
   duration = (float)duration / mp->mp_speed_gain;
 
-  if(!got_pic || mp_get_playstatus(mp) == MP_STOP)
+  if(mp_get_playstatus(mp) == MP_STOP)
     return;
 
 
