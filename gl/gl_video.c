@@ -675,10 +675,10 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
       gvp->gvp_yadif_height  = ctx->height;
       gvp->gvp_yadif_pix_fmt = ctx->pix_fmt;
 
-      printf("YADIF allocating pictures\n");
       for(i = 0; i < 3; i++) {
 	avpicture_free(&gvp->gvp_yadif_pic[i]);
-	avpicture_alloc(&gvp->gvp_yadif_pic[i], ctx->pix_fmt, ctx->width, ctx->height);
+	avpicture_alloc(&gvp->gvp_yadif_pic[i], ctx->pix_fmt, 
+			ctx->width, ctx->height);
       }
     }
 
@@ -689,7 +689,7 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
       w = gvp->gvp_yadif_width  >> !!i;
       h = gvp->gvp_yadif_height >> !!i;
        src = frame->data[i];
-      dst = gvp->gvp_yadif_pic[gvp->gvp_yadif_phase].data[i];
+       dst = gvp->gvp_yadif_pic[gvp->gvp_yadif_phase].data[i];
        while(h--) {
 	memcpy(dst, src, w);
 	dst += w;
