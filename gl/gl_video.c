@@ -164,7 +164,8 @@ gl_decode_thread(void *aux)
   media_buf_t *mb;
   media_pipe_t *mp = gvp->gvp_mp;
 
-  while(gvp->gvp_state == GVP_STATE_THREAD_RUNNING) {
+  while(gvp->gvp_state == GVP_STATE_THREAD_RUNNING ||
+	gvp->gvp_state == GVP_STATE_THREAD_DESTROYING) {
 
     mb = mb_dequeue_wait(mp, &mp->mp_video);
 
