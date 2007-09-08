@@ -638,7 +638,7 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
     }
 
     gvp->gvp_active_frames_needed = 3;
-    gvp->gvp_interlaced = 0;
+    gvp->gvp_interlaced = 1;
 
     for(i = 0; i < 3; i++) {
       w = gvp->gvp_yadif_width  >> (i ? hshift : 0);
@@ -703,8 +703,6 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
       }
 
       asm volatile("emms \n\t" : : : "memory");
-
-      gvp->gvp_interlaced = 0;
       gvf->gvf_pts = pts + j * duration;
       gvf->gvf_duration = duration;
       TAILQ_INSERT_TAIL(&gvp->gvp_display_queue, gvf, link);
@@ -713,8 +711,6 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
     gvp->gvp_yadif_phase++;
     if(gvp->gvp_yadif_phase > 2)
       gvp->gvp_yadif_phase = 0;
-    
-
     return;
   }
 }
