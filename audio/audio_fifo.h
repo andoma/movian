@@ -47,6 +47,8 @@ typedef struct audio_fifo {
   int hysteresis;
   int satisfied;
 
+  int hold;
+
 } audio_fifo_t;
 
 #define ab_dataptr(ab) ((void *)&(ab)->data[0])

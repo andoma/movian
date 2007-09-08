@@ -67,7 +67,7 @@ af_deq(audio_fifo_t *af, int wait)
   pthread_mutex_lock(&af->lock);
 
   while(1) {
-    ab = TAILQ_FIRST(&af->queue);
+    ab = af->hold ? NULL : TAILQ_FIRST(&af->queue);
 
     if(af->hysteresis) {
 
