@@ -25,6 +25,8 @@ void gl_common_init(void);
 
 void gl_sysglue_mainloop(void);
 
+void gl_update_timings(void);
+
 #endif /* SYSGLUE_H */
 
 

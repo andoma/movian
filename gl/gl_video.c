@@ -467,6 +467,8 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
   if(duration == 0 || pts == AV_NOPTS_VALUE)
     return;
 
+  printf("%20lld %d %d\n", pts, duration, frame_duration);
+
   if(gvp->gvp_mp->mp_subtitles) {
     i = subtitles_index_by_pts(gvp->gvp_mp->mp_subtitles, pts);
     if(i != gvp->gvp_last_subtitle_index) {

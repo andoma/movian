@@ -63,6 +63,7 @@ gl_common_init(void)
 {
   const	GLubyte	*s;
 
+  frame_duration = 16666; /* 60 Hz, we dont know anything better yet */
 
   fprintf(stderr, "OpenGL library: %s on %s, version %s\n",
 	  glGetString(GL_VENDOR),
@@ -83,4 +84,54 @@ gl_common_init(void)
   glEnable(GL_LINE_SMOOTH);
 
   glEnable(GL_POLYGON_OFFSET_FILL);
+}
+
+static int
+intcmp(const void *A, const void *B)
+{
+  const int *a = A;
+  const int *b = B;
+  return *a - *b;
+}
+
+
+#define FRAME_DURATION_SAMPLES 31 /* should be an odd number */
+
+void
+gl_update_timings(void)
+{
+  struct timeval tv;
+  static int64_t lastts, firstsample;
+  static int deltaarray[FRAME_DURATION_SAMPLES];
+  static int deltaptr;
+  static int lastframedur;
+  int d;
+
+  gettimeofday(&tv, NULL);
+  wallclock = (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
+  walltime = tv.tv_sec;
+  
+  frame_duration = 16666;
+
+  if(lastts != 0) {
+    d = wallclock - lastts;
+    if(deltaptr == 0)
+      firstsample = wallclock;
+
+    deltaarray[deltaptr++] = d;
+
+    if(deltaptr == FRAME_DURATION_SAMPLES) {
+      qsort(deltaarray, deltaptr, sizeof(int), intcmp);
+      d = deltaarray[FRAME_DURATION_SAMPLES / 2];
+
+      if(lastframedur == 0) {
+	lastframedur = d;
+      } else {
+	lastframedur = (d + lastframedur) / 2;
+      }
+      frame_duration = lastframedur;
+      deltaptr = 0;
+    }
+  }
+  lastts = wallclock;
 }

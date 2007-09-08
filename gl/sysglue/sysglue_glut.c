@@ -256,15 +256,9 @@ gl_sysglue_mainloop(void)
 static void 
 glut_render_scene(void)
 {
-  struct timeval tv;
-
-  gettimeofday(&tv, NULL);
-
-  wallclock = (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
-  walltime = tv.tv_sec;
-
   layout_std_draw();
   glutSwapBuffers();
+  gl_update_timings();
   glw_reaper();
 }
 

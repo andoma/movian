@@ -259,9 +259,7 @@ void
 gl_sysglue_mainloop(void)
 {
   XEvent event;
-  struct timeval tv;
-  int w, h, d;
-  int64_t lastts = 0;
+  int w, h;
 
   while(1) {
 
@@ -289,22 +287,8 @@ gl_sysglue_mainloop(void)
       layout_std_draw(x11state.aspect_ratio);
 
     glFlush();
-
     glXSwapBuffers(x11state.display, x11state.win);
-
-    gettimeofday(&tv, NULL);
-    wallclock = (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
-    walltime = tv.tv_sec;
-
-    if(lastts != 0) {
-      d = wallclock - lastts;
-      if(frame_duration == 0) {
-	frame_duration = d;
-      } else {
-	frame_duration = (d + frame_duration) / 2;
-      }
-    }
-    lastts = wallclock;
+    gl_update_timings();
     glw_reaper();
   }
 }
