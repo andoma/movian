@@ -1834,19 +1834,19 @@ gvp_menu_setup(glw_t *p, gvp_conf_t *gc)
   menu_create_item(s, "icon://menu-current.png", "Automatic", 
 		   gvp_menu_pp, gc, GVP_PP_AUTO, 0);
 
-  menu_create_item(s, "icon://menu-current.png", "Deinterlace: OpenGL",
+  menu_create_item(s, "icon://menu-current.png", "Simple deinterlacer",
 		   gvp_menu_pp, gc, GVP_PP_DEINTERLACER, 0);
 
-  menu_create_item(s, "icon://menu-current.png", "Deinterlace: Yadif",
+  menu_create_item(s, "icon://menu-current.png", "Yadif",
 		   gvp_menu_pp, gc, GVP_PP_YADIF_FRAME, 0);
 
-  menu_create_item(s, "icon://menu-current.png", "Deinterlace: Yadif 2x",
+  menu_create_item(s, "icon://menu-current.png", "Yadif 2x",
 		   gvp_menu_pp, gc, GVP_PP_YADIF_FIELD, 0);
 
-  menu_create_item(s, "icon://menu-current.png", "Deinterlace: Yadif NSI",
+  menu_create_item(s, "icon://menu-current.png", "Yadif NSI",
 		   gvp_menu_pp, gc, GVP_PP_YADIF_FRAME_NO_SPATIAL_ILACE, 0);
 
-  menu_create_item(s, "icon://menu-current.png", "Deinterlace: Yadif 2x NSI",
+  menu_create_item(s, "icon://menu-current.png", "Yadif 2x NSI",
 		   gvp_menu_pp, gc, GVP_PP_YADIF_FIELD_NO_SPATIAL_ILACE, 0);
 
 
