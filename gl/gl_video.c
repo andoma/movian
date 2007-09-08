@@ -35,6 +35,7 @@
 #include "miw.h"
 #include "menu.h"
 #include "subtitles.h"
+#include "yadif.h"
 
 static GLuint yuv2rbg_prog;
 static const char *yuv2rbg_code =
@@ -77,6 +78,8 @@ glp_check_error(const char *name)
 void
 gvp_init(void)
 {
+
+  yadif_init();
 
   glGenProgramsARB(1, &yuv2rbg_prog);
   glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, yuv2rbg_prog);
@@ -309,7 +312,6 @@ gvp_get_buffer(struct AVCodecContext *c, AVFrame *pic)
 
   fm->pts = mb->mb_pts;
   fm->duration = mb->mb_duration;
-  fm->refcount = 1;
   pic->opaque = fm;
   return ret;
 }
@@ -319,13 +321,8 @@ gvp_release_buffer(struct AVCodecContext *c, AVFrame *pic)
 {
   frame_meta_t *fm = pic->opaque;
 
-  if(fm != NULL) {
-    if(fm->refcount > 1) {
-      fm->refcount--;
-      return;
-    }
+  if(fm != NULL)
     free(fm);
-  }
 
   avcodec_default_release_buffer(c, pic);
 }
@@ -338,7 +335,7 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
 {
   gl_video_frame_t *gvf;
   int64_t pts, t;
-  int i, got_pic, h, w, duration;
+  int i, j, got_pic, h, w, duration;
   media_pipe_t *mp = gvp->gvp_mp;
   unsigned char *src, *dst;
   float f;
@@ -350,7 +347,8 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
   media_queue_t *mq = &mp->mp_video;
   time_t now;
   int hvec[3], wvec[3];
-  int tff;
+  int tff, w2, mode;
+  uint8_t *prev, *cur, *next;
 
   got_pic = 0;
 
@@ -480,7 +478,7 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
     }
   }
 
- /* deinterlacer will generate two frames */
+  /* deinterlacer will generate two frames */
 
   if(gvp->gvp_postproc_type == GVP_PP_DEINTERLACER)
     duration /= 2;
@@ -554,8 +552,6 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
   }
 
 
-  tff = !!frame->top_field_first ^ gc->gc_field_parity;
-
   switch(gvp->gvp_postproc_type) {
 
   case GVP_PP_AUTO:
@@ -595,6 +591,8 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
     return;
 
   case GVP_PP_DEINTERLACER:
+    tff = !!frame->top_field_first ^ gc->gc_field_parity;
+
     gvp->gvp_active_frames_needed = 3;
 
     /*
@@ -662,6 +660,110 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
       TAILQ_INSERT_TAIL(&gvp->gvp_display_queue, gvf, link);
     }
     return;
+    
+  case GVP_PP_YADIF_FRAME:
+    mode = 0; goto yadif;
+  case GVP_PP_YADIF_FIELD:
+    mode = 1; goto yadif;
+  case GVP_PP_YADIF_FRAME_NO_SPATIAL_ILACE:
+    mode = 2; goto yadif;
+  case GVP_PP_YADIF_FIELD_NO_SPATIAL_ILACE:
+    mode = 3;
+  yadif:
+    if(gvp->gvp_yadif_width   != ctx->width  ||
+       gvp->gvp_yadif_height  != ctx->height ||
+       gvp->gvp_yadif_pix_fmt != ctx->pix_fmt) {
+      
+      gvp->gvp_yadif_width   = ctx->width;
+      gvp->gvp_yadif_height  = ctx->height;
+      gvp->gvp_yadif_pix_fmt = ctx->pix_fmt;
+
+      printf("YADIF allocating pictures\n");
+      for(i = 0; i < 3; i++) {
+	avpicture_free(&gvp->gvp_yadif_pic[i]);
+	avpicture_alloc(&gvp->gvp_yadif_pic[i], ctx->pix_fmt, ctx->width, ctx->height);
+      }
+    }
+
+    gvp->gvp_active_frames_needed = 3;
+    gvp->gvp_interlaced = 0;
+
+    for(i = 0; i < 3; i++) {
+      w = gvp->gvp_yadif_width  >> !!i;
+      h = gvp->gvp_yadif_height >> !!i;
+       src = frame->data[i];
+      dst = gvp->gvp_yadif_pic[gvp->gvp_yadif_phase].data[i];
+       while(h--) {
+	memcpy(dst, src, w);
+	dst += w;
+	src += frame->linesize[i];
+      }
+    }
+
+    if(!display_or_skip(gvp, duration))
+      return;
+
+    tff = !!frame->top_field_first ^ gc->gc_field_parity;
+
+    if(mode & 1) 
+      duration /= 2;
+
+    for(j = 0; j <= (mode & 1); j++) {
+
+      if((gvf = gvp_dequeue_for_decode(gvp, wvec, hvec)) == NULL)
+	return;
+
+      for(i = 0; i < 3; i++) {
+	int y;
+	int parity = j ^ tff ^ 1;
+
+	h = gvp->gvp_yadif_phase;
+	next = gvp->gvp_yadif_pic[h].data[i];
+	if(--h < 0) h = 2;
+	cur = gvp->gvp_yadif_pic[h].data[i];
+	if(--h < 0) h = 2;
+	prev = gvp->gvp_yadif_pic[h].data[i];
+
+	dst = gvf->gvf_pbo_ptr + gvf->gvf_pbo_offset[i];
+	h = gvf->gvf_height[i];
+	w = gvf->gvf_width[i];
+	w2 = gvp->gvp_yadif_width >> !!i;
+
+	for(y = 0; y < 2; y++) {
+	  memcpy(dst, cur, w);
+	  dst  += w; prev += w2; cur += w2; next += w2;
+	}
+
+	for(; y < h - 2; y++) {
+
+	  if((y ^ parity) & 1) {
+	    yadif_filter_line(mode, dst, prev, cur, next, w, w2, parity ^ tff);
+	  } else {
+	    memcpy(dst, cur, w);
+	  }
+	  dst  += w; prev += w2; cur += w2; next += w2;
+	}
+
+	for(; y < h; y++) {
+	  memcpy(dst, cur, w);
+	  dst  += w; prev += w2; cur += w2; next += w2;
+	}
+      }
+
+      asm volatile("emms \n\t" : : : "memory");
+
+      gvp->gvp_interlaced = 0;
+      gvf->gvf_pts = pts + j * duration;
+      gvf->gvf_duration = duration;
+      TAILQ_INSERT_TAIL(&gvp->gvp_display_queue, gvf, link);
+    }
+
+    gvp->gvp_yadif_phase++;
+    if(gvp->gvp_yadif_phase > 2)
+      gvp->gvp_yadif_phase = 0;
+    
+
+    return;
   }
 }
 
@@ -679,6 +781,7 @@ static int gl_video_widget_callback(glw_t *w, void *opaque,
 static void
 gvp_destroy(gl_video_pipe_t *gvp)
 {
+  abort(); /* free yadif */
   av_free(gvp->gvp_frame);
   free(gvp);
 }
@@ -1734,8 +1837,21 @@ gvp_menu_setup(glw_t *p, gvp_conf_t *gc)
   menu_create_item(s, "icon://menu-current.png", "Automatic", 
 		   gvp_menu_pp, gc, GVP_PP_AUTO, 0);
 
-  menu_create_item(s, "icon://menu-current.png", "Deinterlace (bob)", 
+  menu_create_item(s, "icon://menu-current.png", "Deinterlace: OpenGL",
 		   gvp_menu_pp, gc, GVP_PP_DEINTERLACER, 0);
+
+  menu_create_item(s, "icon://menu-current.png", "Deinterlace: Yadif",
+		   gvp_menu_pp, gc, GVP_PP_YADIF_FRAME, 0);
+
+  menu_create_item(s, "icon://menu-current.png", "Deinterlace: Yadif 2x",
+		   gvp_menu_pp, gc, GVP_PP_YADIF_FIELD, 0);
+
+  menu_create_item(s, "icon://menu-current.png", "Deinterlace: Yadif NSI",
+		   gvp_menu_pp, gc, GVP_PP_YADIF_FRAME_NO_SPATIAL_ILACE, 0);
+
+  menu_create_item(s, "icon://menu-current.png", "Deinterlace: Yadif 2x NSI",
+		   gvp_menu_pp, gc, GVP_PP_YADIF_FIELD_NO_SPATIAL_ILACE, 0);
+
 
   menu_create_item(s, NULL, "Field Parity", 
 		   gvp_menu_pp_field_parity, gc, 0, 0);

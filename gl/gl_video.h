@@ -38,6 +38,10 @@ typedef enum {
   GVP_PP_NONE,
   GVP_PP_AUTO,
   GVP_PP_DEINTERLACER,
+  GVP_PP_YADIF_FRAME,
+  GVP_PP_YADIF_FIELD,
+  GVP_PP_YADIF_FRAME_NO_SPATIAL_ILACE,
+  GVP_PP_YADIF_FIELD_NO_SPATIAL_ILACE,
 } gvp_pp_type_t;
 
 
@@ -229,6 +233,14 @@ typedef struct gl_video_pipe {
 
   glw_t *gvp_subtitle_widget;
   int gvp_last_subtitle_index;
+
+  /* YADIF */
+
+  AVPicture gvp_yadif_pic[3];
+  int gvp_yadif_width;
+  int gvp_yadif_height;
+  int gvp_yadif_pix_fmt;
+  int gvp_yadif_phase;
 
 } gl_video_pipe_t;
 
