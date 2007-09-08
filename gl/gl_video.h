@@ -72,7 +72,6 @@ typedef struct gl_video_frame {
 
   int gvf_duration;
 
-  int gvf_interlaced;
   int gvf_bottom_frame;
 
   GLuint gvf_pbo;

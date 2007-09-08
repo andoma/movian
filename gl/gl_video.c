@@ -624,7 +624,6 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
 	}
       }
 
-      gvf->gvf_interlaced = 1;
       gvf->gvf_bottom_frame = !tff;
       
       gvf->gvf_pts = pts;
@@ -651,8 +650,6 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
 	}
       }
 
- 
-      gvf->gvf_interlaced = 1;
       gvf->gvf_bottom_frame = tff;
 
       gvf->gvf_pts = pts + duration;
