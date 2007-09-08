@@ -349,6 +349,7 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
   int hvec[3], wvec[3];
   int tff, w2, mode;
   uint8_t *prev, *cur, *next;
+  int hshift, vshift;
 
   got_pic = 0;
 
@@ -497,60 +498,14 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
     return;
 
 
-  switch(ctx->pix_fmt) {
-  case PIX_FMT_YUV420P:
-  case PIX_FMT_YUVJ420P: /* FIXME: incorrect color space */
-    wvec[0] = ctx->width;
-    wvec[1] = ctx->width / 2;
-    wvec[2] = ctx->width / 2;
-    hvec[0] = ctx->height;
-    hvec[1] = ctx->height / 2;
-    hvec[2] = ctx->height / 2;
-    break;
+  avcodec_get_chroma_sub_sample(ctx->pix_fmt, &hshift, &vshift);
 
-  case PIX_FMT_YUV422P:
-  case PIX_FMT_YUVJ422P: /* FIXME: incorrect color space */
-    wvec[0] = ctx->width;
-    wvec[1] = ctx->width / 2;
-    wvec[2] = ctx->width / 2;
-    hvec[0] = ctx->height;
-    hvec[1] = ctx->height;
-    hvec[2] = ctx->height;
-    break;
-
-  case PIX_FMT_YUV444P:
-  case PIX_FMT_YUVJ444P: /* FIXME: incorrect color space */
-    wvec[0] = ctx->width;
-    wvec[1] = ctx->width;
-    wvec[2] = ctx->width;
-    hvec[0] = ctx->height;
-    hvec[1] = ctx->height;
-    hvec[2] = ctx->height;
-    break;
-
-  case PIX_FMT_YUV410P:
-    wvec[0] = ctx->width;
-    wvec[1] = ctx->width / 4;
-    wvec[2] = ctx->width / 4;
-    hvec[0] = ctx->height;
-    hvec[1] = ctx->height / 4;
-    hvec[2] = ctx->height / 4;
-    break;
-
-  case PIX_FMT_YUV411P:
-    wvec[0] = ctx->width;
-    wvec[1] = ctx->width / 4;
-    wvec[2] = ctx->width / 4;
-    hvec[0] = ctx->height;
-    hvec[1] = ctx->height;
-    hvec[2] = ctx->height;
-    break;
-
-
-  default:
-    return;
-  }
-
+  wvec[0] = ctx->width;
+  wvec[1] = ctx->width >> hshift;
+  wvec[2] = ctx->width >> hshift;
+  hvec[0] = ctx->height;
+  hvec[1] = ctx->height >> vshift;
+  hvec[2] = ctx->height >> vshift;
 
   switch(gvp->gvp_postproc_type) {
 
