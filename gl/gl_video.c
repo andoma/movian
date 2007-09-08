@@ -641,8 +641,8 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
     gvp->gvp_interlaced = 0;
 
     for(i = 0; i < 3; i++) {
-      w = gvp->gvp_yadif_width  >> !!i;
-      h = gvp->gvp_yadif_height >> !!i;
+      w = gvp->gvp_yadif_width  >> (i ? hshift : 0);
+      h = gvp->gvp_yadif_height >> (i ? vshift : 0);
        src = frame->data[i];
        dst = gvp->gvp_yadif_pic[gvp->gvp_yadif_phase].data[i];
        while(h--) {
@@ -679,7 +679,7 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
 	dst = gvf->gvf_pbo_ptr + gvf->gvf_pbo_offset[i];
 	h = gvf->gvf_height[i];
 	w = gvf->gvf_width[i];
-	w2 = gvp->gvp_yadif_width >> !!i;
+	w2 = gvp->gvp_yadif_width >> (i ? hshift : 0);
 
 	for(y = 0; y < 2; y++) {
 	  memcpy(dst, cur, w);
