@@ -17,6 +17,7 @@
  */
 
 #include <sys/time.h>
+#include <sys/resource.h>
 #include <pthread.h>
 #include <math.h>
 #include <stdio.h>
@@ -74,8 +75,22 @@ main(int argc, char **argv)
   int c;
   struct timeval tv;
   char *cfgfile = NULL;
+  struct rlimit rlim;
 
   setenv("__GL_SYNC_TO_VBLANK", "1", 1); // make nvidia sync to vblank
+
+
+#ifdef RLIMIT_AS
+  getrlimit(RLIMIT_AS, &rlim);
+  rlim.rlim_cur = 512 * 1024 * 1024;
+  setrlimit(RLIMIT_AS, &rlim);
+#endif
+
+#ifdef RLIMIT_DATA
+  getrlimit(RLIMIT_DATA, &rlim);
+  rlim.rlim_cur = 512 * 1024 * 1024;
+  setrlimit(RLIMIT_DATA, &rlim);
+#endif
 
   gettimeofday(&tv, NULL);
   srand(tv.tv_usec);
