@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <assert.h>
 #include <unistd.h>
 #include <sys/time.h>
 #include <time.h>
@@ -193,6 +194,7 @@ mq_flush(media_queue_t *mq)
   media_buf_t *mb;
 
   while((mb = TAILQ_FIRST(&mq->mq_q)) != NULL) {
+    assert(mb->mb_data_type != MB_EXIT);
     TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
     media_buf_free(mb);
   }
