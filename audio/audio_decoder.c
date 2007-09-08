@@ -266,11 +266,16 @@ void
 audio_decoder_change_play_status(media_pipe_t *mp)
 {
   printf("audio_decode_change_play_status %d\n", mp->mp_playstatus);
+  audio_decoder_t *ad;
+
   switch(mp->mp_playstatus) {
   case MP_PLAY:
   case MP_PAUSE:
     if(mp->mp_audio_decoder == NULL)
       ad_create(mp);
+
+    ad = mp->mp_audio_decoder;
+    ad->ad_output->as_fifo.hold = mp->mp_playstatus == MP_PAUSE;
     break;
 
   case MP_STOP:
