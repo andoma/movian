@@ -624,7 +624,7 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
 	}
       }
 
-      gvf->gvf_bottom_frame = !tff;
+      gvf->gvf_debob = !tff;
       
       gvf->gvf_pts = pts;
       gvf->gvf_duration = duration;
@@ -650,7 +650,7 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
 	}
       }
 
-      gvf->gvf_bottom_frame = tff;
+      gvf->gvf_debob = tff;
 
       gvf->gvf_pts = pts + duration;
       gvf->gvf_duration = duration;
@@ -1300,7 +1300,7 @@ render_video_1f(media_pipe_t *mp, gl_video_pipe_t *gvp,
 			       /* ctrl.x == alpha */
 			       alpha,
 			       /* ctrl.y == ishift */
-			       (-0.5f * gvf->gvf_bottom_frame) / 
+			       (-0.5f * gvf->gvf_debob) / 
 			       (float)gvf->gvf_height[0],
 			       0.0,
 			       0.0);
@@ -1351,10 +1351,10 @@ gvp_blend_frames(gl_video_pipe_t *gvp, glw_rctx_t *rc, gl_video_frame_t *fra,
 			       /* ctrl.y == blend */
 			       blend,
 			       /* ctrl.z == image a, y displace */
-			       (-0.5f * fra->gvf_bottom_frame) / 
+			       (-0.5f * fra->gvf_debob) / 
 			       (float)fra->gvf_height[0],
 			       /* ctrl.w == image b, y displace */
-			       (-0.5f * frb->gvf_bottom_frame) / 
+			       (-0.5f * frb->gvf_debob) / 
 			       (float)frb->gvf_height[0]);
 				
   /* color matrix */
