@@ -223,14 +223,10 @@ tvh_get_pvrlog(tvheadend_t *tvh, tvevent_t *tve, int val, int istag)
   void *r;
   const char *v, *x;
 
-  printf("tvh_get_pvrlog, query %d\n", istag);
-
   if(istag)
     r = tvh_query(tvh, "pvr.gettag %d", val);
   else
     r = tvh_query(tvh, "pvr.getlog %d", val);
-
-  printf("r = %s\n", (char *)r);
 
   if(r == NULL)
     return 1;
