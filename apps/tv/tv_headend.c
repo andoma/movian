@@ -223,10 +223,14 @@ tvh_get_pvrlog(tvheadend_t *tvh, tvevent_t *tve, int val, int istag)
   void *r;
   const char *v, *x;
 
+  printf("tvh_get_pvrlog, query %d\n", istag);
+
   if(istag)
     r = tvh_query(tvh, "pvr.gettag %d", val);
   else
     r = tvh_query(tvh, "pvr.getlog %d", val);
+
+  printf("r = %s\n", (char *)r);
 
   if(r == NULL)
     return 1;
@@ -382,14 +386,12 @@ tvh_update_status(tvheadend_t *tvh, int chindex, char *buf)
     
     if((v = propcmp(x, "info")) != NULL)
       eolcpy(tvs.tvs_info, v, sizeof(tvs.tvs_info));
-    else if((v = propcmp(x, "snr")) != NULL)
-      tvs.tvs_snr = atoi(v);
-    else if((v = propcmp(x, "ber")) != NULL)
-      tvs.tvs_ber = atoi(v);
     else if((v = propcmp(x, "uncorrected-blocks")) != NULL)
       tvs.tvs_uncorr = atoi(v);
     else if((v = propcmp(x, "cc-errors")) != NULL)
       tvs.tvs_cc_errors = atoi(v);
+    else if((v = propcmp(x, "rate")) != NULL)
+      tvs.tvs_rate = atoi(v);
     else if((v = propcmp(x, "status")) != NULL)
       tvs.tvs_status = atoi(v);
     else if((v = propcmp(x, "adapter")) != NULL)

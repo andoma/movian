@@ -29,10 +29,9 @@ typedef struct tvstatus {
 
   int tvs_status;    /* set to 1 if stuff is ok */
   char tvs_info[40];
-  int tvs_snr;
-  int tvs_ber;
   int tvs_uncorr;
   int tvs_cc_errors;
+  int tvs_rate;       /* in kbps */
   int tvs_local_errors;
   char tvs_transport[40];
   char tvs_adapter[40];
