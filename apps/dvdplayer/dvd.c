@@ -354,7 +354,7 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
   mp = &ai->ai_mp;
 
   gvp_conf_init(&gc);
-  gc.gc_postproc_type = GVP_PP_NONE;
+  gc.gc_deilace_type = GVP_DEILACE_NONE;
 
   gvp0 = gvp = gvp_create(NULL, &ai->ai_mp, &gc, 0);
 

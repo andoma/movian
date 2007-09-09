@@ -35,19 +35,19 @@
 
 
 typedef enum {
-  GVP_PP_NONE,
-  GVP_PP_AUTO,
-  GVP_PP_DEINTERLACER,
-  GVP_PP_YADIF_FRAME,
-  GVP_PP_YADIF_FIELD,
-  GVP_PP_YADIF_FRAME_NO_SPATIAL_ILACE,
-  GVP_PP_YADIF_FIELD_NO_SPATIAL_ILACE,
-} gvp_pp_type_t;
+  GVP_DEILACE_NONE,
+  GVP_DEILACE_AUTO,
+  GVP_DEILACE_HALF_RES,
+  GVP_DEILACE_YADIF_FRAME,
+  GVP_DEILACE_YADIF_FIELD,
+  GVP_DEILACE_YADIF_FRAME_NO_SPATIAL_ILACE,
+  GVP_DEILACE_YADIF_FIELD_NO_SPATIAL_ILACE,
+} gvp_deilace_type_t;
 
 
 typedef struct gvp_conf {
 
-  gvp_pp_type_t gc_postproc_type;
+  gvp_deilace_type_t gc_deilace_type;
   int gc_avcomp;
   int gc_zoom;
   int gc_field_parity;
@@ -120,7 +120,7 @@ typedef struct gl_video_pipe {
 
   glw_t *gvp_widget;
 
-  gvp_pp_type_t gvp_postproc_type; /* Actual postprocessor running */
+  gvp_deilace_type_t gvp_deilace_type; /* Actual deinterlacer running */
 
   media_pipe_t *gvp_mp;
 

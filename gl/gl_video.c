@@ -144,7 +144,7 @@ void
 gvp_conf_init(gvp_conf_t *gc)
 {
   memset(gc, 0, sizeof(gvp_conf_t));
-  gc->gc_postproc_type = GVP_PP_AUTO;
+  gc->gc_deilace_type = GVP_DEILACE_AUTO;
   gc->gc_zoom = 100;
 }
 
@@ -412,14 +412,14 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
     break;
   }
 
-  if(gc->gc_postproc_type == GVP_PP_AUTO) {
+  if(gc->gc_deilace_type == GVP_DEILACE_AUTO) {
     
     if(frame->interlaced_frame)
-      gvp->gvp_postproc_type = GVP_PP_DEINTERLACER;
+      gvp->gvp_deilace_type = GVP_DEILACE_HALF_RES;
     else
-      gvp->gvp_postproc_type = GVP_PP_NONE;
+      gvp->gvp_deilace_type = GVP_DEILACE_NONE;
   } else {
-    gvp->gvp_postproc_type = gc->gc_postproc_type;
+    gvp->gvp_deilace_type = gc->gc_deilace_type;
   }
   
   /* Compute duration and PTS of frame */
@@ -482,7 +482,7 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
 
   /* deinterlacer will generate two frames */
 
-  if(gvp->gvp_postproc_type == GVP_PP_DEINTERLACER)
+  if(gvp->gvp_deilace_type == GVP_DEILACE_HALF_RES)
     duration /= 2;
 
   snprintf(mq->mq_info_output_type, sizeof(mq->mq_info_output_type),
@@ -508,16 +508,16 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
   hvec[1] = ctx->height >> vshift;
   hvec[2] = ctx->height >> vshift;
 
-  switch(gvp->gvp_postproc_type) {
+  switch(gvp->gvp_deilace_type) {
 
-  case GVP_PP_AUTO:
+  case GVP_DEILACE_AUTO:
     return;
 
     /*
      *  No post processing
      */
 
-  case GVP_PP_NONE:
+  case GVP_DEILACE_NONE:
     gvp->gvp_active_frames_needed = 3;
     gvp->gvp_interlaced = 0;
     if(!display_or_skip(gvp, duration))
@@ -546,7 +546,7 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
     TAILQ_INSERT_TAIL(&gvp->gvp_display_queue, gvf, link);
     return;
 
-  case GVP_PP_DEINTERLACER:
+  case GVP_DEILACE_HALF_RES:
     tff = !!frame->top_field_first ^ gc->gc_field_parity;
 
     gvp->gvp_active_frames_needed = 3;
@@ -614,13 +614,13 @@ gl_decode_video(gl_video_pipe_t *gvp, media_buf_t *mb)
     }
     return;
     
-  case GVP_PP_YADIF_FRAME:
+  case GVP_DEILACE_YADIF_FRAME:
     mode = 0; goto yadif;
-  case GVP_PP_YADIF_FIELD:
+  case GVP_DEILACE_YADIF_FIELD:
     mode = 1; goto yadif;
-  case GVP_PP_YADIF_FRAME_NO_SPATIAL_ILACE:
+  case GVP_DEILACE_YADIF_FRAME_NO_SPATIAL_ILACE:
     mode = 2; goto yadif;
-  case GVP_PP_YADIF_FIELD_NO_SPATIAL_ILACE:
+  case GVP_DEILACE_YADIF_FIELD_NO_SPATIAL_ILACE:
     mode = 3;
   yadif:
     if(gvp->gvp_yadif_width   != ctx->width  ||
@@ -1608,12 +1608,12 @@ gvp_menu_pp(glw_t *w, void *opaque, glw_signal_t signal, ...)
     if((b = glw_find_by_class(w, GLW_BITMAP)) == NULL)
       return 0;
     
-    v = w->glw_u32 == gc->gc_postproc_type ? 1 : 0;
+    v = w->glw_u32 == gc->gc_deilace_type ? 1 : 0;
     b->glw_alpha = (b->glw_alpha * 15 + v) / 16.0;
     return 0;
 
   case GLW_SIGNAL_CLICK:
-    gc->gc_postproc_type = w->glw_u32;
+    gc->gc_deilace_type = w->glw_u32;
     return 1;
     
   default:
@@ -1778,28 +1778,29 @@ gvp_menu_setup(glw_t *p, gvp_conf_t *gc)
 
   /*** Post processor */
 
-  s = menu_create_submenu(v, "icon://tv.png", "Postprocessor", 0);
+  s = menu_create_submenu(v, "icon://tv.png", "Deinterlacer", 0);
 
-  menu_create_item(s, "icon://menu-current.png", "No postprocessing", 
-		   gvp_menu_pp, gc, GVP_PP_NONE, 0);
+  menu_create_item(s, "icon://menu-current.png", "No deinterlacing", 
+		   gvp_menu_pp, gc, GVP_DEILACE_NONE, 0);
 
   menu_create_item(s, "icon://menu-current.png", "Automatic", 
-		   gvp_menu_pp, gc, GVP_PP_AUTO, 0);
+		   gvp_menu_pp, gc, GVP_DEILACE_AUTO, 0);
 
-  menu_create_item(s, "icon://menu-current.png", "Simple deinterlacer",
-		   gvp_menu_pp, gc, GVP_PP_DEINTERLACER, 0);
+  menu_create_item(s, "icon://menu-current.png", "Simple",
+		   gvp_menu_pp, gc, GVP_DEILACE_HALF_RES, 0);
 
   menu_create_item(s, "icon://menu-current.png", "Yadif",
-		   gvp_menu_pp, gc, GVP_PP_YADIF_FRAME, 0);
+		   gvp_menu_pp, gc, GVP_DEILACE_YADIF_FRAME, 0);
 
   menu_create_item(s, "icon://menu-current.png", "Yadif 2x",
-		   gvp_menu_pp, gc, GVP_PP_YADIF_FIELD, 0);
+		   gvp_menu_pp, gc, GVP_DEILACE_YADIF_FIELD, 0);
 
   menu_create_item(s, "icon://menu-current.png", "Yadif NSI",
-		   gvp_menu_pp, gc, GVP_PP_YADIF_FRAME_NO_SPATIAL_ILACE, 0);
-
+		   gvp_menu_pp, gc, 
+		   GVP_DEILACE_YADIF_FRAME_NO_SPATIAL_ILACE, 0);
   menu_create_item(s, "icon://menu-current.png", "Yadif 2x NSI",
-		   gvp_menu_pp, gc, GVP_PP_YADIF_FIELD_NO_SPATIAL_ILACE, 0);
+		   gvp_menu_pp, gc, 
+		   GVP_DEILACE_YADIF_FIELD_NO_SPATIAL_ILACE, 0);
 
 
   menu_create_item(s, NULL, "Field Parity", 
