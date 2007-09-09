@@ -188,7 +188,7 @@ tvh_parse_event(tvevent_t *tve, void *r)
     else if((v = propcmp(x, "prev")) != NULL) 
       tve->tve_event_tag_prev = atoi(v);
     else if((v = propcmp(x, "pvrstatus")) != NULL) 
-      tve->tve_pvrstatus = v[0];
+      tve->tve_pvrstatus = atoi(v);
   }
   tve_fixup_times(tve);
   free(r);
@@ -247,7 +247,7 @@ tvh_get_pvrlog(tvheadend_t *tvh, tvevent_t *tve, int val, int istag)
     else if((v = propcmp(x, "event_tag")) != NULL) 
       tve->tve_event_tag = atoi(v);
     else if((v = propcmp(x, "pvrstatus")) != NULL) 
-      tve->tve_pvrstatus = v[0];
+      tve->tve_pvrstatus = atoi(v);
     else if((v = propcmp(x, "filename")) != NULL) 
       eolcpy(tve->tve_filename, v, sizeof(tve->tve_filename));
     else if((v = propcmp(x, "channel")) != NULL) 
