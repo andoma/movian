@@ -128,7 +128,33 @@ alsa_configure(int format)
     return;
   }
   
- 
+  /* Configurue buffer size */
+
+  snd_pcm_hw_params_get_buffer_size_min(hwp, &buffer_size_min);
+  snd_pcm_hw_params_get_buffer_size_max(hwp, &buffer_size_max);
+  buffer_size = buffer_size_max;
+
+  fprintf(stderr, "audio: attainable buffer size %lu - %lu, trying %lu\n",
+	  buffer_size_min, buffer_size_max, buffer_size);
+
+
+  dir = 0;
+  r = snd_pcm_hw_params_set_buffer_size_near(h, hwp, &buffer_size);
+  if(r < 0) {
+    fprintf(stderr, "audio: Unable to set buffer size %lu (%s)\n",
+	    buffer_size, snd_strerror(r));
+    snd_pcm_close(h);
+    return;
+  }
+
+  r = snd_pcm_hw_params_get_buffer_size(hwp, &buffer_size);
+  if(r < 0) {
+    fprintf(stderr, "audio: Unable to get buffer size (%s)\n",
+	    snd_strerror(r));
+    snd_pcm_close(h);
+    return;
+  }
+
   /* Configurue period */
 
   dir = 0;
@@ -161,34 +187,6 @@ alsa_configure(int format)
     return;
   }
 
- /* Configurue buffer size */
-
-  snd_pcm_hw_params_get_buffer_size_min(hwp, &buffer_size_min);
-  snd_pcm_hw_params_get_buffer_size_max(hwp, &buffer_size_max);
-  buffer_size = buffer_size_max;
-  buffer_size = period_size * 2;
-
-  fprintf(stderr, "audio: attainable buffer size %lu - %lu, trying %lu\n",
-	  buffer_size_min, buffer_size_max, buffer_size);
-
-
-  dir = 0;
-  r = snd_pcm_hw_params_set_buffer_size_near(h, hwp, &buffer_size);
-  if(r < 0) {
-    fprintf(stderr, "audio: Unable to set buffer size %lu (%s)\n",
-	    buffer_size, snd_strerror(r));
-    snd_pcm_close(h);
-    return;
-  }
-
-  r = snd_pcm_hw_params_get_buffer_size(hwp, &buffer_size);
-  if(r < 0) {
-    fprintf(stderr, "audio: Unable to get buffer size (%s)\n",
-	    snd_strerror(r));
-    snd_pcm_close(h);
-    return;
-  }
-
 
   /* write the hw params */
   r = snd_pcm_hw_params(h, hwp);
@@ -207,7 +205,7 @@ alsa_configure(int format)
   snd_pcm_sw_params_current(h, swp);
 
   
-  r = snd_pcm_sw_params_set_avail_min(h, swp, period_size);
+  r = snd_pcm_sw_params_set_avail_min(h, swp, buffer_size / 2);
 
   if(r < 0) {
     fprintf(stderr, "audio: Unable to configure wakeup threshold (%s)\n",
@@ -388,8 +386,6 @@ alsa_thread(void *aux)
 	if(snd_pcm_delay(alsa_handle, &delay))
 	  delay = 0;
       
-	//	printf("delay = %ld\n", delay);
-
 	// delay /= alsa_channels;
       
       /* convert delay from sample rates to µs */
