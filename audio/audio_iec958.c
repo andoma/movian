@@ -26,101 +26,22 @@
 
 #include "audio_iec958.h"
 
-
-
-static const struct {
-  uint16_t bit_rate;
-  uint16_t frm_size[3];
-} ac3_ratesize_tbl[64] =  {
-  { 32  ,{64   ,69   ,96   } },
-  { 32  ,{64   ,70   ,96   } },
-  { 40  ,{80   ,87   ,120  } },
-  { 40  ,{80   ,88   ,120  } },
-  { 48  ,{96   ,104  ,144  } },
-  { 48  ,{96   ,105  ,144  } },
-  { 56  ,{112  ,121  ,168  } },
-  { 56  ,{112  ,122  ,168  } },
-  { 64  ,{128  ,139  ,192  } },
-  { 64  ,{128  ,140  ,192  } },
-  { 80  ,{160  ,174  ,240  } },
-  { 80  ,{160  ,175  ,240  } },
-  { 96  ,{192  ,208  ,288  } },
-  { 96  ,{192  ,209  ,288  } },
-  { 112 ,{224  ,243  ,336  } },
-  { 112 ,{224  ,244  ,336  } },
-  { 128 ,{256  ,278  ,384  } },
-  { 128 ,{256  ,279  ,384  } },
-  { 160 ,{320  ,348  ,480  } },
-  { 160 ,{320  ,349  ,480  } },
-  { 192 ,{384  ,417  ,576  } },
-  { 192 ,{384  ,418  ,576  } },
-  { 224 ,{448  ,487  ,672  } },
-  { 224 ,{448  ,488  ,672  } },
-  { 256 ,{512  ,557  ,768  } },
-  { 256 ,{512  ,558  ,768  } },
-  { 320 ,{640  ,696  ,960  } },
-  { 320 ,{640  ,697  ,960  } },
-  { 384 ,{768  ,835  ,1152 } },
-  { 384 ,{768  ,836  ,1152 } },
-  { 448 ,{896  ,975  ,1344 } },
-  { 448 ,{896  ,976  ,1344 } },
-  { 512 ,{1024 ,1114 ,1536 } },
-  { 512 ,{1024 ,1115 ,1536 } },
-  { 576 ,{1152 ,1253 ,1728 } },
-  { 576 ,{1152 ,1254 ,1728 } },
-  { 640 ,{1280 ,1393 ,1920 } },
-  { 640 ,{1280 ,1394 ,1920 } }
-};
-
-
-
 /*
  * AC3 IEC958 encapsulation 
  */
 
 int
-iec958_build_ac3frame(uint8_t *src, uint8_t *dst)
+iec958_build_ac3frame(uint8_t *src, size_t framesize, uint8_t *dst)
 {
-  int fscod, framesizecod, rate, framesize;
-
-  fscod = (src[4] >> 6) & 0x3;
-  
-  switch(fscod) {
-  case 0:
-    rate = 48000;
-    break;
-  case 1:
-    rate = 44100;
-    break;
-  case 2:
-    rate = 32000;
-    break;
-  default:
-    return 0;
-  }
-
-  framesizecod = src[4] & 0x3f;
-  framesize    = ac3_ratesize_tbl[framesizecod].frm_size[fscod];
-
   dst[0] = 0x72;  dst[1] = 0xf8;  dst[2] = 0x1f;  dst[3] = 0x4e;
   dst[4] = IEC958_PAYLOAD_AC3;
-
-  dst[5] = src[5] & 7;
-  framesize *= 2;
-  swab(src, &dst[8], framesize);
+  swab(src, dst + 8, framesize);
+  memset(dst + 8 + framesize, 0,  IEC958_AC3_FRAME_SIZE - framesize - 8);
   framesize *= 8;
   dst[6] = framesize;
   dst[7] = framesize >> 8;
-
   return IEC958_AC3_FRAME_SIZE / 4; /* 2 channels, 16 bit / ch */
 }
-
-
-
-
-
-
-
 
 
 /*

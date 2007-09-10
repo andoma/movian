@@ -351,7 +351,7 @@ alsa_thread(void *aux)
 	break;
 
       case AUDIO_OUTPUT_AC3:
-	outlen = iec958_build_ac3frame(ab_dataptr(buf), iec958buf);
+	outlen = iec958_build_ac3frame(ab_dataptr(buf), buf->size, iec958buf);
 	outbuf = iec958buf;
 	break;
 
