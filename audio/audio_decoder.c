@@ -95,7 +95,7 @@ static void
 ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
 {
   uint8_t *buf;
-  size_t size;
+  int size;
   int r, data_size, frames, reconfigure;
   int16_t *d;
   channel_offset_t *chlayout;
