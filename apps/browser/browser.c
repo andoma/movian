@@ -203,12 +203,14 @@ browser_check_dvd(b_dir_t *bd, b_entry_t *be)
  */
 
 #define BROWSER_INCLUDE_TRACK 0x1
+#define BROWSER_INCLUDE_AUTHOR 0x2
 
 static void
 browser_make_widget_10_1(glw_t *p, b_dir_t *bd, b_entry_t *be, int flags)
 {
   glw_t *x, *y, *z;
   mediainfo_t *mi = &be->be_mi;
+  double weight;
   char tmp[500];
 
   be->be_widget = p = 
@@ -283,19 +285,30 @@ browser_make_widget_10_1(glw_t *p, b_dir_t *bd, b_entry_t *be, int flags)
 		 "icon://audio.png" : "icon://video.png",
 		 NULL);
 
-      
-      glw_create(GLW_TEXT_BITMAP,
-		 GLW_ATTRIB_ASPECT, 18.0f,
-		 GLW_ATTRIB_WEIGHT, 8.0f,
+      glw_create(GLW_DUMMY,
 		 GLW_ATTRIB_PARENT, x,
-		 GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_LEFT,
-		 GLW_ATTRIB_CAPTION, mi->mi_author,
-		 GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
+		 GLW_ATTRIB_WEIGHT, 0.5,
 		 NULL);
 
+      
+      if(flags & BROWSER_INCLUDE_AUTHOR) {
+
+	glw_create(GLW_TEXT_BITMAP,
+		   GLW_ATTRIB_ASPECT, 14.0f,
+		   GLW_ATTRIB_WEIGHT, 7.0f,
+		   GLW_ATTRIB_PARENT, x,
+		   GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_LEFT,
+		   GLW_ATTRIB_CAPTION, mi->mi_author,
+		   GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
+		   NULL);
+	weight = 10.0f;
+      } else {
+	weight = 17.0f;
+      }
+
       glw_create(GLW_TEXT_BITMAP,
-		 GLW_ATTRIB_ASPECT, 18.0f,
-		 GLW_ATTRIB_WEIGHT, 9.0f,
+		 GLW_ATTRIB_ASPECT, weight * 2.0f,
+		 GLW_ATTRIB_WEIGHT, weight,
 		 GLW_ATTRIB_PARENT, x,
 		 GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_LEFT,
 		 GLW_ATTRIB_CAPTION, mi->mi_title,
@@ -717,7 +730,9 @@ browser_load_dir(browser_t *b, b_entry_t *src, char *path, int enq, glw_t *p)
   int hastrack = 0;
   int music = 0;
   glw_t *sk2 = NULL;
-  
+  const char *author;
+  int flags;
+
   bd = malloc(sizeof(b_dir_t));
   bd->bd_load_progress = 0;
   bd->bd_b = b;
@@ -814,10 +829,17 @@ browser_load_dir(browser_t *b, b_entry_t *src, char *path, int enq, glw_t *p)
     qsort(vec, cnt, sizeof(void *), sort_b_entry);
   }
 
+  flags = hastrack == cnt ? BROWSER_INCLUDE_TRACK : 0;
+
+  author = cnt > 0 ? vec[0]->be_mi.mi_author : NULL;
+
   for(i = 0; i < cnt; i++) {
     be = vec[i];
     if(be->be_mi.mi_type == MI_IMAGE)
       TAILQ_INSERT_TAIL(&bd->bd_images, be, be_image_link);
+
+    if(strcmp(author ?: "", be->be_mi.mi_author ?: ""))
+      flags |= BROWSER_INCLUDE_AUTHOR;
   }
 
   if(enq) {
@@ -864,8 +886,8 @@ browser_load_dir(browser_t *b, b_entry_t *src, char *path, int enq, glw_t *p)
 	    NULL);
 
     for(i = 0; i < cnt; i++)
-      browser_make_widget_10_1(bd->bd_list, bd, vec[i],
-			       hastrack == cnt ? BROWSER_INCLUDE_TRACK : 0);
+      browser_make_widget_10_1(bd->bd_list, bd, vec[i], flags);
+
      
   } else {
 
