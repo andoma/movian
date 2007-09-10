@@ -27,16 +27,18 @@
 
 
 audio_buf_t *
-af_alloc(audio_fifo_t *af)
-{
-  return malloc(af->bufsize + sizeof(audio_buf_t));
-}
-
-
-audio_buf_t *
 af_alloc_dynamic(size_t size)
 {
-  return malloc(size + sizeof(audio_buf_t));
+  audio_buf_t *ab;
+  ab = malloc(size + sizeof(audio_buf_t));
+  ab->size = size;
+  return ab;
+}
+
+audio_buf_t *
+af_alloc(audio_fifo_t *af)
+{
+  return af_alloc_dynamic(af->bufsize);
 }
 
 void
