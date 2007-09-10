@@ -35,6 +35,8 @@ iec958_build_ac3frame(uint8_t *src, size_t framesize, uint8_t *dst)
 {
   dst[0] = 0x72;  dst[1] = 0xf8;  dst[2] = 0x1f;  dst[3] = 0x4e;
   dst[4] = IEC958_PAYLOAD_AC3;
+  dst[5] = src[5] & 7;
+
   swab(src, dst + 8, framesize);
   memset(dst + 8 + framesize, 0,  IEC958_AC3_FRAME_SIZE - framesize - 8);
   framesize *= 8;
