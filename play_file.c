@@ -268,6 +268,8 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
   mp_set_playstatus(mp, MP_PLAY);
   media_pipe_acquire_audio(mp);
 
+  wrap_unlock_all_codecs(fw);
+
   while(1) {
 
     if(fctx->duration == AV_NOPTS_VALUE) {
@@ -277,9 +279,7 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
     }
 
     if(mp_is_paused(mp)) {
-      wrap_unlock_all_codecs(fw);
       key = input_getkey(ic, 1);
-      wrap_lock_all_codecs(fw);
       media_pipe_acquire_audio(mp);
     } else {
       key = input_getkey(ic, 0);
@@ -300,9 +300,7 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
       goto seekflush;
 
     seekflush:
-      wrap_unlock_all_codecs(fw);
       mp_flush(mp, 0);
-      wrap_lock_all_codecs(fw);
       printf("mp flush completed\n");
       mp_auto_display(mp);
       input_flush_queue(ic);
@@ -316,10 +314,8 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
       break;
 
     case INPUT_KEY_STOP:
-      wrap_unlock_all_codecs(fw);
       mp_flush(mp, 1);
       mp_set_playstatus(mp, MP_STOP);
-      wrap_lock_all_codecs(fw);
       break;
 
       /* FALLTHRU */
@@ -329,11 +325,9 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
     case INPUT_KEY_CLEAR:
     case INPUT_KEY_ENTER:
     case INPUT_KEY_DELETE:
-      wrap_unlock_all_codecs(fw);
       printf("Flushing..\n");
       mp_flush(mp, 1);
       printf("Flushing done..\n");
-      wrap_lock_all_codecs(fw);
       break;
 	
     case INPUT_KEY_PLAYPAUSE:
@@ -370,12 +364,7 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
     i = av_read_frame(fctx, &pkt);
 
     if(i < 0) {
-      printf("readframe = %d\n", i);
-      wrap_unlock_all_codecs(fw);
-      printf("waiting...\n");
       mp_wait(mp, mp->mp_audio.mq_stream != -1, mp->mp_video.mq_stream != -1);
-      printf("relocking...\n");
-      wrap_lock_all_codecs(fw);
       key = 0;
       break;
     }
@@ -436,10 +425,8 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
     }
 
     if(mq != NULL) {
-      wrap_unlock_all_codecs(fw);
       mb_enqueue(mp, mq, mb);
       av_free_packet(&pkt);
-      wrap_lock_all_codecs(fw);
       continue;
     }
     
@@ -450,6 +437,8 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
     free(mb);
 
   }
+
+  wrap_lock_all_codecs(fw);
 
   mp->mp_playstatus_update_callback = NULL;
   mp->mp_info_widget = NULL;
