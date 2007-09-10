@@ -22,7 +22,7 @@
 
 #define IEC958_AC3_FRAME_SIZE 6144
 
-#define IEC968_MAX_FRAME_SIZE 65536
+#define IEC958_MAX_FRAME_SIZE 65536 /* Figure a 'real' value */
 
 #define IEC958_PAYLOAD_NULL                         0
 #define IEC958_PAYLOAD_AC3                          1

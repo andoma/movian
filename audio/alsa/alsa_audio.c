@@ -320,7 +320,7 @@ alsa_thread(void *aux)
   void *iec958buf;
   int f = AUDIO_OUTPUT_PCM;
 
-  iec958buf = calloc(1, IEC968_MAX_FRAME_SIZE);
+  iec958buf = calloc(1, IEC958_MAX_FRAME_SIZE);
 
   if(config_get_str("alsa-ac3-device", NULL)) f |= AUDIO_OUTPUT_AC3;
   if(config_get_str("alsa-dts-device", NULL)) f |= AUDIO_OUTPUT_DTS;
