@@ -103,7 +103,8 @@ iec958_build_ac3frame(uint8_t *src, uint8_t *dst)
   framesize    = ac3_ratesize_tbl[framesizecod].frm_size[fscod];
 
   dst[0] = 0x72;  dst[1] = 0xf8;  dst[2] = 0x1f;  dst[3] = 0x4e;
-  dst[4] = 0x01; /* AC-3 */
+  dst[4] = IEC958_PAYLOAD_AC3;
+
   dst[5] = src[5] & 7;
   framesize *= 2;
   swab(src, &dst[8], framesize);
@@ -172,13 +173,13 @@ iec958_build_dtsframe(uint8_t *src, size_t srclen, uint8_t *dst)
 
     switch(nr_samples) {
     case 512:
-      *dst++ = 0x0b; /* DTS-1 */
+      *dst++ = IEC958_PAYLOAD_DTS_1;
       break;
     case 1024:
-      *dst++ = 0x0c; /* DTS-2 */
+      *dst++ = IEC958_PAYLOAD_DTS_2;
       break;
     case 2048:
-      *dst++ = 0x0d; /* DTS-3 */
+      *dst++ = IEC958_PAYLOAD_DTS_3;
       break;
     default:
       return 0;
