@@ -111,8 +111,6 @@ gl_update_timings(void)
   wallclock = (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
   walltime = tv.tv_sec;
   
-  frame_duration = 16666;
-
   if(lastts != 0) {
     d = wallclock - lastts;
     if(deltaptr == 0)
