@@ -67,7 +67,7 @@ lirc_thread(void *aux)
     }
 
     while(fgets(buf, sizeof(buf), fp) != NULL) {
-      sscanf(buf, "%llx %d %s", &ircode, &repeat, keyname);
+      sscanf(buf, "%"PRIx64" %d %s", &ircode, &repeat, keyname);
       
       for(i = 0; i < sizeof(lircmap) / sizeof(lircmap[0]); i++) {
 	if(!strcasecmp(keyname, lircmap[i].name)) {

@@ -909,7 +909,7 @@ render_video_upload(gl_video_pipe_t *gvp, gl_video_frame_t *gvf)
   glTexImage2D(GL_TEXTURE_2D, 0, 1, 
 	       gvf->gvf_width[0], gvf->gvf_height[0],
 	       0, GL_RED, GL_UNSIGNED_BYTE,
-	       (char *)gvf->gvf_pbo_offset[0]);
+	       (char *)(intptr_t)gvf->gvf_pbo_offset[0]);
 
   /* Cr */
 
@@ -919,7 +919,7 @@ render_video_upload(gl_video_pipe_t *gvp, gl_video_frame_t *gvf)
   glTexImage2D(GL_TEXTURE_2D, 0, 1,
 	       gvf->gvf_width[1], gvf->gvf_height[1],
 	       0, GL_RED, GL_UNSIGNED_BYTE,
-	       (char *)gvf->gvf_pbo_offset[2]);
+	       (char *)(intptr_t)gvf->gvf_pbo_offset[2]);
 
   /* Cb */
   
@@ -931,7 +931,7 @@ render_video_upload(gl_video_pipe_t *gvp, gl_video_frame_t *gvf)
   glTexImage2D(GL_TEXTURE_2D, 0, 1,
 	       gvf->gvf_width[2], gvf->gvf_height[2],
 	       0, GL_RED, GL_UNSIGNED_BYTE,
-	       (char *)gvf->gvf_pbo_offset[1]);
+	       (char *)(intptr_t)gvf->gvf_pbo_offset[1]);
   
   glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
 
