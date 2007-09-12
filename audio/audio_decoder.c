@@ -97,7 +97,6 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
   uint8_t *buf;
   int size;
   int r, data_size, frames, reconfigure;
-  int16_t *d;
   channel_offset_t *chlayout;
   codecwrap_t *cw = mb->mb_cw;
   AVCodecContext *ctx;
@@ -130,8 +129,11 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
   while(size > 0) {
 
     wrap_lock_codec(cw);
-
     r = avcodec_decode_audio(ctx, ad->ad_outbuf, &data_size, buf, size);
+    if(r == -1) {
+      wrap_unlock_codec(cw);
+      break;
+    }
 
     if(ad->ad_channels != ctx->channels || ad->ad_rate != ctx->sample_rate || 
        ad->ad_codec != ctx->codec_id) {
@@ -144,52 +146,43 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
     }
 
     wrap_unlock_codec(cw);
-
-    if(r == -1)
+  
+    switch(ad->ad_channels) {
+    case 1:
+      chlayout = layout_mono;
       break;
-
-    if(data_size > 0) {
-      frames = data_size / sizeof(uint16_t) / ad->ad_channels;
-
-      switch(ad->ad_channels) {
-      case 1:
-	chlayout = layout_mono;
+    case 2:
+      chlayout = layout_stereo;
+      break;
+    case 6:
+      switch(ctx->codec_id) {
+      case CODEC_ID_DTS:
+      case CODEC_ID_AAC:
+	chlayout = layout_5dot1_b;
 	break;
-      case 2:
-	chlayout = layout_stereo;
-	break;
-      case 6:
-	switch(ctx->codec_id) {
-	case CODEC_ID_DTS:
-	case CODEC_ID_AAC:
-	  chlayout = layout_5dot1_b;
-	  break;
-	default:
-	  chlayout = layout_5dot1_a;
-	  break;
-	}
-	break;
-
       default:
-	chlayout = NULL;
+	chlayout = layout_5dot1_a;
+	break;
       }
- 
-      if(chlayout != NULL) {
+      break;
+    default:
+      chlayout = NULL;
+    }
 
-	if(reconfigure)
-	  audio_mixer_source_config(ad->ad_output, ad->ad_rate,
-				    ad->ad_channels, chlayout);
+    if(reconfigure)
+      audio_mixer_source_config(ad->ad_output, ad->ad_rate,
+				ad->ad_channels, chlayout);
 
-	d = ad->ad_outbuf;
+    frames = data_size / sizeof(uint16_t) / ad->ad_channels;
 
-	mp->mp_time_feedback = mb->mb_time; /* low resolution informational
-					       time */
+    if(frames > 0 && chlayout != NULL) {
 
-	audio_mixer_source_int16(ad->ad_output, ad->ad_outbuf, frames,
-				 mb->mb_pts);
-
-	ad_update_clock(ad, mp, mb);
-      }
+      mp->mp_time_feedback = mb->mb_time; /* low resolution informational
+					     time */
+      audio_mixer_source_int16(ad->ad_output, ad->ad_outbuf, frames,
+			       mb->mb_pts);
+      
+      ad_update_clock(ad, mp, mb);
     }
     buf += r;
     size -= r;
