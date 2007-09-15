@@ -19,7 +19,7 @@
 #ifndef DVD_H
 #define DVD_H
 
-#include <dvdnav/dvdnav.h>
+#include <libdvdnav/dvdnav.h>
 
 #include "app.h"
 #include "mpeg_support.h"
