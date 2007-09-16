@@ -730,7 +730,11 @@ static int gl_video_widget_callback(glw_t *w, void *opaque,
 static void
 gvp_destroy(gl_video_pipe_t *gvp)
 {
-  abort(); /* free yadif */
+  int i;
+
+  if(gvp->gvp_yadif_width) for(i = 0; i < 3; i++)
+    avpicture_free(&gvp->gvp_yadif_pic[i]);
+
   av_free(gvp->gvp_frame);
   free(gvp);
 }
