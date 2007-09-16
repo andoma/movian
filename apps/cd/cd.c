@@ -134,9 +134,8 @@ cd_start(void *aux)
       ioctl(fd, CDROMEJECT,  NULL);
 
     drivestatus = ioctl(fd, CDROM_DRIVE_STATUS, NULL);
+
     switch(drivestatus) {
-    case CDS_NO_INFO:
-      break;
 
     case CDS_DISC_OK:
       if(do_eject == 1)
@@ -161,25 +160,19 @@ cd_start(void *aux)
 	pthread_create(&ptid, &attr, cd_monitor_thread, &cm);
 
 	ai->ai_no_input_events = 0;
-	//	cd_set_app_icon(ai->ai_app, "icon://cd-dvd.png");
 	r = dvd_main(ai, devname, 1, ai->ai_widget);
 	cm.run = 0;
 	ai->ai_no_input_events = 1;
 	pthread_join(ptid, NULL);   /* wait for monitor thread */
-	printf("monitor joined\n");
 	input_flush_queue(&ai->ai_ic);
 
 	cd_make_idle_widget(ai->ai_widget, "No disc");
-
 
 	switch(r) {
 	case INPUT_KEY_EJECT:
 	  do_eject = 1;
 	  break;
 	}
-
-	//	cd_set_app_icon(ai->ai_app, "icon://cd-unloaded.png");
-
 	break;
       }
 
@@ -193,15 +186,11 @@ cd_start(void *aux)
 	}
       }
 
-      ai->ai_visible = 0;
       break;
       
-    case CDS_TRAY_OPEN:
+    default:
       do_eject = 0;
-    case CDS_NO_DISC:
-      break;
-
-    case CDS_DRIVE_NOT_READY:
+      ai->ai_visible = 0;
       break;
     }
   }
