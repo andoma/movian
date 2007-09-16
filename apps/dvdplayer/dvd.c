@@ -419,7 +419,8 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
     result = dvdnav_get_next_cache_block(dp->dp_dvdnav, &block, &event, &len);
 
     if(result == DVDNAV_STATUS_ERR) {
-      rcode = 1;
+      sleep(1);
+      rcode = -1;
       break;
     }
     switch(event) {
