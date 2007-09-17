@@ -275,7 +275,7 @@ tvh_get_channel(tvheadend_t *tvh, tvchannel_t *tvc, int chindex)
       eolcpy(tvc->tvc_displayname, v, sizeof(tvc->tvc_displayname));
     if((v = propcmp(x, "icon")) != NULL)
       eolcpy(tvc->tvc_icon, v, sizeof(tvc->tvc_icon));
-    else if((v = propcmp(x, "reftag")) != NULL) 
+    else if((v = propcmp(x, "tag")) != NULL) 
       tvc->tvc_tag = atoi(v);
   }
   free(r);
