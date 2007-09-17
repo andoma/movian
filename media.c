@@ -549,9 +549,6 @@ mp_set_playstatus(media_pipe_t *mp, int status)
   
   pthread_mutex_unlock(&mp->mp_mutex);
   
-  if(mp->mp_playstatus_update_callback != NULL)
-    mp->mp_playstatus_update_callback(mp);
-
   audio_decoder_change_play_status(mp);
 }
 

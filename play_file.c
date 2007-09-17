@@ -92,34 +92,6 @@ play_file_create_miw(media_pipe_t *mp, mediainfo_t *mi, glw_t **pscp)
 }
 
 
-static void
-play_file_playstatus_widget_update(media_pipe_t *mp)
-{
-  glw_t *w = mp->mp_playstatus_update_opaque;
-  const char *icon;
-
-  switch(mp->mp_playstatus) {
-  case MP_STOP:
-    icon = "icon://media-playback-stop.png";
-    break;
-  case MP_PAUSE:
-    icon = "icon://media-playback-pause.png";
-    break;
-  case MP_PLAY:
-    icon = "icon://media-playback-start.png";
-    break;
-  default:
-    glw_destroy_childs(w);
-    return;
-  }
-
-  glw_create(GLW_BITMAP, 
-	     GLW_ATTRIB_PARENT, w, 
-	     GLW_ATTRIB_FILENAME, icon,
-	     NULL);
-}
-
-
 
 glw_t *
 play_file_create_extra_miw(media_pipe_t *mp)
@@ -262,9 +234,6 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
 
   amenu = play_file_menu_audio_setup(appi_menu_top(ai), mp);
   
-  mp->mp_playstatus_update_callback = play_file_playstatus_widget_update;
-  mp->mp_playstatus_update_opaque = psc;
-
   mp_set_playstatus(mp, MP_PLAY);
   media_pipe_acquire_audio(mp);
 
@@ -440,7 +409,6 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
 
   wrap_lock_all_codecs(fw);
 
-  mp->mp_playstatus_update_callback = NULL;
   mp->mp_info_widget = NULL;
   mp->mp_info_extra_widget = NULL;
   glw_destroy(meta);

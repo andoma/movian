@@ -183,9 +183,6 @@ typedef struct media_pipe {
 
   float mp_speed_gain;
 
-  void (*mp_playstatus_update_callback)(struct media_pipe *mp);
-  void *mp_playstatus_update_opaque;
-
   struct subtitles *mp_subtitles;
 
   struct audio_decoder *mp_audio_decoder;
