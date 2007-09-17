@@ -232,6 +232,11 @@ static void
 dvd_flush(dvd_player_t *dp)
 {
   media_pipe_t *mp = &dp->dp_ai->ai_mp;
+
+  dp->dp_pp.pp_audio.ps_force_reset = 1;
+  dp->dp_pp.pp_video.ps_force_reset = 1;
+  dp->dp_pp.pp_spu.ps_force_reset = 1;
+
   mp_flush(mp);
 }
 
@@ -426,6 +431,7 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
       rcode = -1;
       break;
     }
+
     switch(event) {
     case DVDNAV_BLOCK_OK:
       if(ai->ai_req_fullscreen != AI_FS_BLANK) {
@@ -510,7 +516,7 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
 
       dp->dp_spu_mode = DP_SPU_FOLLOW_VM;
       dp->dp_audio_mode = DP_AUDIO_FOLLOW_VM;
-      dp->dp_pp.pp_audio.ps_force_reset = 1;
+      dvd_flush(dp);
       break;
       
     case DVDNAV_HOP_CHANNEL:
@@ -537,6 +543,8 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
   }
  out:
 
+  mp_set_playstatus(mp, MP_STOP);
+
   glw_destroy(vmenu);
   glw_destroy(amenu);
   glw_destroy(smenu);
@@ -544,17 +552,20 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
   ai->ai_req_fullscreen = AI_FS_NONE;
 
   pes_deinit(&dp->dp_pp);
-  dvdnav_close(dp->dp_dvdnav);
 
   wrap_format_wait(fw);
 
-  free(dp);
   free(title);
 
   glw_destroy(w);
 
   glw_destroy(mp->mp_info_widget);
   mp->mp_info_widget = NULL;
+
+  dvdnav_close(dp->dp_dvdnav);
+
+  free(dp);
+
   return rcode;
 }
 
