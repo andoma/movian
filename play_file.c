@@ -175,11 +175,11 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
   int streams;
   int64_t cur_pos_pts = AV_NOPTS_VALUE;
   media_pipe_t *mp = &ai->ai_mp;
-  gvp_conf_t gc;
+  vd_conf_t vdc;
   char albumpath[500];
   char *s, *albumart;
   struct stat st;
-  glw_t *gvpw = NULL;
+  glw_t *vdw = NULL;
   glw_t *psc;
 
   printf("\nPlaying %s\n", fname);
@@ -234,10 +234,10 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
   mp->mp_format = fctx;
 
   if(mp->mp_video.mq_stream != -1) {
-    gvp_conf_init(&gc);
-    gvpw = gvp_create(parent, &ai->ai_mp, &gc, 0);
+    vd_conf_init(&vdc);
+    vdw = vd_create(parent, &ai->ai_mp, &vdc, 0);
     ai->ai_req_fullscreen = AI_FS_BLANK;
-    vmenu = gvp_menu_setup(appi_menu_top(ai), &gc);
+    vmenu = vd_menu_setup(appi_menu_top(ai), &vdc);
   } else {
     vmenu = NULL;
   }
@@ -338,12 +338,12 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
       break;
 
     case INPUT_KEY_DECR:
-      //      ai->ai_gvp->gvp_scale -= 0.1;
+      //      ai->ai_vd->vd_scale -= 0.1;
       key = 0;
       break;
 
     case INPUT_KEY_INCR:
-      //      ai->ai_gvp->gvp_scale += 0.1;
+      //      ai->ai_vd->vd_scale += 0.1;
       key = 0;
       break;
 
@@ -468,8 +468,8 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
     }
   }
 
-  if(gvpw != NULL) 
-    glw_destroy(gvpw);
+  if(vdw != NULL) 
+    glw_destroy(vdw);
 
   wrap_format_wait(fw);
 

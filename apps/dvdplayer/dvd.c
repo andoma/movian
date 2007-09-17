@@ -318,8 +318,8 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
   void *data;
   formatwrap_t *fw;
   media_pipe_t *mp;
-  gvp_conf_t gc;
-  glw_t *vmenu, *amenu, *smenu, *w, *gvp, *gvp0;
+  vd_conf_t gc;
+  glw_t *vmenu, *amenu, *smenu, *w, *vd, *vd0;
 
   w = glw_create(GLW_XFADER,
 		 GLW_ATTRIB_PARENT, parent,
@@ -348,17 +348,17 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
 
   smenu = dvd_menu_spu_setup(appi_menu_top(ai), dp);
   amenu = dvd_menu_audio_setup(appi_menu_top(ai), dp);
-  vmenu = gvp_menu_setup(appi_menu_top(ai), &gc);
+  vmenu = vd_menu_setup(appi_menu_top(ai), &gc);
 
   
   mp = &ai->ai_mp;
 
-  gvp_conf_init(&gc);
-  gc.gc_deilace_type = GVP_DEILACE_NONE;
+  vd_conf_init(&gc);
+  gc.gc_deilace_type = VD_DEILACE_NONE;
 
-  gvp0 = gvp = gvp_create(NULL, &ai->ai_mp, &gc, 0);
+  vd0 = vd = vd_create(NULL, &ai->ai_mp, &gc, 0);
 
-  gvp_set_dvd(gvp, dp);
+  vd_set_dvd(vd, dp);
 
 
   dp->dp_spu[DP_SPU_DISABLE] = 0xffffffff;
@@ -442,9 +442,9 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
       }
       kickctd = 3;
 
-      if(gvp0 != NULL) {
-	glw_set(gvp0, GLW_ATTRIB_PARENT, w, NULL);
-	gvp0 = NULL;
+      if(vd0 != NULL) {
+	glw_set(vd0, GLW_ATTRIB_PARENT, w, NULL);
+	vd0 = NULL;
       }
 
       dvd_ps_block(dp, block, len);

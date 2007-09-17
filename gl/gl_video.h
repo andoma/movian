@@ -23,10 +23,10 @@
 
 #include "media.h"
 
-#define GVPF_AUTO_FLUSH 0x1
+#define VDF_AUTO_FLUSH 0x1
 
-#define GVP_FRAMES 4
-#define GVP_GLPP_FRAMES 2
+#define VD_FRAMES 4
+#define VD_GLPP_FRAMES 2
 
 #define GVF_TEX_L   0
 #define GVF_TEX_Cr  1
@@ -34,24 +34,24 @@
 
 
 typedef enum {
-  GVP_DEILACE_NONE,
-  GVP_DEILACE_AUTO,
-  GVP_DEILACE_HALF_RES,
-  GVP_DEILACE_YADIF_FRAME,
-  GVP_DEILACE_YADIF_FIELD,
-  GVP_DEILACE_YADIF_FRAME_NO_SPATIAL_ILACE,
-  GVP_DEILACE_YADIF_FIELD_NO_SPATIAL_ILACE,
-} gvp_deilace_type_t;
+  VD_DEILACE_NONE,
+  VD_DEILACE_AUTO,
+  VD_DEILACE_HALF_RES,
+  VD_DEILACE_YADIF_FRAME,
+  VD_DEILACE_YADIF_FIELD,
+  VD_DEILACE_YADIF_FRAME_NO_SPATIAL_ILACE,
+  VD_DEILACE_YADIF_FIELD_NO_SPATIAL_ILACE,
+} vd_deilace_type_t;
 
 
-typedef struct gvp_conf {
+typedef struct vd_conf {
 
-  gvp_deilace_type_t gc_deilace_type;
+  vd_deilace_type_t gc_deilace_type;
   int gc_avcomp;
   int gc_zoom;
   int gc_field_parity;
   
-} gvp_conf_t;
+} vd_conf_t;
 
 
 TAILQ_HEAD(gl_video_frame_queue, gl_video_frame);
@@ -93,165 +93,165 @@ typedef struct gl_video_frame {
 
 
 typedef enum {
-  GVP_STATE_IDLE = 0,           /* No action */
-  GVP_STATE_THREAD_RUNNING,     /* Thread is running */
-  GVP_STATE_THREAD_DESTROYING,  /* Thread is beeing destroyed */
-} gvp_state_t;
+  VD_STATE_IDLE = 0,           /* No action */
+  VD_STATE_THREAD_RUNNING,     /* Thread is running */
+  VD_STATE_THREAD_DESTROYING,  /* Thread is beeing destroyed */
+} vd_state_t;
 
 
-typedef struct gl_video_pipe {
+typedef struct video_decoder {
 
-  gvp_state_t gvp_state;
+  vd_state_t vd_state;
 
-  int gvp_rendered;
-  int gvp_idle;           /* number of consecutive frames for which
+  int vd_rendered;
+  int vd_idle;           /* number of consecutive frames for which
 			     we have not been rendering */
 
-  int gvp_flags;
+  int vd_flags;
 
-  int gvp_purged;
+  int vd_purged;
 
-  int gvp_compensate_thres;
+  int vd_compensate_thres;
 
-  gvp_conf_t *gvp_conf;
+  vd_conf_t *vd_conf;
 
-  LIST_ENTRY(gl_video_pipe) gvp_global_link;
+  LIST_ENTRY(video_decoder) vd_global_link;
 
-  glw_t *gvp_widget;
+  glw_t *vd_widget;
 
-  gvp_deilace_type_t gvp_deilace_type; /* Actual deinterlacer running */
+  vd_deilace_type_t vd_deilace_type; /* Actual deinterlacer running */
 
-  media_pipe_t *gvp_mp;
+  media_pipe_t *vd_mp;
 
-  gl_video_frame_t gvp_frames[GVP_FRAMES];
+  gl_video_frame_t vd_frames[VD_FRAMES];
 
   /* Mutex for protecting access to the frame queues */
 
-  pthread_mutex_t gvp_queue_mutex;
+  pthread_mutex_t vd_queue_mutex;
 
   /* Unused frames are in the 'inactive' queue
-     gvp_buffer_allocator() is responsible for moving frames to/from
-     inactive <-> avail queue based on gvp_active_frames and
-     gvp_active_framed_needed */
+     vd_buffer_allocator() is responsible for moving frames to/from
+     inactive <-> avail queue based on vd_active_frames and
+     vd_active_framed_needed */
 
-  struct gl_video_frame_queue gvp_inactive_queue;
-  int gvp_active_frames; /* number of active frames (ie, not on
+  struct gl_video_frame_queue vd_inactive_queue;
+  int vd_active_frames; /* number of active frames (ie, not on
 			    inactive queue */
-  int gvp_active_frames_needed; /* number of active frames we want */
+  int vd_active_frames_needed; /* number of active frames we want */
 				   
 
   /* Display queue contains frames that have been writted into
      and should get displayed. gvf->gvf_uploaded is set once the
      PBO has been texturified */
 
-  struct gl_video_frame_queue gvp_display_queue;
+  struct gl_video_frame_queue vd_display_queue;
 
   /* Frames on 'avail_queue' are available to decoder for writing into */
 
-  struct gl_video_frame_queue gvp_avail_queue;
-  pthread_cond_t gvp_avail_queue_cond;
+  struct gl_video_frame_queue vd_avail_queue;
+  pthread_cond_t vd_avail_queue_cond;
 
   /* Frames on 'displaying_queue' are currently displayed, we cannot
      do anything with these until next frame */
 
-  struct gl_video_frame_queue gvp_displaying_queue;
+  struct gl_video_frame_queue vd_displaying_queue;
 
   /* Frames on 'bufalloc' queue needs to have their PBO buffer (re-)alloced
      we cannot do this in the decoder thread (opengl is single threaded)
      so frames are sent to opengl rendered for allocation */
 
-  struct gl_video_frame_queue gvp_bufalloc_queue;
+  struct gl_video_frame_queue vd_bufalloc_queue;
 
   /* Once frames has been (re-)alloced, they are returned on the
      'bufalloced' queue */
 
-  struct gl_video_frame_queue gvp_bufalloced_queue;
-  pthread_cond_t gvp_bufalloced_queue_cond;
+  struct gl_video_frame_queue vd_bufalloced_queue;
+  pthread_cond_t vd_bufalloced_queue_cond;
 
   /* Since we may render the same video output multiple times, we keep
      track of the two frames to be displayed separately for the
      render function */
 
-  gl_video_frame_t *gvp_fra, *gvp_frb;
-  float gvp_blend;
+  gl_video_frame_t *vd_fra, *vd_frb;
+  float vd_blend;
 
 
-  pthread_mutex_t gvp_spill_mutex;
-  int gvp_spill;
+  pthread_mutex_t vd_spill_mutex;
+  int vd_spill;
 
-  int gvp_do_flush;
+  int vd_do_flush;
 
-  int gvp_interlaced;
+  int vd_interlaced;
 
-  pthread_t gvp_decode_thrid; /* Set if thread is running */
+  pthread_t vd_decode_thrid; /* Set if thread is running */
   
-  int64_t gvp_nextpts;
-  int64_t gvp_lastpts;
-  int gvp_estimated_duration;
+  int64_t vd_nextpts;
+  int64_t vd_lastpts;
+  int vd_estimated_duration;
 
-  float gvp_aspect;
+  float vd_aspect;
 
-  AVFrame *gvp_frame;
+  AVFrame *vd_frame;
 
-  float gvp_scale;
+  float vd_scale;
 
   /* Clock (audio - video sync, etc) related members */
 
-  int gvp_avdiff;
+  int vd_avdiff;
 
-  int gvp_ift;
-  int gvp_ifti;
+  int vd_ift;
+  int vd_ifti;
 
-  float gvp_frameskip_rate;
-  float gvp_frameskip_ctd;
+  float vd_frameskip_rate;
+  float vd_frameskip_ctd;
 
-  float gvp_umax, gvp_vmax;
+  float vd_umax, vd_vmax;
 
   /* DVD / SPU related members */
 
-  gl_dvdspu_t *gvp_dvdspu;
-  struct dvd_player *gvp_dvd;
+  gl_dvdspu_t *vd_dvdspu;
+  struct dvd_player *vd_dvd;
   
   /* Kalman filter for AVdiff compensation */
 
-  gv_kalman_t gvp_avfilter;
-  float gvp_avdiff_x;
+  gv_kalman_t vd_avfilter;
+  float vd_avdiff_x;
 
   /* Misc meta */
 
-  const char *gvp_codectxt;
+  const char *vd_codectxt;
 
-  float gvp_zoom;
+  float vd_zoom;
 
   /* color matrix */
 
-  float gvp_cmatrix[9];
+  float vd_cmatrix[9];
 
   /* Subtitles */
 
-  glw_t *gvp_subtitle_widget;
-  int gvp_last_subtitle_index;
+  glw_t *vd_subtitle_widget;
+  int vd_last_subtitle_index;
 
   /* YADIF */
 
-  AVPicture gvp_yadif_pic[3];
-  int gvp_yadif_width;
-  int gvp_yadif_height;
-  int gvp_yadif_pix_fmt;
-  int gvp_yadif_phase;
+  AVPicture vd_yadif_pic[3];
+  int vd_yadif_width;
+  int vd_yadif_height;
+  int vd_yadif_pix_fmt;
+  int vd_yadif_phase;
 
-} gl_video_pipe_t;
+} video_decoder_t;
 
-void gvp_init(void);
+void vd_init(void);
 
-glw_t *gvp_create(glw_t *p, media_pipe_t *mp, gvp_conf_t *gc, int flags);
+glw_t *vd_create(glw_t *p, media_pipe_t *mp, vd_conf_t *gc, int flags);
 
-void gvp_set_dvd(glw_t *w, struct dvd_player *dvd);
+void vd_set_dvd(glw_t *w, struct dvd_player *dvd);
 
-void gvp_conf_init(gvp_conf_t *gc);
+void vd_conf_init(vd_conf_t *gc);
 
-glw_t *gvp_menu_setup(glw_t *p, gvp_conf_t *gc);
+glw_t *vd_menu_setup(glw_t *p, vd_conf_t *gc);
 
-int gvp_get_idle_frames(glw_t *w);
+int vd_get_idle_frames(glw_t *w);
 
 #endif /* VIDEO_GL_H */

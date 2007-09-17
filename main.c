@@ -120,7 +120,7 @@ main(int argc, char **argv)
 
   audio_init();
 
-  gvp_init();
+  vd_init();
 
   layout_std_create();
 

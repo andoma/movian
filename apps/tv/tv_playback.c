@@ -465,8 +465,8 @@ ich_destroy(iptv_channel_t *ich)
 
   mp_deinit(&ich->ich_mp);
 
-  if(ich->ich_gvp != NULL)
-    glw_destroy(ich->ich_gvp);
+  if(ich->ich_vd != NULL)
+    glw_destroy(ich->ich_vd);
   
   pes_deinit(&ich->ich_pp);
 
@@ -682,8 +682,8 @@ iptv_connect(iptv_player_t *iptv)
 
       iptv_widget_channel_container_fill(iptv, w, id);
     
-      ich->ich_gvp = gvp_create(s, &ich->ich_mp, &iptv->iptv_gvp_conf,
-				GVPF_AUTO_FLUSH);
+      ich->ich_vd = vd_create(s, &ich->ich_mp, &iptv->iptv_vd_conf,
+				VDF_AUTO_FLUSH);
     }
   }
 }
@@ -944,14 +944,14 @@ iptv_loop(void *aux)
   inputevent_t ie;
 
   iptv->iptv_tag_hash = glw_taghash_create();
-  gvp_conf_init(&iptv->iptv_gvp_conf);
+  vd_conf_init(&iptv->iptv_vd_conf);
 
   
   tvh_init(tvh, &ai->ai_ic);
   iptv->iptv_tvh.tvh_data_callback = iptv_data_input;
   iptv->iptv_tvh.tvh_status_callback = iptv_status_input;
 
-  gvp_menu_setup(appi_menu_top(ai), &iptv->iptv_gvp_conf);
+  vd_menu_setup(appi_menu_top(ai), &iptv->iptv_vd_conf);
 
   while(1) {
 

@@ -45,8 +45,8 @@ typedef struct iptv_channel {
   unsigned int ich_final_weight;   /* Final computed weight */
   unsigned int ich_sent_weight;    /* Last weight sent to head end */
 
-  glw_t *ich_gvp;
-  glw_t *ich_gvp_parent;
+  glw_t *ich_vd;
+  glw_t *ich_vd_parent;
 
   float ich_avg_vqlen;
   float ich_avg_aqlen;
@@ -74,7 +74,7 @@ typedef struct iptv_player {
   pthread_mutex_t iptv_mutex;
 
   int iptv_num_chan;
-  gvp_conf_t iptv_gvp_conf;
+  vd_conf_t iptv_vd_conf;
 
 
   /* render widgets */
