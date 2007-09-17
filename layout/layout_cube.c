@@ -44,6 +44,7 @@ static float miw_render(float aspect);
 
 static int mirror_input_event(inputevent_t *ie);
 static int menu_input_event(inputevent_t *ie);
+static int hiprio_input_event(inputevent_t *ie);
 
 static void layout_apps(float aspect);
 static void layout_gadgets(float aspect);
@@ -134,6 +135,7 @@ layout_std_create(void)
   glw_t *z;
   int i;
 
+  inputhandler_register(300, hiprio_input_event);
   inputhandler_register(200,   menu_input_event);
   inputhandler_register(100, mirror_input_event);
 
@@ -462,8 +464,20 @@ menu_input_event(inputevent_t *ie)
 
 
 
+static int
+hiprio_input_event(inputevent_t *ie)
+{
+  media_pipe_t *mp = primary_audio;
 
+  if(mp == NULL)
+    return 0;
 
+  if(ie->type == INPUT_KEY && ie->u.key == INPUT_KEY_STOP) {
+    input_postevent(&mp->mp_ai->ai_ic, ie);
+    return 1;
+  }
+  return 0;
+}
 
 
 
