@@ -89,7 +89,7 @@ appi_spawn(app_t *a, int visible)
   LIST_INSERT_HEAD(&a->app_instances, ai, ai_app_link);
 
   input_init(&ai->ai_ic);
-  mp_init(&ai->ai_mp, a->app_name, ai, 0);
+  mp_init(&ai->ai_mp, a->app_name, ai);
   ai->ai_app->app_spawn(ai);
   return ai;
 }
@@ -147,7 +147,7 @@ appi_spawn2(app_t *a, glw_t *p)
   LIST_INSERT_HEAD(&a->app_instances, ai, ai_app_link);
 
   input_init(&ai->ai_ic);
-  mp_init(&ai->ai_mp, a->app_name, ai, 0);
+  mp_init(&ai->ai_mp, a->app_name, ai);
   ai->ai_app->app_spawn(ai);
   return ai;
 }

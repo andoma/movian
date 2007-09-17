@@ -27,8 +27,6 @@ typedef struct audio_decoder {
 
   media_pipe_t *ad_mp;
 
-  int ad_run; 
-
   int16_t *ad_outbuf;
 
   audio_source_t *ad_output;
@@ -40,7 +38,8 @@ typedef struct audio_decoder {
 } audio_decoder_t;
 
 
-void audio_decoder_change_play_status(media_pipe_t *mp);
+void audio_decoder_create(media_pipe_t *mp);
+void audio_decoder_join(media_pipe_t *mp, audio_decoder_t *ad);
 
 
 #endif /* AUDIO_DECODER_H */

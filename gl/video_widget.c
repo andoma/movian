@@ -135,78 +135,30 @@ vd_init(void)
 static int gl_video_widget_callback(glw_t *w, void *opaque, 
 				    glw_signal_t signal, ...);
 
-void
-vd_destroy(video_decoder_t *vd)
-{
-  int i;
-
-  if(vd->vd_yadif_width) for(i = 0; i < 3; i++)
-    avpicture_free(&vd->vd_yadif_pic[i]);
-
-  av_free(vd->vd_frame);
-  free(vd);
-}
-
 
 glw_t *
-vd_create(glw_t *p, media_pipe_t *mp, vd_conf_t *gc, int flags)
+vd_create_widget(glw_t *p, media_pipe_t *mp)
 {
-  int i;
   video_decoder_t *vd;
 
+  if(mp->mp_video_decoder == NULL)
+     video_decoder_create(mp);
 
-  vd = calloc(1, sizeof(video_decoder_t));
-  vd->vd_conf = gc;
-  vd->vd_zoom = 100;
-  vd->vd_flags = flags;
+  vd = mp->mp_video_decoder;
 
-  /* For the exact meaning of these, see gl_video.h */
+  assert(vd->vd_widget == NULL);
 
-  TAILQ_INIT(&vd->vd_inactive_queue);
-  TAILQ_INIT(&vd->vd_avail_queue);
-  TAILQ_INIT(&vd->vd_displaying_queue);
-  TAILQ_INIT(&vd->vd_display_queue);
-  TAILQ_INIT(&vd->vd_bufalloc_queue);
-  TAILQ_INIT(&vd->vd_bufalloced_queue);
-
-  
-  pthread_cond_init(&vd->vd_avail_queue_cond, NULL);
-  pthread_cond_init(&vd->vd_bufalloced_queue_cond, NULL);
-  pthread_mutex_init(&vd->vd_queue_mutex, NULL);
-  pthread_mutex_init(&vd->vd_spill_mutex, NULL);
-
-  vd->vd_mp = mp;
-
-  vd->vd_umax = 1;
-  vd->vd_vmax = 1;
-  vd_init_timings(vd);
-
-
-  for(i = 0; i < VD_FRAMES; i++)
-    TAILQ_INSERT_TAIL(&vd->vd_inactive_queue, &vd->vd_frames[i], link);
-
-  vd->vd_frame = avcodec_alloc_frame();
   vd->vd_dvdspu = gl_dvdspu_init();
 
   vd->vd_widget = glw_create(GLW_EXT,
-			       GLW_ATTRIB_FLAGS, GLW_EVERY_FRAME,
-			       GLW_ATTRIB_PARENT, p, 
-			       GLW_ATTRIB_SIGNAL_HANDLER, 
-			       gl_video_widget_callback, vd, 0,
-			       NULL);
+			     GLW_ATTRIB_FLAGS, GLW_EVERY_FRAME,
+			     GLW_ATTRIB_PARENT, p, 
+			     GLW_ATTRIB_SIGNAL_HANDLER, 
+			     gl_video_widget_callback, vd, 0,
+			     NULL);
 
   return vd->vd_widget;
 }
-
-
-void
-vd_set_dvd(glw_t *w, struct dvd_player *dvd)
-{
-  video_decoder_t *vd = glw_get_opaque(w, gl_video_widget_callback);
-  vd->vd_dvd = dvd;
-}
-
-
 
 
 
@@ -461,7 +413,7 @@ vd_compute_avdiff(video_decoder_t *vd, media_pipe_t *mp, int64_t pts)
   }
   
 
-  vd->vd_avdiff = mp->mp_clock - pts - vd->vd_conf->gc_avcomp * 1000;
+  vd->vd_avdiff = mp->mp_clock - pts - mp->mp_video_conf->gc_avcomp * 1000;
 
   if(abs(vd->vd_avdiff) < 10000000) {
 
@@ -542,7 +494,7 @@ layout_video_pipe(video_decoder_t *vd, glw_rctx_t *rc)
   int output_duration;
   int width = 0, height = 0;
   int64_t pts = 0;
-  vd_conf_t *gc = vd->vd_conf;
+  vd_conf_t *gc = mp->mp_video_conf;
   struct gl_video_frame_queue *dq;
 
   if(vd->vd_subtitle_widget)
@@ -551,7 +503,6 @@ layout_video_pipe(video_decoder_t *vd, glw_rctx_t *rc)
   vd->vd_zoom = (vd->vd_zoom * 7.0f + gc->gc_zoom) / 8.0f;
 
 
-  vd->vd_rendered = 1;
   vd_color_matrix_update(vd, mp);
   output_duration = vd_compute_output_duration(vd, frame_duration);
 
@@ -589,7 +540,7 @@ layout_video_pipe(video_decoder_t *vd, glw_rctx_t *rc)
     frb = TAILQ_NEXT(fra, link);
     pts = vd_compute_blend(vd, fra, frb, output_duration);
 
-    if(mp_get_playstatus(mp) == MP_PLAY) {
+    if(mp_get_playstatus(mp) != MP_PAUSE) {
 
       if(fra != NULL && fra->gvf_duration == 0)
 	vd_enqueue_for_display(vd, fra, dq);
@@ -622,9 +573,6 @@ render_video_quad(media_pipe_t *mp, video_decoder_t *vd,
   
   float tzoom = vd->vd_interlaced ? 0.01 : 0.00;
   
-  if(mp_get_playstatus(mp) == MP_STOP)
-    return;
-
   glBegin(GL_QUADS);
 
   glTexCoord2f(tzoom, tzoom);
@@ -862,11 +810,9 @@ gvf_purge(video_decoder_t *vd, gl_video_frame_t *gvf)
 
 
 static void
-vd_purge(video_decoder_t *vd)
+vd_purge_queues(video_decoder_t *vd)
 {
   gl_video_frame_t *gvf;
-
-  pthread_mutex_lock(&vd->vd_queue_mutex);
 
   while((gvf = TAILQ_FIRST(&vd->vd_avail_queue)) != NULL) {
     TAILQ_REMOVE(&vd->vd_avail_queue, gvf, link);
@@ -892,11 +838,7 @@ vd_purge(video_decoder_t *vd)
     TAILQ_REMOVE(&vd->vd_display_queue, gvf, link);
     gvf_purge(vd, gvf);
   }
-  vd->vd_purged = 1;
-  pthread_cond_signal(&vd->vd_avail_queue_cond);
-  pthread_cond_signal(&vd->vd_bufalloced_queue_cond);
-  
-  pthread_mutex_unlock(&vd->vd_queue_mutex);
+
 }
 
 
@@ -922,9 +864,7 @@ gl_constant_frame_flush(video_decoder_t *vd)
 static int 
 gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  pthread_attr_t attr;
   video_decoder_t *vd = opaque;
-  media_pipe_t *mp = vd->vd_mp;
 
   va_list ap;
   va_start(ap, signal);
@@ -932,65 +872,50 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
   switch(signal) {
   case GLW_SIGNAL_DTOR:
-    vd_purge(vd);
+
+    /* We are going away, flush out all frames (PBOs and textures),
+       and wakeup decoder (it will notice that widget no longer exist
+       and just start dropping decoded output) */
+
+    pthread_mutex_lock(&vd->vd_queue_mutex);
+
+    vd_purge_queues(vd);
+
+    vd->vd_widget = NULL;
+
+    pthread_cond_signal(&vd->vd_avail_queue_cond);
+    pthread_cond_signal(&vd->vd_bufalloced_queue_cond);
+  
+    pthread_mutex_unlock(&vd->vd_queue_mutex);
+
+    /* XXX: Does this need correct locking ? */
 
     gl_dvdspu_deinit(vd->vd_dvdspu);
     vd->vd_dvdspu = NULL;
 
-    switch(vd->vd_state) {
-    case VD_STATE_IDLE:
-      vd_destroy(vd);
-      return 0;
-    case VD_STATE_THREAD_RUNNING:
-      mp_send_cmd(mp, &mp->mp_video, MB_EXIT);
-      /* FALLTHRU */
-    case VD_STATE_THREAD_DESTROYING:
-      glw_ref(vd->vd_widget);
-      return 0;
-    }
+    video_decoder_purge(vd);
     return 0;
 
-
   case GLW_SIGNAL_LAYOUT:
+    vd->vd_running = 1;
     glw_set_active(w);
-
-    switch(vd->vd_state) {
-    case VD_STATE_IDLE:
-      pthread_attr_init(&attr);
-      pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-      pthread_create(&vd->vd_decode_thrid, &attr, vd_decode_thread, vd);
-      vd->vd_state = VD_STATE_THREAD_RUNNING;
-      /* FALLTHRU */
-    case VD_STATE_THREAD_RUNNING:
-      layout_video_pipe(vd, va_arg(ap, void *));
-      break;
-
-    case VD_STATE_THREAD_DESTROYING:
-      return 0;
-    }
+    layout_video_pipe(vd, va_arg(ap, void *));
     return 0;
 
   case GLW_SIGNAL_RENDER:
     render_video_pipe(vd, va_arg(ap, void *));
     return 0;
 
-  case GLW_SIGNAL_INACTIVE:
-    mp_send_cmd(mp, &mp->mp_video, MB_EXIT);
-    vd->vd_state = VD_STATE_THREAD_DESTROYING;
-    return 0;
-
   case GLW_SIGNAL_NEW_FRAME:
     vd_buffer_allocator(vd);
-
-    switch(vd->vd_state) {
-    case VD_STATE_IDLE:
-    case VD_STATE_THREAD_DESTROYING:
+    if(!vd->vd_running)
       gl_constant_frame_flush(vd);
-      return 0;
-    case VD_STATE_THREAD_RUNNING:
-      return 0;
-    }
     return 0;
+
+  case GLW_SIGNAL_INACTIVE:
+    vd->vd_running = 0;
+    return 0;
+
 
   default:
     return 0;

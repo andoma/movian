@@ -232,7 +232,7 @@ static void
 dvd_flush(dvd_player_t *dp)
 {
   media_pipe_t *mp = &dp->dp_ai->ai_mp;
-  mp_flush(mp, 1);
+  mp_flush(mp);
 }
 
 
@@ -346,19 +346,22 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
       title = make_nice_title(title + 1);
   }
 
-  smenu = dvd_menu_spu_setup(appi_menu_top(ai), dp);
-  amenu = dvd_menu_audio_setup(appi_menu_top(ai), dp);
-  vmenu = vd_menu_setup(appi_menu_top(ai), &gc);
+
 
   
   mp = &ai->ai_mp;
 
   vd_conf_init(&gc);
+  mp_set_video_conf(mp, &gc);
   gc.gc_deilace_type = VD_DEILACE_NONE;
 
-  vd0 = vd = vd_create(NULL, &ai->ai_mp, &gc, 0);
+  smenu = dvd_menu_spu_setup(appi_menu_top(ai), dp);
+  amenu = dvd_menu_audio_setup(appi_menu_top(ai), dp);
+  vmenu = vd_menu_setup(appi_menu_top(ai), &gc);
 
-  vd_set_dvd(vd, dp);
+  vd0 = vd = vd_create_widget(NULL, &ai->ai_mp);
+
+  vd_set_dvd(&ai->ai_mp, dp);
 
 
   dp->dp_spu[DP_SPU_DISABLE] = 0xffffffff;

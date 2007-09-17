@@ -708,7 +708,7 @@ icecast_play(radio_t *r, radio_channel_t *rc, media_pipe_t *mp)
 
     mp->mp_info_widget = NULL;
 
-    mp_flush(mp, 0);
+    mp_flush(mp);
 
     curl_slist_free_all(headerlist);
     curl_slist_free_all(http200aliases);

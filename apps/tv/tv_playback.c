@@ -431,7 +431,8 @@ ich_create(iptv_player_t *iptv, int channel, uint32_t tag)
 
   mp = &ich->ich_mp;
   snprintf(buf, sizeof(buf), "TV-ch-%d", channel);
-  mp_init(mp, strdup(buf), iptv->iptv_appi, MEDIA_PIPE_DONT_INVERVENT);
+  mp_init(mp, strdup(buf), iptv->iptv_appi);
+  mp_set_video_conf(mp, &iptv->iptv_vd_conf);
 
   pp = &ich->ich_pp;
   ich->ich_fw = wrap_format_create(NULL, 1);
@@ -681,8 +682,7 @@ iptv_connect(iptv_player_t *iptv)
 
       iptv_widget_channel_container_fill(iptv, w, id);
     
-      ich->ich_vd = vd_create(s, &ich->ich_mp, &iptv->iptv_vd_conf,
-				VDF_AUTO_FLUSH);
+      ich->ich_vd = vd_create_widget(s, &ich->ich_mp);
     }
   }
 }

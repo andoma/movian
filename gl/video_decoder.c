@@ -56,82 +56,15 @@ vd_conf_init(vd_conf_t *gc)
 }
 
 
-/**************************************************************************
+
+/*
+ * vd_dequeue_for_decode
  *
- *  Video decoding thread
+ * This function will return a frame with a mapped PBO that have w x h
+ * according to the w[] and h[] arrays. If no widget is attached to
+ * the decoder it wil return NULL.
  *
  */
-
-static void vd_decode_video(video_decoder_t *vd, media_buf_t *mb);
-
-void *
-vd_decode_thread(void *aux)
-{
-  video_decoder_t *vd = aux;
-  media_buf_t *mb;
-  media_pipe_t *mp = vd->vd_mp;
-
-  while(vd->vd_state == VD_STATE_THREAD_RUNNING ||
-	vd->vd_state == VD_STATE_THREAD_DESTROYING) {
-
-    mb = mb_dequeue_wait(mp, &mp->mp_video);
-
-    switch(mb->mb_data_type) {
-
-    case MB_EXIT:
-      glw_lock();
-      vd->vd_state = VD_STATE_IDLE;
-      break;
-
-    case MB_NOP:
-      break;
-
-    case MB_VIDEO:
-      vd_decode_video(vd, mb);
-      break;
-
-    case MB_RESET:
-    case MB_FLUSH:
-      vd_init_timings(vd);
-      vd->vd_do_flush = 1;
-      /* FALLTHRU */
-
-    case MB_RESET_SPU:
-      if(vd->vd_dvdspu != NULL)
-	gl_dvdspu_flush(vd->vd_dvdspu);
-      break;
-
-    case MB_DVD_SPU:
-    case MB_CLUT:
-    case MB_DVD_PCI:
-    case MB_DVD_HILITE:
-      if(vd->vd_dvdspu != NULL)
-	gl_dvdspu_dispatch(vd->vd_dvd, vd->vd_dvdspu, mb);
-      break;
-
-    default:
-      fprintf(stderr, "ERROR unknown hmb type %d\n", mb->mb_data_type);
-      abort();
-    }
-
-    media_buf_free(mb);
-  }
-
-  pthread_mutex_lock(&mp->mp_mutex);
-  mq_flush(&mp->mp_video);
-  pthread_mutex_unlock(&mp->mp_mutex);
- 
-
-  if(vd->vd_flags & GLW_DESTROYED) {
-    glw_deref(vd->vd_widget);
-    vd_destroy(vd);
-  }
-
-  glw_unlock();
-  return NULL;
-}
-
-
 
 static gl_video_frame_t *
 vd_dequeue_for_decode(video_decoder_t *vd, int w[3], int h[3])
@@ -141,11 +74,15 @@ vd_dequeue_for_decode(video_decoder_t *vd, int w[3], int h[3])
   pthread_mutex_lock(&vd->vd_queue_mutex);
   
   while((gvf = TAILQ_FIRST(&vd->vd_avail_queue)) == NULL &&
-	vd->vd_purged == 0) {
+	vd->vd_widget != NULL) {
     pthread_cond_wait(&vd->vd_avail_queue_cond, &vd->vd_queue_mutex);
   }
-  if(gvf == NULL)
+
+  if(gvf == NULL) {
+  fail:
+    pthread_mutex_unlock(&vd->vd_queue_mutex);
     return NULL;
+  }
 
   TAILQ_REMOVE(&vd->vd_avail_queue, gvf, link);
 
@@ -170,11 +107,11 @@ vd_dequeue_for_decode(video_decoder_t *vd, int w[3], int h[3])
   TAILQ_INSERT_TAIL(&vd->vd_bufalloc_queue, gvf, link);
 
   while((gvf = TAILQ_FIRST(&vd->vd_bufalloced_queue)) == NULL &&
-	vd->vd_purged == 0 )
+	vd->vd_widget != NULL)
     pthread_cond_wait(&vd->vd_bufalloced_queue_cond, &vd->vd_queue_mutex);
 
   if(gvf == NULL)
-    return 0;
+    goto fail;
 
   TAILQ_REMOVE(&vd->vd_bufalloced_queue, gvf, link);
 
@@ -250,7 +187,7 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
   codecwrap_t *cw = mb->mb_cw;
   AVCodecContext *ctx = cw->codec_ctx;
   AVFrame *frame = vd->vd_frame;
-  vd_conf_t *gc = vd->vd_conf;
+  vd_conf_t *gc = mp->mp_video_conf;
   frame_meta_t *fm;
   media_queue_t *mq = &mp->mp_video;
   time_t now;
@@ -621,4 +558,158 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
       vd->vd_yadif_phase = 0;
     return;
   }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void *
+vd_thread(void *aux)
+{
+  video_decoder_t *vd = aux;
+  media_pipe_t *mp = vd->vd_mp;
+  media_buf_t *mb;
+
+  while((mb = mb_dequeue_wait(mp, &mp->mp_video)) != NULL) {
+
+    switch(mb->mb_data_type) {
+
+    case MB_VIDEO:
+      vd_decode_video(vd, mb);
+      break;
+
+    case MB_RESET:
+      vd_init_timings(vd);
+      vd->vd_do_flush = 1;
+      /* FALLTHRU */
+
+    case MB_RESET_SPU:
+      if(vd->vd_dvdspu != NULL)
+	gl_dvdspu_flush(vd->vd_dvdspu);
+      break;
+
+    case MB_DVD_SPU:
+    case MB_CLUT:
+    case MB_DVD_PCI:
+    case MB_DVD_HILITE:
+      if(vd->vd_dvdspu != NULL)
+	gl_dvdspu_dispatch(vd->vd_dvd, vd->vd_dvdspu, mb);
+      break;
+
+    default:
+      abort();
+    }
+
+    media_buf_free(mb);
+  }
+
+  return NULL;
+}
+
+
+
+
+void
+video_decoder_create(media_pipe_t *mp)
+{
+  int i;
+  video_decoder_t *vd;
+
+  vd = mp->mp_video_decoder = calloc(1, sizeof(video_decoder_t));
+
+  vd->vd_zoom = 100;
+  vd->vd_mp = mp;
+  vd->vd_umax = 1;
+  vd->vd_vmax = 1;
+  vd_init_timings(vd);
+
+  /* For the exact meaning of these, see gl_video.h */
+
+  TAILQ_INIT(&vd->vd_inactive_queue);
+  TAILQ_INIT(&vd->vd_avail_queue);
+  TAILQ_INIT(&vd->vd_displaying_queue);
+  TAILQ_INIT(&vd->vd_display_queue);
+  TAILQ_INIT(&vd->vd_bufalloc_queue);
+  TAILQ_INIT(&vd->vd_bufalloced_queue);
+  
+  for(i = 0; i < VD_FRAMES; i++)
+    TAILQ_INSERT_TAIL(&vd->vd_inactive_queue, &vd->vd_frames[i], link);
+
+  pthread_cond_init(&vd->vd_avail_queue_cond, NULL);
+  pthread_cond_init(&vd->vd_bufalloced_queue_cond, NULL);
+  pthread_mutex_init(&vd->vd_queue_mutex, NULL);
+  pthread_mutex_init(&vd->vd_spill_mutex, NULL);
+
+  /* */
+
+  vd->vd_frame = avcodec_alloc_frame();
+
+}
+
+
+void
+video_decoder_start(video_decoder_t *vd)
+{
+  if(vd->vd_ptid == 0)
+    pthread_create(&vd->vd_ptid, NULL, vd_thread, vd);
+}
+
+void
+video_decoder_join(media_pipe_t *mp, video_decoder_t *vd)
+{
+  if(vd->vd_ptid != 0) {
+    pthread_join(vd->vd_ptid, NULL);
+    vd->vd_ptid = 0;
+  }
+
+  glw_lock();
+  video_decoder_purge(vd);
+  glw_unlock();
+} 
+
+
+void
+video_decoder_purge(video_decoder_t *vd)
+{
+  int i;
+
+  if(vd->vd_widget != NULL || vd->vd_ptid != 0)
+    return;
+
+  /* Free YADIF frames */
+
+  if(vd->vd_yadif_width) for(i = 0; i < 3; i++)
+    avpicture_free(&vd->vd_yadif_pic[i]);
+
+  /* Free ffmpeg frame */
+
+  av_free(vd->vd_frame);
+
+  /* We are really gone now */
+
+  vd->vd_mp->mp_video_decoder = NULL;
+  free(vd);
+}
+
+
+void
+vd_set_dvd(media_pipe_t *mp, struct dvd_player *dvd)
+{
+  video_decoder_t *vd = mp->mp_video_decoder;
+  vd->vd_dvd = dvd;
 }

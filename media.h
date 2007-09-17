@@ -75,8 +75,6 @@ typedef struct media_buf {
 
   enum {
     MB_RESET,
-    MB_NOP,
-    MB_FLUSH,
     MB_VIDEO,
     MB_CLUT,
     MB_RESET_SPU,
@@ -86,7 +84,6 @@ typedef struct media_buf {
     MB_DVD_HILITE,
     MB_DVD_NAVKEY,
     MB_AUDIO,
-    MB_EXIT,
   } mb_data_type;
 
   void *mb_data;
@@ -139,20 +136,17 @@ typedef struct media_queue {
  * Media pipe
  */
 
-enum {
+typedef enum {
   MP_STOP,
   MP_PAUSE,
   MP_PLAY
-} mp_playstatus;
+} mp_playstatus_t;
 
 typedef struct media_pipe {
 
   int mp_flags;
 
-#define MEDIA_PIPE_DONT_INVERVENT 0x1  /* Audio should not pause us if
-					  we lose audio focus */
-
-  int mp_playstatus;
+  mp_playstatus_t mp_playstatus;
 
   const char *mp_name;
 
@@ -186,6 +180,9 @@ typedef struct media_pipe {
   struct subtitles *mp_subtitles;
 
   struct audio_decoder *mp_audio_decoder;
+
+  struct video_decoder *mp_video_decoder;
+  struct vd_conf *mp_video_conf;
 
 } media_pipe_t;
 
@@ -239,13 +236,16 @@ media_buf_free(media_buf_t *mb)
   free(mb);
 }
 
+struct vd_conf;
+
 void mq_flush(media_queue_t *mq);
 
-void mp_init(media_pipe_t *hmp, const char *name, struct appi *ai, int flags);
+void mp_init(media_pipe_t *mp, const char *name, struct appi *ai);
+
+void mp_set_video_conf(media_pipe_t *mp, struct vd_conf *vdc);
 
 void mp_deinit(media_pipe_t *mp);
 
-media_buf_t *mb_dequeue(media_pipe_t *hmp, media_queue_t *hmq);
 media_buf_t *mb_dequeue_wait(media_pipe_t *hmp, media_queue_t *hmq);
 void mb_enqueue(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
 void mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd);
@@ -253,7 +253,7 @@ void mp_send_cmd_data(media_pipe_t *mp, media_queue_t *mq, int cmd, void *d);
 void mp_send_cmd_u32_head(media_pipe_t *mp, media_queue_t *mq, int cmd, 
 			  uint32_t u);
 
-void mp_flush(media_pipe_t *mp, int reset);
+void mp_flush(media_pipe_t *mp);
 
 
 void mp_wait(media_pipe_t *mp, int audio, int video);

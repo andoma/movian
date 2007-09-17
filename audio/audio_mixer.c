@@ -202,9 +202,10 @@ audio_source_create(media_pipe_t *mp)
 {
   audio_source_t *as = calloc(1, sizeof(audio_source_t));
 
-  while(mixer_output.words == 0)
+  while(mixer_output.words == 0) {
+    printf("Waiting for mixer launch\n");
     sleep(1);
-
+  }
   audio_fifo_init(&as->as_fifo, 20, mixer_output.words * sizeof(float), 15);
 
   pthread_mutex_lock(&audio_source_lock);

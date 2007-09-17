@@ -207,8 +207,9 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
 
   if(mp->mp_video.mq_stream != -1) {
     vd_conf_init(&vdc);
-    vdw = vd_create(parent, &ai->ai_mp, &vdc, 0);
+    vdw = vd_create_widget(parent, &ai->ai_mp);
     ai->ai_req_fullscreen = AI_FS_BLANK;
+    mp_set_video_conf(mp, &vdc);
     vmenu = vd_menu_setup(appi_menu_top(ai), &vdc);
   } else {
     vmenu = NULL;
@@ -269,8 +270,7 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
       goto seekflush;
 
     seekflush:
-      mp_flush(mp, 0);
-      printf("mp flush completed\n");
+      mp_flush(mp);
       mp_auto_display(mp);
       input_flush_queue(ic);
       key = 0;
@@ -283,8 +283,6 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
       break;
 
     case INPUT_KEY_STOP:
-      mp_flush(mp, 1);
-      mp_set_playstatus(mp, MP_STOP);
       break;
 
       /* FALLTHRU */
@@ -294,9 +292,6 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
     case INPUT_KEY_CLEAR:
     case INPUT_KEY_ENTER:
     case INPUT_KEY_DELETE:
-      printf("Flushing..\n");
-      mp_flush(mp, 1);
-      printf("Flushing done..\n");
       break;
 	
     case INPUT_KEY_PLAYPAUSE:
@@ -305,17 +300,6 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
       mp_playpause(mp, key);
       key = 0;
       break;
-
-    case INPUT_KEY_DECR:
-      //      ai->ai_vd->vd_scale -= 0.1;
-      key = 0;
-      break;
-
-    case INPUT_KEY_INCR:
-      //      ai->ai_vd->vd_scale += 0.1;
-      key = 0;
-      break;
-
 
     default:
       key = 0;
@@ -407,6 +391,8 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
 
   }
 
+  mp_set_playstatus(mp, MP_STOP);
+
   wrap_lock_all_codecs(fw);
 
   mp->mp_info_widget = NULL;
@@ -426,29 +412,18 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
 
   streams = fctx->nb_streams;
 
-  for(i = 0; i < streams; i++) {
-    printf("Closing stream %d ...\n (%p)", i, cwvec[i]);
-    if(cwvec[i] != NULL) {
-      printf("\t%s\n", cwvec[i]->codec->name);
-      wrap_codec_deref(cwvec[i], 0);
-    } else {
-      printf("\tnot open\n");
-    }
-  }
+  for(i = 0; i < streams; i++) if(cwvec[i] != NULL)
+    wrap_codec_deref(cwvec[i], 0);
 
   if(vdw != NULL) 
     glw_destroy(vdw);
 
   wrap_format_wait(fw);
 
-  printf("video deactivate\n");
-
   if(mp->mp_subtitles) {
     subtitles_free(mp->mp_subtitles);
     mp->mp_subtitles = NULL;
   }
-
-  mp_set_playstatus(mp, MP_STOP);
 
   return key;
 }

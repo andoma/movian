@@ -198,13 +198,13 @@ ad_thread(void *aux)
   media_pipe_t *mp = ad->ad_mp;
   media_buf_t *mb;
 
-  while(ad->ad_run) {
-    mb = mb_dequeue_wait(mp, &mp->mp_audio);
+  while((mb = mb_dequeue_wait(mp, &mp->mp_audio)) != NULL) {
+
     switch(mb->mb_data_type) {
     default:
       break;
 
-    case MB_FLUSH:
+    case MB_RESET:
       audio_mixer_source_flush(ad->ad_output);
       break;
 
@@ -214,66 +214,31 @@ ad_thread(void *aux)
     }
     media_buf_free(mb);
   }
-  printf("thread returning\n");
   return NULL;
 }
 
 
 
-static void
-ad_create(media_pipe_t *mp)
+void
+audio_decoder_create(media_pipe_t *mp)
 {
   audio_decoder_t *ad;
 
   ad = mp->mp_audio_decoder = calloc(1, sizeof(audio_decoder_t));
   ad->ad_mp = mp;
-  ad->ad_run = 1;
   ad->ad_outbuf = av_malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE);
   ad->ad_output = audio_source_create(mp);
-
   pthread_create(&ad->ad_ptid, NULL, ad_thread, ad);
 }
 
 
 
-static void
-ad_destroy(media_pipe_t *mp, audio_decoder_t *ad)
+void
+audio_decoder_join(media_pipe_t *mp, audio_decoder_t *ad)
 {
-  ad->ad_run = 0;
- 
-  mp_send_cmd(mp, &mp->mp_audio, MB_NOP);
-  printf("Waiting for audio thread\n");
   pthread_join(ad->ad_ptid, NULL);
-  printf("\tAudio thread joined\n");
-
   audio_source_destroy(ad->ad_output);
-
   av_freep(&ad->ad_outbuf);
   free(ad);
-
   mp->mp_audio_decoder = NULL;
-}
-
-
-void
-audio_decoder_change_play_status(media_pipe_t *mp)
-{
-  printf("audio_decode_change_play_status %d\n", mp->mp_playstatus);
-  audio_decoder_t *ad;
-
-  switch(mp->mp_playstatus) {
-  case MP_PLAY:
-  case MP_PAUSE:
-    if(mp->mp_audio_decoder == NULL)
-      ad_create(mp);
-
-    ad = mp->mp_audio_decoder;
-    ad->ad_output->as_fifo.hold = mp->mp_playstatus == MP_PAUSE;
-    break;
-
-  case MP_STOP:
-    if(mp->mp_audio_decoder != NULL)
-      ad_destroy(mp, mp->mp_audio_decoder);
-    break;
-  }
 }

@@ -1,5 +1,5 @@
 /*
- *  Video output on GL surfaces
+ *  Video decoder
  *  Copyright (C) 2007 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,17 +16,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef VIDEO_GL_H
-#define VIDEO_GL_H
+#ifndef VIDEO_DECODER_H
+#define VIDEO_DECODER_H
 
 #include "gl_dvdspu.h"
 
 #include "media.h"
 
-#define VDF_AUTO_FLUSH 0x1
-
 #define VD_FRAMES 4
-#define VD_GLPP_FRAMES 2
 
 #define GVF_TEX_L   0
 #define GVF_TEX_Cr  1
@@ -92,28 +89,12 @@ typedef struct gl_video_frame {
 } gl_video_frame_t;
 
 
-typedef enum {
-  VD_STATE_IDLE = 0,           /* No action */
-  VD_STATE_THREAD_RUNNING,     /* Thread is running */
-  VD_STATE_THREAD_DESTROYING,  /* Thread is beeing destroyed */
-} vd_state_t;
-
 
 typedef struct video_decoder {
 
-  vd_state_t vd_state;
-
-  int vd_rendered;
-  int vd_idle;           /* number of consecutive frames for which
-			     we have not been rendering */
-
-  int vd_flags;
-
-  int vd_purged;
-
+  int vd_running;
+  
   int vd_compensate_thres;
-
-  vd_conf_t *vd_conf;
 
   LIST_ENTRY(video_decoder) vd_global_link;
 
@@ -183,7 +164,7 @@ typedef struct video_decoder {
 
   int vd_interlaced;
 
-  pthread_t vd_decode_thrid; /* Set if thread is running */
+  pthread_t vd_ptid;
   
   int64_t vd_nextpts;
   int64_t vd_lastpts;
@@ -244,22 +225,24 @@ typedef struct video_decoder {
 
 void vd_init(void);
 
-glw_t *vd_create(glw_t *p, media_pipe_t *mp, vd_conf_t *gc, int flags);
-
-void vd_set_dvd(glw_t *w, struct dvd_player *dvd);
+void vd_set_dvd(media_pipe_t *mp, struct dvd_player *dvd);
 
 void vd_conf_init(vd_conf_t *gc);
 
 glw_t *vd_menu_setup(glw_t *p, vd_conf_t *gc);
 
-int vd_get_idle_frames(glw_t *w);
-
-void vd_destroy(video_decoder_t *vd);
-
 void vd_init_timings(video_decoder_t *vd);
 
 void vd_kalman_init(gv_kalman_t *gvk);
 
-void *vd_decode_thread(void *aux);
+void video_decoder_create(media_pipe_t *mp);
 
-#endif /* VIDEO_GL_H */
+void video_decoder_start(video_decoder_t *vd);
+
+void video_decoder_join(media_pipe_t *mp, video_decoder_t *vd);
+
+glw_t *vd_create_widget(glw_t *p, media_pipe_t *mp);
+
+void video_decoder_purge(video_decoder_t *vd);
+
+#endif /* VIDEO_DECODER_H */

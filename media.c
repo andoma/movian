@@ -18,12 +18,14 @@
 
 #include <assert.h>
 #include <unistd.h>
+#include <errno.h>
 #include <sys/time.h>
 #include <time.h>
 #include "media.h"
 #include "hid/input.h"
 #include "showtime.h"
 #include "audio/audio_decoder.h"
+#include "gl/video_decoder.h"
 
 media_pipe_t *primary_audio;
 
@@ -52,9 +54,8 @@ mq_init(media_queue_t *mq)
  */
 
 void
-mp_init(media_pipe_t *mp, const char *name, struct appi *ai, int flags)
+mp_init(media_pipe_t *mp, const char *name, struct appi *ai)
 {
-  mp->mp_flags = flags;
   mp->mp_name = name;
   mp->mp_ai = ai;
   mp->mp_info_widget_auto_display = 0;
@@ -79,34 +80,11 @@ mp_deinit(media_pipe_t *mp)
     primary_audio = NULL;
 
   mp_set_playstatus(mp, MP_STOP);
+
   if(mp->mp_info_widget != NULL)
     glw_destroy(mp->mp_info_widget);
   if(mp->mp_info_extra_widget != NULL)
     glw_destroy(mp->mp_info_extra_widget);
-  mp_flush(mp, 1);
-}
-
-
-/*
- *
- */
-
-media_buf_t *
-mb_dequeue(media_pipe_t *mp, media_queue_t *mq)
-{
-  media_buf_t *mb;
-
-  pthread_mutex_lock(&mp->mp_mutex);
-
-  mb = TAILQ_FIRST(&mq->mq_q);
-  if(mb != NULL) {
-    TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
-    mq->mq_len--;
-    pthread_cond_signal(&mp->mp_backpressure);
-  }
-
-  pthread_mutex_unlock(&mp->mp_mutex);
-  return mb;
 }
 
 /*
@@ -119,8 +97,13 @@ mb_dequeue_wait(media_pipe_t *mp, media_queue_t *mq)
   media_buf_t *mb;
   pthread_mutex_lock(&mp->mp_mutex);
 
-  while((mb = TAILQ_FIRST(&mq->mq_q)) == NULL ||
-	mp->mp_playstatus == MP_PAUSE) {
+  while(1) {
+    if(mp->mp_playstatus == MP_STOP) {
+      pthread_mutex_unlock(&mp->mp_mutex);
+      return NULL;
+    }
+    if((mb = TAILQ_FIRST(&mq->mq_q)) != NULL)
+      break;
     pthread_cond_wait(&mq->mq_avail, &mp->mp_mutex);
   }
 
@@ -194,7 +177,6 @@ mq_flush(media_queue_t *mq)
   media_buf_t *mb;
 
   while((mb = TAILQ_FIRST(&mq->mq_q)) != NULL) {
-    assert(mb->mb_data_type != MB_EXIT);
     TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
     media_buf_free(mb);
   }
@@ -207,7 +189,7 @@ mq_flush(media_queue_t *mq)
  */
 
 void
-mp_flush(media_pipe_t *mp, int reset)
+mp_flush(media_pipe_t *mp)
 {
   media_queue_t *v = &mp->mp_video;
   media_queue_t *a = &mp->mp_audio;
@@ -215,20 +197,16 @@ mp_flush(media_pipe_t *mp, int reset)
 
   pthread_mutex_lock(&mp->mp_mutex);
 
-  printf("audio flush\n");
   mq_flush(a);
-  printf("video flush\n");
   mq_flush(v);
 
   pthread_cond_signal(&mp->mp_backpressure);
-
-  printf("sending termination commands\n");
 
   if(v->mq_stream >= 0) {
     mb = media_buf_alloc();
     mb->mb_cw = NULL;
     mb->mb_data = NULL;
-    mb->mb_data_type = reset ? MB_RESET : MB_FLUSH;
+    mb->mb_data_type = MB_RESET;
     mb_enq_tail(v, mb);
   }
 
@@ -236,7 +214,7 @@ mp_flush(media_pipe_t *mp, int reset)
     mb = media_buf_alloc();
     mb->mb_cw = NULL;
     mb->mb_data = NULL;
-    mb->mb_data_type = reset ? MB_RESET : MB_FLUSH;
+    mb->mb_data_type = MB_RESET;
     mb_enq_tail(a, mb);
   }
 
@@ -383,12 +361,9 @@ wrap_format_purge(formatwrap_t *fw)
     return;
   }
 
-  if(fw->format == NULL) {
-    printf("Unabled format closed\n");
-  } else {
-    printf("Format %s closed\n", fw->format->iformat->name);
+  if(fw->format != NULL)
     av_close_input_file(fw->format);
-  }
+
   pthread_mutex_unlock(&fw->mutex);
   free(fw);
 }
@@ -418,14 +393,10 @@ wrap_codec_deref(codecwrap_t *cw, int lock)
     return;
   }
 
-  printf("Closing codec %s\n", cw->codec->name);
-
   fw = cw->format;
 
   if(fw != NULL) {
     pthread_mutex_lock(&fw->mutex);
-    printf("\tdelinking from format %s\n", 
-	   fw->format ? fw->format->iformat->name : "<anon>");
     LIST_REMOVE(cw, format_link);
   }
 
@@ -519,7 +490,6 @@ wrap_format_wait(formatwrap_t *fw)
   pthread_mutex_lock(&fw->mutex);
 
   while((cw = LIST_FIRST(&fw->codecs)) != NULL) {
-    printf("cw %s is still around (ref=%d)\n", cw->codec->name, cw->refcount);
     pthread_mutex_unlock(&fw->mutex);
     usleep(100000);
     pthread_mutex_lock(&fw->mutex);
@@ -530,6 +500,8 @@ wrap_format_wait(formatwrap_t *fw)
 }
 
 /*
+ * mp_set_playstatus() is responsible for starting and stopping
+ * decoder threads
  *
  */
 
@@ -539,18 +511,61 @@ mp_set_playstatus(media_pipe_t *mp, int status)
   if(mp->mp_playstatus == status)
     return;
 
-  printf("%s -> status = %d\n", mp->mp_name, status);
+  switch(status) {
 
-  pthread_mutex_lock(&mp->mp_mutex);
+  case MP_PLAY:
+  case MP_PAUSE:
 
-  mp->mp_playstatus = status;
-  pthread_cond_signal(&mp->mp_audio.mq_avail);
-  pthread_cond_signal(&mp->mp_video.mq_avail);
-  
-  pthread_mutex_unlock(&mp->mp_mutex);
-  
-  audio_decoder_change_play_status(mp);
+    mp->mp_playstatus = status;
+
+    if(mp->mp_audio_decoder == NULL)
+      audio_decoder_create(mp);
+
+    if(mp->mp_video_decoder == NULL)
+      video_decoder_create(mp);
+
+    /* If paused, freeze audio fifo */
+
+    mp->mp_audio_decoder->ad_output->as_fifo.hold = 
+      mp->mp_playstatus == MP_PAUSE;
+
+    video_decoder_start(mp->mp_video_decoder);
+    break;
+
+    
+  case MP_STOP:
+    
+    /* First lock queues */
+
+    pthread_mutex_lock(&mp->mp_mutex);
+
+    /* Flush all media in queues */
+
+    mq_flush(&mp->mp_audio);
+    mq_flush(&mp->mp_video);
+
+    /* set playstatus to STOP and signal on conditioners,
+       this will make mb_dequeue_wait return NULL next time it returns */
+    
+    mp->mp_playstatus = MP_STOP;
+    pthread_cond_signal(&mp->mp_audio.mq_avail);
+    pthread_cond_signal(&mp->mp_video.mq_avail);
+    pthread_mutex_unlock(&mp->mp_mutex);
+
+    /* We should now be able to collect the threads */
+
+    if(mp->mp_audio_decoder != NULL)
+      audio_decoder_join(mp, mp->mp_audio_decoder);
+
+    if(mp->mp_video_decoder != NULL)
+      video_decoder_join(mp, mp->mp_video_decoder);
+
+    break;
+  }
 }
+
+
+
 
 
 /*
@@ -592,6 +607,13 @@ media_pipe_release_audio(struct media_pipe *mp)
     primary_audio = NULL;
 }
 
+void
+mp_set_video_conf(media_pipe_t *mp, struct vd_conf *vdc)
+{
+  mp->mp_video_conf = vdc;
+}
+
+
 
 void
 nice_codec_name(char *buf, int len, AVCodecContext *ctx)
@@ -612,4 +634,6 @@ nice_codec_name(char *buf, int len, AVCodecContext *ctx)
   }
   snprintf(buf, len, "%s", fill);
 }
+
+
 
