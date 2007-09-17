@@ -790,6 +790,16 @@ browser_load_dir(browser_t *b, b_entry_t *src, char *path, int enq, glw_t *p)
 
   for(be = TAILQ_FIRST(&bd->bd_entries) ; be != NULL; be = n) {
 
+    if(!enq && input_getkey(&b->b_ai->ai_ic, 0) == INPUT_KEY_BACK) {
+      /* bail out (on users request) */
+      browser_free_dir(bd);
+      glw_destroy(bd->bd_list);
+
+      bd = TAILQ_FIRST(&b->b_dir_stack);
+      bd->bd_list->glw_flags &= ~GLW_ZOOMED; /* XXX: fix locking */
+      return;
+    }
+
     cur++;
     bd->bd_load_progress = (float)cur / (float)tot;
 
