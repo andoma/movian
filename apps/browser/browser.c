@@ -1290,7 +1290,7 @@ peep_thread(void *aux)
 {
   browser_t *b = aux;
   peep_work_t *pw;
-  glw_t *c, *x;
+  glw_t *c;
   int v;
 
   pthread_mutex_lock(&b->b_peep_lock);
@@ -1303,27 +1303,10 @@ peep_thread(void *aux)
     pthread_mutex_unlock(&b->b_peep_lock);
     
     if(pw->pw_container != NULL) {
-#if 0
-      c = glw_create(GLW_BITMAP,
-		     GLW_ATTRIB_FILENAME, "icon://plate.png",
-		     GLW_ATTRIB_FLAGS, GLW_NOASPECT,
-		     GLW_ATTRIB_COLOR, GLW_COLOR_BLACK,
-		     GLW_ATTRIB_ALPHA, 0.7,
+      c = glw_create(GLW_CONTAINER_X, 
 		     NULL);
-#endif
 
-
-      x = glw_create(GLW_CONTAINER_X, 
-		     //		     GLW_ATTRIB_PARENT, c,
-		     NULL);
-      c = x;
-      v = peep_into_dir(x, pw->pw_path, 4, 0);
-
-      if(v == 0)
-	glw_create(GLW_BITMAP, 
-		   GLW_ATTRIB_PARENT, pw->pw_container,
-		   GLW_ATTRIB_FILENAME, "icon://dir.png",
-		   NULL);
+      v = peep_into_dir(c, pw->pw_path, 4, 0);
 
       if(v > 0 && pw->pw_container != NULL)
 	glw_set(c, GLW_ATTRIB_PARENT, pw->pw_container, NULL);
@@ -1371,11 +1354,16 @@ peep_add(browser_t *b, const char *path, glw_t *parent, float weight)
   pw->pw_refcount = 2;
 
   pw->pw_container =
-    glw_create(GLW_CONTAINER_X,
+    glw_create(GLW_XFADER,
 	       GLW_ATTRIB_WEIGHT, weight,
 	       GLW_ATTRIB_PARENT, parent,
 	       GLW_ATTRIB_SIGNAL_HANDLER, peep_widget_callback, pw, 0,
 	       NULL);
+
+  glw_create(GLW_BITMAP, 
+	     GLW_ATTRIB_PARENT, pw->pw_container,
+	     GLW_ATTRIB_FILENAME, "icon://dir.png",
+	     NULL);
 
   pthread_mutex_lock(&b->b_peep_lock);
   TAILQ_INSERT_TAIL(&b->b_peep_queue, pw, pw_link);
