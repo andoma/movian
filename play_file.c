@@ -127,6 +127,30 @@ play_file_create_extra_miw(media_pipe_t *mp)
 }
 
 
+static void
+play_file_draw_status(glw_t *xfader, media_pipe_t *mp)
+{
+  const char *icon;
+
+  switch(mp->mp_playstatus) {
+  case MP_PAUSE:
+    icon = "icon://media-playback-pause.png";
+    break;
+  case MP_PLAY:
+    icon = "icon://media-playback-start.png";
+    break;
+  default:
+    glw_destroy_childs(xfader);
+    return;
+  }
+
+  glw_create(GLW_BITMAP, 
+	     GLW_ATTRIB_PARENT, xfader,
+	     GLW_ATTRIB_FILENAME, icon,
+	     NULL);
+}
+
+
 
 
 
@@ -230,15 +254,14 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
   
 
   meta = mp->mp_info_widget = play_file_create_miw(mp, mi, &psc);
-
   xmeta = mp->mp_info_extra_widget = play_file_create_extra_miw(mp);
-
   amenu = play_file_menu_audio_setup(appi_menu_top(ai), mp);
   
   mp_set_playstatus(mp, MP_PLAY);
   media_pipe_acquire_audio(mp);
-
   wrap_unlock_all_codecs(fw);
+
+  play_file_draw_status(psc, mp);
 
   while(1) {
 
@@ -283,9 +306,6 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
       break;
 
     case INPUT_KEY_STOP:
-      break;
-
-      /* FALLTHRU */
     case INPUT_KEY_BACK:
     case INPUT_KEY_NEXT:
     case INPUT_KEY_PREV:
@@ -298,6 +318,7 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
     case INPUT_KEY_PLAY:
     case INPUT_KEY_PAUSE:
       mp_playpause(mp, key);
+      play_file_draw_status(psc, mp);
       key = 0;
       break;
 
