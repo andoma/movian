@@ -38,6 +38,8 @@ static int curface;
 
 float face_alpha[4];
 
+static int layout_allow_fullscreen;
+
 static float miw_render(float aspect);
 
 static int mirror_input_event(inputevent_t *ie);
@@ -279,7 +281,7 @@ layout_std_draw(float aspect0)
   appi_t *ai;
   static float ca; /* cube alpha */
   static float rot; /* cube rotation */
-  int i;
+  int i, fs;
   float cz;
   static float topinfospace;
   float aspect;
@@ -312,18 +314,24 @@ layout_std_draw(float aspect0)
   ai = layout_get_cur_app();
   cz = 4.0;
 
+  fs = 0;
+
   if(layout_menu_display) {
     /* displaying menu */
     glw_vertex_anim_set3f(&cpos,   0,    1.5,  CAMZ);
     glw_vertex_anim_set3f(&ctgt,   -0.5, 1.0, 1.0);
     glw_vertex_anim_set3f(&fcol,   0.09, 0.11, 0.2);
     glw_vertex_anim_set3f(&wextra, 0.1,  1.0,  -0.95);
-  } else if(ca < 0.01 && ai != NULL && ai->ai_got_fullscreen) {
+  } else if(ca < 0.01 && ai != NULL && ai->ai_req_fullscreen) {
     /* fullscreen mode */
     glw_vertex_anim_set3f(&cpos,   0, 1.0, 3.4);
     glw_vertex_anim_set3f(&ctgt,   0, 1.0, 1.0);
     glw_vertex_anim_set3f(&fcol,   0, 0,   0);
     glw_vertex_anim_set3f(&wextra, 0, 1.0,   -0.95);
+    
+    if(glw_vertex_anim_read_i(&cpos) > 0.99)
+      fs = 1;
+
   } else {
     /* normal */
     glw_vertex_anim_set3f(&cpos,   0,    1.0,  CAMZ);
@@ -331,6 +339,8 @@ layout_std_draw(float aspect0)
     glw_vertex_anim_set3f(&fcol,   0.09, 0.11, 0.2);
     glw_vertex_anim_set3f(&wextra, 0.1,  0.8,    -0.7);
   }
+
+  layout_allow_fullscreen = fs;
 
   glw_vertex_anim_fwd(&cpos,   0.02);
   glw_vertex_anim_fwd(&ctgt,   0.02);
@@ -492,7 +502,7 @@ layout_apps(float aspect)
   rc.rc_alpha = 1.0f;
 
   TAILQ_FOREACH(ai, &appis, ai_global_link) {
-    ai->ai_got_fullscreen = ai->ai_req_fullscreen;
+    ai->ai_got_fullscreen = ai->ai_req_fullscreen && layout_allow_fullscreen;
     if(ai->ai_widget != NULL)
       glw_layout(ai->ai_widget, &rc);
     
