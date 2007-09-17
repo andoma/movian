@@ -109,7 +109,7 @@ dvd_create_miw(dvd_player_t *dp, media_pipe_t *mp, const char *title)
 }
 
 static void
-dvd_display_error(glw_t *w, const char *err)
+dvd_display_error(glw_t *w, const char *err, int isdrive)
 {
   glw_t *y;
 
@@ -128,10 +128,11 @@ dvd_display_error(glw_t *w, const char *err)
 	     GLW_ATTRIB_CAPTION, err,
 	     NULL);
 
-  glw_create(GLW_TEXT_BITMAP,
-	     GLW_ATTRIB_PARENT, y,
-	     GLW_ATTRIB_CAPTION, "Disc will restart in a few seconds.",
-	     NULL);
+  if(isdrive)
+    glw_create(GLW_TEXT_BITMAP,
+	       GLW_ATTRIB_PARENT, y,
+	       GLW_ATTRIB_CAPTION, "Disc will restart in a few seconds.",
+	       NULL);
   sleep(6);
 }
 
@@ -485,7 +486,7 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
 
 
   if(dvdnav_open(&dp->dp_dvdnav, devname) != DVDNAV_STATUS_OK) {
-    dvd_display_error(w, "An error occured when opening DVD");
+    dvd_display_error(w, "An error occured when opening DVD", isdrive);
     glw_destroy(w);
     free(dp);
     return -1;
@@ -724,7 +725,7 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
   dvdnav_close(dp->dp_dvdnav);
 
   if(rcode == -1)
-    dvd_display_error(w, "An error occured during DVD decoding.");
+    dvd_display_error(w, "An error occured during DVD decoding.", isdrive);
 
   glw_destroy(w);
   free(dp);
