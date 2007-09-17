@@ -35,7 +35,6 @@
 #include "settings.h"
 #include "apps/dvdplayer/dvd.h"
 #include "apps/playlist/playlist.h"
-#include "gl/gl_video.h"
 
 typedef struct menu {
   LIST_ENTRY(menu) m_link;

@@ -42,7 +42,6 @@
 #include "layout/layout.h"
 #include "menu.h"
 #include "tv_playback.h"
-#include "gl/gl_video.h"
 #include "miw.h"
 
 static int 

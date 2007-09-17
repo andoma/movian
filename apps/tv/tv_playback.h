@@ -23,7 +23,7 @@
 #include "media.h"
 #include "tv_headend.h"
 #include "app.h"
-#include "gl/gl_video.h"
+#include "gl/video_decoder.h"
 
 
 typedef struct iptv_channel {

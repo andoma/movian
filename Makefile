@@ -23,7 +23,8 @@ SRCS  += layout_cube.c
 # OpenGL support
 
 VPATH += gl
-SRCS  += gl_video.c gl_dvdspu.c yadif.c
+SRCS  += video_decoder.c video_widget.c video_menues.c
+SRCS  += gl_dvdspu.c yadif.c
 
 VPATH += gl/sysglue
 SRCS  += gl_common.c sysglue_$(GL_GLUE).c

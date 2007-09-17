@@ -254,4 +254,12 @@ glw_t *vd_menu_setup(glw_t *p, vd_conf_t *gc);
 
 int vd_get_idle_frames(glw_t *w);
 
+void vd_destroy(video_decoder_t *vd);
+
+void vd_init_timings(video_decoder_t *vd);
+
+void vd_kalman_init(gv_kalman_t *gvk);
+
+void *vd_decode_thread(void *aux);
+
 #endif /* VIDEO_GL_H */

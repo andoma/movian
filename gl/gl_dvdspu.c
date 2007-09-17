@@ -31,7 +31,7 @@
 
 #include "showtime.h"
 #include "media.h"
-#include "gl_video.h"
+#include "video_decoder.h"
 #include "gl_dvdspu.h"
 
 typedef struct gl_dvdspu_pic {

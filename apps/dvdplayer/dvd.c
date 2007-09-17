@@ -37,7 +37,7 @@
 #include "showtime.h"
 #include "dvd.h"
 #include "input.h"
-#include "gl/gl_video.h"
+#include "gl/video_decoder.h"
 #include "menu.h"
 #include "miw.h"
 

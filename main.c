@@ -35,7 +35,7 @@
 #include "input.h"
 #include "app.h"
 
-#include "gl/gl_video.h"
+#include "gl/video_decoder.h"
 #include "gl/sysglue/sysglue.h"
 #include "hid/hid.h"
 #include "audio/audio.h"
