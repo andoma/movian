@@ -19,7 +19,6 @@
 #ifndef VIDEO_GL_H
 #define VIDEO_GL_H
 
-#include <dvdnav/dvdnav.h>
 #include "gl_dvdspu.h"
 
 #include "media.h"

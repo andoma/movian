@@ -29,8 +29,6 @@
 
 #include <inttypes.h>
 
-#include <dvdnav/dvdnav.h>
-
 #include "showtime.h"
 #include "media.h"
 #include "gl_video.h"
