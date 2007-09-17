@@ -520,19 +520,23 @@ miw_peakmeters_create(glw_t *parent)
 glw_t *
 miw_loading(glw_t *parent, const char *what)
 {
-  glw_t *y, *w;
+  glw_t *x, *w;
 
-  y = glw_create(GLW_CONTAINER_Y, 
+  x = glw_create(GLW_CONTAINER_X, 
+		 GLW_ATTRIB_ASPECT, 15.0f,
 		 GLW_ATTRIB_PARENT, parent,
 		 NULL);
+  
 
   glw_create(GLW_TEXT_BITMAP,
-	     GLW_ATTRIB_PARENT, y,
+	     GLW_ATTRIB_PARENT, x,
+	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_RIGHT,
 	     GLW_ATTRIB_CAPTION, "Please wait...",
 	     NULL);
 
   w = glw_create(GLW_ROTATOR, 
-		 GLW_ATTRIB_PARENT, y,
+		 GLW_ATTRIB_WEIGHT, 0.2,
+		 GLW_ATTRIB_PARENT, x,
 		 NULL);
 
   glw_create(GLW_BITMAP, 
@@ -541,11 +545,12 @@ miw_loading(glw_t *parent, const char *what)
 	     NULL);
 
   glw_create(GLW_TEXT_BITMAP,
-	     GLW_ATTRIB_PARENT, y,
+	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_LEFT,
+	     GLW_ATTRIB_PARENT, x,
 	     GLW_ATTRIB_CAPTION, what,
 	     NULL);
 
-  return y;
+  return x;
 }
 
 
