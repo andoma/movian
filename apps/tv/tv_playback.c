@@ -383,40 +383,6 @@ iptv_filter_audio(void *aux, uint32_t sc, int codec_id)
 
 
 
-
-#if 0
-static unsigned int
-ich_compute_weight(iptv_channel_t *ich)
-{
-  int a;
-  glw_t *w;
-  iptv_channel_t *x;
-  iptv_player_t *iptv = ich->ich_iptv;
-
-  if(&ich->ich_mp == audio_sched_mp_get())
-    return 750;
-
-  w = iptv->iptv_chlist->glw_selected;
-  if(w == NULL) {
-    a = 0;
-  } else {
-    x = glw_get_opaque(w);
-    a = x->ich_index;
-  }
-
-  a = abs(a - ich->ich_index);
-#if 1
-  if(a == 0) {
-    return 500; 
-  } else {
-    return 0;
-  }
-#endif
-  return 500 - a;
-}
-
-#endif
-
 static iptv_channel_t *
 ich_create(iptv_player_t *iptv, int channel, uint32_t tag)
 {
@@ -451,32 +417,6 @@ ich_create(iptv_player_t *iptv, int channel, uint32_t tag)
   
   return ich;
 }
-
-#if 0
-
-static void
-ich_destroy(iptv_channel_t *ich)
-{
-  iptv_player_t *iptv = ich->ich_iptv;
-
-  printf("Freein' channel %d\n", ich->ich_index);
-
-  iptv->iptv_channels[ich->ich_index] = NULL;
-
-  mp_deinit(&ich->ich_mp);
-
-  if(ich->ich_vd != NULL)
-    glw_destroy(ich->ich_vd);
-  
-  pes_deinit(&ich->ich_pp);
-
-  wrap_format_wait(ich->ich_fw);
-
-  free(ich);
-}
-
-#endif
-
 
 /*****************************************************************************
  *****************************************************************************
@@ -546,44 +486,6 @@ iptv_widget_channel_container_callback(glw_t *w, void *opaque,
     return 0;
   }
 }
-
-
-#if 0
-
-static int 
-ich_callback(glw_t *w, glw_signal_t signal, ...)
-{
-  iptv_channel_t *ich = glw_get_opaque(w);
-  iptv_player_t *iptv = ich->ich_iptv;
-  unsigned int v;
-
-  switch(signal) {
-  case GLW_SIGNAL_PRE_LAYOUT:
-    v = ich_compute_weight(ich);
-    if(v != ich->ich_weight) {
-
-      ich->ich_weight = v;
-
-      pthread_mutex_lock(&iptv->iptv_weight_update_mutex);
-      pthread_cond_signal(&iptv->iptv_weight_update_cond);
-      pthread_mutex_unlock(&iptv->iptv_weight_update_mutex);
-    }
-
-    return 0;
-
-  case GLW_SIGNAL_DESTROY:
-
-    ich_destroy(ich);
-    return 0;
-
-  default:
-    return 0;
-  }
-}
-
-#endif
-
-
 
 
 /*
@@ -859,26 +761,9 @@ iptv_demux(iptv_player_t *iptv, uint8_t *buf, int len, int pkttype,
 
     ich->ich_avg_aqlen = (ich->ich_avg_aqlen * 31.0 + 
 			  ich->ich_mp.mp_audio.mq_len) / 32.0f;
-
-#if 0
-    if(audio_sched_mp_get() != &ich->ich_mp) {
-
-      if(ich->ich_avg_vqlen < 10)
-	ich->ich_mp.mp_speed_gain = 1.0f;
-      else
-	ich->ich_mp.mp_speed_gain = ich->ich_avg_vqlen / 10.0f;
-    } else {
-      ich->ich_mp.mp_speed_gain = 1.0f;
-    }
-#endif
-
     break;
 
   case HTSTV_EOS:
-    
-    printf("GOT END OF STREAM FOR CHANNEL %d, stopping playback\n",
-	   ich->ich_index);
-
     break;
   }
 }
