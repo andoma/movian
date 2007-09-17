@@ -528,8 +528,12 @@ icecast_write(void *ptr, size_t size, size_t nmemb, void *aux)
   if(r->r_cur_channel != r->r_req_channel)
     return 0;
 
-  if(mp->mp_info_widget == NULL)
+
+  if(mp->mp_info_widget == NULL) {
+    media_pipe_acquire_audio(mp);
+    mp_set_playstatus(mp, MP_PLAY);
     mp->mp_info_widget = radio_create_miw(rc, mp);
+  }
 
   while(s > 0) {
 
@@ -698,9 +702,6 @@ icecast_play(radio_t *r, radio_channel_t *rc, media_pipe_t *mp)
 
     curl_easy_setopt(curl_handle, CURLOPT_ERRORBUFFER, errbuf);
 
-    mp_set_playstatus(mp, MP_PLAY);
-
-    media_pipe_acquire_audio(mp);
     err = curl_easy_perform(curl_handle);
     media_pipe_release_audio(mp);
 
