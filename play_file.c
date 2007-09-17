@@ -65,7 +65,7 @@ play_file_create_miw(media_pipe_t *mp, mediainfo_t *mi, glw_t **pscp)
 		 GLW_ATTRIB_PARENT, c,
 		 NULL);
 
-  *pscp = glw_create(GLW_XFADER,
+  *pscp = glw_create(GLW_FLIPPER,
 		     GLW_ATTRIB_PARENT, x,
 		     NULL);
   
