@@ -124,7 +124,6 @@ cd_start(void *aux)
     }
   }
 
-  cd_make_idle_widget(ai->ai_widget, "No disc");
 
   while(1) {
 
@@ -141,7 +140,10 @@ cd_start(void *aux)
       if(do_eject == 1)
 	break;
 
-      ai->ai_visible = 1;
+      if(ai->ai_visible == 0) {
+	cd_make_idle_widget(ai->ai_widget, "Scanning drive status...");
+	ai->ai_visible = 1;
+      }
 
       discstatus = ioctl(fd, CDROM_DISC_STATUS, NULL);
       switch(discstatus) {
@@ -166,10 +168,10 @@ cd_start(void *aux)
 	pthread_join(ptid, NULL);   /* wait for monitor thread */
 	input_flush_queue(&ai->ai_ic);
 
-	cd_make_idle_widget(ai->ai_widget, "No disc");
 
 	switch(r) {
 	case INPUT_KEY_EJECT:
+	  cd_make_idle_widget(ai->ai_widget, "Ejecting disc...");
 	  do_eject = 1;
 	  break;
 	}

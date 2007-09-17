@@ -40,9 +40,11 @@
 #include "gl/video_decoder.h"
 #include "menu.h"
 #include "miw.h"
+#include "layout/layout.h"
 
 static glw_t *dvd_menu_spu_setup(glw_t *p, dvd_player_t *dp);
 static glw_t *dvd_menu_audio_setup(glw_t *p, dvd_player_t *dp);
+static int dvd_ctrl_input(dvd_player_t *dp, int wait);
 
 #define DVD_AUDIO_STREAMS 8
 #define DVD_AUDIO_MASK      (DVD_AUDIO_STREAMS - 1)
@@ -104,6 +106,153 @@ dvd_create_miw(dvd_player_t *dp, media_pipe_t *mp, const char *title)
 				     NULL);
 
   return c;
+}
+
+static void
+dvd_display_error(glw_t *w, const char *err)
+{
+  glw_t *y;
+
+  y = glw_create(GLW_CONTAINER_Y,
+		 GLW_ATTRIB_ASPECT, 5.0f,
+		 GLW_ATTRIB_PARENT, w,
+		 NULL);
+
+  glw_create(GLW_BITMAP,
+	     GLW_ATTRIB_PARENT, y,
+	     GLW_ATTRIB_FILENAME, "icon://error.png",
+	     NULL);
+
+  glw_create(GLW_TEXT_BITMAP,
+	     GLW_ATTRIB_PARENT, y,
+	     GLW_ATTRIB_CAPTION, err,
+	     NULL);
+
+  glw_create(GLW_TEXT_BITMAP,
+	     GLW_ATTRIB_PARENT, y,
+	     GLW_ATTRIB_CAPTION, "Disc will restart in a few seconds.",
+	     NULL);
+  sleep(6);
+}
+
+static glw_t *
+dvd_start_menu_option(glw_t *p, const char *icon, const char *title)
+{
+  glw_t *x;
+
+  x = glw_create(GLW_CONTAINER_X,
+		 GLW_ATTRIB_ASPECT, 5.0f,
+		 GLW_ATTRIB_PARENT, p,
+		 NULL);
+
+  glw_create(GLW_BITMAP,
+	     GLW_ATTRIB_WEIGHT, 0.3f,
+	     GLW_ATTRIB_PARENT, x,
+	     GLW_ATTRIB_FILENAME, icon,
+	     NULL);
+
+  glw_create(GLW_TEXT_BITMAP,
+	     GLW_ATTRIB_PARENT, x,
+	     GLW_ATTRIB_CAPTION, title,
+	     NULL);
+  return x;
+}
+
+
+#define DVD_START_MENU_EJECT 0x1
+
+
+static int
+dvd_start_menu(appi_t *ai, glw_t *w, const char *title, int options)
+{
+  glw_t *a, *play, *eject, *c, *z;
+  inputevent_t ie;
+
+  c = glw_create(GLW_CONTAINER_Y,
+		 GLW_ATTRIB_ASPECT, 0.8f,
+		 GLW_ATTRIB_PARENT, w,
+		 NULL);
+
+  glw_create(GLW_DUMMY,
+	     GLW_ATTRIB_PARENT, c,
+	     GLW_ATTRIB_WEIGHT, 0.2f,
+	     NULL);
+
+  glw_create(GLW_TEXT_BITMAP,
+	     GLW_ATTRIB_WEIGHT, 0.2f,
+	     GLW_ATTRIB_PARENT, c,
+	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
+	     GLW_ATTRIB_CAPTION, title,
+	     NULL);
+
+  glw_create(GLW_DUMMY,
+	     GLW_ATTRIB_PARENT, c,
+	     GLW_ATTRIB_WEIGHT, 0.2f,
+	     NULL);
+
+  z = glw_create(GLW_BITMAP,
+		 GLW_ATTRIB_ALPHA, 0.1f,
+		 GLW_ATTRIB_PARENT, c,
+		 GLW_ATTRIB_FILENAME, "icon://cd.png",
+		 NULL);
+
+  glw_create(GLW_DUMMY,
+	     GLW_ATTRIB_PARENT, c,
+	     GLW_ATTRIB_WEIGHT, 0.4f,
+	     NULL);
+
+
+  a = glw_create(GLW_ARRAY,
+		 GLW_ATTRIB_PARENT, z,
+		 GLW_ATTRIB_X_SLICES, 1,
+		 GLW_ATTRIB_Y_SLICES, 5,
+		 NULL);
+
+  play = dvd_start_menu_option(a,
+			       "icon://media-playback-start.png", "Play");
+
+  if(options & DVD_START_MENU_EJECT)
+    eject = dvd_start_menu_option(a,
+				  "icon://media-playback-stop.png", "Eject");
+  else
+    eject = NULL;
+
+  
+  while(1) {
+    
+    input_getevent(&ai->ai_ic, 1, &ie, NULL);
+
+    switch(ie.type) {
+    default:
+      break;
+      
+    case INPUT_KEY:
+      switch(ie.u.key) {
+	
+      default:
+	break;
+	
+      case INPUT_KEY_BACK:
+	layout_hide(ai);
+	break;
+
+      case INPUT_KEY_UP:
+	glw_nav_signal(a, GLW_SIGNAL_UP);
+	break;
+	
+      case INPUT_KEY_DOWN:
+	glw_nav_signal(a, GLW_SIGNAL_DOWN);
+	break;
+
+      case INPUT_KEY_ENTER:
+	if(a->glw_selected == play)
+	  return 0;
+	if(a->glw_selected == eject)
+	  return INPUT_KEY_EJECT;
+	break;
+      }
+    }
+  }
 }
 
 
@@ -267,8 +416,7 @@ make_nice_title(const char *t)
   return ret;
 }
 
-static int
-dvd_ctrl_input(dvd_player_t *dp, int wait);
+
 
 
 
@@ -324,7 +472,8 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
   formatwrap_t *fw;
   media_pipe_t *mp;
   vd_conf_t gc;
-  glw_t *vmenu, *amenu, *smenu, *w, *vd, *vd0;
+  glw_t *vmenu, *amenu, *smenu, *w, *vd0;
+  int options = 0;
 
   w = glw_create(GLW_XFADER,
 		 GLW_ATTRIB_PARENT, parent,
@@ -336,8 +485,10 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
 
 
   if(dvdnav_open(&dp->dp_dvdnav, devname) != DVDNAV_STATUS_OK) {
+    dvd_display_error(w, "An error occured when opening DVD");
     glw_destroy(w);
-    return 1;
+    free(dp);
+    return -1;
   }
 
   dvdnav_set_readahead_flag(dp->dp_dvdnav, 1);
@@ -351,8 +502,17 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
       title = make_nice_title(title + 1);
   }
 
+  if(isdrive)
+    options = DVD_START_MENU_EJECT;
 
-
+  if(options) {
+    if((rcode = dvd_start_menu(ai, w, title, options)) != 0) {
+      dvdnav_close(dp->dp_dvdnav);
+      glw_destroy(w);
+      free(dp);
+      return rcode;
+    }
+  }
   
   mp = &ai->ai_mp;
 
@@ -364,7 +524,7 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
   amenu = dvd_menu_audio_setup(appi_menu_top(ai), dp);
   vmenu = vd_menu_setup(appi_menu_top(ai), &gc);
 
-  vd0 = vd = vd_create_widget(NULL, &ai->ai_mp);
+  vd0 = vd_create_widget(NULL, &ai->ai_mp);
 
   vd_set_dvd(&ai->ai_mp, dp);
 
@@ -393,8 +553,6 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
 
   mp->mp_info_widget = dvd_create_miw(dp, mp, title);
 
-
-  printf("entering dvd mainloop\n");
 
 
   mp_set_playstatus(mp, MP_PLAY);
@@ -545,6 +703,9 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
 
   mp_set_playstatus(mp, MP_STOP);
 
+  if(vd0 != NULL)
+    glw_destroy(vd0);
+
   glw_destroy(vmenu);
   glw_destroy(amenu);
   glw_destroy(smenu);
@@ -557,15 +718,16 @@ dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent)
 
   free(title);
 
-  glw_destroy(w);
-
   glw_destroy(mp->mp_info_widget);
   mp->mp_info_widget = NULL;
 
   dvdnav_close(dp->dp_dvdnav);
 
-  free(dp);
+  if(rcode == -1)
+    dvd_display_error(w, "An error occured during DVD decoding.");
 
+  glw_destroy(w);
+  free(dp);
   return rcode;
 }
 
