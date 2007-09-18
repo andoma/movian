@@ -1,4 +1,4 @@
-include ../config.mak
+-include ../config.mak
 
 # core
 
@@ -161,12 +161,15 @@ DEPFLAG = -M
 
 OBJS = $(patsubst %.c,%.o, $(SRCS))
 DEPS= ${OBJS:%.o=%.d}
-INSTDIR= $(CURDIR)/../install/bin
+
+prefix ?= $(INSTALLPREFIX)
+INSTDIR= $(prefix)/bin
+
 all:	$(PROG)
 
 install:
 	mkdir -p $(INSTDIR)
-	cd $(.OBJDIR) && install ${PROG} $(INSTDIR)
+	cd $(.OBJDIR) && install -s ${PROG} $(INSTDIR)
 
 ${PROG}: $(.OBJDIR) $(OBJS) Makefile
 	cd $(.OBJDIR) && $(CC) $(LDFLAGS) -o $@ $(OBJS) \
