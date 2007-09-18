@@ -373,7 +373,7 @@ menu_push_top_menu(appi_t *ai, const char *title)
   glw_t *c;
   menu_t *m;
 
-  av_strlcpy(menutitle, title, sizeof(menutitle));
+  strncpy(menutitle, title, sizeof(menutitle) - 1);
   memcpy(menutitle + sizeof(menutitle) - 4, "...", 4);
 
   c = menu_create_menu(NULL, menutitle);
