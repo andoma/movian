@@ -1214,6 +1214,15 @@ browser_spawn(appi_t *ai)
   pthread_create(&ai->ai_tid, NULL, browser_start, ai);
 }
 
+
+
+app_t app_fb = {
+  .app_name = "Media library",
+  .app_icon = "icon://library.png",
+  .app_spawn = browser_spawn,
+};
+
+
 /********************************
  *
  * Directory content preview
@@ -1380,14 +1389,6 @@ peep_add(browser_t *b, const char *path, glw_t *parent, float weight)
   pthread_cond_signal(&b->b_peep_cond);
   pthread_mutex_unlock(&b->b_peep_lock);
 }
-
-
-
-app_t app_fb = {
-  .app_name = "Media library",
-  .app_icon = "icon://library.png",
-  .app_spawn = browser_spawn,
-};
 
 
 
