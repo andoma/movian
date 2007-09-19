@@ -99,7 +99,7 @@ typedef struct b_dir {
 TAILQ_HEAD(b_dir_queue, b_dir);
 
 typedef struct browser {
-  char *b_rootpath;
+  const char *b_rootpath;
 
   struct b_dir_queue b_dir_stack;
   pthread_mutex_t b_lock;
@@ -717,7 +717,8 @@ browser_dir_title(browser_t *b, b_dir_t *bd)
 
 
 static void
-browser_load_dir(browser_t *b, b_entry_t *src, char *path, int enq, glw_t *p)
+browser_load_dir(browser_t *b, b_entry_t *src, 
+		 const char *path, int enq, glw_t *p)
 {
   DIR *dir;
   struct dirent *d;
@@ -1065,7 +1066,7 @@ browser_back(browser_t *b)
 
 
 void
-browser(appi_t *ai, char *rootpath)
+browser(appi_t *ai, const char *rootpath)
 {
   browser_t *b;
   b_dir_t *bd;
@@ -1203,7 +1204,7 @@ browser(appi_t *ai, char *rootpath)
 static void *
 browser_start(void *aux)
 {
-  browser(aux, "/storage/media/");
+  browser(aux, config_get_str("mediaroot", "/"));
   return NULL;
 }
 

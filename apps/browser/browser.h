@@ -21,6 +21,6 @@
 
 void browser_init(void *aux);
 
-int browser(mediamaster_t *mm, char *rootpath);
+int browser(mediamaster_t *mm, const char *rootpath);
 
 #endif /* BROWSER_H */
