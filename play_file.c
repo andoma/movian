@@ -185,6 +185,8 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
     return INPUT_KEY_NEXT;
   }
 
+  fctx->flags |= AVFMT_FLAG_GENPTS;
+
   if(av_find_stream_info(fctx) < 0) {
     av_close_input_file(fctx);
     fprintf(stderr, "Unable to find stream info\n");
