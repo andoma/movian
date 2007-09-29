@@ -31,9 +31,9 @@
 #include <ffmpeg/common.h>
 
 #ifdef HAVE_LIBEXIF
-#include <exif-data.h>
-#include <exif-utils.h>
-#include <exif-loader.h>
+#include <libexif/exif-data.h>
+#include <libexif/exif-utils.h>
+#include <libexif/exif-loader.h>
 #endif
 
 #include "showtime.h"
