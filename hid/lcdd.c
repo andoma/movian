@@ -48,7 +48,7 @@ lcdd_thread(void *aux)
     fprintf(fp, "widget_add showtime w1 string\n");
     fprintf(fp, "widget_add showtime w2 string\n");
 
-    fprintf(fp, "widget_set showtime w1 1 1 \"Showtime 2.0\"\n");
+    fprintf(fp, "widget_set showtime w1 1 1 \"Showtime\"\n");
     fflush(fp);
 
     while(1) {
