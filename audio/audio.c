@@ -27,12 +27,9 @@
 #include "audio.h"
 #include "audio_ui.h"
 
-extern void audio_alsa_init(void);
-
 void
 audio_init(void)
 {
   audio_alsa_init();
   audio_widget_make();
-
 }

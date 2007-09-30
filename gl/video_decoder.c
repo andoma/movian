@@ -578,7 +578,7 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
 
 
 
-void *
+static void *
 vd_thread(void *aux)
 {
   video_decoder_t *vd = aux;

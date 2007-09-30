@@ -29,6 +29,7 @@
 
 #include "showtime.h"
 #include "hid/input.h"
+#include "audio/audio.h"
 #include "audio/audio_mixer.h"
 #include "audio/audio_ui.h"
 #include "audio/audio_iec958.h"

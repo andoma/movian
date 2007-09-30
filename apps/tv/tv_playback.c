@@ -191,7 +191,7 @@ iptv_miw_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 }
 
 
-glw_t *
+static glw_t *
 iptv_create_miw(iptv_player_t *iptv, iptv_channel_t *ich, uint32_t tag)
 {
   glw_t *c;
@@ -322,7 +322,7 @@ iptv_feed_info(glw_t *y, iptv_channel_t *ich)
 
 
 
-glw_t *
+static glw_t *
 iptv_create_extra_miw(iptv_player_t *iptv, iptv_channel_t *ich)
 {
   glw_t *y, *c;
@@ -596,7 +596,7 @@ iptv_connect(iptv_player_t *iptv)
  *
  */
 
-void
+static void
 iptv_key_event_unzoomed(iptv_player_t *iptv, int key)
 {
   glw_t *w = iptv->iptv_chlist->glw_selected;
@@ -646,7 +646,7 @@ iptv_key_event_unzoomed(iptv_player_t *iptv, int key)
 }
 
 
-void
+static void
 iptv_key_event_zoomed(iptv_player_t *iptv, int key)
 {
   glw_t *w = iptv->iptv_chlist->glw_selected;

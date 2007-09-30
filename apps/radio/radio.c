@@ -399,7 +399,7 @@ radio_thread(void *aux)
  *
  */
 
-void 
+static void 
 radio_spawn(appi_t *ai)
 {
   pthread_create(&ai->ai_tid, NULL, radio_thread, ai);
@@ -439,7 +439,7 @@ set_play_caption(radio_channel_t *rc, const char *metatxt)
  *
  */
 
-glw_t *
+static glw_t *
 radio_create_miw(radio_channel_t *rc, media_pipe_t *mp)
 {
   glw_t *x, *c;

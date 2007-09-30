@@ -1065,7 +1065,7 @@ browser_back(browser_t *b)
 
 
 
-void
+static void
 browser(appi_t *ai, const char *rootpath)
 {
   browser_t *b;

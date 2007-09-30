@@ -81,7 +81,7 @@ PROG = showtime
 CFLAGS += -g -Wall -Werror -funsigned-char -O2 $(HTS_CFLAGS)
 
 CFLAGS += -I/usr/local/include -I$(INCLUDES_INSTALL_BASE) -I$(CURDIR)
-CFLAGS += -Wno-deprecated-declarations
+CFLAGS += -Wno-deprecated-declarations -Wmissing-prototypes
 
 LDFLAGS += -L/usr/local/lib -L$(LIBS_INSTALL_BASE) -L/usr/X11R6/lib 
 

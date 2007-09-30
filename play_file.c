@@ -49,7 +49,7 @@ static int play_file_pre_launch_menu(const char *fname, appi_t *ai,
 				     media_pipe_t *mp);
 
 
-glw_t *
+static glw_t *
 play_file_create_miw(media_pipe_t *mp, mediainfo_t *mi, glw_t **pscp)
 {
   glw_t *x, *c;
@@ -93,7 +93,7 @@ play_file_create_miw(media_pipe_t *mp, mediainfo_t *mi, glw_t **pscp)
 
 
 
-glw_t *
+static glw_t *
 play_file_create_extra_miw(media_pipe_t *mp)
 {
   glw_t *x, *y, *c;

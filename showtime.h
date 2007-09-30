@@ -53,6 +53,7 @@ typedef struct {
 } average_t;
 
 
+extern inline void average_update(average_t *avg, int value);
 
 extern inline void
 average_update(average_t *avg, int value)

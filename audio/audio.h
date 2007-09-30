@@ -21,4 +21,6 @@
 
 void audio_init(void);
 
+void audio_alsa_init(void);
+
 #endif /* AUDIO__H */

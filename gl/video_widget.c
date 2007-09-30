@@ -433,7 +433,7 @@ vd_compute_avdiff(video_decoder_t *vd, media_pipe_t *mp, int64_t pts)
 }
 
 
-int64_t
+static int64_t
 vd_compute_blend(video_decoder_t *vd, gl_video_frame_t *fra,
 		  gl_video_frame_t *frb, int output_duration)
 {

@@ -192,6 +192,8 @@ typedef struct media_pipe {
  */
 
 
+extern inline void wrap_lock_codec(codecwrap_t *cw);
+
 extern inline void
 wrap_lock_codec(codecwrap_t *cw)
 {
@@ -199,6 +201,7 @@ wrap_lock_codec(codecwrap_t *cw)
 }
 
 
+extern inline void wrap_unlock_codec(codecwrap_t *cw);
 
 extern inline void
 wrap_unlock_codec(codecwrap_t *cw)

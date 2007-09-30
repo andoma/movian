@@ -109,7 +109,7 @@ menu_array_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 /*
  *
  */
-void
+static void
 menu_collapse(menu_t *m)
 {
   if(m->m_istop)

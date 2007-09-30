@@ -388,7 +388,7 @@ comp_mode(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
 
 
-void
+static void
 add_audio_mixer_control(glw_t *parent, glw_callback_t *cb, void *opaque)
 {
   glw_t *y;
@@ -407,7 +407,7 @@ add_audio_mixer_control(glw_t *parent, glw_callback_t *cb, void *opaque)
 }
 
 
-void
+static void
 audio_compressor_add_mode_selection(glw_t *p, struct compressor_data *comp,
 				    const char *str, int mode)
 {

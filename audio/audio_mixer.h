@@ -102,4 +102,6 @@ void audio_mixer_source_flush(audio_source_t *as);
 
 void audio_source_prio(audio_source_t *as);
 
+void audio_mixer_menu_setup(glw_t *parent);
+
 #endif /* AUDIO_MIXER_H */

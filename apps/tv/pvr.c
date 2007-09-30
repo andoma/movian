@@ -1510,7 +1510,7 @@ pvr_create_bar(pvr_t *pvr)
 /*
  *
  */
-void 
+static void 
 pvr_spawn(appi_t *ai)
 {
   pthread_create(&ai->ai_tid, NULL, pvr_thread, ai);

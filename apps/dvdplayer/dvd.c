@@ -55,7 +55,7 @@ static int dvd_ctrl_input(dvd_player_t *dp, int wait);
 
 
 
-glw_t *
+static glw_t *
 dvd_create_miw(dvd_player_t *dp, media_pipe_t *mp, const char *title)
 {
   glw_t *y, *x, *c;
@@ -291,7 +291,7 @@ dvd_filter_spu(void *aux, uint32_t sc, int codec_id)
 
 
 
-void
+static void
 dvd_ps_block(dvd_player_t *dp, uint8_t *buf, int len)
 { 
   uint32_t startcode;
@@ -1041,7 +1041,7 @@ dvd_langcode_to_string(uint16_t langcode)
  *
  */
 
-int
+static int
 dvd_subtitle_get_spu_name(dvd_player_t *dp, char *buf, int track, int *phys,
 			  int *iscurp)
 {
@@ -1068,7 +1068,7 @@ dvd_subtitle_get_spu_name(dvd_player_t *dp, char *buf, int track, int *phys,
 
 
 
-void 
+static void 
 dvd_spu_set_track(dvd_player_t *dp, int track)
 {
   if(track == -1) {
@@ -1177,7 +1177,7 @@ dvd_menu_spu_setup(glw_t *p, dvd_player_t *dp)
  *
  */
 
-int
+static int
 dvd_audio_get_track_name(dvd_player_t *dp, char *buf, int track, int *phys,
 			 int *iscurp)
 {
@@ -1245,7 +1245,7 @@ dvd_audio_get_track_name(dvd_player_t *dp, char *buf, int track, int *phys,
 }
 
 
-void 
+static void 
 dvd_audio_set_track(dvd_player_t *dp, int track)
 {
   if(track == -1) {

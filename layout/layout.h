@@ -38,6 +38,8 @@ appi_t *layout_get_cur_app(void);
 
 void layout_std_draw(float aspect);
 
+void layout_std_create(void);
+
 #endif /* LAYOUT_H */
 
 

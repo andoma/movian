@@ -169,7 +169,7 @@ layout_hide(appi_t *ai)
 }
 
 
-void
+static void
 draw_cube(float alpha)
 {
   glLineWidth(2.0);

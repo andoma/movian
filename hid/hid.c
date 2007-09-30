@@ -33,7 +33,7 @@
 #include "lircd.h"
 #include "imonpad.h"
 #include "lcdd.h"
-
+#include "hid.h"
 
 
 void

@@ -119,6 +119,7 @@ glw_t *tvh_create_pvrstatus(glw_t *parent, char pvrstatus, float weight);
 int tvh_get_pvrlog(tvheadend_t *tvh, tvevent_t *tve, int entry, 
 		   int istag);
 
+extern inline const char *propcmp(const char *a, const char *b);
 
 extern inline const char *
 propcmp(const char *a, const char *b)
@@ -130,6 +131,8 @@ propcmp(const char *a, const char *b)
     ? a + strlen(b) + 3 : NULL;
 }
 
+extern inline void eolcpy(char *dst, const char *src, size_t len);
+
 extern inline void
 eolcpy(char *dst, const char *src, size_t len)
 {
@@ -139,6 +142,8 @@ eolcpy(char *dst, const char *src, size_t len)
   }
   *dst = 0;
 }
+
+extern inline const char *nextline(const char *s);
 
 extern inline const char *
 nextline(const char *s)

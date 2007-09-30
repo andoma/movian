@@ -78,7 +78,7 @@ subtitles_free(subtitles_t *sub)
 /*
  *
  */
-subtitles_t *
+static subtitles_t *
 subtitles_load_finale(subtitles_t *sub, int nentries)
 {
   subtitle_entry_t *se;
@@ -99,7 +99,7 @@ subtitles_load_finale(subtitles_t *sub, int nentries)
 /*
  *
  */
-subtitles_t *
+static subtitles_t *
 subtitles_load_srt(const char *filename)
 {
   FILE *fp;
@@ -168,7 +168,7 @@ subtitles_load_srt(const char *filename)
 /*
  *
  */
-subtitles_t *
+static subtitles_t *
 subtitles_load_sub(const char *filename)
 {
   FILE *fp;

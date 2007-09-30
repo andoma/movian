@@ -486,7 +486,7 @@ rssbrowser_thread(void *aux)
  *
  */
 
-void 
+static void 
 rssbrowser_spawn(appi_t *ai)
 {
   pthread_create(&ai->ai_tid, NULL, rssbrowser_thread, ai);
