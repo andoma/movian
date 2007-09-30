@@ -534,8 +534,12 @@ mp_set_playstatus(media_pipe_t *mp, int status)
 
     
   case MP_STOP:
+
+    /* Unfreeze audio */
+
+    mp->mp_audio_decoder->ad_output->as_fifo.hold = 0;
     
-    /* First lock queues */
+    /* Lock queues */
 
     pthread_mutex_lock(&mp->mp_mutex);
 
