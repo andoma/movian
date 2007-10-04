@@ -369,8 +369,9 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
       mb->mb_data_type = MB_VIDEO;
       mb->mb_rate = 0;
       mb->mb_keyframe = 1;
-      mb->mb_data = malloc(pkt.size);
+      mb->mb_data = malloc(pkt.size + FF_INPUT_BUFFER_PADDING_SIZE);
       memcpy(mb->mb_data, pkt.data, pkt.size);
+      memset(mb->mb_data + pkt.size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
       mq = &mp->mp_video;
 
     } else if(pkt.stream_index == mp->mp_audio.mq_stream && 
