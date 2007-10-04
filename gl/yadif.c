@@ -22,6 +22,7 @@
 #include <inttypes.h>
 #include <math.h>
 #include <malloc.h>
+#include "yadif.h"
 
 #define MIN(a,b) ((a) > (b) ? (b) : (a))
 #define MAX(a,b) ((a) < (b) ? (b) : (a))
