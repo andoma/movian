@@ -263,29 +263,30 @@ gl_sysglue_mainloop(void)
 
   while(1) {
 
-    while(XPending(x11state.display)) {
-      XNextEvent(x11state.display, &event);
+    if(frame_duration != 0) {
+
+      while(XPending(x11state.display)) {
+	XNextEvent(x11state.display, &event);
       
-      switch(event.type) {
-      case KeyPress:
-	gl_keypress(&event);
-	break;
+	switch(event.type) {
+	case KeyPress:
+	  gl_keypress(&event);
+	  break;
 
-      case ConfigureNotify:
-	w = event.xconfigure.width;
-	h = event.xconfigure.height;
-	glViewport(0, 0, w, h);
-	x11state.aspect_ratio = (float)w / (float)h;
-	break;
+	case ConfigureNotify:
+	  w = event.xconfigure.width;
+	  h = event.xconfigure.height;
+	  glViewport(0, 0, w, h);
+	  x11state.aspect_ratio = (float)w / (float)h;
+	  break;
 
-      default:
-	break;
+	default:
+	  break;
+	}
       }
-    }
 
-    if(frame_duration != 0)
       layout_std_draw(x11state.aspect_ratio);
-
+    }
     glFlush();
     glXSwapBuffers(x11state.display, x11state.win);
     gl_update_timings();

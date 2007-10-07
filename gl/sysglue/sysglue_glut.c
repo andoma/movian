@@ -256,7 +256,8 @@ gl_sysglue_mainloop(void)
 static void 
 glut_render_scene(void)
 {
-  layout_std_draw();
+  if(frame_duration != 0)
+    layout_std_draw();
   glutSwapBuffers();
   gl_update_timings();
   glw_reaper();
