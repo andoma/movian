@@ -102,16 +102,14 @@ gl_too_fast(void)
   else if(!strcmp((const char *)glvendor, "ATI Technologies Inc.")) {
     fprintf(stderr, 
 	    "You seem to be using an ATI driver on linux\n"
-	    "To sync GL output to vertical refresh, either enable this using "
-	    "the fglrxconfig program,\n"
-	    "or add the following line in the device section in xorg config\n"
-	    "\n"
-	    "\tOption \"Capabilities\" \"0x00000800\"\n"
-	    "\n"
+	    "To sync GL output to vertical refresh, please enable this "
+	    "using the driconf program\n"
 	    "Sorry for the inconvenience\n");
   }
 #endif
-
+  else {
+    fprintf(stderr, "Read the README file for more info\n");
+  }
   _exit(0);
 }
 
