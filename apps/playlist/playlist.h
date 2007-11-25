@@ -19,9 +19,9 @@
 #ifndef PLAYLIST_H
 #define PLAYLIST_H
 
-struct mediainfo;
+void playlist_spawn(void);
 
-void playlist_init(void *aux);
+struct mediainfo;
 
 int playlist_enqueue(const char *path, struct mediainfo *mi, int flush);
 

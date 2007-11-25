@@ -414,7 +414,7 @@ menu_pop_top_menu(appi_t *ai)
 void
 menu_init_app(appi_t *ai)
 {
-  menu_push_top_menu(ai, ai->ai_app->app_name);
+  menu_push_top_menu(ai, ai->ai_name);
 }
 
 

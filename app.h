@@ -22,18 +22,14 @@
 #include "hid/input.h"
 #include "media.h"
 
-TAILQ_HEAD(app_queue, app);
-TAILQ_HEAD(appi_queue, appi);
+LIST_HEAD(appi_list, appi);
 
-extern struct app_queue apps;
-extern struct appi_queue appis;
-
+extern struct appi_list appis;
 
 #define appi_menu_top(ai) ((ai)->ai_menu)
 
 typedef struct appi {
-  LIST_ENTRY(appi) ai_app_link;
-  TAILQ_ENTRY(appi) ai_global_link;
+  LIST_ENTRY(appi) ai_global_link;
 
   ic_t ai_ic;
   media_pipe_t ai_mp;
@@ -54,8 +50,6 @@ typedef struct appi {
 
   pthread_t ai_tid;
 
-  struct app *ai_app;
-
   float ai_req_aspect;         /* requested aspect ratio, for
 				  auto layouting */
   int ai_layouted;
@@ -65,6 +59,10 @@ typedef struct appi {
 
   int ai_visible;
 
+  const char *ai_name;
+
+  const char *ai_icon;
+
   /* These are stupid */
 
   struct play_list *ai_play_list;
@@ -72,49 +70,8 @@ typedef struct appi {
 
 } appi_t;
 
-
-
-typedef struct app {
-  const char *app_name;
-  const char *app_icon;
-  
-  void (*app_spawn)(appi_t *ai);
-
-  glw_callback_t *app_win_callback;
-
-  float app_def_aspect;
-
-  TAILQ_ENTRY(app) app_link;
-  
-  LIST_HEAD(, appi) app_instances;
-
-  glw_t *app_widget;                /* Created by layouter */
-  
-  int app_max_instances;
-
-  int app_cur_instances;
-
-  int app_auto_spawn;               /* Spawn upon startup */
-
-} app_t;
-
-void app_register(app_t *a);
-
-appi_t *appi_spawn(app_t *a, int visible);
-
-appi_t *appi_find(app_t *a, int visible, int create);
-
-#define APP_REGISTER(name) do {			\
-  extern app_t name;				\
-  app_register(&name);				\
-} while(0)
-
-void appi_hide(appi_t *ai);
-
-appi_t *appi_spawn2(app_t *a, glw_t *p);
-
 int appi_widget_post_key(glw_t *w, void *opaque, glw_signal_t signal, ...);
 
-void app_init(void);
+appi_t *appi_spawn(const char *name, const char *icon);
 
 #endif /* APP_H */

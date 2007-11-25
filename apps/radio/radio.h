@@ -19,6 +19,6 @@
 #ifndef RADIO_H
 #define RADIO_H
 
-void radio_init(void *aux);
+void radio_spawn(void);
 
 #endif /* RADIO_H */

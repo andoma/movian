@@ -39,6 +39,7 @@
 #include "play_file.h"
 #include "miw.h"
 #include "mediaprobe.h"
+#include "browser.h"
 
 TAILQ_HEAD(peep_work_head, peep_work);
 TAILQ_HEAD(be_queue, b_entry);
@@ -1209,19 +1210,12 @@ browser_start(void *aux)
 }
 
 
-static void
-browser_spawn(appi_t *ai)
+void
+browser_spawn(void)
 {
+  appi_t *ai = appi_spawn("Browser", "icon://library.png");
   pthread_create(&ai->ai_tid, NULL, browser_start, ai);
 }
-
-
-
-app_t app_fb = {
-  .app_name = "Media library",
-  .app_icon = "icon://library.png",
-  .app_spawn = browser_spawn,
-};
 
 
 /********************************

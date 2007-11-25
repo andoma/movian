@@ -30,8 +30,6 @@ void layout_hide(appi_t *ai);
 glw_t *layout_win_create(const char *name, const char *icon,
 			 glw_callback_t *cb, void *opaque);
 
-void layout_register_app(app_t *a);
-
 glw_t *bar_title(const char *str);
 
 appi_t *layout_get_cur_app(void);
@@ -40,6 +38,6 @@ void layout_std_draw(float aspect);
 
 void layout_std_create(void);
 
+void layout_register_appi(appi_t *ai);
+
 #endif /* LAYOUT_H */
-
-

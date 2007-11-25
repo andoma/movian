@@ -19,6 +19,6 @@
 #ifndef RSSBROWSER_H
 #define RSSBROWSER_H
 
-void rssbrowser_init(void *aux);
+void rssbrowser_spawn(appi_t *ai);
 
 #endif /* RSSBROWSER_H */

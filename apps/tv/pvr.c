@@ -35,6 +35,7 @@
 #include "app.h"
 #include "menu.h"
 #include "layout/layout.h"
+#include "pvr.h"
 
 typedef enum {
   PVR_SA_NONE,
@@ -1510,14 +1511,9 @@ pvr_create_bar(pvr_t *pvr)
 /*
  *
  */
-static void 
-pvr_spawn(appi_t *ai)
+void 
+pvr_spawn(void)
 {
+  appi_t *ai = appi_spawn("Video Recorder", "icon://pvr.png");
   pthread_create(&ai->ai_tid, NULL, pvr_thread, ai);
 }
-
-app_t app_pvr = {
-  .app_name = "Video Recorder",
-  .app_icon = "icon://pvr.png",
-  .app_spawn = pvr_spawn
-};

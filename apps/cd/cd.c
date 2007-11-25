@@ -37,6 +37,7 @@
 #include "apps/dvdplayer/dvd.h"
 #include "input.h"
 #include "miw.h"
+#include "cd.h"
 
 
 
@@ -199,21 +200,9 @@ cd_start(void *aux)
 }
 
 
-static void
-cd_spawn(appi_t *ai)
+void
+cd_spawn(void)
 {
+  appi_t *ai = appi_spawn("CD/DVD Player", "icon://cd.png");
   pthread_create(&ai->ai_tid, NULL, cd_start, ai);
 }
-
-
-/*
- *
- */
-
-app_t app_cd = {
-  .app_name = "CD/DVD Player",
-  .app_icon = "icon://cd.png",
-  .app_spawn = cd_spawn,
-  .app_max_instances = 1,
-  .app_auto_spawn = 1,
-};

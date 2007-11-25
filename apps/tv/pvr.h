@@ -19,6 +19,6 @@
 #ifndef PVR_H
 #define PVR_H
 
-void pvr_init(void *aux);
+void pvr_spawn(void);
 
 #endif /* PVR_H */

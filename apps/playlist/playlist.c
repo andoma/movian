@@ -39,7 +39,7 @@
 #include "mediaprobe.h"
 #include "miw.h"
 
-app_t app_pl;
+static appi_t *playlist_appi;
 
 TAILQ_HEAD(play_list_entry_queue, play_list_entry);
 
@@ -151,11 +151,7 @@ playlist_enqueue_playlist_pls(const char *path)
 void
 playlist_eventstrike(inputevent_t *ie)
 {
-  appi_t *ai;
-
-  ai = appi_find(&app_pl, 0, 0);
-  if(ai != NULL)
-    input_postevent(&ai->ai_ic, ie);
+  input_postevent(&playlist_appi->ai_ic, ie);
 }
 /*
  *
@@ -164,12 +160,8 @@ playlist_eventstrike(inputevent_t *ie)
 void
 playlist_flush(void)
 {
-  appi_t *ai;
+  appi_t *ai = playlist_appi;
   play_list_t *pl;
-
-  ai = appi_find(&app_pl, 0, 0);
-  if(ai == NULL)
-    return;
 
   pl = ai->ai_play_list;
 
@@ -212,9 +204,7 @@ playlist_enqueue(const char *path, mediainfo_t *mi, int flush)
   glw_t *w, *y;
   int o, slot = 1;
   char tmp[40];
-  appi_t *ai;
-
-  ai = appi_find(&app_pl, 0, 1);
+  appi_t *ai = playlist_appi;
 
   pl = ai->ai_play_list;
 
@@ -786,10 +776,13 @@ playlist_start(void *aux)
 
 
 
-static void
-playlist_spawn(appi_t *ai)
+void
+playlist_spawn(void)
 {
+  appi_t *ai = appi_spawn("Playlist", "icon://playlist.png");
   play_list_t *pl = calloc(1, sizeof(play_list_t));
+
+  playlist_appi = ai;
 
   input_init(&pl->pl_ic); /* Input keys forwarded to playback thread */
 
@@ -816,14 +809,6 @@ playlist_spawn(appi_t *ai)
 
   pthread_create(&ai->ai_tid, NULL, playlist_start, pl);
 }
-
-
-app_t app_pl = {
-  .app_name = "Playlist",
-  .app_icon = "icon://playlist.png",
-  .app_spawn = playlist_spawn
-};
-
 
 
 /******************************************************************************

@@ -486,16 +486,9 @@ rssbrowser_thread(void *aux)
  *
  */
 
-static void 
+void 
 rssbrowser_spawn(appi_t *ai)
 {
+  ai = appi_spawn("RSS Browser", "icon://rss.png");
   pthread_create(&ai->ai_tid, NULL, rssbrowser_thread, ai);
 }
-
-
-
-app_t app_rss = {
-  .app_name = "RSS browser",
-  .app_icon = "icon://rss.png",
-  .app_spawn = rssbrowser_spawn
-};

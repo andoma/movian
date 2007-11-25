@@ -515,7 +515,7 @@ layout_apps(float aspect)
   rc.rc_aspect = aspect;
   rc.rc_alpha = 1.0f;
 
-  TAILQ_FOREACH(ai, &appis, ai_global_link) {
+  LIST_FOREACH(ai, &appis, ai_global_link) {
     ai->ai_got_fullscreen = ai->ai_req_fullscreen && layout_allow_fullscreen;
     if(ai->ai_widget != NULL)
       glw_layout(ai->ai_widget, &rc);
@@ -560,12 +560,10 @@ appi_portal_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
 
 void
-layout_register_app(app_t *a)
+layout_register_appi(appi_t *ai)
 {
   glw_t *w, *z, *x, *y;
-  appi_t *ai;
   int i;
-  ai = appi_spawn2(a, NULL);
 
   for(i = 0; i < 4; i++) {
 
@@ -588,7 +586,7 @@ layout_register_app(app_t *a)
     glw_create(GLW_TEXT_BITMAP,
 	       GLW_ATTRIB_WEIGHT, 0.15,
 	       GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
-	       GLW_ATTRIB_CAPTION, a->app_name,
+	       GLW_ATTRIB_CAPTION, ai->ai_name,
 	       GLW_ATTRIB_PARENT, y,
 	       NULL);
     
@@ -610,7 +608,7 @@ layout_register_app(app_t *a)
 
     glw_create(GLW_BITMAP,
 	       GLW_ATTRIB_PARENT, x,
-	       GLW_ATTRIB_FILENAME, a->app_icon,
+	       GLW_ATTRIB_FILENAME, ai->ai_icon,
 	       NULL);
 
     glw_create(GLW_DUMMY,

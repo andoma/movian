@@ -16,142 +16,39 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <string.h>
+
 #include "showtime.h"
 #include "app.h"
 #include "layout/layout.h"
 #include "menu.h"
 
-struct app_queue apps;
-struct appi_queue appis;
-struct appi_queue appis_hidden;
-
-void
-app_init(void)
-{
-  TAILQ_INIT(&apps);
-  TAILQ_INIT(&appis);
-  TAILQ_INIT(&appis_hidden);
-}
-
-void
-app_register(app_t *a)
-{
-  layout_register_app(a);
-
-  TAILQ_INSERT_TAIL(&apps, a, app_link);
-  if(a->app_auto_spawn)
-    appi_spawn(a, 0);
-}
+struct appi_list appis;
 
 
 appi_t *
-appi_spawn(app_t *a, int visible)
-{
-  appi_t *ai;
-
-  TAILQ_FOREACH(ai, &appis_hidden, ai_global_link) {
-    if(ai->ai_app == a) {
-      if(!visible)
-	return ai;
-
-      TAILQ_REMOVE(&appis_hidden, ai, ai_global_link);
-      TAILQ_INSERT_TAIL(&appis, ai, ai_global_link);
-      printf("%p moved from hidden to visible\n", ai);
-      return ai;
-    }
-  }
-  
- if(a->app_max_instances && a->app_cur_instances == a->app_max_instances)
-    return NULL;
-
-  ai = calloc(1, sizeof(appi_t));
-
-  ai->ai_app = a;
-  a->app_cur_instances++;
-
-  menu_init_app(ai);
-#if 0  
-  ai->ai_widget = layout_win_create(a->app_name, a->app_icon, 
-				    a->app_win_callback, ai);
-#endif
-
-  if(a->app_def_aspect == 0)
-    ai->ai_req_aspect = 1.0f;
-
-  if(visible) {
-    TAILQ_INSERT_TAIL(&appis, ai, ai_global_link);
-  } else {
-    TAILQ_INSERT_TAIL(&appis_hidden, ai, ai_global_link);
-    printf("%s created as hidden one (%p)\n", 
-	   a->app_name, ai);
-  }
-
-  LIST_INSERT_HEAD(&a->app_instances, ai, ai_app_link);
-
-  input_init(&ai->ai_ic);
-  mp_init(&ai->ai_mp, a->app_name, ai);
-  ai->ai_app->app_spawn(ai);
-  return ai;
-}
-
-
-appi_t *
-appi_find(app_t *a, int visible, int create)
-{
-  appi_t *ai;
-
-  TAILQ_FOREACH(ai, &appis, ai_global_link) {
-    if(ai->ai_app == a)
-      return ai;
-  }
-
-  TAILQ_FOREACH(ai, &appis_hidden, ai_global_link) {
-    if(ai->ai_app == a)
-      return ai;
-  }
-
-  return create ? appi_spawn(a, visible) : NULL;
-}
-
-
-
-void
-appi_hide(appi_t *ai)
-{
-  TAILQ_REMOVE(&appis, ai, ai_global_link);
-  TAILQ_INSERT_TAIL(&appis_hidden, ai, ai_global_link);
-}
-
-
-
-
-appi_t *
-appi_spawn2(app_t *a, glw_t *p)
+appi_spawn(const char *name, const char *icon)
 {
   appi_t *ai;
 
   ai = calloc(1, sizeof(appi_t));
 
-  ai->ai_app = a;
-  a->app_cur_instances++;
+  LIST_INSERT_HEAD(&appis, ai, ai_global_link);
+
+  ai->ai_name = strdup(name);
+  ai->ai_icon = strdup(icon);
 
   menu_init_app(ai);
 
-  ai->ai_widget = p;
-
-  if(a->app_def_aspect == 0)
-    ai->ai_req_aspect = 1.0f;
-
-  TAILQ_INSERT_TAIL(&appis, ai, ai_global_link);
-
-  LIST_INSERT_HEAD(&a->app_instances, ai, ai_app_link);
+  ai->ai_req_aspect = 1.0f;
 
   input_init(&ai->ai_ic);
-  mp_init(&ai->ai_mp, a->app_name, ai);
-  ai->ai_app->app_spawn(ai);
+  mp_init(&ai->ai_mp, ai->ai_name, ai);
+
+  layout_register_appi(ai);
+
   return ai;
 }
-
 
 /*
  *

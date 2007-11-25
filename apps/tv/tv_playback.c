@@ -874,9 +874,10 @@ iptv_loop(void *aux)
 
 
 
-static void
-iptv_spawn(appi_t *ai)
+void
+iptv_spawn(void)
 {
+  appi_t *ai = appi_spawn("TV", "icon://tv.png");
   iptv_player_t *iptv = calloc(1, sizeof(iptv_player_t));
 
   pthread_mutex_init(&iptv->iptv_mutex, NULL);
@@ -887,17 +888,3 @@ iptv_spawn(appi_t *ai)
   iptv->iptv_appi = ai;
   pthread_create(&ai->ai_tid, NULL, iptv_loop, iptv);
 }
-
-
-
-
-
-/*
- *
- */
-
-app_t app_iptv = {
-  .app_name = "TV",
-  .app_icon = "icon://tv.png",
-  .app_spawn = iptv_spawn,
-};

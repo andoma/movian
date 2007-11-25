@@ -19,6 +19,6 @@
 #ifndef CD_H
 #define CD_H
 
-void cd_init(void *aux);
+void cd_spawn(void);
 
 #endif /* CD_H */

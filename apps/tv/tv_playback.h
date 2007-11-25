@@ -99,4 +99,6 @@ typedef struct iptv_player {
 
 } iptv_player_t;
 
+void iptv_spawn(void);
+
 #endif /* TV_PLAYBACK_H */

@@ -399,18 +399,13 @@ radio_thread(void *aux)
  *
  */
 
-static void 
-radio_spawn(appi_t *ai)
+void 
+radio_spawn(void)
 {
+  appi_t *ai = appi_spawn("Radio", "icon://radio.png");
+
   pthread_create(&ai->ai_tid, NULL, radio_thread, ai);
 }
-
-
-app_t app_radio = {
-  .app_name = "Radio",
-  .app_icon = "icon://radio.png",
-  .app_spawn = radio_spawn
-};
 
 
 /*

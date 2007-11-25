@@ -62,12 +62,29 @@ ffmpeglockmgr(int lock)
 }
 
 
+/*
+ * We dont want to include a lot, hence the local prototypes
+ */
+static void
+init_apps(void)
+{
+#define INITAPP(n) do {				\
+  extern void n ## _spawn(void);		\
+  n ## _spawn();				\
+} while(0)
+
+  INITAPP(iptv);
+  INITAPP(browser);
+  INITAPP(cd);
+  INITAPP(playlist);
+  INITAPP(pvr);
+  INITAPP(radio);
+  INITAPP(rssbrowser);
+}
 
 /*
  *
  */
-
-
 int
 main(int argc, char **argv)
 {
@@ -123,20 +140,9 @@ main(int argc, char **argv)
 
   layout_std_create();
 
-  app_init();
-
-  APP_REGISTER(app_iptv);
-  APP_REGISTER(app_cd);
-  APP_REGISTER(app_fb);
-  APP_REGISTER(app_radio);
-  APP_REGISTER(app_pl);
-  APP_REGISTER(app_pvr);
-  APP_REGISTER(app_rss);
-
-#if 0
-  APP_REGISTER(app_trailers);
-#endif
   inputhandler_register(200, main_input_event);
+
+  init_apps();
 
   gl_sysglue_mainloop();
   return 0;
