@@ -157,6 +157,9 @@ showtime_exit(int suspend)
 {
   settings_write();
 
+  if(suspend == -1)
+    _exit(0);
+
   _exit(suspend ? 10 : 11);
 }
 
@@ -172,6 +175,10 @@ main_input_event(inputevent_t *ie)
     switch(ie->u.key) {
     default:
       break;
+
+    case INPUT_KEY_QUIT:
+      showtime_exit(-1);
+      return 1;
 
     case INPUT_KEY_POWER:
       showtime_exit(1);

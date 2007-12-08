@@ -77,6 +77,7 @@ typedef enum {
   INPUT_KEY_RECORD_WEEKLY,
   INPUT_KEY_RECORD_CANCEL,
   INPUT_KEY_RECORD_TOGGLE,
+  INPUT_KEY_QUIT,
 } input_key_t;
 
 typedef enum {
