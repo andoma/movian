@@ -393,8 +393,6 @@ rssbrowser_thread(void *aux)
       sleep(1);
   }
 
-  ai->ai_visible = 1;
-
   while(1) {
 
     input_getevent(&ai->ai_ic, 1, &ie, NULL);

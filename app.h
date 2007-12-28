@@ -44,20 +44,17 @@ typedef struct appi {
 
   int ai_got_fullscreen;
   
-  glw_t *ai_widget;             /* Created by spawn() function */
+  glw_t *ai_widget;             /* Main application widget */
+
+  glw_t *ai_preview;            /* Preview for displaying some info in
+				   the app browser */
 
   glw_t *ai_menu;               /* Top level menu */
 
   pthread_t ai_tid;
 
-  float ai_req_aspect;         /* requested aspect ratio, for
-				  auto layouting */
-  int ai_layouted;
-  
   int ai_no_input_events;      /* This instance does not react
 				  to input events at all */
-
-  int ai_visible;
 
   const char *ai_name;
 
@@ -66,7 +63,6 @@ typedef struct appi {
   /* These are stupid */
 
   struct play_list *ai_play_list;
-  struct browser *ai_browser;
 
 } appi_t;
 

@@ -841,8 +841,6 @@ iptv_loop(void *aux)
 
     iptv_connect(iptv);
     
-    ai->ai_visible = 1;
-
     while(tvh->tvh_fp != NULL) {
 
       input_getevent(&ai->ai_ic, 1, &ie, NULL);
@@ -864,8 +862,6 @@ iptv_loop(void *aux)
 	break;
       }
     }
-
-    ai->ai_visible = 0;
 
     glw_destroy(iptv->iptv_chlist);
   }

@@ -1,5 +1,5 @@
 /*
- *  Cube layout (on mirror plane)
+ *  Simple layout (on mirror plane)
  *  Copyright (C) 2007 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -31,12 +31,8 @@
 
 int layout_menu_display;
 glw_t *root_menu;
-glw_t *wroot[4];
-glw_t *root_nav[4];
-
-static int curface;
-
-float face_alpha[4];
+glw_t *wroot;
+glw_t *root_nav;
 
 static int layout_allow_fullscreen;
 
@@ -57,10 +53,10 @@ layout_entry_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
   return 0;
 }
 
-appi_t *
+static appi_t *
 layout_get_cur_app(void)
 {
-  glw_t *w = root_nav[curface & 3];
+  glw_t *w = root_nav;
 
   if(!(w->glw_flags & GLW_ZOOMED))
     return NULL;
@@ -99,6 +95,7 @@ layout_nav_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 	r = glw_nav_signal(w, GLW_SIGNAL_DOWN);
 	break;
       case INPUT_KEY_ENTER:
+      case INPUT_KEY_RIGHT:
 	r = glw_nav_signal(w, GLW_SIGNAL_ENTER);
 	break;
       default:
@@ -119,7 +116,6 @@ void
 layout_std_create(void)
 {
   glw_t *y;
-  int i;
 
   inputhandler_register(300, hiprio_input_event);
   inputhandler_register(200,   menu_input_event);
@@ -127,19 +123,15 @@ layout_std_create(void)
 
   root_menu = menu_push_top_menu(NULL, "Showtime");
 
-  for(i = 0; i < 4; i++) {
-  
-    y = wroot[i] = glw_create(GLW_CONTAINER_Y, 
+  y = wroot = glw_create(GLW_CONTAINER_Y, 
 			      NULL);
   
-    root_nav[i] = 
-      glw_create(GLW_NAV,
-		 GLW_ATTRIB_MODE, GLW_MODE_XFADE,
-		 GLW_ATTRIB_Y_SLICES, 15,
-		 GLW_ATTRIB_PARENT, y,
-		 GLW_ATTRIB_SIGNAL_HANDLER, layout_nav_callback, NULL, 0,
-		 NULL);
-  }
+  root_nav = 
+    glw_create(GLW_NAV,
+	       GLW_ATTRIB_Y_SLICES, 15,
+	       GLW_ATTRIB_PARENT, y,
+	       GLW_ATTRIB_SIGNAL_HANDLER, layout_nav_callback, NULL, 0,
+	       NULL);
 }
 
 
@@ -149,65 +141,16 @@ layout_std_create(void)
 void
 layout_hide(appi_t *ai)
 {
-  glw_t *w = root_nav[curface & 3];
+  glw_t *w = root_nav;
   w->glw_flags &= ~GLW_ZOOMED;
 }
 
-
-static void
-draw_cube(float alpha)
-{
-  if(alpha < 0.01)
-    return;
-
-  glLineWidth(2.0);
-  glEnable(GL_BLEND);
-  //  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    
-  alpha *= 0.3;
-
-  glColor4f(1, 1, 1, alpha * face_alpha[0]);
-  glBegin(GL_LINE_LOOP);
-  glVertex3f(-1.0f, -1.0f,  1.0f);
-  glVertex3f( 1.0f, -1.0f,  1.0f);
-  glVertex3f( 1.0f,  1.0f,  1.0f);
-  glVertex3f(-1.0f,  1.0f,  1.0f);
-  glEnd();
-
-  glColor4f(1, 1, 1, alpha * face_alpha[1]);
-  glBegin(GL_LINE_LOOP);
-  glVertex3f(-1.0f, -1.0f, -1.0f);
-  glVertex3f(-1.0f, -1.0f,  1.0f);
-  glVertex3f(-1.0f,  1.0f,  1.0f);
-  glVertex3f(-1.0f,  1.0f, -1.0f);
-  glEnd();
-
-  glColor4f(1, 1, 1, alpha * face_alpha[2]);
-  glBegin(GL_LINE_LOOP);
-  glVertex3f(-1.0f, -1.0f, -1.0f);
-  glVertex3f( 1.0f, -1.0f, -1.0f);
-  glVertex3f( 1.0f,  1.0f, -1.0f);
-  glVertex3f(-1.0f,  1.0f, -1.0f);
-  glEnd();
-
-  glColor4f(1, 1, 1, alpha * face_alpha[3]);
-  glBegin(GL_LINE_LOOP);
-  glVertex3f( 1.0f, -1.0f,  1.0f);
-  glVertex3f( 1.0f, -1.0f, -1.0f);
-  glVertex3f( 1.0f,  1.0f, -1.0f);
-  glVertex3f( 1.0f,  1.0f,  1.0f);
-  glEnd();
-
-  glLineWidth(1.0);
-}
 
 
 static void
 draw_world(float ca, float rot, float alpha, float aspect,
 	   float gadget_displace)
 {
-  int i;
   glw_rctx_t rc;
   appi_t *ai;
 
@@ -220,48 +163,27 @@ draw_world(float ca, float rot, float alpha, float aspect,
 
   memset(&rc, 0, sizeof(rc));
   rc.rc_aspect = aspect;
-  glPushMatrix();
-  glTranslatef(0, 1, 0);
-  glRotatef(rot, 0.0f, 1.0f, 0.0f);
-  draw_cube(ca * alpha);
-  glPopMatrix();
-
-#if 0
-  glBegin(GL_LINE_LOOP);
-  glColor3f(1,1,1);
-  glVertex3f(-1.0f, -1.0f, 0.0f);
-  glVertex3f( 1.0f, -1.0f, 0.0f);
-  glVertex3f( 1.0f,  1.0f, 0.0f);
-  glVertex3f(-1.0f,  1.0f, 0.0f);
-  glEnd();
-#endif
-
 
   rc.rc_zoom = 1.0f;
-  for(i = 0; i <4; i++) {
-    rc.rc_alpha = alpha * face_alpha[i];
-    if(rc.rc_alpha == 0)
-      continue;
-    glPushMatrix();
-    glTranslatef(0, 1, 0);
-    glRotatef((rot - i * 90), 0.0f, 1.0f, 0.0f);
-    glTranslatef(0, 0, 1);
+  rc.rc_alpha = alpha;
+  glPushMatrix();
+  glTranslatef(0, 1, 0);
+  glTranslatef(0, 0, 1);
 
 
 
-    glClipPlane(GL_CLIP_PLANE0, clip_left);
-    glClipPlane(GL_CLIP_PLANE1, clip_right);
-    glClipPlane(GL_CLIP_PLANE2, clip_top);
-    glClipPlane(GL_CLIP_PLANE3, clip_bottom);
+  glClipPlane(GL_CLIP_PLANE0, clip_left);
+  glClipPlane(GL_CLIP_PLANE1, clip_right);
+  glClipPlane(GL_CLIP_PLANE2, clip_top);
+  glClipPlane(GL_CLIP_PLANE3, clip_bottom);
+  
+  glEnable(GL_CLIP_PLANE0);
+  glEnable(GL_CLIP_PLANE1);
+  //    glEnable(GL_CLIP_PLANE2);
+  glEnable(GL_CLIP_PLANE3);
 
-    glEnable(GL_CLIP_PLANE0);
-    glEnable(GL_CLIP_PLANE1);
-    //    glEnable(GL_CLIP_PLANE2);
-    glEnable(GL_CLIP_PLANE3);
-
-    glw_render(wroot[i], &rc);
-    glPopMatrix();
-  }
+  glw_render(wroot, &rc);
+  glPopMatrix();
 
   glDisable(GL_CLIP_PLANE0);
   glDisable(GL_CLIP_PLANE1);
@@ -290,11 +212,10 @@ void
 layout_std_draw(float aspect0)
 {
   glw_rctx_t rc;
-  float a, b;
   appi_t *ai;
   static float ca; /* cube alpha */
   static float rot; /* cube rotation */
-  int i, fs;
+  int fs;
   float cz;
   static float topinfospace;
   float aspect;
@@ -304,21 +225,6 @@ layout_std_draw(float aspect0)
   glw_vertex_t fcol_xyz;
   glw_vertex_t wextra_xyz;
 
-
-  a = curface * 90;
-
-  b = GLW_LP(16, rot, a);
-
-  if(fabs(rot - b) < 0.01) {
-    /* no motion, normalize rotation */
-    curface = curface & 3;
-    b = curface * 90;
-    ca = GLW_LP(16, ca, 0);
-  } else {
-    ca = GLW_LP(16, ca, 1);
-  }
-  rot = b;
-  
 
   /* Camera and "world" animation */
 
@@ -368,12 +274,7 @@ layout_std_draw(float aspect0)
   rc.rc_aspect = aspect;
   rc.rc_zoom = 1;
 
-  for(i = 0; i < 4; i++) {
-    face_alpha[i] = cos((b - i * 90) / 360.0f * M_PI * 2);
-    if(face_alpha[i] < 0.25)
-      face_alpha[i] = 0;
-    glw_layout(wroot[i], &rc);
-  }
+  glw_layout(wroot, &rc);
 
   layout_apps(aspect);
   layout_gadgets(aspect);
@@ -498,14 +399,13 @@ mirror_input_event(inputevent_t *ie)
   case INPUT_KEY:
     switch(ie->u.key) {
     case INPUT_KEY_TASKSWITCH:
-      curface++;
       return 0;
     default:
       break;
     }
   }
 
-  if(glw_drop_signal(root_nav[curface & 3], GLW_SIGNAL_INPUT_EVENT, ie))
+  if(glw_drop_signal(root_nav, GLW_SIGNAL_INPUT_EVENT, ie))
     return 1;
   
   return 0;
@@ -525,14 +425,6 @@ layout_apps(float aspect)
   LIST_FOREACH(ai, &appis, ai_global_link) {
     rc.rc_aspect = aspect;
     ai->ai_got_fullscreen = ai->ai_req_fullscreen && layout_allow_fullscreen;
-    if(ai->ai_widget != NULL)
-      glw_layout(ai->ai_widget, &rc);
-
-    if(ai->ai_preview != NULL) {
-      rc.rc_aspect = aspect * 1.4; /* XXX: too magic */
-      glw_layout(ai->ai_preview, &rc);
-    }
-
     menu_layout(ai->ai_menu);
   }
   menu_layout(root_menu);
@@ -546,7 +438,7 @@ appi_content_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
   va_start(ap, signal);
   appi_t *ai = opaque;
   glw_t *c = ai->ai_widget;
-  glw_rctx_t *rc, rc0;
+  glw_rctx_t *rc;
   inputevent_t *ie;
 
   if(c != NULL) {
@@ -560,10 +452,15 @@ appi_content_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
     case GLW_SIGNAL_RENDER:
       rc = va_arg(ap, void *);
-      rc0 = *rc;
-      rc0.rc_zoom = 1;
-      glw_render(c, &rc0);
-      
+      glw_render(c, rc);
+      break;
+
+    case GLW_SIGNAL_LAYOUT:
+      rc = va_arg(ap, void *);
+      glw_layout(c, rc);
+      break;
+
+
     default:
       break;
     }
@@ -591,7 +488,13 @@ appi_preview_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
     case GLW_SIGNAL_RENDER:
       rc = va_arg(ap, void *);
       glw_render(c, rc);
-      
+      break;
+
+    case GLW_SIGNAL_LAYOUT:
+      rc = va_arg(ap, void *);
+      glw_layout(c, rc);
+      break;
+
     default:
       break;
     }
@@ -607,79 +510,76 @@ void
 layout_register_appi(appi_t *ai)
 {
   glw_t *w, *z, *y, *x;
-  int i;
 
-  for(i = 0; i < 4; i++) {
+  w = glw_create(GLW_NAV_ENTRY,
+		 GLW_ATTRIB_PARENT, root_nav,
+		 GLW_ATTRIB_SIGNAL_HANDLER, layout_entry_callback, ai, 0,
+		 NULL);
 
-    w = glw_create(GLW_NAV_ENTRY,
-		   GLW_ATTRIB_PARENT, root_nav[i],
-		   GLW_ATTRIB_SIGNAL_HANDLER, layout_entry_callback, ai, 0,
-		   NULL);
-
-    /* List entry */
+  /* List entry */
  
-    z = glw_create(GLW_BITMAP,
-		   GLW_ATTRIB_PARENT, w,
-		   GLW_ATTRIB_FILENAME, "icon://plate-wide.png",
-		   GLW_ATTRIB_FLAGS, GLW_NOASPECT,
-		   NULL);
+  z = glw_create(GLW_BITMAP,
+		 GLW_ATTRIB_PARENT, w,
+		 GLW_ATTRIB_FILENAME, "icon://plate-wide.png",
+		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
+		 NULL);
 
-    glw_create(GLW_TEXT_BITMAP,
-	       GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
-	       GLW_ATTRIB_PARENT, z,
-	       GLW_ATTRIB_CAPTION, ai->ai_name,
-	       NULL);
+  glw_create(GLW_TEXT_BITMAP,
+	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
+	     GLW_ATTRIB_PARENT, z,
+	     GLW_ATTRIB_CAPTION, ai->ai_name,
+	     NULL);
 
-    /* Preview thing */
+  /* Preview thing */
 
-    y = glw_create(GLW_CONTAINER_Y,
-		   NULL);
+  y = glw_create(GLW_CONTAINER_Y,
+		 NULL);
 
-    glw_create(GLW_DUMMY,
-	       GLW_ATTRIB_PARENT, y,
-	       NULL);
+  glw_create(GLW_DUMMY,
+	     GLW_ATTRIB_PARENT, y,
+	     NULL);
 
-    x = glw_create(GLW_BITMAP,
-		   GLW_ATTRIB_PARENT, y,
-		   GLW_ATTRIB_FLAGS, GLW_NOASPECT,
-		   GLW_ATTRIB_FILENAME, "icon://plate.png",
-		   NULL);
+  x = glw_create(GLW_BITMAP,
+		 GLW_ATTRIB_PARENT, y,
+		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
+		 GLW_ATTRIB_FILENAME, "icon://plate.png",
+		 NULL);
 		   
 
-    z = glw_create(GLW_CONTAINER_Z,
-		   GLW_ATTRIB_PARENT, x,
-		   NULL);
+  z = glw_create(GLW_CONTAINER_Z,
+		 GLW_ATTRIB_PARENT, x,
+		 NULL);
 
-    glw_create(GLW_BITMAP,
-	       GLW_ATTRIB_PARENT, z,
-	       GLW_ATTRIB_ALPHA, 0.4,
-	       GLW_ATTRIB_FILENAME, ai->ai_icon,
-	       NULL);
+  glw_create(GLW_BITMAP,
+	     GLW_ATTRIB_PARENT, z,
+	     GLW_ATTRIB_ALPHA, 0.4,
+	     GLW_ATTRIB_FILENAME, ai->ai_icon,
+	     NULL);
 
-    /* Preview portal */
-    glw_create(GLW_EXT,
-	       GLW_ATTRIB_PARENT, z,
-	       GLW_ATTRIB_SIGNAL_HANDLER, appi_preview_callback, ai, 0,
-	       NULL);
+  /* Preview portal */
+  glw_create(GLW_EXT,
+	     GLW_ATTRIB_PARENT, z,
+	     GLW_ATTRIB_SIGNAL_HANDLER, appi_preview_callback, ai, 0,
+	     NULL);
 
-    glw_create(GLW_DUMMY,
-	       GLW_ATTRIB_PARENT, y,
-	       NULL);
+  glw_create(GLW_DUMMY,
+	     GLW_ATTRIB_PARENT, y,
+	     NULL);
 
-    glw_set(w,
-	    GLW_ATTRIB_PREVIEW, y,
-	    NULL);
-
+#if 0
+  glw_set(w,
+	  GLW_ATTRIB_PREVIEW, y,
+	  NULL);
+#endif
     
-    /* Content portal */
-    z = glw_create(GLW_EXT,
-		   GLW_ATTRIB_SIGNAL_HANDLER, appi_content_callback, ai, 0,
-		   NULL);
+  /* Content portal */
+  z = glw_create(GLW_EXT,
+		 GLW_ATTRIB_SIGNAL_HANDLER, appi_content_callback, ai, 0,
+		 NULL);
 
-    glw_set(w,
-	    GLW_ATTRIB_CONTENT, z,
-	    NULL);
-  }
+  glw_set(w,
+	  GLW_ATTRIB_CONTENT, z,
+	  NULL);
 }
 
 

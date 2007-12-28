@@ -18,7 +18,7 @@ SRCS  += alsa_audio.c
 # layout engine(s)
 
 VPATH += layout
-SRCS  += layout_cube.c
+SRCS  += layout_simple.c
 
 # OpenGL support
 
@@ -34,11 +34,13 @@ SRCS  += gl_common.c sysglue_$(GL_GLUE).c
 VPATH += hid
 SRCS  += hid.c lircd.c imonpad.c lcdd.c 
 
+VPATH += apps/sandbox
+SRCS  += sandbox.c
 
 # Browser application
 
 VPATH += apps/browser
-SRCS  += browser.c
+SRCS  += browser.c navigator.c filebrowser.c slideshow.c
 
 # CD application
 

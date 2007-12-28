@@ -40,8 +40,6 @@ appi_spawn(const char *name, const char *icon)
 
   menu_init_app(ai);
 
-  ai->ai_req_aspect = 1.0f;
-
   input_init(&ai->ai_ic);
   mp_init(&ai->ai_mp, ai->ai_name, ai);
 

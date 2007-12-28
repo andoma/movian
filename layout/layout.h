@@ -32,8 +32,6 @@ glw_t *layout_win_create(const char *name, const char *icon,
 
 glw_t *bar_title(const char *str);
 
-appi_t *layout_get_cur_app(void);
-
 void layout_std_draw(float aspect);
 
 void layout_std_create(void);

@@ -460,8 +460,6 @@ pvr_connect(pvr_t *pvr)
     }
   }
 
- pvr->pvr_ai->ai_visible = 1;
-
  for(x = r; x != NULL; x = nextline(x)) {
     if((v = propcmp(x, "channel")) != NULL) {
       id = atoi(v);

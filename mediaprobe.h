@@ -21,6 +21,10 @@
 
 typedef struct mediainfo {
   enum {
+    MI_UNKNOWN,
+    MI_DIR,
+    MI_DIR_DVD,
+    MI_FILE,
     MI_AUDIO,
     MI_VIDEO,
     MI_IMAGE,
@@ -31,14 +35,22 @@ typedef struct mediainfo {
   const char *mi_title;
   const char *mi_author;
   const char *mi_album;
+  const char *mi_icon;
   int mi_track;
   int mi_duration;
+  int mi_year;
   time_t mi_time;
+
+#define MI_STREAMINFO_MAX 4
+
+  const char *mi_streaminfo[MI_STREAMINFO_MAX];
+  int mi_streaminfo_num;
 
 } mediainfo_t;
 
 
-int mediaprobe(const char *filename, mediainfo_t *mi, int fast);
+int mediaprobe(const char *filename, mediainfo_t *mi, int fast,
+	       const char *icon);
 
 void mediaprobe_free(mediainfo_t *mi);
 

@@ -54,7 +54,6 @@ typedef struct radio_channel {
 
   rc_type_t rc_type;
 
-  glw_t *rc_widget;
   glw_t *rc_status_container;
   glw_t *rc_meta_text1;
   glw_t *rc_play_caption;
@@ -152,98 +151,92 @@ radio_channel_add(radio_t *r, rc_type_t type, const char *provider,
 		  const char *name, const char *logo, const char *url)
 {
   radio_channel_t *rc = calloc(1, sizeof(radio_channel_t));
-  glw_t *y, *c, *w, *z, *x, *p = r->r_list;
+  glw_t *c, *content, *y, *z;
 
+  glw_t *le;
   
   rc->rc_url = strdup(url);
   rc->rc_type = type;
   rc->rc_provider = strdup(provider);
   rc->rc_name = strdup(name);
 
-  c = glw_create(GLW_BITMAP,
-		 GLW_ATTRIB_PARENT, p,
-		 GLW_ATTRIB_FILENAME, "icon://plate-titled.png",
-		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
-		 GLW_ATTRIB_SIGNAL_HANDLER, radio_channel_callback, rc, 0,
-		 NULL);
-
-  y = glw_create(GLW_CONTAINER_Y,
-		 GLW_ATTRIB_PARENT, c,
-		 NULL);
-
-  glw_create(GLW_TEXT_BITMAP,
-	     GLW_ATTRIB_PARENT, y,
-	     GLW_ATTRIB_WEIGHT, 0.3,
-	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
-	     GLW_ATTRIB_CAPTION, provider,
-	     NULL);
+  content = glw_create(GLW_CONTAINER_Y,
+		       NULL);
 
   glw_create(GLW_DUMMY,
-	     GLW_ATTRIB_PARENT, y,
-	     GLW_ATTRIB_WEIGHT, 0.1,
+	     GLW_ATTRIB_PARENT, content,
+	     NULL);
+
+  y = glw_create(GLW_BITMAP,
+		 GLW_ATTRIB_PARENT, content,
+		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
+		 GLW_ATTRIB_FILENAME, "icon://plate.png",
+		 NULL);
+
+  glw_create(GLW_DUMMY,
+	     GLW_ATTRIB_PARENT, content,
 	     NULL);
 
   z = glw_create(GLW_CONTAINER_Z,
 		 GLW_ATTRIB_PARENT, y,
-		 GLW_ATTRIB_WEIGHT, 2.1,
-		 GLW_ATTRIB_PARENT, y,
 		 NULL);
-
-  x = glw_create(GLW_CONTAINER_X,
-		 GLW_ATTRIB_PARENT, z,
-		 NULL);
-
-  glw_create(GLW_DUMMY,
-	     GLW_ATTRIB_PARENT, x,
-	     GLW_ATTRIB_WEIGHT, 0.5,
-	     NULL);
-
-  glw_create(GLW_BITMAP,
-	     GLW_ATTRIB_FILENAME, "icon://radio.png",
-	     GLW_ATTRIB_ALPHA, 0.25,
-	     GLW_ATTRIB_PARENT, x,
-	     NULL);
-
-  glw_create(GLW_DUMMY,
-	     GLW_ATTRIB_PARENT, x,
-	     GLW_ATTRIB_WEIGHT, 0.5,
-	     NULL);
-
-  w = glw_create(GLW_CONTAINER_Y,
-		 GLW_ATTRIB_PARENT, z,
-		 NULL);
-    
-
 
   rc->rc_status_container = glw_create(GLW_XFADER,
-				       GLW_ATTRIB_WEIGHT, 3.0,
-				       GLW_ATTRIB_PARENT, w,
+				       GLW_ATTRIB_ALPHA, 0.25,
+				       GLW_ATTRIB_PARENT, z,
 				       NULL);
 
+  y = glw_create(GLW_CONTAINER_Y,
+		 GLW_ATTRIB_PARENT, z,
+		 NULL);
 
-  glw_create(GLW_TEXT_BITMAP,
-	     GLW_ATTRIB_PARENT, w,
-	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
-	     GLW_ATTRIB_WEIGHT, 2.0,
-	     GLW_ATTRIB_CAPTION, name,
+  glw_create(GLW_DUMMY,
+	     GLW_ATTRIB_PARENT, y,
 	     NULL);
 
-  glw_create(GLW_RULER, 
-	     GLW_ATTRIB_PARENT, w,
-	     GLW_ATTRIB_WEIGHT, 0.1,
+  glw_create(GLW_TEXT_BITMAP,
+	     GLW_ATTRIB_PARENT, y,
+	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
+	     GLW_ATTRIB_CAPTION, name,
+	     NULL);
+		 
+  glw_create(GLW_TEXT_BITMAP,
+	     GLW_ATTRIB_PARENT, y,
+	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
+	     GLW_ATTRIB_CAPTION, provider,
 	     NULL);
 
   rc->rc_meta_text1 = glw_create(GLW_TEXT_BITMAP,
 				 GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
-				 GLW_ATTRIB_PARENT, w,
+				 GLW_ATTRIB_PARENT, y,
 				 GLW_ATTRIB_CAPTION, "",
 				 NULL);
 
+  glw_create(GLW_DUMMY,
+	     GLW_ATTRIB_PARENT, y,
+	     NULL);
 
-  rc->rc_widget = c;
+  /* */
+
+
+  c = glw_create(GLW_NAV_ENTRY,
+		 GLW_ATTRIB_PARENT, r->r_list,
+		 GLW_ATTRIB_CONTENT, content,
+		 GLW_ATTRIB_SIGNAL_HANDLER,  radio_channel_callback, rc, 0,
+		 NULL);
+
+  le = glw_create(GLW_BITMAP,
+		  GLW_ATTRIB_PARENT, c,
+		  GLW_ATTRIB_FILENAME, "icon://plate-wide.png",
+		  GLW_ATTRIB_FLAGS, GLW_NOASPECT,
+		  NULL);
+  
+  glw_create(GLW_TEXT_BITMAP,
+	     GLW_ATTRIB_PARENT, le,
+	     GLW_ATTRIB_CAPTION, name,
+	     NULL);
 
   TAILQ_INSERT_TAIL(&r->r_channels, rc, rc_link);
-
 }
 
 
@@ -314,9 +307,9 @@ radio_thread(void *aux)
 
 
   ai->ai_widget = r->r_list = 
-    glw_create(GLW_ARRAY,
+    glw_create(GLW_NAV,
+	       GLW_ATTRIB_Y_SLICES, 17,
 	       GLW_ATTRIB_SIGNAL_HANDLER, appi_widget_post_key, ai, 0,
-	       GLW_ATTRIB_SIDEKICK, bar_title("Radio"),
 	       NULL);
   
   radio_channels_configure(r);
@@ -328,8 +321,6 @@ radio_thread(void *aux)
 
   pthread_create(&ptid, NULL, radio_player_loop, r);
 
-  ai->ai_visible = 1;
-
   while(1) {
 
     input_getevent(&ai->ai_ic, 1, &ie, NULL);
@@ -338,11 +329,7 @@ radio_thread(void *aux)
 
     default:
       break;
-#if 0
-    case INPUT_PAD:
-      pad_nav_slist(r->r_list, &ie);
-      break;
-#endif
+
     case INPUT_KEY:
       switch(ie.u.key) {
       default:
@@ -514,15 +501,9 @@ icecast_write(void *ptr, size_t size, size_t nmemb, void *aux)
   media_pipe_t *mp = &ai->ai_mp;
   codecwrap_t *cw = ip->ip_cw;
   
-  if(primary_audio != mp) {
-    /* we are no longer active, pointless to continue playback */
-    r->r_req_channel = NULL;
+  if(r->r_cur_channel != r->r_req_channel) {
     return 0;
   }
-
-  if(r->r_cur_channel != r->r_req_channel)
-    return 0;
-
 
   if(mp->mp_info_widget == NULL) {
     media_pipe_acquire_audio(mp);
@@ -601,6 +582,7 @@ icecast_write(void *ptr, size_t size, size_t nmemb, void *aux)
       mb->mb_data_type = MB_AUDIO;
       mb->mb_data = malloc(outlen);
       mb->mb_size = outlen;
+      mb->mb_pts = AV_NOPTS_VALUE;
       wrap_unlock_codec(cw);
       memcpy(mb->mb_data, outbuf, outlen);
       wrap_unlock_codec(cw);
@@ -696,6 +678,8 @@ icecast_play(radio_t *r, radio_channel_t *rc, media_pipe_t *mp)
     curl_easy_setopt(curl_handle, CURLOPT_NOSIGNAL, 1);
 
     curl_easy_setopt(curl_handle, CURLOPT_ERRORBUFFER, errbuf);
+
+    mp_set_playstatus(mp, MP_PLAY);
 
     err = curl_easy_perform(curl_handle);
     media_pipe_release_audio(mp);

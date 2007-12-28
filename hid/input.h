@@ -103,7 +103,10 @@ typedef struct inputevent {
     } xy;
 
     uint32_t u32;
+    void *ptr;
   } u;
+
+  void (*freefunc)(void *ptr);
 
 } inputevent_t;
 

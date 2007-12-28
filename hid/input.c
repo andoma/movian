@@ -113,6 +113,8 @@ input_flush_queue(ic_t *ic)
   pthread_mutex_lock(&ic->ic_mutex);
 
   while((src = TAILQ_FIRST(&ic->ic_queue)) != NULL) {
+    if(src->type == INPUT_SPECIAL)
+      src->freefunc(src->u.ptr);
     TAILQ_REMOVE(&ic->ic_queue, src, link);
     free(src);
   }

@@ -41,19 +41,25 @@
 
 
 
-typedef struct cd_monitor {
+typedef struct cd_control {
   ic_t *ic;
   int run;
   int cdfd;
 
-} cd_monitor_t;
+  const char *curstatus;
+
+  glw_t *preview_xfader;
+
+  appi_t *ai;
+
+} cd_control_t;
 
 
 
 static void *
 cd_monitor_thread(void *aux)
 {
-  cd_monitor_t *cm = aux;
+  cd_control_t *cm = aux;
   int drivestatus;
 
   while(cm->run) {
@@ -69,12 +75,19 @@ cd_monitor_thread(void *aux)
 
 
 static void
-cd_make_idle_widget(glw_t *p, const char *caption)
+cd_make_idle_widget(cd_control_t *cdc, const char *caption)
 {
   glw_t *y;
+  appi_t *ai = cdc->ai;
 
+  if(cdc->curstatus && !strcmp(caption, cdc->curstatus))
+    return;
+
+  free((void *)cdc->curstatus);
+  cdc->curstatus = strdup(caption);
+  
   y = glw_create(GLW_CONTAINER_Y, 
-		 GLW_ATTRIB_PARENT, p,
+		 GLW_ATTRIB_PARENT, ai->ai_widget,
 		 NULL);
 
   glw_create(GLW_DUMMY, 
@@ -85,6 +98,12 @@ cd_make_idle_widget(glw_t *p, const char *caption)
   glw_create(GLW_TEXT_BITMAP,
 	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
 	     GLW_ATTRIB_PARENT, y,
+	     GLW_ATTRIB_CAPTION, caption,
+	     NULL);  
+
+  glw_create(GLW_TEXT_BITMAP,
+	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
+	     GLW_ATTRIB_PARENT, cdc->preview_xfader,
 	     GLW_ATTRIB_CAPTION, caption,
 	     NULL);  
 }
@@ -105,7 +124,11 @@ cd_start(void *aux)
   int drivestatus;
   int discstatus;
   char tmp[100];
-  cd_monitor_t cm;
+  cd_control_t cdc;
+  glw_t *y;
+
+  memset(&cdc, 0, sizeof(cdc));
+  cdc.ai = ai;
 
   ai->ai_no_input_events = 1;
 
@@ -114,12 +137,26 @@ cd_start(void *aux)
 	       GLW_ATTRIB_SIGNAL_HANDLER, appi_widget_post_key, ai,
 	       NULL);
 
+  y = ai->ai_preview = 
+    glw_create(GLW_CONTAINER_Y,
+	       NULL);
+
+  glw_create(GLW_DUMMY,
+	     GLW_ATTRIB_PARENT, y,
+	     GLW_ATTRIB_WEIGHT, 4.0f,
+	     NULL);
+
+  cdc.preview_xfader = 
+    glw_create(GLW_XFADER,
+	       GLW_ATTRIB_PARENT, y,
+	       NULL);
+
   devname = config_get_str("dvd-device", "/dev/dvd");
 
   fd = open(devname, O_RDONLY | O_NONBLOCK);
   if(fd == -1) {
     sprintf(tmp, "No drive found at \"%s\"", devname);
-    cd_make_idle_widget(ai->ai_widget, tmp);
+    cd_make_idle_widget(&cdc, tmp);
     while(1) {
       sleep(1);
     }
@@ -141,10 +178,7 @@ cd_start(void *aux)
       if(do_eject == 1)
 	break;
 
-      if(ai->ai_visible == 0) {
-	cd_make_idle_widget(ai->ai_widget, "Scanning drive status...");
-	ai->ai_visible = 1;
-      }
+      cd_make_idle_widget(&cdc, "Scanning drive status...");
 
       discstatus = ioctl(fd, CDROM_DISC_STATUS, NULL);
       switch(discstatus) {
@@ -155,16 +189,16 @@ cd_start(void *aux)
       case CDS_DATA_1:
 	ioctl(fd, CDROM_CLEAR_OPTIONS, CDO_LOCK);
 
-	cm.run = 1;
-	cm.cdfd = fd;
-	cm.ic = &ai->ai_ic;
+	cdc.run = 1;
+	cdc.cdfd = fd;
+	cdc.ic = &ai->ai_ic;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-	pthread_create(&ptid, &attr, cd_monitor_thread, &cm);
+	pthread_create(&ptid, &attr, cd_monitor_thread, &cdc);
 
 	ai->ai_no_input_events = 0;
 	r = dvd_main(ai, devname, 1, ai->ai_widget);
-	cm.run = 0;
+	cdc.run = 0;
 	ai->ai_no_input_events = 1;
 	pthread_join(ptid, NULL);   /* wait for monitor thread */
 	input_flush_queue(&ai->ai_ic);
@@ -172,7 +206,7 @@ cd_start(void *aux)
 
 	switch(r) {
 	case INPUT_KEY_EJECT:
-	  cd_make_idle_widget(ai->ai_widget, "Ejecting disc...");
+	  cd_make_idle_widget(&cdc, "Ejecting disc...");
 	  do_eject = 1;
 	  break;
 	}
@@ -192,8 +226,8 @@ cd_start(void *aux)
       break;
       
     default:
+      cd_make_idle_widget(&cdc, "No disc");
       do_eject = 0;
-      ai->ai_visible = 0;
       break;
     }
   }

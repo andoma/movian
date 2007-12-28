@@ -709,29 +709,14 @@ render_video_pipe(video_decoder_t *vd, glw_rctx_t *rc)
   media_pipe_t *mp = vd->vd_mp;
   int width = 0, height = 0;
 
-  static GLdouble clip_left[4] = {1.0, 0.0, 0.0, 1.0};
-  static GLdouble clip_right[4] = {-1.0, 0.0, 0.0, 1.0};
-  static GLdouble clip_bot[4] = {0.0, 1.0, 0.0, 1.0};
-  static GLdouble clip_top[4] = {0.0, -1.0, 0.0, 1.0};
-
   /*
    * rescale
    */
  
   glPushMatrix();
-  if(vd->vd_zoom != 100) {
-    if(vd->vd_zoom > 100) {
-      glClipPlane(GL_CLIP_PLANE0, clip_bot);
-      glClipPlane(GL_CLIP_PLANE1, clip_top);
-      glClipPlane(GL_CLIP_PLANE2, clip_left);
-      glClipPlane(GL_CLIP_PLANE3, clip_right);
-      glEnable(GL_CLIP_PLANE0);
-      glEnable(GL_CLIP_PLANE1);
-      glEnable(GL_CLIP_PLANE2);
-      glEnable(GL_CLIP_PLANE3);
-    }
+  if(vd->vd_zoom != 100)
     glScalef(vd->vd_zoom / 100.0f, vd->vd_zoom / 100.0f, 1.0f);
-  }
+
   glPolygonOffset(0, rc->rc_polyoffset - 1);
   glw_scale_and_rotate(rc->rc_aspect, vd->vd_aspect, 0.0f);
 
@@ -763,13 +748,6 @@ render_video_pipe(video_decoder_t *vd, glw_rctx_t *rc)
   if(width > 0) {
     glPolygonOffset(0, rc->rc_polyoffset - 2);
     gl_dvdspu_render(vd->vd_dvdspu, width, height, rc->rc_alpha);
-  }
-
-  if(vd->vd_zoom > 100) {
-    glDisable(GL_CLIP_PLANE0);
-    glDisable(GL_CLIP_PLANE1);
-    glDisable(GL_CLIP_PLANE2);
-    glDisable(GL_CLIP_PLANE3);
   }
 
   glPopMatrix();

@@ -73,11 +73,11 @@ init_apps(void)
   n ## _spawn();				\
 } while(0)
 
-  INITAPP(iptv);
+  //  INITAPP(iptv);
   INITAPP(browser);
   INITAPP(cd);
   INITAPP(playlist);
-  INITAPP(pvr);
+  //  INITAPP(pvr);
   INITAPP(radio);
   INITAPP(rssbrowser);
 }
