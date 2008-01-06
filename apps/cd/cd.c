@@ -38,7 +38,7 @@
 #include "input.h"
 #include "miw.h"
 #include "cd.h"
-
+#include "layout/layout.h"
 
 
 typedef struct cd_control {
@@ -107,8 +107,50 @@ cd_make_idle_widget(cd_control_t *cdc, const char *caption)
 
 
 
+/**
+ *
+ */
+static int 
+cd_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  int r = 0;
+  inputevent_t *ie;
+  cd_control_t *cdc = opaque;
+
+  va_list ap;
+  va_start(ap, signal);
+
+  switch(signal) {
+  case GLW_SIGNAL_INPUT_EVENT:
+    ie = va_arg(ap, void *);
+
+    if(cdc->run == 0) {
+      /* Not running, process input events */
+      if(ie->type == INPUT_KEY) switch(ie->u.key) {
+      case INPUT_KEY_BACK:
+      case INPUT_KEY_LEFT:
+      case INPUT_KEY_CLOSE:
+	layout_hide(cdc->ai);
+	r = 1;
+	break;
+
+      default:
+	break;
+      }
+    }
+    break;
+
+  default:
+    break;
+  }
+  va_end(ap);
+  return r;
+}
 
 
+/**
+ *
+ */
 static void *
 cd_start(void *aux)
 {
@@ -130,7 +172,7 @@ cd_start(void *aux)
 
   ai->ai_widget =
     glw_create(GLW_XFADER,
-	       GLW_ATTRIB_SIGNAL_HANDLER, appi_widget_post_key, ai,
+	       GLW_ATTRIB_SIGNAL_HANDLER, cd_widget_callback, &cdc,
 	       NULL);
 
   devname = config_get_str("dvd-device", "/dev/dvd");
