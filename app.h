@@ -46,9 +46,6 @@ typedef struct appi {
   
   glw_t *ai_widget;             /* Main application widget */
 
-  glw_t *ai_preview;            /* Preview for displaying some info in
-				   the app browser */
-
   glw_t *ai_menu;               /* Top level menu */
 
   pthread_t ai_tid;

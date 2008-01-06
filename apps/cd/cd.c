@@ -48,8 +48,6 @@ typedef struct cd_control {
 
   const char *curstatus;
 
-  glw_t *preview_xfader;
-
   appi_t *ai;
 
 } cd_control_t;
@@ -92,7 +90,7 @@ cd_make_idle_widget(cd_control_t *cdc, const char *caption)
 
   glw_create(GLW_DUMMY, 
 	     GLW_ATTRIB_PARENT, y,
-	     GLW_ATTRIB_WEIGHT, 9.0f,
+	     GLW_ATTRIB_WEIGHT, 4.5f,
 	     NULL);
 
   glw_create(GLW_TEXT_BITMAP,
@@ -101,11 +99,10 @@ cd_make_idle_widget(cd_control_t *cdc, const char *caption)
 	     GLW_ATTRIB_CAPTION, caption,
 	     NULL);  
 
-  glw_create(GLW_TEXT_BITMAP,
-	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
-	     GLW_ATTRIB_PARENT, cdc->preview_xfader,
-	     GLW_ATTRIB_CAPTION, caption,
-	     NULL);  
+  glw_create(GLW_DUMMY, 
+	     GLW_ATTRIB_PARENT, y,
+	     GLW_ATTRIB_WEIGHT, 4.5f,
+	     NULL);
 }
 
 
@@ -125,7 +122,6 @@ cd_start(void *aux)
   int discstatus;
   char tmp[100];
   cd_control_t cdc;
-  glw_t *y;
 
   memset(&cdc, 0, sizeof(cdc));
   cdc.ai = ai;
@@ -135,20 +131,6 @@ cd_start(void *aux)
   ai->ai_widget =
     glw_create(GLW_XFADER,
 	       GLW_ATTRIB_SIGNAL_HANDLER, appi_widget_post_key, ai,
-	       NULL);
-
-  y = ai->ai_preview = 
-    glw_create(GLW_CONTAINER_Y,
-	       NULL);
-
-  glw_create(GLW_DUMMY,
-	     GLW_ATTRIB_PARENT, y,
-	     GLW_ATTRIB_WEIGHT, 4.0f,
-	     NULL);
-
-  cdc.preview_xfader = 
-    glw_create(GLW_XFADER,
-	       GLW_ATTRIB_PARENT, y,
 	       NULL);
 
   devname = config_get_str("dvd-device", "/dev/dvd");

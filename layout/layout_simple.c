@@ -471,41 +471,6 @@ appi_content_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 }
 
 
-
-
-static int 
-appi_preview_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
-{
-  va_list ap;
-  va_start(ap, signal);
-  appi_t *ai = opaque;
-  glw_t *c = ai->ai_preview;
-  glw_rctx_t *rc;
-
-  if(c != NULL) {
-
-    switch(signal) {
-    case GLW_SIGNAL_RENDER:
-      rc = va_arg(ap, void *);
-      glw_render(c, rc);
-      break;
-
-    case GLW_SIGNAL_LAYOUT:
-      rc = va_arg(ap, void *);
-      glw_layout(c, rc);
-      break;
-
-    default:
-      break;
-    }
-  }
-
-  va_end(ap);
-  return 0;
-}
-
-
-
 void
 layout_register_appi(appi_t *ai)
 {
@@ -556,22 +521,6 @@ layout_register_appi(appi_t *ai)
 	     GLW_ATTRIB_FILENAME, ai->ai_icon,
 	     NULL);
 
-  /* Preview portal */
-  glw_create(GLW_EXT,
-	     GLW_ATTRIB_PARENT, z,
-	     GLW_ATTRIB_SIGNAL_HANDLER, appi_preview_callback, ai, 0,
-	     NULL);
-
-  glw_create(GLW_DUMMY,
-	     GLW_ATTRIB_PARENT, y,
-	     NULL);
-
-#if 0
-  glw_set(w,
-	  GLW_ATTRIB_PREVIEW, y,
-	  NULL);
-#endif
-    
   /* Content portal */
   z = glw_create(GLW_EXT,
 		 GLW_ATTRIB_SIGNAL_HANDLER, appi_content_callback, ai, 0,

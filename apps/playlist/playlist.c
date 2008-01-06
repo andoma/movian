@@ -89,49 +89,11 @@ typedef struct play_list {
   
   int pl_stopped;
 
-  glw_t *pl_w_numentries;
-
 } play_list_t;
 
 
 static void pl_flush(play_list_t *pl, play_list_entry_t *notme);
 static glw_t *playlist_menu_setup(glw_t *p, play_list_t *pl);
-
-
-static void
-playlist_update_numentries_widget(play_list_t *pl)
-{
-  char buf[20];
-
-  snprintf(buf, sizeof(buf), "%d tracks", pl->pl_entries);
-  
-  glw_set(pl->pl_w_numentries,
-	  GLW_ATTRIB_CAPTION, buf,
-	  NULL);
-}
-
-static void
-playlist_preview_init(play_list_t *pl, appi_t *ai)
-{
-  glw_t *y;
-
-  y = glw_create(GLW_CONTAINER_Y,
-		 NULL);
-
-  glw_create(GLW_DUMMY,
-	     GLW_ATTRIB_PARENT, y,
-	     GLW_ATTRIB_WEIGHT, 4.0f,
-	     NULL);
-
-  pl->pl_w_numentries = 
-    glw_create(GLW_TEXT_BITMAP,
-	       GLW_ATTRIB_PARENT, y,
-	       GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
-	       NULL);
-
-  ai->ai_preview = y;
-}
-
 
 
 
@@ -360,7 +322,6 @@ playlist_enqueue(const char *path, mediainfo_t *mi, int flush)
   pthread_cond_signal(&pl->pl_cond);
   pthread_mutex_unlock(&pl->pl_mutex);
 
-  playlist_update_numentries_widget(pl);
   return 1;
 }
 
@@ -461,7 +422,6 @@ ple_destroy(play_list_t *pl, play_list_entry_t *ple)
   TAILQ_REMOVE(&pl->pl_shuffle_queue, ple, ple_shuffle_link);
   free(ple);
   pl->pl_entries--;
-  playlist_update_numentries_widget(pl);
 }
 
 /*
@@ -845,9 +805,6 @@ playlist_spawn(void)
 	       NULL);
 
   ai->ai_widget = pl->pl_list;
-
-  playlist_preview_init(pl, ai);
-  playlist_update_numentries_widget(pl);
 
   playlist_menu_setup(appi_menu_top(ai), pl);
 
