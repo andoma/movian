@@ -308,7 +308,7 @@ radio_thread(void *aux)
 
   ai->ai_widget = r->r_list = 
     glw_create(GLW_NAV,
-	       GLW_ATTRIB_Y_SLICES, 17,
+	       GLW_ATTRIB_Y_SLICES, 15,
 	       GLW_ATTRIB_SIGNAL_HANDLER, appi_widget_post_key, ai, 0,
 	       NULL);
   
