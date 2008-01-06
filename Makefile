@@ -34,9 +34,6 @@ SRCS  += gl_common.c sysglue_$(GL_GLUE).c
 VPATH += hid
 SRCS  += hid.c lircd.c imonpad.c lcdd.c 
 
-VPATH += apps/sandbox
-SRCS  += sandbox.c
-
 # Browser application
 
 VPATH += apps/browser
