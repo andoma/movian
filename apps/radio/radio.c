@@ -352,15 +352,6 @@ radio_thread(void *aux)
 	glw_nav_signal(r->r_list, GLW_SIGNAL_DOWN);
 	break;
 
-      case INPUT_KEY_LEFT:
-	glw_nav_signal(r->r_list, GLW_SIGNAL_LEFT);
-	break;
-
-      case INPUT_KEY_RIGHT:
-	glw_nav_signal(r->r_list, GLW_SIGNAL_RIGHT);
-	break;
-
-
       case INPUT_KEY_ENTER:
 	glw_nav_signal(r->r_list, GLW_SIGNAL_CLICK);
 	pthread_mutex_lock(&r->r_mutex);
@@ -372,6 +363,7 @@ radio_thread(void *aux)
 	media_pipe_acquire_audio(&ai->ai_mp);
 	break;
 	
+      case INPUT_KEY_LEFT:
       case INPUT_KEY_BACK:
       case INPUT_KEY_CLOSE:
 	layout_hide(ai);
