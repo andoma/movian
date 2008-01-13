@@ -137,6 +137,8 @@ cd_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
       default:
 	break;
       }
+    } else {
+      input_postevent(&cdc->ai->ai_ic, ie);
     }
     break;
 
