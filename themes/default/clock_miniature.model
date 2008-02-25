@@ -1,0 +1,17 @@
+#HTSSIMPLEMODEL
+
+y-container {
+ space 0.05
+
+ bitmap {
+  filename icon://clock.png
+  keep-aspect
+ }
+ text {
+  weight 0.25
+  caption Clock
+  align center
+ }
+ space 0.05
+ 
+} 

@@ -1,0 +1,16 @@
+#HTSSIMPLEMODEL
+
+y-container {
+ space 0.05
+
+ bitmap {
+  filename icon://exec.png
+  keep-aspect
+ }
+ text {
+  weight 0.25
+  caption Launcher
+  align center
+ }
+ space 0.05
+} 

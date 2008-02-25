@@ -1,0 +1,17 @@
+#HTSSIMPLEMODEL
+
+y-container {
+ displacement 0 0 0.6
+ space 4.0
+
+ text {
+  weight 0.3
+  caption Select application to start
+  align center
+ }
+
+ list {
+  id application_container
+  slices 7
+ }
+}

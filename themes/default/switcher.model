@@ -1,0 +1,28 @@
+#HTSSIMPLEMODEL
+
+y-container {
+ space 3.0
+ text {
+  weight 0.4
+  align center
+  caption Task switcher
+ }
+ x-container {
+  space 0.1
+  bitmap {
+   filename icon://plate_compact.png
+   texture-borders 0.5 0.5 0.5 0.5
+   vertex-borders  0.1 0.1 0.1 0.1
+   y-container {
+    space 0.05
+    list {
+     id switcher_container
+     slices 9
+    } 
+    space 0.05
+   }
+  }
+  space 0.1
+ }
+ space 3.0
+}
