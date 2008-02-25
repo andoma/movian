@@ -25,8 +25,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <ffmpeg/avcodec.h>
-#include <ffmpeg/avformat.h>
 #include <libhts/htscfg.h>
 #include <libglw/glw.h>
 

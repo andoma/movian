@@ -23,8 +23,7 @@
 #include <stdlib.h>
 #include <sys/queue.h>
 #include <libglw/glw.h>
-#include <ffmpeg/avcodec.h>
-#include <ffmpeg/avformat.h>
+#include <libavformat/avformat.h>
 
 #define MP_WIDGET_AUTO_DISPLAY_TIME 250
 

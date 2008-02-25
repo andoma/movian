@@ -27,9 +27,7 @@
 #include <dirent.h>
 #include <libgen.h>
 
-#include <ffmpeg/avcodec.h>
-#include <ffmpeg/avformat.h>
-#include <ffmpeg/avstring.h>
+#include <libavformat/avformat.h>
 #include <libglw/glw.h>
 
 #include "showtime.h"

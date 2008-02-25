@@ -27,9 +27,6 @@
 #include <string.h>
 #include <errno.h>
 
-#include <ffmpeg/avcodec.h>
-#include <ffmpeg/avformat.h>
-
 #include <libhts/htstv.h>
 
 #include <libglw/glw.h>

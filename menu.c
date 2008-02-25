@@ -25,7 +25,6 @@
 #include <string.h>
 #include <assert.h>
 
-#include <ffmpeg/avstring.h>
 #include <libglw/glw.h>
 
 #include "showtime.h"

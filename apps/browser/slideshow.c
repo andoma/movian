@@ -28,8 +28,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <ffmpeg/avcodec.h>
-#include <ffmpeg/avformat.h>
 #include <libglw/glw.h>
 
 #include "showtime.h"

@@ -29,9 +29,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include <ffmpeg/avcodec.h>
-#include <ffmpeg/avformat.h>
-
 #include <netinet/in.h>
 
 #include "showtime.h"

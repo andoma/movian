@@ -29,8 +29,6 @@
 #include <string.h>
 #include <dirent.h>
 
-#include <ffmpeg/avcodec.h>
-#include <ffmpeg/avformat.h>
 #include <libglw/glw.h>
 
 #include "showtime.h"

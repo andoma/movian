@@ -27,10 +27,8 @@
 #include <string.h>
 #include <ctype.h>
 
-#include <ffmpeg/avcodec.h>
-#include <ffmpeg/avformat.h>
-#include <ffmpeg/avstring.h>
-#include <ffmpeg/common.h>
+#include <libavformat/avformat.h>
+#include <libavutil/avstring.h>
 
 #ifdef HAVE_LIBEXIF
 #include <libexif/exif-data.h>

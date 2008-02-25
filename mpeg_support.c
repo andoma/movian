@@ -26,8 +26,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include <ffmpeg/avcodec.h>
-#include <ffmpeg/avformat.h>
+#include <libavformat/avformat.h>
 
 #include "showtime.h"
 #include "mpeg_support.h"

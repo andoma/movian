@@ -25,8 +25,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <ffmpeg/avcodec.h>
-#include <ffmpeg/avformat.h>
+#include <libavformat/avformat.h>
 #include <libglw/glw.h>
 
 #include "input.h"
