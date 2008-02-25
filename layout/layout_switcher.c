@@ -192,8 +192,13 @@ layout_switcher_input_event(inputevent_t *ie)
   case INPUT_KEY_DOWN:   sig = GLW_SIGNAL_DOWN;   break;
   case INPUT_KEY_LEFT:   sig = GLW_SIGNAL_LEFT;   break;
   case INPUT_KEY_RIGHT:  sig = GLW_SIGNAL_RIGHT;  break;
-  case INPUT_KEY_ENTER:  sig = GLW_SIGNAL_ENTER;  break;
   case INPUT_KEY_SELECT: sig = GLW_SIGNAL_SELECT; break;
+
+  case INPUT_KEY_ENTER:
+    layout_switcher_hold_time = 0;
+    layout_switcher_switch();
+    layout_switcher_set_current_to_front();
+    return 1;
 
   case INPUT_KEY_TASK_SWITCHER:
     layout_switcher_hold_time = 0;
