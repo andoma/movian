@@ -69,7 +69,6 @@ nav_slideshow(nav_t *n, navdir_t *nd, naventry_t *ne0)
 
     x = glw_create(GLW_BITMAP, 
 		   GLW_ATTRIB_FLAGS, GLW_BORDER_BLEND,
-		   GLW_ATTRIB_BORDER_WIDTH, 0.01,
 		   GLW_ATTRIB_FILENAME, ne->ne_url,
 		   GLW_ATTRIB_PARENT, nd->nd_slideshow,
 		   NULL);

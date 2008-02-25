@@ -36,7 +36,7 @@
 int mp_show_extra_info;
 
 
-
+#if 0
 static int 
 general_extra_info(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
@@ -75,13 +75,14 @@ general_menu_exit(glw_t *w, void *opaque, glw_signal_t signal, ...)
     return 0;
   }
 }
-
+#endif
 
 extern void audio_mixer_menu_setup(glw_t *parent);
 
 void
 settings_menu_create(glw_t *parent)
 {
+#if 0
   glw_t *v;
 
   v = menu_create_submenu(parent, "icon://settings.png", 
@@ -96,5 +97,5 @@ settings_menu_create(glw_t *parent)
   menu_create_item(v, NULL, "Extra info", general_extra_info, NULL, 0, 0);
 
   audio_mixer_menu_setup(v);
-
+#endif
 }

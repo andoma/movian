@@ -229,7 +229,6 @@ naventry_get_file_preview(nav_t *n, navdir_t *parent, browser_message_t *bm,
   y = glw_create(GLW_BITMAP,
 		 GLW_ATTRIB_PARENT, ret,
 		 GLW_ATTRIB_FILENAME, "icon://plate-titled.png",
-		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
 		 NULL);
 
   glw_create(GLW_DUMMY,
@@ -392,7 +391,6 @@ nav_add_entry(nav_t *n, navdir_t *nd, browser_message_t *bm, int makewidget)
   x = glw_create(GLW_BITMAP,
 		 GLW_ATTRIB_PARENT, ne->ne_naventry,
 		 GLW_ATTRIB_FILENAME, "icon://plate-wide.png",
-		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
 		 NULL);
 
   ne->ne_title_xfader =
@@ -554,7 +552,7 @@ navigator_input(nav_t *n, browser_message_t *bm)
       if(rscan) switch(bm->bm_mi.mi_type) {
       case MI_FILE:
       case MI_AUDIO:
-	playlist_enqueue(bm->bm_url, &bm->bm_mi, 0);
+	//playlist_enqueue(bm->bm_url, &bm->bm_mi, 0);
 	break;
       default:
 	break;
@@ -639,7 +637,7 @@ nav_enter(appi_t *ai, nav_t *n, naventry_t *ne, int key)
 
   if(ne->ne_mi.mi_type == MI_DIR) {
     if(sel) {
-      playlist_flush();
+      //playlist_flush();
       printf("Scanning dir %s\n", ne->ne_url);
       navdir_open(n, ne->ne_url, 0);
     } else {
@@ -677,7 +675,7 @@ nav_enter(appi_t *ai, nav_t *n, naventry_t *ne, int key)
 
   case MI_AUDIO:
     glw_nav_signal(w, GLW_SIGNAL_CLICK);
-    playlist_enqueue(ne->ne_url, &ne->ne_mi, !sel);
+    //    playlist_enqueue(ne->ne_url, &ne->ne_mi, !sel);
     break;
 
   case MI_VIDEO:
@@ -688,7 +686,7 @@ nav_enter(appi_t *ai, nav_t *n, naventry_t *ne, int key)
   case MI_DIR_DVD:
   case MI_ISO:
     glw_nav_signal(w, GLW_SIGNAL_ENTER);
-    dvd_main(ai, ne->ne_url, 0, content);
+    //    dvd_main(ai, ne->ne_url, 0, content);
     break;
   }
   w->glw_flags &= ~GLW_ZOOMED; /* XXX: fix locking */
@@ -959,7 +957,7 @@ navigator(appi_t *ai, browser_interface_t *bi, const char *rootpath)
       case INPUT_KEY_PLAY:
       case INPUT_KEY_PLAYPAUSE:
       case INPUT_KEY_EJECT:
-	playlist_eventstrike(&ie);
+	//	playlist_eventstrike(&ie);
 	break;
 
       case INPUT_KEY_UP:

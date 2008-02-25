@@ -22,14 +22,38 @@
 #include "hid/input.h"
 #include "media.h"
 
-LIST_HEAD(appi_list, appi);
+/**
+ * Application 
+ */
+typedef struct app {
+  const char *app_name;
+  const char *app_model;
 
-extern struct appi_list appis;
+  glw_t *app_icon_widget;
+
+  void (*app_spawn)(void);
+
+} app_t;
 
 #define appi_menu_top(ai) ((ai)->ai_menu)
 
+
+LIST_HEAD(appi_list, appi);
+extern struct appi_list appis;
+extern pthread_mutex_t appi_list_mutex;
+
+/**
+ * Application instance
+ */
 typedef struct appi {
-  LIST_ENTRY(appi) ai_global_link;
+  LIST_ENTRY(appi) ai_link;
+
+  glw_t *ai_widget_miniature;
+  glw_t *ai_widget_miniature0; /* internal miniature */
+
+  glw_t *ai_widget;
+
+  glw_focus_stack_t ai_gfs;
 
   ic_t ai_ic;
   media_pipe_t ai_mp;
@@ -44,8 +68,6 @@ typedef struct appi {
 
   int ai_got_fullscreen;
   
-  glw_t *ai_widget;             /* Main application widget */
-
   glw_t *ai_menu;               /* Top level menu */
 
   pthread_t ai_tid;
@@ -63,8 +85,17 @@ typedef struct appi {
 
 } appi_t;
 
+
+#define appi_focused(ai) ((ai)->ai_gfs.gfs_active)
+
 int appi_widget_post_key(glw_t *w, void *opaque, glw_signal_t signal, ...);
 
 appi_t *appi_spawn(const char *name, const char *icon);
+
+void apps_load(void);
+
+appi_t *appi_create(const char *name);
+
+void appi_link(appi_t *ai);
 
 #endif /* APP_H */

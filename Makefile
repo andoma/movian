@@ -3,7 +3,7 @@
 # core
 
 SRCS = 	main.c app.c input.c media.c mpeg_support.c play_file.c miw.c \
-	mediaprobe.c coms.c menu.c settings.c subtitles.c
+	mediaprobe.c coms.c settings.c subtitles.c
 
 # audio subsys
 
@@ -18,7 +18,7 @@ SRCS  += alsa_audio.c
 # layout engine(s)
 
 VPATH += layout
-SRCS  += layout_simple.c
+SRCS  += layout.c layout_forms.c layout_world.c layout_switcher.c
 
 # OpenGL support
 
@@ -34,40 +34,51 @@ SRCS  += gl_common.c sysglue_$(GL_GLUE).c
 VPATH += hid
 SRCS  += hid.c lircd.c imonpad.c lcdd.c 
 
+# Launcher application
+
+VPATH += apps/launcher
+SRCS  += launcher.c
+
+# Clock application
+
+VPATH += apps/clock
+SRCS  += clock.c
+
+
 # Browser application
 
-VPATH += apps/browser
-SRCS  += browser.c navigator.c filebrowser.c slideshow.c
+#VPATH += apps/browser
+#SRCS  += browser.c navigator.c filebrowser.c slideshow.c
 
 # CD application
 
-VPATH += apps/cd
-SRCS  += cd.c 
+#VPATH += apps/cd
+#SRCS  += cd.c 
 
 # DVD application
 
-VPATH += apps/dvdplayer
-SRCS  += dvd.c 
+#VPATH += apps/dvdplayer
+#SRCS  += dvd.c 
 
 # Playlist application
 
-VPATH += apps/playlist
-SRCS  += playlist.c
+#VPATH += apps/playlist
+#SRCS  += playlist.c
 
 # RSS browser applcation
 
-VPATH += apps/rss
-SRCS  += rss.c rssbrowser.c
+#VPATH += apps/rss
+#SRCS  += rss.c rssbrowser.c
 
 # Radio application
 
-VPATH += apps/radio
-SRCS  += radio.c
+#VPATH += apps/radio
+#SRCS  += radio.c
 
 # TV & headend com
 
-VPATH += apps/tv
-SRCS +=	tv_headend.c tv_playback.c pvr.c
+#VPATH += apps/tv
+#SRCS +=	tv_headend.c tv_playback.c pvr.c
 
 # Apple Movie Trailer Application
 

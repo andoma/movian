@@ -211,7 +211,7 @@ gl_keypress(XEvent *event)
 
     switch(ikey) {
     case 8:     input_key_down(INPUT_KEY_BACK);       break;
-    case 9:     input_key_down(INPUT_KEY_TASKSWITCH); break;
+    case 9:     input_key_down(INPUT_KEY_TASK_DOSWITCH); break;
     case 13:    input_key_down(INPUT_KEY_ENTER);      break;
     case 27:    input_key_down(INPUT_KEY_CLOSE);      break;
     case ' ':   input_key_down(INPUT_KEY_SELECT);     break;
@@ -232,6 +232,10 @@ gl_keypress(XEvent *event)
     case XK_End:       ikey = INPUT_KEY_STOP;             break;
     case XK_F1:        ikey = INPUT_KEY_MENU;             break;
     case XK_F2:        ikey = INPUT_KEY_PLAYPAUSE;        break;
+
+    case XK_F5:        ikey = INPUT_KEY_APP_LAUNCHER;     break;
+    case XK_F6:        ikey = INPUT_KEY_TASK_SWITCHER;    break;
+
     case XK_F10:       ikey = INPUT_KEY_POWER;            break;
     case XK_F11:       ikey = INPUT_KEY_SEEK_BACKWARD;    break;
     case XK_F12:       ikey = INPUT_KEY_SEEK_FORWARD;     break;
@@ -285,7 +289,7 @@ gl_sysglue_mainloop(void)
 	}
       }
 
-      layout_std_draw(x11state.aspect_ratio);
+      layout_draw(x11state.aspect_ratio);
     }
     glFlush();
     glXSwapBuffers(x11state.display, x11state.win);

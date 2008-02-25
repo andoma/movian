@@ -382,7 +382,6 @@ rssbrowser_thread(void *aux)
   ai->ai_widget = rb->rb_list = 
     glw_create(GLW_ARRAY,
 	       GLW_ATTRIB_SIGNAL_HANDLER, appi_widget_post_key, ai, 0,
-	       GLW_ATTRIB_SIDEKICK, bar_title("Really Simple Syndication"),
 	       NULL);
 
   rssfeeds_configure(rb);

@@ -144,7 +144,6 @@ audio_widget_make(void)
 
   w = glw_create(GLW_BITMAP,
 		 GLW_ATTRIB_FILENAME, "icon://plate-wide.png",
-		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
 		 NULL);
 
   audio_widget = w;

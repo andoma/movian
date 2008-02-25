@@ -798,7 +798,6 @@ playlist_spawn(void)
     glw_create(GLW_ARRAY, 
 	       GLW_ATTRIB_X_SLICES, 1,
 	       GLW_ATTRIB_Y_SLICES, 13,
-	       GLW_ATTRIB_SIDEKICK, bar_title("Playlist"),
 	       GLW_ATTRIB_SIGNAL_HANDLER, appi_widget_post_key, ai, 0,
 	       NULL);
 

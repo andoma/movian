@@ -35,7 +35,7 @@
 /*
  * video decoder menues
  */
-
+#if 0
 static int 
 vd_menu_pp(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
@@ -205,12 +205,14 @@ vd_menu_video_zoom(glw_t *w, void *opaque, glw_signal_t signal, ...)
   va_end(ap);
   return 0;
 }
+#endif
 
 
 
 glw_t *
 vd_menu_setup(glw_t *p, vd_conf_t *gc)
 {
+#if 0
   glw_t *v, *s;
   
   v = menu_create_submenu(p, "icon://tv.png", "Video settings", 1);
@@ -261,6 +263,8 @@ vd_menu_setup(glw_t *p, vd_conf_t *gc)
   menu_create_item(s, NULL, "", vd_menu_video_zoom, gc, 0, 0);
 
   return v;
+#endif
+  return NULL;
 }
 
 

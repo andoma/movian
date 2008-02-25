@@ -23,19 +23,44 @@
 #include "hid/input.h"
 #include "app.h"
 
-extern int layout_menu_display;
+extern glw_t *layout_root;
+extern float layout_switcher_alpha;
 
+/**
+ * Functions in layout.c
+ */ 
 void layout_hide(appi_t *ai);
 
-glw_t *layout_win_create(const char *name, const char *icon,
-			 glw_callback_t *cb, void *opaque);
+void layout_draw(float aspect);
 
-glw_t *bar_title(const char *str);
+void layout_create(void);
 
-void layout_std_draw(float aspect);
+void layout_appi_add(appi_t *ai);
 
-void layout_std_create(void);
+void layout_appi_del(appi_t *ai);
 
-void layout_register_appi(appi_t *ai);
+void layout_app_add(app_t *a);
+
+void layout_app_del(app_t *a);
+
+/**
+ * Functions in layout_world.c
+ */ 
+void layout_world_create(void);
+
+void layout_world_render(float aspect);
+
+void layout_world_appi_show(appi_t *ai);
+
+/**
+ * Functions in layout_switcher.c
+ */ 
+
+void layout_switcher_create(void);
+
+void layout_switcher_appi_add(appi_t *ai);
+
+void layout_switcher_render(float aspect);
 
 #endif /* LAYOUT_H */
+

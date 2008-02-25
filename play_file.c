@@ -56,7 +56,6 @@ play_file_create_miw(media_pipe_t *mp, mediainfo_t *mi, glw_t **pscp)
 
   c = glw_create(GLW_BITMAP,
 		 GLW_ATTRIB_FILENAME, "icon://plate-wide.png",
-		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
 		 NULL);
   
   x = glw_create(GLW_CONTAINER_X,
@@ -456,7 +455,7 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
  * Menus
  *
  */
-
+#if 0
 static int
 audio_menu_atrack(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
@@ -508,12 +507,13 @@ audio_menu_atrack(glw_t *w, void *opaque, glw_signal_t signal, ...)
     return 0;
   }
 }
-
+#endif
 
 
 static glw_t *
 play_file_menu_audio_setup(glw_t *p, media_pipe_t *mp)
 {
+#if 0
   glw_t *v, *w;
   int i;
 
@@ -528,6 +528,8 @@ play_file_menu_audio_setup(glw_t *p, media_pipe_t *mp)
 		   audio_menu_atrack, mp, -1, 0);
 
   return v;
+#endif
+  return NULL;
 }
 
 
@@ -610,7 +612,6 @@ menu_entry_header(glw_t *p, const char *title)
   r = glw_create(GLW_BITMAP,
 		 GLW_ATTRIB_FILENAME, "icon://plate-wide.png",
 		 GLW_ATTRIB_PARENT, y,
-		 GLW_ATTRIB_FLAGS, GLW_NOASPECT,
 		 GLW_ATTRIB_WEIGHT, 0.35,
 		 NULL);
   
@@ -759,7 +760,6 @@ play_file_pre_launch_menu(const char *fname, appi_t *ai, mediainfo_t *mi,
   pla.menu = glw_create(GLW_ARRAY,
 			GLW_ATTRIB_X_SLICES, 1,
 			GLW_ATTRIB_Y_SLICES, 5,
-			GLW_ATTRIB_SIDEKICK, bar_title(title),
 			NULL);
   glw_unlock();
 

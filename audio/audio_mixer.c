@@ -442,9 +442,11 @@ audio_mixer_setup_output(int channels, int period_size, int rate)
 void
 audio_mixer_menu_setup(glw_t *parent)
 {
+#if 0
   glw_t *a;
 
   a = menu_create_submenu(parent, "icon://audio.png", "Audio settings", 0);
 
   audio_compressor_menu_setup(a);
+#endif
 }

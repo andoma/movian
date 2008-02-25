@@ -116,7 +116,7 @@ audio_compressor_update_config(struct compressor_data *comp, audio_mixer_t *mi)
 
 
 
-
+#if 0
 
 
 
@@ -383,14 +383,15 @@ comp_mode(glw_t *w, void *opaque, glw_signal_t signal, ...)
   }
 }
 
+#endif
 
 
 
-
-
+#if 0
 static void
 add_audio_mixer_control(glw_t *parent, glw_callback_t *cb, void *opaque)
 {
+#if 0
   glw_t *y;
 
   y = menu_create_container(parent, cb, opaque, 0, 0);
@@ -404,6 +405,7 @@ add_audio_mixer_control(glw_t *parent, glw_callback_t *cb, void *opaque)
 	     GLW_ATTRIB_COLOR, GLW_COLOR_LIGHT_BLUE,
 	     GLW_ATTRIB_PARENT, y,
 	     NULL);
+#endif
 }
 
 
@@ -425,10 +427,12 @@ audio_compressor_add_mode_selection(glw_t *p, struct compressor_data *comp,
 }
 
 
+#endif
 
 void
 audio_compressor_menu_setup(glw_t *a)
 {
+#if 0
   glw_t *c, *w, *h;
   struct compressor_data *comp = &post_mixer_compressor;
 
@@ -453,6 +457,7 @@ audio_compressor_menu_setup(glw_t *a)
   add_audio_mixer_control(c, comp_postgain,  &post_mixer_compressor);
   add_audio_mixer_control(c, comp_threshold, &post_mixer_compressor);
   add_audio_mixer_control(c, comp_ratio,     &post_mixer_compressor);
+#endif
 }
 
 void

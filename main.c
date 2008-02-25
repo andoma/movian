@@ -62,26 +62,6 @@ ffmpeglockmgr(int lock)
 
 
 /*
- * We dont want to include a lot, hence the local prototypes
- */
-static void
-init_apps(void)
-{
-#define INITAPP(n) do {				\
-  extern void n ## _spawn(void);		\
-  n ## _spawn();				\
-} while(0)
-
-  //  INITAPP(iptv);
-  INITAPP(browser);
-  INITAPP(cd);
-  INITAPP(playlist);
-  //  INITAPP(pvr);
-  INITAPP(radio);
-  INITAPP(rssbrowser);
-}
-
-/*
  *
  */
 int
@@ -137,11 +117,11 @@ main(int argc, char **argv)
 
   vd_init();
 
-  layout_std_create();
+  layout_create();
 
-  inputhandler_register(200, main_input_event);
+  inputhandler_register(300, main_input_event);
 
-  init_apps();
+  apps_load();
 
   gl_sysglue_mainloop();
   return 0;
