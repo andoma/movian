@@ -188,7 +188,6 @@ feed_thread(void *aux)
     rss_free(rf);
 
     glw_set(re->re_item_list, 
-	    GLW_ATTRIB_SHOW_CHILDS, has_desc ? 7 : 11,
 	    NULL);
 
     sleep(re->re_reloadtime);
