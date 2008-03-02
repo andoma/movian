@@ -1,0 +1,17 @@
+#HTSSIMPLEMODEL
+
+y-container {
+ space 0.05
+
+ bitmap {
+  filename icon://library.png
+  keep-aspect
+ }
+ text {
+  weight 0.25
+  caption Navigator
+  align center
+ }
+ space 0.05
+ 
+} 
