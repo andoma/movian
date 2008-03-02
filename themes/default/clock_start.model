@@ -2,14 +2,14 @@
 
 y-container {
  space 0.1
- bitmap {
-  filename icon://clock.png
-  keep-aspect
- } 
  text {
   weight 0.25
   caption Clock
   align center
  }
+ bitmap {
+  filename icon://clock.png
+  keep-aspect
+ } 
  space 0.1
 }
