@@ -1,6 +1,6 @@
 /*
  *  Browser interface
- *  Copyright (C) 2007 Andreas Öman
+ *  Copyright (C) 2008 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,54 +19,101 @@
 #ifndef BROWSER_H
 #define BROWSER_H
 
+#include <libglw/glw.h>
+
 #include "mediaprobe.h"
 #include "hid/input.h"
 
-TAILQ_HEAD(browser_entry_queue, browser_entry);
-
-typedef struct browser_message {
-  enum {
-    BM_ADD,
-    BM_UPDATE,
-    BM_DELETE,
-    BM_FOLDERICON,
-    BM_SCAN_COMPLETE,
-  } bm_action;
-
-  int bm_entry_id;
-  int bm_parent_id;
-
-  const char *bm_url;
-
-  mediainfo_t bm_mi;
-
-} browser_message_t;
-
-void browser_message_destroy(browser_message_t *bm);
+TAILQ_HEAD(browser_node_queue, browser_node);
+TAILQ_HEAD(browser_view_queue, browser_view);
 
 
-typedef struct browser_interface {
-  /* Frontend to Backend methods */
+/**
+ * A browser view is one way of looking at all the childrens in a node.
+ *
+ * Ie, a 'directory' may have multiple views that the user can switch
+ * between: "List, Icons, Photos, etc"
+ */
+
+typedef struct browser_view {
+  TAILQ_ENTRY(browser_view) bv_link;
   
-  void *(*bi_open)(struct browser_interface *bi, const char *path,
-		   int id, int doprobe);
 
-  void (*bi_close)(void *dir);
+} browser_view_t;
 
-  void (*bi_probe)(void *dir, int run);
 
-  void (*bi_destroy)(struct browser_interface *bi);
 
-  /* Inpute event mailbox where backend should drop notifications */
+/**
+ * A browser node is anything that is browsable
+ */
+typedef struct browser_node {
 
-  ic_t *bi_mailbox;
+  /* Hierarchy, these five are protected by top level br_hierarchy_mutex. */
 
-} browser_interface_t;
+  struct browser_root      *bn_root;
+  struct browser_node_queue bn_childs;
+  struct browser_node      *bn_parent;
+  TAILQ_ENTRY(browser_node) bn_parent_link;
+  int                       bn_refcnt;      /* Increase this if you
+					       hold a reference to the
+					       node without holding
+					       the br_hierarchy_mutex */
 
-void browser_message_enqueue(browser_interface_t *bi, int action, int id,
-			     int parent_id, const char *url,
-			     mediainfo_t *mi);
+  /* URL may never change after creation */
+  const char               *bn_url;
 
-void browser_scan_dir(browser_interface_t *bi, const char *path);
+  pthread_mutex_t           bn_mutex;       /* Lock for protecting
+					       fields below */
+
+  glw_t                    *bn_cont_widget; /* GLW_XFADER */
+  glw_t                    *bn_icon_widget; /* GLW_XFADER */
+
+  enum {
+    BN_DIR,
+    BN_FILE,
+  } bn_type;
+
+  struct browser_protocol  *bn_protocol;
+
+} browser_node_t;
+
+
+
+
+/**
+ * Top level browser struct
+ */
+typedef struct browser_root {
+  pthread_mutex_t br_hierarchy_mutex;  /* Locks insertions and deletions
+					  of childs in the entire tree.
+					  This lock may not be held for any
+					  significant time */
+
+  browser_node_t *br_root;
+
+} browser_root_t;
+
+
+/**
+ * Control struct for operating on node
+ */
+typedef struct browser_protocol {
+  void (*bp_scan)(browser_node_t *nb); /* Scan the node for childs */
+
+
+  
+
+} browser_protocol_t;
+
+
+void browser_node_ref(browser_node_t *bn);
+
+void browser_node_deref(browser_node_t *bn);
+
+browser_node_t *browser_node_add_child(browser_node_t *parent,
+				       const char *url, int type);
+
+browser_root_t *browser_root_create(const char *url,
+				    browser_protocol_t *proto);
 
 #endif /* BROWSER_H */

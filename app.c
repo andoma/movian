@@ -108,4 +108,5 @@ apps_load(void)
   launcher_init();
 
   LOADAPP(clock);
+  LOADAPP(navigator);
 }

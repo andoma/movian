@@ -20,54 +20,128 @@
 #include <pthread.h>
 
 #include <assert.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <dirent.h>
-
-#include <libglw/glw.h>
 
 #include "showtime.h"
 #include "browser.h"
+#include "browser_view.h"
 
-
-void
-browser_message_destroy(browser_message_t *bm)
-{
-  free((void *)bm->bm_url);
-  mediaprobe_free(&bm->bm_mi);
-  free(bm);
-}
-
+/**
+ * check if we should free a node, br_hierarchy_mutex must be held
+ */
 static void
-browser_message_destroy2(void *aux)
+check_node_free(browser_node_t *bn)
 {
-  abort();
-  browser_message_destroy(aux);
+  browser_node_t *p = bn->bn_parent;
+
+  if(bn->bn_refcnt != 0 || TAILQ_FIRST(&bn->bn_childs) != NULL)
+    return;
+
+  printf("freeing %s\n", bn->bn_url);
+
+  TAILQ_REMOVE(&p->bn_childs, bn, bn_parent_link);
+  check_node_free(p); /* removed from parent, need to check parent too */
+
+  assert(bn->bn_cont_widget == NULL);
+  assert(bn->bn_icon_widget == NULL);
+
+  free((void *)bn->bn_url);
+  free(bn);
 }
 
 
+/**
+ *
+ */
 void
-browser_message_enqueue(browser_interface_t *bi, int action, int id,
-			int parent_id, const char *url,
-			mediainfo_t *mi)
+browser_node_ref(browser_node_t *bn)
 {
-  browser_message_t *bm = calloc(1, sizeof(browser_message_t));
-  inputevent_t ie;
+  browser_root_t *br = bn->bn_root;
 
-  bm->bm_action = action;
-  bm->bm_entry_id = id;
-  bm->bm_parent_id = parent_id;
-  bm->bm_url = strdup(url);
-  if(mi != NULL)
-    mediaprobe_dup(&bm->bm_mi, mi);
-  
-  ie.type = INPUT_SPECIAL;
-  ie.u.ptr = bm;
-  ie.freefunc = browser_message_destroy2;
-  input_postevent(bi->bi_mailbox, &ie);
+  pthread_mutex_lock(&br->br_hierarchy_mutex);
+  bn->bn_refcnt++;
+  pthread_mutex_unlock(&br->br_hierarchy_mutex);
+}
+
+
+/**
+ *
+ */
+void
+browser_node_deref(browser_node_t *bn)
+{
+  browser_root_t *br = bn->bn_root;
+
+  pthread_mutex_lock(&br->br_hierarchy_mutex);
+  printf("deref %s, cnt before = %d\n", bn->bn_url, bn->bn_refcnt);
+
+  assert(bn->bn_refcnt > 0);
+  bn->bn_refcnt--;
+
+  check_node_free(bn);
+  pthread_mutex_unlock(&br->br_hierarchy_mutex);
+}
+
+
+/**
+ *
+ */
+static browser_node_t *
+browser_node_create(const char *url, browser_protocol_t *proto, int type,
+		    browser_root_t *br)
+{
+  browser_node_t *bn;
+
+  bn = calloc(1, sizeof(browser_node_t));
+  bn->bn_refcnt = 1;
+  bn->bn_url = strdup(url);
+  bn->bn_type = type;
+  bn->bn_protocol = proto;
+  bn->bn_root = br;
+  TAILQ_INIT(&bn->bn_childs);
+  pthread_mutex_init(&bn->bn_mutex, NULL);
+
+  return bn;
+}
+
+
+
+
+/**
+ * Create a new node
+ *
+ * We obtain a reference for the caller, (ie caller must release it when done)
+ */
+browser_node_t *
+browser_node_add_child(browser_node_t *parent, const char *url, int type)
+{
+  browser_root_t *br = parent->bn_root;
+  browser_node_t *bn = browser_node_create(url, parent->bn_protocol, type, br);
+
+  pthread_mutex_lock(&br->br_hierarchy_mutex);
+  TAILQ_INSERT_TAIL(&parent->bn_childs, bn, bn_parent_link);
+  bn->bn_parent = parent;
+  pthread_mutex_unlock(&br->br_hierarchy_mutex);
+
+  browser_view_add_node(bn);
+  return bn;
+}
+
+
+/**
+ * Create a new browser root
+ */
+browser_root_t *
+browser_root_create(const char *url, browser_protocol_t *proto)
+{
+  browser_root_t *br = calloc(1, sizeof(browser_root_t));
+  browser_node_t *bn = browser_node_create(url, proto, BN_DIR, br);
+
+  pthread_mutex_init(&br->br_hierarchy_mutex, NULL);
+
+  br->br_root = bn;
+  return br;
 }

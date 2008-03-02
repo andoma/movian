@@ -16,9 +16,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FILEBROWSER_H
-#define FILEBROWSER_H
+#ifndef BROWSER_FILE_H
+#define BROWSER_FILE_H
 
-browser_interface_t *filebrowser_create(void);
+browser_protocol_t browser_file_protocol;
 
-#endif /* FILEBROWSER_H */
+#endif /* BROWSER_FILE_H */
