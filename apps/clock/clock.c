@@ -116,7 +116,7 @@ clock_start(void *aux)
 
   ai->ai_widget_miniature = 
     glw_create(GLW_MODEL,
-	       GLW_ATTRIB_FILENAME, "clock_miniature",
+	       GLW_ATTRIB_FILENAME, "clock/switcher",
 	       NULL);
 
   layout_switcher_appi_add(ai);
@@ -143,5 +143,5 @@ clock_spawn(void)
 app_t app_clock = {
   .app_spawn = clock_spawn,
   .app_name = "Clock",
-  .app_model = "clock_start",
+  .app_model = "clock/launcher",
 };
