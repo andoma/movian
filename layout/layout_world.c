@@ -333,7 +333,7 @@ layout_child_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
     
     if(sig != GLW_SIGNAL_NONE &&
        glw_send_signal_to_focused(&ai->ai_gfs, sig, NULL))
-      break;
+      return 1;
 
     /* Nav signal not consumed, do it as input event */
     glw_send_signal_to_focused(&ai->ai_gfs, GLW_SIGNAL_INPUT_EVENT, ie);
