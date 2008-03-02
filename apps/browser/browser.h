@@ -68,8 +68,9 @@ typedef struct browser_node {
 					       time so we cannot lock
 					       it in glw-callbacks */
 
-  glw_t                    *bn_cont_widget; /* GLW_XFADER */
-  glw_t                    *bn_icon_widget; /* GLW_XFADER */
+  glw_t                    *bn_icon_widget;
+
+  glw_t                    *bn_cont_xfader;
 
   enum {
     BN_DIR,

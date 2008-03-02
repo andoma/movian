@@ -38,7 +38,7 @@ browser_view_cont_callback(glw_t *w, void *opaque, glw_signal_t sig, ...)
 
   if(sig == GLW_SIGNAL_DESTROY) {
     printf("Widget for container %s destroyed\n", bn->bn_url);
-    bn->bn_cont_widget = NULL;
+    bn->bn_cont_xfader = NULL;
     browser_node_deref(bn);
   }
   return 0;
@@ -71,6 +71,22 @@ browser_view_get_current_node(glw_t *stack)
 }
 
 
+/**
+ *
+ */
+static void
+glw_view_set(browser_node_t *bn, const char *viewname)
+{
+  char buf[256];
+  
+  snprintf(buf, sizeof(buf), "browser/views/%s/view", viewname);
+
+  glw_create(GLW_MODEL,
+	     GLW_ATTRIB_FILENAME, buf,
+	     GLW_ATTRIB_PARENT_HEAD, bn->bn_cont_xfader,
+	     NULL);
+}
+
 
 
 /**
@@ -86,30 +102,26 @@ void
 browser_view_expand_node(browser_node_t *bn, glw_t *parent, 
 			 glw_focus_stack_t *gfs)
 {
+  glw_t *cont;
+
   pthread_mutex_lock(&bn->bn_mutex);
   
   browser_node_ref(bn);
 
-  assert(bn->bn_cont_widget == NULL);
+  assert(bn->bn_cont_xfader == NULL);
 
-  bn->bn_cont_widget =
-#if 0
+  bn->bn_cont_xfader =
     glw_create(GLW_XFADER,
-	       GLW_ATTRIB_PARENT, parent,
+	       GLW_ATTRIB_PARENT_HEAD, parent,
 	       GLW_ATTRIB_SIGNAL_HANDLER, browser_view_cont_callback, bn, 1000,
 	       NULL);
-#endif
-  glw_create(GLW_LIST,
-	     GLW_ATTRIB_SIGNAL_HANDLER, browser_view_cont_callback, bn, 1000,
-	     GLW_ATTRIB_PARENT_HEAD, parent,
-	     GLW_ATTRIB_ORIENTATION, GLW_ORIENTATION_VERTICAL,
-	     GLW_ATTRIB_SLICES, 20,
-	     NULL);
+
+  glw_view_set(bn, "default");
+ 
+  if((cont = glw_find_by_id(bn->bn_cont_xfader, "node_container")) != NULL)
+    glw_focus_set(gfs, cont);
 
   pthread_mutex_unlock(&bn->bn_mutex);
-
-  glw_focus_set(gfs, bn->bn_cont_widget);
-
 }
 
 
@@ -119,21 +131,23 @@ browser_view_expand_node(browser_node_t *bn, glw_t *parent,
 void
 browser_view_collapse_node(browser_node_t *bn, glw_focus_stack_t *gfs)
 {
-  glw_t *w;
+  glw_t *w, *cont;
 
   pthread_mutex_lock(&bn->bn_mutex);
   glw_lock();
 
-  w = bn->bn_cont_widget;
+  w = bn->bn_cont_xfader;
 
-  assert(bn->bn_cont_widget != NULL);
-  bn->bn_cont_widget = NULL;
+  assert(bn->bn_cont_xfader != NULL);
+  bn->bn_cont_xfader = NULL;
 
   glw_set(w, 
 	  GLW_ATTRIB_SIGNAL_HANDLER, browser_view_cont_callback, bn, -1,
 	  NULL);
 
-  glw_focus_lose(gfs, w);
+  if((cont = glw_find_by_id(w, "node_container")) != NULL)
+    glw_focus_lose(gfs, cont);
+
   glw_detach(w);
 
   glw_unlock();
@@ -188,11 +202,14 @@ browser_view_get_current_selected_node(glw_t *stack)
 
   w = stack->glw_selected;
   if(w != NULL) {
-    w = w->glw_selected;
+    w = glw_find_by_id(w, "node_container");
     if(w != NULL) {
-      r = glw_get_opaque(w, browser_view_node_callback);
-      if(r != NULL) {
-	browser_node_ref(r);
+      w = w->glw_selected;
+      if(w != NULL) {
+	r = glw_get_opaque(w, browser_view_node_callback);
+	if(r != NULL) {
+	  browser_node_ref(r);
+	}
       }
     }
   }
@@ -214,6 +231,11 @@ browser_view_add_node(browser_node_t *bn)
   browser_node_t *parent = bn->bn_parent;
   glw_t *x;
   const char *icon;
+  glw_t *cont;
+
+  cont = glw_find_by_id(parent->bn_cont_xfader, "node_container");
+  if(cont == NULL)
+    return;
 
   assert(bn->bn_refcnt > 0);
 
@@ -234,7 +256,7 @@ browser_view_add_node(browser_node_t *bn)
   x = glw_create(GLW_CONTAINER_X,
 		 GLW_ATTRIB_SIGNAL_HANDLER, 
 		 browser_view_node_callback, bn, 1000,
-		 GLW_ATTRIB_PARENT, parent->bn_cont_widget,
+		 GLW_ATTRIB_PARENT, cont,
 		 NULL);
 
   glw_create(GLW_BITMAP,

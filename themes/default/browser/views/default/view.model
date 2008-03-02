@@ -1,0 +1,8 @@
+#HTSSIMPLEMODEL
+
+list {
+ displacement 0 0 0.5
+ id node_container
+ orientation vertical
+ slices 21
+}

@@ -48,7 +48,7 @@ check_node_free(browser_node_t *bn)
   TAILQ_REMOVE(&p->bn_childs, bn, bn_parent_link);
   check_node_free(p); /* removed from parent, need to check parent too */
 
-  assert(bn->bn_cont_widget == NULL);
+  assert(bn->bn_cont_xfader == NULL);
   assert(bn->bn_icon_widget == NULL);
 
   free((void *)bn->bn_url);
