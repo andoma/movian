@@ -49,7 +49,8 @@ const char *filetag_tagnames[] = {
   [FTAG_TRACK]          = "Track",
   [FTAG_NTRACKS]        = "Tracks",
   [FTAG_DURATION]       = "Duration",
-  [FTAG_STREAMINFO]     = "Streaminfo"
+  [FTAG_STREAMINFO]     = "Streaminfo",
+  [FTAG_FILESIZE]       = "Filesize"
 };
 
 
