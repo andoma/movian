@@ -32,6 +32,7 @@ typedef enum {
   FTAG_NTRACKS,
   FTAG_DURATION,
   FTAG_STREAMINFO,
+  FTAG_FILESIZE,
 } ftag_t;
 
 

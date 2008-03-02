@@ -217,6 +217,7 @@ filetag_probe(struct filetag_list *list, const char *filename)
   char probebuf[128];
   char tmp1[300];
   char *p;
+  struct stat st;
   int has_video = 0;
   int has_audio = 0;
   const char *codectype;
@@ -229,6 +230,10 @@ filetag_probe(struct filetag_list *list, const char *filename)
   fd = open(filename, O_RDONLY);
   if(fd == -1)
     return 1;
+
+  if(fstat(fd, &st) == 0) {
+    filetag_set_int(list, FTAG_FILESIZE, 0, st.st_size);
+  }
 
   i = read(fd, probebuf, sizeof(probebuf));
 
