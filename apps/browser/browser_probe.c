@@ -28,6 +28,7 @@
 #include "showtime.h"
 #include "browser.h"
 #include "browser_probe.h"
+#include "browser_view.h"
 
 /**
  *
@@ -52,6 +53,8 @@ browser_probe_thread(void *arg)
     filetag_probe(&bn->bn_ftags, bn->bn_url);
 
     filetag_dumplist(&bn->bn_ftags);
+
+    browser_view_node_update_filetype(bn);
 
     pthread_mutex_unlock(&bn->bn_mutex);
 

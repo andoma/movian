@@ -68,7 +68,9 @@ typedef struct browser_node {
 					       time so we cannot lock
 					       it in glw-callbacks */
 
-  glw_t                    *bn_icon_widget;
+  const char               *bn_view;        /* name of current view */
+
+  glw_t                    *bn_icon_xfader;
 
   glw_t                    *bn_cont_xfader;
 

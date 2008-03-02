@@ -32,4 +32,9 @@ browser_node_t *browser_view_get_current_node(glw_t *stack);
 
 void browser_view_set(browser_node_t *bn, const char *viewname);
 
+void browser_view_node_update_filetype(browser_node_t *bn);
+
+void browser_view_node_update_string(browser_node_t *bn, const char *id,
+				     const char *value);
+
 #endif /* BROWSER_VIEW_H */

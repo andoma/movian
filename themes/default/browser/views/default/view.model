@@ -1,8 +1,14 @@
 #HTSSIMPLEMODEL
 
-list {
+
+x-container {
  displacement 0 0 0.5
- id node_container
- orientation vertical
- slices 21
+
+ list {
+  id node_container
+  orientation vertical
+  slices 31
+ }
+ space 1.0
 }
+

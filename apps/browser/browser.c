@@ -49,7 +49,6 @@ check_node_free(browser_node_t *bn)
   check_node_free(p); /* removed from parent, need to check parent too */
 
   assert(bn->bn_cont_xfader == NULL);
-  assert(bn->bn_icon_widget == NULL);
 
   free((void *)bn->bn_url);
   free(bn);
