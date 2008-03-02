@@ -74,4 +74,10 @@ int filetag_probe(struct filetag_list *list, const char *filename);
 
 void filetag_dumplist(struct filetag_list *list);
 
+int filetag_get_str(struct filetag_list *list, ftag_t tag,
+		    int index, const char **valuep);
+
+int filetag_get_int(struct filetag_list *list, ftag_t tag,
+		     int index, int64_t *valuep);
+
 #endif /* FILEPROBE_H */

@@ -139,6 +139,37 @@ filetag_set_int(struct filetag_list *list, ftag_t tag,
 /**
  *
  */
+int
+filetag_get_str(struct filetag_list *list, ftag_t tag,
+		int index, const char **valuep)
+{
+  filetag_t *ft = filetag_find(list, tag, index, 0);
+  if(ft == NULL)
+    return -1;
+  *valuep = ft->ftag_string;
+  return 0;
+}
+
+
+/**
+ *
+ */
+int
+filetag_get_int(struct filetag_list *list, ftag_t tag,
+		int index, int64_t *valuep)
+{
+  filetag_t *ft = filetag_find(list, tag, index, 0);
+  if(ft == NULL)
+    return -1;
+  *valuep = ft->ftag_int;
+  return 0;
+}
+
+
+
+/**
+ *
+ */
 static void
 ftag_build_string_and_trim(struct filetag_list *list, ftag_t tag, 
 			   const char *str)
