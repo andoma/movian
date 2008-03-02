@@ -74,8 +74,8 @@ browser_view_get_current_node(glw_t *stack)
 /**
  *
  */
-static void
-glw_view_set(browser_node_t *bn, const char *viewname)
+void
+browser_view_set(browser_node_t *bn, const char *viewname)
 {
   char buf[256];
   
@@ -116,7 +116,7 @@ browser_view_expand_node(browser_node_t *bn, glw_t *parent,
 	       GLW_ATTRIB_SIGNAL_HANDLER, browser_view_cont_callback, bn, 1000,
 	       NULL);
 
-  glw_view_set(bn, "default");
+  browser_view_set(bn, "default");
  
   if((cont = glw_find_by_id(bn->bn_cont_xfader, "node_container")) != NULL)
     glw_focus_set(gfs, cont);

@@ -30,4 +30,6 @@ browser_node_t *browser_view_get_current_selected_node(glw_t *stack);
 
 browser_node_t *browser_view_get_current_node(glw_t *stack);
 
+void browser_view_set(browser_node_t *bn, const char *viewname);
+
 #endif /* BROWSER_VIEW_H */
