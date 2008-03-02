@@ -1,6 +1,6 @@
 /*
- *  Functions for file/url playback
- *  Copyright (C) 2007 Andreas Öman
+ *  Browser interface
+ *  Copyright (C) 2008 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,12 +16,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef PLAY_FILE_H
-#define PLAY_FILE_H
+#ifndef BROWSER_PROBE_H
+#define BROWSER_PROBE_H
 
-#include "app.h"
+void browser_probe_init(browser_root_t *br);
 
-int play_file(const char *fname, appi_t *ai, ic_t *ic,
-	      glw_t *extrainfo, glw_t *parent);
+void browser_probe_enqueue(browser_node_t *bn);
 
-#endif /* PLAY_FILE_H */
+#endif /* BROWSER_PROBE_H */

@@ -28,6 +28,7 @@
 #include "showtime.h"
 #include "browser.h"
 #include "browser_view.h"
+#include "browser_probe.h"
 
 /**
  * check if we should free a node, br_hierarchy_mutex must be held
@@ -41,6 +42,8 @@ check_node_free(browser_node_t *bn)
     return;
 
   printf("freeing %s\n", bn->bn_url);
+
+  filetag_freelist(&bn->bn_ftags);
 
   TAILQ_REMOVE(&p->bn_childs, bn, bn_parent_link);
   check_node_free(p); /* removed from parent, need to check parent too */
@@ -102,6 +105,7 @@ browser_node_create(const char *url, browser_protocol_t *proto, int type,
   bn->bn_protocol = proto;
   bn->bn_root = br;
   TAILQ_INIT(&bn->bn_childs);
+  TAILQ_INIT(&bn->bn_ftags);
   pthread_mutex_init(&bn->bn_mutex, NULL);
 
   return bn;
@@ -141,6 +145,8 @@ browser_root_create(const char *url, browser_protocol_t *proto)
   browser_node_t *bn = browser_node_create(url, proto, BN_DIR, br);
 
   pthread_mutex_init(&br->br_hierarchy_mutex, NULL);
+
+  browser_probe_init(br);
 
   br->br_root = bn;
   return br;

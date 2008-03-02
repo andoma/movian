@@ -3,7 +3,7 @@
 # core
 
 SRCS = 	main.c app.c input.c media.c mpeg_support.c play_file.c miw.c \
-	mediaprobe.c coms.c settings.c subtitles.c
+	fileprobe.c coms.c settings.c subtitles.c
 
 # audio subsys
 
@@ -48,7 +48,7 @@ SRCS  += clock.c
 # Browser application
 
 VPATH += apps/browser
-SRCS  += browser.c navigator.c browser_file.c browser_view.c
+SRCS  += browser.c navigator.c browser_file.c browser_view.c browser_probe.c
 
 # CD application
 

@@ -1,6 +1,6 @@
 /*
  *  Functions for probing file contents
- *  Copyright (C) 2007 Andreas Öman
+ *  Copyright (C) 2008 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,22 +37,119 @@
 #endif
 
 #include "showtime.h"
-#include "mediaprobe.h"
+#include "fileprobe.h"
 
-/*
+const char *filetag_tagnames[] = {
+  [FTAG_FILETYPE]       = "Filetype",
+  [FTAG_TITLE]          = "Title",
+  [FTAG_AUTHOR]         = "Author",
+  [FTAG_ALBUM]          = "Album",
+  [FTAG_ICON]           = "Icon",
+  [FTAG_ORIGINAL_DATE]  = "Original date",
+  [FTAG_TRACK]          = "Track",
+  [FTAG_NTRACKS]        = "Tracks",
+  [FTAG_DURATION]       = "Duration",
+  [FTAG_STREAMINFO]     = "Streaminfo"
+};
+
+
+/**
  *
  */
+void 
+filetag_dumplist(struct filetag_list *list)
+{
+  filetag_t *ft;
 
-static char *
-strcpy_and_trim(char *str)
+  TAILQ_FOREACH(ft, list, ftag_link) {
+    printf("%20s: <%5d> : ",
+	   filetag_tagnames[ft->ftag_tag], ft->ftag_index);
+    if(ft->ftag_string)
+      printf("%s\n", ft->ftag_string);
+    else
+      printf("%lld\n", ft->ftag_int);
+
+  }
+}
+
+
+
+
+/**
+ *
+ */
+void 
+filetag_freelist(struct filetag_list *list)
+{
+  filetag_t *ft;
+
+  while((ft = TAILQ_FIRST(list)) != NULL) {
+    TAILQ_REMOVE(list, ft, ftag_link);
+    free((void *)ft->ftag_string);
+    free(ft);
+  }
+}
+
+/**
+ *
+ */
+filetag_t *
+filetag_find(struct filetag_list *list, ftag_t tag, int index, int create)
+{
+  filetag_t *ft;
+
+  TAILQ_FOREACH(ft, list, ftag_link)
+    if(ft->ftag_tag == tag && ft->ftag_index == index)
+      return ft;
+  if(!create)
+    return NULL;
+  ft = calloc(1, sizeof(filetag_t));
+  ft->ftag_tag   = tag;
+  ft->ftag_index = index;
+  TAILQ_INSERT_TAIL(list, ft, ftag_link);
+  return ft;
+}
+
+
+/**
+ *
+ */
+void 
+filetag_set_str(struct filetag_list *list, ftag_t tag,
+		int index, const char *value)
+{
+  filetag_t *ft = filetag_find(list, tag, index, 1);
+  free((void *)ft->ftag_string);
+  ft->ftag_string = strdup(value);
+}
+
+
+/**
+ *
+ */
+void
+filetag_set_int(struct filetag_list *list, ftag_t tag,
+		int index, int64_t value)
+{
+  filetag_t *ft = filetag_find(list, tag, index, 1);
+  ft->ftag_int = value;
+}
+
+
+/**
+ *
+ */
+static void
+ftag_build_string_and_trim(struct filetag_list *list, ftag_t tag, 
+			   const char *str)
 {
   int len = strlen(str);
   char *ret;
 
   if(len == 0)
-    return NULL;
+    return;
 
-  ret = malloc(len + 1);
+  ret = alloca(len + 1);
 
   memcpy(ret, str, len);
   ret[len] = 0;
@@ -64,32 +161,13 @@ strcpy_and_trim(char *str)
     else
       break;
   }
-  return ret;
+  if(*ret == 0)
+    return;
+
+  filetag_set_str(list, tag, 0, ret);
 }
 
 
-static const char *
-utf8dup(const char *in)
-{
-  int ol = 0;
-  const char *x = in;
-  uint8_t tmp;
-  char *r, *y;
-
-  while(*x) {
-    PUT_UTF8(*x, tmp, ol++;);
-    x++;
-  }
-
-  y = r = malloc(ol + 1);
-  x = in;
-  while(*x) {
-    PUT_UTF8(*x, tmp, *y++ = tmp;);
-    x++;
-  }
-  *y = 0;
-  return (const char *)r;
-}
 
 /*
  *
@@ -97,8 +175,8 @@ utf8dup(const char *in)
 
 static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
 
-int 
-mediaprobe(const char *filename, mediainfo_t *mi, int fast, const char *icon)
+int
+filetag_probe(struct filetag_list *list, const char *filename)
 {
   int i, fd;
   AVFormatContext *fctx;
@@ -108,7 +186,6 @@ mediaprobe(const char *filename, mediainfo_t *mi, int fast, const char *icon)
   char probebuf[128];
   char tmp1[300];
   char *p;
-  struct stat st;
   int has_video = 0;
   int has_audio = 0;
   const char *codectype;
@@ -122,15 +199,14 @@ mediaprobe(const char *filename, mediainfo_t *mi, int fast, const char *icon)
   if(fd == -1)
     return 1;
 
-  mi->mi_time = 0;
-
   i = read(fd, probebuf, sizeof(probebuf));
 
   if(i == sizeof(probebuf)) {
     if(!strncasecmp(probebuf, "[playlist]", 10)) {
 
       probebuf[sizeof(probebuf) - 1] = 0;
-      mi->mi_type = MI_PLAYLIST_PLS;
+
+      filetag_set_int(list, FTAG_FILETYPE, 0, FILETYPE_PLAYLIST_PLS);
 
       t = strrchr(filename, '/');
       t = t ? t + 1 : filename;
@@ -140,10 +216,13 @@ mediaprobe(const char *filename, mediainfo_t *mi, int fast, const char *icon)
 	tmp1[i++] = *t++;
       tmp1[i] = 0;
 
-      mi->mi_title = strdup(tmp1);
+      filetag_set_str(list, FTAG_TITLE, 0, tmp1);
 
       t = strstr(probebuf, "NumberOfEntries=");
-      mi->mi_track = t != NULL ? atoi(t + 16) : 0;
+
+      if(t != NULL)
+	filetag_set_int(list, FTAG_NTRACKS, 0, atoi(t + 16));
+
       close(fd);
       return 0;
     }
@@ -174,14 +253,12 @@ mediaprobe(const char *filename, mediainfo_t *mi, int fast, const char *icon)
 	  tm.tm_mon--;
 	  t = mktime(&tm);
 	  if(t != (time_t)-1) {
-	    mi->mi_time = t;
+	    filetag_set_int(list, FTAG_ORIGINAL_DATE, 0, t);
 	  }
 	}
       }
       exif_data_unref(ed);
     }
-
-
 #endif
 
     if(
@@ -191,29 +268,17 @@ mediaprobe(const char *filename, mediainfo_t *mi, int fast, const char *icon)
 	probebuf[8] == 'i' && probebuf[9] == 'f') ||
        !memcmp(probebuf, pngsig, 8)) {
 
-      mi->mi_type = MI_IMAGE;
-      p = strrchr(filename, '/');
-      if(p != NULL && p[1] != 0)
-	mi->mi_title = strdup(p + 1);
-      else
-	mi->mi_title = strdup(filename);
-
-      /* String trailing .jpg .gif, etc */
-      p = strrchr(mi->mi_title, '.');
-      if(p != NULL && isalnum(p[1]) && isalnum(p[2]) && isalnum(p[3]) &&
-	 p[4] == 0) {
-	*p = 0;
-      }
-
+      filetag_set_int(list, FTAG_FILETYPE, 0, FILETYPE_IMAGE);
       close(fd);
       return 0;
     }
   }
-
+#if 0
   if(fast) {
     close(fd);
     return 1;
   }
+#endif
 
   if(lseek(fd, 0x8000, SEEK_SET) == 0x8000) {
     i = read(fd, probebuf, sizeof(probebuf));
@@ -233,8 +298,8 @@ mediaprobe(const char *filename, mediainfo_t *mi, int fast, const char *icon)
 	}
 	*p = 0;
 
-	mi->mi_type = MI_ISO;
-	mi->mi_title = strdup(&probebuf[40]);
+	filetag_set_int(list, FTAG_FILETYPE, 0, FILETYPE_ISO);
+	filetag_set_str(list, FTAG_TITLE,    0, &probebuf[40]);
 	close(fd);
 	return 0;
       }
@@ -263,7 +328,29 @@ mediaprobe(const char *filename, mediainfo_t *mi, int fast, const char *icon)
     return 1;
   }
 
-  mi->mi_type = MI_FILE;
+  /* Format meta info */
+
+  if(fctx->title[0] == 0) {
+    t = strrchr(filename, '/');
+    t = t ? t + 1 : filename;
+    i = strlen(t);
+    p = alloca(i + 1);
+    memcpy(p, t, i + 1);
+    
+    if(i > 4 && p[i - 4] == '.')
+      p[i - 4] = 0;
+    filetag_set_str(list, FTAG_TITLE, 0, p);
+  } else {
+    ftag_build_string_and_trim(list, FTAG_TITLE, fctx->title);
+  }
+
+  ftag_build_string_and_trim(list, FTAG_AUTHOR, fctx->author);
+  ftag_build_string_and_trim(list, FTAG_ALBUM, fctx->album);
+
+  if(fctx->track != 0)
+    filetag_set_int(list, FTAG_TRACK, 0, fctx->track);
+
+  /* Check each stream */
 
   for(i = 0; i < fctx->nb_streams; i++) {
     avctx = fctx->streams[i]->codec;
@@ -282,9 +369,6 @@ mediaprobe(const char *filename, mediainfo_t *mi, int fast, const char *icon)
     default:
       continue;
     }
-
-    if(mi->mi_streaminfo_num == MI_STREAMINFO_MAX)
-      continue;
 
     if(codec == NULL) {
       snprintf(tmp1, sizeof(tmp1), "%s: Unsupported codec", codectype);
@@ -305,39 +389,22 @@ mediaprobe(const char *filename, mediainfo_t *mi, int fast, const char *icon)
 	snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
 		 ", %d kb/s", avctx->bit_rate / 1000);
     }
-    mi->mi_streaminfo[mi->mi_streaminfo_num++] = strdup(tmp1);
+
+    filetag_set_str(list, FTAG_STREAMINFO, i, tmp1);
   }
 
   if(has_video)
-    mi->mi_type = MI_VIDEO;
+    filetag_set_int(list, FTAG_FILETYPE, 0, FILETYPE_VIDEO);
   else if(has_audio)
-    mi->mi_type = MI_AUDIO;
+    filetag_set_int(list, FTAG_FILETYPE, 0, FILETYPE_AUDIO);
 
-  if(fctx->title[0] == 0) {
-    t = strrchr(filename, '/');
-    t = t ? t + 1 : filename;
-    i = strlen(t);
-    p = alloca(i + 1);
-    memcpy(p, t, i + 1);
-    
-    if(i > 4 && p[i - 4] == '.')
-      p[i - 4] = 0;
-    mi->mi_title = utf8dup(p);
-  } else {
-    mi->mi_title = strcpy_and_trim(fctx->title);
-  }
-  mi->mi_author = strcpy_and_trim(fctx->author);
-  mi->mi_album = strcpy_and_trim(fctx->album);
+  if(fctx->duration != AV_NOPTS_VALUE)
+    filetag_set_int(list, FTAG_DURATION, 0, fctx->duration / AV_TIME_BASE);
 
-  mi->mi_track = fctx->track;
-  if(fctx->duration == AV_NOPTS_VALUE) {
-    mi->mi_duration = 0;
-  } else {
-    mi->mi_duration = fctx->duration / AV_TIME_BASE;
-  }
   av_close_input_file(fctx);  
   ffunlock();
 
+#if 0
   /* Set icon, if not supplied, we try to make a guess */
 
   if(icon != NULL) {
@@ -368,39 +435,7 @@ mediaprobe(const char *filename, mediainfo_t *mi, int fast, const char *icon)
       }
     }
   }
+#endif
 
   return 0;
-}
-
-
-void 
-mediaprobe_free(mediainfo_t *mi)
-{
-  int i;
-  free((void *)mi->mi_title);
-  free((void *)mi->mi_author);
-  free((void *)mi->mi_album);
-  free((void *)mi->mi_icon);
-  for(i = 0; i < mi->mi_streaminfo_num; i++)
-    free((void *)mi->mi_streaminfo[i]);
-}
-
-
-void 
-mediaprobe_dup(mediainfo_t *dst, mediainfo_t *src)
-{
-  int i;
-  dst->mi_type = src->mi_type;
-  dst->mi_track = src->mi_track;
-  dst->mi_duration = src->mi_duration;
-  
-  dst->mi_title  = src->mi_title  ? strdup(src->mi_title)  : NULL;
-  dst->mi_author = src->mi_author ? strdup(src->mi_author) : NULL;
-  dst->mi_album  = src->mi_album  ? strdup(src->mi_album)  : NULL;
-  dst->mi_icon   = src->mi_icon   ? strdup(src->mi_icon)   : NULL;
-
-  dst->mi_streaminfo_num = src->mi_streaminfo_num;
-  for(i = 0; i < src->mi_streaminfo_num; i++)
-    dst->mi_streaminfo[i] = src->mi_streaminfo[i] ?
-      strdup(src->mi_streaminfo[i]) : NULL;
 }

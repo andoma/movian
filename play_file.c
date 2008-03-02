@@ -37,21 +37,20 @@
 #include "play_file.h"
 #include "gl/video_decoder.h"
 #include "miw.h"
-#include "mediaprobe.h"
 #include "subtitles.h"
 
 static glw_t *play_file_menu_audio_setup(glw_t *p, media_pipe_t *mp);
 
 static int play_file_pre_launch_menu(const char *fname, appi_t *ai,
-				     mediainfo_t *mi, AVFormatContext *fctx,
+				     AVFormatContext *fctx,
 				     media_pipe_t *mp);
 
 
 static glw_t *
-play_file_create_miw(media_pipe_t *mp, mediainfo_t *mi, glw_t **pscp)
+play_file_create_miw(media_pipe_t *mp,  glw_t **pscp)
 {
   glw_t *x, *c;
-  char tmp[200];
+  //  char tmp[200];
   const char *s;
 
   c = glw_create(GLW_BITMAP,
@@ -66,13 +65,15 @@ play_file_create_miw(media_pipe_t *mp, mediainfo_t *mi, glw_t **pscp)
 		     GLW_ATTRIB_PARENT, x,
 		     NULL);
   
-
+#if 0
   if(mi->mi_author != NULL) {
     s = tmp;
     snprintf(tmp, sizeof(tmp), "%s - %s", mi->mi_author, mi->mi_title);
   } else {
     s = mi->mi_title;
   }
+#endif
+  s = "foo";
 
   /* Title */
   
@@ -152,7 +153,7 @@ play_file_draw_status(glw_t *xfader, media_pipe_t *mp)
 
 
 int
-play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi, 
+play_file(const char *fname, appi_t *ai, ic_t *ic,
 	  glw_t *extrainfo, glw_t *parent)
 {
   AVFormatContext *fctx;
@@ -216,7 +217,7 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
 
   if(mp->mp_video.mq_stream != -1) {
 
-    switch((key = play_file_pre_launch_menu(fname, ai, mi, fctx, mp))) {
+    switch((key = play_file_pre_launch_menu(fname, ai, fctx, mp))) {
     case INPUT_KEY_BACK:
     case INPUT_KEY_STOP:
       goto noplay;
@@ -252,7 +253,7 @@ play_file(const char *fname, appi_t *ai, ic_t *ic, mediainfo_t *mi,
   }
   
 
-  meta = mp->mp_info_widget = play_file_create_miw(mp, mi, &psc);
+  meta = mp->mp_info_widget = play_file_create_miw(mp, &psc);
   xmeta = mp->mp_info_extra_widget = play_file_create_extra_miw(mp);
   amenu = play_file_menu_audio_setup(appi_menu_top(ai), mp);
   
@@ -729,7 +730,7 @@ pre_launch_subtitles_select(glw_t *parent, const char *filename)
 
 
 static int
-play_file_pre_launch_menu(const char *fname, appi_t *ai, mediainfo_t *mi,
+play_file_pre_launch_menu(const char *fname, appi_t *ai,
 			  AVFormatContext *fctx, media_pipe_t *mp)
 {
   pre_launch_t pla;
@@ -741,9 +742,11 @@ play_file_pre_launch_menu(const char *fname, appi_t *ai, mediainfo_t *mi,
   glw_vertex_t v;
   int fadeout = 0;
   const char *subtitles;
-
+#if 0
   snprintf(title, sizeof(title), "%s - %d:%02d",
 	   mi->mi_title, mi->mi_duration / 60, mi->mi_duration % 60);
+#endif
+  title[0] = 0;
 
   glw_vertex_anim_init(&pla.anim, 1.0f, 0.0f, 0.0f, 
 		       GLW_VERTEX_ANIM_SIN_LERP);

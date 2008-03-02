@@ -21,7 +21,7 @@
 
 #include <libglw/glw.h>
 
-#include "mediaprobe.h"
+#include "fileprobe.h"
 #include "hid/input.h"
 
 TAILQ_HEAD(browser_node_queue, browser_node);
@@ -63,7 +63,10 @@ typedef struct browser_node {
   const char               *bn_url;
 
   pthread_mutex_t           bn_mutex;       /* Lock for protecting
-					       fields below */
+					       fields below, this can
+					       be held for extensive
+					       time so we cannot lock
+					       it in glw-callbacks */
 
   glw_t                    *bn_cont_widget; /* GLW_XFADER */
   glw_t                    *bn_icon_widget; /* GLW_XFADER */
@@ -74,6 +77,14 @@ typedef struct browser_node {
   } bn_type;
 
   struct browser_protocol  *bn_protocol;
+
+  struct filetag_list       bn_ftags;
+
+  /* probe link and probe linked state is protected by root
+     probemutex, for more info see browser_probe.[ch] */
+
+  TAILQ_ENTRY(browser_node) bn_probe_link;
+  int                       bn_probe_linked;
 
 } browser_node_t;
 
@@ -90,6 +101,13 @@ typedef struct browser_root {
 					  significant time */
 
   browser_node_t *br_root;
+
+  /* Probing */
+
+  pthread_mutex_t br_probe_mutex;
+  pthread_cond_t  br_probe_cond;
+  pthread_t br_probe_thread_id;
+  struct browser_node_queue br_probe_queue;
 
 } browser_root_t;
 

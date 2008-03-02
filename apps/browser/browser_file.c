@@ -29,6 +29,7 @@
 #include "showtime.h"
 #include "browser.h"
 #include "browser_file.h"
+#include "browser_probe.h"
 
 
 /**
@@ -85,6 +86,10 @@ browser_file_scan_thread(void *arg)
       }
 
       c = browser_node_add_child(bn, buf, type);
+
+      if(type == BN_FILE)
+	browser_probe_enqueue(c);
+
       browser_node_deref(c);
     }
     closedir(dir);
