@@ -154,6 +154,17 @@ filetag_get_str(struct filetag_list *list, ftag_t tag,
 /**
  *
  */
+const char *
+filetag_get_str2(struct filetag_list *list, ftag_t tag, int index)
+{
+  filetag_t *ft = filetag_find(list, tag, index, 0);
+  return ft ? ft->ftag_string : NULL;
+}
+
+
+/**
+ *
+ */
 int
 filetag_get_int(struct filetag_list *list, ftag_t tag,
 		int index, int64_t *valuep)

@@ -78,6 +78,9 @@ void filetag_dumplist(struct filetag_list *list);
 int filetag_get_str(struct filetag_list *list, ftag_t tag,
 		    int index, const char **valuep);
 
+const char *filetag_get_str2(struct filetag_list *list, ftag_t tag,
+			     int index);
+
 int filetag_get_int(struct filetag_list *list, ftag_t tag,
 		     int index, int64_t *valuep);
 
