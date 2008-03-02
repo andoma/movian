@@ -90,7 +90,7 @@ nav_start(void *aux)
 
   ai->ai_widget_miniature = 
     glw_create(GLW_MODEL,
-	       GLW_ATTRIB_FILENAME, "browser/switcher",
+	       GLW_ATTRIB_FILENAME, "browser/switcher-icon",
 	       NULL);
 
   br = browser_root_create("/", &browser_file_protocol);
@@ -156,5 +156,5 @@ nav_spawn(void)
 app_t app_navigator = {
   .app_spawn = nav_spawn,
   .app_name = "Navigator",
-  .app_model = "browser/launcher",
+  .app_model = "browser/start-icon",
 };
