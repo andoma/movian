@@ -92,6 +92,7 @@ CFLAGS += -g -Wall -Werror -funsigned-char -O2 $(HTS_CFLAGS)
 
 CFLAGS += -I/usr/local/include -I$(INCLUDES_INSTALL_BASE) -I$(CURDIR)
 CFLAGS += -Wno-deprecated-declarations -Wmissing-prototypes
+CFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 
 LDFLAGS += -L/usr/local/lib -L$(LIBS_INSTALL_BASE) -L/usr/X11R6/lib 
 
