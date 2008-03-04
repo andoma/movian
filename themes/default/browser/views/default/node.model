@@ -3,11 +3,11 @@
 
 x-container {
  xfader {
-  id filetype_icon_container
+  id node_filetype_icon_container
   weight 0.05
  }
 
  text {
-  id filename
+  id node_filename
  }
 }

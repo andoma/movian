@@ -54,7 +54,7 @@ browser_probe_thread(void *arg)
 
     filetag_dumplist(&bn->bn_ftags);
 
-    browser_view_node_update_filetype(bn);
+    browser_view_node_model_update(bn);
 
     pthread_mutex_unlock(&bn->bn_mutex);
 

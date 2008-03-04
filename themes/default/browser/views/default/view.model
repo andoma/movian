@@ -9,6 +9,99 @@ x-container {
   orientation vertical
   slices 31
  }
- space 1.0
+
+ y-container {
+  x-container {
+   text {
+    caption Filename:
+   }
+   text {
+    id node_filename
+   }
+  }
+
+  x-container {
+   text {
+    caption Title:
+   }
+   text {
+    id node_title
+   }
+  }
+
+  x-container {
+   text {
+    caption Author:
+   }
+   text {
+    id node_author
+   }
+  }
+
+  x-container {
+   text {
+    caption Album:
+   }
+   text {
+    id node_album
+   }
+  }
+
+  x-container {
+   text {
+    caption Size:
+   }
+   text {
+    id node_filesize
+   }
+  }
+
+  x-container {
+   text {
+    caption Duration:
+   }
+   text {
+    id node_duration
+   }
+  }
+
+  x-container {
+   text {
+    caption Date:
+   }
+   text {
+    id node_original_date
+   }
+  }
+
+  x-container {
+   text {
+    caption Mediaformat:
+   }
+   text {
+    id node_mediaformat
+   }
+  }
+
+  x-container {
+   text {
+    caption Audio:
+   }
+   text {
+    id node_audioinfo
+   }
+  }
+
+
+  x-container {
+   text {
+    caption Video:
+   }
+   text {
+    id node_videoinfo
+   }
+  }
+
+ }
 }
 

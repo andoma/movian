@@ -27,6 +27,27 @@
 #include "browser.h"
 #include "browser_view.h"
 
+static void browser_view_update_wset_from_node(glw_t *root,
+					       browser_node_t *bn);
+
+static int browser_view_node_callback(glw_t *w, void *opaque,
+				      glw_signal_t sig, ...);
+
+/**
+ *
+ */
+static int
+browser_view_xfader_callback(glw_t *w, void *opaque, glw_signal_t sig, ...)
+{
+  browser_node_t *bn = opaque;
+
+  if(sig == GLW_SIGNAL_DESTROY) {
+    bn->bn_cont_xfader = NULL;
+    browser_node_deref(bn);
+  }
+  return 0;
+}
+
 
 /**
  *
@@ -34,12 +55,22 @@
 static int
 browser_view_cont_callback(glw_t *w, void *opaque, glw_signal_t sig, ...)
 {
-  browser_node_t *bn = opaque;
+  glw_t *c;
+  browser_node_t *parent = opaque, *bn;
 
-  if(sig == GLW_SIGNAL_DESTROY) {
-    printf("Widget for container %s destroyed\n", bn->bn_url);
-    bn->bn_cont_xfader = NULL;
-    browser_node_deref(bn);
+  va_list ap;
+  va_start(ap, sig);
+
+  if(sig == GLW_SIGNAL_SELECTED_CHANGED) {
+    c = va_arg(ap, void *);
+
+    /* Get the new node that was selected */
+
+    bn = glw_get_opaque(c, browser_view_node_callback);
+    if(bn != NULL && parent->bn_cont_xfader != NULL) {
+      printf("%s is selected\n", bn->bn_url);
+      browser_view_update_wset_from_node(parent->bn_cont_xfader, bn);
+    }
   }
   return 0;
 }
@@ -60,7 +91,7 @@ browser_view_get_current_node(glw_t *stack)
 
   w = stack->glw_selected;
   if(w != NULL) {
-    r = glw_get_opaque(w, browser_view_cont_callback);
+    r = glw_get_opaque(w, browser_view_xfader_callback);
     if(r != NULL) {
       browser_node_ref(r);
     }
@@ -116,13 +147,19 @@ browser_view_expand_node(browser_node_t *bn, glw_t *parent,
   bn->bn_cont_xfader =
     glw_create(GLW_XFADER,
 	       GLW_ATTRIB_PARENT_HEAD, parent,
-	       GLW_ATTRIB_SIGNAL_HANDLER, browser_view_cont_callback, bn, 1000,
+	       GLW_ATTRIB_SIGNAL_HANDLER,
+	       browser_view_xfader_callback, bn, 1000,
 	       NULL);
 
   browser_view_set(bn, "default");
  
-  if((w = glw_find_by_id(bn->bn_cont_xfader, "node_container")) != NULL)
+  if((w = glw_find_by_id(bn->bn_cont_xfader, "node_container")) != NULL) {
     glw_focus_set(gfs, w);
+
+    glw_set(w,
+	    GLW_ATTRIB_SIGNAL_HANDLER, browser_view_cont_callback, bn, 1000,
+	    NULL);
+  }
 
   if((w = glw_find_by_id(bn->bn_cont_xfader, "node_fullpath")) != NULL) {
     glw_set(w,
@@ -150,7 +187,7 @@ browser_view_collapse_node(browser_node_t *bn, glw_focus_stack_t *gfs)
   bn->bn_cont_xfader = NULL;
 
   glw_set(w, 
-	  GLW_ATTRIB_SIGNAL_HANDLER, browser_view_cont_callback, bn, -1,
+	  GLW_ATTRIB_SIGNAL_HANDLER, browser_view_xfader_callback, bn, -1,
 	  NULL);
 
   if((cont = glw_find_by_id(w, "node_container")) != NULL)
@@ -216,10 +253,13 @@ browser_view_get_current_selected_node(glw_t *stack)
 }
 
 /**
- *
+ * In the 'root' widget set, find 'filetype_icon_container' and update
+ * it with a new model based on the current filetype
+ * 
+ * GLW must be locked while doing this
  */
-void
-browser_view_node_update_filetype(browser_node_t *bn)
+static void
+browser_view_set_filetype(glw_t *root, browser_node_t *bn)
 {
   browser_node_t *parent = bn->bn_parent;
   glw_t *w;
@@ -227,58 +267,158 @@ browser_view_node_update_filetype(browser_node_t *bn)
   char buf[256];
   int64_t type;
 
-  glw_lock();
+  w = glw_find_by_id(root, "node_filetype_icon_container");
+  if(w == NULL)
+    return;
+  switch(bn->bn_type) {
+  case BN_DIR:
+    model = "directory";
+    break;
+  default:
+  case BN_FILE:
+    model = "file";
 
-  w = bn->bn_icon_xfader ? 
-    glw_find_by_id(bn->bn_icon_xfader, "filetype_icon_container") : NULL;
-  if(w != NULL) {
-    
-    switch(bn->bn_type) {
-    case BN_DIR:
-      model = "directory";
-      break;
-    default:
-    case BN_FILE:
-      model = "file";
+    if(!filetag_get_int(&bn->bn_ftags, FTAG_FILETYPE, &type)) {
+      switch(type) {
+      case FILETYPE_AUDIO:
+	model = "audio";
+	break;
 
-      if(!filetag_get_int(&bn->bn_ftags, FTAG_FILETYPE, 0, &type)) {
-	switch(type) {
-	case FILETYPE_AUDIO:
-	  model = "audio";
-	  break;
-
-	case FILETYPE_VIDEO:
-	  model = "video";
-	  break;
-	}
+      case FILETYPE_VIDEO:
+	model = "video";
+	break;
       }
-      break;
     }
-
-    snprintf(buf, sizeof(buf), "browser/views/%s/%s", parent->bn_view, model);
-
-    glw_create(GLW_MODEL,
-	       GLW_ATTRIB_FILENAME, buf,
-	       GLW_ATTRIB_PARENT, w,
-	       NULL);
+    break;
   }
-  glw_unlock();
+
+  snprintf(buf, sizeof(buf), "browser/views/%s/%s", parent->bn_view, model);
+
+  glw_create(GLW_MODEL,
+	     GLW_ATTRIB_FILENAME, buf,
+	     GLW_ATTRIB_PARENT, w,
+	     NULL);
+}
+
+
+/**
+ * In the 'root' widget set, find 'id' and update its caption
+ * 
+ * GLW must be locked while doing this
+ */
+static void
+browser_view_set_caption(glw_t *root, const char *id, const char *value)
+{
+  glw_t *w;
+
+  if((w = glw_find_by_id(root, id)) != NULL)
+    glw_set(w, 
+	    GLW_ATTRIB_CAPTION, value,
+	    GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
+	    NULL);
+}
+
+
+static void
+size_quantify(char *buf, size_t buflen, int64_t i64)
+{
+  if(i64 < 1000) {
+    snprintf(buf, buflen, "%lld b", i64);
+  } else if(i64 < 1000 * 1000) {
+    snprintf(buf, buflen, "%.2f kb", (float)i64 / 1000);
+  } else if(i64 < 1000 * 1000 * 1000) {
+    snprintf(buf, buflen, "%.2f Mb", (float)i64 / 1000 / 1000);
+  } else {
+    snprintf(buf, buflen, "%.2f Gb", (float)i64 / 1000 / 1000 / 1000);
+  }
 }
 
 /**
  *
  */
+static void
+browser_view_update_wset_from_node(glw_t *root, browser_node_t *bn)
+{
+  const char *fname;
+  char buf[100];
+  int64_t i64;
+  int32_t i32;
+  time_t t;
+  struct tm tm;
+
+  browser_view_set_filetype(root, bn);
+
+  fname = strrchr(bn->bn_url, '/');
+  fname = fname ? fname + 1 : bn->bn_url;
+  browser_view_set_caption(root, "node_filename", fname);
+
+  browser_view_set_caption(root, "node_title",
+			   filetag_get_str2(&bn->bn_ftags, FTAG_TITLE));
+
+  browser_view_set_caption(root, "node_author",
+			   filetag_get_str2(&bn->bn_ftags, FTAG_AUTHOR));
+
+  browser_view_set_caption(root, "node_album",
+			   filetag_get_str2(&bn->bn_ftags, FTAG_ALBUM));
+
+  browser_view_set_caption(root, "node_mediaformat",
+			   filetag_get_str2(&bn->bn_ftags, FTAG_MEDIAFORMAT));
+
+  browser_view_set_caption(root, "node_videoinfo",
+			   filetag_get_str2(&bn->bn_ftags, FTAG_VIDEOINFO));
+
+  browser_view_set_caption(root, "node_audioinfo",
+			   filetag_get_str2(&bn->bn_ftags, FTAG_AUDIOINFO));
+
+  if(!filetag_get_int(&bn->bn_ftags, FTAG_FILESIZE, &i64)) {
+    size_quantify(buf, sizeof(buf), i64);
+    browser_view_set_caption(root, "node_filesize", buf);
+  } else {
+    browser_view_set_caption(root, "node_filesize", NULL);
+  }
+
+  if(!filetag_get_int(&bn->bn_ftags, FTAG_DURATION, &i64)) {
+    i32 = i64;
+    if(i32 > 3600) {
+      snprintf(buf, sizeof(buf), "%d:%02d:%02d",
+	       i32 / 3600, (i32 % 3600) / 60, i32 % 60);
+    } else {
+      snprintf(buf, sizeof(buf), "%d:%02d", i32 / 60, i32 % 60);
+    }
+    browser_view_set_caption(root, "node_duration", buf);
+  } else {
+    browser_view_set_caption(root, "node_duration", NULL);
+  }
+
+  if(!filetag_get_int(&bn->bn_ftags, FTAG_ORIGINAL_DATE, &i64)) {
+    t = i64;
+    localtime_r(&t, &tm);
+    strftime(buf, sizeof(buf), "%X %x", &tm);
+    browser_view_set_caption(root, "node_original_date", buf);
+  } else {
+    browser_view_set_caption(root, "node_original_date", NULL);
+  }
+
+}
+
+
+/**
+ *
+ */
 void
-browser_view_node_update_string(browser_node_t *bn, const char *id,
-				const char *value)
+browser_view_node_model_update(browser_node_t *bn)
 {
   glw_t *w;
+  browser_node_t *parent = bn->bn_parent;
 
   glw_lock();
 
-  if((w = glw_find_by_id(bn->bn_icon_xfader, id)) != NULL)
-    glw_set(w, GLW_ATTRIB_CAPTION, value, NULL);
+  w = bn->bn_icon_xfader;
 
+  if(w->glw_parent->glw_selected == w)
+    browser_view_update_wset_from_node(parent->bn_cont_xfader, bn);
+
+  browser_view_update_wset_from_node(bn->bn_icon_xfader, bn);
   glw_unlock();
 }
 
@@ -291,21 +431,16 @@ browser_view_node_model_load(browser_node_t *bn)
 {
   browser_node_t *parent = bn->bn_parent;
   char buf[256];
-  const char *fname;
+  glw_t *w;
 
   snprintf(buf, sizeof(buf), "browser/views/%s/node", parent->bn_view);
 
-  glw_create(GLW_MODEL,
-	     GLW_ATTRIB_FILENAME, buf,
-	     GLW_ATTRIB_PARENT, bn->bn_icon_xfader,
-	     NULL);
+  w = glw_create(GLW_MODEL,
+		 GLW_ATTRIB_FILENAME, buf,
+		 GLW_ATTRIB_PARENT, bn->bn_icon_xfader,
+		 NULL);
 
-  browser_view_node_update_filetype(bn);
-
-  fname = strrchr(bn->bn_url, '/');
-  fname = fname ? fname + 1 : bn->bn_url;
-
-  browser_view_node_update_string(bn, "filename", fname);
+  browser_view_update_wset_from_node(w, bn);
 }
 
 
