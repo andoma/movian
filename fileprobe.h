@@ -31,8 +31,10 @@ typedef enum {
   FTAG_TRACK,
   FTAG_NTRACKS,
   FTAG_DURATION,
-  FTAG_STREAMINFO,
   FTAG_FILESIZE,
+  FTAG_AUDIOINFO,
+  FTAG_VIDEOINFO,
+  FTAG_MEDIAFORMAT,
 } ftag_t;
 
 
@@ -50,38 +52,31 @@ typedef struct filetag {
   TAILQ_ENTRY(filetag) ftag_link;
 
   ftag_t ftag_tag;
-
-  int ftag_index;  /* In case of multple instances of the same type,
-		      this should used as an index, otherwise 0 */
-
-
   const char *ftag_string;
   int64_t ftag_int;
 
 } filetag_t;
 
-filetag_t *filetag_find(struct filetag_list *list, ftag_t tag, int index,
-			int create);
+filetag_t *filetag_find(struct filetag_list *list, ftag_t tag, int create);
 
 void filetag_freelist(struct filetag_list *list);
 
 void filetag_set_str(struct filetag_list *list, ftag_t tag,
-		     int index, const char *value);
+		     const char *value);
 
 void filetag_set_int(struct filetag_list *list, ftag_t tag,
-		     int index, int64_t value);
+		     int64_t value);
 
 int filetag_probe(struct filetag_list *list, const char *filename);
 
 void filetag_dumplist(struct filetag_list *list);
 
 int filetag_get_str(struct filetag_list *list, ftag_t tag,
-		    int index, const char **valuep);
+		    const char **valuep);
 
-const char *filetag_get_str2(struct filetag_list *list, ftag_t tag,
-			     int index);
+const char *filetag_get_str2(struct filetag_list *list, ftag_t tag);
 
 int filetag_get_int(struct filetag_list *list, ftag_t tag,
-		     int index, int64_t *valuep);
+		    int64_t *valuep);
 
 #endif /* FILEPROBE_H */

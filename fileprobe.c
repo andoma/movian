@@ -49,7 +49,9 @@ const char *filetag_tagnames[] = {
   [FTAG_TRACK]          = "Track",
   [FTAG_NTRACKS]        = "Tracks",
   [FTAG_DURATION]       = "Duration",
-  [FTAG_STREAMINFO]     = "Streaminfo",
+  [FTAG_AUDIOINFO]      = "Audioinfo",
+  [FTAG_VIDEOINFO]      = "Videoinfo",
+  [FTAG_MEDIAFORMAT]    = "Mediaformat",
   [FTAG_FILESIZE]       = "Filesize"
 };
 
@@ -63,8 +65,8 @@ filetag_dumplist(struct filetag_list *list)
   filetag_t *ft;
 
   TAILQ_FOREACH(ft, list, ftag_link) {
-    printf("%20s: <%5d> : ",
-	   filetag_tagnames[ft->ftag_tag], ft->ftag_index);
+    printf("%20s: ",
+	   filetag_tagnames[ft->ftag_tag]);
     if(ft->ftag_string)
       printf("%s\n", ft->ftag_string);
     else
@@ -95,18 +97,17 @@ filetag_freelist(struct filetag_list *list)
  *
  */
 filetag_t *
-filetag_find(struct filetag_list *list, ftag_t tag, int index, int create)
+filetag_find(struct filetag_list *list, ftag_t tag, int create)
 {
   filetag_t *ft;
 
   TAILQ_FOREACH(ft, list, ftag_link)
-    if(ft->ftag_tag == tag && ft->ftag_index == index)
+    if(ft->ftag_tag == tag)
       return ft;
   if(!create)
     return NULL;
   ft = calloc(1, sizeof(filetag_t));
   ft->ftag_tag   = tag;
-  ft->ftag_index = index;
   TAILQ_INSERT_TAIL(list, ft, ftag_link);
   return ft;
 }
@@ -116,10 +117,9 @@ filetag_find(struct filetag_list *list, ftag_t tag, int index, int create)
  *
  */
 void 
-filetag_set_str(struct filetag_list *list, ftag_t tag,
-		int index, const char *value)
+filetag_set_str(struct filetag_list *list, ftag_t tag, const char *value)
 {
-  filetag_t *ft = filetag_find(list, tag, index, 1);
+  filetag_t *ft = filetag_find(list, tag, 1);
   free((void *)ft->ftag_string);
   ft->ftag_string = strdup(value);
 }
@@ -129,10 +129,9 @@ filetag_set_str(struct filetag_list *list, ftag_t tag,
  *
  */
 void
-filetag_set_int(struct filetag_list *list, ftag_t tag,
-		int index, int64_t value)
+filetag_set_int(struct filetag_list *list, ftag_t tag, int64_t value)
 {
-  filetag_t *ft = filetag_find(list, tag, index, 1);
+  filetag_t *ft = filetag_find(list, tag, 1);
   ft->ftag_int = value;
 }
 
@@ -141,10 +140,9 @@ filetag_set_int(struct filetag_list *list, ftag_t tag,
  *
  */
 int
-filetag_get_str(struct filetag_list *list, ftag_t tag,
-		int index, const char **valuep)
+filetag_get_str(struct filetag_list *list, ftag_t tag, const char **valuep)
 {
-  filetag_t *ft = filetag_find(list, tag, index, 0);
+  filetag_t *ft = filetag_find(list, tag, 0);
   if(ft == NULL)
     return -1;
   *valuep = ft->ftag_string;
@@ -156,9 +154,9 @@ filetag_get_str(struct filetag_list *list, ftag_t tag,
  *
  */
 const char *
-filetag_get_str2(struct filetag_list *list, ftag_t tag, int index)
+filetag_get_str2(struct filetag_list *list, ftag_t tag)
 {
-  filetag_t *ft = filetag_find(list, tag, index, 0);
+  filetag_t *ft = filetag_find(list, tag, 0);
   return ft ? ft->ftag_string : NULL;
 }
 
@@ -167,10 +165,9 @@ filetag_get_str2(struct filetag_list *list, ftag_t tag, int index)
  *
  */
 int
-filetag_get_int(struct filetag_list *list, ftag_t tag,
-		int index, int64_t *valuep)
+filetag_get_int(struct filetag_list *list, ftag_t tag, int64_t *valuep)
 {
-  filetag_t *ft = filetag_find(list, tag, index, 0);
+  filetag_t *ft = filetag_find(list, tag, 0);
   if(ft == NULL)
     return -1;
   *valuep = ft->ftag_int;
@@ -207,7 +204,7 @@ ftag_build_string_and_trim(struct filetag_list *list, ftag_t tag,
   if(*ret == 0)
     return;
 
-  filetag_set_str(list, tag, 0, ret);
+  filetag_set_str(list, tag, ret);
 }
 
 
@@ -244,7 +241,7 @@ filetag_probe(struct filetag_list *list, const char *filename)
     return 1;
 
   if(fstat(fd, &st) == 0) {
-    filetag_set_int(list, FTAG_FILESIZE, 0, st.st_size);
+    filetag_set_int(list, FTAG_FILESIZE, st.st_size);
   }
 
   i = read(fd, probebuf, sizeof(probebuf));
@@ -254,7 +251,7 @@ filetag_probe(struct filetag_list *list, const char *filename)
 
       probebuf[sizeof(probebuf) - 1] = 0;
 
-      filetag_set_int(list, FTAG_FILETYPE, 0, FILETYPE_PLAYLIST_PLS);
+      filetag_set_int(list, FTAG_FILETYPE, FILETYPE_PLAYLIST_PLS);
 
       t = strrchr(filename, '/');
       t = t ? t + 1 : filename;
@@ -264,12 +261,12 @@ filetag_probe(struct filetag_list *list, const char *filename)
 	tmp1[i++] = *t++;
       tmp1[i] = 0;
 
-      filetag_set_str(list, FTAG_TITLE, 0, tmp1);
+      filetag_set_str(list, FTAG_TITLE, tmp1);
 
       t = strstr(probebuf, "NumberOfEntries=");
 
       if(t != NULL)
-	filetag_set_int(list, FTAG_NTRACKS, 0, atoi(t + 16));
+	filetag_set_int(list, FTAG_NTRACKS, atoi(t + 16));
 
       close(fd);
       return 0;
@@ -301,7 +298,7 @@ filetag_probe(struct filetag_list *list, const char *filename)
 	  tm.tm_mon--;
 	  t = mktime(&tm);
 	  if(t != (time_t)-1) {
-	    filetag_set_int(list, FTAG_ORIGINAL_DATE, 0, t);
+	    filetag_set_int(list, FTAG_ORIGINAL_DATE, t);
 	  }
 	}
       }
@@ -316,7 +313,7 @@ filetag_probe(struct filetag_list *list, const char *filename)
 	probebuf[8] == 'i' && probebuf[9] == 'f') ||
        !memcmp(probebuf, pngsig, 8)) {
 
-      filetag_set_int(list, FTAG_FILETYPE, 0, FILETYPE_IMAGE);
+      filetag_set_int(list, FTAG_FILETYPE, FILETYPE_IMAGE);
       close(fd);
       return 0;
     }
@@ -346,8 +343,8 @@ filetag_probe(struct filetag_list *list, const char *filename)
 	}
 	*p = 0;
 
-	filetag_set_int(list, FTAG_FILETYPE, 0, FILETYPE_ISO);
-	filetag_set_str(list, FTAG_TITLE,    0, &probebuf[40]);
+	filetag_set_int(list, FTAG_FILETYPE, FILETYPE_ISO);
+	filetag_set_str(list, FTAG_TITLE,    &probebuf[40]);
 	close(fd);
 	return 0;
       }
@@ -387,7 +384,7 @@ filetag_probe(struct filetag_list *list, const char *filename)
     
     if(i > 4 && p[i - 4] == '.')
       p[i - 4] = 0;
-    filetag_set_str(list, FTAG_TITLE, 0, p);
+    filetag_set_str(list, FTAG_TITLE, p);
   } else {
     ftag_build_string_and_trim(list, FTAG_TITLE, fctx->title);
   }
@@ -396,7 +393,9 @@ filetag_probe(struct filetag_list *list, const char *filename)
   ftag_build_string_and_trim(list, FTAG_ALBUM, fctx->album);
 
   if(fctx->track != 0)
-    filetag_set_int(list, FTAG_TRACK, 0, fctx->track);
+    filetag_set_int(list, FTAG_TRACK, fctx->track);
+
+  filetag_set_str(list, FTAG_MEDIAFORMAT, fctx->iformat->long_name);
 
   /* Check each stream */
 
@@ -438,16 +437,28 @@ filetag_probe(struct filetag_list *list, const char *filename)
 		 ", %d kb/s", avctx->bit_rate / 1000);
     }
 
-    filetag_set_str(list, FTAG_STREAMINFO, i, tmp1);
+    switch(avctx->codec_type) {
+    case CODEC_TYPE_VIDEO:
+      p = strncmp(tmp1, "Video: ", 7) ? tmp1 : tmp1 + 7;
+      filetag_set_str(list, FTAG_VIDEOINFO, p);
+      break;
+    case CODEC_TYPE_AUDIO:
+      p = strncmp(tmp1, "Audio: ", 7) ? tmp1 : tmp1 + 7;
+      filetag_set_str(list, FTAG_AUDIOINFO, p);
+      break;
+      
+    default:
+      continue;
+    }
   }
 
   if(has_video)
-    filetag_set_int(list, FTAG_FILETYPE, 0, FILETYPE_VIDEO);
+    filetag_set_int(list, FTAG_FILETYPE, FILETYPE_VIDEO);
   else if(has_audio)
-    filetag_set_int(list, FTAG_FILETYPE, 0, FILETYPE_AUDIO);
+    filetag_set_int(list, FTAG_FILETYPE, FILETYPE_AUDIO);
 
   if(fctx->duration != AV_NOPTS_VALUE)
-    filetag_set_int(list, FTAG_DURATION, 0, fctx->duration / AV_TIME_BASE);
+    filetag_set_int(list, FTAG_DURATION, fctx->duration / AV_TIME_BASE);
 
   av_close_input_file(fctx);  
   ffunlock();
