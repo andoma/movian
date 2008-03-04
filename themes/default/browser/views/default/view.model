@@ -11,97 +11,163 @@ x-container {
  }
 
  y-container {
-  x-container {
-   text {
-    caption Filename:
-   }
-   text {
-    id node_filename
-   }
+  space 5.0
+  bitmap {
+   filename icon://plate_compact.png
+   texture-borders 0.5 0.5 0.5 0.5
+   vertex-borders  0.1 0.1 0.1 0.1
+   alpha 0.5
+   y-container {
+    space 0.1
+    text {
+     weight 0.5
+     caption Filename:
+    }
+    text {
+     id node_filename
+    }
+    space 0.1
+   } 
   }
 
-  x-container {
-   text {
-    caption Title:
-   }
-   text {
-    id node_title
-   }
+  bitmap {
+   filename icon://plate_compact.png
+   texture-borders 0.5 0.5 0.5 0.5
+   vertex-borders  0.1 0.1 0.1 0.1
+   alpha 0.5
+   y-container {
+    space 0.1
+    text {
+     weight 0.5
+     caption Title:
+    }
+    text {
+     id node_title
+    }
+    space 0.1
+   } 
   }
 
-  x-container {
-   text {
-    caption Author:
-   }
-   text {
-    id node_author
-   }
+  bitmap {
+   filename icon://plate_compact.png
+   texture-borders 0.5 0.5 0.5 0.5
+   vertex-borders  0.1 0.1 0.1 0.1
+   alpha 0.5
+   y-container {
+    space 0.1
+    text {
+     weight 0.5
+     caption Author:
+    }
+    text {
+     id node_author
+    }
+    space 0.1
+   } 
   }
 
-  x-container {
-   text {
-    caption Album:
-   }
-   text {
-    id node_album
-   }
+  bitmap {
+   filename icon://plate_compact.png
+   texture-borders 0.5 0.5 0.5 0.5
+   vertex-borders  0.1 0.1 0.1 0.1
+   alpha 0.5
+   y-container {
+    space 0.1
+    text {
+     weight 0.5
+     caption Album:
+    }
+    text {
+     id node_album
+    }
+    space 0.1
+   } 
   }
 
-  x-container {
-   text {
-    caption Size:
-   }
-   text {
-    id node_filesize
-   }
+  bitmap {
+   filename icon://plate_compact.png
+   texture-borders 0.5 0.5 0.5 0.5
+   vertex-borders  0.1 0.1 0.1 0.1
+   alpha 0.5
+   y-container {
+    space 0.1
+    text {
+     weight 0.5
+     caption Format:
+    }
+    text {
+     id node_mediaformat
+    }
+    space 0.1
+   } 
   }
 
-  x-container {
-   text {
-    caption Duration:
-   }
-   text {
-    id node_duration
-   }
+  bitmap {
+   filename icon://plate_compact.png
+   texture-borders 0.5 0.5 0.5 0.5
+   vertex-borders  0.1 0.1 0.1 0.1
+   alpha 0.5
+   y-container {
+    space 0.1
+    text {
+     weight 0.5
+     caption Video:
+    }
+    text {
+     id node_videoinfo
+    }
+    space 0.1
+   } 
   }
 
-  x-container {
-   text {
-    caption Date:
-   }
-   text {
-    id node_original_date
-   }
+  bitmap {
+   filename icon://plate_compact.png
+   texture-borders 0.5 0.5 0.5 0.5
+   vertex-borders  0.1 0.1 0.1 0.1
+   alpha 0.5
+   y-container {
+    space 0.1
+    text {
+     weight 0.5
+     caption Audio:
+    }
+    text {
+     id node_audioinfo
+    }
+    space 0.1
+   } 
   }
 
-  x-container {
-   text {
-    caption Mediaformat:
-   }
-   text {
-    id node_mediaformat
-   }
+  bitmap {
+   filename icon://plate_compact.png
+   texture-borders 0.5 0.5 0.5 0.5
+   vertex-borders  0.1 0.1 0.1 0.1
+   alpha 0.5
+   x-container {
+    y-container {
+     space 0.1
+     text {
+      weight 0.5
+      caption Size:
+     }
+     text {
+      id node_filesize
+     }
+     space 0.1
+    } 
+
+    y-container {
+     space 0.1
+     text {
+      weight 0.5
+      caption Duration:
+     }
+     text {
+      id node_duration
+     }
+     space 0.1
+    } 
   }
-
-  x-container {
-   text {
-    caption Audio:
-   }
-   text {
-    id node_audioinfo
-   }
-  }
-
-
-  x-container {
-   text {
-    caption Video:
-   }
-   text {
-    id node_videoinfo
-   }
-  }
-
  }
 }
 
