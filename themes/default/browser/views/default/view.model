@@ -8,6 +8,7 @@ x-container {
   id node_container
   orientation vertical
   slices 31
+  cursor-size 0.4
  }
 
  y-container {
