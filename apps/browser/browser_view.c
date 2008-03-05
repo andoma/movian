@@ -403,23 +403,40 @@ browser_view_update_wset_from_node(glw_t *root, browser_node_t *bn)
 
 
 /**
- *
+ * bn_mutex should be held heere
  */
 void
 browser_view_node_model_update(browser_node_t *bn)
 {
   glw_t *w;
-  browser_node_t *parent = bn->bn_parent;
+  browser_root_t *br = bn->bn_root;
+  browser_node_t *parent;
+
+  pthread_mutex_lock(&br->br_hierarchy_mutex);
+
+  parent = bn->bn_parent;
+  parent->bn_refcnt++;
+
+  pthread_mutex_unlock(&br->br_hierarchy_mutex);
+
+  if(bn->bn_icon_xfader == NULL)
+    return;
 
   glw_lock();
 
   w = bn->bn_icon_xfader;
 
-  if(w->glw_parent->glw_selected == w)
-    browser_view_update_wset_from_node(parent->bn_cont_xfader, bn);
+  if(w != NULL) {
 
-  browser_view_update_wset_from_node(bn->bn_icon_xfader, bn);
+    if(w->glw_parent->glw_selected == w && parent->bn_cont_xfader != NULL)
+      browser_view_update_wset_from_node(parent->bn_cont_xfader, bn);
+
+    browser_view_update_wset_from_node(bn->bn_icon_xfader, bn);
+  }
   glw_unlock();
+
+  browser_node_deref(parent);
+
 }
 
 
