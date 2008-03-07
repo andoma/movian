@@ -31,6 +31,13 @@
 #include "browser_file.h"
 #include "browser_probe.h"
 
+static int 
+scan_filter(const struct dirent *d)
+{
+  if(d->d_name[0] == '.')
+    return 0;
+  return 1;
+}
 
 /**
  * browser_file_scan_thread
@@ -42,45 +49,29 @@ browser_file_scan_thread(void *arg)
 
   char buf[1000];
   struct stat st;
-  struct dirent *d;
-  DIR *dir;
-  int type;
+  struct dirent **namelist, *d;
+  int n, type, i;
 
-  if((dir = opendir(bn->bn_url)) != NULL) {
-    while((d = readdir(dir)) != NULL) {
+  n = scandir(bn->bn_url, &namelist, scan_filter, alphasort);
 
-      if(d->d_name[0] == '.')
-	continue; /* skip dot files */
-      
+  if(n < 0) {
+    perror("scandir");
+  } else {
+    for(i = 0; i < n; i++) {
+      d = namelist[i];
+
       snprintf(buf, sizeof(buf), "%s/%s", bn->bn_url, d->d_name);
 
       if(stat(buf, &st))
 	continue;
 
-      type = d->d_type;
-      if(d->d_type == DT_LNK) {
-	/* Resolve what the link point to */
-	switch(st.st_mode & S_IFMT) {
-	case S_IFDIR:
-	  type = DT_DIR;
-	  break;
-	case S_IFREG:
-	  type = DT_REG;
-	  break;
-	default:
-	  continue;
-	}
-      }
-
-      switch(type) {
-      case DT_DIR:
+      switch(st.st_mode & S_IFMT) {
+      case S_IFDIR:
 	type = BN_DIR;
 	break;
-    
-      case DT_REG:
+      case S_IFREG:
 	type = BN_FILE;
 	break;
-
       default:
 	continue;
       }
@@ -92,7 +83,7 @@ browser_file_scan_thread(void *arg)
 
       browser_node_deref(c);
     }
-    closedir(dir);
+    free(namelist);
   }
   browser_node_deref(bn);
   return NULL;
