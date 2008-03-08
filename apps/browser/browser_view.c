@@ -264,7 +264,7 @@ browser_view_set_filetype(glw_t *root, browser_node_t *bn)
   browser_node_t *parent = bn->bn_parent;
   glw_t *w;
   const char *model;
-  char buf[256];
+  char buf[512];
   int64_t type;
 
   w = glw_find_by_id(root, "node_filetype_icon_container");
@@ -287,6 +287,16 @@ browser_view_set_filetype(glw_t *root, browser_node_t *bn)
       case FILETYPE_VIDEO:
 	model = "video";
 	break;
+
+      case FILETYPE_IMAGE:
+	snprintf(buf, sizeof(buf), "thumb://%s", bn->bn_url);
+
+	glw_create(GLW_BITMAP,
+		   GLW_ATTRIB_FILENAME, buf,
+		   GLW_ATTRIB_FLAGS, GLW_KEEP_ASPECT,
+		   GLW_ATTRIB_PARENT, w,
+		   NULL);
+	return;
       }
     }
     break;
