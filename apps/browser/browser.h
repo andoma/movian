@@ -120,9 +120,12 @@ typedef struct browser_root {
  */
 typedef struct browser_protocol {
   void (*bp_scan)(browser_node_t *nb); /* Scan the node for childs */
-
-
-  
+#if 0
+  browser_stream_t *(*bp_open)(const char *url);
+  void (*bp_close)(browser_stream_t *bs);
+  int (*bp_read)(browser_stream_t *bs, void *buf, size_t size);
+  offset_t (*bp_seek)(browser_stream_t *bs, offset_t pos, int whence);
+#endif
 
 } browser_protocol_t;
 
