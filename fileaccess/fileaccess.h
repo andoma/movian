@@ -56,4 +56,6 @@ int fileaccess_scandir(const char *url, fa_scandir_callback_t *cb, void *arg);
 
 void fileaccess_init(void);
 
+const char *fa_resolve_proto(const char *url, fa_protocol_t **p);
+
 #endif /* FILEACCESS_H */

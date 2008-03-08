@@ -35,8 +35,8 @@ struct fa_protocol_list fileaccess_all_protocols;
 /**
  *
  */
-static const char *
-resolve_proto(const char *url, fa_protocol_t **p)
+const char *
+fa_resolve_proto(const char *url, fa_protocol_t **p)
 {
   fa_protocol_t *fap;
 
@@ -70,7 +70,7 @@ fileaccess_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
 {
   fa_protocol_t *fap;
 
-  if((url = resolve_proto(url, &fap)) == NULL)
+  if((url = fa_resolve_proto(url, &fap)) == NULL)
     return -1;
 
   return fap->fap_scan(url, cb, arg);
