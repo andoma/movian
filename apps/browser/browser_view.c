@@ -271,11 +271,11 @@ browser_view_set_filetype(glw_t *root, browser_node_t *bn)
     goto out;
 
   switch(bn->bn_type) {
-  case BN_DIR:
+  case FA_DIR:
     model = "directory";
     break;
   default:
-  case BN_FILE:
+  case FA_FILE:
     model = "file";
 
     if(!filetag_get_int(&bn->bn_ftags, FTAG_FILETYPE, &type)) {

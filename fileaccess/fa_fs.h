@@ -1,6 +1,6 @@
 /*
- *  File browser
- *  Copyright (C) 2007 Andreas Öman
+ *  Direct filesystem access
+ *  Copyright (C) 2008 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,9 +16,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef BROWSER_FILE_H
-#define BROWSER_FILE_H
+#ifndef FA_FS_H
+#define FA_FS_H
 
-browser_protocol_t browser_file_protocol;
+#include "fileaccess.h"
 
-#endif /* BROWSER_FILE_H */
+extern fa_protocol_t fa_protocol_fs;
+
+#endif /* FA_FS_H */

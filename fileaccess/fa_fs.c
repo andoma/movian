@@ -29,102 +29,71 @@
 #include <dirent.h>
 
 #include "showtime.h"
-#include "browser.h"
-#include "browser_file.h"
-#include "browser_probe.h"
+#include "fa_fs.h"
 
 static int 
 scan_filter(const struct dirent *d)
 {
   if(d->d_name[0] == '.')
     return 0;
-  if(!strcasecmp(d->d_name, "thumbs.db"))
-    return 0;
   return 1;
 }
 
-/**
- * browser_file_scan_thread
- */
-static void *
-browser_file_scan_thread(void *arg)
+static void
+fs_urlsnprintf(char *buf, size_t bufsize, const char *prefix, const char *base,
+	       const char *fname)
 {
-  browser_node_t *bn = arg, *c;
+  if(!strcmp(base, "/"))
+    base = "";
+  snprintf(buf, bufsize, "%s%s/%s", prefix, base, fname);
+}
+	       
 
+
+static int
+fs_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
+{
   char buf[1000];
   struct stat st;
   struct dirent **namelist, *d;
   int n, type, i;
 
-  n = scandir(bn->bn_url, &namelist, scan_filter, versionsort);
+  n = scandir(url, &namelist, scan_filter, versionsort);
 
   if(n < 0) {
-    perror("scandir");
+    return -1;
   } else {
     for(i = 0; i < n; i++) {
       d = namelist[i];
 
-      snprintf(buf, sizeof(buf), "%s/%s", bn->bn_url, d->d_name);
+      fs_urlsnprintf(buf, sizeof(buf), "", url, d->d_name);
 
       if(stat(buf, &st))
 	continue;
 
       switch(st.st_mode & S_IFMT) {
       case S_IFDIR:
-	type = BN_DIR;
+	type = FA_DIR;
 	break;
       case S_IFREG:
-	type = BN_FILE;
+	type = FA_FILE;
 	break;
       default:
 	continue;
       }
 
-      c = browser_node_add_child(bn, buf, type);
 
-      if(type == BN_FILE)
-	browser_probe_enqueue(c);
+      fs_urlsnprintf(buf, sizeof(buf), "file://", url, d->d_name);
 
-      browser_node_deref(c);
+      cb(arg, buf, d->d_name, type);
     }
     free(namelist);
   }
-  browser_node_deref(bn);
-  return NULL;
+  return 0;
 }
 
 
-
-
-
-/**
- * Start scanning of a node (which more or less has to be a directory 
- * for this to work, but we expect the caller to know about that).
- *
- * We spawn a new thread to make this quick and fast
- */
-static void
-browser_file_scan(browser_node_t *bn)
-{
-  pthread_t ptid;
-  pthread_attr_t attr;
-  browser_node_ref(bn);
-
-  pthread_attr_init(&attr);
-  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-
-  pthread_create(&ptid, &attr, browser_file_scan_thread, bn);
-}
-
-
-
-
-
-
-
-
-
-browser_protocol_t browser_file_protocol = {
-  .bp_scan = browser_file_scan,
+fa_protocol_t fa_protocol_fs = {
+  .fap_name = "file",
+  .fap_scan = fs_scandir,
 };
-

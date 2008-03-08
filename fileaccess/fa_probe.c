@@ -37,7 +37,7 @@
 #endif
 
 #include "showtime.h"
-#include "fileprobe.h"
+#include "fa_probe.h"
 
 const char *filetag_tagnames[] = {
   [FTAG_FILETYPE]       = "Filetype",

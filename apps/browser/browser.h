@@ -21,7 +21,8 @@
 
 #include <libglw/glw.h>
 
-#include "fileprobe.h"
+#include <fileaccess/fileaccess.h>
+#include <fileaccess/fa_probe.h>
 #include "hid/input.h"
 
 TAILQ_HEAD(browser_node_queue, browser_node);
@@ -62,13 +63,7 @@ typedef struct browser_node {
   /* URL may never change after creation */
   const char               *bn_url;
 
-  enum {
-    BN_DIR,
-    BN_FILE,
-    BN_ARCHIVE,  /* An achive we may dive into and decode */
-  } bn_type;
-
-  struct browser_protocol  *bn_protocol;
+  int                       bn_type; /* FA_ -node type */
 
   /* These fields must be access protected with glw_lock() */
   glw_t                    *bn_icon_xfader;
@@ -113,21 +108,6 @@ typedef struct browser_root {
 } browser_root_t;
 
 
-/**
- * Control struct for operating on node
- */
-typedef struct browser_protocol {
-  void (*bp_scan)(browser_node_t *nb); /* Scan the node for childs */
-#if 0
-  browser_stream_t *(*bp_open)(const char *url);
-  void (*bp_close)(browser_stream_t *bs);
-  int (*bp_read)(browser_stream_t *bs, void *buf, size_t size);
-  offset_t (*bp_seek)(browser_stream_t *bs, offset_t pos, int whence);
-#endif
-
-} browser_protocol_t;
-
-
 void browser_node_ref(browser_node_t *bn);
 
 void browser_node_deref(browser_node_t *bn);
@@ -135,7 +115,8 @@ void browser_node_deref(browser_node_t *bn);
 browser_node_t *browser_node_add_child(browser_node_t *parent,
 				       const char *url, int type);
 
-browser_root_t *browser_root_create(const char *url,
-				    browser_protocol_t *proto);
+browser_root_t *browser_root_create(const char *url);
+
+void browser_scandir(browser_node_t *bn);
 
 #endif /* BROWSER_H */

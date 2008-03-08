@@ -35,10 +35,8 @@
 #include "layout/layout.h"
 
 #include "browser.h"
-#include "browser_file.h"
 #include "browser_view.h"
 #include "navigator.h"
-
 
 typedef struct navigator {
   appi_t *nav_ai;
@@ -93,11 +91,11 @@ nav_start(void *aux)
 	       GLW_ATTRIB_FILENAME, "browser/switcher-icon",
 	       NULL);
 
-  br = browser_root_create("/", &browser_file_protocol);
+  br = browser_root_create("file:///");
   bn = br->br_root;
 
   browser_view_expand_node(bn, ai->ai_widget, &ai->ai_gfs);
-  bn->bn_protocol->bp_scan(bn);
+  browser_scandir(bn);
 
   layout_switcher_appi_add(ai);
   layout_world_appi_show(ai);
@@ -122,7 +120,7 @@ nav_start(void *aux)
 	if(bn == NULL)
 	  break;
 	browser_view_expand_node(bn, ai->ai_widget, &ai->ai_gfs);
-	bn->bn_protocol->bp_scan(bn);
+	browser_scandir(bn);
 	browser_node_deref(bn);
 	break;
 

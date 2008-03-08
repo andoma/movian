@@ -39,6 +39,7 @@
 #include "hid/hid.h"
 #include "audio/audio.h"
 #include "layout/layout.h"
+#include "fileaccess/fileaccess.h"
 
 pthread_mutex_t ffmutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -100,6 +101,8 @@ main(int argc, char **argv)
 
 
   config_open_by_prgname("showtime", cfgfile);
+
+  fileaccess_init();
 
   hid_init();
 

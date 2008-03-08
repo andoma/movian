@@ -30,6 +30,11 @@
 #include "browser_view.h"
 #include "browser_probe.h"
 
+static void *browser_scandir_thread(void *arg);
+
+static void browser_scandir_callback(void *arg, const char *url,
+				     const char *filename, int type);
+
 /**
  * check if we should free a node, br_hierarchy_mutex must be held
  */
@@ -92,8 +97,7 @@ browser_node_deref(browser_node_t *bn)
  *
  */
 static browser_node_t *
-browser_node_create(const char *url, browser_protocol_t *proto, int type,
-		    browser_root_t *br)
+browser_node_create(const char *url, int type, browser_root_t *br)
 {
   browser_node_t *bn;
 
@@ -101,7 +105,6 @@ browser_node_create(const char *url, browser_protocol_t *proto, int type,
   bn->bn_refcnt = 1;
   bn->bn_url = strdup(url);
   bn->bn_type = type;
-  bn->bn_protocol = proto;
   bn->bn_root = br;
   TAILQ_INIT(&bn->bn_childs);
   TAILQ_INIT(&bn->bn_ftags);
@@ -122,7 +125,7 @@ browser_node_t *
 browser_node_add_child(browser_node_t *parent, const char *url, int type)
 {
   browser_root_t *br = parent->bn_root;
-  browser_node_t *bn = browser_node_create(url, parent->bn_protocol, type, br);
+  browser_node_t *bn = browser_node_create(url, type, br);
 
   pthread_mutex_lock(&br->br_hierarchy_mutex);
   TAILQ_INSERT_TAIL(&parent->bn_childs, bn, bn_parent_link);
@@ -138,10 +141,10 @@ browser_node_add_child(browser_node_t *parent, const char *url, int type)
  * Create a new browser root
  */
 browser_root_t *
-browser_root_create(const char *url, browser_protocol_t *proto)
+browser_root_create(const char *url)
 {
   browser_root_t *br = calloc(1, sizeof(browser_root_t));
-  browser_node_t *bn = browser_node_create(url, proto, BN_DIR, br);
+  browser_node_t *bn = browser_node_create(url, FA_DIR, br);
 
   pthread_mutex_init(&br->br_hierarchy_mutex, NULL);
 
@@ -150,3 +153,66 @@ browser_root_create(const char *url, browser_protocol_t *proto)
   br->br_root = bn;
   return br;
 }
+
+
+/**
+ * Start scanning of a node (which more or less has to be a directory 
+ * for this to work, but we expect the caller to know about that).
+ *
+ * We spawn a new thread to make this quick and fast
+ */
+void
+browser_scandir(browser_node_t *bn)
+{
+  pthread_t ptid;
+  pthread_attr_t attr;
+  browser_node_ref(bn);
+
+  pthread_attr_init(&attr);
+  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+  pthread_create(&ptid, &attr, browser_scandir_thread, bn);
+}
+
+
+
+
+/**
+ * Directory scanner
+ */
+static void *
+browser_scandir_thread(void *arg)
+{
+  browser_node_t *bn = arg;
+
+  /*
+   * fileaccess_scandir() may take a long time to execute.
+   * User may be prompted for username/password, etc
+   */
+
+  fileaccess_scandir(bn->bn_url, browser_scandir_callback, bn);
+  browser_node_deref(bn);
+  return NULL;
+}
+
+
+/**
+ * Browser scandir callback for adding a new node
+ */
+static void
+browser_scandir_callback(void *arg, const char *url, const char *filename, 
+			 int type)
+{
+  browser_node_t *bn = arg, *c;
+
+  if(!strcasecmp(filename, "thumbs.db"))
+    return;
+
+  c = browser_node_add_child(bn, url, type);
+
+  if(type == FA_FILE)
+    browser_probe_enqueue(c);
+
+  browser_node_deref(c);
+}
+			 
