@@ -38,6 +38,8 @@ scan_filter(const struct dirent *d)
 {
   if(d->d_name[0] == '.')
     return 0;
+  if(!strcasecmp(d->d_name, "thumbs.db"))
+    return 0;
   return 1;
 }
 
