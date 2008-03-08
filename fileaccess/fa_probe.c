@@ -37,6 +37,7 @@
 #endif
 
 #include "showtime.h"
+#include "fileaccess.h"
 #include "fa_probe.h"
 #include "fa_tags.h"
 
@@ -81,7 +82,7 @@ lavf_build_string_and_trim(struct filetag_list *list, ftag_t tag,
 static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
 
 int
-fa_probe(struct filetag_list *list, const char *filename)
+fa_probe(struct filetag_list *list, const char *url)
 {
   int i, fd;
   AVFormatContext *fctx;
@@ -95,13 +96,17 @@ fa_probe(struct filetag_list *list, const char *filename)
   int has_video = 0;
   int has_audio = 0;
   const char *codectype;
+  fa_protocol_t *fap;
 
 #ifdef HAVE_LIBEXIF
   ExifLoader *l;
   ExifData *ed;
 #endif
 
-  fd = open(filename, O_RDONLY);
+  if((url = fa_resolve_proto(url, &fap)) == NULL)
+    return -1;
+
+  fd = open(url, O_RDONLY);
   if(fd == -1)
     return 1;
 
@@ -118,8 +123,8 @@ fa_probe(struct filetag_list *list, const char *filename)
 
       filetag_set_int(list, FTAG_FILETYPE, FILETYPE_PLAYLIST_PLS);
 
-      t = strrchr(filename, '/');
-      t = t ? t + 1 : filename;
+      t = strrchr(url, '/');
+      t = t ? t + 1 : url;
 
       i = 0;
       while(*t && *t != '.')
@@ -140,7 +145,7 @@ fa_probe(struct filetag_list *list, const char *filename)
 #ifdef HAVE_LIBEXIF
 
     l = exif_loader_new();
-    exif_loader_write_file(l, filename);
+    exif_loader_write_file(l, url);
 
     ed = exif_loader_get_data(l);
     exif_loader_unref (l);
@@ -224,13 +229,13 @@ fa_probe(struct filetag_list *list, const char *filename)
 
   fflock();
   
-  if(av_open_input_file(&fctx, filename, NULL, 0, NULL) != 0) {
+  if(av_open_input_file(&fctx, url, NULL, 0, NULL) != 0) {
     ffunlock();
     return 1;
   }
 
   
-  dump_format(fctx, 0, filename, 0);
+  dump_format(fctx, 0, url, 0);
 
   if(av_find_stream_info(fctx) < 0) {
     av_close_input_file(fctx);
@@ -241,8 +246,8 @@ fa_probe(struct filetag_list *list, const char *filename)
   /* Format meta info */
 
   if(fctx->title[0] == 0) {
-    t = strrchr(filename, '/');
-    t = t ? t + 1 : filename;
+    t = strrchr(url, '/');
+    t = t ? t + 1 : url;
     i = strlen(t);
     p = alloca(i + 1);
     memcpy(p, t, i + 1);
@@ -334,7 +339,7 @@ fa_probe(struct filetag_list *list, const char *filename)
   if(icon != NULL) {
     mi->mi_icon = strdup(icon);
   } else {
-    av_strlcpy(tmp1, filename, sizeof(tmp1));
+    av_strlcpy(tmp1, url, sizeof(tmp1));
     p = strrchr(tmp1, '/');
     if(p != NULL) {
 
@@ -354,7 +359,7 @@ fa_probe(struct filetag_list *list, const char *filename)
 	i++;
       }
       if(foldericons[i]) {
-	mi->mi_icon = strdup(filename);
+	mi->mi_icon = strdup(url);
 	printf("Icon %s\n", mi->mi_icon);
       }
     }
