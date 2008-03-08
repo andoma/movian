@@ -50,7 +50,7 @@ browser_probe_thread(void *arg)
 
     pthread_mutex_lock(&bn->bn_ftags_mutex);
 
-    filetag_probe(&bn->bn_ftags, bn->bn_url);
+    fa_probe(&bn->bn_ftags, bn->bn_url);
 
     filetag_dumplist(&bn->bn_ftags);
 

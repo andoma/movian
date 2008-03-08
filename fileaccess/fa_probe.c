@@ -38,149 +38,14 @@
 
 #include "showtime.h"
 #include "fa_probe.h"
-
-const char *filetag_tagnames[] = {
-  [FTAG_FILETYPE]       = "Filetype",
-  [FTAG_TITLE]          = "Title",
-  [FTAG_AUTHOR]         = "Author",
-  [FTAG_ALBUM]          = "Album",
-  [FTAG_ICON]           = "Icon",
-  [FTAG_ORIGINAL_DATE]  = "Original date",
-  [FTAG_TRACK]          = "Track",
-  [FTAG_NTRACKS]        = "Tracks",
-  [FTAG_DURATION]       = "Duration",
-  [FTAG_AUDIOINFO]      = "Audioinfo",
-  [FTAG_VIDEOINFO]      = "Videoinfo",
-  [FTAG_MEDIAFORMAT]    = "Mediaformat",
-  [FTAG_FILESIZE]       = "Filesize"
-};
-
-
-/**
- *
- */
-void 
-filetag_dumplist(struct filetag_list *list)
-{
-  filetag_t *ft;
-
-  TAILQ_FOREACH(ft, list, ftag_link) {
-    printf("%20s: ",
-	   filetag_tagnames[ft->ftag_tag]);
-    if(ft->ftag_string)
-      printf("%s\n", ft->ftag_string);
-    else
-      printf("%lld\n", ft->ftag_int);
-
-  }
-}
-
-
-
-
-/**
- *
- */
-void 
-filetag_freelist(struct filetag_list *list)
-{
-  filetag_t *ft;
-
-  while((ft = TAILQ_FIRST(list)) != NULL) {
-    TAILQ_REMOVE(list, ft, ftag_link);
-    free((void *)ft->ftag_string);
-    free(ft);
-  }
-}
-
-/**
- *
- */
-filetag_t *
-filetag_find(struct filetag_list *list, ftag_t tag, int create)
-{
-  filetag_t *ft;
-
-  TAILQ_FOREACH(ft, list, ftag_link)
-    if(ft->ftag_tag == tag)
-      return ft;
-  if(!create)
-    return NULL;
-  ft = calloc(1, sizeof(filetag_t));
-  ft->ftag_tag   = tag;
-  TAILQ_INSERT_TAIL(list, ft, ftag_link);
-  return ft;
-}
-
-
-/**
- *
- */
-void 
-filetag_set_str(struct filetag_list *list, ftag_t tag, const char *value)
-{
-  filetag_t *ft = filetag_find(list, tag, 1);
-  free((void *)ft->ftag_string);
-  ft->ftag_string = strdup(value);
-}
-
-
-/**
- *
- */
-void
-filetag_set_int(struct filetag_list *list, ftag_t tag, int64_t value)
-{
-  filetag_t *ft = filetag_find(list, tag, 1);
-  ft->ftag_int = value;
-}
-
-
-/**
- *
- */
-int
-filetag_get_str(struct filetag_list *list, ftag_t tag, const char **valuep)
-{
-  filetag_t *ft = filetag_find(list, tag, 0);
-  if(ft == NULL)
-    return -1;
-  *valuep = ft->ftag_string;
-  return 0;
-}
-
-
-/**
- *
- */
-const char *
-filetag_get_str2(struct filetag_list *list, ftag_t tag)
-{
-  filetag_t *ft = filetag_find(list, tag, 0);
-  return ft ? ft->ftag_string : NULL;
-}
-
-
-/**
- *
- */
-int
-filetag_get_int(struct filetag_list *list, ftag_t tag, int64_t *valuep)
-{
-  filetag_t *ft = filetag_find(list, tag, 0);
-  if(ft == NULL)
-    return -1;
-  *valuep = ft->ftag_int;
-  return 0;
-}
-
+#include "fa_tags.h"
 
 
 /**
  *
  */
 static void
-ftag_build_string_and_trim(struct filetag_list *list, ftag_t tag, 
+lavf_build_string_and_trim(struct filetag_list *list, ftag_t tag, 
 			   const char *str)
 {
   int len = strlen(str);
@@ -216,7 +81,7 @@ ftag_build_string_and_trim(struct filetag_list *list, ftag_t tag,
 static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
 
 int
-filetag_probe(struct filetag_list *list, const char *filename)
+fa_probe(struct filetag_list *list, const char *filename)
 {
   int i, fd;
   AVFormatContext *fctx;
@@ -386,11 +251,11 @@ filetag_probe(struct filetag_list *list, const char *filename)
       p[i - 4] = 0;
     filetag_set_str(list, FTAG_TITLE, p);
   } else {
-    ftag_build_string_and_trim(list, FTAG_TITLE, fctx->title);
+    lavf_build_string_and_trim(list, FTAG_TITLE, fctx->title);
   }
 
-  ftag_build_string_and_trim(list, FTAG_AUTHOR, fctx->author);
-  ftag_build_string_and_trim(list, FTAG_ALBUM, fctx->album);
+  lavf_build_string_and_trim(list, FTAG_AUTHOR, fctx->author);
+  lavf_build_string_and_trim(list, FTAG_ALBUM, fctx->album);
 
   if(fctx->track != 0)
     filetag_set_int(list, FTAG_TRACK, fctx->track);
