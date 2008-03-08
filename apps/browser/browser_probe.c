@@ -48,7 +48,7 @@ browser_probe_thread(void *arg)
     TAILQ_REMOVE(&br->br_probe_queue, bn, bn_probe_link);
     pthread_mutex_unlock(&br->br_probe_mutex);
 
-    pthread_mutex_lock(&bn->bn_mutex);
+    pthread_mutex_lock(&bn->bn_ftags_mutex);
 
     filetag_probe(&bn->bn_ftags, bn->bn_url);
 
@@ -56,7 +56,7 @@ browser_probe_thread(void *arg)
 
     browser_view_node_model_update(bn);
 
-    pthread_mutex_unlock(&bn->bn_mutex);
+    pthread_mutex_unlock(&bn->bn_ftags_mutex);
 
     browser_node_deref(bn);
   }

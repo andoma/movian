@@ -62,25 +62,23 @@ typedef struct browser_node {
   /* URL may never change after creation */
   const char               *bn_url;
 
-  pthread_mutex_t           bn_mutex;       /* Lock for protecting
-					       fields below, this can
-					       be held for extensive
-					       time so we cannot lock
-					       it in glw-callbacks */
-
-  const char               *bn_view;        /* name of current view */
-
-  glw_t                    *bn_icon_xfader;
-
-  glw_t                    *bn_cont_xfader;
-
   enum {
     BN_DIR,
     BN_FILE,
+    BN_ARCHIVE,  /* An achive we may dive into and decode */
   } bn_type;
 
   struct browser_protocol  *bn_protocol;
 
+  /* These fields must be access protected with glw_lock() */
+  glw_t                    *bn_icon_xfader;
+  glw_t                    *bn_cont_xfader;
+  const char               *bn_view;        /* name of current view */
+  /* end of glw_lock() */
+
+  /* File tags (with an associated lock) */
+
+  pthread_mutex_t           bn_ftags_mutex;
   struct filetag_list       bn_ftags;
 
   /* probe link and probe linked state is protected by root

@@ -138,11 +138,11 @@ browser_view_expand_node(browser_node_t *bn, glw_t *parent,
 {
   glw_t *w;
 
-  pthread_mutex_lock(&bn->bn_mutex);
-  
   browser_node_ref(bn);
 
   assert(bn->bn_cont_xfader == NULL);
+
+  glw_lock();
 
   bn->bn_cont_xfader =
     glw_create(GLW_XFADER,
@@ -166,7 +166,7 @@ browser_view_expand_node(browser_node_t *bn, glw_t *parent,
 	    GLW_ATTRIB_CAPTION, bn->bn_url,
 	    NULL);
   }
-  pthread_mutex_unlock(&bn->bn_mutex);
+  glw_unlock();
 }
 
 
@@ -178,7 +178,6 @@ browser_view_collapse_node(browser_node_t *bn, glw_focus_stack_t *gfs)
 {
   glw_t *w, *cont;
 
-  pthread_mutex_lock(&bn->bn_mutex);
   glw_lock();
 
   w = bn->bn_cont_xfader;
@@ -196,7 +195,6 @@ browser_view_collapse_node(browser_node_t *bn, glw_focus_stack_t *gfs)
   glw_detach(w);
 
   glw_unlock();
-  pthread_mutex_unlock(&bn->bn_mutex);
   
   browser_node_deref(bn);
 }
@@ -211,7 +209,6 @@ browser_view_node_callback(glw_t *w, void *opaque, glw_signal_t sig, ...)
   browser_node_t *bn = opaque;
 
   if(sig == GLW_SIGNAL_DESTROY) {
-    printf("Widget for icon %s destroyed\n", bn->bn_url);
     bn->bn_icon_xfader = NULL;
     browser_node_deref(bn);
   }
@@ -266,10 +263,13 @@ browser_view_set_filetype(glw_t *root, browser_node_t *bn)
   const char *model;
   char buf[512];
   int64_t type;
+  
+  glw_lock();
 
   w = glw_find_by_id(root, "node_filetype_icon_container");
   if(w == NULL)
-    return;
+    goto out;
+
   switch(bn->bn_type) {
   case BN_DIR:
     model = "directory";
@@ -296,7 +296,7 @@ browser_view_set_filetype(glw_t *root, browser_node_t *bn)
 		   GLW_ATTRIB_FLAGS, GLW_KEEP_ASPECT,
 		   GLW_ATTRIB_PARENT, w,
 		   NULL);
-	return;
+	goto out;
       }
     }
     break;
@@ -308,6 +308,8 @@ browser_view_set_filetype(glw_t *root, browser_node_t *bn)
 	     GLW_ATTRIB_FILENAME, buf,
 	     GLW_ATTRIB_PARENT, w,
 	     NULL);
+ out:
+  glw_unlock();
 }
 
 
@@ -321,11 +323,15 @@ browser_view_set_caption(glw_t *root, const char *id, const char *value)
 {
   glw_t *w;
 
+  glw_lock();
+
   if((w = glw_find_by_id(root, id)) != NULL)
     glw_set(w, 
 	    GLW_ATTRIB_CAPTION, value,
 	    GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
 	    NULL);
+
+  glw_unlock();
 }
 
 
@@ -413,7 +419,7 @@ browser_view_update_wset_from_node(glw_t *root, browser_node_t *bn)
 
 
 /**
- * bn_mutex should be held heere
+ * bn_ftags_mutex should be held heere
  */
 void
 browser_view_node_model_update(browser_node_t *bn)
@@ -460,6 +466,8 @@ browser_view_node_model_load(browser_node_t *bn)
   char buf[256];
   glw_t *w;
 
+  pthread_mutex_lock(&bn->bn_ftags_mutex);
+
   snprintf(buf, sizeof(buf), "browser/views/%s/node", parent->bn_view);
 
   w = glw_create(GLW_MODEL,
@@ -468,6 +476,8 @@ browser_view_node_model_load(browser_node_t *bn)
 		 NULL);
 
   browser_view_update_wset_from_node(w, bn);
+
+  pthread_mutex_unlock(&bn->bn_ftags_mutex);
 }
 
 
@@ -490,7 +500,6 @@ browser_view_add_node(browser_node_t *bn)
 
   assert(bn->bn_refcnt > 0);
 
-  pthread_mutex_lock(&bn->bn_mutex);
 
   browser_node_ref(bn);
 
@@ -502,5 +511,4 @@ browser_view_add_node(browser_node_t *bn)
 
   browser_view_node_model_load(bn);
 
-  pthread_mutex_unlock(&bn->bn_mutex);
 }

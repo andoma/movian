@@ -105,7 +105,7 @@ browser_node_create(const char *url, browser_protocol_t *proto, int type,
   bn->bn_root = br;
   TAILQ_INIT(&bn->bn_childs);
   TAILQ_INIT(&bn->bn_ftags);
-  pthread_mutex_init(&bn->bn_mutex, NULL);
+  pthread_mutex_init(&bn->bn_ftags_mutex, NULL);
 
   return bn;
 }
