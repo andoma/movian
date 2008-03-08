@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define _GNU_SOURCE
+
 #include <pthread.h>
 #include <assert.h>
 #include <sys/stat.h>
@@ -52,7 +54,7 @@ browser_file_scan_thread(void *arg)
   struct dirent **namelist, *d;
   int n, type, i;
 
-  n = scandir(bn->bn_url, &namelist, scan_filter, alphasort);
+  n = scandir(bn->bn_url, &namelist, scan_filter, versionsort);
 
   if(n < 0) {
     perror("scandir");
