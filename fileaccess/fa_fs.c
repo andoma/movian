@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <dirent.h>
+#include <fcntl.h>
 
 #include "showtime.h"
 #include "fa_fs.h"
@@ -92,8 +93,71 @@ fs_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
   return 0;
 }
 
+/**
+ * Open file
+ */
+static void *
+fs_open(const char *url)
+{
+  int fd = open(url, O_RDONLY);
+  if(fd == -1)
+    return NULL;
+  return (void *)fd;
+}
+
+/**
+ * Close file
+ */
+static void
+fs_close(void *handle)
+{
+  int fd = (int)handle;
+  close(fd);
+}
+
+/**
+ * Read from file
+ */
+static int
+fs_read(void *handle, void *buf, size_t size)
+{
+  int fd = (int)handle;
+
+  return read(fd, buf, size);
+}
+
+/**
+ * Seek in file
+ */
+static off_t
+fs_seek(void *handle, off_t pos, int whence)
+{
+  int fd = (int)handle;
+  return lseek(fd, pos, whence);
+}
+
+/**
+ * Return size of file
+ */
+static off_t
+fs_fsize(void *handle)
+{
+  int fd = (int)handle;
+  struct stat st;
+  
+  if(fstat(fd, &st) < 0)
+    return -1;
+
+  return st.st_size;
+}
+
 
 fa_protocol_t fa_protocol_fs = {
   .fap_name = "file",
   .fap_scan = fs_scandir,
+  .fap_open  = fs_open,
+  .fap_close = fs_close,
+  .fap_read  = fs_read,
+  .fap_seek  = fs_seek,
+  .fap_fsize = fs_fsize,
 };
