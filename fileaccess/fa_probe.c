@@ -41,6 +41,8 @@
 #include "fa_probe.h"
 #include "fa_tags.h"
 
+static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
+static const uint8_t isosig[8] = {0x1, 0x43, 0x44, 0x30, 0x30, 0x31, 0x1, 0x0};
 
 /**
  *
@@ -73,165 +75,211 @@ lavf_build_string_and_trim(struct filetag_list *list, ftag_t tag,
   filetag_set_str(list, tag, ret);
 }
 
-
-
-/*
- *
+/**
+ * Obtain details from playlist
  */
+static void
+fa_probe_playlist(struct filetag_list *list, const char *url,
+		  char *pb, size_t pbsize)
+{
+  const char *t;
+  char tmp1[300];
+  int i;
 
-static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
+  filetag_set_int(list, FTAG_FILETYPE, FILETYPE_PLAYLIST_PLS);
+  
+  t = strrchr(url, '/');
+  t = t ? t + 1 : url;
 
+  i = 0;
+  while(*t && *t != '.')
+    tmp1[i++] = *t++;
+  tmp1[i] = 0;
+  
+  filetag_set_str(list, FTAG_TITLE, tmp1);
+  
+  t = strstr(pb, "NumberOfEntries=");
+  
+  if(t != NULL)
+    filetag_set_int(list, FTAG_NTRACKS, atoi(t + 16));
+}
+
+/**
+ * Extract details from EXIF header
+ */
+#ifdef HAVE_LIBEXIF
+static void
+fa_probe_exif(struct filetag_list *list, fa_protocol_t *fap, void *fh,
+	      char *pb, size_t pbsize)
+{
+  unsigned char buf[4096];
+  int x, v;
+  ExifLoader *l;
+  ExifData *ed;
+  ExifEntry *e;
+
+  l = exif_loader_new();
+
+  v = exif_loader_write(l, (unsigned char *)pb, pbsize);
+  while(v) {
+    if((x = fap->fap_read(fh, buf, sizeof(buf))) < 1)
+      break;
+    v = exif_loader_write(l, buf, x);
+  }
+
+  ed = exif_loader_get_data(l);
+  exif_loader_unref (l);
+  if(ed == NULL)
+    return;
+
+  e = exif_content_get_entry(ed->ifd[EXIF_IFD_EXIF],
+			     EXIF_TAG_DATE_TIME_ORIGINAL);
+  if(e != NULL) {
+    char tid[100];
+    struct tm tm;
+    time_t t;
+    
+    exif_entry_get_value(e, tid, sizeof(tid));
+
+    if(sscanf(tid, "%04d:%02d:%02d %02d:%02d:%02d",
+	      &tm.tm_year, &tm.tm_mon, &tm.tm_mday,
+	      &tm.tm_hour, &tm.tm_min, &tm.tm_sec) == 6) {
+      tm.tm_year -= 1900;
+      tm.tm_mon--;
+      t = mktime(&tm);
+      if(t != (time_t)-1) {
+	filetag_set_int(list, FTAG_ORIGINAL_DATE, t);
+      }
+    }
+  }
+  exif_data_unref(ed);
+}
+#endif
+
+
+/**
+ * Probe file by checking its header
+ */
+static int
+fa_probe_header(struct filetag_list *list, fa_protocol_t *fap,
+		const char *url, void *fh)
+{
+  char pb[128];
+  off_t psiz;
+
+  memset(pb, 0, sizeof(pb));
+  psiz = fap->fap_read(fh, pb, sizeof(pb));
+
+  if(!strncasecmp(pb, "[playlist]", 10)) {
+    /* Playlist */
+    fa_probe_playlist(list, url, pb, sizeof(pb));
+    return 0;
+  }
+
+  if(pb[6] == 'J' && pb[7] == 'F' && pb[8] == 'I' && pb[9] == 'F') {
+    /* JPEG image */
+    filetag_set_int(list, FTAG_FILETYPE, FILETYPE_IMAGE);
+    return 0;
+
+  }
+
+  if(pb[6] == 'E' && pb[7] == 'x' && pb[8] == 'i' && pb[9] == 'f') {
+    /* JPEG image with EXIF tag*/
+#ifdef HAVE_LIBEXIF
+    fa_probe_exif(list, fap, fh, pb, psiz);
+#endif
+    filetag_set_int(list, FTAG_FILETYPE, FILETYPE_IMAGE);
+    return 0;
+  }
+
+  if(!memcmp(pb, pngsig, 8)) {
+    /* PNG */
+    filetag_set_int(list, FTAG_FILETYPE, FILETYPE_IMAGE);
+    return 0;
+  }
+  return -1;
+}
+
+/**
+ * Check if file is an iso image
+ */
+static int
+fa_probe_iso(struct filetag_list *list, fa_protocol_t *fap, void *fh)
+{
+  char pb[128], *p;
+
+  if(fap->fap_seek(fh, 0x8000, SEEK_SET) != 0x8000)
+    return -1;
+
+  if(fap->fap_read(fh, pb, sizeof(pb)) != sizeof(pb))
+    return -1;
+
+  if(memcmp(pb, isosig, 8))
+    return -1;
+
+  p = &pb[40];
+  while(*p > 32 && p != &pb[72])
+    p++;
+
+  *p = 0;
+
+  filetag_set_int(list, FTAG_FILETYPE, FILETYPE_ISO);
+  filetag_set_str(list, FTAG_TITLE,    &pb[40]);
+  return 0;
+}
+  
+
+/**
+ * Probe a file for its type
+ */
 int
 fa_probe(struct filetag_list *list, const char *url)
 {
-  int i, fd;
+  int i;
   AVFormatContext *fctx;
   AVCodecContext *avctx;
   AVCodec *codec;
   const char *t;
-  char probebuf[128];
-  char tmp1[300];
+  char tmp1[1024];
   char *p;
-  struct stat st;
   int has_video = 0;
   int has_audio = 0;
-  const char *codectype;
+  const char *codectype, *url0 = url;
   fa_protocol_t *fap;
+  off_t siz;
+  void *fh;
 
-#ifdef HAVE_LIBEXIF
-  ExifLoader *l;
-  ExifData *ed;
-#endif
 
   if((url = fa_resolve_proto(url, &fap)) == NULL)
     return -1;
 
-  fd = open(url, O_RDONLY);
-  if(fd == -1)
-    return 1;
+  if((fh = fap->fap_open(url)) == NULL)
+    return -1;
 
-  if(fstat(fd, &st) == 0) {
-    filetag_set_int(list, FTAG_FILESIZE, st.st_size);
+  if((siz = fap->fap_fsize(fh)) > 0)
+    filetag_set_int(list, FTAG_FILESIZE, siz);
+
+  if(fa_probe_header(list, fap, url, fh) == 0) {
+    fap->fap_close(fh);
+    return 0;
   }
 
-  i = read(fd, probebuf, sizeof(probebuf));
-
-  if(i == sizeof(probebuf)) {
-    if(!strncasecmp(probebuf, "[playlist]", 10)) {
-
-      probebuf[sizeof(probebuf) - 1] = 0;
-
-      filetag_set_int(list, FTAG_FILETYPE, FILETYPE_PLAYLIST_PLS);
-
-      t = strrchr(url, '/');
-      t = t ? t + 1 : url;
-
-      i = 0;
-      while(*t && *t != '.')
-	tmp1[i++] = *t++;
-      tmp1[i] = 0;
-
-      filetag_set_str(list, FTAG_TITLE, tmp1);
-
-      t = strstr(probebuf, "NumberOfEntries=");
-
-      if(t != NULL)
-	filetag_set_int(list, FTAG_NTRACKS, atoi(t + 16));
-
-      close(fd);
-      return 0;
-    }
-
-#ifdef HAVE_LIBEXIF
-
-    l = exif_loader_new();
-    exif_loader_write_file(l, url);
-
-    ed = exif_loader_get_data(l);
-    exif_loader_unref (l);
-    if(ed != NULL) {
-      ExifEntry *e;
-      
-      e = exif_content_get_entry(ed->ifd[EXIF_IFD_EXIF],
-				 EXIF_TAG_DATE_TIME_ORIGINAL);
-      if(e != NULL) {
-	char tid[100];
-	struct tm tm;
-	time_t t;
-
-	exif_entry_get_value(e, tid, sizeof(tid));
-
-	if(sscanf(tid, "%04d:%02d:%02d %02d:%02d:%02d",
-		  &tm.tm_year, &tm.tm_mon, &tm.tm_mday,
-		  &tm.tm_hour, &tm.tm_min, &tm.tm_sec) == 6) {
-	  tm.tm_year -= 1900;
-	  tm.tm_mon--;
-	  t = mktime(&tm);
-	  if(t != (time_t)-1) {
-	    filetag_set_int(list, FTAG_ORIGINAL_DATE, t);
-	  }
-	}
-      }
-      exif_data_unref(ed);
-    }
-#endif
-
-    if(
-       (probebuf[6] == 'J' && probebuf[7] == 'F' &&
-	probebuf[8] == 'I' && probebuf[9] == 'F') ||
-       (probebuf[6] == 'E' && probebuf[7] == 'x' &&
-	probebuf[8] == 'i' && probebuf[9] == 'f') ||
-       !memcmp(probebuf, pngsig, 8)) {
-
-      filetag_set_int(list, FTAG_FILETYPE, FILETYPE_IMAGE);
-      close(fd);
-      return 0;
-    }
+  if(fa_probe_iso(list, fap, fh) == 0) {
+    fap->fap_close(fh);
+    return 0;
   }
-#if 0
-  if(fast) {
-    close(fd);
-    return 1;
-  }
-#endif
 
-  if(lseek(fd, 0x8000, SEEK_SET) == 0x8000) {
-    i = read(fd, probebuf, sizeof(probebuf));
-    if(i == sizeof(probebuf)) {
-      if(probebuf[0] == 0x01 &&
-	 probebuf[1] == 0x43 &&
-	 probebuf[2] == 0x44 &&
-	 probebuf[3] == 0x30 &&
-	 probebuf[4] == 0x30 &&
-	 probebuf[5] == 0x31 &&
-	 probebuf[6] == 0x01 &&
-	 probebuf[7] == 0x00) {
+  fap->fap_close(fh);
 
-	p = &probebuf[40];
-	while(*p > 32 && p != &probebuf[72]) {
-	  p++;
-	}
-	*p = 0;
+  /* Okay, see if lavf can find out anything about the file */
 
-	filetag_set_int(list, FTAG_FILETYPE, FILETYPE_ISO);
-	filetag_set_str(list, FTAG_TITLE,    &probebuf[40]);
-	close(fd);
-	return 0;
-      }
-    }
-  }
-  
-
-
-  close(fd);
-
-  /* Okay, see if lavc can find out anything about the file */
+  snprintf(tmp1, sizeof(tmp1), "showtime:%s", url0);
 
   fflock();
   
-  if(av_open_input_file(&fctx, url, NULL, 0, NULL) != 0) {
+  if(av_open_input_file(&fctx, tmp1, NULL, 0, NULL) != 0) {
     ffunlock();
-    return 1;
+    return -1;
   }
 
   
