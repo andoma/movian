@@ -40,6 +40,7 @@
 #include "audio/audio.h"
 #include "layout/layout.h"
 #include "fileaccess/fileaccess.h"
+#include "fileaccess/fa_imageloader.h"
 
 pthread_mutex_t ffmutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -112,7 +113,7 @@ main(int argc, char **argv)
 
   gl_sysglue_init(argc, argv);
 
-  if(glw_init(&config_list, ffmpeglockmgr)) {
+  if(glw_init(&config_list, ffmpeglockmgr, fa_imageloader)) {
     fprintf(stderr, "libglw user interface failed to initialize, exiting\n");
     exit(0);
   }

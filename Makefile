@@ -8,7 +8,8 @@ SRCS = 	main.c app.c input.c media.c mpeg_support.c play_file.c miw.c \
 # file access subsys
 
 VPATH += fileaccess
-SRCS  += fileaccess.c fa_probe.c fa_tags.c fa_fs.c
+SRCS  += fileaccess.c fa_probe.c fa_tags.c fa_imageloader.c
+SRCS  += fa_fs.c
 
 # audio subsys
 
