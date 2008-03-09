@@ -26,11 +26,26 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 
 #include "showtime.h"
 #include "fileaccess.h"
 
+#include <libavutil/avstring.h>
+#include <libavformat/avio.h>
+#include <libavcodec/avcodec.h>
+
 struct fa_protocol_list fileaccess_all_protocols;
+static URLProtocol fa_lavf_proto;
+
+/**
+ * Glue struct for exposing fileaccess protocols into lavf
+ */
+typedef struct fa_lavf_glue {
+  fa_protocol_t *fap;
+  void *fh;
+} fa_lavf_glue_t;
+
 
 /**
  *
@@ -92,4 +107,85 @@ void
 fileaccess_init(void)
 {
   INITPROTO(fs);
+  register_protocol(&fa_lavf_proto);
 }
+
+
+
+/**
+ * lavf -> fileaccess open wrapper
+ */
+static int
+fa_lavf_open(URLContext *h, const char *filename, int flags)
+{
+  fa_protocol_t *fap;
+  fa_lavf_glue_t *flg;
+  void *fh;
+
+  av_strstart(filename, "showtime:", &filename);  
+
+  if((filename = fa_resolve_proto(filename, &fap)) == NULL)
+    return AVERROR_NOENT;
+  
+  if((fh = fap->fap_open(filename)) == NULL)
+    return AVERROR_NOENT;
+  
+  flg = malloc(sizeof(fa_lavf_glue_t));
+  flg->fap = fap;
+  flg->fh = fh;
+  h->priv_data = flg;
+  return 0;
+}
+
+/**
+ * lavf -> fileaccess read wrapper
+ */
+static int
+fa_lavf_read(URLContext *h, unsigned char *buf, int size)
+{
+  fa_lavf_glue_t *flg = h->priv_data;
+  
+  return flg->fap->fap_read(flg->fh, buf, size);
+}
+
+/**
+ * lavf -> fileaccess seek wrapper
+ */
+static offset_t
+fa_lavf_seek(URLContext *h, offset_t pos, int whence)
+{
+  fa_lavf_glue_t *flg = h->priv_data;
+  
+  if(whence == AVSEEK_SIZE)
+    return flg->fap->fap_fsize(flg->fh);
+  
+  return flg->fap->fap_seek(flg->fh, pos, whence);
+}
+
+/**
+ * lavf -> fileaccess close wrapper
+ */
+static int
+fa_lavf_close(URLContext *h)
+{
+  fa_lavf_glue_t *flg = h->priv_data;
+
+  flg->fap->fap_close(flg->fh);
+
+  free(flg);
+  h->priv_data = NULL;
+  return 0;
+}
+
+
+
+
+
+static URLProtocol fa_lavf_proto = {
+    "showtime",
+    fa_lavf_open,
+    fa_lavf_read,
+    NULL,            /* Write */
+    fa_lavf_seek,
+    fa_lavf_close,
+};

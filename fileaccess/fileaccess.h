@@ -42,12 +42,11 @@ typedef struct fa_protocol {
 
   int (*fap_scan)(const char *url, fa_scandir_callback_t *cb, void *arg);
 
-#if 0
-  browser_stream_t *(*bp_open)(const char *url);
-  void (*bp_close)(browser_stream_t *bs);
-  int (*bp_read)(browser_stream_t *bs, void *buf, size_t size);
-  offset_t (*bp_seek)(browser_stream_t *bs, offset_t pos, int whence);
-#endif
+  void *(*fap_open)(const char *url);
+  void (*fap_close)(void *handle);
+  int (*fap_read)(void *handle, void *buf, size_t size);
+  off_t (*fap_seek)(void *handle, off_t pos, int whence);
+  off_t (*fap_fsize)(void *handle);
 
 } fa_protocol_t;
 

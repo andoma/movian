@@ -102,12 +102,13 @@ main(int argc, char **argv)
 
   config_open_by_prgname("showtime", cfgfile);
 
-  fileaccess_init();
 
   hid_init();
 
   //  av_log_set_level(AV_LOG_DEBUG);
   av_register_all();
+
+  fileaccess_init();
 
   gl_sysglue_init(argc, argv);
 
