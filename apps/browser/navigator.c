@@ -92,7 +92,7 @@ browser_enter(appi_t *ai, browser_node_t *bn)
 
   case FILETYPE_VIDEO:
     w = glw_create(GLW_CONTAINER,
-		   GLW_ATTRIB_PARENT_HEAD, ai->ai_widget,
+		   GLW_ATTRIB_PARENT, ai->ai_widget,
 		   NULL);
     play_file(bn->bn_url, ai, &ai->ai_ic, w);
     break;
