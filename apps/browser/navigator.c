@@ -37,6 +37,8 @@
 #include "browser.h"
 #include "browser_view.h"
 #include "navigator.h"
+#include "play_file.h"
+
 
 typedef struct navigator {
   appi_t *nav_ai;
@@ -69,6 +71,41 @@ navigator_root_widget(glw_t *w, void *opaque, glw_signal_t sig, ...)
 /**
  *
  */
+static void
+browser_enter(appi_t *ai, browser_node_t *bn)
+{
+  int64_t type;
+  int r;
+  glw_t *w = NULL;
+
+  pthread_mutex_lock(&bn->bn_ftags_mutex);
+  r = filetag_get_int(&bn->bn_ftags, FTAG_FILETYPE, &type);
+  pthread_mutex_unlock(&bn->bn_ftags_mutex);
+
+  if(r)
+    return; 
+
+  switch(type) {
+  case FILETYPE_AUDIO:
+    play_file(bn->bn_url, ai, &ai->ai_ic, NULL);
+    break;
+
+  case FILETYPE_VIDEO:
+    w = glw_create(GLW_CONTAINER,
+		   GLW_ATTRIB_PARENT_HEAD, ai->ai_widget,
+		   NULL);
+    play_file(bn->bn_url, ai, &ai->ai_ic, w);
+    break;
+  }
+
+  if(w)
+    glw_destroy(w);
+}
+
+
+/**
+ *
+ */
 static void *
 nav_start(void *aux)
 {
@@ -91,7 +128,7 @@ nav_start(void *aux)
 	       GLW_ATTRIB_FILENAME, "browser/switcher-icon",
 	       NULL);
 
-  br = browser_root_create("file:///");
+  br = browser_root_create("file:///storage/media/");
   bn = br->br_root;
 
   browser_view_expand_node(bn, ai->ai_widget, &ai->ai_gfs);
@@ -119,8 +156,18 @@ nav_start(void *aux)
 	printf("ENTER: bn = %p\n", bn);
 	if(bn == NULL)
 	  break;
-	browser_view_expand_node(bn, ai->ai_widget, &ai->ai_gfs);
-	browser_scandir(bn);
+
+	switch(bn->bn_type) {
+	case FA_DIR:
+	  browser_view_expand_node(bn, ai->ai_widget, &ai->ai_gfs);
+	  browser_scandir(bn);
+	  break;
+
+	case FA_FILE:
+	  browser_enter(ai, bn);
+	  break;
+
+	}
 	browser_node_deref(bn);
 	break;
 
