@@ -21,7 +21,6 @@
 
 #include "app.h"
 
-int play_file(const char *fname, appi_t *ai, ic_t *ic,
-	      glw_t *extrainfo, glw_t *parent);
+int play_file(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent);
 
 #endif /* PLAY_FILE_H */

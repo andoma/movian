@@ -153,8 +153,7 @@ play_file_draw_status(glw_t *xfader, media_pipe_t *mp)
 
 
 int
-play_file(const char *fname, appi_t *ai, ic_t *ic,
-	  glw_t *extrainfo, glw_t *parent)
+play_file(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
 {
   AVFormatContext *fctx;
   AVCodecContext *ctx;
