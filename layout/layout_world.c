@@ -359,6 +359,8 @@ layout_world_appi_show(appi_t *ai)
   if(w == TAILQ_FIRST(&layout_world->glw_childs))
     return;
 
+  glw_focus_stack_activate(&ai->ai_gfs);
+
   w->glw_parent_alpha = 0.0f; /* fade in */
   w->glw_pos.z = 2.0f;  /* 2.0 so it appears that the app almost comes from 
 			   "behind the user */

@@ -153,7 +153,7 @@ browser_view_expand_node(browser_node_t *bn, glw_t *parent,
 
   browser_view_set(bn, "default");
  
-  if((w = glw_find_by_id(bn->bn_cont_xfader, "node_container")) != NULL) {
+  if((w = glw_find_by_id(bn->bn_cont_xfader, "node_container", 0)) != NULL) {
     glw_focus_set(gfs, w);
 
     glw_set(w,
@@ -161,7 +161,7 @@ browser_view_expand_node(browser_node_t *bn, glw_t *parent,
 	    NULL);
   }
 
-  if((w = glw_find_by_id(bn->bn_cont_xfader, "node_fullpath")) != NULL) {
+  if((w = glw_find_by_id(bn->bn_cont_xfader, "node_fullpath", 0)) != NULL) {
     glw_set(w,
 	    GLW_ATTRIB_CAPTION, bn->bn_url,
 	    NULL);
@@ -189,7 +189,7 @@ browser_view_collapse_node(browser_node_t *bn, glw_focus_stack_t *gfs)
 	  GLW_ATTRIB_SIGNAL_HANDLER, browser_view_xfader_callback, bn, -1,
 	  NULL);
 
-  if((cont = glw_find_by_id(w, "node_container")) != NULL)
+  if((cont = glw_find_by_id(w, "node_container", 0)) != NULL)
     glw_focus_lose(gfs, cont);
 
   glw_detach(w);
@@ -233,7 +233,7 @@ browser_view_get_current_selected_node(glw_t *stack)
 
   w = stack->glw_selected;
   if(w != NULL) {
-    w = glw_find_by_id(w, "node_container");
+    w = glw_find_by_id(w, "node_container", 0);
     if(w != NULL) {
       w = w->glw_selected;
       if(w != NULL) {
@@ -266,7 +266,7 @@ browser_view_set_filetype(glw_t *root, browser_node_t *bn)
   
   glw_lock();
 
-  w = glw_find_by_id(root, "node_filetype_icon_container");
+  w = glw_find_by_id(root, "node_filetype_icon_container", 0);
   if(w == NULL)
     goto out;
 
@@ -325,7 +325,7 @@ browser_view_set_caption(glw_t *root, const char *id, const char *value)
 
   glw_lock();
 
-  if((w = glw_find_by_id(root, id)) != NULL)
+  if((w = glw_find_by_id(root, id, 0)) != NULL)
     glw_set(w, 
 	    GLW_ATTRIB_CAPTION, value,
 	    GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
@@ -495,7 +495,8 @@ browser_view_add_node(browser_node_t *bn)
   if(parent->bn_cont_xfader == NULL)
     return;
 
-  if((cont = glw_find_by_id(parent->bn_cont_xfader, "node_container")) == NULL)
+  if((cont = glw_find_by_id(parent->bn_cont_xfader, "node_container", 0))
+     == NULL)
     return;
 
   assert(bn->bn_refcnt > 0);

@@ -52,7 +52,7 @@ launcher_init(void)
 	       GLW_ATTRIB_FILENAME, "launcher_miniature",
 	       NULL);
 
-  list = glw_find_by_id(ai->ai_widget, "application_container");
+  list = glw_find_by_id(ai->ai_widget, "application_container", 0);
   if(list == NULL) {
     fprintf(stderr, "Warning: 'application_container' not found. "
 	    "This model will not be able to start new applications\n");

@@ -19,27 +19,30 @@
 #ifndef LAYOUT_FORMS_H
 #define LAYOUT_FORMS_H
 
+TAILQ_HEAD(layout_form_entry_list, layout_form_entry);
+
 typedef struct layout_form_entry {
+  TAILQ_ENTRY(layout_form_entry) lfe_link;
+  
   const char *lfe_id;
-  enum {
-    FORM_TYPE_STRING,
-    FORM_TYPE_IP,
-    FORM_TYPE_INTEGER,
-    FORM_TYPE_SELECTION,
-    FORM_TYPE_BUTTON,
-  } lfe_type;
 
-  void *lfe_buffer;         /* for result, we also use this to prep
-			       the current value */
-  size_t lfe_buffer_size;   /* size of dito */
-
-  int lfe_changed;          /* Set if buffer has been changed */
+  glw_t *lfe_widget;
 
 } layout_form_entry_t;
 
 
-int layout_form_query(layout_form_entry_t lfes[], int nlfes,
-		      const char *model);
+int layout_form_query(struct layout_form_entry_list *lfelist,
+		      glw_t *m, glw_focus_stack_t *gfs);
+
+#define LFE_ADD(listp, id) do {						\
+  layout_form_entry_t *lfe = alloca(sizeof(layout_form_entry_t));	\
+  TAILQ_INSERT_TAIL(listp, lfe, lfe_link);				\
+  lfe->lfe_id = id;							\
+} while(0)
+
+void layout_form_add_tab(glw_t *m, const char *listname, const char *listmodel,
+			 const char *deckname, const char *tabmodel);
+
 
 #endif /* LAYOUT_FORMS_H */
 

@@ -49,7 +49,7 @@ layout_switcher_create(void)
 			       NULL);
 
   layout_switcher_list = 
-    glw_find_by_id(layout_switcher, "switcher_container");
+    glw_find_by_id(layout_switcher, "switcher_container", 0);
 
   if(layout_switcher_list == NULL) {
     fprintf(stderr, "Warning: 'switcher_container' not found. "

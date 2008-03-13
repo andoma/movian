@@ -28,29 +28,41 @@
 #include "layout.h"
 #include "layout_forms.h"
 
-typedef struct lfectrl {
-  glw_t *lc_w;
 
-  glw_t *lc_nav[4]; /* up down left right */
+typedef struct layout_form {
+  glw_focus_stack_t *lf_gfs;
 
-#define LC_UP    0
-#define LC_DOWN  1
-#define LC_LEFT  2
-#define LC_RIGHT 3
+} layout_form_t;
 
-} lfectrl_t;
+static int layout_form_callback(glw_t *w, void *opaque,
+				glw_signal_t signal, ...);
+
+
+/**
+ * Find a target we can move to
+ *
+ * It must have a layout_form_callback attached to it so we
+ * can 'escape' from it
+ */
 
 static glw_t *
 find_anything_with_id(glw_t *w)
 {
   glw_t *c, *r;
 
-  if(w == NULL || w->glw_id != NULL)
+  if(w == NULL || glw_get_opaque(w, layout_form_callback) != NULL)
     return w;
 
-  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+
+    if(w->glw_class == GLW_DECK) {
+      if(c != w->glw_selected)
+	continue;
+    }
+
     if((r = find_anything_with_id(c)) != NULL)
       return r;
+  }
   return NULL;
 }
 
@@ -97,23 +109,23 @@ static int
 layout_form_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
   glw_t *n = NULL;
-  lfectrl_t *lc = opaque;
+  layout_form_t *lf = opaque;
 
   va_list ap;
   va_start(ap, signal);
 
   switch(signal) {
   case GLW_SIGNAL_UP:
-    n = lc->lc_nav[LC_UP];
+    n = layout_form_find(w, 1, GLW_CONTAINER_Y);
     break;
   case GLW_SIGNAL_DOWN:
-    n = lc->lc_nav[LC_DOWN];
+    n = layout_form_find(w, 0, GLW_CONTAINER_Y);
     break;
   case GLW_SIGNAL_LEFT:
-    n = lc->lc_nav[LC_LEFT];
+    n = layout_form_find(w, 1, GLW_CONTAINER_X);
     break;
   case GLW_SIGNAL_RIGHT:
-    n = lc->lc_nav[LC_RIGHT];
+    n = layout_form_find(w, 0, GLW_CONTAINER_X);
     break;
   default:
     break;
@@ -122,75 +134,99 @@ layout_form_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
   va_end(ap);
 
   if(n != NULL) {
-    //    glw_lose_focus(w);
-    //    glw_set_focus(n);
+    glw_focus_lose(lf->lf_gfs, w);
+    glw_focus_set(lf->lf_gfs, n);
     return 1;
   }
-
   return 0;
 }
+
+
 
 /**
  *
  */
 int
-layout_form_query(layout_form_entry_t lfes[], int nlfes, const char *model)
+layout_form_query(struct layout_form_entry_list *lfelist, glw_t *m,
+		  glw_focus_stack_t *gfs)
 {
   glw_t *w;
-  int i;
-  lfectrl_t *lc;
-  glw_t *cur = NULL;
+  glw_t *ff = NULL;  /* first widget to focus */
+  layout_form_entry_t *lfe;
+  layout_form_t lf;
 
-  lc = alloca(sizeof(lfectrl_t) * nlfes);
+  memset(&lf, 0, sizeof(lf));
+  lf.lf_gfs = gfs;
 
-  memset(lc, 0, sizeof(lfectrl_t) * nlfes);
-
-  w = glw_create(GLW_MODEL,
-		 GLW_ATTRIB_FILENAME, model,
-		 NULL);
-
-  for(i = 0; i < nlfes; i++) {
-    lc[i].lc_w = glw_find_by_id(w, lfes[i].lfe_id);
-    if(lc[i].lc_w == NULL)
+  TAILQ_FOREACH(lfe, lfelist, lfe_link) {
+    w = lfe->lfe_widget = glw_find_by_id(m, lfe->lfe_id, 1);
+    if(w == NULL)
       continue;
-    if(cur == NULL)
-      cur = lc[i].lc_w;
-    printf("%s\n", lc[i].lc_w->glw_id);
-    lc[i].lc_nav[LC_UP   ] = layout_form_find(lc[i].lc_w, 1, GLW_CONTAINER_Y);
-    lc[i].lc_nav[LC_DOWN ] = layout_form_find(lc[i].lc_w, 0, GLW_CONTAINER_Y);
-    lc[i].lc_nav[LC_LEFT ] = layout_form_find(lc[i].lc_w, 1, GLW_CONTAINER_X);
-    lc[i].lc_nav[LC_RIGHT] = layout_form_find(lc[i].lc_w, 0, GLW_CONTAINER_X);
 
-    glw_set(lc[i].lc_w,
-	    GLW_ATTRIB_SIGNAL_HANDLER, layout_form_callback, &lc[i], 400,
+    if(ff == NULL)
+      ff = w;
+
+    glw_set(w,
+	    GLW_ATTRIB_SIGNAL_HANDLER, layout_form_callback, &lf, 400,
 	    NULL);
-
-    printf("%s UP    -> %s\n",
-	   lc[i].lc_w->glw_id, lc[i].lc_nav[LC_UP   ] ? 
-	   lc[i].lc_nav[LC_UP   ]->glw_id : "nothing");
-
-   printf("%s DOWN  -> %s\n",
-	   lc[i].lc_w->glw_id, lc[i].lc_nav[LC_DOWN ] ? 
-	   lc[i].lc_nav[LC_DOWN ]->glw_id : "nothing");
-
-   printf("%s LEFT  -> %s\n",
-	   lc[i].lc_w->glw_id, lc[i].lc_nav[LC_LEFT ] ? 
-	   lc[i].lc_nav[LC_LEFT ]->glw_id : "nothing");
-
-   printf("%s RIGHT -> %s\n",
-	   lc[i].lc_w->glw_id, lc[i].lc_nav[LC_RIGHT] ? 
-	   lc[i].lc_nav[LC_RIGHT]->glw_id : "nothing");
   }
 
-  //  layout_world_add_entry(w);
 
-  if(cur != NULL) {
-    //    glw_set_focus(cur);
-  }
+  if(ff != NULL)
+    glw_focus_set(gfs, ff);
+
+  glw_focus_stack_activate(gfs);
+
   while(1) {
     sleep(1);
   }
 
-
   return 0;
+}
+
+
+
+
+/**
+ * Callback for coupling display of a tab entry (deck child) to a list entry
+ */
+static int
+layout_form_tab_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  glw_t *tab = opaque;
+
+  switch(signal) {
+  case GLW_SIGNAL_SELECTED_SELF:
+    tab->glw_parent->glw_selected = tab;
+    return 1;
+  default:
+    break;
+  }
+  return 0;
+}
+
+
+
+void
+layout_form_add_tab(glw_t *m, const char *listname, const char *listmodel,
+		    const char *deckname, const char *tabmodel)
+{
+  glw_t *w, *d, *t;
+
+  w = glw_find_by_id(m, listname, 0);
+  d = glw_find_by_id(m, deckname, 0);
+
+  if(w == NULL || d == NULL)
+    return;
+
+  t = glw_create(GLW_MODEL,
+		 GLW_ATTRIB_FILENAME, tabmodel,
+		 GLW_ATTRIB_PARENT, d,
+		 NULL);
+
+  glw_create(GLW_MODEL,
+	     GLW_ATTRIB_FILENAME, listmodel,
+	     GLW_ATTRIB_SIGNAL_HANDLER, layout_form_tab_callback, t, 400,
+	     GLW_ATTRIB_PARENT, w,
+	     NULL);
 }

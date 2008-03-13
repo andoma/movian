@@ -33,6 +33,7 @@
 #include "showtime.h"
 #include "input.h"
 #include "layout/layout.h"
+#include "layout/layout_forms.h"
 
 #include "browser.h"
 #include "browser_view.h"
@@ -43,6 +44,46 @@
 typedef struct navigator {
   appi_t *nav_ai;
 } navigator_t;
+
+
+static void
+nav_settings(navigator_t *nav, appi_t *ai)
+{
+  struct layout_form_entry_list lfelist;
+  glw_t *m;
+  TAILQ_INIT(&lfelist);
+
+  m = glw_create(GLW_MODEL,
+		 GLW_ATTRIB_PARENT, ai->ai_widget,
+		 GLW_ATTRIB_FILENAME, "browser/setup",
+		 NULL);
+
+  LFE_ADD(&lfelist, "storage_type_list");
+
+  layout_form_add_tab(m,
+		      "storage_type_list",       "browser/setup-file-icon",
+		      "storage_type_container",  "browser/setup-file-tab");
+
+  LFE_ADD(&lfelist, "fs_title");
+  LFE_ADD(&lfelist, "fs_path");
+  LFE_ADD(&lfelist, "fs_ok");
+
+
+  layout_form_add_tab(m,
+		      "storage_type_list",      "browser/setup-smb-icon",
+		      "storage_type_container", "browser/setup-smb-tab");
+
+  LFE_ADD(&lfelist, "smb_title");
+  LFE_ADD(&lfelist, "smb_hostname");
+  LFE_ADD(&lfelist, "smb_path");
+  LFE_ADD(&lfelist, "smb_username");
+  LFE_ADD(&lfelist, "smb_password");
+  LFE_ADD(&lfelist, "smb_connect");
+
+  layout_form_query(&lfelist, m, &ai->ai_gfs);
+}
+
+
 
 
 static int
@@ -103,6 +144,7 @@ browser_enter(appi_t *ai, browser_node_t *bn)
 }
 
 
+
 /**
  *
  */
@@ -128,14 +170,19 @@ nav_start(void *aux)
 	       GLW_ATTRIB_FILENAME, "browser/switcher-icon",
 	       NULL);
 
+  layout_switcher_appi_add(ai);
+  layout_world_appi_show(ai);
+
+
+  nav_settings(nav, ai);
+
+
   br = browser_root_create("file:///storage/media/");
   bn = br->br_root;
 
   browser_view_expand_node(bn, ai->ai_widget, &ai->ai_gfs);
   browser_scandir(bn);
 
-  layout_switcher_appi_add(ai);
-  layout_world_appi_show(ai);
 
   while(1) {
 
