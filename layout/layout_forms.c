@@ -275,9 +275,7 @@ get_input_char(inputevent_t *ie)
 
   switch(ie->u.key) {
   case INPUT_KEY_BACK:
-  case 'a' ... 'z':
-  case 'A' ... 'Z':
-  case '0' ... '9':
+  case 32 ... 127:
     return ie->u.key;
   default:
     return -1;
