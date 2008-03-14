@@ -37,6 +37,7 @@ y-container {
    space 0.5
   }
   list {
+   scale-childs
    id fs_icon_list
    slices 6
   }
