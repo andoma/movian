@@ -111,15 +111,14 @@ static void *
 clock_start(void *aux)
 {
   appi_t *ai = appi_create("clock");
-
+  glw_t *mini;
   ai->ai_widget = buildclock();
 
-  ai->ai_widget_miniature = 
-    glw_create(GLW_MODEL,
-	       GLW_ATTRIB_FILENAME, "clock/switcher-icon",
-	       NULL);
-
-  layout_switcher_appi_add(ai);
+  mini = glw_create(GLW_MODEL,
+		    GLW_ATTRIB_FILENAME, "clock/switcher-icon",
+		    NULL);
+  
+  layout_switcher_appi_add(ai, mini);
   layout_world_appi_show(ai);
 
   while(1) {

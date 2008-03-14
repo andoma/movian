@@ -25,6 +25,24 @@ y-container {
  }
 
  x-container {
+  weight 2.0
+  focus-alpha
+  y-container {
+   weight 0.5
+   space 0.5
+   text {
+    caption Icon:
+    align right
+   }
+   space 0.5
+  }
+  list {
+   id fs_icon_list
+   slices 6
+  }
+ }
+
+ x-container {
   focus-alpha
   text {
    weight 0.5
@@ -39,7 +57,7 @@ y-container {
   }
  }
 
- space 4.5
+ space 2.5
 
  x-container {
   weight 2.0

@@ -41,13 +41,14 @@ launcher_init(void)
 {
   glw_t *list;
   appi_t *ai;
+  glw_t *mini;
 
   launcher_appi = ai = appi_create("Launcher");
 
   ai->ai_widget = glw_create(GLW_MODEL,
 			     GLW_ATTRIB_FILENAME, "launcher",
 			     NULL);
-  ai->ai_widget_miniature = 
+  mini = 
     glw_create(GLW_MODEL,
 	       GLW_ATTRIB_FILENAME, "launcher_miniature",
 	       NULL);
@@ -64,7 +65,7 @@ launcher_init(void)
   glw_focus_set(&ai->ai_gfs, list);
 
   layout_world_appi_show(ai);
-  layout_switcher_appi_add(ai);
+  layout_switcher_appi_add(ai, mini);
 }
 
 

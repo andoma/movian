@@ -48,9 +48,6 @@ extern pthread_mutex_t appi_list_mutex;
 typedef struct appi {
   LIST_ENTRY(appi) ai_link;
 
-  glw_t *ai_widget_miniature;
-  glw_t *ai_widget_miniature0; /* internal miniature */
-
   glw_t *ai_widget;
 
   glw_focus_stack_t ai_gfs;

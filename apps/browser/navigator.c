@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <dirent.h>
 
 #include <libglw/glw.h>
 
@@ -46,12 +47,14 @@
 typedef struct navconfig {
   char nc_title[40];
   char nc_rootpath[256];
+  char nc_icon[256];
 } navconfig_t;
 
 
 
 typedef struct navigator {
   appi_t *nav_ai;
+  glw_t *nav_miniature;
 } navigator_t;
 
 
@@ -126,6 +129,7 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
   browser_node_t *bn;
   inputevent_t ie;
   char rooturl[400];
+  glw_t *w;
 
   switch(navtype) {
   case NAVIGATOR_FILESYSTEM:
@@ -138,7 +142,29 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
     break;
   }
 
+  /**
+   * Swap task switcher miniature widget to the one configured
+   */ 
+  glw_lock();
+  glw_destroy(nav->nav_miniature);
 
+  nav->nav_miniature =
+    glw_create(GLW_MODEL,
+	       GLW_ATTRIB_FILENAME, cfg->nc_icon,
+	       NULL);
+
+  layout_switcher_appi_add(ai, nav->nav_miniature);
+  glw_unlock();
+
+  /**
+   * Update title in task switcher miniature widget
+   */
+  if((w = glw_find_by_id(nav->nav_miniature, "title", 0)) != NULL)
+    glw_set(w, GLW_ATTRIB_CAPTION, cfg->nc_title, NULL);
+
+  /**
+   * Create browser root
+   */ 
   br = browser_root_create(rooturl);
   bn = br->br_root;
 
@@ -197,12 +223,69 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
 }
 
 
+/**
+ * Locate the 'fs_icon_list' and fill it with icons the user may
+ * choose to use for this navigator instance.
+ */
+static void
+load_nav_icons_in_tab(glw_t *tab, const char *name)
+{
+  glw_t *w;
+  char path[300];
+  char fullpath[400];
+  struct dirent **namelist, *d;
+  struct stat st;
+  int n, i;
+  char *r;
+
+  if((w = glw_find_by_id(tab, name, 0)) == NULL) 
+    return;
+
+  snprintf(path, sizeof(path), "%s/browser/icons",
+	   config_get_str("theme", "themes/default"));
+
+  n = scandir(path, &namelist, NULL, alphasort);
+  if(n < 0)
+    return;
+
+  for(i = 0; i < n; i++) {
+    d = namelist[i];
+    if(d->d_name[0] == '.')
+      continue;
+
+    snprintf(fullpath, sizeof(fullpath), "%s/%s", path, d->d_name);
+    r = strrchr(fullpath, '.');
+    if(r == NULL)
+      continue;
+    if(strcasecmp(r, ".model"))
+      continue;
+    if(stat(fullpath, &st))
+      continue;
+
+    if((st.st_mode & S_IFMT) != S_IFREG)
+      continue;
+
+    snprintf(fullpath, sizeof(fullpath), "browser/icons/%s",d->d_name);
+
+    r = strrchr(fullpath, '.');
+    if(r == NULL)
+      continue;
+    *r = 0;
+    glw_create(GLW_MODEL,
+	       GLW_ATTRIB_PARENT, w,
+	       GLW_ATTRIB_ID, fullpath,
+	       GLW_ATTRIB_FILENAME, fullpath,
+	       NULL);
+  }
+}
+
+
 
 static int
 nav_setup(navigator_t *nav, appi_t *ai)
 {
   struct layout_form_entry_list lfelist;
-  glw_t *m;
+  glw_t *m, *t;
   int r;
 
   navconfig_t fs;
@@ -221,14 +304,18 @@ nav_setup(navigator_t *nav, appi_t *ai)
    * Local filesystem
    */
   memset(&fs, 0, sizeof(navconfig_t));
-  layout_form_add_tab(m,
-		      "storage_type_list",       "browser/setup-file-icon",
-		      "storage_type_container",  "browser/setup-file-tab");
+  t = layout_form_add_tab(m,
+			  "storage_type_list",       "browser/setup-file-icon",
+			  "storage_type_container",  "browser/setup-file-tab");
+
+  load_nav_icons_in_tab(t, "fs_icon_list");
 
   strcpy(fs.nc_title, "Filesystem");
   strcpy(fs.nc_rootpath, "/");
+  strcpy(fs.nc_icon, "browser/icons/1default-icon");
 
   LFE_ADD_STR(&lfelist, "fs_title", fs.nc_title, sizeof(fs.nc_title));
+  LFE_ADD_LIST(&lfelist, "fs_icon_list", fs.nc_icon, sizeof(fs.nc_icon));
   LFE_ADD_STR(&lfelist, "fs_path", fs.nc_rootpath, sizeof(fs.nc_rootpath));
   LFE_ADD_BTN(&lfelist, "fs_ok", NAVIGATOR_FILESYSTEM);
 
@@ -286,12 +373,13 @@ nav_launch(void *aux)
 	       GLW_ATTRIB_SIGNAL_HANDLER, navigator_root_widget, nav, 1000,
 	       NULL);
 
-  ai->ai_widget_miniature = 
+  nav->nav_miniature =
     glw_create(GLW_MODEL,
 	       GLW_ATTRIB_FILENAME, "browser/switcher-icon",
 	       NULL);
 
-  layout_switcher_appi_add(ai);
+  layout_switcher_appi_add(ai, nav->nav_miniature);
+  
   layout_world_appi_show(ai);
 
   if(settings == NULL) {

@@ -4,13 +4,13 @@ y-container {
  space 0.05
 
  bitmap {
-  filename icon://library.png
+  filename icon://folder_images.png
   keep-aspect
  }
  text {
   weight 0.25
+  caption Images
   id title
-  caption Navigator (unconfigured)
   align center
  }
  space 0.05

@@ -75,12 +75,9 @@ switcher_spawn_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
  * New application instance, link it in
  */
 void
-layout_switcher_appi_add(appi_t *ai)
+layout_switcher_appi_add(appi_t *ai, glw_t *w)
 {
-  if(ai->ai_widget_miniature == NULL)
-    return;
-
-  glw_set(ai->ai_widget_miniature,
+  glw_set(w,
 	  GLW_ATTRIB_PARENT, layout_switcher_list,
 	  GLW_ATTRIB_SIGNAL_HANDLER, switcher_spawn_callback, ai, 100,
 	  NULL);
