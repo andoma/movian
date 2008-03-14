@@ -100,12 +100,6 @@ audio_mastervol_bar_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
   case GLW_SIGNAL_PREPARE:
     w->glw_extra = GLW_LP(3, w->glw_extra, audio_vol);
-
-    if(audio_mute)
-      glw_set(w, GLW_ATTRIB_COLOR, GLW_COLOR_LIGHT_RED, NULL);
-    else
-      glw_set(w, GLW_ATTRIB_COLOR, GLW_COLOR_LIGHT_GREEN, NULL);
-
     return 0;
 
   default:

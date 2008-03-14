@@ -372,7 +372,6 @@ miw_audiotime_create(glw_t *parent, media_pipe_t *mp, float weight,
 
 
   glw_create(GLW_BAR,
-	     GLW_ATTRIB_COLOR, GLW_COLOR_LIGHT_GREEN,
 	     GLW_ATTRIB_PARENT, z,
 	     GLW_ATTRIB_SIGNAL_HANDLER, miw_audiobar_callback, mp, 0,
 	     NULL);
