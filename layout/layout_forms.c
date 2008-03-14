@@ -50,23 +50,34 @@ static int layout_form_entry_button(glw_t *w, void *opaque,
  */
 
 static glw_t *
-find_anything_with_id(glw_t *w)
+find_anything_with_id(glw_t *w, glw_class_t skip_class, int skip)
 {
-  glw_t *c, *r;
+  glw_t *c, *r, *best;
 
   if(w == NULL || glw_get_opaque(w, layout_form_callback) != NULL)
     return w;
 
-  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-
-    if(w->glw_class == GLW_DECK) {
-      if(c != w->glw_selected)
-	continue;
+  if(w->glw_class == skip_class) {
+    best = NULL;
+    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+      if((r = find_anything_with_id(c, 0, 0)) != NULL) {
+	best = r;
+	if(skip == 0)
+	  return r;
+	skip--;
+      }
     }
-
-    if((r = find_anything_with_id(c)) != NULL)
-      return r;
+    if(best != NULL)
+      return best;
+  } else {
+    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+      if(w->glw_class == GLW_DECK && c != w->glw_selected)
+	continue;
+      if((r = find_anything_with_id(c, skip_class, skip)) != NULL)
+	return r;
+    }
   }
+
   return NULL;
 }
 
@@ -77,7 +88,8 @@ find_anything_with_id(glw_t *w)
  *
  */
 static glw_t *
-layout_form_find(glw_t *w, int rev, glw_class_t cont_class)
+layout_form_find(glw_t *w, int rev, glw_class_t cont_class, 
+		 glw_class_t skip_class, int skip)
 {
   glw_t *c, *p, *s;
   
@@ -96,13 +108,48 @@ layout_form_find(glw_t *w, int rev, glw_class_t cont_class)
 	if(s == NULL)
 	  break;
 
-	if((c = find_anything_with_id(s)) != NULL)
+	if((c = find_anything_with_id(s, skip_class, skip)) != NULL)
 	  return c;
       }
     }
     w = w->glw_parent;
   }
 }
+
+
+/**
+ * Compute the "X and Y" offset in the current widget tree
+ *
+ * We use these values so we arrive aligned with the old position when
+ * we cross verital / horizontal containers
+ */
+static void
+layout_form_get_xy(glw_t *w, int *xp, int *yp)
+{
+  glw_t *p = w->glw_parent;
+
+  *xp = 0;
+  *yp = 0;
+
+  switch(p->glw_class) {
+  default:
+    break;
+  case GLW_CONTAINER_X:
+    while((w = TAILQ_PREV(w, glw_queue, glw_parent_link)) != NULL) {
+      if(glw_get_opaque(w, layout_form_callback) != NULL)
+	(*xp)++;
+    }
+    break;
+
+  case GLW_CONTAINER_Y:
+    while((w = TAILQ_PREV(w, glw_queue, glw_parent_link)) != NULL) {
+      if(glw_get_opaque(w, layout_form_callback) != NULL)
+	(*yp)++;
+    }
+    break;
+  }
+}
+
 
 
 /**
@@ -114,22 +161,34 @@ layout_form_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
   glw_t *n = NULL;
   glw_focus_stack_t *gfs = opaque;
+  int x = 0, y = 0;
 
   va_list ap;
   va_start(ap, signal);
 
   switch(signal) {
   case GLW_SIGNAL_UP:
-    n = layout_form_find(w, 1, GLW_CONTAINER_Y);
+  case GLW_SIGNAL_DOWN:
+  case GLW_SIGNAL_LEFT:
+  case GLW_SIGNAL_RIGHT:
+    layout_form_get_xy(w, &x, &y);
+    break;
+  default:
+    break;
+  }
+
+  switch(signal) {
+  case GLW_SIGNAL_UP:
+    n = layout_form_find(w, 1, GLW_CONTAINER_Y, GLW_CONTAINER_X, x);
     break;
   case GLW_SIGNAL_DOWN:
-    n = layout_form_find(w, 0, GLW_CONTAINER_Y);
+    n = layout_form_find(w, 0, GLW_CONTAINER_Y, GLW_CONTAINER_X, x);
     break;
   case GLW_SIGNAL_LEFT:
-    n = layout_form_find(w, 1, GLW_CONTAINER_X);
+    n = layout_form_find(w, 1, GLW_CONTAINER_X, GLW_CONTAINER_Y, y);
     break;
   case GLW_SIGNAL_RIGHT:
-    n = layout_form_find(w, 0, GLW_CONTAINER_X);
+    n = layout_form_find(w, 0, GLW_CONTAINER_X, GLW_CONTAINER_Y, y);
     break;
   default:
     break;
