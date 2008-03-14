@@ -105,11 +105,13 @@ audio_compressor_update_config(struct compressor_data *comp, audio_mixer_t *mi)
     break;
   }
 
+#if 0
   settings_setf("post-mixer-compressor-mode",     "%d", comp->mode);
   settings_setf("post-mixer-compressor-holdtime", "%d", comp->holdtime);
   settings_setf("post-mixer-compressor-postgain", "%f", comp->postgaindb);
   settings_setf("post-mixer-compressor-thres",    "%f", comp->thresdb);
   settings_setf("post-mixer-compressor-ratio",    "%f", comp->ratiocfg);
+#endif
 }
 
 
@@ -463,6 +465,7 @@ audio_compressor_menu_setup(glw_t *a)
 void
 audio_compressor_setup(void)
 {
+#if 0
   post_mixer_compressor.mode = 
     settings_get_int("post-mixer-compressor-mode", 0);
 
@@ -477,6 +480,7 @@ audio_compressor_setup(void)
 
   post_mixer_compressor.ratiocfg = 
     settings_get_float("post-mixer-compressor-ratio", 1.0);
+#endif
 
   post_mixer_compressor.lp = 1000;
 

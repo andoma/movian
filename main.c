@@ -139,8 +139,6 @@ main(int argc, char **argv)
 void
 showtime_exit(int suspend)
 {
-  settings_write();
-
   if(suspend == -1)
     _exit(0);
 
