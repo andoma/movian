@@ -75,8 +75,9 @@ int layout_form_query(struct layout_form_entry_list *lfelist,
   lfe->lfe_id = id;							\
 } while(0)
 
-void layout_form_add_tab(glw_t *m, const char *listname, const char *listmodel,
-			 const char *deckname, const char *tabmodel);
+glw_t *layout_form_add_tab(glw_t *m, const char *listname,
+			   const char *listmodel, const char *deckname,
+			   const char *tabmodel);
 
 
 #endif /* LAYOUT_FORMS_H */

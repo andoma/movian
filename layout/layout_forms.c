@@ -239,8 +239,14 @@ layout_form_tab_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 }
 
 
-
-void
+/**
+ * Create a new tab that's connected with an entry in a list
+ *
+ * The tab must reside in a container that's willing to switch
+ * display when the glw_selected changes (this is done by the
+ * layout_form_tab_callback() above)
+ */
+glw_t *
 layout_form_add_tab(glw_t *m, const char *listname, const char *listmodel,
 		    const char *deckname, const char *tabmodel)
 {
@@ -250,7 +256,7 @@ layout_form_add_tab(glw_t *m, const char *listname, const char *listmodel,
   d = glw_find_by_id(m, deckname, 0);
 
   if(w == NULL || d == NULL)
-    return;
+    return NULL;
 
   t = glw_create(GLW_MODEL,
 		 GLW_ATTRIB_FILENAME, tabmodel,
@@ -262,6 +268,7 @@ layout_form_add_tab(glw_t *m, const char *listname, const char *listmodel,
 	     GLW_ATTRIB_SIGNAL_HANDLER, layout_form_tab_callback, t, 400,
 	     GLW_ATTRIB_PARENT, w,
 	     NULL);
+  return t;
 }
 
 
