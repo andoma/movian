@@ -118,6 +118,33 @@ browser_enter(appi_t *ai, browser_node_t *bn)
 }
 
 
+/**
+ *  Return 0 if user wants to exit, otherwise -1
+ */
+static int
+nav_verify_exit(navigator_t *nav, appi_t *ai)
+{
+  struct layout_form_entry_list lfelist;
+  glw_t *m;
+  int r;
+
+  TAILQ_INIT(&lfelist);
+
+  m = glw_create(GLW_MODEL,
+		 GLW_ATTRIB_PARENT, ai->ai_widget,
+		 GLW_ATTRIB_FILENAME, "browser/exit",
+		 NULL);
+
+  LFE_ADD_BTN(&lfelist, "ok",     0);
+  LFE_ADD_BTN(&lfelist, "cancel", -1); /* form will return '-1' if user
+					  cancels form, so we use same
+					  for the cancel button */
+  
+  r = layout_form_query(&lfelist, m, &ai->ai_gfs);
+  glw_destroy(m);
+  return r;
+}
+
 
 /**
  *
@@ -130,6 +157,7 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
   inputevent_t ie;
   char rooturl[400];
   glw_t *w;
+  int run = 1, r;
 
   switch(navtype) {
   case NAVIGATOR_FILESYSTEM:
@@ -171,7 +199,7 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
   browser_view_expand_node(bn, ai->ai_widget, &ai->ai_gfs);
   browser_scandir(bn);
 
-  while(1) {
+  while(run) {
 
     input_getevent(&ai->ai_ic, 1, &ie, NULL);
     
@@ -209,8 +237,14 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
 	if(bn == NULL)
 	  break;
 
-	if(bn->bn_parent != NULL) 
+	if(bn->bn_parent != NULL) {
 	  browser_view_collapse_node(bn, &ai->ai_gfs);
+	} else {
+	  /* At top level, check before exit */
+	  r = nav_verify_exit(nav, ai);
+	  if(r == 0)
+	    run = 0;
+	}
 	browser_node_deref(bn);
 	break;
 
@@ -218,6 +252,11 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
     }
   }
 
+  bn = br->br_root;
+  browser_view_collapse_node(bn, &ai->ai_gfs);
+
+  printf("Destroying browser\n");
+  browser_root_destroy(br);
   return 0;
 }
 
@@ -387,6 +426,11 @@ nav_launch(void *aux)
   } else {
     abort();
   }
+
+  glw_destroy(nav->nav_miniature);
+  glw_destroy(ai->ai_widget);
+
+  appi_destroy(ai);
   return NULL;
 }
 
@@ -402,7 +446,12 @@ static void
 nav_spawn(FILE *settings)
 {
   pthread_t ptid;
-  pthread_create(&ptid, NULL, nav_launch, settings);
+  pthread_attr_t attr;
+
+  pthread_attr_init(&attr);
+  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+  pthread_create(&ptid, &attr, nav_launch, settings);
 }
 
 

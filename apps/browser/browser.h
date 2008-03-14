@@ -103,6 +103,7 @@ typedef struct browser_root {
   pthread_mutex_t br_probe_mutex;
   pthread_cond_t  br_probe_cond;
   pthread_t br_probe_thread_id;
+  int br_probe_run;
   struct browser_node_queue br_probe_queue;
 
 } browser_root_t;
@@ -116,6 +117,8 @@ browser_node_t *browser_node_add_child(browser_node_t *parent,
 				       const char *url, int type);
 
 browser_root_t *browser_root_create(const char *url);
+
+void browser_root_destroy(browser_root_t *br);
 
 void browser_scandir(browser_node_t *bn);
 

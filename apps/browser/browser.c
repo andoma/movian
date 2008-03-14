@@ -150,6 +150,21 @@ browser_root_create(const char *url)
   return br;
 }
 
+/**
+ *
+ */
+void
+browser_root_destroy(browser_root_t *br)
+{
+  browser_node_t *bn = br->br_root;
+  browser_probe_deinit(br);
+
+  assert(bn->bn_refcnt == 1); /* refcount should be 1 now */
+  browser_node_deref(bn);
+  free(br);
+}
+
+
 
 /**
  * Start scanning of a node (which more or less has to be a directory 

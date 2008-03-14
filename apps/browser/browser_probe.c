@@ -43,8 +43,12 @@ browser_probe_thread(void *arg)
   while(1) {
 
     pthread_mutex_lock(&br->br_probe_mutex);
-    while((bn = TAILQ_FIRST(&br->br_probe_queue)) == NULL)
+    while((bn = TAILQ_FIRST(&br->br_probe_queue)) == NULL && br->br_probe_run)
       pthread_cond_wait(&br->br_probe_cond, &br->br_probe_mutex);
+
+    if(!br->br_probe_run)
+      break;
+
     TAILQ_REMOVE(&br->br_probe_queue, bn, bn_probe_link);
     pthread_mutex_unlock(&br->br_probe_mutex);
 
@@ -60,6 +64,16 @@ browser_probe_thread(void *arg)
 
     browser_node_deref(bn);
   }
+
+  /* Clear the probe queue */
+
+  while((bn = TAILQ_FIRST(&br->br_probe_queue)) != NULL) {
+    TAILQ_REMOVE(&br->br_probe_queue, bn, bn_probe_link);
+    browser_node_deref(bn);
+  }
+
+  pthread_mutex_unlock(&br->br_probe_mutex);
+  return NULL;
 }
 
 /**
@@ -85,10 +99,22 @@ browser_probe_enqueue(browser_node_t *bn)
 void
 browser_probe_init(browser_root_t *br)
 {
+  br->br_probe_run = 1;
   TAILQ_INIT(&br->br_probe_queue);
 
   pthread_cond_init(&br->br_probe_cond, NULL);
   pthread_mutex_init(&br->br_probe_mutex, NULL);
 
   pthread_create(&br->br_probe_thread_id, NULL, browser_probe_thread, br);
+}
+
+/**
+ *
+ */
+void
+browser_probe_deinit(browser_root_t *br)
+{
+  br->br_probe_run = 0;
+  pthread_cond_signal(&br->br_probe_cond);
+  pthread_join(br->br_probe_thread_id, NULL);
 }

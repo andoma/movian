@@ -55,7 +55,7 @@ appi_spawn(const char *name, const char *icon)
 
 
 /**
- * Spawn a new application instance
+ * Create a new application instance
  */
 appi_t *
 appi_create(const char *name)
@@ -70,6 +70,19 @@ appi_create(const char *name)
   
   return ai;
 }
+
+/**
+ * Destroy an application
+ */
+void
+appi_destroy(appi_t *ai)
+{
+  mp_deinit(&ai->ai_mp);
+  free((void *)ai->ai_name);
+  input_flush_queue(&ai->ai_ic);
+  free(ai);
+}
+
 
 /**
  *

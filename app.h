@@ -93,6 +93,8 @@ void apps_load(void);
 
 appi_t *appi_create(const char *name);
 
+void appi_destroy(appi_t *ai);
+
 void appi_link(appi_t *ai);
 
 #endif /* APP_H */
