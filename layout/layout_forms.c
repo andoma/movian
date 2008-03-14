@@ -41,6 +41,10 @@ static int layout_form_callback(glw_t *w, void *opaque,
 static int layout_form_entry_string(glw_t *w, void *opaque,
 				    glw_signal_t signal, ...);
 
+static int layout_form_entry_button(glw_t *w, void *opaque,
+				    glw_signal_t signal, ...);
+
+
 /**
  * Find a target we can move to
  *
@@ -158,12 +162,16 @@ layout_form_query(struct layout_form_entry_list *lfelist, glw_t *m,
   layout_form_entry_t *lfe;
   layout_form_t lf;
   int len;
+  ic_t ic;
+  inputevent_t ie;
 
+  input_init(&ic);
   memset(&lf, 0, sizeof(lf));
   lf.lf_gfs = gfs;
 
   TAILQ_FOREACH(lfe, lfelist, lfe_link) {
     w = lfe->lfe_widget = glw_find_by_id(m, lfe->lfe_id, 1);
+    lfe->lfe_ic = &ic;
     if(w == NULL)
       continue;
 
@@ -185,6 +193,12 @@ layout_form_query(struct layout_form_entry_list *lfelist, glw_t *m,
 	      GLW_ATTRIB_CURSOR_POSITION, len,
 	      NULL);
       break;
+ 
+    case LFE_TYPE_BUTTON:
+      glw_set(w,
+	      GLW_ATTRIB_SIGNAL_HANDLER,  layout_form_entry_button, lfe, 401,
+	      NULL);
+      break;
     }
   }
 
@@ -193,11 +207,13 @@ layout_form_query(struct layout_form_entry_list *lfelist, glw_t *m,
 
   glw_focus_stack_activate(gfs);
 
-  while(1) {
-    sleep(1);
-  }
+  input_getevent(&ic, 1, &ie, NULL);
 
-  return 0;
+  if(ie.type != INPUT_SPECIAL)
+    return -1;
+
+  input_flush_queue(&ic);
+  return ie.u.u32;
 }
 
 
@@ -378,5 +394,33 @@ layout_form_entry_string(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
   va_end(ap);
 
+  return 0;
+}
+
+
+
+
+/**
+ * Callback for controlling a string form entry
+ */
+static int
+layout_form_entry_button(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  layout_form_entry_t *lfe = opaque;
+  inputevent_t ie;
+
+  va_list ap;
+  va_start(ap, signal);
+
+  switch(signal) {
+  case GLW_SIGNAL_ENTER:
+    ie.type = INPUT_SPECIAL;
+    ie.u.u32 = lfe->lfe_value;
+    input_postevent(lfe->lfe_ic, &ie);
+    return 1;
+  default:
+    break;
+  }
+  va_end(ap);
   return 0;
 }

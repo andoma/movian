@@ -51,6 +51,7 @@ nav_settings(navigator_t *nav, appi_t *ai)
 {
   struct layout_form_entry_list lfelist;
   glw_t *m;
+  int r;
 
   char username[60];
 
@@ -71,7 +72,7 @@ nav_settings(navigator_t *nav, appi_t *ai)
 
   LFE_ADD(&lfelist, "fs_title");
   LFE_ADD(&lfelist, "fs_path");
-  LFE_ADD(&lfelist, "fs_ok");
+  LFE_ADD_BTN(&lfelist, "fs_ok", 1);
 
 
   layout_form_add_tab(m,
@@ -83,9 +84,13 @@ nav_settings(navigator_t *nav, appi_t *ai)
   LFE_ADD(&lfelist, "smb_path");
   LFE_ADD_STR(&lfelist, "smb_username", username, sizeof(username));
   LFE_ADD(&lfelist, "smb_password");
-  LFE_ADD(&lfelist, "smb_connect");
+  LFE_ADD_BTN(&lfelist, "smb_connect", 2);
 
-  layout_form_query(&lfelist, m, &ai->ai_gfs);
+  r = layout_form_query(&lfelist, m, &ai->ai_gfs);
+
+  printf("r = %d\n", r);
+
+  glw_destroy(m);
 }
 
 

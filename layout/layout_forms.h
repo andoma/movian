@@ -19,11 +19,15 @@
 #ifndef LAYOUT_FORMS_H
 #define LAYOUT_FORMS_H
 
+#include "hid/input.h"
+
 TAILQ_HEAD(layout_form_entry_list, layout_form_entry);
 
 typedef struct layout_form_entry {
   TAILQ_ENTRY(layout_form_entry) lfe_link;
   
+  ic_t *lfe_ic;
+
   const char *lfe_id;
 
   glw_t *lfe_widget;
@@ -31,6 +35,8 @@ typedef struct layout_form_entry {
   int lfe_type;
 #define LFE_TYPE_STRING 1
 #define LFE_TYPE_BUTTON 2
+
+  int lfe_value;
 
   void *lfe_buf;
   size_t lfe_buf_size;   /* Total size of buffer (allocated memory) */
@@ -49,6 +55,15 @@ int layout_form_query(struct layout_form_entry_list *lfelist,
   lfe->lfe_type = LFE_TYPE_STRING;                                      \
   lfe->lfe_buf = str;							\
   lfe->lfe_buf_size = bufsize;						\
+  TAILQ_INSERT_TAIL(listp, lfe, lfe_link);				\
+  lfe->lfe_id = id;							\
+} while(0)
+
+#define LFE_ADD_BTN(listp, id, val) do {				\
+  layout_form_entry_t *lfe = alloca(sizeof(layout_form_entry_t));	\
+  memset(lfe, 0, sizeof(layout_form_entry_t));				\
+  lfe->lfe_type = LFE_TYPE_BUTTON;					\
+  lfe->lfe_value = val;							\
   TAILQ_INSERT_TAIL(listp, lfe, lfe_link);				\
   lfe->lfe_id = id;							\
 } while(0)
