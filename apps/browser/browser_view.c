@@ -68,7 +68,6 @@ browser_view_cont_callback(glw_t *w, void *opaque, glw_signal_t sig, ...)
 
     bn = glw_get_opaque(c, browser_view_node_callback);
     if(bn != NULL && parent->bn_cont_xfader != NULL) {
-      printf("%s is selected\n", bn->bn_url);
       browser_view_update_wset_from_node(parent->bn_cont_xfader, bn);
     }
   }

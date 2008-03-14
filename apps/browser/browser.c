@@ -46,8 +46,6 @@ check_node_free(browser_node_t *bn)
   if(bn->bn_refcnt != 0 || TAILQ_FIRST(&bn->bn_childs) != NULL)
     return;
 
-  printf("freeing %s\n", bn->bn_url);
-
   filetag_freelist(&bn->bn_ftags);
 
   TAILQ_REMOVE(&p->bn_childs, bn, bn_parent_link);
@@ -83,8 +81,6 @@ browser_node_deref(browser_node_t *bn)
   browser_root_t *br = bn->bn_root;
 
   pthread_mutex_lock(&br->br_hierarchy_mutex);
-  printf("deref %s, cnt before = %d\n", bn->bn_url, bn->bn_refcnt);
-
   assert(bn->bn_refcnt > 0);
   bn->bn_refcnt--;
 

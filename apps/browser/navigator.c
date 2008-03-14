@@ -187,7 +187,6 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
 
       case INPUT_KEY_ENTER:
 	bn = browser_view_get_current_selected_node(ai->ai_widget);
-	printf("ENTER: bn = %p\n", bn);
 	if(bn == NULL)
 	  break;
 
