@@ -38,6 +38,9 @@ static int layout_form_callback(glw_t *w, void *opaque,
 				glw_signal_t signal, ...);
 
 
+static int layout_form_entry_string(glw_t *w, void *opaque,
+				    glw_signal_t signal, ...);
+
 /**
  * Find a target we can move to
  *
@@ -154,6 +157,7 @@ layout_form_query(struct layout_form_entry_list *lfelist, glw_t *m,
   glw_t *ff = NULL;  /* first widget to focus */
   layout_form_entry_t *lfe;
   layout_form_t lf;
+  int len;
 
   memset(&lf, 0, sizeof(lf));
   lf.lf_gfs = gfs;
@@ -169,8 +173,20 @@ layout_form_query(struct layout_form_entry_list *lfelist, glw_t *m,
     glw_set(w,
 	    GLW_ATTRIB_SIGNAL_HANDLER, layout_form_callback, &lf, 400,
 	    NULL);
-  }
 
+    switch(lfe->lfe_type) {
+
+    case LFE_TYPE_STRING:
+      len = strlen((char *)lfe->lfe_buf);
+      lfe->lfe_buf_ptr = len;
+      glw_set(w,
+	      GLW_ATTRIB_SIGNAL_HANDLER,  layout_form_entry_string, lfe, 401,
+	      GLW_ATTRIB_CAPTION, (char *)lfe->lfe_buf,
+	      GLW_ATTRIB_CURSOR_POSITION, len,
+	      NULL);
+      break;
+    }
+  }
 
   if(ff != NULL)
     glw_focus_set(gfs, ff);
@@ -229,4 +245,138 @@ layout_form_add_tab(glw_t *m, const char *listname, const char *listmodel,
 	     GLW_ATTRIB_SIGNAL_HANDLER, layout_form_tab_callback, t, 400,
 	     GLW_ATTRIB_PARENT, w,
 	     NULL);
+}
+
+
+/**
+ *
+ */
+static int
+get_input_char(inputevent_t *ie)
+{
+  if(ie->type != INPUT_KEY)
+    return -1;
+
+  switch(ie->u.key) {
+  case INPUT_KEY_BACK:
+  case 'a' ... 'z':
+  case 'A' ... 'Z':
+  case '0' ... '9':
+    return ie->u.key;
+  default:
+    return -1;
+  }
+}
+
+/**
+ * Insert char in buf
+ */
+static int
+insert_char(layout_form_entry_t *lfe, int ch)
+{
+  int dlen = lfe->lfe_buf_len + 1; /* string length including trailing NUL */
+  int i;
+  char *buf = lfe->lfe_buf;
+
+  if(dlen == lfe->lfe_buf_size)
+    return -1; /* Max length */
+  
+  dlen++;
+
+  for(i = dlen; i != lfe->lfe_buf_ptr; i--)
+    buf[i] = buf[i - 1];
+  
+  buf[i] = ch;
+  lfe->lfe_buf_len++;
+  lfe->lfe_buf_ptr++;
+  return 0;
+}
+
+
+
+/**
+ * Delete char from buf
+ */
+static int
+del_char(layout_form_entry_t *lfe)
+{
+  int dlen = lfe->lfe_buf_len + 1; /* string length including trailing NUL */
+  int i;
+  char *buf = lfe->lfe_buf;
+
+  if(lfe->lfe_buf_ptr == 0)
+    return -1;
+
+  dlen--;
+
+  lfe->lfe_buf_len--;
+  lfe->lfe_buf_ptr--;
+
+  for(i = lfe->lfe_buf_ptr; i != dlen; i++)
+    buf[i] = buf[i + 1];
+
+  return 0;
+}
+
+
+
+/**
+ * Callback for controlling a string form entry
+ */
+static int
+layout_form_entry_string(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  layout_form_entry_t *lfe = opaque;
+  inputevent_t *ie;
+  int r;
+
+  va_list ap;
+  va_start(ap, signal);
+
+  switch(signal) {
+  case GLW_SIGNAL_INPUT_EVENT:
+    ie = va_arg(ap, void *);
+
+    r = get_input_char(ie);
+ 
+    if(r == INPUT_KEY_BACK) {
+      r = del_char(lfe);
+    } else if(r != -1) {
+      insert_char(lfe, r);
+    }
+
+    glw_set(w,
+	    GLW_ATTRIB_CAPTION, lfe->lfe_buf,
+	    GLW_ATTRIB_CURSOR_POSITION, lfe->lfe_buf_ptr,
+	    NULL);
+    break;
+
+  case GLW_SIGNAL_LEFT:
+    lfe->lfe_buf_ptr--;
+    if(lfe->lfe_buf_ptr < 0)
+      lfe->lfe_buf_ptr = 0;
+
+    glw_set(w,
+	    GLW_ATTRIB_CURSOR_POSITION, lfe->lfe_buf_ptr,
+	    NULL);
+    break;
+
+  case GLW_SIGNAL_RIGHT:
+    lfe->lfe_buf_ptr++;
+    if(lfe->lfe_buf_ptr > lfe->lfe_buf_len)
+      lfe->lfe_buf_ptr = lfe->lfe_buf_len;
+
+    glw_set(w,
+	    GLW_ATTRIB_CURSOR_POSITION, lfe->lfe_buf_ptr,
+	    NULL);
+    break;
+
+
+  default:
+    break;
+  }
+
+  va_end(ap);
+
+  return 0;
 }

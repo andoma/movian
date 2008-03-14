@@ -28,14 +28,34 @@ typedef struct layout_form_entry {
 
   glw_t *lfe_widget;
 
+  int lfe_type;
+#define LFE_TYPE_STRING 1
+#define LFE_TYPE_BUTTON 2
+
+  void *lfe_buf;
+  size_t lfe_buf_size;   /* Total size of buffer (allocated memory) */
+  int lfe_buf_ptr;       /* Current position for insert (cursor)    */
+  int lfe_buf_len;       /* Size of current data (string length)    */
+
 } layout_form_entry_t;
 
 
 int layout_form_query(struct layout_form_entry_list *lfelist,
 		      glw_t *m, glw_focus_stack_t *gfs);
 
+#define LFE_ADD_STR(listp, id, str, bufsize) do {			\
+  layout_form_entry_t *lfe = alloca(sizeof(layout_form_entry_t));	\
+  memset(lfe, 0, sizeof(layout_form_entry_t));				\
+  lfe->lfe_type = LFE_TYPE_STRING;                                      \
+  lfe->lfe_buf = str;							\
+  lfe->lfe_buf_size = bufsize;						\
+  TAILQ_INSERT_TAIL(listp, lfe, lfe_link);				\
+  lfe->lfe_id = id;							\
+} while(0)
+
 #define LFE_ADD(listp, id) do {						\
   layout_form_entry_t *lfe = alloca(sizeof(layout_form_entry_t));	\
+  memset(lfe, 0, sizeof(layout_form_entry_t));				\
   TAILQ_INSERT_TAIL(listp, lfe, lfe_link);				\
   lfe->lfe_id = id;							\
 } while(0)

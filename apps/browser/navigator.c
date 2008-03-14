@@ -51,6 +51,11 @@ nav_settings(navigator_t *nav, appi_t *ai)
 {
   struct layout_form_entry_list lfelist;
   glw_t *m;
+
+  char username[60];
+
+  strcpy(username, "");
+
   TAILQ_INIT(&lfelist);
 
   m = glw_create(GLW_MODEL,
@@ -76,7 +81,7 @@ nav_settings(navigator_t *nav, appi_t *ai)
   LFE_ADD(&lfelist, "smb_title");
   LFE_ADD(&lfelist, "smb_hostname");
   LFE_ADD(&lfelist, "smb_path");
-  LFE_ADD(&lfelist, "smb_username");
+  LFE_ADD_STR(&lfelist, "smb_username", username, sizeof(username));
   LFE_ADD(&lfelist, "smb_password");
   LFE_ADD(&lfelist, "smb_connect");
 
