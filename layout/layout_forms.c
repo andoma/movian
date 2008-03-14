@@ -220,9 +220,10 @@ layout_form_initialize(struct layout_form_entry_list *lfelist, glw_t *m,
   TAILQ_FOREACH(lfe, lfelist, lfe_link) {
     w = lfe->lfe_widget = glw_find_by_id(m, lfe->lfe_id, 1);
     lfe->lfe_ic = ic;
-    if(w == NULL)
+    if(w == NULL) {
+      printf("WARNING: Widget %s not found\n", lfe->lfe_id);
       continue;
-
+    }
     if(ff == NULL)
       ff = w;
 
