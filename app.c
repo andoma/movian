@@ -24,36 +24,6 @@
 #include "menu.h"
 #include "apps/launcher/launcher.h"
 
-
-pthread_mutex_t appi_list_mutex = PTHREAD_MUTEX_INITIALIZER;
-struct appi_list appis;
-
-/**
- * Spawn a new application instance
- */
-appi_t *
-appi_spawn(const char *name, const char *icon)
-{
-  appi_t *ai;
-  abort();
-
-  ai = calloc(1, sizeof(appi_t));
-
-
-  ai->ai_name = strdup(name);
-  ai->ai_icon = strdup(icon);
-
-  //  menu_init_app(ai);
-
-  input_init(&ai->ai_ic);
-  mp_init(&ai->ai_mp, ai->ai_name, ai);
-
-  layout_appi_add(ai);
-
-  return ai;
-}
-
-
 /**
  * Create a new application instance
  */
@@ -83,17 +53,6 @@ appi_destroy(appi_t *ai)
   free(ai);
 }
 
-
-/**
- *
- */
-void
-appi_link(appi_t *ai)
-{
-  pthread_mutex_lock(&appi_list_mutex);
-  LIST_INSERT_HEAD(&appis, ai, ai_link);
-  pthread_mutex_unlock(&appi_list_mutex);
-}
 
 /**
  * Init a specific app

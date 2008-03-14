@@ -38,16 +38,10 @@ typedef struct app {
 #define appi_menu_top(ai) ((ai)->ai_menu)
 
 
-LIST_HEAD(appi_list, appi);
-extern struct appi_list appis;
-extern pthread_mutex_t appi_list_mutex;
-
 /**
  * Application instance
  */
 typedef struct appi {
-  LIST_ENTRY(appi) ai_link;
-
   glw_t *ai_widget;
 
   glw_focus_stack_t ai_gfs;
@@ -63,38 +57,19 @@ typedef struct appi {
     AI_FS_BLANK,
   } ai_req_fullscreen;
 
-  int ai_got_fullscreen;
-  
   glw_t *ai_menu;               /* Top level menu */
 
-  pthread_t ai_tid;
-
-  int ai_no_input_events;      /* This instance does not react
-				  to input events at all */
-
   const char *ai_name;
-
-  const char *ai_icon;
-
-  /* These are stupid */
-
-  struct play_list *ai_play_list;
 
 } appi_t;
 
 
 #define appi_focused(ai) ((ai)->ai_gfs.gfs_active)
 
-int appi_widget_post_key(glw_t *w, void *opaque, glw_signal_t signal, ...);
-
-appi_t *appi_spawn(const char *name, const char *icon);
-
 void apps_load(void);
 
 appi_t *appi_create(const char *name);
 
 void appi_destroy(appi_t *ai);
-
-void appi_link(appi_t *ai);
 
 #endif /* APP_H */
