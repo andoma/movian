@@ -39,7 +39,7 @@
 #include "browser.h"
 #include "browser_view.h"
 #include "navigator.h"
-#include "play_file.h"
+#include "play_video.h"
 
 
 #define NAVIGATOR_FILESYSTEM 1
@@ -91,7 +91,6 @@ browser_enter(appi_t *ai, browser_node_t *bn)
 {
   int64_t type;
   int r;
-  glw_t *w = NULL;
 
   pthread_mutex_lock(&bn->bn_ftags_mutex);
   r = filetag_get_int(&bn->bn_ftags, FTAG_FILETYPE, &type);
@@ -102,19 +101,13 @@ browser_enter(appi_t *ai, browser_node_t *bn)
 
   switch(type) {
   case FILETYPE_AUDIO:
-    play_file(bn->bn_url, ai, &ai->ai_ic, NULL);
+    //    play_file(bn->bn_url, ai, &ai->ai_ic, NULL);
     break;
 
   case FILETYPE_VIDEO:
-    w = glw_create(GLW_CONTAINER,
-		   GLW_ATTRIB_PARENT, ai->ai_widget,
-		   NULL);
-    play_file(bn->bn_url, ai, &ai->ai_ic, w);
+    play_video(bn->bn_url, ai, &ai->ai_ic, ai->ai_widget);
     break;
   }
-
-  if(w)
-    glw_destroy(w);
 }
 
 

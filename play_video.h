@@ -16,11 +16,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef PLAY_FILE_H
-#define PLAY_FILE_H
+#ifndef PLAY_VIDEO_H
+#define PLAY_VIDEO_H
 
 #include "app.h"
 
-int play_file(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent);
+int play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent);
 
-#endif /* PLAY_FILE_H */
+#endif /* PLAY_VIDEO_H */

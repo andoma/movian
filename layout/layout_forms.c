@@ -31,7 +31,6 @@
 static int layout_form_callback(glw_t *w, void *opaque,
 				glw_signal_t signal, ...);
 
-
 static int layout_form_entry_string(glw_t *w, void *opaque,
 				    glw_signal_t signal, ...);
 
