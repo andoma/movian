@@ -119,6 +119,35 @@ browser_enter(appi_t *ai, browser_node_t *bn)
 
 
 /**
+ * Store information about this navigator instance on disk
+ */
+static void
+nav_store_instance(appi_t *ai, navconfig_t *cfg, int type)
+{
+  FILE *fp = appi_setings_create(ai);
+  const char *typetxt;
+
+  if(fp == NULL)
+    return;
+  
+  switch(type) {
+  case NAVIGATOR_FILESYSTEM:
+    typetxt = "fs";
+    break;
+  default:
+    abort();
+  }
+
+  fprintf(fp, "type = %s\n", typetxt);
+  fprintf(fp, "title = %s\n", cfg->nc_title);
+  fprintf(fp, "rootpath = %s\n", cfg->nc_rootpath);
+  fprintf(fp, "icon = %s\n", cfg->nc_icon);
+  fclose(fp);
+}
+
+
+
+/**
  *  Return 0 if user wants to exit, otherwise -1
  */
 static int
@@ -199,10 +228,14 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
   browser_view_expand_node(bn, ai->ai_widget, &ai->ai_gfs);
   browser_scandir(bn);
 
+  nav_store_instance(ai, cfg, navtype);
+
   while(run) {
 
     input_getevent(&ai->ai_ic, 1, &ie, NULL);
     
+    printf("Got event, type = %d!\n", ie.type);
+
     switch(ie.type) {
     default:
       break;
@@ -317,8 +350,9 @@ load_nav_icons_in_tab(glw_t *tab, const char *name)
   }
 }
 
-
-
+/**
+ *  Setup a navigator and ask for user configuration
+ */
 static int
 nav_setup(navigator_t *nav, appi_t *ai)
 {
@@ -387,8 +421,40 @@ nav_setup(navigator_t *nav, appi_t *ai)
   return 0;
 }
 
+/**
+ *  Setup a navigator based on stored configuration
+ */
+static int
+nav_autolaunch(navigator_t *nav, appi_t *ai)
+{
+  navconfig_t cfg;
+  const char *s;
+  struct config_head *l = ai->ai_settings;
+  int type;
 
+  if((s = config_get_str_sub(l, "type", NULL)) == NULL)
+    return -1;
+  
+  if(!strcmp(s, "fs")) {
+    type = NAVIGATOR_FILESYSTEM;
+  } else {
+    return -1;
+  }
+  
+  if((s = config_get_str_sub(l, "title", NULL)) == NULL)
+    return -1;
+  av_strlcpy(cfg.nc_title, s, sizeof(cfg.nc_title));
 
+  if((s = config_get_str_sub(l, "rootpath", NULL)) == NULL)
+    return -1;
+  av_strlcpy(cfg.nc_rootpath, s, sizeof(cfg.nc_rootpath));
+
+  if((s = config_get_str_sub(l, "icon", NULL)) == NULL)
+    return -1;
+  av_strlcpy(cfg.nc_icon, s, sizeof(cfg.nc_icon));
+  
+  return nav_main(nav, ai, type, &cfg);
+}
 
 /**
  * Launch a navigator
@@ -400,8 +466,7 @@ static void *
 nav_launch(void *aux)
 {
   navigator_t *nav = alloca(sizeof(navigator_t));
-  appi_t *ai = appi_create("navigator");
-  FILE *settings = aux;
+  appi_t *ai = aux;
 
   memset(nav, 0, sizeof(navigator_t));
   nav->nav_ai = ai;
@@ -420,11 +485,12 @@ nav_launch(void *aux)
   
   layout_world_appi_show(ai);
 
-  if(settings == NULL) {
+  if(ai->ai_settings == NULL) {
     /* From launcher, ask user for settings */
     nav_setup(nav, ai);
   } else {
-    abort();
+    /* Autolaunched */
+    nav_autolaunch(nav, ai);
   }
 
   glw_destroy(nav->nav_miniature);
@@ -443,7 +509,7 @@ nav_launch(void *aux)
  * Start a new navigator thread
  */
 static void
-nav_spawn(FILE *settings)
+nav_spawn(appi_t *ai)
 {
   pthread_t ptid;
   pthread_attr_t attr;
@@ -451,7 +517,7 @@ nav_spawn(FILE *settings)
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
-  pthread_create(&ptid, &attr, nav_launch, settings);
+  pthread_create(&ptid, &attr, nav_launch, ai);
 }
 
 

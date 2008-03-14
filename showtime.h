@@ -23,6 +23,7 @@
 #include <pthread.h>
 #include <sys/time.h>
 #include <libhts/htscfg.h>
+#include <libavutil/avstring.h>
 
 extern pthread_mutex_t ffmutex;
 
@@ -77,5 +78,6 @@ void showtime_exit(int suspend);
 
 extern int has_analogue_pad;
 extern int mp_show_extra_info;
+extern const char *settingsdir;
 
 #endif /* SHOWTIME_H */

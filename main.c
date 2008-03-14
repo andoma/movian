@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 
 #include <libavformat/avformat.h>
 
@@ -43,6 +44,8 @@
 #include "fileaccess/fa_imageloader.h"
 
 pthread_mutex_t ffmutex = PTHREAD_MUTEX_INITIALIZER;
+
+const char *settingsdir;
 
 int frame_duration;
 
@@ -73,6 +76,9 @@ main(int argc, char **argv)
   struct timeval tv;
   char *cfgfile = NULL;
   struct rlimit rlim;
+  char buf[256];
+  const char *homedir;
+  struct stat st;
 
   setenv("__GL_SYNC_TO_VBLANK", "1", 1); // make nvidia sync to vblank
 
@@ -97,6 +103,16 @@ main(int argc, char **argv)
     case 'c':
       cfgfile = optarg;
       break;
+    }
+  }
+
+  homedir = getenv("HOME");
+  if(homedir != NULL) {
+    snprintf(buf, sizeof(buf), "%s/.showtime", homedir);
+
+    if(stat(buf, &st) == 0 || mkdir(buf, 0700) == 0) {
+      settingsdir = strdup(buf);
+      printf("Settings stored in \"%s\"\n", buf);
     }
   }
 

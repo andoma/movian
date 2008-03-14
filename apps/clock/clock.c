@@ -110,7 +110,7 @@ buildclock(void)
 static void *
 clock_start(void *aux)
 {
-  appi_t *ai = appi_create("clock");
+  appi_t *ai = aux;
   glw_t *mini;
   ai->ai_widget = buildclock();
 
@@ -131,11 +131,11 @@ clock_start(void *aux)
 
 
 static void
-clock_spawn(FILE *settings)
+clock_spawn(appi_t *ai)
 {
   pthread_t ptid;
 
-  pthread_create(&ptid, NULL, clock_start, settings);
+  pthread_create(&ptid, NULL, clock_start, ai);
 }
 
 

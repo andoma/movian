@@ -26,12 +26,14 @@
  * Application 
  */
 typedef struct app {
+  LIST_ENTRY(app) app_link;
+
   const char *app_name;
   const char *app_model;
 
   glw_t *app_icon_widget;
 
-  void (*app_spawn)(FILE *settings);
+  void (*app_spawn)(struct appi *ai);
 
 } app_t;
 
@@ -44,12 +46,17 @@ typedef struct app {
 typedef struct appi {
   glw_t *ai_widget;
 
+  app_t *ai_app;
+
   glw_focus_stack_t ai_gfs;
 
   ic_t ai_ic;
   media_pipe_t ai_mp;
   
   AVFormatContext *ai_fctx;
+
+  int ai_instance_index;
+  struct config_head *ai_settings;
 
   enum {
     AI_FS_NONE,
@@ -68,8 +75,12 @@ typedef struct appi {
 
 void apps_load(void);
 
-appi_t *appi_create(const char *name);
+void app_spawn(app_t *app, struct config_head *settings, int index);
 
 void appi_destroy(appi_t *ai);
+
+FILE *appi_setings_create(appi_t *ai);
+
+appi_t *appi_create(const char *name);
 
 #endif /* APP_H */
