@@ -28,12 +28,6 @@
 #include "layout.h"
 #include "layout_forms.h"
 
-
-typedef struct layout_form {
-  glw_focus_stack_t *lf_gfs;
-
-} layout_form_t;
-
 static int layout_form_callback(glw_t *w, void *opaque,
 				glw_signal_t signal, ...);
 
@@ -119,7 +113,7 @@ static int
 layout_form_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
   glw_t *n = NULL;
-  layout_form_t *lf = opaque;
+  glw_focus_stack_t *gfs = opaque;
 
   va_list ap;
   va_start(ap, signal);
@@ -144,8 +138,8 @@ layout_form_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
   va_end(ap);
 
   if(n != NULL) {
-    glw_focus_lose(lf->lf_gfs, w);
-    glw_focus_set(lf->lf_gfs, n);
+    glw_focus_lose(gfs, w);
+    glw_focus_set(gfs, n);
     return 1;
   }
   return 0;
@@ -163,14 +157,11 @@ layout_form_query(struct layout_form_entry_list *lfelist, glw_t *m,
   glw_t *w;
   glw_t *ff = NULL;  /* first widget to focus */
   layout_form_entry_t *lfe;
-  layout_form_t lf;
   int len;
   ic_t ic;
   inputevent_t ie;
 
   input_init(&ic);
-  memset(&lf, 0, sizeof(lf));
-  lf.lf_gfs = gfs;
 
   TAILQ_FOREACH(lfe, lfelist, lfe_link) {
     w = lfe->lfe_widget = glw_find_by_id(m, lfe->lfe_id, 1);
@@ -182,7 +173,7 @@ layout_form_query(struct layout_form_entry_list *lfelist, glw_t *m,
       ff = w;
 
     glw_set(w,
-	    GLW_ATTRIB_SIGNAL_HANDLER, layout_form_callback, &lf, 400,
+	    GLW_ATTRIB_SIGNAL_HANDLER, layout_form_callback, gfs, 400,
 	    NULL);
 
     switch(lfe->lfe_type) {
