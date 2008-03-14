@@ -19,6 +19,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <unistd.h>
 
 #include "showtime.h"
 #include "app.h"
@@ -90,9 +91,17 @@ appi_create(const char *name)
 void
 appi_destroy(appi_t *ai)
 {
+  char buf[256];
+
   if(ai->ai_settings != NULL) {
     config_free0(ai->ai_settings);
     free(ai->ai_settings);
+  }
+
+  if(ai->ai_instance_index != 0 && settingsdir != NULL) {
+    snprintf(buf, sizeof(buf), "%s/applications/%d", settingsdir, 
+	     ai->ai_instance_index);
+    unlink(buf);
   }
 
   mp_deinit(&ai->ai_mp);
