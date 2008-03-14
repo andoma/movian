@@ -132,11 +132,11 @@ clock_start(void *aux)
 
 
 static void
-clock_spawn(void)
+clock_spawn(FILE *settings)
 {
   pthread_t ptid;
 
-  pthread_create(&ptid, NULL, clock_start, NULL);
+  pthread_create(&ptid, NULL, clock_start, settings);
 }
 
 

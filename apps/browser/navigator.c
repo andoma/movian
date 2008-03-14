@@ -41,57 +41,18 @@
 #include "play_file.h"
 
 
+#define NAVIGATOR_FILESYSTEM 1
+
+typedef struct navconfig {
+  char nc_title[40];
+  char nc_rootpath[256];
+} navconfig_t;
+
+
+
 typedef struct navigator {
   appi_t *nav_ai;
 } navigator_t;
-
-
-static void
-nav_settings(navigator_t *nav, appi_t *ai)
-{
-  struct layout_form_entry_list lfelist;
-  glw_t *m;
-  int r;
-
-  char username[60];
-
-  strcpy(username, "");
-
-  TAILQ_INIT(&lfelist);
-
-  m = glw_create(GLW_MODEL,
-		 GLW_ATTRIB_PARENT, ai->ai_widget,
-		 GLW_ATTRIB_FILENAME, "browser/setup",
-		 NULL);
-
-  LFE_ADD(&lfelist, "storage_type_list");
-
-  layout_form_add_tab(m,
-		      "storage_type_list",       "browser/setup-file-icon",
-		      "storage_type_container",  "browser/setup-file-tab");
-
-  LFE_ADD(&lfelist, "fs_title");
-  LFE_ADD(&lfelist, "fs_path");
-  LFE_ADD_BTN(&lfelist, "fs_ok", 1);
-
-
-  layout_form_add_tab(m,
-		      "storage_type_list",      "browser/setup-smb-icon",
-		      "storage_type_container", "browser/setup-smb-tab");
-
-  LFE_ADD(&lfelist, "smb_title");
-  LFE_ADD(&lfelist, "smb_hostname");
-  LFE_ADD(&lfelist, "smb_path");
-  LFE_ADD_STR(&lfelist, "smb_username", username, sizeof(username));
-  LFE_ADD(&lfelist, "smb_password");
-  LFE_ADD_BTN(&lfelist, "smb_connect", 2);
-
-  r = layout_form_query(&lfelist, m, &ai->ai_gfs);
-
-  printf("r = %d\n", r);
-
-  glw_destroy(m);
-}
 
 
 
@@ -158,41 +119,31 @@ browser_enter(appi_t *ai, browser_node_t *bn)
 /**
  *
  */
-static void *
-nav_start(void *aux)
+static int
+nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
 {
   browser_root_t *br;
   browser_node_t *bn;
-  navigator_t *nav = alloca(sizeof(navigator_t));
-  appi_t *ai = appi_create("navigator");
   inputevent_t ie;
+  char rooturl[400];
 
-  memset(nav, 0, sizeof(navigator_t));
-  nav->nav_ai = ai;
+  switch(navtype) {
+  case NAVIGATOR_FILESYSTEM:
+    if(cfg->nc_rootpath[0] == 0) {
+      cfg->nc_rootpath[0] = '/';
+      cfg->nc_rootpath[1] = 0;
+    }
 
-  ai->ai_widget =
-    glw_create(GLW_CUBESTACK,
-	       GLW_ATTRIB_SIGNAL_HANDLER, navigator_root_widget, nav, 1000,
-	       NULL);
-
-  ai->ai_widget_miniature = 
-    glw_create(GLW_MODEL,
-	       GLW_ATTRIB_FILENAME, "browser/switcher-icon",
-	       NULL);
-
-  layout_switcher_appi_add(ai);
-  layout_world_appi_show(ai);
+    snprintf(rooturl, sizeof(rooturl), "file://%s", cfg->nc_rootpath);
+    break;
+  }
 
 
-  nav_settings(nav, ai);
-
-
-  br = browser_root_create("file:///storage/media/");
+  br = browser_root_create(rooturl);
   bn = br->br_root;
 
   browser_view_expand_node(bn, ai->ai_widget, &ai->ai_gfs);
   browser_scandir(bn);
-
 
   while(1) {
 
@@ -242,16 +193,129 @@ nav_start(void *aux)
     }
   }
 
+  return 0;
+}
+
+
+
+static int
+nav_setup(navigator_t *nav, appi_t *ai)
+{
+  struct layout_form_entry_list lfelist;
+  glw_t *m;
+  int r;
+
+  navconfig_t fs;
+
+  TAILQ_INIT(&lfelist);
+
+  m = glw_create(GLW_MODEL,
+		 GLW_ATTRIB_PARENT, ai->ai_widget,
+		 GLW_ATTRIB_FILENAME, "browser/setup",
+		 NULL);
+
+  LFE_ADD(&lfelist, "storage_type_list");
+
+
+  /**
+   * Local filesystem
+   */
+  memset(&fs, 0, sizeof(navconfig_t));
+  layout_form_add_tab(m,
+		      "storage_type_list",       "browser/setup-file-icon",
+		      "storage_type_container",  "browser/setup-file-tab");
+
+  strcpy(fs.nc_title, "Filesystem");
+  strcpy(fs.nc_rootpath, "/");
+
+  LFE_ADD_STR(&lfelist, "fs_title", fs.nc_title, sizeof(fs.nc_title));
+  LFE_ADD_STR(&lfelist, "fs_path", fs.nc_rootpath, sizeof(fs.nc_rootpath));
+  LFE_ADD_BTN(&lfelist, "fs_ok", NAVIGATOR_FILESYSTEM);
+
+
+  /**
+   * CIFS share 
+   */ 
+#if 0
+  layout_form_add_tab(m,
+		      "storage_type_list",      "browser/setup-smb-icon",
+		      "storage_type_container", "browser/setup-smb-tab");
+
+  LFE_ADD(&lfelist, "smb_title");
+  LFE_ADD(&lfelist, "smb_hostname");
+  LFE_ADD(&lfelist, "smb_path");
+  LFE_ADD_STR(&lfelist, "smb_username", username, sizeof(username));
+  LFE_ADD(&lfelist, "smb_password");
+  LFE_ADD_BTN(&lfelist, "smb_connect", 2);
+#endif
+
+  r = layout_form_query(&lfelist, m, &ai->ai_gfs);
+  glw_destroy(m);
+  
+  
+  switch(r) {
+  case NAVIGATOR_FILESYSTEM:
+    r = nav_main(nav, ai, r, &fs);
+    break;
+  }
+
+  return 0;
+}
+
+
+
+
+/**
+ * Launch a navigator
+ *
+ * If aux (settings) is non-NULL, we read settings from it, otherwise
+ * ask user for settings
+ */
+static void *
+nav_launch(void *aux)
+{
+  navigator_t *nav = alloca(sizeof(navigator_t));
+  appi_t *ai = appi_create("navigator");
+  FILE *settings = aux;
+
+  memset(nav, 0, sizeof(navigator_t));
+  nav->nav_ai = ai;
+
+  ai->ai_widget =
+    glw_create(GLW_CUBESTACK,
+	       GLW_ATTRIB_SIGNAL_HANDLER, navigator_root_widget, nav, 1000,
+	       NULL);
+
+  ai->ai_widget_miniature = 
+    glw_create(GLW_MODEL,
+	       GLW_ATTRIB_FILENAME, "browser/switcher-icon",
+	       NULL);
+
+  layout_switcher_appi_add(ai);
+  layout_world_appi_show(ai);
+
+  if(settings == NULL) {
+    /* From launcher, ask user for settings */
+    nav_setup(nav, ai);
+  } else {
+    abort();
+  }
   return NULL;
 }
 
 
 
+
+
+
+/**
+ * Start a new navigator thread
+ */
 static void
-nav_spawn(void)
+nav_spawn(FILE *settings)
 {
   pthread_t ptid;
-  pthread_create(&ptid, NULL, nav_start, NULL);
+  pthread_create(&ptid, NULL, nav_launch, settings);
 }
 
 

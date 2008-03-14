@@ -31,7 +31,7 @@ typedef struct app {
 
   glw_t *app_icon_widget;
 
-  void (*app_spawn)(void);
+  void (*app_spawn)(FILE *settings);
 
 } app_t;
 

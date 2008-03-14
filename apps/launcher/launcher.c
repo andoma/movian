@@ -95,7 +95,7 @@ launcher_spawn_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
   app_t *a = opaque;
   switch(signal) {
   case GLW_SIGNAL_ENTER:
-    a->app_spawn();
+    a->app_spawn(NULL);
     return 1;
   default:
     break;
