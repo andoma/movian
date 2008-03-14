@@ -10,6 +10,7 @@ y-container {
  x-container {
   space 0.1
   bitmap {
+   color 0.3 0.3 0.3
    filename icon://plate_compact.png
    texture-borders 0.5 0.5 0.5 0.5
    vertex-borders  0.1 0.1 0.1 0.1
