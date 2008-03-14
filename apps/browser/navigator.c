@@ -230,12 +230,12 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
 
   nav_store_instance(ai, cfg, navtype);
 
+  input_flush_queue(&ai->ai_ic);
+
   while(run) {
 
     input_getevent(&ai->ai_ic, 1, &ie, NULL);
     
-    printf("Got event, type = %d!\n", ie.type);
-
     switch(ie.type) {
     default:
       break;
