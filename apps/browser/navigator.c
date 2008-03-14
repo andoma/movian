@@ -170,7 +170,7 @@ nav_verify_exit(navigator_t *nav, appi_t *ai)
 					  for the cancel button */
   
   r = layout_form_query(&lfelist, m, &ai->ai_gfs);
-  glw_destroy(m);
+  glw_detach(m);
   return r;
 }
 
@@ -409,7 +409,7 @@ nav_setup(navigator_t *nav, appi_t *ai)
 #endif
 
   r = layout_form_query(&lfelist, m, &ai->ai_gfs);
-  glw_destroy(m);
+  glw_detach(m);
   
   
   switch(r) {
