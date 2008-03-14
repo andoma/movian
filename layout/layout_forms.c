@@ -151,21 +151,17 @@ layout_form_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
  *
  */
 int
-layout_form_query(struct layout_form_entry_list *lfelist, glw_t *m,
-		  glw_focus_stack_t *gfs)
+layout_form_initialize(struct layout_form_entry_list *lfelist, glw_t *m,
+		       glw_focus_stack_t *gfs, ic_t *ic)
 {
   glw_t *w;
   glw_t *ff = NULL;  /* first widget to focus */
   layout_form_entry_t *lfe;
   int len;
-  ic_t ic;
-  inputevent_t ie;
-
-  input_init(&ic);
 
   TAILQ_FOREACH(lfe, lfelist, lfe_link) {
     w = lfe->lfe_widget = glw_find_by_id(m, lfe->lfe_id, 1);
-    lfe->lfe_ic = &ic;
+    lfe->lfe_ic = ic;
     if(w == NULL)
       continue;
 
@@ -207,6 +203,22 @@ layout_form_query(struct layout_form_entry_list *lfelist, glw_t *m,
     glw_focus_set(gfs, ff);
 
   glw_focus_stack_activate(gfs);
+  return 0;
+}
+
+/**
+ *
+ */
+int
+layout_form_query(struct layout_form_entry_list *lfelist, glw_t *m,
+		  glw_focus_stack_t *gfs)
+{
+  ic_t ic;
+  inputevent_t ie;
+
+  input_init(&ic);
+
+  layout_form_initialize(lfelist, m, gfs, &ic);
 
   input_getevent(&ic, 1, &ie, NULL);
 

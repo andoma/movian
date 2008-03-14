@@ -50,6 +50,9 @@ typedef struct layout_form_entry {
 int layout_form_query(struct layout_form_entry_list *lfelist,
 		      glw_t *m, glw_focus_stack_t *gfs);
 
+int layout_form_initialize(struct layout_form_entry_list *lfelist,
+			   glw_t *m, glw_focus_stack_t *gfs, ic_t *ic);
+
 #define LFE_ADD_STR(listp, id, str, bufsize) do {			\
   layout_form_entry_t *lfe = alloca(sizeof(layout_form_entry_t));	\
   memset(lfe, 0, sizeof(layout_form_entry_t));				\
