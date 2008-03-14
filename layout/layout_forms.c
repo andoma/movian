@@ -187,6 +187,7 @@ layout_form_query(struct layout_form_entry_list *lfelist, glw_t *m,
     case LFE_TYPE_STRING:
       len = strlen((char *)lfe->lfe_buf);
       lfe->lfe_buf_ptr = len;
+      lfe->lfe_buf_len = len;
       glw_set(w,
 	      GLW_ATTRIB_SIGNAL_HANDLER,  layout_form_entry_string, lfe, 401,
 	      GLW_ATTRIB_CAPTION, (char *)lfe->lfe_buf,
