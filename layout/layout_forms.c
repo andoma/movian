@@ -380,7 +380,7 @@ layout_form_entry_string(glw_t *w, void *opaque, glw_signal_t signal, ...)
 	    GLW_ATTRIB_CAPTION, lfe->lfe_buf,
 	    GLW_ATTRIB_CURSOR_POSITION, lfe->lfe_buf_ptr,
 	    NULL);
-    break;
+    return 1;
 
   case GLW_SIGNAL_LEFT:
     lfe->lfe_buf_ptr--;
@@ -390,7 +390,7 @@ layout_form_entry_string(glw_t *w, void *opaque, glw_signal_t signal, ...)
     glw_set(w,
 	    GLW_ATTRIB_CURSOR_POSITION, lfe->lfe_buf_ptr,
 	    NULL);
-    break;
+    return 1;
 
   case GLW_SIGNAL_RIGHT:
     lfe->lfe_buf_ptr++;
@@ -400,7 +400,7 @@ layout_form_entry_string(glw_t *w, void *opaque, glw_signal_t signal, ...)
     glw_set(w,
 	    GLW_ATTRIB_CURSOR_POSITION, lfe->lfe_buf_ptr,
 	    NULL);
-    break;
+    return 1;
 
 
   default:
