@@ -40,7 +40,9 @@ static playlist_player_t plp;
 
 static glw_t *playlists_list;
 
-glw_t *playlist_root;
+static glw_t *playlist_root;
+
+static appi_t *playlist_appi;
 
 /**
  * Global lock for reference counters and playlist/playlistentry relations
@@ -53,6 +55,7 @@ pthread_mutex_t playlistlock = PTHREAD_MUTEX_INITIALIZER;
 #define PL_EVENT_PLE_CHANGED       3
 
 static void playlist_signal(playlist_entry_t *ple, int type);
+static void playlist_entry_free(playlist_entry_t *ple);
 
 
 /**
@@ -91,7 +94,7 @@ playlist_create(appi_t *ai, const char *title)
   struct layout_form_entry_list lfelist;
   playlist_t *pl = calloc(1, sizeof(playlist_t));
 
-  pl->pl_ai = ai;
+  playlist_appi = pl->pl_ai = ai;
   TAILQ_INIT(&pl->pl_entries);
   TAILQ_INIT(&pl->pl_shuffle_entries);
 
@@ -109,6 +112,7 @@ playlist_create(appi_t *ai, const char *title)
 
   w = layout_form_add_tab2(playlist_root, "playlists", e,
 			   "track_list_container", "playlist/tracklist");
+  pl->pl_tab = w;
 
   TAILQ_INIT(&lfelist);
   LFE_ADD_MONITOR_CHILD(&lfelist, "track_list", PL_EVENT_PLE_CHANGED);
@@ -117,6 +121,44 @@ playlist_create(appi_t *ai, const char *title)
   pl->pl_list = glw_find_by_id(w, "track_list", 0);
   return pl;
 }
+
+/**
+ * Destroy a playlist
+ */
+static void
+playlist_destroy(playlist_t *pl)
+{
+  playlist_entry_t *ple;
+
+  printf("Freeing playlist %p\n", pl);
+
+  pthread_mutex_lock(&playlistlock);
+
+  /**
+   * Decouple all playlist entries from the playlist
+   */
+  TAILQ_FOREACH(ple, &pl->pl_entries, ple_link) {
+    ple->ple_pl = NULL;
+    glw_set(ple->ple_widget, 
+	    GLW_ATTRIB_PARENT, NULL,
+	    NULL);
+
+    assert(ple->ple_refcnt > 0);
+    ple->ple_refcnt--;
+    if(ple->ple_refcnt == 0)
+      playlist_entry_free(ple);
+  }
+
+  pthread_mutex_unlock(&playlistlock);
+
+  glw_destroy(pl->pl_widget);
+  glw_destroy(pl->pl_tab);
+
+  free(pl);
+  printf("done\n");
+}
+
+
 
 /**
  * Returns the current playlist
@@ -161,20 +203,16 @@ playlist_enqueue(const char *url, struct filetag_list *ftags, int playit)
   glw_t *w;
   const char *s;
 
-  if(pl == NULL) {
-    if(ftags != NULL)
-      filetag_freelist(ftags);
-    return;
-  }
-
+  if(pl == NULL) 
+    /* someone has deleted all playlists, but we're tougher than that! */
+    pl = playlist_create(playlist_appi, "Default playlist");
+  
   if(ftags == NULL) {
     TAILQ_INIT(&ftags0);
     if(fa_probe(&ftags0, url) == -1)
       return;
     ftags = &ftags0;
   }
-
-  filetag_dumplist(ftags);
 
   if(filetag_get_int(ftags, FTAG_FILETYPE, &i64) < 0) {
     filetag_freelist(ftags);
@@ -266,6 +304,9 @@ static void
 playlist_entry_free(playlist_entry_t *ple)
 {
   playlist_t *pl = ple->ple_pl;
+
+  printf("Free'ed playlist entry %s\n", ple->ple_url);
+
   free(ple->ple_url);
 
   if(pl != NULL) {
@@ -273,7 +314,9 @@ playlist_entry_free(playlist_entry_t *ple)
     TAILQ_REMOVE(&pl->pl_shuffle_entries, ple, ple_shuffle_link);
   }
 
- free(ple);
+  glw_destroy(ple->ple_widget);
+  
+  free(ple);
 }
 
 
@@ -302,21 +345,25 @@ playlist_signal(playlist_entry_t *ple, int type)
 playlist_entry_t *
 playlist_advance(playlist_entry_t *ple, int prev)
 {
-  playlist_entry_t *n;
+  playlist_entry_t *n = NULL;
   int shuffle = 0;
 
   pthread_mutex_lock(&playlistlock);
 
-  if(prev) {
-    if(shuffle)
-      n = TAILQ_PREV(ple, playlist_entry_queue, ple_shuffle_link);
-    else
-      n = TAILQ_PREV(ple, playlist_entry_queue, ple_link);
-  } else {
-    if(shuffle)
-      n = TAILQ_NEXT(ple, ple_shuffle_link);
-    else
-      n = TAILQ_NEXT(ple, ple_link);
+  /* ple_pl will be NULL if the playlist has been erased */
+
+  if(ple->ple_pl != NULL) {
+    if(prev) {
+      if(shuffle)
+	n = TAILQ_PREV(ple, playlist_entry_queue, ple_shuffle_link);
+      else
+	n = TAILQ_PREV(ple, playlist_entry_queue, ple_link);
+    } else {
+      if(shuffle)
+	n = TAILQ_NEXT(ple, ple_shuffle_link);
+      else
+	n = TAILQ_NEXT(ple, ple_link);
+    }
   }
 
   if(n != NULL)
@@ -500,7 +547,10 @@ playlist_thread(void *aux)
 	break;
 
       case PL_EVENT_DELETE_PLAYLIST:
-	//	delete_playlist(ai);
+	pl = playlist_get_current();
+	printf("Delete playlist, current is %p\n", pl);
+	if(pl != NULL)
+	  playlist_destroy(pl);
 	break;
       }
     }
