@@ -31,6 +31,9 @@
 static int layout_form_callback(glw_t *w, void *opaque,
 				glw_signal_t signal, ...);
 
+static int layout_form_entry_free(glw_t *w, void *opaque,
+				  glw_signal_t signal, ...);
+
 static int layout_form_entry_string(glw_t *w, void *opaque,
 				    glw_signal_t signal, ...);
 
@@ -284,7 +287,10 @@ layout_form_initialize(struct layout_form_entry_list *lfelist, glw_t *m,
 	      NULL);
       break;
     default:
-      abort();
+      glw_set(w,
+	      GLW_ATTRIB_SIGNAL_HANDLER,  layout_form_entry_free, lfe, 401,
+	      NULL);
+      break;
     }
   }
 
@@ -626,6 +632,31 @@ layout_form_entry_list(glw_t *w, void *opaque, glw_signal_t signal, ...)
       snprintf(lfe->lfe_buf, lfe->lfe_buf_size, "%s", c->glw_id ?: "");
 
     return 1;
+  default:
+    break;
+  }
+
+  va_end(ap);
+
+  return 0;
+}
+
+
+/**
+ * Dummy entry, just for freeing
+ */
+static int
+layout_form_entry_free(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  layout_form_entry_t *lfe = opaque;
+
+  va_list ap;
+  va_start(ap, signal);
+
+  switch(signal) {
+  case GLW_SIGNAL_DTOR:
+    free(lfe);
+    return 0;
   default:
     break;
   }
