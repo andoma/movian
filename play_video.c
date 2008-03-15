@@ -38,6 +38,7 @@
 #include "gl/video_decoder.h"
 #include "subtitles.h"
 #include "layout/layout_forms.h"
+#include "layout/layout_support.h"
 
 #define OVERLAY_BUTTON_PLAYPAUSE 1
 #define OVERLAY_BUTTON_PREV      2
@@ -48,83 +49,6 @@
 #define OVERLAY_BUTTON_ASETTINGS 7
 #define OVERLAY_BUTTON_SSETTINGS 8
 #define OVERLAY_BUTTON_STOP      9
-
-
-/**
- * Update codec info in text widgets
- */ 
-static void
-pv_set_overlay_codec_info(glw_t *w, const char *id, AVCodecContext *ctx)
-{
-  char tmp1[100];
-
-  if((w = glw_find_by_id(w, id, 0)) == NULL)
-    return;
-
-  if(ctx == NULL) {
-    glw_set(w, GLW_ATTRIB_CAPTION, "", NULL);
-    return;
-  }
-
-  snprintf(tmp1, sizeof(tmp1), "%s", ctx->codec->name);
-  
-  if(ctx->codec_type == CODEC_TYPE_AUDIO) {
-    snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
-	     ", %d Hz, %d chanels", ctx->sample_rate, ctx->channels);
-  }
-
-  if(ctx->width)
-    snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
-	     ", %dx%d",
-	     ctx->width, ctx->height);
-  
-  if(ctx->bit_rate > 2000000)
-    snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
-	     ", %.1f Mb/s", (float)ctx->bit_rate / 1000000);
-  else if(ctx->bit_rate)
-    snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
-	     ", %d kb/s", ctx->bit_rate / 1000);
-  
-  glw_set(w, GLW_ATTRIB_CAPTION, tmp1, NULL);
-}
-
-/**
- * Update current time info in text widget
- */ 
-static void
-pv_set_overlay_time_info(glw_t *w, const char *id, int s)
-{
-  char tmp[100];
-  int m ,h;
-
-  if((w = glw_find_by_id(w, id, 0)) == NULL)
-    return;
-
-  m = s / 60;
-  h = s / 3600;
-  
-  if(h > 0) {
-    snprintf(tmp, sizeof(tmp), "%d:%02d:%02d", h, m % 60, s % 60);
-  } else {
-    snprintf(tmp, sizeof(tmp), "%d:%02d", m % 60, s % 60);
-  }
-
-  glw_set(w, GLW_ATTRIB_CAPTION, tmp, NULL);
-}
-
-/**
- * Update current time info in text widget
- */ 
-static void
-pv_set_overlay_bar(glw_t *w, const char *id, float v)
-{
-  if((w = glw_find_by_id(w, id, 0)) == NULL)
-    return;
-
-  glw_set(w, GLW_ATTRIB_EXTRA, v, NULL);
-}
-
-
 
 
 /**
@@ -233,9 +157,7 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
   /**
    * Set total duration
    */
-  pv_set_overlay_time_info(overlay, "time_total", 
-			   fctx->duration / AV_TIME_BASE);
-
+  layout_update_time(overlay, "time_total", fctx->duration / AV_TIME_BASE);
 
   cwvec = alloca(fctx->nb_streams * sizeof(void *));
   memset(cwvec, 0, sizeof(void *) * fctx->nb_streams);
@@ -267,13 +189,13 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
   mp_set_playstatus(mp, MP_PLAY);
   media_pipe_acquire_audio(mp);
 
-  pv_set_overlay_codec_info(overlay, "audioinfo",
-			    mp->mp_audio.mq_stream >= 0 ?
-			    cwvec[mp->mp_audio.mq_stream]->codec_ctx : NULL);
+  layout_update_codec_info(overlay, "audioinfo",
+			   mp->mp_audio.mq_stream >= 0 ?
+			   cwvec[mp->mp_audio.mq_stream]->codec_ctx : NULL);
 
-  pv_set_overlay_codec_info(overlay, "videoinfo",
-			    mp->mp_video.mq_stream >= 0 ?
-			    cwvec[mp->mp_video.mq_stream]->codec_ctx : NULL);
+  layout_update_codec_info(overlay, "videoinfo",
+			   mp->mp_video.mq_stream >= 0 ?
+			   cwvec[mp->mp_video.mq_stream]->codec_ctx : NULL);
 
   wrap_unlock_all_codecs(fw);
 
@@ -287,10 +209,10 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
       float v;
 
       curtime = mp->mp_time_feedback;
-      pv_set_overlay_time_info(overlay, "time_current", curtime);
+      layout_update_time(overlay, "time_current", curtime);
 
       v = (float)curtime / (float)(fctx->duration / AV_TIME_BASE);
-      pv_set_overlay_bar(overlay, "durationbar", v);
+      layout_update_bar(overlay, "durationbar", v);
 
     }
 
