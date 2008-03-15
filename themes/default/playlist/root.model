@@ -11,6 +11,7 @@ y-container {
    scale-childs
    weight 0.3
    id playlists
+   cursor-size 0.03
    slices 4
   }
 
