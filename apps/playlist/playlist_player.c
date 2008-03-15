@@ -37,31 +37,33 @@
  
 
 
-static int
+static playlist_entry_t *
 playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic)
 {
   AVFormatContext *fctx;
   AVCodecContext *ctx;
   AVPacket pkt;
   formatwrap_t *fw;
-  int i, key;
+  int i;
   media_buf_t *mb;
   media_queue_t *mq;
   int64_t pts4seek = 0;
   int streams;
   int64_t cur_pos_pts = AV_NOPTS_VALUE;
-  int curtime;
+  int curtime, gotevent;
   codecwrap_t *cw;
+  playlist_entry_t *next = NULL;
+  inputevent_t ie;
 
   if(av_open_input_file(&fctx, ple->ple_url, NULL, 0, NULL) != 0) {
     fprintf(stderr, "Unable to open input file\n");
-    return -1;
+    return playlist_advance(ple, 0);
   }
 
   if(av_find_stream_info(fctx) < 0) {
     av_close_input_file(fctx);
     fprintf(stderr, "Unable to find stream info\n");
-    return INPUT_KEY_NEXT;
+    return playlist_advance(ple, 0);
   }
 
   mp->mp_audio.mq_stream = -1;
@@ -109,48 +111,84 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic)
     }
  
     if(mp_is_paused(mp)) {
-      key = input_getkey(ic, 1);
+      gotevent = !input_getevent(ic, 1, &ie, NULL);
       media_pipe_acquire_audio(mp);
     } else {
-      key = input_getkey(ic, 0);
+      gotevent = !input_getevent(ic, 0, &ie, NULL);
     }
 
-    switch(key) {
-
-    case INPUT_KEY_SEEK_FAST_BACKWARD:
-      av_seek_frame(fctx, -1, pts4seek - 60000000, AVSEEK_FLAG_BACKWARD);
-    case INPUT_KEY_SEEK_BACKWARD:
-      av_seek_frame(fctx, -1, pts4seek - 15000000, AVSEEK_FLAG_BACKWARD);
-      goto seekflush;
-    case INPUT_KEY_SEEK_FAST_FORWARD:
-      av_seek_frame(fctx, -1, pts4seek + 60000000, 0);
-      goto seekflush;
-    case INPUT_KEY_SEEK_FORWARD:
-      av_seek_frame(fctx, -1, pts4seek + 15000000, 0);
-      goto seekflush;
-
-    seekflush:
-      mp_flush(mp);
-      mp_auto_display(mp);
-      input_flush_queue(ic);
-      key = 0;
-      break;
-
-    case INPUT_KEY_PLAYPAUSE:
-    case INPUT_KEY_PLAY:
-    case INPUT_KEY_PAUSE:
-      mp_playpause(mp, key);
-      key = 0;
-      break;
+    if(gotevent) switch(ie.type) {
 
     default:
-      key = 0;
-      break;
-    }
-    
-    if(key)
+
+    case PLAYLIST_INPUTEVENT_NEWENTRY:
+      /**
+       * A new entry has been added, we don't care about this while
+       * playing, just unref ptr
+       */
+      playlist_entry_unref(ie.u.ptr);
       break;
 
+
+    case PLAYLIST_INPUTEVENT_PLAYENTRY:
+      /**
+       * User wants us to jump to this entry, do it
+       */
+      next = ie.u.ptr;
+      mp_flush(mp);
+      goto out;
+
+	
+    case INPUT_KEY:
+      switch(ie.u.key) {
+
+      case INPUT_KEY_SEEK_FAST_BACKWARD:
+	av_seek_frame(fctx, -1, pts4seek - 60000000, AVSEEK_FLAG_BACKWARD);
+      case INPUT_KEY_SEEK_BACKWARD:
+	av_seek_frame(fctx, -1, pts4seek - 15000000, AVSEEK_FLAG_BACKWARD);
+	goto seekflush;
+      case INPUT_KEY_SEEK_FAST_FORWARD:
+	av_seek_frame(fctx, -1, pts4seek + 60000000, 0);
+	goto seekflush;
+      case INPUT_KEY_SEEK_FORWARD:
+	av_seek_frame(fctx, -1, pts4seek + 15000000, 0);
+	goto seekflush;
+      case INPUT_KEY_RESTART_TRACK:
+	av_seek_frame(fctx, -1, 0, AVSEEK_FLAG_BACKWARD);
+	goto seekflush;
+
+      seekflush:
+	mp_flush(mp);
+	mp_auto_display(mp);
+	input_flush_queue(ic);
+	break;
+
+      case INPUT_KEY_PLAYPAUSE:
+      case INPUT_KEY_PLAY:
+      case INPUT_KEY_PAUSE:
+	mp_playpause(mp, ie.u.key);
+	break;
+
+      case INPUT_KEY_PREV:
+	next = playlist_advance(ple, 1);
+	mp_flush(mp);
+	goto out;
+      
+      case INPUT_KEY_NEXT:
+	next = playlist_advance(ple, 0);
+	mp_flush(mp);
+	goto out;
+
+      case INPUT_KEY_STOP:
+	next = NULL;
+	mp_flush(mp);
+	goto out;
+
+      default:
+	break;
+      }
+    }
+    
     if(mp_is_paused(mp))
       continue;
 
@@ -159,8 +197,9 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic)
     i = av_read_frame(fctx, &pkt);
 
     if(i < 0) {
+      /* End of stream */
       mp_wait(mp, mp->mp_audio.mq_stream != -1, mp->mp_video.mq_stream != -1);
-      key = 0;
+      next = playlist_advance(ple, 0);
       break;
     }
 
@@ -221,6 +260,7 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic)
 
   }
 
+ out:
   wrap_lock_all_codecs(fw);
 
   mp->mp_total_time = 0;
@@ -230,7 +270,7 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic)
   wrap_codec_deref(cw, 0);
 
   wrap_format_wait(fw);
-  return key;
+  return next;
 }
 
 
@@ -245,10 +285,8 @@ playlist_player(void *aux)
 {
   playlist_player_t *plp = aux;
   media_pipe_t *mp = plp->plp_mp;
-
-  playlist_entry_t *ple = NULL;
+  playlist_entry_t *ple = NULL, *next;
   inputevent_t ie;
-  int key;
 
   while(1) {
  
@@ -257,8 +295,6 @@ playlist_player(void *aux)
       /* Got nothing to play, enter STOP mode */
 
       mp_set_playstatus(mp, MP_STOP);
-
-      printf("Playlist waiting...\n");
       input_getevent(&plp->plp_ic, 1, &ie, NULL);
 
       switch(ie.type) {
@@ -266,11 +302,11 @@ playlist_player(void *aux)
 	continue;
 
       case PLAYLIST_INPUTEVENT_NEWENTRY:
+      case PLAYLIST_INPUTEVENT_PLAYENTRY:
 	/**
 	 * A new entry has been enqueued, a reference is held for us
 	 */
 	ple = ie.u.ptr;
-	printf("playlist got ple %s\n", ple->ple_url);
 	break;
       }
     }
@@ -296,8 +332,7 @@ playlist_player(void *aux)
     /**
      * Start playback of track
      */
-    key = playlist_play(ple, mp, &plp->plp_ic);
-
+    next = playlist_play(ple, mp, &plp->plp_ic);
 
     /**
      * Update track widget
@@ -305,6 +340,9 @@ playlist_player(void *aux)
     layout_update_model(ple->ple_widget, "track_playstatus", 
 			"playlist/playstatus-stop");
 
-    ple = playlist_advance(ple, 0, 0);
+    playlist_entry_unref(ple);
+    ple = next;
   }
 }
+
+

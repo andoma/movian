@@ -101,7 +101,7 @@ browser_enter(appi_t *ai, browser_node_t *bn)
 
   switch(type) {
   case FILETYPE_AUDIO:
-    playlist_enqueue(bn->bn_url, NULL);
+    playlist_enqueue(bn->bn_url, NULL, 1);
     break;
 
   case FILETYPE_VIDEO:

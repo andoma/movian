@@ -28,6 +28,10 @@
  */ 
 #define PLAYLIST_INPUTEVENT_NEWENTRY           INPUT_APP + 0
 
+/**
+ * Event used to signal that user wants to play given entry
+ */ 
+#define PLAYLIST_INPUTEVENT_PLAYENTRY          INPUT_APP + 1
 
 
 TAILQ_HEAD(playlist_entry_queue, playlist_entry);
@@ -93,13 +97,15 @@ typedef struct playlist_player {
 
 void playlist_init(void);
 
-void playlist_enqueue(const char *url, struct filetag_list *ftags);
+void playlist_enqueue(const char *url, struct filetag_list *ftags,
+		      int playit);
 
-playlist_entry_t *playlist_advance(playlist_entry_t *ple,
-				   int prev, int shuffle);
+playlist_entry_t *playlist_advance(playlist_entry_t *ple, int prev);
 
 void *playlist_player(void *aux);
 
 extern pthread_mutex_t playlistlock;
+
+void playlist_entry_unref(playlist_entry_t *ple);
 
 #endif /* PLAYLIST_H */
