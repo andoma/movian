@@ -198,7 +198,9 @@ autolaunch_applications(void)
       continue;
     
     appname = config_get_str_sub(cl, "application", NULL);
-    
+    if(appname == NULL)
+      continue;
+
     app = app_find_by_name(appname);
     if(app == NULL) {
       fprintf(stderr, "Unable to spawn app %s, application does not exist\n",
