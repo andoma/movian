@@ -155,8 +155,6 @@ playlist_destroy(playlist_t *pl)
 
   playlist_unlink(pl);
 
-  printf("Freeing playlist %p\n", pl);
-
   pthread_mutex_lock(&playlistlock);
 
   LIST_REMOVE(pl, pl_link);
@@ -185,7 +183,6 @@ playlist_destroy(playlist_t *pl)
 
   free(pl->pl_title);
   free(pl);
-  printf("done\n");
 }
 
 
@@ -353,8 +350,6 @@ static void
 playlist_entry_free(playlist_entry_t *ple)
 {
   playlist_t *pl = ple->ple_pl;
-
-  printf("Free'ed playlist entry %s\n", ple->ple_url);
 
   free(ple->ple_url);
 
@@ -737,7 +732,6 @@ playlist_thread(void *aux)
 
       case PL_EVENT_DELETE_PLAYLIST:
 	pl = playlist_get_current();
-	printf("Delete playlist, current is %p\n", pl);
 	if(pl != NULL)
 	  playlist_destroy(pl);
 	break;
