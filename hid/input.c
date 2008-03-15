@@ -219,36 +219,49 @@ input_root_event(inputevent_t *ie)
 
   pthread_mutex_lock(&ihmutex);
 
-  /* Repeating PREV should be RESTART_TRACK */
+  /* Transform repeated keys into other keys */
   
-  if(ie->type == INPUT_KEY && wallclock - lasttime < dclick) {
-    switch(ie->u.key) {
-    case INPUT_KEY_PREV:
-      if(lastkey == INPUT_KEY_PREV)
-	ie->u.key = INPUT_KEY_RESTART_TRACK;
-      break;
-
-    case INPUT_KEY_STOP:
-      if(lastkey == INPUT_KEY_STOP)
-	ie->u.key = INPUT_KEY_EJECT;
-      break;
-
-    case INPUT_KEY_SEEK_FORWARD:
-      if(lastkey == INPUT_KEY_SEEK_FORWARD)
-	ie->u.key = INPUT_KEY_SEEK_FAST_FORWARD;
-      break;
-
-    case INPUT_KEY_SEEK_BACKWARD:
-      if(lastkey == INPUT_KEY_SEEK_BACKWARD)
-	ie->u.key = INPUT_KEY_SEEK_FAST_BACKWARD;
-      break;
+  if(ie->type == INPUT_KEY) {
+    if(wallclock - lasttime < dclick) {
+      switch(ie->u.key) {
+      case INPUT_KEY_PREV:
+	if(lastkey != INPUT_KEY_RESTART_TRACK)
+	  ie->u.key = INPUT_KEY_RESTART_TRACK;
+	break;
+	
+      case INPUT_KEY_STOP:
+	if(lastkey == INPUT_KEY_STOP)
+	  ie->u.key = INPUT_KEY_EJECT;
+	break;
+	
+      case INPUT_KEY_SEEK_FORWARD:
+	if(lastkey == INPUT_KEY_SEEK_FORWARD)
+	  ie->u.key = INPUT_KEY_SEEK_FAST_FORWARD;
+	break;
+	
+      case INPUT_KEY_SEEK_BACKWARD:
+	if(lastkey == INPUT_KEY_SEEK_BACKWARD)
+	  ie->u.key = INPUT_KEY_SEEK_FAST_BACKWARD;
+	break;
+	
+      default:
+	break;
+      }
+    } else {
       
-    default:
-      break;
+      /* Unrepeated PREV -> INPUT_KEY_RESTART_TRACK */
+      
+      switch(ie->u.key) {
+      case INPUT_KEY_PREV:
+	ie->u.key = INPUT_KEY_RESTART_TRACK;
+	break;
+	
+      default:
+	break;
+      }
     }
     lastkey = ie->u.key;
   }
-
   
   lasttime = wallclock;
 
