@@ -27,5 +27,7 @@ void layout_update_int(glw_t *w, const char *id, int v);
 
 void layout_update_bar(glw_t *w, const char *id, float v);
 
+void layout_update_str(glw_t *w, const char *id, const char *str);
+
 #endif /* LAYOUT_SUPPORT_H */
 

@@ -117,3 +117,16 @@ layout_update_int(glw_t *w, const char *id, int v)
   glw_set(w, GLW_ATTRIB_CAPTION, tmp, NULL);
 
 }
+
+/**
+ * Set caption for a widget to string 'str'
+ */
+void
+layout_update_str(glw_t *w, const char *id, const char *str)
+{
+  if((w = glw_find_by_id(w, id, 0)) == NULL)
+    return;
+
+  glw_set(w, GLW_ATTRIB_CAPTION, str, NULL);
+
+}
