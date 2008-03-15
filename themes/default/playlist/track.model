@@ -1,0 +1,19 @@
+#HTSSIMPLEMODEL
+
+x-container {
+
+ bitmap {
+  weight 0.05
+  filename icon://audio.png
+  keep-aspect
+ }
+
+ xfader {
+  id track_playstatus
+  weight 0.05
+ }
+
+ text {
+  id track_title
+ }
+}

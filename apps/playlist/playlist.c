@@ -33,6 +33,7 @@
 #include "fileaccess/fa_probe.h"
 #include <layout/layout.h>
 #include <layout/layout_forms.h>
+#include <layout/layout_support.h>
 
 static playlist_player_t plp;
 
@@ -41,7 +42,7 @@ static glw_t *playlists_list;
 /**
  * Global lock for reference counters and playlist/playlistentry relations
  */
-static pthread_mutex_t playlistlock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t playlistlock = PTHREAD_MUTEX_INITIALIZER;
 
 
 #define PL_EVENT_PLAYLIST_CHANGED  1
@@ -136,6 +137,8 @@ playlist_enqueue(const char *url, struct filetag_list *ftags)
   inputevent_t ie;
   struct filetag_list ftags0;
   int64_t i64;
+  glw_t *w;
+  const char *s;
 
   if(pl == NULL) {
     if(ftags != NULL)
@@ -167,10 +170,8 @@ playlist_enqueue(const char *url, struct filetag_list *ftags)
 
   ple->ple_url = strdup(url);
 
-  if(filetag_get_int(ftags, FTAG_DURATION, &i64) == 0) {
+  if(filetag_get_int(ftags, FTAG_DURATION, &i64) == 0)
     ple->ple_duration = i64;
-    return;
-  }
 
   ple->ple_pl = pl;
 
@@ -180,6 +181,8 @@ playlist_enqueue(const char *url, struct filetag_list *ftags)
   if(ple2 != NULL) {
     ple->ple_time_offset = ple2->ple_time_offset + ple2->ple_duration;
     ple->ple_track       = ple2->ple_track       + 1;
+  } else {
+    ple->ple_track = 1;
   }
 
   TAILQ_INSERT_TAIL(&pl->pl_entries, ple, ple_link);
@@ -189,26 +192,44 @@ playlist_enqueue(const char *url, struct filetag_list *ftags)
 
   pthread_mutex_unlock(&playlistlock);
 
-  printf("playlist enqueue %s -- list = %p\n", url, pl->pl_list);
-
   ple->ple_refcnt++; /* playlist linkage */
 
-  glw_create(GLW_TEXT_BITMAP,
-	     GLW_ATTRIB_CAPTION, url,
-	     GLW_ATTRIB_PARENT, pl->pl_list,
-	     NULL);
 
-  ple->ple_refcnt++;  /* player refcount */
+  /**
+   * Create playlist entry model in tracklist
+   */
+  w = glw_create(GLW_MODEL,
+		 GLW_ATTRIB_PARENT, pl->pl_list,
+		 GLW_ATTRIB_FILENAME, "playlist/track",
+		 NULL);
+  ple->ple_widget = w;
 
-  ie.type = PLAYLIST_INPUTEVENT_NEWENTRY;
-  ie.u.ptr = ple;
-  input_postevent(&plp.plp_ic, &ie);
+  if(filetag_get_str(ftags, FTAG_TITLE, &s) == 0) {
+    layout_update_str(w, "track_title", s);
+  } else {
+    s = strrchr(url, '/');
+    s = s ? s + 1 : url;
+    layout_update_str(w, "track_title", s);
+  }
+  
 
   /**
    * Update playlist widget
    */
+  layout_update_time(pl->pl_widget, "time_total",  pl->pl_total_time);
+  layout_update_int(pl->pl_widget,  "track_total", pl->pl_nentries);
 
-  
+
+  /**
+   * Inform player that a new entry has been enqueued
+   *
+   * If it is idle, it will start playing it directly
+   */
+
+  ple->ple_refcnt++;  /* player refcount */
+  ie.type = PLAYLIST_INPUTEVENT_NEWENTRY;
+  ie.u.ptr = ple;
+  input_postevent(&plp.plp_ic, &ie);
 
 }
 
@@ -304,7 +325,10 @@ playlist_thread(void *aux)
   /**
    *
    */
-  pl = playlist_add(ai, "alpha");
+  pl = playlist_add(ai, "Default playlist");
+
+  playlist_add(ai, "beta");
+  playlist_add(ai, "gamma");
 
   layout_switcher_appi_add(ai, mini);
   

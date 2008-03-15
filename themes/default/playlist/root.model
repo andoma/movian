@@ -17,7 +17,6 @@ y-container {
   space 0.01
 
   deck {
-   focus-alpha
    id track_list_container
   }
 

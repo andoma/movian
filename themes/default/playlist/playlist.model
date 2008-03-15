@@ -9,6 +9,13 @@ bitmap {
  vertex-borders  0.1 0.1 0.1 0.1
 
  z-container {
+
+  bitmap {
+     alpha 0.1
+     filename icon://sound.png
+     keep-aspect
+  }
+
   y-container {
    text {
     id title
@@ -19,7 +26,7 @@ bitmap {
 
    x-container {
     text {
-     weight 1
+     weight 0.9
      align right
      caption Time:
     }
@@ -43,7 +50,7 @@ bitmap {
 
    x-container {
     text {
-     weight 1
+     weight 0.9
      align right
      caption Track:
     }

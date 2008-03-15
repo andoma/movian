@@ -2,5 +2,5 @@
 list {
  orientation vertical
  id track_list
- slices 30
+ slices 25
 }

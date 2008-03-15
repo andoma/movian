@@ -62,6 +62,8 @@ typedef struct playlist_entry {
 
   playlist_t *ple_pl;
 
+  glw_t *ple_widget;                    /* Widget in tracklist */
+
   int ple_refcnt;                       /* protected by global 'reflock' */
 
   char *ple_url;
@@ -97,5 +99,7 @@ playlist_entry_t *playlist_advance(playlist_entry_t *ple,
 				   int prev, int shuffle);
 
 void *playlist_player(void *aux);
+
+extern pthread_mutex_t playlistlock;
 
 #endif /* PLAYLIST_H */

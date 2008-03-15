@@ -33,11 +33,8 @@
 #include "showtime.h"
 #include "input.h"
 #include "playlist.h"
-
-
-
-
-  
+#include <layout/layout_support.h>
+ 
 
 
 static int
@@ -53,7 +50,7 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic)
   int64_t pts4seek = 0;
   int streams;
   int64_t cur_pos_pts = AV_NOPTS_VALUE;
-
+  int curtime;
   codecwrap_t *cw;
 
   if(av_open_input_file(&fctx, ple->ple_url, NULL, 0, NULL) != 0) {
@@ -90,8 +87,26 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic)
   media_pipe_acquire_audio(mp);
   wrap_unlock_all_codecs(fw);
 
+  curtime = -1;
+
   while(1) {
 
+    /**
+     * If current time feedback (from audio output) changes,
+     * update overlay
+     */ 
+    if(curtime != mp->mp_time_feedback) {
+      curtime = mp->mp_time_feedback;
+
+      pthread_mutex_lock(&playlistlock);
+
+      if(ple->ple_pl != NULL) {
+	layout_update_time(ple->ple_pl->pl_widget, "time_current",
+			   ple->ple_time_offset + curtime);
+      }
+      pthread_mutex_unlock(&playlistlock);
+
+    }
  
     if(mp_is_paused(mp)) {
       key = input_getkey(ic, 1);
@@ -261,7 +276,34 @@ playlist_player(void *aux)
     }
     mp_set_playstatus(mp, MP_PLAY);
 
+    /**
+     * Update playlist widget
+     */
+    pthread_mutex_lock(&playlistlock);
+    if(ple->ple_pl != NULL) {
+      layout_update_int(ple->ple_pl->pl_widget, "track_current",
+			ple->ple_track);
+    }
+    pthread_mutex_unlock(&playlistlock);
+
+
+    /**
+     * Update track widget
+     */
+    layout_update_model(ple->ple_widget, "track_playstatus", 
+			"playlist/playstatus-play");
+
+    /**
+     * Start playback of track
+     */
     key = playlist_play(ple, mp, &plp->plp_ic);
+
+
+    /**
+     * Update track widget
+     */
+    layout_update_model(ple->ple_widget, "track_playstatus", 
+			"playlist/playstatus-stop");
 
     ple = playlist_advance(ple, 0, 0);
   }
