@@ -101,3 +101,19 @@ layout_update_bar(glw_t *w, const char *id, float v)
 
   glw_set(w, GLW_ATTRIB_EXTRA, v, NULL);
 }
+
+/**
+ * Set caption for a widget to integer 'v'
+ */
+void
+layout_update_int(glw_t *w, const char *id, int v)
+{
+  char tmp[20];
+
+  if((w = glw_find_by_id(w, id, 0)) == NULL)
+    return;
+
+  snprintf(tmp, sizeof(tmp), "%d", v);
+  glw_set(w, GLW_ATTRIB_CAPTION, tmp, NULL);
+
+}

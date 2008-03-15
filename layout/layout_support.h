@@ -23,6 +23,8 @@ void layout_update_codec_info(glw_t *w, const char *id, AVCodecContext *ctx);
 
 void layout_update_time(glw_t *w, const char *id, int s);
 
+void layout_update_int(glw_t *w, const char *id, int v);
+
 void layout_update_bar(glw_t *w, const char *id, float v);
 
 #endif /* LAYOUT_SUPPORT_H */
