@@ -54,7 +54,7 @@ static appi_t *playlist_appi;
 pthread_mutex_t playlistlock = PTHREAD_MUTEX_INITIALIZER;
 
 
-#define PL_EVENT_NEW_PLAYLIST      1
+#define PL_EVENT_RENAME_PLAYLIST   1
 #define PL_EVENT_DELETE_PLAYLIST   2
 #define PL_EVENT_PLE_CHANGED       3
 
@@ -145,9 +145,7 @@ playlist_create(const char *title, int truncate)
 
   pl->pl_widget = e;
 
-  w = glw_find_by_id(e, "title", 0);
-  if(w != NULL)
-    glw_set(w, GLW_ATTRIB_CAPTION, title, NULL);
+  layout_update_str(pl->pl_widget, "title", pl->pl_title);
 
   w = layout_form_add_tab2(playlist_root, "playlists", e,
 			   "track_list_container", "playlist/tracklist");
@@ -507,29 +505,38 @@ playlist_root_widget(glw_t *w, void *opaque, glw_signal_t sig, ...)
  *
  */
 static void
-playlist_new(appi_t *ai)
+playlist_rename(playlist_t *pl)
 {
   struct layout_form_entry_list lfelist;
   glw_t *m;
   int r;
-  char plname[64];
+  char plname[100];
+  appi_t *ai = playlist_appi;
 
   TAILQ_INIT(&lfelist);
 
   m = glw_create(GLW_MODEL,
 		 GLW_ATTRIB_PARENT, ai->ai_widget,
-		 GLW_ATTRIB_FILENAME, "playlist/playlist-new",
+		 GLW_ATTRIB_FILENAME, "playlist/playlist-rename",
 		 NULL);
 
-  plname[0] = 0;
+
+  av_strlcpy(plname, pl->pl_title, sizeof(plname));
 
   LFE_ADD_STR(&lfelist, "playlist_title", plname, sizeof(plname), 1);
   LFE_ADD_BTN(&lfelist, "ok",     1);
   LFE_ADD_BTN(&lfelist, "cancel", 2);
   r = layout_form_query(&lfelist, m, &ai->ai_gfs);
 
-  if(r == 1 && plname[0])
-    playlist_create(plname, 0);
+  if(r == 1 && plname[0]) {
+
+    playlist_unlink(pl);
+
+    free(pl->pl_title);
+    pl->pl_title = strdup(plname);
+    layout_update_str(pl->pl_widget, "title", pl->pl_title);
+    playlist_save(pl);
+  }
 
   glw_detach(m);
 }
@@ -734,7 +741,7 @@ playlist_thread(void *aux)
    */
   TAILQ_INIT(&lfelist);
   LFE_ADD(&lfelist, "playlists");
-  LFE_ADD_BTN(&lfelist, "new_playlist", PL_EVENT_NEW_PLAYLIST);
+  LFE_ADD_BTN(&lfelist, "rename_playlist", PL_EVENT_RENAME_PLAYLIST);
   LFE_ADD_BTN(&lfelist, "delete_playlist", PL_EVENT_DELETE_PLAYLIST);
   layout_form_initialize(&lfelist, playlist_root, &ai->ai_gfs, &ai->ai_ic, 1);
 
@@ -770,8 +777,10 @@ playlist_thread(void *aux)
       
       switch(ie.u.u32) {
 
-      case PL_EVENT_NEW_PLAYLIST:
-	playlist_new(ai);
+      case PL_EVENT_RENAME_PLAYLIST:
+	pl = playlist_get_current();
+	if(pl != NULL)
+	  playlist_rename(pl);
 	break;
 
       case PL_EVENT_DELETE_PLAYLIST:

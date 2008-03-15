@@ -29,7 +29,7 @@ y-container {
    space 15
 
    bitmap {
-    id new_playlist
+    id rename_playlist
     focus-cursor
     focus-alpha
     border-scale-childs
@@ -39,11 +39,11 @@ y-container {
     x-container {
      bitmap {
       weight 0.2
-      filename icon://edit_add.png
+      filename icon://edit.png
       keep-aspect
      } 
      text {
-      caption New playlist
+      caption Rename playlist
       align left
      }
     }
