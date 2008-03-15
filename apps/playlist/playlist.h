@@ -43,6 +43,7 @@ typedef struct playlist {
   appi_t *pl_ai;
 
   glw_t *pl_widget;
+  glw_t *pl_tab;
   glw_t *pl_list;
 
   TAILQ_ENTRY(playlist) pl_link;
