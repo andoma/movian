@@ -46,6 +46,8 @@ typedef struct playlist {
   glw_t *pl_tab;
   glw_t *pl_list;
 
+  char *pl_title;
+
   TAILQ_ENTRY(playlist) pl_link;
 
   struct playlist_entry_queue pl_entries;

@@ -22,6 +22,7 @@
 #include <pthread.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -56,6 +57,8 @@ pthread_mutex_t playlistlock = PTHREAD_MUTEX_INITIALIZER;
 
 static void playlist_signal(playlist_entry_t *ple, int type);
 static void playlist_entry_free(playlist_entry_t *ple);
+static void playlist_save(playlist_t *pl);
+static void playlist_unlink(playlist_t *pl);
 
 
 /**
@@ -94,6 +97,8 @@ playlist_create(appi_t *ai, const char *title)
   struct layout_form_entry_list lfelist;
   playlist_t *pl = calloc(1, sizeof(playlist_t));
 
+  pl->pl_title = strdup(title);
+
   playlist_appi = pl->pl_ai = ai;
   TAILQ_INIT(&pl->pl_entries);
   TAILQ_INIT(&pl->pl_shuffle_entries);
@@ -128,7 +133,9 @@ playlist_create(appi_t *ai, const char *title)
 static void
 playlist_destroy(playlist_t *pl)
 {
-  playlist_entry_t *ple;
+  playlist_entry_t *ple, *next;
+
+  playlist_unlink(pl);
 
   printf("Freeing playlist %p\n", pl);
 
@@ -137,7 +144,9 @@ playlist_destroy(playlist_t *pl)
   /**
    * Decouple all playlist entries from the playlist
    */
-  TAILQ_FOREACH(ple, &pl->pl_entries, ple_link) {
+  for(ple = TAILQ_FIRST(&pl->pl_entries); ple != NULL; ple = next) {
+    next = TAILQ_NEXT(ple, ple_link);
+
     ple->ple_pl = NULL;
     glw_set(ple->ple_widget, 
 	    GLW_ATTRIB_PARENT, NULL,
@@ -154,6 +163,7 @@ playlist_destroy(playlist_t *pl)
   glw_destroy(pl->pl_widget);
   glw_destroy(pl->pl_tab);
 
+  free(pl->pl_title);
   free(pl);
   printf("done\n");
 }
@@ -295,6 +305,9 @@ playlist_enqueue(const char *url, struct filetag_list *ftags, int playit)
    */
   playlist_signal(ple, playit ? PLAYLIST_INPUTEVENT_PLAYENTRY : 
 		  PLAYLIST_INPUTEVENT_NEWENTRY);
+
+  playlist_save(pl);
+
 }
 
 /**
@@ -451,6 +464,57 @@ playlist_new(appi_t *ai)
   glw_detach(m);
 }
 
+
+/**
+ *  Store playlist on disk
+ */
+static void
+playlist_save(playlist_t *pl)
+{
+  char buf[256];
+  FILE *fp;
+  struct stat st;
+  playlist_entry_t *ple;
+
+  if(settingsdir == NULL)
+    return;
+
+  snprintf(buf, sizeof(buf), "%s/playlists", settingsdir);
+  if(stat(buf, &st) == 0 || mkdir(buf, 0700) == 0) {
+    snprintf(buf, sizeof(buf), "%s/playlists/%s", settingsdir, 
+	     pl->pl_title);
+
+    fp = fopen(buf, "w+");
+    if(fp != NULL) {
+
+      fprintf(fp, 
+	      "showtimeplaylist-v1\n"
+	      "title=%s\n", pl->pl_title);
+      pthread_mutex_lock(&playlistlock);
+      TAILQ_FOREACH(ple, &pl->pl_entries, ple_link) {
+	fprintf(fp, "track=%s\n", ple->ple_url);
+      }
+      pthread_mutex_unlock(&playlistlock);
+      fclose(fp);
+    }
+  }
+}
+
+
+/**
+ *  Remove playlist from disk
+ */
+static void
+playlist_unlink(playlist_t *pl)
+{
+  char buf[256];
+
+  if(settingsdir == NULL)
+    return;
+
+  snprintf(buf, sizeof(buf), "%s/playlists/%s", settingsdir,  pl->pl_title);
+  unlink(buf);
+}
 
 
 /**
