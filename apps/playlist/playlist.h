@@ -19,6 +19,83 @@
 #ifndef PLAYLIST_H
 #define PLAYLIST_H
 
+#include "app.h"
+#include "fileaccess/fa_tags.h"
+
+
+/**
+ * Event used to signal that a new entry has been enqueued
+ */ 
+#define PLAYLIST_INPUTEVENT_NEWENTRY           INPUT_APP + 0
+
+
+
+TAILQ_HEAD(playlist_entry_queue, playlist_entry);
+
+/**
+ * Struct describing a playlist
+ */
+typedef struct playlist {
+  appi_t *pl_ai;
+
+  glw_t *pl_widget;
+  glw_t *pl_list;
+
+  TAILQ_ENTRY(playlist) pl_link;
+
+  struct playlist_entry_queue pl_entries;
+  struct playlist_entry_queue pl_shuffle_entries;
+
+  int pl_nentries;
+  int pl_total_time;
+
+} playlist_t;
+
+
+
+/**
+ * Struct describing a playlist entry (a track)
+ */
+typedef struct playlist_entry {
+  TAILQ_ENTRY(playlist_entry) ple_link;
+  TAILQ_ENTRY(playlist_entry) ple_shuffle_link;
+
+  playlist_t *ple_pl;
+
+  int ple_refcnt;                       /* protected by global 'reflock' */
+
+  char *ple_url;
+
+  int ple_duration;                     /* Track duration, we need it often
+					   so avoid peeking in tags for this */
+
+  int ple_time_offset;                  /* Time offset in entire playlist, 
+					   i.e. sum of duration for all
+					   previous entries */
+
+  int ple_track;
+
+
+} playlist_entry_t;
+
+/**
+ * Control struct for playback
+ */
+typedef struct playlist_player {
+  int plp_mode;
+  ic_t plp_ic;
+  media_pipe_t *plp_mp;
+
+} playlist_player_t;
+
+
 void playlist_init(void);
+
+void playlist_enqueue(const char *url, struct filetag_list *ftags);
+
+playlist_entry_t *playlist_advance(playlist_entry_t *ple,
+				   int prev, int shuffle);
+
+void *playlist_player(void *aux);
 
 #endif /* PLAYLIST_H */

@@ -192,7 +192,7 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
 	      OVERLAY_BUTTON_SSETTINGS);
 
 
-  layout_form_initialize(&overlay_lfelist, overlay, &ai->ai_gfs, ic);
+  layout_form_initialize(&overlay_lfelist, overlay, &ai->ai_gfs, ic, 1);
 
 
 

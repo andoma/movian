@@ -1,8 +1,69 @@
 #HTSSIMPLEMODEL
 
-y-container {
- text {
-  id title
-  align center
+
+bitmap {
+ color 0.6 0.6 0.6
+ border-scale-childs
+ filename icon://plate_compact.png
+ texture-borders 0.5 0.5 0.5 0.5
+ vertex-borders  0.1 0.1 0.1 0.1
+
+ z-container {
+  y-container {
+   text {
+    id title
+    align center
+   }
+
+   space 5
+
+   x-container {
+    text {
+     weight 1
+     align right
+     caption Time:
+    }
+
+    text {
+     align right
+     id time_current
+    }
+
+    text {
+     weight 0.15
+     caption /
+    align center
+    }
+
+    text {
+     align left
+     id time_total
+    }
+   }
+
+   x-container {
+    text {
+     weight 1
+     align right
+     caption Track:
+    }
+
+    text {
+     align right
+     id track_current
+    }
+
+    text {
+     weight 0.15
+     caption /
+     align center
+    }
+
+    text {
+     align left
+     id track_total
+    }
+   }
+  }
  }
 }

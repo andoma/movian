@@ -40,7 +40,7 @@
 #include "browser_view.h"
 #include "navigator.h"
 #include "play_video.h"
-
+#include "apps/playlist/playlist.h"
 
 #define NAVIGATOR_FILESYSTEM 1
 
@@ -101,7 +101,7 @@ browser_enter(appi_t *ai, browser_node_t *bn)
 
   switch(type) {
   case FILETYPE_AUDIO:
-    //    play_file(bn->bn_url, ai, &ai->ai_ic, NULL);
+    playlist_enqueue(bn->bn_url, NULL);
     break;
 
   case FILETYPE_VIDEO:

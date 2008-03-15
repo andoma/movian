@@ -40,6 +40,9 @@ static int layout_form_entry_list(glw_t *w, void *opaque,
 static int layout_form_entry_button(glw_t *w, void *opaque,
 				    glw_signal_t signal, ...);
 
+static int layout_form_entry_child_mon(glw_t *w, void *opaque,
+				       glw_signal_t signal, ...);
+
 
 /**
  * Find a target we can move to
@@ -210,22 +213,26 @@ layout_form_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
  */
 int
 layout_form_initialize(struct layout_form_entry_list *lfelist, glw_t *m,
-		       glw_focus_stack_t *gfs, ic_t *ic)
+		       glw_focus_stack_t *gfs, ic_t *ic, int updatefocus)
 {
   glw_t *w;
   glw_t *ff = NULL;  /* first widget to focus */
-  layout_form_entry_t *lfe;
+  layout_form_entry_t *lfe, *l;
   int len;
 
-  TAILQ_FOREACH(lfe, lfelist, lfe_link) {
-    w = lfe->lfe_widget = glw_find_by_id(m, lfe->lfe_id, 1);
-    lfe->lfe_ic = ic;
+  TAILQ_FOREACH(l, lfelist, lfe_link) {
+    w =  glw_find_by_id(m, l->lfe_id, 1);
     if(w == NULL) {
-      printf("WARNING: Widget %s not found\n", lfe->lfe_id);
+      printf("WARNING: Widget %s not found\n", l->lfe_id);
       continue;
     }
     if(ff == NULL)
       ff = w;
+
+    lfe = calloc(1, sizeof(layout_form_entry_t));
+    *lfe = *l;
+
+    lfe->lfe_ic = ic;
 
     glw_set(w,
 	    GLW_ATTRIB_SIGNAL_HANDLER, layout_form_callback, gfs, 400,
@@ -255,13 +262,22 @@ layout_form_initialize(struct layout_form_entry_list *lfelist, glw_t *m,
 	      GLW_ATTRIB_SIGNAL_HANDLER,  layout_form_entry_button, lfe, 401,
 	      NULL);
       break;
+
+    case LFE_TYPE_CHILD_MONITOR:
+      glw_set(w,
+	      GLW_ATTRIB_SIGNAL_HANDLER, layout_form_entry_child_mon, lfe, 401,
+	      NULL);
+      break;
+    default:
+      abort();
     }
   }
 
-  if(ff != NULL)
-    glw_focus_set(gfs, ff);
-
-  glw_focus_stack_activate(gfs);
+  if(updatefocus) {
+    if(ff != NULL)
+      glw_focus_set(gfs, ff);
+    glw_focus_stack_activate(gfs);
+  }
   return 0;
 }
 
@@ -277,7 +293,7 @@ layout_form_query(struct layout_form_entry_list *lfelist, glw_t *m,
 
   input_init(&ic);
 
-  layout_form_initialize(lfelist, m, gfs, &ic);
+  layout_form_initialize(lfelist, m, gfs, &ic, 1);
 
   input_getevent(&ic, 1, &ie, NULL);
 
@@ -339,6 +355,37 @@ layout_form_add_tab(glw_t *m, const char *listname, const char *listmodel,
 	     GLW_ATTRIB_SIGNAL_HANDLER, layout_form_tab_callback, t, 400,
 	     GLW_ATTRIB_PARENT, w,
 	     NULL);
+  return t;
+}
+
+/**
+ * Create a new tab that's connected with an entry in a list
+ *
+ * The tab must reside in a container that's willing to switch
+ * display when the glw_selected changes (this is done by the
+ * layout_form_tab_callback() above)
+ */
+glw_t *
+layout_form_add_tab2(glw_t *m, const char *listname, glw_t *listentry,
+		     const char *deckname, const char *tabmodel)
+{
+  glw_t *w, *d, *t;
+
+  w = glw_find_by_id(m, listname, 0);
+  d = glw_find_by_id(m, deckname, 0);
+
+  if(w == NULL || d == NULL)
+    return NULL;
+
+  t = glw_create(GLW_MODEL,
+		 GLW_ATTRIB_FILENAME, tabmodel,
+		 GLW_ATTRIB_PARENT, d,
+		 NULL);
+
+  glw_set(listentry,
+	  GLW_ATTRIB_SIGNAL_HANDLER, layout_form_tab_callback, t, 400,
+	  GLW_ATTRIB_PARENT, w,
+	  NULL);
   return t;
 }
 
@@ -427,6 +474,10 @@ layout_form_entry_string(glw_t *w, void *opaque, glw_signal_t signal, ...)
   va_start(ap, signal);
 
   switch(signal) {
+  case GLW_SIGNAL_DTOR:
+    free(lfe);
+    return 0;
+
   case GLW_SIGNAL_INPUT_EVENT:
     ie = va_arg(ap, void *);
 
@@ -478,7 +529,7 @@ layout_form_entry_string(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
 
 /**
- * Callback for controlling a string form entry
+ * Callback for controlling a button form entry
  */
 static int
 layout_form_entry_button(glw_t *w, void *opaque, glw_signal_t signal, ...)
@@ -490,7 +541,40 @@ layout_form_entry_button(glw_t *w, void *opaque, glw_signal_t signal, ...)
   va_start(ap, signal);
 
   switch(signal) {
+  case GLW_SIGNAL_DTOR:
+    free(lfe);
+    return 0;
+
   case GLW_SIGNAL_ENTER:
+    ie.type = INPUT_U32;
+    ie.u.u32 = lfe->lfe_value;
+    input_postevent(lfe->lfe_ic, &ie);
+    return 1;
+  default:
+    break;
+  }
+  va_end(ap);
+  return 0;
+}
+
+/**
+ * Callback for controlling a string form entry
+ */
+static int
+layout_form_entry_child_mon(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  layout_form_entry_t *lfe = opaque;
+  inputevent_t ie;
+
+  va_list ap;
+  va_start(ap, signal);
+
+  switch(signal) {
+  case GLW_SIGNAL_DTOR:
+    free(lfe);
+    return 0;
+
+  case GLW_SIGNAL_SELECTED_CHANGED:
     ie.type = INPUT_U32;
     ie.u.u32 = lfe->lfe_value;
     input_postevent(lfe->lfe_ic, &ie);
@@ -517,6 +601,10 @@ layout_form_entry_list(glw_t *w, void *opaque, glw_signal_t signal, ...)
   va_start(ap, signal);
 
   switch(signal) {
+  case GLW_SIGNAL_DTOR:
+    free(lfe);
+    return 0;
+
   case GLW_SIGNAL_SELECTED_CHANGED:
     c = va_arg(ap, void *);
     if(c != NULL)

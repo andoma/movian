@@ -9,21 +9,22 @@ y-container {
 
   list {
    scale-childs
-   weight 0.5
+   weight 0.3
    id playlists
    slices 4
   }
 
   space 0.01
 
-  xfader {
-   id tracklistfader
+  deck {
+   focus-alpha
+   id track_list_container
   }
 
   space 0.01
 
   y-container {
-   weight 0.4
+   weight 0.3
 
    space 15
 
@@ -56,7 +57,7 @@ y-container {
  x-container {
   bitmap {
    alpha 0.1
-   weight 0.5
+   weight 0.3
    filename icon://plate_compact.png
    texture-borders 0.5 0.5 0.5 0.5
    vertex-borders  0.1 0.1 0.1 0.1
@@ -83,7 +84,7 @@ y-container {
 
   bitmap {
    alpha 0.1
-   weight 0.4
+   weight 0.3
    filename icon://plate_compact.png
    texture-borders 0.5 0.5 0.5 0.5
    vertex-borders  0.1 0.1 0.1 0.1

@@ -37,6 +37,7 @@ typedef struct layout_form_entry {
 #define LFE_TYPE_BUTTON 2
 #define LFE_TYPE_LIST   3
 #define LFE_TYPE_CUSTOM 4
+#define LFE_TYPE_CHILD_MONITOR 5
 
   int lfe_value;
 
@@ -54,8 +55,24 @@ int layout_form_query(struct layout_form_entry_list *lfelist,
 		      glw_t *m, glw_focus_stack_t *gfs);
 
 int layout_form_initialize(struct layout_form_entry_list *lfelist,
-			   glw_t *m, glw_focus_stack_t *gfs, ic_t *ic);
+			   glw_t *m, glw_focus_stack_t *gfs, ic_t *ic,
+			   int updatefocus);
 
+/**
+ * Generates an event when the child changes
+ */
+#define LFE_ADD_MONITOR_CHILD(listp, id, val) do {			\
+  layout_form_entry_t *lfe = alloca(sizeof(layout_form_entry_t));	\
+  memset(lfe, 0, sizeof(layout_form_entry_t));				\
+  lfe->lfe_type = LFE_TYPE_CHILD_MONITOR;                               \
+  lfe->lfe_value = val;                                                 \
+  TAILQ_INSERT_TAIL(listp, lfe, lfe_link);				\
+  lfe->lfe_id = id;							\
+} while(0)
+
+/**
+ * Custom callback
+ */
 #define LFE_ADD_CUSTOM(listp, id, cb) do {				\
   layout_form_entry_t *lfe = alloca(sizeof(layout_form_entry_t));	\
   memset(lfe, 0, sizeof(layout_form_entry_t));				\
@@ -65,6 +82,9 @@ int layout_form_initialize(struct layout_form_entry_list *lfelist,
   lfe->lfe_id = id;							\
 } while(0)
 
+/**
+ * Modifies a string storage
+ */
 #define LFE_ADD_STR(listp, id, str, bufsize) do {			\
   layout_form_entry_t *lfe = alloca(sizeof(layout_form_entry_t));	\
   memset(lfe, 0, sizeof(layout_form_entry_t));				\
@@ -75,6 +95,9 @@ int layout_form_initialize(struct layout_form_entry_list *lfelist,
   lfe->lfe_id = id;							\
 } while(0)
 
+/**
+ * Modifies a string storage based on the LIST child IDs
+ */
 #define LFE_ADD_LIST(listp, id, str, bufsize) do {			\
   layout_form_entry_t *lfe = alloca(sizeof(layout_form_entry_t));	\
   memset(lfe, 0, sizeof(layout_form_entry_t));				\
@@ -85,6 +108,9 @@ int layout_form_initialize(struct layout_form_entry_list *lfelist,
   lfe->lfe_id = id;							\
 } while(0)
 
+/**
+ * Signal an even when pressed
+ */
 #define LFE_ADD_BTN(listp, id, val) do {				\
   layout_form_entry_t *lfe = alloca(sizeof(layout_form_entry_t));	\
   memset(lfe, 0, sizeof(layout_form_entry_t));				\
@@ -104,6 +130,9 @@ int layout_form_initialize(struct layout_form_entry_list *lfelist,
 glw_t *layout_form_add_tab(glw_t *m, const char *listname,
 			   const char *listmodel, const char *deckname,
 			   const char *tabmodel);
+
+glw_t *layout_form_add_tab2(glw_t *m, const char *listname, glw_t *listentry,
+			    const char *deckname, const char *tabmodel);
 
 
 #endif /* LAYOUT_FORMS_H */

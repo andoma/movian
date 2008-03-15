@@ -30,37 +30,27 @@
 #include "showtime.h"
 #include "app.h"
 #include "playlist.h"
+#include "fileaccess/fa_probe.h"
 #include <layout/layout.h>
 #include <layout/layout_forms.h>
 
-TAILQ_HEAD(playlist_entry_queue, playlist_entry);
+static playlist_player_t plp;
 
 static glw_t *playlists_list;
 
-
-typedef struct playlist {
-
-  TAILQ_ENTRY(playlist) pl_link;
-
-  struct playlist_entry_queue pl_entries;
-  int pl_nentries;
-
-} playlist_t;
+/**
+ * Global lock for reference counters and playlist/playlistentry relations
+ */
+static pthread_mutex_t playlistlock = PTHREAD_MUTEX_INITIALIZER;
 
 
-
-typedef struct playlist_entry {
-
-  TAILQ_ENTRY(playlist_entry) ple_link;
-
-
-} playlist_entry_t;
-
-
+#define PL_EVENT_PLAYLIST_CHANGED  1
+#define PL_EVENT_DELETE_PLAYLIST   2
+#define PL_EVENT_PLE_CHANGED       3
 
 /**
- * Add a playlist
- */ 
+ * Playlist widget callback
+ */
 static int
 playlist_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
@@ -71,41 +61,224 @@ playlist_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 /**
  * Add a playlist
  */ 
-static void 
-playlist_add(const char *title)
+static playlist_t *
+playlist_add(appi_t *ai, const char *title)
 {
   glw_t *e, *w;
-
+  struct layout_form_entry_list lfelist;
   playlist_t *pl = calloc(1, sizeof(playlist_t));
 
+  pl->pl_ai = ai;
   TAILQ_INIT(&pl->pl_entries);
-  
+  TAILQ_INIT(&pl->pl_shuffle_entries);
+
 
   e = glw_create(GLW_MODEL,
-		 GLW_ATTRIB_PARENT, playlists_list,
 		 GLW_ATTRIB_FILENAME, "playlist/playlist",
 		 GLW_ATTRIB_SIGNAL_HANDLER, playlist_widget_callback, pl, 400,
 		 NULL);
+
+  pl->pl_widget = e;
 
   w = glw_find_by_id(e, "title", 0);
   if(w != NULL)
     glw_set(w, GLW_ATTRIB_CAPTION, title, NULL);
 
+  w = layout_form_add_tab2(ai->ai_widget, "playlists", e,
+			   "track_list_container", "playlist/tracklist");
+
+  TAILQ_INIT(&lfelist);
+  LFE_ADD_MONITOR_CHILD(&lfelist, "track_list", PL_EVENT_PLE_CHANGED);
+  layout_form_initialize(&lfelist, w, &ai->ai_gfs, &ai->ai_ic, 0);
+
+  pl->pl_list = glw_find_by_id(w, "track_list", 0);
+  return pl;
+}
+
+/**
+ * Returns the current playlist
+ */
+static playlist_t *
+playlist_get_current(void)
+{
+  glw_t *w;
+  playlist_t *pl = NULL;
+
+  glw_lock();
+
+  w = playlists_list;
+  if(w != NULL) {
+    w = w->glw_selected;
+    if(w != NULL) {
+      pl = glw_get_opaque(w,  playlist_widget_callback);
+    }
+  }
+  glw_unlock();
+  return pl;
 }
 
 
+/**
+ * Playlist enqueue
+ *
+ * Add URL to the current playlist.
+ *
+ * If 'ftags' != NULL, the tags will be used, otherwise, the playlist
+ * will probe by itself
+ *
+ * (NOTE: ftags are not copied, this must be done by the caller)
+ */
+void
+playlist_enqueue(const char *url, struct filetag_list *ftags)
+{
+  playlist_entry_t *ple, *ple2;
+  playlist_t *pl = playlist_get_current();
+  inputevent_t ie;
+  struct filetag_list ftags0;
+  int64_t i64;
+
+  if(pl == NULL) {
+    if(ftags != NULL)
+      filetag_freelist(ftags);
+    return;
+  }
+
+  if(ftags == NULL) {
+    TAILQ_INIT(&ftags0);
+    if(fa_probe(&ftags0, url) == -1)
+      return;
+    ftags = &ftags0;
+  }
+
+  filetag_dumplist(ftags);
+
+  if(filetag_get_int(ftags, FTAG_FILETYPE, &i64) < 0) {
+    filetag_freelist(ftags);
+    return;
+  }
+
+  if(i64 != FILETYPE_AUDIO) {
+    /* We only accept audio */
+    filetag_freelist(ftags);
+    return;
+  }
+
+  ple = calloc(1, sizeof(playlist_entry_t));
+
+  ple->ple_url = strdup(url);
+
+  if(filetag_get_int(ftags, FTAG_DURATION, &i64) == 0) {
+    ple->ple_duration = i64;
+    return;
+  }
+
+  ple->ple_pl = pl;
+
+  pthread_mutex_lock(&playlistlock);
+
+  ple2 = TAILQ_LAST(&pl->pl_entries, playlist_entry_queue);
+  if(ple2 != NULL) {
+    ple->ple_time_offset = ple2->ple_time_offset + ple2->ple_duration;
+    ple->ple_track       = ple2->ple_track       + 1;
+  }
+
+  TAILQ_INSERT_TAIL(&pl->pl_entries, ple, ple_link);
+  TAILQ_INSERT_TAIL(&pl->pl_shuffle_entries, ple, ple_shuffle_link);
+  pl->pl_nentries++;
+  pl->pl_total_time += ple->ple_duration;
+
+  pthread_mutex_unlock(&playlistlock);
+
+  printf("playlist enqueue %s -- list = %p\n", url, pl->pl_list);
+
+  ple->ple_refcnt++; /* playlist linkage */
+
+  glw_create(GLW_TEXT_BITMAP,
+	     GLW_ATTRIB_CAPTION, url,
+	     GLW_ATTRIB_PARENT, pl->pl_list,
+	     NULL);
+
+  ple->ple_refcnt++;  /* player refcount */
+
+  ie.type = PLAYLIST_INPUTEVENT_NEWENTRY;
+  ie.u.ptr = ple;
+  input_postevent(&plp.plp_ic, &ie);
+
+  /**
+   * Update playlist widget
+   */
+
+  
+
+}
+
+/**
+ *
+ */
+static void
+playlist_entry_free(playlist_entry_t *ple)
+{
+  playlist_t *pl = ple->ple_pl;
+  free(ple->ple_url);
+
+  if(pl != NULL) {
+    TAILQ_REMOVE(&pl->pl_entries, ple, ple_link);
+    TAILQ_REMOVE(&pl->pl_shuffle_entries, ple, ple_shuffle_link);
+  }
+
+ free(ple);
+}
 
 
+/**
+ * Get next (or previous) entry, optionally in shuffle mode
+ */
+playlist_entry_t *
+playlist_advance(playlist_entry_t *ple, int prev, int shuffle)
+{
+  playlist_entry_t *n;
+
+  pthread_mutex_lock(&playlistlock);
+
+  if(prev) {
+    if(shuffle)
+      n = TAILQ_PREV(ple, playlist_entry_queue, ple_shuffle_link);
+    else
+      n = TAILQ_PREV(ple, playlist_entry_queue, ple_link);
+  } else {
+    if(shuffle)
+      n = TAILQ_NEXT(ple, ple_shuffle_link);
+    else
+      n = TAILQ_NEXT(ple, ple_link);
+  }
+
+  if(n != NULL)
+    n->ple_refcnt++;
+      
+  ple->ple_refcnt--;
+
+  if(ple->ple_refcnt == 0)
+    playlist_entry_free(ple);
+
+  pthread_mutex_unlock(&playlistlock);
+
+  return n;
+}
 
 
+/**
+ * User interface playlist thread
+ */
 static void *
 playlist_thread(void *aux)
 {
   appi_t *ai;
   glw_t *mini;
   struct layout_form_entry_list lfelist;
-  
-  TAILQ_INIT(&lfelist);
+  inputevent_t ie;
+  playlist_t *pl;
+  pthread_t playerthread;
+
 
   ai = appi_create("Playlist");
 
@@ -117,23 +290,53 @@ playlist_thread(void *aux)
 		    NULL);
 
   playlists_list = glw_find_by_id(ai->ai_widget, "playlists", 0);
-  
 
-  playlist_add("alpha");
-  playlist_add("beta");
-  playlist_add("gamma");
+
+  /**
+   * Initialize and launch player thread
+   */
+  memset(&plp, 0, sizeof(plp));
+  input_init(&plp.plp_ic);
+  plp.plp_mp = &ai->ai_mp;
+  pthread_create(&playerthread, NULL, playlist_player, &plp);
+
+
+  /**
+   *
+   */
+  pl = playlist_add(ai, "alpha");
 
   layout_switcher_appi_add(ai, mini);
+  
+  /**
+   *
+   */
+  TAILQ_INIT(&lfelist);
+  LFE_ADD_MONITOR_CHILD(&lfelist, "playlists", PL_EVENT_PLAYLIST_CHANGED);
+  LFE_ADD_BTN(&lfelist, "delete_playlist", PL_EVENT_DELETE_PLAYLIST);
+  layout_form_initialize(&lfelist, ai->ai_widget, &ai->ai_gfs, &ai->ai_ic, 1);
 
-  LFE_ADD(&lfelist, "playlists");
-  LFE_ADD(&lfelist, "delete_playlist");
-
-  layout_form_initialize(&lfelist, ai->ai_widget, &ai->ai_gfs, &ai->ai_ic);
-
+  
   while(1) {
-    sleep(1);
-  }
+    input_getevent(&ai->ai_ic, 1, &ie, NULL);
+    
+    switch(ie.type) {
+    default:
+      break;
 
+    case INPUT_U32:
+      
+      switch(ie.u.u32) {
+      case PL_EVENT_PLAYLIST_CHANGED:
+	printf("Playlist changed\n");
+	break;
+
+      case PL_EVENT_DELETE_PLAYLIST:
+	printf("Delete playlist\n");
+	break;
+      }
+    }
+  }
 }
 
 void
