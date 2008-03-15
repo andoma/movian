@@ -1,0 +1,96 @@
+#HTSSIMPLEMODEL
+
+
+y-container {
+ displacement 0 0 0.7
+
+ x-container {
+  weight 20
+
+  list {
+   scale-childs
+   weight 0.5
+   id playlists
+   slices 4
+  }
+
+  space 0.01
+
+  xfader {
+   id tracklistfader
+  }
+
+  space 0.01
+
+  y-container {
+   weight 0.4
+
+   space 15
+
+   bitmap {
+    id delete_playlist
+    focus-cursor
+    focus-alpha
+    border-scale-childs
+    filename icon://plate_compact.png
+    texture-borders 0.5 0.5 0.5 0.5
+    vertex-borders  0.1 0.1 0.1 0.1
+    x-container {
+     bitmap {
+      weight 0.2
+      filename icon://error.png
+      keep-aspect
+     } 
+     text {
+      caption Delete playlist
+      align left
+     }
+    }
+   }
+  }
+ }
+
+
+ space 0.2
+
+ x-container {
+  bitmap {
+   alpha 0.1
+   weight 0.5
+   filename icon://plate_compact.png
+   texture-borders 0.5 0.5 0.5 0.5
+   vertex-borders  0.1 0.1 0.1 0.1
+   text { 
+    caption Lists
+    align center
+   }
+  }
+  space 0.01
+
+  bitmap {
+   alpha 0.1
+   filename icon://plate_compact.png
+   texture-borders 0.5 0.5 0.5 0.5
+   vertex-borders  0.1 0.1 0.1 0.1
+   text { 
+    caption Tracks
+    align center
+   }
+  }
+
+
+ space 0.01
+
+  bitmap {
+   alpha 0.1
+   weight 0.4
+   filename icon://plate_compact.png
+   texture-borders 0.5 0.5 0.5 0.5
+   vertex-borders  0.1 0.1 0.1 0.1
+   text { 
+    caption Control
+    align center
+   }
+  }
+ }
+}

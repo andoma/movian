@@ -26,6 +26,7 @@
 #include "layout/layout.h"
 #include "menu.h"
 #include "apps/launcher/launcher.h"
+#include "apps/playlist/playlist.h"
 
 static pthread_mutex_t app_index_mutex; 
 static int app_index = 0;
@@ -235,6 +236,8 @@ void
 apps_load(void)
 {
   launcher_init();
+
+  playlist_init();
 
   LOADAPP(clock);
   LOADAPP(navigator);

@@ -68,8 +68,8 @@ SRCS  += browser.c navigator.c browser_view.c browser_probe.c
 
 # Playlist application
 
-#VPATH += apps/playlist
-#SRCS  += playlist.c
+VPATH += apps/playlist
+SRCS  += playlist.c
 
 # RSS browser applcation
 

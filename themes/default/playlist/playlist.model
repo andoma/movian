@@ -1,0 +1,8 @@
+#HTSSIMPLEMODEL
+
+y-container {
+ text {
+  id title
+  align center
+ }
+}

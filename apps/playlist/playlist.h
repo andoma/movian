@@ -1,6 +1,6 @@
 /*
- *  Playlist
- *  Copyright (C) 2007 Andreas Öman
+ *  Application playlist
+ *  Copyright (C) 2008 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,14 +19,6 @@
 #ifndef PLAYLIST_H
 #define PLAYLIST_H
 
-void playlist_spawn(void);
-
-struct mediainfo;
-
-int playlist_enqueue(const char *path, struct mediainfo *mi, int flush);
-
-void playlist_eventstrike(inputevent_t *ie);
-
-void playlist_flush(void);
+void playlist_init(void);
 
 #endif /* PLAYLIST_H */
