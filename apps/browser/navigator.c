@@ -379,9 +379,9 @@ nav_setup(navigator_t *nav, appi_t *ai)
   strcpy(fs.nc_rootpath, "/");
   strcpy(fs.nc_icon, "browser/icons/1default-icon");
 
-  LFE_ADD_STR(&lfelist, "fs_title", fs.nc_title, sizeof(fs.nc_title));
+  LFE_ADD_STR(&lfelist, "fs_title", fs.nc_title, sizeof(fs.nc_title), 0);
   LFE_ADD_LIST(&lfelist, "fs_icon_list", fs.nc_icon, sizeof(fs.nc_icon));
-  LFE_ADD_STR(&lfelist, "fs_path", fs.nc_rootpath, sizeof(fs.nc_rootpath));
+  LFE_ADD_STR(&lfelist, "fs_path", fs.nc_rootpath, sizeof(fs.nc_rootpath), 0);
   LFE_ADD_BTN(&lfelist, "fs_ok", NAVIGATOR_FILESYSTEM);
 
 

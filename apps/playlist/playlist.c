@@ -383,7 +383,6 @@ playlist_new(appi_t *ai)
   glw_t *m;
   int r;
   char plname[64];
-  playlist_t *pl;
 
   TAILQ_INIT(&lfelist);
 
@@ -394,12 +393,12 @@ playlist_new(appi_t *ai)
 
   plname[0] = 0;
 
-  LFE_ADD_STR(&lfelist, "playlist_title", plname, sizeof(plname));
-  LFE_ADD_BTN(&lfelist, "ok",     0);
-  LFE_ADD_BTN(&lfelist, "cancel", -1);
+  LFE_ADD_STR(&lfelist, "playlist_title", plname, sizeof(plname), 1);
+  LFE_ADD_BTN(&lfelist, "ok",     1);
+  LFE_ADD_BTN(&lfelist, "cancel", 2);
   r = layout_form_query(&lfelist, m, &ai->ai_gfs);
 
-  if(r == 0 && plname[0])
+  if(r == 1 && plname[0])
     playlist_create(ai, plname);
 
   glw_detach(m);
