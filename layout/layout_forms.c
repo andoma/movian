@@ -488,7 +488,7 @@ static int
 layout_form_entry_string(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
   layout_form_entry_t *lfe = opaque;
-  inputevent_t *ie;
+  inputevent_t *ie, ie0;
   int r;
 
   va_list ap;
@@ -498,6 +498,15 @@ layout_form_entry_string(glw_t *w, void *opaque, glw_signal_t signal, ...)
   case GLW_SIGNAL_DTOR:
     free(lfe);
     return 0;
+
+  case GLW_SIGNAL_ENTER:
+    if(lfe->lfe_value == 0)
+      break;
+
+    ie0.type = INPUT_U32;
+    ie0.u.u32 = lfe->lfe_value;
+    input_postevent(lfe->lfe_ic, &ie0);
+    return 1;
 
   case GLW_SIGNAL_INPUT_EVENT:
     ie = va_arg(ap, void *);

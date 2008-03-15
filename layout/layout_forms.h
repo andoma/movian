@@ -85,12 +85,13 @@ int layout_form_initialize(struct layout_form_entry_list *lfelist,
 /**
  * Modifies a string storage
  */
-#define LFE_ADD_STR(listp, id, str, bufsize) do {			\
+#define LFE_ADD_STR(listp, id, str, bufsize, retval) do {		\
   layout_form_entry_t *lfe = alloca(sizeof(layout_form_entry_t));	\
   memset(lfe, 0, sizeof(layout_form_entry_t));				\
   lfe->lfe_type = LFE_TYPE_STRING;                                      \
   lfe->lfe_buf = str;							\
   lfe->lfe_buf_size = bufsize;						\
+  lfe->lfe_value = retval;                                              \
   TAILQ_INSERT_TAIL(listp, lfe, lfe_link);				\
   lfe->lfe_id = id;							\
 } while(0)
