@@ -361,12 +361,10 @@ playlist_enqueue0(playlist_t *pl, const char *url, struct filetag_list *ftags)
 void
 playlist_enqueue(const char *url, struct filetag_list *ftags, int playit)
 {
-  playlist_t *pl = playlist_get_current();
+  playlist_t *pl;
   playlist_entry_t *ple;
 
-  if(pl == NULL) 
-    /* someone has deleted all playlists, but we're tougher than that! */
-    pl = playlist_create("Default playlist", 0);
+  pl = playlist_create("Incoming", 0);
 
   ple = playlist_enqueue0(pl, url, ftags);
 
@@ -728,7 +726,6 @@ playlist_thread(void *aux)
    *
    */
   playlist_scan();
-  pl = playlist_create("Default playlist", 0);
 
   layout_switcher_appi_add(ai, mini);
   
