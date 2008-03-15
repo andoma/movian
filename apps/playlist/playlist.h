@@ -35,6 +35,7 @@
 
 
 TAILQ_HEAD(playlist_entry_queue, playlist_entry);
+LIST_HEAD(playlist_list, playlist);
 
 /**
  * Struct describing a playlist
@@ -48,7 +49,7 @@ typedef struct playlist {
 
   char *pl_title;
 
-  TAILQ_ENTRY(playlist) pl_link;
+  LIST_ENTRY(playlist) pl_link;
 
   struct playlist_entry_queue pl_entries;
   struct playlist_entry_queue pl_shuffle_entries;

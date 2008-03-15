@@ -26,6 +26,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <dirent.h>
 
 #include <libglw/glw.h>
 
@@ -36,6 +37,8 @@
 #include <layout/layout.h>
 #include <layout/layout_forms.h>
 #include <layout/layout_support.h>
+
+static struct playlist_list playlists;
 
 static playlist_player_t plp;
 
@@ -95,7 +98,20 @@ playlist_create(appi_t *ai, const char *title)
 {
   glw_t *e, *w;
   struct layout_form_entry_list lfelist;
-  playlist_t *pl = calloc(1, sizeof(playlist_t));
+  playlist_t *pl;
+
+  pthread_mutex_lock(&playlistlock);
+
+  LIST_FOREACH(pl, &playlists, pl_link) {
+    if(!strcmp(title, pl->pl_title)) {
+      pthread_mutex_unlock(&playlistlock);
+      return pl;
+    }
+  }
+
+  pl = calloc(1, sizeof(playlist_t));
+
+  LIST_INSERT_HEAD(&playlists, pl, pl_link);
 
   pl->pl_title = strdup(title);
 
@@ -124,6 +140,8 @@ playlist_create(appi_t *ai, const char *title)
   layout_form_initialize(&lfelist, w, &ai->ai_gfs, &ai->ai_ic, 0);
 
   pl->pl_list = glw_find_by_id(w, "track_list", 0);
+
+  pthread_mutex_unlock(&playlistlock);
   return pl;
 }
 
@@ -140,6 +158,8 @@ playlist_destroy(playlist_t *pl)
   printf("Freeing playlist %p\n", pl);
 
   pthread_mutex_lock(&playlistlock);
+
+  LIST_REMOVE(pl, pl_link);
 
   /**
    * Decouple all playlist entries from the playlist
@@ -203,36 +223,31 @@ playlist_get_current(void)
  *
  * (NOTE: ftags are not copied, this must be done by the caller)
  */
-void
-playlist_enqueue(const char *url, struct filetag_list *ftags, int playit)
+static playlist_entry_t *
+playlist_enqueue0(playlist_t *pl, const char *url, struct filetag_list *ftags)
 {
   playlist_entry_t *ple, *ple2;
-  playlist_t *pl = playlist_get_current();
   struct filetag_list ftags0;
   int64_t i64;
   glw_t *w;
   const char *s;
 
-  if(pl == NULL) 
-    /* someone has deleted all playlists, but we're tougher than that! */
-    pl = playlist_create(playlist_appi, "Default playlist");
-  
   if(ftags == NULL) {
     TAILQ_INIT(&ftags0);
     if(fa_probe(&ftags0, url) == -1)
-      return;
+      return NULL;
     ftags = &ftags0;
   }
 
   if(filetag_get_int(ftags, FTAG_FILETYPE, &i64) < 0) {
     filetag_freelist(ftags);
-    return;
+    return NULL;
   }
 
   if(i64 != FILETYPE_AUDIO) {
     /* We only accept audio */
     filetag_freelist(ftags);
-    return;
+    return NULL;
   }
 
   ple = calloc(1, sizeof(playlist_entry_t));
@@ -296,6 +311,26 @@ playlist_enqueue(const char *url, struct filetag_list *ftags, int playit)
    */
   layout_update_time(pl->pl_widget, "time_total",  pl->pl_total_time);
   layout_update_int(pl->pl_widget,  "track_total", pl->pl_nentries);
+  return ple;
+}
+
+
+/**
+ * External enqueue interface
+ *
+ * Will also save playlist
+ */
+void
+playlist_enqueue(const char *url, struct filetag_list *ftags, int playit)
+{
+  playlist_t *pl = playlist_get_current();
+  playlist_entry_t *ple;
+
+  if(pl == NULL) 
+    /* someone has deleted all playlists, but we're tougher than that! */
+    pl = playlist_create(playlist_appi, "Default playlist");
+
+  ple = playlist_enqueue0(pl, url, ftags);
 
 
   /**
@@ -303,11 +338,12 @@ playlist_enqueue(const char *url, struct filetag_list *ftags, int playit)
    *
    * If it is idle, it will start playing it directly
    */
-  playlist_signal(ple, playit ? PLAYLIST_INPUTEVENT_PLAYENTRY : 
-		  PLAYLIST_INPUTEVENT_NEWENTRY);
+  if(ple != NULL) {
+    playlist_signal(ple, playit ? PLAYLIST_INPUTEVENT_PLAYENTRY : 
+		    PLAYLIST_INPUTEVENT_NEWENTRY);
+  }
 
   playlist_save(pl);
-
 }
 
 /**
@@ -517,6 +553,94 @@ playlist_unlink(playlist_t *pl)
 }
 
 
+
+
+
+
+
+/**
+ * Load a playlist
+ */
+static void
+playlist_load(appi_t *ai, const char *path)
+{
+  FILE *fp;
+  char line[300];
+  int l;
+  char *title = NULL;
+  playlist_t *pl;
+
+  fp = fopen(path, "r");
+  if(fp != NULL) {
+    if(fgets(line, sizeof(line), fp) != NULL) {
+      if(!strcmp("showtimeplaylist-v1\n", line)) {
+	if(fgets(line, sizeof(line), fp) != NULL) {
+	  if(!strncmp("title=", line, 6)) {
+	    l = strlen(line+6);
+
+	    while(line[6+l] < 32 && l > 0)
+	      line[6 + l--] = 0;
+
+	    pl = playlist_create(ai, line + 6);
+
+	    while(!feof(fp)) {
+	      if(fgets(line, sizeof(line), fp) == NULL)
+		break;
+	
+	      l = strlen(line);
+	      while(line[l] < 32 && l > 0)
+		line[l--] = 0;
+
+	      if(!strncmp("track=", line, 6)) {
+		playlist_enqueue0(pl, line + 6, NULL);
+	      }
+	    }
+	  }
+	}
+      }
+    }
+    fclose(fp);
+  }
+  free(title);
+}
+
+
+
+
+/**
+ *  Scan (stored) playlists (on startup)
+ */
+static void
+playlist_scan(appi_t *ai)
+{
+  char buf[256];
+  char fullpath[256];
+  struct dirent **namelist, *d;
+  int n, i;
+
+  if(settingsdir == NULL)
+    return;
+
+  snprintf(buf, sizeof(buf), "%s/playlists", settingsdir);
+
+  n = scandir(buf, &namelist, NULL, NULL);
+  if(n < 0)
+    return;
+
+  for(i = 0; i < n; i++) {
+    d = namelist[i];
+    if(d->d_name[0] == '.')
+      continue;
+
+    snprintf(fullpath, sizeof(fullpath), "%s/%s", buf, d->d_name);
+
+    printf("Loading playlist %s\n", fullpath);
+    playlist_load(ai, fullpath);
+  }
+}
+
+
+
 /**
  * User interface playlist thread
  */
@@ -561,6 +685,7 @@ playlist_thread(void *aux)
   /**
    *
    */
+  playlist_scan(ai);
   pl = playlist_create(ai, "Default playlist");
 
   layout_switcher_appi_add(ai, mini);
