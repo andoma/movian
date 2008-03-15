@@ -36,6 +36,7 @@ typedef struct layout_form_entry {
 #define LFE_TYPE_STRING 1
 #define LFE_TYPE_BUTTON 2
 #define LFE_TYPE_LIST   3
+#define LFE_TYPE_CUSTOM 4
 
   int lfe_value;
 
@@ -43,6 +44,8 @@ typedef struct layout_form_entry {
   size_t lfe_buf_size;   /* Total size of buffer (allocated memory) */
   int lfe_buf_ptr;       /* Current position for insert (cursor)    */
   int lfe_buf_len;       /* Size of current data (string length)    */
+
+  glw_callback_t *lfe_widget_callback;
 
 } layout_form_entry_t;
 
@@ -52,6 +55,15 @@ int layout_form_query(struct layout_form_entry_list *lfelist,
 
 int layout_form_initialize(struct layout_form_entry_list *lfelist,
 			   glw_t *m, glw_focus_stack_t *gfs, ic_t *ic);
+
+#define LFE_ADD_CUSTOM(listp, id, cb) do {				\
+  layout_form_entry_t *lfe = alloca(sizeof(layout_form_entry_t));	\
+  memset(lfe, 0, sizeof(layout_form_entry_t));				\
+  lfe->lfe_type = LFE_TYPE_CUSTOM;                                      \
+  lfe->lfe_widget_callback = cb                                         \
+  TAILQ_INSERT_TAIL(listp, lfe, lfe_link);				\
+  lfe->lfe_id = id;							\
+} while(0)
 
 #define LFE_ADD_STR(listp, id, str, bufsize) do {			\
   layout_form_entry_t *lfe = alloca(sizeof(layout_form_entry_t));	\
