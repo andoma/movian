@@ -1,19 +1,52 @@
 #HTSSIMPLEMODEL
 
-x-container {
+bitmap {
+ color 0.6 0.6 0.6
+ focus-alpha
+ border-scale-childs
+ filename icon://plate_compact.png
+ texture-borders 0.5 0.5 0.5 0.5
+ vertex-borders  0.1 0.1 0.1 0.1
 
- bitmap {
-  weight 0.05
-  filename icon://audio.png
-  keep-aspect
- }
+ expander {
 
- xfader {
-  id track_playstatus
-  weight 0.05
- }
+  x-container {
 
- text {
-  id track_title
+   xfader {
+    id track_playstatus
+    weight 0.05
+   }
+
+   text {
+    id track_title
+   }
+   text {
+    weight 0.1
+    align left
+    id track_duration
+   }
+  }
+  z-container {
+   bitmap { 
+    filename icon://audio.png
+    alpha 0.1
+    keep-aspect
+   }
+
+   x-container {
+    space 0.05
+    y-container {
+     text {
+      align left
+      id track_author
+     }
+     text {
+      align left
+      id track_album
+     }
+     space 1.0
+    }
+   }
+  }
  }
 }

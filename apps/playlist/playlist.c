@@ -230,6 +230,14 @@ playlist_enqueue(const char *url, struct filetag_list *ftags, int playit)
     s = s ? s + 1 : url;
     layout_update_str(w, "track_title", s);
   }
+
+  layout_update_str(w, "track_author",
+		    filetag_get_str2(ftags, FTAG_AUTHOR));
+
+  layout_update_str(w, "track_album",
+		    filetag_get_str2(ftags, FTAG_ALBUM));
+
+  layout_update_time(w, "track_duration",  ple->ple_duration);
   
 
   /**
