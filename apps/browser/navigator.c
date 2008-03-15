@@ -267,6 +267,9 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
 	case FA_FILE:
 	  browser_enter(ai, bn, 1);
 	  break;
+	case FA_DIR:
+	  playlist_build_from_dir(bn->bn_url);
+	  break;
 	}
 	browser_node_deref(bn);
 	break;

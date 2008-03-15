@@ -11,9 +11,10 @@ bitmap {
  z-container {
 
   bitmap {
-     alpha 0.1
-     filename icon://sound.png
-     keep-aspect
+   id backdrop
+   alpha 0.2
+   filename icon://sound.png
+   keep-aspect
   }
 
   y-container {

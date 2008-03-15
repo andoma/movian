@@ -58,10 +58,9 @@ pthread_mutex_t playlistlock = PTHREAD_MUTEX_INITIALIZER;
 #define PL_EVENT_DELETE_PLAYLIST   2
 #define PL_EVENT_PLE_CHANGED       3
 
-static void playlist_signal(playlist_entry_t *ple, int type);
 static void playlist_entry_free(playlist_entry_t *ple);
-static void playlist_save(playlist_t *pl);
 static void playlist_unlink(playlist_t *pl);
+static void playlist_destroy(playlist_t *pl);
 
 
 /**
@@ -94,7 +93,7 @@ playlist_entry_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
  * Add a playlist
  */ 
 playlist_t *
-playlist_create(const char *title)
+playlist_create(const char *title, int truncate)
 {
   glw_t *e, *w;
   struct layout_form_entry_list lfelist;
@@ -105,6 +104,11 @@ playlist_create(const char *title)
   LIST_FOREACH(pl, &playlists, pl_link) {
     if(!strcmp(title, pl->pl_title)) {
       pthread_mutex_unlock(&playlistlock);
+
+      if(truncate) {
+	playlist_destroy(pl);
+	break;
+      }
       return pl;
     }
   }
@@ -147,6 +151,25 @@ playlist_create(const char *title)
 }
 
 /**
+ * Set the supplied backdrop on the playlist
+ */
+void
+playlist_set_backdrop(playlist_t *pl, const char *url)
+{
+  glw_t *w;
+
+  free(pl->pl_backdrop);
+  pl->pl_backdrop = strdup(url);
+
+  if((w = glw_find_by_id(pl->pl_widget, "backdrop", 0)) == NULL)
+    return;
+
+  glw_set(w,
+	  GLW_ATTRIB_FILENAME, url,
+	  NULL);
+}
+
+/**
  * Destroy a playlist
  */
 static void
@@ -182,6 +205,7 @@ playlist_destroy(playlist_t *pl)
   glw_destroy(pl->pl_widget);
   glw_destroy(pl->pl_tab);
 
+  free(pl->pl_backdrop);
   free(pl->pl_title);
   free(pl);
 }
@@ -221,7 +245,7 @@ playlist_get_current(void)
  *
  * (NOTE: ftags are not copied, this must be done by the caller)
  */
-static playlist_entry_t *
+playlist_entry_t *
 playlist_enqueue0(playlist_t *pl, const char *url, struct filetag_list *ftags)
 {
   playlist_entry_t *ple, *ple2;
@@ -309,6 +333,8 @@ playlist_enqueue0(playlist_t *pl, const char *url, struct filetag_list *ftags)
    */
   layout_update_time(pl->pl_widget, "time_total",  pl->pl_total_time);
   layout_update_int(pl->pl_widget,  "track_total", pl->pl_nentries);
+
+  filetag_freelist(ftags);
   return ple;
 }
 
@@ -326,7 +352,7 @@ playlist_enqueue(const char *url, struct filetag_list *ftags, int playit)
 
   if(pl == NULL) 
     /* someone has deleted all playlists, but we're tougher than that! */
-    pl = playlist_create("Default playlist");
+    pl = playlist_create("Default playlist", 0);
 
   ple = playlist_enqueue0(pl, url, ftags);
 
@@ -368,7 +394,7 @@ playlist_entry_free(playlist_entry_t *ple)
 /**
  * Send signal to playlist player
  */ 
-static void
+void
 playlist_signal(playlist_entry_t *ple, int type)
 {
   inputevent_t ie;
@@ -491,7 +517,7 @@ playlist_new(appi_t *ai)
   r = layout_form_query(&lfelist, m, &ai->ai_gfs);
 
   if(r == 1 && plname[0])
-    playlist_create(plname);
+    playlist_create(plname, 0);
 
   glw_detach(m);
 }
@@ -500,7 +526,7 @@ playlist_new(appi_t *ai)
 /**
  *  Store playlist on disk
  */
-static void
+void
 playlist_save(playlist_t *pl)
 {
   char buf[256];
@@ -522,6 +548,9 @@ playlist_save(playlist_t *pl)
       fprintf(fp, 
 	      "showtimeplaylist-v1\n"
 	      "title=%s\n", pl->pl_title);
+      if(pl->pl_backdrop != NULL)
+	fprintf(fp, "backdrop=%s\n", pl->pl_backdrop);
+      
       pthread_mutex_lock(&playlistlock);
       TAILQ_FOREACH(ple, &pl->pl_entries, ple_link) {
 	fprintf(fp, "track=%s\n", ple->ple_url);
@@ -577,7 +606,7 @@ playlist_load(const char *path)
 	    while(line[6+l] < 32 && l > 0)
 	      line[6 + l--] = 0;
 
-	    pl = playlist_create(line + 6);
+	    pl = playlist_create(line + 6, 0);
 
 	    while(!feof(fp)) {
 	      if(fgets(line, sizeof(line), fp) == NULL)
@@ -587,9 +616,12 @@ playlist_load(const char *path)
 	      while(line[l] < 32 && l > 0)
 		line[l--] = 0;
 
-	      if(!strncmp("track=", line, 6)) {
+	      if(!strncmp("track=", line, 6))
 		playlist_enqueue0(pl, line + 6, NULL);
-	      }
+
+	      if(!strncmp("backdrop=", line, 9))
+		playlist_set_backdrop(pl, line + 9);
+
 	    }
 	  }
 	}
@@ -682,7 +714,7 @@ playlist_thread(void *aux)
    *
    */
   playlist_scan();
-  pl = playlist_create("Default playlist");
+  pl = playlist_create("Default playlist", 0);
 
   layout_switcher_appi_add(ai, mini);
   

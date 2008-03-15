@@ -48,6 +48,7 @@ typedef struct playlist {
   glw_t *pl_list;
 
   char *pl_title;
+  char *pl_backdrop;
 
   LIST_ENTRY(playlist) pl_link;
 
@@ -108,10 +109,21 @@ playlist_entry_t *playlist_advance(playlist_entry_t *ple, int prev);
 
 void *playlist_player(void *aux);
 
-playlist_t *playlist_create(const char *title);
+playlist_t *playlist_create(const char *title, int truncate);
 
 extern pthread_mutex_t playlistlock;
 
 void playlist_entry_unref(playlist_entry_t *ple);
+
+playlist_entry_t *playlist_enqueue0(playlist_t *pl, const char *url,
+				    struct filetag_list *ftags);
+
+void playlist_build_from_dir(const char *url);
+
+void playlist_signal(playlist_entry_t *ple, int type);
+
+void playlist_save(playlist_t *pl);
+
+void playlist_set_backdrop(playlist_t *pl, const char *url);
 
 #endif /* PLAYLIST_H */

@@ -57,4 +57,6 @@ void fileaccess_init(void);
 
 const char *fa_resolve_proto(const char *url, fa_protocol_t **p);
 
+off_t fileaccess_size(const char *url);
+
 #endif /* FILEACCESS_H */

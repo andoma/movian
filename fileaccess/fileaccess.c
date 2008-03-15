@@ -91,6 +91,28 @@ fileaccess_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
   return fap->fap_scan(url, cb, arg);
 }
 
+/**
+ *
+ */
+off_t
+fileaccess_size(const char *url)
+{
+  fa_protocol_t *fap;
+  off_t size;
+  void *handle;
+
+  if((url = fa_resolve_proto(url, &fap)) == NULL)
+    return -1;
+
+  if((handle = fap->fap_open(url)) == NULL)
+    return -1;
+
+  size = fap->fap_fsize(handle);
+
+  fap->fap_close(handle);
+  return size;
+}
+
 
 
 /**
