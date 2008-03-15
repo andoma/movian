@@ -56,8 +56,23 @@ find_anything_with_id(glw_t *w, glw_class_t skip_class, int skip)
 {
   glw_t *c, *r, *best;
 
-  if(w == NULL || glw_get_opaque(w, layout_form_callback) != NULL)
+  if(w == NULL)
     return w;
+
+  if(glw_get_opaque(w, layout_form_callback) != NULL) {
+    /* Candidate for selection */
+
+    switch(w->glw_class) {
+    case GLW_LIST:
+      /* We never want to switch to a list with no childs in it.
+	 There is nothing the user can do there, so skip over it */
+      if(TAILQ_FIRST(&w->glw_childs) != NULL)
+	return w;
+      break;
+    default:
+      return w;
+    }
+  }
 
   if(w->glw_class == skip_class) {
     best = NULL;
