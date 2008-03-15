@@ -93,8 +93,8 @@ playlist_entry_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 /**
  * Add a playlist
  */ 
-static playlist_t *
-playlist_create(appi_t *ai, const char *title)
+playlist_t *
+playlist_create(const char *title)
 {
   glw_t *e, *w;
   struct layout_form_entry_list lfelist;
@@ -115,7 +115,7 @@ playlist_create(appi_t *ai, const char *title)
 
   pl->pl_title = strdup(title);
 
-  playlist_appi = pl->pl_ai = ai;
+  pl->pl_ai = playlist_appi;
   TAILQ_INIT(&pl->pl_entries);
   TAILQ_INIT(&pl->pl_shuffle_entries);
 
@@ -137,7 +137,8 @@ playlist_create(appi_t *ai, const char *title)
 
   TAILQ_INIT(&lfelist);
   LFE_ADD_MONITOR_CHILD(&lfelist, "track_list", PL_EVENT_PLE_CHANGED);
-  layout_form_initialize(&lfelist, w, &ai->ai_gfs, &ai->ai_ic, 0);
+  layout_form_initialize(&lfelist, w, &pl->pl_ai->ai_gfs,
+			 &pl->pl_ai->ai_ic, 0);
 
   pl->pl_list = glw_find_by_id(w, "track_list", 0);
 
@@ -325,7 +326,7 @@ playlist_enqueue(const char *url, struct filetag_list *ftags, int playit)
 
   if(pl == NULL) 
     /* someone has deleted all playlists, but we're tougher than that! */
-    pl = playlist_create(playlist_appi, "Default playlist");
+    pl = playlist_create("Default playlist");
 
   ple = playlist_enqueue0(pl, url, ftags);
 
@@ -490,7 +491,7 @@ playlist_new(appi_t *ai)
   r = layout_form_query(&lfelist, m, &ai->ai_gfs);
 
   if(r == 1 && plname[0])
-    playlist_create(ai, plname);
+    playlist_create(plname);
 
   glw_detach(m);
 }
@@ -557,7 +558,7 @@ playlist_unlink(playlist_t *pl)
  * Load a playlist
  */
 static void
-playlist_load(appi_t *ai, const char *path)
+playlist_load(const char *path)
 {
   FILE *fp;
   char line[300];
@@ -576,7 +577,7 @@ playlist_load(appi_t *ai, const char *path)
 	    while(line[6+l] < 32 && l > 0)
 	      line[6 + l--] = 0;
 
-	    pl = playlist_create(ai, line + 6);
+	    pl = playlist_create(line + 6);
 
 	    while(!feof(fp)) {
 	      if(fgets(line, sizeof(line), fp) == NULL)
@@ -606,7 +607,7 @@ playlist_load(appi_t *ai, const char *path)
  *  Scan (stored) playlists (on startup)
  */
 static void
-playlist_scan(appi_t *ai)
+playlist_scan(void)
 {
   char buf[256];
   char fullpath[256];
@@ -630,7 +631,7 @@ playlist_scan(appi_t *ai)
     snprintf(fullpath, sizeof(fullpath), "%s/%s", buf, d->d_name);
 
     printf("Loading playlist %s\n", fullpath);
-    playlist_load(ai, fullpath);
+    playlist_load(fullpath);
   }
 }
 
@@ -649,7 +650,7 @@ playlist_thread(void *aux)
   playlist_t *pl;
   pthread_t playerthread;
 
-  ai = appi_create("Playlist");
+  playlist_appi = ai = appi_create("Playlist");
 
   ai->ai_widget =
     glw_create(GLW_CUBESTACK,
@@ -680,8 +681,8 @@ playlist_thread(void *aux)
   /**
    *
    */
-  playlist_scan(ai);
-  pl = playlist_create(ai, "Default playlist");
+  playlist_scan();
+  pl = playlist_create("Default playlist");
 
   layout_switcher_appi_add(ai, mini);
   

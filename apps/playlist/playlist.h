@@ -108,6 +108,8 @@ playlist_entry_t *playlist_advance(playlist_entry_t *ple, int prev);
 
 void *playlist_player(void *aux);
 
+playlist_t *playlist_create(const char *title);
+
 extern pthread_mutex_t playlistlock;
 
 void playlist_entry_unref(playlist_entry_t *ple);
