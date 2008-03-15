@@ -130,3 +130,33 @@ layout_update_str(glw_t *w, const char *id, const char *str)
   glw_set(w, GLW_ATTRIB_CAPTION, str, NULL);
 
 }
+
+/**
+ * Load a model into parent 'w'
+ */
+void
+layout_update_model(glw_t *w, const char *id, const char *model)
+{
+  printf("Update %s -> %s\n", id, model);
+
+  if((w = glw_find_by_id(w, id, 0)) == NULL)
+    return;
+
+  printf("\t found widget\n");
+  /* We only support doing this in a few parent classes,
+     since they must autodestroy the previous widget */
+     
+  switch(w->glw_class) {
+  case GLW_XFADER:
+  case GLW_FLIPPER:
+    break;
+  default:
+    printf("incorrect class %d\n", w->glw_class);
+    return;
+  }
+
+  glw_create(GLW_MODEL,
+	     GLW_ATTRIB_FILENAME, model,
+	     GLW_ATTRIB_PARENT, w,
+	     NULL);
+}
