@@ -28,6 +28,27 @@ y-container {
    space 15
 
    bitmap {
+    id new_playlist
+    focus-cursor
+    focus-alpha
+    border-scale-childs
+    filename icon://plate_compact.png
+    texture-borders 0.5 0.5 0.5 0.5
+    vertex-borders  0.1 0.1 0.1 0.1
+    x-container {
+     bitmap {
+      weight 0.2
+      filename icon://edit_add.png
+      keep-aspect
+     } 
+     text {
+      caption New playlist
+      align left
+     }
+    }
+   }
+
+   bitmap {
     id delete_playlist
     focus-cursor
     focus-alpha
@@ -38,7 +59,7 @@ y-container {
     x-container {
      bitmap {
       weight 0.2
-      filename icon://error.png
+      filename icon://edit_delete.png
       keep-aspect
      } 
      text {
@@ -47,6 +68,9 @@ y-container {
      }
     }
    }
+
+
+
   }
  }
 

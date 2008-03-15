@@ -40,12 +40,15 @@ static playlist_player_t plp;
 
 static glw_t *playlists_list;
 
+glw_t *playlist_root;
+
 /**
  * Global lock for reference counters and playlist/playlistentry relations
  */
 pthread_mutex_t playlistlock = PTHREAD_MUTEX_INITIALIZER;
 
 
+#define PL_EVENT_NEW_PLAYLIST      1
 #define PL_EVENT_DELETE_PLAYLIST   2
 #define PL_EVENT_PLE_CHANGED       3
 
@@ -82,7 +85,7 @@ playlist_entry_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
  * Add a playlist
  */ 
 static playlist_t *
-playlist_add(appi_t *ai, const char *title)
+playlist_create(appi_t *ai, const char *title)
 {
   glw_t *e, *w;
   struct layout_form_entry_list lfelist;
@@ -104,7 +107,7 @@ playlist_add(appi_t *ai, const char *title)
   if(w != NULL)
     glw_set(w, GLW_ATTRIB_CAPTION, title, NULL);
 
-  w = layout_form_add_tab2(ai->ai_widget, "playlists", e,
+  w = layout_form_add_tab2(playlist_root, "playlists", e,
 			   "track_list_container", "playlist/tracklist");
 
   TAILQ_INIT(&lfelist);
@@ -369,6 +372,41 @@ playlist_root_widget(glw_t *w, void *opaque, glw_signal_t sig, ...)
 }
 
 
+
+/**
+ *
+ */
+static void
+playlist_new(appi_t *ai)
+{
+  struct layout_form_entry_list lfelist;
+  glw_t *m;
+  int r;
+  char plname[64];
+  playlist_t *pl;
+
+  TAILQ_INIT(&lfelist);
+
+  m = glw_create(GLW_MODEL,
+		 GLW_ATTRIB_PARENT, ai->ai_widget,
+		 GLW_ATTRIB_FILENAME, "playlist/playlist-new",
+		 NULL);
+
+  plname[0] = 0;
+
+  LFE_ADD_STR(&lfelist, "playlist_title", plname, sizeof(plname));
+  LFE_ADD_BTN(&lfelist, "ok",     0);
+  LFE_ADD_BTN(&lfelist, "cancel", -1);
+  r = layout_form_query(&lfelist, m, &ai->ai_gfs);
+
+  if(r == 0 && plname[0])
+    playlist_create(ai, plname);
+
+  glw_detach(m);
+}
+
+
+
 /**
  * User interface playlist thread
  */
@@ -382,20 +420,23 @@ playlist_thread(void *aux)
   playlist_t *pl;
   pthread_t playerthread;
 
-
   ai = appi_create("Playlist");
 
   ai->ai_widget =
-    glw_create(GLW_MODEL,
-	       GLW_ATTRIB_FILENAME, "playlist/root",
+    glw_create(GLW_CUBESTACK,
 	       GLW_ATTRIB_SIGNAL_HANDLER, playlist_root_widget, ai, 500,
 	       NULL);
+
+  playlist_root = glw_create(GLW_MODEL,
+			     GLW_ATTRIB_FILENAME, "playlist/root",
+			     GLW_ATTRIB_PARENT, ai->ai_widget,
+			     NULL);
 
   mini = glw_create(GLW_MODEL,
 		    GLW_ATTRIB_FILENAME, "playlist/switcher-icon",
 		    NULL);
 
-  playlists_list = glw_find_by_id(ai->ai_widget, "playlists", 0);
+  playlists_list = glw_find_by_id(playlist_root, "playlists", 0);
 
 
   /**
@@ -410,10 +451,7 @@ playlist_thread(void *aux)
   /**
    *
    */
-  pl = playlist_add(ai, "Default playlist");
-
-  playlist_add(ai, "beta");
-  playlist_add(ai, "gamma");
+  pl = playlist_create(ai, "Default playlist");
 
   layout_switcher_appi_add(ai, mini);
   
@@ -422,8 +460,9 @@ playlist_thread(void *aux)
    */
   TAILQ_INIT(&lfelist);
   LFE_ADD(&lfelist, "playlists");
+  LFE_ADD_BTN(&lfelist, "new_playlist", PL_EVENT_NEW_PLAYLIST);
   LFE_ADD_BTN(&lfelist, "delete_playlist", PL_EVENT_DELETE_PLAYLIST);
-  layout_form_initialize(&lfelist, ai->ai_widget, &ai->ai_gfs, &ai->ai_ic, 1);
+  layout_form_initialize(&lfelist, playlist_root, &ai->ai_gfs, &ai->ai_ic, 1);
 
   
   while(1) {
@@ -456,8 +495,13 @@ playlist_thread(void *aux)
     case INPUT_U32:
       
       switch(ie.u.u32) {
+
+      case PL_EVENT_NEW_PLAYLIST:
+	playlist_new(ai);
+	break;
+
       case PL_EVENT_DELETE_PLAYLIST:
-	printf("Delete playlist\n");
+	//	delete_playlist(ai);
 	break;
       }
     }
