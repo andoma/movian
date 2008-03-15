@@ -87,7 +87,7 @@ navigator_root_widget(glw_t *w, void *opaque, glw_signal_t sig, ...)
  *
  */
 static void
-browser_enter(appi_t *ai, browser_node_t *bn)
+browser_enter(appi_t *ai, browser_node_t *bn, int selected)
 {
   int64_t type;
   int r;
@@ -101,7 +101,7 @@ browser_enter(appi_t *ai, browser_node_t *bn)
 
   switch(type) {
   case FILETYPE_AUDIO:
-    playlist_enqueue(bn->bn_url, NULL, 1);
+    playlist_enqueue(bn->bn_url, NULL, !selected);
     break;
 
   case FILETYPE_VIDEO:
@@ -251,9 +251,22 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
 	  break;
 
 	case FA_FILE:
-	  browser_enter(ai, bn);
+	  browser_enter(ai, bn, 0);
+	  break;
+	}
+	browser_node_deref(bn);
+	break;
+
+
+      case INPUT_KEY_SELECT:
+	bn = browser_view_get_current_selected_node(ai->ai_widget);
+	if(bn == NULL)
 	  break;
 
+	switch(bn->bn_type) {
+	case FA_FILE:
+	  browser_enter(ai, bn, 1);
+	  break;
 	}
 	browser_node_deref(bn);
 	break;
