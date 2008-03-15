@@ -6,7 +6,7 @@ bitmap {
  border-scale-childs
  filename icon://plate_compact.png
  texture-borders 0.5 0.5 0.5 0.5
- vertex-borders  0.1 0.1 0.1 0.1
+ vertex-borders  0.05 0.05 0.05 0.05
 
  z-container {
 
