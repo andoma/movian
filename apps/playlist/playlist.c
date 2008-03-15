@@ -69,11 +69,25 @@ static void playlist_destroy(playlist_t *pl);
 static int
 playlist_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
+  playlist_t *pl = opaque;
+  playlist_entry_t *ple;
+
+  switch(signal) {
+  default:
+    break;
+  case GLW_SIGNAL_ENTER:
+    pl = opaque;
+    ple = TAILQ_FIRST(&pl->pl_entries);
+    if(ple == NULL)
+      break;
+    playlist_signal(ple, PLAYLIST_INPUTEVENT_PLAYENTRY);
+    break;
+  }
   return 0;
 }
 
 /**
- * Playlist widget callback
+ * Playlist entry widget callback
  */
 static int
 playlist_entry_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
