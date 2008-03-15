@@ -281,7 +281,7 @@ layout_form_query(struct layout_form_entry_list *lfelist, glw_t *m,
 
   input_getevent(&ic, 1, &ie, NULL);
 
-  if(ie.type != INPUT_SPECIAL)
+  if(ie.type != INPUT_U32)
     return -1;
 
   input_flush_queue(&ic);
@@ -491,7 +491,7 @@ layout_form_entry_button(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
   switch(signal) {
   case GLW_SIGNAL_ENTER:
-    ie.type = INPUT_SPECIAL;
+    ie.type = INPUT_U32;
     ie.u.u32 = lfe->lfe_value;
     input_postevent(lfe->lfe_ic, &ie);
     return 1;

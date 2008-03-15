@@ -85,7 +85,11 @@ typedef enum {
   INPUT_NONE = 0,
   INPUT_KEY,
   INPUT_PAD,
-  INPUT_SPECIAL,
+  INPUT_U32,             /* Generic U32 */
+  INPUT_APP,             /* Application specific, 'ptr' will be free'd
+			    by freefunc if entry is flushed.
+			    NOTE: Applications may stack additional types
+			    by having INPUT_APP as a bias */
   
 } input_event_type_t;
 
@@ -107,7 +111,7 @@ typedef struct inputevent {
     void *ptr;
   } u;
 
-  void (*freefunc)(void *ptr);
+  void (*freefunc)(input_event_type_t type, void *ptr);
 
 } inputevent_t;
 
