@@ -545,6 +545,37 @@ playlist_rename(playlist_t *pl)
 
 
 /**
+ *
+ */
+static void
+playlist_delete(playlist_t *pl)
+{
+  struct layout_form_entry_list lfelist;
+  glw_t *m;
+  int r;
+  appi_t *ai = playlist_appi;
+
+  TAILQ_INIT(&lfelist);
+
+  m = glw_create(GLW_MODEL,
+		 GLW_ATTRIB_PARENT, ai->ai_widget,
+		 GLW_ATTRIB_FILENAME, "playlist/playlist-delete",
+		 NULL);
+
+  layout_update_str(m, "playlist_title", pl->pl_title);
+
+  LFE_ADD_BTN(&lfelist, "ok",     1);
+  LFE_ADD_BTN(&lfelist, "cancel", 2);
+  r = layout_form_query(&lfelist, m, &ai->ai_gfs);
+
+  if(r == 1)
+    playlist_destroy(pl);
+
+  glw_detach(m);
+}
+
+
+/**
  *  Store playlist on disk
  */
 void
@@ -788,7 +819,7 @@ playlist_thread(void *aux)
       case PL_EVENT_DELETE_PLAYLIST:
 	pl = playlist_get_current();
 	if(pl != NULL)
-	  playlist_destroy(pl);
+	  playlist_delete(pl);
 	break;
       }
     }
