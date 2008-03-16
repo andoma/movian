@@ -25,7 +25,7 @@ SRCS  += alsa_audio.c
 
 VPATH += layout
 SRCS  += layout.c layout_forms.c layout_world.c layout_switcher.c \
-	 layout_support.c
+	 layout_support.c layout_overlay.c
 
 # OpenGL support
 

@@ -33,6 +33,7 @@
 void
 layout_create(void)
 {
+  layout_overlay_create();
   layout_switcher_create();
   layout_world_create();
 }
@@ -60,5 +61,6 @@ layout_draw(float aspect)
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
   layout_world_render(aspect);
   layout_switcher_render(aspect);
+  layout_overlay_render(aspect);
 }
 
