@@ -233,9 +233,7 @@ gl_keypress(XEvent *event)
     case XK_F1:        ikey = INPUT_KEY_MENU;             break;
     case XK_F2:        ikey = INPUT_KEY_PLAYPAUSE;        break;
 
-    case XK_F5:        ikey = INPUT_KEY_APP_LAUNCHER;     break;
-    case XK_F6:        ikey = INPUT_KEY_TASK_SWITCHER;    break;
-
+    case XK_F9:        ikey = INPUT_KEY_SWITCH_VIEW;      break;
     case XK_F10:       ikey = INPUT_KEY_POWER;            break;
     case XK_F11:       ikey = INPUT_KEY_SEEK_BACKWARD;    break;
     case XK_F12:       ikey = INPUT_KEY_SEEK_FORWARD;     break;

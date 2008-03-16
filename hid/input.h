@@ -79,6 +79,7 @@ typedef enum {
   INPUT_KEY_QUIT,
   INPUT_KEY_TASK_SWITCHER,
   INPUT_KEY_TASK_DOSWITCH,
+  INPUT_KEY_SWITCH_VIEW,
 } input_key_t;
 
 typedef enum {
