@@ -1,0 +1,5 @@
+#HTSSIMPLEMODEL
+
+xfader {
+ id node_filetype_icon_container
+}
