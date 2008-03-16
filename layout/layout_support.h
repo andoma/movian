@@ -19,7 +19,10 @@
 #ifndef LAYOUT_SUPPORT_H
 #define LAYOUT_SUPPORT_H
 
-void layout_update_codec_info(glw_t *w, const char *id, AVCodecContext *ctx);
+struct AVCodecContext;
+
+void layout_update_codec_info(glw_t *w, const char *id, 
+			      struct AVCodecContext *ctx);
 
 void layout_update_time(glw_t *w, const char *id, int s);
 
