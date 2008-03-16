@@ -1,0 +1,33 @@
+#HTSSIMPLEMODEL
+
+bitmap {
+ color 0.6 0.6 0.6
+ focus-alpha
+ border-scale-childs
+ filename icon://plate_compact.png
+ texture-borders 0.5 0.5 0.5 0.5
+ vertex-borders  0.1 0.1 0.1 0.1
+
+ z-container {
+  xfader {
+   alpha 0.3
+   id node_filetype_icon_container
+  }
+  y-container {
+   text {
+    align center
+    id node_title
+   }
+
+   text {
+    align center
+    id node_author
+   }
+
+   text {
+    align center
+    id node_album
+   }
+  }
+ }
+}

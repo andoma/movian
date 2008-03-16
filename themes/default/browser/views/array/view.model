@@ -1,0 +1,15 @@
+#HTSSIMPLEMODEL
+
+
+x-container {
+ displacement 0 0 0.5
+
+ array {
+  id node_container
+  orientation vertical
+  x-slices 3
+  y-slices 5
+  cursor-size 0.05
+ }
+}
+
