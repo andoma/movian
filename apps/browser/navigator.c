@@ -55,6 +55,8 @@ typedef struct navconfig {
 typedef struct navigator {
   appi_t *nav_ai;
   glw_t *nav_miniature;
+  glw_t *nav_splashcontainer;
+  glw_t *nav_stack;
 } navigator_t;
 
 
@@ -87,7 +89,7 @@ navigator_root_widget(glw_t *w, void *opaque, glw_signal_t sig, ...)
  *
  */
 static void
-browser_enter(appi_t *ai, browser_node_t *bn, int selected)
+browser_enter(appi_t *ai, navigator_t *nav, browser_node_t *bn, int selected)
 {
   int64_t type;
   int r;
@@ -105,7 +107,7 @@ browser_enter(appi_t *ai, browser_node_t *bn, int selected)
     break;
 
   case FILETYPE_VIDEO:
-    play_video(bn->bn_url, ai, &ai->ai_ic, ai->ai_widget);
+    play_video(bn->bn_url, ai, &ai->ai_ic, nav->nav_stack);
     break;
   }
 }
@@ -153,7 +155,7 @@ nav_verify_exit(navigator_t *nav, appi_t *ai)
   TAILQ_INIT(&lfelist);
 
   m = glw_create(GLW_MODEL,
-		 GLW_ATTRIB_PARENT, ai->ai_widget,
+		 GLW_ATTRIB_PARENT, nav->nav_stack,
 		 GLW_ATTRIB_FILENAME, "browser/exit",
 		 NULL);
 
@@ -215,10 +217,10 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
   /**
    * Create browser root
    */ 
-  br = browser_root_create(rooturl, &ai->ai_gfs);
+  br = browser_root_create(rooturl, &ai->ai_gfs, nav->nav_splashcontainer);
   bn = br->br_root;
 
-  browser_view_expand_node(bn, ai->ai_widget, &ai->ai_gfs);
+  browser_view_expand_node(bn, nav->nav_stack, &ai->ai_gfs);
   browser_scandir(bn);
 
   nav_store_instance(ai, cfg, navtype);
@@ -240,7 +242,7 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
 	break;
 
       case INPUT_KEY_SWITCH_VIEW:
-	bn = browser_view_get_current_node(ai->ai_widget);
+	bn = browser_view_get_current_node(nav->nav_stack);
 	if(bn == NULL)
 	  break;
 
@@ -248,18 +250,18 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
 	break;
 
       case INPUT_KEY_ENTER:
-	bn = browser_view_get_current_selected_node(ai->ai_widget);
+	bn = browser_view_get_current_selected_node(nav->nav_stack);
 	if(bn == NULL)
 	  break;
 
 	switch(bn->bn_type) {
 	case FA_DIR:
-	  browser_view_expand_node(bn, ai->ai_widget, &ai->ai_gfs);
+	  browser_view_expand_node(bn, nav->nav_stack, &ai->ai_gfs);
 	  browser_scandir(bn);
 	  break;
 
 	case FA_FILE:
-	  browser_enter(ai, bn, 0);
+	  browser_enter(ai, nav, bn, 0);
 	  break;
 	}
 	browser_node_deref(bn);
@@ -267,13 +269,13 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
 
 
       case INPUT_KEY_SELECT:
-	bn = browser_view_get_current_selected_node(ai->ai_widget);
+	bn = browser_view_get_current_selected_node(nav->nav_stack);
 	if(bn == NULL)
 	  break;
 
 	switch(bn->bn_type) {
 	case FA_FILE:
-	  browser_enter(ai, bn, 1);
+	  browser_enter(ai, nav, bn, 1);
 	  break;
 	case FA_DIR:
 	  playlist_build_from_dir(bn->bn_url);
@@ -283,7 +285,7 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
 	break;
 
       case INPUT_KEY_BACK:
-	bn = browser_view_get_current_node(ai->ai_widget);
+	bn = browser_view_get_current_node(nav->nav_stack);
 	if(bn == NULL)
 	  break;
 
@@ -382,7 +384,7 @@ nav_setup(navigator_t *nav, appi_t *ai)
   TAILQ_INIT(&lfelist);
 
   m = glw_create(GLW_MODEL,
-		 GLW_ATTRIB_PARENT, ai->ai_widget,
+		 GLW_ATTRIB_PARENT, nav->nav_stack,
 		 GLW_ATTRIB_FILENAME, "browser/setup",
 		 NULL);
 
@@ -495,10 +497,24 @@ nav_launch(void *aux)
   nav->nav_ai = ai;
 
   ai->ai_widget =
-    glw_create(GLW_CUBESTACK,
+    glw_create(GLW_CONTAINER_Z,
 	       GLW_ATTRIB_SIGNAL_HANDLER, navigator_root_widget, nav, 1000,
 	       NULL);
 
+  nav->nav_stack = 
+    glw_create(GLW_CUBESTACK,
+	       GLW_ATTRIB_PARENT, ai->ai_widget,
+	       NULL);
+
+  nav->nav_splashcontainer = 
+    glw_create(GLW_XFADER,
+	       GLW_ATTRIB_SPEED, 0.2,
+	       GLW_ATTRIB_PARENT, ai->ai_widget,
+	       NULL);
+
+  /**
+   *  Switcher miniature
+   */
   nav->nav_miniature =
     glw_create(GLW_MODEL,
 	       GLW_ATTRIB_FILENAME, "browser/switcher-icon",
