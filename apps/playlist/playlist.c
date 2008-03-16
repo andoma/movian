@@ -717,6 +717,7 @@ playlist_scan(void)
     printf("Loading playlist %s\n", fullpath);
     playlist_load(fullpath);
   }
+  free(namelist);
 }
 
 
