@@ -363,7 +363,7 @@ browser_view_update_wset_from_node(glw_t *root, browser_node_t *bn)
   char buf[100];
   int64_t i64;
   int32_t i32;
-  char *t;
+  const char *title;
   time_t t;
   struct tm tm;
 
@@ -373,11 +373,11 @@ browser_view_update_wset_from_node(glw_t *root, browser_node_t *bn)
   fname = fname ? fname + 1 : bn->bn_url;
   browser_view_set_caption(root, "node_filename", fname);
 
-  t = filetag_get_str2(&bn->bn_ftags, FTAG_TITLE);
-  if(t == NULL)
-    t = fname;
+  title = filetag_get_str2(&bn->bn_ftags, FTAG_TITLE);
+  if(title == NULL)
+    title = fname;
 
-  browser_view_set_caption(root, "node_title", t);
+  browser_view_set_caption(root, "node_title", title);
 
   browser_view_set_caption(root, "node_author",
 			   filetag_get_str2(&bn->bn_ftags, FTAG_AUTHOR));
