@@ -44,6 +44,7 @@ typedef enum {
   FILETYPE_ISO,
   FILETYPE_VIDEO,
   FILETYPE_AUDIO,
+  FILETYPE_NUMTAGS,
 } ftag_filetype_t;
 
 
