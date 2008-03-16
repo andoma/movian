@@ -24,14 +24,19 @@ void browser_view_expand_node(browser_node_t *bn, glw_t *parent,
 
 void browser_view_collapse_node(browser_node_t *bn, glw_focus_stack_t *gfs);
 
-void browser_view_add_node(browser_node_t *bn);
+void browser_view_add_node(browser_node_t *bn, glw_t *c, int select_id);
 
 browser_node_t *browser_view_get_current_selected_node(glw_t *stack);
 
 browser_node_t *browser_view_get_current_node(glw_t *stack);
 
-void browser_view_set(browser_node_t *bn, const char *viewname);
+glw_t *browser_view_set(browser_node_t *bn, browser_view_t *bv,
+			glw_focus_stack_t *gfs);
 
 void browser_view_node_model_update(browser_node_t *bn);
+
+int browser_view_index(void);
+
+void browser_view_switch(browser_node_t *bn, glw_focus_stack_t *gfs);
 
 #endif /* BROWSER_VIEW_H */

@@ -39,10 +39,13 @@ TAILQ_HEAD(browser_view_queue, browser_view);
 typedef struct browser_view {
   TAILQ_ENTRY(browser_view) bv_link;
   
+  const char *bv_path;
+  const char *bv_name;
 
 } browser_view_t;
 
 
+extern struct browser_view_queue browser_views;
 
 /**
  * A browser node is anything that is browsable
@@ -68,7 +71,7 @@ typedef struct browser_node {
   /* These fields must be access protected with glw_lock() */
   glw_t                    *bn_icon_xfader;
   glw_t                    *bn_cont_xfader;
-  const char               *bn_view;        /* name of current view */
+  browser_view_t           *bn_view;
   /* end of glw_lock() */
 
   /* File tags (with an associated lock) */

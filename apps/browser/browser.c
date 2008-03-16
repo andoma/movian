@@ -128,7 +128,7 @@ browser_node_add_child(browser_node_t *parent, const char *url, int type)
   bn->bn_parent = parent;
   pthread_mutex_unlock(&br->br_hierarchy_mutex);
 
-  browser_view_add_node(bn);
+  browser_view_add_node(bn, NULL, 0);
   return bn;
 }
 

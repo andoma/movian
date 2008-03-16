@@ -22,10 +22,16 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <dirent.h>
 
 #include "showtime.h"
 #include "browser.h"
 #include "browser_view.h"
+#include "layout/layout_support.h"
+
+struct browser_view_queue browser_views;
+
+browser_view_t *defaultview;
 
 static void browser_view_update_wset_from_node(glw_t *root,
 					       browser_node_t *bn);
@@ -102,22 +108,36 @@ browser_view_get_current_node(glw_t *stack)
 
 
 /**
+ * Create a model (faded in via the node container XFADER)
  *
+ * Return the new model
  */
-void
-browser_view_set(browser_node_t *bn, const char *viewname)
+glw_t *
+browser_view_set(browser_node_t *bn, browser_view_t *bv, 
+		 glw_focus_stack_t *gfs)
 {
   char buf[256];
-  
-  free((void *)bn->bn_view);
-  bn->bn_view = strdup(viewname);
+  glw_t *m, *w;
 
-  snprintf(buf, sizeof(buf), "browser/views/%s/view", viewname);
+  bn->bn_view = bv;
 
-  glw_create(GLW_MODEL,
+  snprintf(buf, sizeof(buf), "browser/views/%s/view", bv->bv_name);
+
+  m = glw_create(GLW_MODEL,
 	     GLW_ATTRIB_FILENAME, buf,
 	     GLW_ATTRIB_PARENT, bn->bn_cont_xfader,
 	     NULL);
+
+ 
+  if((w = glw_find_by_id(m, "node_container", 0)) != NULL) {
+    glw_focus_set(gfs, w);
+    glw_set(w,
+	    GLW_ATTRIB_SIGNAL_HANDLER, browser_view_cont_callback, bn, 1000,
+	    NULL);
+  }
+
+  layout_update_str(m, "node_fullpath", bn->bn_url);
+  return m;
 }
 
 
@@ -135,8 +155,6 @@ void
 browser_view_expand_node(browser_node_t *bn, glw_t *parent, 
 			 glw_focus_stack_t *gfs)
 {
-  glw_t *w;
-
   browser_node_ref(bn);
 
   assert(bn->bn_cont_xfader == NULL);
@@ -150,21 +168,7 @@ browser_view_expand_node(browser_node_t *bn, glw_t *parent,
 	       browser_view_xfader_callback, bn, 1000,
 	       NULL);
 
-  browser_view_set(bn, "default");
- 
-  if((w = glw_find_by_id(bn->bn_cont_xfader, "node_container", 0)) != NULL) {
-    glw_focus_set(gfs, w);
-
-    glw_set(w,
-	    GLW_ATTRIB_SIGNAL_HANDLER, browser_view_cont_callback, bn, 1000,
-	    NULL);
-  }
-
-  if((w = glw_find_by_id(bn->bn_cont_xfader, "node_fullpath", 0)) != NULL) {
-    glw_set(w,
-	    GLW_ATTRIB_CAPTION, bn->bn_url,
-	    NULL);
-  }
+  browser_view_set(bn, defaultview, gfs);
   glw_unlock();
 }
 
@@ -301,7 +305,8 @@ browser_view_set_filetype(glw_t *root, browser_node_t *bn)
     break;
   }
 
-  snprintf(buf, sizeof(buf), "browser/views/%s/%s", parent->bn_view, model);
+  snprintf(buf, sizeof(buf), "browser/views/%s/%s", 
+	   parent->bn_view->bv_name, model);
 
   glw_create(GLW_MODEL,
 	     GLW_ATTRIB_FILENAME, buf,
@@ -467,7 +472,8 @@ browser_view_node_model_load(browser_node_t *bn)
 
   pthread_mutex_lock(&bn->bn_ftags_mutex);
 
-  snprintf(buf, sizeof(buf), "browser/views/%s/node", parent->bn_view);
+  snprintf(buf, sizeof(buf), "browser/views/%s/node",
+	   parent->bn_view->bv_name);
 
   w = glw_create(GLW_MODEL,
 		 GLW_ATTRIB_FILENAME, buf,
@@ -486,29 +492,121 @@ browser_view_node_model_load(browser_node_t *bn)
  * 
  */
 void
-browser_view_add_node(browser_node_t *bn)
+browser_view_add_node(browser_node_t *bn, glw_t *c, int select_it)
 {
   browser_node_t *parent = bn->bn_parent;
-  glw_t *cont;
 
-  if(parent->bn_cont_xfader == NULL)
+  c = c ? c : parent->bn_cont_xfader;
+  if(c == NULL)
     return;
-
-  if((cont = glw_find_by_id(parent->bn_cont_xfader, "node_container", 0))
-     == NULL)
+  
+  if((c = glw_find_by_id(c, "node_container", 0)) == NULL)
     return;
 
   assert(bn->bn_refcnt > 0);
-
 
   browser_node_ref(bn);
 
   bn->bn_icon_xfader =
     glw_create(GLW_XFADER,
 	       GLW_ATTRIB_SIGNAL_HANDLER, browser_view_node_callback, bn, 1000,
-	       GLW_ATTRIB_PARENT, cont,
+	       GLW_ATTRIB_PARENT, c,
 	       NULL);
 
+  if(select_it)
+    glw_select(c, bn->bn_icon_xfader);
+
   browser_view_node_model_load(bn);
+}
+
+
+/**
+ * Builds index of all available views for this theme
+ */
+int
+browser_view_index(void)
+{
+  char buf[256];
+  char fullpath[256];
+  struct dirent **namelist, *d;
+  int n, i;
+  browser_view_t *bv;
+
+  if(defaultview)
+    return 0; /* already indexed */
+
+  TAILQ_INIT(&browser_views);
+
+  snprintf(buf, sizeof(buf), "%s/browser/views", 
+	   config_get_str("theme", "themes/default"));
+  
+  n = scandir(buf, &namelist, NULL, alphasort);
+  if(n < 0)
+    return -1;
+
+  for(i = 0; i < n; i++) {
+    d = namelist[i];
+    if(d->d_name[0] == '.')
+      continue;
+
+    snprintf(fullpath, sizeof(fullpath), "%s/%s", buf, d->d_name);
+
+    bv = calloc(1, sizeof(browser_view_t));
+
+    TAILQ_INSERT_TAIL(&browser_views, bv, bv_link);
+    bv->bv_path = strdup(fullpath);
+    bv->bv_name = strdup(d->d_name);
+    if(defaultview == NULL)
+      defaultview = bv;
+
+    if(!strcmp(d->d_name, "default"))
+      defaultview = bv;
+  }
+  free(namelist);
+
+  return defaultview == NULL ? -1 : 0;
+}
+
+
+
+
+
+
+
+/**
+ * Switch current view
+ */
+void
+browser_view_switch(browser_node_t *bn, glw_focus_stack_t *gfs)
+{
+  browser_view_t *bv = bn->bn_view;
+  browser_node_t *c, *sel;
+  glw_t *m, *w;
+
+  bv = TAILQ_NEXT(bv, bv_link);
+  if(bv == NULL)
+    bv = TAILQ_FIRST(&browser_views);
+
+  if(bv == bn->bn_view)
+    return; /* Same view, probably only one view available, don't do
+	       anything */
+
+  glw_lock();
+
+  sel = NULL;
+  w = glw_find_by_id(bn->bn_cont_xfader, "node_container", 0);
+  if(w != NULL) {
+    w = w->glw_selected;
+    if(w != NULL) {
+      sel = glw_get_opaque(w, browser_view_node_callback);
+    }
+  }
+  
+  m = browser_view_set(bn, bv, gfs);
+
+  TAILQ_FOREACH(c, &bn->bn_childs, bn_parent_link)
+    browser_view_add_node(c, m, c == sel);
+
+  glw_unlock();
 
 }

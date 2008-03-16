@@ -239,6 +239,14 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
       default:
 	break;
 
+      case INPUT_KEY_SWITCH_VIEW:
+	bn = browser_view_get_current_node(ai->ai_widget);
+	if(bn == NULL)
+	  break;
+
+	browser_view_switch(bn, &ai->ai_gfs);
+	break;
+
       case INPUT_KEY_ENTER:
 	bn = browser_view_get_current_selected_node(ai->ai_widget);
 	if(bn == NULL)
@@ -476,6 +484,12 @@ nav_launch(void *aux)
 {
   navigator_t *nav = alloca(sizeof(navigator_t));
   appi_t *ai = aux;
+
+  if(browser_view_index()) {
+    fprintf(stderr, "No browser views found, cannot start navigator\n");
+    appi_destroy(ai);
+    return NULL;
+  }
 
   memset(nav, 0, sizeof(navigator_t));
   nav->nav_ai = ai;
