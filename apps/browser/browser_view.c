@@ -613,16 +613,15 @@ browser_view_index(void)
 
 /**
  * Inner parts of view switching
- *
- * XXX: The locking here is insufficient
  */
 static void
-browser_view_switch0(browser_node_t *bn, browser_view_t *bv, 
+browser_view_switch0(browser_node_t *bn, browser_view_t *bv,
 		     glw_focus_stack_t *gfs)
 {
-  browser_node_t *sel, *c;
+  browser_root_t *br = bn->bn_root;
+  browser_node_t *sel, *c, **a;
   glw_t *m, *w;
-  int hide;
+  int hide, cnt;
   int64_t type;
 
   glw_lock();
@@ -633,6 +632,7 @@ browser_view_switch0(browser_node_t *bn, browser_view_t *bv,
     w = w->glw_selected;
     if(w != NULL) {
       sel = glw_get_opaque(w, browser_view_node_callback);
+      browser_node_ref(sel);
     }
   }
   
@@ -645,13 +645,19 @@ browser_view_switch0(browser_node_t *bn, browser_view_t *bv,
    * views contentmask
    */
 
-  TAILQ_FOREACH(c, &bn->bn_childs, bn_parent_link) {
-    hide = 0;
-    if(!filetag_get_int(&c->bn_ftags, FTAG_FILETYPE, &type))
-      if(!(1 << type & bv->bv_contentfilter))
-	hide = 1;
+  a = browser_get_array_of_childs(br, bn);
+  for(cnt = 0; (c = a[cnt]) != NULL; cnt++) {
+    pthread_mutex_lock(&c->bn_ftags_mutex);
+    hide = !filetag_get_int(&c->bn_ftags, FTAG_FILETYPE, &type) &&
+      !(1 << type & bv->bv_contentfilter);
+    pthread_mutex_unlock(&c->bn_ftags_mutex);
+
     browser_view_add_node(c, m, c == sel, hide);
+    browser_node_deref(c); /* 'c' may be free'd here */
   }
+
+  free(a);
+  browser_node_deref(sel);
 }
 
 
@@ -662,18 +668,18 @@ browser_view_switch0(browser_node_t *bn, browser_view_t *bv,
 void
 browser_view_switch(browser_node_t *bn, glw_focus_stack_t *gfs)
 {
+  browser_root_t *br = bn->bn_root;
   browser_view_t *bv = bn->bn_view;
-  browser_node_t *c;
+  browser_node_t *c, **a;
   int64_t type;
-  uint32_t contentmask = 0;
-
-
+  uint32_t contentmask = 0, cnt;
 
   /**
    * Collect a mask with all the content types in the node
    */
-  TAILQ_FOREACH(c, &bn->bn_childs, bn_parent_link) {
-
+  a = browser_get_array_of_childs(br, bn);
+  for(cnt = 0; (c = a[cnt]) != NULL; cnt++) {
+    pthread_mutex_lock(&c->bn_ftags_mutex);
     switch(c->bn_type) {
     case FA_DIR:
       contentmask = 1 << FILETYPE_DIR;
@@ -684,7 +690,10 @@ browser_view_switch(browser_node_t *bn, glw_focus_stack_t *gfs)
 	contentmask = 1 << type;
       break;
     }
+    pthread_mutex_unlock(&c->bn_ftags_mutex);
+    browser_node_deref(c); /* 'c' may be free'd here */
   }
+  free(a);
 
   while(1) {
 
