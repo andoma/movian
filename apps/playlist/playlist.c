@@ -706,7 +706,7 @@ playlist_thread(void *aux)
   playlist_appi = ai = appi_create("Playlist");
 
   ai->ai_widget =
-    glw_create(GLW_CUBESTACK,
+    glw_create(GLW_ZSTACK,
 	       GLW_ATTRIB_SIGNAL_HANDLER, playlist_root_widget, ai, 500,
 	       NULL);
 
