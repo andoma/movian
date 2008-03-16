@@ -86,6 +86,7 @@ typedef struct playlist_entry {
 
   int ple_track;
 
+  struct  filetag_list ple_ftags;
 
 } playlist_entry_t;
 

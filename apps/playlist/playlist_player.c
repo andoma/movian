@@ -33,12 +33,14 @@
 #include "showtime.h"
 #include "input.h"
 #include "playlist.h"
+#include <layout/layout.h>
 #include <layout/layout_support.h>
  
 
 
 static playlist_entry_t *
-playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic)
+playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic,
+	      glw_t *overlay)
 {
   AVFormatContext *fctx;
   AVCodecContext *ctx;
@@ -65,6 +67,11 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic)
     fprintf(stderr, "Unable to find stream info\n");
     return playlist_advance(ple, 0);
   }
+
+  
+
+  if(fctx->duration != AV_NOPTS_VALUE)
+    layout_update_time(overlay, "time_total", fctx->duration / AV_TIME_BASE);
 
   mp->mp_audio.mq_stream = -1;
   mp->mp_video.mq_stream = -1;
@@ -106,8 +113,10 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic)
 	layout_update_time(ple->ple_pl->pl_widget, "time_current",
 			   ple->ple_time_offset + curtime);
       }
+
       pthread_mutex_unlock(&playlistlock);
 
+      layout_update_time(overlay, "time_current", curtime);
     }
  
     if(mp_is_paused(mp)) {
@@ -287,10 +296,21 @@ playlist_player(void *aux)
   media_pipe_t *mp = plp->plp_mp;
   playlist_entry_t *ple = NULL, *next;
   inputevent_t ie;
+  glw_t *overlay;
+  const char *t, *s;
+  char buf[256];
+
+  overlay = glw_create(GLW_MODEL,
+		       GLW_ATTRIB_FILENAME, "playlist/overlay",
+		       GLW_ATTRIB_PARENT, overlay_container,
+		       GLW_ATTRIB_FLAGS, GLW_HIDE,
+		       NULL);
 
   while(1) {
  
     while(ple == NULL) {
+
+      glw_hide(overlay);
 
       /* Got nothing to play, enter STOP mode */
 
@@ -310,7 +330,38 @@ playlist_player(void *aux)
 	break;
       }
     }
+
     mp_set_playstatus(mp, MP_PLAY);
+
+    /**
+     * Display and update overlay
+     */
+    glw_unhide(overlay);
+    
+    t = filetag_get_str2(&ple->ple_ftags, FTAG_TITLE);
+    s = strrchr(ple->ple_url, '/');
+    s = s ? s + 1 : ple->ple_url;
+
+    if(t == NULL)
+      t = s;
+
+    layout_update_str(overlay, "track_filename", s);
+    layout_update_str(overlay, "track_title",    t);
+
+
+    t = filetag_get_str2(&ple->ple_ftags, FTAG_AUTHOR);
+    s = filetag_get_str2(&ple->ple_ftags, FTAG_ALBUM);
+    layout_update_str(overlay, "track_author", t);
+    layout_update_str(overlay, "track_album",  s);
+
+    if(t && s) {
+      snprintf(buf, sizeof(buf), "%s - %s", t, s);
+      layout_update_str(overlay, "track_author_album", buf);
+    }
+
+    
+
+
 
     /**
      * Update playlist widget
@@ -332,7 +383,7 @@ playlist_player(void *aux)
     /**
      * Start playback of track
      */
-    next = playlist_play(ple, mp, &plp->plp_ic);
+    next = playlist_play(ple, mp, &plp->plp_ic, overlay);
 
     /**
      * Update track widget

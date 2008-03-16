@@ -346,7 +346,7 @@ playlist_enqueue0(playlist_t *pl, const char *url, struct filetag_list *ftags)
   layout_update_time(pl->pl_widget, "time_total",  pl->pl_total_time);
   layout_update_int(pl->pl_widget,  "track_total", pl->pl_nentries);
 
-  filetag_freelist(ftags);
+  filetag_movelist(&ple->ple_ftags, ftags);
   return ple;
 }
 
@@ -389,6 +389,8 @@ playlist_entry_free(playlist_entry_t *ple)
   playlist_t *pl = ple->ple_pl;
 
   free(ple->ple_url);
+
+  filetag_freelist(&ple->ple_ftags);
 
   if(pl != NULL) {
     TAILQ_REMOVE(&pl->pl_entries, ple, ple_link);
