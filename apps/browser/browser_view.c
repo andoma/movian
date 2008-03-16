@@ -273,8 +273,6 @@ browser_view_set_filetype(glw_t *root, browser_node_t *bn)
   glw_lock();
 
   w = glw_find_by_id(root, "node_filetype_icon_container", 0);
-  if(w == NULL)
-    goto out;
 
   switch(bn->bn_type) {
   case FA_DIR:
@@ -297,24 +295,43 @@ browser_view_set_filetype(glw_t *root, browser_node_t *bn)
       case FILETYPE_IMAGE:
 	snprintf(buf, sizeof(buf), "thumb://%s", bn->bn_url);
 
-	glw_create(GLW_BITMAP,
-		   GLW_ATTRIB_FILENAME, buf,
-		   GLW_ATTRIB_FLAGS, GLW_KEEP_ASPECT,
-		   GLW_ATTRIB_PARENT, w,
-		   NULL);
+	if(w != NULL) {
+	  glw_create(GLW_BITMAP,
+		     GLW_ATTRIB_FILENAME, buf,
+		     GLW_ATTRIB_FLAGS, GLW_KEEP_ASPECT | GLW_BORDER_BLEND,
+		     GLW_ATTRIB_VERTEX_BORDERS,  0.05, 0.05, 0.05, 0.05,
+		     GLW_ATTRIB_TEXTURE_BORDERS, 0.05, 0.05, 0.05, 0.05,
+		     GLW_ATTRIB_PARENT, w,
+		     NULL);
+	}
+
+	w = glw_find_by_id(root, "node_fullsize_image", 0);
+	if(w != NULL) {
+	  glw_create(GLW_BITMAP,
+		     GLW_ATTRIB_FILENAME, bn->bn_url,
+		     GLW_ATTRIB_FLAGS, GLW_KEEP_ASPECT | GLW_BORDER_BLEND,
+		     GLW_ATTRIB_VERTEX_BORDERS,  0.01, 0.01, 0.01, 0.01,
+		     GLW_ATTRIB_TEXTURE_BORDERS, 0.01, 0.01, 0.01, 0.01,
+		     GLW_ATTRIB_PARENT, w,
+		     NULL);
+	}
+
 	goto out;
       }
     }
     break;
   }
 
-  snprintf(buf, sizeof(buf), "browser/views/%s/%s", 
-	   parent->bn_view->bv_name, model);
+  if(w != NULL) {
+    snprintf(buf, sizeof(buf), "browser/views/%s/%s", 
+	     parent->bn_view->bv_name, model);
 
-  glw_create(GLW_MODEL,
-	     GLW_ATTRIB_FILENAME, buf,
-	     GLW_ATTRIB_PARENT, w,
-	     NULL);
+    glw_create(GLW_MODEL,
+	       GLW_ATTRIB_FILENAME, buf,
+	       GLW_ATTRIB_PARENT, w,
+	       NULL);
+  }
+
  out:
   glw_unlock();
 }
@@ -609,11 +626,10 @@ browser_view_switch(browser_node_t *bn, glw_focus_stack_t *gfs)
     }
   }
   
+  glw_unlock();
+
   m = browser_view_set(bn, bv, gfs);
 
   TAILQ_FOREACH(c, &bn->bn_childs, bn_parent_link)
     browser_view_add_node(c, m, c == sel);
-
-  glw_unlock();
-
 }
