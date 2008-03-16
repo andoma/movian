@@ -282,9 +282,6 @@ fa_probe(struct filetag_list *list, const char *url)
     return -1;
   }
 
-  
-  dump_format(fctx, 0, url, 0);
-
   if(av_find_stream_info(fctx) < 0) {
     av_close_input_file(fctx);
     ffunlock();
