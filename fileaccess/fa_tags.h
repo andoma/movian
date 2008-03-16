@@ -77,4 +77,8 @@ const char *filetag_get_str2(struct filetag_list *list, ftag_t tag);
 int filetag_get_int(struct filetag_list *list, ftag_t tag,
 		    int64_t *valuep);
 
+void filetag_movelist(struct filetag_list *dst, struct filetag_list *src);
+
+void filetag_copylist(struct filetag_list *dst, struct filetag_list *src);
+
 #endif /* FA_TAGS_H */

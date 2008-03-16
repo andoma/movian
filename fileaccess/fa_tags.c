@@ -164,3 +164,38 @@ filetag_get_int(struct filetag_list *list, ftag_t tag, int64_t *valuep)
   *valuep = ft->ftag_int;
   return 0;
 }
+
+/**
+ *
+ */
+void 
+filetag_movelist(struct filetag_list *dst, struct filetag_list *src)
+{
+  filetag_t *ft;
+
+  TAILQ_INIT(dst);
+
+  while((ft = TAILQ_FIRST(src)) != NULL) {
+    TAILQ_REMOVE(src, ft, ftag_link);
+    TAILQ_INSERT_TAIL(dst, ft, ftag_link);
+  }
+}
+
+/**
+ *
+ */
+void 
+filetag_copylist(struct filetag_list *dst, struct filetag_list *src)
+{
+  filetag_t *ft, *n;
+
+  TAILQ_INIT(dst);
+
+  TAILQ_FOREACH(ft, src, ftag_link) {
+    n = calloc(1, sizeof(filetag_t));
+    n->ftag_tag    = ft->ftag_tag;
+    n->ftag_int    = ft->ftag_int;
+    n->ftag_string = ft->ftag_string ? strdup(ft->ftag_string) : NULL;
+    TAILQ_INSERT_TAIL(dst, ft, ftag_link);
+  }
+}
