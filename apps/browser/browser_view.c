@@ -516,10 +516,10 @@ browser_view_node_model_load(browser_node_t *bn)
  * 
  */
 void
-browser_view_add_node(browser_node_t *bn, glw_t *c, int select_it)
+browser_view_add_node(browser_node_t *bn, glw_t *c, int select_it, int hidden)
 {
   browser_node_t *parent = bn->bn_parent;
-
+  glw_t *r;
   c = c ? c : parent->bn_cont_xfader;
   if(c == NULL)
     return;
@@ -530,10 +530,11 @@ browser_view_add_node(browser_node_t *bn, glw_t *c, int select_it)
   assert(bn->bn_refcnt > 0);
 
   browser_node_ref(bn);
-
-  bn->bn_icon_xfader =
+  
+  r = bn->bn_icon_xfader =
     glw_create(GLW_XFADER,
 	       GLW_ATTRIB_SIGNAL_HANDLER, browser_view_node_callback, bn, 1000,
+	       GLW_ATTRIB_FLAGS, hidden ? GLW_HIDE : 0,
 	       GLW_ATTRIB_PARENT, c,
 	       NULL);
 
@@ -552,9 +553,12 @@ browser_view_index(void)
 {
   char buf[256];
   char fullpath[256];
+  char cf[256];
   struct dirent **namelist, *d;
-  int n, i;
+  int n, i, l;
   browser_view_t *bv;
+  FILE *fp;
+  uint32_t filtermask;
 
   if(defaultview)
     return 0; /* already indexed */
@@ -585,6 +589,20 @@ browser_view_index(void)
 
     if(!strcmp(d->d_name, "default"))
       defaultview = bv;
+
+    filtermask = 0xffffffff;
+    snprintf(cf, sizeof(cf), "%s/contentfilter", fullpath);
+    if((fp = fopen(cf, "r")) != NULL) {
+      filtermask = 0;
+      while(fgets(cf, sizeof(cf), fp) != NULL) {
+	l = strlen(cf);
+	while(cf[l] < 32 && l > 0)
+	  cf[l--] = 0;
+	if(!strcmp(cf, "image"))
+	  filtermask |= 1 << FILETYPE_IMAGE;
+      }
+    }
+    bv->bv_contentfilter = filtermask;
   }
   free(namelist);
 
@@ -606,14 +624,43 @@ browser_view_switch(browser_node_t *bn, glw_focus_stack_t *gfs)
   browser_view_t *bv = bn->bn_view;
   browser_node_t *c, *sel;
   glw_t *m, *w;
+  int64_t type;
+  uint32_t contentmask = 0;
+  int hide;
 
-  bv = TAILQ_NEXT(bv, bv_link);
-  if(bv == NULL)
-    bv = TAILQ_FIRST(&browser_views);
 
-  if(bv == bn->bn_view)
-    return; /* Same view, probably only one view available, don't do
-	       anything */
+  /**
+   * Collect a mask with all the content types in the node
+   */
+  TAILQ_FOREACH(c, &bn->bn_childs, bn_parent_link) {
+
+    switch(c->bn_type) {
+    case FA_DIR:
+      contentmask = 1 << FILETYPE_DIR;
+      break;
+
+    case FA_FILE:
+      if(!filetag_get_int(&c->bn_ftags, FTAG_FILETYPE, &type))
+	contentmask = 1 << type;
+      break;
+    }
+  }
+
+  while(1) {
+
+    bv = TAILQ_NEXT(bv, bv_link);
+    if(bv == NULL)
+      bv = TAILQ_FIRST(&browser_views);
+
+    if(bv == bn->bn_view)
+      return; /* All views tried, back at current, dont do anything */
+
+
+    if(!(bv->bv_contentfilter & contentmask))
+      continue; /* this view would not display anything, skip it */
+
+    break;
+  }
 
   glw_lock();
 
@@ -630,6 +677,16 @@ browser_view_switch(browser_node_t *bn, glw_focus_stack_t *gfs)
 
   m = browser_view_set(bn, bv, gfs);
 
-  TAILQ_FOREACH(c, &bn->bn_childs, bn_parent_link)
-    browser_view_add_node(c, m, c == sel);
+  /**
+   * Create new nodes, hide nodes that does not match the 
+   * views contentmask
+   */
+
+  TAILQ_FOREACH(c, &bn->bn_childs, bn_parent_link) {
+    hide = 0;
+    if(!filetag_get_int(&c->bn_ftags, FTAG_FILETYPE, &type))
+      if(!(1 << type & bv->bv_contentfilter))
+	hide = 1;
+    browser_view_add_node(c, m, c == sel, hide);
+  }
 }

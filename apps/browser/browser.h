@@ -42,6 +42,8 @@ typedef struct browser_view {
   const char *bv_path;
   const char *bv_name;
 
+  int bv_contentfilter;
+
 } browser_view_t;
 
 

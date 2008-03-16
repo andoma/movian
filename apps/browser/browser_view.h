@@ -24,7 +24,8 @@ void browser_view_expand_node(browser_node_t *bn, glw_t *parent,
 
 void browser_view_collapse_node(browser_node_t *bn, glw_focus_stack_t *gfs);
 
-void browser_view_add_node(browser_node_t *bn, glw_t *c, int select_id);
+void browser_view_add_node(browser_node_t *bn, glw_t *c, int select_id, 
+			   int hide);
 
 browser_node_t *browser_view_get_current_selected_node(glw_t *stack);
 

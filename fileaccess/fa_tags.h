@@ -39,6 +39,8 @@ typedef enum {
 
 
 typedef enum {
+  FILETYPE_DIR,        /* Dummy, but useful for contentmasks and view
+			  switching */
   FILETYPE_PLAYLIST_PLS,
   FILETYPE_IMAGE,
   FILETYPE_ISO,
