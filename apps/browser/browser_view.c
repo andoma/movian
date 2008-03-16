@@ -155,6 +155,8 @@ void
 browser_view_expand_node(browser_node_t *bn, glw_t *parent, 
 			 glw_focus_stack_t *gfs)
 {
+  browser_view_t *bv;
+
   browser_node_ref(bn);
 
   assert(bn->bn_cont_xfader == NULL);
@@ -168,7 +170,8 @@ browser_view_expand_node(browser_node_t *bn, glw_t *parent,
 	       browser_view_xfader_callback, bn, 1000,
 	       NULL);
 
-  browser_view_set(bn, defaultview, gfs);
+  bv = bn->bn_parent ? bn->bn_parent->bn_view : defaultview;
+  browser_view_set(bn, bv, gfs);
   glw_unlock();
 }
 
