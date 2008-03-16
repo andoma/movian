@@ -611,7 +611,48 @@ browser_view_index(void)
 
 
 
+/**
+ * Inner parts of view switching
+ *
+ * XXX: The locking here is insufficient
+ */
+static void
+browser_view_switch0(browser_node_t *bn, browser_view_t *bv, 
+		     glw_focus_stack_t *gfs)
+{
+  browser_node_t *sel, *c;
+  glw_t *m, *w;
+  int hide;
+  int64_t type;
 
+  glw_lock();
+
+  sel = NULL;
+  w = glw_find_by_id(bn->bn_cont_xfader, "node_container", 0);
+  if(w != NULL) {
+    w = w->glw_selected;
+    if(w != NULL) {
+      sel = glw_get_opaque(w, browser_view_node_callback);
+    }
+  }
+  
+  glw_unlock();
+
+  m = browser_view_set(bn, bv, gfs);
+
+  /**
+   * Create new nodes, hide nodes that does not match the 
+   * views contentmask
+   */
+
+  TAILQ_FOREACH(c, &bn->bn_childs, bn_parent_link) {
+    hide = 0;
+    if(!filetag_get_int(&c->bn_ftags, FTAG_FILETYPE, &type))
+      if(!(1 << type & bv->bv_contentfilter))
+	hide = 1;
+    browser_view_add_node(c, m, c == sel, hide);
+  }
+}
 
 
 
@@ -622,11 +663,10 @@ void
 browser_view_switch(browser_node_t *bn, glw_focus_stack_t *gfs)
 {
   browser_view_t *bv = bn->bn_view;
-  browser_node_t *c, *sel;
-  glw_t *m, *w;
+  browser_node_t *c;
   int64_t type;
   uint32_t contentmask = 0;
-  int hide;
+
 
 
   /**
@@ -662,31 +702,23 @@ browser_view_switch(browser_node_t *bn, glw_focus_stack_t *gfs)
     break;
   }
 
-  glw_lock();
+  browser_view_switch0(bn, bv, gfs);
+}
 
-  sel = NULL;
-  w = glw_find_by_id(bn->bn_cont_xfader, "node_container", 0);
-  if(w != NULL) {
-    w = w->glw_selected;
-    if(w != NULL) {
-      sel = glw_get_opaque(w, browser_view_node_callback);
-    }
-  }
-  
-  glw_unlock();
 
-  m = browser_view_set(bn, bv, gfs);
+/**
+ * Switch to the named view, if view is not found, nothing happens
+ */
+void
+browser_view_switch_by_name(browser_node_t *bn, glw_focus_stack_t *gfs,
+			    const char *name)
+{
+  browser_view_t *bv;
 
-  /**
-   * Create new nodes, hide nodes that does not match the 
-   * views contentmask
-   */
+  TAILQ_FOREACH(bv, &browser_views, bv_link)
+    if(!strcmp(bv->bv_name, name))
+      break;
 
-  TAILQ_FOREACH(c, &bn->bn_childs, bn_parent_link) {
-    hide = 0;
-    if(!filetag_get_int(&c->bn_ftags, FTAG_FILETYPE, &type))
-      if(!(1 << type & bv->bv_contentfilter))
-	hide = 1;
-    browser_view_add_node(c, m, c == sel, hide);
-  }
+  if(bv != NULL)
+    browser_view_switch0(bn, bv, gfs);
 }

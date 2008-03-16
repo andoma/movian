@@ -215,7 +215,7 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
   /**
    * Create browser root
    */ 
-  br = browser_root_create(rooturl);
+  br = browser_root_create(rooturl, &ai->ai_gfs);
   bn = br->br_root;
 
   browser_view_expand_node(bn, ai->ai_widget, &ai->ai_gfs);

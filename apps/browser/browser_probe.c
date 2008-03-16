@@ -30,6 +30,9 @@
 #include "browser_probe.h"
 #include "browser_view.h"
 
+static void probe_figure_primary_content(browser_root_t *br,
+					 browser_node_t *bn);
+
 /**
  *
  */
@@ -52,13 +55,20 @@ browser_probe_thread(void *arg)
     TAILQ_REMOVE(&br->br_probe_queue, bn, bn_probe_link);
     pthread_mutex_unlock(&br->br_probe_mutex);
 
-    pthread_mutex_lock(&bn->bn_ftags_mutex);
+    switch(bn->bn_type) {
+    case FA_FILE:
 
-    fa_probe(&bn->bn_ftags, bn->bn_url);
+      pthread_mutex_lock(&bn->bn_ftags_mutex);
+      fa_probe(&bn->bn_ftags, bn->bn_url);
+      browser_view_node_model_update(bn);
+      pthread_mutex_unlock(&bn->bn_ftags_mutex);
+      break;
 
-    browser_view_node_model_update(bn);
-
-    pthread_mutex_unlock(&bn->bn_ftags_mutex);
+    case FA_DIR:
+      printf("I know a lot about %s now\n", bn->bn_url);
+      probe_figure_primary_content(br, bn);
+      break;
+    }
 
     browser_node_deref(bn);
   }
@@ -73,6 +83,55 @@ browser_probe_thread(void *arg)
   pthread_mutex_unlock(&br->br_probe_mutex);
   return NULL;
 }
+
+/**
+ * 
+ */
+static void
+probe_figure_primary_content(browser_root_t *br, browser_node_t *bn)
+{
+  browser_node_t *c, **a;
+  int cnt, contentcount[32], i;
+  int64_t type;
+
+  memset(contentcount, 0, sizeof(int) * 32);
+
+  a = browser_get_array_of_childs(br, bn);
+
+  for(cnt = 0; (c = a[cnt]) != NULL; cnt++) {
+
+    pthread_mutex_lock(&c->bn_ftags_mutex);
+
+    switch(c->bn_type) {
+    case FA_DIR:
+      contentcount[FILETYPE_DIR]++;
+      break;
+      
+    case FA_FILE:
+      if(!filetag_get_int(&c->bn_ftags, FTAG_FILETYPE, &type)) {
+	type &= 31;
+	contentcount[(int)type]++;
+      }
+      break;
+    }
+
+    pthread_mutex_unlock(&c->bn_ftags_mutex);
+    browser_node_deref(c); /* 'c' may be free'd here */
+  }
+  free(a);
+
+  for(i = 0; i < 32; i++)
+    if(contentcount[i] > 3 * cnt / 4)
+      break;
+
+  switch(i) {
+  case FILETYPE_IMAGE:
+    browser_view_switch_by_name(bn, br->br_gfs, "images");
+    break;
+  }
+}
+
+
 
 /**
  *

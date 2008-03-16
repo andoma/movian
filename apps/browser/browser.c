@@ -137,7 +137,7 @@ browser_node_add_child(browser_node_t *parent, const char *url, int type)
  * Create a new browser root
  */
 browser_root_t *
-browser_root_create(const char *url)
+browser_root_create(const char *url, glw_focus_stack_t *gfs)
 {
   browser_root_t *br = calloc(1, sizeof(browser_root_t));
   browser_node_t *bn = browser_node_create(url, FA_DIR, br);
@@ -145,7 +145,7 @@ browser_root_create(const char *url)
   pthread_mutex_init(&br->br_hierarchy_mutex, NULL);
 
   browser_probe_init(br);
-
+  br->br_gfs = gfs;
   br->br_root = bn;
   return br;
 }
@@ -196,12 +196,25 @@ browser_scandir_thread(void *arg)
 {
   browser_node_t *bn = arg;
 
+  if(bn->bn_type != FA_DIR)
+    return NULL;
+
   /*
    * fileaccess_scandir() may take a long time to execute.
    * User may be prompted for username/password, etc
    */
 
   fileaccess_scandir(bn->bn_url, browser_scandir_callback, bn);
+
+  /**
+   * Enqueue directory on probe queue.
+   *
+   * When all files have been probed, the probe code will check all contents
+   * and switch view if seems reasonable to do so
+   */
+
+  browser_probe_enqueue(bn);
+
   browser_node_deref(bn);
   return NULL;
 }
@@ -227,3 +240,36 @@ browser_scandir_callback(void *arg, const char *url, const char *filename,
   browser_node_deref(c);
 }
 			 
+
+/**
+ * Return an array of pointers to childs based on a parent node.
+ *
+ * We use this to avoid having to lock 'br_hierarchy_mutex' for extended times.
+ *
+ * Each child will have its reference count increased by one.
+ *
+ * Array is NULL terminated.
+ */
+
+browser_node_t **
+browser_get_array_of_childs(browser_root_t *br, browser_node_t *bn)
+{
+  int cnt = 0;
+  browser_node_t *c, **r;
+
+  pthread_mutex_lock(&br->br_hierarchy_mutex);
+
+  TAILQ_FOREACH(c, &bn->bn_childs, bn_parent_link)
+    cnt++;
+  
+  r = malloc(sizeof(browser_node_t *) * (cnt + 1));
+
+  cnt = 0;
+  TAILQ_FOREACH(c, &bn->bn_childs, bn_parent_link) {
+    c->bn_refcnt++;
+    r[cnt++] = c;
+  }
+  r[cnt] = NULL;
+  pthread_mutex_unlock(&br->br_hierarchy_mutex);
+  return r;
+}

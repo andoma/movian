@@ -40,4 +40,7 @@ int browser_view_index(void);
 
 void browser_view_switch(browser_node_t *bn, glw_focus_stack_t *gfs);
 
+void browser_view_switch_by_name(browser_node_t *bn, glw_focus_stack_t *gfs,
+				 const char *name);
+
 #endif /* BROWSER_VIEW_H */
