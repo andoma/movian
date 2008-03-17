@@ -135,4 +135,6 @@ void browser_scandir(browser_node_t *bn);
 browser_node_t **browser_get_array_of_childs(browser_root_t *br,
 					     browser_node_t *bn);
 
+void browser_slideshow(browser_node_t *cur, glw_t *parent, ic_t *ic);
+
 #endif /* BROWSER_H */

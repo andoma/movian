@@ -109,6 +109,10 @@ browser_enter(appi_t *ai, navigator_t *nav, browser_node_t *bn, int selected)
   case FILETYPE_VIDEO:
     play_video(bn->bn_url, ai, &ai->ai_ic, nav->nav_stack);
     break;
+
+  case FILETYPE_IMAGE:
+    browser_slideshow(bn, nav->nav_stack, &ai->ai_ic);
+    break;
   }
 }
 
