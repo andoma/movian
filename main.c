@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define _GNU_SOURCE
+#include <sched.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <pthread.h>
@@ -52,6 +54,7 @@ int frame_duration;
 int64_t wallclock;
 time_t walltime;
 int has_analogue_pad;
+int concurrency;
 
 static int main_input_event(inputevent_t *ie);
 
@@ -65,6 +68,24 @@ ffmpeglockmgr(int lock)
     ffunlock();
 }
 
+
+/**
+ * Return the number of CPUs
+ */
+static int
+get_concurrency(void)
+{
+  cpu_set_t mask;
+  int i, r = 0;
+
+  memset(&mask, 0, sizeof(mask));
+  sched_getaffinity(0, sizeof(mask), &mask);
+  for(i = 0; i < CPU_SETSIZE; i++)
+    if(CPU_ISSET(i, &mask))
+      r++;
+
+  return r?:1;
+}
 
 /*
  *
@@ -106,6 +127,8 @@ main(int argc, char **argv)
     }
   }
 
+  concurrency = get_concurrency();
+
   homedir = getenv("HOME");
   if(homedir != NULL) {
     snprintf(buf, sizeof(buf), "%s/.showtime", homedir);
@@ -129,7 +152,7 @@ main(int argc, char **argv)
 
   gl_sysglue_init(argc, argv);
 
-  if(glw_init(&config_list, ffmpeglockmgr, fa_imageloader)) {
+  if(glw_init(&config_list, ffmpeglockmgr, fa_imageloader, concurrency)) {
     fprintf(stderr, "libglw user interface failed to initialize, exiting\n");
     exit(0);
   }
