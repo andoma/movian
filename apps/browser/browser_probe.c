@@ -65,7 +65,6 @@ browser_probe_thread(void *arg)
       break;
 
     case FA_DIR:
-      printf("I know a lot about %s now\n", bn->bn_url);
       probe_figure_primary_content(br, bn);
       break;
     }
