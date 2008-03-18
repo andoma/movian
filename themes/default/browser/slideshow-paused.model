@@ -1,0 +1,13 @@
+#HTSSIMPLEMODEL
+
+y-container {
+ displacement 0 0 1.0
+ x-container {
+  bitmap {
+   filename icon://player_pause.png
+   keep-aspect
+  }
+  space 8
+ }
+ space 8
+}

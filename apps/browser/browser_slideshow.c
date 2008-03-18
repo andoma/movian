@@ -31,16 +31,21 @@
 void
 browser_slideshow(browser_node_t *cur, glw_t *parent, ic_t *ic)
 {
-  glw_t *w, *b;
+  glw_t *w, *b, *z, *pw = NULL;
   browser_node_t *dir = cur->bn_parent;
   browser_root_t *br  = cur->bn_root;
   browser_node_t *c, **a;
   int cnt, run = 1;
   int64_t type;
   inputevent_t ie;
+  int paused = 0;
+
+  z = glw_create(GLW_CONTAINER_Z,
+		 GLW_ATTRIB_PARENT, parent,
+		 NULL);
 
   w = glw_create(GLW_SLIDESHOW,
-		 GLW_ATTRIB_PARENT, parent,
+		 GLW_ATTRIB_PARENT, z,
 		 NULL);
 
   a = browser_get_array_of_childs(br, dir);
@@ -73,6 +78,19 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, ic_t *ic)
 
   while(run) {
 
+    if(paused && pw == NULL)
+      pw = glw_create(GLW_MODEL,
+		      GLW_ATTRIB_PARENT, z,
+		      GLW_ATTRIB_FILENAME, "browser/slideshow-paused",
+		      NULL);
+    else if(!paused && pw) {
+      glw_destroy(pw);
+      pw = NULL;
+    }
+
+
+    glw_set(w, GLW_ATTRIB_SPEED, paused ? 0.0f : 1.0f, NULL);
+
     input_getevent(ic, 1, &ie, NULL);
 
     switch(ie.type) {
@@ -84,6 +102,18 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, ic_t *ic)
       default:
 	break;
 	
+      case INPUT_KEY_PLAYPAUSE:
+	paused = !paused;
+	break;
+
+      case INPUT_KEY_PLAY:
+	paused = 0;
+	break;
+
+      case INPUT_KEY_PAUSE:
+	paused = 1;
+	break;
+
       case INPUT_KEY_BACK:
 	run = 0;
 	break;
@@ -100,5 +130,5 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, ic_t *ic)
     }
   }
 
-  glw_detach(w);
+  glw_detach(z);
 }
