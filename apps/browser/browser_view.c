@@ -363,7 +363,7 @@ static void
 size_quantify(char *buf, size_t buflen, int64_t i64)
 {
   if(i64 < 1000) {
-    snprintf(buf, buflen, "%lld b", i64);
+    snprintf(buf, buflen, "%" PRId64 " b", i64);
   } else if(i64 < 1000 * 1000) {
     snprintf(buf, buflen, "%.2f kb", (float)i64 / 1000);
   } else if(i64 < 1000 * 1000 * 1000) {

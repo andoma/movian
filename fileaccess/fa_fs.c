@@ -99,10 +99,13 @@ fs_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
 static void *
 fs_open(const char *url)
 {
+  int *h;
   int fd = open(url, O_RDONLY);
   if(fd == -1)
     return NULL;
-  return (void *)fd;
+  h = malloc(sizeof(int));
+  *h = fd;
+  return h;
 }
 
 /**
@@ -111,8 +114,9 @@ fs_open(const char *url)
 static void
 fs_close(void *handle)
 {
-  int fd = (int)handle;
+  int fd = *(int *)handle;
   close(fd);
+  free(handle);
 }
 
 /**
@@ -121,7 +125,7 @@ fs_close(void *handle)
 static int
 fs_read(void *handle, void *buf, size_t size)
 {
-  int fd = (int)handle;
+  int fd = *(int *)handle;
 
   return read(fd, buf, size);
 }
@@ -132,7 +136,7 @@ fs_read(void *handle, void *buf, size_t size)
 static off_t
 fs_seek(void *handle, off_t pos, int whence)
 {
-  int fd = (int)handle;
+  int fd = *(int *)handle;
   return lseek(fd, pos, whence);
 }
 
@@ -142,7 +146,7 @@ fs_seek(void *handle, off_t pos, int whence)
 static off_t
 fs_fsize(void *handle)
 {
-  int fd = (int)handle;
+  int fd = *(int *)handle;
   struct stat st;
   
   if(fstat(fd, &st) < 0)

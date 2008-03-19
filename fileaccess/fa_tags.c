@@ -61,7 +61,7 @@ filetag_dumplist(struct filetag_list *list)
     if(ft->ftag_string)
       printf("%s\n", ft->ftag_string);
     else
-      printf("%lld\n", ft->ftag_int);
+      printf("%" PRId64 "\n", ft->ftag_int);
 
   }
 }
