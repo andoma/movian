@@ -364,7 +364,8 @@ vd_color_matrix_update(video_decoder_t *vd, media_pipe_t *mp)
   int i;
 
   f = mp_get_playstatus(mp) == MP_PAUSE ? cmatrix_bw : cmatrix_color;
-  
+  f = cmatrix_color;
+
   for(i = 0; i < 9; i++)
     vd->vd_cmatrix[i] = (vd->vd_cmatrix[i] * 15.0 + f[i]) / 16.0;
 
