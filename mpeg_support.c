@@ -219,7 +219,7 @@ pes_do_block(pes_player_t *pp, uint32_t sc, uint8_t *buf, int len, int w,
     mb->mb_data = malloc(len);
     mb->mb_size = len;
     mb->mb_duration = 1000000LL * av_q2d(ctx->time_base);
-    mb->mb_rate = rate;
+    mb->mb_aspect_override = rate;
     mb->mb_pts = ps->ps_pts;
     wrap_unlock_codec(cw);
 
@@ -246,9 +246,7 @@ pes_do_block(pes_player_t *pp, uint32_t sc, uint8_t *buf, int len, int w,
 
       mb->mb_duration = 1000000LL * av_q2d(ctx->time_base);
 
-      mb->mb_rate = rate;
-
-      mb->mb_keyframe = cw->parser_ctx->pict_type == FF_I_TYPE;
+      mb->mb_aspect_override = rate;
       mb->mb_pts = cw->parser_ctx->pts;
 
       mb->mb_cw = wrap_codec_ref(cw);

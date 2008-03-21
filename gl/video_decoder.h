@@ -156,10 +156,6 @@ typedef struct video_decoder {
   gl_video_frame_t *vd_fra, *vd_frb;
   float vd_blend;
 
-
-  pthread_mutex_t vd_spill_mutex;
-  int vd_spill;
-
   int vd_do_flush;
 
   int vd_interlaced;

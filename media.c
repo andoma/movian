@@ -102,7 +102,8 @@ mb_dequeue_wait(media_pipe_t *mp, media_queue_t *mq)
       pthread_mutex_unlock(&mp->mp_mutex);
       return NULL;
     }
-    if((mb = TAILQ_FIRST(&mq->mq_q)) != NULL)
+
+    if(mp->mp_playstatus >= MP_PLAY && (mb = TAILQ_FIRST(&mq->mq_q)) != NULL)
       break;
     pthread_cond_wait(&mq->mq_avail, &mp->mp_mutex);
   }
@@ -152,18 +153,17 @@ mb_enqueue(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
   pthread_mutex_lock(&mp->mp_mutex);
   
   if(a->mq_stream >= 0 && v->mq_stream >= 0) {
-    while((a->mq_len > MQ_LOWWATER && v->mq_len > MQ_LOWWATER) ||
-	  a->mq_len > MQ_HIWATER || v->mq_len > MQ_HIWATER) {
+    while(mp->mp_playstatus >= MP_PLAY &&
+	  ((a->mq_len > MQ_LOWWATER && v->mq_len > MQ_LOWWATER) ||
+	   a->mq_len > MQ_HIWATER || v->mq_len > MQ_HIWATER)) {
       pthread_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
     }
   } else {
-    while(mq->mq_len > MQ_LOWWATER)
+    while(mq->mq_len > MQ_LOWWATER && mp->mp_playstatus >= MP_PLAY)
       pthread_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
   }
-
-
+  
   mb_enq_tail(mq, mb);
-
   pthread_mutex_unlock(&mp->mp_mutex);
 }
 
@@ -204,16 +204,12 @@ mp_flush(media_pipe_t *mp)
 
   if(v->mq_stream >= 0) {
     mb = media_buf_alloc();
-    mb->mb_cw = NULL;
-    mb->mb_data = NULL;
     mb->mb_data_type = MB_RESET;
     mb_enq_tail(v, mb);
   }
 
   if(a->mq_stream >= 0) {
     mb = media_buf_alloc();
-    mb->mb_cw = NULL;
-    mb->mb_data = NULL;
     mb->mb_data_type = MB_RESET;
     mb_enq_tail(a, mb);
   }
@@ -513,10 +509,17 @@ mp_set_playstatus(media_pipe_t *mp, int status)
 
   switch(status) {
 
+  case MP_VIDEOSEEK_PLAY:
+  case MP_VIDEOSEEK_PAUSE:
   case MP_PLAY:
   case MP_PAUSE:
 
+    pthread_mutex_lock(&mp->mp_mutex);
     mp->mp_playstatus = status;
+    pthread_cond_signal(&mp->mp_backpressure);
+    pthread_cond_signal(&mp->mp_audio.mq_avail);
+    pthread_cond_signal(&mp->mp_video.mq_avail);
+    pthread_mutex_unlock(&mp->mp_mutex);
 
     if(mp->mp_audio_decoder == NULL)
       audio_decoder_create(mp);
@@ -554,6 +557,7 @@ mp_set_playstatus(media_pipe_t *mp, int status)
     mp->mp_playstatus = MP_STOP;
     pthread_cond_signal(&mp->mp_audio.mq_avail);
     pthread_cond_signal(&mp->mp_video.mq_avail);
+    pthread_cond_signal(&mp->mp_backpressure);
     pthread_mutex_unlock(&mp->mp_mutex);
 
     /* We should now be able to collect the threads */
@@ -566,6 +570,7 @@ mp_set_playstatus(media_pipe_t *mp, int status)
 
     break;
   }
+
 }
 
 

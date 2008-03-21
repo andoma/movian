@@ -1,0 +1,8 @@
+#HTSSIMPLEMODEL
+
+rotator {
+ bitmap {
+  filename icon://loading.png
+  keep-aspect
+ }
+}

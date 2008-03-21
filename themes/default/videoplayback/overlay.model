@@ -1,244 +1,58 @@
 #HTSSIMPLEMODEL
 
 y-container {
- displacement 0 0 -0.3
+ displacement 0 0 -0.1
 
  bitmap {
   weight 1.0
-  focus-cursor
-  focus-alpha
+  color 0.5 0.5 0.5
+
   filename icon://plate_compact.png
   texture-borders 0.5 0.5 0.5 0.5
   vertex-borders  0.1 0.1 0.1 0.1
+  border-scale-childs
 
-  y-container {
-   space 0.1
-   text {
-    align center
-    id title
-   }
-
-   space 0.1
-
+  z-container {
    x-container {
-    text {
-     align left
-     id videoinfo
+    xfader {
+     id playstatus
     }
-
-    text {
-     align right
-     id audioinfo
-    }
+    space 10 
    }
-
-   space 0.1
-
-   x-container {
+  
+   y-container {
+    space 0.1
     text {
-     align right
-     id time_current
-    }
-
-    text {
-     weight 0.05
-     caption /
      align center
+     id title
     }
 
-    text {
-     align left
-     id time_total
+    space 1.0
+
+    x-container {
+     text {
+      align right
+      id time_current
+     }
+
+     text {
+      weight 0.05
+      caption /
+      align center
+     }
+
+     text {
+      align left
+      id time_total
+     }
     }
+    space 0.1
    }
-   space 0.1
   }
  }
-
  bar {
-  color 0.8 0.8 1.0
   weight 0.3
   id durationbar
  }
-
- space 5.7
-
- x-container {
-
-  bitmap {
-   id player_prev
-   focus-cursor
-   focus-alpha
-   filename icon://plate_compact.png
-   texture-borders 0.5 0.5 0.5 0.5
-   vertex-borders  0.1 0.1 0.1 0.1
-   bitmap { 
-    filename icon://player_start.png
-    keep-aspect
-   }
-  }
-
-  space 0.2
-
-  bitmap {
-   id player_rew
-   focus-cursor
-   focus-alpha
-   filename icon://plate_compact.png
-   texture-borders 0.5 0.5 0.5 0.5
-   vertex-borders  0.1 0.1 0.1 0.1
-   bitmap { 
-    filename icon://player_rew.png
-    keep-aspect
-   }
-  }
-
-  space 0.2
-
-  bitmap {
-   id player_play
-   focus-cursor
-   focus-alpha
-   filename icon://plate_compact.png
-   texture-borders 0.5 0.5 0.5 0.5
-   vertex-borders  0.1 0.1 0.1 0.1
-   bitmap { 
-    filename icon://player_play.png
-    keep-aspect
-   }
-  }
-
-  space 0.2
-
-  bitmap {
-   id player_fwd
-   focus-cursor
-   focus-alpha
-   filename icon://plate_compact.png
-   texture-borders 0.5 0.5 0.5 0.5
-   vertex-borders  0.1 0.1 0.1 0.1
-   bitmap { 
-    filename icon://player_fwd.png
-    keep-aspect
-   }
-  }
-
-  space 0.2
-
-  bitmap {
-   id player_end
-   focus-cursor
-   focus-alpha
-   filename icon://plate_compact.png
-   texture-borders 0.5 0.5 0.5 0.5
-   vertex-borders  0.1 0.1 0.1 0.1
-   bitmap { 
-    filename icon://player_end.png
-    keep-aspect
-   }
-  }
-
- }
-
-
- x-container {
-
-  bitmap {
-   id player_video_settings
-   focus-cursor
-   focus-alpha
-   filename icon://plate_compact.png
-   texture-borders 0.5 0.5 0.5 0.5
-   vertex-borders  0.1 0.1 0.1 0.1
-   z-container {
-    bitmap {
-     alpha 0.5
-     filename icon://screen.png
-     keep-aspect
-    } 
-    y-container {
-     space 1.0
-     text { 
-      weight 0.4
-      caption Video settings
-      align center
-     }
-     space 0.1
-    }
-   }
-  }
-
-  space 0.2
-
-  bitmap {
-   id player_audio_settings
-   focus-cursor
-   focus-alpha
-   filename icon://plate_compact.png
-   texture-borders 0.5 0.5 0.5 0.5
-   vertex-borders  0.1 0.1 0.1 0.1
-   z-container {
-    bitmap {
-     alpha 0.5
-     filename icon://sound.png
-     keep-aspect
-    } 
-    y-container {
-     space 1.0
-     text { 
-      weight 0.4
-      caption Audio settings
-      align center
-     }
-     space 0.1
-    }
-   }
-  }
-
-
-  space 0.2
-
-  bitmap {
-   id player_stop
-   focus-cursor
-   focus-alpha
-   filename icon://plate_compact.png
-   texture-borders 0.5 0.5 0.5 0.5
-   vertex-borders  0.1 0.1 0.1 0.1
-   bitmap { 
-    filename icon://player_stop.png
-    keep-aspect
-   }
-  }
-
-  space 0.2
-
-  bitmap {
-   id player_subtitle_settings
-   focus-cursor
-   focus-alpha
-   filename icon://plate_compact.png
-   texture-borders 0.5 0.5 0.5 0.5
-   vertex-borders  0.1 0.1 0.1 0.1
-   z-container {
-    bitmap {
-     alpha 0.5
-     filename icon://subtitles.png
-     keep-aspect
-    } 
-    y-container {
-     space 1.0
-     text { 
-      weight 0.4
-      caption Subtitle settings
-      align center
-     }
-     space 0.1
-    }
-   }
-  }
-
-  space 1.2
-
- }
+ space 8.0
 }

@@ -124,26 +124,15 @@ vd_dequeue_for_decode(video_decoder_t *vd, int w[3], int h[3])
 static int
 display_or_skip(video_decoder_t *vd, int duration)
 {
-  int r = 1;
-
-  if(vd->vd_spill == 0)
-    return 1;
-
-  pthread_mutex_lock(&vd->vd_spill_mutex);
-
-  if(vd->vd_spill > duration) {
-    vd->vd_spill -= duration;
-    r = 0;
-  }
-  pthread_mutex_unlock(&vd->vd_spill_mutex);
-  return r;
+  return 1;
 }
 
 typedef struct {
   int refcount;
   int64_t pts;
+  int64_t dts;
   int duration;
-
+  int stream;
 } frame_meta_t;
 
 
@@ -155,7 +144,9 @@ vd_get_buffer(struct AVCodecContext *c, AVFrame *pic)
   frame_meta_t *fm = malloc(sizeof(frame_meta_t));
 
   fm->pts = mb->mb_pts;
+  fm->dts = mb->mb_dts;
   fm->duration = mb->mb_duration;
+  fm->stream = mb->mb_stream;
   pic->opaque = fm;
   return ret;
 }
@@ -223,6 +214,16 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
   ctx->get_buffer = vd_get_buffer;
   ctx->release_buffer = vd_release_buffer;
 
+  /*
+   * If we are seeking, drop any non-reference frames
+   */
+  if((mp->mp_playstatus == MP_VIDEOSEEK_PLAY || 
+      mp->mp_playstatus == MP_VIDEOSEEK_PAUSE) &&
+     mb->mb_dts < mp->mp_videoseekdts)
+    ctx->skip_frame = AVDISCARD_NONREF;
+  else
+    ctx->skip_frame = AVDISCARD_NONE;
+
   avcodec_decode_video(ctx, frame, &got_pic, mb->mb_data, mb->mb_size);
 
   nice_codec_name(mq->mq_info_codec, sizeof(mq->mq_info_codec), ctx);
@@ -237,7 +238,7 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
 
   /* Update aspect ratio */
 
-  switch(mb->mb_rate) {
+  switch(mb->mb_aspect_override) {
   case 0:
 
     if(frame->pan_scan != NULL && frame->pan_scan->width != 0)
@@ -268,8 +269,31 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
   /* Compute duration and PTS of frame */
 
   fm = frame->opaque;
-  if(fm == NULL)
-    return;
+  assert(fm != NULL);
+
+  if(mp->mp_playstatus == MP_VIDEOSEEK_PLAY || 
+     mp->mp_playstatus == MP_VIDEOSEEK_PAUSE) {
+    if(fm->dts < mp->mp_videoseekdts)
+      return;
+
+    if(mp->mp_playstatus == MP_VIDEOSEEK_PAUSE) {
+      mp_set_playstatus(mp, MP_PAUSE);
+    } else {
+      mp_set_playstatus(mp, MP_PLAY);
+    }
+  }
+
+  if(mp->mp_feedback != NULL) {
+    inputevent_t ie;
+
+    ie.type        = INPUT_TS;
+    ie.u.ts.dts    = fm->dts;
+    ie.u.ts.pts    = fm->pts;
+    ie.u.ts.stream = fm->stream;
+
+    input_postevent(mp->mp_feedback, &ie);
+  }
+
 
   pts = fm->pts;
   duration = fm->duration;
@@ -652,7 +676,6 @@ video_decoder_create(media_pipe_t *mp)
   pthread_cond_init(&vd->vd_avail_queue_cond, NULL);
   pthread_cond_init(&vd->vd_bufalloced_queue_cond, NULL);
   pthread_mutex_init(&vd->vd_queue_mutex, NULL);
-  pthread_mutex_init(&vd->vd_spill_mutex, NULL);
 
   /* */
 

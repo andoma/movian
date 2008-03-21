@@ -70,8 +70,6 @@ typedef struct codecwrap {
 typedef struct media_buf {
   TAILQ_ENTRY(media_buf) mb_link;
 
-  struct audio_output *mb_source;
-
   enum {
     MB_RESET,
     MB_VIDEO,
@@ -92,19 +90,13 @@ typedef struct media_buf {
 
   uint32_t mb_duration;
   uint32_t mb_time;           /* in seconds, of current track */
-  uint32_t mb_rate;
+  uint32_t mb_aspect_override;
+  int64_t mb_dts;
   int64_t mb_pts;
-
-  int mb_keyframe;
-  
-  float mb_peak[6];
 
   codecwrap_t *mb_cw;
 
-  void *mb_ptr;
-
-  int mb_subtitle_index;
-
+  int mb_stream; /* For feedback */
 } media_buf_t;
 
 /*
@@ -137,8 +129,13 @@ typedef struct media_queue {
 
 typedef enum {
   MP_STOP,
-  MP_PAUSE,
-  MP_PLAY
+  MP_PAUSE,           /* Freeze playback */
+  MP_PLAY,
+  MP_VIDEOSEEK_PLAY,  /* Audio == silent
+		       * Video == decode until dts >= videoseekdts,
+		       *          then display that frame and goto MP_PLAY
+		       */
+  MP_VIDEOSEEK_PAUSE, /* Same as above, but goto PAUSE */
 } mp_playstatus_t;
 
 typedef struct media_pipe {
@@ -158,8 +155,6 @@ typedef struct media_pipe {
   LIST_ENTRY(media_pipe) mp_asched_link;
   int64_t mp_clock;
   int mp_clock_valid;
-
-  int mp_time_feedback;
 
   int mp_total_time;
 
@@ -182,6 +177,10 @@ typedef struct media_pipe {
 
   struct video_decoder *mp_video_decoder;
   struct vd_conf *mp_video_conf;
+
+  struct inputctrl *mp_feedback;
+
+  int64_t mp_videoseekdts;
 
 } media_pipe_t;
 
@@ -223,7 +222,7 @@ void wrap_format_wait(formatwrap_t *fw);
 static inline media_buf_t *
 media_buf_alloc(void)
 {
-  return malloc(sizeof(media_buf_t));
+  return calloc(1, sizeof(media_buf_t));
 }
 
 static inline void

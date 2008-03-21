@@ -51,7 +51,7 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic,
   media_queue_t *mq;
   int64_t pts4seek = 0;
   int streams;
-  int64_t cur_pos_pts = AV_NOPTS_VALUE;
+  int64_t cur_pos_pts = AV_NOPTS_VALUE, pts;
   int curtime, gotevent;
   codecwrap_t *cw;
   playlist_entry_t *next = NULL;
@@ -98,27 +98,9 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic,
 
   curtime = -1;
 
+  mp->mp_feedback = ic;
+
   while(1) {
-
-    /**
-     * If current time feedback (from audio output) changes,
-     * update overlay
-     */ 
-    if(curtime != mp->mp_time_feedback) {
-      curtime = mp->mp_time_feedback;
-
-      pthread_mutex_lock(&playlistlock);
-
-      if(ple->ple_pl != NULL) {
-	layout_update_time(ple->ple_pl->pl_widget, "time_current",
-			   ple->ple_time_offset + curtime);
-      }
-
-      pthread_mutex_unlock(&playlistlock);
-
-      layout_update_time(overlay, "time_current", curtime);
-    }
- 
     if(mp_is_paused(mp)) {
       gotevent = !input_getevent(ic, 1, &ie, NULL);
       media_pipe_acquire_audio(mp);
@@ -129,6 +111,30 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic,
     if(gotevent) switch(ie.type) {
 
     default:
+
+    case INPUT_TS:
+      pts = ie.u.ts.pts;
+      
+      if(pts != AV_NOPTS_VALUE) {
+	pts -= fctx->start_time;
+
+	pts /= AV_TIME_BASE;
+
+	if(curtime != pts) {
+	  curtime = pts;
+
+	  pthread_mutex_lock(&playlistlock);
+	  
+	  if(ple->ple_pl != NULL)
+	    layout_update_time(ple->ple_pl->pl_widget, "time_current",
+			       ple->ple_time_offset + pts);
+	  
+	  pthread_mutex_unlock(&playlistlock);
+	  
+	  layout_update_time(overlay, "time_current", pts);
+	}
+      }
+      break;
 
     case PLAYLIST_INPUTEVENT_NEWENTRY:
       /**

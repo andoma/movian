@@ -85,6 +85,7 @@ typedef enum {
 typedef enum {
   INPUT_NONE = 0,
   INPUT_KEY,
+  INPUT_TS,
   INPUT_PAD,
   INPUT_U32,             /* Generic U32 */
   INPUT_APP,             /* Application specific, 'ptr' will be free'd
@@ -110,6 +111,13 @@ typedef struct inputevent {
 
     uint32_t u32;
     void *ptr;
+
+    struct {
+      /* TS feedback */
+      int64_t dts;
+      int64_t pts;
+      int     stream;
+    } ts;
   } u;
 
   void (*freefunc)(input_event_type_t type, void *ptr);

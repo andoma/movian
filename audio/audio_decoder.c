@@ -25,6 +25,8 @@
 #include "audio_decoder.h"
 #include "audio_mixer.h"
 
+#include "hid/input.h"
+
 extern int mixer_hw_output_formats;
 
 static channel_offset_t layout_mono[] = {
@@ -177,8 +179,17 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
 
     if(frames > 0 && chlayout != NULL) {
 
-      mp->mp_time_feedback = mb->mb_time; /* low resolution informational
-					     time */
+      if(mp->mp_feedback != NULL) {
+	inputevent_t ie;
+
+	ie.type        = INPUT_TS;
+	ie.u.ts.dts    = mb->mb_dts;
+	ie.u.ts.pts    = mb->mb_pts;
+	ie.u.ts.stream = mb->mb_stream;
+	
+	input_postevent(mp->mp_feedback, &ie);
+      }
+
       audio_mixer_source_int16(ad->ad_output, ad->ad_outbuf, frames,
 			       mb->mb_pts);
       
@@ -196,9 +207,57 @@ ad_thread(void *aux)
 {
   audio_decoder_t *ad = aux;
   media_pipe_t *mp = ad->ad_mp;
+  media_queue_t *mq = &mp->mp_audio;
   media_buf_t *mb;
 
-  while((mb = mb_dequeue_wait(mp, &mp->mp_audio)) != NULL) {
+  pthread_mutex_lock(&mp->mp_mutex);
+
+  while(1) {
+
+    if(mp->mp_playstatus == MP_STOP)
+      break;
+
+    mb = TAILQ_FIRST(&mq->mq_q);
+    switch(mp->mp_playstatus) {
+    case MP_PAUSE:
+      pthread_cond_wait(&mq->mq_avail, &mp->mp_mutex);
+      continue;
+
+    case MP_PLAY:
+      if(mb == NULL) {
+	pthread_cond_wait(&mq->mq_avail, &mp->mp_mutex);
+	continue;
+      }
+      break;
+
+    case MP_VIDEOSEEK_PLAY:
+    case MP_VIDEOSEEK_PAUSE:
+      if(mb == NULL) {
+	pthread_cond_wait(&mq->mq_avail, &mp->mp_mutex);
+	continue;
+      }
+
+      if(mb->mb_dts < mp->mp_videoseekdts) {
+	printf("Audio skipping DTS %.2f\n", mb->mb_dts / 1000000.0);
+	TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
+	mq->mq_len--;
+	pthread_cond_signal(&mp->mp_backpressure);
+	media_buf_free(mb);
+	continue;
+      }
+
+      printf("Audio holding @DTS %.2f\n", mb->mb_dts / 1000000.0);
+      pthread_cond_wait(&mq->mq_avail, &mp->mp_mutex);
+      continue;
+
+    default:
+      abort();
+    }
+
+    TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
+    mq->mq_len--;
+    pthread_cond_signal(&mp->mp_backpressure);
+    pthread_mutex_unlock(&mp->mp_mutex);
 
     switch(mb->mb_data_type) {
     default:
@@ -213,7 +272,11 @@ ad_thread(void *aux)
       break;
     }
     media_buf_free(mb);
+    pthread_mutex_lock(&mp->mp_mutex);
+
   }
+  pthread_mutex_unlock(&mp->mp_mutex);
+
   return NULL;
 }
 

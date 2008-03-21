@@ -50,6 +50,60 @@
 #define OVERLAY_BUTTON_SSETTINGS 8
 #define OVERLAY_BUTTON_STOP      9
 
+typedef struct play_video_ctrl {
+
+  int    pvc_widget_status_playstatus;
+  glw_t *pvc_overlay;
+
+} play_video_ctrl_t;
+
+/**
+ *
+ */
+static void
+pv_update_playstatus(play_video_ctrl_t *pvc, mp_playstatus_t mps)
+{
+  const char *model;
+  glw_t *w;
+
+  if(pvc->pvc_widget_status_playstatus == mps)
+    return;
+
+  pvc->pvc_widget_status_playstatus = mps;
+
+  w = glw_find_by_id(pvc->pvc_overlay, "playstatus", 0);
+  if(w == NULL)
+    return;
+
+  switch(mps) {
+  case MP_PAUSE:
+    model = "videoplayback/pause";
+    break;
+  case MP_PLAY:
+    model = "videoplayback/play";
+    break;
+  case MP_VIDEOSEEK_PAUSE:
+  case MP_VIDEOSEEK_PLAY:
+    model = "videoplayback/seek";
+    break;
+  default:
+    model = NULL;
+    break;
+  }
+
+  if(model != NULL) {
+    w = glw_create(GLW_MODEL,
+		   GLW_ATTRIB_PARENT, w,
+		   GLW_ATTRIB_FILENAME, model,
+		   NULL);
+  } else {
+    w = glw_create(GLW_DUMMY,
+		   GLW_ATTRIB_PARENT, w,
+		   NULL);
+  }
+}
+ 
+
 
 /**
  * 
@@ -65,67 +119,49 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
   int i, key;
   media_buf_t *mb;
   media_queue_t *mq;
-  int64_t pts4seek = 0;
   int streams;
-  int64_t cur_pos_pts = AV_NOPTS_VALUE;
+  //  int64_t cur_pos_pts = AV_NOPTS_VALUE;
   media_pipe_t *mp = &ai->ai_mp;
   vd_conf_t vdc;
-  glw_t *top, *overlay, *w, *vdw;
-  struct layout_form_entry_list overlay_lfelist;
+  glw_t *top, *vdw;
+
+  int64_t pts, dts, seek_ref, seek_delta, seek_abs;
+  inputevent_t ie;
+  int gotevent, run;
+
+  play_video_ctrl_t pvc;
+  glw_t *w;
   const char *s;
-  int curtime = -1;
+
+  memset(&pvc, 0, sizeof(play_video_ctrl_t));
 
   /**
    * Create top level stack
    */
-  top = glw_create(GLW_ZSTACK,
+  top = glw_create(GLW_CONTAINER_Z,
+		   GLW_ATTRIB_DISPLACEMENT, 0.0, 0.0, 1.0,
 		   GLW_ATTRIB_PARENT, parent,
 		   NULL);
-
   /**
    * Create video output widget
    */
   vd_conf_init(&vdc);
   vdw = vd_create_widget(top, &ai->ai_mp);
   mp_set_video_conf(mp, &vdc);
- 
+
+
+  /**
+   * Status XFADER
+   */
+
   /**
    * Control overlay
    */
-  overlay = glw_create(GLW_MODEL,
-		       GLW_ATTRIB_PARENT, top,
-		       GLW_ATTRIB_FILENAME, "videoplayback/overlay",
-		       NULL);
-
-  TAILQ_INIT(&overlay_lfelist);
-
-  LFE_ADD_BTN(&overlay_lfelist, "player_play",  OVERLAY_BUTTON_PLAYPAUSE);
-  LFE_ADD_BTN(&overlay_lfelist, "player_prev",  OVERLAY_BUTTON_PREV);
-  LFE_ADD_BTN(&overlay_lfelist, "player_rew",   OVERLAY_BUTTON_REW);
-  LFE_ADD_BTN(&overlay_lfelist, "player_fwd",   OVERLAY_BUTTON_FWD);
-  LFE_ADD_BTN(&overlay_lfelist, "player_end",   OVERLAY_BUTTON_END);
-  LFE_ADD_BTN(&overlay_lfelist, "player_stop",  OVERLAY_BUTTON_STOP);
-
-  LFE_ADD_BTN(&overlay_lfelist, "player_video_settings", 
-	      OVERLAY_BUTTON_VSETTINGS);
-
-  LFE_ADD_BTN(&overlay_lfelist, "player_audio_settings",
-	      OVERLAY_BUTTON_ASETTINGS);
-
-  LFE_ADD_BTN(&overlay_lfelist, "player_subtitle_settings",
-	      OVERLAY_BUTTON_SSETTINGS);
-
-
-  layout_form_initialize(&overlay_lfelist, overlay, &ai->ai_gfs, ic, 1);
-
-
-
-
-  
-
-
-
-  printf("\nPlaying %s\n", fname);
+  pvc.pvc_overlay = 
+    glw_create(GLW_MODEL,
+	       GLW_ATTRIB_PARENT, top,
+	       GLW_ATTRIB_FILENAME, "videoplayback/overlay",
+	       NULL);
 
   if(av_open_input_file(&fctx, fname, NULL, 0, NULL) != 0) {
     fprintf(stderr, "Unable to open input file\n");
@@ -144,7 +180,7 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
   /**
    * Set title
    */
-  if((w = glw_find_by_id(overlay, "title", 0)) != NULL) {
+  if((w = glw_find_by_id(pvc.pvc_overlay, "title", 0)) != NULL) {
     s = fctx->title;
     if(*s == 0) {
       /* No stored title */
@@ -157,7 +193,8 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
   /**
    * Set total duration
    */
-  layout_update_time(overlay, "time_total", fctx->duration / AV_TIME_BASE);
+  layout_update_time(pvc.pvc_overlay,
+		     "time_total", fctx->duration / AV_TIME_BASE);
 
   cwvec = alloca(fctx->nb_streams * sizeof(void *));
   memset(cwvec, 0, sizeof(void *) * fctx->nb_streams);
@@ -186,162 +223,220 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
 
   wrap_lock_all_codecs(fw);
   
-  mp_set_playstatus(mp, MP_PLAY);
-  media_pipe_acquire_audio(mp);
+  mp_set_playstatus(mp, MP_VIDEOSEEK_PLAY);
+  mp->mp_videoseekdts = 0;
 
-  layout_update_codec_info(overlay, "audioinfo",
+  media_pipe_acquire_audio(mp);
+  mp->mp_feedback = ic;
+
+  layout_update_codec_info(pvc.pvc_overlay, "audioinfo",
 			   mp->mp_audio.mq_stream >= 0 ?
 			   cwvec[mp->mp_audio.mq_stream]->codec_ctx : NULL);
 
-  layout_update_codec_info(overlay, "videoinfo",
+  layout_update_codec_info(pvc.pvc_overlay, "videoinfo",
 			   mp->mp_video.mq_stream >= 0 ?
 			   cwvec[mp->mp_video.mq_stream]->codec_ctx : NULL);
 
   wrap_unlock_all_codecs(fw);
 
-  while(1) {
+  pts         = AV_NOPTS_VALUE;
+  dts         = AV_NOPTS_VALUE;
+  seek_ref    = AV_NOPTS_VALUE;
+  run       = 1;
 
-    /**
-     * If current time feedback (from audio output) changes,
-     * update overlay
-     */ 
-    if(curtime != mp->mp_time_feedback) {
-      float v;
-
-      curtime = mp->mp_time_feedback;
-      layout_update_time(overlay, "time_current", curtime);
-
-      v = (float)curtime / (float)(fctx->duration / AV_TIME_BASE);
-      layout_update_bar(overlay, "durationbar", v);
-
-    }
-
-    if(mp_is_paused(mp)) {
-      key = input_getkey(ic, 1);
-      media_pipe_acquire_audio(mp);
-    } else {
-      key = input_getkey(ic, 0);
-    }
-
-    switch(key) {
-
-    case INPUT_KEY_SEEK_FAST_BACKWARD:
-      av_seek_frame(fctx, -1, pts4seek - 60000000, AVSEEK_FLAG_BACKWARD);
-    case INPUT_KEY_SEEK_BACKWARD:
-      av_seek_frame(fctx, -1, pts4seek - 15000000, AVSEEK_FLAG_BACKWARD);
-      goto seekflush;
-    case INPUT_KEY_SEEK_FAST_FORWARD:
-      av_seek_frame(fctx, -1, pts4seek + 60000000, 0);
-      goto seekflush;
-    case INPUT_KEY_SEEK_FORWARD:
-      av_seek_frame(fctx, -1, pts4seek + 15000000, 0);
-      goto seekflush;
-
-    seekflush:
-      mp_flush(mp);
-      mp_auto_display(mp);
-      input_flush_queue(ic);
-      key = 0;
-      break;
-
-    case INPUT_KEY_PLAYPAUSE:
-    case INPUT_KEY_PLAY:
-    case INPUT_KEY_PAUSE:
-      mp_playpause(mp, key);
-      key = 0;
-      break;
-
-    default:
-      key = 0;
-      break;
-    }
-    
-    if(key)
-      break;
-
-    if(mp_is_paused(mp))
-      continue;
-
-    mb = media_buf_alloc();
-
+  while(run) {
     i = av_read_frame(fctx, &pkt);
 
     if(i < 0) {
+      printf("Read error %d\n", i);
       mp_wait(mp, mp->mp_audio.mq_stream != -1, mp->mp_video.mq_stream != -1);
-      key = 0;
       break;
     }
 
-    mb->mb_data = NULL;
-    mb->mb_size = pkt.size;
-
+    ctx = cwvec[pkt.stream_index]->codec_ctx;
+    mb = NULL;
+    
+    /* Rescale PTS / DTS to µsec */
     if(pkt.pts != AV_NOPTS_VALUE) {
-      mb->mb_pts = av_rescale_q(pkt.pts,
-				fctx->streams[pkt.stream_index]->time_base,
-				AV_TIME_BASE_Q);
-      pts4seek = mb->mb_pts;
+      pts = av_rescale_q(pkt.pts, fctx->streams[pkt.stream_index]->time_base,
+			 AV_TIME_BASE_Q);
     } else {
-      mb->mb_pts = AV_NOPTS_VALUE;
+      pts = AV_NOPTS_VALUE;
     }
-    
-    mb->mb_duration = av_rescale_q(pkt.duration,
-				   fctx->streams[pkt.stream_index]->time_base,
-				   AV_TIME_BASE_Q);
-
-    if(pkt.stream_index == mp->mp_video.mq_stream && 
-       cwvec[mp->mp_video.mq_stream] != NULL) {
-      ctx = cwvec[mp->mp_video.mq_stream]->codec_ctx;
-
-      mb->mb_cw = wrap_codec_ref(cwvec[mp->mp_video.mq_stream]);
-      mb->mb_data_type = MB_VIDEO;
-      mb->mb_rate = 0;
-      mb->mb_keyframe = 1;
-      mb->mb_data = malloc(pkt.size + FF_INPUT_BUFFER_PADDING_SIZE);
-      memcpy(mb->mb_data, pkt.data, pkt.size);
-      memset(mb->mb_data + pkt.size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
-      mq = &mp->mp_video;
-
-    } else if(pkt.stream_index == mp->mp_audio.mq_stream && 
-	      cwvec[mp->mp_audio.mq_stream] != NULL) {
-
-      ctx = cwvec[mp->mp_audio.mq_stream]->codec_ctx;
-
-      if(mb->mb_pts != AV_NOPTS_VALUE) {
-	if(fctx->start_time != AV_NOPTS_VALUE)
-	  cur_pos_pts = mb->mb_pts - fctx->start_time;
-	else
-	  cur_pos_pts = mb->mb_pts;
-      }
-
-      if(cur_pos_pts != AV_NOPTS_VALUE)
-	mb->mb_time = cur_pos_pts / AV_TIME_BASE;
-      else
-	mb->mb_time = 0;
-
-      mb->mb_data_type = MB_AUDIO;
-      mb->mb_cw = wrap_codec_ref(cwvec[mp->mp_audio.mq_stream]);
-
-      mb->mb_data = malloc(pkt.size +  FF_INPUT_BUFFER_PADDING_SIZE);
-      memset(mb->mb_data + pkt.size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
  
-      memcpy(mb->mb_data, pkt.data, pkt.size);
-      mq = &mp->mp_audio;
+    if(pkt.dts != AV_NOPTS_VALUE) {
+      dts = av_rescale_q(pkt.dts, fctx->streams[pkt.stream_index]->time_base,
+			 AV_TIME_BASE_Q);
     } else {
-      mq = NULL;
+      dts = AV_NOPTS_VALUE;
+    }
+ 
+
+    if(ctx != NULL) {
+      if(pkt.stream_index == mp->mp_video.mq_stream) {
+	/* Current video stream */
+
+	mb = media_buf_alloc();
+	mb->mb_data_type = MB_VIDEO;
+	mq = &mp->mp_video;
+
+      } else if(pkt.stream_index == mp->mp_audio.mq_stream) {
+	/* Current audio stream */
+	mb = media_buf_alloc();
+	mb->mb_data_type = MB_AUDIO;
+	mq = &mp->mp_audio;
+      }
     }
 
-    if(mq != NULL) {
-      mb_enqueue(mp, mq, mb);
+    if(mb == NULL) {
       av_free_packet(&pkt);
-      continue;
+    } else {
+
+      mb->mb_pts = pts;
+      mb->mb_dts = dts;
+   
+      /* Rescale duration */
+
+      mb->mb_duration =
+	av_rescale_q(pkt.duration, fctx->streams[pkt.stream_index]->time_base,
+		     AV_TIME_BASE_Q);
+
+      
+      mb->mb_cw = wrap_codec_ref(cwvec[pkt.stream_index]);
+
+      /* Move the data pointers from ffmpeg's packet */
+
+      mb->mb_stream = pkt.stream_index;
+
+      mb->mb_data = pkt.data;
+      pkt.data = NULL;
+
+      mb->mb_size = pkt.size;
+      pkt.size = 0;
+
+      /* Enqueue packet */
+
+      mb_enqueue(mp, mq, mb);
     }
-    
     av_free_packet(&pkt);
 
-    if(mb->mb_data != NULL)
-      free(mb->mb_data);
-    free(mb);
+    pv_update_playstatus(&pvc, mp->mp_playstatus);
 
+    if(mp_is_paused(mp)) {
+      gotevent = !input_getevent(ic, 1, &ie, NULL);
+      media_pipe_acquire_audio(mp);
+    } else {
+      gotevent = !input_getevent(ic, 0, &ie, NULL);
+    }
+
+    if(!gotevent)
+      continue;
+
+    switch(ie.type) {
+
+    default:
+      break;
+
+      /**
+       * Feedback from decoders
+       */
+    case INPUT_TS:
+      if(ie.u.ts.stream != mp->mp_video.mq_stream)
+	break; /* we only deal with the video stream here */
+
+      if(ie.u.ts.dts != AV_NOPTS_VALUE)
+	seek_ref = ie.u.ts.dts;
+
+      pts = ie.u.ts.pts;
+      if(pts != AV_NOPTS_VALUE) {
+	pts -= fctx->start_time;
+
+	layout_update_time(pvc.pvc_overlay,
+			   "time_current",pts / AV_TIME_BASE);
+	layout_update_bar(pvc.pvc_overlay, "durationbar", 
+			  (double)pts / (double)(fctx->duration));
+      }
+      break;
+
+      /**
+       * Keyboard input
+       */
+    case INPUT_KEY:
+      
+      key = ie.u.key;
+
+      seek_abs   = 0;
+      seek_delta = 0;
+
+      switch(key) {
+      case INPUT_KEY_BACK:
+	run = 0;
+	break;
+      case INPUT_KEY_RESTART_TRACK:
+	seek_abs = 1;
+	break;
+      case INPUT_KEY_SEEK_FAST_BACKWARD:
+	seek_delta = -60000000;
+	break;
+      case INPUT_KEY_SEEK_BACKWARD:
+	seek_delta = -15000000;
+	break;
+      case INPUT_KEY_SEEK_FAST_FORWARD:
+	seek_delta = 60000000;
+	break;
+      case INPUT_KEY_SEEK_FORWARD:
+	seek_delta = 15000000;
+	break;
+
+      case INPUT_KEY_PLAYPAUSE:
+      case INPUT_KEY_PLAY:
+      case INPUT_KEY_PAUSE:
+	mp_playpause(mp, key);
+	break;
+
+      default:
+	break;
+      }
+
+      if((seek_delta && seek_ref != AV_NOPTS_VALUE) || seek_abs) {
+	/* Seeking requested */
+
+	/* Just make it display the seek widget */
+	pv_update_playstatus(&pvc, MP_VIDEOSEEK_PLAY);
+
+	if(seek_abs)
+	  seek_ref = seek_abs;
+	else
+	  seek_ref += seek_delta;
+
+	if(seek_ref < fctx->start_time)
+	  seek_ref = fctx->start_time;
+
+	printf("Seeking to %.2f\n", seek_ref / 1000000.0);
+
+	i = av_seek_frame(fctx, -1, seek_ref, AVSEEK_FLAG_BACKWARD);
+
+	if(i < 0)
+	  printf("Seeking failed\n");
+
+	mp_flush(mp);
+      
+	mp->mp_videoseekdts = seek_ref;
+
+	switch(mp->mp_playstatus) {
+	case MP_VIDEOSEEK_PAUSE:
+	case MP_PAUSE:
+	  mp_set_playstatus(mp, MP_VIDEOSEEK_PAUSE);
+	  break;
+	case MP_VIDEOSEEK_PLAY:
+	case MP_PLAY:
+	  mp_set_playstatus(mp, MP_VIDEOSEEK_PLAY);
+	  break;
+	default:
+	  abort();
+	}
+      }
+    }
   }
 
   mp_set_playstatus(mp, MP_STOP);
@@ -361,8 +456,7 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
   for(i = 0; i < streams; i++) if(cwvec[i] != NULL)
     wrap_codec_deref(cwvec[i], 0);
 
-  if(vdw != NULL) 
-    glw_destroy(vdw);
+  glw_destroy(top);
 
   wrap_format_wait(fw);
 
@@ -370,6 +464,7 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
     subtitles_free(mp->mp_subtitles);
     mp->mp_subtitles = NULL;
   }
+  input_flush_queue(ic);
 
-  return key;
+  return 0;
 }

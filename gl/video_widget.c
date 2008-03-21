@@ -435,7 +435,7 @@ vd_compute_avdiff(video_decoder_t *vd, media_pipe_t *mp, int64_t pts)
 
 static int64_t
 vd_compute_blend(video_decoder_t *vd, gl_video_frame_t *fra,
-		  gl_video_frame_t *frb, int output_duration)
+		  gl_video_frame_t *frb, int output_duration, int paused)
 {
   int64_t pts;
   int x;
@@ -445,8 +445,9 @@ vd_compute_blend(video_decoder_t *vd, gl_video_frame_t *fra,
     vd->vd_fra = fra;
     vd->vd_frb = NULL;
 
-    fra->gvf_duration -= output_duration;
     pts = fra->gvf_pts;
+
+    fra->gvf_duration -= output_duration;
     fra->gvf_pts += output_duration;
 
   } else if(frb != NULL) {
@@ -457,12 +458,9 @@ vd_compute_blend(video_decoder_t *vd, gl_video_frame_t *fra,
 
     if(fra->gvf_duration + frb->gvf_duration < output_duration) {
 
-      pthread_mutex_lock(&vd->vd_spill_mutex);
-      x = output_duration - (fra->gvf_duration + frb->gvf_duration);
-      vd->vd_spill += x;
-      pthread_mutex_unlock(&vd->vd_spill_mutex);
+      printf("blend error\n");
 
-      frb->gvf_duration = 0;
+      fra->gvf_duration = 0;
       pts = frb->gvf_pts;
 
     } else {
@@ -492,7 +490,6 @@ layout_video_pipe(video_decoder_t *vd, glw_rctx_t *rc)
   gl_video_frame_t *fra, *frb;
   media_pipe_t *mp = vd->vd_mp;
   int output_duration;
-  int width = 0, height = 0;
   int64_t pts = 0;
   vd_conf_t *gc = mp->mp_video_conf;
   struct gl_video_frame_queue *dq;
@@ -533,21 +530,18 @@ layout_video_pipe(video_decoder_t *vd, glw_rctx_t *rc)
       
     while((frb = TAILQ_FIRST(&vd->vd_displaying_queue)) != NULL)
       vd_enqueue_for_decode(vd, frb, &vd->vd_displaying_queue);
-
-    width = fra->gvf_width[0];
-    height = fra->gvf_height[0];
       
     frb = TAILQ_NEXT(fra, link);
-    pts = vd_compute_blend(vd, fra, frb, output_duration);
 
-    if(mp_get_playstatus(mp) != MP_PAUSE) {
+    pts = vd_compute_blend(vd, fra, frb, output_duration,
+			   mp_get_playstatus(mp) == MP_PAUSE);
 
+    if(mp_get_playstatus(mp) != MP_PAUSE || frb != NULL) {
       if(fra != NULL && fra->gvf_duration == 0)
 	vd_enqueue_for_display(vd, fra, dq);
-
-      if(frb != NULL && frb->gvf_duration == 0)
-	vd_enqueue_for_display(vd, frb, dq);
     }
+    if(frb != NULL && frb->gvf_duration == 0)
+      vd_enqueue_for_display(vd, frb, dq);
   }
 
   if(pts != AV_NOPTS_VALUE) {
