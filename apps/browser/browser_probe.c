@@ -119,6 +119,11 @@ probe_figure_primary_content(browser_root_t *br, browser_node_t *bn)
   }
   free(a);
 
+  if(cnt == 0) {
+    browser_view_switch_by_name(bn, br->br_gfs, "empty");
+    return;
+  }
+
   for(i = 0; i < 32; i++)
     if(contentcount[i] > 3 * cnt / 4)
       break;
