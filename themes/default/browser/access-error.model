@@ -1,0 +1,58 @@
+#HTSSIMPLEMODEL
+
+y-container {
+ space 1.0
+ y-container {
+  weight 4.0
+  id text
+ }
+
+ space 1.0
+
+ x-container {
+  weight 2.0
+  space 1.0
+
+  bitmap {
+   id ignore
+   focus-cursor
+   focus-alpha
+   filename icon://plate_compact.png
+   texture-borders 0.5 0.5 0.5 0.5
+   vertex-borders  0.1 0.1 0.1 0.1
+   y-container {
+    bitmap { 
+     filename icon://ok.png
+     keep-aspect
+    }
+    text {
+     caption Ignore
+     align center
+    }
+   }
+  }
+
+  space 1.0
+
+  bitmap {
+   id exit
+   focus-cursor
+   focus-alpha
+   filename icon://plate_compact.png
+   texture-borders 0.5 0.5 0.5 0.5
+   vertex-borders  0.1 0.1 0.1 0.1
+   y-container {
+    bitmap { 
+     filename icon://error.png
+     keep-aspect
+    }
+    text {
+     caption Exit browser
+     align center
+    }
+   }
+  }
+  space 1.0
+ }
+ space 4.0
+}

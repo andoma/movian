@@ -35,6 +35,7 @@
 #include "input.h"
 #include "layout/layout.h"
 #include "layout/layout_forms.h"
+#include "layout/layout_support.h"
 
 #include "browser.h"
 #include "browser_view.h"
@@ -150,6 +151,42 @@ nav_store_instance(appi_t *ai, navconfig_t *cfg, int type)
  *  Return 0 if user wants to exit, otherwise -1
  */
 static int
+nav_access_error(navigator_t *nav, appi_t *ai, const char *dir, 
+		 const char *errtxt)
+{
+  struct layout_form_entry_list lfelist;
+  glw_t *m;
+  int r;
+
+  char errbuf[400];
+
+  snprintf(errbuf, sizeof(errbuf),
+	   "Unable to access\n"
+	   "%s\n"
+	   "%s", dir, errtxt);
+
+  TAILQ_INIT(&lfelist);
+
+  m = glw_create(GLW_MODEL,
+		 GLW_ATTRIB_PARENT, nav->nav_stack,
+		 GLW_ATTRIB_FILENAME, "browser/access-error",
+		 NULL);
+
+  layout_update_multilinetext(m, "text", errbuf, 5, GLW_ALIGN_CENTER);
+
+  LFE_ADD_BTN(&lfelist, "ignore", 0);
+  LFE_ADD_BTN(&lfelist, "exit",   -1);
+  
+  r = layout_form_query(&lfelist, m, &ai->ai_gfs);
+  glw_detach(m);
+  return r;
+}
+
+
+/**
+ *  Return 0 if user wants to exit, otherwise -1
+ */
+static int
 nav_verify_exit(navigator_t *nav, appi_t *ai)
 {
   struct layout_form_entry_list lfelist;
@@ -225,7 +262,10 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
   bn = br->br_root;
 
   browser_view_expand_node(bn, nav->nav_stack, &ai->ai_gfs);
-  browser_scandir(bn, 0);
+  r = browser_scandir(bn, 0);
+
+  if(r != 0 && nav_access_error(nav, ai, rooturl, strerror(r)))
+    run = 0;
 
   nav_store_instance(ai, cfg, navtype);
 
