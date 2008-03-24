@@ -100,12 +100,9 @@ menu_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
   va_start(ap, signal);
 
   switch(signal) {
-  case GLW_SIGNAL_INPUT_EVENT:
-    printf("hej!\n");
-    break;
-
   case GLW_SIGNAL_LAYOUT:
     w->glw_alpha = GLW_LP(16, w->glw_alpha, ai->ai_display_menu ? 1.0 : 0.0);
+    ai->ai_gfs.gfs_active = ai->ai_display_menu;
     break;
 
   default:
@@ -301,7 +298,6 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
   pvc.pvc_status_overlay = 
     glw_create(GLW_MODEL,
 	       GLW_ATTRIB_PARENT, top,
-	       GLW_ATTRIB_ALPHA, 0.0f,
 	       GLW_ATTRIB_SIGNAL_HANDLER, overlay_callback, &pvc, 100,
 	       GLW_ATTRIB_FILENAME, "videoplayback/overlay",
 	       NULL);
@@ -311,6 +307,7 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
    */
   pvc.pvc_menu_overlay = 
     glw_create(GLW_MODEL,
+	       GLW_ATTRIB_ALPHA, 0.0f,
 	       GLW_ATTRIB_PARENT, top,
 	       GLW_ATTRIB_SIGNAL_HANDLER, menu_callback, &pvc, 100,
 	       GLW_ATTRIB_FILENAME, "videoplayback/menu",
@@ -517,12 +514,6 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
       seek_delta = 0;
 
       switch(key) {
-      case INPUT_KEY_MENU:
-	if(ai->ai_display_menu)
-	  glw_focus_stack_activate(&ai->ai_gfs);
-	else
-	  glw_focus_stack_deactivate(&ai->ai_gfs);
-	break;
       case INPUT_KEY_BACK:
 	run = 0;
 	break;
@@ -593,8 +584,6 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
     }
   }
 
-  glw_focus_stack_activate(&ai->ai_gfs);
-
   mp_set_playstatus(mp, MP_STOP);
 
   wrap_lock_all_codecs(fw);
@@ -621,6 +610,8 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
     mp->mp_subtitles = NULL;
   }
   input_flush_queue(ic);
+
+  glw_focus_stack_activate(&ai->ai_gfs);
 
   return 0;
 }
