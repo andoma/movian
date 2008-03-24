@@ -46,6 +46,9 @@ static int layout_form_entry_button(glw_t *w, void *opaque,
 static int layout_form_entry_child_mon(glw_t *w, void *opaque,
 				       glw_signal_t signal, ...);
 
+static int layout_form_list_option(glw_t *w, void *opaque,
+				   glw_signal_t signal, ...);
+
 
 /**
  * Find a target we can move to
@@ -233,10 +236,10 @@ int
 layout_form_initialize(struct layout_form_entry_list *lfelist, glw_t *m,
 		       glw_focus_stack_t *gfs, ic_t *ic, int updatefocus)
 {
-  glw_t *w;
+  glw_t *w, *c;
   glw_t *ff = NULL;  /* first widget to focus */
   layout_form_entry_t *lfe, *l;
-  int len;
+  int len, v;
 
   TAILQ_FOREACH(l, lfelist, lfe_link) {
     w =  glw_find_by_id(m, l->lfe_id, 1);
@@ -286,6 +289,20 @@ layout_form_initialize(struct layout_form_entry_list *lfelist, glw_t *m,
 	      GLW_ATTRIB_SIGNAL_HANDLER, layout_form_entry_child_mon, lfe, 401,
 	      NULL);
       break;
+
+    case LFE_TYPE_LIST_OPTION:
+      glw_set(w,
+	      GLW_ATTRIB_SIGNAL_HANDLER, layout_form_list_option, lfe, 401,
+	      NULL);
+
+      v = *(int *)lfe->lfe_buf;
+
+      TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
+	if(c->glw_u32 == v)
+	  glw_select(w, c);
+
+      break;
+
     default:
       glw_set(w,
 	      GLW_ATTRIB_SIGNAL_HANDLER,  layout_form_entry_free, lfe, 401,
@@ -674,3 +691,55 @@ layout_form_entry_free(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
   return 0;
 }
+
+static int
+layout_form_list_option(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  layout_form_entry_t *lfe = opaque;
+  glw_t *c;
+
+  va_list ap;
+  va_start(ap, signal);
+
+  switch(signal) {
+  case GLW_SIGNAL_DTOR:
+    free(lfe);
+    return 0;
+
+  case GLW_SIGNAL_SELECTED_CHANGED:
+    c = va_arg(ap, void *);
+    if(c != NULL)
+      memcpy(lfe->lfe_buf, &c->glw_u32, sizeof(int));
+
+    return 1;
+  default:
+    break;
+  }
+
+  va_end(ap);
+
+  return 0;
+}
+
+/**
+ * Options fill
+ */
+void
+layout_form_fill_options(glw_t *m, const char *id,
+			 layout_form_entry_options_t options[], int num)
+{
+  int i;
+
+  if((m = glw_find_by_id(m, id, 0)) == NULL) 
+    return;
+
+  for(i = 0; i < num; i++) {
+    glw_create(GLW_TEXT_BITMAP,
+	       GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
+	       GLW_ATTRIB_PARENT, m,
+	       GLW_ATTRIB_CAPTION, options[i].caption,
+	       GLW_ATTRIB_U32,     options[i].id,
+	       NULL);
+  }
+}
+  

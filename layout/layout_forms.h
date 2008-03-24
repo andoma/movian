@@ -38,6 +38,7 @@ typedef struct layout_form_entry {
 #define LFE_TYPE_LIST   3
 #define LFE_TYPE_CUSTOM 4
 #define LFE_TYPE_CHILD_MONITOR 5
+#define LFE_TYPE_LIST_OPTION   6
 
   int lfe_value;
 
@@ -110,6 +111,18 @@ int layout_form_initialize(struct layout_form_entry_list *lfelist,
 } while(0)
 
 /**
+ * Modifies an int storage based on the LIST child w->glw_u32
+ */
+#define LFE_ADD_OPTION(listp, id, vptr) do {			\
+  layout_form_entry_t *lfe = alloca(sizeof(layout_form_entry_t));	\
+  memset(lfe, 0, sizeof(layout_form_entry_t));				\
+  lfe->lfe_type = LFE_TYPE_LIST_OPTION;                                 \
+  lfe->lfe_buf = vptr;							\
+  TAILQ_INSERT_TAIL(listp, lfe, lfe_link);				\
+  lfe->lfe_id = id;							\
+} while(0)
+
+/**
  * Signal an even when pressed
  */
 #define LFE_ADD_BTN(listp, id, val) do {				\
@@ -135,6 +148,14 @@ glw_t *layout_form_add_tab(glw_t *m, const char *listname,
 glw_t *layout_form_add_tab2(glw_t *m, const char *listname, glw_t *listentry,
 			    const char *deckname, const char *tabmodel);
 
+
+typedef struct layout_form_entry_options {
+  const char *caption;
+  int id;
+} layout_form_entry_options_t;
+
+void layout_form_fill_options(glw_t *m, const char *id,
+			      layout_form_entry_options_t options[], int num);
 
 #endif /* LAYOUT_FORMS_H */
 
