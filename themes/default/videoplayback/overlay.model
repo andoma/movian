@@ -1,7 +1,7 @@
 #HTSSIMPLEMODEL
 
 y-container {
- displacement 0 0 -0.1
+ displacement 0 0 0.9
 
  bitmap {
   weight 1.0

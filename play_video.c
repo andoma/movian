@@ -61,6 +61,8 @@ typedef struct play_video_ctrl {
 
   appi_t *pvc_ai;
 
+  int pvc_setup_mode;
+
 } play_video_ctrl_t;
 
 /**
@@ -102,7 +104,8 @@ menu_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
   switch(signal) {
   case GLW_SIGNAL_LAYOUT:
     w->glw_alpha = GLW_LP(16, w->glw_alpha, ai->ai_display_menu ? 1.0 : 0.0);
-    ai->ai_gfs.gfs_active = ai->ai_display_menu;
+    if(!pvc->pvc_setup_mode)
+      ai->ai_gfs.gfs_active = ai->ai_display_menu;
     break;
 
   default:
@@ -161,6 +164,31 @@ pv_update_playstatus(play_video_ctrl_t *pvc, mp_playstatus_t mps)
 		   NULL);
   }
 }
+
+/**
+ * Add audio track options to the form given
+ */
+static void
+add_audio_tracks(AVFormatContext *fctx, glw_t *t)
+{
+  AVCodecContext *ctx;
+  char buf[100];
+  const char *p;
+  int i;
+
+  for(i = 0; i < fctx->nb_streams; i++) {
+    ctx = fctx->streams[i]->codec;
+    if(ctx->codec_type != CODEC_TYPE_AUDIO)
+      continue;
+
+    avcodec_string(buf, sizeof(buf), ctx, 0);
+    p = strncasecmp(buf, "audio: ", 7) ? buf : buf + 7;
+
+    layout_form_add_option(t, "audio_tracks", p, i);
+  }
+}
+
+
  
 
 /**
@@ -172,11 +200,8 @@ video_menu_form_initialize(play_video_ctrl_t *pvc, appi_t *ai, ic_t *ic,
 			   media_pipe_t *mp)
 {
   glw_t *t, *m = pvc->pvc_menu_overlay;
-  AVCodecContext *ctx;
   struct layout_form_entry_list lfelist;
-  int r, i;
-  char buf[100];
-  const char *p;
+  int r;
 
   layout_form_entry_options_t deilace_options[] = {
     {"Automatic",          VD_DEILACE_AUTO},
@@ -197,17 +222,7 @@ video_menu_form_initialize(play_video_ctrl_t *pvc, appi_t *ai, ic_t *ic,
 			  "menu",           "videoplayback/audio-icon",
 			  "menu_container", "videoplayback/audio-tab");
   
-
-  for(i = 0; i < fctx->nb_streams; i++) {
-    ctx = fctx->streams[i]->codec;
-    if(ctx->codec_type != CODEC_TYPE_AUDIO)
-      continue;
-
-    avcodec_string(buf, sizeof(buf), ctx, 0);
-    p = strncasecmp(buf, "audio: ", 7) ? buf : buf + 7;
-
-    layout_form_add_option(t, "audio_tracks", p, i);
-  }
+  add_audio_tracks(fctx, t);
 
   LFE_ADD_OPTION(&lfelist, "audio_tracks", &mp->mp_audio.mq_stream);
 
@@ -230,6 +245,45 @@ video_menu_form_initialize(play_video_ctrl_t *pvc, appi_t *ai, ic_t *ic,
 
 }
 
+
+
+/**
+ * 
+ */
+static int
+video_start_form(play_video_ctrl_t *pvc, glw_t *parent, appi_t *ai, ic_t *ic,
+		 vd_conf_t *vdc, AVFormatContext *fctx,
+		 media_pipe_t *mp, int64_t start_time)
+{
+  glw_t *m;
+  struct layout_form_entry_list lfelist;
+  int r;
+
+  TAILQ_INIT(&lfelist);
+
+
+  m = glw_create(GLW_MODEL,
+		 GLW_ATTRIB_PARENT, parent,
+		 GLW_ATTRIB_FILENAME, "videoplayback/start",
+		 NULL);
+
+  start_time -= fctx->start_time;
+
+  layout_update_time(m, "start_time", start_time / AV_TIME_BASE);
+
+  add_audio_tracks(fctx, m);
+  LFE_ADD_BTN(&lfelist, "play", 0);
+  LFE_ADD_OPTION(&lfelist, "audio_tracks", &mp->mp_audio.mq_stream);
+  LFE_ADD_BTN(&lfelist, "start_from_begin", 1);
+  LFE_ADD_BTN(&lfelist, "cancel", -1);
+  
+  r = layout_form_query(&lfelist, m, &ai->ai_gfs);
+  glw_detach(m);
+  return r;
+}
+
+
+
 /**
  * 
  */
@@ -248,7 +302,7 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
   //  int64_t cur_pos_pts = AV_NOPTS_VALUE;
   media_pipe_t *mp = &ai->ai_mp;
   vd_conf_t vdc;
-  glw_t *top, *vdw;
+  glw_t *vdw, *zstack, *top;
 
   int64_t pts, dts, seek_ref, seek_delta, seek_abs;
   inputevent_t ie;
@@ -281,14 +335,21 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
    * Create top level stack
    */
   top = glw_create(GLW_CONTAINER_Z,
-		   GLW_ATTRIB_DISPLACEMENT, 0.0, 0.0, 1.0,
+		   GLW_ATTRIB_DISPLACEMENT, 0.0, 0.0, 0.0,
 		   GLW_ATTRIB_PARENT, parent,
 		   NULL);
+
+  /**
+   * Create playfield for video + menu + status, etc
+   */
+  zstack = glw_create(GLW_ZSTACK,
+		      GLW_ATTRIB_PARENT, top,
+		      NULL);
   /**
    * Create video output widget
    */
   vd_conf_init(&vdc);
-  vdw = vd_create_widget(top, &ai->ai_mp);
+  vdw = vd_create_widget(zstack, &ai->ai_mp);
   mp_set_video_conf(mp, &vdc);
 
 
@@ -361,7 +422,7 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
 
   wrap_lock_all_codecs(fw);
   
-  mp_set_playstatus(mp, MP_VIDEOSEEK_PLAY);
+  mp_set_playstatus(mp, MP_VIDEOSEEK_PAUSE);
   mp->mp_videoseekdts = 0;
 
   media_pipe_acquire_audio(mp);
@@ -384,10 +445,10 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
 
   pts         = AV_NOPTS_VALUE;
   dts         = AV_NOPTS_VALUE;
-  seek_ref    = AV_NOPTS_VALUE;
+  seek_ref    = fctx->start_time;
   run       = 1;
 
-  glw_focus_stack_deactivate(&ai->ai_gfs);
+  pvc.pvc_setup_mode = 1;
 
   while(run) {
     i = av_read_frame(fctx, &pkt);
@@ -477,6 +538,9 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
     if(!gotevent)
       continue;
 
+    seek_abs   = 0;
+    seek_delta = 0;
+
     switch(ie.type) {
 
     default:
@@ -501,6 +565,29 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
 	layout_update_bar(pvc.pvc_status_overlay, "durationbar", 
 			  (double)pts / (double)(fctx->duration));
       }
+
+      if(pvc.pvc_setup_mode) {
+	/* First frame displayed */
+	i = video_start_form(&pvc, zstack, ai, ic, &vdc, fctx, mp, seek_ref);
+
+	switch(i) {
+
+	case -1: /* cancel */
+	  run = 0;
+	  break;
+
+	case 0: /* play */
+	  glw_focus_stack_deactivate(&ai->ai_gfs);
+	  mp_set_playstatus(mp, MP_PLAY);
+	  pvc.pvc_setup_mode = 0;
+	  break;
+
+	case 1: /* reset */
+	  seek_abs = 1;
+	  break;
+	}
+      }
+
       break;
 
       /**
@@ -509,9 +596,6 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
     case INPUT_KEY:
 
       key = ie.u.key;
-
-      seek_abs   = 0;
-      seek_delta = 0;
 
       switch(key) {
       case INPUT_KEY_BACK:
@@ -542,44 +626,43 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
       default:
 	break;
       }
+    }
+    if((seek_delta && seek_ref != AV_NOPTS_VALUE) || seek_abs) {
+      /* Seeking requested */
 
-      if((seek_delta && seek_ref != AV_NOPTS_VALUE) || seek_abs) {
-	/* Seeking requested */
+      /* Just make it display the seek widget */
+      pv_update_playstatus(&pvc, MP_VIDEOSEEK_PLAY);
 
-	/* Just make it display the seek widget */
-	pv_update_playstatus(&pvc, MP_VIDEOSEEK_PLAY);
+      if(seek_abs)
+	seek_ref = seek_abs;
+      else
+	seek_ref += seek_delta;
 
-	if(seek_abs)
-	  seek_ref = seek_abs;
-	else
-	  seek_ref += seek_delta;
+      if(seek_ref < fctx->start_time)
+	seek_ref = fctx->start_time;
 
-	if(seek_ref < fctx->start_time)
-	  seek_ref = fctx->start_time;
+      printf("Seeking to %.2f\n", seek_ref / 1000000.0);
 
-	printf("Seeking to %.2f\n", seek_ref / 1000000.0);
+      i = av_seek_frame(fctx, -1, seek_ref, AVSEEK_FLAG_BACKWARD);
 
-	i = av_seek_frame(fctx, -1, seek_ref, AVSEEK_FLAG_BACKWARD);
+      if(i < 0)
+	printf("Seeking failed\n");
 
-	if(i < 0)
-	  printf("Seeking failed\n");
-
-	mp_flush(mp);
+      mp_flush(mp);
       
-	mp->mp_videoseekdts = seek_ref;
+      mp->mp_videoseekdts = seek_ref;
 
-	switch(mp->mp_playstatus) {
-	case MP_VIDEOSEEK_PAUSE:
-	case MP_PAUSE:
-	  mp_set_playstatus(mp, MP_VIDEOSEEK_PAUSE);
-	  break;
-	case MP_VIDEOSEEK_PLAY:
-	case MP_PLAY:
-	  mp_set_playstatus(mp, MP_VIDEOSEEK_PLAY);
-	  break;
-	default:
-	  abort();
-	}
+      switch(mp->mp_playstatus) {
+      case MP_VIDEOSEEK_PAUSE:
+      case MP_PAUSE:
+	mp_set_playstatus(mp, MP_VIDEOSEEK_PAUSE);
+	break;
+      case MP_VIDEOSEEK_PLAY:
+      case MP_PLAY:
+	mp_set_playstatus(mp, MP_VIDEOSEEK_PLAY);
+	break;
+      default:
+	abort();
       }
     }
   }
