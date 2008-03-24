@@ -151,10 +151,6 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
 
 
   /**
-   * Status XFADER
-   */
-
-  /**
    * Control overlay
    */
   pvc.pvc_overlay = 
@@ -229,13 +225,18 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
   media_pipe_acquire_audio(mp);
   mp->mp_feedback = ic;
 
-  layout_update_codec_info(pvc.pvc_overlay, "audioinfo",
-			   mp->mp_audio.mq_stream >= 0 ?
-			   cwvec[mp->mp_audio.mq_stream]->codec_ctx : NULL);
+  if(mp->mp_audio.mq_stream >= 0 && cwvec[mp->mp_audio.mq_stream] != NULL)
+    layout_update_codec_info(pvc.pvc_overlay, "audioinfo",
+			     cwvec[mp->mp_audio.mq_stream]->codec_ctx);
+  else
+    layout_update_codec_info(pvc.pvc_overlay, "audioinfo", NULL);
 
-  layout_update_codec_info(pvc.pvc_overlay, "videoinfo",
-			   mp->mp_video.mq_stream >= 0 ?
-			   cwvec[mp->mp_video.mq_stream]->codec_ctx : NULL);
+  if(mp->mp_video.mq_stream >= 0 && cwvec[mp->mp_video.mq_stream] != NULL)
+    layout_update_codec_info(pvc.pvc_overlay, "videoinfo",
+			     cwvec[mp->mp_video.mq_stream]->codec_ctx);
+  else
+    layout_update_codec_info(pvc.pvc_overlay, "videoinfo", NULL);
+
 
   wrap_unlock_all_codecs(fw);
 
@@ -253,7 +254,7 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
       break;
     }
 
-    ctx = cwvec[pkt.stream_index]->codec_ctx;
+    ctx = cwvec[pkt.stream_index] ? cwvec[pkt.stream_index]->codec_ctx : NULL;
     mb = NULL;
     
     /* Rescale PTS / DTS to µsec */
