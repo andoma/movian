@@ -86,7 +86,7 @@ fileaccess_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
   fa_protocol_t *fap;
 
   if((url = fa_resolve_proto(url, &fap)) == NULL)
-    return -1;
+    return EPROTONOSUPPORT;
 
   return fap->fap_scan(url, cb, arg);
 }

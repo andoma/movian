@@ -28,7 +28,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <fcntl.h>
-
+#include <errno.h>
 #include "showtime.h"
 #include "fa_fs.h"
 
@@ -62,7 +62,7 @@ fs_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
   n = scandir(url, &namelist, scan_filter, versionsort);
 
   if(n < 0) {
-    return -1;
+    return errno;
   } else {
     for(i = 0; i < n; i++) {
       d = namelist[i];
