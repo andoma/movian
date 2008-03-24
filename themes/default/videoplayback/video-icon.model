@@ -1,0 +1,15 @@
+#HTSSIMPLEMODEL
+
+y-container {
+ space 0.1
+ text {
+  weight 0.25
+  caption Video settings
+  align center
+ }
+ bitmap {
+  filename icon://screen.png
+  keep-aspect
+ } 
+ space 0.1
+}

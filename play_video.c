@@ -55,7 +55,11 @@ typedef struct play_video_ctrl {
   int    pvc_widget_status_playstatus;
   glw_t *pvc_status_overlay;
 
-  int    pvc_fader;
+  glw_t *pvc_menu_overlay;
+
+  int    pvc_status_fader;
+
+  appi_t *pvc_ai;
 
 } play_video_ctrl_t;
 
@@ -69,10 +73,10 @@ overlay_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
   switch(signal) {
   case GLW_SIGNAL_LAYOUT:
-    if(pvc->pvc_fader > 0)
-      pvc->pvc_fader--;
+    if(pvc->pvc_status_fader > 0)
+      pvc->pvc_status_fader--;
 
-    w->glw_alpha = GLW_LP(16, w->glw_alpha, pvc->pvc_fader ? 1.0 : 0.0);
+    w->glw_alpha = GLW_LP(16, w->glw_alpha, pvc->pvc_status_fader ? 1.0 : 0.0);
     break;
 
   default:
@@ -80,6 +84,36 @@ overlay_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
   }
   return 0;
 }
+
+
+
+/**
+ *
+ */
+static int
+menu_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  play_video_ctrl_t *pvc = opaque;
+  appi_t *ai = pvc->pvc_ai;
+
+  va_list ap;
+  va_start(ap, signal);
+
+  switch(signal) {
+  case GLW_SIGNAL_INPUT_EVENT:
+    printf("hej!\n");
+    break;
+
+  case GLW_SIGNAL_LAYOUT:
+    w->glw_alpha = GLW_LP(16, w->glw_alpha, ai->ai_display_menu ? 1.0 : 0.0);
+    break;
+
+  default:
+    break;
+  }
+  return 0;
+}
+
 
 
 /**
@@ -102,16 +136,16 @@ pv_update_playstatus(play_video_ctrl_t *pvc, mp_playstatus_t mps)
 
   switch(mps) {
   case MP_PAUSE:
-    pvc->pvc_fader = INT32_MAX;
+    pvc->pvc_status_fader = INT32_MAX;
     model = "videoplayback/pause";
     break;
   case MP_PLAY:
-    pvc->pvc_fader = 150;
+    pvc->pvc_status_fader = 150;
     model = "videoplayback/play";
     break;
   case MP_VIDEOSEEK_PAUSE:
   case MP_VIDEOSEEK_PLAY:
-    pvc->pvc_fader = INT32_MAX;
+    pvc->pvc_status_fader = INT32_MAX;
     model = "videoplayback/seek";
     break;
   default:
@@ -132,6 +166,72 @@ pv_update_playstatus(play_video_ctrl_t *pvc, mp_playstatus_t mps)
 }
  
 
+/**
+ * 
+ */
+static void
+video_menu_form_initialize(play_video_ctrl_t *pvc, appi_t *ai, ic_t *ic,
+			   vd_conf_t *vdc, AVFormatContext *fctx,
+			   media_pipe_t *mp)
+{
+  glw_t *t, *m = pvc->pvc_menu_overlay;
+  AVCodecContext *ctx;
+  struct layout_form_entry_list lfelist;
+  int r, i;
+  char buf[100];
+  const char *p;
+
+  layout_form_entry_options_t deilace_options[] = {
+    {"Automatic",          VD_DEILACE_AUTO},
+    {"Disabled",           VD_DEILACE_NONE},
+    {"Simple",             VD_DEILACE_HALF_RES},
+    {"YADIF",              VD_DEILACE_YADIF_FIELD}
+  };
+
+
+  TAILQ_INIT(&lfelist);
+
+  LFE_ADD(&lfelist, "menu");
+  
+  /**
+   * Audio tab
+   */
+  t = layout_form_add_tab(m,
+			  "menu",           "videoplayback/audio-icon",
+			  "menu_container", "videoplayback/audio-tab");
+  
+
+  for(i = 0; i < fctx->nb_streams; i++) {
+    ctx = fctx->streams[i]->codec;
+    if(ctx->codec_type != CODEC_TYPE_AUDIO)
+      continue;
+
+    avcodec_string(buf, sizeof(buf), ctx, 0);
+    p = strncasecmp(buf, "audio: ", 7) ? buf : buf + 7;
+
+    layout_form_add_option(t, "audio_tracks", p, i);
+  }
+
+  LFE_ADD_OPTION(&lfelist, "audio_tracks", &mp->mp_audio.mq_stream);
+
+  /**
+   * Video tab
+   */
+
+  t = layout_form_add_tab(m,
+			  "menu",           "videoplayback/video-icon",
+			  "menu_container", "videoplayback/video-tab");
+
+  layout_form_fill_options(t, "deinterlacer_options",
+			   deilace_options, 4);
+
+  LFE_ADD_OPTION(&lfelist, "deinterlacer_options", &vdc->gc_deilace_type);
+  LFE_ADD_INT(&lfelist, "avsync",    &vdc->gc_avcomp,"%dms", -2000, 2000, 50);
+  LFE_ADD_INT(&lfelist, "videozoom", &vdc->gc_zoom,  "%d%%",   100, 1000, 10);
+  
+  r = layout_form_initialize(&lfelist, m, &ai->ai_gfs, ic, 1);
+
+}
 
 /**
  * 
@@ -162,6 +262,23 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
   const char *s;
 
   memset(&pvc, 0, sizeof(play_video_ctrl_t));
+  pvc.pvc_ai = ai;
+
+  /**
+   * Open input file
+   */
+  if(av_open_input_file(&fctx, fname, NULL, 0, NULL) != 0) {
+    fprintf(stderr, "Unable to open input file\n");
+    return -1;
+  }
+
+  fctx->flags |= AVFMT_FLAG_GENPTS;
+
+  if(av_find_stream_info(fctx) < 0) {
+    av_close_input_file(fctx);
+    fprintf(stderr, "Unable to find stream info\n");
+    return -1;
+  }
 
   /**
    * Create top level stack
@@ -184,23 +301,22 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
   pvc.pvc_status_overlay = 
     glw_create(GLW_MODEL,
 	       GLW_ATTRIB_PARENT, top,
+	       GLW_ATTRIB_ALPHA, 0.0f,
 	       GLW_ATTRIB_SIGNAL_HANDLER, overlay_callback, &pvc, 100,
 	       GLW_ATTRIB_FILENAME, "videoplayback/overlay",
 	       NULL);
 
-  if(av_open_input_file(&fctx, fname, NULL, 0, NULL) != 0) {
-    fprintf(stderr, "Unable to open input file\n");
-    return -1;
-  }
+  /**
+   * Menu overlay
+   */
+  pvc.pvc_menu_overlay = 
+    glw_create(GLW_MODEL,
+	       GLW_ATTRIB_PARENT, top,
+	       GLW_ATTRIB_SIGNAL_HANDLER, menu_callback, &pvc, 100,
+	       GLW_ATTRIB_FILENAME, "videoplayback/menu",
+	       NULL);
 
-  fctx->flags |= AVFMT_FLAG_GENPTS;
-
-  if(av_find_stream_info(fctx) < 0) {
-    av_close_input_file(fctx);
-    fprintf(stderr, "Unable to find stream info\n");
-    return INPUT_KEY_NEXT;
-  }
-
+  video_menu_form_initialize(&pvc, ai, ic, &vdc, fctx, mp);
 
   /**
    * Set title
@@ -273,6 +389,8 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
   dts         = AV_NOPTS_VALUE;
   seek_ref    = AV_NOPTS_VALUE;
   run       = 1;
+
+  glw_focus_stack_deactivate(&ai->ai_gfs);
 
   while(run) {
     i = av_read_frame(fctx, &pkt);
@@ -392,13 +510,19 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
        * Keyboard input
        */
     case INPUT_KEY:
-      
+
       key = ie.u.key;
 
       seek_abs   = 0;
       seek_delta = 0;
 
       switch(key) {
+      case INPUT_KEY_MENU:
+	if(ai->ai_display_menu)
+	  glw_focus_stack_activate(&ai->ai_gfs);
+	else
+	  glw_focus_stack_deactivate(&ai->ai_gfs);
+	break;
       case INPUT_KEY_BACK:
 	run = 0;
 	break;
@@ -468,6 +592,8 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
       }
     }
   }
+
+  glw_focus_stack_activate(&ai->ai_gfs);
 
   mp_set_playstatus(mp, MP_STOP);
 
