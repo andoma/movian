@@ -28,6 +28,7 @@
 #include "gl/video_decoder.h"
 
 media_pipe_t *primary_audio;
+extern int concurrency;
 
 static void
 mq_mutex_init(pthread_mutex_t *mutex)
@@ -456,8 +457,8 @@ wrap_codec_create(enum CodecID id, enum CodecType type, int parser,
   if(fw != NULL) 
     LIST_INSERT_HEAD(&fw->codecs, cw, format_link);
 
-  if(type == CODEC_TYPE_VIDEO)
-    avcodec_thread_init(cw->codec_ctx, 2);
+  if(type == CODEC_TYPE_VIDEO && concurrency > 1)
+    avcodec_thread_init(cw->codec_ctx, concurrency);
 
   ffunlock();
 
