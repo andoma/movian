@@ -53,7 +53,7 @@
 typedef struct play_video_ctrl {
 
   int    pvc_widget_status_playstatus;
-  glw_t *pvc_overlay;
+  glw_t *pvc_status_overlay;
 
   int    pvc_fader;
 
@@ -96,7 +96,7 @@ pv_update_playstatus(play_video_ctrl_t *pvc, mp_playstatus_t mps)
 
   pvc->pvc_widget_status_playstatus = mps;
 
-  w = glw_find_by_id(pvc->pvc_overlay, "playstatus", 0);
+  w = glw_find_by_id(pvc->pvc_status_overlay, "playstatus", 0);
   if(w == NULL)
     return;
 
@@ -179,9 +179,9 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
 
 
   /**
-   * Control overlay
+   * Status overlay
    */
-  pvc.pvc_overlay = 
+  pvc.pvc_status_overlay = 
     glw_create(GLW_MODEL,
 	       GLW_ATTRIB_PARENT, top,
 	       GLW_ATTRIB_SIGNAL_HANDLER, overlay_callback, &pvc, 100,
@@ -205,7 +205,7 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
   /**
    * Set title
    */
-  if((w = glw_find_by_id(pvc.pvc_overlay, "title", 0)) != NULL) {
+  if((w = glw_find_by_id(pvc.pvc_status_overlay, "title", 0)) != NULL) {
     s = fctx->title;
     if(*s == 0) {
       /* No stored title */
@@ -218,7 +218,7 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
   /**
    * Set total duration
    */
-  layout_update_time(pvc.pvc_overlay,
+  layout_update_time(pvc.pvc_status_overlay,
 		     "time_total", fctx->duration / AV_TIME_BASE);
 
   cwvec = alloca(fctx->nb_streams * sizeof(void *));
@@ -255,16 +255,16 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
   mp->mp_feedback = ic;
 
   if(mp->mp_audio.mq_stream >= 0 && cwvec[mp->mp_audio.mq_stream] != NULL)
-    layout_update_codec_info(pvc.pvc_overlay, "audioinfo",
+    layout_update_codec_info(pvc.pvc_status_overlay, "audioinfo",
 			     cwvec[mp->mp_audio.mq_stream]->codec_ctx);
   else
-    layout_update_codec_info(pvc.pvc_overlay, "audioinfo", NULL);
+    layout_update_codec_info(pvc.pvc_status_overlay, "audioinfo", NULL);
 
   if(mp->mp_video.mq_stream >= 0 && cwvec[mp->mp_video.mq_stream] != NULL)
-    layout_update_codec_info(pvc.pvc_overlay, "videoinfo",
+    layout_update_codec_info(pvc.pvc_status_overlay, "videoinfo",
 			     cwvec[mp->mp_video.mq_stream]->codec_ctx);
   else
-    layout_update_codec_info(pvc.pvc_overlay, "videoinfo", NULL);
+    layout_update_codec_info(pvc.pvc_status_overlay, "videoinfo", NULL);
 
 
   wrap_unlock_all_codecs(fw);
@@ -381,9 +381,9 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
       if(pts != AV_NOPTS_VALUE) {
 	pts -= fctx->start_time;
 
-	layout_update_time(pvc.pvc_overlay,
+	layout_update_time(pvc.pvc_status_overlay,
 			   "time_current",pts / AV_TIME_BASE);
-	layout_update_bar(pvc.pvc_overlay, "durationbar", 
+	layout_update_bar(pvc.pvc_status_overlay, "durationbar", 
 			  (double)pts / (double)(fctx->duration));
       }
       break;
