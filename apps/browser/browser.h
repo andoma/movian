@@ -130,7 +130,7 @@ browser_root_t *browser_root_create(const char *url, glw_focus_stack_t *gfs,
 
 void browser_root_destroy(browser_root_t *br);
 
-void browser_scandir(browser_node_t *bn);
+int browser_scandir(browser_node_t *bn, int async);
 
 browser_node_t **browser_get_array_of_childs(browser_root_t *br,
 					     browser_node_t *bn);

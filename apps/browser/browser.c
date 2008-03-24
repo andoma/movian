@@ -18,7 +18,7 @@
 
 #define _GNU_SOURCE
 #include <pthread.h>
-
+#include <errno.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,6 +31,8 @@
 #include "browser_probe.h"
 
 static void *browser_scandir_thread(void *arg);
+
+static int browser_scandir0(browser_node_t *bn);
 
 static void browser_scandir_callback(void *arg, const char *url,
 				     const char *filename, int type);
@@ -172,41 +174,48 @@ browser_root_destroy(browser_root_t *br)
  * Start scanning of a node (which more or less has to be a directory 
  * for this to work, but we expect the caller to know about that).
  *
- * We spawn a new thread to make this quick and fast
+ * We have the option to spawn a new thread to make this quick and fast
  */
-void
-browser_scandir(browser_node_t *bn)
+int
+browser_scandir(browser_node_t *bn, int async)
 {
   pthread_t ptid;
   pthread_attr_t attr;
+
+  if(!async)
+    return browser_scandir0(bn);
+
   browser_node_ref(bn);
 
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
   pthread_create(&ptid, &attr, browser_scandir_thread, bn);
+  return 0;
 }
 
-
-
-
 /**
- * Directory scanner
+ * Directory scanner guts
+ *
+ * Returns 0 if ok
+ * Otherwise a system error code (errno)
  */
-static void *
-browser_scandir_thread(void *arg)
+static int
+browser_scandir0(browser_node_t *bn)
 {
-  browser_node_t *bn = arg;
+  int r;
 
   if(bn->bn_type != FA_DIR)
-    return NULL;
+    return ENOTDIR;
 
   /*
-   * fileaccess_scandir() may take a long time to execute.
+   * Note: fileaccess_scandir() may take a long time to execute.
    * User may be prompted for username/password, etc
    */
 
-  fileaccess_scandir(bn->bn_url, browser_scandir_callback, bn);
+  if((r = fileaccess_scandir(bn->bn_url, browser_scandir_callback, bn)) != 0)
+    return r;
+
 
   /**
    * Enqueue directory on probe queue.
@@ -216,7 +225,18 @@ browser_scandir_thread(void *arg)
    */
 
   browser_probe_enqueue(bn);
+  return 0;
+}  
+    
 
+/**
+ * Directory scanner thread
+ */
+static void *
+browser_scandir_thread(void *arg)
+{
+  browser_node_t *bn = arg;
+  browser_scandir0(bn);
   browser_node_deref(bn);
   return NULL;
 }

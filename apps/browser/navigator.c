@@ -225,7 +225,7 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
   bn = br->br_root;
 
   browser_view_expand_node(bn, nav->nav_stack, &ai->ai_gfs);
-  browser_scandir(bn);
+  browser_scandir(bn, 0);
 
   nav_store_instance(ai, cfg, navtype);
 
@@ -261,7 +261,7 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
 	switch(bn->bn_type) {
 	case FA_DIR:
 	  browser_view_expand_node(bn, nav->nav_stack, &ai->ai_gfs);
-	  browser_scandir(bn);
+	  browser_scandir(bn, 1);
 	  break;
 
 	case FA_FILE:
