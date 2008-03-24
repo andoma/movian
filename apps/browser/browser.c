@@ -50,8 +50,10 @@ check_node_free(browser_node_t *bn)
 
   filetag_freelist(&bn->bn_ftags);
 
-  TAILQ_REMOVE(&p->bn_childs, bn, bn_parent_link);
-  check_node_free(p); /* removed from parent, need to check parent too */
+  if(p != NULL) {
+    TAILQ_REMOVE(&p->bn_childs, bn, bn_parent_link);
+    check_node_free(p); /* removed from parent, need to check parent too */
+  }
 
   assert(bn->bn_cont_xfader == NULL);
 
