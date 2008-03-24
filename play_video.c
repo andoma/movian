@@ -55,7 +55,32 @@ typedef struct play_video_ctrl {
   int    pvc_widget_status_playstatus;
   glw_t *pvc_overlay;
 
+  int    pvc_fader;
+
 } play_video_ctrl_t;
+
+/**
+ *
+ */
+static int
+overlay_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  play_video_ctrl_t *pvc = opaque;
+
+  switch(signal) {
+  case GLW_SIGNAL_LAYOUT:
+    if(pvc->pvc_fader > 0)
+      pvc->pvc_fader--;
+
+    w->glw_alpha = GLW_LP(16, w->glw_alpha, pvc->pvc_fader ? 1.0 : 0.0);
+    break;
+
+  default:
+    break;
+  }
+  return 0;
+}
+
 
 /**
  *
@@ -77,13 +102,16 @@ pv_update_playstatus(play_video_ctrl_t *pvc, mp_playstatus_t mps)
 
   switch(mps) {
   case MP_PAUSE:
+    pvc->pvc_fader = INT32_MAX;
     model = "videoplayback/pause";
     break;
   case MP_PLAY:
+    pvc->pvc_fader = 150;
     model = "videoplayback/play";
     break;
   case MP_VIDEOSEEK_PAUSE:
   case MP_VIDEOSEEK_PLAY:
+    pvc->pvc_fader = INT32_MAX;
     model = "videoplayback/seek";
     break;
   default:
@@ -156,6 +184,7 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
   pvc.pvc_overlay = 
     glw_create(GLW_MODEL,
 	       GLW_ATTRIB_PARENT, top,
+	       GLW_ATTRIB_SIGNAL_HANDLER, overlay_callback, &pvc, 100,
 	       GLW_ATTRIB_FILENAME, "videoplayback/overlay",
 	       NULL);
 
