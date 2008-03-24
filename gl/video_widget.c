@@ -136,7 +136,7 @@ static int gl_video_widget_callback(glw_t *w, void *opaque,
 
 
 glw_t *
-vd_create_widget(glw_t *p, media_pipe_t *mp)
+vd_create_widget(glw_t *p, media_pipe_t *mp, float zdisplacement)
 {
   video_decoder_t *vd;
 
@@ -150,6 +150,7 @@ vd_create_widget(glw_t *p, media_pipe_t *mp)
   vd->vd_dvdspu = gl_dvdspu_init();
 
   vd->vd_widget = glw_create(GLW_EXT,
+			     GLW_ATTRIB_DISPLACEMENT, 0.0, 0.0, zdisplacement,
 			     GLW_ATTRIB_FLAGS, GLW_EVERY_FRAME,
 			     GLW_ATTRIB_PARENT, p, 
 			     GLW_ATTRIB_SIGNAL_HANDLER, 
@@ -697,7 +698,7 @@ vd_blend_frames(video_decoder_t *vd, glw_rctx_t *rc, gl_video_frame_t *fra,
 
 
 static void 
-render_video_pipe(video_decoder_t *vd, glw_rctx_t *rc)
+render_video_pipe(glw_t *w, video_decoder_t *vd, glw_rctx_t *rc)
 {
   gl_video_frame_t *fra, *frb;
   media_pipe_t *mp = vd->vd_mp;
@@ -708,6 +709,10 @@ render_video_pipe(video_decoder_t *vd, glw_rctx_t *rc)
    */
  
   glPushMatrix();
+  glTranslatef(w->glw_displacement.x,
+	       w->glw_displacement.y,
+	       w->glw_displacement.z);
+ 
   if(vd->vd_zoom != 100)
     glScalef(vd->vd_zoom / 100.0f, vd->vd_zoom / 100.0f, 1.0f);
 
@@ -875,7 +880,7 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
     return 0;
 
   case GLW_SIGNAL_RENDER:
-    render_video_pipe(vd, va_arg(ap, void *));
+    render_video_pipe(w, vd, va_arg(ap, void *));
     return 0;
 
   case GLW_SIGNAL_NEW_FRAME:

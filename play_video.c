@@ -335,7 +335,6 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
    * Create top level stack
    */
   top = glw_create(GLW_CONTAINER_Z,
-		   GLW_ATTRIB_DISPLACEMENT, 0.0, 0.0, 0.0,
 		   GLW_ATTRIB_PARENT, parent,
 		   NULL);
 
@@ -349,7 +348,7 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
    * Create video output widget
    */
   vd_conf_init(&vdc);
-  vdw = vd_create_widget(zstack, &ai->ai_mp);
+  vdw = vd_create_widget(zstack, &ai->ai_mp, 1.0);
   mp_set_video_conf(mp, &vdc);
 
 

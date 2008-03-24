@@ -237,7 +237,7 @@ void video_decoder_start(video_decoder_t *vd);
 
 void video_decoder_join(media_pipe_t *mp, video_decoder_t *vd);
 
-glw_t *vd_create_widget(glw_t *p, media_pipe_t *mp);
+glw_t *vd_create_widget(glw_t *p, media_pipe_t *mp, float zdisplacement);
 
 void video_decoder_purge(video_decoder_t *vd);
 
