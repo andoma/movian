@@ -677,7 +677,8 @@ browser_view_switch0(browser_node_t *bn, browser_view_t *bv,
   }
 
   free(a);
-  browser_node_deref(sel);
+  if(sel != NULL)
+    browser_node_deref(sel);
 
   /* Destroy splash */
 
