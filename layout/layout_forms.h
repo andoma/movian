@@ -39,6 +39,7 @@ typedef struct layout_form_entry {
 #define LFE_TYPE_CUSTOM 4
 #define LFE_TYPE_CHILD_MONITOR 5
 #define LFE_TYPE_LIST_OPTION   6
+#define LFE_TYPE_INTEGER       7
 
   int lfe_value;
 
@@ -48,6 +49,11 @@ typedef struct layout_form_entry {
   int lfe_buf_len;       /* Size of current data (string length)    */
 
   glw_callback_t *lfe_widget_callback;
+
+  int lfe_min;
+  int lfe_max;
+  int lfe_step;
+  const char *lfe_fmt;
 
 } layout_form_entry_t;
 
@@ -93,6 +99,22 @@ int layout_form_initialize(struct layout_form_entry_list *lfelist,
   lfe->lfe_buf = str;							\
   lfe->lfe_buf_size = bufsize;						\
   lfe->lfe_value = retval;                                              \
+  TAILQ_INSERT_TAIL(listp, lfe, lfe_link);				\
+  lfe->lfe_id = id;							\
+} while(0)
+
+/**
+ * Modifies an integer storage
+ */
+#define LFE_ADD_INT(listp, id, vptr, fmt, min, max, step) do {	\
+  layout_form_entry_t *lfe = alloca(sizeof(layout_form_entry_t));	\
+  memset(lfe, 0, sizeof(layout_form_entry_t));				\
+  lfe->lfe_type = LFE_TYPE_INTEGER;					\
+  lfe->lfe_buf = vptr;							\
+  lfe->lfe_min = min;							\
+  lfe->lfe_max = max;							\
+  lfe->lfe_step = step;							\
+  lfe->lfe_fmt = fmt;							\
   TAILQ_INSERT_TAIL(listp, lfe, lfe_link);				\
   lfe->lfe_id = id;							\
 } while(0)

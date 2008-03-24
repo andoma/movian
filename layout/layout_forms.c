@@ -37,6 +37,9 @@ static int layout_form_entry_free(glw_t *w, void *opaque,
 static int layout_form_entry_string(glw_t *w, void *opaque,
 				    glw_signal_t signal, ...);
 
+static int layout_form_entry_integer(glw_t *w, void *opaque,
+				     glw_signal_t signal, ...);
+
 static int layout_form_entry_list(glw_t *w, void *opaque,
 				  glw_signal_t signal, ...);
 
@@ -240,6 +243,7 @@ layout_form_initialize(struct layout_form_entry_list *lfelist, glw_t *m,
   glw_t *ff = NULL;  /* first widget to focus */
   layout_form_entry_t *lfe, *l;
   int len, v;
+  char buf[100];
 
   TAILQ_FOREACH(l, lfelist, lfe_link) {
     w =  glw_find_by_id(m, l->lfe_id, 1);
@@ -303,6 +307,14 @@ layout_form_initialize(struct layout_form_entry_list *lfelist, glw_t *m,
 
       break;
 
+    case LFE_TYPE_INTEGER:
+      snprintf(buf, sizeof(buf), lfe->lfe_fmt, *(int *)lfe->lfe_buf);
+      glw_set(w,
+	      GLW_ATTRIB_SIGNAL_HANDLER,  layout_form_entry_integer, lfe, 401,
+	      GLW_ATTRIB_CAPTION, buf,
+	      NULL);
+      break;
+ 
     default:
       glw_set(w,
 	      GLW_ATTRIB_SIGNAL_HANDLER,  layout_form_entry_free, lfe, 401,
@@ -572,7 +584,54 @@ layout_form_entry_string(glw_t *w, void *opaque, glw_signal_t signal, ...)
   return 0;
 }
 
+/**
+ * Callback for controlling an integer
+ */
+static int
+layout_form_entry_integer(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  layout_form_entry_t *lfe = opaque;
+  int v;
+  char buf[100];
+  va_list ap;
+  va_start(ap, signal);
 
+  switch(signal) {
+  case GLW_SIGNAL_DTOR:
+    free(lfe);
+    return 0;
+
+  case GLW_SIGNAL_LEFT:
+    v = *(int *)lfe->lfe_buf;
+    v = GLW_MAX(v - lfe->lfe_step, lfe->lfe_min);
+    *(int *)lfe->lfe_buf = v;
+    snprintf(buf, sizeof(buf), lfe->lfe_fmt, *(int *)lfe->lfe_buf);
+    
+    glw_set(w,
+	    GLW_ATTRIB_CAPTION, buf,
+	    NULL);
+    return 1;
+
+  case GLW_SIGNAL_RIGHT:
+    v = *(int *)lfe->lfe_buf;
+    v = GLW_MIN(v + lfe->lfe_step, lfe->lfe_max);
+    *(int *)lfe->lfe_buf = v;
+    snprintf(buf, sizeof(buf), lfe->lfe_fmt, *(int *)lfe->lfe_buf);
+    
+    glw_set(w,
+	    GLW_ATTRIB_CAPTION, buf,
+	    NULL);
+    return 1;
+
+
+  default:
+    break;
+  }
+
+  va_end(ap);
+
+  return 0;
+}
 
 
 /**
