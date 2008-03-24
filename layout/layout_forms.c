@@ -802,3 +802,22 @@ layout_form_fill_options(glw_t *m, const char *id,
   }
 }
   
+
+
+/**
+ * Options fill
+ */
+void
+layout_form_add_option(glw_t *m, const char *id, const char *caption, int u32)
+{
+  if((m = glw_find_by_id(m, id, 0)) == NULL) 
+    return;
+
+  glw_create(GLW_TEXT_BITMAP,
+	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
+	     GLW_ATTRIB_PARENT, m,
+	     GLW_ATTRIB_CAPTION, caption,
+	     GLW_ATTRIB_U32,    u32,
+	     NULL);
+}
+  

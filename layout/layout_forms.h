@@ -179,5 +179,8 @@ typedef struct layout_form_entry_options {
 void layout_form_fill_options(glw_t *m, const char *id,
 			      layout_form_entry_options_t options[], int num);
 
+void layout_form_add_option(glw_t *m, const char *id, const char *caption,
+			    int u32);
+
 #endif /* LAYOUT_FORMS_H */
 
