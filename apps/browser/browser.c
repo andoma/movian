@@ -205,19 +205,17 @@ browser_scandir(browser_node_t *bn, int async)
 static int
 browser_scandir0(browser_node_t *bn)
 {
-  int r;
+  int r = 0;
 
   if(bn->bn_type != FA_DIR)
-    return ENOTDIR;
+    r = ENOTDIR;
 
   /*
    * Note: fileaccess_scandir() may take a long time to execute.
    * User may be prompted for username/password, etc
    */
 
-  if((r = fileaccess_scandir(bn->bn_url, browser_scandir_callback, bn)) != 0)
-    return r;
-
+  if(!r) r = fileaccess_scandir(bn->bn_url, browser_scandir_callback, bn);
 
   /**
    * Enqueue directory on probe queue.
@@ -227,7 +225,7 @@ browser_scandir0(browser_node_t *bn)
    */
 
   browser_probe_enqueue(bn);
-  return 0;
+  return r;
 }  
     
 
