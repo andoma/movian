@@ -440,6 +440,8 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
     layout_update_codec_info(pvc.pvc_status_overlay, "videoinfo", NULL);
 
 
+  ai->ai_display_menu = 0;
+
   wrap_unlock_all_codecs(fw);
 
   pts         = AV_NOPTS_VALUE;
