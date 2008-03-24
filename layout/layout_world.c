@@ -312,10 +312,6 @@ layout_child_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
   va_start(ap, signal);
 
   switch(signal) {
-  case GLW_SIGNAL_LAYOUT:
-    ai->ai_gfs.gfs_active = w == w->glw_parent->glw_selected;
-    break;
-
   case GLW_SIGNAL_INPUT_EVENT:
     ie = va_arg(ap, void *);
 
