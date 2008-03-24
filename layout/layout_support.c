@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define _GNU_SOURCE
+#include <assert.h>
 #include <string.h>
 #include <math.h>
 #include <unistd.h>
@@ -155,4 +157,57 @@ layout_update_model(glw_t *w, const char *id, const char *model)
 	     GLW_ATTRIB_FILENAME, model,
 	     GLW_ATTRIB_PARENT, w,
 	     NULL);
+}
+
+/**
+ *
+ */
+void
+layout_update_multilinetext(glw_t *w, const char *id, const char *txt, 
+			    int total_lines, glw_alignment_t alignment)
+{
+  int lines = 1;
+  int i, l, j;
+  const char **vec, *s;
+  char *copy;
+
+  if((w = glw_find_by_id(w, id, 0)) == NULL)
+    return;
+
+  l = strlen(txt);
+  for(i = 0; i < l; i++)
+    if(txt[i] == '\n')
+      lines++;
+
+  copy = strdupa(txt);
+
+  vec = alloca(lines * sizeof(const char *));
+  j = 0;
+  s = copy;
+  for(i = 0; i < l; i++) {
+    if(copy[i] == '\n') {
+      vec[j++] = s;
+      copy[i] = 0;
+      s = copy + 1 + i;
+    }
+  }
+  vec[j++] = s;
+
+  assert(j == lines);
+
+  glw_destroy_childs(w);
+
+  for(i = 0; i < lines; i++)
+    glw_create(GLW_TEXT_BITMAP,
+	       GLW_ATTRIB_PARENT, w,
+	       GLW_ATTRIB_CAPTION, vec[i],
+	       GLW_ATTRIB_ALIGNMENT, alignment,
+	       NULL);
+
+  if(i < total_lines) {
+    glw_create(GLW_DUMMY,
+	       GLW_ATTRIB_PARENT, w,
+	       GLW_ATTRIB_WEIGHT, (float)(total_lines - i),
+	       NULL);
+  }
 }
