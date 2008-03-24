@@ -68,6 +68,8 @@ typedef struct appi {
 
   const char *ai_name;
 
+  int ai_display_menu;
+
 } appi_t;
 
 
