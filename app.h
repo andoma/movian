@@ -58,11 +58,7 @@ typedef struct appi {
   int ai_instance_index;
   struct config_head *ai_settings;
 
-  enum {
-    AI_FS_NONE,
-    AI_FS_WITH_BG,
-    AI_FS_BLANK,
-  } ai_req_fullscreen;
+  int ai_req_fullscreen;
 
   glw_t *ai_menu;               /* Top level menu */
 

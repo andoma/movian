@@ -28,6 +28,8 @@
 
 static glw_t *layout_world;
 
+static int fullscreen;
+
 static int layout_world_input_event(inputevent_t *ie);
 
 static int layout_world_callback(glw_t *w, void *opaque,
@@ -177,12 +179,18 @@ layout_world_render(float aspect0)
   cz = 4.0;
   fs = 0;
 
-  glw_vertex_anim_set3f(&cpos,   0,    1.0,  CAMZ);
-  glw_vertex_anim_set3f(&ctgt,   0,    1.0,  1.0);
-  glw_vertex_anim_set3f(&fcol,   0.09, 0.11, 0.2);
-  glw_vertex_anim_set3f(&wextra, 0.1,  1.0, 0);
+  if(!fullscreen) {
+    glw_vertex_anim_set3f(&cpos,   0,    1.0,  CAMZ);
+    glw_vertex_anim_set3f(&ctgt,   0,    1.0,  1.0);
+    glw_vertex_anim_set3f(&fcol,   0.09, 0.11, 0.2);
+    glw_vertex_anim_set3f(&wextra, 0.1,  1.0, 0);
+  } else {
+    glw_vertex_anim_set3f(&cpos,   0,    1.0,  CAMZ);
+    glw_vertex_anim_set3f(&ctgt,   0,    1.0,  1.0);
+    glw_vertex_anim_set3f(&fcol,   0.0,  0.0,  0.0);
+    glw_vertex_anim_set3f(&wextra, 0.0,  1.0,  0.0);
 
-  //  layout_allow_fullscreen = fs;
+  }
 
   glw_vertex_anim_fwd(&cpos,   0.02);
   glw_vertex_anim_fwd(&ctgt,   0.02);
@@ -312,6 +320,11 @@ layout_child_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
   va_start(ap, signal);
 
   switch(signal) {
+  case GLW_SIGNAL_LAYOUT:
+    if(w == w->glw_parent->glw_selected)
+      fullscreen = ai->ai_req_fullscreen;
+    break;
+
   case GLW_SIGNAL_INPUT_EVENT:
     ie = va_arg(ap, void *);
 

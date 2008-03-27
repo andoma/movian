@@ -536,6 +536,8 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
       gotevent = !input_getevent(ic, 0, &ie, NULL);
     }
 
+    ai->ai_req_fullscreen = mp->mp_playstatus == MP_PLAY;
+
     if(!gotevent)
       continue;
 
@@ -668,6 +670,8 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
     }
   }
 
+  ai->ai_req_fullscreen = 0;
+
   mp_set_playstatus(mp, MP_STOP);
 
   wrap_lock_all_codecs(fw);
@@ -678,7 +682,6 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
   mp->mp_total_time = 0;
 
   ai->ai_fctx = NULL;
-  ai->ai_req_fullscreen = AI_FS_NONE;
 
   streams = fctx->nb_streams;
 
