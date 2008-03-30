@@ -16,8 +16,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define _GNU_SOURCE
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <fcntl.h>
 #include <pthread.h>
 #include <math.h>
 #include <stdio.h>
@@ -282,7 +284,30 @@ video_start_form(play_video_ctrl_t *pvc, glw_t *parent, appi_t *ai, ic_t *ic,
   return r;
 }
 
+/**
+ * 
+ */
+static int
+open_rcache(const char *fname)
+{
+  char buf[512], *n2, *n;
 
+  if(settingsdir == NULL)
+    return -1;
+
+  snprintf(buf, sizeof(buf), "%s/restartcache", settingsdir);
+  mkdir(buf, 0700);
+
+  n = n2 = strdupa(fname);
+  while(*n) {
+    if(*n == '/' || *n == ':' || *n == '?' || *n == '*' || *n > 127 || *n < 32)
+      *n = '_';
+    n++;
+  }
+
+  snprintf(buf, sizeof(buf), "%s/restartcache/%s", settingsdir, n2);
+  return open(buf, O_CREAT | O_RDWR, 0660);
+}
 
 /**
  * 
@@ -304,9 +329,9 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
   vd_conf_t vdc;
   glw_t *vdw, *zstack, *top;
 
-  int64_t pts, dts, seek_ref, seek_delta, seek_abs;
+  int64_t pts, dts, seek_ref, seek_delta, seek_abs, rcache_thres, ts;
   inputevent_t ie;
-  int gotevent, run;
+  int gotevent, run, rcache_fd;
 
   play_video_ctrl_t pvc;
   glw_t *w;
@@ -421,8 +446,17 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
 
   wrap_lock_all_codecs(fw);
   
-  mp_set_playstatus(mp, MP_VIDEOSEEK_PAUSE);
   mp->mp_videoseekdts = 0;
+
+  rcache_fd = open_rcache(fname);
+  if(rcache_fd != -1 && read(rcache_fd, &ts, sizeof(ts)) == sizeof(ts)) {
+    printf("restarting at %lld\n", ts);
+    
+    i = av_seek_frame(fctx, -1, ts, AVSEEK_FLAG_BACKWARD);
+    if(i >= 0)
+      mp->mp_videoseekdts = ts;
+  }
+  mp_set_playstatus(mp, MP_VIDEOSEEK_PAUSE);
 
   media_pipe_acquire_audio(mp);
   mp->mp_feedback = ic;
@@ -444,10 +478,11 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
 
   wrap_unlock_all_codecs(fw);
 
-  pts         = AV_NOPTS_VALUE;
-  dts         = AV_NOPTS_VALUE;
-  seek_ref    = fctx->start_time;
-  run       = 1;
+  pts          = AV_NOPTS_VALUE;
+  dts          = AV_NOPTS_VALUE;
+  rcache_thres = AV_NOPTS_VALUE;
+  seek_ref     = fctx->start_time;
+  run          = 1;
 
   pvc.pvc_setup_mode = 1;
 
@@ -560,6 +595,18 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
 	seek_ref = ie.u.ts.dts;
 
       pts = ie.u.ts.pts;
+
+      if(rcache_fd != -1 && pts != AV_NOPTS_VALUE && pts > rcache_thres) {
+
+	/* Write timestamp into restart cache */
+
+	lseek(rcache_fd, 0, SEEK_SET);
+	write(rcache_fd, &pts, sizeof(pts));
+	fsync(rcache_fd);
+
+	rcache_thres = pts + AV_TIME_BASE * 5;
+      }
+
       if(pts != AV_NOPTS_VALUE) {
 	pts -= fctx->start_time;
 
@@ -571,7 +618,7 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
 
       if(pvc.pvc_setup_mode) {
 	/* First frame displayed */
-	i = video_start_form(&pvc, zstack, ai, ic, &vdc, fctx, mp, seek_ref);
+	i = video_start_form(&pvc, zstack, ai, ic, &vdc, fctx, mp, pts);
 
 	switch(i) {
 
@@ -669,6 +716,8 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
       }
     }
   }
+
+  close(rcache_fd);
 
   ai->ai_req_fullscreen = 0;
 
