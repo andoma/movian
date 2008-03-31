@@ -156,8 +156,7 @@ nav_access_error(navigator_t *nav, appi_t *ai, const char *dir,
 {
   struct layout_form_entry_list lfelist;
   glw_t *m;
-  int r;
-
+  inputevent_t ie;
   char errbuf[400];
 
   snprintf(errbuf, sizeof(errbuf),
@@ -177,9 +176,9 @@ nav_access_error(navigator_t *nav, appi_t *ai, const char *dir,
   LFE_ADD_BTN(&lfelist, "ignore", 0);
   LFE_ADD_BTN(&lfelist, "exit",   -1);
   
-  r = layout_form_query(&lfelist, m, &ai->ai_gfs);
+  layout_form_query(&lfelist, m, &ai->ai_gfs, &ie);
   glw_detach(m);
-  return r;
+  return ie.u.u32;
 }
 
 
@@ -190,8 +189,9 @@ static int
 nav_verify_exit(navigator_t *nav, appi_t *ai)
 {
   struct layout_form_entry_list lfelist;
+  inputevent_t ie;
   glw_t *m;
-  int r;
+
 
   TAILQ_INIT(&lfelist);
 
@@ -205,9 +205,9 @@ nav_verify_exit(navigator_t *nav, appi_t *ai)
 					  cancels form, so we use same
 					  for the cancel button */
   
-  r = layout_form_query(&lfelist, m, &ai->ai_gfs);
+  layout_form_query(&lfelist, m, &ai->ai_gfs, &ie);
   glw_detach(m);
-  return r;
+  return ie.u.u32;
 }
 
 
@@ -421,7 +421,7 @@ nav_setup(navigator_t *nav, appi_t *ai)
 {
   struct layout_form_entry_list lfelist;
   glw_t *m, *t;
-  int r;
+  inputevent_t ie;
 
   navconfig_t fs;
 
@@ -471,13 +471,12 @@ nav_setup(navigator_t *nav, appi_t *ai)
   LFE_ADD_BTN(&lfelist, "smb_connect", 2);
 #endif
 
-  r = layout_form_query(&lfelist, m, &ai->ai_gfs);
+  layout_form_query(&lfelist, m, &ai->ai_gfs, &ie);
   glw_detach(m);
-  
-  
-  switch(r) {
+
+  switch(ie.u.u32) {
   case NAVIGATOR_FILESYSTEM:
-    r = nav_main(nav, ai, r, &fs);
+    nav_main(nav, ai, ie.u.u32, &fs);
     break;
   }
 

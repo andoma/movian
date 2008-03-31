@@ -511,7 +511,7 @@ playlist_rename(playlist_t *pl)
 {
   struct layout_form_entry_list lfelist;
   glw_t *m;
-  int r;
+  inputevent_t ie;
   char plname[100];
   appi_t *ai = playlist_appi;
 
@@ -528,9 +528,9 @@ playlist_rename(playlist_t *pl)
   LFE_ADD_STR(&lfelist, "playlist_title", plname, sizeof(plname), 1);
   LFE_ADD_BTN(&lfelist, "ok",     1);
   LFE_ADD_BTN(&lfelist, "cancel", 2);
-  r = layout_form_query(&lfelist, m, &ai->ai_gfs);
+  layout_form_query(&lfelist, m, &ai->ai_gfs, &ie);
 
-  if(r == 1 && plname[0]) {
+  if(ie.u.u32 == 1 && plname[0]) {
 
     playlist_unlink(pl);
 
@@ -552,7 +552,7 @@ playlist_delete(playlist_t *pl)
 {
   struct layout_form_entry_list lfelist;
   glw_t *m;
-  int r;
+  inputevent_t ie;
   appi_t *ai = playlist_appi;
 
   TAILQ_INIT(&lfelist);
@@ -566,9 +566,9 @@ playlist_delete(playlist_t *pl)
 
   LFE_ADD_BTN(&lfelist, "ok",     1);
   LFE_ADD_BTN(&lfelist, "cancel", 2);
-  r = layout_form_query(&lfelist, m, &ai->ai_gfs);
+  layout_form_query(&lfelist, m, &ai->ai_gfs, &ie);
 
-  if(r == 1)
+  if(ie.u.u32 == 1)
     playlist_destroy(pl);
 
   glw_detach(m);

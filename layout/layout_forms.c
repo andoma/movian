@@ -334,24 +334,15 @@ layout_form_initialize(struct layout_form_entry_list *lfelist, glw_t *m,
 /**
  *
  */
-int
+void
 layout_form_query(struct layout_form_entry_list *lfelist, glw_t *m,
-		  glw_focus_stack_t *gfs)
+		  glw_focus_stack_t *gfs, inputevent_t *iep)
 {
   ic_t ic;
-  inputevent_t ie;
 
   input_init(&ic);
-
   layout_form_initialize(lfelist, m, gfs, &ic, 1);
-
-  input_getevent(&ic, 1, &ie, NULL);
-
-  if(ie.type != INPUT_U32)
-    return -1;
-
-  input_flush_queue(&ic);
-  return ie.u.u32;
+  input_getevent(&ic, 1, iep, NULL);
 }
 
 

@@ -207,7 +207,7 @@ video_start_form(play_video_ctrl_t *pvc, glw_t *parent, appi_t *ai, ic_t *ic,
 {
   glw_t *m;
   struct layout_form_entry_list lfelist;
-  int r;
+  inputevent_t ie;
 
   TAILQ_INIT(&lfelist);
 
@@ -227,9 +227,9 @@ video_start_form(play_video_ctrl_t *pvc, glw_t *parent, appi_t *ai, ic_t *ic,
   LFE_ADD_BTN(&lfelist, "start_from_begin", 1);
   LFE_ADD_BTN(&lfelist, "cancel", -1);
   
-  r = layout_form_query(&lfelist, m, &ai->ai_gfs);
+  layout_form_query(&lfelist, m, &ai->ai_gfs, &ie);
   glw_detach(m);
-  return r;
+  return ie.u.u32;
 }
 
 /**
@@ -505,7 +505,7 @@ video_player_menu(play_video_ctrl_t *pvc, ic_t *ic, media_pipe_t *mp)
   glw_t *t, *m;
   appi_t *ai = pvc->pvc_ai;
   struct layout_form_entry_list lfelist;
-  int r;
+  inputevent_t ie;
   vd_conf_t *vdc = &pvc->pvc_vdc;
 
   layout_form_entry_options_t deilace_options[] = {
@@ -550,7 +550,7 @@ video_player_menu(play_video_ctrl_t *pvc, ic_t *ic, media_pipe_t *mp)
   LFE_ADD_INT(&lfelist, "avsync",    &vdc->gc_avcomp,"%dms", -2000, 2000, 50);
   LFE_ADD_INT(&lfelist, "videozoom", &vdc->gc_zoom,  "%d%%",   100, 1000, 10);
   
-  r = layout_form_query(&lfelist, m, &ai->ai_gfs);
+  layout_form_query(&lfelist, m, &ai->ai_gfs, &ie);
 
   glw_detach(m);
 }

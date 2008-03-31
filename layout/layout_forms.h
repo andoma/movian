@@ -58,8 +58,8 @@ typedef struct layout_form_entry {
 } layout_form_entry_t;
 
 
-int layout_form_query(struct layout_form_entry_list *lfelist,
-		      glw_t *m, glw_focus_stack_t *gfs);
+void layout_form_query(struct layout_form_entry_list *lfelist,
+		       glw_t *m, glw_focus_stack_t *gfs, inputevent_t *iep);
 
 int layout_form_initialize(struct layout_form_entry_list *lfelist,
 			   glw_t *m, glw_focus_stack_t *gfs, ic_t *ic,
