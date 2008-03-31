@@ -79,10 +79,6 @@ navigator_root_widget(glw_t *w, void *opaque, glw_signal_t sig, ...)
 
   case GLW_SIGNAL_INPUT_EVENT:
     ie = va_arg(ap, void *);
-
-    if(ie->type == INPUT_KEY && ie->u.key == INPUT_KEY_MENU)
-      ai->ai_display_menu = !ai->ai_display_menu;
-
     input_postevent(&ai->ai_ic, ie);
     return 1;
   }

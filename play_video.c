@@ -42,6 +42,8 @@
 #include "layout/layout_forms.h"
 #include "layout/layout_support.h"
 
+#define INPUT_APP_SEEK_DIRECT               INPUT_APP + 0
+
 #define OVERLAY_BUTTON_PLAYPAUSE 1
 #define OVERLAY_BUTTON_PREV      2
 #define OVERLAY_BUTTON_REW       3
@@ -57,7 +59,7 @@ typedef struct play_video_ctrl {
   int    pvc_widget_status_playstatus;
   glw_t *pvc_status_overlay;
 
-  glw_t *pvc_menu_overlay;
+  glw_t *pvc_menu_playfield;
 
   int    pvc_status_fader;
 
@@ -65,6 +67,16 @@ typedef struct play_video_ctrl {
 
   int pvc_setup_mode;
 
+  ic_t pvc_ic;
+
+  int pvc_display_menu;
+
+  AVFormatContext *pvc_fctx;
+
+  codecwrap_t **pvc_cwvec;
+
+  vd_conf_t pvc_vdc;
+  
 } play_video_ctrl_t;
 
 /**
@@ -88,34 +100,6 @@ overlay_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
   }
   return 0;
 }
-
-
-
-/**
- *
- */
-static int
-menu_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
-{
-  play_video_ctrl_t *pvc = opaque;
-  appi_t *ai = pvc->pvc_ai;
-
-  va_list ap;
-  va_start(ap, signal);
-
-  switch(signal) {
-  case GLW_SIGNAL_LAYOUT:
-    w->glw_alpha = GLW_LP(16, w->glw_alpha, ai->ai_display_menu ? 1.0 : 0.0);
-    if(!pvc->pvc_setup_mode)
-      ai->ai_gfs.gfs_active = ai->ai_display_menu;
-    break;
-
-  default:
-    break;
-  }
-  return 0;
-}
-
 
 
 /**
@@ -168,6 +152,28 @@ pv_update_playstatus(play_video_ctrl_t *pvc, mp_playstatus_t mps)
 }
 
 /**
+ * Update text about video/audio stream type
+ */
+static void
+video_player_update_stream_info(play_video_ctrl_t *pvc, media_pipe_t *mp)
+{
+  int as = mp->mp_audio.mq_stream;
+  int vs = mp->mp_video.mq_stream;
+  glw_t *w = pvc->pvc_status_overlay;
+
+  if(as >= 0 && pvc->pvc_cwvec[as] != NULL)
+    layout_update_codec_info(w, "audioinfo", pvc->pvc_cwvec[as]->codec_ctx);
+  else
+    layout_update_codec_info(w, "audioinfo", NULL);
+
+  if(vs >= 0 && pvc->pvc_cwvec[vs] != NULL)
+    layout_update_codec_info(w, "audioinfo", pvc->pvc_cwvec[vs]->codec_ctx);
+  else
+    layout_update_codec_info(w, "audioinfo", NULL);
+}
+
+
+/**
  * Add audio track options to the form given
  */
 static void
@@ -189,64 +195,6 @@ add_audio_tracks(AVFormatContext *fctx, glw_t *t)
     layout_form_add_option(t, "audio_tracks", p, i);
   }
 }
-
-
- 
-
-/**
- * 
- */
-static void
-video_menu_form_initialize(play_video_ctrl_t *pvc, appi_t *ai, ic_t *ic,
-			   vd_conf_t *vdc, AVFormatContext *fctx,
-			   media_pipe_t *mp)
-{
-  glw_t *t, *m = pvc->pvc_menu_overlay;
-  struct layout_form_entry_list lfelist;
-  int r;
-
-  layout_form_entry_options_t deilace_options[] = {
-    {"Automatic",          VD_DEILACE_AUTO},
-    {"Disabled",           VD_DEILACE_NONE},
-    {"Simple",             VD_DEILACE_HALF_RES},
-    {"YADIF",              VD_DEILACE_YADIF_FIELD}
-  };
-
-
-  TAILQ_INIT(&lfelist);
-
-  LFE_ADD(&lfelist, "menu");
-  
-  /**
-   * Audio tab
-   */
-  t = layout_form_add_tab(m,
-			  "menu",           "videoplayback/audio-icon",
-			  "menu_container", "videoplayback/audio-tab");
-  
-  add_audio_tracks(fctx, t);
-
-  LFE_ADD_OPTION(&lfelist, "audio_tracks", &mp->mp_audio.mq_stream);
-
-  /**
-   * Video tab
-   */
-
-  t = layout_form_add_tab(m,
-			  "menu",           "videoplayback/video-icon",
-			  "menu_container", "videoplayback/video-tab");
-
-  layout_form_fill_options(t, "deinterlacer_options",
-			   deilace_options, 4);
-
-  LFE_ADD_OPTION(&lfelist, "deinterlacer_options", &vdc->gc_deilace_type);
-  LFE_ADD_INT(&lfelist, "avsync",    &vdc->gc_avcomp,"%dms", -2000, 2000, 50);
-  LFE_ADD_INT(&lfelist, "videozoom", &vdc->gc_zoom,  "%d%%",   100, 1000, 10);
-  
-  r = layout_form_initialize(&lfelist, m, &ai->ai_gfs, ic, 1);
-
-}
-
 
 
 /**
@@ -309,185 +257,32 @@ open_rcache(const char *fname)
   return open(buf, O_CREAT | O_RDWR, 0660);
 }
 
+
 /**
- * 
+ * Thread for reading from lavf and sending to lavc
  */
-int
-play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
+static void *
+player_thread(void *aux)
 {
-  AVFormatContext *fctx;
-  AVCodecContext *ctx;
-  AVPacket pkt;
-  codecwrap_t **cwvec;
-  formatwrap_t *fw;
-  int i, key;
+  play_video_ctrl_t *pvc = aux;
+  appi_t *ai = pvc->pvc_ai;
+  media_pipe_t *mp = &ai->ai_mp;
   media_buf_t *mb;
   media_queue_t *mq;
-  int streams;
-  //  int64_t cur_pos_pts = AV_NOPTS_VALUE;
-  media_pipe_t *mp = &ai->ai_mp;
-  vd_conf_t vdc;
-  glw_t *vdw, *zstack, *top;
-
-  int64_t pts, dts, seek_ref, seek_delta, seek_abs, rcache_thres, ts;
+  int64_t pts, dts, seek_ref, seek_delta, seek_abs;
   inputevent_t ie;
-  int gotevent, run, rcache_fd;
+  AVCodecContext *ctx;
+  AVPacket pkt;
 
-  play_video_ctrl_t pvc;
-  glw_t *w;
-  const char *s;
-
-  memset(&pvc, 0, sizeof(play_video_ctrl_t));
-  pvc.pvc_ai = ai;
-
-  /**
-   * Open input file
-   */
-  if(av_open_input_file(&fctx, fname, NULL, 0, NULL) != 0) {
-    fprintf(stderr, "Unable to open input file\n");
-    return -1;
-  }
-
-  fctx->flags |= AVFMT_FLAG_GENPTS;
-
-  if(av_find_stream_info(fctx) < 0) {
-    av_close_input_file(fctx);
-    fprintf(stderr, "Unable to find stream info\n");
-    return -1;
-  }
-
-  /**
-   * Create top level stack
-   */
-  top = glw_create(GLW_CONTAINER_Z,
-		   GLW_ATTRIB_PARENT, parent,
-		   NULL);
-
-  /**
-   * Create playfield for video + menu + status, etc
-   */
-  zstack = glw_create(GLW_ZSTACK,
-		      GLW_ATTRIB_PARENT, top,
-		      NULL);
-  /**
-   * Create video output widget
-   */
-  vd_conf_init(&vdc);
-  vdw = vd_create_widget(zstack, &ai->ai_mp, 1.0);
-  mp_set_video_conf(mp, &vdc);
-
-
-  /**
-   * Status overlay
-   */
-  pvc.pvc_status_overlay = 
-    glw_create(GLW_MODEL,
-	       GLW_ATTRIB_PARENT, top,
-	       GLW_ATTRIB_SIGNAL_HANDLER, overlay_callback, &pvc, 100,
-	       GLW_ATTRIB_FILENAME, "videoplayback/overlay",
-	       NULL);
-
-  /**
-   * Menu overlay
-   */
-  pvc.pvc_menu_overlay = 
-    glw_create(GLW_MODEL,
-	       GLW_ATTRIB_ALPHA, 0.0f,
-	       GLW_ATTRIB_PARENT, top,
-	       GLW_ATTRIB_SIGNAL_HANDLER, menu_callback, &pvc, 100,
-	       GLW_ATTRIB_FILENAME, "videoplayback/menu",
-	       NULL);
-
-  video_menu_form_initialize(&pvc, ai, ic, &vdc, fctx, mp);
-
-  /**
-   * Set title
-   */
-  if((w = glw_find_by_id(pvc.pvc_status_overlay, "title", 0)) != NULL) {
-    s = fctx->title;
-    if(*s == 0) {
-      /* No stored title */
-      s = strrchr(fname, '/');
-      s = s ? s + 1 : fname;
-    }
-    glw_set(w, GLW_ATTRIB_CAPTION, s, NULL);
-  }
-
-  /**
-   * Set total duration
-   */
-  layout_update_time(pvc.pvc_status_overlay,
-		     "time_total", fctx->duration / AV_TIME_BASE);
-
-  cwvec = alloca(fctx->nb_streams * sizeof(void *));
-  memset(cwvec, 0, sizeof(void *) * fctx->nb_streams);
-  
-  mp->mp_audio.mq_stream = -1;
-  mp->mp_video.mq_stream = -1;
-
-  fw = wrap_format_create(fctx, 1);
-
-  for(i = 0; i < fctx->nb_streams; i++) {
-    ctx = fctx->streams[i]->codec;
-
-    if(mp->mp_video.mq_stream == -1 && ctx->codec_type == CODEC_TYPE_VIDEO) {
-      mp->mp_video.mq_stream = i;
-    }
-
-    if(mp->mp_audio.mq_stream == -1 && ctx->codec_type == CODEC_TYPE_AUDIO) {
-      mp->mp_audio.mq_stream = i;
-    }
-
-    cwvec[i] = wrap_codec_create(ctx->codec_id, ctx->codec_type, 0, fw, ctx);
-  }
-
-  ai->ai_fctx = fctx;
-  mp->mp_format = fctx;
-
-  wrap_lock_all_codecs(fw);
-  
-  mp->mp_videoseekdts = 0;
-
-  rcache_fd = open_rcache(fname);
-  if(rcache_fd != -1 && read(rcache_fd, &ts, sizeof(ts)) == sizeof(ts)) {
-    printf("restarting at %lld\n", ts);
-    
-    i = av_seek_frame(fctx, -1, ts, AVSEEK_FLAG_BACKWARD);
-    if(i >= 0)
-      mp->mp_videoseekdts = ts;
-  }
-  mp_set_playstatus(mp, MP_VIDEOSEEK_PAUSE);
-
-  media_pipe_acquire_audio(mp);
-  mp->mp_feedback = ic;
-
-  if(mp->mp_audio.mq_stream >= 0 && cwvec[mp->mp_audio.mq_stream] != NULL)
-    layout_update_codec_info(pvc.pvc_status_overlay, "audioinfo",
-			     cwvec[mp->mp_audio.mq_stream]->codec_ctx);
-  else
-    layout_update_codec_info(pvc.pvc_status_overlay, "audioinfo", NULL);
-
-  if(mp->mp_video.mq_stream >= 0 && cwvec[mp->mp_video.mq_stream] != NULL)
-    layout_update_codec_info(pvc.pvc_status_overlay, "videoinfo",
-			     cwvec[mp->mp_video.mq_stream]->codec_ctx);
-  else
-    layout_update_codec_info(pvc.pvc_status_overlay, "videoinfo", NULL);
-
-
-  ai->ai_display_menu = 0;
-
-  wrap_unlock_all_codecs(fw);
+  int run, i, gotevent, key;
 
   pts          = AV_NOPTS_VALUE;
   dts          = AV_NOPTS_VALUE;
-  rcache_thres = AV_NOPTS_VALUE;
-  seek_ref     = fctx->start_time;
+  seek_ref     = pvc->pvc_fctx->start_time;
   run          = 1;
 
-  pvc.pvc_setup_mode = 1;
-
   while(run) {
-    i = av_read_frame(fctx, &pkt);
+    i = av_read_frame(pvc->pvc_fctx, &pkt);
 
     if(i < 0) {
       printf("Read error %d\n", i);
@@ -495,19 +290,22 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
       break;
     }
 
-    ctx = cwvec[pkt.stream_index] ? cwvec[pkt.stream_index]->codec_ctx : NULL;
+    ctx = pvc->pvc_cwvec[pkt.stream_index] ? 
+      pvc->pvc_cwvec[pkt.stream_index]->codec_ctx : NULL;
     mb = NULL;
     
     /* Rescale PTS / DTS to µsec */
     if(pkt.pts != AV_NOPTS_VALUE) {
-      pts = av_rescale_q(pkt.pts, fctx->streams[pkt.stream_index]->time_base,
+      pts = av_rescale_q(pkt.pts, 
+			 pvc->pvc_fctx->streams[pkt.stream_index]->time_base,
 			 AV_TIME_BASE_Q);
     } else {
       pts = AV_NOPTS_VALUE;
     }
  
     if(pkt.dts != AV_NOPTS_VALUE) {
-      dts = av_rescale_q(pkt.dts, fctx->streams[pkt.stream_index]->time_base,
+      dts = av_rescale_q(pkt.dts, 
+			 pvc->pvc_fctx->streams[pkt.stream_index]->time_base,
 			 AV_TIME_BASE_Q);
     } else {
       dts = AV_NOPTS_VALUE;
@@ -540,11 +338,12 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
       /* Rescale duration */
 
       mb->mb_duration =
-	av_rescale_q(pkt.duration, fctx->streams[pkt.stream_index]->time_base,
+	av_rescale_q(pkt.duration, 
+		     pvc->pvc_fctx->streams[pkt.stream_index]->time_base,
 		     AV_TIME_BASE_Q);
 
       
-      mb->mb_cw = wrap_codec_ref(cwvec[pkt.stream_index]);
+      mb->mb_cw = wrap_codec_ref(pvc->pvc_cwvec[pkt.stream_index]);
 
       /* Move the data pointers from ffmpeg's packet */
 
@@ -562,13 +361,13 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
     }
     av_free_packet(&pkt);
 
-    pv_update_playstatus(&pvc, mp->mp_playstatus);
+    pv_update_playstatus(pvc, mp->mp_playstatus);
 
     if(mp_is_paused(mp)) {
-      gotevent = !input_getevent(ic, 1, &ie, NULL);
+      gotevent = !input_getevent(&pvc->pvc_ic, 1, &ie, NULL);
       media_pipe_acquire_audio(mp);
     } else {
-      gotevent = !input_getevent(ic, 0, &ie, NULL);
+      gotevent = !input_getevent(&pvc->pvc_ic, 0, &ie, NULL);
     }
 
     ai->ai_req_fullscreen = mp->mp_playstatus == MP_PLAY;
@@ -584,71 +383,33 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
     default:
       break;
 
+    case INPUT_TS:
       /**
        * Feedback from decoders
        */
-    case INPUT_TS:
       if(ie.u.ts.stream != mp->mp_video.mq_stream)
 	break; /* we only deal with the video stream here */
 
       if(ie.u.ts.dts != AV_NOPTS_VALUE)
 	seek_ref = ie.u.ts.dts;
 
-      pts = ie.u.ts.pts;
-
-      if(rcache_fd != -1 && pts != AV_NOPTS_VALUE && pts > rcache_thres) {
-
-	/* Write timestamp into restart cache */
-
-	lseek(rcache_fd, 0, SEEK_SET);
-	write(rcache_fd, &pts, sizeof(pts));
-	fsync(rcache_fd);
-
-	rcache_thres = pts + AV_TIME_BASE * 5;
-      }
-
-      if(pts != AV_NOPTS_VALUE) {
-	pts -= fctx->start_time;
-
-	layout_update_time(pvc.pvc_status_overlay,
-			   "time_current",pts / AV_TIME_BASE);
-	layout_update_bar(pvc.pvc_status_overlay, "durationbar", 
-			  (double)pts / (double)(fctx->duration));
-      }
-
-      if(pvc.pvc_setup_mode) {
-	/* First frame displayed */
-	i = video_start_form(&pvc, zstack, ai, ic, &vdc, fctx, mp, pts);
-
-	switch(i) {
-
-	case -1: /* cancel */
-	  run = 0;
-	  break;
-
-	case 0: /* play */
-	  glw_focus_stack_deactivate(&ai->ai_gfs);
-	  mp_set_playstatus(mp, MP_PLAY);
-	  pvc.pvc_setup_mode = 0;
-	  break;
-
-	case 1: /* reset */
-	  seek_abs = 1;
-	  break;
-	}
-      }
-
       break;
 
+    case INPUT_APP_SEEK_DIRECT:
+      /**
+       * Direct seek
+       */
+      seek_abs = ie.u.ts.dts;
+      break;
+
+    case INPUT_KEY:
       /**
        * Keyboard input
        */
-    case INPUT_KEY:
-
       key = ie.u.key;
 
       switch(key) {
-      case INPUT_KEY_BACK:
+      case INPUT_KEY_STOP:
 	run = 0;
 	break;
       case INPUT_KEY_RESTART_TRACK:
@@ -681,19 +442,19 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
       /* Seeking requested */
 
       /* Just make it display the seek widget */
-      pv_update_playstatus(&pvc, MP_VIDEOSEEK_PLAY);
+      pv_update_playstatus(pvc, MP_VIDEOSEEK_PLAY);
 
       if(seek_abs)
 	seek_ref = seek_abs;
       else
 	seek_ref += seek_delta;
 
-      if(seek_ref < fctx->start_time)
-	seek_ref = fctx->start_time;
+      if(seek_ref < pvc->pvc_fctx->start_time)
+	seek_ref = pvc->pvc_fctx->start_time;
 
       printf("Seeking to %.2f\n", seek_ref / 1000000.0);
 
-      i = av_seek_frame(fctx, -1, seek_ref, AVSEEK_FLAG_BACKWARD);
+      i = av_seek_frame(pvc->pvc_fctx, -1, seek_ref, AVSEEK_FLAG_BACKWARD);
 
       if(i < 0)
 	printf("Seeking failed\n");
@@ -716,6 +477,340 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
       }
     }
   }
+  return NULL;
+}
+
+
+/**
+ * Seek to the given timestamp
+ */
+static void
+video_seek_abs(play_video_ctrl_t *pvc, int64_t ts)
+{
+  inputevent_t ie;
+
+  ie.type = INPUT_APP_SEEK_DIRECT;
+  ie.u.ts.dts = ts;
+  input_postevent(&pvc->pvc_ic, &ie);
+}
+
+
+
+/**
+ * Seek to the given timestamp
+ */
+static void
+video_player_menu(play_video_ctrl_t *pvc, ic_t *ic, media_pipe_t *mp)
+{
+  glw_t *t, *m;
+  appi_t *ai = pvc->pvc_ai;
+  struct layout_form_entry_list lfelist;
+  int r;
+  vd_conf_t *vdc = &pvc->pvc_vdc;
+
+  layout_form_entry_options_t deilace_options[] = {
+    {"Automatic",          VD_DEILACE_AUTO},
+    {"Disabled",           VD_DEILACE_NONE},
+    {"Simple",             VD_DEILACE_HALF_RES},
+    {"YADIF",              VD_DEILACE_YADIF_FIELD}
+  };
+
+  m = glw_create(GLW_MODEL,
+		 GLW_ATTRIB_PARENT, pvc->pvc_menu_playfield,
+		 GLW_ATTRIB_FILENAME, "videoplayback/menu",
+		 NULL);
+
+  TAILQ_INIT(&lfelist);
+
+  LFE_ADD(&lfelist, "menu");
+  
+  /**
+   * Audio tab
+   */
+  t = layout_form_add_tab(m,
+			  "menu",           "videoplayback/audio-icon",
+			  "menu_container", "videoplayback/audio-tab");
+  
+  add_audio_tracks(pvc->pvc_fctx, t);
+
+  LFE_ADD_OPTION(&lfelist, "audio_tracks", &mp->mp_audio.mq_stream);
+
+  /**
+   * Video tab
+   */
+
+  t = layout_form_add_tab(m,
+			  "menu",           "videoplayback/video-icon",
+			  "menu_container", "videoplayback/video-tab");
+
+  layout_form_fill_options(t, "deinterlacer_options",
+			   deilace_options, 4);
+
+  LFE_ADD_OPTION(&lfelist, "deinterlacer_options", &vdc->gc_deilace_type);
+  LFE_ADD_INT(&lfelist, "avsync",    &vdc->gc_avcomp,"%dms", -2000, 2000, 50);
+  LFE_ADD_INT(&lfelist, "videozoom", &vdc->gc_zoom,  "%d%%",   100, 1000, 10);
+  
+  r = layout_form_query(&lfelist, m, &ai->ai_gfs);
+
+  glw_detach(m);
+}
+
+
+
+/**
+ *  Main function for video playback
+ */
+int
+play_video(const char *url, appi_t *ai, ic_t *ic, glw_t *parent)
+{
+  AVCodecContext *ctx;
+  formatwrap_t *fw;
+  media_pipe_t *mp = &ai->ai_mp;
+  glw_t *vdw, *zstack, *top, *w;
+  int64_t ts, rcache_thres, seek_ref, pts;
+  inputevent_t ie;
+  int run, rcache_fd, streams, i, key;
+  play_video_ctrl_t pvc;
+  const char *s;
+  pthread_t player_tid;
+
+  memset(&pvc, 0, sizeof(play_video_ctrl_t));
+  pvc.pvc_ai = ai;
+
+  /**
+   * Open input file
+   */
+  if(av_open_input_file(&pvc.pvc_fctx, url, NULL, 0, NULL) != 0) {
+    fprintf(stderr, "Unable to open input file\n");
+    return -1;
+  }
+
+  pvc.pvc_fctx->flags |= AVFMT_FLAG_GENPTS;
+
+  if(av_find_stream_info(pvc.pvc_fctx) < 0) {
+    av_close_input_file(pvc.pvc_fctx);
+    fprintf(stderr, "Unable to find stream info\n");
+    return -1;
+  }
+
+  /**
+   * Create top level stack
+   */
+  top = glw_create(GLW_CONTAINER_Z,
+		   GLW_ATTRIB_PARENT, parent,
+		   NULL);
+
+  /**
+   * Create playfield for video + menu + status, etc
+   */
+  zstack = glw_create(GLW_ZSTACK,
+		      GLW_ATTRIB_PARENT, top,
+		      NULL);
+  /**
+   * Create video output widget
+   */
+  vd_conf_init(&pvc.pvc_vdc);
+  vdw = vd_create_widget(zstack, &ai->ai_mp, 1.0);
+  mp_set_video_conf(mp, &pvc.pvc_vdc);
+
+
+  /**
+   * Status overlay
+   */
+  pvc.pvc_status_overlay = 
+    glw_create(GLW_MODEL,
+	       GLW_ATTRIB_PARENT, top,
+	       GLW_ATTRIB_SIGNAL_HANDLER, overlay_callback, &pvc, 100,
+	       GLW_ATTRIB_FILENAME, "videoplayback/overlay",
+	       NULL);
+
+  /**
+   * Menu cubestack
+   */
+
+  pvc.pvc_menu_playfield = 
+    glw_create(GLW_CUBESTACK,
+	       GLW_ATTRIB_PARENT, top,
+	       NULL);
+
+  //  video_menu_form_initialize(&pvc, ai, ic, &vdc, fctx, mp);
+
+  /**
+   * Set title
+   */
+  if((w = glw_find_by_id(pvc.pvc_status_overlay, "title", 0)) != NULL) {
+    s = pvc.pvc_fctx->title;
+    if(*s == 0) {
+      /* No stored title */
+      s = strrchr(url, '/');
+      s = s ? s + 1 : url;
+    }
+    glw_set(w, GLW_ATTRIB_CAPTION, s, NULL);
+  }
+
+  /**
+   * Set total duration
+   */
+  layout_update_time(pvc.pvc_status_overlay,
+		     "time_total", pvc.pvc_fctx->duration / AV_TIME_BASE);
+
+  /**
+   * Init codec contexts
+   */
+
+  pvc.pvc_cwvec = alloca(pvc.pvc_fctx->nb_streams * sizeof(void *));
+  memset(pvc.pvc_cwvec, 0, sizeof(void *) * pvc.pvc_fctx->nb_streams);
+  
+  mp->mp_audio.mq_stream = -1;
+  mp->mp_video.mq_stream = -1;
+
+  fw = wrap_format_create(pvc.pvc_fctx, 1);
+
+  for(i = 0; i < pvc.pvc_fctx->nb_streams; i++) {
+    ctx = pvc.pvc_fctx->streams[i]->codec;
+
+    if(mp->mp_video.mq_stream == -1 && ctx->codec_type == CODEC_TYPE_VIDEO) {
+      mp->mp_video.mq_stream = i;
+    }
+
+    if(mp->mp_audio.mq_stream == -1 && ctx->codec_type == CODEC_TYPE_AUDIO) {
+      mp->mp_audio.mq_stream = i;
+    }
+
+    pvc.pvc_cwvec[i] = wrap_codec_create(ctx->codec_id,
+					 ctx->codec_type, 0, fw, ctx);
+  }
+
+  ai->ai_fctx   = pvc.pvc_fctx;
+  mp->mp_format = pvc.pvc_fctx;
+
+  wrap_lock_all_codecs(fw);
+  
+  /**
+   * Restart playback at last position
+   */
+
+  mp->mp_videoseekdts = 0;
+
+  rcache_fd = open_rcache(url);
+  if(rcache_fd != -1 && read(rcache_fd, &ts, sizeof(ts)) == sizeof(ts)) {
+    i = av_seek_frame(pvc.pvc_fctx, -1, ts, AVSEEK_FLAG_BACKWARD);
+    if(i >= 0)
+      mp->mp_videoseekdts = ts;
+  }
+  mp_set_playstatus(mp, MP_VIDEOSEEK_PAUSE);
+
+  media_pipe_acquire_audio(mp);
+
+  input_init(&pvc.pvc_ic);
+
+  mp->mp_feedback = ic;
+
+  video_player_update_stream_info(&pvc, mp);
+
+  wrap_unlock_all_codecs(fw);
+
+
+  pvc.pvc_setup_mode = 1;
+
+  rcache_thres = AV_NOPTS_VALUE;
+  seek_ref     = pvc.pvc_fctx->start_time;
+
+  pthread_create(&player_tid, NULL, player_thread, &pvc);
+  run = 1;
+
+  while(run) {
+    input_getevent(ic, 1, &ie, NULL);
+
+    switch(ie.type) {
+
+    default:
+      break;
+
+      /**
+       * Feedback from decoders
+       */
+    case INPUT_TS:
+      if(ie.u.ts.stream != mp->mp_video.mq_stream)
+	break; /* we only deal with the video stream here */
+
+      if(ie.u.ts.dts != AV_NOPTS_VALUE)
+	seek_ref = ie.u.ts.dts;
+
+      pts = ie.u.ts.pts;
+
+      if(rcache_fd != -1 && 
+	 pts != AV_NOPTS_VALUE && pts > rcache_thres) {
+
+	/* Write timestamp into restart cache */
+
+	lseek(rcache_fd, 0, SEEK_SET);
+	write(rcache_fd, &pts, sizeof(pts));
+	fsync(rcache_fd);
+
+	rcache_thres = pts + AV_TIME_BASE * 5;
+      }
+
+      if(pts != AV_NOPTS_VALUE) {
+	pts -= pvc.pvc_fctx->start_time;
+
+	layout_update_time(pvc.pvc_status_overlay,
+			   "time_current",pts / AV_TIME_BASE);
+	layout_update_bar(pvc.pvc_status_overlay, "durationbar", 
+			  (double)pts / (double)pvc.pvc_fctx->duration);
+      }
+
+      if(pvc.pvc_setup_mode) {
+	/* First frame displayed */
+	i = video_start_form(&pvc, zstack, ai, ic, &pvc.pvc_vdc,
+			     pvc.pvc_fctx, mp, pts);
+
+	switch(i) {
+
+	case -1: /* cancel */
+	  run = 0;
+	  break;
+
+	case 0: /* play */
+	  glw_focus_stack_deactivate(&ai->ai_gfs);
+	  mp_set_playstatus(mp, MP_PLAY);
+	  pvc.pvc_setup_mode = 0;
+	  break;
+
+	case 1: /* reset */
+	  video_seek_abs(&pvc, 1);
+	  break;
+	}
+      }
+
+      break;
+
+      /**
+       * Keyboard input
+       */
+
+    case INPUT_KEY:
+      key = ie.u.key;
+      printf("key = %d\n", key);
+      switch(key) {
+      case INPUT_KEY_STOP:
+      case INPUT_KEY_CLOSE:
+      case INPUT_KEY_BACK:
+      case INPUT_KEY_EJECT:
+	ie.u.key = INPUT_KEY_STOP;
+	run = 0;
+	break;
+
+      case INPUT_KEY_MENU:
+	printf("menu!\n");
+	video_player_menu(&pvc, ic, mp);
+	continue;
+      }
+    }
+    input_postevent(&pvc.pvc_ic, &ie);
+  }
+
+  pthread_join(player_tid, NULL);
 
   close(rcache_fd);
 
@@ -732,10 +827,11 @@ play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent)
 
   ai->ai_fctx = NULL;
 
-  streams = fctx->nb_streams;
+  streams = pvc.pvc_fctx->nb_streams;
 
-  for(i = 0; i < streams; i++) if(cwvec[i] != NULL)
-    wrap_codec_deref(cwvec[i], 0);
+  for(i = 0; i < streams; i++)
+    if(pvc.pvc_cwvec[i] != NULL)
+      wrap_codec_deref(pvc.pvc_cwvec[i], 0);
 
   glw_destroy(top);
 
