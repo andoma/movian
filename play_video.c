@@ -499,7 +499,7 @@ video_seek_abs(play_video_ctrl_t *pvc, int64_t ts)
 /**
  * Seek to the given timestamp
  */
-static void
+static int
 video_player_menu(play_video_ctrl_t *pvc, ic_t *ic, media_pipe_t *mp)
 {
   glw_t *t, *m;
@@ -507,6 +507,7 @@ video_player_menu(play_video_ctrl_t *pvc, ic_t *ic, media_pipe_t *mp)
   struct layout_form_entry_list lfelist;
   inputevent_t ie;
   vd_conf_t *vdc = &pvc->pvc_vdc;
+  int r = 1, run = 1;
 
   layout_form_entry_options_t deilace_options[] = {
     {"Automatic",          VD_DEILACE_AUTO},
@@ -550,9 +551,40 @@ video_player_menu(play_video_ctrl_t *pvc, ic_t *ic, media_pipe_t *mp)
   LFE_ADD_INT(&lfelist, "avsync",    &vdc->gc_avcomp,"%dms", -2000, 2000, 50);
   LFE_ADD_INT(&lfelist, "videozoom", &vdc->gc_zoom,  "%d%%",   100, 1000, 10);
   
-  layout_form_query(&lfelist, m, &ai->ai_gfs, &ie);
+
+  layout_form_initialize(&lfelist, m, &ai->ai_gfs, ic, 1);
+
+  while(run) {
+    input_getevent(ic, 1, &ie, NULL);
+
+    switch(ie.type) {
+    default:
+      break;
+
+    case INPUT_KEY:
+
+      switch(ie.u.key) {
+      default:
+	break;
+
+      case INPUT_KEY_STOP:
+      case INPUT_KEY_CLOSE:
+      case INPUT_KEY_EJECT:
+	r = 0;
+	run = 0;
+	continue;
+
+      case INPUT_KEY_MENU:
+      case INPUT_KEY_BACK:
+	run = 0;
+	continue;
+      }
+    }
+    input_postevent(&pvc->pvc_ic, &ie);
+  }
 
   glw_detach(m);
+  return r;
 }
 
 
@@ -791,7 +823,7 @@ play_video(const char *url, appi_t *ai, ic_t *ic, glw_t *parent)
 
     case INPUT_KEY:
       key = ie.u.key;
-      printf("key = %d\n", key);
+
       switch(key) {
       case INPUT_KEY_STOP:
       case INPUT_KEY_CLOSE:
@@ -802,8 +834,8 @@ play_video(const char *url, appi_t *ai, ic_t *ic, glw_t *parent)
 	break;
 
       case INPUT_KEY_MENU:
-	printf("menu!\n");
-	video_player_menu(&pvc, ic, mp);
+	if(pvc.pvc_setup_mode == 0)
+	  video_player_menu(&pvc, ic, mp);
 	continue;
       }
     }
