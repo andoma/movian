@@ -1,0 +1,24 @@
+#HTSSIMPLEMODEL
+
+y-container {
+ text {
+  caption Subtitle settings
+  align center
+ }
+
+ y-container {
+  weight 2.0
+  focus-alpha
+  focus-cursor
+  text {
+   caption Subtitles
+   align center
+  }
+ 
+  hlist {
+   id subtitle_tracks
+  }
+ }
+
+ space 6.0
+}

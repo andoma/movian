@@ -43,11 +43,11 @@ typedef struct dvd_player {
   int          dp_audio_track_vm;
 
 
-  int          dp_spu_mode;
-#define DP_SPU_FOLLOW_VM 0
-#define DP_SPU_DISABLE   1
-#define DP_SPU_OVERRIDE  2
-  int          dp_spu[3];
+  int          dp_spu_track;
+#define DP_SPU_DISABLE   -1
+#define DP_SPU_FOLLOW_VM -2
+  int          dp_spu_track_vm;
+
 
   uint32_t     dp_clut[16];
 

@@ -76,18 +76,20 @@ dvd_filter_spu(void *aux, uint32_t sc, int codec_id)
 {
   dvd_player_t *dp = aux;
 
-  if(!dp->dp_inmenu) {
+  if(dp->dp_inmenu)
+    return (dp->dp_spu_track_vm & 0x1f) == (sc & 0x1f);
 
-    if(dp->dp_spu[dp->dp_spu_mode] == 0xffffffff)
-      return 0; /* no spu */
+  switch(dp->dp_spu_track) {
+  case DP_SPU_DISABLE:
+    return 0;
+
+  case DP_AUDIO_FOLLOW_VM:
+    return (dp->dp_spu_track_vm & 0x1f) == (sc & 0x1f);
+
+  default:
+    return (dp->dp_spu_track & 0x1f) == (sc & 0x1f);
   }
-
-  return (sc & DVD_SPU_MASK) == (dp->dp_spu[dp->dp_spu_mode] & DVD_SPU_MASK);
 }
-
-
-
-
 
 
 static void
@@ -145,7 +147,7 @@ static void
 dvd_spu_stream_change(dvd_player_t *dp, 
 		      dvdnav_spu_stream_change_event_t *dat)
 {
-  dp->dp_spu[DP_AUDIO_FOLLOW_VM] = dat->physical_wide;
+  dp->dp_spu_track_vm = dat->physical_wide;
 }
 
 
@@ -373,7 +375,7 @@ dvd_player_thread(void *aux)
       mp_send_cmd(mp, &mp->mp_video, MB_RESET_SPU);
       mp_send_cmd(mp, &mp->mp_video, MB_RESET);
 
-      dp->dp_spu_mode = DP_SPU_FOLLOW_VM;
+      dp->dp_spu_track   = DP_SPU_FOLLOW_VM;
       dp->dp_audio_track = DP_AUDIO_FOLLOW_VM;
       dvd_flush(dp);
       break;
@@ -507,9 +509,7 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 
 
   dp->dp_audio_track = DP_AUDIO_FOLLOW_VM;
-
-  dp->dp_spu[DP_SPU_DISABLE] = 0xffffffff;
-  dp->dp_spu[DP_AUDIO_DISABLE] = 0xffffffff;
+  dp->dp_spu_track   = DP_SPU_FOLLOW_VM;
 
   /* Init MPEG elementary stream decoder */
 
@@ -654,12 +654,8 @@ dvd_ctrl_input(dvd_player_t *dp, int wait)
 
   case INPUT_KEY_DVD_SPU_MENU:
     mp_playpause(mp, MP_PLAY);
-    dp->dp_spu_mode = DP_SPU_FOLLOW_VM;
+    dp->dp_spu_track = DP_SPU_FOLLOW_VM;
     dvdnav_menu_call(dp->dp_dvdnav, DVD_MENU_Subpicture);
-    return 1;
-
-  case INPUT_KEY_DVD_SPU_OFF:
-    dp->dp_spu_mode = DP_SPU_DISABLE;
     return 1;
   }
 
@@ -886,17 +882,12 @@ dvd_langcode_to_string(uint16_t langcode)
 }
 
 
-#if 0
 
-/****************************************************************************
- *
- *   DVD Menu SPU functions
- *
+/**
+ * Get name of SPU track
  */
-
 static int
-dvd_subtitle_get_spu_name(dvd_player_t *dp, char *buf, int track, int *phys,
-			  int *iscurp)
+dvd_subtitle_get_spu_name(dvd_player_t *dp, char *buf, size_t size, int track)
 {
   dvdnav_t *dvdnav;
   char *lc;
@@ -912,125 +903,35 @@ dvd_subtitle_get_spu_name(dvd_player_t *dp, char *buf, int track, int *phys,
 
   lc = (char *)dvd_langcode_to_string(langcode);
  
-  *phys = s;
-  sprintf(buf, "%s", lc);
-  *iscurp = dvd_filter_spu(dp, s, 0);
+  snprintf(buf, size, "%s", lc);
   return 0;
 }
 
 
-
-
-static void 
-dvd_spu_set_track(dvd_player_t *dp, int track)
+/**
+ * Add SPU track options to the form given
+ */
+static void
+add_spu_tracks(dvd_player_t *dp, glw_t *t)
 {
-  if(track == -1) {
-    dp->dp_spu_mode = DP_SPU_DISABLE;
-  } else {
-    dp->dp_spu_mode = DP_SPU_OVERRIDE;
-    dp->dp_spu[DP_SPU_OVERRIDE] = track;
-  }
-}
-
-
-
-
-static int
-dvd_menu_spu(glw_t *w, void *opaque, glw_signal_t signal, ...)
-{
-  dvd_player_t *dp = opaque;
-  char str[40];
-  glw_t *c;
-  int u32, iscur;
-
-  switch(signal) {
-  case GLW_SIGNAL_PREPARE:
-    
-    if(walltime == w->glw_holdtime)
-      return 0;
-    w->glw_holdtime = walltime;
-
-    if(dvd_subtitle_get_spu_name(dp, str, glw_get_u32(w), &u32, &iscur)) {
-      glw_set(w, GLW_ATTRIB_HIDDEN, 1, NULL);
-    } else {
-      glw_set(w, GLW_ATTRIB_HIDDEN, 0, NULL);
-
-      if((c = glw_find_by_class(w, GLW_TEXT_BITMAP)) != NULL)
-	glw_set(c, GLW_ATTRIB_CAPTION, str, NULL);
-      
-      if((c = glw_find_by_class(w, GLW_BITMAP)) != NULL)
-	c->glw_alpha = iscur ? 1.0 : 0.0;
-    }
-    return 1;
-
-  case GLW_SIGNAL_CLICK:
-    dvd_spu_set_track(dp, glw_get_u32(w));
-    return 1;
-
-  default:
-    return 0;
-  }
-}
-
-
-
-static int
-dvd_menu_spu_off(glw_t *w, void *opaque, glw_signal_t signal, ...)
-{
-  dvd_player_t *dp = opaque;
-  glw_t *c;
-
-  switch(signal) {
-  case GLW_SIGNAL_PREPARE:
-    if(dp == NULL)
-      return 1;
-    
-    if((c = glw_find_by_class(w, GLW_BITMAP)) != NULL)
-      c->glw_alpha = dp->dp_spu_mode == DP_SPU_DISABLE ? 1.0 : 0.0;
-    return 0;
-
-  case GLW_SIGNAL_CLICK:
-    dvd_spu_set_track(dp, -1);
-    return 1;
-
-  default:
-    return 0;
-  }
-}
-
-
-
-
-
-
-static glw_t *
-dvd_menu_spu_setup(glw_t *p, dvd_player_t *dp)
-{
-  glw_t *v, *w;
+  char buf[100];
   int i;
 
-  v = menu_create_submenu(p, "icon://subtitles.png", "Subtitles", 1);
+  layout_form_add_option(t, "subtitle_tracks", "Disabled",  DP_SPU_DISABLE);
+  layout_form_add_option(t, "subtitle_tracks", "Auto", DP_SPU_FOLLOW_VM);
 
-  for(i = 0; i < 32; i++)
-    w = menu_create_item(v, "icon://menu-current.png", "",
-			 dvd_menu_spu, dp, i, 0);
-  
-  menu_create_item(v, "icon://menu-current.png", "(off)",
-		   dvd_menu_spu_off, dp, -1, 0);
-  return v;
+  for(i = 0; i < 32; i++) {
+    if(dvd_subtitle_get_spu_name(dp, buf, sizeof(buf), i))
+      continue;
+    layout_form_add_option(t, "subtitle_tracks", buf, i);
+  }
 }
 
 
 
-#endif
-
-
-/****************************************************************************
- *
- *   DVD Menu audio functions
- *
+/**
+ * Get name of audio track
  */
-
 static int
 dvd_audio_get_track_name(dvd_player_t *dp, char *buf, size_t size, int track)
 {
@@ -1107,7 +1008,7 @@ add_audio_tracks(dvd_player_t *dp, glw_t *t)
   char buf[100];
   int i;
 
-  layout_form_add_option(t, "audio_tracks", "off",  -1);
+  layout_form_add_option(t, "audio_tracks", "Disabled",  -1);
   layout_form_add_option(t, "audio_tracks", "Auto", -2);
 
   for(i = 0; i < 8; i++) {
@@ -1156,6 +1057,25 @@ dvd_player_menu(dvd_player_t *dp, ic_t *ic, media_pipe_t *mp)
   add_audio_tracks(dp, t);
 
   LFE_ADD_OPTION(&lfelist, "audio_tracks", &dp->dp_audio_track);
+
+ /**
+   * Subtitles tab
+   */
+
+  TAILQ_INIT(&lfelist);
+
+  t = layout_form_add_tab(m,
+			  "menu",           "dvdplayback/subtitles-icon",
+			  "menu_container", "dvdplayback/subtitles-tab");
+  
+  add_spu_tracks(dp, t);
+
+  LFE_ADD_OPTION(&lfelist, "subtitle_tracks", &dp->dp_spu_track);
+  
+  /**
+   * Video tab
+   */
+
 
   video_menu_add_tab(m, &ai->ai_gfs, ic, &dp->dp_vdc);
 
