@@ -33,7 +33,7 @@
 #include "video_decoder.h"
 #include "input.h"
 #include "menu.h"
-#include "video/subtitles.h"
+#include "subtitles.h"
 #include "yadif.h"
 
 static GLuint yuv2rbg_prog;

@@ -37,7 +37,7 @@
 #include "layout/layout.h"
 #include "menu.h"
 #include "play_video.h"
-#include "gl/video_decoder.h"
+#include "video_decoder.h"
 #include "subtitles.h"
 #include "layout/layout_forms.h"
 #include "layout/layout_support.h"

@@ -25,7 +25,7 @@
 #include "hid/input.h"
 #include "showtime.h"
 #include "audio/audio_decoder.h"
-#include "gl/video_decoder.h"
+#include "video/video_decoder.h"
 
 media_pipe_t *primary_audio;
 extern int concurrency;

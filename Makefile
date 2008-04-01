@@ -14,7 +14,9 @@ SRCS  += fa_fs.c
 # video playback subsys
 
 VPATH += video
-SRCS  += play_video.c
+SRCS  += play_video.c video_decoder.c video_widget.c \
+	 gl_dvdspu.c yadif.c
+
 
 # audio subsys
 
@@ -35,8 +37,6 @@ SRCS  += layout.c layout_forms.c layout_world.c layout_switcher.c \
 # OpenGL support
 
 VPATH += gl
-SRCS  += video_decoder.c video_widget.c
-SRCS  += gl_dvdspu.c yadif.c
 
 VPATH += gl/sysglue
 SRCS  += gl_common.c sysglue_$(GL_GLUE).c
