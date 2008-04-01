@@ -32,7 +32,7 @@
 #include "media.h"
 #include "video_decoder.h"
 #include "input.h"
-#include "subtitles.h"
+#include "video/subtitles.h"
 #include "yadif.h"
 
 void
