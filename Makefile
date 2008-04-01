@@ -3,7 +3,7 @@
 # core
 
 SRCS = 	main.c app.c input.c media.c mpeg_support.c \
-	coms.c settings.c subtitles.c
+	coms.c subtitles.c
 
 # file access subsys
 
