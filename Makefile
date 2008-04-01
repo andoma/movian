@@ -2,8 +2,7 @@
 
 # core
 
-SRCS = 	main.c app.c input.c media.c mpeg_support.c \
-	coms.c subtitles.c
+SRCS = 	main.c app.c media.c mpeg_support.c coms.c
 
 # file access subsys
 
@@ -22,7 +21,7 @@ SRCS  += gl_common.c display_$(GL_GLUE).c
 
 VPATH += video
 SRCS  += video_playback.c video_decoder.c video_widget.c \
-	 gl_dvdspu.c yadif.c
+	 gl_dvdspu.c yadif.c subtitles.c
 
 
 # audio subsys
@@ -44,7 +43,7 @@ SRCS  += layout.c layout_forms.c layout_world.c layout_switcher.c \
 # Human Interface Devices
 
 VPATH += hid
-SRCS  += hid.c lircd.c imonpad.c lcdd.c 
+SRCS  += hid.c lircd.c imonpad.c lcdd.c input.c 
 
 # Launcher application
 
