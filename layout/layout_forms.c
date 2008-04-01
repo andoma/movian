@@ -780,7 +780,7 @@ layout_form_fill_options(glw_t *m, const char *id,
 {
   int i;
 
-  if((m = glw_find_by_id(m, id, 0)) == NULL) 
+  if((m = glw_find_by_id(m, id, 1)) == NULL) 
     return;
 
   for(i = 0; i < num; i++) {
@@ -801,7 +801,7 @@ layout_form_fill_options(glw_t *m, const char *id,
 void
 layout_form_add_option(glw_t *m, const char *id, const char *caption, int u32)
 {
-  if((m = glw_find_by_id(m, id, 0)) == NULL) 
+  if((m = glw_find_by_id(m, id, 1)) == NULL) 
     return;
 
   glw_create(GLW_TEXT_BITMAP,
