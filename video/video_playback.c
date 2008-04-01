@@ -885,9 +885,6 @@ play_video(const char *url, appi_t *ai, ic_t *ic, glw_t *parent)
 
   wrap_lock_all_codecs(fw);
 
-  mp->mp_info_widget = NULL;
-  mp->mp_info_extra_widget = NULL;
-
   mp->mp_total_time = 0;
 
   ai->ai_fctx = NULL;

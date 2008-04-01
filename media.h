@@ -158,13 +158,6 @@ typedef struct media_pipe {
 
   int mp_total_time;
 
-  glw_t *mp_info_widget;
-  glw_t *mp_info_extra_widget;
-  int mp_info_widget_auto_display;
-
-  char mp_audio_info[50];
-  char mp_video_info[50];
-
   struct appi *mp_ai;
 
   AVFormatContext *mp_format;
@@ -276,12 +269,6 @@ mp_is_paused(struct media_pipe *mp)
 }
 
 void mp_playpause(struct media_pipe *mp, int key);
-
-static inline void
-mp_auto_display(media_pipe_t *mp)
-{
-  mp->mp_info_widget_auto_display = MP_WIDGET_AUTO_DISPLAY_TIME;
-}
 
 void media_pipe_acquire_audio(struct media_pipe *mp);
 

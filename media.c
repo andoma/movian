@@ -59,7 +59,6 @@ mp_init(media_pipe_t *mp, const char *name, struct appi *ai)
 {
   mp->mp_name = name;
   mp->mp_ai = ai;
-  mp->mp_info_widget_auto_display = 0;
   mp->mp_speed_gain = 1.0f;
 
   mq_mutex_init(&mp->mp_mutex);
@@ -81,11 +80,6 @@ mp_deinit(media_pipe_t *mp)
     primary_audio = NULL;
 
   mp_set_playstatus(mp, MP_STOP);
-
-  if(mp->mp_info_widget != NULL)
-    glw_destroy(mp->mp_info_widget);
-  if(mp->mp_info_extra_widget != NULL)
-    glw_destroy(mp->mp_info_extra_widget);
 }
 
 /*
@@ -600,7 +594,6 @@ mp_playpause(struct media_pipe *mp, int key)
   default:
     return;
   }
-  mp_auto_display(mp);
   mp_set_playstatus(mp, t);
 }
 

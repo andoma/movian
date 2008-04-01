@@ -658,12 +658,10 @@ dvd_ctrl_input(dvd_player_t *dp, int wait)
     switch(key) {
 
     case INPUT_KEY_SEEK_BACKWARD:
-      mp_auto_display(mp);
       dvdnav_sector_search(dp->dp_dvdnav, -10000, SEEK_CUR);
       return 1;
 
     case INPUT_KEY_SEEK_FORWARD:
-      mp_auto_display(mp);
       dvdnav_sector_search(dp->dp_dvdnav, 10000, SEEK_CUR);
       return 1;
     }
@@ -690,12 +688,10 @@ dvd_ctrl_input(dvd_player_t *dp, int wait)
     break;
   case INPUT_KEY_NEXT:
     dvd_flush(dp);
-    mp_auto_display(mp);
     dvdnav_next_pg_search(dp->dp_dvdnav);
     break;
   case INPUT_KEY_PREV:
     dvd_flush(dp);
-    mp_auto_display(mp);
     dvdnav_prev_pg_search(dp->dp_dvdnav);
     break;
   case INPUT_KEY_DVDUP:

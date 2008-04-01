@@ -174,7 +174,6 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic,
 
       seekflush:
 	mp_flush(mp);
-	mp_auto_display(mp);
 	input_flush_queue(ic);
 	break;
 
