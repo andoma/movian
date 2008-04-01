@@ -36,7 +36,7 @@
 #include "input.h"
 #include "layout/layout.h"
 #include "menu.h"
-#include "play_video.h"
+#include "video_playback.h"
 #include "video_decoder.h"
 #include "subtitles.h"
 #include "layout/layout_forms.h"

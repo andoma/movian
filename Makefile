@@ -14,7 +14,7 @@ SRCS  += fa_fs.c
 # video playback subsys
 
 VPATH += video
-SRCS  += play_video.c video_decoder.c video_widget.c \
+SRCS  += video_playback.c video_decoder.c video_widget.c \
 	 gl_dvdspu.c yadif.c
 
 
