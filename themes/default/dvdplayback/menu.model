@@ -1,0 +1,41 @@
+#HTSSIMPLEMODEL
+
+y-container {
+ space 0.8
+ displacement 0.0 0.0 0.9
+ x-container {
+  space 0.9
+  y-container {
+   bitmap {
+    weight 0.3
+    alpha 0.97
+    color 0.1 0.1 0.1
+
+    filename icon://plate_compact.png
+    texture-borders 0.5 0.5 0.5 0.5
+    vertex-borders  0.06 0.06 0.06 0.06
+    border-scale-childs
+    list {
+     scale-childs
+     id menu
+     slices 5
+    }
+   }
+   bitmap {
+    alpha 0.97
+    color 0.1 0.1 0.1
+
+    filename icon://plate_compact.png
+    texture-borders 0.5 0.5 0.5 0.5
+    vertex-borders  0.02 0.02 0.02 0.02
+    border-scale-childs
+    deck {
+     weight 5
+     focus-alpha
+     id menu_container
+    }
+   }
+  }
+  space 0.1
+ }
+}

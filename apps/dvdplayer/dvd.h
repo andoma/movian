@@ -23,6 +23,7 @@
 
 #include "app.h"
 #include "mpeg_support.h"
+#include "video/video_decoder.h"
 
 typedef struct dvd_player {
   
@@ -35,12 +36,11 @@ typedef struct dvd_player {
   pes_player_t dp_pp;
 
 
-  int          dp_audio_mode;
-#define DP_AUDIO_FOLLOW_VM 0
-#define DP_AUDIO_DISABLE   1
-#define DP_AUDIO_OVERRIDE  2
-  int          dp_audio[3];
+  int          dp_audio_track;
+#define DP_AUDIO_DISABLE    -1
+#define DP_AUDIO_FOLLOW_VM  -2
 
+  int          dp_audio_track_vm;
 
 
   int          dp_spu_mode;
@@ -62,6 +62,10 @@ typedef struct dvd_player {
   glw_t *dp_widget_time;
   glw_t *dp_status_overlay;
   glw_t *dp_menu_playfield;
+
+  vd_conf_t dp_vdc;
+
+  int dp_force_status_display;
 
 } dvd_player_t;
 

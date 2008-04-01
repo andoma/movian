@@ -1,0 +1,58 @@
+#HTSSIMPLEMODEL
+
+y-container {
+ displacement 0 0 0.9
+
+ bitmap {
+  weight 1.0
+  color 0.5 0.5 0.5
+
+  filename icon://plate_compact.png
+  texture-borders 0.5 0.5 0.5 0.5
+  vertex-borders  0.1 0.1 0.1 0.1
+  border-scale-childs
+
+  z-container {
+   x-container {
+    xfader {
+     id playstatus
+    }
+    space 10 
+   }
+  
+   y-container {
+    space 0.1
+    text {
+     align center
+     id title
+    }
+
+    space 1.0
+
+    x-container {
+     text {
+      align right
+      id time_current
+     }
+
+     text {
+      weight 0.05
+      caption /
+      align center
+     }
+
+     text {
+      align left
+      id time_total
+     }
+    }
+    space 0.1
+   }
+  }
+ }
+ bar {
+  weight 0.3
+  id durationbar
+ }
+ space 8.0
+}

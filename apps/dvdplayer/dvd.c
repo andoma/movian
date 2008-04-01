@@ -35,12 +35,15 @@
 #include "dvd.h"
 #include "input.h"
 #include "video/video_decoder.h"
+#include "video/video_menu.h"
 #include "layout/layout.h"
+#include "layout/layout_forms.h"
 
 static int dvd_ctrl_input(dvd_player_t *dp, int wait);
 
+static int dvd_player_menu(dvd_player_t *dp, ic_t *ic, media_pipe_t *mp);
+
 #define DVD_AUDIO_STREAMS 8
-#define DVD_AUDIO_MASK      (DVD_AUDIO_STREAMS - 1)
 
 #define DVD_SPU_STREAMS   32
 #define DVD_SPU_MASK      (DVD_SPU_STREAMS - 1)
@@ -56,11 +59,16 @@ dvd_filter_audio(void *aux, uint32_t sc, int codec_id)
 {
   dvd_player_t *dp = aux;
 
-  if(dp->dp_audio[dp->dp_audio_mode] == 0xffffffff)
-    return 0; /* no sound */
+  switch(dp->dp_audio_track) {
+  case DP_AUDIO_DISABLE:
+    return 0;
 
-  return (sc & DVD_AUDIO_MASK) == 
-    (dp->dp_audio[dp->dp_audio_mode] & DVD_AUDIO_MASK);
+  case DP_AUDIO_FOLLOW_VM:
+    return (dp->dp_audio_track_vm & 0x7) == (sc & 0x7);
+
+  default:
+    return (dp->dp_audio_track & 0x7) == (sc & 0x7);
+  }
 }
 
 static int
@@ -129,7 +137,7 @@ static void
 dvd_audio_stream_change(dvd_player_t *dp, 
 			dvdnav_audio_stream_change_event_t *dat)
 {
-  dp->dp_audio[DP_AUDIO_FOLLOW_VM] = dat->physical;
+  dp->dp_audio_track_vm = dat->physical;
 }
 
 
@@ -366,7 +374,7 @@ dvd_player_thread(void *aux)
       mp_send_cmd(mp, &mp->mp_video, MB_RESET);
 
       dp->dp_spu_mode = DP_SPU_FOLLOW_VM;
-      dp->dp_audio_mode = DP_AUDIO_FOLLOW_VM;
+      dp->dp_audio_track = DP_AUDIO_FOLLOW_VM;
       dvd_flush(dp);
       break;
       
@@ -402,7 +410,6 @@ dvd_player_thread(void *aux)
 }
 
 
-
 /**
  *
  */
@@ -415,7 +422,6 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
   char *title;
   formatwrap_t *fw;
   media_pipe_t *mp;
-  vd_conf_t gc;
   //  int options = 0;
   int run = 1, key;
   inputevent_t ie;
@@ -482,9 +488,9 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 #endif
 
 
-  vd_conf_init(&gc);
-  mp_set_video_conf(mp, &gc);
-  gc.gc_deilace_type = VD_DEILACE_NONE;
+  vd_conf_init(&dp->dp_vdc);
+  mp_set_video_conf(mp, &dp->dp_vdc);
+  dp->dp_vdc.gc_deilace_type = VD_DEILACE_NONE;
 
   vd_create_widget(top, &ai->ai_mp, 1.0f);
 
@@ -500,6 +506,7 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 	       NULL);
 
 
+  dp->dp_audio_track = DP_AUDIO_FOLLOW_VM;
 
   dp->dp_spu[DP_SPU_DISABLE] = 0xffffffff;
   dp->dp_spu[DP_AUDIO_DISABLE] = 0xffffffff;
@@ -547,11 +554,13 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 	ie.u.key = INPUT_KEY_STOP;
 	break;
 
+      case INPUT_KEY_MENU:
+	run = dvd_player_menu(dp, &ai->ai_ic, mp);
+	continue;
+
       default:
 	break;
 
-      case INPUT_KEY_MENU:
-	continue;
       }
     }
     input_postevent(&dp->dp_ic, &ie);
@@ -706,14 +715,10 @@ dvd_ctrl_input(dvd_player_t *dp, int wait)
   return 1;
 }
 
-#if 0
 
-/*****************************************************************************
- *
+/**
  * DVD language codes
- *
  */
-
 const struct {
   const char *langcode;
   const char *displayname;
@@ -881,6 +886,7 @@ dvd_langcode_to_string(uint16_t langcode)
 }
 
 
+#if 0
 
 /****************************************************************************
  *
@@ -1016,6 +1022,7 @@ dvd_menu_spu_setup(glw_t *p, dvd_player_t *dp)
 
 
 
+#endif
 
 
 /****************************************************************************
@@ -1025,8 +1032,7 @@ dvd_menu_spu_setup(glw_t *p, dvd_player_t *dp)
  */
 
 static int
-dvd_audio_get_track_name(dvd_player_t *dp, char *buf, int track, int *phys,
-			 int *iscurp)
+dvd_audio_get_track_name(dvd_player_t *dp, char *buf, size_t size, int track)
 {
   dvdnav_t *dvdnav;
   char *lc;
@@ -1034,7 +1040,7 @@ dvd_audio_get_track_name(dvd_player_t *dp, char *buf, int track, int *phys,
   int s, chans, format;
   const char *chtxt, *fmtxt;
 
-  *iscurp = 0;
+  printf("Adding audio track %d\n", track);
 
   dvdnav = dp->dp_dvdnav;
   if((s = dvdnav_get_audio_logical_stream(dvdnav, track)) == -1)
@@ -1084,109 +1090,108 @@ dvd_audio_get_track_name(dvd_player_t *dp, char *buf, int track, int *phys,
     break;
   }
 
-  *phys = s;
-  sprintf(buf, "%s (%s - %s)", lc, fmtxt, chtxt);
-
-  *iscurp = dvd_filter_audio(dp, track, 0);
+  snprintf(buf, size, "%s (%s - %s)", lc, fmtxt, chtxt);
+  printf("\t%s\n", buf);
   return 0;
 }
 
 
-static void 
-dvd_audio_set_track(dvd_player_t *dp, int track)
+
+
+/**
+ * Add audio track options to the form given
+ */
+static void
+add_audio_tracks(dvd_player_t *dp, glw_t *t)
 {
-  if(track == -1) {
-    dp->dp_audio_mode = DP_AUDIO_DISABLE;
-  } else {
-    dp->dp_audio_mode = DP_AUDIO_OVERRIDE;
-    dp->dp_audio[DP_AUDIO_OVERRIDE] = track;
-  }
-}
-
-
-
-
-static int
-dvd_menu_atrack(glw_t *w, void *opaque, glw_signal_t signal, ...)
-{
-  char str[40];
-  dvd_player_t *dp = opaque;
-  int u32, iscur;
-  glw_t *c;
-
-  switch(signal) {
-  case GLW_SIGNAL_PREPARE:
-    if(walltime == w->glw_holdtime)
-      return 0;
-    w->glw_holdtime = walltime;
-
-    if(dvd_audio_get_track_name(dp, str, glw_get_u32(w), &u32, &iscur)) {
-      glw_set(w, GLW_ATTRIB_HIDDEN, 1, NULL);
-    } else {
-      glw_set(w, GLW_ATTRIB_HIDDEN, 0, NULL);
-
-      if((c = glw_find_by_class(w, GLW_TEXT_BITMAP)) != NULL)
-	glw_set(c, GLW_ATTRIB_CAPTION, str, NULL);
-      
-      if((c = glw_find_by_class(w, GLW_BITMAP)) != NULL)
-	c->glw_alpha = iscur ? 1.0 : 0.0;
-    }
-    return 1;
-
-  case GLW_SIGNAL_CLICK:
-    dvd_audio_set_track(dp, glw_get_u32(w));
-    return 1;
-
-  default:
-    return 0;
-  }
-}
-
-
-
-static int
-dvd_menu_atrack_off(glw_t *w, void *opaque, glw_signal_t signal, ...)
-{
-  dvd_player_t *dp = opaque;
-  glw_t *c;
-
-  switch(signal) {
-  case GLW_SIGNAL_PREPARE:
-    if(dp == NULL)
-      return 1;
-    
-    if((c = glw_find_by_class(w, GLW_BITMAP)) != NULL)
-      c->glw_alpha = dp->dp_audio_mode == DP_AUDIO_DISABLE ? 1.0 : 0.0;
-    return 0;
-
-  case GLW_SIGNAL_CLICK:
-    dvd_audio_set_track(dp, -1);
-    return 1;
-
-  default:
-    return 0;
-  }
-}
-
-
-
-
-
-static glw_t *
-dvd_menu_audio_setup(glw_t *p, dvd_player_t *dp)
-{
-  glw_t *v, *w;
+  char buf[100];
   int i;
 
-  v = menu_create_submenu(p, "icon://audio.png", "Audio tracks", 1);
+  layout_form_add_option(t, "audio_tracks", "off",  -1);
+  layout_form_add_option(t, "audio_tracks", "Auto", -2);
 
-  for(i = 0; i < 8; i++)
-    w = menu_create_item(v, "icon://menu-current.png", "",
-			 dvd_menu_atrack, dp, i, 0);
-  
-  menu_create_item(v, "icon://menu-current.png", "(off)",
-		   dvd_menu_atrack_off, dp, -1, 0);
-  return v;
+  for(i = 0; i < 8; i++) {
+    if(dvd_audio_get_track_name(dp, buf, sizeof(buf), i))
+      continue;
+    layout_form_add_option(t, "audio_tracks", buf, i);
+  }
 }
 
-#endif
+
+/**
+ * DVD control menu
+ */
+static int
+dvd_player_menu(dvd_player_t *dp, ic_t *ic, media_pipe_t *mp)
+{
+  glw_t *t, *m;
+  appi_t *ai = dp->dp_ai;
+  struct layout_form_entry_list lfelist;
+  inputevent_t ie;
+  int r = 1, run = 1;
+
+  dp->dp_force_status_display = 1;
+
+  m = glw_create(GLW_MODEL,
+		 GLW_ATTRIB_PARENT, dp->dp_menu_playfield,
+		 GLW_ATTRIB_FILENAME, "dvdplayback/menu",
+		 NULL);
+
+  TAILQ_INIT(&lfelist);
+
+  LFE_ADD(&lfelist, "menu");
+  
+  layout_form_initialize(&lfelist, m, &ai->ai_gfs, ic, 1);
+
+  /**
+   * Audio tab
+   */
+
+  TAILQ_INIT(&lfelist);
+
+  t = layout_form_add_tab(m,
+			  "menu",           "videoplayback/audio-icon",
+			  "menu_container", "videoplayback/audio-tab");
+  
+  add_audio_tracks(dp, t);
+
+  LFE_ADD_OPTION(&lfelist, "audio_tracks", &dp->dp_audio_track);
+
+  video_menu_add_tab(m, &ai->ai_gfs, ic, &dp->dp_vdc);
+
+  layout_form_initialize(&lfelist, m, &ai->ai_gfs, ic, 0);
+
+  while(run) {
+    input_getevent(ic, 1, &ie, NULL);
+
+    switch(ie.type) {
+    default:
+      break;
+
+     case INPUT_KEY:
+
+      switch(ie.u.key) {
+      default:
+	break;
+
+      case INPUT_KEY_STOP:
+      case INPUT_KEY_CLOSE:
+      case INPUT_KEY_EJECT:
+	r = 0;
+	run = 0;
+	continue;
+
+      case INPUT_KEY_MENU:
+      case INPUT_KEY_BACK:
+	run = 0;
+	continue;
+      }
+    }
+    input_postevent(&dp->dp_ic, &ie);
+  }
+
+  glw_detach(m);
+  dp->dp_force_status_display = 0;
+  return r;
+}
+
