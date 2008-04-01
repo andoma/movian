@@ -260,7 +260,7 @@ layout_form_initialize(struct layout_form_entry_list *lfelist, glw_t *m,
     lfe->lfe_ic = ic;
 
     glw_set(w,
-	    GLW_ATTRIB_SIGNAL_HANDLER, layout_form_callback, gfs, 400,
+	    GLW_ATTRIB_SIGNAL_HANDLER, layout_form_callback, gfs, 402,
 	    NULL);
 
     switch(lfe->lfe_type) {
