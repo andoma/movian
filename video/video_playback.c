@@ -609,7 +609,7 @@ video_player_menu(play_video_ctrl_t *pvc, ic_t *ic, media_pipe_t *mp)
 
   LFE_ADD_OPTION(&lfelist, "audio_tracks", &mp->mp_audio.mq_stream);
 
-  video_menu_add_tab(m, &ai->ai_gfs, ic, vdc);
+  video_menu_add_tab(m, &ai->ai_gfs, ic, vdc, "videoplayback/video");
 
   layout_form_initialize(&lfelist, m, &ai->ai_gfs, ic, 0);
 

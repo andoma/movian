@@ -41,14 +41,15 @@
 #include "layout/layout_forms.h"
 #include "layout/layout_support.h"
 
+
+
 /**
  * Video menu
  */
 void
-video_menu_add_tab(glw_t *m, glw_focus_stack_t *gfs, ic_t *ic, vd_conf_t *vdc)
+video_menu_attach(glw_t *m, glw_focus_stack_t *gfs, ic_t *ic, vd_conf_t *vdc)
 {
   struct layout_form_entry_list lfelist;
-  glw_t *t;
 
   layout_form_entry_options_t deilace_options[] = {
     {"Automatic",          VD_DEILACE_AUTO},
@@ -58,12 +59,8 @@ video_menu_add_tab(glw_t *m, glw_focus_stack_t *gfs, ic_t *ic, vd_conf_t *vdc)
   };
 
   TAILQ_INIT(&lfelist);
-
-  t = layout_form_add_tab(m,
-			  "menu",           "videoplayback/video-icon",
-			  "menu_container", "videoplayback/video-tab");
-
-  layout_form_fill_options(t, "deinterlacer_options",
+ 
+  layout_form_fill_options(m, "deinterlacer_options",
 			   deilace_options, 4);
 
   LFE_ADD_OPTION(&lfelist, "deinterlacer_options", &vdc->gc_deilace_type);
@@ -71,4 +68,25 @@ video_menu_add_tab(glw_t *m, glw_focus_stack_t *gfs, ic_t *ic, vd_conf_t *vdc)
   LFE_ADD_INT(&lfelist, "videozoom", &vdc->gc_zoom,  "%d%%",   100, 1000, 10);
 
   layout_form_initialize(&lfelist, m, gfs, ic, 0);
+}
+
+
+/**
+ * Video menu
+ */
+void
+video_menu_add_tab(glw_t *m, glw_focus_stack_t *gfs, ic_t *ic, vd_conf_t *vdc,
+		   const char *src)
+{
+  glw_t *t;
+  char buf1[100], buf2[100];
+
+  snprintf(buf1, sizeof(buf1), "%s-icon", src);
+  snprintf(buf2, sizeof(buf2), "%s-tab",  src);
+
+  t = layout_form_add_tab(m,
+			  "menu",           buf1,
+			  "menu_container", buf2);
+
+  video_menu_attach(m, gfs, ic, vdc);
 }

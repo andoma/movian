@@ -1,15 +1,13 @@
 #HTSSIMPLEMODEL
 
-y-container {
- space 0.1
- text {
-  weight 0.25
-  caption Video settings
-  align center
- }
+z-container {
  bitmap {
+  alpha 0.1
   filename icon://screen.png
   keep-aspect
  } 
- space 0.1
+ text {
+  caption Video settings
+  align center
+ }
 }

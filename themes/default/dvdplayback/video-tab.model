@@ -1,10 +1,6 @@
 #HTSSIMPLEMODEL
 
 y-container {
- text {
-  caption Video settings
-  align center
- }
 
  x-container {
   focus-alpha
@@ -14,6 +10,7 @@ y-container {
   }
  
   hlist {
+   cursor-size 0.2
    focus-cursor
    id deinterlacer_options
   }
@@ -27,6 +24,7 @@ y-container {
   }
  
   text {
+   cursor-size 0.2
    focus-cursor
    id avsync
    align left
@@ -41,6 +39,7 @@ y-container {
   }
  
   text {
+   cursor-size 0.2
    focus-cursor
    id videozoom
    align left

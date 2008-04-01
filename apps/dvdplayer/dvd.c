@@ -1040,9 +1040,10 @@ dvd_player_menu(dvd_player_t *dp, ic_t *ic, media_pipe_t *mp)
 
   TAILQ_INIT(&lfelist);
 
-  LFE_ADD(&lfelist, "menu");
-  
-  layout_form_initialize(&lfelist, m, &ai->ai_gfs, ic, 1);
+  /**
+   * Video tab
+   */
+  video_menu_add_tab(m, &ai->ai_gfs, ic, &dp->dp_vdc, "dvdplayback/video");
 
   /**
    * Audio tab
@@ -1054,9 +1055,10 @@ dvd_player_menu(dvd_player_t *dp, ic_t *ic, media_pipe_t *mp)
 			  "menu",           "dvdplayback/audio-icon",
 			  "menu_container", "dvdplayback/audio-tab");
   
-  add_audio_tracks(dp, t);
+  add_audio_tracks(dp, m);
 
   LFE_ADD_OPTION(&lfelist, "audio_tracks", &dp->dp_audio_track);
+  layout_form_initialize(&lfelist, m, &ai->ai_gfs, ic, 1);
 
  /**
    * Subtitles tab
@@ -1068,18 +1070,17 @@ dvd_player_menu(dvd_player_t *dp, ic_t *ic, media_pipe_t *mp)
 			  "menu",           "dvdplayback/subtitles-icon",
 			  "menu_container", "dvdplayback/subtitles-tab");
   
-  add_spu_tracks(dp, t);
+  add_spu_tracks(dp, m);
 
   LFE_ADD_OPTION(&lfelist, "subtitle_tracks", &dp->dp_spu_track);
-  
+  layout_form_initialize(&lfelist, m, &ai->ai_gfs, ic, 1);
+
+
   /**
-   * Video tab
+   * Tab menu
    */
-
-
-  video_menu_add_tab(m, &ai->ai_gfs, ic, &dp->dp_vdc);
-
-  layout_form_initialize(&lfelist, m, &ai->ai_gfs, ic, 0);
+  LFE_ADD(&lfelist, "menu");
+  layout_form_initialize(&lfelist, m, &ai->ai_gfs, ic, 1);
 
   while(run) {
     input_getevent(ic, 1, &ie, NULL);
@@ -1093,6 +1094,13 @@ dvd_player_menu(dvd_player_t *dp, ic_t *ic, media_pipe_t *mp)
       switch(ie.u.key) {
       default:
 	break;
+
+
+      case INPUT_KEY_LEFT:
+      case INPUT_KEY_RIGHT:
+      case INPUT_KEY_UP: 
+      case INPUT_KEY_DOWN:
+	continue;
 
       case INPUT_KEY_STOP:
       case INPUT_KEY_CLOSE:

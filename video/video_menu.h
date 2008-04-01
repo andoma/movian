@@ -21,6 +21,9 @@
 #define VIDOE_MENU_H
 
 void video_menu_add_tab(glw_t *m, glw_focus_stack_t *gfs, ic_t *ic,
-			vd_conf_t *vdc);
+			vd_conf_t *vdc, const char *src);
+
+void video_menu_attach(glw_t *m, glw_focus_stack_t *gfs, ic_t *ic,
+		       vd_conf_t *vdc);
 
 #endif /* VIDEO_MENU_H */
