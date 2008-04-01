@@ -27,7 +27,7 @@
 #include <libglw/glw.h>
 
 #include "showtime.h"
-#include "sysglue.h"
+#include "display.h"
 
 
 

@@ -38,7 +38,7 @@
 #include "app.h"
 
 #include "video/video_decoder.h"
-#include "display/sysglue.h"
+#include "display/display.h"
 #include "hid/hid.h"
 #include "audio/audio.h"
 #include "layout/layout.h"

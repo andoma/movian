@@ -30,7 +30,7 @@
 #include "showtime.h"
 #include "hid/input.h"
 #include "layout/layout.h"
-#include "sysglue.h"
+#include "display.h"
 
 static struct {
   Display *display;

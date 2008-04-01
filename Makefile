@@ -16,7 +16,7 @@ SRCS  += fa_fs.c
 VPATH += display
 
 VPATH += display
-SRCS  += gl_common.c sysglue_$(GL_GLUE).c
+SRCS  += gl_common.c display_$(GL_GLUE).c
 
 # video playback subsys
 
