@@ -35,7 +35,7 @@ SRCS  += layout.c layout_forms.c layout_world.c layout_switcher.c \
 # OpenGL support
 
 VPATH += gl
-SRCS  += video_decoder.c video_widget.c video_menues.c
+SRCS  += video_decoder.c video_widget.c
 SRCS  += gl_dvdspu.c yadif.c
 
 VPATH += gl/sysglue
