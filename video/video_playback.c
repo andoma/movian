@@ -570,7 +570,7 @@ play_video_ts_changed(play_video_ctrl_t *pvc, inputevent_t *ie,
 
 
 /**
- * Seek to the given timestamp
+ * Video menu
  */
 static int
 video_player_menu(play_video_ctrl_t *pvc, ic_t *ic, media_pipe_t *mp)
