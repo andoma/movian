@@ -38,6 +38,7 @@
 #include "menu.h"
 #include "video_playback.h"
 #include "video_decoder.h"
+#include "video_menu.h"
 #include "subtitles.h"
 #include "layout/layout_forms.h"
 #include "layout/layout_support.h"
@@ -581,13 +582,6 @@ video_player_menu(play_video_ctrl_t *pvc, ic_t *ic, media_pipe_t *mp)
   vd_conf_t *vdc = &pvc->pvc_vdc;
   int r = 1, run = 1;
 
-  layout_form_entry_options_t deilace_options[] = {
-    {"Automatic",          VD_DEILACE_AUTO},
-    {"Disabled",           VD_DEILACE_NONE},
-    {"Simple",             VD_DEILACE_HALF_RES},
-    {"YADIF",              VD_DEILACE_YADIF_FIELD}
-  };
-
   pvc->pvc_force_status_display = 1;
 
   m = glw_create(GLW_MODEL,
@@ -599,9 +593,14 @@ video_player_menu(play_video_ctrl_t *pvc, ic_t *ic, media_pipe_t *mp)
 
   LFE_ADD(&lfelist, "menu");
   
+  layout_form_initialize(&lfelist, m, &ai->ai_gfs, ic, 1);
+
   /**
    * Audio tab
    */
+
+  TAILQ_INIT(&lfelist);
+
   t = layout_form_add_tab(m,
 			  "menu",           "videoplayback/audio-icon",
 			  "menu_container", "videoplayback/audio-tab");
@@ -610,23 +609,9 @@ video_player_menu(play_video_ctrl_t *pvc, ic_t *ic, media_pipe_t *mp)
 
   LFE_ADD_OPTION(&lfelist, "audio_tracks", &mp->mp_audio.mq_stream);
 
-  /**
-   * Video tab
-   */
+  video_menu_add_tab(m, &ai->ai_gfs, ic, vdc);
 
-  t = layout_form_add_tab(m,
-			  "menu",           "videoplayback/video-icon",
-			  "menu_container", "videoplayback/video-tab");
-
-  layout_form_fill_options(t, "deinterlacer_options",
-			   deilace_options, 4);
-
-  LFE_ADD_OPTION(&lfelist, "deinterlacer_options", &vdc->gc_deilace_type);
-  LFE_ADD_INT(&lfelist, "avsync",    &vdc->gc_avcomp,"%dms", -2000, 2000, 50);
-  LFE_ADD_INT(&lfelist, "videozoom", &vdc->gc_zoom,  "%d%%",   100, 1000, 10);
-  
-
-  layout_form_initialize(&lfelist, m, &ai->ai_gfs, ic, 1);
+  layout_form_initialize(&lfelist, m, &ai->ai_gfs, ic, 0);
 
   while(run) {
     input_getevent(ic, 1, &ie, NULL);

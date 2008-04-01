@@ -21,7 +21,7 @@ SRCS  += gl_common.c display_$(GL_GLUE).c
 
 VPATH += video
 SRCS  += video_playback.c video_decoder.c video_widget.c \
-	 gl_dvdspu.c yadif.c subtitles.c
+	 gl_dvdspu.c yadif.c subtitles.c video_menu.c
 
 
 # audio subsys
