@@ -1150,8 +1150,8 @@ dvd_player_menu(dvd_player_t *dp, ic_t *ic, media_pipe_t *mp)
   TAILQ_INIT(&lfelist);
 
   t = layout_form_add_tab(m,
-			  "menu",           "videoplayback/audio-icon",
-			  "menu_container", "videoplayback/audio-tab");
+			  "menu",           "dvdplayback/audio-icon",
+			  "menu_container", "dvdplayback/audio-tab");
   
   add_audio_tracks(dp, t);
 
