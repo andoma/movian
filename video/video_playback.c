@@ -203,6 +203,7 @@ add_audio_tracks(AVFormatContext *fctx, glw_t *t)
 
     layout_form_add_option(t, "audio_tracks", p, i);
   }
+  layout_form_add_option(t, "audio_tracks", "off", -1);
 }
 
 
