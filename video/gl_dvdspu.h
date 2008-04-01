@@ -19,11 +19,7 @@
 #ifndef GL_DVDSPU_H
 #define GL_DVDSPU_H
 
-#include "apps/dvdplayer/dvd.h"
-
 TAILQ_HEAD(gl_dvdspu_pic_head, gl_dvdspu_pic);
-
-
 
 typedef struct hts_rect {
   int x, y, w, h;
@@ -50,8 +46,10 @@ typedef struct gl_dvdspu {
 struct gl_dvdspu *gl_dvdspu_init(void);
 void gl_dvdspu_deinit(gl_dvdspu_t *gd);
 
+struct dvd_player;
 
-void gl_dvdspu_dispatch(dvd_player_t *dp, gl_dvdspu_t *gd, media_buf_t *hmb);
+void gl_dvdspu_dispatch(struct dvd_player *dp,
+			gl_dvdspu_t *gd, media_buf_t *hmb);
 
 void gl_dvdspu_flush(gl_dvdspu_t *gd);
 

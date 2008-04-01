@@ -33,6 +33,7 @@
 #include "media.h"
 #include "video_decoder.h"
 #include "gl_dvdspu.h"
+#include "apps/dvdplayer/dvd.h"
 
 typedef struct gl_dvdspu_pic {
 

@@ -29,6 +29,7 @@
 #include <math.h>
 
 #include "showtime.h"
+#include "hid/input.h"
 #include "media.h"
 #include "video_decoder.h"
 #include "input.h"
