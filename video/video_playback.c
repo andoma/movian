@@ -742,8 +742,6 @@ play_video(const char *url, appi_t *ai, ic_t *ic, glw_t *parent)
 	       GLW_ATTRIB_PARENT, top,
 	       NULL);
 
-  //  video_menu_form_initialize(&pvc, ai, ic, &vdc, fctx, mp);
-
   /**
    * Set title
    */
