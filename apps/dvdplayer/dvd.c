@@ -250,110 +250,33 @@ dvd_update_info(dvd_player_t *dp)
 
 }
 
-
-int
-dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
+/**
+ *
+ */
+static void *
+dvd_player_thread(void *aux)
 {
-  int len, event, result, kickctd, i;
+  dvd_player_t *dp = aux;
+  media_pipe_t *mp = dp->dp_mp;
+  appi_t *      ai = dp->dp_ai;
+
+  int result, run = 1, kickctd = 0, len, event, i;
   uint8_t mem[DVD_VIDEO_LB_LEN], *block;
   pci_t *pci;
   dvdnav_highlight_event_t *hevent;
-  dvd_player_t *dp = calloc(1, sizeof(dvd_player_t));
-  int rcode = 0;
-  const char *rawtitle;
-  char *title;
   void *data;
-  formatwrap_t *fw;
-  media_pipe_t *mp;
-  vd_conf_t gc;
-  glw_t *w, *vd0;
-  //  int options = 0;
-
-  if(!strncmp("file://", url, 7))
-    url += 7;
-
-  w = glw_create(GLW_XFADER,
-		 GLW_ATTRIB_PARENT, parent,
-		 NULL);
-
-  dp->dp_ai = ai;
-
-  if(dvdnav_open(&dp->dp_dvdnav, url) != DVDNAV_STATUS_OK) {
-    //    dvd_display_error(w, "An error occured when opening DVD", isdrive);
-    glw_destroy(w);
-    free(dp);
-    return -1;
-  }
-
-  dvdnav_set_readahead_flag(dp->dp_dvdnav, 1);
-  dvdnav_set_PGC_positioning_flag(dp->dp_dvdnav, 1);
-  dvdnav_get_title_string(dp->dp_dvdnav, &rawtitle);
-
-  title = make_nice_title(rawtitle);
-  if(*title == 0) {
-    title = strrchr(url, '/');
-    if(title != NULL)
-      title = make_nice_title(title + 1);
-  }
-
-#if 0
-  if(isdrive)
-    options = DVD_START_MENU_EJECT;
-  if(options) {
-    if((rcode = dvd_start_menu(ai, w, title, options)) != 0) {
-      dvdnav_close(dp->dp_dvdnav);
-      glw_destroy(w);
-      free(dp);
-      return rcode;
-    }
-  }
-#endif
-
-  mp = &ai->ai_mp;
-
-  vd_conf_init(&gc);
-  mp_set_video_conf(mp, &gc);
-  gc.gc_deilace_type = VD_DEILACE_NONE;
-
-  vd0 = vd_create_widget(NULL, &ai->ai_mp, 1.0f);
-
-  vd_set_dvd(&ai->ai_mp, dp);
-
-
-  dp->dp_spu[DP_SPU_DISABLE] = 0xffffffff;
-  dp->dp_spu[DP_AUDIO_DISABLE] = 0xffffffff;
-
-  /* Init MPEG elementary stream decoder */
-
-  fw = wrap_format_create(NULL, 1);
-
-  pes_init(&dp->dp_pp, &ai->ai_mp, fw);
-
-  dp->dp_pp.pp_audio.ps_filter_cb = dvd_filter_audio;
-  dp->dp_pp.pp_spu.ps_filter_cb = dvd_filter_spu;
-
-  dp->dp_pp.pp_video.ps_aux = dp;
-  dp->dp_pp.pp_audio.ps_aux = dp;
-  dp->dp_pp.pp_spu.ps_aux = dp;
-
-  dp->dp_pp.pp_video.ps_output = &mp->mp_video;
-  dp->dp_pp.pp_spu.ps_output =   &mp->mp_video;
-  dp->dp_pp.pp_audio.ps_output = &mp->mp_audio;
-
-  kickctd = 0;
-
-  //  mp->mp_info_widget = dvd_create_miw(dp, mp, title);
-
+  inputevent_t ie;
 
 
   mp_set_playstatus(mp, MP_PLAY);
 
   media_pipe_acquire_audio(mp);
 
-  while(!rcode) {
+
+  while(run) {
 
     if(mp_is_paused(mp)) {
-      rcode = dvd_ctrl_input(dp, 255);
+      run = dvd_ctrl_input(dp, 255);
       continue;
     }
 
@@ -376,8 +299,7 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
     result = dvdnav_get_next_cache_block(dp->dp_dvdnav, &block, &event, &len);
 
     if(result == DVDNAV_STATUS_ERR) {
-      sleep(1);
-      rcode = -1;
+      run = 0;
       break;
     }
 
@@ -385,12 +307,6 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
     case DVDNAV_BLOCK_OK:
       ai->ai_req_fullscreen = 1;
       kickctd = 3;
-
-      if(vd0 != NULL) {
-	glw_set(vd0, GLW_ATTRIB_PARENT, w, NULL);
-	vd0 = NULL;
-      }
-
       dvd_ps_block(dp, block, len);
       break;
 
@@ -399,7 +315,7 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 
     case DVDNAV_STILL_FRAME:
       dvd_gen_frame_kick(dp);
-      rcode = dvd_ctrl_input(dp, *(int *)block);
+      run = dvd_ctrl_input(dp, *(int *)block);
       continue;
 
     case DVDNAV_SPU_STREAM_CHANGE:
@@ -473,14 +389,184 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 
     dvdnav_free_cache_block(dp->dp_dvdnav, block);
 
-    rcode = dvd_ctrl_input(dp, 0);
-
+    run = dvd_ctrl_input(dp, 0);
   }
 
-  mp_set_playstatus(mp, MP_STOP);
+  /* Make control thread stop */
+  ie.type = INPUT_KEY;
+  ie.u.key = INPUT_KEY_STOP;
+  input_postevent(&ai->ai_ic, &ie);
 
-  if(vd0 != NULL)
-    glw_destroy(vd0);
+  mp_set_playstatus(mp, MP_STOP);
+  return NULL;
+}
+
+
+
+/**
+ *
+ */
+int
+dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
+{
+  dvd_player_t *dp = alloca(sizeof(dvd_player_t));
+  int rcode = 0;
+  const char *rawtitle;
+  char *title;
+  formatwrap_t *fw;
+  media_pipe_t *mp;
+  vd_conf_t gc;
+  //  int options = 0;
+  int run = 1, key;
+  inputevent_t ie;
+  glw_t *top;
+  pthread_t player_tid;
+
+  memset(dp, 0, sizeof(dvd_player_t));
+
+  mp = &ai->ai_mp;
+  dp->dp_mp = mp;
+  dp->dp_ai = ai;
+
+  if(!strncmp("file://", url, 7))
+    url += 7;
+
+  /**
+   * Create top level stack
+   */
+  top = glw_create(GLW_CONTAINER_Z,
+		   GLW_ATTRIB_PARENT, parent,
+		   NULL);
+
+
+  /**
+   * Status overlay
+   */
+#if 0
+  dp->dp_status_overlay = 
+    glw_create(GLW_MODEL,
+	       GLW_ATTRIB_PARENT, top,
+	       GLW_ATTRIB_SIGNAL_HANDLER, overlay_callback, dp, 100,
+	       GLW_ATTRIB_FILENAME, "dvdplayback/overlay",
+	       NULL);
+#endif
+
+
+  if(dvdnav_open(&dp->dp_dvdnav, url) != DVDNAV_STATUS_OK) {
+    //    dvd_display_error(w, "An error occured when opening DVD", isdrive);
+    glw_destroy(top);
+    return -1;
+  }
+
+  dvdnav_set_readahead_flag(dp->dp_dvdnav, 1);
+  dvdnav_set_PGC_positioning_flag(dp->dp_dvdnav, 1);
+  dvdnav_get_title_string(dp->dp_dvdnav, &rawtitle);
+
+  title = make_nice_title(rawtitle);
+  if(*title == 0) {
+    title = strrchr(url, '/');
+    if(title != NULL)
+      title = make_nice_title(title + 1);
+  }
+
+#if 0
+  if(isdrive)
+    options = DVD_START_MENU_EJECT;
+  if(options) {
+    if((rcode = dvd_start_menu(ai, w, title, options)) != 0) {
+      dvdnav_close(dp->dp_dvdnav);
+      glw_destroy(w);
+      return rcode;
+    }
+  }
+#endif
+
+
+  vd_conf_init(&gc);
+  mp_set_video_conf(mp, &gc);
+  gc.gc_deilace_type = VD_DEILACE_NONE;
+
+  vd_create_widget(top, &ai->ai_mp, 1.0f);
+
+  vd_set_dvd(&ai->ai_mp, dp);
+
+  /**
+   * Menu cubestack
+   */
+
+  dp->dp_menu_playfield = 
+    glw_create(GLW_CUBESTACK,
+	       GLW_ATTRIB_PARENT, top,
+	       NULL);
+
+
+
+  dp->dp_spu[DP_SPU_DISABLE] = 0xffffffff;
+  dp->dp_spu[DP_AUDIO_DISABLE] = 0xffffffff;
+
+  /* Init MPEG elementary stream decoder */
+
+  fw = wrap_format_create(NULL, 1);
+
+  pes_init(&dp->dp_pp, &ai->ai_mp, fw);
+
+  dp->dp_pp.pp_audio.ps_filter_cb = dvd_filter_audio;
+  dp->dp_pp.pp_spu.ps_filter_cb = dvd_filter_spu;
+
+  dp->dp_pp.pp_video.ps_aux = dp;
+  dp->dp_pp.pp_audio.ps_aux = dp;
+  dp->dp_pp.pp_spu.ps_aux = dp;
+
+  dp->dp_pp.pp_video.ps_output = &mp->mp_video;
+  dp->dp_pp.pp_spu.ps_output =   &mp->mp_video;
+  dp->dp_pp.pp_audio.ps_output = &mp->mp_audio;
+
+  input_init(&dp->dp_ic);
+
+  pthread_create(&player_tid, NULL, dvd_player_thread, dp);
+
+  while(run) {
+    input_getevent(&ai->ai_ic, 1, &ie, NULL);
+
+    switch(ie.type) {
+
+    default:
+      break;
+
+      /**
+       * Keyboard input
+       */
+    case INPUT_KEY:
+      key = ie.u.key;
+
+      switch(key) {
+      case INPUT_KEY_STOP:
+      case INPUT_KEY_EJECT:
+	run = 0;
+	printf("Sending STOP\n");
+	ie.u.key = INPUT_KEY_STOP;
+	break;
+
+      default:
+	break;
+
+      case INPUT_KEY_MENU:
+	continue;
+      }
+    }
+    input_postevent(&dp->dp_ic, &ie);
+  }
+
+  /* Make sure player stops */
+  ie.u.key = INPUT_KEY_STOP;
+  run = 0;
+  input_postevent(&dp->dp_ic, &ie);
+
+  /* collect the player thread */
+
+  pthread_join(player_tid, NULL);
+  input_flush_queue(&dp->dp_ic);
+
 
   ai->ai_req_fullscreen = 0;
 
@@ -490,9 +576,6 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 
   free(title);
 
-  glw_destroy(mp->mp_info_widget);
-  mp->mp_info_widget = NULL;
-
   dvdnav_close(dp->dp_dvdnav);
 
 #if 0
@@ -500,8 +583,7 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
     dvd_display_error(w, "An error occured during DVD decoding.", isdrive);
 #endif
 
-  glw_destroy(w);
-  free(dp);
+  glw_destroy(top);
   return rcode;
 }
 
@@ -509,13 +591,13 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 static int
 dvd_ctrl_input(dvd_player_t *dp, int wait)
 {
+  ic_t         *ic = &dp->dp_ic;
+  media_pipe_t *mp =  dp->dp_mp;
+
   struct timespec ts;
   int key, r;
   pci_t *pci;
-  appi_t *ai = dp->dp_ai;
-  ic_t *ic = &ai->ai_ic;
   inputevent_t ie;
-  media_pipe_t *mp = &ai->ai_mp;
 
   switch(wait) {
   case 0: /* no timeout, no wait */
@@ -527,7 +609,7 @@ dvd_ctrl_input(dvd_player_t *dp, int wait)
     ts.tv_nsec = 0;
     if(input_getevent(ic, 1, &ie, &ts)) {
       dvdnav_still_skip(dp->dp_dvdnav);
-      return 0;
+      return 1;
     }
     break;
 
@@ -539,7 +621,7 @@ dvd_ctrl_input(dvd_player_t *dp, int wait)
   key = ie.type == INPUT_KEY ? ie.u.key : 0;
 
   if(key == 0)
-    return 0;
+    return 1;
 
   media_pipe_acquire_audio(mp);
 
@@ -547,31 +629,29 @@ dvd_ctrl_input(dvd_player_t *dp, int wait)
 
   switch(key) {
   case INPUT_KEY_STOP:
-  case INPUT_KEY_CLEAR:
-  case INPUT_KEY_EJECT:
-    return key;
+    return 0;
 
   case INPUT_KEY_PLAYPAUSE:
   case INPUT_KEY_PLAY:
   case INPUT_KEY_PAUSE:
     mp_playpause(mp, key);
-    return 0;
+    return 1;
 
 
   case INPUT_KEY_DVD_AUDIO_MENU:
     mp_playpause(mp, MP_PLAY);
     dvdnav_menu_call(dp->dp_dvdnav, DVD_MENU_Audio);
-    return 0;
+    return 1;
 
   case INPUT_KEY_DVD_SPU_MENU:
     mp_playpause(mp, MP_PLAY);
     dp->dp_spu_mode = DP_SPU_FOLLOW_VM;
     dvdnav_menu_call(dp->dp_dvdnav, DVD_MENU_Subpicture);
-    return 0;
+    return 1;
 
   case INPUT_KEY_DVD_SPU_OFF:
     dp->dp_spu_mode = DP_SPU_DISABLE;
-    return 0;
+    return 1;
   }
 
   if(!dp->dp_inmenu) {
@@ -580,18 +660,17 @@ dvd_ctrl_input(dvd_player_t *dp, int wait)
     case INPUT_KEY_SEEK_BACKWARD:
       mp_auto_display(mp);
       dvdnav_sector_search(dp->dp_dvdnav, -10000, SEEK_CUR);
-      return 0;
+      return 1;
 
     case INPUT_KEY_SEEK_FORWARD:
       mp_auto_display(mp);
       dvdnav_sector_search(dp->dp_dvdnav, 10000, SEEK_CUR);
-      return 0;
-
+      return 1;
     }
   }
 
   if(mp_is_paused(mp))
-    return 0;  /* no other actions allows if paused */
+    return 1;  /* no other actions allows if paused */
 
   switch(key) {
   case INPUT_KEY_UP:
@@ -628,9 +707,7 @@ dvd_ctrl_input(dvd_player_t *dp, int wait)
     dvdnav_top_pg_search(dp->dp_dvdnav);
     break;
   }
-  
-  return 0;
-  
+  return 1;
 }
 
 #if 0

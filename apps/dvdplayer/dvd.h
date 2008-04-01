@@ -28,6 +28,10 @@ typedef struct dvd_player {
   
   dvdnav_t    *dp_dvdnav;
 
+  media_pipe_t *dp_mp;
+
+  ic_t         dp_ic;
+
   pes_player_t dp_pp;
 
 
@@ -56,6 +60,8 @@ typedef struct dvd_player {
   glw_t *dp_widget_chapter;
   glw_t *dp_widget_title;
   glw_t *dp_widget_time;
+  glw_t *dp_status_overlay;
+  glw_t *dp_menu_playfield;
 
 } dvd_player_t;
 
