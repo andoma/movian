@@ -69,8 +69,8 @@ SRCS  += browser.c navigator.c browser_view.c browser_probe.c \
 
 # DVD application
 
-#VPATH += apps/dvdplayer
-#SRCS  += dvd.c 
+VPATH += apps/dvdplayer
+SRCS  += dvd.c 
 
 # Playlist application
 

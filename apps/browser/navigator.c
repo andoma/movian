@@ -42,6 +42,7 @@
 #include "navigator.h"
 #include "video/video_playback.h"
 #include "apps/playlist/playlist.h"
+#include "apps/dvdplayer/dvd.h"
 
 #define NAVIGATOR_FILESYSTEM 1
 
@@ -113,6 +114,10 @@ browser_enter(appi_t *ai, navigator_t *nav, browser_node_t *bn, int selected)
 
   case FILETYPE_IMAGE:
     browser_slideshow(bn, nav->nav_stack, &ai->ai_ic);
+    break;
+
+  case FILETYPE_ISO:
+    dvd_main(ai, bn->bn_url, 0, nav->nav_stack);
     break;
   }
 }

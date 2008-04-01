@@ -292,6 +292,10 @@ browser_view_set_filetype(glw_t *root, browser_node_t *bn)
 	model = "video";
 	break;
 
+      case FILETYPE_ISO:
+	model = "iso";
+	break;
+
       case FILETYPE_IMAGE:
 	snprintf(buf, sizeof(buf), "thumb://%s", bn->bn_url);
 
