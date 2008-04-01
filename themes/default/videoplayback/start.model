@@ -22,6 +22,22 @@ y-container {
  y-container {
   weight 2.0
   focus-alpha
+  focus-cursor
+  text {
+   caption Subtitles
+   align center
+  }
+ 
+  hlist {
+   id subtitle_tracks
+  }
+ }
+
+ space 1.0
+
+ y-container {
+  weight 2.0
+  focus-alpha
   text {
    caption Start from
    align center
