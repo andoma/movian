@@ -25,36 +25,41 @@
 #include "showtime.h"
 #include "media.h"
 #include "subtitles.h"
+#include "fileaccess/fileaccess.h"
 
 /*
  *
  */
 subtitle_format_t
-subtitle_probe_file(const char *filename)
+subtitle_probe_file(const char *url)
 {
   char buf[50];
   subtitle_format_t t = SUBTITLE_FORMAT_UNKNOWN;
-  int fd, flen = strlen(filename);
+  int r;
+  fa_protocol_t *fap;
+  void *handle;
+  char *suffix = strrchr(url, '.');
 
-  fd = open(filename, O_RDONLY);
-  if(fd == -1)
+  if(suffix == NULL)
     return SUBTITLE_FORMAT_UNKNOWN;
 
-  if(read(fd, buf, sizeof(buf)) != sizeof(buf)) {
-    close(fd);
+  if((url = fa_resolve_proto(url, &fap)) == NULL)
     return SUBTITLE_FORMAT_UNKNOWN;
-  }
+  
+  if((handle = fap->fap_open(url)) == NULL)
+    return SUBTITLE_FORMAT_UNKNOWN;
+
+  r = fap->fap_read(handle, buf, sizeof(buf));
+  fap->fap_close(handle);
+  if(r != sizeof(buf))
+    return SUBTITLE_FORMAT_UNKNOWN;
 
   buf[sizeof(buf) - 1] = 0;
   
-  if(flen > 5 && !strcasecmp(filename + flen - 4, ".srt") &&
-     isdigit(buf[0]) && strstr(buf, "-->"))
+  if(!strcasecmp(suffix, ".srt") && isdigit(buf[0]) && strstr(buf, "-->"))
     t = SUBTITLE_FORMAT_SRT;
-  else if(flen > 5 && !strcasecmp(filename + flen - 4, ".sub") &&
-	  !strncmp(buf, "{1}{1}", 6))
+  else if(!strcasecmp(suffix, ".sub") &&!strncmp(buf, "{1}{1}", 6))
     t = SUBTITLE_FORMAT_SUB;
-
-  close(fd);
   return t;
 }
 
