@@ -2,7 +2,7 @@
 
 # core
 
-SRCS = 	main.c app.c input.c media.c mpeg_support.c play_video.c \
+SRCS = 	main.c app.c input.c media.c mpeg_support.c \
 	coms.c settings.c subtitles.c
 
 # file access subsys
@@ -10,6 +10,11 @@ SRCS = 	main.c app.c input.c media.c mpeg_support.c play_video.c \
 VPATH += fileaccess
 SRCS  += fileaccess.c fa_probe.c fa_tags.c fa_imageloader.c
 SRCS  += fa_fs.c
+
+# video playback subsys
+
+VPATH += video
+SRCS  += play_video.c
 
 # audio subsys
 

@@ -40,7 +40,7 @@
 #include "browser.h"
 #include "browser_view.h"
 #include "navigator.h"
-#include "play_video.h"
+#include "video/play_video.h"
 #include "apps/playlist/playlist.h"
 
 #define NAVIGATOR_FILESYSTEM 1
