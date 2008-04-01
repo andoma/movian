@@ -11,6 +11,13 @@ VPATH += fileaccess
 SRCS  += fileaccess.c fa_probe.c fa_tags.c fa_imageloader.c
 SRCS  += fa_fs.c
 
+# Display
+
+VPATH += display
+
+VPATH += display
+SRCS  += gl_common.c sysglue_$(GL_GLUE).c
+
 # video playback subsys
 
 VPATH += video
@@ -33,13 +40,6 @@ SRCS  += alsa_audio.c
 VPATH += layout
 SRCS  += layout.c layout_forms.c layout_world.c layout_switcher.c \
 	 layout_support.c layout_overlay.c
-
-# OpenGL support
-
-VPATH += gl
-
-VPATH += gl/sysglue
-SRCS  += gl_common.c sysglue_$(GL_GLUE).c
 
 # Human Interface Devices
 
