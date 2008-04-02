@@ -26,7 +26,6 @@
 #include "showtime.h"
 #include "audio_mixer.h"
 #include "audio_compressor.h"
-#include "menu.h"
 #include "layout/layout.h"
 
 audio_fifo_t mixer_output_fifo;

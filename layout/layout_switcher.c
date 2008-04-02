@@ -25,7 +25,6 @@
 #include "showtime.h"
 #include "app.h"
 #include "layout.h"
-#include "menu.h"
 
 static glw_t *layout_switcher;
 static glw_t *layout_switcher_list;

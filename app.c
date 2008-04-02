@@ -24,7 +24,6 @@
 #include "showtime.h"
 #include "app.h"
 #include "layout/layout.h"
-#include "menu.h"
 #include "apps/launcher/launcher.h"
 #include "apps/playlist/playlist.h"
 

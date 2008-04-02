@@ -25,7 +25,6 @@
 
 #include "showtime.h"
 #include "audio_compressor.h"
-#include "menu.h"
 #include "layout/layout.h"
 
 struct compressor_data post_mixer_compressor;

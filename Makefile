@@ -43,7 +43,7 @@ SRCS  += layout.c layout_forms.c layout_world.c layout_switcher.c \
 # Human Interface Devices
 
 VPATH += hid
-SRCS  += hid.c lircd.c imonpad.c lcdd.c input.c 
+SRCS  += hid.c lircd.c imonpad.c lcdd.c input.c keymapper.c
 
 # Launcher application
 

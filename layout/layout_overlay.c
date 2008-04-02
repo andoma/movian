@@ -25,7 +25,6 @@
 #include "showtime.h"
 #include "app.h"
 #include "layout.h"
-#include "menu.h"
 
 glw_t *overlay_container;
 

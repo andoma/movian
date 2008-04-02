@@ -35,7 +35,6 @@
 #include "showtime.h"
 #include "input.h"
 #include "layout/layout.h"
-#include "menu.h"
 #include "video_playback.h"
 #include "video_decoder.h"
 #include "video_menu.h"
