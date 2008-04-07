@@ -321,8 +321,12 @@ layout_child_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 
   switch(signal) {
   case GLW_SIGNAL_LAYOUT:
-    if(w == w->glw_parent->glw_selected)
+    if(w == w->glw_parent->glw_selected) {
+      ai->ai_active = 1;
       fullscreen = ai->ai_req_fullscreen;
+    } else {
+      ai->ai_active = 0;
+    }
     break;
 
   case GLW_SIGNAL_INPUT_EVENT:
@@ -375,7 +379,7 @@ layout_world_appi_show(appi_t *ai)
 			   "behind the user */
 
   glw_set(w,
-	  GLW_ATTRIB_SIGNAL_HANDLER, layout_child_callback, ai, 400,
+	  GLW_ATTRIB_SIGNAL_HANDLER, layout_child_callback, ai, 1,
 	  GLW_ATTRIB_PARENT_HEAD, layout_world,
 	  NULL);
 }

@@ -46,6 +46,8 @@ typedef struct app {
 typedef struct appi {
   glw_t *ai_widget;
 
+  int ai_active;
+
   app_t *ai_app;
 
   glw_focus_stack_t ai_gfs;
