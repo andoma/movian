@@ -646,7 +646,7 @@ dvd_ctrl_input(dvd_player_t *dp, int wait)
     mp_playpause(mp, key);
     return 1;
 
-
+#if 0
   case INPUT_KEY_DVD_AUDIO_MENU:
     mp_playpause(mp, MP_PLAY);
     dvdnav_menu_call(dp->dp_dvdnav, DVD_MENU_Audio);
@@ -657,6 +657,7 @@ dvd_ctrl_input(dvd_player_t *dp, int wait)
     dp->dp_spu_track = DP_SPU_FOLLOW_VM;
     dvdnav_menu_call(dp->dp_dvdnav, DVD_MENU_Subpicture);
     return 1;
+#endif
   }
 
   if(!dp->dp_inmenu) {
@@ -699,10 +700,12 @@ dvd_ctrl_input(dvd_player_t *dp, int wait)
     dvd_flush(dp);
     dvdnav_prev_pg_search(dp->dp_dvdnav);
     break;
+#if 0
   case INPUT_KEY_DVDUP:
     dvd_flush(dp);
     dvdnav_go_up(dp->dp_dvdnav);
     break;
+#endif
   case INPUT_KEY_RESTART_TRACK:
     dvd_flush(dp);
     dvdnav_top_pg_search(dp->dp_dvdnav);

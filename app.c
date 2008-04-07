@@ -25,6 +25,7 @@
 #include "app.h"
 #include "layout/layout.h"
 #include "apps/launcher/launcher.h"
+#include "apps/settings/settings.h"
 #include "apps/playlist/playlist.h"
 
 static pthread_mutex_t app_index_mutex; 
@@ -80,7 +81,8 @@ appi_create(const char *name)
 
   input_init(&ai->ai_ic);
   mp_init(&ai->ai_mp, name, ai);
-  
+  ai->ai_name = name;
+
   glw_focus_stack_init(&ai->ai_gfs);
   return ai;
 }
@@ -237,6 +239,7 @@ void
 apps_load(void)
 {
   launcher_init();
+  settings_init();
 
   playlist_init();
 

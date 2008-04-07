@@ -29,6 +29,7 @@
 
 #include "showtime.h"
 #include "hid/input.h"
+#include "hid/keymapper.h"
 #include "layout/layout.h"
 #include "display.h"
 
@@ -198,59 +199,53 @@ static void
 gl_keypress(XEvent *event)
 {
   XComposeStatus composestatus;
-  char str[16];
+  char str[16], c;
   KeySym keysym;
   int len;
-  input_key_t ikey;
+  inputevent_t ie;
 
   len = XLookupString(&event->xkey, str, sizeof(str), &keysym, &composestatus);
-  ikey = 0;
 
-  if(len > 0) {
-    ikey  = str[0];
 
-    switch(ikey) {
-    case 8:     input_key_down(INPUT_KEY_BACK);       break;
-    case 9:     input_key_down(INPUT_KEY_TASK_DOSWITCH); break;
-    case 13:    input_key_down(INPUT_KEY_ENTER);      break;
-    case 27:    input_key_down(INPUT_KEY_CLOSE);      break;
-    case ' ':   input_key_down(INPUT_KEY_SELECT);     break;
-    case '+':   input_key_down(INPUT_KEY_INCR);       break;
-    case '-':   input_key_down(INPUT_KEY_DECR);       break;
+  if(len == 1) {
+    c = str[0];
+    switch(c) {
+      /* Static key mappings, these cannot be changed */
+    case 8:          input_key_down(INPUT_KEY_BACK);          return;
+    case 9:          input_key_down(INPUT_KEY_TASK_DOSWITCH); return;
+    case 13:         input_key_down(INPUT_KEY_ENTER);         return;
+    case 27:         input_key_down(INPUT_KEY_CLOSE);         return;
+      /* Always send 1 char ASCII */
     default:
+      input_key_down(c);
       break;
     }
-
-  } else {
+  } else if((event->xkey.state & 0xf) == 0) {
     switch(keysym) {
-    case XK_Left:      ikey = INPUT_KEY_LEFT;             break;
-    case XK_Right:     ikey = INPUT_KEY_RIGHT;            break;
-    case XK_Up:        ikey = INPUT_KEY_UP;               break;
-    case XK_Down:      ikey = INPUT_KEY_DOWN;             break;
-    case XK_Page_Up:   ikey = INPUT_KEY_PREV;             break;
-    case XK_Page_Down: ikey = INPUT_KEY_NEXT;             break;
-    case XK_End:       ikey = INPUT_KEY_STOP;             break;
-    case XK_F1:        ikey = INPUT_KEY_MENU;             break;
-    case XK_F2:        ikey = INPUT_KEY_PLAYPAUSE;        break;
-
-    case XK_F9:        ikey = INPUT_KEY_SWITCH_VIEW;      break;
-    case XK_F10:       ikey = INPUT_KEY_POWER;            break;
-    case XK_F11:       ikey = INPUT_KEY_SEEK_BACKWARD;    break;
-    case XK_F12:       ikey = INPUT_KEY_SEEK_FORWARD;     break;
-      
-    case 0:
-      switch(event->xkey.keycode) {
-      case 176:     ikey = INPUT_KEY_VOLUME_UP;     break;
-      case 174:     ikey = INPUT_KEY_VOLUME_DOWN;   break;
-      case 160:     ikey = INPUT_KEY_VOLUME_MUTE;   break;
-      default:
-	break;
-      }
+    case XK_Left:    input_key_down(INPUT_KEY_LEFT);          return;
+    case XK_Right:   input_key_down(INPUT_KEY_RIGHT);         return;
+    case XK_Up:      input_key_down(INPUT_KEY_UP);            return;
+    case XK_Down:    input_key_down(INPUT_KEY_DOWN);          return;
     }
   }
-  
-  if(ikey)
-    input_key_down(ikey);
+  ie.type = INPUT_KEYDESC;
+
+  /* Construct a string representing the key */
+  if(keysym != NoSymbol) {
+    snprintf(ie.u.keydesc, sizeof(ie.u.keydesc),
+	     "x11 %s%s%s- %s",
+	     event->xkey.state & ShiftMask   ? "- Shift " : "",
+	     event->xkey.state & Mod1Mask    ? "- Alt "   : "",
+	     event->xkey.state & ControlMask ? "- Ctrl "  : "",
+	     XKeysymToString(keysym));
+  } else {
+    snprintf(ie.u.keydesc, sizeof(ie.u.keydesc),
+	     "x11 - raw - 0x%x", event->xkey.keycode);
+  }
+
+  /* Pass it to the mapper */
+
+  keymapper_resolve(&ie);
 }
 
 

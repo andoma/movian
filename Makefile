@@ -50,6 +50,11 @@ SRCS  += hid.c lircd.c imonpad.c lcdd.c input.c keymapper.c
 VPATH += apps/launcher
 SRCS  += launcher.c
 
+# Settings application
+
+VPATH += apps/settings
+SRCS  += settings.c
+
 # Clock application
 
 VPATH += apps/clock

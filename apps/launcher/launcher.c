@@ -34,7 +34,6 @@
 
 static appi_t *launcher_appi;
 static glw_t *launcher_list;
-static int launcher_input_event(inputevent_t *ie);
 
 void
 launcher_init(void)
@@ -61,30 +60,10 @@ launcher_init(void)
   }
 
   launcher_list = list;
-  inputhandler_register(199, launcher_input_event);
   glw_focus_set(&ai->ai_gfs, list);
 
   layout_world_appi_show(ai);
   layout_switcher_appi_add(ai, mini);
-}
-
-
-/**
- * Toggle display of application launcher when we see INPUT_KEY_APP_LAUNCHER
- */
-static int
-launcher_input_event(inputevent_t *ie)
-{
-  appi_t *ai = launcher_appi;
-
-  if(ie->type != INPUT_KEY)
-    return 0;
-
-  if(!appi_focused(ai) && ie->u.key == INPUT_KEY_APP_LAUNCHER) {
-    layout_world_appi_show(launcher_appi);
-    return 1;
-  }
-  return 0;
 }
 
 /**
