@@ -58,7 +58,7 @@ static struct strtab keycodenames[] = {
   { "VolumeUp",              INPUT_KEY_VOLUME_UP },
   { "VolumeDown",            INPUT_KEY_VOLUME_DOWN },
   { "VolumeMute",            INPUT_KEY_VOLUME_MUTE },
-  { "SettingsMenu",          INPUT_KEY_MENU },
+  { "Menu",                  INPUT_KEY_MENU },
   { "Back",                  INPUT_KEY_BACK },
   { "Enter",                 INPUT_KEY_ENTER },
   { "Select",                INPUT_KEY_SELECT },
