@@ -29,24 +29,20 @@
 #include "input.h"
 #include "coms.h"
 #include "showtime.h"
+#include "hid/keymapper.h"
 
 
 static const struct {
   const char *name;
   input_key_t key;
 } lircmap[] = {
-  { "Vol+", INPUT_KEY_VOLUME_UP },
-  { "Vol-", INPUT_KEY_VOLUME_DOWN },
-  { "Mute", INPUT_KEY_VOLUME_MUTE },
-  { "Eject", INPUT_KEY_EJECT },
-  { "Backspace", INPUT_KEY_BACK },
-  { "Enter", INPUT_KEY_ENTER },
-  //  { "Ch+", INPUT_KEY_CHANNEL_PLUS },
-  //  { "Ch-", INPUT_KEY_CHANNEL_MINUS },
-  { "Play", INPUT_KEY_PLAY },
-  { "Pause", INPUT_KEY_PAUSE },
-  { "Stop", INPUT_KEY_STOP },
-  { "Power", INPUT_KEY_POWER },
+  { "Up",           INPUT_KEY_UP    },
+  { "Down",         INPUT_KEY_DOWN  },
+  { "Left",         INPUT_KEY_LEFT  },
+  { "Right",        INPUT_KEY_RIGHT },
+  { "Enter",        INPUT_KEY_ENTER },
+  { "Back",         INPUT_KEY_BACK  },
+  { "Backspace",    INPUT_KEY_BACK  },
 };
 
 static void *
@@ -58,9 +54,10 @@ lirc_thread(void *aux)
   uint32_t repeat;
   char keyname[100];
   int i;
+  inputevent_t ie;
 
   while(1) {
-    fp = open_fd_tcp("127.0.0.1", 8765, NULL, NULL);
+    fp = fopen("/dev/lircd", "r+");
     if(fp == NULL) {
       sleep(1);
       continue;
@@ -68,11 +65,25 @@ lirc_thread(void *aux)
 
     while(fgets(buf, sizeof(buf), fp) != NULL) {
       sscanf(buf, "%"PRIx64" %d %s", &ircode, &repeat, keyname);
-      
+
+
+      if(keyname[0] && keyname[1] == 0) {
+	input_key_down(keyname[0]); /* ASCII input */
+	continue;
+      }
+
       for(i = 0; i < sizeof(lircmap) / sizeof(lircmap[0]); i++) {
 	if(!strcasecmp(keyname, lircmap[i].name)) {
 	  input_key_down(lircmap[i].key);
 	}
+      }
+
+      if(i == sizeof(lircmap) / sizeof(lircmap[0])) {
+	/* No hit, build a keydesc */
+	ie.type = INPUT_KEYDESC;
+	snprintf(ie.u.keydesc, sizeof(ie.u.keydesc),
+		 "lirc - %s", keyname);
+	keymapper_resolve(&ie);
       }
     }
     fclose(fp);

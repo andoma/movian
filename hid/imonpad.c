@@ -30,46 +30,70 @@
 #include "imonpad.h"
 #include "input.h"
 #include "showtime.h"
+#include "hid/keymapper.h"
 
 /*
  * iMON PAD native decoder
  */
 
 static const struct {
+  const char *name;
   uint32_t code;
   input_key_t key;
 } imonpadmap[] = {
-  { 0x288195b7, INPUT_KEY_QUIT },
-  { 0x28A395B7, INPUT_KEY_VOLUME_UP },
-  { 0x28A595B7, INPUT_KEY_VOLUME_DOWN },
-  { 0x2B9595B7, INPUT_KEY_VOLUME_MUTE },
-  { 0x299395B7, INPUT_KEY_EJECT },
-  { 0x28A115B7, INPUT_KEY_BACK },
-  { 0x28A195B7, INPUT_KEY_ENTER },
-  //  { 0x289395B7, INPUT_KEY_CHANNEL_PLUS },
-  //  { 0x288795B7, INPUT_KEY_CHANNEL_MINUS },
-  { 0x2A8115B7, INPUT_KEY_PLAY },
-  { 0x2A9115B7, INPUT_KEY_PAUSE },
-  { 0x2B9715B7, INPUT_KEY_STOP },
-  { 0x289155B7, INPUT_KEY_POWER },
-  //  { 0x2b8515b7, INPUT_KEY_GOTO_MOVIES },
-  //  { 0x299195b7, INPUT_KEY_GOTO_MUSIC },
-  //  { 0x2ba115b7, INPUT_KEY_GOTO_PHOTO },
-  //  { 0x28a515b7, INPUT_KEY_GOTO_TV },
-  //  { 0x29a395b7, INPUT_KEY_GOTO_DVD },
-  { 0x2b8195b7, INPUT_KEY_MENU },
-  //  { 0x28b755b7, INPUT_KEY_META_INFO },
-  { 0x2b8115b7, INPUT_KEY_SEEK_FORWARD },
-  { 0x2a8195b7, INPUT_KEY_SEEK_BACKWARD },
-  { 0x2a8195b7, INPUT_KEY_SEEK_BACKWARD },
-  //  { 0x2aa395b7, INPUT_KEY_WIDEZOOM },
-  //  { 0x29b715b7, INPUT_KEY_APP_LAUNCHER },
-  { 0x2a9395b7, INPUT_KEY_TASK_DOSWITCH },
-  { 0x2bb715b7, INPUT_KEY_CLOSE },
-  //  { 0x2ab195b7, INPUT_KEY_SINGLE_SHOW },
-  { 0x298195b7, INPUT_KEY_NEXT },
-  { 0x2b9115b7, INPUT_KEY_PREV },
-  { 0x2a9315b7, INPUT_KEY_SELECT },
+  {"AppExit",            0x288195B7, 0 },
+  {"Record",             0x298115B7, 0 },
+  {"Play",               0x2A8115B7, 0 }, 
+  {"SlowMotion",         0x29B195B7, 0 },
+  {"Rewind",             0x2A8195B7, 0 },
+  {"Pause",              0x2A9115B7, 0 },
+  {"FastForward",        0x2B8115B7, 0 },
+  {"PrevChapter",        0x2B9115B7, 0 },
+  {"Stop",               0x2B9715B7, 0 },
+  {"NextChapter",        0x298195B7, 0 },
+  {"Esc",                0x2BB715B7, 0 },
+  {"Eject",              0x299395B7, 0 },
+  {"AppLauncher",        0x29B715B7, 0 },
+  {"MultiMon",           0x2AB195B7, 0 },
+  {"TaskSwitcher",       0x2A9395B7, INPUT_KEY_TASK_DOSWITCH },
+  {"Mute",               0x2B9595B7, 0 },
+  {"Vol+",               0x28A395B7, 0 },
+  {"Vol-",               0x28A595B7, 0 },
+  {"Ch+",                0x289395B7, 0 },
+  {"Ch-",                0x288795B7, 0 },
+  {"Timer",              0x2B8395B7, 0 },
+  {"1",                  0x28B595B7, 0 },
+  {"2",                  0x2BB195B7, 0 },
+  {"3",                  0x28B195B7, 0 },
+  {"4",                  0x2A8595B7, 0 },
+  {"5",                  0x299595B7, 0 },
+  {"6",                  0x2AA595B7, 0 },
+  {"7",                  0x2B9395B7, 0 },
+  {"8",                  0x2A8515B7, 0 },
+  {"9",                  0x2AA115B7, 0 },
+  {"0",                  0x2BA595B7, 0 },
+  {"ShiftTab",           0x28B515B7, 0 },
+  {"Tab",                0x29A115B7, 0 },
+  {"MyMovie",            0x2B8515B7, 0 },
+  {"MyMusic",            0x299195B7, 0 },
+  {"MyPhoto",            0x2BA115B7, 0 },
+  {"MyTV",               0x28A515B7, 0 },
+  {"Bookmark",           0x288515B7, 0 },
+  {"Thumbnail",          0x2AB715B7, 0 },
+  {"AspectRatio",        0x29A595B7, 0 },
+  {"FullScreen",         0x2AA395B7, 0 },
+  {"MyDVD",              0x29A295B7, 0 },
+  {"Menu",               0x2BA385B7, 0 },
+  {"Caption",            0x298595B7, 0 },
+  {"Language",           0x2B8595B7, 0 },
+  {"MouseKeyboard",      0x299115B7, 0 },
+  {"SelectSpace",        0x2A9315B7, 0 },
+  {"MouseMenu",          0x28B715B7, 0 },
+  {"MouseRightClick",    0x688481B7, 0 },
+  {"Enter",              0x28A195B7, INPUT_KEY_ENTER },
+  {"MouseLeftClick",     0x688301B7, 0 },
+  {"WindowsKey",         0x2B8195B7, 0 },
+  {"Backspace",          0x28A115B7, INPUT_KEY_BACK },
 };
 
 static int repeat_rate;
@@ -234,7 +258,16 @@ imonpad_thread(void *aux)
 
     for(i = 0; i < sizeof(imonpadmap) / sizeof(imonpadmap[0]); i++) {
       if(v == imonpadmap[i].code) {
-	input_key_down(imonpadmap[i].key);
+
+	if(imonpadmap[i].key)
+	  input_key_down(imonpadmap[i].key);
+	else {
+	  ie.type = INPUT_KEYDESC;
+	  snprintf(ie.u.keydesc, sizeof(ie.u.keydesc),
+		   "imonpad - %s", imonpadmap[i].name);
+	  keymapper_resolve(&ie);
+	}
+	break;
       }
     }
   }
