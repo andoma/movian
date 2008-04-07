@@ -1,0 +1,69 @@
+#HTSSIMPLEMODEL
+
+y-container {
+ space 4.0
+
+ x-container {
+  focus-alpha
+  text {
+   weight 0.5
+   caption Playlist title:
+   align right
+  }
+
+  text {
+   focus-cursor
+   id playlist_title
+   align left
+  }
+ }
+
+ space 1.0
+
+ x-container {
+  weight 2.0
+  space 1.0
+
+  bitmap {
+   id ok
+   focus-cursor
+   focus-alpha
+   filename icon://plate_compact.png
+   texture-borders 0.5 0.5 0.5 0.5
+   vertex-borders  0.1 0.1 0.1 0.1
+   y-container {
+    bitmap { 
+     filename icon://ok.png
+     keep-aspect
+    }
+    text {
+     caption Ok
+     align center
+    }
+   }
+  }
+
+  space 1.0
+
+  bitmap {
+   id cancel
+   focus-cursor
+   focus-alpha
+   filename icon://plate_compact.png
+   texture-borders 0.5 0.5 0.5 0.5
+   vertex-borders  0.1 0.1 0.1 0.1
+   y-container {
+    bitmap { 
+     filename icon://error.png
+     keep-aspect
+    }
+    text {
+     caption Cancel
+     align center
+    }
+   }
+  }
+  space 1.0
+ }
+ space 4.0
+}

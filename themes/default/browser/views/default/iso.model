@@ -1,0 +1,6 @@
+#HTSSIMPLEMODEL
+
+bitmap {
+ filename icon://cd_small.png
+ keep-aspect
+}
