@@ -40,6 +40,7 @@ typedef struct layout_form_entry {
 #define LFE_TYPE_CHILD_MONITOR 5
 #define LFE_TYPE_LIST_OPTION   6
 #define LFE_TYPE_INTEGER       7
+#define LFE_TYPE_KEYDESC       8
 
   int lfe_value;
 
@@ -155,6 +156,20 @@ int layout_form_initialize(struct layout_form_entry_list *lfelist,
   TAILQ_INSERT_TAIL(listp, lfe, lfe_link);				\
   lfe->lfe_id = id;							\
 } while(0)
+
+/**
+ * Modifies a string storage with a keydesc string
+ */
+#define LFE_ADD_KEYDESC(listp, id, str, bufsize) do {		        \
+  layout_form_entry_t *lfe = alloca(sizeof(layout_form_entry_t));	\
+  memset(lfe, 0, sizeof(layout_form_entry_t));				\
+  lfe->lfe_type = LFE_TYPE_KEYDESC;                                     \
+  lfe->lfe_buf = str;							\
+  lfe->lfe_buf_size = bufsize;						\
+  TAILQ_INSERT_TAIL(listp, lfe, lfe_link);				\
+  lfe->lfe_id = id;							\
+} while(0)
+
 
 #define LFE_ADD(listp, id) do {						\
   layout_form_entry_t *lfe = alloca(sizeof(layout_form_entry_t));	\

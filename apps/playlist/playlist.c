@@ -766,6 +766,9 @@ playlist_thread(void *aux)
   /**
    *
    */
+
+  app_load_generic_config(ai, "playlist");
+
   playlist_scan();
 
   layout_switcher_appi_add(ai, mini);
@@ -790,6 +793,11 @@ playlist_thread(void *aux)
     case INPUT_KEY:
       switch(ie.u.key) {
       default:
+	break;
+
+      case INPUT_KEY_MENU:
+	app_settings(ai, ai->ai_widget, "Playlist", "playlist/switcher-icon");
+	app_save_generic_config(ai, "playlist");
 	break;
 
       case INPUT_KEY_SEEK_FAST_BACKWARD:

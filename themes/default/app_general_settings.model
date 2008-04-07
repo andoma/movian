@@ -1,0 +1,59 @@
+#HTSSIMPLEMODEL
+
+y-container {
+ space 0.1
+ text {
+  weight 0.5
+  id settings_title
+  align center
+ }
+
+ xfader {
+  weight 1.5
+  id settings_model
+ }
+
+ space 0.5
+
+ x-container {
+  focus-alpha
+  text {
+   weight 0.5
+   caption Speedbutton:
+   align right
+  }
+
+  text {
+   focus-cursor
+   id speedbutton
+   align left
+  }
+ }
+
+ space 3
+
+ x-container {
+  weight 2.0
+  space 1.0
+
+  bitmap {
+   id ok
+   focus-cursor
+   focus-alpha
+   filename icon://plate_compact.png
+   texture-borders 0.5 0.5 0.5 0.5
+   vertex-borders  0.1 0.1 0.1 0.1
+   y-container {
+    bitmap { 
+     filename icon://ok.png
+     keep-aspect
+    }
+    text {
+     caption Ok
+     align center
+    }
+   }
+  }
+  space 1.0
+ }
+}

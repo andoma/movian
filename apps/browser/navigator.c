@@ -290,6 +290,11 @@ nav_main(navigator_t *nav, appi_t *ai, int navtype, navconfig_t *cfg)
       default:
 	break;
 
+      case INPUT_KEY_MENU:
+	app_settings(ai, nav->nav_stack, cfg->nc_title, cfg->nc_icon);
+	nav_store_instance(ai, cfg, navtype);
+	break;
+
       case INPUT_KEY_SWITCH_VIEW:
 	bn = browser_view_get_current_node(nav->nav_stack);
 	if(bn == NULL)
@@ -457,6 +462,8 @@ nav_setup(navigator_t *nav, appi_t *ai)
   LFE_ADD_STR(&lfelist, "fs_title", fs.nc_title, sizeof(fs.nc_title), 0);
   LFE_ADD_LIST(&lfelist, "fs_icon_list", fs.nc_icon, sizeof(fs.nc_icon));
   LFE_ADD_STR(&lfelist, "fs_path", fs.nc_rootpath, sizeof(fs.nc_rootpath), 0);
+  LFE_ADD_KEYDESC(&lfelist, "fs_speedbutton", 
+	      ai->ai_speedbutton, sizeof(ai->ai_speedbutton));
   LFE_ADD_BTN(&lfelist, "fs_ok", NAVIGATOR_FILESYSTEM);
 
 

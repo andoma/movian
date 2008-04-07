@@ -24,14 +24,46 @@
 #include "showtime.h"
 #include "app.h"
 #include "layout/layout.h"
+#include "layout/layout_forms.h"
+#include "layout/layout_support.h"
 #include "apps/launcher/launcher.h"
 #include "apps/settings/settings.h"
 #include "apps/playlist/playlist.h"
 
-static pthread_mutex_t app_index_mutex; 
+static pthread_mutex_t appi_list_mutex;
+
+static pthread_mutex_t app_index_mutex;
 static int app_index = 0;
 
-LIST_HEAD(, app) apps;
+LIST_HEAD(, app)  apps;
+LIST_HEAD(, appi) appis;
+
+/**
+ *
+ */
+static int
+appi_speedbutton_switcher(inputevent_t *ie)
+{
+  appi_t *ai;
+  int r = 0;
+
+  if(ie->type != INPUT_KEYDESC)
+    return 0;
+
+  pthread_mutex_lock(&appi_list_mutex);
+
+  LIST_FOREACH(ai, &appis, ai_link) {
+    if(!strcmp(ie->u.keydesc, ai->ai_speedbutton)) {
+      layout_world_appi_show(ai);
+      r = 1;
+      break;
+    }
+  }
+  pthread_mutex_unlock(&appi_list_mutex);
+  return r;
+}
+
+
 
 /**
  *
@@ -48,6 +80,18 @@ app_find_by_name(const char *appname)
 }
 
 
+/**
+ *
+ */
+static void
+appi_map_generic_config(appi_t *ai, struct config_head *settings)
+{
+  const char *v;
+
+  if((v = config_get_str_sub(settings, "speedbutton", NULL)) != NULL)
+    snprintf(ai->ai_speedbutton, sizeof(ai->ai_speedbutton), "%s", v);
+}
+
 
 /**
  * Spawn a new application instance
@@ -55,7 +99,12 @@ app_find_by_name(const char *appname)
 void
 app_spawn(app_t *a, struct config_head *settings, int index)
 {
+
   appi_t *ai = calloc(1, sizeof(appi_t));
+
+  pthread_mutex_lock(&appi_list_mutex);
+  LIST_INSERT_HEAD(&appis, ai, ai_link);
+  pthread_mutex_unlock(&appi_list_mutex);
 
   ai->ai_app = a;
   ai->ai_instance_index = index;
@@ -66,6 +115,9 @@ app_spawn(app_t *a, struct config_head *settings, int index)
   glw_focus_stack_init(&ai->ai_gfs);
   
   ai->ai_settings = settings;
+
+  if(settings != NULL)
+    appi_map_generic_config(ai, settings);
 
   a->app_spawn(ai);
 }
@@ -78,6 +130,10 @@ appi_t *
 appi_create(const char *name)
 {
   appi_t *ai = calloc(1, sizeof(appi_t));
+
+  pthread_mutex_lock(&appi_list_mutex);
+  LIST_INSERT_HEAD(&appis, ai, ai_link);
+  pthread_mutex_unlock(&appi_list_mutex);
 
   input_init(&ai->ai_ic);
   mp_init(&ai->ai_mp, name, ai);
@@ -153,6 +209,8 @@ appi_setings_create(appi_t *ai)
 
     fprintf(fp, "application = %s\n", ai->ai_app->app_name);
     fprintf(fp, "instanceid = %d\n", ai->ai_instance_index);
+    if(ai->ai_speedbutton[0])
+      fprintf(fp, "speedbutton = %s\n", ai->ai_speedbutton);
     return fp;
 
   }
@@ -247,4 +305,89 @@ apps_load(void)
   LOADAPP(navigator);
 
   autolaunch_applications();
+
+  inputhandler_register(800, appi_speedbutton_switcher);
 }
+
+
+
+/**
+ * General settings for applications which do not provide one of
+ * their own
+ */
+void
+app_settings(appi_t *ai, glw_t *parent, 
+	     const char *name, const char *miniature)
+{
+  struct layout_form_entry_list lfelist;
+  glw_t *m;
+  inputevent_t ie;
+  char buf[200];
+
+  snprintf(buf, sizeof(buf), "Settings for %s", name);
+
+  TAILQ_INIT(&lfelist);
+
+  m = glw_create(GLW_MODEL,
+		 GLW_ATTRIB_PARENT, parent,
+		 GLW_ATTRIB_FILENAME, "app_general_settings",
+		 NULL);
+
+  if(name)
+    layout_update_str(m, "settings_title", buf);
+
+  if(miniature)
+    layout_update_model(m, "settings_model", miniature);
+
+
+  LFE_ADD_KEYDESC(&lfelist, "speedbutton", ai->ai_speedbutton, 
+		  sizeof(ai->ai_speedbutton));
+  LFE_ADD_BTN(&lfelist, "ok", 0);
+  
+  layout_form_query(&lfelist, m, &ai->ai_gfs, &ie);
+  glw_detach(m);
+}
+
+/**
+ *
+ */
+void
+app_load_generic_config(appi_t *ai, const char *name)
+{
+  char buf[256];
+  struct config_head cl;
+
+  if(settingsdir == NULL)
+    return;
+
+  snprintf(buf, sizeof(buf), "%s/%s", settingsdir, name);
+ 
+  TAILQ_INIT(&cl);
+  if(config_read_file0(buf, &cl) == -1)
+    return;
+  appi_map_generic_config(ai, &cl);
+  config_free0(&cl);
+}
+
+/**
+ *
+ */
+void
+app_save_generic_config(appi_t *ai, const char *name)
+{
+  char buf[256];
+  FILE *fp;
+
+  if(settingsdir == NULL)
+    return;
+
+  snprintf(buf, sizeof(buf), "%s/%s", settingsdir, name);
+
+  if((fp = fopen(buf, "w+")) == NULL)
+    return;
+
+  if(ai->ai_speedbutton[0])
+    fprintf(fp, "speedbutton = %s\n", ai->ai_speedbutton);
+  fclose(fp);
+}
+

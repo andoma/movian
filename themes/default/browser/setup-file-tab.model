@@ -24,6 +24,38 @@ y-container {
   }
  }
 
+
+ x-container {
+  focus-alpha
+  text {
+   weight 0.5
+   caption Path:
+   align right
+  }
+
+  text {
+   focus-cursor
+   id fs_path
+   align left
+  }
+ }
+
+ x-container {
+  focus-alpha
+  text {
+   weight 0.5
+   caption Speedbutton:
+   align right
+  }
+
+  text {
+   focus-cursor
+   id fs_speedbutton
+   align left
+  }
+ }
+
+
  x-container {
   weight 2.0
   focus-alpha
@@ -43,22 +75,7 @@ y-container {
   }
  }
 
- x-container {
-  focus-alpha
-  text {
-   weight 0.5
-   caption Path:
-   align right
-  }
-
-  text {
-   focus-cursor
-   id fs_path
-   align left
-  }
- }
-
- space 2.5
+ space 1.5
 
  x-container {
   weight 2.0

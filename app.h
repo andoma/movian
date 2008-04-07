@@ -46,6 +46,8 @@ typedef struct app {
 typedef struct appi {
   glw_t *ai_widget;
 
+  LIST_ENTRY(appi) ai_link;
+
   int ai_active;
 
   app_t *ai_app;
@@ -66,6 +68,8 @@ typedef struct appi {
 
   const char *ai_name;
 
+  char ai_speedbutton[32];
+
 } appi_t;
 
 
@@ -80,5 +84,12 @@ void appi_destroy(appi_t *ai);
 FILE *appi_setings_create(appi_t *ai);
 
 appi_t *appi_create(const char *name);
+
+void app_settings(appi_t *ai, glw_t *parent, 
+		  const char *name, const char *miniature);
+
+void app_load_generic_config(appi_t *ai, const char *name);
+
+void app_save_generic_config(appi_t *ai, const char *name);
 
 #endif /* APP_H */

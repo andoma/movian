@@ -52,6 +52,9 @@ static int layout_form_entry_child_mon(glw_t *w, void *opaque,
 static int layout_form_list_option(glw_t *w, void *opaque,
 				   glw_signal_t signal, ...);
 
+static int layout_form_entry_keydesc(glw_t *w, void *opaque,
+				     glw_signal_t signal, ...);
+
 
 /**
  * Find a target we can move to
@@ -315,6 +318,13 @@ layout_form_initialize(struct layout_form_entry_list *lfelist, glw_t *m,
 	      NULL);
       break;
  
+    case LFE_TYPE_KEYDESC:
+      glw_set(w,
+	      GLW_ATTRIB_SIGNAL_HANDLER,  layout_form_entry_keydesc, lfe, 401,
+	      GLW_ATTRIB_CAPTION, (char *)lfe->lfe_buf,
+	      NULL);
+      break;
+
     default:
       glw_set(w,
 	      GLW_ATTRIB_SIGNAL_HANDLER,  layout_form_entry_free, lfe, 401,
@@ -708,6 +718,44 @@ layout_form_entry_list(glw_t *w, void *opaque, glw_signal_t signal, ...)
       snprintf(lfe->lfe_buf, lfe->lfe_buf_size, "%s", c->glw_id ?: "");
 
     return 1;
+  default:
+    break;
+  }
+
+  va_end(ap);
+
+  return 0;
+}
+
+
+/**
+ * Callback for controlling a keydesc form entry
+ */
+static int
+layout_form_entry_keydesc(glw_t *w, void *opaque, glw_signal_t signal, ...)
+{
+  layout_form_entry_t *lfe = opaque;
+  inputevent_t *ie;
+
+  va_list ap;
+  va_start(ap, signal);
+
+  switch(signal) {
+  case GLW_SIGNAL_DTOR:
+    free(lfe);
+    return 0;
+
+  case GLW_SIGNAL_INPUT_EVENT:
+    ie = va_arg(ap, void *);
+    if(ie->type != INPUT_KEYDESC)
+      return 0;
+
+    snprintf(lfe->lfe_buf, lfe->lfe_buf_size, "%s", ie->u.keydesc);
+    glw_set(w,
+	    GLW_ATTRIB_CAPTION, lfe->lfe_buf,
+	    NULL);
+    return 1;
+
   default:
     break;
   }
