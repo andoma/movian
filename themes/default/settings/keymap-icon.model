@@ -1,0 +1,16 @@
+#HTSSIMPLEMODEL
+
+y-container {
+ space 0.05
+
+ bitmap {
+  filename icon://keyboard.png
+  keep-aspect
+ }
+ text {
+  weight 0.25
+  caption Keyboard / Input
+  align center
+ }
+ space 0.05
+} 

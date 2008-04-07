@@ -1,0 +1,24 @@
+#HTSSIMPLEMODEL
+
+bitmap {
+ color 0.6 0.6 0.6
+ focus-alpha
+ border-scale-childs
+ filename icon://plate_compact.png
+ texture-borders 0.5 0.5 0.5 0.5
+ vertex-borders  0.1 0.1 0.1 0.1
+ 
+ y-container {
+  space 0.5
+  x-container {
+   text {
+    id mapping_name
+   }
+   text {
+    weight 3.0
+    id mapping_source
+   }
+  }
+ space 0.5
+ }
+}

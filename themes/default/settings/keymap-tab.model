@@ -1,0 +1,14 @@
+#HTSSIMPLEMODEL
+
+y-container {
+ text {
+  align center
+  caption Select target event in list and press a key to map it
+ }
+ list {
+  orientation vertical
+  weight 20
+  slices 10
+  id keymap_list
+ } 
+} 
