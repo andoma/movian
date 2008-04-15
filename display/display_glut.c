@@ -30,7 +30,7 @@
 #include "showtime.h"
 #include "hid/input.h"
 #include "layout/layout.h"
-#include "sysglue.h"
+#include "display.h"
 
 static void glut_render_scene(void);
 
@@ -71,14 +71,6 @@ glut_special_key(int key, int x, int y)
     input_key_down(INPUT_KEY_PLAYPAUSE);
     break;
 
-  case GLUT_KEY_F3:
-    input_key_down(INPUT_KEY_APP_LAUNCHER);
-    break;
-
-  case GLUT_KEY_F4:
-    input_key_down(INPUT_KEY_ROTATE);
-    break;
-
   case GLUT_KEY_F5:
     input_key_down(INPUT_KEY_VOLUME_DOWN);
     break;
@@ -89,14 +81,6 @@ glut_special_key(int key, int x, int y)
 
   case GLUT_KEY_F7:
     input_key_down(INPUT_KEY_VOLUME_MUTE);
-    break;
-
-  case GLUT_KEY_F8:
-    input_key_down(INPUT_KEY_META_INFO);
-    break;
-
-  case GLUT_KEY_F9:
-    input_key_down(INPUT_KEY_WIDEZOOM);
     break;
 
   case GLUT_KEY_F10:
@@ -117,7 +101,7 @@ glut_key(unsigned char key, int x, int y)
 {
   switch(key) {
   case 9:
-    input_key_down(INPUT_KEY_TASKSWITCH);
+    input_key_down(INPUT_KEY_TASK_DOSWITCH);
     break;
 
   case ' ':
@@ -129,12 +113,6 @@ glut_key(unsigned char key, int x, int y)
     break;
   case 27:
     input_key_down(INPUT_KEY_CLOSE);
-    break;
-  case '+':
-    input_key_down(INPUT_KEY_INCR);
-    break;
-  case '-':
-    input_key_down(INPUT_KEY_DECR);
     break;
   case 8:
     input_key_down(INPUT_KEY_BACK);
@@ -170,14 +148,14 @@ glut_mousefunc(int button, int state, int x, int y)
 
 static int lx, ly;
 
-void 
+static void 
 glut_mousemotion_passive(int x, int y)
 {
   lx = x;
   ly = y;
 }
 
-void 
+static void 
 glut_mousemotion(int x, int y)
 {
   int dx, dy;
@@ -200,7 +178,6 @@ void
 gl_sysglue_init(int argc, char **argv)
 {
   const char *fullscreen = config_get_str("fullscreen", NULL);
-  char *x;
 
   glutInit(&argc, argv);
 
@@ -209,19 +186,13 @@ gl_sysglue_init(int argc, char **argv)
   if(fullscreen == NULL) {
     glutInitWindowPosition(100,100);
     glutInitWindowSize(1280, 720);
-    showtime_fps = 60;
+//    showtime_fps = 60;
 
     glutCreateWindow("Showtime Mediacenter");
   } else {
 
     glutGameModeString(fullscreen);
 
-    x = strchr(fullscreen, '@');
-    if(x != NULL)
-      showtime_fps = atoi(x + 1);
-    else
-      showtime_fps = 60;
-      
     if (glutGameModeGet(GLUT_GAME_MODE_POSSIBLE)) {
       glutEnterGameMode();
     } else {
@@ -257,7 +228,7 @@ static void
 glut_render_scene(void)
 {
   if(frame_duration != 0)
-    layout_std_draw();
+    layout_draw(16./9.);
   glutSwapBuffers();
   gl_update_timings();
   glw_reaper();
