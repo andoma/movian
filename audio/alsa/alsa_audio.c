@@ -103,7 +103,8 @@ alsa_configure(int format)
 
   fprintf(stderr, "audio: using device \"%s\"\n", dev);
 
-  snd_pcm_hw_params_alloca(&hwp);
+  hwp = alloca(snd_pcm_hw_params_sizeof());
+  memset(hwp, 0, snd_pcm_hw_params_sizeof());
 
   snd_pcm_hw_params_any(h, hwp);
   snd_pcm_hw_params_set_access(h, hwp, SND_PCM_ACCESS_RW_INTERLEAVED);
@@ -203,7 +204,9 @@ alsa_configure(int format)
    * Software parameters
    */
 
-  snd_pcm_sw_params_alloca(&swp);
+  swp = alloca(snd_pcm_sw_params_sizeof());
+  memset(hwp, 0, snd_pcm_sw_params_sizeof());
+
   snd_pcm_sw_params_current(h, swp);
 
   
@@ -569,7 +572,9 @@ alsa_mixer_setup(void)
   }
 
 
-  snd_mixer_selem_id_alloca(&sid);
+  sid = alloca(snd_mixer_selem_id_sizeof());
+  memset(sid, 0, snd_mixer_selem_id_sizeof());
+
   snd_mixer_selem_id_set_name(sid,
 			      config_get_str("alsa-mixer-element", "Master"));
 
