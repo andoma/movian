@@ -67,4 +67,6 @@ void tv_channel_set_icon(tv_channel_t *ch, const char *icon);
 void tv_channel_set_current_event(tv_channel_t *ch, int index, 
 				  const char *title, time_t start, time_t stop);
 
+tv_channel_t *tv_channel_find_by_tag(tv_t *tv, uint32_t tag);
+
 #endif /* TV_H_ */

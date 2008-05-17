@@ -245,6 +245,25 @@ tv_channel_find(tv_t *tv, tv_ch_group_t *tcg, const char *name, int create)
 /**
  *
  */
+tv_channel_t *
+tv_channel_find_by_tag(tv_t *tv, uint32_t tag)
+{
+  tv_ch_group_t *tcg;
+  tv_channel_t *ch;
+
+  TAILQ_FOREACH(tcg, &tv->tv_groups, tcg_link)
+    TAILQ_FOREACH(ch, &tcg->tcg_channels, ch_link)
+      if(ch->ch_tag == tag)
+        return ch;
+  return NULL;
+}
+
+
+
+
+/**
+ *
+ */
 void
 tv_channel_set_icon(tv_channel_t *ch, const char *icon)
 {

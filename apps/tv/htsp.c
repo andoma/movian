@@ -130,7 +130,8 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int async)
   void *buf;
   unsigned int len;
   uint32_t l, seq;
-  int r, fd = hc->hc_fd, noaccess;
+  int r, fd = hc->hc_fd;
+  uint32_t noaccess;
   htsmsg_t *reply;
   htsp_msg_t *hm = NULL;
 
@@ -326,6 +327,35 @@ htsp_channelAdd(tv_t *tv, htsp_connection_t *hc, htsmsg_t *m)
 }
 
 
+
+
+/**
+ *
+ */
+static void
+htsp_channelUpdate(tv_t *tv, htsp_connection_t *hc, htsmsg_t *m)
+{
+  uint32_t tag;
+  tv_channel_t *ch;
+  uint32_t event;
+
+  if(htsmsg_get_u32(m, "channelTag", &tag))
+    return;
+
+  ch = tv_channel_find_by_tag(tv, tag);
+
+  printf("Update of channel %d -> %p\n", tag, ch);
+
+  if(ch == NULL)
+    return;
+
+ if(htsmsg_get_u32(m, "currentEvent", &event))
+    event = 0;
+
+  htsp_load_current_events(hc, ch, event);
+}
+
+
 /**
  *
  * We keep another thread for dispatching unsolicited (asynchronous)
@@ -368,6 +398,8 @@ htsp_worker_thread(void *aux)
 	htsp_channelGroupAdd(tv, hc, m);
       } else if(!strcmp(method, "channelAdd")) {
 	htsp_channelAdd(tv, hc, m);
+      } else if(!strcmp(method, "channelUpdate")) {
+	htsp_channelUpdate(tv, hc, m);
       }
     }
 
