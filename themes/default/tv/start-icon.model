@@ -1,0 +1,15 @@
+#HTSSIMPLEMODEL
+
+y-container {
+ space 0.1
+ text {
+  weight 0.25
+  caption TV
+  align center
+ }
+ bitmap {
+  filename icon://tv.png
+  keep-aspect
+ } 
+ space 0.1
+}

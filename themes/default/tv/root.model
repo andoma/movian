@@ -1,0 +1,75 @@
+#HTSSIMPLEMODEL
+
+
+
+y-container {
+ displacement 0 0 0.7
+
+ x-container {
+  weight 20
+
+  list {
+   weight 0.3
+   id groups
+   cursor-size 0.08
+   slices 8
+   scale-childs
+  }
+
+  space 0.01
+
+  deck {
+   id channel_list_container
+  }
+
+  space 0.01
+
+  y-container {
+   weight 0.3
+  }
+ }
+
+
+ space 0.2
+
+ x-container {
+  bitmap {
+   alpha 0.1
+   weight 0.3
+   filename icon://plate_compact.png
+   texture-borders 0.5 0.5 0.5 0.5
+   vertex-borders  0.1 0.1 0.1 0.1
+   text { 
+    caption Groups
+    align center
+   }
+  }
+  space 0.01
+
+  bitmap {
+   alpha 0.1
+   filename icon://plate_compact.png
+   texture-borders 0.5 0.5 0.5 0.5
+   vertex-borders  0.1 0.1 0.1 0.1
+   text { 
+    caption Channels
+    align center
+   }
+  }
+
+
+ space 0.01
+
+  bitmap {
+   alpha 0.1
+   weight 0.3
+   filename icon://plate_compact.png
+   texture-borders 0.5 0.5 0.5 0.5
+   vertex-borders  0.1 0.1 0.1 0.1
+   text { 
+    caption ??
+    align center
+   }
+  }
+ }
+}

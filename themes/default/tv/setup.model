@@ -1,0 +1,26 @@
+#HTSSIMPLEMODEL
+
+y-container {
+ displacement 0 0 0.6
+
+ y-container {
+  focus-alpha
+  weight 1.0
+  text {
+   weight 0.3
+   caption Select access method
+   align center
+  }
+
+  list {
+   id tv_type_list
+   slices 7
+  }
+ }
+
+ deck {
+  focus-alpha
+  weight 4.0
+  id tv_type_container
+ }
+}

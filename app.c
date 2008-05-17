@@ -303,6 +303,7 @@ apps_load(void)
 
   LOADAPP(clock);
   LOADAPP(navigator);
+  LOADAPP(tv);
 
   autolaunch_applications();
 

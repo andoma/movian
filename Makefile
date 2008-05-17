@@ -94,8 +94,8 @@ SRCS  += playlist.c playlist_player.c playlist_scanner.c
 
 # TV & headend com
 
-#VPATH += apps/tv
-#SRCS +=	tv_headend.c tv_playback.c pvr.c
+VPATH += apps/tv 
+SRCS +=	tv.c htsp.c
 
 # Apple Movie Trailer Application
 
