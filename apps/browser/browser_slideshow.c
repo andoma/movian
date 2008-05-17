@@ -27,6 +27,7 @@
 #include "showtime.h"
 #include "browser.h"
 #include "browser_view.h"
+#include "useraction.h"
 
 void
 browser_slideshow(browser_node_t *cur, glw_t *parent, ic_t *ic)
@@ -100,6 +101,11 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, ic_t *ic)
     case INPUT_KEY:
       switch(ie.u.key) {
       default:
+	if (ie.u.key >= '0' && ie.u.key <= '9') {
+	  /* User-definable actions */
+	  if (useraction_slideshow(w, ie.u.key) != -1)
+	    glw_send_signal(w, GLW_SIGNAL_NEXT, NULL);
+	}
 	break;
 	
       case INPUT_KEY_PLAYPAUSE:

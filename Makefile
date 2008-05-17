@@ -65,7 +65,7 @@ SRCS  += clock.c
 
 VPATH += apps/browser
 SRCS  += browser.c navigator.c browser_view.c browser_probe.c \
-	 browser_slideshow.c
+	 browser_slideshow.c useraction.c
 
 # CD application
 
