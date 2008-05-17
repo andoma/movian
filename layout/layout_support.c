@@ -129,7 +129,10 @@ layout_update_str(glw_t *w, const char *id, const char *str)
   if((w = glw_find_by_id(w, id, 0)) == NULL)
     return;
 
-  glw_set(w, GLW_ATTRIB_CAPTION, str, NULL);
+  glw_set(w,
+	  GLW_ATTRIB_CAPTION, str,
+	  GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
+	  NULL);
 
 }
 
