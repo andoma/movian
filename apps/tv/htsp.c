@@ -37,8 +37,7 @@
 static void
 htsp_fatal_error(htsp_connection_t *hc, const char *err)
 {
-  printf("%s\n", err);
-  //  hc->hc_event_callback(hc->hc_opaque, HTSP_EVENT_FATAL_ERROR, (void *)err);
+  tv_fatal_error(hc->hc_tv, err);
 }
 
 
@@ -319,11 +318,11 @@ htsp_channelAdd(tv_t *tv, htsp_connection_t *hc, htsmsg_t *m)
   if(htsmsg_get_u32(m, "currentEvent", &event))
     event = 0;
 
-  pthread_mutex_unlock(&tv->tv_ch_mutex);
-
   tv_channel_set_icon(ch, icon);
 
   htsp_load_current_events(hc, ch, event);
+
+  pthread_mutex_unlock(&tv->tv_ch_mutex);
 }
 
 
@@ -342,13 +341,16 @@ htsp_channelUpdate(tv_t *tv, htsp_connection_t *hc, htsmsg_t *m)
   if(htsmsg_get_u32(m, "channelTag", &tag))
     return;
 
-  if((ch = tv_channel_find_by_tag(tv, tag)) == NULL)
-    return;
+  pthread_mutex_lock(&tv->tv_ch_mutex);
 
- if(htsmsg_get_u32(m, "currentEvent", &event))
-    event = 0;
+  if((ch = tv_channel_find_by_tag(tv, tag)) != NULL) {
+    if(htsmsg_get_u32(m, "currentEvent", &event))
+      event = 0;
 
-  htsp_load_current_events(hc, ch, event);
+    htsp_load_current_events(hc, ch, event);
+  }
+
+  pthread_mutex_unlock(&tv->tv_ch_mutex);
 }
 
 
@@ -454,8 +456,6 @@ htsp_msg_dispatch(htsp_connection_t *hc, htsmsg_t *m)
   TAILQ_INSERT_TAIL(&hc->hc_worker_queue, hm, hm_link);
   pthread_cond_signal(&hc->hc_worker_cond);
   pthread_mutex_unlock(&hc->hc_worker_lock);
-  
-
 }
 
 
@@ -466,6 +466,7 @@ static void *
 htsp_com_thread(void *aux)
 {
   htsp_connection_t *hc = aux;
+  tv_t *tv = hc->hc_tv;
   int fd = -1, r, slen;
   const char *errtxt;
   struct sockaddr_storage dst;
@@ -522,13 +523,13 @@ htsp_com_thread(void *aux)
     hc->hc_connected = 1;
     pthread_create(&hc->hc_worker_tid, NULL, htsp_worker_thread, hc);
 
-    //    hc->hc_event_callback(hc->hc_opaque, HTSP_EVENT_CONNECTED, NULL);
+    tv_fatal_error(hc->hc_tv, NULL);  /* Reset any pending fatal error */
 
     /* Receive loop */
 
     while(1) {
       if(read(fd, &msglen, 4) != 4) {
-	htsp_fatal_syserr(hc, errno);
+	htsp_fatal_error(hc, "Read error");
 	break;
       }
 
@@ -537,7 +538,7 @@ htsp_com_thread(void *aux)
       
       if(read(fd, msgbuf, msglen) != msglen) {
 	free(msgbuf);
-	htsp_fatal_syserr(hc, errno);
+	htsp_fatal_error(hc, "Read error");
 	break;
       }
       
@@ -555,9 +556,11 @@ htsp_com_thread(void *aux)
     pthread_cond_broadcast(&hc->hc_rpc_cond);
     pthread_cond_broadcast(&hc->hc_worker_cond);
   
-    printf("HTSP disconnected, waiting for worker_thread\n");
     pthread_join(hc->hc_worker_tid, NULL);
 
+    pthread_mutex_lock(&tv->tv_ch_mutex);
+    tv_remove_all(tv);
+    pthread_mutex_unlock(&tv->tv_ch_mutex);
   }
 }
 

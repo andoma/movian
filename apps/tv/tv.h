@@ -55,6 +55,11 @@ typedef struct tv {
 
   glw_t *tv_root;
 
+  glw_t *tv_fatal_error;
+  const char *tv_last_err;
+
+  struct tvconfig *tv_cfg;
+
 } tv_t;
 
 tv_ch_group_t *tv_channel_group_find(tv_t *tv, const char *name, int create);
@@ -68,5 +73,9 @@ void tv_channel_set_current_event(tv_channel_t *ch, int index,
 				  const char *title, time_t start, time_t stop);
 
 tv_channel_t *tv_channel_find_by_tag(tv_t *tv, uint32_t tag);
+
+void tv_fatal_error(tv_t *tv, const char *err);
+
+void tv_remove_all(tv_t *tv);
 
 #endif /* TV_H_ */

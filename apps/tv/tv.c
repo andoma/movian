@@ -47,6 +47,52 @@ typedef struct tvconfig {
 } tvconfig_t;
 
 
+/**
+ * Display a fatal error for the user
+ *
+ * Fatal is things as: Unable to connect to server, and such things
+ *
+ * If 'err' is NULL we should remove any display (i.e, it's okay again)
+ */
+void 
+tv_fatal_error(tv_t *tv, const char *err)
+{
+  char errbuf[400];
+
+  if(err == tv->tv_last_err)
+    return;
+
+  tv->tv_last_err = err;
+
+  if(tv->tv_fatal_error != NULL) {
+    glw_detach(tv->tv_fatal_error);
+    tv->tv_fatal_error = NULL;
+  }
+
+  if(err == NULL)
+    return;
+
+  snprintf(errbuf, sizeof(errbuf),
+	   "%s\n\n"
+	   "%s\n\n"
+	   "%s",
+	   tv->tv_cfg->tc_title,
+	   tv->tv_cfg->tc_url,
+	   err);
+
+  tv->tv_fatal_error = glw_create(GLW_MODEL,
+				  GLW_ATTRIB_PARENT, tv->tv_stack,
+				  GLW_ATTRIB_FILENAME, "tv/fatal-error",
+				  NULL);
+
+  layout_update_multilinetext(tv->tv_fatal_error, 
+			      "text", errbuf, 5, GLW_ALIGN_CENTER);
+}
+
+
+/**
+ *
+ */
 static int
 tv_root_widget(glw_t *w, void *opaque, glw_signal_t sig, ...)
 {
@@ -304,9 +350,54 @@ tv_channel_set_current_event(tv_channel_t *ch, int index,
   } else {
     layout_update_str(ch->ch_widget, id, NULL);
   }
-
 }
 
+/**
+ *
+ */
+static void
+tv_channel_destroy(tv_ch_group_t *tcg, tv_channel_t *ch)
+{
+  glw_destroy(ch->ch_widget);
+
+  TAILQ_REMOVE(&tcg->tcg_channels, ch, ch_link);
+  free(ch->ch_name);
+  free(ch);
+}
+
+/**
+ *
+ */
+static void
+tv_channel_group_destroy(tv_t *tv, tv_ch_group_t *tcg)
+{
+  glw_destroy(tcg->tcg_widget);
+  glw_destroy(tcg->tcg_tab);
+
+  TAILQ_REMOVE(&tv->tv_groups, tcg, tcg_link);
+  free(tcg->tcg_name);
+  free(tcg);
+}
+
+
+
+/**
+ *
+ */
+void
+tv_remove_all(tv_t *tv)
+{
+  tv_ch_group_t *tcg;
+  tv_channel_t *ch;
+
+  while((tcg = TAILQ_FIRST(&tv->tv_groups)) != NULL) {
+
+    while((ch = TAILQ_FIRST(&tcg->tcg_channels)) != NULL)
+      tv_channel_destroy(tcg, ch);
+
+    tv_channel_group_destroy(tv, tcg);
+  }
+}
 
 
 /**
@@ -318,6 +409,8 @@ tv_main(tv_t *tv, appi_t *ai, int type, tvconfig_t *cfg)
   htsp_connection_t *hc;
   glw_t *w;
   struct layout_form_entry_list lfelist;
+
+  tv->tv_cfg = cfg;
 
   TAILQ_INIT(&tv->tv_groups);
 
@@ -613,7 +706,7 @@ tv_launch(void *aux)
 	       NULL);
 
   tv->tv_stack = 
-    glw_create(GLW_CUBESTACK,
+    glw_create(GLW_ZSTACK,
 	       GLW_ATTRIB_PARENT, ai->ai_widget,
 	       NULL);
 
