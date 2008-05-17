@@ -342,11 +342,7 @@ htsp_channelUpdate(tv_t *tv, htsp_connection_t *hc, htsmsg_t *m)
   if(htsmsg_get_u32(m, "channelTag", &tag))
     return;
 
-  ch = tv_channel_find_by_tag(tv, tag);
-
-  printf("Update of channel %d -> %p\n", tag, ch);
-
-  if(ch == NULL)
+  if((ch = tv_channel_find_by_tag(tv, tag)) == NULL)
     return;
 
  if(htsmsg_get_u32(m, "currentEvent", &event))
