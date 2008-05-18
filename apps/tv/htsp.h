@@ -26,17 +26,21 @@
 #include "tv.h"
 
 TAILQ_HEAD(htsp_msg_queue, htsp_msg);
+LIST_HEAD(htsp_mux_list, htsp_mux);
 
+/**
+ *
+ */
 typedef struct htsp_msg {
   htsmsg_t *hm_msg;	
-
   uint32_t hm_seq;
-  
   TAILQ_ENTRY(htsp_msg) hm_link;
 } htsp_msg_t;
 
 
-
+/**
+ *
+ */
 typedef struct htsp_connection {
 
   int hc_seq_tally;
@@ -62,9 +66,12 @@ typedef struct htsp_connection {
   pthread_cond_t hc_rpc_cond;
   struct htsp_msg_queue hc_rpc_queue;
 
+  struct htsp_mux_list hc_muxes;
 
 } htsp_connection_t;
 
 htsp_connection_t *htsp_create(const char *url, struct tv *tv);
+
+int htsp_subscribe(htsp_connection_t *hc, tv_channel_t *ch);
 
 #endif /* HTSP_H_ */

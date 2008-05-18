@@ -22,9 +22,17 @@
 #include <libglw/glw.h>
 #include "app.h"
 
+#include "video/video_playback.h"
+#include "video/video_decoder.h"
+#include "video/video_menu.h"
+
 TAILQ_HEAD(tv_ch_group_queue, tv_ch_group);
 TAILQ_HEAD(tv_channel_queue,  tv_channel);
+LIST_HEAD(tv_channel_stream_list, tv_channel_stream);
 
+/**
+ *
+ */
 typedef struct tv_ch_group {
   char *tcg_name;
   struct tv_channel_queue tcg_channels;
@@ -34,17 +42,60 @@ typedef struct tv_ch_group {
 } tv_ch_group_t;
 
 
+/**
+ * Defines a channel
+ */
 typedef struct tv_channel {
   char *ch_name;
   uint32_t ch_tag;
   
   glw_t *ch_widget;
 
+  struct tv *ch_tv;
   TAILQ_ENTRY(tv_channel) ch_link;
+
+  /**
+   *
+   */
+
+  uint32_t ch_subscription_id;
+  TAILQ_ENTRY(tv_channel) ch_running_link;
+
+  /**
+   *
+   */
+  glw_t *ch_video_widget;			  
+  vd_conf_t ch_vdc;            /* Video Display Configuration */
+  media_pipe_t ch_mp;
+  formatwrap_t *ch_fw;
+
+  struct tv_channel_stream_list ch_streams;
+
 } tv_channel_t;
 
 
 
+
+/**
+ * Defines a component (audio, video, etc) inside a tv stream
+ */
+typedef struct tv_channel_stream {
+  int tcs_index;
+  codecwrap_t *tcs_cw;
+  media_queue_t *tcs_mq;
+  int tcs_data_type;
+
+  LIST_ENTRY(tv_channel_stream) tcs_link;
+
+} tv_channel_stream_t;
+
+
+
+
+
+/**
+ * Main TV
+ */
 typedef struct tv {
   appi_t *tv_ai;
   glw_t *tv_miniature;
@@ -52,6 +103,8 @@ typedef struct tv {
 
   pthread_mutex_t tv_ch_mutex;
   struct tv_ch_group_queue tv_groups;
+
+  struct tv_channel_queue tv_running_channels;
 
   glw_t *tv_root;
 

@@ -60,6 +60,7 @@ typedef enum {
   INPUT_TS,
   INPUT_PAD,
   INPUT_KEYDESC,
+  INPUT_VEC,             /* vector of u32 */
   INPUT_U32,             /* Generic U32 */
   INPUT_APP,             /* Application specific, 'ptr' will be free'd
 			    by freefunc if entry is flushed.
@@ -93,6 +94,11 @@ typedef struct inputevent {
       int64_t pts;
       int     stream;
     } ts;
+
+    struct {
+      uint32_t u32[4];
+    } vec;
+
   } u;
 
   void (*freefunc)(input_event_type_t type, void *ptr);

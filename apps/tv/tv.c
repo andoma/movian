@@ -145,69 +145,40 @@ tv_store_instance(appi_t *ai, tvconfig_t *cfg, int type)
 }
 
 
-#if 0
 /**
- *  Return 0 if user wants to exit, otherwise -1
+ * Send a signal from glw-level to the tv main dispatcher
  */
-static int
-nav_access_error(navigator_t *nav, appi_t *ai, const char *dir, 
-		 const char *errtxt)
+static void
+channel_signal(tv_channel_t *ch, int op)
 {
-  struct layout_form_entry_list lfelist;
-  glw_t *m;
   inputevent_t ie;
-  char errbuf[400];
+  tv_t *tv = ch->ch_tv;
 
-  snprintf(errbuf, sizeof(errbuf),
-	   "Unable to access\n"
-	   "%s\n"
-	   "%s", dir, errtxt);
+  ie.type = INPUT_VEC;
+  ie.u.vec.u32[0] = op;
+  ie.u.vec.u32[1] = ch->ch_tag;
 
-  TAILQ_INIT(&lfelist);
-
-  m = glw_create(GLW_MODEL,
-		 GLW_ATTRIB_PARENT, nav->nav_stack,
-		 GLW_ATTRIB_FILENAME, "browser/access-error",
-		 NULL);
-
-  layout_update_multilinetext(m, "text", errbuf, 5, GLW_ALIGN_CENTER);
-
-  LFE_ADD_BTN(&lfelist, "ignore", 0);
-  LFE_ADD_BTN(&lfelist, "exit",   -1);
-  
-  layout_form_query(&lfelist, m, &ai->ai_gfs, &ie);
-  glw_detach(m);
-  return ie.u.u32;
+  input_postevent(&tv->tv_ai->ai_ic, &ie);
 }
 
 
+
 /**
- *  Return 0 if user wants to exit, otherwise -1
+ * Callback when user operates on a channel widget
  */
 static int
-nav_verify_exit(navigator_t *nav, appi_t *ai)
+channel_entry_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
-  struct layout_form_entry_list lfelist;
-  inputevent_t ie;
-  glw_t *m;
+  switch(signal) {
+  default:
+    break;
 
-  TAILQ_INIT(&lfelist);
-
-  m = glw_create(GLW_MODEL,
-		 GLW_ATTRIB_PARENT, nav->nav_stack,
-		 GLW_ATTRIB_FILENAME, "browser/exit",
-		 NULL);
-
-  LFE_ADD_BTN(&lfelist, "ok",     0);
-  LFE_ADD_BTN(&lfelist, "cancel", -1); /* form will return '-1' if user
-					  cancels form, so we use same
-					  for the cancel button */
-  
-  layout_form_query(&lfelist, m, &ai->ai_gfs, &ie);
-  glw_detach(m);
-  return ie.u.u32;
+  case GLW_SIGNAL_ENTER:
+    channel_signal(opaque, signal);
+    return 1;
+  }
+  return 0;
 }
-#endif
 
 
 
@@ -274,6 +245,7 @@ tv_channel_find(tv_t *tv, tv_ch_group_t *tcg, const char *name, int create)
   ch = calloc(1, sizeof(tv_channel_t));
   TAILQ_INSERT_TAIL(&tcg->tcg_channels, ch, ch_link);
   ch->ch_name = strdup(name);
+  ch->ch_tv = tv;
 
   /**
    * Create widget
@@ -281,6 +253,7 @@ tv_channel_find(tv_t *tv, tv_ch_group_t *tcg, const char *name, int create)
   ch->ch_widget =
     glw_create(GLW_MODEL,
 	       GLW_ATTRIB_PARENT, tcg->tcg_channel_list,
+	       GLW_ATTRIB_SIGNAL_HANDLER, channel_entry_callback, ch, 400,
 	       GLW_ATTRIB_FILENAME, "tv/channel",
 	       NULL);
 
@@ -403,16 +376,35 @@ tv_remove_all(tv_t *tv)
 /**
  *
  */
+static void
+tv_subscribe(tv_t *tv, htsp_connection_t *hc, uint32_t id)
+{
+  tv_channel_t *ch;
+
+  pthread_mutex_lock(&tv->tv_ch_mutex);
+  if((ch = tv_channel_find_by_tag(tv, id)) != NULL) {
+    htsp_subscribe(hc, ch);
+  }
+  pthread_mutex_unlock(&tv->tv_ch_mutex);
+}
+
+
+/**
+ *
+ */
 static int
 tv_main(tv_t *tv, appi_t *ai, int type, tvconfig_t *cfg)
 {
   htsp_connection_t *hc;
   glw_t *w;
   struct layout_form_entry_list lfelist;
+  int run = 1;
+  inputevent_t ie;
 
   tv->tv_cfg = cfg;
 
   TAILQ_INIT(&tv->tv_groups);
+  TAILQ_INIT(&tv->tv_running_channels);
 
   tv_store_instance(ai, cfg, type);
 
@@ -446,63 +438,6 @@ tv_main(tv_t *tv, appi_t *ai, int type, tvconfig_t *cfg)
 
 
 
-  while(1) {
-    sleep(1);
-  }
-
-#if 0
-
-  browser_root_t *br;
-  browser_node_t *bn;
-  inputevent_t ie;
-  char rooturl[400];
-  glw_t *w;
-  int run = 1, r;
-
-  switch(navtype) {
-  case NAVIGATOR_FILESYSTEM:
-    if(cfg->nc_rootpath[0] == 0) {
-      cfg->nc_rootpath[0] = '/';
-      cfg->nc_rootpath[1] = 0;
-    }
-
-    snprintf(rooturl, sizeof(rooturl), "file://%s", cfg->nc_rootpath);
-    break;
-  }
-
-  /**
-   * Swap task switcher miniature widget to the one configured
-   */ 
-  glw_lock();
-  glw_destroy(nav->nav_miniature);
-
-  nav->nav_miniature =
-    glw_create(GLW_MODEL,
-	       GLW_ATTRIB_FILENAME, cfg->nc_icon,
-	       NULL);
-
-  layout_switcher_appi_add(ai, nav->nav_miniature);
-  glw_unlock();
-
-  /**
-   * Update title in task switcher miniature widget
-   */
-  if((w = glw_find_by_id(nav->nav_miniature, "title", 0)) != NULL)
-    glw_set(w, GLW_ATTRIB_CAPTION, cfg->nc_title, NULL);
-
-  /**
-   * Create browser root
-   */ 
-  br = browser_root_create(rooturl, &ai->ai_gfs, nav->nav_splashcontainer);
-  bn = br->br_root;
-
-  browser_view_expand_node(bn, nav->nav_stack, &ai->ai_gfs);
-  r = browser_scandir(bn, 0);
-
-  if(r != 0 && nav_access_error(nav, ai, rooturl, strerror(r)))
-    run = 0;
-
-  nav_store_instance(ai, cfg, navtype);
 
   input_flush_queue(&ai->ai_ic);
 
@@ -514,86 +449,17 @@ tv_main(tv_t *tv, appi_t *ai, int type, tvconfig_t *cfg)
     default:
       break;
 
-    case INPUT_KEY:
+    case INPUT_VEC:
+      switch(ie.u.vec.u32[0]) {
 
-      switch(ie.u.key) {
-      default:
+      case GLW_SIGNAL_ENTER:
+	tv_subscribe(tv, hc, ie.u.vec.u32[1]);
 	break;
-
-      case INPUT_KEY_MENU:
-	app_settings(ai, nav->nav_stack, cfg->nc_title, cfg->nc_icon);
-	nav_store_instance(ai, cfg, navtype);
-	break;
-
-      case INPUT_KEY_SWITCH_VIEW:
-	bn = browser_view_get_current_node(nav->nav_stack);
-	if(bn == NULL)
-	  break;
-
-	browser_view_switch(bn, &ai->ai_gfs);
-	break;
-
-      case INPUT_KEY_ENTER:
-	bn = browser_view_get_current_selected_node(nav->nav_stack);
-	if(bn == NULL)
-	  break;
-
-	switch(bn->bn_type) {
-	case FA_DIR:
-	  browser_view_expand_node(bn, nav->nav_stack, &ai->ai_gfs);
-	  browser_scandir(bn, 1);
-	  break;
-
-	case FA_FILE:
-	  browser_enter(ai, nav, bn, 0);
-	  break;
-	}
-	browser_node_deref(bn);
-	break;
-
-
-      case INPUT_KEY_SELECT:
-	bn = browser_view_get_current_selected_node(nav->nav_stack);
-	if(bn == NULL)
-	  break;
-
-	switch(bn->bn_type) {
-	case FA_FILE:
-	  browser_enter(ai, nav, bn, 1);
-	  break;
-	case FA_DIR:
-	  playlist_build_from_dir(bn->bn_url);
-	  break;
-	}
-	browser_node_deref(bn);
-	break;
-
-      case INPUT_KEY_BACK:
-	bn = browser_view_get_current_node(nav->nav_stack);
-	if(bn == NULL)
-	  break;
-
-	if(bn->bn_parent != NULL) {
-	  browser_view_collapse_node(bn, &ai->ai_gfs);
-	} else {
-	  /* At top level, check before exit */
-	  r = nav_verify_exit(nav, ai);
-	  if(r == 0)
-	    run = 0;
-	}
-	browser_node_deref(bn);
-	break;
-
       }
+      break;
     }
   }
 
-  bn = br->br_root;
-  browser_view_collapse_node(bn, &ai->ai_gfs);
-
-  printf("Destroying browser\n");
-  browser_root_destroy(br);
-#endif
   return 0;
 }
 

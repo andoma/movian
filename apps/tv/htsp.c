@@ -31,8 +31,16 @@
 #include <errno.h>
 
 #include "htsp.h"
+#include "tv_playback.h"
 
+static void htsp_mux_input(htsp_connection_t *hc,
+			   tv_channel_t *ch, htsmsg_t *m);
 
+static void htsp_mux_start(htsp_connection_t *hc,
+			   tv_channel_t *ch, htsmsg_t *m);
+
+static void htsp_mux_stop(htsp_connection_t *hc,
+			  tv_channel_t *ch, htsmsg_t *m);
 
 static void
 htsp_fatal_error(htsp_connection_t *hc, const char *err)
@@ -198,7 +206,7 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int async)
 
   } else {
 
-    r = read(fd, &l, 4);
+    r = recv(fd, &l, 4, MSG_WAITALL);
     if(r != 4) {
       htsmsg_destroy(m);
       return NULL;
@@ -207,7 +215,7 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int async)
     l = ntohl(l);
     buf = malloc(l);
 
-    if(read(fd, buf, l) != l) {
+    if(recv(fd, buf, l, MSG_WAITALL) != l) {
       free(buf);
       htsmsg_destroy(m);
       return NULL;
@@ -412,14 +420,44 @@ htsp_worker_thread(void *aux)
 
 
 
+
+
+
 /**
  *
  */
 static void
 htsp_msg_dispatch(htsp_connection_t *hc, htsmsg_t *m)
 {
-  uint32_t seq;
+  uint32_t seq, id;
   htsp_msg_t *hm;
+  tv_channel_t *ch;
+  const char *method;
+
+  /*
+   * First, we search for the transport/mux related messages
+   * since they are by far most common
+   */
+
+  if((method = htsmsg_get_str(m, "method")) != NULL) {
+
+    if(!htsmsg_get_u32(m, "id", &id) && 
+       (ch = tv_channel_by_subscription_id(hc->hc_tv, id)) != NULL) {
+
+      if(!strcmp(method, "muxpkt")) {
+	htsp_mux_input(hc, ch, m);
+	return;
+      } else if(!strcmp(method, "subscription_start")) {
+	htsp_mux_start(hc, ch, m);
+	return;
+      } else if(!strcmp(method, "subscription_stop")) {
+	htsp_mux_stop(hc, ch, m);
+	return;
+      }
+    }
+  }
+
+
 
   if(!htsmsg_get_u32(m, "seq", &seq) && seq != 0) {
     /* Reply .. */
@@ -445,7 +483,10 @@ htsp_msg_dispatch(htsp_connection_t *hc, htsmsg_t *m)
     return;
   }
 
-  /* Unsolicited message */
+
+
+
+  /* Unsolicited meta message */
   /* Async updates are sent to another worker thread */
 
   hm = malloc(sizeof(htsp_msg_t));
@@ -528,7 +569,7 @@ htsp_com_thread(void *aux)
     /* Receive loop */
 
     while(1) {
-      if(read(fd, &msglen, 4) != 4) {
+      if(recv(fd, &msglen, 4, MSG_WAITALL) != 4) {
 	htsp_fatal_error(hc, "Read error");
 	break;
       }
@@ -536,7 +577,7 @@ htsp_com_thread(void *aux)
       msglen = ntohl(msglen);
       msgbuf = malloc(msglen);
       
-      if(read(fd, msgbuf, msglen) != msglen) {
+      if(recv(fd, msgbuf, msglen, MSG_WAITALL) != msglen) {
 	free(msgbuf);
 	htsp_fatal_error(hc, "Read error");
 	break;
@@ -618,3 +659,262 @@ htsp_create(const char *url, tv_t *tv)
 }
 
 
+
+/**
+ * Transport input
+ */
+static void
+htsp_mux_input(htsp_connection_t *hc, tv_channel_t *ch, htsmsg_t *m)
+{
+  uint32_t stream;
+  tv_channel_stream_t *tcs;
+  media_pipe_t *mp = &ch->ch_mp;
+  const void *bin;
+  size_t binlen;
+  media_buf_t *mb;
+
+  if(htsmsg_get_u32(m, "stream", &stream)) {
+    htsmsg_destroy(m);
+    return;
+  }
+
+  if(stream != mp->mp_audio.mq_stream && stream != mp->mp_video.mq_stream) {
+    /* Not any of the currently selected stream */
+    htsmsg_destroy(m);
+    return;
+  }
+
+  LIST_FOREACH(tcs, &ch->ch_streams, tcs_link)
+    if(tcs->tcs_index == stream)
+      break;
+
+  if(tcs == NULL) {
+    /* Unknown stream */
+    htsmsg_destroy(m);
+    return;
+  }
+
+  if(htsmsg_get_bin(m, "payload", &bin, &binlen)) {
+    htsmsg_destroy(m);
+    return;
+  }
+
+  mb = media_buf_alloc();
+  mb->mb_data_type = tcs->tcs_data_type;
+  mb->mb_stream = tcs->tcs_index;
+
+  if(htsmsg_get_u32(m, "duration", &mb->mb_duration))
+    mb->mb_duration = 0;
+
+  if(htsmsg_get_s64(m, "dts", &mb->mb_dts))
+    mb->mb_dts = AV_NOPTS_VALUE;
+
+  if(htsmsg_get_s64(m, "dts", &mb->mb_pts))
+    mb->mb_pts = AV_NOPTS_VALUE;
+
+  mb->mb_cw = wrap_codec_ref(tcs->tcs_cw);
+
+  mb->mb_data = malloc(binlen);
+  memcpy(mb->mb_data, bin, binlen);
+  
+  mb->mb_size = binlen;
+
+  mb_enqueue(mp, tcs->tcs_mq, mb);
+  htsmsg_destroy(m);
+}
+
+/**
+ * Subscription started at headend
+ */
+static void
+htsp_mux_start(htsp_connection_t *hc, tv_channel_t *ch, htsmsg_t *m)
+{
+  htsmsg_field_t *f;
+  htsmsg_t *sub;
+  const char *type;
+  uint32_t index, s;
+  codecwrap_t *cw;
+  enum CodecID   codec_id;
+  enum CodecType codec_type;
+  tv_channel_stream_t *tcs;
+
+  int vstream = -1; /* Initial video stream */
+  int astream = -1; /* Initial audio stream */
+
+  int ascore = 0;   /* Discriminator for chosing best stream */
+  int vscore = 0;   /* Discriminator for chosing best stream */
+
+  media_pipe_t *mp = &ch->ch_mp;
+
+  htsmsg_print(m);
+
+  /**
+   * Parse each stream component and add it as a stream at our end
+   */
+  HTSMSG_FOREACH(f, m) {
+    if(f->hmf_type != HMF_MSG || strcmp(f->hmf_name, "stream"))
+      continue;
+    sub = &f->hmf_msg;
+
+    if((type = htsmsg_get_str(sub, "type")) == NULL)
+      continue;
+
+    if(htsmsg_get_u32(sub, "index", &index))
+      continue;
+
+    if(!strcmp(type, "AC3")) {
+      codec_id = CODEC_ID_AC3;
+      codec_type = CODEC_TYPE_AUDIO;
+      s = 2;
+    } else if(!strcmp(type, "MPEG2AUDIO")) {
+      codec_id = CODEC_ID_MP2;
+      codec_type = CODEC_TYPE_AUDIO;
+      s = 1;
+    } else if(!strcmp(type, "MPEG2VIDEO")) {
+     codec_id = CODEC_ID_MPEG2VIDEO;
+      codec_type = CODEC_TYPE_VIDEO;
+      s = 1;
+    } else if(!strcmp(type, "H264")) {
+      codec_id = CODEC_ID_H264;
+      codec_type = CODEC_TYPE_VIDEO;
+      s = 2;
+    } else {
+      continue;
+    }
+    
+    /**
+     * Try to create the codec
+     */
+
+    cw = wrap_codec_create(codec_id, codec_type, 0, ch->ch_fw, NULL);
+    if(cw == NULL)
+      continue; /* We should print something i guess .. */
+    
+    tcs = calloc(1, sizeof(tv_channel_stream_t));
+    tcs->tcs_index = index;
+    tcs->tcs_cw = cw;
+
+    switch(codec_type) {
+    default:
+      break;
+
+    case CODEC_TYPE_VIDEO:
+      tcs->tcs_mq = &mp->mp_video;
+      tcs->tcs_data_type = MB_VIDEO;
+
+      if(s > vscore) {
+	vscore = s;
+	vstream = index;
+      }
+      break;
+
+    case CODEC_TYPE_AUDIO:
+      tcs->tcs_mq = &mp->mp_audio;
+      tcs->tcs_data_type = MB_AUDIO;
+
+      if(s > ascore) {
+	ascore = s;
+	astream = index;
+      }
+      break;
+    }
+
+    LIST_INSERT_HEAD(&ch->ch_streams, tcs, tcs_link);
+  }
+
+  mp->mp_audio.mq_stream = astream;
+  mp->mp_video.mq_stream = vstream;
+
+  printf("TV playback prepared, vstream = %d, astream = %d\n",
+	 vstream, astream);
+
+  mp_set_playstatus(mp, MP_PLAY);
+
+  media_pipe_acquire_audio(mp);
+
+  htsmsg_destroy(m);
+}
+
+/**
+ * Subscription stopped at headend
+ */
+static void
+htsp_mux_stop(htsp_connection_t *hc, tv_channel_t *ch, htsmsg_t *m)
+{
+  
+
+
+  htsmsg_print(m);
+  
+
+  htsmsg_destroy(m);
+}
+
+
+
+/**
+ *
+ */
+int
+htsp_subscribe(htsp_connection_t *hc, tv_channel_t *ch)
+{
+  htsmsg_t *m;
+  uint32_t id;
+
+  if(ch->ch_subscription_id != 0)
+    return 0; /* Already subscribed */
+
+  m = htsmsg_create();
+  htsmsg_add_str(m, "method", "subscribe");
+  htsmsg_add_str(m, "channel", ch->ch_name);
+
+  m = htsp_reqreply(hc, m, 1);
+
+  htsmsg_print(m);
+
+  if(htsmsg_get_u32(m, "id", &id))
+    id = 0;
+  
+  htsmsg_destroy(m);
+
+  if(id != 0) {
+    printf("Created subscription %d for channel %s\n", id, ch->ch_name);
+
+    ch->ch_subscription_id = id;
+    TAILQ_INSERT_TAIL(&ch->ch_tv->tv_running_channels, ch, ch_running_link);
+
+    tv_playback_init(ch);
+  }
+
+  return 0;
+}
+
+
+/**
+ *
+ */
+int
+htsp_unsubscribe(htsp_connection_t *hc, tv_channel_t *ch)
+{
+  htsmsg_t *m;
+  uint32_t id;
+
+  if(ch->ch_subscription_id == 0)
+    return 0; /* Not subscribed */
+
+  m = htsmsg_create();
+  htsmsg_add_u32(m, "id", ch->ch_subscription_id);
+
+  m = htsp_reqreply(hc, m, 1);
+
+  htsmsg_print(m);
+
+  if(htsmsg_get_u32(m, "id", &id))
+    id = 0;
+  
+  htsmsg_destroy(m);
+
+  tv_playback_deinit(ch);
+
+  return 0;
+}
