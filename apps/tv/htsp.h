@@ -74,4 +74,6 @@ htsp_connection_t *htsp_create(const char *url, struct tv *tv);
 
 int htsp_subscribe(htsp_connection_t *hc, tv_channel_t *ch);
 
+int htsp_unsubscribe(htsp_connection_t *hc, tv_channel_t *ch);
+
 #endif /* HTSP_H_ */

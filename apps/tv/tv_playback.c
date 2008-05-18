@@ -91,12 +91,12 @@ tv_playback_deinit(tv_channel_t *ch)
 
   wrap_lock_all_codecs(ch->ch_fw);
 
-  while((tcs = LIST_FIRST(&ch->ch_streams, tcs_tcs_link)) != NULL)
+  while((tcs = LIST_FIRST(&ch->ch_streams)) != NULL)
     tv_channel_stream_destroy(ch, tcs, 0);
 
   glw_destroy(ch->ch_video_widget);
 
-  wrap_format_wait(fw);
+  wrap_format_wait(ch->ch_fw);
 }
 
 
