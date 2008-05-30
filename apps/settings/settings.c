@@ -35,6 +35,9 @@
 #include "layout/layout_forms.h"
 #include "libhts/hts_strtab.h"
 
+#include "audio/audio.h"
+#include "display/display_settings.h"
+
 static void settings_update_keyevent(hid_keycode_t *hkc, glw_t *w);
 
 static glw_t *keymap_list;
@@ -129,7 +132,6 @@ settings_thread(void *aux)
   /**
    * Keyboard mapper
    */
-
   t = layout_form_add_tab(m,
 			  "settings_list",     "settings/keymap-icon",
 			  "settings_container","settings/keymap-tab");
@@ -161,6 +163,8 @@ settings_thread(void *aux)
 
   layout_form_initialize(&lfelist, m, &ai->ai_gfs, ic, 1);
 
+  audio_settings_init(m, &ai->ai_gfs, ic);
+  display_settings_init(m, &ai->ai_gfs, ic);
 
   layout_switcher_appi_add(ai, mini);
 

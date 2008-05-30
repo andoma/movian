@@ -19,8 +19,30 @@
 #ifndef AUDIO_H
 #define AUDIO_H
 
+#include <libglw/glw.h>
+#include "hid/input.h"
+
+typedef struct audio_mode {
+  
+  uint32_t am_formats;
+#define AM_FORMAT_PCM 0x1
+#define AM_FORMAT_AC3 0x2
+#define AM_FORMAT_DTS 0x4
+
+  int am_channels;
+
+  
+
+
+} audio_mode_t;
+
+
+
+
 void audio_init(void);
 
 void audio_alsa_init(void);
+
+void audio_settings_init(glw_t *m, glw_focus_stack_t *gfs, ic_t *ic);
 
 #endif /* AUDIO__H */

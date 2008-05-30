@@ -32,6 +32,7 @@
 #include "hid/keymapper.h"
 #include "layout/layout.h"
 #include "display.h"
+#include "display_settings.h"
 
 static struct {
   Display *display;
@@ -43,11 +44,18 @@ static struct {
   Window win;
   GLXContext glxctx;
   float aspect_ratio;
-  int fullscreen;
+  int current_displaymode;
+  Colormap colormap;
+  const char *displayname;
+  int coords[2][4];
+  
 } x11state;
 
 
 
+/**
+ *
+ */
 static Cursor
 blank_cursor(void)
 {
@@ -71,29 +79,174 @@ blank_cursor(void)
   return blank;
 }
 
+/**
+ *
+ */
+static void
+fullscreen_grab(void)
+{
+  XSync(x11state.display, False);
+    
+  while( GrabSuccess !=
+	 XGrabPointer(x11state.display, x11state.win,
+		      True,
+		      ButtonPressMask | ButtonReleaseMask | ButtonMotionMask
+		      | PointerMotionMask,
+		      GrabModeAsync, GrabModeAsync,
+		      x11state.win, None, CurrentTime))
+    usleep(100);
 
+  XSetInputFocus(x11state.display, x11state.win, RevertToNone, CurrentTime);
+  XWarpPointer(x11state.display, None, x11state.root,
+	       0, 0, 0, 0,
+	       x11state.coords[0][2] / 2, x11state.coords[0][3] / 2);
+  XGrabKeyboard(x11state.display,  x11state.win, False,
+		GrabModeAsync, GrabModeAsync, CurrentTime);
+
+}
+
+/**
+ *
+ */
+static void
+window_open(void)
+{
+  XSetWindowAttributes winAttr;
+  unsigned long mask;
+  int fullscreen = display_settings.displaymode == DISPLAYMODE_FULLSCREEN;
+
+  winAttr.event_mask        = KeyPressMask | StructureNotifyMask;
+  winAttr.background_pixmap = None;
+  winAttr.background_pixel  = 0;
+  winAttr.border_pixel      = 0;
+
+  winAttr.colormap = x11state.colormap = 
+    XCreateColormap(x11state.display, x11state.root,
+		    x11state.xvi->visual, AllocNone);
+  
+  mask = CWBackPixmap | CWBorderPixel | CWColormap | CWEventMask;
+
+  x11state.coords[0][0] = x11state.screen_width  / 4;
+  x11state.coords[0][1] = x11state.screen_height / 4;
+  x11state.coords[0][2] = x11state.screen_width  * 3 / 4;
+  x11state.coords[0][3] = x11state.screen_height * 3 / 4;
+
+  x11state.coords[1][0] = 0;
+  x11state.coords[1][1] = 0;
+  x11state.coords[1][2] = x11state.screen_width;
+  x11state.coords[1][3] = x11state.screen_height;
+
+  if(fullscreen) {
+
+    winAttr.override_redirect = True;
+    mask |= CWOverrideRedirect;
+  }
+
+  x11state.aspect_ratio =
+    (float)x11state.coords[fullscreen][2] / 
+    (float)x11state.coords[fullscreen][3];
+
+  x11state.win = 
+    XCreateWindow(x11state.display,
+		  x11state.root,
+		  x11state.coords[fullscreen][0],
+		  x11state.coords[fullscreen][1],
+		  x11state.coords[fullscreen][2],
+		  x11state.coords[fullscreen][3],
+		  0,
+		  x11state.xvi->depth, InputOutput,
+		  x11state.xvi->visual, mask, &winAttr
+		  );
+
+  x11state.glxctx = glXCreateContext(x11state.display, x11state.xvi, NULL, 1);
+
+  if(x11state.glxctx == NULL) {
+    fprintf(stderr, "Unable to create GLX context on \"%s\"\n",
+	    x11state.displayname);
+    exit(1);
+  }
+
+
+  glXMakeCurrent(x11state.display, x11state.win, x11state.glxctx);
+
+  XMapWindow(x11state.display, x11state.win);
+
+  /* Make an empty / blank cursor */
+
+  XDefineCursor(x11state.display, x11state.win, blank_cursor());
+
+
+  if(fullscreen)
+    fullscreen_grab();
+
+  gl_common_init();
+
+  x11state.current_displaymode = display_settings.displaymode;
+}
+
+/**
+ * Undo what window_open() does
+ */
+static void
+window_close(void)
+{
+  XUndefineCursor(x11state.display, x11state.win);
+  XDestroyWindow(x11state.display, x11state.win);
+  glXDestroyContext(x11state.display, x11state.glxctx);
+  XFreeColormap(x11state.display, x11state.colormap);
+}
+
+
+/**
+ *
+ */
+static void
+window_change_displaymode(void)
+{
+  printf("a\n");
+  glFlush();
+  printf("b\n");
+  XSync(x11state.display, False);
+  printf("c\n");
+
+
+  if(x11state.current_displaymode == DISPLAYMODE_FULLSCREEN) {
+    XUngrabPointer(x11state.display, CurrentTime);
+    XUngrabKeyboard(x11state.display, CurrentTime);
+  }
+
+  printf("d\n");
+
+  glw_flush();
+  printf("e\n");
+  window_close();
+  printf("f\n");
+  
+  window_open();
+  printf("g\n");
+}
+
+
+
+/**
+ *
+ */
 void
 gl_sysglue_init(int argc, char **argv)
 {
-  char *displayname = getenv("DISPLAY");
   int attribs[10];
   int na = 0;
-  XSetWindowAttributes winAttr;
-  unsigned long mask;
-  int x, y, w, h;
-  const char *fullscreen = config_get_str("fullscreen", NULL);
 
-  if(fullscreen)
-    x11state.fullscreen = 1;
+  x11state.displayname = getenv("DISPLAY");
 
-  if((x11state.display = XOpenDisplay(displayname)) == NULL) {
-    fprintf(stderr, "Unable to open X display \"%s\"\n", displayname);
+  if((x11state.display = XOpenDisplay(x11state.displayname)) == NULL) {
+    fprintf(stderr, "Unable to open X display \"%s\"\n", x11state.displayname);
     exit(1);
   }
 
   if(!glXQueryExtension(x11state.display, NULL, NULL)) {
     fprintf(stderr, "OpenGL GLX extension not supported by display \"%s\"\n",
-	    displayname);
+	    x11state.displayname);
     exit(1);
   }
 
@@ -116,85 +269,22 @@ gl_sysglue_init(int argc, char **argv)
 
   if(x11state.xvi == NULL) {
     fprintf(stderr, "Unable to find an adequate Visual on \"%s\"\n",
-	    displayname);
+	    x11state.displayname);
     exit(1);
   }
-
-  winAttr.event_mask        = KeyPressMask | StructureNotifyMask;
-  winAttr.background_pixmap = None;
-  winAttr.background_pixel  = 0;
-  winAttr.border_pixel      = 0;
-
-  winAttr.colormap = XCreateColormap(x11state.display, x11state.root,
-				     x11state.xvi->visual, AllocNone);
-  
-  mask = CWBackPixmap | CWBorderPixel | CWColormap | CWEventMask;
-
-  if(x11state.fullscreen) {
-    w = x11state.screen_width;
-    h = x11state.screen_height;
-    x = 0;
-    y = 0;
-    winAttr.override_redirect = True;
-    mask |= CWOverrideRedirect;
-
-  } else {
-    w = x11state.screen_width  * 3 / 4;
-    h = x11state.screen_height * 3 / 4;
-    x = x11state.screen_width  / 4;
-    y = x11state.screen_height / 4;
-  }
-
-  x11state.aspect_ratio = (float)w / (float)h;
-
-  x11state.win = 
-    XCreateWindow(x11state.display,
-		  x11state.root,
-		  x, y, w, h, 0,
-		  x11state.xvi->depth, InputOutput,
-		  x11state.xvi->visual, mask, &winAttr
-		  );
-
-  x11state.glxctx = glXCreateContext(x11state.display, x11state.xvi, NULL, 1);
-
-  if(x11state.glxctx == NULL) {
-    fprintf(stderr, "Unable to create GLX context on \"%s\"\n",
-	    displayname);
-    exit(1);
-  }
-
-
-  glXMakeCurrent(x11state.display, x11state.win, x11state.glxctx);
-
-  XMapWindow(x11state.display, x11state.win);
-
-  /* Make an empty / blank cursor */
-
-  XDefineCursor(x11state.display, x11state.win, blank_cursor());
-
-
-  if(x11state.fullscreen) {
-    XSync(x11state.display, False);
-    
-    while( GrabSuccess !=
-	   XGrabPointer(x11state.display, x11state.win,
-			True,
-			ButtonPressMask | ButtonReleaseMask | ButtonMotionMask
-			| PointerMotionMask,
-			GrabModeAsync, GrabModeAsync,
-			x11state.win, None, CurrentTime))
-        usleep(100);
-
-    XSetInputFocus(x11state.display, x11state.win, RevertToNone, CurrentTime);
-    XWarpPointer(x11state.display, None, x11state.root,
-		 0, 0, 0, 0, x / 2, y / 2);
-    XGrabKeyboard(x11state.display,  x11state.win, False,
-		  GrabModeAsync, GrabModeAsync, CurrentTime);
-  }
-  gl_common_init();
+  window_open();
 }
 
 
+/**
+ *
+ */
+
+
+
+/**
+ *
+ */
 static void
 gl_keypress(XEvent *event)
 {
@@ -252,6 +342,9 @@ gl_keypress(XEvent *event)
 
 
 
+/**
+ *
+ */
 void
 gl_sysglue_mainloop(void)
 {
@@ -259,6 +352,10 @@ gl_sysglue_mainloop(void)
   int w, h;
 
   while(1) {
+
+
+    if(x11state.current_displaymode != display_settings.displaymode)
+      window_change_displaymode();
 
     if(frame_duration != 0) {
 

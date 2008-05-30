@@ -1,0 +1,18 @@
+#HTSSIMPLEMODEL
+
+y-container {
+
+ x-container {
+  
+  text {
+   caption Displaymode:
+   align right
+  }
+  hlist {
+   focus-alpha
+   focus-cursor
+   id displaymodes
+  }
+ } 	 
+ space 15
+} 

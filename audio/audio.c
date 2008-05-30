@@ -27,9 +27,34 @@
 #include "audio.h"
 #include "audio_ui.h"
 
+#include "layout/layout_forms.h"
+
 void
 audio_init(void)
 {
   audio_alsa_init();
   audio_widget_make();
+}
+
+
+
+
+void
+audio_settings_init(glw_t *m, glw_focus_stack_t *gfs, ic_t *ic)
+{
+  struct layout_form_entry_list lfelist;
+  glw_t *t;
+
+  TAILQ_INIT(&lfelist);
+
+  t = layout_form_add_tab(m,
+			  "settings_list",     "settings/audio-icon",
+			  "settings_container","settings/audio-tab");
+  
+  if(t == NULL)
+    return;
+
+  LFE_ADD(&lfelist, "audiocontrollers");
+
+  layout_form_initialize(&lfelist, m, gfs, ic, 0);
 }

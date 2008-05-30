@@ -15,7 +15,7 @@ SRCS  += fa_fs.c
 VPATH += display
 
 VPATH += display
-SRCS  += gl_common.c display_$(GL_GLUE).c
+SRCS  += gl_common.c display_$(GL_GLUE).c display_settings.c
 
 # video playback subsys
 
