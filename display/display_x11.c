@@ -213,6 +213,7 @@ window_change_displaymode(void)
   glw_flush();
   window_close();
   window_open();
+  display_settings_save();
 }
 
 
@@ -227,6 +228,8 @@ gl_sysglue_init(int argc, char **argv)
   int na = 0;
 
   x11state.displayname = getenv("DISPLAY");
+
+  display_settings_load();
 
   if((x11state.display = XOpenDisplay(x11state.displayname)) == NULL) {
     fprintf(stderr, "Unable to open X display \"%s\"\n", x11state.displayname);
