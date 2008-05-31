@@ -203,27 +203,16 @@ window_close(void)
 static void
 window_change_displaymode(void)
 {
-  printf("a\n");
   glFlush();
-  printf("b\n");
   XSync(x11state.display, False);
-  printf("c\n");
-
 
   if(x11state.current_displaymode == DISPLAYMODE_FULLSCREEN) {
     XUngrabPointer(x11state.display, CurrentTime);
     XUngrabKeyboard(x11state.display, CurrentTime);
   }
-
-  printf("d\n");
-
   glw_flush();
-  printf("e\n");
   window_close();
-  printf("f\n");
-  
   window_open();
-  printf("g\n");
 }
 
 
