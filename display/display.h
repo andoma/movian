@@ -19,6 +19,9 @@
 #ifndef SYSGLUE_H
 #define SYSGLUE_H
 
+#include <libglw/glw.h>
+#include <hid/input.h>
+
 void gl_sysglue_init(int argc, char **argv);
 
 void gl_common_init(void);
@@ -26,6 +29,8 @@ void gl_common_init(void);
 void gl_sysglue_mainloop(void);
 
 void gl_update_timings(void);
+
+void display_settings_init(glw_t *m, glw_focus_stack_t *gfs, ic_t *ic);
 
 #endif /* SYSGLUE_H */
 

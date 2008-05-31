@@ -36,7 +36,7 @@
 #include "libhts/hts_strtab.h"
 
 #include "audio/audio.h"
-#include "display/display_settings.h"
+#include "display/display.h"
 
 static void settings_update_keyevent(hid_keycode_t *hkc, glw_t *w);
 

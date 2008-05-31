@@ -23,6 +23,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
+
+#include <libhts/hts_strtab.h>
 
 #include <libglw/glw.h>
 #include <GL/glx.h>
@@ -31,8 +34,8 @@
 #include "hid/input.h"
 #include "hid/keymapper.h"
 #include "layout/layout.h"
+#include "layout/layout_forms.h"
 #include "display.h"
-#include "display_settings.h"
 
 static struct {
   Display *display;
@@ -51,6 +54,96 @@ static struct {
   
 } x11state;
 
+
+static struct display_settings {
+  enum {
+    DISPLAYMODE_WINDOWED = 0,
+    DISPLAYMODE_FULLSCREEN,
+  } displaymode;
+
+} display_settings;
+
+
+
+static struct strtab displaymodetab[] = {
+  { "windowed",           DISPLAYMODE_WINDOWED },
+  { "fullscreen",         DISPLAYMODE_FULLSCREEN },
+};
+
+/**
+ * Load display settings
+ */
+static void
+display_settings_load(void)
+{
+  char path[PATH_MAX];
+  struct config_head cl;
+  const char *v;
+
+  snprintf(path, sizeof(path), "%s/display", settingsdir);
+
+  TAILQ_INIT(&cl);
+
+  if(config_read_file0(path, &cl) == -1)
+    return;
+
+  if((v = config_get_str_sub(&cl, "displaymode", NULL)) != NULL)
+    display_settings.displaymode = str2val(v, displaymodetab);
+
+  config_free0(&cl);
+}
+
+
+
+/**
+ * Save display settings
+ */
+static void
+display_settings_save(void)
+{
+  char path[PATH_MAX];
+  FILE *fp;
+
+  snprintf(path, sizeof(path), "%s/display", settingsdir);
+
+  if((fp = fopen(path, "w+")) == NULL)
+    return;
+
+  fprintf(fp, "displaymode = %s\n", val2str(display_settings.displaymode,
+					    displaymodetab));
+  fclose(fp);
+}
+
+
+
+
+/**
+ * Add a settings pane with relevant settings
+ */
+void
+display_settings_init(glw_t *m, glw_focus_stack_t *gfs, ic_t *ic)
+{
+  struct layout_form_entry_list lfelist;
+  glw_t *t;
+
+  TAILQ_INIT(&lfelist);
+
+  t = layout_form_add_tab(m,
+			  "settings_list",     "settings/display-icon",
+			  "settings_container","settings/display-tab");
+  
+  if(t == NULL)
+    return;
+
+  layout_form_add_option(t, "displaymodes", "Windowed", 
+			 DISPLAYMODE_WINDOWED);
+  layout_form_add_option(t, "displaymodes", "Fullscreen",
+			 DISPLAYMODE_FULLSCREEN);
+
+  LFE_ADD_OPTION(&lfelist, "displaymodes", &display_settings.displaymode);
+
+  layout_form_initialize(&lfelist, m, gfs, ic, 0);
+}
 
 
 /**
