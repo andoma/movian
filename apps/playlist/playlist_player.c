@@ -361,11 +361,10 @@ playlist_player(void *aux)
 
     if(t && s) {
       snprintf(buf, sizeof(buf), "%s - %s", t, s);
-      layout_update_str(overlay, "track_author_album", buf);
+    } else {
+      buf[0] = 0;
     }
-
-    
-
+    layout_update_str(overlay, "track_author_album", buf);
 
 
     /**
