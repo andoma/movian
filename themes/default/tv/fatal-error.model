@@ -1,0 +1,16 @@
+#HTSSIMPLEMODEL
+
+y-container {
+
+ bitmap {
+  filename icon://error.png
+  keep-aspect
+ }  
+
+ space 1.0 
+
+ y-container {
+  weight 4.0
+  id text
+ }
+}
