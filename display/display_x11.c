@@ -36,6 +36,7 @@
 #include "layout/layout.h"
 #include "layout/layout_forms.h"
 #include "display.h"
+#include "video/video_decoder.h"
 
 static struct {
   Display *display;
@@ -307,6 +308,7 @@ window_change_displaymode(void)
   window_close();
   window_open();
   display_settings_save();
+  vd_init(); /* Reload fragment shaders */
 }
 
 
