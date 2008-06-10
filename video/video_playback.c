@@ -666,6 +666,7 @@ play_video(const char *url, appi_t *ai, ic_t *ic, glw_t *parent)
   play_video_ctrl_t pvc;
   const char *s;
   pthread_t player_tid;
+  char faurl[1000];
 
   memset(&pvc, 0, sizeof(play_video_ctrl_t));
   pvc.pvc_ai = ai;
@@ -673,8 +674,10 @@ play_video(const char *url, appi_t *ai, ic_t *ic, glw_t *parent)
   /**
    * Open input file
    */
-  if(av_open_input_file(&pvc.pvc_fctx, url, NULL, 0, NULL) != 0) {
-    fprintf(stderr, "Unable to open input file\n");
+
+  snprintf(faurl, sizeof(faurl), "showtime:%s", url);
+  if(av_open_input_file(&pvc.pvc_fctx, faurl, NULL, 0, NULL) != 0) {
+    fprintf(stderr, "Unable to open input file %s\n", url);
     return -1;
   }
 
