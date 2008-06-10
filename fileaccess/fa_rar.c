@@ -1,0 +1,721 @@
+/*
+ *  Functions for exposing rar archives as virtual file systems
+ *  Copyright (C) 2008 Andreas Öman
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "config.h"
+
+#include <assert.h>
+#include <alloca.h>
+#include <string.h>
+#include <stdlib.h>
+#include <inttypes.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <pthread.h>
+
+#include "showtime.h"
+#include "fileaccess.h"
+
+
+#define RAR_HEADER_MAIN   0x73
+#define RAR_HEADER_FILE   0x74
+#define RAR_HEADER_NEWSUB 0x7a
+#define RAR_HEADER_ENDARC 0x7b
+
+
+
+
+#define  MHD_VOLUME         0x0001
+#define  MHD_COMMENT        0x0002
+#define  MHD_LOCK           0x0004
+#define  MHD_SOLID          0x0008
+#define  MHD_PACK_COMMENT   0x0010
+#define  MHD_NEWNUMBERING   0x0010
+#define  MHD_AV             0x0020
+#define  MHD_PROTECT        0x0040
+#define  MHD_PASSWORD       0x0080
+#define  MHD_FIRSTVOLUME    0x0100
+#define  MHD_ENCRYPTVER     0x0200
+
+#define  LHD_SPLIT_BEFORE   0x0001
+#define  LHD_SPLIT_AFTER    0x0002
+#define  LHD_PASSWORD       0x0004
+#define  LHD_COMMENT        0x0008
+#define  LHD_SOLID          0x0010
+
+#define  LHD_WINDOWMASK     0x00e0
+#define  LHD_WINDOW64       0x0000
+#define  LHD_WINDOW128      0x0020
+#define  LHD_WINDOW256      0x0040
+#define  LHD_WINDOW512      0x0060
+#define  LHD_WINDOW1024     0x0080
+#define  LHD_WINDOW2048     0x00a0
+#define  LHD_WINDOW4096     0x00c0
+#define  LHD_DIRECTORY      0x00e0
+
+#define  LHD_LARGE          0x0100
+#define  LHD_UNICODE        0x0200
+#define  LHD_SALT           0x0400
+#define  LHD_VERSION        0x0800
+#define  LHD_EXTTIME        0x1000
+#define  LHD_EXTFLAGS       0x2000
+
+#define  SKIP_IF_UNKNOWN    0x4000
+#define  LONG_BLOCK         0x8000
+
+#define  EARC_NEXT_VOLUME   0x0001 // not last volume
+#define  EARC_DATACRC       0x0002
+#define  EARC_REVSPACE      0x0004
+#define  EARC_VOLNUMBER     0x0008
+
+
+static pthread_mutex_t rar_global_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+TAILQ_HEAD(rar_segment_queue, rar_segment);
+LIST_HEAD(rar_volume_list, rar_volume);
+LIST_HEAD(rar_file_list, rar_file);
+LIST_HEAD(rar_archive_list, rar_archive);
+
+static struct rar_archive_list rar_archives;
+
+/**
+ *
+ */
+typedef struct rar_archive {
+
+  pthread_mutex_t ra_mutex;
+
+  int ra_refcount;
+  char *ra_url;
+  fa_protocol_t *ra_fap;
+
+  struct rar_volume_list ra_volumes;
+  struct rar_file *ra_root;
+
+  LIST_ENTRY(rar_archive) ra_link;
+} rar_archive_t;
+
+
+/**
+ *
+ */
+typedef struct rar_volume {
+  char *rv_url;
+  LIST_ENTRY(rar_volume) rv_link;
+} rar_volume_t;
+
+
+/**
+ *
+ */
+typedef struct rar_file {
+  struct rar_segment_queue rf_segments;
+  struct rar_file_list rf_files;
+
+  char *rf_name;
+  
+  int rf_type;
+
+  off_t rf_size;
+  rar_archive_t *rf_archive;
+
+  LIST_ENTRY(rar_file) rf_link;
+		       
+} rar_file_t;
+
+
+/**
+ *
+ */
+typedef struct rar_segment {
+  rar_volume_t *rs_volume;
+  off_t rs_offset;
+  off_t rs_voffset;
+  off_t rs_size;
+  TAILQ_ENTRY(rar_segment) rs_link;
+} rar_segment_t;
+
+
+/**
+ *
+ */
+static rar_file_t *
+rar_archive_find_file(rar_archive_t *ra, rar_file_t *parent,
+		      const char *name, int create)
+{
+  rar_file_t *rf;
+  const char *s, *n = name;
+  char *b;
+  int l;
+
+  s = strchr(name, '/');
+  if(s == NULL)
+    s = strchr(name, '\\');
+  if(s != NULL) {
+    l = s - name;
+    s++;
+    if(*s == 0)
+      return NULL; 
+    n = b = alloca(l + 1);
+    memcpy(b, name, l);
+    b[l] = 0;
+  }
+
+  LIST_FOREACH(rf, &parent->rf_files, rf_link)
+    if(!strcasecmp(n, rf->rf_name))
+      break;
+
+  if(rf == NULL) {
+
+    if(create == 0)
+      return NULL;
+
+    rf = calloc(1, sizeof(rar_file_t));
+    rf->rf_archive = ra;
+    TAILQ_INIT(&rf->rf_segments);
+    rf->rf_name = strdup(n);
+    rf->rf_type = s ? FA_DIR : FA_FILE;
+    LIST_INSERT_HEAD(&parent->rf_files, rf, rf_link);
+  } 
+
+  return s != NULL ? rar_archive_find_file(ra, rf, s, create) : rf;
+}
+
+
+
+static void
+rar_archive_destroy_file(rar_file_t *rf)
+{
+  rar_file_t *c;
+  rar_segment_t *rs;
+
+  
+  while((rs = TAILQ_FIRST(&rf->rf_segments)) != NULL) {
+    TAILQ_REMOVE(&rf->rf_segments, rs, rs_link);
+    free(rs);
+  }
+
+  while((c = LIST_FIRST(&rf->rf_files)) != NULL)
+    rar_archive_destroy_file(c);
+  
+  if(rf->rf_name != NULL) {
+    free(rf->rf_name);
+    LIST_REMOVE(rf, rf_link);
+  }
+  free(rf);
+}
+
+
+
+static void
+rar_archive_scrub(rar_archive_t *ra)
+{
+  rar_volume_t *rv;
+
+  if(ra->ra_root != NULL) {
+    rar_archive_destroy_file(ra->ra_root);
+    ra->ra_root = NULL;
+  }
+
+  while((rv = LIST_FIRST(&ra->ra_volumes)) != NULL) {
+    LIST_REMOVE(rv, rv_link);
+    free(rv->rv_url);
+    free(rv);
+  }
+}
+
+
+
+/**
+ *
+ */
+static int
+rar_archive_load(rar_archive_t *ra)
+{
+  char filename[512], *fname, *s;
+  const char *url;
+  uint8_t buf[16], *hdr = NULL;
+  void *fh = NULL;
+  int volume_index = -1, size, x;
+  unsigned int nsize;
+  uint8_t method, unpver;
+  uint16_t main_flags = 0, flags;
+  uint32_t u32;
+  uint64_t blocksize, packsize, unpsize;
+  int64_t voff;
+  rar_volume_t *rv;
+  rar_file_t *rf;
+  rar_segment_t *rs;
+  fa_protocol_t *fap;
+
+  if((url = fa_resolve_proto(ra->ra_url, &ra->ra_fap)) == NULL)
+    return -1;
+
+  ra->ra_root = calloc(1, sizeof(rar_file_t));
+  ra->ra_root->rf_type = FA_DIR;
+  ra->ra_root->rf_archive = ra;
+
+  fap = ra->ra_fap;
+
+ open_volume:
+
+  snprintf(filename, sizeof(filename), "%s", url);
+
+  if(volume_index >= 0) {
+    if((s = strrchr(filename, '.')) == NULL) {
+      return -1;
+    }
+    s++;
+    sprintf(s, "r%02d", volume_index);
+  }
+
+  volume_index++;
+
+  if((fh = fap->fap_open(filename)) == NULL) {
+    return -1;
+  }
+
+  /* Read & Verify RAR file signature */
+  if(fap->fap_read(fh, buf, 7) != 7)
+    goto err;
+
+  if(buf[0] != 'R' || buf[1] != 'a' || buf[2] != 'r' || buf[3] != '!' ||
+     buf[4] != 0x1a || buf[5] != 0x07 || buf[6] != 0x0) 
+    goto err;
+
+  /* Next we expect a MAIN_HEAD header (13 bytes) */
+  if(fap->fap_read(fh, buf, 13) != 13)
+    goto err;
+
+  /* 2 bytes CRC */
+  
+  if(buf[2] != RAR_HEADER_MAIN)
+    goto err;
+
+  main_flags = buf[3] | buf[4] << 8;
+  size =       buf[5] | buf[6] << 8;
+
+  if(size != 13)
+    goto err;
+
+  rv = calloc(1, sizeof(rar_volume_t));
+  LIST_INSERT_HEAD(&ra->ra_volumes, rv, rv_link);
+  rv->rv_url = strdup(filename);
+  
+  voff = 13 + 7;
+
+  while(1) {
+    
+    /* Read a header */
+    
+    if(fap->fap_read(fh, buf, 7) != 7)
+      break;
+
+    flags = buf[3] | buf[4] << 8;
+    size  = buf[5] | buf[6] << 8;
+    if(size < 7)
+      break;
+    
+    blocksize = size;
+    size -= 7;
+
+    /* Read rest of header */
+    hdr = malloc(size);
+    if(fap->fap_read(fh, hdr, size) != size)
+      break;
+
+    voff += 7 + size;
+
+    if(buf[2] == RAR_HEADER_FILE || buf[2] == RAR_HEADER_NEWSUB) {
+
+      packsize = (uint32_t)(hdr[0] | hdr[1] << 8 | hdr[2] << 16 | hdr[3] << 24);
+      unpsize  = (uint32_t)(hdr[4] | hdr[5] << 8 | hdr[6] << 16 | hdr[7] << 24);
+      /* Skip HostOS    1 byte  */
+      /* Skip FileCRC   4 bytes */
+      /* Skip FileTime  4 bytes */
+      unpver   = hdr[17];
+      method   = hdr[18];
+      nsize    = hdr[19] | hdr[20] << 8;
+      /* Skip FileAttr  4 bytes */
+      x = 25;
+
+      if(flags & LHD_LARGE) {
+	u32 = hdr[x+0] | hdr[x+1] << 8 | hdr[x+2] << 16 | hdr[x+3] << 24;
+	packsize |= (uint64_t)u32 << 32;
+
+	u32 = hdr[x+4] | hdr[x+5] << 8 | hdr[x+6] << 16 | hdr[x+7] << 24;
+	unpsize  |= (uint64_t)u32 << 32;
+
+	x+= 8;
+      }
+      fname = malloc(nsize + 1);
+      memcpy(fname, hdr + x, nsize);
+      fname[nsize] = 0;
+
+      if(unpver == 20 && method == '0' && 
+	 ((flags & LHD_WINDOWMASK) != LHD_DIRECTORY) &&
+	 (rf = rar_archive_find_file(ra, ra->ra_root, fname, 1)) != NULL) {
+	
+	rs = malloc(sizeof(rar_segment_t));
+	rs->rs_volume = rv;
+	rs->rs_offset = rf->rf_size;
+	rs->rs_voffset = voff;
+	rs->rs_size = packsize;
+	rf->rf_size += packsize;
+	TAILQ_INSERT_TAIL(&rf->rf_segments, rs, rs_link);
+      }
+
+      free(fname);
+
+      fap->fap_seek(fh, packsize, SEEK_CUR);
+      voff += packsize;
+
+    } else if(buf[2] == RAR_HEADER_ENDARC) {
+
+      x = 0;
+
+      if(flags & EARC_DATACRC) {
+	if(size < 4)
+	  break;
+	x += 4;
+      }
+      
+      if(flags & EARC_VOLNUMBER) {
+	if(size < 4)
+	  break;
+	u32 = hdr[x+0] | hdr[x+1] << 8 | hdr[x+2] << 16 | hdr[x+3] << 24;
+      }
+
+      free(hdr);
+
+      fap->fap_close(fh);
+      fh = NULL;
+
+
+      if(flags & EARC_NEXT_VOLUME)
+	goto open_volume; 
+      return 0;
+     
+    } else {
+      printf("Unknown header 0x%x, skip\n", buf[2]);
+    }
+    free(hdr);
+  }
+
+ err:
+  fap->fap_close(fh);
+  return -1;
+}
+
+/**
+ *
+ */
+static void
+rar_archive_unref(rar_archive_t *ra)
+{
+  pthread_mutex_lock(&rar_global_mutex);
+
+  ra->ra_refcount--;
+
+  pthread_mutex_unlock(&rar_global_mutex);
+}
+
+
+/**
+ *
+ */
+static rar_archive_t *
+rar_archive_find(const char *url)
+{
+  rar_archive_t *ra;
+
+  pthread_mutex_lock(&rar_global_mutex);
+
+  LIST_FOREACH(ra, &rar_archives, ra_link)
+    if(!strcasecmp(ra->ra_url, url))
+      break;
+
+  if(ra == NULL) {
+    ra = calloc(1, sizeof(rar_archive_t));
+    pthread_mutex_init(&ra->ra_mutex, NULL);
+    
+    ra->ra_url = strdup(url);
+    LIST_INSERT_HEAD(&rar_archives, ra, ra_link);
+  }
+
+  ra->ra_refcount++;
+  pthread_mutex_unlock(&rar_global_mutex);
+
+  pthread_mutex_lock(&ra->ra_mutex);
+
+  if(ra->ra_root == NULL && rar_archive_load(ra)) {
+    rar_archive_scrub(ra);
+  }
+  pthread_mutex_unlock(&ra->ra_mutex);
+
+  return ra;
+}
+
+
+/**
+ *
+ */
+static rar_file_t *
+rar_file_find(const char *url)
+{
+  int l = strlen(url);
+  char *r, *u = alloca(l + 1);
+  rar_archive_t *ra;
+  rar_file_t *rf;
+
+  memcpy(u, url, l);
+  u[l] = 0;
+
+  if((r = strrchr(u, '|')) == NULL)
+    return NULL;
+
+  *r++ = 0;
+  if(*r == '/')
+    r++;
+  if(*r == 0)
+    r = NULL;
+
+  ra = rar_archive_find(u);
+
+  if(r == NULL)
+    rf = ra->ra_root;
+  else
+    rf = rar_archive_find_file(ra, ra->ra_root, r, 0);
+
+  if(rf == NULL)
+    rar_archive_unref(ra);
+
+  return rf;
+}
+
+/**
+ *
+ */
+static void
+rar_file_unref(rar_file_t *rf)
+{
+  rar_archive_unref(rf->rf_archive);
+}
+
+
+/**
+ *
+ */
+static int
+rar_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
+{
+  rar_file_t *c, *rf;
+  char buf[1000];
+
+  if((rf = rar_file_find(url)) == NULL)
+    return -1;
+  
+  if(rf->rf_type != FA_DIR) {
+    rar_file_unref(rf);
+    return -1;
+  }
+
+  LIST_FOREACH(c, &rf->rf_files, rf_link) {
+    snprintf(buf, sizeof(buf), "rar://%s/%s", url, c->rf_name);
+    cb(arg, buf, c->rf_name, c->rf_type);
+  }
+
+  rar_file_unref(rf);
+  return 0;
+}
+
+
+
+/**
+ *
+ */
+typedef struct rar_fd {
+  rar_file_t *rfd_file;
+  rar_segment_t *rfd_segment;
+  void *rfd_fh;
+  off_t rfd_fpos;
+} rar_fd_t;
+
+
+/**
+ *
+ */
+static void *
+rar_open(const char *url)
+{
+  rar_file_t *rf;
+  rar_fd_t *rfd;
+
+  if((rf = rar_file_find(url)) == NULL)
+    return NULL;
+  
+  if(rf->rf_type != FA_FILE) {
+    rar_file_unref(rf);
+    return NULL;
+  }
+
+  rfd = calloc(1, sizeof(rar_fd_t));
+  rfd->rfd_file = rf;
+  return rfd;
+}
+
+
+/**
+ *
+ */
+static void 
+rar_close(void *handle)
+{
+  rar_fd_t *rfd = handle;
+  fa_protocol_t *fap = rfd->rfd_file->rf_archive->ra_fap;
+
+  if(rfd->rfd_fh != NULL)
+    fap->fap_close(rfd->rfd_fh);
+
+  rar_file_unref(rfd->rfd_file);
+  free(rfd);
+}
+
+
+/**
+ * Read from file
+ */
+static int
+rar_read(void *handle, void *buf, size_t size)
+{
+  rar_fd_t *rfd = handle;
+  rar_file_t *rf = rfd->rfd_file;
+  fa_protocol_t *fap = rf->rf_archive->ra_fap;
+  rar_segment_t *rs;
+  size_t c = 0, r, w;
+  off_t o;
+  int x;
+
+  while(c < size) {
+    if((rs = rfd->rfd_segment) == NULL || 
+       rfd->rfd_fpos < rs->rs_offset ||
+       rfd->rfd_fpos >= rs->rs_offset + rs->rs_size) {
+      
+      if(rfd->rfd_fh != NULL) {
+	fap->fap_close(rfd->rfd_fh);
+	rfd->rfd_fh = NULL;
+      }
+
+      TAILQ_FOREACH(rs, &rf->rf_segments, rs_link) {
+	if(rfd->rfd_fpos < rs->rs_offset + rs->rs_size)
+	  break;
+      }
+      if(rs == NULL)
+	return -1;
+
+    }
+
+    w = size - c;
+    r = rs->rs_offset + rs->rs_size - rfd->rfd_fpos;
+    if(w < r)
+      r = w;
+    
+    if(rfd->rfd_fh == NULL) {
+      rfd->rfd_fh = fap->fap_open(rs->rs_volume->rv_url);
+      if(rfd->rfd_fh == NULL)
+	return -1;
+    }
+
+    o = rfd->rfd_fpos - rs->rs_offset + rs->rs_voffset;
+
+    if(fap->fap_seek(rfd->rfd_fh, o, SEEK_SET) < 0) {
+      return -1;
+    }
+    x = fap->fap_read(rfd->rfd_fh, buf + c, r);
+    
+    if(x != r) {
+      return -1;
+    }
+    
+    rfd->rfd_fpos += x;
+    c += x;
+  }
+  return c;
+}
+
+
+/**
+ * Seek in file
+ */
+static off_t
+rar_seek(void *handle, off_t pos, int whence)
+{
+  rar_fd_t *rfd = handle;
+  off_t np;
+
+  switch(whence) {
+  case SEEK_SET:
+    np = pos;
+    break;
+
+  case SEEK_CUR:
+    np = rfd->rfd_fpos + pos;
+    break;
+
+  case SEEK_END:
+    np = rfd->rfd_file->rf_size + pos;
+    break;
+  default:
+    return -1;
+  }
+
+  if(np < 0)
+    return -1;
+
+  rfd->rfd_fpos = np;
+  return np;
+}
+
+
+/**
+ * Return size of file
+ */
+static off_t
+rar_fsize(void *handle)
+{
+  rar_fd_t *rfd = handle;
+
+  return rfd->rfd_file->rf_size;
+}
+
+
+
+
+
+
+fa_protocol_t fa_protocol_rar = {
+  .fap_name = "rar",
+  .fap_scan =  rar_scandir,
+  .fap_open  = rar_open,
+  .fap_close = rar_close,
+  .fap_read  = rar_read,
+  .fap_seek  = rar_seek,
+  .fap_fsize = rar_fsize,
+};

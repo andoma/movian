@@ -206,6 +206,7 @@ static int
 browser_scandir0(browser_node_t *bn)
 {
   int r = 0;
+  const char *url;
 
   if(bn->bn_type != FA_DIR)
     r = ENOTDIR;
@@ -215,7 +216,10 @@ browser_scandir0(browser_node_t *bn)
    * User may be prompted for username/password, etc
    */
 
-  if(!r) r = fileaccess_scandir(bn->bn_url, browser_scandir_callback, bn);
+  if(!r) {
+    url = filetag_get_str2(&bn->bn_ftags, FTAG_URL) ?: bn->bn_url;
+    r = fileaccess_scandir(url, browser_scandir_callback, bn);
+  }
 
   /**
    * Enqueue directory on probe queue.

@@ -165,22 +165,36 @@ fa_probe_header(struct filetag_list *list, fa_protocol_t *fap,
 		const char *url, void *fh)
 {
   char pb[128];
+  char path[512];
   off_t psiz;
+  uint16_t flags;
 
   memset(pb, 0, sizeof(pb));
   psiz = fap->fap_read(fh, pb, sizeof(pb));
 
+  if(pb[0] == 'R'  && pb[1] == 'a'  && pb[2] == 'r' && pb[3] == '!' &&
+     pb[4] == 0x1a && pb[5] == 0x07 && pb[6] == 0x0 && pb[9] == 0x73) {
+
+    flags = pb[10] | pb[11] << 8;
+    if((flags & 0x101) == 1)
+      return FA_NONE; /* Don't include slave volumes */
+
+
+    snprintf(path, sizeof(path), "rar://%s|", url);
+    filetag_set_str(list, FTAG_URL, path);
+    return FA_DIR;
+  }
+
   if(!strncasecmp(pb, "[playlist]", 10)) {
     /* Playlist */
     fa_probe_playlist(list, url, pb, sizeof(pb));
-    return 0;
+    return FA_FILE;
   }
 
   if(pb[6] == 'J' && pb[7] == 'F' && pb[8] == 'I' && pb[9] == 'F') {
     /* JPEG image */
     filetag_set_int(list, FTAG_FILETYPE, FILETYPE_IMAGE);
-    return 0;
-
+    return FA_FILE;
   }
 
   if(pb[6] == 'E' && pb[7] == 'x' && pb[8] == 'i' && pb[9] == 'f') {
@@ -189,13 +203,13 @@ fa_probe_header(struct filetag_list *list, fa_protocol_t *fap,
     fa_probe_exif(list, fap, fh, pb, psiz);
 #endif
     filetag_set_int(list, FTAG_FILETYPE, FILETYPE_IMAGE);
-    return 0;
+    return FA_FILE;
   }
 
   if(!memcmp(pb, pngsig, 8)) {
     /* PNG */
     filetag_set_int(list, FTAG_FILETYPE, FILETYPE_IMAGE);
-    return 0;
+    return FA_FILE;
   }
   return -1;
 }
@@ -235,7 +249,7 @@ fa_probe_iso(struct filetag_list *list, fa_protocol_t *fap, void *fh)
 int
 fa_probe(struct filetag_list *list, const char *url)
 {
-  int i;
+  int i, r;
   AVFormatContext *fctx;
   AVCodecContext *avctx;
   AVCodec *codec;
@@ -259,14 +273,14 @@ fa_probe(struct filetag_list *list, const char *url)
   if((siz = fap->fap_fsize(fh)) > 0)
     filetag_set_int(list, FTAG_FILESIZE, siz);
 
-  if(fa_probe_header(list, fap, url, fh) == 0) {
+  if((r = fa_probe_header(list, fap, url0, fh)) != -1) {
     fap->fap_close(fh);
-    return 0;
+    return r;
   }
 
   if(fa_probe_iso(list, fap, fh) == 0) {
     fap->fap_close(fh);
-    return 0;
+    return FA_FILE;
   }
 
   fap->fap_close(fh);
@@ -285,7 +299,7 @@ fa_probe(struct filetag_list *list, const char *url)
   if(av_find_stream_info(fctx) < 0) {
     av_close_input_file(fctx);
     ffunlock();
-    return 1;
+    return -1;
   }
 
   /* Format meta info */
@@ -411,5 +425,5 @@ fa_probe(struct filetag_list *list, const char *url)
   }
 #endif
 
-  return 0;
+  return FA_FILE;
 }

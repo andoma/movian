@@ -8,7 +8,7 @@ SRCS = 	main.c app.c media.c mpeg_support.c coms.c
 
 VPATH += fileaccess
 SRCS  += fileaccess.c fa_probe.c fa_tags.c fa_imageloader.c
-SRCS  += fa_fs.c
+SRCS  += fa_fs.c fa_rar.c
 
 # Display
 

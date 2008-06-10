@@ -35,6 +35,7 @@ typedef enum {
   FTAG_AUDIOINFO,
   FTAG_VIDEOINFO,
   FTAG_MEDIAFORMAT,
+  FTAG_URL,
 } ftag_t;
 
 

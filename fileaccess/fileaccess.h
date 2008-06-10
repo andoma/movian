@@ -27,6 +27,7 @@ extern struct fa_protocol_list fileaccess_all_protocols;
  */
 #define FA_DIR  1
 #define FA_FILE 2
+#define FA_NONE 3 /* Entry should be hidden */
 
 typedef void (fa_scandir_callback_t)(void *arg, const char *url,
 				     const char *filename, int type);

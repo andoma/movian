@@ -41,7 +41,7 @@ browser_probe_thread(void *arg)
 {
   browser_root_t *br = arg;
   browser_node_t *bn;
-
+  int type;
 
   while(1) {
 
@@ -59,8 +59,14 @@ browser_probe_thread(void *arg)
     case FA_FILE:
 
       pthread_mutex_lock(&bn->bn_ftags_mutex);
-      fa_probe(&bn->bn_ftags, bn->bn_url);
-      browser_view_node_model_update(bn);
+      type = fa_probe(&bn->bn_ftags, bn->bn_url);
+
+      if(type == FA_NONE) {
+	glw_destroy(bn->bn_icon_xfader);
+      } else {
+	bn->bn_type = type;
+	browser_view_node_model_update(bn);
+      }
       pthread_mutex_unlock(&bn->bn_ftags_mutex);
       break;
 

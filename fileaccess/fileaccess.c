@@ -129,6 +129,7 @@ void
 fileaccess_init(void)
 {
   INITPROTO(fs);
+  INITPROTO(rar);
   register_protocol(&fa_lavf_proto);
 }
 
