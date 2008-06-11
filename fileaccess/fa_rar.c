@@ -434,6 +434,13 @@ rar_archive_unref(rar_archive_t *ra)
 
   ra->ra_refcount--;
 
+  if(ra->ra_refcount == 0) {
+    rar_archive_scrub(ra);
+    free(ra->ra_url);
+    LIST_REMOVE(ra, ra_link);
+    free(ra);
+  }
+
   pthread_mutex_unlock(&rar_global_mutex);
 }
 
