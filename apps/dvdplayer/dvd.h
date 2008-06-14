@@ -22,7 +22,7 @@
 #include <dvdnav/dvdnav.h>
 
 #include "app.h"
-#include "mpeg_support.h"
+#include "dvd_mpeg.h"
 #include "video/video_decoder.h"
 
 typedef struct dvd_player {

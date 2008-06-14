@@ -2,7 +2,7 @@
 
 # core
 
-SRCS = 	main.c app.c media.c mpeg_support.c coms.c
+SRCS = 	main.c app.c media.c coms.c
 
 # file access subsys
 
@@ -75,7 +75,7 @@ SRCS  += browser.c navigator.c browser_view.c browser_probe.c \
 # DVD application
 
 VPATH += apps/dvdplayer
-SRCS  += dvd.c 
+SRCS  += dvd.c dvd_mpeg.c
 
 # Playlist application
 

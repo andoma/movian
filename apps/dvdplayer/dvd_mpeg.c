@@ -29,7 +29,7 @@
 #include <libavformat/avformat.h>
 
 #include "showtime.h"
-#include "mpeg_support.h"
+#include "dvd_mpeg.h"
 #include "media.h"
 
 #include <netinet/in.h>
