@@ -46,35 +46,12 @@ typedef struct pes_stream {
 
 
 
-LIST_HEAD(ts_pid_head, ts_pid);
-
-typedef struct ts_pid {
-
-  LIST_ENTRY(ts_pid) tsp_link;
-
-
-  int tsp_pid;
-  int tsp_cc;
-  int tsp_cc_errors;
-
-  int tsp_pus;
-
-  uint8_t *tsp_buf;
-  size_t tsp_bufptr;
-  size_t tsp_bufsize;
-
-} ts_pid_t;
-
 
 typedef struct pes_player {
 
   pes_stream_t pp_video;
   pes_stream_t pp_audio;
   pes_stream_t pp_spu;
-
-  /* For TS packet decoding */
-
-  struct ts_pid_head pp_pidlist;
 
   /* */
 
