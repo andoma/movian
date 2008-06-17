@@ -43,46 +43,63 @@ browser_probe_thread(void *arg)
   browser_node_t *bn;
   int type;
 
-  while(1) {
+  pthread_mutex_lock(&br->br_probe_mutex);
 
-    pthread_mutex_lock(&br->br_probe_mutex);
-    while((bn = TAILQ_FIRST(&br->br_probe_queue)) == NULL && br->br_probe_run)
-      pthread_cond_wait(&br->br_probe_cond, &br->br_probe_mutex);
+  while(br->br_probe_run) {
 
-    if(!br->br_probe_run)
-      break;
+    if((bn = TAILQ_FIRST(&br->br_probe_queue)) != NULL) {
+      TAILQ_REMOVE(&br->br_probe_queue, bn, bn_probe_link);
+      pthread_mutex_unlock(&br->br_probe_mutex);
 
-    TAILQ_REMOVE(&br->br_probe_queue, bn, bn_probe_link);
-    pthread_mutex_unlock(&br->br_probe_mutex);
 
-    /* If the probing code is the only one with a reference, don't probe */
-    if(bn->bn_refcnt > 1) switch(bn->bn_type) {
-    case FA_FILE:
+      /* If the probing code is the only one with a reference, don't probe */
+      if(bn->bn_refcnt > 1) {
 
-      pthread_mutex_lock(&bn->bn_ftags_mutex);
-      type = fa_probe(&bn->bn_ftags, bn->bn_url);
+	pthread_mutex_lock(&bn->bn_ftags_mutex);
 
-      if(type == FA_NONE) {
-	glw_destroy(bn->bn_icon_xfader);
-      } else {
-	bn->bn_type = type;
-	browser_view_node_model_update(bn);
+	if(bn->bn_type == FA_FILE) {
+
+	  type = fa_probe(&bn->bn_ftags, bn->bn_url);
+
+	  if(type == FA_NONE) {
+	    glw_destroy(bn->bn_icon_xfader);
+	  } else {
+	    bn->bn_type = type;
+	    browser_view_node_model_update(bn);
+	  }
+	}
+
+	pthread_mutex_unlock(&bn->bn_ftags_mutex);
       }
-      pthread_mutex_unlock(&bn->bn_ftags_mutex);
-      break;
 
-    case FA_DIR:
-      probe_figure_primary_content(br, bn);
-      break;
+      browser_node_deref(bn);
+      pthread_mutex_lock(&br->br_probe_mutex);
+      continue;
     }
 
-    browser_node_deref(bn);
+
+    if((bn = TAILQ_FIRST(&br->br_autoview_queue)) != NULL) {
+      TAILQ_REMOVE(&br->br_autoview_queue, bn, bn_autoview_link);
+      pthread_mutex_unlock(&br->br_probe_mutex);
+
+      probe_figure_primary_content(br, bn);
+
+      browser_node_deref(bn);
+      pthread_mutex_lock(&br->br_probe_mutex);
+      continue;
+    }
+    pthread_cond_wait(&br->br_probe_cond, &br->br_probe_mutex);
   }
 
   /* Clear the probe queue */
 
   while((bn = TAILQ_FIRST(&br->br_probe_queue)) != NULL) {
     TAILQ_REMOVE(&br->br_probe_queue, bn, bn_probe_link);
+    browser_node_deref(bn);
+  }
+
+  while((bn = TAILQ_FIRST(&br->br_autoview_queue)) != NULL) {
+    TAILQ_REMOVE(&br->br_autoview_queue, bn, bn_autoview_link);
     browser_node_deref(bn);
   }
 
@@ -168,10 +185,28 @@ browser_probe_enqueue(browser_node_t *bn)
  *
  */
 void
+browser_probe_autoview_enqueue(browser_node_t *bn)
+{
+  browser_root_t *br = bn->bn_root;
+
+  browser_node_ref(bn);
+
+  pthread_mutex_lock(&br->br_probe_mutex);
+  TAILQ_INSERT_TAIL(&br->br_autoview_queue, bn, bn_autoview_link);
+  pthread_cond_signal(&br->br_probe_cond);
+  pthread_mutex_unlock(&br->br_probe_mutex);
+}
+
+
+/**
+ *
+ */
+void
 browser_probe_init(browser_root_t *br)
 {
   br->br_probe_run = 1;
   TAILQ_INIT(&br->br_probe_queue);
+  TAILQ_INIT(&br->br_autoview_queue);
 
   pthread_cond_init(&br->br_probe_cond, NULL);
   pthread_mutex_init(&br->br_probe_mutex, NULL);

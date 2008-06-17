@@ -23,6 +23,8 @@ void browser_probe_init(browser_root_t *br);
 
 void browser_probe_enqueue(browser_node_t *bn);
 
+void browser_probe_autoview_enqueue(browser_node_t *bn);
+
 void browser_probe_deinit(browser_root_t *br);
 
 #endif /* BROWSER_PROBE_H */

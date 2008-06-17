@@ -228,7 +228,7 @@ browser_scandir0(browser_node_t *bn)
    * and switch view if seems reasonable to do so
    */
 
-  browser_probe_enqueue(bn);
+  browser_probe_autoview_enqueue(bn);
   return r;
 }  
     

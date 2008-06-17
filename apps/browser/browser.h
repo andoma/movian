@@ -85,7 +85,7 @@ typedef struct browser_node {
      probemutex, for more info see browser_probe.[ch] */
 
   TAILQ_ENTRY(browser_node) bn_probe_link;
-  int                       bn_probe_linked;
+  TAILQ_ENTRY(browser_node) bn_autoview_link;
 
 } browser_node_t;
 
@@ -114,6 +114,7 @@ typedef struct browser_root {
   pthread_t br_probe_thread_id;
   int br_probe_run;
   struct browser_node_queue br_probe_queue;
+  struct browser_node_queue br_autoview_queue;
 
 } browser_root_t;
 
