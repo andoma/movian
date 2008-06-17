@@ -156,6 +156,16 @@ fs_fsize(void *handle)
 }
 
 
+/**
+ * Standard unix stat
+ */
+static int
+fs_stat(const char *url, struct stat *buf)
+{
+  return stat(url, buf);
+}
+
+
 fa_protocol_t fa_protocol_fs = {
   .fap_name = "file",
   .fap_scan = fs_scandir,
@@ -164,4 +174,5 @@ fa_protocol_t fa_protocol_fs = {
   .fap_read  = fs_read,
   .fap_seek  = fs_seek,
   .fap_fsize = fs_fsize,
+  .fap_stat  = fs_stat,
 };

@@ -19,6 +19,8 @@
 #ifndef FILEACCESS_H
 #define FILEACCESS_H
 
+#include <sys/stat.h>
+
 LIST_HEAD(fa_protocol_list, fa_protocol);
 extern struct fa_protocol_list fileaccess_all_protocols;
 
@@ -48,7 +50,7 @@ typedef struct fa_protocol {
   int (*fap_read)(void *handle, void *buf, size_t size);
   off_t (*fap_seek)(void *handle, off_t pos, int whence);
   off_t (*fap_fsize)(void *handle);
-
+  int   (*fap_stat)(const char *url, struct stat *buf);
 } fa_protocol_t;
 
 

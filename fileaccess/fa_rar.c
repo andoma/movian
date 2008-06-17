@@ -712,6 +712,25 @@ rar_fsize(void *handle)
   return rfd->rfd_file->rf_size;
 }
 
+/**
+ * Standard unix stat
+ */
+static int
+rar_stat(const char *url, struct stat *buf)
+{
+  rar_file_t *rf;
+
+  if((rf = rar_file_find(url)) == NULL)
+    return -1;
+
+  memset(buf, 0, sizeof(struct stat));
+
+  buf->st_mode = rf->rf_type == FA_DIR ? S_IFDIR : S_IFREG;
+  buf->st_size = rf->rf_size;
+
+  rar_file_unref(rf);
+  return 0;
+}
 
 
 
@@ -725,4 +744,5 @@ fa_protocol_t fa_protocol_rar = {
   .fap_read  = rar_read,
   .fap_seek  = rar_seek,
   .fap_fsize = rar_fsize,
+  .fap_stat  = rar_stat,
 };
