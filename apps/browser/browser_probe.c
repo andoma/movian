@@ -55,7 +55,8 @@ browser_probe_thread(void *arg)
     TAILQ_REMOVE(&br->br_probe_queue, bn, bn_probe_link);
     pthread_mutex_unlock(&br->br_probe_mutex);
 
-    switch(bn->bn_type) {
+    /* If the probing code is the only one with a reference, don't probe */
+    if(bn->bn_refcnt > 1) switch(bn->bn_type) {
     case FA_FILE:
 
       pthread_mutex_lock(&bn->bn_ftags_mutex);
@@ -98,6 +99,9 @@ probe_figure_primary_content(browser_root_t *br, browser_node_t *bn)
   browser_node_t *c, **a;
   int cnt, contentcount[32], i;
   int64_t type;
+
+  if(bn->bn_cont_xfader == NULL)
+    return; /* not really safe */
 
   memset(contentcount, 0, sizeof(int) * 32);
 
