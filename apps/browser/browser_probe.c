@@ -69,6 +69,18 @@ browser_probe_thread(void *arg)
 	  }
 	}
 
+	if(bn->bn_type == FA_DIR) {
+
+	  type = fa_probe_dir(&bn->bn_ftags, bn->bn_url);
+
+	  if(type == FA_NONE) {
+	    glw_destroy(bn->bn_icon_xfader);
+	  } else {
+	    bn->bn_type = type;
+	    browser_view_node_model_update(bn);
+	  }
+	}
+
 	pthread_mutex_unlock(&bn->bn_ftags_mutex);
       }
 

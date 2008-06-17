@@ -260,8 +260,7 @@ browser_scandir_callback(void *arg, const char *url, const char *filename,
 
   c = browser_node_add_child(bn, url, type);
 
-  if(type == FA_FILE)
-    browser_probe_enqueue(c);
+  browser_probe_enqueue(c);
 
   browser_node_deref(c);
 }

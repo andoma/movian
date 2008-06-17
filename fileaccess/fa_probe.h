@@ -23,4 +23,6 @@
 
 int fa_probe(struct filetag_list *list, const char *filename);
 
+int fa_probe_dir(struct filetag_list *list, const char *url);
+
 #endif /* FA_PROBE_H */

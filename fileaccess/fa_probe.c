@@ -427,3 +427,37 @@ fa_probe(struct filetag_list *list, const char *url)
 
   return FA_FILE;
 }
+
+/**
+ * Make a directory turn into a dvd
+ */
+static int
+fa_probe_dir_is_dvd(struct filetag_list *list)
+{
+  filetag_set_int(list, FTAG_FILETYPE, FILETYPE_ISO);
+  return FA_FILE;
+}
+
+/**
+ * Probe a directory
+ */
+int
+fa_probe_dir(struct filetag_list *list, const char *url)
+{
+  fa_protocol_t *fap;
+  char path[300];
+  struct stat buf;
+
+  if((url = fa_resolve_proto(url, &fap)) == NULL)
+    return -1;
+
+  snprintf(path, sizeof(path), "%s/VIDEO_TS", url);
+  if(fap->fap_stat(path, &buf) == 0 && S_ISDIR(buf.st_mode))
+    return fa_probe_dir_is_dvd(list);
+
+  snprintf(path, sizeof(path), "%s/video_ts", url);
+  if(fap->fap_stat(path, &buf) == 0 && S_ISDIR(buf.st_mode))
+    return fa_probe_dir_is_dvd(list);
+
+  return FA_DIR;
+}
