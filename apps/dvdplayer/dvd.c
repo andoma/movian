@@ -38,6 +38,9 @@
 #include "video/video_menu.h"
 #include "layout/layout.h"
 #include "layout/layout_forms.h"
+#include <libhts/svfs.h>
+
+extern struct svfs_ops showtime_vfs_ops;
 
 static int dvd_ctrl_input(dvd_player_t *dp, int wait);
 
@@ -429,6 +432,7 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
   inputevent_t ie;
   glw_t *top;
   pthread_t player_tid;
+  struct svfs_ops *ops;
 
   memset(dp, 0, sizeof(dvd_player_t));
 
@@ -436,8 +440,11 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
   dp->dp_mp = mp;
   dp->dp_ai = ai;
 
-  if(!strncmp("file://", url, 7))
-    url += 7;
+  if(isdrive) {
+    ops = NULL;
+  } else {
+    ops = &showtime_vfs_ops;
+  }
 
   /**
    * Create top level stack
@@ -460,7 +467,7 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 #endif
 
 
-  if(dvdnav_open(&dp->dp_dvdnav, url) != DVDNAV_STATUS_OK) {
+  if(dvdnav_open(&dp->dp_dvdnav, url, ops) != DVDNAV_STATUS_OK) {
     //    dvd_display_error(w, "An error occured when opening DVD", isdrive);
     glw_destroy(top);
     return -1;
