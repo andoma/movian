@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <dirent.h>
 
 #include "showtime.h"
 #include "fileaccess.h"
@@ -35,16 +36,18 @@
 #include <libavformat/avio.h>
 #include <libavcodec/avcodec.h>
 
+#include <libhts/svfs.h>
+
 struct fa_protocol_list fileaccess_all_protocols;
 static URLProtocol fa_lavf_proto;
 
 /**
  * Glue struct for exposing fileaccess protocols into lavf
  */
-typedef struct fa_lavf_glue {
+typedef struct fa_glue {
   fa_protocol_t *fap;
   void *fh;
-} fa_lavf_glue_t;
+} fa_glue_t;
 
 
 /**
@@ -113,6 +116,97 @@ fileaccess_size(const char *url)
   return size;
 }
 
+/**
+ *
+ */
+typedef struct fa_dir {
+  int entries;
+
+  int curentry;
+
+  struct dirent **vec;
+
+} fa_dir_t;
+
+
+/**
+ *
+ */
+static void
+fa_filldir(void *arg, const char *url, const char *filename, int type)
+{
+  fa_dir_t *fd = arg;
+  struct dirent *d;
+  int s, l = strlen(filename);
+
+  fd->vec = realloc(fd->vec, sizeof(void *) * (fd->entries + 1));
+
+  s = sizeof(struct dirent) - sizeof(d->d_name) + l + 1;
+
+  d = malloc(s);
+  d->d_ino = 0;
+  d->d_off = 0;
+  d->d_reclen = 0;
+  d->d_type = type == FA_FILE ? DT_REG : DT_DIR;
+  memcpy(d->d_name, filename, l);
+  d->d_name[l] = 0;
+
+  fd->vec[fd->entries++] = d;
+}
+
+
+
+
+/**
+ *
+ */
+static void *
+fa_opendir(const char *url)
+{
+  fa_protocol_t *fap;
+  fa_dir_t *fd;
+
+  if((url = fa_resolve_proto(url, &fap)) == NULL)
+    return NULL;
+
+  fd = calloc(1, sizeof(fa_dir_t));
+
+  if(fap->fap_scan(url, fa_filldir, fd) < 0) {
+    free(fd);
+    return NULL;
+  }
+
+  return fd;
+}
+
+
+/**
+ *
+ */
+static struct dirent *
+fa_readdir(void *handle)
+{
+  fa_dir_t *fd = handle;
+  if(fd->curentry == fd->entries)
+    return NULL;
+
+  return fd->vec[fd->curentry++];
+}
+
+/**
+ *
+ */
+static void
+fa_closedir(void *handle)
+{
+  fa_dir_t *fd = handle;
+  int i;
+
+  for(i = 0; i < fd->entries; i++)
+    free(fd->vec[i]);
+  free(fd);
+}
+
 
 
 /**
@@ -142,7 +236,7 @@ static int
 fa_lavf_open(URLContext *h, const char *filename, int flags)
 {
   fa_protocol_t *fap;
-  fa_lavf_glue_t *flg;
+  fa_glue_t *glue;
   void *fh;
 
   av_strstart(filename, "showtime:", &filename);  
@@ -153,10 +247,10 @@ fa_lavf_open(URLContext *h, const char *filename, int flags)
   if((fh = fap->fap_open(filename)) == NULL)
     return AVERROR_NOENT;
   
-  flg = malloc(sizeof(fa_lavf_glue_t));
-  flg->fap = fap;
-  flg->fh = fh;
-  h->priv_data = flg;
+  glue = malloc(sizeof(fa_glue_t));
+  glue->fap = fap;
+  glue->fh = fh;
+  h->priv_data = glue;
   return 0;
 }
 
@@ -166,9 +260,9 @@ fa_lavf_open(URLContext *h, const char *filename, int flags)
 static int
 fa_lavf_read(URLContext *h, unsigned char *buf, int size)
 {
-  fa_lavf_glue_t *flg = h->priv_data;
+  fa_glue_t *glue = h->priv_data;
   
-  return flg->fap->fap_read(flg->fh, buf, size);
+  return glue->fap->fap_read(glue->fh, buf, size);
 }
 
 /**
@@ -177,12 +271,12 @@ fa_lavf_read(URLContext *h, unsigned char *buf, int size)
 static offset_t
 fa_lavf_seek(URLContext *h, offset_t pos, int whence)
 {
-  fa_lavf_glue_t *flg = h->priv_data;
+  fa_glue_t *glue = h->priv_data;
   
   if(whence == AVSEEK_SIZE)
-    return flg->fap->fap_fsize(flg->fh);
+    return glue->fap->fap_fsize(glue->fh);
   
-  return flg->fap->fap_seek(flg->fh, pos, whence);
+  return glue->fap->fap_seek(glue->fh, pos, whence);
 }
 
 /**
@@ -191,11 +285,11 @@ fa_lavf_seek(URLContext *h, offset_t pos, int whence)
 static int
 fa_lavf_close(URLContext *h)
 {
-  fa_lavf_glue_t *flg = h->priv_data;
+  fa_glue_t *glue = h->priv_data;
 
-  flg->fap->fap_close(flg->fh);
+  glue->fap->fap_close(glue->fh);
 
-  free(flg);
+  free(glue);
   h->priv_data = NULL;
   return 0;
 }
@@ -211,4 +305,93 @@ static URLProtocol fa_lavf_proto = {
     NULL,            /* Write */
     fa_lavf_seek,
     fa_lavf_close,
+};
+
+
+
+
+/**
+ * Showtime VFS -> fileaccess open wrapper
+ */
+static void *
+fa_svfs_open(const char *filename)
+{
+  fa_protocol_t *fap;
+  fa_glue_t *glue;
+  void *fh;
+
+  if((filename = fa_resolve_proto(filename, &fap)) == NULL)
+    return NULL;
+  
+  if((fh = fap->fap_open(filename)) == NULL)
+    return NULL;
+  
+  glue = malloc(sizeof(fa_glue_t));
+  glue->fap = fap;
+  glue->fh = fh;
+  return glue;
+}
+
+/**
+ * svfs -> fileaccess read wrapper
+ */
+static int
+fa_svfs_read(void *handle, void *buf, size_t size)
+{
+  fa_glue_t *glue = handle;
+  
+  return glue->fap->fap_read(glue->fh, buf, size);
+}
+
+/**
+ * svfs -> fileaccess seek wrapper
+ */
+static offset_t
+fa_svfs_seek(void *handle, offset_t pos, int whence)
+{
+  fa_glue_t *glue = handle;
+  
+  return glue->fap->fap_seek(glue->fh, pos, whence);
+}
+
+/**
+ * svfs -> fileaccess close wrapper
+ */
+static void
+fa_svfs_close(void *handle)
+{
+  fa_glue_t *glue = handle;
+
+  glue->fap->fap_close(glue->fh);
+
+  free(glue);
+}
+
+
+/**
+ * svfs -> fileaccess close wrapper
+ */
+static int
+fa_svfs_stat(const char *filename, struct stat *buf)
+{
+  fa_protocol_t *fap;
+
+  if((filename = fa_resolve_proto(filename, &fap)) == NULL)
+    return -1;
+  
+  return fap->fap_stat(filename, buf);
+}
+	
+
+
+
+struct svfs_ops showtime_vfs_ops = {
+  .open     = fa_svfs_open,
+  .close    = fa_svfs_close,
+  .read     = fa_svfs_read,
+  .seek     = fa_svfs_seek,
+  .stat     = fa_svfs_stat,
+  .opendir  = fa_opendir,
+  .readdir  = fa_readdir,
+  .closedir = fa_closedir,
 };
