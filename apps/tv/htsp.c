@@ -135,7 +135,7 @@ static htsmsg_t *
 htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int async)
 {
   void *buf;
-  unsigned int len;
+  size_t len;
   uint32_t l, seq;
   int r, fd = hc->hc_fd;
   uint32_t noaccess;
