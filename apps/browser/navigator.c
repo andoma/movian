@@ -197,6 +197,7 @@ nav_verify_exit(navigator_t *nav, appi_t *ai)
   inputevent_t ie;
   glw_t *m;
 
+  input_flush_queue(&ai->ai_ic);
 
   TAILQ_INIT(&lfelist);
 
