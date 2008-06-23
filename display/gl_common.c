@@ -87,32 +87,6 @@ gl_common_init(void)
   glEnable(GL_POLYGON_OFFSET_FILL);
 }
 
-static void
-gl_too_fast(void)
-{
-  fprintf(stderr, 
-	  "Framerate too fast.\n"
-	  "OpenGL refreshes at %.2f fps, this is probably incorrect.\n",
-	  1000000.0f / (float)frame_duration);
-
-  if(0) {
-
-  }
-#ifdef linux
-  else if(!strcmp((const char *)glvendor, "ATI Technologies Inc.")) {
-    fprintf(stderr, 
-	    "You seem to be using an ATI driver on linux\n"
-	    "To sync GL output to vertical refresh, please enable this "
-	    "using the driconf program\n"
-	    "Sorry for the inconvenience\n");
-  }
-#endif
-  else {
-    fprintf(stderr, "Read the README file for more info\n");
-  }
-  _exit(0);
-}
-
 
 
 
@@ -152,9 +126,6 @@ gl_update_timings(void)
       qsort(deltaarray, deltaptr, sizeof(int), intcmp);
       d = deltaarray[FRAME_DURATION_SAMPLES / 2];
       
-      if(d < 10000) 
-	gl_too_fast();
-
       if(lastframedur == 0) {
 	lastframedur = d;
       } else {

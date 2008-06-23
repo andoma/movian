@@ -312,6 +312,19 @@ window_change_displaymode(void)
 }
 
 
+static int
+GLXExtensionSupported(Display *dpy, const char *extension)
+{
+    const char *extensionsString, *pos;
+
+    extensionsString = glXQueryExtensionsString(dpy, DefaultScreen(dpy));
+
+    pos = strstr(extensionsString, extension);
+
+    return pos!=NULL && (pos==extensionsString || pos[-1]==' ') &&
+        (pos[strlen(extension)]==' ' || pos[strlen(extension)]=='\0');
+}
+
 
 /**
  *
@@ -333,6 +346,14 @@ gl_sysglue_init(int argc, char **argv)
 
   if(!glXQueryExtension(x11state.display, NULL, NULL)) {
     fprintf(stderr, "OpenGL GLX extension not supported by display \"%s\"\n",
+	    x11state.displayname);
+    exit(1);
+  }
+
+  if(!GLXExtensionSupported(x11state.display, "GLX_SGI_video_sync")) {
+    fprintf(stderr,
+	    "OpenGL GLX extension GLX_SGI_video_sync is not supported "
+	    "by display \"%s\"\n",
 	    x11state.displayname);
     exit(1);
   }
@@ -437,9 +458,9 @@ gl_sysglue_mainloop(void)
 {
   XEvent event;
   int w, h;
+  unsigned int retraceCount, prev;
 
   while(1) {
-
 
     if(x11state.current_displaymode != display_settings.displaymode)
       window_change_displaymode();
@@ -465,11 +486,23 @@ gl_sysglue_mainloop(void)
 	  break;
 	}
       }
-
-      layout_draw(x11state.aspect_ratio);
     }
     glFlush();
+
+    layout_draw(x11state.aspect_ratio);
+
+    prev = retraceCount;
+
+    // Wait for vertical retrace
+    //    glXGetVideoSyncSGI(&retraceCount);
+    glXWaitVideoSyncSGI(2, (retraceCount+1)%2, &retraceCount);
+
     glXSwapBuffers(x11state.display, x11state.win);
+
+    if(retraceCount != prev + 1) {
+      printf("Frame skip %d\n", retraceCount - prev);
+    }
+
     gl_update_timings();
     glw_reaper();
   }

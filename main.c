@@ -101,8 +101,6 @@ main(int argc, char **argv)
   const char *homedir;
   struct stat st;
 
-  setenv("__GL_SYNC_TO_VBLANK", "1", 1); // make nvidia sync to vblank
-
 
 #ifdef RLIMIT_AS
   getrlimit(RLIMIT_AS, &rlim);
