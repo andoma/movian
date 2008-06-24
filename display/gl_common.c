@@ -31,65 +31,6 @@
 
 
 
-/*
- *
- */
-
-static int
-check_gl_ext(const uint8_t *s, const char *func, int fail)
-{
-  int l = strlen(func);
-  int found;
-  char *v;
-
-  v = strstr((const char *)s, func);
-  found = v != NULL && v[l] < 33;
-  
-  fprintf(stderr, "Checking OpenGL extension \"%s\" : %svailable", func,
-	  found ? "A" : "Not a");
-
-  if(!found && fail) {
-    fprintf(stderr, ", but is required, exiting\n");
-    exit(1);
-  }
-  fprintf(stderr, "\n");
-  return found ? 0 : -1;
-}
-
-const GLubyte *glvendor;
-
-
-
-void
-gl_common_init(void)
-{
-  const	GLubyte	*s;
-  glvendor =  glGetString(GL_VENDOR);
-
-  fprintf(stderr, "OpenGL library: %s on %s, version %s\n",
-	  glvendor,
-	  glGetString(GL_RENDERER),
-	  glGetString(GL_VERSION));
-
-  s = glGetString(GL_EXTENSIONS);
-
-  check_gl_ext(s, "GL_ARB_pixel_buffer_object",      1);
-  check_gl_ext(s, "GL_ARB_vertex_buffer_object",     1);
-  check_gl_ext(s, "GL_ARB_fragment_program",         1);
-  check_gl_ext(s, "GL_ARB_texture_non_power_of_two", 1);
-
-  glDisable(GL_CULL_FACE);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-  glShadeModel(GL_SMOOTH);
-  glEnable(GL_LINE_SMOOTH);
-
-  glEnable(GL_POLYGON_OFFSET_FILL);
-}
-
-
-
-
 static int
 intcmp(const void *A, const void *B)
 {

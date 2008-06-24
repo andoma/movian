@@ -273,8 +273,6 @@ window_open(void)
   if(fullscreen)
     fullscreen_grab();
 
-  gl_common_init();
-
   x11state.current_displaymode = display_settings.displaymode;
 }
 

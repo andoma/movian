@@ -24,8 +24,6 @@
 
 void gl_sysglue_init(int argc, char **argv);
 
-void gl_common_init(void);
-
 void gl_sysglue_mainloop(void);
 
 void gl_update_timings(void);
