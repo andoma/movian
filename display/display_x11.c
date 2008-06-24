@@ -52,7 +52,7 @@ static struct {
   Colormap colormap;
   const char *displayname;
   int coords[2][4];
-  
+  int do_videosync;
 } x11state;
 
 
@@ -208,6 +208,7 @@ window_open(void)
   XSetWindowAttributes winAttr;
   unsigned long mask;
   int fullscreen = display_settings.displaymode == DISPLAYMODE_FULLSCREEN;
+  const GLubyte *glvendor;
 
   winAttr.event_mask        = KeyPressMask | StructureNotifyMask;
   winAttr.background_pixmap = None;
@@ -272,6 +273,12 @@ window_open(void)
 
   if(fullscreen)
     fullscreen_grab();
+
+  glvendor = glGetString(GL_VENDOR); 
+  if(strcmp((char *)glvendor, "NVIDIA Corporation")) {
+    /* Can't rely on __GL_SYNC_TO_VBLANK, use other methods */
+    x11state.do_videosync = 1;
+  }
 
   x11state.current_displaymode = display_settings.displaymode;
 }
@@ -456,7 +463,9 @@ gl_sysglue_mainloop(void)
 {
   XEvent event;
   int w, h;
-  unsigned int retraceCount, prev;
+  unsigned int retraceCount = 0, prev;
+
+  glXGetVideoSyncSGI(&retraceCount);
 
   while(1) {
 
@@ -491,16 +500,10 @@ gl_sysglue_mainloop(void)
 
     prev = retraceCount;
 
-    // Wait for vertical retrace
-    //    glXGetVideoSyncSGI(&retraceCount);
-    glXWaitVideoSyncSGI(2, (retraceCount+1)%2, &retraceCount);
+    if(x11state.do_videosync)
+      glXWaitVideoSyncSGI(2, (retraceCount+1)%2, &retraceCount);
 
     glXSwapBuffers(x11state.display, x11state.win);
-
-    if(retraceCount != prev + 1) {
-      printf("Frame skip %d\n", retraceCount - prev);
-    }
-
     gl_update_timings();
     glw_reaper();
   }
