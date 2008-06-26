@@ -278,6 +278,11 @@ window_open(void)
   if(strcmp((char *)glvendor, "NVIDIA Corporation")) {
     /* Can't rely on __GL_SYNC_TO_VBLANK, use other methods */
     x11state.do_videosync = 1;
+    fprintf(stderr, 
+	    "Display: Using 'glXWaitVideoSyncSGI' for vertical sync\n");
+  } else {
+    fprintf(stderr, 
+	    "Display: Using '__GL_SYNC_TO_VBLANK' for vertical sync\n");
   }
 
   x11state.current_displaymode = display_settings.displaymode;
