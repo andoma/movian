@@ -60,6 +60,7 @@ typedef enum {
   INPUT_TS,
   INPUT_PAD,
   INPUT_KEYDESC,
+  INPUT_NO_AUDIO,
   INPUT_VEC,             /* vector of u32 */
   INPUT_U32,             /* Generic U32 */
   INPUT_APP,             /* Application specific, 'ptr' will be free'd

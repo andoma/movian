@@ -668,7 +668,7 @@ htsp_mux_input(htsp_connection_t *hc, tv_channel_t *ch, htsmsg_t *m)
 {
   uint32_t stream;
   tv_channel_stream_t *tcs;
-  media_pipe_t *mp = &ch->ch_mp;
+  media_pipe_t *mp = ch->ch_mp;
   const void *bin;
   size_t binlen;
   media_buf_t *mb;
@@ -744,7 +744,7 @@ htsp_mux_start(htsp_connection_t *hc, tv_channel_t *ch, htsmsg_t *m)
   int ascore = 0;   /* Discriminator for chosing best stream */
   int vscore = 0;   /* Discriminator for chosing best stream */
 
-  media_pipe_t *mp = &ch->ch_mp;
+  media_pipe_t *mp = ch->ch_mp;
 
   htsmsg_print(m);
 

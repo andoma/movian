@@ -26,19 +26,85 @@
 #include "showtime.h"
 #include "audio.h"
 #include "audio_ui.h"
+#include "audio_fifo.h"
 
 #include "layout/layout_forms.h"
 
+audio_mode_t *audio_mode_current;
+pthread_mutex_t audio_mode_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static struct audio_mode_queue audio_modes;
+
+static void *audio_output_thread(void *aux);
+
+/**
+ *
+ */
 void
 audio_init(void)
 {
+  pthread_t ptid;
+
+  TAILQ_INIT(&audio_modes);
   audio_alsa_init();
+
   audio_widget_make();
+
+  pthread_create(&ptid, NULL, audio_output_thread, NULL);
+}
+
+
+/**
+ *
+ */
+audio_fifo_t *thefifo;
+audio_fifo_t af0;
+
+static void *
+audio_output_thread(void *aux)
+{
+  audio_mode_t *am;
+  int r;
+  audio_fifo_t *af = &af0;
+
+  audio_fifo_init(af, 16000, 8000);
+  thefifo = af;
+
+  am = TAILQ_FIRST(&audio_modes);
+  audio_mode_current = am;
+
+  while(1) {
+    am = audio_mode_current;
+    printf("Audio output using %s\n", am->am_title);
+    r = am->am_entry(am, af);
+
+    if(r == -1) {
+      /* Device error, sleep to avoid busy looping.
+	 Hopefully the error will resolve itself (if another app
+	 is blocking output, etc)
+      */
+      sleep(1);
+    }
+  }
+  return NULL;
 }
 
 
 
+/**
+ *
+ */
+void
+audio_mode_register(audio_mode_t *am)
+{
+  TAILQ_INSERT_TAIL(&audio_modes, am, am_link);
+}
 
+
+
+/**
+ *
+ */
 void
 audio_settings_init(glw_t *m, glw_focus_stack_t *gfs, ic_t *ic)
 {

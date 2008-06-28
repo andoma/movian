@@ -66,7 +66,7 @@ typedef struct tv_channel {
    */
   glw_t *ch_video_widget;			  
   vd_conf_t ch_vdc;            /* Video Display Configuration */
-  media_pipe_t ch_mp;
+  media_pipe_t *ch_mp;
   formatwrap_t *ch_fw;
 
   struct tv_channel_stream_list ch_streams;

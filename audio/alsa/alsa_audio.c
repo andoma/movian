@@ -30,106 +30,98 @@
 #include "showtime.h"
 #include "hid/input.h"
 #include "audio/audio.h"
-#include "audio/audio_mixer.h"
 #include "audio/audio_ui.h"
 #include "audio/audio_iec958.h"
 #include "libhts/htscfg.h"
 
-static snd_pcm_t *alsa_handle;
-static int alsa_channels;
-static unsigned int alsa_rate;
-static int alsa_period_size;
 
-extern int mixer_hw_output_delay;
-extern int mixer_hw_output_formats;
+typedef struct alsa_audio_mode {
+  audio_mode_t aam_head;
 
-extern float mixer_output_matrix[AUDIO_MIXER_MAX_CHANNELS]
-                                [AUDIO_MIXER_MAX_CHANNELS];
+  char *aam_dev;
 
-extern audio_fifo_t mixer_output_fifo;
+  int aam_sample_rate;
 
+} alsa_audio_mode_t;
+
+#define hts_alsa_debug(fmt...) fprintf(stderr, fmt)
 
 static int alsa_mixer_setup(void);
 
-static void
-alsa_configure(int format)
+/**
+ *
+ */
+static snd_pcm_t *
+alsa_open(alsa_audio_mode_t *aam, int format, int rate)
 {
   snd_pcm_hw_params_t *hwp;
   snd_pcm_sw_params_t *swp;
   snd_pcm_t *h;
-  const char *dev;
-  int r, dir;
+  char buf[64];
+  char *dev = aam->aam_dev;
+  int r, ch;
+  int dir;
   snd_pcm_uframes_t period_size_min;
   snd_pcm_uframes_t period_size_max;
   snd_pcm_uframes_t buffer_size_min;
   snd_pcm_uframes_t buffer_size_max;
   snd_pcm_uframes_t period_size;
   snd_pcm_uframes_t buffer_size;
-  int channels;
 
-  if(alsa_handle != NULL) {
-    snd_pcm_close(alsa_handle);
-    alsa_handle = NULL;
-  }
+  if(format == AM_FORMAT_AC3 || format == AM_FORMAT_DTS) {
+    snprintf(buf, sizeof(buf), "%s:AES0=0x2,AES1=0x82,AES2=0x0,AES3=0x2", dev);
+    dev = buf;
+  } 
 
-  switch(format) {
-  case AUDIO_OUTPUT_PCM:
-    channels = atoi(config_get_str("alsa-channels", "2"));
-    dev = config_get_str("alsa-pcm-device", "default");
-    fprintf(stderr, "audio: configuring for PCM; %d channels\n", channels);
-    break;
-
-  case AUDIO_OUTPUT_AC3:
-    channels = 2;
-    dev = config_get_str("alsa-ac3-device", NULL);
-    fprintf(stderr, "audio: configuring for AC3 output\n");
-    break;
-
-  case AUDIO_OUTPUT_DTS:
-    channels = 2;
-    dev = config_get_str("alsa-dts-device", NULL);
-    fprintf(stderr, "audio: configuring for DTS output\n");
-    break;
-
-  default:
-    return;
-  }
-
-  if((r = snd_pcm_open(&h, dev, SND_PCM_STREAM_PLAYBACK, 0) < 0)) {
-    fprintf(stderr, "audio: Cannot open audio device %s (%s)\n",
-		dev, snd_strerror(r));
-    return;
-  }
-
-  fprintf(stderr, "audio: using device \"%s\"\n", dev);
+  fprintf(stderr, "ALSA: opening device \"%s\"\n", dev);
+  
+  if((r = snd_pcm_open(&h, dev, SND_PCM_STREAM_PLAYBACK, 0) < 0))
+    return NULL;
 
   hwp = alloca(snd_pcm_hw_params_sizeof());
   memset(hwp, 0, snd_pcm_hw_params_sizeof());
-
   snd_pcm_hw_params_any(h, hwp);
+
   snd_pcm_hw_params_set_access(h, hwp, SND_PCM_ACCESS_RW_INTERLEAVED);
   snd_pcm_hw_params_set_format(h, hwp, SND_PCM_FORMAT_S16_LE);
 
-  alsa_rate = 48000;
-
-  if((r = snd_pcm_hw_params_set_rate_near(h, hwp, &alsa_rate, 0)) < 0) {
-    fprintf(stderr, "audio: Cannot set rate to %d (%s)\n", 
-	    alsa_rate, snd_strerror(r));
-    snd_pcm_close(h);
-    return;
+  switch(rate) {
+  default:
+  case AM_SR_96000: rate = 96000; break;
+  case AM_SR_48000: rate = 48000; break;
+  case AM_SR_44100: rate = 44100; break;
+  case AM_SR_32000: rate = 32000; break;
+  case AM_SR_24000: rate = 24000; break;
   }
 
-  fprintf(stderr, "audio: rate = %d\n", alsa_rate);
-
-
-  if((r = snd_pcm_hw_params_set_channels(h, hwp, channels)) < 0) {
-    fprintf(stderr, "audio: Cannot set # of channels to %d (%s)\n",
-	    alsa_rate, snd_strerror(r));
-
-    snd_pcm_close(h);
-    return;
-  }
+  snd_pcm_hw_params_set_rate(h, hwp, rate, 0);
   
+  aam->aam_sample_rate = rate;
+
+  switch(format) {
+  case AM_FORMAT_PCM_STEREO:
+  case AM_FORMAT_AC3:
+  case AM_FORMAT_DTS:
+    ch = 2;
+    break;
+
+  case AM_FORMAT_PCM_5DOT1:
+    ch = 6;
+    break;
+
+  case AM_FORMAT_PCM_7DOT1:
+    ch = 8;
+    break;
+
+  default:
+    snd_pcm_close(h);
+    return NULL;
+  }
+
+  snd_pcm_hw_params_set_channels(h, hwp, ch);
+
+  fprintf(stderr, "audio: %d channels\n", ch);
+
 
   /* Configurue period */
 
@@ -138,19 +130,21 @@ alsa_configure(int format)
   dir = 0;
   snd_pcm_hw_params_get_period_size_max(hwp, &period_size_max, &dir);
 
+  //  period_size = period_size_max;
+
   period_size = 1024;
 
   fprintf(stderr, "audio: attainable period size %lu - %lu, trying %lu\n",
 	  period_size_min, period_size_max, period_size);
 
 
-  dir = 1;
+  dir = 0;
   r = snd_pcm_hw_params_set_period_size_near(h, hwp, &period_size, &dir);
   if(r < 0) {
     fprintf(stderr, "audio: Unable to set period size %lu (%s)\n",
 	    period_size, snd_strerror(r));
     snd_pcm_close(h);
-    return;
+    return NULL;
   }
 
 
@@ -160,14 +154,14 @@ alsa_configure(int format)
     fprintf(stderr, "audio: Unable to get period size (%s)\n",
 	    snd_strerror(r));
     snd_pcm_close(h);
-    return;
+    return NULL;
   }
 
   /* Configurue buffer size */
 
   snd_pcm_hw_params_get_buffer_size_min(hwp, &buffer_size_min);
   snd_pcm_hw_params_get_buffer_size_max(hwp, &buffer_size_max);
-  buffer_size = period_size * 3;
+  buffer_size = period_size * 4;
 
   fprintf(stderr, "audio: attainable buffer size %lu - %lu, trying %lu\n",
 	  buffer_size_min, buffer_size_max, buffer_size);
@@ -179,7 +173,7 @@ alsa_configure(int format)
     fprintf(stderr, "audio: Unable to set buffer size %lu (%s)\n",
 	    buffer_size, snd_strerror(r));
     snd_pcm_close(h);
-    return;
+    return NULL;
   }
 
   r = snd_pcm_hw_params_get_buffer_size(hwp, &buffer_size);
@@ -187,7 +181,7 @@ alsa_configure(int format)
     fprintf(stderr, "audio: Unable to get buffer size (%s)\n",
 	    snd_strerror(r));
     snd_pcm_close(h);
-    return;
+    return NULL;
   }
 
 
@@ -197,7 +191,7 @@ alsa_configure(int format)
     fprintf(stderr, "audio: Unable to configure hardware parameters (%s)\n",
 	    snd_strerror(r));
     snd_pcm_close(h);
-    return;
+    return NULL;
   }
 
   /*
@@ -209,14 +203,14 @@ alsa_configure(int format)
 
   snd_pcm_sw_params_current(h, swp);
 
-  
-  r = snd_pcm_sw_params_set_avail_min(h, swp, buffer_size / 2);
+
+  r = snd_pcm_sw_params_set_avail_min(h, swp,  period_size);
 
   if(r < 0) {
     fprintf(stderr, "audio: Unable to configure wakeup threshold (%s)\n",
 	    snd_strerror(r));
     snd_pcm_close(h);
-    return;
+    return NULL;
   }
 
   r = snd_pcm_sw_params_set_xfer_align(h, swp, 1);
@@ -224,7 +218,7 @@ alsa_configure(int format)
     fprintf(stderr, "audio: Unable to configure xfer alignment (%s)\n",
 	    snd_strerror(r));
     snd_pcm_close(h);
-    return;
+    return NULL;
   }
 
 
@@ -233,7 +227,7 @@ alsa_configure(int format)
     fprintf(stderr, "audio: Unable to configure start threshold (%s)\n",
 	    snd_strerror(r));
     snd_pcm_close(h);
-    return;
+    return NULL;
   }
   
   r = snd_pcm_sw_params(h, swp);
@@ -241,7 +235,7 @@ alsa_configure(int format)
     fprintf(stderr, "audio: Cannot set soft parameters (%s)\n", 
 		snd_strerror(r));
     snd_pcm_close(h);
-    return;
+    return NULL;
   }
 
   r = snd_pcm_prepare(h);
@@ -249,68 +243,288 @@ alsa_configure(int format)
     fprintf(stderr, "audio: Cannot prepare audio for playback (%s)\n", 
 		snd_strerror(r));
     snd_pcm_close(h);
-    return;
+    return NULL;
   }
 
-  alsa_channels = channels;
-  alsa_handle = h;
+  aam->aam_head.am_preferred_size = period_size;
 
-  alsa_period_size = period_size;
-
+ 
   printf("audio: period size = %ld\n", period_size);
   printf("audio: buffer size = %ld\n", buffer_size);
-  printf("audio:        rate = %dHz\n", alsa_rate);
 
+  return h;
+}
 
+/**
+ *
+ */
+static void
+alsa_silence(snd_pcm_t *h, int format, int rate)
+{
+  static int16_t *silence;
 
-  switch(alsa_channels) {
-  case 0:
-    break;
+  if(silence == NULL)
+    silence = calloc(1, sizeof(int16_t) * 500 * 8);
 
-  case 2:
-    mixer_output_matrix[MIXER_CHANNEL_LEFT] [0] = 1.0f;
-    mixer_output_matrix[MIXER_CHANNEL_RIGHT][1] = 1.0f;
-
-    mixer_output_matrix[MIXER_CHANNEL_SR_LEFT][0] =  0.707f;
-    mixer_output_matrix[MIXER_CHANNEL_SR_LEFT][1] = -0.707f;
-
-    mixer_output_matrix[MIXER_CHANNEL_SR_RIGHT][0] = -0.707f;
-    mixer_output_matrix[MIXER_CHANNEL_SR_RIGHT][1] =  0.707f;
-
-    mixer_output_matrix[MIXER_CHANNEL_CENTER][0] =  0.707f;
-    mixer_output_matrix[MIXER_CHANNEL_CENTER][1] =  0.707f;
-
-    mixer_output_matrix[MIXER_CHANNEL_LFE][0] =  0.707f;
-    mixer_output_matrix[MIXER_CHANNEL_LFE][1] =  0.707f;
-    break;
-
-  case 6:
-    mixer_output_matrix[MIXER_CHANNEL_LEFT] [0] = 1.0f;
-    mixer_output_matrix[MIXER_CHANNEL_RIGHT][1] = 1.0f;
-
-    mixer_output_matrix[MIXER_CHANNEL_SR_LEFT][2] = 1.0f;
-    mixer_output_matrix[MIXER_CHANNEL_SR_RIGHT][3] = 1.0f;
-
-    mixer_output_matrix[MIXER_CHANNEL_LEFT][5]  = 0.5f;
-    mixer_output_matrix[MIXER_CHANNEL_RIGHT][5] = 0.5;
-    mixer_output_matrix[MIXER_CHANNEL_LFE][5]   = 1.0f;
-
-    if(config_get_bool("alsa-phantom-center", 0)) {
-      mixer_output_matrix[MIXER_CHANNEL_CENTER][0] =  0.707f;
-      mixer_output_matrix[MIXER_CHANNEL_CENTER][1] =  0.707f;
-    } else {
-      mixer_output_matrix[MIXER_CHANNEL_CENTER][4] =  1.0f;
-    }
-    break;
-  }
-
-  audio_mixer_setup_output(alsa_channels, alsa_period_size, alsa_rate);
+  snd_pcm_writei(h, silence, 500);
 }
 
 
+/**
+ *
+ */
+static int
+alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
+{
+  snd_pcm_t *h = NULL; 
+
+  alsa_audio_mode_t *aam = (void *)am;
+  audio_buf_t *ab;
+  int16_t *outbuf;
+  int outlen;
+  int c;
+  int cur_format = 0;
+  int cur_rate = 0;
+  int silence_threshold = 0; 
+  snd_pcm_sframes_t fr;
+  int d;
+  int64_t pts = AV_NOPTS_VALUE;
+
+  while(1) {
+
+    ab = af_deq(af, h == NULL); /* wait if PCM device is not open */
+
+    if(am != audio_mode_current) {
+      /* We're not the selected audio output anymore, return.
+	 We will lose the current audio block, but who cares ? */
+      ab_free(ab);
+      break;
+    }
+
+    if(ab == NULL) {
+      assert(h != NULL);
+    silence:
+      pts = AV_NOPTS_VALUE;
+      alsa_silence(h, cur_format, cur_rate);
+      silence_threshold--;
+      if(silence_threshold < 0) {
+	/* We've been silent for a while, close output device */
+	printf("Closing PCM device due to idling\n");
+	snd_pcm_close(h);
+	h = NULL;
+      }
+      continue;
+    }
+
+    if(h == NULL || ab->ab_format != cur_format || ab->ab_rate != cur_rate) {
+
+      if(!(ab->ab_format & am->am_formats) || 
+	 !(ab->ab_rate & am->am_sample_rates)) {
+	/* Rate / format is not supported by this mode */
+	ab_free(ab);
+	if(h == NULL)
+	  continue;
+
+	goto silence;
+      }
+
+      if(h != NULL)
+	snd_pcm_close(h);
+
+      cur_format = ab->ab_format;
+      cur_rate   = ab->ab_rate;
+
+      pts = AV_NOPTS_VALUE;
+
+      if((h = alsa_open(aam, cur_format, cur_rate)) == NULL)
+	return -1;
+    }
+
+    outbuf = (void *)ab->ab_data;
+    outlen = ab->ab_frames;
+    silence_threshold = 500; /* About 5 seconds */
+    
+    c = snd_pcm_wait(h, 100);
+    if(c >= 0) 
+      c = snd_pcm_avail_update(h);
+
+    if(c == -EPIPE)
+      snd_pcm_prepare(h);
 
 
+    if(outlen > 0) {
 
+      /* PTS is the time of the first frame of this audio packet */
+
+      if((pts = ab->ab_pts) != AV_NOPTS_VALUE && ab->ab_mp != NULL) {
+
+	/* snd_pcm_delay returns number of frames between the software
+	   pointer and to the start of the hardware pointer.
+	   Ie. the current delay in the soundcard */
+
+
+	if(snd_pcm_delay(h, &fr))
+	  fr = 0; /* failed */
+
+	/* Convert the frame delay into micro seconds */
+
+	d = (fr * 1000 / aam->aam_sample_rate) * 1000;
+
+	/* Add it to our timestamp */
+	pts += d;
+
+	ab->ab_mp->mp_audio_clock = pts;
+	ab->ab_mp->mp_audio_clock_valid = 1;
+      }
+
+      snd_pcm_writei(h, outbuf, outlen);
+
+    }
+    ab_free(ab);
+  }
+  return 0;
+}
+
+/**
+ *
+ */
+static int
+alsa_probe(const char *dev)
+{
+  snd_pcm_hw_params_t *hwp;
+  snd_pcm_t *h;
+  int r, is_iec958;
+  snd_pcm_info_t *info;
+  int formats = 0, rates = 0;
+  const char *name;
+  char buf[128];
+  alsa_audio_mode_t *aam;
+  int i;
+
+  info = alloca(snd_pcm_info_sizeof());
+
+  fprintf(stderr, "\n===============================================\n"
+	  "ALSA: probing device \"%s\"\n", dev);
+
+  if((r = snd_pcm_open(&h, dev, SND_PCM_STREAM_PLAYBACK, 0) < 0)) {
+    printf("Unable to open -- %s\n", snd_strerror(r));
+    return -1;
+  }
+
+  if(snd_pcm_info(h, info) < 0) {
+    fprintf(stderr, "Unable to obtain info -- %s\n", snd_strerror(r));
+    snd_pcm_close(h);
+    return -1;
+  }
+
+  name = snd_pcm_info_get_name(info);
+
+  fprintf(stderr, "Device name: \"%s\"\n", name);
+
+  hwp = alloca(snd_pcm_hw_params_sizeof());
+  memset(hwp, 0, snd_pcm_hw_params_sizeof());
+
+  if((r = snd_pcm_hw_params_any(h, hwp)) < 0) {
+    fprintf(stderr, "Unable to query hw params -- %s\n", snd_strerror(r));
+    snd_pcm_close(h);
+    return -1;
+  }
+
+  if((r = snd_pcm_hw_params_set_access(h, hwp,
+				       SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
+    fprintf(stderr, "No interleaved support -- %s\n", snd_strerror(r));
+    snd_pcm_close(h);
+    return -1;
+  }
+
+  if((r = snd_pcm_hw_params_set_format(h, hwp,
+				       SND_PCM_FORMAT_S16_LE)) < 0) {
+    fprintf(stderr, "No 16bit LE support -- %s\n", snd_strerror(r));
+    snd_pcm_close(h);
+    return -1;
+  }
+
+  if(!snd_pcm_hw_params_test_rate(h, hwp, 96000, 0))
+    rates |= AM_SR_96000;
+
+  if(!snd_pcm_hw_params_test_rate(h, hwp, 48000, 0))
+    rates |= AM_SR_48000;
+
+  if(!snd_pcm_hw_params_test_rate(h, hwp, 44100, 0))
+    rates |= AM_SR_44100;
+
+  if(!snd_pcm_hw_params_test_rate(h, hwp, 32000, 0))
+    rates |= AM_SR_32000;
+
+  if(!snd_pcm_hw_params_test_rate(h, hwp, 24000, 0))
+    rates |= AM_SR_24000;
+
+  if(rates == 0) {
+    fprintf(stderr, "No 48kHz support\n");
+    snd_pcm_close(h);
+    return -1;
+  }
+
+  if(!snd_pcm_hw_params_test_channels(h, hwp, 2))
+    formats |= AM_FORMAT_PCM_STEREO;
+  
+  if(!snd_pcm_hw_params_test_channels(h, hwp, 6))
+    formats |= AM_FORMAT_PCM_5DOT1;
+  
+  if(!snd_pcm_hw_params_test_channels(h, hwp, 7))
+    formats |= AM_FORMAT_PCM_7DOT1;
+
+  if(formats == 0) {
+    fprintf(stderr, "No usable channel configuration\n");
+    snd_pcm_close(h);
+    return -1;
+  }
+
+  is_iec958 =
+    (strstr(dev, "iec958")  || strstr(dev, "IEC958") ||
+     strstr(name, "iec958") || strstr(name, "IEC958")) &&
+    formats == AM_FORMAT_PCM_STEREO && rates == AM_SR_48000;
+
+  snd_pcm_close(h);
+
+  if(is_iec958) {
+    /* Test if we can output passthru as well*/
+
+    fprintf(stderr, "Seems to be IEC859 (SPDIF), verifying passthru\n");
+
+
+    snprintf(buf, sizeof(buf), "%s:AES0=0x2,AES1=0x82,AES2=0x0,AES3=0x2",
+	     dev);
+
+    if((r = snd_pcm_open(&h, buf, SND_PCM_STREAM_PLAYBACK, 0) < 0)) {
+      fprintf(stderr, "SPDIF passthru not working\n");
+    } else {
+      snd_pcm_close(h);
+      formats |= AM_FORMAT_DTS | AM_FORMAT_AC3;
+    }
+  }
+
+  fprintf(stderr, "Ok%s\n", is_iec958 ? ", SPDIF" : "");
+
+  aam = calloc(1, sizeof(alsa_audio_mode_t));
+  aam->aam_head.am_formats = formats;
+  aam->aam_head.am_sample_rates = rates;
+  aam->aam_head.am_title = strdup(name);
+
+  aam->aam_head.am_entry = alsa_audio_start;
+
+  aam->aam_dev = strdup(dev);
+
+  for(i = 0; i < 8; i++)
+    aam->aam_head.am_swizzle[i] = i;
+
+  audio_mode_register(&aam->aam_head);
+
+  return 0;
+}
+
+
+#if 0
 
 static void *
 alsa_thread(void *aux)
@@ -339,7 +553,7 @@ alsa_thread(void *aux)
 
     while(1) {
 
-      buf = af_deq(&mixer_output_fifo, 1);
+      buf = af_deq(&mixer_output_fifo);
 
       if(buf->payload_type != current_output_type) {
 	current_output_type = buf->payload_type;
@@ -400,19 +614,112 @@ alsa_thread(void *aux)
   }
 }
 
+#endif
+
+static void
+alsa_probe_devices(void)
+{
+  int err, cardNum = -1, devNum, subDevCount, i;
+  snd_ctl_t *cardHandle;
+  snd_pcm_info_t  *pcmInfo;
+  char str[64];
+
+  while(1) {
+
+    // Get next sound card's card number. When "cardNum" == -1, then ALSA
+    // fetches the first card
+    if((err = snd_card_next(&cardNum)) < 0) {
+      fprintf(stderr, "ALSA: Can't get the next card number: %s\n",
+	      snd_strerror(err));
+      break;
+    }
+
+    // No more cards? ALSA sets "cardNum" to -1 if so
+    if (cardNum < 0)
+      break;
+
+    /* Open this card's control interface. We specify only the card
+       number -- not any device nor sub-device too */
+
+    snprintf(str, sizeof(str), "hw:%i", cardNum);
+    if((err = snd_ctl_open(&cardHandle, str, 0)) < 0) {
+      printf("ALSA: Can't open card %i: %s\n", cardNum, snd_strerror(err));
+      continue;
+    }
 
 
+    // Start with the first wave device on this card
+    devNum = -1;
+    
+    while(1) {
 
+      // Get the number of the next wave device on this card
+      if((err = snd_ctl_pcm_next_device(cardHandle, &devNum)) < 0) {
+	fprintf(stderr, "ALSA: Can't get next wave device number: %s\n",
+		snd_strerror(err));
+	break;
+      }
 
+      /* No more wave devices on this card? ALSA sets "devNum" to -1
+       * if so.  NOTE: It's possible that this sound card may have no
+       * wave devices on it at all, for example if it's only a MIDI
+       * card
+       */
+      if (devNum < 0)
+	break;
 
+      /* To get some info about the subdevices of this wave device (on
+       * the card), we need a snd_pcm_info_t, so let's allocate one on
+       * the stack
+       */
 
+      pcmInfo = alloca(snd_pcm_info_sizeof());
+      memset(pcmInfo, 0, snd_pcm_info_sizeof());
+
+      // Tell ALSA which device (number) we want info about
+      snd_pcm_info_set_device(pcmInfo, devNum);
+      
+      // Get info on the wave outs of this device
+      snd_pcm_info_set_stream(pcmInfo, SND_PCM_STREAM_PLAYBACK);
+      
+      i = -1;
+      subDevCount = 1;
+
+      // More subdevices?
+      while (++i < subDevCount) {
+	// Tell ALSA to fill in our snd_pcm_info_t with info on this subdevice
+	snd_pcm_info_set_subdevice(pcmInfo, i);
+	if ((err = snd_ctl_pcm_info(cardHandle, pcmInfo)) < 0)
+	  continue;
+	
+	// Print out how many subdevices (once only)
+	if(!i) {
+	  subDevCount = snd_pcm_info_get_subdevices_count(pcmInfo);
+	}
+
+	if(subDevCount > 1)
+	  snprintf(str, sizeof(str), "hw:%i,%i,%i", cardNum, devNum, i);
+	else
+	  snprintf(str, sizeof(str), "hw:%i,%i", cardNum, devNum);
+
+	alsa_probe(str);
+      }
+    }
+    snd_ctl_close(cardHandle);
+  }
+  snd_config_update_free_global();
+}
 
 
 void
 audio_alsa_init(void)
 {
-  pthread_t ptid;
-  pthread_create(&ptid, NULL, alsa_thread, NULL);
+  alsa_probe("default");
+  //  alsa_probe("iec958");
+
+  alsa_probe_devices();
+
+  //  pthread_create(&ptid, NULL, alsa_thread, NULL);
   alsa_mixer_setup();
 }
 

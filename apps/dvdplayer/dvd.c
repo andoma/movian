@@ -159,7 +159,7 @@ dvd_gen_frame_kick(dvd_player_t *dp)
 {
   media_buf_t *mb;
   codecwrap_t *cw = dp->dp_pp.pp_video.ps_cw;
-  media_pipe_t *mp = &dp->dp_ai->ai_mp;
+  media_pipe_t *mp = dp->dp_ai->ai_mp;
 
   if(cw == NULL)
     return;
@@ -185,7 +185,7 @@ dvd_gen_frame_kick(dvd_player_t *dp)
 static void
 dvd_flush(dvd_player_t *dp)
 {
-  media_pipe_t *mp = &dp->dp_ai->ai_mp;
+  media_pipe_t *mp = dp->dp_ai->ai_mp;
 
   dp->dp_pp.pp_audio.ps_force_reset = 1;
   dp->dp_pp.pp_video.ps_force_reset = 1;
@@ -436,7 +436,7 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 
   memset(dp, 0, sizeof(dvd_player_t));
 
-  mp = &ai->ai_mp;
+  mp = ai->ai_mp;
   dp->dp_mp = mp;
   dp->dp_ai = ai;
 
@@ -501,9 +501,9 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
   mp_set_video_conf(mp, &dp->dp_vdc);
   dp->dp_vdc.gc_deilace_type = VD_DEILACE_NONE;
 
-  vd_create_widget(top, &ai->ai_mp, 1.0f);
+  vd_create_widget(top, mp, 1.0f);
 
-  vd_set_dvd(&ai->ai_mp, dp);
+  vd_set_dvd(mp, dp);
 
   /**
    * Menu cubestack
@@ -522,7 +522,7 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 
   fw = wrap_format_create(NULL, 1);
 
-  pes_init(&dp->dp_pp, &ai->ai_mp, fw);
+  pes_init(&dp->dp_pp, mp, fw);
 
   dp->dp_pp.pp_audio.ps_filter_cb = dvd_filter_audio;
   dp->dp_pp.pp_spu.ps_filter_cb = dvd_filter_spu;

@@ -51,11 +51,11 @@ tv_playback_init(tv_channel_t *ch)
 
   vd_conf_init(&ch->ch_vdc);
   
-  mp_init(&ch->ch_mp, ch->ch_name, tv->tv_ai);
+  ch->ch_mp = mp_create(ch->ch_name, tv->tv_ai);
 
-  ch->ch_video_widget = vd_create_widget(tv->tv_stack, &ch->ch_mp, 1.0);
+  ch->ch_video_widget = vd_create_widget(tv->tv_stack, ch->ch_mp, 1.0);
 
-  mp_set_video_conf(&ch->ch_mp, &ch->ch_vdc);
+  mp_set_video_conf(ch->ch_mp, &ch->ch_vdc);
 
   ch->ch_fw = wrap_format_create(NULL, 1);
 }
@@ -81,7 +81,7 @@ tv_playback_deinit(tv_channel_t *ch)
 {
   tv_t *tv = ch->ch_tv;
   tv_channel_stream_t *tcs;
-  media_pipe_t *mp = &ch->ch_mp;
+  media_pipe_t *mp = ch->ch_mp;
 
   assert(ch->ch_video_widget != NULL);
 

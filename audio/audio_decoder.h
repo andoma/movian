@@ -20,7 +20,14 @@
 #define AUDIO_DECODER_H
 
 #include "media.h"
-#include "audio_mixer.h"
+#include "audio.h"
+
+LIST_HEAD(audio_decoder_list, audio_decoder);
+
+typedef void (ad_mix_func_t)(int frames, int channels, int16_t *src, 
+			     const uint8_t *swizzleptr,
+			     int16_t *output[AUDIO_CHAN_MAX],
+			     int stride, audio_mode_t *am);
 
 typedef struct audio_decoder {
   pthread_t ad_ptid;  /* Thread id */
@@ -29,17 +36,33 @@ typedef struct audio_decoder {
 
   int16_t *ad_outbuf;
 
-  audio_source_t *ad_output;
+  audio_buf_t *ad_buf;
 
-  int ad_rate;
-  int ad_channels;
-  int ad_codec;
+  struct AVResampleContext *ad_resampler;
+  int16_t *ad_resampler_spill[AUDIO_CHAN_MAX];
+  int ad_resampler_spill_size;
+  int ad_resampler_channels;
+  int ad_resampler_srcrate;
+  int ad_resampler_dstrate;
+
+  int16_t *ad_resbuf;
+
+  int64_t ad_silence_last_rt;
+  int64_t ad_silence_last_pts;
+
+  /* Upon pause we suck back packets from the output queue and
+     move them here */
+
+  struct audio_buf_queue ad_hold_queue;
+  
+  LIST_ENTRY(audio_decoder) ad_link;
+
 
 } audio_decoder_t;
 
 
-void audio_decoder_create(media_pipe_t *mp);
-void audio_decoder_join(media_pipe_t *mp, audio_decoder_t *ad);
+audio_decoder_t *audio_decoder_create(media_pipe_t *mp);
 
+void audio_decoder_destroy(audio_decoder_t *ad);
 
 #endif /* AUDIO_DECODER_H */

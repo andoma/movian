@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include <libhts/hts_strtab.h>
 #include "showtime.h"

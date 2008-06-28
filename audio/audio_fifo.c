@@ -25,127 +25,187 @@
 #include "showtime.h"
 #include "audio_fifo.h"
 
-
+/**
+ *
+ */
 audio_buf_t *
-af_alloc_dynamic(size_t size)
+af_alloc(size_t size)
 {
   audio_buf_t *ab;
   ab = malloc(size + sizeof(audio_buf_t));
-  ab->size = size;
+  ab->ab_mp = NULL;
   return ab;
 }
 
-audio_buf_t *
-af_alloc(audio_fifo_t *af)
-{
-  return af_alloc_dynamic(af->bufsize);
-}
-
+/**
+ *
+ */
 void
 af_enq(audio_fifo_t *af, audio_buf_t *ab)
 {
-  ab->ts = wallclock;
-  assert(ab->payload_type != 0);
+  pthread_mutex_lock(&af->af_lock);
 
-  pthread_mutex_lock(&af->lock);
+  while(af->af_len > af->af_maxlen)
+    pthread_cond_wait(&af->af_cond, &af->af_lock);
 
-  while(af->len == af->maxlen)
-    pthread_cond_wait(&af->cond, &af->lock);
+  af->af_len += ab->ab_frames;
 
-  af->len++;
-  TAILQ_INSERT_TAIL(&af->queue, ab, link);
-  pthread_cond_signal(&af->cond);
+  TAILQ_INSERT_TAIL(&af->af_queue, ab, link);
+  pthread_cond_broadcast(&af->af_cond);
 
-  pthread_mutex_unlock(&af->lock);
+  pthread_mutex_unlock(&af->af_lock);
 }
 
 
+/**
+ *
+ */
+audio_buf_t *
+af_peek(audio_fifo_t *af)
+{
+  audio_buf_t *ab;
+
+  ab = TAILQ_FIRST(&af->af_queue);
+
+  if(af->af_hysteresis) {
+
+    if(ab == NULL)
+      af->af_satisfied = 0;
+    else if(af->af_len < af->af_hysteresis && af->af_satisfied == 0)
+      ab = NULL;
+    else
+      af->af_satisfied = 1;
+  }
+  
+  return ab;
+}
+
+/**
+ *
+ */
+static void
+af_remove(audio_fifo_t *af, audio_buf_t *ab)
+{
+  af->af_len -= ab->ab_frames;
+  TAILQ_REMOVE(&af->af_queue, ab, link);
+  pthread_cond_broadcast(&af->af_cond);
+}
+
+
+/**
+ *
+ */
 audio_buf_t *
 af_deq(audio_fifo_t *af, int wait)
 {
   audio_buf_t *ab;
-  int64_t delay;
 
-  pthread_mutex_lock(&af->lock);
-
+  af_lock(af);
   while(1) {
-    ab = af->hold ? NULL : TAILQ_FIRST(&af->queue);
-
-    if(af->hysteresis) {
-
-      if(ab == NULL)
-	af->satisfied = 0;
-      else if(af->len < af->hysteresis && af->satisfied == 0)
-	ab = NULL;
-      else
-	af->satisfied = 1;
-    }
-
-    if(ab != NULL)
+    ab = af_peek(af);
+    
+    if(ab != NULL || !wait)
       break;
-
-    if(wait)
-      pthread_cond_wait(&af->cond, &af->lock);
-    else
-      break;
-  }
-  if(ab != NULL) {
-    af->len--;
-    TAILQ_REMOVE(&af->queue, ab, link);
-    pthread_cond_signal(&af->cond);
-
-    delay = wallclock - ab->ts;
-    af->avgdelay = (af->avgdelay + delay) / 2.0;
+    pthread_cond_wait(&af->af_cond, &af->af_lock);
   }
 
-  pthread_mutex_unlock(&af->lock);
+  if(ab != NULL)
+    af_remove(af, ab);
+
+  af_unlock(af);
   return ab;
 }
 
-
-
-
-
+/**
+ *
+ */
 void
-af_free(audio_buf_t *ab)
+ab_free(audio_buf_t *ab)
 {
+  if(ab->ab_mp != NULL)
+    mp_unref(ab->ab_mp);
   free(ab);
 }
 
 
+/**
+ *
+ */
 void
-audio_fifo_init(audio_fifo_t *af, int maxlen, size_t size, int hysteresis)
+audio_fifo_init(audio_fifo_t *af, int maxlen, int hysteresis)
 {
-  pthread_mutex_init(&af->lock, NULL);
-  pthread_cond_init(&af->cond, NULL);
-  TAILQ_INIT(&af->queue);
-  af->satisfied = 0;
-  af->hysteresis = hysteresis;
-  af->len = 0;
-  af->maxlen = maxlen;
-  af->bufsize = size;
+  pthread_mutex_init(&af->af_lock, NULL);
+  pthread_cond_init(&af->af_cond, NULL);
+  TAILQ_INIT(&af->af_queue);
+  af->af_satisfied = 0;
+  af->af_hysteresis = hysteresis;
+  af->af_len = 0;
+  af->af_maxlen = maxlen;
 }
 
-void 
-audio_fifo_purge(audio_fifo_t *af)
+/**
+ * Remove all buffer entries from the given reference and
+ * optionally put them on queue 'q'
+ */
+void
+audio_fifo_purge(audio_fifo_t *af, void *ref, struct audio_buf_queue *q)
+{
+  audio_buf_t *ab, *n;
+
+  pthread_mutex_lock(&af->af_lock);
+
+  for(ab = TAILQ_FIRST(&af->af_queue); ab != NULL; ab = n) {
+    n = TAILQ_NEXT(ab, link);
+    if(ref != NULL && ab->ab_ref != ref)
+      continue;
+
+    TAILQ_REMOVE(&af->af_queue, ab, link);
+    af->af_len -= ab->ab_frames;
+
+    if(q != NULL) {
+      TAILQ_INSERT_TAIL(q, ab, link);
+    } else {
+      ab_free(ab);
+    }
+  }
+
+  pthread_cond_broadcast(&af->af_cond);
+  pthread_mutex_unlock(&af->af_lock);  
+}
+
+
+/**
+ * Remove all buffer entries from the given reference and
+ * optionally put them on queue 'q'
+ */
+void
+audio_fifo_reinsert(audio_fifo_t *af, struct audio_buf_queue *q)
 {
   audio_buf_t *ab;
 
-  pthread_mutex_lock(&af->lock);
+  pthread_mutex_lock(&af->af_lock);
 
-  while((ab = TAILQ_FIRST(&af->queue)) != NULL) {
-    TAILQ_REMOVE(&af->queue, ab, link);
-    free(ab);
+  while((ab = TAILQ_FIRST(q)) != NULL) {
+    TAILQ_REMOVE(q, ab, link);
+    af->af_len += ab->ab_frames;
+    TAILQ_INSERT_TAIL(&af->af_queue, ab, link);
   }
-  af->len = 0;
 
-  pthread_cond_signal(&af->cond);
-  pthread_mutex_unlock(&af->lock);
+  pthread_cond_broadcast(&af->af_cond);
+  pthread_mutex_unlock(&af->af_lock);  
 }
 
 
-void 
-audio_fifo_destroy(audio_fifo_t *af)
+/**
+ *
+ */
+void
+audio_fifo_clear_queue(struct audio_buf_queue *q)
 {
-  audio_fifo_purge(af);
+  audio_buf_t *ab;
+
+  while((ab = TAILQ_FIRST(q)) != NULL) {
+    TAILQ_REMOVE(q, ab, link);
+    ab_free(ab);
+  }
 }

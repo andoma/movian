@@ -27,7 +27,6 @@
 #include "audio/audio_decoder.h"
 #include "video/video_decoder.h"
 
-media_pipe_t *primary_audio;
 extern int concurrency;
 
 static void
@@ -50,13 +49,21 @@ mq_init(media_queue_t *mq)
 
 }
 
-/*
+
+/**
  *
  */
-
-void
-mp_init(media_pipe_t *mp, const char *name, struct appi *ai)
+media_pipe_t *
+mp_create(const char *name, struct appi *ai)
 {
+  media_pipe_t *mp;
+
+  mp = calloc(1, sizeof(media_pipe_t));
+  
+  pthread_mutex_init(&mp->mp_ref_mutex, NULL);
+
+  mp->mp_refcount = 1;
+
   mp->mp_name = name;
   mp->mp_ai = ai;
   mp->mp_speed_gain = 1.0f;
@@ -66,21 +73,49 @@ mp_init(media_pipe_t *mp, const char *name, struct appi *ai)
   
   mq_init(&mp->mp_audio);
   mq_init(&mp->mp_video);
+  return mp;
 }
 
 
-/*
+/**
  *
  */
-
-void
-mp_deinit(media_pipe_t *mp)
+static void
+mp_destroy(media_pipe_t *mp)
 {
-  if(primary_audio == mp)
-    primary_audio = NULL;
-
-  mp_set_playstatus(mp, MP_STOP);
+  fprintf(stderr, "Don't know how to destroy mp yet\n");
+  abort();
 }
+
+
+/**
+ *
+ */
+void
+mp_unref(media_pipe_t *mp)
+{
+  pthread_mutex_lock(&mp->mp_ref_mutex);
+  mp->mp_refcount--;
+
+  if(mp->mp_refcount == 0) {
+    mp_destroy(mp);
+    return;
+  }
+  pthread_mutex_unlock(&mp->mp_ref_mutex);
+}
+
+/**
+ *
+ */
+media_pipe_t *
+mp_ref(media_pipe_t *mp)
+{
+  pthread_mutex_lock(&mp->mp_ref_mutex);
+  mp->mp_refcount++;
+  pthread_mutex_unlock(&mp->mp_ref_mutex);
+  return mp;
+}
+
 
 /*
  *
@@ -504,9 +539,15 @@ mp_set_playstatus(media_pipe_t *mp, int status)
 
   switch(status) {
 
+  case MP_PLAY:
+#if 0
+    if(mp->mp_audio_decoder != NULL)
+      audio_decoder_release(mp->mp_audio_decoder);
+
+    /* FALLTHRU */
+#endif
   case MP_VIDEOSEEK_PLAY:
   case MP_VIDEOSEEK_PAUSE:
-  case MP_PLAY:
   case MP_PAUSE:
 
     pthread_mutex_lock(&mp->mp_mutex);
@@ -517,15 +558,15 @@ mp_set_playstatus(media_pipe_t *mp, int status)
     pthread_mutex_unlock(&mp->mp_mutex);
 
     if(mp->mp_audio_decoder == NULL)
-      audio_decoder_create(mp);
+      mp->mp_audio_decoder = audio_decoder_create(mp);
+
+#if 0
+    if(status != MP_PLAY && mp->mp_audio_decoder != NULL)
+      audio_decoder_hold(mp->mp_audio_decoder);
+#endif
 
     if(mp->mp_video_decoder == NULL)
       video_decoder_create(mp);
-
-    /* If paused, freeze audio fifo */
-
-    mp->mp_audio_decoder->ad_output->as_fifo.hold = 
-      mp->mp_playstatus == MP_PAUSE;
 
     video_decoder_start(mp->mp_video_decoder);
     break;
@@ -533,10 +574,6 @@ mp_set_playstatus(media_pipe_t *mp, int status)
     
   case MP_STOP:
 
-    /* Unfreeze audio */
-
-    mp->mp_audio_decoder->ad_output->as_fifo.hold = 0;
-    
     /* Lock queues */
 
     pthread_mutex_lock(&mp->mp_mutex);
@@ -557,8 +594,10 @@ mp_set_playstatus(media_pipe_t *mp, int status)
 
     /* We should now be able to collect the threads */
 
-    if(mp->mp_audio_decoder != NULL)
-      audio_decoder_join(mp, mp->mp_audio_decoder);
+    if(mp->mp_audio_decoder != NULL) {
+      audio_decoder_destroy(mp->mp_audio_decoder);
+      mp->mp_audio_decoder = NULL;
+    }
 
     if(mp->mp_video_decoder != NULL)
       video_decoder_join(mp, mp->mp_video_decoder);
@@ -600,14 +639,13 @@ mp_playpause(struct media_pipe *mp, int key)
 void
 media_pipe_acquire_audio(struct media_pipe *mp)
 {
-  primary_audio = mp;
+  fprintf(stderr, "!!!!!!!!!!! media_pipe_acquire_audio()");
 }
 
 void
 media_pipe_release_audio(struct media_pipe *mp)
 {
-  if(primary_audio == mp)
-    primary_audio = NULL;
+  fprintf(stderr, "!!!!!!!!!!! media_pipe_release_audio()");
 }
 
 void

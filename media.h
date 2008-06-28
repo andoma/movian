@@ -25,14 +25,13 @@
 #include <libglw/glw.h>
 #include <libavformat/avformat.h>
 
+
 #define MP_WIDGET_AUTO_DISPLAY_TIME 250
 
 struct appi;
 
 #define MQ_LOWWATER 20
 #define MQ_HIWATER  200
-
-
 
 TAILQ_HEAD(media_buf_queue, media_buf);
 TAILQ_HEAD(media_pipe_queue, media_pipe);
@@ -97,6 +96,7 @@ typedef struct media_buf {
   codecwrap_t *mb_cw;
 
   int mb_stream; /* For feedback */
+
 } media_buf_t;
 
 /*
@@ -140,7 +140,8 @@ typedef enum {
 
 typedef struct media_pipe {
 
-  int mp_flags;
+  pthread_mutex_t mp_ref_mutex;
+  int mp_refcount;
 
   mp_playstatus_t mp_playstatus;
 
@@ -152,9 +153,10 @@ typedef struct media_pipe {
 
   media_queue_t mp_video, mp_audio;
   
+  int64_t mp_audio_clock;
+  int mp_audio_clock_valid;
+
   LIST_ENTRY(media_pipe) mp_asched_link;
-  int64_t mp_clock;
-  int mp_clock_valid;
 
   int mp_total_time;
 
@@ -183,18 +185,18 @@ typedef struct media_pipe {
  */
 
 
-extern inline void wrap_lock_codec(codecwrap_t *cw);
+static inline void wrap_lock_codec(codecwrap_t *cw);
 
-extern inline void
+static inline void
 wrap_lock_codec(codecwrap_t *cw)
 {
   pthread_mutex_lock(&cw->mutex);
 }
 
 
-extern inline void wrap_unlock_codec(codecwrap_t *cw);
+static inline void wrap_unlock_codec(codecwrap_t *cw);
 
-extern inline void
+static inline void
 wrap_unlock_codec(codecwrap_t *cw)
 {
   pthread_mutex_unlock(&cw->mutex);
@@ -230,15 +232,15 @@ media_buf_free(media_buf_t *mb)
   free(mb);
 }
 
-struct vd_conf;
+
+media_pipe_t *mp_create(const char *name, struct appi *ai);
+media_pipe_t *mp_ref(media_pipe_t *mp);
+void mp_unref(media_pipe_t *mp);
 
 void mq_flush(media_queue_t *mq);
 
-void mp_init(media_pipe_t *mp, const char *name, struct appi *ai);
-
+struct vd_conf;
 void mp_set_video_conf(media_pipe_t *mp, struct vd_conf *vdc);
-
-void mp_deinit(media_pipe_t *mp);
 
 media_buf_t *mb_dequeue_wait(media_pipe_t *hmp, media_queue_t *hmq);
 void mb_enqueue(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);

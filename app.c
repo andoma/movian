@@ -110,8 +110,8 @@ app_spawn(app_t *a, struct config_head *settings, int index)
   ai->ai_instance_index = index;
 
   input_init(&ai->ai_ic);
-  mp_init(&ai->ai_mp, a->app_name, ai);
-  
+  ai->ai_mp = mp_create(a->app_name, ai); /* Includes a refcount, this is
+					     decreated in appi_destroy() */
   glw_focus_stack_init(&ai->ai_gfs);
   
   ai->ai_settings = settings;
@@ -136,7 +136,8 @@ appi_create(const char *name)
   pthread_mutex_unlock(&appi_list_mutex);
 
   input_init(&ai->ai_ic);
-  mp_init(&ai->ai_mp, name, ai);
+  ai->ai_mp = mp_create(name, ai); /* Includes a refcount, this is
+				      decreated in appi_destroy() */
   ai->ai_name = name;
 
   glw_focus_stack_init(&ai->ai_gfs);
@@ -162,7 +163,8 @@ appi_destroy(appi_t *ai)
     unlink(buf);
   }
 
-  mp_deinit(&ai->ai_mp);
+  mp_unref(ai->ai_mp);
+
   free((void *)ai->ai_name);
   input_flush_queue(&ai->ai_ic);
   free(ai);

@@ -399,7 +399,7 @@ vd_compute_output_duration(video_decoder_t *vd, int frame_duration)
 static void
 vd_compute_avdiff(video_decoder_t *vd, media_pipe_t *mp, int64_t pts)
 {
-  if(!mp->mp_clock_valid) {
+  if(!mp->mp_audio_clock_valid) {
     vd->vd_avdiff_x = 0;
     vd_kalman_init(&vd->vd_avfilter);
     return;
@@ -413,7 +413,8 @@ vd_compute_avdiff(video_decoder_t *vd, media_pipe_t *mp, int64_t pts)
   }
   
 
-  vd->vd_avdiff = mp->mp_clock - pts - mp->mp_video_conf->gc_avcomp * 1000;
+  vd->vd_avdiff = 
+    mp->mp_audio_clock - pts - mp->mp_video_conf->gc_avcomp * 1000;
 
   if(abs(vd->vd_avdiff) < 10000000) {
 
@@ -425,10 +426,10 @@ vd_compute_avdiff(video_decoder_t *vd, media_pipe_t *mp, int64_t pts)
     if(vd->vd_avdiff_x < -10.0f)
       vd->vd_avdiff_x = -10.0f;
   }
-#if 0
+#if 1
   printf("%s: AVDIFF = %f %d %lld %lld\n", 
 	 mp->mp_name, vd->vd_avdiff_x, vd->vd_avdiff,
-	 mp->mp_clock, pts);
+	 mp->mp_audio_clock, pts);
 #endif
 }
 

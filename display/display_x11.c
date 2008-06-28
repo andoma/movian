@@ -459,6 +459,7 @@ gl_keypress(XEvent *event)
 
 
 
+extern void soundcheck(void);
 
 /**
  *

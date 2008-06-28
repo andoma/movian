@@ -276,7 +276,7 @@ player_thread(void *aux)
 {
   play_video_ctrl_t *pvc = aux;
   appi_t *ai = pvc->pvc_ai;
-  media_pipe_t *mp = &ai->ai_mp;
+  media_pipe_t *mp = ai->ai_mp;
   media_buf_t *mb;
   media_queue_t *mq;
   int64_t pts, dts, seek_ref, seek_delta, seek_abs;
@@ -658,7 +658,7 @@ play_video(const char *url, appi_t *ai, ic_t *ic, glw_t *parent)
 {
   AVCodecContext *ctx;
   formatwrap_t *fw;
-  media_pipe_t *mp = &ai->ai_mp;
+  media_pipe_t *mp = ai->ai_mp;
   glw_t *vdw, *top, *w;
   int64_t ts;
   inputevent_t ie;
@@ -706,7 +706,7 @@ play_video(const char *url, appi_t *ai, ic_t *ic, glw_t *parent)
    * Create video output widget
    */
   vd_conf_init(&pvc.pvc_vdc);
-  vdw = vd_create_widget(pvc.pvc_zstack, &ai->ai_mp, 1.0);
+  vdw = vd_create_widget(pvc.pvc_zstack, ai->ai_mp, 1.0);
   mp_set_video_conf(mp, &pvc.pvc_vdc);
 
 

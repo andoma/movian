@@ -55,7 +55,7 @@ typedef struct appi {
   glw_focus_stack_t ai_gfs;
 
   ic_t ai_ic;
-  media_pipe_t ai_mp;
+  media_pipe_t *ai_mp;
   
   AVFormatContext *ai_fctx;
 

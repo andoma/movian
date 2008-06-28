@@ -27,8 +27,7 @@ SRCS  += video_playback.c video_decoder.c video_widget.c \
 # audio subsys
 
 VPATH += audio
-SRCS  += audio.c audio_decoder.c audio_fifo.c audio_mixer.c audio_ui.c \
-	 audio_compressor.c audio_iec958.c
+SRCS  += audio.c audio_decoder.c audio_fifo.c audio_ui.c audio_iec958.c
 
 # ALSA Audio support
 VPATH += audio/alsa
@@ -105,7 +104,7 @@ SRCS +=	tv.c htsp.c tv_playback.c
 
 
 PROG = showtime
-CFLAGS += -g -Wall -Werror -funsigned-char -O2 $(HTS_CFLAGS)
+CFLAGS += -g -Wall -Werror -funsigned-char -O0 $(HTS_CFLAGS)
 
 CFLAGS += -I/usr/local/include -I$(INCLUDES_INSTALL_BASE) -I$(CURDIR)
 CFLAGS += -Wno-deprecated-declarations -Wmissing-prototypes

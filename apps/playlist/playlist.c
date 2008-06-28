@@ -759,7 +759,7 @@ playlist_thread(void *aux)
    */
   memset(&plp, 0, sizeof(plp));
   input_init(&plp.plp_ic);
-  plp.plp_mp = &ai->ai_mp;
+  plp.plp_mp = ai->ai_mp;
   pthread_create(&playerthread, NULL, playlist_player, &plp);
 
 
