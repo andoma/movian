@@ -453,6 +453,9 @@ player_thread(void *aux)
     if((seek_delta && seek_ref != AV_NOPTS_VALUE) || seek_abs) {
       /* Seeking requested */
 
+      /* Reset restart cache threshold to force writeout */
+      pvc->pvc_rcache_last = INT64_MIN;
+
       /* Just make it display the seek widget */
       pv_update_playstatus(pvc, MP_VIDEOSEEK_PLAY);
 
