@@ -210,8 +210,7 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic,
     i = av_read_frame(fctx, &pkt);
 
     if(i < 0) {
-      /* End of stream */
-      mp_wait(mp, mp->mp_audio.mq_stream != -1, mp->mp_video.mq_stream != -1);
+      /* End of stream (or some other type of error), next track */
       next = playlist_advance(ple, 0);
       break;
     }
