@@ -65,4 +65,8 @@ audio_decoder_t *audio_decoder_create(media_pipe_t *mp);
 
 void audio_decoder_destroy(audio_decoder_t *ad);
 
+void audio_decoder_acquire_output(audio_decoder_t *ad);
+
+int audio_decoder_is_silenced(audio_decoder_t *ad);
+
 #endif /* AUDIO_DECODER_H */

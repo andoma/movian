@@ -540,6 +540,8 @@ mp_set_playstatus(media_pipe_t *mp, int status)
   switch(status) {
 
   case MP_PLAY:
+    if(mp->mp_audio_decoder != NULL)
+      audio_decoder_acquire_output(mp->mp_audio_decoder);
 #if 0
     if(mp->mp_audio_decoder != NULL)
       audio_decoder_release(mp->mp_audio_decoder);
@@ -636,11 +638,7 @@ mp_playpause(struct media_pipe *mp, int key)
   mp_set_playstatus(mp, t);
 }
 
-void
-media_pipe_acquire_audio(struct media_pipe *mp)
-{
-  fprintf(stderr, "!!!!!!!!!!! media_pipe_acquire_audio()");
-}
+
 
 
 void
@@ -673,3 +671,12 @@ nice_codec_name(char *buf, int len, AVCodecContext *ctx)
 
 
 
+/**
+ *
+ */
+int
+mp_is_audio_silenced(media_pipe_t *mp)
+{
+  return mp->mp_audio_decoder &&
+    audio_decoder_is_silenced(mp->mp_audio_decoder);
+}

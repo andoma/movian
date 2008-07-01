@@ -375,7 +375,6 @@ player_thread(void *aux)
 
     if(mp_is_paused(mp)) {
       gotevent = !input_getevent(&pvc->pvc_ic, 1, &ie, NULL);
-      media_pipe_acquire_audio(mp);
     } else {
       gotevent = !input_getevent(&pvc->pvc_ic, 0, &ie, NULL);
     }
@@ -794,8 +793,6 @@ play_video(const char *url, appi_t *ai, ic_t *ic, glw_t *parent)
       mp->mp_videoseekdts = ts;
   }
   mp_set_playstatus(mp, MP_VIDEOSEEK_PAUSE);
-
-  media_pipe_acquire_audio(mp);
 
   input_init(&pvc.pvc_ic);
 

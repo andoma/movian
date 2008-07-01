@@ -92,10 +92,6 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic,
 
   mp->mp_format = fctx;
 
-  wrap_lock_all_codecs(fw);
-  media_pipe_acquire_audio(mp);
-  wrap_unlock_all_codecs(fw);
-
   curtime = -1;
 
   mp->mp_feedback = ic;
@@ -103,7 +99,6 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic,
   while(1) {
     if(mp_is_paused(mp)) {
       gotevent = !input_getevent(ic, 1, &ie, NULL);
-      media_pipe_acquire_audio(mp);
     } else {
       gotevent = !input_getevent(ic, 0, &ie, NULL);
     }

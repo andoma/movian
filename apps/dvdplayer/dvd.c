@@ -283,9 +283,6 @@ dvd_player_thread(void *aux)
 
   mp_set_playstatus(mp, MP_PLAY);
 
-  media_pipe_acquire_audio(mp);
-
-
   while(run) {
 
     if(mp_is_paused(mp)) {
@@ -638,8 +635,6 @@ dvd_ctrl_input(dvd_player_t *dp, int wait)
 
   if(key == 0)
     return 1;
-
-  media_pipe_acquire_audio(mp);
 
   pci = &dp->dp_pci;
 

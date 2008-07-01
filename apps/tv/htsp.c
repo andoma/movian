@@ -830,8 +830,6 @@ htsp_mux_start(htsp_connection_t *hc, tv_channel_t *ch, htsmsg_t *m)
 
   mp_set_playstatus(mp, MP_PLAY);
 
-  media_pipe_acquire_audio(mp);
-
   htsmsg_destroy(m);
 }
 

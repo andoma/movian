@@ -107,6 +107,27 @@ audio_decoder_destroy(audio_decoder_t *ad)
   free(ad);
 }
 
+/**
+ * Acquire audio output
+ */
+void
+audio_decoder_acquire_output(audio_decoder_t *ad)
+{
+  pthread_mutex_lock(&audio_decoders_mutex);
+  LIST_REMOVE(ad, ad_link);
+  LIST_INSERT_HEAD(&audio_decoders, ad, ad_link);
+  pthread_mutex_unlock(&audio_decoders_mutex);
+}
+
+/**
+ * Return 1 if the audio output is currently silenced (not primary)
+ */
+int
+audio_decoder_is_silenced(audio_decoder_t *ad)
+{
+  return LIST_FIRST(&audio_decoders) != ad;
+}
+
 
 
 #if 0

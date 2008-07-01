@@ -276,6 +276,8 @@ void media_pipe_acquire_audio(struct media_pipe *mp);
 
 void nice_codec_name(char *buf, int len, AVCodecContext *ctx);
 
+int mp_is_audio_silenced(media_pipe_t *mp);
+
 extern media_pipe_t *primary_audio;
 
 #endif /* MEDIA_H */
