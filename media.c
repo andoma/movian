@@ -83,8 +83,8 @@ mp_create(const char *name, struct appi *ai)
 static void
 mp_destroy(media_pipe_t *mp)
 {
-  fprintf(stderr, "Don't know how to destroy mp yet\n");
-  abort();
+  mp_set_playstatus(mp, MP_STOP);
+  free(mp);
 }
 
 
