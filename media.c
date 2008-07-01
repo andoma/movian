@@ -642,11 +642,6 @@ media_pipe_acquire_audio(struct media_pipe *mp)
   fprintf(stderr, "!!!!!!!!!!! media_pipe_acquire_audio()");
 }
 
-void
-media_pipe_release_audio(struct media_pipe *mp)
-{
-  fprintf(stderr, "!!!!!!!!!!! media_pipe_release_audio()");
-}
 
 void
 mp_set_video_conf(media_pipe_t *mp, struct vd_conf *vdc)
