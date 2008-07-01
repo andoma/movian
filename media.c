@@ -540,8 +540,6 @@ mp_set_playstatus(media_pipe_t *mp, int status)
   switch(status) {
 
   case MP_PLAY:
-    if(mp->mp_audio_decoder != NULL)
-      audio_decoder_acquire_output(mp->mp_audio_decoder);
 #if 0
     if(mp->mp_audio_decoder != NULL)
       audio_decoder_release(mp->mp_audio_decoder);
@@ -561,6 +559,9 @@ mp_set_playstatus(media_pipe_t *mp, int status)
 
     if(mp->mp_audio_decoder == NULL)
       mp->mp_audio_decoder = audio_decoder_create(mp);
+
+    if(status == MP_PLAY && mp->mp_audio_decoder != NULL)
+      audio_decoder_acquire_output(mp->mp_audio_decoder);
 
 #if 0
     if(status != MP_PLAY && mp->mp_audio_decoder != NULL)

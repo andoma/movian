@@ -22,7 +22,7 @@
 #include "media.h"
 #include "audio.h"
 
-LIST_HEAD(audio_decoder_list, audio_decoder);
+TAILQ_HEAD(audio_decoder_queue, audio_decoder);
 
 typedef void (ad_mix_func_t)(int frames, int channels, int16_t *src, 
 			     const uint8_t *swizzleptr,
@@ -55,11 +55,12 @@ typedef struct audio_decoder {
 
   struct audio_buf_queue ad_hold_queue;
   
-  LIST_ENTRY(audio_decoder) ad_link;
+  TAILQ_ENTRY(audio_decoder) ad_link;
 
 
 } audio_decoder_t;
 
+void audio_decoder_init(void);
 
 audio_decoder_t *audio_decoder_create(media_pipe_t *mp);
 

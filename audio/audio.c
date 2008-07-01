@@ -27,6 +27,7 @@
 #include "audio.h"
 #include "audio_ui.h"
 #include "audio_fifo.h"
+#include "audio_decoder.h"
 
 #include "layout/layout_forms.h"
 
@@ -46,6 +47,7 @@ audio_init(void)
   pthread_t ptid;
 
   TAILQ_INIT(&audio_modes);
+  audio_decoder_init();
   audio_alsa_init();
 
   audio_widget_make();

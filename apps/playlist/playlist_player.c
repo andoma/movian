@@ -97,6 +97,10 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic,
   mp->mp_feedback = ic;
 
   while(1) {
+
+    if(mp->mp_playstatus == MP_PLAY && mp_is_audio_silenced(mp))
+      mp_set_playstatus(mp, MP_PAUSE);
+
     if(mp_is_paused(mp)) {
       gotevent = !input_getevent(ic, 1, &ie, NULL);
     } else {

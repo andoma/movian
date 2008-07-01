@@ -29,7 +29,7 @@
 
 extern audio_fifo_t *thefifo;
 
-static struct audio_decoder_list audio_decoders;
+static struct audio_decoder_queue audio_decoders;
 static pthread_mutex_t audio_decoders_mutex;
 
 #define CLIP16(a) ((a) > 32767 ? 32767 : ((a) < -32768 ? -32768 : a))
@@ -60,6 +60,14 @@ static void audio_deliver(audio_decoder_t *ad, audio_mode_t *am, int16_t *src,
 static void *ad_thread(void *aux);
 
 
+/**
+ *
+ */
+void
+audio_decoder_init(void)
+{
+  TAILQ_INIT(&audio_decoders);
+}
 
 
 /**
@@ -79,7 +87,7 @@ audio_decoder_create(media_pipe_t *mp)
   TAILQ_INIT(&ad->ad_hold_queue);
 
   pthread_mutex_lock(&audio_decoders_mutex);
-  LIST_INSERT_HEAD(&audio_decoders, ad, ad_link);
+  TAILQ_INSERT_TAIL(&audio_decoders, ad, ad_link);
   pthread_mutex_unlock(&audio_decoders_mutex);
 
   pthread_create(&ad->ad_ptid, NULL, ad_thread, ad);
@@ -99,7 +107,7 @@ audio_decoder_destroy(audio_decoder_t *ad)
   pthread_join(ad->ad_ptid, NULL);
   audio_fifo_clear_queue(&ad->ad_hold_queue);
   pthread_mutex_lock(&audio_decoders_mutex);
-  LIST_REMOVE(ad, ad_link);
+  TAILQ_REMOVE(&audio_decoders, ad, ad_link);
   pthread_mutex_unlock(&audio_decoders_mutex);
 
   close_resampler(ad);
@@ -113,9 +121,10 @@ audio_decoder_destroy(audio_decoder_t *ad)
 void
 audio_decoder_acquire_output(audio_decoder_t *ad)
 {
+  printf("%s: Acquire output!\n",ad->ad_mp->mp_name);
   pthread_mutex_lock(&audio_decoders_mutex);
-  LIST_REMOVE(ad, ad_link);
-  LIST_INSERT_HEAD(&audio_decoders, ad, ad_link);
+  TAILQ_REMOVE(&audio_decoders, ad, ad_link);
+  TAILQ_INSERT_HEAD(&audio_decoders, ad, ad_link);
   pthread_mutex_unlock(&audio_decoders_mutex);
 }
 
@@ -125,7 +134,7 @@ audio_decoder_acquire_output(audio_decoder_t *ad)
 int
 audio_decoder_is_silenced(audio_decoder_t *ad)
 {
-  return LIST_FIRST(&audio_decoders) != ad;
+  return TAILQ_FIRST(&audio_decoders) != ad;
 }
 
 
@@ -340,7 +349,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
 
     frames = data_size / sizeof(int16_t) / channels;
 
-    if(LIST_FIRST(&audio_decoders) == ad) {
+    if(TAILQ_FIRST(&audio_decoders) == ad) {
 
       /* We are the primary audio decoder == we may play, forward
 	 to the mixer stages */
@@ -364,14 +373,6 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
       delay = (int64_t)frames * 1000000LL / rate;
       usleep(delay); /* XXX: Must be better */
 	
-      /* Inform our source that it's not making any sound, some sources
-	 may pause or just stop */
-
-      if(mp->mp_feedback != NULL) {
-	ie.type        = INPUT_NO_AUDIO;
-	input_postevent(mp->mp_feedback, &ie);
-      }
-
       /* Flush any packets in the pause pending queue */
       
       audio_fifo_clear_queue(&ad->ad_hold_queue);

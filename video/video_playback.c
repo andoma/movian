@@ -373,6 +373,9 @@ player_thread(void *aux)
 
     pv_update_playstatus(pvc, mp->mp_playstatus);
 
+    if(mp->mp_playstatus == MP_PLAY && mp_is_audio_silenced(mp))
+      mp_set_playstatus(mp, MP_PAUSE);
+
     if(mp_is_paused(mp)) {
       gotevent = !input_getevent(&pvc->pvc_ic, 1, &ie, NULL);
     } else {
