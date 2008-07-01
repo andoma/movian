@@ -426,7 +426,7 @@ vd_compute_avdiff(video_decoder_t *vd, media_pipe_t *mp, int64_t pts)
     if(vd->vd_avdiff_x < -10.0f)
       vd->vd_avdiff_x = -10.0f;
   }
-#if 1
+#if 0
   printf("%s: AVDIFF = %f %d %lld %lld\n", 
 	 mp->mp_name, vd->vd_avdiff_x, vd->vd_avdiff,
 	 mp->mp_audio_clock, pts);
