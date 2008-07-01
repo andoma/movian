@@ -262,6 +262,11 @@ ad_thread(void *aux)
     switch(mb->mb_data_type) {
     default:
       break;
+      
+    case MB_RESET:
+      /* Flush any pending audio in the output fifo */
+      audio_fifo_purge(thefifo, ad, NULL);
+      break;
 
     case MB_AUDIO:
       ad_decode_buf(ad, mp, mb);
