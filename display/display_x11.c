@@ -286,6 +286,9 @@ window_open(void)
   }
 
   x11state.current_displaymode = display_settings.displaymode;
+
+  glw_init_gl();
+
 }
 
 /**

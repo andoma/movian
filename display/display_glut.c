@@ -212,8 +212,7 @@ gl_sysglue_init(int argc, char **argv)
 
   glutSetCursor(GLUT_CURSOR_NONE);
 
-  gl_common_init();
-
+  glw_init_gl();
 }
 
 void
