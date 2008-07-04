@@ -62,11 +62,6 @@ draw_cube(float alpha)
   if(alpha < 0.01)
     return;
 
-  glLineWidth(2.0);
-  glEnable(GL_BLEND);
-  //  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    
   alpha *= 0.3;
 
   glColor4f(1, 1, 1, alpha);
@@ -239,6 +234,8 @@ layout_world_render(float aspect0)
     glVertex3f( 20.0f, 0.0f, -10.0f);
     glVertex3f(-20.0f, 0.0f, -10.0f);
     glEnd();
+
+    glEnable(GL_BLEND);
   }
 
   draw_world(ca, rot, 1.0, rc.rc_aspect);

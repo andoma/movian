@@ -721,10 +721,10 @@ render_video_pipe(glw_t *w, video_decoder_t *vd, glw_rctx_t *rc)
 
 
 
-  if(rc->rc_alpha < 0.98f) 
-    glEnable(GL_BLEND); 
-  else
+  if(rc->rc_alpha > 0.98f) 
     glDisable(GL_BLEND); 
+  else
+    glEnable(GL_BLEND); 
 
 
   fra = vd->vd_fra;
@@ -742,7 +742,7 @@ render_video_pipe(glw_t *w, video_decoder_t *vd, glw_rctx_t *rc)
     }
   }
 
-  glDisable(GL_BLEND); 
+  glEnable(GL_BLEND); 
 
   if(width > 0) {
     glPolygonOffset(0, rc->rc_polyoffset - 2);
