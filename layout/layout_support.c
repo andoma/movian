@@ -137,6 +137,22 @@ layout_update_str(glw_t *w, const char *id, const char *str)
 }
 
 /**
+ * Set filename for a widget to 'file'
+ */
+void
+layout_update_filename(glw_t *w, const char *id, const char *filename)
+{
+  if((w = glw_find_by_id(w, id, 0)) == NULL)
+    return;
+
+  glw_set(w,
+	  GLW_ATTRIB_FILENAME, filename,
+	  NULL);
+
+}
+
+
+/**
  * Load a model into parent 'w'
  */
 void

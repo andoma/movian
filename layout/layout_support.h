@@ -37,5 +37,7 @@ void layout_update_model(glw_t *w, const char *id, const char *model);
 void layout_update_multilinetext(glw_t *w, const char *id, const char *txt,
 				 int total_lines, glw_alignment_t alignment);
 
+void layout_update_filename(glw_t *w, const char *id, const char *filename);
+
 #endif /* LAYOUT_SUPPORT_H */
 
