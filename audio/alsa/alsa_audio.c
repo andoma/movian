@@ -471,7 +471,7 @@ alsa_probe(const char *dev)
   if(!snd_pcm_hw_params_test_channels(h, hwp, 6))
     formats |= AM_FORMAT_PCM_5DOT1;
   
-  if(!snd_pcm_hw_params_test_channels(h, hwp, 7))
+  if(!snd_pcm_hw_params_test_channels(h, hwp, 8))
     formats |= AM_FORMAT_PCM_7DOT1;
 
   if(formats == 0) {
