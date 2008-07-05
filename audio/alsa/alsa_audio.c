@@ -298,6 +298,10 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
       /* We're not the selected audio output anymore, return.
 	 We will lose the current audio block, but who cares ? */
       ab_free(ab);
+
+      if(h != NULL)
+	snd_pcm_close(h);
+
       break;
     }
 
@@ -398,6 +402,7 @@ alsa_probe(const char *dev)
   int formats = 0, rates = 0;
   const char *name;
   char buf[128];
+  char longtitle[128];
   alsa_audio_mode_t *aam;
   int i;
 
@@ -418,6 +423,8 @@ alsa_probe(const char *dev)
   }
 
   name = snd_pcm_info_get_name(info);
+
+  snprintf(longtitle, sizeof(longtitle), "Alsa - %s", name);
 
   fprintf(stderr, "Device name: \"%s\"\n", name);
 
@@ -498,6 +505,7 @@ alsa_probe(const char *dev)
 
     if((r = snd_pcm_open(&h, buf, SND_PCM_STREAM_PLAYBACK, 0) < 0)) {
       fprintf(stderr, "SPDIF passthru not working\n");
+      return 0;
     } else {
       snd_pcm_close(h);
       formats |= AM_FORMAT_DTS | AM_FORMAT_AC3;
@@ -510,6 +518,8 @@ alsa_probe(const char *dev)
   aam->aam_head.am_formats = formats;
   aam->aam_head.am_sample_rates = rates;
   aam->aam_head.am_title = strdup(name);
+  aam->aam_head.am_long_title = strdup(longtitle);
+  aam->aam_head.am_icon = strdup("icon://alsa.png");
 
   aam->aam_head.am_entry = alsa_audio_start;
 
@@ -715,7 +725,7 @@ void
 audio_alsa_init(void)
 {
   alsa_probe("default");
-  //  alsa_probe("iec958");
+  alsa_probe("iec958");
 
   alsa_probe_devices();
 

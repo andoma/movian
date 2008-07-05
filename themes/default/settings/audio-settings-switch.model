@@ -1,0 +1,14 @@
+#HTSSIMPLEMODEL
+
+x-container {
+  
+ text {
+  id title
+  align right
+ }
+ hlist {
+  focus-alpha
+  focus-cursor
+  id switches
+ }
+} 

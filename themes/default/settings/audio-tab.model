@@ -1,9 +1,24 @@
 #HTSSIMPLEMODEL
 
 y-container {
- list {
-  orientation vertical
-  slices 10
-  id audiocontrollers
- } 
-} 
+ y-container {
+  focus-alpha
+  weight 1.0
+  text {
+   weight 0.3
+   caption Select audio output
+   align center
+  }
+
+  list {
+   id audio_output_list
+   slices 7
+  }
+ }
+
+ deck {
+  focus-alpha
+  weight 4.0
+  id audio_output_container
+ }
+}
