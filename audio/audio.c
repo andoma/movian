@@ -39,9 +39,6 @@ static struct audio_mode_queue audio_modes;
 
 static void *audio_output_thread(void *aux);
 
-static glw_t *audio_selection_model;
-static glw_focus_stack_t *audio_selection_gfs;
-
 /**
  *
  */
@@ -140,20 +137,27 @@ audio_mode_add_switch_on_off(glw_t *parent, const char *name, int *store)
 #endif
 }
 
-
 /**
  *
  */
 void
 audio_mode_register(audio_mode_t *am)
 {
+  TAILQ_INSERT_TAIL(&audio_modes, am, am_link);
+}
+
+
+/**
+ *
+ */
+static void
+audio_mode_add_to_settings(audio_mode_t *am, glw_focus_stack_t *gfs, 
+			   glw_t *parent)
+{
   struct layout_form_entry_list lfelist;
   glw_t *t, *ico, *p;
   char buf[50];
   int multich = am->am_formats & (AM_FORMAT_PCM_5DOT1 | AM_FORMAT_PCM_7DOT1);
-
-  TAILQ_INSERT_TAIL(&audio_modes, am, am_link);
-
 
   /* Add the control deck */
 
@@ -170,7 +174,7 @@ audio_mode_register(audio_mode_t *am)
 	  GLW_ATTRIB_SIGNAL_HANDLER, audio_output_switch, am, 200,
 	  NULL);
 
-  t = layout_form_add_tab2(audio_selection_model,
+  t = layout_form_add_tab2(parent,
 			   "audio_output_list", ico,
 			   "audio_output_container",
 			   "settings/audio-output-tab");
@@ -196,7 +200,7 @@ audio_mode_register(audio_mode_t *am)
 
   LFE_ADD(&lfelist, "settings_list");
 
-  layout_form_initialize(&lfelist, t, audio_selection_gfs, NULL, 0);
+  layout_form_initialize(&lfelist, t, gfs, NULL, 0);
 
 
 }
@@ -211,9 +215,9 @@ audio_settings_init(glw_t *m, glw_focus_stack_t *gfs, ic_t *ic)
 {
   struct layout_form_entry_list lfelist;
   glw_t *t;
+  audio_mode_t *am;
 
   TAILQ_INIT(&lfelist);
-  audio_selection_gfs = gfs;
 
   t = layout_form_add_tab(m,
 			  "settings_list",     "settings/audio-icon",
@@ -222,9 +226,13 @@ audio_settings_init(glw_t *m, glw_focus_stack_t *gfs, ic_t *ic)
   if(t == NULL)
     return;
 
-  audio_selection_model = t;
-
   LFE_ADD(&lfelist, "audio_output_list");
 
   layout_form_initialize(&lfelist, m, gfs, ic, 0);
+
+  /* Add each audio output mode */
+
+  TAILQ_FOREACH(am, &audio_modes, am_link)
+    audio_mode_add_to_settings(am, gfs, t);
+
 }

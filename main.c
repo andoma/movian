@@ -156,6 +156,8 @@ main(int argc, char **argv)
     exit(0);
   }
 
+  audio_init();
+
   vd_init();
 
   layout_create();
@@ -163,8 +165,6 @@ main(int argc, char **argv)
   inputhandler_register(300, main_input_event);
 
   apps_load();
-
-  audio_init();
 
   gl_sysglue_mainloop();
   return 0;
