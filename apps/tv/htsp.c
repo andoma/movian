@@ -429,7 +429,7 @@ htsp_worker_thread(void *aux)
 static void
 htsp_msg_dispatch(htsp_connection_t *hc, htsmsg_t *m)
 {
-  uint32_t seq, id;
+  uint32_t seq, tag;
   htsp_msg_t *hm;
   tv_channel_t *ch;
   const char *method;
@@ -441,8 +441,8 @@ htsp_msg_dispatch(htsp_connection_t *hc, htsmsg_t *m)
 
   if((method = htsmsg_get_str(m, "method")) != NULL) {
 
-    if(!htsmsg_get_u32(m, "id", &id) && 
-       (ch = tv_channel_by_subscription_id(hc->hc_tv, id)) != NULL) {
+    if(!htsmsg_get_u32(m, "channelTag", &tag) && 
+       (ch = tv_channel_by_tag(hc->hc_tv, tag)) != NULL) {
 
       if(!strcmp(method, "muxpkt")) {
 	htsp_mux_input(hc, ch, m);
@@ -771,7 +771,7 @@ htsp_mux_start(htsp_connection_t *hc, tv_channel_t *ch, htsmsg_t *m)
       codec_type = CODEC_TYPE_AUDIO;
       s = 1;
     } else if(!strcmp(type, "MPEG2VIDEO")) {
-     codec_id = CODEC_ID_MPEG2VIDEO;
+      codec_id = CODEC_ID_MPEG2VIDEO;
       codec_type = CODEC_TYPE_VIDEO;
       s = 1;
     } else if(!strcmp(type, "H264")) {
@@ -859,12 +859,16 @@ htsp_subscribe(htsp_connection_t *hc, tv_channel_t *ch)
   htsmsg_t *m;
   uint32_t id;
 
-  if(ch->ch_subscription_id != 0)
+  if(ch->ch_running)
     return 0; /* Already subscribed */
 
   m = htsmsg_create();
   htsmsg_add_str(m, "method", "subscribe");
-  htsmsg_add_str(m, "channel", ch->ch_name);
+  htsmsg_add_u32(m, "channelTag", ch->ch_tag);
+
+  tv_playback_init(ch);
+  ch->ch_running = 1;
+  TAILQ_INSERT_TAIL(&ch->ch_tv->tv_running_channels, ch, ch_running_link);
 
   m = htsp_reqreply(hc, m, 1);
 
@@ -878,10 +882,6 @@ htsp_subscribe(htsp_connection_t *hc, tv_channel_t *ch)
   if(id != 0) {
     printf("Created subscription %d for channel %s\n", id, ch->ch_name);
 
-    ch->ch_subscription_id = id;
-    TAILQ_INSERT_TAIL(&ch->ch_tv->tv_running_channels, ch, ch_running_link);
-
-    tv_playback_init(ch);
   }
 
   return 0;
@@ -897,11 +897,11 @@ htsp_unsubscribe(htsp_connection_t *hc, tv_channel_t *ch)
   htsmsg_t *m;
   uint32_t id;
 
-  if(ch->ch_subscription_id == 0)
+  if(!ch->ch_running)
     return 0; /* Not subscribed */
 
   m = htsmsg_create();
-  htsmsg_add_u32(m, "id", ch->ch_subscription_id);
+  htsmsg_add_u32(m, "channelTag", ch->ch_tag);
 
   m = htsp_reqreply(hc, m, 1);
 
@@ -914,5 +914,7 @@ htsp_unsubscribe(htsp_connection_t *hc, tv_channel_t *ch)
 
   tv_playback_deinit(ch);
 
+  ch->ch_running = 0;
+  TAILQ_REMOVE(&ch->ch_tv->tv_running_channels, ch, ch_running_link);
   return 0;
 }

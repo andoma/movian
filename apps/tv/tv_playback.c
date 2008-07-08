@@ -104,11 +104,11 @@ tv_playback_deinit(tv_channel_t *ch)
  *
  */
 tv_channel_t *
-tv_channel_by_subscription_id(tv_t *tv, uint32_t id)
+tv_channel_by_tag(tv_t *tv, uint32_t tag)
 {
   tv_channel_t *ch;
   TAILQ_FOREACH(ch, &tv->tv_running_channels, ch_running_link)
-    if(ch->ch_subscription_id == id)
+    if(ch->ch_tag == tag)
       return ch;
   return NULL;
 }

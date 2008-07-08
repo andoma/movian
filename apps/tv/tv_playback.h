@@ -25,7 +25,7 @@ void tv_playback_deinit(tv_channel_t *ch);
 
 void tv_playback_clean(tv_channel_t *ch);
 
-tv_channel_t *tv_channel_by_subscription_id(tv_t *tv, uint32_t id);
+tv_channel_t *tv_channel_by_tag(tv_t *tv, uint32_t tag);
 
 void tv_channel_stream_destroy(tv_channel_t *ch, tv_channel_stream_t *tcs,
 			       int lock);

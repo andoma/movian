@@ -58,7 +58,7 @@ typedef struct tv_channel {
    *
    */
 
-  uint32_t ch_subscription_id;
+  int ch_running;
   TAILQ_ENTRY(tv_channel) ch_running_link;
 
   /**
