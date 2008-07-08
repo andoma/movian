@@ -395,3 +395,93 @@ struct svfs_ops showtime_vfs_ops = {
   .readdir  = fa_readdir,
   .closedir = fa_closedir,
 };
+
+
+
+
+
+
+/**
+ * POSIX -> fileaccess open wrapper
+ */
+int
+fa_posix_open(const char *filename, int flags, ...)
+{
+  fa_protocol_t *fap;
+  fa_glue_t *glue;
+  void *fh;
+
+  if((filename = fa_resolve_proto(filename, &fap)) == NULL)
+    return -1;
+  
+  if((fh = fap->fap_open(filename)) == NULL)
+    return -1;
+  
+  glue = malloc(sizeof(fa_glue_t));
+  glue->fap = fap;
+  glue->fh = fh;
+  return (int)glue;
+}
+
+/**
+ * svfs -> fileaccess read wrapper
+ */
+ssize_t
+fa_posix_read(int fd, void *buf, size_t size)
+{
+  fa_glue_t *glue = (void *)fd;
+  
+  return glue->fap->fap_read(glue->fh, buf, size);
+}
+
+/**
+ * svfs -> fileaccess seek wrapper
+ */
+offset_t
+fa_posix_seek(int fd, offset_t pos, int whence)
+{
+  fa_glue_t *glue = (void *)fd;
+  
+  return glue->fap->fap_seek(glue->fh, pos, whence);
+}
+
+/**
+ * svfs -> fileaccess close wrapper
+ */
+int
+fa_posix_close(int fd)
+{
+  fa_glue_t *glue = (void *)fd;
+
+  glue->fap->fap_close(glue->fh);
+
+  free(glue);
+  return 0;
+}
+
+
+/**
+ * svfs -> fileaccess close wrapper
+ */
+int
+fa_posix_stat(const char *filename, struct stat *buf)
+{
+  fa_protocol_t *fap;
+
+  if((filename = fa_resolve_proto(filename, &fap)) == NULL)
+    return -1;
+  
+  return fap->fap_stat(filename, buf);
+}
+	
+/**
+ * svfs -> fileaccess close wrapper
+ */
+offset_t
+fa_posix_filesize(int fd)
+{
+  fa_glue_t *glue = (void *)fd;
+
+  return glue->fap->fap_fsize(glue->fh);
+}
+	
