@@ -146,7 +146,6 @@ layout_overlay_render(float aspect)
     return;
 
   memset(&rc0, 0, sizeof(rc0));
-  rc0.rc_selected = 1;
   rc0.rc_zoom  = 1.0f;
   rc0.rc_alpha = 1.0;
   rc0.rc_aspect = aspect;

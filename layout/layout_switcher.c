@@ -111,7 +111,6 @@ layout_switcher_render(float aspect)
 
   memset(&rc0, 0, sizeof(rc0));
 
-  rc0.rc_selected = 1;
   rc0.rc_zoom  = 1.0f;
   rc0.rc_alpha = layout_switcher_alpha;
   rc0.rc_aspect = aspect;
