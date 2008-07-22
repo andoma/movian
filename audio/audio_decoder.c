@@ -664,7 +664,7 @@ audio_mix2(audio_decoder_t *ad, audio_mode_t *am,
     /**
      * Small front speakers (need to mix front audio to LFE)
      */
-    if(am->am_formats & AM_FORMAT_PCM_5DOT1 && am->am_phantom_lfe) {
+    if(am->am_formats & AM_FORMAT_PCM_5DOT1 && am->am_small_front) {
       if(channels >= 6) {
 	data = data0;
 	for(i = 0; i < frames; i++) {
@@ -690,6 +690,7 @@ audio_mix2(audio_decoder_t *ad, audio_mode_t *am,
 
 	  dst[5] = x;
 	}
+	channels = 6;
       }
     }
   }
