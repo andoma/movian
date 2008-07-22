@@ -33,8 +33,6 @@
 
 #include "showtime.h"
 #include "layout/layout.h"
-#include "layout/layout_forms.h"
-#include "layout/layout_support.h"
 #include "event.h"
 
 #include "browser.h"

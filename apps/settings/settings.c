@@ -32,7 +32,6 @@
 #include "settings.h"
 #include "hid/keymapper.h"
 #include "layout/layout.h"
-#include "layout/layout_forms.h"
 #include "libhts/hts_strtab.h"
 
 #include "audio/audio.h"

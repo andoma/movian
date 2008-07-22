@@ -27,7 +27,6 @@
 #include "showtime.h"
 #include "browser.h"
 #include "browser_view.h"
-#include "layout/layout_support.h"
 #include "fileaccess/fa_rawloader.h"
 
 struct browser_view_queue browser_views;

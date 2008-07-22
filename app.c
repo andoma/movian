@@ -25,8 +25,6 @@
 #include "app.h"
 #include "event.h"
 #include "layout/layout.h"
-#include "layout/layout_forms.h"
-#include "layout/layout_support.h"
 #include "apps/launcher/launcher.h"
 #include "apps/settings/settings.h"
 #include "apps/playlist/playlist.h"

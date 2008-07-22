@@ -34,8 +34,6 @@
 #include "dvd.h"
 #include "video/video_decoder.h"
 #include "video/video_menu.h"
-#include "layout/layout.h"
-#include "layout/layout_forms.h"
 #include <libhts/svfs.h>
 
 extern struct svfs_ops showtime_vfs_ops;

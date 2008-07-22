@@ -34,8 +34,6 @@
 #include "event.h"
 #include "playlist.h"
 #include <layout/layout.h>
-#include <layout/layout_support.h>
- 
 
 static void
 playlist_update_playstatus(playlist_entry_t *ple, glw_t *w, int status)

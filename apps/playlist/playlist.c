@@ -36,7 +36,6 @@
 #include "event.h"
 #include <fileaccess/fa_probe.h>
 #include <layout/layout.h>
-#include <layout/layout_forms.h>
 
 static struct playlist_list playlists;
 
