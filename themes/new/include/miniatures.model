@@ -1,0 +1,17 @@
+macro miniature(title, icon) {
+
+  .focusCursor = true;
+  .focusAlpha  = true;
+
+  widget bitmap = {
+    .source = $icon;
+    .keepAspect = true;
+  };
+  
+  widget label = {
+    .weight = 0.25;
+    .caption = $title;
+    .align = center;
+    .id = "title";
+  };
+};

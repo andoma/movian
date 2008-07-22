@@ -44,24 +44,17 @@ launcher_init(void)
 
   launcher_appi = ai = appi_create("Launcher");
 
-  ai->ai_widget = glw_create(GLW_MODEL,
-			     GLW_ATTRIB_FILENAME, "launcher",
-			     NULL);
-  mini = 
-    glw_create(GLW_MODEL,
-	       GLW_ATTRIB_FILENAME, "launcher_miniature",
-	       NULL);
+  ai->ai_widget = glw_model_create("theme://launcher/launcher.model", NULL);
+  mini =          glw_model_create("theme://launcher/launcher_miniature.model",
+				   NULL);
 
   list = glw_find_by_id(ai->ai_widget, "application_container", 0);
   if(list == NULL) {
     fprintf(stderr, "Warning: 'application_container' not found. "
 	    "This model will not be able to start new applications\n");
-    return;
   }
 
   launcher_list = list;
-  glw_focus_set(&ai->ai_gfs, list);
-
   layout_world_appi_show(ai);
   layout_switcher_appi_add(ai, mini);
 }
@@ -70,11 +63,16 @@ launcher_init(void)
  * Callback for launching a new app when user press ENTER
  */
 static int
-launcher_spawn_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+launcher_spawn_callback(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
 {
   app_t *a = opaque;
-  switch(signal) {
-  case GLW_SIGNAL_ENTER:
+  glw_event_t *ge = extra;
+
+  if(sig != GLW_SIGNAL_EVENT)
+    return 0;
+
+  switch(ge->ge_type) {
+  case GEV_ENTER:
     app_spawn(a, NULL, 0);
     return 1;
   default:
@@ -89,12 +87,15 @@ launcher_spawn_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 void
 launcher_app_add(app_t *a)
 {
+  glw_t *w;
   if(launcher_list == NULL)
     return;
 
-  glw_create(GLW_MODEL,
-	     GLW_ATTRIB_PARENT, launcher_list,
-	     GLW_ATTRIB_SIGNAL_HANDLER, launcher_spawn_callback, a, 400,
-	     GLW_ATTRIB_FILENAME, a->app_model,
-	     NULL);
+  w = glw_model_create(a->app_model, launcher_list);
+  if(w == NULL)
+    return;
+
+  glw_set(w,
+	  GLW_ATTRIB_SIGNAL_HANDLER, launcher_spawn_callback, a, 400,
+	  NULL);
 }

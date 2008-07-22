@@ -29,8 +29,8 @@
 #include "audio_fifo.h"
 #include "audio_decoder.h"
 
-#include "layout/layout_forms.h"
-#include "layout/layout_support.h"
+#include <libglw/glw.h>
+#include "app.h"
 
 audio_mode_t *audio_mode_current;
 pthread_mutex_t audio_mode_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -76,6 +76,8 @@ audio_output_thread(void *aux)
   am = TAILQ_FIRST(&audio_modes);
   audio_mode_current = am;
 
+  printf("And there it was assigned\n");
+
   while(1) {
     am = audio_mode_current;
     printf("Audio output using %s\n", am->am_title);
@@ -92,50 +94,6 @@ audio_output_thread(void *aux)
   return NULL;
 }
 
-/**
- *
- */
-static int
-audio_output_switch(glw_t *w, void *opaque, glw_signal_t signal, ...)
-{
-  audio_mode_t *am = opaque;
-
-  switch(signal) {
-  case GLW_SIGNAL_SELECTED_SELF:
-    audio_mode_current = am;
-    break;
-  default:
-    break;
-  }
-  return 0;
-}
-
-/**
- *
- */
-static void
-audio_mode_add_switch_on_off(glw_t *parent, const char *name, int *store)
-{
-  struct layout_form_entry_list lfelist;
-  glw_t *s;
-
-  TAILQ_INIT(&lfelist);
-
-  s = glw_create(GLW_MODEL,
-		 GLW_ATTRIB_PARENT, parent, 
-		 GLW_ATTRIB_FILENAME, "settings/audio-settings-switch",
-		 NULL);
-
-  layout_update_str(s, "title", name);
-
-  layout_form_add_option(s, "switches", "Off", 0);
-  layout_form_add_option(s, "switches", "On",  1);
-#if 0
-  LFE_ADD_OPTION(&lfelist, "switches", store);
-
-  layout_form_initialize(&lfelist, parent, audio_selection_gfs, NULL, 0);
-#endif
-}
 
 /**
  *
@@ -147,62 +105,44 @@ audio_mode_register(audio_mode_t *am)
 }
 
 
+
+
 /**
  *
  */
 static void
-audio_mode_add_to_settings(audio_mode_t *am, glw_focus_stack_t *gfs, 
-			   glw_t *parent)
+audio_mode_change(void *opaque, int value)
 {
-  struct layout_form_entry_list lfelist;
-  glw_t *t, *ico, *p;
-  char buf[50];
-  int multich = am->am_formats & (AM_FORMAT_PCM_5DOT1 | AM_FORMAT_PCM_7DOT1);
+  audio_mode_current = opaque;
+}
 
-  /* Add the control deck */
+/**
+ *
+ */
+static void
+audio_opt_int_cb(void *opaque, int value)
+{
+  int *ptr = opaque;
+  *ptr = value;
+}
 
-  TAILQ_INIT(&lfelist);
+/**
+ *
+ */
+static void
+audio_add_int_option_on_off(glw_t *l, const char *title, int *ptr)
+{
+  glw_t *opt, *sel;
 
-  ico = glw_create(GLW_MODEL,
-		   GLW_ATTRIB_FILENAME, "settings/audio-output-icon",
-		   NULL);
+  opt = glw_model_create("theme://settings/audio/audio-option.model", l);
+  glw_set_caption(opt, "title", title);
 
-  layout_update_filename(ico, "icon", am->am_icon);
-  layout_update_str(ico, "title", am->am_title);
-
-  glw_set(ico,
-	  GLW_ATTRIB_SIGNAL_HANDLER, audio_output_switch, am, 200,
-	  NULL);
-
-  t = layout_form_add_tab2(parent,
-			   "audio_output_list", ico,
-			   "audio_output_container",
-			   "settings/audio-output-tab");
-
-  snprintf(buf, sizeof(buf), "%s%s%s%s%s",
-	   am->am_formats & AM_FORMAT_PCM_STEREO ? "Stereo  " : "",
-	   am->am_formats & AM_FORMAT_PCM_5DOT1  ? "5.1  "    : "",
-	   am->am_formats & AM_FORMAT_PCM_7DOT1  ? "7.1 "     : "",
-	   am->am_formats & AM_FORMAT_AC3        ? "AC3 "     : "",
-	   am->am_formats & AM_FORMAT_DTS        ? "DTS "     : "");
-  layout_update_str(t, "output_formats", buf);
-
-
-  layout_update_str(t, "title", am->am_long_title);
-
-  p = glw_find_by_id(t, "settings_list", 0);
-  
-  if(multich && p) {
-    audio_mode_add_switch_on_off(p, "Phantom Center:", &am->am_phantom_center);
-    audio_mode_add_switch_on_off(p, "Phantom LFE:", &am->am_phantom_lfe);
-    audio_mode_add_switch_on_off(p, "Small Front:", &am->am_small_front);
+  if((sel = glw_find_by_id(opt, "options", 0)) != NULL) {
+    glw_selection_add_text_option(sel, "Off", 
+				  audio_opt_int_cb, ptr, 0, *ptr == 0);
+    glw_selection_add_text_option(sel, "On", 
+				  audio_opt_int_cb, ptr, 1, *ptr == 1);
   }
-
-  LFE_ADD(&lfelist, "settings_list");
-
-  layout_form_initialize(&lfelist, t, gfs, NULL, 0);
-
-
 }
 
 
@@ -210,29 +150,66 @@ audio_mode_add_to_settings(audio_mode_t *am, glw_focus_stack_t *gfs,
 /**
  *
  */
-void
-audio_settings_init(glw_t *m, glw_focus_stack_t *gfs, ic_t *ic)
+static void
+audio_mode_add_to_settings(audio_mode_t *am, glw_t *parent)
 {
-  struct layout_form_entry_list lfelist;
-  glw_t *t;
-  audio_mode_t *am;
+  glw_t *w, *le, *l;
+  glw_t *deck;
+  char buf[50];
+  int multich = am->am_formats & (AM_FORMAT_PCM_5DOT1 | AM_FORMAT_PCM_7DOT1);
 
-  TAILQ_INIT(&lfelist);
-
-  t = layout_form_add_tab(m,
-			  "settings_list",     "settings/audio-icon",
-			  "settings_container","settings/audio-tab");
-  
-  if(t == NULL)
+  if((w = glw_find_by_id(parent, "outputdevice_list", 0)) == NULL)
     return;
 
-  LFE_ADD(&lfelist, "audio_output_list");
+  le = glw_selection_add_text_option(w, am->am_title, audio_mode_change,
+				     am, 0, 0);
 
-  layout_form_initialize(&lfelist, m, gfs, ic, 0);
+  snprintf(buf, sizeof(buf), "%s%s%s%s%s",
+	   am->am_formats & AM_FORMAT_PCM_STEREO ? "Stereo  " : "",
+	   am->am_formats & AM_FORMAT_PCM_5DOT1  ? "5.1  "    : "",
+	   am->am_formats & AM_FORMAT_PCM_7DOT1  ? "7.1 "     : "",
+	   am->am_formats & AM_FORMAT_AC3        ? "AC3 "     : "",
+	   am->am_formats & AM_FORMAT_DTS        ? "DTS "     : "");
 
-  /* Add each audio output mode */
+
+  deck = glw_model_create("theme://settings/audio/audio-device-settings.model",
+			  NULL);
+
+  glw_set_caption(deck, "output_formats", buf);
+
+  if((l = glw_find_by_id(deck, "controllers", 0)) == NULL)
+    return;
+
+  if(multich) {
+    audio_add_int_option_on_off(l, "Phantom Center:", &am->am_phantom_center);
+    audio_add_int_option_on_off(l, "Phantom LFE:", &am->am_phantom_lfe);
+    audio_add_int_option_on_off(l, "Small Front:", &am->am_small_front);
+  }
+
+  glw_add_tab(parent, NULL, le, "outputdevice_deck", deck);
+}
+
+/**
+ *
+ */
+void
+audio_settings_init(appi_t *ai, glw_t *m)
+{
+  glw_t *icon = glw_model_create("theme://settings/audio/audio-icon.model",
+				 NULL);
+  glw_t *tab  = glw_model_create("theme://settings/audio/audio.model",
+				 NULL);
+  audio_mode_t *am;
+  glw_t *w;
+
+  glw_add_tab(m, "settings_list", icon, "settings_deck", tab);
 
   TAILQ_FOREACH(am, &audio_modes, am_link)
-    audio_mode_add_to_settings(am, gfs, t);
+    audio_mode_add_to_settings(am, tab);
 
+  if((w = glw_find_by_id(tab, "outputdevice_list", 0)) != NULL) {
+    w = glw_selection_get_widget_by_opaque(w, audio_mode_current);
+    if(w != NULL)
+      glw_select(w);
+  }
 }

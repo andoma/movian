@@ -26,8 +26,56 @@
 
 #include <libhts/hts_strtab.h>
 #include "showtime.h"
-#include "input.h"
 #include "keymapper.h"
+#include "app.h"
+
+static glw_t *keymapper_list;
+static appi_t *keymapper_appi;
+
+/**
+ * Based on the keycode, return a descriptive text
+ */
+static struct strtab keycodenames[] = {
+  { "Up",                    GEV_UP },
+  { "Down",                  GEV_DOWN },
+  { "Left",                  GEV_LEFT },
+  { "Right",                 GEV_RIGHT },
+  { "Enter",                 GEV_ENTER },
+  { "Close",                 EVENT_KEY_CLOSE },
+  { "Stop",                  EVENT_KEY_STOP },
+  { "PlayPause",             EVENT_KEY_PLAYPAUSE },
+  { "Play",                  EVENT_KEY_PLAY },
+  { "Pause",                 EVENT_KEY_PAUSE },
+  { "VolumeUp",              EVENT_KEY_VOLUME_UP },
+  { "VolumeDown",            EVENT_KEY_VOLUME_DOWN },
+  { "VolumeMute",            EVENT_KEY_VOLUME_MUTE },
+  { "Menu",                  EVENT_KEY_MENU },
+  { "Back",                  EVENT_KEY_BACK },
+  { "Select",                EVENT_KEY_SELECT },
+  { "Eject",                 EVENT_KEY_EJECT },
+  { "Power",                 EVENT_KEY_POWER },
+  { "Previous",              EVENT_KEY_PREV },
+  { "Next",                  EVENT_KEY_NEXT },
+  { "SeekForward",           EVENT_KEY_SEEK_FORWARD },
+  { "SeekReverse",           EVENT_KEY_SEEK_BACKWARD },
+  { "Quit",                  EVENT_KEY_QUIT },
+  { "TaskSwitcher",          EVENT_KEY_TASK_SWITCHER },
+  { "TaskSwitcherSwitch",    EVENT_KEY_TASK_DOSWITCH },
+  { "ChangeView",            EVENT_KEY_SWITCH_VIEW },
+};
+
+const char *
+keycode2str(event_type_t code)
+{
+  return val2str(code, keycodenames);
+}
+
+event_type_t
+keystr2code(const char *str)
+{
+  return str2val(str, keycodenames);
+}
+
 
 #define KEYDESC_HASH_SIZE 101
 
@@ -47,26 +95,41 @@ static struct hid_keycode_list keycodes;
 static struct hid_keydesc_list keydescs[KEYDESC_HASH_SIZE];
 
 /**
+ *
+ */
+static void
+keymapper_post_string(const char *str)
+{
+  event_keydesc_t *ek;
+  int l = strlen(str);
+
+  ek = glw_event_create(EVENT_KEYDESC, sizeof(event_keydesc_t) + l + 1);
+  memcpy(ek->desc, str, l);
+  ek->desc[l] = 0;
+  event_post(&ek->h);
+}
+
+/**
  * Resolve a keydesc into a keycode
  */
 void
-keymapper_resolve(inputevent_t *ie)
+keymapper_resolve(const char *str)
 {
-  unsigned int hash = keydesc_hashstr(ie->u.keydesc);
+  unsigned int hash = keydesc_hashstr(str);
   hid_keydesc_t *hkd;
   hid_keycode_t *hkc;
-
-  input_root_event(ie);
+ 
+  keymapper_post_string(str);
 
   LIST_FOREACH(hkd, &keydescs[hash], hkd_hash_link)
-    if(!strcmp(hkd->hkd_desc, ie->u.keydesc))
+    if(!strcmp(hkd->hkd_desc, str))
       break;
 
   if(hkd == NULL)
     return;
 
   hkc = hkd->hkd_hkc;
-  input_key_down(hkc->hkc_code);
+  event_post_simple(hkc->hkc_code);
 }
 
 
@@ -74,7 +137,7 @@ keymapper_resolve(inputevent_t *ie)
  *
  */
 hid_keycode_t *
-keymapper_find_by_code(input_key_t val)
+keymapper_find_by_code(event_type_t val)
 {
   hid_keycode_t *hkc;
 
@@ -131,7 +194,7 @@ keymapper_map(hid_keydesc_t *hkd, hid_keycode_t *hkc)
 /**
  *
  */
-void
+static void
 keymapper_save(void)
 {
   hid_keycode_t *hkc;
@@ -159,7 +222,7 @@ keymapper_save(void)
 /**
  *
  */
-void
+static void
 keymapper_load(void)
 {
   hid_keycode_t *hkc;
@@ -167,7 +230,7 @@ keymapper_load(void)
   char buf[256];
   char buf2[256];
   FILE *fp;
-  input_key_t val;
+  event_type_t val;
 
   snprintf(buf, sizeof(buf), "%s/keymap", settingsdir);
 
@@ -186,4 +249,137 @@ keymapper_load(void)
 
   }
   fclose(fp);
+}
+
+/**
+ *
+ */
+static void 
+keymapper_update_model(hid_keycode_t *hkc, glw_t *w)
+{
+  char buf[100];
+  hid_keydesc_t *hkd;
+
+  if(w == NULL) {
+    TAILQ_FOREACH(w, &keymapper_list->glw_childs, glw_parent_link)
+      if(w->glw_u32 == hkc->hkc_code)
+	break;
+    if(w == NULL)
+      return;
+  }
+
+  if((w = glw_find_by_id(w, "mapping_source", 0)) == NULL)
+    return;
+
+  buf[0] = 0;
+  LIST_FOREACH(hkd, &hkc->hkc_descs, hkd_keycode_link)
+    snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+	     "%s%s", hkd->hkd_desc, 
+	     LIST_NEXT(hkd, hkd_keycode_link) ? ", " : "");
+
+  glw_set(w, 
+	  GLW_ATTRIB_CAPTION, buf,
+	  NULL);
+}
+
+/**
+ *
+ */
+static int
+eh_keymapper(glw_event_t *ge)
+{
+  hid_keydesc_t *hkd;
+  hid_keycode_t *hkc;
+  glw_t *w;
+  event_keydesc_t *ekd;
+
+  if(keymapper_appi == NULL || !keymapper_appi->ai_active || 
+     !glw_is_selected(keymapper_list))
+    return 0;
+
+  switch(ge->ge_type) {
+  case GEV_UP:
+  case GEV_DOWN:
+  case GEV_LEFT:
+  case GEV_RIGHT:
+  case GEV_ENTER:
+  case EVENT_KEY_TASK_DOSWITCH:
+    return 0; /* Pass thru those events */
+
+  default:
+    return 1;
+
+  case EVENT_KEYDESC:
+    break;
+  }
+
+  if((w = keymapper_list->glw_selected) == NULL)
+    return 0;
+
+  ekd = (void *)ge;
+
+  hkc = keymapper_find_by_code(w->glw_u32);
+  hkd = keymapper_find_by_desc(ekd->desc);
+
+  if(hkd->hkd_hkc == hkc)
+    return 1; /* No change */
+ 
+  if(hkd->hkd_hkc != NULL) {
+    /* Remove previous mapping */
+    LIST_REMOVE(hkd, hkd_keycode_link);
+    keymapper_update_model(hkd->hkd_hkc, NULL);
+  }
+
+  hkd->hkd_hkc = hkc;
+  LIST_INSERT_HEAD(&hkc->hkc_descs, hkd, hkd_keycode_link);
+
+  keymapper_update_model(hkc, w);
+  keymapper_save();
+  return 0;
+}
+
+
+/**
+ *
+ */
+void
+keymapper_init(appi_t *ai, glw_t *settings)
+{
+  glw_t *icon = 
+    glw_model_create("theme://settings/keymapper/keymapper-icon.model", NULL);
+  glw_t *tab  = 
+    glw_model_create("theme://settings/keymapper/keymapper.model", NULL);
+  glw_t *l, *e, *y;
+  int i;
+  hid_keycode_t *hkc;
+
+  glw_add_tab(settings, "settings_list", icon, "settings_deck", tab);
+
+  keymapper_load();
+
+  if((l = glw_find_by_id(tab, "keymapper_list", 0)) == NULL)
+    return;
+
+  keymapper_appi = ai;
+  keymapper_list = l;
+
+  for(i = 0; i < sizeof(keycodenames) / sizeof(keycodenames[0]); i++) {
+
+    e = glw_model_create("theme://settings/keymapper/entry.model", l);
+
+    glw_set(e, GLW_ATTRIB_U32, keycodenames[i].val, NULL);
+
+    if((y = glw_find_by_id(e, "mapping_name", 0)) != NULL) {
+      glw_set(y,
+	      GLW_ATTRIB_CAPTION, keycodenames[i].str,
+	      NULL);
+      
+      hkc = keymapper_find_by_code(keycodenames[i].val);
+      if(hkc != NULL)
+	keymapper_update_model(hkc, e);
+    }
+  }
+
+  event_handler_register(10000, eh_keymapper);
+
 }

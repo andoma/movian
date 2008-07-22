@@ -32,7 +32,6 @@
 #include <libglw/glw.h>
 
 #include "showtime.h"
-#include "input.h"
 #include "layout/layout.h"
 #include "layout/layout_forms.h"
 #include "layout/layout_support.h"
@@ -40,6 +39,7 @@
 #include "browser.h"
 #include "browser_view.h"
 #include "navigator.h"
+#if 0
 #include "useraction.h"
 
 
@@ -79,3 +79,4 @@ useraction_slideshow(glw_t *w, input_key_t key) {
 
   return 0;
 }
+#endif

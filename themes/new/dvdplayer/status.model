@@ -1,0 +1,72 @@
+widget container_x = {
+
+  widget xfader = {
+    .id = "playstatus";
+  };
+
+  widget container_y = {
+    .weight = 6.0;
+    widget container_x = {
+
+      widget label = {
+	.caption = "Disc:";
+      };
+
+      widget label = {
+	.weight = 5.0;
+	.id = "disc";
+      };
+    };
+
+    widget container_x = {
+
+      widget label = {
+	.caption = "Title:";
+      };
+
+      widget label = {
+	.weight = 5.0;
+	.id = "title";
+      };
+    };
+
+
+    widget container_x = {
+
+      widget label = {
+	.caption = "Chapter:";
+      };
+
+      widget label = {
+	.weight = 5.0;
+	.id = "chapter";
+      };
+    };
+  };
+
+  widget container_y = {
+    .weight = 5.0;
+
+    widget container_x = {
+      .weight = 1.0;
+
+      widget label = {
+	.align = right;
+	.weight = 5;
+	.id = "time_current";
+      };
+
+      widget label = {
+	.caption = "/";
+      };
+
+      widget label = {
+	.align = left;
+	.weight = 5;
+	.id = "time_total";
+      };
+    };
+
+    space 2.0;
+  };
+};

@@ -28,7 +28,6 @@
 #include <math.h>
 
 #include "imonpad.h"
-#include "input.h"
 #include "showtime.h"
 #include "hid/keymapper.h"
 
@@ -39,7 +38,7 @@
 static const struct {
   const char *name;
   uint32_t code;
-  input_key_t key;
+  event_type_t key;
 } imonpadmap[] = {
   {"AppExit",            0x288195B7, 0 },
   {"Record",             0x298115B7, 0 },
@@ -55,7 +54,7 @@ static const struct {
   {"Eject",              0x299395B7, 0 },
   {"AppLauncher",        0x29B715B7, 0 },
   {"MultiMon",           0x2AB195B7, 0 },
-  {"TaskSwitcher",       0x2A9395B7, INPUT_KEY_TASK_DOSWITCH },
+  {"TaskSwitcher",       0x2A9395B7, EVENT_KEY_TASK_DOSWITCH },
   {"Mute",               0x2B9595B7, 0 },
   {"Vol+",               0x28A395B7, 0 },
   {"Vol-",               0x28A595B7, 0 },
@@ -90,10 +89,10 @@ static const struct {
   {"SelectSpace",        0x2A9315B7, 0 },
   {"MouseMenu",          0x28B715B7, 0 },
   {"MouseRightClick",    0x688481B7, 0 },
-  {"Enter",              0x28A195B7, INPUT_KEY_ENTER },
+  {"Enter",              0x28A195B7, GEV_ENTER },
   {"MouseLeftClick",     0x688301B7, 0 },
   {"WindowsKey",         0x2B8195B7, 0 },
-  {"Backspace",          0x28A115B7, INPUT_KEY_BACK },
+  {"Backspace",          0x28A115B7, EVENT_KEY_BACK },
 };
 
 static int repeat_rate;
@@ -124,11 +123,11 @@ imonpad_thread(void *aux)
   uint8_t buf[4];
   uint32_t v;
   int dx, dy;
-  inputevent_t ie;
   float angle;
   int64_t last_nav_generated_ts = 0, ts, delta;
   int64_t last_nav_sens_ts = 0;
   int k;
+  char desc[32];
 
   while(1) {
     if(fd == -1) {
@@ -156,11 +155,12 @@ imonpad_thread(void *aux)
 
       if(buf[0] & 0x02) dx |= ~0x10+1;
       if(buf[0] & 0x01) dy |= ~0x10+1;
-
+#if 0
       ie.u.xy.x = dx;
       ie.u.xy.y = dy;
       ie.type = INPUT_PAD;
       input_root_event(&ie);
+#endif
 
       /* Compute angle and vector length */
 
@@ -237,20 +237,20 @@ imonpad_thread(void *aux)
       k = 0;
 
       if(angle > 360 - ALIMIT || angle < 0 + ALIMIT)
-	k = INPUT_KEY_LEFT;
+	k = GEV_LEFT;
       
       if(angle > 90 - ALIMIT && angle < 90 + ALIMIT)
-	k = INPUT_KEY_UP;
+	k = GEV_UP;
       
       if(angle > 180 - ALIMIT && angle < 180 + ALIMIT)
-	k = INPUT_KEY_RIGHT;
+	k = GEV_RIGHT;
       
       if(angle > 270 - ALIMIT && angle < 270 + ALIMIT)
-	k = INPUT_KEY_DOWN;
+	k = GEV_DOWN;
 
       if(k && delta > repeat_rate0) {
 	last_nav_generated_ts = ts;
-	input_key_down(k);
+	event_post_simple(k);
 	delta -= repeat_rate0;
       }
       continue;
@@ -260,12 +260,10 @@ imonpad_thread(void *aux)
       if(v == imonpadmap[i].code) {
 
 	if(imonpadmap[i].key)
-	  input_key_down(imonpadmap[i].key);
+	  event_post_simple(imonpadmap[i].key);
 	else {
-	  ie.type = INPUT_KEYDESC;
-	  snprintf(ie.u.keydesc, sizeof(ie.u.keydesc),
-		   "imonpad - %s", imonpadmap[i].name);
-	  keymapper_resolve(&ie);
+	  snprintf(desc, sizeof(desc), "imonpad - %s", imonpadmap[i].name);
+	  keymapper_resolve(desc);
 	}
 	break;
       }

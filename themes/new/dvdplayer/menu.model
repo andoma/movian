@@ -1,0 +1,182 @@
+#include "include/buttons"
+
+
+macro option(id) {
+  widget container_x = {
+
+    widget bitmap = {
+      .selectable = true;
+      .focusCursor = true;
+      .focusAlpha = true;
+      .color = [0.6 0.6 0.6];
+      .focusColor = [0.4 0.4 0.0];
+
+      .weight = 0.15;
+      .source = "theme://images/up.png";
+      .keepAspect = true;
+
+      event enter to $id decr;
+
+    };
+
+    widget bitmap = {
+      .selectable = true;
+      .focusCursor = true;
+      .focusAlpha = true;
+      .color = [0.6 0.6 0.6];
+      .focusColor = [0.4 0.4 0.0];
+
+      .weight = 0.15;
+      .source = "theme://images/down.png";
+      .keepAspect = true;
+
+      event enter to $id incr;
+
+    };
+
+    widget selection = {
+      .id = $id;
+    };
+  };
+};
+
+
+
+
+macro intval(id, format, min, max, step) {
+  widget container_x = {
+
+    widget bitmap = {
+      .selectable = true;
+      .focusCursor = true;
+      .focusAlpha = true;
+      .color = [0.6 0.6 0.6];
+      .focusColor = [0.4 0.4 0.0];
+
+      .weight = 0.15;
+      .source = "theme://images/left.png";
+      .keepAspect = true;
+
+      event enter to $id decr;
+
+    };
+
+    widget integer = {
+      .id = $id;
+      .align = center;
+      .caption = $format;
+      .min = $min;
+      .max = $max;
+      .step = $step;
+    };
+
+    widget bitmap = {
+      .selectable = true;
+      .focusCursor = true;
+      .focusAlpha = true;
+      .color = [0.6 0.6 0.6];
+      .focusColor = [0.4 0.4 0.0];
+
+      .weight = 0.15;
+      .source = "theme://images/right.png";
+      .keepAspect = true;
+
+      event enter to $id incr;
+
+    };
+
+  };
+};
+
+
+
+.displacement = [0 0 1];
+widget form = {
+  widget container_x = {
+    widget bitmap = {
+      .alpha = 0.9;
+      .color = [0.0 0.0 0.3];
+      .borderScale = true;
+      .source = "theme://images/plate-compact.png";
+      .textureBorders = [0.5 0.5 0.5 0.5];
+      .vertexBorders  = [0.05 0.05 0.05 0.05];
+  
+      widget container_y = {
+
+	/**
+	 * Audio track selection
+	 */
+	widget label = {
+	  .weight = 0.75;
+	  .caption = "Audio track:";
+	};
+	option("audio_tracks");
+	space 0.5;
+
+	/**
+	 * Subtitle selection
+	 */
+	widget label = {
+	  .weight = 0.75;
+	  .caption = "Subtitle:";
+	};
+
+	option("subtitle_tracks");
+	space 0.5;
+
+	/**
+	 * Video selection
+	 */
+	widget label = {
+	  .weight = 0.75;
+	  .caption = "Deinterlacing:";
+	};
+
+	option("video_deinterlacer");
+	space 0.5;
+
+	/**
+	 * Video selection
+	 */
+	widget label = {
+	  .weight = 0.75;
+	  .caption = "Video delay:";
+	};
+	intval("video_delay", "%d ms", -500, 500, 50);
+	space 0.5;
+
+	/**
+	 * Video selection
+	 */
+	widget label = {
+	  .weight = 0.75;
+	  .caption = "Video zoom:";
+	};
+	intval("video_zoom", "%d %%", 0, 500, 10);
+	space 0.5;
+
+	space 2.5;
+
+	widget container_x = {
+	  .weight = 9.0;
+	  space 0.1;
+	  widget container_y = {
+
+	    space 5.0;
+
+	    form_button("Restart", "theme://images/player_start.png", restart, 
+			[0 0.2 0]);
+
+	    space 0.5;
+
+	    form_button("Close menu", "theme://images/ok.png", closeMenu,
+			[0 0.2 0]);
+	  };
+	  space 0.1;
+	};
+	space 0.5;
+      };
+    };
+    space 3.0;
+  };
+};

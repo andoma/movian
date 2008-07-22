@@ -27,10 +27,11 @@
 #include "showtime.h"
 #include "browser.h"
 #include "browser_view.h"
-#include "useraction.h"
+//#include "useraction.h"
+#include "event.h"
 
 void
-browser_slideshow(browser_node_t *cur, glw_t *parent, ic_t *ic)
+browser_slideshow(browser_node_t *cur, glw_t *parent, glw_event_queue_t *geq)
 {
   glw_t *w, *b, *z, *pw = NULL;
   browser_node_t *dir = cur->bn_parent;
@@ -38,7 +39,7 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, ic_t *ic)
   browser_node_t *c, **a;
   int cnt, run = 1;
   int64_t type;
-  inputevent_t ie;
+  glw_event_t *ge;
   int paused = 0;
 
   z = glw_create(GLW_CONTAINER_Z,
@@ -59,7 +60,7 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, ic_t *ic)
        type == FILETYPE_IMAGE) {
 
       b = glw_create(GLW_BITMAP,
-		     GLW_ATTRIB_FILENAME, c->bn_url,
+		     GLW_ATTRIB_SOURCE, c->bn_url,
 		     GLW_ATTRIB_FLAGS, GLW_KEEP_ASPECT | GLW_BORDER_BLEND,
 		     GLW_ATTRIB_VERTEX_BORDERS,  0.01, 0.01, 0.01, 0.01,
 		     GLW_ATTRIB_TEXTURE_BORDERS, 0.01, 0.01, 0.01, 0.01,
@@ -67,7 +68,7 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, ic_t *ic)
 		     NULL);
 
       if(c == cur)
-	glw_select(w, b);
+	glw_select(b);
     }
 
     pthread_mutex_unlock(&c->bn_ftags_mutex);
@@ -80,10 +81,7 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, ic_t *ic)
   while(run) {
 
     if(paused && pw == NULL)
-      pw = glw_create(GLW_MODEL,
-		      GLW_ATTRIB_PARENT, z,
-		      GLW_ATTRIB_FILENAME, "browser/slideshow-paused",
-		      NULL);
+      pw = glw_model_create("theme://browser/slideshow-paused.model", z);
     else if(!paused && pw) {
       glw_destroy(pw);
       pw = NULL;
@@ -92,47 +90,43 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, ic_t *ic)
 
     glw_set(w, GLW_ATTRIB_SPEED, paused ? 0.0f : 1.0f, NULL);
 
-    input_getevent(ic, 1, &ie, NULL);
+    ge = glw_event_get(-1, geq);
 
-    switch(ie.type) {
+    switch(ge->ge_type) {
     default:
+#if 0
+      if (ie.u.key >= '0' && ie.u.key <= '9') {
+	/* User-definable actions */
+	if (useraction_slideshow(w, ie.u.key) != -1)
+	  glw_send_signal(w, GLW_SIGNAL_NEXT, NULL);
+      }
+#endif
+      break;
+	
+    case EVENT_KEY_PLAYPAUSE:
+      paused = !paused;
+      break;
+
+    case EVENT_KEY_PLAY:
+      paused = 0;
       break;
       
-    case INPUT_KEY:
-      switch(ie.u.key) {
-      default:
-	if (ie.u.key >= '0' && ie.u.key <= '9') {
-	  /* User-definable actions */
-	  if (useraction_slideshow(w, ie.u.key) != -1)
-	    glw_send_signal(w, GLW_SIGNAL_NEXT, NULL);
-	}
-	break;
-	
-      case INPUT_KEY_PLAYPAUSE:
-	paused = !paused;
-	break;
+    case EVENT_KEY_PAUSE:
+      paused = 1;
+      break;
+      
+    case EVENT_KEY_BACK:
+      run = 0;
+      break;
 
-      case INPUT_KEY_PLAY:
-	paused = 0;
-	break;
+    case EVENT_KEY_NEXT:
+      //      glw_send_event_simple(w, GEV_INCR);
+      break;
 
-      case INPUT_KEY_PAUSE:
-	paused = 1;
-	break;
-
-      case INPUT_KEY_BACK:
-	run = 0;
-	break;
-
-      case INPUT_KEY_NEXT:
-	glw_send_signal(w, GLW_SIGNAL_NEXT, NULL);
-	break;
-
-      case INPUT_KEY_PREV:
-      case INPUT_KEY_RESTART_TRACK:
-	glw_send_signal(w, GLW_SIGNAL_PREV, NULL);
-	break;
-      }
+    case EVENT_KEY_PREV:
+    case EVENT_KEY_RESTART_TRACK:
+      //      glw_send_event_simple(w, GEV_DECR);
+      break;
     }
   }
 

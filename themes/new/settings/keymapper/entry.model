@@ -1,0 +1,12 @@
+.focusAlpha = true;
+.focusCursor = true;
+
+widget container_x = {
+  widget label = {
+    .id = "mapping_name";
+  };
+  widget label = {
+    .id = "mapping_source";
+    .weight = 3.0;
+  };
+};

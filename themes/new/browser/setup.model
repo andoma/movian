@@ -1,0 +1,88 @@
+#include "include/buttons"
+
+widget form = {
+
+  widget container_y = {
+
+    widget bitmap = {
+      .color = [0.6 0.6 0.6];
+      .source = "theme://images/plate-titled-top.png";
+      .textureBorders = [0.1 0.1 0.1 0.1];
+      .vertexBorders  = [0.1 0.1 0.1 0.1];
+      .borderScale = true;
+      
+      widget label = {
+	.caption = "Setup new browser";
+	.align = center;
+      };
+    };
+
+    widget bitmap = {
+      .weight = 8.0;
+      .alpha = 0.4;
+      .color = [0.6 0.6 0.6];
+      .source = "theme://images/plate-titled-bottom.png";
+      .textureBorders = [0.1 0.1 0.1 0.1];
+      .vertexBorders  = [0.1 0.1 0.1 0.1];
+      .borderScale = true;
+      
+      widget container_y = {
+	
+	widget label = {
+	  .caption = "Title:";
+	  .weight = 0.5;
+	};
+	
+	widget text = {
+	  .selectable = true;
+	  .focusCursor = true;
+	  .focusAlpha = true;
+	  .weight = 1;
+	  .id = "title";
+	  .caption = "Browser";
+	};
+
+	space 0.5;
+
+	widget label = {
+	  .caption = "Rootpath:";
+	  .weight = 0.5;
+	};
+	
+	widget text = {
+	  .selectable = true;
+	  .focusCursor = true;
+	  .focusAlpha = true;
+	  .weight = 1;
+	  .id = "rootpath";
+	  .caption = "file:///";
+	};
+
+	space 0.5;
+
+
+	widget label = {
+	  .caption = "Application icon:";
+	  .weight = 0.5;
+	};
+	
+	widget selection = {
+	  .weight = 1;
+	  .id = "icon_container";
+	};
+
+	space 0.5;
+
+	space 3;
+	
+	widget container_x = {
+	  space 0.5;
+	  form_button_ok();
+	  space 0.5;
+	  form_button_cancel();
+	  space 0.5;
+	};
+      };
+    };
+  };
+};

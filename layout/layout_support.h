@@ -19,6 +19,8 @@
 #ifndef LAYOUT_SUPPORT_H
 #define LAYOUT_SUPPORT_H
 
+#if 0
+
 struct AVCodecContext;
 
 void layout_update_codec_info(glw_t *w, const char *id, 
@@ -37,7 +39,9 @@ void layout_update_model(glw_t *w, const char *id, const char *model);
 void layout_update_multilinetext(glw_t *w, const char *id, const char *txt,
 				 int total_lines, glw_alignment_t alignment);
 
-void layout_update_filename(glw_t *w, const char *id, const char *filename);
+void layout_update_source(glw_t *w, const char *id, const char *filename);
+
+#endif
 
 #endif /* LAYOUT_SUPPORT_H */
 

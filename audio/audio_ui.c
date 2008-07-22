@@ -23,7 +23,6 @@
 
 #include <libglw/glw.h>
 
-#include "input.h"
 #include "layout/layout.h"
 #include "showtime.h"
 #include "audio_ui.h"
@@ -91,14 +90,14 @@ audio_ui_vol_changed(float vol, int mute)
  * Master volume
  *
  */
-
+#if 0
 static int 
 audio_mastervol_bar_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 {
   switch(signal) {
     return 0;
 
-  case GLW_SIGNAL_PREPARE:
+  case GLW_SIGNAL_LAYOUT:
     w->glw_extra = GLW_LP(3, w->glw_extra, audio_vol);
     return 0;
 
@@ -114,7 +113,7 @@ audio_mastervol_txt_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
   char buf[30];
 
   switch(signal) {
-  case GLW_SIGNAL_PREPARE:
+  case GLW_SIGNAL_LAYOUT:
     if(audio_mute)
       snprintf(buf, sizeof(buf), "Master volume: Muted");
     else
@@ -129,10 +128,12 @@ audio_mastervol_txt_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 }
 
 
+#endif
 
 void
 audio_widget_make(void)
 {
+#if 0
   glw_t *w, *z;
 
 
@@ -152,9 +153,10 @@ audio_widget_make(void)
 	     GLW_ATTRIB_SIGNAL_HANDLER, audio_mastervol_bar_callback, NULL, 0,
 	     NULL);
 
-  glw_create(GLW_TEXT_BITMAP,
+  glw_create(GLW_LABEL,
 	     GLW_ATTRIB_PARENT, z,
 	     GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_CENTER,
 	     GLW_ATTRIB_SIGNAL_HANDLER, audio_mastervol_txt_callback, NULL, 0,
 	     NULL);
+#endif
 }

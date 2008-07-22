@@ -20,7 +20,6 @@
 #define LAYOUT_H
 
 #include <libglw/glw.h>
-#include "hid/input.h"
 #include "app.h"
 
 extern glw_t *layout_root;
@@ -53,13 +52,9 @@ void layout_world_render(float aspect);
 void layout_world_appi_show(appi_t *ai);
 
 /**
- * Functions in layout_overlay.c
+ *
  */ 
-void layout_overlay_create(void);
-
-extern glw_t *overlay_container;
-
-void layout_overlay_render(float aspect);
+extern glw_t *layout_global_status;
 
 /**
  * Functions in layout_switcher.c

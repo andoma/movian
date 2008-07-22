@@ -1,0 +1,95 @@
+macro info(title, infoid) {
+  widget container_x = {
+    widget label = {
+      .caption = $title;
+      .align = right;
+    };
+
+    widget label = {
+      .weight = 2;
+      .id = $infoid;
+      .align = left;
+    };
+  };
+};
+
+
+macro option(title, id) {
+  widget container_x = {
+    widget label = {
+      .caption = $title;
+      .align = right;
+    };
+
+    widget bitmap = {
+      .selectable = true;
+      .focusCursor = true;
+      .focusAlpha = true;
+      .color = [0.6 0.6 0.6];
+      .focusColor = [0.4 0.4 0.0];
+
+      .weight = 0.05;
+      .source = "theme://images/up.png";
+      .keepAspect = true;
+
+      event enter to $id decr;
+
+    };
+
+    widget bitmap = {
+      .selectable = true;
+      .focusCursor = true;
+      .focusAlpha = true;
+      .color = [0.6 0.6 0.6];
+      .focusColor = [0.4 0.4 0.0];
+
+      .weight = 0.05;
+      .source = "theme://images/down.png";
+      .keepAspect = true;
+
+      event enter to $id incr;
+
+    };
+
+    widget selection = {
+      .id = $id;
+    };
+  };
+};
+
+
+widget container_z = {
+
+  widget bitmap = {
+    .source = "theme://images/gpu-pcb.png";
+    .keepAspect = true;
+    .alpha = 0.15;
+  };
+
+  widget container_y = {
+    space 4;
+    widget bitmap = {
+      .keepAspect = true;
+      .id = "gpuicon";
+      .align = left;
+    };
+
+  };
+
+  widget container_y = {
+    option("Displaymode:", "displaymode");
+
+    space 5.0;
+
+    widget label = {
+      .caption = "Display status";
+      .align = center;
+    };
+    info("Refreshrate:",    "refreshrate");
+
+    space 4.0;
+    info("GPU:",    "gpuname");
+    info("Vendor:", "gpuvendor");
+    info("Driver:", "gpudriver");
+  };
+};

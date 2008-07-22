@@ -19,7 +19,8 @@
 #ifndef KEYMAPPER_H
 #define KEYMAPPER_H
 
-
+#include "event.h"
+#include "app.h"
 
 LIST_HEAD(hid_keydesc_list, hid_keydesc);
 LIST_HEAD(hid_keycode_list, hid_keycode);
@@ -33,7 +34,7 @@ LIST_HEAD(hid_keycode_list, hid_keycode);
 typedef struct hid_keycode {
   LIST_ENTRY(hid_keycode) hkc_link;
   struct hid_keydesc_list hkc_descs;
-  input_key_t hkc_code;
+  event_type_t hkc_code;
 } hid_keycode_t;
 
 /**
@@ -49,16 +50,15 @@ typedef struct hid_keydesc {
 } hid_keydesc_t;
 
 
-void keymapper_resolve(inputevent_t *ie);
+void keymapper_resolve(const char *str);
 
-hid_keycode_t *keymapper_find_by_code(input_key_t val);
+hid_keycode_t *keymapper_find_by_code(event_type_t val);
 hid_keydesc_t *keymapper_find_by_desc(const char *str);
 void keymapper_map(hid_keydesc_t *hkm, hid_keycode_t *hkc);
 
-const char *keycode2str(input_key_t code);
-input_key_t keystr2code(const char *str);
+const char *keycode2str(event_type_t code);
+event_type_t keystr2code(const char *str);
 
-void keymapper_save(void);
-void keymapper_load(void);
+void keymapper_init(appi_t *ai, glw_t *settings);
 
 #endif /* KEYMAPPER_H */

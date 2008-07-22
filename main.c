@@ -34,8 +34,8 @@
 #include <libglw/glw.h>
 
 #include "showtime.h"
-#include "input.h"
 #include "app.h"
+#include "event.h"
 
 #include "video/video_decoder.h"
 #include "display/display.h"
@@ -44,6 +44,7 @@
 #include "layout/layout.h"
 #include "fileaccess/fileaccess.h"
 #include "fileaccess/fa_imageloader.h"
+#include "fileaccess/fa_rawloader.h"
 
 pthread_mutex_t ffmutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -56,7 +57,7 @@ time_t walltime;
 int has_analogue_pad;
 int concurrency;
 
-static int main_input_event(inputevent_t *ie);
+static int main_event_handler(glw_event_t *ge);
 
 
 static void
@@ -144,14 +145,15 @@ main(int argc, char **argv)
 
   hid_init();
 
-  //  av_log_set_level(AV_LOG_DEBUG);
+  av_log_set_level(AV_LOG_ERROR);
   av_register_all();
 
   fileaccess_init();
 
   gl_sysglue_init(argc, argv);
 
-  if(glw_init(&config_list, ffmpeglockmgr, fa_imageloader, concurrency)) {
+  if(glw_init(ffmpeglockmgr, fa_imageloader, fa_rawloader, fa_rawunload,
+	      concurrency)) {
     fprintf(stderr, "libglw user interface failed to initialize, exiting\n");
     exit(0);
   }
@@ -162,7 +164,7 @@ main(int argc, char **argv)
 
   layout_create();
 
-  inputhandler_register(300, main_input_event);
+  event_handler_register(300, main_event_handler);
 
   apps_load();
 
@@ -185,26 +187,19 @@ showtime_exit(int suspend)
 
 
 static int
-main_input_event(inputevent_t *ie)
+main_event_handler(glw_event_t *ge)
 {
-  switch(ie->type) {
+  switch(ge->ge_type) {
   default:
     break;
 
-  case INPUT_KEY:
-    switch(ie->u.key) {
-    default:
-      break;
+  case EVENT_KEY_QUIT:
+    showtime_exit(-1);
+    return 1;
 
-    case INPUT_KEY_QUIT:
-      showtime_exit(-1);
-      return 1;
-
-    case INPUT_KEY_POWER:
-      showtime_exit(1);
-      return 1;
-    }
-    break;
+  case EVENT_KEY_POWER:
+    showtime_exit(1);
+    return 1;
   }
   return 0;
 }

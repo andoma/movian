@@ -224,6 +224,7 @@ fileaccess_init(void)
 {
   INITPROTO(fs);
   INITPROTO(rar);
+  INITPROTO(theme);
   register_protocol(&fa_lavf_proto);
 }
 

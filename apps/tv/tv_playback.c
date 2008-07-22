@@ -30,7 +30,6 @@
 #include <libglw/glw.h>
 
 #include "showtime.h"
-#include "input.h"
 #include "layout/layout.h"
 #include "layout/layout_forms.h"
 #include "layout/layout_support.h"

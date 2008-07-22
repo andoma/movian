@@ -29,12 +29,11 @@
 #include <math.h>
 
 #include "showtime.h"
-#include "hid/input.h"
 #include "media.h"
 #include "video_decoder.h"
-#include "input.h"
 #include "subtitles.h"
 #include "yadif.h"
+#include "event.h"
 
 void
 vd_init_timings(video_decoder_t *vd)
@@ -285,16 +284,16 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
   }
 
   if(mp->mp_feedback != NULL) {
-    inputevent_t ie;
+    event_ts_t *et;
 
-    ie.type        = INPUT_TS;
-    ie.u.ts.dts    = fm->dts;
-    ie.u.ts.pts    = fm->pts;
-    ie.u.ts.stream = fm->stream;
+    et = glw_event_create(EVENT_VIDEO_CLOCK, sizeof(event_ts_t));
+    et->dts    = fm->dts;
+    et->pts    = fm->pts;
+    et->stream = fm->stream;
 
-    input_postevent(mp->mp_feedback, &ie);
+    glw_event_enqueue(mp->mp_feedback, &et->h);
+    glw_event_unref(&et->h);
   }
-
 
   pts = fm->pts;
   duration = fm->duration;
@@ -512,9 +511,9 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
     for(i = 0; i < 3; i++) {
       w = vd->vd_yadif_width  >> (i ? hshift : 0);
       h = vd->vd_yadif_height >> (i ? vshift : 0);
-       src = frame->data[i];
-       dst = vd->vd_yadif_pic[vd->vd_yadif_phase].data[i];
-       while(h--) {
+      src = frame->data[i];
+      dst = vd->vd_yadif_pic[vd->vd_yadif_phase].data[i];
+      while(h--) {
 	memcpy(dst, src, w);
 	dst += w;
 	src += frame->linesize[i];

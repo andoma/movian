@@ -1,0 +1,4 @@
+widget bitmap = {
+  .source = "theme://images/player_play.png";
+  .keepAspect = true;
+};

@@ -26,7 +26,7 @@
 #include <string.h>
 
 #include "lircd.h"
-#include "input.h"
+#include "event.h"
 #include "coms.h"
 #include "showtime.h"
 #include "hid/keymapper.h"
@@ -34,15 +34,15 @@
 
 static const struct {
   const char *name;
-  input_key_t key;
+  event_type_t key;
 } lircmap[] = {
-  { "Up",           INPUT_KEY_UP    },
-  { "Down",         INPUT_KEY_DOWN  },
-  { "Left",         INPUT_KEY_LEFT  },
-  { "Right",        INPUT_KEY_RIGHT },
-  { "Enter",        INPUT_KEY_ENTER },
-  { "Back",         INPUT_KEY_BACK  },
-  { "Backspace",    INPUT_KEY_BACK  },
+  { "Up",           GEV_UP    },
+  { "Down",         GEV_DOWN  },
+  { "Left",         GEV_LEFT  },
+  { "Right",        GEV_RIGHT },
+  { "Enter",        GEV_ENTER },
+  { "Back",         EVENT_KEY_BACK  },
+  { "Backspace",    EVENT_KEY_BACK  },
 };
 
 static void *
@@ -54,7 +54,6 @@ lirc_thread(void *aux)
   uint32_t repeat;
   char keyname[100];
   int i;
-  inputevent_t ie;
 
   while(1) {
     fp = fopen("/dev/lircd", "r+");
@@ -68,22 +67,21 @@ lirc_thread(void *aux)
 
 
       if(keyname[0] && keyname[1] == 0) {
-	input_key_down(keyname[0]); /* ASCII input */
+	/* ASCII input */
+	event_post(glw_event_create_unicode(keyname[0]));
 	continue;
       }
 
       for(i = 0; i < sizeof(lircmap) / sizeof(lircmap[0]); i++) {
 	if(!strcasecmp(keyname, lircmap[i].name)) {
-	  input_key_down(lircmap[i].key);
+	  event_post_simple(lircmap[i].key);
 	}
       }
 
       if(i == sizeof(lircmap) / sizeof(lircmap[0])) {
-	/* No hit, build a keydesc */
-	ie.type = INPUT_KEYDESC;
-	snprintf(ie.u.keydesc, sizeof(ie.u.keydesc),
-		 "lirc - %s", keyname);
-	keymapper_resolve(&ie);
+	/* No hit, send to keymapper */
+	snprintf(buf, sizeof(buf), "lirc - %s", keyname);
+	keymapper_resolve(buf);
       }
     }
     fclose(fp);

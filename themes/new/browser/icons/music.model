@@ -1,0 +1,2 @@
+#include "include/miniatures"
+miniature("", "theme://images/folder_sound.png");

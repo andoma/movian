@@ -27,45 +27,37 @@
 
 typedef struct dvd_player {
   
-  dvdnav_t    *dp_dvdnav;
-
+  dvdnav_t *dp_dvdnav;
+  glw_event_queue_t *dp_geq;
   media_pipe_t *dp_mp;
-
-  ic_t         dp_ic;
-
   pes_player_t dp_pp;
 
-
-  int          dp_audio_track;
+  int dp_audio_track;
 #define DP_AUDIO_DISABLE    -1
 #define DP_AUDIO_FOLLOW_VM  -2
+  int dp_audio_track_vm;
 
-  int          dp_audio_track_vm;
-
-
-  int          dp_spu_track;
+  int dp_spu_track;
 #define DP_SPU_DISABLE   -1
 #define DP_SPU_FOLLOW_VM -2
-  int          dp_spu_track_vm;
+  int dp_spu_track_vm;
 
 
-  uint32_t     dp_clut[16];
+  uint32_t dp_clut[16];
 
-  int          dp_inmenu;
+  int dp_inmenu;
 
   struct appi *dp_ai;
 
-  pci_t          dp_pci;
-
-  glw_t *dp_widget_chapter;
-  glw_t *dp_widget_title;
-  glw_t *dp_widget_time;
-  glw_t *dp_status_overlay;
-  glw_t *dp_menu_playfield;
+  pci_t dp_pci;
 
   vd_conf_t dp_vdc;
 
-  int dp_force_status_display;
+  glw_t *dp_menu;
+  glw_t *dp_container;
+  glw_t *dp_status;
+
+  int dp_widget_status_playstatus;
 
 } dvd_player_t;
 

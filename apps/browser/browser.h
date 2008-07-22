@@ -23,7 +23,6 @@
 
 #include <fileaccess/fileaccess.h>
 #include <fileaccess/fa_probe.h>
-#include "hid/input.h"
 
 TAILQ_HEAD(browser_node_queue, browser_node);
 TAILQ_HEAD(browser_view_queue, browser_view);
@@ -103,8 +102,6 @@ typedef struct browser_root {
 
   browser_node_t *br_root;
 
-  glw_focus_stack_t *br_gfs;
-
   glw_t *br_splashcontainer;
 
   /* Probing */
@@ -126,8 +123,7 @@ void browser_node_deref(browser_node_t *bn);
 browser_node_t *browser_node_add_child(browser_node_t *parent,
 				       const char *url, int type);
 
-browser_root_t *browser_root_create(const char *url, glw_focus_stack_t *gfs,
-				    glw_t *splashcontainer);
+browser_root_t *browser_root_create(const char *url, glw_t *splashcontainer);
 
 void browser_root_destroy(browser_root_t *br);
 
@@ -136,6 +132,7 @@ int browser_scandir(browser_node_t *bn, int async);
 browser_node_t **browser_get_array_of_childs(browser_root_t *br,
 					     browser_node_t *bn);
 
-void browser_slideshow(browser_node_t *cur, glw_t *parent, ic_t *ic);
+void browser_slideshow(browser_node_t *cur, glw_t *parent, 
+		       glw_event_queue_t *geq);
 
 #endif /* BROWSER_H */

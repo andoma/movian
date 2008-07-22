@@ -160,7 +160,7 @@ probe_figure_primary_content(browser_root_t *br, browser_node_t *bn)
   free(a);
 
   if(cnt == 0) {
-    browser_view_switch_by_name(bn, br->br_gfs, "empty");
+    browser_view_switch_by_name(bn, "empty");
     return;
   }
 
@@ -170,7 +170,7 @@ probe_figure_primary_content(browser_root_t *br, browser_node_t *bn)
 
   switch(i) {
   case FILETYPE_IMAGE:
-    browser_view_switch_by_name(bn, br->br_gfs, "images");
+    browser_view_switch_by_name(bn, "images");
     break;
   }
 }

@@ -23,6 +23,7 @@
 
 #include "showtime.h"
 #include "app.h"
+#include "event.h"
 #include "layout/layout.h"
 #include "layout/layout_forms.h"
 #include "layout/layout_support.h"
@@ -42,18 +43,19 @@ LIST_HEAD(, appi) appis;
  *
  */
 static int
-appi_speedbutton_switcher(inputevent_t *ie)
+appi_speedbutton_switcher(glw_event_t *ge)
 {
+  event_keydesc_t *ek = (void *)ge;
   appi_t *ai;
   int r = 0;
 
-  if(ie->type != INPUT_KEYDESC)
+  if(ge->ge_type != EVENT_KEYDESC)
     return 0;
 
   pthread_mutex_lock(&appi_list_mutex);
 
   LIST_FOREACH(ai, &appis, ai_link) {
-    if(!strcmp(ie->u.keydesc, ai->ai_speedbutton)) {
+    if(!strcmp(ek->desc, ai->ai_speedbutton)) {
       layout_world_appi_show(ai);
       r = 1;
       break;
@@ -109,11 +111,9 @@ app_spawn(app_t *a, struct config_head *settings, int index)
   ai->ai_app = a;
   ai->ai_instance_index = index;
 
-  input_init(&ai->ai_ic);
+  glw_event_initqueue(&ai->ai_geq);
   ai->ai_mp = mp_create(a->app_name, ai); /* Includes a refcount, this is
 					     decreated in appi_destroy() */
-  glw_focus_stack_init(&ai->ai_gfs);
-  
   ai->ai_settings = settings;
 
   if(settings != NULL)
@@ -131,16 +131,17 @@ appi_create(const char *name)
 {
   appi_t *ai = calloc(1, sizeof(appi_t));
 
+  printf("creating appi %s\n", name);
+
   pthread_mutex_lock(&appi_list_mutex);
   LIST_INSERT_HEAD(&appis, ai, ai_link);
   pthread_mutex_unlock(&appi_list_mutex);
 
-  input_init(&ai->ai_ic);
+  glw_event_initqueue(&ai->ai_geq);
   ai->ai_mp = mp_create(name, ai); /* Includes a refcount, this is
 				      decreated in appi_destroy() */
   ai->ai_name = name;
 
-  glw_focus_stack_init(&ai->ai_gfs);
   return ai;
 }
 
@@ -166,7 +167,7 @@ appi_destroy(appi_t *ai)
   mp_unref(ai->ai_mp);
 
   free((void *)ai->ai_name);
-  input_flush_queue(&ai->ai_ic);
+  glw_event_flushqueue(&ai->ai_geq);
   free(ai);
 }
 
@@ -179,7 +180,6 @@ app_init(app_t *a)
 {
   launcher_app_add(a);
 }
-
 
 /**
  * Open application settings file, truncates it if already exist.
@@ -303,13 +303,13 @@ apps_load(void)
 
   playlist_init();
 
-  LOADAPP(clock);
+  //  LOADAPP(clock);
   LOADAPP(navigator);
-  LOADAPP(tv);
+  //  LOADAPP(tv);
 
   autolaunch_applications();
 
-  inputhandler_register(800, appi_speedbutton_switcher);
+  event_handler_register(800, appi_speedbutton_switcher);
 }
 
 
@@ -322,6 +322,8 @@ void
 app_settings(appi_t *ai, glw_t *parent, 
 	     const char *name, const char *miniature)
 {
+  abort();
+#if 0
   struct layout_form_entry_list lfelist;
   glw_t *m;
   inputevent_t ie;
@@ -349,6 +351,7 @@ app_settings(appi_t *ai, glw_t *parent,
   
   layout_form_query(&lfelist, m, &ai->ai_gfs, &ie);
   glw_detach(m);
+#endif
 }
 
 /**

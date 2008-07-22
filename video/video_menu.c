@@ -33,7 +33,6 @@
 #include <libglw/glw.h>
 
 #include "showtime.h"
-#include "input.h"
 #include "layout/layout.h"
 #include "video_decoder.h"
 #include "video_menu.h"
@@ -42,51 +41,47 @@
 #include "layout/layout_support.h"
 
 
-
 /**
- * Video menu
+ *
  */
-void
-video_menu_attach(glw_t *m, glw_focus_stack_t *gfs, ic_t *ic, vd_conf_t *vdc)
+static void
+vdc_set_ilace(void *opaque, int value)
 {
-  struct layout_form_entry_list lfelist;
-
-  layout_form_entry_options_t deilace_options[] = {
-    {"Automatic",          VD_DEILACE_AUTO},
-    {"Disabled",           VD_DEILACE_NONE},
-    {"Simple",             VD_DEILACE_HALF_RES},
-    {"YADIF",              VD_DEILACE_YADIF_FIELD}
-  };
-
-  TAILQ_INIT(&lfelist);
- 
-  layout_form_fill_options(m, "deinterlacer_options",
-			   deilace_options, 4);
-
-  LFE_ADD_OPTION(&lfelist, "deinterlacer_options", &vdc->gc_deilace_type);
-  LFE_ADD_INT(&lfelist, "avsync",    &vdc->gc_avcomp,"%dms", -2000, 2000, 50);
-  LFE_ADD_INT(&lfelist, "videozoom", &vdc->gc_zoom,  "%d%%",   100, 1000, 10);
-
-  layout_form_initialize(&lfelist, m, gfs, ic, 0);
+  vd_conf_t *vdc = opaque;
+  vdc->gc_deilace_type = value;
 }
 
+/**
+ * 
+ */
+static void
+vdc_menu_ilace_opt(glw_t *w, vd_conf_t *vdc, 
+		   const char *title, vd_deilace_type_t type)
+{
+  glw_selection_add_text_option(w, title, vdc_set_ilace, vdc, type,
+				vdc->gc_deilace_type == type);
+}
 
 /**
  * Video menu
  */
 void
-video_menu_add_tab(glw_t *m, glw_focus_stack_t *gfs, ic_t *ic, vd_conf_t *vdc,
-		   const char *src)
+video_menu_attach(glw_t *p, vd_conf_t *vdc)
 {
-  glw_t *t;
-  char buf1[100], buf2[100];
+  glw_t *w;
+  if((w = glw_find_by_id(p, "video_deinterlacer", 0)) != NULL) {
+    vdc_menu_ilace_opt(w, vdc, "None", VD_DEILACE_NONE);
+    vdc_menu_ilace_opt(w, vdc, "Auto", VD_DEILACE_AUTO);
+    vdc_menu_ilace_opt(w, vdc, "Half resolution", VD_DEILACE_HALF_RES);
+    vdc_menu_ilace_opt(w, vdc, "YADIF half rate", VD_DEILACE_YADIF_FRAME);
+    vdc_menu_ilace_opt(w, vdc, "YADIF full rate", VD_DEILACE_YADIF_FIELD);
+  }
 
-  snprintf(buf1, sizeof(buf1), "%s-icon", src);
-  snprintf(buf2, sizeof(buf2), "%s-tab",  src);
+  if((w = glw_find_by_id(p, "video_delay", 0)) != NULL)
+    glw_set(w,GLW_ATTRIB_INTPTR, &vdc->gc_avcomp, NULL);
 
-  t = layout_form_add_tab(m,
-			  "menu",           buf1,
-			  "menu_container", buf2);
+  if((w = glw_find_by_id(p, "video_zoom", 0)) != NULL)
+    glw_set(w, GLW_ATTRIB_INTPTR, &vdc->gc_zoom, NULL);
 
-  video_menu_attach(m, gfs, ic, vdc);
+
 }

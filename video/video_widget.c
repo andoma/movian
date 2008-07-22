@@ -31,7 +31,6 @@
 #include "showtime.h"
 #include "media.h"
 #include "video_decoder.h"
-#include "input.h"
 #include "subtitles.h"
 #include "yadif.h"
 
@@ -131,7 +130,7 @@ vd_init(void)
  */
 
 static int gl_video_widget_callback(glw_t *w, void *opaque, 
-				    glw_signal_t signal, ...);
+				    glw_signal_t signal, void *extra);
 
 
 glw_t *
@@ -597,7 +596,6 @@ render_video_1f(media_pipe_t *mp, video_decoder_t *vd,
 
   render_video_upload(vd, gvf);
 
-
   glEnable(GL_FRAGMENT_PROGRAM_ARB);
   glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, yuv2rbg_prog);
 
@@ -722,8 +720,7 @@ render_video_pipe(glw_t *w, video_decoder_t *vd, glw_rctx_t *rc)
     glDisable(GL_BLEND); 
   else
     glEnable(GL_BLEND); 
-
-
+  
   fra = vd->vd_fra;
   frb = vd->vd_frb;
 
@@ -834,13 +831,10 @@ gl_constant_frame_flush(video_decoder_t *vd)
 
 
 static int 
-gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, 
+			 void *extra)
 {
   video_decoder_t *vd = opaque;
-
-  va_list ap;
-  va_start(ap, signal);
-
 
   switch(signal) {
   case GLW_SIGNAL_DTOR:
@@ -871,11 +865,11 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
   case GLW_SIGNAL_LAYOUT:
     vd->vd_running = 1;
     glw_set_active(w);
-    layout_video_pipe(vd, va_arg(ap, void *));
+    layout_video_pipe(vd, extra);
     return 0;
 
   case GLW_SIGNAL_RENDER:
-    render_video_pipe(w, vd, va_arg(ap, void *));
+    render_video_pipe(w, vd, extra);
     return 0;
 
   case GLW_SIGNAL_NEW_FRAME:

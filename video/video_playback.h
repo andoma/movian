@@ -21,6 +21,7 @@
 
 #include "app.h"
 
-int play_video(const char *fname, appi_t *ai, ic_t *ic, glw_t *parent);
+int play_video(const char *fname, appi_t *ai, glw_event_queue_t *geq,
+	       glw_t *parent);
 
 #endif /* PLAY_VIDEO_H */

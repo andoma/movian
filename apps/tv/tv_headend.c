@@ -37,7 +37,6 @@
 #include "showtime.h"
 #include "tv_headend.h"
 #include "coms.h"
-#include "input.h"
 #include "miw.h"
 
 static void tvh_connect(tvheadend_t *tvh);

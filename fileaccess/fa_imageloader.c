@@ -105,7 +105,6 @@ fa_imageloader(glw_image_load_ctrl_t *ctrl)
   void *fh;
   const char *filename = ctrl->url;
   char p[16];
-  char urlbuf[512];
   int is_exif = 0;
   int r;
 
@@ -116,12 +115,6 @@ fa_imageloader(glw_image_load_ctrl_t *ctrl)
 
   if(!strncmp(filename, "http://", 7))
     filename = filename_by_url(filename);
-
-  else if(!strncmp(filename, "icon://", 7)) {
-    snprintf(urlbuf, sizeof(urlbuf), "file://%s/%s",
-	     config_get_str("theme", "themes/default"), filename + 7);
-    filename = urlbuf;
-  }
 
 
   if(filename == NULL)

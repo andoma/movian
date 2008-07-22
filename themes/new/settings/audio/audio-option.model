@@ -1,0 +1,60 @@
+.focusCursor = true;
+.focusAlpha = true;
+
+
+
+macro option(tid, id) {
+  widget container_x = {
+    .aspect = 15;
+    widget label = {
+      .weight = 2.0;
+      .id = $tid;
+      .align = right;
+    };
+
+    widget bitmap = {
+      .selectable = true;
+      .focusCursor = true;
+      .focusAlpha = true;
+      .color = [0.6 0.6 0.6];
+      .focusColor = [0.4 0.4 0.0];
+
+      .weight = 0.2;
+      .source = "theme://images/up.png";
+      .keepAspect = true;
+
+      event enter to $id decr;
+
+    };
+
+    widget bitmap = {
+      .selectable = true;
+      .focusCursor = true;
+      .focusAlpha = true;
+      .color = [0.6 0.6 0.6];
+      .focusColor = [0.4 0.4 0.0];
+
+      .weight = 0.2;
+      .source = "theme://images/down.png";
+      .keepAspect = true;
+
+      event enter to $id incr;
+
+    };
+
+    widget selection = {
+      .id = $id;
+    };
+  };
+};
+
+
+
+widget bitmap = {
+  .color = [0.2 0.2 0.2];
+  .borderScale = true;
+  .source = "theme://images/plate-compact.png";
+  .textureBorders = [0.5 0.5 0.5 0.5];
+  .vertexBorders  = [0.05 0.05 0.05 0.05];
+  option("title", "options");
+};

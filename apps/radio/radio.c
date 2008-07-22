@@ -34,7 +34,6 @@
 
 
 #include "showtime.h"
-#include "input.h"
 #include "play_file.h"
 #include "miw.h"
 #include "radio.h"

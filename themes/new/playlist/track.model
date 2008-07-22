@@ -1,0 +1,95 @@
+.focusAlpha = true;
+.focusCursor = true;
+
+/*
+
+widget bitmap = {
+  .color = [0.6 0.6 0.6];
+  .borderScale = true;
+  .source = "theme://images/plate-compact.png";
+  .textureBorders = [0.5 0.5 0.5 0.5];
+  .vertexBorders  = [0.05 0.05 0.05 0.05];
+  
+  widget expander = {
+    
+    widget container_x = {
+
+      widget xfader = {
+	.id = "track_playstatus";
+	.weight = 0.05;
+      };
+      
+      widget label = {
+	.id = "track_title";
+      };
+      
+      widget label = {
+	.weight = 0.1;
+	.id = "track_duration";
+      };
+    };
+
+    widget container_x = {
+      space 0.05;
+      widget container_y = {
+
+	widget label = {
+	  .id = "track_author";
+	};
+
+	widget label = {
+	  .id = "track_album";
+	};
+	space 1.0;
+      };
+      space 0.1;
+    };
+  };
+};
+
+*/
+
+
+
+widget bitmap = {
+  .color = [0.6 0.6 0.6];
+  .borderScale = true;
+  .source = "theme://images/plate-compact.png";
+  .textureBorders = [0.5 0.5 0.5 0.5];
+  .vertexBorders  = [0.05 0.05 0.05 0.05];
+  
+  widget container_z = {
+    widget xfader = {
+      .align = left;
+      .alpha = 0.3;
+      .id = "track_playstatus";
+    };
+
+    widget expander = {
+    
+      widget container_x = {
+	widget label = {
+	  .id = "track_title";
+	  .weight = 0.9;
+	};
+      
+	widget label = {
+	  .weight = 0.1;
+	  .id = "track_duration";
+	};
+      };
+
+      widget container_y = {
+
+	widget label = {
+	  .id = "track_author";
+	};
+      
+	widget label = {
+	  .id = "track_album";
+	};
+	space 1.0;
+      };
+    };
+  };
+};

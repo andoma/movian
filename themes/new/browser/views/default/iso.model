@@ -1,0 +1,4 @@
+widget  bitmap = {
+  .source = "theme://images/dir.png";
+  .keepAspect = true;
+};

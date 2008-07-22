@@ -1,0 +1,2 @@
+#include "include/miniatures"
+miniature("Display", "theme://images/tv.png");

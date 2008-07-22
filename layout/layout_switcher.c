@@ -25,27 +25,22 @@
 #include "showtime.h"
 #include "app.h"
 #include "layout.h"
+#include "event.h"
 
 static glw_t *layout_switcher;
 static glw_t *layout_switcher_list;
-static glw_focus_stack_t layout_switcher_gfs;
 
 static int layout_switcher_hold_time;
 float layout_switcher_alpha;
 
-static int layout_switcher_input_event(inputevent_t *ie);
+static int layout_switcher_input_event(glw_event_t *ge);
 
 void
 layout_switcher_create(void)
 {
-  inputhandler_register(201, layout_switcher_input_event);
+  event_handler_register(201, layout_switcher_input_event);
 
-  glw_focus_stack_init(&layout_switcher_gfs);
-  glw_focus_stack_activate(&layout_switcher_gfs);
-
-  layout_switcher = glw_create(GLW_MODEL,
-			       GLW_ATTRIB_FILENAME, "switcher",
-			       NULL);
+  layout_switcher = glw_model_create("theme://switcher/switcher.model", NULL);
 
   layout_switcher_list = 
     glw_find_by_id(layout_switcher, "switcher_container", 0);
@@ -55,8 +50,6 @@ layout_switcher_create(void)
 	    "This model will not be able to switch between applications\n");
     return;
   }
-  
-  glw_focus_set(&layout_switcher_gfs, layout_switcher_list);
 }
 
 
@@ -64,7 +57,8 @@ layout_switcher_create(void)
  * Callback for switching to another app instance
  */
 static int
-switcher_spawn_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+switcher_spawn_callback(glw_t *w, void *opaque, glw_signal_t signal,
+			void *extra)
 {
   return 0;
 }
@@ -76,6 +70,9 @@ switcher_spawn_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 void
 layout_switcher_appi_add(appi_t *ai, glw_t *w)
 {
+  if(layout_switcher_list == NULL)
+    return;
+
   glw_set(w,
 	  GLW_ATTRIB_PARENT, layout_switcher_list,
 	  GLW_ATTRIB_SIGNAL_HANDLER, switcher_spawn_callback, ai, 100,
@@ -114,6 +111,7 @@ layout_switcher_render(float aspect)
   rc0.rc_zoom  = 1.0f;
   rc0.rc_alpha = layout_switcher_alpha;
   rc0.rc_aspect = aspect;
+  rc0.rc_focused = 1;
 
   glw_layout(layout_switcher, &rc0);
 
@@ -158,22 +156,21 @@ layout_switcher_switch(void)
  * Primary point for input event distribution
  */
 static int
-layout_switcher_input_event(inputevent_t *ie)
+layout_switcher_input_event(glw_event_t *ge)
 {
-  glw_signal_t sig;
-
-  if(ie->type != INPUT_KEY)
+  if(layout_switcher_list == NULL)
     return 0;
 
-  if(ie->u.key == INPUT_KEY_TASK_DOSWITCH) {
-    glw_send_signal(layout_switcher_list, GLW_SIGNAL_NEXT, NULL);
+  if(ge->ge_type == EVENT_KEY_TASK_DOSWITCH) {
+    ge->ge_type = GEV_INCR;
+    glw_signal(layout_switcher_list, GLW_SIGNAL_EVENT, ge);
     layout_switcher_hold_time = 1000000 / frame_duration;
     layout_switcher_switch();
     return 1;
   }
 
   if(layout_switcher_hold_time == 0) {
-    if(ie->u.key == INPUT_KEY_TASK_SWITCHER) {
+    if(ge->ge_type == EVENT_KEY_TASK_SWITCHER) {
       layout_switcher_hold_time = 10 * 1000000 / frame_duration;
       return 1;
     }
@@ -182,30 +179,22 @@ layout_switcher_input_event(inputevent_t *ie)
 
   /* task switcher is visible */
 
-  switch(ie->u.key) {
-  case INPUT_KEY_UP:     sig = GLW_SIGNAL_UP;     break;
-  case INPUT_KEY_DOWN:   sig = GLW_SIGNAL_DOWN;   break;
-  case INPUT_KEY_LEFT:   sig = GLW_SIGNAL_LEFT;   break;
-  case INPUT_KEY_RIGHT:  sig = GLW_SIGNAL_RIGHT;  break;
-  case INPUT_KEY_SELECT: sig = GLW_SIGNAL_SELECT; break;
-
-  case INPUT_KEY_ENTER:
+  switch(ge->ge_type) {
+  case GEV_ENTER:
     layout_switcher_hold_time = 0;
     layout_switcher_switch();
     layout_switcher_set_current_to_front();
     return 1;
 
-  case INPUT_KEY_TASK_SWITCHER:
+  case EVENT_KEY_TASK_SWITCHER:
     layout_switcher_hold_time = 0;
     return 1;
     
   default:
-    return 1;
+    layout_switcher_hold_time = 10 * 1000000 / frame_duration;
+    glw_signal(layout_switcher_list, GLW_SIGNAL_EVENT, ge);
+    layout_switcher_switch();
   }
-  layout_switcher_hold_time = 10 * 1000000 / frame_duration;
-
-  glw_send_signal(layout_switcher_list, sig, NULL);
-  layout_switcher_switch();
   return 1;
 }
 

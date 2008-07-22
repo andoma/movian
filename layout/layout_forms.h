@@ -1,3 +1,4 @@
+#if 0
 /*
  *  Forms
  *  Copyright (C) 2008 Andreas Öman
@@ -199,3 +200,5 @@ void layout_form_add_option(glw_t *m, const char *id, const char *caption,
 
 #endif /* LAYOUT_FORMS_H */
 
+
+#endif

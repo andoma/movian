@@ -1,0 +1,102 @@
+macro info(title, infoid) {
+  widget container_x = {
+    widget label = {
+      .caption = $title;
+      .align = right;
+    };
+
+    widget label = {
+      .weight = 2;
+      .id = $infoid;
+      .align = left;
+    };
+  };
+};
+
+
+macro option(title, id) {
+  widget container_x = {
+    widget label = {
+      .caption = $title;
+      .align = right;
+    };
+
+    widget bitmap = {
+      .selectable = true;
+      .focusCursor = true;
+      .focusAlpha = true;
+      .color = [0.6 0.6 0.6];
+      .focusColor = [0.4 0.4 0.0];
+
+      .weight = 0.1;
+      .source = "theme://images/up.png";
+      .keepAspect = true;
+
+      event enter to $id decr;
+
+    };
+
+    widget bitmap = {
+      .selectable = true;
+      .focusCursor = true;
+      .focusAlpha = true;
+      .color = [0.6 0.6 0.6];
+      .focusColor = [0.4 0.4 0.0];
+
+      .weight = 0.1;
+      .source = "theme://images/down.png";
+      .keepAspect = true;
+
+      event enter to $id incr;
+
+    };
+
+    widget selection = {
+      .id = $id;
+    };
+  };
+};
+
+
+widget container_x = {
+
+  widget bitmap = {
+    .source = "theme://images/mixer.png";
+    .alpha = 0.5;
+    .align = left;
+    .keepAspect = true;
+
+    widget container_y = {
+      widget label = {
+	.caption = "Mixer settings";
+	.align = center;
+      };
+      space 0.5;
+
+      space 12;
+
+    };
+  };
+
+  widget bitmap = {
+    .source = "theme://images/audio-pcb.png";
+    .alpha = 0.1;
+    .keepAspect = true;
+    widget container_y = {
+      widget label = {
+	.caption = "Audio hardware";
+	.align = center;
+      };
+      space 0.5;
+
+      option("Device:", "outputdevice_list");
+
+      space 0.5;
+
+      widget deck = {
+	.id = "outputdevice_deck";
+	.weight = 11;
+      };
+    };
+  };
+};

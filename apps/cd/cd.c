@@ -35,7 +35,6 @@
 #include "showtime.h"
 #include "app.h"
 #include "apps/dvdplayer/dvd.h"
-#include "input.h"
 #include "miw.h"
 #include "cd.h"
 #include "layout/layout.h"

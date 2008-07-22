@@ -20,15 +20,15 @@
 #define SYSGLUE_H
 
 #include <libglw/glw.h>
-#include <hid/input.h>
+#include "app.h"
 
 void gl_sysglue_init(int argc, char **argv);
 
 void gl_sysglue_mainloop(void);
 
-void gl_update_timings(void);
+int gl_update_timings(void);
 
-void display_settings_init(glw_t *m, glw_focus_stack_t *gfs, ic_t *ic);
+void display_settings_init(appi_t *ai, glw_t *m);
 
 #endif /* SYSGLUE_H */
 

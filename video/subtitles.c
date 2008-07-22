@@ -337,9 +337,10 @@ subtitles_make_widget(subtitles_t *sub, int index)
 	     GLW_ATTRIB_PARENT, x,
 	     GLW_ATTRIB_WEIGHT, 0.1f,
 	     NULL);
-
+#if 0
   glw_text_multiline(x, GLW_TEXT_BITMAP, se->se_text,
 		     300, 3, 0, 27.0);
+#endif
 
   glw_create(GLW_DUMMY,
 	     GLW_ATTRIB_PARENT, x,

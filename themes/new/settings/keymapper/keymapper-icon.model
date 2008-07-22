@@ -1,0 +1,2 @@
+#include "include/miniatures"
+miniature("Keymapper", "theme://images/keyboard.png");

@@ -31,44 +31,6 @@
 #include "layout_support.h"
 
 /**
- * Update codec info in text widgets
- */ 
-void
-layout_update_codec_info(glw_t *w, const char *id, AVCodecContext *ctx)
-{
-  char tmp1[100];
-
-  if((w = glw_find_by_id(w, id, 0)) == NULL)
-    return;
-
-  if(ctx == NULL) {
-    glw_set(w, GLW_ATTRIB_CAPTION, "", NULL);
-    return;
-  }
-
-  snprintf(tmp1, sizeof(tmp1), "%s", ctx->codec->name);
-  
-  if(ctx->codec_type == CODEC_TYPE_AUDIO) {
-    snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
-	     ", %d Hz, %d chanels", ctx->sample_rate, ctx->channels);
-  }
-
-  if(ctx->width)
-    snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
-	     ", %dx%d",
-	     ctx->width, ctx->height);
-  
-  if(ctx->bit_rate > 2000000)
-    snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
-	     ", %.1f Mb/s", (float)ctx->bit_rate / 1000000);
-  else if(ctx->bit_rate)
-    snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
-	     ", %d kb/s", ctx->bit_rate / 1000);
-  
-  glw_set(w, GLW_ATTRIB_CAPTION, tmp1, NULL);
-}
-
-/**
  * Update current time info in text widget
  */ 
 void
@@ -131,7 +93,6 @@ layout_update_str(glw_t *w, const char *id, const char *str)
 
   glw_set(w,
 	  GLW_ATTRIB_CAPTION, str,
-	  GLW_ATTRIB_TEXT_FLAGS, GLW_TEXT_UTF8,
 	  NULL);
 
 }
@@ -140,13 +101,13 @@ layout_update_str(glw_t *w, const char *id, const char *str)
  * Set filename for a widget to 'file'
  */
 void
-layout_update_filename(glw_t *w, const char *id, const char *filename)
+layout_update_source(glw_t *w, const char *id, const char *filename)
 {
   if((w = glw_find_by_id(w, id, 0)) == NULL)
     return;
 
   glw_set(w,
-	  GLW_ATTRIB_FILENAME, filename,
+	  GLW_ATTRIB_SOURCE, filename,
 	  NULL);
 
 }
@@ -172,10 +133,7 @@ layout_update_model(glw_t *w, const char *id, const char *model)
     return;
   }
 
-  glw_create(GLW_MODEL,
-	     GLW_ATTRIB_FILENAME, model,
-	     GLW_ATTRIB_PARENT, w,
-	     NULL);
+  glw_model_create(model, w);
 }
 
 /**
@@ -217,7 +175,7 @@ layout_update_multilinetext(glw_t *w, const char *id, const char *txt,
   glw_destroy_childs(w);
 
   for(i = 0; i < lines; i++)
-    glw_create(GLW_TEXT_BITMAP,
+    glw_create(GLW_LABEL,
 	       GLW_ATTRIB_PARENT, w,
 	       GLW_ATTRIB_CAPTION, vec[i],
 	       GLW_ATTRIB_ALIGNMENT, alignment,

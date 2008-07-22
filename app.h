@@ -19,7 +19,6 @@
 #ifndef APP_H
 #define APP_H
 
-#include "hid/input.h"
 #include "media.h"
 
 /**
@@ -52,9 +51,7 @@ typedef struct appi {
 
   app_t *ai_app;
 
-  glw_focus_stack_t ai_gfs;
-
-  ic_t ai_ic;
+  glw_event_queue_t ai_geq;
   media_pipe_t *ai_mp;
   
   AVFormatContext *ai_fctx;

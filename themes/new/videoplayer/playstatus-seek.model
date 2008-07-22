@@ -1,0 +1,6 @@
+widget rotator = {
+  widget bitmap = {
+    .source = "theme://images/loading.png";
+    .keepAspect = true;
+  };
+};

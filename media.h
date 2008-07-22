@@ -25,6 +25,13 @@
 #include <libglw/glw.h>
 #include <libavformat/avformat.h>
 
+typedef struct event_ts {
+  glw_event_t h;
+  int stream;
+  int64_t dts;
+  int64_t pts;
+} event_ts_t;
+
 
 #define MP_WIDGET_AUTO_DISPLAY_TIME 250
 
@@ -173,9 +180,11 @@ typedef struct media_pipe {
   struct video_decoder *mp_video_decoder;
   struct vd_conf *mp_video_conf;
 
-  struct inputctrl *mp_feedback;
+  struct glw_event_queue *mp_feedback;
 
   int64_t mp_videoseekdts;
+
+  glw_t *mp_status_xfader;
 
 } media_pipe_t;
 
@@ -277,6 +286,11 @@ void media_pipe_acquire_audio(struct media_pipe *mp);
 void nice_codec_name(char *buf, int len, AVCodecContext *ctx);
 
 int mp_is_audio_silenced(media_pipe_t *mp);
+
+void media_update_codec_info_widget(glw_t *w, const char *id, 
+				    AVCodecContext *ctx);
+
+void media_get_codec_info(AVCodecContext *ctx, char *buf, size_t size);
 
 extern media_pipe_t *primary_audio;
 

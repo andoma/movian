@@ -21,11 +21,13 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <time.h>
+#include <string.h>
 #include "media.h"
-#include "hid/input.h"
 #include "showtime.h"
 #include "audio/audio_decoder.h"
 #include "video/video_decoder.h"
+#include "event.h"
+#include "layout/layout.h"
 
 extern int concurrency;
 
@@ -73,6 +75,14 @@ mp_create(const char *name, struct appi *ai)
   
   mq_init(&mp->mp_audio);
   mq_init(&mp->mp_video);
+
+  if(layout_global_status != NULL)
+    mp->mp_status_xfader = glw_create(GLW_FLIPPER,
+				      GLW_ATTRIB_PARENT, layout_global_status,
+				      NULL);
+  else
+    abort();
+
   return mp;
 }
 
@@ -83,6 +93,9 @@ mp_create(const char *name, struct appi *ai)
 static void
 mp_destroy(media_pipe_t *mp)
 {
+  if(mp->mp_status_xfader != NULL)
+    glw_destroy(mp->mp_status_xfader);
+
   mp_set_playstatus(mp, MP_STOP);
   free(mp);
 }
@@ -554,8 +567,10 @@ mp_set_playstatus(media_pipe_t *mp, int status)
     if(mp->mp_audio_decoder == NULL)
       mp->mp_audio_decoder = audio_decoder_create(mp);
 
-    if(status == MP_PLAY && mp->mp_audio_decoder != NULL)
+    if(status == MP_PLAY) {
       audio_decoder_acquire_output(mp->mp_audio_decoder);
+      //      mp->mp_status_xfader->glw_parent->glw_selected = mp->mp_status_xfader;
+    }
 
     if(mp->mp_video_decoder == NULL)
       video_decoder_create(mp);
@@ -613,13 +628,14 @@ mp_playpause(struct media_pipe *mp, int key)
   int t;
 
   switch(key) {
-  case INPUT_KEY_PLAYPAUSE:
+  case EVENT_KEY_PLAYPAUSE:
     t = mp->mp_playstatus == MP_PLAY ? MP_PAUSE : MP_PLAY;
+    printf("t = %d\n", t);
     break;
-  case INPUT_KEY_PLAY:
+  case EVENT_KEY_PLAY:
     t = MP_PLAY;
     break;
-  case INPUT_KEY_PAUSE:
+  case EVENT_KEY_PAUSE:
     t = MP_PAUSE;
     break;
   default:
@@ -669,4 +685,89 @@ mp_is_audio_silenced(media_pipe_t *mp)
 {
   return mp->mp_audio_decoder &&
     audio_decoder_is_silenced(mp->mp_audio_decoder);
+}
+
+
+/**
+ *
+ */
+static void
+codec_details(AVCodecContext *ctx, char *buf, size_t size, const char *lead)
+{
+  const char *cfg;
+
+  if(ctx->codec_type == CODEC_TYPE_AUDIO) {
+
+    if(ctx->sample_rate % 1000 == 0) {
+      snprintf(buf, size, "%s%d kHz", lead, ctx->sample_rate / 1000);
+    } else {
+      snprintf(buf, size, "%s%.1f kHz", lead, (float)ctx->sample_rate / 1000);
+    }
+    lead = ", ";
+
+    switch(ctx->channels) {
+    case 1: 
+      cfg = "mono";
+      break;
+    case 2: 
+      cfg = "stereo";
+      break;
+    case 6: 
+      cfg = "5.1";
+      break;
+    default:
+      snprintf(buf + strlen(buf), size - strlen(buf), ", %d channels",
+	       ctx->channels);
+      cfg = NULL;
+      break;
+    }
+    if(cfg != NULL) {
+      snprintf(buf + strlen(buf), size - strlen(buf), ", %s", cfg);
+    }
+  }
+
+  if(ctx->width) {
+    snprintf(buf + strlen(buf), size - strlen(buf),
+	     "%s%dx%d", lead, ctx->width, ctx->height);
+    lead = ", ";
+  }
+
+  if(ctx->bit_rate > 2000000)
+    snprintf(buf + strlen(buf), size - strlen(buf),
+	     "%s%.1f Mb/s", lead, (float)ctx->bit_rate / 1000000);
+  else if(ctx->bit_rate)
+    snprintf(buf + strlen(buf), size - strlen(buf),
+	     "%s%d kb/s", lead, ctx->bit_rate / 1000);
+}
+
+/**
+ * Update codec info in text widgets
+ */ 
+void
+media_update_codec_info_widget(glw_t *w, const char *id, AVCodecContext *ctx)
+{
+  char tmp1[100];
+
+  if((w = glw_find_by_id(w, id, 0)) == NULL)
+    return;
+
+  if(ctx == NULL) {
+    glw_set(w, GLW_ATTRIB_CAPTION, "", NULL);
+    return;
+  }
+
+  snprintf(tmp1, sizeof(tmp1), "%s", ctx->codec->long_name);
+  
+  codec_details(ctx, tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1), ", ");
+  glw_set(w, GLW_ATTRIB_CAPTION, tmp1, NULL);
+}
+
+/**
+ * Update codec info in text widgets
+ */ 
+void
+media_get_codec_info(AVCodecContext *ctx, char *buf, size_t size)
+{
+  snprintf(buf, size, "%s\n", ctx->codec->long_name);
+  codec_details(ctx, buf + strlen(buf), size - strlen(buf), "");
 }

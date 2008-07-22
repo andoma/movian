@@ -1,0 +1,44 @@
+#include "include/buttons"
+
+.displacement = [0 0 0.7];
+
+widget form = {
+
+  widget container_x = {
+    .debug = true;
+
+    /**
+     * List with all the playlists
+     */
+    widget list = {
+      .id = "playlist_container";
+      .scaleChilds = true;
+      .slices = 4;
+    };
+
+    space 0.1;
+
+    /**
+     * Deck that will display all entries in each playlist
+     */
+    widget deck = {
+      .weight = 4;
+      .id = "tracklist_container";
+    };
+
+    space 0.1;
+
+    /**
+     * Various buttons
+     */
+     widget container_y = {
+      space 20;
+      
+      form_button("Rename playlist", "theme://images/edit.png",
+		  rename, [0.3 0.3 0]);
+
+      form_button("Delete playlist", "theme://images/edit_delete.png",
+		  delete, [0.3 0 0]);
+    };
+  };
+};

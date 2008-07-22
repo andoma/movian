@@ -20,8 +20,8 @@
 #define AUDIO_H
 
 #include <libglw/glw.h>
-#include "hid/input.h"
 #include "audio_fifo.h"
+#include "app.h"
 
 #define AUDIO_CHAN_MAX 8
 
@@ -91,6 +91,6 @@ void audio_init(void);
 
 void audio_alsa_init(void);
 
-void audio_settings_init(glw_t *m, glw_focus_stack_t *gfs, ic_t *ic);
+void audio_settings_init(appi_t *ai, glw_t *m);
 
 #endif /* AUDIO__H */

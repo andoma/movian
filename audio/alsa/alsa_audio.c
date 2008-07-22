@@ -28,7 +28,6 @@
 #include <alsa/asoundlib.h>
 
 #include "showtime.h"
-#include "hid/input.h"
 #include "audio/audio.h"
 #include "audio/audio_ui.h"
 #include "audio/audio_iec958.h"
@@ -46,7 +45,7 @@ typedef struct alsa_audio_mode {
 
 #define hts_alsa_debug(fmt...) fprintf(stderr, fmt)
 
-static int alsa_mixer_setup(void);
+//static int alsa_mixer_setup(void);
 
 /**
  *
@@ -730,12 +729,12 @@ audio_alsa_init(void)
   alsa_probe_devices();
 
   //  pthread_create(&ptid, NULL, alsa_thread, NULL);
-  alsa_mixer_setup();
+  //  alsa_mixer_setup();
 }
 
 
 
-
+#if 0
 static ic_t  alsa_master_volume_input;
 static float alsa_master_volume;
 static int   alsa_master_mute;
@@ -910,3 +909,4 @@ alsa_mixer_setup(void)
   return 0;
 
 }
+#endif

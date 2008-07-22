@@ -23,7 +23,6 @@
 #include <arpa/inet.h>
 #include <libglw/glw.h>
 #include "showtime.h"
-#include "hid/input.h"
 
 typedef struct tvstatus {
 

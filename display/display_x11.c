@@ -31,7 +31,6 @@
 #include <GL/glx.h>
 
 #include "showtime.h"
-#include "hid/input.h"
 #include "hid/keymapper.h"
 #include "layout/layout.h"
 #include "layout/layout_forms.h"
@@ -53,6 +52,7 @@ static struct {
   const char *displayname;
   int coords[2][4];
   int do_videosync;
+  int update_gfx_info;
 } x11state;
 
 
@@ -64,12 +64,12 @@ static struct display_settings {
 
 } display_settings;
 
-
-
 static struct strtab displaymodetab[] = {
   { "windowed",           DISPLAYMODE_WINDOWED },
   { "fullscreen",         DISPLAYMODE_FULLSCREEN },
 };
+
+static glw_t *display_settings_model;
 
 /**
  * Load display settings
@@ -116,34 +116,46 @@ display_settings_save(void)
 }
 
 
+/**
+ * Switch displaymode, we just set a variable and let mainloop switch
+ * later on
+ */
 
+static void
+display_set_mode(void *opaque, int value)
+{
+  display_settings.displaymode = value;
+}
 
 /**
  * Add a settings pane with relevant settings
  */
 void
-display_settings_init(glw_t *m, glw_focus_stack_t *gfs, ic_t *ic)
+display_settings_init(appi_t *ai, glw_t *m)
 {
-  struct layout_form_entry_list lfelist;
-  glw_t *t;
+  glw_t *icon = 
+    glw_model_create("theme://settings/display/display-icon.model", NULL);
+  glw_t *tab  = 
+    glw_model_create("theme://settings/display/x11/display-x11.model", NULL);
 
-  TAILQ_INIT(&lfelist);
+  glw_t *w;
 
-  t = layout_form_add_tab(m,
-			  "settings_list",     "settings/display-icon",
-			  "settings_container","settings/display-tab");
-  
-  if(t == NULL)
-    return;
+  glw_add_tab(m, "settings_list", icon, "settings_deck", tab);
 
-  layout_form_add_option(t, "displaymodes", "Windowed", 
-			 DISPLAYMODE_WINDOWED);
-  layout_form_add_option(t, "displaymodes", "Fullscreen",
-			 DISPLAYMODE_FULLSCREEN);
+  display_settings_model = tab;
 
-  LFE_ADD_OPTION(&lfelist, "displaymodes", &display_settings.displaymode);
+  if((w = glw_find_by_id(tab, "displaymode", 0)) != NULL) {
+    glw_selection_add_text_option(w, "Windowed", display_set_mode, NULL, 
+				  DISPLAYMODE_WINDOWED,
+				  display_settings.displaymode ==
+				  DISPLAYMODE_WINDOWED);
 
-  layout_form_initialize(&lfelist, m, gfs, ic, 0);
+   glw_selection_add_text_option(w, "Fullscreen", display_set_mode, NULL, 
+				 DISPLAYMODE_FULLSCREEN,
+				 display_settings.displaymode ==
+				 DISPLAYMODE_FULLSCREEN);
+  }
+  x11state.update_gfx_info = 1;
 }
 
 
@@ -413,7 +425,7 @@ gl_keypress(XEvent *event)
   char str[16], c;
   KeySym keysym;
   int len;
-  inputevent_t ie;
+  char buf[32];
 
   len = XLookupString(&event->xkey, str, sizeof(str), &keysym, &composestatus);
 
@@ -422,47 +434,68 @@ gl_keypress(XEvent *event)
     c = str[0];
     switch(c) {
       /* Static key mappings, these cannot be changed */
-    case 8:          input_key_down(INPUT_KEY_BACK);          return;
-    case 9:          input_key_down(INPUT_KEY_TASK_DOSWITCH); return;
-    case 13:         input_key_down(INPUT_KEY_ENTER);         return;
-    case 27:         input_key_down(INPUT_KEY_CLOSE);         return;
+    case 8:          event_post_simple(GEV_BACKSPACE);           return;
+    case 9:          event_post_simple(EVENT_KEY_TASK_DOSWITCH); return;
+    case 13:         event_post_simple(GEV_ENTER);               return;
+    case 27:         event_post_simple(EVENT_KEY_CLOSE);         return;
       /* Always send 1 char ASCII */
     default:
-      input_key_down(c);
+      event_post(glw_event_create_unicode(c));
       break;
     }
   } else if((event->xkey.state & 0xf) == 0) {
     switch(keysym) {
-    case XK_Left:    input_key_down(INPUT_KEY_LEFT);          return;
-    case XK_Right:   input_key_down(INPUT_KEY_RIGHT);         return;
-    case XK_Up:      input_key_down(INPUT_KEY_UP);            return;
-    case XK_Down:    input_key_down(INPUT_KEY_DOWN);          return;
+    case XK_Left:    event_post_simple(GEV_LEFT);          return;
+    case XK_Right:   event_post_simple(GEV_RIGHT);         return;
+    case XK_Up:      event_post_simple(GEV_UP);            return;
+    case XK_Down:    event_post_simple(GEV_DOWN);          return;
     }
   }
-  ie.type = INPUT_KEYDESC;
 
   /* Construct a string representing the key */
   if(keysym != NoSymbol) {
-    snprintf(ie.u.keydesc, sizeof(ie.u.keydesc),
+    snprintf(buf, sizeof(buf),
 	     "x11 %s%s%s- %s",
 	     event->xkey.state & ShiftMask   ? "- Shift " : "",
 	     event->xkey.state & Mod1Mask    ? "- Alt "   : "",
 	     event->xkey.state & ControlMask ? "- Ctrl "  : "",
 	     XKeysymToString(keysym));
   } else {
-    snprintf(ie.u.keydesc, sizeof(ie.u.keydesc),
+    snprintf(buf, sizeof(buf),
 	     "x11 - raw - 0x%x", event->xkey.keycode);
   }
 
   /* Pass it to the mapper */
 
-  keymapper_resolve(&ie);
+  keymapper_resolve(buf);
 }
 
+/**
+ *
+ */
+static void
+update_gfx_info(void)
+{
+  const GLubyte *s;
 
+  s = glGetString(GL_VENDOR);
+  if(!strcmp((char *)s, "NVIDIA Corporation")) {
+    glw_set_source(display_settings_model, "gpuicon", 
+		   "theme://images/nvidia.png");
+  } else if(!strcmp((char *)s, "ATI Technologies Inc.")) {
+    glw_set_source(display_settings_model, "gpuicon", 
+		   "theme://images/ati.png");
+  }
 
+  glw_set_caption(display_settings_model, "gpuvendor", (char *)s);
 
-extern void soundcheck(void);
+  s = glGetString(GL_RENDERER);
+  glw_set_caption(display_settings_model, "gpuname", (char *)s);
+
+  s = glGetString(GL_VERSION);
+  glw_set_caption(display_settings_model, "gpudriver", (char *)s);
+}
+
 
 /**
  *
@@ -477,6 +510,11 @@ gl_sysglue_mainloop(void)
   glXGetVideoSyncSGI(&retraceCount);
 
   while(1) {
+
+    if(x11state.update_gfx_info) {
+      update_gfx_info();
+      x11state.update_gfx_info = 0;
+    }
 
     if(x11state.current_displaymode != display_settings.displaymode)
       window_change_displaymode();
@@ -513,7 +551,11 @@ gl_sysglue_mainloop(void)
       glXWaitVideoSyncSGI(2, (retraceCount+1)%2, &retraceCount);
 
     glXSwapBuffers(x11state.display, x11state.win);
-    gl_update_timings();
+    if(gl_update_timings()) {
+      char tmp[30];
+      snprintf(tmp, sizeof(tmp), "%.2f Hz", (float)1000000. / frame_duration);
+      glw_set_caption(display_settings_model, "refreshrate", tmp);
+    }
     glw_reaper();
   }
 }

@@ -176,3 +176,47 @@ fa_protocol_t fa_protocol_fs = {
   .fap_fsize = fs_fsize,
   .fap_stat  = fs_stat,
 };
+
+
+
+/**
+ *
+ */
+static int
+theme_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
+{
+  const char *theme = config_get_str("theme", "themes/default");
+  char buf[200];
+
+  snprintf(buf, sizeof(buf), "%s/%s", theme, url);
+  printf("Scanning %s\n", buf);
+  return fs_scandir(buf, cb, arg);
+}
+
+
+/**
+ *
+ */
+static void *
+theme_open(const char *url)
+{
+  const char *theme = config_get_str("theme", "themes/default");
+  char buf[200];
+
+  snprintf(buf, sizeof(buf), "%s/%s", theme, url);
+  return fs_open(buf);
+}
+
+/**
+ *
+ */
+fa_protocol_t fa_protocol_theme = {
+  .fap_name = "theme",
+  .fap_scan = theme_scandir,
+  .fap_open  = theme_open,
+  .fap_close = fs_close,
+  .fap_read  = fs_read,
+  .fap_seek  = fs_seek,
+  .fap_fsize = fs_fsize,
+  .fap_stat  = NULL,
+};

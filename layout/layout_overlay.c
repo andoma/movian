@@ -28,7 +28,8 @@
 
 glw_t *overlay_container;
 
-static int overlay_callback(glw_t *w, void *opaque, glw_signal_t signal, ...);
+static int overlay_callback(glw_t *w, void *opaque, glw_signal_t signal,
+			    void *extra);
 
 /**
  * Create overlay handling widget
@@ -46,7 +47,7 @@ layout_overlay_create(void)
  *
  */
 static int
-overlay_child_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+overlay_child_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   return 0;
 }
@@ -65,21 +66,16 @@ typedef struct overlay_animator {
  *
  */
 static int
-overlay_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+overlay_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_t *c;
-  glw_rctx_t *rc, rc0;
+  glw_rctx_t *rc = extra, rc0;
   float a, b = 1.0 - 0.9 * layout_switcher_alpha;
   overlay_animator_t *oa;
   glw_vertex_t xyz;
 
-  va_list ap;
-  va_start(ap, signal);
-
   switch(signal) {
   case GLW_SIGNAL_RENDER:
-    rc = va_arg(ap, void *);
- 
     TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
 
       oa = glw_get_opaque(c, overlay_child_callback);
@@ -98,7 +94,6 @@ overlay_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
     break;
 
   case GLW_SIGNAL_LAYOUT:
-    rc = va_arg(ap, void *);
     TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
       oa = glw_get_opaque(c, overlay_child_callback);
       a = c->glw_flags & GLW_HIDE ? 0 : 1;
@@ -109,7 +104,7 @@ overlay_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
     break;
 
   case GLW_SIGNAL_CHILD_CREATED:
-    c = va_arg(ap, void *);
+    c = extra;
     oa = calloc(1, sizeof(overlay_animator_t));
 
     glw_vertex_anim_init(&oa->oa_anim, 0, 0, 0.0,
@@ -120,7 +115,7 @@ overlay_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
     break;
 
   case GLW_SIGNAL_CHILD_DESTROYED:
-    c = va_arg(ap, void *);
+    c = extra;
 
     oa = calloc(1, sizeof(overlay_animator_t));
     oa = glw_get_opaque(c, overlay_child_callback);
@@ -130,8 +125,6 @@ overlay_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
   default:
     break;
   }
-
-  va_end(ap);
   return 0;
 }
 

@@ -28,7 +28,6 @@
 
 
 #include "showtime.h"
-#include "hid/input.h"
 #include "layout/layout.h"
 #include "display.h"
 

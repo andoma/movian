@@ -1,0 +1,2 @@
+#include "include/miniatures"
+miniature("Playlist", "theme://images/playlist.png");

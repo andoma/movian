@@ -1,0 +1,32 @@
+macro hlist(title, id, color, listsize) {
+
+  widget container_y = {
+
+    widget bitmap = {
+      .color = $color;
+      .source = "theme://images/plate-titled-top.png";
+      .textureBorders = [0.1 0.1 0.1 0.1];
+      .vertexBorders  = [0.1 0.1 0.1 0.1];
+      .borderScale = true;
+
+      widget label = {
+	.caption = $title;
+	.align = center;
+      };
+    };
+
+    widget bitmap = {
+      .weight = $listsize;
+      .color = $color;
+      .source = "theme://images/plate-titled-bottom.png";
+      .textureBorders = [0.1 0.1 0.1 0.1];
+      .vertexBorders  = [0.1 0.1 0.1 0.1];
+      .borderScale = true;
+      
+      widget list = {
+	.id = $id;
+	.slices = 9;
+      };
+    };
+  };
+};

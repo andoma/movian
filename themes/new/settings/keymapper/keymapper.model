@@ -1,0 +1,5 @@
+widget list = {
+  .id = "keymapper_list";
+  .orientation = vertical;
+  .slices = 20;
+};

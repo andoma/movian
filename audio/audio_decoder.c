@@ -24,8 +24,7 @@
 #include "showtime.h"
 #include "audio_decoder.h"
 #include "audio.h"
-
-#include "hid/input.h"
+#include "event.h"
 
 extern audio_fifo_t *thefifo;
 
@@ -59,6 +58,7 @@ static void audio_deliver(audio_decoder_t *ad, audio_mode_t *am, int16_t *src,
 
 static void *ad_thread(void *aux);
 
+static int audio_decoder_event_handler(glw_event_t *ge);
 
 /**
  *
@@ -66,6 +66,8 @@ static void *ad_thread(void *aux);
 void
 audio_decoder_init(void)
 {
+  event_handler_register(900, audio_decoder_event_handler);
+
   TAILQ_INIT(&audio_decoders);
 }
 
@@ -293,7 +295,6 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
   codecwrap_t *cw = mb->mb_cw;
   AVCodecContext *ctx;
   enum CodecID codec_id;
-  inputevent_t ie;
   int64_t pts;
 
   ctx = cw->codec_ctx;
@@ -344,12 +345,15 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
     wrap_unlock_codec(cw);
 
     if(mp->mp_feedback != NULL) {
-      ie.type        = INPUT_TS;
-      ie.u.ts.dts    = mb->mb_dts;
-      ie.u.ts.pts    = mb->mb_pts;
-      ie.u.ts.stream = mb->mb_stream;
-	
-      input_postevent(mp->mp_feedback, &ie);
+      event_ts_t *et;
+
+      et = glw_event_create(EVENT_AUDIO_CLOCK, sizeof(event_ts_t));
+      et->dts    = mb->mb_dts;
+      et->pts    = mb->mb_pts;
+      et->stream = mb->mb_stream;
+
+      glw_event_enqueue(mp->mp_feedback, &et->h);
+      glw_event_unref(&et->h);
     }
 
     frames = data_size / sizeof(int16_t) / channels;
@@ -367,6 +371,13 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
       if(data_size > 0)
 	audio_mix1(ad, am, channels, rate, codec_id, ad->ad_outbuf, 
 		   frames, pts, mp);
+
+      /**
+       * Force the global status to point to us
+       */
+
+      mp->mp_status_xfader->glw_parent->glw_selected = mp->mp_status_xfader;
+
     } else {
 
       /* We are just suppoed to be silent, emulate some kind of 
@@ -868,6 +879,51 @@ resample(audio_decoder_t *ad, int16_t *dstmix, int dstavail,
 
    return srcframes;
  }
+
+
+
+/**
+ *
+ */
+static int
+audio_decoder_event_handler(glw_event_t *ge)
+{
+  audio_decoder_t *ad;
+  media_pipe_t *mp;
+  int r = 0;
+
+  switch(ge->ge_type) {
+
+  case EVENT_KEY_SEEK_FAST_BACKWARD:
+  case EVENT_KEY_SEEK_BACKWARD:
+  case EVENT_KEY_SEEK_FAST_FORWARD:
+  case EVENT_KEY_SEEK_FORWARD:
+  case EVENT_KEY_PLAYPAUSE:
+  case EVENT_KEY_PLAY:
+  case EVENT_KEY_PAUSE:
+  case EVENT_KEY_STOP:
+  case EVENT_KEY_PREV:
+  case EVENT_KEY_NEXT:
+  case EVENT_KEY_RESTART_TRACK:
+    break;
+  default:
+    return 0;
+  }
+
+  pthread_mutex_lock(&audio_decoders_mutex);
+
+  ad = TAILQ_FIRST(&audio_decoders);
+  if(ad != NULL) {
+    mp = ad->ad_mp;
+    if(mp->mp_feedback != NULL) {
+      glw_event_enqueue(mp->mp_feedback, ge);
+      r = 1;
+    }
+  }
+
+  pthread_mutex_unlock(&audio_decoders_mutex);
+  return r;
+}
 
 
 

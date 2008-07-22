@@ -30,7 +30,6 @@
 #include <libhts/htstv.h>
 
 #include "showtime.h"
-#include "input.h"
 #include "tv_headend.h"
 #include "app.h"
 #include "menu.h"

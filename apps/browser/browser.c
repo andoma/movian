@@ -141,8 +141,7 @@ browser_node_add_child(browser_node_t *parent, const char *url, int type)
  * Create a new browser root
  */
 browser_root_t *
-browser_root_create(const char *url, glw_focus_stack_t *gfs,
-		    glw_t *splashcontainer)
+browser_root_create(const char *url, glw_t *splashcontainer)
 {
   browser_root_t *br = calloc(1, sizeof(browser_root_t));
   browser_node_t *bn = browser_node_create(url, FA_DIR, br);
@@ -151,7 +150,6 @@ browser_root_create(const char *url, glw_focus_stack_t *gfs,
 
   browser_probe_init(br);
   br->br_splashcontainer = splashcontainer;
-  br->br_gfs = gfs;
   br->br_root = bn;
   return br;
 }

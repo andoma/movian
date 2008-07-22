@@ -24,14 +24,14 @@
 
 
 /**
- * Event used to signal that a new entry has been enqueued
+ * SubEvent used to signal that a new entry has been enqueued
  */ 
-#define PLAYLIST_INPUTEVENT_NEWENTRY           INPUT_APP + 0
+#define PLAYLIST_EVENT_NEWENTRY           1
 
 /**
- * Event used to signal that user wants to play given entry
+ * SubEvent used to signal that user wants to play given entry
  */ 
-#define PLAYLIST_INPUTEVENT_PLAYENTRY          INPUT_APP + 1
+#define PLAYLIST_EVENT_PLAYENTRY          2
 
 
 TAILQ_HEAD(playlist_entry_queue, playlist_entry);
@@ -91,11 +91,22 @@ typedef struct playlist_entry {
 } playlist_entry_t;
 
 /**
+ *
+ */
+typedef struct playlist_event {
+  glw_event_t h;
+  playlist_entry_t *ple;
+  int type;
+} playlist_event_t;
+
+
+
+/**
  * Control struct for playback
  */
 typedef struct playlist_player {
   int plp_mode;
-  ic_t plp_ic;
+  glw_event_queue_t plp_geq;
   media_pipe_t *plp_mp;
 
 } playlist_player_t;

@@ -32,7 +32,6 @@
 #include <libxml/tree.h>
 
 #include "showtime.h"
-#include "input.h"
 #include "play_file.h"
 #include "rssbrowser.h"
 #include "miw.h"

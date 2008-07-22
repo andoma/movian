@@ -31,16 +31,70 @@
 #include <libglw/glw.h>
 
 #include "showtime.h"
-#include "input.h"
+#include "event.h"
 #include "playlist.h"
 #include <layout/layout.h>
 #include <layout/layout_support.h>
  
 
+static void
+playlist_update_playstatus(playlist_entry_t *ple, glw_t *w, int status)
+{
+  const char *m;
+
+  switch(status) {
+  case MP_PLAY:
+    m = "theme://playlist/playstatus-play.model";
+    break;
+
+  case MP_PAUSE:
+    m = "theme://playlist/playstatus-pause.model";
+    break;
+
+  default:
+    m = "theme://playlist/playstatus-stop.model";
+    break;
+  }
+
+  glw_switch_model(ple->ple_widget, "track_playstatus", m);
+  glw_switch_model(w,               "track_playstatus", m);
+}
+
+
+static void
+playlist_status_update_next(playlist_entry_t *cur, glw_t *w)
+{
+  playlist_entry_t *ple = playlist_advance(cur, 0);
+  glw_t *m;
+  const char *t, *s;
+
+  if((w = glw_find_by_id(w, "track_next", 0)) == NULL)
+    return;
+
+  if(ple == NULL) {
+    glw_create(GLW_DUMMY, GLW_ATTRIB_PARENT, w, NULL);
+    return;
+  }
+
+  m = glw_model_create("theme://playlist/status-next.model", w);
+
+  t = filetag_get_str2(&ple->ple_ftags, FTAG_TITLE);
+  s = strrchr(ple->ple_url, '/');
+  s = s ? s + 1 : ple->ple_url;
+  
+  if(t == NULL)
+    t = s;
+  
+  glw_set_caption(m, "track_next_title", t);
+
+
+  playlist_entry_unref(ple);
+
+}
 
 static playlist_entry_t *
-playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic,
-	      glw_t *overlay)
+playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
+	      glw_t *status)
 {
   AVFormatContext *fctx;
   AVCodecContext *ctx;
@@ -51,11 +105,14 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic,
   media_queue_t *mq;
   int64_t pts4seek = 0;
   int streams;
-  int64_t cur_pos_pts = AV_NOPTS_VALUE, pts;
-  int curtime, gotevent;
+  int64_t cur_pos_pts = AV_NOPTS_VALUE;
+  int curtime;
   codecwrap_t *cw;
   playlist_entry_t *next = NULL;
-  inputevent_t ie;
+  glw_event_t *ge;
+  playlist_event_t *pe;
+  event_ts_t *et;
+  int64_t pts;
 
   if(av_open_input_file(&fctx, ple->ple_url, NULL, 0, NULL) != 0) {
     fprintf(stderr, "Unable to open input file\n");
@@ -71,7 +128,7 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic,
   
 
   if(fctx->duration != AV_NOPTS_VALUE)
-    layout_update_time(overlay, "time_total", fctx->duration / AV_TIME_BASE);
+    glw_set_caption_time(status, "time_total", fctx->duration / AV_TIME_BASE);
 
   mp->mp_audio.mq_stream = -1;
   mp->mp_video.mq_stream = -1;
@@ -94,112 +151,122 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, ic_t *ic,
 
   curtime = -1;
 
-  mp->mp_feedback = ic;
+  mp->mp_feedback = geq;
 
   while(1) {
 
-    if(mp->mp_playstatus == MP_PLAY && mp_is_audio_silenced(mp))
+    if(mp->mp_playstatus == MP_PLAY && mp_is_audio_silenced(mp)) {
       mp_set_playstatus(mp, MP_PAUSE);
-
-    if(mp_is_paused(mp)) {
-      gotevent = !input_getevent(ic, 1, &ie, NULL);
-    } else {
-      gotevent = !input_getevent(ic, 0, &ie, NULL);
+      playlist_update_playstatus(ple, status, MP_PAUSE);
     }
 
-    if(gotevent) switch(ie.type) {
 
-    default:
+    ge = glw_event_get(mp_is_paused(mp) ? -1 : 0, geq);
 
-    case INPUT_TS:
-      pts = ie.u.ts.pts;
-      
-      if(pts != AV_NOPTS_VALUE) {
-	pts -= fctx->start_time;
-
-	pts /= AV_TIME_BASE;
-
-	if(curtime != pts) {
-	  curtime = pts;
-
-	  pthread_mutex_lock(&playlistlock);
-	  
-	  if(ple->ple_pl != NULL)
-	    layout_update_time(ple->ple_pl->pl_widget, "time_current",
-			       ple->ple_time_offset + pts);
-	  
-	  pthread_mutex_unlock(&playlistlock);
-	  
-	  layout_update_time(overlay, "time_current", pts);
-	}
-      }
-      break;
-
-    case PLAYLIST_INPUTEVENT_NEWENTRY:
-      /**
-       * A new entry has been added, we don't care about this while
-       * playing, just unref ptr
-       */
-      playlist_entry_unref(ie.u.ptr);
-      break;
-
-
-    case PLAYLIST_INPUTEVENT_PLAYENTRY:
-      /**
-       * User wants us to jump to this entry, do it
-       */
-      next = ie.u.ptr;
-      mp_flush(mp);
-      goto out;
-
+    if(ge != NULL) {
+      switch(ge->ge_type) {
 	
-    case INPUT_KEY:
-      switch(ie.u.key) {
+      default:
+	break;
 
-      case INPUT_KEY_SEEK_FAST_BACKWARD:
+      case EVENT_AUDIO_CLOCK:
+	et = (void *)ge;
+	if(et->pts != AV_NOPTS_VALUE) {
+
+	  pts = et->pts - fctx->start_time;
+	  pts /= AV_TIME_BASE;
+
+	  if(curtime != pts) {
+	    curtime = pts;
+
+	    pthread_mutex_lock(&playlistlock);
+	  
+	    if(ple->ple_pl != NULL)
+	      glw_set_caption_time(ple->ple_pl->pl_widget, "time_current",
+				   ple->ple_time_offset + pts);
+	  
+	    pthread_mutex_unlock(&playlistlock);
+	  
+	    glw_set_caption_time(status, "time_current", pts);
+	  }
+	}
+	break;
+
+      case EVENT_PLAYLIST:
+	pe = (void *)ge;
+	switch(pe->type) {
+	case PLAYLIST_EVENT_NEWENTRY:
+	  /**
+	   * A new entry has been added, we don't care about this while
+	   * playing, just unref ptr
+	   */
+	  playlist_entry_unref(pe->ple);
+	  break;
+
+	case PLAYLIST_EVENT_PLAYENTRY:
+	  /**
+	   * User wants us to jump to this entry, do it
+	   */
+	  next = pe->ple;
+	  mp_flush(mp);
+	  glw_event_unref(ge);
+	  goto out;
+
+	default:
+	  abort();
+	}
+	
+      case EVENT_KEY_SEEK_FAST_BACKWARD:
 	av_seek_frame(fctx, -1, pts4seek - 60000000, AVSEEK_FLAG_BACKWARD);
-      case INPUT_KEY_SEEK_BACKWARD:
+	goto seekflush;
+
+      case EVENT_KEY_SEEK_BACKWARD:
 	av_seek_frame(fctx, -1, pts4seek - 15000000, AVSEEK_FLAG_BACKWARD);
 	goto seekflush;
-      case INPUT_KEY_SEEK_FAST_FORWARD:
+
+      case EVENT_KEY_SEEK_FAST_FORWARD:
 	av_seek_frame(fctx, -1, pts4seek + 60000000, 0);
 	goto seekflush;
-      case INPUT_KEY_SEEK_FORWARD:
+
+      case EVENT_KEY_SEEK_FORWARD:
 	av_seek_frame(fctx, -1, pts4seek + 15000000, 0);
 	goto seekflush;
-      case INPUT_KEY_RESTART_TRACK:
+
+      case EVENT_KEY_RESTART_TRACK:
 	av_seek_frame(fctx, -1, 0, AVSEEK_FLAG_BACKWARD);
-	goto seekflush;
 
       seekflush:
 	mp_flush(mp);
-	input_flush_queue(ic);
+	glw_event_flushqueue(geq);
+	break;
+	
+      case EVENT_KEY_PLAYPAUSE:
+      case EVENT_KEY_PLAY:
+      case EVENT_KEY_PAUSE:
+	mp_playpause(mp, ge->ge_type);
+
+	playlist_update_playstatus(ple, status, mp->mp_playstatus);
 	break;
 
-      case INPUT_KEY_PLAYPAUSE:
-      case INPUT_KEY_PLAY:
-      case INPUT_KEY_PAUSE:
-	mp_playpause(mp, ie.u.key);
-	break;
-
-      case INPUT_KEY_PREV:
+      case EVENT_KEY_PREV:
 	next = playlist_advance(ple, 1);
 	mp_flush(mp);
+	glw_event_unref(ge);
 	goto out;
       
-      case INPUT_KEY_NEXT:
+      case EVENT_KEY_NEXT:
 	next = playlist_advance(ple, 0);
 	mp_flush(mp);
+	glw_event_unref(ge);
 	goto out;
 
-      case INPUT_KEY_STOP:
+      case EVENT_KEY_STOP:
 	next = NULL;
 	mp_flush(mp);
+	glw_event_unref(ge);
 	goto out;
-
-      default:
-	break;
       }
+      glw_event_unref(ge);
     }
     
     if(mp_is_paused(mp))
@@ -298,48 +365,45 @@ playlist_player(void *aux)
   playlist_player_t *plp = aux;
   media_pipe_t *mp = plp->plp_mp;
   playlist_entry_t *ple = NULL, *next;
-  inputevent_t ie;
-  glw_t *overlay;
+  glw_t *status = NULL;
   const char *t, *s;
   char buf[256];
-
-  overlay = glw_create(GLW_MODEL,
-		       GLW_ATTRIB_FILENAME, "playlist/overlay",
-		       GLW_ATTRIB_PARENT, overlay_container,
-		       GLW_ATTRIB_FLAGS, GLW_HIDE,
-		       NULL);
+  glw_event_t *ge;
+  playlist_event_t *pe;
 
   while(1) {
  
     while(ple == NULL) {
 
-      glw_hide(overlay);
-
       /* Got nothing to play, enter STOP mode */
 
-      mp_set_playstatus(mp, MP_STOP);
-      input_getevent(&plp->plp_ic, 1, &ie, NULL);
+      if(status != NULL) {
+	glw_destroy(status);
+	status = NULL;
+      }
 
-      switch(ie.type) {
+      mp_set_playstatus(mp, MP_STOP);
+      ge = glw_event_get(-1, &plp->plp_geq);
+      switch(ge->ge_type) {
       default:
+	glw_event_unref(ge);
 	continue;
 
-      case PLAYLIST_INPUTEVENT_NEWENTRY:
-      case PLAYLIST_INPUTEVENT_PLAYENTRY:
+      case EVENT_PLAYLIST:
 	/**
 	 * A new entry has been enqueued, a reference is held for us
 	 */
-	ple = ie.u.ptr;
+	pe = (void *)ge;
+	ple = pe->ple;
+	glw_event_unref(ge);
 	break;
       }
     }
 
     mp_set_playstatus(mp, MP_PLAY);
 
-    /**
-     * Display and update overlay
-     */
-    glw_unhide(overlay);
+    status = glw_model_create("theme://playlist/status.model",
+			      mp->mp_status_xfader);
     
     t = filetag_get_str2(&ple->ple_ftags, FTAG_TITLE);
     s = strrchr(ple->ple_url, '/');
@@ -348,50 +412,51 @@ playlist_player(void *aux)
     if(t == NULL)
       t = s;
 
-    layout_update_str(overlay, "track_filename", s);
-    layout_update_str(overlay, "track_title",    t);
+    glw_set_caption(status, "track_filename", s);
+    glw_set_caption(status, "track_title",    t);
 
 
     t = filetag_get_str2(&ple->ple_ftags, FTAG_AUTHOR);
     s = filetag_get_str2(&ple->ple_ftags, FTAG_ALBUM);
-    layout_update_str(overlay, "track_author", t);
-    layout_update_str(overlay, "track_album",  s);
+    glw_set_caption(status, "track_author", t);
+    glw_set_caption(status, "track_album",  s);
 
     if(t && s) {
       snprintf(buf, sizeof(buf), "%s - %s", t, s);
     } else {
       buf[0] = 0;
     }
-    layout_update_str(overlay, "track_author_album", buf);
+    glw_set_caption(status, "track_author_album", buf);
 
 
     /**
      * Update playlist widget
      */
     pthread_mutex_lock(&playlistlock);
-    if(ple->ple_pl != NULL) {
-      layout_update_int(ple->ple_pl->pl_widget, "track_current",
-			ple->ple_track);
-    }
+    if(ple->ple_pl != NULL)
+      glw_set_caption_int(ple->ple_pl->pl_widget, "track_current",
+			  ple->ple_track);
     pthread_mutex_unlock(&playlistlock);
 
 
     /**
      * Update track widget
      */
-    layout_update_model(ple->ple_widget, "track_playstatus", 
-			"playlist/playstatus-play");
+
+    playlist_update_playstatus(ple, status, MP_PLAY);
+
+    playlist_status_update_next(ple, status);
 
     /**
      * Start playback of track
      */
-    next = playlist_play(ple, mp, &plp->plp_ic, overlay);
+    next = playlist_play(ple, mp, &plp->plp_geq, status);
 
     /**
      * Update track widget
      */
-    layout_update_model(ple->ple_widget, "track_playstatus", 
-			"playlist/playstatus-stop");
+    glw_switch_model(ple->ple_widget, "track_playstatus", 
+		     "theme://playlist/playstatus-stop.model");
 
     playlist_entry_unref(ple);
     ple = next;

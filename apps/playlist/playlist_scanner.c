@@ -28,7 +28,6 @@
 #include <libglw/glw.h>
 
 #include "showtime.h"
-#include "input.h"
 #include "playlist.h"
 #include "fileaccess/fileaccess.h"
 #include "fileaccess/fa_probe.h"
@@ -73,7 +72,7 @@ playlist_scandir_dofile(playlist_scanner_t *ps, const char *url)
 
     if(ps->ps_started == 0 && ple != NULL) {
       ps->ps_started = 1;
-      playlist_signal(ple, PLAYLIST_INPUTEVENT_PLAYENTRY);
+      playlist_signal(ple, PLAYLIST_EVENT_PLAYENTRY);
     }
     return;
 

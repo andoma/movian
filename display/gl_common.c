@@ -42,7 +42,7 @@ intcmp(const void *A, const void *B)
 
 #define FRAME_DURATION_SAMPLES 31 /* should be an odd number */
 
-void
+int
 gl_update_timings(void)
 {
   struct timeval tv;
@@ -50,8 +50,8 @@ gl_update_timings(void)
   static int deltaarray[FRAME_DURATION_SAMPLES];
   static int deltaptr;
   static int lastframedur;
-  int d;
-
+  int d, r = 0;
+  
   gettimeofday(&tv, NULL);
   wallclock = (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
   walltime = tv.tv_sec;
@@ -73,8 +73,10 @@ gl_update_timings(void)
 	lastframedur = (d + lastframedur) / 2;
       }
       frame_duration = lastframedur;
+      r = 1;
       deltaptr = 0;
     }
   }
   lastts = wallclock;
+  return r;
 }

@@ -2,12 +2,12 @@
 
 # core
 
-SRCS = 	main.c app.c media.c coms.c
+SRCS = 	main.c app.c media.c coms.c event.c
 
 # file access subsys
 
 VPATH += fileaccess
-SRCS  += fileaccess.c fa_probe.c fa_tags.c fa_imageloader.c
+SRCS  += fileaccess.c fa_probe.c fa_tags.c fa_imageloader.c fa_rawloader.c
 SRCS  += fa_fs.c fa_rar.c
 
 # Display
@@ -20,8 +20,9 @@ SRCS  += gl_common.c display_$(GL_GLUE).c
 # video playback subsys
 
 VPATH += video
-SRCS  += video_playback.c video_decoder.c video_widget.c \
-	 gl_dvdspu.c yadif.c subtitles.c video_menu.c
+SRCS  += video_playback.c 
+SRCS  += video_decoder.c video_widget.c video_menu.c \
+	 gl_dvdspu.c yadif.c subtitles.c
 
 
 # audio subsys
@@ -36,13 +37,12 @@ SRCS  += alsa_audio.c
 # layout engine(s)
 
 VPATH += layout
-SRCS  += layout.c layout_forms.c layout_world.c layout_switcher.c \
-	 layout_support.c layout_overlay.c
+SRCS  += layout.c layout_world.c layout_switcher.c
 
 # Human Interface Devices
 
 VPATH += hid
-SRCS  += hid.c lircd.c imonpad.c lcdd.c input.c keymapper.c
+SRCS  += hid.c lircd.c imonpad.c lcdd.c keymapper.c
 
 # Launcher application
 
@@ -56,8 +56,8 @@ SRCS  += settings.c
 
 # Clock application
 
-VPATH += apps/clock
-SRCS  += clock.c
+#VPATH += apps/clock
+#SRCS  += clock.c
 
 
 # Browser application
@@ -93,8 +93,8 @@ SRCS  += playlist.c playlist_player.c playlist_scanner.c
 
 # TV & headend com
 
-VPATH += apps/tv 
-SRCS +=	tv.c htsp.c tv_playback.c
+#VPATH += apps/tv 
+#SRCS +=	tv.c htsp.c tv_playback.c
 
 # Apple Movie Trailer Application
 

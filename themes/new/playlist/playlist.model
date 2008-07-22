@@ -1,0 +1,92 @@
+.focusAlpha = true;
+.focusCursor = true;
+
+widget bitmap = {
+  .source = "theme://images/plate-titled-top.png";
+  .textureBorders = [0.1 0.1 0.1 0.1];
+  .vertexBorders  = [0.1 0.1 0.1 0.1];
+  .borderScale = true;
+
+  widget label = {
+    .id = "title";
+    .align = center;
+  };
+};
+
+widget bitmap = {
+  .weight = 7;
+  .source = "theme://images/plate-titled-bottom.png";
+  .textureBorders = [0.1 0.1 0.1 0.1];
+  .vertexBorders  = [0.1 0.1 0.1 0.1];
+  .borderScale = true;
+      
+  widget container_z = {
+
+    /**
+     * Backdrop image, we default to 'sound.png' but playlist
+     * may upgrade it with album art, etc
+     */
+    widget bitmap = {
+      .id = "backdrop";
+      .alpha = 0.2;
+      .source = "theme://images/sound.png";
+      .keepAspect = true;
+    };
+
+
+    widget container_y = {
+
+      space 6.0;
+
+      widget container_x = {
+	widget label = {
+	  .align = right;
+	  .caption = "Time:";
+	};
+
+	widget label = {
+	  .align = right;
+	  .id = "time_current";
+	};
+
+	widget label = {
+	  .weight = 0.15;
+	  .align = center;
+	  .caption = "/";
+	};
+
+	widget label = {
+	  .align = left;
+	  .id = "time_total";
+	};
+      };
+
+
+     widget container_x = {
+	widget label = {
+	  .align = right;
+	  .caption = "Track:";
+	};
+
+	widget label = {
+	  .align = right;
+	  .id = "track_current";
+	};
+
+	widget label = {
+	  .weight = 0.15;
+	  .align = center;
+	  .caption = "/";
+	};
+
+	widget label = {
+	  .align = left;
+	  .id = "track_total";
+	};
+      };
+
+
+
+    };
+  };
+};

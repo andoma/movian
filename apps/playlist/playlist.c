@@ -33,10 +33,10 @@
 #include "showtime.h"
 #include "app.h"
 #include "playlist.h"
-#include "fileaccess/fa_probe.h"
+#include "event.h"
+#include <fileaccess/fa_probe.h>
 #include <layout/layout.h>
 #include <layout/layout_forms.h>
-#include <layout/layout_support.h>
 
 static struct playlist_list playlists;
 
@@ -54,10 +54,6 @@ static appi_t *playlist_appi;
 pthread_mutex_t playlistlock = PTHREAD_MUTEX_INITIALIZER;
 
 
-#define PL_EVENT_RENAME_PLAYLIST   1
-#define PL_EVENT_DELETE_PLAYLIST   2
-#define PL_EVENT_PLE_CHANGED       3
-
 static void playlist_entry_free(playlist_entry_t *ple);
 static void playlist_unlink(playlist_t *pl);
 static void playlist_destroy(playlist_t *pl);
@@ -67,21 +63,26 @@ static void playlist_destroy(playlist_t *pl);
  * Playlist widget callback
  */
 static int
-playlist_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+pl_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, 
+		   void *extra)
 {
   playlist_t *pl = opaque;
   playlist_entry_t *ple;
+  glw_event_t *ge = extra;
 
-  switch(signal) {
+  if(signal != GLW_SIGNAL_EVENT)
+    return 0;
+
+  switch(ge->ge_type) {
   default:
     break;
-  case GLW_SIGNAL_ENTER:
+  case GEV_ENTER:
     pl = opaque;
     ple = TAILQ_FIRST(&pl->pl_entries);
     if(ple == NULL)
       break;
-    playlist_signal(ple, PLAYLIST_INPUTEVENT_PLAYENTRY);
-    break;
+    playlist_signal(ple, PLAYLIST_EVENT_PLAYENTRY);
+    return 1;
   }
   return 0;
 }
@@ -90,13 +91,18 @@ playlist_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
  * Playlist entry widget callback
  */
 static int
-playlist_entry_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
+ple_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
+			void *extra)
 {
-  switch(signal) {
+  glw_event_t *ge = extra;
+  if(signal != GLW_SIGNAL_EVENT)
+    return 0;
+
+  switch(ge->ge_type) {
   default:
     break;
-  case GLW_SIGNAL_ENTER:
-    playlist_signal(opaque, PLAYLIST_INPUTEVENT_PLAYENTRY);
+  case GEV_ENTER:
+    playlist_signal(opaque, PLAYLIST_EVENT_PLAYENTRY);
     return 1;
   }
   return 0;
@@ -109,8 +115,6 @@ playlist_entry_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
 playlist_t *
 playlist_create(const char *title, int truncate)
 {
-  glw_t *e, *w;
-  struct layout_form_entry_list lfelist;
   playlist_t *pl;
 
   pthread_mutex_lock(&playlistlock);
@@ -128,35 +132,29 @@ playlist_create(const char *title, int truncate)
   }
 
   pl = calloc(1, sizeof(playlist_t));
-
   LIST_INSERT_HEAD(&playlists, pl, pl_link);
 
   pl->pl_title = strdup(title);
-
+  
   pl->pl_ai = playlist_appi;
   TAILQ_INIT(&pl->pl_entries);
   TAILQ_INIT(&pl->pl_shuffle_entries);
 
+  pl->pl_widget = glw_model_create("theme://playlist/playlist.model", NULL);
+  
+  glw_set(pl->pl_widget,
+	  GLW_ATTRIB_SIGNAL_HANDLER, pl_widget_callback, pl, 400,
+	  NULL);
 
-  e = glw_create(GLW_MODEL,
-		 GLW_ATTRIB_FILENAME, "playlist/playlist",
-		 GLW_ATTRIB_SIGNAL_HANDLER, playlist_widget_callback, pl, 400,
-		 NULL);
+  pl->pl_tab = glw_model_create("theme://playlist/tracklist.model", NULL);
 
-  pl->pl_widget = e;
+  pl->pl_list = glw_find_by_id(pl->pl_tab, "track_container", 0);
 
-  layout_update_str(pl->pl_widget, "title", pl->pl_title);
+  glw_set_caption(pl->pl_widget, "title", pl->pl_title);
 
-  w = layout_form_add_tab2(playlist_root, "playlists", e,
-			   "track_list_container", "playlist/tracklist");
-  pl->pl_tab = w;
-
-  TAILQ_INIT(&lfelist);
-  LFE_ADD_MONITOR_CHILD(&lfelist, "track_list", PL_EVENT_PLE_CHANGED);
-  layout_form_initialize(&lfelist, w, &pl->pl_ai->ai_gfs,
-			 &pl->pl_ai->ai_ic, 0);
-
-  pl->pl_list = glw_find_by_id(w, "track_list", 0);
+  glw_add_tab(playlist_root,
+	      "playlist_container", pl->pl_widget,
+	      "tracklist_container", pl->pl_tab);
 
   pthread_mutex_unlock(&playlistlock);
   return pl;
@@ -177,7 +175,7 @@ playlist_set_backdrop(playlist_t *pl, const char *url)
     return;
 
   glw_set(w,
-	  GLW_ATTRIB_FILENAME, url,
+	  GLW_ATTRIB_SOURCE, url,
 	  NULL);
 }
 
@@ -227,6 +225,7 @@ playlist_destroy(playlist_t *pl)
 /**
  * Returns the current playlist
  */
+
 static playlist_t *
 playlist_get_current(void)
 {
@@ -239,7 +238,7 @@ playlist_get_current(void)
   if(w != NULL) {
     w = w->glw_selected;
     if(w != NULL) {
-      pl = glw_get_opaque(w,  playlist_widget_callback);
+      pl = glw_get_opaque(w,  pl_widget_callback);
     }
   }
   glw_unlock();
@@ -263,7 +262,6 @@ playlist_enqueue0(playlist_t *pl, const char *url, struct filetag_list *ftags)
   playlist_entry_t *ple, *ple2;
   struct filetag_list ftags0;
   int64_t i64;
-  glw_t *w;
   const char *s;
 
   if(ftags == NULL) {
@@ -316,35 +314,35 @@ playlist_enqueue0(playlist_t *pl, const char *url, struct filetag_list *ftags)
   /**
    * Create playlist entry model in tracklist
    */
-  w = glw_create(GLW_MODEL,
-		 GLW_ATTRIB_PARENT, pl->pl_list,
-		 GLW_ATTRIB_SIGNAL_HANDLER, playlist_entry_callback, ple, 400,
-		 GLW_ATTRIB_FILENAME, "playlist/track",
-		 NULL);
-  ple->ple_widget = w;
+  ple->ple_widget = glw_model_create("theme://playlist/track.model",
+				     pl->pl_list);
+
+  glw_set(ple->ple_widget,
+	  GLW_ATTRIB_SIGNAL_HANDLER, ple_widget_callback, ple, 400,
+	  NULL);
 
   if(filetag_get_str(ftags, FTAG_TITLE, &s) == 0) {
-    layout_update_str(w, "track_title", s);
+    glw_set_caption(ple->ple_widget, "track_title", s);
   } else {
     s = strrchr(url, '/');
     s = s ? s + 1 : url;
-    layout_update_str(w, "track_title", s);
+    glw_set_caption(ple->ple_widget, "track_title", s);
   }
 
-  layout_update_str(w, "track_author",
-		    filetag_get_str2(ftags, FTAG_AUTHOR));
+  glw_set_caption(ple->ple_widget, "track_author",
+		  filetag_get_str2(ftags, FTAG_AUTHOR));
 
-  layout_update_str(w, "track_album",
-		    filetag_get_str2(ftags, FTAG_ALBUM));
+  glw_set_caption(ple->ple_widget, "track_album",
+		  filetag_get_str2(ftags, FTAG_ALBUM));
 
-  layout_update_time(w, "track_duration",  ple->ple_duration);
-  
+  glw_set_caption_time(ple->ple_widget, "track_duration",  ple->ple_duration);
+
 
   /**
    * Update playlist widget
    */
-  layout_update_time(pl->pl_widget, "time_total",  pl->pl_total_time);
-  layout_update_int(pl->pl_widget,  "track_total", pl->pl_nentries);
+  glw_set_caption_time(pl->pl_widget, "time_total",  pl->pl_total_time);
+  glw_set_caption_int(pl->pl_widget,  "track_total", pl->pl_nentries);
 
   filetag_movelist(&ple->ple_ftags, ftags);
   return ple;
@@ -373,8 +371,8 @@ playlist_enqueue(const char *url, struct filetag_list *ftags, int playit)
    * If it is idle, it will start playing it directly
    */
   if(ple != NULL) {
-    playlist_signal(ple, playit ? PLAYLIST_INPUTEVENT_PLAYENTRY : 
-		    PLAYLIST_INPUTEVENT_NEWENTRY);
+    playlist_signal(ple, playit ? PLAYLIST_EVENT_PLAYENTRY : 
+		    PLAYLIST_EVENT_NEWENTRY);
   }
 
   playlist_save(pl);
@@ -402,6 +400,16 @@ playlist_entry_free(playlist_entry_t *ple)
   free(ple);
 }
 
+/**
+ * Destroy a playlist entry signal
+ */
+static void
+playlist_signal_dtor(glw_event_t *ge)
+{
+  playlist_event_t *pe = (void *)ge;
+  playlist_entry_unref(pe->ple);
+  free(pe);
+}
 
 /**
  * Send signal to playlist player
@@ -409,16 +417,19 @@ playlist_entry_free(playlist_entry_t *ple)
 void
 playlist_signal(playlist_entry_t *ple, int type)
 {
-  inputevent_t ie;
+  playlist_event_t *pe;
 
   pthread_mutex_lock(&playlistlock);
   ple->ple_refcnt++;
   pthread_mutex_unlock(&playlistlock);
 
-  ie.type = type;
-  ie.u.ptr = ple;
-  ie.freefunc = (void *)playlist_entry_unref;
-  input_postevent(&plp.plp_ic, &ie);
+  pe = glw_event_create(EVENT_PLAYLIST, sizeof(playlist_event_t));
+  pe->h.ge_dtor = playlist_signal_dtor;
+
+  pe->ple = ple;
+  pe->type = type;
+
+  glw_event_enqueue(&plp.plp_geq, &pe->h);
 }
 
 
@@ -479,64 +490,22 @@ playlist_entry_unref(playlist_entry_t *ple)
 /**
  *
  */
-static int
-playlist_root_widget(glw_t *w, void *opaque, glw_signal_t sig, ...)
-{
-  appi_t *ai = opaque;
-  inputevent_t *ie;
-
-  va_list ap;
-  va_start(ap, sig);
-  
-  switch(sig) {
-  default:
-    break;
-
-  case GLW_SIGNAL_INPUT_EVENT:
-    ie = va_arg(ap, void *);
-    input_postevent(&ai->ai_ic, ie);
-    return 1;
-  }
-  va_end(ap);
-  return 0;
-}
-
-
-
-/**
- *
- */
 static void
-playlist_rename(playlist_t *pl)
+playlist_rename(playlist_t *pl, glw_t *parent)
 {
-  struct layout_form_entry_list lfelist;
-  glw_t *m;
-  inputevent_t ie;
-  char plname[100];
-  appi_t *ai = playlist_appi;
+  char buf[100];
+  glw_t *m = glw_model_create("theme://playlist/playlist-rename.model", parent);
 
-  TAILQ_INIT(&lfelist);
+  glw_set_caption(m, "playlistname", pl->pl_title);
 
-  m = glw_create(GLW_MODEL,
-		 GLW_ATTRIB_PARENT, ai->ai_widget,
-		 GLW_ATTRIB_FILENAME, "playlist/playlist-rename",
-		 NULL);
-
-
-  av_strlcpy(plname, pl->pl_title, sizeof(plname));
-
-  LFE_ADD_STR(&lfelist, "playlist_title", plname, sizeof(plname), 1);
-  LFE_ADD_BTN(&lfelist, "ok",     1);
-  LFE_ADD_BTN(&lfelist, "cancel", 2);
-  layout_form_query(&lfelist, m, &ai->ai_gfs, &ie);
-
-  if(ie.u.u32 == 1 && plname[0]) {
+  if(!glw_wait_form_ok_cancel(m)) {
+    glw_get_caption(m, "playlistname", buf, sizeof(buf));
 
     playlist_unlink(pl);
 
     free(pl->pl_title);
-    pl->pl_title = strdup(plname);
-    layout_update_str(pl->pl_widget, "title", pl->pl_title);
+    pl->pl_title = strdup(buf);
+    glw_set_caption(pl->pl_widget, "title", pl->pl_title);
     playlist_save(pl);
   }
 
@@ -548,27 +517,11 @@ playlist_rename(playlist_t *pl)
  *
  */
 static void
-playlist_delete(playlist_t *pl)
+playlist_delete(playlist_t *pl, glw_t *parent)
 {
-  struct layout_form_entry_list lfelist;
-  glw_t *m;
-  inputevent_t ie;
-  appi_t *ai = playlist_appi;
+  glw_t *m = glw_model_create("theme://playlist/playlist-delete.model", parent);
 
-  TAILQ_INIT(&lfelist);
-
-  m = glw_create(GLW_MODEL,
-		 GLW_ATTRIB_PARENT, ai->ai_widget,
-		 GLW_ATTRIB_FILENAME, "playlist/playlist-delete",
-		 NULL);
-
-  layout_update_str(m, "playlist_title", pl->pl_title);
-
-  LFE_ADD_BTN(&lfelist, "ok",     1);
-  LFE_ADD_BTN(&lfelist, "cancel", 2);
-  layout_form_query(&lfelist, m, &ai->ai_gfs, &ie);
-
-  if(ie.u.u32 == 1)
+  if(!glw_wait_form_ok_cancel(m))
     playlist_destroy(pl);
 
   glw_detach(m);
@@ -730,35 +683,35 @@ playlist_thread(void *aux)
 {
   appi_t *ai;
   glw_t *mini;
-  struct layout_form_entry_list lfelist;
-  inputevent_t ie;
   playlist_t *pl;
   pthread_t playerthread;
+  glw_t *form;
+  glw_event_t *ge;
+  glw_event_appmethod_t *gea;
 
   playlist_appi = ai = appi_create("Playlist");
 
   ai->ai_widget =
     glw_create(GLW_ZSTACK,
-	       GLW_ATTRIB_SIGNAL_HANDLER, playlist_root_widget, ai, 500,
 	       NULL);
 
-  playlist_root = glw_create(GLW_MODEL,
-			     GLW_ATTRIB_FILENAME, "playlist/root",
-			     GLW_ATTRIB_PARENT, ai->ai_widget,
-			     NULL);
 
-  mini = glw_create(GLW_MODEL,
-		    GLW_ATTRIB_FILENAME, "playlist/switcher-icon",
-		    NULL);
+  playlist_root = glw_model_create("theme://playlist/playlist-app.model",
+				   ai->ai_widget);
 
-  playlists_list = glw_find_by_id(playlist_root, "playlists", 0);
+  form = glw_find_by_class(playlist_root, GLW_FORM);
+
+  mini = glw_model_create("theme://playlist/playlist-miniature.model", NULL);
+
+  playlists_list = glw_find_by_id(playlist_root, "playlist_container", 0);
 
 
   /**
    * Initialize and launch player thread
    */
   memset(&plp, 0, sizeof(plp));
-  input_init(&plp.plp_ic);
+  
+  glw_event_initqueue(&plp.plp_geq);
   plp.plp_mp = ai->ai_mp;
   pthread_create(&playerthread, NULL, playlist_player, &plp);
 
@@ -772,66 +725,34 @@ playlist_thread(void *aux)
   playlist_scan();
 
   layout_switcher_appi_add(ai, mini);
-  
-  /**
-   *
-   */
-  TAILQ_INIT(&lfelist);
-  LFE_ADD(&lfelist, "playlists");
-  LFE_ADD_BTN(&lfelist, "rename_playlist", PL_EVENT_RENAME_PLAYLIST);
-  LFE_ADD_BTN(&lfelist, "delete_playlist", PL_EVENT_DELETE_PLAYLIST);
-  layout_form_initialize(&lfelist, playlist_root, &ai->ai_gfs, &ai->ai_ic, 1);
 
+  if(form != NULL) {
+    glw_set(form,
+	    GLW_ATTRIB_SIGNAL_HANDLER, glw_event_enqueuer, &ai->ai_geq, 1000, 
+	    NULL);
+  }
   
   while(1) {
-    input_getevent(&ai->ai_ic, 1, &ie, NULL);
-    
-    switch(ie.type) {
+    ge = glw_event_get(-1, &ai->ai_geq);
+
+    switch(ge->ge_type) {
     default:
       break;
 
-    case INPUT_KEY:
-      switch(ie.u.key) {
-      default:
-	break;
+    case GEV_APPMETHOD:
+      gea = (void *)ge;
+      if(!strcmp(gea->method, "delete")) {
+	if((pl = playlist_get_current()) != NULL)
+	  playlist_delete(pl, ai->ai_widget);
 
-      case INPUT_KEY_MENU:
-	app_settings(ai, ai->ai_widget, "Playlist", "playlist/switcher-icon");
-	app_save_generic_config(ai, "playlist");
-	break;
+      } else if(!strcmp(gea->method, "rename")) {
+	if((pl = playlist_get_current()) != NULL)
+	  playlist_rename(pl, ai->ai_widget);
 
-      case INPUT_KEY_SEEK_FAST_BACKWARD:
-      case INPUT_KEY_SEEK_BACKWARD:
-      case INPUT_KEY_SEEK_FAST_FORWARD:
-      case INPUT_KEY_SEEK_FORWARD:
-      case INPUT_KEY_PLAYPAUSE:
-      case INPUT_KEY_PLAY:
-      case INPUT_KEY_PAUSE:
-      case INPUT_KEY_STOP:
-      case INPUT_KEY_PREV:
-      case INPUT_KEY_NEXT:
-      case INPUT_KEY_RESTART_TRACK:
-	input_postevent(&plp.plp_ic, &ie);
-	break;
       }
-
-    case INPUT_U32:
-      
-      switch(ie.u.u32) {
-
-      case PL_EVENT_RENAME_PLAYLIST:
-	pl = playlist_get_current();
-	if(pl != NULL)
-	  playlist_rename(pl);
-	break;
-
-      case PL_EVENT_DELETE_PLAYLIST:
-	pl = playlist_get_current();
-	if(pl != NULL)
-	  playlist_delete(pl);
-	break;
-      }
+      break;
     }
+    glw_event_unref(ge);
   }
 }
 
