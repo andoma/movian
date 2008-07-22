@@ -199,23 +199,23 @@ keymapper_save(void)
 {
   hid_keycode_t *hkc;
   hid_keydesc_t *hkd;
-  char buf[256];
-  FILE *fp;
   const char *codename;
 
-  snprintf(buf, sizeof(buf), "%s/keymap", settingsdir);
-
-  if((fp = fopen(buf, "w+")) == NULL)
-    return;
+  htsmsg_t *settings = htsmsg_create();
+  htsmsg_t *simple = htsmsg_create();
 
   LIST_FOREACH(hkc, &keycodes, hkc_link) {
     if((codename = keycode2str(hkc->hkc_code)) == NULL)
       continue;
-
+    
     LIST_FOREACH(hkd, &hkc->hkc_descs, hkd_keycode_link) 
-      fprintf(fp, "%s = %s\n", codename, hkd->hkd_desc);
+      htsmsg_add_str(simple, codename, hkd->hkd_desc);
   }
-  fclose(fp);
+
+  htsmsg_add_msg(settings, "simple", simple);
+
+  hts_settings_save(settings, "keymap");
+  htsmsg_destroy(settings);
 }
 
 
@@ -225,31 +225,32 @@ keymapper_save(void)
 static void
 keymapper_load(void)
 {
+  htsmsg_t *settings;
+  htsmsg_t *simple;
+  htsmsg_field_t *f;
   hid_keycode_t *hkc;
   hid_keydesc_t *hkd;
-  char buf[256];
-  char buf2[256];
-  FILE *fp;
   event_type_t val;
 
-  snprintf(buf, sizeof(buf), "%s/keymap", settingsdir);
-
-  if((fp = fopen(buf, "r")) == NULL)
+  if((settings = hts_settings_load("keymap")) == NULL)
     return;
 
-  while(fscanf(fp, "%s = %[^\n]", buf, buf2) == 2) {
-    fprintf(stderr, "%s -> %s\n", buf, buf2);
+  if((simple = htsmsg_get_msg(settings, "simple")) != NULL) {
+    HTSMSG_FOREACH(f, simple) {
+      if(f->hmf_type != HMF_STR)
+	continue;
 
-    if((val = keystr2code(buf)) == -1)
-      continue;
+      if((val = keystr2code(f->hmf_name)) == -1)
+	continue;
+      
+      hkc = keymapper_find_by_code(val);
+      hkd = keymapper_find_by_desc(f->hmf_str);
 
-    hkc = keymapper_find_by_code(val);
-    hkd = keymapper_find_by_desc(buf2);
-    keymapper_map(hkd, hkc);
-
+      keymapper_map(hkd, hkc);
+    }
   }
-  fclose(fp);
 }
+
 
 /**
  *

@@ -533,38 +533,25 @@ playlist_delete(playlist_t *pl, glw_t *parent)
 void
 playlist_save(playlist_t *pl)
 {
-  char buf[256];
-  FILE *fp;
-  struct stat st;
   playlist_entry_t *ple;
+  htsmsg_t *t, *m = htsmsg_create();
 
-  if(settingsdir == NULL)
-    return;
+  htsmsg_add_str(m, "title", pl->pl_title);
+  if(pl->pl_backdrop != NULL)
+    htsmsg_add_str(m, "backdrop", pl->pl_backdrop);
 
-  snprintf(buf, sizeof(buf), "%s/playlists", settingsdir);
-  if(stat(buf, &st) == 0 || mkdir(buf, 0700) == 0) {
-    snprintf(buf, sizeof(buf), "%s/playlists/%s", settingsdir, 
-	     pl->pl_title);
+  t = htsmsg_create();
 
-    fp = fopen(buf, "w+");
-    if(fp != NULL) {
-
-      fprintf(fp, 
-	      "showtimeplaylist-v1\n"
-	      "title=%s\n", pl->pl_title);
-      if(pl->pl_backdrop != NULL)
-	fprintf(fp, "backdrop=%s\n", pl->pl_backdrop);
-      
-      pthread_mutex_lock(&playlistlock);
-      TAILQ_FOREACH(ple, &pl->pl_entries, ple_link) {
-	fprintf(fp, "track=%s\n", ple->ple_url);
-      }
-      pthread_mutex_unlock(&playlistlock);
-      fclose(fp);
-    }
+  pthread_mutex_lock(&playlistlock);
+  TAILQ_FOREACH(ple, &pl->pl_entries, ple_link) {
+    htsmsg_add_str(t, NULL, ple->ple_url);
   }
-}
 
+  htsmsg_add_array(m, "tracks", t);
+
+  hts_settings_save(m, "playlists/%s", pl->pl_title);
+  htsmsg_destroy(m);
+}
 
 /**
  *  Remove playlist from disk
@@ -572,71 +559,37 @@ playlist_save(playlist_t *pl)
 static void
 playlist_unlink(playlist_t *pl)
 {
-  char buf[256];
-
-  if(settingsdir == NULL)
-    return;
-
-  snprintf(buf, sizeof(buf), "%s/playlists/%s", settingsdir,  pl->pl_title);
-  unlink(buf);
+  hts_settings_remove("playlists/%s", pl->pl_title);
 }
-
-
-
-
-
 
 
 /**
  * Load a playlist
  */
 static void
-playlist_load(const char *path)
+playlist_load(htsmsg_t *list)
 {
-  FILE *fp;
-  char line[300];
-  int l;
-  char *title = NULL;
+  htsmsg_t *tracks;
+  const char *s;
   playlist_t *pl;
+  htsmsg_field_t *f;
 
-  fp = fopen(path, "r");
-  if(fp != NULL) {
-    if(fgets(line, sizeof(line), fp) != NULL) {
-      if(!strcmp("showtimeplaylist-v1\n", line)) {
-	if(fgets(line, sizeof(line), fp) != NULL) {
-	  if(!strncmp("title=", line, 6)) {
-	    l = strlen(line+6);
-
-	    while(line[6+l] < 32 && l > 0)
-	      line[6 + l--] = 0;
-
-	    pl = playlist_create(line + 6, 0);
-
-	    while(!feof(fp)) {
-	      if(fgets(line, sizeof(line), fp) == NULL)
-		break;
-	
-	      l = strlen(line);
-	      while(line[l] < 32 && l > 0)
-		line[l--] = 0;
-
-	      if(!strncmp("track=", line, 6))
-		playlist_enqueue0(pl, line + 6, NULL);
-
-	      if(!strncmp("backdrop=", line, 9))
-		playlist_set_backdrop(pl, line + 9);
-
-	    }
-	  }
-	}
+  if((s = htsmsg_get_str(list, "title")) == NULL)
+    return;
+  
+  pl = playlist_create(s, 0);
+  
+  if((tracks = htsmsg_get_array(list, "tracks")) != NULL) {
+    HTSMSG_FOREACH(f, tracks) {
+      if(f->hmf_type == HMF_STR) {
+	playlist_enqueue0(pl, f->hmf_str, NULL);
       }
     }
-    fclose(fp);
   }
-  free(title);
+  
+  if((s = htsmsg_get_str(list, "backdrop")) != NULL)
+    playlist_set_backdrop(pl, s);
 }
-
-
 
 
 /**
@@ -645,32 +598,19 @@ playlist_load(const char *path)
 static void
 playlist_scan(void)
 {
-  char buf[256];
-  char fullpath[256];
-  struct dirent **namelist, *d;
-  int n, i;
+  htsmsg_field_t *f;
+  htsmsg_t *playlists, *list;
 
-  if(settingsdir == NULL)
+  if((playlists = hts_settings_load("playlists")) == NULL)
     return;
 
-  snprintf(buf, sizeof(buf), "%s/playlists", settingsdir);
-
-  n = scandir(buf, &namelist, NULL, NULL);
-  if(n < 0)
-    return;
-
-  for(i = 0; i < n; i++) {
-    d = namelist[i];
-    if(d->d_name[0] == '.')
-      continue;
-
-    snprintf(fullpath, sizeof(fullpath), "%s/%s", buf, d->d_name);
-
-    printf("Loading playlist %s\n", fullpath);
-    playlist_load(fullpath);
+  HTSMSG_FOREACH(f, playlists) {
+    if((list = htsmsg_get_msg_by_field(f)) != NULL)
+      playlist_load(list);
   }
-  free(namelist);
+  htsmsg_destroy(playlists);
 }
+ 
 
 
 
@@ -719,7 +659,7 @@ playlist_thread(void *aux)
    *
    */
 
-  app_load_generic_config(ai, "playlist");
+  //  app_load_generic_config(ai, "playlist");
 
   playlist_scan();
 

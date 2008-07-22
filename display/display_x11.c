@@ -76,21 +76,16 @@ static glw_t *display_settings_model;
 static void
 display_settings_load(void)
 {
-  char path[PATH_MAX];
-  struct config_head cl;
+  htsmsg_t *settings;
   const char *v;
 
-  snprintf(path, sizeof(path), "%s/display", settingsdir);
-
-  TAILQ_INIT(&cl);
-
-  if(config_read_file0(path, &cl) == -1)
+  if((settings = hts_settings_load("display")) == NULL)
     return;
 
-  if((v = config_get_str_sub(&cl, "displaymode", NULL)) != NULL)
+  if((v = htsmsg_get_str(settings, "displaymode")) != NULL)
     display_settings.displaymode = str2val(v, displaymodetab);
 
-  config_free0(&cl);
+  htsmsg_destroy(settings);
 }
 
 
@@ -101,17 +96,13 @@ display_settings_load(void)
 static void
 display_settings_save(void)
 {
-  char path[PATH_MAX];
-  FILE *fp;
+  htsmsg_t *m = htsmsg_create();
 
-  snprintf(path, sizeof(path), "%s/display", settingsdir);
-
-  if((fp = fopen(path, "w+")) == NULL)
-    return;
-
-  fprintf(fp, "displaymode = %s\n", val2str(display_settings.displaymode,
-					    displaymodetab));
-  fclose(fp);
+  htsmsg_add_str(m, "displaymode", val2str(display_settings.displaymode,
+					   displaymodetab));
+  
+  hts_settings_save(m, "display");
+  htsmsg_destroy(m);
 }
 
 

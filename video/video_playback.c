@@ -26,8 +26,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <dirent.h>
-#include <libgen.h>
+
+
+#include <libhts/htssettings.h>
 
 #include <libavformat/avformat.h>
 #include <libglw/glw.h>
@@ -70,7 +71,8 @@ typedef struct play_video_ctrl {
   vd_conf_t pvc_vdc;
   
   int64_t pvc_rcache_last;
-  int pvc_rcache_fd;
+
+  char *pvc_rcache_title;
 
   int pvc_force_status_display;
 
@@ -144,28 +146,33 @@ video_player_update_stream_info(play_video_ctrl_t *pvc)
 }
 
 /**
- * 
+ *
  */
-static int
-open_rcache(const char *fname)
+static void
+rcache_init(play_video_ctrl_t *pvc, const char *fname)
 {
-  char buf[512], *n2, *n;
+  char *n;
+  n = pvc->pvc_rcache_title = strdup(fname);
 
-  if(settingsdir == NULL)
-    return -1;
-
-  snprintf(buf, sizeof(buf), "%s/restartcache", settingsdir);
-  mkdir(buf, 0700);
-
-  n = n2 = strdupa(fname);
   while(*n) {
     if(*n == '/' || *n == ':' || *n == '?' || *n == '*' || *n > 127 || *n < 32)
       *n = '_';
     n++;
   }
+}
 
-  snprintf(buf, sizeof(buf), "%s/restartcache/%s", settingsdir, n2);
-  return open(buf, O_CREAT | O_RDWR, 0660);
+/**
+ * Restart cache, store info
+ */
+static void
+rcache_store(play_video_ctrl_t *pvc, int ts)
+{
+  htsmsg_t *m;
+
+  m = htsmsg_create();
+  htsmsg_add_u64(m, "ts", ts);
+  hts_settings_save(m, "restartcache/%s", pvc->pvc_rcache_title);
+  htsmsg_destroy(m);
 }
 
 
@@ -240,14 +247,9 @@ static void
 play_video_clock_update(play_video_ctrl_t *pvc, int64_t pts,
 			media_pipe_t *mp)
 {
-  if(pvc->pvc_rcache_fd != -1 && 
-     pts != AV_NOPTS_VALUE && pts > pvc->pvc_rcache_last) {
+  if(pts != AV_NOPTS_VALUE && pts > pvc->pvc_rcache_last) {
 
-    /* Write timestamp into restart cache */
-    
-    lseek(pvc->pvc_rcache_fd, 0, SEEK_SET);
-    write(pvc->pvc_rcache_fd, &pts, sizeof(pts));
-    fsync(pvc->pvc_rcache_fd);
+    rcache_store(pvc, pts);
 
     pvc->pvc_rcache_last = pts + AV_TIME_BASE * 5;
   }
@@ -508,7 +510,7 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
   int streams, i;
   play_video_ctrl_t pvc;
   const char *s;
-
+  htsmsg_t *m;
   char faurl[1000];
 
   memset(&pvc, 0, sizeof(play_video_ctrl_t));
@@ -615,13 +617,17 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
 
   mp->mp_videoseekdts = 0;
 
-  pvc.pvc_rcache_fd = open_rcache(url);
-  if(pvc.pvc_rcache_fd != -1 && 
-     read(pvc.pvc_rcache_fd, &ts, sizeof(ts)) == sizeof(ts)) {
-    i = av_seek_frame(pvc.pvc_fctx, -1, ts, AVSEEK_FLAG_BACKWARD);
-    if(i >= 0)
-      mp->mp_videoseekdts = ts;
+  rcache_init(&pvc, url);
+
+  m = hts_settings_load("restartcache/%s", pvc.pvc_rcache_title);
+  if(m != NULL) {
+    if(!htsmsg_get_s64(m, "ts", &ts)) {
+      i = av_seek_frame(pvc.pvc_fctx, -1, ts, AVSEEK_FLAG_BACKWARD);
+      if(i >= 0)
+	mp->mp_videoseekdts = ts;
+    }
   }
+
   mp_set_playstatus(mp, MP_VIDEOSEEK_PAUSE);
 
   mp->mp_feedback = geq;
@@ -638,9 +644,6 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
 
 
   glw_destroy(pvc.pvc_status);
-
-  if(pvc.pvc_rcache_fd != -1)
-    close(pvc.pvc_rcache_fd);
 
   ai->ai_req_fullscreen = 0;
 

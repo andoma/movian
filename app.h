@@ -19,6 +19,7 @@
 #ifndef APP_H
 #define APP_H
 
+#include <libhts/htsmsg.h>
 #include "media.h"
 
 /**
@@ -57,7 +58,7 @@ typedef struct appi {
   AVFormatContext *ai_fctx;
 
   int ai_instance_index;
-  struct config_head *ai_settings;
+  htsmsg_t *ai_settings;
 
   int ai_req_fullscreen;
 
@@ -74,11 +75,13 @@ typedef struct appi {
 
 void apps_load(void);
 
-void app_spawn(app_t *app, struct config_head *settings, int index);
+void app_spawn(app_t *app, htsmsg_t *settings, int index);
 
 void appi_destroy(appi_t *ai);
 
-FILE *appi_setings_create(appi_t *ai);
+htsmsg_t *appi_settings_create(appi_t *ai);
+
+void appi_settings_save(appi_t *ai, htsmsg_t *m);
 
 appi_t *appi_create(const char *name);
 

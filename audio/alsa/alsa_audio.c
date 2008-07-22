@@ -31,7 +31,6 @@
 #include "audio/audio.h"
 #include "audio/audio_ui.h"
 #include "audio/audio_iec958.h"
-#include "libhts/htscfg.h"
 
 
 typedef struct alsa_audio_mode {

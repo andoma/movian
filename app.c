@@ -20,6 +20,9 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <assert.h>
+
+#include <libhts/htssettings.h>
 
 #include "showtime.h"
 #include "app.h"
@@ -84,11 +87,11 @@ app_find_by_name(const char *appname)
  *
  */
 static void
-appi_map_generic_config(appi_t *ai, struct config_head *settings)
+appi_map_generic_config(appi_t *ai, htsmsg_t *settings)
 {
   const char *v;
 
-  if((v = config_get_str_sub(settings, "speedbutton", NULL)) != NULL)
+  if((v = htsmsg_get_str(settings, "speedbutton")) != NULL)
     snprintf(ai->ai_speedbutton, sizeof(ai->ai_speedbutton), "%s", v);
 }
 
@@ -97,7 +100,7 @@ appi_map_generic_config(appi_t *ai, struct config_head *settings)
  * Spawn a new application instance
  */
 void
-app_spawn(app_t *a, struct config_head *settings, int index)
+app_spawn(app_t *a, htsmsg_t *settings, int index)
 {
 
   appi_t *ai = calloc(1, sizeof(appi_t));
@@ -149,18 +152,10 @@ appi_create(const char *name)
 void
 appi_destroy(appi_t *ai)
 {
-  char buf[256];
+  if(ai->ai_settings != NULL)
+    htsmsg_destroy(ai->ai_settings);
 
-  if(ai->ai_settings != NULL) {
-    config_free0(ai->ai_settings);
-    free(ai->ai_settings);
-  }
-
-  if(ai->ai_instance_index != 0 && settingsdir != NULL) {
-    snprintf(buf, sizeof(buf), "%s/applications/%d", settingsdir, 
-	     ai->ai_instance_index);
-    unlink(buf);
-  }
+  hts_settings_remove("applications/%d", ai->ai_instance_index);
 
   mp_unref(ai->ai_mp);
 
@@ -182,14 +177,10 @@ app_init(app_t *a)
 /**
  * Open application settings file, truncates it if already exist.
  */
-FILE *
-appi_setings_create(appi_t *ai)
+htsmsg_t *
+appi_settings_create(appi_t *ai)
 {
-  char buf[256];
-  struct stat st;
-  FILE *fp;
-  if(settingsdir == NULL)
-    return NULL;
+  htsmsg_t *m;
 
   if(ai->ai_instance_index == 0) {
     pthread_mutex_lock(&app_index_mutex);
@@ -197,24 +188,23 @@ appi_setings_create(appi_t *ai)
     pthread_mutex_unlock(&app_index_mutex);
   }
 
-  snprintf(buf, sizeof(buf), "%s/applications", settingsdir);
+  m = htsmsg_create();
 
-  if(stat(buf, &st) == 0 || mkdir(buf, 0700) == 0) {
-    snprintf(buf, sizeof(buf), "%s/applications/%d", settingsdir, 
-	     ai->ai_instance_index);
+  htsmsg_add_str(m, "application", ai->ai_app->app_name);
+  htsmsg_add_u32(m, "instanceid", ai->ai_instance_index);
+  if(ai->ai_speedbutton[0])
+    htsmsg_add_str(m, "speedbutton", ai->ai_speedbutton);
+  return m;
+}
 
-    fp = fopen(buf, "w+");
-    if(fp == NULL)
-      return NULL;
-
-    fprintf(fp, "application = %s\n", ai->ai_app->app_name);
-    fprintf(fp, "instanceid = %d\n", ai->ai_instance_index);
-    if(ai->ai_speedbutton[0])
-      fprintf(fp, "speedbutton = %s\n", ai->ai_speedbutton);
-    return fp;
-
-  }
-  return NULL;
+/**
+ * Finalize storage of settings
+ */
+void
+appi_settings_save(appi_t *ai, htsmsg_t *m)
+{
+  hts_settings_save(m, "applications/%d", ai->ai_instance_index);
+  htsmsg_destroy(m);
 }
 
 
@@ -224,60 +214,39 @@ appi_setings_create(appi_t *ai)
 static void
 autolaunch_applications(void)
 {
-  char buf[256];
-  char fullpath[256];
-  struct dirent **namelist, *d;
-  int i, n;
+  htsmsg_t *m, *a;
+  htsmsg_field_t *f;
   const char *appname;
   app_t *app;
-  int index;
+  uint32_t instance;
 
-  struct config_head *cl;
-
-  if(settingsdir == NULL)
+  if((m = hts_settings_load("applications")) == NULL)
     return;
 
-  snprintf(buf, sizeof(buf), "%s/applications", settingsdir);
-
-  n = scandir(buf, &namelist, NULL, NULL);
-  if(n < 0)
-    return;
-
-  for(i = 0; i < n; i++) {
-    d = namelist[i];
-    if(d->d_name[0] == '.')
+  HTSMSG_FOREACH(f, m) {
+    if((a = htsmsg_get_msg_by_field(f)) == NULL)
       continue;
     
-    snprintf(fullpath, sizeof(fullpath), "%s/%s", buf, d->d_name);
-
-    cl = malloc(sizeof(struct config_head));
-
-    TAILQ_INIT(cl);
-    if(config_read_file0(fullpath, cl) == -1)
-      continue;
-    
-    appname = config_get_str_sub(cl, "application", NULL);
-    if(appname == NULL)
+    if((appname = htsmsg_get_str(a, "application")) == NULL)
       continue;
 
     app = app_find_by_name(appname);
     if(app == NULL) {
       fprintf(stderr, "Unable to spawn app %s, application does not exist\n",
 	      appname);
-      config_free0(cl);
-      free(cl);
       continue;
     }
-
-    index = atoi(config_get_str_sub(cl, "instanceid", "0"));
-    if(index == 0)
+    
+    if(htsmsg_get_u32(a, "instanceid", &instance))
       continue;
 
-    if(index > app_index)
-      app_index = index;
+    if(instance > app_index)
+      app_index = instance;
 
-    app_spawn(app, cl, index);
+    a = htsmsg_detach_submsg(f);
+    app_spawn(app, a, instance);
   }
+  htsmsg_destroy(m);
 }
 
 
@@ -351,47 +320,3 @@ app_settings(appi_t *ai, glw_t *parent,
   glw_detach(m);
 #endif
 }
-
-/**
- *
- */
-void
-app_load_generic_config(appi_t *ai, const char *name)
-{
-  char buf[256];
-  struct config_head cl;
-
-  if(settingsdir == NULL)
-    return;
-
-  snprintf(buf, sizeof(buf), "%s/%s", settingsdir, name);
- 
-  TAILQ_INIT(&cl);
-  if(config_read_file0(buf, &cl) == -1)
-    return;
-  appi_map_generic_config(ai, &cl);
-  config_free0(&cl);
-}
-
-/**
- *
- */
-void
-app_save_generic_config(appi_t *ai, const char *name)
-{
-  char buf[256];
-  FILE *fp;
-
-  if(settingsdir == NULL)
-    return;
-
-  snprintf(buf, sizeof(buf), "%s/%s", settingsdir, name);
-
-  if((fp = fopen(buf, "w+")) == NULL)
-    return;
-
-  if(ai->ai_speedbutton[0])
-    fprintf(fp, "speedbutton = %s\n", ai->ai_speedbutton);
-  fclose(fp);
-}
-

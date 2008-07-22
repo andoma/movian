@@ -177,18 +177,23 @@ fa_protocol_t fa_protocol_fs = {
   .fap_stat  = fs_stat,
 };
 
-
-
+/**
+ *
+ */
+static const char *
+theme_get(void)
+{
+  return "themes/new";
+}
 /**
  *
  */
 static int
 theme_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
 {
-  const char *theme = config_get_str("theme", "themes/default");
   char buf[200];
 
-  snprintf(buf, sizeof(buf), "%s/%s", theme, url);
+  snprintf(buf, sizeof(buf), "%s/%s", theme_get(), url);
   printf("Scanning %s\n", buf);
   return fs_scandir(buf, cb, arg);
 }
@@ -200,10 +205,9 @@ theme_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
 static void *
 theme_open(const char *url)
 {
-  const char *theme = config_get_str("theme", "themes/default");
   char buf[200];
 
-  snprintf(buf, sizeof(buf), "%s/%s", theme, url);
+  snprintf(buf, sizeof(buf), "%s/%s", theme_get(), url);
   return fs_open(buf);
 }
 

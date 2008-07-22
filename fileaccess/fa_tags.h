@@ -19,6 +19,8 @@
 #ifndef FA_TAGS_H
 #define FA_TAGS_H
 
+#include <libhts/htsq.h>
+
 TAILQ_HEAD(filetag_list, filetag);
 
 typedef enum {

@@ -39,6 +39,7 @@
 void
 hid_init(void)
 {
+#if 0
   const char *irtype;
 
   irtype = config_get_str("lirctype", NULL);
@@ -55,5 +56,5 @@ hid_init(void)
   if(config_get_bool("lcdd", 0)) {
     lcdd_init();
   }
-
+#endif
 }

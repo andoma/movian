@@ -21,6 +21,8 @@
 
 #include <sys/stat.h>
 
+#include <libhts/htsq.h>
+
 LIST_HEAD(fa_protocol_list, fa_protocol);
 extern struct fa_protocol_list fileaccess_all_protocols;
 

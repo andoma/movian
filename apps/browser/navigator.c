@@ -101,15 +101,13 @@ browser_enter(appi_t *ai, navigator_t *nav, browser_node_t *bn, int selected)
 static void
 nav_store_instance(appi_t *ai, navconfig_t *cfg)
 {
-  FILE *fp = appi_setings_create(ai);
-
-  if(fp == NULL)
-    return;
+  htsmsg_t *m = appi_settings_create(ai);
   
-  fprintf(fp, "title = %s\n", cfg->nc_title);
-  fprintf(fp, "rootpath = %s\n", cfg->nc_rootpath);
-  fprintf(fp, "icon = %s\n", cfg->nc_icon);
-  fclose(fp);
+  htsmsg_add_str(m, "title", cfg->nc_title);
+  htsmsg_add_str(m, "rootpath", cfg->nc_rootpath);
+  htsmsg_add_str(m, "icon", cfg->nc_icon);
+
+  appi_settings_save(ai, m);
 }
 
 
@@ -317,6 +315,8 @@ nav_setup(navigator_t *nav, appi_t *ai)
   navconfig_t nc;
   int r;
 
+  memset(&nc, 0, sizeof(nc));
+
   m = glw_model_create("theme://browser/setup.model", nav->nav_stack);
   load_nav_icons_in_tab(m, "icon_container");
 
@@ -339,17 +339,16 @@ nav_autolaunch(navigator_t *nav, appi_t *ai)
 {
   navconfig_t cfg;
   const char *s;
-  struct config_head *l = ai->ai_settings;
 
-  if((s = config_get_str_sub(l, "title", NULL)) == NULL)
+  if((s = htsmsg_get_str(ai->ai_settings, "title")) == NULL)
     return -1;
   av_strlcpy(cfg.nc_title, s, sizeof(cfg.nc_title));
 
-  if((s = config_get_str_sub(l, "rootpath", NULL)) == NULL)
+  if((s = htsmsg_get_str(ai->ai_settings, "rootpath")) == NULL)
     return -1;
   av_strlcpy(cfg.nc_rootpath, s, sizeof(cfg.nc_rootpath));
 
-  if((s = config_get_str_sub(l, "icon", NULL)) == NULL)
+  if((s = htsmsg_get_str(ai->ai_settings, "icon")) == NULL)
     return -1;
   av_strlcpy(cfg.nc_icon, s, sizeof(cfg.nc_icon));
   

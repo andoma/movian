@@ -48,8 +48,6 @@
 
 pthread_mutex_t ffmutex = PTHREAD_MUTEX_INITIALIZER;
 
-const char *settingsdir;
-
 int frame_duration;
 
 int64_t wallclock;
@@ -98,9 +96,6 @@ main(int argc, char **argv)
   struct timeval tv;
   char *cfgfile = NULL;
   struct rlimit rlim;
-  char buf[256];
-  const char *homedir;
-  struct stat st;
 
   setenv("__GL_SYNC_TO_VBLANK", "1", 1); // make nvidia sync to vblan
 
@@ -129,19 +124,7 @@ main(int argc, char **argv)
 
   concurrency = get_concurrency();
 
-  homedir = getenv("HOME");
-  if(homedir != NULL) {
-    snprintf(buf, sizeof(buf), "%s/.showtime", homedir);
-
-    if(stat(buf, &st) == 0 || mkdir(buf, 0700) == 0) {
-      settingsdir = strdup(buf);
-      printf("Settings stored in \"%s\"\n", buf);
-    }
-  }
-
-
-  config_open_by_prgname("showtime", cfgfile);
-
+  hts_settings_init("showtime");
 
   hid_init();
 
