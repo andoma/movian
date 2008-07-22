@@ -112,7 +112,7 @@ display_settings_save(void)
  */
 
 static void
-display_set_mode(void *opaque, int value)
+display_set_mode(void *opaque, void *opaque2, int value)
 {
   display_settings.displaymode = value;
 }
@@ -135,15 +135,15 @@ display_settings_init(appi_t *ai, glw_t *m)
   display_settings_model = tab;
 
   if((w = glw_find_by_id(tab, "displaymode", 0)) != NULL) {
-    glw_selection_add_text_option(w, "Windowed", display_set_mode, NULL, 
+    glw_selection_add_text_option(w, "Windowed", display_set_mode, NULL, NULL,
 				  DISPLAYMODE_WINDOWED,
 				  display_settings.displaymode ==
 				  DISPLAYMODE_WINDOWED);
 
-   glw_selection_add_text_option(w, "Fullscreen", display_set_mode, NULL, 
-				 DISPLAYMODE_FULLSCREEN,
-				 display_settings.displaymode ==
-				 DISPLAYMODE_FULLSCREEN);
+    glw_selection_add_text_option(w, "Fullscreen", display_set_mode, NULL, NULL,
+				  DISPLAYMODE_FULLSCREEN,
+				  display_settings.displaymode ==
+				  DISPLAYMODE_FULLSCREEN);
   }
   x11state.update_gfx_info = 1;
 }

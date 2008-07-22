@@ -42,7 +42,7 @@
  *
  */
 static void
-vdc_set_ilace(void *opaque, int value)
+vdc_set_ilace(void *opaque, void *opaque2, int value)
 {
   vd_conf_t *vdc = opaque;
   vdc->gc_deilace_type = value;
@@ -55,7 +55,7 @@ static void
 vdc_menu_ilace_opt(glw_t *w, vd_conf_t *vdc, 
 		   const char *title, vd_deilace_type_t type)
 {
-  glw_selection_add_text_option(w, title, vdc_set_ilace, vdc, type,
+  glw_selection_add_text_option(w, title, vdc_set_ilace, vdc, NULL, type,
 				vdc->gc_deilace_type == type);
 }
 

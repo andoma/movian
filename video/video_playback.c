@@ -181,7 +181,7 @@ rcache_store(play_video_ctrl_t *pvc, int ts)
  * Called from GLW when user selecs a different audio track
  */
 static void
-video_playback_set_audio_track(void *opaque, int value)
+video_playback_set_audio_track(void *opaque, void *opaque2, int value)
 {
   play_video_ctrl_t *pvc = opaque;
 
@@ -223,10 +223,10 @@ video_player_open_menu(play_video_ctrl_t *pvc, int toggle)
 	continue;
       media_get_codec_info(ctx, buf, sizeof(buf));
       glw_selection_add_text_option(p, buf, video_playback_set_audio_track,
-				    pvc, i, i == mp->mp_audio.mq_stream);
+				    pvc, NULL, i, i == mp->mp_audio.mq_stream);
     }
     glw_selection_add_text_option(p, "Off", video_playback_set_audio_track,
-				  pvc, -1, -1 == mp->mp_audio.mq_stream);
+				  pvc, NULL, -1, -1 == mp->mp_audio.mq_stream);
   }
 
 

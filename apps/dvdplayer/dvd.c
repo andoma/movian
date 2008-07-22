@@ -929,7 +929,7 @@ dvd_spu_get_track_name(dvd_player_t *dp, char *buf, size_t size, int track)
  *
  */
 static void
-change_spu_track(void *opaque, int track)
+change_spu_track(void *opaque, void *opaque2, int track)
 {
   dvd_player_t *dp = opaque;
   dp->dp_spu_track = track;
@@ -940,7 +940,7 @@ change_spu_track(void *opaque, int track)
 static void
 add_spu_track(dvd_player_t *dp, glw_t *w, const char *title, int id)
 {
-  glw_selection_add_text_option(w, title, change_spu_track, dp,
+  glw_selection_add_text_option(w, title, change_spu_track, dp, NULL,
 				id, id == dp->dp_spu_track);
 }
 
@@ -1041,7 +1041,7 @@ dvd_audio_get_track_name(dvd_player_t *dp, char *buf, size_t size, int track)
  *
  */
 static void
-change_audio_track(void *opaque, int track)
+change_audio_track(void *opaque, void *opaque2, int track)
 {
   dvd_player_t *dp = opaque;
   dp->dp_audio_track = track;
@@ -1052,7 +1052,7 @@ change_audio_track(void *opaque, int track)
 static void
 add_audio_track(dvd_player_t *dp, glw_t *w, const char *title, int id)
 {
-  glw_selection_add_text_option(w, title, change_audio_track, dp,
+  glw_selection_add_text_option(w, title, change_audio_track, dp, NULL,
 				id, id == dp->dp_audio_track);
 }
 
