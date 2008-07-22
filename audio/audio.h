@@ -43,7 +43,8 @@ TAILQ_HEAD(audio_mode_queue, audio_mode);
 
 
 #define audio_mode_stereo_only(am) \
-  (((am)->am_formats & AM_FORMAT_PCM_MASK) == AM_FORMAT_PCM_STEREO)
+  ((((am)->am_formats & AM_FORMAT_PCM_MASK) == AM_FORMAT_PCM_STEREO) ||\
+   (am)->am_force_downmix)
 
 typedef struct audio_mode {
   uint32_t am_formats;
@@ -76,6 +77,7 @@ typedef struct audio_mode {
   uint32_t am_phantom_center;
   uint32_t am_phantom_lfe;
   uint32_t am_small_front;
+  uint32_t am_force_downmix;
 
   int am_preferred_size;
 
