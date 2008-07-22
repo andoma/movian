@@ -76,11 +76,9 @@ audio_output_thread(void *aux)
   am = TAILQ_FIRST(&audio_modes);
   audio_mode_current = am;
 
-  printf("And there it was assigned\n");
-
   while(1) {
     am = audio_mode_current;
-    printf("Audio output using %s\n", am->am_title);
+    fprintf(stderr, "Audio output using %s\n", am->am_title);
     r = am->am_entry(am, af);
 
     if(r == -1) {
