@@ -546,6 +546,7 @@ playlist_save(playlist_t *pl)
   TAILQ_FOREACH(ple, &pl->pl_entries, ple_link) {
     htsmsg_add_str(t, NULL, ple->ple_url);
   }
+  pthread_mutex_unlock(&playlistlock);
 
   htsmsg_add_array(m, "tracks", t);
 
