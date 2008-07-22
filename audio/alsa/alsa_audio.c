@@ -401,6 +401,7 @@ alsa_probe(const char *dev)
   const char *name;
   char buf[128];
   char longtitle[128];
+  char id[128];
   alsa_audio_mode_t *aam;
   int i;
 
@@ -419,6 +420,8 @@ alsa_probe(const char *dev)
     snd_pcm_close(h);
     return -1;
   }
+
+  snprintf(id, sizeof(id), "alsa:%s", dev);
 
   name = snd_pcm_info_get_name(info);
 
@@ -516,7 +519,7 @@ alsa_probe(const char *dev)
   aam->aam_head.am_formats = formats;
   aam->aam_head.am_sample_rates = rates;
   aam->aam_head.am_title = strdup(name);
-  aam->aam_head.am_long_title = strdup(longtitle);
+  aam->aam_head.am_id = strdup(id);
   aam->aam_head.am_icon = strdup("icon://alsa.png");
 
   aam->aam_head.am_entry = alsa_audio_start;

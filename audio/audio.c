@@ -94,6 +94,41 @@ audio_output_thread(void *aux)
   return NULL;
 }
 
+/**
+ *
+ */
+static void
+audio_mode_load_settings(audio_mode_t *am)
+{
+  htsmsg_t *m = hts_settings_load("audio/devices/%s", am->am_id);
+  
+  if(m == NULL)
+    return;
+
+  htsmsg_get_u32(m, "phantom_center", &am->am_phantom_center);
+  htsmsg_get_u32(m, "phantom_lfe", &am->am_phantom_lfe);
+  htsmsg_get_u32(m, "small_front", &am->am_small_front);
+
+  htsmsg_destroy(m);
+
+}
+
+
+/**
+ *
+ */
+static void
+audio_mode_save_settings(audio_mode_t *am)
+{
+  htsmsg_t *m = htsmsg_create();
+
+  htsmsg_add_u32(m, "phantom_center", am->am_phantom_center);
+  htsmsg_add_u32(m, "phantom_lfe", am->am_phantom_lfe);
+  htsmsg_add_u32(m, "small_front", am->am_small_front);
+
+  hts_settings_save(m, "audio/devices/%s", am->am_id);
+  htsmsg_destroy(m);
+}
 
 /**
  *
@@ -102,6 +137,7 @@ void
 audio_mode_register(audio_mode_t *am)
 {
   TAILQ_INSERT_TAIL(&audio_modes, am, am_link);
+  audio_mode_load_settings(am);
 }
 
 
@@ -111,7 +147,7 @@ audio_mode_register(audio_mode_t *am)
  *
  */
 static void
-audio_mode_change(void *opaque, int value)
+audio_mode_change(void *opaque, void *opaque2, int value)
 {
   audio_mode_current = opaque;
 }
@@ -120,17 +156,20 @@ audio_mode_change(void *opaque, int value)
  *
  */
 static void
-audio_opt_int_cb(void *opaque, int value)
+audio_opt_int_cb(void *opaque, void *opaque2, int value)
 {
+  audio_mode_t *am = opaque2;
   int *ptr = opaque;
   *ptr = value;
+  audio_mode_save_settings(am);
 }
 
 /**
  *
  */
 static void
-audio_add_int_option_on_off(glw_t *l, const char *title, int *ptr)
+audio_add_int_option_on_off(audio_mode_t *am, glw_t *l, const char *title,
+			    unsigned int *ptr)
 {
   glw_t *opt, *sel;
 
@@ -139,9 +178,9 @@ audio_add_int_option_on_off(glw_t *l, const char *title, int *ptr)
 
   if((sel = glw_find_by_id(opt, "options", 0)) != NULL) {
     glw_selection_add_text_option(sel, "Off", 
-				  audio_opt_int_cb, ptr, 0, *ptr == 0);
+				  audio_opt_int_cb, ptr, am, 0, *ptr == 0);
     glw_selection_add_text_option(sel, "On", 
-				  audio_opt_int_cb, ptr, 1, *ptr == 1);
+				  audio_opt_int_cb, ptr, am, 1, *ptr == 1);
   }
 }
 
@@ -162,7 +201,7 @@ audio_mode_add_to_settings(audio_mode_t *am, glw_t *parent)
     return;
 
   le = glw_selection_add_text_option(w, am->am_title, audio_mode_change,
-				     am, 0, 0);
+				     am, NULL, 0, 0);
 
   snprintf(buf, sizeof(buf), "%s%s%s%s%s",
 	   am->am_formats & AM_FORMAT_PCM_STEREO ? "Stereo  " : "",
@@ -181,9 +220,12 @@ audio_mode_add_to_settings(audio_mode_t *am, glw_t *parent)
     return;
 
   if(multich) {
-    audio_add_int_option_on_off(l, "Phantom Center:", &am->am_phantom_center);
-    audio_add_int_option_on_off(l, "Phantom LFE:", &am->am_phantom_lfe);
-    audio_add_int_option_on_off(l, "Small Front:", &am->am_small_front);
+    audio_add_int_option_on_off(am, l, "Phantom Center:",
+				&am->am_phantom_center);
+    audio_add_int_option_on_off(am, l, "Phantom LFE:",
+				&am->am_phantom_lfe);
+    audio_add_int_option_on_off(am, l, "Small Front:",
+				&am->am_small_front);
   }
 
   glw_add_tab(parent, NULL, le, "outputdevice_deck", deck);

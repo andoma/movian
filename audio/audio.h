@@ -65,7 +65,7 @@ typedef struct audio_mode {
   unsigned int am_sample_rate;
 
   char *am_title;
-  char *am_long_title;
+  char *am_id;
   char *am_icon;
 
   int (*am_entry)(struct audio_mode *am, audio_fifo_t *af);
@@ -73,9 +73,9 @@ typedef struct audio_mode {
   uint8_t am_swizzle[AUDIO_CHAN_MAX]; /* channel swizzling */
 
 
-  int am_phantom_center;
-  int am_phantom_lfe;
-  int am_small_front;
+  uint32_t am_phantom_center;
+  uint32_t am_phantom_lfe;
+  uint32_t am_small_front;
 
   int am_preferred_size;
 
