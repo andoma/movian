@@ -39,6 +39,41 @@ static struct audio_mode_queue audio_modes;
 
 static void *audio_output_thread(void *aux);
 
+
+/**
+ *
+ */
+static void
+audio_global_save_settings(void)
+{
+  htsmsg_t *m = htsmsg_create();
+  htsmsg_add_str(m, "current", audio_mode_current->am_id);
+  hts_settings_save(m, "audio/current");
+  htsmsg_destroy(m);
+}
+
+/**
+ *
+ */
+static void
+audio_global_load_settings(void)
+{
+  audio_mode_t *am;
+  const char *cur;
+  htsmsg_t *m = hts_settings_load("audio/current");
+
+  if(m == NULL)
+    return;
+
+  if((cur = htsmsg_get_str(m, "current")) != NULL)
+    TAILQ_FOREACH(am, &audio_modes, am_link)
+      if(!strcmp(cur, am->am_id))
+	audio_mode_current = am;
+
+  htsmsg_destroy(m);
+}
+
+
 /**
  *
  */
@@ -75,6 +110,8 @@ audio_output_thread(void *aux)
 
   am = TAILQ_FIRST(&audio_modes);
   audio_mode_current = am;
+
+  audio_global_load_settings();
 
   while(1) {
     am = audio_mode_current;
@@ -148,6 +185,7 @@ static void
 audio_mode_change(void *opaque, void *opaque2, int value)
 {
   audio_mode_current = opaque;
+  audio_global_save_settings();
 }
 
 /**
