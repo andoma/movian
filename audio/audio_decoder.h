@@ -38,6 +38,8 @@ typedef struct audio_decoder {
 
   audio_buf_t *ad_buf;
 
+  int ad_do_flush;
+
   struct AVResampleContext *ad_resampler;
   int16_t *ad_resampler_spill[AUDIO_CHAN_MAX];
   int ad_resampler_spill_size;

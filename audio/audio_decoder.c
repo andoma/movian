@@ -266,6 +266,7 @@ ad_thread(void *aux)
       break;
       
     case MB_RESET:
+      ad->ad_do_flush = 1;
       /* Flush any pending audio in the output fifo */
       audio_fifo_purge(thefifo, ad, NULL);
       break;
@@ -327,6 +328,11 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
   while(size > 0) {
 
     wrap_lock_codec(cw);
+
+    if(ad->ad_do_flush) {
+      avcodec_flush_buffers(cw->codec_ctx);
+      ad->ad_do_flush = 0;
+    }
 
     if(audio_mode_stereo_only(am))
       ctx->request_channels = 2; /* We can only output stereo.
