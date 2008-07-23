@@ -88,6 +88,7 @@ typedef struct audio_mode {
   uint32_t am_phantom_lfe;
   uint32_t am_small_front;
   uint32_t am_force_downmix;
+  uint32_t am_swap_surround;  /* Swap center+LFE with surround channels */
 
   int am_preferred_size;
 

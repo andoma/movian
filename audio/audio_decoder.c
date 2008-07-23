@@ -637,7 +637,7 @@ audio_mix2(audio_decoder_t *ad, audio_mode_t *am,
 	   int channels, int rate, int16_t *data0, int frames, int64_t pts,
 	   media_pipe_t *mp)
 {
-  int x, i, c;
+  int x, y, i, c;
   int16_t *data, *src, *dst;
 
   /**
@@ -736,6 +736,23 @@ audio_mix2(audio_decoder_t *ad, audio_mode_t *am,
 	}
 	channels = 6;
       }
+    }
+  }
+
+  /**
+   * Swap Center + LFE with Surround
+   */
+  if(am->am_swap_surround && channels > 5) {
+    data = data0;
+    for(i = 0; i < frames; i++) {
+      x = data[4];
+      y = data[5];
+      data[4] = data[2];
+      data[5] = data[3];
+      data[2] = x;
+      data[3] = y;
+      
+      data += channels;
     }
   }
 

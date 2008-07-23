@@ -146,6 +146,7 @@ audio_mode_load_settings(audio_mode_t *am)
   htsmsg_get_u32(m, "phantom_lfe", &am->am_phantom_lfe);
   htsmsg_get_u32(m, "small_front", &am->am_small_front);
   htsmsg_get_u32(m, "force_downmix", &am->am_force_downmix);
+  htsmsg_get_u32(m, "swap_surround", &am->am_swap_surround);
 
   htsmsg_destroy(m);
 
@@ -164,6 +165,7 @@ audio_mode_save_settings(audio_mode_t *am)
   htsmsg_add_u32(m, "phantom_lfe", am->am_phantom_lfe);
   htsmsg_add_u32(m, "small_front", am->am_small_front);
   htsmsg_add_u32(m, "force_downmix", am->am_force_downmix);
+  htsmsg_add_u32(m, "swap_surround", am->am_swap_surround);
 
   hts_settings_save(m, "audio/devices/%s", am->am_id);
   htsmsg_destroy(m);
@@ -308,6 +310,8 @@ audio_mode_add_to_settings(audio_mode_t *am, glw_t *parent)
 				&am->am_small_front);
     audio_add_int_option_on_off(am, l, "Force Stereo Downmix:",
 				&am->am_force_downmix);
+    audio_add_int_option_on_off(am, l, "Swap C+LFE with Sr:",
+				&am->am_swap_surround);
   }
 
   /**
