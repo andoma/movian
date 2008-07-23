@@ -5,7 +5,7 @@
 
 macro option(tid, id) {
   widget container_x = {
-    .aspect = 15;
+    .aspect = 23;
     widget label = {
       .weight = 2.0;
       .id = $tid;
@@ -43,6 +43,7 @@ macro option(tid, id) {
     };
 
     widget selection = {
+	.weight = 2.0;
       .id = $id;
     };
   };

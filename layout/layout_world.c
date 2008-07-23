@@ -27,7 +27,7 @@
 #include "layout.h"
 #include "event.h"
 
-static glw_t *layout_world;
+glw_t *layout_world;
 
 static int fullscreen;
 

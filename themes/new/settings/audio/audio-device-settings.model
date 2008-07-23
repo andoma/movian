@@ -12,10 +12,11 @@ widget label = {
 space 1;
 
 widget list = {
+  .debug = true;
   .orientation = vertical;
   .weight = 9;
   .id = "controllers";
   .slices = 9;
-  .expand = 3;
+  .expand = 2;
 };
 

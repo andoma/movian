@@ -89,6 +89,8 @@ audio_init(void)
   audio_widget_make();
 
   pthread_create(&ptid, NULL, audio_output_thread, NULL);
+
+  audio_mixer_init();
 }
 
 
@@ -222,6 +224,46 @@ audio_add_int_option_on_off(audio_mode_t *am, glw_t *l, const char *title,
   }
 }
 
+/**
+ *
+ */
+static void
+audio_mixdev_cb(void *opaque, void *opaque2, int value)
+{
+  audio_mode_t *am = opaque;
+  mixer_controller_t *mc = opaque2;
+
+  am->am_mixers[value] = mc;
+  audio_mode_save_settings(am);
+}
+
+
+/**
+ *
+ */
+static void
+audio_add_mixer_map(audio_mode_t *am, glw_t *p, int type, const char *title)
+{
+  glw_t *opt, *sel;
+  mixer_controller_t *mc;
+
+  opt = glw_model_create("theme://settings/audio/audio-option.model", p);
+  glw_set_caption(opt, "title", title);
+
+  if((sel = glw_find_by_id(opt, "options", 0)) == NULL)
+    return;
+
+  glw_selection_add_text_option(sel, "Not available", audio_mixdev_cb,
+				am, NULL, type, 
+				am->am_mixers[type] == mc);
+
+  TAILQ_FOREACH(mc, &am->am_mixer_controllers, mc_link) {
+    glw_selection_add_text_option(sel, mc->mc_title, audio_mixdev_cb, 
+				  am, mc, type, 
+				  am->am_mixers[type] == mc);
+  }
+}
+
 
 
 /**
@@ -266,6 +308,20 @@ audio_mode_add_to_settings(audio_mode_t *am, glw_t *parent)
 				&am->am_small_front);
     audio_add_int_option_on_off(am, l, "Force Stereo Downmix:",
 				&am->am_force_downmix);
+  }
+
+  /**
+   * Add any mixer controllers
+   */
+
+  if(TAILQ_FIRST(&am->am_mixer_controllers) != NULL) {
+    audio_add_mixer_map(am, l, AM_MIXER_MASTER,  "Master volume:");
+    audio_add_mixer_map(am, l, AM_MIXER_FRONT,   "Front volume:");
+    audio_add_mixer_map(am, l, AM_MIXER_REAR,    "Rear volume:");
+    audio_add_mixer_map(am, l, AM_MIXER_CENTER,  "Center volume:");
+    audio_add_mixer_map(am, l, AM_MIXER_LFE,     "LFE volume:");
+    audio_add_mixer_map(am, l, AM_MIXER_CENTER_AND_LFE, "Center + LFE volume:");
+    audio_add_mixer_map(am, l, AM_MIXER_SIDE,    "Side volume:");
   }
 
   glw_add_tab(parent, NULL, le, "outputdevice_deck", deck);

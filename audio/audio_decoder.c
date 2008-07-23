@@ -422,7 +422,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
 	    media_pipe_t *mp)
  {
    const uint8_t *swizzle;
-
+   volume_control_t *vc = &global_volume; // Needed for soft-gain
    int16_t tmp[AUDIO_CHAN_MAX];
    int x, y, z, i, c;
    int16_t *data, *src, *dst;
@@ -537,6 +537,18 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
    }
 
 
+   /**
+    * Apply softgain, (if needed)
+    */
+
+   if(vc->vc_soft_gain_needed) {
+     data = data0;
+     for(i = 0; i < frames; i++) {
+       for(c = 0; c < channels; c++)
+	 data[c] = CLIP16((data[c] * vc->vc_soft_gain[c]) >> 16);
+       data += channels;
+     }
+   }
 
    /**
     * Resampling

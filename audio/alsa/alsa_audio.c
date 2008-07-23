@@ -32,7 +32,9 @@
 #include "audio/audio_ui.h"
 #include "audio/audio_iec958.h"
 
-
+/**
+ * Alsa representation of an audio mode
+ */
 typedef struct alsa_audio_mode {
   audio_mode_t aam_head;
 
@@ -41,6 +43,19 @@ typedef struct alsa_audio_mode {
   int aam_sample_rate;
 
 } alsa_audio_mode_t;
+
+/**
+ * Alsa representation of a mixer controller
+ */
+typedef struct alsa_mixer_controller {
+  mixer_controller_t h;
+  snd_mixer_elem_t *amc_elem;
+  int amc_joined;
+
+} alsa_mixer_controller_t;
+
+
+static int alsa_probe_mixer(const char *device, audio_mode_t *am);
 
 #define hts_alsa_debug(fmt...) fprintf(stderr, fmt)
 
@@ -391,7 +406,7 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
  *
  */
 static int
-alsa_probe(const char *dev)
+alsa_probe(const char *card, const char *dev)
 {
   snd_pcm_hw_params_t *hwp;
   snd_pcm_t *h;
@@ -529,6 +544,10 @@ alsa_probe(const char *dev)
   for(i = 0; i < 8; i++)
     aam->aam_head.am_swizzle[i] = i;
 
+  TAILQ_INIT(&aam->aam_head.am_mixer_controllers);
+  if(card != NULL)
+    alsa_probe_mixer(card, &aam->aam_head);
+
   audio_mode_register(&aam->aam_head);
 
   return 0;
@@ -633,7 +652,8 @@ alsa_probe_devices(void)
   int err, cardNum = -1, devNum, subDevCount, i;
   snd_ctl_t *cardHandle;
   snd_pcm_info_t  *pcmInfo;
-  char str[64];
+  char devname[64];
+  char cardname[64];
 
   while(1) {
 
@@ -652,8 +672,8 @@ alsa_probe_devices(void)
     /* Open this card's control interface. We specify only the card
        number -- not any device nor sub-device too */
 
-    snprintf(str, sizeof(str), "hw:%i", cardNum);
-    if((err = snd_ctl_open(&cardHandle, str, 0)) < 0) {
+    snprintf(cardname, sizeof(cardname), "hw:%i", cardNum);
+    if((err = snd_ctl_open(&cardHandle, cardname, 0)) < 0) {
       printf("ALSA: Can't open card %i: %s\n", cardNum, snd_strerror(err));
       continue;
     }
@@ -709,11 +729,11 @@ alsa_probe_devices(void)
 	}
 
 	if(subDevCount > 1)
-	  snprintf(str, sizeof(str), "hw:%i,%i,%i", cardNum, devNum, i);
+	  snprintf(devname, sizeof(devname), "hw:%i,%i,%i", cardNum, devNum, i);
 	else
-	  snprintf(str, sizeof(str), "hw:%i,%i", cardNum, devNum);
+	  snprintf(devname, sizeof(devname), "hw:%i,%i", cardNum, devNum);
 
-	alsa_probe(str);
+	alsa_probe(cardname, devname);
       }
     }
     snd_ctl_close(cardHandle);
@@ -721,194 +741,173 @@ alsa_probe_devices(void)
   snd_config_update_free_global();
 }
 
-
+/**
+ *
+ */
 void
 audio_alsa_init(void)
 {
-  alsa_probe("default");
-  alsa_probe("iec958");
+  alsa_probe("default", "default");
+  alsa_probe(NULL, "iec958");
 
   alsa_probe_devices();
-
-  //  pthread_create(&ptid, NULL, alsa_thread, NULL);
-  //  alsa_mixer_setup();
 }
 
 
+
+
+/**
+ *
+ */
+static float
+alsa_mixer_volume_set(struct mixer_controller *mc, float in)
+{
+  alsa_mixer_controller_t *amc = (void *)mc;
+  long v;
+  float cur;
+
+  /* Some audiocards seem to behave a bit strange at the bottom of its
+     defined volume range, so we don't allow values lower than 
+     'min + 3dB' */
+
+#define ALSA_MIXER_BOTTOM_MARGIN 3 /* dB */
+
+  if(in < mc->mc_min + ALSA_MIXER_BOTTOM_MARGIN) {
+    v = (mc->mc_min + ALSA_MIXER_BOTTOM_MARGIN) * 100.0;
+  } else if(in > mc->mc_max) {
+    v = mc->mc_max * 100.0;
+  } else {
+    v = in * 100.0;
+  }
+
+  if(snd_mixer_selem_set_playback_dB_all(amc->amc_elem, v, 0) < 0)
+    return in;
+  
+  snd_mixer_selem_get_playback_dB(amc->amc_elem, 0, &v);
+  cur = (float)v / 100.0;
+  return in - cur;
+}
+
+
+/**
+ *
+ */
+static int
+alsa_mixer_mute_set(struct mixer_controller *mc, int mute)
+{
+  alsa_mixer_controller_t *amc = (void *)mc;
+
+  return snd_mixer_selem_set_playback_switch_all(amc->amc_elem, !mute);
+}
+
+/**
+ *
+ */
+static void
+alsa_mixer_add_controller(audio_mode_t *am, snd_mixer_elem_t *elem)
+{
+  alsa_mixer_controller_t *amc;
+  mixer_controller_t *mc;
+  long min, max;
+  char buf[30];
+  snd_mixer_selem_id_t *sid = alloca(snd_mixer_selem_id_sizeof());
+  
+  snd_mixer_selem_get_id(elem, sid);
+
+  amc = calloc(1, sizeof(alsa_mixer_controller_t));
+  mc = &amc->h;
+
+  snprintf(buf, sizeof(buf), "Alsa: %s", snd_mixer_selem_id_get_name(sid));
+  mc->mc_title = strdup(buf);
+
+  amc->amc_elem = elem;
+  
+  if(snd_mixer_selem_has_common_volume(elem) ||
+     snd_mixer_selem_has_playback_volume(elem)) {
+
+    amc->amc_joined = snd_mixer_selem_has_playback_volume_joined(elem);
+
+    /* Is a volume controller */
+
+    snd_mixer_selem_get_playback_dB_range(elem, &min, &max);
+
+    mc->mc_min = (float)min / 100.0f;
+    mc->mc_max = (float)max / 100.0f;
+
+    snd_mixer_selem_get_playback_dB(elem, 0, &min);
+
+    mc->mc_set_volume = alsa_mixer_volume_set;
+
+    if(snd_mixer_selem_has_common_switch(elem) || 
+       snd_mixer_selem_has_playback_switch(elem)) {
+      mc->mc_set_mute = alsa_mixer_mute_set;
+    }
+    mc->mc_type = MC_TYPE_SLIDER;
+
+    if(!strcmp("Master", snd_mixer_selem_id_get_name(sid))) {
+      am->am_mixers[AM_MIXER_MASTER] = mc;
+    }
+  } else {
+    return;
+  } 
 
 #if 0
-static ic_t  alsa_master_volume_input;
-static float alsa_master_volume;
-static int   alsa_master_mute;
-static snd_mixer_elem_t *alsa_mixer_element;
-
-
-
-/**
- * Mixer update
- */
-
-static void
-mixer_write(float vol, int mute)
-{
-  snd_mixer_elem_t *e = alsa_mixer_element;
-
-  if(e == NULL)
-    return;
-
-  /* Mute flag */
-
-  if(snd_mixer_selem_has_playback_switch_joined(e)) {
-    snd_mixer_selem_set_playback_switch_all(e, !mute);
-  } else {
-    snd_mixer_selem_set_playback_switch(e, SND_MIXER_SCHN_FRONT_LEFT,  !mute);
-    snd_mixer_selem_set_playback_switch(e, SND_MIXER_SCHN_FRONT_RIGHT, !mute);
+  if(snd_mixer_selem_has_common_switch(elem) || 
+     snd_mixer_selem_has_playback_switch(elem)) {
+    printf("\t%s is a simple switch\n", mc->mc_title);
   }
 
-  vol = 100.0f * vol;
-
-  /* Volume */
-
-  snd_mixer_selem_set_playback_volume(e, SND_MIXER_SCHN_FRONT_LEFT,  vol);
-  snd_mixer_selem_set_playback_volume(e, SND_MIXER_SCHN_FRONT_RIGHT, vol);
-}
-
-
-
-
-/**
- *
- */
-
-
-static void *
-alsa_master_volume_thread(void *aux)
-{
-  int key;
-  float v;
-
-  while(1) {
-    key = input_getkey(&alsa_master_volume_input, 1);
-
-    v = alsa_master_volume / 10.0;
-    if(v < 0.01)
-      v = 0.01;
-
-    switch(key) {
-    case INPUT_KEY_VOLUME_UP:
-      alsa_master_volume += v;
-      break;
-
-    case INPUT_KEY_VOLUME_DOWN:
-      alsa_master_volume -= v;
-      break;
-
-    case INPUT_KEY_VOLUME_MUTE:
-      alsa_master_mute = !alsa_master_mute;
-      break;
-    }
-
-    if(alsa_master_volume > 1.0f)
-      alsa_master_volume = 1.0f;
-    else if(alsa_master_volume < 0.0f)
-      alsa_master_volume = 0.0f;
-
-    mixer_write(alsa_master_volume, alsa_master_mute);
-    audio_ui_vol_changed(alsa_master_volume, alsa_master_mute);
+  if (snd_mixer_selem_is_enumerated(elem)) {
+    printf("%s is enumerated\n", mc->mc_title);
   }
-}
-
-
-/**
- *
- */
-
-static int
-alsa_mixer_input_event(inputevent_t *ie)
-{
-  switch(ie->type) {
-  default:
-    break;
-
-  case INPUT_KEY:
-
-    switch(ie->u.key) {
-    default:
-      break;
-
-    case INPUT_KEY_VOLUME_UP:
-    case INPUT_KEY_VOLUME_DOWN:
-    case INPUT_KEY_VOLUME_MUTE:
-      input_keystrike(&alsa_master_volume_input, ie->u.key);
-      return 1;
-    }
-    break;
-  }
-  return 0;
-}
-
-
-
-
-
-
-
-static int
-alsa_mixer_setup(void)
-{
-  snd_mixer_t *mixer;
-  const char *mixerdev = "hw:0";
-  snd_mixer_selem_id_t *sid;
-  snd_mixer_elem_t *e;
-  long v;
-  int r;
-  pthread_t ptid;
-
-  /* Open mixer */
-
-  if((r = snd_mixer_open(&mixer, 0)) < 0) {
-    fprintf(stderr, "Cannot open mixer\n");
-    return 1;
-  }
-
-  if((r = snd_mixer_attach(mixer, mixerdev)) < 0) {
-    fprintf(stderr, "Cannot attach mixer\n");
-    snd_mixer_close(mixer);
-    return 1;
-  }
-  
-  if((r = snd_mixer_selem_register(mixer, NULL, NULL)) < 0) {
-    fprintf(stderr, "Cannot register mixer\n");
-    snd_mixer_close(mixer);
-    return 1;
-  }
-
-  if((r = snd_mixer_load(mixer)) < 0) {
-    fprintf(stderr, "Cannot load mixer\n");
-    snd_mixer_close(mixer);
-    return 1;
-  }
-
-
-  sid = alloca(snd_mixer_selem_id_sizeof());
-  memset(sid, 0, snd_mixer_selem_id_sizeof());
-
-  snd_mixer_selem_id_set_name(sid,
-			      config_get_str("alsa-mixer-element", "Master"));
-
-  e = snd_mixer_find_selem(mixer, sid);
-  if(e != NULL) {
-    snd_mixer_selem_set_playback_volume_range(e, 0, 100);
-    snd_mixer_selem_get_playback_volume(e, SND_MIXER_SCHN_FRONT_LEFT, &v);
-    alsa_master_volume = v / 100.0;
-  }
-
-  input_init(&alsa_master_volume_input);
-  pthread_create(&ptid, NULL, &alsa_master_volume_thread, NULL);
-  inputhandler_register(200, alsa_mixer_input_event);
-
-  alsa_mixer_element = e;
-  return 0;
-
-}
 #endif
+
+  TAILQ_INSERT_TAIL(&am->am_mixer_controllers, mc, mc_link);
+}
+
+
+
+/**
+ *
+ */
+static int
+alsa_probe_mixer(const char *device, audio_mode_t *am)
+{
+  int err;
+  snd_mixer_t *handle;
+  snd_mixer_elem_t *elem;
+	
+  if((err = snd_mixer_open(&handle, 0)) < 0) {
+    fprintf(stderr, 
+	    "Mixer %s open error: %s\n", device, snd_strerror(err));
+    return err;
+  }
+
+  if((err = snd_mixer_attach(handle, device)) < 0) {
+    fprintf(stderr, "Mixer attach %s error: %s",
+	    device, snd_strerror(err));
+    snd_mixer_close(handle);
+    return err;
+  }
+
+  if((err = snd_mixer_selem_register(handle, NULL, NULL)) < 0) {
+    fprintf(stderr, 
+	    "Mixer %s register error: %s", device, snd_strerror(err));
+    snd_mixer_close(handle);
+    return err;
+  }
+
+  if((err = snd_mixer_load(handle)) < 0) {
+    fprintf(stderr, 
+	    "Mixer %s load error: %s", device, snd_strerror(err));
+    snd_mixer_close(handle);
+    return err;
+  }
+
+  for(elem = snd_mixer_first_elem(handle); elem; 
+      elem = snd_mixer_elem_next(elem)) {
+
+    alsa_mixer_add_controller(am, elem);
+  }
+  return 0;
+}
