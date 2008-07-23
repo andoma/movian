@@ -41,6 +41,8 @@ typedef void (fa_scandir_callback_t)(void *arg, const char *url,
  */
 typedef struct fa_protocol {
 
+  void (*fap_init)(void);
+
   LIST_ENTRY(fa_protocol) fap_link;
 
   const char *fap_name;

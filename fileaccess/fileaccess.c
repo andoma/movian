@@ -217,6 +217,7 @@ fa_closedir(void *handle)
  {									      \
    extern  fa_protocol_t fa_protocol_ ## a;				      \
    LIST_INSERT_HEAD(&fileaccess_all_protocols, &fa_protocol_ ## a, fap_link); \
+   if(fa_protocol_ ## a.fap_init != NULL) fa_protocol_ ## a.fap_init();	      \
  }
 
 void
