@@ -103,6 +103,22 @@ smb_get_thread_context(void)
 /**
  *
  */
+
+typedef struct smbdirentry {
+  int type;
+  char name[0];
+} smbdirentry_t;
+
+static int
+smb_scandir_sort(const void *A, const void *B)
+{
+  const smbdirentry_t *a = *(smbdirentry_t * const *)A;
+  const smbdirentry_t *b = *(smbdirentry_t * const *)B;
+
+  return strcmp(a->name, b->name);
+
+}
+
 static int
 smb_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
 {
@@ -110,6 +126,11 @@ smb_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
   SMBCFILE *fd;
   struct smbc_dirent *dirent;
   char buf[256];
+  int l, i;
+
+  /* Sorting */
+  int svec_len, svec_size;
+  smbdirentry_t **svec, *sde;
 
   if(ctx == NULL)
     return -1;
@@ -117,25 +138,51 @@ smb_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
   if((fd = ctx->opendir(ctx, url)) == NULL)
     return -1;
 
+  svec_size = 100;
+  svec_len = 0;
+  svec = malloc(svec_size * sizeof(struct smbdirentry_t *));
+
   while((dirent = ctx->readdir(ctx, fd)) != NULL) {
     if(dirent->name[0] == 0 || dirent->name[0] == '.')
       continue;
 
-    snprintf(buf, sizeof(buf), "%s/%s", url, dirent->name);
+    l = strlen(dirent->name);
+    sde = malloc(sizeof(smbdirentry_t) + l + 1);
+    sde->type = dirent->smbc_type;
+    memcpy(sde->name, dirent->name, l);
+    sde->name[l] = 0;
 
-    switch(dirent->smbc_type) {
+    svec[svec_len++] = sde;
+
+    if(svec_len == svec_size) {
+      svec_size *= 2;
+      svec = realloc(svec, svec_size * sizeof(struct smbdirentry_t *));
+    }
+  }
+
+  ctx->close_fn(ctx, fd);
+
+  qsort(svec, svec_len, sizeof(struct smbdirentry_t *), smb_scandir_sort);
+
+  for(i = 0; i < svec_len; i++) {
+  
+    sde = svec[i];
+
+    snprintf(buf, sizeof(buf), "%s/%s", url, sde->name);
+
+    switch(sde->type) {
     case SMBC_FILE_SHARE:
     case SMBC_DIR:
-      cb(arg, buf, dirent->name, FA_DIR);
+      cb(arg, buf, sde->name, FA_DIR);
       break;
 
     case SMBC_FILE:
-      cb(arg, buf, dirent->name, FA_FILE);
+      cb(arg, buf, sde->name, FA_FILE);
       break;
     }
+    free(sde);
   }
-  
-  ctx->close_fn(ctx, fd);
+  free(svec);
   return 0;
 }
 
