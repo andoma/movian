@@ -57,7 +57,7 @@ const char *
 fa_resolve_proto(const char *url, fa_protocol_t **p)
 {
   fa_protocol_t *fap;
-
+  const char *url0 = url;
   char proto[30];
   int n = 0;
 
@@ -74,7 +74,7 @@ fa_resolve_proto(const char *url, fa_protocol_t **p)
   LIST_FOREACH(fap, &fileaccess_all_protocols, fap_link)
     if(!strcmp(fap->fap_name, proto)) {
       *p = fap;
-      return url;
+      return fap->fap_flags & FAP_INCLUDE_PROTO_IN_URL ? url0 : url;
     }
   return NULL;
 }
