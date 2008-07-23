@@ -8,7 +8,7 @@ SRCS = 	main.c app.c media.c coms.c event.c
 
 VPATH += fileaccess
 SRCS  += fileaccess.c fa_probe.c fa_tags.c fa_imageloader.c fa_rawloader.c
-SRCS  += fa_fs.c fa_rar.c
+SRCS  += fa_fs.c fa_rar.c fa_smb.c
 
 # Display
 
@@ -119,6 +119,13 @@ LDFLAGS += -L/usr/local/lib -L$(LIBS_INSTALL_BASE) -L/usr/X11R6/lib
 
 SLIBS += ${LIBHTS_SLIBS} ${LIBGLW_SLIBS} ${LIBDVDNAV_SLIBS}
 DLIBS += ${LIBHTS_DLIBS} ${LIBGLW_DLIBS} ${LIBDVDNAV_DLIBS}
+
+#
+# libsmbclient
+#
+
+SLIBS += ${LIBSMBCLIENT_SLIBS}
+DLIBS += ${LIBSMBCLIENT_DLIBS}
 
 #
 # curl

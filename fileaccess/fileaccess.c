@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config.h"
+
 #define _GNU_SOURCE
 
 #include <pthread.h>
@@ -226,6 +228,9 @@ fileaccess_init(void)
   INITPROTO(fs);
   INITPROTO(rar);
   INITPROTO(theme);
+#ifdef HAVE_LIBSMBCLIENT
+  INITPROTO(smb);
+#endif
   register_protocol(&fa_lavf_proto);
 }
 
