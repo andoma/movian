@@ -135,6 +135,24 @@ audio_output_thread(void *aux)
  *
  */
 static void
+audio_mode_load_mixer_map( htsmsg_t *m, audio_mode_t *am, 
+			   const char *name, int type)
+{
+  const char *s;
+  mixer_controller_t *mc;
+  if((s = htsmsg_get_str(m, name)) == NULL)
+    return;
+
+  TAILQ_FOREACH(mc, &am->am_mixer_controllers, mc_link) {
+    if(!strcmp(mc->mc_title, s))
+      am->am_mixers[type] = mc;
+  }
+}
+
+/**
+ *
+ */
+static void
 audio_mode_load_settings(audio_mode_t *am)
 {
   htsmsg_t *m = hts_settings_load("audio/devices/%s", am->am_id);
@@ -148,8 +166,28 @@ audio_mode_load_settings(audio_mode_t *am)
   htsmsg_get_u32(m, "force_downmix", &am->am_force_downmix);
   htsmsg_get_u32(m, "swap_surround", &am->am_swap_surround);
 
+  audio_mode_load_mixer_map(m, am, "mixer_master",     AM_MIXER_MASTER);
+  audio_mode_load_mixer_map(m, am, "mixer_front",      AM_MIXER_FRONT);
+  audio_mode_load_mixer_map(m, am, "mixer_rear",       AM_MIXER_REAR);
+  audio_mode_load_mixer_map(m, am, "mixer_center",     AM_MIXER_CENTER);
+  audio_mode_load_mixer_map(m, am, "mixer_center_lfe", AM_MIXER_CENTER_AND_LFE);
+  audio_mode_load_mixer_map(m, am, "mixer_lfe",        AM_MIXER_LFE);
+  audio_mode_load_mixer_map(m, am, "mixer_side",       AM_MIXER_SIDE);
+
   htsmsg_destroy(m);
 
+}
+
+/**
+ *
+ */
+static void
+audio_mode_save_mixer_map( htsmsg_t *m, audio_mode_t *am, 
+			   const char *name, int type)
+{
+  if(am->am_mixers[type] == NULL)
+    return;
+  htsmsg_add_str(m, name, am->am_mixers[type]->mc_title);
 }
 
 
@@ -166,6 +204,14 @@ audio_mode_save_settings(audio_mode_t *am)
   htsmsg_add_u32(m, "small_front", am->am_small_front);
   htsmsg_add_u32(m, "force_downmix", am->am_force_downmix);
   htsmsg_add_u32(m, "swap_surround", am->am_swap_surround);
+
+  audio_mode_save_mixer_map(m, am, "mixer_master",     AM_MIXER_MASTER);
+  audio_mode_save_mixer_map(m, am, "mixer_front",      AM_MIXER_FRONT);
+  audio_mode_save_mixer_map(m, am, "mixer_rear",       AM_MIXER_REAR);
+  audio_mode_save_mixer_map(m, am, "mixer_center",     AM_MIXER_CENTER);
+  audio_mode_save_mixer_map(m, am, "mixer_center_lfe", AM_MIXER_CENTER_AND_LFE);
+  audio_mode_save_mixer_map(m, am, "mixer_lfe",        AM_MIXER_LFE);
+  audio_mode_save_mixer_map(m, am, "mixer_side",       AM_MIXER_SIDE);
 
   hts_settings_save(m, "audio/devices/%s", am->am_id);
   htsmsg_destroy(m);
