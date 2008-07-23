@@ -337,6 +337,8 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
     if(audio_mode_stereo_only(am))
       ctx->request_channels = 2; /* We can only output stereo.
 				    Ask codecs to do downmixing for us. */
+    else
+      ctx->request_channels = 0;
 
     r = avcodec_decode_audio(ctx, ad->ad_outbuf, &data_size, buf, size);
     if(r == -1) {
