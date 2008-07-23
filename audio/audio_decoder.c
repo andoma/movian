@@ -511,8 +511,8 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
        data[0] = CLIP16(x);
        data[1] = CLIP16(y);
        data[5] = 0;
+       data += channels;
      }
-     data += channels;
    }
 
 
@@ -532,8 +532,8 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
        data[0] = CLIP16(x);
        data[1] = CLIP16(y);
        data[4] = 0;
+       data += channels;
      }
-     data += channels;
    }
 
 
