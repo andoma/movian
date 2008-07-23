@@ -38,7 +38,7 @@
 #define IEC958_PAYLOAD_DTS_2                        12
 #define IEC958_PAYLOAD_DTS_3                        13
 
-int iec958_build_ac3frame(uint8_t *src, size_t srcsize, uint8_t *dst);
-int iec958_build_dtsframe(uint8_t *src, size_t srcsize, uint8_t *dst);
+int iec958_build_ac3frame(const uint8_t *src, size_t srcsize, uint8_t *dst);
+int iec958_build_dtsframe(const uint8_t *src, size_t srcsize, uint8_t *dst);
 
 #endif /* AUDIO_IEC958_H */

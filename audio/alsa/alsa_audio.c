@@ -272,14 +272,18 @@ alsa_open(alsa_audio_mode_t *aam, int format, int rate)
  *
  */
 static void
-alsa_silence(snd_pcm_t *h, int format, int rate)
+alsa_silence(snd_pcm_t *h, int format, int rate, void *tmpbuf)
 {
-  static int16_t *silence;
+  int frames;
 
-  if(silence == NULL)
-    silence = calloc(1, sizeof(int16_t) * 500 * 8);
+  if(format == AM_FORMAT_AC3) {
+    frames = iec958_build_ac3frame(NULL, 0, tmpbuf);
+  } else {
+    memset(tmpbuf, 0, 500 * sizeof(int16_t) * 8);
+    frames = 500;
+  }
 
-  snd_pcm_writei(h, silence, 500);
+  snd_pcm_writei(h, tmpbuf, frames);
 }
 
 
@@ -302,6 +306,10 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
   snd_pcm_sframes_t fr;
   int d;
   int64_t pts = AV_NOPTS_VALUE;
+  int ret = 0;
+  void *tmpbuf;
+
+  tmpbuf = calloc(1, IEC958_MAX_FRAME_SIZE);
 
   while(1) {
 
@@ -322,7 +330,7 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
       assert(h != NULL);
     silence:
       pts = AV_NOPTS_VALUE;
-      alsa_silence(h, cur_format, cur_rate);
+      alsa_silence(h, cur_format, cur_rate, tmpbuf);
       silence_threshold--;
       if(silence_threshold < 0) {
 	/* We've been silent for a while, close output device */
@@ -353,12 +361,34 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
 
       pts = AV_NOPTS_VALUE;
 
-      if((h = alsa_open(aam, cur_format, cur_rate)) == NULL)
-	return -1;
+      if((h = alsa_open(aam, cur_format, cur_rate)) == NULL) {
+	ret = -1;
+	break;
+      }
     }
 
-    outbuf = (void *)ab->ab_data;
-    outlen = ab->ab_frames;
+
+    switch(cur_format) {
+
+    case AM_FORMAT_AC3:
+      outlen = iec958_build_ac3frame((void *)ab->ab_data, 
+				     ab->ab_frames, tmpbuf);
+      outbuf = tmpbuf;
+      break;
+
+    case AM_FORMAT_DTS:
+      outlen = iec958_build_dtsframe((void *)ab->ab_data,
+				     ab->ab_frames, tmpbuf);
+      outbuf = tmpbuf;
+      break;
+
+    default:
+      outbuf = (void *)ab->ab_data;
+      outlen = ab->ab_frames;
+      break;
+
+    }
+
     silence_threshold = 500; /* About 5 seconds */
     
     c = snd_pcm_wait(h, 100);
@@ -399,7 +429,9 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
     }
     ab_free(ab);
   }
-  return 0;
+
+  free(tmpbuf);
+  return ret;
 }
 
 /**

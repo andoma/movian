@@ -282,6 +282,30 @@ ad_thread(void *aux)
   pthread_mutex_unlock(&mp->mp_mutex);
   return NULL;
 }
+/**
+ *
+ */
+static void
+audio_deliver_passthru(media_buf_t *mb, audio_decoder_t *ad, int format)
+{
+  audio_fifo_t *af = thefifo;
+  audio_buf_t *ab;
+
+  ab = af_alloc(mb->mb_size);
+  ab->ab_channels = 2;
+  ab->ab_format   = format;
+  ab->ab_rate     = AM_SR_48000;
+  ab->ab_frames   = mb->mb_size;
+  ab->ab_pts      = mb->mb_pts;
+
+  memcpy(ab->ab_data, mb->mb_data, mb->mb_size);
+  
+  ab->ab_ref = ad; /* A reference to our decoder. This is used
+		      to revert out packets in the play queue during
+		      a pause event */
+  
+  af_enq(af, ab);
+}
 
 
 /**
@@ -299,19 +323,20 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
   int64_t pts;
 
   ctx = cw->codec_ctx;
-#if 0
 
-  if(primary_audio == mp) switch(ctx->codec_id) {
+
+  if(TAILQ_FIRST(&audio_decoders) == ad) {
+    switch(ctx->codec_id) {
     case CODEC_ID_AC3:
-      if(mixer_hw_output_formats & AUDIO_OUTPUT_AC3) {
-	ab_enq_passthru(ad, mp, mb, AUDIO_OUTPUT_AC3);
+      if(am->am_formats & AM_FORMAT_AC3) {
+	audio_deliver_passthru(mb, ad, AM_FORMAT_AC3);
 	return;
       }
       break;
 
     case CODEC_ID_DTS:
-      if(mixer_hw_output_formats & AUDIO_OUTPUT_DTS) {
-	ab_enq_passthru(ad, mp, mb, AUDIO_OUTPUT_DTS);
+      if(am->am_formats & AM_FORMAT_DTS) {
+	audio_deliver_passthru(mb, ad, AM_FORMAT_DTS);
 	return;
       }
       break;
@@ -319,8 +344,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
     default:
       break;
     }
-#endif
-
+  }
   buf = mb->mb_data;
   size = mb->mb_size;
   pts = mb->mb_pts;

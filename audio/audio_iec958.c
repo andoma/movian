@@ -31,17 +31,20 @@
  */
 
 int
-iec958_build_ac3frame(uint8_t *src, size_t framesize, uint8_t *dst)
+iec958_build_ac3frame(const uint8_t *src, size_t framesize, uint8_t *dst)
 {
   dst[0] = 0x72;  dst[1] = 0xf8;  dst[2] = 0x1f;  dst[3] = 0x4e;
   dst[4] = IEC958_PAYLOAD_AC3;
-  dst[5] = src[5] & 7;
-
-  swab(src, dst + 8, framesize);
-  memset(dst + 8 + framesize, 0,  IEC958_AC3_FRAME_SIZE - framesize - 8);
-  framesize *= 8;
-  dst[6] = framesize;
-  dst[7] = framesize >> 8;
+  if(src == NULL) {
+    memset(dst + 5, 0, IEC958_AC3_FRAME_SIZE - 5);
+  } else {
+    dst[5] = src[5] & 7;
+    swab(src, dst + 8, framesize);
+    memset(dst + 8 + framesize, 0,  IEC958_AC3_FRAME_SIZE - framesize - 8);
+    framesize *= 8;
+    dst[6] = framesize;
+    dst[7] = framesize >> 8;
+  }
   return IEC958_AC3_FRAME_SIZE / 4; /* 2 channels, 16 bit / ch */
 }
 
@@ -52,7 +55,7 @@ iec958_build_ac3frame(uint8_t *src, size_t framesize, uint8_t *dst)
 
 
 static int 
-dts_decode_header(uint8_t *src, int *rate, int *nblks)
+dts_decode_header(const uint8_t *src, int *rate, int *nblks)
 {
   int ftype, surp, fsize, amode;
   uint32_t sync;
@@ -80,7 +83,7 @@ dts_decode_header(uint8_t *src, int *rate, int *nblks)
 }
 
 int
-iec958_build_dtsframe(uint8_t *src, size_t srclen, uint8_t *dst)
+iec958_build_dtsframe(const uint8_t *src, size_t srclen, uint8_t *dst)
 {
   int nblks, fsize, rate, burst_len, nr_samples;
   uint8_t *dst0 = dst;
