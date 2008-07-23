@@ -30,7 +30,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include "showtime.h"
-#include "fa_fs.h"
+#include "fileaccess.h"
 
 static int 
 scan_filter(const struct dirent *d)
