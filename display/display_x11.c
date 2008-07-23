@@ -70,6 +70,9 @@ static struct strtab displaymodetab[] = {
 
 static glw_t *display_settings_model;
 
+PFNGLXGETVIDEOSYNCSGIPROC _glXGetVideoSyncSGI;
+PFNGLXWAITVIDEOSYNCSGIPROC _glXWaitVideoSyncSGI;
+
 /**
  * Load display settings
  */
@@ -395,6 +398,12 @@ gl_sysglue_init(int argc, char **argv)
 	    x11state.displayname);
     exit(1);
   }
+
+  _glXGetVideoSyncSGI = (PFNGLXGETVIDEOSYNCSGIPROC)
+    glXGetProcAddress((const GLubyte*)"glXGetVideoSyncSGI");
+  _glXWaitVideoSyncSGI = (PFNGLXWAITVIDEOSYNCSGIPROC)
+    glXGetProcAddress((const GLubyte*)"glXWaitVideoSyncSGI");
+
   window_open();
 }
 
@@ -497,7 +506,7 @@ gl_sysglue_mainloop(void)
   int w, h;
   unsigned int retraceCount = 0, prev;
 
-  glXGetVideoSyncSGI(&retraceCount);
+  _glXGetVideoSyncSGI(&retraceCount);
 
   while(1) {
 
@@ -538,7 +547,7 @@ gl_sysglue_mainloop(void)
     prev = retraceCount;
 
     if(x11state.do_videosync)
-      glXWaitVideoSyncSGI(2, (retraceCount+1)%2, &retraceCount);
+      _glXWaitVideoSyncSGI(2, (retraceCount+1)%2, &retraceCount);
 
     glXSwapBuffers(x11state.display, x11state.win);
     if(gl_update_timings()) {
