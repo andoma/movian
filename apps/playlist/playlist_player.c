@@ -111,9 +111,12 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
   playlist_event_t *pe;
   event_ts_t *et;
   int64_t pts;
+  char faurl[1000];
 
-  if(av_open_input_file(&fctx, ple->ple_url, NULL, 0, NULL) != 0) {
-    fprintf(stderr, "Unable to open input file\n");
+  snprintf(faurl, sizeof(faurl), "showtime:%s", ple->ple_url);
+
+  if(av_open_input_file(&fctx, faurl, NULL, 0, NULL) != 0) {
+    fprintf(stderr, "Unable to open input file %s\n", ple->ple_url);
     return playlist_advance(ple, 0);
   }
 
