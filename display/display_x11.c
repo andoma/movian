@@ -336,6 +336,8 @@ GLXExtensionSupported(Display *dpy, const char *extension)
     const char *extensionsString, *pos;
 
     extensionsString = glXQueryExtensionsString(dpy, DefaultScreen(dpy));
+    if(extensionsString == NULL)
+      return 0;
 
     pos = strstr(extensionsString, extension);
 
