@@ -564,7 +564,7 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 
   dvd_player_loop(dp);
 
-
+  glw_destroy(dp->dp_status);
 
   ai->ai_req_fullscreen = 0;
 
