@@ -1,0 +1,5 @@
+#include "include/popups"
+
+space 2.0;
+
+error("Access error", "Exit browser");

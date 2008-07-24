@@ -43,3 +43,54 @@ macro are_you_sure(title) {
     };
   };
 };
+
+
+
+macro error(title, otheropt) {
+
+  widget form = {
+
+    widget container_y = {
+
+      widget bitmap = {
+	.color = [0.6 0.6 0.6];
+	.source = "theme://images/plate-titled-top.png";
+	.textureBorders = [0.1 0.1 0.1 0.1];
+	.vertexBorders  = [0.1 0.1 0.1 0.1];
+	.borderScale = true;
+	
+	widget label = {
+	  .caption = $title;
+	  .align = center;
+	};
+      };
+
+      widget bitmap = {
+	.weight = 4.0;
+	.color = [0.3 0.3 0.3];
+	.source = "theme://images/plate-titled-bottom.png";
+	.textureBorders = [0.1 0.1 0.1 0.1];
+	.vertexBorders  = [0.1 0.1 0.1 0.1];
+	.borderScale = true;
+      
+	widget container_y = {
+	
+	  widget label = {
+	    .weight = 1.5;
+	    .align = center;
+	    .id = "detailedError";
+	  };
+	  space  0.5;
+
+	  widget container_x = {
+	    space 0.5;
+	    form_button("Retry", "theme://images/ok.png",  ok, [0 0.3 0]);
+	    space 0.5;
+	    form_button($otheropt, "theme://images/no.png", cancel, [0.3 0.0 0]);
+	    space 0.5;
+	  };
+	};
+      };
+    };
+  };
+};

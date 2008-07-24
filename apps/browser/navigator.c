@@ -119,35 +119,19 @@ static int
 nav_access_error(navigator_t *nav, appi_t *ai, const char *dir, 
 		 const char *errtxt)
 {
-  abort();
-#if 0
-  struct layout_form_entry_list lfelist;
+  int r;
   glw_t *m;
-  inputevent_t ie;
   char errbuf[400];
 
   snprintf(errbuf, sizeof(errbuf),
-	   "Unable to access\n"
-	   "%s\n"
+	   "\"%s\"\n"
 	   "%s", dir, errtxt);
 
-  TAILQ_INIT(&lfelist);
-
-  m = glw_create(GLW_MODEL,
-		 GLW_ATTRIB_PARENT, nav->nav_stack,
-		 GLW_ATTRIB_FILENAME, "browser/access-error",
-		 NULL);
-
-  layout_update_multilinetext(m, "text", errbuf, 5, GLW_ALIGN_CENTER);
-
-  LFE_ADD_BTN(&lfelist, "ignore", 0);
-  LFE_ADD_BTN(&lfelist, "exit",   -1);
-  
-  layout_form_query(&lfelist, m, &ai->ai_gfs, &ie);
+  m = glw_model_create("theme://browser/access-error.model", nav->nav_stack);
+  glw_set_caption(m, "detailedError", errbuf);
+  r = glw_wait_form_ok_cancel(m);
   glw_detach(m);
-  return ie.u.u32;
-#endif
-
+  return r;
 }
 
 
@@ -203,10 +187,9 @@ nav_main(navigator_t *nav, appi_t *ai, navconfig_t *cfg)
   bn = br->br_root;
 
   browser_view_expand_node(bn, nav->nav_stack);
-  r = browser_scandir(bn, 0);
 
-  if(r != 0 && nav_access_error(nav, ai, rooturl, strerror(r)))
-    run = 0;
+  while(run && (r = browser_scandir(bn, 0)) != 0)
+    run = !nav_access_error(nav, ai, rooturl, strerror(r));
 
   nav_store_instance(ai, cfg);
 
