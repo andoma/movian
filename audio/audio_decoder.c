@@ -29,7 +29,7 @@
 extern audio_fifo_t *thefifo;
 
 static struct audio_decoder_queue audio_decoders;
-static pthread_mutex_t audio_decoders_mutex;
+static hts_mutex_t audio_decoders_mutex;
 
 #define CLIP16(a) ((a) > 32767 ? 32767 : ((a) < -32768 ? -32768 : a))
 
@@ -88,11 +88,11 @@ audio_decoder_create(media_pipe_t *mp)
 
   TAILQ_INIT(&ad->ad_hold_queue);
 
-  pthread_mutex_lock(&audio_decoders_mutex);
+  hts_mutex_lock(&audio_decoders_mutex);
   TAILQ_INSERT_TAIL(&audio_decoders, ad, ad_link);
-  pthread_mutex_unlock(&audio_decoders_mutex);
+  hts_mutex_unlock(&audio_decoders_mutex);
 
-  pthread_create(&ad->ad_ptid, NULL, ad_thread, ad);
+  hts_thread_create(&ad->ad_tid, ad_thread, ad);
   return ad;
 }
 
@@ -106,11 +106,11 @@ audio_decoder_create(media_pipe_t *mp)
 void
 audio_decoder_destroy(audio_decoder_t *ad)
 {
-  pthread_join(ad->ad_ptid, NULL);
+  hts_thread_join(ad->ad_tid);
   audio_fifo_clear_queue(&ad->ad_hold_queue);
-  pthread_mutex_lock(&audio_decoders_mutex);
+  hts_mutex_lock(&audio_decoders_mutex);
   TAILQ_REMOVE(&audio_decoders, ad, ad_link);
-  pthread_mutex_unlock(&audio_decoders_mutex);
+  hts_mutex_unlock(&audio_decoders_mutex);
 
   close_resampler(ad);
   av_freep(&ad->ad_outbuf);
@@ -124,10 +124,10 @@ void
 audio_decoder_acquire_output(audio_decoder_t *ad)
 {
   printf("%s: Acquire output!\n",ad->ad_mp->mp_name);
-  pthread_mutex_lock(&audio_decoders_mutex);
+  hts_mutex_lock(&audio_decoders_mutex);
   TAILQ_REMOVE(&audio_decoders, ad, ad_link);
   TAILQ_INSERT_HEAD(&audio_decoders, ad, ad_link);
-  pthread_mutex_unlock(&audio_decoders_mutex);
+  hts_mutex_unlock(&audio_decoders_mutex);
 }
 
 /**
@@ -215,7 +215,7 @@ ad_thread(void *aux)
   media_queue_t *mq = &mp->mp_audio;
   media_buf_t *mb;
 
-  pthread_mutex_lock(&mp->mp_mutex);
+  hts_mutex_lock(&mp->mp_mutex);
 
   while(mp->mp_playstatus != MP_STOP) {
 
@@ -223,12 +223,12 @@ ad_thread(void *aux)
     switch(mp->mp_playstatus) {
     case MP_PAUSE:
       audio_fifo_purge(thefifo, ad, &ad->ad_hold_queue);
-      pthread_cond_wait(&mq->mq_avail, &mp->mp_mutex);
+      hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
       continue;
 
     case MP_PLAY:
       if(mb == NULL) {
-	pthread_cond_wait(&mq->mq_avail, &mp->mp_mutex);
+	hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
 	continue;
       }
       break;
@@ -236,20 +236,20 @@ ad_thread(void *aux)
     case MP_VIDEOSEEK_PLAY:
     case MP_VIDEOSEEK_PAUSE:
       if(mb == NULL) {
-	pthread_cond_wait(&mq->mq_avail, &mp->mp_mutex);
+	hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
 	continue;
       }
 
       if(mb->mb_dts < mp->mp_videoseekdts) {
 	TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
 	mq->mq_len--;
-	pthread_cond_signal(&mp->mp_backpressure);
+	hts_cond_signal(&mp->mp_backpressure);
 	media_buf_free(mb);
 	continue;
       }
 
       audio_fifo_purge(thefifo, ad, &ad->ad_hold_queue);
-      pthread_cond_wait(&mq->mq_avail, &mp->mp_mutex);
+      hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
       continue;
 
     default:
@@ -258,8 +258,8 @@ ad_thread(void *aux)
 
     TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
     mq->mq_len--;
-    pthread_cond_signal(&mp->mp_backpressure);
-    pthread_mutex_unlock(&mp->mp_mutex);
+    hts_cond_signal(&mp->mp_backpressure);
+    hts_mutex_unlock(&mp->mp_mutex);
 
     switch(mb->mb_data_type) {
     default:
@@ -276,10 +276,10 @@ ad_thread(void *aux)
       break;
     }
     media_buf_free(mb);
-    pthread_mutex_lock(&mp->mp_mutex);
+    hts_mutex_lock(&mp->mp_mutex);
   }
 
-  pthread_mutex_unlock(&mp->mp_mutex);
+  hts_mutex_unlock(&mp->mp_mutex);
   return NULL;
 }
 /**
@@ -972,7 +972,7 @@ audio_decoder_event_handler(glw_event_t *ge)
     return 0;
   }
 
-  pthread_mutex_lock(&audio_decoders_mutex);
+  hts_mutex_lock(&audio_decoders_mutex);
 
   ad = TAILQ_FIRST(&audio_decoders);
   if(ad != NULL) {
@@ -983,7 +983,7 @@ audio_decoder_event_handler(glw_event_t *ge)
     }
   }
 
-  pthread_mutex_unlock(&audio_decoders_mutex);
+  hts_mutex_unlock(&audio_decoders_mutex);
   return r;
 }
 

@@ -17,7 +17,6 @@
  */
 
 #define _GNU_SOURCE
-#include <pthread.h>
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -380,11 +379,11 @@ tv_subscribe(tv_t *tv, htsp_connection_t *hc, uint32_t id)
 {
   tv_channel_t *ch;
 
-  pthread_mutex_lock(&tv->tv_ch_mutex);
+  hts_mutex_lock(&tv->tv_ch_mutex);
   if((ch = tv_channel_find_by_tag(tv, id)) != NULL) {
     htsp_subscribe(hc, ch);
   }
-  pthread_mutex_unlock(&tv->tv_ch_mutex);
+  hts_mutex_unlock(&tv->tv_ch_mutex);
 }
 
 
@@ -613,13 +612,8 @@ tv_launch(void *aux)
 static void
 tv_spawn(appi_t *ai)
 {
-  pthread_t ptid;
-  pthread_attr_t attr;
-
-  pthread_attr_init(&attr);
-  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-
-  pthread_create(&ptid, &attr, tv_launch, ai);
+  hts_thread_t tid;
+  hts_thread_create_detached(&ptid, tv_launch, ai);
 }
 
 

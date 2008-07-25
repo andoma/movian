@@ -19,7 +19,6 @@
 #ifndef MEDIA_H
 #define MEDIA_H
 
-#include <pthread.h>
 #include <stdlib.h>
 #include <sys/queue.h>
 #include <libglw/glw.h>
@@ -49,7 +48,7 @@ LIST_HEAD(media_pipe_list, media_pipe);
  */
 
 typedef struct formatwrap {
-  pthread_mutex_t mutex;
+  hts_mutex_t mutex;
   AVFormatContext *format;
   LIST_HEAD(, codecwrap) codecs;
   int refcount;                   /* this does not include the codecs */
@@ -58,7 +57,7 @@ typedef struct formatwrap {
 
 
 typedef struct codecwrap {
-  pthread_mutex_t mutex;
+  hts_mutex_t mutex;
   int refcount;
   AVCodec *codec;
   AVCodecContext *codec_ctx;
@@ -114,7 +113,7 @@ typedef struct media_queue {
   struct media_buf_queue mq_q;
   unsigned int mq_len;
   int mq_stream;             /* Stream id, or -1 if queue is inactive */
-  pthread_cond_t mq_avail;
+  hts_cond_t mq_avail;
 
   /* informational stuff */
 
@@ -147,16 +146,16 @@ typedef enum {
 
 typedef struct media_pipe {
 
-  pthread_mutex_t mp_ref_mutex;
+  hts_mutex_t mp_ref_mutex;
   int mp_refcount;
 
   mp_playstatus_t mp_playstatus;
 
   const char *mp_name;
 
-  pthread_mutex_t mp_mutex;
+  hts_mutex_t mp_mutex;
 
-  pthread_cond_t mp_backpressure;
+  hts_cond_t mp_backpressure;
 
   media_queue_t mp_video, mp_audio;
   
@@ -199,7 +198,7 @@ static inline void wrap_lock_codec(codecwrap_t *cw);
 static inline void
 wrap_lock_codec(codecwrap_t *cw)
 {
-  pthread_mutex_lock(&cw->mutex);
+  hts_mutex_lock(&cw->mutex);
 }
 
 
@@ -208,7 +207,7 @@ static inline void wrap_unlock_codec(codecwrap_t *cw);
 static inline void
 wrap_unlock_codec(codecwrap_t *cw)
 {
-  pthread_mutex_unlock(&cw->mutex);
+  hts_mutex_unlock(&cw->mutex);
 }
 
 void wrap_codec_deref(codecwrap_t *cw, int lock);

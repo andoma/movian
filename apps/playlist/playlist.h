@@ -123,7 +123,7 @@ void *playlist_player(void *aux);
 
 playlist_t *playlist_create(const char *title, int truncate);
 
-extern pthread_mutex_t playlistlock;
+extern hts_mutex_t playlistlock;
 
 void playlist_entry_unref(playlist_entry_t *ple);
 

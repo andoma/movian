@@ -30,7 +30,7 @@ typedef void (ad_mix_func_t)(int frames, int channels, int16_t *src,
 			     int stride, audio_mode_t *am);
 
 typedef struct audio_decoder {
-  pthread_t ad_ptid;  /* Thread id */
+  hts_thread_t ad_tid;  /* Thread id */
 
   media_pipe_t *ad_mp;
 

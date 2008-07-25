@@ -19,7 +19,6 @@
 #include <assert.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <pthread.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <errno.h>
@@ -50,7 +49,7 @@ static appi_t *playlist_appi;
 /**
  * Global lock for reference counters and playlist/playlistentry relations
  */
-pthread_mutex_t playlistlock = PTHREAD_MUTEX_INITIALIZER;
+hts_mutex_t playlistlock;
 
 
 static void playlist_entry_free(playlist_entry_t *ple);
@@ -116,11 +115,11 @@ playlist_create(const char *title, int truncate)
 {
   playlist_t *pl;
 
-  pthread_mutex_lock(&playlistlock);
+  hts_mutex_lock(&playlistlock);
 
   LIST_FOREACH(pl, &playlists, pl_link) {
     if(!strcmp(title, pl->pl_title)) {
-      pthread_mutex_unlock(&playlistlock);
+      hts_mutex_unlock(&playlistlock);
 
       if(truncate) {
 	playlist_destroy(pl);
@@ -155,7 +154,7 @@ playlist_create(const char *title, int truncate)
 	      "playlist_container", pl->pl_widget,
 	      "tracklist_container", pl->pl_tab);
 
-  pthread_mutex_unlock(&playlistlock);
+  hts_mutex_unlock(&playlistlock);
   return pl;
 }
 
@@ -188,7 +187,7 @@ playlist_destroy(playlist_t *pl)
 
   playlist_unlink(pl);
 
-  pthread_mutex_lock(&playlistlock);
+  hts_mutex_lock(&playlistlock);
 
   LIST_REMOVE(pl, pl_link);
 
@@ -209,7 +208,7 @@ playlist_destroy(playlist_t *pl)
       playlist_entry_free(ple);
   }
 
-  pthread_mutex_unlock(&playlistlock);
+  hts_mutex_unlock(&playlistlock);
 
   glw_destroy(pl->pl_widget);
   glw_destroy(pl->pl_tab);
@@ -290,7 +289,7 @@ playlist_enqueue0(playlist_t *pl, const char *url, struct filetag_list *ftags)
 
   ple->ple_pl = pl;
 
-  pthread_mutex_lock(&playlistlock);
+  hts_mutex_lock(&playlistlock);
 
   ple2 = TAILQ_LAST(&pl->pl_entries, playlist_entry_queue);
   if(ple2 != NULL) {
@@ -305,7 +304,7 @@ playlist_enqueue0(playlist_t *pl, const char *url, struct filetag_list *ftags)
   pl->pl_nentries++;
   pl->pl_total_time += ple->ple_duration;
 
-  pthread_mutex_unlock(&playlistlock);
+  hts_mutex_unlock(&playlistlock);
 
   ple->ple_refcnt++; /* playlist linkage */
 
@@ -418,9 +417,9 @@ playlist_signal(playlist_entry_t *ple, int type)
 {
   playlist_event_t *pe;
 
-  pthread_mutex_lock(&playlistlock);
+  hts_mutex_lock(&playlistlock);
   ple->ple_refcnt++;
-  pthread_mutex_unlock(&playlistlock);
+  hts_mutex_unlock(&playlistlock);
 
   pe = glw_event_create(EVENT_PLAYLIST, sizeof(playlist_event_t));
   pe->h.ge_dtor = playlist_signal_dtor;
@@ -441,7 +440,7 @@ playlist_advance(playlist_entry_t *ple, int prev)
   playlist_entry_t *n = NULL;
   int shuffle = 0;
 
-  pthread_mutex_lock(&playlistlock);
+  hts_mutex_lock(&playlistlock);
 
   /* ple_pl will be NULL if the playlist has been erased */
 
@@ -462,7 +461,7 @@ playlist_advance(playlist_entry_t *ple, int prev)
   if(n != NULL)
     n->ple_refcnt++;
       
-  pthread_mutex_unlock(&playlistlock);
+  hts_mutex_unlock(&playlistlock);
 
   return n;
 }
@@ -474,14 +473,14 @@ playlist_advance(playlist_entry_t *ple, int prev)
 void
 playlist_entry_unref(playlist_entry_t *ple)
 {
-  pthread_mutex_lock(&playlistlock);
+  hts_mutex_lock(&playlistlock);
 
   assert(ple->ple_refcnt > 0);
   ple->ple_refcnt--;
   if(ple->ple_refcnt == 0)
     playlist_entry_free(ple);
 
-  pthread_mutex_unlock(&playlistlock);
+  hts_mutex_unlock(&playlistlock);
 
 }
 
@@ -542,11 +541,11 @@ playlist_save(playlist_t *pl)
 
   t = htsmsg_create();
 
-  pthread_mutex_lock(&playlistlock);
+  hts_mutex_lock(&playlistlock);
   TAILQ_FOREACH(ple, &pl->pl_entries, ple_link) {
     htsmsg_add_str(t, NULL, ple->ple_url);
   }
-  pthread_mutex_unlock(&playlistlock);
+  hts_mutex_unlock(&playlistlock);
 
   htsmsg_add_array(m, "tracks", t);
 
@@ -624,7 +623,7 @@ playlist_thread(void *aux)
   appi_t *ai;
   glw_t *mini;
   playlist_t *pl;
-  pthread_t playerthread;
+  hts_thread_t playerthread;
   glw_t *form;
   glw_event_t *ge;
   glw_event_appmethod_t *gea;
@@ -653,7 +652,7 @@ playlist_thread(void *aux)
   
   glw_event_initqueue(&plp.plp_geq);
   plp.plp_mp = ai->ai_mp;
-  pthread_create(&playerthread, NULL, playlist_player, &plp);
+  hts_thread_create(&playerthread, playlist_player, &plp);
 
 
   /**
@@ -699,7 +698,8 @@ playlist_thread(void *aux)
 void
 playlist_init(void)
 {
-  pthread_t ptid;
+  hts_thread_t tid;
 
-  pthread_create(&ptid, NULL, playlist_thread, NULL);
+  hts_mutex_init(&playlistlock);
+  hts_thread_create(&tid, playlist_thread, NULL);
 }

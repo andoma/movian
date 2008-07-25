@@ -18,7 +18,6 @@
 
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <pthread.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>

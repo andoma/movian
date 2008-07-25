@@ -16,8 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _GNU_SOURCE
-#include <pthread.h>
 #include <errno.h>
 #include <assert.h>
 #include <stdio.h>
@@ -70,9 +68,9 @@ browser_node_ref(browser_node_t *bn)
 {
   browser_root_t *br = bn->bn_root;
 
-  pthread_mutex_lock(&br->br_hierarchy_mutex);
+  hts_mutex_lock(&br->br_hierarchy_mutex);
   bn->bn_refcnt++;
-  pthread_mutex_unlock(&br->br_hierarchy_mutex);
+  hts_mutex_unlock(&br->br_hierarchy_mutex);
 }
 
 
@@ -84,12 +82,12 @@ browser_node_deref(browser_node_t *bn)
 {
   browser_root_t *br = bn->bn_root;
 
-  pthread_mutex_lock(&br->br_hierarchy_mutex);
+  hts_mutex_lock(&br->br_hierarchy_mutex);
   assert(bn->bn_refcnt > 0);
   bn->bn_refcnt--;
 
   check_node_free(bn);
-  pthread_mutex_unlock(&br->br_hierarchy_mutex);
+  hts_mutex_unlock(&br->br_hierarchy_mutex);
 }
 
 
@@ -108,7 +106,7 @@ browser_node_create(const char *url, int type, browser_root_t *br)
   bn->bn_root = br;
   TAILQ_INIT(&bn->bn_childs);
   TAILQ_INIT(&bn->bn_ftags);
-  pthread_mutex_init(&bn->bn_ftags_mutex, NULL);
+  hts_mutex_init(&bn->bn_ftags_mutex);
 
   return bn;
 }
@@ -127,10 +125,10 @@ browser_node_add_child(browser_node_t *parent, const char *url, int type)
   browser_root_t *br = parent->bn_root;
   browser_node_t *bn = browser_node_create(url, type, br);
 
-  pthread_mutex_lock(&br->br_hierarchy_mutex);
+  hts_mutex_lock(&br->br_hierarchy_mutex);
   TAILQ_INSERT_TAIL(&parent->bn_childs, bn, bn_parent_link);
   bn->bn_parent = parent;
-  pthread_mutex_unlock(&br->br_hierarchy_mutex);
+  hts_mutex_unlock(&br->br_hierarchy_mutex);
 
   browser_view_add_node(bn, NULL, 0, 0);
   return bn;
@@ -146,7 +144,7 @@ browser_root_create(const char *url, glw_t *splashcontainer)
   browser_root_t *br = calloc(1, sizeof(browser_root_t));
   browser_node_t *bn = browser_node_create(url, FA_DIR, br);
 
-  pthread_mutex_init(&br->br_hierarchy_mutex, NULL);
+  hts_mutex_init(&br->br_hierarchy_mutex);
 
   browser_probe_init(br);
   br->br_splashcontainer = splashcontainer;
@@ -179,18 +177,14 @@ browser_root_destroy(browser_root_t *br)
 int
 browser_scandir(browser_node_t *bn, int async)
 {
-  pthread_t ptid;
-  pthread_attr_t attr;
+  hts_thread_t ptid;
 
   if(!async)
     return browser_scandir0(bn);
 
   browser_node_ref(bn);
 
-  pthread_attr_init(&attr);
-  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-
-  pthread_create(&ptid, &attr, browser_scandir_thread, bn);
+  hts_thread_create_detached(&ptid, browser_scandir_thread, bn);
   return 0;
 }
 
@@ -280,7 +274,7 @@ browser_get_array_of_childs(browser_root_t *br, browser_node_t *bn)
   int cnt = 0;
   browser_node_t *c, **r;
 
-  pthread_mutex_lock(&br->br_hierarchy_mutex);
+  hts_mutex_lock(&br->br_hierarchy_mutex);
 
   TAILQ_FOREACH(c, &bn->bn_childs, bn_parent_link)
     cnt++;
@@ -293,6 +287,6 @@ browser_get_array_of_childs(browser_root_t *br, browser_node_t *bn)
     r[cnt++] = c;
   }
   r[cnt] = NULL;
-  pthread_mutex_unlock(&br->br_hierarchy_mutex);
+  hts_mutex_unlock(&br->br_hierarchy_mutex);
   return r;
 }

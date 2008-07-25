@@ -32,9 +32,9 @@
 #include "apps/settings/settings.h"
 #include "apps/playlist/playlist.h"
 
-static pthread_mutex_t appi_list_mutex;
+static hts_mutex_t appi_list_mutex;
 
-static pthread_mutex_t app_index_mutex;
+static hts_mutex_t app_index_mutex;
 static int app_index = 0;
 
 LIST_HEAD(, app)  apps;
@@ -53,7 +53,7 @@ appi_speedbutton_switcher(glw_event_t *ge)
   if(ge->ge_type != EVENT_KEYDESC)
     return 0;
 
-  pthread_mutex_lock(&appi_list_mutex);
+  hts_mutex_lock(&appi_list_mutex);
 
   LIST_FOREACH(ai, &appis, ai_link) {
     if(!strcmp(ek->desc, ai->ai_speedbutton)) {
@@ -62,7 +62,7 @@ appi_speedbutton_switcher(glw_event_t *ge)
       break;
     }
   }
-  pthread_mutex_unlock(&appi_list_mutex);
+  hts_mutex_unlock(&appi_list_mutex);
   return r;
 }
 
@@ -105,9 +105,9 @@ app_spawn(app_t *a, htsmsg_t *settings, int index)
 
   appi_t *ai = calloc(1, sizeof(appi_t));
 
-  pthread_mutex_lock(&appi_list_mutex);
+  hts_mutex_lock(&appi_list_mutex);
   LIST_INSERT_HEAD(&appis, ai, ai_link);
-  pthread_mutex_unlock(&appi_list_mutex);
+  hts_mutex_unlock(&appi_list_mutex);
 
   ai->ai_app = a;
   ai->ai_instance_index = index;
@@ -134,9 +134,9 @@ appi_create(const char *name)
 
   printf("creating appi %s\n", name);
 
-  pthread_mutex_lock(&appi_list_mutex);
+  hts_mutex_lock(&appi_list_mutex);
   LIST_INSERT_HEAD(&appis, ai, ai_link);
-  pthread_mutex_unlock(&appi_list_mutex);
+  hts_mutex_unlock(&appi_list_mutex);
 
   glw_event_initqueue(&ai->ai_geq);
   ai->ai_mp = mp_create(name, ai); /* Includes a refcount, this is
@@ -183,9 +183,9 @@ appi_settings_create(appi_t *ai)
   htsmsg_t *m;
 
   if(ai->ai_instance_index == 0) {
-    pthread_mutex_lock(&app_index_mutex);
+    hts_mutex_lock(&app_index_mutex);
     ai->ai_instance_index = ++app_index;
-    pthread_mutex_unlock(&app_index_mutex);
+    hts_mutex_unlock(&app_index_mutex);
   }
 
   m = htsmsg_create();

@@ -20,7 +20,6 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <fcntl.h>
-#include <pthread.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>

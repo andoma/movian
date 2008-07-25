@@ -18,9 +18,6 @@
 
 #include "config.h"
 
-#define _GNU_SOURCE
-
-#include <pthread.h>
 #include <assert.h>
 #include <sys/stat.h>
 #include <sys/time.h>

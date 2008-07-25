@@ -43,17 +43,17 @@ af_alloc(size_t size)
 void
 af_enq(audio_fifo_t *af, audio_buf_t *ab)
 {
-  pthread_mutex_lock(&af->af_lock);
+  hts_mutex_lock(&af->af_lock);
 
   while(af->af_len > af->af_maxlen)
-    pthread_cond_wait(&af->af_cond, &af->af_lock);
+    hts_cond_wait(&af->af_cond, &af->af_lock);
 
   af->af_len += ab->ab_frames;
 
   TAILQ_INSERT_TAIL(&af->af_queue, ab, link);
-  pthread_cond_broadcast(&af->af_cond);
+  hts_cond_broadcast(&af->af_cond);
 
-  pthread_mutex_unlock(&af->af_lock);
+  hts_mutex_unlock(&af->af_lock);
 }
 
 
@@ -88,7 +88,7 @@ af_remove(audio_fifo_t *af, audio_buf_t *ab)
 {
   af->af_len -= ab->ab_frames;
   TAILQ_REMOVE(&af->af_queue, ab, link);
-  pthread_cond_broadcast(&af->af_cond);
+  hts_cond_broadcast(&af->af_cond);
 }
 
 
@@ -106,7 +106,7 @@ af_deq(audio_fifo_t *af, int wait)
     
     if(ab != NULL || !wait)
       break;
-    pthread_cond_wait(&af->af_cond, &af->af_lock);
+    hts_cond_wait(&af->af_cond, &af->af_lock);
   }
 
   if(ab != NULL)
@@ -134,8 +134,8 @@ ab_free(audio_buf_t *ab)
 void
 audio_fifo_init(audio_fifo_t *af, int maxlen, int hysteresis)
 {
-  pthread_mutex_init(&af->af_lock, NULL);
-  pthread_cond_init(&af->af_cond, NULL);
+  hts_mutex_init(&af->af_lock);
+  hts_cond_init(&af->af_cond);
   TAILQ_INIT(&af->af_queue);
   af->af_satisfied = 0;
   af->af_hysteresis = hysteresis;
@@ -152,7 +152,7 @@ audio_fifo_purge(audio_fifo_t *af, void *ref, struct audio_buf_queue *q)
 {
   audio_buf_t *ab, *n;
 
-  pthread_mutex_lock(&af->af_lock);
+  hts_mutex_lock(&af->af_lock);
 
   for(ab = TAILQ_FIRST(&af->af_queue); ab != NULL; ab = n) {
     n = TAILQ_NEXT(ab, link);
@@ -169,8 +169,8 @@ audio_fifo_purge(audio_fifo_t *af, void *ref, struct audio_buf_queue *q)
     }
   }
 
-  pthread_cond_broadcast(&af->af_cond);
-  pthread_mutex_unlock(&af->af_lock);  
+  hts_cond_broadcast(&af->af_cond);
+  hts_mutex_unlock(&af->af_lock);  
 }
 
 
@@ -183,7 +183,7 @@ audio_fifo_reinsert(audio_fifo_t *af, struct audio_buf_queue *q)
 {
   audio_buf_t *ab;
 
-  pthread_mutex_lock(&af->af_lock);
+  hts_mutex_lock(&af->af_lock);
 
   while((ab = TAILQ_FIRST(q)) != NULL) {
     TAILQ_REMOVE(q, ab, link);
@@ -191,8 +191,8 @@ audio_fifo_reinsert(audio_fifo_t *af, struct audio_buf_queue *q)
     TAILQ_INSERT_TAIL(&af->af_queue, ab, link);
   }
 
-  pthread_cond_broadcast(&af->af_cond);
-  pthread_mutex_unlock(&af->af_lock);  
+  hts_cond_broadcast(&af->af_cond);
+  hts_mutex_unlock(&af->af_lock);  
 }
 
 

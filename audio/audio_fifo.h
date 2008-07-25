@@ -39,8 +39,8 @@ typedef struct audio_buf {
 
 typedef struct audio_fifo {
 
-  pthread_mutex_t af_lock;
-  pthread_cond_t af_cond;
+  hts_mutex_t af_lock;
+  hts_cond_t af_cond;
 
   struct audio_buf_queue af_queue;
 
@@ -57,9 +57,9 @@ audio_buf_t *af_alloc(size_t size);
 
 void af_enq(audio_fifo_t *af, audio_buf_t *ab);
 
-#define af_lock(af) pthread_mutex_lock(&(af)->af_lock);
+#define af_lock(af) hts_mutex_lock(&(af)->af_lock);
 
-#define af_unlock(af) pthread_mutex_unlock(&(af)->af_lock);
+#define af_unlock(af) hts_mutex_unlock(&(af)->af_lock);
 
 audio_buf_t *af_peek(audio_fifo_t *af);
 

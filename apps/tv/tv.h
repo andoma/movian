@@ -101,7 +101,7 @@ typedef struct tv {
   glw_t *tv_miniature;
   glw_t *tv_stack;
 
-  pthread_mutex_t tv_ch_mutex;
+  hts_mutex_t tv_ch_mutex;
   struct tv_ch_group_queue tv_groups;
 
   struct tv_channel_queue tv_running_channels;

@@ -40,7 +40,7 @@ typedef struct tvstatus {
 typedef struct tvheadend {
   FILE *tvh_fp;
   struct sockaddr_in tvh_localaddr;
-  pthread_mutex_t tvh_mutex;
+  hts_mutex_t tvh_mutex;
 
 
   void (*tvh_data_callback)(struct tvheadend *tvh, uint8_t *buf,

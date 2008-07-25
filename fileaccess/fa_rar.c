@@ -86,7 +86,7 @@
 #define  EARC_VOLNUMBER     0x0008
 
 
-static pthread_mutex_t rar_global_mutex = PTHREAD_MUTEX_INITIALIZER;
+static hts_mutex_t rar_global_mutex;
 
 TAILQ_HEAD(rar_segment_queue, rar_segment);
 LIST_HEAD(rar_volume_list, rar_volume);
@@ -100,7 +100,7 @@ static struct rar_archive_list rar_archives;
  */
 typedef struct rar_archive {
 
-  pthread_mutex_t ra_mutex;
+  hts_mutex_t ra_mutex;
 
   int ra_refcount;
   char *ra_url;
@@ -430,7 +430,7 @@ rar_archive_load(rar_archive_t *ra)
 static void
 rar_archive_unref(rar_archive_t *ra)
 {
-  pthread_mutex_lock(&rar_global_mutex);
+  hts_mutex_lock(&rar_global_mutex);
 
   ra->ra_refcount--;
 
@@ -441,7 +441,7 @@ rar_archive_unref(rar_archive_t *ra)
     free(ra);
   }
 
-  pthread_mutex_unlock(&rar_global_mutex);
+  hts_mutex_unlock(&rar_global_mutex);
 }
 
 
@@ -453,7 +453,7 @@ rar_archive_find(const char *url)
 {
   rar_archive_t *ra;
 
-  pthread_mutex_lock(&rar_global_mutex);
+  hts_mutex_lock(&rar_global_mutex);
 
   LIST_FOREACH(ra, &rar_archives, ra_link)
     if(!strcasecmp(ra->ra_url, url))
@@ -461,21 +461,21 @@ rar_archive_find(const char *url)
 
   if(ra == NULL) {
     ra = calloc(1, sizeof(rar_archive_t));
-    pthread_mutex_init(&ra->ra_mutex, NULL);
+    hts_mutex_init(&ra->ra_mutex);
     
     ra->ra_url = strdup(url);
     LIST_INSERT_HEAD(&rar_archives, ra, ra_link);
   }
 
   ra->ra_refcount++;
-  pthread_mutex_unlock(&rar_global_mutex);
+  hts_mutex_unlock(&rar_global_mutex);
 
-  pthread_mutex_lock(&ra->ra_mutex);
+  hts_mutex_lock(&ra->ra_mutex);
 
   if(ra->ra_root == NULL && rar_archive_load(ra)) {
     rar_archive_scrub(ra);
   }
-  pthread_mutex_unlock(&ra->ra_mutex);
+  hts_mutex_unlock(&ra->ra_mutex);
 
   return ra;
 }
@@ -733,10 +733,18 @@ rar_stat(const char *url, struct stat *buf)
 }
 
 
-
+/**
+ *
+ */
+static void
+rar_init(void)
+{
+  hts_mutex_init(&rar_global_mutex);
+}
 
 
 fa_protocol_t fa_protocol_rar = {
+  .fap_init = rar_init,
   .fap_name = "rar",
   .fap_scan =  rar_scandir,
   .fap_open  = rar_open,

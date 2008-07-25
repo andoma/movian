@@ -16,13 +16,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <pthread.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <dirent.h>
 
 #include "showtime.h"
 #include "browser.h"
@@ -443,12 +441,12 @@ browser_view_node_model_update(browser_node_t *bn)
   browser_root_t *br = bn->bn_root;
   browser_node_t *parent;
 
-  pthread_mutex_lock(&br->br_hierarchy_mutex);
+  hts_mutex_lock(&br->br_hierarchy_mutex);
 
   parent = bn->bn_parent;
   parent->bn_refcnt++;
 
-  pthread_mutex_unlock(&br->br_hierarchy_mutex);
+  hts_mutex_unlock(&br->br_hierarchy_mutex);
 
   if(bn->bn_icon_xfader == NULL)
     return;
@@ -481,7 +479,7 @@ browser_view_node_model_load(browser_node_t *bn)
   char buf[256];
   glw_t *w;
 
-  pthread_mutex_lock(&bn->bn_ftags_mutex);
+  hts_mutex_lock(&bn->bn_ftags_mutex);
 
   snprintf(buf, sizeof(buf), "theme://browser/views/%s/node.model",
 	   parent->bn_view->bv_name);
@@ -490,7 +488,7 @@ browser_view_node_model_load(browser_node_t *bn)
 
   browser_view_update_wset_from_node(w, bn);
 
-  pthread_mutex_unlock(&bn->bn_ftags_mutex);
+  hts_mutex_unlock(&bn->bn_ftags_mutex);
 }
 
 
@@ -635,10 +633,10 @@ browser_view_switch0(browser_node_t *bn, browser_view_t *bv)
 
   a = browser_get_array_of_childs(br, bn);
   for(cnt = 0; (c = a[cnt]) != NULL; cnt++) {
-    pthread_mutex_lock(&c->bn_ftags_mutex);
+    hts_mutex_lock(&c->bn_ftags_mutex);
     hide = !filetag_get_int(&c->bn_ftags, FTAG_FILETYPE, &type) &&
       !(1 << type & bv->bv_contentfilter);
-    pthread_mutex_unlock(&c->bn_ftags_mutex);
+    hts_mutex_unlock(&c->bn_ftags_mutex);
 
     browser_view_add_node(c, m, c == sel, hide);
     browser_node_deref(c); /* 'c' may be free'd here */
@@ -674,7 +672,7 @@ browser_view_switch(browser_node_t *bn)
    */
   a = browser_get_array_of_childs(br, bn);
   for(cnt = 0; (c = a[cnt]) != NULL; cnt++) {
-    pthread_mutex_lock(&c->bn_ftags_mutex);
+    hts_mutex_lock(&c->bn_ftags_mutex);
     switch(c->bn_type) {
     case FA_DIR:
       contentmask = 1 << FILETYPE_DIR;
@@ -685,7 +683,7 @@ browser_view_switch(browser_node_t *bn)
 	contentmask = 1 << type;
       break;
     }
-    pthread_mutex_unlock(&c->bn_ftags_mutex);
+    hts_mutex_unlock(&c->bn_ftags_mutex);
     browser_node_deref(c); /* 'c' may be free'd here */
   }
   free(a);

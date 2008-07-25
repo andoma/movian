@@ -247,7 +247,7 @@ audio_mixer_thread(void *aux)
 void
 audio_mixer_init(void)
 {
-  pthread_t ptid;
+  hts_thread_t tid;
 
-  pthread_create(&ptid, NULL, audio_mixer_thread, NULL);
+  hts_thread_create(&tid, audio_mixer_thread, NULL);
 }

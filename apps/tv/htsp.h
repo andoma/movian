@@ -44,26 +44,26 @@ typedef struct htsp_msg {
 typedef struct htsp_connection {
 
   int hc_seq_tally;
-  pthread_mutex_t hc_tally_lock;
+  hts_mutex_t hc_tally_lock;
 
   int hc_connected;
 
   char *hc_hostname;
   int hc_port;
 
-  pthread_t hc_com_tid;
-  pthread_t hc_worker_tid;
+  hts_thread_t hc_com_tid;
+  hrs_thread_t hc_worker_tid;
 
   int hc_fd;
 
   struct tv *hc_tv;
 
-  pthread_mutex_t hc_worker_lock;
-  pthread_cond_t hc_worker_cond;
+  hts_mutex_t hc_worker_lock;
+  hts_cond_t hc_worker_cond;
   struct htsp_msg_queue hc_worker_queue;
 
-  pthread_mutex_t hc_rpc_lock;
-  pthread_cond_t hc_rpc_cond;
+  hts_mutex_t hc_rpc_lock;
+  hts_cond_t hc_rpc_cond;
   struct htsp_msg_queue hc_rpc_queue;
 
   struct htsp_mux_list hc_muxes;

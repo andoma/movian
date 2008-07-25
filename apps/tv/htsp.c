@@ -17,7 +17,6 @@
  */
 
 #define _GNU_SOURCE
-#include <pthread.h>
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -144,9 +143,9 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int async)
 
   /* Generate a sequence number for our message */
 
-  pthread_mutex_lock(&hc->hc_tally_lock);
+  hts_mutex_lock(&hc->hc_tally_lock);
   seq = ++hc->hc_seq_tally;
-  pthread_mutex_unlock(&hc->hc_tally_lock);
+  hts_mutex_unlock(&hc->hc_tally_lock);
 
   htsmsg_add_u32(m, "seq", seq);
 
@@ -163,9 +162,9 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int async)
     hm = malloc(sizeof(htsp_msg_t));
     hm->hm_msg = NULL;
     hm->hm_seq = seq;
-    pthread_mutex_lock(&hc->hc_rpc_lock);
+    hts_mutex_lock(&hc->hc_rpc_lock);
     TAILQ_INSERT_TAIL(&hc->hc_rpc_queue, hm, hm_link);
-    pthread_mutex_unlock(&hc->hc_rpc_lock);
+    hts_mutex_unlock(&hc->hc_rpc_lock);
   }
 
   if(write(fd, buf, len) < 0) {
@@ -173,9 +172,9 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int async)
     htsmsg_destroy(m);
     
     if(hm != NULL) {
-      pthread_mutex_lock(&hc->hc_rpc_lock);
+      hts_mutex_lock(&hc->hc_rpc_lock);
       TAILQ_REMOVE(&hc->hc_rpc_queue, hm, hm_link);
-      pthread_mutex_unlock(&hc->hc_rpc_lock);
+      hts_mutex_unlock(&hc->hc_rpc_lock);
       free(hm);
     }
 
@@ -185,22 +184,22 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int async)
 
 
   if(hm != NULL) {
-    pthread_mutex_lock(&hc->hc_rpc_lock);
+    hts_mutex_lock(&hc->hc_rpc_lock);
     while(1) {
       if(hc->hc_connected == 0) {
 	htsmsg_destroy(m);
-	pthread_mutex_unlock(&hc->hc_rpc_lock);
+	hts_mutex_unlock(&hc->hc_rpc_lock);
 	return NULL;
       }
 
       if(hm->hm_msg != NULL)
 	break;
 
-      pthread_cond_wait(&hc->hc_rpc_cond, &hc->hc_rpc_lock);
+      hts_cond_wait(&hc->hc_rpc_cond, &hc->hc_rpc_lock);
     }
       
     TAILQ_REMOVE(&hc->hc_rpc_queue, hm, hm_link);
-    pthread_mutex_unlock(&hc->hc_rpc_lock);
+    hts_mutex_unlock(&hc->hc_rpc_lock);
     reply = hm->hm_msg;
     free(hm);
 
@@ -247,9 +246,9 @@ htsp_channelGroupAdd(tv_t *tv, htsp_connection_t *hc, htsmsg_t *m)
   if(group == NULL)
     return;
 
-  pthread_mutex_lock(&tv->tv_ch_mutex);
+  hts_mutex_lock(&tv->tv_ch_mutex);
   tcg = tv_channel_group_find(tv, group, 1);
-  pthread_mutex_unlock(&tv->tv_ch_mutex);
+  hts_mutex_unlock(&tv->tv_ch_mutex);
 }
 
 
@@ -316,7 +315,7 @@ htsp_channelAdd(tv_t *tv, htsp_connection_t *hc, htsmsg_t *m)
   if(group == NULL || chan == NULL)
     return;
 
-  pthread_mutex_lock(&tv->tv_ch_mutex);
+  hts_mutex_lock(&tv->tv_ch_mutex);
 
   tcg = tv_channel_group_find(tv, group, 1);
 
@@ -330,7 +329,7 @@ htsp_channelAdd(tv_t *tv, htsp_connection_t *hc, htsmsg_t *m)
 
   htsp_load_current_events(hc, ch, event);
 
-  pthread_mutex_unlock(&tv->tv_ch_mutex);
+  hts_mutex_unlock(&tv->tv_ch_mutex);
 }
 
 
@@ -349,7 +348,7 @@ htsp_channelUpdate(tv_t *tv, htsp_connection_t *hc, htsmsg_t *m)
   if(htsmsg_get_u32(m, "channelTag", &tag))
     return;
 
-  pthread_mutex_lock(&tv->tv_ch_mutex);
+  hts_mutex_lock(&tv->tv_ch_mutex);
 
   if((ch = tv_channel_find_by_tag(tv, tag)) != NULL) {
     if(htsmsg_get_u32(m, "currentEvent", &event))
@@ -358,7 +357,7 @@ htsp_channelUpdate(tv_t *tv, htsp_connection_t *hc, htsmsg_t *m)
     htsp_load_current_events(hc, ch, event);
   }
 
-  pthread_mutex_unlock(&tv->tv_ch_mutex);
+  hts_mutex_unlock(&tv->tv_ch_mutex);
 }
 
 
@@ -381,19 +380,19 @@ htsp_worker_thread(void *aux)
   const char *method;
   tv_t *tv = hc->hc_tv;
 
-  pthread_mutex_lock(&hc->hc_worker_lock);
+  hts_mutex_lock(&hc->hc_worker_lock);
 
   while(hc->hc_connected) {
     
     while(hc->hc_connected && (hm = TAILQ_FIRST(&hc->hc_worker_queue)) == NULL)
-      pthread_cond_wait(&hc->hc_worker_cond, &hc->hc_worker_lock);
+      hts_cond_wait(&hc->hc_worker_cond, &hc->hc_worker_lock);
 
     if(hm != NULL) 
       TAILQ_REMOVE(&hc->hc_worker_queue, hm, hm_link);
     else
       continue;
 
-    pthread_mutex_unlock(&hc->hc_worker_lock);
+    hts_mutex_unlock(&hc->hc_worker_lock);
 
     m = hm->hm_msg;
     free(hm);
@@ -410,10 +409,10 @@ htsp_worker_thread(void *aux)
     }
 
     htsmsg_destroy(m);
-    pthread_mutex_lock(&hc->hc_worker_lock);
+    hts_mutex_lock(&hc->hc_worker_lock);
   }
 
-  pthread_mutex_unlock(&hc->hc_worker_lock);
+  hts_mutex_unlock(&hc->hc_worker_lock);
   return NULL;
 }
 
@@ -462,20 +461,20 @@ htsp_msg_dispatch(htsp_connection_t *hc, htsmsg_t *m)
   if(!htsmsg_get_u32(m, "seq", &seq) && seq != 0) {
     /* Reply .. */
 
-    pthread_mutex_lock(&hc->hc_rpc_lock);
+    hts_mutex_lock(&hc->hc_rpc_lock);
     TAILQ_FOREACH(hm, &hc->hc_rpc_queue, hm_link)
       if(seq == hm->hm_seq)
 	break;
 
     if(hm != NULL) {
       hm->hm_msg = m;
-      pthread_cond_broadcast(&hc->hc_rpc_cond);
+      hts_cond_broadcast(&hc->hc_rpc_cond);
       m = NULL;
     } else {
       printf("Warning, unmatched sequence\n");
       abort();
     }
-    pthread_mutex_unlock(&hc->hc_rpc_lock);
+    hts_mutex_unlock(&hc->hc_rpc_lock);
 
     if(m != NULL)
       htsmsg_destroy(m);
@@ -493,10 +492,10 @@ htsp_msg_dispatch(htsp_connection_t *hc, htsmsg_t *m)
 
   hm->hm_msg = m;
 
-  pthread_mutex_lock(&hc->hc_worker_lock);
+  hts_mutex_lock(&hc->hc_worker_lock);
   TAILQ_INSERT_TAIL(&hc->hc_worker_queue, hm, hm_link);
-  pthread_cond_signal(&hc->hc_worker_cond);
-  pthread_mutex_unlock(&hc->hc_worker_lock);
+  hts_cond_signal(&hc->hc_worker_cond);
+  hts_mutex_unlock(&hc->hc_worker_lock);
 }
 
 
@@ -562,7 +561,7 @@ htsp_com_thread(void *aux)
     htsmsg_destroy(m);
 
     hc->hc_connected = 1;
-    pthread_create(&hc->hc_worker_tid, NULL, htsp_worker_thread, hc);
+    hts_create(&hc->hc_worker_tid, NULL, htsp_worker_thread, hc);
 
     tv_fatal_error(hc->hc_tv, NULL);  /* Reset any pending fatal error */
 
@@ -594,14 +593,14 @@ htsp_com_thread(void *aux)
 
     hc->hc_connected = 0;
 
-    pthread_cond_broadcast(&hc->hc_rpc_cond);
-    pthread_cond_broadcast(&hc->hc_worker_cond);
+    hts_cond_broadcast(&hc->hc_rpc_cond);
+    hts_cond_broadcast(&hc->hc_worker_cond);
   
-    pthread_join(hc->hc_worker_tid, NULL);
+    hts_join(hc->hc_worker_tid, NULL);
 
-    pthread_mutex_lock(&tv->tv_ch_mutex);
+    hts_mutex_lock(&tv->tv_ch_mutex);
     tv_remove_all(tv);
-    pthread_mutex_unlock(&tv->tv_ch_mutex);
+    hts_mutex_unlock(&tv->tv_ch_mutex);
   }
 }
 
@@ -646,15 +645,15 @@ htsp_create(const char *url, tv_t *tv)
   hc->hc_port = port;
 
 
-  pthread_mutex_init(&hc->hc_worker_lock, NULL);
-  pthread_cond_init(&hc->hc_worker_cond, NULL);
+  hts_mutex_init(&hc->hc_worker_lock, NULL);
+  hts_cond_init(&hc->hc_worker_cond, NULL);
   TAILQ_INIT(&hc->hc_worker_queue);
 
-  pthread_mutex_init(&hc->hc_rpc_lock, NULL);
-  pthread_cond_init(&hc->hc_rpc_cond, NULL);
+  hts_mutex_init(&hc->hc_rpc_lock, NULL);
+  hts_cond_init(&hc->hc_rpc_cond, NULL);
   TAILQ_INIT(&hc->hc_rpc_queue);
 
-  pthread_create(&hc->hc_com_tid,    NULL, htsp_com_thread, hc);
+  hts_create(&hc->hc_com_tid,    NULL, htsp_com_thread, hc);
   return hc;
 }
 

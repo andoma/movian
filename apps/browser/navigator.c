@@ -16,9 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _GNU_SOURCE
-#include <pthread.h>
-
 #include <assert.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -27,7 +24,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <dirent.h>
 
 #include <libglw/glw.h>
 
@@ -68,9 +64,9 @@ browser_enter(appi_t *ai, navigator_t *nav, browser_node_t *bn, int selected)
   int64_t type;
   int r;
 
-  pthread_mutex_lock(&bn->bn_ftags_mutex);
+  hts_mutex_lock(&bn->bn_ftags_mutex);
   r = filetag_get_int(&bn->bn_ftags, FTAG_FILETYPE, &type);
-  pthread_mutex_unlock(&bn->bn_ftags_mutex);
+  hts_mutex_unlock(&bn->bn_ftags_mutex);
 
   if(r)
     return; 
@@ -415,13 +411,8 @@ nav_launch(void *aux)
 static void
 nav_spawn(appi_t *ai)
 {
-  pthread_t ptid;
-  pthread_attr_t attr;
-
-  pthread_attr_init(&attr);
-  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-
-  pthread_create(&ptid, &attr, nav_launch, ai);
+  hts_thread_t tid;
+  hts_thread_create_detached(&tid, nav_launch, ai);
 }
 
 

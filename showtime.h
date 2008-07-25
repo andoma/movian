@@ -20,16 +20,16 @@
 #define SHOWTIME_H
 
 #include <inttypes.h>
-#include <pthread.h>
 #include <sys/time.h>
 #include <libhts/htssettings.h>
+#include <libhts/htsthreads.h>
 #include <libavutil/avstring.h>
 
-extern pthread_mutex_t ffmutex;
+extern hts_mutex_t ffmutex;
 
-#define fflock() pthread_mutex_lock(&ffmutex)
+#define fflock() hts_mutex_lock(&ffmutex)
 
-#define ffunlock() pthread_mutex_unlock(&ffmutex)
+#define ffunlock() hts_mutex_unlock(&ffmutex)
 
 extern int64_t wallclock;
 extern time_t walltime;

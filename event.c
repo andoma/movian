@@ -17,7 +17,6 @@
  */
 
 #include <sys/time.h>
-#include <pthread.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,9 +25,18 @@
 #include "showtime.h"
 #include "event.h"
 
-static pthread_mutex_t ehmutex = PTHREAD_MUTEX_INITIALIZER;
+static hts_mutex_t ehmutex;
 static LIST_HEAD(, event_handler) event_handlers;
 
+
+/**
+ *
+ */
+void
+event_init(void)
+{
+  hts_mutex_init(&ehmutex);
+}
 
 /**
  *  Root input handler & events (from keyboard, remote controls, etc)
@@ -62,9 +70,9 @@ event_handler_register(int pri, int (*callback)(glw_event_t *ge))
 
   ih->pri = pri;
   ih->callback = callback;
-  pthread_mutex_lock(&ehmutex);
+  hts_mutex_lock(&ehmutex);
   LIST_INSERT_SORTED(&event_handlers, ih, link, ihcmp);
-  pthread_mutex_unlock(&ehmutex);
+  hts_mutex_unlock(&ehmutex);
 }
 
 
@@ -78,13 +86,13 @@ event_post(glw_event_t *ge)
 {
   event_handler_t *eh;
 
-  pthread_mutex_lock(&ehmutex);
+  hts_mutex_lock(&ehmutex);
 
   LIST_FOREACH(eh, &event_handlers, link) {
     if(eh->callback(ge))
       break;
   }
-  pthread_mutex_unlock(&ehmutex);
+  hts_mutex_unlock(&ehmutex);
 
   glw_event_unref(ge);
 }

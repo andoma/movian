@@ -18,7 +18,6 @@
 
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <pthread.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -180,13 +179,13 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
 	  if(curtime != pts) {
 	    curtime = pts;
 
-	    pthread_mutex_lock(&playlistlock);
+	    hts_mutex_lock(&playlistlock);
 	  
 	    if(ple->ple_pl != NULL)
 	      glw_set_caption_time(ple->ple_pl->pl_widget, "time_current",
 				   ple->ple_time_offset + pts);
 	  
-	    pthread_mutex_unlock(&playlistlock);
+	    hts_mutex_unlock(&playlistlock);
 	  
 	    glw_set_caption_time(status, "time_current", pts);
 	  }
@@ -433,11 +432,11 @@ playlist_player(void *aux)
     /**
      * Update playlist widget
      */
-    pthread_mutex_lock(&playlistlock);
+    hts_mutex_lock(&playlistlock);
     if(ple->ple_pl != NULL)
       glw_set_caption_int(ple->ple_pl->pl_widget, "track_current",
 			  ple->ple_track);
-    pthread_mutex_unlock(&playlistlock);
+    hts_mutex_unlock(&playlistlock);
 
 
     /**

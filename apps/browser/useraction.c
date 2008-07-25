@@ -16,9 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _GNU_SOURCE
-#include <pthread.h>
-
 #include <assert.h>
 #include <sys/stat.h>
 #include <sys/time.h>

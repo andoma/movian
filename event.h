@@ -74,5 +74,6 @@ typedef struct event_keydesc {
 
 } event_keydesc_t;
 
+void event_init(void);
 
 #endif /* EVENT_H */

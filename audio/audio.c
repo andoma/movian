@@ -33,7 +33,7 @@
 #include "app.h"
 
 audio_mode_t *audio_mode_current;
-pthread_mutex_t audio_mode_mutex = PTHREAD_MUTEX_INITIALIZER;
+hts_mutex_t audio_mode_mutex;
 
 static struct audio_mode_queue audio_modes;
 
@@ -80,7 +80,9 @@ audio_global_load_settings(void)
 void
 audio_init(void)
 {
-  pthread_t ptid;
+  hts_thread_t ptid;
+
+  hts_mutex_init(&audio_mode_mutex);
 
   TAILQ_INIT(&audio_modes);
   audio_decoder_init();
@@ -88,7 +90,7 @@ audio_init(void)
 
   audio_widget_make();
 
-  pthread_create(&ptid, NULL, audio_output_thread, NULL);
+  hts_thread_create(&ptid, audio_output_thread, NULL);
 
   audio_mixer_init();
 }

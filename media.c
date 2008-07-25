@@ -32,9 +32,9 @@
 extern int concurrency;
 
 static void
-mq_mutex_init(pthread_mutex_t *mutex)
+mq_mutex_init(hts_mutex_t *mutex)
 {
-  pthread_mutex_init(mutex, NULL);
+  hts_mutex_init(mutex);
 }
 
 /*
@@ -47,7 +47,7 @@ mq_init(media_queue_t *mq)
   TAILQ_INIT(&mq->mq_q);
   mq->mq_len = 0;
   mq->mq_stream = -1;
-  pthread_cond_init(&mq->mq_avail, NULL);
+  hts_cond_init(&mq->mq_avail);
 
 }
 
@@ -62,7 +62,7 @@ mp_create(const char *name, struct appi *ai)
 
   mp = calloc(1, sizeof(media_pipe_t));
   
-  pthread_mutex_init(&mp->mp_ref_mutex, NULL);
+  hts_mutex_init(&mp->mp_ref_mutex);
 
   mp->mp_refcount = 1;
 
@@ -71,7 +71,7 @@ mp_create(const char *name, struct appi *ai)
   mp->mp_speed_gain = 1.0f;
 
   mq_mutex_init(&mp->mp_mutex);
-  pthread_cond_init(&mp->mp_backpressure, NULL);
+  hts_cond_init(&mp->mp_backpressure);
   
   mq_init(&mp->mp_audio);
   mq_init(&mp->mp_video);
@@ -107,14 +107,14 @@ mp_destroy(media_pipe_t *mp)
 void
 mp_unref(media_pipe_t *mp)
 {
-  pthread_mutex_lock(&mp->mp_ref_mutex);
+  hts_mutex_lock(&mp->mp_ref_mutex);
   mp->mp_refcount--;
 
   if(mp->mp_refcount == 0) {
     mp_destroy(mp);
     return;
   }
-  pthread_mutex_unlock(&mp->mp_ref_mutex);
+  hts_mutex_unlock(&mp->mp_ref_mutex);
 }
 
 /**
@@ -123,9 +123,9 @@ mp_unref(media_pipe_t *mp)
 media_pipe_t *
 mp_ref(media_pipe_t *mp)
 {
-  pthread_mutex_lock(&mp->mp_ref_mutex);
+  hts_mutex_lock(&mp->mp_ref_mutex);
   mp->mp_refcount++;
-  pthread_mutex_unlock(&mp->mp_ref_mutex);
+  hts_mutex_unlock(&mp->mp_ref_mutex);
   return mp;
 }
 
@@ -138,23 +138,23 @@ media_buf_t *
 mb_dequeue_wait(media_pipe_t *mp, media_queue_t *mq)
 {
   media_buf_t *mb;
-  pthread_mutex_lock(&mp->mp_mutex);
+  hts_mutex_lock(&mp->mp_mutex);
 
   while(1) {
     if(mp->mp_playstatus == MP_STOP) {
-      pthread_mutex_unlock(&mp->mp_mutex);
+      hts_mutex_unlock(&mp->mp_mutex);
       return NULL;
     }
 
     if(mp->mp_playstatus >= MP_PLAY && (mb = TAILQ_FIRST(&mq->mq_q)) != NULL)
       break;
-    pthread_cond_wait(&mq->mq_avail, &mp->mp_mutex);
+    hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
   }
 
   TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
   mq->mq_len--;
-  pthread_cond_signal(&mp->mp_backpressure);
-  pthread_mutex_unlock(&mp->mp_mutex);
+  hts_cond_signal(&mp->mp_backpressure);
+  hts_mutex_unlock(&mp->mp_mutex);
   return mb;
 }
 
@@ -167,7 +167,7 @@ mb_enq_tail(media_queue_t *mq, media_buf_t *mb)
 {
   TAILQ_INSERT_TAIL(&mq->mq_q, mb, mb_link);
   mq->mq_len++;
-  pthread_cond_signal(&mq->mq_avail);
+  hts_cond_signal(&mq->mq_avail);
 }
 
 /*
@@ -179,7 +179,7 @@ mb_enq_head(media_queue_t *mq, media_buf_t *mb)
 {
   TAILQ_INSERT_HEAD(&mq->mq_q, mb, mb_link);
   mq->mq_len++;
-  pthread_cond_signal(&mq->mq_avail);
+  hts_cond_signal(&mq->mq_avail);
 }
 
 
@@ -193,21 +193,21 @@ mb_enqueue(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
   media_queue_t *v = &mp->mp_video;
   media_queue_t *a = &mp->mp_audio;
 
-  pthread_mutex_lock(&mp->mp_mutex);
+  hts_mutex_lock(&mp->mp_mutex);
   
   if(a->mq_stream >= 0 && v->mq_stream >= 0) {
     while(mp->mp_playstatus >= MP_PLAY &&
 	  ((a->mq_len > MQ_LOWWATER && v->mq_len > MQ_LOWWATER) ||
 	   a->mq_len > MQ_HIWATER || v->mq_len > MQ_HIWATER)) {
-      pthread_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
+      hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
     }
   } else {
     while(mq->mq_len > MQ_LOWWATER && mp->mp_playstatus >= MP_PLAY)
-      pthread_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
+      hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
   }
   
   mb_enq_tail(mq, mb);
-  pthread_mutex_unlock(&mp->mp_mutex);
+  hts_mutex_unlock(&mp->mp_mutex);
 }
 
 /*
@@ -238,12 +238,12 @@ mp_flush(media_pipe_t *mp)
   media_queue_t *a = &mp->mp_audio;
   media_buf_t *mb;
 
-  pthread_mutex_lock(&mp->mp_mutex);
+  hts_mutex_lock(&mp->mp_mutex);
 
   mq_flush(a);
   mq_flush(v);
 
-  pthread_cond_signal(&mp->mp_backpressure);
+  hts_cond_signal(&mp->mp_backpressure);
 
   if(v->mq_stream >= 0) {
     mb = media_buf_alloc();
@@ -257,7 +257,7 @@ mp_flush(media_pipe_t *mp)
     mb_enq_tail(a, mb);
   }
 
-  pthread_mutex_unlock(&mp->mp_mutex);
+  hts_mutex_unlock(&mp->mp_mutex);
 
 }
 
@@ -288,14 +288,14 @@ mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd)
 {
   media_buf_t *mb;
 
-  pthread_mutex_lock(&mp->mp_mutex);
+  hts_mutex_lock(&mp->mp_mutex);
 
   mb = media_buf_alloc();
   mb->mb_cw = NULL;
   mb->mb_data = NULL;
   mb->mb_data_type = cmd;
   mb_enq_tail(mq, mb);
-  pthread_mutex_unlock(&mp->mp_mutex);
+  hts_mutex_unlock(&mp->mp_mutex);
 }
 
 /*
@@ -307,14 +307,14 @@ mp_send_cmd_data(media_pipe_t *mp, media_queue_t *mq, int cmd, void *d)
 {
  media_buf_t *mb;
 
-  pthread_mutex_lock(&mp->mp_mutex);
+  hts_mutex_lock(&mp->mp_mutex);
 
   mb = media_buf_alloc();
   mb->mb_cw = NULL;
   mb->mb_data_type = cmd;
   mb->mb_data = d;
   mb_enq_tail(mq, mb);
-  pthread_mutex_unlock(&mp->mp_mutex);
+  hts_mutex_unlock(&mp->mp_mutex);
 }
 
 /*
@@ -326,7 +326,7 @@ mp_send_cmd_u32_head(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u)
 {
   media_buf_t *mb;
 
-  pthread_mutex_lock(&mp->mp_mutex);
+  hts_mutex_lock(&mp->mp_mutex);
 
   mb = media_buf_alloc();
   mb->mb_cw = NULL;
@@ -334,7 +334,7 @@ mp_send_cmd_u32_head(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u)
   mb->mb_data = NULL;
   mb->mb_data32 = u;
   mb_enq_head(mq, mb);
-  pthread_mutex_unlock(&mp->mp_mutex);
+  hts_mutex_unlock(&mp->mp_mutex);
 }
 
 /*
@@ -346,7 +346,7 @@ mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u)
 {
   media_buf_t *mb;
 
-  pthread_mutex_lock(&mp->mp_mutex);
+  hts_mutex_lock(&mp->mp_mutex);
 
   mb = media_buf_alloc();
   mb->mb_cw = NULL;
@@ -354,7 +354,7 @@ mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u)
   mb->mb_data = NULL;
   mb->mb_data32 = u;
   mb_enq_tail(mq, mb);
-  pthread_mutex_unlock(&mp->mp_mutex);
+  hts_mutex_unlock(&mp->mp_mutex);
 }
 
 
@@ -391,19 +391,19 @@ void
 wrap_format_purge(formatwrap_t *fw)
 {
   if(LIST_FIRST(&fw->codecs) != NULL) {
-    pthread_mutex_unlock(&fw->mutex);
+    hts_mutex_unlock(&fw->mutex);
     return;
   }
 
   if(fw->refcount > 0) {
-    pthread_mutex_unlock(&fw->mutex);
+    hts_mutex_unlock(&fw->mutex);
     return;
   }
 
   if(fw->format != NULL)
     av_close_input_file(fw->format);
 
-  pthread_mutex_unlock(&fw->mutex);
+  hts_mutex_unlock(&fw->mutex);
   free(fw);
 }
 
@@ -424,18 +424,18 @@ wrap_codec_deref(codecwrap_t *cw, int lock)
   formatwrap_t *fw;
 
   if(lock)
-    pthread_mutex_lock(&cw->mutex);
+    hts_mutex_lock(&cw->mutex);
 
   if(cw->refcount > 1) {
     cw->refcount--;
-    pthread_mutex_unlock(&cw->mutex);
+    hts_mutex_unlock(&cw->mutex);
     return;
   }
 
   fw = cw->format;
 
   if(fw != NULL) {
-    pthread_mutex_lock(&fw->mutex);
+    hts_mutex_lock(&fw->mutex);
     LIST_REMOVE(cw, format_link);
   }
 
@@ -457,10 +457,10 @@ wrap_codec_deref(codecwrap_t *cw, int lock)
   cw->codec_ctx = NULL;
   cw->parser_ctx = NULL;
 
-  pthread_mutex_unlock(&cw->mutex); /* XXX: not really needed */
+  hts_mutex_unlock(&cw->mutex); /* XXX: not really needed */
 
-  if(pthread_mutex_destroy(&cw->mutex))
-    perror("pthread_mutex_destroy");
+  if(hts_mutex_destroy(&cw->mutex))
+    perror("hts_mutex_destroy");
 
   free(cw);
 }
@@ -526,12 +526,12 @@ wrap_format_wait(formatwrap_t *fw)
 {
   codecwrap_t *cw;
   
-  pthread_mutex_lock(&fw->mutex);
+  hts_mutex_lock(&fw->mutex);
 
   while((cw = LIST_FIRST(&fw->codecs)) != NULL) {
-    pthread_mutex_unlock(&fw->mutex);
+    hts_mutex_unlock(&fw->mutex);
     usleep(100000);
-    pthread_mutex_lock(&fw->mutex);
+    hts_mutex_lock(&fw->mutex);
   }
 
   fw->refcount--;
@@ -557,12 +557,12 @@ mp_set_playstatus(media_pipe_t *mp, int status)
   case MP_VIDEOSEEK_PAUSE:
   case MP_PAUSE:
 
-    pthread_mutex_lock(&mp->mp_mutex);
+    hts_mutex_lock(&mp->mp_mutex);
     mp->mp_playstatus = status;
-    pthread_cond_signal(&mp->mp_backpressure);
-    pthread_cond_signal(&mp->mp_audio.mq_avail);
-    pthread_cond_signal(&mp->mp_video.mq_avail);
-    pthread_mutex_unlock(&mp->mp_mutex);
+    hts_cond_signal(&mp->mp_backpressure);
+    hts_cond_signal(&mp->mp_audio.mq_avail);
+    hts_cond_signal(&mp->mp_video.mq_avail);
+    hts_mutex_unlock(&mp->mp_mutex);
 
     if(mp->mp_audio_decoder == NULL)
       mp->mp_audio_decoder = audio_decoder_create(mp);
@@ -583,7 +583,7 @@ mp_set_playstatus(media_pipe_t *mp, int status)
 
     /* Lock queues */
 
-    pthread_mutex_lock(&mp->mp_mutex);
+    hts_mutex_lock(&mp->mp_mutex);
 
     /* Flush all media in queues */
 
@@ -594,10 +594,10 @@ mp_set_playstatus(media_pipe_t *mp, int status)
        this will make mb_dequeue_wait return NULL next time it returns */
     
     mp->mp_playstatus = MP_STOP;
-    pthread_cond_signal(&mp->mp_audio.mq_avail);
-    pthread_cond_signal(&mp->mp_video.mq_avail);
-    pthread_cond_signal(&mp->mp_backpressure);
-    pthread_mutex_unlock(&mp->mp_mutex);
+    hts_cond_signal(&mp->mp_audio.mq_avail);
+    hts_cond_signal(&mp->mp_video.mq_avail);
+    hts_cond_signal(&mp->mp_backpressure);
+    hts_mutex_unlock(&mp->mp_mutex);
 
     /* We should now be able to collect the threads */
 

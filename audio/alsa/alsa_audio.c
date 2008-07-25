@@ -16,7 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <pthread.h>
 #include <math.h>
 #include <stdio.h>
 #define  __USE_XOPEN

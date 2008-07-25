@@ -77,7 +77,7 @@ typedef struct browser_node {
 
   /* File tags (with an associated lock) */
 
-  pthread_mutex_t           bn_ftags_mutex;
+  hts_mutex_t           bn_ftags_mutex;
   struct filetag_list       bn_ftags;
 
   /* probe link and probe linked state is protected by root
@@ -95,7 +95,7 @@ typedef struct browser_node {
  * Top level browser struct
  */
 typedef struct browser_root {
-  pthread_mutex_t br_hierarchy_mutex;  /* Locks insertions and deletions
+  hts_mutex_t br_hierarchy_mutex;  /* Locks insertions and deletions
 					  of childs in the entire tree.
 					  This lock may not be held for any
 					  significant time */
@@ -106,9 +106,9 @@ typedef struct browser_root {
 
   /* Probing */
 
-  pthread_mutex_t br_probe_mutex;
-  pthread_cond_t  br_probe_cond;
-  pthread_t br_probe_thread_id;
+  hts_mutex_t br_probe_mutex;
+  hts_cond_t  br_probe_cond;
+  hts_thread_t br_probe_thread_id;
   int br_probe_run;
   struct browser_node_queue br_probe_queue;
   struct browser_node_queue br_autoview_queue;

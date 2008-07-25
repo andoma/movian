@@ -18,7 +18,6 @@
 
 #include <assert.h>
 #include <sys/time.h>
-#include <pthread.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>

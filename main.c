@@ -16,11 +16,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _GNU_SOURCE
 #include <sched.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-#include <pthread.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +44,12 @@
 #include "fileaccess/fa_imageloader.h"
 #include "fileaccess/fa_rawloader.h"
 
-pthread_mutex_t ffmutex = PTHREAD_MUTEX_INITIALIZER;
+#ifdef HTS_HAVE_PTHREAD
+#include <pthread.h>
+#endif
+
+
+pthread_mutex_t ffmutex;
 
 int frame_duration;
 
@@ -74,6 +77,7 @@ ffmpeglockmgr(int lock)
 static int
 get_concurrency(void)
 {
+#ifdef HTS_HAVE_PTHREAD
   cpu_set_t mask;
   int i, r = 0;
 
@@ -84,6 +88,9 @@ get_concurrency(void)
       r++;
 
   return r?:1;
+#else
+  return 1;
+#endif
 }
 
 /*
@@ -126,8 +133,11 @@ main(int argc, char **argv)
 
   hts_settings_init("showtime");
 
+  event_init();
+
   hid_init();
 
+  hts_mutex_init(&ffmutex);
   av_log_set_level(AV_LOG_ERROR);
   av_register_all();
 

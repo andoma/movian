@@ -18,7 +18,6 @@
 
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <pthread.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -154,14 +153,10 @@ void
 playlist_build_from_dir(const char *url)
 {
   playlist_scanner_t *ps;
-  pthread_t ptid;
-  pthread_attr_t attr;
+  hts_thread_t tid;
 
   ps = calloc(1, sizeof(playlist_scanner_t));
   ps->ps_url = strdup(url);
 
-  pthread_attr_init(&attr);
-  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-
-  pthread_create(&ptid, &attr, playlist_scanner_thread, ps);
+  hts_thread_create_detached(&tid, playlist_scanner_thread, ps);
 }

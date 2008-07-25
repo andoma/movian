@@ -15,10 +15,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#define _GNU_SOURCE
-#include <pthread.h>
-
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,20 +39,20 @@ browser_probe_thread(void *arg)
   browser_node_t *bn;
   int type;
 
-  pthread_mutex_lock(&br->br_probe_mutex);
+  hts_mutex_lock(&br->br_probe_mutex);
 
   while(br->br_probe_run) {
 
     if((bn = TAILQ_FIRST(&br->br_probe_queue)) != NULL) {
       TAILQ_REMOVE(&br->br_probe_queue, bn, bn_probe_link);
-      pthread_mutex_unlock(&br->br_probe_mutex);
+      hts_mutex_unlock(&br->br_probe_mutex);
 
       printf("Probing %s\n", bn->bn_url);
 
       /* If the probing code is the only one with a reference, don't probe */
       if(bn->bn_refcnt > 1) {
 
-	pthread_mutex_lock(&bn->bn_ftags_mutex);
+	hts_mutex_lock(&bn->bn_ftags_mutex);
 
 	if(bn->bn_type == FA_FILE) {
 
@@ -82,26 +78,26 @@ browser_probe_thread(void *arg)
 	  }
 	}
 
-	pthread_mutex_unlock(&bn->bn_ftags_mutex);
+	hts_mutex_unlock(&bn->bn_ftags_mutex);
       }
 
       browser_node_deref(bn);
-      pthread_mutex_lock(&br->br_probe_mutex);
+      hts_mutex_lock(&br->br_probe_mutex);
       continue;
     }
 
 
     if((bn = TAILQ_FIRST(&br->br_autoview_queue)) != NULL) {
       TAILQ_REMOVE(&br->br_autoview_queue, bn, bn_autoview_link);
-      pthread_mutex_unlock(&br->br_probe_mutex);
+      hts_mutex_unlock(&br->br_probe_mutex);
 
       probe_figure_primary_content(br, bn);
 
       browser_node_deref(bn);
-      pthread_mutex_lock(&br->br_probe_mutex);
+      hts_mutex_lock(&br->br_probe_mutex);
       continue;
     }
-    pthread_cond_wait(&br->br_probe_cond, &br->br_probe_mutex);
+    hts_cond_wait(&br->br_probe_cond, &br->br_probe_mutex);
   }
 
   /* Clear the probe queue */
@@ -116,7 +112,7 @@ browser_probe_thread(void *arg)
     browser_node_deref(bn);
   }
 
-  pthread_mutex_unlock(&br->br_probe_mutex);
+  hts_mutex_unlock(&br->br_probe_mutex);
   return NULL;
 }
 
@@ -139,7 +135,7 @@ probe_figure_primary_content(browser_root_t *br, browser_node_t *bn)
 
   for(cnt = 0; (c = a[cnt]) != NULL; cnt++) {
 
-    pthread_mutex_lock(&c->bn_ftags_mutex);
+    hts_mutex_lock(&c->bn_ftags_mutex);
 
     switch(c->bn_type) {
     case FA_DIR:
@@ -154,7 +150,7 @@ probe_figure_primary_content(browser_root_t *br, browser_node_t *bn)
       break;
     }
 
-    pthread_mutex_unlock(&c->bn_ftags_mutex);
+    hts_mutex_unlock(&c->bn_ftags_mutex);
     browser_node_deref(c); /* 'c' may be free'd here */
   }
   free(a);
@@ -187,10 +183,10 @@ browser_probe_enqueue(browser_node_t *bn)
 
   browser_node_ref(bn);
 
-  pthread_mutex_lock(&br->br_probe_mutex);
+  hts_mutex_lock(&br->br_probe_mutex);
   TAILQ_INSERT_TAIL(&br->br_probe_queue, bn, bn_probe_link);
-  pthread_cond_signal(&br->br_probe_cond);
-  pthread_mutex_unlock(&br->br_probe_mutex);
+  hts_cond_signal(&br->br_probe_cond);
+  hts_mutex_unlock(&br->br_probe_mutex);
 }
 
 
@@ -204,10 +200,10 @@ browser_probe_autoview_enqueue(browser_node_t *bn)
 
   browser_node_ref(bn);
 
-  pthread_mutex_lock(&br->br_probe_mutex);
+  hts_mutex_lock(&br->br_probe_mutex);
   TAILQ_INSERT_TAIL(&br->br_autoview_queue, bn, bn_autoview_link);
-  pthread_cond_signal(&br->br_probe_cond);
-  pthread_mutex_unlock(&br->br_probe_mutex);
+  hts_cond_signal(&br->br_probe_cond);
+  hts_mutex_unlock(&br->br_probe_mutex);
 }
 
 
@@ -221,10 +217,10 @@ browser_probe_init(browser_root_t *br)
   TAILQ_INIT(&br->br_probe_queue);
   TAILQ_INIT(&br->br_autoview_queue);
 
-  pthread_cond_init(&br->br_probe_cond, NULL);
-  pthread_mutex_init(&br->br_probe_mutex, NULL);
+  hts_cond_init(&br->br_probe_cond);
+  hts_mutex_init(&br->br_probe_mutex);
 
-  pthread_create(&br->br_probe_thread_id, NULL, browser_probe_thread, br);
+  hts_thread_create(&br->br_probe_thread_id, browser_probe_thread, br);
 }
 
 /**
@@ -234,6 +230,6 @@ void
 browser_probe_deinit(browser_root_t *br)
 {
   br->br_probe_run = 0;
-  pthread_cond_signal(&br->br_probe_cond);
-  pthread_join(br->br_probe_thread_id, NULL);
+  hts_cond_signal(&br->br_probe_cond);
+  hts_thread_join(br->br_probe_thread_id);
 }

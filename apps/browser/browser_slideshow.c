@@ -16,7 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <pthread.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,7 +52,7 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, glw_event_queue_t *geq)
   a = browser_get_array_of_childs(br, dir);
   for(cnt = 0; (c = a[cnt]) != NULL; cnt++) {
     
-    pthread_mutex_lock(&c->bn_ftags_mutex);
+    hts_mutex_lock(&c->bn_ftags_mutex);
 
     if(c->bn_type == FA_FILE &&
        !filetag_get_int(&c->bn_ftags, FTAG_FILETYPE, &type) &&
@@ -71,7 +70,7 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, glw_event_queue_t *geq)
 	glw_select(b);
     }
 
-    pthread_mutex_unlock(&c->bn_ftags_mutex);
+    hts_mutex_unlock(&c->bn_ftags_mutex);
 
     browser_node_deref(c); /* 'c' may be free'd here */
   }
