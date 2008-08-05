@@ -555,7 +555,8 @@ gl_sysglue_mainloop(void)
     if(gl_update_timings()) {
       char tmp[30];
       snprintf(tmp, sizeof(tmp), "%.2f Hz", (float)1000000. / frame_duration);
-      glw_set_caption(display_settings_model, "refreshrate", tmp);
+      if(display_settings_model != NULL)
+	glw_set_caption(display_settings_model, "refreshrate", tmp);
     }
     glw_reaper();
   }
