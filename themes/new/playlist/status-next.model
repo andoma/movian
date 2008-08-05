@@ -1,11 +1,11 @@
-widget container_y = {
-  widget label = {
-    .caption = "Next track:";
-    .weight = 0.7;
-  };
+widget(container_y, {
+    widget(label, {
+	.caption = "Next track:";
+	.weight = 0.7;
+      });
   
-  widget label = {
-    .id = "track_next_title";
-  };
-};
+    widget(label, {
+	.id = "track_next_title";
+      });
+  });
 

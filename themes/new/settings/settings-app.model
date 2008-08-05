@@ -1,43 +1,43 @@
-.displacement = [0 0 0.7];
 
-widget form = {
+widget(form, {
 
-  widget container_y = {
+    widget(container_y, {
 
-    widget bitmap = {
-      .color = [0.4 0.4 0.4];
-      .source = "theme://images/plate-titled-top.png";
-      .textureBorders = [0.1 0.1 0.1 0.1];
-      .vertexBorders  = [0.1 0.1 0.1 0.1];
-      .borderScale = true;
+	.displacement = [0, 0, 0.7];
 
-      widget container_y = {
-	widget label = {
-	  .caption = "Global settings";
-	  .align = center;
-	};
+	widget(bitmap, {
+	    .color = [0.4, 0.4, 0.4];
+	    .source = "theme://images/plate-titled-top.png";
+	    .textureBorders = [0.1, 0.1, 0.1, 0.1];
+	    .vertexBorders  = [0.1, 0.1, 0.1, 0.1];
+	    .borderScale = true;
 
-	widget list = {
-	  .id = "settings_list";
-	  .slices = 9;
-	  .weight = 3.0; 
-	};
+	    widget(container_y, {
+		widget(label, {
+		    .caption = "Global settings";
+		    .align = center;
+		  });
 
-      };
-    };
+		widget(list, {
+		    .id = "settings_list";
+		    .slices = 9;
+		    .weight = 3.0; 
+		  });
 
-    widget bitmap = {
-      .weight = 5;
-      /*      .color = [0.4 0.4 0.4]; */
-      .alpha = 0.3;
-      .source = "theme://images/plate-titled-bottom.png";
-      .textureBorders = [0.1 0.1 0.1 0.1];
-      .vertexBorders  = [0.01 0.01 0.01 0.01];
-      .borderScale = true;
+	      });
+	  });
+
+	widget(bitmap, {
+	    .weight = 5;
+	    .alpha = 0.3;
+	    .source = "theme://images/plate-titled-bottom.png";
+	    .textureBorders = [0.1,  0.1,  0.1,  0.1];
+	    .vertexBorders  = [0.01, 0.01, 0.01, 0.01];
+	    .borderScale = true;
  
-      widget deck = {
-	.id = "settings_deck";
-      };
-    };
-  };
-};
+	    widget(deck, {
+		.id = "settings_deck";
+	      });
+	  });
+      });
+  });

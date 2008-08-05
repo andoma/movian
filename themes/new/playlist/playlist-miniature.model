@@ -1,2 +1,3 @@
-#include "include/miniatures"
-miniature("Playlist", "theme://images/playlist.png");
+#include "theme://include/miniatures.model"
+
+MINIATURE("Playlist", "theme://images/playlist.png");

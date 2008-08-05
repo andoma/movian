@@ -1,62 +1,62 @@
-widget container_x = {
+widget(container_x, {
 
-  widget xfader = {
-    .id = "playstatus";
-  };
+    widget(xfader, {
+	.id = "playstatus";
+      });
 
-  widget container_y = {
-    .weight = 8.0;
-    widget label = {
-      .id = "title";
-    };
+    widget(container_y, {
+	.weight = 8.0;
+	widget(label, {
+	    .id = "title";
+	  });
 
-    widget container_x = {
-      widget label = {
-	.caption = "Video:";
-      };
+	widget(container_x, {
+	    widget(label, {
+		.caption = "Video:";
+	      });
 
-      widget label = {
-	.weight = 10.0;
-	.id = "videoinfo";
-      };
-    };
+	    widget(label, {
+		.weight = 10.0;
+		.id = "videoinfo";
+	      });
+	  });
 
-    widget container_x = {
-      widget label = {
-	.caption = "Audio:";
-      };
+	widget(container_x, {
+	    widget(label, {
+		.caption = "Audio:";
+	      });
 
-      widget label = {
-	.weight = 10.0;
-	.id = "audioinfo";
-      };
-    };
-  };
+	    widget(label, {
+		.weight = 10.0;
+		.id = "audioinfo";
+	      });
+	  });
+      });
 
-  widget container_y = {
-    .weight = 3.0;
+    widget(container_y, {
+	.weight = 3.0;
 
-    widget container_x = {
+	widget(container_x, {
 
-      .weight = 1.3;
+	    .weight = 1.3;
 
-      widget label = {
-	.align = right;
-	.weight = 5;
-	.id = "time_current";
-      };
+	    widget(label, {
+		.align = right;
+		.weight = 5;
+		.id = "time_current";
+	      });
 
-     widget label = {
-       .caption = "/";
-     };
+	    widget(label, {
+		.caption = "/";
+	      });
 
-      widget label = {
-	.align = left;
-	.weight = 5;
-	.id = "time_total";
-      };
-    };
+	    widget(label, {
+		.align = left;
+		.weight = 5;
+		.id = "time_total";
+	      });
+	  });
 
-    space 2.0;
-  };
-};
+	space(2.0);
+      });
+  });

@@ -1,101 +1,46 @@
-/*
 
-.focusCursor = true;
-
-widget bitmap = {
-  .selectable = true;
-  .focusAlpha = true;
-  .borderScale = true;
-  .color = [0.6 0.6 0.6];
-  .source = "theme://images/plate-compact.png";
-  .textureBorders = [0.5 0.5 0.5 0.5];
-  .vertexBorders  = [0.05 0.05 0.05 0.05];
+widget(bitmap, {
+    .selectable = true;
+    .focusCursor = true;
+    .focusAlpha = true;
+    .borderScale = true;
+    .color = [0.6, 0.6, 0.6];
+    .source = "theme://images/plate-compact.png";
+    .textureBorders = [0.5,  0.5,  0.5,  0.5];
+    .vertexBorders  = [0.05, 0.05, 0.05, 0.05];
   
-  widget expander = {
+    widget(container_x, {
+
+	widget(xfader, {
+	    .id = "node_filetype_icon_container";
+	    .weight = 0.05;
+	  });
     
-    widget container_x = {
-
-      widget xfader = {
-	.id = "node_filetype_icon_container";
-	.weight = 0.05;
-      };
-      
-      widget label = {
-	.id = "node_filename";
-      };
-
-      widget label = {
-	.id = "node_duration";
-	.weight = 0.1;
-      };
-
-    };
-
-    widget container_x = {
-      space = 0.05;
-
-      widget container_y = {
-      
-	widget label = {
-	  .id = "node_author";
-	};
-
-	widget label = {
-	  .id = "node_album";
-	};
-	space 1.0;
-      };
-    };
-  };
-};
-
-*/
-
-
-
-.focusCursor = true;
-
-widget bitmap = {
-  .selectable = true;
-  .focusAlpha = true;
-  .borderScale = true;
-  .color = [0.6 0.6 0.6];
-  .source = "theme://images/plate-compact.png";
-  .textureBorders = [0.5 0.5 0.5 0.5];
-  .vertexBorders  = [0.05 0.05 0.05 0.05];
-  
-  widget container_x = {
-
-    widget xfader = {
-      .id = "node_filetype_icon_container";
-      .weight = 0.05;
-    };
+	widget(expander, {
     
-    widget expander = {
-    
-      widget container_x = {
+	    widget(container_x, {
       
-	widget label = {
-	  .id = "node_filename";
-	};
+		widget(label, {
+		    .id = "node_filename";
+		  });
 
-	widget label = {
-	  .id = "node_duration";
-	  .weight = 0.1;
-	};
-      };
+		widget(label, {
+		    .id = "node_duration";
+		    .weight = 0.1;
+		  });
+	      });
 
-      widget container_y = {
+	    widget(container_y, {
 	
-	widget label = {
-	  .id = "node_author";
-	};
+		widget(label, {
+		    .id = "node_author";
+		  });
 
-	widget label = {
-	  .id = "node_album";
-	};
-	space 1.0;
-      };
-    };
-  };
-};
+		widget(label, {
+		    .id = "node_album";
+		  });
+		space(1.0);
+	      });
+	  });
+      });
+  });

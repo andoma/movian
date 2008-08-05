@@ -1,12 +1,13 @@
-#include "include/hlist"
+#include "theme://include/hlist.model"
 
-.displacement = [0 0 0.6];
+widget(form, {
+    widget(container_y, {
+	
+	.displacement = [0 0 0.6];
 
-widget form = {
-  widget container_y = {
+	space(3.0);
 
-    space 3.0;
-
-    hlist("Application Launcher", "application_container",  [0.5 0.5 0.5], 3);
-  };
-};
+	HLIST("Application Launcher", "application_container",
+	      [0.5, 0.5, 0.5], 3);
+      });
+  });

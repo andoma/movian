@@ -1,54 +1,57 @@
-#include "include/buttons"
+#include "theme://include/buttons.model"
 
-space 2.0;
+widget(container_y, {
 
-widget form = {
+    space(2.0);
 
-  widget container_y = {
+    widget(form, {
 
-    widget bitmap = {
-      .color = [0.6 0.6 0.6];
-      .source = "theme://images/plate-titled-top.png";
-      .textureBorders = [0.1 0.1 0.1 0.1];
-      .vertexBorders  = [0.1 0.1 0.1 0.1];
-      .borderScale = true;
+	widget(container_y, {
 
-      widget label = {
-	.caption = "Rename playlist";
-	.align = center;
-      };
-    };
+	    widget(bitmap, {
+		.color = [0.6, 0.6, 0.6];
+		.source = "theme://images/plate-titled-top.png";
+		.textureBorders = [0.1, 0.1, 0.1, 0.1];
+		.vertexBorders  = [0.1, 0.1, 0.1, 0.1];
+		.borderScale = true;
 
-    widget bitmap = {
-      .weight = 4.0;
-      .color = [0.3 0.3 0.3];
-      .source = "theme://images/plate-titled-bottom.png";
-      .textureBorders = [0.1 0.1 0.1 0.1];
-      .vertexBorders  = [0.1 0.1 0.1 0.1];
-      .borderScale = true;
+		widget(label, {
+		    .caption = "Rename playlist";
+		    .align = center;
+		  });
+	      });
+
+	    widget(bitmap, {
+		.weight = 4.0;
+		.color = [0.3, 0.3, 0.3];
+		.source = "theme://images/plate-titled-bottom.png";
+		.textureBorders = [0.1, 0.1, 0.1, 0.1];
+		.vertexBorders  = [0.1, 0.1, 0.1, 0.1];
+		.borderScale = true;
       
-      widget container_y = {
+		widget(container_y, {
 	
-	space 0.5;
+		    space(0.5);
 
-	widget text = {
-	  .id = "playlistname";
-	  .focusCursor = true;
-	  .focusAlpha = true;
-	  .selectable = true;
-	  .align = center;
-	};
-
-	space 0.5;
-	widget container_x = {
-	  space 0.5;
-	  form_button_ok();
-	  space 0.5;
-	  form_button_cancel();
-	  space 0.5;
-	};
-      };
-    };
-  };
-};
+		    widget(text, {
+			.id = "playlistname";
+			.focusCursor = true;
+			.focusAlpha = true;
+			.selectable = true;
+			.align = center;
+		      });
+		    
+		    space(0.5);
+		    widget(container_x, {
+			space(0.5);
+			FORM_BUTTON_OK();
+			space(0.5);
+			FORM_BUTTON_CANCEL();
+			space(0.5);
+		      });
+		  });
+	      });
+	  });
+      });
+  });
 

@@ -1,17 +1,19 @@
-macro miniature(title, icon) {
+#define MINIATURE(TITLE, ICON)
+{
+  widget(container_y, {
+      .focusCursor = true;
+      .focusAlpha  = true;
 
-  .focusCursor = true;
-  .focusAlpha  = true;
-
-  widget bitmap = {
-    .source = $icon;
-    .keepAspect = true;
-  };
+      widget(bitmap, {
+	  .source = ICON;
+	  .keepAspect = true;
+	});
   
-  widget label = {
-    .weight = 0.25;
-    .caption = $title;
-    .align = center;
-    .id = "title";
-  };
-};
+      widget(label, {
+	  .weight = 0.25;
+	  .caption = TITLE;
+	  .align = center;
+	  .id = "title";
+	});
+    });
+}

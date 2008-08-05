@@ -1,96 +1,98 @@
-#include "include/buttons"
+#include "theme://include/buttons.model"
 
-macro are_you_sure(title) {
+#define ARE_YOU_SURE(TITLE)
+{
+  widget(form, {
 
-  widget form = {
+      widget(container_y, {
 
-    widget container_y = {
-
-      widget bitmap = {
-	.color = [0.6 0.6 0.6];
-	.source = "theme://images/plate-titled-top.png";
-	.textureBorders = [0.1 0.1 0.1 0.1];
-	.vertexBorders  = [0.1 0.1 0.1 0.1];
-	.borderScale = true;
+	  widget(bitmap, {
+	      .color = [0.6, 0.6, 0.6];
+	      .source = "theme://images/plate-titled-top.png";
+	      .textureBorders = [0.1, 0.1, 0.1, 0.1];
+	      .vertexBorders  = [0.1, 0.1, 0.1, 0.1];
+	      .borderScale = true;
 	
-	widget label = {
-	  .caption = $title;
-	  .align = center;
-	};
-      };
+	      widget(label, {
+		.caption = TITLE;
+		  .align = center;
+		});
+	    });
 
-      widget bitmap = {
-	.weight = 4.0;
-	.color = [0.3 0.3 0.3];
-	.source = "theme://images/plate-titled-bottom.png";
-	.textureBorders = [0.1 0.1 0.1 0.1];
-	.vertexBorders  = [0.1 0.1 0.1 0.1];
-	.borderScale = true;
+	  widget(bitmap, {
+	      .weight = 4.0;
+	      .color = [0.3, 0.3, 0.3];
+	      .source = "theme://images/plate-titled-bottom.png";
+	      .textureBorders = [0.1, 0.1, 0.1, 0.1];
+	      .vertexBorders  = [0.1, 0.1, 0.1, 0.1];
+	      .borderScale = true;
       
-	widget container_y = {
+	      widget(container_y, {
 	
-	  space 2;
+		  space(2);
 
-	  widget container_x = {
-	    space 0.5;
-	    form_button_ok();
-	    space 0.5;
-	    form_button_cancel();
-	    space 0.5;
-	  };
-	};
-      };
-    };
-  };
-};
+		  widget(container_x, {
+		      space(0.5);
+		      FORM_BUTTON_OK();
+		      space(0.5);
+		      FORM_BUTTON_CANCEL();
+		      space(0.5);
+		    });
+		});
+	    });
+	});
+    });
+}
 
 
 
-macro error(title, otheropt) {
+#define ERROR(TITLE, OTHEROPT)
+{
+  widget(form, {
 
-  widget form = {
+      widget(container_y, {
 
-    widget container_y = {
-
-      widget bitmap = {
-	.color = [0.6 0.6 0.6];
-	.source = "theme://images/plate-titled-top.png";
-	.textureBorders = [0.1 0.1 0.1 0.1];
-	.vertexBorders  = [0.1 0.1 0.1 0.1];
-	.borderScale = true;
+	  widget(bitmap, {
+	      .color = [0.6, 0.6, 0.6];
+	      .source = "theme://images/plate-titled-top.png";
+	      .textureBorders = [0.1, 0.1, 0.1, 0.1];
+	      .vertexBorders  = [0.1, 0.1, 0.1, 0.1];
+	      .borderScale = true;
 	
-	widget label = {
-	  .caption = $title;
-	  .align = center;
-	};
-      };
+	      widget(label, {
+		  .caption = TITLE;
+		  .align = center;
+		});
+	    });
 
-      widget bitmap = {
-	.weight = 4.0;
-	.color = [0.3 0.3 0.3];
-	.source = "theme://images/plate-titled-bottom.png";
-	.textureBorders = [0.1 0.1 0.1 0.1];
-	.vertexBorders  = [0.1 0.1 0.1 0.1];
-	.borderScale = true;
+	  widget(bitmap, {
+	      .weight = 4.0;
+	      .color = [0.3, 0.3, 0.3];
+	      .source = "theme://images/plate-titled-bottom.png";
+	      .textureBorders = [0.1, 0.1, 0.1, 0.1];
+	      .vertexBorders  = [0.1, 0.1, 0.1, 0.1];
+	      .borderScale = true;
       
-	widget container_y = {
+	      widget(container_y, {
 	
-	  widget label = {
-	    .weight = 1.5;
-	    .align = center;
-	    .id = "detailedError";
-	  };
-	  space  0.5;
+		  widget(label, {
+		      .weight = 1.5;
+		      .align = center;
+		      .id = "detailedError";
+		    });
+		  space (0.5);
 
-	  widget container_x = {
-	    space 0.5;
-	    form_button("Retry", "theme://images/ok.png",  ok, [0 0.3 0]);
-	    space 0.5;
-	    form_button($otheropt, "theme://images/no.png", cancel, [0.3 0.0 0]);
-	    space 0.5;
-	  };
-	};
-      };
-    };
-  };
-};
+		  widget(container_x, {
+		      space(0.5);
+		      FORM_BUTTON("Retry", "theme://images/ok.png",  
+				  ok, [0.0, 0.3, 0.0]);
+		      space(0.5);
+		      FORM_BUTTON(OTHEROPT, "theme://images/no.png",
+				  cancel, [0.3, 0.0, 0.0]);
+		      space(0.5);
+		    });
+		});
+	    });
+	});
+    });
+}

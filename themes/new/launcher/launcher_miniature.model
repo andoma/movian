@@ -1,2 +1,2 @@
-#include "include/miniatures"
-miniature("Launcher", "theme://images/exec.png");
+#include "theme://include/miniatures.model"
+MINIATURE("Launcher", "theme://images/exec.png");

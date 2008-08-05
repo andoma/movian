@@ -1,5 +1,8 @@
-#include "include/popups"
+#include "theme://include/popups.model"
 
-space 2.0;
+widget(container_y, {
 
-are_you_sure("Delete playlist?");
+    space(2.0);
+
+    ARE_YOU_SURE("Delete playlist?");
+  });

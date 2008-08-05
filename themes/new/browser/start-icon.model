@@ -1,2 +1,2 @@
-#include "include/miniatures"
-miniature("Browser", "theme://images/library.png");
+#include "theme://include/miniatures.model"
+MINIATURE("Browser", "theme://images/library.png");

@@ -1,14 +1,14 @@
-#include "include/hlist"
+#include "theme://include/hlist.model"
 
-widget form = {
-  widget container_y = {
-
-    space 2.0;
-    widget container_x = {
-      space 0.1;
-      hlist("Task switcher", "switcher_container", [0.5 0.5 0.5], 3);
-      space 0.1;
-    };
-    space 2.0;
-  };
-};
+widget(form, {
+    widget(container_y,{
+	space(2.0);
+	
+	widget(container_x, {
+	    space(0.1);
+	    HLIST("Task switcher", "switcher_container", [0.5, 0.5, 0.5], 3);
+	    space(0.1);
+	  });
+	space(2.0);
+      });
+  });

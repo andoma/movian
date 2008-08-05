@@ -1,4 +1,4 @@
-widget  bitmap = {
-  .source = "theme://images/audio.png";
-  .keepAspect = true;
-};
+widget(bitmap , {
+    .source = "theme://images/audio.png";
+    .keepAspect = true;
+  });

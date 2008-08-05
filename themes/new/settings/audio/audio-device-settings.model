@@ -1,22 +1,22 @@
+widget(container_y, {
+    widget(label, {
+	.caption = "Supported output formats:";
+	.weight = 0.33;
+      });
 
-widget label = {
-  .caption = "Supported output formats:";
-  .weight = 0.33;
-};
+    widget(label, {
+	.weight = 0.66;
+	.id = "output_formats";
+      });
 
-widget label = {
-  .weight = 0.66;
-  .id = "output_formats";
-};
+    space(1);
 
-space 1;
-
-widget list = {
-  .debug = true;
-  .orientation = vertical;
-  .weight = 9;
-  .id = "controllers";
-  .slices = 9;
-  .expand = 2;
-};
+    widget(list, {
+	.orientation = vertical;
+	.weight = 9;
+	.id = "controllers";
+	.slices = 9;
+	.expand = 2;
+      });
+  });
 

@@ -1,6 +1,6 @@
-widget list = {
+widget(list, {
   .expand = 3.0;
   .orientation = vertical;
   .id = "track_container";
   .slices = 30;
-};
+  });

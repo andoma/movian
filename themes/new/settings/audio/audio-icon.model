@@ -1,2 +1,2 @@
-#include "include/miniatures"
-miniature("Audio", "theme://images/audio.png");
+#include "theme://include/miniatures.model"
+MINIATURE("Audio", "theme://images/audio.png");

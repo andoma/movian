@@ -1,4 +1,4 @@
-widget  bitmap = {
+widget(bitmap, {
   .source = "theme://images/file.png";
   .keepAspect = true;
-};
+  });

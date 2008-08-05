@@ -1,72 +1,72 @@
-widget container_x = {
+widget(container_x, {
 
-  widget xfader = {
+  widget(xfader, {
     .id = "playstatus";
-  };
+  });
 
-  widget container_y = {
+  widget(container_y, {
     .weight = 6.0;
-    widget container_x = {
+    widget(container_x, {
 
-      widget label = {
+      widget(label, {
 	.caption = "Disc:";
-      };
+      });
 
-      widget label = {
+      widget(label, {
 	.weight = 5.0;
 	.id = "disc";
-      };
-    };
+      });
+    });
 
-    widget container_x = {
+    widget(container_x, {
 
-      widget label = {
+      widget(label, {
 	.caption = "Title:";
-      };
+      });
 
-      widget label = {
+      widget(label, {
 	.weight = 5.0;
 	.id = "title";
-      };
-    };
+      });
+    });
 
 
-    widget container_x = {
+    widget(container_x, {
 
-      widget label = {
+      widget(label, {
 	.caption = "Chapter:";
-      };
+      });
 
-      widget label = {
+      widget(label, {
 	.weight = 5.0;
 	.id = "chapter";
-      };
-    };
-  };
+      });
+    });
+  });
 
-  widget container_y = {
+  widget(container_y, {
     .weight = 5.0;
 
-    widget container_x = {
+    widget(container_x, {
       .weight = 1.0;
 
-      widget label = {
+      widget(label, {
 	.align = right;
 	.weight = 5;
 	.id = "time_current";
-      };
+      });
 
-      widget label = {
+      widget(label, {
 	.caption = "/";
-      };
+      });
 
-      widget label = {
+      widget(label, {
 	.align = left;
 	.weight = 5;
 	.id = "time_total";
-      };
-    };
+      });
+    });
 
-    space 2.0;
-  };
-};
+    space(2.0);
+  });
+});

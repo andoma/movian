@@ -1,2 +1,2 @@
-#include "include/miniatures"
-miniature("Keymapper", "theme://images/keyboard.png");
+#include "theme://include/miniatures.model"
+MINIATURE("Keymapper", "theme://images/keyboard.png");
