@@ -108,7 +108,7 @@ global_prop_init(void)
   prop_global = glw_prop_create(NULL, "global", GLW_GP_DIRECTORY);
 
   p = glw_prop_create(prop_global, "version", GLW_GP_STRING);
-  glw_prop_set_string(p, "%s", htsversion);
+  glw_prop_set_string(p, htsversion);
 
   cpu = glw_prop_create(prop_global, "cpu", GLW_GP_DIRECTORY);
   p = glw_prop_create(cpu, "cores", GLW_GP_FLOAT);

@@ -143,7 +143,7 @@ playlist_create(const char *title, int truncate)
   pl->pl_prop_root = glw_prop_create(NULL, "playlist", GLW_GP_DIRECTORY);
 
   glw_prop_set_string(glw_prop_create(pl->pl_prop_root, "title", GLW_GP_STRING),
-		      "%s", pl->pl_title);
+		      pl->pl_title);
 
 
   p = glw_prop_create(pl->pl_prop_root, "time", GLW_GP_DIRECTORY);

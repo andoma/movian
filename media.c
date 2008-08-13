@@ -835,31 +835,29 @@ media_fill_properties(glw_prop_t *root, const char *url, int type,
     break;
   }
 
-  glw_prop_set_string(glw_prop_create(root, "type", GLW_GP_STRING),
-		      "%s", s);
+  glw_prop_set_string(glw_prop_create(root, "type", GLW_GP_STRING), s);
 
   if(filetag_get_str(ftags, FTAG_TITLE, &s)) {
     s = strrchr(url, '/');
     s = s ? s + 1 : url;
   }
-  glw_prop_set_string(glw_prop_create(root, "title", GLW_GP_STRING),
-		      "%s", s);
+  glw_prop_set_string(glw_prop_create(root, "title", GLW_GP_STRING), s);
 
   glw_prop_set_string(glw_prop_create(root, "author", GLW_GP_STRING),
-		      "%s", filetag_get_str2(ftags, FTAG_AUTHOR) ?: "");
+		      filetag_get_str2(ftags, FTAG_AUTHOR) ?: "");
 
 
   glw_prop_set_string(glw_prop_create(root, "album", GLW_GP_STRING),
-		      "%s", filetag_get_str2(ftags, FTAG_ALBUM) ?: "");
+		      filetag_get_str2(ftags, FTAG_ALBUM) ?: "");
 
   glw_prop_set_string(glw_prop_create(root, "format", GLW_GP_STRING),
-		      "%s", filetag_get_str2(ftags, FTAG_MEDIAFORMAT) ?: "");
+		      filetag_get_str2(ftags, FTAG_MEDIAFORMAT) ?: "");
 
   glw_prop_set_string(glw_prop_create(root, "audioinfo", GLW_GP_STRING),
-		      "%s", filetag_get_str2(ftags, FTAG_AUDIOINFO) ?: "");
+		      filetag_get_str2(ftags, FTAG_AUDIOINFO) ?: "");
 
   glw_prop_set_string(glw_prop_create(root, "videoinfo", GLW_GP_STRING),
-		      "%s", filetag_get_str2(ftags, FTAG_VIDEOINFO) ?: "");
+		      filetag_get_str2(ftags, FTAG_VIDEOINFO) ?: "");
 
   if(filetag_get_int(ftags, FTAG_DURATION, &i64))
     i64 = -1;
@@ -874,6 +872,6 @@ media_fill_properties(glw_prop_t *root, const char *url, int type,
   }
 
   glw_prop_set_string(glw_prop_create(root, "originaldate", GLW_GP_STRING),
-		      "%s", buf);
+		      buf);
 
 }
