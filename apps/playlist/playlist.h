@@ -58,6 +58,15 @@ typedef struct playlist {
   int pl_nentries;
   int pl_total_time;
 
+  glw_prop_t *pl_prop_root;
+  glw_prop_t *pl_prop_time_total;
+  glw_prop_t *pl_prop_time_current;
+
+  glw_prop_t *pl_prop_track_total;
+  glw_prop_t *pl_prop_track_current;
+
+
+
 } playlist_t;
 
 
@@ -87,6 +96,8 @@ typedef struct playlist_entry {
   int ple_track;
 
   struct  filetag_list ple_ftags;
+
+  glw_prop_t *ple_prop_root;
 
 } playlist_entry_t;
 

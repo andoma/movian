@@ -9,7 +9,7 @@ widget(container_y, {
 	.borderScale = true;
 
 	widget(label, {
-	    .id = "title";
+	    .caption = playlist.title;
 	    .align = center;
 	  });
       });
@@ -47,7 +47,7 @@ widget(container_y, {
 
 		    widget(label, {
 			.align = right;
-			.id = "time_current";
+			.caption = playlist.time.current;
 		      });
 
 		    widget(label, {
@@ -58,7 +58,7 @@ widget(container_y, {
 
 		    widget(label, {
 			.align = left;
-			.id = "time_total";
+			.caption = playlist.time.total;
 		      });
 		  });
 
@@ -69,9 +69,9 @@ widget(container_y, {
 			.caption = "Track:";
 		      });
 
-		    widget(label, {
+		    widget(integer, {
 			.align = right;
-			.id = "track_current";
+			.value = playlist.track.current;
 		      });
 
 		    widget(label, {
@@ -80,9 +80,9 @@ widget(container_y, {
 			.caption = "/";
 		      });
 
-		    widget(label, {
+		    widget(integer, {
 			.align = left;
-			.id = "track_total";
+			.value = playlist.track.total;
 		      });
 		  });
 	      });

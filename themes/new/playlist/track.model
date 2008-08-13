@@ -18,25 +18,19 @@ widget(bitmap, {
     
 	    widget(container_x, {
 		widget(label, {
-		    .id = "track_title";
+		    .caption = media.title;
 		    .weight = 0.9;
 		  });
       
 		widget(label, {
 		    .weight = 0.1;
-		    .id = "track_duration";
+		    .caption = media.duration;
 		  });
 	      });
 
 	    widget(container_y, {
-
-		widget(label, {
-		    .id = "track_author";
-		  });
-      
-		widget(label, {
-		    .id = "track_album";
-		  });
+		widget(label, { .caption = media.author; });
+      		widget(label, { .caption = media.album;  });
 		space(1.0);
 	      });
 	  });

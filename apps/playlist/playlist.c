@@ -113,6 +113,8 @@ ple_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 playlist_t *
 playlist_create(const char *title, int truncate)
 {
+  glw_prop_t *plist[3] = {NULL, prop_global, NULL};
+  glw_prop_t *p;
   playlist_t *pl;
 
   hts_mutex_lock(&playlistlock);
@@ -138,8 +140,24 @@ playlist_create(const char *title, int truncate)
   TAILQ_INIT(&pl->pl_entries);
   TAILQ_INIT(&pl->pl_shuffle_entries);
 
+  pl->pl_prop_root = glw_prop_create(NULL, "playlist", GLW_GP_DIRECTORY);
+  plist[0] = pl->pl_prop_root;
+
+  glw_prop_set_string(glw_prop_create(pl->pl_prop_root, "title", GLW_GP_STRING),
+		      "%s", pl->pl_title);
+
+
+  p = glw_prop_create(pl->pl_prop_root, "time", GLW_GP_DIRECTORY);
+  pl->pl_prop_time_total   = glw_prop_create(p, "total", GLW_GP_TIME);
+  pl->pl_prop_time_current = glw_prop_create(p, "current", GLW_GP_TIME);
+
+  p = glw_prop_create(pl->pl_prop_root, "track", GLW_GP_DIRECTORY);
+  pl->pl_prop_track_total   = glw_prop_create(p, "total", GLW_GP_FLOAT);
+  pl->pl_prop_track_current = glw_prop_create(p, "current", GLW_GP_FLOAT);
+
+
   pl->pl_widget = glw_model_create("theme://playlist/playlist.model", NULL,
-				   NULL, 0);
+				   plist, 0);
   
   glw_set(pl->pl_widget,
 	  GLW_ATTRIB_SIGNAL_HANDLER, pl_widget_callback, pl, 400,
@@ -150,7 +168,6 @@ playlist_create(const char *title, int truncate)
 
   pl->pl_list = glw_find_by_id(pl->pl_tab, "track_container", 0);
 
-  glw_set_caption(pl->pl_widget, "title", pl->pl_title);
 
   glw_add_tab(playlist_root,
 	      "playlist_container", pl->pl_widget,
@@ -215,6 +232,8 @@ playlist_destroy(playlist_t *pl)
   glw_destroy(pl->pl_widget);
   glw_destroy(pl->pl_tab);
 
+  glw_prop_destroy(pl->pl_prop_root);
+
   free(pl->pl_backdrop);
   free(pl->pl_title);
   free(pl);
@@ -263,6 +282,8 @@ playlist_enqueue0(playlist_t *pl, const char *url, struct filetag_list *ftags)
   struct filetag_list ftags0;
   int64_t i64;
   const char *s;
+  glw_prop_t *p;
+  glw_prop_t *plist[4] = {NULL, pl->pl_prop_root, prop_global, NULL};
 
   if(ftags == NULL) {
     TAILQ_INIT(&ftags0);
@@ -310,39 +331,51 @@ playlist_enqueue0(playlist_t *pl, const char *url, struct filetag_list *ftags)
 
   ple->ple_refcnt++; /* playlist linkage */
 
+  /**
+   * Create properties
+   */
+  ple->ple_prop_root = glw_prop_create(NULL, "media", GLW_GP_DIRECTORY);
+  plist[0] = ple->ple_prop_root;
+
+  p = glw_prop_create(ple->ple_prop_root, "title", GLW_GP_STRING);
+  if(filetag_get_str(ftags, FTAG_TITLE, &s)) {
+    s = strrchr(url, '/');
+    s = s ? s + 1 : url;
+    glw_set_caption(ple->ple_widget, "track_title", s);
+  }
+  glw_prop_set_string(p, "%s", s);
+
+
+  glw_prop_set_string(glw_prop_create(ple->ple_prop_root, 
+				      "author", GLW_GP_STRING),
+		      "%s", filetag_get_str2(ftags, FTAG_AUTHOR) ?: "");
+
+
+  glw_prop_set_string(glw_prop_create(ple->ple_prop_root, 
+				      "album", GLW_GP_STRING),
+		      "%s", filetag_get_str2(ftags, FTAG_ALBUM) ?: "");
+
+  glw_prop_set_time(glw_prop_create(ple->ple_prop_root, 
+				    "duration", GLW_GP_TIME),
+		    ple->ple_duration);
+
 
   /**
    * Create playlist entry model in tracklist
    */
   ple->ple_widget = glw_model_create("theme://playlist/track.model",
-				     pl->pl_list, NULL, GLW_MODEL_CACHE);
+				     pl->pl_list, plist, GLW_MODEL_CACHE);
 
   glw_set(ple->ple_widget,
 	  GLW_ATTRIB_SIGNAL_HANDLER, ple_widget_callback, ple, 400,
 	  NULL);
 
-  if(filetag_get_str(ftags, FTAG_TITLE, &s) == 0) {
-    glw_set_caption(ple->ple_widget, "track_title", s);
-  } else {
-    s = strrchr(url, '/');
-    s = s ? s + 1 : url;
-    glw_set_caption(ple->ple_widget, "track_title", s);
-  }
-
-  glw_set_caption(ple->ple_widget, "track_author",
-		  filetag_get_str2(ftags, FTAG_AUTHOR));
-
-  glw_set_caption(ple->ple_widget, "track_album",
-		  filetag_get_str2(ftags, FTAG_ALBUM));
-
-  glw_set_caption_time(ple->ple_widget, "track_duration",  ple->ple_duration);
-
-
   /**
    * Update playlist widget
    */
-  glw_set_caption_time(pl->pl_widget, "time_total",  pl->pl_total_time);
-  glw_set_caption_int(pl->pl_widget,  "track_total", pl->pl_nentries);
+
+  glw_prop_set_time(pl->pl_prop_time_total, pl->pl_total_time);
+  glw_prop_set_float(pl->pl_prop_track_total, pl->pl_nentries);
 
   filetag_movelist(&ple->ple_ftags, ftags);
   return ple;
@@ -397,6 +430,8 @@ playlist_entry_free(playlist_entry_t *ple)
 
   glw_destroy(ple->ple_widget);
   
+  glw_prop_destroy(ple->ple_prop_root);
+
   free(ple);
 }
 
