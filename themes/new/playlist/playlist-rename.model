@@ -34,7 +34,7 @@ widget(container_y, {
 		    space(0.5);
 
 		    widget(text, {
-			.id = "playlistname";
+			.caption = playlist.title;
 			.focusCursor = true;
 			.focusAlpha = true;
 			.selectable = true;

@@ -538,8 +538,6 @@ playlist_rename(playlist_t *pl, glw_t *parent)
 			      0,
 			      prop_global, pl->pl_prop_root, NULL);
 
-  glw_set_caption(m, "playlistname", pl->pl_title);
-
   if(!glw_wait_form_ok_cancel(m)) {
     glw_get_caption(m, "playlistname", buf, sizeof(buf));
 
