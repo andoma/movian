@@ -43,9 +43,10 @@ launcher_init(void)
 
   launcher_appi = ai = appi_create("Launcher");
 
-  ai->ai_widget = glw_model_create("theme://launcher/launcher.model", NULL);
+  ai->ai_widget = glw_model_create("theme://launcher/launcher.model", NULL,
+				   NULL, 0);
   mini =          glw_model_create("theme://launcher/launcher_miniature.model",
-				   NULL);
+				   NULL, NULL, 0);
 
   list = glw_find_by_id(ai->ai_widget, "application_container", 0);
   if(list == NULL) {
@@ -90,7 +91,7 @@ launcher_app_add(app_t *a)
   if(launcher_list == NULL)
     return;
 
-  w = glw_model_create(a->app_model, launcher_list);
+  w = glw_model_create(a->app_model, launcher_list, NULL, 0);
   if(w == NULL)
     return;
 

@@ -78,5 +78,6 @@ void showtime_exit(int suspend);
 
 extern int has_analogue_pad;
 extern int mp_show_extra_info;
+extern struct glw_prop *prop_global;
 
 #endif /* SHOWTIME_H */

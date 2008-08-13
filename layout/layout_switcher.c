@@ -40,7 +40,8 @@ layout_switcher_create(void)
 {
   event_handler_register(201, layout_switcher_input_event);
 
-  layout_switcher = glw_model_create("theme://switcher/switcher.model", NULL);
+  layout_switcher = glw_model_create("theme://switcher/switcher.model", NULL,
+				     NULL, 0);
 
   layout_switcher_list = 
     glw_find_by_id(layout_switcher, "switcher_container", 0);

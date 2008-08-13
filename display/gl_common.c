@@ -75,6 +75,8 @@ gl_update_timings(void)
       frame_duration = lastframedur;
       r = 1;
       deltaptr = 0;
+
+      glw_set_framerate(1000000.0 / (float)frame_duration);
     }
   }
   lastts = wallclock;

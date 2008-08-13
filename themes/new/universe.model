@@ -30,32 +30,49 @@ widget(container_z, {
     widget(container_x, {
 	space(0.5);
 	widget(container_y, {
-	    .id = "master_volume_place";
-	    .alpha = 0;
-	    
 	    space(1.0);
 
-	    widget(bitmap, {
-		.color = [0.3, 0.3, 0.3];
-		.borderScale = true;
-		.source = "theme://images/plate-compact.png";
-		.textureBorders = [0.5 0.5 0.5 0.5];
-		.vertexBorders  = [0.05 0.05 0.05 0.05];
-	
-		widget(container_x, {
-		    widget(label, {
-			.caption = "Master volume:";
-			.align = right;
-		      });
+	    widget(container_z, {
+		.alpha = iir(changed(global.audio.mastervolume, 2.0), 7);
 
-		    widget(label, {
-			.caption = "-50 dB";
-			.id = "master_volume";
-			.align = left;
+		widget(bitmap, {
+		    .color = [0.3, 0.3, 0.3];
+		    .borderScale = true;
+		    .source = "theme://images/plate-compact.png";
+		    .textureBorders = [0.5,  0.5,  0.5,  0.5];
+		    .vertexBorders  = [0.05, 0.05, 0.05, 0.05];
+	
+		    widget(container_x, {
+			widget(label, {
+			    .caption = "Master volume:";
+			    .align = right;
+			  });
+
+			widget(integer, {
+			    .value = global.audio.mastervolume;
+			    .align = left;
+			  });
 		      });
 		  });
 	      });
-	    space(30.0);
+
+	    widget(container_z, {
+		.alpha = iir(global.audio.mastermute, 7);
+		widget(bitmap, {
+		    .color = [0.8, 0.2, 0.1];
+		    .borderScale = true;
+		    .source = "theme://images/plate-compact.png";
+		    .textureBorders = [0.5,  0.5,  0.5,  0.5];
+		    .vertexBorders  = [0.05, 0.05, 0.05, 0.05];
+	
+		    widget(label, {
+			.caption = "Audio muted";
+			.align = center;
+		      });
+		  });
+	      });
+
+	    space(29.0);
 	  });
 	space(0.5);
       });

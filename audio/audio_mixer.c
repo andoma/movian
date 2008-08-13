@@ -30,24 +30,7 @@ extern glw_t *layout_world;
 volume_control_t global_volume;
 
 static glw_event_queue_t audio_mixer_event_queue;
-
-static int vol_fader_show;
-
-static int
-volume_widget_fader(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
-{
-  if(signal != GLW_SIGNAL_LAYOUT)
-    return 0;
-
-  if(global_volume.vc_master_mute)
-    vol_fader_show = 100;
-
-  vol_fader_show = GLW_MAX(vol_fader_show - 1, 0);
-  w->glw_alpha = GLW_LP(16, w->glw_alpha, !!vol_fader_show);
-  return 0;
-
-}
-
+static glw_prop_t *prop_mastervol, *prop_mastermute;
 
 /**
  *
@@ -55,24 +38,8 @@ volume_widget_fader(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 static void
 volume_update_widget(volume_control_t *vc)
 {
-  glw_t *w;
-  char buf[20];
-
-  if(layout_world == NULL)
-    return;
-
-  if((w = glw_find_by_id(layout_world, "master_volume_place", 0)) != NULL)
-    glw_set(w, GLW_ATTRIB_SIGNAL_HANDLER, volume_widget_fader, NULL, 500, NULL);
-
-  if(vc->vc_master_mute)
-    snprintf(buf, sizeof(buf), "Muted");
-  else
-    snprintf(buf, sizeof(buf), "%d dB", (int)vc->vc_master_vol);
-
-  if((w = glw_find_by_id(layout_world, "master_volume", 0)) != NULL)
-    glw_set(w, GLW_ATTRIB_CAPTION, buf, NULL);
-
-  vol_fader_show = 100;
+  glw_prop_set_float(prop_mastervol, vc->vc_master_vol);
+  glw_prop_set_float(prop_mastermute, vc->vc_master_mute);
 }
 
 
@@ -248,6 +215,11 @@ void
 audio_mixer_init(void)
 {
   hts_thread_t tid;
+  glw_prop_t *prop_audio;
+
+  prop_audio = glw_prop_create(prop_global, "audio", GLW_GP_DIRECTORY);
+  prop_mastervol  = glw_prop_create(prop_audio, "mastervolume", GLW_GP_FLOAT);
+  prop_mastermute = glw_prop_create(prop_audio, "mastermute", GLW_GP_FLOAT);
 
   hts_thread_create(&tid, audio_mixer_thread, NULL);
 }

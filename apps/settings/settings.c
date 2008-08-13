@@ -48,9 +48,11 @@ settings_init(void)
 
   ai = appi_create("Settings");
 
-  ai->ai_widget = glw_model_create("theme://settings/settings-app.model", NULL);
+  ai->ai_widget = glw_model_create("theme://settings/settings-app.model", NULL,
+				   NULL, 0);
 
-  mini = glw_model_create("theme://settings/settings-miniature.model", NULL);
+  mini = glw_model_create("theme://settings/settings-miniature.model", NULL,
+			  NULL, 0);
   layout_switcher_appi_add(ai, mini);
 
   display_settings_init(ai, ai->ai_widget);

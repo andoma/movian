@@ -123,7 +123,8 @@ nav_access_error(navigator_t *nav, appi_t *ai, const char *dir,
 	   "\"%s\"\n"
 	   "%s", dir, errtxt);
 
-  m = glw_model_create("theme://browser/access-error.model", nav->nav_stack);
+  m = glw_model_create("theme://browser/access-error.model", nav->nav_stack,
+		       NULL, 0);
   glw_set_caption(m, "detailedError", errbuf);
   r = glw_wait_form_ok_cancel(m);
   glw_detach(m);
@@ -140,7 +141,7 @@ nav_verify_exit(glw_t *parent, appi_t *ai)
  glw_t *m;
  int r;
 
-  m = glw_model_create("theme://browser/exit.model", parent);
+  m = glw_model_create("theme://browser/exit.model", parent, NULL, 0);
   r = glw_wait_form_ok_cancel(m);
   glw_detach(m);
 
@@ -166,7 +167,7 @@ nav_main(navigator_t *nav, appi_t *ai, navconfig_t *cfg)
   glw_destroy(nav->nav_miniature);
 
   nav->nav_miniature = 
-    glw_model_create("theme://browser/browser-miniature.model", NULL);
+    glw_model_create("theme://browser/browser-miniature.model", NULL, NULL, 0);
 
   layout_switcher_appi_add(ai, nav->nav_miniature);
   glw_unlock();
@@ -266,7 +267,7 @@ nav_main(navigator_t *nav, appi_t *ai, navconfig_t *cfg)
 static void
 icons_callback(void *arg, const char *url, const char *filename, int type)
 {
-  glw_model_create(url, arg);
+  glw_model_create(url, arg, NULL, 0);
 
 }
 
@@ -296,7 +297,7 @@ nav_setup(navigator_t *nav, appi_t *ai)
 
   memset(&nc, 0, sizeof(nc));
 
-  m = glw_model_create("theme://browser/setup.model", nav->nav_stack);
+  m = glw_model_create("theme://browser/setup.model", nav->nav_stack, NULL, 0);
   load_nav_icons_in_tab(m, "icon_container");
 
   r = glw_wait_form_ok_cancel(m);
@@ -355,7 +356,8 @@ nav_launch(void *aux)
   memset(nav, 0, sizeof(navigator_t));
   nav->nav_ai = ai;
 
-  ai->ai_widget = glw_model_create("theme://browser/browser-app.model", NULL);
+  ai->ai_widget = glw_model_create("theme://browser/browser-app.model", NULL,
+				   NULL, 0);
 
   if((nav->nav_stack = glw_find_by_id(ai->ai_widget, "stack", 0)) == NULL) {
     fprintf(stderr, "No navigation 'stack' found\n");
@@ -379,7 +381,7 @@ nav_launch(void *aux)
    *  Switcher miniature
    */
   nav->nav_miniature =
-    glw_model_create("theme://browser/browser-miniature.model", NULL);
+    glw_model_create("theme://browser/browser-miniature.model", NULL, NULL, 0);
 
   layout_switcher_appi_add(ai, nav->nav_miniature);
   

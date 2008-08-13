@@ -121,7 +121,7 @@ browser_view_set(browser_node_t *bn, browser_view_t *bv)
   snprintf(buf, sizeof(buf), "theme://browser/views/%s/view.model",
 	   bv->bv_name);
 
-  m = glw_model_create(buf, bn->bn_cont_xfader);
+  m = glw_model_create(buf, bn->bn_cont_xfader, NULL, 0);
  
   if((w = glw_find_by_id(m, "node_container", 0)) != NULL) {
     glw_select(w);
@@ -326,7 +326,7 @@ browser_view_set_filetype(glw_t *root, browser_node_t *bn)
     snprintf(buf, sizeof(buf), "theme://browser/views/%s/%s.model", 
 	     parent->bn_view->bv_name, model);
 
-    glw_model_create(buf, w);
+    glw_model_create(buf, w, NULL, 0);
   }
 
  out:
@@ -484,7 +484,7 @@ browser_view_node_model_load(browser_node_t *bn)
   snprintf(buf, sizeof(buf), "theme://browser/views/%s/node.model",
 	   parent->bn_view->bv_name);
 
-  w = glw_model_create(buf, bn->bn_icon_xfader);
+  w = glw_model_create(buf, bn->bn_icon_xfader, NULL, 0);
 
   browser_view_update_wset_from_node(w, bn);
 
@@ -591,7 +591,7 @@ browser_view_splash(browser_view_t *bv, glw_t *parent)
   snprintf(buf, sizeof(buf), 
 	   "theme://browser/views/%s/splash.model", bv->bv_name);
 
-  glw_model_create(buf, parent);
+  glw_model_create(buf, parent, NULL, 0);
 }
 
 

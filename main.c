@@ -57,6 +57,8 @@ int64_t wallclock;
 time_t walltime;
 int has_analogue_pad;
 int concurrency;
+extern char *htsversion;
+glw_prop_t *prop_global;
 
 static int main_event_handler(glw_event_t *ge);
 
@@ -92,6 +94,27 @@ get_concurrency(void)
   return 1;
 #endif
 }
+
+
+/**
+ *
+ */
+static void
+global_prop_init(void)
+{
+  glw_prop_t *p;
+  glw_prop_t *cpu;
+
+  prop_global = glw_prop_create(NULL, "global", GLW_GP_DIRECTORY);
+
+  p = glw_prop_create(prop_global, "version", GLW_GP_STRING);
+  glw_prop_set_string(p, "%s", htsversion);
+
+  cpu = glw_prop_create(prop_global, "cpu", GLW_GP_DIRECTORY);
+  p = glw_prop_create(cpu, "cores", GLW_GP_FLOAT);
+  glw_prop_set_float(p, concurrency);
+}
+
 
 /*
  *
@@ -150,6 +173,8 @@ main(int argc, char **argv)
     fprintf(stderr, "libglw user interface failed to initialize, exiting\n");
     exit(0);
   }
+
+  global_prop_init();
 
   audio_init();
 

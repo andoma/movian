@@ -80,7 +80,8 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, glw_event_queue_t *geq)
   while(run) {
 
     if(paused && pw == NULL)
-      pw = glw_model_create("theme://browser/slideshow-paused.model", z);
+	pw = glw_model_create("theme://browser/slideshow-paused.model", z,
+			    NULL, 0);
     else if(!paused && pw) {
       glw_destroy(pw);
       pw = NULL;

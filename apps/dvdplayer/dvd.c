@@ -300,7 +300,7 @@ dp_update_playstatus(dvd_player_t *dp, mp_playstatus_t mps)
   }
 
   if(model != NULL) {
-    glw_model_create(model, w);
+    glw_model_create(model, w, NULL, 0);
   } else {
     glw_create(GLW_DUMMY,
 	       GLW_ATTRIB_PARENT, w,
@@ -481,7 +481,7 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
   /**
    * Create top level stack
    */
-  top = glw_model_create("theme://dvdplayer/dvdplayer.model", parent);
+  top = glw_model_create("theme://dvdplayer/dvdplayer.model", parent, NULL, 0);
   dp->dp_container = glw_find_by_id(top, "dvdplayer_container", 0);
   if(dp->dp_container == NULL) {
     fprintf(stderr, "Unable to find dvdplayer_container\n");
@@ -529,7 +529,7 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
    * Status overlay
    */
   dp->dp_status = glw_model_create("theme://dvdplayer/status.model",
-				   mp->mp_status_xfader);
+				   mp->mp_status_xfader, NULL, 0);
 
 
   glw_set_caption(dp->dp_status, "disc", title);
@@ -1104,7 +1104,7 @@ dvd_player_open_menu(dvd_player_t *dp, int toggle)
   }
 
   dp->dp_menu =
-    glw_model_create("theme://dvdplayer/menu.model", dp->dp_container);
+    glw_model_create("theme://dvdplayer/menu.model", dp->dp_container, NULL, 0);
 
   /**
    * Populate audio tracks
