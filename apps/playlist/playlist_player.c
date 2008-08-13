@@ -38,23 +38,29 @@ static void
 playlist_update_playstatus(playlist_entry_t *ple, glw_t *w, int status)
 {
   const char *m;
+  const char *s;
 
   switch(status) {
   case MP_PLAY:
     m = "theme://playlist/playstatus-play.model";
+    s = "play";
     break;
 
   case MP_PAUSE:
     m = "theme://playlist/playstatus-pause.model";
+    s = "pause";
     break;
 
   default:
     m = "theme://playlist/playstatus-stop.model";
+    s = "stop";
     break;
   }
 
   glw_switch_model(ple->ple_widget, "track_playstatus", m);
   glw_switch_model(w,               "track_playstatus", m);
+
+  glw_prop_set_string(ple->ple_prop_playstatus, s);
 }
 
 
@@ -349,6 +355,9 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
   wrap_codec_deref(cw, 0);
 
   wrap_format_wait(fw);
+
+  playlist_update_playstatus(ple, status, MP_STOP);
+
   return next;
 }
 

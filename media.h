@@ -292,5 +292,9 @@ void media_update_codec_info_widget(glw_t *w, const char *id,
 void media_get_codec_info(AVCodecContext *ctx, char *buf, size_t size);
 
 extern media_pipe_t *primary_audio;
+struct filetag_list;
+
+void media_fill_properties(glw_prop_t *root, const char *url, int type,
+			   struct filetag_list *tags);
 
 #endif /* MEDIA_H */

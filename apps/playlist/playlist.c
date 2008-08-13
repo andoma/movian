@@ -34,6 +34,7 @@
 #include "playlist.h"
 #include "event.h"
 #include <fileaccess/fa_probe.h>
+#include <fileaccess/fileaccess.h>
 #include <layout/layout.h>
 
 static struct playlist_list playlists;
@@ -113,7 +114,6 @@ ple_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 playlist_t *
 playlist_create(const char *title, int truncate)
 {
-  glw_prop_t *plist[3] = {NULL, prop_global, NULL};
   glw_prop_t *p;
   playlist_t *pl;
 
@@ -141,7 +141,6 @@ playlist_create(const char *title, int truncate)
   TAILQ_INIT(&pl->pl_shuffle_entries);
 
   pl->pl_prop_root = glw_prop_create(NULL, "playlist", GLW_GP_DIRECTORY);
-  plist[0] = pl->pl_prop_root;
 
   glw_prop_set_string(glw_prop_create(pl->pl_prop_root, "title", GLW_GP_STRING),
 		      "%s", pl->pl_title);
@@ -282,9 +281,6 @@ playlist_enqueue0(playlist_t *pl, const char *url, struct filetag_list *ftags)
   playlist_entry_t *ple, *ple2;
   struct filetag_list ftags0;
   int64_t i64;
-  const char *s;
-  glw_prop_t *p;
-  glw_prop_t *plist[4] = {NULL, pl->pl_prop_root, prop_global, NULL};
 
   if(ftags == NULL) {
     TAILQ_INIT(&ftags0);
@@ -336,29 +332,11 @@ playlist_enqueue0(playlist_t *pl, const char *url, struct filetag_list *ftags)
    * Create properties
    */
   ple->ple_prop_root = glw_prop_create(NULL, "media", GLW_GP_DIRECTORY);
-  plist[0] = ple->ple_prop_root;
 
-  p = glw_prop_create(ple->ple_prop_root, "title", GLW_GP_STRING);
-  if(filetag_get_str(ftags, FTAG_TITLE, &s)) {
-    s = strrchr(url, '/');
-    s = s ? s + 1 : url;
-    glw_set_caption(ple->ple_widget, "track_title", s);
-  }
-  glw_prop_set_string(p, "%s", s);
+  ple->ple_prop_playstatus = glw_prop_create(ple->ple_prop_root,
+					     "playstatus", GLW_GP_STRING);
 
-
-  glw_prop_set_string(glw_prop_create(ple->ple_prop_root, 
-				      "author", GLW_GP_STRING),
-		      "%s", filetag_get_str2(ftags, FTAG_AUTHOR) ?: "");
-
-
-  glw_prop_set_string(glw_prop_create(ple->ple_prop_root, 
-				      "album", GLW_GP_STRING),
-		      "%s", filetag_get_str2(ftags, FTAG_ALBUM) ?: "");
-
-  glw_prop_set_time(glw_prop_create(ple->ple_prop_root, 
-				    "duration", GLW_GP_TIME),
-		    ple->ple_duration);
+  media_fill_properties(ple->ple_prop_root, url, FA_FILE, ftags);
 
 
   /**

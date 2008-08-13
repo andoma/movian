@@ -28,6 +28,8 @@
 #include "video/video_decoder.h"
 #include "event.h"
 #include "layout/layout.h"
+#include "fileaccess/fa_tags.h"
+#include "fileaccess/fileaccess.h"
 
 extern int concurrency;
 
@@ -770,4 +772,108 @@ media_get_codec_info(AVCodecContext *ctx, char *buf, size_t size)
 {
   snprintf(buf, size, "%s\n", ctx->codec->long_name);
   codec_details(ctx, buf + strlen(buf), size - strlen(buf), "");
+}
+
+#if 0
+static void
+size_quantify(char *buf, size_t buflen, int64_t i64)
+{
+  if(i64 < 1000) {
+    snprintf(buf, buflen, "%" PRId64 " b", i64);
+  } else if(i64 < 1000 * 1000) {
+    snprintf(buf, buflen, "%.2f kb", (float)i64 / 1000);
+  } else if(i64 < 1000 * 1000 * 1000) {
+    snprintf(buf, buflen, "%.2f Mb", (float)i64 / 1000 / 1000);
+  } else {
+    snprintf(buf, buflen, "%.2f Gb", (float)i64 / 1000 / 1000 / 1000);
+  }
+}
+#endif
+
+/**
+ *
+ */
+void
+media_fill_properties(glw_prop_t *root, const char *url, int type,
+		      struct filetag_list *ftags)
+{
+  time_t t;
+  struct tm tm;
+  int64_t i64;
+  const char *s;
+  char buf[30];
+  int64_t stype;
+
+  switch(type) {
+  case FA_DIR:
+    s = "directory";
+    break;
+
+  default:
+  case FA_FILE:
+    s = "file";
+
+    if(!filetag_get_int(ftags, FTAG_FILETYPE, &stype)) {
+      switch(stype) {
+      case FILETYPE_AUDIO:
+	s = "audio";
+	break;
+	
+      case FILETYPE_VIDEO:
+	s = "video";
+	break;
+
+      case FILETYPE_ISO:
+	s = "iso";
+	break;
+
+      case FILETYPE_IMAGE:
+	s = "image";
+	break;
+      }
+    }
+    break;
+  }
+
+  glw_prop_set_string(glw_prop_create(root, "type", GLW_GP_STRING),
+		      "%s", s);
+
+  if(filetag_get_str(ftags, FTAG_TITLE, &s)) {
+    s = strrchr(url, '/');
+    s = s ? s + 1 : url;
+  }
+  glw_prop_set_string(glw_prop_create(root, "title", GLW_GP_STRING),
+		      "%s", s);
+
+  glw_prop_set_string(glw_prop_create(root, "author", GLW_GP_STRING),
+		      "%s", filetag_get_str2(ftags, FTAG_AUTHOR) ?: "");
+
+
+  glw_prop_set_string(glw_prop_create(root, "album", GLW_GP_STRING),
+		      "%s", filetag_get_str2(ftags, FTAG_ALBUM) ?: "");
+
+  glw_prop_set_string(glw_prop_create(root, "format", GLW_GP_STRING),
+		      "%s", filetag_get_str2(ftags, FTAG_MEDIAFORMAT) ?: "");
+
+  glw_prop_set_string(glw_prop_create(root, "audioinfo", GLW_GP_STRING),
+		      "%s", filetag_get_str2(ftags, FTAG_AUDIOINFO) ?: "");
+
+  glw_prop_set_string(glw_prop_create(root, "videoinfo", GLW_GP_STRING),
+		      "%s", filetag_get_str2(ftags, FTAG_VIDEOINFO) ?: "");
+
+  if(filetag_get_int(ftags, FTAG_DURATION, &i64))
+    i64 = -1;
+  glw_prop_set_time(glw_prop_create(root, "duration", GLW_GP_TIME), i64);
+
+  if(!filetag_get_int(ftags, FTAG_ORIGINAL_DATE, &i64)) {
+    t = i64;
+    localtime_r(&t, &tm);
+    strftime(buf, sizeof(buf), "%X %x", &tm);
+  } else {
+    buf[0] = 0;
+  }
+
+  glw_prop_set_string(glw_prop_create(root, "originaldate", GLW_GP_STRING),
+		      "%s", buf);
+
 }

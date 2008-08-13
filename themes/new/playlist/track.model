@@ -8,10 +8,13 @@ widget(bitmap, {
     .vertexBorders  = [0.05, 0.05, 0.05, 0.05];
   
     widget(container_z, {
-	widget(xfader, {
-	    .align = left;
+	widget(bitmap, {
 	    .alpha = 0.3;
-	    .id = "track_playstatus";
+	    .keepAspect = true;
+	    .source = translate(media.playstatus,
+				["play",  "theme://images/player_play.png",
+				 "pause", "theme://images/player_pause.png"],
+				"");
 	  });
 
 	widget(expander, {

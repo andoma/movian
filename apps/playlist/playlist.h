@@ -98,6 +98,7 @@ typedef struct playlist_entry {
   struct  filetag_list ple_ftags;
 
   glw_prop_t *ple_prop_root;
+  glw_prop_t *ple_prop_playstatus;
 
 } playlist_entry_t;
 
