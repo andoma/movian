@@ -48,8 +48,9 @@ widget(container_z, {
 			    .align = right;
 			  });
 
-			widget(integer, {
-			    .value = global.audio.mastervolume;
+			widget(label, {
+			    .caption = float2str(global.audio.mastervolume, 0)
+			      + " dB";
 			    .align = left;
 			  });
 		      });
