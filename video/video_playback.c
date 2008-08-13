@@ -112,7 +112,7 @@ pv_update_playstatus(play_video_ctrl_t *pvc, mp_playstatus_t mps)
   }
 
   if(model != NULL) {
-    glw_model_create(model, w, NULL, 0);
+    glw_model_create(model, w, 0, NULL);
   } else {
     glw_create(GLW_DUMMY,
 	       GLW_ATTRIB_PARENT, w,
@@ -210,7 +210,7 @@ video_player_open_menu(play_video_ctrl_t *pvc, int toggle)
 
   pvc->pvc_menu =
     glw_model_create("theme://videoplayer/menu.model", pvc->pvc_container,
-		     NULL, 0);
+		     0, NULL);
   
   /**
    * Populate audio tracks
@@ -538,7 +538,7 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
    * Create top level widget
    */
   top = glw_model_create("theme://videoplayer/videoplayer.model", parent,
-			 NULL, 0);
+			 0, NULL);
   pvc.pvc_container = glw_find_by_id(top, "videoplayer_container", 0);
   if(pvc.pvc_container == NULL) {
     fprintf(stderr, "Unable to locate videoplayer container\n");
@@ -561,7 +561,7 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
    */
   pvc.pvc_status = glw_model_create("theme://videoplayer/status.model",
 				    mp->mp_status_xfader,
-				    NULL, 0);
+				    0, NULL);
 
   /**
    * Set title

@@ -128,10 +128,10 @@ display_settings_init(appi_t *ai, glw_t *m)
 {
   glw_t *icon = 
     glw_model_create("theme://settings/display/display-icon.model", NULL,
-		     NULL, 0);
+		     0, NULL);
   glw_t *tab  = 
     glw_model_create("theme://settings/display/x11/display-x11.model", NULL,
-		     NULL, 0);
+		     0, NULL);
 
   glw_t *w;
 

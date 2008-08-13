@@ -264,7 +264,7 @@ audio_add_int_option_on_off(audio_mode_t *am, glw_t *l, const char *title,
   glw_t *opt, *sel;
 
   opt = glw_model_create("theme://settings/audio/audio-option.model", l,
-			 NULL, 0);
+			 0, NULL);
   glw_set_caption(opt, "title", title);
 
   if((sel = glw_find_by_id(opt, "options", 0)) != NULL) {
@@ -299,7 +299,7 @@ audio_add_mixer_map(audio_mode_t *am, glw_t *p, int type, const char *title)
   mixer_controller_t *mc;
 
   opt = glw_model_create("theme://settings/audio/audio-option.model", p,
-			 NULL, 0);
+			 0, NULL);
   glw_set_caption(opt, "title", title);
 
   if((sel = glw_find_by_id(opt, "options", 0)) == NULL)
@@ -344,7 +344,7 @@ audio_mode_add_to_settings(audio_mode_t *am, glw_t *parent)
 
 
   deck = glw_model_create("theme://settings/audio/audio-device-settings.model",
-			  NULL, NULL, 0);
+			  NULL, 0, NULL);
 
   glw_set_caption(deck, "output_formats", buf);
 
@@ -388,9 +388,9 @@ void
 audio_settings_init(appi_t *ai, glw_t *m)
 {
   glw_t *icon = glw_model_create("theme://settings/audio/audio-icon.model",
-				 NULL, NULL, 0);
+				 NULL, 0, NULL);
   glw_t *tab  = glw_model_create("theme://settings/audio/audio.model",
-				 NULL, NULL, 0);
+				 NULL, 0, NULL);
   audio_mode_t *am;
   glw_t *w;
 

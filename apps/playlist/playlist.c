@@ -156,15 +156,16 @@ playlist_create(const char *title, int truncate)
   pl->pl_prop_track_current = glw_prop_create(p, "current", GLW_GP_FLOAT);
 
 
-  pl->pl_widget = glw_model_create("theme://playlist/playlist.model", NULL,
-				   plist, 0);
+  pl->pl_widget = glw_model_create("theme://playlist/playlist.model", NULL, 0,
+				   prop_global, pl->pl_prop_root, NULL);
   
   glw_set(pl->pl_widget,
 	  GLW_ATTRIB_SIGNAL_HANDLER, pl_widget_callback, pl, 400,
 	  NULL);
 
-  pl->pl_tab = glw_model_create("theme://playlist/tracklist.model", NULL,
-				NULL, 0);
+  pl->pl_tab = glw_model_create("theme://playlist/tracklist.model", NULL, 0,
+				   prop_global, pl->pl_prop_root, NULL);
+
 
   pl->pl_list = glw_find_by_id(pl->pl_tab, "track_container", 0);
 
@@ -364,7 +365,11 @@ playlist_enqueue0(playlist_t *pl, const char *url, struct filetag_list *ftags)
    * Create playlist entry model in tracklist
    */
   ple->ple_widget = glw_model_create("theme://playlist/track.model",
-				     pl->pl_list, plist, GLW_MODEL_CACHE);
+				     pl->pl_list, GLW_MODEL_CACHE,
+				     ple->ple_prop_root,
+				     pl->pl_prop_root, 
+				     prop_global,
+				     NULL);
 
   glw_set(ple->ple_widget,
 	  GLW_ATTRIB_SIGNAL_HANDLER, ple_widget_callback, ple, 400,
@@ -530,7 +535,8 @@ playlist_rename(playlist_t *pl, glw_t *parent)
 {
   char buf[100];
   glw_t *m = glw_model_create("theme://playlist/playlist-rename.model", parent,
-			      NULL, 0);
+			      0,
+			      prop_global, pl->pl_prop_root, NULL);
 
   glw_set_caption(m, "playlistname", pl->pl_title);
 
@@ -556,7 +562,8 @@ static void
 playlist_delete(playlist_t *pl, glw_t *parent)
 {
   glw_t *m = glw_model_create("theme://playlist/playlist-delete.model", parent,
-			      NULL, 0);
+			      0,
+			      prop_global, pl->pl_prop_root, NULL);
 
   if(!glw_wait_form_ok_cancel(m))
     playlist_destroy(pl);
@@ -675,12 +682,13 @@ playlist_thread(void *aux)
 
 
   playlist_root = glw_model_create("theme://playlist/playlist-app.model",
-				   ai->ai_widget, NULL, 0);
+				   ai->ai_widget, 0,
+				   prop_global, NULL);
 
   form = glw_find_by_class(playlist_root, GLW_FORM);
 
   mini = glw_model_create("theme://playlist/playlist-miniature.model", NULL,
-			  NULL, 0);
+			  0, prop_global, NULL);
 
   playlists_list = glw_find_by_id(playlist_root, "playlist_container", 0);
 

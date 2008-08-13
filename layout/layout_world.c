@@ -66,9 +66,9 @@ void
 layout_world_create(void)
 {
   glw_t *w;
-  glw_prop_t *plist[2] = {prop_global, NULL};
 
-  layout_world = glw_model_create("theme://universe.model", NULL, plist, 0);
+  layout_world = glw_model_create("theme://universe.model", NULL, 0,
+				  prop_global, NULL);
 
   layout_global_status = glw_find_by_id(layout_world,
 					"global_status_container", 0);

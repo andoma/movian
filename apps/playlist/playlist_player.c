@@ -73,7 +73,7 @@ playlist_status_update_next(playlist_entry_t *cur, glw_t *w)
     return;
   }
 
-  m = glw_model_create("theme://playlist/status-next.model", w, NULL, 0);
+  m = glw_model_create("theme://playlist/status-next.model", w, 0, NULL);
 
   t = filetag_get_str2(&ple->ple_ftags, FTAG_TITLE);
   s = strrchr(ple->ple_url, '/');
@@ -403,7 +403,7 @@ playlist_player(void *aux)
     mp_set_playstatus(mp, MP_PLAY);
 
     status = glw_model_create("theme://playlist/status.model",
-			      mp->mp_status_xfader, NULL, 0);
+			      mp->mp_status_xfader, 0, NULL);
     
     t = filetag_get_str2(&ple->ple_ftags, FTAG_TITLE);
     s = strrchr(ple->ple_url, '/');

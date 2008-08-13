@@ -347,10 +347,10 @@ keymapper_init(appi_t *ai, glw_t *settings)
 {
   glw_t *icon = 
     glw_model_create("theme://settings/keymapper/keymapper-icon.model", NULL,
-		     NULL, 0);
+		     0, NULL);
   glw_t *tab  = 
     glw_model_create("theme://settings/keymapper/keymapper.model", NULL,
-		     NULL, 0);
+		     0, NULL);
   glw_t *l, *e, *y;
   int i;
   hid_keycode_t *hkc;
@@ -367,7 +367,8 @@ keymapper_init(appi_t *ai, glw_t *settings)
 
   for(i = 0; i < sizeof(keycodenames) / sizeof(keycodenames[0]); i++) {
 
-    e = glw_model_create("theme://settings/keymapper/entry.model", l, NULL, 0);
+    e = glw_model_create("theme://settings/keymapper/entry.model", l,
+			 0, NULL);
 
     glw_set(e, GLW_ATTRIB_U32, keycodenames[i].val, NULL);
 
