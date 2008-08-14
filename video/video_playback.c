@@ -596,7 +596,7 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
     }
   }
 
-  media_update_playstatus_prop(pvc.pvc_prop_playstatus, MP_VIDEOSEEK_PAUSE);
+  mp_set_playstatus(mp, MP_VIDEOSEEK_PAUSE); 
 
   mp->mp_feedback = geq;
 
