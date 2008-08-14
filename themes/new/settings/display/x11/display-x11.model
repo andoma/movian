@@ -1,4 +1,4 @@
-#define INFO(TITLE, INFOID)
+#define INFO(TITLE, INFO)
 {
   widget(container_x, {
       widget(label, {
@@ -8,7 +8,7 @@
 
       widget(label, {
 	  .weight = 2;
-	  .id = INFOID;
+	  .caption = INFO;
 	  .align = left;
 	});
     });
@@ -72,8 +72,15 @@ widget(container_z, {
 	space(4);
 	widget(bitmap, {
 	    .keepAspect = true;
-	    .id = "gpuicon";
 	    .align = left;
+	    .source = translate(global.gpu.vendor,
+				[
+				"NVIDIA Corporation", 
+				"theme://images/nvidia.png",
+				"ATI Technologies Inc.", 
+				"theme://images/nvidia.png"
+				 ],
+				"");
 	  });
       });
 
@@ -86,11 +93,11 @@ widget(container_z, {
 	    .caption = "Display status";
 	    .align = center;
 	  });
-	INFO("Refreshrate:",    "refreshrate");
+	INFO("Refreshrate:", float2str(global.display.refreshrate, 2) + " Hz");
 
 	space(4);
-	INFO("GPU:",    "gpuname");
-	INFO("Vendor:", "gpuvendor");
-	INFO("Driver:", "gpudriver");
+	INFO("GPU:",    global.gpu.name);
+	INFO("Vendor:", global.gpu.vendor);
+	INFO("Driver:", global.gpu.driver);
       });
   });

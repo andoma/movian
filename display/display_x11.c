@@ -36,6 +36,11 @@
 #include "display.h"
 #include "video/video_decoder.h"
 
+glw_prop_t *prop_display;
+glw_prop_t *prop_gpu;
+
+glw_prop_t *prop_display_refreshrate;
+
 static struct {
   Display *display;
   int screen;
@@ -51,7 +56,6 @@ static struct {
   const char *displayname;
   int coords[2][4];
   int do_videosync;
-  int update_gfx_info;
 } x11state;
 
 
@@ -72,6 +76,8 @@ static glw_t *display_settings_model;
 
 PFNGLXGETVIDEOSYNCSGIPROC _glXGetVideoSyncSGI;
 PFNGLXWAITVIDEOSYNCSGIPROC _glXWaitVideoSyncSGI;
+
+static void update_gpu_info(void);
 
 /**
  * Load display settings
@@ -128,10 +134,10 @@ display_settings_init(appi_t *ai, glw_t *m)
 {
   glw_t *icon = 
     glw_model_create("theme://settings/display/display-icon.model", NULL,
-		     0, NULL);
+		     0, prop_global, NULL);
   glw_t *tab  = 
     glw_model_create("theme://settings/display/x11/display-x11.model", NULL,
-		     0, NULL);
+		     0, prop_global, NULL);
 
   glw_t *w;
 
@@ -150,7 +156,6 @@ display_settings_init(appi_t *ai, glw_t *m)
 				  display_settings.displaymode ==
 				  DISPLAYMODE_FULLSCREEN);
   }
-  x11state.update_gfx_info = 1;
 }
 
 
@@ -294,6 +299,8 @@ window_open(void)
 
   x11state.current_displaymode = display_settings.displaymode;
 
+  update_gpu_info();
+
   glw_init_gl();
 
 }
@@ -356,6 +363,12 @@ gl_sysglue_init(int argc, char **argv)
 {
   int attribs[10];
   int na = 0;
+
+  prop_display = glw_prop_create(prop_global, "display", GLW_GP_DIRECTORY);
+  prop_gpu     = glw_prop_create(prop_global, "gpu",     GLW_GP_DIRECTORY);
+
+  prop_display_refreshrate = 
+    glw_prop_create(prop_display, "refreshrate", GLW_GP_FLOAT);
 
   x11state.displayname = getenv("DISPLAY");
 
@@ -477,26 +490,16 @@ gl_keypress(XEvent *event)
  *
  */
 static void
-update_gfx_info(void)
+update_gpu_info(void)
 {
-  const GLubyte *s;
+  glw_prop_set_string(glw_prop_create(prop_gpu, "vendor", GLW_GP_STRING),
+		      (const char *)glGetString(GL_VENDOR));
 
-  s = glGetString(GL_VENDOR);
-  if(!strcmp((char *)s, "NVIDIA Corporation")) {
-    glw_set_source(display_settings_model, "gpuicon", 
-		   "theme://images/nvidia.png");
-  } else if(!strcmp((char *)s, "ATI Technologies Inc.")) {
-    glw_set_source(display_settings_model, "gpuicon", 
-		   "theme://images/ati.png");
-  }
+  glw_prop_set_string(glw_prop_create(prop_gpu, "name", GLW_GP_STRING),
+		      (const char *)glGetString(GL_RENDERER));
 
-  glw_set_caption(display_settings_model, "gpuvendor", (char *)s);
-
-  s = glGetString(GL_RENDERER);
-  glw_set_caption(display_settings_model, "gpuname", (char *)s);
-
-  s = glGetString(GL_VERSION);
-  glw_set_caption(display_settings_model, "gpudriver", (char *)s);
+  glw_prop_set_string(glw_prop_create(prop_gpu, "driver", GLW_GP_STRING),
+		      (const char *)glGetString(GL_VERSION));
 }
 
 
@@ -513,12 +516,6 @@ gl_sysglue_mainloop(void)
   _glXGetVideoSyncSGI(&retraceCount);
 
   while(1) {
-
-    if(x11state.update_gfx_info) {
-      update_gfx_info();
-      x11state.update_gfx_info = 0;
-    }
-
     if(x11state.current_displaymode != display_settings.displaymode)
       window_change_displaymode();
 
@@ -555,10 +552,8 @@ gl_sysglue_mainloop(void)
 
     glXSwapBuffers(x11state.display, x11state.win);
     if(gl_update_timings()) {
-      char tmp[30];
-      snprintf(tmp, sizeof(tmp), "%.2f Hz", (float)1000000. / frame_duration);
-      if(display_settings_model != NULL)
-	glw_set_caption(display_settings_model, "refreshrate", tmp);
+      glw_prop_set_float(prop_display_refreshrate,
+			 (float)1000000. / frame_duration);
     }
     glw_reaper();
   }

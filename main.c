@@ -154,6 +154,8 @@ main(int argc, char **argv)
 
   concurrency = get_concurrency();
 
+  global_prop_init();
+
   hts_settings_init("showtime");
 
   event_init();
@@ -173,8 +175,6 @@ main(int argc, char **argv)
     fprintf(stderr, "libglw user interface failed to initialize, exiting\n");
     exit(0);
   }
-
-  global_prop_init();
 
   audio_init();
 
