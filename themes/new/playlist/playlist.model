@@ -23,14 +23,9 @@ widget(container_y, {
       
 	widget(container_z, {
 
-	    /**
-	     * Backdrop image, we default to 'sound.png' but playlist
-	     * may upgrade it with album art, etc
-	     */
 	    widget(bitmap, {
-		.id = "backdrop";
 		.alpha = 0.2;
-		.source = "theme://images/sound.png";
+		.source = playlist.backdrop;
 		.keepAspect = true;
 	      });
 

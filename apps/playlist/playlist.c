@@ -142,9 +142,13 @@ playlist_create(const char *title, int truncate)
 
   pl->pl_prop_root = glw_prop_create(NULL, "playlist", GLW_GP_DIRECTORY);
 
-  glw_prop_set_string(glw_prop_create(pl->pl_prop_root, "title", GLW_GP_STRING),
-		      pl->pl_title);
+  pl->pl_prop_title = glw_prop_create(pl->pl_prop_root, "title", GLW_GP_STRING);
+  glw_prop_set_string(pl->pl_prop_title, pl->pl_title);
 
+  pl->pl_prop_backdrop = glw_prop_create(pl->pl_prop_root, "backdrop",
+					 GLW_GP_STRING);
+
+  glw_prop_set_string(pl->pl_prop_backdrop, "theme://images/sound.png"); // XXX
 
   p = glw_prop_create(pl->pl_prop_root, "time", GLW_GP_DIRECTORY);
   pl->pl_prop_time_total   = glw_prop_create(p, "total", GLW_GP_TIME);
@@ -183,17 +187,10 @@ playlist_create(const char *title, int truncate)
 void
 playlist_set_backdrop(playlist_t *pl, const char *url)
 {
-  glw_t *w;
-
   free(pl->pl_backdrop);
   pl->pl_backdrop = strdup(url);
 
-  if((w = glw_find_by_id(pl->pl_widget, "backdrop", 0)) == NULL)
-    return;
-
-  glw_set(w,
-	  GLW_ATTRIB_SOURCE, url,
-	  NULL);
+  glw_prop_set_string(pl->pl_prop_backdrop, url);
 }
 
 /**
@@ -523,7 +520,7 @@ playlist_rename(playlist_t *pl, glw_t *parent)
 
     free(pl->pl_title);
     pl->pl_title = strdup(buf);
-    glw_set_caption(pl->pl_widget, "title", pl->pl_title);
+    glw_prop_set_string(pl->pl_prop_title, pl->pl_title);
     playlist_save(pl);
   }
 
