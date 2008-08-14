@@ -803,6 +803,7 @@ media_fill_properties(glw_prop_t *root, const char *url, int type,
   const char *s;
   char buf[30];
   int64_t stype;
+  glw_prop_t *p;
 
   glw_prop_set_string(glw_prop_create(root, "url", GLW_GP_STRING), url);
 
@@ -861,9 +862,11 @@ media_fill_properties(glw_prop_t *root, const char *url, int type,
   glw_prop_set_string(glw_prop_create(root, "videoinfo", GLW_GP_STRING),
 		      filetag_get_str2(ftags, FTAG_VIDEOINFO) ?: "");
 
+  p = glw_prop_create(root, "time", GLW_GP_DIRECTORY);
+
   if(filetag_get_int(ftags, FTAG_DURATION, &i64))
     i64 = -1;
-  glw_prop_set_time(glw_prop_create(root, "duration", GLW_GP_TIME), i64);
+  glw_prop_set_time(glw_prop_create(p, "total", GLW_GP_TIME), i64);
 
   if(!filetag_get_int(ftags, FTAG_ORIGINAL_DATE, &i64)) {
     t = i64;

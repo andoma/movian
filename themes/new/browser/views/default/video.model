@@ -4,7 +4,7 @@ BROWSER_PLATE("theme://images/movie.png",
 	     
 	      widget(container_x, {
 		  widget(label, {.caption = media.title;});
-		  widget(label, {.caption = media.duration; .weight = 0.1;});
+		  widget(label, {.caption = media.time.total; .weight = 0.1;});
 		});
 	      ,
 

@@ -35,65 +35,57 @@
 #include <layout/layout.h>
 
 static void
-playlist_update_playstatus(playlist_entry_t *ple, glw_t *w, int status)
+playlist_update_playstatus(playlist_entry_t *ple, int status)
 {
-  const char *m;
   const char *s;
 
   switch(status) {
   case MP_PLAY:
-    m = "theme://playlist/playstatus-play.model";
     s = "play";
     break;
 
   case MP_PAUSE:
-    m = "theme://playlist/playstatus-pause.model";
     s = "pause";
     break;
 
   default:
-    m = "theme://playlist/playstatus-stop.model";
     s = "stop";
     break;
   }
-
-  glw_switch_model(ple->ple_widget, "track_playstatus", m);
-  glw_switch_model(w,               "track_playstatus", m);
-
   glw_prop_set_string(ple->ple_prop_playstatus, s);
 }
 
-
 static void
-playlist_status_update_next(playlist_entry_t *cur, glw_t *w)
+playlist_status_update_next(playlist_entry_t *cur)
 {
-  playlist_entry_t *ple = playlist_advance(cur, 0);
-  glw_t *m;
+  playlist_t *pl;
+  playlist_entry_t *ple;
   const char *t, *s;
 
-  if((w = glw_find_by_id(w, "track_next", 0)) == NULL)
-    return;
+  ple = playlist_advance(cur, 0);
 
-  if(ple == NULL) {
-    glw_create(GLW_DUMMY, GLW_ATTRIB_PARENT, w, NULL);
-    return;
+  hts_mutex_lock(&playlistlock);
+  pl = cur->ple_pl;
+  if(pl != NULL) {
+
+    if(ple != NULL) {
+      t = filetag_get_str2(&ple->ple_ftags, FTAG_TITLE);
+      s = strrchr(ple->ple_url, '/');
+      s = s ? s + 1 : ple->ple_url;
+      if(t == NULL)
+	t = s;
+    } else {
+      t = "";
+    }
+    glw_prop_set_string(pl->pl_prop_next_track_title, t);
   }
+  hts_mutex_unlock(&playlistlock);
 
-  m = glw_model_create("theme://playlist/status-next.model", w, 0, NULL);
-
-  t = filetag_get_str2(&ple->ple_ftags, FTAG_TITLE);
-  s = strrchr(ple->ple_url, '/');
-  s = s ? s + 1 : ple->ple_url;
-  
-  if(t == NULL)
-    t = s;
-  
-  glw_set_caption(m, "track_next_title", t);
-
-
-  playlist_entry_unref(ple);
+  if(ple != NULL)
+    playlist_entry_unref(ple);
 
 }
+
 
 static playlist_entry_t *
 playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
@@ -131,11 +123,6 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
     return playlist_advance(ple, 0);
   }
 
-  
-
-  if(fctx->duration != AV_NOPTS_VALUE)
-    glw_set_caption_time(status, "time_total", fctx->duration / AV_TIME_BASE);
-
   mp->mp_audio.mq_stream = -1;
   mp->mp_video.mq_stream = -1;
 
@@ -163,7 +150,7 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
 
     if(mp->mp_playstatus == MP_PLAY && mp_is_audio_silenced(mp)) {
       mp_set_playstatus(mp, MP_PAUSE);
-      playlist_update_playstatus(ple, status, MP_PAUSE);
+      playlist_update_playstatus(ple, MP_PAUSE);
     }
 
 
@@ -193,13 +180,14 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
 	  
 	    hts_mutex_unlock(&playlistlock);
 	  
-	    glw_set_caption_time(status, "time_current", pts);
+	    glw_prop_set_time(ple->ple_prop_time_current, pts);
 	  }
 	}
 	break;
 
       case EVENT_PLAYLIST:
 	pe = (void *)ge;
+	playlist_status_update_next(ple);
 	switch(pe->type) {
 	case PLAYLIST_EVENT_NEWENTRY:
 	  /**
@@ -251,7 +239,7 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
       case EVENT_KEY_PAUSE:
 	mp_playpause(mp, ge->ge_type);
 
-	playlist_update_playstatus(ple, status, mp->mp_playstatus);
+	playlist_update_playstatus(ple, mp->mp_playstatus);
 	break;
 
       case EVENT_KEY_PREV:
@@ -356,7 +344,7 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
 
   wrap_format_wait(fw);
 
-  playlist_update_playstatus(ple, status, MP_STOP);
+  playlist_update_playstatus(ple, MP_STOP);
 
   return next;
 }
@@ -375,8 +363,6 @@ playlist_player(void *aux)
   media_pipe_t *mp = plp->plp_mp;
   playlist_entry_t *ple = NULL, *next;
   glw_t *status = NULL;
-  const char *t, *s;
-  char buf[256];
   glw_event_t *ge;
   playlist_event_t *pe;
 
@@ -411,37 +397,21 @@ playlist_player(void *aux)
 
     mp_set_playstatus(mp, MP_PLAY);
 
-    status = glw_model_create("theme://playlist/status.model",
-			      mp->mp_status_xfader, 0, NULL);
-    
-    t = filetag_get_str2(&ple->ple_ftags, FTAG_TITLE);
-    s = strrchr(ple->ple_url, '/');
-    s = s ? s + 1 : ple->ple_url;
-
-    if(t == NULL)
-      t = s;
-
-    glw_set_caption(status, "track_filename", s);
-    glw_set_caption(status, "track_title",    t);
-
-
-    t = filetag_get_str2(&ple->ple_ftags, FTAG_AUTHOR);
-    s = filetag_get_str2(&ple->ple_ftags, FTAG_ALBUM);
-    glw_set_caption(status, "track_author", t);
-    glw_set_caption(status, "track_album",  s);
-
-    if(t && s) {
-      snprintf(buf, sizeof(buf), "%s - %s", t, s);
-    } else {
-      buf[0] = 0;
-    }
-    glw_set_caption(status, "track_author_album", buf);
+    hts_mutex_lock(&playlistlock);
 
 
     /**
+     * Create status widget
+     */
+    status = glw_model_create("theme://playlist/status.model",
+			      mp->mp_status_xfader, 0,
+			      ple->ple_prop_root,
+			      prop_global,
+			      ple->ple_pl ? ple->ple_pl->pl_prop_root : NULL, 
+			      NULL);
+    /**
      * Update playlist widget
      */
-    hts_mutex_lock(&playlistlock);
     if(ple->ple_pl != NULL)
       glw_prop_set_float(ple->ple_pl->pl_prop_track_current, ple->ple_track);
     hts_mutex_unlock(&playlistlock);
@@ -451,20 +421,13 @@ playlist_player(void *aux)
      * Update track widget
      */
 
-    playlist_update_playstatus(ple, status, MP_PLAY);
-
-    playlist_status_update_next(ple, status);
+    playlist_update_playstatus(ple, MP_PLAY);
+    playlist_status_update_next(ple);
 
     /**
      * Start playback of track
      */
     next = playlist_play(ple, mp, &plp->plp_geq, status);
-
-    /**
-     * Update track widget
-     */
-    glw_switch_model(ple->ple_widget, "track_playstatus", 
-		     "theme://playlist/playstatus-stop.model");
 
     playlist_entry_unref(ple);
     ple = next;

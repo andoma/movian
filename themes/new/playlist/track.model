@@ -27,7 +27,7 @@ widget(bitmap, {
       
 		widget(label, {
 		    .weight = 0.1;
-		    .caption = media.duration;
+		    .caption = media.time.total;
 		  });
 	      });
 

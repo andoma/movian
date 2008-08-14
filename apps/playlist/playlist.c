@@ -150,6 +150,9 @@ playlist_create(const char *title, int truncate)
 
   glw_prop_set_string(pl->pl_prop_backdrop, "theme://images/sound.png"); // XXX
 
+  pl->pl_prop_next_track_title = glw_prop_create(pl->pl_prop_root, "nexttrack",
+						 GLW_GP_STRING);
+
   p = glw_prop_create(pl->pl_prop_root, "time", GLW_GP_DIRECTORY);
   pl->pl_prop_time_total   = glw_prop_create(p, "total", GLW_GP_TIME);
   pl->pl_prop_time_current = glw_prop_create(p, "current", GLW_GP_TIME);
@@ -278,6 +281,7 @@ playlist_enqueue0(playlist_t *pl, const char *url, struct filetag_list *ftags)
   playlist_entry_t *ple, *ple2;
   struct filetag_list ftags0;
   int64_t i64;
+  glw_prop_t *p;
 
   if(ftags == NULL) {
     TAILQ_INIT(&ftags0);
@@ -334,6 +338,9 @@ playlist_enqueue0(playlist_t *pl, const char *url, struct filetag_list *ftags)
 					     "playstatus", GLW_GP_STRING);
 
   media_fill_properties(ple->ple_prop_root, url, FA_FILE, ftags);
+
+  p = glw_prop_create(ple->ple_prop_root, "time", GLW_GP_DIRECTORY);
+  ple->ple_prop_time_current = glw_prop_create(p, "current", GLW_GP_TIME);
 
 
   /**

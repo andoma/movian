@@ -1,18 +1,17 @@
 widget(container_x, {
 
-    widget(xfader, {
-	.id = "track_playstatus";
+    widget(bitmap, {
+	.keepAspect = true;
+	.source = translate(media.playstatus,
+			    ["play",  "theme://images/player_play.png",
+			     "pause", "theme://images/player_pause.png"],
+			    "");
       });
 
     widget(container_y, {
 	.weight = 8.0;
-	widget(label, {
-	    .id = "track_title";
-	  });
-
-	widget(label, {
-	    .id = "track_author_album";
-	  });
+	widget(label, { .caption = media.title; });
+	widget(label, { .caption = media.author + " - " + media.album; });
 	space(1.0);
       });
 
@@ -20,29 +19,16 @@ widget(container_x, {
 	.weight = 3.0;
 
 	widget(container_x, {
-
 	    .weight = 1.3;
-
-	    widget(label, {
-		.align = right;
-		.weight = 5;
-		.id = "time_current";
-	      });
-
-	    widget(label, {
-		.caption = "/";
-	      });
-
-	    widget(label, {
-		.align = left;
-		.weight = 5;
-		.id = "time_total";
-	      });
+	    widget(label, {.caption = media.time.current; .align  = right; });
+	    widget(label, {.caption = "/";                .weight = 0.2;   });
+	    widget(label, {.caption = media.time.total;   .align  = left;  });
 	  });
 
-	widget(xfader, {
+	widget(container_y, {
 	    .weight = 1.7;
-	    .id = "track_next";
+	    widget(label, { .caption = "Next track:"; .weight = 0.7; });
+	    widget(label, { .caption = playlist.nexttrack; });
 	  });
       });
   });

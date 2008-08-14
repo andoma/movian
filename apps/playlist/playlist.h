@@ -68,6 +68,7 @@ typedef struct playlist {
   glw_prop_t *pl_prop_backdrop;
   glw_prop_t *pl_prop_title;
 
+  glw_prop_t *pl_prop_next_track_title;
 
 } playlist_t;
 
@@ -101,6 +102,7 @@ typedef struct playlist_entry {
 
   glw_prop_t *ple_prop_root;
   glw_prop_t *ple_prop_playstatus;
+  glw_prop_t *ple_prop_time_current;
 
 } playlist_entry_t;
 
