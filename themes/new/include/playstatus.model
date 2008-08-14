@@ -5,7 +5,8 @@
       .keepAspect = true;
       .source = translate(PROP,
 			  ["play",  "theme://include/playstatus-play.model",
-			   "pause", "theme://include/playstatus-pause.model"],
+			   "pause", "theme://include/playstatus-pause.model",
+			   "seek",  "theme://include/playstatus-seek.model"],
 			  "");
     });
 }
