@@ -57,7 +57,14 @@ typedef struct dvd_player {
   glw_t *dp_container;
   glw_t *dp_status;
 
-  int dp_widget_status_playstatus;
+  glw_prop_t *dp_prop_root;
+  glw_prop_t *dp_prop_playstatus;
+  glw_prop_t *dp_prop_time_current;
+  glw_prop_t *dp_prop_time_total;
+
+  glw_prop_t *dp_prop_title;
+  glw_prop_t *dp_prop_chapter;
+
 
 } dvd_player_t;
 

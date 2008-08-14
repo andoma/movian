@@ -1,4 +1,0 @@
-widget(bitmap, {
-  .source = "theme://images/player_pause.png";
-  .keepAspect = true;
-  });

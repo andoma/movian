@@ -226,7 +226,7 @@ make_nice_title(const char *t)
 static void
 dvd_update_info(dvd_player_t *dp)
 {
-  int title, titles, part, parts, s, m, h;
+  int title, titles, part, parts, s;
   char tmp[100];
   int64_t t;
 
@@ -243,8 +243,7 @@ dvd_update_info(dvd_player_t *dp)
   else
     sprintf(tmp, "%d / %d", title, titles);
 
-  glw_set_caption(dp->dp_status, "title", tmp);
-
+  glw_prop_set_string(dp->dp_prop_title, tmp);
 
   /**
    * Chapter
@@ -254,19 +253,15 @@ dvd_update_info(dvd_player_t *dp)
   else
     sprintf(tmp, "%d / %d", part, parts);
 
-  glw_set_caption(dp->dp_status, "chapter", tmp);
+  glw_prop_set_string(dp->dp_prop_chapter, tmp);
 
 
   /**
    * Time
    */
   s = t / 90000LL;
-  m = s / 60;
-  h = s / 3600;
 
-  sprintf(tmp, "%02d:%02d:%02d", h, m % 60, s % 60);
-
-  glw_set_caption(dp->dp_status, "time_current", tmp);
+  glw_prop_set_time(dp->dp_prop_time_current, s);
 }
 
 /**
@@ -275,37 +270,27 @@ dvd_update_info(dvd_player_t *dp)
 static void
 dp_update_playstatus(dvd_player_t *dp, mp_playstatus_t mps)
 {
-  const char *model;
-  glw_t *w;
-
-  if(dp->dp_widget_status_playstatus == mps)
-    return;
-
-  dp->dp_widget_status_playstatus = mps;
-
-  w = glw_find_by_id(dp->dp_status, "playstatus", 0);
-  if(w == NULL)
-    return;
+  const char *s;
 
   switch(mps) {
-  case MP_PAUSE:
-    model = "theme://dvdplayer/playstatus-pause.model";
-    break;
   case MP_PLAY:
-    model = "theme://dvdplayer/playstatus-play.model";
+    s = "play";
     break;
-  default:
-    model = NULL;
-    break;
-  }
 
-  if(model != NULL) {
-    glw_model_create(model, w, 0, NULL);
-  } else {
-    glw_create(GLW_DUMMY,
-	       GLW_ATTRIB_PARENT, w,
-	       NULL);
+  case MP_PAUSE:
+    s = "pause";
+    break;
+
+  case MP_VIDEOSEEK_PLAY:
+  case MP_VIDEOSEEK_PAUSE:
+    s = "seek";
+    break;
+
+  default:
+    s = "stop";
+    break;
   }
+  glw_prop_set_string(dp->dp_prop_playstatus, s);
 }
 
 
@@ -464,6 +449,7 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
   media_pipe_t *mp;
   glw_t *top;
   struct svfs_ops *ops;
+  glw_prop_t *p;
 
   memset(dp, 0, sizeof(dvd_player_t));
   
@@ -518,7 +504,31 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
   }
 #endif
 
+  /**
+   * Property tree
+   */
 
+  dp->dp_prop_root = glw_prop_create(NULL, "media", GLW_GP_DIRECTORY);
+
+  glw_prop_set_string(glw_prop_create(dp->dp_prop_root, "disc", GLW_GP_STRING),
+		      title);
+
+  dp->dp_prop_playstatus = glw_prop_create(dp->dp_prop_root,
+					   "playstatus", GLW_GP_STRING);
+
+  p = glw_prop_create(dp->dp_prop_root, "time", GLW_GP_DIRECTORY);
+  dp->dp_prop_time_total = glw_prop_create(p, "total", GLW_GP_TIME);
+  dp->dp_prop_time_current = glw_prop_create(p, "current", GLW_GP_TIME);
+
+
+  dp->dp_prop_title =
+    glw_prop_create(dp->dp_prop_root, "title", GLW_GP_STRING);
+  dp->dp_prop_chapter =
+    glw_prop_create(dp->dp_prop_root, "chapter", GLW_GP_STRING);
+
+  /**
+   * Video widget
+   */
   vd_conf_init(&dp->dp_vdc);
   mp_set_video_conf(mp, &dp->dp_vdc);
   dp->dp_vdc.gc_deilace_type = VD_DEILACE_NONE;
@@ -530,7 +540,8 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
    * Status overlay
    */
   dp->dp_status = glw_model_create("theme://dvdplayer/status.model",
-				   mp->mp_status_xfader, 0, NULL);
+				   mp->mp_status_xfader, 0,
+				   dp->dp_prop_root, NULL);
 
 
   glw_set_caption(dp->dp_status, "disc", title);
@@ -582,6 +593,9 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 #endif
 
   glw_destroy(top);
+
+  glw_prop_destroy(dp->dp_prop_root);
+
   return rcode;
 }
 
@@ -1105,7 +1119,8 @@ dvd_player_open_menu(dvd_player_t *dp, int toggle)
   }
 
   dp->dp_menu =
-    glw_model_create("theme://dvdplayer/menu.model", dp->dp_container, 0, NULL);
+    glw_model_create("theme://dvdplayer/menu.model", dp->dp_container, 0,
+		     dp->dp_prop_root, NULL);
 
   /**
    * Populate audio tracks
