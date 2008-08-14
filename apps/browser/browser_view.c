@@ -187,11 +187,6 @@ browser_view_collapse_node(browser_node_t *bn)
 	  GLW_ATTRIB_SIGNAL_HANDLER, browser_view_xfader_callback, bn, -1,
 	  NULL);
 
-#if 0
-  if((cont = glw_find_by_id(w, "node_container", 0)) != NULL)
-    glw_focus_lose(cont);
-#endif
-
   glw_detach(w);
 
   glw_unlock();
