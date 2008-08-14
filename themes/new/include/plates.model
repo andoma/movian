@@ -1,0 +1,29 @@
+#define PLATE_TITLED(TITLE, BODY)
+{
+  widget(container_y, {
+
+      widget(bitmap, {
+	  .color = [0.6, 0.6, 0.6];
+	  .source = "theme://images/plate-titled-top.png";
+	  .textureBorders = [0.1, 0.1, 0.1, 0.1];
+	  .vertexBorders  = [0.1, 0.1, 0.1, 0.1];
+	  .borderScale = true;
+	
+	  widget(label, {
+	      .caption = TITLE;
+	      .align = center;
+	    });
+	});
+
+      widget(bitmap, {
+	  .weight = 4.0;
+	  .color = [0.3, 0.3, 0.3];
+	  .source = "theme://images/plate-titled-bottom.png";
+	  .textureBorders = [0.1, 0.1, 0.1, 0.1];
+	  .vertexBorders  = [0.1, 0.1, 0.1, 0.1];
+	  .borderScale = true;
+
+	  BODY;
+	});
+    });
+}

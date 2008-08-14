@@ -1,46 +1,15 @@
 #include "theme://include/buttons.model"
+#include "theme://include/plates.model"
 
 #define ARE_YOU_SURE(TITLE)
 {
   widget(form, {
-
-      widget(container_y, {
-
-	  widget(bitmap, {
-	      .color = [0.6, 0.6, 0.6];
-	      .source = "theme://images/plate-titled-top.png";
-	      .textureBorders = [0.1, 0.1, 0.1, 0.1];
-	      .vertexBorders  = [0.1, 0.1, 0.1, 0.1];
-	      .borderScale = true;
-	
-	      widget(label, {
-		.caption = TITLE;
-		  .align = center;
-		});
-	    });
-
-	  widget(bitmap, {
-	      .weight = 4.0;
-	      .color = [0.3, 0.3, 0.3];
-	      .source = "theme://images/plate-titled-bottom.png";
-	      .textureBorders = [0.1, 0.1, 0.1, 0.1];
-	      .vertexBorders  = [0.1, 0.1, 0.1, 0.1];
-	      .borderScale = true;
-      
-	      widget(container_y, {
-	
-		  space(2);
-
-		  widget(container_x, {
-		      space(0.5);
-		      FORM_BUTTON_OK();
-		      space(0.5);
-		      FORM_BUTTON_CANCEL();
-		      space(0.5);
-		    });
-		});
-	    });
-	});
+      PLATE_TITLED(TITLE, 
+		   widget(container_y, {
+		       space(2);
+		       FORM_BUTTONS_TWO(FORM_BUTTON_OK(), FORM_BUTTON_CANCEL());
+		     });
+		   );
     });
 }
 
@@ -49,50 +18,25 @@
 #define ERROR(TITLE, OTHEROPT, DETAILES)
 {
   widget(form, {
+      PLATE_TITLED(TITLE, 
+		   
+		   widget(container_y, {
+		       
+		       widget(label, {
+			   .weight = 1.5;
+			   .align = center;
+			   .caption = DETAILES;
+			 });
+		       space (0.5);
 
-      widget(container_y, {
 
-	  widget(bitmap, {
-	      .color = [0.6, 0.6, 0.6];
-	      .source = "theme://images/plate-titled-top.png";
-	      .textureBorders = [0.1, 0.1, 0.1, 0.1];
-	      .vertexBorders  = [0.1, 0.1, 0.1, 0.1];
-	      .borderScale = true;
-	
-	      widget(label, {
-		  .caption = TITLE;
-		  .align = center;
-		});
-	    });
+		       FORM_BUTTONS_TWO(
+			   FORM_BUTTON("Retry", "theme://images/ok.png",  
+				       ok, [0.0, 0.3, 0.0]),
+			   FORM_BUTTON(OTHEROPT, "theme://images/no.png",
+				       cancel, [0.3, 0.0, 0.0]));
+		     });
+		   );
 
-	  widget(bitmap, {
-	      .weight = 4.0;
-	      .color = [0.3, 0.3, 0.3];
-	      .source = "theme://images/plate-titled-bottom.png";
-	      .textureBorders = [0.1, 0.1, 0.1, 0.1];
-	      .vertexBorders  = [0.1, 0.1, 0.1, 0.1];
-	      .borderScale = true;
-      
-	      widget(container_y, {
-	
-		  widget(label, {
-		      .weight = 1.5;
-		      .align = center;
-		      .caption = DETAILES;
-		    });
-		  space (0.5);
-
-		  widget(container_x, {
-		      space(0.5);
-		      FORM_BUTTON("Retry", "theme://images/ok.png",  
-				  ok, [0.0, 0.3, 0.0]);
-		      space(0.5);
-		      FORM_BUTTON(OTHEROPT, "theme://images/no.png",
-				  cancel, [0.3, 0.0, 0.0]);
-		      space(0.5);
-		    });
-		});
-	    });
-	});
     });
 }

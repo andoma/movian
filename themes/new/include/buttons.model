@@ -39,3 +39,15 @@
 {
   FORM_BUTTON("Cancel", "theme://images/no.png", cancel, [0.3, 0, 0]);
 };
+
+
+#define FORM_BUTTONS_TWO(LEFT, RIGHT)
+{
+  widget(container_x, {
+      space(0.5);
+      LEFT();
+      space(0.5);
+      RIGHT();
+      space(0.5);
+    });
+}
