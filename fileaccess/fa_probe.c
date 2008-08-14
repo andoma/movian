@@ -348,7 +348,7 @@ fa_probe(struct filetag_list *list, const char *url)
     if(codec == NULL) {
       snprintf(tmp1, sizeof(tmp1), "%s: Unsupported codec", codectype);
     } else {
-      snprintf(tmp1, sizeof(tmp1), "%s: %s",  codectype, codec->name);
+      snprintf(tmp1, sizeof(tmp1), "%s", codec->long_name);
 
       if(avctx->codec_type == CODEC_TYPE_AUDIO) {
 	snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
@@ -367,12 +367,10 @@ fa_probe(struct filetag_list *list, const char *url)
 
     switch(avctx->codec_type) {
     case CODEC_TYPE_VIDEO:
-      p = strncmp(tmp1, "Video: ", 7) ? tmp1 : tmp1 + 7;
-      filetag_set_str(list, FTAG_VIDEOINFO, p);
+      filetag_set_str(list, FTAG_VIDEOINFO, tmp1);
       break;
     case CODEC_TYPE_AUDIO:
-      p = strncmp(tmp1, "Audio: ", 7) ? tmp1 : tmp1 + 7;
-      filetag_set_str(list, FTAG_AUDIOINFO, p);
+      filetag_set_str(list, FTAG_AUDIOINFO, tmp1);
       break;
       
     default:
