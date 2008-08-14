@@ -1,13 +1,6 @@
 widget(container_y, {
-    widget(label, {
-	.caption = "Supported output formats:";
-	.weight = 0.33;
-      });
-
-    widget(label, {
-	.weight = 0.66;
-	.id = "output_formats";
-      });
+    widget(label, { .caption = "Supported output formats:"; .weight = 0.33; });
+    widget(label, { .caption = audiodevice.outputformats;   .weight = 0.66; });
 
     space(1);
 

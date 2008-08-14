@@ -262,10 +262,13 @@ audio_add_int_option_on_off(audio_mode_t *am, glw_t *l, const char *title,
 			    unsigned int *ptr)
 {
   glw_t *opt, *sel;
+  glw_prop_t *r;
+  
+  r = glw_prop_create(NULL, "option", GLW_GP_DIRECTORY);
+  glw_prop_set_string(glw_prop_create(r, "title", GLW_GP_STRING), title);
 
   opt = glw_model_create("theme://settings/audio/audio-option.model", l,
-			 0, NULL);
-  glw_set_caption(opt, "title", title);
+			 0, r, NULL);
 
   if((sel = glw_find_by_id(opt, "options", 0)) != NULL) {
     glw_selection_add_text_option(sel, "Off", 
@@ -297,10 +300,13 @@ audio_add_mixer_map(audio_mode_t *am, glw_t *p, int type, const char *title)
 {
   glw_t *opt, *sel;
   mixer_controller_t *mc;
+  glw_prop_t *r;
+
+  r = glw_prop_create(NULL, "option", GLW_GP_DIRECTORY);
+  glw_prop_set_string(glw_prop_create(r, "title", GLW_GP_STRING), title);
 
   opt = glw_model_create("theme://settings/audio/audio-option.model", p,
-			 0, NULL);
-  glw_set_caption(opt, "title", title);
+			 0, r, NULL);
 
   if((sel = glw_find_by_id(opt, "options", 0)) == NULL)
     return;
@@ -328,6 +334,10 @@ audio_mode_add_to_settings(audio_mode_t *am, glw_t *parent)
   glw_t *deck;
   char buf[50];
   int multich = am->am_formats & (AM_FORMAT_PCM_5DOT1 | AM_FORMAT_PCM_7DOT1);
+  glw_prop_t *r;
+
+  r = glw_prop_create(NULL, "audiodevice", GLW_GP_DIRECTORY);
+
 
   if((w = glw_find_by_id(parent, "outputdevice_list", 0)) == NULL)
     return;
@@ -342,11 +352,11 @@ audio_mode_add_to_settings(audio_mode_t *am, glw_t *parent)
 	   am->am_formats & AM_FORMAT_AC3        ? "AC3 "     : "",
 	   am->am_formats & AM_FORMAT_DTS        ? "DTS "     : "");
 
+  glw_prop_set_string(glw_prop_create(r, "outputformats", GLW_GP_STRING), buf);
+
 
   deck = glw_model_create("theme://settings/audio/audio-device-settings.model",
-			  NULL, 0, NULL);
-
-  glw_set_caption(deck, "output_formats", buf);
+			  NULL, 0, r, NULL);
 
   if((l = glw_find_by_id(deck, "controllers", 0)) == NULL)
     return;
