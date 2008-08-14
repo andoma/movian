@@ -209,7 +209,8 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
 	default:
 	  abort();
 	}
-	
+	break;
+
       case EVENT_KEY_SEEK_FAST_BACKWARD:
 	av_seek_frame(fctx, -1, pts4seek - 60000000, AVSEEK_FLAG_BACKWARD);
 	goto seekflush;
