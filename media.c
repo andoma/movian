@@ -781,6 +781,39 @@ media_update_codec_info_prop(glw_prop_t *p, AVCodecContext *ctx)
   glw_prop_set_string(p, tmp);
 }
 
+
+
+/**
+ *
+ */
+void
+media_update_playstatus_prop(glw_prop_t *p, mp_playstatus_t mps)
+{
+  const char *s;
+
+  switch(mps) {
+  case MP_PLAY:
+    s = "play";
+    break;
+
+  case MP_PAUSE:
+    s = "pause";
+    break;
+
+  case MP_VIDEOSEEK_PLAY:
+  case MP_VIDEOSEEK_PAUSE:
+    s = "seek";
+    break;
+
+  default:
+    s = "stop";
+    break;
+  }
+  glw_prop_set_string(p, s);
+}
+
+
+
 /**
  * Update codec info in text widgets
  */ 

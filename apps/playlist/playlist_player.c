@@ -35,27 +35,6 @@
 #include <layout/layout.h>
 
 static void
-playlist_update_playstatus(playlist_entry_t *ple, int status)
-{
-  const char *s;
-
-  switch(status) {
-  case MP_PLAY:
-    s = "play";
-    break;
-
-  case MP_PAUSE:
-    s = "pause";
-    break;
-
-  default:
-    s = "stop";
-    break;
-  }
-  glw_prop_set_string(ple->ple_prop_playstatus, s);
-}
-
-static void
 playlist_status_update_next(playlist_entry_t *cur)
 {
   playlist_t *pl;
@@ -150,7 +129,7 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
 
     if(mp->mp_playstatus == MP_PLAY && mp_is_audio_silenced(mp)) {
       mp_set_playstatus(mp, MP_PAUSE);
-      playlist_update_playstatus(ple, MP_PAUSE);
+      media_update_playstatus_prop(ple->ple_prop_playstatus, MP_PAUSE);
     }
 
 
@@ -240,7 +219,8 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
       case EVENT_KEY_PAUSE:
 	mp_playpause(mp, ge->ge_type);
 
-	playlist_update_playstatus(ple, mp->mp_playstatus);
+	media_update_playstatus_prop(ple->ple_prop_playstatus,
+				     mp->mp_playstatus);
 	break;
 
       case EVENT_KEY_PREV:
@@ -345,8 +325,7 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
 
   wrap_format_wait(fw);
 
-  playlist_update_playstatus(ple, MP_STOP);
-
+  media_update_playstatus_prop(ple->ple_prop_playstatus, MP_STOP);
   return next;
 }
 
@@ -422,7 +401,7 @@ playlist_player(void *aux)
      * Update track widget
      */
 
-    playlist_update_playstatus(ple, MP_PLAY);
+    media_update_playstatus_prop(ple->ple_prop_playstatus, MP_PLAY);
     playlist_status_update_next(ple);
 
     /**

@@ -291,6 +291,8 @@ void media_update_codec_info_widget(glw_t *w, const char *id,
 
 void media_update_codec_info_prop(glw_prop_t *p, AVCodecContext *ctx);
 
+void media_update_playstatus_prop(glw_prop_t *p, mp_playstatus_t mps);
+
 void media_get_codec_info(AVCodecContext *ctx, char *buf, size_t size);
 
 extern media_pipe_t *primary_audio;

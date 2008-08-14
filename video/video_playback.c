@@ -82,35 +82,6 @@ typedef struct play_video_ctrl {
 } play_video_ctrl_t;
 
 /**
- *
- */
-static void
-pv_update_playstatus(play_video_ctrl_t *pvc, mp_playstatus_t mps)
-{
-  const char *s;
-
-  switch(mps) {
-  case MP_PLAY:
-    s = "play";
-    break;
-
-  case MP_PAUSE:
-    s = "pause";
-    break;
-
-  case MP_VIDEOSEEK_PLAY:
-  case MP_VIDEOSEEK_PAUSE:
-    s = "seek";
-    break;
-
-  default:
-    s = "stop";
-    break;
-  }
-  glw_prop_set_string(pvc->pvc_prop_playstatus, s);
-}
-
-/**
  * Update text about video/audio stream type
  */
 static void
@@ -353,7 +324,7 @@ video_player_loop(play_video_ctrl_t *pvc, glw_event_queue_t *geq)
     }
     av_free_packet(&pkt);
 
-    pv_update_playstatus(pvc, mp->mp_playstatus);
+    media_update_playstatus_prop(pvc->pvc_prop_playstatus, mp->mp_playstatus);
 
     if(mp->mp_playstatus == MP_PLAY && mp_is_audio_silenced(mp))
       mp_set_playstatus(mp, MP_PAUSE);
@@ -440,7 +411,7 @@ video_player_loop(play_video_ctrl_t *pvc, glw_event_queue_t *geq)
       pvc->pvc_rcache_last = INT64_MIN;
 
       /* Just make it display the seek widget */
-      pv_update_playstatus(pvc, MP_VIDEOSEEK_PLAY);
+      media_update_playstatus_prop(pvc->pvc_prop_playstatus, MP_VIDEOSEEK_PLAY);
 
       if(seek_abs)
 	seek_ref = seek_abs;
@@ -625,7 +596,7 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
     }
   }
 
-  mp_set_playstatus(mp, MP_VIDEOSEEK_PAUSE);
+  media_update_playstatus_prop(pvc.pvc_prop_playstatus, MP_VIDEOSEEK_PAUSE);
 
   mp->mp_feedback = geq;
 

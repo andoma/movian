@@ -268,36 +268,6 @@ dvd_update_info(dvd_player_t *dp)
  *
  */
 static void
-dp_update_playstatus(dvd_player_t *dp, mp_playstatus_t mps)
-{
-  const char *s;
-
-  switch(mps) {
-  case MP_PLAY:
-    s = "play";
-    break;
-
-  case MP_PAUSE:
-    s = "pause";
-    break;
-
-  case MP_VIDEOSEEK_PLAY:
-  case MP_VIDEOSEEK_PAUSE:
-    s = "seek";
-    break;
-
-  default:
-    s = "stop";
-    break;
-  }
-  glw_prop_set_string(dp->dp_prop_playstatus, s);
-}
-
-
-/**
- *
- */
-static void
 dvd_player_loop(dvd_player_t *dp)
 {
   media_pipe_t *mp = dp->dp_mp;
@@ -313,7 +283,7 @@ dvd_player_loop(dvd_player_t *dp)
 
   while(run) {
 
-    dp_update_playstatus(dp, mp->mp_playstatus);
+    media_update_playstatus_prop(dp->dp_prop_playstatus, mp->mp_playstatus);
 
     if(mp_is_paused(mp)) {
       ai->ai_req_fullscreen = 0;
