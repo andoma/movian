@@ -95,6 +95,24 @@ appi_map_generic_config(appi_t *ai, htsmsg_t *settings)
     snprintf(ai->ai_speedbutton, sizeof(ai->ai_speedbutton), "%s", v);
 }
 
+/**
+ * 
+ */
+static appi_t *
+appi_create0(const char *name)
+{
+  appi_t *ai = calloc(1, sizeof(appi_t));
+  
+  hts_mutex_lock(&appi_list_mutex);
+  LIST_INSERT_HEAD(&appis, ai, ai_link);
+  hts_mutex_unlock(&appi_list_mutex);
+  
+  glw_event_initqueue(&ai->ai_geq);
+  ai->ai_mp = mp_create(name, ai); /* Includes a refcount, this is
+				      decreated in appi_destroy() */
+
+  return ai;
+}
 
 /**
  * Spawn a new application instance
@@ -102,19 +120,10 @@ appi_map_generic_config(appi_t *ai, htsmsg_t *settings)
 void
 app_spawn(app_t *a, htsmsg_t *settings, int index)
 {
-
-  appi_t *ai = calloc(1, sizeof(appi_t));
-
-  hts_mutex_lock(&appi_list_mutex);
-  LIST_INSERT_HEAD(&appis, ai, ai_link);
-  hts_mutex_unlock(&appi_list_mutex);
+  appi_t *ai = appi_create0(a->app_name);
 
   ai->ai_app = a;
   ai->ai_instance_index = index;
-
-  glw_event_initqueue(&ai->ai_geq);
-  ai->ai_mp = mp_create(a->app_name, ai); /* Includes a refcount, this is
-					     decreated in appi_destroy() */
   ai->ai_settings = settings;
 
   if(settings != NULL)
@@ -130,19 +139,8 @@ app_spawn(app_t *a, htsmsg_t *settings, int index)
 appi_t *
 appi_create(const char *name)
 {
-  appi_t *ai = calloc(1, sizeof(appi_t));
-
-  printf("creating appi %s\n", name);
-
-  hts_mutex_lock(&appi_list_mutex);
-  LIST_INSERT_HEAD(&appis, ai, ai_link);
-  hts_mutex_unlock(&appi_list_mutex);
-
-  glw_event_initqueue(&ai->ai_geq);
-  ai->ai_mp = mp_create(name, ai); /* Includes a refcount, this is
-				      decreated in appi_destroy() */
+  appi_t *ai = appi_create0(name);
   ai->ai_name = name;
-
   return ai;
 }
 
