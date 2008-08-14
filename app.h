@@ -68,6 +68,9 @@ typedef struct appi {
 
   char ai_speedbutton[32];
 
+  glw_prop_t *ai_prop_root;
+  glw_prop_t *ai_prop_title;
+
 } appi_t;
 
 

@@ -111,6 +111,9 @@ appi_create0(const char *name)
   ai->ai_mp = mp_create(name, ai); /* Includes a refcount, this is
 				      decreated in appi_destroy() */
 
+  ai->ai_prop_root = glw_prop_create(NULL, "app", GLW_GP_DIRECTORY);
+  ai->ai_prop_title = glw_prop_create(ai->ai_prop_root, "title", GLW_GP_STRING);
+
   return ai;
 }
 
@@ -159,6 +162,7 @@ appi_destroy(appi_t *ai)
 
   free((void *)ai->ai_name);
   glw_event_flushqueue(&ai->ai_geq);
+  glw_prop_destroy(ai->ai_prop_root);
   free(ai);
 }
 
