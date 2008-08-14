@@ -743,29 +743,7 @@ codec_details(AVCodecContext *ctx, char *buf, size_t size, const char *lead)
 }
 
 /**
- * Update codec info in text widgets
- */ 
-void
-media_update_codec_info_widget(glw_t *w, const char *id, AVCodecContext *ctx)
-{
-  char tmp1[100];
-
-  if((w = glw_find_by_id(w, id, 0)) == NULL)
-    return;
-
-  if(ctx == NULL) {
-    glw_set(w, GLW_ATTRIB_CAPTION, "", NULL);
-    return;
-  }
-
-  snprintf(tmp1, sizeof(tmp1), "%s", ctx->codec->long_name);
-  
-  codec_details(ctx, tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1), ", ");
-  glw_set(w, GLW_ATTRIB_CAPTION, tmp1, NULL);
-}
-
-/**
- * Update codec info in text widgets
+ * Update codec info in property
  */ 
 void
 media_update_codec_info_prop(glw_prop_t *p, AVCodecContext *ctx)

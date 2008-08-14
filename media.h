@@ -286,9 +286,6 @@ void nice_codec_name(char *buf, int len, AVCodecContext *ctx);
 
 int mp_is_audio_silenced(media_pipe_t *mp);
 
-void media_update_codec_info_widget(glw_t *w, const char *id, 
-				    AVCodecContext *ctx);
-
 void media_update_codec_info_prop(glw_prop_t *p, AVCodecContext *ctx);
 
 void media_update_playstatus_prop(glw_prop_t *p, mp_playstatus_t mps);
