@@ -289,6 +289,8 @@ int mp_is_audio_silenced(media_pipe_t *mp);
 void media_update_codec_info_widget(glw_t *w, const char *id, 
 				    AVCodecContext *ctx);
 
+void media_update_codec_info_prop(glw_prop_t *p, AVCodecContext *ctx);
+
 void media_get_codec_info(AVCodecContext *ctx, char *buf, size_t size);
 
 extern media_pipe_t *primary_audio;

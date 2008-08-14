@@ -768,6 +768,23 @@ media_update_codec_info_widget(glw_t *w, const char *id, AVCodecContext *ctx)
  * Update codec info in text widgets
  */ 
 void
+media_update_codec_info_prop(glw_prop_t *p, AVCodecContext *ctx)
+{
+  char tmp[100];
+
+  if(ctx == NULL) {
+    tmp[0] = 0;
+  } else {
+    snprintf(tmp, sizeof(tmp), "%s", ctx->codec->long_name);
+    codec_details(ctx, tmp + strlen(tmp), sizeof(tmp) - strlen(tmp), ", ");
+  }
+  glw_prop_set_string(p, tmp);
+}
+
+/**
+ * Update codec info in text widgets
+ */ 
+void
 media_get_codec_info(AVCodecContext *ctx, char *buf, size_t size)
 {
   snprintf(buf, size, "%s\n", ctx->codec->long_name);
