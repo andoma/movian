@@ -130,7 +130,6 @@ browser_view_set(browser_node_t *bn, browser_view_t *bv)
 #endif
   }
 
-  glw_set_caption(m, "node_fullpath", bn->bn_url);
   return m;
 }
 
