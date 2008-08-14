@@ -513,9 +513,6 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 				   mp->mp_status_xfader, 0,
 				   dp->dp_prop_root, NULL);
 
-
-  glw_set_caption(dp->dp_status, "disc", title);
-
   /**
    * By default, follow DVD VM machine
    */
