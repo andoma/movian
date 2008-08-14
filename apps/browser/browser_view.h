@@ -32,8 +32,6 @@ browser_node_t *browser_view_get_current_node(glw_t *stack);
 
 glw_t *browser_view_set(browser_node_t *bn, browser_view_t *bv);
 
-void browser_view_node_model_update(browser_node_t *bn);
-
 int browser_view_index(void);
 
 void browser_view_switch(browser_node_t *bn);

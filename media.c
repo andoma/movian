@@ -804,6 +804,8 @@ media_fill_properties(glw_prop_t *root, const char *url, int type,
   char buf[30];
   int64_t stype;
 
+  glw_prop_set_string(glw_prop_create(root, "url", GLW_GP_STRING), url);
+
   switch(type) {
   case FA_DIR:
     s = "directory";

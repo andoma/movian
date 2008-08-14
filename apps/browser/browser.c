@@ -27,6 +27,8 @@
 #include "browser.h"
 #include "browser_view.h"
 #include "browser_probe.h"
+#include "media.h"
+
 
 static void *browser_scandir_thread(void *arg);
 
@@ -56,6 +58,7 @@ check_node_free(browser_node_t *bn)
   assert(bn->bn_cont_xfader == NULL);
 
   free((void *)bn->bn_url);
+  glw_prop_destroy(bn->bn_prop_root);
   free(bn);
 }
 
@@ -100,6 +103,7 @@ browser_node_create(const char *url, int type, browser_root_t *br)
   browser_node_t *bn;
 
   bn = calloc(1, sizeof(browser_node_t));
+  bn->bn_prop_root = glw_prop_create(NULL, "media", GLW_GP_DIRECTORY);
   bn->bn_refcnt = 1;
   bn->bn_url = strdup(url);
   bn->bn_type = type;
@@ -112,6 +116,16 @@ browser_node_create(const char *url, int type, browser_root_t *br)
 }
 
 
+
+/**
+ * Update properties
+ */
+void
+browser_node_update_props(browser_node_t *bn)
+{
+  media_fill_properties(bn->bn_prop_root, bn->bn_url, bn->bn_type,
+			&bn->bn_ftags);
+}
 
 
 /**
@@ -129,6 +143,8 @@ browser_node_add_child(browser_node_t *parent, const char *url, int type)
   TAILQ_INSERT_TAIL(&parent->bn_childs, bn, bn_parent_link);
   bn->bn_parent = parent;
   hts_mutex_unlock(&br->br_hierarchy_mutex);
+
+  browser_node_update_props(bn);
 
   browser_view_add_node(bn, NULL, 0, 0);
   return bn;

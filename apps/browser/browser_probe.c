@@ -59,10 +59,10 @@ browser_probe_thread(void *arg)
 	  type = fa_probe(&bn->bn_ftags, bn->bn_url);
 
 	  if(type == FA_NONE) {
-	    glw_destroy(bn->bn_icon_xfader);
+	    glw_destroy(bn->bn_model);
 	  } else {
 	    bn->bn_type = type;
-	    browser_view_node_model_update(bn);
+	    browser_node_update_props(bn);
 	  }
 	}
 
@@ -71,10 +71,10 @@ browser_probe_thread(void *arg)
 	  type = fa_probe_dir(&bn->bn_ftags, bn->bn_url);
 
 	  if(type == FA_NONE) {
-	    glw_destroy(bn->bn_icon_xfader);
+	    glw_destroy(bn->bn_model);
 	  } else {
 	    bn->bn_type = type;
-	    browser_view_node_model_update(bn);
+	    browser_node_update_props(bn);
 	  }
 	}
 

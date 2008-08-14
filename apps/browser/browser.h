@@ -69,8 +69,10 @@ typedef struct browser_node {
 
   int                       bn_type; /* FA_ -node type */
 
+  glw_prop_t               *bn_prop_root;
+  glw_t                    *bn_model;
+
   /* These fields must be access protected with glw_lock() */
-  glw_t                    *bn_icon_xfader;
   glw_t                    *bn_cont_xfader;
   browser_view_t           *bn_view;
   /* end of glw_lock() */
@@ -126,6 +128,8 @@ browser_node_t *browser_node_add_child(browser_node_t *parent,
 browser_root_t *browser_root_create(const char *url, glw_t *splashcontainer);
 
 void browser_root_destroy(browser_root_t *br);
+
+void browser_node_update_props(browser_node_t *bn);
 
 int browser_scandir(browser_node_t *bn, int async);
 

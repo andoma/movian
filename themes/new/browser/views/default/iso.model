@@ -1,4 +1,8 @@
-widget(bitmap, {
-  .source = "theme://images/dir.png";
-  .keepAspect = true;
-  });
+#include "theme://browser/views/default/plate.model"
+
+BROWSER_PLATE("theme://images/cd.png",
+	     
+	      widget(label, {.caption = media.title;});
+	      ,
+	      space(1.0);
+    );

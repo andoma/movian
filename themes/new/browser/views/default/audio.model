@@ -1,4 +1,16 @@
-widget(bitmap , {
-    .source = "theme://images/audio.png";
-    .keepAspect = true;
-  });
+#include "theme://browser/views/default/plate.model"
+
+BROWSER_PLATE("theme://images/audio.png",
+	     
+	      widget(container_x, {
+		  widget(label, {.caption = media.title;});
+		  widget(label, {.caption = media.duration; .weight = 0.1;});
+		});
+	      ,
+
+	      widget(container_y, {
+		  widget(label, {.caption = media.author;});
+		  widget(label, {.caption = media.album;});
+		  space(1.0);
+		})
+    );
