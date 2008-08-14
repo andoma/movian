@@ -46,7 +46,7 @@
 
 
 
-#define ERROR(TITLE, OTHEROPT)
+#define ERROR(TITLE, OTHEROPT, DETAILES)
 {
   widget(form, {
 
@@ -78,7 +78,7 @@
 		  widget(label, {
 		      .weight = 1.5;
 		      .align = center;
-		      .id = "detailedError";
+		      .caption = DETAILES;
 		    });
 		  space (0.5);
 

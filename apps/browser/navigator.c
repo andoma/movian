@@ -117,17 +117,17 @@ nav_access_error(navigator_t *nav, appi_t *ai, const char *dir,
 {
   int r;
   glw_t *m;
-  char errbuf[400];
+  glw_prop_t *p;
 
-  snprintf(errbuf, sizeof(errbuf),
-	   "\"%s\"\n"
-	   "%s", dir, errtxt);
+  p = glw_prop_create(NULL, "error", GLW_GP_DIRECTORY);
+  glw_prop_set_stringf(glw_prop_create(p, "details", GLW_GP_STRING),
+		       "\"%s\"\n%s", dir, errtxt);
 
   m = glw_model_create("theme://browser/access-error.model", nav->nav_stack,
-		       0, NULL);
-  glw_set_caption(m, "detailedError", errbuf);
+		       0, p, NULL);
   r = glw_wait_form_ok_cancel(m);
   glw_detach(m);
+  glw_prop_destroy(p);
   return r;
 }
 
