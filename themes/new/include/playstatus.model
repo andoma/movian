@@ -1,0 +1,11 @@
+#define PLAYSTATUS_WIDGET(PROP, ALPHA)
+{
+  widget(showroom, {
+      .alpha = ALPHA;
+      .keepAspect = true;
+      .source = translate(PROP,
+			  ["play",  "theme://include/playstatus-play.model",
+			   "pause", "theme://include/playstatus-pause.model"],
+			  "");
+    });
+}

@@ -1,3 +1,5 @@
+#include "theme://include/playstatus.model"
+
 widget(bitmap, {
     .focusCursor = true;
     .focusAlpha  = true;
@@ -8,27 +10,13 @@ widget(bitmap, {
     .vertexBorders  = [0.05, 0.05, 0.05, 0.05];
   
     widget(container_z, {
-	widget(bitmap, {
-	    .alpha = 0.3;
-	    .keepAspect = true;
-	    .source = translate(media.playstatus,
-				["play",  "theme://images/player_play.png",
-				 "pause", "theme://images/player_pause.png"],
-				"");
-	  });
+	PLAYSTATUS_WIDGET(media.playstatus, 0.3);
 
 	widget(expander, {
-    
+   
 	    widget(container_x, {
-		widget(label, {
-		    .caption = media.title;
-		    .weight = 0.9;
-		  });
-      
-		widget(label, {
-		    .weight = 0.1;
-		    .caption = media.time.total;
-		  });
+		widget(label, { .caption = media.title;      .weight = 0.9; });
+		widget(label, { .caption = media.time.total; .weight = 0.1; });
 	      });
 
 	    widget(container_y, {

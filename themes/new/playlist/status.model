@@ -1,12 +1,8 @@
+#include "theme://include/playstatus.model"
+
 widget(container_x, {
 
-    widget(bitmap, {
-	.keepAspect = true;
-	.source = translate(media.playstatus,
-			    ["play",  "theme://images/player_play.png",
-			     "pause", "theme://images/player_pause.png"],
-			    "");
-      });
+    PLAYSTATUS_WIDGET(media.playstatus, 1.0);
 
     widget(container_y, {
 	.weight = 8.0;
