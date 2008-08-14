@@ -161,23 +161,7 @@ nav_main(navigator_t *nav, appi_t *ai, navconfig_t *cfg)
   const char *rooturl = cfg->nc_rootpath;
   int run = 1, r;
 
-  /**
-   * Swap task switcher miniature widget to the one configured
-   */ 
-  glw_lock();
-  glw_destroy(nav->nav_miniature);
-
-  nav->nav_miniature = 
-    glw_model_create("theme://browser/browser-miniature.model", NULL,
-		     0, NULL);
-
-  layout_switcher_appi_add(ai, nav->nav_miniature);
-  glw_unlock();
-
-  /**
-   * Update title in task switcher miniature widget
-   */
-  glw_set_caption(nav->nav_miniature, "title", cfg->nc_title);
+  glw_prop_set_string(ai->ai_prop_title, cfg->nc_title);
 
   /**
    * Create browser root
@@ -359,7 +343,7 @@ nav_launch(void *aux)
   nav->nav_ai = ai;
 
   ai->ai_widget = glw_model_create("theme://browser/browser-app.model", NULL,
-				   0, NULL);
+				   0,  ai->ai_prop_root, prop_global, NULL);
 
   if((nav->nav_stack = glw_find_by_id(ai->ai_widget, "stack", 0)) == NULL) {
     fprintf(stderr, "No navigation 'stack' found\n");
@@ -384,7 +368,7 @@ nav_launch(void *aux)
    */
   nav->nav_miniature =
     glw_model_create("theme://browser/browser-miniature.model", NULL,
-		     0, NULL);
+		     0, ai->ai_prop_root, prop_global, NULL);
 
   layout_switcher_appi_add(ai, nav->nav_miniature);
   
