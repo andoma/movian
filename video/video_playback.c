@@ -54,9 +54,6 @@
 #define OVERLAY_BUTTON_STOP      9
 
 typedef struct play_video_ctrl {
-
-  int    pvc_widget_status_playstatus;
-
   glw_t *pvc_container;
   glw_t *pvc_status;
   glw_t *pvc_menu;
@@ -75,6 +72,13 @@ typedef struct play_video_ctrl {
 
   int pvc_force_status_display;
 
+  glw_prop_t *pvc_prop_root;
+  glw_prop_t *pvc_prop_playstatus;
+  glw_prop_t *pvc_prop_time_current;
+
+  glw_prop_t *pvc_prop_videoinfo;
+  glw_prop_t *pvc_prop_audioinfo;
+
 } play_video_ctrl_t;
 
 /**
@@ -83,41 +87,27 @@ typedef struct play_video_ctrl {
 static void
 pv_update_playstatus(play_video_ctrl_t *pvc, mp_playstatus_t mps)
 {
-  const char *model;
-  glw_t *w;
-
-  if(pvc->pvc_widget_status_playstatus == mps)
-    return;
-
-  pvc->pvc_widget_status_playstatus = mps;
-
-  w = glw_find_by_id(pvc->pvc_status, "playstatus", 0);
-  if(w == NULL)
-    return;
+  const char *s;
 
   switch(mps) {
-  case MP_PAUSE:
-    model = "theme://videoplayer/playstatus-pause.model";
-    break;
   case MP_PLAY:
-    model = "theme://videoplayer/playstatus-play.model";
+    s = "play";
     break;
-  case MP_VIDEOSEEK_PAUSE:
-  case MP_VIDEOSEEK_PLAY:
-    model = "theme://videoplayer/playstatus-seek.model";
-    break;
-  default:
-    model = NULL;
-    break;
-  }
 
-  if(model != NULL) {
-    glw_model_create(model, w, 0, NULL);
-  } else {
-    glw_create(GLW_DUMMY,
-	       GLW_ATTRIB_PARENT, w,
-	       NULL);
+  case MP_PAUSE:
+    s = "pause";
+    break;
+
+  case MP_VIDEOSEEK_PLAY:
+  case MP_VIDEOSEEK_PAUSE:
+    s = "seek";
+    break;
+
+  default:
+    s = "stop";
+    break;
   }
+  glw_prop_set_string(pvc->pvc_prop_playstatus, s);
 }
 
 /**
@@ -129,19 +119,15 @@ video_player_update_stream_info(play_video_ctrl_t *pvc)
   media_pipe_t *mp = pvc->pvc_ai->ai_mp;
   int as = mp->mp_audio.mq_stream;
   int vs = mp->mp_video.mq_stream;
-  glw_t *w = pvc->pvc_status;
+  AVCodecContext *ctx;
 
-  if(as >= 0 && pvc->pvc_cwvec[as] != NULL)
-    media_update_codec_info_widget(w, "audioinfo",
-				   pvc->pvc_cwvec[as]->codec_ctx);
-  else
-    glw_set_caption(w, "audioinfo", NULL);
+  ctx = as >= 0 && pvc->pvc_cwvec[as] != NULL ? 
+    pvc->pvc_cwvec[as]->codec_ctx : NULL;
+  media_update_codec_info_prop(pvc->pvc_prop_audioinfo, ctx);
 
-  if(vs >= 0 && pvc->pvc_cwvec[vs] != NULL)
-    media_update_codec_info_widget(w, "videoinfo",
-				   pvc->pvc_cwvec[vs]->codec_ctx);
-  else
-    glw_set_caption(w, "videoinfo", NULL);
+  ctx = as >= 0 && pvc->pvc_cwvec[vs] != NULL ? 
+    pvc->pvc_cwvec[vs]->codec_ctx : NULL;
+  media_update_codec_info_prop(pvc->pvc_prop_videoinfo, ctx);
 }
 
 /**
@@ -210,7 +196,7 @@ video_player_open_menu(play_video_ctrl_t *pvc, int toggle)
 
   pvc->pvc_menu =
     glw_model_create("theme://videoplayer/menu.model", pvc->pvc_container,
-		     0, NULL);
+		     0, pvc->pvc_prop_root, NULL);
   
   /**
    * Populate audio tracks
@@ -256,13 +242,7 @@ play_video_clock_update(play_video_ctrl_t *pvc, int64_t pts,
 
   if(pts != AV_NOPTS_VALUE) {
     pts -= pvc->pvc_fctx->start_time;
-    
-    glw_set_caption_time(pvc->pvc_status,
-		       "time_current",pts / AV_TIME_BASE);
-#if 0
-    layout_update_bar(pvc->pvc_status, "durationbar", 
-		      (double)pts / (double)pvc->pvc_fctx->duration);
-#endif
+    glw_prop_set_time(pvc->pvc_prop_time_current, pts / AV_TIME_BASE);
   }
 }
 
@@ -505,13 +485,14 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
   AVCodecContext *ctx;
   formatwrap_t *fw;
   media_pipe_t *mp = ai->ai_mp;
-  glw_t *vdw, *top, *w;
+  glw_t *vdw, *top;
   int64_t ts;
   int streams, i;
   play_video_ctrl_t pvc;
   const char *s;
   htsmsg_t *m;
   char faurl[1000];
+  glw_prop_t *p;
 
   memset(&pvc, 0, sizeof(play_video_ctrl_t));
   pvc.pvc_ai = ai;
@@ -535,16 +516,49 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
   }
 
   /**
+   * Create property tree
+   */ 
+
+  pvc.pvc_prop_root = glw_prop_create(NULL, "media", GLW_GP_DIRECTORY);
+
+  pvc.pvc_prop_playstatus = glw_prop_create(pvc.pvc_prop_root,
+					     "playstatus", GLW_GP_STRING);
+
+
+  p = glw_prop_create(pvc.pvc_prop_root, "time", GLW_GP_DIRECTORY);
+  glw_prop_set_time(glw_prop_create(p, "total", GLW_GP_TIME),
+		    pvc.pvc_fctx->duration / AV_TIME_BASE);
+
+  pvc.pvc_prop_time_current = glw_prop_create(p, "current", GLW_GP_TIME);
+
+  pvc.pvc_prop_videoinfo = glw_prop_create(pvc.pvc_prop_root,
+					    "videoinfo", GLW_GP_STRING);
+
+  pvc.pvc_prop_audioinfo = glw_prop_create(pvc.pvc_prop_root,
+					    "audioinfo", GLW_GP_STRING);
+
+  s = pvc.pvc_fctx->title;
+  if(*s == 0) {
+    /* No stored title */
+    s = strrchr(url, '/');
+    s = s ? s + 1 : url;
+  }
+  
+  glw_prop_set_string(glw_prop_create(pvc.pvc_prop_root, 
+				      "title", GLW_GP_STRING), s);
+
+  /**
    * Create top level widget
    */
   top = glw_model_create("theme://videoplayer/videoplayer.model", parent,
-			 0, NULL);
+			 0, pvc.pvc_prop_root, NULL);
   pvc.pvc_container = glw_find_by_id(top, "videoplayer_container", 0);
   if(pvc.pvc_container == NULL) {
     fprintf(stderr, "Unable to locate videoplayer container\n");
     sleep(1);
     glw_destroy(top);
     av_close_input_file(pvc.pvc_fctx);
+    glw_prop_destroy(pvc.pvc_prop_root);
     return -1;
   }
 
@@ -561,26 +575,7 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
    */
   pvc.pvc_status = glw_model_create("theme://videoplayer/status.model",
 				    mp->mp_status_xfader,
-				    0, NULL);
-
-  /**
-   * Set title
-   */
-  if((w = glw_find_by_id(pvc.pvc_status, "title", 0)) != NULL) {
-    s = pvc.pvc_fctx->title;
-    if(*s == 0) {
-      /* No stored title */
-      s = strrchr(url, '/');
-      s = s ? s + 1 : url;
-    }
-    glw_set(w, GLW_ATTRIB_CAPTION, s, NULL);
-  }
-
-  /**
-   * Set total duration
-   */
-  glw_set_caption_time(pvc.pvc_status,
-		       "time_total", pvc.pvc_fctx->duration / AV_TIME_BASE);
+				    0, pvc.pvc_prop_root, NULL);
 
   /**
    * Init codec contexts
