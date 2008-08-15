@@ -47,8 +47,6 @@ browser_probe_thread(void *arg)
       TAILQ_REMOVE(&br->br_probe_queue, bn, bn_probe_link);
       hts_mutex_unlock(&br->br_probe_mutex);
 
-      printf("Probing %s\n", bn->bn_url);
-
       /* If the probing code is the only one with a reference, don't probe */
       if(bn->bn_refcnt > 1) {
 
