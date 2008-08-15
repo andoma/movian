@@ -286,7 +286,7 @@ keymapper_update_model(hid_keycode_t *hkc, glw_t *w)
  *
  */
 static int
-eh_keymapper(glw_event_t *ge)
+eh_keymapper(glw_event_t *ge, void *opaque)
 {
   hid_keydesc_t *hkd;
   hid_keycode_t *hkc;
@@ -383,6 +383,7 @@ keymapper_init(appi_t *ai, glw_t *settings)
     }
   }
 
-  event_handler_register(10000, eh_keymapper);
+  event_handler_register("keymapper", eh_keymapper, EVENTPRI_KEYMAPPER,
+			 NULL);
 
 }

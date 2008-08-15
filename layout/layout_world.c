@@ -37,7 +37,7 @@ extern float layout_switcher_alpha;
 
 
 
-static int layout_world_input_event(glw_event_t *ge);
+static int layout_world_input_event(glw_event_t *ge, void *opaque);
 
 glw_t *layout_global_status;
 
@@ -79,7 +79,8 @@ layout_world_create(void)
 	    NULL);
   }
   
-  event_handler_register(0, layout_world_input_event);
+  event_handler_register("world", layout_world_input_event, EVENTPRI_WORLD,
+			 NULL);
 }
 
 
@@ -165,7 +166,7 @@ layout_world_appi_show(appi_t *ai)
  * Primary point for input event distribution
  */
 static int
-layout_world_input_event(glw_event_t *ge)
+layout_world_input_event(glw_event_t *ge, void *opaque)
 {
   glw_signal(layout_world, GLW_SIGNAL_EVENT, ge);
   return 1;

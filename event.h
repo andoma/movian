@@ -59,12 +59,33 @@ typedef enum {
   EVENT_KEY_SWITCH_VIEW,
 } event_type_t;
 
+
+/**
+ * The lowest entry in this list will be called first
+ */
+typedef enum {
+  EVENTPRI_WORLD,
+  EVENTPRI_SWITCHER,
+  EVENTPRI_MAIN,
+  EVENTPRI_SPEEDBUTTONS,
+
+  EVENTPRI_MEDIACONTROLS_PLAYLIST,
+  EVENTPRI_MEDIACONTROLS_SLIDESHOW,
+  EVENTPRI_MEDIACONTROLS_VIDEOPLAYBACK,
+
+  EVENTPRI_AUDIO_MIXER,
+  EVENTPRI_KEYMAPPER,
+} eventpri_t;
+
 void event_post(glw_event_t *ge);
 
 void event_post_simple(event_type_t type);
 
-void event_handler_register(int pri, int (*callback)(glw_event_t *ge));
+void *event_handler_register(const char *name, int (*callback)(glw_event_t *ge,
+							       void *opaque),
+			     eventpri_t pri, void *opaque);
 
+void event_handler_unregister(void *ih);
 
 typedef struct event_keydesc {
   glw_event_t h;
@@ -74,5 +95,6 @@ typedef struct event_keydesc {
 } event_keydesc_t;
 
 void event_init(void);
+
 
 #endif /* EVENT_H */

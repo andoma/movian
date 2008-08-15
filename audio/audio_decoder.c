@@ -58,16 +58,12 @@ static void audio_deliver(audio_decoder_t *ad, audio_mode_t *am, int16_t *src,
 
 static void *ad_thread(void *aux);
 
-static int audio_decoder_event_handler(glw_event_t *ge);
-
 /**
  *
  */
 void
 audio_decoder_init(void)
 {
-  event_handler_register(900, audio_decoder_event_handler);
-
   TAILQ_INIT(&audio_decoders);
 }
 
@@ -941,51 +937,6 @@ resample(audio_decoder_t *ad, int16_t *dstmix, int dstavail,
 
    return srcframes;
  }
-
-
-
-/**
- *
- */
-static int
-audio_decoder_event_handler(glw_event_t *ge)
-{
-  audio_decoder_t *ad;
-  media_pipe_t *mp;
-  int r = 0;
-
-  switch(ge->ge_type) {
-
-  case EVENT_KEY_SEEK_FAST_BACKWARD:
-  case EVENT_KEY_SEEK_BACKWARD:
-  case EVENT_KEY_SEEK_FAST_FORWARD:
-  case EVENT_KEY_SEEK_FORWARD:
-  case EVENT_KEY_PLAYPAUSE:
-  case EVENT_KEY_PLAY:
-  case EVENT_KEY_PAUSE:
-  case EVENT_KEY_STOP:
-  case EVENT_KEY_PREV:
-  case EVENT_KEY_NEXT:
-  case EVENT_KEY_RESTART_TRACK:
-    break;
-  default:
-    return 0;
-  }
-
-  hts_mutex_lock(&audio_decoders_mutex);
-
-  ad = TAILQ_FIRST(&audio_decoders);
-  if(ad != NULL) {
-    mp = ad->ad_mp;
-    if(mp->mp_feedback != NULL) {
-      glw_event_enqueue(mp->mp_feedback, ge);
-      r = 1;
-    }
-  }
-
-  hts_mutex_unlock(&audio_decoders_mutex);
-  return r;
-}
 
 
 

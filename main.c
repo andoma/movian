@@ -60,7 +60,7 @@ int concurrency;
 extern char *htsversion;
 glw_prop_t *prop_global;
 
-static int main_event_handler(glw_event_t *ge);
+static int main_event_handler(glw_event_t *ge, void *opaque);
 
 
 static void
@@ -182,7 +182,7 @@ main(int argc, char **argv)
 
   layout_create();
 
-  event_handler_register(300, main_event_handler);
+  event_handler_register("main", main_event_handler, EVENTPRI_MAIN, NULL);
 
   apps_load();
 
@@ -205,7 +205,7 @@ showtime_exit(int suspend)
 
 
 static int
-main_event_handler(glw_event_t *ge)
+main_event_handler(glw_event_t *ge, void *opaque)
 {
   switch(ge->ge_type) {
   default:

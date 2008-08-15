@@ -145,7 +145,7 @@ audio_mixer_update(volume_control_t *vc)
  *
  */
 static int
-audio_mixer_event_handler(glw_event_t *ge)
+audio_mixer_event_handler(glw_event_t *ge, void *opaque)
 {
   switch(ge->ge_type) {
 
@@ -172,7 +172,8 @@ audio_mixer_thread(void *aux)
   glw_event_t *ge;
   glw_event_initqueue(&audio_mixer_event_queue);
 
-  event_handler_register(900, audio_mixer_event_handler);
+  event_handler_register("audio mixer", audio_mixer_event_handler,
+			 EVENTPRI_AUDIO_MIXER, NULL);
   
   global_volume.vc_master_vol = -50;
   audio_mixer_update(&global_volume);

@@ -44,7 +44,7 @@ LIST_HEAD(, appi) appis;
  *
  */
 static int
-appi_speedbutton_switcher(glw_event_t *ge)
+appi_speedbutton_switcher(glw_event_t *ge, void *opaque)
 {
   event_keydesc_t *ek = (void *)ge;
   appi_t *ai;
@@ -278,7 +278,8 @@ apps_load(void)
 
   autolaunch_applications();
 
-  event_handler_register(800, appi_speedbutton_switcher);
+  event_handler_register("speedbuttons", appi_speedbutton_switcher,
+			 EVENTPRI_SPEEDBUTTONS, NULL);
 }
 
 

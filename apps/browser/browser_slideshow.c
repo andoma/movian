@@ -30,9 +30,40 @@
 #include "event.h"
 #include "media.h"
 
-void
-browser_slideshow(browser_node_t *cur, glw_t *parent, glw_event_queue_t *geq)
+
+/**
+ *
+ */
+static int
+slideshow_event_handler(glw_event_t *ge, void *opaque)
 {
+  appi_t *ai = opaque;
+
+  if(ai->ai_active == 0)
+    return 0;
+
+  switch(ge->ge_type) {
+
+  case EVENT_KEY_PLAYPAUSE:
+  case EVENT_KEY_PLAY:
+  case EVENT_KEY_PAUSE:
+  case EVENT_KEY_PREV:
+  case EVENT_KEY_NEXT:
+  case EVENT_KEY_RESTART_TRACK:
+    break;
+  default:
+    return 0;
+  }
+
+  glw_event_enqueue(&ai->ai_geq, ge);
+  return 1;
+}
+
+
+void
+browser_slideshow(browser_node_t *cur, glw_t *parent, appi_t *ai)
+{
+  glw_event_queue_t *geq = &ai->ai_geq;
   glw_t *top, *slideshow, *b;
   browser_node_t *dir = cur->bn_parent;
   browser_root_t *br  = cur->bn_root;
@@ -42,6 +73,7 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, glw_event_queue_t *geq)
   glw_event_t *ge;
   mp_playstatus_t mps = MP_PLAY;
   glw_prop_t *prop_root, *prop_ps;
+  void *eh;
 
   prop_root = glw_prop_create(NULL, "slideshow", GLW_GP_DIRECTORY);
   prop_ps   = glw_prop_create(prop_root, "playstatus", GLW_GP_STRING);
@@ -77,6 +109,10 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, glw_event_queue_t *geq)
   }
 
   free(a);
+
+  eh = event_handler_register("slideshow", slideshow_event_handler,
+			      EVENTPRI_MEDIACONTROLS_SLIDESHOW, ai);
+  ai->ai_req_fullscreen = 1;
 
   while(run) {
 
@@ -125,6 +161,9 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, glw_event_queue_t *geq)
     }
   }
 
+  ai->ai_req_fullscreen = 0;
+
+  event_handler_unregister(eh);
 
   glw_detach(top);
   glw_prop_destroy(prop_root);

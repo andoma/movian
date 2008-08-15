@@ -81,7 +81,7 @@ browser_enter(appi_t *ai, navigator_t *nav, browser_node_t *bn, int selected)
     break;
 
   case FILETYPE_IMAGE:
-    browser_slideshow(bn, nav->nav_stack, &ai->ai_geq);
+    browser_slideshow(bn, nav->nav_stack, ai);
     break;
 
   case FILETYPE_ISO:

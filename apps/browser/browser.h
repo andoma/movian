@@ -20,9 +20,10 @@
 #define BROWSER_H
 
 #include <libglw/glw.h>
-
 #include <fileaccess/fileaccess.h>
 #include <fileaccess/fa_probe.h>
+
+#include "app.h"
 
 TAILQ_HEAD(browser_node_queue, browser_node);
 TAILQ_HEAD(browser_view_queue, browser_view);
@@ -137,7 +138,6 @@ int browser_scandir(browser_node_t *bn, int async);
 browser_node_t **browser_get_array_of_childs(browser_root_t *br,
 					     browser_node_t *bn);
 
-void browser_slideshow(browser_node_t *cur, glw_t *parent, 
-		       glw_event_queue_t *geq);
+void browser_slideshow(browser_node_t *cur, glw_t *parent, appi_t *ai);
 
 #endif /* BROWSER_H */

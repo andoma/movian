@@ -81,6 +81,44 @@ typedef struct play_video_ctrl {
 
 } play_video_ctrl_t;
 
+
+
+
+/**
+ *
+ */
+static int
+video_player_event_handler(glw_event_t *ge, void *opaque)
+{
+  play_video_ctrl_t *pvc = opaque;
+  appi_t *ai = pvc->pvc_ai;
+
+  if(ai->ai_active == 0)
+    return 0;
+
+  switch(ge->ge_type) {
+
+  case EVENT_KEY_SEEK_FAST_BACKWARD:
+  case EVENT_KEY_SEEK_BACKWARD:
+  case EVENT_KEY_SEEK_FAST_FORWARD:
+  case EVENT_KEY_SEEK_FORWARD:
+  case EVENT_KEY_PLAYPAUSE:
+  case EVENT_KEY_PLAY:
+  case EVENT_KEY_PAUSE:
+  case EVENT_KEY_STOP:
+  case EVENT_KEY_PREV:
+  case EVENT_KEY_NEXT:
+  case EVENT_KEY_RESTART_TRACK:
+    break;
+  default:
+    return 0;
+  }
+
+  glw_event_enqueue(&ai->ai_geq, ge);
+  return 1;
+}
+
+
 /**
  * Update text about video/audio stream type
  */
@@ -464,6 +502,7 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
   htsmsg_t *m;
   char faurl[1000];
   glw_prop_t *p;
+  void *eh;
 
   memset(&pvc, 0, sizeof(play_video_ctrl_t));
   pvc.pvc_ai = ai;
@@ -604,12 +643,14 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
 
   wrap_unlock_all_codecs(fw);
 
-
   pvc.pvc_rcache_last = INT64_MIN;
 
+  eh = event_handler_register("videoplayer", video_player_event_handler,
+			      EVENTPRI_MEDIACONTROLS_VIDEOPLAYBACK, &pvc);
 
   video_player_loop(&pvc, geq);
 
+  event_handler_unregister(eh);
 
   glw_destroy(pvc.pvc_status);
 

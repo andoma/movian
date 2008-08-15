@@ -331,6 +331,37 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
 
 
 
+/**
+ *
+ */
+static int
+playlist_event_handler(glw_event_t *ge, void *opaque)
+{
+  playlist_player_t *plp = opaque;
+
+  switch(ge->ge_type) {
+
+  case EVENT_KEY_SEEK_FAST_BACKWARD:
+  case EVENT_KEY_SEEK_BACKWARD:
+  case EVENT_KEY_SEEK_FAST_FORWARD:
+  case EVENT_KEY_SEEK_FORWARD:
+  case EVENT_KEY_PLAYPAUSE:
+  case EVENT_KEY_PLAY:
+  case EVENT_KEY_PAUSE:
+  case EVENT_KEY_STOP:
+  case EVENT_KEY_PREV:
+  case EVENT_KEY_NEXT:
+  case EVENT_KEY_RESTART_TRACK:
+    break;
+  default:
+    return 0;
+  }
+
+  glw_event_enqueue(&plp->plp_geq, ge);
+  return 1;
+}
+
+
 
 
 /**
@@ -345,6 +376,7 @@ playlist_player(void *aux)
   glw_t *status = NULL;
   glw_event_t *ge;
   playlist_event_t *pe;
+  void *eh;
 
   while(1) {
  
@@ -400,14 +432,21 @@ playlist_player(void *aux)
     /**
      * Update track widget
      */
-
     media_update_playstatus_prop(ple->ple_prop_playstatus, MP_PLAY);
     playlist_status_update_next(ple);
+
+    /**
+     * Register event handler
+     */
+    eh = event_handler_register("playlistplayer", playlist_event_handler,
+				EVENTPRI_MEDIACONTROLS_PLAYLIST, plp);
 
     /**
      * Start playback of track
      */
     next = playlist_play(ple, mp, &plp->plp_geq, status);
+
+    event_handler_unregister(eh);
 
     playlist_entry_unref(ple);
     ple = next;

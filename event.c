@@ -43,9 +43,11 @@ event_init(void)
  */
 
 typedef struct event_handler {
-  LIST_ENTRY(event_handler) link;
+  const char *name;
+  void *opaque;
   int pri;
-  int (*callback)(glw_event_t *ge);
+  int (*callback)(glw_event_t *ge, void *opaque);
+  LIST_ENTRY(event_handler) link;
 } event_handler_t;
 
 
@@ -62,19 +64,37 @@ ihcmp(event_handler_t *a, event_handler_t *b)
 /**
  *
  */
-void
-event_handler_register(int pri, int (*callback)(glw_event_t *ge))
+void *
+event_handler_register(const char *name, int (*callback)(glw_event_t *ge,
+							 void *opaque), 
+		       eventpri_t pri, void *opaque)
 {
   event_handler_t *ih;
   ih = malloc(sizeof(event_handler_t));
 
+  ih->name = name;
   ih->pri = pri;
   ih->callback = callback;
+  ih->opaque = opaque;
   hts_mutex_lock(&ehmutex);
   LIST_INSERT_SORTED(&event_handlers, ih, link, ihcmp);
   hts_mutex_unlock(&ehmutex);
+  return ih;
 }
 
+/**
+ *
+ */
+void
+event_handler_unregister(void *IH)
+{
+  event_handler_t *ih = IH;
+
+  hts_mutex_lock(&ehmutex);
+  LIST_REMOVE(ih, link);
+  hts_mutex_unlock(&ehmutex);
+  free(ih);
+}
 
 
 
@@ -89,7 +109,7 @@ event_post(glw_event_t *ge)
   hts_mutex_lock(&ehmutex);
 
   LIST_FOREACH(eh, &event_handlers, link) {
-    if(eh->callback(ge))
+    if(eh->callback(ge, eh->opaque))
       break;
   }
   hts_mutex_unlock(&ehmutex);

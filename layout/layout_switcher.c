@@ -33,12 +33,13 @@ static glw_t *layout_switcher_list;
 static int layout_switcher_hold_time;
 float layout_switcher_alpha;
 
-static int layout_switcher_input_event(glw_event_t *ge);
+static int layout_switcher_input_event(glw_event_t *ge, void *opaque);
 
 void
 layout_switcher_create(void)
 {
-  event_handler_register(201, layout_switcher_input_event);
+  event_handler_register("switcher", layout_switcher_input_event, 
+			 EVENTPRI_SWITCHER, NULL);
 
   layout_switcher = glw_model_create("theme://switcher/switcher.model", NULL,
 				     0, NULL);
@@ -157,7 +158,7 @@ layout_switcher_switch(void)
  * Primary point for input event distribution
  */
 static int
-layout_switcher_input_event(glw_event_t *ge)
+layout_switcher_input_event(glw_event_t *ge, void *opaque)
 {
   if(layout_switcher_list == NULL)
     return 0;
