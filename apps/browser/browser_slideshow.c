@@ -71,7 +71,7 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, appi_t *ai)
   int cnt, run = 1;
   int64_t type;
   glw_event_t *ge;
-  mp_playstatus_t mps = MP_PLAY;
+  mp_playstatus_t mps = MP_PAUSE;
   glw_prop_t *prop_root, *prop_ps;
   void *eh;
 
