@@ -1,6 +1,7 @@
 #define PLAYSTATUS_WIDGET(PROP, ALPHA)
 {
   widget(animator, {
+      .time = 0.25;
       .alpha = ALPHA;
       .source = translate(PROP,
 			  ["play",  "theme://include/playstatus-play.model",
