@@ -1,8 +1,7 @@
 #define PLAYSTATUS_WIDGET(PROP, ALPHA)
 {
-  widget(showroom, {
+  widget(animator, {
       .alpha = ALPHA;
-      .keepAspect = true;
       .source = translate(PROP,
 			  ["play",  "theme://include/playstatus-play.model",
 			   "pause", "theme://include/playstatus-pause.model",

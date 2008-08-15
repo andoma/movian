@@ -156,7 +156,7 @@ browser_view_expand_node(browser_node_t *bn, glw_t *parent)
   glw_lock();
 
   bn->bn_cont_xfader =
-    glw_create(GLW_XFADER,
+    glw_create(GLW_ANIMATOR,
 	       GLW_ATTRIB_PARENT, parent,
 	       GLW_ATTRIB_SIGNAL_HANDLER,
 	       browser_view_xfader_callback, bn, 1000,

@@ -79,7 +79,7 @@ mp_create(const char *name, struct appi *ai)
   mq_init(&mp->mp_video);
 
   if(layout_global_status != NULL)
-    mp->mp_status_xfader = glw_create(GLW_FLIPPER,
+    mp->mp_status_xfader = glw_create(GLW_ANIMATOR,
 				      GLW_ATTRIB_PARENT, layout_global_status,
 				      NULL);
   else

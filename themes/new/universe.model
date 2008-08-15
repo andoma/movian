@@ -4,6 +4,7 @@ widget(container_z, {
     .displacement = [0, 0, 1];
 
     widget(container_y, {
+		.debug = true;
 	widget(mirror, {
 	    .displacement = [0, 0, -1];
 	    .weight = 12.0;
