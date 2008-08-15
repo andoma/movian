@@ -151,9 +151,11 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, appi_t *ai)
       break;
 
     case EVENT_KEY_NEXT:
+    case GEV_RIGHT:
       glw_event_signal_simple(slideshow, GEV_INCR);
       break;
 
+    case GEV_LEFT:
     case EVENT_KEY_PREV:
     case EVENT_KEY_RESTART_TRACK:
       glw_event_signal_simple(slideshow, GEV_DECR);
