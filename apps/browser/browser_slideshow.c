@@ -28,26 +28,32 @@
 #include "browser_view.h"
 //#include "useraction.h"
 #include "event.h"
+#include "media.h"
 
 void
 browser_slideshow(browser_node_t *cur, glw_t *parent, glw_event_queue_t *geq)
 {
-  glw_t *w, *b, *z, *pw = NULL;
+  glw_t *top, *slideshow, *b;
   browser_node_t *dir = cur->bn_parent;
   browser_root_t *br  = cur->bn_root;
   browser_node_t *c, **a;
   int cnt, run = 1;
   int64_t type;
   glw_event_t *ge;
-  int paused = 0;
+  mp_playstatus_t mps = MP_PLAY;
+  glw_prop_t *prop_root, *prop_ps;
 
-  z = glw_create(GLW_CONTAINER_Z,
-		 GLW_ATTRIB_PARENT, parent,
-		 NULL);
+  prop_root = glw_prop_create(NULL, "slideshow", GLW_GP_DIRECTORY);
+  prop_ps   = glw_prop_create(prop_root, "playstatus", GLW_GP_STRING);
 
-  w = glw_create(GLW_SLIDESHOW,
-		 GLW_ATTRIB_PARENT, z,
-		 NULL);
+  top = glw_model_create("theme://browser/slideshow/view.model", parent,
+			 0, prop_global, prop_root, NULL);
+
+  if((slideshow = glw_find_by_id(top, "slideshow", 0)) == NULL) {
+      glw_destroy(top);
+      glw_prop_destroy(prop_root);
+      return;
+  }
 
   a = browser_get_array_of_childs(br, dir);
   for(cnt = 0; (c = a[cnt]) != NULL; cnt++) {
@@ -58,14 +64,9 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, glw_event_queue_t *geq)
        !filetag_get_int(&c->bn_ftags, FTAG_FILETYPE, &type) &&
        type == FILETYPE_IMAGE) {
 
-      b = glw_create(GLW_BITMAP,
-		     GLW_ATTRIB_SOURCE, c->bn_url,
-		     GLW_ATTRIB_FLAGS, GLW_KEEP_ASPECT | GLW_BORDER_BLEND,
-		     GLW_ATTRIB_VERTEX_BORDERS,  0.01, 0.01, 0.01, 0.01,
-		     GLW_ATTRIB_TEXTURE_BORDERS, 0.01, 0.01, 0.01, 0.01,
-		     GLW_ATTRIB_PARENT, w,
-		     NULL);
-
+	b = glw_model_create("theme://browser/slideshow/node.model", slideshow,
+			     GLW_MODEL_CACHE, 
+			     c->bn_prop_root, prop_global, prop_root, NULL);
       if(c == cur)
 	glw_select(b);
     }
@@ -79,16 +80,10 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, glw_event_queue_t *geq)
 
   while(run) {
 
-    if(paused && pw == NULL)
-	pw = glw_model_create("theme://browser/slideshow-paused.model", z,
-			      0, NULL);
-    else if(!paused && pw) {
-      glw_destroy(pw);
-      pw = NULL;
-    }
+    glw_set(slideshow, GLW_ATTRIB_TIME, 
+	    mps == MP_PLAY ? 5.0 : 0.0, NULL);
 
-
-    glw_set(w, GLW_ATTRIB_TIME, paused ? 0.0f : 1.0f, NULL);
+    media_update_playstatus_prop(prop_ps, mps);
 
     ge = glw_event_get(-1, geq);
 
@@ -102,33 +97,35 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, glw_event_queue_t *geq)
       }
 #endif
       break;
-	
+
     case EVENT_KEY_PLAYPAUSE:
-      paused = !paused;
+      mps = mps == MP_PLAY ? MP_PAUSE : MP_PLAY;
       break;
 
     case EVENT_KEY_PLAY:
-      paused = 0;
+      mps = MP_PLAY;
       break;
       
     case EVENT_KEY_PAUSE:
-      paused = 1;
+      mps = MP_PAUSE;
       break;
       
-    case EVENT_KEY_BACK:
+    case GEV_BACKSPACE:
       run = 0;
       break;
 
     case EVENT_KEY_NEXT:
-      //      glw_send_event_simple(w, GEV_INCR);
+      glw_event_signal_simple(slideshow, GEV_INCR);
       break;
 
     case EVENT_KEY_PREV:
     case EVENT_KEY_RESTART_TRACK:
-      //      glw_send_event_simple(w, GEV_DECR);
+      glw_event_signal_simple(slideshow, GEV_DECR);
       break;
     }
   }
 
-  glw_detach(z);
+
+  glw_detach(top);
+  glw_prop_destroy(prop_root);
 }
