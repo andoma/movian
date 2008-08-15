@@ -95,4 +95,6 @@ void app_load_generic_config(appi_t *ai, const char *name);
 
 void app_save_generic_config(appi_t *ai, const char *name);
 
+void appi_speedbutton_mapper(glw_t *w, const char *name, appi_t *ai);
+
 #endif /* APP_H */

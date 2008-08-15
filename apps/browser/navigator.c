@@ -272,6 +272,7 @@ load_nav_icons_in_tab(glw_t *w, const char *name)
   fileaccess_scandir("theme://browser/icons", icons_callback, w);
 }
 
+
 /**
  *  Setup a navigator and ask for user configuration
  */
@@ -286,6 +287,7 @@ nav_setup(navigator_t *nav, appi_t *ai)
 
   m = glw_model_create("theme://browser/setup.model", nav->nav_stack, 0, NULL);
   load_nav_icons_in_tab(m, "icon_container");
+  appi_speedbutton_mapper(m, "speedbutton", ai);
 
   r = glw_wait_form_ok_cancel(m);
 

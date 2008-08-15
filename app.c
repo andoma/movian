@@ -323,3 +323,37 @@ app_settings(appi_t *ai, glw_t *parent,
   glw_detach(m);
 #endif
 }
+
+
+/**
+ *
+ */
+static int
+speedbutton_interceptor(glw_t *w, void *opaque, glw_signal_t signal,
+			void *extra)
+{
+  event_keydesc_t *ekd = extra;
+  appi_t *ai = opaque;
+
+  if(signal != GLW_SIGNAL_EVENT || ekd->h.ge_type != EVENT_KEYDESC)
+    return 0;
+
+  snprintf(ai->ai_speedbutton, sizeof(ai->ai_speedbutton), "%s", ekd->desc);
+  
+  glw_set(w, GLW_ATTRIB_CAPTION, ekd->desc, NULL);
+  return 1;
+}
+/**
+ *
+ */
+void
+appi_speedbutton_mapper(glw_t *w, const char *name, appi_t *ai)
+{
+  if((w = glw_find_by_id(w, name, 0)) == NULL) 
+    return;
+
+  glw_set(w,
+	  GLW_ATTRIB_SIGNAL_HANDLER, speedbutton_interceptor, ai, 200,
+	  NULL);
+
+}

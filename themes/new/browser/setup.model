@@ -110,7 +110,20 @@ widget(form, {
 
 		space(0.5);
 
-		space(3);
+		widget(label, {
+		    .caption = "Speedbutton:";
+		    .weight = 0.5;
+		  });
+	
+		widget(label, {
+		    .selectable = true;
+		    .focusCursor = true;
+		    .focusAlpha = true;
+		    .weight = 1;
+		    .id = "speedbutton";
+		  });
+
+		space(1.5);
 	
 		widget(container_x, {
 		    space(0.5);
