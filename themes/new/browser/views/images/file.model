@@ -1,0 +1,6 @@
+widget(label, {
+    .selectable = true;
+    .focusCursor = true;
+    .focusAlpha = true;
+    .caption = media.title;
+  });

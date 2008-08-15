@@ -1,0 +1,7 @@
+widget(bitmap, {
+    .textureBorders = [0.01, 0.01, 0.01, 0.01];
+    .vertexBorders  = [0.01, 0.01, 0.01, 0.01];
+    .keepAspect = true;
+    .borderBlend = true;
+    .source = media.url;
+  });

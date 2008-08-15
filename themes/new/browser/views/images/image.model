@@ -1,0 +1,7 @@
+widget(bitmap, {
+    .selectable = true;
+    .focusCursor = true;
+    .focusAlpha = true;
+    .keepAspect = true;
+    .source = "thumb://" + media.url;
+  });

@@ -1,0 +1,25 @@
+widget(form, {
+
+    widget(container_z, {
+	widget(container_y, {
+	    .displacement = [0, 0, -0.4];
+	    widget(animator, {
+		.id = "preview_container";
+		.effect = slideHorizontal;
+	      });
+	    space(0.12);
+	  });
+
+	widget(container_y, {
+	    .displacement = [0, 0, 0.6];
+	    space(4);
+
+	    widget(list, {
+		.id = "node_container";
+		.orientation = horizontal;
+		.slices = 6;
+		.scaleChilds = true;
+	      });
+	  });
+      });
+  });
