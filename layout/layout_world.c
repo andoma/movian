@@ -35,28 +35,12 @@ float fullscreen_fader;
 
 extern float layout_switcher_alpha;
 
+glw_prop_t *prop_fullscreen;
 
 
 static int layout_world_input_event(glw_event_t *ge, void *opaque);
 
 glw_t *layout_global_status;
-
-/**
- *
- */
-static int
-layout_world_status_fader(glw_t *w, void *opaque, glw_signal_t signal,
-			  void *extra)
-{
-  switch(signal) {
-  default:
-    break;
-  case GLW_SIGNAL_LAYOUT:
-    w->glw_weight = 1 - fullscreen_fader;
-    break;
-  }
-  return 0;
-}
 
 
 /**
@@ -65,7 +49,7 @@ layout_world_status_fader(glw_t *w, void *opaque, glw_signal_t signal,
 void
 layout_world_create(void)
 {
-  glw_t *w;
+  prop_fullscreen = glw_prop_create(prop_global, "fullscreen", GLW_GP_FLOAT);
 
   layout_world = glw_model_create("theme://universe.model", NULL, 0,
 				  prop_global, NULL);
@@ -73,12 +57,6 @@ layout_world_create(void)
   layout_global_status = glw_find_by_id(layout_world,
 					"global_status_container", 0);
 
-  if((w = glw_find_by_id(layout_world, "global_status_place", 0)) != NULL) {
-    glw_set(w,
-	    GLW_ATTRIB_SIGNAL_HANDLER, layout_world_status_fader, NULL, 30,
-	    NULL);
-  }
-  
   event_handler_register("world", layout_world_input_event, EVENTPRI_WORLD,
 			 NULL);
 }
@@ -93,6 +71,7 @@ layout_world_render(float aspect)
   glw_rctx_t rc;
   
   fullscreen_fader = GLW_LP(16, fullscreen_fader, fullscreen);
+  glw_prop_set_float(prop_fullscreen, fullscreen_fader);
 
   memset(&rc, 0, sizeof(rc));
   rc.rc_aspect = aspect;

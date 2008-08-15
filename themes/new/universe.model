@@ -15,7 +15,7 @@ widget(container_z, {
 	  });
 
 	widget(bitmap, {
-	    .id = "global_status_place";
+	    .weight = 1 - global.fullscreen;
 	    .color = [0.01, 0.03, 0.2];
 	    .borderScale = true;
 	    .source = "theme://images/plate-compact.png";
