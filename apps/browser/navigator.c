@@ -50,7 +50,6 @@ typedef struct navconfig {
 typedef struct navigator {
   appi_t *nav_ai;
   glw_t *nav_miniature;
-  glw_t *nav_splashcontainer;
   glw_t *nav_stack;
 } navigator_t;
 
@@ -166,7 +165,7 @@ nav_main(navigator_t *nav, appi_t *ai, navconfig_t *cfg)
   /**
    * Create browser root
    */ 
-  br = browser_root_create(rooturl, nav->nav_splashcontainer);
+  br = browser_root_create(rooturl);
   bn = br->br_root;
 
   browser_view_expand_node(bn, nav->nav_stack);
@@ -353,14 +352,6 @@ nav_launch(void *aux)
   glw_set(ai->ai_widget,
 	  GLW_ATTRIB_SIGNAL_HANDLER, glw_event_enqueuer, &ai->ai_geq, 1000,
 	  NULL);
-
-#if 0
-  nav->nav_splashcontainer = 
-    glw_create(GLW_XFADER,
-	       GLW_ATTRIB_SPEED, 0.2,
-	       GLW_ATTRIB_PARENT, ai->ai_widget,
-	       NULL);
-#endif
 
   /**
    *  Switcher miniature

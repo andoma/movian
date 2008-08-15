@@ -106,8 +106,6 @@ typedef struct browser_root {
 
   browser_node_t *br_root;
 
-  glw_t *br_splashcontainer;
-
   /* Probing */
 
   hts_mutex_t br_probe_mutex;
@@ -127,7 +125,7 @@ void browser_node_deref(browser_node_t *bn);
 browser_node_t *browser_node_add_child(browser_node_t *parent,
 				       const char *url, int type);
 
-browser_root_t *browser_root_create(const char *url, glw_t *splashcontainer);
+browser_root_t *browser_root_create(const char *url);
 
 void browser_root_destroy(browser_root_t *br);
 

@@ -340,22 +340,6 @@ browser_view_index(void)
 
 
 /**
- *
- */
-static void
-browser_view_splash(browser_view_t *bv, glw_t *parent)
-{
-  char buf[200];
-
-  snprintf(buf, sizeof(buf), 
-	   "theme://browser/views/%s/splash.model", bv->bv_name);
-
-  glw_model_create(buf, parent, 0, NULL);
-}
-
-
-
-/**
  * Inner parts of view switching
  */
 static void
@@ -366,8 +350,6 @@ browser_view_switch0(browser_node_t *bn, browser_view_t *bv)
   glw_t *m, *w;
   int hide, cnt;
   int64_t type;
-
-  browser_view_splash(bv, br->br_splashcontainer);
 
   glw_lock();
 
@@ -404,12 +386,6 @@ browser_view_switch0(browser_node_t *bn, browser_view_t *bv)
   free(a);
   if(sel != NULL)
     browser_node_deref(sel);
-
-  /* Destroy splash */
-
-  glw_create(GLW_DUMMY,
-	     GLW_ATTRIB_PARENT, br->br_splashcontainer,
-	     NULL);
 }
 
 
