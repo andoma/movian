@@ -2,6 +2,7 @@
 
 
 widget(animator, {
+    .speed = 0.3;
     .source = translate(media.type,
 			[
 			 "directory", NODEMODEL("directory.model"),
