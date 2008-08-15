@@ -163,6 +163,7 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, appi_t *ai)
       glw_event_signal_simple(slideshow, GEV_DECR);
       break;
     }
+    glw_event_unref(ge);
   }
 
   ai->ai_req_fullscreen = 0;
