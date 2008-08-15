@@ -49,7 +49,7 @@ static struct strtab keycodenames[] = {
   { "VolumeDown",            EVENT_KEY_VOLUME_DOWN },
   { "VolumeMuteToggle",      EVENT_KEY_VOLUME_MUTE_TOGGLE },
   { "Menu",                  EVENT_KEY_MENU },
-  { "Back",                  EVENT_KEY_BACK },
+  { "Back",                  GEV_BACKSPACE },
   { "Select",                EVENT_KEY_SELECT },
   { "Eject",                 EVENT_KEY_EJECT },
   { "Power",                 EVENT_KEY_POWER },

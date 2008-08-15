@@ -92,7 +92,7 @@ static const struct {
   {"Enter",              0x28A195B7, GEV_ENTER },
   {"MouseLeftClick",     0x688301B7, 0 },
   {"WindowsKey",         0x2B8195B7, 0 },
-  {"Backspace",          0x28A115B7, EVENT_KEY_BACK },
+  {"Backspace",          0x28A115B7, GEV_BACKSPACE },
 };
 
 static int repeat_rate;

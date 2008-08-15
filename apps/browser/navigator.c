@@ -212,7 +212,6 @@ nav_main(navigator_t *nav, appi_t *ai, navconfig_t *cfg)
 
 
     case GEV_BACKSPACE:
-    case EVENT_KEY_BACK:
       bn = browser_view_get_current_node(nav->nav_stack);
       if(bn == NULL)
 	break;

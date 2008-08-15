@@ -41,8 +41,8 @@ static const struct {
   { "Left",         GEV_LEFT  },
   { "Right",        GEV_RIGHT },
   { "Enter",        GEV_ENTER },
-  { "Back",         EVENT_KEY_BACK  },
-  { "Backspace",    EVENT_KEY_BACK  },
+  { "Back",         GEV_BACKSPACE  },
+  { "Backspace",    GEV_BACKSPACE  },
 };
 
 static void *
