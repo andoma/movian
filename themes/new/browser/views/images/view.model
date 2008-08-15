@@ -5,7 +5,6 @@ widget(form, {
 	    .displacement = [0, 0, -0.4];
 	    widget(animator, {
 		.id = "preview_container";
-		.effect = slideHorizontal;
 	      });
 	    space(0.12);
 	  });
