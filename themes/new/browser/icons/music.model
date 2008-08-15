@@ -1,2 +1,2 @@
-#include "theme://include/miniatures.model"
-MINIATURE("", "theme://images/folder_sound.png");
+#include "theme://include/icon.model"
+ICON("theme://images/folder_sound.png");

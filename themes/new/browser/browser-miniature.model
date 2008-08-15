@@ -1,2 +1,2 @@
 #include "theme://include/miniatures.model"
-MINIATURE(app.title, "theme://images/library.png");
+MINIATURE2(app.title, nav.icon);

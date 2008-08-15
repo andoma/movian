@@ -17,3 +17,22 @@
 	});
     });
 }
+
+#define MINIATURE2(TITLE, ICONMODEL)
+{
+  widget(container_y, {
+      .focusCursor = true;
+      .focusAlpha  = true;
+
+      widget(animator, {
+	  .source = ICONMODEL;
+	});
+  
+      widget(label, {
+	  .weight = 0.25;
+	  .caption = TITLE;
+	  .align = center;
+	  .id = "title";
+	});
+    });
+}

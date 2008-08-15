@@ -66,9 +66,46 @@ widget(form, {
 		    .weight = 0.5;
 		  });
 	
-		widget(selection, {
+		widget(container_x, {
 		    .weight = 1;
-		    .id = "icon_container";
+
+		    widget(bitmap, {
+			.selectable = true;
+			.focusCursor = true;
+			.focusAlpha = true;
+			.color = [0.6, 0.6, 0.6];
+			.focusColor = [0.4, 0.4, 0.0];
+			
+			.weight = 0.2;
+			.source = "theme://images/up.png";
+			.keepAspect = true;
+			
+			event(enter,"icon_container",decr);
+			
+		      });
+
+		    widget(bitmap, {
+			.selectable = true;
+			.focusCursor = true;
+			.focusAlpha = true;
+			.color = [0.6, 0.6, 0.6];
+			.focusColor = [0.4, 0.4, 0.0];
+			
+			.weight = 0.2;
+			.source = "theme://images/down.png";
+			.keepAspect = true;
+			
+			event(enter,"icon_container",incr);
+
+		      });
+
+		    
+		    widget(selection, {
+			.weight = 0.2;
+			.id = "icon_container";
+		      });
+
+		    space(5.0);
 		  });
 
 		space(0.5);

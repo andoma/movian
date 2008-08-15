@@ -51,6 +51,8 @@ typedef struct navigator {
   appi_t *nav_ai;
   glw_t *nav_miniature;
   glw_t *nav_stack;
+  glw_prop_t *nav_prop_root;
+  glw_prop_t *nav_prop_icon;
 } navigator_t;
 
 
@@ -161,6 +163,7 @@ nav_main(navigator_t *nav, appi_t *ai, navconfig_t *cfg)
   int run = 1, r;
 
   glw_prop_set_string(ai->ai_prop_title, cfg->nc_title);
+  glw_prop_set_string(nav->nav_prop_icon, cfg->nc_icon);
 
   /**
    * Create browser root
@@ -288,6 +291,7 @@ nav_setup(navigator_t *nav, appi_t *ai)
 
   glw_get_caption(m, "title", nc.nc_title, sizeof(nc.nc_title));
   glw_get_caption(m, "rootpath", nc.nc_rootpath, sizeof(nc.nc_rootpath));
+  glw_get_model(m, "icon_container", nc.nc_icon, sizeof(nc.nc_icon));
 
   glw_detach(m);
 
@@ -315,7 +319,7 @@ nav_autolaunch(navigator_t *nav, appi_t *ai)
   if((s = htsmsg_get_str(ai->ai_settings, "icon")) == NULL)
     return -1;
   av_strlcpy(cfg.nc_icon, s, sizeof(cfg.nc_icon));
-  
+
   return nav_main(nav, ai, &cfg);
 }
 
@@ -340,8 +344,18 @@ nav_launch(void *aux)
   memset(nav, 0, sizeof(navigator_t));
   nav->nav_ai = ai;
 
+  nav->nav_prop_root = glw_prop_create(NULL, "nav", GLW_GP_DIRECTORY);
+  nav->nav_prop_icon = glw_prop_create(nav->nav_prop_root, 
+				       "icon", GLW_GP_STRING);
+
+  glw_prop_set_string(nav->nav_prop_icon,
+		      "theme://browser/icons/1default.model");
+
+
   ai->ai_widget = glw_model_create("theme://browser/browser-app.model", NULL,
-				   0,  ai->ai_prop_root, prop_global, NULL);
+				   0,  
+				   nav->nav_prop_root, ai->ai_prop_root,
+				   prop_global, NULL);
 
   if((nav->nav_stack = glw_find_by_id(ai->ai_widget, "stack", 0)) == NULL) {
     fprintf(stderr, "No navigation 'stack' found\n");
@@ -356,9 +370,11 @@ nav_launch(void *aux)
   /**
    *  Switcher miniature
    */
+
   nav->nav_miniature =
     glw_model_create("theme://browser/browser-miniature.model", NULL,
-		     0, ai->ai_prop_root, prop_global, NULL);
+		     0, 
+		     nav->nav_prop_root, ai->ai_prop_root, prop_global, NULL);
 
   layout_switcher_appi_add(ai, nav->nav_miniature);
   
@@ -376,6 +392,7 @@ nav_launch(void *aux)
   glw_destroy(ai->ai_widget);
 
   appi_destroy(ai);
+  glw_prop_destroy(nav->nav_prop_root);
   return NULL;
 }
 
