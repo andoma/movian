@@ -74,6 +74,7 @@ typedef struct browser_node {
 
   /* These fields must be access protected with glw_lock() */
   glw_t                    *bn_cont_xfader;
+  glw_t                    *bn_cont_preview;
   browser_view_t           *bn_view;
   /* end of glw_lock() */
 

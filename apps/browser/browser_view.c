@@ -50,7 +50,6 @@ browser_view_xfader_callback(glw_t *w, void *opaque, glw_signal_t sig,
   return 0;
 }
 
-#if 0
 /**
  *
  */
@@ -60,6 +59,7 @@ browser_view_cont_callback(glw_t *w, void *opaque, glw_signal_t sig,
 {
   glw_t *c;
   browser_node_t *parent = opaque, *bn;
+  char buf[256];
 
 
   if(sig == GLW_SIGNAL_SELECTED_CHANGED) {
@@ -68,13 +68,17 @@ browser_view_cont_callback(glw_t *w, void *opaque, glw_signal_t sig,
     /* Get the new node that was selected */
 
     bn = glw_get_opaque(c, browser_view_node_callback);
-    if(bn != NULL && parent->bn_cont_xfader != NULL) {
-      browser_view_update_wset_from_node(parent->bn_cont_xfader, bn);
+    if(bn != NULL) {
+      snprintf(buf, sizeof(buf), "theme://browser/views/%s/preview.model",
+	       parent->bn_view->bv_name);
+
+      glw_model_create(buf, parent->bn_cont_preview, GLW_MODEL_CACHE,
+		       bn->bn_prop_root, prop_global, NULL);
     }
   }
   return 0;
 }
-#endif
+
 
 
 /**
@@ -120,14 +124,16 @@ browser_view_set(browser_node_t *bn, browser_view_t *bv)
 	   bv->bv_name);
 
   m = glw_model_create(buf, bn->bn_cont_xfader, 0, NULL);
+
+  bn->bn_cont_preview = glw_find_by_id(m, "preview_container", 0);
  
   if((w = glw_find_by_id(m, "node_container", 0)) != NULL) {
     glw_select(w);
-#if 0
-    glw_set(w,
-	    GLW_ATTRIB_SIGNAL_HANDLER, browser_view_cont_callback, bn, 1000,
-	    NULL);
-#endif
+
+    if(bn->bn_cont_preview != NULL)
+      glw_set(w,
+	      GLW_ATTRIB_SIGNAL_HANDLER, browser_view_cont_callback, bn, 1000,
+	      NULL);
   }
 
   return m;
