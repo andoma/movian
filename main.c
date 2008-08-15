@@ -198,9 +198,9 @@ void
 showtime_exit(int suspend)
 {
   if(suspend == -1)
-    _exit(0);
+    exit(0);
 
-  _exit(suspend ? 10 : 11);
+  exit(suspend ? 10 : 11);
 }
 
 
