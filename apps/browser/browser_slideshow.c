@@ -88,7 +88,7 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, glw_event_queue_t *geq)
     }
 
 
-    glw_set(w, GLW_ATTRIB_SPEED, paused ? 0.0f : 1.0f, NULL);
+    glw_set(w, GLW_ATTRIB_TIME, paused ? 0.0f : 1.0f, NULL);
 
     ge = glw_event_get(-1, geq);
 
