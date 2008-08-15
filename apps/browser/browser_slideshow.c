@@ -46,6 +46,7 @@ slideshow_event_handler(glw_event_t *ge, void *opaque)
 
   case EVENT_KEY_PLAYPAUSE:
   case EVENT_KEY_PLAY:
+  case EVENT_KEY_STOP:
   case EVENT_KEY_PAUSE:
   case EVENT_KEY_PREV:
   case EVENT_KEY_NEXT:
@@ -147,6 +148,7 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, appi_t *ai)
       break;
       
     case GEV_BACKSPACE:
+    case EVENT_KEY_STOP:
       run = 0;
       break;
 
