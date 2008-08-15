@@ -1,0 +1,66 @@
+
+#define INTVAL(ID, FORMAT, MIN, MAX, STEP) {
+widget(container_x, {
+
+    widget(bitmap, {
+	.selectable = true;
+	.focusCursor = true;
+	.focusAlpha = true;
+	.color = [0.6, 0.6, 0.6];
+	.focusColor = [0.4, 0.4, 0.0];
+
+	.weight = 0.15;
+	.source = "theme://images/left.png";
+	.keepAspect = true;
+
+	event(enter, ID decr);
+
+      });
+
+    widget(integer, {
+	.id = ID;
+	.align = center;
+	.caption = FORMAT;
+	.min = MIN;
+	.max = MAX;
+	.step = STEP;
+      });
+
+    widget(bitmap, {
+	.selectable = true;
+	.focusCursor = true;
+	.focusAlpha = true;
+	.color = [0.6, 0.6, 0.6];
+	.focusColor = [0.4, 0.4, 0.0];
+
+	.weight = 0.15;
+	.source = "theme://images/right.png";
+	.keepAspect = true;
+
+	event(enter, ID, incr);
+
+      });
+  });
+
+}
+widget(container_z, {
+
+    widget(container_x, {
+
+	widget(container_y, {
+
+	    /**
+	     * UI scaling
+	     */
+	    widget(label, {
+		.weight = 0.75;
+		.caption = "User interface global zoom:";
+	      });
+	    INTVAL("uiscale", "%d %%", 10, 200, 10);
+	    space(0.5);
+	    
+	    space(20.0);
+	  });
+	space(4.0f);
+      });
+});

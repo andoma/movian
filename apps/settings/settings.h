@@ -21,4 +21,6 @@
 
 void settings_init(void);
 
+void settings_userinterface_init(appi_t *ai, glw_t *m);
+
 #endif /* SETTINGS_H */

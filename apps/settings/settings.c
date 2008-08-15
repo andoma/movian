@@ -56,6 +56,7 @@ settings_init(void)
   layout_switcher_appi_add(ai, mini);
 
   display_settings_init(ai, ai->ai_widget);
+  settings_userinterface_init(ai, ai->ai_widget);
   audio_settings_init(ai, ai->ai_widget);
   keymapper_init(ai, ai->ai_widget);
 

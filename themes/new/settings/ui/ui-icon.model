@@ -1,0 +1,2 @@
+#include "theme://include/miniatures.model"
+MINIATURE("Interface", "theme://images/windows.png");

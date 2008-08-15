@@ -53,7 +53,7 @@ SRCS  += launcher.c
 # Settings application
 
 VPATH += apps/settings
-SRCS  += settings.c
+SRCS  += settings.c settings_ui.c
 
 # Clock application
 

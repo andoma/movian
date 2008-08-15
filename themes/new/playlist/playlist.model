@@ -15,7 +15,7 @@ widget(container_y, {
       });
 
     widget(bitmap, {
-	.weight = 7;
+	.weight = 7 / global.uiscale;
 	.source = "theme://images/plate-titled-bottom.png";
 	.textureBorders = [0.1, 0.1, 0.1, 0.1];
 	.vertexBorders  = [0.1, 0.1, 0.1, 0.1];

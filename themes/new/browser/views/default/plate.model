@@ -16,7 +16,7 @@ widget(bitmap, {
 	widget(bitmap, {
 	    .keepAspect = true;
 	    .source = ICON;
-	    .weight = 0.05;
+	    .weight = 0.075 * global.uiscale;
 	  });
     
 

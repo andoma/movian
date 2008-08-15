@@ -4,7 +4,7 @@ widget(container_y, {
 	widget(list, {
 	    .id = "node_container";
 	    .orientation = vertical;
-	    .slices = 30;
+	    .slices = 30 / global.uiscale;
 	    .expand = 3.0;
 	  });
       });

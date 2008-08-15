@@ -59,6 +59,7 @@ int has_analogue_pad;
 int concurrency;
 extern char *htsversion;
 glw_prop_t *prop_global;
+glw_prop_t *prop_ui_scale;
 
 static int main_event_handler(glw_event_t *ge, void *opaque);
 
@@ -106,6 +107,8 @@ global_prop_init(void)
   glw_prop_t *cpu;
 
   prop_global = glw_prop_create(NULL, "global", GLW_GP_DIRECTORY);
+
+  prop_ui_scale = glw_prop_create(prop_global, "uiscale", GLW_GP_FLOAT);
 
   p = glw_prop_create(prop_global, "version", GLW_GP_STRING);
   glw_prop_set_string(p, htsversion);

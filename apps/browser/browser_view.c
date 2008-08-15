@@ -123,7 +123,8 @@ browser_view_set(browser_node_t *bn, browser_view_t *bv)
   snprintf(buf, sizeof(buf), "theme://browser/views/%s/view.model",
 	   bv->bv_name);
 
-  m = glw_model_create(buf, bn->bn_cont_xfader, 0, NULL);
+  m = glw_model_create(buf, bn->bn_cont_xfader, 0,
+		       bn->bn_prop_root, prop_global, NULL);
 
   bn->bn_cont_preview = glw_find_by_id(m, "preview_container", 0);
  
