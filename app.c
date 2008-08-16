@@ -58,7 +58,7 @@ appi_speedbutton_switcher(glw_event_t *ge, void *opaque)
 
   LIST_FOREACH(ai, &appis, ai_link) {
     if(!strcmp(ek->desc, ai->ai_speedbutton)) {
-      layout_world_appi_show(ai);
+      layout_appi_show(ai);
       r = 1;
       break;
     }

@@ -381,7 +381,7 @@ nav_launch(void *aux)
   mainmenu_appi_add(ai, nav->nav_miniature, 1);
   
   if(ai->ai_settings == NULL) {
-    layout_world_appi_show(ai);
+    layout_appi_show(ai);
 
     /* From launcher, ask user for settings */
     nav_setup(nav, ai);

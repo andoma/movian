@@ -50,7 +50,7 @@ mainmenu_init(void)
 
   ai->ai_widget = mainmenumodel;
 
-  layout_world_appi_show(ai);
+  layout_appi_show(ai);
 }
 
 
@@ -70,7 +70,7 @@ mainmenu_appi_callback(glw_t *w, void *opaque, glw_signal_t signal,
     return 0;
 
   if(ge->ge_type == GEV_ENTER) {
-    layout_world_appi_show(opaque);
+    layout_appi_show(opaque);
     return 1;
   }
 
@@ -106,7 +106,7 @@ static int
 mainmenu_input_event(glw_event_t *ge, void *opaque)
 {
   if(ge->ge_type == EVENT_KEY_MAINMENU) {
-    layout_world_appi_show(opaque);
+    layout_appi_show(opaque);
     return 1;
   }
   return 0;

@@ -38,7 +38,7 @@ SRCS  += alsa_audio.c
 # layout engine(s)
 
 VPATH += layout
-SRCS  += layout.c layout_world.c
+SRCS  += layout.c
 
 # Human Interface Devices
 

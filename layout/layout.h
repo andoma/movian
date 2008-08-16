@@ -22,34 +22,14 @@
 #include <libglw/glw.h>
 #include "app.h"
 
-extern glw_t *layout_root;
-extern float layout_switcher_alpha;
-
 /**
  * Functions in layout.c
  */ 
-void layout_hide(appi_t *ai);
-
-void layout_draw(float aspect);
-
 void layout_create(void);
 
-void layout_appi_add(appi_t *ai);
+void layout_appi_show(appi_t *ai);
 
-void layout_appi_del(appi_t *ai);
-
-void layout_app_add(app_t *a);
-
-void layout_app_del(app_t *a);
-
-/**
- * Functions in layout_world.c
- */ 
-void layout_world_create(void);
-
-void layout_world_render(float aspect);
-
-void layout_world_appi_show(appi_t *ai);
+void layout_draw(float aspect);
 
 /**
  *
