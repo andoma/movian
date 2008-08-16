@@ -39,14 +39,14 @@ launcher_init(void)
 {
   glw_t *list;
   appi_t *ai;
-  glw_t *mini;
 
   launcher_appi = ai = appi_create("Launcher");
 
   ai->ai_widget = glw_model_create("theme://launcher/launcher.model",
 				   NULL, 0, NULL);
-  mini =          glw_model_create("theme://launcher/launcher_miniature.model",
-				   NULL, 0, NULL);
+  ai->ai_miniature = 
+    glw_model_create("theme://launcher/launcher_miniature.model",
+		     NULL, 0, NULL);
 
   list = glw_find_by_id(ai->ai_widget, "application_container", 0);
   if(list == NULL) {
@@ -55,7 +55,7 @@ launcher_init(void)
   }
 
   launcher_list = list;
-  mainmenu_appi_add(ai, mini, 0);
+  mainmenu_appi_add(ai, 0);
 }
 
 /**

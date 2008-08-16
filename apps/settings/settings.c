@@ -43,7 +43,6 @@ void
 settings_init(void)
 {
   appi_t *ai;
-  glw_t *mini;
   glw_t *l;
 
   ai = appi_create("Settings");
@@ -51,10 +50,11 @@ settings_init(void)
   ai->ai_widget = glw_model_create("theme://settings/settings-app.model", NULL,
 				   0, NULL);
 
-  mini = glw_model_create("theme://settings/settings-miniature.model", NULL,
-			  0, NULL);
+  ai->ai_miniature
+    = glw_model_create("theme://settings/settings-miniature.model", NULL,
+		       0, NULL);
 
-  mainmenu_appi_add(ai, mini, 0);
+  mainmenu_appi_add(ai, 0);
 
   display_settings_init(ai, ai->ai_widget);
   settings_userinterface_init(ai, ai->ai_widget);

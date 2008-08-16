@@ -647,7 +647,6 @@ static void *
 playlist_thread(void *aux)
 {
   appi_t *ai;
-  glw_t *mini;
   playlist_t *pl;
   hts_thread_t playerthread;
   glw_t *form;
@@ -667,8 +666,9 @@ playlist_thread(void *aux)
 
   form = glw_find_by_class(playlist_root, GLW_FORM);
 
-  mini = glw_model_create("theme://playlist/playlist-miniature.model", NULL,
-			  0, prop_global, NULL);
+  ai->ai_miniature =
+    glw_model_create("theme://playlist/playlist-miniature.model", NULL,
+		     0, prop_global, NULL);
 
   playlists_list = glw_find_by_id(playlist_root, "playlist_container", 0);
 
@@ -691,7 +691,7 @@ playlist_thread(void *aux)
 
   playlist_scan();
 
-  mainmenu_appi_add(ai, mini, 1);
+  mainmenu_appi_add(ai, 1);
 
   if(form != NULL) {
     glw_set(form,

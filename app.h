@@ -45,6 +45,7 @@ typedef struct app {
  */
 typedef struct appi {
   glw_t *ai_widget;
+  glw_t *ai_miniature;
 
   LIST_ENTRY(appi) ai_link;
 
@@ -100,6 +101,6 @@ void appi_speedbutton_mapper(glw_t *w, const char *name, appi_t *ai);
 /**
  *
  */
-void mainmenu_appi_add(appi_t *ai, glw_t *miniature, int primary);
+void mainmenu_appi_add(appi_t *ai, int primary);
 
 #endif /* APP_H */

@@ -49,7 +49,6 @@ typedef struct navconfig {
 
 typedef struct navigator {
   appi_t *nav_ai;
-  glw_t *nav_miniature;
   glw_t *nav_stack;
   glw_prop_t *nav_prop_root;
   glw_prop_t *nav_prop_icon;
@@ -373,12 +372,12 @@ nav_launch(void *aux)
    *  Switcher miniature
    */
 
-  nav->nav_miniature =
+  ai->ai_miniature =
     glw_model_create("theme://browser/browser-miniature.model", NULL,
 		     0, 
 		     nav->nav_prop_root, ai->ai_prop_root, prop_global, NULL);
 
-  mainmenu_appi_add(ai, nav->nav_miniature, 1);
+  mainmenu_appi_add(ai, 1);
   
   if(ai->ai_settings == NULL) {
     layout_appi_show(ai);
@@ -390,7 +389,7 @@ nav_launch(void *aux)
     nav_autolaunch(nav, ai);
   }
 
-  glw_destroy(nav->nav_miniature);
+  glw_destroy(ai->ai_miniature);
   glw_destroy(ai->ai_widget);
 
   appi_destroy(ai);

@@ -81,7 +81,7 @@ mainmenu_appi_callback(glw_t *w, void *opaque, glw_signal_t signal,
  *
  */
 void
-mainmenu_appi_add(appi_t *ai, glw_t *miniature, int primary)
+mainmenu_appi_add(appi_t *ai, int primary)
 {
   glw_t *w = NULL;
 
@@ -94,7 +94,7 @@ mainmenu_appi_add(appi_t *ai, glw_t *miniature, int primary)
   if(w == NULL)
     return;
   
-  glw_set(miniature,
+  glw_set(ai->ai_miniature,
 	  GLW_ATTRIB_PARENT, w,
 	  GLW_ATTRIB_SIGNAL_HANDLER, mainmenu_appi_callback, ai, 100,
 	  NULL);
