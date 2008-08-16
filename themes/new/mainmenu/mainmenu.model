@@ -5,7 +5,6 @@ widget(form, {
     widget(container_y, {
 	.displacement = [0, 0, 0.6];
 
-	space(1.0);
 
 	PLATE(
 	      .weight = 0.75;
@@ -40,21 +39,49 @@ widget(form, {
 	space(1.0);
 
 	widget(container_x, {
-
 	    .weight = 2.0;
 
+
+	    widget(container_z, {
+		.weight = 0.5;
+		widget(bitmap, {
+		    .source = "theme://images/clock.png";
+		    .keepAspect = true;
+		  });
+
+		widget(bitmap, {
+		    .angle = (global.clock.hour % 12) * 30 + 
+		      global.clock.minute / 2;
+		    .source = "theme://images/clock-hour-hand.png";
+		    .keepAspect = true;
+		  });
+
+		widget(bitmap, {
+		    .angle = global.clock.minute * 6;
+		    .source = "theme://images/clock-minute-hand.png";
+		    .keepAspect = true;
+		  });
+	      });
+
 	    widget(container_y, {
-		
-		.weight = 2.0;
+		.weight = 1.5;
 
-		space(4.0);
+		space(3.0);
 
+		widget(label, {
+		    .caption = global.clock.weekday;
+		  });
 
+		widget(label, {
+		    .caption = global.clock.date;
+		  });
 
 	      });
+
 	    space(0.1);
 
 	    widget(container_y, {
+
 		PLATE(
 		      .weight = 0.25;
 		      widget(label, {
