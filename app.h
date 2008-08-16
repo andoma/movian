@@ -103,4 +103,6 @@ void appi_speedbutton_mapper(glw_t *w, const char *name, appi_t *ai);
  */
 void mainmenu_appi_add(appi_t *ai, int primary);
 
+void mainmenu_show(appi_t *from);
+
 #endif /* APP_H */

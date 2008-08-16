@@ -131,7 +131,7 @@ nav_access_error(navigator_t *nav, appi_t *ai, const char *dir,
   return r;
 }
 
-
+#if 0
 /**
  *  Return 0 if user wants to exit, otherwise -1
  */
@@ -148,6 +148,7 @@ nav_verify_exit(glw_t *parent, appi_t *ai)
 
   return r;
 }
+#endif
 
 /**
  *
@@ -220,10 +221,8 @@ nav_main(navigator_t *nav, appi_t *ai, navconfig_t *cfg)
       if(bn->bn_parent != NULL) {
 	browser_view_collapse_node(bn);
       } else {
-	/* At top level, check before exit */
-	r = nav_verify_exit(nav->nav_stack, ai);
-	if(r == 0)
-	  run = 0;
+	/* At top level, return to main menu */
+	mainmenu_show(ai);
       }
       browser_node_deref(bn);
       break;

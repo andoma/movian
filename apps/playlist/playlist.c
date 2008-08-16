@@ -706,6 +706,10 @@ playlist_thread(void *aux)
     default:
       break;
 
+    case GEV_BACKSPACE:
+      mainmenu_show(ai);
+      break;
+
     case GEV_APPMETHOD:
       gea = (void *)ge;
       if(!strcmp(gea->method, "delete")) {

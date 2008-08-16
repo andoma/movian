@@ -34,13 +34,14 @@
 #include <layout/layout.h>
 
 glw_t *mainmenumodel;
+appi_t *mainmenu_appi;
 
 static int mainmenu_input_event(glw_event_t *ge, void *opaque);
 
 void
 mainmenu_init(void)
 {
-  appi_t *ai = appi_create("Mainmenu");
+  appi_t *ai = mainmenu_appi = appi_create("Mainmenu");
 
   event_handler_register("mainmenuswitcher", mainmenu_input_event, 
 			 EVENTPRI_MAINMENU, ai);
@@ -99,6 +100,8 @@ mainmenu_appi_add(appi_t *ai, int primary)
 	  GLW_ATTRIB_SIGNAL_HANDLER, mainmenu_appi_callback, ai, 100,
 	  NULL);
 }
+
+
 /**
  *
  */
@@ -110,4 +113,16 @@ mainmenu_input_event(glw_event_t *ge, void *opaque)
     return 1;
   }
   return 0;
+}
+
+
+
+/**
+ *
+ */
+void
+mainmenu_show(appi_t *from)
+{
+  glw_select(from->ai_miniature);
+  layout_appi_show(mainmenu_appi);
 }
