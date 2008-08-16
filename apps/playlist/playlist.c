@@ -691,7 +691,7 @@ playlist_thread(void *aux)
 
   playlist_scan();
 
-  layout_switcher_appi_add(ai, mini);
+  mainmenu_appi_add(ai, mini, 1);
 
   if(form != NULL) {
     glw_set(form,

@@ -1,0 +1,82 @@
+#include "theme://include/plates.model"
+
+
+#define PLATE_BIG(BODY)
+{
+  widget(bitmap, {
+      .color = COLOR_PRIMARY();
+      .source = "theme://images/plate-compact.png";
+      .textureBorders = [0.5,  0.5,  0.5,  0.5];
+      .vertexBorders  = [0.03, 0.03, 0.03, 0.03];
+      .borderScale = true;
+      BODY;
+    });
+}
+
+
+
+widget(form, {
+    widget(container_y, {
+	.displacement = [0, 0, 0.6];
+
+	space(1.0);
+
+	PLATE(
+	      .weight = 0.75;
+	      widget(container_x, {
+		  space(1.0);
+
+		  widget(label, {
+		      .caption = "Showtime";
+		      .align = center;
+		    });
+
+		  widget(container_y, {
+		      space(1.0);
+
+		      widget(label, {
+			  .caption = "Version " + global.version;
+			  .align = right;
+			});
+		    });
+		});
+	      );
+	
+	space(0.3);
+
+	PLATE_BIG(
+	      .weight = 6.0f;
+	      widget(array, {
+		  .id = "primary_apps";
+		  .xslices = 6;
+		  .yslices = 2;
+		});
+	      );
+
+	space(1.7);
+
+	widget(container_x, {
+
+	    .weight = 2.0;
+
+	    widget(container_y, {
+		
+		.weight = 2.0;
+
+		space(4.0);
+
+
+
+	      });
+	    space(0.1);
+
+	    PLATE_TITLED("Control panel",
+			 widget(array, {
+			     .weight = 3.0f;
+			     .id = "secondary_apps";
+			     .xslices = 4;
+			   });
+			 );
+	  });
+      });
+  });

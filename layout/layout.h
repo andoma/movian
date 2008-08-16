@@ -56,15 +56,5 @@ void layout_world_appi_show(appi_t *ai);
  */ 
 extern glw_t *layout_global_status;
 
-/**
- * Functions in layout_switcher.c
- */ 
-
-void layout_switcher_create(void);
-
-void layout_switcher_appi_add(appi_t *ai, glw_t *w);
-
-void layout_switcher_render(float aspect);
-
 #endif /* LAYOUT_H */
 

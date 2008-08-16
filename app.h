@@ -97,4 +97,9 @@ void app_save_generic_config(appi_t *ai, const char *name);
 
 void appi_speedbutton_mapper(glw_t *w, const char *name, appi_t *ai);
 
+/**
+ *
+ */
+void mainmenu_appi_add(appi_t *ai, glw_t *miniature, int primary);
+
 #endif /* APP_H */

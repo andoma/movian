@@ -28,6 +28,7 @@
 #include "app.h"
 #include "event.h"
 #include "layout/layout.h"
+#include "apps/mainmenu/mainmenu.h"
 #include "apps/launcher/launcher.h"
 #include "apps/settings/settings.h"
 #include "apps/playlist/playlist.h"
@@ -267,6 +268,7 @@ autolaunch_applications(void)
 void
 apps_load(void)
 {
+  mainmenu_init();
   launcher_init();
   settings_init();
 

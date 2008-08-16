@@ -53,7 +53,8 @@ settings_init(void)
 
   mini = glw_model_create("theme://settings/settings-miniature.model", NULL,
 			  0, NULL);
-  layout_switcher_appi_add(ai, mini);
+
+  mainmenu_appi_add(ai, mini, 0);
 
   display_settings_init(ai, ai->ai_widget);
   settings_userinterface_init(ai, ai->ai_widget);

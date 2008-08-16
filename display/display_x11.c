@@ -451,7 +451,6 @@ gl_keypress(XEvent *event)
     switch(c) {
       /* Static key mappings, these cannot be changed */
     case 8:          event_post_simple(GEV_BACKSPACE);           return;
-    case 9:          event_post_simple(EVENT_KEY_TASK_DOSWITCH); return;
     case 13:         event_post_simple(GEV_ENTER);               return;
     case 27:         event_post_simple(EVENT_KEY_CLOSE);         return;
       /* Always send 1 char ASCII */

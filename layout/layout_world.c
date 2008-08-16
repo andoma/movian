@@ -90,7 +90,7 @@ layout_world_render(float aspect)
 	    0, 0, 1,
 	    0, 1, 0);
 
-  rc.rc_alpha = 1.0f - (0.9 * layout_switcher_alpha);
+  rc.rc_alpha = 1.0f;
   glw_render(layout_world, &rc);
 }
 

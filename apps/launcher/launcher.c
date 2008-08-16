@@ -55,8 +55,7 @@ launcher_init(void)
   }
 
   launcher_list = list;
-  layout_world_appi_show(ai);
-  layout_switcher_appi_add(ai, mini);
+  mainmenu_appi_add(ai, mini, 0);
 }
 
 /**

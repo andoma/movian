@@ -54,7 +54,7 @@ static const struct {
   {"Eject",              0x299395B7, 0 },
   {"AppLauncher",        0x29B715B7, 0 },
   {"MultiMon",           0x2AB195B7, 0 },
-  {"TaskSwitcher",       0x2A9395B7, EVENT_KEY_TASK_DOSWITCH },
+  {"TaskSwitcher",       0x2A9395B7, 0 },
   {"Mute",               0x2B9595B7, 0 },
   {"Vol+",               0x28A395B7, 0 },
   {"Vol-",               0x28A595B7, 0 },

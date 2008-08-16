@@ -378,11 +378,11 @@ nav_launch(void *aux)
 		     0, 
 		     nav->nav_prop_root, ai->ai_prop_root, prop_global, NULL);
 
-  layout_switcher_appi_add(ai, nav->nav_miniature);
+  mainmenu_appi_add(ai, nav->nav_miniature, 1);
   
-  layout_world_appi_show(ai);
-
   if(ai->ai_settings == NULL) {
+    layout_world_appi_show(ai);
+
     /* From launcher, ask user for settings */
     nav_setup(nav, ai);
   } else {

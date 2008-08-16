@@ -1,6 +1,6 @@
 /*
- *  Layout engine
- *  Copyright (C) 2008 Andreas Öman
+ *  Showtime mainmenu
+ *  Copyright (C) 2008 Andreas Ã–man
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,46 +16,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <string.h>
-#include <math.h>
+#ifndef MAINMENU_H_
+#define MAINMENU_H_
 
-#include <GL/glu.h>
-#include <libglw/glw.h>
+void mainmenu_init(void);
 
-#include "showtime.h"
-#include "app.h"
-#include "layout.h"
-
-#include "audio/audio_ui.h"
-
-
-void
-layout_create(void)
-{
-  layout_world_create();
-}
-
-void
-layout_hide(appi_t *ai)
-{
-
-}
-
-
-void
-layout_appi_add(appi_t *ai)
-{
-}
-
-
-
-/**
- * Master scene rendering
- */
-void 
-layout_draw(float aspect)
-{
-  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-  layout_world_render(aspect);
-}
-
+#endif /* MAINMENU_H_ */

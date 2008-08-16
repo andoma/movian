@@ -58,8 +58,7 @@ static struct strtab keycodenames[] = {
   { "SeekForward",           EVENT_KEY_SEEK_FORWARD },
   { "SeekReverse",           EVENT_KEY_SEEK_BACKWARD },
   { "Quit",                  EVENT_KEY_QUIT },
-  { "TaskSwitcher",          EVENT_KEY_TASK_SWITCHER },
-  { "TaskSwitcherSwitch",    EVENT_KEY_TASK_DOSWITCH },
+  { "MainMenu",              EVENT_KEY_MAINMENU },
   { "ChangeView",            EVENT_KEY_SWITCH_VIEW },
 };
 
@@ -303,7 +302,6 @@ eh_keymapper(glw_event_t *ge, void *opaque)
   case GEV_LEFT:
   case GEV_RIGHT:
   case GEV_ENTER:
-  case EVENT_KEY_TASK_DOSWITCH:
     return 0; /* Pass thru those events */
 
   default:

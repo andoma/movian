@@ -38,12 +38,17 @@ SRCS  += alsa_audio.c
 # layout engine(s)
 
 VPATH += layout
-SRCS  += layout.c layout_world.c layout_switcher.c
+SRCS  += layout.c layout_world.c
 
 # Human Interface Devices
 
 VPATH += hid
 SRCS  += hid.c lircd.c imonpad.c lcdd.c keymapper.c
+
+# Main menu
+
+VPATH += apps/mainmenu
+SRCS  += mainmenu.c
 
 # Launcher application
 
