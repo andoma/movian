@@ -1,24 +1,17 @@
 widget(form, {
-
-    widget(container_z, {
-	widget(container_y, {
-	    .displacement = [0, 0, -0.4];
-	    widget(animator, {
-		.id = "preview_container";
-	      });
-	    space(0.12);
+    widget(container_y, {
+	.displacement = [0, 0, 0.9];
+	widget(animator, {
+	    .weight = 5.0;
+	    .id = "preview_container";
 	  });
 
-	widget(container_y, {
-	    .displacement = [0, 0, 0.6];
-	    space(4);
-
-	    widget(list, {
-		.id = "node_container";
-		.orientation = horizontal;
-		.slices = 6;
-		.scaleChilds = true;
-	      });
+	space(0.05);
+	widget(list, {
+	    .id = "node_container";
+	    .orientation = horizontal;
+	    .slices = 6;
 	  });
+	space(0.05);
       });
   });
