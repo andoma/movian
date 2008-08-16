@@ -3,6 +3,7 @@ widget(container_y, {
     .focusCursor = true;
 
     widget(bitmap, {
+	.color = [0.6, 0.6, 0.6];
 	.source = "theme://images/plate-titled-top.png";
 	.textureBorders = [0.1, 0.1, 0.1, 0.1];
 	.vertexBorders  = [0.1, 0.1, 0.1, 0.1];
@@ -15,6 +16,7 @@ widget(container_y, {
       });
 
     widget(bitmap, {
+	.color = [0.6, 0.6, 0.6];
 	.weight = 7 / global.uiscale;
 	.source = "theme://images/plate-titled-bottom.png";
 	.textureBorders = [0.1, 0.1, 0.1, 0.1];
