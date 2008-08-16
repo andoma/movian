@@ -1,38 +1,60 @@
-#define MINIATURE(TITLE, ICON)
+#include "theme://include/plates.model"
+
+
+#define MINIATURE0(TITLE, BODY)
 {
   widget(container_y, {
       .focusCursor = true;
       .focusAlpha  = true;
+ 
 
       widget(bitmap, {
-	  .source = ICON;
-	  .keepAspect = true;
+	  .color =  COLOR_PRIMARY();
+	  .source = "theme://images/plate-titled-top.png";
+	  .textureBorders = [0.1, 0.1, 0.1, 0.1];
+	  .vertexBorders  = [0.1, 0.1, 0.1, 0.1];
+	  .borderScale = true;
+	
+	  widget(label, {
+	      .caption = TITLE;
+	      .align = center;
+	    });
 	});
-  
-      widget(label, {
-	  .weight = 0.25;
-	  .caption = TITLE;
-	  .align = center;
-	  .id = "title";
+
+      widget(bitmap, {
+	  .weight = 4.0;
+	  .color =  COLOR_PRIMARY() * 0.66;
+	  .source = "theme://images/plate-titled-bottom.png";
+	  .textureBorders = [0.1, 0.1, 0.1, 0.1];
+	  .vertexBorders  = [0.1, 0.1, 0.1, 0.1];
+	  .borderScale = true;
+
+	  BODY;
 	});
     });
 }
 
+
+
+
+
+
+#define MINIATURE(TITLE, ICON)
+{
+  MINIATURE0(TITLE, 
+	     widget(bitmap, {
+		 .source = ICON;
+		 .keepAspect = true;
+	       });
+	     );
+
+}
+
 #define MINIATURE2(TITLE, ICONMODEL)
 {
-  widget(container_y, {
-      .focusCursor = true;
-      .focusAlpha  = true;
-
-      widget(animator, {
-	  .source = ICONMODEL;
-	});
-  
-      widget(label, {
-	  .weight = 0.25;
-	  .caption = TITLE;
-	  .align = center;
-	  .id = "title";
-	});
-    });
+  MINIATURE0(TITLE, 
+	     widget(animator, {
+		 .source = ICONMODEL;
+	       });
+	     );
 }

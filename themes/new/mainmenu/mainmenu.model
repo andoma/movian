@@ -1,20 +1,6 @@
 #include "theme://include/plates.model"
 
 
-#define PLATE_BIG(BODY)
-{
-  widget(bitmap, {
-      .color = COLOR_PRIMARY();
-      .source = "theme://images/plate-compact.png";
-      .textureBorders = [0.5,  0.5,  0.5,  0.5];
-      .vertexBorders  = [0.03, 0.03, 0.03, 0.03];
-      .borderScale = true;
-      BODY;
-    });
-}
-
-
-
 widget(form, {
     widget(container_y, {
 	.displacement = [0, 0, 0.6];
@@ -44,16 +30,14 @@ widget(form, {
 	
 	space(0.3);
 
-	PLATE_BIG(
-	      .weight = 6.0f;
-	      widget(array, {
-		  .id = "primary_apps";
-		  .xslices = 6;
-		  .yslices = 2;
-		});
-	      );
+	widget(array, {
+	    .weight = 6.0f;
+	    .id = "primary_apps";
+	    .xslices = 5;
+	    .yslices = 2;
+	  });
 
-	space(1.7);
+	space(1.0);
 
 	widget(container_x, {
 
@@ -70,13 +54,22 @@ widget(form, {
 	      });
 	    space(0.1);
 
-	    PLATE_TITLED("Control panel",
-			 widget(array, {
-			     .weight = 3.0f;
-			     .id = "secondary_apps";
-			     .xslices = 4;
-			   });
-			 );
+	    widget(container_y, {
+		PLATE(
+		      .weight = 0.25;
+		      widget(label, {
+			  .caption = "Control panel";
+			  .align = center;
+			});
+		      );
+		space(0.05);
+
+		widget(array, {
+		    .id = "secondary_apps";
+		    .xslices = 3;
+		  });
+	      });
 	  });
+	space(0.02);
       });
   });
