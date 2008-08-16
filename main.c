@@ -96,6 +96,44 @@ get_concurrency(void)
 #endif
 }
 
+glw_prop_t *prop_hour;
+glw_prop_t *prop_minute;
+glw_prop_t *prop_weekday;
+glw_prop_t *prop_month;
+glw_prop_t *prop_date;
+
+/**
+ *
+ */
+static void *
+propupdater(void *aux)
+{
+  char buf[30];
+
+  time_t now;
+  struct tm tm;
+
+  while(1) {
+
+    time(&now);
+
+    localtime_r(&now, &tm);
+
+    glw_prop_set_float(prop_hour, tm.tm_hour);
+    glw_prop_set_float(prop_minute, tm.tm_min);
+
+    strftime(buf, sizeof(buf), "%A", &tm);
+    glw_prop_set_string(prop_weekday, buf);
+
+    strftime(buf, sizeof(buf), "%B", &tm);
+    glw_prop_set_string(prop_month, buf);
+
+    strftime(buf, sizeof(buf), "%x", &tm);
+    glw_prop_set_string(prop_date, buf);
+
+    sleep(60);
+  }
+}
 
 /**
  *
@@ -105,6 +143,7 @@ global_prop_init(void)
 {
   glw_prop_t *p;
   glw_prop_t *cpu;
+  hts_thread_t tid;
 
   prop_global = glw_prop_create(NULL, "global", GLW_GP_DIRECTORY);
 
@@ -116,6 +155,19 @@ global_prop_init(void)
   cpu = glw_prop_create(prop_global, "cpu", GLW_GP_DIRECTORY);
   p = glw_prop_create(cpu, "cores", GLW_GP_FLOAT);
   glw_prop_set_float(p, concurrency);
+
+
+  /* */
+  p = glw_prop_create(prop_global, "clock", GLW_GP_DIRECTORY);
+
+  prop_hour = glw_prop_create(p, "hour", GLW_GP_FLOAT);
+  prop_minute = glw_prop_create(p, "minute", GLW_GP_FLOAT);
+  prop_weekday = glw_prop_create(p, "weekday", GLW_GP_STRING);
+  prop_month = glw_prop_create(p, "month", GLW_GP_STRING);
+  prop_date = glw_prop_create(p, "date", GLW_GP_STRING);
+
+  hts_thread_create_detached(&tid, propupdater, NULL);
+
 }
 
 
