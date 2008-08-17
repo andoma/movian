@@ -276,7 +276,6 @@ apps_load(void)
 
   playlist_init();
 
-  //  LOADAPP(clock);
   LOADAPP(navigator);
   //  LOADAPP(tv);
 

@@ -60,12 +60,6 @@ SRCS  += launcher.c
 VPATH += apps/settings
 SRCS  += settings.c settings_ui.c
 
-# Clock application
-
-#VPATH += apps/clock
-#SRCS  += clock.c
-
-
 # Browser application
 
 VPATH += apps/browser
