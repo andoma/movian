@@ -406,6 +406,7 @@ nav_launch(void *aux)
 
   appi_destroy(ai);
   glw_prop_destroy(nav->nav_prop_root);
+  mainmenu_show(NULL);
   return NULL;
 }
 
