@@ -301,8 +301,10 @@ window_open(void)
 
   update_gpu_info();
 
-  glw_init_gl();
-
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glDisable(GL_CULL_FACE);
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 }
 
 /**
