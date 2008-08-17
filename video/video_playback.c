@@ -527,7 +527,7 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
     return -1;
   }
 
-  mp = pvc.pvc_mp = mp_create(url, ai);
+  mp = pvc.pvc_mp = mp_create(url);
 
   /**
    * Create property tree

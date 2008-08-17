@@ -679,7 +679,7 @@ playlist_thread(void *aux)
   memset(&plp, 0, sizeof(plp));
   
   glw_event_initqueue(&plp.plp_geq);
-  plp.plp_mp = mp_create("Playlist", ai);
+  plp.plp_mp = mp_create("Playlist");
   hts_thread_create(&playerthread, playlist_player, &plp);
 
 

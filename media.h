@@ -166,8 +166,6 @@ typedef struct media_pipe {
 
   int mp_total_time;
 
-  struct appi *mp_ai;
-
   AVFormatContext *mp_format;
 
   float mp_speed_gain;
@@ -241,7 +239,7 @@ media_buf_free(media_buf_t *mb)
 }
 
 
-media_pipe_t *mp_create(const char *name, struct appi *ai);
+media_pipe_t *mp_create(const char *name);
 media_pipe_t *mp_ref(media_pipe_t *mp);
 void mp_unref(media_pipe_t *mp);
 

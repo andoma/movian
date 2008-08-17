@@ -58,7 +58,7 @@ mq_init(media_queue_t *mq)
  *
  */
 media_pipe_t *
-mp_create(const char *name, struct appi *ai)
+mp_create(const char *name)
 {
   media_pipe_t *mp;
 
@@ -69,7 +69,6 @@ mp_create(const char *name, struct appi *ai)
   mp->mp_refcount = 1;
 
   mp->mp_name = name;
-  mp->mp_ai = ai;
   mp->mp_speed_gain = 1.0f;
 
   mq_mutex_init(&mp->mp_mutex);

@@ -423,7 +423,7 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 
   memset(dp, 0, sizeof(dvd_player_t));
   
-  dp->dp_mp = mp = mp_create(url, ai);
+  dp->dp_mp = mp = mp_create(url);
   dp->dp_ai = ai;
   dp->dp_geq = &ai->ai_geq;
 
