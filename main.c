@@ -101,6 +101,7 @@ glw_prop_t *prop_minute;
 glw_prop_t *prop_weekday;
 glw_prop_t *prop_month;
 glw_prop_t *prop_date;
+glw_prop_t *prop_day;
 
 /**
  *
@@ -121,6 +122,7 @@ propupdater(void *aux)
 
     glw_prop_set_float(prop_hour, tm.tm_hour);
     glw_prop_set_float(prop_minute, tm.tm_min);
+    glw_prop_set_float(prop_day, tm.tm_mday);
 
     strftime(buf, sizeof(buf), "%A", &tm);
     glw_prop_set_string(prop_weekday, buf);
@@ -165,6 +167,7 @@ global_prop_init(void)
   prop_weekday = glw_prop_create(p, "weekday", GLW_GP_STRING);
   prop_month = glw_prop_create(p, "month", GLW_GP_STRING);
   prop_date = glw_prop_create(p, "date", GLW_GP_STRING);
+  prop_day = glw_prop_create(p, "day", GLW_GP_FLOAT);
 
   hts_thread_create_detached(&tid, propupdater, NULL);
 

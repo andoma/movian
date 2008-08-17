@@ -73,7 +73,8 @@ widget(form, {
 		  });
 
 		widget(label, {
-		    .caption = global.clock.date;
+		    .caption = float2str(global.clock.day, 0)
+		      + ", " + global.clock.month;
 		  });
 
 	      });
