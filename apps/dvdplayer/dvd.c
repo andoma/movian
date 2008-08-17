@@ -156,7 +156,7 @@ dvd_gen_frame_kick(dvd_player_t *dp)
 {
   media_buf_t *mb;
   codecwrap_t *cw = dp->dp_pp.pp_video.ps_cw;
-  media_pipe_t *mp = dp->dp_ai->ai_mp;
+  media_pipe_t *mp = dp->dp_mp;
 
   if(cw == NULL)
     return;
@@ -182,7 +182,7 @@ dvd_gen_frame_kick(dvd_player_t *dp)
 static void
 dvd_flush(dvd_player_t *dp)
 {
-  media_pipe_t *mp = dp->dp_ai->ai_mp;
+  media_pipe_t *mp = dp->dp_mp;
 
   dp->dp_pp.pp_audio.ps_force_reset = 1;
   dp->dp_pp.pp_video.ps_force_reset = 1;
@@ -423,8 +423,7 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 
   memset(dp, 0, sizeof(dvd_player_t));
   
-  mp = ai->ai_mp;
-  dp->dp_mp = mp;
+  dp->dp_mp = mp = mp_create(url, ai);
   dp->dp_ai = ai;
   dp->dp_geq = &ai->ai_geq;
 
@@ -441,12 +440,14 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 			 0, NULL);
   dp->dp_container = glw_find_by_id(top, "dvdplayer_container", 0);
   if(dp->dp_container == NULL) {
+    mp_unref(mp);
     fprintf(stderr, "Unable to find dvdplayer_container\n");
     return -1;
   }
 
   if(dvdnav_open(&dp->dp_dvdnav, url, ops) != DVDNAV_STATUS_OK) {
     //    dvd_display_error(w, "An error occured when opening DVD", isdrive);
+    mp_unref(mp);
     glw_destroy(top);
     return -1;
   }
@@ -562,6 +563,8 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
   glw_destroy(top);
 
   glw_prop_destroy(dp->dp_prop_root);
+
+  mp_unref(mp);
 
   return rcode;
 }

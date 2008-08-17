@@ -60,6 +60,8 @@ typedef struct play_video_ctrl {
 
   appi_t *pvc_ai;
 
+  media_pipe_t *pvc_mp;
+
   AVFormatContext *pvc_fctx;
 
   codecwrap_t **pvc_cwvec;
@@ -125,7 +127,7 @@ video_player_event_handler(glw_event_t *ge, void *opaque)
 static void
 video_player_update_stream_info(play_video_ctrl_t *pvc)
 {
-  media_pipe_t *mp = pvc->pvc_ai->ai_mp;
+  media_pipe_t *mp = pvc->pvc_mp;
   int as = mp->mp_audio.mq_stream;
   int vs = mp->mp_video.mq_stream;
   AVCodecContext *ctx;
@@ -179,7 +181,7 @@ video_playback_set_audio_track(void *opaque, void *opaque2, int value)
 {
   play_video_ctrl_t *pvc = opaque;
 
-  pvc->pvc_ai->ai_mp->mp_audio.mq_stream = value;
+  pvc->pvc_mp->mp_audio.mq_stream = value;
   video_player_update_stream_info(pvc);
 }
 
@@ -192,7 +194,7 @@ video_player_open_menu(play_video_ctrl_t *pvc, int toggle)
   glw_t *p;
   AVCodecContext *ctx;
   char buf[100];
-  media_pipe_t *mp = pvc->pvc_ai->ai_mp;
+  media_pipe_t *mp = pvc->pvc_mp;
   int i;
 
   if(pvc->pvc_menu != NULL) {
@@ -264,7 +266,7 @@ static void
 video_player_loop(play_video_ctrl_t *pvc, glw_event_queue_t *geq)
 {
   appi_t *ai = pvc->pvc_ai;
-  media_pipe_t *mp = ai->ai_mp;
+  media_pipe_t *mp = pvc->pvc_mp;
   media_buf_t *mb;
   media_queue_t *mq;
   int64_t pts, dts, seek_ref, seek_delta, seek_abs;
@@ -491,9 +493,9 @@ video_player_loop(play_video_ctrl_t *pvc, glw_event_queue_t *geq)
 int
 play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
 {
+  media_pipe_t *mp;
   AVCodecContext *ctx;
   formatwrap_t *fw;
-  media_pipe_t *mp = ai->ai_mp;
   glw_t *vdw, *top;
   int64_t ts;
   int streams, i;
@@ -524,6 +526,8 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
     fprintf(stderr, "Unable to find stream info\n");
     return -1;
   }
+
+  mp = pvc.pvc_mp = mp_create(url, ai);
 
   /**
    * Create property tree
@@ -576,7 +580,7 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
    * Create video output widget
    */
   vd_conf_init(&pvc.pvc_vdc);
-  vdw = vd_create_widget(pvc.pvc_container, ai->ai_mp, 1.0);
+  vdw = vd_create_widget(pvc.pvc_container, mp, 1.0);
   mp_set_video_conf(mp, &pvc.pvc_vdc);
 
 
@@ -679,5 +683,7 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
     mp->mp_subtitles = NULL;
   }
   glw_event_flushqueue(geq);
+
+  mp_unref(pvc.pvc_mp);
   return 0;
 }

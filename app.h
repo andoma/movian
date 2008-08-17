@@ -54,7 +54,6 @@ typedef struct appi {
   app_t *ai_app;
 
   glw_event_queue_t ai_geq;
-  media_pipe_t *ai_mp;
   
   AVFormatContext *ai_fctx;
 

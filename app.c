@@ -109,8 +109,6 @@ appi_create0(const char *name)
   hts_mutex_unlock(&appi_list_mutex);
   
   glw_event_initqueue(&ai->ai_geq);
-  ai->ai_mp = mp_create(name, ai); /* Includes a refcount, this is
-				      decreated in appi_destroy() */
 
   ai->ai_prop_root = glw_prop_create(NULL, "app", GLW_GP_DIRECTORY);
   ai->ai_prop_title = glw_prop_create(ai->ai_prop_root, "title", GLW_GP_STRING);
@@ -158,8 +156,6 @@ appi_destroy(appi_t *ai)
     htsmsg_destroy(ai->ai_settings);
 
   hts_settings_remove("applications/%d", ai->ai_instance_index);
-
-  mp_unref(ai->ai_mp);
 
   free((void *)ai->ai_name);
   glw_event_flushqueue(&ai->ai_geq);
