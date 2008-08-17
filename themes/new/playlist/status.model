@@ -6,9 +6,9 @@ widget(container_x, {
 
     widget(container_y, {
 	.weight = 8.0;
-	widget(label, { .caption = media.title; });
-	widget(label, { .caption = media.author + " - " + media.album; });
-	space(1.0);
+	widget(label, { .caption = media.title;  .weight = 1.5;});
+	widget(label, { .caption = media.author; });
+	widget(label, { .caption = media.album;  });
       });
 
     widget(container_y, {
