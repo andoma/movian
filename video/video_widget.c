@@ -716,7 +716,7 @@ render_video_pipe(glw_t *w, video_decoder_t *vd, glw_rctx_t *rc)
   if(vd->vd_zoom != 100)
     glScalef(vd->vd_zoom / 100.0f, vd->vd_zoom / 100.0f, 1.0f);
 
-  glw_scale_and_rotate(rc->rc_aspect, vd->vd_aspect, 0.0f);
+  glw_rescale(rc->rc_aspect, vd->vd_aspect);
 
   if(rc->rc_alpha > 0.98f) 
     glDisable(GL_BLEND); 
