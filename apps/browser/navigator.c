@@ -38,20 +38,19 @@
 #include "apps/playlist/playlist.h"
 #include "apps/dvdplayer/dvd.h"
 
-
-typedef struct navconfig {
-  char nc_title[40];
-  char nc_rootpath[256];
-  char nc_icon[256];
-} navconfig_t;
-
-
-
 typedef struct navigator {
   appi_t *nav_ai;
   glw_t *nav_stack;
   glw_prop_t *nav_prop_root;
   glw_prop_t *nav_prop_icon;
+  glw_prop_t *nav_prop_path;
+
+  enum {
+    NAV_RS_RUN,
+    NAV_RS_RECONFIGURE,
+    NAV_RS_STOP,
+  } nav_runstatus;
+
 } navigator_t;
 
 
@@ -95,13 +94,12 @@ browser_enter(appi_t *ai, navigator_t *nav, browser_node_t *bn, int selected)
  * Store information about this navigator instance on disk
  */
 static void
-nav_store_instance(appi_t *ai, navconfig_t *cfg)
+nav_store_instance(appi_t *ai, navigator_t *nav)
 {
   htsmsg_t *m = appi_settings_create(ai);
   
-  htsmsg_add_str(m, "title", cfg->nc_title);
-  htsmsg_add_str(m, "rootpath", cfg->nc_rootpath);
-  htsmsg_add_str(m, "icon", cfg->nc_icon);
+  htsmsg_add_str(m, "rootpath", glw_prop_get_string(nav->nav_prop_path));
+  htsmsg_add_str(m, "icon",     glw_prop_get_string(nav->nav_prop_icon));
 
   appi_settings_save(ai, m);
 }
@@ -131,129 +129,23 @@ nav_access_error(navigator_t *nav, appi_t *ai, const char *dir,
   return r;
 }
 
-#if 0
-/**
- *  Return 0 if user wants to exit, otherwise -1
- */
-static int
-nav_verify_exit(glw_t *parent, appi_t *ai)
-{
- glw_t *m;
- int r;
-
-  m = glw_model_create("theme://browser/exit.model", parent,
-		       0, NULL);
-  r = glw_wait_form_ok_cancel(m);
-  glw_detach(m);
-
-  return r;
-}
-#endif
-
-/**
- *
- */
-static int
-nav_main(navigator_t *nav, appi_t *ai, navconfig_t *cfg)
-{
-  browser_root_t *br;
-  browser_node_t *bn;
-  glw_event_t *ge;
-  const char *rooturl = cfg->nc_rootpath;
-  int run = 1, r;
-
-  glw_prop_set_string(ai->ai_prop_title, cfg->nc_title);
-  glw_prop_set_string(nav->nav_prop_icon, cfg->nc_icon);
-
-  /**
-   * Create browser root
-   */ 
-  br = browser_root_create(rooturl);
-  bn = br->br_root;
-
-  browser_view_expand_node(bn, nav->nav_stack);
-
-  while(run && (r = browser_scandir(bn, 0)) != 0)
-    run = !nav_access_error(nav, ai, rooturl, strerror(r));
-
-  nav_store_instance(ai, cfg);
-
-  glw_event_flushqueue(&ai->ai_geq);
-
-  while(run) {
-
-    ge = glw_event_get(-1, &ai->ai_geq);
-
-    switch(ge->ge_type) {
-    default:
-      break;
-
-    case GEV_ENTER:
-    case EVENT_KEY_SELECT:
-      bn = browser_view_get_current_selected_node(nav->nav_stack);
-      if(bn == NULL)
-	break;
-
-      switch(bn->bn_type) {
-      case FA_DIR:
-	if(ge->ge_type == EVENT_KEY_SELECT) {
-	  playlist_build_from_dir(bn->bn_url);
-	} else {
-	  browser_view_expand_node(bn, nav->nav_stack);
-	  browser_scandir(bn, 1);
-	}
-	break;
-	
-      case FA_FILE:
-	browser_enter(ai, nav, bn, ge->ge_type == EVENT_KEY_SELECT);
-	break;
-      }
-      browser_node_deref(bn);
-      break;
-
-
-
-    case GEV_BACKSPACE:
-      bn = browser_view_get_current_node(nav->nav_stack);
-      if(bn == NULL)
-	break;
-
-      if(bn->bn_parent != NULL) {
-	browser_view_collapse_node(bn);
-      } else {
-	/* At top level, return to main menu */
-	mainmenu_show(ai);
-      }
-      browser_node_deref(bn);
-      break;
-
-     case EVENT_KEY_SWITCH_VIEW:
-	bn = browser_view_get_current_node(nav->nav_stack);
-	if(bn == NULL)
-	  break;
-
-	browser_view_switch(bn);
-	break;
-    }
-    glw_event_unref(ge);
-  }
-
-  bn = br->br_root;
-  browser_view_collapse_node(bn);
-
-  browser_root_destroy(br);
-  return 0;
-}
-
+typedef struct {
+  glw_t *parent;
+  const char *current;
+} iconloadctx_t;
 
 /**
  *
  */
 static void
-icons_callback(void *arg, const char *url, const char *filename, int type)
+icons_callback(void *aux, const char *url, const char *filename, int type)
 {
-  glw_model_create(url, arg, 0, NULL);
+  iconloadctx_t *ctx = aux;
+  glw_t *m;
 
+  m = glw_model_create(url, ctx->parent, 0, NULL);
+  if(!strcmp(url, ctx->current))
+    ctx->parent->glw_selected = m;
 }
 
 
@@ -262,65 +154,168 @@ icons_callback(void *arg, const char *url, const char *filename, int type)
  * choose to use for this navigator instance.
  */
 static void
-load_nav_icons_in_tab(glw_t *w, const char *name)
+load_nav_icons_in_tab(glw_t *m, const char *name, const char *current)
 {
-  if((w = glw_find_by_id(w, name, 0)) == NULL) 
+  iconloadctx_t ctx;
+
+  ctx.current = current;
+
+  if((ctx.parent = glw_find_by_id(m, name, 0)) == NULL) 
     return;
 
-  fileaccess_scandir("theme://browser/icons", icons_callback, w);
+  fileaccess_scandir("theme://browser/icons", icons_callback, &ctx);
 }
 
 
 /**
- *  Setup a navigator and ask for user configuration
+ * Navigator configuration
  */
 static void
-nav_setup(navigator_t *nav, appi_t *ai)
+nav_config(navigator_t *nav, appi_t *ai)
 {
   glw_t *m;
-  navconfig_t nc;
-  int r;
+  char buf[128];
+  glw_event_t *ge;
+  glw_event_appmethod_t *gea;
 
-  memset(&nc, 0, sizeof(nc));
+  m = glw_model_create("theme://browser/config.model", nav->nav_stack, 0,
+		       prop_global, 
+		       nav->nav_prop_root, 
+		       ai->ai_prop_root, 
+		       NULL);
 
-  m = glw_model_create("theme://browser/setup.model", nav->nav_stack, 0, NULL);
-  load_nav_icons_in_tab(m, "icon_container");
+  load_nav_icons_in_tab(m, "icon_container",
+			glw_prop_get_string(nav->nav_prop_icon));
   appi_speedbutton_mapper(m, "speedbutton", ai);
 
-  r = glw_wait_form_ok_cancel(m);
+  ge = glw_wait_form(m);
 
-  glw_get_caption(m, "title", nc.nc_title, sizeof(nc.nc_title));
-  glw_get_caption(m, "rootpath", nc.nc_rootpath, sizeof(nc.nc_rootpath));
-  glw_get_model(m, "icon_container", nc.nc_icon, sizeof(nc.nc_icon));
+  if(ge->ge_type == GEV_OK) {
+    glw_prop_set_from_widget(m, "title",    ai->ai_prop_title);
+    glw_prop_set_from_widget(m, "rootpath", nav->nav_prop_path);
 
+    glw_get_model(m, "icon_container", buf, sizeof(buf));
+    glw_prop_set_string(nav->nav_prop_icon, buf);
+
+    nav_store_instance(ai, nav);
+
+    nav->nav_runstatus = NAV_RS_RECONFIGURE;
+  } else if(ge->ge_type == GEV_CANCEL) {
+    nav->nav_runstatus = NAV_RS_RUN;
+
+  } else if(ge->ge_type == GEV_APPMETHOD) {
+    gea = (glw_event_appmethod_t *)ge;
+
+    if(!strcmp(gea->method, "appQuit"))
+      nav->nav_runstatus = NAV_RS_STOP;
+  }
+
+  glw_event_unref(ge);
   glw_detach(m);
-
-  if(r == 0)
-    nav_main(nav, ai, &nc);
 }
 
+
 /**
- *  Setup a navigator based on stored configuration
+ *
  */
 static int
-nav_autolaunch(navigator_t *nav, appi_t *ai)
+nav_main(navigator_t *nav, appi_t *ai)
 {
-  navconfig_t cfg;
-  const char *s;
+  browser_root_t *br;
+  browser_node_t *bn;
+  glw_event_t *ge;
+  const char *rooturl;
+  int r;
 
-  if((s = htsmsg_get_str(ai->ai_settings, "title")) == NULL)
-    return -1;
-  av_strlcpy(cfg.nc_title, s, sizeof(cfg.nc_title));
+  glw_event_flushqueue(&ai->ai_geq);
 
-  if((s = htsmsg_get_str(ai->ai_settings, "rootpath")) == NULL)
-    return -1;
-  av_strlcpy(cfg.nc_rootpath, s, sizeof(cfg.nc_rootpath));
+  while(nav->nav_runstatus != NAV_RS_STOP) {
 
-  if((s = htsmsg_get_str(ai->ai_settings, "icon")) == NULL)
-    return -1;
-  av_strlcpy(cfg.nc_icon, s, sizeof(cfg.nc_icon));
+    /**
+     * Create browser root
+     */ 
+    rooturl = glw_prop_get_string(nav->nav_prop_path);
+    
+    br = browser_root_create(rooturl);
+    bn = br->br_root;
 
-  return nav_main(nav, ai, &cfg);
+    browser_view_expand_node(bn, nav->nav_stack);
+    
+    if((r = browser_scandir(bn, 0)) != 0) {
+      nav_access_error(nav, ai, rooturl, strerror(r));
+      nav_config(nav, ai);
+    } else {
+      nav->nav_runstatus = NAV_RS_RUN;
+    }
+
+    while(nav->nav_runstatus == NAV_RS_RUN) {
+
+      ge = glw_event_get(-1, &ai->ai_geq);
+
+      switch(ge->ge_type) {
+      default:
+	break;
+
+      case GEV_ENTER:
+      case EVENT_KEY_SELECT:
+	bn = browser_view_get_current_selected_node(nav->nav_stack);
+	if(bn == NULL)
+	  break;
+
+	switch(bn->bn_type) {
+	case FA_DIR:
+	  if(ge->ge_type == EVENT_KEY_SELECT) {
+	    playlist_build_from_dir(bn->bn_url);
+	  } else {
+	    browser_view_expand_node(bn, nav->nav_stack);
+	    browser_scandir(bn, 1);
+	  }
+	  break;
+	
+	case FA_FILE:
+	  browser_enter(ai, nav, bn, ge->ge_type == EVENT_KEY_SELECT);
+	  break;
+	}
+	browser_node_unref(bn);
+	break;
+
+
+      case EVENT_KEY_MENU:
+	nav_config(nav, ai);
+	break;
+
+      case GEV_BACKSPACE:
+	bn = browser_view_get_current_node(nav->nav_stack);
+	if(bn == NULL)
+	  break;
+
+	if(bn->bn_parent != NULL) {
+	  browser_view_collapse_node(bn);
+	} else {
+	  /* At top level, return to main menu */
+	  mainmenu_show(ai);
+	}
+	browser_node_unref(bn);
+	break;
+
+      case EVENT_KEY_SWITCH_VIEW:
+	bn = browser_view_get_current_node(nav->nav_stack);
+	if(bn == NULL)
+	  break;
+
+	browser_view_switch(bn);
+	break;
+      }
+      glw_event_unref(ge);
+    }
+
+    bn = br->br_root;
+    browser_view_collapse_node(bn);
+
+    browser_root_destroy(br);
+  }
+
+  return 0;
 }
 
 /**
@@ -334,6 +329,7 @@ nav_launch(void *aux)
 {
   navigator_t *nav = alloca(sizeof(navigator_t));
   appi_t *ai = aux;
+  const char *s;
 
   if(browser_view_index()) {
     fprintf(stderr, "No browser views found, cannot start navigator\n");
@@ -347,15 +343,15 @@ nav_launch(void *aux)
   nav->nav_prop_root = glw_prop_create(NULL, "nav", GLW_GP_DIRECTORY);
   nav->nav_prop_icon = glw_prop_create(nav->nav_prop_root, 
 				       "icon", GLW_GP_STRING);
-
-  glw_prop_set_string(nav->nav_prop_icon,
-		      "theme://browser/icons/1default.model");
-
+  nav->nav_prop_path = glw_prop_create(nav->nav_prop_root,
+				       "rootpath", GLW_GP_STRING);
 
   ai->ai_widget = glw_model_create("theme://browser/browser-app.model", NULL,
 				   0,  
-				   nav->nav_prop_root, ai->ai_prop_root,
-				   prop_global, NULL);
+				   nav->nav_prop_root, 
+				   ai->ai_prop_root,
+				   prop_global, 
+				   NULL);
 
   if((nav->nav_stack = glw_find_by_id(ai->ai_widget, "stack", 0)) == NULL) {
     fprintf(stderr, "No navigation 'stack' found\n");
@@ -372,21 +368,38 @@ nav_launch(void *aux)
    */
 
   ai->ai_miniature =
-    glw_model_create("theme://browser/browser-miniature.model", NULL,
-		     0, 
-		     nav->nav_prop_root, ai->ai_prop_root, prop_global, NULL);
+    glw_model_create("theme://browser/browser-miniature.model", NULL,  0, 
+		     nav->nav_prop_root, 
+		     ai->ai_prop_root,
+		     prop_global, 
+		     NULL);
 
   mainmenu_appi_add(ai, 1);
   
-  if(ai->ai_settings == NULL) {
-    layout_appi_show(ai);
 
-    /* From launcher, ask user for settings */
-    nav_setup(nav, ai);
+
+  /**
+   * load configuration (if present)
+   */
+  if(ai->ai_settings != NULL) {
+    if((s = htsmsg_get_str(ai->ai_settings, "rootpath")) != NULL)
+      glw_prop_set_string(nav->nav_prop_path, s);
+
+    if((s = htsmsg_get_str(ai->ai_settings, "icon")) != NULL)
+      glw_prop_set_string(nav->nav_prop_icon, s);
+
   } else {
-    /* Autolaunched */
-    nav_autolaunch(nav, ai);
+
+    glw_prop_set_string(nav->nav_prop_icon,
+			"theme://browser/icons/1default.model");
+
+    glw_prop_set_string(nav->nav_prop_path, "file:///");
+
+    layout_appi_show(ai);
+    nav_config(nav, ai);
   }
+
+  nav_main(nav, ai);
 
   glw_destroy(ai->ai_miniature);
   glw_destroy(ai->ai_widget);

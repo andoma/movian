@@ -79,7 +79,7 @@ browser_probe_thread(void *arg)
 	hts_mutex_unlock(&bn->bn_ftags_mutex);
       }
 
-      browser_node_deref(bn);
+      browser_node_unref(bn);
       hts_mutex_lock(&br->br_probe_mutex);
       continue;
     }
@@ -91,7 +91,7 @@ browser_probe_thread(void *arg)
 
       probe_figure_primary_content(br, bn);
 
-      browser_node_deref(bn);
+      browser_node_unref(bn);
       hts_mutex_lock(&br->br_probe_mutex);
       continue;
     }
@@ -102,12 +102,12 @@ browser_probe_thread(void *arg)
 
   while((bn = TAILQ_FIRST(&br->br_probe_queue)) != NULL) {
     TAILQ_REMOVE(&br->br_probe_queue, bn, bn_probe_link);
-    browser_node_deref(bn);
+    browser_node_unref(bn);
   }
 
   while((bn = TAILQ_FIRST(&br->br_autoview_queue)) != NULL) {
     TAILQ_REMOVE(&br->br_autoview_queue, bn, bn_autoview_link);
-    browser_node_deref(bn);
+    browser_node_unref(bn);
   }
 
   hts_mutex_unlock(&br->br_probe_mutex);
@@ -149,7 +149,7 @@ probe_figure_primary_content(browser_root_t *br, browser_node_t *bn)
     }
 
     hts_mutex_unlock(&c->bn_ftags_mutex);
-    browser_node_deref(c); /* 'c' may be free'd here */
+    browser_node_unref(c); /* 'c' may be free'd here */
   }
   free(a);
 

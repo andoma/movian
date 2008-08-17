@@ -40,19 +40,21 @@ static void browser_scandir_callback(void *arg, const char *url,
 /**
  * check if we should free a node, br_hierarchy_mutex must be held
  */
-static void
-check_node_free(browser_node_t *bn)
+static int
+check_node_free(browser_node_t *bn, int norootref)
 {
   browser_node_t *p = bn->bn_parent;
+  int decr = 0;
 
   if(bn->bn_refcnt != 0 || TAILQ_FIRST(&bn->bn_childs) != NULL)
-    return;
+    return 0;
 
   filetag_freelist(&bn->bn_ftags);
 
   if(p != NULL) {
     TAILQ_REMOVE(&p->bn_childs, bn, bn_parent_link);
-    check_node_free(p); /* removed from parent, need to check parent too */
+    /* removed from parent, need to check parent too */
+    decr = check_node_free(p, norootref);
   }
 
   assert(bn->bn_cont_xfader == NULL);
@@ -60,6 +62,7 @@ check_node_free(browser_node_t *bn)
   free((void *)bn->bn_url);
   glw_prop_destroy(bn->bn_prop_root);
   free(bn);
+  return decr + 1;
 }
 
 
@@ -71,26 +74,38 @@ browser_node_ref(browser_node_t *bn)
 {
   browser_root_t *br = bn->bn_root;
 
-  hts_mutex_lock(&br->br_hierarchy_mutex);
+  hts_mutex_lock(&br->br_mutex);
   bn->bn_refcnt++;
-  hts_mutex_unlock(&br->br_hierarchy_mutex);
+  hts_mutex_unlock(&br->br_mutex);
 }
+
 
 
 /**
  *
  */
 void
-browser_node_deref(browser_node_t *bn)
+browser_node_unref(browser_node_t *bn)
 {
+  int decr;
   browser_root_t *br = bn->bn_root;
 
-  hts_mutex_lock(&br->br_hierarchy_mutex);
+  hts_mutex_lock(&br->br_mutex);
+
   assert(bn->bn_refcnt > 0);
   bn->bn_refcnt--;
 
-  check_node_free(bn);
-  hts_mutex_unlock(&br->br_hierarchy_mutex);
+  decr = check_node_free(bn, 0);
+
+  br->br_refcnt -= decr;
+  if(br->br_refcnt == 0) {
+    /* Destruction of browser root */
+    browser_probe_deinit(br);
+    free(br);
+    return;
+  }
+
+  hts_mutex_unlock(&br->br_mutex);
 }
 
 
@@ -107,7 +122,6 @@ browser_node_create(const char *url, int type, browser_root_t *br)
   bn->bn_refcnt = 1;
   bn->bn_url = strdup(url);
   bn->bn_type = type;
-  bn->bn_root = br;
   TAILQ_INIT(&bn->bn_childs);
   TAILQ_INIT(&bn->bn_ftags);
   hts_mutex_init(&bn->bn_ftags_mutex);
@@ -139,10 +153,14 @@ browser_node_add_child(browser_node_t *parent, const char *url, int type)
   browser_root_t *br = parent->bn_root;
   browser_node_t *bn = browser_node_create(url, type, br);
 
-  hts_mutex_lock(&br->br_hierarchy_mutex);
+  hts_mutex_lock(&br->br_mutex);
+  
+  bn->bn_root = br;
+  br->br_refcnt++;
+
   TAILQ_INSERT_TAIL(&parent->bn_childs, bn, bn_parent_link);
   bn->bn_parent = parent;
-  hts_mutex_unlock(&br->br_hierarchy_mutex);
+  hts_mutex_unlock(&br->br_mutex);
 
   browser_node_update_props(bn);
 
@@ -160,12 +178,16 @@ browser_root_create(const char *url)
   browser_root_t *br = calloc(1, sizeof(browser_root_t));
   browser_node_t *bn = browser_node_create(url, FA_DIR, br);
 
-  hts_mutex_init(&br->br_hierarchy_mutex);
+  hts_mutex_init(&br->br_mutex);
+
+  bn->bn_root = br;
 
   browser_probe_init(br);
   br->br_root = bn;
+  br->br_refcnt = 1;
   return br;
 }
+
 
 /**
  *
@@ -173,14 +195,8 @@ browser_root_create(const char *url)
 void
 browser_root_destroy(browser_root_t *br)
 {
-  browser_node_t *bn = br->br_root;
-  browser_probe_deinit(br);
-
-  assert(bn->bn_refcnt == 1); /* refcount should be 1 now */
-  browser_node_deref(bn);
-  free(br);
+  browser_node_unref(br->br_root);
 }
-
 
 
 /**
@@ -248,7 +264,7 @@ browser_scandir_thread(void *arg)
 {
   browser_node_t *bn = arg;
   browser_scandir0(bn);
-  browser_node_deref(bn);
+  browser_node_unref(bn);
   return NULL;
 }
 
@@ -269,7 +285,7 @@ browser_scandir_callback(void *arg, const char *url, const char *filename,
 
   browser_probe_enqueue(c);
 
-  browser_node_deref(c);
+  browser_node_unref(c);
 }
 			 
 
@@ -289,7 +305,7 @@ browser_get_array_of_childs(browser_root_t *br, browser_node_t *bn)
   int cnt = 0;
   browser_node_t *c, **r;
 
-  hts_mutex_lock(&br->br_hierarchy_mutex);
+  hts_mutex_lock(&br->br_mutex);
 
   TAILQ_FOREACH(c, &bn->bn_childs, bn_parent_link)
     cnt++;
@@ -302,6 +318,6 @@ browser_get_array_of_childs(browser_root_t *br, browser_node_t *bn)
     r[cnt++] = c;
   }
   r[cnt] = NULL;
-  hts_mutex_unlock(&br->br_hierarchy_mutex);
+  hts_mutex_unlock(&br->br_mutex);
   return r;
 }

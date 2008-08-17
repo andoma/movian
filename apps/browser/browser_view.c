@@ -45,7 +45,7 @@ browser_view_xfader_callback(glw_t *w, void *opaque, glw_signal_t sig,
 
   if(sig == GLW_SIGNAL_DESTROY) {
     bn->bn_cont_xfader = NULL;
-    browser_node_deref(bn);
+    browser_node_unref(bn);
   }
   return 0;
 }
@@ -198,7 +198,7 @@ browser_view_collapse_node(browser_node_t *bn)
 
   glw_unlock();
   
-  browser_node_deref(bn);
+  browser_node_unref(bn);
 }
 
 
@@ -213,7 +213,7 @@ browser_view_node_callback(glw_t *w, void *opaque, glw_signal_t sig,
 
   if(sig == GLW_SIGNAL_DESTROY) {
     bn->bn_model = NULL;
-    browser_node_deref(bn);
+    browser_node_unref(bn);
   }
 
   return 0;
@@ -381,12 +381,12 @@ browser_view_switch0(browser_node_t *bn, browser_view_t *bv)
     hts_mutex_unlock(&c->bn_ftags_mutex);
 
     browser_view_add_node(c, m, c == sel, hide);
-    browser_node_deref(c); /* 'c' may be free'd here */
+    browser_node_unref(c); /* 'c' may be free'd here */
   }
 
   free(a);
   if(sel != NULL)
-    browser_node_deref(sel);
+    browser_node_unref(sel);
 }
 
 
@@ -420,7 +420,7 @@ browser_view_switch(browser_node_t *bn)
       break;
     }
     hts_mutex_unlock(&c->bn_ftags_mutex);
-    browser_node_deref(c); /* 'c' may be free'd here */
+    browser_node_unref(c); /* 'c' may be free'd here */
   }
   free(a);
 

@@ -106,7 +106,7 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, appi_t *ai)
 
     hts_mutex_unlock(&c->bn_ftags_mutex);
 
-    browser_node_deref(c); /* 'c' may be free'd here */
+    browser_node_unref(c); /* 'c' may be free'd here */
   }
 
   free(a);

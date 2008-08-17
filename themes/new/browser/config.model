@@ -39,7 +39,7 @@ widget(form, {
 		    .focusAlpha = true;
 		    .weight = 1;
 		    .id = "title";
-		    .caption = "Browser";
+		    .caption = app.title;
 		  });
 
 		space(0.5);
@@ -55,7 +55,7 @@ widget(form, {
 		    .focusAlpha = true;
 		    .weight = 1;
 		    .id = "rootpath";
-		    .caption = "file:///";
+		    .caption = nav.rootpath;
 		  });
 
 		space(0.5);
@@ -123,15 +123,22 @@ widget(form, {
 		    .id = "speedbutton";
 		  });
 
-		space(1.5);
 	
 		widget(container_x, {
+		    FORM_BUTTONS_TWO(FORM_BUTTON_OK(), FORM_BUTTON_CANCEL());
+		  });
+
+		space(0.5);
+
+		widget(container_x, {
 		    space(0.5);
-		    FORM_BUTTON_OK();
-		    space(0.5);
-		    FORM_BUTTON_CANCEL();
+		    FORM_BUTTON("Remove this browser",
+				"theme://images/no.png",
+				appQuit,
+				[0.3, 0, 0]);
 		    space(0.5);
 		  });
+
 	      });
 	  });
       });

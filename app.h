@@ -64,8 +64,6 @@ typedef struct appi {
 
   glw_t *ai_menu;               /* Top level menu */
 
-  const char *ai_name;
-
   char ai_speedbutton[32];
 
   glw_prop_t *ai_prop_root;

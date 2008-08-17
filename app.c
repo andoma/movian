@@ -23,6 +23,8 @@
 #include <assert.h>
 
 #include <libhts/htssettings.h>
+#include <libglw/glw.h>
+
 
 #include "showtime.h"
 #include "app.h"
@@ -94,6 +96,9 @@ appi_map_generic_config(appi_t *ai, htsmsg_t *settings)
 
   if((v = htsmsg_get_str(settings, "speedbutton")) != NULL)
     snprintf(ai->ai_speedbutton, sizeof(ai->ai_speedbutton), "%s", v);
+
+  if((v = htsmsg_get_str(settings, "title")) != NULL)
+    glw_prop_set_string(ai->ai_prop_title, v);
 }
 
 /**
@@ -112,6 +117,8 @@ appi_create0(const char *name)
 
   ai->ai_prop_root = glw_prop_create(NULL, "app", GLW_GP_DIRECTORY);
   ai->ai_prop_title = glw_prop_create(ai->ai_prop_root, "title", GLW_GP_STRING);
+
+  glw_prop_set_string(ai->ai_prop_title, name);
 
   return ai;
 }
@@ -142,7 +149,6 @@ appi_t *
 appi_create(const char *name)
 {
   appi_t *ai = appi_create0(name);
-  ai->ai_name = name;
   return ai;
 }
 
@@ -157,7 +163,6 @@ appi_destroy(appi_t *ai)
 
   hts_settings_remove("applications/%d", ai->ai_instance_index);
 
-  free((void *)ai->ai_name);
   glw_event_flushqueue(&ai->ai_geq);
   glw_prop_destroy(ai->ai_prop_root);
   free(ai);
@@ -190,6 +195,7 @@ appi_settings_create(appi_t *ai)
   m = htsmsg_create();
 
   htsmsg_add_str(m, "application", ai->ai_app->app_name);
+  htsmsg_add_str(m, "title", glw_prop_get_string(ai->ai_prop_title));
   htsmsg_add_u32(m, "instanceid", ai->ai_instance_index);
   if(ai->ai_speedbutton[0])
     htsmsg_add_str(m, "speedbutton", ai->ai_speedbutton);
@@ -241,7 +247,7 @@ autolaunch_applications(void)
 
     if(instance > app_index)
       app_index = instance;
-
+    
     a = htsmsg_detach_submsg(f);
     app_spawn(app, a, instance);
   }
@@ -351,6 +357,7 @@ appi_speedbutton_mapper(glw_t *w, const char *name, appi_t *ai)
     return;
 
   glw_set(w,
+	  GLW_ATTRIB_CAPTION, ai->ai_speedbutton,
 	  GLW_ATTRIB_SIGNAL_HANDLER, speedbutton_interceptor, ai, 200,
 	  NULL);
 

@@ -99,10 +99,14 @@ typedef struct browser_node {
  * Top level browser struct
  */
 typedef struct browser_root {
-  hts_mutex_t br_hierarchy_mutex;  /* Locks insertions and deletions
-					  of childs in the entire tree.
-					  This lock may not be held for any
-					  significant time */
+  hts_mutex_t br_mutex;  /* Locks insertions and deletions
+			    of childs in the entire tree.
+			    This lock may not be held for any
+			    significant time.
+			    The lock also protects modification of br_refcount
+			 */
+
+  int br_refcnt;
 
   browser_node_t *br_root;
 
@@ -120,7 +124,7 @@ typedef struct browser_root {
 
 void browser_node_ref(browser_node_t *bn);
 
-void browser_node_deref(browser_node_t *bn);
+void browser_node_unref(browser_node_t *bn);
 
 browser_node_t *browser_node_add_child(browser_node_t *parent,
 				       const char *url, int type);
