@@ -235,8 +235,7 @@ ad_thread(void *aux)
 	hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
 	continue;
       }
-
-      if(mb->mb_dts < mp->mp_videoseekdts) {
+      if(mb->mb_dts < mp->mp_videoseekdts || mq->mq_len == MQ_HIWATER) {
 	TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
 	mq->mq_len--;
 	hts_cond_signal(&mp->mp_backpressure);
