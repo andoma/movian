@@ -29,6 +29,8 @@
 
 #include <inttypes.h>
 
+#include <GL/gl.h>
+
 #include "showtime.h"
 #include "media.h"
 #include "video_decoder.h"
@@ -46,7 +48,7 @@ typedef struct gl_dvdspu_pic {
   uint8_t gdp_palette[4];
   uint8_t gdp_alpha[4];
 
-  GLuint gdp_tex;
+  unsigned int gdp_tex;
 
   uint8_t *gdp_spu;
 

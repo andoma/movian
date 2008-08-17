@@ -28,6 +28,8 @@
 #include <stdio.h>
 #include <math.h>
 
+#include <GL/gl.h>
+
 #include "showtime.h"
 #include "media.h"
 #include "video_decoder.h"

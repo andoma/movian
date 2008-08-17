@@ -70,7 +70,7 @@ typedef struct gl_video_frame {
 
   int gvf_debob;
 
-  GLuint gvf_pbo;
+  unsigned int gvf_pbo;
   void *gvf_pbo_ptr;
   
   int gvf_pbo_offset[3];
@@ -82,9 +82,9 @@ typedef struct gl_video_frame {
   
   int gvf_uploaded;
 
-  GLuint gvf_textures[3];
+  unsigned int gvf_textures[3];
 
-  GLuint gvf_frame_buffer;
+  unsigned int gvf_frame_buffer;
 
 } gl_video_frame_t;
 
