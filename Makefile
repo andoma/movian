@@ -28,7 +28,7 @@ SRCS  += video_decoder.c video_widget.c video_menu.c \
 # audio subsys
 
 VPATH += audio
-SRCS  += audio.c audio_decoder.c audio_fifo.c audio_ui.c audio_iec958.c \
+SRCS  += audio.c audio_decoder.c audio_fifo.c audio_iec958.c \
 	 audio_mixer.c
 
 # ALSA Audio support

@@ -88,8 +88,6 @@ audio_init(void)
   audio_decoder_init();
   audio_alsa_init();
 
-  audio_widget_make();
-
   hts_thread_create(&ptid, audio_output_thread, NULL);
 
   audio_mixer_init();
