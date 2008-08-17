@@ -123,6 +123,7 @@ mainmenu_input_event(glw_event_t *ge, void *opaque)
 void
 mainmenu_show(appi_t *from)
 {
-  glw_select(from->ai_miniature);
+  if(from != NULL)
+    glw_select(from->ai_miniature);
   layout_appi_show(mainmenu_appi);
 }
