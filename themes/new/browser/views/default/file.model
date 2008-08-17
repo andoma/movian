@@ -1,8 +1,8 @@
 #include "theme://browser/views/default/plate.model"
 
-BROWSER_PLATE("theme://images/file.png",
+BROWSER_PLATE_EXPAND("theme://images/file.png",
 	     
-	      widget(label, {.caption = media.title;});
-	      ,
-	      space(1.0);
+		     widget(label, {.caption = media.title;});
+		     ,
+		     space(1.0);
     );

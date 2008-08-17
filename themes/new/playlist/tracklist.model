@@ -1,5 +1,5 @@
 widget(list, {
-  .expand = 3.0;
+  .expandChilds = true;
   .orientation = vertical;
   .id = "track_container";
   .slices = 30  / global.uiscale;

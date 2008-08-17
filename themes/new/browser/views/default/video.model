@@ -1,6 +1,6 @@
 #include "theme://browser/views/default/plate.model"
 
-BROWSER_PLATE("theme://images/movie.png",
+BROWSER_PLATE_EXPAND("theme://images/movie.png",
 	     
 	      widget(container_x, {
 		  widget(label, {.caption = media.title;});

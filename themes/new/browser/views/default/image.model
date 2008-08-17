@@ -1,14 +1,8 @@
 #include "theme://browser/views/default/plate.model"
 
-BROWSER_PLATE("thumb://" + media.url,
-	     
-	      widget(container_x, {
-		  widget(label, {.caption = media.title;});
+BROWSER_PLATE(
+	      widget(bitmap, {
+		  .source = "thumb://" + media.url;
+		  .keepAspect = true;
 		});
-	      ,
-
-	      widget(container_y, {
-		  widget(label, {.caption = media.originaldate;});
-		  space(2.0);
-		})
-    );
+	      );

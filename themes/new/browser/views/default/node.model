@@ -1,5 +1,14 @@
 #define NODEMODEL(N) { "theme://browser/views/default/" + N}
 
+.weight = translate(media.type,
+		    [
+		     "directory", "2",
+		     "file",      "2",
+		     "audio",     "2.5",
+		     "video",     "3.5",
+		     "image",     "6",
+		     "iso",       "2"
+		     ], "2");
 
 widget(animator, {
     .time = 0.3;

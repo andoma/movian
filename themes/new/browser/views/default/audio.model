@@ -1,6 +1,6 @@
 #include "theme://browser/views/default/plate.model"
 
-BROWSER_PLATE("theme://images/audio.png",
+BROWSER_PLATE_EXPAND("theme://images/audio.png",
 	     
 	      widget(container_x, {
 		  widget(label, {.caption = media.title;});
@@ -11,6 +11,5 @@ BROWSER_PLATE("theme://images/audio.png",
 	      widget(container_y, {
 		  widget(label, {.caption = media.author;});
 		  widget(label, {.caption = media.album;});
-		  space(1.0);
 		})
     );
