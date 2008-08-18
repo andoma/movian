@@ -565,7 +565,7 @@ playlist_save(playlist_t *pl)
   if(pl->pl_backdrop != NULL)
     htsmsg_add_str(m, "backdrop", pl->pl_backdrop);
 
-  t = htsmsg_create();
+  t = htsmsg_create_array();
 
   hts_mutex_lock(&playlistlock);
   TAILQ_FOREACH(ple, &pl->pl_entries, ple_link) {
@@ -573,7 +573,7 @@ playlist_save(playlist_t *pl)
   }
   hts_mutex_unlock(&playlistlock);
 
-  htsmsg_add_array(m, "tracks", t);
+  htsmsg_add_msg(m, "tracks", t);
 
   hts_settings_save(m, "playlists/%s", pl->pl_title);
   htsmsg_destroy(m);
