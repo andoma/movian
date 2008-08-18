@@ -25,6 +25,7 @@
 
 #include "app.h"
 
+LIST_HEAD(browser_node_list,   browser_node);
 TAILQ_HEAD(browser_node_queue, browser_node);
 TAILQ_HEAD(browser_view_queue, browser_view);
 
@@ -87,7 +88,7 @@ typedef struct browser_node {
   /* probe link and probe linked state is protected by root
      probemutex, for more info see browser_probe.[ch] */
 
-  TAILQ_ENTRY(browser_node) bn_probe_link;
+  LIST_ENTRY(browser_node) bn_probe_link;
   TAILQ_ENTRY(browser_node) bn_autoview_link;
 
 } browser_node_t;
@@ -116,7 +117,7 @@ typedef struct browser_root {
   hts_cond_t  br_probe_cond;
   hts_thread_t br_probe_thread_id;
   int br_probe_run;
-  struct browser_node_queue br_probe_queue;
+  struct browser_node_list br_probe_list;
   struct browser_node_queue br_autoview_queue;
 
 } browser_root_t;

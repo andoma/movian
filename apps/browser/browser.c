@@ -220,6 +220,14 @@ browser_scandir(browser_node_t *bn, int async)
 }
 
 /**
+ *
+ */
+typedef struct browser_scanner_ctx {
+  browser_node_t *bn;
+  struct browser_node_list l;
+} browser_scanner_ctx_t;
+
+/**
  * Directory scanner guts
  *
  * Returns 0 if ok
@@ -230,6 +238,9 @@ browser_scandir0(browser_node_t *bn)
 {
   int r = 0;
   const char *url;
+  browser_scanner_ctx_t bsc;
+  browser_node_t *c;
+  browser_root_t *br = bn->bn_root;
 
   if(bn->bn_type != FA_DIR)
     r = ENOTDIR;
@@ -241,8 +252,21 @@ browser_scandir0(browser_node_t *bn)
 
   if(!r) {
     url = filetag_get_str2(&bn->bn_ftags, FTAG_URL) ?: bn->bn_url;
-    r = fileaccess_scandir(url, browser_scandir_callback, bn);
+
+    bsc.bn = bn;
+    LIST_INIT(&bsc.l);
+    r = fileaccess_scandir(url, browser_scandir_callback, &bsc);
+
+    hts_mutex_lock(&br->br_probe_mutex);
+
+    while((c = LIST_FIRST(&bsc.l)) != NULL) {
+      LIST_REMOVE(c, bn_probe_link);
+      LIST_INSERT_HEAD(&br->br_probe_list, c, bn_probe_link);
+    }
+    hts_cond_signal(&br->br_probe_cond);
+    hts_mutex_unlock(&br->br_probe_mutex);
   }
+
 
   /**
    * Enqueue directory on probe queue.
@@ -276,16 +300,14 @@ static void
 browser_scandir_callback(void *arg, const char *url, const char *filename, 
 			 int type)
 {
-  browser_node_t *bn = arg, *c;
+  browser_scanner_ctx_t *bsc = arg;
+  browser_node_t *c;
 
   if(!strcasecmp(filename, "thumbs.db"))
     return;
 
-  c = browser_node_add_child(bn, url, type);
-
-  browser_probe_enqueue(c);
-
-  browser_node_unref(c);
+  c = browser_node_add_child(bsc->bn, url, type);
+  LIST_INSERT_HEAD(&bsc->l, c, bn_probe_link);
 }
 			 
 

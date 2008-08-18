@@ -43,8 +43,8 @@ browser_probe_thread(void *arg)
 
   while(br->br_probe_run) {
 
-    if((bn = TAILQ_FIRST(&br->br_probe_queue)) != NULL) {
-      TAILQ_REMOVE(&br->br_probe_queue, bn, bn_probe_link);
+    if((bn = LIST_FIRST(&br->br_probe_list)) != NULL) {
+      LIST_REMOVE(bn, bn_probe_link);
       hts_mutex_unlock(&br->br_probe_mutex);
 
       /* If the probing code is the only one with a reference, don't probe */
@@ -100,8 +100,8 @@ browser_probe_thread(void *arg)
 
   /* Clear the probe queue */
 
-  while((bn = TAILQ_FIRST(&br->br_probe_queue)) != NULL) {
-    TAILQ_REMOVE(&br->br_probe_queue, bn, bn_probe_link);
+  while((bn = LIST_FIRST(&br->br_probe_list)) != NULL) {
+    LIST_REMOVE(bn, bn_probe_link);
     browser_node_unref(bn);
   }
 
@@ -170,24 +170,6 @@ probe_figure_primary_content(browser_root_t *br, browser_node_t *bn)
 }
 
 
-
-/**
- *
- */
-void
-browser_probe_enqueue(browser_node_t *bn)
-{
-  browser_root_t *br = bn->bn_root;
-
-  browser_node_ref(bn);
-
-  hts_mutex_lock(&br->br_probe_mutex);
-  TAILQ_INSERT_TAIL(&br->br_probe_queue, bn, bn_probe_link);
-  hts_cond_signal(&br->br_probe_cond);
-  hts_mutex_unlock(&br->br_probe_mutex);
-}
-
-
 /**
  *
  */
@@ -212,7 +194,7 @@ void
 browser_probe_init(browser_root_t *br)
 {
   br->br_probe_run = 1;
-  TAILQ_INIT(&br->br_probe_queue);
+  LIST_INIT(&br->br_probe_list);
   TAILQ_INIT(&br->br_autoview_queue);
 
   hts_cond_init(&br->br_probe_cond);
