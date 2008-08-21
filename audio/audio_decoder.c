@@ -184,7 +184,7 @@ static const uint8_t swizzle_ac3[AUDIO_CHAN_MAX] = {
 /**
  *
  */
-static const uint8_t swizzle_dts_aac[AUDIO_CHAN_MAX] = {
+static const uint8_t swizzle_dts[AUDIO_CHAN_MAX] = {
   1, /* Left */
   2, /* Right */
   3, /* Back Left */
@@ -192,6 +192,19 @@ static const uint8_t swizzle_dts_aac[AUDIO_CHAN_MAX] = {
   0, /* Center */
   5, /* LFE */
 };
+
+/**
+ *
+ */
+static const uint8_t swizzle_aac[AUDIO_CHAN_MAX] = {
+  1, /* Left */
+  2, /* Right */
+  4, /* Back Left */
+  5, /* Back Right */
+  0, /* Center */
+  3, /* LFE */
+};
+
 
 
 /**
@@ -453,9 +466,13 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
    swizzle = NULL;
    switch(codec_id) {
    case CODEC_ID_DTS:
+     if(channels > 2)
+       swizzle = swizzle_dts;
+     break;
+
    case CODEC_ID_AAC:
      if(channels > 2)
-       swizzle = swizzle_dts_aac;
+       swizzle = swizzle_aac;
      break;
 
    case CODEC_ID_AC3:
