@@ -372,7 +372,8 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
     else
       ctx->request_channels = 0;
 
-    r = avcodec_decode_audio(ctx, ad->ad_outbuf, &data_size, buf, size);
+    data_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
+    r = avcodec_decode_audio2(ctx, ad->ad_outbuf, &data_size, buf, size);
     if(r == -1) {
       wrap_unlock_codec(cw);
       break;
