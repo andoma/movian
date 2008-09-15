@@ -78,7 +78,7 @@ widget(container_z, {
 				"NVIDIA Corporation", 
 				"theme://images/nvidia.png",
 				"ATI Technologies Inc.", 
-				"theme://images/nvidia.png"
+				"theme://images/ati.png"
 				 ],
 				"");
 	  });
