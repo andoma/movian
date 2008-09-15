@@ -585,98 +585,9 @@ alsa_probe(const char *card, const char *dev)
 }
 
 
-#if 0
-
-static void *
-alsa_thread(void *aux)
-{
-  int c, x;
-  int16_t *outbuf;
-  int outlen;
-  audio_buf_t *buf;
-  snd_pcm_sframes_t delay;
-  int current_output_type = AUDIO_OUTPUT_PCM;
-  void *iec958buf;
-  int f = AUDIO_OUTPUT_PCM;
-
-  iec958buf = calloc(1, IEC958_MAX_FRAME_SIZE);
-
-  if(config_get_str("alsa-ac3-device", NULL)) f |= AUDIO_OUTPUT_AC3;
-  if(config_get_str("alsa-dts-device", NULL)) f |= AUDIO_OUTPUT_DTS;
-
-  /* tell mixer which formats we support */
-
-  mixer_hw_output_formats = f;
-
-  while(1) {
-
-    alsa_configure(current_output_type);
-
-    while(1) {
-
-      buf = af_deq(&mixer_output_fifo);
-
-      if(buf->payload_type != current_output_type) {
-	current_output_type = buf->payload_type;
-	af_free(buf);
-	break;
-      }
-
-      switch(current_output_type) {
-
-      case AUDIO_OUTPUT_PCM:
-	outbuf = ab_dataptr(buf);
-	outlen = alsa_period_size;
-	break;
-
-      case AUDIO_OUTPUT_AC3:
-	outlen = iec958_build_ac3frame(ab_dataptr(buf), buf->size, iec958buf);
-	outbuf = iec958buf;
-	break;
-
-      case AUDIO_OUTPUT_DTS:
-	outlen = iec958_build_dtsframe(ab_dataptr(buf), buf->size, iec958buf);
-	outbuf = iec958buf;
-	break;
-
-      default:
-	outbuf = NULL;
-	outlen = 0;
-	break;
-      }
-
-      if(alsa_handle == NULL) {
-	af_free(buf);
-	continue;
-      }
-
-      c = snd_pcm_wait(alsa_handle, 100);
-      if(c >= 0) 
-	c = snd_pcm_avail_update(alsa_handle);
-
-      if(c == -EPIPE) {
-	snd_pcm_prepare(alsa_handle);
-	continue;
-      }
- 
-      if(outlen > 0) {
-
-	x = snd_pcm_writei(alsa_handle, outbuf, outlen);
-
-	if(snd_pcm_delay(alsa_handle, &delay))
-	  delay = 0;
-      
-      /* convert delay from sample rates to µs */
-	mixer_hw_output_delay = (delay * 1000 / alsa_rate) * 1000;
-      }
-
-      af_free(buf);
-    }
-  }
-}
-
-#endif
-
+/**
+ *
+ */
 static void
 alsa_probe_devices(void)
 {
@@ -883,17 +794,6 @@ alsa_mixer_add_controller(audio_mode_t *am, snd_mixer_elem_t *elem)
   } else {
     return;
   } 
-
-#if 0
-  if(snd_mixer_selem_has_common_switch(elem) || 
-     snd_mixer_selem_has_playback_switch(elem)) {
-    printf("\t%s is a simple switch\n", mc->mc_title);
-  }
-
-  if (snd_mixer_selem_is_enumerated(elem)) {
-    printf("%s is enumerated\n", mc->mc_title);
-  }
-#endif
 
   TAILQ_INSERT_TAIL(&am->am_mixer_controllers, mc, mc_link);
 }
