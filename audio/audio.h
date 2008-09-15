@@ -106,8 +106,6 @@ void audio_mode_register(audio_mode_t *am);
 
 void audio_init(void);
 
-void audio_alsa_init(void);
-
 void audio_settings_init(appi_t *ai, glw_t *m);
 
 

@@ -35,6 +35,10 @@ SRCS  += audio.c audio_decoder.c audio_fifo.c audio_iec958.c \
 VPATH += audio/alsa
 SRCS  += alsa_audio.c
 
+# Dummy Audio support (no output)
+VPATH += audio/dummy
+SRCS  += dummy_audio.c
+
 # layout engine(s)
 
 VPATH += layout

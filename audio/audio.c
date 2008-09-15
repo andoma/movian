@@ -85,8 +85,14 @@ audio_init(void)
   hts_mutex_init(&audio_mode_mutex);
 
   TAILQ_INIT(&audio_modes);
+
   audio_decoder_init();
-  audio_alsa_init();
+
+#define AUDIO_INIT_SUBSYS(name) \
+ do {extern void audio_## name ##_init(void); audio_## name ##_init();}while(0)
+
+  AUDIO_INIT_SUBSYS(dummy);
+  AUDIO_INIT_SUBSYS(alsa);
 
   hts_thread_create(&ptid, audio_output_thread, NULL);
 

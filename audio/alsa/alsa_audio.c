@@ -775,6 +775,8 @@ alsa_probe_devices(void)
 /**
  *
  */
+void audio_alsa_init(void); /* Avoid warning */
+
 void
 audio_alsa_init(void)
 {
