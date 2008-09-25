@@ -561,7 +561,7 @@ htsp_com_thread(void *aux)
     htsmsg_destroy(m);
 
     hc->hc_connected = 1;
-    hts_create(&hc->hc_worker_tid, NULL, htsp_worker_thread, hc);
+    hts_thread_create(&hc->hc_worker_tid, htsp_worker_thread, hc);
 
     tv_fatal_error(hc->hc_tv, NULL);  /* Reset any pending fatal error */
 
@@ -596,7 +596,7 @@ htsp_com_thread(void *aux)
     hts_cond_broadcast(&hc->hc_rpc_cond);
     hts_cond_broadcast(&hc->hc_worker_cond);
   
-    hts_join(hc->hc_worker_tid, NULL);
+    hts_thread_join(hc->hc_worker_tid);
 
     hts_mutex_lock(&tv->tv_ch_mutex);
     tv_remove_all(tv);
@@ -645,15 +645,15 @@ htsp_create(const char *url, tv_t *tv)
   hc->hc_port = port;
 
 
-  hts_mutex_init(&hc->hc_worker_lock, NULL);
-  hts_cond_init(&hc->hc_worker_cond, NULL);
+  hts_mutex_init(&hc->hc_worker_lock);
+  hts_cond_init(&hc->hc_worker_cond);
   TAILQ_INIT(&hc->hc_worker_queue);
 
-  hts_mutex_init(&hc->hc_rpc_lock, NULL);
-  hts_cond_init(&hc->hc_rpc_cond, NULL);
+  hts_mutex_init(&hc->hc_rpc_lock);
+  hts_cond_init(&hc->hc_rpc_cond);
   TAILQ_INIT(&hc->hc_rpc_queue);
 
-  hts_create(&hc->hc_com_tid,    NULL, htsp_com_thread, hc);
+  hts_thread_create(&hc->hc_com_tid, htsp_com_thread, hc);
   return hc;
 }
 

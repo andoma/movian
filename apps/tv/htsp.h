@@ -52,7 +52,7 @@ typedef struct htsp_connection {
   int hc_port;
 
   hts_thread_t hc_com_tid;
-  hrs_thread_t hc_worker_tid;
+  hts_thread_t hc_worker_tid;
 
   int hc_fd;
 
