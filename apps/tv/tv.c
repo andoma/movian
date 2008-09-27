@@ -15,7 +15,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #define _GNU_SOURCE
 
 #include <assert.h>
@@ -26,256 +25,159 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <dirent.h>
 
 #include <libglw/glw.h>
 
 #include "showtime.h"
 #include "layout/layout.h"
-#include "layout/layout_forms.h"
-#include "layout/layout_support.h"
-
+#include "event.h"
 #include "htsp.h"
 
-#define TV_TYPE_HTSP 1
-
-typedef struct tvconfig {
-  char tc_title[40];
-  char tc_url[256];
-} tvconfig_t;
-
+static void tv_unsubscribe(tv_t *tv, tv_channel_t *ch);
 
 /**
- * Display a fatal error for the user
- *
- * Fatal is things as: Unable to connect to server, and such things
- *
- * If 'err' is NULL we should remove any display (i.e, it's okay again)
- */
-void 
-tv_fatal_error(tv_t *tv, const char *err)
-{
-  char errbuf[400];
-
-  if(err == tv->tv_last_err)
-    return;
-
-  tv->tv_last_err = err;
-
-  if(tv->tv_fatal_error != NULL) {
-    glw_detach(tv->tv_fatal_error);
-    tv->tv_fatal_error = NULL;
-  }
-
-  if(err == NULL)
-    return;
-
-  snprintf(errbuf, sizeof(errbuf),
-	   "%s\n\n"
-	   "%s\n\n"
-	   "%s",
-	   tv->tv_cfg->tc_title,
-	   tv->tv_cfg->tc_url,
-	   err);
-
-  tv->tv_fatal_error = glw_create(GLW_MODEL,
-				  GLW_ATTRIB_PARENT, tv->tv_stack,
-				  GLW_ATTRIB_FILENAME, "tv/fatal-error",
-				  NULL);
-
-  layout_update_multilinetext(tv->tv_fatal_error, 
-			      "text", errbuf, 5, GLW_ALIGN_CENTER);
-}
-
-
-/**
- *
+ *  Return 0 if user wants to exit, otherwise -1
  */
 static int
-tv_root_widget(glw_t *w, void *opaque, glw_signal_t sig, ...)
+tv_access_error(tv_t *tv, appi_t *ai, const char *dir, 
+		const char *errtxt)
 {
-  tv_t *tv = opaque;
-  appi_t *ai = tv->tv_ai;
-  inputevent_t *ie;
-
-  va_list ap;
-  va_start(ap, sig);
+  int r;
+  glw_t *m;
+  glw_prop_t *p;
   
-  switch(sig) {
-  default:
-    break;
+  p = glw_prop_create(NULL, "error", GLW_GP_DIRECTORY);
+  glw_prop_set_stringf(glw_prop_create(p, "details", GLW_GP_STRING),
+		       "\"%s\"\n%s", dir, errtxt);
 
-  case GLW_SIGNAL_INPUT_EVENT:
-    ie = va_arg(ap, void *);
-    input_postevent(&ai->ai_ic, ie);
-    return 1;
-  }
-  va_end(ap);
-  return 0;
+  m = glw_model_create("theme://tv/access-error.model", tv->tv_stack,
+		       0, p, NULL);
+  r = glw_wait_form_ok_cancel(m);
+  glw_detach(m);
+  glw_prop_destroy(p);
+  return r;
 }
-
-
-
-/**
- * Store information about this TV instance on disk
- */
-static void
-tv_store_instance(appi_t *ai, tvconfig_t *cfg, int type)
-{
-  FILE *fp = appi_setings_create(ai);
-  const char *typetxt;
-
-  if(fp == NULL)
-    return;
-  
-  switch(type) {
-  case TV_TYPE_HTSP:
-    typetxt = "htsp";
-    break;
-  default:
-    abort();
-  }
-
-  fprintf(fp, "type = %s\n", typetxt);
-  fprintf(fp, "title = %s\n", cfg->tc_title);
-  fprintf(fp, "url = %s\n", cfg->tc_url);
-  fclose(fp);
-}
-
-
-/**
- * Send a signal from glw-level to the tv main dispatcher
- */
-static void
-channel_signal(tv_channel_t *ch, int op)
-{
-  inputevent_t ie;
-  tv_t *tv = ch->ch_tv;
-
-  ie.type = INPUT_VEC;
-  ie.u.vec.u32[0] = op;
-  ie.u.vec.u32[1] = ch->ch_tag;
-
-  input_postevent(&tv->tv_ai->ai_ic, &ie);
-}
-
-
-
-/**
- * Callback when user operates on a channel widget
- */
-static int
-channel_entry_callback(glw_t *w, void *opaque, glw_signal_t signal, ...)
-{
-  switch(signal) {
-  default:
-    break;
-
-  case GLW_SIGNAL_ENTER:
-    channel_signal(opaque, signal);
-    return 1;
-  }
-  return 0;
-}
-
 
 
 /**
  *
  */
-tv_ch_group_t *
-tv_channel_group_find(tv_t *tv, const char *name, int create)
+tv_tag_t *
+tv_tag_find(tv_t *tv, const char *identifier, int create)
 {
-  tv_ch_group_t *tcg;
-  struct layout_form_entry_list lfelist;
-  glw_t *w;
+  tv_tag_t *tt;
 
-  TAILQ_FOREACH(tcg, &tv->tv_groups, tcg_link)
-    if(!strcmp(tcg->tcg_name, name))
-      return tcg;
+  TAILQ_FOREACH(tt, &tv->tv_tags, tt_tv_link)
+    if(!strcmp(tt->tt_identifier, identifier))
+      return tt;
 
   if(!create)
     return NULL;
 
-  tcg = calloc(1, sizeof(tv_ch_group_t));
-  TAILQ_INSERT_TAIL(&tv->tv_groups, tcg, tcg_link);
-  tcg->tcg_name = strdup(name);
-  TAILQ_INIT(&tcg->tcg_channels);
+  tt = calloc(1, sizeof(tv_tag_t));
+  tt->tt_identifier = strdup(identifier);
+  TAILQ_INSERT_TAIL(&tv->tv_tags, tt, tt_tv_link);
+  TAILQ_INIT(&tt->tt_ctms);
 
+  tt->tt_prop_root  = glw_prop_create(NULL, "tag", GLW_GP_DIRECTORY);
+  tt->tt_prop_title = glw_prop_create(tt->tt_prop_root,
+				      "title", GLW_GP_STRING);
   /**
    * Create widget
    */
-  tcg->tcg_widget = glw_create(GLW_MODEL,
-			       GLW_ATTRIB_FILENAME, "tv/channel-group",
-			       NULL);
+  tt->tt_widget = glw_model_create("theme://tv/tag.model", NULL, 0,
+				   prop_global,
+				   tv->tv_prop_root,
+				   tv->tv_ai->ai_prop_root,
+				   tt->tt_prop_root,
+				   NULL);
 
-  layout_update_str(tcg->tcg_widget, "title", name);
+  tt->tt_tab = glw_model_create("theme://tv/chlist.model", NULL, 0,
+				   prop_global,
+				   tv->tv_prop_root,
+				   tv->tv_ai->ai_prop_root,
+				   tt->tt_prop_root,
+				   NULL);
 
-  w = layout_form_add_tab2(tv->tv_root, "groups", tcg->tcg_widget,
-			   "channel_list_container", "tv/channellist");
-  tcg->tcg_tab = w;
+  tt->tt_chlist = glw_find_by_id(tt->tt_tab, "channel_container", 0);
 
-  tcg->tcg_channel_list = glw_find_by_id(w, "channel_list", 0);
+  glw_add_tab(tv->tv_rootwidget,
+	      "tag_container", tt->tt_widget,
+	      "chlist_container", tt->tt_tab);
 
-  TAILQ_INIT(&lfelist);
-  LFE_ADD_MONITOR_CHILD(&lfelist, "channel_list", 4);
-  layout_form_initialize(&lfelist, w, &tv->tv_ai->ai_gfs,
-			 &tv->tv_ai->ai_ic, 0);
-
-  return tcg;
+  return tt;
 }
+
+/**
+ *
+ */
+void
+tv_tag_set_title(tv_tag_t *tt, const char *title)
+{
+  if(title != NULL)
+    glw_prop_set_string(tt->tt_prop_title, title);
+}
+
 
 /**
  *
  */
 tv_channel_t *
-tv_channel_find(tv_t *tv, tv_ch_group_t *tcg, const char *name, int create)
+tv_channel_find(tv_t *tv, uint32_t id, int create)
 {
   tv_channel_t *ch;
+  int i;
+  glw_prop_t *p, *p_epg, *p_sub;
+  char buf[10];
 
-  TAILQ_FOREACH(ch, &tcg->tcg_channels, ch_link)
-    if(!strcmp(ch->ch_name, name))
+  TAILQ_FOREACH(ch, &tv->tv_channels, ch_tv_link)
+    if(ch->ch_id == id)
       return ch;
 
   if(!create)
     return NULL;
 
   ch = calloc(1, sizeof(tv_channel_t));
-  TAILQ_INSERT_TAIL(&tcg->tcg_channels, ch, ch_link);
-  ch->ch_name = strdup(name);
+  TAILQ_INIT(&ch->ch_ctms);
+  TAILQ_INSERT_TAIL(&tv->tv_channels, ch, ch_tv_link);
   ch->ch_tv = tv;
+  ch->ch_id = id;
 
-  /**
-   * Create widget
-   */
-  ch->ch_widget =
-    glw_create(GLW_MODEL,
-	       GLW_ATTRIB_PARENT, tcg->tcg_channel_list,
-	       GLW_ATTRIB_SIGNAL_HANDLER, channel_entry_callback, ch, 400,
-	       GLW_ATTRIB_FILENAME, "tv/channel",
-	       NULL);
+  ch->ch_prop_root  = glw_prop_create(NULL, "channel", GLW_GP_DIRECTORY);
+  ch->ch_prop_title = glw_prop_create(ch->ch_prop_root,
+				      "title", GLW_GP_STRING);
+  ch->ch_prop_icon  = glw_prop_create(ch->ch_prop_root,
+				      "icon", GLW_GP_STRING);
 
-  layout_update_str(ch->ch_widget, "title", ch->ch_name);
+  p_epg = glw_prop_create(ch->ch_prop_root, "epg", GLW_GP_DIRECTORY);
+
+  for(i = 0; i < 3; i++) {
+    snprintf(buf, sizeof(buf), "event%d", i);
+    p = glw_prop_create(p_epg, buf, GLW_GP_DIRECTORY);
+    
+    ch->ch_prop_epg_title[i] = glw_prop_create(p, "title", GLW_GP_STRING);
+    ch->ch_prop_epg_start[i] = glw_prop_create(p, "start", GLW_GP_INT);
+    ch->ch_prop_epg_stop[i]  = glw_prop_create(p, "stop",  GLW_GP_INT);
+  }
+
+  /* Subscription props */
+
+  p_sub = glw_prop_create(ch->ch_prop_root, "subscription", GLW_GP_DIRECTORY);
+
+  ch->ch_prop_sub_status = glw_prop_create(p_sub, "status", GLW_GP_STRING);
   return ch;
 }
+
 
 /**
  *
  */
-tv_channel_t *
-tv_channel_find_by_tag(tv_t *tv, uint32_t tag)
+void
+tv_channel_set_title(tv_channel_t *ch, const char *title)
 {
-  tv_ch_group_t *tcg;
-  tv_channel_t *ch;
-
-  TAILQ_FOREACH(tcg, &tv->tv_groups, tcg_link)
-    TAILQ_FOREACH(ch, &tcg->tcg_channels, ch_link)
-      if(ch->ch_tag == tag)
-        return ch;
-  return NULL;
+  if(title != NULL)
+    glw_prop_set_string(ch->ch_prop_title, title);
 }
-
-
 
 
 /**
@@ -284,15 +186,148 @@ tv_channel_find_by_tag(tv_t *tv, uint32_t tag)
 void
 tv_channel_set_icon(tv_channel_t *ch, const char *icon)
 {
-  glw_t *w;
-
-  if((w = glw_find_by_id(ch->ch_widget, "icon", 0)) == NULL)
-    return;
-
-  glw_set(w,
-	  GLW_ATTRIB_FILENAME, icon,
-	  NULL);
+  if(icon != NULL)
+    glw_prop_set_string(ch->ch_prop_icon, icon);
 }
+
+/**
+ *
+ */
+static void
+tv_control_signal(tv_t *tv, int cmd, int key)
+{
+  tv_ctrl_event_t *tce;
+
+  tce = glw_event_create(EVENT_TV, sizeof(tv_ctrl_event_t));
+  tce->cmd = cmd;
+  tce->key = key;
+  glw_event_enqueue(&tv->tv_ai->ai_geq, &tce->h);
+}
+
+
+/**
+ * Callback for intercepting user events on a channel (enter, select, etc)
+ */
+static int
+channel_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
+			void *extra)
+{
+  glw_event_t *ge = extra;
+  tv_t *tv = opaque;
+  if(signal != GLW_SIGNAL_EVENT)
+    return 0;
+
+  switch(ge->ge_type) {
+  default:
+    break;
+
+  case EVENT_KEY_SELECT:
+    tv_control_signal(tv, TV_CTRL_START, w->glw_u32);
+    return 1;
+
+  case GEV_ENTER:
+  case EVENT_KEY_PLAY:
+    tv_control_signal(tv, TV_CTRL_CLEAR_AND_START, w->glw_u32);
+    return 1;
+
+  case EVENT_KEY_STOP:
+    tv_control_signal(tv, TV_CTRL_STOP, w->glw_u32);
+    return 1;
+
+  case EVENT_KEY_EJECT:
+    tv_control_signal(tv, TV_CTRL_CLEAR, w->glw_u32);
+    return 1;
+  }
+  return 0;
+}
+
+
+/**
+ *
+ */
+void
+tv_tag_map_channel(tv_t *tv, tv_tag_t *tt, tv_channel_t *ch)
+{
+  tv_channel_tag_map_t *ctm;
+
+  TAILQ_FOREACH(ctm, &tt->tt_ctms, ctm_tag_link)
+    if(ctm->ctm_channel == ch)
+      break;
+  if(ctm != NULL) {
+    /* Maping already exist, just make sure it's not deleted */
+    ctm->ctm_delete_me = 0;
+    return;
+  }
+
+  ctm = calloc(1, sizeof(tv_channel_tag_map_t));
+  ctm->ctm_tag = tt;
+  ctm->ctm_channel = ch;
+  TAILQ_INSERT_TAIL(&ch->ch_ctms, ctm, ctm_channel_link);
+  TAILQ_INSERT_TAIL(&tt->tt_ctms, ctm, ctm_tag_link);
+
+  /**
+   * Create channel widget in tag list
+   */
+  ctm->ctm_widget = glw_model_create("theme://tv/channel.model",
+				     tt->tt_chlist, GLW_MODEL_CACHE,
+				     ch->ch_prop_root,
+				     tt->tt_prop_root,
+				     prop_global,
+				     NULL);
+
+  ctm->ctm_widget->glw_u32 = ch->ch_id; /* A bit ugly */
+
+  glw_set(ctm->ctm_widget,
+	  GLW_ATTRIB_SIGNAL_HANDLER, channel_widget_callback, tv, 400,
+	  NULL);
+
+  
+}
+
+
+/**
+ *
+ */
+static void
+ctm_destroy(tv_channel_tag_map_t *ctm)
+{
+  tv_channel_t *ch = ctm->ctm_channel;
+  tv_tag_t *tt = ctm->ctm_tag;
+
+  glw_destroy(ctm->ctm_widget);
+  TAILQ_REMOVE(&ch->ch_ctms, ctm, ctm_channel_link);
+  TAILQ_REMOVE(&tt->tt_ctms, ctm, ctm_tag_link);
+  free(ctm);
+}
+/**
+ *
+ */
+void
+tv_tag_mark_ctms(tv_tag_t *tt)
+{
+  tv_channel_tag_map_t *ctm;
+  TAILQ_FOREACH(ctm, &tt->tt_ctms, ctm_tag_link)
+    ctm->ctm_delete_me = 1;
+}
+
+
+
+/**
+ *
+ */
+void
+tv_tag_delete_marked_ctms(tv_tag_t *tt)
+{
+  tv_channel_tag_map_t *ctm, *next;
+
+  for(ctm = TAILQ_FIRST(&tt->tt_ctms); ctm != NULL; ctm = next) {
+    next = TAILQ_NEXT(ctm, ctm_tag_link);
+    if(ctm->ctm_delete_me)
+      ctm_destroy(ctm);
+  }
+}
+
+
 
 
 /**
@@ -302,52 +337,52 @@ void
 tv_channel_set_current_event(tv_channel_t *ch, int index, 
 			     const char *title, time_t start, time_t stop)
 {
-  char id[20];
-  char buf[30];
-  struct tm tm1, tm2;
-
-  snprintf(id, sizeof(id), "title%d", index + 1);
-  layout_update_str(ch->ch_widget, id, title);
-
-  snprintf(id, sizeof(id), "time%d", index + 1);
-  if(start && stop) {
-    localtime_r(&start, &tm1);
-    localtime_r(&stop,  &tm2);
-    
-    snprintf(buf, sizeof(buf), "%02d:%02d - %02d:%02d",
-	     tm1.tm_hour, tm1.tm_min, tm2.tm_hour, tm2.tm_min);
-
-    layout_update_str(ch->ch_widget, id, buf);
-  } else {
-    layout_update_str(ch->ch_widget, id, NULL);
-  }
+  glw_prop_set_string(ch->ch_prop_epg_title[index], title);
+  glw_prop_set_int(ch->ch_prop_epg_start[index],    start);
+  glw_prop_set_int(ch->ch_prop_epg_stop[index],     stop);
 }
 
 /**
  *
  */
-static void
-tv_channel_destroy(tv_ch_group_t *tcg, tv_channel_t *ch)
+void
+tv_channel_destroy(tv_t *tv, tv_channel_t *ch)
 {
-  glw_destroy(ch->ch_widget);
+  tv_channel_tag_map_t *ctm;
 
-  TAILQ_REMOVE(&tcg->tcg_channels, ch, ch_link);
-  free(ch->ch_name);
+  tv_unsubscribe(tv, ch);
+
+  while((ctm = TAILQ_FIRST(&ch->ch_ctms)) != NULL)
+    ctm_destroy(ctm);
+
+  TAILQ_REMOVE(&tv->tv_channels, ch, ch_tv_link);
+
+  glw_prop_destroy(ch->ch_prop_root);
+
   free(ch);
 }
 
+
+
 /**
  *
  */
-static void
-tv_channel_group_destroy(tv_t *tv, tv_ch_group_t *tcg)
+void
+tv_tag_destroy(tv_t *tv, tv_tag_t *tt)
 {
-  glw_destroy(tcg->tcg_widget);
-  glw_destroy(tcg->tcg_tab);
+  tv_channel_tag_map_t *ctm;
 
-  TAILQ_REMOVE(&tv->tv_groups, tcg, tcg_link);
-  free(tcg->tcg_name);
-  free(tcg);
+  while((ctm = TAILQ_FIRST(&tt->tt_ctms)) != NULL)
+    ctm_destroy(ctm);
+
+  TAILQ_REMOVE(&tv->tv_tags, tt, tt_tv_link);
+
+  glw_destroy(tt->tt_widget);
+  glw_destroy(tt->tt_tab);
+
+  glw_prop_destroy(tt->tt_prop_root);
+
+  free(tt);
 }
 
 
@@ -358,16 +393,135 @@ tv_channel_group_destroy(tv_t *tv, tv_ch_group_t *tcg)
 void
 tv_remove_all(tv_t *tv)
 {
-  tv_ch_group_t *tcg;
   tv_channel_t *ch;
+  tv_tag_t *tt;
 
-  while((tcg = TAILQ_FIRST(&tv->tv_groups)) != NULL) {
+  while((ch = TAILQ_FIRST(&tv->tv_channels)) != NULL)
+    tv_channel_destroy(tv, ch);
 
-    while((ch = TAILQ_FIRST(&tcg->tcg_channels)) != NULL)
-      tv_channel_destroy(tcg, ch);
+  while((tt = TAILQ_FIRST(&tv->tv_tags)) != NULL)
+    tv_tag_destroy(tv, tt);
 
-    tv_channel_group_destroy(tv, tcg);
+}
+
+/**
+ * Stop playback on a channel.
+ * Internal code only, this does not communicate with backend.
+ *
+ * 'tv_ch_mutex' must be locked.
+ */
+void
+tv_channel_stop(tv_t *tv, tv_channel_t *ch)
+{
+  formatwrap_t *fw = ch->ch_fw;
+  media_pipe_t *mp = ch->ch_mp;
+  tv_channel_stream_t *tcs;
+
+  if(ch->ch_running == 0)
+    return;
+
+  ch->ch_running = 0;
+
+  /* Remove from running link, no more packets should enter the pipeline */
+  pthread_mutex_lock(&tv->tv_running_mutex);
+  LIST_REMOVE(ch, ch_running_link);
+  pthread_mutex_unlock(&tv->tv_running_mutex);
+
+  /* Close codecs in the correct way */
+
+  wrap_lock_all_codecs(fw);
+
+  while((tcs = LIST_FIRST(&ch->ch_streams)) != NULL) {
+    wrap_codec_deref(tcs->tcs_cw, 0);
+    LIST_REMOVE(tcs, tcs_link);
+    free(tcs);
   }
+
+  wrap_format_wait(fw);
+
+  mp->mp_audio.mq_stream = -1;
+  mp->mp_video.mq_stream = -1;
+
+  ch->ch_fw = NULL;
+}
+
+
+/**
+ * Subscribe to a channel.
+ * - Send subscription request to backend.
+ * - Create widgets, and media pipe
+ *
+ * 'tv_ch_mutex' must be locked.
+ */
+static void
+tv_subscribe(tv_t *tv, tv_channel_t *ch)
+{
+  glw_t *vwp;
+  char errbuf[100];
+
+  if(tv->tv_be_subscribe == NULL)
+    return; /* No backend, can't do anything */
+
+  if(ch->ch_subscribed)
+    return; /* Subscribe twice does not do anything.
+	       Perhaps we should pop the subscription to front? */
+
+  ch->ch_subscribe_widget =
+    glw_model_create("theme://tv/subscription.model",
+		     tv->tv_subscription_container, GLW_MODEL_CACHE,
+		     ch->ch_prop_root,
+		     prop_global,
+		     NULL);
+
+  vwp = glw_find_by_id(ch->ch_subscribe_widget, "video_container", 0);
+
+
+  vd_conf_init(&ch->ch_vdc);
+  ch->ch_mp = mp_create("TV");
+
+  assert(ch->ch_video_widget == NULL);
+  ch->ch_video_widget = vd_create_widget(vwp, ch->ch_mp, 0.0);
+
+  mp_set_video_conf(ch->ch_mp, &ch->ch_vdc);
+
+  ch->ch_subscribed = 1;
+
+  if(tv->tv_be_subscribe(tv->tv_be_opaque, ch, errbuf, sizeof(errbuf)) < 0)
+    glw_prop_set_string(ch->ch_prop_sub_status, errbuf);
+}
+
+/**
+ * Unsubscribe from a channel.
+ * - Destroy widgets, and media pipe
+ * - Send subscription stop to backend.
+ *
+ * We don't actually wait for response from the backend.
+ * Instead we just tear down everything.
+ *
+ * 'tv_ch_mutex' must be locked.
+ */
+static void
+tv_unsubscribe(tv_t *tv, tv_channel_t *ch)
+{
+  if(!ch->ch_subscribed)
+    return; /* Already unsubscribed */
+
+  /* If backend no longer has an unsubscribe callback we assume
+     that it has cleaned up everything itself, thus we just skip
+     over the call */
+
+  if(tv->tv_be_unsubscribe != NULL)
+    tv->tv_be_unsubscribe(tv->tv_be_opaque, ch);
+
+  tv_channel_stop(tv, ch);
+
+  /* Destroy subscription widget (video, etc) */
+  glw_destroy(ch->ch_subscribe_widget);
+
+  /* Unref media_pipe */
+  mp_unref(ch->ch_mp);
+  ch->ch_mp = NULL;
+  ch->ch_subscribed = 0;
 }
 
 
@@ -375,182 +529,168 @@ tv_remove_all(tv_t *tv)
  *
  */
 static void
-tv_subscribe(tv_t *tv, htsp_connection_t *hc, uint32_t id)
+tv_unsubscribe_all(tv_t *tv)
 {
   tv_channel_t *ch;
 
-  hts_mutex_lock(&tv->tv_ch_mutex);
-  if((ch = tv_channel_find_by_tag(tv, id)) != NULL) {
-    htsp_subscribe(hc, ch);
-  }
-  hts_mutex_unlock(&tv->tv_ch_mutex);
+  TAILQ_FOREACH(ch, &tv->tv_channels, ch_tv_link)
+    tv_unsubscribe(tv, ch);
 }
+
+
+
+/**
+ *
+ */
+static void
+handle_tv_ctrl_event(tv_t *tv, tv_ctrl_event_t *tce)
+{
+  tv_channel_t *ch;
+
+  switch(tce->cmd) {
+  case TV_CTRL_CLEAR_AND_START:
+    tv_unsubscribe_all(tv);
+    /* FALLTHRU */
+  case TV_CTRL_START:
+    if((ch = tv_channel_find(tv, tce->key, 0)) == NULL)
+      break;
+
+    tv_subscribe(tv, ch);
+    break;
+
+  case TV_CTRL_CLEAR:
+    tv_unsubscribe_all(tv);
+    break;
+
+  case TV_CTRL_STOP:
+    if((ch = tv_channel_find(tv, tce->key, 0)) == NULL)
+      break;
+    tv_unsubscribe(tv, ch);
+    break;
+  }
+}
+
+
+
+/**
+ * Store information about this TV instance on disk
+ */
+static void
+tv_store_instance(appi_t *ai, tv_t *tv)
+{
+  htsmsg_t *m = appi_settings_create(ai);
+  htsmsg_add_str(m, "url", glw_prop_get_string(tv->tv_prop_url));
+  appi_settings_save(ai, m);
+}
+
+
+
+
+/**
+ * TV configuration
+ */
+static void
+tv_config(tv_t *tv, appi_t *ai)
+{
+  glw_t *m;
+  glw_event_t *ge;
+  glw_event_appmethod_t *gea;
+
+  m = glw_model_create("theme://tv/config.model", tv->tv_stack, 0,
+		       prop_global, 
+		       tv->tv_prop_root, 
+		       ai->ai_prop_root, 
+		       NULL);
+
+  appi_speedbutton_mapper(m, "speedbutton", ai);
+
+  ge = glw_wait_form(m);
+
+  if(ge->ge_type == GEV_OK) {
+    glw_prop_set_from_widget(m, "title",    ai->ai_prop_title);
+    glw_prop_set_from_widget(m, "url",      tv->tv_prop_url);
+
+    tv_store_instance(ai, tv);
+
+    tv->tv_runstatus = TV_RS_RECONFIGURE;
+  } else if(ge->ge_type == GEV_CANCEL) {
+    tv->tv_runstatus = TV_RS_RUN;
+
+  } else if(ge->ge_type == GEV_APPMETHOD) {
+    gea = (glw_event_appmethod_t *)ge;
+
+    if(!strcmp(gea->method, "appQuit"))
+      tv->tv_runstatus = TV_RS_STOP;
+  }
+
+  glw_event_unref(ge);
+  glw_detach(m);
+}
+
 
 
 /**
  *
  */
 static int
-tv_main(tv_t *tv, appi_t *ai, int type, tvconfig_t *cfg)
+tv_main(tv_t *tv, appi_t *ai)
 {
+  glw_event_t *ge;
+  const char *url;
   htsp_connection_t *hc;
-  glw_t *w;
-  struct layout_form_entry_list lfelist;
-  int run = 1;
-  inputevent_t ie;
 
-  tv->tv_cfg = cfg;
+  glw_event_flushqueue(&ai->ai_geq);
 
-  TAILQ_INIT(&tv->tv_groups);
-  TAILQ_INIT(&tv->tv_running_channels);
+  while(tv->tv_runstatus != TV_RS_STOP) {
 
-  tv_store_instance(ai, cfg, type);
-
-  /**
-   * Update title in task switcher miniature widget
-   */
-  if((w = glw_find_by_id(tv->tv_miniature, "title", 0)) != NULL)
-    glw_set(w, GLW_ATTRIB_CAPTION, cfg->tc_title, NULL);
-
-  /**
-   * Create group root
-   */ 
-  
-  tv->tv_root = glw_create(GLW_MODEL,
-			   GLW_ATTRIB_PARENT, tv->tv_stack,
-			   GLW_ATTRIB_FILENAME, "tv/root",
-			   NULL);
-
-
-  /**
-   * Setup widget navigation
-   */
-  TAILQ_INIT(&lfelist);
-  LFE_ADD(&lfelist, "groups");
-  //  LFE_ADD_BTN(&lfelist, "rename_playlist", PL_EVENT_RENAME_PLAYLIST);
-  //  LFE_ADD_BTN(&lfelist, "delete_playlist", PL_EVENT_DELETE_PLAYLIST);
-  layout_form_initialize(&lfelist, tv->tv_root, &ai->ai_gfs, &ai->ai_ic, 1);
-
-
-  hc = htsp_create(cfg->tc_url, tv);
-
-
-
-
-  input_flush_queue(&ai->ai_ic);
-
-  while(run) {
-
-    input_getevent(&ai->ai_ic, 1, &ie, NULL);
+    /**
+     * Create browser root
+     */ 
+    url = glw_prop_get_string(tv->tv_prop_url);
     
-    switch(ie.type) {
-    default:
-      break;
+    if((hc = htsp_create(url, tv)) == NULL) {
+      tv_access_error(tv, ai, url, "Can not connect");
+      tv_config(tv, ai);
+    } else {
+      tv->tv_runstatus = TV_RS_RUN;
+    }
 
-    case INPUT_VEC:
-      switch(ie.u.vec.u32[0]) {
+    while(tv->tv_runstatus == TV_RS_RUN) {
 
-      case GLW_SIGNAL_ENTER:
-	tv_subscribe(tv, hc, ie.u.vec.u32[1]);
+      ge = glw_event_get(-1, &ai->ai_geq);
+
+      switch(ge->ge_type) {
+      default:
+	break;
+
+      case EVENT_KEY_MENU:
+	tv_config(tv, ai);
+	break;
+
+      case GEV_BACKSPACE:
+	mainmenu_show(ai);
+	break;
+
+      case EVENT_TV:
+	hts_mutex_lock(&tv->tv_ch_mutex);
+	handle_tv_ctrl_event(tv, (tv_ctrl_event_t *)ge);
+	hts_mutex_unlock(&tv->tv_ch_mutex);
 	break;
       }
-      break;
+      glw_event_unref(ge);
     }
+
+    if(hc != NULL)
+      htsp_destroy(hc);
+    hc = NULL;
   }
 
   return 0;
 }
 
 
-
 /**
- *  Setup a TV client and ask for user configuration
- */
-static int
-tv_setup(tv_t *tv, appi_t *ai)
-{
-  struct layout_form_entry_list lfelist;
-  glw_t *m, *t;
-  inputevent_t ie;
-
-  tvconfig_t htsp_cfg;
-
-  TAILQ_INIT(&lfelist);
-
-  m = glw_create(GLW_MODEL,
-		 GLW_ATTRIB_PARENT, tv->tv_stack,
-		 GLW_ATTRIB_FILENAME, "tv/setup",
-		 NULL);
-
-  LFE_ADD(&lfelist, "tv_type_list");
-
-  /**
-   * HTSP client
-   */
-  memset(&htsp_cfg, 0, sizeof(tvconfig_t));
-  t = layout_form_add_tab(m,
-			  "tv_type_list",       "tv/setup-htsp-icon",
-			  "tv_type_container",  "tv/setup-htsp-tab");
-
-  strcpy(htsp_cfg.tc_title, "HTS Tvheadend");
-  strcpy(htsp_cfg.tc_url, "htsp://127.0.0.1:9910");
-
-  LFE_ADD_STR(&lfelist, "htsp_title", 
-	      htsp_cfg.tc_title, sizeof(htsp_cfg.tc_title), 0);
-
-  LFE_ADD_STR(&lfelist, "htsp_url", 
-	      htsp_cfg.tc_url, sizeof(htsp_cfg.tc_url), 0);
-
-  LFE_ADD_KEYDESC(&lfelist, "fs_speedbutton", 
-	      ai->ai_speedbutton, sizeof(ai->ai_speedbutton));
-  LFE_ADD_BTN(&lfelist, "fs_ok", TV_TYPE_HTSP);
-
-
-  layout_form_query(&lfelist, m, &ai->ai_gfs, &ie);
-  glw_detach(m);
-
-  switch(ie.u.u32) {
-  case TV_TYPE_HTSP:
-    tv_main(tv, ai, TV_TYPE_HTSP, &htsp_cfg);
-    break;
-  }
-
-  return 0;
-}
-
-/**
- *  Setup a TV based on stored configuration
- */
-static int
-tv_autolaunch(tv_t *nav, appi_t *ai)
-{
-  tvconfig_t cfg;
-  const char *s;
-  struct config_head *l = ai->ai_settings;
-  int type;
-
-  if((s = config_get_str_sub(l, "type", NULL)) == NULL)
-    return -1;
-  
-  if(!strcmp(s, "htsp")) {
-    type = TV_TYPE_HTSP;
-  } else {
-    return -1;
-  }
-  
-  if((s = config_get_str_sub(l, "title", NULL)) == NULL)
-    return -1;
-  av_strlcpy(cfg.tc_title, s, sizeof(cfg.tc_title));
-
-  if((s = config_get_str_sub(l, "url", NULL)) == NULL)
-    return -1;
-  av_strlcpy(cfg.tc_url, s, sizeof(cfg.tc_url));
-  
-  return tv_main(nav, ai, type, &cfg);
-}
-
-/**
- * Launch a TV client
+ * Launch a TV
  *
  * If aux (settings) is non-NULL, we read settings from it, otherwise
  * ask user for settings
@@ -560,65 +700,101 @@ tv_launch(void *aux)
 {
   tv_t *tv = alloca(sizeof(tv_t));
   appi_t *ai = aux;
+  const char *s;
+  glw_prop_t *p_be;
 
   memset(tv, 0, sizeof(tv_t));
+
+  TAILQ_INIT(&tv->tv_tags);
+  TAILQ_INIT(&tv->tv_channels);
+
   tv->tv_ai = ai;
 
-  ai->ai_widget =
-    glw_create(GLW_CONTAINER_Z,
-	       GLW_ATTRIB_SIGNAL_HANDLER, tv_root_widget, tv, 1000,
-	       NULL);
 
-  tv->tv_stack = 
-    glw_create(GLW_ZSTACK,
-	       GLW_ATTRIB_PARENT, ai->ai_widget,
-	       NULL);
+  tv->tv_prop_root = glw_prop_create(NULL, "tv", GLW_GP_DIRECTORY);
+  tv->tv_prop_url  = glw_prop_create(tv->tv_prop_root,
+				     "url", GLW_GP_STRING);
+
+  p_be = glw_prop_create(tv->tv_prop_root, "backend", GLW_GP_DIRECTORY);
+
+  tv->tv_prop_backend_error = glw_prop_create(p_be, "error", GLW_GP_STRING);
+  tv->tv_prop_backend_name  = glw_prop_create(p_be, "name", GLW_GP_STRING);
+
+  tv->tv_stack = ai->ai_widget = glw_create(GLW_ZSTACK, NULL); /* XXX */
+
+  tv->tv_rootwidget =
+    glw_model_create("theme://tv/tv-app.model", ai->ai_widget,
+		     0,  
+		     tv->tv_prop_root, 
+		     ai->ai_prop_root,
+		     prop_global, 
+		     NULL);
+
+
+  tv->tv_subscription_container =
+    glw_find_by_id(tv->tv_rootwidget, "subscription_container", 0);
+  
+
+  glw_set(tv->tv_rootwidget,
+	  GLW_ATTRIB_SIGNAL_HANDLER, glw_event_enqueuer, &ai->ai_geq, 1000,
+	  NULL);
 
   /**
    *  Switcher miniature
    */
-  tv->tv_miniature =
-    glw_create(GLW_MODEL,
-	       GLW_ATTRIB_FILENAME, "tv/switcher-icon",
-	       NULL);
 
-  layout_switcher_appi_add(ai, tv->tv_miniature);
+  ai->ai_miniature =
+    glw_model_create("theme://tv/tv-miniature.model", NULL,  0, 
+		     tv->tv_prop_root, 
+		     ai->ai_prop_root,
+		     prop_global, 
+		     NULL);
+
+  mainmenu_appi_add(ai, 1);
   
-  layout_world_appi_show(ai);
 
-  if(ai->ai_settings == NULL) {
-    /* From launcher, ask user for settings */
-    tv_setup(tv, ai);
+
+  /**
+   * load configuration (if present)
+   */
+  if(ai->ai_settings != NULL) {
+    if((s = htsmsg_get_str(ai->ai_settings, "url")) != NULL)
+      glw_prop_set_string(tv->tv_prop_url, s);
+
   } else {
-    /* Autolaunched */
-    tv_autolaunch(tv, ai);
+
+    glw_prop_set_string(tv->tv_prop_url, "htsp://127.0.0.1:9982");
+
+    layout_appi_show(ai);
+    tv_config(tv, ai);
   }
 
-  glw_destroy(tv->tv_miniature);
+  tv_main(tv, ai);
+
+  glw_destroy(ai->ai_miniature);
   glw_destroy(ai->ai_widget);
 
   appi_destroy(ai);
+  glw_prop_destroy(tv->tv_prop_root);
+  mainmenu_show(NULL);
   return NULL;
 }
 
 
 
-
-
-
 /**
- * Start a new TV application
+ * Start a new tv thread
  */
 static void
 tv_spawn(appi_t *ai)
 {
   hts_thread_t tid;
-  hts_thread_create_detached(&ptid, tv_launch, ai);
+  hts_thread_create_detached(&tid, tv_launch, ai);
 }
 
 
 app_t app_tv = {
   .app_spawn = tv_spawn,
   .app_name = "TV",
-  .app_model = "tv/start-icon",
+  .app_model = "theme://tv/start-icon.model",
 };

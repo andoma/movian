@@ -1,0 +1,3 @@
+#include "theme://include/miniatures.model"
+
+MINIATURE(app.title, "theme://images/tv.png");

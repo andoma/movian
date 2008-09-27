@@ -43,6 +43,8 @@ typedef struct htsp_msg {
  */
 typedef struct htsp_connection {
 
+  int hc_run;
+
   int hc_seq_tally;
   hts_mutex_t hc_tally_lock;
 
@@ -72,8 +74,6 @@ typedef struct htsp_connection {
 
 htsp_connection_t *htsp_create(const char *url, struct tv *tv);
 
-int htsp_subscribe(htsp_connection_t *hc, tv_channel_t *ch);
-
-int htsp_unsubscribe(htsp_connection_t *hc, tv_channel_t *ch);
+void htsp_destroy(htsp_connection_t *htsp);
 
 #endif /* HTSP_H_ */

@@ -1,0 +1,34 @@
+widget(container_z, {
+  .focusAlpha = true;
+  .focusCursor = true;
+
+  widget(container_z, {
+    .id = "video_container";
+  });
+
+  widget(container_y, {
+  
+    widget(container_x, {
+
+      widget(bitmap, {
+	.keepAspect = true;
+	.source = channel.icon;
+	.weight = 0.15;
+      });
+
+      widget(label, {
+	.caption = channel.title;
+      });
+
+    });
+
+    space(5.0);
+
+    widget(label, {
+      .caption = channel.subscription.status;
+    });
+
+
+
+  });
+});

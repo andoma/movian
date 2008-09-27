@@ -277,7 +277,7 @@ apps_load(void)
   playlist_init();
 
   LOADAPP(navigator);
-  //  LOADAPP(tv);
+  LOADAPP(tv);
 
   autolaunch_applications();
 

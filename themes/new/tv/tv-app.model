@@ -1,0 +1,63 @@
+ #include "theme://include/plates.model"
+
+widget(container_z, {
+    .displacement = [0, 0, 0.7];
+
+    widget(container_y, {
+      .alpha = iir(isset(tv.backend.error), 7);
+
+      space(4.0);
+
+      PLATE(
+	    widget(container_y, {
+	      widget(label, {
+		.align = center;
+		.caption = "Server at '" + tv.url + "':";
+	      });
+	      
+	      widget(label, {
+		.align = center;
+		.caption = tv.backend.error;
+	      });
+	    });
+      );
+      
+      space(4.0);
+    });
+
+    widget(form, {
+	
+	widget(container_x, {
+
+	    /**
+	     * List with all the tags
+	     */
+	    widget(list, {
+		.id = "tag_container";
+		.scaleChilds = true;
+		.slices = 4;
+	      });
+
+	    space(0.05);
+
+	    /**
+	     * Deck that will display all channels for a given tag
+	     */
+	    widget(deck, {
+		.weight = 4;
+		.id = "chlist_container";
+	      });
+
+	    space(0.05);
+	    
+	    /**
+	     * List with all the subscriptions
+	     * This is the list of currently active channels.
+	     */
+	    widget(list, {
+		.id = "subscription_container";
+		.slices = 4;
+	      });
+	  });
+      });
+  });

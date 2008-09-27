@@ -31,6 +31,7 @@ typedef enum {
   EVENT_VIDEO_CLOCK,
 
   EVENT_PLAYLIST,      /* Playlist specific events, see playlist.h */
+  EVENT_TV,            /* TV specific events, see tv.h */
 
 
   EVENT_KEY_CLOSE,
