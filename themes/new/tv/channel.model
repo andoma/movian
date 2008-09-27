@@ -1,3 +1,5 @@
+#include "theme://include/bar.model"
+
 #define EPGINFO(INDEX)
 {
   widget(container_x, {
@@ -41,7 +43,14 @@ widget(bitmap, {
 
     widget(expander, {
       widget(container_y, {
-	widget(label, {.caption = channel.title; .weight = 1.5;});
+	widget(container_x, {
+	  .weight = 1.5;
+	  widget(label, {.caption = channel.title;});
+	  PROGRESSBAR((time() - channel.epg.event0.start) / 
+		      (channel.epg.event0.stop - channel.epg.event0.start),
+		      [0.3, 0.5, 1.0]);
+
+	});
 	EPGINFO(event0);
      });
 
