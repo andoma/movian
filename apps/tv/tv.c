@@ -446,6 +446,31 @@ tv_channel_stop(tv_t *tv, tv_channel_t *ch)
 }
 
 
+
+/**
+ * Callback for intercepting user events on a subscription
+ */
+static int
+subscription_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
+			     void *extra)
+{
+  glw_event_t *ge = extra;
+  tv_t *tv = opaque;
+  if(signal != GLW_SIGNAL_EVENT)
+    return 0;
+
+  switch(ge->ge_type) {
+  default:
+    break;
+
+  case EVENT_KEY_STOP:
+    tv_control_signal(tv, TV_CTRL_STOP, w->glw_u32);
+    return 1;
+  }
+  return 0;
+}
+
+
 /**
  * Subscribe to a channel.
  * - Send subscription request to backend.
@@ -472,6 +497,13 @@ tv_subscribe(tv_t *tv, tv_channel_t *ch)
 		     ch->ch_prop_root,
 		     prop_global,
 		     NULL);
+
+  ch->ch_subscribe_widget->glw_u32 = ch->ch_id; /* A bit ugly */
+
+  glw_set(ch->ch_subscribe_widget,
+	  GLW_ATTRIB_SIGNAL_HANDLER, subscription_widget_callback, tv, 400,
+	  NULL);
+
 
   vwp = glw_find_by_id(ch->ch_subscribe_widget, "video_container", 0);
 
