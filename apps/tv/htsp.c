@@ -432,10 +432,11 @@ htsp_worker_thread(void *aux)
     while(hc->hc_connected && (hm = TAILQ_FIRST(&hc->hc_worker_queue)) == NULL)
       hts_cond_wait(&hc->hc_worker_cond, &hc->hc_worker_lock);
 
-    if(hm != NULL) 
+    if(hm != NULL) {
       TAILQ_REMOVE(&hc->hc_worker_queue, hm, hm_link);
-    else
+    } else {
       continue;
+    }
 
     hts_mutex_unlock(&hc->hc_worker_lock);
 
@@ -769,7 +770,7 @@ htsp_mux_input(tv_t *tv, htsmsg_t *m)
 	  break;
       
       if(tcs != NULL) {
- 
+
 	mb = media_buf_alloc();
 	mb->mb_data_type = tcs->tcs_data_type;
 	mb->mb_stream = tcs->tcs_index;
