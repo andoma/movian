@@ -28,7 +28,6 @@
 	  .borderScale = true;
  		    
 	  widget(list, {
-	      .debug = true;
 	      .id = ID;
 	      .slices = 9;
 	    });
