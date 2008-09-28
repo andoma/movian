@@ -946,7 +946,7 @@ htsp_subscriptionStart(tv_t *tv, htsmsg_t *m)
   mp->mp_audio.mq_stream = astream;
   mp->mp_video.mq_stream = vstream;
 
-  mp_set_playstatus(mp, MP_PLAY, 0);
+  mp_set_playstatus(mp, MP_PLAY, ch->ch_playstatus_start_flags);
   
   ch->ch_running = 1;
 

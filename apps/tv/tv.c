@@ -618,6 +618,8 @@ tv_subscribe(tv_t *tv, tv_channel_t *ch, int fs)
 
   mp_set_video_conf(ch->ch_mp, &ch->ch_vdc);
 
+  ch->ch_playstatus_start_flags = fs ? 0 : MP_DONT_GRAB_AUDIO;
+
   if(tv->tv_be_subscribe(tv->tv_be_opaque, ch, errbuf, sizeof(errbuf)) < 0)
     glw_prop_set_string(ch->ch_prop_sub_status, errbuf);
 }

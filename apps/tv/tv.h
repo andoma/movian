@@ -93,6 +93,9 @@ typedef struct tv_channel {
 
   glw_prop_t *ch_prop_sub_status;
 
+  int ch_playstatus_start_flags;  /* Control flags passed to
+				     mp_set_playstatus() upon stream
+				     start */
 
   struct tv *ch_tv;
   TAILQ_ENTRY(tv_channel) ch_tv_link;
