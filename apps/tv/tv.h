@@ -20,6 +20,7 @@
 #define TV_H_
 
 #include <libglw/glw.h>
+#include <libhts/avg.h>
 #include "app.h"
 
 #include "video/video_playback.h"
@@ -92,6 +93,12 @@ typedef struct tv_channel {
 
 
   glw_prop_t *ch_prop_sub_status;
+  glw_prop_t *ch_prop_sub_backend_queuesize;
+  glw_prop_t *ch_prop_sub_backend_queuedrops;
+  glw_prop_t *ch_prop_sub_backend_queuedelay;
+  glw_prop_t *ch_prop_sub_bitrate;
+
+  avgstat_t ch_avg_bitrate;
 
   int ch_playstatus_start_flags;  /* Control flags passed to
 				     mp_set_playstatus() upon stream

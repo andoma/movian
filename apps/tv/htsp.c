@@ -30,6 +30,7 @@
 #include <errno.h>
 
 #include "htsp.h"
+#include "showtime.h"
 
 static void htsp_mux_input(tv_t *tv, htsmsg_t *m);
 
@@ -38,6 +39,8 @@ static void htsp_subscriptionStart(tv_t *tv, htsmsg_t *m);
 static void htsp_subscriptionStop(tv_t *tv, htsmsg_t *m);
 
 static void htsp_subscriptionStatus(tv_t *tv, htsmsg_t *m);
+
+static void htsp_queueStatus(tv_t *tv, htsmsg_t *m);
 
 static int htsp_subscribe(void *opaque, tv_channel_t *ch, char *errbuf,
 			  size_t errsize);
@@ -459,6 +462,8 @@ htsp_worker_thread(void *aux)
 	htsp_subscriptionStop(tv, m);
       } else if(!strcmp(method, "subscriptionStatus")) {
 	htsp_subscriptionStatus(tv, m);
+      } else if(!strcmp(method, "queueStatus")) {
+	htsp_queueStatus(tv, m);
       } else {
 	fprintf(stderr, "HTSP: Unknown async method '%s' received\n",
 		method);
@@ -741,6 +746,7 @@ htsp_mux_input(tv_t *tv, htsmsg_t *m)
   const void *bin;
   size_t binlen;
   media_buf_t *mb;
+  int r;
 
   if(htsmsg_get_u32(m, "channelId", &chid) ||
      htsmsg_get_u32(m, "stream", &stream)  ||
@@ -785,11 +791,17 @@ htsp_mux_input(tv_t *tv, htsmsg_t *m)
   
 	mb->mb_size = binlen;
 
+	avgstat_add(&ch->ch_avg_bitrate, binlen, walltime);
+
 	if(mb_enqueue_no_block(mp, tcs->tcs_mq, mb)) {
 	  media_buf_free(mb);
 	}
       }
     }
+
+    r = avgstat_read_and_expire(&ch->ch_avg_bitrate, walltime) / 10;
+    glw_prop_set_int(ch->ch_prop_sub_bitrate, r / 1000 * 8);
+    
   }
   pthread_mutex_unlock(&tv->tv_running_mutex);
 }
@@ -972,6 +984,41 @@ htsp_subscriptionStatus(tv_t *tv, htsmsg_t *m)
   if((ch = htsp_obtain_channel_by_msg(tv, m)) == NULL)
     return;
   glw_prop_set_string(ch->ch_prop_sub_status, htsmsg_get_str(m, "status"));
+  hts_mutex_unlock(&tv->tv_ch_mutex);
+}
+
+
+
+
+/**
+ * Subscription started at headend
+ */
+static void
+htsp_queueStatus(tv_t *tv, htsmsg_t *m)
+{
+  tv_channel_t *ch;
+  uint32_t u32;
+  uint32_t drops;
+
+  if((ch = htsp_obtain_channel_by_msg(tv, m)) == NULL)
+    return;
+  
+  drops = 0;
+  if(!htsmsg_get_u32(m, "Bdrops", &u32))
+    drops += u32;
+  if(!htsmsg_get_u32(m, "Pdrops", &u32))
+    drops += u32;
+  if(!htsmsg_get_u32(m, "Idrops", &u32))
+    drops += u32;
+
+  glw_prop_set_int(ch->ch_prop_sub_backend_queuedrops, drops);
+
+  if(!htsmsg_get_u32(m, "bytes", &u32))
+    glw_prop_set_int(ch->ch_prop_sub_backend_queuesize, u32 / 1000);
+
+  if(!htsmsg_get_u32(m, "delay", &u32))
+    glw_prop_set_int(ch->ch_prop_sub_backend_queuedelay, u32 / 1000);
+
   hts_mutex_unlock(&tv->tv_ch_mutex);
 }
 

@@ -8,6 +8,8 @@ widget(container_z, {
     .id = "video_container";
   });
 
+
+
   widget(container_y, {
 
     space(0.1);
@@ -47,7 +49,52 @@ widget(container_z, {
 	});
       });
     });
-    space(10);
+
+
+    widget(container_x, {
+      .weight = 10.0;
+
+      space(5.0);
+      widget(bitmap, {
+	.alpha = 0.9;
+	.color = [0.0, 0.0, 0.3];
+	.borderScale = true;
+	.source = "theme://images/plate-compact.png";
+	.textureBorders = [0.5,  0.5,  0.5,  0.5];
+	.vertexBorders  = [0.03, 0.03, 0.03, 0.03];
+
+
+	widget(container_y, {
+	  widget(label, {.weight = 0.75; .caption = "Bitrate:";});
+	  widget(label, {
+	    .caption = int2str(channel.subscription.bitrate) + " kbit/s";
+	  });
+	  space(0.5);
+
+	  widget(label, {.weight = 0.75; .caption = "Headend queue size:";});
+	  widget(label, {
+	    .caption = int2str(channel.subscription.queuesize) + " kB";
+	  });
+	  space(0.5);
+
+	  widget(label, {.weight = 0.75; .caption = "Headend queue delay:";});
+	  widget(label, {
+	    .caption = int2str(channel.subscription.queuedelay) + " ms";
+	  });
+	  space(0.5);
+
+	  widget(label, {.weight = 0.75; .caption = "Headend queue drops:";});
+	  widget(label, {
+	    .caption = int2str(channel.subscription.queuedrops) + " packets";
+	  });
+	  space(0.5);
+
+	  space(20.0);
+
+	});
+      });
+    });
+
 
     widget(label, {
       .caption = channel.subscription.status;

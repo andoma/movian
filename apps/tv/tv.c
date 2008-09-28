@@ -168,6 +168,7 @@ tv_channel_find(tv_t *tv, uint32_t id, int create)
     return NULL;
 
   ch = calloc(1, sizeof(tv_channel_t));
+  avgstat_init(&ch->ch_avg_bitrate, 10);
   TAILQ_INIT(&ch->ch_ctms);
   TAILQ_INSERT_TAIL(&tv->tv_channels, ch, ch_tv_link);
   ch->ch_tv = tv;
@@ -200,6 +201,15 @@ tv_channel_find(tv_t *tv, uint32_t id, int create)
   p_sub = glw_prop_create(ch->ch_prop_root, "subscription", GLW_GP_DIRECTORY);
 
   ch->ch_prop_sub_status = glw_prop_create(p_sub, "status", GLW_GP_STRING);
+  ch->ch_prop_sub_bitrate = glw_prop_create(p_sub, "bitrate", GLW_GP_INT);
+  ch->ch_prop_sub_backend_queuesize =
+    glw_prop_create(p_sub, "queuesize", GLW_GP_INT);
+  ch->ch_prop_sub_backend_queuedelay =
+    glw_prop_create(p_sub, "queuedelay", GLW_GP_INT);
+  ch->ch_prop_sub_backend_queuedrops =
+    glw_prop_create(p_sub, "queuedrops", GLW_GP_INT);
+
+
   return ch;
 }
 
