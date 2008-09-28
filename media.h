@@ -233,6 +233,7 @@ void mp_set_video_conf(media_pipe_t *mp, struct vd_conf *vdc);
 
 media_buf_t *mb_dequeue_wait(media_pipe_t *hmp, media_queue_t *hmq);
 void mb_enqueue(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
+int mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
 void mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd);
 void mp_send_cmd_data(media_pipe_t *mp, media_queue_t *mq, int cmd, void *d);
 void mp_send_cmd_u32_head(media_pipe_t *mp, media_queue_t *mq, int cmd, 

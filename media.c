@@ -197,6 +197,40 @@ mb_enqueue(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
   hts_mutex_unlock(&mp->mp_mutex);
 }
 
+
+/**
+ * Return -1 if queues are full. return 0 if enqueue succeeded.
+ */
+int
+mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
+{
+  media_queue_t *v = &mp->mp_video;
+  media_queue_t *a = &mp->mp_audio;
+
+  hts_mutex_lock(&mp->mp_mutex);
+  
+  if(a->mq_stream >= 0 && v->mq_stream >= 0) {
+
+    if((a->mq_len > MQ_LOWWATER && v->mq_len > MQ_LOWWATER) ||
+       a->mq_len > MQ_HIWATER || v->mq_len > MQ_HIWATER) {
+      hts_mutex_unlock(&mp->mp_mutex);
+      return -1;
+    }
+
+  } else {
+
+    if(mq->mq_len > MQ_LOWWATER) {
+      hts_mutex_unlock(&mp->mp_mutex);
+      return -1;
+    }
+  }
+  
+  mb_enq_tail(mq, mb);
+  hts_mutex_unlock(&mp->mp_mutex);
+  return 0;
+}
+
+
 /*
  * Must be called with mp locked
  */
