@@ -567,7 +567,6 @@ tv_subscribe(tv_t *tv, tv_channel_t *ch, int fs)
   vd_conf_init(&ch->ch_vdc);
   ch->ch_mp = mp_create("TV");
 
-  assert(ch->ch_video_widget == NULL);
   ch->ch_video_widget = vd_create_widget(vwp, ch->ch_mp, 0.0);
 
   mp_set_video_conf(ch->ch_mp, &ch->ch_vdc);
