@@ -495,7 +495,7 @@ mp_set_playstatus(media_pipe_t *mp, int status, int flags)
     if(mp->mp_audio_decoder == NULL)
       mp->mp_audio_decoder = audio_decoder_create(mp);
 
-    if(status == MP_PLAY)
+    if(status == MP_PLAY && !(flags & MP_DONT_GRAB_AUDIO))
       audio_decoder_acquire_output(mp->mp_audio_decoder);
 
     if(mp->mp_video_decoder == NULL)
