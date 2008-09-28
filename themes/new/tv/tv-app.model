@@ -38,6 +38,7 @@ widget(container_z, {
 	     * List with all the tags
 	     */
 	    widget(list, {
+		.alpha = iir(tv.showChannels, 7);
 		.weight = 1.5;
 		.id = "tag_container";
 		.slices = 8;
@@ -49,6 +50,7 @@ widget(container_z, {
 	     * Deck that will display all channels for a given tag
 	     */
 	    widget(deck, {
+		.alpha = iir(tv.showChannels, 7);
 		.weight = 6;
 		.id = "chlist_container";
 	      });

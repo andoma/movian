@@ -178,6 +178,10 @@ tv_channel_find(tv_t *tv, uint32_t id, int create)
 				      "title", GLW_GP_STRING);
   ch->ch_prop_icon  = glw_prop_create(ch->ch_prop_root,
 				      "icon", GLW_GP_STRING);
+  ch->ch_prop_fullscreen = glw_prop_create(ch->ch_prop_root,
+					   "fullscreen", GLW_GP_INT);
+
+  /* EPG props */
 
   p_epg = glw_prop_create(ch->ch_prop_root, "epg", GLW_GP_DIRECTORY);
 
@@ -189,6 +193,7 @@ tv_channel_find(tv_t *tv, uint32_t id, int create)
     ch->ch_prop_epg_start[i] = glw_prop_create(p, "start", GLW_GP_INT);
     ch->ch_prop_epg_stop[i]  = glw_prop_create(p, "stop",  GLW_GP_INT);
   }
+
 
   /* Subscription props */
 
@@ -440,6 +445,54 @@ tv_remove_all(tv_t *tv)
 }
 
 /**
+ * Switch the given channel to be presented in fullscreen mode
+ */
+static void
+tv_fullscreen(tv_t *tv, tv_channel_t *ch)
+{
+  glw_t *w, *p;
+  tv_channel_t *o;
+
+  if(ch->ch_subscribed == 0)
+    return; /* Should normally not happen, but we have a small
+	       timeslot condition between the event enqueue in glw
+	       callbacks and the main thread, so we just leave it */
+
+  glw_lock();
+
+  /* Pull out any currently fullscreen channels */
+  p = tv->tv_fullscreen_container;
+  if(p != NULL && (w = TAILQ_FIRST(&p->glw_childs)) != NULL) {
+    /* No longer in fullscreen mode */
+    glw_set(w, GLW_ATTRIB_PARENT, tv->tv_subscription_container, NULL);
+
+    o = tv_channel_find(tv, w->glw_u32, 0);
+    assert(o != NULL);
+
+    glw_prop_set_int(o->ch_prop_fullscreen, 0);
+  }
+
+  /* Insert this channels widget into fullscreen container */
+  glw_set(ch->ch_subscribe_widget,
+	  GLW_ATTRIB_PARENT, tv->tv_fullscreen_container,
+	  NULL);
+
+  glw_unlock();
+
+  glw_prop_set_int(ch->ch_prop_fullscreen, 1);
+
+  tv->tv_ai->ai_req_fullscreen = 1;
+
+  /* HM HM HM */
+  glw_prop_set_int(tv->tv_prop_show_channels, 0); /* ??? */
+}
+
+
+
+
+
+
+/**
  * Stop playback on a channel.
  * Internal code only, this does not communicate with backend.
  *
@@ -454,6 +507,9 @@ tv_channel_stop(tv_t *tv, tv_channel_t *ch)
 
   if(ch->ch_running == 0)
     return;
+
+  if(glw_prop_get_int(ch->ch_prop_fullscreen))
+    tv->tv_ai->ai_req_fullscreen = 0;
 
   ch->ch_running = 0;
 
@@ -522,7 +578,7 @@ subscription_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 static void
 tv_subscribe(tv_t *tv, tv_channel_t *ch, int fs)
 {
-  glw_t *vwp, *p, *w;
+  glw_t *vwp;
   char errbuf[100];
 
   if(tv->tv_be_subscribe == NULL)
@@ -532,28 +588,12 @@ tv_subscribe(tv_t *tv, tv_channel_t *ch, int fs)
     return; /* Subscribe twice does not do anything.
 	       Perhaps we should pop the subscription to front? */
 
-  /* Where to put the widget?*/
-  if(fs) {
-    /* Fullscreen mode, if any widget is already there we will move it
-       to the subscription container (or picture-in-picture view) */
-    
-    p = tv->tv_fullscreen_container;
-
-    glw_lock();
-    
-    w = TAILQ_FIRST(&p->glw_childs);
-    if(w != NULL)
-      glw_set(w, GLW_ATTRIB_PARENT, tv->tv_subscription_container, NULL);
-
-    glw_unlock();
-
-  } else {
-    p = tv->tv_subscription_container;
-  }
+  ch->ch_subscribed = 1;
 
   ch->ch_subscribe_widget =
     glw_model_create("theme://tv/subscription.model",
-		     p, GLW_MODEL_CACHE,
+		     fs ? NULL : tv->tv_subscription_container,
+		     GLW_MODEL_CACHE,
 		     ch->ch_prop_root,
 		     prop_global,
 		     NULL);
@@ -563,6 +603,11 @@ tv_subscribe(tv_t *tv, tv_channel_t *ch, int fs)
   glw_set(ch->ch_subscribe_widget,
 	  GLW_ATTRIB_SIGNAL_HANDLER, subscription_widget_callback, tv, 400,
 	  NULL);
+
+  if(fs)
+    tv_fullscreen(tv, ch);
+  else
+    glw_prop_set_int(ch->ch_prop_fullscreen, 0);
 
 
   vwp = glw_find_by_id(ch->ch_subscribe_widget, "video_container", 0);
@@ -574,8 +619,6 @@ tv_subscribe(tv_t *tv, tv_channel_t *ch, int fs)
   ch->ch_video_widget = vd_create_widget(vwp, ch->ch_mp, 0.0);
 
   mp_set_video_conf(ch->ch_mp, &ch->ch_vdc);
-
-  ch->ch_subscribed = 1;
 
   if(tv->tv_be_subscribe(tv->tv_be_opaque, ch, errbuf, sizeof(errbuf)) < 0)
     glw_prop_set_string(ch->ch_prop_sub_status, errbuf);
@@ -629,33 +672,6 @@ tv_unsubscribe_all(tv_t *tv)
 }
 
 
-/**
- * Switch the given channel to be presented in fullscreen mode
- */
-static void
-tv_fullscreen(tv_t *tv, tv_channel_t *ch)
-{
-  glw_t *w, *p;
-
-  if(ch->ch_subscribed == 0)
-    return; /* Should normally not happen, but we have a small
-	       timeslot condition between the event enqueue in glw
-	       callbacks and the main thread, so we just leave it */
-
-  glw_lock();
-
-  /* Pull out any currently fullscreen channels */
-  p = tv->tv_fullscreen_container;
-  if(p != NULL && (w = TAILQ_FIRST(&p->glw_childs)) != NULL)
-    glw_set(w, GLW_ATTRIB_PARENT, tv->tv_subscription_container, NULL);
-
-  /* Insert this channels widget into fullscreen container */
-  glw_set(ch->ch_subscribe_widget,
-	  GLW_ATTRIB_PARENT, tv->tv_fullscreen_container,
-	  NULL);
-
-  glw_unlock();
-}
 
 
 
@@ -817,6 +833,27 @@ tv_main(tv_t *tv, appi_t *ai)
   return 0;
 }
 
+/**
+ *
+ */
+static int
+tv_gui_callback(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
+{
+  tv_t *tv = opaque;
+
+  switch(sig) {
+  default:
+    return 0;
+
+  case GLW_SIGNAL_LAYOUT:
+    return 0;
+
+  case GLW_SIGNAL_EVENT:
+    glw_prop_set_int(tv->tv_prop_show_channels, 1);
+    return 0;
+  }
+}
+
 
 /**
  * Launch a TV
@@ -844,12 +881,20 @@ tv_launch(void *aux)
   tv->tv_prop_url  = glw_prop_create(tv->tv_prop_root,
 				     "url", GLW_GP_STRING);
 
+  tv->tv_prop_show_channels = glw_prop_create(tv->tv_prop_root, "showChannels",
+					      GLW_GP_INT);
+
+  glw_prop_set_int(tv->tv_prop_show_channels, 1);
+
   p_be = glw_prop_create(tv->tv_prop_root, "backend", GLW_GP_DIRECTORY);
 
   tv->tv_prop_backend_error = glw_prop_create(p_be, "error", GLW_GP_STRING);
   tv->tv_prop_backend_name  = glw_prop_create(p_be, "name", GLW_GP_STRING);
 
-  tv->tv_stack = ai->ai_widget = glw_create(GLW_ZSTACK, NULL); /* XXX */
+  tv->tv_stack = ai->ai_widget = 
+    glw_create(GLW_ZSTACK,
+	       GLW_ATTRIB_SIGNAL_HANDLER, tv_gui_callback, tv, 1, 
+	       NULL);
 
   tv->tv_rootwidget =
     glw_model_create("theme://tv/tv-app.model", ai->ai_widget,

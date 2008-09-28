@@ -1,24 +1,5 @@
 #include "theme://include/bar.model"
-
-#define EPGINFO(INDEX)
-{
-  widget(container_x, {
-    widget(label, {
-      .weight = 2;
-      .caption = channel.epg.INDEX.title;
-    });
-
-    widget(label, {
-      .align = right;
-      .caption = strftime(channel.epg.INDEX.start, "%A %H:%M");
-    });
-
-    widget(label, {
-      .caption = strftime(channel.epg.INDEX.stop, "- %H:%M");
-    });
-  });
-}
-
+#include "theme://tv/epginfo.model"
 
 
 .weight = 1.8;

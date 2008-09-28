@@ -84,6 +84,8 @@ typedef struct tv_channel {
   glw_prop_t *ch_prop_title;
   glw_prop_t *ch_prop_icon;
 
+  glw_prop_t *ch_prop_fullscreen;
+
   glw_prop_t *ch_prop_epg_start[3];
   glw_prop_t *ch_prop_epg_stop[3];
   glw_prop_t *ch_prop_epg_title[3];
@@ -165,6 +167,7 @@ typedef struct tv {
 
   glw_prop_t *tv_prop_root;
   glw_prop_t *tv_prop_url;
+  glw_prop_t *tv_prop_show_channels;
 
   glw_prop_t *tv_prop_backend_error;
   glw_prop_t *tv_prop_backend_name;

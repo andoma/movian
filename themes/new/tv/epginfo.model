@@ -1,0 +1,22 @@
+
+#define EPGINFO(INDEX)
+{
+  widget(container_x, {
+    widget(label, {
+      .weight = 2;
+      .caption = channel.epg.INDEX.title;
+    });
+
+    widget(label, {
+      .weight = 1.3;
+      .align = right;
+      .caption = strftime(channel.epg.INDEX.start, "%A %H:%M");
+    });
+
+    widget(label, {
+      .weight = 0.7;
+      .caption = strftime(channel.epg.INDEX.stop, "- %H:%M");
+    });
+  });
+}
+

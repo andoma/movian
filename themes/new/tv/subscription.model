@@ -1,3 +1,6 @@
+#include "theme://include/bar.model"
+#include "theme://tv/epginfo.model"
+
 widget(container_z, {
   .focusCursor = true;
 
@@ -6,22 +9,45 @@ widget(container_z, {
   });
 
   widget(container_y, {
-  
-    widget(container_x, {
+
+    space(0.1);
+
+    widget(container_z, {
+
+      .weight = 2 - channel.fullscreen;
+
+      .debug = true;
+      /**
+       * Only display the header if title changes
+       */
+      .alpha = iir((1 - channel.fullscreen) ||
+		   changed(channel.epg.event0.title, 5), 7);
 
       widget(bitmap, {
-	.keepAspect = true;
-	.source = channel.icon;
-	.weight = 0.15;
-      });
 
-      widget(label, {
-	.caption = channel.title;
+	.color = [0.3, 0.3, 0.3];
+	.source = "theme://images/plate-compact.png";
+	.textureBorders = [0.5,  0.5,  0.5,  0.5];
+	.vertexBorders  = [0.05, 0.05, 0.05, 0.05];
+      
+	widget(container_x, {
+	
+	  widget(bitmap, {
+	    .keepAspect = true;
+	    .source = channel.icon;
+	    .weight = 0.15;
+	  });
+	
+	  widget(container_y, {
+	    widget(label, {
+	      .caption = channel.title;
+	    });
+	    EPGINFO(event0);
+	  });
+	});
       });
-
     });
-
-    space(5.0);
+    space(10);
 
     widget(label, {
       .caption = channel.subscription.status;
