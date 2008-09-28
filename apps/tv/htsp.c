@@ -785,7 +785,9 @@ htsp_mux_input(tv_t *tv, htsmsg_t *m)
   
 	mb->mb_size = binlen;
 
-	mb_enqueue(mp, tcs->tcs_mq, mb);
+	if(mb_enqueue_no_block(mp, tcs->tcs_mq, mb)) {
+	  media_buf_free(mb);
+	}
       }
     }
   }
