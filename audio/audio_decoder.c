@@ -654,7 +654,8 @@ audio_mix2(audio_decoder_t *ad, audio_mode_t *am,
   if(channels == 1) {
     src = data0 + frames;
 
-    if(am->am_formats & AM_FORMAT_PCM_5DOT1 && !am->am_phantom_center) {
+    if(am->am_formats & AM_FORMAT_PCM_5DOT1 && !am->am_phantom_center &&
+       !am->am_force_downmix) {
       
       /* Mix mono to center and LFE */
 
@@ -673,7 +674,7 @@ audio_mix2(audio_decoder_t *ad, audio_mode_t *am,
 	dst[5] = x;
       }
       channels = 6;
-    } else if(am->am_formats & AM_FORMAT_PCM_5DOT1) {
+    } else if(am->am_formats & AM_FORMAT_PCM_5DOT1 && !am->am_force_downmix) {
 
       /* Mix mono to L + R and LFE */
 
