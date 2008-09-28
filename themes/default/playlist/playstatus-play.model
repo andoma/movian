@@ -1,6 +1,0 @@
-#HTSSIMPLEMODEL
-
-bitmap {
- filename icon://player_play_small.png
- keep-aspect
-}

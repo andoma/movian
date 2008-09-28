@@ -1,9 +1,0 @@
-#HTSSIMPLEMODEL
-list {
- expand 3.0
- orientation vertical
- id track_list
- slices 30
- cursor-size 0.05
-
-}

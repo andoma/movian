@@ -1,6 +1,0 @@
-#HTSSIMPLEMODEL
-
-bitmap {
- filename icon://video.png
- keep-aspect
-}
