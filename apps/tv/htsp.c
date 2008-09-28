@@ -779,9 +779,9 @@ htsp_mux_input(tv_t *tv, htsmsg_t *m)
 
 	mb->mb_cw = wrap_codec_ref(tcs->tcs_cw);
 
-	mb->mb_data = malloc(binlen);
-	memcpy(mb->mb_data, bin, binlen); /* XXX: not good, we should
-					     steal the memory instead */
+	mb->mb_data = malloc(binlen + FF_INPUT_BUFFER_PADDING_SIZE);
+	memcpy(mb->mb_data, bin, binlen);
+	memset(mb->mb_data + binlen, 0, FF_INPUT_BUFFER_PADDING_SIZE);
   
 	mb->mb_size = binlen;
 
