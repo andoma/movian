@@ -91,7 +91,7 @@ mp_destroy(media_pipe_t *mp)
   if(mp->mp_status_xfader != NULL)
     glw_destroy(mp->mp_status_xfader);
 
-  mp_set_playstatus(mp, MP_STOP);
+  mp_set_playstatus(mp, MP_STOP, 0);
   free(mp);
 }
 
@@ -473,7 +473,7 @@ wrap_format_destroy(formatwrap_t *fw)
  * decoder threads
  */
 void
-mp_set_playstatus(media_pipe_t *mp, int status)
+mp_set_playstatus(media_pipe_t *mp, int status, int flags)
 {
   if(mp->mp_playstatus == status)
     return;
@@ -495,10 +495,8 @@ mp_set_playstatus(media_pipe_t *mp, int status)
     if(mp->mp_audio_decoder == NULL)
       mp->mp_audio_decoder = audio_decoder_create(mp);
 
-    if(status == MP_PLAY) {
+    if(status == MP_PLAY)
       audio_decoder_acquire_output(mp->mp_audio_decoder);
-      //      mp->mp_status_xfader->glw_parent->glw_selected = mp->mp_status_xfader;
-    }
 
     if(mp->mp_video_decoder == NULL)
       video_decoder_create(mp);
@@ -568,7 +566,7 @@ mp_playpause(struct media_pipe *mp, int key)
   default:
     return;
   }
-  mp_set_playstatus(mp, t);
+  mp_set_playstatus(mp, t, 0);
 }
 
 

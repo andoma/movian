@@ -128,7 +128,7 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
   while(1) {
 
     if(mp->mp_playstatus == MP_PLAY && mp_is_audio_silenced(mp)) {
-      mp_set_playstatus(mp, MP_PAUSE);
+      mp_set_playstatus(mp, MP_PAUSE, 0);
       media_update_playstatus_prop(ple->ple_prop_playstatus, MP_PAUSE);
     }
 
@@ -387,7 +387,7 @@ playlist_player(void *aux)
 	status = NULL;
       }
 
-      mp_set_playstatus(mp, MP_STOP);
+      mp_set_playstatus(mp, MP_STOP, 0);
       ge = glw_event_get(-1, &plp->plp_geq);
       switch(ge->ge_type) {
       default:
@@ -405,7 +405,7 @@ playlist_player(void *aux)
       }
     }
 
-    mp_set_playstatus(mp, MP_PLAY);
+    mp_set_playstatus(mp, MP_PLAY, 0);
 
     hts_mutex_lock(&playlistlock);
 

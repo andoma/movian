@@ -276,7 +276,7 @@ dvd_player_loop(dvd_player_t *dp)
   dvdnav_highlight_event_t *hevent;
   void *data;
 
-  mp_set_playstatus(mp, MP_PLAY);
+  mp_set_playstatus(mp, MP_PLAY, 0);
 
   while(run) {
 

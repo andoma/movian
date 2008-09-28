@@ -273,9 +273,9 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
       return;
 
     if(mp->mp_playstatus == MP_VIDEOSEEK_PAUSE) {
-      mp_set_playstatus(mp, MP_PAUSE);
+      mp_set_playstatus(mp, MP_PAUSE, 0);
     } else {
-      mp_set_playstatus(mp, MP_PLAY);
+      mp_set_playstatus(mp, MP_PLAY, 0);
     }
   }
 

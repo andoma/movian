@@ -249,7 +249,7 @@ void mp_codec_unlock(media_pipe_t *mp);
 
 void mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u);
 
-void mp_set_playstatus(media_pipe_t *mp, int status);
+void mp_set_playstatus(media_pipe_t *mp, int status, int flags);
 
 #define mp_get_playstatus(mp) ((mp)->mp_playstatus)
 

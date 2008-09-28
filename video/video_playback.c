@@ -367,7 +367,7 @@ video_player_loop(play_video_ctrl_t *pvc, glw_event_queue_t *geq)
     media_update_playstatus_prop(pvc->pvc_prop_playstatus, mp->mp_playstatus);
 
     if(mp->mp_playstatus == MP_PLAY && mp_is_audio_silenced(mp))
-      mp_set_playstatus(mp, MP_PAUSE);
+      mp_set_playstatus(mp, MP_PAUSE, 0);
 
     ai->ai_req_fullscreen = mp->mp_playstatus == MP_PLAY && !pvc->pvc_menu;
 
@@ -473,11 +473,11 @@ video_player_loop(play_video_ctrl_t *pvc, glw_event_queue_t *geq)
       switch(mp->mp_playstatus) {
       case MP_VIDEOSEEK_PAUSE:
       case MP_PAUSE:
-	mp_set_playstatus(mp, MP_VIDEOSEEK_PAUSE);
+	mp_set_playstatus(mp, MP_VIDEOSEEK_PAUSE, 0);
 	break;
       case MP_VIDEOSEEK_PLAY:
       case MP_PLAY:
-	mp_set_playstatus(mp, MP_VIDEOSEEK_PLAY);
+	mp_set_playstatus(mp, MP_VIDEOSEEK_PLAY, 0);
 	break;
       default:
 	abort();
@@ -637,7 +637,7 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
     }
   }
 
-  mp_set_playstatus(mp, MP_VIDEOSEEK_PAUSE); 
+  mp_set_playstatus(mp, MP_VIDEOSEEK_PAUSE, 0); 
 
   mp->mp_feedback = geq;
 
@@ -656,7 +656,7 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
 
   ai->ai_req_fullscreen = 0;
 
-  mp_set_playstatus(mp, MP_STOP);
+  mp_set_playstatus(mp, MP_STOP, 0);
 
   mp->mp_total_time = 0;
 
