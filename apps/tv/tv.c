@@ -82,6 +82,15 @@ tv_tag_find(tv_t *tv, const char *identifier, int create)
   tt->tt_prop_root  = glw_prop_create(NULL, "tag", GLW_GP_DIRECTORY);
   tt->tt_prop_title = glw_prop_create(tt->tt_prop_root,
 				      "title", GLW_GP_STRING);
+  tt->tt_prop_icon  = glw_prop_create(tt->tt_prop_root,
+				      "icon", GLW_GP_STRING);
+
+  tt->tt_prop_titled_icon = glw_prop_create(tt->tt_prop_root,
+					    "titledIcon", GLW_GP_INT);
+
+  tt->tt_prop_nchannels = glw_prop_create(tt->tt_prop_root,
+					  "channels", GLW_GP_INT);
+
   /**
    * Create widget
    */
@@ -116,6 +125,27 @@ tv_tag_set_title(tv_tag_t *tt, const char *title)
 {
   if(title != NULL)
     glw_prop_set_string(tt->tt_prop_title, title);
+}
+
+
+/**
+ *
+ */
+void
+tv_tag_set_icon(tv_tag_t *tt, const char *icon)
+{
+  if(icon != NULL)
+    glw_prop_set_string(tt->tt_prop_icon, icon);
+}
+
+
+/**
+ *
+ */
+void
+tv_tag_set_titled_icon(tv_tag_t *tt, int v)
+{
+  glw_prop_set_int(tt->tt_prop_titled_icon, v);
 }
 
 
@@ -265,6 +295,8 @@ tv_tag_map_channel(tv_t *tv, tv_tag_t *tt, tv_channel_t *ch)
   TAILQ_INSERT_TAIL(&ch->ch_ctms, ctm, ctm_channel_link);
   TAILQ_INSERT_TAIL(&tt->tt_ctms, ctm, ctm_tag_link);
 
+  glw_prop_set_int(tt->tt_prop_nchannels, ++tt->tt_nctms);
+
   /**
    * Create channel widget in tag list
    */
@@ -297,6 +329,9 @@ ctm_destroy(tv_channel_tag_map_t *ctm)
   glw_destroy(ctm->ctm_widget);
   TAILQ_REMOVE(&ch->ch_ctms, ctm, ctm_channel_link);
   TAILQ_REMOVE(&tt->tt_ctms, ctm, ctm_tag_link);
+
+  glw_prop_set_int(tt->tt_prop_nchannels, --tt->tt_nctms);
+
   free(ctm);
 }
 /**
@@ -476,12 +511,14 @@ subscription_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
  * - Send subscription request to backend.
  * - Create widgets, and media pipe
  *
+ * 'fs' is used to start the subscription in fullscreen mode
+ * 
  * 'tv_ch_mutex' must be locked.
  */
 static void
-tv_subscribe(tv_t *tv, tv_channel_t *ch)
+tv_subscribe(tv_t *tv, tv_channel_t *ch, int fs)
 {
-  glw_t *vwp;
+  glw_t *vwp, *p, *w;
   char errbuf[100];
 
   if(tv->tv_be_subscribe == NULL)
@@ -491,9 +528,28 @@ tv_subscribe(tv_t *tv, tv_channel_t *ch)
     return; /* Subscribe twice does not do anything.
 	       Perhaps we should pop the subscription to front? */
 
+  /* Where to put the widget?*/
+  if(fs) {
+    /* Fullscreen mode, if any widget is already there we will move it
+       to the subscription container (or picture-in-picture view) */
+    
+    p = tv->tv_fullscreen_container;
+
+    glw_lock();
+    
+    w = TAILQ_FIRST(&p->glw_childs);
+    if(w != NULL)
+      glw_set(w, GLW_ATTRIB_PARENT, tv->tv_subscription_container, NULL);
+
+    glw_unlock();
+
+  } else {
+    p = tv->tv_subscription_container;
+  }
+
   ch->ch_subscribe_widget =
     glw_model_create("theme://tv/subscription.model",
-		     tv->tv_subscription_container, GLW_MODEL_CACHE,
+		     p, GLW_MODEL_CACHE,
 		     ch->ch_prop_root,
 		     prop_global,
 		     NULL);
@@ -582,12 +638,15 @@ handle_tv_ctrl_event(tv_t *tv, tv_ctrl_event_t *tce)
   switch(tce->cmd) {
   case TV_CTRL_CLEAR_AND_START:
     tv_unsubscribe_all(tv);
-    /* FALLTHRU */
+    if((ch = tv_channel_find(tv, tce->key, 0)) == NULL)
+      break;
+    tv_subscribe(tv, ch, 1);
+    break;
+
   case TV_CTRL_START:
     if((ch = tv_channel_find(tv, tce->key, 0)) == NULL)
       break;
-
-    tv_subscribe(tv, ch);
+    tv_subscribe(tv, ch, 0);
     break;
 
   case TV_CTRL_CLEAR:
@@ -766,6 +825,9 @@ tv_launch(void *aux)
   tv->tv_subscription_container =
     glw_find_by_id(tv->tv_rootwidget, "subscription_container", 0);
   
+  tv->tv_fullscreen_container = 
+    glw_find_by_id(tv->tv_rootwidget, "fullscreen_container", 0);
+
 
   glw_set(tv->tv_rootwidget,
 	  GLW_ATTRIB_SIGNAL_HANDLER, glw_event_enqueuer, &ai->ai_geq, 1000,

@@ -1,5 +1,4 @@
 widget(container_z, {
-  .focusAlpha = true;
   .focusCursor = true;
 
   widget(container_z, {

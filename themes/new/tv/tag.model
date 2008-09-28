@@ -1,26 +1,32 @@
-widget(container_y, {
-  .focusAlpha = true;
+widget(bitmap, {
+  .selectable = true;
   .focusCursor = true;
+  .focusAlpha = true;
+  .borderScale = true;
+  .color = [0.6, 0.6, 0.6];
+  .source = "theme://images/plate-compact.png";
+  .textureBorders = [0.5,  0.5,  0.5,  0.5];
+  .vertexBorders  = [0.05, 0.05, 0.05, 0.05];
+  widget(container_y, {
+    widget(container_z, {
+      .weight = 3;
 
-  widget(bitmap, {
-    .color = [0.6, 0.6, 0.6];
-    .source = "theme://images/plate-titled-top.png";
-    .textureBorders = [0.1, 0.1, 0.1, 0.1];
-    .vertexBorders  = [0.1, 0.1, 0.1, 0.1];
-    .borderScale = true;
+      widget(bitmap, {
+	.source = tag.icon;
+	.keepAspect = true;
+      });
 
+      widget(label, {
+	.alpha = 1 - tag.titledIcon;
+	.aspect = 5;
+	.caption = tag.title;
+	.align = center;
+      });
+
+    });
     widget(label, {
-      .caption = tag.title;
+      .caption = int2str(tag.channels) + " channels";
       .align = center;
     });
-  });
-
-  widget(bitmap, {
-    .color = [0.6, 0.6, 0.6];
-    .weight = 7 / global.uiscale;
-    .source = "theme://images/plate-titled-bottom.png";
-    .textureBorders = [0.1, 0.1, 0.1, 0.1];
-    .vertexBorders  = [0.1, 0.1, 0.1, 0.1];
-    .borderScale = true;
   });
 });

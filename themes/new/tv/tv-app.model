@@ -1,7 +1,12 @@
  #include "theme://include/plates.model"
 
 widget(container_z, {
-    .displacement = [0, 0, 0.7];
+    .displacement = [0, 0, 1.0];
+
+    widget(container_z, {
+	/* The TV app will place display of fullscreen channels here */
+	.id = "fullscreen_container";
+    });
 
     widget(container_y, {
       .alpha = iir(isset(tv.backend.error), 7);
@@ -28,14 +33,14 @@ widget(container_z, {
     widget(form, {
 	
 	widget(container_x, {
-
+	    space(0.05);
 	    /**
 	     * List with all the tags
 	     */
 	    widget(list, {
+		.weight = 1.5;
 		.id = "tag_container";
-		.scaleChilds = true;
-		.slices = 4;
+		.slices = 8;
 	      });
 
 	    space(0.05);
@@ -44,7 +49,7 @@ widget(container_z, {
 	     * Deck that will display all channels for a given tag
 	     */
 	    widget(deck, {
-		.weight = 4;
+		.weight = 6;
 		.id = "chlist_container";
 	      });
 
@@ -55,9 +60,11 @@ widget(container_z, {
 	     * This is the list of currently active channels.
 	     */
 	    widget(list, {
+		.weight = 2;
 		.id = "subscription_container";
 		.slices = 4;
 	      });
+	    space(0.05);
 	  });
       });
   });

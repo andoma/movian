@@ -41,9 +41,13 @@ typedef struct tv_tag {
   TAILQ_ENTRY(tv_tag) tt_tv_link;
 
   struct tv_channel_tag_map_queue tt_ctms;
+  int tt_nctms;
 
   glw_prop_t *tt_prop_root;
   glw_prop_t *tt_prop_title;
+  glw_prop_t *tt_prop_icon;
+  glw_prop_t *tt_prop_titled_icon;
+  glw_prop_t *tt_prop_nchannels;
 
   glw_t *tt_widget;
   glw_t *tt_tab;
@@ -157,6 +161,7 @@ typedef struct tv {
   glw_t *tv_stack;
   glw_t *tv_rootwidget;
   glw_t *tv_subscription_container;
+  glw_t *tv_fullscreen_container;
 
   glw_prop_t *tv_prop_root;
   glw_prop_t *tv_prop_url;
@@ -207,6 +212,10 @@ tv_tag_t *tv_tag_find(tv_t *tv, const char *identifier, int create);
 void tv_tag_destroy(tv_t *tv, tv_tag_t *tt);
 
 void tv_tag_set_title(tv_tag_t *tt, const char *title);
+
+void tv_tag_set_icon(tv_tag_t *tt, const char *icon);
+
+void tv_tag_set_titled_icon(tv_tag_t *tt, int v);
 
 void tv_tag_mark_ctms(tv_tag_t *tt);
 

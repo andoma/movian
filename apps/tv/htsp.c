@@ -268,6 +268,7 @@ htsp_tagAddUpdate(tv_t *tv, htsp_connection_t *hc, htsmsg_t *m, int add)
   tv_tag_t *tt;
   htsmsg_t *members;
   const char *id;
+  uint32_t u32;
 
   if((id = htsmsg_get_str(m, "tagId")) == NULL)
     return;
@@ -275,6 +276,10 @@ htsp_tagAddUpdate(tv_t *tv, htsp_connection_t *hc, htsmsg_t *m, int add)
   hts_mutex_lock(&tv->tv_ch_mutex);
   if((tt = tv_tag_find(tv, id, add)) != NULL) {
     tv_tag_set_title(tt, htsmsg_get_str(m, "tagName"));
+    tv_tag_set_icon(tt, htsmsg_get_str(m, "tagIcon"));
+
+    if(!htsmsg_get_u32(m, "tagTitledIcon", &u32))
+	tv_tag_set_titled_icon(tt, u32);
 
     if((members = htsmsg_get_array(m, "members")) != NULL)
       htsp_tag_update_membership(tv, tt, members);
