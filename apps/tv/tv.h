@@ -196,6 +196,7 @@ typedef struct tv_ctrl_event {
     TV_CTRL_CLEAR_AND_START,
     TV_CTRL_CLEAR,
     TV_CTRL_STOP,
+    TV_CTRL_FULLSCREEN,
   } cmd;
 
   int key; /* ChannelId, etc */

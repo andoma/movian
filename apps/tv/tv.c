@@ -498,6 +498,10 @@ subscription_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
   default:
     break;
 
+  case GEV_ENTER:
+    tv_control_signal(tv, TV_CTRL_FULLSCREEN, w->glw_u32);
+    return 1;
+
   case EVENT_KEY_STOP:
     tv_control_signal(tv, TV_CTRL_STOP, w->glw_u32);
     return 1;
@@ -625,6 +629,35 @@ tv_unsubscribe_all(tv_t *tv)
 }
 
 
+/**
+ * Switch the given channel to be presented in fullscreen mode
+ */
+static void
+tv_fullscreen(tv_t *tv, tv_channel_t *ch)
+{
+  glw_t *w, *p;
+
+  if(ch->ch_subscribed == 0)
+    return; /* Should normally not happen, but we have a small
+	       timeslot condition between the event enqueue in glw
+	       callbacks and the main thread, so we just leave it */
+
+  glw_lock();
+
+  /* Pull out any currently fullscreen channels */
+  p = tv->tv_fullscreen_container;
+  if(p != NULL && (w = TAILQ_FIRST(&p->glw_childs)) != NULL)
+    glw_set(w, GLW_ATTRIB_PARENT, tv->tv_subscription_container, NULL);
+
+  /* Insert this channels widget into fullscreen container */
+  glw_set(ch->ch_subscribe_widget,
+	  GLW_ATTRIB_PARENT, tv->tv_fullscreen_container,
+	  NULL);
+
+  glw_unlock();
+}
+
+
 
 /**
  *
@@ -656,6 +689,12 @@ handle_tv_ctrl_event(tv_t *tv, tv_ctrl_event_t *tce)
     if((ch = tv_channel_find(tv, tce->key, 0)) == NULL)
       break;
     tv_unsubscribe(tv, ch);
+    break;
+
+  case TV_CTRL_FULLSCREEN:
+    if((ch = tv_channel_find(tv, tce->key, 0)) == NULL)
+      break;
+    tv_fullscreen(tv, ch);
     break;
   }
 }
