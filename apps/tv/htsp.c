@@ -319,7 +319,7 @@ htsp_load_current_events(htsp_connection_t *hc, tv_channel_t *ch,
 			 uint32_t event)
 {
   htsmsg_t *m;
-  int i;
+  int i = 0;
   uint32_t start, stop;
   const char *title;
 
