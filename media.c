@@ -31,18 +31,14 @@
 #include "fileaccess/fa_tags.h"
 #include "fileaccess/fileaccess.h"
 
+#include <libhts/htsatomic.h>
+
 extern int concurrency;
 
-static void
-mq_mutex_init(hts_mutex_t *mutex)
-{
-  hts_mutex_init(mutex);
-}
 
-/*
+/**
  *
  */
-
 static void
 mq_init(media_queue_t *mq)
 {
@@ -64,14 +60,12 @@ mp_create(const char *name)
 
   mp = calloc(1, sizeof(media_pipe_t));
   
-  hts_mutex_init(&mp->mp_ref_mutex);
-
   mp->mp_refcount = 1;
 
   mp->mp_name = name;
   mp->mp_speed_gain = 1.0f;
 
-  mq_mutex_init(&mp->mp_mutex);
+  hts_mutex_init(&mp->mp_mutex);
   hts_cond_init(&mp->mp_backpressure);
   
   mq_init(&mp->mp_audio);
@@ -108,14 +102,8 @@ mp_destroy(media_pipe_t *mp)
 void
 mp_unref(media_pipe_t *mp)
 {
-  hts_mutex_lock(&mp->mp_ref_mutex);
-  mp->mp_refcount--;
-
-  if(mp->mp_refcount == 0) {
+  if(atomic_add(&mp->mp_refcount, -1) == 0)
     mp_destroy(mp);
-    return;
-  }
-  hts_mutex_unlock(&mp->mp_ref_mutex);
 }
 
 /**
@@ -124,9 +112,7 @@ mp_unref(media_pipe_t *mp)
 media_pipe_t *
 mp_ref(media_pipe_t *mp)
 {
-  hts_mutex_lock(&mp->mp_ref_mutex);
-  mp->mp_refcount++;
-  hts_mutex_unlock(&mp->mp_ref_mutex);
+  atomic_add(&mp->mp_refcount, 1);
   return mp;
 }
 
@@ -360,85 +346,26 @@ mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u)
 
 
 
-/*
+/**
  *
  */
-
-void
-wrap_lock_all_codecs(formatwrap_t *fw)
-{
-  codecwrap_t *cw;
-
-  LIST_FOREACH(cw, &fw->codecs, format_link)
-    wrap_lock_codec(cw);
-}
-
-
-void
-wrap_unlock_all_codecs(formatwrap_t *fw)
-{
-  codecwrap_t *cw;
-
-  LIST_FOREACH(cw, &fw->codecs, format_link)
-    wrap_unlock_codec(cw);
-}
-
-
-/*
- * Assumes we're already locked
- */
-
-void
-wrap_format_purge(formatwrap_t *fw)
-{
-  if(LIST_FIRST(&fw->codecs) != NULL) {
-    hts_mutex_unlock(&fw->mutex);
-    return;
-  }
-
-  if(fw->refcount > 0) {
-    hts_mutex_unlock(&fw->mutex);
-    return;
-  }
-
-  if(fw->format != NULL)
-    av_close_input_file(fw->format);
-
-  hts_mutex_unlock(&fw->mutex);
-  free(fw);
-}
-
 codecwrap_t *
 wrap_codec_ref(codecwrap_t *cw)
 {
-  cw->refcount++;
+  atomic_add(&cw->refcount, 1);
   return cw;
 }
 
-
-
-
-
+/**
+ *
+ */
 void
-wrap_codec_deref(codecwrap_t *cw, int lock)
+wrap_codec_deref(codecwrap_t *cw)
 {
-  formatwrap_t *fw;
+  formatwrap_t *fw = cw->format;
 
-  if(lock)
-    hts_mutex_lock(&cw->mutex);
-
-  if(cw->refcount > 1) {
-    cw->refcount--;
-    hts_mutex_unlock(&cw->mutex);
+  if(atomic_add(&cw->refcount, -1) > 1)
     return;
-  }
-
-  fw = cw->format;
-
-  if(fw != NULL) {
-    hts_mutex_lock(&fw->mutex);
-    LIST_REMOVE(cw, format_link);
-  }
 
   fflock();
 
@@ -451,22 +378,19 @@ wrap_codec_deref(codecwrap_t *cw, int lock)
   
   ffunlock();
 
-  if(fw != NULL)
-    wrap_format_purge(fw);
-
-  cw->codec = NULL;
-  cw->codec_ctx = NULL;
-  cw->parser_ctx = NULL;
-
-  hts_mutex_unlock(&cw->mutex); /* XXX: not really needed */
-
-  if(hts_mutex_destroy(&cw->mutex))
-    perror("hts_mutex_destroy");
-
+  if((fw = cw->format) != NULL) {
+    hts_mutex_lock(&fw->fw_mutex);
+    LIST_REMOVE(cw, format_link);
+    pthread_cond_signal(&fw->fw_cond);
+    hts_mutex_unlock(&fw->fw_mutex);
+  }
   free(cw);
 }
 
 
+/**
+ *
+ */
 codecwrap_t *
 wrap_codec_create(enum CodecID id, enum CodecType type, int parser,
 		  formatwrap_t *fw, AVCodecContext *ctx)
@@ -493,12 +417,14 @@ wrap_codec_create(enum CodecID id, enum CodecType type, int parser,
 
   cw->parser_ctx = parser ? av_parser_init(id) : NULL;
 
-  mq_mutex_init(&cw->mutex);
   cw->refcount = 1;
   cw->format = fw;
   
-  if(fw != NULL) 
+  if(fw != NULL) {
+    hts_mutex_lock(&fw->fw_mutex);
     LIST_INSERT_HEAD(&fw->codecs, cw, format_link);
+    hts_mutex_unlock(&fw->fw_mutex);
+  }
 
   if(type == CODEC_TYPE_VIDEO && concurrency > 1)
     avcodec_thread_init(cw->codec_ctx, concurrency);
@@ -508,43 +434,44 @@ wrap_codec_create(enum CodecID id, enum CodecType type, int parser,
   return cw;
 }
 
-
+/**
+ *
+ */
 formatwrap_t *
-wrap_format_create(AVFormatContext *fctx, int refcount)
+wrap_format_create(AVFormatContext *fctx)
 {
   formatwrap_t *fw = malloc(sizeof(formatwrap_t));
 
-  mq_mutex_init(&fw->mutex);
+  hts_mutex_init(&fw->fw_mutex);
+  hts_cond_init(&fw->fw_cond);
   LIST_INIT(&fw->codecs);
   fw->format = fctx;
-  fw->refcount = 1;
   return fw;
 }
 
 
-void
-wrap_format_wait(formatwrap_t *fw)
-{
-  codecwrap_t *cw;
-  
-  hts_mutex_lock(&fw->mutex);
-
-  while((cw = LIST_FIRST(&fw->codecs)) != NULL) {
-    hts_mutex_unlock(&fw->mutex);
-    usleep(100000);
-    hts_mutex_lock(&fw->mutex);
-  }
-
-  fw->refcount--;
-  wrap_format_purge(fw);
-}
-
-/*
- * mp_set_playstatus() is responsible for starting and stopping
- * decoder threads
+/**
  *
  */
+void
+wrap_format_destroy(formatwrap_t *fw)
+{
+  /* Wait for all codecs to be released */
+  hts_mutex_lock(&fw->fw_mutex);
+  while((LIST_FIRST(&fw->codecs)) != NULL)
+    pthread_cond_wait(&fw->fw_cond, &fw->fw_mutex);
+  hts_mutex_unlock(&fw->fw_mutex);
 
+  if(fw->format != NULL)
+    av_close_input_file(fw->format);
+  free(fw);
+}
+
+
+/**
+ * mp_set_playstatus() is responsible for starting and stopping
+ * decoder threads
+ */
 void
 mp_set_playstatus(media_pipe_t *mp, int status)
 {

@@ -864,7 +864,7 @@ htsp_subscriptionStart(tv_t *tv, htsmsg_t *m)
   }
   
   mp = ch->ch_mp;
-  ch->ch_fw = wrap_format_create(NULL, 1);
+  ch->ch_fw = wrap_format_create(NULL);
 
   /**
    * Parse each stream component and add it as a stream at our end

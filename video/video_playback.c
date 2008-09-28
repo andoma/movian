@@ -600,7 +600,7 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
   mp->mp_audio.mq_stream = -1;
   mp->mp_video.mq_stream = -1;
 
-  fw = wrap_format_create(pvc.pvc_fctx, 1);
+  fw = wrap_format_create(pvc.pvc_fctx);
 
   for(i = 0; i < pvc.pvc_fctx->nb_streams; i++) {
     ctx = pvc.pvc_fctx->streams[i]->codec;
@@ -620,8 +620,6 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
   ai->ai_fctx   = pvc.pvc_fctx;
   mp->mp_format = pvc.pvc_fctx;
 
-  wrap_lock_all_codecs(fw);
-  
   /**
    * Restart playback at last position
    */
@@ -645,8 +643,6 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
 
   video_player_update_stream_info(&pvc);
 
-  wrap_unlock_all_codecs(fw);
-
   pvc.pvc_rcache_last = INT64_MIN;
 
   eh = event_handler_register("videoplayer", video_player_event_handler,
@@ -662,8 +658,6 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
 
   mp_set_playstatus(mp, MP_STOP);
 
-  wrap_lock_all_codecs(fw);
-
   mp->mp_total_time = 0;
 
   ai->ai_fctx = NULL;
@@ -672,11 +666,11 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
 
   for(i = 0; i < streams; i++)
     if(pvc.pvc_cwvec[i] != NULL)
-      wrap_codec_deref(pvc.pvc_cwvec[i], 0);
+      wrap_codec_deref(pvc.pvc_cwvec[i]);
 
   glw_destroy(top);
 
-  wrap_format_wait(fw);
+  wrap_format_destroy(fw);
 
   if(mp->mp_subtitles) {
     subtitles_free(mp->mp_subtitles);

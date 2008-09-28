@@ -520,15 +520,13 @@ tv_channel_stop(tv_t *tv, tv_channel_t *ch)
 
   /* Close codecs in the correct way */
 
-  wrap_lock_all_codecs(fw);
-
   while((tcs = LIST_FIRST(&ch->ch_streams)) != NULL) {
-    wrap_codec_deref(tcs->tcs_cw, 0);
+    wrap_codec_deref(tcs->tcs_cw);
     LIST_REMOVE(tcs, tcs_link);
     free(tcs);
   }
 
-  wrap_format_wait(fw);
+  wrap_format_destroy(fw);
 
   mp->mp_audio.mq_stream = -1;
   mp->mp_video.mq_stream = -1;

@@ -188,8 +188,6 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
 
   got_pic = 0;
 
-  wrap_lock_codec(cw);
-
   if(vd->vd_do_flush) {
     do {
       avcodec_decode_video(ctx, frame, &got_pic, NULL, 0);
@@ -228,8 +226,6 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
 
   nice_codec_name(mq->mq_info_codec, sizeof(mq->mq_info_codec), ctx);
   
-  wrap_unlock_codec(cw);
-
   if(got_pic == 0)
     return;
 

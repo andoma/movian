@@ -105,7 +105,7 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
   mp->mp_audio.mq_stream = -1;
   mp->mp_video.mq_stream = -1;
 
-  fw = wrap_format_create(fctx, 1);
+  fw = wrap_format_create(fctx);
 
   cw = NULL;
   for(i = 0; i < fctx->nb_streams; i++) {
@@ -315,15 +315,13 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
   }
 
  out:
-  wrap_lock_all_codecs(fw);
-
   mp->mp_total_time = 0;
 
   streams = fctx->nb_streams;
 
-  wrap_codec_deref(cw, 0);
+  wrap_codec_deref(cw);
 
-  wrap_format_wait(fw);
+  wrap_format_destroy(fw);
 
   media_update_playstatus_prop(ple->ple_prop_playstatus, MP_STOP);
   return next;

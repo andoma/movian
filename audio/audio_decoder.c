@@ -359,8 +359,6 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
   
   while(size > 0) {
 
-    wrap_lock_codec(cw);
-
     if(ad->ad_do_flush) {
       avcodec_flush_buffers(cw->codec_ctx);
       ad->ad_do_flush = 0;
@@ -374,16 +372,12 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
 
     data_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
     r = avcodec_decode_audio2(ctx, ad->ad_outbuf, &data_size, buf, size);
-    if(r == -1) {
-      wrap_unlock_codec(cw);
+    if(r == -1)
       break;
-    }
 
     channels = ctx->channels;
     rate     = ctx->sample_rate;
     codec_id = ctx->codec_id;
-
-    wrap_unlock_codec(cw);
 
     if(mp->mp_feedback != NULL) {
       event_ts_t *et;

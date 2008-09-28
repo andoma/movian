@@ -161,8 +161,6 @@ dvd_gen_frame_kick(dvd_player_t *dp)
   if(cw == NULL)
     return;
 
-  wrap_lock_codec(cw);
-
   mb = media_buf_alloc();
   mb->mb_cw = wrap_codec_ref(cw);
   mb->mb_size = 0;
@@ -171,7 +169,6 @@ dvd_gen_frame_kick(dvd_player_t *dp)
   mb->mb_data_type = MB_VIDEO;
   mb->mb_duration = 1000000LL * av_q2d(cw->codec_ctx->time_base);
 
-  wrap_unlock_codec(cw);
   mb_enqueue(mp, &mp->mp_video, mb);
 }
 
@@ -524,7 +521,7 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
    * Init MPEG elementary stream decoder
    */
 
-  fw = wrap_format_create(NULL, 1);
+  fw = wrap_format_create(NULL);
 
   pes_init(&dp->dp_pp, mp, fw);
 
@@ -549,7 +546,7 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 
   pes_deinit(&dp->dp_pp);
 
-  wrap_format_wait(fw);
+  wrap_format_destroy(fw);
 
   free(title);
 

@@ -48,16 +48,16 @@ LIST_HEAD(media_pipe_list, media_pipe);
  */
 
 typedef struct formatwrap {
-  hts_mutex_t mutex;
   AVFormatContext *format;
+
+  hts_mutex_t fw_mutex;
+  hts_cond_t fw_cond;
   LIST_HEAD(, codecwrap) codecs;
-  int refcount;                   /* this does not include the codecs */
 } formatwrap_t;
 
 
 
 typedef struct codecwrap {
-  hts_mutex_t mutex;
   int refcount;
   AVCodec *codec;
   AVCodecContext *codec_ctx;
@@ -145,8 +145,6 @@ typedef enum {
 } mp_playstatus_t;
 
 typedef struct media_pipe {
-
-  hts_mutex_t mp_ref_mutex;
   int mp_refcount;
 
   mp_playstatus_t mp_playstatus;
@@ -186,38 +184,23 @@ typedef struct media_pipe {
 } media_pipe_t;
 
 
-/*
- * ffmpeg lock wrappers
+/**
+ * Format
  */
+formatwrap_t *wrap_format_create(AVFormatContext *fctx);
 
+void wrap_format_destroy(formatwrap_t *fw);
 
-static inline void wrap_lock_codec(codecwrap_t *cw);
+/**
+ * Codecs
+ */
+void wrap_codec_deref(codecwrap_t *cw);
 
-static inline void
-wrap_lock_codec(codecwrap_t *cw)
-{
-  hts_mutex_lock(&cw->mutex);
-}
-
-
-static inline void wrap_unlock_codec(codecwrap_t *cw);
-
-static inline void
-wrap_unlock_codec(codecwrap_t *cw)
-{
-  hts_mutex_unlock(&cw->mutex);
-}
-
-void wrap_codec_deref(codecwrap_t *cw, int lock);
 codecwrap_t *wrap_codec_ref(codecwrap_t *cw);
+
 codecwrap_t *wrap_codec_create(enum CodecID id, enum CodecType type, 
 			       int parser, formatwrap_t *fw,
 			       AVCodecContext *ctx);
-formatwrap_t *wrap_format_create(AVFormatContext *fctx, int refcount);
-void wrap_lock_all_codecs(formatwrap_t *fw);
-void wrap_unlock_all_codecs(formatwrap_t *fw);
-void wrap_format_purge(formatwrap_t *fw);
-void wrap_format_wait(formatwrap_t *fw);
 
 
 static inline media_buf_t *
@@ -233,7 +216,7 @@ media_buf_free(media_buf_t *mb)
     free(mb->mb_data);
 
   if(mb->mb_cw != NULL)
-    wrap_codec_deref(mb->mb_cw, 1);
+    wrap_codec_deref(mb->mb_cw);
   
   free(mb);
 }

@@ -37,7 +37,7 @@ static void
 pes_free_stream(pes_stream_t *ps)
 {
   if(ps->ps_cw != NULL)
-    wrap_codec_deref(ps->ps_cw, 1);
+    wrap_codec_deref(ps->ps_cw);
 }
 
 
@@ -204,9 +204,6 @@ pes_do_block(pes_player_t *pp, uint32_t sc, uint8_t *buf, int len, int w,
   cw = ps->ps_cw;
   ctx = cw->codec_ctx;
  
-  wrap_lock_codec(cw);
- 
-
   if(cw->parser_ctx == NULL) {
 
     /* No parseing available */
@@ -220,7 +217,6 @@ pes_do_block(pes_player_t *pp, uint32_t sc, uint8_t *buf, int len, int w,
     mb->mb_duration = 1000000LL * av_q2d(ctx->time_base);
     mb->mb_aspect_override = rate;
     mb->mb_pts = ps->ps_pts;
-    wrap_unlock_codec(cw);
 
     memcpy(mb->mb_data, buf, len);
 
@@ -250,16 +246,12 @@ pes_do_block(pes_player_t *pp, uint32_t sc, uint8_t *buf, int len, int w,
 
       mb->mb_cw = wrap_codec_ref(cw);
 
-      wrap_unlock_codec(cw);
       mb_enqueue(mp, ps->ps_output, mb);
-      wrap_lock_codec(cw);
-
     }
     
     buf += rlen;
     len -= rlen;
   }
-  wrap_unlock_codec(cw);
 }
 
 
