@@ -30,6 +30,9 @@ typedef enum {
   EVENT_AUDIO_CLOCK,
   EVENT_VIDEO_CLOCK,
 
+  EVENT_RECONFIGURE,   /* Special event to force apps to reconfiguring
+			  themselfs */
+
   EVENT_PLAYLIST,      /* Playlist specific events, see playlist.h */
   EVENT_TV,            /* TV specific events, see tv.h */
 

@@ -49,7 +49,7 @@ typedef struct htsp_connection {
   hts_mutex_t hc_tally_lock;
 
   int hc_connected;
-
+  char *hc_url;
   char *hc_hostname;
   int hc_port;
 

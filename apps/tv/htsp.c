@@ -31,6 +31,8 @@
 
 #include "htsp.h"
 #include "showtime.h"
+#include "keyring.h"
+#include "event.h"
 
 static void htsp_mux_input(tv_t *tv, htsmsg_t *m);
 
@@ -147,6 +149,9 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int async)
   uint32_t noaccess;
   htsmsg_t *reply;
   htsp_msg_t *hm = NULL;
+  int retry = 0;
+  char *username;
+  char *password;
 
   /* Generate a sequence number for our message */
 
@@ -156,10 +161,39 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int async)
 
   htsmsg_add_u32(m, "seq", seq);
 
-  // again:
+ again:
+
+  r = keyring_lookup(hc->hc_url, &username, &password, NULL, !!retry,
+		     "TV client", "Access denied");
+  if(r == -1) {
+    /* User rejected */
+    glw_event_enqueue(&hc->hc_tv->tv_ai->ai_geq, 
+		      glw_event_create(EVENT_RECONFIGURE, 
+				       sizeof(glw_event_t)));
+    htsmsg_destroy(m);
+    errno = EACCES;
+    return NULL;
+  }
+
+  if(r == 0) {
+    /* Got auth credentials */
+    htsmsg_delete_field(m, "username");
+    htsmsg_delete_field(m, "password");
+
+    if(username != NULL) 
+      htsmsg_add_str(m, "username", username);
+
+    if(password != NULL) 
+      htsmsg_add_str(m, "password", password);
+
+    free(username);
+    free(password);
+  }
+
 
   if(htsmsg_binary_serialize(m, &buf, &len, -1) < 0) {
     htsmsg_destroy(m);
+    errno = ENOMEM;
     return NULL;
   }
 
@@ -184,7 +218,7 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int async)
       hts_mutex_unlock(&hc->hc_rpc_lock);
       free(hm);
     }
-
+    errno = EIO;
     return NULL;
   }
   free(buf);
@@ -196,6 +230,7 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int async)
       if(hc->hc_connected == 0) {
 	htsmsg_destroy(m);
 	hts_mutex_unlock(&hc->hc_rpc_lock);
+	errno = ECONNRESET;
 	return NULL;
       }
 
@@ -224,6 +259,7 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int async)
     if(recv(fd, buf, l, MSG_WAITALL) != l) {
       free(buf);
       htsmsg_destroy(m);
+      errno = ECONNRESET;
       return NULL;
     }
   
@@ -232,11 +268,10 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int async)
 
   if(!htsmsg_get_u32(reply, "_noaccess", &noaccess) && noaccess) {
     /* Access denied, we need to try with new credentials */
-
-    abort();  /* not supported right now */
-
+    htsmsg_destroy(reply);
+    retry++;
+    goto again;
   }
-
 
   htsmsg_destroy(m); /* Destroy original message */
   return reply;
@@ -561,7 +596,10 @@ htsp_com_thread(void *aux)
 
   tv->tv_be_opaque = hc;
 
-  for(;;sleep(5)) {
+  for(;;sleep(1)) {
+
+    if(hc->hc_run == 0)
+      break;
 
     if(hc->hc_fd != -1) {
       close(hc->hc_fd);
@@ -594,6 +632,11 @@ htsp_com_thread(void *aux)
       continue;
     }
 
+    if(hc->hc_run == 0)
+      break;
+
+    htsp_fatal_error(hc, NULL);  /* Reset any pending fatal error */
+ 
     /* Ok, connected, now, switch session into async mode */
 
     m = htsmsg_create();
@@ -608,9 +651,7 @@ htsp_com_thread(void *aux)
     hc->hc_connected = 1;
     hts_thread_create(&hc->hc_worker_tid, htsp_worker_thread, hc);
 
-    htsp_fatal_error(hc, NULL);  /* Reset any pending fatal error */
-
-    tv->tv_be_subscribe   = htsp_subscribe;
+   tv->tv_be_subscribe   = htsp_subscribe;
     tv->tv_be_unsubscribe = htsp_unsubscribe;
     
     /* Receive loop */
@@ -674,6 +715,7 @@ htsp_create(const char *url, tv_t *tv)
 {
   char hname[100];
   int i, port;
+  const char *url0 = url;
   htsp_connection_t *hc;
 
   if(strncmp("htsp://", url, 7))
@@ -696,6 +738,8 @@ htsp_create(const char *url, tv_t *tv)
   port = atoi(url);
 
   hc = calloc(1, sizeof(htsp_connection_t));
+  hc->hc_url = strdup(url0);  /* Copy original URL name for
+				 authentication purposes */
   hc->hc_run = 1;
   hc->hc_tv = tv;
   hc->hc_hostname = strdup(hname);
@@ -727,6 +771,7 @@ htsp_destroy(htsp_connection_t *hc)
 
   hts_thread_join(hc->hc_com_tid);
   free(hc->hc_hostname);
+  free(hc->hc_url);
   free(hc);
 }
 

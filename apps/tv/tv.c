@@ -820,6 +820,12 @@ tv_main(tv_t *tv, appi_t *ai)
       default:
 	break;
 
+      case EVENT_RECONFIGURE:
+	htsp_destroy(hc);
+	hc = NULL;
+	tv_config(tv, ai);
+	break;
+
       case EVENT_KEY_MENU:
 	tv_config(tv, ai);
 	break;
