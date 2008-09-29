@@ -2,7 +2,7 @@
 
 # core
 
-SRCS = 	main.c app.c media.c coms.c event.c
+SRCS = 	main.c app.c media.c coms.c event.c keyring.c
 
 # file access subsys
 

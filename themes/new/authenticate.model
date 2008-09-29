@@ -1,0 +1,139 @@
+#include "theme://include/buttons.model"
+
+widget(form, {
+
+  widget(container_x, {
+      
+    space(0.3);
+    widget(container_y, {
+
+      space(3);
+
+      widget(bitmap, {
+	.color = [1.0, 0.1, 0.1];
+	.source = "theme://images/plate-titled-top.png";
+	.textureBorders = [0.1, 0.1, 0.1, 0.1];
+	.vertexBorders  = [0.1, 0.1, 0.1, 0.1];
+	.borderScale = true;
+      
+	widget(label, {
+	  .caption = "Authentication request by " + auth.source;
+	  .align = center;
+	});
+      });
+
+      widget(bitmap, {
+	.weight = 8.0;
+	.color = [0.5, 0.1, 0.1];
+	.source = "theme://images/plate-titled-bottom.png";
+	.textureBorders = [0.1, 0.1, 0.1, 0.1];
+	.vertexBorders  = [0.02, 0.02, 0.02, 0.02];
+	.borderScale = true;
+      
+	widget(container_y, {
+
+	  /**
+	   * Resource (not editable)
+	   */
+
+	  widget(label, {
+	    .caption = "Resource:";
+	    .weight = 0.5;
+	  });
+	
+	  widget(label, {
+	    .weight = 1;
+	    .caption = auth.resource;
+	  });
+
+	  space(0.5);
+
+	  /**
+	   * Resource (not editable)
+	   */
+
+	  widget(label, {
+	    .caption = "Reason:";
+	    .weight = 0.5;
+	  });
+	
+	  widget(label, {
+	    .weight = 1;
+	    .caption = auth.reason;
+	  });
+
+	  space(0.5);
+	
+	  /**
+	   * Username
+	   */
+
+	  widget(label, {
+	    .caption = "Username:";
+	    .weight = 0.5;
+	  });
+	
+	  widget(text, {
+	    .selectable = true;
+	    .focusCursor = true;
+	    .focusAlpha = true;
+	    .weight = 1;
+	    .id = "username";
+	  });
+
+	  space(0.5);
+
+	  /**
+	   * Password
+	   */
+
+	  widget(label, {
+	    .caption = "Password:";
+	    .weight = 0.5;
+	  });
+	
+	  widget(text, {
+	    .selectable = true;
+	    .focusCursor = true;
+	    .focusAlpha = true;
+	    .password = true;
+	    .weight = 1;
+	    .id = "password";
+	  });
+
+	  space(0.5);
+
+	  /**
+	   * Domain
+	   */
+
+	  widget(label, {
+	    .alpha = auth.domainReq;
+	    .caption = "Domain:";
+	    .weight = 0.5;
+	  });
+	
+	  widget(text, {
+	    .alpha = auth.domainReq;
+	    .selectable = auth.domainReq;
+	    .focusCursor = true;
+	    .focusAlpha = true;
+	    .weight = 1;
+	    .id = "domain";
+	  });
+
+	  space(0.5);
+
+	
+	  widget(container_x, {
+	    FORM_BUTTONS_TWO(FORM_BUTTON_OK(), FORM_BUTTON_CANCEL());
+	  });
+
+	  space(0.5);
+	});
+      });
+      space(3);
+    });
+    space(0.3);
+  });
+});

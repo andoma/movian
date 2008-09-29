@@ -27,6 +27,12 @@ widget(container_z, {
 	  });
       });
     
+    widget(container_y, {
+      /* Not so good .. */
+      .debug = true;
+      .id = "auth_query_container";
+    });
+
     widget(container_x, {
 	space(0.5);
 	widget(container_y, {
