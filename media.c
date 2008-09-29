@@ -40,13 +40,14 @@ extern int concurrency;
  *
  */
 static void
-mq_init(media_queue_t *mq)
+mq_init(media_queue_t *mq, glw_prop_t *p)
 {
   TAILQ_INIT(&mq->mq_q);
   mq->mq_len = 0;
   mq->mq_stream = -1;
   hts_cond_init(&mq->mq_avail);
-
+  mq->mq_prop_qlen_cur = glw_prop_create(p, "qlen", GLW_GP_INT);
+  mq->mq_prop_qlen_max = glw_prop_create(p, "qmax", GLW_GP_INT);
 }
 
 
@@ -68,8 +69,13 @@ mp_create(const char *name)
   hts_mutex_init(&mp->mp_mutex);
   hts_cond_init(&mp->mp_backpressure);
   
-  mq_init(&mp->mp_audio);
-  mq_init(&mp->mp_video);
+  mp->mp_prop_root = glw_prop_create(NULL, "mp", GLW_GP_DIRECTORY);
+
+  mq_init(&mp->mp_audio, glw_prop_create(mp->mp_prop_root, 
+					 "audio", GLW_GP_DIRECTORY));
+
+  mq_init(&mp->mp_video, glw_prop_create(mp->mp_prop_root, 
+					 "video", GLW_GP_DIRECTORY));
 
   if(layout_global_status != NULL)
     mp->mp_status_xfader = glw_create(GLW_ANIMATOR,
@@ -90,6 +96,8 @@ mp_destroy(media_pipe_t *mp)
 {
   if(mp->mp_status_xfader != NULL)
     glw_destroy(mp->mp_status_xfader);
+
+  glw_prop_destroy(mp->mp_prop_root);
 
   mp_set_playstatus(mp, MP_STOP, 0);
   free(mp);
@@ -155,6 +163,7 @@ mb_enq_tail(media_queue_t *mq, media_buf_t *mb)
   TAILQ_INSERT_TAIL(&mq->mq_q, mb, mb_link);
   mq->mq_len++;
   hts_cond_signal(&mq->mq_avail);
+  glw_prop_set_int(mq->mq_prop_qlen_cur, mq->mq_len);
 }
 
 /*
@@ -167,6 +176,7 @@ mb_enq_head(media_queue_t *mq, media_buf_t *mb)
   TAILQ_INSERT_HEAD(&mq->mq_q, mb, mb_link);
   mq->mq_len++;
   hts_cond_signal(&mq->mq_avail);
+  glw_prop_set_int(mq->mq_prop_qlen_cur, mq->mq_len);
 }
 
 

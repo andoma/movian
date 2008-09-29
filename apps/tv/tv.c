@@ -598,11 +598,14 @@ tv_subscribe(tv_t *tv, tv_channel_t *ch, int fs)
 
   ch->ch_subscribed = 1;
 
+  ch->ch_mp = mp_create("TV");
+
   ch->ch_subscribe_widget =
     glw_model_create("theme://tv/subscription.model",
 		     fs ? NULL : tv->tv_subscription_container,
 		     GLW_MODEL_CACHE,
 		     ch->ch_prop_root,
+		     ch->ch_mp->mp_prop_root,
 		     prop_global,
 		     NULL);
 
@@ -622,7 +625,6 @@ tv_subscribe(tv_t *tv, tv_channel_t *ch, int fs)
 
 
   vd_conf_init(&ch->ch_vdc);
-  ch->ch_mp = mp_create("TV");
 
   ch->ch_video_widget = vd_create_widget(vwp, ch->ch_mp, 0.0);
 

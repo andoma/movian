@@ -179,7 +179,6 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
   AVFrame *frame = vd->vd_frame;
   vd_conf_t *gc = mp->mp_video_conf;
   frame_meta_t *fm;
-  media_queue_t *mq = &mp->mp_video;
   time_t now;
   int hvec[3], wvec[3];
   int tff, w2, mode;
@@ -201,12 +200,6 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
   }
 
   time(&now);
-  if(now != mq->mq_info_last_time) {
-    mq->mq_info_rate = mq->mq_info_rate_acc / 125;
-    mq->mq_info_last_time = now;
-    mq->mq_info_rate_acc = 0;
-  }
-  mq->mq_info_rate_acc += mb->mb_size;
 
   ctx->opaque = mb;
   ctx->get_buffer = vd_get_buffer;
@@ -224,8 +217,6 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
 
   avcodec_decode_video(ctx, frame, &got_pic, mb->mb_data, mb->mb_size);
 
-  nice_codec_name(mq->mq_info_codec, sizeof(mq->mq_info_codec), ctx);
-  
   if(got_pic == 0)
     return;
 
@@ -347,14 +338,6 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
 
   if(vd->vd_deilace_type == VD_DEILACE_HALF_RES)
     duration /= 2;
-
-  snprintf(mq->mq_info_output_type, sizeof(mq->mq_info_output_type),
-	   "%d * %d%c @ %.2f Hz (%s)",
-	   ctx->width,
-	   ctx->height,
-	   frame->interlaced_frame ? 'i' : 'p',
-	   1000000.0f / (float) duration,
-	   avcodec_get_pix_fmt_name(ctx->pix_fmt));
 
   duration = (float)duration / mp->mp_speed_gain;
 

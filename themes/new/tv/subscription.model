@@ -67,29 +67,47 @@ widget(container_z, {
 	widget(container_y, {
 	  widget(label, {.weight = 0.75; .caption = "Bitrate:";});
 	  widget(label, {
+	    .align = right;
 	    .caption = int2str(channel.subscription.bitrate) + " kbit/s";
 	  });
 	  space(0.5);
 
 	  widget(label, {.weight = 0.75; .caption = "Headend queue size:";});
 	  widget(label, {
+	    .align = right;
 	    .caption = int2str(channel.subscription.queuesize) + " kB";
 	  });
 	  space(0.5);
 
 	  widget(label, {.weight = 0.75; .caption = "Headend queue delay:";});
 	  widget(label, {
+	    .align = right;
 	    .caption = int2str(channel.subscription.queuedelay) + " ms";
 	  });
 	  space(0.5);
 
 	  widget(label, {.weight = 0.75; .caption = "Headend queue drops:";});
 	  widget(label, {
+	    .align = right;
 	    .caption = int2str(channel.subscription.queuedrops) + " packets";
 	  });
 	  space(0.5);
 
-	  space(20.0);
+	  widget(label, {.weight = 0.75; .caption = "Video queue size:";});
+	  widget(label, {
+	    .align = right;
+	    .caption = int2str(mp.video.qlen) + " packets";
+	  });
+	  space(0.5);
+
+	  widget(label, {.weight = 0.75; .caption = "Audio queue size:";});
+	  widget(label, {
+	    .align = right;
+	    .caption = int2str(mp.audio.qlen) + " packets";
+	  });
+	  space(0.5);
+
+	  space(18.0);
 
 	});
       });

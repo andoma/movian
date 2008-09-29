@@ -115,15 +115,8 @@ typedef struct media_queue {
   int mq_stream;             /* Stream id, or -1 if queue is inactive */
   hts_cond_t mq_avail;
 
-  /* informational stuff */
-
-  char  mq_info_codec[30];
-  int   mq_info_rate;               /* in kbps */
-  char  mq_info_output_type[50];
-
-  time_t mq_info_last_time;
-  int   mq_info_rate_acc;
-
+  glw_prop_t *mq_prop_qlen_cur;
+  glw_prop_t *mq_prop_qlen_max;
 } media_queue_t;
 
 
@@ -180,6 +173,8 @@ typedef struct media_pipe {
   int64_t mp_videoseekdts;
 
   glw_t *mp_status_xfader;
+
+  glw_prop_t *mp_prop_root;
 
 } media_pipe_t;
 
