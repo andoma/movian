@@ -869,6 +869,8 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
        and wakeup decoder (it will notice that widget no longer exist
        and just start dropping decoded output) */
 
+    LIST_REMOVE(vd, vd_global_link);
+
     pthread_mutex_lock(&vd->vd_queue_mutex);
 
     vd_purge_queues(vd);

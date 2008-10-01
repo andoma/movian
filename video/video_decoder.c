@@ -703,8 +703,6 @@ video_decoder_purge(video_decoder_t *vd)
 
   /* We are really gone now */
 
-  LIST_REMOVE(vd, vd_global_link);
-
   vd->vd_mp->mp_video_decoder = NULL;
   free(vd);
 }
