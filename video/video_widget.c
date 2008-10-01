@@ -36,6 +36,9 @@
 #include "subtitles.h"
 #include "yadif.h"
 
+LIST_HEAD(video_decoder_list, video_decoder);
+struct video_decoder_list video_decoders;
+
 static GLuint yuv2rbg_prog;
 static const char *yuv2rbg_code =
 #include "cg/yuv2rgb.h"
@@ -45,6 +48,8 @@ static GLuint yuv2rbg_2mix_prog;
 static const char *yuv2rbg_2mix_code =
 #include "cg/yuv2rgb_2mix.h"
 ;
+
+static void vd_purge_queues(video_decoder_t *vd);
 
 
 void
@@ -122,7 +127,22 @@ vd_init(void)
   glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, 0);
 }
 
+/**
+ *
+ */
+void
+vd_flush_all(void)
+{
+  video_decoder_t *vd;
 
+  LIST_FOREACH(vd, &video_decoders, vd_global_link) {
+    pthread_mutex_lock(&vd->vd_queue_mutex);
+    vd_purge_queues(vd);
+    pthread_cond_signal(&vd->vd_avail_queue_cond);
+    pthread_cond_signal(&vd->vd_bufalloced_queue_cond);
+    pthread_mutex_unlock(&vd->vd_queue_mutex);
+  }
+}
 
 
 /**************************************************************************
@@ -156,6 +176,10 @@ vd_create_widget(glw_t *p, media_pipe_t *mp, float zdisplacement)
 			     GLW_ATTRIB_SIGNAL_HANDLER, 
 			     gl_video_widget_callback, vd, 0,
 			     NULL);
+
+  glw_lock();
+  LIST_INSERT_HEAD(&video_decoders, vd, vd_global_link);
+  glw_unlock();
 
   return vd->vd_widget;
 }

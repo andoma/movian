@@ -241,4 +241,6 @@ glw_t *vd_create_widget(glw_t *p, media_pipe_t *mp, float zdisplacement);
 
 void video_decoder_purge(video_decoder_t *vd);
 
+void vd_flush_all(void);
+
 #endif /* VIDEO_DECODER_H */

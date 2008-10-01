@@ -326,6 +326,8 @@ window_close(void)
 static void
 window_change_displaymode(void)
 {
+  vd_flush_all();
+
   glFlush();
   XSync(x11state.display, False);
 
