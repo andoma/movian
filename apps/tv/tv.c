@@ -528,6 +528,9 @@ tv_channel_stop(tv_t *tv, tv_channel_t *ch)
   LIST_REMOVE(ch, ch_running_link);
   pthread_mutex_unlock(&tv->tv_running_mutex);
 
+  /* Drain packet queues */
+  mp_flush(mp);
+
   /* Close codecs in the correct way */
 
   while((tcs = LIST_FIRST(&ch->ch_streams)) != NULL) {
