@@ -32,9 +32,9 @@
 #include "hid/keymapper.h"
 #include "layout/layout.h"
 #include "libhts/hts_strtab.h"
-
 #include "audio/audio.h"
 #include "display/display.h"
+#include "hid/hid.h"
 
 /**
  *
@@ -60,7 +60,7 @@ settings_init(void)
   settings_userinterface_init(ai, ai->ai_widget);
   audio_settings_init(ai, ai->ai_widget);
   keymapper_init(ai, ai->ai_widget);
-
+  hid_init(ai, ai->ai_widget);
 
   /* Make sure the settings top list is selected and nothing else */
 

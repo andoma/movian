@@ -19,6 +19,8 @@
 #ifndef LIRCD_H
 #define LIRCD_H
 
-void lircd_init(void);
+#include "hid.h"
+
+void lircd_proc(glw_prop_t *status);
 
 #endif /* LIRCD_H */

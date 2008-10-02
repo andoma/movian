@@ -19,17 +19,18 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdarg.h>
 #include <math.h>
+#include <poll.h>
 
 #include "imonpad.h"
 #include "showtime.h"
 #include "hid/keymapper.h"
+#include "hid/hid.h"
 
 /*
  * iMON PAD native decoder
@@ -96,54 +97,52 @@ static const struct {
   {"Power",              0x289155B7, 0 },
 };
 
-static int repeat_rate;
-static int repeat_rate0;
 
 #define REPEAT_RATE_SLOWEST 1000000
 
-static void *
-imonpad_compute_repeat_rate(void *aux)
+
+
+/**
+ *
+ */
+void
+imonpad_proc(glw_prop_t *status)
 {
-  repeat_rate = repeat_rate0 = REPEAT_RATE_SLOWEST;
-
-  while(1) {
-    usleep(100000);
-    repeat_rate = (repeat_rate * 7 + repeat_rate0) / 8;
-  }
-}
-
-
-
-
-
-
-static void *
-imonpad_thread(void *aux)
-{
-  int fd = -1, i, l;
+  int fd, i, l, repeat_rate, repeat_rate0, dx, dy, r, k;
   uint8_t buf[4];
   uint32_t v;
-  int dx, dy;
   float angle;
-  int64_t last_nav_generated_ts = 0, ts, delta;
-  int64_t last_nav_sens_ts = 0;
-  int k;
+  int64_t last_nav_generated_ts = 0, ts, delta, last_nav_sens_ts = 0;
   char desc[32];
+  int64_t nextavg = 0;
+  struct pollfd fds;
+  const char *dev = "/dev/lirc0";
 
-  while(1) {
-    if(fd == -1) {
-      fd = open("/dev/lirc0", O_RDONLY);
-      
-      if(fd == -1) {
-	sleep(1);
-	continue;
-      }
+  repeat_rate = repeat_rate0 = REPEAT_RATE_SLOWEST;
+
+  if((fd = open(dev, O_RDONLY)) == -1) {
+    glw_prop_set_stringf(status, "imonpad: Unable to open \"%s\"", dev);
+    sleep(1);
+    return;
+  }
+
+  while(hid_ir_mode == HID_IR_IMONPAD) {
+
+    r = poll(&fds, 1, 100);
+
+    if(wallclock > nextavg) {
+      nextavg = wallclock + 100000;
+      repeat_rate = (repeat_rate * 7 + repeat_rate0) / 8;
     }
-
-    if(read(fd, buf, 4) != 4) {
-      close(fd);
-      fd = -1;
+    
+    if(r != 1)
       continue;
+    
+    if(read(fd, buf, 4) != 4) {
+      glw_prop_set_stringf(status, "imonpad: Read error from \"%s\"", dev);
+      close(fd);
+      sleep(1);
+      return;
     }
 
     v = buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
@@ -270,19 +269,7 @@ imonpad_thread(void *aux)
       }
     }
   }
+  close(fd);
+  return;
 }
 
-
-
-
-
-
-void
-imonpad_init(void)
-{
-  static pthread_t ptid;
-
-  has_analogue_pad = 1;
-  pthread_create(&ptid, NULL, imonpad_thread, NULL);
-  pthread_create(&ptid, NULL, imonpad_compute_repeat_rate, NULL);
-}

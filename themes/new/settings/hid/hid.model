@@ -1,0 +1,66 @@
+
+#define OPTION(TITLE, ID)
+{
+  widget(container_x, {
+      widget(label, {
+	  .caption = TITLE;
+	  .align = right;
+	});
+
+      widget(bitmap, {
+	  .selectable = true;
+	  .focusCursor = true;
+	  .focusAlpha = true;
+	  .color = [0.6, 0.6, 0.6];
+	  .focusColor = [0.4, 0.4, 0.0];
+
+	  .weight = 0.1;
+	  .source = "theme://images/up.png";
+	  .keepAspect = true;
+
+	  event(enter,ID, decr);
+
+	});
+
+      widget(bitmap, {
+	  .selectable = true;
+	  .focusCursor = true;
+	  .focusAlpha = true;
+	  .color = [0.6, 0.6, 0.6];
+	  .focusColor = [0.4, 0.4, 0.0];
+
+	  .weight = 0.1;
+	  .source = "theme://images/down.png";
+	  .keepAspect = true;
+
+	  event(enter,ID, incr);
+
+	});
+
+      widget(selection, {
+	  .id = ID;
+	});
+    });
+}
+
+widget(container_z, {
+
+  widget(container_y, {
+
+    widget(container_x, {
+      OPTION("Remote control:", "rcmode");
+      space(0.1);
+      widget(label, {
+	.weight = 0.25;
+	.caption = "Status:";
+	.align = right;
+      });
+      widget(label, {
+	.weight = 1.25;
+	.caption = hid.status;
+      });
+    });
+    space(15.0);
+  });
+});
+

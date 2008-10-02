@@ -37,7 +37,6 @@
 
 #include "video/video_decoder.h"
 #include "display/display.h"
-#include "hid/hid.h"
 #include "audio/audio.h"
 #include "layout/layout.h"
 #include "fileaccess/fileaccess.h"
@@ -55,7 +54,6 @@ int frame_duration;
 
 int64_t wallclock;
 time_t walltime;
-int has_analogue_pad;
 int concurrency;
 extern char *htsversion;
 glw_prop_t *prop_global;
@@ -217,8 +215,6 @@ main(int argc, char **argv)
   hts_settings_init("showtime");
 
   event_init();
-
-  hid_init();
 
   hts_mutex_init(&ffmutex);
   av_log_set_level(AV_LOG_ERROR);

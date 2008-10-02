@@ -19,6 +19,8 @@
 #ifndef IMONPAD_H
 #define IMONPAD_H
 
-void imonpad_init(void);
+#include "hid.h"
+
+void imonpad_proc(glw_prop_t *status);
 
 #endif /* IMONPAD_H */

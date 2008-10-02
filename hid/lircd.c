@@ -18,17 +18,19 @@
 
 #include <sys/stat.h>
 #include <fcntl.h>
-
-#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <poll.h>
+#include <sys/socket.h>
+
+#include <libhts/htsbuf.h>
 
 #include "lircd.h"
 #include "event.h"
-#include "coms.h"
 #include "showtime.h"
+#include "hid/hid.h"
 #include "hid/keymapper.h"
 
 
@@ -45,27 +47,58 @@ static const struct {
   { "Backspace",    GEV_BACKSPACE  },
 };
 
-static void *
-lirc_thread(void *aux)
+void
+lircd_proc(glw_prop_t *status)
 {
-  FILE *fp;
   char buf[200];
   uint64_t ircode;
   uint32_t repeat;
   char keyname[100];
-  int i;
+  int i, r, fd, len;
+  htsbuf_queue_t q;
+  struct pollfd fds;
+  const char *dev = "/dev/lirc";
 
-  while(1) {
-    fp = fopen("/dev/lircd", "r+");
-    if(fp == NULL) {
-      sleep(1);
-      continue;
+  if((fd = open(dev, O_RDONLY)) == -1) {
+    glw_prop_set_stringf(status, "lirc: Unable to open \"%s\"", dev);
+    sleep(1);
+    return;
+  }
+
+
+  fds.fd = fd;
+  fds.events = POLLIN;
+
+  htsbuf_queue_init(&q, 0);
+
+  while(hid_ir_mode == HID_IR_LIRC) {
+
+    r = poll(&fds, 1, 1000);
+    if(r > 0) {
+      if((r = recv(fd, buf, sizeof(buf), MSG_DONTWAIT)) < 1) {
+	glw_prop_set_stringf(status, "lirc: Unable to read from \"%s\"", dev);
+	break;
+      }
+      htsbuf_append(&q, buf, r);
     }
 
-    while(fgets(buf, sizeof(buf), fp) != NULL) {
+    while((len = htsbuf_find(&q, 0xa)) != -1) {
+      
+      if(len >= sizeof(buf) - 1) {
+	glw_prop_set_stringf(status, "lirc: Command buffer size exceeded");
+	goto out;
+      }
+
+      htsbuf_read(&q, buf, len);
+      buf[len] = 0;
+      
+      while(len > 0 && buf[len - 1] < 32)
+	buf[--len] = 0;
+      htsbuf_drop(&q, 1); /* Drop the \n */
+      
       sscanf(buf, "%"PRIx64" %d %s", &ircode, &repeat, keyname);
-
-
+      
+      
       if(keyname[0] && keyname[1] == 0) {
 	/* ASCII input */
 	event_post(glw_event_create_unicode(keyname[0]));
@@ -84,14 +117,8 @@ lirc_thread(void *aux)
 	keymapper_resolve(buf);
       }
     }
-    fclose(fp);
   }
-}
-
-
-void
-lircd_init(void)
-{
-  static pthread_t ptid;
-  pthread_create(&ptid, NULL, lirc_thread, NULL);
+ out:
+  close(fd);
+  htsbuf_queue_flush(&q);;
 }

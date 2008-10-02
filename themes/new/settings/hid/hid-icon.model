@@ -1,0 +1,2 @@
+#include "theme://include/miniatures.model"
+MINIATURE("Remote controllers", "theme://images/windows.png");

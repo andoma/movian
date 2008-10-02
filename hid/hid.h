@@ -19,6 +19,16 @@
 #ifndef HID_H
 #define HID_H
 
-void hid_init(void);
+#include "app.h"
+
+typedef enum {
+  HID_IR_NONE,
+  HID_IR_LIRC,
+  HID_IR_IMONPAD,
+} hid_ir_mode_t;
+
+extern hid_ir_mode_t hid_ir_mode;
+
+void hid_init(appi_t *ai, glw_t *m);
 
 #endif /* HID_H */
