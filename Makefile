@@ -47,7 +47,7 @@ SRCS  += layout.c
 # Human Interface Devices
 
 VPATH += hid
-SRCS  += hid.c lircd.c imonpad.c lcdd.c keymapper.c
+SRCS  += hid.c lircd.c imonpad.c keymapper.c
 
 # Main menu
 
