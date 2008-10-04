@@ -272,8 +272,8 @@ fa_lavf_read(URLContext *h, unsigned char *buf, int size)
 /**
  * lavf -> fileaccess seek wrapper
  */
-static offset_t
-fa_lavf_seek(URLContext *h, offset_t pos, int whence)
+static int64_t
+fa_lavf_seek(URLContext *h, int64_t pos, int whence)
 {
   fa_glue_t *glue = h->priv_data;
   
@@ -350,8 +350,8 @@ fa_svfs_read(void *handle, void *buf, size_t size)
 /**
  * svfs -> fileaccess seek wrapper
  */
-static offset_t
-fa_svfs_seek(void *handle, offset_t pos, int whence)
+static int64_t
+fa_svfs_seek(void *handle, int64_t pos, int whence)
 {
   fa_glue_t *glue = handle;
   
@@ -441,8 +441,8 @@ fa_posix_read(int fd, void *buf, size_t size)
 /**
  * svfs -> fileaccess seek wrapper
  */
-offset_t
-fa_posix_seek(int fd, offset_t pos, int whence)
+int64_t
+fa_posix_seek(int fd, int64_t pos, int whence)
 {
   fa_glue_t *glue = (void *)fd;
   
@@ -481,7 +481,7 @@ fa_posix_stat(const char *filename, struct stat *buf)
 /**
  * svfs -> fileaccess close wrapper
  */
-offset_t
+int64_t
 fa_posix_filesize(int fd)
 {
   fa_glue_t *glue = (void *)fd;
