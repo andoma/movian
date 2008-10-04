@@ -511,7 +511,7 @@ gl_sysglue_mainloop(void)
 {
   XEvent event;
   int w, h;
-  unsigned int retraceCount = 0, prev;
+  unsigned int retraceCount = 0;
 
   _glXGetVideoSyncSGI(&retraceCount);
 
@@ -541,20 +541,19 @@ gl_sysglue_mainloop(void)
 	}
       }
     }
-    glFlush();
-
     layout_draw(x11state.aspect_ratio);
 
-    prev = retraceCount;
+    glFlush();
 
     if(x11state.do_videosync)
       _glXWaitVideoSyncSGI(2, (retraceCount+1)%2, &retraceCount);
 
     glXSwapBuffers(x11state.display, x11state.win);
-    if(gl_update_timings()) {
+
+    if(gl_update_timings())
       glw_prop_set_float(prop_display_refreshrate,
 			 (float)1000000. / frame_duration);
-    }
+
     glw_reaper();
   }
 }
