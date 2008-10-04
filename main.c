@@ -16,7 +16,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config.h"
+#ifdef HTS_USE_PTHREADS
+#define _GNU_SOURCE
 #include <sched.h>
+#include <pthread.h>
+#endif
+
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <math.h>
@@ -43,9 +49,6 @@
 #include "fileaccess/fa_imageloader.h"
 #include "fileaccess/fa_rawloader.h"
 
-#ifdef HTS_HAVE_PTHREAD
-#include <pthread.h>
-#endif
 
 
 pthread_mutex_t ffmutex;
@@ -78,7 +81,7 @@ ffmpeglockmgr(int lock)
 static int
 get_concurrency(void)
 {
-#ifdef HTS_HAVE_PTHREAD
+#ifdef HTS_USE_PTHREADS
   cpu_set_t mask;
   int i, r = 0;
 
@@ -88,6 +91,7 @@ get_concurrency(void)
     if(CPU_ISSET(i, &mask))
       r++;
 
+  fprintf(stderr, "%d CPUs detected\n", r);
   return r?:1;
 #else
   return 1;
