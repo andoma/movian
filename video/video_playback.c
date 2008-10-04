@@ -614,7 +614,7 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
     }
 
     pvc.pvc_cwvec[i] = wrap_codec_create(ctx->codec_id,
-					 ctx->codec_type, 0, fw, ctx);
+					 ctx->codec_type, 0, fw, ctx, 0);
   }
 
   ai->ai_fctx   = pvc.pvc_fctx;

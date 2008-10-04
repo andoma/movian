@@ -966,7 +966,8 @@ htsp_subscriptionStart(tv_t *tv, htsmsg_t *m)
        * Try to create the codec
        */
 
-      cw = wrap_codec_create(codec_id, codec_type, 0, ch->ch_fw, NULL);
+      cw = wrap_codec_create(codec_id, codec_type, 0, ch->ch_fw, NULL,
+			     codec_id == CODEC_ID_H264);
       if(cw == NULL)
 	continue; /* We should print something i guess .. */
     

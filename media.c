@@ -437,7 +437,8 @@ wrap_codec_deref(codecwrap_t *cw)
  */
 codecwrap_t *
 wrap_codec_create(enum CodecID id, enum CodecType type, int parser,
-		  formatwrap_t *fw, AVCodecContext *ctx)
+		  formatwrap_t *fw, AVCodecContext *ctx,
+		  int cheat_for_speed)
 {
   codecwrap_t *cw = malloc(sizeof(codecwrap_t));
 
@@ -470,8 +471,12 @@ wrap_codec_create(enum CodecID id, enum CodecType type, int parser,
     hts_mutex_unlock(&fw->fw_mutex);
   }
 
-  if(type == CODEC_TYPE_VIDEO && concurrency > 1)
+  if(type == CODEC_TYPE_VIDEO && concurrency > 1) {
     avcodec_thread_init(cw->codec_ctx, concurrency);
+    
+    if(cheat_for_speed)
+      cw->codec_ctx->flags2 |= CODEC_FLAG2_FAST;
+  }
 
   ffunlock();
 

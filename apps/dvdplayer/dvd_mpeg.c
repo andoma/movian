@@ -187,7 +187,7 @@ pes_do_block(pes_player_t *pp, uint32_t sc, uint8_t *buf, int len, int w,
     pes_free_stream(ps);
     
     ps->ps_codec_id = codec_id;
-    ps->ps_cw = wrap_codec_create(codec_id, type, 1, pp->pp_fw, NULL);
+    ps->ps_cw = wrap_codec_create(codec_id, type, 1, pp->pp_fw, NULL, 0);
     ps->ps_cw->codec_ctx->codec_type = type;
     ps->ps_output->mq_stream = 0;
   }

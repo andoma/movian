@@ -195,7 +195,8 @@ codecwrap_t *wrap_codec_ref(codecwrap_t *cw);
 
 codecwrap_t *wrap_codec_create(enum CodecID id, enum CodecType type, 
 			       int parser, formatwrap_t *fw,
-			       AVCodecContext *ctx);
+			       AVCodecContext *ctx,
+			       int cheat_for_speed);
 
 
 static inline media_buf_t *

@@ -114,7 +114,7 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
     if(ctx->codec_type != CODEC_TYPE_AUDIO)
       continue;
 
-    cw = wrap_codec_create(ctx->codec_id, ctx->codec_type, 0, fw, ctx);
+    cw = wrap_codec_create(ctx->codec_id, ctx->codec_type, 0, fw, ctx, 0);
     mp->mp_audio.mq_stream = i;
     break;
   }
