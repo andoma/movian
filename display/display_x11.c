@@ -220,7 +220,6 @@ window_open(void)
   XSetWindowAttributes winAttr;
   unsigned long mask;
   int fullscreen = display_settings.displaymode == DISPLAYMODE_FULLSCREEN;
-  const GLubyte *glvendor;
 
   winAttr.event_mask        = KeyPressMask | StructureNotifyMask;
   winAttr.background_pixmap = None;
@@ -286,9 +285,7 @@ window_open(void)
   if(fullscreen)
     fullscreen_grab();
 
-  glvendor = glGetString(GL_VENDOR); 
-  if(strcmp((char *)glvendor, "NVIDIA Corporation")) {
-    /* Can't rely on __GL_SYNC_TO_VBLANK, use other methods */
+  if(getenv("__GL_SYNC_TO_VBLANK") == 0) {
     x11state.do_videosync = 1;
     fprintf(stderr, 
 	    "Display: Using 'glXWaitVideoSyncSGI' for vertical sync\n");

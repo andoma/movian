@@ -183,8 +183,6 @@ main(int argc, char **argv)
   char *cfgfile = NULL;
   struct rlimit rlim;
 
-  setenv("__GL_SYNC_TO_VBLANK", "1", 1); // make nvidia sync to vblan
-
 #ifdef RLIMIT_AS
   getrlimit(RLIMIT_AS, &rlim);
   rlim.rlim_cur = 512 * 1024 * 1024;
