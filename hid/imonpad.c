@@ -126,6 +126,9 @@ imonpad_proc(glw_prop_t *status)
     return;
   }
 
+  fds.fd = fd;
+  fds.events = POLLIN;
+
   while(hid_ir_mode == HID_IR_IMONPAD) {
 
     r = poll(&fds, 1, 100);
