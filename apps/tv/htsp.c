@@ -826,7 +826,7 @@ htsp_mux_input(tv_t *tv, htsmsg_t *m)
 	if(htsmsg_get_s64(m, "dts", &mb->mb_dts))
 	  mb->mb_dts = AV_NOPTS_VALUE;
 
-	if(htsmsg_get_s64(m, "dts", &mb->mb_pts))
+	if(htsmsg_get_s64(m, "pts", &mb->mb_pts))
 	  mb->mb_pts = AV_NOPTS_VALUE;
 
 	mb->mb_cw = wrap_codec_ref(tcs->tcs_cw);
