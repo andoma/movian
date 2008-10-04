@@ -162,6 +162,39 @@ audio_mixer_event_handler(glw_event_t *ge, void *opaque)
 }
 
 
+/**
+ *
+ */
+static void
+audio_mixer_load(void)
+{
+  htsmsg_t *m = hts_settings_load("audiomixer");
+  int32_t i32;
+
+  if(m == NULL)
+    return;
+
+  if(!htsmsg_get_s32(m, "master-volume", &i32))
+    global_volume.vc_master_vol = (float)i32 / 1000;
+
+  htsmsg_destroy(m);
+}
+
+
+/**
+ *
+ */
+static void
+audio_mixer_save(void)
+{
+  htsmsg_t *m = htsmsg_create();
+
+  htsmsg_add_s32(m, "master-volume", 
+		 global_volume.vc_master_vol * 1000);
+  hts_settings_save(m, "audiomixer");
+  htsmsg_destroy(m);
+}
+
 
 /**
  *
@@ -172,10 +205,13 @@ audio_mixer_thread(void *aux)
   glw_event_t *ge;
   glw_event_initqueue(&audio_mixer_event_queue);
 
+  global_volume.vc_master_vol = -50;
+
+  audio_mixer_load();
+
   event_handler_register("audio mixer", audio_mixer_event_handler,
 			 EVENTPRI_AUDIO_MIXER, NULL);
   
-  global_volume.vc_master_vol = -50;
   audio_mixer_update(&global_volume);
     
 
@@ -187,12 +223,14 @@ audio_mixer_thread(void *aux)
       global_volume.vc_master_vol += 1;
       if(global_volume.vc_master_vol > 6)
 	global_volume.vc_master_vol = 6;
+      audio_mixer_save();
       break;
 
     case EVENT_KEY_VOLUME_DOWN:
       global_volume.vc_master_vol -= 1;
       if(global_volume.vc_master_vol < -75)
 	global_volume.vc_master_vol = -75;
+      audio_mixer_save();
       break;
     case EVENT_KEY_VOLUME_MUTE_TOGGLE:
       global_volume.vc_master_mute = !global_volume.vc_master_mute;

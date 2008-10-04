@@ -289,8 +289,8 @@ htsp_tag_update_membership(tv_t *tv, tv_tag_t *tt, htsmsg_t *m)
   tv_tag_mark_ctms(tt);
 
   HTSMSG_FOREACH(f, m) {
-    if(f->hmf_type == HMF_U64 &&
-       (ch = tv_channel_find(tv, f->hmf_u64, 0)) != NULL)
+    if(f->hmf_type == HMF_S64 &&
+       (ch = tv_channel_find(tv, f->hmf_s64, 0)) != NULL)
       tv_tag_map_channel(tv, tt, ch);
   }
 

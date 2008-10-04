@@ -166,7 +166,7 @@ rcache_store(play_video_ctrl_t *pvc, int ts)
   htsmsg_t *m;
 
   m = htsmsg_create();
-  htsmsg_add_u64(m, "ts", ts);
+  htsmsg_add_s64(m, "ts", ts);
   hts_settings_save(m, "restartcache/%s", pvc->pvc_rcache_title);
   htsmsg_destroy(m);
 }
