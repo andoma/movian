@@ -317,7 +317,7 @@ audio_add_mixer_map(audio_mode_t *am, glw_t *p, int type, const char *title)
 
   glw_selection_add_text_option(sel, "Not available", audio_mixdev_cb,
 				am, NULL, type, 
-				am->am_mixers[type] == mc);
+				am->am_mixers[type] == NULL);
 
   TAILQ_FOREACH(mc, &am->am_mixer_controllers, mc_link) {
     glw_selection_add_text_option(sel, mc->mc_title, audio_mixdev_cb, 
