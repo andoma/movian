@@ -60,6 +60,8 @@ static struct strtab keycodenames[] = {
   { "Quit",                  EVENT_KEY_QUIT },
   { "MainMenu",              EVENT_KEY_MAINMENU },
   { "ChangeView",            EVENT_KEY_SWITCH_VIEW },
+  { "Channel+",              EVENT_KEY_CHANNEL_PLUS },
+  { "Channel-",              EVENT_KEY_CHANNEL_MINUS },
 };
 
 const char *
