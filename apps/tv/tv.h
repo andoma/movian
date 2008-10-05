@@ -178,6 +178,7 @@ typedef struct tv {
   glw_prop_t *tv_prop_root;
   glw_prop_t *tv_prop_url;
   glw_prop_t *tv_prop_show_channel_menu;
+  glw_prop_t *tv_prop_show_details;
 
   glw_prop_t *tv_prop_backend_error;
   glw_prop_t *tv_prop_backend_name;

@@ -209,7 +209,6 @@ tv_channel_find(tv_t *tv, uint32_t id, int create)
   ch->ch_prop_sub_backend_queuedrops =
     glw_prop_create(p_sub, "queuedrops", GLW_GP_INT);
 
-
   return ch;
 }
 
@@ -609,6 +608,7 @@ tv_subscribe(tv_t *tv, tv_channel_t *ch, int fs)
 		     GLW_MODEL_CACHE,
 		     ch->ch_prop_root,
 		     ch->ch_mp->mp_prop_root,
+		     tv->tv_prop_root,
 		     prop_global,
 		     NULL);
 
@@ -897,6 +897,10 @@ tv_launch(void *aux)
   tv->tv_prop_show_channel_menu = glw_prop_create(tv->tv_prop_root, 
 						  "showChannelMenu",
 						  GLW_GP_INT);
+ 
+  tv->tv_prop_show_details = glw_prop_create(tv->tv_prop_root, 
+					     "showDetails",
+					     GLW_GP_INT);
   
   glw_prop_set_int(tv->tv_prop_show_channel_menu, 1);
 
