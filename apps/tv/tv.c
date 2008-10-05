@@ -267,7 +267,7 @@ channel_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     break;
 
   case EVENT_KEY_SELECT:
-    tv_control_signal(tv, TV_CTRL_START, w->glw_u32);
+    //    tv_control_signal(tv, TV_CTRL_START, w->glw_u32);
     return 1;
 
   case GEV_ENTER:
