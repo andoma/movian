@@ -52,7 +52,7 @@ widget(container_z, {
 
 
     widget(container_x, {
-      .alpha = tv.showDetails;
+      .alpha = channel.showDetails;
       .weight = 10.0;
 
       space(5.0);

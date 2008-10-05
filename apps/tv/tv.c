@@ -36,6 +36,96 @@
 static void tv_unsubscribe(tv_t *tv, tv_channel_t *ch);
 
 /**
+ * Called from GLW when user selecs a different audio track
+ */
+static void
+tv_set_audio_track(void *opaque, void *opaque2, int value)
+{
+  tv_channel_t *ch = opaque;
+
+  ch->ch_mp->mp_audio.mq_stream = value;
+}
+
+
+/**
+ * Called from GLW when user switches detailed display
+ */
+static void
+tv_set_display_details(void *opaque, void *opaque2, int value)
+{
+  tv_channel_t *ch = opaque;
+  glw_prop_set_int(ch->ch_prop_show_details, value);
+}
+
+/**
+ * Open menu
+ */
+static void
+tv_subscription_open_menu(tv_t *tv, tv_channel_t *ch)
+{
+  glw_t *p;
+  media_pipe_t *mp = ch->ch_mp;
+  tv_channel_stream_t *tcs;
+  
+  if(ch->ch_menu != NULL) {
+    glw_detach(ch->ch_menu);
+    ch->ch_menu = NULL;
+    return;
+  }
+
+  p = glw_find_by_id(ch->ch_subscribe_widget, "video_container", 0);
+  if(p == NULL)
+    return;
+
+  ch->ch_menu =
+    glw_model_create("theme://tv/subscription-menu.model", p,
+		     0, 
+		     ch->ch_prop_root,
+		     ch->ch_mp->mp_prop_root,
+		     tv->tv_prop_root,
+		     prop_global,
+		     NULL);
+  
+  /**
+   * Populate audio tracks
+   */
+  if((p = glw_find_by_id(ch->ch_menu, "audio_tracks", 0)) != NULL) {
+
+    LIST_FOREACH(tcs, &ch->ch_streams, tcs_link) {
+      if(tcs->tcs_cw->codec->type != CODEC_TYPE_AUDIO)
+	continue;
+
+      glw_selection_add_text_option(p, tcs->tcs_title,
+				    tv_set_audio_track,
+				    ch, NULL, tcs->tcs_index,
+				    tcs->tcs_index == mp->mp_audio.mq_stream);
+    }
+    glw_selection_add_text_option(p, "Off", tv_set_audio_track,
+				  ch, NULL, -1, -1 == mp->mp_audio.mq_stream);
+  }
+
+
+  /**
+   * Populate video control widgets
+   */
+  video_menu_attach(ch->ch_menu, &ch->ch_vdc);
+
+
+  if((p = glw_find_by_id(ch->ch_menu, "details", 0)) != NULL) {
+    glw_selection_add_text_option(p, "On", tv_set_display_details, ch, NULL, 1,
+				  glw_prop_get_int(ch->ch_prop_show_details));
+
+    glw_selection_add_text_option(p, "Off", tv_set_display_details,
+				  ch, NULL, 0,
+				  !glw_prop_get_int(ch->ch_prop_show_details));
+  }
+
+  glw_select(ch->ch_menu);
+
+}
+
+
+/**
  *  Return 0 if user wants to exit, otherwise -1
  */
 static int
@@ -182,6 +272,10 @@ tv_channel_find(tv_t *tv, uint32_t id, int create)
   ch->ch_prop_fullscreen = glw_prop_create(ch->ch_prop_root,
 					   "fullscreen", GLW_GP_INT);
 
+  ch->ch_prop_show_details = glw_prop_create(ch->ch_prop_root, 
+					     "showDetails",
+					     GLW_GP_INT);
+  
   /* EPG props */
 
   p_epg = glw_prop_create(ch->ch_prop_root, "epg", GLW_GP_DIRECTORY);
@@ -535,6 +629,7 @@ tv_channel_stop(tv_t *tv, tv_channel_t *ch)
   while((tcs = LIST_FIRST(&ch->ch_streams)) != NULL) {
     wrap_codec_deref(tcs->tcs_cw);
     LIST_REMOVE(tcs, tcs_link);
+    free(tcs->tcs_title);
     free(tcs);
   }
 
@@ -547,7 +642,7 @@ tv_channel_stop(tv_t *tv, tv_channel_t *ch)
 }
 
 
-
+#if 0
 /**
  * Callback for intercepting user events on a subscription
  */
@@ -567,14 +662,15 @@ subscription_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GEV_ENTER:
     tv_control_signal(tv, TV_CTRL_FULLSCREEN, w->glw_u32);
     return 1;
-
+#if 0
   case EVENT_KEY_STOP:
     tv_control_signal(tv, TV_CTRL_STOP, w->glw_u32);
     return 1;
+#endif
   }
   return 0;
 }
-
+#endif
 
 /**
  * Subscribe to a channel.
@@ -614,9 +710,11 @@ tv_subscribe(tv_t *tv, tv_channel_t *ch, int fs)
 
   ch->ch_subscribe_widget->glw_u32 = ch->ch_id; /* A bit ugly */
 
+#if 0
   glw_set(ch->ch_subscribe_widget,
 	  GLW_ATTRIB_SIGNAL_HANDLER, subscription_widget_callback, tv, 400,
 	  NULL);
+#endif
 
   if(fs)
     tv_fullscreen(tv, ch);
@@ -666,6 +764,10 @@ tv_unsubscribe(tv_t *tv, tv_channel_t *ch)
 
   /* Destroy subscription widget (video, etc) */
   glw_destroy(ch->ch_subscribe_widget);
+
+  /* If there was a menu around it would also have been destroyed */
+  ch->ch_menu = NULL;
+
 
   /* Unref media_pipe */
   mp_unref(ch->ch_mp);
@@ -830,7 +932,11 @@ tv_main(tv_t *tv, appi_t *ai)
 	break;
 
       case EVENT_KEY_MENU:
-	tv_config(tv, ai);
+	if(tv->tv_fullscreen_channel == NULL) {
+	  tv_config(tv, ai);
+	  break;
+	}
+	tv_subscription_open_menu(tv, tv->tv_fullscreen_channel);
 	break;
 
       case GEV_BACKSPACE:
@@ -898,10 +1004,6 @@ tv_launch(void *aux)
 						  "showChannelMenu",
 						  GLW_GP_INT);
  
-  tv->tv_prop_show_details = glw_prop_create(tv->tv_prop_root, 
-					     "showDetails",
-					     GLW_GP_INT);
-  
   glw_prop_set_int(tv->tv_prop_show_channel_menu, 1);
 
   p_be = glw_prop_create(tv->tv_prop_root, "backend", GLW_GP_DIRECTORY);

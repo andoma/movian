@@ -66,6 +66,7 @@ typedef struct tv_channel_stream {
   codecwrap_t *tcs_cw;
   media_queue_t *tcs_mq;
   int tcs_data_type;
+  char *tcs_title;
 
   LIST_ENTRY(tv_channel_stream) tcs_link;
 
@@ -86,6 +87,7 @@ typedef struct tv_channel {
   glw_prop_t *ch_prop_icon;
 
   glw_prop_t *ch_prop_fullscreen;
+  glw_prop_t *ch_prop_show_details;
 
   glw_prop_t *ch_prop_epg_start[3];
   glw_prop_t *ch_prop_epg_stop[3];
@@ -123,6 +125,7 @@ typedef struct tv_channel {
   vd_conf_t ch_vdc;
   media_pipe_t *ch_mp;
 
+  glw_t *ch_menu;
 
   /**
    * A channel is running once the backend has acknowledged that it
@@ -178,7 +181,6 @@ typedef struct tv {
   glw_prop_t *tv_prop_root;
   glw_prop_t *tv_prop_url;
   glw_prop_t *tv_prop_show_channel_menu;
-  glw_prop_t *tv_prop_show_details;
 
   glw_prop_t *tv_prop_backend_error;
   glw_prop_t *tv_prop_backend_name;

@@ -897,6 +897,8 @@ htsp_subscriptionStart(tv_t *tv, htsmsg_t *m)
   int vscore = 0;   /* Discriminator for chosing best stream */
 
   media_pipe_t *mp;
+  char buf[40];
+  const char *nicename, *lang;
 
   if((ch = htsp_obtain_channel_by_msg(tv, m)) == NULL)
     return;
@@ -945,18 +947,22 @@ htsp_subscriptionStart(tv_t *tv, htsmsg_t *m)
       if(!strcmp(type, "AC3")) {
 	codec_id = CODEC_ID_AC3;
 	codec_type = CODEC_TYPE_AUDIO;
+	nicename = "AC-3";
 	s = 2;
       } else if(!strcmp(type, "MPEG2AUDIO")) {
 	codec_id = CODEC_ID_MP2;
 	codec_type = CODEC_TYPE_AUDIO;
+	nicename = "MPEG";
 	s = 1;
       } else if(!strcmp(type, "MPEG2VIDEO")) {
 	codec_id = CODEC_ID_MPEG2VIDEO;
 	codec_type = CODEC_TYPE_VIDEO;
+	nicename = "MPEG-2";
 	s = 1;
       } else if(!strcmp(type, "H264")) {
 	codec_id = CODEC_ID_H264;
 	codec_type = CODEC_TYPE_VIDEO;
+	nicename = "H264";
 	s = 2;
       } else {
 	continue;
@@ -998,6 +1004,14 @@ htsp_subscriptionStart(tv_t *tv, htsmsg_t *m)
 	  astream = index;
 	}
 	break;
+      }
+
+      lang = htsmsg_get_str(sub, "language");
+      if(lang != NULL) {
+	snprintf(buf, sizeof(buf), "%s (%s)", nicename, lang);
+	tcs->tcs_title = strdup(buf);
+      } else {
+	tcs->tcs_title = strdup(nicename);
       }
 
       LIST_INSERT_HEAD(&ch->ch_streams, tcs, tcs_link);
