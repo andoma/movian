@@ -223,6 +223,47 @@ keymapper_save(void)
  *
  */
 static void
+keymapper_add_mapping(const char *event, const char *keycode)
+{
+  event_type_t val;
+  hid_keycode_t *hkc;
+  hid_keydesc_t *hkd;
+
+  if((val = keystr2code(event)) == -1)
+    return;
+
+  hkc = keymapper_find_by_code(val);
+  hkd = keymapper_find_by_desc(keycode);
+  keymapper_map(hkd, hkc);
+}
+
+/**
+ *
+ */
+static void
+keymapper_set_default(void)
+{
+  keymapper_add_mapping("ChangeView", "x11 - F3");
+  keymapper_add_mapping("VolumeMuteToggle", "x11 - F7");
+  keymapper_add_mapping("VolumeDown", "x11 - F5");
+  keymapper_add_mapping("VolumeUp", "x11 - F6");
+  keymapper_add_mapping("Next", "x11 - Next");
+  keymapper_add_mapping("Previous", "x11 - Prior");
+  keymapper_add_mapping("PlayPause", "x11 - F2");
+  keymapper_add_mapping("Select", "x11 - space");
+  keymapper_add_mapping("SeekForward", "x11 - F12");
+  keymapper_add_mapping("SeekReverse", "x11 - F11");
+  keymapper_add_mapping("Quit", "x11 - F10");
+  keymapper_add_mapping("Stop", "x11 - End");
+  keymapper_add_mapping("Menu", "x11 - F1");
+  keymapper_add_mapping("MainMenu", "x11 - Menu");
+}
+
+
+/**
+ *
+ */
+static void
 keymapper_load(void)
 {
   htsmsg_t *settings;
@@ -232,9 +273,10 @@ keymapper_load(void)
   hid_keydesc_t *hkd;
   event_type_t val;
 
-  if((settings = hts_settings_load("keymap")) == NULL)
+  if((settings = hts_settings_load("keymap")) == NULL) {
+    keymapper_set_default();
     return;
-
+  }
   if((simple = htsmsg_get_msg(settings, "simple")) != NULL) {
     HTSMSG_FOREACH(f, simple) {
       if(f->hmf_type != HMF_STR)
