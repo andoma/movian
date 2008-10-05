@@ -36,6 +36,20 @@
 static void tv_unsubscribe(tv_t *tv, tv_channel_t *ch);
 
 /**
+ *
+ */
+static void
+tv_show_channel_menu(tv_t *tv)
+{
+  glw_t *w;
+  glw_prop_set_int(tv->tv_prop_show_channel_menu, 1);
+
+  if((w = glw_find_by_id(tv->tv_rootwidget, "menuFocus", 0)) != NULL) 
+    glw_select(w);
+}
+
+
+/**
  * Called from GLW when user selecs a different audio track
  */
 static void
@@ -943,7 +957,7 @@ tv_main(tv_t *tv, appi_t *ai)
 	if(glw_prop_get_int(tv->tv_prop_show_channel_menu))
 	  mainmenu_show(ai);
 	else
-	  glw_prop_set_int(tv->tv_prop_show_channel_menu, 1);
+	  tv_show_channel_menu(tv);
 	break;
 
       case EVENT_KEY_STOP:
@@ -953,7 +967,7 @@ tv_main(tv_t *tv, appi_t *ai)
 	  tv_unsubscribe(tv, tv->tv_fullscreen_channel);
 
 	hts_mutex_unlock(&tv->tv_ch_mutex);
-	glw_prop_set_int(tv->tv_prop_show_channel_menu, 1);
+	tv_show_channel_menu(tv);
 	break;
 
       case EVENT_TV:

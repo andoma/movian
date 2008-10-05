@@ -33,6 +33,7 @@ widget(container_z, {
     widget(form, {
 	
 	widget(container_x, {
+	    .id = "menuFocus"; // This is bad and will be removed in 2.1
 	    space(0.05);
 	    /**
 	     * List with all the tags
