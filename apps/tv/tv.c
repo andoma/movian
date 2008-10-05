@@ -275,12 +275,8 @@ channel_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     tv_control_signal(tv, TV_CTRL_CLEAR_AND_START, w->glw_u32);
     return 1;
 
-  case EVENT_KEY_STOP:
-    tv_control_signal(tv, TV_CTRL_STOP, w->glw_u32);
-    return 1;
-
   case EVENT_KEY_EJECT:
-    tv_control_signal(tv, TV_CTRL_CLEAR, w->glw_u32);
+    //    tv_control_signal(tv, TV_CTRL_CLEAR, w->glw_u32);
     return 1;
   }
   return 0;
@@ -489,12 +485,13 @@ tv_fullscreen(tv_t *tv, tv_channel_t *ch)
 
   glw_unlock();
 
+  tv->tv_fullscreen_channel = ch;
+
   glw_prop_set_int(ch->ch_prop_fullscreen, 1);
 
   tv->tv_ai->ai_req_fullscreen = 1;
 
-  /* HM HM HM */
-  glw_prop_set_int(tv->tv_prop_show_channels, 0); /* ??? */
+  glw_prop_set_int(tv->tv_prop_show_channel_menu, 0);
 }
 
 
@@ -517,6 +514,9 @@ tv_channel_stop(tv_t *tv, tv_channel_t *ch)
 
   if(ch->ch_running == 0)
     return;
+
+  if(tv->tv_fullscreen_channel == ch)
+    tv->tv_fullscreen_channel = NULL;
 
   if(glw_prop_get_int(ch->ch_prop_fullscreen))
     tv->tv_ai->ai_req_fullscreen = 0;
@@ -834,7 +834,20 @@ tv_main(tv_t *tv, appi_t *ai)
 	break;
 
       case GEV_BACKSPACE:
-	mainmenu_show(ai);
+	if(glw_prop_get_int(tv->tv_prop_show_channel_menu))
+	  mainmenu_show(ai);
+	else
+	  glw_prop_set_int(tv->tv_prop_show_channel_menu, 1);
+	break;
+
+      case EVENT_KEY_STOP:
+	hts_mutex_lock(&tv->tv_ch_mutex);
+
+	if(tv->tv_fullscreen_channel != NULL)
+	  tv_unsubscribe(tv, tv->tv_fullscreen_channel);
+
+	hts_mutex_unlock(&tv->tv_ch_mutex);
+	glw_prop_set_int(tv->tv_prop_show_channel_menu, 1);
 	break;
 
       case EVENT_TV:
@@ -852,27 +865,6 @@ tv_main(tv_t *tv, appi_t *ai)
   }
 
   return 0;
-}
-
-/**
- *
- */
-static int
-tv_gui_callback(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
-{
-  tv_t *tv = opaque;
-
-  switch(sig) {
-  default:
-    return 0;
-
-  case GLW_SIGNAL_LAYOUT:
-    return 0;
-
-  case GLW_SIGNAL_EVENT:
-    glw_prop_set_int(tv->tv_prop_show_channels, 1);
-    return 0;
-  }
 }
 
 
@@ -902,10 +894,11 @@ tv_launch(void *aux)
   tv->tv_prop_url  = glw_prop_create(tv->tv_prop_root,
 				     "url", GLW_GP_STRING);
 
-  tv->tv_prop_show_channels = glw_prop_create(tv->tv_prop_root, "showChannels",
-					      GLW_GP_INT);
-
-  glw_prop_set_int(tv->tv_prop_show_channels, 1);
+  tv->tv_prop_show_channel_menu = glw_prop_create(tv->tv_prop_root, 
+						  "showChannelMenu",
+						  GLW_GP_INT);
+  
+  glw_prop_set_int(tv->tv_prop_show_channel_menu, 1);
 
   p_be = glw_prop_create(tv->tv_prop_root, "backend", GLW_GP_DIRECTORY);
 
@@ -914,7 +907,6 @@ tv_launch(void *aux)
 
   tv->tv_stack = ai->ai_widget = 
     glw_create(GLW_ZSTACK,
-	       GLW_ATTRIB_SIGNAL_HANDLER, tv_gui_callback, tv, 1, 
 	       NULL);
 
   tv->tv_rootwidget =

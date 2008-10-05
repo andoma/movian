@@ -177,7 +177,7 @@ typedef struct tv {
 
   glw_prop_t *tv_prop_root;
   glw_prop_t *tv_prop_url;
-  glw_prop_t *tv_prop_show_channels;
+  glw_prop_t *tv_prop_show_channel_menu;
 
   glw_prop_t *tv_prop_backend_error;
   glw_prop_t *tv_prop_backend_name;
@@ -187,6 +187,8 @@ typedef struct tv {
     TV_RS_RECONFIGURE,
     TV_RS_STOP,
   } tv_runstatus;
+
+  tv_channel_t *tv_fullscreen_channel;
 
   /* Backend support */
 
