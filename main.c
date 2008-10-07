@@ -214,7 +214,7 @@ main(int argc, char **argv)
 
   global_prop_init();
 
-  hts_settings_init("showtime");
+  hts_settings_init("showtime", NULL);
 
   event_init();
 
