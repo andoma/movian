@@ -184,7 +184,7 @@ main(int argc, char **argv)
 {
   int c;
   struct timeval tv;
-  char *cfgfile = NULL;
+  const char *settingspath = NULL;
   struct rlimit rlim;
 
 #ifdef RLIMIT_AS
@@ -202,19 +202,20 @@ main(int argc, char **argv)
   gettimeofday(&tv, NULL);
   srand(tv.tv_usec);
 
-  while((c = getopt(argc, argv, "c:")) != -1) {
+  while((c = getopt(argc, argv, "s:")) != -1) {
     switch(c) {
-    case 'c':
-      cfgfile = optarg;
+    case 's':
+      settingspath = optarg;
       break;
     }
   }
+
 
   concurrency = get_concurrency();
 
   global_prop_init();
 
-  hts_settings_init("showtime", NULL);
+  hts_settings_init("showtime", settingspath);
 
   event_init();
 
