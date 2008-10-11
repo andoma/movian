@@ -193,7 +193,6 @@ theme_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
   char buf[200];
 
   snprintf(buf, sizeof(buf), "%s/%s", theme_get(), url);
-  printf("Scanning %s\n", buf);
   return fs_scandir(buf, cb, arg);
 }
 
