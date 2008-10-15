@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
+#include <errno.h>
 
 #include <libhts/hts_strtab.h>
 
@@ -56,6 +57,15 @@ static struct {
   const char *displayname;
   int coords[2][4];
   int do_videosync;
+  struct {
+    enum {
+      X11SS_NONE,
+      X11SS_XSCREENSAVER,
+      X11SS_GNOME,
+    }     mode;
+    int   interval;
+    pid_t pid;
+  } screensaver;
 } x11state;
 
 
@@ -356,6 +366,91 @@ GLXExtensionSupported(Display *dpy, const char *extension)
 }
 
 
+
+/**
+ * This thread keeps the screensaver from starting up.
+ */
+static void *
+screensaver_inhibitor (void *aux)
+{
+
+  while (x11state.screensaver.interval > 0) {
+    sleep(x11state.screensaver.interval);
+    switch (x11state.screensaver.mode)
+      {
+      case X11SS_XSCREENSAVER:
+	XResetScreenSaver(x11state.display);
+	break;
+	
+      case X11SS_GNOME:
+	if (system("gnome-screensaver-command -p") == -1) {
+	  static int failcnt = 0;
+	  printf("gnome-screensaver-command -p failed: %s", strerror(errno));
+	  if (++failcnt > 10) {
+	    printf("giving up screensaver inhibitor\n");
+	    x11state.screensaver.mode = X11SS_NONE;
+	    x11state.screensaver.interval = 0;
+	  }
+	}
+	break;
+	
+      default:
+	break;
+      }
+  }
+
+  return NULL;
+}
+
+
+/**
+ * Try to figure out which screensaver to inhibit
+ */
+static int
+screensaver_query (void)
+{
+  int r;
+  int tmo, itvl, prefbl, alexp;
+
+  /* Try xscreensaver */
+  r = XGetScreenSaver(x11state.display, &tmo, &itvl, &prefbl, &alexp);
+  if (r == 1 && tmo > 0) {
+    x11state.screensaver.mode = X11SS_XSCREENSAVER;
+    x11state.screensaver.interval = tmo / 2 + 5;
+    printf("Using xscreensaver (interval %i)\n",
+	   x11state.screensaver.interval);
+    return 0;
+  }
+
+  /* Try gnome-screensaver */
+  if (system("gnome-screensaver-command -p") == 0) {
+    x11state.screensaver.mode = X11SS_GNOME;
+    x11state.screensaver.interval = 30;
+    printf("Using gnome screensaver (interval %i)\n",
+	   x11state.screensaver.interval);
+    return 0;
+  }
+  
+  x11state.screensaver.mode = X11SS_NONE;
+  x11state.screensaver.interval = 0;
+  printf("No screensaver will be inhibited\n");
+  return -1;
+}
+
+
+static void
+screensaver_inhibitor_init (void)
+{
+  hts_thread_t tid;
+
+  if (screensaver_query() == -1)
+    return;
+
+  hts_thread_create_detached(&tid, screensaver_inhibitor, NULL);
+}
+
+
+
 /**
  *
  */
@@ -421,6 +516,8 @@ gl_sysglue_init(int argc, char **argv)
     glXGetProcAddress((const GLubyte*)"glXGetVideoSyncSGI");
   _glXWaitVideoSyncSGI = (PFNGLXWAITVIDEOSYNCSGIPROC)
     glXGetProcAddress((const GLubyte*)"glXWaitVideoSyncSGI");
+
+  screensaver_inhibitor_init();
 
   window_open();
 }
