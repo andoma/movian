@@ -182,7 +182,7 @@ fa_protocol_t fa_protocol_fs = {
 static const char *
 theme_get(void)
 {
-  return HTS_CONTENT_PATH "/showtime/themes/new";
+  return HTS_CONTENT_PATH "/showtime/themes/default";
 }
 /**
  *
