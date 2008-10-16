@@ -115,8 +115,8 @@ appi_create0(const char *name)
   
   glw_event_initqueue(&ai->ai_geq);
 
-  ai->ai_prop_root = glw_prop_create(NULL, "app", GLW_GP_DIRECTORY);
-  ai->ai_prop_title = glw_prop_create(ai->ai_prop_root, "title", GLW_GP_STRING);
+  ai->ai_prop_root = glw_prop_create(NULL, "app");
+  ai->ai_prop_title = glw_prop_create(ai->ai_prop_root, "title");
 
   glw_prop_set_string(ai->ai_prop_title, name);
 

@@ -258,7 +258,7 @@ dvd_update_info(dvd_player_t *dp)
    */
   s = t / 90000LL;
 
-  glw_prop_set_time(dp->dp_prop_time_current, s);
+  glw_prop_set_int(dp->dp_prop_time_current, s);
 }
 
 /**
@@ -476,23 +476,20 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
    * Property tree
    */
 
-  dp->dp_prop_root = glw_prop_create(NULL, "media", GLW_GP_DIRECTORY);
+  dp->dp_prop_root = glw_prop_create(NULL, "media");
 
-  glw_prop_set_string(glw_prop_create(dp->dp_prop_root, "disc", GLW_GP_STRING),
+  glw_prop_set_string(glw_prop_create(dp->dp_prop_root, "disc"),
 		      title);
 
-  dp->dp_prop_playstatus = glw_prop_create(dp->dp_prop_root,
-					   "playstatus", GLW_GP_STRING);
+  dp->dp_prop_playstatus = glw_prop_create(dp->dp_prop_root, "playstatus");
 
-  p = glw_prop_create(dp->dp_prop_root, "time", GLW_GP_DIRECTORY);
-  dp->dp_prop_time_total = glw_prop_create(p, "total", GLW_GP_TIME);
-  dp->dp_prop_time_current = glw_prop_create(p, "current", GLW_GP_TIME);
+  p = glw_prop_create(dp->dp_prop_root, "time");
+  dp->dp_prop_time_total = glw_prop_create(p, "total");
+  dp->dp_prop_time_current = glw_prop_create(p, "current");
 
 
-  dp->dp_prop_title =
-    glw_prop_create(dp->dp_prop_root, "title", GLW_GP_STRING);
-  dp->dp_prop_chapter =
-    glw_prop_create(dp->dp_prop_root, "chapter", GLW_GP_STRING);
+  dp->dp_prop_title = glw_prop_create(dp->dp_prop_root, "title");
+  dp->dp_prop_chapter = glw_prop_create(dp->dp_prop_root, "chapter");
 
   /**
    * Video widget

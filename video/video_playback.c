@@ -253,7 +253,7 @@ play_video_clock_update(play_video_ctrl_t *pvc, int64_t pts,
 
   if(pts != AV_NOPTS_VALUE) {
     pts -= pvc->pvc_fctx->start_time;
-    glw_prop_set_time(pvc->pvc_prop_time_current, pts / AV_TIME_BASE);
+    glw_prop_set_int(pvc->pvc_prop_time_current, pts / AV_TIME_BASE);
   }
 }
 
@@ -533,23 +533,21 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
    * Create property tree
    */ 
 
-  pvc.pvc_prop_root = glw_prop_create(NULL, "media", GLW_GP_DIRECTORY);
+  pvc.pvc_prop_root = glw_prop_create(NULL, "media");
 
   pvc.pvc_prop_playstatus = glw_prop_create(pvc.pvc_prop_root,
-					     "playstatus", GLW_GP_STRING);
+					     "playstatus");
 
 
-  p = glw_prop_create(pvc.pvc_prop_root, "time", GLW_GP_DIRECTORY);
-  glw_prop_set_time(glw_prop_create(p, "total", GLW_GP_TIME),
+  p = glw_prop_create(pvc.pvc_prop_root, "time");
+  glw_prop_set_int(glw_prop_create(p, "total"),
 		    pvc.pvc_fctx->duration / AV_TIME_BASE);
 
-  pvc.pvc_prop_time_current = glw_prop_create(p, "current", GLW_GP_TIME);
+  pvc.pvc_prop_time_current = glw_prop_create(p, "current");
 
-  pvc.pvc_prop_videoinfo = glw_prop_create(pvc.pvc_prop_root,
-					    "videoinfo", GLW_GP_STRING);
+  pvc.pvc_prop_videoinfo = glw_prop_create(pvc.pvc_prop_root, "videoinfo");
 
-  pvc.pvc_prop_audioinfo = glw_prop_create(pvc.pvc_prop_root,
-					    "audioinfo", GLW_GP_STRING);
+  pvc.pvc_prop_audioinfo = glw_prop_create(pvc.pvc_prop_root, "audioinfo");
 
   s = pvc.pvc_fctx->title;
   if(*s == 0) {
@@ -558,8 +556,7 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
     s = s ? s + 1 : url;
   }
   
-  glw_prop_set_string(glw_prop_create(pvc.pvc_prop_root, 
-				      "title", GLW_GP_STRING), s);
+  glw_prop_set_string(glw_prop_create(pvc.pvc_prop_root, "title"), s);
 
   /**
    * Create top level widget

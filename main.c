@@ -149,27 +149,27 @@ global_prop_init(void)
   glw_prop_t *cpu;
   hts_thread_t tid;
 
-  prop_global = glw_prop_create(NULL, "global", GLW_GP_DIRECTORY);
+  prop_global = glw_prop_create(NULL, "global");
 
-  prop_ui_scale = glw_prop_create(prop_global, "uiscale", GLW_GP_FLOAT);
+  prop_ui_scale = glw_prop_create(prop_global, "uiscale");
 
-  p = glw_prop_create(prop_global, "version", GLW_GP_STRING);
+  p = glw_prop_create(prop_global, "version");
   glw_prop_set_string(p, htsversion);
 
-  cpu = glw_prop_create(prop_global, "cpu", GLW_GP_DIRECTORY);
-  p = glw_prop_create(cpu, "cores", GLW_GP_FLOAT);
+  cpu = glw_prop_create(prop_global, "cpu");
+  p = glw_prop_create(cpu, "cores");
   glw_prop_set_float(p, concurrency);
 
 
   /* */
-  p = glw_prop_create(prop_global, "clock", GLW_GP_DIRECTORY);
+  p = glw_prop_create(prop_global, "clock");
 
-  prop_hour = glw_prop_create(p, "hour", GLW_GP_FLOAT);
-  prop_minute = glw_prop_create(p, "minute", GLW_GP_FLOAT);
-  prop_weekday = glw_prop_create(p, "weekday", GLW_GP_STRING);
-  prop_month = glw_prop_create(p, "month", GLW_GP_STRING);
-  prop_date = glw_prop_create(p, "date", GLW_GP_STRING);
-  prop_day = glw_prop_create(p, "day", GLW_GP_FLOAT);
+  prop_hour = glw_prop_create(p, "hour");
+  prop_minute = glw_prop_create(p, "minute");
+  prop_weekday = glw_prop_create(p, "weekday");
+  prop_month = glw_prop_create(p, "month");
+  prop_date = glw_prop_create(p, "date");
+  prop_day = glw_prop_create(p, "day");
 
   hts_thread_create_detached(&tid, propupdater, NULL);
 

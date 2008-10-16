@@ -92,15 +92,11 @@ keyring_lookup(const char *id, char **username, char **password,
   if(query && 
      (p = glw_find_by_id(universe, "auth_query_container", 0)) != NULL) {
 
-    props = glw_prop_create(NULL, "auth", GLW_GP_DIRECTORY);
-    glw_prop_set_string(glw_prop_create(props, "resource", GLW_GP_STRING),
-			id);
-    glw_prop_set_string(glw_prop_create(props, "reason", GLW_GP_STRING),
-			reason);
-    glw_prop_set_string(glw_prop_create(props, "source", GLW_GP_STRING),
-			source);
-    glw_prop_set_int(glw_prop_create(props, "domainReq", GLW_GP_INT),
-			!!domain);
+    props = glw_prop_create(NULL, "auth");
+    glw_prop_set_string(glw_prop_create(props, "resource"), id);
+    glw_prop_set_string(glw_prop_create(props, "reason"), reason);
+    glw_prop_set_string(glw_prop_create(props, "source"), source);
+    glw_prop_set_int(glw_prop_create(props, "domainReq"), !!domain);
 
 
     w = glw_model_create("theme://authenticate.model", p, 0,

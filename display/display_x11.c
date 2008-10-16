@@ -460,11 +460,11 @@ gl_sysglue_init(int argc, char **argv)
   int attribs[10];
   int na = 0;
 
-  prop_display = glw_prop_create(prop_global, "display", GLW_GP_DIRECTORY);
-  prop_gpu     = glw_prop_create(prop_global, "gpu",     GLW_GP_DIRECTORY);
+  prop_display = glw_prop_create(prop_global, "display");
+  prop_gpu     = glw_prop_create(prop_global, "gpu");
 
   prop_display_refreshrate = 
-    glw_prop_create(prop_display, "refreshrate", GLW_GP_FLOAT);
+    glw_prop_create(prop_display, "refreshrate");
 
   x11state.displayname = getenv("DISPLAY");
 
@@ -589,13 +589,13 @@ gl_keypress(XEvent *event)
 static void
 update_gpu_info(void)
 {
-  glw_prop_set_string(glw_prop_create(prop_gpu, "vendor", GLW_GP_STRING),
+  glw_prop_set_string(glw_prop_create(prop_gpu, "vendor"),
 		      (const char *)glGetString(GL_VENDOR));
 
-  glw_prop_set_string(glw_prop_create(prop_gpu, "name", GLW_GP_STRING),
+  glw_prop_set_string(glw_prop_create(prop_gpu, "name"),
 		      (const char *)glGetString(GL_RENDERER));
 
-  glw_prop_set_string(glw_prop_create(prop_gpu, "driver", GLW_GP_STRING),
+  glw_prop_set_string(glw_prop_create(prop_gpu, "driver"),
 		      (const char *)glGetString(GL_VERSION));
 }
 

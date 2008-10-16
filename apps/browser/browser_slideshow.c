@@ -76,8 +76,8 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, appi_t *ai)
   glw_prop_t *prop_root, *prop_ps;
   void *eh;
 
-  prop_root = glw_prop_create(NULL, "slideshow", GLW_GP_DIRECTORY);
-  prop_ps   = glw_prop_create(prop_root, "playstatus", GLW_GP_STRING);
+  prop_root = glw_prop_create(NULL, "slideshow");
+  prop_ps   = glw_prop_create(prop_root, "playstatus");
 
   top = glw_model_create("theme://browser/slideshow/view.model", parent,
 			 0, prop_global, prop_root, NULL);

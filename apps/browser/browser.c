@@ -118,7 +118,7 @@ browser_node_create(const char *url, int type, browser_root_t *br)
   browser_node_t *bn;
 
   bn = calloc(1, sizeof(browser_node_t));
-  bn->bn_prop_root = glw_prop_create(NULL, "media", GLW_GP_DIRECTORY);
+  bn->bn_prop_root = glw_prop_create(NULL, "media");
   bn->bn_refcnt = 1;
   bn->bn_url = strdup(url);
   bn->bn_type = type;

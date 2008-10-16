@@ -150,8 +150,8 @@ tv_access_error(tv_t *tv, appi_t *ai, const char *dir,
   glw_t *m;
   glw_prop_t *p;
   
-  p = glw_prop_create(NULL, "error", GLW_GP_DIRECTORY);
-  glw_prop_set_stringf(glw_prop_create(p, "details", GLW_GP_STRING),
+  p = glw_prop_create(NULL, "error");
+  glw_prop_set_stringf(glw_prop_create(p, "details"),
 		       "\"%s\"\n%s", dir, errtxt);
 
   m = glw_model_create("theme://tv/access-error.model", tv->tv_stack,
@@ -183,17 +183,12 @@ tv_tag_find(tv_t *tv, const char *identifier, int create)
   TAILQ_INSERT_TAIL(&tv->tv_tags, tt, tt_tv_link);
   TAILQ_INIT(&tt->tt_ctms);
 
-  tt->tt_prop_root  = glw_prop_create(NULL, "tag", GLW_GP_DIRECTORY);
-  tt->tt_prop_title = glw_prop_create(tt->tt_prop_root,
-				      "title", GLW_GP_STRING);
-  tt->tt_prop_icon  = glw_prop_create(tt->tt_prop_root,
-				      "icon", GLW_GP_STRING);
+  tt->tt_prop_root  = glw_prop_create(NULL, "tag");
+  tt->tt_prop_title = glw_prop_create(tt->tt_prop_root, "title");
+  tt->tt_prop_icon  = glw_prop_create(tt->tt_prop_root, "icon");
 
-  tt->tt_prop_titled_icon = glw_prop_create(tt->tt_prop_root,
-					    "titledIcon", GLW_GP_INT);
-
-  tt->tt_prop_nchannels = glw_prop_create(tt->tt_prop_root,
-					  "channels", GLW_GP_INT);
+  tt->tt_prop_titled_icon = glw_prop_create(tt->tt_prop_root, "titledIcon");
+  tt->tt_prop_nchannels = glw_prop_create(tt->tt_prop_root, "channels");
 
   /**
    * Create widget
@@ -278,44 +273,39 @@ tv_channel_find(tv_t *tv, uint32_t id, int create)
   ch->ch_tv = tv;
   ch->ch_id = id;
 
-  ch->ch_prop_root  = glw_prop_create(NULL, "channel", GLW_GP_DIRECTORY);
-  ch->ch_prop_title = glw_prop_create(ch->ch_prop_root,
-				      "title", GLW_GP_STRING);
-  ch->ch_prop_icon  = glw_prop_create(ch->ch_prop_root,
-				      "icon", GLW_GP_STRING);
-  ch->ch_prop_fullscreen = glw_prop_create(ch->ch_prop_root,
-					   "fullscreen", GLW_GP_INT);
+  ch->ch_prop_root  = glw_prop_create(NULL, "channel");
+  ch->ch_prop_title = glw_prop_create(ch->ch_prop_root, "title");
+  ch->ch_prop_icon  = glw_prop_create(ch->ch_prop_root, "icon");
+  ch->ch_prop_fullscreen = glw_prop_create(ch->ch_prop_root, "fullscreen");
 
-  ch->ch_prop_show_details = glw_prop_create(ch->ch_prop_root, 
-					     "showDetails",
-					     GLW_GP_INT);
+  ch->ch_prop_show_details = glw_prop_create(ch->ch_prop_root, "showDetails");
   
   /* EPG props */
 
-  p_epg = glw_prop_create(ch->ch_prop_root, "epg", GLW_GP_DIRECTORY);
+  p_epg = glw_prop_create(ch->ch_prop_root, "epg");
 
   for(i = 0; i < 3; i++) {
     snprintf(buf, sizeof(buf), "event%d", i);
-    p = glw_prop_create(p_epg, buf, GLW_GP_DIRECTORY);
+    p = glw_prop_create(p_epg, buf);
     
-    ch->ch_prop_epg_title[i] = glw_prop_create(p, "title", GLW_GP_STRING);
-    ch->ch_prop_epg_start[i] = glw_prop_create(p, "start", GLW_GP_INT);
-    ch->ch_prop_epg_stop[i]  = glw_prop_create(p, "stop",  GLW_GP_INT);
+    ch->ch_prop_epg_title[i] = glw_prop_create(p, "title");
+    ch->ch_prop_epg_start[i] = glw_prop_create(p, "start");
+    ch->ch_prop_epg_stop[i]  = glw_prop_create(p, "stop");
   }
 
 
   /* Subscription props */
 
-  p_sub = glw_prop_create(ch->ch_prop_root, "subscription", GLW_GP_DIRECTORY);
+  p_sub = glw_prop_create(ch->ch_prop_root, "subscription");
 
-  ch->ch_prop_sub_status = glw_prop_create(p_sub, "status", GLW_GP_STRING);
-  ch->ch_prop_sub_bitrate = glw_prop_create(p_sub, "bitrate", GLW_GP_INT);
+  ch->ch_prop_sub_status = glw_prop_create(p_sub, "status");
+  ch->ch_prop_sub_bitrate = glw_prop_create(p_sub, "bitrate");
   ch->ch_prop_sub_backend_queuesize =
-    glw_prop_create(p_sub, "queuesize", GLW_GP_INT);
+    glw_prop_create(p_sub, "queuesize");
   ch->ch_prop_sub_backend_queuedelay =
-    glw_prop_create(p_sub, "queuedelay", GLW_GP_INT);
+    glw_prop_create(p_sub, "queuedelay");
   ch->ch_prop_sub_backend_queuedrops =
-    glw_prop_create(p_sub, "queuedrops", GLW_GP_INT);
+    glw_prop_create(p_sub, "queuedrops");
 
   return ch;
 }
@@ -1010,20 +1000,18 @@ tv_launch(void *aux)
   tv->tv_ai = ai;
 
 
-  tv->tv_prop_root = glw_prop_create(NULL, "tv", GLW_GP_DIRECTORY);
-  tv->tv_prop_url  = glw_prop_create(tv->tv_prop_root,
-				     "url", GLW_GP_STRING);
+  tv->tv_prop_root = glw_prop_create(NULL, "tv");
+  tv->tv_prop_url  = glw_prop_create(tv->tv_prop_root, "url");
 
   tv->tv_prop_show_channel_menu = glw_prop_create(tv->tv_prop_root, 
-						  "showChannelMenu",
-						  GLW_GP_INT);
+						  "showChannelMenu");
  
   glw_prop_set_int(tv->tv_prop_show_channel_menu, 1);
 
-  p_be = glw_prop_create(tv->tv_prop_root, "backend", GLW_GP_DIRECTORY);
+  p_be = glw_prop_create(tv->tv_prop_root, "backend");
 
-  tv->tv_prop_backend_error = glw_prop_create(p_be, "error", GLW_GP_STRING);
-  tv->tv_prop_backend_name  = glw_prop_create(p_be, "name", GLW_GP_STRING);
+  tv->tv_prop_backend_error = glw_prop_create(p_be, "error");
+  tv->tv_prop_backend_name  = glw_prop_create(p_be, "name");
 
   tv->tv_stack = ai->ai_widget = 
     glw_create(GLW_ZSTACK,

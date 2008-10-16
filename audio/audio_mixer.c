@@ -39,7 +39,7 @@ static void
 volume_update_widget(volume_control_t *vc)
 {
   glw_prop_set_float(prop_mastervol, vc->vc_master_vol);
-  glw_prop_set_float(prop_mastermute, vc->vc_master_mute);
+  glw_prop_set_int(prop_mastermute, vc->vc_master_mute);
 }
 
 
@@ -256,9 +256,9 @@ audio_mixer_init(void)
   hts_thread_t tid;
   glw_prop_t *prop_audio;
 
-  prop_audio = glw_prop_create(prop_global, "audio", GLW_GP_DIRECTORY);
-  prop_mastervol  = glw_prop_create(prop_audio, "mastervolume", GLW_GP_FLOAT);
-  prop_mastermute = glw_prop_create(prop_audio, "mastermute", GLW_GP_FLOAT);
+  prop_audio = glw_prop_create(prop_global, "audio");
+  prop_mastervol  = glw_prop_create(prop_audio, "mastervolume");
+  prop_mastermute = glw_prop_create(prop_audio, "mastermute");
 
   hts_thread_create(&tid, audio_mixer_thread, NULL);
 }

@@ -117,8 +117,8 @@ nav_access_error(navigator_t *nav, appi_t *ai, const char *dir,
   glw_t *m;
   glw_prop_t *p;
 
-  p = glw_prop_create(NULL, "error", GLW_GP_DIRECTORY);
-  glw_prop_set_stringf(glw_prop_create(p, "details", GLW_GP_STRING),
+  p = glw_prop_create(NULL, "error");
+  glw_prop_set_stringf(glw_prop_create(p, "details"),
 		       "\"%s\"\n%s", dir, errtxt);
 
   m = glw_model_create("theme://browser/access-error.model", nav->nav_stack,
@@ -340,11 +340,9 @@ nav_launch(void *aux)
   memset(nav, 0, sizeof(navigator_t));
   nav->nav_ai = ai;
 
-  nav->nav_prop_root = glw_prop_create(NULL, "nav", GLW_GP_DIRECTORY);
-  nav->nav_prop_icon = glw_prop_create(nav->nav_prop_root, 
-				       "icon", GLW_GP_STRING);
-  nav->nav_prop_path = glw_prop_create(nav->nav_prop_root,
-				       "rootpath", GLW_GP_STRING);
+  nav->nav_prop_root = glw_prop_create(NULL, "nav");
+  nav->nav_prop_icon = glw_prop_create(nav->nav_prop_root, "icon");
+  nav->nav_prop_path = glw_prop_create(nav->nav_prop_root, "rootpath");
 
   ai->ai_widget = glw_model_create("theme://browser/browser-app.model", NULL,
 				   0,  

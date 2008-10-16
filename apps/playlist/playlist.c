@@ -140,26 +140,25 @@ playlist_create(const char *title, int truncate)
   TAILQ_INIT(&pl->pl_entries);
   TAILQ_INIT(&pl->pl_shuffle_entries);
 
-  pl->pl_prop_root = glw_prop_create(NULL, "playlist", GLW_GP_DIRECTORY);
+  pl->pl_prop_root = glw_prop_create(NULL, "playlist");
 
-  pl->pl_prop_title = glw_prop_create(pl->pl_prop_root, "title", GLW_GP_STRING);
+  pl->pl_prop_title = glw_prop_create(pl->pl_prop_root, "title");
   glw_prop_set_string(pl->pl_prop_title, pl->pl_title);
 
-  pl->pl_prop_backdrop = glw_prop_create(pl->pl_prop_root, "backdrop",
-					 GLW_GP_STRING);
+  pl->pl_prop_backdrop = glw_prop_create(pl->pl_prop_root, "backdrop");
 
   glw_prop_set_string(pl->pl_prop_backdrop, "theme://images/sound.png"); // XXX
 
-  pl->pl_prop_next_track_title = glw_prop_create(pl->pl_prop_root, "nexttrack",
-						 GLW_GP_STRING);
+  pl->pl_prop_next_track_title = 
+    glw_prop_create(pl->pl_prop_root, "nexttrack");
 
-  p = glw_prop_create(pl->pl_prop_root, "time", GLW_GP_DIRECTORY);
-  pl->pl_prop_time_total   = glw_prop_create(p, "total", GLW_GP_TIME);
-  pl->pl_prop_time_current = glw_prop_create(p, "current", GLW_GP_TIME);
+  p = glw_prop_create(pl->pl_prop_root, "time");
+  pl->pl_prop_time_total   = glw_prop_create(p, "total");
+  pl->pl_prop_time_current = glw_prop_create(p, "current");
 
-  p = glw_prop_create(pl->pl_prop_root, "track", GLW_GP_DIRECTORY);
-  pl->pl_prop_track_total   = glw_prop_create(p, "total", GLW_GP_FLOAT);
-  pl->pl_prop_track_current = glw_prop_create(p, "current", GLW_GP_FLOAT);
+  p = glw_prop_create(pl->pl_prop_root, "track");
+  pl->pl_prop_track_total   = glw_prop_create(p, "total");
+  pl->pl_prop_track_current = glw_prop_create(p, "current");
 
 
   pl->pl_widget = glw_model_create("theme://playlist/playlist.model", NULL, 0,
@@ -332,15 +331,15 @@ playlist_enqueue0(playlist_t *pl, const char *url, struct filetag_list *ftags)
   /**
    * Create properties
    */
-  ple->ple_prop_root = glw_prop_create(NULL, "media", GLW_GP_DIRECTORY);
+  ple->ple_prop_root = glw_prop_create(NULL, "media");
 
   ple->ple_prop_playstatus = glw_prop_create(ple->ple_prop_root,
-					     "playstatus", GLW_GP_STRING);
+					     "playstatus");
 
   media_fill_properties(ple->ple_prop_root, url, FA_FILE, ftags);
 
-  p = glw_prop_create(ple->ple_prop_root, "time", GLW_GP_DIRECTORY);
-  ple->ple_prop_time_current = glw_prop_create(p, "current", GLW_GP_TIME);
+  p = glw_prop_create(ple->ple_prop_root, "time");
+  ple->ple_prop_time_current = glw_prop_create(p, "current");
 
 
   /**
@@ -361,7 +360,7 @@ playlist_enqueue0(playlist_t *pl, const char *url, struct filetag_list *ftags)
    * Update playlist widget
    */
 
-  glw_prop_set_time(pl->pl_prop_time_total, pl->pl_total_time);
+  glw_prop_set_int(pl->pl_prop_time_total, pl->pl_total_time);
   glw_prop_set_float(pl->pl_prop_track_total, pl->pl_nentries);
 
   filetag_movelist(&ple->ple_ftags, ftags);

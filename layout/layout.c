@@ -43,7 +43,7 @@ static int layout_input_event(glw_event_t *ge, void *opaque);
 void
 layout_create(void)
 {
-  prop_fullscreen = glw_prop_create(prop_global, "fullscreen", GLW_GP_FLOAT);
+  prop_fullscreen = glw_prop_create(prop_global, "fullscreen");
 
   universe = glw_model_create("theme://universe.model", NULL, 0,
 			      prop_global, NULL);

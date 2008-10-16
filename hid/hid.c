@@ -99,9 +99,9 @@ hid_init(appi_t *ai, glw_t *m)
   uint32_t u32;
   glw_t *sel, *icon, *tab;
 
-  glw_prop_t *prop_hid_root = glw_prop_create(NULL, "hid", GLW_GP_DIRECTORY);
+  glw_prop_t *prop_hid_root = glw_prop_create(NULL, "hid");
 
-  prop_hid_status = glw_prop_create(prop_hid_root, "status", GLW_GP_STRING);
+  prop_hid_status = glw_prop_create(prop_hid_root, "status");
 
   icon = glw_model_create("theme://settings/hid/hid-icon.model",
 			  NULL, 0, NULL);

@@ -17,7 +17,8 @@ widget(bitmap, {
    
 	    widget(container_x, {
 		widget(label, { .caption = media.title;      .weight = 0.9; });
-		widget(label, { .caption = media.time.total; .weight = 0.1; });
+		widget(label, { .caption = int2duration(media.time.total);
+		                .weight = 0.1; });
 	      });
 
 	    widget(container_y, {

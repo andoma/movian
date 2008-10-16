@@ -154,12 +154,12 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
 	    hts_mutex_lock(&playlistlock);
 	  
 	    if(ple->ple_pl != NULL)
-	      glw_prop_set_time(ple->ple_pl->pl_prop_time_current,
-				ple->ple_time_offset + pts);
+	      glw_prop_set_int(ple->ple_pl->pl_prop_time_current,
+			       ple->ple_time_offset + pts);
 	  
 	    hts_mutex_unlock(&playlistlock);
 	  
-	    glw_prop_set_time(ple->ple_prop_time_current, pts);
+	    glw_prop_set_int(ple->ple_prop_time_current, pts);
 	  }
 	}
 	break;
