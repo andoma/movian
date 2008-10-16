@@ -537,7 +537,7 @@ alsa_probe(const char *card, const char *dev)
   is_iec958 =
     (strstr(dev, "iec958")  || strstr(dev, "IEC958") ||
      strstr(name, "iec958") || strstr(name, "IEC958")) &&
-    formats == AM_FORMAT_PCM_STEREO && rates == AM_SR_48000;
+    formats == AM_FORMAT_PCM_STEREO && rates & AM_SR_48000;
 
   snd_pcm_close(h);
 
