@@ -30,6 +30,7 @@
 
 #include <libglw/glw.h>
 #include <GL/glx.h>
+#include <X11/Xatom.h>
 
 #include "showtime.h"
 #include "hid/keymapper.h"
@@ -230,6 +231,9 @@ window_open(void)
   XSetWindowAttributes winAttr;
   unsigned long mask;
   int fullscreen = display_settings.displaymode == DISPLAYMODE_FULLSCREEN;
+  XTextProperty text;
+  extern char *htsversion;
+  char buf[60];
 
   winAttr.event_mask        = KeyPressMask | StructureNotifyMask;
   winAttr.background_pixmap = None;
@@ -290,6 +294,17 @@ window_open(void)
   /* Make an empty / blank cursor */
 
   XDefineCursor(x11state.display, x11state.win, blank_cursor());
+
+
+  /* Set window title */
+  snprintf(buf, sizeof(buf), "HTS Showtime %s", htsversion);
+
+  text.value = (unsigned char *)buf;
+  text.encoding = XA_STRING;
+  text.format = 8;
+  text.nitems = strlen(buf);
+  
+  XSetWMName(x11state.display, x11state.win, &text);
 
 
   if(fullscreen)
