@@ -67,6 +67,7 @@ static struct {
     int   interval;
     pid_t pid;
   } screensaver;
+  Atom deletewindow;
 } x11state;
 
 
@@ -306,6 +307,11 @@ window_open(void)
   
   XSetWMName(x11state.display, x11state.win, &text);
 
+  /* Create the window deletion atom */
+  x11state.deletewindow = XInternAtom(x11state.display, "WM_DELETE_WINDOW",
+				      0);
+
+  XSetWMProtocols(x11state.display, x11state.win, &x11state.deletewindow, 1);
 
   if(fullscreen)
     fullscreen_grab();
@@ -661,6 +667,14 @@ gl_sysglue_mainloop(void)
 	  h = event.xconfigure.height;
 	  glViewport(0, 0, w, h);
 	  x11state.aspect_ratio = (float)w / (float)h;
+	  break;
+
+
+        case ClientMessage:
+	  if((Atom)event.xclient.data.l[0] == x11state.deletewindow) {
+	    /* Window manager wants us to close */
+	    showtime_running = 0;
+	  }
 	  break;
 
 	default:
