@@ -33,6 +33,7 @@ extern hts_mutex_t ffmutex;
 
 extern int64_t wallclock;
 extern time_t walltime;
+extern int showtime_running;
 
 static inline int64_t
 showtime_get_ts(void)
@@ -73,8 +74,6 @@ average_update(average_t *avg, int value)
 
   avg->values[avg->ptr] += value;
 }
-
-void showtime_exit(int suspend);
 
 extern int mp_show_extra_info;
 extern struct glw_prop *prop_global;

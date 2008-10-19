@@ -49,8 +49,6 @@
 #include "fileaccess/fa_imageloader.h"
 #include "fileaccess/fa_rawloader.h"
 
-
-
 pthread_mutex_t ffmutex;
 
 int frame_duration;
@@ -61,6 +59,8 @@ int concurrency;
 extern char *htsversion;
 glw_prop_t *prop_global;
 glw_prop_t *prop_ui_scale;
+int showtime_running;
+static int stopcode;
 
 static int main_event_handler(glw_event_t *ge, void *opaque);
 
@@ -243,38 +243,31 @@ main(int argc, char **argv)
 
   apps_load();
 
+  showtime_running = 1;
+
   gl_sysglue_mainloop();
-  return 0;
+
+  return stopcode;
 }
 
-/*
- *
+/**
+ * Catch buttons used for exiting
  */
-
-void
-showtime_exit(int suspend)
-{
-  if(suspend == -1)
-    exit(0);
-
-  exit(suspend ? 10 : 11);
-}
-
-
 static int
 main_event_handler(glw_event_t *ge, void *opaque)
 {
   switch(ge->ge_type) {
   default:
-    break;
+    return 0;
 
   case EVENT_KEY_QUIT:
-    showtime_exit(-1);
-    return 1;
+    stopcode = 0;
+    break;
 
   case EVENT_KEY_POWER:
-    showtime_exit(1);
-    return 1;
+    stopcode = 10;
+    break;
   }
-  return 0;
+  showtime_running = 0;
+  return 1;
 }

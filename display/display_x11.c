@@ -331,7 +331,7 @@ window_close(void)
  *
  */
 static void
-window_change_displaymode(void)
+window_shutdown(void)
 {
   vd_flush_all();
 
@@ -344,12 +344,27 @@ window_change_displaymode(void)
   }
   glw_flush();
   window_close();
+}
+
+
+/**
+ *
+ */
+static void
+window_change_displaymode(void)
+{
+  window_shutdown();
+
+
   window_open();
   display_settings_save();
   vd_init(); /* Reload fragment shaders */
 }
 
 
+/**
+ *
+ */
 static int
 GLXExtensionSupported(Display *dpy, const char *extension)
 {
@@ -612,7 +627,7 @@ gl_sysglue_mainloop(void)
 
   _glXGetVideoSyncSGI(&retraceCount);
 
-  while(1) {
+  while(showtime_running) {
     if(x11state.current_displaymode != display_settings.displaymode)
       window_change_displaymode();
 
@@ -653,5 +668,6 @@ gl_sysglue_mainloop(void)
 
     glw_reaper();
   }
+  window_shutdown();
 }
 
