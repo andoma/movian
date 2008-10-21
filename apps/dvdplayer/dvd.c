@@ -258,7 +258,7 @@ dvd_update_info(dvd_player_t *dp)
    */
   s = t / 90000LL;
 
-  glw_prop_set_int(dp->dp_prop_time_current, s);
+  glw_prop_set_int(dp->dp_mp->mp_prop_currenttime, s);
 }
 
 /**
@@ -416,7 +416,6 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
   media_pipe_t *mp;
   glw_t *top;
   struct svfs_ops *ops;
-  glw_prop_t *p;
 
   memset(dp, 0, sizeof(dvd_player_t));
   
@@ -478,18 +477,15 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 
   dp->dp_prop_root = glw_prop_create(NULL, "media");
 
-  glw_prop_set_string(glw_prop_create(dp->dp_prop_root, "disc"),
-		      title);
+  glw_prop_set_string(glw_prop_create(dp->dp_prop_root, "title"), title);
 
   dp->dp_prop_playstatus = glw_prop_create(dp->dp_prop_root, "playstatus");
 
-  p = glw_prop_create(dp->dp_prop_root, "time");
-  dp->dp_prop_time_total = glw_prop_create(p, "total");
-  dp->dp_prop_time_current = glw_prop_create(p, "current");
-
-
-  dp->dp_prop_title = glw_prop_create(dp->dp_prop_root, "title");
+  dp->dp_prop_time_total = glw_prop_create(dp->dp_prop_root, "totaltime");
+  dp->dp_prop_title = glw_prop_create(dp->dp_prop_root, "dvdtitle");
   dp->dp_prop_chapter = glw_prop_create(dp->dp_prop_root, "chapter");
+
+  media_set_metatree(mp, dp->dp_prop_root);
 
   /**
    * Video widget
@@ -500,13 +496,6 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 
   vd_create_widget(dp->dp_container, mp, 1.0f);
   vd_set_dvd(mp, dp);
-
-  /**
-   * Status overlay
-   */
-  dp->dp_status = glw_model_create("theme://dvdplayer/status.model",
-				   mp->mp_status_xfader, 0,
-				   dp->dp_prop_root, NULL);
 
   /**
    * By default, follow DVD VM machine
@@ -537,7 +526,7 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 
   dvd_player_loop(dp);
 
-  glw_destroy(dp->dp_status);
+  media_clear_metatree(mp);
 
   ai->ai_req_fullscreen = 0;
 

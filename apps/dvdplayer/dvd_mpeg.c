@@ -243,7 +243,6 @@ pes_do_block(pes_player_t *pp, uint32_t sc, uint8_t *buf, int len, int w,
 
       mb->mb_aspect_override = rate;
       mb->mb_pts = cw->parser_ctx->pts;
-
       mb->mb_cw = wrap_codec_ref(cw);
 
       mb_enqueue(mp, ps->ps_output, mb);

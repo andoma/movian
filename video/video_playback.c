@@ -55,7 +55,6 @@
 
 typedef struct play_video_ctrl {
   glw_t *pvc_container;
-  glw_t *pvc_status;
   glw_t *pvc_menu;
 
   appi_t *pvc_ai;
@@ -76,7 +75,6 @@ typedef struct play_video_ctrl {
 
   glw_prop_t *pvc_prop_root;
   glw_prop_t *pvc_prop_playstatus;
-  glw_prop_t *pvc_prop_time_current;
 
   glw_prop_t *pvc_prop_videoinfo;
   glw_prop_t *pvc_prop_audioinfo;
@@ -250,11 +248,6 @@ play_video_clock_update(play_video_ctrl_t *pvc, int64_t pts,
 
     pvc->pvc_rcache_last = pts + AV_TIME_BASE * 5;
   }
-
-  if(pts != AV_NOPTS_VALUE) {
-    pts -= pvc->pvc_fctx->start_time;
-    glw_prop_set_int(pvc->pvc_prop_time_current, pts / AV_TIME_BASE);
-  }
 }
 
 
@@ -281,8 +274,6 @@ video_player_loop(play_video_ctrl_t *pvc, glw_event_queue_t *geq)
   dts          = AV_NOPTS_VALUE;
   seek_ref     = pvc->pvc_fctx->start_time;
   run          = 1;
-
-  mp->mp_status_xfader->glw_parent->glw_selected = mp->mp_status_xfader;
 
   while(run) {
     i = av_read_frame(pvc->pvc_fctx, &pkt);
@@ -358,13 +349,18 @@ video_player_loop(play_video_ctrl_t *pvc, glw_event_queue_t *geq)
       mb->mb_size = pkt.size;
       pkt.size = 0;
 
+      if(pts != AV_NOPTS_VALUE)
+	mb->mb_time = (pts - pvc->pvc_fctx->start_time) / AV_TIME_BASE;
+      else
+	mb->mb_time = -1;
+
       /* Enqueue packet */
 
       mb_enqueue(mp, mq, mb);
     }
     av_free_packet(&pkt);
 
-    media_update_playstatus_prop(pvc->pvc_prop_playstatus, mp->mp_playstatus);
+    media_update_playstatus_prop(mp->mp_prop_playstatus, mp->mp_playstatus);
 
     if(mp->mp_playstatus == MP_PLAY && mp_is_audio_silenced(mp))
       mp_set_playstatus(mp, MP_PAUSE, 0);
@@ -451,7 +447,7 @@ video_player_loop(play_video_ctrl_t *pvc, glw_event_queue_t *geq)
       pvc->pvc_rcache_last = INT64_MIN;
 
       /* Just make it display the seek widget */
-      media_update_playstatus_prop(pvc->pvc_prop_playstatus, MP_VIDEOSEEK_PLAY);
+      media_update_playstatus_prop(mp->mp_prop_playstatus, MP_VIDEOSEEK_PLAY);
 
       if(seek_abs)
 	seek_ref = seek_abs;
@@ -503,7 +499,6 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
   const char *s;
   htsmsg_t *m;
   char faurl[1000];
-  glw_prop_t *p;
   void *eh;
 
   memset(&pvc, 0, sizeof(play_video_ctrl_t));
@@ -538,12 +533,8 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
   pvc.pvc_prop_playstatus = glw_prop_create(pvc.pvc_prop_root,
 					     "playstatus");
 
-
-  p = glw_prop_create(pvc.pvc_prop_root, "time");
-  glw_prop_set_int(glw_prop_create(p, "total"),
+  glw_prop_set_int(glw_prop_create(pvc.pvc_prop_root, "totaltime"),
 		    pvc.pvc_fctx->duration / AV_TIME_BASE);
-
-  pvc.pvc_prop_time_current = glw_prop_create(p, "current");
 
   pvc.pvc_prop_videoinfo = glw_prop_create(pvc.pvc_prop_root, "videoinfo");
 
@@ -557,6 +548,8 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
   }
   
   glw_prop_set_string(glw_prop_create(pvc.pvc_prop_root, "title"), s);
+
+  media_set_metatree(mp, pvc.pvc_prop_root);
 
   /**
    * Create top level widget
@@ -579,14 +572,6 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
   vd_conf_init(&pvc.pvc_vdc);
   vdw = vd_create_widget(pvc.pvc_container, mp, 1.0);
   mp_set_video_conf(mp, &pvc.pvc_vdc);
-
-
-  /**
-   * Status overlay
-   */
-  pvc.pvc_status = glw_model_create("theme://videoplayer/status.model",
-				    mp->mp_status_xfader,
-				    0, pvc.pvc_prop_root, NULL);
 
   /**
    * Init codec contexts
@@ -647,9 +632,9 @@ play_video(const char *url, appi_t *ai, glw_event_queue_t *geq, glw_t *parent)
 
   video_player_loop(&pvc, geq);
 
+  media_clear_metatree(mp);
+  
   event_handler_unregister(eh);
-
-  glw_destroy(pvc.pvc_status);
 
   ai->ai_req_fullscreen = 0;
 

@@ -29,7 +29,6 @@
 #include "audio/audio_ui.h"
 
 glw_t *universe;
-glw_t *layout_global_status;
 
 static int fullscreen;
 static float fullscreen_fader;
@@ -47,9 +46,6 @@ layout_create(void)
 
   universe = glw_model_create("theme://universe.model", NULL, 0,
 			      prop_global, NULL);
-
-  layout_global_status = glw_find_by_id(universe,
-					"global_status_container", 0);
 
   event_handler_register("universe", layout_input_event, EVENTPRI_UNIVERSE,
 			 NULL);

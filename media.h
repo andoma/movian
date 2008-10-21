@@ -172,9 +172,12 @@ typedef struct media_pipe {
 
   int64_t mp_videoseekdts;
 
-  glw_t *mp_status_xfader;
+  /* Props */
 
   glw_prop_t *mp_prop_root;
+  glw_prop_t *mp_prop_meta;
+  glw_prop_t *mp_prop_playstatus;
+  glw_prop_t *mp_prop_currenttime;
 
 } media_pipe_t;
 
@@ -202,7 +205,9 @@ codecwrap_t *wrap_codec_create(enum CodecID id, enum CodecType type,
 static inline media_buf_t *
 media_buf_alloc(void)
 {
-  return calloc(1, sizeof(media_buf_t));
+  media_buf_t *mb = calloc(1, sizeof(media_buf_t));
+  mb->mb_time = -1;
+  return mb;
 }
 
 static inline void
@@ -276,5 +281,9 @@ struct filetag_list;
 
 void media_fill_properties(glw_prop_t *root, const char *url, int type,
 			   struct filetag_list *tags);
+
+void media_set_currentmedia(media_pipe_t *mp);
+void media_set_metatree(media_pipe_t *mp, glw_prop_t *src);
+void media_clear_metatree(media_pipe_t *mp);
 
 #endif /* MEDIA_H */

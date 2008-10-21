@@ -67,8 +67,7 @@ playlist_status_update_next(playlist_entry_t *cur)
 
 
 static playlist_entry_t *
-playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
-	      glw_t *status)
+playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq)
 {
   AVFormatContext *fctx;
   AVCodecContext *ctx;
@@ -129,7 +128,7 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
 
     if(mp->mp_playstatus == MP_PLAY && mp_is_audio_silenced(mp)) {
       mp_set_playstatus(mp, MP_PAUSE, 0);
-      media_update_playstatus_prop(ple->ple_prop_playstatus, MP_PAUSE);
+      media_update_playstatus_prop(mp->mp_prop_playstatus, MP_PAUSE);
     }
 
 
@@ -159,7 +158,7 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
 	  
 	    hts_mutex_unlock(&playlistlock);
 	  
-	    glw_prop_set_int(ple->ple_prop_time_current, pts);
+	    //	    glw_prop_set_int(mp->mp_prop_time_current, pts);
 	  }
 	}
 	break;
@@ -219,7 +218,7 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
       case EVENT_KEY_PAUSE:
 	mp_playpause(mp, ge->ge_type);
 
-	media_update_playstatus_prop(ple->ple_prop_playstatus,
+	media_update_playstatus_prop(mp->mp_prop_playstatus,
 				     mp->mp_playstatus);
 	break;
 
@@ -286,7 +285,7 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
       if(cur_pos_pts != AV_NOPTS_VALUE)
 	mb->mb_time = cur_pos_pts / AV_TIME_BASE;
       else
-	mb->mb_time = 0;
+	mb->mb_time = -1;
 
       mb->mb_data_type = MB_AUDIO;
       mb->mb_cw = wrap_codec_ref(cw);
@@ -323,7 +322,7 @@ playlist_play(playlist_entry_t *ple, media_pipe_t *mp, glw_event_queue_t *geq,
 
   wrap_format_destroy(fw);
 
-  media_update_playstatus_prop(ple->ple_prop_playstatus, MP_STOP);
+  media_update_playstatus_prop(mp->mp_prop_playstatus, MP_STOP);
   return next;
 }
 
@@ -371,7 +370,6 @@ playlist_player(void *aux)
   playlist_player_t *plp = aux;
   media_pipe_t *mp = plp->plp_mp;
   playlist_entry_t *ple = NULL, *next;
-  glw_t *status = NULL;
   glw_event_t *ge;
   playlist_event_t *pe;
   void *eh;
@@ -380,13 +378,9 @@ playlist_player(void *aux)
  
     while(ple == NULL) {
 
+      media_clear_metatree(mp);
+
       /* Got nothing to play, enter STOP mode */
-
-      if(status != NULL) {
-	glw_destroy(status);
-	status = NULL;
-      }
-
       mp_set_playstatus(mp, MP_STOP, 0);
       ge = glw_event_get(-1, &plp->plp_geq);
       switch(ge->ge_type) {
@@ -409,28 +403,20 @@ playlist_player(void *aux)
 
     hts_mutex_lock(&playlistlock);
 
+    media_set_metatree(mp, ple->ple_prop_root);
 
-    /**
-     * Create status widget
-     */
-    status = glw_model_create("theme://playlist/status.model",
-			      mp->mp_status_xfader, 0,
-			      ple->ple_prop_root,
-			      prop_global,
-			      ple->ple_pl ? ple->ple_pl->pl_prop_root : NULL, 
-			      NULL);
     /**
      * Update playlist widget
      */
     if(ple->ple_pl != NULL)
-      glw_prop_set_float(ple->ple_pl->pl_prop_track_current, ple->ple_track);
+      glw_prop_set_int(ple->ple_pl->pl_prop_track_current, ple->ple_track);
     hts_mutex_unlock(&playlistlock);
 
 
     /**
      * Update track widget
      */
-    media_update_playstatus_prop(ple->ple_prop_playstatus, MP_PLAY);
+    media_update_playstatus_prop(mp->mp_prop_playstatus, MP_PLAY);
     playlist_status_update_next(ple);
 
     /**
@@ -442,7 +428,7 @@ playlist_player(void *aux)
     /**
      * Start playback of track
      */
-    next = playlist_play(ple, mp, &plp->plp_geq, status);
+    next = playlist_play(ple, mp, &plp->plp_geq);
 
     event_handler_unregister(eh);
 

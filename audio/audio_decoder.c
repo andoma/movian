@@ -391,6 +391,9 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
       glw_event_unref(&et->h);
     }
 
+    if(mb->mb_time != -1)
+      glw_prop_set_int(mp->mp_prop_currenttime, mb->mb_time);
+
     frames = data_size / sizeof(int16_t) / channels;
 
     if(TAILQ_FIRST(&audio_decoders) == ad) {
@@ -411,7 +414,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
        * Force the global status to point to us
        */
 
-      mp->mp_status_xfader->glw_parent->glw_selected = mp->mp_status_xfader;
+      media_set_currentmedia(mp);
 
     } else {
 

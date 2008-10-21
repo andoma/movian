@@ -69,19 +69,15 @@ mp_create(const char *name)
   hts_mutex_init(&mp->mp_mutex);
   hts_cond_init(&mp->mp_backpressure);
   
-  mp->mp_prop_root = glw_prop_create(NULL, "mp");
+  mp->mp_prop_root = glw_prop_create(NULL, "media");
 
   mq_init(&mp->mp_audio, glw_prop_create(mp->mp_prop_root, "audio"));
-
   mq_init(&mp->mp_video, glw_prop_create(mp->mp_prop_root, "video"));
 
-  if(layout_global_status != NULL)
-    mp->mp_status_xfader = glw_create(GLW_ANIMATOR,
-				      GLW_ATTRIB_PARENT, layout_global_status,
-				      NULL);
-  else
-    abort();
-
+  mp->mp_prop_meta        = glw_prop_create(mp->mp_prop_root, "meta");
+  mp->mp_prop_playstatus  = glw_prop_create(mp->mp_prop_root, "playstatus");
+  mp->mp_prop_currenttime = glw_prop_create(mp->mp_prop_root, "currenttime");
+ 
   return mp;
 }
 
@@ -92,12 +88,8 @@ mp_create(const char *name)
 static void
 mp_destroy(media_pipe_t *mp)
 {
-  if(mp->mp_status_xfader != NULL)
-    glw_destroy(mp->mp_status_xfader);
-
-  glw_prop_destroy(mp->mp_prop_root);
-
   mp_set_playstatus(mp, MP_STOP, 0);
+  glw_prop_destroy(mp->mp_prop_root);
   free(mp);
 }
 
@@ -582,6 +574,8 @@ mp_set_playstatus(media_pipe_t *mp, int status, int flags)
     if(mp->mp_video_decoder != NULL)
       video_decoder_join(mp, mp->mp_video_decoder);
 
+    glw_prop_set_void(mp->mp_prop_currenttime);
+    media_update_playstatus_prop(mp->mp_prop_playstatus, MP_STOP);
     break;
   }
 
@@ -801,7 +795,7 @@ media_fill_properties(glw_prop_t *root, const char *url, int type,
   const char *s;
   char buf[30];
   int64_t stype;
-  glw_prop_t *p, *p2;
+  glw_prop_t *p;
 
   glw_prop_set_string(glw_prop_create(root, "url"), url);
 
@@ -860,11 +854,9 @@ media_fill_properties(glw_prop_t *root, const char *url, int type,
   glw_prop_set_string(glw_prop_create(root, "videoinfo"),
 		      filetag_get_str2(ftags, FTAG_VIDEOINFO) ?: "");
 
-  p = glw_prop_create(root, "time");
-
-  p2 = glw_prop_create(p, "total");
+  p = glw_prop_create(root, "totaltime");
   if(!filetag_get_int(ftags, FTAG_DURATION, &i64))
-    glw_prop_set_int(p2, i64);
+    glw_prop_set_int(p, i64);
 
   if(!filetag_get_int(ftags, FTAG_ORIGINAL_DATE, &i64)) {
     t = i64;
@@ -876,4 +868,45 @@ media_fill_properties(glw_prop_t *root, const char *url, int type,
 
   glw_prop_set_string(glw_prop_create(root, "originaldate"), buf);
 
+}
+
+
+/**
+ *
+ */
+void
+media_set_currentmedia(media_pipe_t *mp)
+{
+  glw_prop_t *p;
+  static media_pipe_t *lastmp;
+
+  if(lastmp == mp)
+    return;
+
+  lastmp = mp;
+  p = glw_prop_create(prop_global, "currentmedia");
+  glw_prop_linktree(mp->mp_prop_root, p);
+
+  p = glw_prop_create(prop_global, "currentmediasource");
+  glw_prop_set_string(p, mp->mp_name);
+}
+
+
+/**
+ *
+ */
+void
+media_set_metatree(media_pipe_t *mp, glw_prop_t *src)
+{
+  glw_prop_linktree(src, mp->mp_prop_meta);
+}
+
+
+/**
+ *
+ */
+void
+media_clear_metatree(media_pipe_t *mp)
+{
+  glw_prop_unlink(mp->mp_prop_meta);
 }

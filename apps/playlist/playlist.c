@@ -333,14 +333,10 @@ playlist_enqueue0(playlist_t *pl, const char *url, struct filetag_list *ftags)
    */
   ple->ple_prop_root = glw_prop_create(NULL, "media");
 
-  ple->ple_prop_playstatus = glw_prop_create(ple->ple_prop_root,
-					     "playstatus");
-
   media_fill_properties(ple->ple_prop_root, url, FA_FILE, ftags);
 
-  p = glw_prop_create(ple->ple_prop_root, "time");
-  ple->ple_prop_time_current = glw_prop_create(p, "current");
-
+  p = glw_prop_create(ple->ple_prop_root, "playlist");
+  glw_prop_linktree(pl->pl_prop_root, p);
 
   /**
    * Create playlist entry model in tracklist
@@ -361,7 +357,7 @@ playlist_enqueue0(playlist_t *pl, const char *url, struct filetag_list *ftags)
    */
 
   glw_prop_set_int(pl->pl_prop_time_total, pl->pl_total_time);
-  glw_prop_set_float(pl->pl_prop_track_total, pl->pl_nentries);
+  glw_prop_set_int(pl->pl_prop_track_total, pl->pl_nentries);
 
   filetag_movelist(&ple->ple_ftags, ftags);
   return ple;

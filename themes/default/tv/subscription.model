@@ -97,14 +97,14 @@ widget(container_z, {
 	  widget(label, {.weight = 0.75; .caption = "Video queue size:";});
 	  widget(label, {
 	    .align = right;
-	    .caption = int2str(mp.video.qlen) + " packets";
+	    .caption = int2str(media.video.qlen) + " packets";
 	  });
 	  space(0.5);
 
 	  widget(label, {.weight = 0.75; .caption = "Audio queue size:";});
 	  widget(label, {
 	    .align = right;
-	    .caption = int2str(mp.audio.qlen) + " packets";
+	    .caption = int2str(media.audio.qlen) + " packets";
 	  });
 	  space(0.5);
 

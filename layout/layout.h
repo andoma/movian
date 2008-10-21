@@ -31,10 +31,5 @@ void layout_appi_show(appi_t *ai);
 
 void layout_draw(float aspect);
 
-/**
- *
- */ 
-extern glw_t *layout_global_status;
-
 #endif /* LAYOUT_H */
 

@@ -836,6 +836,7 @@ htsp_mux_input(tv_t *tv, htsmsg_t *m)
 	memset(mb->mb_data + binlen, 0, FF_INPUT_BUFFER_PADDING_SIZE);
   
 	mb->mb_size = binlen;
+	mb->mb_time = -1;
 
 	avgstat_add(&ch->ch_avg_bitrate, binlen, walltime);
 
