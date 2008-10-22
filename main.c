@@ -16,12 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.h"
-#ifdef HTS_USE_PTHREADS
-#define _GNU_SOURCE
-#include <sched.h>
-#include <pthread.h>
-#endif
 
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -74,29 +68,6 @@ ffmpeglockmgr(int lock)
     ffunlock();
 }
 
-
-/**
- * Return the number of CPUs
- */
-static int
-get_concurrency(void)
-{
-#ifdef HTS_USE_PTHREADS
-  cpu_set_t mask;
-  int i, r = 0;
-
-  memset(&mask, 0, sizeof(mask));
-  sched_getaffinity(0, sizeof(mask), &mask);
-  for(i = 0; i < CPU_SETSIZE; i++)
-    if(CPU_ISSET(i, &mask))
-      r++;
-
-  fprintf(stderr, "%d CPUs detected\n", r);
-  return r?:1;
-#else
-  return 1;
-#endif
-}
 
 glw_prop_t *prop_hour;
 glw_prop_t *prop_minute;
@@ -211,7 +182,7 @@ main(int argc, char **argv)
   }
 
 
-  concurrency = get_concurrency();
+  concurrency = hts_get_system_concurrency();
 
   global_prop_init();
 
