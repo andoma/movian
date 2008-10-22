@@ -179,11 +179,8 @@ fa_protocol_t fa_protocol_fs = {
 /**
  *
  */
-static const char *
-theme_get(void)
-{
-  return HTS_CONTENT_PATH "/showtime/themes/default";
-}
+extern const char *themepath;
+
 /**
  *
  */
@@ -192,7 +189,7 @@ theme_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
 {
   char buf[200];
 
-  snprintf(buf, sizeof(buf), "%s/%s", theme_get(), url);
+  snprintf(buf, sizeof(buf), "%s/%s", themepath, url);
   return fs_scandir(buf, cb, arg);
 }
 
@@ -205,7 +202,7 @@ theme_open(const char *url)
 {
   char buf[200];
 
-  snprintf(buf, sizeof(buf), "%s/%s", theme_get(), url);
+  snprintf(buf, sizeof(buf), "%s/%s", themepath, url);
   return fs_open(buf);
 }
 

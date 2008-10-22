@@ -56,6 +56,8 @@ glw_prop_t *prop_ui_scale;
 int showtime_running;
 static int stopcode;
 
+const char *themepath = HTS_CONTENT_PATH "/showtime/themes/default";
+
 static int main_event_handler(glw_event_t *ge, void *opaque);
 
 
@@ -173,10 +175,13 @@ main(int argc, char **argv)
   gettimeofday(&tv, NULL);
   srand(tv.tv_usec);
 
-  while((c = getopt(argc, argv, "s:")) != -1) {
+  while((c = getopt(argc, argv, "s:t:")) != -1) {
     switch(c) {
     case 's':
       settingspath = optarg;
+      break;
+    case 't':
+      themepath = optarg;
       break;
     }
   }
