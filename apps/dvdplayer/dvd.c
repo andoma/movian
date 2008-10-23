@@ -575,6 +575,7 @@ dvd_ctrl_input(dvd_player_t *dp, int wait)
     break;
 
   case 255:  /* wait forever */
+  default:
     ge = glw_event_get(-1, dp->dp_geq);
     break;
   }

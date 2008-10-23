@@ -109,7 +109,7 @@ SRCS +=	 htsp.c tv.c
 
 PROG = showtime
 MAN  = showtime.1
-CFLAGS += -g -Wall -Werror -funsigned-char -O0 $(HTS_CFLAGS)
+CFLAGS += -g -Wall -Werror -funsigned-char -O2 $(HTS_CFLAGS)
 
 CFLAGS += -I/usr/local/include -I$(INCLUDES_INSTALL_BASE) -I$(CURDIR)
 CFLAGS += -Wno-deprecated-declarations -Wmissing-prototypes
