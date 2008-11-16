@@ -44,13 +44,13 @@ static nav_page_t *
 be_page_open(const char *url0, char *errbuf, size_t errlen)
 {
   nav_page_t *n;
-  hts_prop_t *p;
+  prop_t *p;
 
   n = nav_page_create(&be_page, url0, sizeof(nav_page_t));
 
   p = n->np_prop_root;
 
-  hts_prop_set_string(hts_prop_create(p, "type"), url0 + strlen("page://"));
+  prop_set_string(prop_create(p, "type"), url0 + strlen("page://"));
   return n;
 }
 

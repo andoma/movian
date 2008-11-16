@@ -46,7 +46,7 @@ static const uint8_t isosig[8] = {0x1, 0x43, 0x44, 0x30, 0x30, 0x31, 0x1, 0x0};
  *
  */
 static void
-lavf_build_string_and_trim(hts_prop_t *p, const char *pname, const char *str)
+lavf_build_string_and_trim(prop_t *p, const char *pname, const char *str)
 {
   int len = strlen(str);
   char *ret;
@@ -69,21 +69,21 @@ lavf_build_string_and_trim(hts_prop_t *p, const char *pname, const char *str)
   if(*ret == 0)
     return;
 
-  hts_prop_set_string(hts_prop_create(p, pname), ret);
+  prop_set_string(prop_create(p, pname), ret);
 }
 
 /**
  * Obtain details from playlist
  */
 static void
-fa_probe_playlist(hts_prop_t *proproot, const char *url,
+fa_probe_playlist(prop_t *proproot, const char *url,
 		  char *pb, size_t pbsize)
 {
   const char *t;
   char tmp1[300];
   int i;
 
-  hts_prop_set_string(hts_prop_create(proproot, "type"), "playlist");
+  prop_set_string(prop_create(proproot, "type"), "playlist");
   
   t = strrchr(url, '/');
   t = t ? t + 1 : url;
@@ -93,12 +93,12 @@ fa_probe_playlist(hts_prop_t *proproot, const char *url,
     tmp1[i++] = *t++;
   tmp1[i] = 0;
   
-  hts_prop_set_string(hts_prop_create(proproot, "title"), tmp1);
+  prop_set_string(prop_create(proproot, "title"), tmp1);
   
   t = strstr(pb, "NumberOfEntries=");
   
   if(t != NULL)
-    hts_prop_set_int(hts_prop_create(proproot, "ntracks"), atoi(t + 16));
+    prop_set_int(prop_create(proproot, "ntracks"), atoi(t + 16));
 }
 
 /**
@@ -106,7 +106,7 @@ fa_probe_playlist(hts_prop_t *proproot, const char *url,
  */
 #ifdef HAVE_LIBEXIF
 static void
-fa_probe_exif(hts_prop_t *proproot, fa_protocol_t *fap, void *fh,
+fa_probe_exif(prop_t *proproot, fa_protocol_t *fap, void *fh,
 	      char *pb, size_t pbsize)
 {
   unsigned char buf[4096];
@@ -145,7 +145,7 @@ fa_probe_exif(hts_prop_t *proproot, fa_protocol_t *fap, void *fh,
       tm.tm_mon--;
       t = mktime(&tm);
       if(t != (time_t)-1) {
-	hts_prop_set_int(hts_prop_create(proproot, "date"), t);
+	prop_set_int(prop_create(proproot, "date"), t);
       }
     }
   }
@@ -158,7 +158,7 @@ fa_probe_exif(hts_prop_t *proproot, fa_protocol_t *fap, void *fh,
  * Probe file by checking its header
  */
 static int
-fa_probe_header(hts_prop_t *proproot, hts_prop_t *urlp, fa_protocol_t *fap,
+fa_probe_header(prop_t *proproot, prop_t *urlp, fa_protocol_t *fap,
 		const char *url, void *fh)
 {
   char pb[128];
@@ -177,7 +177,7 @@ fa_probe_header(hts_prop_t *proproot, hts_prop_t *urlp, fa_protocol_t *fap,
 
 
     if(urlp != NULL)
-      hts_prop_set_stringf(urlp, "rar://%s|", url);
+      prop_set_stringf(urlp, "rar://%s|", url);
     return FA_DIR;
   }
 
@@ -189,7 +189,7 @@ fa_probe_header(hts_prop_t *proproot, hts_prop_t *urlp, fa_protocol_t *fap,
 
   if(pb[6] == 'J' && pb[7] == 'F' && pb[8] == 'I' && pb[9] == 'F') {
     /* JPEG image */
-    hts_prop_set_string(hts_prop_create(proproot, "type"), "image");
+    prop_set_string(prop_create(proproot, "type"), "image");
     return FA_FILE;
   }
 
@@ -198,13 +198,13 @@ fa_probe_header(hts_prop_t *proproot, hts_prop_t *urlp, fa_protocol_t *fap,
 #ifdef HAVE_LIBEXIF
     fa_probe_exif(proproot, fap, fh, pb, psiz);
 #endif
-    hts_prop_set_string(hts_prop_create(proproot, "type"), "image");
+    prop_set_string(prop_create(proproot, "type"), "image");
     return FA_FILE;
   }
 
   if(!memcmp(pb, pngsig, 8)) {
     /* PNG */
-    hts_prop_set_string(hts_prop_create(proproot, "type"), "image");
+    prop_set_string(prop_create(proproot, "type"), "image");
     return FA_FILE;
   }
   return -1;
@@ -214,7 +214,7 @@ fa_probe_header(hts_prop_t *proproot, hts_prop_t *urlp, fa_protocol_t *fap,
  * Check if file is an iso image
  */
 static int
-fa_probe_iso(hts_prop_t *proproot, fa_protocol_t *fap, void *fh)
+fa_probe_iso(prop_t *proproot, fa_protocol_t *fap, void *fh)
 {
   char pb[128], *p;
 
@@ -233,8 +233,8 @@ fa_probe_iso(hts_prop_t *proproot, fa_protocol_t *fap, void *fh)
 
   *p = 0;
 
-  hts_prop_set_string(hts_prop_create(proproot, "type"), "iso");
-  hts_prop_set_string(hts_prop_create(proproot, "title"), &pb[40]);
+  prop_set_string(prop_create(proproot, "type"), "iso");
+  prop_set_string(prop_create(proproot, "title"), &pb[40]);
   return 0;
 }
   
@@ -243,7 +243,7 @@ fa_probe_iso(hts_prop_t *proproot, fa_protocol_t *fap, void *fh)
  * Probe a file for its type
  */
 int
-fa_probe(hts_prop_t *proproot, hts_prop_t *urlp, const char *url)
+fa_probe(prop_t *proproot, prop_t *urlp, const char *url)
 {
   int i, r;
   AVFormatContext *fctx;
@@ -304,7 +304,7 @@ fa_probe(hts_prop_t *proproot, hts_prop_t *urlp, const char *url)
     
     if(i > 4 && p[i - 4] == '.')
       p[i - 4] = 0;
-    hts_prop_set_string(hts_prop_create(proproot, "title"), p);
+    prop_set_string(prop_create(proproot, "title"), p);
   } else {
     lavf_build_string_and_trim(proproot, "title", fctx->title);
   }
@@ -313,9 +313,9 @@ fa_probe(hts_prop_t *proproot, hts_prop_t *urlp, const char *url)
   lavf_build_string_and_trim(proproot, "album", fctx->album);
 
   if(fctx->track != 0)
-    hts_prop_set_int(hts_prop_create(proproot, "track"), fctx->track);
+    prop_set_int(prop_create(proproot, "track"), fctx->track);
 
-  hts_prop_set_string(hts_prop_create(proproot, "mediaformat"),
+  prop_set_string(prop_create(proproot, "mediaformat"),
 		      fctx->iformat->long_name);
 
   /* Check each stream */
@@ -360,10 +360,10 @@ fa_probe(hts_prop_t *proproot, hts_prop_t *urlp, const char *url)
 
     switch(avctx->codec_type) {
     case CODEC_TYPE_VIDEO:
-      hts_prop_set_string(hts_prop_create(proproot, "videoinfo"), tmp1);
+      prop_set_string(prop_create(proproot, "videoinfo"), tmp1);
       break;
     case CODEC_TYPE_AUDIO:
-      hts_prop_set_string(hts_prop_create(proproot, "audioinfo"), tmp1);
+      prop_set_string(prop_create(proproot, "audioinfo"), tmp1);
       break;
       
     default:
@@ -372,12 +372,12 @@ fa_probe(hts_prop_t *proproot, hts_prop_t *urlp, const char *url)
   }
 
   if(has_video)
-    hts_prop_set_string(hts_prop_create(proproot, "type"), "video");
+    prop_set_string(prop_create(proproot, "type"), "video");
   else if(has_audio)
-    hts_prop_set_string(hts_prop_create(proproot, "type"), "audio");
+    prop_set_string(prop_create(proproot, "type"), "audio");
 
   if(fctx->duration != AV_NOPTS_VALUE)
-    hts_prop_set_int(hts_prop_create(proproot, "duration"),
+    prop_set_int(prop_create(proproot, "duration"),
 		     fctx->duration / AV_TIME_BASE);
 
   av_close_input_file(fctx);  
@@ -390,9 +390,9 @@ fa_probe(hts_prop_t *proproot, hts_prop_t *urlp, const char *url)
  * Make a directory turn into a dvd
  */
 static int
-fa_probe_dir_is_dvd(hts_prop_t *proproot)
+fa_probe_dir_is_dvd(prop_t *proproot)
 {
-  hts_prop_set_string(hts_prop_create(proproot, "type"), "iso");
+  prop_set_string(prop_create(proproot, "type"), "iso");
   return FA_FILE;
 }
 
@@ -400,7 +400,7 @@ fa_probe_dir_is_dvd(hts_prop_t *proproot)
  * Probe a directory
  */
 int
-fa_probe_dir(hts_prop_t *proproot, const char *url)
+fa_probe_dir(prop_t *proproot, const char *url)
 {
   fa_protocol_t *fap;
   char path[300];

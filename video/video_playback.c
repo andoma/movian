@@ -72,11 +72,11 @@ typedef struct play_video_ctrl {
 
   int pvc_force_status_display;
 
-  hts_prop_t *pvc_prop_root;
-  hts_prop_t *pvc_prop_playstatus;
+  prop_t *pvc_prop_root;
+  prop_t *pvc_prop_playstatus;
 
-  hts_prop_t *pvc_prop_videoinfo;
-  hts_prop_t *pvc_prop_audioinfo;
+  prop_t *pvc_prop_videoinfo;
+  prop_t *pvc_prop_audioinfo;
 
 } play_video_ctrl_t;
 
@@ -531,17 +531,17 @@ play_video(const char *url, glw_event_queue_t *geq, glw_t *parent)
    * Create property tree
    */ 
 
-  pvc.pvc_prop_root = hts_prop_create(NULL, "media");
+  pvc.pvc_prop_root = prop_create(NULL, "media");
 
-  pvc.pvc_prop_playstatus = hts_prop_create(pvc.pvc_prop_root,
+  pvc.pvc_prop_playstatus = prop_create(pvc.pvc_prop_root,
 					     "playstatus");
 
-  hts_prop_set_int(hts_prop_create(pvc.pvc_prop_root, "totaltime"),
+  prop_set_int(prop_create(pvc.pvc_prop_root, "totaltime"),
 		    pvc.pvc_fctx->duration / AV_TIME_BASE);
 
-  pvc.pvc_prop_videoinfo = hts_prop_create(pvc.pvc_prop_root, "videoinfo");
+  pvc.pvc_prop_videoinfo = prop_create(pvc.pvc_prop_root, "videoinfo");
 
-  pvc.pvc_prop_audioinfo = hts_prop_create(pvc.pvc_prop_root, "audioinfo");
+  pvc.pvc_prop_audioinfo = prop_create(pvc.pvc_prop_root, "audioinfo");
 
   s = pvc.pvc_fctx->title;
   if(*s == 0) {
@@ -550,7 +550,7 @@ play_video(const char *url, glw_event_queue_t *geq, glw_t *parent)
     s = s ? s + 1 : url;
   }
   
-  hts_prop_set_string(hts_prop_create(pvc.pvc_prop_root, "title"), s);
+  prop_set_string(prop_create(pvc.pvc_prop_root, "title"), s);
 
   media_set_metatree(mp, pvc.pvc_prop_root);
 
@@ -565,7 +565,7 @@ play_video(const char *url, glw_event_queue_t *geq, glw_t *parent)
     sleep(1);
     glw_destroy(top);
     av_close_input_file(pvc.pvc_fctx);
-    hts_prop_destroy(pvc.pvc_prop_root);
+    prop_destroy(pvc.pvc_prop_root);
     return -1;
   }
 

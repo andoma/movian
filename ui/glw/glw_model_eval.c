@@ -31,7 +31,7 @@
  *
  */
 typedef struct glw_prop_sub_pending {
-  hts_prop_t *gpsp_prop;
+  prop_t *gpsp_prop;
   LIST_ENTRY(glw_prop_sub_pending) gpsp_link;
 } glw_prop_sub_pending_t;
 
@@ -44,7 +44,7 @@ typedef struct glw_prop_sub {
   LIST_ENTRY(glw_prop_sub) gps_link;
   glw_t *gps_widget;
 
-  hts_prop_sub_t *gps_sub;
+  prop_sub_t *gps_sub;
 
   token_t *gps_rpn;
 
@@ -54,7 +54,7 @@ typedef struct glw_prop_sub {
   glw_class_t gps_cloner_class;
   
   struct glw_prop_sub_pending_list gps_pending;
-  hts_prop_t *gps_pending_select;
+  prop_t *gps_pending_select;
 
 #ifdef GLW_MODEL_ERRORINFO
   refstr_t *gps_file;
@@ -76,7 +76,7 @@ glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l)
 
     gps->gps_sub->hps_opaque = NULL;
 
-    hts_prop_unsubscribe(gps->gps_sub);
+    prop_unsubscribe(gps->gps_sub);
 
     if(gps->gps_token != NULL)
       glw_model_token_free(gps->gps_token);
@@ -520,19 +520,19 @@ static int
 cloner_child_signal_handler(glw_t *w, void *opaque, 
 			    glw_signal_t signal, void *extra)
 {
-  hts_prop_t *p = opaque;
+  prop_t *p = opaque;
 
   switch(signal) {
   case GLW_SIGNAL_DESTROY:
-    hts_prop_ref_dec(p);
+    prop_ref_dec(p);
     break;
 
   case GLW_SIGNAL_SELECTED_UPDATE:
-    hts_prop_select(p, 0);
+    prop_select(p, 0);
     break;
 
   case GLW_SIGNAL_SELECTED_UPDATE_ADVISORY:
-    hts_prop_select(p, 1);
+    prop_select(p, 1);
     break;
 
   default:
@@ -545,7 +545,7 @@ cloner_child_signal_handler(glw_t *w, void *opaque,
  *
  */
 static void
-cloner_add_child0(glw_prop_sub_t *gps, hts_prop_t *p,
+cloner_add_child0(glw_prop_sub_t *gps, prop_t *p,
 		  glw_t *parent, errorinfo_t *ei, int selected)
 {
   token_t *body;
@@ -577,12 +577,12 @@ cloner_add_child0(glw_prop_sub_t *gps, hts_prop_t *p,
  *
  */
 static void
-cloner_add_child(glw_prop_sub_t *gps, hts_prop_t *p,
+cloner_add_child(glw_prop_sub_t *gps, prop_t *p,
 		 glw_t *parent, errorinfo_t *ei, int selected)
 {
   glw_prop_sub_pending_t *gpsp;
 
-  hts_prop_ref_inc(p); /* Decreased upon destroy in signal handler or
+  prop_ref_inc(p); /* Decreased upon destroy in signal handler or
 			  if it is removed from the pending list */
 
   if(gps->gps_cloner_body == NULL) {
@@ -610,7 +610,7 @@ cloner_add_child(glw_prop_sub_t *gps, hts_prop_t *p,
  *
  */
 static glw_t *
-cloner_find_child(hts_prop_t *p, glw_t *parent)
+cloner_find_child(prop_t *p, glw_t *parent)
 {
   glw_t *w;
   glw_signal_handler_t *gsh;
@@ -629,7 +629,7 @@ cloner_find_child(hts_prop_t *p, glw_t *parent)
  *
  */
 static void
-cloner_del_child(glw_prop_sub_t *gps, hts_prop_t *p, glw_t *parent)
+cloner_del_child(glw_prop_sub_t *gps, prop_t *p, glw_t *parent)
 {
   glw_t *w;
   glw_prop_sub_pending_t *gpsp;
@@ -646,7 +646,7 @@ cloner_del_child(glw_prop_sub_t *gps, hts_prop_t *p, glw_t *parent)
       if(gps->gps_pending_select == p)
 	gps->gps_pending_select = NULL;
 
-      hts_prop_ref_dec(p);
+      prop_ref_dec(p);
       LIST_REMOVE(gpsp, gpsp_link);
       free(gpsp);
       return;
@@ -662,7 +662,7 @@ cloner_del_child(glw_prop_sub_t *gps, hts_prop_t *p, glw_t *parent)
  *
  */
 static void
-cloner_sel_child(glw_prop_sub_t *gps, hts_prop_t *p, glw_t *parent)
+cloner_sel_child(glw_prop_sub_t *gps, prop_t *p, glw_t *parent)
 {
   glw_t *w;
 
@@ -705,10 +705,10 @@ prop_callback_alloc_token(glw_prop_sub_t *gps, token_type_t type)
  *
  */
 static void
-prop_callback(hts_prop_sub_t *s, hts_prop_event_t event, ...)
+prop_callback(prop_sub_t *s, prop_event_t event, ...)
 {
   glw_prop_sub_t *gps;
-  hts_prop_t *p;
+  prop_t *p;
   token_t *rpn = NULL, *t = NULL;
 
   va_list ap;
@@ -756,22 +756,22 @@ prop_callback(hts_prop_sub_t *s, hts_prop_event_t event, ...)
       break;
 
     case PROP_ADD_CHILD:
-      p = va_arg(ap, hts_prop_t *);
+      p = va_arg(ap, prop_t *);
       cloner_add_child(gps, p, gps->gps_widget, NULL, 1);
       break;
 
     case PROP_ADD_SELECTED_CHILD:
-      p = va_arg(ap, hts_prop_t *);
+      p = va_arg(ap, prop_t *);
       cloner_add_child(gps, p, gps->gps_widget, NULL, 0);
       break;
 
     case PROP_DEL_CHILD:
-      p = va_arg(ap, hts_prop_t *);
+      p = va_arg(ap, prop_t *);
       cloner_del_child(gps, p, gps->gps_widget);
       break;
 
     case PROP_SEL_CHILD:
-      p = va_arg(ap, hts_prop_t *);
+      p = va_arg(ap, prop_t *);
       cloner_sel_child(gps, p, gps->gps_widget);
       break;
     }
@@ -802,7 +802,7 @@ static int
 subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
 {
   glw_prop_sub_t *gps;
-  hts_prop_sub_t *s;
+  prop_sub_t *s;
   glw_t *w = ec->w;
   int i = 0;
   token_t *t;
@@ -824,7 +824,7 @@ subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
   gps->gps_line = self->line;
 #endif
 
-  s = hts_prop_subscribe(ec->prop, propname, prop_callback, gps);
+  s = prop_subscribe(ec->prop, propname, prop_callback, gps);
 
   if(s == NULL) {
     refstr_unref(gps->gps_file);

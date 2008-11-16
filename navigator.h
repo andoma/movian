@@ -35,7 +35,7 @@ typedef struct nav_page {
   TAILQ_ENTRY(nav_page) np_history_link;
   int np_inhistory;
 
-  hts_prop_t *np_prop_root;
+  prop_t *np_prop_root;
   char *np_url;
 
   struct nav_backend *np_be;

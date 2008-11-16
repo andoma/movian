@@ -78,7 +78,7 @@ keyring_lookup(const char *id, char **username, char **password,
 {
   htsmsg_t *m;
   glw_t *p, *w;
-  hts_prop_t *props;
+  prop_t *props;
   glw_event_t *ge;
   char buf[128];
   extern glw_t *universe;
@@ -91,11 +91,11 @@ keyring_lookup(const char *id, char **username, char **password,
   if(query && 
      (p = glw_find_by_id(universe, "auth_query_container", 0)) != NULL) {
 
-    props = hts_prop_create(NULL, "auth");
-    hts_prop_set_string(hts_prop_create(props, "resource"), id);
-    hts_prop_set_string(hts_prop_create(props, "reason"), reason);
-    hts_prop_set_string(hts_prop_create(props, "source"), source);
-    hts_prop_set_int(hts_prop_create(props, "domainReq"), !!domain);
+    props = prop_create(NULL, "auth");
+    prop_set_string(prop_create(props, "resource"), id);
+    prop_set_string(prop_create(props, "reason"), reason);
+    prop_set_string(prop_create(props, "source"), source);
+    prop_set_int(prop_create(props, "domainReq"), !!domain);
 
 
     w = glw_model_create("theme://authenticate.model", p, 0, props);
@@ -104,7 +104,7 @@ keyring_lookup(const char *id, char **username, char **password,
 
     ge = glw_wait_form(w);
 
-    hts_prop_destroy(props);
+    prop_destroy(props);
 
     htsmsg_delete_field(keyring, id);
 

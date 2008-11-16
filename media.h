@@ -115,8 +115,8 @@ typedef struct media_queue {
   int mq_stream;             /* Stream id, or -1 if queue is inactive */
   hts_cond_t mq_avail;
 
-  hts_prop_t *mq_prop_qlen_cur;
-  hts_prop_t *mq_prop_qlen_max;
+  prop_t *mq_prop_qlen_cur;
+  prop_t *mq_prop_qlen_max;
 } media_queue_t;
 
 
@@ -174,10 +174,10 @@ typedef struct media_pipe {
 
   /* Props */
 
-  hts_prop_t *mp_prop_root;
-  hts_prop_t *mp_prop_meta;
-  hts_prop_t *mp_prop_playstatus;
-  hts_prop_t *mp_prop_currenttime;
+  prop_t *mp_prop_root;
+  prop_t *mp_prop_meta;
+  prop_t *mp_prop_playstatus;
+  prop_t *mp_prop_currenttime;
 
 } media_pipe_t;
 
@@ -270,20 +270,20 @@ void nice_codec_name(char *buf, int len, AVCodecContext *ctx);
 
 int mp_is_audio_silenced(media_pipe_t *mp);
 
-void media_update_codec_info_prop(hts_prop_t *p, AVCodecContext *ctx);
+void media_update_codec_info_prop(prop_t *p, AVCodecContext *ctx);
 
-void media_update_playstatus_prop(hts_prop_t *p, mp_playstatus_t mps);
+void media_update_playstatus_prop(prop_t *p, mp_playstatus_t mps);
 
 void media_get_codec_info(AVCodecContext *ctx, char *buf, size_t size);
 
 extern media_pipe_t *primary_audio;
 struct filetag_list;
 
-void media_fill_properties(hts_prop_t *root, const char *url, int type,
+void media_fill_properties(prop_t *root, const char *url, int type,
 			   struct filetag_list *tags);
 
 void media_set_currentmedia(media_pipe_t *mp);
-void media_set_metatree(media_pipe_t *mp, hts_prop_t *src);
+void media_set_metatree(media_pipe_t *mp, prop_t *src);
 void media_clear_metatree(media_pipe_t *mp);
 
 #endif /* MEDIA_H */

@@ -1,0 +1,1046 @@
+/*
+ *  Property trees
+ *  Copyright (C) 2008 Andreas Öman
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+#include <stdarg.h>
+#include <unistd.h>
+
+#include <libhts/htsthreads.h>
+#include <libhts/htsatomic.h>
+
+#include "prop.h"
+
+static hts_mutex_t prop_mutex;
+static prop_t *prop_global;
+
+/**
+ *
+ */
+static void
+propname0(prop_t *p, char *buf, size_t bufsiz)
+{
+  int l;
+
+  if(p->hp_parent != NULL)
+    propname0(p->hp_parent, buf, bufsiz);
+
+  l = strlen(buf);
+  if(l > 0)
+    buf[l++] = '.';
+  strcpy(buf + l, p->hp_name ?: "<noname>");
+}
+
+
+/**
+ *
+ */
+const char *
+propname(prop_t *p)
+{
+  static char buf[200];
+
+  if(p == NULL)
+    return "nil";
+  buf[0] = 0;
+  propname0(p, buf, sizeof(buf));
+  return buf;
+}
+
+
+
+
+
+
+/**
+ *
+ */
+TAILQ_HEAD(prop_notify_queue, prop_notify);
+
+typedef struct prop_notify {
+  TAILQ_ENTRY(prop_notify) hpn_link;
+  prop_sub_t *hpn_sub;
+  prop_event_t hpn_event;
+
+  union {
+    prop_t *p;
+    float f;
+    int i;
+    char *s;
+  } u;
+
+#define hpn_prop   u.p
+#define hpn_float  u.f
+#define hpn_int    u.i
+#define hpn_string u.s
+
+} prop_notify_t;
+
+
+/**
+ *
+ */
+void
+prop_ref_dec(prop_t *p)
+{
+  if(atomic_add(&p->hp_refcount, -1) > 1)
+    return;
+
+  free(p->hp_name);
+  free(p);
+}
+
+
+/**
+ *
+ */
+void
+prop_ref_inc(prop_t *p)
+{
+  atomic_add(&p->hp_refcount, 1);
+}
+
+
+
+/**
+ *
+ */
+static void
+prop_sub_ref_dec(prop_sub_t *s)
+{
+  if(atomic_add(&s->hps_refcount, -1) > 1)
+    return;
+
+  free(s);
+}
+
+
+
+/**
+ *
+ */
+static void
+prop_notify_queue(struct prop_notify_queue *q)
+{
+  prop_notify_t *n;
+  prop_sub_t *s;
+
+  while((n = TAILQ_FIRST(q)) != NULL) {
+
+    s = n->hpn_sub;
+    
+    switch(n->hpn_event) {
+    case PROP_SET_VOID:
+    case PROP_SET_DIR:
+      s->hps_callback(s, n->hpn_event);
+      break;
+
+    case PROP_SET_STRING:
+      s->hps_callback(s, n->hpn_event, n->hpn_string);
+      free(n->hpn_string);
+      break;
+
+    case PROP_SET_INT:
+      s->hps_callback(s, n->hpn_event, n->hpn_int);
+      break;
+
+    case PROP_SET_FLOAT:
+      s->hps_callback(s, n->hpn_event, n->hpn_float);
+      break;
+
+    case PROP_ADD_CHILD:
+    case PROP_ADD_SELECTED_CHILD:
+    case PROP_DEL_CHILD:
+    case PROP_SEL_CHILD:
+      s->hps_callback(s, n->hpn_event, n->hpn_prop);
+      prop_ref_dec(n->hpn_prop);
+      break;
+    }
+    prop_sub_ref_dec(s);
+
+    TAILQ_REMOVE(q, n, hpn_link);
+    free(n);
+  }
+}
+
+
+/**
+ *
+ */
+static prop_notify_t *
+get_notify(prop_sub_t *s)
+{
+  prop_notify_t *n = malloc(sizeof(prop_notify_t));
+  atomic_add(&s->hps_refcount, 1);
+  n->hpn_sub = s;
+  return n;
+}
+
+
+/**
+ *
+ */
+static void
+prop_build_notify_value(struct prop_notify_queue *q, prop_sub_t *s)
+{
+  prop_notify_t *n = get_notify(s);
+  prop_t *p = s->hps_value_prop;
+
+  switch(p->hp_type) {
+  case PROP_STRING:
+    n->hpn_string = strdup(p->hp_string);
+    n->hpn_event = PROP_SET_STRING;
+    break;
+
+  case PROP_FLOAT:
+    n->hpn_float = p->hp_float;
+    n->hpn_event = PROP_SET_FLOAT;
+    break;
+
+  case PROP_INT:
+    n->hpn_float = p->hp_float;
+    n->hpn_event = PROP_SET_INT;
+    break;
+
+  case PROP_DIR:
+    n->hpn_event = PROP_SET_DIR;
+    break;
+
+  case PROP_VOID:
+    n->hpn_event = PROP_SET_VOID;
+    break;
+  }
+  TAILQ_INSERT_TAIL(q, n, hpn_link);
+}
+
+
+
+/**
+ *
+ */
+static void
+prop_notify_void(struct prop_notify_queue *q, prop_sub_t *s)
+{
+  prop_notify_t *n = get_notify(s);
+
+  n->hpn_event = PROP_SET_VOID;
+  TAILQ_INSERT_TAIL(q, n, hpn_link);
+}
+
+
+/**
+ *
+ */
+static void
+prop_notify_value(struct prop_notify_queue *q, prop_t *p)
+{
+  prop_sub_t *s;
+
+  LIST_FOREACH(s, &p->hp_value_subscriptions, hps_value_prop_link)
+    prop_build_notify_value(q, s);
+}
+
+
+/**
+ *
+ */
+static void
+prop_build_notify_child(struct prop_notify_queue *q, prop_sub_t *s,
+			    prop_t *p, prop_event_t event)
+{
+  prop_notify_t *n = get_notify(s);
+
+  atomic_add(&p->hp_refcount, 1);
+
+  n->hpn_prop = p;
+  n->hpn_event = event;
+  TAILQ_INSERT_TAIL(q, n, hpn_link);
+}
+
+
+/**
+ *
+ */
+static void
+prop_notify_child(struct prop_notify_queue *q, prop_t *child,
+		      prop_t *parent, prop_event_t event)
+{
+  prop_sub_t *s;
+
+  LIST_FOREACH(s, &parent->hp_value_subscriptions, hps_value_prop_link)
+    prop_build_notify_child(q, s, child, event);
+}
+
+
+/**
+ *
+ */
+static void
+prop_clean(struct prop_notify_queue *q, prop_t *p)
+{
+  switch(p->hp_type) {
+  case PROP_VOID:
+  case PROP_INT:
+  case PROP_FLOAT:
+    break;
+
+  case PROP_STRING:
+    free(p->hp_string);
+    break;
+
+  case PROP_DIR:
+    abort();
+  }
+}
+
+
+/**
+ *
+ */
+static void
+prop_make_dir(struct prop_notify_queue *q, prop_t *p)
+{
+  if(p->hp_type == PROP_DIR)
+    return;
+
+  prop_clean(q, p);
+  
+  LIST_INIT(&p->hp_childs);
+  p->hp_selected = NULL;
+  p->hp_type = PROP_DIR;
+  
+  prop_notify_value(q, p);
+}
+
+
+
+
+/**
+ *
+ */
+static prop_t *
+prop_create0(struct prop_notify_queue *q, 
+		 prop_t *parent, const char *name)
+{
+  prop_t *hp;
+
+  if(parent != NULL) {
+
+    prop_make_dir(q, parent);
+
+    if(name != NULL) {
+      LIST_FOREACH(hp, &parent->hp_childs, hp_parent_link) {
+	if(hp->hp_name != NULL && !strcmp(hp->hp_name, name)) {
+	  return hp;
+	}
+      }
+    }
+  }
+
+  hp = malloc(sizeof(prop_t));
+  hp->hp_originator = NULL;
+  hp->hp_refcount = 1;
+  hp->hp_type = PROP_VOID;
+  hp->hp_name = name ? strdup(name) : NULL;
+
+  LIST_INIT(&hp->hp_targets);
+  LIST_INIT(&hp->hp_value_subscriptions);
+  LIST_INIT(&hp->hp_canonical_subscriptions);
+
+  hp->hp_parent = parent;
+
+  if(parent != NULL) {
+    LIST_INSERT_HEAD(&parent->hp_childs, hp, hp_parent_link);
+    prop_notify_child(q, hp, parent, PROP_ADD_CHILD);
+  }
+
+  return hp;
+}
+
+
+
+/**
+ *
+ */
+prop_t *
+prop_create(prop_t *parent, const char *name)
+{
+  prop_t *p;
+
+  struct prop_notify_queue q;
+  TAILQ_INIT(&q);
+
+  hts_mutex_lock(&prop_mutex);
+  p = prop_create0(&q, parent, name);
+  hts_mutex_unlock(&prop_mutex);
+
+  prop_notify_queue(&q);
+
+  return p;
+}
+
+
+/**
+ *
+ */
+void
+prop_set_parent(prop_t *p, prop_t *parent)
+{
+  struct prop_notify_queue q;
+  TAILQ_INIT(&q);
+
+  assert(p->hp_parent == NULL);
+
+  hts_mutex_lock(&prop_mutex);
+
+  prop_make_dir(&q, parent);
+
+  p->hp_parent = parent;
+  LIST_INSERT_HEAD(&parent->hp_childs, p, hp_parent_link);
+
+  printf("Child ''%s'' added to parent %s\n", p->hp_name ?: "<noname>",
+	 propname(parent));
+
+  prop_notify_child(&q, p, parent, PROP_ADD_CHILD);
+
+  hts_mutex_unlock(&prop_mutex);
+  prop_notify_queue(&q);
+}
+
+
+/**
+ *
+ */
+static void
+prop_destroy0(struct prop_notify_queue *q, prop_t *p)
+{
+  prop_t *c, *parent;
+  prop_sub_t *s;
+  prop_notify_t *n;
+
+
+  switch(p->hp_type) {
+  case PROP_DIR:
+    LIST_FOREACH(c, &p->hp_childs, hp_parent_link)
+      prop_destroy0(q, c);
+    break;
+
+  case PROP_STRING:
+    free(p->hp_string);
+    break;
+
+  case PROP_FLOAT:
+  case PROP_INT:
+  case PROP_VOID:
+    break;
+  }
+
+
+  while((s = LIST_FIRST(&p->hp_canonical_subscriptions)) != NULL) {
+    LIST_REMOVE(s, hps_canonical_prop_link);
+    s->hps_canonical_prop = NULL;
+
+    fprintf(stderr, "htsprop: Warning, destroyed a property (%s)"
+	    "with a canonical subscription attached to it\n"
+	    "This is probaby bad and needs to be further investigated\n",
+	    propname(p));
+  }
+
+  while((s = LIST_FIRST(&p->hp_value_subscriptions)) != NULL) {
+    n = get_notify(s);
+    n->hpn_event = PROP_SET_VOID;
+    TAILQ_INSERT_TAIL(q, n, hpn_link);
+
+    LIST_REMOVE(s, hps_value_prop_link);
+    s->hps_value_prop = NULL;
+  }
+
+  if(p->hp_originator != NULL) {
+    p->hp_originator = NULL;
+    LIST_REMOVE(p, hp_originator_link);
+  }
+
+  if(p->hp_parent != NULL) {
+    prop_notify_child(q, p, p->hp_parent, PROP_DEL_CHILD);
+    parent = p->hp_parent;
+
+    LIST_REMOVE(p, hp_parent_link);
+    p->hp_parent = NULL;
+
+    if(parent->hp_selected == p) {
+
+      /* It's pointless for us to try to choose a different child
+	 to be selected. Why? .. All subscribers sort the props
+	 in their own order. Instead, notify them that nothing
+	 is selected. This should trig them to reselect somthing. 
+	 This will echo back to us as an advisory prop_select()
+      */
+      parent->hp_selected = NULL;
+      prop_notify_child(q, NULL, parent, PROP_SEL_CHILD);
+    }
+
+  }
+
+  prop_ref_dec(p);
+}
+
+
+/**
+ *
+ */
+void
+prop_destroy(prop_t *p)
+{
+  struct prop_notify_queue q;
+  TAILQ_INIT(&q);
+
+  hts_mutex_lock(&prop_mutex);
+  prop_destroy0(&q, p);
+  hts_mutex_unlock(&prop_mutex);
+
+  prop_notify_queue(&q);
+}
+
+
+/**
+ *
+ */
+static prop_t *
+prop_subfind(struct prop_notify_queue *q,
+		 prop_t *p, const char **name, int follow_symlinks)
+{
+  prop_t *c;
+
+  while(name[0] != NULL) {
+    
+    while(follow_symlinks && p->hp_originator != NULL)
+      p = p->hp_originator;
+
+    if(p->hp_type != PROP_DIR) {
+
+      if(p->hp_type != PROP_VOID) {
+	/* We don't want subscriptions to overwrite real values */
+	return NULL;
+      }
+
+      LIST_INIT(&p->hp_childs);
+      p->hp_selected = NULL;
+      p->hp_type = PROP_DIR;
+
+      prop_notify_value(q, p);
+    }
+
+    LIST_FOREACH(c, &p->hp_childs, hp_parent_link) {
+      if(c->hp_name != NULL && !strcmp(c->hp_name, name[0]))
+	break;
+    }
+    p = c ?: prop_create0(q, p, name[0]);
+    name++;
+  }
+
+  while(follow_symlinks && p->hp_originator != NULL)
+    p = p->hp_originator;
+
+  return p;
+}
+
+
+/**
+ *
+ */
+prop_sub_t *
+prop_subscribe(struct prop *prop, const char **name,
+		   prop_callback_t *cb, void *opaque)
+{
+  prop_t *p, *value, *canonical, *c;
+  prop_sub_t *s;
+  struct prop_notify_queue q;
+  TAILQ_INIT(&q);
+
+  if(name == NULL) {
+    /* No name given, just subscribe to the supplied prop */
+    canonical = value = prop;
+    hts_mutex_lock(&prop_mutex);
+
+  } else {
+
+    if(!strcmp(name[0], "global"))
+      p = prop_global;
+    else if(!strcmp(name[0], "self"))
+      p = prop;
+    else if(prop->hp_name != NULL && !strcmp(name[0], prop->hp_name))
+      p = prop;
+    else {
+      return NULL;
+    }
+
+    name++;
+
+    hts_mutex_lock(&prop_mutex);
+
+    /* Canonical name is the resolved props without following symlinks */
+    canonical = prop_subfind(&q, p, name, 0);
+  
+    /* ... and value will follow links */
+    value     = prop_subfind(&q, p, name, 1);
+    
+    if(canonical == NULL || value == NULL) {
+      hts_mutex_unlock(&prop_mutex);
+      return NULL;
+    }
+  }
+
+  s = malloc(sizeof(prop_sub_t));
+
+  LIST_INSERT_HEAD(&canonical->hp_canonical_subscriptions, s, 
+		   hps_canonical_prop_link);
+  s->hps_canonical_prop = canonical;
+
+
+  LIST_INSERT_HEAD(&value->hp_value_subscriptions, s, 
+		   hps_value_prop_link);
+  s->hps_value_prop = value;
+
+  s->hps_callback = cb;
+  s->hps_opaque = opaque;
+  s->hps_refcount = 1;
+
+  prop_build_notify_value(&q, s);
+
+  if(value->hp_type == PROP_DIR) {
+    LIST_FOREACH(c, &value->hp_childs, hp_parent_link)
+      prop_build_notify_child(&q, s, c, 
+				  value->hp_selected == c ? 
+				  PROP_ADD_SELECTED_CHILD : PROP_ADD_CHILD);
+  }
+
+  hts_mutex_unlock(&prop_mutex);
+  prop_notify_queue(&q);
+  return s;
+}
+
+
+/**
+ *
+ */
+void
+prop_unsubscribe(prop_sub_t *s)
+{
+  hts_mutex_lock(&prop_mutex);
+
+  if(s->hps_value_prop != NULL) {
+    LIST_REMOVE(s, hps_value_prop_link);
+    s->hps_value_prop = NULL;
+  }
+
+  if(s->hps_canonical_prop != NULL) {
+    LIST_REMOVE(s, hps_canonical_prop_link);
+    s->hps_canonical_prop = NULL;
+  }
+
+  hts_mutex_unlock(&prop_mutex);
+
+  prop_sub_ref_dec(s);
+}
+
+
+
+/**
+ *
+ */
+void
+prop_init(void)
+{
+  prop_global = prop_create0(NULL, NULL, "global");
+
+  hts_mutex_init(&prop_mutex);
+}
+
+
+/**
+ *
+ */
+prop_t *
+prop_get_global(void)
+{
+  return prop_global;
+}
+
+
+/**
+ *
+ */
+static void
+prop_set_epilogue(struct prop_notify_queue *q, prop_t *p)
+{
+  prop_notify_value(q, p);
+
+  hts_mutex_unlock(&prop_mutex);
+  prop_notify_queue(q);
+
+}
+
+
+
+/**
+ *
+ */
+void
+prop_set_string(prop_t *p, const char *str)
+{
+  struct prop_notify_queue q;
+  TAILQ_INIT(&q);
+
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type != PROP_STRING) {
+
+    prop_clean(&q, p);
+
+  } else if(!strcmp(p->hp_string, str)) {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  } else {
+    free(p->hp_string);
+  }
+
+  p->hp_string = strdup(str);
+  p->hp_type = PROP_STRING;
+
+  prop_set_epilogue(&q, p);
+}
+
+/**
+ *
+ */
+void
+prop_set_stringf(prop_t *p, const char *fmt, ...)
+{
+  char buf[512];
+
+  va_list ap;
+
+  va_start(ap, fmt);
+  vsnprintf(buf, sizeof(buf), fmt, ap);
+  va_end(ap);
+
+  prop_set_string(p, buf);
+}
+
+/**
+ *
+ */
+void
+prop_set_float(prop_t *p, float v)
+{
+  struct prop_notify_queue q;
+  TAILQ_INIT(&q);
+
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type != PROP_FLOAT) {
+
+    prop_clean(&q, p);
+
+  } else if(p->hp_float == v) {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
+
+  p->hp_float = v;
+  p->hp_type = PROP_FLOAT;
+
+  prop_set_epilogue(&q, p);
+}
+
+/**
+ *
+ */
+void
+prop_set_int(prop_t *p, int v)
+{
+  struct prop_notify_queue q;
+  TAILQ_INIT(&q);
+
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type != PROP_INT) {
+
+    prop_clean(&q, p);
+
+  } else if(p->hp_int == v) {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
+
+  p->hp_int = v;
+  p->hp_type = PROP_INT;
+
+  prop_set_epilogue(&q, p);
+}
+
+
+/**
+ *
+ */
+void
+prop_set_void(prop_t *p)
+{
+  struct prop_notify_queue q;
+  TAILQ_INIT(&q);
+
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type != PROP_VOID) {
+
+    prop_clean(&q, p);
+
+  } else {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
+
+  p->hp_type = PROP_VOID;
+  prop_set_epilogue(&q, p);
+}
+
+
+/**
+ * Relink subscriptions after a symlink has been changed
+ *
+ * The canonical prop pointer will stay in the 'dst' tree 
+ *
+ * The value prop pointer will be moved to originate from the 'src' tree.
+ *
+ */
+static void
+relink_subscriptions(struct prop_notify_queue *q, 
+		     prop_t *src, prop_t *dst)
+{
+  prop_sub_t *s;
+  prop_t *c, *z;
+
+  /* Follow any symlinks should we bump into 'em */
+  while(src->hp_originator != NULL)
+    src = src->hp_originator;
+
+  printf("  Linking %s", propname(src));
+  printf(" -> %s\n", propname(dst));
+
+  LIST_FOREACH(s, &dst->hp_canonical_subscriptions, hps_canonical_prop_link) {
+
+    if(s->hps_value_prop != NULL) {
+      /* If we previously was a directory, flush it out */
+      if(s->hps_value_prop->hp_type == PROP_DIR) {
+	prop_notify_void(q, s);
+      }
+      LIST_REMOVE(s, hps_value_prop_link);
+    }
+
+    LIST_INSERT_HEAD(&src->hp_value_subscriptions, s, hps_value_prop_link);
+    s->hps_value_prop = src;
+
+    /* Update with new value */
+    prop_build_notify_value(q, s);
+
+    if(src->hp_type == PROP_DIR) {
+      LIST_FOREACH(c, &src->hp_childs, hp_parent_link)
+	prop_build_notify_child(q, s, c,
+				    src->hp_selected == c ? 
+				    PROP_ADD_SELECTED_CHILD : PROP_ADD_CHILD);
+    }
+  }
+
+  if(dst->hp_type == PROP_DIR) {
+    
+    /* Take care of all childs */
+
+    LIST_FOREACH(c, &dst->hp_childs, hp_parent_link) {
+      
+      if(c->hp_name == NULL)
+	continue;
+
+      /* Search for a matching source */
+      LIST_FOREACH(z, &src->hp_childs, hp_parent_link) {
+	if(z->hp_name != NULL && !strcmp(c->hp_name, z->hp_name))
+	  break;
+      }
+      
+      if(z != NULL) {
+	/* Found! Recurse */
+
+	relink_subscriptions(q, z, c);
+
+      } else {
+	/* Nothing, blast the value */
+
+	LIST_FOREACH(s, &c->hp_canonical_subscriptions,
+		     hps_canonical_prop_link) {
+
+	  prop_notify_void(q, s);
+	  LIST_REMOVE(s, hps_value_prop_link);
+	  s->hps_value_prop = NULL;
+	}
+      }
+    }
+  }
+}
+
+/**
+ *
+ */
+static void
+prop_unlink0(struct prop_notify_queue *q, prop_t *p)
+{
+  LIST_REMOVE(p, hp_originator_link);
+  p->hp_originator = NULL;
+
+  relink_subscriptions(q, p, p);
+}
+
+
+/**
+ *
+ */
+void
+prop_link(prop_t *src, prop_t *dst)
+{
+  struct prop_notify_queue q;
+  TAILQ_INIT(&q);
+
+  hts_mutex_lock(&prop_mutex);
+
+  if(dst->hp_originator != NULL)
+    prop_unlink0(&q, dst);
+
+  dst->hp_originator = src;
+  LIST_INSERT_HEAD(&src->hp_targets, dst, hp_originator_link);
+
+  /* Follow any aditional symlinks source may point at */
+  while(src->hp_originator != NULL)
+    src = src->hp_originator;
+
+  relink_subscriptions(&q, src, dst);
+
+  hts_mutex_unlock(&prop_mutex);
+  prop_notify_queue(&q);
+}
+
+
+
+
+/**
+ *
+ */
+void
+prop_unlink(prop_t *p)
+{
+  struct prop_notify_queue q;
+  TAILQ_INIT(&q);
+
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_originator != NULL)
+    prop_unlink0(&q, p);
+
+  hts_mutex_unlock(&prop_mutex);
+  prop_notify_queue(&q);
+}
+
+/**
+ *
+ */
+void
+prop_select(prop_t *p, int advisory)
+{
+  prop_t *parent;
+  struct prop_notify_queue q;
+  TAILQ_INIT(&q);
+
+  hts_mutex_lock(&prop_mutex);
+
+  parent = p->hp_parent;
+
+  printf("Selecting %s (%s)\n", propname(p), advisory ? "Advisory" : "Forced");
+  printf(" parent = %s\n", propname(parent));
+
+  if(parent != NULL) {
+    assert(parent->hp_type == PROP_DIR);
+
+    /* If in advisory mode and something is already selected,
+       don't do anything */
+    if(!advisory || parent->hp_selected == NULL) {
+      prop_notify_child(&q, p, parent, PROP_SEL_CHILD);
+      parent->hp_selected = p;
+    }
+  }
+
+  hts_mutex_unlock(&prop_mutex);
+  prop_notify_queue(&q);
+}
+
+
+/**
+ *
+ */
+prop_t **
+prop_get_ancestors(prop_t *p)
+{
+  prop_t *a = p, **r;
+  int l = 2; /* one for current, one for terminating NULL */
+
+  hts_mutex_lock(&prop_mutex);
+
+  while(a->hp_parent != NULL) {
+    l++;
+    a = a->hp_parent;
+  }
+
+  r = malloc(l * sizeof(prop_t *));
+  
+  l = 0;
+  while(p != NULL) {
+    prop_ref_inc(p);
+    r[l++] = p;
+    p = p->hp_parent;
+  }
+  r[l] = NULL;
+
+  hts_mutex_unlock(&prop_mutex);
+  return r;
+}
+
+
+/**
+ *
+ */
+void
+prop_ancestors_unref(prop_t **r)
+{
+  prop_t **a = r;
+
+  while(*a != NULL) {
+    prop_ref_dec(*a);
+    a++;
+  }
+  free(r);
+}
+
+

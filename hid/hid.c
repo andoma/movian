@@ -34,9 +34,9 @@
 #include "hid.h"
 
 hid_ir_mode_t hid_ir_mode;
-extern hts_prop_t *prop_global;
+extern prop_t *prop_global;
 
-static hts_prop_t *prop_hid_status;
+static prop_t *prop_hid_status;
 
 /**
  *
@@ -48,7 +48,7 @@ hid_thread(void *aux)
   while(1) {
     switch(hid_ir_mode) {
     case HID_IR_NONE:
-      hts_prop_set_string(prop_hid_status, "OK");
+      prop_set_string(prop_hid_status, "OK");
       sleep(1);
       continue;
       
@@ -99,9 +99,9 @@ hid_init(glw_t *m)
   uint32_t u32;
   glw_t *sel, *icon, *tab;
 
-  hts_prop_t *prop_hid_root = hts_prop_create(NULL, "hid");
+  prop_t *prop_hid_root = prop_create(NULL, "hid");
 
-  prop_hid_status = hts_prop_create(prop_hid_root, "status");
+  prop_hid_status = prop_create(prop_hid_root, "status");
 
   icon = glw_model_create("theme://settings/hid/hid-icon.model",
 			  NULL, 0, NULL);

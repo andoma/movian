@@ -173,7 +173,7 @@ typedef struct glw_model_eval_context {
   errorinfo_t *ei;
   token_t *alloc;
   struct glw *w;
-  struct hts_prop *prop;
+  struct prop *prop;
   
   int persistence;
 #define GLW_MODEL_EVAL_ONCE        0

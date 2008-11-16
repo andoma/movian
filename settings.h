@@ -27,14 +27,14 @@ typedef struct setting setting_t;
 
 typedef void (setting_callback_bool_t)(void *opaque, int value);
 
-hts_prop_t *settings_add_dir(hts_prop_t *parent, const char *id, 
+prop_t *settings_add_dir(prop_t *parent, const char *id, 
 			     const char *title);
 
-hts_prop_t *settings_get_dirlist(hts_prop_t *parent);
+prop_t *settings_get_dirlist(prop_t *parent);
 
 
 
-setting_t *settings_add_bool(hts_prop_t *parent, const char *id, 
+setting_t *settings_add_bool(prop_t *parent, const char *id, 
 			     const char *title, int initial, htsmsg_t *store,
 			     setting_callback_bool_t *cb, void *opaque);
 

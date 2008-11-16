@@ -33,10 +33,10 @@ static struct nav_page_queue nav_history;
 
 static nav_page_t *nav_page_current;
 
-static hts_prop_t *nav_prop_root;
-static hts_prop_t *nav_prop_path;
-static hts_prop_t *nav_prop_pages;
-static hts_prop_t *nav_prop_curpage;
+static prop_t *nav_prop_root;
+static prop_t *nav_prop_path;
+static prop_t *nav_prop_pages;
+static prop_t *nav_prop_curpage;
 static glw_event_queue_t nav_geq;
 
 static void *navigator_thread(void *aux);
@@ -68,10 +68,10 @@ nav_init(void)
   TAILQ_INIT(&nav_history);
   event_handler_register("navigator", nav_input_event, EVENTPRI_NAV, NULL);
 
-  nav_prop_root    = hts_prop_create(hts_prop_get_global(), "nav");
-  nav_prop_path    = hts_prop_create(nav_prop_root, "path");
-  nav_prop_pages   = hts_prop_create(nav_prop_root, "pages");
-  nav_prop_curpage = hts_prop_create(nav_prop_root, "currentpage");
+  nav_prop_root    = prop_create(prop_get_global(), "nav");
+  nav_prop_path    = prop_create(nav_prop_root, "path");
+  nav_prop_pages   = prop_create(nav_prop_root, "pages");
+  nav_prop_curpage = prop_create(nav_prop_root, "currentpage");
 
   glw_event_initqueue(&nav_geq);
 
@@ -105,7 +105,7 @@ nav_close(nav_page_t *np)
 {
 #if 0
   LIST_REMOVE(np, np_global_link);
-  hts_prop_destroy(np->np_prop_root);
+  prop_destroy(np->np_prop_root);
   free(np);
 #endif
 }
@@ -128,9 +128,9 @@ nav_open(const char *url)
   TAILQ_FOREACH(np, &nav_pages, np_global_link) {
     if(!strcmp(np->np_url, url)) {
       printf("Selecting %s\n", np->np_url);
-      hts_prop_select(np->np_prop_root, 0);
+      prop_select(np->np_prop_root, 0);
 
-      hts_prop_link(np->np_prop_root, nav_prop_curpage);
+      prop_link(np->np_prop_root, nav_prop_curpage);
       break;
     }
   }
@@ -149,8 +149,8 @@ nav_open(const char *url)
     if(np == NULL)
       return;
 
-    hts_prop_set_parent(np->np_prop_root, nav_prop_pages);
-    hts_prop_link(np->np_prop_root, nav_prop_curpage);
+    prop_set_parent(np->np_prop_root, nav_prop_pages);
+    prop_link(np->np_prop_root, nav_prop_curpage);
   }
 
   if(np->np_inhistory == 0) {
@@ -203,9 +203,9 @@ nav_page_create(struct nav_backend *be, const char *url, size_t allocsize)
 
   TAILQ_INSERT_TAIL(&nav_pages, np, np_global_link);
 
-  np->np_prop_root = hts_prop_create(NULL, "page");
+  np->np_prop_root = prop_create(NULL, "page");
 
-  hts_prop_set_string(hts_prop_create(np->np_prop_root, "url"), url);
+  prop_set_string(prop_create(np->np_prop_root, "url"), url);
   return np;
 }
 

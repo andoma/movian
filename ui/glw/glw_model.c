@@ -52,7 +52,7 @@ glw_model_error(errorinfo_t *ei, glw_t *parent)
  */
 static glw_t *
 glw_model_create2(token_t *sof, const char *src, glw_t *parent,
-		  hts_prop_t *prop, int flags)
+		  prop_t *prop, int flags)
 {
   token_t *eof, *l;
   errorinfo_t ei;
@@ -96,7 +96,7 @@ glw_model_create2(token_t *sof, const char *src, glw_t *parent,
  *
  */
 glw_t *
-glw_model_create(const char *src, glw_t *parent, int flags, hts_prop_t *prop)
+glw_model_create(const char *src, glw_t *parent, int flags, prop_t *prop)
 {
   token_t *sof;
   glw_t *r;

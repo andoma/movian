@@ -38,10 +38,10 @@
 #include "video/video_decoder.h"
 #include "settings.h"
 
-hts_prop_t *prop_display;
-hts_prop_t *prop_gpu;
+prop_t *prop_display;
+prop_t *prop_gpu;
 
-hts_prop_t *prop_display_refreshrate;
+prop_t *prop_display_refreshrate;
 
 static struct {
   Display *display;
@@ -116,7 +116,7 @@ display_set_mode(void *opaque, int value)
 static void
 display_settings_init(void)
 {
-  hts_prop_t *r;
+  prop_t *r;
 
   htsmsg_t *settings = hts_settings_load("display");
 
@@ -455,11 +455,11 @@ gl_sysglue_init(int argc, char **argv)
   int attribs[10];
   int na = 0;
 
-  prop_display = hts_prop_create(hts_prop_get_global(), "display");
-  prop_gpu     = hts_prop_create(hts_prop_get_global(), "gpu");
+  prop_display = prop_create(prop_get_global(), "display");
+  prop_gpu     = prop_create(prop_get_global(), "gpu");
 
   prop_display_refreshrate = 
-    hts_prop_create(prop_display, "refreshrate");
+    prop_create(prop_display, "refreshrate");
 
   x11state.displayname = getenv("DISPLAY");
 
@@ -584,13 +584,13 @@ gl_keypress(XEvent *event)
 static void
 update_gpu_info(void)
 {
-  hts_prop_set_string(hts_prop_create(prop_gpu, "vendor"),
+  prop_set_string(prop_create(prop_gpu, "vendor"),
 		      (const char *)glGetString(GL_VENDOR));
 
-  hts_prop_set_string(hts_prop_create(prop_gpu, "name"),
+  prop_set_string(prop_create(prop_gpu, "name"),
 		      (const char *)glGetString(GL_RENDERER));
 
-  hts_prop_set_string(hts_prop_create(prop_gpu, "driver"),
+  prop_set_string(prop_create(prop_gpu, "driver"),
 		      (const char *)glGetString(GL_VERSION));
 }
 
@@ -651,8 +651,8 @@ gl_sysglue_mainloop(void)
     glXSwapBuffers(x11state.display, x11state.win);
 
     if(gl_update_timings())
-      hts_prop_set_float(prop_display_refreshrate,
-			 (float)1000000. / frame_duration);
+      prop_set_float(prop_display_refreshrate,
+		     (float)1000000. / frame_duration);
 
     glw_reaper();
   }

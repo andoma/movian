@@ -30,7 +30,7 @@ extern glw_t *layout_world;
 volume_control_t global_volume;
 
 static glw_event_queue_t audio_mixer_event_queue;
-static hts_prop_t *prop_mastervol, *prop_mastermute;
+static prop_t *prop_mastervol, *prop_mastermute;
 
 /**
  *
@@ -38,8 +38,8 @@ static hts_prop_t *prop_mastervol, *prop_mastermute;
 static void
 volume_update_widget(volume_control_t *vc)
 {
-  hts_prop_set_float(prop_mastervol, vc->vc_master_vol);
-  hts_prop_set_int(prop_mastermute, vc->vc_master_mute);
+  prop_set_float(prop_mastervol, vc->vc_master_vol);
+  prop_set_int(prop_mastermute, vc->vc_master_mute);
 }
 
 
@@ -254,11 +254,11 @@ void
 audio_mixer_init(void)
 {
   hts_thread_t tid;
-  hts_prop_t *prop_audio;
+  prop_t *prop_audio;
 
-  prop_audio = hts_prop_create(hts_prop_get_global(), "audio");
-  prop_mastervol  = hts_prop_create(prop_audio, "mastervolume");
-  prop_mastermute = hts_prop_create(prop_audio, "mastermute");
+  prop_audio = prop_create(prop_get_global(), "audio");
+  prop_mastervol  = prop_create(prop_audio, "mastervolume");
+  prop_mastermute = prop_create(prop_audio, "mastermute");
 
   hts_thread_create(&tid, audio_mixer_thread, NULL);
 }

@@ -177,10 +177,6 @@ glw_event_map_destroy(glw_event_map_t *gem)
   free(gem->gem_target);
   free(gem->gem_method);
   free(gem->gem_argument);
-
-  if(gem->gem_prop)
-    hts_prop_ref_dec(gem->gem_prop);
-
   free(gem);
 }
 

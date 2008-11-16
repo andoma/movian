@@ -31,7 +31,7 @@ glw_t *universe;
 
 static int fullscreen;
 static float fullscreen_fader;
-hts_prop_t *prop_fullscreen;
+prop_t *prop_fullscreen;
 
 static int layout_input_event(glw_event_t *ge, void *opaque);
 int layout_event_handler(glw_t *w, void *opaque, glw_signal_t sig, 
@@ -43,7 +43,7 @@ int layout_event_handler(glw_t *w, void *opaque, glw_signal_t sig,
 void
 layout_create(void)
 {
-  prop_fullscreen = hts_prop_create(hts_prop_get_global(), "fullscreen");
+  prop_fullscreen = prop_create(prop_get_global(), "fullscreen");
 
   universe = glw_model_create("theme://universe.model", NULL, 0, NULL);
 
@@ -69,7 +69,7 @@ layout_draw(float aspect)
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
   
   fullscreen_fader = GLW_LP(16, fullscreen_fader, fullscreen);
-  hts_prop_set_float(prop_fullscreen, fullscreen_fader);
+  prop_set_float(prop_fullscreen, fullscreen_fader);
 
   memset(&rc, 0, sizeof(rc));
   rc.rc_aspect = aspect;

@@ -21,12 +21,12 @@
 
 #include <libhts/htsq.h>
 #include <libhts/htsthreads.h>
-#include <libhts/htsprop.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <inttypes.h>
 #include <time.h>
 #include <math.h>
+#include "prop.h"
 
 #define GLW_LERP(a, y0, y1) ((y0) + (a) * ((y1) - (y0)))
 #define GLW_S(a) (sin(GLW_LERP(a, M_PI * -0.5, M_PI * 0.5)) * 0.5 + 0.5)
@@ -543,7 +543,7 @@ typedef struct glw_event_map {
   char *gem_argument;
   LIST_ENTRY(glw_event_map) gem_link;
 
-  hts_prop_t *gem_prop;
+  // prop_t *gem_prop;
 
 
 } glw_event_map_t;
@@ -593,7 +593,7 @@ void glw_set_framerate(float r);
  * Models
  */
 glw_t *glw_model_create(const char *src, glw_t *parent, int flags,
-			struct hts_prop *prop);
+			struct prop *prop);
 
 #define GLW_MODEL_CACHE 0x1
 

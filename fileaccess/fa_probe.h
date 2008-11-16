@@ -19,10 +19,10 @@
 #ifndef FA_PROBE_H
 #define FA_PROBE_H
 
-#include <libhts/htsprop.h>
+#include "prop.h"
 
-int fa_probe(hts_prop_t *proproot, hts_prop_t *urlp, const char *url);
+int fa_probe(prop_t *proproot, prop_t *urlp, const char *url);
 
-int fa_probe_dir(hts_prop_t *proproot, const char *url);
+int fa_probe_dir(prop_t *proproot, const char *url);
 
 #endif /* FA_PROBE_H */

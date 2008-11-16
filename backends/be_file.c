@@ -35,7 +35,7 @@ typedef struct be_file_page {
 
   hts_thread_t bfp_scanner;
 
-  hts_prop_t *bfp_nodes;
+  prop_t *bfp_nodes;
 
 } be_file_page_t;
 
@@ -59,22 +59,22 @@ be_file_canhandle(const char *url)
 static void
 scandir_callback(void *arg, const char *url, const char *filename, int type)
 {
-  hts_prop_t *p;
+  prop_t *p;
   be_file_page_t *bfp = arg;
-  hts_prop_t *urlp;
-  hts_prop_t *media;
+  prop_t *urlp;
+  prop_t *media;
 
-  p = hts_prop_create(NULL, "node");
+  p = prop_create(NULL, "node");
 
-  hts_prop_set_string(hts_prop_create(p, "filename"), filename);
+  prop_set_string(prop_create(p, "filename"), filename);
 
-  urlp = hts_prop_create(p, "url");
-  hts_prop_set_string(urlp, url);
+  urlp = prop_create(p, "url");
+  prop_set_string(urlp, url);
 
-  media = hts_prop_create(p, "media");
+  media = prop_create(p, "media");
   fa_probe(media, urlp, url);
 
-  hts_prop_set_parent(p, bfp->bfp_nodes);
+  prop_set_parent(p, bfp->bfp_nodes);
 }
 
 
@@ -100,7 +100,7 @@ be_file_open(const char *url0, char *errbuf, size_t errlen)
   const char *url;
   struct stat buf;
   be_file_page_t *bfp;
-  hts_prop_t *p;
+  prop_t *p;
 
   if((url = fa_resolve_proto(url0, &fap)) == NULL) {
     snprintf(errbuf, errlen, "Protocol not handled");
@@ -120,9 +120,9 @@ be_file_open(const char *url0, char *errbuf, size_t errlen)
 
     /* TODO: Check if it is a DVD */
 
-    hts_prop_set_string(hts_prop_create(p, "type"), "filedirectory");
+    prop_set_string(prop_create(p, "type"), "filedirectory");
     
-    bfp->bfp_nodes = hts_prop_create(p, "nodes");
+    bfp->bfp_nodes = prop_create(p, "nodes");
     
     hts_thread_create_detached(&bfp->bfp_scanner, scanner, bfp);
 
