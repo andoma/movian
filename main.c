@@ -58,7 +58,7 @@ hts_prop_t *prop_ui_scale;
 int showtime_running;
 static int stopcode;
 
-const char *themepath = HTS_CONTENT_PATH "/showtime/themes/default";
+const char *themepath = HTS_CONTENT_PATH "/showtime/themes/new";
 
 static int main_event_handler(glw_event_t *ge, void *opaque);
 
