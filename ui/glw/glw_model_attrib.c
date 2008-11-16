@@ -1,0 +1,353 @@
+/*
+ *  GL Widgets, model loader, widget attributes
+ *  Copyright (C) 2008 Andreas Öman
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+
+#include <assert.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <libhts/hts_strtab.h>
+
+#include "glw_model.h"
+#include "glw.h"
+
+
+/**
+ *
+ */
+static int
+set_string(glw_model_eval_context_t *ec, const token_attrib_t *a,
+	   struct token *t)
+{
+  char buf[30];
+  const char *str;
+
+  switch(t->type) {
+  case TOKEN_VOID:
+    str = "";
+    break;
+
+  case TOKEN_STRING:
+    str = t->t_string;
+    break;
+
+  case TOKEN_INT:
+    snprintf(buf, sizeof(buf), "%d", t->t_int);
+    str = buf;
+    break;
+
+  case TOKEN_FLOAT:
+    snprintf(buf, sizeof(buf), "%f", t->t_float);
+    str = buf;
+    break;
+
+  default:
+    return glw_model_seterr(ec->ei, t, 
+			    "Attribute '%s' expects a string or scalar",
+			    a->name);
+  }
+
+  glw_set(ec->w, a->attrib, str, NULL);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+set_float(glw_model_eval_context_t *ec, const token_attrib_t *a, 
+	  struct token *t)
+{
+  float f;
+
+  switch(t->type) {
+  case TOKEN_STRING:
+    f = strtod(t->t_string, NULL);
+    break;
+
+  case TOKEN_FLOAT:
+    f = t->t_float;
+    break;
+
+  case TOKEN_INT:
+    f = t->t_int;
+    break;
+
+  case TOKEN_VOID:
+    f = 0;
+    break;
+
+  default:
+    return glw_model_seterr(ec->ei, t, "Attribute '%s' expects a scalar",
+			    a->name);
+  }
+
+  glw_set(ec->w, a->attrib, f, NULL);
+  return 0;
+}
+
+/**
+ *
+ */
+static int
+set_int(glw_model_eval_context_t *ec, const token_attrib_t *a, 
+	  struct token *t)
+{
+  int v;
+
+  switch(t->type) {
+  case TOKEN_STRING:
+    v = atoi(t->t_string);
+    break;
+
+  case TOKEN_FLOAT:
+    v = t->t_float;
+    break;
+
+  case TOKEN_INT:
+    v = t->t_int;
+    break;
+
+  case TOKEN_VOID:
+    v = 0;
+    break;
+
+  default:
+    return glw_model_seterr(ec->ei, t, "Attribute '%s' expects a scalar",
+			    a->name);
+  }
+
+  glw_set(ec->w, a->attrib, v, NULL);
+  return 0;
+}
+
+
+
+/**
+ *
+ */
+static int
+set_float3(glw_model_eval_context_t *ec, const token_attrib_t *a, 
+	   struct token *t)
+{
+  if(t->type != TOKEN_VECTOR_FLOAT || t->t_elements != 3)
+    return glw_model_seterr(ec->ei, t, "Attribute '%s' expects a vec3",
+			    a->name);
+
+  glw_set(ec->w, a->attrib, 
+	  t->t_float_vector[0],
+	  t->t_float_vector[1],
+	  t->t_float_vector[2],
+	  NULL);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+set_float4(glw_model_eval_context_t *ec, const token_attrib_t *a, 
+	   struct token *t)
+{
+  if(t->type != TOKEN_VECTOR_FLOAT || t->t_elements != 4)
+    return glw_model_seterr(ec->ei, t, "Attribute '%s' expects a vec4",
+			    a->name);
+
+  glw_set(ec->w, a->attrib, 
+	  t->t_float_vector[0],
+	  t->t_float_vector[1],
+	  t->t_float_vector[2],
+	  t->t_float_vector[3],
+	  NULL);
+  return 0;
+}
+
+
+static struct strtab aligntab[] = {
+  { "default",       GLW_ALIGN_DEFAULT},
+  { "center",        GLW_ALIGN_CENTER},
+  { "left",          GLW_ALIGN_LEFT},
+  { "right",         GLW_ALIGN_RIGHT},
+  { "top",           GLW_ALIGN_TOP},
+  { "bottom",        GLW_ALIGN_BOTTOM}
+};
+
+
+/**
+ *
+ */
+static int
+set_align(glw_model_eval_context_t *ec, const token_attrib_t *a, 
+	  struct token *t)
+{
+  int v;
+  if(t->type != TOKEN_IDENTIFIER || (v = str2val(t->t_string, aligntab)) < 0)
+    return glw_model_seterr(ec->ei, t, "Invalid assignment for attribute %s",
+			    a->name);
+  glw_set(ec->w, GLW_ATTRIB_ALIGNMENT, v, NULL);
+  return 0;
+}
+
+
+
+static struct strtab orientationtab[] = {
+  { "vertical",       GLW_ORIENTATION_VERTICAL},
+  { "horizontal",     GLW_ORIENTATION_HORIZONTAL},
+};
+
+
+/**
+ *
+ */
+static int
+set_orientation(glw_model_eval_context_t *ec, const token_attrib_t *a, 
+		struct token *t)
+{
+  int v;
+  if(t->type != TOKEN_IDENTIFIER || (v = str2val(t->t_string,
+						 orientationtab)) < 0)
+    return glw_model_seterr(ec->ei, t, "Invalid assignment for attribute %s",
+			    a->name);
+  glw_set(ec->w, GLW_ATTRIB_ORIENTATION, v, NULL);
+  return 0;
+}
+
+
+
+
+
+static struct strtab transitiontab[] = {
+  { "blend",             GLW_TRANS_BLEND},
+  { "flipHorizontal",    GLW_TRANS_FLIP_HORIZONTAL},
+  { "flipVertical",      GLW_TRANS_FLIP_VERTICAL},
+  { "slideHorizontal",   GLW_TRANS_SLIDE_HORIZONTAL},
+  { "slideVertical",     GLW_TRANS_SLIDE_VERTICAL},
+};
+
+
+/**
+ *
+ */
+static int
+set_transition_effect(glw_model_eval_context_t *ec, const token_attrib_t *a, 
+		      struct token *t)
+{
+  int v;
+  if(t->type != TOKEN_IDENTIFIER || (v = str2val(t->t_string,
+						 transitiontab)) < 0)
+    return glw_model_seterr(ec->ei, t, "Invalid assignment for attribute %s",
+			    a->name);
+  glw_set(ec->w, GLW_ATTRIB_TRANSITION_EFFECT, v, NULL);
+  return 0;
+}
+
+
+
+/**
+ *
+ */
+static int
+set_flag(glw_model_eval_context_t *ec, const token_attrib_t *a, 
+	  struct token *t)
+{
+  int set = 0;
+
+  if(t->type == TOKEN_IDENTIFIER)
+    set = !strcmp(t->t_string, "true");
+  else if(t->type == TOKEN_INT)
+    set = t->t_int;
+  else if(t->type == TOKEN_FLOAT)
+    set = t->t_float > 0.5;
+  else
+    return glw_model_seterr(ec->ei, t, "Invalid assignment for attribute %s",
+			    a->name);
+
+  if(set)
+    glw_set(ec->w, GLW_ATTRIB_FLAGS, a->attrib, NULL);
+  return 0;
+}
+
+
+
+
+/**
+ *
+ */
+static const token_attrib_t attribtab[] = {
+  {"id",              set_string, GLW_ATTRIB_ID},
+  {"caption",         set_string, GLW_ATTRIB_CAPTION},
+  {"source",          set_string, GLW_ATTRIB_SOURCE},
+
+  {"scaleChilds",     set_flag,   GLW_SCALE_CHILDS},
+  {"expandChilds",    set_flag,   GLW_EXPAND_CHILDS},
+  {"borderScale",     set_flag,   GLW_BORDER_SCALE_CHILDS},
+  {"selectable",      set_flag,   GLW_SELECTABLE},
+  {"focusCursor",     set_flag,   GLW_FOCUS_DRAW_CURSOR},
+  {"focusAlpha",      set_flag,   GLW_FOCUS_ADJ_ALPHA},
+  {"keepAspect",      set_flag,   GLW_KEEP_ASPECT},
+  {"debug",           set_flag,   GLW_DEBUG},
+  {"skeleton",        set_flag,   GLW_DRAW_SKEL},
+  {"borderBlend",     set_flag,   GLW_BORDER_BLEND},
+  {"password",        set_flag,   GLW_PASSWORD},
+
+  {"slices",          set_int,    GLW_ATTRIB_SLICES},
+  {"min",             set_int,    GLW_ATTRIB_INT_MIN},
+  {"max",             set_int,    GLW_ATTRIB_INT_MAX},
+  {"step",            set_int,    GLW_ATTRIB_INT_STEP},
+  {"value",           set_int,    GLW_ATTRIB_INT},
+  {"xslices",         set_int,    GLW_ATTRIB_X_SLICES},
+  {"yslices",         set_int,    GLW_ATTRIB_Y_SLICES},
+
+  {"alpha",           set_float,  GLW_ATTRIB_ALPHA},
+  {"aspect",          set_float,  GLW_ATTRIB_ASPECT},
+  {"weight",          set_float,  GLW_ATTRIB_WEIGHT},
+  {"expand",          set_float,  GLW_ATTRIB_EXPAND},
+  {"time",            set_float,  GLW_ATTRIB_TIME},
+  {"angle",           set_float,  GLW_ATTRIB_ANGLE},
+  {"xfill",           set_float,  GLW_ATTRIB_XFILL},
+
+  {"displacement",    set_float3, GLW_ATTRIB_DISPLACEMENT},
+  {"color",           set_float3, GLW_ATTRIB_RGB},
+  {"focusColor",      set_float3, GLW_ATTRIB_FOCUS_RGB},
+  {"textureBorders",  set_float4, GLW_ATTRIB_TEXTURE_BORDERS},
+  {"vertexBorders",   set_float4, GLW_ATTRIB_VERTEX_BORDERS},
+
+  {"align",           set_align,  0},
+  {"orientation",     set_orientation,  0},
+  {"effect",          set_transition_effect,  0},
+};
+
+
+/**
+ *
+ */
+int 
+glw_model_attrib_resolve(token_t *t)
+{
+  int i;
+
+  for(i = 0; i < sizeof(attribtab) / sizeof(attribtab[0]); i++)
+    if(!strcmp(attribtab[i].name, t->t_string)) {
+      free(t->t_string);
+      t->t_attrib = &attribtab[i];
+      t->type = TOKEN_OBJECT_ATTRIBUTE;
+      return 0;
+    }
+  return -1;
+}

@@ -1,0 +1,18 @@
+-include ../../config.mak
+
+SRCS = glw_model.c glw_model_lexer.c glw_model_parser.c glw_model_test.c  \
+     glw_model_eval.c glw_model_preproc.c
+
+PROG = glwtest
+PROGPATH = $(HTS_BUILD_ROOT)/libs/libglw
+
+CFLAGS += -g -Wall -Werror -funsigned-char -O0 $(HTS_CFLAGS)
+
+CFLAGS += -I/usr/local/include -I$(INCLUDES_INSTALL_BASE) -I$(CURDIR)
+CFLAGS += -Wno-deprecated-declarations -Wmissing-prototypes
+CFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
+
+LDFLAGS += -L/usr/local/lib -L$(LIBS_INSTALL_BASE) -L/usr/X11R6/lib -lm
+
+
+include ../../build/smallbin.mk
