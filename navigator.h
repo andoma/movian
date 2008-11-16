@@ -19,7 +19,8 @@
 #ifndef NAVIGATOR_H__
 #define NAVIGATOR_H__
 
-#include "ui/glw/glw.h"
+#include "event.h"
+#include "prop.h"
 
 TAILQ_HEAD(nav_page_queue, nav_page);
 LIST_HEAD(nav_backend_list, nav_backend);
@@ -29,7 +30,7 @@ LIST_HEAD(nav_backend_list, nav_backend);
  *
  */
 typedef struct nav_page {
-  glw_event_queue_t np_geq;
+  event_queue_t np_eq;
  
   TAILQ_ENTRY(nav_page) np_global_link;
   TAILQ_ENTRY(nav_page) np_history_link;

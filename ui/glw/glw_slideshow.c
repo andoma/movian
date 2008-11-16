@@ -31,7 +31,7 @@ glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
   glw_t *c, *p, *n;
   glw_rctx_t *rc = extra, rc0;
   float delta;
-  glw_event_t *ge;
+  event_t *e;
 
   switch(signal) {
   case GLW_SIGNAL_RENDER:
@@ -114,9 +114,9 @@ glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
     return 1;
 
   case GLW_SIGNAL_EVENT:
-    ge = extra;
-    switch(ge->ge_type) {
-    case GEV_INCR:
+    e = extra;
+    switch(e->e_type) {
+    case EVENT_INCR:
       c = w->glw_selected ? TAILQ_NEXT(w->glw_selected, glw_parent_link) : NULL;
       if(c == NULL)
 	c = TAILQ_FIRST(&w->glw_childs);
@@ -124,7 +124,7 @@ glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
       s->timer = 0;
       return 1;
 
-    case GEV_DECR:
+    case EVENT_DECR:
       c = w->glw_selected ? TAILQ_PREV(w->glw_selected, glw_queue,
 				       glw_parent_link) : NULL;
       if(c == NULL)

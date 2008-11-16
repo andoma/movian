@@ -27,13 +27,15 @@
 #include "audio/audio_ui.h"
 #include "navigator.h"
 
+#include "ui/glw/glw.h"
+
 glw_t *universe;
 
 static int fullscreen;
 static float fullscreen_fader;
 prop_t *prop_fullscreen;
 
-static int layout_input_event(glw_event_t *ge, void *opaque);
+static int layout_input_event(event_t *e, void *opaque);
 int layout_event_handler(glw_t *w, void *opaque, glw_signal_t sig, 
 			 void *extra);
 
@@ -97,9 +99,9 @@ layout_draw(float aspect)
  * Primary point for input event distribution in the UI
  */
 static int
-layout_input_event(glw_event_t *ge, void *opaque)
+layout_input_event(event_t *e, void *opaque)
 {
-  return glw_signal(universe, GLW_SIGNAL_EVENT, ge);
+  return glw_signal(universe, GLW_SIGNAL_EVENT, e);
 }
 
 
@@ -109,11 +111,11 @@ layout_input_event(glw_event_t *ge, void *opaque)
 int
 layout_event_handler(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
 {
-  glw_event_t *ge = extra;
+  event_t *e = extra;
 
   if(sig != GLW_SIGNAL_EVENT_BUBBLE)
     return 0;
 
-  event_post(ge);
+  event_post(e);
   return 1;
 }

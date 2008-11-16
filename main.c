@@ -57,7 +57,7 @@ static int stopcode;
 
 const char *themepath = HTS_CONTENT_PATH "/showtime/themes/new";
 
-static int main_event_handler(glw_event_t *ge, void *opaque);
+static int main_event_handler(event_t *e, void *opaque);
 
 
 static void
@@ -295,9 +295,9 @@ main(int argc, char **argv)
  * Catch buttons used for exiting
  */
 static int
-main_event_handler(glw_event_t *ge, void *opaque)
+main_event_handler(event_t *e, void *opaque)
 {
-  switch(ge->ge_type) {
+  switch(e->e_type) {
   default:
     return 0;
 

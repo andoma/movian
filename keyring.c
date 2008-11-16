@@ -23,6 +23,7 @@
 #include "showtime.h"
 #include "event.h"
 #include "keyring.h"
+#include "ui/glw/glw.h"
 
 static htsmsg_t *keyring;
 
@@ -79,8 +80,8 @@ keyring_lookup(const char *id, char **username, char **password,
   htsmsg_t *m;
   glw_t *p, *w;
   prop_t *props;
-  glw_event_t *ge;
-  char buf[128];
+  event_t *e;
+  //  char buf[128];
   extern glw_t *universe;
 
   pthread_mutex_lock(&keyring_mutex);
@@ -102,16 +103,16 @@ keyring_lookup(const char *id, char **username, char **password,
 
     abort(); //glw_select(w); /* Grab focus */
 
-    ge = glw_wait_form(w);
+    abort(); //e = glw_wait_form(w);
 
     prop_destroy(props);
 
     htsmsg_delete_field(keyring, id);
 
-    if(ge->ge_type == GEV_OK) {
+    if(e->e_type == EVENT_OK) {
 
       m = htsmsg_create();
-
+#if 0
       glw_get_caption(w, "username", buf, sizeof(buf));
       htsmsg_add_str(m, "username", buf);
 
@@ -120,13 +121,14 @@ keyring_lookup(const char *id, char **username, char **password,
 
       glw_get_caption(w, "domain", buf, sizeof(buf));
       htsmsg_add_str(m, "domain", buf);
+#endif
 
       htsmsg_add_msg(keyring, id, m);
 
       keyring_store();
       glw_detach(w);
 
-    } else if(ge->ge_type == GEV_CANCEL) {
+    } else if(e->e_type == EVENT_CANCEL) {
       keyring_store();
       glw_detach(w);
       pthread_mutex_unlock(&keyring_mutex);

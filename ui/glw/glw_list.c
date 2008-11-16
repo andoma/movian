@@ -327,7 +327,7 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   glw_rctx_t *rc = extra;
   glw_list_t *h = (void *)w;
   glw_t *c = w->glw_selected, *n;
-  glw_event_t *ge;
+  event_t *e;
 
   switch(signal) {
   default:
@@ -363,43 +363,43 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     if(c == NULL)
       return 0;
 
-    ge = extra;
+    e = extra;
     n = NULL;
 
-    if(glw_signal0(c, GLW_SIGNAL_EVENT, ge))
+    if(glw_signal0(c, GLW_SIGNAL_EVENT, e))
       return 1;
 
-    switch(ge->ge_type) {
+    switch(e->e_type) {
     default:
       break;
 
-    case GEV_LEFT:
+    case EVENT_LEFT:
       if(h->orientation == GLW_ORIENTATION_HORIZONTAL)
 	n = glw_get_prev_n(c, 1);
       break;
 
-    case GEV_RIGHT:
+    case EVENT_RIGHT:
       if(h->orientation == GLW_ORIENTATION_HORIZONTAL)
 	n = glw_get_next_n(c, 1);
       break;
 
-    case GEV_UP:
+    case EVENT_UP:
       if(h->orientation == GLW_ORIENTATION_VERTICAL)
 	n = glw_get_prev_n(c, 1);
       break;
 
-    case GEV_DOWN:
+    case EVENT_DOWN:
       if(h->orientation == GLW_ORIENTATION_VERTICAL)
 	n = glw_get_next_n(c, 1);
       break;
 
-    case GEV_INCR:
+    case EVENT_INCR:
       n = glw_get_next_n(c, 1);
       if(n == NULL)
 	n = TAILQ_FIRST(&w->glw_childs);
       break;
 
-    case GEV_DECR:
+    case EVENT_DECR:
       n = glw_get_prev_n(c, 1);
       break;
     }

@@ -25,6 +25,7 @@
 #include <alloca.h>
 
 #include "glw.h"
+#include "glw_i.h"
 #include "glw_model.h"
 
 refstr_t *

@@ -64,6 +64,8 @@ hid_thread(void *aux)
   return NULL;
 }
 
+#if 0
+
 /**
  *
  */
@@ -76,7 +78,6 @@ hid_save(void)
   htsmsg_destroy(m);
 }
 
-
 /**
  *
  */
@@ -86,6 +87,7 @@ hid_mode_cb(void *opaque, void *opaque2, int value)
   hid_ir_mode = value;
   hid_save();
 }
+#endif
 
 
 /**
@@ -118,7 +120,7 @@ hid_init(glw_t *m)
   
   if((sel = glw_find_by_id(tab, "rcmode", 0)) == NULL)
     return;
-
+#if 0
   glw_selection_add_text_option(sel, "No remote", hid_mode_cb,
 				NULL, NULL, HID_IR_NONE,
 				HID_IR_NONE == hid_ir_mode);
@@ -130,6 +132,7 @@ hid_init(glw_t *m)
   glw_selection_add_text_option(sel, "iMon Pad", hid_mode_cb,
 				NULL, NULL, HID_IR_IMONPAD,
 				HID_IR_IMONPAD == hid_ir_mode);
+#endif
 
   //  glw_add_tab(m, "settings_list", icon, "settings_deck", tab);
 

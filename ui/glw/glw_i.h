@@ -19,6 +19,8 @@
 #ifndef __GLW_I_H__
 #define __GLW_I_H__
 
+#include "event.h"
+
 extern float glw_framerate;
 
 static inline void
@@ -170,17 +172,34 @@ glw_is_select_candidate(glw_t *w)
   return w->glw_selected != NULL || w->glw_flags & GLW_SELECTABLE;
 }
 
-int glw_navigate(glw_t *w, void *extra);
+
+
+
+/**
+ *
+ */
+typedef struct glw_event_map {
+  event_type_t gem_inevent;
+  event_type_t gem_outevent;
+  char *gem_target;
+  char *gem_method;
+  char *gem_argument;
+  LIST_ENTRY(glw_event_map) gem_link;
+} glw_event_map_t;
+
+
+
+int glw_navigate(glw_t *w, event_t *e);
 
 void glw_event_init(void);
 
-void glw_event_map_add(glw_t *w, glw_event_type_t inevent,
-		       const char *target, glw_event_type_t outevent,
+void glw_event_map_add(glw_t *w, event_type_t inevent,
+		       const char *target, event_type_t outevent,
 		       const char *appmethod);
 
 void glw_event_map_destroy(glw_event_map_t *gem);
 
-int glw_event_map_intercept(glw_t *w, glw_event_t *ge);
+int glw_event_map_intercept(glw_t *w, event_t *e);
 
 extern void (*glw_ffmpeglockmgr)(int lock);
 extern int (*glw_imageloader)(glw_image_load_ctrl_t *ctrl);
@@ -214,5 +233,8 @@ void glw_gf_register(glw_gf_ctrl_t *ggc);
 void glw_gf_unregister(glw_gf_ctrl_t *ggc);
 
 void glw_gf_do(void);
+
+
+
 
 #endif /* __GLW_I_H__ */

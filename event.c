@@ -41,10 +41,144 @@ event_init(void)
   hts_mutex_init_recursive(&ehmutex);
 }
 
+
+
+
+/**
+ *
+ */
+static void
+event_default_dtor(event_t *e)
+{
+  free(e);
+}
+
+/**
+ *
+ */
+void *
+event_create(event_type_t type, size_t size)
+{
+  event_t *e = malloc(size);
+  e->e_dtor = event_default_dtor;
+  e->e_refcount = 1;
+  e->e_mapped = 0;
+  e->e_type = type;
+  return e;
+}
+
+/**
+ *
+ */
+void *
+event_create_unicode(int sym)
+{
+  event_unicode_t *e = malloc(sizeof(event_unicode_t));
+  e->h.e_dtor = event_default_dtor;
+  e->h.e_refcount = 1;
+  e->h.e_type = EVENT_UNICODE;
+  e->sym = sym;
+  return e;
+}
+
+
+/**
+ *
+ */
+void
+event_enqueue(event_queue_t *eq, event_t *e)
+{
+  atomic_add(&e->e_refcount, 1);
+
+  hts_mutex_lock(&eq->eq_mutex);
+  TAILQ_INSERT_TAIL(&eq->eq_q, e, e_link);
+  hts_cond_signal(&eq->eq_cond);
+  hts_mutex_unlock(&eq->eq_mutex);
+}
+
+
+/**
+ *
+ * @param timeout Timeout in milliseconds
+ */
+event_t *
+event_get(int timeout, event_queue_t *eq)
+{
+  event_t *e;
+
+  hts_mutex_lock(&eq->eq_mutex);
+
+  if(timeout == 0) {
+    e = TAILQ_FIRST(&eq->eq_q);
+  } else if(timeout == -1) {
+    while((e = TAILQ_FIRST(&eq->eq_q)) == NULL)
+      hts_cond_wait(&eq->eq_cond, &eq->eq_mutex);
+  } else {
+    while((e = TAILQ_FIRST(&eq->eq_q)) == NULL) {
+      if(hts_cond_wait_timeout(&eq->eq_cond, &eq->eq_mutex, timeout))
+	break;
+    }
+  }
+
+  if(e != NULL)
+    TAILQ_REMOVE(&eq->eq_q, e, e_link);
+  hts_mutex_unlock(&eq->eq_mutex);
+  return e;
+}
+
+
+/**
+ *
+ */
+void
+event_unref(event_t *e)
+{
+  if(atomic_add(&e->e_refcount, -1) == 1)
+    e->e_dtor(e);
+}
+
+
+/**
+ *
+ */
+void
+event_initqueue(event_queue_t *eq)
+{
+  TAILQ_INIT(&eq->eq_q);
+  hts_cond_init(&eq->eq_cond);
+  hts_mutex_init(&eq->eq_mutex);
+}
+
+
+/**
+ *
+ */
+void
+event_flushqueue(event_queue_t *eq)
+{
+  event_t *e;
+
+  hts_mutex_lock(&eq->eq_mutex);
+
+  while((e = TAILQ_FIRST(&eq->eq_q)) != NULL) {
+    TAILQ_REMOVE(&eq->eq_q, e, e_link);
+    event_unref(e);
+  }
+  hts_mutex_unlock(&eq->eq_mutex);
+}
+
+
+
+
+
+
+
+
+
+
 /**
  *  Root input handler & events (from keyboard, remote controls, etc)
  */
-
 typedef struct event_handler {
   const char *name;
   void *opaque;
@@ -52,7 +186,7 @@ typedef struct event_handler {
   int active; /* The event dispatcher may be invoked recursively,
 		 and if so, avoid calling the same handler twice */
 
-  int (*callback)(glw_event_t *ge, void *opaque);
+  int (*callback)(event_t *ge, void *opaque);
   LIST_ENTRY(event_handler) link;
 } event_handler_t;
 
@@ -71,7 +205,7 @@ ihcmp(event_handler_t *a, event_handler_t *b)
  *
  */
 void *
-event_handler_register(const char *name, int (*callback)(glw_event_t *ge,
+event_handler_register(const char *name, int (*callback)(event_t *ge,
 							 void *opaque), 
 		       eventpri_t pri, void *opaque)
 {
@@ -109,7 +243,7 @@ event_handler_unregister(void *IH)
  *
  */
 void
-event_post(glw_event_t *ge)
+event_post(event_t *e)
 {
   event_handler_t *eh;
   int r;
@@ -122,7 +256,7 @@ event_post(glw_event_t *ge)
       continue;
 
     eh->active = 1;
-    r = eh->callback(ge, eh->opaque);
+    r = eh->callback(e, eh->opaque);
     eh->active = 0;
     if(r)
       break;
@@ -130,7 +264,7 @@ event_post(glw_event_t *ge)
 
   hts_mutex_unlock(&ehmutex);
 
-  glw_event_unref(ge);
+  event_unref(e);
 }
 
 
@@ -140,6 +274,5 @@ event_post(glw_event_t *ge)
 void
 event_post_simple(event_type_t type)
 {
-  glw_event_t *ge = glw_event_create(type, sizeof(glw_event_t));
-  event_post(ge);
+  event_post(event_create(type, sizeof(event_t)));
 }

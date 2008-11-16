@@ -189,7 +189,7 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal,
 {
   glw_array_t *a = (void *)w;
   glw_t *n, *c = w->glw_selected;
-  glw_event_t *ge;
+  event_t *e;
 
   switch(signal) {
   default:
@@ -229,23 +229,23 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal,
     if(c == NULL)
       return 0;
 
-    ge = extra;
+    e = extra;
     n = NULL;
 
-    if(glw_signal0(c, GLW_SIGNAL_EVENT, ge))
+    if(glw_signal0(c, GLW_SIGNAL_EVENT, e))
       return 1;
 
-    switch(ge->ge_type) {
-    case GEV_UP:
+    switch(e->e_type) {
+    case EVENT_UP:
       n = glw_get_prev_n_all(c, a->xvisible);
       break;
-    case GEV_DOWN:
+    case EVENT_DOWN:
       n = glw_get_next_n_all(c, a->xvisible);
       break;
-    case GEV_LEFT:
+    case EVENT_LEFT:
       n = glw_get_prev_n(c, 1);
       break;
-    case GEV_RIGHT:
+    case EVENT_RIGHT:
       n = glw_get_next_n(c, 1);
       break;
     default:

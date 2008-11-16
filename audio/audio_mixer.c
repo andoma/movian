@@ -25,11 +25,9 @@
 #include "audio.h"
 #include "event.h"
 
-extern glw_t *layout_world;
-
 volume_control_t global_volume;
 
-static glw_event_queue_t audio_mixer_event_queue;
+static event_queue_t audio_mixer_event_queue;
 static prop_t *prop_mastervol, *prop_mastermute;
 
 /**
@@ -145,9 +143,9 @@ audio_mixer_update(volume_control_t *vc)
  *
  */
 static int
-audio_mixer_event_handler(glw_event_t *ge, void *opaque)
+audio_mixer_event_handler(event_t *e, void *opaque)
 {
-  switch(ge->ge_type) {
+  switch(e->e_type) {
 
   case EVENT_KEY_VOLUME_UP:
   case EVENT_KEY_VOLUME_DOWN:
@@ -157,7 +155,7 @@ audio_mixer_event_handler(glw_event_t *ge, void *opaque)
     return 0;
   }
 
-  glw_event_enqueue(&audio_mixer_event_queue, ge);
+  event_enqueue(&audio_mixer_event_queue, e);
   return 1;
 }
 
@@ -202,8 +200,8 @@ audio_mixer_save(void)
 static void *
 audio_mixer_thread(void *aux)
 {
-  glw_event_t *ge;
-  glw_event_initqueue(&audio_mixer_event_queue);
+  event_t *e;
+  event_initqueue(&audio_mixer_event_queue);
 
   global_volume.vc_master_vol = -50;
 
@@ -216,9 +214,9 @@ audio_mixer_thread(void *aux)
     
 
   while(1) {
-    ge = glw_event_get(-1, &audio_mixer_event_queue);
+    e = event_get(-1, &audio_mixer_event_queue);
 
-    switch(ge->ge_type) {
+    switch(e->e_type) {
     case EVENT_KEY_VOLUME_UP:
       global_volume.vc_master_vol += 1;
       if(global_volume.vc_master_vol > 6)
@@ -240,7 +238,7 @@ audio_mixer_thread(void *aux)
       break;
     }
 
-    glw_event_unref(ge);
+    event_unref(e);
 
     audio_mixer_update(&global_volume);
   }

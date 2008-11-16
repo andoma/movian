@@ -27,7 +27,7 @@
 typedef struct dvd_player {
   
   dvdnav_t *dp_dvdnav;
-  glw_event_queue_t *dp_geq;
+  event_queue_t *dp_eq;
   media_pipe_t *dp_mp;
   pes_player_t dp_pp;
 

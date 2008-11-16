@@ -20,7 +20,8 @@
 #define PLAY_VIDEO_H
 
 #include "ui/glw/glw.h"
+#include "event.h"
 
-int play_video(const char *fname, glw_event_queue_t *geq, glw_t *parent);
+int play_video(const char *fname, event_queue_t *eq, glw_t *parent);
 
 #endif /* PLAY_VIDEO_H */

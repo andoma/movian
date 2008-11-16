@@ -397,6 +397,7 @@ audio_mode_add_to_settings(audio_mode_t *am, glw_t *parent)
 }
 #endif
 
+#if 0
 /**
  *
  */
@@ -423,3 +424,4 @@ audio_settings_init(glw_t *m)
   }
 #endif
 }
+#endif

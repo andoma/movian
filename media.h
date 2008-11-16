@@ -20,12 +20,14 @@
 #define MEDIA_H
 
 #include <stdlib.h>
-#include <sys/queue.h>
 #include <libavformat/avformat.h>
-#include "ui/glw/glw.h"
+
+#include "event.h"
+#include "prop.h"
+
 
 typedef struct event_ts {
-  glw_event_t h;
+  event_t h;
   int stream;
   int64_t dts;
   int64_t pts;
@@ -168,7 +170,7 @@ typedef struct media_pipe {
   struct video_decoder *mp_video_decoder;
   struct vd_conf *mp_video_conf;
 
-  struct glw_event_queue *mp_feedback;
+  struct event_queue *mp_feedback;
 
   int64_t mp_videoseekdts;
 

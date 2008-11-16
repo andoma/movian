@@ -160,37 +160,36 @@ layout_form_get_xy(glw_t *w, int *xp, int *yp)
  *
  */
 int
-glw_navigate(glw_t *w, void *extra)
+glw_navigate(glw_t *w, event_t *e)
 {
   int x = 0, y = 0;
   glw_t *n = NULL;
-  glw_event_t *ge = extra;
 
-  if(glw_event_map_intercept(w, ge))
+  if(glw_event_map_intercept(w, e))
     return 1;
 
   if(w->glw_selected != NULL)
-    if(glw_signal0(w->glw_selected, GLW_SIGNAL_EVENT, ge))
+    if(glw_signal0(w->glw_selected, GLW_SIGNAL_EVENT, e))
       return 1;
   
   if(w->glw_flags & GLW_SELECTABLE) {
 
     layout_form_get_xy(w, &x, &y);
 
-    switch(ge->ge_type) {
+    switch(e->e_type) {
     default:
       break;
 
-    case GEV_UP:
+    case EVENT_UP:
       n = layout_form_find(w, 1, GLW_CONTAINER_Y, GLW_CONTAINER_X, x);
       break;
-    case GEV_DOWN:
+    case EVENT_DOWN:
       n = layout_form_find(w, 0, GLW_CONTAINER_Y, GLW_CONTAINER_X, x);
       break;
-    case GEV_LEFT:
+    case EVENT_LEFT:
       n = layout_form_find(w, 1, GLW_CONTAINER_X, GLW_CONTAINER_Y, y);
       break;
-    case GEV_RIGHT:
+    case EVENT_RIGHT:
       n = layout_form_find(w, 0, GLW_CONTAINER_X, GLW_CONTAINER_Y, y);
       break;
     }

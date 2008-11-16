@@ -382,13 +382,13 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
     if(mp->mp_feedback != NULL) {
       event_ts_t *et;
 
-      et = glw_event_create(EVENT_AUDIO_CLOCK, sizeof(event_ts_t));
+      et = event_create(EVENT_AUDIO_CLOCK, sizeof(event_ts_t));
       et->dts    = mb->mb_dts;
       et->pts    = mb->mb_pts;
       et->stream = mb->mb_stream;
 
-      glw_event_enqueue(mp->mp_feedback, &et->h);
-      glw_event_unref(&et->h);
+      event_enqueue(mp->mp_feedback, &et->h);
+      event_unref(&et->h);
     }
 
     if(mb->mb_time != -1)

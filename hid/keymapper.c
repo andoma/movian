@@ -26,19 +26,19 @@
 #include <libhts/hts_strtab.h>
 #include "showtime.h"
 #include "keymapper.h"
+#include "ui/glw/glw.h"
 
 static glw_t *keymapper_list;
-//static appi_t *keymapper_appi;
 
 /**
  * Based on the keycode, return a descriptive text
  */
 static struct strtab keycodenames[] = {
-  { "Up",                    GEV_UP },
-  { "Down",                  GEV_DOWN },
-  { "Left",                  GEV_LEFT },
-  { "Right",                 GEV_RIGHT },
-  { "Enter",                 GEV_ENTER },
+  { "Up",                    EVENT_UP },
+  { "Down",                  EVENT_DOWN },
+  { "Left",                  EVENT_LEFT },
+  { "Right",                 EVENT_RIGHT },
+  { "Enter",                 EVENT_ENTER },
   { "Close",                 EVENT_KEY_CLOSE },
   { "Stop",                  EVENT_KEY_STOP },
   { "PlayPause",             EVENT_KEY_PLAYPAUSE },
@@ -48,7 +48,7 @@ static struct strtab keycodenames[] = {
   { "VolumeDown",            EVENT_KEY_VOLUME_DOWN },
   { "VolumeMuteToggle",      EVENT_KEY_VOLUME_MUTE_TOGGLE },
   { "Menu",                  EVENT_KEY_MENU },
-  { "Back",                  GEV_BACKSPACE },
+  { "Back",                  EVENT_BACKSPACE },
   { "Select",                EVENT_KEY_SELECT },
   { "Eject",                 EVENT_KEY_EJECT },
   { "Power",                 EVENT_KEY_POWER },
@@ -102,7 +102,7 @@ keymapper_post_string(const char *str)
   event_keydesc_t *ek;
   int l = strlen(str);
 
-  ek = glw_event_create(EVENT_KEYDESC, sizeof(event_keydesc_t) + l + 1);
+  ek = event_create(EVENT_KEYDESC, sizeof(event_keydesc_t) + l + 1);
   memcpy(ek->desc, str, l);
   ek->desc[l] = 0;
   event_post(&ek->h);
@@ -328,7 +328,7 @@ keymapper_update_model(hid_keycode_t *hkc, glw_t *w)
  *
  */
 static int
-eh_keymapper(glw_event_t *ge, void *opaque)
+eh_keymapper(event_t *e, void *opaque)
 {
   hid_keydesc_t *hkd;
   hid_keycode_t *hkc;
@@ -340,12 +340,12 @@ eh_keymapper(glw_event_t *ge, void *opaque)
     return 0;
 #endif
 
-  switch(ge->ge_type) {
-  case GEV_UP:
-  case GEV_DOWN:
-  case GEV_LEFT:
-  case GEV_RIGHT:
-  case GEV_ENTER:
+  switch(e->e_type) {
+  case EVENT_UP:
+  case EVENT_DOWN:
+  case EVENT_LEFT:
+  case EVENT_RIGHT:
+  case EVENT_ENTER:
     return 0; /* Pass thru those events */
 
   default:
@@ -358,7 +358,7 @@ eh_keymapper(glw_event_t *ge, void *opaque)
   if((w = keymapper_list->glw_selected) == NULL)
     return 0;
 
-  ekd = (void *)ge;
+  ekd = (void *)e;
 
   hkc = keymapper_find_by_code(w->glw_u32);
   hkd = keymapper_find_by_desc(ekd->desc);
@@ -385,7 +385,7 @@ eh_keymapper(glw_event_t *ge, void *opaque)
  *
  */
 void
-keymapper_init(glw_t *settings)
+keymapper_init(void)
 {
 #if 0
   glw_t *icon = 
@@ -431,3 +431,4 @@ keymapper_init(glw_t *settings)
 			 NULL);
 
 }
+

@@ -87,7 +87,7 @@ typedef struct play_video_ctrl {
  *
  */
 static int
-video_player_event_handler(glw_event_t *ge, void *opaque)
+video_player_event_handler(event_t *e, void *opaque)
 {
 #if 0
   play_video_ctrl_t *pvc = opaque;
@@ -171,7 +171,7 @@ rcache_store(play_video_ctrl_t *pvc, int ts)
   htsmsg_destroy(m);
 }
 
-
+#if 0
 
 /**
  * Called from GLW when user selecs a different audio track
@@ -184,6 +184,7 @@ video_playback_set_audio_track(void *opaque, void *opaque2, int value)
   pvc->pvc_mp->mp_audio.mq_stream = value;
   video_player_update_stream_info(pvc);
 }
+#endif
 
 /**
  * Open menu
@@ -194,7 +195,7 @@ video_player_open_menu(play_video_ctrl_t *pvc, int toggle)
   glw_t *p;
   AVCodecContext *ctx;
   char buf[100];
-  media_pipe_t *mp = pvc->pvc_mp;
+  //  media_pipe_t *mp = pvc->pvc_mp;
   int i;
 
   if(pvc->pvc_menu != NULL) {
@@ -219,11 +220,18 @@ video_player_open_menu(play_video_ctrl_t *pvc, int toggle)
       if(ctx->codec_type != CODEC_TYPE_AUDIO)
 	continue;
       media_get_codec_info(ctx, buf, sizeof(buf));
+#if 0
       glw_selection_add_text_option(p, buf, video_playback_set_audio_track,
 				    pvc, NULL, i, i == mp->mp_audio.mq_stream);
+#endif
+      abort();
     }
+#if 0
     glw_selection_add_text_option(p, "Off", video_playback_set_audio_track,
 				  pvc, NULL, -1, -1 == mp->mp_audio.mq_stream);
+#endif
+    abort();
+
   }
 
 
@@ -258,14 +266,14 @@ play_video_clock_update(play_video_ctrl_t *pvc, int64_t pts,
  * Thread for reading from lavf and sending to lavc
  */
 static void
-video_player_loop(play_video_ctrl_t *pvc, glw_event_queue_t *geq)
+video_player_loop(play_video_ctrl_t *pvc, event_queue_t *eq)
 {
   //  appi_t *ai = pvc->pvc_ai;
   media_pipe_t *mp = pvc->pvc_mp;
   media_buf_t *mb;
   media_queue_t *mq;
   int64_t pts, dts, seek_ref, seek_delta, seek_abs;
-  glw_event_t *ge;
+  event_t *e;
   //  glw_event_appmethod_t *gea;
   event_ts_t *et;
   AVCodecContext *ctx;
@@ -369,13 +377,13 @@ video_player_loop(play_video_ctrl_t *pvc, glw_event_queue_t *geq)
 
     //    ai->ai_req_fullscreen = mp->mp_playstatus == MP_PLAY && !pvc->pvc_menu;
 
-    ge = glw_event_get(mp_is_paused(mp) ? -1 : 0, geq);
+    e = event_get(mp_is_paused(mp) ? -1 : 0, eq);
 
     seek_abs   = 0;
     seek_delta = 0;
 
-    if(ge != NULL) {
-      switch(ge->ge_type) {
+    if(e != NULL) {
+      switch(e->e_type) {
 #if 0
       case GEV_APPMETHOD:
 	gea = (void *)ge;
@@ -396,7 +404,7 @@ video_player_loop(play_video_ctrl_t *pvc, glw_event_queue_t *geq)
 #endif
 
       case EVENT_VIDEO_CLOCK:
-	et = (void *)ge;
+	et = (void *)e;
 	/**
 	 * Feedback from decoders
 	 */
@@ -435,13 +443,13 @@ video_player_loop(play_video_ctrl_t *pvc, glw_event_queue_t *geq)
       case EVENT_KEY_PLAYPAUSE:
       case EVENT_KEY_PLAY:
       case EVENT_KEY_PAUSE:
-	mp_playpause(mp, ge->ge_type);
+	mp_playpause(mp, e->e_type);
 	break;
       
       default:
 	break;
       }
-      glw_event_unref(ge);
+      event_unref(e);
     }
     if((seek_delta && seek_ref != AV_NOPTS_VALUE) || seek_abs) {
       /* Seeking requested */
@@ -490,7 +498,7 @@ video_player_loop(play_video_ctrl_t *pvc, glw_event_queue_t *geq)
  *  Main function for video playback
  */
 int
-play_video(const char *url, glw_event_queue_t *geq, glw_t *parent)
+play_video(const char *url, event_queue_t *eq, glw_t *parent)
 {
   media_pipe_t *mp;
   AVCodecContext *ctx;
@@ -624,7 +632,7 @@ play_video(const char *url, glw_event_queue_t *geq, glw_t *parent)
 
   mp_set_playstatus(mp, MP_VIDEOSEEK_PAUSE, 0); 
 
-  mp->mp_feedback = geq;
+  mp->mp_feedback = eq;
 
   video_player_update_stream_info(&pvc);
 
@@ -633,7 +641,7 @@ play_video(const char *url, glw_event_queue_t *geq, glw_t *parent)
   eh = event_handler_register("videoplayer", video_player_event_handler,
 			      EVENTPRI_MEDIACONTROLS_VIDEOPLAYBACK, &pvc);
 
-  video_player_loop(&pvc, geq);
+  video_player_loop(&pvc, eq);
 
   media_clear_metatree(mp);
   
@@ -661,7 +669,7 @@ play_video(const char *url, glw_event_queue_t *geq, glw_t *parent)
     subtitles_free(mp->mp_subtitles);
     mp->mp_subtitles = NULL;
   }
-  glw_event_flushqueue(geq);
+  event_flushqueue(eq);
 
   mp_unref(pvc.pvc_mp);
   return 0;

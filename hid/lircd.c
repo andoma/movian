@@ -38,13 +38,13 @@ static const struct {
   const char *name;
   event_type_t key;
 } lircmap[] = {
-  { "Up",           GEV_UP    },
-  { "Down",         GEV_DOWN  },
-  { "Left",         GEV_LEFT  },
-  { "Right",        GEV_RIGHT },
-  { "Enter",        GEV_ENTER },
-  { "Back",         GEV_BACKSPACE  },
-  { "Backspace",    GEV_BACKSPACE  },
+  { "Up",           EVENT_UP    },
+  { "Down",         EVENT_DOWN  },
+  { "Left",         EVENT_LEFT  },
+  { "Right",        EVENT_RIGHT },
+  { "Enter",        EVENT_ENTER },
+  { "Back",         EVENT_BACKSPACE  },
+  { "Backspace",    EVENT_BACKSPACE  },
 };
 
 void
@@ -101,7 +101,7 @@ lircd_proc(prop_t *status)
       
       if(keyname[0] && keyname[1] == 0) {
 	/* ASCII input */
-	event_post(glw_event_create_unicode(keyname[0]));
+	event_post(event_create_unicode(keyname[0]));
 	continue;
       }
 

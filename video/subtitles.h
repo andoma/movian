@@ -49,7 +49,7 @@ subtitles_t *subtitles_load(const char *filename);
 
 int subtitles_index_by_pts(subtitles_t *sub, int64_t pts);
 
-glw_t *subtitles_make_widget(subtitles_t *sub, int index);
+//glw_t *subtitles_make_widget(subtitles_t *sub, int index);
 
 subtitle_format_t subtitle_probe_file(const char *filename);
 

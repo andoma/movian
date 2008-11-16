@@ -273,13 +273,13 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
   if(mp->mp_feedback != NULL) {
     event_ts_t *et;
 
-    et = glw_event_create(EVENT_VIDEO_CLOCK, sizeof(event_ts_t));
+    et = event_create(EVENT_VIDEO_CLOCK, sizeof(event_ts_t));
     et->dts    = fm->dts;
     et->pts    = fm->pts;
     et->stream = fm->stream;
 
-    glw_event_enqueue(mp->mp_feedback, &et->h);
-    glw_event_unref(&et->h);
+    event_enqueue(mp->mp_feedback, &et->h);
+    event_unref(&et->h);
   }
 
   pts = fm->pts;
@@ -328,8 +328,11 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
       if(vd->vd_subtitle_widget != NULL)
 	glw_destroy(vd->vd_subtitle_widget);
       
+#if 0
       vd->vd_subtitle_widget =
 	subtitles_make_widget(vd->vd_mp->mp_subtitles, i);
+#endif
+      abort();
       vd->vd_last_subtitle_index = i;
     }
   }

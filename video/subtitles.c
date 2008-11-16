@@ -305,7 +305,7 @@ subtitles_index_by_pts(subtitles_t *sub, int64_t pts)
     return h;
   }
 }
-
+#if 0
 /*
  *
  */
@@ -348,3 +348,5 @@ subtitles_make_widget(subtitles_t *sub, int index)
 	     NULL);
   return y;
 }
+#endif
+

@@ -1209,17 +1209,17 @@ glwf_space(glw_model_eval_context_t *ec, struct token *self)
  *
  */
 static struct strtab eventtab[] = {
-  { "enter",       GEV_ENTER},
-  { "up",          GEV_UP},
-  { "down",        GEV_DOWN},
-  { "left",        GEV_LEFT},
-  { "right",       GEV_RIGHT},
+  { "enter",       EVENT_ENTER},
+  { "up",          EVENT_UP},
+  { "down",        EVENT_DOWN},
+  { "left",        EVENT_LEFT},
+  { "right",       EVENT_RIGHT},
 
-  { "incr",        GEV_INCR},
-  { "decr",        GEV_DECR},
+  { "incr",        EVENT_INCR},
+  { "decr",        EVENT_DECR},
 
-  { "ok",          GEV_OK},
-  { "cancel",      GEV_CANCEL},
+  { "ok",          EVENT_OK},
+  { "cancel",      EVENT_CANCEL},
 };
 
 
@@ -1297,7 +1297,7 @@ glwf_systemEvent(glw_model_eval_context_t *ec, struct token *self)
   }
 
   gem = malloc(sizeof(glw_event_map_t));
-  gem->gem_outevent = GEV_SYS;
+  gem->gem_outevent = EVENT_GENERIC;
 
   gem->gem_target   = strdup(a->t_string);
   gem->gem_method   = strdup(b->t_string);

@@ -19,11 +19,31 @@
 #ifndef EVENT_H
 #define EVENT_H
 
-#include "ui/glw/glw.h"
+#include <libhts/htsq.h>
+#include <libhts/htsthreads.h>
+#include <libhts/htsatomic.h>
 
 
 typedef enum {
-  EVENT_SHOWTIME = GEV_EXT_BASE,
+  EVENT_NONE = 0,
+  EVENT_UP,
+  EVENT_DOWN,
+  EVENT_LEFT,
+  EVENT_RIGHT,
+  EVENT_ENTER,
+
+  EVENT_INCR,
+  EVENT_DECR,
+
+  EVENT_OK,
+  EVENT_CANCEL,
+
+  EVENT_BACKSPACE,
+  EVENT_UNICODE,
+
+  EVENT_GENERIC,
+
+
 
   EVENT_KEYDESC,
 
@@ -65,6 +85,76 @@ typedef enum {
 } event_type_t;
 
 
+
+TAILQ_HEAD(event_q, event);
+
+/**
+ *
+ */
+typedef struct event_queue {
+  struct event_q eq_q;
+  hts_cond_t eq_cond;
+  hts_mutex_t eq_mutex;
+} event_queue_t;
+
+
+/**
+ *
+ */
+typedef struct event {
+  int     e_refcount;
+  int     e_mapped;
+  event_type_t e_type;
+  void (*e_dtor)(struct event *e);
+  TAILQ_ENTRY(event) e_link;
+} event_t;
+
+
+/**
+ *
+ */
+typedef struct event_unicode {
+  event_t h;
+  int sym;
+} event_unicode_t;
+
+
+/**
+ *
+ */
+typedef struct event_generic {
+  event_t h;
+  char *target;
+  char *method;
+  char *argument;
+} event_generic_t;
+
+
+void *event_create(event_type_t type, size_t size);
+
+void *event_create_unicode(int sym);
+
+void event_enqueue(event_queue_t *eq, event_t *e);
+
+event_t *event_get(int timeout, event_queue_t *eq);
+
+void event_unref(event_t *e);
+
+void event_initqueue(event_queue_t *eq);
+
+void event_flushqueue(event_queue_t *eq);
+
+
+
+
+
+
+
+
+
+
+
+
 /**
  * The last entry in this list will be called first
  */
@@ -82,21 +172,19 @@ typedef enum {
   EVENTPRI_KEYMAPPER,
 } eventpri_t;
 
-void event_post(glw_event_t *ge);
+void event_post(event_t *ge);
 
 void event_post_simple(event_type_t type);
 
-void *event_handler_register(const char *name, int (*callback)(glw_event_t *ge,
+void *event_handler_register(const char *name, int (*callback)(event_t *ge,
 							       void *opaque),
 			     eventpri_t pri, void *opaque);
 
 void event_handler_unregister(void *ih);
 
 typedef struct event_keydesc {
-  glw_event_t h;
-
+  event_t h;
   char desc[0];
-
 } event_keydesc_t;
 
 void event_init(void);

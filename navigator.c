@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
 
 #include "showtime.h"
 #include "navigator.h"
@@ -37,10 +38,10 @@ static prop_t *nav_prop_root;
 static prop_t *nav_prop_path;
 static prop_t *nav_prop_pages;
 static prop_t *nav_prop_curpage;
-static glw_event_queue_t nav_geq;
+static event_queue_t nav_eq;
 
 static void *navigator_thread(void *aux);
-static int nav_input_event(glw_event_t *ge, void *opaque);
+static int nav_input_event(event_t *e, void *opaque);
 
 
 /**
@@ -73,7 +74,7 @@ nav_init(void)
   nav_prop_pages   = prop_create(nav_prop_root, "pages");
   nav_prop_curpage = prop_create(nav_prop_root, "currentpage");
 
-  glw_event_initqueue(&nav_geq);
+  event_initqueue(&nav_eq);
 
 #define NAV_INIT_BE(name) \
  {extern nav_backend_t be_ ## name; nav_init_be(&be_ ## name);}
@@ -197,7 +198,7 @@ nav_page_create(struct nav_backend *be, const char *url, size_t allocsize)
 {
   nav_page_t *np = calloc(1, allocsize);
 
-  glw_event_initqueue(&np->np_geq);
+  event_initqueue(&np->np_eq);
   np->np_url = strdup(url);
   np->np_be = be;
 
@@ -214,25 +215,25 @@ nav_page_create(struct nav_backend *be, const char *url, size_t allocsize)
  *
  */
 static int
-nav_input_event(glw_event_t *ge, void *opaque)
+nav_input_event(event_t *e, void *opaque)
 {
-  glw_event_sys_t *sys;
+  event_generic_t *g;
 
-  switch(ge->ge_type) {
-  case GEV_SYS:
-    sys = (glw_event_sys_t *)ge;
-    if(!strcmp(sys->target, "navigator"))
+  switch(e->e_type) {
+  case EVENT_GENERIC:
+    g = (event_generic_t *)e;
+    if(!strcmp(g->target, "navigator"))
       break;
     return 0;
 
-  case GEV_BACKSPACE:
+  case EVENT_BACKSPACE:
     break;
 
   default:
     return 0;
   }
 
-  glw_event_enqueue(&nav_geq, ge);
+  event_enqueue(&nav_eq, e);
   return 1;
 }
 
@@ -243,33 +244,33 @@ nav_input_event(glw_event_t *ge, void *opaque)
 static void *
 navigator_thread(void *aux)
 {
-  glw_event_t *ge;
-  glw_event_sys_t *sys;
+  event_t *e;
+  event_generic_t *g;
  
   while(1) {
-    ge = glw_event_get(-1, &nav_geq);
+    e = event_get(-1, &nav_eq);
 
-    switch(ge->ge_type) {
+    switch(e->e_type) {
     default:
       break;
       
-    case GEV_BACKSPACE:
+    case EVENT_BACKSPACE:
       nav_back();
       break;
 
 
-    case GEV_SYS:
-      sys = (glw_event_sys_t *)ge;
+    case EVENT_GENERIC:
+      g = (event_generic_t *)e;
     
-      if(!strcmp(sys->method, "open"))
-	nav_open(sys->argument);
+      if(!strcmp(g->method, "open"))
+	nav_open(g->argument);
       
-      if(!strcmp(sys->method, "back"))
+      if(!strcmp(g->method, "back"))
 	nav_back();
       break;
     }
 
-    glw_event_unref(ge);
+    event_unref(e);
   }
 }
 

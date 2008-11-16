@@ -19,6 +19,8 @@
 #ifndef VIDEO_DECODER_H
 #define VIDEO_DECODER_H
 
+#include "ui/glw/glw.h"
+
 #include "gl_dvdspu.h"
 
 #include "media.h"

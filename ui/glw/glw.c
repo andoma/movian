@@ -130,7 +130,6 @@ glw_init(void (*ffmpeglockmgr)(int lock),
 	 void (*rawunloader)(const void *data),
 	 int concurrency)
 {
-  glw_event_init();
   hts_mutex_init_recursive(&glw_global_lock);
 
   TAILQ_INIT(&glw_destroyer_queue);

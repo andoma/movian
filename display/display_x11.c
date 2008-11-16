@@ -543,20 +543,20 @@ gl_keypress(XEvent *event)
     c = str[0];
     switch(c) {
       /* Static key mappings, these cannot be changed */
-    case 8:          event_post_simple(GEV_BACKSPACE);           return;
-    case 13:         event_post_simple(GEV_ENTER);               return;
+    case 8:          event_post_simple(EVENT_BACKSPACE);           return;
+    case 13:         event_post_simple(EVENT_ENTER);               return;
     case 27:         event_post_simple(EVENT_KEY_CLOSE);         return;
       /* Always send 1 char ASCII */
     default:
-      event_post(glw_event_create_unicode(c));
+      event_post(event_create_unicode(c));
       break;
     }
   } else if((event->xkey.state & 0xf) == 0) {
     switch(keysym) {
-    case XK_Left:    event_post_simple(GEV_LEFT);          return;
-    case XK_Right:   event_post_simple(GEV_RIGHT);         return;
-    case XK_Up:      event_post_simple(GEV_UP);            return;
-    case XK_Down:    event_post_simple(GEV_DOWN);          return;
+    case XK_Left:    event_post_simple(EVENT_LEFT);          return;
+    case XK_Right:   event_post_simple(EVENT_RIGHT);         return;
+    case XK_Up:      event_post_simple(EVENT_UP);            return;
+    case XK_Down:    event_post_simple(EVENT_DOWN);          return;
     }
   }
 

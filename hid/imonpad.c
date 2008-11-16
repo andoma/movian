@@ -90,10 +90,10 @@ static const struct {
   {"SelectSpace",        0x2A9315B7, 0 },
   {"MouseMenu",          0x28B715B7, 0 },
   {"MouseRightClick",    0x688481B7, 0 },
-  {"Enter",              0x28A195B7, GEV_ENTER },
+  {"Enter",              0x28A195B7, EVENT_ENTER },
   {"MouseLeftClick",     0x688301B7, 0 },
   {"WindowsKey",         0x2B8195B7, 0 },
-  {"Backspace",          0x28A115B7, GEV_BACKSPACE },
+  {"Backspace",          0x28A115B7, EVENT_BACKSPACE },
   {"Power",              0x289155B7, 0 },
 };
 
@@ -240,16 +240,16 @@ imonpad_proc(prop_t *status)
       k = 0;
 
       if(angle > 360 - ALIMIT || angle < 0 + ALIMIT)
-	k = GEV_LEFT;
+	k = EVENT_LEFT;
       
       if(angle > 90 - ALIMIT && angle < 90 + ALIMIT)
-	k = GEV_UP;
+	k = EVENT_UP;
       
       if(angle > 180 - ALIMIT && angle < 180 + ALIMIT)
-	k = GEV_RIGHT;
+	k = EVENT_RIGHT;
       
       if(angle > 270 - ALIMIT && angle < 270 + ALIMIT)
-	k = GEV_DOWN;
+	k = EVENT_DOWN;
 
       if(k && delta > repeat_rate0) {
 	last_nav_generated_ts = ts;

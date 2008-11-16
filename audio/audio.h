@@ -104,8 +104,6 @@ void audio_mode_register(audio_mode_t *am);
 
 void audio_init(void);
 
-void audio_settings_init(glw_t *m);
-
 
 /**
  * Mixer controllers

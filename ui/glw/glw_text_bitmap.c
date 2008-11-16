@@ -602,8 +602,8 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
 			 void *extra)
 {
   glw_text_bitmap_t *gtb = (void *)w;
-  glw_event_t *ge;
-  glw_event_unicode_t *geu;
+  event_t *e;
+  event_unicode_t *eu;
   int v;
 
   switch(signal) {
@@ -625,24 +625,24 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
     if(w->glw_class == GLW_LABEL)
       return glw_navigate(w, extra);
 
-    ge = extra;
+    e = extra;
 
     if(w->glw_class == GLW_INTEGER) {
 
-      int e = ge->ge_type;
+      int type = e->e_type;
 
-      if(ge->ge_type == GEV_UNICODE) {
-	geu = extra;
-	if(geu->sym == '+')
-	  e = GEV_INCR;
-	if(geu->sym == '-')
-	  e = GEV_DECR;
+      if(e->e_type == EVENT_UNICODE) {
+	eu = extra;
+	if(eu->sym == '+')
+	  type = EVENT_INCR;
+	if(eu->sym == '-')
+	  type = EVENT_DECR;
       }
 
-      switch(ge->ge_type) {
+      switch(type) {
       default:
 	break;
-      case GEV_INCR:
+      case EVENT_INCR:
 	if(glw_get_int0(w, &v) == 0) {
 	  v = GLW_MIN(v + gtb->gtb_int_step, gtb->gtb_int_max);
 	  glw_set(w, GLW_ATTRIB_INT, v, NULL);
@@ -650,7 +650,7 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
 	}
 	return 1;
 	
-      case GEV_DECR:
+      case EVENT_DECR:
 	if(glw_get_int0(w, &v) == 0) {
 	  v = GLW_MAX(v - gtb->gtb_int_step, gtb->gtb_int_min);
 	  glw_set(w, GLW_ATTRIB_INT, v, NULL);
@@ -661,11 +661,11 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
       return 0;
     }
 
-    switch(ge->ge_type) {
+    switch(e->e_type) {
     default:
       break;
 
-    case GEV_BACKSPACE:
+    case EVENT_BACKSPACE:
       if(!del_char(gtb)) 
 	break;
       
@@ -673,29 +673,29 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
 	gtb->gtb_status = GTB_NEED_RERENDER;
       return 1;
 
-    case GEV_UNICODE:
-      geu = extra;
+    case EVENT_UNICODE:
+      eu = extra;
 
-      if(insert_char(gtb, geu->sym)) {
+      if(insert_char(gtb, eu->sym)) {
 	if(gtb->gtb_status != GTB_ON_QUEUE)
 	  gtb->gtb_status = GTB_NEED_RERENDER;
       }
       return 1;
 
-    case GEV_LEFT:
+    case EVENT_LEFT:
       if(gtb->gtb_edit_ptr == 0)
 	break;
       gtb->gtb_edit_ptr--;
       return 1;
 
-    case GEV_RIGHT:
+    case EVENT_RIGHT:
       if(gtb->gtb_edit_ptr >= gtb->gtb_uc_len)
 	break;
       gtb->gtb_edit_ptr++;
       return 1;
 
     }
-    return glw_navigate(w, ge);
+    return glw_navigate(w, e);
   }
   return 0;
 }

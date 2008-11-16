@@ -58,6 +58,6 @@ void keymapper_map(hid_keydesc_t *hkm, hid_keycode_t *hkc);
 const char *keycode2str(event_type_t code);
 event_type_t keystr2code(const char *str);
 
-void keymapper_init(glw_t *settings);
+void keymapper_init(void);
 
 #endif /* KEYMAPPER_H */
