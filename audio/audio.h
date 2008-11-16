@@ -19,7 +19,6 @@
 #ifndef AUDIO_H
 #define AUDIO_H
 
-#include <libglw/glw.h>
 #include "audio_fifo.h"
 
 #define AUDIO_CHAN_MAX 8

@@ -31,8 +31,6 @@
 
 #include <libhts/htsprop.h>
 
-#include <libglw/glw.h>
-
 #include "showtime.h"
 #include "event.h"
 

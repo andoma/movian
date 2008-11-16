@@ -20,7 +20,6 @@
 #include <math.h>
 
 #include <GL/glu.h>
-#include <libglw/glw.h>
 
 #include "showtime.h"
 #include "layout.h"

@@ -19,8 +19,6 @@
 #ifndef SYSGLUE_H
 #define SYSGLUE_H
 
-#include <libglw/glw.h>
-
 void gl_sysglue_init(int argc, char **argv);
 
 void gl_sysglue_mainloop(void);

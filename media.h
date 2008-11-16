@@ -21,8 +21,8 @@
 
 #include <stdlib.h>
 #include <sys/queue.h>
-#include <libglw/glw.h>
 #include <libavformat/avformat.h>
+#include "ui/glw/glw.h"
 
 typedef struct event_ts {
   glw_event_t h;

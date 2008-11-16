@@ -19,7 +19,6 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
-#include <libglw/glw.h>
 #include <unistd.h>
 
 #include "showtime.h"

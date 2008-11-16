@@ -19,7 +19,7 @@
 #ifndef NAVIGATOR_H__
 #define NAVIGATOR_H__
 
-#include <libglw/glw.h>
+#include "ui/glw/glw.h"
 
 TAILQ_HEAD(nav_page_queue, nav_page);
 LIST_HEAD(nav_backend_list, nav_backend);

@@ -29,8 +29,6 @@
 #include "audio_fifo.h"
 #include "audio_decoder.h"
 
-#include <libglw/glw.h>
-
 audio_mode_t *audio_mode_current;
 hts_mutex_t audio_mode_mutex;
 

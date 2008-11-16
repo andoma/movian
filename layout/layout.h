@@ -19,8 +19,6 @@
 #ifndef LAYOUT_H
 #define LAYOUT_H
 
-#include <libglw/glw.h>
-
 /**
  * Functions in layout.c
  */ 

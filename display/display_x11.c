@@ -26,7 +26,8 @@
 #include <limits.h>
 #include <errno.h>
 
-#include <libglw/glw.h>
+#include "ui/glw/glw.h"
+
 #include <GL/glx.h>
 #include <X11/Xatom.h>
 

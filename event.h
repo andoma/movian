@@ -19,7 +19,7 @@
 #ifndef EVENT_H
 #define EVENT_H
 
-#include <libglw/glw.h>
+#include "ui/glw/glw.h"
 
 
 typedef enum {

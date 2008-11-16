@@ -19,7 +19,7 @@
 #ifndef HID_H
 #define HID_H
 
-#include <libglw/glw.h>
+#include "ui/glw/glw.h"
 
 typedef enum {
   HID_IR_NONE,

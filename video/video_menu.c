@@ -30,7 +30,6 @@
 #include <libgen.h>
 
 #include <libavformat/avformat.h>
-#include <libglw/glw.h>
 
 #include "showtime.h"
 #include "layout/layout.h"

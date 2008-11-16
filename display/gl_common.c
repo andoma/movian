@@ -24,7 +24,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <libglw/glw.h>
+#include "ui/glw/glw.h"
 
 #include "showtime.h"
 #include "display.h"

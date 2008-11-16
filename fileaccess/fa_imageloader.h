@@ -19,7 +19,7 @@
 #ifndef FA_IMAGELOADER_H
 #define FA_IMAGELOADER_H
 
-#include <libglw/glw.h>
+#include "ui/glw/glw.h"
 
 int fa_imageloader(glw_image_load_ctrl_t *ctrl);
 
