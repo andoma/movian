@@ -20,7 +20,6 @@
 #define KEYMAPPER_H
 
 #include "event.h"
-#include "app.h"
 
 LIST_HEAD(hid_keydesc_list, hid_keydesc);
 LIST_HEAD(hid_keycode_list, hid_keycode);
@@ -59,6 +58,6 @@ void keymapper_map(hid_keydesc_t *hkm, hid_keycode_t *hkc);
 const char *keycode2str(event_type_t code);
 event_type_t keystr2code(const char *str);
 
-void keymapper_init(appi_t *ai, glw_t *settings);
+void keymapper_init(glw_t *settings);
 
 #endif /* KEYMAPPER_H */

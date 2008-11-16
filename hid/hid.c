@@ -34,9 +34,9 @@
 #include "hid.h"
 
 hid_ir_mode_t hid_ir_mode;
-extern glw_prop_t *prop_global;
+extern hts_prop_t *prop_global;
 
-static glw_prop_t *prop_hid_status;
+static hts_prop_t *prop_hid_status;
 
 /**
  *
@@ -48,7 +48,7 @@ hid_thread(void *aux)
   while(1) {
     switch(hid_ir_mode) {
     case HID_IR_NONE:
-      glw_prop_set_string(prop_hid_status, "OK");
+      hts_prop_set_string(prop_hid_status, "OK");
       sleep(1);
       continue;
       
@@ -92,22 +92,22 @@ hid_mode_cb(void *opaque, void *opaque2, int value)
  *
  */
 void
-hid_init(appi_t *ai, glw_t *m)
+hid_init(glw_t *m)
 {
   hts_thread_t tid;
   htsmsg_t *s;
   uint32_t u32;
   glw_t *sel, *icon, *tab;
 
-  glw_prop_t *prop_hid_root = glw_prop_create(NULL, "hid");
+  hts_prop_t *prop_hid_root = hts_prop_create(NULL, "hid");
 
-  prop_hid_status = glw_prop_create(prop_hid_root, "status");
+  prop_hid_status = hts_prop_create(prop_hid_root, "status");
 
   icon = glw_model_create("theme://settings/hid/hid-icon.model",
 			  NULL, 0, NULL);
 
   tab  = glw_model_create("theme://settings/hid/hid.model",
-			  NULL, 0, prop_global, prop_hid_root, NULL);
+			  NULL, 0, prop_hid_root);
  
   if((s = hts_settings_load("hid")) != NULL) {
     if(!htsmsg_get_u32(s, "rcmode", &u32))
@@ -131,7 +131,7 @@ hid_init(appi_t *ai, glw_t *m)
 				NULL, NULL, HID_IR_IMONPAD,
 				HID_IR_IMONPAD == hid_ir_mode);
 
-  glw_add_tab(m, "settings_list", icon, "settings_deck", tab);
+  //  glw_add_tab(m, "settings_list", icon, "settings_deck", tab);
 
   hts_thread_create(&tid, hid_thread, NULL);
 }

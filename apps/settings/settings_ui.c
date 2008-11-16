@@ -28,7 +28,6 @@
 #include <libglw/glw.h>
 
 #include "showtime.h"
-#include "app.h"
 #include "settings.h"
 
 uint32_t userinterface_scale = 100;
@@ -66,7 +65,7 @@ ui_scale_change_cb(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
  *
  */
 void
-settings_userinterface_init(appi_t *ai, glw_t *m)
+settings_userinterface_init(glw_t *m)
 {
   glw_t *icon, *tab, *w;
   htsmsg_t *settings;

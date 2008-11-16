@@ -38,7 +38,6 @@
 #include "showtime.h"
 #include "fileaccess.h"
 #include "fa_probe.h"
-#include "fa_tags.h"
 
 static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
 static const uint8_t isosig[8] = {0x1, 0x43, 0x44, 0x30, 0x30, 0x31, 0x1, 0x0};
@@ -47,8 +46,7 @@ static const uint8_t isosig[8] = {0x1, 0x43, 0x44, 0x30, 0x30, 0x31, 0x1, 0x0};
  *
  */
 static void
-lavf_build_string_and_trim(struct filetag_list *list, ftag_t tag, 
-			   const char *str)
+lavf_build_string_and_trim(hts_prop_t *p, const char *pname, const char *str)
 {
   int len = strlen(str);
   char *ret;
@@ -71,21 +69,21 @@ lavf_build_string_and_trim(struct filetag_list *list, ftag_t tag,
   if(*ret == 0)
     return;
 
-  filetag_set_str(list, tag, ret);
+  hts_prop_set_string(hts_prop_create(p, pname), ret);
 }
 
 /**
  * Obtain details from playlist
  */
 static void
-fa_probe_playlist(struct filetag_list *list, const char *url,
+fa_probe_playlist(hts_prop_t *proproot, const char *url,
 		  char *pb, size_t pbsize)
 {
   const char *t;
   char tmp1[300];
   int i;
 
-  filetag_set_int(list, FTAG_FILETYPE, FILETYPE_PLAYLIST_PLS);
+  hts_prop_set_string(hts_prop_create(proproot, "type"), "playlist");
   
   t = strrchr(url, '/');
   t = t ? t + 1 : url;
@@ -95,12 +93,12 @@ fa_probe_playlist(struct filetag_list *list, const char *url,
     tmp1[i++] = *t++;
   tmp1[i] = 0;
   
-  filetag_set_str(list, FTAG_TITLE, tmp1);
+  hts_prop_set_string(hts_prop_create(proproot, "title"), tmp1);
   
   t = strstr(pb, "NumberOfEntries=");
   
   if(t != NULL)
-    filetag_set_int(list, FTAG_NTRACKS, atoi(t + 16));
+    hts_prop_set_int(hts_prop_create(proproot, "ntracks"), atoi(t + 16));
 }
 
 /**
@@ -108,7 +106,7 @@ fa_probe_playlist(struct filetag_list *list, const char *url,
  */
 #ifdef HAVE_LIBEXIF
 static void
-fa_probe_exif(struct filetag_list *list, fa_protocol_t *fap, void *fh,
+fa_probe_exif(hts_prop_t *proproot, fa_protocol_t *fap, void *fh,
 	      char *pb, size_t pbsize)
 {
   unsigned char buf[4096];
@@ -147,7 +145,7 @@ fa_probe_exif(struct filetag_list *list, fa_protocol_t *fap, void *fh,
       tm.tm_mon--;
       t = mktime(&tm);
       if(t != (time_t)-1) {
-	filetag_set_int(list, FTAG_ORIGINAL_DATE, t);
+	hts_prop_set_int(hts_prop_create(proproot, "date"), t);
       }
     }
   }
@@ -160,11 +158,10 @@ fa_probe_exif(struct filetag_list *list, fa_protocol_t *fap, void *fh,
  * Probe file by checking its header
  */
 static int
-fa_probe_header(struct filetag_list *list, fa_protocol_t *fap,
+fa_probe_header(hts_prop_t *proproot, hts_prop_t *urlp, fa_protocol_t *fap,
 		const char *url, void *fh)
 {
   char pb[128];
-  char path[512];
   off_t psiz;
   uint16_t flags;
 
@@ -179,35 +176,35 @@ fa_probe_header(struct filetag_list *list, fa_protocol_t *fap,
       return FA_NONE; /* Don't include slave volumes */
 
 
-    snprintf(path, sizeof(path), "rar://%s|", url);
-    filetag_set_str(list, FTAG_URL, path);
+    if(urlp != NULL)
+      hts_prop_set_stringf(urlp, "rar://%s|", url);
     return FA_DIR;
   }
 
   if(!strncasecmp(pb, "[playlist]", 10)) {
     /* Playlist */
-    fa_probe_playlist(list, url, pb, sizeof(pb));
+    fa_probe_playlist(proproot, url, pb, sizeof(pb));
     return FA_FILE;
   }
 
   if(pb[6] == 'J' && pb[7] == 'F' && pb[8] == 'I' && pb[9] == 'F') {
     /* JPEG image */
-    filetag_set_int(list, FTAG_FILETYPE, FILETYPE_IMAGE);
+    hts_prop_set_string(hts_prop_create(proproot, "type"), "image");
     return FA_FILE;
   }
 
   if(pb[6] == 'E' && pb[7] == 'x' && pb[8] == 'i' && pb[9] == 'f') {
     /* JPEG image with EXIF tag*/
 #ifdef HAVE_LIBEXIF
-    fa_probe_exif(list, fap, fh, pb, psiz);
+    fa_probe_exif(proproot, fap, fh, pb, psiz);
 #endif
-    filetag_set_int(list, FTAG_FILETYPE, FILETYPE_IMAGE);
+    hts_prop_set_string(hts_prop_create(proproot, "type"), "image");
     return FA_FILE;
   }
 
   if(!memcmp(pb, pngsig, 8)) {
     /* PNG */
-    filetag_set_int(list, FTAG_FILETYPE, FILETYPE_IMAGE);
+    hts_prop_set_string(hts_prop_create(proproot, "type"), "image");
     return FA_FILE;
   }
   return -1;
@@ -217,7 +214,7 @@ fa_probe_header(struct filetag_list *list, fa_protocol_t *fap,
  * Check if file is an iso image
  */
 static int
-fa_probe_iso(struct filetag_list *list, fa_protocol_t *fap, void *fh)
+fa_probe_iso(hts_prop_t *proproot, fa_protocol_t *fap, void *fh)
 {
   char pb[128], *p;
 
@@ -236,8 +233,8 @@ fa_probe_iso(struct filetag_list *list, fa_protocol_t *fap, void *fh)
 
   *p = 0;
 
-  filetag_set_int(list, FTAG_FILETYPE, FILETYPE_ISO);
-  filetag_set_str(list, FTAG_TITLE,    &pb[40]);
+  hts_prop_set_string(hts_prop_create(proproot, "type"), "iso");
+  hts_prop_set_string(hts_prop_create(proproot, "title"), &pb[40]);
   return 0;
 }
   
@@ -246,7 +243,7 @@ fa_probe_iso(struct filetag_list *list, fa_protocol_t *fap, void *fh)
  * Probe a file for its type
  */
 int
-fa_probe(struct filetag_list *list, const char *url)
+fa_probe(hts_prop_t *proproot, hts_prop_t *urlp, const char *url)
 {
   int i, r;
   AVFormatContext *fctx;
@@ -259,9 +256,7 @@ fa_probe(struct filetag_list *list, const char *url)
   int has_audio = 0;
   const char *codectype, *url0 = url;
   fa_protocol_t *fap;
-  off_t siz;
   void *fh;
-
 
   if((url = fa_resolve_proto(url, &fap)) == NULL)
     return -1;
@@ -269,15 +264,12 @@ fa_probe(struct filetag_list *list, const char *url)
   if((fh = fap->fap_open(url)) == NULL)
     return -1;
 
-  if((siz = fap->fap_fsize(fh)) > 0)
-    filetag_set_int(list, FTAG_FILESIZE, siz);
-
-  if((r = fa_probe_header(list, fap, url0, fh)) != -1) {
+  if((r = fa_probe_header(proproot, urlp, fap, url0, fh)) != -1) {
     fap->fap_close(fh);
     return r;
   }
 
-  if(fa_probe_iso(list, fap, fh) == 0) {
+  if(fa_probe_iso(proproot, fap, fh) == 0) {
     fap->fap_close(fh);
     return FA_FILE;
   }
@@ -312,18 +304,19 @@ fa_probe(struct filetag_list *list, const char *url)
     
     if(i > 4 && p[i - 4] == '.')
       p[i - 4] = 0;
-    filetag_set_str(list, FTAG_TITLE, p);
+    hts_prop_set_string(hts_prop_create(proproot, "title"), p);
   } else {
-    lavf_build_string_and_trim(list, FTAG_TITLE, fctx->title);
+    lavf_build_string_and_trim(proproot, "title", fctx->title);
   }
 
-  lavf_build_string_and_trim(list, FTAG_AUTHOR, fctx->author);
-  lavf_build_string_and_trim(list, FTAG_ALBUM, fctx->album);
+  lavf_build_string_and_trim(proproot, "author", fctx->author);
+  lavf_build_string_and_trim(proproot, "album", fctx->album);
 
   if(fctx->track != 0)
-    filetag_set_int(list, FTAG_TRACK, fctx->track);
+    hts_prop_set_int(hts_prop_create(proproot, "track"), fctx->track);
 
-  filetag_set_str(list, FTAG_MEDIAFORMAT, fctx->iformat->long_name);
+  hts_prop_set_string(hts_prop_create(proproot, "mediaformat"),
+		      fctx->iformat->long_name);
 
   /* Check each stream */
 
@@ -367,10 +360,10 @@ fa_probe(struct filetag_list *list, const char *url)
 
     switch(avctx->codec_type) {
     case CODEC_TYPE_VIDEO:
-      filetag_set_str(list, FTAG_VIDEOINFO, tmp1);
+      hts_prop_set_string(hts_prop_create(proproot, "videoinfo"), tmp1);
       break;
     case CODEC_TYPE_AUDIO:
-      filetag_set_str(list, FTAG_AUDIOINFO, tmp1);
+      hts_prop_set_string(hts_prop_create(proproot, "audioinfo"), tmp1);
       break;
       
     default:
@@ -379,48 +372,16 @@ fa_probe(struct filetag_list *list, const char *url)
   }
 
   if(has_video)
-    filetag_set_int(list, FTAG_FILETYPE, FILETYPE_VIDEO);
+    hts_prop_set_string(hts_prop_create(proproot, "type"), "video");
   else if(has_audio)
-    filetag_set_int(list, FTAG_FILETYPE, FILETYPE_AUDIO);
+    hts_prop_set_string(hts_prop_create(proproot, "type"), "audio");
 
   if(fctx->duration != AV_NOPTS_VALUE)
-    filetag_set_int(list, FTAG_DURATION, fctx->duration / AV_TIME_BASE);
+    hts_prop_set_int(hts_prop_create(proproot, "duration"),
+		     fctx->duration / AV_TIME_BASE);
 
   av_close_input_file(fctx);  
   ffunlock();
-
-#if 0
-  /* Set icon, if not supplied, we try to make a guess */
-
-  if(icon != NULL) {
-    mi->mi_icon = strdup(icon);
-  } else {
-    av_strlcpy(tmp1, url, sizeof(tmp1));
-    p = strrchr(tmp1, '/');
-    if(p != NULL) {
-
-      static const char *foldericons[] = {
-	"Folder.jpg",
-	"folder.jpg",
-	"AlbumArtSmall.jpg",
-	NULL};
-
-      p++;
-      i = 0;
-      while(foldericons[i]) {
-	av_strlcpy(p, foldericons[i], sizeof(tmp1) - (p - tmp1) - 1);
-	if(stat(tmp1, &st) == 0) {
-	  break;
-	}
-	i++;
-      }
-      if(foldericons[i]) {
-	mi->mi_icon = strdup(url);
-	printf("Icon %s\n", mi->mi_icon);
-      }
-    }
-  }
-#endif
 
   return FA_FILE;
 }
@@ -429,9 +390,9 @@ fa_probe(struct filetag_list *list, const char *url)
  * Make a directory turn into a dvd
  */
 static int
-fa_probe_dir_is_dvd(struct filetag_list *list)
+fa_probe_dir_is_dvd(hts_prop_t *proproot)
 {
-  filetag_set_int(list, FTAG_FILETYPE, FILETYPE_ISO);
+  hts_prop_set_string(hts_prop_create(proproot, "type"), "iso");
   return FA_FILE;
 }
 
@@ -439,7 +400,7 @@ fa_probe_dir_is_dvd(struct filetag_list *list)
  * Probe a directory
  */
 int
-fa_probe_dir(struct filetag_list *list, const char *url)
+fa_probe_dir(hts_prop_t *proproot, const char *url)
 {
   fa_protocol_t *fap;
   char path[300];
@@ -450,11 +411,11 @@ fa_probe_dir(struct filetag_list *list, const char *url)
 
   snprintf(path, sizeof(path), "%s/VIDEO_TS", url);
   if(fap->fap_stat(path, &buf) == 0 && S_ISDIR(buf.st_mode))
-    return fa_probe_dir_is_dvd(list);
+    return fa_probe_dir_is_dvd(proproot);
 
   snprintf(path, sizeof(path), "%s/video_ts", url);
   if(fap->fap_stat(path, &buf) == 0 && S_ISDIR(buf.st_mode))
-    return fa_probe_dir_is_dvd(list);
+    return fa_probe_dir_is_dvd(proproot);
 
   return FA_DIR;
 }

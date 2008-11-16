@@ -33,7 +33,6 @@
 
 #include "browser.h"
 #include "browser_view.h"
-#include "navigator.h"
 #if 0
 #include "useraction.h"
 

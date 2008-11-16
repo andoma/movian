@@ -26,6 +26,22 @@
 #include "browser_probe.h"
 #include "browser_view.h"
 
+static hts_mutex_t br_probe_mutex;
+static hts_cond_t  br_probe_cond;
+static hts_thread_t br_probe_thread_id;
+static struct browser_node_list br_probe_list;
+static struct browser_node_queue br_autoview_queue;
+
+
+    hts_mutex_lock(&br->br_probe_mutex);
+
+    while((c = LIST_FIRST(&bsc.l)) != NULL) {
+      LIST_REMOVE(c, bn_probe_link);
+      LIST_INSERT_HEAD(&br->br_probe_list, c, bn_probe_link);
+    }
+    hts_cond_signal(&br->br_probe_cond);
+    hts_mutex_unlock(&br->br_probe_mutex);
+
 static void probe_figure_primary_content(browser_root_t *br,
 					 browser_node_t *bn);
 

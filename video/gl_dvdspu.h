@@ -19,6 +19,8 @@
 #ifndef GL_DVDSPU_H
 #define GL_DVDSPU_H
 
+#include "media.h"
+
 TAILQ_HEAD(gl_dvdspu_pic_head, gl_dvdspu_pic);
 
 typedef struct hts_rect {

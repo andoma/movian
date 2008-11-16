@@ -28,7 +28,6 @@
 #include "video/video_decoder.h"
 #include "event.h"
 #include "layout/layout.h"
-#include "fileaccess/fa_tags.h"
 #include "fileaccess/fileaccess.h"
 
 #include <libhts/htsatomic.h>
@@ -40,14 +39,14 @@ extern int concurrency;
  *
  */
 static void
-mq_init(media_queue_t *mq, glw_prop_t *p)
+mq_init(media_queue_t *mq, hts_prop_t *p)
 {
   TAILQ_INIT(&mq->mq_q);
   mq->mq_len = 0;
   mq->mq_stream = -1;
   hts_cond_init(&mq->mq_avail);
-  mq->mq_prop_qlen_cur = glw_prop_create(p, "qlen");
-  mq->mq_prop_qlen_max = glw_prop_create(p, "qmax");
+  mq->mq_prop_qlen_cur = hts_prop_create(p, "qlen");
+  mq->mq_prop_qlen_max = hts_prop_create(p, "qmax");
 }
 
 
@@ -69,14 +68,14 @@ mp_create(const char *name)
   hts_mutex_init(&mp->mp_mutex);
   hts_cond_init(&mp->mp_backpressure);
   
-  mp->mp_prop_root = glw_prop_create(NULL, "media");
+  mp->mp_prop_root = hts_prop_create(NULL, "media");
 
-  mq_init(&mp->mp_audio, glw_prop_create(mp->mp_prop_root, "audio"));
-  mq_init(&mp->mp_video, glw_prop_create(mp->mp_prop_root, "video"));
+  mq_init(&mp->mp_audio, hts_prop_create(mp->mp_prop_root, "audio"));
+  mq_init(&mp->mp_video, hts_prop_create(mp->mp_prop_root, "video"));
 
-  mp->mp_prop_meta        = glw_prop_create(mp->mp_prop_root, "meta");
-  mp->mp_prop_playstatus  = glw_prop_create(mp->mp_prop_root, "playstatus");
-  mp->mp_prop_currenttime = glw_prop_create(mp->mp_prop_root, "currenttime");
+  mp->mp_prop_meta        = hts_prop_create(mp->mp_prop_root, "meta");
+  mp->mp_prop_playstatus  = hts_prop_create(mp->mp_prop_root, "playstatus");
+  mp->mp_prop_currenttime = hts_prop_create(mp->mp_prop_root, "currenttime");
  
   return mp;
 }
@@ -89,7 +88,7 @@ static void
 mp_destroy(media_pipe_t *mp)
 {
   mp_set_playstatus(mp, MP_STOP, 0);
-  glw_prop_destroy(mp->mp_prop_root);
+  hts_prop_destroy(mp->mp_prop_root);
   free(mp);
 }
 
@@ -153,7 +152,7 @@ mb_enq_tail(media_queue_t *mq, media_buf_t *mb)
   TAILQ_INSERT_TAIL(&mq->mq_q, mb, mb_link);
   mq->mq_len++;
   hts_cond_signal(&mq->mq_avail);
-  glw_prop_set_int(mq->mq_prop_qlen_cur, mq->mq_len);
+  hts_prop_set_int(mq->mq_prop_qlen_cur, mq->mq_len);
 }
 
 /*
@@ -166,7 +165,7 @@ mb_enq_head(media_queue_t *mq, media_buf_t *mb)
   TAILQ_INSERT_HEAD(&mq->mq_q, mb, mb_link);
   mq->mq_len++;
   hts_cond_signal(&mq->mq_avail);
-  glw_prop_set_int(mq->mq_prop_qlen_cur, mq->mq_len);
+  hts_prop_set_int(mq->mq_prop_qlen_cur, mq->mq_len);
 }
 
 
@@ -574,7 +573,7 @@ mp_set_playstatus(media_pipe_t *mp, int status, int flags)
     if(mp->mp_video_decoder != NULL)
       video_decoder_join(mp, mp->mp_video_decoder);
 
-    glw_prop_set_void(mp->mp_prop_currenttime);
+    hts_prop_set_void(mp->mp_prop_currenttime);
     media_update_playstatus_prop(mp->mp_prop_playstatus, MP_STOP);
     break;
   }
@@ -710,7 +709,7 @@ codec_details(AVCodecContext *ctx, char *buf, size_t size, const char *lead)
  * Update codec info in property
  */ 
 void
-media_update_codec_info_prop(glw_prop_t *p, AVCodecContext *ctx)
+media_update_codec_info_prop(hts_prop_t *p, AVCodecContext *ctx)
 {
   char tmp[100];
 
@@ -720,7 +719,7 @@ media_update_codec_info_prop(glw_prop_t *p, AVCodecContext *ctx)
     snprintf(tmp, sizeof(tmp), "%s", ctx->codec->long_name);
     codec_details(ctx, tmp + strlen(tmp), sizeof(tmp) - strlen(tmp), ", ");
   }
-  glw_prop_set_string(p, tmp);
+  hts_prop_set_string(p, tmp);
 }
 
 
@@ -729,7 +728,7 @@ media_update_codec_info_prop(glw_prop_t *p, AVCodecContext *ctx)
  *
  */
 void
-media_update_playstatus_prop(glw_prop_t *p, mp_playstatus_t mps)
+media_update_playstatus_prop(hts_prop_t *p, mp_playstatus_t mps)
 {
   const char *s;
 
@@ -751,7 +750,7 @@ media_update_playstatus_prop(glw_prop_t *p, mp_playstatus_t mps)
     s = "stop";
     break;
   }
-  glw_prop_set_string(p, s);
+  hts_prop_set_string(p, s);
 }
 
 
@@ -782,11 +781,12 @@ size_quantify(char *buf, size_t buflen, int64_t i64)
 }
 #endif
 
+#if 0
 /**
  *
  */
 void
-media_fill_properties(glw_prop_t *root, const char *url, int type,
+media_fill_properties(hts_prop_t *root, const char *url, int type,
 		      struct filetag_list *ftags)
 {
   time_t t;
@@ -795,9 +795,9 @@ media_fill_properties(glw_prop_t *root, const char *url, int type,
   const char *s;
   char buf[30];
   int64_t stype;
-  glw_prop_t *p;
+  hts_prop_t *p;
 
-  glw_prop_set_string(glw_prop_create(root, "url"), url);
+  hts_prop_set_string(hts_prop_create(root, "url"), url);
 
   switch(type) {
   case FA_DIR:
@@ -830,33 +830,33 @@ media_fill_properties(glw_prop_t *root, const char *url, int type,
     break;
   }
 
-  glw_prop_set_string(glw_prop_create(root, "type"), s);
+  hts_prop_set_string(hts_prop_create(root, "type"), s);
 
   if(filetag_get_str(ftags, FTAG_TITLE, &s)) {
     s = strrchr(url, '/');
     s = s ? s + 1 : url;
   }
-  glw_prop_set_string(glw_prop_create(root, "title"), s);
+  hts_prop_set_string(hts_prop_create(root, "title"), s);
 
-  glw_prop_set_string(glw_prop_create(root, "author"),
+  hts_prop_set_string(hts_prop_create(root, "author"),
 		      filetag_get_str2(ftags, FTAG_AUTHOR) ?: "");
 
 
-  glw_prop_set_string(glw_prop_create(root, "album"),
+  hts_prop_set_string(hts_prop_create(root, "album"),
 		      filetag_get_str2(ftags, FTAG_ALBUM) ?: "");
 
-  glw_prop_set_string(glw_prop_create(root, "format"),
+  hts_prop_set_string(hts_prop_create(root, "format"),
 		      filetag_get_str2(ftags, FTAG_MEDIAFORMAT) ?: "");
 
-  glw_prop_set_string(glw_prop_create(root, "audioinfo"),
+  hts_prop_set_string(hts_prop_create(root, "audioinfo"),
 		      filetag_get_str2(ftags, FTAG_AUDIOINFO) ?: "");
 
-  glw_prop_set_string(glw_prop_create(root, "videoinfo"),
+  hts_prop_set_string(hts_prop_create(root, "videoinfo"),
 		      filetag_get_str2(ftags, FTAG_VIDEOINFO) ?: "");
 
-  p = glw_prop_create(root, "totaltime");
+  p = hts_prop_create(root, "totaltime");
   if(!filetag_get_int(ftags, FTAG_DURATION, &i64))
-    glw_prop_set_int(p, i64);
+    hts_prop_set_int(p, i64);
 
   if(!filetag_get_int(ftags, FTAG_ORIGINAL_DATE, &i64)) {
     t = i64;
@@ -866,9 +866,10 @@ media_fill_properties(glw_prop_t *root, const char *url, int type,
     buf[0] = 0;
   }
 
-  glw_prop_set_string(glw_prop_create(root, "originaldate"), buf);
+  hts_prop_set_string(hts_prop_create(root, "originaldate"), buf);
 
 }
+#endif
 
 
 /**
@@ -877,18 +878,18 @@ media_fill_properties(glw_prop_t *root, const char *url, int type,
 void
 media_set_currentmedia(media_pipe_t *mp)
 {
-  glw_prop_t *p;
+  hts_prop_t *p;
   static media_pipe_t *lastmp;
 
   if(lastmp == mp)
     return;
 
   lastmp = mp;
-  p = glw_prop_create(prop_global, "currentmedia");
-  glw_prop_linktree(mp->mp_prop_root, p);
+  p = hts_prop_create(hts_prop_get_global(), "currentmedia");
+  abort(); // hts_prop_linktree(mp->mp_prop_root, p);
 
-  p = glw_prop_create(prop_global, "currentmediasource");
-  glw_prop_set_string(p, mp->mp_name);
+  p = hts_prop_create(hts_prop_get_global(), "currentmediasource");
+  hts_prop_set_string(p, mp->mp_name);
 }
 
 
@@ -896,9 +897,9 @@ media_set_currentmedia(media_pipe_t *mp)
  *
  */
 void
-media_set_metatree(media_pipe_t *mp, glw_prop_t *src)
+media_set_metatree(media_pipe_t *mp, hts_prop_t *src)
 {
-  glw_prop_linktree(src, mp->mp_prop_meta);
+  abort(); //hts_prop_linktree(src, mp->mp_prop_meta);
 }
 
 
@@ -908,5 +909,5 @@ media_set_metatree(media_pipe_t *mp, glw_prop_t *src)
 void
 media_clear_metatree(media_pipe_t *mp)
 {
-  glw_prop_unlink(mp->mp_prop_meta);
+  abort(); //hts_prop_unlink(mp->mp_prop_meta);
 }

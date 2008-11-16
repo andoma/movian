@@ -19,10 +19,12 @@
 #ifndef BROWSER_PROBE_H
 #define BROWSER_PROBE_H
 
-void browser_probe_init(browser_root_t *br);
+void browser_probe_init(void);
 
 void browser_probe_autoview_enqueue(browser_node_t *bn);
 
-void browser_probe_deinit(browser_root_t *br);
+void browser_probe_from_list(struct browser_node_list *l);
+
+void browser_probe_deinit(void);
 
 #endif /* BROWSER_PROBE_H */

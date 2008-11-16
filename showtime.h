@@ -76,6 +76,5 @@ average_update(average_t *avg, int value)
 }
 
 extern int mp_show_extra_info;
-extern struct glw_prop *prop_global;
 
 #endif /* SHOWTIME_H */

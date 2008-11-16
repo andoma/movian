@@ -392,7 +392,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
     }
 
     if(mb->mb_time != -1)
-      glw_prop_set_int(mp->mp_prop_currenttime, mb->mb_time);
+      hts_prop_set_int(mp->mp_prop_currenttime, mb->mb_time);
 
     frames = data_size / sizeof(int16_t) / channels;
 

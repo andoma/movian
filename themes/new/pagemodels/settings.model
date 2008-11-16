@@ -1,0 +1,24 @@
+#include "theme://include/plates.model"
+
+
+widget(container_y, {
+
+  widget(list, {
+    .orientation = vertical;
+    .slices = 10;
+    cloner(page.nodes, container_z, {
+     
+      PLATE_SELECTABLE();
+
+      PLATE_WIDE(
+        widget(animator, {
+	  .source = "theme://settings/" + self.type + ".model";
+	});
+      );
+
+
+    });
+  });
+});
+
+

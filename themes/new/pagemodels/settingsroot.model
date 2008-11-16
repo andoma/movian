@@ -1,0 +1,19 @@
+#include "theme://include/plates.model"
+
+
+widget(container_y, {
+  widget(array, {
+    .xslices = 5;
+    .yslices = 3;
+    cloner(page.nodes, container_z, {
+
+      PLATE_SELECTABLE();
+
+      PLATE_SQUARE_MID_IMAGE_AND_TITLE("theme://images/settings.png",
+				       self.title);
+      onEvent(enter, systemEvent(navigator, open, self.url));
+    });
+  });
+});
+
+

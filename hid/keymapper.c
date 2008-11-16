@@ -26,10 +26,9 @@
 #include <libhts/hts_strtab.h>
 #include "showtime.h"
 #include "keymapper.h"
-#include "app.h"
 
 static glw_t *keymapper_list;
-static appi_t *keymapper_appi;
+//static appi_t *keymapper_appi;
 
 /**
  * Based on the keycode, return a descriptive text
@@ -335,10 +334,11 @@ eh_keymapper(glw_event_t *ge, void *opaque)
   hid_keycode_t *hkc;
   glw_t *w;
   event_keydesc_t *ekd;
-
+#if 0
   if(keymapper_appi == NULL || !keymapper_appi->ai_active || 
      !glw_is_selected(keymapper_list))
     return 0;
+#endif
 
   switch(ge->ge_type) {
   case GEV_UP:
@@ -385,11 +385,13 @@ eh_keymapper(glw_event_t *ge, void *opaque)
  *
  */
 void
-keymapper_init(appi_t *ai, glw_t *settings)
+keymapper_init(glw_t *settings)
 {
+#if 0
   glw_t *icon = 
     glw_model_create("theme://settings/keymapper/keymapper-icon.model", NULL,
 		     0, NULL);
+#endif
   glw_t *tab  = 
     glw_model_create("theme://settings/keymapper/keymapper.model", NULL,
 		     0, NULL);
@@ -397,14 +399,14 @@ keymapper_init(appi_t *ai, glw_t *settings)
   int i;
   hid_keycode_t *hkc;
 
-  glw_add_tab(settings, "settings_list", icon, "settings_deck", tab);
+  //glw_add_tab(settings, "settings_list", icon, "settings_deck", tab);
 
   keymapper_load();
 
   if((l = glw_find_by_id(tab, "keymapper_list", 0)) == NULL)
     return;
 
-  keymapper_appi = ai;
+  //  keymapper_appi = ai;
   keymapper_list = l;
 
   for(i = 0; i < sizeof(keycodenames) / sizeof(keycodenames[0]); i++) {

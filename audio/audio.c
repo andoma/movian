@@ -30,7 +30,6 @@
 #include "audio_decoder.h"
 
 #include <libglw/glw.h>
-#include "app.h"
 
 audio_mode_t *audio_mode_current;
 hts_mutex_t audio_mode_mutex;
@@ -39,7 +38,7 @@ static struct audio_mode_queue audio_modes;
 
 static void *audio_output_thread(void *aux);
 
-
+#if 0
 /**
  *
  */
@@ -51,6 +50,7 @@ audio_global_save_settings(void)
   hts_settings_save(m, "audio/current");
   htsmsg_destroy(m);
 }
+#endif
 
 /**
  *
@@ -184,6 +184,7 @@ audio_mode_load_settings(audio_mode_t *am)
 
 }
 
+#if 0
 /**
  *
  */
@@ -222,6 +223,7 @@ audio_mode_save_settings(audio_mode_t *am)
   hts_settings_save(m, "audio/devices/%s", am->am_id);
   htsmsg_destroy(m);
 }
+#endif
 
 /**
  *
@@ -235,7 +237,7 @@ audio_mode_register(audio_mode_t *am)
 
 
 
-
+#if 0
 /**
  *
  */
@@ -258,6 +260,7 @@ audio_opt_int_cb(void *opaque, void *opaque2, int value)
   audio_mode_save_settings(am);
 }
 
+
 /**
  *
  */
@@ -266,13 +269,13 @@ audio_add_int_option_on_off(audio_mode_t *am, glw_t *l, const char *title,
 			    unsigned int *ptr)
 {
   glw_t *opt, *sel;
-  glw_prop_t *r;
+  hts_prop_t *r;
   
-  r = glw_prop_create(NULL, "option");
-  glw_prop_set_string(glw_prop_create(r, "title"), title);
+  r = hts_prop_create(NULL, "option");
+  hts_prop_set_string(hts_prop_create(r, "title"), title);
 
   opt = glw_model_create("theme://settings/audio/audio-option.model", l,
-			 0, r, NULL);
+			 0, r);
 
   if((sel = glw_find_by_id(opt, "options", 0)) != NULL) {
     glw_selection_add_text_option(sel, "Off", 
@@ -304,13 +307,13 @@ audio_add_mixer_map(audio_mode_t *am, glw_t *p, int type, const char *title)
 {
   glw_t *opt, *sel;
   mixer_controller_t *mc;
-  glw_prop_t *r;
+  hts_prop_t *r;
 
-  r = glw_prop_create(NULL, "option");
-  glw_prop_set_string(glw_prop_create(r, "title"), title);
+  r = hts_prop_create(NULL, "option");
+  hts_prop_set_string(hts_prop_create(r, "title"), title);
 
   opt = glw_model_create("theme://settings/audio/audio-option.model", p,
-			 0, r, NULL);
+			 0, r);
 
   if((sel = glw_find_by_id(opt, "options", 0)) == NULL)
     return;
@@ -325,9 +328,9 @@ audio_add_mixer_map(audio_mode_t *am, glw_t *p, int type, const char *title)
 				  am->am_mixers[type] == mc);
   }
 }
+#endif
 
-
-
+#if 0
 /**
  *
  */
@@ -338,9 +341,9 @@ audio_mode_add_to_settings(audio_mode_t *am, glw_t *parent)
   glw_t *deck;
   char buf[50];
   int multich = am->am_formats & (AM_FORMAT_PCM_5DOT1 | AM_FORMAT_PCM_7DOT1);
-  glw_prop_t *r;
+  hts_prop_t *r;
 
-  r = glw_prop_create(NULL, "audiodevice");
+  r = hts_prop_create(NULL, "audiodevice");
 
 
   if((w = glw_find_by_id(parent, "outputdevice_list", 0)) == NULL)
@@ -356,11 +359,11 @@ audio_mode_add_to_settings(audio_mode_t *am, glw_t *parent)
 	   am->am_formats & AM_FORMAT_AC3        ? "AC3 "     : "",
 	   am->am_formats & AM_FORMAT_DTS        ? "DTS "     : "");
 
-  glw_prop_set_string(glw_prop_create(r, "outputformats"), buf);
+  hts_prop_set_string(hts_prop_create(r, "outputformats"), buf);
 
 
   deck = glw_model_create("theme://settings/audio/audio-device-settings.model",
-			  NULL, 0, r, NULL);
+			  NULL, 0, r);
 
   if((l = glw_find_by_id(deck, "controllers", 0)) == NULL)
     return;
@@ -392,15 +395,19 @@ audio_mode_add_to_settings(audio_mode_t *am, glw_t *parent)
     audio_add_mixer_map(am, l, AM_MIXER_SIDE,    "Side volume:");
   }
 
-  glw_add_tab(parent, NULL, le, "outputdevice_deck", deck);
+  //  glw_add_tab(parent, NULL, le, "outputdevice_deck", deck);
 }
+#endif
 
 /**
  *
  */
 void
-audio_settings_init(appi_t *ai, glw_t *m)
+audio_settings_init(glw_t *m)
 {
+  return;
+
+#if 0
   glw_t *icon = glw_model_create("theme://settings/audio/audio-icon.model",
 				 NULL, 0, NULL);
   glw_t *tab  = glw_model_create("theme://settings/audio/audio.model",
@@ -408,14 +415,13 @@ audio_settings_init(appi_t *ai, glw_t *m)
   audio_mode_t *am;
   glw_t *w;
 
-  glw_add_tab(m, "settings_list", icon, "settings_deck", tab);
+  //  glw_add_tab(m, "settings_list", icon, "settings_deck", tab);
 
   TAILQ_FOREACH(am, &audio_modes, am_link)
     audio_mode_add_to_settings(am, tab);
 
   if((w = glw_find_by_id(tab, "outputdevice_list", 0)) != NULL) {
-    w = glw_selection_get_widget_by_opaque(w, audio_mode_current);
-    if(w != NULL)
-      glw_select(w);
+    glw_selection_get_widget_by_opaque(w, audio_mode_current);
   }
+#endif
 }

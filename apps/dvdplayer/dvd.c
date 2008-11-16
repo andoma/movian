@@ -268,7 +268,7 @@ static void
 dvd_player_loop(dvd_player_t *dp)
 {
   media_pipe_t *mp = dp->dp_mp;
-  appi_t *      ai = dp->dp_ai;
+  //  appi_t *      ai = dp->dp_ai;
 
   int result, run = 1, kickctd = 0, len, event, i;
   uint8_t mem[DVD_VIDEO_LB_LEN], *block;
@@ -283,7 +283,7 @@ dvd_player_loop(dvd_player_t *dp)
     media_update_playstatus_prop(dp->dp_prop_playstatus, mp->mp_playstatus);
 
     if(mp_is_paused(mp)) {
-      ai->ai_req_fullscreen = 0;
+      //      ai->ai_req_fullscreen = 0;
       run = dvd_ctrl_input(dp, 255);
       continue;
     }
@@ -313,7 +313,7 @@ dvd_player_loop(dvd_player_t *dp)
 
     switch(event) {
     case DVDNAV_BLOCK_OK:
-      ai->ai_req_fullscreen = !dp->dp_menu;
+      //      ai->ai_req_fullscreen = !dp->dp_menu;
       kickctd = 3;
       dvd_ps_block(dp, block, len);
       break;
@@ -406,7 +406,7 @@ dvd_player_loop(dvd_player_t *dp)
  *
  */
 int
-dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
+dvd_main(const char *url, int isdrive, glw_t *parent)
 {
   dvd_player_t *dp = alloca(sizeof(dvd_player_t));
   int rcode = 0;
@@ -420,8 +420,7 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
   memset(dp, 0, sizeof(dvd_player_t));
   
   dp->dp_mp = mp = mp_create(url);
-  dp->dp_ai = ai;
-  dp->dp_geq = &ai->ai_geq;
+  //  dp->dp_geq = &ai->ai_geq;
 
   if(isdrive) {
     ops = NULL;
@@ -528,7 +527,7 @@ dvd_main(appi_t *ai, const char *url, int isdrive, glw_t *parent)
 
   media_clear_metatree(mp);
 
-  ai->ai_req_fullscreen = 0;
+  //  ai->ai_req_fullscreen = 0;
 
   pes_deinit(&dp->dp_pp);
 

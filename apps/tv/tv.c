@@ -33,6 +33,8 @@
 #include "event.h"
 #include "htsp.h"
 
+#if 0
+
 static void tv_unsubscribe(tv_t *tv, tv_channel_t *ch);
 
 /**
@@ -143,8 +145,7 @@ tv_subscription_open_menu(tv_t *tv, tv_channel_t *ch)
  *  Return 0 if user wants to exit, otherwise -1
  */
 static int
-tv_access_error(tv_t *tv, appi_t *ai, const char *dir, 
-		const char *errtxt)
+tv_access_error(tv_t *tv, const char *dir, char *errtxt)
 {
   int r;
   glw_t *m;
@@ -196,14 +197,12 @@ tv_tag_find(tv_t *tv, const char *identifier, int create)
   tt->tt_widget = glw_model_create("theme://tv/tag.model", NULL, 0,
 				   prop_global,
 				   tv->tv_prop_root,
-				   tv->tv_ai->ai_prop_root,
 				   tt->tt_prop_root,
 				   NULL);
 
   tt->tt_tab = glw_model_create("theme://tv/chlist.model", NULL, 0,
 				   prop_global,
 				   tv->tv_prop_root,
-				   tv->tv_ai->ai_prop_root,
 				   tt->tt_prop_root,
 				   NULL);
 
@@ -343,7 +342,7 @@ tv_control_signal(tv_t *tv, int cmd, int key)
   tce = glw_event_create(EVENT_TV, sizeof(tv_ctrl_event_t));
   tce->cmd = cmd;
   tce->key = key;
-  glw_event_enqueue(&tv->tv_ai->ai_geq, &tce->h);
+  abort(); //glw_event_enqueue(&tv->tv_ai->ai_geq, &tce->h);
 }
 
 
@@ -586,7 +585,7 @@ tv_fullscreen(tv_t *tv, tv_channel_t *ch)
 
   glw_prop_set_int(ch->ch_prop_fullscreen, 1);
 
-  tv->tv_ai->ai_req_fullscreen = 1;
+  //  tv->tv_ai->ai_req_fullscreen = 1;
 
   glw_prop_set_int(tv->tv_prop_show_channel_menu, 0);
 }
@@ -615,8 +614,10 @@ tv_channel_stop(tv_t *tv, tv_channel_t *ch)
   if(tv->tv_fullscreen_channel == ch)
     tv->tv_fullscreen_channel = NULL;
 
+#if 0
   if(glw_prop_get_int(ch->ch_prop_fullscreen))
     tv->tv_ai->ai_req_fullscreen = 0;
+#endif
 
   ch->ch_running = 0;
 
@@ -841,6 +842,7 @@ handle_tv_ctrl_event(tv_t *tv, tv_ctrl_event_t *tce)
 /**
  * Store information about this TV instance on disk
  */
+#if 0
 static void
 tv_store_instance(appi_t *ai, tv_t *tv)
 {
@@ -848,9 +850,9 @@ tv_store_instance(appi_t *ai, tv_t *tv)
   htsmsg_add_str(m, "url", glw_prop_get_string(tv->tv_prop_url));
   appi_settings_save(ai, m);
 }
+#endif
 
-
-
+#if 0
 
 /**
  * TV configuration
@@ -892,20 +894,20 @@ tv_config(tv_t *tv, appi_t *ai)
   glw_event_unref(ge);
   glw_detach(m);
 }
-
+#endif
 
 
 /**
  *
  */
 static int
-tv_main(tv_t *tv, appi_t *ai)
+tv_main(tv_t *tv)
 {
   glw_event_t *ge;
   const char *url;
   htsp_connection_t *hc;
 
-  glw_event_flushqueue(&ai->ai_geq);
+  //  glw_event_flushqueue(&ai->ai_geq);
 
   while(tv->tv_runstatus != TV_RS_STOP) {
 
@@ -1096,3 +1098,4 @@ app_t app_tv = {
   .app_name = "TV",
   .app_model = "theme://tv/start-icon.model",
 };
+#endif

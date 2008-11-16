@@ -21,7 +21,6 @@
 #include <libhts/htssettings.h>
 
 #include "showtime.h"
-#include "app.h"
 #include "event.h"
 #include "keyring.h"
 
@@ -79,7 +78,7 @@ keyring_lookup(const char *id, char **username, char **password,
 {
   htsmsg_t *m;
   glw_t *p, *w;
-  glw_prop_t *props;
+  hts_prop_t *props;
   glw_event_t *ge;
   char buf[128];
   extern glw_t *universe;
@@ -92,21 +91,20 @@ keyring_lookup(const char *id, char **username, char **password,
   if(query && 
      (p = glw_find_by_id(universe, "auth_query_container", 0)) != NULL) {
 
-    props = glw_prop_create(NULL, "auth");
-    glw_prop_set_string(glw_prop_create(props, "resource"), id);
-    glw_prop_set_string(glw_prop_create(props, "reason"), reason);
-    glw_prop_set_string(glw_prop_create(props, "source"), source);
-    glw_prop_set_int(glw_prop_create(props, "domainReq"), !!domain);
+    props = hts_prop_create(NULL, "auth");
+    hts_prop_set_string(hts_prop_create(props, "resource"), id);
+    hts_prop_set_string(hts_prop_create(props, "reason"), reason);
+    hts_prop_set_string(hts_prop_create(props, "source"), source);
+    hts_prop_set_int(hts_prop_create(props, "domainReq"), !!domain);
 
 
-    w = glw_model_create("theme://authenticate.model", p, 0,
-			 prop_global, props, NULL);
+    w = glw_model_create("theme://authenticate.model", p, 0, props);
 
-    glw_select(w); /* Grab focus */
+    abort(); //glw_select(w); /* Grab focus */
 
     ge = glw_wait_form(w);
 
-    glw_prop_destroy(props);
+    hts_prop_destroy(props);
 
     htsmsg_delete_field(keyring, id);
 

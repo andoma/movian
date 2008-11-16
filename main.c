@@ -29,10 +29,11 @@
 
 #include <libavformat/avformat.h>
 
+#include <libhts/htsprop.h>
+
 #include <libglw/glw.h>
 
 #include "showtime.h"
-#include "app.h"
 #include "event.h"
 
 #include "video/video_decoder.h"
@@ -42,6 +43,8 @@
 #include "fileaccess/fileaccess.h"
 #include "fileaccess/fa_imageloader.h"
 #include "fileaccess/fa_rawloader.h"
+#include "navigator.h"
+#include "settings.h"
 
 pthread_mutex_t ffmutex;
 
@@ -51,8 +54,7 @@ int64_t wallclock;
 time_t walltime;
 int concurrency;
 extern char *htsversion;
-glw_prop_t *prop_global;
-glw_prop_t *prop_ui_scale;
+hts_prop_t *prop_ui_scale;
 int showtime_running;
 static int stopcode;
 
@@ -71,12 +73,13 @@ ffmpeglockmgr(int lock)
 }
 
 
-glw_prop_t *prop_hour;
-glw_prop_t *prop_minute;
-glw_prop_t *prop_weekday;
-glw_prop_t *prop_month;
-glw_prop_t *prop_date;
-glw_prop_t *prop_day;
+hts_prop_t *prop_sec;
+hts_prop_t *prop_hour;
+hts_prop_t *prop_minute;
+hts_prop_t *prop_weekday;
+hts_prop_t *prop_month;
+hts_prop_t *prop_date;
+hts_prop_t *prop_day;
 
 /**
  *
@@ -95,22 +98,69 @@ propupdater(void *aux)
 
     localtime_r(&now, &tm);
 
-    glw_prop_set_float(prop_hour, tm.tm_hour);
-    glw_prop_set_float(prop_minute, tm.tm_min);
-    glw_prop_set_float(prop_day, tm.tm_mday);
+    hts_prop_set_int(prop_sec, tm.tm_sec);
+    hts_prop_set_int(prop_hour, tm.tm_hour);
+    hts_prop_set_int(prop_minute, tm.tm_min);
+    hts_prop_set_int(prop_day, tm.tm_mday);
 
     strftime(buf, sizeof(buf), "%A", &tm);
-    glw_prop_set_string(prop_weekday, buf);
+    hts_prop_set_string(prop_weekday, buf);
 
     strftime(buf, sizeof(buf), "%B", &tm);
-    glw_prop_set_string(prop_month, buf);
+    hts_prop_set_string(prop_month, buf);
 
     strftime(buf, sizeof(buf), "%x", &tm);
-    glw_prop_set_string(prop_date, buf);
+    hts_prop_set_string(prop_date, buf);
 
-    sleep(60);
+    sleep(1);
   }
 }
+
+
+
+/**
+ *
+ */
+hts_prop_t *prop_cloner;
+hts_prop_t *prop_cloner2;
+static void *
+clonertest(void *aux)
+{
+  hts_prop_t *a, *b, *c;
+
+  while(1) {
+
+    a = hts_prop_create(prop_cloner, "hej");
+    hts_prop_set_string(hts_prop_create(a, "name"), "jag e a");
+
+    sleep(1);
+
+    b = hts_prop_create(prop_cloner, "hej2");
+    hts_prop_set_string(hts_prop_create(b, "name"), "jag e b");
+
+    sleep(1);
+
+    c = hts_prop_create(prop_cloner, "hej3");
+    hts_prop_set_string(hts_prop_create(c, "name"), "jag e c");
+
+    sleep(1);
+    hts_prop_destroy(b);
+
+    sleep(1);
+    hts_prop_destroy(a);
+
+    if(prop_cloner2 == NULL) {
+      prop_cloner2 = hts_prop_create(hts_prop_get_global(), "clonertest2");
+      hts_prop_link(prop_cloner, prop_cloner2);
+    }
+
+    sleep(1);
+    hts_prop_destroy(c);
+
+    sleep(1);
+  }
+}
+
 
 /**
  *
@@ -118,33 +168,40 @@ propupdater(void *aux)
 static void
 global_prop_init(void)
 {
-  glw_prop_t *p;
-  glw_prop_t *cpu;
+  hts_prop_t *p;
+  hts_prop_t *cpu;
   hts_thread_t tid;
 
-  prop_global = glw_prop_create(NULL, "global");
+  prop_ui_scale = hts_prop_create(hts_prop_get_global(), "uiscale");
 
-  prop_ui_scale = glw_prop_create(prop_global, "uiscale");
+  prop_cloner = hts_prop_create(hts_prop_get_global(), "clonertest");
+  //  prop_cloner2 = hts_prop_create(hts_prop_get_global(), "clonertest2");
 
-  p = glw_prop_create(prop_global, "version");
-  glw_prop_set_string(p, htsversion);
 
-  cpu = glw_prop_create(prop_global, "cpu");
-  p = glw_prop_create(cpu, "cores");
-  glw_prop_set_float(p, concurrency);
+
+
+  p = hts_prop_create(hts_prop_get_global(), "version");
+  hts_prop_set_string(p, htsversion);
+
+  cpu = hts_prop_create(hts_prop_get_global(), "cpu");
+  p = hts_prop_create(cpu, "cores");
+  hts_prop_set_float(p, concurrency);
 
 
   /* */
-  p = glw_prop_create(prop_global, "clock");
+  p = hts_prop_create(hts_prop_get_global(), "clock");
 
-  prop_hour = glw_prop_create(p, "hour");
-  prop_minute = glw_prop_create(p, "minute");
-  prop_weekday = glw_prop_create(p, "weekday");
-  prop_month = glw_prop_create(p, "month");
-  prop_date = glw_prop_create(p, "date");
-  prop_day = glw_prop_create(p, "day");
+  prop_sec = hts_prop_create(p, "sec");
+  prop_hour = hts_prop_create(p, "hour");
+  prop_minute = hts_prop_create(p, "minute");
+  prop_weekday = hts_prop_create(p, "weekday");
+  prop_month = hts_prop_create(p, "month");
+  prop_date = hts_prop_create(p, "date");
+  prop_day = hts_prop_create(p, "day");
 
   hts_thread_create_detached(&tid, propupdater, NULL);
+
+  if(0)hts_thread_create_detached(&tid, clonertest, NULL);
 
 }
 
@@ -189,9 +246,13 @@ main(int argc, char **argv)
 
   concurrency = hts_get_system_concurrency();
 
+  hts_prop_init();
+
   global_prop_init();
 
   hts_settings_init("showtime", settingspath);
+
+  settings_init();
 
   event_init();
 
@@ -209,6 +270,8 @@ main(int argc, char **argv)
     exit(0);
   }
 
+  nav_init();
+
   audio_init();
 
   vd_init();
@@ -217,9 +280,14 @@ main(int argc, char **argv)
 
   event_handler_register("main", main_event_handler, EVENTPRI_MAIN, NULL);
 
-  apps_load();
+  //  apps_load();
 
   showtime_running = 1;
+
+  if(optind < argc)
+    nav_open(argv[optind]);
+  else
+    nav_open("mainmenu://");
 
   gl_sysglue_mainloop();
 

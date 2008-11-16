@@ -19,10 +19,10 @@
 #ifndef FA_PROBE_H
 #define FA_PROBE_H
 
-#include "fa_tags.h"
+#include <libhts/htsprop.h>
 
-int fa_probe(struct filetag_list *list, const char *filename);
+int fa_probe(hts_prop_t *proproot, hts_prop_t *urlp, const char *url);
 
-int fa_probe_dir(struct filetag_list *list, const char *url);
+int fa_probe_dir(hts_prop_t *proproot, const char *url);
 
 #endif /* FA_PROBE_H */

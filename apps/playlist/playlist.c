@@ -30,13 +30,12 @@
 #include <libglw/glw.h>
 
 #include "showtime.h"
-#include "app.h"
 #include "playlist.h"
 #include "event.h"
 #include <fileaccess/fa_probe.h>
 #include <fileaccess/fileaccess.h>
 #include <layout/layout.h>
-
+#if 0
 static struct playlist_list playlists;
 
 static playlist_player_t plp;
@@ -45,7 +44,7 @@ static glw_t *playlists_list;
 
 static glw_t *playlist_root;
 
-static appi_t *playlist_appi;
+//static appi_t *playlist_appi;
 
 /**
  * Global lock for reference counters and playlist/playlistentry relations
@@ -136,7 +135,7 @@ playlist_create(const char *title, int truncate)
 
   pl->pl_title = strdup(title);
   
-  pl->pl_ai = playlist_appi;
+  //  pl->pl_ai = playlist_appi;
   TAILQ_INIT(&pl->pl_entries);
   TAILQ_INIT(&pl->pl_shuffle_entries);
 
@@ -641,29 +640,33 @@ playlist_scan(void)
 static void *
 playlist_thread(void *aux)
 {
-  appi_t *ai;
-  playlist_t *pl;
+  //  appi_t *ai;
+  //  playlist_t *pl;
   hts_thread_t playerthread;
   glw_t *form;
   glw_event_t *ge;
-  glw_event_appmethod_t *gea;
+  //  glw_event_appmethod_t *gea;
 
-  playlist_appi = ai = appi_create("Playlist");
-
+  //  playlist_appi = ai = appi_create("Playlist");
+#if 0
   ai->ai_widget =
     glw_create(GLW_ZSTACK,
 	       NULL);
+#endif
 
-
+#if 0
   playlist_root = glw_model_create("theme://playlist/playlist-app.model",
 				   ai->ai_widget, 0,
 				   prop_global, NULL);
+#endif
 
   form = glw_find_by_class(playlist_root, GLW_FORM);
 
+#if 0
   ai->ai_miniature =
     glw_model_create("theme://playlist/playlist-miniature.model", NULL,
 		     0, prop_global, NULL);
+#endif
 
   playlists_list = glw_find_by_id(playlist_root, "playlist_container", 0);
 
@@ -686,26 +689,27 @@ playlist_thread(void *aux)
 
   playlist_scan();
 
-  mainmenu_appi_add(ai, 1);
-
+  //  mainmenu_appi_add(ai, 1);
+#if 0
   if(form != NULL) {
     glw_set(form,
 	    GLW_ATTRIB_SIGNAL_HANDLER, glw_event_enqueuer, &ai->ai_geq, 1000, 
 	    NULL);
   }
-  
+#endif
   while(1) {
-    ge = glw_event_get(-1, &ai->ai_geq);
+    //    ge = glw_event_get(-1, &ai->ai_geq);
 
     switch(ge->ge_type) {
     default:
       break;
 
     case GEV_BACKSPACE:
-      mainmenu_show(ai);
+      //      mainmenu_show(ai);
       break;
 
     case GEV_APPMETHOD:
+#if 0
       gea = (void *)ge;
       if(!strcmp(gea->method, "delete")) {
 	if((pl = playlist_get_current()) != NULL)
@@ -716,6 +720,7 @@ playlist_thread(void *aux)
 	  playlist_rename(pl, ai->ai_widget);
 
       }
+#endif
       break;
     }
     glw_event_unref(ge);
@@ -730,3 +735,15 @@ playlist_init(void)
   hts_mutex_init(&playlistlock);
   hts_thread_create(&tid, playlist_thread, NULL);
 }
+
+
+
+
+int
+playlist_spawn(nav_page_t *np, const char *path)
+{
+  
+
+
+}
+#endif

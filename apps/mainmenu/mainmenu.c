@@ -28,19 +28,20 @@
 #include <libglw/glw.h>
 
 #include "showtime.h"
-#include "app.h"
 #include "mainmenu.h"
 #include "event.h"
 #include <layout/layout.h>
+#if 0
 
 glw_t *mainmenumodel;
-appi_t *mainmenu_appi;
+//appi_t *mainmenu_appi;
 
 static int mainmenu_input_event(glw_event_t *ge, void *opaque);
 
 void
 mainmenu_init(void)
 {
+#if 0
   appi_t *ai = mainmenu_appi = appi_create("Mainmenu");
 
   event_handler_register("mainmenuswitcher", mainmenu_input_event, 
@@ -52,6 +53,7 @@ mainmenu_init(void)
   ai->ai_widget = mainmenumodel;
 
   layout_appi_show(ai);
+#endif
 }
 
 
@@ -71,18 +73,20 @@ mainmenu_appi_callback(glw_t *w, void *opaque, glw_signal_t signal,
     return 0;
 
   if(ge->ge_type == GEV_ENTER) {
-    layout_appi_show(opaque);
+    abort();
+    //    layout_appi_show(opaque);
     return 1;
   }
 
   return 0;
 }
 
+#if 0
 /**
  *
  */
 void
-mainmenu_appi_add(appi_t *ai, int primary)
+mainmenu_appi_add(int primary)
 {
   glw_t *w = NULL;
 
@@ -100,6 +104,7 @@ mainmenu_appi_add(appi_t *ai, int primary)
 	  GLW_ATTRIB_SIGNAL_HANDLER, mainmenu_appi_callback, ai, 100,
 	  NULL);
 }
+#endif
 
 
 /**
@@ -109,7 +114,7 @@ static int
 mainmenu_input_event(glw_event_t *ge, void *opaque)
 {
   if(ge->ge_type == EVENT_KEY_MAINMENU) {
-    layout_appi_show(opaque);
+    //    layout_appi_show(opaque);
     return 1;
   }
   return 0;
@@ -120,6 +125,7 @@ mainmenu_input_event(glw_event_t *ge, void *opaque)
 /**
  *
  */
+#if 0
 void
 mainmenu_show(appi_t *from)
 {
@@ -127,3 +133,5 @@ mainmenu_show(appi_t *from)
     glw_select(from->ai_miniature);
   layout_appi_show(mainmenu_appi);
 }
+#endif
+#endif

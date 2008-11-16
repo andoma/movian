@@ -1,0 +1,15 @@
+widget(container_x, {
+
+  onEvent(enter, systemEvent(navigator, open, self.url));
+
+  widget(bitmap, {
+    .keepAspect = true;
+    .source = "theme://images/dir.png";
+  });
+
+  widget(label, {
+    .aspect = 40;
+    .weight = 10;
+    .caption = self.title;
+  });
+});

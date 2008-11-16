@@ -19,9 +19,8 @@
 #ifndef PLAYLIST_H
 #define PLAYLIST_H
 
-#include "app.h"
 #include "fileaccess/fa_tags.h"
-
+#include "media.h"
 
 /**
  * SubEvent used to signal that a new entry has been enqueued
@@ -41,7 +40,7 @@ LIST_HEAD(playlist_list, playlist);
  * Struct describing a playlist
  */
 typedef struct playlist {
-  appi_t *pl_ai;
+  //  appi_t *pl_ai;
 
   glw_t *pl_widget;
   glw_t *pl_tab;

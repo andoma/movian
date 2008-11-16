@@ -20,14 +20,13 @@
 #define LAYOUT_H
 
 #include <libglw/glw.h>
-#include "app.h"
 
 /**
  * Functions in layout.c
  */ 
 void layout_create(void);
 
-void layout_appi_show(appi_t *ai);
+//void layout_appi_show(appi_t *ai);
 
 void layout_draw(float aspect);
 

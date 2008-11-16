@@ -30,14 +30,16 @@
 #include "event.h"
 #include "media.h"
 
+#if 0
 
+#if 0
 /**
  *
  */
 static int
 slideshow_event_handler(glw_event_t *ge, void *opaque)
 {
-  appi_t *ai = opaque;
+  //  appi_t *ai = opaque;
 
   if(ai->ai_active == 0)
     return 0;
@@ -59,12 +61,14 @@ slideshow_event_handler(glw_event_t *ge, void *opaque)
   glw_event_enqueue(&ai->ai_geq, ge);
   return 1;
 }
+#endif
+
 
 
 void
-browser_slideshow(browser_node_t *cur, glw_t *parent, appi_t *ai)
+browser_slideshow(browser_node_t *cur, glw_t *parent)
 {
-  glw_event_queue_t *geq = &ai->ai_geq;
+  //  glw_event_queue_t *geq = &ai->ai_geq;
   glw_t *top, *slideshow, *b;
   browser_node_t *dir = cur->bn_parent;
   browser_root_t *br  = cur->bn_root;
@@ -110,10 +114,11 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, appi_t *ai)
   }
 
   free(a);
-
+#if 0
   eh = event_handler_register("slideshow", slideshow_event_handler,
 			      EVENTPRI_MEDIACONTROLS_SLIDESHOW, ai);
   ai->ai_req_fullscreen = 1;
+#endif
 
   while(run) {
 
@@ -122,7 +127,7 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, appi_t *ai)
 
     media_update_playstatus_prop(prop_ps, mps);
 
-    ge = glw_event_get(-1, geq);
+    //    ge = glw_event_get(-1, geq);
 
     switch(ge->ge_type) {
     default:
@@ -166,10 +171,11 @@ browser_slideshow(browser_node_t *cur, glw_t *parent, appi_t *ai)
     glw_event_unref(ge);
   }
 
-  ai->ai_req_fullscreen = 0;
+  //  ai->ai_req_fullscreen = 0;
 
   event_handler_unregister(eh);
 
   glw_detach(top);
   glw_prop_destroy(prop_root);
 }
+#endif

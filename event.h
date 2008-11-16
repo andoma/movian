@@ -66,11 +66,11 @@ typedef enum {
 
 
 /**
- * The lowest entry in this list will be called first
+ * The last entry in this list will be called first
  */
 typedef enum {
+  EVENTPRI_NAV,
   EVENTPRI_UNIVERSE,
-  EVENTPRI_MAINMENU,
   EVENTPRI_MAIN,
   EVENTPRI_SPEEDBUTTONS,
 

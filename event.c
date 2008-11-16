@@ -16,6 +16,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define _GNU_SOURCE
+#include <libhts/htsthreads.h>
+
 #include <sys/time.h>
 #include <errno.h>
 #include <stdio.h>
@@ -35,7 +38,7 @@ static LIST_HEAD(, event_handler) event_handlers;
 void
 event_init(void)
 {
-  hts_mutex_init(&ehmutex);
+  hts_mutex_init_recursive(&ehmutex);
 }
 
 /**
@@ -46,6 +49,9 @@ typedef struct event_handler {
   const char *name;
   void *opaque;
   int pri;
+  int active; /* The event dispatcher may be invoked recursively,
+		 and if so, avoid calling the same handler twice */
+
   int (*callback)(glw_event_t *ge, void *opaque);
   LIST_ENTRY(event_handler) link;
 } event_handler_t;
@@ -75,6 +81,7 @@ event_handler_register(const char *name, int (*callback)(glw_event_t *ge,
   ih->name = name;
   ih->pri = pri;
   ih->callback = callback;
+  ih->active = 0;
   ih->opaque = opaque;
   hts_mutex_lock(&ehmutex);
   LIST_INSERT_SORTED(&event_handlers, ih, link, ihcmp);
@@ -105,13 +112,22 @@ void
 event_post(glw_event_t *ge)
 {
   event_handler_t *eh;
+  int r;
 
   hts_mutex_lock(&ehmutex);
 
   LIST_FOREACH(eh, &event_handlers, link) {
-    if(eh->callback(ge, eh->opaque))
+    
+    if(eh->active)
+      continue;
+
+    eh->active = 1;
+    r = eh->callback(ge, eh->opaque);
+    eh->active = 0;
+    if(r)
       break;
   }
+
   hts_mutex_unlock(&ehmutex);
 
   glw_event_unref(ge);

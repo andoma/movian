@@ -2,12 +2,12 @@
 
 # core
 
-SRCS = 	main.c app.c media.c event.c keyring.c
+SRCS = 	main.c navigator.c media.c event.c keyring.c settings.c
 
 # file access subsys
 
 VPATH += fileaccess
-SRCS  += fileaccess.c fa_probe.c fa_tags.c fa_imageloader.c fa_rawloader.c
+SRCS  += fileaccess.c fa_probe.c  fa_imageloader.c fa_rawloader.c
 SRCS  += fa_fs.c fa_rar.c fa_smb.c
 
 # Display
@@ -49,26 +49,29 @@ SRCS  += layout.c
 VPATH += hid
 SRCS  += hid.c lircd.c imonpad.c keymapper.c
 
+VPATH += backends
+SRCS  += be_file.c be_page.c
+
 # Main menu
 
-VPATH += apps/mainmenu
-SRCS  += mainmenu.c
+#VPATH += apps/mainmenu
+#SRCS  += mainmenu.c
 
 # Launcher application
 
-VPATH += apps/launcher
-SRCS  += launcher.c
+#VPATH += apps/launcher
+#SRCS  += launcher.c
 
 # Settings application
 
-VPATH += apps/settings
-SRCS  += settings.c settings_ui.c
+#VPATH += apps/settings
+#SRCS  += settings.c settings_ui.c
 
 # Browser application
 
-VPATH += apps/browser
-SRCS  += browser.c navigator.c browser_view.c browser_probe.c \
-	 browser_slideshow.c useraction.c
+#VPATH += apps/browser
+#SRCS  += browser.c browser_view.c browser_probe.c \
+#	 browser_slideshow.c useraction.c
 
 # CD application
 
@@ -77,13 +80,13 @@ SRCS  += browser.c navigator.c browser_view.c browser_probe.c \
 
 # DVD application
 
-VPATH += apps/dvdplayer
-SRCS  += dvd.c dvd_mpeg.c
+#VPATH += apps/dvdplayer
+#SRCS  += dvd.c dvd_mpeg.c
 
 # Playlist application
 
-VPATH += apps/playlist
-SRCS  += playlist.c playlist_player.c playlist_scanner.c
+#VPATH += apps/playlist
+#SRCS  += playlist.c playlist_player.c playlist_scanner.c
 
 # RSS browser applcation
 
@@ -97,8 +100,8 @@ SRCS  += playlist.c playlist_player.c playlist_scanner.c
 
 # TV & headend com
 
-VPATH += apps/tv 
-SRCS +=	 htsp.c tv.c
+#VPATH += apps/tv 
+#SRCS +=	 htsp.c tv.c
 
 # Apple Movie Trailer Application
 

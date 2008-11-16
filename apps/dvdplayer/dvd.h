@@ -21,7 +21,6 @@
 
 #include <dvdnav/dvdnav.h>
 
-#include "app.h"
 #include "dvd_mpeg.h"
 #include "video/video_decoder.h"
 
@@ -56,17 +55,17 @@ typedef struct dvd_player {
   glw_t *dp_menu;
   glw_t *dp_container;
 
-  glw_prop_t *dp_prop_root;
-  glw_prop_t *dp_prop_playstatus;
-  glw_prop_t *dp_prop_time_total;
+  hts_prop_t *dp_prop_root;
+  hts_prop_t *dp_prop_playstatus;
+  hts_prop_t *dp_prop_time_total;
 
-  glw_prop_t *dp_prop_title;
-  glw_prop_t *dp_prop_chapter;
+  hts_prop_t *dp_prop_title;
+  hts_prop_t *dp_prop_chapter;
 
   int dp_time;
 
 } dvd_player_t;
 
-int dvd_main(appi_t *ai, const char *devname, int isdrive, glw_t *parent);
+int dvd_main(const char *devname, int isdrive, glw_t *parent);
 
 #endif /* DVD_H */

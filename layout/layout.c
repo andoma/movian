@@ -23,18 +23,20 @@
 #include <libglw/glw.h>
 
 #include "showtime.h"
-#include "app.h"
 #include "layout.h"
 #include "event.h"
 #include "audio/audio_ui.h"
+#include "navigator.h"
 
 glw_t *universe;
 
 static int fullscreen;
 static float fullscreen_fader;
-glw_prop_t *prop_fullscreen;
+hts_prop_t *prop_fullscreen;
 
 static int layout_input_event(glw_event_t *ge, void *opaque);
+int layout_event_handler(glw_t *w, void *opaque, glw_signal_t sig, 
+			 void *extra);
 
 /**
  *
@@ -42,13 +44,17 @@ static int layout_input_event(glw_event_t *ge, void *opaque);
 void
 layout_create(void)
 {
-  prop_fullscreen = glw_prop_create(prop_global, "fullscreen");
+  prop_fullscreen = hts_prop_create(hts_prop_get_global(), "fullscreen");
 
-  universe = glw_model_create("theme://universe.model", NULL, 0,
-			      prop_global, NULL);
+  universe = glw_model_create("theme://universe.model", NULL, 0, NULL);
 
   event_handler_register("universe", layout_input_event, EVENTPRI_UNIVERSE,
 			 NULL);
+
+  glw_set(universe,
+	  GLW_ATTRIB_SIGNAL_HANDLER, layout_event_handler, NULL, 1000,
+	  NULL);
+
 }
 
 
@@ -64,7 +70,7 @@ layout_draw(float aspect)
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
   
   fullscreen_fader = GLW_LP(16, fullscreen_fader, fullscreen);
-  glw_prop_set_float(prop_fullscreen, fullscreen_fader);
+  hts_prop_set_float(prop_fullscreen, fullscreen_fader);
 
   memset(&rc, 0, sizeof(rc));
   rc.rc_aspect = aspect;
@@ -88,60 +94,27 @@ layout_draw(float aspect)
 }
 
 
+/**
+ * Primary point for input event distribution in the UI
+ */
+static int
+layout_input_event(glw_event_t *ge, void *opaque)
+{
+  return glw_signal(universe, GLW_SIGNAL_EVENT, ge);
+}
 
 
 /**
  *
  */
-static int
-layout_child_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
+int
+layout_event_handler(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
 {
-  appi_t *ai = opaque;
+  glw_event_t *ge = extra;
 
-  switch(signal) {
-  case GLW_SIGNAL_LAYOUT:
-    if(w == w->glw_parent->glw_selected) {
-      ai->ai_active = 1;
-      fullscreen = ai->ai_req_fullscreen;
-    } else {
-      ai->ai_active = 0;
-    }
-    break;
+  if(sig != GLW_SIGNAL_EVENT_BUBBLE)
+    return 0;
 
-  default:
-    break;
-  }
-  return 0;
-}
-
-
-/**
- * Show application instance (and optionally add it)
- */
-void
-layout_appi_show(appi_t *ai)
-{
-  glw_t *p;
-
-  p = glw_find_by_id(universe, "application_instance_container", 0);
-  if(p == NULL)
-    return;
-
-  glw_set(ai->ai_widget,
-	  GLW_ATTRIB_SIGNAL_HANDLER, layout_child_callback, ai, 1,
-	  GLW_ATTRIB_PARENT, p,
-	  NULL);
-
-  glw_select(ai->ai_widget);
-}
-
-/**
- * Primary point for input event distribution
- */
-static int
-layout_input_event(glw_event_t *ge, void *opaque)
-{
-  glw_signal(universe, GLW_SIGNAL_EVENT, ge);
+  event_post(ge);
   return 1;
 }
-

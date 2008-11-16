@@ -21,7 +21,6 @@
 
 #include <libglw/glw.h>
 #include <libhts/avg.h>
-#include "app.h"
 
 #include "video/video_playback.h"
 #include "video/video_decoder.h"
@@ -162,7 +161,7 @@ typedef struct tv_channel_tag_map {
  */
 typedef struct tv {
 
-  appi_t *tv_ai;
+  //  appi_t *tv_ai;
 
   hts_mutex_t tv_ch_mutex; /* Must never be acquired while holding
 			      tv_running_mutex (will deadlock) */

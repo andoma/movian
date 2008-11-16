@@ -1,0 +1,45 @@
+#include "theme://include/plates.model"
+
+
+#define MINIATURE0(TITLE, BODY)
+{
+  widget(bitmap, {
+    .focusCursor = true;
+    .focusAlpha  = true;
+    .source = "theme://images/plate256.png";
+
+    widget(container_y, {
+      space(0.15);
+      BODY;
+      widget(label, {
+	.weight = 0.2;
+	.caption = TITLE;
+	.align = center;
+      });
+      space(0.15);
+    });
+  });
+}
+
+
+
+
+#define MINIATURE(TITLE, ICON)
+{
+  MINIATURE0(TITLE, 
+	     widget(bitmap, {
+		 .source = ICON;
+		 .keepAspect = true;
+	       });
+	     );
+
+}
+
+#define MINIATURE2(TITLE, ICONMODEL)
+{
+  MINIATURE0(TITLE, 
+	     widget(animator, {
+		 .source = ICONMODEL;
+	       });
+	     );
+}

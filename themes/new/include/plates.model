@@ -1,0 +1,48 @@
+#define PLATE_SELECTABLE() {
+  .selectable = true;
+  .focusCursor = true;
+  .focusAlpha = true;
+}
+
+#define PLATE_SQUARE_MID(BODY)
+{
+  widget(bitmap, {
+    .source = "theme://images/plate256.png";
+    BODY;
+  });
+}
+
+
+#define PLATE_SQUARE_MID_IMAGE_AND_TITLE(IMAGE, TITLE)
+{
+  PLATE_SQUARE_MID(
+		   widget(container_y, {
+		     space(1);
+
+		     widget(bitmap, {
+		       .source = IMAGE;
+		       .keepAspect = true;
+		       .weight = 5.0;
+		     });
+
+		     widget(label, {
+		       .align = center;
+		       .caption = TITLE;
+		     });
+		     
+		     space(1);
+		   });
+		   );
+}
+
+#define PLATE_WIDE(BODY)
+{
+  widget(bitmap, {
+    .source = "theme://images/plate256.png";
+    .textureBorders = [0.2,  0.2,  0.2,  0.2];
+    .vertexBorders  = [0.1,  0.1,  0.1,  0.1];
+    .borderScale = true;
+    BODY;
+  });
+}
+

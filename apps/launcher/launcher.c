@@ -15,7 +15,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+#if 0
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <ctype.h>
@@ -27,7 +27,6 @@
 #include <libglw/glw.h>
 
 #include "showtime.h"
-#include "app.h"
 #include "launcher.h"
 #include <layout/layout.h>
 
@@ -98,3 +97,4 @@ launcher_app_add(app_t *a)
 	  GLW_ATTRIB_SIGNAL_HANDLER, launcher_spawn_callback, a, 400,
 	  NULL);
 }
+#endif

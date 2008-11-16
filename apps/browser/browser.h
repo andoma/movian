@@ -19,11 +19,12 @@
 #ifndef BROWSER_H
 #define BROWSER_H
 
+#include "navigator.h"
+
+
 #include <libglw/glw.h>
 #include <fileaccess/fileaccess.h>
 #include <fileaccess/fa_probe.h>
-
-#include "app.h"
 
 LIST_HEAD(browser_node_list,   browser_node);
 TAILQ_HEAD(browser_node_queue, browser_node);
@@ -50,24 +51,20 @@ typedef struct browser_view {
 
 extern struct browser_view_queue browser_views;
 
+
+
+
+
 /**
  * A browser node is anything that is browsable
  */
 typedef struct browser_node {
+  int                       bn_refcnt;
 
-  /* Hierarchy, these five are protected by top level br_hierarchy_mutex. */
-
-  struct browser_root      *bn_root;
-  struct browser_node_queue bn_childs;
-  struct browser_node      *bn_parent;
-  TAILQ_ENTRY(browser_node) bn_parent_link;
-  int                       bn_refcnt;      /* Increase this if you
-					       hold a reference to the
-					       node without holding
-					       the br_hierarchy_mutex */
+  TAILQ_ENTRY(browser_node) bn_page_link;
 
   /* URL may never change after creation */
-  const char               *bn_url;
+  char                     *bn_url;
 
   int                       bn_type; /* FA_ -node type */
 
@@ -85,7 +82,7 @@ typedef struct browser_node {
   hts_mutex_t           bn_ftags_mutex;
   struct filetag_list       bn_ftags;
 
-  /* probe link and probe linked state is protected by root
+  /* probe link and probe linked state is protected by global
      probemutex, for more info see browser_probe.[ch] */
 
   LIST_ENTRY(browser_node) bn_probe_link;
@@ -96,6 +93,19 @@ typedef struct browser_node {
 
 
 
+/**
+ * A browser page lists multiple browser nodes
+ */
+typedef struct browser_page {
+  nav_page_t bp_np;
+  char      *bp_url;
+
+  struct browser_node_queue bp_childs;
+} browser_page_t;
+
+
+
+#if 0
 /**
  * Top level browser struct
  */
@@ -121,26 +131,22 @@ typedef struct browser_root {
   struct browser_node_queue br_autoview_queue;
 
 } browser_root_t;
+#endif
 
 
 void browser_node_ref(browser_node_t *bn);
 
 void browser_node_unref(browser_node_t *bn);
 
-browser_node_t *browser_node_add_child(browser_node_t *parent,
-				       const char *url, int type);
-
-browser_root_t *browser_root_create(const char *url);
-
-void browser_root_destroy(browser_root_t *br);
+browser_node_t *browser_node_create(browser_page_t *bp, 
+				    const char *url, int type);
 
 void browser_node_update_props(browser_node_t *bn);
 
-int browser_scandir(browser_node_t *bn, int async);
+int browser_scandir(browser_page_t *bp, int async);
 
-browser_node_t **browser_get_array_of_childs(browser_root_t *br,
-					     browser_node_t *bn);
+browser_node_t **browser_get_array_of_childs(browser_node_t *bn);
 
-void browser_slideshow(browser_node_t *cur, glw_t *parent, appi_t *ai);
+void browser_slideshow(browser_node_t *cur, glw_t *parent);
 
 #endif /* BROWSER_H */

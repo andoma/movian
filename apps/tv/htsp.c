@@ -167,7 +167,7 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int async)
 		     "TV client", "Access denied");
   if(r == -1) {
     /* User rejected */
-    glw_event_enqueue(&hc->hc_tv->tv_ai->ai_geq, 
+    glw_event_enqueue(NULL, //&hc->hc_tv->tv_ai->ai_geq, 
 		      glw_event_create(EVENT_RECONFIGURE, 
 				       sizeof(glw_event_t)));
     htsmsg_destroy(m);

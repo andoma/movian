@@ -26,8 +26,6 @@
 #include <limits.h>
 #include <errno.h>
 
-#include <libhts/hts_strtab.h>
-
 #include <libglw/glw.h>
 #include <GL/glx.h>
 #include <X11/Xatom.h>
@@ -37,11 +35,12 @@
 #include "layout/layout.h"
 #include "display.h"
 #include "video/video_decoder.h"
+#include "settings.h"
 
-glw_prop_t *prop_display;
-glw_prop_t *prop_gpu;
+hts_prop_t *prop_display;
+hts_prop_t *prop_gpu;
 
-glw_prop_t *prop_display_refreshrate;
+hts_prop_t *prop_display_refreshrate;
 
 static struct {
   Display *display;
@@ -53,7 +52,7 @@ static struct {
   Window win;
   GLXContext glxctx;
   float aspect_ratio;
-  int current_displaymode;
+  int is_fullscreen;
   Colormap colormap;
   const char *displayname;
   int coords[2][4];
@@ -72,42 +71,15 @@ static struct {
 
 
 static struct display_settings {
-  enum {
-    DISPLAYMODE_WINDOWED = 0,
-    DISPLAYMODE_FULLSCREEN,
-  } displaymode;
-
+  int fullscreen;
 } display_settings;
 
-static struct strtab displaymodetab[] = {
-  { "windowed",           DISPLAYMODE_WINDOWED },
-  { "fullscreen",         DISPLAYMODE_FULLSCREEN },
-};
-
-static glw_t *display_settings_model;
 
 PFNGLXGETVIDEOSYNCSGIPROC _glXGetVideoSyncSGI;
 PFNGLXWAITVIDEOSYNCSGIPROC _glXWaitVideoSyncSGI;
 
 static void update_gpu_info(void);
 
-/**
- * Load display settings
- */
-static void
-display_settings_load(void)
-{
-  htsmsg_t *settings;
-  const char *v;
-
-  if((settings = hts_settings_load("display")) == NULL)
-    return;
-
-  if((v = htsmsg_get_str(settings, "displaymode")) != NULL)
-    display_settings.displaymode = str2val(v, displaymodetab);
-
-  htsmsg_destroy(settings);
-}
 
 
 
@@ -119,8 +91,7 @@ display_settings_save(void)
 {
   htsmsg_t *m = htsmsg_create();
 
-  htsmsg_add_str(m, "displaymode", val2str(display_settings.displaymode,
-					   displaymodetab));
+  htsmsg_add_u32(m, "fullscreen", display_settings.fullscreen);
   
   hts_settings_save(m, "display");
   htsmsg_destroy(m);
@@ -131,43 +102,30 @@ display_settings_save(void)
  * Switch displaymode, we just set a variable and let mainloop switch
  * later on
  */
-
 static void
-display_set_mode(void *opaque, void *opaque2, int value)
+display_set_mode(void *opaque, int value)
 {
-  display_settings.displaymode = value;
+  display_settings.fullscreen = value;
 }
+
 
 /**
  * Add a settings pane with relevant settings
  */
-void
-display_settings_init(appi_t *ai, glw_t *m)
+static void
+display_settings_init(void)
 {
-  glw_t *icon = 
-    glw_model_create("theme://settings/display/display-icon.model", NULL,
-		     0, prop_global, NULL);
-  glw_t *tab  = 
-    glw_model_create("theme://settings/display/x11/display-x11.model", NULL,
-		     0, prop_global, NULL);
+  hts_prop_t *r;
 
-  glw_t *w;
+  htsmsg_t *settings = hts_settings_load("display");
 
-  glw_add_tab(m, "settings_list", icon, "settings_deck", tab);
+  r = settings_add_dir(NULL, "display", "Display settings");
+  
+  settings_add_bool(r, "fullscreen",
+		    "Fullscreen mode", 0, settings,
+		    display_set_mode, NULL);
 
-  display_settings_model = tab;
-
-  if((w = glw_find_by_id(tab, "displaymode", 0)) != NULL) {
-    glw_selection_add_text_option(w, "Windowed", display_set_mode, NULL, NULL,
-				  DISPLAYMODE_WINDOWED,
-				  display_settings.displaymode ==
-				  DISPLAYMODE_WINDOWED);
-
-    glw_selection_add_text_option(w, "Fullscreen", display_set_mode, NULL, NULL,
-				  DISPLAYMODE_FULLSCREEN,
-				  display_settings.displaymode ==
-				  DISPLAYMODE_FULLSCREEN);
-  }
+  htsmsg_destroy(settings);
 }
 
 
@@ -231,7 +189,7 @@ window_open(void)
 {
   XSetWindowAttributes winAttr;
   unsigned long mask;
-  int fullscreen = display_settings.displaymode == DISPLAYMODE_FULLSCREEN;
+  int fullscreen = display_settings.fullscreen;
   XTextProperty text;
   extern char *htsversion;
   char buf[60];
@@ -325,7 +283,7 @@ window_open(void)
 	    "Display: Using '__GL_SYNC_TO_VBLANK' for vertical sync\n");
   }
 
-  x11state.current_displaymode = display_settings.displaymode;
+  x11state.is_fullscreen = display_settings.fullscreen;
 
   update_gpu_info();
 
@@ -359,7 +317,7 @@ window_shutdown(void)
   glFlush();
   XSync(x11state.display, False);
 
-  if(x11state.current_displaymode == DISPLAYMODE_FULLSCREEN) {
+  if(x11state.is_fullscreen) {
     XUngrabPointer(x11state.display, CurrentTime);
     XUngrabKeyboard(x11state.display, CurrentTime);
   }
@@ -496,15 +454,15 @@ gl_sysglue_init(int argc, char **argv)
   int attribs[10];
   int na = 0;
 
-  prop_display = glw_prop_create(prop_global, "display");
-  prop_gpu     = glw_prop_create(prop_global, "gpu");
+  prop_display = hts_prop_create(hts_prop_get_global(), "display");
+  prop_gpu     = hts_prop_create(hts_prop_get_global(), "gpu");
 
   prop_display_refreshrate = 
-    glw_prop_create(prop_display, "refreshrate");
+    hts_prop_create(prop_display, "refreshrate");
 
   x11state.displayname = getenv("DISPLAY");
 
-  display_settings_load();
+  display_settings_init();
 
   if((x11state.display = XOpenDisplay(x11state.displayname)) == NULL) {
     fprintf(stderr, "Unable to open X display \"%s\"\n", x11state.displayname);
@@ -625,13 +583,13 @@ gl_keypress(XEvent *event)
 static void
 update_gpu_info(void)
 {
-  glw_prop_set_string(glw_prop_create(prop_gpu, "vendor"),
+  hts_prop_set_string(hts_prop_create(prop_gpu, "vendor"),
 		      (const char *)glGetString(GL_VENDOR));
 
-  glw_prop_set_string(glw_prop_create(prop_gpu, "name"),
+  hts_prop_set_string(hts_prop_create(prop_gpu, "name"),
 		      (const char *)glGetString(GL_RENDERER));
 
-  glw_prop_set_string(glw_prop_create(prop_gpu, "driver"),
+  hts_prop_set_string(hts_prop_create(prop_gpu, "driver"),
 		      (const char *)glGetString(GL_VERSION));
 }
 
@@ -649,7 +607,7 @@ gl_sysglue_mainloop(void)
   _glXGetVideoSyncSGI(&retraceCount);
 
   while(showtime_running) {
-    if(x11state.current_displaymode != display_settings.displaymode)
+    if(x11state.is_fullscreen != display_settings.fullscreen)
       window_change_displaymode();
 
     if(frame_duration != 0) {
@@ -692,7 +650,7 @@ gl_sysglue_mainloop(void)
     glXSwapBuffers(x11state.display, x11state.win);
 
     if(gl_update_timings())
-      glw_prop_set_float(prop_display_refreshrate,
+      hts_prop_set_float(prop_display_refreshrate,
 			 (float)1000000. / frame_duration);
 
     glw_reaper();

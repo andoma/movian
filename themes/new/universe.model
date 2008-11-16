@@ -1,0 +1,87 @@
+#include "theme://include/plates.model"
+
+
+widget(form, {
+
+  widget(container_z, {
+
+    .displacement = [0, 0, 1];
+
+    widget(fx_texrot, {
+      .source = "theme://images/caribbean.png";
+    });
+
+    widget(container_y, {
+
+      widget(bitmap, {
+	.source = "theme://images/alphashade.png";
+	.alpha = 0.2;
+	
+
+	widget(container_x, {
+	  .weight = 0.05;
+	  
+	  widget(bitmap, {
+	    
+	    .source = "theme://images/plate256.png";
+	    .selectable = true;
+	    .focusCursor = true;
+	    .focusAlpha = true;
+	    
+	    onEvent(enter, systemEvent(navigator, back, ""));
+	    
+	    widget(label, {
+	      .caption = "Back";
+	    });
+	  });
+	  
+	  widget(label, {
+	    .weight = 20;
+	    .caption = global.nav.currentpage.url;
+	  });
+	});
+      });
+
+      widget(deck, {
+	.weight = 10;
+
+	cloner(global.nav.pages, animator, {
+	  .time = 0.3;
+	  .source = "theme://pagemodels/" + page.type + ".model";
+	});
+
+      });
+    });
+
+  });
+});
+
+/*
+
+
+widget(form, {
+  widget(container_y, {
+
+    widget(list, {
+      cloner(global.clonertest, label, {
+	.selectable = true;
+	.focusCursor = true;
+	.focusAlpha = true;
+	.caption = self.name;
+      });
+    });
+
+
+    widget(list, {
+      cloner(global.clonertest2, label, {
+	.selectable = true;
+	.focusCursor = true;
+	.focusAlpha = true;
+	.caption = self.name;
+      });
+    });
+
+  });
+});
+
+*/

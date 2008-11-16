@@ -27,7 +27,6 @@
 #include <libglw/glw.h>
 
 #include "showtime.h"
-#include "app.h"
 #include "settings.h"
 #include "hid/keymapper.h"
 #include "layout/layout.h"
@@ -35,14 +34,13 @@
 #include "audio/audio.h"
 #include "display/display.h"
 #include "hid/hid.h"
-
+#if 0
 /**
  *
  */
 void
 settings_init(void)
 {
-  appi_t *ai;
   glw_t *l;
 
   ai = appi_create("Settings");
@@ -70,3 +68,4 @@ settings_init(void)
       glw_select(l);
   }
 }
+#endif
