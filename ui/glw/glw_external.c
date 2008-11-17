@@ -69,7 +69,6 @@ glw_ref(glw_t *w)
 /*
  *
  */
-
 void
 glw_set_active(glw_t *w)
 {
@@ -322,32 +321,6 @@ glw_detach(glw_t *w)
   }
   glw_unlock();
 }
-
-/**
- *
- */
-int
-glw_get_text(glw_t *w, char *buf, size_t buflen)
-{
-  int r;
-  glw_lock();
-  r = glw_get_text0(w, buf, buflen);
-  glw_unlock();
-  return r;
-}
-/**
- *
- */
-int
-glw_get_int(glw_t *w, int *result)
-{
-  int r;
-  glw_lock();
-  r = glw_get_int0(w, result);
-  glw_unlock();
-  return r;
-}
-
 
 /*
  *
