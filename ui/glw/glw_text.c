@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "fileaccess/fa_rawloader.h"
+
 #include "glw.h"
 #include "glw_i.h"
 #include "glw_text.h"
@@ -76,7 +78,7 @@ glw_text_getutf8(const char **s)
  *
  */
 int
-glw_text_init(void)
+glw_text_init(glw_root_t *gr)
 {
   int error;
   const void *r;
@@ -90,13 +92,13 @@ glw_text_init(void)
     return -1;
   }
 
-  if((r = glw_rawloader(font_variable, &size)) == NULL) {
+  if((r = fa_rawloader(font_variable, &size)) == NULL) {
     fprintf(stderr, "Unable to load %s\n", font_variable);
     return -1;
   }
 
-  if(glw_text_bitmap_init(r, size) < 0) {
-    glw_rawunload(r);
+  if(glw_text_bitmap_init(gr, r, size) < 0) {
+    fa_rawunload(r);
     fprintf(stderr, "Cannot load font \"%s\" for bitmapped rendering\n", 
 	    font_variable);
     return -1;

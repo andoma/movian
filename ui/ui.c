@@ -1,6 +1,6 @@
 /*
- *  glue for system dependent gl stuff
- *  Copyright (C) 2007 Andreas Öman
+ *  User interface top control
+ *  Copyright (C) 2007 Andreas Ã–man
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,15 +16,51 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SYSGLUE_H
-#define SYSGLUE_H
+#include "ui.h"
+#include "ui/glw/glw.h"
+#include "libhts/htsthreads.h"
 
-void gl_sysglue_init(int argc, char **argv);
+static hts_mutex_t ui_mutex;
+static hts_cond_t ui_cond;
 
-void gl_sysglue_mainloop(void);
+static int showtime_running;
 
-int gl_update_timings(void);
+/**
+ *
+ */
+void
+ui_exit_showtime(void)
+{
+  hts_mutex_lock(&ui_mutex);
+  showtime_running = 0;
+  hts_cond_signal(&ui_cond);
+  hts_mutex_unlock(&ui_mutex);
+}
 
-#endif /* SYSGLUE_H */
+
+/**
+ *
+ */
+void
+ui_loop(void)
+{
+  uii_t *uii;
 
 
+  glw_init_global();
+
+  showtime_running = 1;
+
+  uii = glw_start(NULL);
+
+  hts_mutex_lock(&ui_mutex);
+
+
+  while(showtime_running) {
+    hts_cond_wait(&ui_cond, &ui_mutex);
+  }
+
+  hts_mutex_unlock(&ui_mutex);
+
+  uii->uii_ui->ui_stop(uii);
+}

@@ -98,7 +98,7 @@ filename_by_url(const char *url)
  *
  */
 int
-fa_imageloader(glw_image_load_ctrl_t *ctrl)
+fa_imageloader(fa_image_load_ctrl_t *ctrl)
 {
   fa_protocol_t *fap;
   void *fh;

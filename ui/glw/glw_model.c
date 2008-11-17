@@ -32,7 +32,7 @@
  *
  */
 static glw_t *
-glw_model_error(errorinfo_t *ei, glw_t *parent)
+glw_model_error(glw_root_t *gr, errorinfo_t *ei, glw_t *parent)
 {
   char buf[128];
 
@@ -40,10 +40,11 @@ glw_model_error(errorinfo_t *ei, glw_t *parent)
 	   ei->file, ei->line, ei->error);
   fprintf(stderr, "%s\n", buf);
 
-  return glw_create(GLW_LABEL,
-		    GLW_ATTRIB_PARENT, parent,
-		    GLW_ATTRIB_CAPTION, buf,
-		    NULL);
+  return glw_create_i(gr,
+		      GLW_LABEL,
+		      GLW_ATTRIB_PARENT, parent,
+		      GLW_ATTRIB_CAPTION, buf,
+		      NULL);
 }
 
 
@@ -51,7 +52,7 @@ glw_model_error(errorinfo_t *ei, glw_t *parent)
  *
  */
 static glw_t *
-glw_model_create2(token_t *sof, const char *src, glw_t *parent,
+glw_model_create2(glw_root_t *gr, token_t *sof, const char *src, glw_t *parent,
 		  prop_t *prop, int flags)
 {
   token_t *eof, *l;
@@ -60,7 +61,7 @@ glw_model_create2(token_t *sof, const char *src, glw_t *parent,
   glw_model_eval_context_t ec;
 
   if((l = glw_model_load1(src, &ei, sof)) == NULL)
-    return glw_model_error(&ei, parent);
+    return glw_model_error(gr, &ei, parent);
 
   eof = calloc(1, sizeof(token_t));
   eof->type = TOKEN_END;
@@ -68,24 +69,26 @@ glw_model_create2(token_t *sof, const char *src, glw_t *parent,
   l->next = eof;
   
   if(glw_model_preproc(sof, &ei))
-    return glw_model_error(&ei, parent);
+    return glw_model_error(gr, &ei, parent);
 
   if(glw_model_parse(sof, &ei))
-    return glw_model_error(&ei, parent);
+    return glw_model_error(gr, &ei, parent);
 
   memset(&ec, 0, sizeof(ec));
 
-  r = glw_create_i(GLW_MODEL,
+  r = glw_create_i(gr,
+		   GLW_MODEL,
 		   GLW_ATTRIB_CAPTION, src,
 		   GLW_ATTRIB_PARENT, parent,
 		   NULL);
+  ec.gr = gr;
   ec.w = r;
   ec.ei = &ei;
   ec.prop = prop;
 
   if(glw_model_eval_block(sof, &ec)) {
     glw_destroy0(ec.w);
-    return glw_model_error(&ei, parent);
+    return glw_model_error(gr, &ei, parent);
   }
   
   return r;
@@ -96,7 +99,8 @@ glw_model_create2(token_t *sof, const char *src, glw_t *parent,
  *
  */
 glw_t *
-glw_model_create(const char *src, glw_t *parent, int flags, prop_t *prop)
+glw_model_create(glw_root_t *gr, const char *src,
+		 glw_t *parent, int flags, prop_t *prop)
 {
   token_t *sof;
   glw_t *r;
@@ -105,7 +109,7 @@ glw_model_create(const char *src, glw_t *parent, int flags, prop_t *prop)
   sof->type = TOKEN_START;
   sof->file = refstr_create(src);
 
-  r = glw_model_create2(sof, src, parent, prop, flags);
+  r = glw_model_create2(gr, sof, src, parent, prop, flags);
 
   glw_model_free_chain(sof);
   return r;

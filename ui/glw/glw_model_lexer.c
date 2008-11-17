@@ -18,11 +18,7 @@
 
 #include "glw.h"
 #include "glw_model.h"
-
-extern const void *(*glw_rawloader)(const char *filename, size_t *sizeptr);
-extern void (*glw_rawunload)(const void *data);
-
-
+#include "fileaccess/fa_rawloader.h"
 
 /**
  *
@@ -287,7 +283,7 @@ glw_model_load1(const char *filename, errorinfo_t *ei, token_t *prev)
   refstr_t *f;
   token_t *last;
 
-  if((src = glw_rawloader(filename, NULL)) == NULL) {
+  if((src = fa_rawloader(filename, NULL)) == NULL) {
     snprintf(ei->error, sizeof(ei->error), "Unable to open \"%s\"", filename);
     snprintf(ei->file,  sizeof(ei->file),  "%s", filename);
     ei->line = 0;
@@ -297,6 +293,6 @@ glw_model_load1(const char *filename, errorinfo_t *ei, token_t *prev)
   f = refstr_create(filename);
   last = lexer(src, ei, f, prev);
   refstr_unref(f);
-  glw_rawunload(src);
+  fa_rawunload(src);
   return last;
 }

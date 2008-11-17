@@ -155,7 +155,7 @@ settings_add_bool(prop_t *parent, const char *id, const char *title,
   prop_set_int(v, !!initial);
 
   s->s_callback = cb;
-  s->s_opaque = cb;
+  s->s_opaque = opaque;
   
   sub = prop_subscribe(v, NULL, callback_bool, s);
   s->s_sub = sub;

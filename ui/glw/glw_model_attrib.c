@@ -24,6 +24,7 @@
 
 #include "glw_model.h"
 #include "glw.h"
+#include "glw_i.h"
 
 
 /**
@@ -61,7 +62,7 @@ set_string(glw_model_eval_context_t *ec, const token_attrib_t *a,
 			    a->name);
   }
 
-  glw_set(ec->w, a->attrib, str, NULL);
+  glw_set_i(ec->w, a->attrib, str, NULL);
   return 0;
 }
 
@@ -97,7 +98,7 @@ set_float(glw_model_eval_context_t *ec, const token_attrib_t *a,
 			    a->name);
   }
 
-  glw_set(ec->w, a->attrib, f, NULL);
+  glw_set_i(ec->w, a->attrib, f, NULL);
   return 0;
 }
 
@@ -132,7 +133,7 @@ set_int(glw_model_eval_context_t *ec, const token_attrib_t *a,
 			    a->name);
   }
 
-  glw_set(ec->w, a->attrib, v, NULL);
+  glw_set_i(ec->w, a->attrib, v, NULL);
   return 0;
 }
 
@@ -149,11 +150,11 @@ set_float3(glw_model_eval_context_t *ec, const token_attrib_t *a,
     return glw_model_seterr(ec->ei, t, "Attribute '%s' expects a vec3",
 			    a->name);
 
-  glw_set(ec->w, a->attrib, 
-	  t->t_float_vector[0],
-	  t->t_float_vector[1],
-	  t->t_float_vector[2],
-	  NULL);
+  glw_set_i(ec->w, a->attrib, 
+	    t->t_float_vector[0],
+	    t->t_float_vector[1],
+	    t->t_float_vector[2],
+	    NULL);
   return 0;
 }
 
@@ -169,12 +170,12 @@ set_float4(glw_model_eval_context_t *ec, const token_attrib_t *a,
     return glw_model_seterr(ec->ei, t, "Attribute '%s' expects a vec4",
 			    a->name);
 
-  glw_set(ec->w, a->attrib, 
-	  t->t_float_vector[0],
-	  t->t_float_vector[1],
-	  t->t_float_vector[2],
-	  t->t_float_vector[3],
-	  NULL);
+  glw_set_i(ec->w, a->attrib, 
+	    t->t_float_vector[0],
+	    t->t_float_vector[1],
+	    t->t_float_vector[2],
+	    t->t_float_vector[3],
+	    NULL);
   return 0;
 }
 
@@ -200,7 +201,7 @@ set_align(glw_model_eval_context_t *ec, const token_attrib_t *a,
   if(t->type != TOKEN_IDENTIFIER || (v = str2val(t->t_string, aligntab)) < 0)
     return glw_model_seterr(ec->ei, t, "Invalid assignment for attribute %s",
 			    a->name);
-  glw_set(ec->w, GLW_ATTRIB_ALIGNMENT, v, NULL);
+  glw_set_i(ec->w, GLW_ATTRIB_ALIGNMENT, v, NULL);
   return 0;
 }
 
@@ -224,7 +225,7 @@ set_orientation(glw_model_eval_context_t *ec, const token_attrib_t *a,
 						 orientationtab)) < 0)
     return glw_model_seterr(ec->ei, t, "Invalid assignment for attribute %s",
 			    a->name);
-  glw_set(ec->w, GLW_ATTRIB_ORIENTATION, v, NULL);
+  glw_set_i(ec->w, GLW_ATTRIB_ORIENTATION, v, NULL);
   return 0;
 }
 
@@ -253,7 +254,7 @@ set_transition_effect(glw_model_eval_context_t *ec, const token_attrib_t *a,
 						 transitiontab)) < 0)
     return glw_model_seterr(ec->ei, t, "Invalid assignment for attribute %s",
 			    a->name);
-  glw_set(ec->w, GLW_ATTRIB_TRANSITION_EFFECT, v, NULL);
+  glw_set_i(ec->w, GLW_ATTRIB_TRANSITION_EFFECT, v, NULL);
   return 0;
 }
 
@@ -279,7 +280,7 @@ set_flag(glw_model_eval_context_t *ec, const token_attrib_t *a,
 			    a->name);
 
   if(set)
-    glw_set(ec->w, GLW_ATTRIB_FLAGS, a->attrib, NULL);
+    glw_set_i(ec->w, GLW_ATTRIB_FLAGS, a->attrib, NULL);
   return 0;
 }
 

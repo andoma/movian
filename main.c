@@ -34,14 +34,13 @@
 #include "prop.h"
 
 #include "video/video_decoder.h"
-#include "display/display.h"
 #include "audio/audio.h"
-#include "layout/layout.h"
 #include "fileaccess/fileaccess.h"
 #include "fileaccess/fa_imageloader.h"
 #include "fileaccess/fa_rawloader.h"
 #include "navigator.h"
 #include "settings.h"
+#include "ui/ui.h"
 
 pthread_mutex_t ffmutex;
 
@@ -52,22 +51,11 @@ time_t walltime;
 int concurrency;
 extern char *htsversion;
 prop_t *prop_ui_scale;
-int showtime_running;
 static int stopcode;
 
 const char *themepath = HTS_CONTENT_PATH "/showtime/themes/new";
 
 static int main_event_handler(event_t *e, void *opaque);
-
-
-static void
-ffmpeglockmgr(int lock)
-{
-  if(lock)
-    fflock();
-  else
-    ffunlock();
-}
 
 
 prop_t *prop_sec;
@@ -205,34 +193,22 @@ main(int argc, char **argv)
 
   fileaccess_init();
 
-  gl_sysglue_init(argc, argv);
-
-  if(glw_init(ffmpeglockmgr, fa_imageloader, fa_rawloader, fa_rawunload,
-	      concurrency)) {
-    fprintf(stderr, "libglw user interface failed to initialize, exiting\n");
-    exit(0);
-  }
-
   nav_init();
 
   audio_init();
 
   vd_init();
 
-  layout_create();
-
   event_handler_register("main", main_event_handler, EVENTPRI_MAIN, NULL);
 
   //  apps_load();
-
-  showtime_running = 1;
 
   if(optind < argc)
     nav_open(argv[optind]);
   else
     nav_open("mainmenu://");
 
-  gl_sysglue_mainloop();
+  ui_loop();
 
   return stopcode;
 }
@@ -255,6 +231,7 @@ main_event_handler(event_t *e, void *opaque)
     stopcode = 10;
     break;
   }
-  showtime_running = 0;
+
+  ui_exit_showtime();
   return 1;
 }

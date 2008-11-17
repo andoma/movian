@@ -44,37 +44,25 @@
 #include "glw_bitmap.h"
 #include "glw_scaler.h"
 
+#include "fileaccess/fa_imageloader.h"
+#include "showtime.h"
+
 static int maxwidth = 2048;
 static int maxheight = 1024;
 
-static int image_decode(glw_texture_t *ht);
+static int image_decode(glw_root_t *gr, glw_texture_t *ht);
 
-static void glw_tex_deref_locked(glw_texture_t *gt);
+static void glw_tex_deref_locked(glw_root_t *gr, glw_texture_t *gt);
 static void glw_tex_set_state_locked(glw_texture_t *gt, int state);
-
-static hts_thread_t imageptid;
-
-LIST_HEAD(glw_texture_list, glw_texture);
-
-static struct glw_texture_list glw_tex_active_list;
-static struct glw_texture_list glw_tex_flush_list;
-
-static hts_mutex_t tex_mutex;
-TAILQ_HEAD(, glw_texture) tex_rel_queue;
-
-static hts_cond_t tex_load_cond;
-TAILQ_HEAD(, glw_texture) tex_load_queue[2];
-
-LIST_HEAD(, glw_texture) tex_list;
 
 
 void
-glw_tex_is_active(glw_texture_t *gt)
+glw_tex_is_active(glw_root_t *gr, glw_texture_t *gt)
 {
-  hts_mutex_lock(&tex_mutex);
+  hts_mutex_lock(&gr->gr_tex_mutex);
   LIST_REMOVE(gt, gt_flush_link);
-  LIST_INSERT_HEAD(&glw_tex_active_list, gt, gt_flush_link);
-  hts_mutex_unlock(&tex_mutex);
+  LIST_INSERT_HEAD(&gr->gr_tex_active_list, gt, gt_flush_link);
+  hts_mutex_unlock(&gr->gr_tex_mutex);
 }
 
 static void
@@ -92,23 +80,23 @@ glw_tex_free_gl_resources(glw_texture_t *gt)
 }
 
 void
-glw_tex_autoflush(void)
+glw_tex_autoflush(glw_root_t *gr)
 {
   glw_texture_t *gt;
 
-  hts_mutex_lock(&tex_mutex);
+  hts_mutex_lock(&gr->gr_tex_mutex);
 
-  while((gt = LIST_FIRST(&glw_tex_flush_list)) != NULL) {
+  while((gt = LIST_FIRST(&gr->gr_tex_flush_list)) != NULL) {
     assert(gt->gt_filename != NULL);
     LIST_REMOVE(gt, gt_flush_link);
     glw_tex_free_gl_resources(gt);
     gt->gt_state = GT_STATE_INACTIVE;
   }
 
-  LIST_MOVE(&glw_tex_flush_list, &glw_tex_active_list, gt_flush_link);
-  LIST_INIT(&glw_tex_active_list);
+  LIST_MOVE(&gr->gr_tex_flush_list, &gr->gr_tex_active_list, gt_flush_link);
+  LIST_INIT(&gr->gr_tex_active_list);
 
-  hts_mutex_unlock(&tex_mutex);
+  hts_mutex_unlock(&gr->gr_tex_mutex);
 }
 
 
@@ -117,77 +105,80 @@ glw_tex_autoflush(void)
 static void *
 image_thread(void *aux)
 {
+  glw_root_t *gr = aux;
   glw_texture_t *gt;
   int r;
 
-  hts_mutex_lock(&tex_mutex);
+  hts_mutex_lock(&gr->gr_tex_mutex);
 
   while(1) {
     
     while(1) {
 
-      if((gt = TAILQ_FIRST(&tex_load_queue[0])) != NULL) {
-	TAILQ_REMOVE(&tex_load_queue[0], gt, gt_work_link);
+      if((gt = TAILQ_FIRST(&gr->gr_tex_load_queue[0])) != NULL) {
+	TAILQ_REMOVE(&gr->gr_tex_load_queue[0], gt, gt_work_link);
 	break;
       }
-      if((gt = TAILQ_FIRST(&tex_load_queue[1])) != NULL) {
-	TAILQ_REMOVE(&tex_load_queue[1], gt, gt_work_link);
+      if((gt = TAILQ_FIRST(&gr->gr_tex_load_queue[1])) != NULL) {
+	TAILQ_REMOVE(&gr->gr_tex_load_queue[1], gt, gt_work_link);
 	break;
       }
-      hts_cond_wait(&tex_load_cond, &tex_mutex);
+      hts_cond_wait(&gr->gr_tex_load_cond, &gr->gr_tex_mutex);
     }
 
     if(gt->gt_refcnt > 1) {
-      hts_mutex_unlock(&tex_mutex);
-      r = image_decode(gt);
-      hts_mutex_lock(&tex_mutex);
+      hts_mutex_unlock(&gr->gr_tex_mutex);
+      r = image_decode(gr, gt);
+      hts_mutex_lock(&gr->gr_tex_mutex);
     } else {
       r = 0;
     }
     
     glw_tex_set_state_locked(gt, r < 0 ? GT_STATE_ERROR : GT_STATE_VALID);
 
-    LIST_INSERT_HEAD(&glw_tex_active_list, gt, gt_flush_link);
+    LIST_INSERT_HEAD(&gr->gr_tex_active_list, gt, gt_flush_link);
 
-    glw_tex_deref_locked(gt);
+    glw_tex_deref_locked(gr, gt);
   }
 }
 
 
 void
-glw_image_init(int concurrency)
+glw_image_init(glw_root_t *gr)
 {
   int i;
+  hts_thread_t imageptid;
+  extern int concurrency;
 
-  hts_mutex_init(&tex_mutex);
-  hts_cond_init(&tex_load_cond);
+  hts_mutex_init(&gr->gr_tex_mutex);
+  hts_cond_init(&gr->gr_tex_load_cond);
 
-  TAILQ_INIT(&tex_rel_queue);
-  TAILQ_INIT(&tex_load_queue[0]);
-  TAILQ_INIT(&tex_load_queue[1]);
+  TAILQ_INIT(&gr->gr_tex_rel_queue);
+  TAILQ_INIT(&gr->gr_tex_load_queue[0]);
+  TAILQ_INIT(&gr->gr_tex_load_queue[1]);
 
   /* Start multiple workers for decoding images */
   for(i = 0; i < concurrency; i++)
-    hts_thread_create(&imageptid, image_thread, NULL);
+    hts_thread_create(&imageptid, image_thread, gr);
 }
 
 /**
  * Flush all loaded textures, must be done on the gl thread context
  */
 void
-glw_tex_flush_all(void)
+glw_tex_flush_all(glw_root_t *gr)
 {
   glw_texture_t *gt;
-  hts_mutex_lock(&tex_mutex);
+  hts_mutex_lock(&gr->gr_tex_mutex);
 
-  LIST_FOREACH(gt, &tex_list, gt_global_link) {
+  LIST_FOREACH(gt, &gr->gr_tex_list, gt_global_link) {
     if(gt->gt_state != GT_STATE_VALID)
       continue;
     LIST_REMOVE(gt, gt_flush_link);
     glw_tex_free_gl_resources(gt);
     gt->gt_state = GT_STATE_INACTIVE;
   }
-  hts_mutex_unlock(&tex_mutex);
+  hts_mutex_unlock(&gr->gr_tex_mutex);
 }
 
 
@@ -202,11 +193,6 @@ make_powerof2(int v)
   m = ((1 << (av_log2(v))) + (1 << (av_log2(v) + 1))) / 2;
   return 1 << (av_log2(v) + (v > m));
 }
-
-
-
-
-extern int (*glw_imageloader)(glw_image_load_ctrl_t *ctrl);
 
 typedef void *SwsFilter;
 
@@ -236,13 +222,13 @@ static void texture_load_rescale_swscale(AVCodecContext *ctx, AVFrame *frame,
 static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
 
 static int
-image_decode(glw_texture_t *gt)
+image_decode(glw_root_t *gr, glw_texture_t *gt)
 {
   int r, w, h, got_pic, pix_fmt, x, y, i;
   AVCodecContext *ctx;
   AVCodec *codec;
   AVFrame *frame, *frame_A, *frame_B = NULL;
-  glw_image_load_ctrl_t ctrl;
+  fa_image_load_ctrl_t ctrl;
   int need_format_conv = 0;
   int need_rescale;
   uint32_t *palette, *u32p;
@@ -254,23 +240,23 @@ image_decode(glw_texture_t *gt)
   memset(&ctrl, 0, sizeof(ctrl));
   ctrl.url = gt->gt_filename;
   
-  if(glw_imageloader(&ctrl))
+  if(fa_imageloader(&ctrl))
     return -1;
 
-  glw_ffmpeglockmgr(1);
+  fflock();
 
   ctx = avcodec_alloc_context();
   codec = avcodec_find_decoder(ctrl.codecid);
   
   if(avcodec_open(ctx, codec) < 0) {
     avcodec_close(ctx);
-    glw_ffmpeglockmgr(0);
+    ffunlock();
     av_free(ctx);
     free(ctrl.data);
     return -1;
   }
   
-  glw_ffmpeglockmgr(0);
+  ffunlock();
 
   frame_A = avcodec_alloc_frame();
 
@@ -371,7 +357,7 @@ image_decode(glw_texture_t *gt)
 
   gt->gt_aspect = (float)w / (float)h;
 
-  if(!(glw_sysfeatures & GLW_SYSFEATURE_TNPO2)) {
+  if(!(gr->gr_sysfeatures & GLW_SYSFEATURE_TNPO2)) {
     /* We lack non-power-of-two texture support, check if we must rescale.
      * Since the bitmap aspect is already calculated, it will automatically 
      * compensate the rescaling when we render the texture.
@@ -401,9 +387,9 @@ image_decode(glw_texture_t *gt)
     texture_load_direct(frame, gt);
   }
 
-  glw_ffmpeglockmgr(1);
+  fflock();
   avcodec_close(ctx);
-  glw_ffmpeglockmgr(0);
+  ffunlock();
   av_free(ctx);
 
   av_free(frame_A);
@@ -577,23 +563,23 @@ texture_scale_old(AVCodecContext *ctx, AVFrame *frame, glw_texture_t *gt)
 
 
 void
-glw_texture_purge(void)
+glw_texture_purge(glw_root_t *gr)
 {
   glw_texture_t *gt; 
-  hts_mutex_lock(&tex_mutex);
+  hts_mutex_lock(&gr->gr_tex_mutex);
 
-  while((gt = TAILQ_FIRST(&tex_rel_queue)) != NULL) {
-    TAILQ_REMOVE(&tex_rel_queue, gt, gt_work_link);
+  while((gt = TAILQ_FIRST(&gr->gr_tex_rel_queue)) != NULL) {
+    TAILQ_REMOVE(&gr->gr_tex_rel_queue, gt, gt_work_link);
 
     glw_tex_free_gl_resources(gt);
     free(gt);
   }
-  hts_mutex_unlock(&tex_mutex);
+  hts_mutex_unlock(&gr->gr_tex_mutex);
 }
 
 
 static void
-glw_tex_deref_locked(glw_texture_t *gt)
+glw_tex_deref_locked(glw_root_t *gr, glw_texture_t *gt)
 {
   gt->gt_refcnt--;
 
@@ -611,15 +597,15 @@ glw_tex_deref_locked(glw_texture_t *gt)
   if(gt->gt_bitmap != NULL)
     munmap(gt->gt_bitmap, gt->gt_bitmap_size);
 
-  TAILQ_INSERT_TAIL(&tex_rel_queue, gt, gt_work_link);
+  TAILQ_INSERT_TAIL(&gr->gr_tex_rel_queue, gt, gt_work_link);
 }
 
 void
-glw_tex_deref(glw_texture_t *gt)
+glw_tex_deref(glw_root_t *gr, glw_texture_t *gt)
 {
-  hts_mutex_lock(&tex_mutex);
-  glw_tex_deref_locked(gt);
-  hts_mutex_unlock(&tex_mutex);
+  hts_mutex_lock(&gr->gr_tex_mutex);
+  glw_tex_deref_locked(gr, gt);
+  hts_mutex_unlock(&gr->gr_tex_mutex);
 }
 
 
@@ -633,46 +619,46 @@ glw_tex_set_state_locked(glw_texture_t *gt, int state)
 
 
 glw_texture_t *
-glw_tex_create(const char *filename)
+glw_tex_create(glw_root_t *gr, const char *filename)
 {
   glw_texture_t *gt;
 
-  hts_mutex_lock(&tex_mutex);
+  hts_mutex_lock(&gr->gr_tex_mutex);
 
-  LIST_FOREACH(gt, &tex_list, gt_global_link)
+  LIST_FOREACH(gt, &gr->gr_tex_list, gt_global_link)
     if(!strcmp(gt->gt_filename, filename))
       break;
 
   if(gt == NULL) {
     gt = calloc(1, sizeof(glw_texture_t));
     gt->gt_filename = strdup(filename);
-    LIST_INSERT_HEAD(&tex_list, gt, gt_global_link);
+    LIST_INSERT_HEAD(&gr->gr_tex_list, gt, gt_global_link);
     gt->gt_state = GT_STATE_INACTIVE;
   }
 
   gt->gt_refcnt++;
 
-  hts_mutex_unlock(&tex_mutex);
+  hts_mutex_unlock(&gr->gr_tex_mutex);
   return gt;
 }
 
 
 static void
-gl_tex_req_load(glw_texture_t *gt)
+gl_tex_req_load(glw_root_t *gr, glw_texture_t *gt)
 {
-  hts_mutex_lock(&tex_mutex);
+  hts_mutex_lock(&gr->gr_tex_mutex);
   gt->gt_refcnt++;
 
   if(!strncmp(gt->gt_filename, "thumb://", 8)) {
-    TAILQ_INSERT_TAIL(&tex_load_queue[1], gt, gt_work_link);
+    TAILQ_INSERT_TAIL(&gr->gr_tex_load_queue[1], gt, gt_work_link);
   } else {
-    TAILQ_INSERT_TAIL(&tex_load_queue[0], gt, gt_work_link);
+    TAILQ_INSERT_TAIL(&gr->gr_tex_load_queue[0], gt, gt_work_link);
   }
 
   gt->gt_state = GT_STATE_LOADING;
 
-  hts_cond_signal(&tex_load_cond);
-  hts_mutex_unlock(&tex_mutex);
+  hts_cond_signal(&gr->gr_tex_load_cond);
+  hts_mutex_unlock(&gr->gr_tex_mutex);
 }
 
 
@@ -687,14 +673,14 @@ get_ts(void)
 
 
 void
-glw_tex_layout(glw_texture_t *gt)
+glw_tex_layout(glw_root_t *gr, glw_texture_t *gt)
 {
   int siz;
   void *p;
 
   switch(gt->gt_state) {
   case GT_STATE_INACTIVE:
-    gl_tex_req_load(gt);
+    gl_tex_req_load(gr, gt);
     return;
     
   case GT_STATE_LOADING:
@@ -714,9 +700,9 @@ glw_tex_layout(glw_texture_t *gt)
 
     glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
 
-    hts_mutex_lock(&tex_mutex);
+    hts_mutex_lock(&gr->gr_tex_mutex);
     glw_tex_set_state_locked(gt, GT_STATE_GOT_PBO);
-    hts_mutex_unlock(&tex_mutex);
+    hts_mutex_unlock(&gr->gr_tex_mutex);
     return;
 
   case GT_STATE_GOT_PBO:
@@ -765,7 +751,7 @@ glw_tex_layout(glw_texture_t *gt)
     /* FALLTHRU */
 
   case GT_STATE_ERROR:
-    glw_tex_is_active(gt);
+    glw_tex_is_active(gr, gt);
     break;
   }
 }

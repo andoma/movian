@@ -26,24 +26,29 @@
 #include <limits.h>
 #include <errno.h>
 
-#include "ui/glw/glw.h"
+#include "glw.h"
+#include "glw_i.h"
 
 #include <GL/glx.h>
+#include <GL/glu.h>
 #include <X11/Xatom.h>
 
 #include "showtime.h"
 #include "hid/keymapper.h"
 #include "layout/layout.h"
-#include "display/display.h"
 #include "video/video_decoder.h"
 #include "settings.h"
 
-prop_t *prop_display;
-prop_t *prop_gpu;
+typedef struct glw_x11 {
 
-prop_t *prop_display_refreshrate;
+  glw_root_t gr;
 
-static struct {
+  hts_thread_t threadid;
+
+  int running;
+
+  glw_t *universe;
+
   Display *display;
   int screen;
   int screen_width;
@@ -53,7 +58,10 @@ static struct {
   Window win;
   GLXContext glxctx;
   float aspect_ratio;
+
   int is_fullscreen;
+  int want_fullscreen;
+
   Colormap colormap;
   const char *displayname;
   int coords[2][4];
@@ -68,16 +76,11 @@ static struct {
     pid_t pid;
   } screensaver;
   Atom deletewindow;
-} x11state;
 
+  PFNGLXGETVIDEOSYNCSGIPROC glXGetVideoSyncSGI;
+  PFNGLXWAITVIDEOSYNCSGIPROC glXWaitVideoSyncSGI;
 
-static struct display_settings {
-  int fullscreen;
-} display_settings;
-
-
-PFNGLXGETVIDEOSYNCSGIPROC _glXGetVideoSyncSGI;
-PFNGLXWAITVIDEOSYNCSGIPROC _glXWaitVideoSyncSGI;
+} glw_x11_t;
 
 static void update_gpu_info(void);
 
@@ -88,11 +91,11 @@ static void update_gpu_info(void);
  * Save display settings
  */
 static void
-display_settings_save(void)
+display_settings_save(glw_x11_t *gx11)
 {
   htsmsg_t *m = htsmsg_create();
 
-  htsmsg_add_u32(m, "fullscreen", display_settings.fullscreen);
+  htsmsg_add_u32(m, "fullscreen", gx11->want_fullscreen);
   
   hts_settings_save(m, "display");
   htsmsg_destroy(m);
@@ -106,7 +109,8 @@ display_settings_save(void)
 static void
 display_set_mode(void *opaque, int value)
 {
-  display_settings.fullscreen = value;
+  glw_x11_t *gx11 = opaque;
+  gx11->want_fullscreen = value;
 }
 
 
@@ -114,7 +118,7 @@ display_set_mode(void *opaque, int value)
  * Add a settings pane with relevant settings
  */
 static void
-display_settings_init(void)
+display_settings_init(glw_x11_t *gx11)
 {
   prop_t *r;
 
@@ -124,7 +128,7 @@ display_settings_init(void)
   
   settings_add_bool(r, "fullscreen",
 		    "Fullscreen mode", 0, settings,
-		    display_set_mode, NULL);
+		    display_set_mode, gx11);
 
   htsmsg_destroy(settings);
 }
@@ -134,7 +138,7 @@ display_settings_init(void)
  *
  */
 static Cursor
-blank_cursor(void)
+blank_cursor(glw_x11_t *gx11)
 {
   Cursor blank = None;
   char cursorNoneBits[32];
@@ -144,14 +148,14 @@ blank_cursor(void)
   memset(cursorNoneBits, 0, sizeof( cursorNoneBits ));
   memset(&dontCare, 0, sizeof( dontCare ));
   cursorNonePixmap =
-    XCreateBitmapFromData(x11state.display, x11state.root,
+    XCreateBitmapFromData(gx11->display, gx11->root,
 			  cursorNoneBits, 16, 16);
 
-  blank = XCreatePixmapCursor(x11state.display,
+  blank = XCreatePixmapCursor(gx11->display,
 			      cursorNonePixmap, cursorNonePixmap,
 			      &dontCare, &dontCare, 0, 0);
 
-  XFreePixmap(x11state.display, cursorNonePixmap);
+  XFreePixmap(gx11->display, cursorNonePixmap);
 
   return blank;
 }
@@ -160,24 +164,24 @@ blank_cursor(void)
  *
  */
 static void
-fullscreen_grab(void)
+fullscreen_grab(glw_x11_t *gx11)
 {
-  XSync(x11state.display, False);
+  XSync(gx11->display, False);
     
   while( GrabSuccess !=
-	 XGrabPointer(x11state.display, x11state.win,
+	 XGrabPointer(gx11->display, gx11->win,
 		      True,
 		      ButtonPressMask | ButtonReleaseMask | ButtonMotionMask
 		      | PointerMotionMask,
 		      GrabModeAsync, GrabModeAsync,
-		      x11state.win, None, CurrentTime))
+		      gx11->win, None, CurrentTime))
     usleep(100);
 
-  XSetInputFocus(x11state.display, x11state.win, RevertToNone, CurrentTime);
-  XWarpPointer(x11state.display, None, x11state.root,
+  XSetInputFocus(gx11->display, gx11->win, RevertToNone, CurrentTime);
+  XWarpPointer(gx11->display, None, gx11->root,
 	       0, 0, 0, 0,
-	       x11state.coords[0][2] / 2, x11state.coords[0][3] / 2);
-  XGrabKeyboard(x11state.display,  x11state.win, False,
+	       gx11->coords[0][2] / 2, gx11->coords[0][3] / 2);
+  XGrabKeyboard(gx11->display,  gx11->win, False,
 		GrabModeAsync, GrabModeAsync, CurrentTime);
 
 }
@@ -186,11 +190,11 @@ fullscreen_grab(void)
  *
  */
 static void
-window_open(void)
+window_open(glw_x11_t *gx11)
 {
   XSetWindowAttributes winAttr;
   unsigned long mask;
-  int fullscreen = display_settings.fullscreen;
+  int fullscreen = gx11->want_fullscreen;
   XTextProperty text;
   extern char *htsversion;
   char buf[60];
@@ -200,21 +204,21 @@ window_open(void)
   winAttr.background_pixel  = 0;
   winAttr.border_pixel      = 0;
 
-  winAttr.colormap = x11state.colormap = 
-    XCreateColormap(x11state.display, x11state.root,
-		    x11state.xvi->visual, AllocNone);
+  winAttr.colormap = gx11->colormap = 
+    XCreateColormap(gx11->display, gx11->root,
+		    gx11->xvi->visual, AllocNone);
   
   mask = CWBackPixmap | CWBorderPixel | CWColormap | CWEventMask;
 
-  x11state.coords[0][0] = x11state.screen_width  / 4;
-  x11state.coords[0][1] = x11state.screen_height / 4;
-  x11state.coords[0][2] = x11state.screen_width  * 3 / 4;
-  x11state.coords[0][3] = x11state.screen_height * 3 / 4;
+  gx11->coords[0][0] = gx11->screen_width  / 4;
+  gx11->coords[0][1] = gx11->screen_height / 4;
+  gx11->coords[0][2] = gx11->screen_width  * 3 / 4;
+  gx11->coords[0][3] = gx11->screen_height * 3 / 4;
 
-  x11state.coords[1][0] = 0;
-  x11state.coords[1][1] = 0;
-  x11state.coords[1][2] = x11state.screen_width;
-  x11state.coords[1][3] = x11state.screen_height;
+  gx11->coords[1][0] = 0;
+  gx11->coords[1][1] = 0;
+  gx11->coords[1][2] = gx11->screen_width;
+  gx11->coords[1][3] = gx11->screen_height;
 
   if(fullscreen) {
 
@@ -222,38 +226,38 @@ window_open(void)
     mask |= CWOverrideRedirect;
   }
 
-  x11state.aspect_ratio =
-    (float)x11state.coords[fullscreen][2] / 
-    (float)x11state.coords[fullscreen][3];
+  gx11->aspect_ratio =
+    (float)gx11->coords[fullscreen][2] / 
+    (float)gx11->coords[fullscreen][3];
 
-  x11state.win = 
-    XCreateWindow(x11state.display,
-		  x11state.root,
-		  x11state.coords[fullscreen][0],
-		  x11state.coords[fullscreen][1],
-		  x11state.coords[fullscreen][2],
-		  x11state.coords[fullscreen][3],
+  gx11->win = 
+    XCreateWindow(gx11->display,
+		  gx11->root,
+		  gx11->coords[fullscreen][0],
+		  gx11->coords[fullscreen][1],
+		  gx11->coords[fullscreen][2],
+		  gx11->coords[fullscreen][3],
 		  0,
-		  x11state.xvi->depth, InputOutput,
-		  x11state.xvi->visual, mask, &winAttr
+		  gx11->xvi->depth, InputOutput,
+		  gx11->xvi->visual, mask, &winAttr
 		  );
 
-  x11state.glxctx = glXCreateContext(x11state.display, x11state.xvi, NULL, 1);
+  gx11->glxctx = glXCreateContext(gx11->display, gx11->xvi, NULL, 1);
 
-  if(x11state.glxctx == NULL) {
+  if(gx11->glxctx == NULL) {
     fprintf(stderr, "Unable to create GLX context on \"%s\"\n",
-	    x11state.displayname);
+	    gx11->displayname);
     exit(1);
   }
 
 
-  glXMakeCurrent(x11state.display, x11state.win, x11state.glxctx);
+  glXMakeCurrent(gx11->display, gx11->win, gx11->glxctx);
 
-  XMapWindow(x11state.display, x11state.win);
+  XMapWindow(gx11->display, gx11->win);
 
   /* Make an empty / blank cursor */
 
-  XDefineCursor(x11state.display, x11state.win, blank_cursor());
+  XDefineCursor(gx11->display, gx11->win, blank_cursor(gx11));
 
 
   /* Set window title */
@@ -264,19 +268,19 @@ window_open(void)
   text.format = 8;
   text.nitems = strlen(buf);
   
-  XSetWMName(x11state.display, x11state.win, &text);
+  XSetWMName(gx11->display, gx11->win, &text);
 
   /* Create the window deletion atom */
-  x11state.deletewindow = XInternAtom(x11state.display, "WM_DELETE_WINDOW",
+  gx11->deletewindow = XInternAtom(gx11->display, "WM_DELETE_WINDOW",
 				      0);
 
-  XSetWMProtocols(x11state.display, x11state.win, &x11state.deletewindow, 1);
+  XSetWMProtocols(gx11->display, gx11->win, &gx11->deletewindow, 1);
 
   if(fullscreen)
-    fullscreen_grab();
+    fullscreen_grab(gx11);
 
   if(getenv("__GL_SYNC_TO_VBLANK") == 0) {
-    x11state.do_videosync = 1;
+    gx11->do_videosync = 1;
     fprintf(stderr, 
 	    "Display: Using 'glXWaitVideoSyncSGI' for vertical sync\n");
   } else {
@@ -284,7 +288,7 @@ window_open(void)
 	    "Display: Using '__GL_SYNC_TO_VBLANK' for vertical sync\n");
   }
 
-  x11state.is_fullscreen = display_settings.fullscreen;
+  gx11->is_fullscreen = gx11->want_fullscreen;
 
   update_gpu_info();
 
@@ -298,12 +302,12 @@ window_open(void)
  * Undo what window_open() does
  */
 static void
-window_close(void)
+window_close(glw_x11_t *gx11)
 {
-  XUndefineCursor(x11state.display, x11state.win);
-  XDestroyWindow(x11state.display, x11state.win);
-  glXDestroyContext(x11state.display, x11state.glxctx);
-  XFreeColormap(x11state.display, x11state.colormap);
+  XUndefineCursor(gx11->display, gx11->win);
+  XDestroyWindow(gx11->display, gx11->win);
+  glXDestroyContext(gx11->display, gx11->glxctx);
+  XFreeColormap(gx11->display, gx11->colormap);
 }
 
 
@@ -311,19 +315,19 @@ window_close(void)
  *
  */
 static void
-window_shutdown(void)
+window_shutdown(glw_x11_t *gx11)
 {
   vd_flush_all();
 
   glFlush();
-  XSync(x11state.display, False);
+  XSync(gx11->display, False);
 
-  if(x11state.is_fullscreen) {
-    XUngrabPointer(x11state.display, CurrentTime);
-    XUngrabKeyboard(x11state.display, CurrentTime);
+  if(gx11->is_fullscreen) {
+    XUngrabPointer(gx11->display, CurrentTime);
+    XUngrabKeyboard(gx11->display, CurrentTime);
   }
-  glw_flush();
-  window_close();
+  glw_flush(&gx11->gr);
+  window_close(gx11);
 }
 
 
@@ -331,13 +335,13 @@ window_shutdown(void)
  *
  */
 static void
-window_change_displaymode(void)
+window_change_displaymode(glw_x11_t *gx11)
 {
-  window_shutdown();
+  window_shutdown(gx11);
 
 
-  window_open();
-  display_settings_save();
+  window_open(gx11);
+  display_settings_save(gx11);
   vd_init(); /* Reload fragment shaders */
 }
 
@@ -366,15 +370,16 @@ GLXExtensionSupported(Display *dpy, const char *extension)
  * This thread keeps the screensaver from starting up.
  */
 static void *
-screensaver_inhibitor (void *aux)
+screensaver_inhibitor(void *aux)
 {
+  glw_x11_t *gx11 = aux;
 
-  while (x11state.screensaver.interval > 0) {
-    sleep(x11state.screensaver.interval);
-    switch (x11state.screensaver.mode)
+  while (gx11->screensaver.interval > 0) {
+    sleep(gx11->screensaver.interval);
+    switch (gx11->screensaver.mode)
       {
       case X11SS_XSCREENSAVER:
-	XResetScreenSaver(x11state.display);
+	XResetScreenSaver(gx11->display);
 	break;
 	
       case X11SS_GNOME:
@@ -383,8 +388,8 @@ screensaver_inhibitor (void *aux)
 	  printf("gnome-screensaver-command -p failed: %s", strerror(errno));
 	  if (++failcnt > 10) {
 	    printf("giving up screensaver inhibitor\n");
-	    x11state.screensaver.mode = X11SS_NONE;
-	    x11state.screensaver.interval = 0;
+	    gx11->screensaver.mode = X11SS_NONE;
+	    gx11->screensaver.interval = 0;
 	  }
 	}
 	break;
@@ -402,46 +407,46 @@ screensaver_inhibitor (void *aux)
  * Try to figure out which screensaver to inhibit
  */
 static int
-screensaver_query (void)
+screensaver_query(glw_x11_t *gx11)
 {
   int r;
   int tmo, itvl, prefbl, alexp;
 
   /* Try xscreensaver */
-  r = XGetScreenSaver(x11state.display, &tmo, &itvl, &prefbl, &alexp);
+  r = XGetScreenSaver(gx11->display, &tmo, &itvl, &prefbl, &alexp);
   if (r == 1 && tmo > 0) {
-    x11state.screensaver.mode = X11SS_XSCREENSAVER;
-    x11state.screensaver.interval = tmo / 2 + 5;
+    gx11->screensaver.mode = X11SS_XSCREENSAVER;
+    gx11->screensaver.interval = tmo / 2 + 5;
     printf("Using xscreensaver (interval %i)\n",
-	   x11state.screensaver.interval);
+	   gx11->screensaver.interval);
     return 0;
   }
 
   /* Try gnome-screensaver */
   if (system("gnome-screensaver-command -p") == 0) {
-    x11state.screensaver.mode = X11SS_GNOME;
-    x11state.screensaver.interval = 30;
+    gx11->screensaver.mode = X11SS_GNOME;
+    gx11->screensaver.interval = 30;
     printf("Using gnome screensaver (interval %i)\n",
-	   x11state.screensaver.interval);
+	   gx11->screensaver.interval);
     return 0;
   }
   
-  x11state.screensaver.mode = X11SS_NONE;
-  x11state.screensaver.interval = 0;
+  gx11->screensaver.mode = X11SS_NONE;
+  gx11->screensaver.interval = 0;
   printf("No screensaver will be inhibited\n");
   return -1;
 }
 
 
 static void
-screensaver_inhibitor_init (void)
+screensaver_inhibitor_init(glw_x11_t *gx11)
 {
   hts_thread_t tid;
 
-  if (screensaver_query() == -1)
+  if(screensaver_query(gx11) == -1)
     return;
 
-  hts_thread_create_detached(&tid, screensaver_inhibitor, NULL);
+  hts_thread_create_detached(&tid, screensaver_inhibitor, gx11);
 }
 
 
@@ -449,45 +454,47 @@ screensaver_inhibitor_init (void)
 /**
  *
  */
-void
-gl_sysglue_init(int argc, char **argv)
+static void
+glw_x11_init(glw_x11_t *gx11)
 {
   int attribs[10];
   int na = 0;
 
+#if 0
   prop_display = prop_create(prop_get_global(), "display");
   prop_gpu     = prop_create(prop_get_global(), "gpu");
 
   prop_display_refreshrate = 
     prop_create(prop_display, "refreshrate");
+#endif
 
-  x11state.displayname = getenv("DISPLAY");
+  gx11->displayname = getenv("DISPLAY");
 
-  display_settings_init();
+  display_settings_init(gx11);
 
-  if((x11state.display = XOpenDisplay(x11state.displayname)) == NULL) {
-    fprintf(stderr, "Unable to open X display \"%s\"\n", x11state.displayname);
+  if((gx11->display = XOpenDisplay(gx11->displayname)) == NULL) {
+    fprintf(stderr, "Unable to open X display \"%s\"\n", gx11->displayname);
     exit(1);
   }
 
-  if(!glXQueryExtension(x11state.display, NULL, NULL)) {
+  if(!glXQueryExtension(gx11->display, NULL, NULL)) {
     fprintf(stderr, "OpenGL GLX extension not supported by display \"%s\"\n",
-	    x11state.displayname);
+	    gx11->displayname);
     exit(1);
   }
 
-  if(!GLXExtensionSupported(x11state.display, "GLX_SGI_video_sync")) {
+  if(!GLXExtensionSupported(gx11->display, "GLX_SGI_video_sync")) {
     fprintf(stderr,
 	    "OpenGL GLX extension GLX_SGI_video_sync is not supported "
 	    "by display \"%s\"\n",
-	    x11state.displayname);
+	    gx11->displayname);
     exit(1);
   }
 
-  x11state.screen        = DefaultScreen(x11state.display);
-  x11state.screen_width  = DisplayWidth(x11state.display, x11state.screen);
-  x11state.screen_height = DisplayHeight(x11state.display, x11state.screen);
-  x11state.root          = RootWindow(x11state.display, x11state.screen);
+  gx11->screen        = DefaultScreen(gx11->display);
+  gx11->screen_width  = DisplayWidth(gx11->display, gx11->screen);
+  gx11->screen_height = DisplayHeight(gx11->display, gx11->screen);
+  gx11->root          = RootWindow(gx11->display, gx11->screen);
  
   attribs[na++] = GLX_RGBA;
   attribs[na++] = GLX_RED_SIZE;
@@ -499,29 +506,23 @@ gl_sysglue_init(int argc, char **argv)
   attribs[na++] = GLX_DOUBLEBUFFER;
   attribs[na++] = None;
   
-  x11state.xvi = glXChooseVisual(x11state.display, x11state.screen, attribs);
+  gx11->xvi = glXChooseVisual(gx11->display, gx11->screen, attribs);
 
-  if(x11state.xvi == NULL) {
+  if(gx11->xvi == NULL) {
     fprintf(stderr, "Unable to find an adequate Visual on \"%s\"\n",
-	    x11state.displayname);
+	    gx11->displayname);
     exit(1);
   }
 
-  _glXGetVideoSyncSGI = (PFNGLXGETVIDEOSYNCSGIPROC)
+  gx11->glXGetVideoSyncSGI = (PFNGLXGETVIDEOSYNCSGIPROC)
     glXGetProcAddress((const GLubyte*)"glXGetVideoSyncSGI");
-  _glXWaitVideoSyncSGI = (PFNGLXWAITVIDEOSYNCSGIPROC)
+  gx11->glXWaitVideoSyncSGI = (PFNGLXWAITVIDEOSYNCSGIPROC)
     glXGetProcAddress((const GLubyte*)"glXWaitVideoSyncSGI");
 
-  screensaver_inhibitor_init();
+  screensaver_inhibitor_init(gx11);
 
-  window_open();
+  window_open(gx11);
 }
-
-
-/**
- *
- */
-
 
 
 /**
@@ -584,6 +585,7 @@ gl_keypress(XEvent *event)
 static void
 update_gpu_info(void)
 {
+#if 0
   prop_set_string(prop_create(prop_gpu, "vendor"),
 		      (const char *)glGetString(GL_VENDOR));
 
@@ -592,29 +594,150 @@ update_gpu_info(void)
 
   prop_set_string(prop_create(prop_gpu, "driver"),
 		      (const char *)glGetString(GL_VERSION));
+#endif
+}
+
+
+
+
+static int
+intcmp(const void *A, const void *B)
+{
+  const int *a = A;
+  const int *b = B;
+  return *a - *b;
+}
+
+
+#define FRAME_DURATION_SAMPLES 31 /* should be an odd number */
+
+static int
+update_timings(void)
+{
+  struct timeval tv;
+  static int64_t lastts, firstsample;
+  static int deltaarray[FRAME_DURATION_SAMPLES];
+  static int deltaptr;
+  static int lastframedur;
+  int d, r = 0;
+  
+  gettimeofday(&tv, NULL);
+  wallclock = (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
+  walltime = tv.tv_sec;
+  
+  if(lastts != 0) {
+    d = wallclock - lastts;
+    if(deltaptr == 0)
+      firstsample = wallclock;
+
+    deltaarray[deltaptr++] = d;
+
+    if(deltaptr == FRAME_DURATION_SAMPLES) {
+      qsort(deltaarray, deltaptr, sizeof(int), intcmp);
+      d = deltaarray[FRAME_DURATION_SAMPLES / 2];
+      
+      if(lastframedur == 0) {
+	lastframedur = d;
+      } else {
+	lastframedur = (d + lastframedur) / 2;
+      }
+      frame_duration = lastframedur;
+      r = 1;
+      deltaptr = 0;
+
+      //      glw_set_framerate(1000000.0 / (float)frame_duration);
+    }
+  }
+  lastts = wallclock;
+  return r;
+}
+
+
+
+/**
+ * Master scene rendering
+ */
+static void 
+layout_draw(glw_x11_t *gx11, float aspect)
+{
+  glw_rctx_t rc;
+
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+  
+  //  fullscreen_fader = GLW_LP(16, fullscreen_fader, fullscreen);
+  //  prop_set_float(prop_fullscreen, fullscreen_fader);
+
+  memset(&rc, 0, sizeof(rc));
+  rc.rc_aspect = aspect;
+  rc.rc_focused = 1;
+  rc.rc_fullscreen = 0;
+  glw_layout(gx11->universe, &rc);
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective(45, 1.0, 1.0, 60.0);
+
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+
+  gluLookAt(0, 0, 3.4,
+	    0, 0, 1,
+	    0, 1, 0);
+
+  rc.rc_alpha = 1.0f;
+  glw_render(gx11->universe, &rc);
+}
+
+
+/**
+ * Primary point for input event distribution in the UI
+ */
+static int
+layout_input_event(event_t *e, void *opaque)
+{
+  glw_x11_t *gx11 = opaque;
+  return glw_signal(gx11->universe, GLW_SIGNAL_EVENT, e);
 }
 
 
 /**
  *
  */
-void
-gl_sysglue_mainloop(void)
+static int
+layout_event_handler(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
+{
+  event_t *e = extra;
+
+  if(sig != GLW_SIGNAL_EVENT_BUBBLE)
+    return 0;
+
+  event_post(e);
+  return 1;
+}
+
+
+
+
+/**
+ *
+ */
+static void
+glw_sysglue_mainloop(glw_x11_t *gx11)
 {
   XEvent event;
   int w, h;
   unsigned int retraceCount = 0;
 
-  _glXGetVideoSyncSGI(&retraceCount);
+  gx11->glXGetVideoSyncSGI(&retraceCount);
 
-  while(showtime_running) {
-    if(x11state.is_fullscreen != display_settings.fullscreen)
-      window_change_displaymode();
+  while(gx11->running) {
+    if(gx11->is_fullscreen != gx11->want_fullscreen)
+      window_change_displaymode(gx11);
 
     if(frame_duration != 0) {
 
-      while(XPending(x11state.display)) {
-	XNextEvent(x11state.display, &event);
+      while(XPending(gx11->display)) {
+	XNextEvent(gx11->display, &event);
       
 	switch(event.type) {
 	case KeyPress:
@@ -625,14 +748,14 @@ gl_sysglue_mainloop(void)
 	  w = event.xconfigure.width;
 	  h = event.xconfigure.height;
 	  glViewport(0, 0, w, h);
-	  x11state.aspect_ratio = (float)w / (float)h;
+	  gx11->aspect_ratio = (float)w / (float)h;
 	  break;
 
 
         case ClientMessage:
-	  if((Atom)event.xclient.data.l[0] == x11state.deletewindow) {
+	  if((Atom)event.xclient.data.l[0] == gx11->deletewindow) {
 	    /* Window manager wants us to close */
-	    showtime_running = 0;
+	    ui_exit_showtime();
 	  }
 	  break;
 
@@ -641,21 +764,71 @@ gl_sysglue_mainloop(void)
 	}
       }
     }
-    layout_draw(x11state.aspect_ratio);
+    layout_draw(gx11, gx11->aspect_ratio);
 
     glFlush();
 
-    if(x11state.do_videosync)
-      _glXWaitVideoSyncSGI(2, (retraceCount+1)%2, &retraceCount);
+    if(gx11->do_videosync)
+      gx11->glXWaitVideoSyncSGI(2, (retraceCount+1)%2, &retraceCount);
 
-    glXSwapBuffers(x11state.display, x11state.win);
+    glXSwapBuffers(gx11->display, gx11->win);
 
-    if(gl_update_timings())
+    update_timings();
+#if 0
       prop_set_float(prop_display_refreshrate,
 		     (float)1000000. / frame_duration);
+#endif
 
-    glw_reaper();
+    glw_reaper(&gx11->gr);
   }
-  window_shutdown();
+  window_shutdown(gx11);
+}
+
+
+
+/**
+ *
+ */
+static void *
+glw_x11_thread(void *aux)
+{
+  glw_x11_t *gx11 = aux;
+
+  glw_x11_init(gx11);
+
+  if(glw_init(&gx11->gr))
+    return NULL;
+
+  gx11->running = 1;
+
+  
+  gx11->universe = glw_model_create(&gx11->gr,
+				    "theme://universe.model", NULL, 0, NULL);
+
+  event_handler_register("universe", layout_input_event, EVENTPRI_UNIVERSE,
+			 gx11);
+
+  glw_set_i(gx11->universe,
+	    GLW_ATTRIB_SIGNAL_HANDLER, layout_event_handler, gx11, 1000,
+	    NULL);
+
+  glw_sysglue_mainloop(gx11);
+
+  return NULL;
+}
+
+
+
+
+/**
+ *
+ */
+uii_t *
+glw_start(const char *arg)
+{
+  glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
+
+  hts_thread_create(&gx11->threadid, glw_x11_thread, gx11);
+  return &gx11->gr.gr_uii;
 }
 

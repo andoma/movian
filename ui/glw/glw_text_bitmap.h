@@ -76,10 +76,11 @@ typedef struct glw_text_bitmap {
 
 
 
-int glw_text_bitmap_init(const void *file_base, long file_size);
+int glw_text_bitmap_init(glw_root_t *gr, 
+			 const void *file_base, long file_size);
 
 void glw_text_bitmap_ctor(glw_t *w, int init, va_list ap);
 
-void glw_text_flush(void);
+void glw_text_flush(glw_root_t *gr);
 
 #endif /* GLW_TEXT_BITMAP_H */

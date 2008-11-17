@@ -105,10 +105,10 @@ hid_init(glw_t *m)
 
   prop_hid_status = prop_create(prop_hid_root, "status");
 
-  icon = glw_model_create("theme://settings/hid/hid-icon.model",
+  icon = glw_model_create(NULL, "theme://settings/hid/hid-icon.model",
 			  NULL, 0, NULL);
 
-  tab  = glw_model_create("theme://settings/hid/hid.model",
+  tab  = glw_model_create(NULL, "theme://settings/hid/hid.model",
 			  NULL, 0, prop_hid_root);
  
   if((s = hts_settings_load("hid")) != NULL) {

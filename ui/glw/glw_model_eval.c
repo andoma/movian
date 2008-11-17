@@ -374,6 +374,7 @@ eval_array(glw_model_eval_context_t *pec, token_t *t0)
   ec.ei = pec->ei;
   ec.prop = pec->prop;
   ec.rpn = pec->rpn;
+  ec.gr = pec->gr;
 
   for(t = t0->child; t != NULL; t = t->next) {
     ec.alloc = NULL;
@@ -501,6 +502,7 @@ eval_dynamic(glw_t *w, token_t *rpn)
 
   memset(&ec, 0, sizeof(ec));
   ec.w = w;
+  ec.gr = w->glw_root;
 
   glw_model_eval_rpn0(rpn, &ec);
 
@@ -556,13 +558,15 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p,
   memset(&n, 0, sizeof(n));
   n.prop = p;
   n.ei = ei;
+  n.gr = parent->glw_root;
 
-  n.w = glw_create(gps->gps_cloner_class,
-		   GLW_ATTRIB_SIGNAL_HANDLER, cloner_child_signal_handler,
-		   p, 500,
-		   GLW_ATTRIB_PARENT, parent,
-		   GLW_ATTRIB_PROPROOT, p,
-		   NULL);
+  n.w = glw_create_i(parent->glw_root,
+		     gps->gps_cloner_class,
+		     GLW_ATTRIB_SIGNAL_HANDLER, cloner_child_signal_handler,
+		     p, 500,
+		     GLW_ATTRIB_PARENT, parent,
+		     GLW_ATTRIB_PROPROOT, p,
+		     NULL);
 
   if(selected)
     glw_signal0(parent, GLW_SIGNAL_SELECT, n.w);
@@ -933,6 +937,7 @@ glw_model_eval_rpn(token_t *t, glw_model_eval_context_t *pec, int *copyp)
   ec.prop = pec->prop;
   ec.w = pec->w;
   ec.rpn = t;
+  ec.gr = pec->gr;
 
   r = glw_model_eval_rpn0(t, &ec);
 
@@ -1103,10 +1108,12 @@ glwf_widget(glw_model_eval_context_t *ec, struct token *self)
   memset(&n, 0, sizeof(n));
   n.prop = ec->prop;
   n.ei = ec->ei;
-  n.w = glw_create(c,
-		   GLW_ATTRIB_PARENT, ec->w,
-		   GLW_ATTRIB_PROPROOT, ec->prop,
-		   NULL);
+  n.gr = ec->gr;
+  n.w = glw_create_i(ec->gr,
+		     c,
+		     GLW_ATTRIB_PARENT, ec->w,
+		     GLW_ATTRIB_PROPROOT, ec->prop,
+		     NULL);
   
   if(glw_model_eval_block(b, &n))
     return -1;
@@ -1197,10 +1204,11 @@ glwf_space(glw_model_eval_context_t *ec, struct token *self)
     return glw_model_seterr(ec->ei, self, 
 			    "widget: Invalid first argument, "
 			    "expected float");
-  glw_create(GLW_DUMMY,
-	     GLW_ATTRIB_PARENT, ec->w,
-	     GLW_ATTRIB_WEIGHT, a->t_float,
-	     NULL);
+  glw_create_i(ec->gr, 
+	       GLW_DUMMY,
+	       GLW_ATTRIB_PARENT, ec->w,
+	       GLW_ATTRIB_WEIGHT, a->t_float,
+	       NULL);
   return 0;
 }
 
@@ -1377,7 +1385,7 @@ glwf_changed(glw_model_eval_context_t *ec, struct token *self)
   }
 
   if(change == 1)
-    e->threshold = b->t_float * glw_framerate;
+    e->threshold = b->t_float * ec->gr->gr_framerate;
 
   if(e->threshold > 0)
     e->threshold--;

@@ -82,7 +82,6 @@ keyring_lookup(const char *id, char **username, char **password,
   prop_t *props;
   event_t *e;
   //  char buf[128];
-  extern glw_t *universe;
 
   pthread_mutex_lock(&keyring_mutex);
 
@@ -90,7 +89,7 @@ keyring_lookup(const char *id, char **username, char **password,
     keyring_init();
 
   if(query && 
-     (p = glw_find_by_id(universe, "auth_query_container", 0)) != NULL) {
+     (p = glw_find_by_id(NULL, "auth_query_container", 0)) != NULL) {
 
     props = prop_create(NULL, "auth");
     prop_set_string(prop_create(props, "resource"), id);
@@ -99,7 +98,7 @@ keyring_lookup(const char *id, char **username, char **password,
     prop_set_int(prop_create(props, "domainReq"), !!domain);
 
 
-    w = glw_model_create("theme://authenticate.model", p, 0, props);
+    w = glw_model_create(NULL, "theme://authenticate.model", p, 0, props);
 
     abort(); //glw_select(w); /* Grab focus */
 

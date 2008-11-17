@@ -35,7 +35,7 @@ glw_bitmap_dtor(glw_t *w)
   glw_bitmap_t *gb = (void *)w;
 
   if(gb->gb_tex != NULL)
-    glw_tex_deref(gb->gb_tex);
+    glw_tex_deref(w->glw_root, gb->gb_tex);
 }
 
 
@@ -394,7 +394,7 @@ glw_bitmap_layout(glw_t *w, glw_rctx_t *rc)
   glw_form_alpha_update(w, rc);
 
   if(gt != NULL)
-    glw_tex_layout(gt);
+    glw_tex_layout(w->glw_root, gt);
 
   c = TAILQ_FIRST(&w->glw_childs);
 
@@ -494,9 +494,9 @@ glw_bitmap_ctor(glw_t *w, int init, va_list ap)
     return;
 
   if(gb->gb_tex != NULL)
-    glw_tex_deref(gb->gb_tex);
+    glw_tex_deref(w->glw_root, gb->gb_tex);
 
-  gb->gb_tex = glw_tex_create(filename);
+  gb->gb_tex = glw_tex_create(w->glw_root, filename);
 }
 
 

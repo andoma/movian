@@ -318,10 +318,11 @@ keymapper_update_model(hid_keycode_t *hkc, glw_t *w)
     snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
 	     "%s%s", hkd->hkd_desc, 
 	     LIST_NEXT(hkd, hkd_keycode_link) ? ", " : "");
-
+#if 0
   glw_set(w, 
 	  GLW_ATTRIB_CAPTION, buf,
 	  NULL);
+#endif
 }
 
 /**
@@ -393,7 +394,7 @@ keymapper_init(void)
 		     0, NULL);
 #endif
   glw_t *tab  = 
-    glw_model_create("theme://settings/keymapper/keymapper.model", NULL,
+    glw_model_create(NULL, "theme://settings/keymapper/keymapper.model", NULL,
 		     0, NULL);
   glw_t *l, *e, *y;
   int i;
@@ -411,16 +412,18 @@ keymapper_init(void)
 
   for(i = 0; i < sizeof(keycodenames) / sizeof(keycodenames[0]); i++) {
 
-    e = glw_model_create("theme://settings/keymapper/entry.model", l,
+    e = glw_model_create(NULL, "theme://settings/keymapper/entry.model", l,
 			 0, NULL);
 
-    glw_set(e, GLW_ATTRIB_U32, keycodenames[i].val, NULL);
+    //    glw_set(e, GLW_ATTRIB_U32, keycodenames[i].val, NULL);
 
     if((y = glw_find_by_id(e, "mapping_name", 0)) != NULL) {
+#if 0
       glw_set(y,
 	      GLW_ATTRIB_CAPTION, keycodenames[i].str,
 	      NULL);
-      
+#endif
+ 
       hkc = keymapper_find_by_code(keycodenames[i].val);
       if(hkc != NULL)
 	keymapper_update_model(hkc, e);

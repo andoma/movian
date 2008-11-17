@@ -94,7 +94,7 @@ check_gl_ext(const uint8_t *s, const char *func)
  *
  */
 void
-glw_check_system_features(void)
+glw_check_system_features(glw_root_t *gr)
 {
   const	GLubyte	*s;
 
@@ -102,15 +102,15 @@ glw_check_system_features(void)
 
   s = glGetString(GL_EXTENSIONS);
   
-  glw_sysfeatures |= check_gl_ext(s, "GL_ARB_pixel_buffer_object") ?
+  gr->gr_sysfeatures |= check_gl_ext(s, "GL_ARB_pixel_buffer_object") ?
     GLW_SYSFEATURE_PBO : 0;
 
-  glw_sysfeatures |= check_gl_ext(s, "GL_ARB_vertex_buffer_object") ? 
+  gr->gr_sysfeatures |= check_gl_ext(s, "GL_ARB_vertex_buffer_object") ? 
     GLW_SYSFEATURE_VBO : 0;
 
-  glw_sysfeatures |= check_gl_ext(s, "GL_ARB_fragment_program") ?
+  gr->gr_sysfeatures |= check_gl_ext(s, "GL_ARB_fragment_program") ?
     GLW_SYSFEATURE_FRAG_PROG : 0;
 
-  glw_sysfeatures |= check_gl_ext(s, "GL_ARB_texture_non_power_of_two") ? 
+  gr->gr_sysfeatures |= check_gl_ext(s, "GL_ARB_texture_non_power_of_two") ? 
     GLW_SYSFEATURE_TNPO2 : 0;
 }

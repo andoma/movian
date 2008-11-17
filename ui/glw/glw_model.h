@@ -174,6 +174,7 @@ typedef struct glw_model_eval_context {
   token_t *alloc;
   struct glw *w;
   struct prop *prop;
+  struct glw_root *gr;
   
   int persistence;
 #define GLW_MODEL_EVAL_ONCE        0

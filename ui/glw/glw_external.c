@@ -31,12 +31,12 @@
  *
  */
 void
-glw_flush(void)
+glw_flush(glw_root_t *gr)
 {
   glw_lock();
   glw_gf_do();
-  glw_tex_flush_all();
-  glw_text_flush();
+  glw_tex_flush_all(gr);
+  glw_text_flush(gr);
   glw_unlock();
 }
 
@@ -107,46 +107,6 @@ glw_layout(glw_t *w, glw_rctx_t *rc)
 /*
  *
  */
-
-glw_t *
-glw_create(glw_class_t class, ...)
-{
-  glw_t *w; 
-  va_list ap;
-
-  va_start(ap, class);
-
-  glw_lock();
-  w = glw_create0(class, ap);
-  glw_unlock();
-
-  va_end(ap);
-
-  return w;
-}
-
-/*
- *
- */
-
-void
-glw_set(glw_t *w, ...)
-{
-  va_list ap;
-
-  va_start(ap, w);
-
-  glw_lock();
-  glw_attrib_set0(w, 0, ap);
-  glw_unlock();
-
-  va_end(ap);
-}
-
-/*
- *
- */
-
 void 
 glw_destroy(glw_t *w)
 {
@@ -392,16 +352,4 @@ glw_is_selected(glw_t *w)
     w = w->glw_parent;
   }
   return 1;
-}
-
-
-/**
- *
- */
-void
-glw_set_framerate(float r)
-{
-  extern float glw_framerate;
-
-  glw_framerate = r;
 }

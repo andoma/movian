@@ -207,7 +207,7 @@ video_player_open_menu(play_video_ctrl_t *pvc, int toggle)
   }
 
   pvc->pvc_menu =
-    glw_model_create("theme://videoplayer/menu.model", pvc->pvc_container,
+    glw_model_create(NULL, "theme://videoplayer/menu.model", pvc->pvc_container,
 		     0, pvc->pvc_prop_root);
   
   /**
@@ -565,7 +565,7 @@ play_video(const char *url, event_queue_t *eq, glw_t *parent)
   /**
    * Create top level widget
    */
-  top = glw_model_create("theme://videoplayer/videoplayer.model", parent,
+  top = glw_model_create(NULL, "theme://videoplayer/videoplayer.model", parent,
 			 0, pvc.pvc_prop_root);
   pvc.pvc_container = glw_find_by_id(top, "videoplayer_container", 0);
   if(pvc.pvc_container == NULL) {

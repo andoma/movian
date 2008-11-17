@@ -47,22 +47,8 @@
 #include "glw_animator.h"
 #include "glw_fx_texrot.h"
 
-int glw_sysfeatures;
-static struct glw_queue glw_destroyer_queue;
-const char *glw_icon_path;
-void (*glw_ffmpeglockmgr)(int lock);
-int (*glw_imageloader)(glw_image_load_ctrl_t *ctrl);
-const void *(*glw_rawloader)(const char *filename, size_t *sizeptr);
-void (*glw_rawunload)(const void *data);
-
-float glw_framerate;
-
 static hts_mutex_t glw_global_lock;
 
-static struct glw_head glw_active_list;
-static struct glw_head glw_active_flush_list;
-static struct glw_head glw_active_dummy_list;
-static struct glw_head glw_every_frame_list;
 
 static const size_t glw_class_to_size[] = {
   [GLW_DUMMY] = sizeof(glw_t),
@@ -119,35 +105,35 @@ glw_cond_wait(hts_cond_t *c)
 }
 
 
-/*
+/**
+ *
+ */
+void
+glw_init_global(void)
+{
+  hts_mutex_init_recursive(&glw_global_lock);
+}
+
+/**
  *
  */
 int
-glw_init(void (*ffmpeglockmgr)(int lock),
-	 int (*imageloader)(glw_image_load_ctrl_t *ctrl),
-	 const void *(*rawloader)(const char *filename, size_t *lenptr),
-	 void (*rawunloader)(const void *data),
-	 int concurrency)
+glw_init(glw_root_t *gr)
 {
-  hts_mutex_init_recursive(&glw_global_lock);
-
-  TAILQ_INIT(&glw_destroyer_queue);
-  glw_image_init(concurrency);
-
-  glw_ffmpeglockmgr = ffmpeglockmgr;
-  glw_imageloader = imageloader;
-  glw_rawloader = rawloader;
-  glw_rawunload = rawunloader;
-
-  if(glw_text_init())
+  if(glw_text_init(gr)) {
+    free(gr);
     return -1;
+  }
 
-  glw_framerate = 60; /* default until we know better */
+  TAILQ_INIT(&gr->gr_destroyer_queue);
+  glw_image_init(gr);
 
-  glw_check_system_features();
+  gr->gr_framerate = 60; /* default until we know better */
+
+  glw_check_system_features(gr);
   return 0;
 }
-
+  
 
 
 
@@ -180,6 +166,8 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
   glw_t *p;
   void *v, *o;
   int pri, a, r = 0;
+  glw_root_t *gr = w->glw_root;
+
   va_list apx;
 
   va_copy(apx, ap);
@@ -273,7 +261,7 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       a = va_arg(ap, int);
 
       if(a & GLW_EVERY_FRAME && !(w->glw_flags & GLW_EVERY_FRAME)) 
-	LIST_INSERT_HEAD(&glw_every_frame_list, w, glw_every_frame_link);
+	LIST_INSERT_HEAD(&gr->gr_every_frame_list, w, glw_every_frame_link);
 
       w->glw_flags |= a;
       break;
@@ -402,12 +390,11 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
   return r;
 }
 
-/*
+/**
  *
  */
-
 glw_t *
-glw_create0(glw_class_t class, va_list ap)
+glw_create0(glw_root_t *gr, glw_class_t class, va_list ap)
 {
   size_t size; 
   glw_t *w; 
@@ -416,6 +403,7 @@ glw_create0(glw_class_t class, va_list ap)
 
   size = glw_class_to_size[class];
   w = calloc(1, size);
+  w->glw_root = gr;
   w->glw_class = class;
   w->glw_alpha = 1.0f;
   w->glw_weight = 1.0f;
@@ -424,7 +412,7 @@ glw_create0(glw_class_t class, va_list ap)
   w->glw_col.b = 1.0f;
   w->glw_time = 1.0f;
   w->glw_alignment = GLW_ALIGN_DEFAULT;
-  LIST_INSERT_HEAD(&glw_active_dummy_list, w, glw_active_link);
+  LIST_INSERT_HEAD(&gr->gr_active_dummy_list, w, glw_active_link);
 
   TAILQ_INIT(&w->glw_childs);
   TAILQ_INIT(&w->glw_render_list);
@@ -444,13 +432,13 @@ glw_create0(glw_class_t class, va_list ap)
  */
 
 glw_t *
-glw_create_i(glw_class_t class, ...)
+glw_create_i(glw_root_t *gr, glw_class_t class, ...)
 {
   glw_t *w; 
   va_list ap;
 
   va_start(ap, class);
-  w = glw_create0(class, ap);
+  w = glw_create0(gr, class, ap);
   va_end(ap);
   return w;
 }
@@ -475,32 +463,32 @@ glw_set_i(glw_t *w, ...)
  */
 
 void
-glw_reaper(void)
+glw_reaper(glw_root_t *gr)
 {
   glw_t *w;
 
   glw_lock();
 
-  glw_cursor_layout_frame();
+  glw_cursor_layout_frame(gr);
 
-  LIST_FOREACH(w, &glw_every_frame_list, glw_every_frame_link)
+  LIST_FOREACH(w, &gr->gr_every_frame_list, glw_every_frame_link)
     glw_signal0(w, GLW_SIGNAL_NEW_FRAME, NULL);
 
-  while((w = LIST_FIRST(&glw_active_flush_list)) != NULL) {
+  while((w = LIST_FIRST(&gr->gr_active_flush_list)) != NULL) {
     LIST_REMOVE(w, glw_active_link);
-    LIST_INSERT_HEAD(&glw_active_dummy_list, w, glw_active_link);
+    LIST_INSERT_HEAD(&gr->gr_active_dummy_list, w, glw_active_link);
     glw_signal0(w, GLW_SIGNAL_INACTIVE, NULL);
   }
 
-  LIST_MOVE(&glw_active_flush_list, &glw_active_list, glw_active_link);
-  LIST_INIT(&glw_active_list);
+  LIST_MOVE(&gr->gr_active_flush_list, &gr->gr_active_list, glw_active_link);
+  LIST_INIT(&gr->gr_active_list);
 
-  glw_texture_purge();
+  glw_texture_purge(gr);
 
-  glw_tex_autoflush();
+  glw_tex_autoflush(gr);
 
-  while((w = TAILQ_FIRST(&glw_destroyer_queue)) != NULL) {
-    TAILQ_REMOVE(&glw_destroyer_queue, w, glw_parent_link);
+  while((w = TAILQ_FIRST(&gr->gr_destroyer_queue)) != NULL) {
+    TAILQ_REMOVE(&gr->gr_destroyer_queue, w, glw_parent_link);
 
     glw_signal0(w, GLW_SIGNAL_DTOR, NULL);
 
@@ -533,6 +521,7 @@ void
 glw_destroy0(glw_t *w)
 {
   glw_t *c, *p;
+  glw_root_t *gr = w->glw_root;
   glw_event_map_t *gem;
 
   glw_prop_subscription_destroy_list(&w->glw_prop_subscriptions);
@@ -568,7 +557,7 @@ glw_destroy0(glw_t *w)
 
   free((void *)w->glw_id);
 
-  TAILQ_INSERT_TAIL(&glw_destroyer_queue, w, glw_parent_link);
+  TAILQ_INSERT_TAIL(&gr->gr_destroyer_queue, w, glw_parent_link);
 
   glw_model_free_chain(w->glw_dynamic_expressions);
 }
@@ -622,8 +611,9 @@ glw_drop_signal0(glw_t *w, glw_signal_t signal, void *opaque)
 void
 glw_set_active0(glw_t *w)
 {
+  glw_root_t *gr = w->glw_root;
   LIST_REMOVE(w, glw_active_link);
-  LIST_INSERT_HEAD(&glw_active_list, w, glw_active_link);
+  LIST_INSERT_HEAD(&gr->gr_active_list, w, glw_active_link);
 }
 
 /*
@@ -855,3 +845,4 @@ glw_gf_do(void)
   LIST_FOREACH(ggc, &ggcs, link)
     ggc->flush(ggc->opaque);
 }
+

@@ -39,7 +39,7 @@ glw_fx_texrot_dtor(glw_t *w)
   glw_gf_unregister(&fx->fx_flushctrl);
 
   if(fx->fx_tex != NULL)
-    glw_tex_deref(fx->fx_tex);
+    glw_tex_deref(w->glw_root, fx->fx_tex);
 
   if(fx->fx_texsize != 0) {
     glDeleteTextures(1, &fx->fx_fbtex);
@@ -257,7 +257,7 @@ glw_fx_texrot_layout(glw_t *w, glw_rctx_t *rc)
   glw_texture_t *gt = fx->fx_tex;
 
   if(gt != NULL) {
-    glw_tex_layout(gt);
+    glw_tex_layout(w->glw_root, gt);
     glw_fx_texrot_buildtex(fx, gt);
   }
 }
@@ -339,7 +339,7 @@ glw_fx_texrot_ctor(glw_t *w, int init, va_list ap)
     return;
 
   if(fx->fx_tex != NULL)
-    glw_tex_deref(fx->fx_tex);
+    glw_tex_deref(w->glw_root, fx->fx_tex);
 
-  fx->fx_tex = glw_tex_create(filename);
+  fx->fx_tex = glw_tex_create(w->glw_root, filename);
 }

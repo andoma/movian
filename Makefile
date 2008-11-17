@@ -10,12 +10,6 @@ VPATH += fileaccess
 SRCS  += fileaccess.c fa_probe.c  fa_imageloader.c fa_rawloader.c
 SRCS  += fa_fs.c fa_rar.c fa_smb.c
 
-# Display
-
-VPATH += display
-
-VPATH += display
-SRCS  += gl_common.c
 
 # video playback subsys
 
@@ -38,11 +32,6 @@ SRCS  += alsa_audio.c
 # Dummy Audio support (no output)
 VPATH += audio/dummy
 SRCS  += dummy_audio.c
-
-# layout engine(s)
-
-VPATH += layout
-SRCS  += layout.c
 
 # Human Interface Devices
 
@@ -107,6 +96,9 @@ SRCS  += be_file.c be_page.c
 
 #VPATH += apps/apple_movie_trailers
 #SRCS  += movt.c
+
+VPATH += ui
+SRCS += ui.c
 
 # glw
 VPATH += ui/glw

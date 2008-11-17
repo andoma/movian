@@ -55,7 +55,7 @@ typedef struct glw_form {
 } glw_form_t;
 
 
-void glw_cursor_layout_frame(void);
+void glw_cursor_layout_frame(glw_root_t *gr);
 
 void glw_form_ctor(glw_t *w, int init, va_list ap);
 

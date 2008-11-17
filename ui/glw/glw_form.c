@@ -27,8 +27,6 @@
 #include "glw_bitmap.h"
 #include "glw_form.h"
 
-static glw_texture_t *cursor_gt;
-
 static float cursor_alpha[5][5] = {
   {1.0f, 1.0f, 1.0f, 1.0f, 1.0f},
   {1.0f, 1.0f, 1.0f, 1.0f, 1.0f},
@@ -77,18 +75,18 @@ set_cursor_col(int y, int x, float r)
 }
 
 void
-glw_cursor_layout_frame(void)
+glw_cursor_layout_frame(glw_root_t *gr)
 {
   static float v;
   float r;
   glw_texture_t *gt;
 
-  if(cursor_gt == NULL)
-    cursor_gt = glw_tex_create("theme://images/cursor.png");
+  if(gr->gr_cursor_gt == NULL)
+    gr->gr_cursor_gt = glw_tex_create(gr, "theme://images/cursor.png");
 
-  gt = cursor_gt;
+  gt = gr->gr_cursor_gt;
 
-  glw_tex_layout(gt);
+  glw_tex_layout(gr, gt);
 
 
 #define F(v) (0.5 + 0.5 * (v))
@@ -146,9 +144,9 @@ glw_cursor_layout_frame(void)
  *
  */
 static void
-glw_cursor_draw(float alpha, float xscale, float yscale)
+glw_cursor_draw(glw_root_t *gr, float alpha, float xscale, float yscale)
 {
-  glw_texture_t *gt = cursor_gt;
+  glw_texture_t *gt = gr->gr_cursor_gt;
   float vex[5][2];
   int x, y;
   float v;
@@ -229,7 +227,7 @@ glw_cursor_draw(float alpha, float xscale, float yscale)
  *
  */
 static void
-gff_render(glw_form_focus_t *gff, float aspect)
+gff_render(glw_root_t *gr, glw_form_focus_t *gff, float aspect)
 {
   int i;
   float xs, ys;
@@ -255,7 +253,7 @@ gff_render(glw_form_focus_t *gff, float aspect)
   }
 
 
-  glw_cursor_draw(gff->gff_alpha_prim, 
+  glw_cursor_draw(gr, gff->gff_alpha_prim, 
 		  xs / (100 * fabs(gff->gff_m_prim[0])),
 		  ys / (100 * fabs(gff->gff_m_prim[5]))
 		  );
@@ -318,6 +316,7 @@ glw_form_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   glw_form_t *gf = (void *)w;
   glw_form_focus_t *gff;
   glw_rctx_t *rc;
+  glw_root_t *gr = w->glw_root;
 
   switch(signal) {
   default:
@@ -358,7 +357,7 @@ glw_form_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     if(c != NULL)
       glw_render0(c, rc);
 
-    gff_render(gff, rc->rc_aspect);
+    gff_render(gr, gff, rc->rc_aspect);
 
     gf->gf_current_focus = TAILQ_NEXT(gff, gff_link);
     break;

@@ -44,7 +44,7 @@ glw_animator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_LAYOUT:
-    a->delta = 1 / (w->glw_time * glw_framerate);
+    a->delta = 1 / (w->glw_time * w->glw_root->gr_framerate);
 
     for(c = TAILQ_FIRST(&w->glw_childs); c != NULL; c = n) {
       n = TAILQ_NEXT(c, glw_parent_link);
@@ -146,7 +146,7 @@ glw_animator_ctor(glw_t *w, int init, va_list ap)
   if(filename != NULL) {
 
     if(*filename) 
-      glw_model_create(filename, w, 0, a->prop);
+	glw_model_create(w->glw_root, filename, w, 0, a->prop);
     else {
       /* Fade out all */
       TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)

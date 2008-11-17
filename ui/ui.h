@@ -1,6 +1,6 @@
 /*
- *  Common layout functions
- *  Copyright (C) 2007 Andreas Öman
+ *  User interface top include file
+ *  Copyright (C) 2007 Andreas Ã–man
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,17 +16,45 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LAYOUT_H
-#define LAYOUT_H
+#ifndef UI_H__
+#define UI_H__
+
+#include <libhts/htsq.h>
+
 
 /**
- * Functions in layout.c
- */ 
-void layout_create(void);
+ * User interface instance
+ */
+typedef struct uii {
 
-//void layout_appi_show(appi_t *ai);
+  LIST_ENTRY(uii) uii_link;
+  
+  struct ui *uii_ui;
 
-void layout_draw(float aspect);
+} uii_t;
 
-#endif /* LAYOUT_H */
 
+/**
+ * User interface
+ */
+typedef struct ui {
+
+  LIST_ENTRY(ui) ui_link;
+
+  uii_t *(*ui_start)(char *arg);
+
+  void (*ui_stop)(uii_t *uii);
+
+} ui_t;
+
+
+
+
+/**
+ *
+ */
+void ui_loop(void);
+
+void ui_exit_showtime(void);
+
+#endif /* UI_H__ */

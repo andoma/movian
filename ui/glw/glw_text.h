@@ -19,14 +19,7 @@
 #ifndef GLW_TEXT_H
 #define GLW_TEXT_H
 
-#include <ft2build.h>  
-#include FT_FREETYPE_H
-#include FT_GLYPH_H
-#include FT_OUTLINE_H
-
-extern FT_Library glw_text_library;
-
-int glw_text_init(void);
+int glw_text_init(glw_root_t *gr);
 
 int glw_text_getutf8(const char **s);
 

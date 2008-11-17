@@ -71,7 +71,7 @@ glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
       s->displaytime = INT32_MAX;
       delta = 0.1f;
     } else {
-      s->displaytime = glw_framerate * w->glw_time;
+      s->displaytime = w->glw_root->gr_framerate * w->glw_time;
       delta = 1 / (s->displaytime * 0.1);
     }
 

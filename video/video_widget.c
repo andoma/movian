@@ -168,7 +168,7 @@ vd_create_widget(glw_t *p, media_pipe_t *mp, float zdisplacement)
   assert(vd->vd_widget == NULL);
 
   vd->vd_dvdspu = gl_dvdspu_init();
-
+#if 0
   vd->vd_widget = glw_create(GLW_EXT,
 			     GLW_ATTRIB_DISPLACEMENT, 0.0, 0.0, zdisplacement,
 			     GLW_ATTRIB_FLAGS, GLW_EVERY_FRAME,
@@ -176,6 +176,8 @@ vd_create_widget(glw_t *p, media_pipe_t *mp, float zdisplacement)
 			     GLW_ATTRIB_SIGNAL_HANDLER, 
 			     gl_video_widget_callback, vd, 0,
 			     NULL);
+#endif
+  printf("%p\n", gl_video_widget_callback);
 
   glw_lock();
   LIST_INSERT_HEAD(&video_decoders, vd, vd_global_link);

@@ -21,7 +21,6 @@
 
 #include "event.h"
 
-extern float glw_framerate;
 
 static inline void
 glw_flush_render_list(glw_t *w)
@@ -109,9 +108,10 @@ void glw_render0(glw_t *w, glw_rctx_t *rc);
 
 void glw_layout0(glw_t *w, glw_rctx_t *rc);
 
-glw_t *glw_create0(glw_class_t class, va_list ap);
+glw_t *glw_create0(glw_root_t *gr, glw_class_t class, va_list ap);
 
-glw_t *glw_create_i(glw_class_t class, ...) __attribute__((__sentinel__(0)));
+glw_t *glw_create_i(glw_root_t *gr, 
+		    glw_class_t class, ...) __attribute__((__sentinel__(0)));
 
 #define glw_lock_assert() glw_lock_check(__FILE__, __LINE__)
 
@@ -201,11 +201,6 @@ void glw_event_map_destroy(glw_event_map_t *gem);
 
 int glw_event_map_intercept(glw_t *w, event_t *e);
 
-extern void (*glw_ffmpeglockmgr)(int lock);
-extern int (*glw_imageloader)(glw_image_load_ctrl_t *ctrl);
-extern const void *(*glw_rawloader)(const char *filename, size_t *sizeptr);
-extern void (*glw_rawunload)(const void *data);
-
 void glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l);
 
 
@@ -213,7 +208,7 @@ void glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l);
  * Render interface abstraction
  */
 
-void glw_check_system_features(void);
+void glw_check_system_features(glw_root_t *gr);
 
 void glw_render_T(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc);
 

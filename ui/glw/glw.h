@@ -27,6 +27,16 @@
 #include <time.h>
 #include <math.h>
 #include "prop.h"
+#include "ui/ui.h"
+
+
+#include <ft2build.h>  
+#include FT_FREETYPE_H
+#include FT_GLYPH_H
+#include FT_OUTLINE_H
+
+extern FT_Library glw_text_library;
+
 
 #define GLW_LERP(a, y0, y1) ((y0) + (a) * ((y1) - (y0)))
 #define GLW_S(a) (sin(GLW_LERP(a, M_PI * -0.5, M_PI * 0.5)) * 0.5 + 0.5)
@@ -118,6 +128,9 @@ TAILQ_HEAD(glw_queue, glw);
 LIST_HEAD(glw_head, glw);
 LIST_HEAD(glw_event_map_list, glw_event_map);
 LIST_HEAD(glw_prop_sub_list, glw_prop_sub);
+LIST_HEAD(glw_texture_list, glw_texture);
+
+
 
 typedef struct glw_vertex {
   float x, y, z;
@@ -192,7 +205,66 @@ typedef enum {
 
 } glw_signal_t;
 
-struct glw_rctx;
+
+/**
+ * GLW root context
+ */
+typedef struct glw_root {
+  uii_t gr_uii;
+
+  hts_thread_t gr_thread;
+
+  int gr_sysfeatures;
+#define GLW_SYSFEATURE_PBO       0x1
+#define GLW_SYSFEATURE_VBO       0x2
+#define GLW_SYSFEATURE_FRAG_PROG 0x4
+#define GLW_SYSFEATURE_TNPO2     0x8
+  
+  struct glw_queue gr_destroyer_queue;
+  
+  float gr_framerate;
+
+  struct glw_head gr_active_list;
+  struct glw_head gr_active_flush_list;
+  struct glw_head gr_active_dummy_list;
+  struct glw_head gr_every_frame_list;
+
+
+  /**
+   * Font renderer
+   */
+  LIST_HEAD(,  glw_text_bitmap) gr_gtbs;
+  TAILQ_HEAD(, glw_text_bitmap) gr_gtb_render_queue;
+  hts_cond_t gr_gtb_render_cond;
+  FT_Face gr_gtb_face;
+  
+  /**
+   * Image/Texture loader
+   */
+
+
+  struct glw_texture_list gr_tex_active_list;
+  struct glw_texture_list gr_tex_flush_list;
+
+  hts_mutex_t gr_tex_mutex;
+  TAILQ_HEAD(, glw_texture) gr_tex_rel_queue;
+
+  hts_cond_t gr_tex_load_cond;
+  TAILQ_HEAD(, glw_texture) gr_tex_load_queue[2];
+
+  LIST_HEAD(, glw_texture) gr_tex_list;
+
+  /**
+   *
+   */
+  struct glw_texture *gr_cursor_gt;
+
+} glw_root_t;
+
+
+
+
+
 
 /**
  * Matrix
@@ -248,6 +320,7 @@ LIST_HEAD(glw_signal_handler_list, glw_signal_handler);
 
 typedef struct glw {
   glw_class_t glw_class;
+  glw_root_t *glw_root;
   int glw_refcnt;
   LIST_ENTRY(glw) glw_active_link;
   LIST_ENTRY(glw) glw_every_frame_link;
@@ -347,28 +420,17 @@ typedef struct glw_vertex_anim {
 } glw_vertex_anim_t;
 
 
-typedef struct glw_image_load_ctrl {
-  const char *url;
-  int got_thumb;
-  int want_thumb;
-  void *data;
-  size_t datasize;
-  int codecid;              /* LAVC codec id */
-} glw_image_load_ctrl_t;
-
-
 #define GLW_TEXT_UTF8     0x1
 #define GLW_TEXT_EDITABLE 0x2
 
-void glw_flush(void);
+int glw_init(glw_root_t *gr);
+
+
+void glw_flush(glw_root_t *gr);
 
 void glw_layout(glw_t *w, glw_rctx_t *rc);
 
 void glw_render(glw_t *w, glw_rctx_t *rc);
-
-glw_t *glw_create(glw_class_t class, ...) __attribute__((__sentinel__(0)));
-
-void glw_set(glw_t *w, ...)__attribute__((__sentinel__(0)));
 
 void glw_rescale(float s_aspect, float t_aspect);
 
@@ -376,13 +438,9 @@ void glw_destroy(glw_t *w);
 
 void *glw_get_opaque(glw_t *w, glw_callback_t *func);
 
-void glw_reaper(void);
+void glw_reaper(glw_root_t *gr);
 
-int glw_init(void (*ffmpeglockmgr)(int lock),
-	     int (*imageloader)(glw_image_load_ctrl_t *ctrl),
-	     const void *(*rawloader)(const char *filename, size_t *sizeptr),
-	     void (*rawunloader)(const void *data),
-	     int concurrency);
+void glw_init_global(void);
 
 int glw_selected_visible_callback(glw_t *w, glw_signal_t signal, ...);
 
@@ -401,8 +459,6 @@ int glw_signal(glw_t *w, glw_signal_t sig, void *extra);
 void glw_hide(glw_t *w);
 
 void glw_unhide(glw_t *w);
-
-extern void (*glw_ffmpeglockmgr)(int lock);
 
 void glw_child_signal(glw_t *w, glw_signal_t sig);
 
@@ -463,14 +519,6 @@ float glw_vertex_anim_read_i(glw_vertex_anim_t *gva);
 
 const char *glw_bitmap_get_filename(glw_t *w);
 
-
-#define GLW_SYSFEATURE_PBO       0x1
-#define GLW_SYSFEATURE_VBO       0x2
-#define GLW_SYSFEATURE_FRAG_PROG 0x4
-#define GLW_SYSFEATURE_TNPO2     0x8
-
-extern int glw_sysfeatures; /* Contains the GLW_SYSFEATURE_ -flags */
-
 /**
  *
  */
@@ -481,7 +529,8 @@ void glw_set_framerate(float r);
 /**
  * Models
  */
-glw_t *glw_model_create(const char *src, glw_t *parent, int flags,
+glw_t *glw_model_create(glw_root_t *gr, const char *src, 
+			glw_t *parent, int flags,
 			struct prop *prop);
 
 #define GLW_MODEL_CACHE 0x1
@@ -497,5 +546,11 @@ typedef enum {
   GLW_TRANS_SLIDE_VERTICAL,
   GLW_TRANS_num,
 } glw_transition_type_t;
+
+
+/**
+ * temp
+ */
+uii_t *glw_start(const char *arg);
 
 #endif /* GLW_H */

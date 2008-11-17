@@ -58,22 +58,22 @@ typedef struct glw_texture {
 
 } glw_texture_t;
 
-glw_texture_t *glw_tex_create(const char *filename);
+glw_texture_t *glw_tex_create(glw_root_t *gr, const char *filename);
 
-void glw_tex_deref(glw_texture_t *ht);
+void glw_tex_deref(glw_root_t *gr, glw_texture_t *ht);
 
-void glw_tex_layout(glw_texture_t *gt);
+void glw_tex_layout(glw_root_t *gr, glw_texture_t *gt);
 
-void glw_image_init(int concurrency);
+void glw_image_init(glw_root_t *gr);
 
-void glw_texture_purge(void);
+void glw_texture_purge(glw_root_t *gr);
 
-void glw_tex_is_active(glw_texture_t *gt);
+void glw_tex_is_active(glw_root_t *gr, glw_texture_t *gt);
 
-void glw_tex_autoflush(void);
+void glw_tex_autoflush(glw_root_t *gr);
 
 void glw_tex_upload(glw_texture_t *gt);
 
-void glw_tex_flush_all(void);
+void glw_tex_flush_all(glw_root_t *gr);
 
 #endif /* GLW_TEXTURE_H */

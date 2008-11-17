@@ -19,8 +19,15 @@
 #ifndef FA_IMAGELOADER_H
 #define FA_IMAGELOADER_H
 
-#include "ui/glw/glw.h"
+typedef struct fa_image_load_ctrl {
+  const char *url;
+  int got_thumb;
+  int want_thumb;
+  void *data;
+  size_t datasize;
+  int codecid;              /* LAVC codec id */
+} fa_image_load_ctrl_t;
 
-int fa_imageloader(glw_image_load_ctrl_t *ctrl);
+int fa_imageloader(fa_image_load_ctrl_t *ctrl);
 
 #endif /* FA_IMAGELOADER_H */

@@ -42,12 +42,6 @@
 
 #define BITMAP_HEIGHT 32
 
-static LIST_HEAD(,  glw_text_bitmap) gtbs;
-static TAILQ_HEAD(, glw_text_bitmap) gtb_render_queue;
-static hts_cond_t gtb_render_cond;
-
-static FT_Face gtb_face;
-
 typedef struct glyph {
   FT_Glyph glyph;
   FT_Vector pos;
@@ -118,7 +112,7 @@ paint_shadow(uint8_t *dst, uint8_t *src, int w, int h)
 
 
 static int
-gtb_make_tex(glw_text_bitmap_data_t *gtbd, FT_Face face, 
+gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face, 
 	     const int *uc, const int len, int flags, int docur)
 {
   FT_GlyphSlot slot = face->glyph;
@@ -199,7 +193,7 @@ gtb_make_tex(glw_text_bitmap_data_t *gtbd, FT_Face face,
 
   target_width  = 10 + (siz_x / 62);
 
-  if(!(glw_sysfeatures & GLW_SYSFEATURE_TNPO2)) {
+  if(!(gr->gr_sysfeatures & GLW_SYSFEATURE_TNPO2)) {
     gtbd->gtbd_stride = 1 << (av_log2(target_width) + 1);
   } else {
     gtbd->gtbd_stride = target_width;
@@ -322,6 +316,7 @@ static void
 glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 {
   glw_text_bitmap_t *gtb = (void *)w;
+  glw_root_t *gr = w->glw_root;
 
   if(w->glw_alpha < 0.01)
     return;
@@ -332,9 +327,9 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
   glw_set_active0(w);
 
   if(gtb->gtb_status == GTB_NEED_RERENDER) {
-    TAILQ_INSERT_TAIL(&gtb_render_queue, gtb, gtb_workq_link);
+    TAILQ_INSERT_TAIL(&gr->gr_gtb_render_queue, gtb, gtb_workq_link);
     gtb->gtb_status = GTB_ON_QUEUE;
-    hts_cond_signal(&gtb_render_cond);
+    hts_cond_signal(&gr->gr_gtb_render_cond);
     return;
   }
 }
@@ -515,6 +510,7 @@ static void
 glw_text_bitmap_dtor(glw_t *w)
 {
   glw_text_bitmap_t *gtb = (void *)w;
+  glw_root_t *gr = w->glw_root;
 
   free(gtb->gtb_data.gtbd_data);
 
@@ -524,7 +520,7 @@ glw_text_bitmap_dtor(glw_t *w)
      glDeleteTextures(1, &gtb->gtb_texture);
 
   if(gtb->gtb_status == GTB_ON_QUEUE)
-    TAILQ_REMOVE(&gtb_render_queue, gtb, gtb_workq_link);
+    TAILQ_REMOVE(&gr->gr_gtb_render_queue, gtb, gtb_workq_link);
 }
 
 /**
@@ -645,7 +641,7 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
       case EVENT_INCR:
 	if(glw_get_int0(w, &v) == 0) {
 	  v = GLW_MIN(v + gtb->gtb_int_step, gtb->gtb_int_max);
-	  glw_set(w, GLW_ATTRIB_INT, v, NULL);
+	  glw_set_i(w, GLW_ATTRIB_INT, v, NULL);
 	  glw_signal(w, GLW_SIGNAL_CHANGED, NULL);
 	}
 	return 1;
@@ -653,7 +649,7 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
       case EVENT_DECR:
 	if(glw_get_int0(w, &v) == 0) {
 	  v = GLW_MAX(v - gtb->gtb_int_step, gtb->gtb_int_min);
-	  glw_set(w, GLW_ATTRIB_INT, v, NULL);
+	  glw_set_i(w, GLW_ATTRIB_INT, v, NULL);
 	  glw_signal(w, GLW_SIGNAL_CHANGED, NULL);
 	}
 	return 1;
@@ -717,19 +713,21 @@ glw_text_bitmap_multiline(glw_text_bitmap_t *gtb, int l)
 
   while((s2 = strchr(s1, '\n')) != NULL) {
     *s2 = 0;
-    glw_create(GLW_LABEL,
+    glw_create_i(w->glw_root,
+		 GLW_LABEL,
+		 GLW_ATTRIB_PARENT, w,
+		 GLW_ATTRIB_CAPTION, s1,
+		 GLW_ATTRIB_ALIGNMENT, w->glw_alignment,
+		 NULL);
+    s1 = s2 + 1;
+  }
+
+  glw_create_i(w->glw_root,
+	       GLW_LABEL,
 	       GLW_ATTRIB_PARENT, w,
 	       GLW_ATTRIB_CAPTION, s1,
 	       GLW_ATTRIB_ALIGNMENT, w->glw_alignment,
 	       NULL);
-    s1 = s2 + 1;
-  }
-
-  glw_create(GLW_LABEL,
-	     GLW_ATTRIB_PARENT, w,
-	     GLW_ATTRIB_CAPTION, s1,
-	     GLW_ATTRIB_ALIGNMENT, w->glw_alignment,
-	     NULL);
 
 }
 
@@ -763,6 +761,7 @@ void
 glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
 {
   glw_text_bitmap_t *gtb = (void *)w;
+  glw_root_t *gr = w->glw_root;
   glw_attribute_t attrib;
   int l, update = 0, x, c;
   const char *str;
@@ -876,7 +875,7 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
   }
 
   if(init) /* We do this here in case we break out for multiline editing */
-    LIST_INSERT_HEAD(&gtbs, gtb, gtb_global_link);
+    LIST_INSERT_HEAD(&gr->gr_gtbs, gtb, gtb_global_link);
 }
 
 
@@ -887,6 +886,7 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
 static void *
 font_render_thread(void *aux)
 {
+  glw_root_t *gr = aux;
   glw_text_bitmap_t *gtb;
   int *uc, len, docur, i;
   glw_text_bitmap_data_t d;
@@ -895,8 +895,8 @@ font_render_thread(void *aux)
 
   while(1) {
     
-    while((gtb = TAILQ_FIRST(&gtb_render_queue)) == NULL)
-      glw_cond_wait(&gtb_render_cond);
+    while((gtb = TAILQ_FIRST(&gr->gr_gtb_render_queue)) == NULL)
+      glw_cond_wait(&gr->gr_gtb_render_cond);
 
     /* We are going to render unlocked so we cannot use gtb at all */
 
@@ -912,7 +912,7 @@ font_render_thread(void *aux)
     }
     gtb->w.glw_refcnt++;  /* just avoid glw_reaper from freeing us */
 
-    TAILQ_REMOVE(&gtb_render_queue, gtb, gtb_workq_link);
+    TAILQ_REMOVE(&gr->gr_gtb_render_queue, gtb, gtb_workq_link);
     gtb->gtb_status = GTB_VALID;
     
     docur = gtb->gtb_edit_ptr >= 0;
@@ -920,7 +920,7 @@ font_render_thread(void *aux)
     glw_unlock();
 
     if(uc == NULL || uc[0] == 0 || 
-       gtb_make_tex(&d, gtb_face, uc, len, 0, docur)) {
+       gtb_make_tex(gr, &d, gr->gr_gtb_face, uc, len, 0, docur)) {
       d.gtbd_data = NULL;
       d.gtbd_siz_x = 0;
       d.gtbd_siz_y = 0;
@@ -947,21 +947,22 @@ font_render_thread(void *aux)
  *
  */
 int
-glw_text_bitmap_init(const void *file_base, long file_size)
+glw_text_bitmap_init(glw_root_t *gr, const void *file_base, long file_size)
 {
   hts_thread_t font_render_ptid;
 
-  TAILQ_INIT(&gtb_render_queue);
+  TAILQ_INIT(&gr->gr_gtb_render_queue);
 
-  if(FT_New_Memory_Face(glw_text_library, file_base, file_size, 0, &gtb_face))
+  if(FT_New_Memory_Face(glw_text_library, file_base, file_size, 0, 
+			&gr->gr_gtb_face))
     return -1;
 
-  FT_Set_Pixel_Sizes(gtb_face, 0, BITMAP_HEIGHT);
-  FT_Select_Charmap(gtb_face, FT_ENCODING_UNICODE);
+  FT_Set_Pixel_Sizes(gr->gr_gtb_face, 0, BITMAP_HEIGHT);
+  FT_Select_Charmap(gr->gr_gtb_face, FT_ENCODING_UNICODE);
 
-  hts_cond_init(&gtb_render_cond);
+  hts_cond_init(&gr->gr_gtb_render_cond);
 
-  hts_thread_create(&font_render_ptid, font_render_thread, NULL);
+  hts_thread_create(&font_render_ptid, font_render_thread, gr);
   return 0;
 }
 
@@ -969,10 +970,10 @@ glw_text_bitmap_init(const void *file_base, long file_size)
  *
  */
 void
-glw_text_flush(void)
+glw_text_flush(glw_root_t *gr)
 {
   glw_text_bitmap_t *gtb;
-  LIST_FOREACH(gtb, &gtbs, gtb_global_link)
+  LIST_FOREACH(gtb, &gr->gr_gtbs, gtb_global_link)
     gtb_flush(gtb);
 }
 
