@@ -118,63 +118,12 @@ propupdater(void *aux)
 /**
  *
  */
-prop_t *prop_cloner;
-prop_t *prop_cloner2;
-static void *
-clonertest(void *aux)
-{
-  prop_t *a, *b, *c;
-
-  while(1) {
-
-    a = prop_create(prop_cloner, "hej");
-    prop_set_string(prop_create(a, "name"), "jag e a");
-
-    sleep(1);
-
-    b = prop_create(prop_cloner, "hej2");
-    prop_set_string(prop_create(b, "name"), "jag e b");
-
-    sleep(1);
-
-    c = prop_create(prop_cloner, "hej3");
-    prop_set_string(prop_create(c, "name"), "jag e c");
-
-    sleep(1);
-    prop_destroy(b);
-
-    sleep(1);
-    prop_destroy(a);
-
-    if(prop_cloner2 == NULL) {
-      prop_cloner2 = prop_create(prop_get_global(), "clonertest2");
-      prop_link(prop_cloner, prop_cloner2);
-    }
-
-    sleep(1);
-    prop_destroy(c);
-
-    sleep(1);
-  }
-}
-
-
-/**
- *
- */
 static void
 global_prop_init(void)
 {
   prop_t *p;
   prop_t *cpu;
   hts_thread_t tid;
-
-  prop_ui_scale = prop_create(prop_get_global(), "uiscale");
-
-  prop_cloner = prop_create(prop_get_global(), "clonertest");
-  //  prop_cloner2 = prop_create(prop_get_global(), "clonertest2");
-
-
 
 
   p = prop_create(prop_get_global(), "version");
@@ -197,9 +146,6 @@ global_prop_init(void)
   prop_day = prop_create(p, "day");
 
   hts_thread_create_detached(&tid, propupdater, NULL);
-
-  if(0)hts_thread_create_detached(&tid, clonertest, NULL);
-
 }
 
 
