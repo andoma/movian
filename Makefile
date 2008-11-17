@@ -15,7 +15,7 @@ SRCS  += fa_fs.c fa_rar.c fa_smb.c
 VPATH += display
 
 VPATH += display
-SRCS  += gl_common.c display_$(GL_GLUE).c
+SRCS  += gl_common.c
 
 # video playback subsys
 
@@ -112,7 +112,10 @@ SRCS  += be_file.c be_page.c
 VPATH += ui/glw
 SRCS += glw.c
 
+SRCS += glw_x11.c
+
 SRCS += glw_opengl.c
+
 
 SRCS += glw_model.c glw_model_lexer.c glw_model_parser.c \
 	glw_model_eval.c glw_model_preproc.c glw_model_support.c \
