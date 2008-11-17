@@ -35,10 +35,6 @@
 #define GLW_MAX(a, b) ((a) > (b) ? (a) : (b))
 #define GLW_DEG2RAD(a) ((a) * M_PI * 2.0f / 360.0f)
 
-#define GLW_TAG_HASH_SIZE 512
-#define GLW_TAG_HASH_MASK (GLW_TAG_HASH_SIZE - 1)
-
-
 typedef enum {
   GLW_DUMMY,        /* Emtpy placeholder, wont render anything */
   GLW_MODEL,
@@ -62,7 +58,6 @@ typedef enum {
   GLW_EXPANDER,
   GLW_SLIDESHOW,
   GLW_FORM,
-  //  GLW_SELECTION,
   GLW_MIRROR,
   GLW_ANIMATOR,
   GLW_FX_TEXROT,

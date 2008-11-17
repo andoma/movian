@@ -85,7 +85,6 @@ static const size_t glw_class_to_size[] = {
   [GLW_EXPANDER] = sizeof(glw_t),
   [GLW_SLIDESHOW] = sizeof(glw_slideshow_t),
   [GLW_FORM] = sizeof(glw_form_t),
-  //  [GLW_SELECTION] = sizeof(glw_selection_t),
   [GLW_MIRROR] = sizeof(glw_t),
   [GLW_ANIMATOR] = sizeof(glw_animator_t),
   [GLW_FX_TEXROT] = sizeof(glw_fx_texrot_t),
@@ -382,11 +381,6 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
     glw_form_ctor(w, init, apx);
     break;
 
-    /*  case GLW_SELECTION:
-    glw_selection_ctor(w, init, apx);
-    break;
-    */
-
   case GLW_MIRROR:
     glw_mirror_ctor(w, init, apx);
     break;
@@ -600,17 +594,6 @@ glw_find_by_id0(glw_t *w, const char *id, int deepsearch)
       return r;
   }
   return NULL;
-}
-
-
-/*
- *
- */
-
-struct glw_head *
-glw_taghash_create(void)
-{
-  return calloc(1, sizeof(struct glw_head) * GLW_TAG_HASH_SIZE);
 }
 
 /*
