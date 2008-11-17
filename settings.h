@@ -19,7 +19,7 @@
 #ifndef SETTINGS_H__
 #define SETTINGS_H__
 
-#include "ui/glw/glw.h"
+#include "prop.h"
 
 struct setting;
 typedef struct setting setting_t;
