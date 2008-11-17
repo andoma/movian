@@ -27,7 +27,6 @@
 #include "audio/audio_decoder.h"
 #include "video/video_decoder.h"
 #include "event.h"
-#include "layout/layout.h"
 #include "fileaccess/fileaccess.h"
 
 #include <libhts/htsatomic.h>

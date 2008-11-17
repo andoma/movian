@@ -35,7 +35,6 @@
 
 #include "showtime.h"
 #include "hid/keymapper.h"
-#include "layout/layout.h"
 #include "video/video_decoder.h"
 #include "settings.h"
 

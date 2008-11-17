@@ -32,7 +32,6 @@
 #include <libavformat/avformat.h>
 
 #include "showtime.h"
-#include "layout/layout.h"
 #include "video_playback.h"
 #include "video_decoder.h"
 #include "video_menu.h"
