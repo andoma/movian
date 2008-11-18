@@ -179,6 +179,8 @@ typedef struct glw_model_eval_context {
 
   token_t *rpn; 
 
+  int passive_subscriptions;
+
 } glw_model_eval_context_t;
 
 

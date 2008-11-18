@@ -375,6 +375,7 @@ eval_array(glw_model_eval_context_t *pec, token_t *t0)
   ec.prop = pec->prop;
   ec.rpn = pec->rpn;
   ec.gr = pec->gr;
+  ec.passive_subscriptions = pec->passive_subscriptions;
 
   for(t = t0->child; t != NULL; t = t->next) {
     ec.alloc = NULL;
@@ -443,11 +444,35 @@ static int
 eval_assign(glw_model_eval_context_t *ec, struct token *self)
 {
   token_t *b = eval_pop(ec), *a = eval_pop(ec);
+  prop_t *p;
   int r;
 
   if(a == NULL || b == NULL)
     return glw_model_seterr(ec->ei, self, "Missing operands");
  
+  if(a->propsubr != NULL) {
+    
+    p = prop_get_by_subscription(a->propsubr->gps_sub);
+    switch(b->type) {
+    case TOKEN_STRING:
+      prop_set_string(p, b->t_string);
+      break;
+    case TOKEN_INT:
+      prop_set_int(p, b->t_int);
+      break;
+    case TOKEN_FLOAT:
+      prop_set_float(p, b->t_float);
+      break;
+    default:
+      prop_set_void(p);
+      break;
+    }
+    prop_ref_dec(p);
+    eval_push(ec, b);
+    return 0;
+  }
+
+
   if(a->type != TOKEN_OBJECT_ATTRIBUTE)
     return glw_model_seterr(ec->ei, self, "Invalid assignment");
 
@@ -845,7 +870,7 @@ subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
   gps->gps_widget = w;
   LIST_INSERT_HEAD(&w->glw_prop_subscriptions, gps, gps_link);
 
-  gps->gps_rpn = ec->rpn;
+  gps->gps_rpn = ec->passive_subscriptions ? NULL : ec->rpn;
 
   free(self->t_string);
   self->propsubr = gps;
@@ -942,6 +967,7 @@ glw_model_eval_rpn(token_t *t, glw_model_eval_context_t *pec, int *copyp)
   ec.w = pec->w;
   ec.rpn = t;
   ec.gr = pec->gr;
+  ec.passive_subscriptions = pec->passive_subscriptions;
 
   r = glw_model_eval_rpn0(t, &ec);
 
@@ -1244,7 +1270,8 @@ glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem)
   n.ei = NULL;
   n.gr = w->glw_root;
   n.w = w;
-  
+  n.passive_subscriptions = 1;
+
   body = glw_model_clone_chain(b->block);
   glw_model_eval_block(body, &n);
   glw_model_free_chain(body);
