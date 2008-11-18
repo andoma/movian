@@ -266,3 +266,19 @@ event_post_simple(event_type_t type)
 {
   event_post(event_create(type, sizeof(event_t)));
 }
+
+
+/**
+ * Destroy a sys signal
+ */
+void
+event_generic_dtor(event_t *e)
+{
+  event_generic_t *g = (void *)e;
+  free(g->target);
+  free(g->method);
+  free(g->argument);
+  free(g);
+}
+
+

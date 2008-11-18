@@ -465,7 +465,7 @@ eval_assign(glw_model_eval_context_t *ec, struct token *self)
 static int
 eval_prop(glw_model_eval_context_t *ec, struct token *self)
 {
-  glw_prop_sub_t *gps = self->t_propsubr;
+  glw_prop_sub_t *gps = self->propsubr;
   token_t *r;
 
   ec->persistence = GLW_MAX(ec->persistence, GLW_MODEL_EVAL_PROP);
@@ -732,30 +732,34 @@ prop_callback(prop_sub_t *s, prop_event_t event, ...)
     switch(event) {
     case PROP_SET_VOID:
       t = prop_callback_alloc_token(gps, TOKEN_VOID);
+      t->propsubr = gps;
       rpn = gps->gps_rpn;
       break;
 
     case PROP_SET_STRING:
       t = prop_callback_alloc_token(gps, TOKEN_STRING);
+      t->propsubr = gps;
       t->t_string = strdup(va_arg(ap, char *));
       rpn = gps->gps_rpn;
       break;
 
     case PROP_SET_INT:
       t = prop_callback_alloc_token(gps, TOKEN_INT);
+      t->propsubr = gps;
       t->t_int = va_arg(ap, int);
       rpn = gps->gps_rpn;
       break;
 
     case PROP_SET_FLOAT:
       t = prop_callback_alloc_token(gps, TOKEN_FLOAT);
+      t->propsubr = gps;
       t->t_float = va_arg(ap, double);
       rpn = gps->gps_rpn;
       break;
 
     case PROP_SET_DIR:
       t = prop_callback_alloc_token(gps, TOKEN_DIRECTORY);
-      t->t_propsubr = gps;
+      t->propsubr = gps;
       rpn = gps->gps_rpn;
       break;
 
@@ -844,7 +848,7 @@ subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
   gps->gps_rpn = ec->rpn;
 
   free(self->t_string);
-  self->t_propsubr = gps;
+  self->propsubr = gps;
   self->type = TOKEN_PROPERTY_SUBSCRIPTION;
 
   glw_model_free_chain(self->child);
@@ -1160,7 +1164,7 @@ glwf_cloner(glw_model_eval_context_t *ec, struct token *self)
     glw_destroy0(w);
 
   if(a->type == TOKEN_DIRECTORY) {
-    gps = a->t_propsubr;
+    gps = a->propsubr;
 
     if(gps->gps_cloner_body != NULL)
       glw_model_free_chain(gps->gps_cloner_body);
@@ -1258,8 +1262,8 @@ glwf_onEvent(glw_model_eval_context_t *ec, struct token *self)
     return glw_model_seterr(ec->ei, a, "onEvent: Second arg is not an event");
 
   gem = b->t_gem;
-  gem->gem_inevent = srcevent;
-  LIST_INSERT_HEAD(&w->glw_event_maps, gem, gem_link);
+  gem->gem_srcevent = srcevent;
+  glw_event_map_add(w, gem);
 
   b->type = TOKEN_NOP; /* Steal 'gem' pointer from this token */
   return 0;
@@ -1270,24 +1274,23 @@ glwf_onEvent(glw_model_eval_context_t *ec, struct token *self)
  *
  */
 static int 
-glwf_systemEvent(glw_model_eval_context_t *ec, struct token *self)
+glwf_genericEvent(glw_model_eval_context_t *ec, struct token *self)
 {
   token_t *c = eval_pop(ec);  /* Argument */
   token_t *b = eval_pop(ec);  /* Method */
   token_t *a = eval_pop(ec);  /* Target name */
   token_t *r;
-  glw_event_map_t *gem;
   const char *s;
 
   if(a == NULL || b == NULL || c == NULL)
     return glw_model_seterr(ec->ei, self, "Missing operands");
 
   if(a->type != TOKEN_IDENTIFIER)
-    return glw_model_seterr(ec->ei, a, "systemEvent: "
+    return glw_model_seterr(ec->ei, a, "genericEvent: "
 			    "First argument is not an identifier");
   
   if(b->type != TOKEN_IDENTIFIER)
-    return glw_model_seterr(ec->ei, b, "systemEvent: "
+    return glw_model_seterr(ec->ei, b, "genericEvent: "
 			    "Second argument is not an identifier");
   
   switch(c->type) {
@@ -1300,19 +1303,12 @@ glwf_systemEvent(glw_model_eval_context_t *ec, struct token *self)
     break;
 
   default:
-    return glw_model_seterr(ec->ei, c, "systemEvent: "
+    return glw_model_seterr(ec->ei, c, "genericEvent: "
 			    "Third argument is not a string");
   }
 
-  gem = malloc(sizeof(glw_event_map_t));
-  gem->gem_outevent = EVENT_GENERIC;
-
-  gem->gem_target   = strdup(a->t_string);
-  gem->gem_method   = strdup(b->t_string);
-  gem->gem_argument = strdup(s);
-
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  r->t_gem = gem;
+  r->t_gem = glw_event_map_generic_create(a->t_string, b->t_string, s);
   eval_push(ec, r);
   return 0;
 }
@@ -1728,7 +1724,7 @@ static const token_func_t funcvec[] = {
   {"cloner", glwf_cloner},
   {"space", glwf_space},
   {"onEvent", glwf_onEvent},
-  {"systemEvent", glwf_systemEvent},
+  {"genericEvent", glwf_genericEvent},
   {"changed", glwf_changed, glwf_changed_ctor, glwf_changed_dtor},
   {"iir", glwf_iir},
   {"float2str", glwf_float2str},

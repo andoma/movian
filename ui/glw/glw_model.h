@@ -129,25 +129,21 @@ typedef struct token {
     const struct token_func   *func;
     const struct token_attrib *attrib;
 
-    struct glw_prop_sub *propsubr;
-
     struct glw_event_map *gem;
 
   } u;
 
 #define t_string          u.string
 #define t_string_vector   u.string_vec
-
 #define t_float           u.value
 #define t_float_vector    u.value_vec
-
 #define t_int             u.ival
-
 #define t_func            u.func
 #define t_attrib          u.attrib
-#define t_propsubr        u.propsubr
-
 #define t_gem             u.gem
+
+
+  struct glw_prop_sub *propsubr;
 
 } token_t;
 

@@ -22,28 +22,41 @@
 #include "event.h"
 
 
-/**
+/** 
  *
  */
 typedef struct glw_event_map {
-  event_type_t gem_inevent;
-  event_type_t gem_outevent;
-  char *gem_target;
-  char *gem_method;
-  char *gem_argument;
   LIST_ENTRY(glw_event_map) gem_link;
+
+  event_type_t gem_srcevent;
+
+  void (*gem_fire)(glw_t *w, struct glw_event_map *gem);
+  void (*gem_dtor)(struct glw_event_map *gem);
+
 } glw_event_map_t;
 
 
+/**
+ *
+ */
+void glw_event_map_add(glw_t *w, glw_event_map_t *gem);
 
-void glw_event_init(void);
-
-void glw_event_map_add(glw_t *w, event_type_t inevent,
-		       const char *target, event_type_t outevent,
-		       const char *appmethod);
-
+/**
+ *
+ */
 void glw_event_map_destroy(glw_event_map_t *gem);
 
+/**
+ *
+ */
 int glw_event_map_intercept(glw_t *w, event_t *e);
+
+
+/**
+ *
+ */
+glw_event_map_t *glw_event_map_generic_create(const char *target, 
+					      const char *method,
+					      const char *argument);
 
 #endif /* GLW_EVENT_H__ */

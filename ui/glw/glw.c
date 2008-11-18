@@ -540,8 +540,10 @@ glw_destroy0(glw_t *w)
 
   glw_prop_subscription_destroy_list(&w->glw_prop_subscriptions);
 
-  while((gem = LIST_FIRST(&w->glw_event_maps)) != NULL)
-    glw_event_map_destroy(gem);
+  while((gem = LIST_FIRST(&w->glw_event_maps)) != NULL) {
+    LIST_REMOVE(gem, gem_link);
+    gem->gem_dtor(gem);
+  }
 
   if(w->glw_flags & GLW_EVERY_FRAME)
     LIST_REMOVE(w, glw_every_frame_link);

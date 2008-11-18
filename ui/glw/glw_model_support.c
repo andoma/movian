@@ -71,7 +71,6 @@ void
 glw_model_token_free(token_t *t)
 {
   int i;
-  glw_event_map_t *gem;
 
 #ifdef GLW_MODEL_ERRORINFO
   if(t->file != NULL)
@@ -133,11 +132,7 @@ glw_model_token_free(token_t *t)
     break;
 
   case TOKEN_EVENT:
-    gem = t->t_gem;
-    free(gem->gem_target);
-    free(gem->gem_method);
-    free(gem->gem_argument);
-    free(gem);
+    t->t_gem->gem_dtor(t->t_gem);
     break;
 
   case TOKEN_num:
@@ -176,7 +171,7 @@ glw_model_token_copy(token_t *src)
 
   case TOKEN_PROPERTY_SUBSCRIPTION:
   case TOKEN_DIRECTORY:
-    dst->t_propsubr = src->t_propsubr;
+    dst->propsubr = src->propsubr;
     break;
 
   case TOKEN_FUNCTION:

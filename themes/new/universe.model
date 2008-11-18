@@ -28,7 +28,7 @@ widget(form, {
 	    .focusCursor = true;
 	    .focusAlpha = true;
 	    
-	    onEvent(enter, systemEvent(navigator, back, ""));
+	    onEvent(enter, genericEvent(navigator, back, ""));
 	    
 	    widget(label, {
 	      .caption = "Back";

@@ -1,6 +1,6 @@
 widget(container_x, {
 
-  onEvent(enter, systemEvent(navigator, open, self.url));
+  onEvent(enter, genericEvent(navigator, open, self.url));
 
   widget(bitmap, {
     .keepAspect = true;

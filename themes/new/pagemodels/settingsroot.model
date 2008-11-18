@@ -11,7 +11,7 @@ widget(container_y, {
 
       PLATE_SQUARE_MID_IMAGE_AND_TITLE("theme://images/settings.png",
 				       self.title);
-      onEvent(enter, systemEvent(navigator, open, self.url));
+      onEvent(enter, genericEvent(navigator, open, self.url));
     });
   });
 });

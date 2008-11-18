@@ -119,6 +119,7 @@ typedef struct event_unicode {
 } event_unicode_t;
 
 
+
 /**
  *
  */
@@ -128,6 +129,9 @@ typedef struct event_generic {
   char *method;
   char *argument;
 } event_generic_t;
+
+void event_generic_dtor(event_t *e);
+
 
 
 void *event_create(event_type_t type, size_t size);

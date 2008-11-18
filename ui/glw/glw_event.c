@@ -23,18 +23,103 @@
 #include "glw_event.h"
 
 
+
+typedef struct glw_event_generic {
+  glw_event_map_t map;
+
+  char *target;
+  char *method;
+  char *argument;
+
+} glw_event_generic_t;
+
+
+
+/**
+ *
+ */
+static void
+glw_event_map_generic_dtor(glw_event_map_t *gem)
+{
+  glw_event_generic_t *g = (glw_event_generic_t *)gem;
+
+  free(g->target);
+  free(g->method);
+  free(g->argument);
+
+  free(g);
+}
+
+/**
+ *
+ */
+static void
+glw_event_map_generic_fire(glw_t *w, glw_event_map_t *gem)
+{
+  glw_event_generic_t *g = (glw_event_generic_t *)gem;
+  event_generic_t *e;
+
+  e = event_create(EVENT_GENERIC, sizeof(event_generic_t));
+  e->h.e_dtor = event_generic_dtor;
+    
+  e->target   = strdup(g->target);
+  e->method   = strdup(g->method);
+  e->argument = strdup(g->argument);
+  
+  e->h.e_mapped = 1;
+
+  while(w != NULL) {
+    if(glw_signal0(w, GLW_SIGNAL_EVENT_BUBBLE, e))
+      return; /* Taker gets our refcount */
+    w = w->glw_parent;
+  }
+
+  event_unref(&e->h); /* Nobody took it */
+}
+
+
+/**
+ *
+ */
+glw_event_map_t *
+glw_event_map_generic_create(const char *target, 
+			     const char *method,
+			     const char *argument)
+{
+  glw_event_generic_t *g = malloc(sizeof(glw_event_generic_t));
+  
+  g->target   = strdup(target);
+  g->method   = strdup(method);
+  g->argument = strdup(argument);
+
+  g->map.gem_dtor = glw_event_map_generic_dtor;
+  g->map.gem_fire = glw_event_map_generic_fire;
+  return &g->map;
+}
+
+
+
+
 /**
  *
  */
 void
-glw_event_map_destroy(glw_event_map_t *gem)
+glw_event_map_add(glw_t *w, glw_event_map_t *gem)
 {
-  LIST_REMOVE(gem, gem_link);
-  free(gem->gem_target);
-  free(gem->gem_method);
-  free(gem->gem_argument);
-  free(gem);
+  glw_event_map_t *o;
+
+  LIST_FOREACH(o, &w->glw_event_maps, gem_link) {
+    if(o->gem_srcevent == gem->gem_srcevent) {
+      LIST_REMOVE(o, gem_link);
+      o->gem_dtor(o);
+      break;
+    }
+  }
+  LIST_INSERT_HEAD(&w->glw_event_maps, gem, gem_link);
 }
+
+
+#if 0
 
 /**
  *
@@ -78,18 +163,8 @@ glw_event_find_target(glw_t *w, const char *id)
   return NULL;
 }
 
-/**
- * Destroy a sys signal
- */
-static void
-generic_dtor(event_t *e)
-{
-  event_generic_t *g = (void *)e;
-  free(g->target);
-  free(g->method);
-  free(g->argument);
-  free(g);
-}
+#endif
+
 
 
 /**
@@ -99,51 +174,17 @@ int
 glw_event_map_intercept(glw_t *w, event_t *e)
 {
   glw_event_map_t *gem;
-  glw_t *t;
-  event_t *n;
-  event_generic_t *g;
-  int r = 0;
 
   if(e->e_mapped)
     return 0; /* Avoid recursion */
 
   LIST_FOREACH(gem, &w->glw_event_maps, gem_link) {
-    if(gem->gem_inevent == e->e_type)
+    if(gem->gem_srcevent == e->e_type)
       break;
   }
   if(gem == NULL)
     return 0;
 
-
-  switch(gem->gem_outevent) {
-  case EVENT_GENERIC:
-    g = event_create(EVENT_GENERIC, sizeof(event_generic_t));
-    g->h.e_dtor = generic_dtor;
-    
-    g->target   = strdup(gem->gem_target);
-    g->method   = strdup(gem->gem_method);
-    g->argument = strdup(gem->gem_argument);
-    
-    n = &g->h;
-    n->e_mapped = 1;
-
-    while(w != NULL) {
-      if((r = glw_signal0(w, GLW_SIGNAL_EVENT_BUBBLE, n)) != 0)
-	return 1; /* Taker gets our refcount */
-      w = w->glw_parent;
-    }
-    break;
-
-
-  default:
-    n = event_create(gem->gem_outevent, sizeof(event_t));
-    n->e_mapped = 1;
-    
-    if((t = glw_event_find_target(w, gem->gem_target)) != NULL)
-      r = glw_signal0(t, GLW_SIGNAL_EVENT, n);
-    break;
-  }
-
-  event_unref(n);
-  return r;
+  gem->gem_fire(w, gem);
+  return 1;
 }
