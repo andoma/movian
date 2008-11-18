@@ -117,7 +117,6 @@ glw_animator_ctor(glw_t *w, int init, va_list ap)
 
   if(init) {
     glw_signal_handler_int(w, glw_animator_callback);
-    printf("Animator created\n");
   }
 
   do {
@@ -129,12 +128,10 @@ glw_animator_ctor(glw_t *w, int init, va_list ap)
 
     case GLW_ATTRIB_SOURCE:
       filename = va_arg(ap, char *);
-      printf("source = %s\n", filename);
       break;
     case GLW_ATTRIB_PROPROOT:
       a->prop = va_arg(ap, void *);
       /* REFcount ?? */
-      printf("Animator prop = %s\n", propname(a->prop));
       break;
 
     default:
