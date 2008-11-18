@@ -1,4 +1,9 @@
 widget(container_x, {
+
+  onEvent(enter, {
+    self.value = 1 ^^ self.value;
+  });
+
   widget(label, {
     .aspect = 20;
     .align = right;
@@ -7,6 +12,9 @@ widget(container_x, {
 
   widget(label, {
     .aspect = 20;
-    .caption = "The value is " + int2str(self.value);
+    .caption = translate(int2str(self.value),
+			 ["0", "Off",
+			  "1", "On"],
+			 "Unknown");
   });
 });
