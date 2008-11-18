@@ -208,6 +208,8 @@ prop_t **prop_get_ancestors(prop_t *p);
 
 void prop_ancestors_unref(prop_t **r);
 
+prop_t *prop_get_by_subscription(prop_sub_t *s);
+
 /* DEBUGish */
 const char *propname(prop_t *p);
 
