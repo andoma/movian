@@ -123,12 +123,6 @@ void glw_set_i(glw_t *w, ...);
 
 void glw_destroy0(glw_t *w);
 
-int glw_child_prev0(glw_t *w);
-
-int glw_child_next0(glw_t *w);
-
-int glw_drop_signal0(glw_t *w, glw_signal_t signal, void *opaque);
-
 void glw_deref0(glw_t *w);
 
 void glw_hide0(glw_t *w);
@@ -148,8 +142,6 @@ glw_t *glw_get_prev_n_all(glw_t *c, int count);
 glw_t *glw_get_next_n_all(glw_t *c, int count);
 
 glw_t *glw_find_by_id0(glw_t *w, const char *id, int deepsearch);
-
-void glw_signal_handler_clean(glw_t *w);
 
 #define GLW_SIGNAL_PRI_INTERNAL 100
 

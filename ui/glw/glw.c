@@ -458,10 +458,24 @@ glw_set_i(glw_t *w, ...)
 }
 
 
-/*
+/**
  *
  */
+static void
+glw_signal_handler_clean(glw_t *w)
+{
+  glw_signal_handler_t *gsh;
+  while((gsh = LIST_FIRST(&w->glw_signal_handlers)) != NULL) {
+    LIST_REMOVE(gsh, gsh_link);
+    free(gsh);
+  }
+}
 
+
+
+/**
+ *
+ */
 void
 glw_reaper(glw_root_t *gr)
 {
@@ -585,25 +599,6 @@ glw_find_by_id0(glw_t *w, const char *id, int deepsearch)
   return NULL;
 }
 
-/*
- *
- */
-
-int
-glw_drop_signal0(glw_t *w, glw_signal_t signal, void *opaque)
-{
-  glw_signal_handler_t *gsh;
-
-  while(w != NULL) {
-    LIST_FOREACH(gsh, &w->glw_signal_handlers, gsh_link) {
-      if(gsh->gsh_func(w, gsh->gsh_opaque, signal, opaque))
-	 return 1;
-    }
-    w = w->glw_selected ?: TAILQ_FIRST(&w->glw_childs);
-  }
-  return 0;
-}
-
 
 /*
  *
@@ -659,20 +654,6 @@ glw_signal_handler_unregister(glw_t *w, glw_callback_t *func, void *opaque)
       break;
   
   if(gsh != NULL) {
-    LIST_REMOVE(gsh, gsh_link);
-    free(gsh);
-  }
-}
-
-/*
- *
- */
-
-void
-glw_signal_handler_clean(glw_t *w)
-{
-  glw_signal_handler_t *gsh;
-  while((gsh = LIST_FIRST(&w->glw_signal_handlers)) != NULL) {
     LIST_REMOVE(gsh, gsh_link);
     free(gsh);
   }
