@@ -242,8 +242,6 @@ typedef struct glw_root {
   /**
    * Image/Texture loader
    */
-
-
   struct glw_texture_list gr_tex_active_list;
   struct glw_texture_list gr_tex_flush_list;
 
@@ -256,24 +254,12 @@ typedef struct glw_root {
   LIST_HEAD(, glw_texture) gr_tex_list;
 
   /**
-   *
+   * Cursor and form
    */
   struct glw_texture *gr_cursor_gt;
 
 } glw_root_t;
 
-
-
-
-
-
-/**
- * Matrix
- */
-
-typedef struct glw_matrix {
-  float m[4][4];
-} glw_matrix_t;
 
 /**
  * Focus
@@ -310,6 +296,9 @@ typedef struct glw_rctx {
 typedef int (glw_callback_t)(struct glw *w, void *opaque, 
 			     glw_signal_t signal, void *value);
 
+/**
+ * Signal handler
+ */
 typedef struct glw_signal_handler {
   LIST_ENTRY(glw_signal_handler) gsh_link;
   glw_callback_t *gsh_func;
@@ -319,6 +308,10 @@ typedef struct glw_signal_handler {
 
 LIST_HEAD(glw_signal_handler_list, glw_signal_handler);
 
+
+/**
+ * GL widget
+ */
 typedef struct glw {
   glw_class_t glw_class;
   glw_root_t *glw_root;
