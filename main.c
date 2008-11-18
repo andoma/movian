@@ -223,6 +223,10 @@ main_event_handler(event_t *e, void *opaque)
   default:
     return 0;
 
+  case EVENT_KEY_CLOSE:
+    stopcode = 0;
+    break;
+
   case EVENT_KEY_QUIT:
     stopcode = 0;
     break;
