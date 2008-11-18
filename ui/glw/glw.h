@@ -438,53 +438,27 @@ void glw_destroy(glw_t *w);
 
 void *glw_get_opaque(glw_t *w, glw_callback_t *func);
 
+void glw_set_active0(glw_t *w);
+
 void glw_reaper(glw_root_t *gr);
 
 void glw_init_global(void);
 
-int glw_selected_visible_callback(glw_t *w, glw_signal_t signal, ...);
-
-int glw_selected_weight_scaler_callback(glw_t *w, glw_signal_t signal, ...);
-
 glw_t *glw_find_by_tag(struct glw_head *hash, uint32_t tag);
-
-struct glw_head *glw_taghash_create(void);
 
 void glw_destroy_childs(glw_t *w);
 
-glw_t *glw_find_by_class(glw_t *p, glw_class_t class);
-
 int glw_signal(glw_t *w, glw_signal_t sig, void *extra);
-
-void glw_hide(glw_t *w);
-
-void glw_unhide(glw_t *w);
-
-void glw_child_signal(glw_t *w, glw_signal_t sig);
-
-int glw_nav_signal(glw_t *w, glw_signal_t sig);
-
-void glw_set_active(glw_t *w);
 
 void glw_lock(void);
 
 void glw_unlock(void);
-
-void glw_ref(glw_t *w);
-
-void glw_deref(glw_t *w);
 
 void glw_cond_wait(hts_cond_t *c);
 
 glw_t *glw_find_by_id(glw_t *w, const char *id, int deepsearch);
 
 void glw_detach(glw_t *w);
-
-int glw_is_selected(glw_t *w);
-
-int glw_get_text(glw_t *w, char *buf, size_t buflen);
-
-int glw_get_int(glw_t *w, int *result);
 
 void glw_vertex_anim_fwd(glw_vertex_anim_t *gva, float v);
 

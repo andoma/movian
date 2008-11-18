@@ -642,7 +642,7 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
 	if(glw_get_int0(w, &v) == 0) {
 	  v = GLW_MIN(v + gtb->gtb_int_step, gtb->gtb_int_max);
 	  glw_set_i(w, GLW_ATTRIB_INT, v, NULL);
-	  glw_signal(w, GLW_SIGNAL_CHANGED, NULL);
+	  glw_signal0(w, GLW_SIGNAL_CHANGED, NULL);
 	}
 	return 1;
 	
@@ -650,7 +650,7 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
 	if(glw_get_int0(w, &v) == 0) {
 	  v = GLW_MAX(v - gtb->gtb_int_step, gtb->gtb_int_min);
 	  glw_set_i(w, GLW_ATTRIB_INT, v, NULL);
-	  glw_signal(w, GLW_SIGNAL_CHANGED, NULL);
+	  glw_signal0(w, GLW_SIGNAL_CHANGED, NULL);
 	}
 	return 1;
       }
@@ -932,7 +932,7 @@ font_render_thread(void *aux)
 
     if(gtb->w.glw_flags & GLW_DESTROYED) {
       /* widget got destroyed while we were away, throw away the results */
-      glw_deref(&gtb->w);
+      glw_deref0(&gtb->w);
       free(d.gtbd_data);
       continue;
     }

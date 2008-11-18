@@ -68,7 +68,7 @@ glw_zstack_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
   case GLW_SIGNAL_EVENT:
     if(w->glw_selected != NULL)
-      return glw_signal(w->glw_selected, GLW_SIGNAL_EVENT, extra);
+      return glw_signal0(w->glw_selected, GLW_SIGNAL_EVENT, extra);
     break;
   }
   return 0;

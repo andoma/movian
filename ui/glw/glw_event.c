@@ -128,7 +128,7 @@ glw_event_map_intercept(glw_t *w, event_t *e)
     n->e_mapped = 1;
 
     while(w != NULL) {
-      if((r = glw_signal(w, GLW_SIGNAL_EVENT_BUBBLE, n)) != 0)
+      if((r = glw_signal0(w, GLW_SIGNAL_EVENT_BUBBLE, n)) != 0)
 	return 1; /* Taker gets our refcount */
       w = w->glw_parent;
     }
@@ -140,7 +140,7 @@ glw_event_map_intercept(glw_t *w, event_t *e)
     n->e_mapped = 1;
     
     if((t = glw_event_find_target(w, gem->gem_target)) != NULL)
-      r = glw_signal(t, GLW_SIGNAL_EVENT, n);
+      r = glw_signal0(t, GLW_SIGNAL_EVENT, n);
     break;
   }
 

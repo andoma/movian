@@ -582,7 +582,9 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
       return;
   }
 
-  r = glw_signal(gx11->universe, GLW_SIGNAL_EVENT, e);
+  glw_lock();
+  r = glw_signal0(gx11->universe, GLW_SIGNAL_EVENT, e);
+  glw_unlock();
 
   if(r == 0) {
     /* Not consumed, drop it into the main event dispatcher */

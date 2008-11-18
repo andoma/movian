@@ -894,7 +894,7 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
   case GLW_SIGNAL_LAYOUT:
     vd->vd_running = 1;
-    glw_set_active(w);
+    glw_set_active0(w);
     layout_video_pipe(vd, extra);
     return 0;
 

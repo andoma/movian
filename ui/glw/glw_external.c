@@ -41,47 +41,9 @@ glw_flush(glw_root_t *gr)
 }
 
 
-/*
+/**
  *
  */
-
-void
-glw_deref(glw_t *w)
-{
-  glw_lock();
-  glw_deref0(w);
-  glw_unlock();
-}
-
-/*
- *
- */
-
-void
-glw_ref(glw_t *w)
-{
-  glw_lock();
-  w->glw_refcnt++;
-  glw_unlock();
-}
-
-
-/*
- *
- */
-void
-glw_set_active(glw_t *w)
-{
-  glw_lock();
-  glw_set_active0(w);
-  glw_unlock();
-}
-
-
-/*
- *
- */
-
 void
 glw_render(glw_t *w, glw_rctx_t *rc)
 {
@@ -130,97 +92,6 @@ glw_destroy_childs(glw_t *w)
     glw_destroy0(c);
 
   glw_unlock();
-}
-
-
-/*
- *
- */
-
- 
-static glw_t *
-glw_find_by_class_r(glw_t *p, glw_class_t class)
-{
-  glw_t *c, *x;
-
-  if(p->glw_class == class)
-    return p;
-
-  TAILQ_FOREACH(c, &p->glw_childs, glw_parent_link) {
-    x = glw_find_by_class_r(c, class);
-    if(x != NULL)
-      return x;
-  }
-
-  return NULL;
-}
-
- 
-glw_t *
-glw_find_by_class(glw_t *p, glw_class_t class)
-{
-  glw_t *r;
-
-  glw_lock();
-  r = glw_find_by_class_r(p, class);
-  glw_unlock();
-  return r;
-}
-
-
-/*
- *
- */
-void
-glw_hide(glw_t *w)
-{
-  glw_lock();
-  glw_hide0(w);
-  glw_unlock();
-}
-
-
-/*
- *
- */
-void
-glw_unhide(glw_t *w)
-{
-  glw_lock();
-  glw_unhide0(w);
-  glw_unlock();
-}
-
-
-
-/*
- *
- */
-
-int
-glw_nav_signal(glw_t *w, glw_signal_t sig)
-{
-  int r;
-
-  glw_lock();
-  r = glw_signal0(w, sig, NULL);
-  glw_unlock();
-  return r;
-}
-
-
-/*
- *
- */
-int
-glw_signal(glw_t *w, glw_signal_t sig, void *extra)
-{
-  int r;
-
-  glw_lock();
-  r = glw_signal0(w, sig, extra);
-  glw_unlock();
-  return r;
 }
 
 /*
@@ -338,18 +209,3 @@ glw_vertex_anim_init(glw_vertex_anim_t *gva, float x, float y, float z,
   gva->gva_flags = flags;
 }
 
-
-
-/**
- *
- */
-int
-glw_is_selected(glw_t *w)
-{
-  while(w->glw_parent != NULL) {
-    if(w->glw_parent->glw_selected != w)
-      return 0;
-    w = w->glw_parent;
-  }
-  return 1;
-}

@@ -107,7 +107,7 @@ glw_mirror_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     return 1;
 
   case GLW_SIGNAL_EVENT:
-    return glw_signal(c, GLW_SIGNAL_EVENT, extra);
+    return glw_signal0(c, GLW_SIGNAL_EVENT, extra);
   }
   return 0;
 }
