@@ -1217,6 +1217,79 @@ glwf_space(glw_model_eval_context_t *ec, struct token *self)
 }
 
 
+
+
+/**
+ *
+ */
+typedef struct glw_event_map_eval_block {
+  glw_event_map_t map;
+  token_t *block;
+  prop_t *prop;
+} glw_event_map_eval_block_t;
+
+
+/**
+ *
+ */
+static void
+glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem)
+{
+  glw_event_map_eval_block_t *b = (glw_event_map_eval_block_t *)gem;
+  token_t *body;
+  glw_model_eval_context_t n;
+
+  memset(&n, 0, sizeof(n));
+  n.prop = b->prop;
+  n.ei = NULL;
+  n.gr = w->glw_root;
+  n.w = w;
+  
+  body = glw_model_clone_chain(b->block);
+  glw_model_eval_block(body, &n);
+  glw_model_free_chain(body);
+}
+
+/**
+ *
+ */
+static void
+glw_event_map_eval_block_dtor(glw_event_map_t *gem)
+{
+  glw_event_map_eval_block_t *b = (glw_event_map_eval_block_t *)gem;
+
+  glw_model_token_free(b->block);
+
+  if(b->prop)
+    prop_ref_dec(b->prop);
+
+  free(b);
+}
+
+
+
+/**
+ *
+ */
+static glw_event_map_t *
+glw_event_map_eval_block_create(glw_model_eval_context_t *ec,
+				struct token *block)
+{
+  glw_event_map_eval_block_t *b = malloc(sizeof(glw_event_map_eval_block_t));
+
+  b->block = glw_model_clone_chain(block);
+  b->prop = ec->prop;
+
+  if(b->prop)
+    prop_ref_inc(b->prop);
+
+  b->map.gem_dtor = glw_event_map_eval_block_dtor;
+  b->map.gem_fire = glw_event_map_eval_block_fire;
+  return &b->map;
+}
+
+
+
 /**
  *
  */
@@ -1258,14 +1331,26 @@ glwf_onEvent(glw_model_eval_context_t *ec, struct token *self)
      (srcevent = str2val(a->t_string, eventtab)) < 0)
     return glw_model_seterr(ec->ei, a, "Invalid source event type");
 
-  if(b->type != TOKEN_EVENT)
-    return glw_model_seterr(ec->ei, a, "onEvent: Second arg is not an event");
 
-  gem = b->t_gem;
+  switch(b->type) {
+
+  case TOKEN_EVENT:
+    b->type = TOKEN_NOP; /* Steal 'gem' pointer from this token.
+			    It's okay since TOKEN_EVENT are always
+			    generated dynamically. */
+    gem = b->t_gem;
+    break;
+
+  case TOKEN_BLOCK:
+    gem = glw_event_map_eval_block_create(ec, b);
+    break;
+
+  default:
+    return glw_model_seterr(ec->ei, a, "onEvent: Second arg is invalid");
+  }
+
   gem->gem_srcevent = srcevent;
   glw_event_map_add(w, gem);
-
-  b->type = TOKEN_NOP; /* Steal 'gem' pointer from this token */
   return 0;
 }
 
