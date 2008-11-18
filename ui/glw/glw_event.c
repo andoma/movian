@@ -16,11 +16,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "glw.h"
-
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
+
+#include "glw.h"
+#include "glw_event.h"
+
 
 /**
  *
@@ -146,35 +147,3 @@ glw_event_map_intercept(glw_t *w, event_t *e)
   event_unref(n);
   return r;
 }
-
-
-#if 0
-/**
- *
- */
-int
-glw_event_enqueuer(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
-{
-  glw_event_queue_t *geq = opaque;
-  glw_event_t *ge = extra;
-
-  if(sig != GLW_SIGNAL_EVENT && sig != GLW_SIGNAL_EVENT_BUBBLE)
-    return 0;
-
-  glw_event_enqueue(geq, ge);
-  return 1;
-}
-
-
-/**
- *
- */
-void
-glw_event_signal_simple(glw_t *w, event_type_t type)
-{
-  event_t *e = event_create(type, sizeof(event_t));
-  glw_signal(w, GLW_SIGNAL_EVENT, e);
-  event_unref(e);
-}
-
-#endif

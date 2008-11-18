@@ -22,7 +22,7 @@
 #include <errno.h>
 
 #include "glw.h"
-
+#include "glw_event.h"
 
 /**
  * Find a target we can move to

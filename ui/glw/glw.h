@@ -27,6 +27,7 @@
 #include <time.h>
 #include <math.h>
 #include "prop.h"
+#include "event.h"
 #include "ui/ui.h"
 
 
@@ -670,36 +671,7 @@ glw_is_select_candidate(glw_t *w)
   return w->glw_selected != NULL || w->glw_flags & GLW_SELECTABLE;
 }
 
-
-
-#include "event.h"
-/**
- *
- */
-typedef struct glw_event_map {
-  event_type_t gem_inevent;
-  event_type_t gem_outevent;
-  char *gem_target;
-  char *gem_method;
-  char *gem_argument;
-  LIST_ENTRY(glw_event_map) gem_link;
-} glw_event_map_t;
-
-
-
 int glw_navigate(glw_t *w, event_t *e);
-
-void glw_event_init(void);
-
-void glw_event_map_add(glw_t *w, event_type_t inevent,
-		       const char *target, event_type_t outevent,
-		       const char *appmethod);
-
-void glw_event_map_destroy(glw_event_map_t *gem);
-
-int glw_event_map_intercept(glw_t *w, event_t *e);
-
-void glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l);
 
 
 /**

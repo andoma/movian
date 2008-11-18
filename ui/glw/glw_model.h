@@ -242,4 +242,7 @@ token_t *glw_model_clone_chain(token_t *src);
 struct glw;
 void glw_model_ctor(struct glw *w, int init, va_list ap);
 
+struct glw_prop_sub_list;
+void glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l);
+
 #endif /* GLW_MODEL_H */

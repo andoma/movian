@@ -45,6 +45,7 @@
 #include "glw_mirror.h"
 #include "glw_animator.h"
 #include "glw_fx_texrot.h"
+#include "glw_event.h"
 
 static hts_mutex_t glw_global_lock;
 

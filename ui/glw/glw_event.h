@@ -1,0 +1,49 @@
+/*
+ *  GL Widgets, event handling
+ *  Copyright (C) 2008 Andreas Öman
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifndef GLW_EVENT_H__
+#define GLW_EVENT_H__
+
+#include "event.h"
+
+
+/**
+ *
+ */
+typedef struct glw_event_map {
+  event_type_t gem_inevent;
+  event_type_t gem_outevent;
+  char *gem_target;
+  char *gem_method;
+  char *gem_argument;
+  LIST_ENTRY(glw_event_map) gem_link;
+} glw_event_map_t;
+
+
+
+void glw_event_init(void);
+
+void glw_event_map_add(glw_t *w, event_type_t inevent,
+		       const char *target, event_type_t outevent,
+		       const char *appmethod);
+
+void glw_event_map_destroy(glw_event_map_t *gem);
+
+int glw_event_map_intercept(glw_t *w, event_t *e);
+
+#endif /* GLW_EVENT_H__ */

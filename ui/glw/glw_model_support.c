@@ -26,6 +26,7 @@
 
 #include "glw.h"
 #include "glw_model.h"
+#include "glw_event.h"
 
 refstr_t *
 refstr_create(const char *str)
