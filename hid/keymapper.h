@@ -49,7 +49,7 @@ typedef struct hid_keydesc {
 } hid_keydesc_t;
 
 
-void keymapper_resolve(const char *str);
+event_t *keymapper_resolve(const char *str);
 
 hid_keycode_t *keymapper_find_by_code(event_type_t val);
 hid_keydesc_t *keymapper_find_by_desc(const char *str);

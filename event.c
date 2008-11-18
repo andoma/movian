@@ -38,7 +38,7 @@ static LIST_HEAD(, event_handler) event_handlers;
 void
 event_init(void)
 {
-  hts_mutex_init_recursive(&ehmutex);
+  hts_mutex_init(&ehmutex);
 }
 
 
@@ -89,7 +89,6 @@ void
 event_enqueue(event_queue_t *eq, event_t *e)
 {
   atomic_add(&e->e_refcount, 1);
-
   hts_mutex_lock(&eq->eq_mutex);
   TAILQ_INSERT_TAIL(&eq->eq_q, e, e_link);
   hts_cond_signal(&eq->eq_cond);
@@ -183,9 +182,6 @@ typedef struct event_handler {
   const char *name;
   void *opaque;
   int pri;
-  int active; /* The event dispatcher may be invoked recursively,
-		 and if so, avoid calling the same handler twice */
-
   int (*callback)(event_t *ge, void *opaque);
   LIST_ENTRY(event_handler) link;
 } event_handler_t;
@@ -215,7 +211,6 @@ event_handler_register(const char *name, int (*callback)(event_t *ge,
   ih->name = name;
   ih->pri = pri;
   ih->callback = callback;
-  ih->active = 0;
   ih->opaque = opaque;
   hts_mutex_lock(&ehmutex);
   LIST_INSERT_SORTED(&event_handlers, ih, link, ihcmp);
@@ -252,12 +247,7 @@ event_post(event_t *e)
 
   LIST_FOREACH(eh, &event_handlers, link) {
     
-    if(eh->active)
-      continue;
-
-    eh->active = 1;
     r = eh->callback(e, eh->opaque);
-    eh->active = 0;
     if(r)
       break;
   }

@@ -111,7 +111,7 @@ keymapper_post_string(const char *str)
 /**
  * Resolve a keydesc into a keycode
  */
-void
+event_t *
 keymapper_resolve(const char *str)
 {
   unsigned int hash = keydesc_hashstr(str);
@@ -125,10 +125,11 @@ keymapper_resolve(const char *str)
       break;
 
   if(hkd == NULL)
-    return;
+    return NULL;
 
   hkc = hkd->hkd_hkc;
-  event_post_simple(hkc->hkc_code);
+
+  return event_create_simple(hkc->hkc_code);
 }
 
 

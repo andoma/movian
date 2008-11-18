@@ -132,6 +132,8 @@ typedef struct event_generic {
 
 void *event_create(event_type_t type, size_t size);
 
+#define event_create_simple(type) event_create(type, sizeof(event_t))
+
 void *event_create_unicode(int sym);
 
 void event_enqueue(event_queue_t *eq, event_t *e);
@@ -160,7 +162,6 @@ void event_flushqueue(event_queue_t *eq);
  */
 typedef enum {
   EVENTPRI_NAV,
-  EVENTPRI_UNIVERSE,
   EVENTPRI_MAIN,
   EVENTPRI_SPEEDBUTTONS,
 

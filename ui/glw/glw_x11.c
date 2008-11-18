@@ -528,13 +528,15 @@ glw_x11_init(glw_x11_t *gx11)
  *
  */
 static void
-gl_keypress(XEvent *event)
+gl_keypress(glw_x11_t *gx11, XEvent *event)
 {
   XComposeStatus composestatus;
   char str[16], c;
   KeySym keysym;
   int len;
   char buf[32];
+  event_t *e = NULL;
+  int r;
 
   len = XLookupString(&event->xkey, str, sizeof(str), &keysym, &composestatus);
 
@@ -543,39 +545,51 @@ gl_keypress(XEvent *event)
     c = str[0];
     switch(c) {
       /* Static key mappings, these cannot be changed */
-    case 8:          event_post_simple(EVENT_BACKSPACE);           return;
-    case 13:         event_post_simple(EVENT_ENTER);               return;
-    case 27:         event_post_simple(EVENT_KEY_CLOSE);         return;
+    case 8:          e = event_create_simple(EVENT_BACKSPACE); break;
+    case 13:         e = event_create_simple(EVENT_ENTER);     break;
+    case 27:         e = event_create_simple(EVENT_KEY_CLOSE); break;
       /* Always send 1 char ASCII */
     default:
-      event_post(event_create_unicode(c));
+      e = event_create_unicode(c);
       break;
     }
   } else if((event->xkey.state & 0xf) == 0) {
     switch(keysym) {
-    case XK_Left:    event_post_simple(EVENT_LEFT);          return;
-    case XK_Right:   event_post_simple(EVENT_RIGHT);         return;
-    case XK_Up:      event_post_simple(EVENT_UP);            return;
-    case XK_Down:    event_post_simple(EVENT_DOWN);          return;
+    case XK_Left:    e = event_create_simple(EVENT_LEFT);  break;
+    case XK_Right:   e = event_create_simple(EVENT_RIGHT); break;
+    case XK_Up:      e = event_create_simple(EVENT_UP);    break;
+    case XK_Down:    e = event_create_simple(EVENT_DOWN);  break;
     }
   }
 
-  /* Construct a string representing the key */
-  if(keysym != NoSymbol) {
-    snprintf(buf, sizeof(buf),
-	     "x11 %s%s%s- %s",
-	     event->xkey.state & ShiftMask   ? "- Shift " : "",
-	     event->xkey.state & Mod1Mask    ? "- Alt "   : "",
-	     event->xkey.state & ControlMask ? "- Ctrl "  : "",
-	     XKeysymToString(keysym));
-  } else {
-    snprintf(buf, sizeof(buf),
-	     "x11 - raw - 0x%x", event->xkey.keycode);
+  if(e == NULL) {
+
+    /* Construct a string representing the key */
+    if(keysym != NoSymbol) {
+      snprintf(buf, sizeof(buf),
+	       "x11 %s%s%s- %s",
+	       event->xkey.state & ShiftMask   ? "- Shift " : "",
+	       event->xkey.state & Mod1Mask    ? "- Alt "   : "",
+	       event->xkey.state & ControlMask ? "- Ctrl "  : "",
+	       XKeysymToString(keysym));
+    } else {
+      snprintf(buf, sizeof(buf),
+	       "x11 - raw - 0x%x", event->xkey.keycode);
+    }
+    e = keymapper_resolve(buf);
+
+    if(e == NULL)
+      return;
   }
 
-  /* Pass it to the mapper */
+  r = glw_signal(gx11->universe, GLW_SIGNAL_EVENT, e);
 
-  keymapper_resolve(buf);
+  if(r == 0) {
+    /* Not consumed, drop it into the main event dispatcher */
+    event_post(e);
+  } else {
+    event_unref(e);
+  }
 }
 
 /**
@@ -689,17 +703,6 @@ layout_draw(glw_x11_t *gx11, float aspect)
 
 
 /**
- * Primary point for input event distribution in the UI
- */
-static int
-layout_input_event(event_t *e, void *opaque)
-{
-  glw_x11_t *gx11 = opaque;
-  return glw_signal(gx11->universe, GLW_SIGNAL_EVENT, e);
-}
-
-
-/**
  *
  */
 static int
@@ -740,7 +743,7 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
       
 	switch(event.type) {
 	case KeyPress:
-	  gl_keypress(&event);
+	  gl_keypress(gx11, &event);
 	  break;
 
 	case ConfigureNotify:
@@ -803,9 +806,6 @@ glw_x11_thread(void *aux)
   
   gx11->universe = glw_model_create(&gx11->gr,
 				    "theme://universe.model", NULL, 0, NULL);
-
-  event_handler_register("universe", layout_input_event, EVENTPRI_UNIVERSE,
-			 gx11);
 
   glw_set_i(gx11->universe,
 	    GLW_ATTRIB_SIGNAL_HANDLER, layout_event_handler, gx11, 1000,
