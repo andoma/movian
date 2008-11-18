@@ -23,7 +23,6 @@
 #include <GL/gl.h>
 
 #include "glw.h"
-#include "glw_i.h"
 #include "glw_bitmap.h"
 #include "glw_form.h"
 

@@ -27,7 +27,6 @@
 #include <assert.h>
 
 #include "glw.h"
-#include "glw_i.h"
 #include "glw_container.h"
 #include "glw_text.h"
 #include "glw_text_bitmap.h"
@@ -825,5 +824,190 @@ glw_gf_do(void)
   glw_gf_ctrl_t *ggc;
   LIST_FOREACH(ggc, &ggcs, link)
     ggc->flush(ggc->opaque);
+}
+
+
+
+
+/**
+ *
+ */
+void
+glw_flush(glw_root_t *gr)
+{
+  glw_lock();
+  glw_gf_do();
+  glw_tex_flush_all(gr);
+  glw_text_flush(gr);
+  glw_unlock();
+}
+
+
+/**
+ *
+ */
+void
+glw_render(glw_t *w, glw_rctx_t *rc)
+{
+  glw_lock();
+  glw_render0(w, rc);
+  glw_unlock();
+}
+
+
+/*
+ *
+ */
+
+void
+glw_layout(glw_t *w, glw_rctx_t *rc)
+{
+  glw_lock();
+  glw_layout0(w, rc);
+  glw_unlock();
+}
+
+
+/*
+ *
+ */
+void 
+glw_destroy(glw_t *w)
+{
+  glw_lock();
+  glw_destroy0(w);
+  glw_unlock();
+}
+
+/*
+ *
+ */
+
+void
+glw_destroy_childs(glw_t *w)
+{
+  glw_t *c;
+
+  glw_lock();
+
+  while((c = TAILQ_FIRST(&w->glw_childs)) != NULL)
+    glw_destroy0(c);
+
+  glw_unlock();
+}
+
+/*
+ *
+ */
+void *
+glw_get_opaque(glw_t *w, glw_callback_t *func)
+{
+  glw_signal_handler_t *gsh;
+
+  glw_lock();
+  
+  LIST_FOREACH(gsh, &w->glw_signal_handlers, gsh_link)
+    if(gsh->gsh_func == func)
+      break;
+  glw_unlock();
+
+  return gsh ? gsh->gsh_opaque : NULL;
+}
+
+
+/**
+ *
+ */
+glw_t *
+glw_find_by_id(glw_t *w, const char *id, int deepsearch)
+{
+  glw_t *r;
+
+  glw_lock();
+  r = glw_find_by_id0(w, id, deepsearch);
+  glw_unlock();
+  return r;
+}
+
+
+/**
+ *
+ */
+void
+glw_detach(glw_t *w)
+{
+  glw_t *p;
+  glw_signal_handler_t *gsh;
+
+  glw_lock();
+
+  p = w->glw_parent;
+  if(p != NULL) {
+
+    LIST_FOREACH(gsh, &p->glw_signal_handlers, gsh_link)
+      if(gsh->gsh_func(p, gsh->gsh_opaque, GLW_SIGNAL_DETACH_CHILD, w))
+	break;
+
+    if(gsh == NULL)
+      /* Parent does not support detach, destroy child instead */
+      glw_destroy0(w);
+  }
+  glw_unlock();
+}
+
+/*
+ *
+ */
+
+void
+glw_vertex_anim_fwd(glw_vertex_anim_t *gva, float v)
+{
+  gva->gva_i = GLW_MIN(1.0f, gva->gva_i + v);
+}
+
+float
+glw_vertex_anim_read_i(glw_vertex_anim_t *gva)
+{
+  return gva->gva_flags & GLW_VERTEX_ANIM_SIN_LERP ? 
+    GLW_S(gva->gva_i) : gva->gva_i;
+}
+
+void
+glw_vertex_anim_read(glw_vertex_anim_t *gva, glw_vertex_t *t)
+{
+  float i = glw_vertex_anim_read_i(gva);
+  
+  t->x = GLW_LERP(i, gva->gva_prev.x, gva->gva_next.x);
+  t->y = GLW_LERP(i, gva->gva_prev.y, gva->gva_next.y);
+  t->z = GLW_LERP(i, gva->gva_prev.z, gva->gva_next.z);
+}
+
+
+void
+glw_vertex_anim_set(glw_vertex_anim_t *gva, glw_vertex_t *t)
+{
+  if(!memcmp(&gva->gva_next, t, sizeof(glw_vertex_t)))
+    return;
+
+  glw_vertex_anim_read(gva, &gva->gva_prev);
+  memcpy(&gva->gva_next, t, sizeof(glw_vertex_t));
+  gva->gva_i = 0;
+}
+
+void
+glw_vertex_anim_set3f(glw_vertex_anim_t *gva, float x, float y, float z)
+{
+  glw_vertex_t t = {.x = x, .y = y, .z = z};
+  glw_vertex_anim_set(gva, &t);
+}
+
+void
+glw_vertex_anim_init(glw_vertex_anim_t *gva, float x, float y, float z,
+		     int flags)
+{
+  gva->gva_prev.x = gva->gva_next.x = x;
+  gva->gva_prev.y = gva->gva_next.y = y;
+  gva->gva_prev.z = gva->gva_next.z = z;
+  gva->gva_flags = flags;
 }
 

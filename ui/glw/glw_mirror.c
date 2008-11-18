@@ -19,7 +19,6 @@
 #include <GL/gl.h>
 
 #include "glw.h"
-#include "glw_i.h"
 #include "glw_mirror.h"
 
 /*

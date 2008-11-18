@@ -24,7 +24,6 @@
 
 #include "glw_model.h"
 #include "glw.h"
-#include "glw_i.h"
 
 
 /**

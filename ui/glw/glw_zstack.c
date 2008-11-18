@@ -17,7 +17,6 @@
  */
 
 #include "glw.h"
-#include "glw_i.h"
 #include "glw_zstack.h"
 
 /*

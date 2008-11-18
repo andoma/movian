@@ -20,7 +20,6 @@
 #include <GL/gl.h>
 
 #include "glw.h"
-#include "glw_i.h"
 
 /**
  * Render a widget with prior translation and scaling

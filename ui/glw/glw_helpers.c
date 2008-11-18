@@ -22,7 +22,6 @@
 #include <errno.h>
 
 #include "glw.h"
-#include "glw_i.h"
 
 
 /**

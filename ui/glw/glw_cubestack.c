@@ -18,7 +18,6 @@
 
 #include <math.h>
 #include "glw.h"
-#include "glw_i.h"
 #include "glw_cubestack.h"
 
 #define glw_parent_x      glw_parent_misc[0]

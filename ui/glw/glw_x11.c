@@ -27,7 +27,6 @@
 #include <errno.h>
 
 #include "glw.h"
-#include "glw_i.h"
 
 #include <GL/glx.h>
 #include <GL/glu.h>

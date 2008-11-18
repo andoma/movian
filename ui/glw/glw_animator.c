@@ -21,7 +21,6 @@
 #include <stdlib.h>
 
 #include "glw.h"
-#include "glw_i.h"
 #include "glw_animator.h"
 #include "glw_transitions.h"
 

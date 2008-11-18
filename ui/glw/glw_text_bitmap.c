@@ -31,7 +31,6 @@
 #include <math.h>
 
 #include "glw.h"
-#include "glw_i.h"
 #include "glw_text.h"
 #include "glw_text_bitmap.h"
 #include "glw_bitmap.h"

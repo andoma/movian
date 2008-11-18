@@ -23,7 +23,6 @@
 #include <GL/glu.h>
 
 #include "glw.h"
-#include "glw_i.h"
 #include "glw_fx_texrot.h"
 #include "glw_form.h"
 
