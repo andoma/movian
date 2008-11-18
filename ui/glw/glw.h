@@ -403,16 +403,6 @@ typedef struct glw {
 
 #define glw_get_u32(w) ((w)->glw_u32)
 
-typedef struct glw_vertex_anim {
-  int gva_flags;
-#define GLW_VERTEX_ANIM_SIN_LERP 0x1
-
-  glw_vertex_t gva_prev;
-  glw_vertex_t gva_next;
-  float gva_i;
-
-} glw_vertex_anim_t;
-
 
 #define GLW_TEXT_UTF8     0x1
 #define GLW_TEXT_EDITABLE 0x2
@@ -453,37 +443,6 @@ void glw_cond_wait(hts_cond_t *c);
 glw_t *glw_find_by_id(glw_t *w, const char *id, int deepsearch);
 
 void glw_detach(glw_t *w);
-
-void glw_vertex_anim_fwd(glw_vertex_anim_t *gva, float v);
-
-void glw_vertex_anim_read(glw_vertex_anim_t *gva, glw_vertex_t *t);
-
-void glw_vertex_anim_set(glw_vertex_anim_t *gva, glw_vertex_t *t);
-
-void glw_vertex_anim_init(glw_vertex_anim_t *gva, float x, float y, float z,
-			  int flags);
-
-void glw_vertex_anim_set3f(glw_vertex_anim_t *gva, float x, float y, float z);
-
-float glw_vertex_anim_read_i(glw_vertex_anim_t *gva);
-
-#define GLW_VERTEX_ANIM_SIN_INITIALIZER(xx, yy, zz)  	\
- { .gva_flags = GLW_VERTEX_ANIM_SIN_LERP,		\
-   .gva_prev.x = xx,					\
-   .gva_prev.y = yy,					\
-   .gva_prev.z = zz,					\
-   .gva_next.x = xx,					\
-   .gva_next.y = yy,					\
-   .gva_next.z = zz}
-
-#define GLW_VERTEX_ANIM_LINEAR_INITIALIZER(xx, yy, zz)  \
- { .gva_prev.x = xx,					\
-   .gva_prev.y = yy,					\
-   .gva_prev.z = zz,					\
-   .gva_next.x = xx,					\
-   .gva_next.y = yy,					\
-   .gva_next.z = zz}
-
 
 const char *glw_bitmap_get_filename(glw_t *w);
 
