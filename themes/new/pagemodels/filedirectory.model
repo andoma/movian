@@ -8,7 +8,7 @@ widget(container_x, {
     cloner(page.nodes, container_y, {
       
       PLATE_SELECTABLE();
-      onEvent(enter, systemEvent(navigator, open, node.url));
+      onEvent(enter, genericEvent(navigator, open, node.url));
 
       PLATE_WIDE(
         widget(container_y, {
