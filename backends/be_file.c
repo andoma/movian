@@ -28,6 +28,8 @@
 #include "fileaccess/fileaccess.h"
 #include "fileaccess/fa_probe.h"
 
+TAILQ_HEAD(be_file_entry_queue,  be_file_entry);
+
 nav_backend_t be_file;
 
 typedef struct be_file_page {
@@ -37,8 +39,21 @@ typedef struct be_file_page {
 
   prop_t *bfp_nodes;
 
+  struct be_file_entry_queue bfp_entries;
+
 } be_file_page_t;
 
+
+/**
+ *
+ */
+typedef struct be_file_entry {
+  TAILQ_ENTRY(be_file_entry) bfe_link;
+  char *bfe_url;
+  prop_t *bfe_prop;
+
+
+} be_file_entry_t;
 
 
 
@@ -62,7 +77,7 @@ scandir_callback(void *arg, const char *url, const char *filename, int type)
   prop_t *p;
   be_file_page_t *bfp = arg;
   prop_t *urlp;
-  prop_t *media;
+  be_file_entry_t *bfe;
 
   p = prop_create(NULL, "node");
 
@@ -71,8 +86,11 @@ scandir_callback(void *arg, const char *url, const char *filename, int type)
   urlp = prop_create(p, "url");
   prop_set_string(urlp, url);
 
-  media = prop_create(p, "media");
-  fa_probe(media, urlp, url);
+  bfe = malloc(sizeof(be_file_entry_t));
+  bfe->bfe_url = strdup(url);
+  bfe->bfe_prop = p;
+  prop_ref_inc(p);
+  TAILQ_INSERT_TAIL(&bfp->bfp_entries, bfe, bfe_link);
 
   prop_set_parent(p, bfp->bfp_nodes);
 }
@@ -85,7 +103,24 @@ static void *
 scanner(void *aux)
 {
   be_file_page_t *bfp = aux;
+  be_file_entry_t *bfe;
+  prop_t *media;
+
+  TAILQ_INIT(&bfp->bfp_entries);
   fileaccess_scandir(bfp->h.np_url, scandir_callback, bfp);
+
+
+  while((bfe = TAILQ_FIRST(&bfp->bfp_entries)) != NULL) {
+    TAILQ_REMOVE(&bfp->bfp_entries, bfe, bfe_link);
+
+    media = prop_create(bfe->bfe_prop, "media");
+    fa_probe(media, prop_create(bfe->bfe_prop, "url"), bfe->bfe_url);
+
+    prop_ref_dec(bfe->bfe_prop);
+    free(bfe->bfe_url);
+    free(bfe);
+  }
+
   return NULL;
 }
 
