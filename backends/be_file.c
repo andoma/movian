@@ -75,7 +75,7 @@ scandir_callback(void *arg, const char *url, const char *filename, int type)
 {
   prop_t *p;
   be_file_page_t *bfp = arg;
-  prop_t *urlp;
+  prop_t *urlp, *media;
   be_file_entry_t *bfe;
 
   p = prop_create(NULL, "node");
@@ -85,9 +85,11 @@ scandir_callback(void *arg, const char *url, const char *filename, int type)
   urlp = prop_create(p, "url");
   prop_set_string(urlp, url);
 
+  media = prop_create(p, "media");
+  prop_set_string(prop_create(media, "title"), filename);
 
   if(type == FA_DIR) {
-    prop_set_string(prop_create(prop_create(p, "media"), "type"), "directory");
+    prop_set_string(prop_create(media, "type"), "directory");
   } else {
     bfe = malloc(sizeof(be_file_entry_t));
     bfe->bfe_url = strdup(url);
