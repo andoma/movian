@@ -1655,7 +1655,7 @@ glwf_translate(glw_model_eval_context_t *ec, struct token *self)
   int i;
   const char *s;
 
-  if(a == NULL || a->type != TOKEN_STRING)
+  if(a == NULL)
     return glw_model_seterr(ec->ei, self, 
 			    "Invalid first operand to translate()");
 
@@ -1668,10 +1668,12 @@ glwf_translate(glw_model_eval_context_t *ec, struct token *self)
 			    "Invalid third operand to translate()");
 
   s = c->t_string;
-  for(i = 0; i < b->t_elements; i += 2) {
-    if(!strcmp(a->t_string, b->t_string_vector[i])) {
-      s = b->t_string_vector[i + 1];
-      break;
+  if(a->type == TOKEN_STRING) {
+    for(i = 0; i < b->t_elements; i += 2) {
+      if(!strcmp(a->t_string, b->t_string_vector[i])) {
+	s = b->t_string_vector[i + 1];
+	break;
+      }
     }
   }
 
