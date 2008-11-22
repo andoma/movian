@@ -1,32 +1,76 @@
 #include "theme://include/plates.model"
 
-widget(container_x, {
+widget(container_y, {
 
+  space(0.02);
   widget(list, {
     .orientation = vertical;
     .slices = 20;
+    .expandChilds = true;
     cloner(page.nodes, container_y, {
-      
+
+
+      .weight = translate(self.media.type,
+			  [
+			      "directory", "2",
+			      "file",      "2",
+			      "audio",     "2.5",
+			      "video",     "3.5",
+			      "image",     "6",
+			      "iso",       "2"
+			      ], "2");
+
+
       PLATE_SELECTABLE();
       onEvent(enter, genericEvent(navigator, open, node.url));
 
       PLATE_WIDE(
-        widget(container_y, {
-	  widget(label, {
-	    .caption = self.filename;
+	  widget(container_x, {
+	    
+	    widget(bitmap, {
+	      .keepAspect = true;
+	      .source = translate(self.media.type,
+		  [
+		   "directory", "theme://images/dir.png",
+		   "audio",     "theme://images/audio.png",
+		   "video",     "theme://images/movie.png"
+		   ],
+				  "theme://images/file.png");
+	    });
+	    
+	    
+	    widget(expander, {
+	      .weight = 20;
+
+	      widget(container_x, {
+		widget(label, {
+		  .caption = self.media.title;
+		});
+		
+		widget(label, {
+		  .caption = int2duration(self.media.duration);
+		  .weight = 0.1;
+		});
+	      });
+
+	      widget(animator, {
+		.time = 0.3;
+
+		.source = translate(self.media.type,
+		    [
+		     "audio",     "theme://mediameta/audio.model",
+		     "video",     "theme://mediameta/video.model"
+		     ],
+				    "theme://mediameta/void.model");
+	      });
+	    });
 	  });
-	  widget(label, {
-	    .caption = self.media.title;
-	  });
-	  widget(label, {
-	    .caption = self.media.type;
-	  });
-	});
+	  
       );
 
     });
   });
-
+  space(0.02);
 });
 
 

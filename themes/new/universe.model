@@ -11,77 +11,62 @@ widget(form, {
       .source = "theme://images/caribbean.png";
     });
 
-    widget(container_y, {
 
+    
+    widget(container_y, {
+      
       widget(bitmap, {
+	.weight = 0.5;
+
 	.source = "theme://images/alphashade.png";
 	.alpha = 0.2;
 	
+	widget(container_y, {
+	  space(0.1);
 
-	widget(container_x, {
-	  .weight = 0.05;
-	  
-	  widget(bitmap, {
+	  widget(container_x, {
+
+	    space(0.1);
+
+	    widget(bitmap, {
 	    
-	    .source = "theme://images/plate256.png";
-	    .selectable = true;
-	    .focusCursor = true;
-	    .focusAlpha = true;
-	    
-	    onEvent(enter, genericEvent(navigator, back, ""));
+	      .source = "theme://images/plate256.png";
+	      .selectable = true;
+	      .focusCursor = true;
+	      .focusAlpha = true;
+	      
+	      onEvent(enter, genericEvent(navigator, back, ""));
+
+	      widget(label, {
+		.caption = "Back";
+	      });
+	    });
 	    
 	    widget(label, {
-	      .caption = "Back";
+	      .aspect = 40;
+	      .weight = 20;
+	      .caption = global.nav.currentpage.url;
 	    });
+	    space(0.1);
 	  });
-	  
-	  widget(label, {
-	    .weight = 20;
-	    .caption = global.nav.currentpage.url;
-	  });
+	  space(0.1);
 	});
       });
 
-      widget(deck, {
+      widget(container_x, {
 	.weight = 10;
-
-	cloner(global.nav.pages, animator, {
-	  .time = 0.3;
-	  .source = "theme://pagemodels/" + page.type + ".model";
+	
+	space(0.01);
+	
+	widget(deck, {
+	  
+	  cloner(global.nav.pages, animator, {
+	    .time = 0.3;
+	    .source = "theme://pagemodels/" + page.type + ".model";
+	  });
 	});
-
+	space(0.01);
       });
     });
-
   });
 });
-
-/*
-
-
-widget(form, {
-  widget(container_y, {
-
-    widget(list, {
-      cloner(global.clonertest, label, {
-	.selectable = true;
-	.focusCursor = true;
-	.focusAlpha = true;
-	.caption = self.name;
-      });
-    });
-
-
-    widget(list, {
-      cloner(global.clonertest2, label, {
-	.selectable = true;
-	.focusCursor = true;
-	.focusAlpha = true;
-	.caption = self.name;
-      });
-    });
-
-  });
-});
-
-*/
