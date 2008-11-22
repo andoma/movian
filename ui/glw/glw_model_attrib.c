@@ -304,6 +304,8 @@ static const token_attrib_t attribtab[] = {
   {"skeleton",        set_flag,   GLW_DRAW_SKEL},
   {"borderBlend",     set_flag,   GLW_BORDER_BLEND},
   {"password",        set_flag,   GLW_PASSWORD},
+  {"mirrorx",         set_flag,   GLW_MIRROR_X},
+  {"mirrory",         set_flag,   GLW_MIRROR_Y},
 
   {"slices",          set_int,    GLW_ATTRIB_SLICES},
   {"min",             set_int,    GLW_ATTRIB_INT_MIN},
