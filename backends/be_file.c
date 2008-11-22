@@ -52,7 +52,6 @@ typedef struct be_file_entry {
   char *bfe_url;
   prop_t *bfe_prop;
 
-
 } be_file_entry_t;
 
 
@@ -86,11 +85,16 @@ scandir_callback(void *arg, const char *url, const char *filename, int type)
   urlp = prop_create(p, "url");
   prop_set_string(urlp, url);
 
-  bfe = malloc(sizeof(be_file_entry_t));
-  bfe->bfe_url = strdup(url);
-  bfe->bfe_prop = p;
-  prop_ref_inc(p);
-  TAILQ_INSERT_TAIL(&bfp->bfp_entries, bfe, bfe_link);
+
+  if(type == FA_DIR) {
+    prop_set_string(prop_create(prop_create(p, "media"), "type"), "directory");
+  } else {
+    bfe = malloc(sizeof(be_file_entry_t));
+    bfe->bfe_url = strdup(url);
+    bfe->bfe_prop = p;
+    prop_ref_inc(p);
+    TAILQ_INSERT_TAIL(&bfp->bfp_entries, bfe, bfe_link);
+  }
 
   prop_set_parent(p, bfp->bfp_nodes);
 }
