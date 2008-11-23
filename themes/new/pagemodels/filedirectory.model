@@ -12,12 +12,9 @@ widget(container_y, {
 
       .weight = translate(self.media.type,
 			  [
-			      "directory", "2",
-			      "file",      "2",
 			      "audio",     "2.5",
 			      "video",     "3.5",
 			      "image",     "6",
-			      "iso",       "2"
 			      ], "2");
 
 
@@ -31,9 +28,11 @@ widget(container_y, {
 	      .keepAspect = true;
 	      .source = translate(self.media.type,
 		  [
+		   "archive",   "theme://images/dir.png",
 		   "directory", "theme://images/dir.png",
 		   "audio",     "theme://images/audio.png",
-		   "video",     "theme://images/movie.png"
+		   "video",     "theme://images/movie.png",
+		   "dvd",       "theme://images/movie.png"
 		   ],
 				  "theme://images/file.png");
 	    });

@@ -29,9 +29,16 @@ extern struct fa_protocol_list fileaccess_all_protocols;
 /**
  * types
  */
-#define FA_DIR  1
-#define FA_FILE 2
-#define FA_NONE 3 /* Entry should be hidden */
+#define FA_UNKNOWN  0
+#define FA_DIR      1
+#define FA_FILE     2
+#define FA_ARCHIVE  3 /* Archive (a file, but we can dive into it) */
+#define FA_AUDIO    4
+#define FA_VIDEO    5
+#define FA_PLAYLIST 6
+#define FA_DVD      7
+#define FA_IMAGE    8
+
 
 typedef void (fa_scandir_callback_t)(void *arg, const char *url,
 				     const char *filename, int type);

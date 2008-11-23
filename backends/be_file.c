@@ -51,6 +51,7 @@ typedef struct be_file_entry {
   TAILQ_ENTRY(be_file_entry) bfe_link;
   char *bfe_url;
   prop_t *bfe_prop;
+  int bfe_type;
 
 } be_file_entry_t;
 
@@ -88,19 +89,31 @@ scandir_callback(void *arg, const char *url, const char *filename, int type)
   media = prop_create(p, "media");
   prop_set_string(prop_create(media, "title"), filename);
 
-  if(type == FA_DIR) {
-    prop_set_string(prop_create(media, "type"), "directory");
-  } else {
-    bfe = malloc(sizeof(be_file_entry_t));
-    bfe->bfe_url = strdup(url);
-    bfe->bfe_prop = p;
-    prop_ref_inc(p);
-    TAILQ_INSERT_TAIL(&bfp->bfp_entries, bfe, bfe_link);
-  }
+  prop_set_string(prop_create(media, "type"), 
+		  type == FA_DIR ? "directory" : "file");
+  
+  bfe = malloc(sizeof(be_file_entry_t));
+  bfe->bfe_type = type;
+  bfe->bfe_url = strdup(url);
+  bfe->bfe_prop = p;
+  prop_ref_inc(p);
+  TAILQ_INSERT_TAIL(&bfp->bfp_entries, bfe, bfe_link);
 
   prop_set_parent(p, bfp->bfp_nodes);
 }
 
+
+
+const char *type2str[] = {
+  [FA_FILE]     = "file",
+  [FA_AUDIO]    = "audio",
+  [FA_ARCHIVE]  = "archive",
+  [FA_AUDIO]    = "audio",
+  [FA_VIDEO]    = "video",
+  [FA_PLAYLIST] = "playlist",
+  [FA_DVD]      = "dvd",
+  [FA_IMAGE]    = "image",
+};
 
 /**
  *
@@ -110,26 +123,79 @@ scanner(void *aux)
 {
   be_file_page_t *bfp = aux;
   be_file_entry_t *bfe;
-  prop_t *media;
+  prop_t *media, *p;
+  int r;
 
   TAILQ_INIT(&bfp->bfp_entries);
   fileaccess_scandir(bfp->h.np_url, scandir_callback, bfp);
 
-
   while((bfe = TAILQ_FIRST(&bfp->bfp_entries)) != NULL) {
     TAILQ_REMOVE(&bfp->bfp_entries, bfe, bfe_link);
 
-    media = prop_create(bfe->bfe_prop, "media");
-    fa_probe(media, prop_create(bfe->bfe_prop, "url"), bfe->bfe_url);
+    p = bfe->bfe_prop;
+    media = prop_create(p, "media");
 
-    prop_ref_dec(bfe->bfe_prop);
+    if(bfe->bfe_type == FA_DIR) {
+      r = fa_probe_dir(media, bfe->bfe_url);
+    } else {
+      r = fa_probe(media, bfe->bfe_url, NULL, 0);
+    }
+
+    if(r < sizeof(type2str) / sizeof(type2str[0]) && type2str[r] != NULL)
+      prop_set_string(prop_create(media, "type"), type2str[r]);
+
     free(bfe->bfe_url);
     free(bfe);
+
+    if(r == FA_UNKNOWN)
+      prop_destroy(p);
+
+    prop_ref_dec(p);
   }
 
   return NULL;
 }
 
+/**
+ *
+ */
+static nav_page_t *
+file_open_dir(const char *url0)
+{
+  be_file_page_t *bfp;
+  prop_t *p;
+
+  /* TODO: Check if it is a DVD */
+
+  bfp = nav_page_create(&be_file, url0, sizeof(be_file_page_t));
+  p = bfp->h.np_prop_root;
+
+  prop_set_string(prop_create(p, "type"), "filedirectory");
+  
+  bfp->bfp_nodes = prop_create(p, "nodes");
+  
+  hts_thread_create_detached(&bfp->bfp_scanner, scanner, bfp);
+  return &bfp->h;
+}
+
+/**
+ *
+ */
+static nav_page_t *
+file_open_file(const char *url0)
+{
+  char redir[512];
+  int r;
+
+  r = fa_probe(NULL, url0, redir, sizeof(redir));
+  
+  switch(r) {
+  case FA_ARCHIVE:
+    return file_open_dir(redir);
+  default:
+    abort();
+  }
+}
 
 /**
  *
@@ -140,8 +206,6 @@ be_file_open(const char *url0, char *errbuf, size_t errlen)
   fa_protocol_t *fap;
   const char *url;
   struct stat buf;
-  be_file_page_t *bfp;
-  prop_t *p;
 
   if((url = fa_resolve_proto(url0, &fap)) == NULL) {
     snprintf(errbuf, errlen, "Protocol not handled");
@@ -153,26 +217,11 @@ be_file_open(const char *url0, char *errbuf, size_t errlen)
     return NULL;
   }
 
-  bfp = nav_page_create(&be_file, url0, sizeof(be_file_page_t));
 
-  p = bfp->h.np_prop_root;
+  if(S_ISDIR(buf.st_mode))
+    return file_open_dir(url0);
 
-  if(S_ISDIR(buf.st_mode)) {
-
-    /* TODO: Check if it is a DVD */
-
-    prop_set_string(prop_create(p, "type"), "filedirectory");
-    
-    bfp->bfp_nodes = prop_create(p, "nodes");
-    
-    hts_thread_create_detached(&bfp->bfp_scanner, scanner, bfp);
-
-  } else {
-    abort();
-
-  }
-
-  return &bfp->h;
+  return file_open_file(url0);
 }
 
 

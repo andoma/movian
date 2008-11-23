@@ -83,8 +83,6 @@ fa_probe_playlist(prop_t *proproot, const char *url,
   char tmp1[300];
   int i;
 
-  prop_set_string(prop_create(proproot, "type"), "playlist");
-  
   t = strrchr(url, '/');
   t = t ? t + 1 : url;
 
@@ -158,8 +156,9 @@ fa_probe_exif(prop_t *proproot, fa_protocol_t *fap, void *fh,
  * Probe file by checking its header
  */
 static int
-fa_probe_header(prop_t *proproot, prop_t *urlp, fa_protocol_t *fap,
-		const char *url, void *fh)
+fa_probe_header(prop_t *proproot, fa_protocol_t *fap,
+		const char *url, void *fh,
+		char *newurl, size_t newurlsize)
 {
   char pb[128];
   off_t psiz;
@@ -173,39 +172,38 @@ fa_probe_header(prop_t *proproot, prop_t *urlp, fa_protocol_t *fap,
 
     flags = pb[10] | pb[11] << 8;
     if((flags & 0x101) == 1)
-      return FA_NONE; /* Don't include slave volumes */
+      return FA_UNKNOWN; /* Don't include slave volumes */
 
 
-    if(urlp != NULL)
-      prop_set_stringf(urlp, "rar://%s|", url);
-    return FA_DIR;
+    if(newurl != NULL)
+      snprintf(newurl, newurlsize, "rar://%s|", url);
+    return FA_ARCHIVE;
   }
 
   if(!strncasecmp(pb, "[playlist]", 10)) {
     /* Playlist */
-    fa_probe_playlist(proproot, url, pb, sizeof(pb));
-    return FA_FILE;
+    if(proproot != NULL)
+      fa_probe_playlist(proproot, url, pb, sizeof(pb));
+    return FA_PLAYLIST;
   }
 
   if(pb[6] == 'J' && pb[7] == 'F' && pb[8] == 'I' && pb[9] == 'F') {
     /* JPEG image */
-    prop_set_string(prop_create(proproot, "type"), "image");
-    return FA_FILE;
+    return FA_IMAGE;
   }
 
   if(pb[6] == 'E' && pb[7] == 'x' && pb[8] == 'i' && pb[9] == 'f') {
     /* JPEG image with EXIF tag*/
 #ifdef HAVE_LIBEXIF
-    fa_probe_exif(proproot, fap, fh, pb, psiz);
+    if(proproot != NULL)
+      fa_probe_exif(proproot, fap, fh, pb, psiz);
 #endif
-    prop_set_string(prop_create(proproot, "type"), "image");
-    return FA_FILE;
+    return FA_IMAGE;
   }
 
   if(!memcmp(pb, pngsig, 8)) {
     /* PNG */
-    prop_set_string(prop_create(proproot, "type"), "image");
-    return FA_FILE;
+    return FA_IMAGE;
   }
   return -1;
 }
@@ -233,8 +231,8 @@ fa_probe_iso(prop_t *proproot, fa_protocol_t *fap, void *fh)
 
   *p = 0;
 
-  prop_set_string(prop_create(proproot, "type"), "iso");
-  prop_set_string(prop_create(proproot, "title"), &pb[40]);
+  if(proproot != NULL)
+    prop_set_string(prop_create(proproot, "title"), &pb[40]);
   return 0;
 }
   
@@ -242,8 +240,8 @@ fa_probe_iso(prop_t *proproot, fa_protocol_t *fap, void *fh)
 /**
  * Probe a file for its type
  */
-int
-fa_probe(prop_t *proproot, prop_t *urlp, const char *url)
+unsigned int
+fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize)
 {
   int i, r;
   AVFormatContext *fctx;
@@ -257,21 +255,23 @@ fa_probe(prop_t *proproot, prop_t *urlp, const char *url)
   const char *codectype, *url0 = url;
   fa_protocol_t *fap;
   void *fh;
+  int type;
 
   if((url = fa_resolve_proto(url, &fap)) == NULL)
-    return -1;
+    return FA_UNKNOWN;
 
   if((fh = fap->fap_open(url)) == NULL)
-    return -1;
+    return FA_UNKNOWN;
 
-  if((r = fa_probe_header(proproot, urlp, fap, url0, fh)) != -1) {
+  if((r = fa_probe_header(proproot, fap, url0, fh,
+			  newurl, newurlsize)) != -1) {
     fap->fap_close(fh);
     return r;
   }
 
   if(fa_probe_iso(proproot, fap, fh) == 0) {
     fap->fap_close(fh);
-    return FA_FILE;
+    return FA_DVD;
   }
 
   fap->fap_close(fh);
@@ -284,39 +284,42 @@ fa_probe(prop_t *proproot, prop_t *urlp, const char *url)
   
   if(av_open_input_file(&fctx, tmp1, NULL, 0, NULL) != 0) {
     ffunlock();
-    return -1;
+    return FA_UNKNOWN;
   }
 
   if(av_find_stream_info(fctx) < 0) {
     av_close_input_file(fctx);
     ffunlock();
-    return -1;
+    return FA_UNKNOWN;
   }
 
-  /* Format meta info */
+  if(proproot != NULL) {
 
-  if(fctx->title[0] == 0) {
-    t = strrchr(url, '/');
-    t = t ? t + 1 : url;
-    i = strlen(t);
-    p = alloca(i + 1);
-    memcpy(p, t, i + 1);
+    /* Format meta info */
+
+    if(fctx->title[0] == 0) {
+      t = strrchr(url, '/');
+      t = t ? t + 1 : url;
+      i = strlen(t);
+      p = alloca(i + 1);
+      memcpy(p, t, i + 1);
     
-    if(i > 4 && p[i - 4] == '.')
-      p[i - 4] = 0;
-    prop_set_string(prop_create(proproot, "title"), p);
-  } else {
-    lavf_build_string_and_trim(proproot, "title", fctx->title);
+      if(i > 4 && p[i - 4] == '.')
+	p[i - 4] = 0;
+      prop_set_string(prop_create(proproot, "title"), p);
+    } else {
+      lavf_build_string_and_trim(proproot, "title", fctx->title);
+    }
+
+    lavf_build_string_and_trim(proproot, "author", fctx->author);
+    lavf_build_string_and_trim(proproot, "album", fctx->album);
+
+    if(fctx->track != 0)
+      prop_set_int(prop_create(proproot, "track"), fctx->track);
+
+    prop_set_string(prop_create(proproot, "mediaformat"),
+		    fctx->iformat->long_name);
   }
-
-  lavf_build_string_and_trim(proproot, "author", fctx->author);
-  lavf_build_string_and_trim(proproot, "album", fctx->album);
-
-  if(fctx->track != 0)
-    prop_set_int(prop_create(proproot, "track"), fctx->track);
-
-  prop_set_string(prop_create(proproot, "mediaformat"),
-		      fctx->iformat->long_name);
 
   /* Check each stream */
 
@@ -338,68 +341,63 @@ fa_probe(prop_t *proproot, prop_t *urlp, const char *url)
       continue;
     }
 
-    if(codec == NULL) {
-      snprintf(tmp1, sizeof(tmp1), "%s: Unsupported codec", codectype);
-    } else {
-      snprintf(tmp1, sizeof(tmp1), "%s", codec->long_name);
+    if(proproot != NULL) {
 
-      if(avctx->codec_type == CODEC_TYPE_AUDIO) {
-	snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
-		 ", %d Hz, %d chanels", avctx->sample_rate, avctx->channels);
+      if(codec == NULL) {
+	snprintf(tmp1, sizeof(tmp1), "%s: Unsupported codec", codectype);
+      } else {
+	snprintf(tmp1, sizeof(tmp1), "%s", codec->long_name);
+
+	if(avctx->codec_type == CODEC_TYPE_AUDIO) {
+	  snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
+		   ", %d Hz, %d chanels", avctx->sample_rate, avctx->channels);
+	}
+
+	if(avctx->width)
+	  snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
+		   ", %dx%d",
+		   avctx->width, avctx->height);
+      
+	if(avctx->bit_rate)
+	  snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
+		   ", %d kb/s", avctx->bit_rate / 1000);
       }
 
-      if(avctx->width)
-	snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
-		 ", %dx%d",
-		 avctx->width, avctx->height);
+      switch(avctx->codec_type) {
+      case CODEC_TYPE_VIDEO:
+	prop_set_string(prop_create(proproot, "videoinfo"), tmp1);
+	break;
+      case CODEC_TYPE_AUDIO:
+	prop_set_string(prop_create(proproot, "audioinfo"), tmp1);
+	break;
       
-      if(avctx->bit_rate)
-	snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
-		 ", %d kb/s", avctx->bit_rate / 1000);
-    }
-
-    switch(avctx->codec_type) {
-    case CODEC_TYPE_VIDEO:
-      prop_set_string(prop_create(proproot, "videoinfo"), tmp1);
-      break;
-    case CODEC_TYPE_AUDIO:
-      prop_set_string(prop_create(proproot, "audioinfo"), tmp1);
-      break;
-      
-    default:
-      continue;
+      default:
+	continue;
+      }
     }
   }
 
-  if(has_video)
-    prop_set_string(prop_create(proproot, "type"), "video");
-  else if(has_audio)
-    prop_set_string(prop_create(proproot, "type"), "audio");
+  type = FA_FILE;
 
-  if(fctx->duration != AV_NOPTS_VALUE)
+  if(has_video)
+    type = FA_VIDEO;
+  else if(has_audio)
+    type = FA_AUDIO;
+
+  if(proproot != NULL && fctx->duration != AV_NOPTS_VALUE)
     prop_set_int(prop_create(proproot, "duration"),
-		     fctx->duration / AV_TIME_BASE);
+		 fctx->duration / AV_TIME_BASE);
 
   av_close_input_file(fctx);  
   ffunlock();
 
-  return FA_FILE;
-}
-
-/**
- * Make a directory turn into a dvd
- */
-static int
-fa_probe_dir_is_dvd(prop_t *proproot)
-{
-  prop_set_string(prop_create(proproot, "type"), "iso");
-  return FA_FILE;
+  return type;
 }
 
 /**
  * Probe a directory
  */
-int
+unsigned int
 fa_probe_dir(prop_t *proproot, const char *url)
 {
   fa_protocol_t *fap;
@@ -407,15 +405,15 @@ fa_probe_dir(prop_t *proproot, const char *url)
   struct stat buf;
 
   if((url = fa_resolve_proto(url, &fap)) == NULL)
-    return -1;
+    return FA_UNKNOWN;
 
   snprintf(path, sizeof(path), "%s/VIDEO_TS", url);
   if(fap->fap_stat(path, &buf) == 0 && S_ISDIR(buf.st_mode))
-    return fa_probe_dir_is_dvd(proproot);
+    return FA_DVD;
 
   snprintf(path, sizeof(path), "%s/video_ts", url);
   if(fap->fap_stat(path, &buf) == 0 && S_ISDIR(buf.st_mode))
-    return fa_probe_dir_is_dvd(proproot);
+    return FA_DVD;
 
   return FA_DIR;
 }

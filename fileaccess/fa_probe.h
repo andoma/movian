@@ -21,8 +21,9 @@
 
 #include "prop.h"
 
-int fa_probe(prop_t *proproot, prop_t *urlp, const char *url);
+unsigned int fa_probe(prop_t *proproot, const char *url,
+		      char *newurl, size_t newurlsize);
 
-int fa_probe_dir(prop_t *proproot, const char *url);
+unsigned int fa_probe_dir(prop_t *proproot, const char *url);
 
 #endif /* FA_PROBE_H */
