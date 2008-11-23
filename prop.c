@@ -170,7 +170,8 @@ prop_notify_queue(struct prop_notify_queue *q)
     case PROP_DEL_CHILD:
     case PROP_SEL_CHILD:
       s->hps_callback(s, n->hpn_event, n->hpn_prop);
-      prop_ref_dec(n->hpn_prop);
+      if(n->hpn_prop != NULL)
+	prop_ref_dec(n->hpn_prop);
       break;
     }
     prop_sub_ref_dec(s);
@@ -267,7 +268,8 @@ prop_build_notify_child(struct prop_notify_queue *q, prop_sub_t *s,
 {
   prop_notify_t *n = get_notify(s);
 
-  atomic_add(&p->hp_refcount, 1);
+  if(p != NULL)
+    atomic_add(&p->hp_refcount, 1);
 
   n->hpn_prop = p;
   n->hpn_event = event;
