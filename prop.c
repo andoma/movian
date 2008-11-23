@@ -417,9 +417,6 @@ prop_set_parent(prop_t *p, prop_t *parent)
   p->hp_parent = parent;
   LIST_INSERT_HEAD(&parent->hp_childs, p, hp_parent_link);
 
-  printf("Child ''%s'' added to parent %s\n", p->hp_name ?: "<noname>",
-	 propname(parent));
-
   prop_notify_child(&q, p, parent, PROP_ADD_CHILD);
 
   hts_mutex_unlock(&prop_mutex);
@@ -458,11 +455,6 @@ prop_destroy0(struct prop_notify_queue *q, prop_t *p)
   while((s = LIST_FIRST(&p->hp_canonical_subscriptions)) != NULL) {
     LIST_REMOVE(s, hps_canonical_prop_link);
     s->hps_canonical_prop = NULL;
-
-    fprintf(stderr, "htsprop: Warning, destroyed a property (%s)"
-	    "with a canonical subscription attached to it\n"
-	    "This is probaby bad and needs to be further investigated\n",
-	    propname(p));
   }
 
   while((s = LIST_FIRST(&p->hp_value_subscriptions)) != NULL) {
@@ -843,9 +835,6 @@ relink_subscriptions(struct prop_notify_queue *q,
   while(src->hp_originator != NULL)
     src = src->hp_originator;
 
-  printf("  Linking %s", propname(src));
-  printf(" -> %s\n", propname(dst));
-
   LIST_FOREACH(s, &dst->hp_canonical_subscriptions, hps_canonical_prop_link) {
 
     if(s->hps_value_prop != NULL) {
@@ -979,9 +968,6 @@ prop_select(prop_t *p, int advisory)
   hts_mutex_lock(&prop_mutex);
 
   parent = p->hp_parent;
-
-  printf("Selecting %s (%s)\n", propname(p), advisory ? "Advisory" : "Forced");
-  printf(" parent = %s\n", propname(parent));
 
   if(parent != NULL) {
     assert(parent->hp_type == PROP_DIR);
