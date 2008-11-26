@@ -106,7 +106,7 @@ static const struct {
  *
  */
 void
-imonpad_proc(prop_t *status)
+imonpad_proc(void)
 {
   int fd, i, l, repeat_rate, repeat_rate0, dx, dy, r, k;
   uint8_t buf[4];
@@ -121,7 +121,7 @@ imonpad_proc(prop_t *status)
   repeat_rate = repeat_rate0 = REPEAT_RATE_SLOWEST;
 
   if((fd = open(dev, O_RDONLY)) == -1) {
-    prop_set_stringf(status, "imonpad: Unable to open \"%s\"", dev);
+    //    prop_set_stringf(status, "imonpad: Unable to open \"%s\"", dev);
     sleep(1);
     return;
   }
@@ -142,7 +142,7 @@ imonpad_proc(prop_t *status)
       continue;
     
     if(read(fd, buf, 4) != 4) {
-      prop_set_stringf(status, "imonpad: Read error from \"%s\"", dev);
+      //prop_set_stringf(status, "imonpad: Read error from \"%s\"", dev);
       close(fd);
       sleep(1);
       return;

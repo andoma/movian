@@ -19,8 +19,6 @@
 #ifndef HID_H
 #define HID_H
 
-#include "ui/glw/glw.h"
-
 typedef enum {
   HID_IR_NONE,
   HID_IR_LIRC,
@@ -29,6 +27,6 @@ typedef enum {
 
 extern hid_ir_mode_t hid_ir_mode;
 
-void hid_init(glw_t *m);
+void hid_init(void);
 
 #endif /* HID_H */

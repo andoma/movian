@@ -44,13 +44,13 @@ glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
       if(p->glw_parent_alpha > 0.01) {
 	rc0 = *rc;
 	rc0.rc_alpha *= p->glw_parent_alpha;
-	glw_render(p, &rc0);
+	glw_render0(p, &rc0);
       }
     }
 
     rc0 = *rc;
     rc0.rc_alpha *= c->glw_parent_alpha;
-    glw_render(c, &rc0);
+    glw_render0(c, &rc0);
 
     n = TAILQ_NEXT(c, glw_parent_link);
     if(n == NULL)
@@ -59,7 +59,7 @@ glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
       if(n->glw_parent_alpha > 0.01) {
 	rc0 = *rc;
 	rc0.rc_alpha *= n->glw_parent_alpha;
-	glw_render(n, &rc0);
+	glw_render0(n, &rc0);
       }
     }
     return 1;
@@ -89,7 +89,7 @@ glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
   
     s->timer++;
 
-    glw_layout(c, rc);
+    glw_layout0(c, rc);
     c->glw_parent_alpha = GLW_MIN(c->glw_parent_alpha + delta, 1.0f);
 
     /**
@@ -100,7 +100,7 @@ glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
       p = TAILQ_LAST(&w->glw_childs, glw_queue);
     if(p != NULL && p != c) {
       p->glw_parent_alpha = GLW_MAX(p->glw_parent_alpha - delta, 0.0f);
-      glw_layout(p, rc);
+      glw_layout0(p, rc);
     }
 
     n = TAILQ_NEXT(c, glw_parent_link);
@@ -108,7 +108,7 @@ glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
       n = TAILQ_FIRST(&w->glw_childs);
     if(n != NULL && n != c) {
       n->glw_parent_alpha = GLW_MAX(n->glw_parent_alpha - delta, 0.0f);
-      glw_layout(n, rc);
+      glw_layout0(n, rc);
     }
     return 1;
 

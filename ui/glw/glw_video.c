@@ -474,7 +474,7 @@ layout_video_pipe(glw_video_t *gv, glw_rctx_t *rc)
   struct gl_video_frame_queue *dq;
 
   if(gv->gv_subtitle_widget)
-    glw_layout(gv->gv_subtitle_widget, rc);
+    glw_layout0(gv->gv_subtitle_widget, rc);
 
   gv_color_matrix_update(gv, mp);
   output_duration = gv_compute_output_duration(gv, frame_duration);
@@ -724,7 +724,7 @@ render_video_pipe(glw_t *w, glw_video_t *gv, glw_rctx_t *rc)
   glPopMatrix();
 
   if(gv->gv_subtitle_widget)
-    glw_render(gv->gv_subtitle_widget, rc);
+    glw_render0(gv->gv_subtitle_widget, rc);
 
 }
 

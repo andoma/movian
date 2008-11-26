@@ -23,8 +23,7 @@
 #include "showtime.h"
 #include "event.h"
 #include "keyring.h"
-#include "ui/glw/glw.h"
-
+#if 0
 static htsmsg_t *keyring;
 
 pthread_mutex_t keyring_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -67,6 +66,7 @@ setstr(char **p, htsmsg_t *m, const char *fname)
   else
     *p = NULL;
 }
+#endif
 
 
 /**
@@ -77,6 +77,8 @@ keyring_lookup(const char *id, char **username, char **password,
 	       char **domain, int query, const char *source,
 	       const char *reason)
 {
+  return 1;
+#if 0
   htsmsg_t *m;
   glw_t *p, *w;
   prop_t *props;
@@ -147,4 +149,5 @@ keyring_lookup(const char *id, char **username, char **password,
 
   pthread_mutex_unlock(&keyring_mutex);
   return 0;
+#endif
 }

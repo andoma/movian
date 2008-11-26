@@ -664,7 +664,7 @@ cloner_del_child(glw_prop_sub_t *gps, prop_t *p, glw_t *parent)
   glw_prop_sub_pending_t *gpsp;
 
   if((w = cloner_find_child(p, parent)) != NULL) {
-    glw_detach(w);
+    glw_detach0(w);
     return;
   }
 

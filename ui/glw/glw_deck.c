@@ -39,7 +39,7 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_LAYOUT:
     if(w->glw_alpha < 0.01 || w->glw_selected == NULL)
       break;
-    glw_layout(w->glw_selected, rc);
+    glw_layout0(w->glw_selected, rc);
     break;
     
   case GLW_SIGNAL_RENDER:

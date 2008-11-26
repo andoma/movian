@@ -21,6 +21,6 @@
 
 #include "hid.h"
 
-void lircd_proc(prop_t *status);
+void lircd_proc(void);
 
 #endif /* LIRCD_H */

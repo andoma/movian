@@ -85,7 +85,7 @@ glw_mirror_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     glClipPlane(GL_CLIP_PLANE5, clip_bottom);
     glEnable(GL_CLIP_PLANE5);
 
-    glw_render(c, &rc0);
+    glw_render0(c, &rc0);
 
     glTranslatef(0, -1, 0);
     /* invert model matrix along XZ plane for mirror effect */
@@ -99,7 +99,7 @@ glw_mirror_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     glClipPlane(GL_CLIP_PLANE5, clip_bottom);
     glEnable(GL_CLIP_PLANE5);
 
-    glw_render(c, &rc0);
+    glw_render0(c, &rc0);
     glPopMatrix();
 
     glDisable(GL_CLIP_PLANE5);

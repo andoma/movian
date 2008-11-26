@@ -77,7 +77,7 @@ glw_cs_layout(glw_cubestack_t *cs, glw_t *w, glw_rctx_t *rc)
 
     if(c->glw_parent_alpha < 0.01) {
       TAILQ_REMOVE(&cs->fadeout, c, glw_parent_link);
-      glw_destroy(c);
+      glw_destroy0(c);
       continue;
     }
 

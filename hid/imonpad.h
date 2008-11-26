@@ -21,6 +21,6 @@
 
 #include "hid.h"
 
-void imonpad_proc(prop_t *status);
+void imonpad_proc(void);
 
 #endif /* IMONPAD_H */

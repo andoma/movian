@@ -681,12 +681,14 @@ layout_draw(glw_x11_t *gx11, float aspect)
   
   //  fullscreen_fader = GLW_LP(16, fullscreen_fader, fullscreen);
   //  prop_set_float(prop_fullscreen, fullscreen_fader);
+  
+  glw_lock();
 
   memset(&rc, 0, sizeof(rc));
   rc.rc_aspect = aspect;
   rc.rc_focused = 1;
   rc.rc_fullscreen = 0;
-  glw_layout(gx11->universe, &rc);
+  glw_layout0(gx11->universe, &rc);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -700,7 +702,8 @@ layout_draw(glw_x11_t *gx11, float aspect)
 	    0, 1, 0);
 
   rc.rc_alpha = 1.0f;
-  glw_render(gx11->universe, &rc);
+  glw_render0(gx11->universe, &rc);
+  glw_unlock();
 }
 
 
@@ -779,11 +782,13 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 
     update_timings();
 #if 0
-      prop_set_float(prop_display_refreshrate,
-		     (float)1000000. / frame_duration);
+    prop_set_float(prop_display_refreshrate,
+		   (float)1000000. / frame_duration);
 #endif
 
-    glw_reaper(&gx11->gr);
+    glw_lock();
+    glw_reaper0(&gx11->gr);
+    glw_unlock();
   }
   window_shutdown(gx11);
 }

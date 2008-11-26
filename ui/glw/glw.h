@@ -416,44 +416,29 @@ typedef struct glw {
 #define GLW_TEXT_UTF8     0x1
 #define GLW_TEXT_EDITABLE 0x2
 
-int glw_init(glw_root_t *gr);
+void glw_init_global(void);
 
+int glw_init(glw_root_t *gr);
 
 void glw_flush(glw_root_t *gr);
 
-void glw_layout(glw_t *w, glw_rctx_t *rc);
-
-void glw_render(glw_t *w, glw_rctx_t *rc);
-
 void glw_rescale(float s_aspect, float t_aspect);
-
-void glw_destroy(glw_t *w);
 
 void *glw_get_opaque(glw_t *w, glw_callback_t *func);
 
 void glw_set_active0(glw_t *w);
 
-void glw_reaper(glw_root_t *gr);
+void glw_reaper0(glw_root_t *gr);
 
-void glw_init_global(void);
+void glw_cond_wait(hts_cond_t *c);
 
-glw_t *glw_find_by_tag(struct glw_head *hash, uint32_t tag);
+void glw_detach0(glw_t *w);
 
-void glw_destroy_childs(glw_t *w);
-
-int glw_signal(glw_t *w, glw_signal_t sig, void *extra);
+const char *glw_bitmap_get_filename(glw_t *w);
 
 void glw_lock(void);
 
 void glw_unlock(void);
-
-void glw_cond_wait(hts_cond_t *c);
-
-glw_t *glw_find_by_id(glw_t *w, const char *id, int deepsearch);
-
-void glw_detach(glw_t *w);
-
-const char *glw_bitmap_get_filename(glw_t *w);
 
 /**
  *

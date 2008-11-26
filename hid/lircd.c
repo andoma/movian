@@ -48,7 +48,7 @@ static const struct {
 };
 
 void
-lircd_proc(prop_t *status)
+lircd_proc(void)
 {
   char buf[200];
   uint64_t ircode;
@@ -60,7 +60,7 @@ lircd_proc(prop_t *status)
   const char *dev = "/dev/lirc";
 
   if((fd = open(dev, O_RDONLY)) == -1) {
-    prop_set_stringf(status, "lirc: Unable to open \"%s\"", dev);
+    //    prop_set_stringf(status, "lirc: Unable to open \"%s\"", dev);
     sleep(1);
     return;
   }
@@ -76,7 +76,7 @@ lircd_proc(prop_t *status)
     r = poll(&fds, 1, 1000);
     if(r > 0) {
       if((r = recv(fd, buf, sizeof(buf), MSG_DONTWAIT)) < 1) {
-	prop_set_stringf(status, "lirc: Unable to read from \"%s\"", dev);
+	//	prop_set_stringf(status, "lirc: Unable to read from \"%s\"", dev);
 	break;
       }
       htsbuf_append(&q, buf, r);
@@ -85,7 +85,7 @@ lircd_proc(prop_t *status)
     while((len = htsbuf_find(&q, 0xa)) != -1) {
       
       if(len >= sizeof(buf) - 1) {
-	prop_set_stringf(status, "lirc: Command buffer size exceeded");
+	//	prop_set_stringf(status, "lirc: Command buffer size exceeded");
 	goto out;
       }
 

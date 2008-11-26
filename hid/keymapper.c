@@ -311,9 +311,6 @@ keymapper_update_model(hid_keycode_t *hkc, glw_t *w)
       return;
   }
 
-  if((w = glw_find_by_id(w, "mapping_source", 0)) == NULL)
-    return;
-
   buf[0] = 0;
   LIST_FOREACH(hkd, &hkc->hkc_descs, hkd_keycode_link)
     snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
@@ -389,48 +386,7 @@ eh_keymapper(event_t *e, void *opaque)
 void
 keymapper_init(void)
 {
-#if 0
-  glw_t *icon = 
-    glw_model_create("theme://settings/keymapper/keymapper-icon.model", NULL,
-		     0, NULL);
-#endif
-  glw_t *tab  = 
-    glw_model_create(NULL, "theme://settings/keymapper/keymapper.model", NULL,
-		     0, NULL);
-  glw_t *l, *e, *y;
-  int i;
-  hid_keycode_t *hkc;
-
-  //glw_add_tab(settings, "settings_list", icon, "settings_deck", tab);
-
   keymapper_load();
-
-  if((l = glw_find_by_id(tab, "keymapper_list", 0)) == NULL)
-    return;
-
-  //  keymapper_appi = ai;
-  keymapper_list = l;
-
-  for(i = 0; i < sizeof(keycodenames) / sizeof(keycodenames[0]); i++) {
-
-    e = glw_model_create(NULL, "theme://settings/keymapper/entry.model", l,
-			 0, NULL);
-
-    //    glw_set(e, GLW_ATTRIB_U32, keycodenames[i].val, NULL);
-
-    if((y = glw_find_by_id(e, "mapping_name", 0)) != NULL) {
-#if 0
-      glw_set(y,
-	      GLW_ATTRIB_CAPTION, keycodenames[i].str,
-	      NULL);
-#endif
- 
-      hkc = keymapper_find_by_code(keycodenames[i].val);
-      if(hkc != NULL)
-	keymapper_update_model(hkc, e);
-    }
-  }
-
   event_handler_register("keymapper", eh_keymapper, EVENTPRI_KEYMAPPER,
 			 NULL);
 

@@ -77,7 +77,6 @@ static const size_t glw_class_to_size[] = {
   [GLW_VIDEO] = sizeof(glw_video_t),
 };
 
-
 /*
  *
  */
@@ -95,6 +94,7 @@ glw_unlock(void)
 {
   hts_mutex_unlock(&glw_global_lock);
 }
+
 
 /*
  *
@@ -479,11 +479,9 @@ glw_signal_handler_clean(glw_t *w)
  *
  */
 void
-glw_reaper(glw_root_t *gr)
+glw_reaper0(glw_root_t *gr)
 {
   glw_t *w;
-
-  glw_lock();
 
   glw_cursor_layout_frame(gr);
 
@@ -514,8 +512,6 @@ glw_reaper(glw_root_t *gr)
     if(w->glw_refcnt == 0)
       free(w);
   }
-
-  glw_unlock();
 }
 
 /*
@@ -840,11 +836,9 @@ glw_gf_do(void)
 void
 glw_flush(glw_root_t *gr)
 {
-  glw_lock();
   glw_gf_do();
   glw_tex_flush_all(gr);
   glw_text_flush(gr);
-  glw_unlock();
 }
 
 
@@ -852,99 +846,10 @@ glw_flush(glw_root_t *gr)
  *
  */
 void
-glw_render(glw_t *w, glw_rctx_t *rc)
-{
-  glw_lock();
-  glw_render0(w, rc);
-  glw_unlock();
-}
-
-
-/*
- *
- */
-
-void
-glw_layout(glw_t *w, glw_rctx_t *rc)
-{
-  glw_lock();
-  glw_layout0(w, rc);
-  glw_unlock();
-}
-
-
-/*
- *
- */
-void 
-glw_destroy(glw_t *w)
-{
-  glw_lock();
-  glw_destroy0(w);
-  glw_unlock();
-}
-
-/*
- *
- */
-
-void
-glw_destroy_childs(glw_t *w)
-{
-  glw_t *c;
-
-  glw_lock();
-
-  while((c = TAILQ_FIRST(&w->glw_childs)) != NULL)
-    glw_destroy0(c);
-
-  glw_unlock();
-}
-
-/*
- *
- */
-void *
-glw_get_opaque(glw_t *w, glw_callback_t *func)
-{
-  glw_signal_handler_t *gsh;
-
-  glw_lock();
-  
-  LIST_FOREACH(gsh, &w->glw_signal_handlers, gsh_link)
-    if(gsh->gsh_func == func)
-      break;
-  glw_unlock();
-
-  return gsh ? gsh->gsh_opaque : NULL;
-}
-
-
-/**
- *
- */
-glw_t *
-glw_find_by_id(glw_t *w, const char *id, int deepsearch)
-{
-  glw_t *r;
-
-  glw_lock();
-  r = glw_find_by_id0(w, id, deepsearch);
-  glw_unlock();
-  return r;
-}
-
-
-/**
- *
- */
-void
-glw_detach(glw_t *w)
+glw_detach0(glw_t *w)
 {
   glw_t *p;
   glw_signal_handler_t *gsh;
-
-  glw_lock();
 
   p = w->glw_parent;
   if(p != NULL) {
@@ -957,5 +862,4 @@ glw_detach(glw_t *w)
       /* Parent does not support detach, destroy child instead */
       glw_destroy0(w);
   }
-  glw_unlock();
 }
