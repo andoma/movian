@@ -25,8 +25,6 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "ui/glw/glw.h"
-
 #include "showtime.h"
 
 #include "lircd.h"
@@ -34,7 +32,6 @@
 #include "hid.h"
 
 hid_ir_mode_t hid_ir_mode;
-extern prop_t *prop_global;
 
 /**
  *
