@@ -333,6 +333,8 @@ eh_keymapper(event_t *e, void *opaque)
   hid_keycode_t *hkc;
   glw_t *w;
   event_keydesc_t *ekd;
+  return 0;
+
 #if 0
   if(keymapper_appi == NULL || !keymapper_appi->ai_active || 
      !glw_is_selected(keymapper_list))

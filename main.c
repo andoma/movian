@@ -40,6 +40,7 @@
 #include "navigator.h"
 #include "settings.h"
 #include "ui/ui.h"
+#include "hid/keymapper.h"
 
 pthread_mutex_t ffmutex;
 
@@ -183,6 +184,8 @@ main(int argc, char **argv)
   hts_settings_init("showtime", settingspath);
 
   settings_init();
+
+  keymapper_init();
 
   event_init();
 
