@@ -19,8 +19,6 @@
 #include "config.h"
 #ifdef HAVE_LIBSMBCLIENT
 
-#define _GNU_SOURCE
-
 #include <pthread.h>
 #include <assert.h>
 #include <sys/stat.h>
