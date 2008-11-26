@@ -76,15 +76,4 @@ const char *fa_resolve_proto(const char *url, fa_protocol_t **p);
 
 off_t fileaccess_size(const char *url);
 
-/**
- * POSIX style interface for showtime vfs
- */
-
-int fa_posix_open(const char *filename, int flags, ...);
-ssize_t fa_posix_read(int fd, void *buf, size_t size);
-off_t fa_posix_seek(int fd, off_t pos, int whence);
-int fa_posix_close(int fd);
-int fa_posix_stat(const char *filename, struct stat *buf);
-off_t fa_posix_filesize(int fd);
-
 #endif /* FILEACCESS_H */
