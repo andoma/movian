@@ -33,7 +33,6 @@
 
 #include "showtime.h"
 #include "video_playback.h"
-#include "video_decoder.h"
 #include "video_menu.h"
 #include "subtitles.h"
 #include "event.h"

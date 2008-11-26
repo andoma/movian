@@ -818,7 +818,8 @@ audio_mix2(audio_decoder_t *ad, audio_mode_t *am,
      if(ab->ab_pts == AV_NOPTS_VALUE && pts != AV_NOPTS_VALUE) {
        pts -= 1000000LL * ab->ab_frames / rate;
        ab->ab_pts = pts; 
-       ab->ab_mp = mp_ref(mp);
+       ab->ab_mp = mp;
+       mp_ref(mp);
        pts = AV_NOPTS_VALUE;
      }
 

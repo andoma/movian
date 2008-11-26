@@ -33,7 +33,6 @@
 #include "event.h"
 #include "prop.h"
 
-#include "video/video_decoder.h"
 #include "audio/audio.h"
 #include "fileaccess/fileaccess.h"
 #include "fileaccess/fa_imageloader.h"
@@ -196,8 +195,6 @@ main(int argc, char **argv)
   nav_init();
 
   audio_init();
-
-  vd_init();
 
   event_handler_register("main", main_event_handler, EVENTPRI_MAIN, NULL);
 

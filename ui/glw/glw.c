@@ -46,6 +46,7 @@
 #include "glw_animator.h"
 #include "glw_fx_texrot.h"
 #include "glw_event.h"
+#include "glw_video.h"
 
 static hts_mutex_t glw_global_lock;
 
@@ -61,7 +62,6 @@ static const size_t glw_class_to_size[] = {
   [GLW_LABEL]  = sizeof(glw_text_bitmap_t),
   [GLW_TEXT]  = sizeof(glw_text_bitmap_t),
   [GLW_INTEGER]  = sizeof(glw_text_bitmap_t),
-  [GLW_EXT]  = sizeof(glw_t),
   [GLW_ROTATOR] = sizeof(glw_t),
   [GLW_ARRAY] = sizeof(glw_array_t),
   [GLW_LIST] = sizeof(glw_list_t),
@@ -74,6 +74,7 @@ static const size_t glw_class_to_size[] = {
   [GLW_MIRROR] = sizeof(glw_t),
   [GLW_ANIMATOR] = sizeof(glw_animator_t),
   [GLW_FX_TEXROT] = sizeof(glw_fx_texrot_t),
+  [GLW_VIDEO] = sizeof(glw_video_t),
 };
 
 
@@ -331,9 +332,6 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
     glw_array_ctor(w, init, apx);
     break;
 
-  case GLW_EXT:
-    break;
-
   case GLW_ROTATOR:
     glw_rotator_ctor(w, init, apx);
     break;
@@ -383,6 +381,10 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 
   case GLW_FX_TEXROT:
     glw_fx_texrot_ctor(w, init, apx);
+    break;
+
+  case GLW_VIDEO:
+    glw_video_ctor(w, init, apx);
     break;
   }
 

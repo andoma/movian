@@ -21,6 +21,7 @@
 
 #include <stdlib.h>
 #include <libavformat/avformat.h>
+#include <libhts/htsatomic.h>
 
 #include "event.h"
 #include "prop.h"
@@ -87,6 +88,7 @@ typedef struct media_buf {
     MB_DVD_PCI,
     MB_DVD_HILITE,
     MB_DVD_NAVKEY,
+    MB_EXIT,
     MB_AUDIO,
   } mb_data_type;
 
@@ -226,15 +228,12 @@ media_buf_free(media_buf_t *mb)
 
 
 media_pipe_t *mp_create(const char *name);
-media_pipe_t *mp_ref(media_pipe_t *mp);
+
+#define mp_ref(mp) atomic_add(&(mp)->mp_refcount, 1)
 void mp_unref(media_pipe_t *mp);
 
 void mq_flush(media_queue_t *mq);
 
-struct vd_conf;
-void mp_set_video_conf(media_pipe_t *mp, struct vd_conf *vdc);
-
-media_buf_t *mb_dequeue_wait(media_pipe_t *hmp, media_queue_t *hmq);
 void mb_enqueue(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
 int mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
 void mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd);

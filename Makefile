@@ -14,9 +14,7 @@ SRCS  += fa_fs.c fa_rar.c fa_smb.c
 # video playback subsys
 
 VPATH += video
-SRCS  += video_playback.c 
-SRCS  += video_decoder.c video_widget.c video_menu.c \
-	 gl_dvdspu.c yadif.c subtitles.c
+SRCS  += yadif.c
 
 
 # audio subsys
@@ -121,7 +119,7 @@ SRCS += glw_container.c glw_text.c glw_text_bitmap.c \
 	glw_mirror.c glw_animator.c glw_transitions.c \
 	glw_fx_texrot.c
 
-
+SRCS += glw_video.c glw_video_decoder.c
 
 
 

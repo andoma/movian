@@ -30,6 +30,7 @@
 #include "event.h"
 #include "ui/ui.h"
 
+#include <GL/gl.h>
 
 #include <ft2build.h>  
 #include FT_FREETYPE_H
@@ -59,7 +60,6 @@ typedef enum {
   GLW_TEXT,
   GLW_INTEGER,
 
-  GLW_EXT,          /* External widget, rendering is done via callback */
   GLW_ROTATOR,      /* Rotating device */
   GLW_ARRAY,
   GLW_LIST,
@@ -72,6 +72,7 @@ typedef enum {
   GLW_MIRROR,
   GLW_ANIMATOR,
   GLW_FX_TEXROT,
+  GLW_VIDEO,
 } glw_class_t;
 
 
@@ -130,6 +131,7 @@ LIST_HEAD(glw_head, glw);
 LIST_HEAD(glw_event_map_list, glw_event_map);
 LIST_HEAD(glw_prop_sub_list, glw_prop_sub);
 LIST_HEAD(glw_texture_list, glw_texture);
+LIST_HEAD(glw_video_list, glw_video);
 
 
 
@@ -257,6 +259,13 @@ typedef struct glw_root {
    * Cursor and form
    */
   struct glw_texture *gr_cursor_gt;
+
+  /**
+   * Video decoder and renderer
+   */
+  GLuint gr_yuv2rbg_prog;
+  GLuint gr_yuv2rbg_2mix_prog;
+  struct glw_video_list gr_video_decoders;
 
 } glw_root_t;
 

@@ -25,11 +25,9 @@
 #include "media.h"
 #include "showtime.h"
 #include "audio/audio_decoder.h"
-#include "video/video_decoder.h"
 #include "event.h"
 #include "fileaccess/fileaccess.h"
 
-#include <libhts/htsatomic.h>
 
 extern int concurrency;
 
@@ -102,17 +100,8 @@ mp_unref(media_pipe_t *mp)
     mp_destroy(mp);
 }
 
-/**
- *
- */
-media_pipe_t *
-mp_ref(media_pipe_t *mp)
-{
-  atomic_add(&mp->mp_refcount, 1);
-  return mp;
-}
 
-
+#if 0
 /*
  *
  */
@@ -140,6 +129,7 @@ mb_dequeue_wait(media_pipe_t *mp, media_queue_t *mq)
   hts_mutex_unlock(&mp->mp_mutex);
   return mb;
 }
+#endif
 
 /*
  *
@@ -534,11 +524,6 @@ mp_set_playstatus(media_pipe_t *mp, int status, int flags)
 
     if(status == MP_PLAY && !(flags & MP_DONT_GRAB_AUDIO))
       audio_decoder_acquire_output(mp->mp_audio_decoder);
-
-    if(mp->mp_video_decoder == NULL)
-      video_decoder_create(mp);
-
-    video_decoder_start(mp->mp_video_decoder);
     break;
 
     
@@ -568,9 +553,6 @@ mp_set_playstatus(media_pipe_t *mp, int status, int flags)
       audio_decoder_destroy(mp->mp_audio_decoder);
       mp->mp_audio_decoder = NULL;
     }
-
-    if(mp->mp_video_decoder != NULL)
-      video_decoder_join(mp, mp->mp_video_decoder);
 
     prop_set_void(mp->mp_prop_currenttime);
     media_update_playstatus_prop(mp->mp_prop_playstatus, MP_STOP);
@@ -606,15 +588,6 @@ mp_playpause(struct media_pipe *mp, int key)
     return;
   }
   mp_set_playstatus(mp, t, 0);
-}
-
-
-
-
-void
-mp_set_video_conf(media_pipe_t *mp, struct vd_conf *vdc)
-{
-  mp->mp_video_conf = vdc;
 }
 
 

@@ -27,6 +27,7 @@
 #include <errno.h>
 
 #include "glw.h"
+#include "glw_video.h"
 
 #include <GL/glx.h>
 #include <GL/glu.h>
@@ -34,7 +35,6 @@
 
 #include "showtime.h"
 #include "hid/keymapper.h"
-#include "video/video_decoder.h"
 #include "settings.h"
 
 typedef struct glw_x11 {
@@ -294,6 +294,10 @@ window_open(glw_x11_t *gx11)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glDisable(GL_CULL_FACE);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+  /* Load fragment shaders */
+  glw_video_global_init(&gx11->gr);
+
 }
 
 /**
@@ -315,7 +319,7 @@ window_close(glw_x11_t *gx11)
 static void
 window_shutdown(glw_x11_t *gx11)
 {
-  vd_flush_all();
+  glw_video_global_flush(&gx11->gr);
 
   glFlush();
   XSync(gx11->display, False);
@@ -336,11 +340,8 @@ static void
 window_change_displaymode(glw_x11_t *gx11)
 {
   window_shutdown(gx11);
-
-
   window_open(gx11);
   display_settings_save(gx11);
-  vd_init(); /* Reload fragment shaders */
 }
 
 
