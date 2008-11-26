@@ -328,7 +328,7 @@ window_shutdown(glw_x11_t *gx11)
     XUngrabPointer(gx11->display, CurrentTime);
     XUngrabKeyboard(gx11->display, CurrentTime);
   }
-  glw_flush(&gx11->gr);
+  glw_flush0(&gx11->gr);
   window_close(gx11);
 }
 
@@ -682,8 +682,6 @@ layout_draw(glw_x11_t *gx11, float aspect)
   //  fullscreen_fader = GLW_LP(16, fullscreen_fader, fullscreen);
   //  prop_set_float(prop_fullscreen, fullscreen_fader);
   
-  glw_lock();
-
   memset(&rc, 0, sizeof(rc));
   rc.rc_aspect = aspect;
   rc.rc_focused = 1;
@@ -703,7 +701,6 @@ layout_draw(glw_x11_t *gx11, float aspect)
 
   rc.rc_alpha = 1.0f;
   glw_render0(gx11->universe, &rc);
-  glw_unlock();
 }
 
 
@@ -738,8 +735,11 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
   gx11->glXGetVideoSyncSGI(&retraceCount);
 
   while(gx11->running) {
-    if(gx11->is_fullscreen != gx11->want_fullscreen)
+    if(gx11->is_fullscreen != gx11->want_fullscreen) {
+      glw_lock();
       window_change_displaymode(gx11);
+      glw_unlock();
+    }
 
     if(frame_duration != 0) {
 
@@ -771,7 +771,11 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 	}
       }
     }
+    glw_lock();
+    glw_reaper0(&gx11->gr);
     layout_draw(gx11, gx11->aspect_ratio);
+    glw_unlock();
+
 
     glFlush();
 
@@ -781,14 +785,6 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
     glXSwapBuffers(gx11->display, gx11->win);
 
     update_timings();
-#if 0
-    prop_set_float(prop_display_refreshrate,
-		   (float)1000000. / frame_duration);
-#endif
-
-    glw_lock();
-    glw_reaper0(&gx11->gr);
-    glw_unlock();
   }
   window_shutdown(gx11);
 }

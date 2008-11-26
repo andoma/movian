@@ -420,7 +420,7 @@ void glw_init_global(void);
 
 int glw_init(glw_root_t *gr);
 
-void glw_flush(glw_root_t *gr);
+void glw_flush0(glw_root_t *gr);
 
 void glw_rescale(float s_aspect, float t_aspect);
 

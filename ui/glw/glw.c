@@ -813,7 +813,7 @@ glw_gf_do(void)
  *
  */
 void
-glw_flush(glw_root_t *gr)
+glw_flush0(glw_root_t *gr)
 {
   glw_gf_do();
   glw_tex_flush_all(gr);
