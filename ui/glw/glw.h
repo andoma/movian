@@ -611,6 +611,9 @@ void glw_signal_handler_unregister(glw_t *w, glw_callback_t *func,
 
 int glw_signal0(glw_t *w, glw_signal_t sig, void *extra);
 
+#define glw_render0(w, rc) glw_signal0(w, GLW_SIGNAL_RENDER, rc)
+#define glw_layout0(w, rc) glw_signal0(w, GLW_SIGNAL_LAYOUT, rc)
+
 static inline int 
 glw_is_select_candidate(glw_t *w)
 {

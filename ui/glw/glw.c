@@ -136,27 +136,6 @@ glw_init(glw_root_t *gr)
 }
   
 
-
-
-/*
- *
- */
-void
-glw_render0(glw_t *w, glw_rctx_t *rc)
-{
-  glw_signal0(w, GLW_SIGNAL_RENDER, rc);
-}
-
-/*
- *
- */
-void
-glw_layout0(glw_t *w, glw_rctx_t *rc)
-{
-  glw_signal0(w, GLW_SIGNAL_LAYOUT, rc);
-}
-
-
 /*
  *
  */
