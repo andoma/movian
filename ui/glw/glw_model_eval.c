@@ -1332,6 +1332,7 @@ static struct strtab eventtab[] = {
 
   { "ok",          EVENT_OK},
   { "cancel",      EVENT_CANCEL},
+  { "mainmenu",    EVENT_KEY_MAINMENU},
 };
 
 
