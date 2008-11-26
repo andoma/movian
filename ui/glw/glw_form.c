@@ -25,6 +25,7 @@
 #include "glw.h"
 #include "glw_bitmap.h"
 #include "glw_form.h"
+#include "glw_event.h"
 
 static float cursor_alpha[5][5] = {
   {1.0f, 1.0f, 1.0f, 1.0f, 1.0f},
@@ -362,6 +363,9 @@ glw_form_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_EVENT:
+    if(glw_event_map_intercept(w, extra))
+      return 1;
+
     if(c != NULL)
       return glw_signal0(c, GLW_SIGNAL_EVENT, extra);
     break;
