@@ -140,49 +140,6 @@ glw_video_global_flush(glw_root_t *gr)
 }
 
 
-/**************************************************************************
- *
- *  Create video output widget
- *
- */
-#if 0
-static int gl_video_widget_callback(glw_t *w, void *opaque, 
-				    glw_signal_t signal, void *extra);
-
-
-glw_t *
-gv_create_widget(glw_t *p, media_pipe_t *mp, float zdisplacement)
-{
-  glw_video_decoder_t *vd;
-
-  if(mp->mp_video_decoder == NULL)
-     video_decoder_create(mp);
-
-  vd = mp->mp_video_decoder;
-
-  assert(vd->vd_widget == NULL);
-
-  vd->vd_dvdspu = gl_dvdspu_init();
-#if 0
-  vd->vd_widget = glw_create(GLW_EXT,
-			     GLW_ATTRIB_DISPLACEMENT, 0.0, 0.0, zdisplacement,
-			     GLW_ATTRIB_FLAGS, GLW_EVERY_FRAME,
-			     GLW_ATTRIB_PARENT, p, 
-			     GLW_ATTRIB_SIGNAL_HANDLER, 
-			     gl_video_widget_callback, vd, 0,
-			     NULL);
-#endif
-  printf("%p\n", gl_video_widget_callback);
-
-  glw_lock();
-  LIST_INSERT_HEAD(&video_decoders, vd, vd_global_link);
-  glw_unlock();
-
-  return vd->vd_widget;
-}
-
-#endif
-
 
 /**************************************************************************
  *
