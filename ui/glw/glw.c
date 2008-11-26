@@ -16,15 +16,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _GNU_SOURCE
-
-#include <libhts/htsthreads.h>
-
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <errno.h>
 #include <assert.h>
+
+#include <libhts/htsthreads.h>
 
 #include "glw.h"
 #include "glw_container.h"
@@ -553,29 +551,6 @@ glw_destroy0(glw_t *w)
   TAILQ_INSERT_TAIL(&gr->gr_destroyer_queue, w, glw_parent_link);
 
   glw_model_free_chain(w->glw_dynamic_expressions);
-}
-
-
-
-/**
- * Find a glw object (recursively) based on id (a string)
- */
-glw_t *
-glw_find_by_id0(glw_t *w, const char *id, int deepsearch)
-{
-  glw_t *c, *r;
-
-  if(w->glw_id != NULL && !strcmp(w->glw_id, id))
-    return w;
-  
-  if(!deepsearch && (w->glw_class == GLW_LIST || w->glw_class == GLW_ARRAY))
-    return NULL;
-
-  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-    if((r = glw_find_by_id0(c, id, deepsearch)) != NULL)
-      return r;
-  }
-  return NULL;
 }
 
 

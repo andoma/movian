@@ -596,8 +596,6 @@ glw_t *glw_get_prev_n_all(glw_t *c, int count);
 
 glw_t *glw_get_next_n_all(glw_t *c, int count);
 
-glw_t *glw_find_by_id0(glw_t *w, const char *id, int deepsearch);
-
 #define GLW_SIGNAL_PRI_INTERNAL 100
 
 void glw_signal_handler_register(glw_t *w, glw_callback_t *func, void *opaque, 
