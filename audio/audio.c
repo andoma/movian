@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "showtime.h"
+#include "settings.h"
 #include "audio.h"
 #include "audio_ui.h"
 #include "audio_fifo.h"
@@ -33,6 +34,8 @@ audio_mode_t *audio_mode_current;
 hts_mutex_t audio_mode_mutex;
 
 static struct audio_mode_queue audio_modes;
+
+static prop_t *audio_settings_root;
 
 static void *audio_output_thread(void *aux);
 
@@ -80,6 +83,8 @@ audio_init(void)
 {
   hts_thread_t ptid;
 
+  audio_settings_root = settings_add_dir(NULL, "audio", "Audio settings");
+  
   hts_mutex_init(&audio_mode_mutex);
 
   TAILQ_INIT(&audio_modes);
@@ -135,6 +140,8 @@ audio_output_thread(void *aux)
   return NULL;
 }
 
+#if 0
+
 /**
  *
  */
@@ -152,6 +159,7 @@ audio_mode_load_mixer_map( htsmsg_t *m, audio_mode_t *am,
       am->am_mixers[type] = mc;
   }
 }
+
 
 /**
  *
@@ -181,8 +189,9 @@ audio_mode_load_settings(audio_mode_t *am)
   htsmsg_destroy(m);
 
 }
+#endif
 
-#if 0
+
 /**
  *
  */
@@ -194,6 +203,7 @@ audio_mode_save_mixer_map( htsmsg_t *m, audio_mode_t *am,
     return;
   htsmsg_add_str(m, name, am->am_mixers[type]->mc_title);
 }
+
 
 
 /**
@@ -221,7 +231,63 @@ audio_mode_save_settings(audio_mode_t *am)
   hts_settings_save(m, "audio/devices/%s", am->am_id);
   htsmsg_destroy(m);
 }
-#endif
+
+
+/**
+ *
+ */
+static void
+am_set_phantom_center(void *opaque, int value)
+{
+  audio_mode_t *am = opaque;
+  am->am_phantom_center = !!value;
+  audio_mode_save_settings(am);
+}
+
+/**
+ *
+ */
+static void
+am_set_phantom_lfe(void *opaque, int value)
+{
+  audio_mode_t *am = opaque;
+  am->am_phantom_lfe = !!value;
+  audio_mode_save_settings(am);
+}
+
+/**
+ *
+ */
+static void
+am_set_small_front(void *opaque, int value)
+{
+  audio_mode_t *am = opaque;
+  am->am_small_front = !!value;
+  audio_mode_save_settings(am);
+}
+
+/**
+ *
+ */
+static void
+am_set_force_downmix(void *opaque, int value)
+{
+  audio_mode_t *am = opaque;
+  am->am_force_downmix = !!value;
+  audio_mode_save_settings(am);
+}
+
+/**
+ *
+ */
+static void
+am_set_swap_surround(void *opaque, int value)
+{
+  audio_mode_t *am = opaque;
+  am->am_swap_surround = !!value;
+  audio_mode_save_settings(am);
+}
+
 
 /**
  *
@@ -229,8 +295,29 @@ audio_mode_save_settings(audio_mode_t *am)
 void
 audio_mode_register(audio_mode_t *am)
 {
+  prop_t *r;
+  int multich = am->am_formats & (AM_FORMAT_PCM_5DOT1 | AM_FORMAT_PCM_7DOT1);
+  htsmsg_t *settings = hts_settings_load("audio/devices/%s", am->am_id);
+
   TAILQ_INSERT_TAIL(&audio_modes, am, am_link);
-  audio_mode_load_settings(am);
+
+  r = settings_add_dir(audio_settings_root, am->am_id, am->am_title);
+
+  if(multich) {
+    settings_add_bool(r, "phantom_center", "Phantom center",
+		      0, settings, am_set_phantom_center, am);
+    settings_add_bool(r, "phantom_lfe", "Phantom LFE",
+		      0, settings, am_set_phantom_lfe, am);
+    settings_add_bool(r, "small_front", "Small front speakers",
+		      0, settings, am_set_small_front, am);
+    settings_add_bool(r, "force_downmix", "Force stereo downmix",
+		      0, settings, am_set_force_downmix, am);
+    settings_add_bool(r, "swap_surround", "Swap LFE+center with surround",
+		      0, settings, am_set_swap_surround, am);
+  }
+
+  if(settings != NULL)
+    htsmsg_destroy(settings);
 }
 
 
