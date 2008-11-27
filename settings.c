@@ -26,6 +26,7 @@
 #include "settings.h"
 #include "event.h"
 #include "navigator.h"
+#include "assert.h"
 
 #define SETTINGS_URI "settings:"
 
@@ -71,19 +72,27 @@ settings_set_url(prop_t *p, prop_t *parent)
 
   if(parent != NULL) {
 
-    abort();
-
     a = prop_get_ancestors(parent);
     i = 0;
-    while(a[i] != NULL) {
-      printf("ancestor: %s\n", a[i++]->hp_name);
+    while(a[i] != NULL)
+      i++;
+
+    assert(i > 2);
+    i-=3;
+
+    snprintf(url, sizeof(url), SETTINGS_URI);
+
+    while(i >= 0) {
+
+      snprintf(url + strlen(url), sizeof(url) - strlen(url), 
+	       "%s/", a[i]->hp_name);
+      i-=2;
     }
-
-    url[0] = 0;
-
 
     prop_ancestors_unref(a);
 
+    snprintf(url + strlen(url), sizeof(url) - strlen(url), 
+	     "%s", p->hp_name);
   } else {
     snprintf(url, sizeof(url), SETTINGS_URI"%s", p->hp_name);
   }
