@@ -37,7 +37,7 @@ typedef struct nav_page {
   int np_inhistory;
 
   prop_t *np_prop_root;
-  char *np_url;
+  char *np_uri;
 
   struct nav_backend *np_be;
 
@@ -51,9 +51,9 @@ typedef struct nav_backend {
 
   LIST_ENTRY(nav_backend) nb_global_link;
 
-  int (*nb_canhandle)(const char *url);
+  int (*nb_canhandle)(const char *uri);
 
-  nav_page_t *(*nb_open)(const char *url, char *errbuf, size_t errlen);
+  nav_page_t *(*nb_open)(const char *uri, char *errbuf, size_t errlen);
 
 } nav_backend_t;
 
@@ -65,9 +65,9 @@ void nav_init(void);
 
 void nav_close(nav_page_t *np);
 
-void nav_open(const char *url);
+void nav_open(const char *uri);
 
-void *nav_page_create(struct nav_backend *be, const char *url, 
+void *nav_page_create(struct nav_backend *be, const char *uri, 
 		      size_t allocsize);
 
 #endif /* NAVIGATOR_H__ */

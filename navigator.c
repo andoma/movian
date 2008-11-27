@@ -116,7 +116,7 @@ nav_close(nav_page_t *np)
  *
  */
 void
-nav_open(const char *url)
+nav_open(const char *uri)
 {
   nav_page_t *np, *np2;
   nav_backend_t *nb;
@@ -124,11 +124,11 @@ nav_open(const char *url)
 
   /* First, if a page is already open, go directly to it */
 
-  printf("Opening %s\n", url);
+  printf("Opening %s\n", uri);
 
   TAILQ_FOREACH(np, &nav_pages, np_global_link) {
-    if(!strcmp(np->np_url, url)) {
-      printf("Selecting %s\n", np->np_url);
+    if(!strcmp(np->np_uri, uri)) {
+      printf("Selecting %s\n", np->np_uri);
       prop_select(np->np_prop_root, 0);
 
       prop_link(np->np_prop_root, nav_prop_curpage);
@@ -139,13 +139,13 @@ nav_open(const char *url)
   if(np == NULL) {
 
     LIST_FOREACH(nb, &nav_backends, nb_global_link)
-      if(nb->nb_canhandle(url))
+      if(nb->nb_canhandle(uri))
 	break;
   
     if(nb == NULL)
       return;
 
-    np = nb->nb_open(url, errbuf, sizeof(errbuf));
+    np = nb->nb_open(uri, errbuf, sizeof(errbuf));
   
     if(np == NULL)
       return;
@@ -186,7 +186,7 @@ nav_back(void)
      (np = TAILQ_PREV(np, nav_page_queue, np_history_link)) == NULL)
     return;
   
-  nav_open(np->np_url);
+  nav_open(np->np_uri);
 }
 
 
@@ -194,19 +194,19 @@ nav_back(void)
  *
  */
 void *
-nav_page_create(struct nav_backend *be, const char *url, size_t allocsize)
+nav_page_create(struct nav_backend *be, const char *uri, size_t allocsize)
 {
   nav_page_t *np = calloc(1, allocsize);
 
   event_initqueue(&np->np_eq);
-  np->np_url = strdup(url);
+  np->np_uri = strdup(uri);
   np->np_be = be;
 
   TAILQ_INSERT_TAIL(&nav_pages, np, np_global_link);
 
   np->np_prop_root = prop_create(NULL, "page");
 
-  prop_set_string(prop_create(np->np_prop_root, "url"), url);
+  prop_set_string(prop_create(np->np_prop_root, "uri"), uri);
   return np;
 }
 

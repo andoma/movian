@@ -27,6 +27,8 @@
 #include "event.h"
 #include "navigator.h"
 
+#define SETTINGS_URI "settings:"
+
 nav_backend_t be_settings;
 static prop_t *settings_root;
 
@@ -83,7 +85,7 @@ settings_set_url(prop_t *p, prop_t *parent)
     prop_ancestors_unref(a);
 
   } else {
-    snprintf(url, sizeof(url), "settings://%s", p->hp_name);
+    snprintf(url, sizeof(url), SETTINGS_URI"%s", p->hp_name);
   }
 
   prop_set_string(prop_create(p, "url"), url);
@@ -184,7 +186,7 @@ settings_init(void)
 static int
 be_settings_canhandle(const char *url)
 {
-  return !strncmp(url, "settings://", strlen("settings://"));
+  return !strncmp(url, SETTINGS_URI, strlen(SETTINGS_URI));
 }
 
 
@@ -199,7 +201,7 @@ be_settings_open(const char *url0, char *errbuf, size_t errlen)
 {
   nav_page_t *n;
   prop_t *type, *nodes, *p;
-  const char *url = url0 + strlen("settings://");
+  const char *url = url0 + strlen(SETTINGS_URI);
   char buf[100];
   int l;
 

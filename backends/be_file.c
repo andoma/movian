@@ -49,7 +49,7 @@ typedef struct be_file_page {
  */
 typedef struct be_file_entry {
   TAILQ_ENTRY(be_file_entry) bfe_link;
-  char *bfe_url;
+  char *bfe_uri;
   prop_t *bfe_prop;
   int bfe_type;
 
@@ -61,10 +61,10 @@ typedef struct be_file_entry {
  *
  */
 static int
-be_file_canhandle(const char *url)
+be_file_canhandle(const char *uri)
 {
   fa_protocol_t *fap;
-  return fa_resolve_proto(url, &fap) != NULL;
+  return fa_resolve_proto(uri, &fap) != NULL;
 }
 
 
@@ -72,19 +72,19 @@ be_file_canhandle(const char *url)
  *
  */
 static void
-scandir_callback(void *arg, const char *url, const char *filename, int type)
+scandir_callback(void *arg, const char *uri, const char *filename, int type)
 {
   prop_t *p;
   be_file_page_t *bfp = arg;
-  prop_t *urlp, *media;
+  prop_t *urip, *media;
   be_file_entry_t *bfe;
 
   p = prop_create(NULL, "node");
 
   prop_set_string(prop_create(p, "filename"), filename);
 
-  urlp = prop_create(p, "url");
-  prop_set_string(urlp, url);
+  urip = prop_create(p, "uri");
+  prop_set_string(urip, uri);
 
   media = prop_create(p, "media");
   prop_set_string(prop_create(media, "title"), filename);
@@ -94,7 +94,7 @@ scandir_callback(void *arg, const char *url, const char *filename, int type)
   
   bfe = malloc(sizeof(be_file_entry_t));
   bfe->bfe_type = type;
-  bfe->bfe_url = strdup(url);
+  bfe->bfe_uri = strdup(uri);
   bfe->bfe_prop = p;
   prop_ref_inc(p);
   TAILQ_INSERT_TAIL(&bfp->bfp_entries, bfe, bfe_link);
@@ -127,7 +127,7 @@ scanner(void *aux)
   int r;
 
   TAILQ_INIT(&bfp->bfp_entries);
-  fileaccess_scandir(bfp->h.np_url, scandir_callback, bfp);
+  fileaccess_scandir(bfp->h.np_uri, scandir_callback, bfp);
 
   while((bfe = TAILQ_FIRST(&bfp->bfp_entries)) != NULL) {
     TAILQ_REMOVE(&bfp->bfp_entries, bfe, bfe_link);
@@ -136,15 +136,15 @@ scanner(void *aux)
     media = prop_create(p, "media");
 
     if(bfe->bfe_type == FA_DIR) {
-      r = fa_probe_dir(media, bfe->bfe_url);
+      r = fa_probe_dir(media, bfe->bfe_uri);
     } else {
-      r = fa_probe(media, bfe->bfe_url, NULL, 0);
+      r = fa_probe(media, bfe->bfe_uri, NULL, 0);
     }
 
     if(r < sizeof(type2str) / sizeof(type2str[0]) && type2str[r] != NULL)
       prop_set_string(prop_create(media, "type"), type2str[r]);
 
-    free(bfe->bfe_url);
+    free(bfe->bfe_uri);
     free(bfe);
 
     if(r == FA_UNKNOWN)
@@ -160,14 +160,14 @@ scanner(void *aux)
  *
  */
 static nav_page_t *
-file_open_dir(const char *url0)
+file_open_dir(const char *uri0)
 {
   be_file_page_t *bfp;
   prop_t *p;
 
   /* TODO: Check if it is a DVD */
 
-  bfp = nav_page_create(&be_file, url0, sizeof(be_file_page_t));
+  bfp = nav_page_create(&be_file, uri0, sizeof(be_file_page_t));
   p = bfp->h.np_prop_root;
 
   prop_set_string(prop_create(p, "type"), "filedirectory");
@@ -182,12 +182,12 @@ file_open_dir(const char *url0)
  *
  */
 static nav_page_t *
-file_open_file(const char *url0)
+file_open_file(const char *uri0)
 {
   char redir[512];
   int r;
 
-  r = fa_probe(NULL, url0, redir, sizeof(redir));
+  r = fa_probe(NULL, uri0, redir, sizeof(redir));
   
   switch(r) {
   case FA_ARCHIVE:
@@ -201,27 +201,27 @@ file_open_file(const char *url0)
  *
  */
 static nav_page_t *
-be_file_open(const char *url0, char *errbuf, size_t errlen)
+be_file_open(const char *uri0, char *errbuf, size_t errlen)
 {
   fa_protocol_t *fap;
-  const char *url;
+  const char *uri;
   struct stat buf;
 
-  if((url = fa_resolve_proto(url0, &fap)) == NULL) {
+  if((uri = fa_resolve_proto(uri0, &fap)) == NULL) {
     snprintf(errbuf, errlen, "Protocol not handled");
     return NULL;
   }
 
-  if(fap->fap_stat(url, &buf)) {
-    snprintf(errbuf, errlen, "Unable to stat url");
+  if(fap->fap_stat(uri, &buf)) {
+    snprintf(errbuf, errlen, "Unable to stat uri");
     return NULL;
   }
 
 
   if(S_ISDIR(buf.st_mode))
-    return file_open_dir(url0);
+    return file_open_dir(uri0);
 
-  return file_open_file(url0);
+  return file_open_file(uri0);
 }
 
 
