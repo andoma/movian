@@ -214,8 +214,6 @@ be_settings_open(const char *url0, char *errbuf, size_t errlen)
   char buf[100];
   int l;
 
-  printf("Decomposing %s\n", url);
-
   p = settings_root;
   /* Decompose URL and try to find representative node */
 
@@ -228,22 +226,13 @@ be_settings_open(const char *url0, char *errbuf, size_t errlen)
     if(*url == '/')
       url++;
     
-    printf("component = %s\n", buf);
-
     if(p->hp_type != PROP_DIR) {
       snprintf(errbuf, errlen, "Settings property is not a directory");
       return NULL;
     }
-
-    printf("creating %s in prop %s\n", buf, propname(p));
-
     p = prop_create(p, buf);
-
-    printf("creating %s in prop %s\n", "nodes", propname(p));
-
     p = prop_create(p, "nodes");
   }
-
 
 
   n = nav_page_create(&be_settings, url0, sizeof(nav_page_t));
