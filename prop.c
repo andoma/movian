@@ -328,7 +328,7 @@ prop_make_dir(struct prop_notify_queue *q, prop_t *p)
 
   prop_clean(q, p);
   
-  LIST_INIT(&p->hp_childs);
+  TAILQ_INIT(&p->hp_childs);
   p->hp_selected = NULL;
   p->hp_type = PROP_DIR;
   
@@ -352,7 +352,7 @@ prop_create0(struct prop_notify_queue *q,
     prop_make_dir(q, parent);
 
     if(name != NULL) {
-      LIST_FOREACH(hp, &parent->hp_childs, hp_parent_link) {
+      TAILQ_FOREACH(hp, &parent->hp_childs, hp_parent_link) {
 	if(hp->hp_name != NULL && !strcmp(hp->hp_name, name)) {
 	  return hp;
 	}
@@ -373,7 +373,7 @@ prop_create0(struct prop_notify_queue *q,
   hp->hp_parent = parent;
 
   if(parent != NULL) {
-    LIST_INSERT_HEAD(&parent->hp_childs, hp, hp_parent_link);
+    TAILQ_INSERT_TAIL(&parent->hp_childs, hp, hp_parent_link);
     prop_notify_child(q, hp, parent, PROP_ADD_CHILD, skipme);
   }
 
@@ -419,7 +419,7 @@ prop_set_parent_ex(prop_t *p, prop_t *parent, prop_sub_t *skipme)
   prop_make_dir(&q, parent);
 
   p->hp_parent = parent;
-  LIST_INSERT_HEAD(&parent->hp_childs, p, hp_parent_link);
+  TAILQ_INSERT_TAIL(&parent->hp_childs, p, hp_parent_link);
 
   prop_notify_child(&q, p, parent, PROP_ADD_CHILD, skipme);
 
@@ -441,7 +441,7 @@ prop_destroy0(struct prop_notify_queue *q, prop_t *p)
 
   switch(p->hp_type) {
   case PROP_DIR:
-    LIST_FOREACH(c, &p->hp_childs, hp_parent_link)
+    while((c = TAILQ_FIRST(&p->hp_childs)) != NULL)
       prop_destroy0(q, c);
     break;
 
@@ -479,7 +479,7 @@ prop_destroy0(struct prop_notify_queue *q, prop_t *p)
     prop_notify_child(q, p, p->hp_parent, PROP_DEL_CHILD, NULL);
     parent = p->hp_parent;
 
-    LIST_REMOVE(p, hp_parent_link);
+    TAILQ_REMOVE(&parent->hp_childs, p, hp_parent_link);
     p->hp_parent = NULL;
 
     if(parent->hp_selected == p) {
@@ -538,14 +538,14 @@ prop_subfind(struct prop_notify_queue *q,
 	return NULL;
       }
 
-      LIST_INIT(&p->hp_childs);
+      TAILQ_INIT(&p->hp_childs);
       p->hp_selected = NULL;
       p->hp_type = PROP_DIR;
 
       prop_notify_value(q, p, NULL);
     }
 
-    LIST_FOREACH(c, &p->hp_childs, hp_parent_link) {
+    TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link) {
       if(c->hp_name != NULL && !strcmp(c->hp_name, name[0]))
 	break;
     }
@@ -623,7 +623,7 @@ prop_subscribe(struct prop *prop, const char **name,
   prop_build_notify_value(&q, s);
 
   if(value->hp_type == PROP_DIR) {
-    LIST_FOREACH(c, &value->hp_childs, hp_parent_link)
+    TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
       prop_build_notify_child(&q, s, c, 
 				  value->hp_selected == c ? 
 				  PROP_ADD_SELECTED_CHILD : PROP_ADD_CHILD);
@@ -856,7 +856,7 @@ relink_subscriptions(struct prop_notify_queue *q,
     prop_build_notify_value(q, s);
 
     if(src->hp_type == PROP_DIR) {
-      LIST_FOREACH(c, &src->hp_childs, hp_parent_link)
+      TAILQ_FOREACH(c, &src->hp_childs, hp_parent_link)
 	prop_build_notify_child(q, s, c,
 				    src->hp_selected == c ? 
 				    PROP_ADD_SELECTED_CHILD : PROP_ADD_CHILD);
@@ -867,13 +867,13 @@ relink_subscriptions(struct prop_notify_queue *q,
     
     /* Take care of all childs */
 
-    LIST_FOREACH(c, &dst->hp_childs, hp_parent_link) {
+    TAILQ_FOREACH(c, &dst->hp_childs, hp_parent_link) {
       
       if(c->hp_name == NULL)
 	continue;
 
       /* Search for a matching source */
-      LIST_FOREACH(z, &src->hp_childs, hp_parent_link) {
+      TAILQ_FOREACH(z, &src->hp_childs, hp_parent_link) {
 	if(z->hp_name != NULL && !strcmp(c->hp_name, z->hp_name))
 	  break;
       }

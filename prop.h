@@ -41,6 +41,7 @@ typedef void (prop_callback_t)(struct prop_sub *sub,
 				   prop_event_t event, ...);
 
 
+TAILQ_HEAD(prop_queue, prop);
 LIST_HEAD(prop_list, prop);
 LIST_HEAD(prop_sub_list, prop_sub);
 
@@ -79,7 +80,7 @@ typedef struct prop {
    * Parent linkage. Protected by mutex
    */
   struct prop *hp_parent;
-  LIST_ENTRY(prop) hp_parent_link;
+  TAILQ_ENTRY(prop) hp_parent_link;
 
 
   /**
@@ -111,7 +112,7 @@ typedef struct prop {
     int i;
     char *str;
     struct {
-      struct prop_list childs;
+      struct prop_queue childs;
       struct prop *selected;
     } c;
   } u;
