@@ -178,31 +178,50 @@ prop_sub_t *prop_subscribe(struct prop *prop, const char **name,
 
 void prop_unsubscribe(prop_sub_t *s);
 
-prop_t *prop_create(prop_t *parent, const char *name);
+prop_t *prop_create_ex(prop_t *parent, const char *name,
+		       prop_sub_t *skipme);
+
+#define prop_create(parent, name) prop_create_ex(parent, name, NULL)
 
 void prop_destroy(prop_t *p);
 
-void prop_set_string(prop_t *p, const char *str);
+void prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str);
 
-void prop_set_stringf(prop_t *p, const char *fmt, ...);
+void prop_set_stringf_ex(prop_t *p, prop_sub_t *skipme, const char *fmt, ...);
 
-void prop_set_float(prop_t *p, float v);
+void prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v);
 
-void prop_set_int(prop_t *p, int v);
+void prop_set_int_ex(prop_t *p, prop_sub_t *skipme, int v);
 
-void prop_set_void(prop_t *p);
+void prop_set_void_ex(prop_t *p, prop_sub_t *skipme);
+
+
+#define prop_set_string(p, str) prop_set_string_ex(p, NULL, str)
+
+#define prop_set_stringf(p, fmt...) prop_set_stringf_ex(p, NULL, fmt)
+
+#define prop_set_float(p, v) prop_set_float_ex(p, NULL, v)
+
+#define prop_set_int(p, v) prop_set_int_ex(p, NULL, v)
+
+#define prop_set_void(p) prop_set_void_ex(p, NULL)
+
 
 void prop_ref_dec(prop_t *p);
 
 void prop_ref_inc(prop_t *p);
 
-void prop_set_parent(prop_t *p, prop_t *parent);
+void prop_set_parent_ex(prop_t *p, prop_t *parent, prop_sub_t *skipme);
+
+#define prop_set_parent(p, parent) prop_set_parent_ex(p, parent, NULL)
 
 void prop_link(prop_t *src, prop_t *dst);
 
 void prop_unlink(prop_t *p);
 
-void prop_select(prop_t *p, int advisory);
+void prop_select_ex(prop_t *p, int advisory, prop_sub_t *skipme);
+
+#define prop_select(p, advisory) prop_select_ex(p, advisory, NULL)
 
 prop_t **prop_get_ancestors(prop_t *p);
 
