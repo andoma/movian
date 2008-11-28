@@ -24,8 +24,15 @@
 struct setting;
 typedef struct setting setting_t;
 
+typedef struct settings_multiopt {
+  const char *id;
+  const char *title;
+  const char *icon;
+} settings_multiopt_t;
 
 typedef void (setting_callback_bool_t)(void *opaque, int value);
+
+typedef void (setting_callback_string_t)(void *opaque, const char *str);
 
 prop_t *settings_add_dir(prop_t *parent, const char *id, 
 			     const char *title);
@@ -37,6 +44,13 @@ prop_t *settings_get_dirlist(prop_t *parent);
 setting_t *settings_add_bool(prop_t *parent, const char *id, 
 			     const char *title, int initial, htsmsg_t *store,
 			     setting_callback_bool_t *cb, void *opaque);
+
+setting_t *settings_add_multiopt(prop_t *parent, const char *id,
+				 const char *title,
+				 setting_callback_string_t *cb, void *opaque);
+
+void settings_multiopt_add_opt(setting_t *parent, const char *id,
+			       const char *title, int selected);
 
 void settings_init(void);
 

@@ -41,6 +41,7 @@ struct setting {
   void *s_opaque;
   void *s_callback;
   prop_sub_t *s_sub;
+  prop_t *s_prop;
 };
 
 
@@ -173,6 +174,68 @@ settings_add_bool(prop_t *parent, const char *id, const char *title,
   
   settings_set_parent(r, parent);
   return s;
+}
+
+
+
+/**
+ *
+ */
+static void 
+callback_string(struct prop_sub *sub, prop_event_t event, ...)
+{
+  setting_t *s = sub->hps_opaque;
+  setting_callback_string_t *cb;
+  prop_t *c;
+
+  va_list ap;
+  va_start(ap, event);
+
+  if(event == PROP_SEL_CHILD) {
+    c = va_arg(ap, prop_t *);
+    cb = s->s_callback;
+    cb(s->s_opaque, c ? c->hp_name : NULL);
+  }
+}
+
+
+/**
+ *
+ */
+setting_t *
+settings_add_multiopt(prop_t *parent, const char *id, const char *title,
+		      setting_callback_string_t *cb, void *opaque)
+{
+  prop_t *r = settings_add(id, title, "multiopt");
+  prop_t *o = prop_create(r, "options");
+  setting_t *s = malloc(sizeof(setting_t));
+  prop_sub_t *sub;
+
+  s->s_callback = cb;
+  s->s_opaque = opaque;
+  s->s_prop = r;
+  
+  sub = prop_subscribe(o, NULL, callback_string, s);
+  s->s_sub = sub;
+  
+  settings_set_parent(r, parent);
+  return s;
+}
+
+
+
+/**
+ *
+ */
+void
+settings_multiopt_add_opt(setting_t *parent, const char *id, const char *title,
+			  int selected)
+{
+  prop_t *r = parent->s_prop;
+  prop_t *opts = prop_create(r, "options");
+  prop_t *o = prop_create(opts, id);
+
+  prop_set_string(prop_create(o, "title"), title);
 }
 
 
