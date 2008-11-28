@@ -88,7 +88,8 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_CHILD_CREATED:
-    w->glw_selected = extra;
+    if(w->glw_selected == NULL)
+      w->glw_selected = extra;
     break;
   }
 
