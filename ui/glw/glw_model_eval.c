@@ -1427,8 +1427,34 @@ glwf_genericEvent(glw_model_eval_context_t *ec, struct token *self)
 }
 
 
+/**
+ *
+ */
+static int 
+glwf_internalEvent(glw_model_eval_context_t *ec, struct token *self)
+{
+  token_t *b = eval_pop(ec);  /* Event */
+  token_t *a = eval_pop(ec);  /* Target name */
+  token_t *r;
+  int dstevent;
 
+  if(a == NULL || b == NULL)
+    return glw_model_seterr(ec->ei, self, "Missing operands");
 
+  if(a->type != TOKEN_STRING)
+    return glw_model_seterr(ec->ei, a, "internalEvent: "
+			    "First argument is not a string");
+  
+  if(b->type != TOKEN_IDENTIFIER ||
+     (dstevent = str2val(b->t_string, eventtab)) < 0)
+    return glw_model_seterr(ec->ei, b, "internalEvent: "
+			    "Invalid target event");
+  
+  r = eval_alloc(self, ec, TOKEN_EVENT);
+  r->t_gem = glw_event_map_internal_create(a->t_string, dstevent);
+  eval_push(ec, r);
+  return 0;
+}
 
 
 
@@ -1840,6 +1866,7 @@ static const token_func_t funcvec[] = {
   {"space", glwf_space},
   {"onEvent", glwf_onEvent},
   {"genericEvent", glwf_genericEvent},
+  {"internalEvent", glwf_internalEvent},
   {"changed", glwf_changed, glwf_changed_ctor, glwf_changed_dtor},
   {"iir", glwf_iir},
   {"float2str", glwf_float2str},

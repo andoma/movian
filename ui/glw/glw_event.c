@@ -119,8 +119,6 @@ glw_event_map_add(glw_t *w, glw_event_map_t *gem)
 }
 
 
-#if 0
-
 /**
  *
  */
@@ -163,7 +161,69 @@ glw_event_find_target(glw_t *w, const char *id)
   return NULL;
 }
 
-#endif
+
+typedef struct glw_event_internal {
+  glw_event_map_t map;
+
+  char *target;
+  event_type_t event;
+
+} glw_event_internal_t;
+
+
+
+
+/**
+ *
+ */
+static void
+glw_event_map_internal_dtor(glw_event_map_t *gem)
+{
+  glw_event_internal_t *g = (glw_event_internal_t *)gem;
+
+  free(g->target);
+  free(g);
+}
+
+
+/**
+ *
+ */
+static void
+glw_event_map_internal_fire(glw_t *w, glw_event_map_t *gem)
+{
+  glw_event_internal_t *g = (glw_event_internal_t *)gem;
+  glw_t *t = glw_event_find_target(w, g->target);
+  event_t *e;
+
+  if(t == NULL) {
+    fprintf(stderr, "%s widget not found\n", g->target);
+    return;
+  }
+  e = event_create_simple(g->event);
+  e->e_mapped = 1;
+
+  glw_signal0(t, GLW_SIGNAL_EVENT, e);
+  event_unref(e);
+}
+
+
+
+/**
+ *
+ */
+glw_event_map_t *
+glw_event_map_internal_create(const char *target, event_type_t event)
+{
+  glw_event_internal_t *g = malloc(sizeof(glw_event_internal_t));
+  
+  g->target = strdup(target);
+  g->event  = event;
+
+  g->map.gem_dtor = glw_event_map_internal_dtor;
+  g->map.gem_fire = glw_event_map_internal_fire;
+  return &g->map;
+}
 
 
 
