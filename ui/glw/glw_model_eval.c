@@ -790,12 +790,12 @@ prop_callback(prop_sub_t *s, prop_event_t event, ...)
 
     case PROP_ADD_CHILD:
       p = va_arg(ap, prop_t *);
-      cloner_add_child(gps, p, gps->gps_widget, NULL, 1);
+      cloner_add_child(gps, p, gps->gps_widget, NULL, 0);
       break;
 
     case PROP_ADD_SELECTED_CHILD:
       p = va_arg(ap, prop_t *);
-      cloner_add_child(gps, p, gps->gps_widget, NULL, 0);
+      cloner_add_child(gps, p, gps->gps_widget, NULL, 1);
       break;
 
     case PROP_DEL_CHILD:
