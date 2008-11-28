@@ -42,6 +42,7 @@ struct setting {
   void *s_callback;
   prop_sub_t *s_sub;
   prop_t *s_prop;
+  int s_inhibit_update;
 };
 
 
@@ -191,7 +192,7 @@ callback_string(struct prop_sub *sub, prop_event_t event, ...)
   va_list ap;
   va_start(ap, event);
 
-  if(event == PROP_SEL_CHILD) {
+  if(!s->s_inhibit_update  && event == PROP_SEL_CHILD) {
     c = va_arg(ap, prop_t *);
     cb = s->s_callback;
     cb(s->s_opaque, c ? c->hp_name : NULL);
@@ -236,6 +237,13 @@ settings_multiopt_add_opt(setting_t *parent, const char *id, const char *title,
   prop_t *o = prop_create(opts, id);
 
   prop_set_string(prop_create(o, "title"), title);
+
+
+  if(selected) {
+    parent->s_inhibit_update = 1;
+    prop_select(o, 0);
+    parent->s_inhibit_update = 0;
+  }
 }
 
 
