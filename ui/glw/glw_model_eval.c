@@ -32,10 +32,10 @@
  */
 typedef struct glw_prop_sub_pending {
   prop_t *gpsp_prop;
-  LIST_ENTRY(glw_prop_sub_pending) gpsp_link;
+  TAILQ_ENTRY(glw_prop_sub_pending) gpsp_link;
 } glw_prop_sub_pending_t;
 
-LIST_HEAD(glw_prop_sub_pending_list, glw_prop_sub_pending);
+TAILQ_HEAD(glw_prop_sub_pending_queue, glw_prop_sub_pending);
 
 /**
  *
@@ -53,7 +53,7 @@ typedef struct glw_prop_sub {
   token_t *gps_cloner_body;
   glw_class_t gps_cloner_class;
   
-  struct glw_prop_sub_pending_list gps_pending;
+  struct glw_prop_sub_pending_queue gps_pending;
   prop_t *gps_pending_select;
 
 #ifdef GLW_MODEL_ERRORINFO
@@ -625,7 +625,7 @@ cloner_add_child(glw_prop_sub_t *gps, prop_t *p,
 
     gpsp = malloc(sizeof(glw_prop_sub_pending_t));
     gpsp->gpsp_prop = p;
-    LIST_INSERT_HEAD(&gps->gps_pending, gpsp, gpsp_link);
+    TAILQ_INSERT_TAIL(&gps->gps_pending, gpsp, gpsp_link);
 
     if(selected)
       gps->gps_pending_select = p;
@@ -669,14 +669,14 @@ cloner_del_child(glw_prop_sub_t *gps, prop_t *p, glw_t *parent)
   }
 
   /* It may reside in the pending list */
-  LIST_FOREACH(gpsp, &gps->gps_pending, gpsp_link) {
+  TAILQ_FOREACH(gpsp, &gps->gps_pending, gpsp_link) {
     if(gpsp->gpsp_prop == p) {
 
       if(gps->gps_pending_select == p)
 	gps->gps_pending_select = NULL;
 
       prop_ref_dec(p);
-      LIST_REMOVE(gpsp, gpsp_link);
+      TAILQ_REMOVE(&gps->gps_pending, gpsp, gpsp_link);
       free(gpsp);
       return;
     }
@@ -851,6 +851,8 @@ subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
   propname[i] = NULL;
 
   gps = calloc(1, sizeof(glw_prop_sub_t));
+
+  TAILQ_INIT(&gps->gps_pending);
 
 #ifdef GLW_MODEL_ERRORINFO
   gps->gps_file = refstr_dup(self->file);
@@ -1199,8 +1201,8 @@ glwf_cloner(glw_model_eval_context_t *ec, struct token *self)
     gps->gps_cloner_class = class;
 
     /* Create pending childs */
-    while((gpsp = LIST_FIRST(&gps->gps_pending)) != NULL) {
-      LIST_REMOVE(gpsp, gpsp_link);
+    while((gpsp = TAILQ_FIRST(&gps->gps_pending)) != NULL) {
+      TAILQ_REMOVE(&gps->gps_pending, gpsp, gpsp_link);
 
       cloner_add_child0(gps, gpsp->gpsp_prop, ec->w, ec->ei,
 			gpsp->gpsp_prop == gps->gps_pending_select);
