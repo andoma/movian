@@ -31,7 +31,9 @@ static int
 glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_rctx_t *rc = extra;
-  
+  glw_t *c, *n;
+  event_t *e;
+
   switch(signal) {
   default:
     break;
@@ -49,8 +51,36 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_EVENT:
-    if(w->glw_selected != NULL)
-      return glw_signal0(w->glw_selected, GLW_SIGNAL_EVENT, extra);
+    if(w->glw_selected != NULL) {
+      if(glw_signal0(w->glw_selected, GLW_SIGNAL_EVENT, extra))
+	return 1;
+    }
+
+    if((c = w->glw_selected) == NULL)
+      return 0;
+    
+    /* Respond to some events ourselfs */
+    e = extra;
+
+    switch(e->e_type) {
+    case EVENT_INCR:
+      n = glw_get_next_n(c, 1);
+      break;
+    case EVENT_DECR:
+      n = glw_get_prev_n(c, 1);
+      break;
+    default:
+      n = NULL;
+      break;
+    }
+
+    if(n != NULL) {
+      if(n != c) {
+	w->glw_selected = n;
+	glw_signal0(n, GLW_SIGNAL_SELECTED_UPDATE, NULL);
+      }
+      return 1;
+    }
     break;
 
   case GLW_SIGNAL_SELECT:
