@@ -237,9 +237,7 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
   glw_t *c;
   int pop = 0;
 
-  if(w->glw_flags & GLW_FOCUS_DRAW_CURSOR && rc->rc_focused)
-    glw_form_cursor_set(rc);
-
+ 
   if(gt != NULL && gt->gt_state == GT_STATE_VALID && a > 0.01) {
 
     glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -255,6 +253,9 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
     glBindTexture(GL_TEXTURE_2D, gt->gt_texture);
 
     if(!(w->glw_flags & GLW_KEEP_ASPECT)) {
+
+      if(w->glw_flags & GLW_FOCUS_DRAW_CURSOR && rc->rc_focused)
+	glw_form_cursor_set(rc);
 
       bitmap_render_tesselated(rc->rc_aspect, gt->gt_aspect, 
 			       gb->gb_vborders, gb->gb_tborders,
@@ -303,6 +304,9 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
 	glTranslatef(0.0, -1.0, 0.0f);
 	break;
       }
+
+      if(w->glw_flags & GLW_FOCUS_DRAW_CURSOR && rc->rc_focused)
+	glw_form_cursor_set(rc);
       
 
       if(w->glw_flags & GLW_BORDER_BLEND) {
