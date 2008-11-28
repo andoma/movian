@@ -8,7 +8,7 @@ widget(container_y, {
     .slices = 10;
     cloner(page.nodes, container_z, {
      
-      PLATE_SELECTABLE();
+      .focusAlpha = true;
 
       PLATE_WIDE(
         widget(animator, {

@@ -1,5 +1,8 @@
 widget(container_x, {
 
+  .focusCursor = true;
+  .selectable = true;
+
   onEvent(enter, genericEvent(navigator, open, self.url));
 
   widget(bitmap, {

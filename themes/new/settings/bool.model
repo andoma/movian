@@ -1,5 +1,8 @@
 widget(container_x, {
 
+  .focusCursor = true;
+  .selectable = true;
+
   onEvent(enter, {
     self.value = 1 ^^ self.value;
   });

@@ -1,0 +1,42 @@
+widget(container_x, {
+
+  widget(label, {
+    .aspect = 20;
+    .align = right;
+    .caption = self.title + ":";
+  });
+
+
+  widget(container_x, {
+    widget(bitmap, {
+      .focusCursor = true;
+      .selectable = true;
+      .keepAspect = true;
+      .weight = 0.1;
+      .source = "theme://images/left.png";
+      onEvent(enter, internalEvent("choiceDeck", decr));
+    });
+
+    widget(deck, {
+      .id = "choiceDeck";
+      cloner(self.options, container_y, {
+	widget(label, {
+	  .align = center;
+	  .aspect = 20;
+	  .caption = self.title;
+	});
+      });
+    });
+
+    widget(bitmap, {
+      .focusCursor = true;
+      .selectable = true;
+
+      .keepAspect = true;
+      .weight = 0.1;
+      .source = "theme://images/right.png";
+
+      onEvent(enter, internalEvent("choiceDeck", incr));
+    });
+  });
+});
