@@ -149,6 +149,22 @@ pqe_event_create(playqueue_entry_t *pqe, int jump)
 }
 
 
+/**
+ *
+ */
+static void
+playqueue_clear(void)
+{
+  playqueue_entry_t *pqe;
+
+  while((pqe = TAILQ_FIRST(&playqueue_entries)) != NULL) {
+    TAILQ_REMOVE(&playqueue_entries, pqe, pqe_link);
+    pqe->pqe_linked = 0;
+    pqe_unref(pqe);
+  }
+}
+
+
 
 
 /**
@@ -219,7 +235,7 @@ playqueue_load(const char *uri, const char *parent, prop_t *media, int enq)
   
   /* Clear out the current playqueue */
   
-  //  playqueue_clear();
+  playqueue_clear();
 
 
   e = pqe_event_create(pqe, 1);
