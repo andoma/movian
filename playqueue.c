@@ -322,13 +322,14 @@ playqueue_init(void)
 /**
  *
  */
-static nav_page_t *
-be_playqueue_open(const char *url0, char *errbuf, size_t errlen)
+static int
+be_playqueue_open(const char *url0, nav_page_t **npp, 
+		  char *errbuf, size_t errlen)
 {
   nav_page_t *n;
   prop_t *type, *nodes;
 
-  n = nav_page_create(&be_playqueue, url0, sizeof(nav_page_t));
+  *npp = n = nav_page_create(&be_playqueue, url0, sizeof(nav_page_t));
 
   type  = prop_create(n->np_prop_root, "type");
   prop_set_string(type, "playqueue");
@@ -336,7 +337,7 @@ be_playqueue_open(const char *url0, char *errbuf, size_t errlen)
   nodes = prop_create(n->np_prop_root, "nodes");
 
   prop_link(playqueue_root, nodes);
-  return n;
+  return 0;
 }
 
 

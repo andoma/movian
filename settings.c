@@ -272,8 +272,9 @@ be_settings_canhandle(const char *url)
 /**
  *
  */
-static nav_page_t *
-be_settings_open(const char *url0, char *errbuf, size_t errlen)
+static int
+be_settings_open(const char *url0, nav_page_t **npp,
+		 char *errbuf, size_t errlen)
 {
   nav_page_t *n;
   prop_t *type, *nodes, *p;
@@ -295,7 +296,7 @@ be_settings_open(const char *url0, char *errbuf, size_t errlen)
     
     if(p->hp_type != PROP_DIR) {
       snprintf(errbuf, errlen, "Settings property is not a directory");
-      return NULL;
+      return -1;
     }
     p = prop_create(p, buf);
     p = prop_create(p, "nodes");
@@ -310,7 +311,9 @@ be_settings_open(const char *url0, char *errbuf, size_t errlen)
   prop_set_string(type, "settings");
 
   prop_link(p, nodes);
-  return n;
+  *npp = n;
+  
+  return 0;
 }
 
 

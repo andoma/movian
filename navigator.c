@@ -124,13 +124,9 @@ nav_open(const char *uri)
 
   /* First, if a page is already open, go directly to it */
 
-  printf("Opening %s\n", uri);
-
   TAILQ_FOREACH(np, &nav_pages, np_global_link) {
     if(!strcmp(np->np_uri, uri)) {
-      printf("Selecting %s\n", np->np_uri);
       prop_select(np->np_prop_root, 0);
-
       prop_link(np->np_prop_root, nav_prop_curpage);
       break;
     }
@@ -142,10 +138,15 @@ nav_open(const char *uri)
       if(nb->nb_canhandle(uri))
 	break;
   
-    if(nb == NULL)
+    if(nb == NULL) {
+      fprintf(stderr, "Unable to open %s -- No handler", uri);
       return;
+    }
 
-    np = nb->nb_open(uri, errbuf, sizeof(errbuf));
+    if(nb->nb_open(uri, &np, errbuf, sizeof(errbuf))) {
+      fprintf(stderr, "Unable to open %s -- %s", uri, errbuf);
+      return;
+    }
   
     if(np == NULL)
       return;

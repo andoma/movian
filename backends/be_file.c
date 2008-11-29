@@ -160,8 +160,8 @@ scanner(void *aux)
 /**
  *
  */
-static nav_page_t *
-file_open_dir(const char *uri0)
+static int
+file_open_dir(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
 {
   be_file_page_t *bfp;
   prop_t *p;
@@ -176,14 +176,15 @@ file_open_dir(const char *uri0)
   bfp->bfp_nodes = prop_create(p, "nodes");
   
   hts_thread_create_detached(&bfp->bfp_scanner, scanner, bfp);
-  return &bfp->h;
+  *npp = &bfp->h;
+  return 0;
 }
 
 /**
  *
  */
-static nav_page_t *
-file_open_file(const char *uri0)
+static int
+file_open_file(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
 {
   char redir[512];
   int r;
@@ -196,22 +197,23 @@ file_open_file(const char *uri0)
   switch(r) {
   case FA_ARCHIVE:
     prop_destroy(media);
-    return file_open_dir(redir);
+    return file_open_dir(redir, npp, errbuf, errlen);
   case FA_AUDIO:
     playqueue_play(uri0, NULL, media, 0);
-    abort();
-    return NULL;
+    *npp = NULL;
+    return 0;
 
   default:
-    abort();
+    snprintf(errbuf, errlen, "Can not handle file contents");
+    return -1;
   }
 }
 
 /**
  *
  */
-static nav_page_t *
-be_file_open(const char *uri0, char *errbuf, size_t errlen)
+static int
+be_file_open(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
 {
   fa_protocol_t *fap;
   const char *uri;
@@ -219,19 +221,16 @@ be_file_open(const char *uri0, char *errbuf, size_t errlen)
 
   if((uri = fa_resolve_proto(uri0, &fap)) == NULL) {
     snprintf(errbuf, errlen, "Protocol not handled");
-    return NULL;
+    return -1;
   }
 
   if(fap->fap_stat(uri, &buf)) {
     snprintf(errbuf, errlen, "Unable to stat uri");
-    return NULL;
+    return -1;
   }
 
-
-  if(S_ISDIR(buf.st_mode))
-    return file_open_dir(uri0);
-
-  return file_open_file(uri0);
+  return S_ISDIR(buf.st_mode) ? file_open_dir(uri0, npp, errbuf, errlen) :
+    file_open_file(uri0, npp, errbuf, errlen);
 }
 
 

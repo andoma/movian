@@ -53,7 +53,8 @@ typedef struct nav_backend {
 
   int (*nb_canhandle)(const char *uri);
 
-  nav_page_t *(*nb_open)(const char *uri, char *errbuf, size_t errlen);
+  int (*nb_open)(const char *uri, nav_page_t **npp,
+		 char *errbuf, size_t errlen);
 
 } nav_backend_t;
 
