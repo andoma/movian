@@ -27,6 +27,7 @@
 #include "navigator.h"
 #include "fileaccess/fileaccess.h"
 #include "fileaccess/fa_probe.h"
+#include "playqueue.h"
 
 TAILQ_HEAD(be_file_entry_queue,  be_file_entry);
 
@@ -83,7 +84,7 @@ scandir_callback(void *arg, const char *uri, const char *filename, int type)
 
   prop_set_string(prop_create(p, "filename"), filename);
 
-  urip = prop_create(p, "uri");
+  urip = prop_create(p, "url");
   prop_set_string(urip, uri);
 
   media = prop_create(p, "media");
@@ -186,12 +187,21 @@ file_open_file(const char *uri0)
 {
   char redir[512];
   int r;
+  prop_t *media;
 
-  r = fa_probe(NULL, uri0, redir, sizeof(redir));
+  media = prop_create(NULL, "media");
+
+  r = fa_probe(media, uri0, redir, sizeof(redir));
   
   switch(r) {
   case FA_ARCHIVE:
+    prop_destroy(media);
     return file_open_dir(redir);
+  case FA_AUDIO:
+    playqueue_play(uri0, NULL, media, 0);
+    abort();
+    return NULL;
+
   default:
     abort();
   }

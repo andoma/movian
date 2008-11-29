@@ -36,8 +36,12 @@ SRCS  += dummy_audio.c
 VPATH += hid
 SRCS  += hid.c lircd.c imonpad.c keymapper.c
 
+#
+
 VPATH += backends
 SRCS  += be_file.c be_page.c
+
+SRCS  += playqueue.c
 
 # Main menu
 

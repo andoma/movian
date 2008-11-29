@@ -41,6 +41,7 @@
 #include "settings.h"
 #include "ui/ui.h"
 #include "hid/keymapper.h"
+#include "playqueue.h"
 
 pthread_mutex_t ffmutex;
 
@@ -194,6 +195,7 @@ main(int argc, char **argv)
   av_register_all();
 
   fileaccess_init();
+  playqueue_init();
 
   nav_init();
 

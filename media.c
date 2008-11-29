@@ -752,7 +752,7 @@ media_set_currentmedia(media_pipe_t *mp)
 
   lastmp = mp;
   p = prop_create(prop_get_global(), "currentmedia");
-  abort(); // hts_prop_linktree(mp->mp_prop_root, p);
+  //  abort(); // hts_prop_linktree(mp->mp_prop_root, p);
 
   p = prop_create(prop_get_global(), "currentmediasource");
   prop_set_string(p, mp->mp_name);
@@ -765,7 +765,7 @@ media_set_currentmedia(media_pipe_t *mp)
 void
 media_set_metatree(media_pipe_t *mp, prop_t *src)
 {
-  abort(); //hts_prop_linktree(src, mp->mp_prop_meta);
+  //  abort(); //hts_prop_linktree(src, mp->mp_prop_meta);
 }
 
 
@@ -775,5 +775,5 @@ media_set_metatree(media_pipe_t *mp, prop_t *src)
 void
 media_clear_metatree(media_pipe_t *mp)
 {
-  abort(); //hts_prop_unlink(mp->mp_prop_meta);
+  //  abort(); //hts_prop_unlink(mp->mp_prop_meta);
 }
