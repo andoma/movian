@@ -173,7 +173,11 @@ playqueue_load(const char *uri, const char *parent, prop_t *media, int enq)
   TAILQ_FOREACH(pqe, &playqueue_entries, pqe_link) {
     if(!strcmp(pqe->pqe_uri, uri) && !strcmp(pqe->pqe_parent, parent)) {
       /* Already in, go to it */
-      //      playqueue_jump(pqe);
+
+      e = pqe_event_create(pqe, 1);
+      event_enqueue(&player_eventqueue, e);
+      event_unref(e);
+
       hts_mutex_unlock(&playqueue_mutex);
 
       if(media != NULL)
@@ -188,15 +192,11 @@ playqueue_load(const char *uri, const char *parent, prop_t *media, int enq)
   pqe->pqe_parent = strdup(parent);
   pqe->pqe_root   = prop_create(NULL, NULL);
   pqe->pqe_enq    = enq;
-
+  pqe->pqe_refcount = 1;
+  pqe->pqe_linked = 1;
   prop_set_parent(media, pqe->pqe_root);
 
   prop_set_string(prop_create(pqe->pqe_root, "url"), uri);
-
-  
-  
-
-
 
   if(enq) {
 
@@ -222,11 +222,12 @@ playqueue_load(const char *uri, const char *parent, prop_t *media, int enq)
   //  playqueue_clear();
 
 
-  printf("ok, i'm about to start playing %s\n", uri);
-
   e = pqe_event_create(pqe, 1);
   event_enqueue(&player_eventqueue, e);
   event_unref(e);
+
+  hts_mutex_unlock(&playqueue_mutex);
+
 }
 
 /**
@@ -288,7 +289,6 @@ playqueue_play(const char *uri, const char *parent, prop_t *media,
   TAILQ_INSERT_TAIL(&playqueue_requests, pqr, pqr_link);
   hts_cond_signal(&playqueue_request_cond);
   hts_mutex_unlock(&playqueue_request_mutex);
-  sleep(3000);
 }
 
 
@@ -416,6 +416,7 @@ playtrack(playqueue_entry_t *pqe, media_pipe_t *mp, event_queue_t *eq)
   int64_t pts;
   char faurl[1000];
   event_t *e;
+  playqueue_event_t *pe;
 
   snprintf(faurl, sizeof(faurl), "showtime:%s", pqe->pqe_uri);
 
@@ -492,33 +493,24 @@ playtrack(playqueue_entry_t *pqe, media_pipe_t *mp, event_queue_t *eq)
 	  }
 	}
 	break;
-#if 0
+
       case EVENT_PLAYLIST:
-	pe = (void *)ge;
-	playlist_status_update_next(ple);
-	switch(pe->type) {
-	case PLAYLIST_EVENT_NEWENTRY:
-	  /**
-	   * A new entry has been added, we don't care about this while
-	   * playing, just unref ptr
-	   */
-	  playlist_entry_unref(pe->ple);
+	pe = (playqueue_event_t *)e;
+	if(!pe->jump) {
+	  /* Entry added without request to start playing it at once.
+	     Just ignore this */
+	  pqe_unref(pe->pqe);
 	  break;
-
-	case PLAYLIST_EVENT_PLAYENTRY:
-	  /**
-	   * User wants us to jump to this entry, do it
-	   */
-	  next = pe->ple;
-	  mp_flush(mp);
-	  glw_event_unref(ge);
-	  goto out;
-
-	default:
-	  abort();
 	}
-	break;
-#endif
+
+	/* Switch to track in request */
+	pqe_unref(pqe);
+	pqe = pe->pqe;
+
+	mp_flush(mp);
+	event_unref(e);
+	goto out;
+
 
       case EVENT_KEY_SEEK_FAST_BACKWARD:
 	av_seek_frame(fctx, -1, pts4seek - 60000000, AVSEEK_FLAG_BACKWARD);
