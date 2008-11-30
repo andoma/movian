@@ -29,6 +29,7 @@
 #include "prop.h"
 
 static hts_mutex_t prop_mutex;
+static hts_cond_t  prop_cond;
 static prop_t *prop_global;
 
 /**
@@ -73,6 +74,8 @@ propname(prop_t *p)
  *
  */
 TAILQ_HEAD(prop_notify_queue, prop_notify);
+
+static struct  prop_notify_queue prop_notifies;
 
 typedef struct prop_notify {
   TAILQ_ENTRY(prop_notify) hpn_link;
@@ -134,15 +137,24 @@ prop_sub_ref_dec(prop_sub_t *s)
 
 
 /**
- *
+ * Thread for dispatching prop_notify entries
  */
-static void
-prop_notify_queue(struct prop_notify_queue *q)
+static void *
+prop_delivery(void *aux)
 {
   prop_notify_t *n;
   prop_sub_t *s;
 
-  while((n = TAILQ_FIRST(q)) != NULL) {
+  while(1) {
+
+    hts_mutex_lock(&prop_mutex);
+
+    while((n = TAILQ_FIRST(&prop_notifies)) == NULL)
+      hts_cond_wait(&prop_cond, &prop_mutex);
+
+    TAILQ_REMOVE(&prop_notifies, n, hpn_link);
+    
+    hts_mutex_unlock(&prop_mutex);
 
     s = n->hpn_sub;
     
@@ -175,12 +187,9 @@ prop_notify_queue(struct prop_notify_queue *q)
       break;
     }
     prop_sub_ref_dec(s);
-
-    TAILQ_REMOVE(q, n, hpn_link);
     free(n);
   }
 }
-
 
 /**
  *
@@ -199,7 +208,7 @@ get_notify(prop_sub_t *s)
  *
  */
 static void
-prop_build_notify_value(struct prop_notify_queue *q, prop_sub_t *s)
+prop_build_notify_value(prop_sub_t *s)
 {
   prop_notify_t *n = get_notify(s);
   prop_t *p = s->hps_value_prop;
@@ -228,7 +237,8 @@ prop_build_notify_value(struct prop_notify_queue *q, prop_sub_t *s)
     n->hpn_event = PROP_SET_VOID;
     break;
   }
-  TAILQ_INSERT_TAIL(q, n, hpn_link);
+  TAILQ_INSERT_TAIL(&prop_notifies, n, hpn_link);
+  hts_cond_signal(&prop_cond);
 }
 
 
@@ -237,12 +247,13 @@ prop_build_notify_value(struct prop_notify_queue *q, prop_sub_t *s)
  *
  */
 static void
-prop_notify_void(struct prop_notify_queue *q, prop_sub_t *s)
+prop_notify_void(prop_sub_t *s)
 {
   prop_notify_t *n = get_notify(s);
 
   n->hpn_event = PROP_SET_VOID;
-  TAILQ_INSERT_TAIL(q, n, hpn_link);
+  TAILQ_INSERT_TAIL(&prop_notifies, n, hpn_link);
+  hts_cond_signal(&prop_cond);
 }
 
 
@@ -250,14 +261,13 @@ prop_notify_void(struct prop_notify_queue *q, prop_sub_t *s)
  *
  */
 static void
-prop_notify_value(struct prop_notify_queue *q, prop_t *p,
-		  prop_sub_t *skipme)
+prop_notify_value(prop_t *p, prop_sub_t *skipme)
 {
   prop_sub_t *s;
 
   LIST_FOREACH(s, &p->hp_value_subscriptions, hps_value_prop_link)
     if(s != skipme)
-      prop_build_notify_value(q, s);
+      prop_build_notify_value(s);
 }
 
 
@@ -265,8 +275,7 @@ prop_notify_value(struct prop_notify_queue *q, prop_t *p,
  *
  */
 static void
-prop_build_notify_child(struct prop_notify_queue *q, prop_sub_t *s,
-			    prop_t *p, prop_event_t event)
+prop_build_notify_child(prop_sub_t *s, prop_t *p, prop_event_t event)
 {
   prop_notify_t *n = get_notify(s);
 
@@ -275,7 +284,8 @@ prop_build_notify_child(struct prop_notify_queue *q, prop_sub_t *s,
 
   n->hpn_prop = p;
   n->hpn_event = event;
-  TAILQ_INSERT_TAIL(q, n, hpn_link);
+  TAILQ_INSERT_TAIL(&prop_notifies, n, hpn_link);
+  hts_cond_signal(&prop_cond);
 }
 
 
@@ -283,15 +293,14 @@ prop_build_notify_child(struct prop_notify_queue *q, prop_sub_t *s,
  *
  */
 static void
-prop_notify_child(struct prop_notify_queue *q, prop_t *child,
-		  prop_t *parent, prop_event_t event,
+prop_notify_child(prop_t *child, prop_t *parent, prop_event_t event,
 		  prop_sub_t *skipme)
 {
   prop_sub_t *s;
 
   LIST_FOREACH(s, &parent->hp_value_subscriptions, hps_value_prop_link)
     if(s != skipme)
-      prop_build_notify_child(q, s, child, event);
+      prop_build_notify_child(s, child, event);
 }
 
 
@@ -299,7 +308,7 @@ prop_notify_child(struct prop_notify_queue *q, prop_t *child,
  *
  */
 static void
-prop_clean(struct prop_notify_queue *q, prop_t *p)
+prop_clean(prop_t *p)
 {
   switch(p->hp_type) {
   case PROP_VOID:
@@ -321,18 +330,18 @@ prop_clean(struct prop_notify_queue *q, prop_t *p)
  *
  */
 static void
-prop_make_dir(struct prop_notify_queue *q, prop_t *p)
+prop_make_dir(prop_t *p)
 {
   if(p->hp_type == PROP_DIR)
     return;
 
-  prop_clean(q, p);
+  prop_clean(p);
   
   TAILQ_INIT(&p->hp_childs);
   p->hp_selected = NULL;
   p->hp_type = PROP_DIR;
   
-  prop_notify_value(q, p, NULL);
+  prop_notify_value(p, NULL);
 }
 
 
@@ -342,14 +351,13 @@ prop_make_dir(struct prop_notify_queue *q, prop_t *p)
  *
  */
 static prop_t *
-prop_create0(struct prop_notify_queue *q, 
-	     prop_t *parent, const char *name, prop_sub_t *skipme)
+prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme)
 {
   prop_t *hp;
 
   if(parent != NULL) {
 
-    prop_make_dir(q, parent);
+    prop_make_dir(parent);
 
     if(name != NULL) {
       TAILQ_FOREACH(hp, &parent->hp_childs, hp_parent_link) {
@@ -374,7 +382,7 @@ prop_create0(struct prop_notify_queue *q,
 
   if(parent != NULL) {
     TAILQ_INSERT_TAIL(&parent->hp_childs, hp, hp_parent_link);
-    prop_notify_child(q, hp, parent, PROP_ADD_CHILD, skipme);
+    prop_notify_child(hp, parent, PROP_ADD_CHILD, skipme);
   }
 
   return hp;
@@ -390,14 +398,9 @@ prop_create_ex(prop_t *parent, const char *name, prop_sub_t *skipme)
 {
   prop_t *p;
 
-  struct prop_notify_queue q;
-  TAILQ_INIT(&q);
-
   hts_mutex_lock(&prop_mutex);
-  p = prop_create0(&q, parent, name, skipme);
+  p = prop_create0(parent, name, skipme);
   hts_mutex_unlock(&prop_mutex);
-
-  prop_notify_queue(&q);
 
   return p;
 }
@@ -409,22 +412,18 @@ prop_create_ex(prop_t *parent, const char *name, prop_sub_t *skipme)
 void
 prop_set_parent_ex(prop_t *p, prop_t *parent, prop_sub_t *skipme)
 {
-  struct prop_notify_queue q;
-  TAILQ_INIT(&q);
-
   assert(p->hp_parent == NULL);
 
   hts_mutex_lock(&prop_mutex);
 
-  prop_make_dir(&q, parent);
+  prop_make_dir(parent);
 
   p->hp_parent = parent;
   TAILQ_INSERT_TAIL(&parent->hp_childs, p, hp_parent_link);
 
-  prop_notify_child(&q, p, parent, PROP_ADD_CHILD, skipme);
+  prop_notify_child(p, parent, PROP_ADD_CHILD, skipme);
 
   hts_mutex_unlock(&prop_mutex);
-  prop_notify_queue(&q);
 }
 
 
@@ -432,17 +431,15 @@ prop_set_parent_ex(prop_t *p, prop_t *parent, prop_sub_t *skipme)
  *
  */
 static void
-prop_destroy0(struct prop_notify_queue *q, prop_t *p)
+prop_destroy0(prop_t *p)
 {
   prop_t *c, *parent;
   prop_sub_t *s;
-  prop_notify_t *n;
-
 
   switch(p->hp_type) {
   case PROP_DIR:
     while((c = TAILQ_FIRST(&p->hp_childs)) != NULL)
-      prop_destroy0(q, c);
+      prop_destroy0(c);
     break;
 
   case PROP_STRING:
@@ -462,9 +459,7 @@ prop_destroy0(struct prop_notify_queue *q, prop_t *p)
   }
 
   while((s = LIST_FIRST(&p->hp_value_subscriptions)) != NULL) {
-    n = get_notify(s);
-    n->hpn_event = PROP_SET_VOID;
-    TAILQ_INSERT_TAIL(q, n, hpn_link);
+    prop_notify_void(s);
 
     LIST_REMOVE(s, hps_value_prop_link);
     s->hps_value_prop = NULL;
@@ -476,7 +471,7 @@ prop_destroy0(struct prop_notify_queue *q, prop_t *p)
   }
 
   if(p->hp_parent != NULL) {
-    prop_notify_child(q, p, p->hp_parent, PROP_DEL_CHILD, NULL);
+    prop_notify_child(p, p->hp_parent, PROP_DEL_CHILD, NULL);
     parent = p->hp_parent;
 
     TAILQ_REMOVE(&parent->hp_childs, p, hp_parent_link);
@@ -491,7 +486,7 @@ prop_destroy0(struct prop_notify_queue *q, prop_t *p)
 	 This will echo back to us as an advisory prop_select()
       */
       parent->hp_selected = NULL;
-      prop_notify_child(q, NULL, parent, PROP_SEL_CHILD, NULL);
+      prop_notify_child(NULL, parent, PROP_SEL_CHILD, NULL);
     }
 
   }
@@ -506,14 +501,9 @@ prop_destroy0(struct prop_notify_queue *q, prop_t *p)
 void
 prop_destroy(prop_t *p)
 {
-  struct prop_notify_queue q;
-  TAILQ_INIT(&q);
-
   hts_mutex_lock(&prop_mutex);
-  prop_destroy0(&q, p);
+  prop_destroy0(p);
   hts_mutex_unlock(&prop_mutex);
-
-  prop_notify_queue(&q);
 }
 
 
@@ -521,8 +511,7 @@ prop_destroy(prop_t *p)
  *
  */
 static prop_t *
-prop_subfind(struct prop_notify_queue *q,
-		 prop_t *p, const char **name, int follow_symlinks)
+prop_subfind(prop_t *p, const char **name, int follow_symlinks)
 {
   prop_t *c;
 
@@ -542,14 +531,14 @@ prop_subfind(struct prop_notify_queue *q,
       p->hp_selected = NULL;
       p->hp_type = PROP_DIR;
 
-      prop_notify_value(q, p, NULL);
+      prop_notify_value(p, NULL);
     }
 
     TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link) {
       if(c->hp_name != NULL && !strcmp(c->hp_name, name[0]))
 	break;
     }
-    p = c ?: prop_create0(q, p, name[0], NULL);
+    p = c ?: prop_create0(p, name[0], NULL);
     name++;
   }
 
@@ -569,8 +558,6 @@ prop_subscribe(struct prop *prop, const char **name,
 {
   prop_t *p, *value, *canonical, *c;
   prop_sub_t *s;
-  struct prop_notify_queue q;
-  TAILQ_INIT(&q);
 
   if(name == NULL) {
     /* No name given, just subscribe to the supplied prop */
@@ -594,10 +581,10 @@ prop_subscribe(struct prop *prop, const char **name,
     hts_mutex_lock(&prop_mutex);
 
     /* Canonical name is the resolved props without following symlinks */
-    canonical = prop_subfind(&q, p, name, 0);
+    canonical = prop_subfind(p, name, 0);
   
     /* ... and value will follow links */
-    value     = prop_subfind(&q, p, name, 1);
+    value     = prop_subfind(p, name, 1);
     
     if(canonical == NULL || value == NULL) {
       hts_mutex_unlock(&prop_mutex);
@@ -620,17 +607,16 @@ prop_subscribe(struct prop *prop, const char **name,
   s->hps_opaque = opaque;
   s->hps_refcount = 1;
 
-  prop_build_notify_value(&q, s);
+  prop_build_notify_value(s);
 
   if(value->hp_type == PROP_DIR) {
     TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
-      prop_build_notify_child(&q, s, c, 
-				  value->hp_selected == c ? 
-				  PROP_ADD_SELECTED_CHILD : PROP_ADD_CHILD);
+      prop_build_notify_child(s, c, 
+			      value->hp_selected == c ? 
+			      PROP_ADD_SELECTED_CHILD : PROP_ADD_CHILD);
   }
 
   hts_mutex_unlock(&prop_mutex);
-  prop_notify_queue(&q);
   return s;
 }
 
@@ -666,9 +652,16 @@ prop_unsubscribe(prop_sub_t *s)
 void
 prop_init(void)
 {
-  prop_global = prop_create0(NULL, NULL, "global", NULL);
+  hts_thread_t tid;
+
+  TAILQ_INIT(&prop_notifies);
 
   hts_mutex_init(&prop_mutex);
+  hts_cond_init(&prop_cond);
+
+  prop_global = prop_create0(NULL, "global", NULL);
+
+  hts_thread_create(&tid, prop_delivery, NULL);
 }
 
 
@@ -686,13 +679,11 @@ prop_get_global(void)
  *
  */
 static void
-prop_set_epilogue(struct prop_notify_queue *q, prop_sub_t *skipme, prop_t *p)
+prop_set_epilogue(prop_sub_t *skipme, prop_t *p)
 {
-  prop_notify_value(q, p, skipme);
+  prop_notify_value(p, skipme);
 
   hts_mutex_unlock(&prop_mutex);
-  prop_notify_queue(q);
-
 }
 
 
@@ -703,14 +694,11 @@ prop_set_epilogue(struct prop_notify_queue *q, prop_sub_t *skipme, prop_t *p)
 void
 prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str)
 {
-  struct prop_notify_queue q;
-  TAILQ_INIT(&q);
-
   hts_mutex_lock(&prop_mutex);
 
   if(p->hp_type != PROP_STRING) {
 
-    prop_clean(&q, p);
+    prop_clean(p);
 
   } else if(!strcmp(p->hp_string, str)) {
     hts_mutex_unlock(&prop_mutex);
@@ -722,7 +710,7 @@ prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str)
   p->hp_string = strdup(str);
   p->hp_type = PROP_STRING;
 
-  prop_set_epilogue(&q, skipme, p);
+  prop_set_epilogue(skipme, p);
 }
 
 /**
@@ -748,14 +736,11 @@ prop_set_stringf_ex(prop_t *p, prop_sub_t *skipme, const char *fmt, ...)
 void
 prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v)
 {
-  struct prop_notify_queue q;
-  TAILQ_INIT(&q);
-
   hts_mutex_lock(&prop_mutex);
 
   if(p->hp_type != PROP_FLOAT) {
 
-    prop_clean(&q, p);
+    prop_clean(p);
 
   } else if(p->hp_float == v) {
     hts_mutex_unlock(&prop_mutex);
@@ -765,7 +750,7 @@ prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v)
   p->hp_float = v;
   p->hp_type = PROP_FLOAT;
 
-  prop_set_epilogue(&q, skipme, p);
+  prop_set_epilogue(skipme, p);
 }
 
 /**
@@ -774,14 +759,11 @@ prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v)
 void
 prop_set_int_ex(prop_t *p, prop_sub_t *skipme, int v)
 {
-  struct prop_notify_queue q;
-  TAILQ_INIT(&q);
-
   hts_mutex_lock(&prop_mutex);
 
   if(p->hp_type != PROP_INT) {
 
-    prop_clean(&q, p);
+    prop_clean(p);
 
   } else if(p->hp_int == v) {
     hts_mutex_unlock(&prop_mutex);
@@ -791,7 +773,7 @@ prop_set_int_ex(prop_t *p, prop_sub_t *skipme, int v)
   p->hp_int = v;
   p->hp_type = PROP_INT;
 
-  prop_set_epilogue(&q, skipme, p);
+  prop_set_epilogue(skipme, p);
 }
 
 
@@ -801,14 +783,11 @@ prop_set_int_ex(prop_t *p, prop_sub_t *skipme, int v)
 void
 prop_set_void_ex(prop_t *p, prop_sub_t *skipme)
 {
-  struct prop_notify_queue q;
-  TAILQ_INIT(&q);
-
   hts_mutex_lock(&prop_mutex);
 
   if(p->hp_type != PROP_VOID) {
 
-    prop_clean(&q, p);
+    prop_clean(p);
 
   } else {
     hts_mutex_unlock(&prop_mutex);
@@ -816,7 +795,7 @@ prop_set_void_ex(prop_t *p, prop_sub_t *skipme)
   }
 
   p->hp_type = PROP_VOID;
-  prop_set_epilogue(&q, skipme, p);
+  prop_set_epilogue(skipme, p);
 }
 
 
@@ -829,8 +808,7 @@ prop_set_void_ex(prop_t *p, prop_sub_t *skipme)
  *
  */
 static void
-relink_subscriptions(struct prop_notify_queue *q, 
-		     prop_t *src, prop_t *dst)
+relink_subscriptions(prop_t *src, prop_t *dst)
 {
   prop_sub_t *s;
   prop_t *c, *z;
@@ -844,7 +822,7 @@ relink_subscriptions(struct prop_notify_queue *q,
     if(s->hps_value_prop != NULL) {
       /* If we previously was a directory, flush it out */
       if(s->hps_value_prop->hp_type == PROP_DIR) {
-	prop_notify_void(q, s);
+	prop_notify_void(s);
       }
       LIST_REMOVE(s, hps_value_prop_link);
     }
@@ -853,13 +831,13 @@ relink_subscriptions(struct prop_notify_queue *q,
     s->hps_value_prop = src;
 
     /* Update with new value */
-    prop_build_notify_value(q, s);
+    prop_build_notify_value(s);
 
     if(src->hp_type == PROP_DIR) {
       TAILQ_FOREACH(c, &src->hp_childs, hp_parent_link)
-	prop_build_notify_child(q, s, c,
-				    src->hp_selected == c ? 
-				    PROP_ADD_SELECTED_CHILD : PROP_ADD_CHILD);
+	prop_build_notify_child(s, c,
+				src->hp_selected == c ? 
+				PROP_ADD_SELECTED_CHILD : PROP_ADD_CHILD);
     }
   }
 
@@ -881,7 +859,7 @@ relink_subscriptions(struct prop_notify_queue *q,
       if(z != NULL) {
 	/* Found! Recurse */
 
-	relink_subscriptions(q, z, c);
+	relink_subscriptions(z, c);
 
       } else {
 	/* Nothing, blast the value */
@@ -889,7 +867,7 @@ relink_subscriptions(struct prop_notify_queue *q,
 	LIST_FOREACH(s, &c->hp_canonical_subscriptions,
 		     hps_canonical_prop_link) {
 
-	  prop_notify_void(q, s);
+	  prop_notify_void(s);
 	  LIST_REMOVE(s, hps_value_prop_link);
 	  s->hps_value_prop = NULL;
 	}
@@ -902,12 +880,12 @@ relink_subscriptions(struct prop_notify_queue *q,
  *
  */
 static void
-prop_unlink0(struct prop_notify_queue *q, prop_t *p)
+prop_unlink0(prop_t *p)
 {
   LIST_REMOVE(p, hp_originator_link);
   p->hp_originator = NULL;
 
-  relink_subscriptions(q, p, p);
+  relink_subscriptions(p, p);
 }
 
 
@@ -918,13 +896,11 @@ void
 prop_link(prop_t *src, prop_t *dst)
 {
   prop_t *t;
-  struct prop_notify_queue q;
-  TAILQ_INIT(&q);
 
   hts_mutex_lock(&prop_mutex);
 
   if(dst->hp_originator != NULL)
-    prop_unlink0(&q, dst);
+    prop_unlink0(dst);
 
   dst->hp_originator = src;
   LIST_INSERT_HEAD(&src->hp_targets, dst, hp_originator_link);
@@ -933,15 +909,14 @@ prop_link(prop_t *src, prop_t *dst)
   while(src->hp_originator != NULL)
     src = src->hp_originator;
 
-  relink_subscriptions(&q, src, dst);
+  relink_subscriptions(src, dst);
 
   while((dst = dst->hp_parent) != NULL) {
     LIST_FOREACH(t, &dst->hp_targets, hp_originator_link)
-      relink_subscriptions(&q, dst, t);
+      relink_subscriptions(dst, t);
   }
 
   hts_mutex_unlock(&prop_mutex);
-  prop_notify_queue(&q);
 }
 
 
@@ -954,21 +929,18 @@ void
 prop_unlink(prop_t *p)
 {
   prop_t *t;
-  struct prop_notify_queue q;
-  TAILQ_INIT(&q);
 
   hts_mutex_lock(&prop_mutex);
 
   if(p->hp_originator != NULL)
-    prop_unlink0(&q, p);
+    prop_unlink0(p);
 
   while((p = p->hp_parent) != NULL) {
     LIST_FOREACH(t, &p->hp_targets, hp_originator_link)
-      relink_subscriptions(&q, p, t);
+      relink_subscriptions(p, t);
   }
 
   hts_mutex_unlock(&prop_mutex);
-  prop_notify_queue(&q);
 }
 
 /**
@@ -978,8 +950,6 @@ void
 prop_select_ex(prop_t *p, int advisory, prop_sub_t *skipme)
 {
   prop_t *parent;
-  struct prop_notify_queue q;
-  TAILQ_INIT(&q);
 
   hts_mutex_lock(&prop_mutex);
 
@@ -991,13 +961,12 @@ prop_select_ex(prop_t *p, int advisory, prop_sub_t *skipme)
     /* If in advisory mode and something is already selected,
        don't do anything */
     if(!advisory || parent->hp_selected == NULL) {
-      prop_notify_child(&q, p, parent, PROP_SEL_CHILD, skipme);
+      prop_notify_child(p, parent, PROP_SEL_CHILD, skipme);
       parent->hp_selected = p;
     }
   }
 
   hts_mutex_unlock(&prop_mutex);
-  prop_notify_queue(&q);
 }
 
 
