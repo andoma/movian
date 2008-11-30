@@ -752,7 +752,7 @@ media_set_currentmedia(media_pipe_t *mp)
 
   lastmp = mp;
   p = prop_create(prop_get_global(), "currentmedia");
-  //  abort(); // hts_prop_linktree(mp->mp_prop_root, p);
+  prop_link(mp->mp_prop_root, p);
 
   p = prop_create(prop_get_global(), "currentmediasource");
   prop_set_string(p, mp->mp_name);
