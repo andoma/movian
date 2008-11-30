@@ -110,7 +110,7 @@ glw_cond_wait(hts_cond_t *c)
 void
 glw_init_global(void)
 {
-  hts_mutex_init_recursive(&glw_global_lock);
+  hts_mutex_init(&glw_global_lock);
 }
 
 /**
