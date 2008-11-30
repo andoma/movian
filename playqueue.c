@@ -239,6 +239,7 @@ playqueue_load(const char *uri, const char *parent, prop_t *meta, int enq)
   
   playqueue_clear();
 
+  TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_link);
 
   e = pqe_event_create(pqe, 1);
   event_enqueue(&player_eventqueue, e);
