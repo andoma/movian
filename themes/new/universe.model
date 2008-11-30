@@ -78,11 +78,14 @@ widget(form, {
 	widget(container_y, {
 	  space(0.1);
 
-	  widget(container_x, {
-
-	    space(0.1);
-	    space(0.1);
+	  widget(label, {
+	    .caption = global.currentmedia.meta.title;
 	  });
+
+	  widget(label, {
+	    .caption = global.currentmediasource;
+	  });
+
 	  space(0.1);
 	});
       });
