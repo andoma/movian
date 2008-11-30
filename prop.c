@@ -917,6 +917,7 @@ prop_unlink0(struct prop_notify_queue *q, prop_t *p)
 void
 prop_link(prop_t *src, prop_t *dst)
 {
+  prop_t *t;
   struct prop_notify_queue q;
   TAILQ_INIT(&q);
 
@@ -933,6 +934,11 @@ prop_link(prop_t *src, prop_t *dst)
     src = src->hp_originator;
 
   relink_subscriptions(&q, src, dst);
+
+  while((dst = dst->hp_parent) != NULL) {
+    LIST_FOREACH(t, &dst->hp_targets, hp_originator_link)
+      relink_subscriptions(&q, dst, t);
+  }
 
   hts_mutex_unlock(&prop_mutex);
   prop_notify_queue(&q);
