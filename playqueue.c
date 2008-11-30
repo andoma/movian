@@ -498,6 +498,9 @@ playtrack(playqueue_entry_t *pqe, media_pipe_t *mp, event_queue_t *eq)
 
 	  if(curtime != pts) {
 	    curtime = pts;
+
+	    prop_set_int(mp->mp_prop_currenttime, pts);
+
 #if 0
 	    hts_mutex_lock(&playlistlock);
 	  
@@ -506,8 +509,6 @@ playtrack(playqueue_entry_t *pqe, media_pipe_t *mp, event_queue_t *eq)
 			       pqe->pqe_time_offset + pts);
 	  
 	    hts_mutex_unlock(&playlistlock);
-	  
-	    //	    glw_prop_set_int(mp->mp_prop_time_current, pts);
 #endif
 	  }
 	}
