@@ -62,6 +62,7 @@ typedef struct playqueue_entry {
   char *pqe_uri;
   char *pqe_parent;
   prop_t *pqe_root;
+  prop_t *pqe_meta;
   int pqe_enq;
 
   /**
@@ -89,7 +90,7 @@ typedef struct playqueue_request {
   TAILQ_ENTRY(playqueue_request) pqr_link;
   char *pqr_uri;
   char *pqr_parent;
-  prop_t *pqr_media;
+  prop_t *pqr_meta;
   int pqr_enq;
 
 } playqueue_request_t;
@@ -171,7 +172,7 @@ playqueue_clear(void)
  * Load playqueue based on the given uri.
  *
  * This function is responsible for freeing (or using) the
- * supplied media prop tree.
+ * supplied meta prop tree.
  *
  * If enq is set we don't clear the playqueue, instead we insert the
  * entry after the current track (or after the last enqueued track)
@@ -179,7 +180,7 @@ playqueue_clear(void)
  * That way users may 'stick in' track in the current playqueue
  */
 static void
-playqueue_load(const char *uri, const char *parent, prop_t *media, int enq)
+playqueue_load(const char *uri, const char *parent, prop_t *meta, int enq)
 {
   playqueue_entry_t *pqe, *prev;
   event_t *e;
@@ -196,8 +197,8 @@ playqueue_load(const char *uri, const char *parent, prop_t *media, int enq)
 
       hts_mutex_unlock(&playqueue_mutex);
 
-      if(media != NULL)
-	prop_destroy(media);
+      if(meta != NULL)
+	prop_destroy(meta);
       return;
     }
   }
@@ -210,7 +211,8 @@ playqueue_load(const char *uri, const char *parent, prop_t *media, int enq)
   pqe->pqe_enq    = enq;
   pqe->pqe_refcount = 1;
   pqe->pqe_linked = 1;
-  prop_set_parent(media, pqe->pqe_root);
+  pqe->pqe_meta = meta;
+  prop_set_parent(meta, pqe->pqe_root);
 
   prop_set_string(prop_create(pqe->pqe_root, "url"), uri);
 
@@ -265,7 +267,7 @@ playqueue_thread(void *aux)
     
     hts_mutex_unlock(&playqueue_request_mutex);
 
-    playqueue_load(pqr->pqr_uri, pqr->pqr_parent, pqr->pqr_media,
+    playqueue_load(pqr->pqr_uri, pqr->pqr_parent, pqr->pqr_meta,
 		   pqr->pqr_enq);
     
     free(pqr->pqr_parent);
@@ -282,7 +284,7 @@ playqueue_thread(void *aux)
  * We don't want to hog caller, so we dispatch the request to a worker thread.
  */
 void
-playqueue_play(const char *uri, const char *parent, prop_t *media,
+playqueue_play(const char *uri, const char *parent, prop_t *meta,
 	       int enq)
 {
   playqueue_request_t *pqr = malloc(sizeof(playqueue_request_t));
@@ -298,7 +300,7 @@ playqueue_play(const char *uri, const char *parent, prop_t *media,
   } else {
     pqr->pqr_parent = strdup(parent);
   }
-  pqr->pqr_media = media;
+  pqr->pqr_meta = meta;
   pqr->pqr_enq = enq;
 
   hts_mutex_lock(&playqueue_request_mutex);
@@ -677,10 +679,14 @@ player_thread(void *aux)
   playqueue_entry_t *pqe = NULL;
   playqueue_event_t *pe;
   event_t *e;
+  prop_t *meta = prop_create(mp->mp_prop_root, "meta");
 
   while(1) {
     
     while(pqe == NULL) {
+
+      prop_unlink(meta);
+
       /* Got nothing to play, enter STOP mode */
       mp_set_playstatus(mp, MP_STOP, 0);
       e = event_get(-1, &player_eventqueue);
@@ -694,8 +700,8 @@ player_thread(void *aux)
 
     mp_set_playstatus(mp, MP_PLAY, 0);
 
+    prop_link(pqe->pqe_meta, meta);
+
     pqe = playtrack(pqe, mp, &player_eventqueue);
   }
-  
-
 }
