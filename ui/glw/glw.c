@@ -34,9 +34,7 @@
 #include "glw_rotator.h"
 #include "glw_model.h"
 #include "glw_list.h"
-#include "glw_cubestack.h"
 #include "glw_deck.h"
-#include "glw_zstack.h"
 #include "glw_expander.h"
 #include "glw_slideshow.h"
 #include "glw_selection.h"
@@ -60,9 +58,7 @@ static const size_t glw_class_to_size[] = {
   [GLW_ROTATOR] = sizeof(glw_t),
   [GLW_ARRAY] = sizeof(glw_array_t),
   [GLW_LIST] = sizeof(glw_list_t),
-  [GLW_CUBESTACK] = sizeof(glw_cubestack_t),
   [GLW_DECK] = sizeof(glw_deck_t),
-  [GLW_ZSTACK] = sizeof(glw_t),
   [GLW_EXPANDER] = sizeof(glw_t),
   [GLW_SLIDESHOW] = sizeof(glw_slideshow_t),
   [GLW_FORM] = sizeof(glw_form_t),
@@ -311,16 +307,8 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
     glw_list_ctor(w, init, apx);
     break;
 
-  case GLW_CUBESTACK:
-    glw_cubestack_ctor(w, init, apx);
-    break;
-
   case GLW_DECK:
     glw_deck_ctor(w, init, apx);
-    break;
-
-  case GLW_ZSTACK:
-    glw_zstack_ctor(w, init, apx);
     break;
 
   case GLW_EXPANDER:

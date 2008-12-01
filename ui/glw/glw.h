@@ -63,9 +63,7 @@ typedef enum {
   GLW_ROTATOR,      /* Rotating device */
   GLW_ARRAY,
   GLW_LIST,
-  GLW_CUBESTACK,
   GLW_DECK,
-  GLW_ZSTACK,
   GLW_EXPANDER,
   GLW_SLIDESHOW,
   GLW_FORM,
