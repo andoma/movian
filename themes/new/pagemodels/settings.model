@@ -4,6 +4,7 @@
 widget(container_y, {
 
   widget(list, {
+    .weight = 10;
     .orientation = vertical;
     .slices = 10;
     cloner(page.nodes, container_z, {
@@ -15,10 +16,10 @@ widget(container_y, {
 	  .source = "theme://settings/" + self.type + ".model";
 	});
       );
-
-
     });
   });
+
+  BUTTON(page.mayadd, 2.0, "Add", "theme://images/new.png", {});
 });
 
 
