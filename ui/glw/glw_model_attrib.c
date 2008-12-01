@@ -330,7 +330,6 @@ static const token_attrib_t attribtab[] = {
 
   {"displacement",    set_float3, GLW_ATTRIB_DISPLACEMENT},
   {"color",           set_float3, GLW_ATTRIB_RGB},
-  {"focusColor",      set_float3, GLW_ATTRIB_FOCUS_RGB},
   {"textureBorders",  set_float4, GLW_ATTRIB_TEXTURE_BORDERS},
   {"vertexBorders",   set_float4, GLW_ATTRIB_VERTEX_BORDERS},
 

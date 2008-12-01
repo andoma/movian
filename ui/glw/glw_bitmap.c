@@ -242,10 +242,7 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
     glActiveTextureARB(GL_TEXTURE0_ARB);
 
-    glColor4f(w->glw_col.r + w->glw_focus * w->glw_focus_color.r,
-	      w->glw_col.g + w->glw_focus * w->glw_focus_color.g,
-	      w->glw_col.b + w->glw_focus * w->glw_focus_color.b,
-	      a);
+    glColor4f(w->glw_col.r, w->glw_col.g, w->glw_col.b, a);
     
     glPushMatrix();
 

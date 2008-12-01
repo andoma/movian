@@ -113,7 +113,6 @@ typedef enum {
   GLW_ATTRIB_INT_MIN,
   GLW_ATTRIB_INT_MAX,
   GLW_ATTRIB_INTPTR,
-  GLW_ATTRIB_FOCUS_RGB,
   GLW_ATTRIB_PROPROOT,
   GLW_ATTRIB_TRANSITION_EFFECT,
   GLW_ATTRIB_XFILL,
@@ -378,7 +377,6 @@ typedef struct glw {
   glw_vertex_t glw_displacement;
 
   glw_rgb_t glw_col;                 /* Primary widget color */
-  glw_rgb_t glw_focus_color;         /* Additive focus color */
   float glw_weight;                  /* Relative weight */
   float glw_weight_extra;  		  
   float glw_aspect;                  /* Aspect */
@@ -537,7 +535,6 @@ do {						\
     (void)va_arg(ap, double);			\
   case GLW_ATTRIB_DISPLACEMENT:                 \
   case GLW_ATTRIB_RGB:                          \
-  case GLW_ATTRIB_FOCUS_RGB:                    \
     (void)va_arg(ap, double);			\
     (void)va_arg(ap, double);			\
   case GLW_ATTRIB_WEIGHT:			\

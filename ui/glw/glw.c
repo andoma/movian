@@ -267,12 +267,6 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       w->glw_col.b = va_arg(ap, double);
       break;
 
-    case GLW_ATTRIB_FOCUS_RGB:
-      w->glw_focus_color.r = va_arg(ap, double);
-      w->glw_focus_color.g = va_arg(ap, double);
-      w->glw_focus_color.b = va_arg(ap, double);
-      break;
-
     case GLW_ATTRIB_TIME:
       w->glw_time = va_arg(ap, double);
       break;
