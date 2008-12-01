@@ -582,9 +582,9 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
       return;
   }
 
-  glw_lock();
+  glw_lock(&gx11->gr);
   r = glw_signal0(gx11->universe, GLW_SIGNAL_EVENT, e);
-  glw_unlock();
+  glw_unlock(&gx11->gr);
 
   if(r == 0) {
     /* Not consumed, drop it into the main event dispatcher */
@@ -736,9 +736,9 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 
   while(gx11->running) {
     if(gx11->is_fullscreen != gx11->want_fullscreen) {
-      glw_lock();
+      glw_lock(&gx11->gr);
       window_change_displaymode(gx11);
-      glw_unlock();
+      glw_unlock(&gx11->gr);
     }
 
     if(frame_duration != 0) {
@@ -771,10 +771,10 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 	}
       }
     }
-    glw_lock();
+    glw_lock(&gx11->gr);
     glw_reaper0(&gx11->gr);
     layout_draw(gx11, gx11->aspect_ratio);
-    glw_unlock();
+    glw_unlock(&gx11->gr);
 
 
     glFlush();

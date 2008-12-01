@@ -732,12 +732,9 @@ prop_callback(prop_sub_t *s, prop_event_t event, ...)
   va_list ap;
   va_start(ap, event);
 
-  glw_lock();
-
   gps = s->hps_opaque;
 
   /* The opaque value may be NULL if we have free'd the gps-struct.
-     The hps_opaque value is guarded by the glw_lock() mutex.
      Thus, if gps is NULL, we've no longer any interest in this
      subscription, so just skip it all */
 
@@ -810,8 +807,6 @@ prop_callback(prop_sub_t *s, prop_event_t event, ...)
     if(rpn != NULL) 
       eval_dynamic(gps->gps_widget, rpn);
   }
-
-  glw_unlock();
 }
 
 
@@ -848,7 +843,8 @@ subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
   gps->gps_line = self->line;
 #endif
 
-  s = prop_subscribe(ec->prop, propname, prop_callback, gps, NULL);
+  s = prop_subscribe(ec->prop, propname, prop_callback, gps,
+		     w->glw_root->gr_courier);
 
   if(s == NULL) {
     refstr_unref(gps->gps_file);

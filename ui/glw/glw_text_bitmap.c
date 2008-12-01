@@ -890,12 +890,12 @@ font_render_thread(void *aux)
   int *uc, len, docur, i;
   glw_text_bitmap_data_t d;
 
-  glw_lock();
+  glw_lock(gr);
 
   while(1) {
     
     while((gtb = TAILQ_FIRST(&gr->gr_gtb_render_queue)) == NULL)
-      glw_cond_wait(&gr->gr_gtb_render_cond);
+      glw_cond_wait(gr, &gr->gr_gtb_render_cond);
 
     /* We are going to render unlocked so we cannot use gtb at all */
 
@@ -916,7 +916,7 @@ font_render_thread(void *aux)
     
     docur = gtb->gtb_edit_ptr >= 0;
 
-    glw_unlock();
+    glw_unlock(gr);
 
     if(uc == NULL || uc[0] == 0 || 
        gtb_make_tex(gr, &d, gr->gr_gtb_face, uc, len, 0, docur)) {
@@ -927,7 +927,7 @@ font_render_thread(void *aux)
     }
 
     free(uc);
-    glw_lock();
+    glw_lock(gr);
 
     if(gtb->w.glw_flags & GLW_DESTROYED) {
       /* widget got destroyed while we were away, throw away the results */

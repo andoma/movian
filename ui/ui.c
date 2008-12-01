@@ -46,9 +46,6 @@ ui_loop(void)
 {
   uii_t *uii;
 
-
-  glw_init_global();
-
   showtime_running = 1;
 
   uii = glw_start(NULL);

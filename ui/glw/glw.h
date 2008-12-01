@@ -216,6 +216,9 @@ typedef struct glw_root {
   uii_t gr_uii;
 
   hts_thread_t gr_thread;
+  hts_mutex_t gr_mutex;
+  prop_courier_t *gr_courier;
+
 
   int gr_sysfeatures;
 #define GLW_SYSFEATURE_PBO       0x1
@@ -266,6 +269,7 @@ typedef struct glw_root {
   GLuint gr_yuv2rbg_prog;
   GLuint gr_yuv2rbg_2mix_prog;
   struct glw_video_list gr_video_decoders;
+
 
 } glw_root_t;
 
@@ -430,15 +434,15 @@ void glw_set_active0(glw_t *w);
 
 void glw_reaper0(glw_root_t *gr);
 
-void glw_cond_wait(hts_cond_t *c);
+void glw_cond_wait(glw_root_t *gr, hts_cond_t *c);
 
 void glw_detach0(glw_t *w);
 
 const char *glw_bitmap_get_filename(glw_t *w);
 
-void glw_lock(void);
+void glw_lock(glw_root_t *gr);
 
-void glw_unlock(void);
+void glw_unlock(glw_root_t *gr);
 
 /**
  *

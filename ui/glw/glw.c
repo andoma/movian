@@ -46,9 +46,6 @@
 #include "glw_event.h"
 #include "glw_video.h"
 
-static hts_mutex_t glw_global_lock;
-
-
 static const size_t glw_class_to_size[] = {
   [GLW_DUMMY] = sizeof(glw_t),
   [GLW_MODEL] = sizeof(glw_t),
@@ -79,18 +76,18 @@ static const size_t glw_class_to_size[] = {
  *
  */
 void
-glw_lock(void)
+glw_lock(glw_root_t *gr)
 {
-  hts_mutex_lock(&glw_global_lock);
+  hts_mutex_lock(&gr->gr_mutex);
 }
 
 /*
  *
  */
 void
-glw_unlock(void)
+glw_unlock(glw_root_t *gr)
 {
-  hts_mutex_unlock(&glw_global_lock);
+  hts_mutex_unlock(&gr->gr_mutex);
 }
 
 
@@ -98,20 +95,11 @@ glw_unlock(void)
  *
  */
 void
-glw_cond_wait(hts_cond_t *c)
+glw_cond_wait(glw_root_t *gr, hts_cond_t *c)
 {
-  hts_cond_wait(c, &glw_global_lock);
+  hts_cond_wait(c, &gr->gr_mutex);
 }
 
-
-/**
- *
- */
-void
-glw_init_global(void)
-{
-  hts_mutex_init(&glw_global_lock);
-}
 
 /**
  *
@@ -119,6 +107,9 @@ glw_init_global(void)
 int
 glw_init(glw_root_t *gr)
 {
+  hts_mutex_init(&gr->gr_mutex);
+  gr->gr_courier = prop_courier_create(&gr->gr_mutex);
+
   if(glw_text_init(gr)) {
     free(gr);
     return -1;
