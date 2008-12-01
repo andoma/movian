@@ -1825,6 +1825,28 @@ glwf_int2duration(glw_model_eval_context_t *ec, struct token *self)
 
 
 /**
+ * Create a new child under the given property
+ */
+static int 
+glwf_createchild(glw_model_eval_context_t *ec, struct token *self)
+{
+  token_t *a = eval_pop(ec);
+  prop_t *p;
+
+  if(a == NULL || a->propsubr == NULL) {
+    return glw_model_seterr(ec->ei, self, 
+			    "Invalid operand to createChild()");
+  }
+
+  p = prop_get_by_subscription(a->propsubr->gps_sub);
+
+  prop_create(p, NULL);
+  prop_ref_dec(p);
+  return 0;
+}
+
+
+/**
  *
  */
 static const token_func_t funcvec[] = {
@@ -1845,6 +1867,7 @@ static const token_func_t funcvec[] = {
   {"isset", glwf_isset},
   {"time", glwf_time},
   {"int2duration", glwf_int2duration},
+  {"createChild", glwf_createchild},
 };
 
 

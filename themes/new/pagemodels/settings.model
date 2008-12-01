@@ -19,7 +19,9 @@ widget(container_y, {
     });
   });
 
-  BUTTON(page.mayadd, 2.0, "Add", "theme://images/new.png", {});
+  BUTTON(page.mayadd, 2.0, "Add", "theme://images/new.png", {
+    createChild(page.nodes);
+  });
 });
 
 
