@@ -19,45 +19,42 @@
 #ifndef KEYMAPPER_H
 #define KEYMAPPER_H
 
+#include <libhts/htsthreads.h>
+#include "prop.h"
 #include "event.h"
 
-LIST_HEAD(hid_keydesc_list, hid_keydesc);
-LIST_HEAD(hid_keycode_list, hid_keycode);
+LIST_HEAD(keymap_entry_list, keymap_entry);
+
+/**
+ * A keymap entry is used to translate a keycode (ascii-string)
+ * into an event
+ */
+typedef struct keymap_entry {
+  LIST_ENTRY(keymap_entry) ke_link;
+  char *ke_keycode;
+  event_type_t ke_event;
+} keymap_entry_t;
 
 
 /**
- * Struct for representing a keycode (INPUT_KEY_xxx)
+ * We support having multiple keymaps, one global, and locals per
+ * user interface instance
+ */
+typedef struct keymap {
+  struct keymap_entry_list km_entries;
+  hts_mutex_t km_mutex;
+  prop_t *km_settings;   /* Pointer to settings in settings tree */
+} keymap_t;
+
+
+
+/**
  *
- * Each of these can be mapped to from multiple hid_keydesc:s
  */
-typedef struct hid_keycode {
-  LIST_ENTRY(hid_keycode) hkc_link;
-  struct hid_keydesc_list hkc_descs;
-  event_type_t hkc_code;
-} hid_keycode_t;
+event_t *keymapper_resolve(keymap_t *km, const char *str);
 
-/**
- * Struct for looking up a key description (ASCII string)
- */
-typedef struct hid_keydesc {
-  char *hkd_desc;
-  LIST_ENTRY(hid_keydesc) hkd_hash_link;
+void keymapper_deliver(keymap_t *km, const char *str);
 
-  LIST_ENTRY(hid_keydesc) hkd_keycode_link;
-  hid_keycode_t *hkd_hkc;
-
-} hid_keydesc_t;
-
-
-event_t *keymapper_resolve(const char *str);
-
-hid_keycode_t *keymapper_find_by_code(event_type_t val);
-hid_keydesc_t *keymapper_find_by_desc(const char *str);
-void keymapper_map(hid_keydesc_t *hkm, hid_keycode_t *hkc);
-
-const char *keycode2str(event_type_t code);
-event_type_t keystr2code(const char *str);
-
-void keymapper_init(void);
+void keymapper_init(keymap_t *km, prop_t *settingsparent, const char *title);
 
 #endif /* KEYMAPPER_H */

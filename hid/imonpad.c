@@ -266,7 +266,7 @@ imonpad_proc(void)
 	  event_post_simple(imonpadmap[i].key);
 	else {
 	  snprintf(desc, sizeof(desc), "imonpad - %s", imonpadmap[i].name);
-	  keymapper_resolve(desc);
+	  keymapper_deliver(NULL, desc);
 	}
 	break;
       }

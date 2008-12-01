@@ -114,7 +114,7 @@ lircd_proc(void)
       if(i == sizeof(lircmap) / sizeof(lircmap[0])) {
 	/* No hit, send to keymapper */
 	snprintf(buf, sizeof(buf), "lirc - %s", keyname);
-	keymapper_resolve(buf);
+	keymapper_deliver(NULL, buf);
       }
     }
   }

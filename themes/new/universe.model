@@ -86,6 +86,16 @@ widget(form, {
 	    .caption = global.currentmediasource;
 	  });
 
+
+	  widget(container_x, {
+	    widget(label, {
+	      .caption = int2duration(global.currentmedia.currenttime);
+	    });
+	    widget(label, {
+	      .caption = int2duration(global.currentmedia.meta.duration);
+	    });
+	  });
+
 	  space(0.1);
 	});
       });

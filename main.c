@@ -186,7 +186,7 @@ main(int argc, char **argv)
 
   settings_init();
 
-  keymapper_init();
+  keymapper_init(NULL, NULL, "Global keymap");
 
   event_init();
 

@@ -50,9 +50,6 @@ typedef enum {
   EVENT_AUDIO_CLOCK,
   EVENT_VIDEO_CLOCK,
 
-  EVENT_RECONFIGURE,   /* Special event to force apps to reconfiguring
-			  themselfs */
-
   EVENT_PLAYLIST,      /* Playlist specific events, see playlist.h */
   EVENT_TV,            /* TV specific events, see tv.h */
 
@@ -174,7 +171,6 @@ typedef enum {
   EVENTPRI_MEDIACONTROLS_VIDEOPLAYBACK,
 
   EVENTPRI_AUDIO_MIXER,
-  EVENTPRI_KEYMAPPER,
 } eventpri_t;
 
 void event_post(event_t *ge);
@@ -193,6 +189,9 @@ typedef struct event_keydesc {
 } event_keydesc_t;
 
 void event_init(void);
+
+const char *event_code2str(event_type_t code);
+event_type_t event_str2code(const char *str);
 
 
 #endif /* EVENT_H */

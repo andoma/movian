@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <libhts/hts_strtab.h>
 
 #include "showtime.h"
 #include "event.h"
@@ -278,4 +279,58 @@ event_generic_dtor(event_t *e)
   free(g);
 }
 
+
+
+
+/**
+ *
+ */
+
+static struct strtab eventnames[] = {
+  { "Up",                    EVENT_UP },
+  { "Down",                  EVENT_DOWN },
+  { "Left",                  EVENT_LEFT },
+  { "Right",                 EVENT_RIGHT },
+  { "Enter",                 EVENT_ENTER },
+  { "Incr",                  EVENT_INCR },
+  { "Decr",                  EVENT_DECR },
+  { "Ok",                    EVENT_OK },
+  { "Cancel",                EVENT_CANCEL },
+  { "Close",                 EVENT_KEY_CLOSE },
+  { "Stop",                  EVENT_KEY_STOP },
+  { "PlayPause",             EVENT_KEY_PLAYPAUSE },
+  { "Play",                  EVENT_KEY_PLAY },
+  { "Pause",                 EVENT_KEY_PAUSE },
+  { "VolumeUp",              EVENT_KEY_VOLUME_UP },
+  { "VolumeDown",            EVENT_KEY_VOLUME_DOWN },
+  { "VolumeMuteToggle",      EVENT_KEY_VOLUME_MUTE_TOGGLE },
+  { "Menu",                  EVENT_KEY_MENU },
+  { "Back",                  EVENT_BACKSPACE },
+  { "Select",                EVENT_KEY_SELECT },
+  { "Eject",                 EVENT_KEY_EJECT },
+  { "Power",                 EVENT_KEY_POWER },
+  { "Previous",              EVENT_KEY_PREV },
+  { "Next",                  EVENT_KEY_NEXT },
+  { "SeekForward",           EVENT_KEY_SEEK_FORWARD },
+  { "SeekReverse",           EVENT_KEY_SEEK_BACKWARD },
+  { "Quit",                  EVENT_KEY_QUIT },
+  { "MainMenu",              EVENT_KEY_MAINMENU },
+  { "ChangeView",            EVENT_KEY_SWITCH_VIEW },
+  { "Channel+",              EVENT_KEY_CHANNEL_PLUS },
+  { "Channel-",              EVENT_KEY_CHANNEL_MINUS },  
+};
+
+
+
+const char *
+event_code2str(event_type_t code)
+{
+  return val2str(code, eventnames);
+}
+
+event_type_t
+event_str2code(const char *str)
+{
+  return str2val(str, eventnames);
+}
 

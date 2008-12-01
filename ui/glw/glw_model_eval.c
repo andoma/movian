@@ -1322,25 +1322,6 @@ glw_event_map_eval_block_create(glw_model_eval_context_t *ec,
 /**
  *
  */
-static struct strtab eventtab[] = {
-  { "enter",       EVENT_ENTER},
-  { "up",          EVENT_UP},
-  { "down",        EVENT_DOWN},
-  { "left",        EVENT_LEFT},
-  { "right",       EVENT_RIGHT},
-
-  { "incr",        EVENT_INCR},
-  { "decr",        EVENT_DECR},
-
-  { "ok",          EVENT_OK},
-  { "cancel",      EVENT_CANCEL},
-  { "mainmenu",    EVENT_KEY_MAINMENU},
-};
-
-
-/**
- *
- */
 static int 
 glwf_onEvent(glw_model_eval_context_t *ec, struct token *self)
 {
@@ -1358,7 +1339,7 @@ glwf_onEvent(glw_model_eval_context_t *ec, struct token *self)
     return glw_model_seterr(ec->ei, self, "Missing operands");
 
   if(a->type != TOKEN_IDENTIFIER || 
-     (srcevent = str2val(a->t_string, eventtab)) < 0)
+     (srcevent = event_str2code(a->t_string)) < 0)
     return glw_model_seterr(ec->ei, a, "Invalid source event type");
 
 
@@ -1448,7 +1429,7 @@ glwf_internalEvent(glw_model_eval_context_t *ec, struct token *self)
 			    "First argument is not a string");
   
   if(b->type != TOKEN_IDENTIFIER ||
-     (dstevent = str2val(b->t_string, eventtab)) < 0)
+     (dstevent = event_str2code(b->t_string )) < 0)
     return glw_model_seterr(ec->ei, b, "internalEvent: "
 			    "Invalid target event");
   
