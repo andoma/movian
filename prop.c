@@ -1058,6 +1058,7 @@ prop_courier_create(hts_mutex_t *entrymutex)
 {
   prop_courier_t *pc = calloc(1, sizeof(prop_courier_t));
 
+  pc->pc_entry_mutex = entrymutex;
   hts_cond_init(&pc->pc_cond);
 
   TAILQ_INIT(&pc->pc_queue);
