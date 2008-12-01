@@ -37,8 +37,7 @@ typedef enum {
   PROP_SEL_CHILD,
 } prop_event_t;
 
-typedef void (prop_callback_t)(struct prop_sub *sub,
-				   prop_event_t event, ...);
+typedef void (prop_callback_t)(struct prop_sub *sub, prop_event_t event, ...);
 
 
 TAILQ_HEAD(prop_queue, prop);
