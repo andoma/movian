@@ -131,6 +131,8 @@ keymapper_init(keymap_t *km, prop_t *settingsparent, const char *title)
 
   km->km_settings = settings_add_dir(settingsparent, "keymap", title);
 
+  prop_set_int(prop_create(km->km_settings, "mayadd"), 1);
+ 
   km->km_subscription = prop_subscribe(km->km_settings, NULL,
 				       km_subscribe_callback, km, NULL, 0);
 
