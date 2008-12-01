@@ -39,7 +39,7 @@ find_anything_with_id(glw_t *w, glw_class_t skip_class, int skip)
   if(w == NULL)
     return w;
 
-  if(w->glw_flags & GLW_SELECTABLE) {
+  if(w->glw_flags & GLW_FOCUSABLE) {
     /* Candidate for selection */
 
     switch(w->glw_class) {
@@ -68,7 +68,7 @@ find_anything_with_id(glw_t *w, glw_class_t skip_class, int skip)
       return best;
   } else {
     TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-      if(w->glw_class == GLW_DECK && c != w->glw_selected)
+      if(w->glw_class == GLW_DECK && c != w->glw_focused)
 	continue;
       if((r = find_anything_with_id(c, skip_class, skip)) != NULL)
 	return r;
@@ -139,14 +139,14 @@ layout_form_get_xy(glw_t *w, int *xp, int *yp)
 
   case GLW_CONTAINER_X:
     while((w = TAILQ_PREV(w, glw_queue, glw_parent_link)) != NULL) {
-      if(w->glw_flags & GLW_SELECTABLE)
+      if(w->glw_flags & GLW_FOCUSABLE)
 	(*xp)++;
     }
     break;
 
   case GLW_CONTAINER_Y:
     while((w = TAILQ_PREV(w, glw_queue, glw_parent_link)) != NULL) {
-      if(w->glw_flags & GLW_SELECTABLE)
+      if(w->glw_flags & GLW_FOCUSABLE)
 	(*yp)++;
     }
     break;
@@ -167,11 +167,11 @@ glw_navigate(glw_t *w, event_t *e)
   if(glw_event_map_intercept(w, e))
     return 1;
 
-  if(w->glw_selected != NULL)
-    if(glw_signal0(w->glw_selected, GLW_SIGNAL_EVENT, e))
+  if(w->glw_focused != NULL)
+    if(glw_signal0(w->glw_focused, GLW_SIGNAL_EVENT, e))
       return 1;
   
-  if(w->glw_flags & GLW_SELECTABLE) {
+  if(w->glw_flags & GLW_FOCUSABLE) {
 
     layout_form_get_xy(w, &x, &y);
 
@@ -195,7 +195,7 @@ glw_navigate(glw_t *w, event_t *e)
 
     if(n != NULL) {
       while(n->glw_parent != NULL) {
-	n->glw_parent->glw_selected = n;
+	n->glw_parent->glw_focused = n;
 	n = n->glw_parent;
       }
       return 1;

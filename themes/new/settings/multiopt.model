@@ -10,7 +10,7 @@ widget(container_x, {
   widget(container_x, {
     widget(bitmap, {
       .focusCursor = true;
-      .selectable = true;
+      .focusable = true;
       .keepAspect = true;
       .weight = 0.1;
       .source = "theme://images/left.png";
@@ -30,7 +30,7 @@ widget(container_x, {
 
     widget(bitmap, {
       .focusCursor = true;
-      .selectable = true;
+      .focusable = true;
 
       .keepAspect = true;
       .weight = 0.1;

@@ -18,7 +18,7 @@ widget(container_y, {
 			      ], "2");
 
 
-      PLATE_SELECTABLE();
+      PLATE_FOCUSABLE();
       onEvent(enter, genericEvent(navigator, open, node.url));
 
       PLATE_WIDE(

@@ -163,8 +163,8 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 
 	glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_DESTROYED, w);
 
-	if(w->glw_parent->glw_selected == w)
-	  w->glw_parent->glw_selected = TAILQ_NEXT(w, glw_parent_link);
+	if(w->glw_parent->glw_focused == w)
+	  w->glw_parent->glw_focused = TAILQ_NEXT(w, glw_parent_link);
 
 	if(w->glw_flags & GLW_RENDER_LINKED) {
 	  w->glw_flags &= ~GLW_RENDER_LINKED;
@@ -537,8 +537,8 @@ glw_destroy0(glw_t *w)
     /* Some classes needs to do some stuff is a child is destroyed */
     glw_signal0(p, GLW_SIGNAL_CHILD_DESTROYED, w);
 
-    if(p->glw_selected == w)
-      p->glw_selected = TAILQ_NEXT(w, glw_parent_link);
+    if(p->glw_focused == w)
+      p->glw_focused = TAILQ_NEXT(w, glw_parent_link);
 
     TAILQ_REMOVE(&p->glw_childs, w, glw_parent_link);
   }
@@ -642,8 +642,8 @@ glw_hide0(glw_t *w)
   if(!(w->glw_flags & GLW_HIDE)) {
     w->glw_flags |= GLW_HIDE;
     if(p != NULL) {
-      if(p->glw_selected == w)
-	p->glw_selected = glw_find_closest_non_hidden(w);
+      if(p->glw_focused == w)
+	p->glw_focused = glw_find_closest_non_hidden(w);
       glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_HIDDEN, w);
     }
   }

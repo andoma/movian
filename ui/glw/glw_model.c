@@ -127,7 +127,7 @@ glw_model_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_LAYOUT:
   case GLW_SIGNAL_RENDER:
   case GLW_SIGNAL_EVENT:
-    w->glw_selected = c;
+    w->glw_focused = c;
     if(c != NULL)
       return glw_signal0(c, signal, extra);
     return 0;

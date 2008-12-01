@@ -29,7 +29,7 @@ widget(form, {
 	    widget(bitmap, {
 	    
 	      .source = "theme://images/plate256.png";
-	      .selectable = true;
+	      .focusable = true;
 	      .focusCursor = true;
 	      .focusAlpha = true;
 	      

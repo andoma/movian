@@ -34,7 +34,7 @@ glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
   switch(signal) {
   case GLW_SIGNAL_RENDER:
-    if((c = w->glw_selected) == NULL)
+    if((c = w->glw_focused) == NULL)
       return 1;
 
     p = TAILQ_PREV(c, glw_queue, glw_parent_link);
@@ -75,15 +75,15 @@ glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
     }
 
     
-    if((c = w->glw_selected) == NULL)
-      c = w->glw_selected = TAILQ_FIRST(&w->glw_childs);
+    if((c = w->glw_focused) == NULL)
+      c = w->glw_focused = TAILQ_FIRST(&w->glw_childs);
     if(c == NULL)
       return 1;
 
     if(s->timer >= s->displaytime) {
-      c = w->glw_selected = TAILQ_NEXT(c, glw_parent_link);
+      c = w->glw_focused = TAILQ_NEXT(c, glw_parent_link);
       if(c == NULL)
-	c = w->glw_selected = TAILQ_FIRST(&w->glw_childs);
+	c = w->glw_focused = TAILQ_FIRST(&w->glw_childs);
       s->timer = 0;
     }
   
@@ -116,19 +116,19 @@ glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
     e = extra;
     switch(e->e_type) {
     case EVENT_INCR:
-      c = w->glw_selected ? TAILQ_NEXT(w->glw_selected, glw_parent_link) : NULL;
+      c = w->glw_focused ? TAILQ_NEXT(w->glw_focused, glw_parent_link) : NULL;
       if(c == NULL)
 	c = TAILQ_FIRST(&w->glw_childs);
-      w->glw_selected = c;
+      w->glw_focused = c;
       s->timer = 0;
       return 1;
 
     case EVENT_DECR:
-      c = w->glw_selected ? TAILQ_PREV(w->glw_selected, glw_queue,
+      c = w->glw_focused ? TAILQ_PREV(w->glw_focused, glw_queue,
 				       glw_parent_link) : NULL;
       if(c == NULL)
 	c = TAILQ_LAST(&w->glw_childs, glw_queue);
-      w->glw_selected = c;
+      w->glw_focused = c;
       s->timer = 0;
       return 1;
     default:

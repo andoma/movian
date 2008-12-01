@@ -403,8 +403,8 @@ glw_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
 
   if(c != NULL) {
-    if(glw_is_select_candidate(c))
-      w->glw_selected = c;
+    if(glw_is_focus_candidate(c))
+      w->glw_focused = c;
     glw_layout0(c, rc);
   }
 }

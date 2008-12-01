@@ -74,7 +74,7 @@ glw_array_layout_child(glw_array_t *a, glw_t *c, glw_rctx_t *rc,
 		       float xs, float ys)
 {
   glw_rctx_t rc0 = *rc;
-  int issel = c == a->w.glw_selected;
+  int issel = c == a->w.glw_focused;
 
   c->glw_parent_pos.x = c->glw_parent_x;
   c->glw_parent_pos.y = c->glw_parent_y - a->ycenter;
@@ -119,23 +119,23 @@ glw_array_layout(glw_t *w, glw_rctx_t *rc)
       glw_array_reposition_childs(a);
     }
 
-    if(w->glw_selected == NULL) {
+    if(w->glw_focused == NULL) {
       c = TAILQ_FIRST(&w->glw_childs);
       if(c == NULL) {
 	/* If we have nothing to layout we should make sure our
 	   parent does not have us selected, it will mess up focus */
 	
-	if(w->glw_parent->glw_selected == w)
-	  w->glw_parent->glw_selected = NULL;
+	if(w->glw_parent->glw_focused == w)
+	  w->glw_parent->glw_focused = NULL;
 	return;
       }
 
       a->curx = c->glw_parent_pos.x;
       a->cury = c->glw_parent_pos.y;
-      w->glw_selected = c;
-      glw_signal0(c, GLW_SIGNAL_SELECTED_UPDATE_ADVISORY, NULL);
+      w->glw_focused = c;
+      glw_signal0(c, GLW_SIGNAL_FOCUSED_UPDATE_ADVISORY, NULL);
     }
-    c = w->glw_selected;
+    c = w->glw_focused;
 
     glw_array_layout_child(a, c, rc, xs, ys);
 
@@ -175,7 +175,7 @@ glw_array_render(glw_t *w, glw_rctx_t *rc)
     if(c->glw_parent_pos.y < -1.5 || c->glw_parent_pos.y > 1.5)
       continue;
 
-    rc0.rc_focused = rc->rc_focused && c == w->glw_selected;
+    rc0.rc_focused = rc->rc_focused && c == w->glw_focused;
     glw_render_TS(c, &rc0, rc);
   }
 }
@@ -187,7 +187,7 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal,
 		   void *extra)
 {
   glw_array_t *a = (void *)w;
-  glw_t *n, *c = w->glw_selected;
+  glw_t *n, *c = w->glw_focused;
   event_t *e;
 
   switch(signal) {
@@ -202,9 +202,9 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal,
     return 0;
 
   case GLW_SIGNAL_CHILD_CREATED:
-    if(w->glw_selected == NULL) {
-      c = w->glw_selected = extra;
-      glw_signal0(c, GLW_SIGNAL_SELECTED_UPDATE_ADVISORY, NULL);
+    if(w->glw_focused == NULL) {
+      c = w->glw_focused = extra;
+      glw_signal0(c, GLW_SIGNAL_FOCUSED_UPDATE_ADVISORY, NULL);
     }
     /* FALLTHRU */
   case GLW_SIGNAL_CHILD_VISIBLE:
@@ -218,8 +218,8 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal,
     a->reposition_needed = 1;
     return 0;
 
-  case GLW_SIGNAL_SELECT:
-    w->glw_selected = c;
+  case GLW_SIGNAL_FOCUS:
+    w->glw_focused = c;
     a->curx = c->glw_parent_x;
     a->cury = c->glw_parent_y;
     return 0;
@@ -252,8 +252,8 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal,
     }
 
     if(n != NULL) {
-      glw_signal0(n, GLW_SIGNAL_SELECTED_UPDATE, NULL);
-      w->glw_selected = n;
+      glw_signal0(n, GLW_SIGNAL_FOCUSED_UPDATE, NULL);
+      w->glw_focused = n;
       a->curx = n->glw_parent_x;
       a->cury = n->glw_parent_y;
       return 1;
@@ -273,7 +273,7 @@ glw_array_ctor(glw_t *w, int init, va_list ap)
 
   if(init) {
     glw_signal_handler_int(w, glw_array_callback);
-    w->glw_flags |= GLW_SELECTABLE;
+    w->glw_flags |= GLW_FOCUSABLE;
     a->cursor_width = 0.1f;
     a->curx = -2;
     a->cury = -2;

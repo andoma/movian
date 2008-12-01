@@ -50,7 +50,7 @@ glw_zstack_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       glw_layout0(c, rc);
     }
 
-    w->glw_selected = TAILQ_LAST(&w->glw_childs, glw_queue);
+    w->glw_focused = TAILQ_LAST(&w->glw_childs, glw_queue);
     break;
     
   case GLW_SIGNAL_RENDER:
@@ -66,8 +66,8 @@ glw_zstack_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_EVENT:
-    if(w->glw_selected != NULL)
-      return glw_signal0(w->glw_selected, GLW_SIGNAL_EVENT, extra);
+    if(w->glw_focused != NULL)
+      return glw_signal0(w->glw_focused, GLW_SIGNAL_EVENT, extra);
     break;
   }
   return 0;

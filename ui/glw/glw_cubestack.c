@@ -38,7 +38,7 @@ glw_cs_render(glw_cubestack_t *cs, glw_t *w, glw_rctx_t *rc)
       continue;
 
     rc0.rc_alpha = rc->rc_alpha * c->glw_parent_alpha;
-    rc0.rc_focused = rc->rc_focused && c == w->glw_selected;
+    rc0.rc_focused = rc->rc_focused && c == w->glw_focused;
     glw_render_T(c, &rc0, rc);
   }
 
@@ -62,7 +62,7 @@ glw_cs_layout(glw_cubestack_t *cs, glw_t *w, glw_rctx_t *rc)
     c->glw_parent_alpha = GLW_LP(16, c->glw_parent_alpha, c->glw_parent_a);
 
     rc0 = *rc;
-    rc0.rc_focused &= c == w->glw_selected;
+    rc0.rc_focused &= c == w->glw_focused;
 
     glw_layout0(c, &rc0);
   }
@@ -95,9 +95,9 @@ glw_cs_reposition(glw_t *w, glw_t *skip)
   float z = 0.0f;
   float alpha = 1.0f;
 
-  w->glw_selected = TAILQ_LAST(&w->glw_childs, glw_queue);
-  if(skip != NULL && w->glw_selected == skip)
-      w->glw_selected = TAILQ_PREV(w->glw_selected,
+  w->glw_focused = TAILQ_LAST(&w->glw_childs, glw_queue);
+  if(skip != NULL && w->glw_focused == skip)
+      w->glw_focused = TAILQ_PREV(w->glw_focused,
 				   glw_queue, glw_parent_link);
 
   TAILQ_FOREACH_REVERSE(c, &w->glw_childs, glw_queue, glw_parent_link) {
@@ -166,7 +166,7 @@ glw_cubestack_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     return 1;
 
   case GLW_SIGNAL_EVENT:
-    if((c = w->glw_selected) == NULL)
+    if((c = w->glw_focused) == NULL)
       return 0;
     return glw_signal0(c, GLW_SIGNAL_EVENT, extra);
   }

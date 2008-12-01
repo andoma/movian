@@ -92,10 +92,10 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
 	rc0.rc_aspect = aspect / e1;
       }
 
-      if(w->glw_selected == NULL && glw_is_select_candidate(c))
-	w->glw_selected = c;
+      if(w->glw_focused == NULL && glw_is_focus_candidate(c))
+	w->glw_focused = c;
 
-      rc0.rc_focused = rc->rc_focused && w->glw_selected == c;
+      rc0.rc_focused = rc->rc_focused && w->glw_focused == c;
       glw_layout0(c, &rc0);
       if(c->glw_weight > 0.01)
 	glw_link_render_list(w, c);
@@ -129,10 +129,10 @@ glw_container_z_layout(glw_t *w, glw_rctx_t *rc)
     c->glw_parent_scale.y = 1.0f;
     c->glw_parent_scale.z = 1.0f;
 
-    rc0.rc_focused = rc->rc_focused && w->glw_selected == c;
+    rc0.rc_focused = rc->rc_focused && w->glw_focused == c;
 
-    if(w->glw_selected == NULL && glw_is_select_candidate(c))
-      w->glw_selected = c;
+    if(w->glw_focused == NULL && glw_is_focus_candidate(c))
+      w->glw_focused = c;
 
     glw_layout0(c, &rc0);
     glw_link_render_list(w, c);
@@ -214,7 +214,7 @@ glw_container_render(glw_t *w, glw_rctx_t *rc)
 
     rc0.rc_form   = rc->rc_form;
     rc0.rc_aspect = aspect * c->glw_parent_scale.x / c->glw_parent_scale.y;
-    rc0.rc_focused = rc->rc_focused && w->glw_selected == c;
+    rc0.rc_focused = rc->rc_focused && w->glw_focused == c;
     glw_render0(c, &rc0);
     glPopMatrix();
   }
@@ -241,9 +241,9 @@ glw_container_callback(glw_t *w, void *opaque, glw_signal_t signal,
        TAILQ_NEXT(c, glw_parent_link) == NULL) {
       /* Last child to be destoyed */
 
-      if(w->glw_parent->glw_selected == w) {
+      if(w->glw_parent->glw_focused == w) {
 	/* We can no longer be selected */
-	w->glw_parent->glw_selected = NULL;
+	w->glw_parent->glw_focused = NULL;
       }
     }
     break;

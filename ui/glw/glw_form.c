@@ -385,7 +385,7 @@ glw_form_ctor(glw_t *w, int init, va_list ap)
   glw_form_t *gf = (void *)w;
 
   if(init) {
-    w->glw_flags |= GLW_SELECTABLE;
+    w->glw_flags |= GLW_FOCUSABLE;
     TAILQ_INIT(&gf->gf_focuses);
     glw_signal_handler_int(w, glw_form_callback);
   }

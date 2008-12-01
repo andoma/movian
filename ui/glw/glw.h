@@ -188,16 +188,16 @@ typedef enum {
 
 
   /**
-   * Sent to parent to switch current selected child.
-   * Parent should NOT send GLW_SIGNAL_SELECTED_UPDATE to the child
+   * Sent to parent to switch current focused child.
+   * Parent should NOT send GLW_SIGNAL_FOCUSED_UPDATE to the child
    * in this case.
    */
-  GLW_SIGNAL_SELECT,
+  GLW_SIGNAL_FOCUS,
 
   /**
    * Emitted by parent to child when it has been selected.
    */
-  GLW_SIGNAL_SELECTED_UPDATE,
+  GLW_SIGNAL_FOCUSED_UPDATE,
 
   /**
    * Emitted by parent to child when it has been selected.
@@ -205,7 +205,7 @@ typedef enum {
    * when they have nothing else selected and just chooses one
    * based on some internal logic.
    */
-  GLW_SIGNAL_SELECTED_UPDATE_ADVISORY,
+  GLW_SIGNAL_FOCUSED_UPDATE_ADVISORY,
 
 } glw_signal_t;
 
@@ -342,7 +342,7 @@ typedef struct glw {
   struct glw_queue glw_render_list;
   TAILQ_ENTRY(glw) glw_render_link;
 		   
-  struct glw *glw_selected;
+  struct glw *glw_focused;
 
   /** 
    * All the glw_parent stuff is operated by this widgets
@@ -374,13 +374,13 @@ typedef struct glw {
 #define GLW_FOCUS_ADJ_ALPHA 0x4000  /* Adjust alpha based on focus */
 #define GLW_FOCUS_DRAW_CURSOR 0x8000  /* Draw cursor when we have focus */
 
-#define GLW_SCALE_CHILDS      0x10000 /* Scaledown unselected childs */
+#define GLW_SCALE_CHILDS      0x10000 /* Scaledown unfocuseded childs */
 
 #define GLW_DEBUG             0x20000 /* Debug this object */
 
 #define GLW_BORDER_SCALE_CHILDS 0x40000 /* Scale childs to fit within border */
 
-#define GLW_SELECTABLE          0x80000
+#define GLW_FOCUSABLE          0x80000
 
 #define GLW_EXPAND_CHILDS       0x100000 /* Expand childs (for list) */
 
@@ -619,9 +619,9 @@ int glw_signal0(glw_t *w, glw_signal_t sig, void *extra);
 #define glw_layout0(w, rc) glw_signal0(w, GLW_SIGNAL_LAYOUT, rc)
 
 static inline int 
-glw_is_select_candidate(glw_t *w)
+glw_is_focus_candidate(glw_t *w)
 {
-  return w->glw_selected != NULL || w->glw_flags & GLW_SELECTABLE;
+  return w->glw_focused != NULL || w->glw_flags & GLW_FOCUSABLE;
 }
 
 int glw_navigate(glw_t *w, event_t *e);

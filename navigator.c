@@ -126,7 +126,7 @@ nav_open(const char *uri)
 
   TAILQ_FOREACH(np, &nav_pages, np_global_link) {
     if(!strcmp(np->np_uri, uri)) {
-      prop_select(np->np_prop_root, 0);
+      prop_focus(np->np_prop_root, 0);
       prop_link(np->np_prop_root, nav_prop_curpage);
       break;
     }
@@ -154,7 +154,7 @@ nav_open(const char *uri)
     prop_set_parent(np->np_prop_root, nav_prop_pages);
     prop_link(np->np_prop_root, nav_prop_curpage);
 
-    prop_select(np->np_prop_root, 0);
+    prop_focus(np->np_prop_root, 0);
   }
 
   if(np->np_inhistory == 0) {

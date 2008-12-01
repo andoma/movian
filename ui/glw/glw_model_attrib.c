@@ -301,7 +301,7 @@ static const token_attrib_t attribtab[] = {
   {"scaleChilds",     set_flag,   GLW_SCALE_CHILDS},
   {"expandChilds",    set_flag,   GLW_EXPAND_CHILDS},
   {"borderScale",     set_flag,   GLW_BORDER_SCALE_CHILDS},
-  {"selectable",      set_flag,   GLW_SELECTABLE},
+  {"focusable",       set_flag,   GLW_FOCUSABLE},
   {"focusCursor",     set_flag,   GLW_FOCUS_DRAW_CURSOR},
   {"focusAlpha",      set_flag,   GLW_FOCUS_ADJ_ALPHA},
   {"keepAspect",      set_flag,   GLW_KEEP_ASPECT},

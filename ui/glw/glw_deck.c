@@ -39,24 +39,24 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_LAYOUT:
-    if(w->glw_alpha < 0.01 || w->glw_selected == NULL)
+    if(w->glw_alpha < 0.01 || w->glw_focused == NULL)
       break;
-    glw_layout0(w->glw_selected, rc);
+    glw_layout0(w->glw_focused, rc);
     break;
     
   case GLW_SIGNAL_RENDER:
-    if(w->glw_alpha < 0.01 || w->glw_selected == NULL)
+    if(w->glw_alpha < 0.01 || w->glw_focused == NULL)
       break;
-    glw_render0(w->glw_selected, rc);
+    glw_render0(w->glw_focused, rc);
     break;
 
   case GLW_SIGNAL_EVENT:
-    if(w->glw_selected != NULL) {
-      if(glw_signal0(w->glw_selected, GLW_SIGNAL_EVENT, extra))
+    if(w->glw_focused != NULL) {
+      if(glw_signal0(w->glw_focused, GLW_SIGNAL_EVENT, extra))
 	return 1;
     }
 
-    if((c = w->glw_selected) == NULL)
+    if((c = w->glw_focused) == NULL)
       return 0;
     
     /* Respond to some events ourselfs */
@@ -76,20 +76,20 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
     if(n != NULL) {
       if(n != c) {
-	w->glw_selected = n;
-	glw_signal0(n, GLW_SIGNAL_SELECTED_UPDATE, NULL);
+	w->glw_focused = n;
+	glw_signal0(n, GLW_SIGNAL_FOCUSED_UPDATE, NULL);
       }
       return 1;
     }
     break;
 
-  case GLW_SIGNAL_SELECT:
-    w->glw_selected = extra;
+  case GLW_SIGNAL_FOCUS:
+    w->glw_focused = extra;
     break;
 
   case GLW_SIGNAL_CHILD_CREATED:
-    if(w->glw_selected == NULL)
-      w->glw_selected = extra;
+    if(w->glw_focused == NULL)
+      w->glw_focused = extra;
     break;
   }
 
