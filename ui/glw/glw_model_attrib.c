@@ -289,6 +289,35 @@ set_flag(glw_model_eval_context_t *ec, const token_attrib_t *a,
 
 
 
+/**
+ *
+ */
+static int
+set_mirror(glw_model_eval_context_t *ec, const token_attrib_t *a, 
+	   struct token *t)
+{
+  int set = 0;
+
+  if(t->type == TOKEN_IDENTIFIER)
+    set = !strcmp(t->t_string, "true");
+  else if(t->type == TOKEN_INT)
+    set = t->t_int;
+  else if(t->type == TOKEN_FLOAT)
+    set = t->t_float > 0.5;
+  else if(t->type == TOKEN_VOID)
+    set = 0;
+  else
+    return glw_model_seterr(ec->ei, t, "Invalid assignment for attribute %s",
+			    a->name);
+
+  if(set)
+    glw_set_i(ec->w, GLW_ATTRIB_MIRROR, a->attrib, NULL);
+
+  return 0;
+}
+
+
+
 
 /**
  *
@@ -309,8 +338,8 @@ static const token_attrib_t attribtab[] = {
   {"skeleton",        set_flag,   GLW_DRAW_SKEL},
   {"borderBlend",     set_flag,   GLW_BORDER_BLEND},
   {"password",        set_flag,   GLW_PASSWORD},
-  {"mirrorx",         set_flag,   GLW_MIRROR_X},
-  {"mirrory",         set_flag,   GLW_MIRROR_Y},
+  {"mirrorx",         set_mirror, GLW_MIRROR_X},
+  {"mirrory",         set_mirror, GLW_MIRROR_Y},
 
   {"slices",          set_int,    GLW_ATTRIB_SLICES},
   {"min",             set_int,    GLW_ATTRIB_INT_MIN},
