@@ -354,37 +354,26 @@ typedef struct glw {
   float glw_parent_misc[4];
 
   int glw_flags;  
-#define GLW_CLEAN         0x1     /* Set if displaylist is up to date */
-#define GLW_HIDE          0x2     /* Set if hidden */
-#define GLW_KEEP_ASPECT   0x4     /* Keep aspect (for bitmaps) */
-#define GLW_ZOOMED        0x8     /* widget is zoomed */
 
-#define GLW_DESTROYED     0x20    /* was destroyed but someone
-				     is holding references */
-#define GLW_RENDER_LINKED 0x40    /* glw_render_link is linked */
-#define GLW_BORDER_BLEND  0x80    /* Blend borders to 0 alpha (for
-				     bitmaps */
-
-#define GLW_EVERY_FRAME   0x100   /* Want GLW_SIGNAL_NEW_FRAME at all times */
-
-
-
-#define GLW_DRAW_SKEL     0x400   /* Draw extra lines to visualize details */
-
-#define GLW_FOCUS_ADJ_ALPHA 0x4000  /* Adjust alpha based on focus */
-#define GLW_FOCUS_DRAW_CURSOR 0x8000  /* Draw cursor when we have focus */
-
-#define GLW_SCALE_CHILDS      0x10000 /* Scaledown unfocuseded childs */
-
-#define GLW_DEBUG             0x20000 /* Debug this object */
-
-#define GLW_BORDER_SCALE_CHILDS 0x40000 /* Scale childs to fit within border */
-
-#define GLW_FOCUSABLE          0x80000
-
-#define GLW_EXPAND_CHILDS       0x100000 /* Expand childs (for list) */
-
-#define GLW_PASSWORD            0x200000 /* Don't display real contents */
+#define GLW_HIDE                0x1     /* Set if hidden */
+#define GLW_KEEP_ASPECT         0x2     /* Keep aspect (for bitmaps) */
+#define GLW_DESTROYED           0x4     /* was destroyed but someone
+					   is holding references */
+#define GLW_RENDER_LINKED       0x8     /* glw_render_link is linked */
+#define GLW_BORDER_BLEND        0x10    /* Blend borders to 0 alpha
+					   (for bitmaps */
+#define GLW_EVERY_FRAME         0x20    /* Want GLW_SIGNAL_NEW_FRAME
+					   at all times */
+#define GLW_DRAW_SKEL           0x40    /* Draw extra lines to
+					    visualize details */
+#define GLW_FOCUS_ADJ_ALPHA     0x80    /* Adjust alpha based on focus */
+#define GLW_FOCUS_DRAW_CURSOR   0x100   /* Draw cursor when we have focus */
+#define GLW_SCALE_CHILDS        0x200   /* Scaledown unfocuseded childs */
+#define GLW_DEBUG               0x400   /* Debug this object */
+#define GLW_BORDER_SCALE_CHILDS 0x800   /* Scale childs to fit within border */
+#define GLW_FOCUSABLE           0x1000
+#define GLW_EXPAND_CHILDS       0x2000  /* Expand childs (for list) */
+#define GLW_PASSWORD            0x4000  /* Don't display real contents */
 
   glw_vertex_t glw_displacement;
 
