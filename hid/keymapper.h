@@ -33,6 +33,7 @@ typedef struct keymap_entry {
   LIST_ENTRY(keymap_entry) ke_link;
   char *ke_keycode;
   event_type_t ke_event;
+  prop_t *ke_prop;
 } keymap_entry_t;
 
 
@@ -44,6 +45,8 @@ typedef struct keymap {
   struct keymap_entry_list km_entries;
   hts_mutex_t km_mutex;
   prop_t *km_settings;   /* Pointer to settings in settings tree */
+
+  prop_sub_t *km_subscription;
 } keymap_t;
 
 
