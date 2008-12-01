@@ -122,7 +122,7 @@ settings_set_parent(prop_t *p, prop_t *parent)
 prop_t *
 settings_add_dir(prop_t *parent, const char *id, const char *title)
 {
-  prop_t *r = settings_add(id, title, "directory");
+  prop_t *r = settings_add(id, title, "settings");
   settings_set_url(r, parent);
   settings_set_parent(r, parent);
   return r;
@@ -277,13 +277,26 @@ be_settings_open(const char *url0, nav_page_t **npp,
 		 char *errbuf, size_t errlen)
 {
   nav_page_t *n;
-  prop_t *type, *nodes, *p;
+  prop_t *type, *nodes, *p, *p2;
   const char *url = url0 + strlen(SETTINGS_URI);
   char buf[100];
   int l;
 
   p = settings_root;
   /* Decompose URL and try to find representative node */
+
+  if(*url == 0) {
+    n = nav_page_create(&be_settings, url0, sizeof(nav_page_t));
+
+    type  = prop_create(n->np_prop_root, "type");
+    nodes = prop_create(n->np_prop_root, "nodes");
+
+    prop_set_string(type, "settings");
+
+    prop_link(p, nodes);
+    *npp = n;
+    return 0;
+  }
 
   while(*url) {
     l = 0;
@@ -298,21 +311,13 @@ be_settings_open(const char *url0, nav_page_t **npp,
       snprintf(errbuf, errlen, "Settings property is not a directory");
       return -1;
     }
-    p = prop_create(p, buf);
-    p = prop_create(p, "nodes");
+    p2 = prop_create(p, buf);
+    p  = prop_create(p2, "nodes");
   }
 
-
   n = nav_page_create(&be_settings, url0, sizeof(nav_page_t));
-
-  type  = prop_create(n->np_prop_root, "type");
-  nodes = prop_create(n->np_prop_root, "nodes");
-
-  prop_set_string(type, "settings");
-
-  prop_link(p, nodes);
+  prop_link(p2, n->np_prop_root);
   *npp = n;
-  
   return 0;
 }
 
