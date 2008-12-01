@@ -184,17 +184,6 @@ eval_op(glw_model_eval_context_t *ec, struct token *self)
 
   switch(self->type) {
   case TOKEN_ADD:
-
-    if(a->type == TOKEN_STRING && b->type == TOKEN_VOID) {
-      eval_push(ec, a);
-      return 0;
-    }
-
-    if(a->type == TOKEN_VOID && b->type == TOKEN_STRING) {
-      eval_push(ec, b);
-      return 0;
-    }
-
     if(a->type == TOKEN_STRING && b->type == TOKEN_STRING) {
       /* Concatenation of strings */
       al = strlen(a->t_string);
@@ -449,7 +438,7 @@ eval_assign(glw_model_eval_context_t *ec, struct token *self)
 
   if(a == NULL || b == NULL)
     return glw_model_seterr(ec->ei, self, "Missing operands");
- 
+  
   if(a->propsubr != NULL) {
     
     p = prop_get_by_subscription(a->propsubr->gps_sub);
@@ -876,6 +865,7 @@ subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
 
   free(self->t_string);
   self->propsubr = gps;
+
   self->type = TOKEN_PROPERTY_SUBSCRIPTION;
 
   glw_model_free_chain(self->child);
@@ -1632,21 +1622,19 @@ glwf_int2str(glw_model_eval_context_t *ec, struct token *self)
   token_t *r;
   char buf[30];
 
-  if(a == NULL || a->type != TOKEN_INT) {
-    if(a != NULL && a->type == TOKEN_STRING) {
-      r = eval_alloc(self, ec, TOKEN_STRING);
-      r->t_string = strdup(a->t_string);
-      eval_push(ec, r);
-      return 0;
-    }
+  if(a == NULL) {
     return glw_model_seterr(ec->ei, self, 
-			    "Invalid first operand to int2str()");
+			    "Missing operant to int2str()");
   }
 
-  snprintf(buf, sizeof(buf), "%d", a->t_int);
 
-  r = eval_alloc(self, ec, TOKEN_STRING);
-  r->t_string = strdup(buf);
+  if(a->type == TOKEN_INT) {
+    snprintf(buf, sizeof(buf), "%d", a->t_int);
+    r = eval_alloc(self, ec, TOKEN_STRING);
+    r->t_string = strdup(buf);
+  } else {
+    r = a;
+  }
   eval_push(ec, r);
   return 0;
 }
