@@ -278,7 +278,8 @@ set_flag(glw_model_eval_context_t *ec, const token_attrib_t *a,
 			    a->name);
 
   if(set)
-    glw_set_i(ec->w, GLW_ATTRIB_FLAGS, a->attrib, NULL);
+    glw_set_i(ec->w, GLW_ATTRIB_SET_FLAGS, a->attrib, NULL);
+
   return 0;
 }
 

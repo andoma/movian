@@ -226,13 +226,22 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       w->glw_alignment = va_arg(ap, int);
       break;
 
-    case GLW_ATTRIB_FLAGS:
+    case GLW_ATTRIB_SET_FLAGS:
       a = va_arg(ap, int);
 
       if(a & GLW_EVERY_FRAME && !(w->glw_flags & GLW_EVERY_FRAME)) 
 	LIST_INSERT_HEAD(&gr->gr_every_frame_list, w, glw_every_frame_link);
 
       w->glw_flags |= a;
+      break;
+
+    case GLW_ATTRIB_CLR_FLAGS:
+      a = va_arg(ap, int);
+
+      if(a & GLW_EVERY_FRAME && (w->glw_flags & GLW_EVERY_FRAME)) 
+	LIST_REMOVE(w, glw_every_frame_link);
+
+      w->glw_flags &= ~a;
       break;
 
     case GLW_ATTRIB_ANGLE:

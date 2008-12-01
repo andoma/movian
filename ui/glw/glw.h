@@ -90,7 +90,8 @@ typedef enum {
   GLW_ATTRIB_ANGLE,
   GLW_ATTRIB_U32,
   GLW_ATTRIB_ALIGNMENT,
-  GLW_ATTRIB_FLAGS,
+  GLW_ATTRIB_SET_FLAGS,
+  GLW_ATTRIB_CLR_FLAGS,
   GLW_ATTRIB_EXTRA,
   GLW_ATTRIB_SLICES,
   GLW_ATTRIB_X_SLICES,
@@ -526,7 +527,8 @@ do {						\
     break;					\
   case GLW_ATTRIB_U32:				\
   case GLW_ATTRIB_ALIGNMENT:			\
-  case GLW_ATTRIB_FLAGS:			\
+  case GLW_ATTRIB_SET_FLAGS:			\
+  case GLW_ATTRIB_CLR_FLAGS:			\
   case GLW_ATTRIB_SLICES:                       \
   case GLW_ATTRIB_X_SLICES:                     \
   case GLW_ATTRIB_Y_SLICES:                     \
