@@ -132,7 +132,7 @@ keymapper_init(keymap_t *km, prop_t *settingsparent, const char *title)
   km->km_settings = settings_add_dir(settingsparent, "keymap", title);
 
   km->km_subscription = prop_subscribe(km->km_settings, NULL,
-				       km_subscribe_callback, km);
+				       km_subscribe_callback, km, NULL);
 
   keymapper_entry_add(km, "x11-hehe", EVENT_KEY_MAINMENU);
 }

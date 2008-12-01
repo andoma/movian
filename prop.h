@@ -46,6 +46,24 @@ LIST_HEAD(prop_sub_list, prop_sub);
 
 
 
+/**
+ *
+ */
+TAILQ_HEAD(prop_notify_queue, prop_notify);
+
+typedef struct prop_courier {
+
+  struct prop_notify_queue pc_queue;
+
+  hts_mutex_t *pc_entry_mutex;
+  hts_cond_t pc_cond;
+  hts_thread_t pc_thread;
+
+  int pc_run;
+
+} prop_courier_t;
+
+
 
 /**
  * Property types
@@ -144,6 +162,11 @@ typedef struct prop_sub {
   prop_callback_t *hps_callback;
 
   /**
+   * Pointer to courier, May never be changed. Not protected by mutex
+   */
+  prop_courier_t *hps_courier;
+
+  /**
    *
    */
   void *hps_opaque;
@@ -160,9 +183,7 @@ typedef struct prop_sub {
   LIST_ENTRY(prop_sub) hps_canonical_prop_link;
   prop_t *hps_canonical_prop;
 
-
 } prop_sub_t;
-
 
 
 /**
@@ -174,7 +195,8 @@ prop_t *prop_get_global(void);
 void prop_init(void);
 
 prop_sub_t *prop_subscribe(struct prop *prop, const char **name,
-				   prop_callback_t *cb, void *opaque);
+			   prop_callback_t *cb, void *opaque,
+			   prop_courier_t *pc);
 
 void prop_unsubscribe(prop_sub_t *s);
 
@@ -228,6 +250,8 @@ prop_t **prop_get_ancestors(prop_t *p);
 void prop_ancestors_unref(prop_t **r);
 
 prop_t *prop_get_by_subscription(prop_sub_t *s);
+
+prop_courier_t *prop_courier_create(hts_mutex_t *entrymutex);
 
 /* DEBUGish */
 const char *propname(prop_t *p);

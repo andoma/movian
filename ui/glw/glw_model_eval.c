@@ -848,7 +848,7 @@ subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
   gps->gps_line = self->line;
 #endif
 
-  s = prop_subscribe(ec->prop, propname, prop_callback, gps);
+  s = prop_subscribe(ec->prop, propname, prop_callback, gps, NULL);
 
   if(s == NULL) {
     refstr_unref(gps->gps_file);

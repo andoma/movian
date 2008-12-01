@@ -29,8 +29,9 @@
 #include "prop.h"
 
 static hts_mutex_t prop_mutex;
-static hts_cond_t  prop_cond;
 static prop_t *prop_global;
+
+static prop_courier_t *global_courier;
 
 /**
  *
@@ -73,10 +74,6 @@ propname(prop_t *p)
 /**
  *
  */
-TAILQ_HEAD(prop_notify_queue, prop_notify);
-
-static struct  prop_notify_queue prop_notifies;
-
 typedef struct prop_notify {
   TAILQ_ENTRY(prop_notify) hpn_link;
   prop_sub_t *hpn_sub;
@@ -140,23 +137,30 @@ prop_sub_ref_dec(prop_sub_t *s)
  * Thread for dispatching prop_notify entries
  */
 static void *
-prop_delivery(void *aux)
+prop_courier(void *aux)
 {
+  prop_courier_t *pc = aux;
+
   prop_notify_t *n;
   prop_sub_t *s;
 
-  while(1) {
+  hts_mutex_lock(&prop_mutex);
 
-    hts_mutex_lock(&prop_mutex);
+  while(pc->pc_run) {
 
-    while((n = TAILQ_FIRST(&prop_notifies)) == NULL)
-      hts_cond_wait(&prop_cond, &prop_mutex);
+    if((n = TAILQ_FIRST(&pc->pc_queue)) == NULL) {
+      hts_cond_wait(&pc->pc_cond, &prop_mutex);
+      continue;
+    }
 
-    TAILQ_REMOVE(&prop_notifies, n, hpn_link);
+    TAILQ_REMOVE(&pc->pc_queue, n, hpn_link);
     
     hts_mutex_unlock(&prop_mutex);
 
     s = n->hpn_sub;
+
+    if(pc->pc_entry_mutex != NULL)
+      hts_mutex_lock(pc->pc_entry_mutex);
     
     switch(n->hpn_event) {
     case PROP_SET_VOID:
@@ -186,10 +190,26 @@ prop_delivery(void *aux)
 	prop_ref_dec(n->hpn_prop);
       break;
     }
+
+    if(pc->pc_entry_mutex != NULL)
+      hts_mutex_unlock(pc->pc_entry_mutex);
+ 
     prop_sub_ref_dec(s);
     free(n);
   }
+  return NULL;
 }
+
+/**
+ *
+ */
+static void
+courier_enqueue(prop_courier_t *pc, prop_notify_t *n)
+{
+  TAILQ_INSERT_TAIL(&pc->pc_queue, n, hpn_link);
+  hts_cond_signal(&pc->pc_cond);
+}
+
 
 /**
  *
@@ -237,8 +257,7 @@ prop_build_notify_value(prop_sub_t *s)
     n->hpn_event = PROP_SET_VOID;
     break;
   }
-  TAILQ_INSERT_TAIL(&prop_notifies, n, hpn_link);
-  hts_cond_signal(&prop_cond);
+  courier_enqueue(s->hps_courier, n);
 }
 
 
@@ -252,8 +271,7 @@ prop_notify_void(prop_sub_t *s)
   prop_notify_t *n = get_notify(s);
 
   n->hpn_event = PROP_SET_VOID;
-  TAILQ_INSERT_TAIL(&prop_notifies, n, hpn_link);
-  hts_cond_signal(&prop_cond);
+  courier_enqueue(s->hps_courier, n);
 }
 
 
@@ -284,8 +302,7 @@ prop_build_notify_child(prop_sub_t *s, prop_t *p, prop_event_t event)
 
   n->hpn_prop = p;
   n->hpn_event = event;
-  TAILQ_INSERT_TAIL(&prop_notifies, n, hpn_link);
-  hts_cond_signal(&prop_cond);
+  courier_enqueue(s->hps_courier, n);
 }
 
 
@@ -554,7 +571,7 @@ prop_subfind(prop_t *p, const char **name, int follow_symlinks)
  */
 prop_sub_t *
 prop_subscribe(struct prop *prop, const char **name,
-		   prop_callback_t *cb, void *opaque)
+	       prop_callback_t *cb, void *opaque, prop_courier_t *pc)
 {
   prop_t *p, *value, *canonical, *c;
   prop_sub_t *s;
@@ -593,6 +610,8 @@ prop_subscribe(struct prop *prop, const char **name,
   }
 
   s = malloc(sizeof(prop_sub_t));
+
+  s->hps_courier = pc ?: global_courier;
 
   LIST_INSERT_HEAD(&canonical->hp_canonical_subscriptions, s, 
 		   hps_canonical_prop_link);
@@ -652,16 +671,10 @@ prop_unsubscribe(prop_sub_t *s)
 void
 prop_init(void)
 {
-  hts_thread_t tid;
-
-  TAILQ_INIT(&prop_notifies);
-
   hts_mutex_init(&prop_mutex);
-  hts_cond_init(&prop_cond);
-
   prop_global = prop_create0(NULL, "global", NULL);
 
-  hts_thread_create(&tid, prop_delivery, NULL);
+  global_courier = prop_courier_create(NULL);
 }
 
 
@@ -1034,4 +1047,22 @@ prop_get_by_subscription(prop_sub_t *s)
   hts_mutex_unlock(&prop_mutex);
 
   return p;
+}
+
+
+/**
+ *
+ */
+prop_courier_t *
+prop_courier_create(hts_mutex_t *entrymutex)
+{
+  prop_courier_t *pc = calloc(1, sizeof(prop_courier_t));
+
+  hts_cond_init(&pc->pc_cond);
+
+  TAILQ_INIT(&pc->pc_queue);
+  pc->pc_run = 1;
+
+  hts_thread_create(&pc->pc_thread, prop_courier, pc);
+  return pc;
 }
