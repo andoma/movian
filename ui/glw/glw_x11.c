@@ -576,7 +576,7 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
       snprintf(buf, sizeof(buf),
 	       "x11 - raw - 0x%x", event->xkey.keycode);
     }
-    e = keymapper_resolve(buf);
+    e = keymapper_resolve(NULL, buf);
 
     if(e == NULL)
       return;
