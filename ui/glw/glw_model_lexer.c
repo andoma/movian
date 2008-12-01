@@ -110,6 +110,7 @@ lexer_single_char(token_t *next, refstr_t *f, int line, char s)
   case '*' : ty = TOKEN_MULTIPLY;                 break;
   case '/' : ty = TOKEN_DIVIDE;                   break;
   case '%' : ty = TOKEN_MODULO;                   break;
+  case '$' : ty = TOKEN_DOLLAR;                   break;
   default:
     return NULL;
   }

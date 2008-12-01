@@ -1,5 +1,5 @@
 widget(container_y, {
-  widget(label, {.caption = self.media.format;});
-  widget(label, {.caption = self.media.videoinfo;});
-  widget(label, {.caption = self.media.audioinfo;});
+  widget(label, {.caption = $self.media.format;});
+  widget(label, {.caption = $self.media.videoinfo;});
+  widget(label, {.caption = $self.media.audioinfo;});
 });

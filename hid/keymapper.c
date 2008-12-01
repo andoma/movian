@@ -30,7 +30,23 @@ static keymap_t km_global;
 static void 
 km_subscribe_callback(struct prop_sub *sub, prop_event_t event, ...)
 {
-  printf("km_subscribe event %d\n", event);
+  prop_t *p;
+
+  va_list ap;
+  va_start(ap, event);
+
+  p = va_arg(ap, prop_t *);
+
+  switch(event) {
+  default:
+    break;
+
+  case PROP_ADD_CHILD:
+    /* New child created */
+    prop_set_string(prop_create(p, "type"), "keymapentry");
+    break;
+  }
+
 }
 
 
@@ -133,8 +149,9 @@ keymapper_init(keymap_t *km, prop_t *settingsparent, const char *title)
 
   prop_set_int(prop_create(km->km_settings, "mayadd"), 1);
  
-  km->km_subscription = prop_subscribe(km->km_settings, NULL,
-				       km_subscribe_callback, km, NULL, 0);
+  km->km_subscription = 
+    prop_subscribe(prop_create(km->km_settings, "nodes"), NULL,
+		   km_subscribe_callback, km, NULL, 0);
 
   keymapper_entry_add(km, "x11-hehe", EVENT_KEY_MAINMENU);
 }

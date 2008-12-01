@@ -63,6 +63,7 @@ typedef enum {
   TOKEN_MULTIPLY,              // *
   TOKEN_DIVIDE,                // /
   TOKEN_MODULO,                // %
+  TOKEN_DOLLAR,                // $
   TOKEN_BOOLEAN_AND,           // &&
   TOKEN_BOOLEAN_OR,            // ||
   TOKEN_BOOLEAN_XOR,           // ^^

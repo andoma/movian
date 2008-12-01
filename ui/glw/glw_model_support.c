@@ -115,6 +115,7 @@ glw_model_token_free(token_t *t)
   case TOKEN_MULTIPLY:
   case TOKEN_DIVIDE:
   case TOKEN_MODULO:
+  case TOKEN_DOLLAR:
   case TOKEN_BOOLEAN_AND:
   case TOKEN_BOOLEAN_OR:
   case TOKEN_BOOLEAN_XOR:
@@ -208,6 +209,7 @@ glw_model_token_copy(token_t *src)
   case TOKEN_MULTIPLY:
   case TOKEN_DIVIDE:
   case TOKEN_MODULO:
+  case TOKEN_DOLLAR:
   case TOKEN_BOOLEAN_AND:
   case TOKEN_BOOLEAN_OR:
   case TOKEN_BOOLEAN_XOR:

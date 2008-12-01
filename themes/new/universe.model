@@ -43,7 +43,7 @@ widget(form, {
 	    widget(label, {
 	      .aspect = 40;
 	      .weight = 20;
-	      .caption = global.nav.currentpage.uri;
+	      .caption = $global.nav.currentpage.uri;
 	    });
 	    space(0.1);
 	  });
@@ -58,9 +58,9 @@ widget(form, {
 	
 	widget(deck, {
 	  
-	  cloner(global.nav.pages, animator, {
+	  cloner($global.nav.pages, animator, {
 	    .time = 0.3;
-	    .source = "theme://pagemodels/" + page.type + ".model";
+	    .source = "theme://pagemodels/" + $page.type + ".model";
 	  });
 	});
 	space(0.01);
@@ -79,20 +79,20 @@ widget(form, {
 	  space(0.1);
 
 	  widget(label, {
-	    .caption = global.currentmedia.meta.title;
+	    .caption = $global.currentmedia.meta.title;
 	  });
 
 	  widget(label, {
-	    .caption = global.currentmediasource;
+	    .caption = $global.currentmediasource;
 	  });
 
 
 	  widget(container_x, {
 	    widget(label, {
-	      .caption = int2duration(global.currentmedia.currenttime);
+	      .caption = int2duration($global.currentmedia.currenttime);
 	    });
 	    widget(label, {
-	      .caption = int2duration(global.currentmedia.meta.duration);
+	      .caption = int2duration($global.currentmedia.meta.duration);
 	    });
 	  });
 

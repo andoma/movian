@@ -1,4 +1,4 @@
 widget(container_y, {
-  widget(label, {.caption = self.media.author;});
-  widget(label, {.caption = self.media.album;});
+  widget(label, {.caption = $self.media.author;});
+  widget(label, {.caption = $self.media.album;});
 });

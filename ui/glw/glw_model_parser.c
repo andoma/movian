@@ -200,6 +200,42 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei)
     t1 = t->next;
 
     /**
+     * Transform $foo.bar.etc into a property chain
+     */
+    if(t->type == TOKEN_DOLLAR && t1 != NULL && t1->type == TOKEN_IDENTIFIER) {
+
+      t0 = t2 = t;
+      
+      t0->type = TOKEN_PROPERTY;
+      t0->next = t1->next;
+      t0->t_string = t1->t_string;
+      t1->t_string = NULL;
+
+      glw_model_token_free(t1);
+
+
+      t = t0->next;
+      
+      while(t != NULL && t->type == TOKEN_DOT) {
+	t1 = t->next;
+	if(t1 == NULL || t1->type != TOKEN_IDENTIFIER) {
+	  glw_model_seterr(ei, t1, "Invalid object dereference");
+	  return -1;
+	}
+
+	t0->next = t1->next;
+	t1->next = NULL;
+
+	glw_model_token_free(t);
+
+	t2->child = t1;
+	t2 = t1;
+	t = t0->next;
+      }
+      continue;
+    }
+
+    /**
      * Transform '.name' into just 'name' and set its type to
      * object attribute
      */
@@ -234,27 +270,6 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei)
 
 	t = t1->next;
 	continue;
-      }
-      
-      t0 = t2 = t;
-
-      while(t1 && t1->type == TOKEN_DOT) {
-	
-	t0->type = TOKEN_PROPERTY;
-	t0->next = t1->next;
-	glw_model_token_free(t1);
-	
-	t1 = t0->next;
-	if(t1->type != TOKEN_IDENTIFIER) {
-	  glw_model_seterr(ei, t1, "Invalid object dereference");
-	  return -1;
-	}
-	
-	t0->next = t1->next;
-	t2->child = t1;
-	t1->next = NULL;
-	t2 = t1;
-	t1 = t0->next;
       }
     }
     t = t1;

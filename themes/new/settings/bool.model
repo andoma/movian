@@ -4,18 +4,18 @@ widget(container_x, {
   .focusable = true;
 
   onEvent(enter, {
-    self.value = 1 ^^ self.value;
+    $self.value = 1 ^^ $self.value;
   });
 
   widget(label, {
     .aspect = 20;
     .align = right;
-    .caption = self.title + ":";
+    .caption = $self.title + ":";
   });
 
   widget(label, {
     .aspect = 20;
-    .caption = translate(int2str(self.value),
+    .caption = translate(int2str($self.value),
 			 ["0", "Off",
 			  "1", "On"],
 			 "Unknown");

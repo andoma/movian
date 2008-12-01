@@ -3,7 +3,7 @@ widget(container_x, {
   widget(label, {
     .aspect = 20;
     .align = right;
-    .caption = self.title + ":";
+    .caption = $self.title + ":";
   });
 
 
@@ -19,11 +19,11 @@ widget(container_x, {
 
     widget(deck, {
       .id = "choiceDeck";
-      cloner(self.options, container_y, {
+      cloner($self.options, container_y, {
 	widget(label, {
 	  .align = center;
 	  .aspect = 20;
-	  .caption = self.title;
+	  .caption = $self.title;
 	});
       });
     });

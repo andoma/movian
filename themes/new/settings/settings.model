@@ -3,7 +3,7 @@ widget(container_x, {
   .focusCursor = true;
   .focusable = true;
 
-  onEvent(enter, genericEvent(navigator, open, self.url));
+  onEvent(enter, genericEvent(navigator, open, $self.url));
 
   widget(bitmap, {
     .keepAspect = true;
@@ -13,6 +13,6 @@ widget(container_x, {
   widget(label, {
     .aspect = 40;
     .weight = 10;
-    .caption = self.title;
+    .caption = $self.title;
   });
 });
