@@ -43,7 +43,7 @@ widget(form, {
 	    widget(label, {
 	      .aspect = 40;
 	      .weight = 20;
-	      .caption = global.nav.currentpage.url;
+	      .caption = global.nav.currentpage.uri;
 	    });
 	    space(0.1);
 	  });
