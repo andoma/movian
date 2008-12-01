@@ -1846,6 +1846,29 @@ glwf_createchild(glw_model_eval_context_t *ec, struct token *self)
 }
 
 
+
+/**
+ * Delete given property
+ */
+static int 
+glwf_delete(glw_model_eval_context_t *ec, struct token *self)
+{
+  token_t *a = eval_pop(ec);
+  prop_t *p;
+
+  if(a == NULL || a->propsubr == NULL) {
+    return glw_model_seterr(ec->ei, self, 
+			    "Invalid operand to delete()");
+  }
+
+  p = prop_get_by_subscription(a->propsubr->gps_sub);
+
+  prop_destroy(p);
+  prop_ref_dec(p);
+  return 0;
+}
+
+
 /**
  *
  */
@@ -1868,6 +1891,7 @@ static const token_func_t funcvec[] = {
   {"time", glwf_time},
   {"int2duration", glwf_int2duration},
   {"createChild", glwf_createchild},
+  {"delete", glwf_delete},
 };
 
 

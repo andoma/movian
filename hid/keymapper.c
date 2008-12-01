@@ -45,6 +45,10 @@ km_subscribe_callback(struct prop_sub *sub, prop_event_t event, ...)
     /* New child created */
     prop_set_string(prop_create(p, "type"), "keymapentry");
     break;
+
+  case PROP_DEL_CHILD:
+    printf("Deleted\n");
+    break;
   }
 
 }
