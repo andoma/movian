@@ -273,6 +273,8 @@ set_flag(glw_model_eval_context_t *ec, const token_attrib_t *a,
     set = t->t_int;
   else if(t->type == TOKEN_FLOAT)
     set = t->t_float > 0.5;
+  else if(t->type == TOKEN_VOID)
+    set = 0;
   else
     return glw_model_seterr(ec->ei, t, "Invalid assignment for attribute %s",
 			    a->name);
