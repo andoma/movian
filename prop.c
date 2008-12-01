@@ -228,11 +228,41 @@ get_notify(prop_sub_t *s)
  *
  */
 static void
-prop_build_notify_value(prop_sub_t *s)
+prop_build_notify_value(prop_sub_t *s, int direct)
 {
-  prop_notify_t *n = get_notify(s);
   prop_t *p = s->hps_value_prop;
+  prop_notify_t *n;
 
+  if(direct) {
+    /* Direct mode can be requested during subscribe to get
+       the current values updated directly without dispatch
+       via the courier */
+
+    switch(p->hp_type) {
+    case PROP_STRING:
+      s->hps_callback(s, PROP_SET_STRING, p->hp_string);
+      break;
+
+    case PROP_FLOAT:
+      s->hps_callback(s, PROP_SET_FLOAT, p->hp_float);
+      break;
+
+    case PROP_INT:
+      s->hps_callback(s, PROP_SET_INT, p->hp_int);
+      break;
+
+    case PROP_DIR:
+      s->hps_callback(s, PROP_SET_DIR);
+      break;
+
+    case PROP_VOID:
+      s->hps_callback(s, PROP_SET_VOID);
+      break;
+    }
+    return;
+  }
+
+  n = get_notify(s);
   switch(p->hp_type) {
   case PROP_STRING:
     n->hpn_string = strdup(p->hp_string);
@@ -285,7 +315,7 @@ prop_notify_value(prop_t *p, prop_sub_t *skipme)
 
   LIST_FOREACH(s, &p->hp_value_subscriptions, hps_value_prop_link)
     if(s != skipme)
-      prop_build_notify_value(s);
+      prop_build_notify_value(s, 0);
 }
 
 
@@ -293,9 +323,17 @@ prop_notify_value(prop_t *p, prop_sub_t *skipme)
  *
  */
 static void
-prop_build_notify_child(prop_sub_t *s, prop_t *p, prop_event_t event)
+prop_build_notify_child(prop_sub_t *s, prop_t *p, prop_event_t event,
+			int direct)
 {
-  prop_notify_t *n = get_notify(s);
+  prop_notify_t *n;
+
+  if(direct) {
+    s->hps_callback(s, event, p);
+    return;
+  }
+
+  n = get_notify(s);
 
   if(p != NULL)
     atomic_add(&p->hp_refcount, 1);
@@ -317,7 +355,7 @@ prop_notify_child(prop_t *child, prop_t *parent, prop_event_t event,
 
   LIST_FOREACH(s, &parent->hp_value_subscriptions, hps_value_prop_link)
     if(s != skipme)
-      prop_build_notify_child(s, child, event);
+      prop_build_notify_child(s, child, event, 0);
 }
 
 
@@ -347,7 +385,7 @@ prop_clean(prop_t *p)
  *
  */
 static void
-prop_make_dir(prop_t *p)
+prop_make_dir(prop_t *p, prop_sub_t *skipme)
 {
   if(p->hp_type == PROP_DIR)
     return;
@@ -358,7 +396,7 @@ prop_make_dir(prop_t *p)
   p->hp_selected = NULL;
   p->hp_type = PROP_DIR;
   
-  prop_notify_value(p, NULL);
+  prop_notify_value(p, skipme);
 }
 
 
@@ -374,7 +412,7 @@ prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme)
 
   if(parent != NULL) {
 
-    prop_make_dir(parent);
+    prop_make_dir(parent, skipme);
 
     if(name != NULL) {
       TAILQ_FOREACH(hp, &parent->hp_childs, hp_parent_link) {
@@ -433,7 +471,7 @@ prop_set_parent_ex(prop_t *p, prop_t *parent, prop_sub_t *skipme)
 
   hts_mutex_lock(&prop_mutex);
 
-  prop_make_dir(parent);
+  prop_make_dir(parent, skipme);
 
   p->hp_parent = parent;
   TAILQ_INSERT_TAIL(&parent->hp_childs, p, hp_parent_link);
@@ -571,10 +609,12 @@ prop_subfind(prop_t *p, const char **name, int follow_symlinks)
  */
 prop_sub_t *
 prop_subscribe(struct prop *prop, const char **name,
-	       prop_callback_t *cb, void *opaque, prop_courier_t *pc)
+	       prop_callback_t *cb, void *opaque, prop_courier_t *pc,
+	       int flags)
 {
   prop_t *p, *value, *canonical, *c;
   prop_sub_t *s;
+  int direct = !!(flags & PROP_SUB_DIRECT_UPDATE);
 
   if(name == NULL) {
     /* No name given, just subscribe to the supplied prop */
@@ -626,13 +666,14 @@ prop_subscribe(struct prop *prop, const char **name,
   s->hps_opaque = opaque;
   s->hps_refcount = 1;
 
-  prop_build_notify_value(s);
+  prop_build_notify_value(s, direct);
 
   if(value->hp_type == PROP_DIR) {
     TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
       prop_build_notify_child(s, c, 
 			      value->hp_selected == c ? 
-			      PROP_ADD_SELECTED_CHILD : PROP_ADD_CHILD);
+			      PROP_ADD_SELECTED_CHILD : PROP_ADD_CHILD,
+			      direct);
   }
 
   hts_mutex_unlock(&prop_mutex);
@@ -844,13 +885,13 @@ relink_subscriptions(prop_t *src, prop_t *dst)
     s->hps_value_prop = src;
 
     /* Update with new value */
-    prop_build_notify_value(s);
+    prop_build_notify_value(s, 0);
 
     if(src->hp_type == PROP_DIR) {
       TAILQ_FOREACH(c, &src->hp_childs, hp_parent_link)
 	prop_build_notify_child(s, c,
 				src->hp_selected == c ? 
-				PROP_ADD_SELECTED_CHILD : PROP_ADD_CHILD);
+				PROP_ADD_SELECTED_CHILD : PROP_ADD_CHILD, 0);
     }
   }
 

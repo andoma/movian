@@ -169,7 +169,7 @@ settings_add_bool(prop_t *parent, const char *id, const char *title,
   s->s_callback = cb;
   s->s_opaque = opaque;
   
-  sub = prop_subscribe(v, NULL, callback_bool, s, NULL);
+  sub = prop_subscribe(v, NULL, callback_bool, s, NULL, 0);
   s->s_sub = sub;
   
   settings_set_parent(r, parent);
@@ -215,7 +215,7 @@ settings_add_multiopt(prop_t *parent, const char *id, const char *title,
   s->s_opaque = opaque;
   s->s_prop = r;
   
-  sub = prop_subscribe(o, NULL, callback_string, s, NULL);
+  sub = prop_subscribe(o, NULL, callback_string, s, NULL, 0);
   s->s_sub = sub;
   
   settings_set_parent(r, parent);
