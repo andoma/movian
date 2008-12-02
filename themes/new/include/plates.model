@@ -1,7 +1,6 @@
 #define PLATE_FOCUSABLE() {
   .focusable = true;
   .focusCursor = true;
-  .focusAlpha = true;
 }
 
 #define PLATE_SQUARE_MID(BODY)
@@ -60,7 +59,6 @@
       .source = "theme://images/plate256.png";
       .focusable = ENABLE;
       .focusCursor = ENABLE;
-      .focusAlpha = ENABLE;
       .borderScale = true;
       
       .textureBorders = [0.2,  0.2,  0.2,  0.2];

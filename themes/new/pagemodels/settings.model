@@ -8,9 +8,6 @@ widget(container_y, {
     .orientation = vertical;
     .slices = 10;
     cloner($page.nodes, container_z, {
-     
-      .focusAlpha = true;
-
       PLATE_WIDE(
         widget(animator, {
 	  .source = "theme://settings/" + $self.type + ".model";

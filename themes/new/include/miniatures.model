@@ -5,7 +5,6 @@
 {
   widget(bitmap, {
     .focusCursor = true;
-    .focusAlpha  = true;
     .source = "theme://images/plate256.png";
 
     widget(container_y, {

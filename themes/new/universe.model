@@ -31,7 +31,6 @@ widget(form, {
 	      .source = "theme://images/plate256.png";
 	      .focusable = true;
 	      .focusCursor = true;
-	      .focusAlpha = true;
 	      
 	      onEvent(enter, genericEvent(navigator, back, ""));
 
