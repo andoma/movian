@@ -86,7 +86,6 @@ typedef enum {
   GLW_ATTRIB_ASPECT,
   GLW_ATTRIB_ALPHA,
   GLW_ATTRIB_ANGLE,
-  GLW_ATTRIB_U32,
   GLW_ATTRIB_ALIGNMENT,
   GLW_ATTRIB_SET_FLAGS,
   GLW_ATTRIB_CLR_FLAGS,
@@ -381,8 +380,6 @@ typedef struct glw {
   float glw_alpha;                   /* Alpha set by user */
   float glw_extra;
 
-  uint32_t glw_u32;
-
   float glw_time;                    /* Time constant */
 
   glw_alignment_t glw_alignment;
@@ -399,13 +396,7 @@ typedef struct glw {
 
 } glw_t;
 
-#define glw_get_u32(w) ((w)->glw_u32)
-
-
-#define GLW_TEXT_UTF8     0x1
 #define GLW_TEXT_EDITABLE 0x2
-
-void glw_init_global(void);
 
 int glw_init(glw_root_t *gr);
 
@@ -509,7 +500,6 @@ do {						\
   case GLW_ATTRIB_PROPROOT:         		\
     (void)va_arg(ap, void *);			\
     break;					\
-  case GLW_ATTRIB_U32:				\
   case GLW_ATTRIB_ALIGNMENT:			\
   case GLW_ATTRIB_SET_FLAGS:			\
   case GLW_ATTRIB_CLR_FLAGS:			\

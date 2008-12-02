@@ -213,10 +213,6 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       w->glw_extra = va_arg(ap, double);
       break;
 
-    case GLW_ATTRIB_U32:
-      w->glw_u32 = va_arg(ap, uint32_t);
-      break;
-
     case GLW_ATTRIB_ALIGNMENT:
       w->glw_alignment = va_arg(ap, int);
       break;
