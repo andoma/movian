@@ -37,7 +37,6 @@
 #include "glw_deck.h"
 #include "glw_expander.h"
 #include "glw_slideshow.h"
-#include "glw_selection.h"
 #include "glw_mirror.h"
 #include "glw_animator.h"
 #include "glw_fx_texrot.h"
