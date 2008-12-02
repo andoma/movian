@@ -29,7 +29,7 @@ void
 glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c;
-  float d = -1.0f, e1, e2, tw = 0;
+  float d = -1.0f, e1, tw = 0;
   int xy;
   float aspect = w->glw_aspect > 0 ? w->glw_aspect : rc->rc_aspect;
   glw_rctx_t rc0 = *rc;
@@ -41,7 +41,7 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
   glw_flush_render_list(w);
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-    tw += c->glw_weight + c->glw_weight_extra;
+    tw += c->glw_weight;
 
   tw *= 0.5f;
 
@@ -65,11 +65,10 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
 
     if(c->glw_class != GLW_DUMMY) {
 
-      e1 = c->glw_weight                         / tw / 2.0f;
-      e2 = (c->glw_weight + c->glw_weight_extra) / tw / 2.0f;
+      e1 = c->glw_weight / tw / 2.0f;
 
       if(xy) {
-	c->glw_parent_pos.x = d + e2 + w->glw_displacement.x;
+	c->glw_parent_pos.x = d + e1 + w->glw_displacement.x;
 	c->glw_parent_pos.y = 0.0    + w->glw_displacement.y;
 	c->glw_parent_pos.z = 0.0    + w->glw_displacement.z;
 
@@ -82,7 +81,7 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
       } else {
 
 	c->glw_parent_pos.x = 0         + w->glw_displacement.x;
-	c->glw_parent_pos.y = -(d + e2) + w->glw_displacement.y;
+	c->glw_parent_pos.y = -(d + e1) + w->glw_displacement.y;
 	c->glw_parent_pos.z = 0.0       + w->glw_displacement.z;
 
 	c->glw_parent_scale.x = 1.0f;
@@ -100,7 +99,7 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
       if(c->glw_weight > 0.01)
 	glw_link_render_list(w, c);
     }
-    d += (c->glw_weight + c->glw_weight_extra) / tw;
+    d += c->glw_weight / tw;
   }
 }
 

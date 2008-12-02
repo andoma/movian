@@ -376,7 +376,6 @@ typedef struct glw {
 
   glw_rgb_t glw_col;                 /* Primary widget color */
   float glw_weight;                  /* Relative weight */
-  float glw_weight_extra;  		  
   float glw_aspect;                  /* Aspect */
   const char *glw_caption;           /* Widget caption */
   float glw_alpha;                   /* Alpha set by user */
