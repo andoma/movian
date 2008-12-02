@@ -332,7 +332,6 @@ static const token_attrib_t attribtab[] = {
   {"borderScale",     set_flag,   GLW_BORDER_SCALE_CHILDS},
   {"focusable",       set_flag,   GLW_FOCUSABLE},
   {"focusCursor",     set_flag,   GLW_FOCUS_DRAW_CURSOR},
-  {"focusAlpha",      set_flag,   GLW_FOCUS_ADJ_ALPHA},
   {"keepAspect",      set_flag,   GLW_KEEP_ASPECT},
   {"debug",           set_flag,   GLW_DEBUG},
   {"skeleton",        set_flag,   GLW_DRAW_SKEL},

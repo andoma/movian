@@ -61,9 +61,4 @@ void glw_form_ctor(glw_t *w, int init, va_list ap);
 
 void glw_form_cursor_set(glw_rctx_t *rc);
 
-float glw_form_alpha_get(glw_t *w);
-
-void glw_form_alpha_update(glw_t *w, glw_rctx_t *rc);
-
-
 #endif /* GLW_FORM_H */

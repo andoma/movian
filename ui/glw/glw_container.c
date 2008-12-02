@@ -34,7 +34,6 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
   float aspect = w->glw_aspect > 0 ? w->glw_aspect : rc->rc_aspect;
   glw_rctx_t rc0 = *rc;
 
-  glw_form_alpha_update(w, rc);
   if(w->glw_alpha < 0.01)
       return;
 
@@ -111,8 +110,6 @@ glw_container_z_layout(glw_t *w, glw_rctx_t *rc)
   glw_t *c;
   glw_rctx_t rc0 = *rc;
 
-  glw_form_alpha_update(w, rc);
-
   if(w->glw_alpha < 0.01)
       return;
 
@@ -145,7 +142,7 @@ void
 glw_container_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c;
-  float alpha = glw_form_alpha_get(w) * rc->rc_alpha * w->glw_alpha;
+  float alpha = rc->rc_alpha * w->glw_alpha;
   float aspect = w->glw_aspect > 0 ? w->glw_aspect : rc->rc_aspect;
   glw_rctx_t rc0 = *rc;
 

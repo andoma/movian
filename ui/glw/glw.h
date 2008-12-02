@@ -362,7 +362,7 @@ typedef struct glw {
 					   at all times */
 #define GLW_DRAW_SKEL           0x40    /* Draw extra lines to
 					    visualize details */
-#define GLW_FOCUS_ADJ_ALPHA     0x80    /* Adjust alpha based on focus */
+
 #define GLW_FOCUS_DRAW_CURSOR   0x100   /* Draw cursor when we have focus */
 #define GLW_SCALE_CHILDS        0x200   /* Scaledown unfocuseded childs */
 #define GLW_DEBUG               0x400   /* Debug this object */

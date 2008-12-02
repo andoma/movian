@@ -261,30 +261,6 @@ gff_render(glw_root_t *gr, glw_form_focus_t *gff, float aspect)
 }
 
 
-
-/**
- *
- */
-void
-glw_form_alpha_update(glw_t *w, glw_rctx_t *rc)
-{
-  w->glw_focus = GLW_LP(8, w->glw_focus, rc->rc_focused ? 1 : 0);
-}
-
-
-/**
- *
- */
-float
-glw_form_alpha_get(glw_t *w)
-{
-  if(w->glw_flags & GLW_FOCUS_ADJ_ALPHA)
-    return w->glw_focus * 0.5 + 0.5;
-  return 1.0;
-}
-
-
-
 /**
  *
  */

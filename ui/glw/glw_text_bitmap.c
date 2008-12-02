@@ -321,7 +321,6 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
     return;
 
   gtb->cursor_flash++;
-  glw_form_alpha_update(w, rc);
 
   glw_set_active0(w);
 
@@ -377,8 +376,6 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
     gtbd->gtbd_data = NULL;
   }
 
-
-  alpha *= glw_form_alpha_get(w);
   a = cos((float)gtb->cursor_flash / 10.0f) * 0.5 + 0.5;
  
   glPushMatrix();

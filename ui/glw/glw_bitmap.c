@@ -232,7 +232,7 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_bitmap_t *gb = (void *)w;
   glw_texture_t *gt = gb->gb_tex;
-  float a = rc->rc_alpha * w->glw_alpha * glw_form_alpha_get(w);
+  float a = rc->rc_alpha * w->glw_alpha;
   glw_rctx_t rc0;
   glw_t *c;
   int pop = 0;
@@ -371,7 +371,7 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
       rc0.rc_aspect *= xs / ys;
     }
-    rc0.rc_alpha = rc->rc_alpha * glw_form_alpha_get(w);
+    rc0.rc_alpha = rc->rc_alpha;
 
     glw_render0(c, &rc0);
 
@@ -390,8 +390,6 @@ glw_bitmap_layout(glw_t *w, glw_rctx_t *rc)
   glw_bitmap_t *gb = (void *)w;
   glw_texture_t *gt = gb->gb_tex;
   glw_t *c;
-
-  glw_form_alpha_update(w, rc);
 
   if(gt != NULL)
     glw_tex_layout(w->glw_root, gt);

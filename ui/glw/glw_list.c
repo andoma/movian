@@ -175,8 +175,6 @@ glw_list_layout(glw_t *w, glw_rctx_t *rc)
 
   glw_flush_render_list(w);
 
-  glw_form_alpha_update(w, rc);
-
   if((o = l->fixed_orientation) == GLW_ORIENTATION_UNKNOWN)
     o = rc->rc_aspect > 1.0 ? GLW_ORIENTATION_HORIZONTAL : 
       GLW_ORIENTATION_VERTICAL;
@@ -301,7 +299,7 @@ glw_list_render(glw_t *w, glw_rctx_t *rc)
   glw_list_t *l = (glw_list_t *)w;
   glw_rctx_t rc0 = *rc;
   glw_t *c;
-  float alpha = glw_form_alpha_get(w) * rc->rc_alpha * w->glw_alpha;
+  float alpha = rc->rc_alpha * w->glw_alpha;
 
   if(alpha < 0.01)
     return;
