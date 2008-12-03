@@ -131,11 +131,11 @@ glw_list_layout_child(glw_list_t *l, glw_t *c, glw_rctx_t *rc,
 
   switch(l->orientation) {
   case GLW_ORIENTATION_HORIZONTAL:
-    v = fabs(c->glw_parent_pos.x) - 1.0f;
+    v = fabs(c->glw_parent_pos.x) - 0.9f;
     break;
       
   case GLW_ORIENTATION_VERTICAL:
-    v = fabs(c->glw_parent_pos.y) - 1.0f;
+    v = fabs(c->glw_parent_pos.y) - 0.9f;
     break;
 
   default:
