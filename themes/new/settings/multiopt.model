@@ -13,7 +13,7 @@ widget(container_x, {
       .focus = true;
       .keepAspect = true;
       .weight = 0.1;
-      .source = "theme://images/left.png";
+      .source = "theme://icons/left.png";
       onEvent(enter, internalEvent("choiceDeck", decr));
     });
 
@@ -34,7 +34,7 @@ widget(container_x, {
 
       .keepAspect = true;
       .weight = 0.1;
-      .source = "theme://images/right.png";
+      .source = "theme://icons/right.png";
 
       onEvent(enter, internalEvent("choiceDeck", incr));
     });

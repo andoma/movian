@@ -26,38 +26,13 @@ widget(cursor, {
 
 	    space(0.1);
 
-	    widget(bitmap, {
-	    
-	      .source = "theme://images/plate256.png";
-	      .focus = target;
-	      .focusCursor = true;
-	      .debug = true;
-
-	      onEvent(enter, genericEvent(navigator, back, ""));
-
-	      widget(label, {
-		.caption = "Back";
-	      });
-	    });
+	    BUTTON_IMAGE(1, 1, "theme://icons/back.png",
+			 genericEvent(navigator, back, ""));
 	    
 	    widget(label, {
 	      .aspect = 40;
 	      .weight = 20;
 	      .caption = $global.nav.currentpage.uri;
-	    });
-
-	    widget(bitmap, {
-	    
-	      .source = "theme://images/plate256.png";
-	      .focus = target;
-	      .focusCursor = true;
-	      .debug = true;
-
-	      onEvent(enter, genericEvent(navigator, back, ""));
-
-	      widget(label, {
-		.caption = "hemlo";
-	      });
 	    });
 
 	    space(0.1);

@@ -7,7 +7,13 @@ widget(container_x, {
 
   widget(bitmap, {
     .keepAspect = true;
-    .source = "theme://images/dir.png";
+    .source =  translate($self.subtype,
+			 [
+			  "audio", "theme://icons/speaker.png",
+			  "display", "theme://icons/screen.png"
+
+			  ],
+			 "theme://icons/config.png");
   });
 
   widget(label, {

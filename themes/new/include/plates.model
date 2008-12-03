@@ -82,3 +82,31 @@
     });
   });
 };
+
+
+
+#define BUTTON_IMAGE(ENABLE, ASPECT, IMAGE, EVENTCODE) {
+  widget(container_y, {
+    .aspect = ASPECT;
+    .alpha = ENABLE;
+
+    widget(bitmap, {
+      
+      .source = "theme://images/plate256.png";
+      .focus = ENABLE;
+      .focusCursor = ENABLE;
+      .borderScale = true;
+      
+      .textureBorders = [0.2,  0.2,  0.2,  0.2];
+      .vertexBorders  = [0.1,  0.1,  0.1,  0.1];
+
+      onEvent(enter, EVENTCODE);
+      
+      widget(bitmap, {
+	.weight = 1.75;
+	.source = IMAGE;
+	.keepAspect = true;
+      });
+    });
+  });
+};

@@ -28,11 +28,11 @@ widget(container_y, {
 	      .keepAspect = true;
 	      .source = translate($self.media.type,
 		  [
-		   "archive",   "theme://images/dir.png",
-		   "directory", "theme://images/dir.png",
-		   "audio",     "theme://images/audio.png",
-		   "video",     "theme://images/movie.png",
-		   "dvd",       "theme://images/movie.png"
+		   "archive",   "theme://icons/dir.png",
+		   "directory", "theme://icons/dir.png",
+		   "audio",     "theme://icons/audio.png",
+		   "video",     "theme://icons/movie.png",
+		   "dvd",       "theme://icons/movie.png"
 		   ],
 				  "theme://images/file.png");
 	    });

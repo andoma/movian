@@ -17,7 +17,7 @@ widget(container_y, {
   });
 
   widget(container_x, {
-    BUTTON($page.mayadd, 2.0, "Add", "theme://images/new.png", {
+    BUTTON_IMAGE($page.mayadd, 2.0, "theme://icons/add.png", {
       createChild($page.nodes);
     });
     space(6.0);
