@@ -182,6 +182,8 @@ typedef struct glw_model_eval_context {
 
   int passive_subscriptions;
 
+  struct glw_prop_sub_list *sublist;
+
 } glw_model_eval_context_t;
 
 

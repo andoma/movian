@@ -84,6 +84,7 @@ glw_model_create2(glw_root_t *gr, token_t *sof, const char *src, glw_t *parent,
   ec.w = r;
   ec.ei = &ei;
   ec.prop = prop;
+  ec.sublist = &ec.w->glw_prop_subscriptions;
 
   if(glw_model_eval_block(sof, &ec)) {
     glw_destroy0(ec.w);

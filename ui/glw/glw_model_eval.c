@@ -365,6 +365,7 @@ eval_array(glw_model_eval_context_t *pec, token_t *t0)
   ec.rpn = pec->rpn;
   ec.gr = pec->gr;
   ec.passive_subscriptions = pec->passive_subscriptions;
+  ec.sublist = pec->sublist;
 
   for(t = t0->child; t != NULL; t = t->next) {
     ec.alloc = NULL;
@@ -586,6 +587,8 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p,
   if(selected)
     glw_signal0(parent, GLW_SIGNAL_SELECT, n.w);
 
+  n.sublist = &n.w->glw_prop_subscriptions;
+
   glw_model_eval_block(body, &n);
   glw_model_free_chain(body);
 
@@ -605,7 +608,7 @@ cloner_add_child(glw_prop_sub_t *gps, prop_t *p,
 			  if it is removed from the pending list */
 
   if(gps->gps_cloner_body == NULL) {
-    
+
     /*
      * The cloner body has not been evaluated yet so we can not
      * create the child. This happens when we subscribe initially.
@@ -844,6 +847,7 @@ subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
   gps->gps_line = self->line;
 #endif
 
+
   s = prop_subscribe(ec->prop, propname, prop_callback, gps,
 		     w->glw_root->gr_courier, PROP_SUB_DIRECT_UPDATE);
 
@@ -856,7 +860,7 @@ subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
   gps->gps_sub = s;
 
   gps->gps_widget = w;
-  LIST_INSERT_HEAD(&w->glw_prop_subscriptions, gps, gps_link);
+  LIST_INSERT_HEAD(ec->sublist, gps, gps_link);
 
   gps->gps_rpn = ec->passive_subscriptions ? NULL : ec->rpn;
 
@@ -957,6 +961,7 @@ glw_model_eval_rpn(token_t *t, glw_model_eval_context_t *pec, int *copyp)
   ec.rpn = t;
   ec.gr = pec->gr;
   ec.passive_subscriptions = pec->passive_subscriptions;
+  ec.sublist = pec->sublist;
 
   r = glw_model_eval_rpn0(t, &ec);
 
@@ -1131,6 +1136,8 @@ glwf_widget(glw_model_eval_context_t *ec, struct token *self)
 		     GLW_ATTRIB_PROPROOT, ec->prop,
 		     NULL);
   
+  n.sublist = &n.w->glw_prop_subscriptions;
+
   if(glw_model_eval_block(b, &n))
     return -1;
 
@@ -1250,6 +1257,9 @@ glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem)
   glw_event_map_eval_block_t *b = (glw_event_map_eval_block_t *)gem;
   token_t *body;
   glw_model_eval_context_t n;
+  struct glw_prop_sub_list l;
+
+  LIST_INIT(&l);
 
   memset(&n, 0, sizeof(n));
   n.prop = b->prop;
@@ -1257,9 +1267,11 @@ glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem)
   n.gr = w->glw_root;
   n.w = w;
   n.passive_subscriptions = 1;
+  n.sublist = &l;
 
   body = glw_model_clone_chain(b->block);
   glw_model_eval_block(body, &n);
+  glw_prop_subscription_destroy_list(&l);
   glw_model_free_chain(body);
 }
 
