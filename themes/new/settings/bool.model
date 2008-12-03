@@ -1,7 +1,7 @@
 widget(container_x, {
 
   .focusCursor = true;
-  .focusable = true;
+  .focus = true;
 
   onEvent(enter, {
     $self.value = 1 ^^ $self.value;

@@ -16,8 +16,11 @@ widget(container_y, {
     });
   });
 
-  BUTTON($page.mayadd, 2.0, "Add", "theme://images/new.png", {
-    createChild($page.nodes);
+  widget(container_x, {
+    BUTTON($page.mayadd, 2.0, "Add", "theme://images/new.png", {
+      createChild($page.nodes);
+    });
+    space(6.0);
   });
 });
 

@@ -583,7 +583,7 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
   }
 
   glw_lock(&gx11->gr);
-  r = glw_signal0(gx11->universe, GLW_SIGNAL_EVENT, e);
+  r = glw_event(&gx11->gr, e);
   glw_unlock(&gx11->gr);
 
   if(r == 0) {
@@ -684,7 +684,6 @@ layout_draw(glw_x11_t *gx11, float aspect)
   
   memset(&rc, 0, sizeof(rc));
   rc.rc_aspect = aspect;
-  rc.rc_focused = 1;
   rc.rc_fullscreen = 0;
   glw_layout0(gx11->universe, &rc);
 

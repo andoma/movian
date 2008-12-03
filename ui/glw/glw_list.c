@@ -38,8 +38,6 @@ glw_list_reposition_childs(glw_list_t *l)
     return;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-    if(c->glw_flags & GLW_HIDE)
-      continue;
 
     if(l->orientation == GLW_ORIENTATION_HORIZONTAL) {
       c->glw_parent_x = w->glw_displacement.x + v;
@@ -67,7 +65,7 @@ glw_list_layout_child(glw_list_t *l, glw_t *c, glw_rctx_t *rc,
 {
   glw_rctx_t rc0 = *rc;
   float scale, xs, ys, zdisplace;
-  int issel = c == l->w.glw_focused;
+  int issel = l->focused_child == c;
   float alpha = 1.0;
   float v;
 
@@ -130,8 +128,6 @@ glw_list_layout_child(glw_list_t *l, glw_t *c, glw_rctx_t *rc,
   c->glw_parent_pos.z   = GLW_LP(8, c->glw_parent_pos.z,    zdisplace);
 
   rc0.rc_aspect = rc->rc_aspect * c->glw_parent_scale.x / c->glw_parent_scale.y;
-  rc0.rc_focused = rc->rc_focused && issel;
-
   c->glw_parent_alpha = GLW_LP(16, c->glw_parent_alpha, alpha);
 
   switch(l->orientation) {
@@ -152,7 +148,7 @@ glw_list_layout_child(glw_list_t *l, glw_t *c, glw_rctx_t *rc,
   c->glw_parent_alpha *= v;
   glw_layout0(c, &rc0);
 
-  if(c->glw_parent_alpha < 0.02 || c->glw_flags & GLW_HIDE)
+  if(c->glw_parent_alpha < 0.02)
     return 0;
 
   glw_link_render_list(&l->w, c);
@@ -207,19 +203,17 @@ glw_list_layout(glw_t *w, glw_rctx_t *rc)
     glw_list_reposition_childs(l);
   }
 
-  if((c = w->glw_focused) == NULL) {
-    c = TAILQ_FIRST(&w->glw_childs);
-    if(c == NULL) {
-      /* If we have nothing to layout we should make sure our
-	 parent does not have us focused, it will mess up focus */
-    
-      if(w->glw_parent->glw_focused == w)
-	w->glw_parent->glw_focused = NULL;
-      return;
-    }
+  c = glw_get_indirectly_focused_child(w);
 
-    w->glw_focused = c;
-    glw_signal0(c, GLW_SIGNAL_FOCUSED_UPDATE_ADVISORY, NULL);
+  if(c != NULL) 
+    l->focused_child = c;
+  else
+    c = l->focused_child;
+
+  if(c == NULL) {
+    c = TAILQ_FIRST(&w->glw_childs);
+    if(c == NULL)
+      return;
   }
 
   thres = 1 + 10 * 1.0f / (float)l->visible;
@@ -309,9 +303,6 @@ glw_list_render(glw_t *w, glw_rctx_t *rc)
     rc0.rc_alpha  = alpha * c->glw_parent_alpha;
     if(l->w.glw_flags & GLW_EXPAND_CHILDS)
       rc0.rc_zoom = c->glw_parent_zoom;
-
-    rc0.rc_focused = rc->rc_focused && c == w->glw_focused;
-
     glw_render_TS(c, &rc0, rc);
   }
 }
@@ -322,9 +313,7 @@ static int
 glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_rctx_t *rc = extra;
-  glw_list_t *h = (void *)w;
-  glw_t *c = w->glw_focused, *n;
-  event_t *e;
+  glw_list_t *l = (void *)w;
 
   switch(signal) {
   default:
@@ -338,78 +327,16 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     return 0;
 
   case GLW_SIGNAL_CHILD_CREATED:
-    if(w->glw_focused == NULL) {
-      c = w->glw_focused = extra;
-      glw_signal0(c, GLW_SIGNAL_FOCUSED_UPDATE_ADVISORY, NULL);
-    }
-    /* FALLTHRU */
   case GLW_SIGNAL_CHILD_DESTROYED:
-  case GLW_SIGNAL_CHILD_VISIBLE:
-  case GLW_SIGNAL_CHILD_HIDDEN:
-    h->reposition_needed = 1;
+    if(l->focused_child == extra)
+      l->focused_child = NULL;
+
+    l->reposition_needed = 1;
     return 0;
 
-  case GLW_SIGNAL_FOCUS:
-    w->glw_focused = c;
+  case GLW_SIGNAL_SELECT:
+    w->glw_selected = extra;
     return 0;
-
-  case GLW_SIGNAL_EVENT:
-    if(w->glw_alpha < 0.01)
-      return 0; /* If we're not visible, don't consume events */
-
-    if(c == NULL)
-      return 0;
-
-    e = extra;
-    n = NULL;
-
-    if(glw_signal0(c, GLW_SIGNAL_EVENT, e))
-      return 1;
-
-    switch(e->e_type) {
-    default:
-      break;
-
-    case EVENT_LEFT:
-      if(h->orientation == GLW_ORIENTATION_HORIZONTAL)
-	n = glw_get_prev_n(c, 1);
-      break;
-
-    case EVENT_RIGHT:
-      if(h->orientation == GLW_ORIENTATION_HORIZONTAL)
-	n = glw_get_next_n(c, 1);
-      break;
-
-    case EVENT_UP:
-      if(h->orientation == GLW_ORIENTATION_VERTICAL)
-	n = glw_get_prev_n(c, 1);
-      break;
-
-    case EVENT_DOWN:
-      if(h->orientation == GLW_ORIENTATION_VERTICAL)
-	n = glw_get_next_n(c, 1);
-      break;
-
-    case EVENT_INCR:
-      n = glw_get_next_n(c, 1);
-      if(n == NULL)
-	n = TAILQ_FIRST(&w->glw_childs);
-      break;
-
-    case EVENT_DECR:
-      n = glw_get_prev_n(c, 1);
-      break;
-    }
-
-    if(n != NULL) {
-      if(n != c) {
-	w->glw_focused = n;
-	glw_signal0(n, GLW_SIGNAL_FOCUSED_UPDATE, NULL);
-      }
-      return 1;
-    }
-
-    return glw_navigate(w, extra);
   }
   return 0;
 }
@@ -424,7 +351,6 @@ glw_list_ctor(glw_t *w, int init, va_list ap)
 
   if(init) {
     glw_signal_handler_int(w, glw_list_callback);
-    w->glw_flags |= GLW_FOCUSABLE;
     h->visible = 5;
   }
 

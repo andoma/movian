@@ -409,7 +409,8 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
     glw_rescale(aspect, 1.0);
     glTranslatef(1.0, 0, 0);
-    if(rc->rc_focused && gtb->gtb_edit_ptr >= 0) {
+
+    if(glw_is_focused(w) && gtb->gtb_edit_ptr >= 0) {
       glColor4f(1,1,1, alpha * a);
       glBegin(GL_QUADS);
       glVertex3f( 0.05, -0.9f, 0.0f);
@@ -419,8 +420,8 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
       glEnd();
     }
 
-    if(w->glw_flags & GLW_FOCUS_DRAW_CURSOR && rc->rc_focused)
-      glw_form_cursor_set(rc);
+    if(glw_is_focusable(w))
+      glw_store_matrix(w, rc);
 
     glPopMatrix();
     return;
@@ -446,7 +447,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
     break;
   }
 
-  if(rc->rc_focused &&
+  if(glw_is_focused(w) &&
      gtb->gtb_edit_ptr >= 0 && gtbd->gtbd_cursor_scale > 0 &&
      gtb->gtb_edit_ptr <= gtbd->gtbd_cursor_pos_size) {
     i = gtb->gtb_edit_ptr;
@@ -468,8 +469,8 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
     glEnd();      
   }
 
-  if(w->glw_flags & GLW_FOCUS_DRAW_CURSOR && rc->rc_focused)
-    glw_form_cursor_set(rc);
+  if(glw_is_focusable(w))
+    glw_store_matrix(w, rc);
 
   glActiveTextureARB(GL_TEXTURE0_ARB);
 
@@ -615,7 +616,7 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
     break;
   case GLW_SIGNAL_EVENT:
     if(w->glw_class == GLW_LABEL)
-      return glw_navigate(w, extra);
+      return 0;
 
     e = extra;
 
@@ -687,7 +688,7 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
       return 1;
 
     }
-    return glw_navigate(w, e);
+    return 0;
   }
   return 0;
 }

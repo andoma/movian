@@ -33,6 +33,8 @@ typedef struct glw_list {
 
   float expansion_factor; /* factor */
 
+  glw_t *focused_child;
+
 } glw_list_t;
 
 void glw_list_ctor(glw_t *w, int init, va_list ap);

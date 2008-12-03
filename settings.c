@@ -191,7 +191,7 @@ callback_string(struct prop_sub *sub, prop_event_t event, ...)
   va_list ap;
   va_start(ap, event);
 
-  if(event == PROP_FOCUS_CHILD) {
+  if(event == PROP_SELECT_CHILD) {
     c = va_arg(ap, prop_t *);
     cb = s->s_callback;
     cb(s->s_opaque, c ? c->hp_name : NULL);
@@ -239,7 +239,7 @@ settings_multiopt_add_opt(setting_t *parent, const char *id, const char *title,
 
 
   if(selected)
-    prop_focus_ex(o, 0, parent->s_sub);
+    prop_select_ex(o, 0, parent->s_sub);
 }
 
 

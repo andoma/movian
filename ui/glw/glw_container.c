@@ -35,7 +35,7 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
   glw_rctx_t rc0 = *rc;
 
   if(w->glw_alpha < 0.01)
-      return;
+    return;
 
   glw_flush_render_list(w);
 
@@ -90,10 +90,6 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
 	rc0.rc_aspect = aspect / e1;
       }
 
-      if(w->glw_focused == NULL && glw_is_focus_candidate(c))
-	w->glw_focused = c;
-
-      rc0.rc_focused = rc->rc_focused && w->glw_focused == c;
       glw_layout0(c, &rc0);
       if(c->glw_weight > 0.01)
 	glw_link_render_list(w, c);
@@ -111,7 +107,7 @@ glw_container_z_layout(glw_t *w, glw_rctx_t *rc)
   glw_rctx_t rc0 = *rc;
 
   if(w->glw_alpha < 0.01)
-      return;
+    return;
 
   glw_flush_render_list(w);
 
@@ -124,11 +120,6 @@ glw_container_z_layout(glw_t *w, glw_rctx_t *rc)
     c->glw_parent_scale.x = 1.0f;
     c->glw_parent_scale.y = 1.0f;
     c->glw_parent_scale.z = 1.0f;
-
-    rc0.rc_focused = rc->rc_focused && w->glw_focused == c;
-
-    if(w->glw_focused == NULL && glw_is_focus_candidate(c))
-      w->glw_focused = c;
 
     glw_layout0(c, &rc0);
     glw_link_render_list(w, c);
@@ -192,10 +183,10 @@ glw_container_render(glw_t *w, glw_rctx_t *rc)
     }
   }
 
-  rc0.rc_alpha  = alpha;
-
-  if(w->glw_flags & GLW_FOCUS_DRAW_CURSOR && rc->rc_focused)
-    glw_form_cursor_set(rc);
+  rc0.rc_alpha = alpha;
+  
+  if(glw_is_focusable(w))
+    glw_store_matrix(w, rc);
 
   TAILQ_FOREACH(c, &w->glw_render_list, glw_render_link) {
 
@@ -208,9 +199,8 @@ glw_container_render(glw_t *w, glw_rctx_t *rc)
 	     c->glw_parent_scale.y, 
 	     c->glw_parent_scale.z);
 
-    rc0.rc_form   = rc->rc_form;
     rc0.rc_aspect = aspect * c->glw_parent_scale.x / c->glw_parent_scale.y;
-    rc0.rc_focused = rc->rc_focused && w->glw_focused == c;
+
     glw_render0(c, &rc0);
     glPopMatrix();
   }
@@ -224,26 +214,18 @@ static int
 glw_container_callback(glw_t *w, void *opaque, glw_signal_t signal,
 		       void *extra)
 {
-  glw_t *c = extra;
+  glw_t *c;
+
   switch(signal) {
   case GLW_SIGNAL_RENDER:
     glw_container_render(w, extra);
     break;
+
   case GLW_SIGNAL_EVENT:
-    return glw_navigate(w, extra);
-
-  case GLW_SIGNAL_CHILD_DESTROYED:
-    if(TAILQ_FIRST(&w->glw_childs) == extra &&
-       TAILQ_NEXT(c, glw_parent_link) == NULL) {
-      /* Last child to be destoyed */
-
-      if(w->glw_parent->glw_focused == w) {
-	/* We can no longer be selected */
-	w->glw_parent->glw_focused = NULL;
-      }
-    }
+    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
+      if(glw_signal0(c, GLW_SIGNAL_EVENT, extra))
+	return 1;
     break;
-
 
   default:
     break;

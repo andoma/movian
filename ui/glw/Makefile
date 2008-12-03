@@ -12,10 +12,10 @@ SRCS += glw_model.c glw_model_lexer.c glw_model_parser.c \
 
 SRCS += glw_container.c glw_text.c glw_text_bitmap.c \
 	glw_bitmap.c glw_tex_loader.c \
-	glw_helpers.c glw_external.c glw_array.c \
+	glw_helpers.c glw_external.c \
 	glw_form.c glw_rotator.c \
 	glw_list.c glw_cubestack.c glw_deck.c glw_zstack.c \
-	glw_expander.c glw_slideshow.c glw_scaler.c glw_event.c \
+	glw_expander.c glw_scaler.c glw_event.c \
 	glw_mirror.c glw_animator.c glw_transitions.c \
 	glw_fx_texrot.c
 

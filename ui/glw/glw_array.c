@@ -273,7 +273,6 @@ glw_array_ctor(glw_t *w, int init, va_list ap)
 
   if(init) {
     glw_signal_handler_int(w, glw_array_callback);
-    w->glw_flags |= GLW_FOCUSABLE;
     a->cursor_width = 0.1f;
     a->curx = -2;
     a->cury = -2;

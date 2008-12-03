@@ -76,11 +76,6 @@ glw_animator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     }
     return 0;
   
-  case GLW_SIGNAL_EVENT:
-    if(w->glw_focused != NULL)
-      return glw_signal0(w->glw_focused, GLW_SIGNAL_EVENT, extra);
-    break;
-
   case GLW_SIGNAL_DETACH_CHILD:
     c = extra;
     c->glw_parent_anim_tgt = 1;
@@ -88,7 +83,6 @@ glw_animator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
   case GLW_SIGNAL_CHILD_CREATED:
     c = extra;
-    w->glw_focused = c;
     c->glw_parent_anim_cur = -1;
     c->glw_parent_anim_tgt = 0;
     

@@ -20,25 +20,23 @@
 #define GLW_FORM_H
 
 
-TAILQ_HEAD(glw_form_focus_queue, glw_form_focus);
 
 /**
  *
  */
-typedef struct glw_form_focus {
+typedef struct glw_cursor_painter {
 
-  float gff_m[16];
-  float gff_m_prim[16];
+  float gcp_m[16];
+  float gcp_m_prim[16];
 
-  float gff_alpha;
-  float gff_alpha_prim;
+  float gcp_alpha;
+  float gcp_alpha_prim;
 
-  float gff_aspect;
-  float gff_aspect_prim;
+  float gcp_aspect;
+  float gcp_aspect_prim;
 
-  TAILQ_ENTRY(glw_form_focus) gff_link;
+} glw_cursor_painter_t;
 
-} glw_form_focus_t;
 
 /**
  *
@@ -46,11 +44,9 @@ typedef struct glw_form_focus {
 typedef struct glw_form {
   struct glw w;
 
-  struct glw_form_focus_queue gf_focuses;
-  glw_form_focus_t *gf_current_focus;
+  int render_cycle;
 
-  
-
+  glw_cursor_painter_t gcp;
 
 } glw_form_t;
 
@@ -59,6 +55,6 @@ void glw_cursor_layout_frame(glw_root_t *gr);
 
 void glw_form_ctor(glw_t *w, int init, va_list ap);
 
-void glw_form_cursor_set(glw_rctx_t *rc);
+int glw_navigate(glw_t *w, event_t *e);
 
 #endif /* GLW_FORM_H */

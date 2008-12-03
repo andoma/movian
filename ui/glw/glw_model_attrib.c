@@ -317,6 +317,40 @@ set_mirror(glw_model_eval_context_t *ec, const token_attrib_t *a,
 }
 
 
+/**
+ *
+ */
+static int
+set_focus(glw_model_eval_context_t *ec, const token_attrib_t *a, 
+	  struct token *t)
+{
+  glw_focus_mode_t gfm;
+
+  if(t->type == TOKEN_IDENTIFIER) {
+
+    if(!strcmp(t->t_string, "target") || !strcmp(t->t_string, "true"))
+      gfm = GLW_FOCUS_TARGET;
+    else if(!strcmp(t->t_string, "leader"))
+      gfm = GLW_FOCUS_LEADER;
+    else
+      gfm = GLW_FOCUS_NONE;
+
+  } else if(t->type == TOKEN_INT)
+    gfm = t->t_int ? GLW_FOCUS_TARGET : 0;
+  else if(t->type == TOKEN_FLOAT)
+    gfm = t->t_float > 0.5  ? GLW_FOCUS_TARGET : 0;
+  else if(t->type == TOKEN_VOID)
+    gfm = GLW_FOCUS_NONE;
+  else
+    return glw_model_seterr(ec->ei, t, "Invalid assignment for attribute %s",
+			    a->name);
+  
+  glw_set_i(ec->w, GLW_ATTRIB_FOCUSABLE, gfm, NULL);
+
+  return 0;
+}
+
+
 
 
 /**
@@ -330,7 +364,6 @@ static const token_attrib_t attribtab[] = {
   {"scaleChilds",     set_flag,   GLW_SCALE_CHILDS},
   {"expandChilds",    set_flag,   GLW_EXPAND_CHILDS},
   {"borderScale",     set_flag,   GLW_BORDER_SCALE_CHILDS},
-  {"focusable",       set_flag,   GLW_FOCUSABLE},
   {"focusCursor",     set_flag,   GLW_FOCUS_DRAW_CURSOR},
   {"keepAspect",      set_flag,   GLW_KEEP_ASPECT},
   {"debug",           set_flag,   GLW_DEBUG},
@@ -364,6 +397,7 @@ static const token_attrib_t attribtab[] = {
   {"align",           set_align,  0},
   {"orientation",     set_orientation,  0},
   {"effect",          set_transition_effect,  0},
+  {"focus",           set_focus, 0},
 };
 
 

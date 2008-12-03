@@ -182,9 +182,9 @@ prop_courier(void *aux)
       break;
 
     case PROP_ADD_CHILD:
-    case PROP_ADD_FOCUSED_CHILD:
+    case PROP_ADD_SELECTED_CHILD:
     case PROP_DEL_CHILD:
-    case PROP_FOCUS_CHILD:
+    case PROP_SELECT_CHILD:
       s->hps_callback(s, n->hpn_event, n->hpn_prop);
       if(n->hpn_prop != NULL)
 	prop_ref_dec(n->hpn_prop);
@@ -393,7 +393,7 @@ prop_make_dir(prop_t *p, prop_sub_t *skipme)
   prop_clean(p);
   
   TAILQ_INIT(&p->hp_childs);
-  p->hp_focused = NULL;
+  p->hp_selected = NULL;
   p->hp_type = PROP_DIR;
   
   prop_notify_value(p, skipme);
@@ -532,16 +532,16 @@ prop_destroy0(prop_t *p)
     TAILQ_REMOVE(&parent->hp_childs, p, hp_parent_link);
     p->hp_parent = NULL;
 
-    if(parent->hp_focused == p) {
+    if(parent->hp_selected == p) {
 
       /* It's pointless for us to try to choose a different child
-	 to be focused. Why? .. All subscribers sort the props
+	 to be selected. Why? .. All subscribers sort the props
 	 in their own order. Instead, notify them that nothing
-	 is focused. This should trig them to refocus somthing. 
-	 This will echo back to us as an advisory prop_focus()
+	 is selected. This should trig them to reselect somthing. 
+	 This will echo back to us as an advisory prop_select()
       */
-      parent->hp_focused = NULL;
-      prop_notify_child(NULL, parent, PROP_FOCUS_CHILD, NULL);
+      parent->hp_selected = NULL;
+      prop_notify_child(NULL, parent, PROP_SELECT_CHILD, NULL);
     }
 
   }
@@ -583,7 +583,7 @@ prop_subfind(prop_t *p, const char **name, int follow_symlinks)
       }
 
       TAILQ_INIT(&p->hp_childs);
-      p->hp_focused = NULL;
+      p->hp_selected = NULL;
       p->hp_type = PROP_DIR;
 
       prop_notify_value(p, NULL);
@@ -671,8 +671,8 @@ prop_subscribe(struct prop *prop, const char **name,
   if(value->hp_type == PROP_DIR) {
     TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
       prop_build_notify_child(s, c, 
-			      value->hp_focused == c ? 
-			      PROP_ADD_FOCUSED_CHILD : PROP_ADD_CHILD,
+			      value->hp_selected == c ? 
+			      PROP_ADD_SELECTED_CHILD : PROP_ADD_CHILD,
 			      direct);
   }
 
@@ -890,8 +890,8 @@ relink_subscriptions(prop_t *src, prop_t *dst)
     if(src->hp_type == PROP_DIR) {
       TAILQ_FOREACH(c, &src->hp_childs, hp_parent_link)
 	prop_build_notify_child(s, c,
-				src->hp_focused == c ? 
-				PROP_ADD_FOCUSED_CHILD : PROP_ADD_CHILD, 0);
+				src->hp_selected == c ? 
+				PROP_ADD_SELECTED_CHILD : PROP_ADD_CHILD, 0);
     }
   }
 
@@ -1001,7 +1001,7 @@ prop_unlink(prop_t *p)
  *
  */
 void
-prop_focus_ex(prop_t *p, int advisory, prop_sub_t *skipme)
+prop_select_ex(prop_t *p, int advisory, prop_sub_t *skipme)
 {
   prop_t *parent;
 
@@ -1014,9 +1014,9 @@ prop_focus_ex(prop_t *p, int advisory, prop_sub_t *skipme)
 
     /* If in advisory mode and something is already selected,
        don't do anything */
-    if(!advisory || parent->hp_focused == NULL) {
-      prop_notify_child(p, parent, PROP_FOCUS_CHILD, skipme);
-      parent->hp_focused = p;
+    if(!advisory || parent->hp_selected == NULL) {
+      prop_notify_child(p, parent, PROP_SELECT_CHILD, skipme);
+      parent->hp_selected = p;
     }
   }
 

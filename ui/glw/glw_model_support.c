@@ -402,12 +402,17 @@ glw_model_seterr(errorinfo_t *ei, token_t *b, const char *fmt, ...)
 {
   va_list ap;
 
-  if(ei == NULL)
-    return -1;
 
   va_start(ap, fmt);
 
   assert(b != NULL);
+
+  if(ei == NULL) {
+    fprintf(stderr, "GLW: %s:%d: ", refstr_get(b->file), b->line);
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    return -1;
+  }
 
   vsnprintf(ei->error, sizeof(ei->error), fmt, ap);
   va_end(ap);

@@ -55,17 +55,13 @@ typedef enum {
   GLW_CONTAINER_Y,  /* Vertical container */
   GLW_CONTAINER_Z,  /* Depth container */
   GLW_BITMAP,
-
   GLW_LABEL,
   GLW_TEXT,
   GLW_INTEGER,
-
   GLW_ROTATOR,      /* Rotating device */
-  GLW_ARRAY,
   GLW_LIST,
   GLW_DECK,
   GLW_EXPANDER,
-  GLW_SLIDESHOW,
   GLW_FORM,
   GLW_MIRROR,
   GLW_ANIMATOR,
@@ -93,7 +89,6 @@ typedef enum {
   GLW_ATTRIB_SLICES,
   GLW_ATTRIB_X_SLICES,
   GLW_ATTRIB_Y_SLICES,
-  GLW_ATTRIB_HIDDEN,
   GLW_ATTRIB_PREVIEW,
   GLW_ATTRIB_CONTENT,
   GLW_ATTRIB_MODE,
@@ -113,6 +108,7 @@ typedef enum {
   GLW_ATTRIB_PROPROOT,
   GLW_ATTRIB_TRANSITION_EFFECT,
   GLW_ATTRIB_XFILL,
+  GLW_ATTRIB_FOCUSABLE,
 } glw_attribute_t;
 
 #define GLW_MIRROR_X   0x1
@@ -129,7 +125,6 @@ LIST_HEAD(glw_event_map_list, glw_event_map);
 LIST_HEAD(glw_prop_sub_list, glw_prop_sub);
 LIST_HEAD(glw_texture_list, glw_texture);
 LIST_HEAD(glw_video_list, glw_video);
-
 
 
 typedef struct glw_vertex {
@@ -155,6 +150,11 @@ typedef enum {
   GLW_ORIENTATION_HORIZONTAL,
 } glw_orientation_t;
 
+typedef enum {
+  GLW_FOCUS_NONE,
+  GLW_FOCUS_LEADER,
+  GLW_FOCUS_TARGET,
+} glw_focus_mode_t;
 
 /**
  * XXX Document these
@@ -170,15 +170,13 @@ typedef enum {
   GLW_SIGNAL_CHILD_CREATED,
   GLW_SIGNAL_CHILD_DESTROYED,
 
-  GLW_SIGNAL_CHILD_HIDDEN,
-  GLW_SIGNAL_CHILD_VISIBLE,
-
   GLW_SIGNAL_DETACH_CHILD,
 
   GLW_SIGNAL_NEW_FRAME,
 
-  GLW_SIGNAL_EVENT,
   GLW_SIGNAL_EVENT_BUBBLE,
+
+  GLW_SIGNAL_EVENT,
 
   GLW_SIGNAL_CHANGED,
 
@@ -188,20 +186,12 @@ typedef enum {
    * Parent should NOT send GLW_SIGNAL_FOCUSED_UPDATE to the child
    * in this case.
    */
-  GLW_SIGNAL_FOCUS,
+  GLW_SIGNAL_SELECT,
 
   /**
    * Emitted by parent to child when it has been selected.
    */
-  GLW_SIGNAL_FOCUSED_UPDATE,
-
-  /**
-   * Emitted by parent to child when it has been selected.
-   * Low prio update of selected focus. Emitted by widgets
-   * when they have nothing else selected and just chooses one
-   * based on some internal logic.
-   */
-  GLW_SIGNAL_FOCUSED_UPDATE_ADVISORY,
+  GLW_SIGNAL_SELECTED_UPDATE,
 
 } glw_signal_t;
 
@@ -260,6 +250,12 @@ typedef struct glw_root {
    */
   struct glw_texture *gr_cursor_gt;
 
+
+  /**
+   * Root focus leader
+   */
+  struct glw_queue gr_focus_childs;
+
   /**
    * Video decoder and renderer
    */
@@ -271,22 +267,6 @@ typedef struct glw_root {
 } glw_root_t;
 
 
-/**
- * Focus
- */
-typedef struct glw_cursor {
-  float gc_m[16];
-  float gc_m_prim[16];
-
-  float gc_alpha;
-  float gc_alpha_prim;
-
-  float gc_aspect;
-  float gc_aspect_prim;
-
-} glw_cursor_t;
-
-
 
 /**
  * Render context
@@ -296,9 +276,8 @@ typedef struct glw_rctx {
   float rc_aspect;
   float rc_zoom;
   float rc_fullscreen;
-  int rc_focused;
 
-  struct glw_form *rc_form;
+  struct glw_cursor_painter *rc_cursor_painter;
 
 } glw_rctx_t;
 
@@ -329,6 +308,9 @@ typedef struct glw {
   LIST_ENTRY(glw) glw_active_link;
   LIST_ENTRY(glw) glw_every_frame_link;
 
+  LIST_ENTRY(glw) glw_tmp_link;
+  float glw_tmp_value;
+
   struct glw_signal_handler_list glw_signal_handlers;
 
   struct glw *glw_parent;
@@ -338,7 +320,7 @@ typedef struct glw {
   struct glw_queue glw_render_list;
   TAILQ_ENTRY(glw) glw_render_link;
 		   
-  struct glw *glw_focused;
+  struct glw *glw_selected;
 
   /** 
    * All the glw_parent stuff is operated by this widgets
@@ -351,7 +333,6 @@ typedef struct glw {
 
   int glw_flags;  
 
-#define GLW_HIDE                0x1     /* Set if hidden */
 #define GLW_KEEP_ASPECT         0x2     /* Keep aspect (for bitmaps) */
 #define GLW_DESTROYED           0x4     /* was destroyed but someone
 					   is holding references */
@@ -362,12 +343,10 @@ typedef struct glw {
 					   at all times */
 #define GLW_DRAW_SKEL           0x40    /* Draw extra lines to
 					    visualize details */
-
 #define GLW_FOCUS_DRAW_CURSOR   0x100   /* Draw cursor when we have focus */
 #define GLW_SCALE_CHILDS        0x200   /* Scaledown unfocuseded childs */
 #define GLW_DEBUG               0x400   /* Debug this object */
 #define GLW_BORDER_SCALE_CHILDS 0x800   /* Scale childs to fit within border */
-#define GLW_FOCUSABLE           0x1000
 #define GLW_EXPAND_CHILDS       0x2000  /* Expand childs (for list) */
 #define GLW_PASSWORD            0x4000  /* Don't display real contents */
 
@@ -386,15 +365,26 @@ typedef struct glw {
 
   const char *glw_id;
 
-  float glw_focus;
-
   struct glw_event_map_list glw_event_maps;		  
 
   struct glw_prop_sub_list glw_prop_subscriptions;
 
   struct token *glw_dynamic_expressions;
 
+  float *glw_matrix;
+
+
+  /* Focus */
+  TAILQ_ENTRY(glw) glw_focus_parent_link;
+  struct glw *glw_focus_parent;
+
+  glw_focus_mode_t glw_focus_mode;
+
+  struct glw_queue glw_focus_childs; /* Only used if GLW_FOCUS_LEADER is set.
+					First is the currently focused one */
+
 } glw_t;
+
 
 #define GLW_TEXT_EDITABLE 0x2
 
@@ -420,12 +410,20 @@ void glw_lock(glw_root_t *gr);
 
 void glw_unlock(glw_root_t *gr);
 
+
 /**
  *
  */
-void glw_cursor_render(glw_cursor_t *gc);
+#define glw_is_focusable(w) ((w)->glw_focus_mode == GLW_FOCUS_TARGET)
 
-void glw_set_framerate(float r);
+int glw_is_focused(glw_t *w);
+
+void glw_store_matrix(glw_t *w, glw_rctx_t *rc);
+
+glw_t *glw_get_indirectly_focused_child(glw_t *w);
+
+void glw_focus_set(glw_t *w);
+
 
 /**
  * Models
@@ -506,7 +504,6 @@ do {						\
   case GLW_ATTRIB_SLICES:                       \
   case GLW_ATTRIB_X_SLICES:                     \
   case GLW_ATTRIB_Y_SLICES:                     \
-  case GLW_ATTRIB_HIDDEN:                       \
   case GLW_ATTRIB_MODE:                         \
   case GLW_ATTRIB_MIRROR:                       \
   case GLW_ATTRIB_ORIENTATION:                  \
@@ -515,6 +512,7 @@ do {						\
   case GLW_ATTRIB_INT_MIN:                      \
   case GLW_ATTRIB_INT_MAX:                      \
   case GLW_ATTRIB_TRANSITION_EFFECT:            \
+  case GLW_ATTRIB_FOCUSABLE:                    \
     (void)va_arg(ap, int);			\
     break;					\
   case GLW_ATTRIB_TEXTURE_BORDERS:              \
@@ -559,10 +557,6 @@ void glw_destroy0(glw_t *w);
 
 void glw_deref0(glw_t *w);
 
-void glw_hide0(glw_t *w);
-
-void glw_unhide0(glw_t *w);
-
 int glw_get_text0(glw_t *w, char *buf, size_t buflen);
 
 int glw_get_int0(glw_t *w, int *result);
@@ -574,6 +568,8 @@ glw_t *glw_get_next_n(glw_t *c, int count);
 glw_t *glw_get_prev_n_all(glw_t *c, int count);
 
 glw_t *glw_get_next_n_all(glw_t *c, int count);
+
+int glw_event(glw_root_t *gr, event_t *e);
 
 #define GLW_SIGNAL_PRI_INTERNAL 100
 
@@ -590,14 +586,6 @@ int glw_signal0(glw_t *w, glw_signal_t sig, void *extra);
 
 #define glw_render0(w, rc) glw_signal0(w, GLW_SIGNAL_RENDER, rc)
 #define glw_layout0(w, rc) glw_signal0(w, GLW_SIGNAL_LAYOUT, rc)
-
-static inline int 
-glw_is_focus_candidate(glw_t *w)
-{
-  return w->glw_focused != NULL || w->glw_flags & GLW_FOCUSABLE;
-}
-
-int glw_navigate(glw_t *w, event_t *e);
 
 
 /**

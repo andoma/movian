@@ -29,9 +29,10 @@ widget(form, {
 	    widget(bitmap, {
 	    
 	      .source = "theme://images/plate256.png";
-	      .focusable = true;
+	      .focus = target;
 	      .focusCursor = true;
-	      
+	      .debug = true;
+
 	      onEvent(enter, genericEvent(navigator, back, ""));
 
 	      widget(label, {
@@ -44,6 +45,21 @@ widget(form, {
 	      .weight = 20;
 	      .caption = $global.nav.currentpage.uri;
 	    });
+
+	    widget(bitmap, {
+	    
+	      .source = "theme://images/plate256.png";
+	      .focus = target;
+	      .focusCursor = true;
+	      .debug = true;
+
+	      onEvent(enter, genericEvent(navigator, back, ""));
+
+	      widget(label, {
+		.caption = "hemlo";
+	      });
+	    });
+
 	    space(0.1);
 	  });
 	  space(0.1);
@@ -56,8 +72,10 @@ widget(form, {
 	space(0.01);
 	
 	widget(deck, {
+	  .debug = true;
 	  
 	  cloner($global.nav.pages, animator, {
+	    .focus = leader;
 	    .time = 0.3;
 	    .source = "theme://pagemodels/" + $page.type + ".model";
 	  });

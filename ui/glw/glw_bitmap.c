@@ -251,8 +251,8 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
     if(!(w->glw_flags & GLW_KEEP_ASPECT)) {
 
-      if(w->glw_flags & GLW_FOCUS_DRAW_CURSOR && rc->rc_focused)
-	glw_form_cursor_set(rc);
+      if(glw_is_focusable(w))
+	glw_store_matrix(w, rc);
 
       bitmap_render_tesselated(rc->rc_aspect, gt->gt_aspect, 
 			       gb->gb_vborders, gb->gb_tborders,
@@ -302,9 +302,8 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
 	break;
       }
 
-      if(w->glw_flags & GLW_FOCUS_DRAW_CURSOR && rc->rc_focused)
-	glw_form_cursor_set(rc);
-      
+      if(glw_is_focusable(w))
+	glw_store_matrix(w, rc);
 
       if(w->glw_flags & GLW_BORDER_BLEND) {
 
@@ -396,12 +395,8 @@ glw_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
   c = TAILQ_FIRST(&w->glw_childs);
 
-
-  if(c != NULL) {
-    if(glw_is_focus_candidate(c))
-      w->glw_focused = c;
+  if(c != NULL)
     glw_layout0(c, rc);
-  }
 }
 
 
@@ -413,6 +408,7 @@ static int
 glw_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
 		    void *extra)
 {
+  glw_t *c;
   switch(signal) {
   default:
     break;
@@ -426,7 +422,10 @@ glw_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
     glw_bitmap_dtor(w);
     break;
   case GLW_SIGNAL_EVENT:
-    return glw_navigate(w, extra);
+    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
+      if(glw_signal0(c, GLW_SIGNAL_EVENT, extra))
+	return 1;
+    break;
   }
   return 0;
 }
