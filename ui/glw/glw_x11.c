@@ -78,6 +78,12 @@ typedef struct glw_x11 {
   PFNGLXGETVIDEOSYNCSGIPROC glXGetVideoSyncSGI;
   PFNGLXWAITVIDEOSYNCSGIPROC glXWaitVideoSyncSGI;
 
+  int window_width;
+  int window_height;
+
+  int is_pointer_enabled;
+  int want_pointer_enabled;
+
 } glw_x11_t;
 
 static void update_gpu_info(void);
@@ -94,6 +100,7 @@ display_settings_save(glw_x11_t *gx11)
   htsmsg_t *m = htsmsg_create();
 
   htsmsg_add_u32(m, "fullscreen", gx11->want_fullscreen);
+  htsmsg_add_u32(m, "pointer",    gx11->want_pointer_enabled);
   
   hts_settings_save(m, "display");
   htsmsg_destroy(m);
@@ -112,6 +119,17 @@ display_set_mode(void *opaque, int value)
 }
 
 
+
+/**
+ * Switch pointer on/off
+ */
+static void
+display_set_pointer(void *opaque, int value)
+{
+  glw_x11_t *gx11 = opaque;
+  gx11->want_pointer_enabled = value;
+}
+
 /**
  * Add a settings pane with relevant settings
  */
@@ -127,6 +145,10 @@ display_settings_init(glw_x11_t *gx11)
   settings_add_bool(r, "fullscreen",
 		    "Fullscreen mode", 0, settings,
 		    display_set_mode, gx11);
+
+  settings_add_bool(r, "pointer",
+		    "Mouse pointer", 1, settings,
+		    display_set_pointer, gx11);
 
   htsmsg_destroy(settings);
 }
@@ -197,7 +219,10 @@ window_open(glw_x11_t *gx11)
   extern char *htsversion;
   char buf[60];
 
-  winAttr.event_mask        = KeyPressMask | StructureNotifyMask;
+  winAttr.event_mask        = KeyPressMask | StructureNotifyMask |
+    ButtonPressMask | ButtonReleaseMask |
+    PointerMotionMask | ButtonMotionMask;
+
   winAttr.background_pixmap = None;
   winAttr.background_pixel  = 0;
   winAttr.border_pixel      = 0;
@@ -240,6 +265,12 @@ window_open(glw_x11_t *gx11)
 		  gx11->xvi->visual, mask, &winAttr
 		  );
 
+  gx11->window_width  = 
+    gx11->coords[fullscreen][2] - gx11->coords[fullscreen][0];
+  gx11->window_height =
+    gx11->coords[fullscreen][3] - gx11->coords[fullscreen][1];
+
+
   gx11->glxctx = glXCreateContext(gx11->display, gx11->xvi, NULL, 1);
 
   if(gx11->glxctx == NULL) {
@@ -255,8 +286,10 @@ window_open(glw_x11_t *gx11)
 
   /* Make an empty / blank cursor */
 
-  XDefineCursor(gx11->display, gx11->win, blank_cursor(gx11));
+  if(gx11->want_pointer_enabled == 0)
+    XDefineCursor(gx11->display, gx11->win, blank_cursor(gx11));
 
+  gx11->is_pointer_enabled = gx11->want_pointer_enabled;
 
   /* Set window title */
   snprintf(buf, sizeof(buf), "HTS Showtime %s", htsversion);
@@ -729,7 +762,9 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 {
   XEvent event;
   int w, h;
+  float x, y;
   unsigned int retraceCount = 0;
+  glw_t *g;
 
   gx11->glXGetVideoSyncSGI(&retraceCount);
 
@@ -738,6 +773,16 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
       glw_lock(&gx11->gr);
       window_change_displaymode(gx11);
       glw_unlock(&gx11->gr);
+    }
+
+    if(gx11->is_pointer_enabled != gx11->want_pointer_enabled) {
+
+      if(gx11->want_pointer_enabled) {
+	XUndefineCursor(gx11->display, gx11->win);
+      } else {
+	XDefineCursor(gx11->display, gx11->win, blank_cursor(gx11));
+      }
+      gx11->is_pointer_enabled = gx11->want_pointer_enabled;
     }
 
     if(frame_duration != 0) {
@@ -755,6 +800,8 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 	  h = event.xconfigure.height;
 	  glViewport(0, 0, w, h);
 	  gx11->aspect_ratio = (float)w / (float)h;
+	  gx11->window_width  = w;
+	  gx11->window_height = h;
 	  break;
 
 
@@ -763,6 +810,40 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 	    /* Window manager wants us to close */
 	    ui_exit_showtime();
 	  }
+	  break;
+	  
+	case MotionNotify:
+	  if(!gx11->is_pointer_enabled)
+	    break;
+
+	  x = (2.0 * event.xmotion.x / gx11->window_width) - 1;
+	  y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
+	  
+	  glw_lock(&gx11->gr);
+	  glw_pointer_motion(&gx11->gr, x, y);
+	  glw_unlock(&gx11->gr);
+	  break;
+	  
+	case ButtonPress:
+	  if(!gx11->is_pointer_enabled)
+	    break;
+
+	  if(event.xbutton.button != 1)
+	    break;
+	  x =  (2.0 * event.xmotion.x / gx11->window_width) - 1;
+	  y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
+	  
+	  glw_lock(&gx11->gr);
+	  g = glw_pointer_motion(&gx11->gr, x, y);
+
+	  if(g != NULL) {
+	    event_t *e;
+	    e = event_create_simple(EVENT_ENTER);
+	    glw_event_to_widget(g, e);
+	    event_unref(e);
+	  }
+
+	  glw_unlock(&gx11->gr);
 	  break;
 
 	default:

@@ -276,7 +276,8 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       if(gfm != GLW_FOCUS_NONE) {
 	/* Find first parent which is a focus leader */
 	for(p = w->glw_parent; p != NULL; p = p->glw_parent)
-	  if(p->glw_focus_mode == GLW_FOCUS_LEADER)
+	  if(p->glw_focus_mode == GLW_FOCUS_LEADER_ENABLED ||
+	     p->glw_focus_mode == GLW_FOCUS_LEADER_DISABLED)
 	    break;
 
 	w->glw_focus_parent = p;
@@ -825,7 +826,8 @@ glw_get_indirectly_focused_child(glw_t *w)
 
   /* Find closest focus leader */
   for(l = w; l != NULL; l = l->glw_parent) {
-    if(l->glw_focus_mode == GLW_FOCUS_LEADER)
+    if(l->glw_focus_mode == GLW_FOCUS_LEADER_ENABLED ||
+       l->glw_focus_mode == GLW_FOCUS_LEADER_DISABLED)
       break;
   }
 
@@ -878,6 +880,21 @@ glw_focus_set(glw_t *w)
   }
 }
 
+/**
+ *
+ */
+int
+glw_event_to_widget(glw_t *w, event_t *e)
+{
+  if(glw_event_map_intercept(w, e))
+    return 1;
+
+  if(glw_signal0(w, GLW_SIGNAL_EVENT, e))
+    return 1;
+
+  return glw_navigate(w, e);
+}
+
 
 /**
  *
@@ -893,19 +910,66 @@ glw_event(glw_root_t *gr, event_t *e)
   while(1) {
     if(w->glw_focus_mode == GLW_FOCUS_TARGET)
       break;
-    if(w->glw_focus_mode == GLW_FOCUS_LEADER) {
+    if(w->glw_focus_mode == GLW_FOCUS_LEADER_ENABLED) {
       w = TAILQ_FIRST(&w->glw_focus_childs);
       if(w == NULL)
 	return 0;
     }
   }
-
-  if(glw_event_map_intercept(w, e))
-    return 1;
-
-  if(glw_signal0(w, GLW_SIGNAL_EVENT, e))
-    return 1;
-
-  return glw_navigate(w, e);
+  return glw_event_to_widget(w, e);
 }
 
+
+
+static glw_t *
+pointer_scan(glw_t *w, float x, float y)
+{
+  glw_t *c, *r;
+  float *m;
+  float x1, x2, y1, y2;
+
+  switch(w->glw_focus_mode) {
+  case GLW_FOCUS_NONE:
+  case GLW_FOCUS_LEADER_DISABLED:
+    return NULL;
+
+  case GLW_FOCUS_LEADER_ENABLED:
+    TAILQ_FOREACH(c, &w->glw_focus_childs, glw_focus_parent_link)
+      if((r = pointer_scan(c, x, y)) != NULL)
+	return r;
+    return NULL;
+
+  case GLW_FOCUS_TARGET:
+
+    if(w->glw_focus_mode == GLW_FOCUS_TARGET && (m = w->glw_matrix) != NULL) {
+      
+      x1 = m[12] - m[0];
+      x2 = m[12] + m[0];
+
+      y1 = m[13] - m[5];
+      y2 = m[13] + m[5];
+      
+      if(x >= x1 && x <= x2 && y >= y1 && y <= y2) {
+	glw_focus_set(w);
+	return w;
+      }
+    }
+    break;
+  }
+  return NULL;
+}
+
+
+/**
+ *
+ */
+glw_t *
+glw_pointer_motion(glw_root_t *gr, float x, float y)
+{
+  glw_t *c, *r;
+
+  TAILQ_FOREACH(c, &gr->gr_focus_childs, glw_focus_parent_link)
+    if((r = pointer_scan(c, x, y)) != NULL)
+      return r;
+  return NULL;
+}

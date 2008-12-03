@@ -152,7 +152,8 @@ typedef enum {
 
 typedef enum {
   GLW_FOCUS_NONE,
-  GLW_FOCUS_LEADER,
+  GLW_FOCUS_LEADER_ENABLED,
+  GLW_FOCUS_LEADER_DISABLED,
   GLW_FOCUS_TARGET,
 } glw_focus_mode_t;
 
@@ -570,6 +571,10 @@ glw_t *glw_get_prev_n_all(glw_t *c, int count);
 glw_t *glw_get_next_n_all(glw_t *c, int count);
 
 int glw_event(glw_root_t *gr, event_t *e);
+
+int glw_event_to_widget(glw_t *w, event_t *e);
+
+glw_t *glw_pointer_motion(glw_root_t *gr, float x, float y);
 
 int glw_navigate(glw_t *w, event_t *e);
 

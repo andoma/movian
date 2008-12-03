@@ -27,6 +27,25 @@
 /**
  *
  */
+static void
+switchfocus(glw_t *prev, glw_t *n)
+{
+  if(prev != NULL && prev->glw_focus_mode == GLW_FOCUS_LEADER_ENABLED)
+    prev->glw_focus_mode = GLW_FOCUS_LEADER_DISABLED;
+
+  if(n != NULL && 
+     (n->glw_focus_mode == GLW_FOCUS_LEADER_ENABLED ||
+      n->glw_focus_mode == GLW_FOCUS_LEADER_DISABLED)) {
+    
+    n->glw_focus_mode = GLW_FOCUS_LEADER_ENABLED;
+    glw_focus_set(n);
+  }
+}
+
+
+/**
+ *
+ */
 static int
 glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
@@ -84,21 +103,15 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_SELECT:
+    switchfocus(w->glw_selected, extra);
     w->glw_selected = extra;
-
-    if(w->glw_selected != NULL &&
-       w->glw_selected->glw_focus_mode == GLW_FOCUS_LEADER)
-      glw_focus_set(w->glw_selected);
-
     break;
 
   case GLW_SIGNAL_CHILD_CREATED:
-    if(w->glw_selected == NULL)
+    if(w->glw_selected == NULL) {
+      switchfocus(w->glw_selected, extra);
       w->glw_selected = extra;
-
-    if(w->glw_selected != NULL &&
-       w->glw_selected->glw_focus_mode == GLW_FOCUS_LEADER)
-      glw_focus_set(w->glw_selected);
+    }
     break;
   }
 
