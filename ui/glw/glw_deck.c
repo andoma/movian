@@ -20,7 +20,6 @@
 #include "glw.h"
 #include "glw_deck.h"
 #include "glw_transitions.h"
-#include "glw_form.h"
 
 #include <stdlib.h>
 #include <assert.h>

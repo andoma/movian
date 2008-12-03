@@ -19,7 +19,6 @@
 #include <math.h>
 #include "glw.h"
 #include "glw_list.h"
-#include "glw_form.h"
 
 #define glw_parent_x      glw_parent_misc[0]
 #define glw_parent_y      glw_parent_misc[1]

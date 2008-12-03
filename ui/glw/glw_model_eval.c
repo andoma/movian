@@ -1082,7 +1082,7 @@ static struct strtab classtab[] = {
   { "deck",          GLW_DECK},
   { "expander",      GLW_EXPANDER},
   //  { "slideshow",     GLW_SLIDESHOW},
-  { "form",          GLW_FORM},
+  { "cursor",        GLW_CURSOR},
   { "mirror",        GLW_MIRROR},
   { "rotator",       GLW_ROTATOR},
   { "animator",      GLW_ANIMATOR},

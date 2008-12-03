@@ -1,5 +1,5 @@
 /*
- *  GL Widgets, Forms
+ *  GL Widgets, Cursors
  *  Copyright (C) 2008 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef GLW_FORM_H
-#define GLW_FORM_H
+#ifndef GLW_CURSOR_H
+#define GLW_CURSOR_H
 
 
 
@@ -41,20 +41,20 @@ typedef struct glw_cursor_painter {
 /**
  *
  */
-typedef struct glw_form {
+typedef struct glw_cursor {
   struct glw w;
 
   int render_cycle;
 
   glw_cursor_painter_t gcp;
 
-} glw_form_t;
+} glw_cursor_t;
 
 
 void glw_cursor_layout_frame(glw_root_t *gr);
 
-void glw_form_ctor(glw_t *w, int init, va_list ap);
+void glw_cursor_ctor(glw_t *w, int init, va_list ap);
 
 int glw_navigate(glw_t *w, event_t *e);
 
-#endif /* GLW_FORM_H */
+#endif /* GLW_CURSOR_H */

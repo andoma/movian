@@ -23,7 +23,6 @@
 
 #include "glw.h"
 #include "glw_container.h"
-#include "glw_form.h"
 
 void 
 glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)

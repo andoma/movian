@@ -24,9 +24,6 @@
 
 #include "glw.h"
 #include "glw_bitmap.h"
-#include "glw_form.h"
-
-
 
 static void
 glw_bitmap_dtor(glw_t *w)

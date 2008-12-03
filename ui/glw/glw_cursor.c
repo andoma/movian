@@ -1,5 +1,5 @@
 /*
- *  GL Widgets, Forms
+ *  GL Widgets, Cursors
  *  Copyright (C) 2008 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -24,7 +24,7 @@
 
 #include "glw.h"
 #include "glw_bitmap.h"
-#include "glw_form.h"
+#include "glw_cursor.h"
 #include "glw_event.h"
 
 
@@ -933,10 +933,10 @@ glw_navigate(glw_t *w, event_t *e)
  *
  */
 static int
-glw_form_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
+glw_cursor_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_t *c = TAILQ_FIRST(&w->glw_childs);
-  glw_form_t *gf = (void *)w;
+  glw_cursor_t *gf = (void *)w;
   glw_rctx_t *rc;
   glw_root_t *gr = w->glw_root;
 
@@ -967,25 +967,8 @@ glw_form_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
     gf->render_cycle++;
     break;
-
-  case GLW_SIGNAL_EVENT:
-#if 0
-    if((gfc = TAILQ_FIRST(&gf->gf_form_ctrls)) == NULL)
-      return 0;
-
-    if((c = gfc->gfc_current_focus) == NULL)
-      return 0;
-
-    if(glw_event_map_intercept(c, extra))
-      return 1;
-
-    if(glw_signal0(c, GLW_SIGNAL_EVENT, extra))
-      return 1;
-#endif
-    return 0; //return glw_form_navigate(gfc, extra);
   }
   return 0;
-
 }
 
 
@@ -994,9 +977,9 @@ glw_form_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
  *
  */
 void 
-glw_form_ctor(glw_t *w, int init, va_list ap)
+glw_cursor_ctor(glw_t *w, int init, va_list ap)
 {
   if(init) {
-    glw_signal_handler_int(w, glw_form_callback);
+    glw_signal_handler_int(w, glw_cursor_callback);
   }
 }

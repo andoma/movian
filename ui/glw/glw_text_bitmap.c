@@ -34,7 +34,6 @@
 #include "glw_text.h"
 #include "glw_text_bitmap.h"
 #include "glw_bitmap.h"
-#include "glw_form.h"
 #include "glw_container.h"
 
 #include <libavutil/common.h>

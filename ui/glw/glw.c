@@ -30,7 +30,7 @@
 #include "glw_text_bitmap.h"
 #include "glw_bitmap.h"
 #include "glw_array.h"
-#include "glw_form.h"
+#include "glw_cursor.h"
 #include "glw_rotator.h"
 #include "glw_model.h"
 #include "glw_list.h"
@@ -60,7 +60,7 @@ static const size_t glw_class_to_size[] = {
   [GLW_DECK] = sizeof(glw_deck_t),
   [GLW_EXPANDER] = sizeof(glw_t),
   //  [GLW_SLIDESHOW] = sizeof(glw_slideshow_t),
-  [GLW_FORM] = sizeof(glw_form_t),
+  [GLW_CURSOR] = sizeof(glw_cursor_t),
   [GLW_MIRROR] = sizeof(glw_t),
   [GLW_ANIMATOR] = sizeof(glw_animator_t),
   [GLW_FX_TEXROT] = sizeof(glw_fx_texrot_t),
@@ -343,8 +343,8 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
   case GLW_DUMMY:
     break;
 
-  case GLW_FORM:
-    glw_form_ctor(w, init, apx);
+  case GLW_CURSOR:
+    glw_cursor_ctor(w, init, apx);
     break;
 
   case GLW_MIRROR:
