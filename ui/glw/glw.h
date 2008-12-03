@@ -571,6 +571,8 @@ glw_t *glw_get_next_n_all(glw_t *c, int count);
 
 int glw_event(glw_root_t *gr, event_t *e);
 
+int glw_navigate(glw_t *w, event_t *e);
+
 #define GLW_SIGNAL_PRI_INTERNAL 100
 
 void glw_signal_handler_register(glw_t *w, glw_callback_t *func, void *opaque, 

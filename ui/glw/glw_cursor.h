@@ -55,6 +55,4 @@ void glw_cursor_layout_frame(glw_root_t *gr);
 
 void glw_cursor_ctor(glw_t *w, int init, va_list ap);
 
-int glw_navigate(glw_t *w, event_t *e);
-
 #endif /* GLW_CURSOR_H */

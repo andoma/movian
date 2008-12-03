@@ -115,7 +115,7 @@ SRCS += glw_model.c glw_model_lexer.c glw_model_parser.c \
 	glw_model_eval.c glw_model_preproc.c glw_model_support.c \
 	glw_model_attrib.c
 SRCS += glw_container.c glw_text.c glw_text_bitmap.c \
-	glw_bitmap.c glw_tex_loader.c \
+	glw_bitmap.c glw_tex_loader.c glw_navigation.c \
 	glw_cursor.c glw_rotator.c glw_list.c glw_deck.c  \
 	glw_expander.c glw_scaler.c glw_event.c \
 	glw_mirror.c glw_animator.c glw_transitions.c \

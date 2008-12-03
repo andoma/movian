@@ -772,6 +772,26 @@ glw_detach0(glw_t *w)
 }
 
 
+/**
+ *
+ */
+void
+glw_store_matrix(glw_t *w, glw_rctx_t *rc)
+{
+  glw_cursor_painter_t *gcp = rc->rc_cursor_painter;
+  if(w->glw_matrix == NULL)
+    w->glw_matrix = malloc(sizeof(float) * 16);
+  
+  glGetFloatv(GL_MODELVIEW_MATRIX, w->glw_matrix);
+  
+  if(glw_is_focused(w) && gcp != NULL) {
+    gcp->gcp_alpha  = rc->rc_alpha;
+    gcp->gcp_aspect = rc->rc_aspect;
+    memcpy(gcp->gcp_m, w->glw_matrix, 16 * sizeof(float));
+  }
+}
+
+
 
 /**
  *
@@ -792,25 +812,6 @@ glw_is_focused(glw_t *w)
     if(TAILQ_FIRST(&p->glw_focus_childs) != w)
       return 0;
     w = p;
-  }
-}
-
-/**
- *
- */
-void
-glw_store_matrix(glw_t *w, glw_rctx_t *rc)
-{
-  glw_cursor_painter_t *gcp = rc->rc_cursor_painter;
-  if(w->glw_matrix == NULL)
-    w->glw_matrix = malloc(sizeof(float) * 16);
-  
-  glGetFloatv(GL_MODELVIEW_MATRIX, w->glw_matrix);
-  
-  if(glw_is_focused(w) && gcp != NULL) {
-    gcp->gcp_alpha  = rc->rc_alpha;
-    gcp->gcp_aspect = rc->rc_aspect;
-    memcpy(gcp->gcp_m, w->glw_matrix, 16 * sizeof(float));
   }
 }
 
@@ -849,6 +850,35 @@ glw_get_indirectly_focused_child(glw_t *w)
 }
 
 
+
+/**
+ *
+ */
+void
+glw_focus_set(glw_t *w)
+{
+  glw_t *l;
+  struct glw_queue *q;
+
+  while(1) {
+
+    assert(w->glw_focus_mode != GLW_FOCUS_NONE);
+
+    l = w->glw_focus_parent;
+    
+    q = l != NULL ? &l->glw_focus_childs : &w->glw_root->gr_focus_childs;
+
+    TAILQ_REMOVE(q, w, glw_focus_parent_link);
+    TAILQ_INSERT_HEAD(q, w, glw_focus_parent_link);
+
+    if(l == NULL)
+      break;
+
+    w = l;
+  }
+}
+
+
 /**
  *
  */
@@ -879,30 +909,3 @@ glw_event(glw_root_t *gr, event_t *e)
   return glw_navigate(w, e);
 }
 
-
-/**
- *
- */
-void
-glw_focus_set(glw_t *w)
-{
-  glw_t *l;
-  struct glw_queue *q;
-
-  while(1) {
-
-    assert(w->glw_focus_mode != GLW_FOCUS_NONE);
-
-    l = w->glw_focus_parent;
-    
-    q = l != NULL ? &l->glw_focus_childs : &w->glw_root->gr_focus_childs;
-
-    TAILQ_REMOVE(q, w, glw_focus_parent_link);
-    TAILQ_INSERT_HEAD(q, w, glw_focus_parent_link);
-
-    if(l == NULL)
-      break;
-
-    w = l;
-  }
-}
