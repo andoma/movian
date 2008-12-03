@@ -98,7 +98,8 @@ audio_init(void)
 {
   hts_thread_t ptid;
 
-  audio_settings_root = settings_add_dir(NULL, "audio", "Audio settings");
+  audio_settings_root = settings_add_dir(NULL, "audio", "Audio settings",
+					 "audio");
   
   audio_settings_current_device = 
     settings_add_multiopt(audio_settings_root, "currentdevice", 
@@ -394,7 +395,7 @@ audio_mode_register(audio_mode_t *am)
     audio_mode_current = am;
 
 
-  r = settings_add_dir(audio_settings_root, am->am_id, am->am_title);
+  r = settings_add_dir(audio_settings_root, am->am_id, am->am_title, "audio");
 
   if(multich) {
     settings_add_bool(r, "phantom_center", "Phantom center",

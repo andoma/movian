@@ -149,7 +149,8 @@ keymapper_init(keymap_t *km, prop_t *settingsparent, const char *title)
   LIST_INIT(&km->km_entries);
   hts_mutex_init(&km->km_mutex);
 
-  km->km_settings = settings_add_dir(settingsparent, "keymap", title);
+  km->km_settings = settings_add_dir(settingsparent, "keymap", title,
+				     "keymap");
 
   prop_set_int(prop_create(km->km_settings, "mayadd"), 1);
  

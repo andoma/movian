@@ -122,7 +122,7 @@ display_settings_init(glw_x11_t *gx11)
 
   htsmsg_t *settings = hts_settings_load("display");
 
-  r = settings_add_dir(NULL, "display", "Display settings");
+  r = settings_add_dir(NULL, "display", "Display settings", "display");
   
   settings_add_bool(r, "fullscreen",
 		    "Fullscreen mode", 0, settings,

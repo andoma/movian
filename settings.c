@@ -120,9 +120,11 @@ settings_set_parent(prop_t *p, prop_t *parent)
  *
  */
 prop_t *
-settings_add_dir(prop_t *parent, const char *id, const char *title)
+settings_add_dir(prop_t *parent, const char *id, const char *title,
+		 const char *subtype)
 {
   prop_t *r = settings_add(id, title, "settings");
+  prop_set_string(prop_create(r, "subtype"), subtype);
   settings_set_url(r, parent);
   settings_set_parent(r, parent);
   return r;

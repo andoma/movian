@@ -35,7 +35,7 @@ typedef void (setting_callback_bool_t)(void *opaque, int value);
 typedef void (setting_callback_string_t)(void *opaque, const char *str);
 
 prop_t *settings_add_dir(prop_t *parent, const char *id, 
-			     const char *title);
+			 const char *title, const char *subtype);
 
 prop_t *settings_get_dirlist(prop_t *parent);
 
