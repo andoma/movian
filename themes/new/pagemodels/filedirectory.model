@@ -10,7 +10,7 @@ widget(container_y, {
     cloner($page.nodes, container_y, {
 
 
-      .weight = translate($self.media.type,
+      .expand = translate($self.media.type,
 			  [
 			      "audio",     "2.5",
 			      "video",     "3.5",
