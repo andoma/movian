@@ -258,6 +258,9 @@ prop_build_notify_value(prop_sub_t *s, int direct)
     case PROP_VOID:
       s->hps_callback(s, PROP_SET_VOID);
       break;
+
+    case PROP_ZOMBIE:
+      abort();
     }
     return;
   }
@@ -286,6 +289,9 @@ prop_build_notify_value(prop_sub_t *s, int direct)
   case PROP_VOID:
     n->hpn_event = PROP_SET_VOID;
     break;
+
+  case PROP_ZOMBIE:
+    abort();
   }
   courier_enqueue(s->hps_courier, n);
 }
@@ -366,6 +372,9 @@ static void
 prop_clean(prop_t *p)
 {
   switch(p->hp_type) {
+  case PROP_ZOMBIE:
+    abort();
+
   case PROP_VOID:
   case PROP_INT:
   case PROP_FLOAT:
@@ -454,7 +463,12 @@ prop_create_ex(prop_t *parent, const char *name, prop_sub_t *skipme)
   prop_t *p;
 
   hts_mutex_lock(&prop_mutex);
-  p = prop_create0(parent, name, skipme);
+  
+  if(parent == NULL || parent->hp_type != PROP_ZOMBIE)
+    p = prop_create0(parent, name, skipme);
+  else
+    p = NULL;
+
   hts_mutex_unlock(&prop_mutex);
 
   return p;
@@ -470,6 +484,12 @@ prop_set_parent_ex(prop_t *p, prop_t *parent, prop_sub_t *skipme)
   assert(p->hp_parent == NULL);
 
   hts_mutex_lock(&prop_mutex);
+
+  if(parent != NULL && parent->hp_type == PROP_ZOMBIE) {
+    fprintf(stderr, "Warning: trying to setparent on zombie parent\n");
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
 
   prop_make_dir(parent, skipme);
 
@@ -492,6 +512,9 @@ prop_destroy0(prop_t *p)
   prop_sub_t *s;
 
   switch(p->hp_type) {
+  case PROP_ZOMBIE:
+    abort();
+
   case PROP_DIR:
     while((c = TAILQ_FIRST(&p->hp_childs)) != NULL)
       prop_destroy0(c);
@@ -507,6 +530,7 @@ prop_destroy0(prop_t *p)
     break;
   }
 
+  p->hp_type = PROP_ZOMBIE;
 
   while((s = LIST_FIRST(&p->hp_canonical_subscriptions)) != NULL) {
     LIST_REMOVE(s, hps_canonical_prop_link);
@@ -633,6 +657,11 @@ prop_subscribe(struct prop *prop, const char **name,
       return NULL;
     }
 
+    if(p->hp_type == PROP_ZOMBIE) {
+      hts_mutex_unlock(&prop_mutex);
+      return NULL;
+    }
+
     name++;
 
     hts_mutex_lock(&prop_mutex);
@@ -750,6 +779,11 @@ prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str)
 {
   hts_mutex_lock(&prop_mutex);
 
+  if(p->hp_type == PROP_ZOMBIE) {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
+
   if(p->hp_type != PROP_STRING) {
 
     prop_clean(p);
@@ -792,6 +826,11 @@ prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v)
 {
   hts_mutex_lock(&prop_mutex);
 
+  if(p->hp_type == PROP_ZOMBIE) {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
+
   if(p->hp_type != PROP_FLOAT) {
 
     prop_clean(p);
@@ -814,6 +853,11 @@ void
 prop_set_int_ex(prop_t *p, prop_sub_t *skipme, int v)
 {
   hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type == PROP_ZOMBIE) {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
 
   if(p->hp_type != PROP_INT) {
 
@@ -838,6 +882,11 @@ void
 prop_set_void_ex(prop_t *p, prop_sub_t *skipme)
 {
   hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type == PROP_ZOMBIE) {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
 
   if(p->hp_type != PROP_VOID) {
 
@@ -953,6 +1002,11 @@ prop_link(prop_t *src, prop_t *dst)
 
   hts_mutex_lock(&prop_mutex);
 
+  if(src->hp_type == PROP_ZOMBIE || dst->hp_type == PROP_ZOMBIE) {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
+
   if(dst->hp_originator != NULL)
     prop_unlink0(dst);
 
@@ -986,6 +1040,11 @@ prop_unlink(prop_t *p)
 
   hts_mutex_lock(&prop_mutex);
 
+  if(p->hp_type == PROP_ZOMBIE) {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
+
   if(p->hp_originator != NULL)
     prop_unlink0(p);
 
@@ -1006,6 +1065,11 @@ prop_select_ex(prop_t *p, int advisory, prop_sub_t *skipme)
   prop_t *parent;
 
   hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type == PROP_ZOMBIE) {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
 
   parent = p->hp_parent;
 
@@ -1034,6 +1098,11 @@ prop_get_ancestors(prop_t *p)
   int l = 2; /* one for current, one for terminating NULL */
 
   hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type == PROP_ZOMBIE) {
+    hts_mutex_unlock(&prop_mutex);
+    return NULL;
+  }
 
   while(a->hp_parent != NULL) {
     l++;

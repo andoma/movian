@@ -74,6 +74,7 @@ typedef enum {
   PROP_STRING,
   PROP_FLOAT,
   PROP_INT,
+  PROP_ZOMBIE, /* Destroyed can never be changed again */
 } prop_type_t;
 
 
