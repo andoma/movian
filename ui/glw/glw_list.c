@@ -83,15 +83,8 @@ glw_list_layout_child(glw_list_t *l, glw_t *c, glw_rctx_t *rc,
     }
   }
 
-  if(l->w.glw_flags & GLW_SCALE_CHILDS) {
-    scale     = issel ? 1.0 : 0.5;
-    alpha    *= issel ? 2.0 : 0.5;
-    zdisplace = issel ? 0.0 : -1.0;
-    zdisplace = 0.0f;
-  } else {
-    scale = 1.0f;
-    zdisplace = 0.0f;
-  }
+  scale = 1.0f;
+  zdisplace = 0.0f;
 
   xs = ys = scale;
 
