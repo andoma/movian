@@ -318,7 +318,8 @@ static struct strtab eventnames[] = {
   { "MainMenu",              EVENT_KEY_MAINMENU },
   { "ChangeView",            EVENT_KEY_SWITCH_VIEW },
   { "Channel+",              EVENT_KEY_CHANNEL_PLUS },
-  { "Channel-",              EVENT_KEY_CHANNEL_MINUS },  
+  { "Channel-",              EVENT_KEY_CHANNEL_MINUS },
+  { "KeyCode",               EVENT_KEYDESC },
 };
 
 

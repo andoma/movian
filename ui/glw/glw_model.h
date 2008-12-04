@@ -184,6 +184,8 @@ typedef struct glw_model_eval_context {
 
   struct glw_prop_sub_list *sublist;
 
+  struct event *event;
+
 } glw_model_eval_context_t;
 
 

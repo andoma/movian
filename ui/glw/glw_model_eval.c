@@ -842,6 +842,23 @@ subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
 
   propname[i] = NULL;
 
+
+  if(i == 1 && !strcmp(propname[i], "event") && ec->event != NULL &&
+     ec->event->e_type == EVENT_KEYDESC) {
+
+    event_keydesc_t *ek = (event_keydesc_t *)ec->event;
+
+    /* Hack, if user ask for $event, try to translate the event 
+     * into something clever.
+     * I don't like this very much, but it'll have to do for now 
+     */
+
+    t = eval_alloc(self, ec, TOKEN_STRING);
+    t->t_string = strdup(ek->desc);
+    eval_push(ec, t);
+    return 0;
+  }
+
   gps = calloc(1, sizeof(glw_prop_sub_t));
 
   TAILQ_INIT(&gps->gps_pending);
@@ -1257,7 +1274,7 @@ typedef struct glw_event_map_eval_block {
  *
  */
 static void
-glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem)
+glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
 {
   glw_event_map_eval_block_t *b = (glw_event_map_eval_block_t *)gem;
   token_t *body;
@@ -1273,6 +1290,7 @@ glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem)
   n.w = w;
   n.passive_subscriptions = 1;
   n.sublist = &l;
+  n.event = src;
 
   body = glw_model_clone_chain(b->block);
   glw_model_eval_block(body, &n);

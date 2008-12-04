@@ -54,7 +54,7 @@ glw_event_map_generic_dtor(glw_event_map_t *gem)
  *
  */
 static void
-glw_event_map_generic_fire(glw_t *w, glw_event_map_t *gem)
+glw_event_map_generic_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
 {
   glw_event_generic_t *g = (glw_event_generic_t *)gem;
   event_generic_t *e;
@@ -191,7 +191,7 @@ glw_event_map_internal_dtor(glw_event_map_t *gem)
  *
  */
 static void
-glw_event_map_internal_fire(glw_t *w, glw_event_map_t *gem)
+glw_event_map_internal_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
 {
   glw_event_internal_t *g = (glw_event_internal_t *)gem;
   glw_t *t = glw_event_find_target(w, g->target);
@@ -246,6 +246,6 @@ glw_event_map_intercept(glw_t *w, event_t *e)
   if(gem == NULL)
     return 0;
 
-  gem->gem_fire(w, gem);
+  gem->gem_fire(w, gem, e);
   return 1;
 }
