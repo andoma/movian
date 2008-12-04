@@ -622,26 +622,6 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
 
   ui_dispatch_event(e, buf, &gx11->gr.gr_uii);
 }
-#if 0  
-
-    e = keymapper_resolve(NULL, buf);
-    if(e == NULL)
-      return;
-  }
-
-  glw_lock(&gx11->gr);
-  r = glw_event(&gx11->gr, e);
-  glw_unlock(&gx11->gr);
-
-  if(r == 0) {
-    /* Not consumed, drop it into the main event dispatcher */
-    event_post(e);
-  } else {
-    event_unref(e);
-  }
-}
-#endif
-
 
 /**
  *
