@@ -291,7 +291,6 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 
     case GLW_ATTRIB_EXPAND_REQUEST:
       w->glw_exp_req = va_arg(ap, double);
-      printf("expreq set to %f\n", w->glw_exp_req);
       break;
 
     default:
