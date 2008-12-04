@@ -901,17 +901,13 @@ glw_event_to_widget(glw_t *w, event_t *e)
 }
 
 
+
 /**
  *
  */
-int
-glw_event(glw_root_t *gr, event_t *e)
+static int
+glw_event_i(glw_t *w, event_t *e)
 {
-  glw_t *w;
-
-  if((w = TAILQ_FIRST(&gr->gr_focus_childs)) == NULL)
-    return 0;
-
   while(1) {
     if(w->glw_focus_mode == GLW_FOCUS_TARGET)
       break;
@@ -926,31 +922,49 @@ glw_event(glw_root_t *gr, event_t *e)
 }
 
 
-
-static glw_t *
-pointer_scan(glw_t *w, float x, float y)
+/**
+ *
+ */
+int
+glw_event(glw_root_t *gr, event_t *e)
 {
-  glw_t *c, *r;
+  glw_t *w;
+
+  if((w = TAILQ_FIRST(&gr->gr_focus_childs)) == NULL)
+    return 0;
+
+  return glw_event_i(w, e);
+}
+
+
+
+
+
+/**
+ *
+ */
+static int
+pointer_event0(glw_t *w, float x, float y, event_t *e)
+{
+  glw_t *c;
   float *m;
   float x1, x2, y1, y2;
 
   switch(w->glw_focus_mode) {
   case GLW_FOCUS_NONE:
-    return NULL;
+    return 0;
 
   case GLW_FOCUS_LEADER:
-
     if(w->glw_flags & GLW_FOCUS_DISABLED)
-      return NULL;
+      return 0;
 
     TAILQ_FOREACH(c, &w->glw_focus_childs, glw_focus_parent_link)
-      if((r = pointer_scan(c, x, y)) != NULL)
-	return r;
-    return NULL;
+      if(pointer_event0(c, x, y, e))
+	return 1;
+    return 0;
 
   case GLW_FOCUS_TARGET:
-
-    if(w->glw_focus_mode == GLW_FOCUS_TARGET && (m = w->glw_matrix) != NULL) {
+    if((m = w->glw_matrix) != NULL) {
       
       x1 = m[12] - m[0];
       x2 = m[12] + m[0];
@@ -959,26 +973,99 @@ pointer_scan(glw_t *w, float x, float y)
       y2 = m[13] + m[5];
       
       if(x >= x1 && x <= x2 && y >= y1 && y <= y2) {
+
 	glw_focus_set(w);
-	return w;
+
+	if(e != NULL) {
+	  glw_event_to_widget(w, e);
+	}
+
+	return 1;
       }
     }
     break;
   }
-  return NULL;
+  return 0;
 }
 
 
 /**
  *
  */
-glw_t *
-glw_pointer_motion(glw_root_t *gr, float x, float y)
+void
+glw_pointer_event(glw_root_t *gr, float x, float y, event_t *e)
 {
-  glw_t *c, *r;
+  glw_t *c;
 
   TAILQ_FOREACH(c, &gr->gr_focus_childs, glw_focus_parent_link)
-    if((r = pointer_scan(c, x, y)) != NULL)
-      return r;
-  return NULL;
+    if(pointer_event0(c, x, y, e))
+      break;
+}
+
+
+
+
+/**
+ *
+ */
+static int
+pointer_scroll0(glw_t *w, float x, float y, int direction)
+{
+  glw_t *c;
+  float *m;
+  float x1, x2, y1, y2;
+  event_t *e;
+
+
+  switch(w->glw_focus_mode) {
+  case GLW_FOCUS_NONE:
+  case GLW_FOCUS_TARGET:
+    return 0;
+
+  case GLW_FOCUS_LEADER:
+    if(w->glw_flags & GLW_FOCUS_DISABLED)
+      return 0;
+
+    if((m = w->glw_matrix) != NULL) {
+      
+      x1 = m[12] - m[0];
+      x2 = m[12] + m[0];
+
+      y1 = m[13] - m[5];
+      y2 = m[13] + m[5];
+      
+      if(x >= x1 && x <= x2 && y >= y1 && y <= y2) {
+
+	glw_focus_set(w);
+
+	
+	e = event_create_simple(direction ? EVENT_DOWN : EVENT_UP);
+	glw_event_i(w, e);
+	event_unref(e);
+	return 1;
+      }
+    }
+
+    TAILQ_FOREACH(c, &w->glw_focus_childs, glw_focus_parent_link)
+      if(pointer_scroll0(c, x, y, direction))
+	return 1;
+    return 0;
+
+    break;
+  }
+  return 0;
+}
+
+
+/**
+ *
+ */
+void
+glw_pointer_scroll(glw_root_t *gr, float x, float y, int direction)
+{
+  glw_t *c;
+
+  TAILQ_FOREACH(c, &gr->gr_focus_childs, glw_focus_parent_link)
+    if(pointer_scroll0(c, x, y, direction))
+      break;
 }

@@ -562,7 +562,9 @@ int glw_event(glw_root_t *gr, event_t *e);
 
 int glw_event_to_widget(glw_t *w, event_t *e);
 
-glw_t *glw_pointer_motion(glw_root_t *gr, float x, float y);
+void glw_pointer_event(glw_root_t *gr, float x, float y, event_t *e);
+
+void glw_pointer_scroll(glw_root_t *gr, float x, float y, int direction);
 
 int glw_navigate(glw_t *w, event_t *e);
 

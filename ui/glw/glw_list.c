@@ -260,6 +260,8 @@ glw_list_render(glw_t *w, glw_rctx_t *rc)
   glw_t *c;
   float alpha = rc->rc_alpha * w->glw_alpha;
 
+  glw_store_matrix(w, rc);
+
   if(alpha < 0.01)
     return;
 
@@ -279,6 +281,7 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_rctx_t *rc = extra;
   glw_list_t *l = (void *)w;
+  event_t *e;
 
   switch(signal) {
   default:
@@ -302,6 +305,16 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_SELECT:
     w->glw_selected = extra;
     return 0;
+
+  case GLW_SIGNAL_EVENT:
+    if(w->glw_focus_mode != GLW_FOCUS_LEADER)
+      return 0; /* We must be a leader for this to work */
+
+    e = extra;
+    return 0;
+
+    
+
   }
   return 0;
 }

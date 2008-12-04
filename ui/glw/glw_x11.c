@@ -761,7 +761,7 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
   int w, h;
   float x, y;
   unsigned int retraceCount = 0;
-  glw_t *g;
+  event_t *e;
 
   gx11->glXGetVideoSyncSGI(&retraceCount);
 
@@ -818,7 +818,7 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 	  y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
 	  
 	  glw_lock(&gx11->gr);
-	  glw_pointer_motion(&gx11->gr, x, y);
+	  glw_pointer_event(&gx11->gr, x, y, NULL);
 	  glw_unlock(&gx11->gr);
 	  break;
 	  
@@ -826,21 +826,30 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 	  if(!gx11->is_pointer_enabled)
 	    break;
 
-	  if(event.xbutton.button != 1)
-	    break;
 	  x =  (2.0 * event.xmotion.x / gx11->window_width) - 1;
 	  y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
-	  
+
 	  glw_lock(&gx11->gr);
-	  g = glw_pointer_motion(&gx11->gr, x, y);
 
-	  if(g != NULL) {
-	    event_t *e;
+	  switch(event.xbutton.button) {
+	  case 1:
+	    /* Left click */
 	    e = event_create_simple(EVENT_ENTER);
-	    glw_event_to_widget(g, e);
+	    glw_pointer_event(&gx11->gr, x, y, e);
 	    event_unref(e);
-	  }
+	    break;
+	  case 4:
+	    /* Scroll up */
+	    glw_pointer_scroll(&gx11->gr, x, y, 0);
+	    break;
+	  case 5:
+	    /* Scroll down */
+	    glw_pointer_scroll(&gx11->gr, x, y, 1);
+	    break;
 
+	  default:
+	    break;
+	  }
 	  glw_unlock(&gx11->gr);
 	  break;
 
