@@ -102,7 +102,7 @@ display_settings_save(glw_x11_t *gx11)
   htsmsg_add_u32(m, "fullscreen", gx11->want_fullscreen);
   htsmsg_add_u32(m, "pointer",    gx11->want_pointer_enabled);
   
-  hts_settings_save(m, "display");
+  hts_settings_save(m, "displays/%s", gx11->displayname);
   htsmsg_destroy(m);
 }
 
@@ -137,10 +137,13 @@ static void
 display_settings_init(glw_x11_t *gx11)
 {
   prop_t *r;
+  char title[256];
+  htsmsg_t *settings = hts_settings_load("displays/%s", gx11->displayname);
 
-  htsmsg_t *settings = hts_settings_load("display");
+  snprintf(title, sizeof(title), "Display settings for %s",
+	   gx11->displayname);
 
-  r = settings_add_dir(NULL, "display", "Display settings", "display");
+  r = settings_add_dir(NULL, "display", title, "display");
   
   settings_add_bool(r, "fullscreen",
 		    "Fullscreen mode", 0, settings,
@@ -499,8 +502,6 @@ glw_x11_init(glw_x11_t *gx11)
   prop_display_refreshrate = 
     prop_create(prop_display, "refreshrate");
 #endif
-
-  gx11->displayname = getenv("DISPLAY");
 
   display_settings_init(gx11);
 
@@ -922,6 +923,8 @@ static uii_t *
 glw_x11_start(const char *arg)
 {
   glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
+
+  gx11->displayname = strdup(arg ?: getenv("DISPLAY"));
 
   gx11->gr.gr_uii.uii_ui = &glw_ui;
 
