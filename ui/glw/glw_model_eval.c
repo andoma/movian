@@ -366,6 +366,7 @@ eval_array(glw_model_eval_context_t *pec, token_t *t0)
   ec.gr = pec->gr;
   ec.passive_subscriptions = pec->passive_subscriptions;
   ec.sublist = pec->sublist;
+  ec.event = pec->event;
 
   for(t = t0->child; t != NULL; t = t->next) {
     ec.alloc = NULL;
@@ -842,8 +843,7 @@ subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
 
   propname[i] = NULL;
 
-
-  if(i == 1 && !strcmp(propname[i], "event") && ec->event != NULL &&
+  if(i == 1 && !strcmp(propname[0], "event") && ec->event != NULL &&
      ec->event->e_type == EVENT_KEYDESC) {
 
     event_keydesc_t *ek = (event_keydesc_t *)ec->event;
@@ -983,6 +983,7 @@ glw_model_eval_rpn(token_t *t, glw_model_eval_context_t *pec, int *copyp)
   ec.gr = pec->gr;
   ec.passive_subscriptions = pec->passive_subscriptions;
   ec.sublist = pec->sublist;
+  ec.event = pec->event;
 
   r = glw_model_eval_rpn0(t, &ec);
 
