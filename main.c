@@ -203,12 +203,10 @@ main(int argc, char **argv)
 
   event_handler_register("main", main_event_handler, EVENTPRI_MAIN, NULL);
 
-  //  apps_load();
-
   if(optind < argc)
     nav_open(argv[optind]);
   else
-    nav_open("mainmenu://");
+    nav_open("page://mainmenu");
 
   ui_loop();
 

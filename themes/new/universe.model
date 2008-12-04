@@ -26,16 +26,19 @@ widget(cursor, {
 
 	    space(0.1);
 
-	    BUTTON_IMAGE(1, 1, "theme://icons/back.png",
-			 genericEvent(navigator, back, ""));
+	    BUTTON(1, 1, "Home", "theme://icons/home.png",
+		   genericEvent(navigator, open, "page://mainmenu"));
+
+	    space(0.1);
+
+	    BUTTON(1, 1, "Back", "theme://icons/back.png",
+		   genericEvent(navigator, back, ""));
 	    
 	    widget(label, {
 	      .aspect = 40;
 	      .weight = 20;
 	      .caption = $global.nav.currentpage.uri;
 	    });
-
-	    space(0.1);
 	  });
 	  space(0.1);
 	});
