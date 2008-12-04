@@ -31,12 +31,15 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
   float d = -1.0f, e1, tw = 0;
   int xy;
   float aspect = w->glw_aspect > 0 ? w->glw_aspect : rc->rc_aspect;
-  glw_rctx_t rc0 = *rc;
+  glw_rctx_t rc0;
+
+  glw_flush_render_list(w);
 
   if(w->glw_alpha < 0.01)
     return;
 
-  glw_flush_render_list(w);
+  rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, w->glw_exp_req);
+  rc0 = *rc;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
     tw += c->glw_weight;
@@ -90,6 +93,8 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
       }
 
       glw_layout0(c, &rc0);
+      rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, rc0.rc_exp_req);
+
       if(c->glw_weight > 0.01)
 	glw_link_render_list(w, c);
     }
@@ -103,10 +108,13 @@ static void
 glw_container_z_layout(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c;
-  glw_rctx_t rc0 = *rc;
+  glw_rctx_t rc0;
 
   if(w->glw_alpha < 0.01)
     return;
+
+  rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, w->glw_exp_req);
+  rc0 = *rc;
 
   glw_flush_render_list(w);
 
@@ -121,6 +129,8 @@ glw_container_z_layout(glw_t *w, glw_rctx_t *rc)
     c->glw_parent_scale.z = 1.0f;
 
     glw_layout0(c, &rc0);
+    rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, rc0.rc_exp_req);
+
     glw_link_render_list(w, c);
    }
 }

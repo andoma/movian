@@ -387,6 +387,8 @@ glw_bitmap_layout(glw_t *w, glw_rctx_t *rc)
   glw_texture_t *gt = gb->gb_tex;
   glw_t *c;
 
+  rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, w->glw_exp_req);
+
   if(gt != NULL)
     glw_tex_layout(w->glw_root, gt);
 

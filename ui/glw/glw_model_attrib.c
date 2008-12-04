@@ -357,10 +357,10 @@ static const token_attrib_t attribtab[] = {
   {"alpha",           set_float,  GLW_ATTRIB_ALPHA},
   {"aspect",          set_float,  GLW_ATTRIB_ASPECT},
   {"weight",          set_float,  GLW_ATTRIB_WEIGHT},
-  {"expand",          set_float,  GLW_ATTRIB_EXPAND},
   {"time",            set_float,  GLW_ATTRIB_TIME},
   {"angle",           set_float,  GLW_ATTRIB_ANGLE},
   {"xfill",           set_float,  GLW_ATTRIB_XFILL},
+  {"expand",          set_float,  GLW_ATTRIB_EXPAND_REQUEST},
 
   {"displacement",    set_float3, GLW_ATTRIB_DISPLACEMENT},
   {"color",           set_float3, GLW_ATTRIB_RGB},

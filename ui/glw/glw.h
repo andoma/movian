@@ -99,7 +99,6 @@ typedef enum {
   GLW_ATTRIB_ID,
   GLW_ATTRIB_DISPLACEMENT,
   GLW_ATTRIB_RGB,
-  GLW_ATTRIB_EXPAND,
   GLW_ATTRIB_TIME,
   GLW_ATTRIB_INT_STEP,
   GLW_ATTRIB_INT_MIN,
@@ -109,6 +108,7 @@ typedef enum {
   GLW_ATTRIB_TRANSITION_EFFECT,
   GLW_ATTRIB_XFILL,
   GLW_ATTRIB_FOCUSABLE,
+  GLW_ATTRIB_EXPAND_REQUEST,
 } glw_attribute_t;
 
 #define GLW_MIRROR_X   0x1
@@ -275,6 +275,8 @@ typedef struct glw_rctx {
 
   struct glw_cursor_painter *rc_cursor_painter;
 
+  float rc_exp_req;
+
 } glw_rctx_t;
 
 
@@ -368,6 +370,7 @@ typedef struct glw {
 
   float *glw_matrix;
 
+  float glw_exp_req;
 
   /* Focus */
   TAILQ_ENTRY(glw) glw_focus_parent_link;
@@ -521,9 +524,9 @@ do {						\
   case GLW_ATTRIB_ALPHA:			\
   case GLW_ATTRIB_ANGLE:			\
   case GLW_ATTRIB_EXTRA:			\
-  case GLW_ATTRIB_EXPAND:                       \
   case GLW_ATTRIB_TIME:                         \
   case GLW_ATTRIB_XFILL:                        \
+  case GLW_ATTRIB_EXPAND_REQUEST:               \
     (void)va_arg(ap, double);			\
     break;					\
   }						\

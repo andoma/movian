@@ -89,8 +89,6 @@ glw_list_layout_child(glw_list_t *l, glw_t *c, glw_rctx_t *rc,
    * We abuse tpos.z for zoom ramping
    */
   if(l->w.glw_flags & GLW_EXPAND_CHILDS) {
-    c->glw_parent_zoom = GLW_LP(8, c->glw_parent_zoom, 
-				issel ? c->glw_weight - 1.0 : 0);
     rc0.rc_zoom = c->glw_parent_zoom;
 
     if(l->w.glw_class == GLW_LIST_X) {
@@ -127,7 +125,11 @@ glw_list_layout_child(glw_list_t *l, glw_t *c, glw_rctx_t *rc,
 
   v = GLW_LERP(GLW_MIN(GLW_MAX(v * 6., 0), 1), 1.0f, 0.0f);
   c->glw_parent_alpha *= v;
+
+  rc0.rc_exp_req = 1;
   glw_layout0(c, &rc0);
+  c->glw_parent_zoom = GLW_LP(8, c->glw_parent_zoom, 
+			      issel ? rc0.rc_exp_req - 1.0 : 0);
 
   if(c->glw_parent_alpha < 0.02)
     return 0;
