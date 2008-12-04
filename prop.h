@@ -35,6 +35,8 @@ typedef enum {
   PROP_ADD_SELECTED_CHILD,
   PROP_DEL_CHILD,
   PROP_SELECT_CHILD,
+  PROP_REQ_NEW_CHILD,
+  PROP_REQ_DELETE,
 } prop_event_t;
 
 typedef void (prop_callback_t)(struct prop_sub *sub, prop_event_t event, ...);
@@ -254,6 +256,10 @@ prop_t **prop_get_ancestors(prop_t *p);
 void prop_ancestors_unref(prop_t **r);
 
 prop_t *prop_get_by_subscription(prop_sub_t *s);
+
+void prop_request_new_child_by_subscription(prop_sub_t *s);
+
+void prop_request_delete_child_by_subscription(prop_sub_t *s);
 
 prop_courier_t *prop_courier_create(hts_mutex_t *entrymutex);
 

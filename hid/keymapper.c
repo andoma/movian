@@ -27,32 +27,6 @@
 
 static keymap_t km_global;
 
-static void 
-km_subscribe_callback(struct prop_sub *sub, prop_event_t event, ...)
-{
-  prop_t *p;
-  //  keymap_t *km = sub->hps_opaque;
-
-  va_list ap;
-  va_start(ap, event);
-
-  p = va_arg(ap, prop_t *);
-
-  switch(event) {
-  default:
-    break;
-
-  case PROP_ADD_CHILD:
-    /* New child created */
-    prop_set_string(prop_create(p, "type"), "keymapentry");
-    break;
-
-  case PROP_DEL_CHILD:
-    break;
-  }
-
-}
-
 
 
 /**
@@ -84,6 +58,35 @@ keymapper_entry_add(keymap_t *km, const char *str, event_type_t e)
   hts_mutex_unlock(&km->km_mutex);
 }
 
+
+/**
+ *
+ */
+static void 
+km_subscribe_callback(struct prop_sub *sub, prop_event_t event, ...)
+{
+  prop_t *p;
+  keymap_t *km = sub->hps_opaque;
+
+  va_list ap;
+  va_start(ap, event);
+
+  p = va_arg(ap, prop_t *);
+
+  switch(event) {
+  default:
+    break;
+
+  case PROP_REQ_NEW_CHILD:
+    keymapper_entry_add(km, "hej", EVENT_NONE);
+    break;
+
+  case PROP_REQ_DELETE:
+    printf("want to delete\n");
+    break;
+  }
+
+}
 
 
 /**

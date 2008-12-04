@@ -185,6 +185,8 @@ prop_courier(void *aux)
     case PROP_ADD_SELECTED_CHILD:
     case PROP_DEL_CHILD:
     case PROP_SELECT_CHILD:
+    case PROP_REQ_DELETE:
+    case PROP_REQ_NEW_CHILD:
       s->hps_callback(s, n->hpn_event, n->hpn_prop);
       if(n->hpn_prop != NULL)
 	prop_ref_dec(n->hpn_prop);
@@ -1157,6 +1159,44 @@ prop_get_by_subscription(prop_sub_t *s)
   hts_mutex_unlock(&prop_mutex);
 
   return p;
+}
+
+
+/**
+ *
+ */
+void
+prop_request_new_child_by_subscription(prop_sub_t *s)
+{
+  prop_t *p;
+  hts_mutex_lock(&prop_mutex);
+
+  p = s->hps_value_prop;
+  if(p->hp_type == PROP_DIR)
+    prop_notify_child(NULL, p, PROP_REQ_NEW_CHILD, s);
+
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
+ *
+ */
+void
+prop_request_delete_child_by_subscription(prop_sub_t *s)
+{
+  prop_t *p, *c;
+  hts_mutex_lock(&prop_mutex);
+
+  c = s->hps_value_prop;
+  if(c->hp_type != PROP_ZOMBIE) {
+    p = c->hp_parent;
+
+    if(p->hp_type == PROP_DIR)
+      prop_notify_child(c, p, PROP_REQ_DELETE, s);
+  }
+
+  hts_mutex_unlock(&prop_mutex);
 }
 
 
