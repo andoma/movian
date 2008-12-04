@@ -74,6 +74,7 @@ event_create_unicode(int sym)
   event_unicode_t *e = malloc(sizeof(event_unicode_t));
   e->h.e_dtor = event_default_dtor;
   e->h.e_refcount = 1;
+  e->h.e_mapped = 0;
   e->h.e_type = EVENT_UNICODE;
   e->sym = sym;
   return e;
