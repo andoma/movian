@@ -287,6 +287,7 @@ event_generic_dtor(event_t *e)
  */
 
 static struct strtab eventnames[] = {
+  { "no-event",              EVENT_NONE },
   { "Up",                    EVENT_UP },
   { "Down",                  EVENT_DOWN },
   { "Left",                  EVENT_LEFT },
