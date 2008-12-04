@@ -31,6 +31,7 @@ static void
 km_subscribe_callback(struct prop_sub *sub, prop_event_t event, ...)
 {
   prop_t *p;
+  //  keymap_t *km = sub->hps_opaque;
 
   va_list ap;
   va_start(ap, event);
@@ -47,26 +48,11 @@ km_subscribe_callback(struct prop_sub *sub, prop_event_t event, ...)
     break;
 
   case PROP_DEL_CHILD:
-    printf("Deleted\n");
     break;
   }
 
 }
 
-
-
-/**
- *
- */
-static prop_t *
-keymapper_build_prop(void)
-{
-  prop_t *p = prop_create(NULL, NULL);
-  
-  prop_set_string(prop_create(p, "type"), "keymapentry");
-
-  return p;
-}
 
 
 /**
@@ -87,8 +73,8 @@ keymapper_entry_add(keymap_t *km, const char *str, event_type_t e)
   ke->ke_event = e;
   LIST_INSERT_HEAD(&km->km_entries, ke, ke_link);
 
-  ke->ke_prop = keymapper_build_prop();
-
+  ke->ke_prop =  prop_create(NULL, NULL);
+  prop_set_string(prop_create(ke->ke_prop, "type"), "keymapentry");
   prop_set_string(prop_create(ke->ke_prop, "keycode"), str);
   prop_set_string(prop_create(ke->ke_prop, "event"), event_code2str(e));
 
@@ -153,7 +139,7 @@ keymapper_init(keymap_t *km, prop_t *settingsparent, const char *title)
 				     "keymap");
 
   prop_set_int(prop_create(km->km_settings, "mayadd"), 1);
- 
+
   km->km_subscription = 
     prop_subscribe(prop_create(km->km_settings, "nodes"), NULL,
 		   km_subscribe_callback, km, NULL, 0);
