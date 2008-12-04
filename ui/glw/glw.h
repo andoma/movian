@@ -147,8 +147,7 @@ typedef enum {
 
 typedef enum {
   GLW_FOCUS_NONE,
-  GLW_FOCUS_LEADER_ENABLED,
-  GLW_FOCUS_LEADER_DISABLED,
+  GLW_FOCUS_LEADER,
   GLW_FOCUS_TARGET,
 } glw_focus_mode_t;
 
@@ -331,6 +330,7 @@ typedef struct glw {
 
   int glw_flags;  
 
+#define GLW_FOCUS_DISABLED      0x1     /* Can not receive focus right now */
 #define GLW_KEEP_ASPECT         0x2     /* Keep aspect (for bitmaps) */
 #define GLW_DESTROYED           0x4     /* was destroyed but someone
 					   is holding references */

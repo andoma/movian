@@ -305,7 +305,7 @@ set_focus(glw_model_eval_context_t *ec, const token_attrib_t *a,
     if(!strcmp(t->t_string, "target") || !strcmp(t->t_string, "true"))
       gfm = GLW_FOCUS_TARGET;
     else if(!strcmp(t->t_string, "leader"))
-      gfm = GLW_FOCUS_LEADER_ENABLED;
+      gfm = GLW_FOCUS_LEADER;
     else
       gfm = GLW_FOCUS_NONE;
 

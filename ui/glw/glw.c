@@ -277,8 +277,7 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       if(gfm != GLW_FOCUS_NONE) {
 	/* Find first parent which is a focus leader */
 	for(p = w->glw_parent; p != NULL; p = p->glw_parent)
-	  if(p->glw_focus_mode == GLW_FOCUS_LEADER_ENABLED ||
-	     p->glw_focus_mode == GLW_FOCUS_LEADER_DISABLED)
+	  if(p->glw_focus_mode == GLW_FOCUS_LEADER)
 	    break;
 
 	w->glw_focus_parent = p;
@@ -833,8 +832,7 @@ glw_get_indirectly_focused_child(glw_t *w)
 
   /* Find closest focus leader */
   for(l = w; l != NULL; l = l->glw_parent) {
-    if(l->glw_focus_mode == GLW_FOCUS_LEADER_ENABLED ||
-       l->glw_focus_mode == GLW_FOCUS_LEADER_DISABLED)
+    if(l->glw_focus_mode == GLW_FOCUS_LEADER)
       break;
   }
 
@@ -917,7 +915,8 @@ glw_event(glw_root_t *gr, event_t *e)
   while(1) {
     if(w->glw_focus_mode == GLW_FOCUS_TARGET)
       break;
-    if(w->glw_focus_mode == GLW_FOCUS_LEADER_ENABLED) {
+    if(w->glw_focus_mode == GLW_FOCUS_LEADER &&
+       !(w->glw_flags & GLW_FOCUS_DISABLED)) {
       w = TAILQ_FIRST(&w->glw_focus_childs);
       if(w == NULL)
 	return 0;
@@ -937,10 +936,13 @@ pointer_scan(glw_t *w, float x, float y)
 
   switch(w->glw_focus_mode) {
   case GLW_FOCUS_NONE:
-  case GLW_FOCUS_LEADER_DISABLED:
     return NULL;
 
-  case GLW_FOCUS_LEADER_ENABLED:
+  case GLW_FOCUS_LEADER:
+
+    if(w->glw_flags & GLW_FOCUS_DISABLED)
+      return NULL;
+
     TAILQ_FOREACH(c, &w->glw_focus_childs, glw_focus_parent_link)
       if((r = pointer_scan(c, x, y)) != NULL)
 	return r;

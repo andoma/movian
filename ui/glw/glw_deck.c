@@ -30,14 +30,11 @@
 static void
 switchfocus(glw_t *prev, glw_t *n)
 {
-  if(prev != NULL && prev->glw_focus_mode == GLW_FOCUS_LEADER_ENABLED)
-    prev->glw_focus_mode = GLW_FOCUS_LEADER_DISABLED;
+  if(prev != NULL && prev->glw_focus_mode == GLW_FOCUS_LEADER)
+    prev->glw_flags |= GLW_FOCUS_DISABLED;
 
-  if(n != NULL && 
-     (n->glw_focus_mode == GLW_FOCUS_LEADER_ENABLED ||
-      n->glw_focus_mode == GLW_FOCUS_LEADER_DISABLED)) {
-    
-    n->glw_focus_mode = GLW_FOCUS_LEADER_ENABLED;
+  if(n != NULL && n->glw_focus_mode == GLW_FOCUS_LEADER) {
+    n->glw_flags &= ~GLW_FOCUS_DISABLED;
     glw_focus_set(n);
   }
 }
