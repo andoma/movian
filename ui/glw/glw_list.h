@@ -22,7 +22,6 @@
 typedef struct glw_list {
   glw_t w;
 
-  glw_orientation_t orientation, fixed_orientation;
   int visible;
 
   int reposition_needed;

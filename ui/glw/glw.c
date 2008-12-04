@@ -56,7 +56,8 @@ static const size_t glw_class_to_size[] = {
   [GLW_INTEGER]  = sizeof(glw_text_bitmap_t),
   [GLW_ROTATOR] = sizeof(glw_t),
   //  [GLW_ARRAY] = sizeof(glw_array_t),
-  [GLW_LIST] = sizeof(glw_list_t),
+  [GLW_LIST_X] = sizeof(glw_list_t),
+  [GLW_LIST_Y] = sizeof(glw_list_t),
   [GLW_DECK] = sizeof(glw_deck_t),
   [GLW_EXPANDER] = sizeof(glw_t),
   //  [GLW_SLIDESHOW] = sizeof(glw_slideshow_t),
@@ -325,7 +326,8 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
     glw_rotator_ctor(w, init, apx);
     break;
 
-  case GLW_LIST:
+  case GLW_LIST_X:
+  case GLW_LIST_Y:
     glw_list_ctor(w, init, apx);
     break;
 

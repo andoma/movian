@@ -33,12 +33,9 @@ glw_list_reposition_childs(glw_list_t *l)
   vd = 2. / l->visible;
   v = -1.0f + vd * 0.5;
 
-  if(l->orientation == 0)
-    return;
-
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
 
-    if(l->orientation == GLW_ORIENTATION_HORIZONTAL) {
+    if(w->glw_class == GLW_LIST_X) {
       c->glw_parent_x = w->glw_displacement.x + v;
       c->glw_parent_y = w->glw_displacement.y;
     } else {
@@ -76,7 +73,7 @@ glw_list_layout_child(glw_list_t *l, glw_t *c, glw_rctx_t *rc,
     return -1;
 
   if(l->w.glw_flags & GLW_EXPAND_CHILDS) {
-    if(l->orientation == GLW_ORIENTATION_HORIZONTAL) {
+    if(l->w.glw_class == GLW_LIST_X) {
       c->glw_parent_pos.x -= expansion_factor / l->visible;
     } else {
       c->glw_parent_pos.y += expansion_factor / l->visible;
@@ -96,7 +93,7 @@ glw_list_layout_child(glw_list_t *l, glw_t *c, glw_rctx_t *rc,
 				issel ? c->glw_weight - 1.0 : 0);
     rc0.rc_zoom = c->glw_parent_zoom;
 
-    if(l->orientation == GLW_ORIENTATION_HORIZONTAL) {
+    if(l->w.glw_class == GLW_LIST_X) {
       xs *= c->glw_parent_zoom + 1.;
       *xdp -= 2 * c->glw_parent_zoom / (float)l->visible;
       c->glw_parent_pos.x += c->glw_parent_zoom / (float)l->visible;
@@ -122,18 +119,10 @@ glw_list_layout_child(glw_list_t *l, glw_t *c, glw_rctx_t *rc,
   rc0.rc_aspect = rc->rc_aspect * c->glw_parent_scale.x / c->glw_parent_scale.y;
   c->glw_parent_alpha = GLW_LP(16, c->glw_parent_alpha, alpha);
 
-  switch(l->orientation) {
-  case GLW_ORIENTATION_HORIZONTAL:
+  if(l->w.glw_class == GLW_LIST_X) {
     v = fabs(c->glw_parent_pos.x) - 0.9f;
-    break;
-      
-  case GLW_ORIENTATION_VERTICAL:
+  } else {
     v = fabs(c->glw_parent_pos.y) - 0.9f;
-    break;
-
-  default:
-    v = 0;
-    break;
   }
 
   v = GLW_LERP(GLW_MIN(GLW_MAX(v * 6., 0), 1), 1.0f, 0.0f);
@@ -155,7 +144,6 @@ glw_list_layout(glw_t *w, glw_rctx_t *rc)
   glw_list_t *l = (void *)w;
   glw_t *c, *p, *n;
   float d, xx, yy, xd = 0, yd = 0, thres;
-  glw_orientation_t o;
   float expansion_factor;
   
   if(w->glw_alpha < 0.01)
@@ -163,33 +151,16 @@ glw_list_layout(glw_t *w, glw_rctx_t *rc)
 
   glw_flush_render_list(w);
 
-  if((o = l->fixed_orientation) == GLW_ORIENTATION_UNKNOWN)
-    o = rc->rc_aspect > 1.0 ? GLW_ORIENTATION_HORIZONTAL : 
-      GLW_ORIENTATION_VERTICAL;
-  
-  if(o != l->orientation) {
-    /* Orientation changed */
-    l->orientation = o;
-    l->reposition_needed = 1;
-  }
-
   if(l->reposition_needed) {
 
-    switch(o) {
-    case GLW_ORIENTATION_HORIZONTAL:
+    if(w->glw_class == GLW_LIST_X) {
       l->xs = 1.0f / (float)l->visible;
       l->ys = 1.0f;
       l->ycenter = l->ycenter_target = 0;
-      break;
-      
-    case GLW_ORIENTATION_VERTICAL:
+    } else {
       l->xs = 1.0f;
       l->ys = 1.0f / (float)l->visible;
       l->xcenter = l->xcenter_target = 0;
-      break;
-      
-    default:
-      return;
     }
     l->reposition_needed = 0;
     glw_list_reposition_childs(l);
@@ -352,9 +323,6 @@ glw_list_ctor(glw_t *w, int init, va_list ap)
     case GLW_ATTRIB_SLICES:
       h->reposition_needed = 1;
       h->visible = va_arg(ap, int);
-      break;
-    case GLW_ATTRIB_ORIENTATION:
-      h->fixed_orientation = va_arg(ap, int);
       break;
 
     default:

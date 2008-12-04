@@ -123,7 +123,8 @@ find_candidate(glw_t *w, query_t *query)
       find_candidate(c, query);
     break;
 
-  case GLW_LIST:
+  case GLW_LIST_X:
+  case GLW_LIST_Y:
     /* We end up here if we try to enter a GLW_LIST from outside */
     if(query->direction) {
       c = TAILQ_FIRST(&w->glw_childs);
@@ -242,7 +243,8 @@ glw_navigate(glw_t *w, event_t *e)
       if(p->glw_class != (orientation ? GLW_CONTAINER_X : GLW_CONTAINER_Y))
 	break;
 
-    case GLW_LIST:
+    case GLW_LIST_X:
+    case GLW_LIST_Y:
 
       c = w;
       while(1) {

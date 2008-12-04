@@ -205,32 +205,6 @@ set_align(glw_model_eval_context_t *ec, const token_attrib_t *a,
 
 
 
-static struct strtab orientationtab[] = {
-  { "vertical",       GLW_ORIENTATION_VERTICAL},
-  { "horizontal",     GLW_ORIENTATION_HORIZONTAL},
-};
-
-
-/**
- *
- */
-static int
-set_orientation(glw_model_eval_context_t *ec, const token_attrib_t *a, 
-		struct token *t)
-{
-  int v;
-  if(t->type != TOKEN_IDENTIFIER || (v = str2val(t->t_string,
-						 orientationtab)) < 0)
-    return glw_model_seterr(ec->ei, t, "Invalid assignment for attribute %s",
-			    a->name);
-  glw_set_i(ec->w, GLW_ATTRIB_ORIENTATION, v, NULL);
-  return 0;
-}
-
-
-
-
-
 static struct strtab transitiontab[] = {
   { "blend",             GLW_TRANS_BLEND},
   { "flipHorizontal",    GLW_TRANS_FLIP_HORIZONTAL},
@@ -394,7 +368,6 @@ static const token_attrib_t attribtab[] = {
   {"vertexBorders",   set_float4, GLW_ATTRIB_VERTEX_BORDERS},
 
   {"align",           set_align,  0},
-  {"orientation",     set_orientation,  0},
   {"effect",          set_transition_effect,  0},
   {"focus",           set_focus, 0},
 };

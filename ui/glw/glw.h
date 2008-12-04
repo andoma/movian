@@ -59,7 +59,8 @@ typedef enum {
   GLW_TEXT,
   GLW_INTEGER,
   GLW_ROTATOR,      /* Rotating device */
-  GLW_LIST,
+  GLW_LIST_X,
+  GLW_LIST_Y,
   GLW_DECK,
   GLW_EXPANDER,
   GLW_CURSOR,
@@ -97,7 +98,6 @@ typedef enum {
   GLW_ATTRIB_MIRROR,
   GLW_ATTRIB_ID,
   GLW_ATTRIB_DISPLACEMENT,
-  GLW_ATTRIB_ORIENTATION,
   GLW_ATTRIB_RGB,
   GLW_ATTRIB_EXPAND,
   GLW_ATTRIB_TIME,
@@ -144,11 +144,6 @@ typedef enum {
   GLW_ALIGN_TOP,
 } glw_alignment_t;
 
-typedef enum {
-  GLW_ORIENTATION_UNKNOWN = 0,
-  GLW_ORIENTATION_VERTICAL,
-  GLW_ORIENTATION_HORIZONTAL,
-} glw_orientation_t;
 
 typedef enum {
   GLW_FOCUS_NONE,
@@ -506,7 +501,6 @@ do {						\
   case GLW_ATTRIB_Y_SLICES:                     \
   case GLW_ATTRIB_MODE:                         \
   case GLW_ATTRIB_MIRROR:                       \
-  case GLW_ATTRIB_ORIENTATION:                  \
   case GLW_ATTRIB_INT:                          \
   case GLW_ATTRIB_INT_STEP:                     \
   case GLW_ATTRIB_INT_MIN:                      \
