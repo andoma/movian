@@ -783,6 +783,7 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 	XDefineCursor(gx11->display, gx11->win, blank_cursor(gx11));
       }
       gx11->is_pointer_enabled = gx11->want_pointer_enabled;
+      display_settings_save(gx11);
     }
 
     if(frame_duration != 0) {
