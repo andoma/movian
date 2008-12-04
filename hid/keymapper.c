@@ -32,10 +32,62 @@ static keymap_t km_global;
 /**
  *
  */
+static void 
+km_set_code(struct prop_sub *sub, prop_event_t event, ...)
+{
+  keymap_entry_t *ke = sub->hps_opaque;
+  const char *str;
+
+  va_list ap;
+  va_start(ap, event);
+
+  if(event != PROP_SET_STRING)
+    return;
+
+  str = va_arg(ap, char *);
+  printf("Code set to %s\n", str);
+
+  if(strcmp(ke->ke_keycode, str)) {
+    free(ke->ke_keycode);
+    ke->ke_keycode = strdup(str);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+km_set_event(struct prop_sub *sub, prop_event_t event, ...)
+{
+  keymap_entry_t *ke = sub->hps_opaque;
+  const char *str;
+  event_type_t e;
+  va_list ap;
+  va_start(ap, event);
+
+  if(event != PROP_SET_STRING)
+    return;
+
+  str = va_arg(ap, char *);
+  printf("Event set to %s\n", str);
+
+  e = event_str2code(str);
+  
+  if(ke->ke_event != e) {
+    ke->ke_event = e;
+  }
+}
+
+
+/**
+ *
+ */
 static void
 keymapper_entry_add(keymap_t *km, const char *str, event_type_t e)
 {
   keymap_entry_t *ke;
+  prop_t *p;
 
   if(km == NULL)
     km = &km_global;
@@ -49,8 +101,15 @@ keymapper_entry_add(keymap_t *km, const char *str, event_type_t e)
 
   ke->ke_prop =  prop_create(NULL, NULL);
   prop_set_string(prop_create(ke->ke_prop, "type"), "keymapentry");
-  prop_set_string(prop_create(ke->ke_prop, "keycode"), str);
-  prop_set_string(prop_create(ke->ke_prop, "event"), event_code2str(e));
+
+  p = prop_create(ke->ke_prop, "keycode");
+  prop_set_string(p, str);
+  ke->ke_sub_keycode = prop_subscribe(p, NULL, km_set_code, ke, NULL, 0);
+
+  p = prop_create(ke->ke_prop, "event");
+  prop_set_string(p, event_code2str(e));
+  ke->ke_sub_event = prop_subscribe(p, NULL, km_set_event, ke, NULL, 0);
+
 
   prop_set_parent_ex(ke->ke_prop, prop_create(km->km_settings, "nodes"),
 		     km->km_subscription);
@@ -78,11 +137,11 @@ km_subscribe_callback(struct prop_sub *sub, prop_event_t event, ...)
     break;
 
   case PROP_REQ_NEW_CHILD:
-    keymapper_entry_add(km, "hej", EVENT_NONE);
+    keymapper_entry_add(km, "<unset>", EVENT_NONE);
     break;
 
   case PROP_REQ_DELETE:
-    printf("want to delete\n");
+    prop_destroy(p);
     break;
   }
 

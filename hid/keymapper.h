@@ -34,6 +34,10 @@ typedef struct keymap_entry {
   char *ke_keycode;
   event_type_t ke_event;
   prop_t *ke_prop;
+
+  prop_sub_t *ke_sub_keycode;
+  prop_sub_t *ke_sub_event;
+
 } keymap_entry_t;
 
 
