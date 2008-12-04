@@ -20,6 +20,10 @@
 #define UI_H__
 
 #include <libhts/htsq.h>
+#include "event.h"
+
+LIST_HEAD(ui_list,  ui);
+LIST_HEAD(uii_list, uii);
 
 
 /**
@@ -35,15 +39,19 @@ typedef struct uii {
 
 
 /**
- * User interface
+ * User interface class
  */
 typedef struct ui {
 
+  const char *ui_title;
+
   LIST_ENTRY(ui) ui_link;
 
-  uii_t *(*ui_start)(char *arg);
+  uii_t *(*ui_start)(const char *arg);
 
   void (*ui_stop)(uii_t *uii);
+
+  int (*ui_dispatch_event)(uii_t *uii, event_t *e);
 
 } ui_t;
 
@@ -56,5 +64,7 @@ typedef struct ui {
 void ui_loop(void);
 
 void ui_exit_showtime(void);
+
+void ui_dispatch_event(event_t *e, const char *buf, uii_t *uii);
 
 #endif /* UI_H__ */

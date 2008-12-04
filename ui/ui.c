@@ -25,6 +25,9 @@ static hts_cond_t ui_cond;
 
 static int showtime_running;
 
+static struct ui_list uis;
+static struct uii_list uiis;
+
 /**
  *
  */
@@ -37,6 +40,20 @@ ui_exit_showtime(void)
   hts_mutex_unlock(&ui_mutex);
 }
 
+/**
+ *
+ */
+static void
+ui_initialize(void)
+{
+#define link_ui(name) do {\
+ extern ui_t name ## _ui;\
+ LIST_INSERT_HEAD(&uis, &name ## _ui, ui_link);\
+}while(0)
+
+  link_ui(glw);
+}
+
 
 /**
  *
@@ -44,20 +61,66 @@ ui_exit_showtime(void)
 void
 ui_loop(void)
 {
+  ui_t *ui;
   uii_t *uii;
+
+  ui_initialize();
 
   showtime_running = 1;
 
-  uii = glw_start(NULL);
+  ui = LIST_FIRST(&uis);
+  uii = ui->ui_start(NULL);
+  LIST_INSERT_HEAD(&uiis, uii, uii_link);
+
+
+  /* Main loop */
 
   hts_mutex_lock(&ui_mutex);
-
-
   while(showtime_running) {
     hts_cond_wait(&ui_cond, &ui_mutex);
   }
-
   hts_mutex_unlock(&ui_mutex);
 
   uii->uii_ui->ui_stop(uii);
+}
+
+
+/**
+ *
+ */
+void
+ui_dispatch_event(event_t *e, const char *buf, uii_t *uii)
+{
+  int r, l;
+  event_keydesc_t *ek;
+
+  if(buf != NULL) {
+    l = strlen(buf);
+    ek = event_create(EVENT_KEYDESC, sizeof(event_keydesc_t) + l + 1);
+    memcpy(ek->desc, buf, l + 1);
+    ui_dispatch_event(&ek->h, NULL, uii);
+  }
+
+  if(e == NULL)
+    return;
+
+  if(uii != NULL && uii->uii_ui->ui_dispatch_event != NULL) {
+    r = uii->uii_ui->ui_dispatch_event(uii, e);
+  } else {
+
+    r = 0;
+    
+    LIST_FOREACH(uii, &uiis, uii_link) {
+      if(uii->uii_ui->ui_dispatch_event != NULL) 
+	if((r = uii->uii_ui->ui_dispatch_event(uii, e)) != 0)
+	  break;
+    }
+  }
+
+  if(r == 0) {
+    /* Not consumed, drop it into the main event dispatcher */
+    event_post(e);
+  } else {
+    event_unref(e);
+  }
 }

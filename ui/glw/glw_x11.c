@@ -569,10 +569,11 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
   int len;
   char buf[32];
   event_t *e = NULL;
-  int r;
+
 
   len = XLookupString(&event->xkey, str, sizeof(str), &keysym, &composestatus);
 
+  buf[0] = 0;
 
   if(len == 1) {
     c = str[0];
@@ -583,8 +584,14 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
     case 27:         e = event_create_simple(EVENT_KEY_CLOSE); break;
       /* Always send 1 char ASCII */
     default:
+      if(c < 32 || c == 127)
+	break;
+
+      buf[0] = c;
+      buf[1] = 0;
       e = event_create_unicode(c);
-      break;
+      ui_dispatch_event(e, buf, &gx11->gr.gr_uii);
+      return;
     }
   } else if((event->xkey.state & 0xf) == 0) {
     switch(keysym) {
@@ -595,22 +602,29 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
     }
   }
 
-  if(e == NULL) {
+  if(e != NULL) {
+    ui_dispatch_event(e, NULL, &gx11->gr.gr_uii);
+    return;
+  }
 
-    /* Construct a string representing the key */
-    if(keysym != NoSymbol) {
-      snprintf(buf, sizeof(buf),
-	       "x11 %s%s%s- %s",
-	       event->xkey.state & ShiftMask   ? "- Shift " : "",
-	       event->xkey.state & Mod1Mask    ? "- Alt "   : "",
-	       event->xkey.state & ControlMask ? "- Ctrl "  : "",
-	       XKeysymToString(keysym));
-    } else {
-      snprintf(buf, sizeof(buf),
-	       "x11 - raw - 0x%x", event->xkey.keycode);
-    }
+  /* Construct a string representing the key */
+  if(keysym != NoSymbol) {
+    snprintf(buf, sizeof(buf),
+	     "x11 %s%s%s- %s",
+	     event->xkey.state & ShiftMask   ? "- Shift " : "",
+	     event->xkey.state & Mod1Mask    ? "- Alt "   : "",
+	     event->xkey.state & ControlMask ? "- Ctrl "  : "",
+	     XKeysymToString(keysym));
+  } else {
+    snprintf(buf, sizeof(buf),
+	     "x11 - raw - 0x%x", event->xkey.keycode);
+  }
+
+  ui_dispatch_event(e, buf, &gx11->gr.gr_uii);
+}
+#if 0  
+
     e = keymapper_resolve(NULL, buf);
-
     if(e == NULL)
       return;
   }
@@ -626,6 +640,8 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
     event_unref(e);
   }
 }
+#endif
+
 
 /**
  *
@@ -901,17 +917,46 @@ glw_x11_thread(void *aux)
 }
 
 
+/**
+ *
+ */
+static int
+glw_x11_dispatch_event(uii_t *uii, event_t *e)
+{
+  glw_x11_t *gx11 = (glw_x11_t *)uii;
+  int r;
+
+  glw_lock(&gx11->gr);
+  r = glw_event(&gx11->gr, e);
+  glw_unlock(&gx11->gr);
+
+  return r;
+}
+
+ui_t glw_ui;
+
+/**
+ *
+ */
+static uii_t *
+glw_x11_start(const char *arg)
+{
+  glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
+
+  gx11->gr.gr_uii.uii_ui = &glw_ui;
+
+  hts_thread_create(&gx11->threadid, glw_x11_thread, gx11);
+  return &gx11->gr.gr_uii;
+}
 
 
 /**
  *
  */
-uii_t *
-glw_start(const char *arg)
-{
-  glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
+ui_t glw_ui = {
+  .ui_title = "glw",
+  .ui_start = glw_x11_start,
+  .ui_dispatch_event = glw_x11_dispatch_event,
+};
 
-  hts_thread_create(&gx11->threadid, glw_x11_thread, gx11);
-  return &gx11->gr.gr_uii;
-}
 

@@ -445,14 +445,6 @@ typedef enum {
 } glw_transition_type_t;
 
 
-/**
- * temp
- */
-uii_t *glw_start(const char *arg);
-
-
-
-
 static inline void
 glw_flush_render_list(glw_t *w)
 {

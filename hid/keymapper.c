@@ -45,7 +45,6 @@ km_set_code(struct prop_sub *sub, prop_event_t event, ...)
     return;
 
   str = va_arg(ap, char *);
-  printf("Code set to %s\n", str);
 
   if(strcmp(ke->ke_keycode, str)) {
     free(ke->ke_keycode);
@@ -70,8 +69,6 @@ km_set_event(struct prop_sub *sub, prop_event_t event, ...)
     return;
 
   str = va_arg(ap, char *);
-  printf("Event set to %s\n", str);
-
   e = event_str2code(str);
   
   if(ke->ke_event != e) {
