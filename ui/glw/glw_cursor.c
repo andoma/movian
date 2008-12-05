@@ -280,6 +280,7 @@ glw_cursor_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
   case GLW_SIGNAL_LAYOUT:
     gf->render_cycle = 0;
+    gf->gcp.gcp_alpha = 0;
 
     if(c != NULL)
       glw_layout0(c, extra);
