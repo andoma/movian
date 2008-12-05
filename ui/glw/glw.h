@@ -380,9 +380,6 @@ typedef struct glw {
 
 } glw_t;
 
-
-#define GLW_TEXT_EDITABLE 0x2
-
 int glw_init(glw_root_t *gr);
 
 void glw_flush0(glw_root_t *gr);
