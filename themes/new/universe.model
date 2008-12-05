@@ -17,7 +17,7 @@ widget(cursor, {
       
       widget(bitmap, {
 	.source = "theme://images/alphashade.png";
-	.alpha = 0.2;
+	.alphaSelf = 0.2;
 	
 	widget(container_y, {
 	  space(0.1);
@@ -68,7 +68,7 @@ widget(cursor, {
      widget(bitmap, {
 	.mirrory = true;
 	.source = "theme://images/alphashade.png";
-	.alpha = 0.2;
+	.alphaSelf = 0.2;
 	
 	widget(container_y, {
 	  space(0.1);

@@ -354,6 +354,7 @@ static const token_attrib_t attribtab[] = {
   {"yslices",         set_int,    GLW_ATTRIB_Y_SLICES},
 
   {"alpha",           set_float,  GLW_ATTRIB_ALPHA},
+  {"alphaSelf",       set_float,  GLW_ATTRIB_ALPHA_SELF},
   {"aspect",          set_float,  GLW_ATTRIB_ASPECT},
   {"weight",          set_float,  GLW_ATTRIB_WEIGHT},
   {"time",            set_float,  GLW_ATTRIB_TIME},

@@ -82,6 +82,7 @@ typedef enum {
   GLW_ATTRIB_SOURCE,
   GLW_ATTRIB_ASPECT,
   GLW_ATTRIB_ALPHA,
+  GLW_ATTRIB_ALPHA_SELF,
   GLW_ATTRIB_ANGLE,
   GLW_ATTRIB_ALIGNMENT,
   GLW_ATTRIB_SET_FLAGS,
@@ -507,6 +508,7 @@ do {						\
   case GLW_ATTRIB_WEIGHT:			\
   case GLW_ATTRIB_ASPECT:			\
   case GLW_ATTRIB_ALPHA:			\
+  case GLW_ATTRIB_ALPHA_SELF:			\
   case GLW_ATTRIB_ANGLE:			\
   case GLW_ATTRIB_EXTRA:			\
   case GLW_ATTRIB_TIME:                         \

@@ -24,6 +24,8 @@
 typedef struct glw_bitmap {
   glw_t gb_head;
 
+  float gb_alpha_self;
+
   float gb_angle;
   float gb_angle0;
 

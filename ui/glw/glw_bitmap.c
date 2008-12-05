@@ -229,7 +229,7 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_bitmap_t *gb = (void *)w;
   glw_texture_t *gt = gb->gb_tex;
-  float a = rc->rc_alpha * w->glw_alpha;
+  float a = rc->rc_alpha * w->glw_alpha * gb->gb_alpha_self;
   glw_rctx_t rc0;
   glw_t *c;
   int pop = 0;
@@ -367,7 +367,7 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
       rc0.rc_aspect *= xs / ys;
     }
-    rc0.rc_alpha = rc->rc_alpha;
+    rc0.rc_alpha = rc->rc_alpha * w->glw_alpha;
 
     glw_render0(c, &rc0);
 
@@ -443,6 +443,7 @@ glw_bitmap_ctor(glw_t *w, int init, va_list ap)
     w->glw_alignment = GLW_ALIGN_CENTER;
     glw_signal_handler_int(w, glw_bitmap_callback);
     gb->gb_xfill = 1.0f;
+    gb->gb_alpha_self = 1;
   }
 
   do {
@@ -464,6 +465,10 @@ glw_bitmap_ctor(glw_t *w, int init, va_list ap)
 
     case GLW_ATTRIB_ANGLE:
       gb->gb_angle = va_arg(ap, double);
+      break;
+
+    case GLW_ATTRIB_ALPHA_SELF:
+      gb->gb_alpha_self = va_arg(ap, double);
       break;
       
     case GLW_ATTRIB_SOURCE:
