@@ -1896,6 +1896,25 @@ glwf_delete(glw_model_eval_context_t *ec, struct token *self)
 }
 
 
+
+/**
+ * Return 1 if the current widget is in focus
+ */
+static int 
+glwf_isFocused(glw_model_eval_context_t *ec, struct token *self)
+{
+  token_t *r;
+
+  ec->persistence = GLW_MAX(ec->persistence, GLW_MODEL_EVAL_EVERY_FRAME);
+
+  r = eval_alloc(self, ec, TOKEN_INT);
+  r->t_int = glw_is_focused(ec->w);
+  eval_push(ec, r);
+  return 0;
+}
+
+
+
 /**
  *
  */
@@ -1919,6 +1938,7 @@ static const token_func_t funcvec[] = {
   {"int2duration", glwf_int2duration},
   {"createChild", glwf_createchild},
   {"delete", glwf_delete},
+  {"isFocused", glwf_isFocused},
 };
 
 
