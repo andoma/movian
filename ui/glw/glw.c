@@ -973,7 +973,7 @@ pointer_event0(glw_t *w, float x, float y, event_t *e)
       
       if(x >= x1 && x <= x2 && y >= y1 && y <= y2) {
 
-	glw_focus_set(w);
+	//	glw_focus_set(w);
 
 	if(e != NULL) {
 	  glw_event_to_widget(w, e);
