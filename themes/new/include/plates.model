@@ -60,6 +60,7 @@
       .focus = ENABLE;
       .focusCursor = ENABLE;
       .borderScale = true;
+      .alpha = iir(0.5 + 0.5 * isFocused(), 10);
       
       .textureBorders = [0.2,  0.2,  0.2,  0.2];
       .vertexBorders  = [0.1,  0.1,  0.1,  0.1];
@@ -96,6 +97,7 @@
       .focus = ENABLE;
       .focusCursor = ENABLE;
       .borderScale = true;
+      .alpha = iir(0.5 + 0.5 * isFocused(), 10);
       
       .textureBorders = [0.2,  0.2,  0.2,  0.2];
       .vertexBorders  = [0.1,  0.1,  0.1,  0.1];

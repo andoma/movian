@@ -15,6 +15,7 @@ widget(expander, {
 		 .focusCursor = true;
 		 .focus = target;
 		 .weight = 2;
+		 .alpha = iir(0.5 + 0.5 * isFocused(), 10);
 
 		 onEvent(KeyCode, {
 		   $self.keycode = $event;
@@ -38,6 +39,7 @@ widget(expander, {
 		 .focusCursor = true;
 		 .focus = target;
 		 .weight = 2;
+		 .alpha = iir(0.5 + 0.5 * isFocused(), 10);
       
 		 widget(label, {
 		   .aspect = 20;
