@@ -6,7 +6,6 @@ widget(container_y, {
   widget(list_y, {
     .focus = leader;
     .slices = 20;
-    .expandChilds = true;
     cloner($page.nodes, container_y, {
 
 
