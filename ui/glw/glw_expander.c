@@ -57,6 +57,7 @@ glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 	rc->rc_aspect * a->glw_parent_scale.x / a->glw_parent_scale.y;
 
     glw_layout0(a, &rc0);
+    rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, rc0.rc_exp_req);
     
     if(rc->rc_zoom < 0.01)
       break;
@@ -68,6 +69,7 @@ glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     rc0.rc_aspect =
 	rc->rc_aspect * b->glw_parent_scale.x / b->glw_parent_scale.y;
     glw_layout0(b, &rc0);
+    rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, rc0.rc_exp_req);
     break;
     
   case GLW_SIGNAL_RENDER:

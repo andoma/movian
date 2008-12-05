@@ -142,6 +142,7 @@ find_candidate(glw_t *w, query_t *query)
       find_candidate(c, query);
     break;
 
+  case GLW_EXPANDER:
   case GLW_CONTAINER_X:
   case GLW_CONTAINER_Y:
     TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
@@ -235,6 +236,7 @@ glw_navigate(glw_t *w, event_t *e)
       break;
 
     case GLW_CONTAINER_Z:
+    case GLW_EXPANDER:
       break;
 
     case GLW_CONTAINER_X:
