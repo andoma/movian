@@ -305,9 +305,6 @@ typedef struct glw {
   LIST_ENTRY(glw) glw_active_link;
   LIST_ENTRY(glw) glw_every_frame_link;
 
-  LIST_ENTRY(glw) glw_tmp_link;
-  float glw_tmp_value;
-
   struct glw_signal_handler_list glw_signal_handlers;
 
   struct glw *glw_parent;
