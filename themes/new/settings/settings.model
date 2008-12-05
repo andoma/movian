@@ -3,7 +3,7 @@ widget(container_x, {
   .focusCursor = true;
   .focus = target;
 
-  onEvent(enter, genericEvent(navigator, open, $self.url));
+  onEvent(enter, genericEvent(navigator, open, $self.uri));
 
   widget(bitmap, {
     .keepAspect = true;

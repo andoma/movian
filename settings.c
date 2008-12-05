@@ -65,9 +65,9 @@ settings_add(const char *id, const char *title, const char *type)
  *
  */
 static void
-settings_set_url(prop_t *p, prop_t *parent)
+settings_set_uri(prop_t *p, prop_t *parent)
 {
-  char url[200];
+  char uri[200];
   prop_t **a;
   int i;
 
@@ -81,24 +81,24 @@ settings_set_url(prop_t *p, prop_t *parent)
     assert(i > 2);
     i-=3;
 
-    snprintf(url, sizeof(url), SETTINGS_URI);
+    snprintf(uri, sizeof(uri), SETTINGS_URI);
 
     while(i >= 0) {
 
-      snprintf(url + strlen(url), sizeof(url) - strlen(url), 
+      snprintf(uri + strlen(uri), sizeof(uri) - strlen(uri), 
 	       "%s/", a[i]->hp_name);
       i-=2;
     }
 
     prop_ancestors_unref(a);
 
-    snprintf(url + strlen(url), sizeof(url) - strlen(url), 
+    snprintf(uri + strlen(uri), sizeof(uri) - strlen(uri), 
 	     "%s", p->hp_name);
   } else {
-    snprintf(url, sizeof(url), SETTINGS_URI"%s", p->hp_name);
+    snprintf(uri, sizeof(uri), SETTINGS_URI"%s", p->hp_name);
   }
 
-  prop_set_string(prop_create(p, "url"), url);
+  prop_set_string(prop_create(p, "uri"), uri);
 }
 
 
@@ -125,7 +125,7 @@ settings_add_dir(prop_t *parent, const char *id, const char *title,
 {
   prop_t *r = settings_add(id, title, "settings");
   prop_set_string(prop_create(r, "subtype"), subtype);
-  settings_set_url(r, parent);
+  settings_set_uri(r, parent);
   settings_set_parent(r, parent);
   return r;
 }
@@ -262,9 +262,9 @@ settings_init(void)
  *
  */
 static int
-be_settings_canhandle(const char *url)
+be_settings_canhandle(const char *uri)
 {
-  return !strncmp(url, SETTINGS_URI, strlen(SETTINGS_URI));
+  return !strncmp(uri, SETTINGS_URI, strlen(SETTINGS_URI));
 }
 
 
@@ -275,20 +275,20 @@ be_settings_canhandle(const char *url)
  *
  */
 static int
-be_settings_open(const char *url0, nav_page_t **npp,
+be_settings_open(const char *uri0, nav_page_t **npp,
 		 char *errbuf, size_t errlen)
 {
   nav_page_t *n;
   prop_t *type, *nodes, *p, *p2;
-  const char *url = url0 + strlen(SETTINGS_URI);
+  const char *uri = uri0 + strlen(SETTINGS_URI);
   char buf[100];
   int l;
 
   p = settings_root;
-  /* Decompose URL and try to find representative node */
+  /* Decompose URI and try to find representative node */
 
-  if(*url == 0) {
-    n = nav_page_create(&be_settings, url0, sizeof(nav_page_t));
+  if(*uri == 0) {
+    n = nav_page_create(&be_settings, uri0, sizeof(nav_page_t));
 
     type  = prop_create(n->np_prop_root, "type");
     nodes = prop_create(n->np_prop_root, "nodes");
@@ -300,14 +300,14 @@ be_settings_open(const char *url0, nav_page_t **npp,
     return 0;
   }
 
-  while(*url) {
+  while(*uri) {
     l = 0;
-    while(*url && *url != '/' && l < sizeof(buf) - 2) {
-      buf[l++] = *url++;
+    while(*uri && *uri != '/' && l < sizeof(buf) - 2) {
+      buf[l++] = *uri++;
     }
     buf[l] = 0;
-    if(*url == '/')
-      url++;
+    if(*uri == '/')
+      uri++;
     
     if(p->hp_type != PROP_DIR) {
       snprintf(errbuf, errlen, "Settings property is not a directory");
@@ -317,7 +317,7 @@ be_settings_open(const char *url0, nav_page_t **npp,
     p  = prop_create(p2, "nodes");
   }
 
-  n = nav_page_create(&be_settings, url0, sizeof(nav_page_t));
+  n = nav_page_create(&be_settings, uri0, sizeof(nav_page_t));
   prop_link(p2, n->np_prop_root);
   *npp = n;
   return 0;
