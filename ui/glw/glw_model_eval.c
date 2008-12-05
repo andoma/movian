@@ -544,11 +544,12 @@ cloner_child_signal_handler(glw_t *w, void *opaque,
   case GLW_SIGNAL_DESTROY:
     prop_ref_dec(p);
     break;
-#if 0
+
   case GLW_SIGNAL_SELECTED_UPDATE:
     prop_select(p, 0);
     break;
 
+#if 0
   case GLW_SIGNAL_SELECTED_UPDATE_ADVISORY:
     prop_select(p, 1);
     break;
