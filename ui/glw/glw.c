@@ -857,6 +857,43 @@ glw_get_indirectly_focused_child(glw_t *w)
 
 
 
+
+/**
+ * Return true if we are indirectly focused
+ */
+int
+glw_is_indirectly_focused(glw_t *w)
+{
+  glw_t *l, *c;
+
+  /* Find closest focus leader */
+  for(l = w; l != NULL; l = l->glw_parent) {
+    if(l->glw_focus_mode == GLW_FOCUS_LEADER)
+      break;
+  }
+
+  if(l == NULL)
+    return 0;
+
+  /* Find widgets currently focused by the leader */
+  while(1) {
+    c = TAILQ_FIRST(&l->glw_focus_childs);
+    if(c == NULL || c->glw_focus_mode == GLW_FOCUS_TARGET)
+      break;
+    l = c;
+  }
+
+  /* Trace back and se if we hit the list */
+  while(c != NULL) {
+    if(c == w)
+      return 1;
+    c = c->glw_parent;
+  }
+  return 0;
+}
+
+
+
 /**
  *
  */

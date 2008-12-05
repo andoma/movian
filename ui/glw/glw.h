@@ -414,6 +414,8 @@ void glw_store_matrix(glw_t *w, glw_rctx_t *rc);
 
 glw_t *glw_get_indirectly_focused_child(glw_t *w);
 
+int glw_is_indirectly_focused(glw_t *w);
+
 void glw_focus_set(glw_t *w);
 
 
