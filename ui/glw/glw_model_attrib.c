@@ -335,7 +335,6 @@ static const token_attrib_t attribtab[] = {
   {"caption",         set_string, GLW_ATTRIB_CAPTION},
   {"source",          set_string, GLW_ATTRIB_SOURCE},
 
-  {"expandChilds",    set_flag,   GLW_EXPAND_CHILDS},
   {"borderScale",     set_flag,   GLW_BORDER_SCALE_CHILDS},
   {"focusCursor",     set_flag,   GLW_FOCUS_DRAW_CURSOR},
   {"keepAspect",      set_flag,   GLW_KEEP_ASPECT},

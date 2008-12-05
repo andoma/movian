@@ -341,7 +341,6 @@ typedef struct glw {
 #define GLW_FOCUS_DRAW_CURSOR   0x100   /* Draw cursor when we have focus */
 #define GLW_DEBUG               0x400   /* Debug this object */
 #define GLW_BORDER_SCALE_CHILDS 0x800   /* Scale childs to fit within border */
-#define GLW_EXPAND_CHILDS       0x2000  /* Expand childs (for list) */
 #define GLW_PASSWORD            0x4000  /* Don't display real contents */
 
   glw_vertex_t glw_displacement;
