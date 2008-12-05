@@ -289,7 +289,7 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       }
       break;
 
-    case GLW_ATTRIB_EXPAND_REQUEST:
+    case GLW_ATTRIB_EXPAND:
       w->glw_exp_req = va_arg(ap, double);
       break;
 

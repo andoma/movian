@@ -1,52 +1,60 @@
 #include "theme://include/plates.model"
 
-widget(container_x, {
+widget(expander, {
+  widget(container_x, {
 
 
-  widget(container_y, {
-    .weight = 10;
+    widget(container_y, {
+      .weight = 10;
 
-    widget(label, {
-      .caption = "Input source keycode:";
+      widget(label, {
+	.caption = "Input source keycode:";
+      });
+
+      PLATE_WIDE(
+		 .focusCursor = true;
+		 .focus = target;
+		 .weight = 2;
+
+		 onEvent(KeyCode, {
+		   $self.keycode = $event;
+		 });
+      
+		 widget(label, {
+		   .align = center;
+		   .caption = $self.keycode;
+		 });
+		 );
+    }); 
+
+
+    widget(container_y, {
+      .weight = 10;
+      widget(label, {
+	.caption = "Generated event:";
+      });
+
+      PLATE_WIDE(
+		 .focusCursor = true;
+		 .focus = target;
+		 .weight = 2;
+      
+		 widget(label, {
+		   .aspect = 20;
+		   .align = center;
+		   .caption = $self.event;
+		 });
+
+		 onEvent(enter, {
+		   .expand = 4;
+		 });
+
+		 );
     });
 
-    PLATE_WIDE(
-      .focusCursor = true;
-      .focus = target;
-      .weight = 2;
-
-      onEvent(KeyCode, {
-	$self.keycode = $event;
-      });
-      
-      widget(label, {
-	.align = center;
-	.caption = $self.keycode;
-      });
-      );
-  }); 
-
-
-  widget(container_y, {
-    .weight = 10;
-    widget(label, {
-      .caption = "Generated event:";
+    BUTTON(1, 1,  "Delete", "theme://icons/delete.png", {
+      delete($self);
     });
-
-    PLATE_WIDE(
-      .focusCursor = true;
-      .focus = target;
-      .weight = 2;
-      
-      widget(label, {
-	.aspect = 20;
-	.align = center;
-	.caption = $self.event;
-      });
-      );
   });
-
-  BUTTON_IMAGE(1, 1,  "theme://icons/delete.png", {
-    delete($self);
-  });
+  space(1.0);
 });

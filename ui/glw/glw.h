@@ -108,7 +108,7 @@ typedef enum {
   GLW_ATTRIB_TRANSITION_EFFECT,
   GLW_ATTRIB_XFILL,
   GLW_ATTRIB_FOCUSABLE,
-  GLW_ATTRIB_EXPAND_REQUEST,
+  GLW_ATTRIB_EXPAND,
 } glw_attribute_t;
 
 #define GLW_MIRROR_X   0x1
@@ -511,7 +511,7 @@ do {						\
   case GLW_ATTRIB_EXTRA:			\
   case GLW_ATTRIB_TIME:                         \
   case GLW_ATTRIB_XFILL:                        \
-  case GLW_ATTRIB_EXPAND_REQUEST:               \
+  case GLW_ATTRIB_EXPAND:                       \
     (void)va_arg(ap, double);			\
     break;					\
   }						\
