@@ -379,8 +379,9 @@ audio_mode_register(audio_mode_t *am)
 {
   prop_t *r;
   int multich = am->am_formats & (AM_FORMAT_PCM_5DOT1 | AM_FORMAT_PCM_7DOT1);
-  htsmsg_t *m = hts_settings_load("audio/devices/%s", am->am_id);
+  htsmsg_t *m;
   int selected;
+  char buf[256];
 
   TAILQ_INSERT_TAIL(&audio_modes, am, am_link);
 
@@ -395,7 +396,14 @@ audio_mode_register(audio_mode_t *am)
     audio_mode_current = am;
 
 
-  r = settings_add_dir(audio_settings_root, am->am_id, am->am_title, "audio");
+  if(multich == 0 && TAILQ_FIRST(&am->am_mixer_controllers) == NULL)
+    return;
+
+  m = hts_settings_load("audio/devices/%s", am->am_id);
+
+
+  snprintf(buf, sizeof(buf), "Configuration for %s", am->am_title);
+  r = settings_add_dir(audio_settings_root, am->am_id, buf, "audio");
 
   if(multich) {
     settings_add_bool(r, "phantom_center", "Phantom center",
