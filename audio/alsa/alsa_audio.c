@@ -467,7 +467,7 @@ alsa_probe(const char *card, const char *dev)
     return -1;
   }
 
-  snprintf(id, sizeof(id), "alsa:%s", dev);
+  snprintf(id, sizeof(id), "alsa.%s", dev);
 
   name = snd_pcm_info_get_name(info);
 

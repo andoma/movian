@@ -61,7 +61,7 @@ audio_dummy_init(void)
   am->am_formats = AM_FORMAT_PCM_STEREO;
   am->am_sample_rates = AM_SR_48000;
   am->am_title = strdup("No audio output");
-  am->am_id = strdup("No audio output");
+  am->am_id = strdup("dummy");
 
   am->am_entry = dummy_audio_start;
 
