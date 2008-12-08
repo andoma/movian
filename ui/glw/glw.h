@@ -268,7 +268,10 @@ typedef struct glw_root {
  */
 typedef struct glw_rctx {
   float rc_alpha;
-  float rc_aspect;
+
+  float rc_scale_x;
+  float rc_scale_y;
+
   float rc_zoom;
   float rc_fullscreen;
 
@@ -347,7 +350,7 @@ typedef struct glw {
 
   glw_rgb_t glw_col;                 /* Primary widget color */
   float glw_weight;                  /* Relative weight */
-  float glw_aspect;                  /* Aspect */
+  //  float glw_aspect;                  /* Aspect */
   const char *glw_caption;           /* Widget caption */
   float glw_alpha;                   /* Alpha set by user */
   float glw_extra;

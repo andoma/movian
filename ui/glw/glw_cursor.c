@@ -229,35 +229,24 @@ glw_cursor_draw(glw_root_t *gr, float alpha, float xscale, float yscale)
  *
  */
 static void
-gcp_render(glw_root_t *gr, glw_cursor_painter_t *gcp, float aspect)
+gcp_render(glw_root_t *gr, glw_cursor_painter_t *gcp, 
+	   float scale_x, float scale_y)
 {
   int i;
-  float xs, ys;
-  //  float x, y;
 
   for(i = 0; i < 16; i++)
     gcp->gcp_m_prim[i] = GLW_LP(5, gcp->gcp_m_prim[i], gcp->gcp_m[i]);
 
   gcp->gcp_alpha_prim  = GLW_LP(5, gcp->gcp_alpha_prim, gcp->gcp_alpha);
-  gcp->gcp_aspect_prim = GLW_LP(5, gcp->gcp_aspect_prim, gcp->gcp_aspect);
+  gcp->gcp_scale_x_prim = GLW_LP(5, gcp->gcp_scale_x_prim, gcp->gcp_scale_x);
+  gcp->gcp_scale_y_prim = GLW_LP(5, gcp->gcp_scale_y_prim, gcp->gcp_scale_y);
 
   glPushMatrix();
   glLoadMatrixf(gcp->gcp_m_prim);
 
-  aspect = 1.0;;
-
-  if(aspect > 0) {
-    xs = 1 / aspect;
-    ys = 1;
-  } else {
-    xs = 1;
-    ys = aspect;
-  }
-
-
   glw_cursor_draw(gr, gcp->gcp_alpha_prim, 
-		  xs / (100 * fabs(gcp->gcp_m_prim[0])),
-		  ys / (100 * fabs(gcp->gcp_m_prim[5]))
+		  scale_x / (100 * fabs(gcp->gcp_m_prim[0])),
+		  scale_y / (100 * fabs(gcp->gcp_m_prim[5]))
 		  );
   glPopMatrix();
 }
@@ -298,7 +287,7 @@ glw_cursor_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       glw_render0(c, rc);
 
     if(gf->render_cycle == 0)
-      gcp_render(gr, &gf->gcp, rc->rc_aspect);
+      gcp_render(gr, &gf->gcp, rc->rc_scale_x, rc->rc_scale_y);
 
     gf->render_cycle++;
     break;

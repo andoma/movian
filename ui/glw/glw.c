@@ -191,7 +191,7 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       break;
 
     case GLW_ATTRIB_ASPECT:
-      w->glw_aspect = va_arg(ap, double);
+      //      w->glw_aspect = va_arg(ap, double);
       break;
 
     case GLW_ATTRIB_CAPTION:
@@ -790,7 +790,8 @@ glw_store_matrix(glw_t *w, glw_rctx_t *rc)
   
   if(glw_is_focused(w) && gcp != NULL) {
     gcp->gcp_alpha  = rc->rc_alpha;
-    gcp->gcp_aspect = rc->rc_aspect;
+    gcp->gcp_scale_x = rc->rc_scale_x;
+    gcp->gcp_scale_y = rc->rc_scale_y;
     memcpy(gcp->gcp_m, w->glw_matrix, 16 * sizeof(float));
   }
 }

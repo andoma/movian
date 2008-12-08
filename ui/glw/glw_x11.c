@@ -713,7 +713,13 @@ layout_draw(glw_x11_t *gx11, float aspect)
   //  prop_set_float(prop_fullscreen, fullscreen_fader);
   
   memset(&rc, 0, sizeof(rc));
-  rc.rc_aspect = aspect;
+  if(aspect > 1) {
+    rc.rc_scale_x = aspect;
+    rc.rc_scale_y = 1;
+  } else {
+    rc.rc_scale_x = 1;
+    rc.rc_scale_y = 1 / aspect;
+  }
   rc.rc_fullscreen = 0;
   glw_layout0(gx11->universe, &rc);
 

@@ -379,12 +379,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
  
   glPushMatrix();
 
-  if(w->glw_aspect != 0) {
-    aspect = w->glw_aspect;
-    glw_rescale(rc->rc_aspect, aspect);
-  } else {
-    aspect = rc->rc_aspect;
-  }
+  aspect = rc->rc_scale_x / rc->rc_scale_y;
 
   switch(w->glw_alignment) {
   case GLW_ALIGN_CENTER:

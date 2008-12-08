@@ -30,7 +30,6 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
   glw_t *c;
   float d = -1.0f, e1, tw = 0;
   int xy;
-  float aspect = w->glw_aspect > 0 ? w->glw_aspect : rc->rc_aspect;
   glw_rctx_t rc0;
 
   glw_flush_render_list(w);
@@ -74,7 +73,7 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
 	c->glw_parent_scale.y = 1.0f;
 	c->glw_parent_scale.z = e1;
       
-	rc0.rc_aspect = aspect * e1;
+	rc0.rc_scale_x = rc->rc_scale_x * e1;
 
       } else {
 
@@ -86,7 +85,7 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
 	c->glw_parent_scale.y = e1;
 	c->glw_parent_scale.z = e1;
 
-	rc0.rc_aspect = aspect / e1;
+	rc0.rc_scale_y = rc->rc_scale_y * e1;
       }
 
       glw_layout0(c, &rc0);
@@ -140,54 +139,10 @@ glw_container_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c;
   float alpha = rc->rc_alpha * w->glw_alpha;
-  float aspect = w->glw_aspect > 0 ? w->glw_aspect : rc->rc_aspect;
   glw_rctx_t rc0 = *rc;
 
   if(alpha < 0.01)
     return;
-
-  if(w->glw_aspect > 0) {
-    glPushMatrix();
-
-    switch(w->glw_alignment) {
-    case GLW_ALIGN_CENTER:
-      break;
-    case GLW_ALIGN_DEFAULT:
-    case GLW_ALIGN_LEFT:
-      glTranslatef(-1.0, 0.0, 0.0f);
-      break;
-    case GLW_ALIGN_RIGHT:
-      glTranslatef(1.0, 0.0, 0.0f);
-      break;
-    case GLW_ALIGN_BOTTOM:
-      glTranslatef(0.0, -1.0, 0.0f);
-      break;
-    case GLW_ALIGN_TOP:
-      glTranslatef(0.0, 1.0, 0.0f);
-      break;
-    }
-
-
-    glw_rescale(rc->rc_aspect, w->glw_aspect);
-
-    switch(w->glw_alignment) {
-    case GLW_ALIGN_CENTER:
-      break;
-    case GLW_ALIGN_DEFAULT:
-    case GLW_ALIGN_LEFT:
-      glTranslatef(1.0f, 0.0f, 0.0f);
-      break;
-    case GLW_ALIGN_RIGHT:
-      glTranslatef(-1.0f, 0.0f, 0.0f);
-      break;
-    case GLW_ALIGN_BOTTOM:
-      glTranslatef(0.0, 1.0, 0.0f);
-      break;
-    case GLW_ALIGN_TOP:
-      glTranslatef(0.0, -1.0, 0.0f);
-      break;
-    }
-  }
 
   rc0.rc_alpha = alpha;
   
@@ -205,14 +160,12 @@ glw_container_render(glw_t *w, glw_rctx_t *rc)
 	     c->glw_parent_scale.y, 
 	     c->glw_parent_scale.z);
 
-    rc0.rc_aspect = aspect * c->glw_parent_scale.x / c->glw_parent_scale.y;
+    rc0.rc_scale_x = rc->rc_scale_x * c->glw_parent_scale.x;
+    rc0.rc_scale_y = rc->rc_scale_y * c->glw_parent_scale.y;
 
     glw_render0(c, &rc0);
     glPopMatrix();
   }
-
-  if(w->glw_aspect > 0)
-    glPopMatrix();
 }
 
 

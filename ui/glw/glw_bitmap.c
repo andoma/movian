@@ -230,6 +230,7 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
   glw_bitmap_t *gb = (void *)w;
   glw_texture_t *gt = gb->gb_tex;
   float a = rc->rc_alpha * w->glw_alpha * gb->gb_alpha_self;
+  float aspect = rc->rc_scale_x / rc->rc_scale_y;
   glw_rctx_t rc0;
   glw_t *c;
   int pop = 0;
@@ -251,7 +252,7 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
       if(glw_is_focusable(w))
 	glw_store_matrix(w, rc);
 
-      bitmap_render_tesselated(rc->rc_aspect, gt->gt_aspect, 
+      bitmap_render_tesselated(aspect, gt->gt_aspect, 
 			       gb->gb_vborders, gb->gb_tborders,
 			       gb->gb_head.glw_flags & GLW_DRAW_SKEL,
 			       gb->gb_mirror, gb->gb_xfill);
@@ -276,7 +277,7 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
 	break;
       }
       
-      glw_rescale(rc->rc_aspect, gt->gt_aspect);
+      glw_rescale(aspect, gt->gt_aspect);
 
       if(gb->gb_angle != 0)
 	glRotatef(-gb->gb_angle, 0, 0, 1);
@@ -354,18 +355,19 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
       pop = 1;
       glPushMatrix();
       
-      x1 = -1.0 + 1 / GLW_MAX(rc->rc_aspect, 1.0f) * gb->gb_vborders[0];
-      x2 =  1.0 - 1 / GLW_MAX(rc->rc_aspect, 1.0f) * gb->gb_vborders[1];
+      x1 = -1.0 + 1 / GLW_MAX(aspect, 1.0f) * gb->gb_vborders[0];
+      x2 =  1.0 - 1 / GLW_MAX(aspect, 1.0f) * gb->gb_vborders[1];
 
-      y1 =  1.0 - GLW_MIN(rc->rc_aspect, 1.0f)     * gb->gb_vborders[2];
-      y2 = -1.0 + GLW_MIN(rc->rc_aspect, 1.0f)     * gb->gb_vborders[3];
+      y1 =  1.0 - GLW_MIN(aspect, 1.0f)     * gb->gb_vborders[2];
+      y2 = -1.0 + GLW_MIN(aspect, 1.0f)     * gb->gb_vborders[3];
 
       xs = (x2 - x1) * 0.5f;
       ys = (y1 - y2) * 0.5f;
 
       glScalef(xs, ys, 1.0f);
 
-      rc0.rc_aspect *= xs / ys;
+      rc0.rc_scale_x = rc->rc_scale_x * xs;
+      rc0.rc_scale_y = rc->rc_scale_y * ys;
     }
     rc0.rc_alpha = rc->rc_alpha * w->glw_alpha;
 

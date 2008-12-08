@@ -27,8 +27,8 @@
 void
 glw_render_TS(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc)
 {
-  rc->rc_aspect =
-    prevrc->rc_aspect * c->glw_parent_scale.x / c->glw_parent_scale.y;
+  rc->rc_scale_x = prevrc->rc_scale_x * c->glw_parent_scale.x;
+  rc->rc_scale_y = prevrc->rc_scale_y * c->glw_parent_scale.y;
 
   glPushMatrix();
   glTranslatef(c->glw_parent_pos.x,
