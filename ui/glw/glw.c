@@ -46,7 +46,6 @@
 static const size_t glw_class_to_size[] = {
   [GLW_DUMMY] = sizeof(glw_t),
   [GLW_MODEL] = sizeof(glw_t),
-  [GLW_CONTAINER] = sizeof(glw_t),
   [GLW_CONTAINER_X] = sizeof(glw_t),
   [GLW_CONTAINER_Y] = sizeof(glw_t),
   [GLW_CONTAINER_Z] = sizeof(glw_t),
@@ -307,7 +306,6 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
   case GLW_CONTAINER_X:
   case GLW_CONTAINER_Y:
   case GLW_CONTAINER_Z:
-  case GLW_CONTAINER:
     glw_container_ctor(w, init, apx);
     break;
 

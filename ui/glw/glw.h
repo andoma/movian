@@ -50,7 +50,6 @@ extern FT_Library glw_text_library;
 typedef enum {
   GLW_DUMMY,        /* Emtpy placeholder, wont render anything */
   GLW_MODEL,
-  GLW_CONTAINER,    /* Automatic layout */
   GLW_CONTAINER_X,  /* Horizonal container */
   GLW_CONTAINER_Y,  /* Vertical container */
   GLW_CONTAINER_Z,  /* Depth container */

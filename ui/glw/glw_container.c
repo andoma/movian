@@ -47,9 +47,6 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
   tw *= 0.5f;
 
   switch(w->glw_class) {
-  case GLW_CONTAINER:
-    xy = aspect > 1.0f ? 1 : 0;
-    break;
   case GLW_CONTAINER_X:
     xy = 1;
     break;
