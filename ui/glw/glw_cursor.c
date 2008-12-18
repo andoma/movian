@@ -245,8 +245,8 @@ gcp_render(glw_root_t *gr, glw_cursor_painter_t *gcp,
   glLoadMatrixf(gcp->gcp_m_prim);
 
   glw_cursor_draw(gr, gcp->gcp_alpha_prim, 
-		  scale_x / (100 * fabs(gcp->gcp_m_prim[0])),
-		  scale_y / (100 * fabs(gcp->gcp_m_prim[5]))
+		  scale_y / (100 * fabs(gcp->gcp_m_prim[0])),
+		  scale_x / (100 * fabs(gcp->gcp_m_prim[5]))
 		  );
   glPopMatrix();
 }
