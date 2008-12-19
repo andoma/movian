@@ -34,6 +34,8 @@
 
 void (*yadif_filter_line)(int mode, uint8_t *dst, uint8_t *prev, uint8_t *cur, uint8_t *next, int w, int refs, int parity);
 
+#if defined(__i386__) || defined(__x86_64__)
+
 #define LOAD4(mem,dst) \
             "movd      "mem", "#dst" \n\t"\
             "punpcklbw %%mm7, "#dst" \n\t"
@@ -244,6 +246,8 @@ static void filter_line_mmx2(int mode, uint8_t *dst, uint8_t *prev, uint8_t *cur
 #undef CHECK2
 #undef FILTER
 
+#endif
+
 static void filter_line_c(int mode, uint8_t *dst, uint8_t *prev, uint8_t *cur, uint8_t *next, int w, int refs, int parity){
     int x;
     uint8_t *prev2= parity ? prev : cur ;
@@ -309,6 +313,8 @@ int
 yadif_init(void)
 {
    yadif_filter_line = filter_line_c;
+#if defined(__i386__) || defined(__x86_64__)
    yadif_filter_line = filter_line_mmx2;
+#endif
    return 0;
 }
