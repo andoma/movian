@@ -403,7 +403,7 @@ wrap_codec_deref(codecwrap_t *cw)
   if((fw = cw->format) != NULL) {
     hts_mutex_lock(&fw->fw_mutex);
     LIST_REMOVE(cw, format_link);
-    pthread_cond_signal(&fw->fw_cond);
+    hts_cond_signal(&fw->fw_cond);
     hts_mutex_unlock(&fw->fw_mutex);
   }
   free(cw);
@@ -486,7 +486,7 @@ wrap_format_destroy(formatwrap_t *fw)
   /* Wait for all codecs to be released */
   hts_mutex_lock(&fw->fw_mutex);
   while((LIST_FIRST(&fw->codecs)) != NULL)
-    pthread_cond_wait(&fw->fw_cond, &fw->fw_mutex);
+    hts_cond_wait(&fw->fw_cond, &fw->fw_mutex);
   hts_mutex_unlock(&fw->fw_mutex);
 
   if(fw->format != NULL)
