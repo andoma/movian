@@ -31,7 +31,7 @@
 #include "event.h"
 #include "showtime.h"
 #include "hid/hid.h"
-#include "hid/keymapper.h"
+#include "ui/keymapper.h"
 
 
 static const struct {

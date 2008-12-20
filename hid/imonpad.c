@@ -29,7 +29,7 @@
 
 #include "imonpad.h"
 #include "showtime.h"
-#include "hid/keymapper.h"
+#include "ui/keymapper.h"
 #include "hid/hid.h"
 
 /*

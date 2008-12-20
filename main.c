@@ -40,7 +40,7 @@
 #include "navigator.h"
 #include "settings.h"
 #include "ui/ui.h"
-#include "hid/keymapper.h"
+#include "ui/keymapper.h"
 #include "playqueue.h"
 
 hts_mutex_t ffmutex;

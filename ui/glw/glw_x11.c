@@ -33,7 +33,7 @@
 #include <X11/Xatom.h>
 
 #include "showtime.h"
-#include "hid/keymapper.h"
+#include "ui/keymapper.h"
 #include "settings.h"
 
 typedef struct glw_x11 {
