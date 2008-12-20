@@ -111,7 +111,7 @@ typedef struct glw_video {
 
   /* Mutex for protecting access to the frame queues */
 
-  pthread_mutex_t gv_queue_mutex;
+  hts_mutex_t gv_queue_mutex;
 
   /* Unused frames are in the 'inactive' queue
      gv_buffer_allocator() is responsible for moving frames to/from
@@ -133,7 +133,7 @@ typedef struct glw_video {
   /* Frames on 'avail_queue' are available to decoder for writing into */
 
   struct gl_video_frame_queue gv_avail_queue;
-  pthread_cond_t gv_avail_queue_cond;
+  hts_cond_t gv_avail_queue_cond;
 
   /* Frames on 'displaying_queue' are currently displayed, we cannot
      do anything with these until next frame */
@@ -150,7 +150,7 @@ typedef struct glw_video {
      'bufalloced' queue */
 
   struct gl_video_frame_queue gv_bufalloced_queue;
-  pthread_cond_t gv_bufalloced_queue_cond;
+  hts_cond_t gv_bufalloced_queue_cond;
 
   /* Since we may render the same video output multiple times, we keep
      track of the two frames to be displayed separately for the
@@ -163,7 +163,7 @@ typedef struct glw_video {
 
   int gv_interlaced;
 
-  pthread_t gv_ptid;
+  hts_thread_t gv_ptid;
   
   int64_t gv_nextpts;
   int64_t gv_lastpts;

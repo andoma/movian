@@ -34,7 +34,7 @@ typedef struct gl_dvdspu {
   
   struct gl_dvdspu_pic_head gd_pics;
 
-  pthread_mutex_t gd_mutex;
+  hts_mutex_t gd_mutex;
 
   hts_rect_t gd_hilite;
 
