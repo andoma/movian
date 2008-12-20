@@ -19,6 +19,8 @@
 #ifndef FILEACCESS_H
 #define FILEACCESS_H
 
+#include <stdint.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 
 #include <libhts/htsq.h>
