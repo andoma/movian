@@ -225,6 +225,7 @@ fileaccess_init(void)
   INITPROTO(fs);
   INITPROTO(rar);
   INITPROTO(theme);
+  INITPROTO(http);
 #ifdef HAVE_LIBSMBCLIENT
   INITPROTO(smb);
 #endif
