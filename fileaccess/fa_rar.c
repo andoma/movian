@@ -28,7 +28,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <pthread.h>
 
 #include "showtime.h"
 #include "fileaccess.h"
