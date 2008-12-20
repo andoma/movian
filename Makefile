@@ -25,7 +25,7 @@ SRCS  += audio.c audio_decoder.c audio_fifo.c audio_iec958.c \
 
 # ALSA Audio support
 VPATH += audio/alsa
-SRCS  += alsa_audio.c
+SRCS-$(HAVE_LIBASOUND)  += alsa_audio.c
 
 # Dummy Audio support (no output)
 VPATH += audio/dummy
@@ -104,25 +104,37 @@ SRCS += ui.c
 
 # glw
 VPATH += ui/glw
-SRCS += glw.c
 
-SRCS += glw_x11.c
+SRCS-$(HAVE_GLW)     += glw.c \
+			glw_event.c \
+			glw_model.c \
+		     	glw_model_lexer.c \
+		     	glw_model_parser.c \
+			glw_model_eval.c \
+			glw_model_preproc.c \
+			glw_model_support.c \
+			glw_model_attrib.c \
+			glw_container.c \
+			glw_list.c \
+			glw_deck.c \
+			glw_expander.c \
+			glw_text.c \
+			glw_text_bitmap.c \
+			glw_bitmap.c \
+			glw_tex_loader.c \
+			glw_navigation.c \
+			glw_cursor.c \
+			glw_rotator.c  \
+			glw_scaler.c  \
+			glw_animator.c \
+			glw_transitions.c \
 
-SRCS += glw_opengl.c
+SRCS-$(HAVE_GLW_FRONTEND_X11)	+= glw_x11.c
 
-
-SRCS += glw_model.c glw_model_lexer.c glw_model_parser.c \
-	glw_model_eval.c glw_model_preproc.c glw_model_support.c \
-	glw_model_attrib.c
-SRCS += glw_container.c glw_text.c glw_text_bitmap.c \
-	glw_bitmap.c glw_tex_loader.c glw_navigation.c \
-	glw_cursor.c glw_rotator.c glw_list.c glw_deck.c  \
-	glw_expander.c glw_scaler.c glw_event.c \
-	glw_mirror.c glw_animator.c glw_transitions.c \
-	glw_fx_texrot.c
-
-SRCS += glw_video.c glw_video_decoder.c
-
+SRCS-$(HAVE_GLW_BACKEND_OPENGL) += glw_opengl.c
+SRCS-$(HAVE_GLW_BACKEND_OPENGL) += glw_mirror.c
+SRCS-$(HAVE_GLW_BACKEND_OPENGL) += glw_video.c glw_video_decoder.c
+SRCS-$(HAVE_GLW_BACKEND_OPENGL) += glw_fx_texrot.c
 
 
 PROG = showtime

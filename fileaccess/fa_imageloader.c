@@ -30,7 +30,6 @@
 #include <libavformat/avformat.h>
 #include <libavutil/avstring.h>
 
-#include <curl/curl.h>
 
 #ifdef HAVE_LIBEXIF
 #include <libexif/exif-data.h>
@@ -44,6 +43,8 @@
 
 static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
 
+#ifdef HAVE_LIBCURL
+#include <curl/curl.h>
 /**
  *
  */
@@ -92,6 +93,7 @@ filename_by_url(const char *url)
   snprintf(fname, sizeof(fname), "file://%s/%s", dlcache, ls);
   return fname;
 }
+#endif
 
 
 /**
@@ -112,9 +114,10 @@ fa_imageloader(fa_image_load_ctrl_t *ctrl)
     ctrl->want_thumb = 1;
   }
 
+#ifdef HAVE_LIBCURL
   if(!strncmp(filename, "http://", 7))
     filename = filename_by_url(filename);
-
+#endif
 
   if(filename == NULL)
     return -1;

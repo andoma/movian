@@ -16,9 +16,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <string.h>
+
 #include "ui.h"
-#include "ui/glw/glw.h"
 #include "libhts/htsthreads.h"
+
 
 static hts_mutex_t ui_mutex;
 static hts_cond_t ui_cond;
@@ -51,7 +53,9 @@ ui_initialize(void)
  LIST_INSERT_HEAD(&uis, &name ## _ui, ui_link);\
 }while(0)
 
-  link_ui(glw);
+#ifdef HAVE_GLW_FRONTEND_X11
+  link_ui(glw_x11);
+#endif
 }
 
 
@@ -69,8 +73,10 @@ ui_loop(void)
   showtime_running = 1;
 
   ui = LIST_FIRST(&uis);
-  uii = ui->ui_start(NULL);
-  LIST_INSERT_HEAD(&uiis, uii, uii_link);
+  if(ui != NULL) {
+    uii = ui->ui_start(NULL);
+    LIST_INSERT_HEAD(&uiis, uii, uii_link);
+  }
 
 
   /* Main loop */
@@ -81,7 +87,7 @@ ui_loop(void)
   }
   hts_mutex_unlock(&ui_mutex);
 
-  uii->uii_ui->ui_stop(uii);
+  //  uii->uii_ui->ui_stop(uii);
 }
 
 

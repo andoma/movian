@@ -19,6 +19,8 @@
 #ifndef GLW_H
 #define GLW_H
 
+#include "config.h"
+
 #include <libhts/htsq.h>
 #include <libhts/htsthreads.h>
 #include <stdio.h>
@@ -30,7 +32,9 @@
 #include "event.h"
 #include "ui/ui.h"
 
+#if HAVE_GLW_BACKEND_OPENGL
 #include <GL/gl.h>
+#endif
 
 #include <ft2build.h>  
 #include FT_FREETYPE_H
@@ -254,9 +258,11 @@ typedef struct glw_root {
   /**
    * Video decoder and renderer
    */
+#if HAVE_GLW_BACKEND_OPENGL
   GLuint gr_yuv2rbg_prog;
   GLuint gr_yuv2rbg_2mix_prog;
   struct glw_video_list gr_video_decoders;
+#endif
 
 
 } glw_root_t;
