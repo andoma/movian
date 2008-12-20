@@ -43,59 +43,6 @@
 
 static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
 
-#ifdef HAVE_LIBCURL
-#include <curl/curl.h>
-/**
- *
- */
-static const char *
-filename_by_url(const char *url)
-{
-  static char fname[300];
-  char *ls;
-  struct stat st;
-  CURL *ch;
-  FILE *fp;
-  static const char *dlcache;
-  
-  if(dlcache == NULL)
-    dlcache = "/tmp/showtime_dlcache"; 
-  /* config_get_str("dlcache", "/tmp/showtime_dlcache"); */
-
-  mkdir(dlcache, 0777);
-
-  ls = strrchr(url, '/');
-  if(ls == NULL)
-    return NULL;
-
-  ls++;
-
-  snprintf(fname, sizeof(fname), "%s/%s", dlcache, ls);
-
-  if(stat(fname, &st) == -1) {
-
-    fp = fopen(fname, "w+");
-    if(fp == NULL) 
-      return NULL;
-    ch = curl_easy_init();
-    curl_easy_setopt(ch, CURLOPT_URL, url);
-    curl_easy_setopt(ch, CURLOPT_WRITEDATA, fp);
-    
-    curl_easy_setopt(ch, CURLOPT_CONNECTTIMEOUT, 5);
-    curl_easy_setopt(ch, CURLOPT_NOPROGRESS, 1);
-    curl_easy_setopt(ch, CURLOPT_NOSIGNAL, 1);
-    
-    curl_easy_perform(ch);
-    curl_easy_cleanup(ch);
-    fclose(fp);
-  }
-
-  snprintf(fname, sizeof(fname), "file://%s/%s", dlcache, ls);
-  return fname;
-}
-#endif
-
-
 /**
  *
  */
@@ -113,14 +60,6 @@ fa_imageloader(fa_image_load_ctrl_t *ctrl)
     filename = filename + 8;
     ctrl->want_thumb = 1;
   }
-
-#ifdef HAVE_LIBCURL
-  if(!strncmp(filename, "http://", 7))
-    filename = filename_by_url(filename);
-#endif
-
-  if(filename == NULL)
-    return -1;
 
   if((filename = fa_resolve_proto(filename, &fap)) == NULL)
     return -1;
