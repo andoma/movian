@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <math.h>
 
 #include "showtime.h"
 #include "audio.h"
