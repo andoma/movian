@@ -147,9 +147,9 @@ main(int argc, char **argv)
   int c;
   struct timeval tv;
   const char *settingspath = NULL;
-  struct rlimit rlim;
 
 #ifdef RLIMIT_AS
+  struct rlimit rlim;
   getrlimit(RLIMIT_AS, &rlim);
   rlim.rlim_cur = 512 * 1024 * 1024;
   setrlimit(RLIMIT_AS, &rlim);
