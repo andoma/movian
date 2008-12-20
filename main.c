@@ -43,7 +43,7 @@
 #include "hid/keymapper.h"
 #include "playqueue.h"
 
-pthread_mutex_t ffmutex;
+hts_mutex_t ffmutex;
 
 int frame_duration;
 
