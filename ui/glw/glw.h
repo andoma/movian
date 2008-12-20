@@ -41,9 +41,6 @@
 #include FT_GLYPH_H
 #include FT_OUTLINE_H
 
-extern FT_Library glw_text_library;
-
-
 #define GLW_LERP(a, y0, y1) ((y0) + (a) * ((y1) - (y0)))
 #define GLW_S(a) (sin(GLW_LERP(a, M_PI * -0.5, M_PI * 0.5)) * 0.5 + 0.5)
 #define GLW_LP(a, y0, y1) (((y0) * ((a) - 1.0) + (y1)) / (a))

@@ -38,6 +38,8 @@
 
 #include <libavutil/common.h>
 
+extern FT_Library glw_text_library;
+
 #define BITMAP_HEIGHT 32
 
 typedef struct glyph {
