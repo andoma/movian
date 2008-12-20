@@ -19,8 +19,6 @@
 #include <stdlib.h>
 #include <alloca.h>
 
-#include <GL/gl.h>
-
 #include "glw.h"
 #include "glw_container.h"
 
@@ -149,23 +147,8 @@ glw_container_render(glw_t *w, glw_rctx_t *rc)
   if(glw_is_focusable(w))
     glw_store_matrix(w, rc);
 
-  TAILQ_FOREACH(c, &w->glw_render_list, glw_render_link) {
-
-    glPushMatrix();
-    glTranslatef(c->glw_parent_pos.x, 
-		 c->glw_parent_pos.y, 
-		 c->glw_parent_pos.z);
-
-    glScalef(c->glw_parent_scale.x, 
-	     c->glw_parent_scale.y, 
-	     c->glw_parent_scale.z);
-
-    rc0.rc_scale_x = rc->rc_scale_x * c->glw_parent_scale.x;
-    rc0.rc_scale_y = rc->rc_scale_y * c->glw_parent_scale.y;
-
-    glw_render0(c, &rc0);
-    glPopMatrix();
-  }
+  TAILQ_FOREACH(c, &w->glw_render_list, glw_render_link)
+    glw_render_TS(c, &rc0, rc);
 }
 
 
