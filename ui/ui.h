@@ -47,7 +47,7 @@ typedef struct ui {
 
   LIST_ENTRY(ui) ui_link;
 
-  uii_t *(*ui_start)(const char *arg);
+  uii_t *(*ui_start)(struct ui *ui, const char *arg);
 
   void (*ui_stop)(uii_t *uii);
 

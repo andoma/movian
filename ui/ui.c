@@ -74,7 +74,7 @@ ui_loop(void)
 
   ui = LIST_FIRST(&uis);
   if(ui != NULL) {
-    uii = ui->ui_start(NULL);
+    uii = ui->ui_start(ui, NULL);
     LIST_INSERT_HEAD(&uiis, uii, uii_link);
   }
 

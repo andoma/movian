@@ -928,19 +928,17 @@ glw_x11_dispatch_event(uii_t *uii, event_t *e)
   return r;
 }
 
-ui_t glw_x11_ui;
-
 /**
  *
  */
 static uii_t *
-glw_x11_start(const char *arg)
+glw_x11_start(ui_t *ui, const char *arg)
 {
   glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
 
   gx11->displayname = strdup(arg ?: getenv("DISPLAY"));
 
-  gx11->gr.gr_uii.uii_ui = &glw_x11_ui;
+  gx11->gr.gr_uii.uii_ui = ui;
 
   hts_thread_create(&gx11->threadid, glw_x11_thread, gx11);
   return &gx11->gr.gr_uii;
