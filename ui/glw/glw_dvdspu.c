@@ -18,7 +18,7 @@
 
 #include <sys/time.h>
 #include <time.h>
-#include <pthread.h>
+#include <hts.h>
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -377,9 +377,9 @@ spu_repaint(dvd_player_t *dp, gl_dvdspu_t *gd, gl_dvdspu_pic_t *gdp)
 static void
 gl_dvdspu_destroy_pic(gl_dvdspu_t *gd, gl_dvdspu_pic_t *gdp)
 {
-  pthread_mutex_lock(&gd->gd_mutex);
+  hts_mutex_lock(&gd->gd_mutex);
   TAILQ_REMOVE(&gd->gd_pics, gdp, gdp_link);
-  pthread_mutex_unlock(&gd->gd_mutex);
+  hts_mutex_unlock(&gd->gd_mutex);
 
   if(gdp->gdp_tex != 0)
     glDeleteTextures(1, &gdp->gdp_tex);
@@ -450,9 +450,9 @@ gl_dvdspu_load(gl_dvdspu_t *gd, media_buf_t *mb)
 
   mb->mb_data = NULL;
 
-  pthread_mutex_lock(&gd->gd_mutex);
+  hts_mutex_lock(&gd->gd_mutex);
   TAILQ_INSERT_TAIL(&gd->gd_pics, gdp, gdp_link);
-  pthread_mutex_unlock(&gd->gd_mutex);
+  hts_mutex_unlock(&gd->gd_mutex);
 
 }
 
@@ -472,7 +472,7 @@ gl_dvdspu_init(void)
 
   TAILQ_INIT(&gd->gd_pics);
   gd->gd_clut = NULL;
-  pthread_mutex_init(&gd->gd_mutex, NULL);
+  hts_mutex_init(&gd->gd_mutex, NULL);
 
   return gd;
 }
@@ -483,7 +483,7 @@ gl_dvdspu_deinit(gl_dvdspu_t *gd)
 {
   gl_dvdspu_pic_t *gdp;
   
-  pthread_mutex_lock(&gd->gd_mutex);
+  hts_mutex_lock(&gd->gd_mutex);
 
   while((gdp = TAILQ_FIRST(&gd->gd_pics)) != NULL) {
 

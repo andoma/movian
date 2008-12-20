@@ -20,7 +20,6 @@
 #include <assert.h>
 #include <sys/time.h>
 #include <time.h>
-#include <pthread.h>
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -59,16 +58,16 @@ gv_dequeue_for_decode(glw_video_t *gv, int w[3], int h[3])
 {
   gl_video_frame_t *gvf;
 
-  pthread_mutex_lock(&gv->gv_queue_mutex);
+  hts_mutex_lock(&gv->gv_queue_mutex);
   
   while((gvf = TAILQ_FIRST(&gv->gv_avail_queue)) == NULL &&
 	gv->gv_run_decoder) {
-    pthread_cond_wait(&gv->gv_avail_queue_cond, &gv->gv_queue_mutex);
+    hts_cond_wait(&gv->gv_avail_queue_cond, &gv->gv_queue_mutex);
   }
 
   if(gvf == NULL) {
   fail:
-    pthread_mutex_unlock(&gv->gv_queue_mutex);
+    hts_mutex_unlock(&gv->gv_queue_mutex);
     return NULL;
   }
 
@@ -78,7 +77,7 @@ gv_dequeue_for_decode(glw_video_t *gv, int w[3], int h[3])
      gvf->gvf_width[1] == w[1] && gvf->gvf_height[1] == h[1] && 
      gvf->gvf_width[2] == w[2] && gvf->gvf_height[2] == h[2] && 
      gvf->gvf_pbo_ptr != NULL) {
-    pthread_mutex_unlock(&gv->gv_queue_mutex);
+    hts_mutex_unlock(&gv->gv_queue_mutex);
     return gvf;
   }
 
@@ -96,14 +95,14 @@ gv_dequeue_for_decode(glw_video_t *gv, int w[3], int h[3])
 
   while((gvf = TAILQ_FIRST(&gv->gv_bufalloced_queue)) == NULL &&
 	gv->gv_run_decoder)
-    pthread_cond_wait(&gv->gv_bufalloced_queue_cond, &gv->gv_queue_mutex);
+    hts_cond_wait(&gv->gv_bufalloced_queue_cond, &gv->gv_queue_mutex);
 
   if(gvf == NULL)
     goto fail;
 
   TAILQ_REMOVE(&gv->gv_bufalloced_queue, gvf, link);
 
-  pthread_mutex_unlock(&gv->gv_queue_mutex);
+  hts_mutex_unlock(&gv->gv_queue_mutex);
 
   assert(gvf->gvf_pbo_ptr != NULL);
   return gvf;

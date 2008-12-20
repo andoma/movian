@@ -20,7 +20,6 @@
 #include <assert.h>
 #include <sys/time.h>
 #include <time.h>
-#include <pthread.h>
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -131,11 +130,11 @@ glw_video_global_flush(glw_root_t *gr)
   glw_video_t *gv;
 
   LIST_FOREACH(gv, &gr->gr_video_decoders, gv_global_link) {
-    pthread_mutex_lock(&gv->gv_queue_mutex);
+    hts_mutex_lock(&gv->gv_queue_mutex);
     gv_purge_queues(gv);
-    pthread_cond_signal(&gv->gv_avail_queue_cond);
-    pthread_cond_signal(&gv->gv_bufalloced_queue_cond);
-    pthread_mutex_unlock(&gv->gv_queue_mutex);
+    hts_cond_signal(&gv->gv_avail_queue_cond);
+    hts_cond_signal(&gv->gv_bufalloced_queue_cond);
+    hts_mutex_unlock(&gv->gv_queue_mutex);
   }
 }
 
@@ -154,7 +153,7 @@ gv_buffer_allocator(glw_video_t *gv)
   gl_video_frame_t *gvf;
   size_t siz;
 
-  pthread_mutex_lock(&gv->gv_queue_mutex);
+  hts_mutex_lock(&gv->gv_queue_mutex);
   
   assert(gv->gv_active_frames_needed <= GV_FRAMES);
 
@@ -162,7 +161,7 @@ gv_buffer_allocator(glw_video_t *gv)
     gvf = TAILQ_FIRST(&gv->gv_inactive_queue);
     TAILQ_REMOVE(&gv->gv_inactive_queue, gvf, link);
     TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvf, link);
-    pthread_cond_signal(&gv->gv_avail_queue_cond);
+    hts_cond_signal(&gv->gv_avail_queue_cond);
     gv->gv_active_frames++;
   }
 
@@ -203,10 +202,10 @@ gv_buffer_allocator(glw_video_t *gv)
     glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
 
     TAILQ_INSERT_TAIL(&gv->gv_bufalloced_queue, gvf, link);
-    pthread_cond_signal(&gv->gv_bufalloced_queue_cond);
+    hts_cond_signal(&gv->gv_bufalloced_queue_cond);
   }
 
-  pthread_mutex_unlock(&gv->gv_queue_mutex);
+  hts_mutex_unlock(&gv->gv_queue_mutex);
 
 }
 
@@ -296,7 +295,7 @@ gv_enqueue_for_decode(glw_video_t *gv, gl_video_frame_t *gvf,
 		       struct gl_video_frame_queue *fromqueue)
 {
   
-  pthread_mutex_lock(&gv->gv_queue_mutex);
+  hts_mutex_lock(&gv->gv_queue_mutex);
 
   TAILQ_REMOVE(fromqueue, gvf, link);
 
@@ -311,8 +310,8 @@ gv_enqueue_for_decode(glw_video_t *gv, gl_video_frame_t *gvf,
   }
 
   TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvf, link);
-  pthread_cond_signal(&gv->gv_avail_queue_cond);
-  pthread_mutex_unlock(&gv->gv_queue_mutex);
+  hts_cond_signal(&gv->gv_avail_queue_cond);
+  hts_mutex_unlock(&gv->gv_queue_mutex);
 }
 
 
@@ -835,14 +834,14 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
     LIST_REMOVE(gv, gv_global_link);
 
-    pthread_mutex_lock(&gv->gv_queue_mutex);
+    hts_mutex_lock(&gv->gv_queue_mutex);
 
     gv_purge_queues(gv);
 
-    pthread_cond_signal(&gv->gv_avail_queue_cond);
-    pthread_cond_signal(&gv->gv_bufalloced_queue_cond);
+    hts_cond_signal(&gv->gv_avail_queue_cond);
+    hts_cond_signal(&gv->gv_bufalloced_queue_cond);
   
-    pthread_mutex_unlock(&gv->gv_queue_mutex);
+    hts_mutex_unlock(&gv->gv_queue_mutex);
 
     /* XXX: Does this need any other locking ? */
 
@@ -905,9 +904,9 @@ glw_video_init(glw_video_t *gv, glw_root_t *gr)
   for(i = 0; i < GV_FRAMES; i++)
     TAILQ_INSERT_TAIL(&gv->gv_inactive_queue, &gv->gv_frames[i], link);
     
-  pthread_cond_init(&gv->gv_avail_queue_cond, NULL);
-  pthread_cond_init(&gv->gv_bufalloced_queue_cond, NULL);
-  pthread_mutex_init(&gv->gv_queue_mutex, NULL);
+  hts_cond_init(&gv->gv_avail_queue_cond);
+  hts_cond_init(&gv->gv_bufalloced_queue_cond);
+  hts_mutex_init(&gv->gv_queue_mutex);
 }
 
 
