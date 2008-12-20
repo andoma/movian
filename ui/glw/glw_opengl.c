@@ -20,6 +20,7 @@
 #include <GL/gl.h>
 
 #include "glw.h"
+#include "glw_cursor.h"
 
 /**
  * Render a widget with prior translation and scaling
@@ -113,3 +114,26 @@ glw_check_system_features(glw_root_t *gr)
   gr->gr_sysfeatures |= check_gl_ext(s, "GL_ARB_texture_non_power_of_two") ? 
     GLW_SYSFEATURE_TNPO2 : 0;
 }
+
+
+
+/**
+ *
+ */
+void
+glw_store_matrix(glw_t *w, glw_rctx_t *rc)
+{
+  glw_cursor_painter_t *gcp = rc->rc_cursor_painter;
+  if(w->glw_matrix == NULL)
+    w->glw_matrix = malloc(sizeof(float) * 16);
+  
+  glGetFloatv(GL_MODELVIEW_MATRIX, w->glw_matrix);
+  
+  if(glw_is_focused(w) && gcp != NULL) {
+    gcp->gcp_alpha  = rc->rc_alpha;
+    gcp->gcp_scale_x = rc->rc_scale_x;
+    gcp->gcp_scale_y = rc->rc_scale_y;
+    memcpy(gcp->gcp_m, w->glw_matrix, 16 * sizeof(float));
+  }
+}
+
