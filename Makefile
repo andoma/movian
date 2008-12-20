@@ -4,24 +4,24 @@
 
 SRCS = 	main.c navigator.c media.c event.c keyring.c settings.c prop.c
 
-# file access subsys
-
+#
+# File access subsys
+#
 VPATH += fileaccess
 SRCS  += fileaccess.c fa_probe.c  fa_imageloader.c fa_rawloader.c
 SRCS  += fa_fs.c fa_rar.c fa_smb.c
 
-
-# video playback subsys
-
+#
+# Video support
+#
 VPATH += video
 SRCS  += yadif.c
 
-
-# audio subsys
-
+#
+# Audio subsys
+#
 VPATH += audio
-SRCS  += audio.c audio_decoder.c audio_fifo.c audio_iec958.c \
-	 audio_mixer.c
+SRCS  += audio.c audio_decoder.c audio_fifo.c audio_iec958.c audio_mixer.c
 
 # ALSA Audio support
 VPATH += audio/alsa
@@ -31,78 +31,32 @@ SRCS-$(HAVE_LIBASOUND)  += alsa_audio.c
 VPATH += audio/dummy
 SRCS  += dummy_audio.c
 
+#
 # Human Interface Devices
-
+#
 VPATH += hid
 SRCS  += hid.c lircd.c imonpad.c keymapper.c
 
 #
-
+# Various backends
+#
 VPATH += backends
 SRCS  += be_file.c be_page.c
 
+#
+# Playqueue
+#
 SRCS  += playqueue.c
 
-# Main menu
-
-#VPATH += apps/mainmenu
-#SRCS  += mainmenu.c
-
-# Launcher application
-
-#VPATH += apps/launcher
-#SRCS  += launcher.c
-
-# Settings application
-
-#VPATH += apps/settings
-#SRCS  += settings.c settings_ui.c
-
-# Browser application
-
-#VPATH += apps/browser
-#SRCS  += browser.c browser_view.c browser_probe.c \
-#	 browser_slideshow.c useraction.c
-
-# CD application
-
-#VPATH += apps/cd
-#SRCS  += cd.c 
-
-# DVD application
-
-#VPATH += apps/dvdplayer
-#SRCS  += dvd.c dvd_mpeg.c
-
-# Playlist application
-
-#VPATH += apps/playlist
-#SRCS  += playlist.c playlist_player.c playlist_scanner.c
-
-# RSS browser applcation
-
-#VPATH += apps/rss
-#SRCS  += rss.c rssbrowser.c
-
-# Radio application
-
-#VPATH += apps/radio
-#SRCS  += radio.c
-
-# TV & headend com
-
-#VPATH += apps/tv 
-#SRCS +=	 htsp.c tv.c
-
-# Apple Movie Trailer Application
-
-#VPATH += apps/apple_movie_trailers
-#SRCS  += movt.c
-
+#
+# User interface common
+#
 VPATH += ui
 SRCS += ui.c
 
-# glw
+#
+# GLW user interface
+#
 VPATH += ui/glw
 
 SRCS-$(HAVE_GLW)     += glw.c \
@@ -140,93 +94,25 @@ SRCS-$(HAVE_GLW_BACKEND_OPENGL) += glw_fx_texrot.c
 PROG = showtime
 MAN  = showtime.1
 CFLAGS += -g -Wall -Werror -funsigned-char -O2 $(HTS_CFLAGS)
-
-CFLAGS += -I/usr/local/include -I$(INCLUDES_INSTALL_BASE) -I$(CURDIR)
 CFLAGS += -Wno-deprecated-declarations -Wmissing-prototypes
 CFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
+CFLAGS += -I$(CURDIR)
 
-LDFLAGS += -L/usr/local/lib -L$(LIBS_INSTALL_BASE) -L/usr/X11R6/lib 
+#
+# External libs
+#
+DLIBS  += ${SHOWTIME_DLIBS}
+CFLAGS += ${SHOWTIME_DLIBS_CFLAGS}
+DLIBS-$(HAVE_ZLIB)    += -lz
+DLIBS-$(HAVE_LIBPTHREAD) += -lpthread
 
 #
 # Locally compiled libs
 # 
-
-SLIBS += ${LIBHTS_SLIBS} ${LIBDVDNAV_SLIBS}
-DLIBS += ${LIBHTS_DLIBS} ${LIBDVDNAV_DLIBS}
-
-#
-# libsmbclient
-#
-
-SLIBS += ${LIBSMBCLIENT_SLIBS}
-DLIBS += ${LIBSMBCLIENT_DLIBS}
-
-#
-# curl
-#
-
-SLIBS 	+= ${LIBCURL_SLIBS}
-DLIBS 	+= ${LIBCURL_DLIBS}
-CFLAGS	+= ${LIBCURL_CFLAGS}
-
-#
-# freetype2
-#
-
-SLIBS 	+= ${LIBFREETYPE2_SLIBS}
-DLIBS 	+= ${LIBFREETYPE2_DLIBS}
-CFLAGS	+= ${LIBFREETYPE2_CFLAGS}
-
-# CD audio
-
-SLIBS 	+= ${LIBCDIO_CDDA_SLIBS}
-DLIBS 	+= ${LIBCDIO_CDDA_DLIBS}
-CFLAGS 	+= ${LIBCDIO_CDDA_CFLAGS}
-
-# CD database
-
-SLIBS 	+= ${LIBCDDB_SLIBS}
-DLIBS 	+= ${LIBCDDB_DLIBS}
-CFLAGS 	+= ${LIBCDDB_CFLAGS}
-
-# asound (alsa)
-
-SLIBS 	+= ${LIBASOUND_SLIBS}
-DLIBS 	+= ${LIBASOUND_DLIBS}
-CFLAGS 	+= ${LIBASOUND_CFLAGS}
-
-# XML
-
-SLIBS 	+= ${LIBXML2_SLIBS}
-DLIBS 	+= ${LIBXML2_DLIBS}
-CFLAGS 	+= ${LIBXML2_CFLAGS}
-
-# EXIF
-
-SLIBS 	+= ${LIBEXIF_SLIBS}
-DLIBS 	+= ${LIBEXIF_DLIBS}
-CFLAGS 	+= ${LIBEXIF_CFLAGS}
-
-
-#
-# ffmpeg
-#
-
-DLIBS  += $(FFMPEG_DLIBS)
-SLIBS  += $(FFMPEG_SLIBS)
-CFLAGS += $(FFMPEG_CFLAGS)
-
-# OpenGL 
-CFLAGS += -DGL_GLEXT_PROTOTYPES -DGLX_GLXEXT_PROTOTYPES
-DLIBS  += $(LIBGL_DLIBS)
-
-# Other X11
-CFLAGS += $(LIBXRANDR_CFLAGS)
-SLIBS  += $(LIBXRANDR_SLIBS) $(LIBNVCTRL_SLIBS)
-
-# Misc
-
-DLIBS += -lm -lz -ldl -lpthread
+LDFLAGS += -L$(LIBS_INSTALL_BASE)
+CFLAGS  += -I$(INCLUDES_INSTALL_BASE)
+SLIBS   += ${DVDNAV_SLIBS} ${FFMPEG_SLIBS} ${LIBHTS_SLIBS}
+DLIBS   += ${DVDNAV_DLIBS} ${FFMPEG_DLIBS} ${LIBHTS_DLIBS}
 
 include ../build/prog.mk
 
