@@ -139,12 +139,12 @@ nav_open(const char *uri)
 	break;
   
     if(nb == NULL) {
-      fprintf(stderr, "Unable to open %s -- No handler", uri);
+      fprintf(stderr, "Unable to open %s -- No handler\n", uri);
       return;
     }
 
     if(nb->nb_open(uri, &np, errbuf, sizeof(errbuf))) {
-      fprintf(stderr, "Unable to open %s -- %s", uri, errbuf);
+      fprintf(stderr, "Unable to open %s -- %s\n", uri, errbuf);
       return;
     }
   
