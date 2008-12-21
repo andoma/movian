@@ -43,7 +43,7 @@ glw_animator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_LAYOUT:
-    a->delta = 1 / (w->glw_time * w->glw_root->gr_framerate);
+    a->delta = 1 / (w->glw_time * (1000000 / w->glw_root->gr_frameduration));
 
     for(c = TAILQ_FIRST(&w->glw_childs); c != NULL; c = n) {
       n = TAILQ_NEXT(c, glw_parent_link);

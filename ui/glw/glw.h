@@ -211,7 +211,8 @@ typedef struct glw_root {
   
   struct glw_queue gr_destroyer_queue;
   
-  float gr_framerate;
+  //  float gr_framerate;
+  int gr_frameduration;
 
   struct glw_head gr_active_list;
   struct glw_head gr_active_flush_list;

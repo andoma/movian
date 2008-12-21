@@ -471,6 +471,7 @@ layout_video_pipe(glw_video_t *gv, glw_rctx_t *rc)
   int output_duration;
   int64_t pts = 0;
   struct gl_video_frame_queue *dq;
+  int frame_duration = gv->w.glw_root->gr_frameduration;
 
   if(gv->gv_subtitle_widget)
     glw_layout0(gv->gv_subtitle_widget, rc);

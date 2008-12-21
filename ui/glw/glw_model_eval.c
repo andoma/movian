@@ -1524,7 +1524,7 @@ glwf_changed(glw_model_eval_context_t *ec, struct token *self)
   }
 
   if(change == 1)
-    e->threshold = b->t_float * ec->gr->gr_framerate;
+    e->threshold = b->t_float * (1000000 / ec->gr->gr_frameduration);
 
   if(e->threshold > 0)
     e->threshold--;

@@ -115,7 +115,7 @@ glw_init(glw_root_t *gr)
   TAILQ_INIT(&gr->gr_destroyer_queue);
   glw_image_init(gr);
 
-  gr->gr_framerate = 60; /* default until we know better */
+  gr->gr_frameduration = 1000000 / 60;
 
   glw_check_system_features(gr);
   return 0;

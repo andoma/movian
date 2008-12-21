@@ -83,6 +83,8 @@ typedef struct glw_x11 {
   int is_pointer_enabled;
   int want_pointer_enabled;
 
+  int frame_duration;
+
 } glw_x11_t;
 
 static void update_gpu_info(void);
@@ -656,7 +658,7 @@ intcmp(const void *A, const void *B)
 #define FRAME_DURATION_SAMPLES 31 /* should be an odd number */
 
 static int
-update_timings(void)
+update_timings(glw_x11_t *gx11)
 {
   struct timeval tv;
   static int64_t lastts, firstsample;
@@ -685,7 +687,7 @@ update_timings(void)
       } else {
 	lastframedur = (d + lastframedur) / 2;
       }
-      frame_duration = lastframedur;
+      gx11->frame_duration = lastframedur;
       r = 1;
       deltaptr = 0;
 
@@ -788,7 +790,7 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
       display_settings_save(gx11);
     }
 
-    if(frame_duration != 0) {
+    if(gx11->frame_duration != 0) {
 
       while(XPending(gx11->display)) {
 	XNextEvent(gx11->display, &event);
@@ -876,7 +878,7 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 
     glXSwapBuffers(gx11->display, gx11->win);
 
-    update_timings();
+    update_timings(gx11);
   }
   window_shutdown(gx11);
 }

@@ -42,6 +42,4 @@ showtime_get_ts(void)
   return (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
 }
 
-extern int frame_duration;
-
 #endif /* SHOWTIME_H */

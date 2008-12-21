@@ -46,8 +46,6 @@
 
 hts_mutex_t ffmutex;
 
-int frame_duration;
-
 int64_t wallclock;
 time_t walltime;
 int concurrency;
