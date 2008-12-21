@@ -17,7 +17,7 @@ SRCS  += fa_fs.c fa_rar.c fa_smb.c fa_http.c
 # Networking
 #
 VPATH += networking
-SRCS += net_posix.c
+SRCS-$(HAVE_POSIX_NETWORKING) += net_posix.c
 
 
 #
