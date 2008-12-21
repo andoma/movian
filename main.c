@@ -32,7 +32,7 @@
 #include "showtime.h"
 #include "event.h"
 #include "prop.h"
-#include "sysdep.h"
+#include "arch/arch.h"
 
 #include "audio/audio.h"
 #include "fileaccess/fileaccess.h"
@@ -146,18 +146,6 @@ main(int argc, char **argv)
   struct timeval tv;
   const char *settingspath = NULL;
 
-#ifdef RLIMIT_AS
-  struct rlimit rlim;
-  getrlimit(RLIMIT_AS, &rlim);
-  rlim.rlim_cur = 512 * 1024 * 1024;
-  setrlimit(RLIMIT_AS, &rlim);
-#endif
-
-#ifdef RLIMIT_DATA
-  getrlimit(RLIMIT_DATA, &rlim);
-  rlim.rlim_cur = 512 * 1024 * 1024;
-  setrlimit(RLIMIT_DATA, &rlim);
-#endif
 
   gettimeofday(&tv, NULL);
   srand(tv.tv_usec);
@@ -173,10 +161,9 @@ main(int argc, char **argv)
     }
   }
 
-
-  concurrency = sysdep_get_system_concurrency();
-
   prop_init();
+
+  arch_init();
 
   global_prop_init();
 

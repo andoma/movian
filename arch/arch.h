@@ -17,39 +17,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "sysdep.h"
+#ifndef ARCH_H__
 
-#ifdef linux
+void arch_init(void);
 
-#define _GNU_SOURCE
-#include <sched.h>
-#include <pthread.h>
-
-#include <string.h>
-
-#include <libhts/htsthreads.h>
-
-int
-sysdep_get_system_concurrency(void)
-{
-  cpu_set_t mask;
-  int i, r = 0;
-
-  memset(&mask, 0, sizeof(mask));
-  sched_getaffinity(0, sizeof(mask), &mask);
-  for(i = 0; i < CPU_SETSIZE; i++)
-    if(CPU_ISSET(i, &mask))
-      r++;
-  return r?:1;
-}
-
-#else
-
-int
-sysdep_get_system_concurrency(void)
-{
-  return 1;
-}
-
-#endif
-
+#endif /* ARCH_H__ */
