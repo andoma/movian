@@ -32,6 +32,7 @@
 #include "showtime.h"
 #include "event.h"
 #include "prop.h"
+#include "sysdep.h"
 
 #include "audio/audio.h"
 #include "fileaccess/fileaccess.h"
@@ -176,7 +177,7 @@ main(int argc, char **argv)
   }
 
 
-  concurrency = hts_get_system_concurrency();
+  concurrency = sysdep_get_system_concurrency();
 
   prop_init();
 

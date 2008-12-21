@@ -2,7 +2,7 @@
 
 # core
 
-SRCS = 	main.c navigator.c media.c event.c keyring.c settings.c prop.c
+SRCS = 	main.c navigator.c media.c event.c keyring.c settings.c prop.c sysdep.c
 
 
 
