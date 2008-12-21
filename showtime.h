@@ -44,34 +44,4 @@ showtime_get_ts(void)
 
 extern int frame_duration;
 
-#define AVG_BUFSIZE 4
-
-typedef struct {
-  int values[AVG_BUFSIZE];
-  int ptr;
-  int avg;
-  int64_t clock;
-} average_t;
-
-
-extern inline void average_update(average_t *avg, int value);
-
-extern inline void
-average_update(average_t *avg, int value)
-{
-  int v, i;
-
-  if(avg->clock + 1000000 < wallclock) {
-    avg->clock = wallclock;
-    v = 0;
-    for(i = 0; i < AVG_BUFSIZE; i++)
-      v += avg->values[i];
-    avg->avg = v / AVG_BUFSIZE;
-    avg->ptr = (avg->ptr + 1) & (AVG_BUFSIZE - 1);
-    avg->values[avg->ptr] = 0;
-  }
-
-  avg->values[avg->ptr] += value;
-}
-
 #endif /* SHOWTIME_H */
