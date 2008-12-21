@@ -105,23 +105,14 @@ MAN  = showtime.1
 CFLAGS += -g -Wall -Werror -funsigned-char -O2 $(HTS_CFLAGS)
 CFLAGS += -Wno-deprecated-declarations -Wmissing-prototypes
 CFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
-CFLAGS += -I$(CURDIR)
-
+CFLAGS += -I$(CURDIR) -I$(INCLUDES_INSTALL_BASE)
+LDFLAGS += -L$(LIBS_INSTALL_BASE)
 #
-# External libs
+# 
 #
 DLIBS  += ${SHOWTIME_DLIBS}
-CFLAGS += ${SHOWTIME_DLIBS_CFLAGS}
-DLIBS-$(HAVE_ZLIB)    += -lz
-DLIBS-$(HAVE_LIBPTHREAD) += -lpthread
-
-#
-# Locally compiled libs
-# 
-LDFLAGS += -L$(LIBS_INSTALL_BASE)
-CFLAGS  += -I$(INCLUDES_INSTALL_BASE)
-SLIBS   += ${DVDNAV_SLIBS} ${FFMPEG_SLIBS} ${LIBHTS_SLIBS}
-DLIBS   += ${DVDNAV_DLIBS} ${FFMPEG_DLIBS} ${LIBHTS_DLIBS}
+SLIBS  += ${SHOWTIME_SLIBS}
+CFLAGS += ${SHOWTIME_CFLAGS}
 
 include ../build/prog.mk
 
