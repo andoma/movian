@@ -19,6 +19,8 @@
 #ifndef NET_H__
 #define NET_H__
 
+#include <sys/types.h>
+#include <stdint.h>
 #include <libhts/htsbuf.h>
 
 int tcp_connect(const char *hostname, int port, char *errbuf,
