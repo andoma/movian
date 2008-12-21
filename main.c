@@ -50,7 +50,6 @@ int64_t wallclock;
 time_t walltime;
 int concurrency;
 extern char *htsversion;
-prop_t *prop_ui_scale;
 static int stopcode;
 
 const char *themepath = HTS_CONTENT_PATH "/showtime/themes/new";
