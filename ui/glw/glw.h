@@ -32,7 +32,7 @@
 #include "event.h"
 #include "ui/ui.h"
 
-#if HAVE_GLW_BACKEND_OPENGL
+#if CONFIG_GLW_BACKEND_OPENGL
 #include <GL/gl.h>
 #endif
 
@@ -256,7 +256,7 @@ typedef struct glw_root {
   /**
    * Video decoder and renderer
    */
-#if HAVE_GLW_BACKEND_OPENGL
+#if CONFIG_GLW_BACKEND_OPENGL
   GLuint gr_yuv2rbg_prog;
   GLuint gr_yuv2rbg_2mix_prog;
   struct glw_video_list gr_video_decoders;

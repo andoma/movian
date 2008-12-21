@@ -17,7 +17,7 @@ SRCS  += fa_fs.c fa_rar.c fa_smb.c fa_http.c
 # Networking
 #
 VPATH += networking
-SRCS-$(HAVE_POSIX_NETWORKING) += net_posix.c
+SRCS-$(CONFIG_POSIX_NETWORKING) += net_posix.c
 
 
 #
@@ -34,7 +34,7 @@ SRCS  += audio.c audio_decoder.c audio_fifo.c audio_iec958.c audio_mixer.c
 
 # ALSA Audio support
 VPATH += audio/alsa
-SRCS-$(HAVE_LIBASOUND)  += alsa_audio.c
+SRCS-$(CONFIG_LIBASOUND)  += alsa_audio.c
 
 # Dummy Audio support (no output)
 VPATH += audio/dummy
@@ -68,7 +68,7 @@ SRCS += ui.c  keymapper.c
 #
 VPATH += ui/glw
 
-SRCS-$(HAVE_GLW)     += glw.c \
+SRCS-$(CONFIG_GLW)     += glw.c \
 			glw_event.c \
 			glw_model.c \
 		     	glw_model_lexer.c \
@@ -92,17 +92,17 @@ SRCS-$(HAVE_GLW)     += glw.c \
 			glw_animator.c \
 			glw_transitions.c \
 
-SRCS-$(HAVE_GLW_FRONTEND_X11)	+= glw_x11.c
+SRCS-$(CONFIG_GLW_FRONTEND_X11)	+= glw_x11.c
 
-SRCS-$(HAVE_GLW_BACKEND_OPENGL) += glw_opengl.c
-SRCS-$(HAVE_GLW_BACKEND_OPENGL) += glw_mirror.c
-SRCS-$(HAVE_GLW_BACKEND_OPENGL) += glw_video.c glw_video_decoder.c
-SRCS-$(HAVE_GLW_BACKEND_OPENGL) += glw_fx_texrot.c
+SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += glw_opengl.c
+SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += glw_mirror.c
+SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += glw_video.c glw_video_decoder.c
+SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += glw_fx_texrot.c
 
 
 PROG = showtime
 MAN  = showtime.1
-CFLAGS += -g -Wall -Werror -funsigned-char -O2 $(HTS_CFLAGS)
+CFLAGS += -g -Wall -Werror -funsigned-char -O2
 CFLAGS += -Wno-deprecated-declarations -Wmissing-prototypes
 CFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 CFLAGS += -I$(CURDIR) -I$(INCLUDES_INSTALL_BASE)
@@ -110,9 +110,9 @@ LDFLAGS += -L$(LIBS_INSTALL_BASE)
 #
 # 
 #
-DLIBS  += ${SHOWTIME_DLIBS}
-SLIBS  += ${SHOWTIME_SLIBS}
-CFLAGS += ${SHOWTIME_CFLAGS}
+DLIBS  += ${SHOWTIME_DLIBS}  ${HTS_DLIBS}
+SLIBS  += ${SHOWTIME_SLIBS}  ${HTS_SLIBS}
+CFLAGS += ${SHOWTIME_CFLAGS} ${HTS_CFLAGS}
 
 include ../build/prog.mk
 
