@@ -17,6 +17,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "sysdep.h"
+
 #ifdef linux
 
 #define _GNU_SOURCE
@@ -26,8 +28,6 @@
 #include <string.h>
 
 #include <libhts/htsthreads.h>
-
-#include "sysdep.h"
 
 int
 sysdep_get_system_concurrency(void)
