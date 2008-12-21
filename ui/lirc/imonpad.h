@@ -1,5 +1,5 @@
 /*
- *  Common HID functions
+ *  Driver for iMON's pad controller
  *  Copyright (C) 2007 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,17 +16,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HID_H
-#define HID_H
+#ifndef IMONPAD_H
+#define IMONPAD_H
 
-typedef enum {
-  HID_IR_NONE,
-  HID_IR_LIRC,
-  HID_IR_IMONPAD,
-} hid_ir_mode_t;
+void imonpad_proc(void);
 
-extern hid_ir_mode_t hid_ir_mode;
-
-void hid_init(void);
-
-#endif /* HID_H */
+#endif /* IMONPAD_H */

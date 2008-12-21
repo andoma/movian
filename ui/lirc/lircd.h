@@ -1,5 +1,5 @@
 /*
- *  Common HID functions
+ *  Lircd interface
  *  Copyright (C) 2007 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,55 +16,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <sys/stat.h>
-#include <fcntl.h>
+#ifndef LIRCD_H
+#define LIRCD_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdarg.h>
+void lircd_proc(void);
 
-#include "showtime.h"
-
-#include "lircd.h"
-#include "imonpad.h"
-#include "hid.h"
-
-hid_ir_mode_t hid_ir_mode;
-
-/**
- *
- */
-static void *
-hid_thread(void *aux)
-{
-
-  while(1) {
-    switch(hid_ir_mode) {
-    case HID_IR_NONE:
-      sleep(1);
-      continue;
-      
-    case HID_IR_LIRC:
-      lircd_proc();
-      break;
-
-    case HID_IR_IMONPAD:
-      imonpad_proc();
-      break;
-    }
-  }
-  return NULL;
-}
-
-/**
- *
- */
-void
-hid_init(void)
-{
-  hts_thread_t tid;
- 
-  hts_thread_create(&tid, hid_thread, NULL);
-}
+#endif /* LIRCD_H */

@@ -40,11 +40,6 @@ SRCS-$(CONFIG_LIBASOUND)  += alsa_audio.c
 VPATH += audio/dummy
 SRCS  += dummy_audio.c
 
-#
-# Human Interface Devices
-#
-VPATH += hid
-SRCS  += hid.c lircd.c imonpad.c
 
 #
 # Various backends
@@ -62,6 +57,12 @@ SRCS  += playqueue.c
 #
 VPATH += ui
 SRCS += ui.c  keymapper.c
+
+#
+# LIRC
+#
+#VPATH += ui/lirc
+#SRCS  += lirc.c lircd.c imonpad.c
 
 #
 # GLW user interface
