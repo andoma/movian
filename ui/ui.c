@@ -53,7 +53,7 @@ ui_initialize(void)
  LIST_INSERT_HEAD(&uis, &name ## _ui, ui_link);\
 }while(0)
 
-#ifdef HAVE_GLW_FRONTEND_X11
+#ifdef CONFIG_GLW_FRONTEND_X11
   link_ui(glw_x11);
 #endif
 }
