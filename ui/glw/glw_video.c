@@ -103,16 +103,18 @@ glp_check_error(const char *name)
 void
 glw_video_global_init(glw_root_t *gr)
 {
-  glGenProgramsARB(1, &gr->gr_yuv2rbg_prog);
-  glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, gr->gr_yuv2rbg_prog);
+  glw_backend_root_t *gbr = &gr->gr_be;
+
+  glGenProgramsARB(1, &gbr->gbr_yuv2rbg_prog);
+  glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, gbr->gbr_yuv2rbg_prog);
   glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, 
 		     strlen(yuv2rbg_code), yuv2rbg_code);
 
   glp_check_error("yuv2rgb");
 
 
-  glGenProgramsARB(1, &gr->gr_yuv2rbg_2mix_prog);
-  glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, gr->gr_yuv2rbg_2mix_prog);
+  glGenProgramsARB(1, &gbr->gbr_yuv2rbg_2mix_prog);
+  glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, gbr->gbr_yuv2rbg_2mix_prog);
   glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, 
 		     strlen(yuv2rbg_2mix_code), yuv2rbg_2mix_code);
 
@@ -129,7 +131,7 @@ glw_video_global_flush(glw_root_t *gr)
 {
   glw_video_t *gv;
 
-  LIST_FOREACH(gv, &gr->gr_video_decoders, gv_global_link) {
+  LIST_FOREACH(gv, &gr->gr_be.gbr_video_decoders, gv_global_link) {
     hts_mutex_lock(&gv->gv_queue_mutex);
     gv_purge_queues(gv);
     hts_cond_signal(&gv->gv_avail_queue_cond);
@@ -574,7 +576,7 @@ render_video_1f(media_pipe_t *mp, glw_video_t *gv,
 
   glEnable(GL_FRAGMENT_PROGRAM_ARB);
   glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, 
-		   gv->w.glw_root->gr_yuv2rbg_prog);
+		   gv->w.glw_root->gr_be.gbr_yuv2rbg_prog);
 
 
   /* ctrl constants */
@@ -625,7 +627,7 @@ gv_blend_frames(glw_video_t *gv, glw_rctx_t *rc, gl_video_frame_t *fra,
     
   glEnable(GL_FRAGMENT_PROGRAM_ARB);
   glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,
-		   gv->w.glw_root->gr_yuv2rbg_2mix_prog);
+		   gv->w.glw_root->gr_be.gbr_yuv2rbg_2mix_prog);
 
   /* ctrl */
   glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0,
@@ -886,7 +888,7 @@ glw_video_init(glw_video_t *gv, glw_root_t *gr)
 
   //  gv->gv_dvdspu = gl_dvdspu_init();
  
-  LIST_INSERT_HEAD(&gr->gr_video_decoders, gv, gv_global_link);
+  LIST_INSERT_HEAD(&gr->gr_be.gbr_video_decoders, gv, gv_global_link);
 
   gv->gv_zoom = 100;
   gv->gv_umax = 1;

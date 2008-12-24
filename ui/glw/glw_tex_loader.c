@@ -357,7 +357,7 @@ image_decode(glw_root_t *gr, glw_texture_t *gt)
 
   gt->gt_aspect = (float)w / (float)h;
 
-  if(!(gr->gr_sysfeatures & GLW_SYSFEATURE_TNPO2)) {
+  if(!(gr->gr_be.gbr_sysfeatures & GLW_OPENGL_TNPO2)) {
     /* We lack non-power-of-two texture support, check if we must rescale.
      * Since the bitmap aspect is already calculated, it will automatically 
      * compensate the rescaling when we render the texture.

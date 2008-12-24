@@ -193,7 +193,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 
   target_width  = 10 + (siz_x / 62);
 
-  if(!(gr->gr_sysfeatures & GLW_SYSFEATURE_TNPO2)) {
+  if(!(gr->gr_be.gbr_sysfeatures & GLW_OPENGL_TNPO2)) {
     gtbd->gtbd_stride = 1 << (av_log2(target_width) + 1);
   } else {
     gtbd->gtbd_stride = target_width;

@@ -32,8 +32,18 @@
 #include "event.h"
 #include "ui/ui.h"
 
+TAILQ_HEAD(glw_queue, glw);
+LIST_HEAD(glw_head, glw);
+LIST_HEAD(glw_event_map_list, glw_event_map);
+LIST_HEAD(glw_prop_sub_list, glw_prop_sub);
+LIST_HEAD(glw_texture_list, glw_texture);
+LIST_HEAD(glw_video_list, glw_video);
+
+
+
+
 #if CONFIG_GLW_BACKEND_OPENGL
-#include <GL/gl.h>
+#include "glw_opengl.h"
 #endif
 
 #include <ft2build.h>  
@@ -119,15 +129,6 @@ typedef enum {
 #define GLW_MODE_XFADE    0
 #define GLW_MODE_SLIDE    1
 
-
-TAILQ_HEAD(glw_queue, glw);
-LIST_HEAD(glw_head, glw);
-LIST_HEAD(glw_event_map_list, glw_event_map);
-LIST_HEAD(glw_prop_sub_list, glw_prop_sub);
-LIST_HEAD(glw_texture_list, glw_texture);
-LIST_HEAD(glw_video_list, glw_video);
-
-
 typedef struct glw_vertex {
   float x, y, z;
 } glw_vertex_t;
@@ -202,16 +203,8 @@ typedef struct glw_root {
   hts_mutex_t gr_mutex;
   prop_courier_t *gr_courier;
 
-
-  int gr_sysfeatures;
-#define GLW_SYSFEATURE_PBO       0x1
-#define GLW_SYSFEATURE_VBO       0x2
-#define GLW_SYSFEATURE_FRAG_PROG 0x4
-#define GLW_SYSFEATURE_TNPO2     0x8
-  
   struct glw_queue gr_destroyer_queue;
   
-  //  float gr_framerate;
   int gr_frameduration;
 
   struct glw_head gr_active_list;
@@ -254,14 +247,9 @@ typedef struct glw_root {
   struct glw_queue gr_focus_childs;
 
   /**
-   * Video decoder and renderer
-   */
-#if CONFIG_GLW_BACKEND_OPENGL
-  GLuint gr_yuv2rbg_prog;
-  GLuint gr_yuv2rbg_2mix_prog;
-  struct glw_video_list gr_video_decoders;
-#endif
-
+   * Backend specifics
+   */ 
+  glw_backend_root_t gr_be;
 
 } glw_root_t;
 
