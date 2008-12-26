@@ -143,6 +143,8 @@ find_candidate(glw_t *w, query_t *query)
   case GLW_EXPANDER:
   case GLW_CONTAINER_X:
   case GLW_CONTAINER_Y:
+  case GLW_STACK_X:
+  case GLW_STACK_Y:
     TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
       find_candidate(c, query);
     break;
@@ -239,13 +241,19 @@ glw_navigate(glw_t *w, event_t *e)
 
     case GLW_CONTAINER_X:
     case GLW_CONTAINER_Y:
-
-      if(p->glw_class != (orientation ? GLW_CONTAINER_X : GLW_CONTAINER_Y))
-	break;
+      if(p->glw_class == (orientation ? GLW_CONTAINER_X : GLW_CONTAINER_Y))
+	goto container;
+      break;
+	      
+    case GLW_STACK_X:
+    case GLW_STACK_Y:
+      if(p->glw_class == (orientation ? GLW_STACK_X : GLW_STACK_Y))
+	goto container;
+      break;
 
     case GLW_LIST_X:
     case GLW_LIST_Y:
-
+      container:
       c = w;
       while(1) {
 	if(direction == 1)
