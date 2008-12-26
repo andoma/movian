@@ -117,10 +117,10 @@ audio_init(void)
 #define AUDIO_INIT_SUBSYS(name) \
  do {extern void audio_## name ##_init(void); audio_## name ##_init();}while(0)
 
-  AUDIO_INIT_SUBSYS(dummy);
 #ifdef CONFIG_LIBASOUND
   AUDIO_INIT_SUBSYS(alsa);
 #endif
+  AUDIO_INIT_SUBSYS(dummy);
 
   hts_thread_create(&ptid, audio_output_thread, NULL);
 
