@@ -45,18 +45,20 @@ static float
 compute_position(glw_t *w, int horizontal)
 {
   glw_t *p, *c;
-  float tw, a, x;
+  float a, x;
 
   x = 0;
 
   for(; (p = w->glw_parent) != NULL; w = p) {
     switch(p->glw_class) {
     case GLW_CONTAINER_X:
+    case GLW_STACK_X:
       if(!horizontal)
 	continue;
       break;
 
     case GLW_CONTAINER_Y:
+    case GLW_STACK_Y:
       if(horizontal)
 	continue;
       break;
@@ -65,19 +67,15 @@ compute_position(glw_t *w, int horizontal)
       continue;
     }
     
-    tw = 0;
-    a = w->glw_weight / 2;
-
-    TAILQ_FOREACH(c, &p->glw_childs, glw_parent_link)
-      tw += c->glw_weight;
+    a = w->glw_norm_weight / 2;
 
     TAILQ_FOREACH(c, &p->glw_childs, glw_parent_link) {
       if(c == w)
 	break;
-      a += c->glw_weight;
+      a += c->glw_norm_weight;
     }
 
-    x = (2 * a / tw) - 1 + (x * w->glw_weight / tw);
+    x = (2 * a) - 1 + (x * w->glw_norm_weight);
   }
   return x;
 }

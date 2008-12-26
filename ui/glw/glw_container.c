@@ -39,9 +39,7 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
   rc0 = *rc;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-    tw += c->glw_weight;
-
-  tw *= 0.5f;
+    tw += c->glw_conf_weight;
 
   switch(w->glw_class) {
   case GLW_CONTAINER_X:
@@ -58,9 +56,10 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
 
-    if(c->glw_class != GLW_DUMMY) {
+    e1 = c->glw_conf_weight / tw;
+    c->glw_norm_weight = e1;
 
-      e1 = c->glw_weight / tw / 2.0f;
+    if(c->glw_class != GLW_DUMMY) {
 
       if(xy) {
 	c->glw_parent_pos.x = d + e1 + w->glw_displacement.x;
@@ -89,10 +88,10 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
       glw_layout0(c, &rc0);
       rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, rc0.rc_exp_req);
 
-      if(c->glw_weight > 0.01)
+      if(c->glw_conf_weight > 0.01)
 	glw_link_render_list(w, c);
     }
-    d += c->glw_weight / tw;
+    d += 2 * e1;
   }
 }
 

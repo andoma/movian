@@ -26,6 +26,7 @@
 
 #include "glw.h"
 #include "glw_container.h"
+#include "glw_stack.h"
 #include "glw_text.h"
 #include "glw_text_bitmap.h"
 #include "glw_bitmap.h"
@@ -49,6 +50,8 @@ static const size_t glw_class_to_size[] = {
   [GLW_CONTAINER_X] = sizeof(glw_t),
   [GLW_CONTAINER_Y] = sizeof(glw_t),
   [GLW_CONTAINER_Z] = sizeof(glw_t),
+  [GLW_STACK_X] = sizeof(glw_t),
+  [GLW_STACK_Y] = sizeof(glw_t),
   [GLW_BITMAP]  = sizeof(glw_bitmap_t),
   [GLW_LABEL]  = sizeof(glw_text_bitmap_t),
   [GLW_TEXT]  = sizeof(glw_text_bitmap_t),
@@ -187,11 +190,11 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       break;
 
     case GLW_ATTRIB_WEIGHT:
-      w->glw_weight = va_arg(ap, double);
+      w->glw_conf_weight = va_arg(ap, double);
       break;
 
     case GLW_ATTRIB_ASPECT:
-      //      w->glw_aspect = va_arg(ap, double);
+      w->glw_aspect = va_arg(ap, double);
       break;
 
     case GLW_ATTRIB_CAPTION:
@@ -309,6 +312,12 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
     glw_container_ctor(w, init, apx);
     break;
 
+
+  case GLW_STACK_X:
+  case GLW_STACK_Y:
+    glw_stack_ctor(w, init, apx);
+    break;
+
   case GLW_BITMAP:
     glw_bitmap_ctor(w, init, apx);
     break;
@@ -392,7 +401,7 @@ glw_create0(glw_root_t *gr, glw_class_t class, va_list ap)
   w->glw_root = gr;
   w->glw_class = class;
   w->glw_alpha = 1.0f;
-  w->glw_weight = 1.0f;
+  w->glw_conf_weight = 1.0f;
   w->glw_col.r = 1.0f;
   w->glw_col.g = 1.0f;
   w->glw_col.b = 1.0f;

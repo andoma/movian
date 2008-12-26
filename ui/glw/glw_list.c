@@ -169,7 +169,7 @@ glw_list_layout(glw_t *w, glw_rctx_t *rc)
 
   thres = 1 + 10 * 1.0f / (float)l->visible;
 
-  l->expansion_factor = GLW_LP(8, l->expansion_factor, c->glw_weight - 1.0f);
+  l->expansion_factor = GLW_LP(8, l->expansion_factor, c->glw_conf_weight - 1.0f);
 
   expansion_factor = l->expansion_factor;
     

@@ -61,21 +61,23 @@ LIST_HEAD(glw_video_list, glw_video);
 typedef enum {
   GLW_DUMMY,        /* Emtpy placeholder, wont render anything */
   GLW_MODEL,
-  GLW_CONTAINER_X,  /* Horizonal container */
-  GLW_CONTAINER_Y,  /* Vertical container */
+  GLW_CONTAINER_X,  /* Horizonal weight based container */
+  GLW_CONTAINER_Y,  /* Vertical weight based container */
   GLW_CONTAINER_Z,  /* Depth container */
+  GLW_STACK_X,      /* Horizonal aspect based stack */
+  GLW_STACK_Y,      /* Vertical aspect based stack */
+  GLW_LIST_X,
+  GLW_LIST_Y,
+  GLW_DECK,
+  GLW_EXPANDER,
+  GLW_ANIMATOR,
   GLW_BITMAP,
   GLW_LABEL,
   GLW_TEXT,
   GLW_INTEGER,
   GLW_ROTATOR,      /* Rotating device */
-  GLW_LIST_X,
-  GLW_LIST_Y,
-  GLW_DECK,
-  GLW_EXPANDER,
   GLW_CURSOR,
   GLW_MIRROR,
-  GLW_ANIMATOR,
   GLW_FX_TEXROT,
   GLW_VIDEO,
 } glw_class_t;
@@ -341,8 +343,9 @@ typedef struct glw {
   glw_vertex_t glw_displacement;
 
   glw_rgb_t glw_col;                 /* Primary widget color */
-  float glw_weight;                  /* Relative weight */
-  //  float glw_aspect;                  /* Aspect */
+  float glw_conf_weight;             /* Relative weight (configured) */
+  float glw_norm_weight;             /* Relative weight (normalized) */
+  float glw_aspect;                  /* Aspect */
   const char *glw_caption;           /* Widget caption */
   float glw_alpha;                   /* Alpha set by user */
   float glw_extra;
