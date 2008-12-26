@@ -118,7 +118,7 @@ audio_init(void)
  do {extern void audio_## name ##_init(void); audio_## name ##_init();}while(0)
 
   AUDIO_INIT_SUBSYS(dummy);
-#ifdef HAVE_LIBASOUND
+#ifdef CONFIG_LIBASOUND
   AUDIO_INIT_SUBSYS(alsa);
 #endif
 
