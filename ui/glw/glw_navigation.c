@@ -253,6 +253,10 @@ glw_navigate(glw_t *w, event_t *e)
 
     case GLW_LIST_X:
     case GLW_LIST_Y:
+
+      if(p->glw_class != (orientation ? GLW_LIST_X : GLW_LIST_Y))
+	break;
+
       container:
       c = w;
       while(1) {
