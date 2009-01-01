@@ -148,9 +148,9 @@ audio_mixer_event_handler(event_t *e, void *opaque)
 {
   switch(e->e_type) {
 
-  case EVENT_KEY_VOLUME_UP:
-  case EVENT_KEY_VOLUME_DOWN:
-  case EVENT_KEY_VOLUME_MUTE_TOGGLE:
+  case EVENT_VOLUME_UP:
+  case EVENT_VOLUME_DOWN:
+  case EVENT_VOLUME_MUTE_TOGGLE:
     break;
   default:
     return 0;
@@ -218,20 +218,20 @@ audio_mixer_thread(void *aux)
     e = event_get(-1, &audio_mixer_event_queue);
 
     switch(e->e_type) {
-    case EVENT_KEY_VOLUME_UP:
+    case EVENT_VOLUME_UP:
       global_volume.vc_master_vol += 1;
       if(global_volume.vc_master_vol > 6)
 	global_volume.vc_master_vol = 6;
       audio_mixer_save();
       break;
 
-    case EVENT_KEY_VOLUME_DOWN:
+    case EVENT_VOLUME_DOWN:
       global_volume.vc_master_vol -= 1;
       if(global_volume.vc_master_vol < -75)
 	global_volume.vc_master_vol = -75;
       audio_mixer_save();
       break;
-    case EVENT_KEY_VOLUME_MUTE_TOGGLE:
+    case EVENT_VOLUME_MUTE_TOGGLE:
       global_volume.vc_master_mute = !global_volume.vc_master_mute;
       break;
       

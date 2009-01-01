@@ -575,13 +575,13 @@ mp_playpause(struct media_pipe *mp, int key)
   int t;
 
   switch(key) {
-  case EVENT_KEY_PLAYPAUSE:
+  case EVENT_PLAYPAUSE:
     t = mp->mp_playstatus == MP_PLAY ? MP_PAUSE : MP_PLAY;
     break;
-  case EVENT_KEY_PLAY:
+  case EVENT_PLAY:
     t = MP_PLAY;
     break;
-  case EVENT_KEY_PAUSE:
+  case EVENT_PAUSE:
     t = MP_PAUSE;
     break;
   default:

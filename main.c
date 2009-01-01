@@ -208,15 +208,15 @@ main_event_handler(event_t *e, void *opaque)
   default:
     return 0;
 
-  case EVENT_KEY_CLOSE:
+  case EVENT_CLOSE:
     stopcode = 0;
     break;
 
-  case EVENT_KEY_QUIT:
+  case EVENT_QUIT:
     stopcode = 0;
     break;
 
-  case EVENT_KEY_POWER:
+  case EVENT_POWER:
     stopcode = 10;
     break;
   }

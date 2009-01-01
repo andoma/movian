@@ -532,23 +532,23 @@ playtrack(playqueue_entry_t *pqe, media_pipe_t *mp, event_queue_t *eq)
 	goto out;
 
 
-      case EVENT_KEY_SEEK_FAST_BACKWARD:
+      case EVENT_SEEK_FAST_BACKWARD:
 	av_seek_frame(fctx, -1, pts4seek - 60000000, AVSEEK_FLAG_BACKWARD);
 	goto seekflush;
 
-      case EVENT_KEY_SEEK_BACKWARD:
+      case EVENT_SEEK_BACKWARD:
 	av_seek_frame(fctx, -1, pts4seek - 15000000, AVSEEK_FLAG_BACKWARD);
 	goto seekflush;
 
-      case EVENT_KEY_SEEK_FAST_FORWARD:
+      case EVENT_SEEK_FAST_FORWARD:
 	av_seek_frame(fctx, -1, pts4seek + 60000000, 0);
 	goto seekflush;
 
-      case EVENT_KEY_SEEK_FORWARD:
+      case EVENT_SEEK_FORWARD:
 	av_seek_frame(fctx, -1, pts4seek + 15000000, 0);
 	goto seekflush;
 
-      case EVENT_KEY_RESTART_TRACK:
+      case EVENT_RESTART_TRACK:
 	av_seek_frame(fctx, -1, 0, AVSEEK_FLAG_BACKWARD);
 
       seekflush:
@@ -556,28 +556,28 @@ playtrack(playqueue_entry_t *pqe, media_pipe_t *mp, event_queue_t *eq)
 	event_flushqueue(eq);
 	break;
 	
-      case EVENT_KEY_PLAYPAUSE:
-      case EVENT_KEY_PLAY:
-      case EVENT_KEY_PAUSE:
+      case EVENT_PLAYPAUSE:
+      case EVENT_PLAY:
+      case EVENT_PAUSE:
 	mp_playpause(mp, e->e_type);
 
 	media_update_playstatus_prop(mp->mp_prop_playstatus,
 				     mp->mp_playstatus);
 	break;
 
-      case EVENT_KEY_PREV:
+      case EVENT_PREV:
 	pqe = playqueue_advance(pqe, 1);
 	mp_flush(mp);
 	event_unref(e);
 	goto out;
       
-      case EVENT_KEY_NEXT:
+      case EVENT_NEXT:
 	pqe = playqueue_advance(pqe, 0);
 	mp_flush(mp);
 	event_unref(e);
 	goto out;
 
-      case EVENT_KEY_STOP:
+      case EVENT_STOP:
 	pqe_unref(pqe);
 	pqe = NULL;
 	mp_flush(mp);

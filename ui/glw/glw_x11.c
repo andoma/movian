@@ -583,7 +583,7 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
       /* Static key mappings, these cannot be changed */
     case 8:          e = event_create_simple(EVENT_BACKSPACE); break;
     case 13:         e = event_create_simple(EVENT_ENTER);     break;
-    case 27:         e = event_create_simple(EVENT_KEY_CLOSE); break;
+    case 27:         e = event_create_simple(EVENT_CLOSE);     break;
       /* Always send 1 char ASCII */
     default:
       if(c < 32 || c == 127)

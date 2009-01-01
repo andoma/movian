@@ -203,5 +203,5 @@ keymapper_init(keymap_t *km, prop_t *settingsparent, const char *title)
     prop_subscribe(prop_create(km->km_settings, "nodes"), NULL,
 		   km_subscribe_callback, km, NULL, 0);
 
-  keymapper_entry_add(km, "x11-hehe", EVENT_KEY_MAINMENU);
+  keymapper_entry_add(km, "x11-hehe", EVENT_MAINMENU);
 }
