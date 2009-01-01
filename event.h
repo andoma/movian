@@ -50,7 +50,7 @@ typedef enum {
   EVENT_AUDIO_CLOCK,
   EVENT_VIDEO_CLOCK,
 
-  EVENT_PLAYLIST,      /* Playlist specific events, see playlist.h */
+  EVENT_PLAYQUEUE,
   EVENT_TV,            /* TV specific events, see tv.h */
 
 
@@ -79,6 +79,7 @@ typedef enum {
   EVENT_KEY_SWITCH_VIEW,
   EVENT_KEY_CHANNEL_PLUS,
   EVENT_KEY_CHANNEL_MINUS,
+
 } event_type_t;
 
 

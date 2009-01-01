@@ -140,7 +140,7 @@ pqe_event_create(playqueue_entry_t *pqe, int jump)
 {
    playqueue_event_t *e;
 
-   e = event_create(EVENT_PLAYLIST, sizeof(playqueue_event_t));
+   e = event_create(EVENT_PLAYQUEUE, sizeof(playqueue_event_t));
    
    e->jump = jump;
    e->pqe = pqe;
@@ -514,7 +514,7 @@ playtrack(playqueue_entry_t *pqe, media_pipe_t *mp, event_queue_t *eq)
 	}
 	break;
 
-      case EVENT_PLAYLIST:
+      case EVENT_PLAYQUEUE:
 	pe = (playqueue_event_t *)e;
 	if(!pe->jump) {
 	  /* Entry added without request to start playing it at once.
@@ -693,7 +693,7 @@ player_thread(void *aux)
       mp_set_playstatus(mp, MP_STOP, 0);
       e = event_get(-1, &player_eventqueue);
       
-      if(e->e_type == EVENT_PLAYLIST) {
+      if(e->e_type == EVENT_PLAYQUEUE) {
 	pe = (playqueue_event_t *)e;
 	pqe = pe->pqe;
       }
