@@ -171,8 +171,6 @@ main(int argc, char **argv)
 
   settings_init();
 
-  keymapper_init(NULL, NULL, "Global keymap");
-
   event_init();
 
   hts_mutex_init(&ffmutex);

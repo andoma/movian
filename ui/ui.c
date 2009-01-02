@@ -17,9 +17,10 @@
  */
 
 #include <string.h>
+#include <libhts/htsthreads.h>
 
 #include "ui.h"
-#include "libhts/htsthreads.h"
+#include "keymapper.h"
 
 
 static hts_mutex_t ui_mutex;
@@ -67,6 +68,8 @@ ui_loop(void)
 {
   ui_t *ui;
   uii_t *uii;
+
+  keymapper_init();
 
   ui_initialize();
 

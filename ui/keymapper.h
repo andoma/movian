@@ -36,7 +36,8 @@ typedef struct keymap_entry {
   prop_t *ke_prop;
 
   prop_sub_t *ke_sub_keycode;
-  prop_sub_t *ke_sub_event;
+
+  struct keymap *ke_km;
 
 } keymap_entry_t;
 
@@ -48,9 +49,8 @@ typedef struct keymap_entry {
 typedef struct keymap {
   struct keymap_entry_list km_entries;
   hts_mutex_t km_mutex;
+  char *km_name;
   prop_t *km_settings;   /* Pointer to settings in settings tree */
-
-  prop_sub_t *km_subscription;
 } keymap_t;
 
 
@@ -62,6 +62,9 @@ event_t *keymapper_resolve(keymap_t *km, const char *str);
 
 void keymapper_deliver(keymap_t *km, const char *str);
 
-void keymapper_init(keymap_t *km, prop_t *settingsparent, const char *title);
+keymap_t *keymapper_create(prop_t *settingsparent, const char *name,
+			   const char *title);
+
+void keymapper_init(void);
 
 #endif /* KEYMAPPER_H */
