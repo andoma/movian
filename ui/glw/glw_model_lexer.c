@@ -158,6 +158,12 @@ lexer(const char *src, errorinfo_t *ei, refstr_t *f, token_t *prev)
       continue;
     }
 
+    if(src[0] == 'v' && src[1] == 'o' && src[2] == 'i' && src[3] == 'd') {
+      prev = lexer_add_token_simple(prev, f, line, TOKEN_VOID);
+      src+=4;
+      continue;
+    }
+
 
     if(*src == '/' && src[1] == '/') {
       // C++ style comment

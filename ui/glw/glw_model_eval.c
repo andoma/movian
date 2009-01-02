@@ -929,6 +929,7 @@ glw_model_eval_rpn0(token_t *t0, glw_model_eval_context_t *ec)
     case TOKEN_FLOAT:
     case TOKEN_IDENTIFIER:
     case TOKEN_OBJECT_ATTRIBUTE:
+    case TOKEN_VOID:
       eval_push(ec, t);
       break;
 
@@ -1918,6 +1919,25 @@ glwf_isFocused(glw_model_eval_context_t *ec, struct token *self)
 
 
 /**
+ * Returns the second argument if the first is void, otherwise returns
+ * the first arg
+ */
+static int 
+glwf_devoidify(glw_model_eval_context_t *ec, struct token *self)
+{
+  token_t *b = eval_pop(ec);
+  token_t *a = eval_pop(ec);
+
+  if(a == NULL || a->type == TOKEN_VOID) {
+    eval_push(ec, b);
+  } else {
+    eval_push(ec, a);
+  }
+  return 0;
+}
+
+
+/**
  *
  */
 static const token_func_t funcvec[] = {
@@ -1941,6 +1961,7 @@ static const token_func_t funcvec[] = {
   {"createChild", glwf_createchild},
   {"delete", glwf_delete},
   {"isFocused", glwf_isFocused},
+  {"devoidify", glwf_devoidify},
 };
 
 

@@ -114,6 +114,7 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
     case TOKEN_ARRAY:
     case TOKEN_BLOCK:
     case TOKEN_PROPERTY:
+    case TOKEN_VOID:
       t = tokenqueue_enqueue(&outq, t);
       continue;
 
