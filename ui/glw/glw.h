@@ -193,6 +193,11 @@ typedef enum {
    */
   GLW_SIGNAL_SELECTED_UPDATE,
 
+  /**
+   *
+   */
+  GLW_SIGNAL_FOCUS_CHANGED,
+
 } glw_signal_t;
 
 

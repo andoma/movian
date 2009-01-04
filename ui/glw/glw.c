@@ -292,8 +292,11 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 
 	w->glw_focus_parent = p;
 
-	if(p != NULL)
+	if(p != NULL) {
 	  TAILQ_INSERT_TAIL(&p->glw_focus_childs, w, glw_focus_parent_link);
+	  if(TAILQ_FIRST(&p->glw_focus_childs) == w)
+	    glw_signal0(p, GLW_SIGNAL_FOCUS_CHANGED, NULL);
+	}
 	else
 	  TAILQ_INSERT_TAIL(&gr->gr_focus_childs, w, glw_focus_parent_link);
       }
@@ -911,7 +914,7 @@ glw_focus_set(glw_t *w)
 
     if(l == NULL)
       break;
-
+    glw_signal0(l, GLW_SIGNAL_FOCUS_CHANGED, NULL);
     w = l;
   }
 }

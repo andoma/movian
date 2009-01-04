@@ -176,10 +176,10 @@ typedef struct glw_model_eval_context {
   struct prop *prop;
   struct glw_root *gr;
   
-  int persistence;
-#define GLW_MODEL_EVAL_ONCE        0
-#define GLW_MODEL_EVAL_PROP        1
-#define GLW_MODEL_EVAL_EVERY_FRAME 2
+  int dynamic_eval;
+#define GLW_MODEL_DYNAMIC_EVAL_PROP         0x1
+#define GLW_MODEL_DYNAMIC_EVAL_EVERY_FRAME  0x2
+#define GLW_MODEL_DYNAMIC_EVAL_FOCUS_CHANGE 0x4
 
   token_t *rpn; 
 

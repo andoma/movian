@@ -417,7 +417,7 @@ eval_array(glw_model_eval_context_t *pec, token_t *t0)
     n++;
     glw_model_free_chain(ec.alloc);
 
-    pec->persistence = GLW_MAX(pec->persistence, ec.persistence);
+    pec->dynamic_eval |= ec.dynamic_eval;
   }
 
   eval_push(pec, out);
@@ -447,7 +447,8 @@ eval_assign(glw_model_eval_context_t *ec, struct token *self)
     
     s = a->propsubr->gps_sub;
 
-    p = prop_get_by_subscription(s);
+    p = prop_get_by_subscription_canonical(s);
+
     switch(b->type) {
     case TOKEN_STRING:
       prop_set_string_ex(p, s, b->t_string);
@@ -457,6 +458,9 @@ eval_assign(glw_model_eval_context_t *ec, struct token *self)
       break;
     case TOKEN_FLOAT:
       prop_set_float_ex(p, s, b->t_float);
+      break;
+    case TOKEN_PROPERTY:
+      prop_link_ex(b->t_prop, p, s);
       break;
     default:
       prop_set_void_ex(p, s);
@@ -488,7 +492,7 @@ eval_prop(glw_model_eval_context_t *ec, struct token *self)
   glw_prop_sub_t *gps = self->propsubr;
   token_t *r;
 
-  ec->persistence = GLW_MAX(ec->persistence, GLW_MODEL_EVAL_PROP);
+  ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_PROP;
 
   if((r = gps->gps_token) == NULL)
     r = eval_alloc(self, ec, TOKEN_VOID);
@@ -502,12 +506,23 @@ eval_prop(glw_model_eval_context_t *ec, struct token *self)
 /**
  *
  */
-
 static int
-eval_dynamic_signal_handler(glw_t *w, void *opaque, 
-			    glw_signal_t signal, void *extra)
+eval_dynamic_every_frame_sig(glw_t *w, void *opaque, 
+			     glw_signal_t signal, void *extra)
 {
   if(signal == GLW_SIGNAL_LAYOUT)
+    eval_dynamic(w, opaque);
+  return 0;
+}
+
+/**
+ *
+ */
+static int
+eval_dynamic_focus_change_sig(glw_t *w, void *opaque, 
+			      glw_signal_t signal, void *extra)
+{
+  if(signal == GLW_SIGNAL_FOCUS_CHANGED)
     eval_dynamic(w, opaque);
   return 0;
 }
@@ -526,12 +541,15 @@ eval_dynamic(glw_t *w, token_t *rpn)
 
   glw_model_eval_rpn0(rpn, &ec);
 
-  assert(ec.persistence != 0);
-
-  if(ec.persistence == GLW_MODEL_EVAL_EVERY_FRAME)
-    glw_signal_handler_register(w, eval_dynamic_signal_handler, rpn, 1000);
+  if(ec.dynamic_eval & GLW_MODEL_DYNAMIC_EVAL_EVERY_FRAME)
+    glw_signal_handler_register(w, eval_dynamic_every_frame_sig, rpn, 1000);
   else
-    glw_signal_handler_unregister(w, eval_dynamic_signal_handler, rpn);
+    glw_signal_handler_unregister(w, eval_dynamic_every_frame_sig, rpn);
+
+  if(ec.dynamic_eval & GLW_MODEL_DYNAMIC_EVAL_FOCUS_CHANGE)
+    glw_signal_handler_register(w, eval_dynamic_focus_change_sig, rpn, 1000);
+  else
+    glw_signal_handler_unregister(w, eval_dynamic_focus_change_sig, rpn);
 }
 
 
@@ -1008,7 +1026,7 @@ glw_model_eval_rpn(token_t *t, glw_model_eval_context_t *pec, int *copyp)
 
   r = glw_model_eval_rpn0(t, &ec);
 
-  *copyp = ec.persistence;
+  *copyp = ec.dynamic_eval;
   glw_model_free_chain(ec.alloc);
   return r;
 }
@@ -1024,7 +1042,7 @@ glw_model_eval_block(token_t *t, glw_model_eval_context_t *ec)
   token_t **p;
   glw_t *w;
 
-  assert(ec->persistence == 0);
+  assert(ec->dynamic_eval == 0);
 
   p = &t->child;
 
@@ -1046,8 +1064,11 @@ glw_model_eval_block(token_t *t, glw_model_eval_context_t *ec)
       t->next =  w->glw_dynamic_expressions;
       w->glw_dynamic_expressions = t;
 
-      if(copy == GLW_MODEL_EVAL_EVERY_FRAME)
-	glw_signal_handler_register(w, eval_dynamic_signal_handler, t, 1000);
+      if(copy & GLW_MODEL_DYNAMIC_EVAL_EVERY_FRAME)
+	glw_signal_handler_register(w, eval_dynamic_every_frame_sig, t, 1000);
+
+      if(copy & GLW_MODEL_DYNAMIC_EVAL_FOCUS_CHANGE)
+	glw_signal_handler_register(w, eval_dynamic_focus_change_sig, t, 1000);
       continue;
 
     default:
@@ -1558,7 +1579,7 @@ glwf_changed(glw_model_eval_context_t *ec, struct token *self)
   r = eval_alloc(self, ec, TOKEN_FLOAT);
   if(e->threshold > 0) {
     r->t_float = 1;
-    ec->persistence = GLW_MAX(ec->persistence, GLW_MODEL_EVAL_EVERY_FRAME);
+    ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_EVERY_FRAME;
   }
 
   eval_push(ec, r);
@@ -1624,7 +1645,7 @@ glwf_iir(glw_model_eval_context_t *ec, struct token *self)
 
   if(x != y) {
     r->t_float = self->t_extra_float;
-    ec->persistence = GLW_MAX(ec->persistence, GLW_MODEL_EVAL_EVERY_FRAME);
+    ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_EVERY_FRAME;
   } else {
     r->t_float = f;
   }
@@ -1827,7 +1848,7 @@ glwf_time(glw_model_eval_context_t *ec, struct token *self)
   r->t_int = now;
   eval_push(ec, r);
 
-  ec->persistence = GLW_MAX(ec->persistence, GLW_MODEL_EVAL_EVERY_FRAME);
+  ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_EVERY_FRAME;
 
   return 0;
 }
@@ -1931,7 +1952,7 @@ glwf_isFocused(glw_model_eval_context_t *ec, struct token *self)
 {
   token_t *r;
 
-  ec->persistence = GLW_MAX(ec->persistence, GLW_MODEL_EVAL_EVERY_FRAME);
+  ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_EVERY_FRAME;
 
   r = eval_alloc(self, ec, TOKEN_INT);
   r->t_int = glw_is_focused(ec->w);
@@ -1956,6 +1977,44 @@ glwf_devoidify(glw_model_eval_context_t *ec, struct token *self)
   } else {
     eval_push(ec, a);
   }
+  return 0;
+}
+
+
+
+
+/**
+ * Returns the focused child (or void if nothing is focused)
+ */
+static int 
+glwf_focusedChild(glw_model_eval_context_t *ec, struct token *self)
+{
+  glw_t *w = ec->w, *c;
+  token_t *r;
+  glw_signal_handler_t *gsh;
+
+  if(w == NULL) 
+    return glw_model_seterr(ec->ei, self, "focusedChild() without widget");
+
+  ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_FOCUS_CHANGE;
+
+  c = glw_get_indirectly_focused_child(w);
+  if(c != NULL) {
+    LIST_FOREACH(gsh, &c->glw_signal_handlers, gsh_link)
+      if(gsh->gsh_func == cloner_child_signal_handler)
+	break;
+
+    if(gsh != NULL) {
+      r = eval_alloc(self, ec, TOKEN_PROPERTY);
+      r->t_prop = gsh->gsh_opaque;
+      prop_ref_inc(r->t_prop);
+      eval_push(ec, r);
+      return 0;
+    }
+  }
+
+  r = eval_alloc(self, ec, TOKEN_VOID);
+  eval_push(ec, r);
   return 0;
 }
 
@@ -1985,6 +2044,7 @@ static const token_func_t funcvec[] = {
   {"delete", glwf_delete},
   {"isFocused", glwf_isFocused},
   {"devoidify", glwf_devoidify},
+  {"focusedChild", glwf_focusedChild},
 };
 
 
