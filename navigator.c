@@ -82,6 +82,7 @@ nav_init(void)
   NAV_INIT_BE(page);
   NAV_INIT_BE(file);
   NAV_INIT_BE(settings);
+  NAV_INIT_BE(playqueue);
 
   hts_thread_create(&tid, navigator_thread, NULL);
 }
