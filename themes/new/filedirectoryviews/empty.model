@@ -1,0 +1,8 @@
+widget(stack_y, {
+  .align = center;
+  widget(label, {
+    .aspect = 30;
+    .align = center;
+    .caption = "No contents";
+  });
+});
