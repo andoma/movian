@@ -166,6 +166,74 @@ playqueue_clear(void)
 }
 
 
+/**
+ * Load siblings to the 'justadded' track.
+ *
+ * We do this by scanning the parent directory of the track.
+ *
+ * The idea is that even if a user just comes to as with a single URL
+ * we are able to grab info about all tracks on the album.
+ *
+ */
+static void
+playqueue_load_siblings(const char *uri, playqueue_entry_t *justadded)
+{
+  fa_dir_t *fd;
+  int before = 1;
+  playqueue_entry_t *pqe;
+  fa_dir_entry_t *fde;
+  prop_t *media;
+  int r;
+
+  if((fd = fileaccess_scandir(uri)) == NULL)
+    return;
+
+  fa_dir_sort(fd);
+    
+  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+    if(!strcmp(fde->fde_url, justadded->pqe_uri)) {
+      before = 0;
+      continue;
+    }
+
+    if(fde->fde_type == FA_DIR)
+      continue;
+    
+    media = prop_create(NULL, "media");
+    r = fa_probe(media, fde->fde_url, NULL, 0);
+
+    if(r != FA_AUDIO) {
+      prop_destroy(media);
+      continue;
+    }
+
+    pqe = malloc(sizeof(playqueue_entry_t));
+    pqe->pqe_uri    = strdup(fde->fde_url);
+    pqe->pqe_parent = strdup(uri);
+    pqe->pqe_root   = prop_create(NULL, NULL);
+    pqe->pqe_enq    = 0;
+    pqe->pqe_refcount = 1;
+    pqe->pqe_linked = 1;
+    pqe->pqe_meta = media;
+    prop_set_parent(media, pqe->pqe_root);
+    
+    prop_set_string(prop_create(pqe->pqe_root, "url"), pqe->pqe_uri);
+
+    if(before) {
+      TAILQ_INSERT_BEFORE(justadded, pqe, pqe_link);
+      prop_set_parent_ex(pqe->pqe_root, playqueue_root, 
+			 justadded->pqe_root, NULL);
+    } else {
+      TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_link);
+      prop_set_parent(pqe->pqe_root, playqueue_root);
+    }
+
+  }
+  fa_dir_free(fd);
+}
+
+
+
 
 
 /**
@@ -190,7 +258,6 @@ playqueue_load(const char *uri, const char *parent, prop_t *meta, int enq)
   TAILQ_FOREACH(pqe, &playqueue_entries, pqe_link) {
     if(!strcmp(pqe->pqe_uri, uri) && !strcmp(pqe->pqe_parent, parent)) {
       /* Already in, go to it */
-
       e = pqe_event_create(pqe, 1);
       event_enqueue(&player_eventqueue, e);
       event_unref(e);
@@ -236,17 +303,21 @@ playqueue_load(const char *uri, const char *parent, prop_t *meta, int enq)
 
   
   /* Clear out the current playqueue */
-  
   playqueue_clear();
 
+  /* Enqueue our new entry */
   TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_link);
+  prop_set_parent(pqe->pqe_root, playqueue_root);
 
+  /* Tick player to play it */
   e = pqe_event_create(pqe, 1);
   event_enqueue(&player_eventqueue, e);
   event_unref(e);
 
-  hts_mutex_unlock(&playqueue_mutex);
+  /* Scan dir (if provided) for additional tracks (siblings) */
+  playqueue_load_siblings(parent, pqe);
 
+  hts_mutex_unlock(&playqueue_mutex);
 }
 
 /**
