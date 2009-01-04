@@ -43,6 +43,8 @@ glw_animator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_LAYOUT:
+    rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, w->glw_exp_req);
+
     a->delta = 1 / (w->glw_time * (1000000 / w->glw_root->gr_frameduration));
 
     for(c = TAILQ_FIRST(&w->glw_childs); c != NULL; c = n) {

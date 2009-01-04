@@ -34,6 +34,8 @@ glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_LAYOUT:
+    rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, w->glw_exp_req);
+
     if((a = TAILQ_FIRST(&w->glw_childs)) == NULL) {
       break;
     }
@@ -59,8 +61,8 @@ glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     glw_layout0(a, &rc0);
     rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, rc0.rc_exp_req);
     
-    if(rc->rc_zoom < 0.01)
-      break;
+    //    if(rc->rc_zoom < 0.01)
+    //      break;
 
     b->glw_parent_pos.y   = -1.0 + (0.5 * z * 2 / (z + 1));
     b->glw_parent_scale.x = 1.0f;
