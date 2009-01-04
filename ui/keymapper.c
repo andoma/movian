@@ -26,6 +26,7 @@
 #include "settings.h"
 
 static keymap_t *km_global;
+static hts_mutex_t km_mutex;
 
 /**
  *
@@ -136,25 +137,14 @@ keymapper_create_entries(keymap_t *km)
 /**
  *
  */
-event_t *
-keymapper_resolve(keymap_t *km, const char *str)
+static void
+keymapper_resolve0(keymap_t *km, const char *str, uii_t *uii)
 {
   keymap_entry_t *ke;
-  event_t *e;
-
-  if(km == NULL)
-    km = km_global;
-
-  hts_mutex_lock(&km->km_mutex);
 
   LIST_FOREACH(ke, &km->km_entries, ke_link)
-    if(!strcmp(str, ke->ke_keycode))
-      break;
-
-  e = ke != NULL ? event_create_simple(ke->ke_event) : NULL;
-
-  hts_mutex_unlock(&km->km_mutex);
-  return e;
+    if(ke->ke_keycode != NULL && !strcmp(str, ke->ke_keycode))
+      ui_dispatch_event(event_create_simple(ke->ke_event), NULL, uii);
 }
 
 
@@ -162,11 +152,15 @@ keymapper_resolve(keymap_t *km, const char *str)
  *
  */
 void
-keymapper_deliver(keymap_t *km, const char *str)
+keymapper_resolve(const char *str, uii_t *uii)
 {
-  event_t *e = keymapper_resolve(km, str);
-  if(e != NULL)
-    event_post(e);
+  hts_mutex_lock(&km_mutex);
+  
+  if(uii != NULL && uii->uii_km != NULL)
+    keymapper_resolve0(uii->uii_km, str, uii);
+  keymapper_resolve0(km_global, str, uii);
+
+  hts_mutex_unlock(&km_mutex);
 }
 
 
@@ -181,7 +175,6 @@ keymapper_create(prop_t *settingsparent, const char *name, const char *title)
   km = calloc(1, sizeof(keymap_t));
 
   LIST_INIT(&km->km_entries);
-  hts_mutex_init(&km->km_mutex);
 
   km->km_name = strdup(name);
   km->km_settings = settings_add_dir(settingsparent, "keymap", title,
@@ -198,5 +191,6 @@ keymapper_create(prop_t *settingsparent, const char *name, const char *title)
 void
 keymapper_init(void)
 {
+  hts_mutex_init(&km_mutex);
   km_global = keymapper_create(NULL, "global", "Global keymap");
 }

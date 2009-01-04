@@ -22,6 +22,7 @@
 #include <libhts/htsthreads.h>
 #include "prop.h"
 #include "event.h"
+#include "ui.h"
 
 LIST_HEAD(keymap_entry_list, keymap_entry);
 
@@ -48,7 +49,6 @@ typedef struct keymap_entry {
  */
 typedef struct keymap {
   struct keymap_entry_list km_entries;
-  hts_mutex_t km_mutex;
   char *km_name;
   prop_t *km_settings;   /* Pointer to settings in settings tree */
 } keymap_t;
@@ -58,9 +58,8 @@ typedef struct keymap {
 /**
  *
  */
-event_t *keymapper_resolve(keymap_t *km, const char *str);
-
-void keymapper_deliver(keymap_t *km, const char *str);
+struct uii;
+void keymapper_resolve(const char *str, struct uii *uii);
 
 keymap_t *keymapper_create(prop_t *settingsparent, const char *name,
 			   const char *title);

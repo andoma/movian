@@ -108,6 +108,8 @@ ui_dispatch_event(event_t *e, const char *buf, uii_t *uii)
     ek = event_create(EVENT_KEYDESC, sizeof(event_keydesc_t) + l + 1);
     memcpy(ek->desc, buf, l + 1);
     ui_dispatch_event(&ek->h, NULL, uii);
+
+    keymapper_resolve(buf, uii);
   }
 
   if(e == NULL)
