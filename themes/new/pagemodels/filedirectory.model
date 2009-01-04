@@ -1,5 +1,9 @@
-#include "theme://include/plates.model"
+//#include "theme://include/plates.model"
 
+widget(animator, {
+  .source = "theme://filedirectoryviews/" + $page.view + ".model";
+});
+/*
 widget(container_y, {
 
   space(0.02);
@@ -72,3 +76,4 @@ widget(container_y, {
 });
 
 
+*/

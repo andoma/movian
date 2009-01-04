@@ -1,0 +1,57 @@
+#include "theme://include/plates.model"
+
+widget(list_y, {
+  .focus = leader;
+  .slices = 20;
+  cloner($page.nodes, container_y, {
+
+    PLATE_FOCUSABLE();
+    onEvent(enter, genericEvent(navigator, open, $self.url));
+
+    PLATE_WIDE(
+      widget(container_x, {
+	    
+	widget(bitmap, {
+	  .keepAspect = true;
+	  .source = translate($self.media.type,
+			      [
+			       "archive",   "theme://icons/dir.png",
+			       "directory", "theme://icons/dir.png",
+			       "audio",     "theme://icons/audio.png",
+			       "video",     "theme://icons/movie.png",
+			       "dvd",       "theme://icons/movie.png"
+			       ],
+			      "theme://images/file.png");
+	});
+	
+	    
+	widget(expander, {
+	  .weight = 20;
+
+	  widget(container_x, {
+	    widget(label, {
+	      .caption = $self.media.title;
+	    });
+		
+	    widget(label, {
+	      .caption = int2duration($self.media.duration);
+	      .weight = 0.1;
+	    });
+	  });
+
+	  widget(animator, {
+	    .time = 0.3;
+	    
+	    .source = translate($self.media.type,
+		[
+		 "audio",     "theme://filedirectoryviews/list/audio.model",
+		 "video",     "theme://filedirectoryviews/list/video.model"
+		 ],
+		 "theme://filedirectoryviews/list/void.model"
+				);
+	  });
+	});
+      });
+    );
+  });
+});
