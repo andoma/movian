@@ -433,7 +433,7 @@ prop_clean(prop_t *p)
     break;
 
   case PROP_DIR:
-    abort();
+    break;
   }
 }
 
