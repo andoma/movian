@@ -1,10 +1,21 @@
 #include "theme://include/plates.model"
 
 widget(container_y, {
-  space(5);
+
+  widget(bitmap, {
+    .weight = 4;
+    .source = $self.focused.url;
+    .keepAspect = true;
+  });
+
+  space(0.2);
+
   widget(list_x, {
     .focus = leader;
     .slices = 8;
+
+    $self.focused = focusedChild();
+
     cloner($page.nodes, container_y, {
 
       PLATE_FOCUSABLE();
