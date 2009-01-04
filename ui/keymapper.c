@@ -110,7 +110,7 @@ keymapper_entry_add(keymap_t *km, const char *str, const char *eventname,
   p = prop_create(ke->ke_prop, "event");
   prop_set_string(p, eventname);
 
-  prop_set_parent_ex(ke->ke_prop, prop_create(km->km_settings, "nodes"), NULL);
+  prop_set_parent(ke->ke_prop, prop_create(km->km_settings, "nodes"));
 }
 
 
