@@ -72,6 +72,7 @@ typedef enum {
   TOKEN_INT,
   TOKEN_IDENTIFIER,
   TOKEN_FUNCTION,              //
+  TOKEN_PROPERTY,
   TOKEN_PROPERTY_NAME,
   TOKEN_PROPERTY_SUBSCRIPTION,
   TOKEN_OBJECT_ATTRIBUTE,
@@ -132,6 +133,8 @@ typedef struct token {
 
     struct glw_event_map *gem;
 
+    struct prop *prop;
+
   } u;
 
 #define t_string          u.string
@@ -142,7 +145,7 @@ typedef struct token {
 #define t_func            u.func
 #define t_attrib          u.attrib
 #define t_gem             u.gem
-
+#define t_prop            u.prop
 
   struct glw_prop_sub *propsubr;
 

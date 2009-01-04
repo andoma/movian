@@ -83,6 +83,10 @@ glw_model_token_free(token_t *t)
       t->t_func->dtor(t);
     break;
 
+  case TOKEN_PROPERTY:
+    prop_ref_dec(t->t_prop);
+    break;
+
   case TOKEN_FLOAT:
   case TOKEN_INT:
   case TOKEN_VECTOR_FLOAT:
@@ -168,6 +172,11 @@ glw_model_token_copy(token_t *src)
 
   case TOKEN_INT:
     dst->t_int = src->t_int;
+    break;
+
+  case TOKEN_PROPERTY:
+    dst->t_prop = src->t_prop;
+    prop_ref_inc(dst->t_prop);
     break;
 
   case TOKEN_PROPERTY_SUBSCRIPTION:
