@@ -259,6 +259,8 @@ void prop_ancestors_unref(prop_t **r);
 
 prop_t *prop_get_by_subscription(prop_sub_t *s);
 
+prop_t *prop_get_by_subscription_canonical(prop_sub_t *s);
+
 void prop_request_new_child_by_subscription(prop_sub_t *s);
 
 void prop_request_delete_child_by_subscription(prop_sub_t *s);
