@@ -268,4 +268,6 @@ prop_courier_t *prop_courier_create(hts_mutex_t *entrymutex);
 /* DEBUGish */
 const char *propname(prop_t *p);
 
+void prop_print_tree(prop_t *p);
+
 #endif /* PROP_H__ */

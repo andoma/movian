@@ -1269,3 +1269,52 @@ prop_courier_create(hts_mutex_t *entrymutex)
   hts_thread_create(&pc->pc_thread, prop_courier, pc);
   return pc;
 }
+
+
+/**
+ *
+ */
+static void
+prop_print_tree0(prop_t *p, int indent)
+{
+  prop_t *c;
+
+  fprintf(stderr, "%*.s%s: ", indent, "", p->hp_name);
+
+  switch(p->hp_type) {
+  case PROP_STRING:
+    fprintf(stderr, "\"%s\"\n", p->hp_string);
+    break;
+
+  case PROP_FLOAT:
+    fprintf(stderr, "%f\n", p->hp_float);
+    break;
+
+  case PROP_INT:
+    fprintf(stderr, "%d\n", p->hp_int);
+    break;
+
+  case PROP_DIR:
+    fprintf(stderr, "<directory>\n");
+    TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
+      prop_print_tree0(c, indent + 4);
+    break;
+
+  case PROP_VOID:
+    fprintf(stderr, "<void>\n");
+    break;
+    
+  case PROP_ZOMBIE:
+    fprintf(stderr, "<zombie, ref=%d>\n", p->hp_refcount);
+    break;
+  }
+}
+
+/**
+ *
+ */
+void
+prop_print_tree(prop_t *p)
+{
+  prop_print_tree0(p, 0);
+}
