@@ -1,3 +1,0 @@
-widget(label, {
-  .caption = page.value;
-});
