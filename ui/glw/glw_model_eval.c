@@ -437,6 +437,7 @@ eval_assign(glw_model_eval_context_t *ec, struct token *self)
 {
   token_t *b = eval_pop(ec), *a = eval_pop(ec);
   prop_t *p;
+  prop_sub_t *s;
   int r;
 
   if(a == NULL || b == NULL)
@@ -444,19 +445,21 @@ eval_assign(glw_model_eval_context_t *ec, struct token *self)
   
   if(a->propsubr != NULL) {
     
-    p = prop_get_by_subscription(a->propsubr->gps_sub);
+    s = a->propsubr->gps_sub;
+
+    p = prop_get_by_subscription(s);
     switch(b->type) {
     case TOKEN_STRING:
-      prop_set_string(p, b->t_string);
+      prop_set_string_ex(p, s, b->t_string);
       break;
     case TOKEN_INT:
-      prop_set_int(p, b->t_int);
+      prop_set_int_ex(p, s, b->t_int);
       break;
     case TOKEN_FLOAT:
-      prop_set_float(p, b->t_float);
+      prop_set_float_ex(p, s, b->t_float);
       break;
     default:
-      prop_set_void(p);
+      prop_set_void_ex(p, s);
       break;
     }
     prop_ref_dec(p);
