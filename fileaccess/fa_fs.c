@@ -16,8 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _GNU_SOURCE /* for versionsort() */
-
 #include <assert.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -31,14 +29,6 @@
 #include "showtime.h"
 #include "fileaccess.h"
 
-static int 
-scan_filter(const struct dirent *d)
-{
-  if(d->d_name[0] == '.')
-    return 0;
-  return 1;
-}
-
 static void
 fs_urlsnprintf(char *buf, size_t bufsize, const char *prefix, const char *base,
 	       const char *fname)
@@ -51,44 +41,39 @@ fs_urlsnprintf(char *buf, size_t bufsize, const char *prefix, const char *base,
 
 
 static int
-fs_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
+fs_scandir(fa_dir_t *fd, const char *url)
 {
-  char buf[1000];
+  char buf[256];
   struct stat st;
-  struct dirent **namelist, *d;
-  int n, type, i;
+  struct dirent *d;
+  int type;
+  DIR *dir;
 
-  n = scandir(url, &namelist, scan_filter, versionsort);
-
-  if(n < 0) {
+  if((dir = opendir(url)) == NULL)
     return errno;
-  } else {
-    for(i = 0; i < n; i++) {
-      d = namelist[i];
+  
+  while((d = readdir(dir)) != NULL) {
+    fs_urlsnprintf(buf, sizeof(buf), "", url, d->d_name);
 
-      fs_urlsnprintf(buf, sizeof(buf), "", url, d->d_name);
+    if(stat(buf, &st))
+      continue;
 
-      if(stat(buf, &st))
-	continue;
-
-      switch(st.st_mode & S_IFMT) {
-      case S_IFDIR:
-	type = FA_DIR;
-	break;
-      case S_IFREG:
-	type = FA_FILE;
-	break;
-      default:
-	continue;
-      }
-
-
-      fs_urlsnprintf(buf, sizeof(buf), "file://", url, d->d_name);
-
-      cb(arg, buf, d->d_name, type);
+    switch(st.st_mode & S_IFMT) {
+    case S_IFDIR:
+      type = FA_DIR;
+      break;
+    case S_IFREG:
+      type = FA_FILE;
+      break;
+    default:
+      continue;
     }
-    free(namelist);
+    
+    fs_urlsnprintf(buf, sizeof(buf), "file://", url, d->d_name);
+
+    fa_dir_add(fd, buf, d->d_name, type);
   }
+  closedir(dir);
   return 0;
 }
 
@@ -185,12 +170,12 @@ extern const char *themepath;
  *
  */
 static int
-theme_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
+theme_scandir(fa_dir_t *fd, const char *url)
 {
   char buf[200];
 
   snprintf(buf, sizeof(buf), "%s/%s", themepath, url);
-  return fs_scandir(buf, cb, arg);
+  return fs_scandir(fd, url);
 }
 
 

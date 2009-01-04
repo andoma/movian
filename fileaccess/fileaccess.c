@@ -82,15 +82,22 @@ fa_resolve_proto(const char *url, fa_protocol_t **p)
 /**
  *
  */
-int
-fileaccess_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
+fa_dir_t *
+fileaccess_scandir(const char *url)
 {
   fa_protocol_t *fap;
+  fa_dir_t *fd;
 
   if((url = fa_resolve_proto(url, &fap)) == NULL)
-    return EPROTONOSUPPORT;
+    return NULL;
 
-  return fap->fap_scan(url, cb, arg);
+  fd = fa_dir_alloc();
+  if(fap->fap_scan(fd, url)) {
+    fa_dir_free(fd);
+    return NULL;
+  }
+
+  return fd;
 }
 
 /**
@@ -115,103 +122,98 @@ fileaccess_size(const char *url)
   return size;
 }
 
-/**
- *
- */
-typedef struct fa_dir {
-  int entries;
-
-  int curentry;
-
-  struct dirent **vec;
-
-} fa_dir_t;
-
 
 /**
  *
  */
-static void
-fa_filldir(void *arg, const char *url, const char *filename, int type)
+fa_dir_t *
+fa_dir_alloc(void)
 {
-  fa_dir_t *fd = arg;
-  struct dirent *d;
-  int s, l = strlen(filename);
-
-  fd->vec = realloc(fd->vec, sizeof(void *) * (fd->entries + 1));
-
-  s = sizeof(struct dirent) - sizeof(d->d_name) + l + 1;
-
-  d = malloc(s);
-  d->d_ino = 0;
-  d->d_off = 0;
-  d->d_reclen = 0;
-  d->d_type = type == FA_FILE ? DT_REG : DT_DIR;
-  memcpy(d->d_name, filename, l);
-  d->d_name[l] = 0;
-
-  fd->vec[fd->entries++] = d;
-}
-
-
-
-
-/**
- *
- */
-static void *
-fa_opendir(const char *url)
-{
-  fa_protocol_t *fap;
-  fa_dir_t *fd;
-
-  if((url = fa_resolve_proto(url, &fap)) == NULL)
-    return NULL;
-
-  fd = calloc(1, sizeof(fa_dir_t));
-
-  if(fap->fap_scan(url, fa_filldir, fd) < 0) {
-    free(fd);
-    return NULL;
-  }
-
+  fa_dir_t *fd = malloc(sizeof(fa_dir_t));
+  TAILQ_INIT(&fd->fd_entries);
+  fd->fd_count = 0;
   return fd;
 }
 
-
 /**
  *
  */
-static struct dirent *
-fa_readdir(void *handle)
+void
+fa_dir_free(fa_dir_t *fd)
 {
-  fa_dir_t *fd = handle;
-  if(fd->curentry == fd->entries)
-    return NULL;
+  fa_dir_entry_t *fde;
 
-  return fd->vec[fd->curentry++];
-}
-
-/**
- *
- */
-static void
-fa_closedir(void *handle)
-{
-  fa_dir_t *fd = handle;
-  int i;
-
-  for(i = 0; i < fd->entries; i++)
-    free(fd->vec[i]);
+  while((fde = TAILQ_FIRST(&fd->fd_entries)) != NULL) {
+    TAILQ_REMOVE(&fd->fd_entries, fde, fde_link);
+    free(fde->fde_filename);
+    free(fde->fde_url);
+    free(fde);
+  }
   free(fd);
 }
 
+/**
+ *
+ */
+void
+fa_dir_add(fa_dir_t *fd, const char *url, const char *filename, int type)
+{
+  fa_dir_entry_t *fde;
 
+  if(filename[0] == '.')
+    return; /* Skip all dot-filenames */
+
+  fde = malloc(sizeof(fa_dir_entry_t));
+
+  fde->fde_url      = strdup(url);
+  fde->fde_filename = strdup(filename);
+  fde->fde_type = type;
+
+  TAILQ_INSERT_TAIL(&fd->fd_entries, fde, fde_link);
+  fd->fd_count++;
+}
+
+
+
+static int 
+fa_dir_sort_compar(const void *A, const void *B)
+{
+  fa_dir_entry_t *a = *(fa_dir_entry_t **)A;
+  fa_dir_entry_t *b = *(fa_dir_entry_t **)B;
+
+  return strcasecmp(a->fde_filename, b->fde_filename);
+}
 
 /**
  *
  */
+void
+fa_dir_sort(fa_dir_t *fd)
+{
+  fa_dir_entry_t **v;
+  fa_dir_entry_t *fde;
+  int i = 0;
 
+  if(fd->fd_count == 0)
+    return;
+
+  v = malloc(fd->fd_count * sizeof(fa_dir_entry_t *));
+
+  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link)
+    v[i++] = fde;
+
+  qsort(v, fd->fd_count, sizeof(fa_dir_entry_t *), fa_dir_sort_compar);
+
+  TAILQ_INIT(&fd->fd_entries);
+  for(i = 0; i < fd->fd_count; i++)
+    TAILQ_INSERT_TAIL(&fd->fd_entries, v[i], fde_link);
+  
+  free(v);
+}
+
+/**
+ *
+ */
 #define INITPROTO(a)							      \
  {									      \
    extern  fa_protocol_t fa_protocol_ ## a;				      \
@@ -313,7 +315,7 @@ static URLProtocol fa_lavf_proto = {
 };
 
 
-
+#if 0
 
 /**
  * Showtime VFS -> fileaccess open wrapper
@@ -400,3 +402,4 @@ struct svfs_ops showtime_vfs_ops = {
   .readdir  = fa_readdir,
   .closedir = fa_closedir,
 };
+#endif

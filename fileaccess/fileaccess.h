@@ -25,6 +25,37 @@
 
 #include <libhts/htsq.h>
 
+TAILQ_HEAD(fa_dir_entry_queue, fa_dir_entry);
+
+/**
+ *
+ */
+typedef struct fa_dir_entry {
+  TAILQ_ENTRY(fa_dir_entry) fde_link;
+  char *fde_filename;
+  char *fde_url;
+  int fde_type; /* FA_ .. types above */
+} fa_dir_entry_t;
+
+/**
+ *
+ */
+typedef struct fa_dir {
+  struct fa_dir_entry_queue fd_entries;
+  int fd_count;
+} fa_dir_t;
+
+fa_dir_t *fa_dir_alloc(void);
+
+void fa_dir_free(fa_dir_t *fd);
+
+void fa_dir_add(fa_dir_t *fd, const char *path, const char *name, int type);
+
+void fa_dir_sort(fa_dir_t *fd);
+
+/**
+ *
+ */
 LIST_HEAD(fa_protocol_list, fa_protocol);
 extern struct fa_protocol_list fileaccess_all_protocols;
 
@@ -59,7 +90,7 @@ typedef struct fa_protocol {
 
   const char *fap_name;
 
-  int (*fap_scan)(const char *url, fa_scandir_callback_t *cb, void *arg);
+  int (*fap_scan)(fa_dir_t *fd, const char *url);
 
   void *(*fap_open)(const char *url);
   void (*fap_close)(void *handle);
@@ -70,7 +101,7 @@ typedef struct fa_protocol {
 } fa_protocol_t;
 
 
-int fileaccess_scandir(const char *url, fa_scandir_callback_t *cb, void *arg);
+fa_dir_t *fileaccess_scandir(const char *url);
 
 void fileaccess_init(void);
 

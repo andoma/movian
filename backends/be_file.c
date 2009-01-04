@@ -73,10 +73,10 @@ be_file_canhandle(const char *uri)
  *
  */
 static void
-scandir_callback(void *arg, const char *uri, const char *filename, int type)
+scanner_add(be_file_page_t *bfp, const char *uri, 
+	    const char *filename, int type)
 {
   prop_t *p;
-  be_file_page_t *bfp = arg;
   prop_t *urip, *media;
   be_file_entry_t *bfe;
 
@@ -114,9 +114,19 @@ scanner(void *aux)
   be_file_entry_t *bfe;
   prop_t *media, *p;
   int r;
+  fa_dir_t *fd;
+  fa_dir_entry_t *fde;
 
   TAILQ_INIT(&bfp->bfp_entries);
-  fileaccess_scandir(bfp->h.np_uri, scandir_callback, bfp);
+  if((fd = fileaccess_scandir(bfp->h.np_uri)) == NULL)
+    return NULL;
+
+  fa_dir_sort(fd);
+
+  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link)
+    scanner_add(bfp, fde->fde_url, fde->fde_filename, fde->fde_type);
+
+  fa_dir_free(fd);
 
   while((bfe = TAILQ_FIRST(&bfp->bfp_entries)) != NULL) {
     TAILQ_REMOVE(&bfp->bfp_entries, bfe, bfe_link);
