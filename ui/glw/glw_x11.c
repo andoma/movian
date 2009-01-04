@@ -60,7 +60,9 @@ typedef struct glw_x11 {
   int want_fullscreen;
 
   Colormap colormap;
-  const char *displayname;
+  const char *displayname_real;
+  const char *displayname_config;
+  const char *displayname_title;
   int coords[2][4];
   int do_videosync;
   struct {
@@ -103,7 +105,7 @@ display_settings_save(glw_x11_t *gx11)
   htsmsg_add_u32(m, "fullscreen", gx11->want_fullscreen);
   htsmsg_add_u32(m, "pointer",    gx11->want_pointer_enabled);
   
-  hts_settings_save(m, "displays/%s", gx11->displayname);
+  hts_settings_save(m, "displays/glw/x11/%s", gx11->displayname_config);
   htsmsg_destroy(m);
 }
 
@@ -139,10 +141,15 @@ display_settings_init(glw_x11_t *gx11)
 {
   prop_t *r;
   char title[256];
-  htsmsg_t *settings = hts_settings_load("displays/%s", gx11->displayname);
+  htsmsg_t *settings = hts_settings_load("displays/glw/x11/%s",
+					 gx11->displayname_config);
 
-  snprintf(title, sizeof(title), "Display settings for %s",
-	   gx11->displayname);
+  if(gx11->displayname_title) {
+    snprintf(title, sizeof(title), "Display settings for GLW/X11 on screen %s",
+	     gx11->displayname_title);
+  } else {
+    snprintf(title, sizeof(title), "Display settings for GLW/X11");
+  }
 
   r = settings_add_dir(NULL, "display", title, "display");
   
@@ -156,7 +163,8 @@ display_settings_init(glw_x11_t *gx11)
 
   htsmsg_destroy(settings);
 
-  gx11->gr.gr_uii.uii_km = keymapper_create(r, gx11->displayname, "Keymap");
+  gx11->gr.gr_uii.uii_km =
+    keymapper_create(r, gx11->displayname_config, "Keymap");
 }
 
 
@@ -281,7 +289,7 @@ window_open(glw_x11_t *gx11)
 
   if(gx11->glxctx == NULL) {
     fprintf(stderr, "Unable to create GLX context on \"%s\"\n",
-	    gx11->displayname);
+	    gx11->displayname_real);
     exit(1);
   }
 
@@ -508,14 +516,15 @@ glw_x11_init(glw_x11_t *gx11)
 
   display_settings_init(gx11);
 
-  if((gx11->display = XOpenDisplay(gx11->displayname)) == NULL) {
-    fprintf(stderr, "Unable to open X display \"%s\"\n", gx11->displayname);
+  if((gx11->display = XOpenDisplay(gx11->displayname_real)) == NULL) {
+    fprintf(stderr, "Unable to open X display \"%s\"\n",
+	    gx11->displayname_real);
     exit(1);
   }
 
   if(!glXQueryExtension(gx11->display, NULL, NULL)) {
     fprintf(stderr, "OpenGL GLX extension not supported by display \"%s\"\n",
-	    gx11->displayname);
+	    gx11->displayname_real);
     exit(1);
   }
 
@@ -523,7 +532,7 @@ glw_x11_init(glw_x11_t *gx11)
     fprintf(stderr,
 	    "OpenGL GLX extension GLX_SGI_video_sync is not supported "
 	    "by display \"%s\"\n",
-	    gx11->displayname);
+	    gx11->displayname_real);
     exit(1);
   }
 
@@ -546,7 +555,7 @@ glw_x11_init(glw_x11_t *gx11)
 
   if(gx11->xvi == NULL) {
     fprintf(stderr, "Unable to find an adequate Visual on \"%s\"\n",
-	    gx11->displayname);
+	    gx11->displayname_real);
     exit(1);
   }
 
@@ -940,7 +949,19 @@ glw_x11_start(ui_t *ui, const char *arg)
 {
   glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
 
-  gx11->displayname = strdup(arg ?: getenv("DISPLAY"));
+  if(arg == NULL) {
+
+    gx11->displayname_real   = getenv("DISPLAY");
+    gx11->displayname_config = "default";
+    gx11->displayname_title  = NULL;
+    
+  } else {
+
+    gx11->displayname_real   = arg;
+    gx11->displayname_config = arg;
+    gx11->displayname_title  = arg;
+
+  }
 
   gx11->gr.gr_uii.uii_ui = ui;
 
