@@ -132,7 +132,7 @@ int
 glw_attrib_set0(glw_t *w, int init, va_list ap)
 {
   glw_attribute_t attrib;
-  glw_t *p;
+  glw_t *p, *b;
   void *v, *o;
   int pri, a, r = 0;
   glw_root_t *gr = w->glw_root;
@@ -160,8 +160,8 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 
     case GLW_ATTRIB_PARENT:
     case GLW_ATTRIB_PARENT_HEAD:
+    case GLW_ATTRIB_PARENT_BEFORE:
       if(w->glw_parent != NULL) {
-
 
 	glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_DESTROYED, w);
 
@@ -180,7 +180,15 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 
       w->glw_parent = p;
       if(p != NULL) {
-	if(attrib == GLW_ATTRIB_PARENT_HEAD) {
+	if(attrib == GLW_ATTRIB_PARENT_BEFORE) {
+	  b = va_arg(ap, void *);
+	  if(b == NULL) {
+	    TAILQ_INSERT_TAIL(&w->glw_parent->glw_childs, w, glw_parent_link);
+	  } else {
+	    TAILQ_INSERT_BEFORE(b, w, glw_parent_link);
+	  }
+
+	} else if(attrib == GLW_ATTRIB_PARENT_HEAD) {
 	  TAILQ_INSERT_HEAD(&w->glw_parent->glw_childs, w, glw_parent_link);
 	} else {
 	  TAILQ_INSERT_TAIL(&w->glw_parent->glw_childs, w, glw_parent_link);

@@ -87,6 +87,7 @@ typedef enum {
   GLW_ATTRIB_END = 0,
   GLW_ATTRIB_PARENT,
   GLW_ATTRIB_PARENT_HEAD,
+  GLW_ATTRIB_PARENT_BEFORE,
   GLW_ATTRIB_SIGNAL_HANDLER,
   GLW_ATTRIB_WEIGHT,
   GLW_ATTRIB_CAPTION,
@@ -470,6 +471,8 @@ do {						\
     (void)va_arg(ap, void *);			\
     (void)va_arg(ap, int);			\
     break;                                      \
+  case GLW_ATTRIB_PARENT_BEFORE:		\
+    (void)va_arg(ap, void *);			\
   case GLW_ATTRIB_PARENT:			\
   case GLW_ATTRIB_PARENT_HEAD:			\
   case GLW_ATTRIB_SOURCE:			\
