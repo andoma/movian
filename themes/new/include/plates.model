@@ -6,7 +6,10 @@
 #define PLATE_SQUARE_MID(BODY)
 {
   widget(bitmap, {
+    .textureBorders = [0.2,  0.2,  0.2,  0.2];
+    .vertexBorders  = [0.1,  0.1,  0.1,  0.1];
     .source = "theme://images/plate256.png";
+    .borderScale = true;
     BODY;
   });
 }

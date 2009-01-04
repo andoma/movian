@@ -1,4 +1,5 @@
 widget(container_y, {
+  .expand = 2.5;
   widget(label, {.caption = $self.media.author;});
   widget(label, {.caption = $self.media.album;});
 });

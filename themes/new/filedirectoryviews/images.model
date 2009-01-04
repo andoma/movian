@@ -1,0 +1,27 @@
+#include "theme://include/plates.model"
+
+widget(container_y, {
+  space(5);
+  widget(list_x, {
+    .focus = leader;
+    .slices = 8;
+    cloner($page.nodes, container_y, {
+
+      PLATE_FOCUSABLE();
+      onEvent(enter, genericEvent(navigator, open, $self.url));
+
+      PLATE_SQUARE_MID(
+        widget(animator, {
+	  .time = 0.3;
+	    
+	  .source = translate($self.media.type,
+	      [
+	       "image",     "theme://filedirectoryviews/square/image.model",
+	       ],
+			      "theme://filedirectoryviews/square/void.model"
+			      );
+	});
+	);
+    });
+  });
+});
