@@ -113,7 +113,7 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
     case TOKEN_OBJECT_ATTRIBUTE:
     case TOKEN_ARRAY:
     case TOKEN_BLOCK:
-    case TOKEN_PROPERTY:
+    case TOKEN_PROPERTY_NAME:
     case TOKEN_VOID:
       t = tokenqueue_enqueue(&outq, t);
       continue;
@@ -207,7 +207,7 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei)
 
       t0 = t2 = t;
       
-      t0->type = TOKEN_PROPERTY;
+      t0->type = TOKEN_PROPERTY_NAME;
       t0->next = t1->next;
       t0->t_string = t1->t_string;
       t1->t_string = NULL;

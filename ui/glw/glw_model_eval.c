@@ -938,7 +938,7 @@ glw_model_eval_rpn0(token_t *t0, glw_model_eval_context_t *ec)
 	return -1;
       break;
 
-    case TOKEN_PROPERTY:
+    case TOKEN_PROPERTY_NAME:
       if(subscribe_prop(ec, t))
 	return -1;
       break;
