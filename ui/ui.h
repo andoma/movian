@@ -21,6 +21,7 @@
 
 #include <libhts/htsq.h>
 #include "event.h"
+#include "keymapper.h"
 
 LIST_HEAD(ui_list,  ui);
 LIST_HEAD(uii_list, uii);
@@ -34,6 +35,8 @@ typedef struct uii {
   LIST_ENTRY(uii) uii_link;
   
   struct ui *uii_ui;
+
+  keymap_t *uii_km;
 
 } uii_t;
 

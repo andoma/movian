@@ -155,6 +155,8 @@ display_settings_init(glw_x11_t *gx11)
 		    display_set_pointer, gx11);
 
   htsmsg_destroy(settings);
+
+  gx11->gr.gr_uii.uii_km = keymapper_create(r, gx11->displayname, "Keymap");
 }
 
 
