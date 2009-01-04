@@ -245,9 +245,13 @@ void prop_set_parent_ex(prop_t *p, prop_t *parent, prop_t *before,
 
 #define prop_set_parent(p, parent) prop_set_parent_ex(p, parent, NULL, NULL)
 
-void prop_link(prop_t *src, prop_t *dst);
+void prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme);
 
-void prop_unlink(prop_t *p);
+#define prop_link(src, dst) prop_link_ex(src, dst, NULL)
+
+void prop_unlink_ex(prop_t *p, prop_sub_t *skipme);
+
+#define prop_unlink(p) prop_unlink_ex(p, NULL)
 
 void prop_select_ex(prop_t *p, int advisory, prop_sub_t *skipme);
 
