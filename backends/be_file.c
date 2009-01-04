@@ -39,6 +39,7 @@ typedef struct be_file_page {
   hts_thread_t bfp_scanner;
 
   prop_t *bfp_nodes;
+  prop_t *bfp_viewprop;
 
   struct be_file_entry_queue bfp_entries;
 
@@ -113,20 +114,25 @@ scanner(void *aux)
   be_file_page_t *bfp = aux;
   be_file_entry_t *bfe;
   prop_t *media, *p;
-  int r;
+  int r, destroyed = 0;
   fa_dir_t *fd;
   fa_dir_entry_t *fde;
+  int images = 0;
 
   TAILQ_INIT(&bfp->bfp_entries);
   if((fd = fileaccess_scandir(bfp->h.np_uri)) == NULL)
     return NULL;
 
+  if(fd->fd_count == 0) {
+    prop_set_string(bfp->bfp_viewprop, "empty");
+    fa_dir_free(fd);
+    return NULL;
+  }
+
   fa_dir_sort(fd);
 
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link)
     scanner_add(bfp, fde->fde_url, fde->fde_filename, fde->fde_type);
-
-  fa_dir_free(fd);
 
   while((bfe = TAILQ_FIRST(&bfp->bfp_entries)) != NULL) {
     TAILQ_REMOVE(&bfp->bfp_entries, bfe, bfe_link);
@@ -143,12 +149,29 @@ scanner(void *aux)
     free(bfe->bfe_uri);
     free(bfe);
 
-    if(r == FA_UNKNOWN)
+    switch(r) {
+    case FA_UNKNOWN:
+      destroyed++;
       prop_destroy(p);
+      break;
 
+    case FA_IMAGE:
+      images++;
+      break;
+    }
     prop_ref_dec(p);
   }
 
+  if(fd->fd_count == destroyed) {
+    prop_set_string(bfp->bfp_viewprop, "empty");
+    return NULL;
+  }
+
+  if(images * 4 > fd->fd_count * 3) {
+    prop_set_string(bfp->bfp_viewprop, "images");
+  }
+
+  fa_dir_free(fd);
   return NULL;
 }
 
@@ -167,6 +190,9 @@ file_open_dir(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
   p = bfp->h.np_prop_root;
 
   prop_set_string(prop_create(p, "type"), "filedirectory");
+
+  bfp->bfp_viewprop = prop_create(p, "view");
+  prop_set_string(bfp->bfp_viewprop, "list");
   
   bfp->bfp_nodes = prop_create(p, "nodes");
   
