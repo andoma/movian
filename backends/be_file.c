@@ -104,18 +104,6 @@ scandir_callback(void *arg, const char *uri, const char *filename, int type)
 }
 
 
-
-const char *type2str[] = {
-  [FA_FILE]     = "file",
-  [FA_AUDIO]    = "audio",
-  [FA_ARCHIVE]  = "archive",
-  [FA_AUDIO]    = "audio",
-  [FA_VIDEO]    = "video",
-  [FA_PLAYLIST] = "playlist",
-  [FA_DVD]      = "dvd",
-  [FA_IMAGE]    = "image",
-};
-
 /**
  *
  */
@@ -141,9 +129,6 @@ scanner(void *aux)
     } else {
       r = fa_probe(media, bfe->bfe_uri, NULL, 0);
     }
-
-    if(r < sizeof(type2str) / sizeof(type2str[0]) && type2str[r] != NULL)
-      prop_set_string(prop_create(media, "type"), type2str[r]);
 
     free(bfe->bfe_uri);
     free(bfe);

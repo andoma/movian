@@ -237,6 +237,29 @@ fa_probe_iso(prop_t *proproot, fa_protocol_t *fap, void *fh)
 }
   
 
+
+
+const char *type2str[] = {
+  [FA_FILE]     = "file",
+  [FA_AUDIO]    = "audio",
+  [FA_ARCHIVE]  = "archive",
+  [FA_AUDIO]    = "audio",
+  [FA_VIDEO]    = "video",
+  [FA_PLAYLIST] = "playlist",
+  [FA_DVD]      = "dvd",
+  [FA_IMAGE]    = "image",
+};
+
+
+void
+fa_set_type(prop_t *proproot, unsigned int type)
+{
+  if(type < sizeof(type2str) / sizeof(type2str[0]) && type2str[type] != NULL)
+    prop_set_string(prop_create(proproot, "type"), type2str[type]);
+}
+
+
+
 /**
  * Probe a file for its type
  */
@@ -266,11 +289,13 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize)
   if((r = fa_probe_header(proproot, fap, url0, fh,
 			  newurl, newurlsize)) != -1) {
     fap->fap_close(fh);
+    fa_set_type(proproot, r);
     return r;
   }
 
   if(fa_probe_iso(proproot, fap, fh) == 0) {
     fap->fap_close(fh);
+    fa_set_type(proproot, FA_DVD);
     return FA_DVD;
   }
 
@@ -391,6 +416,7 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize)
   av_close_input_file(fctx);  
   ffunlock();
 
+  fa_set_type(proproot, type);
   return type;
 }
 
@@ -403,17 +429,22 @@ fa_probe_dir(prop_t *proproot, const char *url)
   fa_protocol_t *fap;
   char path[300];
   struct stat buf;
+  int type;
 
   if((url = fa_resolve_proto(url, &fap)) == NULL)
     return FA_UNKNOWN;
 
+  type = FA_DIR;
+
   snprintf(path, sizeof(path), "%s/VIDEO_TS", url);
-  if(fap->fap_stat(path, &buf) == 0 && S_ISDIR(buf.st_mode))
-    return FA_DVD;
+  if(fap->fap_stat(path, &buf) == 0 && S_ISDIR(buf.st_mode)) {
+    type = FA_DVD;
+  } else {
+    snprintf(path, sizeof(path), "%s/video_ts", url);
+    if(fap->fap_stat(path, &buf) == 0 && S_ISDIR(buf.st_mode))
+      type = FA_DVD;
+  }
 
-  snprintf(path, sizeof(path), "%s/video_ts", url);
-  if(fap->fap_stat(path, &buf) == 0 && S_ISDIR(buf.st_mode))
-    return FA_DVD;
-
-  return FA_DIR;
+  fa_set_type(proproot, type);
+  return type;
 }

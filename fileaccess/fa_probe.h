@@ -26,4 +26,6 @@ unsigned int fa_probe(prop_t *proproot, const char *url,
 
 unsigned int fa_probe_dir(prop_t *proproot, const char *url);
 
+void fa_set_type(prop_t *proproot, unsigned int type);
+
 #endif /* FA_PROBE_H */
