@@ -31,7 +31,7 @@
 #include <libavutil/avstring.h>
 
 
-#ifdef HAVE_LIBEXIF
+#ifdef CONFIG_LIBEXIF
 #include <libexif/exif-data.h>
 #include <libexif/exif-utils.h>
 #include <libexif/exif-loader.h>
@@ -89,7 +89,7 @@ fa_imageloader(fa_image_load_ctrl_t *ctrl)
   }
   
 
-#ifdef HAVE_LIBEXIF
+#ifdef CONFIG_LIBEXIF
   if(is_exif && ctrl->want_thumb) {
     unsigned char exifbuf[1024];
     int v, x;

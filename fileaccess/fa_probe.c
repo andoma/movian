@@ -29,7 +29,7 @@
 #include <libavformat/avformat.h>
 #include <libavutil/avstring.h>
 
-#ifdef HAVE_LIBEXIF
+#ifdef CONFIG_LIBEXIF
 #include <libexif/exif-data.h>
 #include <libexif/exif-utils.h>
 #include <libexif/exif-loader.h>
@@ -102,7 +102,7 @@ fa_probe_playlist(prop_t *proproot, const char *url,
 /**
  * Extract details from EXIF header
  */
-#ifdef HAVE_LIBEXIF
+#ifdef CONFIG_LIBEXIF
 static void
 fa_probe_exif(prop_t *proproot, fa_protocol_t *fap, void *fh,
 	      char *pb, size_t pbsize)
@@ -194,7 +194,7 @@ fa_probe_header(prop_t *proproot, fa_protocol_t *fap,
 
   if(pb[6] == 'E' && pb[7] == 'x' && pb[8] == 'i' && pb[9] == 'f') {
     /* JPEG image with EXIF tag*/
-#ifdef HAVE_LIBEXIF
+#ifdef CONFIG_LIBEXIF
     if(proproot != NULL)
       fa_probe_exif(proproot, fap, fh, pb, psiz);
 #endif
