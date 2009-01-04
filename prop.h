@@ -32,6 +32,7 @@ typedef enum {
   PROP_SET_FLOAT,
   PROP_SET_DIR,
   PROP_ADD_CHILD,
+  PROP_ADD_CHILD_BEFORE,
   PROP_ADD_SELECTED_CHILD,
   PROP_DEL_CHILD,
   PROP_SELECT_CHILD,
@@ -239,9 +240,10 @@ void prop_ref_dec(prop_t *p);
 
 void prop_ref_inc(prop_t *p);
 
-void prop_set_parent_ex(prop_t *p, prop_t *parent, prop_sub_t *skipme);
+void prop_set_parent_ex(prop_t *p, prop_t *parent, prop_t *before, 
+			prop_sub_t *skipme);
 
-#define prop_set_parent(p, parent) prop_set_parent_ex(p, parent, NULL)
+#define prop_set_parent(p, parent) prop_set_parent_ex(p, parent, NULL, NULL)
 
 void prop_link(prop_t *src, prop_t *dst);
 

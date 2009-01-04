@@ -32,6 +32,7 @@
  */
 typedef struct glw_prop_sub_pending {
   prop_t *gpsp_prop;
+  prop_t *gpsp_before;
   TAILQ_ENTRY(glw_prop_sub_pending) gpsp_link;
 } glw_prop_sub_pending_t;
 
@@ -561,17 +562,39 @@ cloner_child_signal_handler(glw_t *w, void *opaque,
   return 0;
 }
 
+
+/**
+ *
+ */
+static glw_t *
+cloner_find_child(prop_t *p, glw_t *parent)
+{
+  glw_t *w;
+  glw_signal_handler_t *gsh;
+
+  TAILQ_FOREACH(w, &parent->glw_childs, glw_parent_link)
+    LIST_FOREACH(gsh, &w->glw_signal_handlers, gsh_link)
+      if(gsh->gsh_func == cloner_child_signal_handler && 
+	 gsh->gsh_opaque == p)
+	return w;
+  return NULL;
+}
+
+
 /**
  *
  */
 static void
-cloner_add_child0(glw_prop_sub_t *gps, prop_t *p,
+cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
 		  glw_t *parent, errorinfo_t *ei, int selected)
 {
   token_t *body;
   glw_model_eval_context_t n;
+  glw_t *b;
 
   body = glw_model_clone_chain(gps->gps_cloner_body);
+
+  b = before ? cloner_find_child(before, parent) : NULL;
 
   memset(&n, 0, sizeof(n));
   n.prop = p;
@@ -582,7 +605,7 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p,
 		     gps->gps_cloner_class,
 		     GLW_ATTRIB_SIGNAL_HANDLER, cloner_child_signal_handler,
 		     p, 500,
-		     GLW_ATTRIB_PARENT, parent,
+		     GLW_ATTRIB_PARENT_BEFORE, parent, b,
 		     GLW_ATTRIB_PROPROOT, p,
 		     NULL);
 
@@ -601,13 +624,13 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p,
  *
  */
 static void
-cloner_add_child(glw_prop_sub_t *gps, prop_t *p,
+cloner_add_child(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
 		 glw_t *parent, errorinfo_t *ei, int selected)
 {
   glw_prop_sub_pending_t *gpsp;
 
   prop_ref_inc(p); /* Decreased upon destroy in signal handler or
-			  if it is removed from the pending list */
+		      if it is removed from the pending list */
 
   if(gps->gps_cloner_body == NULL) {
 
@@ -618,33 +641,20 @@ cloner_add_child(glw_prop_sub_t *gps, prop_t *p,
      * setup.
      */
 
+    if(before != NULL)
+      prop_ref_inc(before);
+
     gpsp = malloc(sizeof(glw_prop_sub_pending_t));
     gpsp->gpsp_prop = p;
+    gpsp->gpsp_before = before;
+
     TAILQ_INSERT_TAIL(&gps->gps_pending, gpsp, gpsp_link);
 
     if(selected)
       gps->gps_pending_select = p;
     return;
   }
-  cloner_add_child0(gps, p, parent, ei, selected);
-}
-
-
-/**
- *
- */
-static glw_t *
-cloner_find_child(prop_t *p, glw_t *parent)
-{
-  glw_t *w;
-  glw_signal_handler_t *gsh;
-
-  TAILQ_FOREACH(w, &parent->glw_childs, glw_parent_link)
-    LIST_FOREACH(gsh, &w->glw_signal_handlers, gsh_link)
-      if(gsh->gsh_func == cloner_child_signal_handler && 
-	 gsh->gsh_opaque == p)
-	return w;
-  return NULL;
+  cloner_add_child0(gps, p, before, parent, ei, selected);
 }
 
 
@@ -732,7 +742,7 @@ static void
 prop_callback(prop_sub_t *s, prop_event_t event, ...)
 {
   glw_prop_sub_t *gps;
-  prop_t *p;
+  prop_t *p, *p2;
   token_t *rpn = NULL, *t = NULL;
 
   va_list ap;
@@ -782,12 +792,18 @@ prop_callback(prop_sub_t *s, prop_event_t event, ...)
 
     case PROP_ADD_CHILD:
       p = va_arg(ap, prop_t *);
-      cloner_add_child(gps, p, gps->gps_widget, NULL, 0);
+      cloner_add_child(gps, p, NULL, gps->gps_widget, NULL, 0);
+      break;
+
+    case PROP_ADD_CHILD_BEFORE:
+      p = va_arg(ap, prop_t *);
+      p2 = va_arg(ap, prop_t *);
+      cloner_add_child(gps, p, p2, gps->gps_widget, NULL, 0);
       break;
 
     case PROP_ADD_SELECTED_CHILD:
       p = va_arg(ap, prop_t *);
-      cloner_add_child(gps, p, gps->gps_widget, NULL, 1);
+      cloner_add_child(gps, p, NULL, gps->gps_widget, NULL, 1);
       break;
 
     case PROP_DEL_CHILD:
@@ -1222,8 +1238,12 @@ glwf_cloner(glw_model_eval_context_t *ec, struct token *self)
     while((gpsp = TAILQ_FIRST(&gps->gps_pending)) != NULL) {
       TAILQ_REMOVE(&gps->gps_pending, gpsp, gpsp_link);
 
-      cloner_add_child0(gps, gpsp->gpsp_prop, ec->w, ec->ei,
+      cloner_add_child0(gps, gpsp->gpsp_prop, gpsp->gpsp_before, ec->w, ec->ei,
 			gpsp->gpsp_prop == gps->gps_pending_select);
+
+      if(gpsp->gpsp_before)
+	prop_ref_dec(gpsp->gpsp_before);
+	
       free(gpsp);
     }
     gps->gps_pending_select = NULL;

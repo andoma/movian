@@ -91,6 +91,8 @@ typedef struct prop_notify {
 #define hpn_int    u.i
 #define hpn_string u.s
 
+  prop_t *hpn_prop2; /* pointless to put in union right now */
+
 } prop_notify_t;
 
 
@@ -190,6 +192,12 @@ prop_courier(void *aux)
       s->hps_callback(s, n->hpn_event, n->hpn_prop);
       if(n->hpn_prop != NULL)
 	prop_ref_dec(n->hpn_prop);
+      break;
+
+    case PROP_ADD_CHILD_BEFORE:
+      s->hps_callback(s, n->hpn_event, n->hpn_prop, n->hpn_prop2);
+      prop_ref_dec(n->hpn_prop);
+      prop_ref_dec(n->hpn_prop2);
       break;
     }
 
@@ -367,6 +375,44 @@ prop_notify_child(prop_t *child, prop_t *parent, prop_event_t event,
 }
 
 
+
+
+/**
+ *
+ */
+static void
+prop_build_notify_child2(prop_sub_t *s, prop_t *p, prop_t *sibling, 
+			 prop_event_t event)
+{
+  prop_notify_t *n;
+
+  n = get_notify(s);
+
+  atomic_add(&p->hp_refcount, 1);
+  atomic_add(&sibling->hp_refcount, 1);
+
+  n->hpn_prop = p;
+  n->hpn_prop2 = sibling;
+  n->hpn_event = event;
+  courier_enqueue(s->hps_courier, n);
+}
+
+
+/**
+ *
+ */
+static void
+prop_notify_child2(prop_t *child, prop_t *parent, prop_t *sibling,
+		   prop_event_t event, prop_sub_t *skipme)
+{
+  prop_sub_t *s;
+
+  LIST_FOREACH(s, &parent->hp_value_subscriptions, hps_value_prop_link)
+    if(s != skipme)
+      prop_build_notify_child2(s, child, sibling, event);
+}
+
+
 /**
  *
  */
@@ -481,7 +527,8 @@ prop_create_ex(prop_t *parent, const char *name, prop_sub_t *skipme)
  *
  */
 void
-prop_set_parent_ex(prop_t *p, prop_t *parent, prop_sub_t *skipme)
+prop_set_parent_ex(prop_t *p, prop_t *parent, prop_t *before, 
+		   prop_sub_t *skipme)
 {
   assert(p->hp_parent == NULL);
 
@@ -496,9 +543,14 @@ prop_set_parent_ex(prop_t *p, prop_t *parent, prop_sub_t *skipme)
   prop_make_dir(parent, skipme);
 
   p->hp_parent = parent;
-  TAILQ_INSERT_TAIL(&parent->hp_childs, p, hp_parent_link);
 
-  prop_notify_child(p, parent, PROP_ADD_CHILD, skipme);
+  if(before != NULL) {
+    TAILQ_INSERT_BEFORE(before, p, hp_parent_link);
+    prop_notify_child2(p, parent, before, PROP_ADD_CHILD_BEFORE, skipme);
+  } else {
+    TAILQ_INSERT_TAIL(&parent->hp_childs, p, hp_parent_link);
+    prop_notify_child(p, parent, PROP_ADD_CHILD, skipme);
+  }
 
   hts_mutex_unlock(&prop_mutex);
 }
