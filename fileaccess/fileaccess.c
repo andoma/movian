@@ -228,6 +228,7 @@ fileaccess_init(void)
   INITPROTO(rar);
   INITPROTO(theme);
   INITPROTO(http);
+  INITPROTO(webdav);
 #ifdef HAVE_LIBSMBCLIENT
   INITPROTO(smb);
 #endif
