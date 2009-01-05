@@ -1224,7 +1224,8 @@ glwf_cloner(glw_model_eval_context_t *ec, struct token *self)
   glw_prop_sub_t *gps;
   glw_prop_sub_pending_t *gpsp;
   int class;
-  glw_t *w;
+  glw_t *w, *n;
+  glw_signal_handler_t *gsh;
 
   if(ec->w == NULL) 
     return glw_model_seterr(ec->ei, self, 
@@ -1246,8 +1247,17 @@ glwf_cloner(glw_model_eval_context_t *ec, struct token *self)
 			    "cloner: Invalid third argument, "
 			    "expected block");
 
-  while((w = TAILQ_FIRST(&ec->w->glw_childs)) != NULL)
-    glw_destroy0(w);
+  /* Destroy any previous cloned entries */
+  for(w = TAILQ_FIRST(&ec->w->glw_childs); w != NULL; w = n) {
+    n = TAILQ_NEXT(w, glw_parent_link);
+
+    LIST_FOREACH(gsh, &w->glw_signal_handlers, gsh_link)
+      if(gsh->gsh_func == cloner_child_signal_handler)
+	break;
+
+    if(gsh != NULL)
+      glw_destroy0(w);
+  }
 
   if(a->type == TOKEN_DIRECTORY) {
     gps = a->propsubr;
