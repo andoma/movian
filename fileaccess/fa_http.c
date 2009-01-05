@@ -20,7 +20,10 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <libavutil/base64.h>
 #include <libhts/htsmsg_xml.h>
+
+#include "keyring.h"
 #include "fileaccess.h"
 #include "networking/net.h"
 
@@ -271,6 +274,46 @@ redirect(http_file_t *hf, int *redircount)
 /**
  *
  */
+static int 
+authenticate(http_file_t *hf)
+{
+  char *username;
+  char *password;
+  char buf1[128];
+  char buf2[128];
+  int r;
+
+  if(http_drain_content(hf))
+    return -1;
+
+  r = keyring_lookup(hf->hf_url, &username, &password, NULL, !!hf->hf_auth,
+		     "HTTP Client", "Access denied");
+
+  free(hf->hf_auth);
+  hf->hf_auth = NULL;
+
+  if(r == -1)
+    /* Rejected */
+    return -1;
+
+  if(r == 0) {
+    /* Got auth credentials */  
+    snprintf(buf1, sizeof(buf1), "%s:%s", username, password);
+    av_base64_encode(buf2, sizeof(buf2), (uint8_t *)buf1, strlen(buf1));
+
+    snprintf(buf1, sizeof(buf1), "Authorization: Basic %s", buf2);
+    hf->hf_auth = strdup(buf1);
+    return 0;
+  }
+
+  /* No auth info */
+  return 0;
+}
+
+
+/**
+ *
+ */
 static int
 http_connect(http_file_t *hf)
 {
@@ -327,14 +370,8 @@ http_connect(http_file_t *hf)
 
 
   case 401:
-    if(http_drain_content(hf))
+    if(authenticate(hf))
       return -1;
-
-    if(hf->hf_auth != NULL)
-      return -1;
-
-    /* XXX: keyring lookup */
-    return -1;
     goto again;
 
   default:
@@ -704,14 +741,8 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd)
     goto reconnect;
 
   case 401:
-    if(http_drain_content(hf))
+    if(authenticate(hf))
       return -1;
-
-    if(hf->hf_auth != NULL)
-      return -1;
-    
-    /* XXX: keyring lookup */
-    return -1;
     goto again;
 
   default:
