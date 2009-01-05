@@ -368,8 +368,6 @@ http_open(const char *url)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   
-  printf("URL = %s\n", url);
-
   htsbuf_queue_init(&hf->hf_spill, 0);
 
   hf->hf_url = strdup(url);
