@@ -61,8 +61,10 @@ typedef struct glw_x11 {
 
   Colormap colormap;
   const char *displayname_real;
-  const char *displayname_config;
   const char *displayname_title;
+
+  char *config_name;
+
   int coords[2][4];
   int do_videosync;
   struct {
@@ -89,6 +91,15 @@ typedef struct glw_x11 {
 
 } glw_x11_t;
 
+static const keymap_defmap_t glw_default_keymap[] = {
+  { EVENT_PLAYPAUSE, "x11 - F2"},
+  { EVENT_NONE, NULL},
+};
+
+
+
+
+
 static void update_gpu_info(void);
 
 
@@ -105,7 +116,7 @@ display_settings_save(glw_x11_t *gx11)
   htsmsg_add_u32(m, "fullscreen", gx11->want_fullscreen);
   htsmsg_add_u32(m, "pointer",    gx11->want_pointer_enabled);
   
-  hts_settings_save(m, "displays/glw/x11/%s", gx11->displayname_config);
+  hts_settings_save(m, "displays/%s", gx11->config_name);
   htsmsg_destroy(m);
 }
 
@@ -141,8 +152,7 @@ display_settings_init(glw_x11_t *gx11)
 {
   prop_t *r;
   char title[256];
-  htsmsg_t *settings = hts_settings_load("displays/glw/x11/%s",
-					 gx11->displayname_config);
+  htsmsg_t *settings = hts_settings_load("displays/%s", gx11->config_name);
 
   if(gx11->displayname_title) {
     snprintf(title, sizeof(title), "Display settings for GLW/X11 on screen %s",
@@ -164,7 +174,7 @@ display_settings_init(glw_x11_t *gx11)
   htsmsg_destroy(settings);
 
   gx11->gr.gr_uii.uii_km =
-    keymapper_create(r, gx11->displayname_config, "Keymap");
+    keymapper_create(r, gx11->config_name, "Keymap", glw_default_keymap);
 }
 
 
@@ -948,20 +958,23 @@ static uii_t *
 glw_x11_start(ui_t *ui, const char *arg)
 {
   glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
+  char confname[256];
 
   if(arg == NULL) {
 
     gx11->displayname_real   = getenv("DISPLAY");
-    gx11->displayname_config = "default";
+    snprintf(confname, sizeof(confname), "glw/x11/default");
     gx11->displayname_title  = NULL;
     
   } else {
 
     gx11->displayname_real   = arg;
-    gx11->displayname_config = arg;
+    snprintf(confname, sizeof(confname), "glw/x11/%s", arg);
     gx11->displayname_title  = arg;
 
   }
+
+  gx11->config_name = strdup(confname);
 
   gx11->gr.gr_uii.uii_ui = ui;
 

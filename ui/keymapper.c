@@ -118,17 +118,31 @@ keymapper_entry_add(keymap_t *km, const char *str, const char *eventname,
  *
  */
 static void
-keymapper_create_entries(keymap_t *km)
+keymapper_create_entries(keymap_t *km, const keymap_defmap_t *def)
 {
   event_type_t e;
   htsmsg_t *m;
   const char *eventname;
+  const char *keycode;
+  int i;
 
   m = hts_settings_load("keymaps/%s", km->km_name);
   for(e = EVENT_NONE + 1; e < EVENT_last_mappable; e++) {
-    if((eventname = event_code2str(e)) != NULL)
-      keymapper_entry_add(km, m ? htsmsg_get_str(m, eventname) : NULL,
-			  eventname, e);
+    if((eventname = event_code2str(e)) == NULL) 
+      continue;
+    
+    keycode = NULL;
+
+    if(m != NULL) {
+      keycode = htsmsg_get_str(m, eventname);
+    } else if(def != NULL) {
+      for(i = 0; def[i].kd_keycode != NULL; i++)
+	if(def[i].kd_event == e) {
+	  keycode = def[i].kd_keycode;
+	  break;
+	}
+    }
+    keymapper_entry_add(km, keycode, eventname, e);
   }
   htsmsg_destroy(m);
 }
@@ -168,7 +182,8 @@ keymapper_resolve(const char *str, uii_t *uii)
  *
  */
 keymap_t *
-keymapper_create(prop_t *settingsparent, const char *name, const char *title)
+keymapper_create(prop_t *settingsparent, const char *name, const char *title,
+		 const keymap_defmap_t *def)
 {
   keymap_t *km;
 
@@ -180,7 +195,7 @@ keymapper_create(prop_t *settingsparent, const char *name, const char *title)
   km->km_settings = settings_add_dir(settingsparent, "keymap", title,
 				     "keymap");
 
-  keymapper_create_entries(km);
+  keymapper_create_entries(km, def);
   return km;
 }
 
@@ -192,5 +207,5 @@ void
 keymapper_init(void)
 {
   hts_mutex_init(&km_mutex);
-  km_global = keymapper_create(NULL, "global", "Global keymap");
+  km_global = keymapper_create(NULL, "global", "Global keymap", NULL);
 }

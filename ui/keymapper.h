@@ -20,6 +20,7 @@
 #define KEYMAPPER_H
 
 #include <libhts/htsthreads.h>
+#include <libhts/hts_strtab.h>
 #include "prop.h"
 #include "event.h"
 #include "ui.h"
@@ -53,6 +54,13 @@ typedef struct keymap {
   prop_t *km_settings;   /* Pointer to settings in settings tree */
 } keymap_t;
 
+/**
+ *
+ */
+typedef struct keymap_default {
+  event_type_t kd_event;
+  const char *kd_keycode;
+} keymap_defmap_t;
 
 
 /**
@@ -62,7 +70,7 @@ struct uii;
 void keymapper_resolve(const char *str, struct uii *uii);
 
 keymap_t *keymapper_create(prop_t *settingsparent, const char *name,
-			   const char *title);
+			   const char *title, const keymap_defmap_t *def);
 
 void keymapper_init(void);
 
