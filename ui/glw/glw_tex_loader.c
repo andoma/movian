@@ -70,11 +70,6 @@ glw_tex_free_gl_resources(glw_texture_t *gt)
     glDeleteTextures(1, &gt->gt_texture);
     gt->gt_texture = 0;
   }
-
-  if(gt->gt_pbo != 0) {
-    glDeleteBuffersARB(1, &gt->gt_pbo);
-    gt->gt_pbo = 0;
-  }
 }
 
 void
@@ -488,78 +483,11 @@ texture_load_rescale_swscale(AVCodecContext *ctx, AVFrame *frame,
 }
 
 
-
-
-
-#if 0
-/**
- * Legacy, we just keep it to have the PBO stuff around
- */
-static void
-texture_scale_old(AVCodecContext *ctx, AVFrame *frame, glw_texture_t *gt)
-{
-  AVPicture pic;
-  struct SwsContext *sws;
-  int w = gt->gt_xs;
-  int h = gt->gt_ys;
-
-  sws = sws_getContext(ctx->width, ctx->height, pix_fmt, 
-		       w, h, PIX_FMT_RGB24,
-		       SWS_BICUBIC, NULL, NULL, NULL);
-  gt->gt_bpp = 3;
-  gt->gt_format = GL_RGB;
-  gt->gt_ext_format = GL_RGB;
-  gt->gt_ext_type = GL_UNSIGNED_BYTE;
-  
-  gt->gt_bitmap_size = gt->gt_bpp * gt->gt_xs * gt->gt_ys;
-  
-  if(0) {
-
-    hts_mutex_lock(&tex_mutex);
-
-    gt->gt_state = GT_STATE_WANT_PBO;
-  
-    while(gt->gt_state == GT_STATE_WANT_PBO) 
-      hts_cond_wait(&gt->gt_cond, &tex_mutex);
-  
-    hts_mutex_unlock(&tex_mutex);
-
-    switch(gt->gt_state) {
-    case GT_STATE_INACTIVE:
-      return;
-    case GT_STATE_GOT_PBO:
-      break;
-    default:
-      abort();
-    }
-  } else {
-
-    gt->gt_bitmap = mmap(NULL, gt->gt_bitmap_size, PROT_READ | PROT_WRITE,
-			 MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-  }
-
-    
-  pic.data[0] = gt->gt_bitmap;
-  pic.linesize[0] = w  * 3;
-  
-  if(sws_scale(sws, frame->data, frame->linesize, 0, 0,
-	       pic.data, pic.linesize) < 0) {
-    fprintf(stderr, "%s: scaling failed\n", gt->gt_filename);
-  }
-  
-  sws_freeContext(sws);
-}
-#endif
-
-
 /*****************************************************************************
  *
  *
  *
  */
-
-
-
 void
 glw_texture_purge(glw_root_t *gr)
 {
@@ -659,21 +587,9 @@ gl_tex_req_load(glw_root_t *gr, glw_texture_t *gt)
   hts_mutex_unlock(&gr->gr_tex_mutex);
 }
 
-
-
-static inline int64_t
-get_ts(void)
-{
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  return (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
-}
-
-
 void
 glw_tex_layout(glw_root_t *gr, glw_texture_t *gt)
 {
-  int siz;
   void *p;
 
   switch(gt->gt_state) {
@@ -684,39 +600,10 @@ glw_tex_layout(glw_root_t *gr, glw_texture_t *gt)
   case GT_STATE_LOADING:
     return;
 
-  case GT_STATE_WANT_PBO:
-    glGenBuffersARB(1, &gt->gt_pbo);
-
-    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gt->gt_pbo);
-
-    siz = gt->gt_xs * gt->gt_ys * gt->gt_bpp;
-
-    glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, siz, NULL, GL_STREAM_DRAW_ARB);
-
-    gt->gt_bitmap = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 
-				   GL_WRITE_ONLY);
-
-    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
-
-    hts_mutex_lock(&gr->gr_tex_mutex);
-    glw_tex_set_state_locked(gt, GT_STATE_GOT_PBO);
-    hts_mutex_unlock(&gr->gr_tex_mutex);
-    return;
-
-  case GT_STATE_GOT_PBO:
-    return;
-
   case GT_STATE_VALID:
 
     if(gt->gt_texture == 0) {
-      if(gt->gt_pbo != 0) {
-	glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gt->gt_pbo);
-	glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
-	gt->gt_bitmap = NULL;
-	p = NULL;
-      } else {
-	p = gt->gt_bitmap;
-      }
+      p = gt->gt_bitmap;
 
       glActiveTextureARB(GL_TEXTURE0_ARB); // not needed ?
 
@@ -733,12 +620,6 @@ glw_tex_layout(glw_root_t *gr, glw_texture_t *gt)
 		   gt->gt_ext_type, p);
 
       glBindTexture(GL_TEXTURE_2D, 0);
-
-      if(gt->gt_pbo != 0) {
-	glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
-	glDeleteBuffersARB(1, &gt->gt_pbo);
-	gt->gt_pbo = 0;
-      }
 
       if(gt->gt_bitmap != NULL) {
 	munmap(gt->gt_bitmap, gt->gt_bitmap_size);

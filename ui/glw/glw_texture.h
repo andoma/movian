@@ -29,8 +29,6 @@ typedef struct glw_texture {
   enum {
     GT_STATE_INACTIVE,
     GT_STATE_LOADING,
-    GT_STATE_WANT_PBO,
-    GT_STATE_GOT_PBO,
     GT_STATE_VALID,
     GT_STATE_ERROR,
   } gt_state;
@@ -42,7 +40,6 @@ typedef struct glw_texture {
   float gt_aspect;
 
   unsigned int gt_texture;
-  unsigned int gt_pbo;
 
   const char *gt_filename;
 
