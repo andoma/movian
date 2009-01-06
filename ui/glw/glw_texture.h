@@ -37,7 +37,7 @@ typedef struct glw_texture {
 
   float gt_aspect;
 
-  unsigned int gt_texture;
+  glw_backend_texture_t gt_texture;
 
   const char *gt_filename;
 

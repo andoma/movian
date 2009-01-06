@@ -39,6 +39,8 @@ typedef struct glw_backend_root {
 
 } glw_backend_root_t;
 
+typedef GLuint glw_backend_texture_t;
+
 #define glw_PushMatrix(newrc, oldrc) glPushMatrix()
 
 #define glw_PopMatrix() glPopMatrix()
