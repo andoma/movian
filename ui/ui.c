@@ -64,7 +64,7 @@ ui_initialize(void)
  *
  */
 void
-ui_loop(void)
+ui_init(void)
 {
   ui_t *ui;
   uii_t *uii;
@@ -80,8 +80,14 @@ ui_loop(void)
     uii = ui->ui_start(ui, NULL);
     LIST_INSERT_HEAD(&uiis, uii, uii_link);
   }
+}
 
-
+/**
+ *
+ */
+void
+ui_main_loop(void)
+{
   /* Main loop */
 
   hts_mutex_lock(&ui_mutex);

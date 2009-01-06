@@ -63,7 +63,9 @@ typedef struct ui {
 /**
  *
  */
-void ui_loop(void);
+void ui_init(void);
+
+void ui_main_loop(void);
 
 void ui_exit_showtime(void);
 

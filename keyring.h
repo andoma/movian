@@ -20,6 +20,8 @@
 #ifndef KEYRING_H__
 #define KEYRING_H__
 
+void keyring_init(void);
+
 int keyring_lookup(const char *id, char **username, char **password,
 		   char **domain, int may_query, const char *source,
 		   const char *reason);

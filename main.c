@@ -43,6 +43,7 @@
 #include "ui/ui.h"
 #include "ui/keymapper.h"
 #include "playqueue.h"
+#include "keyring.h"
 
 hts_mutex_t ffmutex;
 
@@ -169,6 +170,8 @@ main(int argc, char **argv)
 
   hts_settings_init("showtime", settingspath);
 
+  keyring_init();
+
   settings_init();
 
   event_init();
@@ -186,12 +189,14 @@ main(int argc, char **argv)
 
   event_handler_register("main", main_event_handler, EVENTPRI_MAIN, NULL);
 
+  ui_init();
+
   if(optind < argc)
     nav_open(argv[optind]);
   else
     nav_open("page://mainmenu");
 
-  ui_loop();
+  ui_main_loop();
 
   return stopcode;
 }
