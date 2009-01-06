@@ -33,8 +33,6 @@ typedef struct glw_texture {
     GT_STATE_ERROR,
   } gt_state;
 
-  hts_cond_t gt_cond;
-
   unsigned int gt_refcnt;
 
   float gt_aspect;

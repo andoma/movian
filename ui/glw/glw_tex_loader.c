@@ -45,13 +45,9 @@
 #include "fileaccess/fa_imageloader.h"
 #include "showtime.h"
 
-static int maxwidth = 2048;
-static int maxheight = 1024;
-
 static int image_decode(glw_root_t *gr, glw_texture_t *ht);
 
 static void glw_tex_deref_locked(glw_root_t *gr, glw_texture_t *gt);
-static void glw_tex_set_state_locked(glw_texture_t *gt, int state);
 
 
 void
@@ -127,7 +123,7 @@ image_thread(void *aux)
       r = 0;
     }
     
-    glw_tex_set_state_locked(gt, r < 0 ? GT_STATE_ERROR : GT_STATE_VALID);
+    gt->gt_state =  r < 0 ? GT_STATE_ERROR : GT_STATE_VALID;
 
     LIST_INSERT_HEAD(&gr->gr_tex_active_list, gt, gt_flush_link);
 
@@ -186,6 +182,10 @@ make_powerof2(int v)
   m = ((1 << (av_log2(v))) + (1 << (av_log2(v) + 1))) / 2;
   return 1 << (av_log2(v) + (v > m));
 }
+
+static int maxwidth = 2048;
+static int maxheight = 1024;
+
 
 typedef void *SwsFilter;
 
@@ -533,16 +533,6 @@ glw_tex_deref(glw_root_t *gr, glw_texture_t *gt)
   glw_tex_deref_locked(gr, gt);
   hts_mutex_unlock(&gr->gr_tex_mutex);
 }
-
-
-static void 
-glw_tex_set_state_locked(glw_texture_t *gt, int state)
-{
-  gt->gt_state = state;
-  hts_cond_signal(&gt->gt_cond);
-}
-
-
 
 glw_texture_t *
 glw_tex_create(glw_root_t *gr, const char *filename)
