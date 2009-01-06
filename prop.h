@@ -236,6 +236,9 @@ void prop_set_void_ex(prop_t *p, prop_sub_t *skipme);
 #define prop_set_void(p) prop_set_void_ex(p, NULL)
 
 
+int prop_get_string(prop_t *p, char *buf, size_t bufsize);
+
+
 void prop_ref_dec(prop_t *p);
 
 void prop_ref_inc(prop_t *p);
