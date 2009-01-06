@@ -116,7 +116,7 @@ glw_init(glw_root_t *gr)
   TAILQ_INIT(&gr->gr_focus_childs);
 
   TAILQ_INIT(&gr->gr_destroyer_queue);
-  glw_image_init(gr);
+  glw_tex_init(gr);
 
   gr->gr_frameduration = 1000000 / 60;
 
@@ -502,7 +502,7 @@ glw_reaper0(glw_root_t *gr)
   LIST_MOVE(&gr->gr_active_flush_list, &gr->gr_active_list, glw_active_link);
   LIST_INIT(&gr->gr_active_list);
 
-  glw_texture_purge(gr);
+  glw_tex_purge(gr);
 
   glw_tex_autoflush(gr);
 

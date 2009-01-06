@@ -99,6 +99,7 @@ SRCS-$(CONFIG_GLW)     += glw.c \
 SRCS-$(CONFIG_GLW_FRONTEND_X11)	+= glw_x11.c
 
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += glw_opengl.c
+SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += glw_texture_opengl.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += glw_mirror.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += glw_video.c glw_video_decoder.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += glw_fx_texrot.c

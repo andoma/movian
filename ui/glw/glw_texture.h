@@ -53,15 +53,15 @@ typedef struct glw_texture {
 
 } glw_texture_t;
 
+void glw_tex_init(glw_root_t *gr);
+
 glw_texture_t *glw_tex_create(glw_root_t *gr, const char *filename);
 
 void glw_tex_deref(glw_root_t *gr, glw_texture_t *ht);
 
 void glw_tex_layout(glw_root_t *gr, glw_texture_t *gt);
 
-void glw_image_init(glw_root_t *gr);
-
-void glw_texture_purge(glw_root_t *gr);
+void glw_tex_purge(glw_root_t *gr);
 
 void glw_tex_is_active(glw_root_t *gr, glw_texture_t *gt);
 
@@ -70,5 +70,17 @@ void glw_tex_autoflush(glw_root_t *gr);
 void glw_tex_upload(glw_texture_t *gt);
 
 void glw_tex_flush_all(glw_root_t *gr);
+
+
+/**
+ * Backend interface
+ */
+int glw_tex_backend_decode(glw_root_t *gr, glw_texture_t *gt);
+
+void glw_tex_backend_free_render_resources(glw_texture_t *gt);
+
+void glw_tex_backend_free_loader_resources(glw_texture_t *gt);
+
+void glw_tex_backend_layout(glw_texture_t *gt);
 
 #endif /* GLW_TEXTURE_H */
