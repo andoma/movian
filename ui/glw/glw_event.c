@@ -163,6 +163,16 @@ glw_event_find_target(glw_t *w, const char *id)
 }
 
 
+/**
+ *
+ */
+glw_t *
+glw_find_neighbour(glw_t *w, const char *id)
+{
+  return glw_event_find_target(w, id);
+}
+
+
 typedef struct glw_event_internal {
   glw_event_map_t map;
 

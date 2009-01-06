@@ -570,6 +570,8 @@ void glw_pointer_scroll(glw_root_t *gr, float x, float y, int direction);
 
 int glw_navigate(glw_t *w, event_t *e);
 
+glw_t *glw_find_neighbour(glw_t *w, const char *id);
+
 #define GLW_SIGNAL_PRI_INTERNAL 100
 
 void glw_signal_handler_register(glw_t *w, glw_callback_t *func, void *opaque, 
