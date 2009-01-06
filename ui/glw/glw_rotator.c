@@ -47,13 +47,16 @@ glw_rotator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       break;
 
     rc0 = *rc;
-    rc0.rc_scale_x = 1.0f;
-    rc0.rc_scale_y = 1.0f;
 
     glw_PushMatrix(&rc0, rc);
-    glw_Scalef(rc, 0.8, 0.8, 0.8);
-    glw_rescale(rc, 1.0f);
-    glw_Rotatef(rc, w->glw_extra, 0.0, 0.0f, 1.0f);
+    glw_Scalef(&rc0, 0.8, 0.8, 0.8);
+    glw_rescale(&rc0, 1.0f);
+
+
+    glw_Rotatef(&rc0, w->glw_extra, 0.0, 0.0f, 1.0f);
+
+    rc0.rc_scale_x = 1.0f;
+    rc0.rc_scale_y = 1.0f;
     glw_render0(c, &rc0);
     glw_PopMatrix();
     break;
