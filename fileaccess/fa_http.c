@@ -42,6 +42,7 @@ typedef struct http_file {
   char *hf_url;
   char *hf_auth;
   char *hf_location;
+  char *hf_auth_realm;
 
   int hf_fd;
 
@@ -63,6 +64,8 @@ typedef struct http_file {
 
   int hf_isdir;
   int hf_port;
+
+  int hf_auth_failed;
 
 } http_file_t;
 
@@ -184,6 +187,32 @@ http_drain_content(http_file_t *hf)
   return 0;
 }
 
+/*
+ * Split a string in components delimited by 'delimiter'
+ */
+static int
+http_tokenize(char *buf, char **vec, int vecsize, int delimiter)
+{
+  int n = 0;
+
+  while(1) {
+    while((*buf > 0 && *buf < 33) || *buf == delimiter)
+      buf++;
+    if(*buf == 0)
+      break;
+    vec[n++] = buf;
+    if(n == vecsize)
+      break;
+    while(*buf > 32 && *buf != delimiter)
+      buf++;
+    if(*buf == 0)
+      break;
+    *buf = 0;
+    buf++;
+  }
+  return n;
+}
+
 /**
  *
  */
@@ -191,9 +220,10 @@ static int
 http_read_respone(http_file_t *hf)
 {
   int li;
-  char *q;
+  char *c, *q, *argv[2];
   int code = -1;
   int64_t i64;
+
   hf->hf_rsize = -1;
   hf->hf_chunked_transfer = 0;
 
@@ -212,18 +242,54 @@ http_read_respone(http_file_t *hf)
       while(*q == ' ')
 	q++;
       code = atoi(q);
-    } else if(!strcmp(hf->hf_line, "Transfer-Encoding: chunked")) {
-      hf->hf_chunked_transfer = 1;
+      continue;
+    }
+    
+    if(http_tokenize(hf->hf_line, argv, 2, -1) != 2)
+      continue;
 
-    } else if(!strncmp(hf->hf_line, "Location: ", strlen("Location: "))) {
+    if((c = strrchr(argv[0], ':')) == NULL)
+      continue;
+    *c = 0;
 
-      free(hf->hf_location);
-      hf->hf_location = strdup(hf->hf_line + strlen("Location: "));
+    if(!strcasecmp(argv[0], "Transfer-Encoding")) {
 
-    } else if(!strncmp(hf->hf_line, "Content-Length: ",
-		       strlen("Content-Length: "))) {
+      if(!strcasecmp(argv[1], "chunked"))
+	hf->hf_chunked_transfer = 1;
+
+      continue;
+    }
+
+    if(!strcasecmp(argv[0], "WWW-Authenticate")) {
+
+      if(http_tokenize(argv[1], argv, 2, -1) != 2)
+	continue;
       
-      i64 = strtoll(hf->hf_line + strlen("Content-Length: "), NULL, 0);
+      if(strcasecmp(argv[0], "Basic"))
+	continue;
+
+      if(strncasecmp(argv[1], "realm=\"", strlen("realm=\"")))
+	continue;
+      q = c = argv[1] + strlen("realm=\"");
+      
+      if((q = strrchr(c, '"')) == NULL)
+	continue;
+      *q = 0;
+      
+      free(hf->hf_auth_realm);
+      hf->hf_auth_realm = strdup(c);
+      continue;
+    }
+
+
+    if(!strcasecmp(argv[0], "Location")) {
+      free(hf->hf_location);
+      hf->hf_location = strdup(argv[1]);
+      continue;
+    }
+
+    if(!strcasecmp(argv[0], "Content-Length")) {
+      i64 = strtoll(argv[1], NULL, 0);
       hf->hf_rsize = i64;
 
       if(code == 200)
@@ -286,8 +352,16 @@ authenticate(http_file_t *hf)
   if(http_drain_content(hf))
     return -1;
 
-  r = keyring_lookup(hf->hf_url, &username, &password, NULL, !!hf->hf_auth,
+  if(hf->hf_auth_realm == NULL)
+    return -1;
+
+  snprintf(buf1, sizeof(buf1), "%s @ %s", hf->hf_auth_realm, hf->hf_hostname);
+
+  r = keyring_lookup(buf1, &username, &password, NULL, 
+		     hf->hf_auth_failed > 0,
 		     "HTTP Client", "Access denied");
+
+  hf->hf_auth_failed++;
 
   free(hf->hf_auth);
   hf->hf_auth = NULL;
@@ -358,12 +432,14 @@ http_connect(http_file_t *hf)
 
   switch(code) {
   case 200:
+    hf->hf_auth_failed = 0;
     return hf->hf_size < 0 ? -1: 0;
     
   case 301:
   case 302:
   case 303:
   case 307:
+    hf->hf_auth_failed = 0;
     if(redirect(hf, &redircount))
       return -1;
     goto reconnect;
@@ -719,6 +795,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd)
   switch(code) {
 
   case 207: /* 207 Multi-part */
+    hf->hf_auth_failed = 0;
 
     if((buf = http_read_content(hf)) == NULL)
       return -1;
@@ -736,6 +813,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd)
   case 302:
   case 303:
   case 307:
+    hf->hf_auth_failed = 0;
      if(redirect(hf, &redircount))
       return -1;
     goto reconnect;
