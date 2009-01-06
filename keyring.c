@@ -194,13 +194,13 @@ keyring_lookup(const char *id, char **username, char **password,
 
     if(kp.result != 1) {
       /* return CANCEL to caller */
-      pthread_mutex_unlock(&keyring_mutex);
+      hts_mutex_unlock(&keyring_mutex);
       return -1;
     }
   }
 
   if((m = htsmsg_get_msg(keyring, id)) == NULL) {
-    pthread_mutex_unlock(&keyring_mutex);
+    hts_mutex_unlock(&keyring_mutex);
     return 1;
   }
 
