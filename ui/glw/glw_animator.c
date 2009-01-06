@@ -16,8 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <GL/gl.h>
-
 #include <stdlib.h>
 
 #include "glw.h"
@@ -71,10 +69,10 @@ glw_animator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 	continue;
       }
 
-      glPushMatrix();
+      glw_PushMatrix(&rc0, rc);
       glw_transition_render(a->efx_conf, c->glw_parent_anim_cur, alpha, &rc0);
       glw_render0(c, &rc0);
-      glPopMatrix();
+      glw_PopMatrix();
     }
     return 0;
   

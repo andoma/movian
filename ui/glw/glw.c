@@ -1104,3 +1104,65 @@ glw_pointer_scroll(glw_root_t *gr, float x, float y, int direction)
     if(pointer_scroll0(c, x, y, direction))
       break;
 }
+
+
+/**
+ * Render a widget with prior translation and scaling
+ */
+void
+glw_render_TS(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc)
+{
+  rc->rc_scale_x = prevrc->rc_scale_x * c->glw_parent_scale.x;
+  rc->rc_scale_y = prevrc->rc_scale_y * c->glw_parent_scale.y;
+
+  glw_PushMatrix(rc, prevrc);
+
+  glw_Translatef(rc, 
+		 c->glw_parent_pos.x,
+		 c->glw_parent_pos.y,
+		 c->glw_parent_pos.z);
+
+  glw_Scalef(rc, 
+	     c->glw_parent_scale.x,
+	     c->glw_parent_scale.y,
+	     c->glw_parent_scale.z);
+
+  glw_signal0(c, GLW_SIGNAL_RENDER, rc);
+  glw_PopMatrix();
+}
+
+
+/**
+ * Render a widget with prior translation
+ */
+void
+glw_render_T(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc)
+{
+  glw_PushMatrix(rc, prevrc);
+
+  glw_Translatef(rc, 
+		 c->glw_parent_pos.x,
+		 c->glw_parent_pos.y,
+		 c->glw_parent_pos.z);
+
+  glw_signal0(c, GLW_SIGNAL_RENDER, rc);
+  glw_PopMatrix();
+}
+
+
+
+/**
+ *
+ */
+void
+glw_rescale(float s_aspect, float t_aspect)
+{
+  float a = s_aspect / t_aspect;
+
+  if(a > 1.0f) {
+    glScalef(1.0f / a, 1.0f, 1.0f);
+  } else {
+    glScalef(1.0f, a, 1.0f);
+  }
+}
+

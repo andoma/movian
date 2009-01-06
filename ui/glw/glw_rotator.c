@@ -16,11 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <GL/gl.h>
-
 #include "glw.h"
 #include "glw_rotator.h"
-
 
 /*
  *
@@ -53,12 +50,12 @@ glw_rotator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     rc0.rc_scale_x = 1.0f;
     rc0.rc_scale_y = 1.0f;
 
-    glPushMatrix();
-    glScalef(0.8, 0.8, 0.8);
+    glw_PushMatrix(&rc0, rc);
+    glw_Scalef(rc, 0.8, 0.8, 0.8);
     glw_rescale(rc->rc_scale_x / rc->rc_scale_y, 1.0f);
-    glRotatef(w->glw_extra, 0.0, 0.0f, 1.0f);
+    glw_Rotatef(rc, w->glw_extra, 0.0, 0.0f, 1.0f);
     glw_render0(c, &rc0);
-    glPopMatrix();
+    glw_PopMatrix();
     break;
   }
   return 0;

@@ -16,8 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <GL/gl.h>
-
 #include "glw.h"
 #include "glw_transitions.h"
 
@@ -41,15 +39,15 @@ trans_flip_horizontal(float b, float alpha, glw_rctx_t *rc)
 
   if(b > 0) {
     v = 1 - b;
-    glTranslatef(0, 0, -1);
-    glRotatef((1 - v) * -90, 1, 0, 0);
-    glTranslatef(0, 0,  1);
+    glw_Translatef(rc, 0, 0, -1);
+    glw_Rotatef(rc, (1 - v) * -90, 1, 0, 0);
+    glw_Translatef(rc, 0, 0,  1);
     rc->rc_alpha = alpha * v;
   } else {
     v = -b;
-    glTranslatef(0, 0, -1);
-    glRotatef(v * 90, 1, 0, 0);
-    glTranslatef(0, 0,  1);
+    glw_Translatef(rc, 0, 0, -1);
+    glw_Rotatef(rc, v * 90, 1, 0, 0);
+    glw_Translatef(rc, 0, 0,  1);
     rc->rc_alpha = alpha * (1 - v);
   }
 }
@@ -65,15 +63,15 @@ trans_flip_vertical(float b, float alpha, glw_rctx_t *rc)
 
   if(b > 0) {
     v = 1 - b;
-    glTranslatef(0, 0, -1);
-    glRotatef((1 - v) * -90, 0, 1, 0);
-    glTranslatef(0, 0,  1);
+    glw_Translatef(rc, 0, 0, -1);
+    glw_Rotatef(rc, (1 - v) * -90, 0, 1, 0);
+    glw_Translatef(rc, 0, 0,  1);
     rc->rc_alpha = alpha * v;
   } else {
     v = -b;
-    glTranslatef(0, 0, -1);
-    glRotatef(v * 90, 0, 1, 0);
-    glTranslatef(0, 0,  1);
+    glw_Translatef(rc, 0, 0, -1);
+    glw_Rotatef(rc, v * 90, 0, 1, 0);
+    glw_Translatef(rc, 0, 0,  1);
     rc->rc_alpha = alpha * (1 - v);
   }
 }
@@ -86,7 +84,7 @@ static void
 trans_slide_horizontal(float b, float alpha, glw_rctx_t *rc)
 {
   rc->rc_alpha = alpha * GLW_S(1 - fabs(b));
-  glTranslatef(-2 * b, 0, 0);
+  glw_Translatef(rc, -2 * b, 0, 0);
 }
 
 
@@ -97,7 +95,7 @@ static void
 trans_slide_vertical(float b, float alpha, glw_rctx_t *rc)
 {
   rc->rc_alpha = alpha * GLW_S(1 - fabs(b));
-  glTranslatef(0, 2 * b, 0);
+  glw_Translatef(rc, 0, 2 * b, 0);
 }
 
 

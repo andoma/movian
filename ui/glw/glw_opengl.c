@@ -23,61 +23,6 @@
 #include "glw_cursor.h"
 
 /**
- * Render a widget with prior translation and scaling
- */
-void
-glw_render_TS(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc)
-{
-  rc->rc_scale_x = prevrc->rc_scale_x * c->glw_parent_scale.x;
-  rc->rc_scale_y = prevrc->rc_scale_y * c->glw_parent_scale.y;
-
-  glPushMatrix();
-  glTranslatef(c->glw_parent_pos.x,
-	       c->glw_parent_pos.y,
-	       c->glw_parent_pos.z);
-
-  glScalef(c->glw_parent_scale.x,
-	   c->glw_parent_scale.y,
-	   c->glw_parent_scale.z);
-
-  glw_signal0(c, GLW_SIGNAL_RENDER, rc);
-  glPopMatrix();
-}
-
-
-/**
- * Render a widget with prior translation
- */
-void
-glw_render_T(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc)
-{
-  glPushMatrix();
-  glTranslatef(c->glw_parent_pos.x,
-	       c->glw_parent_pos.y,
-	       c->glw_parent_pos.z);
-  glw_signal0(c, GLW_SIGNAL_RENDER, rc);
-  glPopMatrix();
-}
-
-
-
-/**
- *
- */
-void
-glw_rescale(float s_aspect, float t_aspect)
-{
-  float a = s_aspect / t_aspect;
-
-  if(a > 1.0f) {
-    glScalef(1.0f / a, 1.0f, 1.0f);
-  } else {
-    glScalef(1.0f, a, 1.0f);
-  }
-}
-
-
-/**
  * return 1 if the extension is found, otherwise 0
  */
 static int

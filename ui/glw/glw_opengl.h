@@ -38,4 +38,14 @@ typedef struct glw_backend_root {
 
 } glw_backend_root_t;
 
+#define glw_PushMatrix(newrc, oldrc) glPushMatrix()
+
+#define glw_PopMatrix() glPopMatrix()
+
+#define glw_Translatef(rc, x, y, z) glTranslatef(x, y, z)
+
+#define glw_Scalef(rc, x, y, z) glScalef(x, y, z)
+
+#define glw_Rotatef(rc, a, x, y, z) glRotatef(a, x, y, z)
+
 #endif /* GLW_OPENGL_H__ */
