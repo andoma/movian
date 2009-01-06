@@ -173,10 +173,9 @@ glw_cursor_draw(glw_root_t *gr, float alpha, float xscale, float yscale)
 
   alpha = alpha * 0.75;
   
-  glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, gt->gt_texture);
 
- glBegin(GL_QUADS);
+  glBegin(GL_QUADS);
 
   /* XXX: replace with drawarray */
 
@@ -217,7 +216,6 @@ glw_cursor_draw(glw_root_t *gr, float alpha, float xscale, float yscale)
   }
 
   glEnd();
-  glDisable(GL_TEXTURE_2D);
 }
 
 

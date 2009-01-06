@@ -459,12 +459,13 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
     glVertex3f(x2,  0.9f, 0.0f);
     glVertex3f(x1,  0.9f, 0.0f);
     glEnd();      
+
+    glEnable(GL_TEXTURE_2D);
   }
 
   if(glw_is_focusable(w))
     glw_store_matrix(w, rc);
 
-  glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, gtb->gtb_texture);
 
   glColor4f(1,1,1, alpha);
@@ -485,7 +486,6 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
   glEnd();
 
-  glDisable(GL_TEXTURE_2D);
   glPopMatrix();
 }
 

@@ -76,6 +76,7 @@ glw_mirror_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     glVertex3f(-20.0f, -1.0f, -10.0f);
     glEnd();
 
+    glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
 
     rc0 = *rc;

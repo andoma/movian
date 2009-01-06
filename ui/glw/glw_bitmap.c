@@ -109,6 +109,7 @@ bitmap_render_tesselated(float wa, float ta, float vborders[4],
       glEnd();
     }
   }
+  glEnable(GL_TEXTURE_2D);
 }
 
 
@@ -131,7 +132,6 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
     
     glPushMatrix();
 
-    glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, gt->gt_texture);
 
     if(!(w->glw_flags & GLW_KEEP_ASPECT)) {
@@ -209,13 +209,17 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
       if(gb->gb_head.glw_flags & GLW_DRAW_SKEL) {
  	glDisable(GL_BLEND);
 	glDisable(GL_TEXTURE_2D);
+
 	glBegin(GL_LINE_LOOP);
 	glVertex3f( -1.0, -1.0f, 0.0f);
 	glVertex3f( 1.0, -1.0f, 0.0f);
 	glVertex3f( 1.0, 1.0f, 0.0f);
 	glVertex3f( -1.0, 1.0f, 0.0f);
 	glEnd();
+
+	glEnable(GL_TEXTURE_2D);
  	glEnable(GL_BLEND);
+
       }
     }
 

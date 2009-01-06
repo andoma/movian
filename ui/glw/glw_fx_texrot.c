@@ -55,7 +55,6 @@ glw_fx_texrot_render(glw_t *w, glw_rctx_t *rc)
 
     glColor4f(1, 1, 1, a);
 
-    glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, fx->fx_fbtex);
 
     glBegin(GL_QUADS);
@@ -117,7 +116,6 @@ glw_fx_texrot_render_internal(glw_fx_texrot_t *fx, glw_texture_t *gt)
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-  glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, gt->gt_texture);
 
   glColor4f(1.0, 1.0, 1.0, 0.15);
@@ -152,8 +150,6 @@ glw_fx_texrot_render_internal(glw_fx_texrot_t *fx, glw_texture_t *gt)
 
     glPopMatrix();
   }
-  glDisable(GL_TEXTURE_2D);
-  
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 

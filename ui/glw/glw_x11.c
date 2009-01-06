@@ -351,6 +351,7 @@ window_open(glw_x11_t *gx11)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glDisable(GL_CULL_FACE);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  glEnable(GL_TEXTURE_2D);
 
   /* Load fragment shaders */
   glw_video_global_init(&gx11->gr);

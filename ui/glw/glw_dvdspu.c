@@ -579,8 +579,6 @@ gl_dvdspu_render(struct gl_dvdspu *gd, float xsize, float ysize, float alpha)
 
   glBindTexture(GL_TEXTURE_2D, gdp->gdp_tex);
 
-  glEnable(GL_TEXTURE_2D);
-
   glPushMatrix();
 
   glScalef(2.0f / xsize, -2.0f / ysize, 0.0f);
@@ -607,8 +605,6 @@ gl_dvdspu_render(struct gl_dvdspu *gd, float xsize, float ysize, float alpha)
   glEnd();
 
   glPopMatrix();
-
-  glDisable(GL_TEXTURE_2D);
 }
 
 
