@@ -541,6 +541,8 @@ eval_dynamic(glw_t *w, token_t *rpn)
 
   glw_model_eval_rpn0(rpn, &ec);
 
+  glw_model_free_chain(ec.alloc);
+
   if(ec.dynamic_eval & GLW_MODEL_DYNAMIC_EVAL_EVERY_FRAME)
     glw_signal_handler_register(w, eval_dynamic_every_frame_sig, rpn, 1000);
   else

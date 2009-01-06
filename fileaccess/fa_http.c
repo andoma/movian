@@ -377,6 +377,10 @@ authenticate(http_file_t *hf)
 
     snprintf(buf1, sizeof(buf1), "Authorization: Basic %s", buf2);
     hf->hf_auth = strdup(buf1);
+
+    free(username);
+    free(password);
+
     return 0;
   }
 
@@ -466,6 +470,7 @@ http_destroy(http_file_t *hf)
   http_disconnect(hf);
   free(hf->hf_url);
   free(hf->hf_auth);
+  free(hf->hf_auth_realm);
   free(hf->hf_location);
   free(hf);
 }
