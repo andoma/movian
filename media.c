@@ -50,6 +50,16 @@ mq_init(media_queue_t *mq, prop_t *p)
 /**
  *
  */
+static void
+mq_destroy(media_queue_t *mq)
+{
+  hts_cond_destroy(&mq->mq_avail);
+}
+
+
+/**
+ *
+ */
 media_pipe_t *
 mp_create(const char *name)
 {
@@ -84,8 +94,14 @@ mp_create(const char *name)
 static void
 mp_destroy(media_pipe_t *mp)
 {
+  mq_destroy(&mp->mp_audio);
+  mq_destroy(&mp->mp_video);
   mp_set_playstatus(mp, MP_STOP, 0);
   prop_destroy(mp->mp_prop_root);
+
+  hts_cond_destroy(&mp->mp_backpressure);
+  hts_mutex_destroy(&mp->mp_mutex);
+
   free(mp);
 }
 
@@ -491,6 +507,9 @@ wrap_format_destroy(formatwrap_t *fw)
 
   if(fw->format != NULL)
     av_close_input_file(fw->format);
+
+  hts_cond_destroy(&fw->fw_cond);
+  hts_mutex_destroy(&fw->fw_mutex);
   free(fw);
 }
 

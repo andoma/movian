@@ -437,6 +437,7 @@ rar_archive_unref(rar_archive_t *ra)
     rar_archive_scrub(ra);
     free(ra->ra_url);
     LIST_REMOVE(ra, ra_link);
+    hts_mutex_destroy(&ra->ra_mutex);
     free(ra);
   }
 
