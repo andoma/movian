@@ -1154,14 +1154,15 @@ glw_render_T(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc)
  *
  */
 void
-glw_rescale(float s_aspect, float t_aspect)
+glw_rescale(glw_rctx_t *rc, float t_aspect)
 {
+  float s_aspect = rc->rc_scale_x / rc->rc_scale_y;
   float a = s_aspect / t_aspect;
 
   if(a > 1.0f) {
-    glScalef(1.0f / a, 1.0f, 1.0f);
+    glw_Scalef(rc, 1.0f / a, 1.0f, 1.0f);
   } else {
-    glScalef(1.0f, a, 1.0f);
+    glw_Scalef(rc, 1.0f, a, 1.0f);
   }
 }
 

@@ -164,7 +164,7 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
 	break;
       }
       
-      glw_rescale(aspect, gt->gt_aspect);
+      glw_rescale(rc, gt->gt_aspect);
 
       if(gb->gb_angle != 0)
 	glRotatef(-gb->gb_angle, 0, 0, 1);

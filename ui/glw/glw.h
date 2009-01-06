@@ -594,7 +594,7 @@ void glw_render_T(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc);
 
 void glw_render_TS(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc);
 
-void glw_rescale(float s_aspect, float t_aspect);
+void glw_rescale(glw_rctx_t *rc, float t_aspect);
 
 
 /**

@@ -403,7 +403,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
   if(gtb->gtb_texture == 0 || gtbd->gtbd_siz_x == 0) {
 
-    glw_rescale(aspect, 1.0);
+    glw_rescale(rc, 1.0);
     glTranslatef(1.0, 0, 0);
 
     if(glw_is_focused(w) && gtb->gtb_edit_ptr >= 0) {
@@ -423,7 +423,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
     return;
   }
 
-  glw_rescale(aspect, gtbd->gtbd_aspect);
+  glw_rescale(rc, gtbd->gtbd_aspect);
 
   switch(w->glw_alignment) {
   case GLW_ALIGN_CENTER:
