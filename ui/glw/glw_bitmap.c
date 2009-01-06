@@ -34,15 +34,14 @@ glw_bitmap_dtor(glw_t *w)
 
 static void
 bitmap_render_tesselated(float wa, float ta, float vborders[4],
-			 float tborders[4], int wireframe, int mirror,
-			 float xfill)
+			 float tborders[4], int wireframe, int mirror)
 {
   float tex[4][2];
   float vex[4][2];
   int x, y;
 
   vex[0][0] = -1.0;
-  vex[3][0] =  1.0 - (1 - xfill) * 2;
+  vex[3][0] =  1.0;
   vex[1][0] = (vex[0][0] + 1 / GLW_MAX(wa, 1.0f) * vborders[0]);
   vex[2][0] = (vex[3][0] - 1 / GLW_MAX(wa, 1.0f) * vborders[1]);
 
@@ -141,7 +140,7 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
       bitmap_render_tesselated(aspect, gt->gt_aspect, 
 			       gb->gb_vborders, gb->gb_tborders,
 			       gb->gb_head.glw_flags & GLW_DRAW_SKEL,
-			       gb->gb_mirror, gb->gb_xfill);
+			       gb->gb_mirror);
 
     } else {
 
@@ -326,7 +325,6 @@ glw_bitmap_ctor(glw_t *w, int init, va_list ap)
   if(init) {
     w->glw_alignment = GLW_ALIGN_CENTER;
     glw_signal_handler_int(w, glw_bitmap_callback);
-    gb->gb_xfill = 1.0f;
     gb->gb_alpha_self = 1;
   }
 
@@ -357,11 +355,6 @@ glw_bitmap_ctor(glw_t *w, int init, va_list ap)
       
     case GLW_ATTRIB_SOURCE:
       filename = va_arg(ap, char *);
-      break;
-
-    case GLW_ATTRIB_XFILL:
-      gb->gb_xfill = va_arg(ap, double);
-      gb->gb_xfill = GLW_MAX(0, GLW_MIN(gb->gb_xfill, 1));
       break;
 
     case GLW_ATTRIB_MIRROR:

@@ -36,8 +36,6 @@ typedef struct glw_bitmap {
  
   int gb_mirror;
 
-  float gb_xfill;
-
 } glw_bitmap_t;
 
 void glw_bitmap_ctor(glw_t *w, int init, va_list ap);

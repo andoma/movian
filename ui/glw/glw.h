@@ -120,7 +120,6 @@ typedef enum {
   GLW_ATTRIB_INTPTR,
   GLW_ATTRIB_PROPROOT,
   GLW_ATTRIB_TRANSITION_EFFECT,
-  GLW_ATTRIB_XFILL,
   GLW_ATTRIB_FOCUSABLE,
   GLW_ATTRIB_EXPAND,
 } glw_attribute_t;
@@ -515,7 +514,6 @@ do {						\
   case GLW_ATTRIB_ANGLE:			\
   case GLW_ATTRIB_EXTRA:			\
   case GLW_ATTRIB_TIME:                         \
-  case GLW_ATTRIB_XFILL:                        \
   case GLW_ATTRIB_EXPAND:                       \
     (void)va_arg(ap, double);			\
     break;					\
