@@ -15,6 +15,9 @@ widget(cursor, {
     
     widget(container_y, {
       
+      /**
+       * Top
+       */
       widget(bitmap, {
 	.source = "theme://images/alphashade.png";
 	.alphaSelf = 0.2;
@@ -44,9 +47,16 @@ widget(cursor, {
 	});
       });
 
+      /**
+       * Mid
+       */
       widget(container_x, {
 	.weight = 10;
 	
+	cloner($global.popups, animator, {
+	  .source = "theme://popups/" + $self.type + ".model";
+	});
+
 	space(0.01);
 	
 	widget(deck, {
@@ -64,8 +74,10 @@ widget(cursor, {
 
 
 
-
-     widget(bitmap, {
+      /**
+       * Bottom 
+       */
+      widget(bitmap, {
 	.mirrory = true;
 	.source = "theme://images/alphashade.png";
 	.alphaSelf = 0.2;
