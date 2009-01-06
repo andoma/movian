@@ -2029,6 +2029,36 @@ glwf_focusedChild(glw_model_eval_context_t *ec, struct token *self)
 }
 
 
+
+
+/**
+ * Return caption from the given widget
+ */
+static int 
+glwf_getCaption(glw_model_eval_context_t *ec, struct token *self)
+{
+  token_t *a = eval_pop(ec);
+  token_t *r;
+  glw_t *w;
+  char buf[100];
+
+  if(a != NULL && a->type == TOKEN_STRING) {
+    w = glw_find_neighbour(ec->w, a->t_string);
+
+    if(w != NULL && !glw_get_text0(w, buf, sizeof(buf))) {
+      r = eval_alloc(self, ec, TOKEN_STRING);
+      r->t_string = strdup(buf);
+      eval_push(ec, r);
+      return 0;
+    }
+  }
+
+  r = eval_alloc(self, ec, TOKEN_VOID);
+  eval_push(ec, r);
+  return 0;
+}
+
+
 /**
  *
  */
@@ -2055,6 +2085,7 @@ static const token_func_t funcvec[] = {
   {"isFocused", glwf_isFocused},
   {"devoidify", glwf_devoidify},
   {"focusedChild", glwf_focusedChild},
+  {"getCaption", glwf_getCaption},
 };
 
 
