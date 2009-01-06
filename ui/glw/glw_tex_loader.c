@@ -211,9 +211,6 @@ static void texture_load_rescale(AVCodecContext *ctx, AVFrame *frame,
 static void texture_load_rescale_swscale(AVCodecContext *ctx, AVFrame *frame,
 					 glw_texture_t *gt, int pix_fmt);
 
-
-static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
-
 static int
 image_decode(glw_root_t *gr, glw_texture_t *gt)
 {
