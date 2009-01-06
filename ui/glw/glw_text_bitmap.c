@@ -28,15 +28,19 @@
 #include <stdio.h>
 #include <math.h>
 
+#include <libavutil/common.h>
+
 #include "glw.h"
-#include "glw_text.h"
 #include "glw_text_bitmap.h"
 #include "glw_bitmap.h"
 #include "glw_container.h"
+#include "fileaccess/fa_rawloader.h"
 
-#include <libavutil/common.h>
 
-extern FT_Library glw_text_library;
+
+static int glw_text_getutf8(const char **s);
+
+static FT_Library glw_text_library;
 
 #define BITMAP_HEIGHT 32
 
@@ -930,29 +934,6 @@ font_render_thread(void *aux)
   }
 }
 
-/*
- *
- */
-int
-glw_text_bitmap_init(glw_root_t *gr, const void *file_base, long file_size)
-{
-  hts_thread_t font_render_ptid;
-
-  TAILQ_INIT(&gr->gr_gtb_render_queue);
-
-  if(FT_New_Memory_Face(glw_text_library, file_base, file_size, 0, 
-			&gr->gr_gtb_face))
-    return -1;
-
-  FT_Set_Pixel_Sizes(gr->gr_gtb_face, 0, BITMAP_HEIGHT);
-  FT_Select_Charmap(gr->gr_gtb_face, FT_ENCODING_UNICODE);
-
-  hts_cond_init(&gr->gr_gtb_render_cond);
-
-  hts_thread_create(&font_render_ptid, font_render_thread, gr);
-  return 0;
-}
-
 /**
  *
  */
@@ -1005,5 +986,100 @@ glw_get_int0(glw_t *w, int *result)
     return -1;
 
   *result = *gtb->gtb_int_ptr;
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+glw_text_getutf8(const char **s)
+{
+  uint8_t c;
+  int r;
+  int l;
+
+  c = **s;
+  *s = *s + 1;
+
+  switch(c) {
+  case 0 ... 127:
+    return c;
+
+  case 192 ... 223:
+    r = c & 0x1f;
+    l = 1;
+    break;
+
+  case 224 ... 239:
+    r = c & 0xf;
+    l = 2;
+    break;
+
+  case 240 ... 247:
+    r = c & 0x7;
+    l = 3;
+    break;
+
+  case 248 ... 251:
+    r = c & 0x3;
+    l = 4;
+    break;
+
+  case 252 ... 253:
+    r = c & 0x1;
+    l = 5;
+    break;
+  default:
+    return 0;
+  }
+
+  while(l-- > 0) {
+    c = **s;
+    *s = *s + 1;
+    if(c == 0)
+      return 0;
+    r = r << 6 | (c & 0x3f);
+  }
+  return r;
+}
+
+/**
+ *
+ */
+int
+glw_text_bitmap_init(glw_root_t *gr)
+{
+  int error;
+  const void *r;
+  size_t size;
+  hts_thread_t font_render_ptid;
+  const char *font_variable = "theme://font.ttf";
+
+  error = FT_Init_FreeType(&glw_text_library);
+  if(error) {
+    fprintf(stderr, "Freetype init error\n");
+    return -1;
+  }
+
+  if((r = fa_rawloader(font_variable, &size)) == NULL) {
+    fprintf(stderr, "Unable to load font: %s\n", font_variable);
+    return -1;
+  }
+
+  TAILQ_INIT(&gr->gr_gtb_render_queue);
+
+  if(FT_New_Memory_Face(glw_text_library, r, size, 0, &gr->gr_gtb_face)) {
+    fprintf(stderr, "Unable to create font face: %s\n", font_variable);
+    return -1;
+  }
+
+  FT_Set_Pixel_Sizes(gr->gr_gtb_face, 0, BITMAP_HEIGHT);
+  FT_Select_Charmap(gr->gr_gtb_face, FT_ENCODING_UNICODE);
+
+  hts_cond_init(&gr->gr_gtb_render_cond);
+
+  hts_thread_create(&font_render_ptid, font_render_thread, gr);
   return 0;
 }

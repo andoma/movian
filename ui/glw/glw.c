@@ -27,7 +27,6 @@
 #include "glw.h"
 #include "glw_container.h"
 #include "glw_stack.h"
-#include "glw_text.h"
 #include "glw_text_bitmap.h"
 #include "glw_bitmap.h"
 #include "glw_array.h"
@@ -108,7 +107,7 @@ glw_init(glw_root_t *gr)
   hts_mutex_init(&gr->gr_mutex);
   gr->gr_courier = prop_courier_create(&gr->gr_mutex);
 
-  if(glw_text_init(gr)) {
+  if(glw_text_bitmap_init(gr)) {
     free(gr);
     return -1;
   }

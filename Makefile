@@ -85,7 +85,6 @@ SRCS-$(CONFIG_GLW)     += glw.c \
 			glw_list.c \
 			glw_deck.c \
 			glw_expander.c \
-			glw_text.c \
 			glw_text_bitmap.c \
 			glw_bitmap.c \
 			glw_texture_loader.c \
