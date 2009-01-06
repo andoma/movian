@@ -335,8 +335,6 @@ typedef struct glw {
 #define GLW_DESTROYED           0x4     /* was destroyed but someone
 					   is holding references */
 #define GLW_RENDER_LINKED       0x8     /* glw_render_link is linked */
-#define GLW_BORDER_BLEND        0x10    /* Blend borders to 0 alpha
-					   (for bitmaps */
 #define GLW_EVERY_FRAME         0x20    /* Want GLW_SIGNAL_NEW_FRAME
 					   at all times */
 #define GLW_DRAW_SKEL           0x40    /* Draw extra lines to

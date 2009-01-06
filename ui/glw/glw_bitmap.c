@@ -112,115 +112,6 @@ bitmap_render_tesselated(float wa, float ta, float vborders[4],
 }
 
 
-static float border_alpha[4][4] = {
-  {0.0, 0.0, 0.0, 0.0},
-  {0.0, 1.0, 1.0, 0.0},
-  {0.0, 1.0, 1.0, 0.0},
-  {0.0, 0.0, 0.0, 0.0}
-};
-
-
-static void
-bitmap_render_border_blended(float wa, float alpha, float vborders[4],
-			 float tborders[4])
-{
-  float tex[4][2];
-  float vex[4][2];
-  int x, y;
-
-  vex[0][1] =  1.0;
-  vex[3][1] = -1.0;
-
-  vex[1][1] = vex[0][1] - vborders[2];
-  vex[2][1] = vex[3][1] + vborders[3];
-
-  tex[0][1] = 0.0;
-  tex[3][1] = 1.0;
-
-  tex[1][1] = tex[0][1] + vborders[2] * 0.5;
-  tex[2][1] = tex[3][1] - vborders[3] * 0.5;
-  
-  vex[0][0] = -1.0;
-  vex[3][0] =  1.0;
-  vex[1][0] = vex[0][0] + (tborders[0] / wa);
-  vex[2][0] = vex[3][0] - (tborders[0] / wa);
-
-  tex[0][0] = 0.0;
-  tex[3][0] = 1.0;
-  tex[1][0] = tex[0][0] + (tborders[1] * 0.5) / wa;
-  tex[2][0] = tex[3][0] - (tborders[1] * 0.5) / wa;
-
-  glBegin(GL_TRIANGLES);
-
-  /* XXX: replace with drawarray */
-
-  for(y = 0; y < 3; y++) {
-    for(x = 0; x < 3; x++) {
-
-      if((x == 0 && y == 0) || (x == 2 && y == 2)) {
-
-	glTexCoord2f(tex[x + 0][0], tex[y + 1][1]);
-	glColor4f(1.0f, 1.0f, 1.0f, border_alpha[x + 0][y + 1] * alpha);
-	glVertex3f  (vex[x + 0][0], vex[y + 1][1], 0.0f);
-
-	glTexCoord2f(tex[x + 1][0], tex[y + 1][1]);
-	glColor4f(1.0f, 1.0f, 1.0f, border_alpha[x + 1][y + 1] * alpha);
-	glVertex3f  (vex[x + 1][0], vex[y + 1][1], 0.0f);
-
-	glTexCoord2f(tex[x + 0][0], tex[y + 0][1]);
-	glColor4f(1.0f, 1.0f, 1.0f, border_alpha[x + 0][y + 0] * alpha);
-	glVertex3f  (vex[x + 0][0], vex[y + 0][1], 0.0f);
-
-
-
-	glTexCoord2f(tex[x + 0][0], tex[y + 0][1]);
-	glColor4f(1.0f, 1.0f, 1.0f, border_alpha[x + 0][y + 0] * alpha);
-	glVertex3f  (vex[x + 0][0], vex[y + 0][1], 0.0f);
-
-	glTexCoord2f(tex[x + 1][0], tex[y + 1][1]);
-	glColor4f(1.0f, 1.0f, 1.0f, border_alpha[x + 1][y + 1] * alpha);
-	glVertex3f  (vex[x + 1][0], vex[y + 1][1], 0.0f);
-
-
-	glTexCoord2f(tex[x + 1][0], tex[y + 0][1]);
-	glColor4f(1.0f, 1.0f, 1.0f, border_alpha[x + 1][y + 0] * alpha);
-	glVertex3f  (vex[x + 1][0], vex[y + 0][1], 0.0f);
-
-      } else {
-
-	glTexCoord2f(tex[x + 0][0], tex[y + 1][1]);
-	glColor4f(1.0f, 1.0f, 1.0f, border_alpha[x + 0][y + 1] * alpha);
-	glVertex3f  (vex[x + 0][0], vex[y + 1][1], 0.0f);
-
-	glTexCoord2f(tex[x + 1][0], tex[y + 1][1]);
-	glColor4f(1.0f, 1.0f, 1.0f, border_alpha[x + 1][y + 1] * alpha);
-	glVertex3f  (vex[x + 1][0], vex[y + 1][1], 0.0f);
-
-	glTexCoord2f(tex[x + 1][0], tex[y + 0][1]);
-	glColor4f(1.0f, 1.0f, 1.0f, border_alpha[x + 1][y + 0] * alpha);
-	glVertex3f  (vex[x + 1][0], vex[y + 0][1], 0.0f);
-
-	glTexCoord2f(tex[x + 0][0], tex[y + 1][1]);
-	glColor4f(1.0f, 1.0f, 1.0f, border_alpha[x + 0][y + 1] * alpha);
-	glVertex3f  (vex[x + 0][0], vex[y + 1][1], 0.0f);
-
-	glTexCoord2f(tex[x + 1][0], tex[y + 0][1]);
-	glColor4f(1.0f, 1.0f, 1.0f, border_alpha[x + 1][y + 0] * alpha);
-	glVertex3f  (vex[x + 1][0], vex[y + 0][1], 0.0f);
-
-	glTexCoord2f(tex[x + 0][0], tex[y + 0][1]);
-	glColor4f(1.0f, 1.0f, 1.0f, border_alpha[x + 0][y + 0] * alpha);
-	glVertex3f  (vex[x + 0][0], vex[y + 0][1], 0.0f);
-      }
-    }
-  }
-
-  glEnd();
-
-}
-
-
-
 
 static void 
 glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
@@ -299,29 +190,21 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
       if(glw_is_focusable(w))
 	glw_store_matrix(w, rc);
 
-      if(w->glw_flags & GLW_BORDER_BLEND) {
+      glBegin(GL_QUADS);
+      
+      glTexCoord2f(0.0, 1.0);
+      glVertex3f( -1.0, -1.0f, 0.0f);
+      
+      glTexCoord2f(1.0, 1.0);
+      glVertex3f( 1.0, -1.0f, 0.0f);
+	
+      glTexCoord2f(1.0, 0.0);
+      glVertex3f( 1.0, 1.0f, 0.0f);
 
-	bitmap_render_border_blended(gt->gt_aspect, a, 
-				     gb->gb_vborders, gb->gb_tborders);
-
-      } else {
-
-	glBegin(GL_QUADS);
-
-	glTexCoord2f(0.0, 1.0);
-	glVertex3f( -1.0, -1.0f, 0.0f);
-
-	glTexCoord2f(1.0, 1.0);
-	glVertex3f( 1.0, -1.0f, 0.0f);
-
-	glTexCoord2f(1.0, 0.0);
-	glVertex3f( 1.0, 1.0f, 0.0f);
-
-	glTexCoord2f(0.0, 0.0);
-	glVertex3f( -1.0, 1.0f, 0.0f);
-
-	glEnd();
-      }
+      glTexCoord2f(0.0, 0.0);
+      glVertex3f( -1.0, 1.0f, 0.0f);
+      
+      glEnd();
 
       if(gb->gb_head.glw_flags & GLW_DRAW_SKEL) {
  	glDisable(GL_BLEND);
