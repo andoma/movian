@@ -173,8 +173,6 @@ glw_cursor_draw(glw_root_t *gr, float alpha, float xscale, float yscale)
 
   alpha = alpha * 0.75;
   
-  glActiveTextureARB(GL_TEXTURE0_ARB);
-
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, gt->gt_texture);
 

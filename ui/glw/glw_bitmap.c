@@ -236,8 +236,6 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
  
   if(gt != NULL && gt->gt_state == GT_STATE_VALID && a > 0.01) {
 
-    glActiveTextureARB(GL_TEXTURE0_ARB);
-
     glColor4f(w->glw_col.r, w->glw_col.g, w->glw_col.b, a);
     
     glPushMatrix();

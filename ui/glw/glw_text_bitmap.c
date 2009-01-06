@@ -351,8 +351,6 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
   if(gtbd->gtbd_data != NULL) {
 
-    glActiveTextureARB(GL_TEXTURE0_ARB);
-
     if(gtb->gtb_texture == 0) {
       glGenTextures(1, &gtb->gtb_texture);
       glBindTexture(GL_TEXTURE_2D, gtb->gtb_texture);
@@ -465,8 +463,6 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
   if(glw_is_focusable(w))
     glw_store_matrix(w, rc);
-
-  glActiveTextureARB(GL_TEXTURE0_ARB);
 
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, gtb->gtb_texture);

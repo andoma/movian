@@ -52,7 +52,6 @@ glw_fx_texrot_render(glw_t *w, glw_rctx_t *rc)
   float a = rc->rc_alpha * w->glw_alpha;
 
   if(gt != NULL && gt->gt_state == GT_STATE_VALID && a > 0.01) {
-    glActiveTextureARB(GL_TEXTURE0_ARB);
 
     glColor4f(1, 1, 1, a);
 

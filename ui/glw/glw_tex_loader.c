@@ -605,8 +605,6 @@ glw_tex_layout(glw_root_t *gr, glw_texture_t *gt)
     if(gt->gt_texture == 0) {
       p = gt->gt_bitmap;
 
-      glActiveTextureARB(GL_TEXTURE0_ARB); // not needed ?
-
       glGenTextures(1, &gt->gt_texture);
       glBindTexture(GL_TEXTURE_2D, gt->gt_texture);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

@@ -531,8 +531,6 @@ gl_dvdspu_layout(struct dvd_player *dp, struct gl_dvdspu *gd)
   if(gdp->gdp_destroyme == 1)
     goto destroy;
 
-  glActiveTextureARB(GL_TEXTURE0_ARB);
-
   x = gl_dvdspu_chew(gd, gdp);
 
   switch(x) {
@@ -578,8 +576,6 @@ gl_dvdspu_render(struct gl_dvdspu *gd, float xsize, float ysize, float alpha)
 
   if(gdp == NULL || gdp->gdp_tex == 0)
     return;
-
-  glActiveTextureARB(GL_TEXTURE0_ARB);
 
   glBindTexture(GL_TEXTURE_2D, gdp->gdp_tex);
 

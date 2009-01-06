@@ -647,15 +647,6 @@ gv_blend_frames(glw_video_t *gv, glw_rctx_t *rc, gl_video_frame_t *fra,
 				 gv->gv_cmatrix[i * 3 + 1],
 				 gv->gv_cmatrix[i * 3 + 2], 0.0f);
 
-  glActiveTextureARB(GL_TEXTURE2_ARB);
-  glBindTexture(GL_TEXTURE_2D, gv_tex_get(gv, fra, GVF_TEX_Cb));
-
-  glActiveTextureARB(GL_TEXTURE1_ARB);
-  glBindTexture(GL_TEXTURE_2D, gv_tex_get(gv, fra, GVF_TEX_Cr));
-
-  glActiveTextureARB(GL_TEXTURE0_ARB);
-  glBindTexture(GL_TEXTURE_2D, gv_tex_get(gv, fra, GVF_TEX_L));
-
   glActiveTextureARB(GL_TEXTURE5_ARB);
   glBindTexture(GL_TEXTURE_2D, gv_tex_get(gv, frb, GVF_TEX_Cb));
 
@@ -664,6 +655,15 @@ gv_blend_frames(glw_video_t *gv, glw_rctx_t *rc, gl_video_frame_t *fra,
 
   glActiveTextureARB(GL_TEXTURE3_ARB);
   glBindTexture(GL_TEXTURE_2D, gv_tex_get(gv, frb, GVF_TEX_L));
+
+  glActiveTextureARB(GL_TEXTURE2_ARB);
+  glBindTexture(GL_TEXTURE_2D, gv_tex_get(gv, fra, GVF_TEX_Cb));
+
+  glActiveTextureARB(GL_TEXTURE1_ARB);
+  glBindTexture(GL_TEXTURE_2D, gv_tex_get(gv, fra, GVF_TEX_Cr));
+
+  glActiveTextureARB(GL_TEXTURE0_ARB);
+  glBindTexture(GL_TEXTURE_2D, gv_tex_get(gv, fra, GVF_TEX_L));
 
   render_video_quad(mp, gv, fra);
 
