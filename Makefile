@@ -85,15 +85,15 @@ SRCS-$(CONFIG_GLW)     += glw.c \
 			glw_list.c \
 			glw_deck.c \
 			glw_expander.c \
-			glw_text_bitmap.c \
-			glw_bitmap.c \
-			glw_texture_loader.c \
-			glw_navigation.c \
-			glw_cursor.c \
 			glw_rotator.c  \
-			glw_scaler.c  \
 			glw_animator.c \
 			glw_transitions.c \
+			glw_navigation.c \
+			glw_texture_loader.c \
+			glw_scaler.c  \
+			glw_bitmap.c \
+			glw_text_bitmap.c \
+			glw_cursor.c \
 
 SRCS-$(CONFIG_GLW_FRONTEND_X11)	+= glw_x11.c
 
