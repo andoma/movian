@@ -16,8 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <GL/gl.h>
-
 #include "glw.h"
 #include "glw_mirror.h"
 

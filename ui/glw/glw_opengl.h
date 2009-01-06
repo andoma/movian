@@ -20,6 +20,7 @@
 #define GLW_OPENGL_H__
 
 #include <GL/gl.h>
+#include <GL/glu.h>
 
 typedef struct glw_backend_root {
 

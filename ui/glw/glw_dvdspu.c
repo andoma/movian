@@ -29,8 +29,6 @@
 
 #include <inttypes.h>
 
-#include <GL/gl.h>
-
 #include "showtime.h"
 #include "media.h"
 #include "video_decoder.h"

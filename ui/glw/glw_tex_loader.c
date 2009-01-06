@@ -35,8 +35,6 @@
 #include <math.h>
 #include <errno.h>
 
-#include <GL/gl.h>
-
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 

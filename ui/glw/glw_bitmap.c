@@ -20,8 +20,6 @@
 #include <string.h>
 #include <sys/mman.h>
 
-#include <GL/gl.h>
-
 #include "glw.h"
 #include "glw_bitmap.h"
 

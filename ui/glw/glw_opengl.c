@@ -17,7 +17,6 @@
  */
 
 #include <string.h>
-#include <GL/gl.h>
 
 #include "glw.h"
 #include "glw_cursor.h"
