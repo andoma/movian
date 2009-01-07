@@ -335,7 +335,6 @@ static const token_attrib_t attribtab[] = {
   {"caption",         set_string, GLW_ATTRIB_CAPTION},
   {"source",          set_string, GLW_ATTRIB_SOURCE},
 
-  {"borderScale",     set_flag,   GLW_BORDER_SCALE_CHILDS},
   {"focusCursor",     set_flag,   GLW_FOCUS_DRAW_CURSOR},
   {"keepAspect",      set_flag,   GLW_KEEP_ASPECT},
   {"debug",           set_flag,   GLW_DEBUG},
@@ -362,8 +361,7 @@ static const token_attrib_t attribtab[] = {
 
   {"displacement",    set_float3, GLW_ATTRIB_DISPLACEMENT},
   {"color",           set_float3, GLW_ATTRIB_RGB},
-  {"textureBorders",  set_float4, GLW_ATTRIB_TEXTURE_BORDERS},
-  {"vertexBorders",   set_float4, GLW_ATTRIB_VERTEX_BORDERS},
+  {"textureCoords",   set_float4, GLW_ATTRIB_TEXTURE_COORDS},
 
   {"align",           set_align,  0},
   {"effect",          set_transition_effect,  0},

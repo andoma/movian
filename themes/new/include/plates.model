@@ -6,10 +6,8 @@
 #define PLATE_SQUARE_MID(BODY)
 {
   widget(bitmap, {
-    .textureBorders = [0.2,  0.2,  0.2,  0.2];
-    .vertexBorders  = [0.1,  0.1,  0.1,  0.1];
+    .textureCoords = [0.1, 0.1, 0.9, 0.9];
     .source = "theme://images/plate256.png";
-    .borderScale = true;
     BODY;
   });
 }
@@ -41,9 +39,7 @@
 {
   widget(bitmap, {
     .source = "theme://images/plate256.png";
-    .textureBorders = [0.2,  0.2,  0.2,  0.2];
-    .vertexBorders  = [0.1,  0.1,  0.1,  0.1];
-    .borderScale = true;
+    .textureCoords = [0.1, 0.1, 0.9, 0.9];
     BODY;
   });
 }
@@ -62,11 +58,9 @@
       .source = "theme://images/plate256.png";
       .focus = ENABLE;
       .focusCursor = ENABLE;
-      .borderScale = true;
       .alpha = iir(0.5 + 0.5 * isFocused(), 10);
       
-      .textureBorders = [0.2,  0.2,  0.2,  0.2];
-      .vertexBorders  = [0.1,  0.1,  0.1,  0.1];
+      .textureCoords = [0.1, 0.1, 0.9, 0.9];
 
       onEvent(enter, EVENTCODE);
       
@@ -99,11 +93,9 @@
       .source = "theme://images/plate256.png";
       .focus = ENABLE;
       .focusCursor = ENABLE;
-      .borderScale = true;
       .alpha = iir(0.5 + 0.5 * isFocused(), 10);
       
-      .textureBorders = [0.2,  0.2,  0.2,  0.2];
-      .vertexBorders  = [0.1,  0.1,  0.1,  0.1];
+      .textureCoords = [0.1, 0.1, 0.9, 0.9];
 
       onEvent(enter, EVENTCODE);
       

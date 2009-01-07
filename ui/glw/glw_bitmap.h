@@ -31,10 +31,17 @@ typedef struct glw_bitmap {
 
   glw_texture_t *gb_tex;
 
-  float gb_tborders[4];
-  float gb_vborders[4];
+  int gb_border_scaling;
+
+  float gb_tex_left;
+  float gb_tex_right;
+  float gb_tex_top;
+  float gb_tex_bottom;
  
   int gb_mirror;
+
+  int gb_tex_xs;
+  int gb_tex_ys;
 
 } glw_bitmap_t;
 

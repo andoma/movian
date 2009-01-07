@@ -107,8 +107,7 @@ typedef enum {
   GLW_ATTRIB_PREVIEW,
   GLW_ATTRIB_CONTENT,
   GLW_ATTRIB_MODE,
-  GLW_ATTRIB_TEXTURE_BORDERS,
-  GLW_ATTRIB_VERTEX_BORDERS,
+  GLW_ATTRIB_TEXTURE_COORDS,
   GLW_ATTRIB_MIRROR,
   GLW_ATTRIB_ID,
   GLW_ATTRIB_DISPLACEMENT,
@@ -340,7 +339,6 @@ typedef struct glw {
 					    visualize details */
 #define GLW_FOCUS_DRAW_CURSOR   0x100   /* Draw cursor when we have focus */
 #define GLW_DEBUG               0x400   /* Debug this object */
-#define GLW_BORDER_SCALE_CHILDS 0x800   /* Scale childs to fit within border */
 #define GLW_PASSWORD            0x4000  /* Don't display real contents */
 
   glw_vertex_t glw_displacement;
@@ -500,8 +498,7 @@ do {						\
   case GLW_ATTRIB_FOCUSABLE:                    \
     (void)va_arg(ap, int);			\
     break;					\
-  case GLW_ATTRIB_TEXTURE_BORDERS:              \
-  case GLW_ATTRIB_VERTEX_BORDERS:               \
+  case GLW_ATTRIB_TEXTURE_COORDS:               \
     (void)va_arg(ap, double);			\
   case GLW_ATTRIB_DISPLACEMENT:                 \
   case GLW_ATTRIB_RGB:                          \
