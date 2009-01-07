@@ -29,6 +29,9 @@ glw_bitmap_dtor(glw_t *w)
 
   if(gb->gb_tex != NULL)
     glw_tex_deref(w->glw_root, gb->gb_tex);
+
+  if(gb->gb_render_initialized)
+    glw_tex_render_free(&gb->gb_gtr);
 }
 
 
@@ -42,6 +45,7 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
   float alpha_self = rc->rc_alpha * w->glw_alpha * gb->gb_alpha_self;
   glw_rctx_t rc0;
   glw_t *c;
+  float xs, ys;
 
   if(gt == NULL || gt->gt_state != GT_STATE_VALID)
     return;
@@ -97,44 +101,11 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
     if(glw_is_focusable(w))
       glw_store_matrix(w, rc);
     
-    if(alpha_self > 0.01) {
-      glBindTexture(GL_TEXTURE_2D, gt->gt_texture);
+    if(alpha_self > 0.01)
+      glw_tex_render(&gb->gb_gtr, &gt->gt_texture,
+		     w->glw_col.r, w->glw_col.g, w->glw_col.b, alpha_self);
 
-      glColor4f(w->glw_col.r, w->glw_col.g, w->glw_col.b, alpha_self);
-
-      glBegin(GL_QUADS);
-      
-      glTexCoord2f(0.0, 1.0);
-      glVertex3f( -1.0, -1.0f, 0.0f);
-      
-      glTexCoord2f(1.0, 1.0);
-      glVertex3f( 1.0, -1.0f, 0.0f);
-	
-      glTexCoord2f(1.0, 0.0);
-      glVertex3f( 1.0, 1.0f, 0.0f);
-
-      glTexCoord2f(0.0, 0.0);
-      glVertex3f( -1.0, 1.0f, 0.0f);
-      
-      glEnd();
-    }
-
-    if(gb->gb_head.glw_flags & GLW_DRAW_SKEL) {
-      glDisable(GL_BLEND);
-      glDisable(GL_TEXTURE_2D);
-
-      glBegin(GL_LINE_LOOP);
-      glVertex3f( -1.0, -1.0f, 0.0f);
-      glVertex3f( 1.0, -1.0f, 0.0f);
-      glVertex3f( 1.0, 1.0f, 0.0f);
-      glVertex3f( -1.0, 1.0f, 0.0f);
-      glEnd();
-
-      glEnable(GL_TEXTURE_2D);
-      glEnable(GL_BLEND);
-    }
-
-      
+   
     if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
       rc0.rc_alpha = rc->rc_alpha * w->glw_alpha;
       glw_render0(c, &rc0);
@@ -143,117 +114,21 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
   } else {
 
-    float tex[4][2];
-    float vex[4][2];
-    int x, y;
-    float a, b;
-    float xs, ys;
-    float t_aspect = gt->gt_aspect;
-
     if(glw_is_focusable(w))
       glw_store_matrix(w, rc);
 
-    a = rc->rc_scale_x / rc->rc_scale_y;
+    if(alpha_self > 0.01)
+      glw_tex_render(&gb->gb_gtr, &gt->gt_texture,
+		     w->glw_col.r, w->glw_col.g, w->glw_col.b, alpha_self);
 
-    /* Texture X coordinates */
-    tex[0][0] = 0.0;
-    tex[1][0] = gb->gb_tex_left;
-    tex[2][0] = gb->gb_tex_right;
-    tex[3][0] = 1.0;
-
-    /* Texture Y coordinates */
-    tex[0][1] = 0.0;
-    tex[1][1] = gb->gb_tex_top;
-    tex[2][1] = gb->gb_tex_bottom;
-    tex[3][1] = 1.0;
-
-
-    vex[0][0] = -1.0;
-    vex[1][0] = -1.0 + gb->gb_tex_left * 2;
-    vex[2][0] =  1 - ((1 - gb->gb_tex_right) * 2);
-    vex[3][0] =  1.0;
-    
-    vex[0][1] =  1.0;
-    vex[1][1] =  1 - gb->gb_tex_top * 2;
-    vex[2][1] = -1.0 + ((1 - gb->gb_tex_bottom) * 2);
-    vex[3][1] = -1.0;
-
-
-    if(a > t_aspect) {
-      
-      b = t_aspect / a;
-      
-      vex[1][0] = -1.0 + gb->gb_tex_left * 2 * b;
-      vex[2][0] =  1 - ((1 - gb->gb_tex_right) * 2 * b);
-      
-    } else {
-      
-      b = a / t_aspect;
-      
-      vex[1][1] =  1 - gb->gb_tex_top * 2 *b;
-      vex[2][1] = -1.0 + ((1 - gb->gb_tex_bottom) * 2 * b);
-    }
-
-    if(gb->gb_mirror & GLW_MIRROR_X)
-      for(x = 0; x < 4; x++)
-	tex[x][0] = 1.0f - tex[x][0];
-
-    if(gb->gb_mirror & GLW_MIRROR_Y)
-      for(y = 0; y < 4; y++)
-	tex[y][1] = 1.0f - tex[y][1];
-
-
-    glColor4f(w->glw_col.r, w->glw_col.g, w->glw_col.b, alpha_self);
-    glBindTexture(GL_TEXTURE_2D, gt->gt_texture);
-
-    glBegin(GL_QUADS);
-
-    /* XXX: replace with drawarray */
-    
-    for(y = 0; y < 3; y++) {
-      for(x = 0; x < 3; x++) {
-	
-	glTexCoord2f(tex[x + 0][0], tex[y + 1][1]);
-	glVertex3f  (vex[x + 0][0], vex[y + 1][1], 0.0f);
-	
-	glTexCoord2f(tex[x + 1][0], tex[y + 1][1]);
-	glVertex3f  (vex[x + 1][0], vex[y + 1][1], 0.0f);
-	
-	glTexCoord2f(tex[x + 1][0], tex[y + 0][1]);
-	glVertex3f  (vex[x + 1][0], vex[y + 0][1], 0.0f);
-	
-	glTexCoord2f(tex[x + 0][0], tex[y + 0][1]);
-	glVertex3f  (vex[x + 0][0], vex[y + 0][1], 0.0f);
-      }
-    }
-    
-    glEnd();
-    
-    if(gb->gb_head.glw_flags & GLW_DRAW_SKEL) {
-      glDisable(GL_TEXTURE_2D);
-
-      for(y = 0; y < 3; y++) {
-	for(x = 0; x < 3; x++) {
-	  
-	  glBegin(GL_LINE_LOOP);
-	  glVertex3f  (vex[x + 0][0], vex[y + 1][1], 0.0f);
-	  glVertex3f  (vex[x + 1][0], vex[y + 1][1], 0.0f);
-	  glVertex3f  (vex[x + 1][0], vex[y + 0][1], 0.0f);
-	  glVertex3f  (vex[x + 0][0], vex[y + 0][1], 0.0f);
-	  glEnd();
-	}
-      }
-      glEnable(GL_TEXTURE_2D);
-    }
-     
     if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
 
       rc0 = *rc;
       
       glw_PushMatrix(&rc0, rc);
       
-      xs = (vex[2][0] - vex[1][0]) * 0.5f;
-      ys = (vex[1][1] - vex[2][1]) * 0.5f;
+      xs = gb->gb_child_xs;
+      ys = gb->gb_child_ys;
 
       glw_Scalef(&rc0, xs, ys, 1.0f);
 
@@ -269,7 +144,101 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
 }
 
 
+/**
+ *
+ */
+static void
+glw_bitmap_layout_tesselated(glw_rctx_t *rc, glw_bitmap_t *gb, 
+			     glw_texture_t *gt)
+{
+  float tex[4][2];
+  float vex[4][2];
+  int x, y, i = 0;
+  float a, b;
+  float t_aspect = gt->gt_aspect;
 
+  gb->gb_saved_scale_x = rc->rc_scale_x;
+  gb->gb_saved_scale_y = rc->rc_scale_y;
+ 
+  a = rc->rc_scale_x / rc->rc_scale_y;
+
+  /* Texture X coordinates */
+  tex[0][0] = 0.0;
+  tex[1][0] = gb->gb_tex_left;
+  tex[2][0] = gb->gb_tex_right;
+  tex[3][0] = 1.0;
+
+  /* Texture Y coordinates */
+  tex[0][1] = 0.0;
+  tex[1][1] = gb->gb_tex_top;
+  tex[2][1] = gb->gb_tex_bottom;
+  tex[3][1] = 1.0;
+
+
+  vex[0][0] = -1.0;
+  vex[1][0] = -1.0 + gb->gb_tex_left * 2;
+  vex[2][0] =  1 - ((1 - gb->gb_tex_right) * 2);
+  vex[3][0] =  1.0;
+    
+  vex[0][1] =  1.0;
+  vex[1][1] =  1 - gb->gb_tex_top * 2;
+  vex[2][1] = -1.0 + ((1 - gb->gb_tex_bottom) * 2);
+  vex[3][1] = -1.0;
+
+
+  if(a > t_aspect) {
+    
+    b = t_aspect / a;
+    
+    vex[1][0] = -1.0 + gb->gb_tex_left * 2 * b;
+    vex[2][0] =  1 - ((1 - gb->gb_tex_right) * 2 * b);
+    
+  } else {
+    
+    b = a / t_aspect;
+    
+    vex[1][1] =  1 - gb->gb_tex_top * 2 *b;
+    vex[2][1] = -1.0 + ((1 - gb->gb_tex_bottom) * 2 * b);
+  }
+  
+  if(gb->gb_mirror & GLW_MIRROR_X)
+    for(x = 0; x < 4; x++)
+      tex[x][0] = 1.0f - tex[x][0];
+
+  if(gb->gb_mirror & GLW_MIRROR_Y)
+    for(y = 0; y < 4; y++)
+      tex[y][1] = 1.0f - tex[y][1];
+
+    
+  for(y = 0; y < 3; y++) {
+    for(x = 0; x < 3; x++) {
+
+      glw_tex_render_set_vertex(&gb->gb_gtr, i++,
+				vex[x + 0][0], vex[y + 1][1], 0.0f,
+				tex[x + 0][0], tex[y + 1][1]);
+
+      glw_tex_render_set_vertex(&gb->gb_gtr, i++,
+				vex[x + 1][0], vex[y + 1][1], 0.0f,
+				tex[x + 1][0], tex[y + 1][1]);
+
+      glw_tex_render_set_vertex(&gb->gb_gtr, i++,
+				vex[x + 1][0], vex[y + 0][1], 0.0f,
+				tex[x + 1][0], tex[y + 0][1]);
+	
+      glw_tex_render_set_vertex(&gb->gb_gtr, i++,
+				vex[x + 0][0], vex[y + 0][1], 0.0f,
+				tex[x + 0][0], tex[y + 0][1]);
+    }
+  }
+    
+  gb->gb_child_xs = (vex[2][0] - vex[1][0]) * 0.5f;
+  gb->gb_child_ys = (vex[1][1] - vex[2][1]) * 0.5f;
+}
+
+
+/**
+ *
+ */
 static void 
 glw_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 {
@@ -279,12 +248,35 @@ glw_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
   rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, w->glw_exp_req);
 
-  if(gt != NULL)
-    glw_tex_layout(w->glw_root, gt);
+  if(gt == NULL)
+    return;
 
-  c = TAILQ_FIRST(&w->glw_childs);
+  glw_tex_layout(w->glw_root, gt);
 
-  if(c != NULL)
+  if(gb->gb_render_init == 1) {
+    gb->gb_render_init = 0;
+
+    if(gb->gb_render_initialized)
+      glw_tex_render_free(&gb->gb_gtr);
+
+    glw_tex_render_setup(&gb->gb_gtr, gb->gb_border_scaling ? 9 : 1);
+    gb->gb_render_initialized = 1;
+
+    if(!gb->gb_border_scaling) {
+      glw_tex_render_set_vertex(&gb->gb_gtr, 0, -1.0, -1.0, 0.0, 0.0, 1.0);
+      glw_tex_render_set_vertex(&gb->gb_gtr, 1,  1.0, -1.0, 0.0, 1.0, 1.0);
+      glw_tex_render_set_vertex(&gb->gb_gtr, 2,  1.0,  1.0, 0.0, 1.0, 0.0);
+      glw_tex_render_set_vertex(&gb->gb_gtr, 3, -1.0,  1.0, 0.0, 0.0, 0.0);
+    } else {
+      glw_bitmap_layout_tesselated(rc, gb, gt);
+    }
+  } else if(gb->gb_border_scaling &&
+	    (gb->gb_saved_scale_x != rc->rc_scale_x ||
+	     gb->gb_saved_scale_y != rc->rc_scale_y)) {
+    glw_bitmap_layout_tesselated(rc, gb, gt);
+  }
+
+  if((c = TAILQ_FIRST(&w->glw_childs)) != NULL)
     glw_layout0(c, rc);
 }
 
@@ -344,6 +336,7 @@ glw_bitmap_ctor(glw_t *w, int init, va_list ap)
       gb->gb_tex_top    = va_arg(ap, double);
       gb->gb_tex_right  = va_arg(ap, double);
       gb->gb_tex_bottom = va_arg(ap, double);
+      gb->gb_render_init = 1;
       break;
 
     case GLW_ATTRIB_ANGLE:
@@ -356,10 +349,12 @@ glw_bitmap_ctor(glw_t *w, int init, va_list ap)
       
     case GLW_ATTRIB_SOURCE:
       filename = va_arg(ap, char *);
+      gb->gb_render_init = 1;
       break;
 
     case GLW_ATTRIB_MIRROR:
       gb->gb_mirror = va_arg(ap, int);
+      gb->gb_render_init = 1;
       break;
 
     default:

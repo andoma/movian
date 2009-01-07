@@ -607,8 +607,4 @@ void glw_gf_unregister(glw_gf_ctrl_t *ggc);
 
 void glw_gf_do(void);
 
-
-
-
-
 #endif /* GLW_H */

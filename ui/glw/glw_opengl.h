@@ -51,4 +51,14 @@ typedef GLuint glw_backend_texture_t;
 
 #define glw_Rotatef(rc, a, x, y, z) glRotatef(a, x, y, z)
 
+
+/**
+ * Texture Quad renderer
+ */
+typedef struct glw_tex_renderer {
+  int gtr_quads;
+  float *gtr_buffer;
+} glw_tex_renderer_t;
+
+
 #endif /* GLW_OPENGL_H__ */
