@@ -253,27 +253,29 @@ glw_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
   glw_tex_layout(w->glw_root, gt);
 
-  if(gb->gb_render_init == 1) {
-    gb->gb_render_init = 0;
+  if(gt->gt_state == GT_STATE_VALID) {
+    if(gb->gb_render_init == 1) {
+      gb->gb_render_init = 0;
 
-    if(gb->gb_render_initialized)
-      glw_tex_render_free(&gb->gb_gtr);
+      if(gb->gb_render_initialized)
+	glw_tex_render_free(&gb->gb_gtr);
 
-    glw_tex_render_setup(&gb->gb_gtr, gb->gb_border_scaling ? 9 : 1);
-    gb->gb_render_initialized = 1;
+      glw_tex_render_setup(&gb->gb_gtr, gb->gb_border_scaling ? 9 : 1);
+      gb->gb_render_initialized = 1;
 
-    if(!gb->gb_border_scaling) {
-      glw_tex_render_set_vertex(&gb->gb_gtr, 0, -1.0, -1.0, 0.0, 0.0, 1.0);
-      glw_tex_render_set_vertex(&gb->gb_gtr, 1,  1.0, -1.0, 0.0, 1.0, 1.0);
-      glw_tex_render_set_vertex(&gb->gb_gtr, 2,  1.0,  1.0, 0.0, 1.0, 0.0);
-      glw_tex_render_set_vertex(&gb->gb_gtr, 3, -1.0,  1.0, 0.0, 0.0, 0.0);
-    } else {
+      if(!gb->gb_border_scaling) {
+	glw_tex_render_set_vertex(&gb->gb_gtr, 0, -1.0, -1.0, 0.0, 0.0, 1.0);
+	glw_tex_render_set_vertex(&gb->gb_gtr, 1,  1.0, -1.0, 0.0, 1.0, 1.0);
+	glw_tex_render_set_vertex(&gb->gb_gtr, 2,  1.0,  1.0, 0.0, 1.0, 0.0);
+	glw_tex_render_set_vertex(&gb->gb_gtr, 3, -1.0,  1.0, 0.0, 0.0, 0.0);
+      } else {
+	glw_bitmap_layout_tesselated(rc, gb, gt);
+      }
+    } else if(gb->gb_border_scaling &&
+	      (gb->gb_saved_scale_x != rc->rc_scale_x ||
+	       gb->gb_saved_scale_y != rc->rc_scale_y)) {
       glw_bitmap_layout_tesselated(rc, gb, gt);
     }
-  } else if(gb->gb_border_scaling &&
-	    (gb->gb_saved_scale_x != rc->rc_scale_x ||
-	     gb->gb_saved_scale_y != rc->rc_scale_y)) {
-    glw_bitmap_layout_tesselated(rc, gb, gt);
   }
 
   if((c = TAILQ_FIRST(&w->glw_childs)) != NULL)
