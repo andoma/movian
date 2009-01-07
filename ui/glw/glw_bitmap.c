@@ -48,47 +48,49 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
   if(!gb->gb_border_scaling) {
 
-    glPushMatrix();
+    rc0 = *rc;
+
+    glw_PushMatrix(&rc0, rc);
 
     switch(w->glw_alignment) {
     case GLW_ALIGN_CENTER:
       break;
     case GLW_ALIGN_DEFAULT:
     case GLW_ALIGN_LEFT:
-      glTranslatef(-1.0, 0.0, 0.0f);
+      glw_Translatef(&rc0, -1.0, 0.0, 0.0f);
       break;
     case GLW_ALIGN_RIGHT:
-      glTranslatef(1.0, 0.0, 0.0f);
+      glw_Translatef(&rc0, 1.0, 0.0, 0.0f);
       break;
     case GLW_ALIGN_BOTTOM:
-      glTranslatef(0.0, -1.0, 0.0f);
+      glw_Translatef(&rc0, 0.0, -1.0, 0.0f);
       break;
     case GLW_ALIGN_TOP:
-      glTranslatef(0.0, 1.0, 0.0f);
+      glw_Translatef(&rc0, 0.0, 1.0, 0.0f);
       break;
     }
       
     if(w->glw_flags & GLW_KEEP_ASPECT)
-      glw_rescale(rc, gt->gt_aspect);
+      glw_rescale(&rc0, gt->gt_aspect);
 
     if(gb->gb_angle != 0)
-      glRotatef(-gb->gb_angle, 0, 0, 1);
+      glw_Rotatef(&rc0, -gb->gb_angle, 0, 0, 1);
 
     switch(w->glw_alignment) {
     case GLW_ALIGN_CENTER:
       break;
     case GLW_ALIGN_DEFAULT:
     case GLW_ALIGN_LEFT:
-      glTranslatef(1.0f, 0.0f, 0.0f);
+      glw_Translatef(&rc0, 1.0f, 0.0f, 0.0f);
       break;
     case GLW_ALIGN_RIGHT:
-      glTranslatef(-1.0f, 0.0f, 0.0f);
+      glw_Translatef(&rc0, -1.0f, 0.0f, 0.0f);
       break;
     case GLW_ALIGN_BOTTOM:
-      glTranslatef(0.0, 1.0, 0.0f);
+      glw_Translatef(&rc0, 0.0, 1.0, 0.0f);
       break;
     case GLW_ALIGN_TOP:
-      glTranslatef(0.0, -1.0, 0.0f);
+      glw_Translatef(&rc0, 0.0, -1.0, 0.0f);
       break;
     }
 
@@ -134,11 +136,10 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
       
     if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
-      rc0 = *rc;
       rc0.rc_alpha = rc->rc_alpha * w->glw_alpha;
       glw_render0(c, &rc0);
     }
-    glPopMatrix();
+    glw_PopMatrix();
 
   } else {
 
@@ -249,12 +250,12 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
       rc0 = *rc;
       
-      glPushMatrix();
+      glw_PushMatrix(&rc0, rc);
       
       xs = (vex[2][0] - vex[1][0]) * 0.5f;
       ys = (vex[1][1] - vex[2][1]) * 0.5f;
 
-      glScalef(xs, ys, 1.0f);
+      glw_Scalef(&rc0, xs, ys, 1.0f);
 
       rc0.rc_scale_x = rc->rc_scale_x * xs;
       rc0.rc_scale_y = rc->rc_scale_y * ys;
@@ -262,7 +263,7 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
       rc0.rc_alpha = rc->rc_alpha * w->glw_alpha;
       glw_render0(c, &rc0);
 
-      glPopMatrix();
+      glw_PopMatrix();
     }
   }
 }
