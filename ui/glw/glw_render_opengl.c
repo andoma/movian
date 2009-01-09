@@ -87,7 +87,7 @@ glw_render_vts_col(glw_renderer_t *gr, int vertex,
  * 
  */
 void
-glw_render(glw_renderer_t *gr, int mode, int attribs,
+glw_render(glw_renderer_t *gr, glw_rctx_t *rc, int mode, int attribs,
 	   glw_backend_texture_t *be_tex,
 	   float r, float g, float b, float a)
 {

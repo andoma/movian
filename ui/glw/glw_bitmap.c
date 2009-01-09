@@ -99,10 +99,11 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
     }
 
     if(glw_is_focusable(w))
-      glw_store_matrix(w, rc);
+      glw_store_matrix(w, &rc0);
     
     if(alpha_self > 0.01)
-      glw_render(&gb->gb_gr, GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
+      glw_render(&gb->gb_gr, &rc0, 
+		 GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
 		 &gt->gt_texture,
 		 w->glw_col.r, w->glw_col.g, w->glw_col.b, alpha_self);
 
@@ -119,7 +120,8 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
       glw_store_matrix(w, rc);
 
     if(alpha_self > 0.01)
-      glw_render(&gb->gb_gr, GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
+      glw_render(&gb->gb_gr, rc, 
+		 GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
 		 &gt->gt_texture,
 		 w->glw_col.r, w->glw_col.g, w->glw_col.b, alpha_self);
 
