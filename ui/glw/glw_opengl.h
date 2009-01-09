@@ -53,12 +53,20 @@ typedef GLuint glw_backend_texture_t;
 
 
 /**
- * Texture Quad renderer
+ * Renderer
  */
-typedef struct glw_tex_renderer {
-  int gtr_quads;
-  float *gtr_buffer;
-} glw_tex_renderer_t;
+typedef struct glw_renderer {
+  int gr_vertices;
+  float *gr_buffer;
+  int gr_stride;
+} glw_renderer_t;
+
+#define GLW_RENDER_MODE_QUADS     GL_QUADS
+#define GLW_RENDER_MODE_LINESTRIP GL_LINESTRIP
+
+#define glw_render_set_pre(gr)
+
+#define glw_render_set_post(gr)
 
 
 #endif /* GLW_OPENGL_H__ */

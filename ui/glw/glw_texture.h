@@ -84,17 +84,4 @@ void glw_tex_backend_free_loader_resources(glw_texture_t *gt);
 void glw_tex_backend_layout(glw_texture_t *gt);
 
 
-/**
- *
- */
-void glw_tex_render_setup(glw_tex_renderer_t *gtr, int quads);
-
-void glw_tex_render_free(glw_tex_renderer_t *gtr);
-
-void glw_tex_render_set_vertex(glw_tex_renderer_t *gtr, int vertex,
-			       float x, float y, float z, float s, float t);
-
-void glw_tex_render(glw_tex_renderer_t *gtr, glw_backend_texture_t *be_tex,
-		    float r, float g, float b, float a);
-
 #endif /* GLW_TEXTURE_H */

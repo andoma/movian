@@ -43,7 +43,7 @@ typedef struct glw_bitmap {
   int gb_render_initialized;
   int gb_render_init;
 
-  glw_tex_renderer_t gb_gtr;
+  glw_renderer_t gb_gr;
 
   float gb_saved_scale_x;
   float gb_saved_scale_y;

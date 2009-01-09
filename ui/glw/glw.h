@@ -579,10 +579,6 @@ int glw_signal0(glw_t *w, glw_signal_t sig, void *extra);
 #define glw_render0(w, rc) glw_signal0(w, GLW_SIGNAL_RENDER, rc)
 #define glw_layout0(w, rc) glw_signal0(w, GLW_SIGNAL_LAYOUT, rc)
 
-/**
- * Render interface abstraction
- */
-
 void glw_check_system_features(glw_root_t *gr);
 
 void glw_render_T(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc);
@@ -591,6 +587,31 @@ void glw_render_TS(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc);
 
 void glw_rescale(glw_rctx_t *rc, float t_aspect);
 
+/**
+ * Render interface abstraction
+ */
+
+#define GLW_RENDER_ATTRIBS_NONE       0
+#define GLW_RENDER_ATTRIBS_TEX        1
+#define GLW_RENDER_ATTRIBS_TEX_COLOR  2
+
+
+void glw_render_init(glw_renderer_t *gr, int vertices, int attribs);
+
+void glw_render_free(glw_renderer_t *gr);
+
+void glw_render_vtx_pos(glw_renderer_t *gr, int vertex,
+			float x, float y, float z);
+
+void glw_render_vtx_st(glw_renderer_t *gr, int vertex,
+		       float s, float t);
+
+void glw_render_vts_col(glw_renderer_t *gr, int vertex,
+			float r, float g, float b, float a);
+
+void glw_render(glw_renderer_t *gr, int mode, int attribs,
+		glw_backend_texture_t *be_tex,
+		float r, float g, float b, float a);
 
 /**
  * Global flush interface 
