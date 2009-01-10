@@ -16,8 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
-
 #include "glw.h"
 #include "glw_animator.h"
 #include "glw_transitions.h"

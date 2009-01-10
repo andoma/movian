@@ -16,23 +16,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.h"
-
-#include <assert.h>
-#include <stdlib.h>
-
-#include <sys/time.h>
-#include <sys/stat.h>
 #include <sys/mman.h>
-
-#include <time.h>
-
-#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <stdio.h>
-#include <math.h>
-#include <errno.h>
 
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>

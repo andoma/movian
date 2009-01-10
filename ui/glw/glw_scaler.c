@@ -20,16 +20,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include "config.h"
-
 #include <assert.h>
 #include <inttypes.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
-#include <stdio.h>
-#include <math.h>
-#include <errno.h>
 
 #include "glw_scaler.h"
 

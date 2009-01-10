@@ -16,17 +16,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.h"
-
 #include <assert.h>
 
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <stdio.h>
 
 #include "glw.h"
-#include "showtime.h"
 #include "glw_texture.h"
 
 static void glw_tex_deref_locked(glw_root_t *gr, glw_loadable_texture_t *glt);
