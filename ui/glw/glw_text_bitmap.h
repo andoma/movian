@@ -21,9 +21,7 @@
 
 typedef struct glw_text_bitmap_data {
 
-  int gtbd_format;
-  int gtbd_ext_format;
-  int gtbd_ext_type;
+  int gtbd_pixel_format;
   
   uint8_t *gtbd_data;
   int gtbd_siz_x;
@@ -44,8 +42,10 @@ typedef struct glw_text_bitmap {
 
   unsigned int gtb_texture;
 
+  int gtb_renderer_inited;
+
   glw_renderer_t gtb_text_renderer;
-  int gtb_text_renderer_inited;
+  glw_renderer_t gtb_cursor_renderer;
 
   TAILQ_ENTRY(glw_text_bitmap) gtb_workq_link;
   LIST_ENTRY(glw_text_bitmap) gtb_global_link;
@@ -65,6 +65,9 @@ typedef struct glw_text_bitmap {
   int gtb_uc_size;
 
   int gtb_edit_ptr;
+  int gtb_paint_cursor;
+  int gtb_update_cursor;
+  float gtb_cursor_alpha;
 
   int gtb_int;
   int gtb_int_step;

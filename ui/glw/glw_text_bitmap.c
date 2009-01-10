@@ -31,6 +31,7 @@
 #include <libavutil/common.h>
 
 #include "glw.h"
+#include "glw_texture.h"
 #include "glw_text_bitmap.h"
 #include "glw_container.h"
 #include "fileaccess/fa_rawloader.h"
@@ -290,20 +291,14 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   if(shadow) {
 
     gtbd->gtbd_data = calloc(1, 2 * gtbd->gtbd_stride * target_height);
-
     paint_shadow(gtbd->gtbd_data, data, gtbd->gtbd_stride, gtbd->gtbd_siz_y);
-
     free(data);
-
-    gtbd->gtbd_format     = GL_LUMINANCE4_ALPHA4;
-    gtbd->gtbd_ext_format = GL_LUMINANCE_ALPHA;
-    gtbd->gtbd_ext_type   = GL_UNSIGNED_BYTE;
+    gtbd->gtbd_pixel_format = GLW_TEXTURE_FORMAT_I4A4;
 
   } else {
-    gtbd->gtbd_data       = data;
-    gtbd->gtbd_format     = GL_ALPHA8;
-    gtbd->gtbd_ext_format = GL_ALPHA;
-    gtbd->gtbd_ext_type   = GL_UNSIGNED_BYTE;
+
+    gtbd->gtbd_data = data;
+    gtbd->gtbd_pixel_format = GLW_TEXTURE_FORMAT_I8;
   }
   return 0;
 }
@@ -318,11 +313,13 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 {
   glw_text_bitmap_t *gtb = (void *)w;
   glw_root_t *gr = w->glw_root;
+  glw_text_bitmap_data_t *gtbd = &gtb->gtb_data;
+  float x1, x2, n;
+  int i;
 
   if(w->glw_alpha < 0.01)
     return;
 
-  gtb->cursor_flash++;
 
   glw_set_active0(w);
 
@@ -332,33 +329,16 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
     hts_cond_signal(&gr->gr_gtb_render_cond);
     return;
   }
-}
 
+  if(!gtb->gtb_renderer_inited) {
+    gtb->gtb_renderer_inited = 1;
+    glw_render_init(&gtb->gtb_text_renderer,   4, GLW_RENDER_ATTRIBS_TEX);
 
-/*
- *
- */
-static void
-glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
-{
-  glw_text_bitmap_t *gtb = (void *)w;
-  glw_text_bitmap_data_t *gtbd = &gtb->gtb_data;
-  float alpha, x1, x2, a;
-  int i;
-  glw_rctx_t rc0;
-
-  alpha = rc->rc_alpha * w->glw_alpha;
-
-  if(alpha < 0.01)
-    return;
-
+    if(w->glw_class == GLW_TEXT)
+      glw_render_init(&gtb->gtb_cursor_renderer, 4, GLW_RENDER_ATTRIBS_NONE);
+  }
 
   if(gtbd->gtbd_data != NULL) {
-
-    if(!gtb->gtb_text_renderer_inited) {
-      gtb->gtb_text_renderer_inited = 1;
-      glw_render_init(&gtb->gtb_text_renderer, 4, GLW_RENDER_ATTRIBS_TEX);
-    }
     
     glw_render_set_pre(&gtb->gtb_text_renderer);
 
@@ -376,29 +356,76 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
     glw_render_set_post(&gtb->gtb_text_renderer);
 
-    if(gtb->gtb_texture == 0) {
-      glGenTextures(1, &gtb->gtb_texture);
-      glBindTexture(GL_TEXTURE_2D, gtb->gtb_texture);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    
-    } else {
-      glBindTexture(GL_TEXTURE_2D, gtb->gtb_texture);
-    }
-
-    glTexImage2D(GL_TEXTURE_2D, 0, gtbd->gtbd_format, 
-		 gtbd->gtbd_stride, gtbd->gtbd_siz_y,
-		 0, gtbd->gtbd_ext_format, 
-		 gtbd->gtbd_ext_type, gtbd->gtbd_data);
+    glw_tex_upload(&gtb->gtb_texture, gtbd->gtbd_data, gtbd->gtbd_pixel_format,
+		   gtbd->gtbd_stride, gtbd->gtbd_siz_y);
 
     free(gtbd->gtbd_data);
     gtbd->gtbd_data = NULL;
   }
 
-  a = cos((float)gtb->cursor_flash / 10.0f) * 0.5 + 0.5;
+
+  if(w->glw_class != GLW_TEXT)
+    return;
+
+  /* Cursor handling */
+
+  if(!glw_is_focused(w)) {
+    gtb->gtb_paint_cursor = 0;
+    return;
+  }
+  
+  gtb->cursor_flash++;
+  gtb->gtb_cursor_alpha = cos((float)gtb->cursor_flash / 10.0f) * 0.5 + 0.5;
+ 
+  gtb->gtb_paint_cursor = 1;
+
+  if(gtb->gtb_update_cursor) {
+
+    gtb->gtb_update_cursor = 0;
+    
+    if(gtbd->gtbd_cursor_pos != NULL) {
+      
+      n = gtbd->gtbd_cursor_scale;
+      
+      i = gtb->gtb_edit_ptr;
+      x1 = (float)gtbd->gtbd_cursor_pos[i*2  ] / n;
+      x2 = (float)gtbd->gtbd_cursor_pos[i*2+1] / n;
+      
+      x1 = -1. + x1 * 2.;
+      x2 = -1. + x2 * 2.;
+
+    } else {
+      
+      x1 = 0.05;
+      x2 = 0.5;
+    }
+    
+    glw_render_set_pre(&gtb->gtb_cursor_renderer);
+    glw_render_vtx_pos(&gtb->gtb_cursor_renderer, 0, x1, -0.9, 0.0);
+    glw_render_vtx_pos(&gtb->gtb_cursor_renderer, 1, x2, -0.9, 0.0);
+    glw_render_vtx_pos(&gtb->gtb_cursor_renderer, 2, x2,  0.9, 0.0);
+    glw_render_vtx_pos(&gtb->gtb_cursor_renderer, 3, x1,  0.9, 0.0);
+    
+    glw_render_set_post(&gtb->gtb_cursor_renderer);
+  }
+}
+
+
+/*
+ *
+ */
+static void
+glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
+{
+  glw_text_bitmap_t *gtb = (void *)w;
+  glw_text_bitmap_data_t *gtbd = &gtb->gtb_data;
+  float alpha;
+  glw_rctx_t rc0;
+
+  alpha = rc->rc_alpha * w->glw_alpha;
+
+  if(alpha < 0.01)
+    return;
  
   rc0 = *rc;
 
@@ -410,20 +437,10 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
     glw_rescale(&rc0, 1.0);
     glw_Translatef(&rc0, 1.0, 0, 0);
 
-    if(glw_is_focused(w) && gtb->gtb_edit_ptr >= 0) {
-#if 0
-      glw_render(gr->gr_text_empty_cursor, &rc0,
+    if(gtb->gtb_paint_cursor)
+      glw_render(&gtb->gtb_cursor_renderer, &rc0,
 		 GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_NONE,
-		 NULL, 1, 1, 1, alpha * a);
-#endif
-      glColor4f(1,1,1, alpha * a);
-      glBegin(GL_QUADS);
-      glVertex3f( 0.05, -0.9f, 0.0f);
-      glVertex3f( 0.5,  -0.9f, 0.0f);
-      glVertex3f( 0.5,   0.9f, 0.0f);
-      glVertex3f( 0.05,  0.9f, 0.0f);
-      glEnd();
-    }
+		 NULL, 1, 1, 1, alpha * gtb->gtb_cursor_alpha);
 
     if(glw_is_focusable(w))
       glw_store_matrix(w, &rc0);
@@ -435,64 +452,18 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
   glw_rescale(&rc0, gtbd->gtbd_aspect);
   glw_align_2(&rc0, w->glw_alignment);
 
-  if(glw_is_focused(w) &&
-     gtb->gtb_edit_ptr >= 0 && gtbd->gtbd_cursor_scale > 0 &&
-     gtb->gtb_edit_ptr <= gtbd->gtbd_cursor_pos_size) {
-    i = gtb->gtb_edit_ptr;
-    x1 = (float)gtbd->gtbd_cursor_pos[i*2  ] / (float)gtbd->gtbd_cursor_scale;
-    x2 = (float)gtbd->gtbd_cursor_pos[i*2+1] / (float)gtbd->gtbd_cursor_scale;
-
-    x1 = -1. + x1 * 2.;
-    x2 = -1. + x2 * 2.;
-#if 0
-    glw_render(&gtb->gtb_cursor, &rc0,
+  if(gtb->gtb_paint_cursor)
+    glw_render(&gtb->gtb_cursor_renderer, &rc0,
 	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_NONE,
-	       NULL, 1, 1, 1, alpha * a);
-#endif
-
-    glDisable(GL_TEXTURE_2D);
-
-    glColor4f(1,1,1, alpha);
-    glBegin(GL_QUADS);
-    
-    glVertex3f(x1, -0.9f, 0.0f);
-    glVertex3f(x2, -0.9f, 0.0f);
-    glVertex3f(x2,  0.9f, 0.0f);
-    glVertex3f(x1,  0.9f, 0.0f);
-    glEnd();      
-
-    glEnable(GL_TEXTURE_2D);
-  }
+	       NULL, 1, 1, 1, alpha * gtb->gtb_cursor_alpha);
 
   if(glw_is_focusable(w))
     glw_store_matrix(w, &rc0);
-
 
   glw_render(&gtb->gtb_text_renderer, &rc0, 
 	     GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
 	     &gtb->gtb_texture,
 	     1,1,1, alpha);
-#if 0
-  glBindTexture(GL_TEXTURE_2D, gtb->gtb_texture);
-
-  glColor4f(1,1,1, alpha);
-
-  glBegin(GL_QUADS);
-
-  glTexCoord2f(0.0, 1.0);
-  glVertex3f( -1.0, -1.0f, 0.0f);
-
-  glTexCoord2f(gtbd->gtbd_texsize, 1.0);
-  glVertex3f( 1.0, -1.0f, 0.0f);
-
-  glTexCoord2f(gtbd->gtbd_texsize, 0.0);
-  glVertex3f( 1.0, 1.0f, 0.0f);
-
-  glTexCoord2f(0.0, 0.0);
-  glVertex3f( -1.0, 1.0f, 0.0f);
-
-  glEnd();
-#endif
 
   glw_PopMatrix();
 }
@@ -511,12 +482,12 @@ glw_text_bitmap_dtor(glw_t *w)
 
   LIST_REMOVE(gtb, gtb_global_link);
 
-  if(gtb->gtb_texture != 0)
-     glDeleteTextures(1, &gtb->gtb_texture);
+  glw_tex_destroy(&gtb->gtb_texture);
 
-  if(gtb->gtb_text_renderer_inited)
+  if(gtb->gtb_renderer_inited) {
     glw_render_free(&gtb->gtb_text_renderer);
-
+    glw_render_free(&gtb->gtb_cursor_renderer);
+  }
   if(gtb->gtb_status == GTB_ON_QUEUE)
     TAILQ_REMOVE(&gr->gr_gtb_render_queue, gtb, gtb_workq_link);
 }
@@ -552,9 +523,11 @@ del_char(glw_text_bitmap_t *gtb)
 
   gtb->gtb_uc_len--;
   gtb->gtb_edit_ptr--;
+  gtb->gtb_update_cursor = 1;
 
   for(i = gtb->gtb_edit_ptr; i != dlen; i++)
     buf[i] = buf[i + 1];
+
 
   return 1;
 }
@@ -582,6 +555,7 @@ insert_char(glw_text_bitmap_t *gtb, int ch)
   buf[i] = ch;
   gtb->gtb_uc_len++;
   gtb->gtb_edit_ptr++;
+  gtb->gtb_update_cursor = 1;
   return 1;
 }
 
@@ -680,12 +654,14 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
       if(gtb->gtb_edit_ptr == 0)
 	break;
       gtb->gtb_edit_ptr--;
+      gtb->gtb_update_cursor = 1;
       return 1;
 
     case EVENT_RIGHT:
       if(gtb->gtb_edit_ptr >= gtb->gtb_uc_len)
 	break;
       gtb->gtb_edit_ptr++;
+      gtb->gtb_update_cursor = 1;
       return 1;
 
     }
@@ -865,8 +841,10 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
 	gtb->gtb_uc_buffer[x++] = c;
 
     gtb->gtb_uc_len   = x;
-    if(w->glw_class == GLW_TEXT)
+    if(w->glw_class == GLW_TEXT) {
       gtb->gtb_edit_ptr = x;
+      gtb->gtb_update_cursor = 1;
+    }
 
     if(gtb->gtb_status != GTB_ON_QUEUE)
       gtb->gtb_status = GTB_NEED_RERENDER;
