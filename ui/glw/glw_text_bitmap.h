@@ -46,6 +46,9 @@ typedef struct glw_text_bitmap {
 
   unsigned int gtb_texture;
 
+  glw_renderer_t gtb_text_renderer;
+  int gtb_text_renderer_inited;
+
   TAILQ_ENTRY(glw_text_bitmap) gtb_workq_link;
   LIST_ENTRY(glw_text_bitmap) gtb_global_link;
 

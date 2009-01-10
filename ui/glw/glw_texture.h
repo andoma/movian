@@ -83,5 +83,4 @@ void glw_tex_backend_free_loader_resources(glw_texture_t *gt);
 
 void glw_tex_backend_layout(glw_texture_t *gt);
 
-
 #endif /* GLW_TEXTURE_H */

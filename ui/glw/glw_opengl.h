@@ -68,5 +68,8 @@ typedef struct glw_renderer {
 
 #define glw_render_set_post(gr)
 
+#define glw_can_tnpo2(gr) (!!(gr->gr_be.gbr_sysfeatures & GLW_OPENGL_TNPO2))
+
+#define glw_is_tex_inited(n) (*(n) != 0)
 
 #endif /* GLW_OPENGL_H__ */
