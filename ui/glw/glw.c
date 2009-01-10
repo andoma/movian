@@ -28,7 +28,7 @@
 #include "glw_container.h"
 #include "glw_stack.h"
 #include "glw_text_bitmap.h"
-#include "glw_bitmap.h"
+#include "glw_image.h"
 #include "glw_array.h"
 #include "glw_cursor.h"
 #include "glw_rotator.h"
@@ -51,7 +51,7 @@ static const size_t glw_class_to_size[] = {
   [GLW_CONTAINER_Z] = sizeof(glw_t),
   [GLW_STACK_X] = sizeof(glw_t),
   [GLW_STACK_Y] = sizeof(glw_t),
-  [GLW_BITMAP]  = sizeof(glw_bitmap_t),
+  [GLW_IMAGE]  = sizeof(glw_image_t),
   [GLW_LABEL]  = sizeof(glw_text_bitmap_t),
   [GLW_TEXT]  = sizeof(glw_text_bitmap_t),
   [GLW_INTEGER]  = sizeof(glw_text_bitmap_t),
@@ -328,8 +328,8 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
     glw_stack_ctor(w, init, apx);
     break;
 
-  case GLW_BITMAP:
-    glw_bitmap_ctor(w, init, apx);
+  case GLW_IMAGE:
+    glw_image_ctor(w, init, apx);
     break;
 
   case GLW_LABEL:
@@ -426,7 +426,7 @@ glw_create0(glw_root_t *gr, glw_class_t class, va_list ap)
   case GLW_INTEGER:
     w->glw_alignment = GLW_ALIGN_LEFT;
     break;
-  case GLW_BITMAP:
+  case GLW_IMAGE:
     w->glw_alignment = GLW_ALIGN_CENTER;
     break;
   case GLW_STACK_X:

@@ -11,7 +11,7 @@ widget(list_y, {
     PLATE_WIDE(
       widget(container_x, {
 	    
-	widget(bitmap, {
+	widget(image, {
 	  .keepAspect = true;
 	  .source = translate($self.media.type,
 			      [

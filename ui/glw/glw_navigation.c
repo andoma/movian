@@ -115,7 +115,7 @@ find_candidate(glw_t *w, query_t *query)
     break;
 
   case GLW_ANIMATOR:
-  case GLW_BITMAP:
+  case GLW_IMAGE:
   case GLW_MODEL:
     if((c = TAILQ_FIRST(&w->glw_childs)) != NULL)
       find_candidate(c, query);
@@ -230,7 +230,7 @@ glw_navigate(glw_t *w, event_t *e)
     default:
 
     case GLW_ANIMATOR:
-    case GLW_BITMAP:
+    case GLW_IMAGE:
     case GLW_DECK:
     case GLW_MODEL:
       break;

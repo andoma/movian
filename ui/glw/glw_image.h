@@ -1,5 +1,5 @@
 /*
- *  GL Widgets, GLW_BITMAP widget and texture stuff
+ *  GL Widgets, GLW_IMAGE widget and texture stuff
  *  Copyright (C) 2007 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,43 +16,43 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef GLW_BITMAP_H
-#define GLW_BITMAP_H
+#ifndef GLW_IMAGE_H
+#define GLW_IMAGE_H
 
 #include "glw_texture.h"
 
-typedef struct glw_bitmap {
-  glw_t gb_head;
+typedef struct glw_image {
+  glw_t gi_head;
 
-  float gb_alpha_self;
+  float gi_alpha_self;
 
-  float gb_angle;
-  float gb_angle0;
+  float gi_angle;
+  float gi_angle0;
 
-  glw_texture_t *gb_tex;
+  glw_texture_t *gi_tex;
 
-  int gb_border_scaling;
+  int gi_border_scaling;
 
-  float gb_tex_left;
-  float gb_tex_right;
-  float gb_tex_top;
-  float gb_tex_bottom;
+  float gi_tex_left;
+  float gi_tex_right;
+  float gi_tex_top;
+  float gi_tex_bottom;
  
-  int gb_mirror;
+  int gi_mirror;
 
-  int gb_render_initialized;
-  int gb_render_init;
+  int gi_render_initialized;
+  int gi_render_init;
 
-  glw_renderer_t gb_gr;
+  glw_renderer_t gi_gr;
 
-  float gb_saved_scale_x;
-  float gb_saved_scale_y;
+  float gi_saved_scale_x;
+  float gi_saved_scale_y;
 
-  float gb_child_xs;
-  float gb_child_ys;
+  float gi_child_xs;
+  float gi_child_ys;
 
-} glw_bitmap_t;
+} glw_image_t;
 
-void glw_bitmap_ctor(glw_t *w, int init, va_list ap);
+void glw_image_ctor(glw_t *w, int init, va_list ap);
 
-#endif /* GLW_BITMAP_H */
+#endif /* GLW_IMAGE_H */

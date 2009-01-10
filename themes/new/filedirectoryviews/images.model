@@ -2,7 +2,7 @@
 
 widget(container_y, {
 
-  widget(bitmap, {
+  widget(image, {
     .weight = 4;
     .source = $self.focused.url;
     .keepAspect = true;

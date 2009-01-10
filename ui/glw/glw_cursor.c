@@ -21,7 +21,7 @@
 #include <assert.h>
 
 #include "glw.h"
-#include "glw_bitmap.h"
+#include "glw_texture.h"
 #include "glw_cursor.h"
 #include "glw_event.h"
 

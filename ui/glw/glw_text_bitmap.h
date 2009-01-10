@@ -19,8 +19,6 @@
 #ifndef GLW_TEXT_BITMAP_H
 #define GLW_TEXT_BITMAP_H
 
-#include "glw_bitmap.h"
-
 typedef struct glw_text_bitmap_data {
 
   int gtbd_format;

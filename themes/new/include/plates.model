@@ -5,7 +5,7 @@
 
 #define PLATE_SQUARE_MID(BODY)
 {
-  widget(bitmap, {
+  widget(image, {
     .textureCoords = [0.1, 0.1, 0.9, 0.9];
     .source = "theme://images/plate256.png";
     BODY;
@@ -19,7 +19,7 @@
 		   widget(container_y, {
 		     space(1);
 
-		     widget(bitmap, {
+		     widget(image, {
 		       .source = IMAGE;
 		       .keepAspect = true;
 		       .weight = 5.0;
@@ -37,7 +37,7 @@
 
 #define PLATE_WIDE(BODY)
 {
-  widget(bitmap, {
+  widget(image, {
     .source = "theme://images/plate256.png";
     .textureCoords = [0.1, 0.1, 0.9, 0.9];
     BODY;
@@ -53,7 +53,7 @@
     .aspect = ASPECT;
     .alpha = ENABLE;
 
-    widget(bitmap, {
+    widget(image, {
       
       .source = "theme://images/plate256.png";
       .focus = ENABLE;
@@ -66,7 +66,7 @@
       
       widget(container_y, {
 	
-	widget(bitmap, {
+	widget(image, {
 	  .weight = 1.75;
 	  .source = IMAGE;
 	  .keepAspect = true;
@@ -88,7 +88,7 @@
     .aspect = ASPECT;
     .alpha = ENABLE;
 
-    widget(bitmap, {
+    widget(image, {
       
       .source = "theme://images/plate256.png";
       .focus = ENABLE;
@@ -99,7 +99,7 @@
 
       onEvent(enter, EVENTCODE);
       
-      widget(bitmap, {
+      widget(image, {
 	.weight = 1.75;
 	.source = IMAGE;
 	.keepAspect = true;

@@ -91,7 +91,7 @@ SRCS-$(CONFIG_GLW)     += glw.c \
 			glw_navigation.c \
 			glw_texture_loader.c \
 			glw_scaler.c  \
-			glw_bitmap.c \
+			glw_image.c \
 			glw_text_bitmap.c \
 			glw_cursor.c \
 

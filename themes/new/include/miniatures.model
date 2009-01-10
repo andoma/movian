@@ -3,7 +3,7 @@
 
 #define MINIATURE0(TITLE, BODY)
 {
-  widget(bitmap, {
+  widget(image, {
     .focusCursor = true;
     .source = "theme://images/plate256.png";
 
@@ -26,7 +26,7 @@
 #define MINIATURE(TITLE, ICON)
 {
   MINIATURE0(TITLE, 
-	     widget(bitmap, {
+	     widget(image, {
 		 .source = ICON;
 		 .keepAspect = true;
 	       });

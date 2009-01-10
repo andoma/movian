@@ -32,7 +32,6 @@
 
 #include "glw.h"
 #include "glw_text_bitmap.h"
-#include "glw_bitmap.h"
 #include "glw_container.h"
 #include "fileaccess/fa_rawloader.h"
 

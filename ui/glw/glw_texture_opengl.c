@@ -38,7 +38,7 @@
 #include <libavformat/avformat.h>
 
 #include "glw.h"
-#include "glw_bitmap.h"
+#include "glw_image.h"
 #include "glw_scaler.h"
 
 #include "showtime.h"

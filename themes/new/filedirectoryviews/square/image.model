@@ -1,4 +1,4 @@
-widget(bitmap, {
+widget(image, {
   .keepAspect = true;
   .source = "thumb://" + $self.url;
 });

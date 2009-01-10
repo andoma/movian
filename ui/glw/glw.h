@@ -71,7 +71,7 @@ typedef enum {
   GLW_DECK,
   GLW_EXPANDER,
   GLW_ANIMATOR,
-  GLW_BITMAP,
+  GLW_IMAGE,
   GLW_LABEL,
   GLW_TEXT,
   GLW_INTEGER,
@@ -390,8 +390,6 @@ void glw_reaper0(glw_root_t *gr);
 void glw_cond_wait(glw_root_t *gr, hts_cond_t *c);
 
 void glw_detach0(glw_t *w);
-
-const char *glw_bitmap_get_filename(glw_t *w);
 
 void glw_lock(glw_root_t *gr);
 

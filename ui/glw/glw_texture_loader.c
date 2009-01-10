@@ -26,8 +26,8 @@
 #include <stdio.h>
 
 #include "glw.h"
-#include "glw_bitmap.h"
 #include "showtime.h"
+#include "glw_texture.h"
 
 static void glw_tex_deref_locked(glw_root_t *gr, glw_texture_t *gt);
 
