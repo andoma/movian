@@ -411,3 +411,57 @@ texture_load_rescale_swscale(AVCodecContext *ctx, AVFrame *frame,
   
   sws_freeContext(sws);
 }
+
+/**
+ *
+ */
+void
+glw_tex_upload(glw_backend_texture_t *tex, const void *src, int fmt,
+	       int width, int height)
+{
+  int format;
+  int ext_format;
+  int ext_type;
+
+  if(*tex == 0) {
+    glGenTextures(1, tex);
+    glBindTexture(GL_TEXTURE_2D, *tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    
+  } else {
+    glBindTexture(GL_TEXTURE_2D, *tex);
+  }
+  
+  switch(fmt) {
+  case GLW_TEXTURE_FORMAT_I4A4:
+    format     = GL_LUMINANCE4_ALPHA4;
+    ext_format = GL_LUMINANCE_ALPHA;
+    ext_type   = GL_UNSIGNED_BYTE;
+    break;
+  case GLW_TEXTURE_FORMAT_I8:
+    format     = GL_ALPHA8;
+    ext_format = GL_ALPHA;
+    ext_type   = GL_UNSIGNED_BYTE;
+    break;
+  default:
+    return;
+  }
+
+  glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0,
+	       ext_format, ext_type, src);
+}
+
+
+/**
+ *
+ */
+void
+glw_tex_destroy(glw_backend_texture_t *tex)
+{
+  if(*tex != 0)
+    glDeleteTextures(1, tex);
+}

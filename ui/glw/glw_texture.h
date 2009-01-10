@@ -67,8 +67,6 @@ void glw_tex_is_active(glw_root_t *gr, glw_loadable_texture_t *glt);
 
 void glw_tex_autoflush(glw_root_t *gr);
 
-void glw_tex_upload(glw_loadable_texture_t *glt);
-
 void glw_tex_flush_all(glw_root_t *gr);
 
 
@@ -82,5 +80,13 @@ void glw_tex_backend_free_render_resources(glw_loadable_texture_t *glt);
 void glw_tex_backend_free_loader_resources(glw_loadable_texture_t *glt);
 
 void glw_tex_backend_layout(glw_loadable_texture_t *glt);
+
+#define GLW_TEXTURE_FORMAT_I8    1
+#define GLW_TEXTURE_FORMAT_I4A4  2
+
+void glw_tex_upload(glw_backend_texture_t *tex, const void *src, int format,
+		    int width, int height);
+
+void glw_tex_destroy(glw_backend_texture_t *tex);
 
 #endif /* GLW_TEXTURE_H */
