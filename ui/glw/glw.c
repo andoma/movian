@@ -416,7 +416,27 @@ glw_create0(glw_root_t *gr, glw_class_t class, va_list ap)
   w->glw_col.g = 1.0f;
   w->glw_col.b = 1.0f;
   w->glw_time = 1.0f;
-  w->glw_alignment = GLW_ALIGN_DEFAULT;
+
+  /* XXX: Not good */
+  switch(w->glw_class) {
+  default:
+    break;
+  case GLW_LABEL:
+  case GLW_TEXT:
+  case GLW_INTEGER:
+    w->glw_alignment = GLW_ALIGN_LEFT;
+    break;
+  case GLW_BITMAP:
+    w->glw_alignment = GLW_ALIGN_CENTER;
+    break;
+  case GLW_STACK_X:
+    w->glw_alignment = GLW_ALIGN_LEFT;
+    break;
+  case GLW_STACK_Y:
+    w->glw_alignment = GLW_ALIGN_TOP;
+    break;
+  }
+
   LIST_INSERT_HEAD(&gr->gr_active_dummy_list, w, glw_active_link);
 
   TAILQ_INIT(&w->glw_childs);
@@ -1166,3 +1186,11 @@ glw_rescale(glw_rctx_t *rc, float t_aspect)
   }
 }
 
+const glw_vertex_t align_vertices[] = 
+  {
+    [GLW_ALIGN_CENTER] = {  0.0,  0.0, 0.0 },
+    [GLW_ALIGN_LEFT]   = { -1.0,  0.0, 0.0 },
+    [GLW_ALIGN_RIGHT]  = {  1.0,  0.0, 0.0 },
+    [GLW_ALIGN_BOTTOM] = {  0.0, -1.0, 0.0 },
+    [GLW_ALIGN_TOP]    = {  0.0,  1.0, 0.0 },
+  };

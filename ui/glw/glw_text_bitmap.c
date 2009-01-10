@@ -386,7 +386,6 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
   switch(w->glw_alignment) {
   case GLW_ALIGN_CENTER:
     break;
-  case GLW_ALIGN_DEFAULT:
   case GLW_ALIGN_LEFT:
     glTranslatef(-1.0, 0.0, 0.0f);
     break;
@@ -428,7 +427,6 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
   switch(w->glw_alignment) {
   case GLW_ALIGN_CENTER:
     break;
-  case GLW_ALIGN_DEFAULT:
   case GLW_ALIGN_LEFT:
     glTranslatef(1.0f, 0.0f, 0.0f);
     break;

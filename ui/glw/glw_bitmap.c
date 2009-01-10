@@ -56,23 +56,7 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
     glw_PushMatrix(&rc0, rc);
 
-    switch(w->glw_alignment) {
-    case GLW_ALIGN_CENTER:
-      break;
-    case GLW_ALIGN_DEFAULT:
-    case GLW_ALIGN_LEFT:
-      glw_Translatef(&rc0, -1.0, 0.0, 0.0f);
-      break;
-    case GLW_ALIGN_RIGHT:
-      glw_Translatef(&rc0, 1.0, 0.0, 0.0f);
-      break;
-    case GLW_ALIGN_BOTTOM:
-      glw_Translatef(&rc0, 0.0, -1.0, 0.0f);
-      break;
-    case GLW_ALIGN_TOP:
-      glw_Translatef(&rc0, 0.0, 1.0, 0.0f);
-      break;
-    }
+    glw_align_1(&rc0, w->glw_alignment);
       
     if(w->glw_flags & GLW_KEEP_ASPECT)
       glw_rescale(&rc0, gt->gt_aspect);
@@ -80,23 +64,7 @@ glw_bitmap_render(glw_t *w, glw_rctx_t *rc)
     if(gb->gb_angle != 0)
       glw_Rotatef(&rc0, -gb->gb_angle, 0, 0, 1);
 
-    switch(w->glw_alignment) {
-    case GLW_ALIGN_CENTER:
-      break;
-    case GLW_ALIGN_DEFAULT:
-    case GLW_ALIGN_LEFT:
-      glw_Translatef(&rc0, 1.0f, 0.0f, 0.0f);
-      break;
-    case GLW_ALIGN_RIGHT:
-      glw_Translatef(&rc0, -1.0f, 0.0f, 0.0f);
-      break;
-    case GLW_ALIGN_BOTTOM:
-      glw_Translatef(&rc0, 0.0, 1.0, 0.0f);
-      break;
-    case GLW_ALIGN_TOP:
-      glw_Translatef(&rc0, 0.0, -1.0, 0.0f);
-      break;
-    }
+    glw_align_2(&rc0, w->glw_alignment);
 
     if(glw_is_focusable(w))
       glw_store_matrix(w, &rc0);
@@ -341,7 +309,6 @@ glw_bitmap_ctor(glw_t *w, int init, va_list ap)
   const char *filename = NULL;
 
   if(init) {
-    w->glw_alignment = GLW_ALIGN_CENTER;
     glw_signal_handler_int(w, glw_bitmap_callback);
     gb->gb_alpha_self = 1;
   }

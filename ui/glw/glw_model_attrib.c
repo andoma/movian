@@ -179,7 +179,6 @@ set_float4(glw_model_eval_context_t *ec, const token_attrib_t *a,
 
 
 static struct strtab aligntab[] = {
-  { "default",       GLW_ALIGN_DEFAULT},
   { "center",        GLW_ALIGN_CENTER},
   { "left",          GLW_ALIGN_LEFT},
   { "right",         GLW_ALIGN_RIGHT},

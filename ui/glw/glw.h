@@ -139,7 +139,6 @@ typedef struct glw_rgb {
 } glw_rgb_t;
 
 typedef enum {
-  GLW_ALIGN_DEFAULT,
   GLW_ALIGN_CENTER,
   GLW_ALIGN_LEFT,
   GLW_ALIGN_RIGHT,
@@ -586,6 +585,28 @@ void glw_render_T(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc);
 void glw_render_TS(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc);
 
 void glw_rescale(glw_rctx_t *rc, float t_aspect);
+
+extern const glw_vertex_t align_vertices[];
+
+static inline void
+glw_align_1(glw_rctx_t *rc, glw_alignment_t a)
+{
+  if(a != GLW_ALIGN_CENTER)
+    glw_Translatef(rc, 
+		   align_vertices[a].x, 
+		   align_vertices[a].y, 
+		   align_vertices[a].z);
+}
+
+static inline void
+glw_align_2(glw_rctx_t *rc, glw_alignment_t a)
+{
+  if(a != GLW_ALIGN_CENTER)
+    glw_Translatef(rc, 
+		   -align_vertices[a].x, 
+		   -align_vertices[a].y, 
+		   -align_vertices[a].z);
+}
 
 /**
  * Render interface abstraction
