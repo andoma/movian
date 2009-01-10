@@ -437,7 +437,7 @@ glw_tex_upload(glw_backend_texture_t *tex, const void *src, int fmt,
   }
   
   switch(fmt) {
-  case GLW_TEXTURE_FORMAT_I4A4:
+  case GLW_TEXTURE_FORMAT_I8A8:
     format     = GL_LUMINANCE4_ALPHA4;
     ext_format = GL_LUMINANCE_ALPHA;
     ext_type   = GL_UNSIGNED_BYTE;

@@ -81,8 +81,8 @@ void glw_tex_backend_free_loader_resources(glw_loadable_texture_t *glt);
 
 void glw_tex_backend_layout(glw_loadable_texture_t *glt);
 
-#define GLW_TEXTURE_FORMAT_I8    1
-#define GLW_TEXTURE_FORMAT_I4A4  2
+#define GLW_TEXTURE_FORMAT_I8    1  // [Intensity]
+#define GLW_TEXTURE_FORMAT_I8A8  2  // [Intensity] [Alpha]
 
 void glw_tex_upload(glw_backend_texture_t *tex, const void *src, int format,
 		    int width, int height);

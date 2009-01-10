@@ -293,7 +293,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
     gtbd->gtbd_data = calloc(1, 2 * gtbd->gtbd_stride * target_height);
     paint_shadow(gtbd->gtbd_data, data, gtbd->gtbd_stride, gtbd->gtbd_siz_y);
     free(data);
-    gtbd->gtbd_pixel_format = GLW_TEXTURE_FORMAT_I4A4;
+    gtbd->gtbd_pixel_format = GLW_TEXTURE_FORMAT_I8A8;
 
   } else {
 
