@@ -19,6 +19,8 @@
 #ifndef GLW_TEXTURE_H
 #define GLW_TEXTURE_H
 
+#include <libavcodec/avcodec.h>
+
 typedef struct glw_loadable_texture {
 
   LIST_ENTRY(glw_loadable_texture) glt_global_link;
@@ -73,7 +75,10 @@ void glw_tex_flush_all(glw_root_t *gr);
 /**
  * Backend interface
  */
-int glw_tex_backend_decode(glw_root_t *gr, glw_loadable_texture_t *glt);
+int glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
+			 AVFrame *frame, int pix_fmt,
+			 int src_w, int src_h,
+			 int req_w, int req_h);
 
 void glw_tex_backend_free_render_resources(glw_loadable_texture_t *glt);
 

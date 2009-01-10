@@ -25,7 +25,12 @@
 #include "glw.h"
 #include "glw_texture.h"
 
+#include "showtime.h"
+#include "fileaccess/fa_imageloader.h"
+
 static void glw_tex_deref_locked(glw_root_t *gr, glw_loadable_texture_t *glt);
+
+static int glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt);
 
 
 void
@@ -87,7 +92,7 @@ loader_thread(void *aux)
 
     if(glt->glt_refcnt > 1) {
       hts_mutex_unlock(&gr->gr_tex_mutex);
-      r = glw_tex_backend_decode(gr, glt);
+      r = glw_tex_load(gr, glt);
       hts_mutex_lock(&gr->gr_tex_mutex);
     } else {
       r = 0;
@@ -140,11 +145,70 @@ glw_tex_flush_all(glw_root_t *gr)
   hts_mutex_unlock(&gr->gr_tex_mutex);
 }
 
+/**
+ *
+ */
+static int
+glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
+{
+  fa_image_load_ctrl_t ctrl;
+  AVCodecContext *ctx;
+  AVCodec *codec;
+  AVFrame *frame;
+  int r, got_pic, w, h;
+
+  if(glt->glt_filename == NULL)
+    return -1;
+
+  memset(&ctrl, 0, sizeof(ctrl));
+  ctrl.url = glt->glt_filename;
+  
+  if(fa_imageloader(&ctrl))
+    return -1;
+
+  fflock();
+
+  ctx = avcodec_alloc_context();
+  codec = avcodec_find_decoder(ctrl.codecid);
+  
+  if(avcodec_open(ctx, codec) < 0) {
+    ffunlock();
+    av_free(ctx);
+    free(ctrl.data);
+    return -1;
+  }
+  
+  ffunlock();
+
+  frame = avcodec_alloc_frame();
+
+  r = avcodec_decode_video(ctx, frame, &got_pic, ctrl.data, ctrl.datasize);
+
+  free(ctrl.data);
+
+  if(ctrl.want_thumb && ctrl.got_thumb) {
+    w = 160;
+    h = 160 * ctx->height / ctx->width;
+  } else {
+    w = ctx->width;
+    h = ctx->height;
+  }
+
+  r = glw_tex_backend_load(gr, glt, frame, 
+			   ctx->pix_fmt, ctx->width, ctx->height, w, h);
+
+  av_free(frame);
+
+  fflock();
+  avcodec_close(ctx);
+  ffunlock();
+  av_free(ctx);
+
+  return r;
+}
 
 
-/*****************************************************************************
- *
- *
+/**
  *
  */
 void
@@ -161,7 +225,9 @@ glw_tex_purge(glw_root_t *gr)
   hts_mutex_unlock(&gr->gr_tex_mutex);
 }
 
-
+/**
+ *
+ */
 static void
 glw_tex_deref_locked(glw_root_t *gr, glw_loadable_texture_t *glt)
 {
@@ -183,6 +249,10 @@ glw_tex_deref_locked(glw_root_t *gr, glw_loadable_texture_t *glt)
   TAILQ_INSERT_TAIL(&gr->gr_tex_rel_queue, glt, glt_work_link);
 }
 
+
+/**
+ *
+ */
 void
 glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *glt)
 {
@@ -191,6 +261,10 @@ glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *glt)
   hts_mutex_unlock(&gr->gr_tex_mutex);
 }
 
+
+/**
+ *
+ */
 glw_loadable_texture_t *
 glw_tex_create(glw_root_t *gr, const char *filename)
 {
@@ -216,6 +290,9 @@ glw_tex_create(glw_root_t *gr, const char *filename)
 }
 
 
+/**
+ *
+ */
 static void
 gl_tex_req_load(glw_root_t *gr, glw_loadable_texture_t *glt)
 {
@@ -234,6 +311,10 @@ gl_tex_req_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   hts_mutex_unlock(&gr->gr_tex_mutex);
 }
 
+
+/**
+ *
+ */
 void
 glw_tex_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
 {
