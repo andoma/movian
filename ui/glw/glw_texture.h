@@ -19,55 +19,55 @@
 #ifndef GLW_TEXTURE_H
 #define GLW_TEXTURE_H
 
-typedef struct glw_texture {
+typedef struct glw_loadable_texture {
 
-  LIST_ENTRY(glw_texture) gt_global_link;
-  LIST_ENTRY(glw_texture) gt_flush_link;
-  TAILQ_ENTRY(glw_texture) gt_work_link;
-  int gt_flags;
+  LIST_ENTRY(glw_loadable_texture) glt_global_link;
+  LIST_ENTRY(glw_loadable_texture) glt_flush_link;
+  TAILQ_ENTRY(glw_loadable_texture) glt_work_link;
+  int glt_flags;
 
   enum {
-    GT_STATE_INACTIVE,
-    GT_STATE_LOADING,
-    GT_STATE_VALID,
-    GT_STATE_ERROR,
-  } gt_state;
+    GLT_STATE_INACTIVE,
+    GLT_STATE_LOADING,
+    GLT_STATE_VALID,
+    GLT_STATE_ERROR,
+  } glt_state;
 
-  unsigned int gt_refcnt;
+  unsigned int glt_refcnt;
 
-  float gt_aspect;
+  float glt_aspect;
 
-  glw_backend_texture_t gt_texture;
+  glw_backend_texture_t glt_texture;
 
-  const char *gt_filename;
+  const char *glt_filename;
 
-  void *gt_bitmap;
-  size_t gt_bitmap_size;
-  int gt_xs;
-  int gt_ys;
-  int gt_bpp;
+  void *glt_bitmap;
+  size_t glt_bitmap_size;
+  int glt_xs;
+  int glt_ys;
+  int glt_bpp;
 
-  int gt_format;
-  int gt_ext_format;
-  int gt_ext_type;
+  int glt_format;
+  int glt_ext_format;
+  int glt_ext_type;
 
-} glw_texture_t;
+} glw_loadable_texture_t;
 
 void glw_tex_init(glw_root_t *gr);
 
-glw_texture_t *glw_tex_create(glw_root_t *gr, const char *filename);
+glw_loadable_texture_t *glw_tex_create(glw_root_t *gr, const char *filename);
 
-void glw_tex_deref(glw_root_t *gr, glw_texture_t *ht);
+void glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *ht);
 
-void glw_tex_layout(glw_root_t *gr, glw_texture_t *gt);
+void glw_tex_layout(glw_root_t *gr, glw_loadable_texture_t *glt);
 
 void glw_tex_purge(glw_root_t *gr);
 
-void glw_tex_is_active(glw_root_t *gr, glw_texture_t *gt);
+void glw_tex_is_active(glw_root_t *gr, glw_loadable_texture_t *glt);
 
 void glw_tex_autoflush(glw_root_t *gr);
 
-void glw_tex_upload(glw_texture_t *gt);
+void glw_tex_upload(glw_loadable_texture_t *glt);
 
 void glw_tex_flush_all(glw_root_t *gr);
 
@@ -75,12 +75,12 @@ void glw_tex_flush_all(glw_root_t *gr);
 /**
  * Backend interface
  */
-int glw_tex_backend_decode(glw_root_t *gr, glw_texture_t *gt);
+int glw_tex_backend_decode(glw_root_t *gr, glw_loadable_texture_t *glt);
 
-void glw_tex_backend_free_render_resources(glw_texture_t *gt);
+void glw_tex_backend_free_render_resources(glw_loadable_texture_t *glt);
 
-void glw_tex_backend_free_loader_resources(glw_texture_t *gt);
+void glw_tex_backend_free_loader_resources(glw_loadable_texture_t *glt);
 
-void glw_tex_backend_layout(glw_texture_t *gt);
+void glw_tex_backend_layout(glw_loadable_texture_t *glt);
 
 #endif /* GLW_TEXTURE_H */

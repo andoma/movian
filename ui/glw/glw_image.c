@@ -41,13 +41,13 @@ static void
 glw_image_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_image_t *gi = (void *)w;
-  glw_texture_t *gt = gi->gi_tex;
+  glw_loadable_texture_t *glt = gi->gi_tex;
   float alpha_self = rc->rc_alpha * w->glw_alpha * gi->gi_alpha_self;
   glw_rctx_t rc0;
   glw_t *c;
   float xs, ys;
 
-  if(gt == NULL || gt->gt_state != GT_STATE_VALID)
+  if(glt == NULL || glt->glt_state != GLT_STATE_VALID)
     return;
 
   if(!gi->gi_border_scaling) {
@@ -59,7 +59,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     glw_align_1(&rc0, w->glw_alignment);
       
     if(w->glw_flags & GLW_KEEP_ASPECT)
-      glw_rescale(&rc0, gt->gt_aspect);
+      glw_rescale(&rc0, glt->glt_aspect);
 
     if(gi->gi_angle != 0)
       glw_Rotatef(&rc0, -gi->gi_angle, 0, 0, 1);
@@ -72,7 +72,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     if(alpha_self > 0.01)
       glw_render(&gi->gi_gr, &rc0, 
 		 GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
-		 &gt->gt_texture,
+		 &glt->glt_texture,
 		 w->glw_col.r, w->glw_col.g, w->glw_col.b, alpha_self);
 
    
@@ -90,7 +90,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     if(alpha_self > 0.01)
       glw_render(&gi->gi_gr, rc, 
 		 GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
-		 &gt->gt_texture,
+		 &glt->glt_texture,
 		 w->glw_col.r, w->glw_col.g, w->glw_col.b, alpha_self);
 
     if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
@@ -121,13 +121,13 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
  */
 static void
 glw_image_layout_tesselated(glw_rctx_t *rc, glw_image_t *gi, 
-			     glw_texture_t *gt)
+			    glw_loadable_texture_t *glt)
 {
   float tex[4][2];
   float vex[4][2];
   int x, y, i = 0;
   float a, b;
-  float t_aspect = gt->gt_aspect;
+  float t_aspect = glt->glt_aspect;
 
   gi->gi_saved_scale_x = rc->rc_scale_x;
   gi->gi_saved_scale_y = rc->rc_scale_y;
@@ -219,17 +219,17 @@ static void
 glw_image_layout(glw_t *w, glw_rctx_t *rc)
 {
   glw_image_t *gi = (void *)w;
-  glw_texture_t *gt = gi->gi_tex;
+  glw_loadable_texture_t *glt = gi->gi_tex;
   glw_t *c;
 
   rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, w->glw_exp_req);
 
-  if(gt == NULL)
+  if(glt == NULL)
     return;
 
-  glw_tex_layout(w->glw_root, gt);
+  glw_tex_layout(w->glw_root, glt);
 
-  if(gt->gt_state == GT_STATE_VALID) {
+  if(glt->glt_state == GLT_STATE_VALID) {
     if(gi->gi_render_init == 1) {
       gi->gi_render_init = 0;
 
@@ -254,12 +254,12 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	glw_render_vtx_pos(&gi->gi_gr, 3, -1.0,  1.0, 0.0);
 	glw_render_vtx_st (&gi->gi_gr, 3,  0.0,  0.0);
       } else {
-	glw_image_layout_tesselated(rc, gi, gt);
+	glw_image_layout_tesselated(rc, gi, glt);
       }
     } else if(gi->gi_border_scaling &&
 	      (gi->gi_saved_scale_x != rc->rc_scale_x ||
 	       gi->gi_saved_scale_y != rc->rc_scale_y)) {
-      glw_image_layout_tesselated(rc, gi, gt);
+      glw_image_layout_tesselated(rc, gi, glt);
     }
   }
 

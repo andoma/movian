@@ -48,11 +48,11 @@
  * Free texture (always invoked in main rendering thread)
  */
 void
-glw_tex_backend_free_render_resources(glw_texture_t *gt)
+glw_tex_backend_free_render_resources(glw_loadable_texture_t *glt)
 {
-  if(gt->gt_texture != 0) {
-    glDeleteTextures(1, &gt->gt_texture);
-    gt->gt_texture = 0;
+  if(glt->glt_texture != 0) {
+    glDeleteTextures(1, &glt->glt_texture);
+    glt->glt_texture = 0;
   }
 }
 
@@ -61,11 +61,11 @@ glw_tex_backend_free_render_resources(glw_texture_t *gt)
  * Free resources created by glw_tex_backend_decode()
  */
 void
-glw_tex_backend_free_loader_resources(glw_texture_t *gt)
+glw_tex_backend_free_loader_resources(glw_loadable_texture_t *glt)
 {
-  if(gt->gt_bitmap != NULL) {
-    munmap(gt->gt_bitmap, gt->gt_bitmap_size);
-    gt->gt_bitmap = NULL;
+  if(glt->glt_bitmap != NULL) {
+    munmap(glt->glt_bitmap, glt->glt_bitmap_size);
+    glt->glt_bitmap = NULL;
   }
 }
 
@@ -74,32 +74,32 @@ glw_tex_backend_free_loader_resources(glw_texture_t *gt)
  * Invoked on every frame when status == VALID
  */
 void
-glw_tex_backend_layout(glw_texture_t *gt)
+glw_tex_backend_layout(glw_loadable_texture_t *glt)
 {
   void *p;
   
-  if(gt->gt_texture != 0)
+  if(glt->glt_texture != 0)
     return;
 
-  p = gt->gt_bitmap;
+  p = glt->glt_bitmap;
 
-  glGenTextures(1, &gt->gt_texture);
-  glBindTexture(GL_TEXTURE_2D, gt->gt_texture);
+  glGenTextures(1, &glt->glt_texture);
+  glBindTexture(GL_TEXTURE_2D, glt->glt_texture);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
     
-  glTexImage2D(GL_TEXTURE_2D, 0, gt->gt_format, 
-	       gt->gt_xs, gt->gt_ys,
-	       0, gt->gt_ext_format,
-	       gt->gt_ext_type, p);
+  glTexImage2D(GL_TEXTURE_2D, 0, glt->glt_format, 
+	       glt->glt_xs, glt->glt_ys,
+	       0, glt->glt_ext_format,
+	       glt->glt_ext_type, p);
     
   glBindTexture(GL_TEXTURE_2D, 0);
     
-  if(gt->gt_bitmap != NULL) {
-    munmap(gt->gt_bitmap, gt->gt_bitmap_size);
-    gt->gt_bitmap = NULL;
+  if(glt->glt_bitmap != NULL) {
+    munmap(glt->glt_bitmap, glt->glt_bitmap_size);
+    glt->glt_bitmap = NULL;
   }
 }
 
@@ -136,16 +136,16 @@ int sws_scale(struct SwsContext *context, uint8_t* src[], int srcStride[],
 
 void sws_freeContext(struct SwsContext *swsContext);
 
-static void texture_load_direct(AVFrame *frame, glw_texture_t *gt);
+static void texture_load_direct(AVFrame *frame, glw_loadable_texture_t *glt);
 
 static void texture_load_rescale(AVCodecContext *ctx, AVFrame *frame,
-				 glw_texture_t *gt);
+				 glw_loadable_texture_t *glt);
 
 static void texture_load_rescale_swscale(AVCodecContext *ctx, AVFrame *frame,
-					 glw_texture_t *gt, int pix_fmt);
+					 glw_loadable_texture_t *glt, int pix_fmt);
 
 int
-glw_tex_backend_decode(glw_root_t *gr, glw_texture_t *gt)
+glw_tex_backend_decode(glw_root_t *gr, glw_loadable_texture_t *glt)
 {
   int r, w, h, got_pic, pix_fmt, x, y, i;
   AVCodecContext *ctx;
@@ -157,11 +157,11 @@ glw_tex_backend_decode(glw_root_t *gr, glw_texture_t *gt)
   uint32_t *palette, *u32p;
   uint8_t *map;
 
-  if(gt->gt_filename == NULL)
+  if(glt->glt_filename == NULL)
     return -1;
 
   memset(&ctrl, 0, sizeof(ctrl));
-  ctrl.url = gt->gt_filename;
+  ctrl.url = glt->glt_filename;
   
   if(fa_imageloader(&ctrl))
     return -1;
@@ -203,24 +203,24 @@ glw_tex_backend_decode(glw_root_t *gr, glw_texture_t *gt)
     break;
 
   case PIX_FMT_RGB24:    
-    gt->gt_bpp = 3;
-    gt->gt_format = GL_RGB;
-    gt->gt_ext_format = GL_RGB;
-    gt->gt_ext_type = GL_UNSIGNED_BYTE;
+    glt->glt_bpp = 3;
+    glt->glt_format = GL_RGB;
+    glt->glt_ext_format = GL_RGB;
+    glt->glt_ext_type = GL_UNSIGNED_BYTE;
     break;
 
   case PIX_FMT_RGBA32:
-    gt->gt_bpp = 4;
-    gt->gt_format = GL_RGBA;
-    gt->gt_ext_format = GL_BGRA;
-    gt->gt_ext_type = GL_UNSIGNED_BYTE;
+    glt->glt_bpp = 4;
+    glt->glt_format = GL_RGBA;
+    glt->glt_ext_format = GL_BGRA;
+    glt->glt_ext_type = GL_UNSIGNED_BYTE;
     break;
     
   case PIX_FMT_GRAY8:
-    gt->gt_bpp = 1;
-    gt->gt_format = GL_LUMINANCE;
-    gt->gt_ext_format = GL_LUMINANCE;
-    gt->gt_ext_type = GL_UNSIGNED_BYTE;
+    glt->glt_bpp = 1;
+    glt->glt_format = GL_LUMINANCE;
+    glt->glt_ext_format = GL_LUMINANCE;
+    glt->glt_ext_type = GL_UNSIGNED_BYTE;
     break;
 
   case PIX_FMT_PAL8:
@@ -258,10 +258,10 @@ glw_tex_backend_decode(glw_root_t *gr, glw_texture_t *gt)
     
     pix_fmt = PIX_FMT_RGBA32;
 
-    gt->gt_bpp = 4;
-    gt->gt_format = GL_RGBA;
-    gt->gt_ext_format = GL_BGRA;
-    gt->gt_ext_type = GL_UNSIGNED_BYTE;
+    glt->glt_bpp = 4;
+    glt->glt_format = GL_RGBA;
+    glt->glt_ext_format = GL_BGRA;
+    glt->glt_ext_type = GL_UNSIGNED_BYTE;
 
     break;
   }
@@ -278,7 +278,7 @@ glw_tex_backend_decode(glw_root_t *gr, glw_texture_t *gt)
     h = maxheight;
   }
 
-  gt->gt_aspect = (float)w / (float)h;
+  glt->glt_aspect = (float)w / (float)h;
 
   if(!(gr->gr_be.gbr_sysfeatures & GLW_OPENGL_TNPO2)) {
     /* We lack non-power-of-two texture support, check if we must rescale.
@@ -295,19 +295,19 @@ glw_tex_backend_decode(glw_root_t *gr, glw_texture_t *gt)
 
   need_rescale = w != ctx->width || h != ctx->height;
 
-  gt->gt_xs = w;
-  gt->gt_ys = h;
+  glt->glt_xs = w;
+  glt->glt_ys = h;
 
   frame = frame_B ?: frame_A;
 
   if(need_rescale && !need_format_conv) {
-    texture_load_rescale(ctx, frame, gt);
+    texture_load_rescale(ctx, frame, glt);
   } else
     if(need_rescale || need_format_conv) {
-    texture_load_rescale_swscale(ctx, frame, gt, pix_fmt);
+    texture_load_rescale_swscale(ctx, frame, glt, pix_fmt);
 
   } else {
-    texture_load_direct(frame, gt);
+    texture_load_direct(frame, glt);
   }
 
   fflock();
@@ -329,20 +329,20 @@ glw_tex_backend_decode(glw_root_t *gr, glw_texture_t *gt)
  * format matches one the OpenGL supports by itself)
  */
 static void
-texture_load_direct(AVFrame *frame, glw_texture_t *gt)
+texture_load_direct(AVFrame *frame, glw_loadable_texture_t *glt)
 {
   uint8_t *src, *dst;
-  int w = gt->gt_xs;
-  int h = gt->gt_ys;
+  int w = glt->glt_xs;
+  int h = glt->glt_ys;
 
-  gt->gt_bitmap_size = gt->gt_bpp * gt->gt_xs * gt->gt_ys;
+  glt->glt_bitmap_size = glt->glt_bpp * glt->glt_xs * glt->glt_ys;
 
-  gt->gt_bitmap = mmap(NULL, gt->gt_bitmap_size, PROT_READ | PROT_WRITE,
+  glt->glt_bitmap = mmap(NULL, glt->glt_bitmap_size, PROT_READ | PROT_WRITE,
 		       MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
   src = frame->data[0];
-  dst = gt->gt_bitmap;
-  w *= gt->gt_bpp;
+  dst = glt->glt_bitmap;
+  w *= glt->glt_bpp;
 
   if(frame->linesize[0] != w) {
     while(h--) {
@@ -362,17 +362,17 @@ texture_load_direct(AVFrame *frame, glw_texture_t *gt)
  */
 static void
 texture_load_rescale(AVCodecContext *ctx, AVFrame *frame,
-		     glw_texture_t *gt)
+		     glw_loadable_texture_t *glt)
 {
-  gt->gt_bitmap_size = gt->gt_bpp * gt->gt_xs * gt->gt_ys;
-  gt->gt_bitmap = mmap(NULL, gt->gt_bitmap_size,
+  glt->glt_bitmap_size = glt->glt_bpp * glt->glt_xs * glt->glt_ys;
+  glt->glt_bitmap = mmap(NULL, glt->glt_bitmap_size,
 		       PROT_READ | PROT_WRITE, 
 		       MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
   glw_bitmap_rescale(frame->data[0], ctx->width, ctx->height, 
 		     frame->linesize[0],
-		     gt->gt_bitmap, gt->gt_xs, gt->gt_ys, 
-		     gt->gt_xs * gt->gt_bpp, gt->gt_bpp);
+		     glt->glt_bitmap, glt->glt_xs, glt->glt_ys, 
+		     glt->glt_xs * glt->glt_bpp, glt->glt_bpp);
 }
 
 
@@ -381,32 +381,32 @@ texture_load_rescale(AVCodecContext *ctx, AVFrame *frame,
  */
 static void
 texture_load_rescale_swscale(AVCodecContext *ctx, AVFrame *frame,
-			     glw_texture_t *gt, int pix_fmt)
+			     glw_loadable_texture_t *glt, int pix_fmt)
 {
   AVPicture pic;
   struct SwsContext *sws;
-  int w = gt->gt_xs;
-  int h = gt->gt_ys;
+  int w = glt->glt_xs;
+  int h = glt->glt_ys;
 
   sws = sws_getContext(ctx->width, ctx->height, pix_fmt, 
 		       w, h, PIX_FMT_RGB24,
 		       SWS_BICUBIC, NULL, NULL, NULL);
-  gt->gt_bpp = 3;
-  gt->gt_format = GL_RGB;
-  gt->gt_ext_format = GL_RGB;
-  gt->gt_ext_type = GL_UNSIGNED_BYTE;
+  glt->glt_bpp = 3;
+  glt->glt_format = GL_RGB;
+  glt->glt_ext_format = GL_RGB;
+  glt->glt_ext_type = GL_UNSIGNED_BYTE;
 
-  gt->gt_bitmap_size = gt->gt_bpp * gt->gt_xs * gt->gt_ys;
+  glt->glt_bitmap_size = glt->glt_bpp * glt->glt_xs * glt->glt_ys;
   
-  gt->gt_bitmap = mmap(NULL, gt->gt_bitmap_size, PROT_READ | PROT_WRITE,
+  glt->glt_bitmap = mmap(NULL, glt->glt_bitmap_size, PROT_READ | PROT_WRITE,
 		       MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     
-  pic.data[0] = gt->gt_bitmap;
-  pic.linesize[0] = w * gt->gt_bpp;
+  pic.data[0] = glt->glt_bitmap;
+  pic.linesize[0] = w * glt->glt_bpp;
   
   if(sws_scale(sws, frame->data, frame->linesize, 0, 0,
 	       pic.data, pic.linesize) < 0) {
-    fprintf(stderr, "%s: scaling failed\n", gt->gt_filename);
+    fprintf(stderr, "%s: scaling failed\n", glt->glt_filename);
   }
   
   sws_freeContext(sws);

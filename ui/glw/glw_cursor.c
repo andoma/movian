@@ -79,14 +79,14 @@ glw_cursor_layout_frame(glw_root_t *gr)
 {
   static float v;
   float r;
-  glw_texture_t *gt;
+  glw_loadable_texture_t *glt;
 
-  if(gr->gr_cursor_gt == NULL)
-    gr->gr_cursor_gt = glw_tex_create(gr, "theme://images/cursor.png");
+  if(gr->gr_cursor == NULL)
+    gr->gr_cursor = glw_tex_create(gr, "theme://images/cursor.png");
 
-  gt = gr->gr_cursor_gt;
+  glt = gr->gr_cursor;
 
-  glw_tex_layout(gr, gt);
+  glw_tex_layout(gr, glt);
 
 
 #define F(v) (0.5 + 0.5 * (v))
@@ -146,12 +146,12 @@ glw_cursor_layout_frame(glw_root_t *gr)
 static void
 glw_cursor_draw(glw_root_t *gr, float alpha, float xscale, float yscale)
 {
-  glw_texture_t *gt = gr->gr_cursor_gt;
+  glw_loadable_texture_t *glt = gr->gr_cursor;
   float vex[5][2];
   int x, y;
   float v;
 
-  if(gt == NULL || gt->gt_texture == 0)
+  if(glt == NULL || glt->glt_texture == 0)
     return;
 
   v = yscale;
@@ -173,7 +173,7 @@ glw_cursor_draw(glw_root_t *gr, float alpha, float xscale, float yscale)
 
   alpha = alpha * 0.75;
   
-  glBindTexture(GL_TEXTURE_2D, gt->gt_texture);
+  glBindTexture(GL_TEXTURE_2D, glt->glt_texture);
 
   glBegin(GL_QUADS);
 

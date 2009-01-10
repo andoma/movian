@@ -48,10 +48,10 @@ static void
 glw_fx_texrot_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_fx_texrot_t *fx = (void *)w;
-  glw_texture_t *gt = fx->fx_tex;
+  glw_loadable_texture_t *glt = fx->fx_tex;
   float a = rc->rc_alpha * w->glw_alpha;
 
-  if(gt != NULL && gt->gt_state == GT_STATE_VALID && a > 0.01) {
+  if(glt != NULL && glt->glt_state == GLT_STATE_VALID && a > 0.01) {
 
     glColor4f(1, 1, 1, a);
 
@@ -110,13 +110,13 @@ glw_fx_texrot_init(glw_fx_texrot_t *fx)
  *
  */
 static void
-glw_fx_texrot_render_internal(glw_fx_texrot_t *fx, glw_texture_t *gt)
+glw_fx_texrot_render_internal(glw_fx_texrot_t *fx, glw_loadable_texture_t *glt)
 {
   int i;
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-  glBindTexture(GL_TEXTURE_2D, gt->gt_texture);
+  glBindTexture(GL_TEXTURE_2D, glt->glt_texture);
 
   glColor4f(1.0, 1.0, 1.0, 0.15);
 
@@ -163,7 +163,7 @@ glw_fx_texrot_render_internal(glw_fx_texrot_t *fx, glw_texture_t *gt)
  *
  */
 static void
-glw_fx_texrot_buildtex(glw_fx_texrot_t *fx, glw_texture_t *gt)
+glw_fx_texrot_buildtex(glw_fx_texrot_t *fx, glw_loadable_texture_t *glt)
 {
   int viewport[4];
  
@@ -217,7 +217,7 @@ glw_fx_texrot_buildtex(glw_fx_texrot_t *fx, glw_texture_t *gt)
 
   glClear(GL_COLOR_BUFFER_BIT);
 
-  glw_fx_texrot_render_internal(fx, gt);
+  glw_fx_texrot_render_internal(fx, glt);
 
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
@@ -243,11 +243,11 @@ static void
 glw_fx_texrot_layout(glw_t *w, glw_rctx_t *rc)
 {
   glw_fx_texrot_t *fx = (void *)w;
-  glw_texture_t *gt = fx->fx_tex;
+  glw_loadable_texture_t *glt = fx->fx_tex;
 
-  if(gt != NULL) {
-    glw_tex_layout(w->glw_root, gt);
-    glw_fx_texrot_buildtex(fx, gt);
+  if(glt != NULL) {
+    glw_tex_layout(w->glw_root, glt);
+    glw_fx_texrot_buildtex(fx, glt);
   }
 }
 

@@ -36,7 +36,8 @@ TAILQ_HEAD(glw_queue, glw);
 LIST_HEAD(glw_head, glw);
 LIST_HEAD(glw_event_map_list, glw_event_map);
 LIST_HEAD(glw_prop_sub_list, glw_prop_sub);
-LIST_HEAD(glw_texture_list, glw_texture);
+LIST_HEAD(glw_loadable_texture_list, glw_loadable_texture);
+TAILQ_HEAD(glw_loadable_texture_queue, glw_loadable_texture);
 LIST_HEAD(glw_video_list, glw_video);
 
 
@@ -229,21 +230,19 @@ typedef struct glw_root {
   /**
    * Image/Texture loader
    */
-  struct glw_texture_list gr_tex_active_list;
-  struct glw_texture_list gr_tex_flush_list;
-
   hts_mutex_t gr_tex_mutex;
-  TAILQ_HEAD(, glw_texture) gr_tex_rel_queue;
-
   hts_cond_t gr_tex_load_cond;
-  TAILQ_HEAD(, glw_texture) gr_tex_load_queue[2];
 
-  LIST_HEAD(, glw_texture) gr_tex_list;
+  struct glw_loadable_texture_list gr_tex_active_list;
+  struct glw_loadable_texture_list gr_tex_flush_list;
+  struct glw_loadable_texture_queue gr_tex_rel_queue;
+  struct glw_loadable_texture_queue gr_tex_load_queue[2];
+  struct glw_loadable_texture_list gr_tex_list;
 
   /**
    * Cursor and form
    */
-  struct glw_texture *gr_cursor_gt;
+  struct glw_loadable_texture *gr_cursor;
 
 
   /**

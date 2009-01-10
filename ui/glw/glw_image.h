@@ -29,7 +29,7 @@ typedef struct glw_image {
   float gi_angle;
   float gi_angle0;
 
-  glw_texture_t *gi_tex;
+  glw_loadable_texture_t *gi_tex;
 
   int gi_border_scaling;
 

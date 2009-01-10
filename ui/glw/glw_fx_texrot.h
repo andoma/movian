@@ -43,7 +43,7 @@ struct fxplate {
 typedef struct glw_fx_texrot {
   glw_t w;
 
-  glw_texture_t *fx_tex;
+  glw_loadable_texture_t *fx_tex;
 
   unsigned int fx_fb;
   unsigned int fx_fbtex;

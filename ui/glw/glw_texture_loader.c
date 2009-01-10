@@ -29,15 +29,15 @@
 #include "showtime.h"
 #include "glw_texture.h"
 
-static void glw_tex_deref_locked(glw_root_t *gr, glw_texture_t *gt);
+static void glw_tex_deref_locked(glw_root_t *gr, glw_loadable_texture_t *glt);
 
 
 void
-glw_tex_is_active(glw_root_t *gr, glw_texture_t *gt)
+glw_tex_is_active(glw_root_t *gr, glw_loadable_texture_t *glt)
 {
   hts_mutex_lock(&gr->gr_tex_mutex);
-  LIST_REMOVE(gt, gt_flush_link);
-  LIST_INSERT_HEAD(&gr->gr_tex_active_list, gt, gt_flush_link);
+  LIST_REMOVE(glt, glt_flush_link);
+  LIST_INSERT_HEAD(&gr->gr_tex_active_list, glt, glt_flush_link);
   hts_mutex_unlock(&gr->gr_tex_mutex);
 }
 
@@ -45,18 +45,18 @@ glw_tex_is_active(glw_root_t *gr, glw_texture_t *gt)
 void
 glw_tex_autoflush(glw_root_t *gr)
 {
-  glw_texture_t *gt;
+  glw_loadable_texture_t *glt;
 
   hts_mutex_lock(&gr->gr_tex_mutex);
 
-  while((gt = LIST_FIRST(&gr->gr_tex_flush_list)) != NULL) {
-    assert(gt->gt_filename != NULL);
-    LIST_REMOVE(gt, gt_flush_link);
-    glw_tex_backend_free_render_resources(gt);
-    gt->gt_state = GT_STATE_INACTIVE;
+  while((glt = LIST_FIRST(&gr->gr_tex_flush_list)) != NULL) {
+    assert(glt->glt_filename != NULL);
+    LIST_REMOVE(glt, glt_flush_link);
+    glw_tex_backend_free_render_resources(glt);
+    glt->glt_state = GLT_STATE_INACTIVE;
   }
 
-  LIST_MOVE(&gr->gr_tex_flush_list, &gr->gr_tex_active_list, gt_flush_link);
+  LIST_MOVE(&gr->gr_tex_flush_list, &gr->gr_tex_active_list, glt_flush_link);
   LIST_INIT(&gr->gr_tex_active_list);
 
   hts_mutex_unlock(&gr->gr_tex_mutex);
@@ -69,7 +69,7 @@ static void *
 loader_thread(void *aux)
 {
   glw_root_t *gr = aux;
-  glw_texture_t *gt;
+  glw_loadable_texture_t *glt;
   int r;
 
   hts_mutex_lock(&gr->gr_tex_mutex);
@@ -78,30 +78,30 @@ loader_thread(void *aux)
     
     while(1) {
 
-      if((gt = TAILQ_FIRST(&gr->gr_tex_load_queue[0])) != NULL) {
-	TAILQ_REMOVE(&gr->gr_tex_load_queue[0], gt, gt_work_link);
+      if((glt = TAILQ_FIRST(&gr->gr_tex_load_queue[0])) != NULL) {
+	TAILQ_REMOVE(&gr->gr_tex_load_queue[0], glt, glt_work_link);
 	break;
       }
-      if((gt = TAILQ_FIRST(&gr->gr_tex_load_queue[1])) != NULL) {
-	TAILQ_REMOVE(&gr->gr_tex_load_queue[1], gt, gt_work_link);
+      if((glt = TAILQ_FIRST(&gr->gr_tex_load_queue[1])) != NULL) {
+	TAILQ_REMOVE(&gr->gr_tex_load_queue[1], glt, glt_work_link);
 	break;
       }
       hts_cond_wait(&gr->gr_tex_load_cond, &gr->gr_tex_mutex);
     }
 
-    if(gt->gt_refcnt > 1) {
+    if(glt->glt_refcnt > 1) {
       hts_mutex_unlock(&gr->gr_tex_mutex);
-      r = glw_tex_backend_decode(gr, gt);
+      r = glw_tex_backend_decode(gr, glt);
       hts_mutex_lock(&gr->gr_tex_mutex);
     } else {
       r = 0;
     }
     
-    gt->gt_state =  r < 0 ? GT_STATE_ERROR : GT_STATE_VALID;
+    glt->glt_state =  r < 0 ? GLT_STATE_ERROR : GLT_STATE_VALID;
 
-    LIST_INSERT_HEAD(&gr->gr_tex_active_list, gt, gt_flush_link);
+    LIST_INSERT_HEAD(&gr->gr_tex_active_list, glt, glt_flush_link);
 
-    glw_tex_deref_locked(gr, gt);
+    glw_tex_deref_locked(gr, glt);
   }
 }
 
@@ -131,15 +131,15 @@ glw_tex_init(glw_root_t *gr)
 void
 glw_tex_flush_all(glw_root_t *gr)
 {
-  glw_texture_t *gt;
+  glw_loadable_texture_t *glt;
   hts_mutex_lock(&gr->gr_tex_mutex);
 
-  LIST_FOREACH(gt, &gr->gr_tex_list, gt_global_link) {
-    if(gt->gt_state != GT_STATE_VALID)
+  LIST_FOREACH(glt, &gr->gr_tex_list, glt_global_link) {
+    if(glt->glt_state != GLT_STATE_VALID)
       continue;
-    LIST_REMOVE(gt, gt_flush_link);
-    glw_tex_backend_free_render_resources(gt);
-    gt->gt_state = GT_STATE_INACTIVE;
+    LIST_REMOVE(glt, glt_flush_link);
+    glw_tex_backend_free_render_resources(glt);
+    glt->glt_state = GLT_STATE_INACTIVE;
   }
   hts_mutex_unlock(&gr->gr_tex_mutex);
 }
@@ -154,107 +154,107 @@ glw_tex_flush_all(glw_root_t *gr)
 void
 glw_tex_purge(glw_root_t *gr)
 {
-  glw_texture_t *gt; 
+  glw_loadable_texture_t *glt; 
   hts_mutex_lock(&gr->gr_tex_mutex);
 
-  while((gt = TAILQ_FIRST(&gr->gr_tex_rel_queue)) != NULL) {
-    TAILQ_REMOVE(&gr->gr_tex_rel_queue, gt, gt_work_link);
-    glw_tex_backend_free_render_resources(gt);
-    free(gt);
+  while((glt = TAILQ_FIRST(&gr->gr_tex_rel_queue)) != NULL) {
+    TAILQ_REMOVE(&gr->gr_tex_rel_queue, glt, glt_work_link);
+    glw_tex_backend_free_render_resources(glt);
+    free(glt);
   }
   hts_mutex_unlock(&gr->gr_tex_mutex);
 }
 
 
 static void
-glw_tex_deref_locked(glw_root_t *gr, glw_texture_t *gt)
+glw_tex_deref_locked(glw_root_t *gr, glw_loadable_texture_t *glt)
 {
-  gt->gt_refcnt--;
+  glt->glt_refcnt--;
 
-  if(gt->gt_refcnt > 0)
+  if(glt->glt_refcnt > 0)
     return;
   
-  if(gt->gt_filename != NULL) {
-    if(gt->gt_state == GT_STATE_VALID || gt->gt_state == GT_STATE_ERROR)
-      LIST_REMOVE(gt, gt_flush_link);
+  if(glt->glt_filename != NULL) {
+    if(glt->glt_state == GLT_STATE_VALID || glt->glt_state == GLT_STATE_ERROR)
+      LIST_REMOVE(glt, glt_flush_link);
 
-    LIST_REMOVE(gt, gt_global_link);
-    free((void *)gt->gt_filename);
+    LIST_REMOVE(glt, glt_global_link);
+    free((void *)glt->glt_filename);
   }
   
-  glw_tex_backend_free_loader_resources(gt);
+  glw_tex_backend_free_loader_resources(glt);
 
-  TAILQ_INSERT_TAIL(&gr->gr_tex_rel_queue, gt, gt_work_link);
+  TAILQ_INSERT_TAIL(&gr->gr_tex_rel_queue, glt, glt_work_link);
 }
 
 void
-glw_tex_deref(glw_root_t *gr, glw_texture_t *gt)
+glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *glt)
 {
   hts_mutex_lock(&gr->gr_tex_mutex);
-  glw_tex_deref_locked(gr, gt);
+  glw_tex_deref_locked(gr, glt);
   hts_mutex_unlock(&gr->gr_tex_mutex);
 }
 
-glw_texture_t *
+glw_loadable_texture_t *
 glw_tex_create(glw_root_t *gr, const char *filename)
 {
-  glw_texture_t *gt;
+  glw_loadable_texture_t *glt;
 
   hts_mutex_lock(&gr->gr_tex_mutex);
 
-  LIST_FOREACH(gt, &gr->gr_tex_list, gt_global_link)
-    if(!strcmp(gt->gt_filename, filename))
+  LIST_FOREACH(glt, &gr->gr_tex_list, glt_global_link)
+    if(!strcmp(glt->glt_filename, filename))
       break;
 
-  if(gt == NULL) {
-    gt = calloc(1, sizeof(glw_texture_t));
-    gt->gt_filename = strdup(filename);
-    LIST_INSERT_HEAD(&gr->gr_tex_list, gt, gt_global_link);
-    gt->gt_state = GT_STATE_INACTIVE;
+  if(glt == NULL) {
+    glt = calloc(1, sizeof(glw_loadable_texture_t));
+    glt->glt_filename = strdup(filename);
+    LIST_INSERT_HEAD(&gr->gr_tex_list, glt, glt_global_link);
+    glt->glt_state = GLT_STATE_INACTIVE;
   }
 
-  gt->gt_refcnt++;
+  glt->glt_refcnt++;
 
   hts_mutex_unlock(&gr->gr_tex_mutex);
-  return gt;
+  return glt;
 }
 
 
 static void
-gl_tex_req_load(glw_root_t *gr, glw_texture_t *gt)
+gl_tex_req_load(glw_root_t *gr, glw_loadable_texture_t *glt)
 {
   hts_mutex_lock(&gr->gr_tex_mutex);
-  gt->gt_refcnt++;
+  glt->glt_refcnt++;
 
-  if(!strncmp(gt->gt_filename, "thumb://", 8)) {
-    TAILQ_INSERT_TAIL(&gr->gr_tex_load_queue[1], gt, gt_work_link);
+  if(!strncmp(glt->glt_filename, "thumb://", 8)) {
+    TAILQ_INSERT_TAIL(&gr->gr_tex_load_queue[1], glt, glt_work_link);
   } else {
-    TAILQ_INSERT_TAIL(&gr->gr_tex_load_queue[0], gt, gt_work_link);
+    TAILQ_INSERT_TAIL(&gr->gr_tex_load_queue[0], glt, glt_work_link);
   }
 
-  gt->gt_state = GT_STATE_LOADING;
+  glt->glt_state = GLT_STATE_LOADING;
 
   hts_cond_signal(&gr->gr_tex_load_cond);
   hts_mutex_unlock(&gr->gr_tex_mutex);
 }
 
 void
-glw_tex_layout(glw_root_t *gr, glw_texture_t *gt)
+glw_tex_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
 {
-  switch(gt->gt_state) {
-  case GT_STATE_INACTIVE:
-    gl_tex_req_load(gr, gt);
+  switch(glt->glt_state) {
+  case GLT_STATE_INACTIVE:
+    gl_tex_req_load(gr, glt);
     return;
     
-  case GT_STATE_LOADING:
+  case GLT_STATE_LOADING:
     return;
 
-  case GT_STATE_VALID:
-    glw_tex_backend_layout(gt);
+  case GLT_STATE_VALID:
+    glw_tex_backend_layout(glt);
     /* FALLTHRU */
 
-  case GT_STATE_ERROR:
-    glw_tex_is_active(gr, gt);
+  case GLT_STATE_ERROR:
+    glw_tex_is_active(gr, glt);
     break;
   }
 }
