@@ -1676,6 +1676,7 @@ glwf_float2str(glw_model_eval_context_t *ec, struct token *self)
   token_t *a = eval_pop(ec);
   token_t *r;
   char buf[30];
+  int prec;
 
   if(a == NULL || a->type != TOKEN_FLOAT) {
 
@@ -1688,12 +1689,14 @@ glwf_float2str(glw_model_eval_context_t *ec, struct token *self)
     return glw_model_seterr(ec->ei, self, 
 			    "Invalid first operand to float2str()");
   }
+  
+  prec = 2;
+  if(b != NULL && b->type == TOKEN_FLOAT)
+    prec = b->t_float;
+  if(b != NULL && b->type == TOKEN_INT)
+    prec = b->t_int;
 
-  if(b == NULL || b->type != TOKEN_FLOAT)
-    return glw_model_seterr(ec->ei, self, 
-			    "Invalid second operand to float2str()");
-
-  snprintf(buf, sizeof(buf), "%.*f", (int)b->t_float, a->t_float);
+  snprintf(buf, sizeof(buf), "%.*f", prec, a->t_float);
 
   r = eval_alloc(self, ec, TOKEN_STRING);
   r->t_string = strdup(buf);
