@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 #include <libavutil/base64.h>
 #include <libhts/htsmsg_xml.h>
 
@@ -519,7 +520,7 @@ http_read(void *handle, void *buf, size_t size)
 {
   http_file_t *hf = handle;
   htsbuf_queue_t q;
-  int i;
+  int i, code;
 
   if(size == 0)
     return 0;
@@ -543,19 +544,23 @@ http_read(void *handle, void *buf, size_t size)
 		   hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
 
     tcp_write_queue(hf->hf_fd, &q);
-    http_read_respone(hf);
+    code = http_read_respone(hf);
+    if(code == 206) {
 
-    if(hf->hf_chunked_transfer)
-      return -1; /* Not supported atm */
+      if(hf->hf_chunked_transfer)
+	return -1; /* Not supported atm */
 
-    if(hf->hf_rsize < size)
-      size = hf->hf_rsize;
+      if(hf->hf_rsize < size)
+	size = hf->hf_rsize;
 
-    if(!tcp_read_data(hf->hf_fd, buf, size, &hf->hf_spill)) {
-      hf->hf_pos += size;
-      return size;
+      if(size == 0)
+	return size;
+
+      if(!tcp_read_data(hf->hf_fd, buf, size, &hf->hf_spill)) {
+	hf->hf_pos += size;
+	return size;
+      }
     }
-
     http_disconnect(hf);
     
     if(http_connect(hf))
