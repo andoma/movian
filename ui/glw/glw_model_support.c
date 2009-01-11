@@ -38,13 +38,6 @@ refstr_create(const char *str)
   return r;
 }
 
-refstr_t *
-refstr_dup(refstr_t *r)
-{
-  r->refcnt++;
-  return r;
-}
-
 void
 refstr_unref(refstr_t *r)
 {

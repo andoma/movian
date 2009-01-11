@@ -32,9 +32,15 @@ typedef struct refstr {
 } refstr_t;
 
 refstr_t *refstr_create(const char *str);
-refstr_t *refstr_dup(refstr_t *r);
 void refstr_unref(refstr_t *r);
 const char *refstr_get(refstr_t *r);
+
+static inline refstr_t *
+refstr_dup(refstr_t *r)
+{
+  r->refcnt++;
+  return r;
+}
 
 
 #define GLW_MODEL_ERRORINFO
