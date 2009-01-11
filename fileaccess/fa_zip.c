@@ -40,7 +40,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
 
-static pthread_mutex_t zip_global_mutex;
+static hts_mutex_t zip_global_mutex;
 
 
 LIST_HEAD(zip_file_list, zip_file);
@@ -121,7 +121,7 @@ typedef struct zip_local_file_header {
  */
 typedef struct zip_archive {
 
-  pthread_mutex_t za_mutex;
+  hts_mutex_t za_mutex;
 
   int za_refcount;
   char *za_url;
@@ -376,7 +376,7 @@ zip_archive_load(zip_archive_t *za)
 static void
 zip_archive_unref(zip_archive_t *za)
 {
-  pthread_mutex_lock(&zip_global_mutex);
+  hts_mutex_lock(&zip_global_mutex);
 
   za->za_refcount--;
 
@@ -388,7 +388,7 @@ zip_archive_unref(zip_archive_t *za)
     free(za);
   }
 
-  pthread_mutex_unlock(&zip_global_mutex);
+  hts_mutex_unlock(&zip_global_mutex);
 }
 
 
@@ -400,7 +400,7 @@ zip_archive_find(const char *url)
 {
   zip_archive_t *za;
 
-  pthread_mutex_lock(&zip_global_mutex);
+  hts_mutex_lock(&zip_global_mutex);
 
   LIST_FOREACH(za, &zip_archives, za_link)
     if(!strcasecmp(za->za_url, url))
@@ -408,21 +408,21 @@ zip_archive_find(const char *url)
 
   if(za == NULL) {
     za = calloc(1, sizeof(zip_archive_t));
-    pthread_mutex_init(&za->za_mutex, NULL);
+    hts_mutex_init(&za->za_mutex);
     
     za->za_url = strdup(url);
     LIST_INSERT_HEAD(&zip_archives, za, za_link);
   }
 
   za->za_refcount++;
-  pthread_mutex_unlock(&zip_global_mutex);
+  hts_mutex_unlock(&zip_global_mutex);
 
-  pthread_mutex_lock(&za->za_mutex);
+  hts_mutex_lock(&za->za_mutex);
 
   if(za->za_root == NULL && zip_archive_load(za)) {
     zip_archive_scrub(za);
   }
-  pthread_mutex_unlock(&za->za_mutex);
+  hts_mutex_unlock(&za->za_mutex);
 
   return za;
 }
