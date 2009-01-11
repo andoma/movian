@@ -1678,16 +1678,14 @@ glwf_float2str(glw_model_eval_context_t *ec, struct token *self)
   char buf[30];
   int prec;
 
-  if(a == NULL || a->type != TOKEN_FLOAT) {
-
-    if(a != NULL && a->type == TOKEN_STRING) {
-      r = eval_alloc(self, ec, TOKEN_STRING);
-      r->t_string = strdup(a->t_string);
-      eval_push(ec, r);
-      return 0;
-    }
+  if(a == NULL || b == NULL) {
     return glw_model_seterr(ec->ei, self, 
-			    "Invalid first operand to float2str()");
+			    "Missing operands to float2str()");
+  }
+
+  if(a->type != TOKEN_FLOAT) {
+    eval_push(ec, a);
+    return 0;
   }
   
   prec = 2;
