@@ -13,7 +13,7 @@ SRCS  += arch_${ARCHITECTURE}.c
 #
 VPATH += fileaccess
 SRCS  += fileaccess.c fa_probe.c  fa_imageloader.c fa_rawloader.c
-SRCS  += fa_fs.c fa_rar.c fa_smb.c fa_http.c
+SRCS  += fa_fs.c fa_rar.c fa_smb.c fa_http.c fa_zip.c fa_zlib.c
 
 #
 # Networking

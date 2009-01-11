@@ -1,0 +1,808 @@
+/*
+ *  Functions for exposing zip archives as virtual file systems
+ *  Copyright (C) 2008 Andreas Öman
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * Based on:
+ *
+ * http://www.pkware.com/documents/casestudies/APPNOTE.TXT
+ *
+ */
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <assert.h>
+#include "showtime.h"
+#include "fileaccess.h"
+#include "fa_zlib.h"
+
+
+#ifndef MIN
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
+#ifndef MAX
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
+
+static pthread_mutex_t zip_global_mutex;
+
+
+LIST_HEAD(zip_file_list, zip_file);
+LIST_HEAD(zip_archive_list, zip_archive);
+
+static struct zip_archive_list zip_archives;
+
+/**
+ *
+ */
+typedef struct zip_hdr_disk_trailer {
+  uint8_t magic[4]; /* 0x06054b50 */
+  uint8_t disk[2];
+  uint8_t finaldisk[2];
+  uint8_t entries[2];
+  uint8_t totalentries[2];
+  uint8_t rootsize[4];
+  uint8_t rootoffset[4];
+  uint8_t commentsize[2];
+  uint8_t comment[0];
+} __attribute__((packed)) zip_hdr_disk_trailer_t;
+
+/**
+ *
+ */
+typedef struct zip_hdr_file_header {
+  uint8_t magic[4];
+  uint8_t version_made_by[2];
+  uint8_t version_needed[2];
+  uint8_t gpflags[2];
+  uint8_t method[2];
+  uint8_t last_mod_file_time[2];
+  uint8_t last_mod_file_date[2];
+  uint8_t crc[4];
+  uint8_t compressed_size[4];
+  uint8_t uncompressed_size[4];
+  uint8_t filename_len[2];
+  uint8_t extra_len[2];
+  uint8_t comment_len[2];
+  uint8_t disk_number_start[2];
+  uint8_t attribs_internal[2];
+  uint8_t attribs_external[4];
+  uint8_t lfh_offset[4];
+  uint8_t filename[0];
+
+} __attribute__((packed)) zip_hdr_file_header_t;
+
+/**
+ *
+ */
+typedef struct zip_local_file_header {
+  uint8_t magic[4];
+  uint8_t version_needed[2];
+  uint8_t gpflags[2];
+  uint8_t method[2];
+  uint8_t last_mod_file_time[2];
+  uint8_t last_mod_file_date[2];
+  uint8_t crc[4];
+  uint8_t compressed_size[4];
+  uint8_t uncompressed_size[4];
+  uint8_t filename_len[2];
+  uint8_t extra_len[2];
+} __attribute__((packed)) zip_local_file_header_t;
+
+
+
+
+#define ZIPHDR_GET16(hdr, field) \
+ (((uint16_t)(hdr)->field[1]) << 8 | ((uint16_t)(hdr)->field[0]))
+
+#define ZIPHDR_GET32(hdr, field) \
+ (((uint32_t)(hdr)->field[3] << 24) | ((uint32_t)(hdr)->field[2] << 16) | \
+  ((uint32_t)(hdr)->field[1] << 8)  | ((uint32_t)(hdr)->field[0]       ))
+
+
+/**
+ *
+ */
+typedef struct zip_archive {
+
+  pthread_mutex_t za_mutex;
+
+  int za_refcount;
+  char *za_url;
+  char *za_path;
+
+  fa_protocol_t *za_fap;
+
+  struct zip_file *za_root;
+
+  LIST_ENTRY(zip_archive) za_link;
+} zip_archive_t;
+
+
+/**
+ *
+ */
+typedef struct zip_file {
+  struct zip_file_list zf_files;
+  zip_archive_t *zf_archive;
+
+  char *zf_name;
+  char *zf_fullname;
+
+  int zf_type;
+  int zf_method;
+
+  off_t zf_uncompressed_size;
+  off_t zf_compressed_size;
+  off_t zf_lhpos;
+
+  LIST_ENTRY(zip_file) zf_link;
+} zip_file_t;
+
+
+
+
+/**
+ *
+ */
+static zip_file_t *
+zip_archive_find_file(zip_archive_t *za, zip_file_t *parent,
+		      const char *name, int create)
+{
+  zip_file_t *zf;
+  const char *s, *n = name;
+  char *b;
+  int l;
+
+  s = strchr(name, '/');
+  if(s == NULL)
+    s = strchr(name, '\\');
+  if(s != NULL) {
+    l = s - name;
+    s++;
+    if(*s == 0)
+      return NULL; 
+    n = b = alloca(l + 1);
+    memcpy(b, name, l);
+    b[l] = 0;
+  }
+
+  LIST_FOREACH(zf, &parent->zf_files, zf_link)
+    if(!strcasecmp(n, zf->zf_name))
+      break;
+
+  if(zf == NULL) {
+
+    if(create == 0)
+      return NULL;
+
+    zf = calloc(1, sizeof(zip_file_t));
+    zf->zf_archive = za;
+    zf->zf_name = strdup(n);
+    zf->zf_type = s ? FA_DIR : FA_FILE;
+    LIST_INSERT_HEAD(&parent->zf_files, zf, zf_link);
+  } 
+
+  return s != NULL ? zip_archive_find_file(za, zf, s, create) : zf;
+}
+
+
+
+static void
+zip_archive_destroy_file(zip_file_t *zf)
+{
+  zip_file_t *c;
+
+  while((c = LIST_FIRST(&zf->zf_files)) != NULL)
+    zip_archive_destroy_file(c);
+  
+  if(zf->zf_name != NULL) {
+    free(zf->zf_name);
+    free(zf->zf_fullname);
+    LIST_REMOVE(zf, zf_link);
+  }
+  free(zf);
+}
+
+
+
+static void
+zip_archive_scrub(zip_archive_t *za)
+{
+  if(za->za_root != NULL) {
+    zip_archive_destroy_file(za->za_root);
+    za->za_root = NULL;
+  }
+}
+
+#define TRAILER_SCAN_SIZE 1024
+
+/**
+ *
+ */
+static int
+zip_archive_load(zip_archive_t *za)
+{
+  zip_file_t *zf;
+  const char *url;
+  fa_protocol_t *fap;
+  void *fh;
+  zip_hdr_disk_trailer_t *disktrailer;
+  zip_hdr_file_header_t *fhdr;
+  char *buf, *ptr;
+  size_t scan_size;
+  off_t scan_off, asize;
+  int i, l;
+
+  off_t cds_off;
+  size_t cds_size;
+  char *fname;
+
+  if((url = fa_resolve_proto(za->za_url, &za->za_fap)) == NULL)
+    return -1;
+
+  fap = za->za_fap;
+
+  za->za_path = strdup(url);
+
+  if((fh = fap->fap_open(url)) == NULL)
+    return -1;
+
+  asize = fap->fap_fsize(fh);
+
+  scan_off = asize - TRAILER_SCAN_SIZE;
+  if(scan_off < 0) {
+    scan_size = asize;
+    scan_off = 0;
+  } else {
+    scan_size = TRAILER_SCAN_SIZE;
+  }
+
+  buf = malloc(scan_size);
+
+  fap->fap_seek(fh, scan_off, SEEK_SET);
+
+  if(fap->fap_read(fh, buf, scan_size) != scan_size) {
+    free(buf);
+    fap->fap_close(fh);
+    return -1;
+  }
+
+  cds_size = 0; 
+  cds_off = 0;
+
+  for(i = scan_size - sizeof(zip_hdr_disk_trailer_t); i >= 0; i--) {
+    if(buf[i + 0] == 'P' && buf[i + 1] == 'K' && 
+       buf[i + 2] == 5   && buf[i + 3] == 6) {
+      disktrailer = (void *)buf + i;
+      cds_size = ZIPHDR_GET32(disktrailer, rootsize);
+      cds_off  = ZIPHDR_GET32(disktrailer, rootoffset);
+      break;
+    }
+  }
+
+  if(i == -1) {
+    free(buf);
+    fap->fap_close(fh);
+    return -1;
+  }
+
+  free(buf);
+  if((buf = malloc(cds_size)) == NULL) {
+    fap->fap_close(fh);
+    return -1;
+  }
+
+  fap->fap_seek(fh, cds_off, SEEK_SET);
+
+  if(fap->fap_read(fh, buf, cds_size) != cds_size) {
+    free(buf);
+    fap->fap_close(fh);
+    return -1;
+  }
+
+  za->za_root = calloc(1, sizeof(zip_file_t));
+  za->za_root->zf_type = FA_DIR;
+  za->za_root->zf_archive = za;
+
+
+  ptr = buf;
+  while(cds_size > sizeof(zip_hdr_file_header_t)) {
+
+    fhdr = (zip_hdr_file_header_t *)ptr;
+
+    if(fhdr->magic[0] != 'P' || fhdr->magic[1] != 'K' ||
+       fhdr->magic[2] != 1   || fhdr->magic[3] != 2) {
+      break;
+    }
+    l = ZIPHDR_GET16(fhdr, filename_len);
+    if(l == 0) {
+      break;
+    }
+
+    fname = malloc(l + 1);
+
+    memcpy(fname, fhdr->filename, l);
+    fname[l] = 0;
+
+    if(fname[l - 1] != '/') {
+      /* Not a directory */
+      if((zf = zip_archive_find_file(za, za->za_root, fname, 1)) != NULL) {
+	zf->zf_uncompressed_size = ZIPHDR_GET32(fhdr, uncompressed_size);
+	zf->zf_compressed_size   = ZIPHDR_GET32(fhdr, compressed_size);
+	zf->zf_lhpos             = ZIPHDR_GET32(fhdr, lfh_offset);
+	zf->zf_method            = ZIPHDR_GET16(fhdr, method);
+	
+      }
+    }
+
+    free(fname);
+
+    l = sizeof(zip_hdr_file_header_t) + 
+      ZIPHDR_GET16(fhdr, filename_len) + 
+      ZIPHDR_GET16(fhdr, extra_len) +
+      ZIPHDR_GET16(fhdr, comment_len);
+
+    cds_size -= l;
+    ptr += l;
+  }
+
+  free(buf);
+  fap->fap_close(fh);
+  return 0;
+}
+
+
+
+/**
+ *
+ */
+static void
+zip_archive_unref(zip_archive_t *za)
+{
+  pthread_mutex_lock(&zip_global_mutex);
+
+  za->za_refcount--;
+
+  if(za->za_refcount == 0) {
+    zip_archive_scrub(za);
+    free(za->za_url);
+    free(za->za_path);
+    LIST_REMOVE(za, za_link);
+    free(za);
+  }
+
+  pthread_mutex_unlock(&zip_global_mutex);
+}
+
+
+/**
+ *
+ */
+static zip_archive_t *
+zip_archive_find(const char *url)
+{
+  zip_archive_t *za;
+
+  pthread_mutex_lock(&zip_global_mutex);
+
+  LIST_FOREACH(za, &zip_archives, za_link)
+    if(!strcasecmp(za->za_url, url))
+      break;
+
+  if(za == NULL) {
+    za = calloc(1, sizeof(zip_archive_t));
+    pthread_mutex_init(&za->za_mutex, NULL);
+    
+    za->za_url = strdup(url);
+    LIST_INSERT_HEAD(&zip_archives, za, za_link);
+  }
+
+  za->za_refcount++;
+  pthread_mutex_unlock(&zip_global_mutex);
+
+  pthread_mutex_lock(&za->za_mutex);
+
+  if(za->za_root == NULL && zip_archive_load(za)) {
+    zip_archive_scrub(za);
+  }
+  pthread_mutex_unlock(&za->za_mutex);
+
+  return za;
+}
+
+
+/**
+ *
+ */
+static zip_file_t *
+zip_file_find(const char *url)
+{
+  int l = strlen(url);
+  char *r, *u = alloca(l + 1);
+  zip_archive_t *za;
+  zip_file_t *rf;
+
+  memcpy(u, url, l);
+  u[l] = 0;
+
+  if((r = strrchr(u, '|')) == NULL)
+    return NULL;
+
+  *r++ = 0;
+  if(*r == '/')
+    r++;
+  if(*r == 0)
+    r = NULL;
+
+  za = zip_archive_find(u);
+
+  if(r == NULL)
+    rf = za->za_root;
+  else
+    rf = zip_archive_find_file(za, za->za_root, r, 0);
+
+  if(rf == NULL)
+    zip_archive_unref(za);
+
+  return rf;
+}
+
+/**
+ *
+ */
+static void
+zip_file_unref(zip_file_t *zf)
+{
+  zip_archive_unref(zf->zf_archive);
+}
+
+
+/**
+ *
+ */
+static int
+zip_scandir(fa_dir_t *fd, const char *url)
+{
+  zip_file_t *c, *zf;
+  char buf[512];
+
+  if((zf = zip_file_find(url)) == NULL)
+    return -1;
+  
+  if(zf->zf_type != FA_DIR) {
+    zip_file_unref(zf);
+    return -1;
+  }
+
+  LIST_FOREACH(c, &zf->zf_files, zf_link) {
+    snprintf(buf, sizeof(buf), "zip://%s/%s", url, c->zf_name);
+    fa_dir_add(fd, buf, c->zf_name, c->zf_type);
+  }
+
+  zip_file_unref(zf);
+  return 0;
+}
+
+
+
+
+
+
+/**
+ *
+ */
+typedef struct zip_fh {
+  zip_file_t *zfh_file;
+
+  fa_protocol_t *zfh_reader;
+  void *zfh_reader_opaque;
+
+  int64_t zfh_pos;
+
+  /* Members for accessing original archive */
+  void *zfh_archive_handle;
+  int64_t zfh_archive_pos;
+  int64_t zfh_file_start;
+
+} zip_fh_t;
+
+
+
+/**
+ *
+ */
+static int
+zip_file_read(void *handle, void *buf, size_t size)
+{
+  zip_fh_t *zfh = handle;
+  zip_file_t *zf = zfh->zfh_file;
+  zip_archive_t *za = zf->zf_archive;
+  int64_t wpos;
+  size_t r;
+
+  if(zfh->zfh_pos < 0 || zfh->zfh_pos > zf->zf_compressed_size)
+    return 0;
+
+  if(zfh->zfh_pos + size > zf->zf_compressed_size)
+    size = zf->zf_compressed_size - zfh->zfh_pos;
+
+  assert(size >= 0);
+
+  wpos = zfh->zfh_pos + zfh->zfh_file_start; // Real position in archive
+
+  if(wpos != zfh->zfh_archive_pos) {
+    // Not there, must seek
+    if(za->za_fap->fap_seek(zfh->zfh_archive_handle, wpos, SEEK_SET) != wpos) {
+      // Can't go there in archive, bail out
+      zfh->zfh_archive_pos = -1;
+      return -1;
+    }
+  }
+  
+  r = za->za_fap->fap_read(zfh->zfh_archive_handle, buf, size);
+
+  if(r > 0)
+    zfh->zfh_pos += r;
+  return r;
+}
+
+
+/**
+ *
+ */
+static off_t
+zip_file_seek(void *handle, off_t pos, int whence)
+{
+  zip_fh_t *zfh = handle;
+  zip_file_t *zf = zfh->zfh_file;
+  off_t np;
+
+  switch(whence) {
+  case SEEK_SET:
+    np = pos;
+    break;
+
+  case SEEK_CUR:
+    np = zfh->zfh_pos + pos;
+    break;
+
+  case SEEK_END:
+    np = zf->zf_compressed_size + pos;
+    break;
+
+  default:
+    return -1;
+  }
+
+  if(np < 0)
+    return -1;
+
+  zfh->zfh_pos = np;
+  return np;
+}
+
+/**
+ *
+ */
+static void
+zip_file_close(void *handle)
+{
+  zip_fh_t *zfh = handle;
+  zip_file_t *zf = zfh->zfh_file;
+  zip_archive_t *za = zf->zf_archive;
+  
+  za->za_fap->fap_close(zfh->zfh_archive_handle);
+}
+
+
+/**
+ *
+ */
+static int64_t
+zip_file_fsize(void *handle)
+{
+  zip_fh_t *zfh = handle;
+  zip_file_t *zf = zfh->zfh_file;
+
+  return zf->zf_compressed_size;
+}
+
+
+
+/**
+ * Intermediate FAP for reading into ZIP files
+ */
+static fa_protocol_t zip_file_protocol = {
+  .fap_name = "zipfile",
+  .fap_read  = zip_file_read,
+  .fap_seek  = zip_file_seek,
+  .fap_close = zip_file_close,
+  .fap_fsize = zip_file_fsize,
+};
+
+
+/**
+ *
+ */
+static void *
+zip_open(const char *url)
+{
+  zip_file_t *zf;
+  zip_fh_t *zfh;
+  zip_archive_t *za;
+  zip_local_file_header_t h;
+  fa_protocol_t *fap;
+ 
+  if((zf = zip_file_find(url)) == NULL)
+    return NULL;
+
+  if(zf->zf_type != FA_FILE) {
+    zip_file_unref(zf);
+    return NULL;
+  }
+
+  za = zf->zf_archive;
+  zfh = calloc(1, sizeof(zip_fh_t));
+  zfh->zfh_file = zf;
+
+  fap = za->za_fap;
+
+  if((zfh->zfh_archive_handle = fap->fap_open(za->za_path)) == NULL) {
+    zip_file_unref(zf);
+    free(zfh);
+    return NULL;
+  }
+
+  fap->fap_seek(zfh->zfh_archive_handle, zf->zf_lhpos, SEEK_SET);
+ 
+  if(fap->fap_read(zfh->zfh_archive_handle, &h, sizeof(h)) != sizeof(h))
+    goto bad;
+
+  if(h.magic[0] != 'P' || h.magic[1] != 'K' ||
+     h.magic[2] != 3   || h.magic[3] != 4)
+    goto bad;
+
+  zfh->zfh_file_start = zf->zf_lhpos + sizeof(h) + 
+    ZIPHDR_GET16(&h, filename_len) + ZIPHDR_GET16(&h, extra_len);
+
+  switch(zf->zf_method) {
+  case 0:
+    /* No compression */
+    zfh->zfh_reader_opaque = zfh;
+    zfh->zfh_reader = &zip_file_protocol;
+    break;
+
+  case 8:
+    /* Inflate (zlib) */
+    zfh->zfh_reader_opaque = fa_inflate_init(&zip_file_protocol,
+					     zfh, zf->zf_uncompressed_size);
+    if(zfh->zfh_reader_opaque == NULL)
+      goto bad;
+
+    zfh->zfh_reader = &fa_protocol_inflate;
+    break;
+
+  default:
+    fprintf(stderr, "%s -- Compression method %d not supported\n",
+	    za->za_url, zf->zf_method);
+    /* FALLTHRU */
+  bad:
+    za->za_fap->fap_close(zfh->zfh_archive_handle);
+    zip_file_unref(zf);
+    free(zfh);
+    return NULL;
+  }
+
+  return zfh;
+}
+
+
+/**
+ *
+ */
+
+static void 
+zip_close(void *handle)
+{
+  zip_fh_t *zfh = handle;
+
+  zfh->zfh_reader->fap_close(zfh->zfh_reader_opaque);
+
+  zip_file_unref(zfh->zfh_file); /* za may be destroyed here */
+  free(zfh);
+}
+
+
+/**
+ * Read from file
+ */
+static int
+zip_read(void *handle, void *buf, size_t size)
+{
+  zip_fh_t *zfh = handle;
+
+  return zfh->zfh_reader->fap_read(zfh->zfh_reader_opaque, buf, size);
+}
+
+
+/**
+ * Seek in file
+ */
+static off_t
+zip_seek(void *handle, off_t pos, int whence)
+{
+  zip_fh_t *zfh = handle;
+  return zfh->zfh_reader->fap_seek(zfh->zfh_reader_opaque, pos, whence);
+}
+
+
+/**
+ * Return size of file
+ */
+static off_t
+zip_fsize(void *handle)
+{
+  zip_fh_t *zfh = handle;
+  return zfh->zfh_reader->fap_fsize(zfh->zfh_reader_opaque);
+}
+
+/**
+ * Standard unix stat
+ */
+static int
+zip_stat(const char *url, struct stat *buf)
+{
+  zip_file_t *zf;
+
+  if((zf = zip_file_find(url)) == NULL)
+    return -1;
+
+  memset(buf, 0, sizeof(struct stat));
+
+  buf->st_mode = zf->zf_type == FA_DIR ? S_IFDIR : S_IFREG;
+  buf->st_size = zf->zf_uncompressed_size;
+
+  zip_file_unref(zf);
+  return 0;
+}
+
+
+
+/**
+ *
+ */
+static void
+zip_init(void)
+{
+  hts_mutex_init(&zip_global_mutex);
+}
+
+
+fa_protocol_t fa_protocol_zip = {
+  .fap_init = zip_init,
+  .fap_name = "zip",
+  .fap_scan =  zip_scandir,
+  .fap_open  = zip_open,
+  .fap_close = zip_close,
+  .fap_read  = zip_read,
+  .fap_seek  = zip_seek,
+  .fap_fsize = zip_fsize,
+  .fap_stat  = zip_stat,
+};

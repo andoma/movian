@@ -226,6 +226,7 @@ fileaccess_init(void)
 {
   INITPROTO(fs);
   INITPROTO(rar);
+  INITPROTO(zip);
   INITPROTO(theme);
   INITPROTO(http);
   INITPROTO(webdav);

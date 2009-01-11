@@ -180,6 +180,12 @@ fa_probe_header(prop_t *proproot, fa_protocol_t *fap,
     return FA_ARCHIVE;
   }
 
+  if(pb[0] == 0x50 && pb[1] == 0x4b && pb[2] == 0x03 && pb[3] == 0x04) {
+    if(newurl != NULL)
+      snprintf(newurl, newurlsize, "zip://%s|", url);
+    return FA_ARCHIVE;
+  }
+
   if(!strncasecmp(pb, "[playlist]", 10)) {
     /* Playlist */
     if(proproot != NULL)
