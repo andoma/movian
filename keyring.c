@@ -169,14 +169,10 @@ keyring_lookup(const char *id, char **username, char **password,
 	buf[0] = 0;
       htsmsg_add_str(m, "username", buf);
 
-      printf("username = %s\n", buf);
-
       if(prop_get_string(pass, buf, sizeof(buf)))
 	buf[0] = 0;
 
       htsmsg_add_str(m, "password", buf);
-
-      printf("password = %s\n", buf);
 
       htsmsg_add_msg(keyring, id, m);
 
