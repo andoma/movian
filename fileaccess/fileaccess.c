@@ -91,6 +91,9 @@ fileaccess_scandir(const char *url)
   if((url = fa_resolve_proto(url, &fap)) == NULL)
     return NULL;
 
+  if(fap->fap_scan == NULL)
+    return NULL;
+
   fd = fa_dir_alloc();
   if(fap->fap_scan(fd, url)) {
     fa_dir_free(fd);
