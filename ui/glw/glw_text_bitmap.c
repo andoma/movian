@@ -432,7 +432,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
   glw_PushMatrix(&rc0, rc);
   glw_align_1(&rc0, w->glw_alignment);
 
-  if(gtb->gtb_texture == 0 || gtbd->gtbd_siz_x == 0) {
+  if(gtbd->gtbd_siz_x == 0) {
 
     glw_rescale(&rc0, 1.0);
     glw_Translatef(&rc0, 1.0, 0, 0);
@@ -498,11 +498,8 @@ glw_text_bitmap_dtor(glw_t *w)
 static void
 gtb_flush(glw_text_bitmap_t *gtb)
 {
-  if(gtb->gtb_texture != 0) {
-    glDeleteTextures(1, &gtb->gtb_texture);
-    gtb->gtb_texture = 0;
-    gtb->gtb_status = GTB_NEED_RERENDER;
-  }
+  glw_tex_destroy(&gtb->gtb_texture);
+  gtb->gtb_status = GTB_NEED_RERENDER;
 }
 
 
