@@ -147,7 +147,7 @@ glw_cursor_draw(glw_root_t *gr, glw_cursor_painter_t *gcp,
   float v, alpha;
   glw_renderer_t *r = &gcp->gcp_renderer;
 
-  if(glt->glt_texture == 0)
+  if(!glw_is_tex_inited(&glt->glt_texture))
     return;
 
   v = yscale;
