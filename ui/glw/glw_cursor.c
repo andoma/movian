@@ -143,7 +143,7 @@ glw_cursor_draw(glw_root_t *gr, glw_cursor_painter_t *gcp,
 {
   glw_loadable_texture_t *glt = gr->gr_cursor;
   float vex[5][2];
-  int x, y;
+  int x, y, i = 0;
   float v, alpha;
   glw_renderer_t *r = &gcp->gcp_renderer;
 
@@ -176,38 +176,38 @@ glw_cursor_draw(glw_root_t *gr, glw_cursor_painter_t *gcp,
       if(x > 0 && x < 3 && y > 0 && y < 3)
 	continue;
 
-      glw_render_vts_col(r, v,
+      glw_render_vts_col(r, i,
 			 cursor_red  [y + 1][x + 0], 
 			 cursor_green[y + 1][x + 0], 
 			 cursor_blue [y + 1][x + 0], 
 			 cursor_alpha[y + 1][x + 0] * alpha);
-      glw_render_vtx_pos(r, v++,
+      glw_render_vtx_pos(r, i++,
 			 vex[x + 0][0], vex[y + 1][1], 0.0f);
 
-      glw_render_vts_col(r, v,
+      glw_render_vts_col(r, i,
 			 cursor_red  [y + 1][x + 1], 
 			 cursor_green[y + 1][x + 1], 
 			 cursor_blue [y + 1][x + 1], 
 			 cursor_alpha[y + 1][x + 1] * alpha);
 
-      glw_render_vtx_pos(r, v++,
+      glw_render_vtx_pos(r, i++,
 			 vex[x + 1][0], vex[y + 1][1], 0.0f);
 
-      glw_render_vts_col(r, v,
+      glw_render_vts_col(r, i,
 			 cursor_red  [y + 0][x + 1], 
 			 cursor_green[y + 0][x + 1], 
 			 cursor_blue [y + 0][x + 1], 
 			 cursor_alpha[y + 0][x + 1] * alpha);
-      glw_render_vtx_pos(r, v++,
+      glw_render_vtx_pos(r, i++,
 			 vex[x + 1][0], vex[y + 0][1], 0.0f);
      
-      glw_render_vts_col(r, v,
+      glw_render_vts_col(r, i,
 			 cursor_red  [y + 0][x + 0], 
 			 cursor_green[y + 0][x + 0], 
 			 cursor_blue [y + 0][x + 0], 
 			 cursor_alpha[y + 0][x + 0] * alpha);
 
-      glw_render_vtx_pos(r, v++,
+      glw_render_vtx_pos(r, i++,
 			 vex[x + 0][0], vex[y + 0][1], 0.0f);
     }
   }
