@@ -383,6 +383,8 @@ glw_tex_upload(glw_backend_texture_t *tex, const void *src, int fmt,
 void
 glw_tex_destroy(glw_backend_texture_t *tex)
 {
-  if(*tex != 0)
+  if(*tex != 0) {
     glDeleteTextures(1, tex);
+    *tex = 0;
+  }
 }
