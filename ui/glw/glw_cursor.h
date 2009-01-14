@@ -38,6 +38,9 @@ typedef struct glw_cursor_painter {
   float gcp_scale_y;
   float gcp_scale_y_prim;
 
+  glw_renderer_t gcp_renderer;
+  int            gcp_renderer_inited;
+
 } glw_cursor_painter_t;
 
 

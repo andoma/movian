@@ -138,14 +138,16 @@ glw_cursor_layout_frame(glw_root_t *gr)
  *
  */
 static void
-glw_cursor_draw(glw_root_t *gr, float alpha, float xscale, float yscale)
+glw_cursor_draw(glw_root_t *gr, glw_cursor_painter_t *gcp, 
+		glw_rctx_t *rc, float xscale, float yscale)
 {
   glw_loadable_texture_t *glt = gr->gr_cursor;
   float vex[5][2];
   int x, y;
-  float v;
+  float v, alpha;
+  glw_renderer_t *r = &gcp->gcp_renderer;
 
-  if(glt == NULL || glt->glt_texture == 0)
+  if(glt->glt_texture == 0)
     return;
 
   v = yscale;
@@ -163,53 +165,56 @@ glw_cursor_draw(glw_root_t *gr, float alpha, float xscale, float yscale)
   vex[2][0] =  0.0f;
   vex[3][0] =  1.0f - v * 0.5;
   vex[4][0] =  1.0f + v * 0.5;
-
-
-  alpha = alpha * 0.75;
   
-  glBindTexture(GL_TEXTURE_2D, glt->glt_texture);
+  alpha = rc->rc_alpha;
 
-  glBegin(GL_QUADS);
-
-  /* XXX: replace with drawarray */
+  glw_render_set_pre(r);
 
   for(y = 0; y < 4; y++) {
     for(x = 0; x < 4; x++) {
 
       if(x > 0 && x < 3 && y > 0 && y < 3)
 	continue;
-      
-      glColor4f(cursor_red  [y + 1][x + 0], 
-		cursor_green[y + 1][x + 0], 
-		cursor_blue [y + 1][x + 0], 
-		cursor_alpha[y + 1][x + 0] * alpha);
-      glTexCoord2f(cursor_tex[x + 0], cursor_tex[y + 1]);
-      glVertex3f  (vex[x + 0][0], vex[y + 1][1], 0.0f);
 
-      glColor4f(cursor_red  [y + 1][x + 1], 
-		cursor_green[y + 1][x + 1], 
-		cursor_blue [y + 1][x + 1], 
-		cursor_alpha[y + 1][x + 1] * alpha);
-      glTexCoord2f(cursor_tex[x + 1], cursor_tex[y + 1]);
-      glVertex3f  (vex[x + 1][0], vex[y + 1][1], 0.0f);
+      glw_render_vts_col(r, v,
+			 cursor_red  [y + 1][x + 0], 
+			 cursor_green[y + 1][x + 0], 
+			 cursor_blue [y + 1][x + 0], 
+			 cursor_alpha[y + 1][x + 0] * alpha);
+      glw_render_vtx_pos(r, v++,
+			 vex[x + 0][0], vex[y + 1][1], 0.0f);
 
-      glColor4f(cursor_red  [y + 0][x + 1], 
-		cursor_green[y + 0][x + 1], 
-		cursor_blue [y + 0][x + 1], 
-		cursor_alpha[y + 0][x + 1] * alpha);
-      glTexCoord2f(cursor_tex[x + 1], cursor_tex[y + 0]);
-      glVertex3f  (vex[x + 1][0], vex[y + 0][1], 0.0f);
+      glw_render_vts_col(r, v,
+			 cursor_red  [y + 1][x + 1], 
+			 cursor_green[y + 1][x + 1], 
+			 cursor_blue [y + 1][x + 1], 
+			 cursor_alpha[y + 1][x + 1] * alpha);
 
-      glColor4f(cursor_red  [y + 0][x + 0], 
-		cursor_green[y + 0][x + 0], 
-		cursor_blue [y + 0][x + 0], 
-		cursor_alpha[y + 0][x + 0] * alpha);
-      glTexCoord2f(cursor_tex[x + 0], cursor_tex[y + 0]);
-      glVertex3f  (vex[x + 0][0], vex[y + 0][1], 0.0f);
+      glw_render_vtx_pos(r, v++,
+			 vex[x + 1][0], vex[y + 1][1], 0.0f);
+
+      glw_render_vts_col(r, v,
+			 cursor_red  [y + 0][x + 1], 
+			 cursor_green[y + 0][x + 1], 
+			 cursor_blue [y + 0][x + 1], 
+			 cursor_alpha[y + 0][x + 1] * alpha);
+      glw_render_vtx_pos(r, v++,
+			 vex[x + 1][0], vex[y + 0][1], 0.0f);
+     
+      glw_render_vts_col(r, v,
+			 cursor_red  [y + 0][x + 0], 
+			 cursor_green[y + 0][x + 0], 
+			 cursor_blue [y + 0][x + 0], 
+			 cursor_alpha[y + 0][x + 0] * alpha);
+
+      glw_render_vtx_pos(r, v++,
+			 vex[x + 0][0], vex[y + 0][1], 0.0f);
     }
   }
+  glw_render_set_post(r);
 
-  glEnd();
+  glw_render(r, rc, GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX_COLOR,
+	     &glt->glt_texture, 1, 1, 1, 1);
 }
 
 
@@ -217,10 +222,14 @@ glw_cursor_draw(glw_root_t *gr, float alpha, float xscale, float yscale)
  *
  */
 static void
-gcp_render(glw_root_t *gr, glw_cursor_painter_t *gcp, 
-	   float scale_x, float scale_y)
+gcp_render(glw_root_t *gr, glw_cursor_painter_t *gcp, glw_rctx_t *rc)
 {
   int i;
+
+  float scale_x = rc->rc_scale_x;
+  float scale_y = rc->rc_scale_y;
+
+  glw_rctx_t rc0 = *rc;
 
   for(i = 0; i < 16; i++)
     gcp->gcp_m_prim[i] = GLW_LP(5, gcp->gcp_m_prim[i], gcp->gcp_m[i]);
@@ -229,15 +238,49 @@ gcp_render(glw_root_t *gr, glw_cursor_painter_t *gcp,
   gcp->gcp_scale_x_prim = GLW_LP(5, gcp->gcp_scale_x_prim, gcp->gcp_scale_x);
   gcp->gcp_scale_y_prim = GLW_LP(5, gcp->gcp_scale_y_prim, gcp->gcp_scale_y);
 
-  glPushMatrix();
-  glLoadMatrixf(gcp->gcp_m_prim);
 
-  glw_cursor_draw(gr, gcp->gcp_alpha_prim, 
+  glw_PushMatrix(&rc0, rc);
+
+  glw_LoadMatrixf(&rc0, gcp->gcp_m_prim);
+
+  glw_cursor_draw(gr, gcp, &rc0,
 		  scale_y / (100 * fabs(gcp->gcp_m_prim[0])),
 		  scale_x / (100 * fabs(gcp->gcp_m_prim[5]))
 		  );
-  glPopMatrix();
+  glw_PopMatrix();
 }
+
+/**
+ *
+ */
+static void
+gcp_setup_renderer(glw_cursor_painter_t *gcp)
+{
+  int x, y, v = 0;
+  glw_renderer_t *r = &gcp->gcp_renderer;
+
+  gcp->gcp_renderer_inited = 1;
+
+  glw_render_init(r, 48, GLW_RENDER_ATTRIBS_TEX_COLOR);
+
+  glw_render_set_pre(r);
+
+  for(y = 0; y < 4; y++) {
+    for(x = 0; x < 4; x++) {
+
+      if(x > 0 && x < 3 && y > 0 && y < 3)
+	continue;
+
+      glw_render_vtx_st(r, v++, cursor_tex[x + 0], cursor_tex[y + 1]);
+      glw_render_vtx_st(r, v++, cursor_tex[x + 1], cursor_tex[y + 1]);
+      glw_render_vtx_st(r, v++, cursor_tex[x + 1], cursor_tex[y + 0]);
+      glw_render_vtx_st(r, v++, cursor_tex[x + 0], cursor_tex[y + 0]);
+    }
+  }
+  glw_render_set_post(r);
+}
+
+
 
 
 /**
@@ -250,14 +293,26 @@ glw_cursor_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   glw_cursor_t *gf = (void *)w;
   glw_rctx_t *rc;
   glw_root_t *gr = w->glw_root;
+  glw_cursor_painter_t *gcp = &gf->gcp;
+
 
   switch(signal) {
   default:
     break;
 
+  case GLW_SIGNAL_DTOR:
+    if(gcp->gcp_renderer_inited)
+      glw_render_free(&gcp->gcp_renderer);
+    break;
+
   case GLW_SIGNAL_LAYOUT:
+    gcp = &gf->gcp;
+    gcp->gcp_alpha = 0;
+
+    if(gcp->gcp_renderer_inited == 0)
+      gcp_setup_renderer(gcp);
+
     gf->render_cycle = 0;
-    gf->gcp.gcp_alpha = 0;
 
     if(c != NULL)
       glw_layout0(c, extra);
@@ -275,7 +330,7 @@ glw_cursor_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       glw_render0(c, rc);
 
     if(gf->render_cycle == 0)
-      gcp_render(gr, &gf->gcp, rc->rc_scale_x, rc->rc_scale_y);
+      gcp_render(gr, &gf->gcp, rc);
 
     gf->render_cycle++;
     break;

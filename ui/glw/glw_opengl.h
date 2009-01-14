@@ -51,6 +51,7 @@ typedef GLuint glw_backend_texture_t;
 
 #define glw_Rotatef(rc, a, x, y, z) glRotatef(a, x, y, z)
 
+#define glw_LoadMatrixf(rc, src) glLoadMatrixf(src)
 
 /**
  * Renderer
