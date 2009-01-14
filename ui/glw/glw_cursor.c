@@ -79,15 +79,9 @@ glw_cursor_layout_frame(glw_root_t *gr)
 {
   static float v;
   float r;
-  glw_loadable_texture_t *glt;
-
-  if(gr->gr_cursor == NULL)
-    gr->gr_cursor = glw_tex_create(gr, "theme://images/cursor.png");
-
-  glt = gr->gr_cursor;
+  glw_loadable_texture_t *glt = gr->gr_cursor;
 
   glw_tex_layout(gr, glt);
-
 
 #define F(v) (0.5 + 0.5 * (v))
 
@@ -297,7 +291,13 @@ glw_cursor_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 void 
 glw_cursor_ctor(glw_t *w, int init, va_list ap)
 {
+  glw_root_t *gr = w->glw_root;
+
   if(init) {
+
+    if(gr->gr_cursor == NULL)
+      gr->gr_cursor = glw_tex_create(gr, "theme://images/cursor.png");
+
     glw_signal_handler_int(w, glw_cursor_callback);
   }
 }
