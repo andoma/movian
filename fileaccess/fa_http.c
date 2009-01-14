@@ -394,17 +394,17 @@ authenticate(http_file_t *hf)
  *
  */
 static int
-http_connect(http_file_t *hf)
+http_connect(http_file_t *hf, int probe)
 {
   char errbuf[128];
   int port, code;
   htsbuf_queue_t q;
   int redircount = 0;
 
- reconnect:
-  hf->hf_size = -1;
-  hf->hf_fd = -1;
+  hf->hf_rsize = 0;
 
+ reconnect:
+  hf->hf_fd = -1;
   url_split(NULL, 0, hf->hf_authurl, sizeof(hf->hf_authurl), 
 	    hf->hf_hostname, sizeof(hf->hf_hostname), &port,
 	    hf->hf_path, sizeof(hf->hf_path), hf->hf_url);
@@ -413,8 +413,15 @@ http_connect(http_file_t *hf)
     port = 80;
 
   hf->hf_fd = tcp_connect(hf->hf_hostname, port, errbuf, sizeof(errbuf), 3000);
-  if(hf->hf_fd < 0)
+  if(hf->hf_fd < 0) {
+    hf->hf_size = -1;
     return -1;
+  }
+
+  if(!probe && hf->hf_size != -1)
+    return 0;
+
+  hf->hf_size = -1;
 
   htsbuf_queue_init(&q, 0);
 
@@ -438,6 +445,7 @@ http_connect(http_file_t *hf)
   switch(code) {
   case 200:
     hf->hf_auth_failed = 0;
+    hf->hf_rsize = 0;
     return hf->hf_size < 0 ? -1: 0;
     
   case 301:
@@ -491,7 +499,7 @@ http_open(const char *url)
 
   hf->hf_url = strdup(url);
 
-  if(!http_connect(hf))
+  if(!http_connect(hf, 1))
     return hf;
 
   http_destroy(hf);
@@ -525,27 +533,52 @@ http_read(void *handle, void *buf, size_t size)
   if(size == 0)
     return 0;
 
+  /* Max 5 retries */
   for(i = 0; i < 5; i++) {
 
-    htsbuf_queue_init(&q, 0);
+    /* If not connected, try to (re-)connect */
+    if(hf->hf_fd == -1 && http_connect(hf, 0))
+      return -1;
 
-    htsbuf_qprintf(&q, 
-		   "GET %s HTTP/1.1\r\n"
-		   "Accept: */*\r\n"
-		   "User-Agent: Showtime %s\r\n"
-		   "Host: %s\r\n"
-		   "Range: bytes=%"PRId64"-%"PRId64"\r\n"
-		   "%s%s"
-		   "\r\n",
-		   hf->hf_path,
-		   htsversion,
-		   hf->hf_hostname,
-		   hf->hf_pos, hf->hf_pos + size - 1,
-		   hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
+    if(hf->hf_rsize > 0) {
+      /* We have pending data input on the socket */
 
-    tcp_write_queue(hf->hf_fd, &q);
-    code = http_read_respone(hf);
-    if(code == 206) {
+      if(hf->hf_rsize < size)
+	/* We can not read more data than is available */
+	size = hf->hf_rsize;
+
+    } else {
+
+      /* Must send a new request */
+
+      htsbuf_queue_init(&q, 0);
+
+      htsbuf_qprintf(&q, 
+		     "GET %s HTTP/1.1\r\n"
+		     "Accept: */*\r\n"
+		     "User-Agent: Showtime %s\r\n"
+		     "Host: %s\r\n"
+		     "%s%s",
+		     hf->hf_path,
+		     htsversion,
+		     hf->hf_hostname,
+		     hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
+
+      if(size > 1024) {
+	htsbuf_qprintf(&q, "Range: bytes=%"PRId64"-\r\n\r\n", hf->hf_pos);
+      } else {
+	htsbuf_qprintf(&q, 
+		       "Range: bytes=%"PRId64"-%"PRId64"\r\n\r\n", 
+		       hf->hf_pos, hf->hf_pos + size - 1);
+      }
+
+      tcp_write_queue(hf->hf_fd, &q);
+      code = http_read_respone(hf);
+
+      if(code != 206) {
+	http_disconnect(hf);
+	continue; // Try again
+      }
 
       if(hf->hf_chunked_transfer)
 	return -1; /* Not supported atm */
@@ -555,17 +588,15 @@ http_read(void *handle, void *buf, size_t size)
 
       if(size == 0)
 	return size;
-
-      if(!tcp_read_data(hf->hf_fd, buf, size, &hf->hf_spill)) {
-	hf->hf_pos += size;
-	return size;
-      }
     }
-    http_disconnect(hf);
-    
-    if(http_connect(hf))
-      return -1;
+
+    if(!tcp_read_data(hf->hf_fd, buf, size, &hf->hf_spill)) {
+      hf->hf_pos   += size;
+      hf->hf_rsize -= size;
+      return size;
+    }
   }
+  http_disconnect(hf);
   return -1;
 }
 
@@ -598,7 +629,14 @@ http_seek(void *handle, int64_t pos, int whence)
   if(np < 0)
     return -1;
 
-  hf->hf_pos = np;
+
+  if(hf->hf_pos != np) {
+
+    if(hf->hf_rsize != 0)  // We've data pending on socket, disconnect
+      http_disconnect(hf);
+    hf->hf_pos = np;
+  }
+
   return np;
 }
 
