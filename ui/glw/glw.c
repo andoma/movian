@@ -739,18 +739,6 @@ glw_get_next_n_all(glw_t *c, int count)
 }
 
 
-int
-glw_signal0(glw_t *w, glw_signal_t sig, void *extra)
-{
-  glw_signal_handler_t *gsh, *next;
-  for(gsh = LIST_FIRST(&w->glw_signal_handlers); gsh != NULL; gsh = next) {
-    next = LIST_NEXT(gsh, gsh_link);
-    if(gsh->gsh_func(w, gsh->gsh_opaque, sig, extra))
-      return 1;
-  }
-  return 0;
-}
-
 /**
  *
  */

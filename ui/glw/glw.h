@@ -514,6 +514,20 @@ do {						\
 } while(0)
 
 
+
+static inline int
+glw_signal0(glw_t *w, glw_signal_t sig, void *extra)
+{
+  glw_signal_handler_t *gsh, *next;
+  for(gsh = LIST_FIRST(&w->glw_signal_handlers); gsh != NULL; gsh = next) {
+    next = LIST_NEXT(gsh, gsh_link);
+    if(gsh->gsh_func(w, gsh->gsh_opaque, sig, extra))
+      return 1;
+  }
+  return 0;
+}
+
+
 void glw_render0(glw_t *w, glw_rctx_t *rc);
 
 void glw_layout0(glw_t *w, glw_rctx_t *rc);
