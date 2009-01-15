@@ -163,7 +163,7 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   memset(&ctrl, 0, sizeof(ctrl));
   ctrl.url = glt->glt_filename;
   
-  if(fa_imageloader(&ctrl))
+  if(fa_imageloader(&ctrl, gr->gr_theme))
     return -1;
 
   fflock();

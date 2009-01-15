@@ -205,6 +205,8 @@ typedef enum {
 typedef struct glw_root {
   uii_t gr_uii;
 
+  char *gr_theme;
+
   hts_thread_t gr_thread;
   hts_mutex_t gr_mutex;
   prop_courier_t *gr_courier;

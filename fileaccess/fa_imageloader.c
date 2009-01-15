@@ -47,7 +47,7 @@ static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
  *
  */
 int
-fa_imageloader(fa_image_load_ctrl_t *ctrl)
+fa_imageloader(fa_image_load_ctrl_t *ctrl, const char *theme)
 {
   fa_handle_t *fh;
   const char *filename = ctrl->url;
@@ -60,7 +60,7 @@ fa_imageloader(fa_image_load_ctrl_t *ctrl)
     ctrl->want_thumb = 1;
   }
 
-  if((fh = fa_open(filename)) == NULL)
+  if((fh = fa_open_theme(filename, theme)) == NULL)
     return -1;
 
   if(fa_read(fh, p, sizeof(p)) != sizeof(p)) {

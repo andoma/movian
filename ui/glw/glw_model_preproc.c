@@ -79,7 +79,8 @@ macro_add_arg(macro_t *m, const char *name)
  *
  */
 static int
-glw_model_preproc0(token_t *p, errorinfo_t *ei, struct macro_list *ml)
+glw_model_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
+		   struct macro_list *ml)
 {
   token_t *t, *n, *x, *a, *b, *c, *d, *e;
   macro_t *m;
@@ -216,7 +217,7 @@ glw_model_preproc0(token_t *p, errorinfo_t *ei, struct macro_list *ml)
 	  return glw_model_seterr(ei, t, "Invalid filename after include");
 
 	x = t->next;
-	if((n = glw_model_load1(t->t_string, ei, t)) == NULL)
+	if((n = glw_model_load1(gr, t->t_string, ei, t)) == NULL)
 	  return -1;
 
 	n->next = x;
@@ -322,7 +323,7 @@ glw_model_preproc0(token_t *p, errorinfo_t *ei, struct macro_list *ml)
  *
  */
 int
-glw_model_preproc(token_t *p, errorinfo_t *ei)
+glw_model_preproc(glw_root_t *gr, token_t *p, errorinfo_t *ei)
 {
   struct macro_list ml;
   macro_t *m;
@@ -330,7 +331,7 @@ glw_model_preproc(token_t *p, errorinfo_t *ei)
   
   LIST_INIT(&ml);
   
-  r = glw_model_preproc0(p, ei, &ml);
+  r = glw_model_preproc0(gr, p, ei, &ml);
   
   while((m = LIST_FIRST(&ml)) != NULL)
     macro_destroy(m);

@@ -47,25 +47,32 @@ static URLProtocol fa_lavf_proto;
  *
  */
 static char *
-fa_resolve_proto(const char *url, fa_protocol_t **p)
+fa_resolve_proto(const char *url, fa_protocol_t **p,
+		 const char *x_proto, const char *x_url)
 {
   fa_protocol_t *fap;
   const char *url0 = url;
-  char proto[30];
+  char buf[100];
   int n = 0;
 
-  while(*url != ':' && *url>31 && n < sizeof(proto) - 1)
-    proto[n++] = *url++;
+  while(*url != ':' && *url>31 && n < sizeof(buf) - 1)
+    buf[n++] = *url++;
 
-  proto[n] = 0;
+  buf[n] = 0;
 
   if(url[0] != ':' || url[1] != '/' || url[2] != '/')
     return NULL;
 
   url += 3;
 
+  if(x_proto != NULL && !strcmp(x_proto, buf)) {
+    snprintf(buf, sizeof(buf), "%s%s%s", 
+	     x_url, x_url[strlen(x_url) - 1] == '/' ? "" : "/", url);
+    return fa_resolve_proto(buf, p, NULL, NULL);
+  }
+
   LIST_FOREACH(fap, &fileaccess_all_protocols, fap_link) {
-    if(strcmp(fap->fap_name, proto))
+    if(strcmp(fap->fap_name, buf))
       continue;
     *p = fap;
     return strdup(fap->fap_flags & FAP_INCLUDE_PROTO_IN_URL ? url0 : url);
@@ -82,7 +89,7 @@ fa_can_handle(const char *url)
   fa_protocol_t *fap;
   char *filename;
 
-  if((filename = fa_resolve_proto(url, &fap)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL)) == NULL)
     return 0;
   free(filename);
   return 1;
@@ -98,7 +105,7 @@ fa_open(const char *url)
   char *filename;
   fa_handle_t *fh;
 
-  if((filename = fa_resolve_proto(url, &fap)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL)) == NULL)
     return NULL;
   
   fh = fap->fap_open(fap, filename);
@@ -107,6 +114,25 @@ fa_open(const char *url)
   return fh;
 }
 
+
+/**
+ *
+ */
+fa_handle_t *
+fa_open_theme(const char *url, const char *themepath)
+{
+  fa_protocol_t *fap;
+  char *filename;
+  fa_handle_t *fh;
+
+  if((filename = fa_resolve_proto(url, &fap, "theme", themepath)) == NULL)
+    return NULL;
+  
+  fh = fap->fap_open(fap, filename);
+  free(filename);
+
+  return fh;
+}
 
 /**
  *
@@ -154,7 +180,7 @@ fa_stat(const char *url, struct stat *buf)
   char *filename;
   int r;
 
-  if((filename = fa_resolve_proto(url, &fap)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL)) == NULL)
     return AVERROR_NOENT;
   
   r = fap->fap_stat(fap, filename, buf);
@@ -175,7 +201,7 @@ fa_scandir(const char *url)
   fa_dir_t *fd;
   char *filename;
 
-  if((filename = fa_resolve_proto(url, &fap)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL)) == NULL)
     return NULL;
 
   if(fap->fap_scan != NULL) {
@@ -296,7 +322,6 @@ fileaccess_init(void)
   INITPROTO(fs);
   INITPROTO(rar);
   INITPROTO(zip);
-  INITPROTO(theme);
   INITPROTO(http);
   INITPROTO(webdav);
 #ifdef HAVE_LIBSMBCLIENT
@@ -319,7 +344,7 @@ fa_lavf_open(URLContext *h, const char *url, int flags)
 
   av_strstart(url, "showtime:", &url);  
 
-  if((filename = fa_resolve_proto(url, &fap)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL)) == NULL)
     return AVERROR_NOENT;
   
   fh = fap->fap_open(fap, filename);

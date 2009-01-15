@@ -960,6 +960,7 @@ glw_x11_start(ui_t *ui, const char *arg)
 {
   glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
   char confname[256];
+  extern char *themepath;
 
   if(arg == NULL) {
 
@@ -976,6 +977,7 @@ glw_x11_start(ui_t *ui, const char *arg)
   }
 
   gx11->config_name = strdup(confname);
+  gx11->gr.gr_theme = strdup(themepath);
 
   gx11->gr.gr_uii.uii_ui = ui;
 

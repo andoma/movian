@@ -53,7 +53,7 @@ int concurrency;
 extern char *htsversion;
 static int stopcode;
 
-const char *themepath = HTS_CONTENT_PATH "/showtime/themes/new";
+const char *themepath = "file://" HTS_CONTENT_PATH "/showtime/themes/new";
 
 static int main_event_handler(event_t *e, void *opaque);
 

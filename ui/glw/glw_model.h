@@ -25,6 +25,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+#include "glw.h"
 
 typedef struct refstr {
   unsigned int refcnt;
@@ -229,7 +230,8 @@ token_t *glw_model_lexer(const char *src, errorinfo_t *ei,
 			 refstr_t *f, token_t *prev);
 
 
-token_t *glw_model_load1(const char *filename, errorinfo_t *ei, token_t *prev);
+token_t *glw_model_load1(glw_root_t *gr, const char *filename,
+			 errorinfo_t *ei, token_t *prev);
 
 int glw_model_parse(token_t *sof, errorinfo_t *ei);
 
@@ -247,7 +249,7 @@ int glw_model_seterr(errorinfo_t *ei, token_t *b, const char *fmt, ...);
 
 int glw_model_eval_block(token_t *t, glw_model_eval_context_t *ec);
 
-int glw_model_preproc(token_t *p, errorinfo_t *ei);
+int glw_model_preproc(glw_root_t *gr, token_t *p, errorinfo_t *ei);
 
 token_t *glw_model_clone_chain(token_t *src);
 

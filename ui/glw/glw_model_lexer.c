@@ -284,13 +284,14 @@ lexer(const char *src, errorinfo_t *ei, refstr_t *f, token_t *prev)
  *
  */
 token_t *
-glw_model_load1(const char *filename, errorinfo_t *ei, token_t *prev)
+glw_model_load1(glw_root_t *gr, const char *filename, 
+		errorinfo_t *ei, token_t *prev)
 {
   const char *src;
   refstr_t *f;
   token_t *last;
 
-  if((src = fa_rawloader(filename, NULL)) == NULL) {
+  if((src = fa_rawloader(filename, NULL, gr->gr_theme)) == NULL) {
     snprintf(ei->error, sizeof(ei->error), "Unable to open \"%s\"", filename);
     snprintf(ei->file,  sizeof(ei->file),  "%s", filename);
     ei->line = 0;

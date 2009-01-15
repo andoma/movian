@@ -86,6 +86,7 @@ typedef struct fa_handle {
 
 fa_dir_t *fa_scandir(const char *url);
 fa_handle_t *fa_open(const char *url);
+fa_handle_t *fa_open_theme(const char *url, const char *themepath);
 void fa_close(fa_handle_t *fh);
 int fa_read(fa_handle_t *fh, void *buf, size_t size);
 int64_t fa_seek(fa_handle_t *fh, int64_t pos, int whence);

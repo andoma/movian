@@ -1045,7 +1045,7 @@ glw_text_bitmap_init(glw_root_t *gr)
     return -1;
   }
 
-  if((r = fa_rawloader(font_variable, &size)) == NULL) {
+  if((r = fa_rawloader(font_variable, &size, gr->gr_theme)) == NULL) {
     fprintf(stderr, "Unable to load font: %s\n", font_variable);
     return -1;
   }

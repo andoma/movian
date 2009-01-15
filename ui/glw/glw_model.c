@@ -59,7 +59,7 @@ glw_model_create2(glw_root_t *gr, token_t *sof, const char *src, glw_t *parent,
   glw_t *r;
   glw_model_eval_context_t ec;
 
-  if((l = glw_model_load1(src, &ei, sof)) == NULL)
+  if((l = glw_model_load1(gr, src, &ei, sof)) == NULL)
     return glw_model_error(gr, &ei, parent);
 
   eof = calloc(1, sizeof(token_t));
@@ -67,7 +67,7 @@ glw_model_create2(glw_root_t *gr, token_t *sof, const char *src, glw_t *parent,
   eof->file = refstr_create(src);
   l->next = eof;
   
-  if(glw_model_preproc(sof, &ei))
+  if(glw_model_preproc(gr, sof, &ei))
     return glw_model_error(gr, &ei, parent);
 
   if(glw_model_parse(sof, &ei))

@@ -28,6 +28,6 @@ typedef struct fa_image_load_ctrl {
   int codecid;              /* LAVC codec id */
 } fa_image_load_ctrl_t;
 
-int fa_imageloader(fa_image_load_ctrl_t *ctrl);
+int fa_imageloader(fa_image_load_ctrl_t *ctrl, const char *theme);
 
 #endif /* FA_IMAGELOADER_H */

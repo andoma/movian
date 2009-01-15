@@ -31,14 +31,14 @@
 #include "fa_rawloader.h"
 
 const void *
-fa_rawloader(const char *filename, size_t *sizeptr)
+fa_rawloader(const char *filename, size_t *sizeptr, const char *theme)
 {
   fa_handle_t *fh;
   size_t size;
   char *data;
   int r;
 
-  if((fh = fa_open(filename)) == NULL)
+  if((fh = fa_open_theme(filename, theme)) == NULL)
     return NULL;
 
   size = fa_fsize(fh);
