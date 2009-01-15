@@ -49,8 +49,7 @@ static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
 int
 fa_imageloader(fa_image_load_ctrl_t *ctrl)
 {
-  fa_protocol_t *fap;
-  void *fh;
+  fa_handle_t *fh;
   const char *filename = ctrl->url;
   char p[16];
   int is_exif = 0;
@@ -61,15 +60,12 @@ fa_imageloader(fa_image_load_ctrl_t *ctrl)
     ctrl->want_thumb = 1;
   }
 
-  if((filename = fa_resolve_proto(filename, &fap)) == NULL)
+  if((fh = fa_open(filename)) == NULL)
     return -1;
 
-  if((fh = fap->fap_open(filename)) == NULL)
-    return -1;
-
-  if(fap->fap_read(fh, p, sizeof(p)) != sizeof(p)) {
+  if(fa_read(fh, p, sizeof(p)) != sizeof(p)) {
     fprintf(stderr, "%s: file too short\n", filename);
-    fap->fap_close(fh);
+    fa_close(fh);
     return -1;
   }
 
@@ -84,7 +80,7 @@ fa_imageloader(fa_image_load_ctrl_t *ctrl)
     ctrl->codecid = CODEC_ID_PNG;
   } else {
     fprintf(stderr, "%s: format not known\n", filename);
-    fap->fap_close(fh);
+    fa_close(fh);
     return -1;
   }
   
@@ -100,7 +96,7 @@ fa_imageloader(fa_image_load_ctrl_t *ctrl)
 
     v = exif_loader_write(l, (unsigned char *)p, sizeof(p));
     while(v) {
-      if((x = fap->fap_read(fh, exifbuf, sizeof(exifbuf))) < 1)
+      if((x = fa_read(fh, exifbuf, sizeof(exifbuf))) < 1)
 	break;
       v = exif_loader_write(l, exifbuf, x);
     }
@@ -109,7 +105,7 @@ fa_imageloader(fa_image_load_ctrl_t *ctrl)
     exif_loader_unref (l);
 
     if(ed != NULL && ed->data != NULL) {
-      fap->fap_close(fh);
+      fa_close(fh);
       ctrl->data = malloc(ed->size);
       memcpy(ctrl->data, ed->data, ed->size);
       ctrl->datasize = ed->size;
@@ -119,14 +115,14 @@ fa_imageloader(fa_image_load_ctrl_t *ctrl)
     }
   }
 #endif
-  fap->fap_seek(fh, SEEK_SET, 0);
+  fa_seek(fh, SEEK_SET, 0);
 
-  ctrl->datasize = fap->fap_fsize(fh);
+  ctrl->datasize = fa_fsize(fh);
   ctrl->data = malloc(ctrl->datasize);
   
-  r = fap->fap_read(fh, ctrl->data, ctrl->datasize);
+  r = fa_read(fh, ctrl->data, ctrl->datasize);
 
-  fap->fap_close(fh);
+  fa_close(fh);
 
   if(r != ctrl->datasize) {
     free(ctrl->data);

@@ -65,8 +65,7 @@ typedef struct be_file_entry {
 static int
 be_file_canhandle(const char *uri)
 {
-  fa_protocol_t *fap;
-  return fa_resolve_proto(uri, &fap) != NULL;
+  return fa_can_handle(uri);
 }
 
 
@@ -120,7 +119,7 @@ scanner(void *aux)
   int images = 0;
 
   TAILQ_INIT(&bfp->bfp_entries);
-  if((fd = fileaccess_scandir(bfp->h.np_uri)) == NULL)
+  if((fd = fa_scandir(bfp->h.np_uri)) == NULL)
     return NULL;
 
   if(fd->fd_count == 0) {
@@ -236,16 +235,9 @@ file_open_file(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
 static int
 be_file_open(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
 {
-  fa_protocol_t *fap;
-  const char *uri;
   struct stat buf;
 
-  if((uri = fa_resolve_proto(uri0, &fap)) == NULL) {
-    snprintf(errbuf, errlen, "Protocol not handled");
-    return -1;
-  }
-
-  if(fap->fap_stat(uri, &buf)) {
+  if(fa_stat(uri0, &buf)) {
     snprintf(errbuf, errlen, "Unable to stat uri");
     return -1;
   }

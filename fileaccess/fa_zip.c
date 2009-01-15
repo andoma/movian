@@ -125,9 +125,6 @@ typedef struct zip_archive {
 
   int za_refcount;
   char *za_url;
-  char *za_path;
-
-  fa_protocol_t *za_fap;
 
   struct zip_file *za_root;
 
@@ -240,9 +237,7 @@ static int
 zip_archive_load(zip_archive_t *za)
 {
   zip_file_t *zf;
-  const char *url;
-  fa_protocol_t *fap;
-  void *fh;
+  fa_handle_t *fh;
   zip_hdr_disk_trailer_t *disktrailer;
   zip_hdr_file_header_t *fhdr;
   char *buf, *ptr;
@@ -254,17 +249,10 @@ zip_archive_load(zip_archive_t *za)
   size_t cds_size;
   char *fname;
 
-  if((url = fa_resolve_proto(za->za_url, &za->za_fap)) == NULL)
+  if((fh = fa_open(za->za_url)) == NULL)
     return -1;
 
-  fap = za->za_fap;
-
-  za->za_path = strdup(url);
-
-  if((fh = fap->fap_open(url)) == NULL)
-    return -1;
-
-  asize = fap->fap_fsize(fh);
+  asize = fa_fsize(fh);
 
   scan_off = asize - TRAILER_SCAN_SIZE;
   if(scan_off < 0) {
@@ -276,11 +264,11 @@ zip_archive_load(zip_archive_t *za)
 
   buf = malloc(scan_size);
 
-  fap->fap_seek(fh, scan_off, SEEK_SET);
+  fa_seek(fh, scan_off, SEEK_SET);
 
-  if(fap->fap_read(fh, buf, scan_size) != scan_size) {
+  if(fa_read(fh, buf, scan_size) != scan_size) {
     free(buf);
-    fap->fap_close(fh);
+    fa_close(fh);
     return -1;
   }
 
@@ -299,21 +287,21 @@ zip_archive_load(zip_archive_t *za)
 
   if(i == -1) {
     free(buf);
-    fap->fap_close(fh);
+    fa_close(fh);
     return -1;
   }
 
   free(buf);
   if((buf = malloc(cds_size)) == NULL) {
-    fap->fap_close(fh);
+    fa_close(fh);
     return -1;
   }
 
-  fap->fap_seek(fh, cds_off, SEEK_SET);
+  fa_seek(fh, cds_off, SEEK_SET);
 
-  if(fap->fap_read(fh, buf, cds_size) != cds_size) {
+  if(fa_read(fh, buf, cds_size) != cds_size) {
     free(buf);
-    fap->fap_close(fh);
+    fa_close(fh);
     return -1;
   }
 
@@ -364,7 +352,7 @@ zip_archive_load(zip_archive_t *za)
   }
 
   free(buf);
-  fap->fap_close(fh);
+  fa_close(fh);
   return 0;
 }
 
@@ -383,7 +371,6 @@ zip_archive_unref(zip_archive_t *za)
   if(za->za_refcount == 0) {
     zip_archive_scrub(za);
     free(za->za_url);
-    free(za->za_path);
     LIST_REMOVE(za, za_link);
     free(za);
   }
@@ -509,10 +496,12 @@ zip_scandir(fa_dir_t *fd, const char *url)
  *
  */
 typedef struct zip_fh {
+  fa_handle_t h;
+
   zip_file_t *zfh_file;
 
-  fa_protocol_t *zfh_reader;
-  void *zfh_reader_opaque;
+  fa_handle_t *zfh_reader_handle;
+  const fa_protocol_t *zfh_reader_proto;
 
   int64_t zfh_pos;
 
@@ -529,11 +518,10 @@ typedef struct zip_fh {
  *
  */
 static int
-zip_file_read(void *handle, void *buf, size_t size)
+zip_file_read(fa_handle_t *handle, void *buf, size_t size)
 {
-  zip_fh_t *zfh = handle;
+  zip_fh_t *zfh = (zip_fh_t *)handle;
   zip_file_t *zf = zfh->zfh_file;
-  zip_archive_t *za = zf->zf_archive;
   int64_t wpos;
   size_t r;
 
@@ -549,14 +537,14 @@ zip_file_read(void *handle, void *buf, size_t size)
 
   if(wpos != zfh->zfh_archive_pos) {
     // Not there, must seek
-    if(za->za_fap->fap_seek(zfh->zfh_archive_handle, wpos, SEEK_SET) != wpos) {
+    if(fa_seek(zfh->zfh_archive_handle, wpos, SEEK_SET) != wpos) {
       // Can't go there in archive, bail out
       zfh->zfh_archive_pos = -1;
       return -1;
     }
   }
   
-  r = za->za_fap->fap_read(zfh->zfh_archive_handle, buf, size);
+  r = fa_read(zfh->zfh_archive_handle, buf, size);
 
   if(r > 0)
     zfh->zfh_pos += r;
@@ -568,9 +556,9 @@ zip_file_read(void *handle, void *buf, size_t size)
  *
  */
 static off_t
-zip_file_seek(void *handle, off_t pos, int whence)
+zip_file_seek(fa_handle_t *handle, off_t pos, int whence)
 {
-  zip_fh_t *zfh = handle;
+  zip_fh_t *zfh = (zip_fh_t *)handle;
   zip_file_t *zf = zfh->zfh_file;
   off_t np;
 
@@ -602,13 +590,10 @@ zip_file_seek(void *handle, off_t pos, int whence)
  *
  */
 static void
-zip_file_close(void *handle)
+zip_file_close(fa_handle_t *handle)
 {
-  zip_fh_t *zfh = handle;
-  zip_file_t *zf = zfh->zfh_file;
-  zip_archive_t *za = zf->zf_archive;
-  
-  za->za_fap->fap_close(zfh->zfh_archive_handle);
+  zip_fh_t *zfh = (zip_fh_t *)handle;
+  fa_close(zfh->zfh_archive_handle);
 }
 
 
@@ -616,9 +601,9 @@ zip_file_close(void *handle)
  *
  */
 static int64_t
-zip_file_fsize(void *handle)
+zip_file_fsize(fa_handle_t *handle)
 {
-  zip_fh_t *zfh = handle;
+  zip_fh_t *zfh = (zip_fh_t *)handle;
   zip_file_t *zf = zfh->zfh_file;
 
   return zf->zf_compressed_size;
@@ -638,17 +623,17 @@ static fa_protocol_t zip_file_protocol = {
 };
 
 
+
 /**
  *
  */
-static void *
-zip_open(const char *url)
+static fa_handle_t *
+zip_open(fa_protocol_t *fap, const char *url)
 {
   zip_file_t *zf;
   zip_fh_t *zfh;
   zip_archive_t *za;
   zip_local_file_header_t h;
-  fa_protocol_t *fap;
  
   if((zf = zip_file_find(url)) == NULL)
     return NULL;
@@ -661,18 +646,17 @@ zip_open(const char *url)
   za = zf->zf_archive;
   zfh = calloc(1, sizeof(zip_fh_t));
   zfh->zfh_file = zf;
+  zfh->h.fh_proto = fap;
 
-  fap = za->za_fap;
-
-  if((zfh->zfh_archive_handle = fap->fap_open(za->za_path)) == NULL) {
+  if((zfh->zfh_archive_handle = fa_open(za->za_url)) == NULL) {
     zip_file_unref(zf);
     free(zfh);
     return NULL;
   }
 
-  fap->fap_seek(zfh->zfh_archive_handle, zf->zf_lhpos, SEEK_SET);
+  fa_seek(zfh->zfh_archive_handle, zf->zf_lhpos, SEEK_SET);
  
-  if(fap->fap_read(zfh->zfh_archive_handle, &h, sizeof(h)) != sizeof(h))
+  if(fa_read(zfh->zfh_archive_handle, &h, sizeof(h)) != sizeof(h))
     goto bad;
 
   if(h.magic[0] != 'P' || h.magic[1] != 'K' ||
@@ -683,20 +667,22 @@ zip_open(const char *url)
     ZIPHDR_GET16(&h, filename_len) + ZIPHDR_GET16(&h, extra_len);
 
   switch(zf->zf_method) {
+
   case 0:
     /* No compression */
-    zfh->zfh_reader_opaque = zfh;
-    zfh->zfh_reader = &zip_file_protocol;
+    zfh->zfh_reader_handle = &zfh->h;
+    zfh->zfh_reader_proto = &zip_file_protocol;
     break;
+
 
   case 8:
     /* Inflate (zlib) */
-    zfh->zfh_reader_opaque = fa_inflate_init(&zip_file_protocol,
-					     zfh, zf->zf_uncompressed_size);
-    if(zfh->zfh_reader_opaque == NULL)
+    zfh->zfh_reader_handle = fa_inflate_init(&zip_file_protocol, &zfh->h,
+					     zf->zf_uncompressed_size);
+    if(zfh->zfh_reader_handle == NULL)
       goto bad;
 
-    zfh->zfh_reader = &fa_protocol_inflate;
+    zfh->zfh_reader_proto = &fa_protocol_inflate;
     break;
 
   default:
@@ -704,13 +690,13 @@ zip_open(const char *url)
 	    za->za_url, zf->zf_method);
     /* FALLTHRU */
   bad:
-    za->za_fap->fap_close(zfh->zfh_archive_handle);
+    fa_close(zfh->zfh_archive_handle);
     zip_file_unref(zf);
     free(zfh);
     return NULL;
   }
 
-  return zfh;
+  return &zfh->h;
 }
 
 
@@ -719,11 +705,11 @@ zip_open(const char *url)
  */
 
 static void 
-zip_close(void *handle)
+zip_close(fa_handle_t *handle)
 {
-  zip_fh_t *zfh = handle;
-
-  zfh->zfh_reader->fap_close(zfh->zfh_reader_opaque);
+  zip_fh_t *zfh = (zip_fh_t *)handle;
+  
+   zfh->zfh_reader_proto->fap_close(zfh->zfh_reader_handle);
 
   zip_file_unref(zfh->zfh_file); /* za may be destroyed here */
   free(zfh);
@@ -734,11 +720,10 @@ zip_close(void *handle)
  * Read from file
  */
 static int
-zip_read(void *handle, void *buf, size_t size)
+zip_read(fa_handle_t *handle, void *buf, size_t size)
 {
-  zip_fh_t *zfh = handle;
-
-  return zfh->zfh_reader->fap_read(zfh->zfh_reader_opaque, buf, size);
+  zip_fh_t *zfh = (zip_fh_t *)handle;
+  return zfh->zfh_reader_proto->fap_read(zfh->zfh_reader_handle, buf, size);
 }
 
 
@@ -746,10 +731,10 @@ zip_read(void *handle, void *buf, size_t size)
  * Seek in file
  */
 static off_t
-zip_seek(void *handle, off_t pos, int whence)
+zip_seek(fa_handle_t *handle, off_t pos, int whence)
 {
-  zip_fh_t *zfh = handle;
-  return zfh->zfh_reader->fap_seek(zfh->zfh_reader_opaque, pos, whence);
+  zip_fh_t *zfh = (zip_fh_t *)handle;
+  return zfh->zfh_reader_proto->fap_seek(zfh->zfh_reader_handle, pos, whence);
 }
 
 
@@ -757,17 +742,17 @@ zip_seek(void *handle, off_t pos, int whence)
  * Return size of file
  */
 static off_t
-zip_fsize(void *handle)
+zip_fsize(fa_handle_t *handle)
 {
-  zip_fh_t *zfh = handle;
-  return zfh->zfh_reader->fap_fsize(zfh->zfh_reader_opaque);
+  zip_fh_t *zfh = (zip_fh_t *)handle;
+  return zfh->zfh_reader_proto->fap_fsize(zfh->zfh_reader_handle);
 }
 
 /**
  * Standard unix stat
  */
 static int
-zip_stat(const char *url, struct stat *buf)
+zip_stat(fa_protocol_t *fap, const char *url, struct stat *buf)
 {
   zip_file_t *zf;
 

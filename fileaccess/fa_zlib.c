@@ -34,10 +34,12 @@
 
 
 typedef struct fa_inflator {
+  fa_handle_t h;
+
   z_stream fi_zstream;
   
-  void *fi_src_handle;
-  fa_protocol_t *fi_src_fap;
+  fa_handle_t *fi_src_handle;
+  const fa_protocol_t *fi_src_fap;
 
   int64_t fi_unc_size;  // Uncompressed size
   int64_t fi_pos;       // Current file position
@@ -58,8 +60,9 @@ typedef struct fa_inflator {
 /**
  *
  */
-void *
-fa_inflate_init(fa_protocol_t *src_fap, void *handle, int64_t unc_size)
+fa_handle_t *
+fa_inflate_init(const fa_protocol_t *src_fap, fa_handle_t *handle,
+		int64_t unc_size)
 {
   fa_inflator_t *fi = calloc(1, sizeof(fa_inflator_t));
 
@@ -74,16 +77,16 @@ fa_inflate_init(fa_protocol_t *src_fap, void *handle, int64_t unc_size)
   
   fi->fi_load_size = 32768;
   fi->fi_buf       = malloc(DECODESIZE);
-  return fi;
+  return &fi->h;
 }
 
 /**
  *
  */
 static void
-inflate_close(void *handle)
+inflate_close(fa_handle_t *handle)
 {
-  fa_inflator_t *fi = handle;
+  fa_inflator_t *fi = (fa_inflator_t *)handle;
 
   fi->fi_src_fap->fap_close(fi->fi_src_handle);
   inflateEnd(&fi->fi_zstream);
@@ -98,9 +101,9 @@ inflate_close(void *handle)
  *
  */
 static int
-inflate_read(void *handle, void *buf, size_t size)
+inflate_read(fa_handle_t *handle, void *buf, size_t size)
 {
-  fa_inflator_t *fi = handle;
+  fa_inflator_t *fi = (fa_inflator_t *)handle;
   int total_read = 0;
   int n, c, r, stream_end = 0;
 
@@ -179,9 +182,9 @@ inflate_read(void *handle, void *buf, size_t size)
  * Seek in file
  */
 static int64_t
-inflate_seek(void *handle, int64_t pos, int whence)
+inflate_seek(fa_handle_t *handle, int64_t pos, int whence)
 {
-  fa_inflator_t *fi = handle;
+  fa_inflator_t *fi = (fa_inflator_t *)handle;
   off_t np;
 
   switch(whence) {
@@ -212,9 +215,9 @@ inflate_seek(void *handle, int64_t pos, int whence)
  *
  */
 static int64_t
-inflate_fsize(void *handle)
+inflate_fsize(fa_handle_t *handle)
 {
-  fa_inflator_t *fi = handle;
+  fa_inflator_t *fi = (fa_inflator_t *)handle;
   return fi->fi_unc_size;
 }
 

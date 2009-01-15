@@ -25,6 +25,9 @@
 
 #include <libhts/htsq.h>
 
+void fileaccess_init(void);
+
+
 TAILQ_HEAD(fa_dir_entry_queue, fa_dir_entry);
 
 /**
@@ -72,41 +75,23 @@ extern struct fa_protocol_list fileaccess_all_protocols;
 #define FA_DVD      7
 #define FA_IMAGE    8
 
-
-typedef void (fa_scandir_callback_t)(void *arg, const char *url,
-				     const char *filename, int type);
-
 /**
- * File access protocol
+ *
  */
-typedef struct fa_protocol {
-
-  int fap_flags;
-#define FAP_INCLUDE_PROTO_IN_URL 0x1
-
-  void (*fap_init)(void);
-
-  LIST_ENTRY(fa_protocol) fap_link;
-
-  const char *fap_name;
-
-  int (*fap_scan)(fa_dir_t *fd, const char *url);
-
-  void *(*fap_open)(const char *url);
-  void (*fap_close)(void *handle);
-  int (*fap_read)(void *handle, void *buf, size_t size);
-  off_t (*fap_seek)(void *handle, off_t pos, int whence);
-  off_t (*fap_fsize)(void *handle);
-  int   (*fap_stat)(const char *url, struct stat *buf);
-} fa_protocol_t;
+typedef struct fa_handle {
+  const struct fa_protocol *fh_proto;
+} fa_handle_t;
 
 
-fa_dir_t *fileaccess_scandir(const char *url);
 
-void fileaccess_init(void);
+fa_dir_t *fa_scandir(const char *url);
+fa_handle_t *fa_open(const char *url);
+void fa_close(fa_handle_t *fh);
+int fa_read(fa_handle_t *fh, void *buf, size_t size);
+int64_t fa_seek(fa_handle_t *fh, int64_t pos, int whence);
+int64_t fa_fsize(fa_handle_t *fh);
+int fa_stat(const char *url, struct stat *buf);
 
-const char *fa_resolve_proto(const char *url, fa_protocol_t **p);
-
-off_t fileaccess_size(const char *url);
+int fa_can_handle(const char *url);
 
 #endif /* FILEACCESS_H */

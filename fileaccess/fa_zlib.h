@@ -19,7 +19,10 @@
 #ifndef FA_ZLIB_H__
 #define FA_ZLIB_H__
 
-void *fa_inflate_init(fa_protocol_t *src_fap, void *handle, int64_t unc_size);
+#include "fa_proto.h"
+
+fa_handle_t *fa_inflate_init(const fa_protocol_t *src_fap, fa_handle_t *handle,
+			     int64_t unc_size);
 extern fa_protocol_t fa_protocol_inflate;
 
 #endif /* FA_ZLIB_H__ */

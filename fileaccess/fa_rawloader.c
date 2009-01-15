@@ -33,25 +33,20 @@
 const void *
 fa_rawloader(const char *filename, size_t *sizeptr)
 {
-  fa_protocol_t *fap;
-  void *fh;
+  fa_handle_t *fh;
   size_t size;
   char *data;
   int r;
 
- 
-  if((filename = fa_resolve_proto(filename, &fap)) == NULL)
+  if((fh = fa_open(filename)) == NULL)
     return NULL;
 
-  if((fh = fap->fap_open(filename)) == NULL)
-    return NULL;
-
-  size = fap->fap_fsize(fh);
+  size = fa_fsize(fh);
   data = malloc(size + 1);
 
-  r = fap->fap_read(fh, data, size);
+  r = fa_read(fh, data, size);
 
-  fap->fap_close(fh);
+  fa_close(fh);
 
   if(r != size) {
     free(data);

@@ -31,6 +31,7 @@
 
 #include "showtime.h"
 #include "fileaccess.h"
+#include "fa_proto.h"
 
 
 #define RAR_HEADER_MAIN   0x73
@@ -103,7 +104,6 @@ typedef struct rar_archive {
 
   int ra_refcount;
   char *ra_url;
-  fa_protocol_t *ra_fap;
 
   struct rar_volume_list ra_volumes;
   struct rar_file *ra_root;
@@ -132,7 +132,7 @@ typedef struct rar_file {
   
   int rf_type;
 
-  off_t rf_size;
+  int64_t rf_size;
   rar_archive_t *rf_archive;
 
   LIST_ENTRY(rar_file) rf_link;
@@ -145,9 +145,9 @@ typedef struct rar_file {
  */
 typedef struct rar_segment {
   rar_volume_t *rs_volume;
-  off_t rs_offset;
-  off_t rs_voffset;
-  off_t rs_size;
+  int64_t rs_offset;
+  int64_t rs_voffset;
+  int64_t rs_size;
   TAILQ_ENTRY(rar_segment) rs_link;
 } rar_segment_t;
 
@@ -249,7 +249,6 @@ static int
 rar_archive_load(rar_archive_t *ra)
 {
   char filename[512], *fname, *s;
-  const char *url;
   uint8_t buf[16], *hdr = NULL;
   void *fh = NULL;
   int volume_index = -1, size, x;
@@ -262,20 +261,14 @@ rar_archive_load(rar_archive_t *ra)
   rar_volume_t *rv;
   rar_file_t *rf;
   rar_segment_t *rs;
-  fa_protocol_t *fap;
-
-  if((url = fa_resolve_proto(ra->ra_url, &ra->ra_fap)) == NULL)
-    return -1;
 
   ra->ra_root = calloc(1, sizeof(rar_file_t));
   ra->ra_root->rf_type = FA_DIR;
   ra->ra_root->rf_archive = ra;
 
-  fap = ra->ra_fap;
-
  open_volume:
 
-  snprintf(filename, sizeof(filename), "%s", url);
+  snprintf(filename, sizeof(filename), "%s", ra->ra_url);
 
   if(volume_index >= 0) {
     if((s = strrchr(filename, '.')) == NULL) {
@@ -287,12 +280,11 @@ rar_archive_load(rar_archive_t *ra)
 
   volume_index++;
 
-  if((fh = fap->fap_open(filename)) == NULL) {
+  if((fh = fa_open(filename)) == NULL)
     return -1;
-  }
 
   /* Read & Verify RAR file signature */
-  if(fap->fap_read(fh, buf, 7) != 7)
+  if(fa_read(fh, buf, 7) != 7)
     goto err;
 
   if(buf[0] != 'R' || buf[1] != 'a' || buf[2] != 'r' || buf[3] != '!' ||
@@ -300,7 +292,7 @@ rar_archive_load(rar_archive_t *ra)
     goto err;
 
   /* Next we expect a MAIN_HEAD header (13 bytes) */
-  if(fap->fap_read(fh, buf, 13) != 13)
+  if(fa_read(fh, buf, 13) != 13)
     goto err;
 
   /* 2 bytes CRC */
@@ -324,7 +316,7 @@ rar_archive_load(rar_archive_t *ra)
     
     /* Read a header */
     
-    if(fap->fap_read(fh, buf, 7) != 7)
+    if(fa_read(fh, buf, 7) != 7)
       break;
 
     flags = buf[3] | buf[4] << 8;
@@ -337,7 +329,7 @@ rar_archive_load(rar_archive_t *ra)
 
     /* Read rest of header */
     hdr = malloc(size);
-    if(fap->fap_read(fh, hdr, size) != size)
+    if(fa_read(fh, hdr, size) != size)
       break;
 
     voff += 7 + size;
@@ -383,7 +375,7 @@ rar_archive_load(rar_archive_t *ra)
 
       free(fname);
 
-      fap->fap_seek(fh, packsize, SEEK_CUR);
+      fa_seek(fh, packsize, SEEK_CUR);
       voff += packsize;
 
     } else if(buf[2] == RAR_HEADER_ENDARC) {
@@ -404,7 +396,7 @@ rar_archive_load(rar_archive_t *ra)
 
       free(hdr);
 
-      fap->fap_close(fh);
+      fa_close(fh);
       fh = NULL;
 
 
@@ -419,7 +411,7 @@ rar_archive_load(rar_archive_t *ra)
   }
 
  err:
-  fap->fap_close(fh);
+  fa_close(fh);
   return -1;
 }
 
@@ -559,18 +551,19 @@ rar_scandir(fa_dir_t *fd, const char *url)
  *
  */
 typedef struct rar_fd {
+  fa_handle_t h;
   rar_file_t *rfd_file;
   rar_segment_t *rfd_segment;
   void *rfd_fh;
-  off_t rfd_fpos;
+  int64_t rfd_fpos;
 } rar_fd_t;
 
 
 /**
  *
  */
-static void *
-rar_open(const char *url)
+static fa_handle_t *
+rar_open(fa_protocol_t *fap, const char *url)
 {
   rar_file_t *rf;
   rar_fd_t *rfd;
@@ -585,7 +578,9 @@ rar_open(const char *url)
 
   rfd = calloc(1, sizeof(rar_fd_t));
   rfd->rfd_file = rf;
-  return rfd;
+
+  rfd->h.fh_proto = fap;
+  return &rfd->h;
 }
 
 
@@ -593,13 +588,12 @@ rar_open(const char *url)
  *
  */
 static void 
-rar_close(void *handle)
+rar_close(fa_handle_t *handle)
 {
-  rar_fd_t *rfd = handle;
-  fa_protocol_t *fap = rfd->rfd_file->rf_archive->ra_fap;
+  rar_fd_t *rfd = (rar_fd_t *)handle;
 
   if(rfd->rfd_fh != NULL)
-    fap->fap_close(rfd->rfd_fh);
+    fa_close(rfd->rfd_fh);
 
   rar_file_unref(rfd->rfd_file);
   free(rfd);
@@ -610,14 +604,13 @@ rar_close(void *handle)
  * Read from file
  */
 static int
-rar_read(void *handle, void *buf, size_t size)
+rar_read(fa_handle_t *handle, void *buf, size_t size)
 {
-  rar_fd_t *rfd = handle;
+  rar_fd_t *rfd = (rar_fd_t *)handle;
   rar_file_t *rf = rfd->rfd_file;
-  fa_protocol_t *fap = rf->rf_archive->ra_fap;
   rar_segment_t *rs;
   size_t c = 0, r, w;
-  off_t o;
+  int64_t o;
   int x;
 
   while(c < size) {
@@ -626,7 +619,7 @@ rar_read(void *handle, void *buf, size_t size)
        rfd->rfd_fpos >= rs->rs_offset + rs->rs_size) {
       
       if(rfd->rfd_fh != NULL) {
-	fap->fap_close(rfd->rfd_fh);
+	fa_close(rfd->rfd_fh);
 	rfd->rfd_fh = NULL;
       }
 
@@ -645,17 +638,17 @@ rar_read(void *handle, void *buf, size_t size)
       r = w;
     
     if(rfd->rfd_fh == NULL) {
-      rfd->rfd_fh = fap->fap_open(rs->rs_volume->rv_url);
+      rfd->rfd_fh = fa_open(rs->rs_volume->rv_url);
       if(rfd->rfd_fh == NULL)
 	return -1;
     }
 
     o = rfd->rfd_fpos - rs->rs_offset + rs->rs_voffset;
 
-    if(fap->fap_seek(rfd->rfd_fh, o, SEEK_SET) < 0) {
+    if(fa_seek(rfd->rfd_fh, o, SEEK_SET) < 0) {
       return -1;
     }
-    x = fap->fap_read(rfd->rfd_fh, buf + c, r);
+    x = fa_read(rfd->rfd_fh, buf + c, r);
     
     if(x != r) {
       return -1;
@@ -671,11 +664,11 @@ rar_read(void *handle, void *buf, size_t size)
 /**
  * Seek in file
  */
-static off_t
-rar_seek(void *handle, off_t pos, int whence)
+static int64_t
+rar_seek(fa_handle_t *handle, int64_t pos, int whence)
 {
-  rar_fd_t *rfd = handle;
-  off_t np;
+  rar_fd_t *rfd = (rar_fd_t *)handle;
+  int64_t np;
 
   switch(whence) {
   case SEEK_SET:
@@ -704,10 +697,10 @@ rar_seek(void *handle, off_t pos, int whence)
 /**
  * Return size of file
  */
-static off_t
-rar_fsize(void *handle)
+static int64_t
+rar_fsize(fa_handle_t *handle)
 {
-  rar_fd_t *rfd = handle;
+  rar_fd_t *rfd = (rar_fd_t *)handle;
 
   return rfd->rfd_file->rf_size;
 }
@@ -716,7 +709,7 @@ rar_fsize(void *handle)
  * Standard unix stat
  */
 static int
-rar_stat(const char *url, struct stat *buf)
+rar_stat(fa_protocol_t *fap, const char *url, struct stat *buf)
 {
   rar_file_t *rf;
 

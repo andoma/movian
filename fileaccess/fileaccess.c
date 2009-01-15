@@ -37,22 +37,16 @@
 
 #include <libhts/svfs.h>
 
+#include "fa_proto.h"
+
 struct fa_protocol_list fileaccess_all_protocols;
 static URLProtocol fa_lavf_proto;
-
-/**
- * Glue struct for exposing fileaccess protocols into lavf
- */
-typedef struct fa_glue {
-  fa_protocol_t *fap;
-  void *fh;
-} fa_glue_t;
 
 
 /**
  *
  */
-const char *
+static char *
 fa_resolve_proto(const char *url, fa_protocol_t **p)
 {
   fa_protocol_t *fap;
@@ -70,59 +64,131 @@ fa_resolve_proto(const char *url, fa_protocol_t **p)
 
   url += 3;
 
-  LIST_FOREACH(fap, &fileaccess_all_protocols, fap_link)
-    if(!strcmp(fap->fap_name, proto)) {
-      *p = fap;
-      return fap->fap_flags & FAP_INCLUDE_PROTO_IN_URL ? url0 : url;
-    }
+  LIST_FOREACH(fap, &fileaccess_all_protocols, fap_link) {
+    if(strcmp(fap->fap_name, proto))
+      continue;
+    *p = fap;
+    return strdup(fap->fap_flags & FAP_INCLUDE_PROTO_IN_URL ? url0 : url);
+  }
   return NULL;
 }
+
+/**
+ *
+ */
+int
+fa_can_handle(const char *url)
+{
+  fa_protocol_t *fap;
+  char *filename;
+
+  if((filename = fa_resolve_proto(url, &fap)) == NULL)
+    return 0;
+  free(filename);
+  return 1;
+}
+
+/**
+ *
+ */
+fa_handle_t *
+fa_open(const char *url)
+{
+  fa_protocol_t *fap;
+  char *filename;
+  fa_handle_t *fh;
+
+  if((filename = fa_resolve_proto(url, &fap)) == NULL)
+    return NULL;
+  
+  fh = fap->fap_open(fap, filename);
+  free(filename);
+
+  return fh;
+}
+
+
+/**
+ *
+ */
+void
+fa_close(fa_handle_t *fh)
+{
+  fh->fh_proto->fap_close(fh);
+}
+
+/**
+ *
+ */
+int
+fa_read(fa_handle_t *fh, void *buf, size_t size)
+{
+  return fh->fh_proto->fap_read(fh, buf, size);
+}
+
+/**
+ *
+ */
+int64_t
+fa_seek(fa_handle_t *fh, int64_t pos, int whence)
+{
+  return fh->fh_proto->fap_seek(fh, pos, whence);
+}
+
+/**
+ *
+ */
+int64_t
+fa_fsize(fa_handle_t *fh)
+{
+  return fh->fh_proto->fap_fsize(fh);
+}
+
+/**
+ *
+ */
+int
+fa_stat(const char *url, struct stat *buf)
+{
+  fa_protocol_t *fap;
+  char *filename;
+  int r;
+
+  if((filename = fa_resolve_proto(url, &fap)) == NULL)
+    return AVERROR_NOENT;
+  
+  r = fap->fap_stat(fap, filename, buf);
+  free(filename);
+
+  return r;
+}
+
 
 
 /**
  *
  */
 fa_dir_t *
-fileaccess_scandir(const char *url)
+fa_scandir(const char *url)
 {
   fa_protocol_t *fap;
   fa_dir_t *fd;
+  char *filename;
 
-  if((url = fa_resolve_proto(url, &fap)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap)) == NULL)
     return NULL;
 
-  if(fap->fap_scan == NULL)
-    return NULL;
-
-  fd = fa_dir_alloc();
-  if(fap->fap_scan(fd, url)) {
-    fa_dir_free(fd);
-    return NULL;
+  if(fap->fap_scan != NULL) {
+    fd = fa_dir_alloc();
+    if(fap->fap_scan(fd, filename)) {
+      fa_dir_free(fd);
+      fd = NULL;
+    }
+  } else {
+    fd = NULL;
   }
-
+  free(filename);
   return fd;
-}
-
-/**
- *
- */
-off_t
-fileaccess_size(const char *url)
-{
-  fa_protocol_t *fap;
-  off_t size;
-  void *handle;
-
-  if((url = fa_resolve_proto(url, &fap)) == NULL)
-    return -1;
-
-  if((handle = fap->fap_open(url)) == NULL)
-    return -1;
-
-  size = fap->fap_fsize(handle);
-
-  fap->fap_close(handle);
-  return size;
 }
 
 
@@ -245,24 +311,24 @@ fileaccess_init(void)
  * lavf -> fileaccess open wrapper
  */
 static int
-fa_lavf_open(URLContext *h, const char *filename, int flags)
+fa_lavf_open(URLContext *h, const char *url, int flags)
 {
   fa_protocol_t *fap;
-  fa_glue_t *glue;
   void *fh;
+  char *filename;
 
-  av_strstart(filename, "showtime:", &filename);  
+  av_strstart(url, "showtime:", &url);  
 
-  if((filename = fa_resolve_proto(filename, &fap)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap)) == NULL)
     return AVERROR_NOENT;
   
-  if((fh = fap->fap_open(filename)) == NULL)
+  fh = fap->fap_open(fap, filename);
+  free(filename);
+  
+  if(fh == NULL) 
     return AVERROR_NOENT;
   
-  glue = malloc(sizeof(fa_glue_t));
-  glue->fap = fap;
-  glue->fh = fh;
-  h->priv_data = glue;
+  h->priv_data = fh;
   return 0;
 }
 
@@ -272,9 +338,7 @@ fa_lavf_open(URLContext *h, const char *filename, int flags)
 static int
 fa_lavf_read(URLContext *h, unsigned char *buf, int size)
 {
-  fa_glue_t *glue = h->priv_data;
-  
-  return glue->fap->fap_read(glue->fh, buf, size);
+  return fa_read(h->priv_data, buf, size);
 }
 
 /**
@@ -283,12 +347,10 @@ fa_lavf_read(URLContext *h, unsigned char *buf, int size)
 static int64_t
 fa_lavf_seek(URLContext *h, int64_t pos, int whence)
 {
-  fa_glue_t *glue = h->priv_data;
-  
   if(whence == AVSEEK_SIZE)
-    return glue->fap->fap_fsize(glue->fh);
+    return fa_fsize(h->priv_data);
   
-  return glue->fap->fap_seek(glue->fh, pos, whence);
+  return fa_seek(h->priv_data, pos, whence);
 }
 
 /**
@@ -297,17 +359,9 @@ fa_lavf_seek(URLContext *h, int64_t pos, int whence)
 static int
 fa_lavf_close(URLContext *h)
 {
-  fa_glue_t *glue = h->priv_data;
-
-  glue->fap->fap_close(glue->fh);
-
-  free(glue);
-  h->priv_data = NULL;
+  fa_close(h->priv_data);
   return 0;
 }
-
-
-
 
 
 static URLProtocol fa_lavf_proto = {
@@ -318,93 +372,3 @@ static URLProtocol fa_lavf_proto = {
     fa_lavf_seek,
     fa_lavf_close,
 };
-
-
-#if 0
-
-/**
- * Showtime VFS -> fileaccess open wrapper
- */
-static void *
-fa_svfs_open(const char *filename)
-{
-  fa_protocol_t *fap;
-  fa_glue_t *glue;
-  void *fh;
-
-  if((filename = fa_resolve_proto(filename, &fap)) == NULL)
-    return NULL;
-  
-  if((fh = fap->fap_open(filename)) == NULL)
-    return NULL;
-  
-  glue = malloc(sizeof(fa_glue_t));
-  glue->fap = fap;
-  glue->fh = fh;
-  return glue;
-}
-
-/**
- * svfs -> fileaccess read wrapper
- */
-static int
-fa_svfs_read(void *handle, void *buf, size_t size)
-{
-  fa_glue_t *glue = handle;
-  
-  return glue->fap->fap_read(glue->fh, buf, size);
-}
-
-/**
- * svfs -> fileaccess seek wrapper
- */
-static int64_t
-fa_svfs_seek(void *handle, int64_t pos, int whence)
-{
-  fa_glue_t *glue = handle;
-  
-  return glue->fap->fap_seek(glue->fh, pos, whence);
-}
-
-/**
- * svfs -> fileaccess close wrapper
- */
-static void
-fa_svfs_close(void *handle)
-{
-  fa_glue_t *glue = handle;
-
-  glue->fap->fap_close(glue->fh);
-
-  free(glue);
-}
-
-
-/**
- * svfs -> fileaccess close wrapper
- */
-static int
-fa_svfs_stat(const char *filename, struct stat *buf)
-{
-  fa_protocol_t *fap;
-
-  if((filename = fa_resolve_proto(filename, &fap)) == NULL)
-    return -1;
-  
-  return fap->fap_stat(filename, buf);
-}
-	
-
-
-
-struct svfs_ops showtime_vfs_ops = {
-  .open     = fa_svfs_open,
-  .close    = fa_svfs_close,
-  .read     = fa_svfs_read,
-  .seek     = fa_svfs_seek,
-  .stat     = fa_svfs_stat,
-  .opendir  = fa_opendir,
-  .readdir  = fa_readdir,
-  .closedir = fa_closedir,
-};
-#endif

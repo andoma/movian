@@ -27,6 +27,7 @@
 #include "keyring.h"
 #include "fileaccess.h"
 #include "networking/net.h"
+#include "fa_proto.h"
 
 extern char *htsversion;
 
@@ -40,6 +41,8 @@ extern void url_split(char *proto, int proto_size,
 
 
 typedef struct http_file {
+  fa_handle_t h;
+
   char *hf_url;
   char *hf_auth;
   char *hf_location;
@@ -490,8 +493,8 @@ http_destroy(http_file_t *hf)
 /**
  * Open file
  */
-static void *
-http_open(const char *url)
+static fa_handle_t *
+http_open(fa_protocol_t *fap, const char *url)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   
@@ -499,8 +502,10 @@ http_open(const char *url)
 
   hf->hf_url = strdup(url);
 
-  if(!http_connect(hf, 1))
-    return hf;
+  if(!http_connect(hf, 1)) {
+    hf->h.fh_proto = fap;
+    return &hf->h;
+  }
 
   http_destroy(hf);
   return NULL;
@@ -513,9 +518,9 @@ http_open(const char *url)
  * Close file
  */
 static void
-http_close(void *handle)
+http_close(fa_handle_t *handle)
 {
-  http_file_t *hf = handle;
+  http_file_t *hf = (http_file_t *)handle;
   http_destroy(hf);
 }
 
@@ -524,9 +529,9 @@ http_close(void *handle)
  * Read from file
  */
 static int
-http_read(void *handle, void *buf, size_t size)
+http_read(fa_handle_t *handle, void *buf, size_t size)
 {
-  http_file_t *hf = handle;
+  http_file_t *hf = (http_file_t *)handle;
   htsbuf_queue_t q;
   int i, code;
 
@@ -605,9 +610,9 @@ http_read(void *handle, void *buf, size_t size)
  * Seek in file
  */
 static int64_t
-http_seek(void *handle, int64_t pos, int whence)
+http_seek(fa_handle_t *handle, int64_t pos, int whence)
 {
-  http_file_t *hf = handle;
+  http_file_t *hf = (http_file_t *)handle;
   off_t np;
 
   switch(whence) {
@@ -645,9 +650,9 @@ http_seek(void *handle, int64_t pos, int whence)
  * Return size of file
  */
 static int64_t
-http_fsize(void *handle)
+http_fsize(fa_handle_t *handle)
 {
-  http_file_t *hf = handle;
+  http_file_t *hf = (http_file_t *)handle;
   return hf->hf_size;
 }
 
@@ -656,13 +661,16 @@ http_fsize(void *handle)
  * Standard unix stat
  */
 static int
-http_stat(const char *url, struct stat *buf)
+http_stat(fa_protocol_t *fap, const char *url, struct stat *buf)
 {
+  fa_handle_t *handle;
   http_file_t *hf;
 
-  if((hf = http_open(url)) == NULL)
+  if((handle = http_open(fap, url)) == NULL)
     return -1;
  
+  hf = (http_file_t *)handle;
+
   buf->st_mode = S_IFREG;
   buf->st_size = hf->hf_size;
   
@@ -882,7 +890,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd)
  * Standard unix stat
  */
 static int
-dav_stat(const char *url, struct stat *buf)
+dav_stat(fa_protocol_t *fap, const char *url, struct stat *buf)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   htsbuf_queue_init(&hf->hf_spill, 0);

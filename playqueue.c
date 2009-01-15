@@ -185,7 +185,7 @@ playqueue_load_siblings(const char *uri, playqueue_entry_t *justadded)
   prop_t *media;
   int r;
 
-  if((fd = fileaccess_scandir(uri)) == NULL)
+  if((fd = fa_scandir(uri)) == NULL)
     return;
 
   fa_dir_sort(fd);

@@ -104,8 +104,7 @@ fa_probe_playlist(prop_t *proproot, const char *url,
  */
 #ifdef CONFIG_LIBEXIF
 static void
-fa_probe_exif(prop_t *proproot, fa_protocol_t *fap, void *fh,
-	      char *pb, size_t pbsize)
+fa_probe_exif(prop_t *proproot, fa_handle_t *fh, char *pb, size_t pbsize)
 {
   unsigned char buf[4096];
   int x, v;
@@ -117,7 +116,7 @@ fa_probe_exif(prop_t *proproot, fa_protocol_t *fap, void *fh,
 
   v = exif_loader_write(l, (unsigned char *)pb, pbsize);
   while(v) {
-    if((x = fap->fap_read(fh, buf, sizeof(buf))) < 1)
+    if((x = fa_read(fh, buf, sizeof(buf))) < 1)
       break;
     v = exif_loader_write(l, buf, x);
   }
@@ -156,8 +155,7 @@ fa_probe_exif(prop_t *proproot, fa_protocol_t *fap, void *fh,
  * Probe file by checking its header
  */
 static int
-fa_probe_header(prop_t *proproot, fa_protocol_t *fap,
-		const char *url, void *fh,
+fa_probe_header(prop_t *proproot, const char *url, fa_handle_t *fh,
 		char *newurl, size_t newurlsize)
 {
   char pb[128];
@@ -165,7 +163,7 @@ fa_probe_header(prop_t *proproot, fa_protocol_t *fap,
   uint16_t flags;
 
   memset(pb, 0, sizeof(pb));
-  psiz = fap->fap_read(fh, pb, sizeof(pb));
+  psiz = fa_read(fh, pb, sizeof(pb));
 
   if(pb[0] == 'R'  && pb[1] == 'a'  && pb[2] == 'r' && pb[3] == '!' &&
      pb[4] == 0x1a && pb[5] == 0x07 && pb[6] == 0x0 && pb[9] == 0x73) {
@@ -202,7 +200,7 @@ fa_probe_header(prop_t *proproot, fa_protocol_t *fap,
     /* JPEG image with EXIF tag*/
 #ifdef CONFIG_LIBEXIF
     if(proproot != NULL)
-      fa_probe_exif(proproot, fap, fh, pb, psiz);
+      fa_probe_exif(proproot, fh, pb, psiz);
 #endif
     return FA_IMAGE;
   }
@@ -218,14 +216,14 @@ fa_probe_header(prop_t *proproot, fa_protocol_t *fap,
  * Check if file is an iso image
  */
 static int
-fa_probe_iso(prop_t *proproot, fa_protocol_t *fap, void *fh)
+fa_probe_iso(prop_t *proproot, fa_handle_t *fh)
 {
   char pb[128], *p;
 
-  if(fap->fap_seek(fh, 0x8000, SEEK_SET) != 0x8000)
+  if(fa_seek(fh, 0x8000, SEEK_SET) != 0x8000)
     return -1;
 
-  if(fap->fap_read(fh, pb, sizeof(pb)) != sizeof(pb))
+  if(fa_read(fh, pb, sizeof(pb)) != sizeof(pb))
     return -1;
 
   if(memcmp(pb, isosig, 8))
@@ -282,30 +280,25 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize)
   int has_video = 0;
   int has_audio = 0;
   const char *codectype, *url0 = url;
-  fa_protocol_t *fap;
-  void *fh;
+  fa_handle_t *fh;
   int type;
 
-  if((url = fa_resolve_proto(url, &fap)) == NULL)
+  if((fh = fa_open(url)) == NULL)
     return FA_UNKNOWN;
 
-  if((fh = fap->fap_open(url)) == NULL)
-    return FA_UNKNOWN;
-
-  if((r = fa_probe_header(proproot, fap, url0, fh,
-			  newurl, newurlsize)) != -1) {
-    fap->fap_close(fh);
+  if((r = fa_probe_header(proproot, url0, fh, newurl, newurlsize)) != -1) {
+    fa_close(fh);
     fa_set_type(proproot, r);
     return r;
   }
 
-  if(fa_probe_iso(proproot, fap, fh) == 0) {
-    fap->fap_close(fh);
+  if(fa_probe_iso(proproot, fh) == 0) {
+    fa_close(fh);
     fa_set_type(proproot, FA_DVD);
     return FA_DVD;
   }
 
-  fap->fap_close(fh);
+  fa_close(fh);
 
   /* Okay, see if lavf can find out anything about the file */
 
@@ -432,22 +425,18 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize)
 unsigned int
 fa_probe_dir(prop_t *proproot, const char *url)
 {
-  fa_protocol_t *fap;
   char path[300];
   struct stat buf;
   int type;
 
-  if((url = fa_resolve_proto(url, &fap)) == NULL)
-    return FA_UNKNOWN;
-
   type = FA_DIR;
 
   snprintf(path, sizeof(path), "%s/VIDEO_TS", url);
-  if(fap->fap_stat(path, &buf) == 0 && S_ISDIR(buf.st_mode)) {
+  if(fa_stat(path, &buf) == 0 && S_ISDIR(buf.st_mode)) {
     type = FA_DVD;
   } else {
     snprintf(path, sizeof(path), "%s/video_ts", url);
-    if(fap->fap_stat(path, &buf) == 0 && S_ISDIR(buf.st_mode))
+    if(fa_stat(path, &buf) == 0 && S_ISDIR(buf.st_mode))
       type = FA_DVD;
   }
 

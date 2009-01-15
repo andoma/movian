@@ -29,6 +29,15 @@
 #include "showtime.h"
 #include "fileaccess.h"
 
+#include "fa_proto.h"
+
+typedef struct fs_handle {
+  fa_handle_t h;
+  int fd;
+} fs_handle_t;
+
+
+
 static void
 fs_urlsnprintf(char *buf, size_t bufsize, const char *prefix, const char *base,
 	       const char *fname)
@@ -80,60 +89,64 @@ fs_scandir(fa_dir_t *fd, const char *url)
 /**
  * Open file
  */
-static void *
-fs_open(const char *url)
+static fa_handle_t *
+fs_open(fa_protocol_t *fap, const char *url)
 {
-  int *h;
+  fs_handle_t *fh;
+
   int fd = open(url, O_RDONLY);
   if(fd == -1)
     return NULL;
-  h = malloc(sizeof(int));
-  *h = fd;
-  return h;
+  fh = malloc(sizeof(fs_handle_t));
+  fh->fd = fd;
+
+  fh->h.fh_proto = fap;
+
+  return &fh->h;
 }
 
 /**
  * Close file
  */
 static void
-fs_close(void *handle)
+fs_close(fa_handle_t *fh0)
 {
-  int fd = *(int *)handle;
-  close(fd);
-  free(handle);
+  fs_handle_t *fh = (fs_handle_t *)fh0;
+  close(fh->fd);
+  free(fh);
 }
 
 /**
  * Read from file
  */
 static int
-fs_read(void *handle, void *buf, size_t size)
+fs_read(fa_handle_t *fh0, void *buf, size_t size)
 {
-  int fd = *(int *)handle;
+  fs_handle_t *fh = (fs_handle_t *)fh0;
 
-  return read(fd, buf, size);
+  return read(fh->fd, buf, size);
 }
 
 /**
  * Seek in file
  */
 static off_t
-fs_seek(void *handle, off_t pos, int whence)
+fs_seek(fa_handle_t *fh0, off_t pos, int whence)
 {
-  int fd = *(int *)handle;
-  return lseek(fd, pos, whence);
+  fs_handle_t *fh = (fs_handle_t *)fh0;
+  return lseek(fh->fd, pos, whence);
 }
 
 /**
  * Return size of file
  */
 static off_t
-fs_fsize(void *handle)
+fs_fsize(fa_handle_t *fh0)
 {
-  int fd = *(int *)handle;
+  fs_handle_t *fh = (fs_handle_t *)fh0;
   struct stat st;
   
-  if(fstat(fd, &st) < 0)
+  if(fstat(fh->fd, &st) < 0)
     return -1;
 
   return st.st_size;
@@ -144,7 +157,7 @@ fs_fsize(void *handle)
  * Standard unix stat
  */
 static int
-fs_stat(const char *url, struct stat *buf)
+fs_stat(fa_protocol_t *fap, const char *url, struct stat *buf)
 {
   return stat(url, buf);
 }
@@ -182,13 +195,13 @@ theme_scandir(fa_dir_t *fd, const char *url)
 /**
  *
  */
-static void *
-theme_open(const char *url)
+static fa_handle_t *
+theme_open(fa_protocol_t *fap, const char *url)
 {
   char buf[200];
 
   snprintf(buf, sizeof(buf), "%s/%s", themepath, url);
-  return fs_open(buf);
+  return fs_open(&fa_protocol_fs, buf);
 }
 
 /**
