@@ -23,7 +23,6 @@
 #include <sys/time.h>
 #include <libhts/htssettings.h>
 #include <libhts/htsthreads.h>
-#include <libavutil/avstring.h>
 
 extern hts_mutex_t ffmutex;
 
