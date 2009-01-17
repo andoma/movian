@@ -1014,7 +1014,7 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme)
     }
   }
 
-  if(dst->hp_type == PROP_DIR) {
+  if(dst->hp_type == PROP_DIR && src->hp_type == PROP_DIR) {
     
     /* Take care of all childs */
 
