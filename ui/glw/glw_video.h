@@ -86,8 +86,6 @@ typedef struct glw_video {
 
   glw_t w;
 
-  int gv_visible;  /* Set if we are currently rendered every frame */
-  
   int gv_run_decoder;
 
   int gv_compensate_thres;
@@ -232,7 +230,9 @@ void gv_init_timings(glw_video_t *gv);
 
 void gv_kalman_init(gv_kalman_t *gvk);
 
-void glw_video_boot_decoder(glw_video_t *gv, media_pipe_t *mp);
+void glw_video_decoder_start(void *opaque);
+
+void glw_video_decoder_stop(void *opaque);
 
 void glw_video_ctor(glw_t *w, int init, va_list ap);
 

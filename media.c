@@ -70,7 +70,6 @@ mp_create(const char *name)
   mp->mp_refcount = 1;
 
   mp->mp_name = name;
-  mp->mp_speed_gain = 1.0f;
 
   hts_mutex_init(&mp->mp_mutex);
   hts_cond_init(&mp->mp_backpressure);
@@ -530,13 +529,17 @@ mp_set_playstatus(media_pipe_t *mp, int status, int flags)
   case MP_VIDEOSEEK_PLAY:
   case MP_VIDEOSEEK_PAUSE:
   case MP_PAUSE:
-
     hts_mutex_lock(&mp->mp_mutex);
     mp->mp_playstatus = status;
     hts_cond_signal(&mp->mp_backpressure);
     hts_cond_signal(&mp->mp_audio.mq_avail);
     hts_cond_signal(&mp->mp_video.mq_avail);
     hts_mutex_unlock(&mp->mp_mutex);
+
+    if(mp->mp_video_decoder_start != NULL && mp->mp_video_running == 0) {
+      mp->mp_video_decoder_start(mp->mp_video_opaque);
+      mp->mp_video_running = 1;
+    }
 
     if(mp->mp_audio_decoder == NULL)
       mp->mp_audio_decoder = audio_decoder_create(mp);
@@ -572,6 +575,12 @@ mp_set_playstatus(media_pipe_t *mp, int status, int flags)
       audio_decoder_destroy(mp->mp_audio_decoder);
       mp->mp_audio_decoder = NULL;
     }
+
+    if(mp->mp_video_running) {
+      mp->mp_video_decoder_stop(mp->mp_video_opaque);
+      mp->mp_video_running = 0;
+    }
+
 
     prop_set_void(mp->mp_prop_currenttime);
     media_update_playstatus_prop(mp->mp_prop_playstatus, MP_STOP);

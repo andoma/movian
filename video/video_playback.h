@@ -19,9 +19,8 @@
 #ifndef PLAY_VIDEO_H
 #define PLAY_VIDEO_H
 
-#include "ui/glw/glw.h"
-#include "event.h"
+#include "media.h"
 
-int play_video(const char *fname, event_queue_t *eq, glw_t *parent);
+int play_video(const char *fname, media_pipe_t *mp);
 
 #endif /* PLAY_VIDEO_H */

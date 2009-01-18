@@ -32,6 +32,7 @@
 #include "glw_video.h"
 //#include "subtitles.h"
 #include "video/yadif.h"
+#include "video/video_playback.h"
 
 static const char *yuv2rbg_code =
 #include "cg/yuv2rgb.h"
@@ -73,7 +74,7 @@ gv_kalman_feed(gv_kalman_t *gvk, float z)
 
 /**************************************************************************
  *
- *  GL Video Pipe Init
+ *  GL Video Init
  *
  */
 
@@ -464,7 +465,7 @@ gv_compute_blend(glw_video_t *gv, gl_video_frame_t *fra,
 
 
 static void 
-layout_video_pipe(glw_video_t *gv, glw_rctx_t *rc)
+gv_new_frame(glw_video_t *gv)
 {
   gl_video_frame_t *fra, *frb;
   media_pipe_t *mp = gv->gv_mp;
@@ -472,9 +473,6 @@ layout_video_pipe(glw_video_t *gv, glw_rctx_t *rc)
   int64_t pts = 0;
   struct gl_video_frame_queue *dq;
   int frame_duration = gv->w.glw_root->gr_frameduration;
-
-  if(gv->gv_subtitle_widget)
-    glw_layout0(gv->gv_subtitle_widget, rc);
 
   gv_color_matrix_update(gv, mp);
   output_duration = gv_compute_output_duration(gv, frame_duration);
@@ -674,7 +672,7 @@ gv_blend_frames(glw_video_t *gv, glw_rctx_t *rc, gl_video_frame_t *fra,
 
 
 static void 
-render_video_pipe(glw_t *w, glw_video_t *gv, glw_rctx_t *rc)
+render_video(glw_t *w, glw_video_t *gv, glw_rctx_t *rc)
 {
   gl_video_frame_t *fra, *frb;
   media_pipe_t *mp = gv->gv_mp;
@@ -693,6 +691,9 @@ render_video_pipe(glw_t *w, glw_video_t *gv, glw_rctx_t *rc)
     glScalef(gv->gv_zoom / 100.0f, gv->gv_zoom / 100.0f, 1.0f);
 
   glw_rescale(rc, gv->gv_aspect);
+
+  if(glw_is_focusable(w))
+    glw_store_matrix(w, rc);
 
   if(rc->rc_alpha > 0.98f) 
     glDisable(GL_BLEND); 
@@ -791,53 +792,25 @@ gv_purge_queues(glw_video_t *gv)
 }
 
 
-
-static void
-gl_constant_frame_flush(glw_video_t *gv)
-{
-  gl_video_frame_t *fra;
-
-  fra = TAILQ_FIRST(&gv->gv_displaying_queue);
-  if(fra != NULL) {
-    assert(fra->gvf_pbo_ptr == NULL);
-    gv_enqueue_for_decode(gv, fra, &gv->gv_displaying_queue);
-  } else {
-    fra = TAILQ_FIRST(&gv->gv_display_queue);
-    if(fra != NULL) {
-      gv_enqueue_for_decode(gv, fra, &gv->gv_display_queue);
-    }
-  }
-}
-
-
+/**
+ *
+ */
 static int 
 gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, 
 			 void *extra)
 {
-  glw_video_t *gv = opaque;
+  glw_video_t *gv = (glw_video_t *)w;
 
   switch(signal) {
   case GLW_SIGNAL_DTOR:
-
-    /* If decoder thread is running ask it to shut itself down */
-    if(gv->gv_mp != NULL) {
-      w->glw_refcnt++;  /* Don't free widget just yet, 
-			   decoder thread will do it */
-      gv->gv_run_decoder = 0;
-
-      mp_send_cmd_u32_head(gv->gv_mp, &gv->gv_mp->mp_video, MB_EXIT, 0);
-    }
-
-    /* We are going away, flush out all frames (PBOs and textures),
-       and wakeup decoder (it will notice that widget no longer exist
-       and just start dropping decoded output) */
-    gv->gv_run_decoder = 0;
+    /* We are going away, flush out all frames (PBOs and textures) */
 
     LIST_REMOVE(gv, gv_global_link);
 
-    hts_mutex_lock(&gv->gv_queue_mutex);
 
     gv_purge_queues(gv);
+
+    hts_mutex_lock(&gv->gv_queue_mutex);
 
     hts_cond_signal(&gv->gv_avail_queue_cond);
     hts_cond_signal(&gv->gv_bufalloced_queue_cond);
@@ -851,31 +824,21 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
     return 0;
 
-  case GLW_SIGNAL_LAYOUT:
-    gv->gv_visible = 1;
-    glw_set_active0(w);
-    layout_video_pipe(gv, extra);
-    return 0;
-
   case GLW_SIGNAL_RENDER:
-    render_video_pipe(w, gv, extra);
+    render_video(w, gv, extra);
     return 0;
 
   case GLW_SIGNAL_NEW_FRAME:
     gv_buffer_allocator(gv);
-    if(!gv->gv_visible)
-      gl_constant_frame_flush(gv);
+    gv_new_frame(gv);
     return 0;
-
-  case GLW_SIGNAL_INACTIVE:
-    gv->gv_visible = 0;
-    return 0;
-
 
   default:
     return 0;
   }
 }
+
+
 /**
  *
  */
@@ -920,9 +883,39 @@ glw_video_ctor(glw_t *w, int init, va_list ap)
 {
   glw_video_t *gv = (glw_video_t *)w;
   glw_root_t *gr = w->glw_root;
+  glw_attribute_t attrib;
+  const char *filename;
 
   if(init) {
+
+    gv->gv_mp = mp_create("Video decoder");
+
+    gv->gv_mp->mp_video_decoder_start = glw_video_decoder_start;
+    gv->gv_mp->mp_video_decoder_stop  = glw_video_decoder_stop;
+    gv->gv_mp->mp_video_opaque        = gv;
+
     glw_signal_handler_int(w, gl_video_widget_callback);
     glw_video_init(gv, gr);
+
+    glw_set_i(w, 
+	      GLW_ATTRIB_SET_FLAGS, GLW_EVERY_FRAME, 
+	      NULL);
   }
+
+  do {
+    attrib = va_arg(ap, int);
+    switch(attrib) {
+
+    case GLW_ATTRIB_SOURCE:
+      filename = va_arg(ap, char *);
+      play_video(filename, gv->gv_mp);
+      break;
+
+    default:
+      GLW_ATTRIB_CHEW(attrib, ap);
+      break;
+    }
+  } while(attrib);
+
+
 }

@@ -65,8 +65,7 @@ gv_dequeue_for_decode(glw_video_t *gv, int w[3], int h[3])
     hts_cond_wait(&gv->gv_avail_queue_cond, &gv->gv_queue_mutex);
   }
 
-  if(gvf == NULL) {
-  fail:
+  if(!gv->gv_run_decoder) {
     hts_mutex_unlock(&gv->gv_queue_mutex);
     return NULL;
   }
@@ -97,8 +96,10 @@ gv_dequeue_for_decode(glw_video_t *gv, int w[3], int h[3])
 	gv->gv_run_decoder)
     hts_cond_wait(&gv->gv_bufalloced_queue_cond, &gv->gv_queue_mutex);
 
-  if(gvf == NULL)
-    goto fail;
+  if(!gv->gv_run_decoder) {
+    hts_mutex_unlock(&gv->gv_queue_mutex);
+    return NULL;
+  }
 
   TAILQ_REMOVE(&gv->gv_bufalloced_queue, gvf, link);
 
@@ -329,11 +330,8 @@ gv_decode_video(glw_video_t *gv, media_buf_t *mb)
   if(gv->gv_deilace_type == GV_DEILACE_HALF_RES)
     duration /= 2;
 
-  duration = (float)duration / mp->mp_speed_gain;
-
   if(mp_get_playstatus(mp) == MP_STOP)
     return;
-
 
   avcodec_get_chroma_sub_sample(ctx->pix_fmt, &hshift, &vshift);
 
@@ -552,21 +550,6 @@ gv_decode_video(glw_video_t *gv, media_buf_t *mb)
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /**
  * Video decoder thread
  */
@@ -579,18 +562,23 @@ gv_thread(void *aux)
   media_buf_t *mb;
   int i;
 
+  gv->gv_frame = avcodec_alloc_frame();
 
   hts_mutex_lock(&mp->mp_mutex);
 
-  while(1) {
+  while(gv->gv_run_decoder) {
 
     mb = TAILQ_FIRST(&mq->mq_q);
 
     if(mb != NULL && mb->mb_data_type == MB_EXIT)
       break;
 
-    if(mp->mp_playstatus <= MP_PLAY || mb == NULL)
+    if(mp->mp_playstatus < MP_PLAY || mb == NULL) {
+      hts_mutex_unlock(&mp->mp_mutex);
+      usleep(200000);
+      hts_mutex_lock(&mp->mp_mutex);
       continue;
+    }
 
     TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
     mq->mq_len--;
@@ -633,13 +621,11 @@ gv_thread(void *aux)
     hts_mutex_lock(&mp->mp_mutex);
   }
 
-
   /* Flush any remaining packets in video decoder queue */
   mq_flush(mq);
 
   /* Wakeup any stalled sender */
   hts_cond_signal(&mp->mp_backpressure);
-
 
   hts_mutex_unlock(&mp->mp_mutex);
 
@@ -650,9 +636,6 @@ gv_thread(void *aux)
 
   /* Free ffmpeg frame */
   av_free(gv->gv_frame);
-
-  /* Drop reference to mediapipe */
-  mp_unref(mp);
 
   free(gv);
   return NULL;
@@ -665,15 +648,41 @@ gv_thread(void *aux)
  *
  */
 void
-glw_video_boot_decoder(glw_video_t *gv, media_pipe_t *mp)
+glw_video_decoder_start(void *opaque)
 {
-  mp_ref(mp);
-  gv->gv_mp = mp;
+  glw_video_t *gv = opaque;
   gv->gv_run_decoder = 1;
-
-  gv->gv_frame = avcodec_alloc_frame();
-  hts_thread_create_detached(&gv->gv_ptid, gv_thread, gv);
+  hts_thread_create(&gv->gv_ptid, gv_thread, gv);
 }
+
+
+
+/**
+ *
+ */
+void
+glw_video_decoder_stop(void *opaque)
+{
+  glw_video_t *gv = opaque;
+
+  hts_mutex_lock(&gv->gv_queue_mutex);
+
+  gv->gv_run_decoder = 0;
+
+  hts_cond_signal(&gv->gv_bufalloced_queue_cond);
+  hts_cond_signal(&gv->gv_avail_queue_cond);
+
+  hts_mutex_unlock(&gv->gv_queue_mutex);
+
+  printf("Waiting for video decoder\n");
+  hts_thread_join(gv->gv_ptid);
+  printf("Video decoder joined\n");
+}
+
+
+
+
+
 
 #if 0
 void

@@ -32,9 +32,9 @@
 
 #include "showtime.h"
 #include "video_playback.h"
-#include "video_menu.h"
 #include "subtitles.h"
 #include "event.h"
+#include "media.h"
 
 
 #define INPUT_APP_SEEK_DIRECT               INPUT_APP + 0
@@ -50,19 +50,17 @@
 #define OVERLAY_BUTTON_STOP      9
 
 typedef struct play_video_ctrl {
-  glw_t *pvc_container;
-  glw_t *pvc_menu;
 
-  //  appi_t *pvc_ai;
+  hts_thread_t pvc_thread;
 
   media_pipe_t *pvc_mp;
+
+  char *pvc_url;
 
   AVFormatContext *pvc_fctx;
 
   codecwrap_t **pvc_cwvec;
 
-  vd_conf_t pvc_vdc;
-  
   int64_t pvc_rcache_last;
 
   char *pvc_rcache_title;
@@ -78,6 +76,8 @@ typedef struct play_video_ctrl {
 } play_video_ctrl_t;
 
 
+
+#if 0
 
 
 /**
@@ -183,6 +183,7 @@ video_playback_set_audio_track(void *opaque, void *opaque2, int value)
 }
 #endif
 
+#if 0
 /**
  * Open menu
  */
@@ -197,7 +198,6 @@ video_player_open_menu(play_video_ctrl_t *pvc, int toggle)
 
   if(pvc->pvc_menu != NULL) {
     if(toggle) {
-      glw_detach(pvc->pvc_menu);
       pvc->pvc_menu = NULL;
     }
     return;
@@ -217,17 +217,11 @@ video_player_open_menu(play_video_ctrl_t *pvc, int toggle)
       if(ctx->codec_type != CODEC_TYPE_AUDIO)
 	continue;
       media_get_codec_info(ctx, buf, sizeof(buf));
-#if 0
       glw_selection_add_text_option(p, buf, video_playback_set_audio_track,
 				    pvc, NULL, i, i == mp->mp_audio.mq_stream);
-#endif
-      abort();
-    }
-#if 0
+     }
     glw_selection_add_text_option(p, "Off", video_playback_set_audio_track,
 				  pvc, NULL, -1, -1 == mp->mp_audio.mq_stream);
-#endif
-    abort();
 
   }
 
@@ -238,6 +232,7 @@ video_player_open_menu(play_video_ctrl_t *pvc, int toggle)
   video_menu_attach(pvc->pvc_menu, &pvc->pvc_vdc);
 
 }
+#endif
 
 
 
@@ -263,7 +258,7 @@ play_video_clock_update(play_video_ctrl_t *pvc, int64_t pts,
  * Thread for reading from lavf and sending to lavc
  */
 static void
-video_player_loop(play_video_ctrl_t *pvc, event_queue_t *eq)
+video_player_loop(play_video_ctrl_t *pvc)
 {
   //  appi_t *ai = pvc->pvc_ai;
   media_pipe_t *mp = pvc->pvc_mp;
@@ -374,7 +369,7 @@ video_player_loop(play_video_ctrl_t *pvc, event_queue_t *eq)
 
     //    ai->ai_req_fullscreen = mp->mp_playstatus == MP_PLAY && !pvc->pvc_menu;
 
-    e = event_get(mp_is_paused(mp) ? -1 : 0, eq);
+    e = NULL; // event_get(mp_is_paused(mp) ? -1 : 0, eq);
 
     seek_abs   = 0;
     seek_delta = 0;
@@ -413,7 +408,7 @@ video_player_loop(play_video_ctrl_t *pvc, event_queue_t *eq)
 
 	play_video_clock_update(pvc, et->pts, mp);
 	break;
-
+#if 0
       case EVENT_KEY_MENU:
 	video_player_open_menu(pvc, 1);
 	break;
@@ -442,7 +437,8 @@ video_player_loop(play_video_ctrl_t *pvc, event_queue_t *eq)
       case EVENT_KEY_PAUSE:
 	mp_playpause(mp, e->e_type);
 	break;
-      
+#endif
+
       default:
 	break;
       }
@@ -495,12 +491,10 @@ video_player_loop(play_video_ctrl_t *pvc, event_queue_t *eq)
  *  Main function for video playback
  */
 int
-play_video(const char *url, event_queue_t *eq, glw_t *parent)
+play_video(const char *url, media_pipe_t *mp)
 {
-  media_pipe_t *mp;
   AVCodecContext *ctx;
   formatwrap_t *fw;
-  glw_t *vdw, *top;
   int64_t ts;
   int streams, i;
   play_video_ctrl_t pvc;
@@ -530,7 +524,7 @@ play_video(const char *url, event_queue_t *eq, glw_t *parent)
     return -1;
   }
 
-  mp = pvc.pvc_mp = mp_create(url);
+  pvc.pvc_mp = mp;
 
   /**
    * Create property tree
@@ -559,27 +553,6 @@ play_video(const char *url, event_queue_t *eq, glw_t *parent)
 
   media_set_metatree(mp, pvc.pvc_prop_root);
 
-  /**
-   * Create top level widget
-   */
-  top = glw_model_create(NULL, "theme://videoplayer/videoplayer.model", parent,
-			 0, pvc.pvc_prop_root);
-  pvc.pvc_container = glw_find_by_id(top, "videoplayer_container", 0);
-  if(pvc.pvc_container == NULL) {
-    fprintf(stderr, "Unable to locate videoplayer container\n");
-    sleep(1);
-    glw_destroy(top);
-    av_close_input_file(pvc.pvc_fctx);
-    prop_destroy(pvc.pvc_prop_root);
-    return -1;
-  }
-
-  /**
-   * Create video output widget
-   */
-  vd_conf_init(&pvc.pvc_vdc);
-  vdw = vd_create_widget(pvc.pvc_container, mp, 1.0);
-  mp_set_video_conf(mp, &pvc.pvc_vdc);
 
   /**
    * Init codec contexts
@@ -629,7 +602,7 @@ play_video(const char *url, event_queue_t *eq, glw_t *parent)
 
   mp_set_playstatus(mp, MP_VIDEOSEEK_PAUSE, 0); 
 
-  mp->mp_feedback = eq;
+  //  mp->mp_feedback = eq;
 
   video_player_update_stream_info(&pvc);
 
@@ -638,7 +611,7 @@ play_video(const char *url, event_queue_t *eq, glw_t *parent)
   eh = event_handler_register("videoplayer", video_player_event_handler,
 			      EVENTPRI_MEDIACONTROLS_VIDEOPLAYBACK, &pvc);
 
-  video_player_loop(&pvc, eq);
+  video_player_loop(&pvc);
 
   media_clear_metatree(mp);
   
@@ -658,16 +631,280 @@ play_video(const char *url, event_queue_t *eq, glw_t *parent)
     if(pvc.pvc_cwvec[i] != NULL)
       wrap_codec_deref(pvc.pvc_cwvec[i]);
 
-  glw_destroy(top);
-
   wrap_format_destroy(fw);
 
   if(mp->mp_subtitles) {
-    subtitles_free(mp->mp_subtitles);
+    fprintf(stderr, "subtitles_free(mp->mp_subtitles);\n");
     mp->mp_subtitles = NULL;
   }
-  event_flushqueue(eq);
+  //  event_flushqueue(eq);
 
   mp_unref(pvc.pvc_mp);
   return 0;
 }
+#endif
+
+
+
+
+/**
+ * Thread for reading from lavf and sending to lavc
+ */
+static void
+video_player_loop(play_video_ctrl_t *pvc)
+{
+  //  appi_t *ai = pvc->pvc_ai;
+  media_pipe_t *mp = pvc->pvc_mp;
+  media_buf_t *mb;
+  media_queue_t *mq;
+  int64_t pts, dts, seek_ref, seek_delta, seek_abs;
+  //  glw_event_appmethod_t *gea;
+  AVCodecContext *ctx;
+  AVPacket pkt;
+  int run, i;
+
+  pts          = AV_NOPTS_VALUE;
+  dts          = AV_NOPTS_VALUE;
+  seek_ref     = pvc->pvc_fctx->start_time;
+  run          = 1;
+
+  while(run) {
+    i = av_read_frame(pvc->pvc_fctx, &pkt);
+
+    if(i < 0) {
+      printf("Read error %d\n", i);
+      mp_wait(mp, mp->mp_audio.mq_stream != -1, mp->mp_video.mq_stream != -1);
+      break;
+    }
+
+    ctx = pvc->pvc_cwvec[pkt.stream_index] ? 
+      pvc->pvc_cwvec[pkt.stream_index]->codec_ctx : NULL;
+    mb = NULL;
+    
+    /* Rescale PTS / DTS to µsec */
+    if(pkt.pts != AV_NOPTS_VALUE) {
+      pts = av_rescale_q(pkt.pts, 
+			 pvc->pvc_fctx->streams[pkt.stream_index]->time_base,
+			 AV_TIME_BASE_Q);
+    } else {
+      pts = AV_NOPTS_VALUE;
+    }
+ 
+    if(pkt.dts != AV_NOPTS_VALUE) {
+      dts = av_rescale_q(pkt.dts, 
+			 pvc->pvc_fctx->streams[pkt.stream_index]->time_base,
+			 AV_TIME_BASE_Q);
+    } else {
+      dts = AV_NOPTS_VALUE;
+    }
+ 
+
+    if(ctx != NULL) {
+      if(pkt.stream_index == mp->mp_video.mq_stream) {
+	/* Current video stream */
+
+	mb = media_buf_alloc();
+	mb->mb_data_type = MB_VIDEO;
+	mq = &mp->mp_video;
+
+      } else if(pkt.stream_index == mp->mp_audio.mq_stream) {
+	/* Current audio stream */
+	mb = media_buf_alloc();
+	mb->mb_data_type = MB_AUDIO;
+	mq = &mp->mp_audio;
+      }
+    }
+
+    if(mb == NULL) {
+      av_free_packet(&pkt);
+    } else {
+
+      mb->mb_pts = pts;
+      mb->mb_dts = dts;
+   
+      /* Rescale duration */
+
+      mb->mb_duration =
+	av_rescale_q(pkt.duration, 
+		     pvc->pvc_fctx->streams[pkt.stream_index]->time_base,
+		     AV_TIME_BASE_Q);
+
+      
+      mb->mb_cw = wrap_codec_ref(pvc->pvc_cwvec[pkt.stream_index]);
+
+      /* Move the data pointers from ffmpeg's packet */
+
+      mb->mb_stream = pkt.stream_index;
+
+      mb->mb_data = pkt.data;
+      pkt.data = NULL;
+
+      mb->mb_size = pkt.size;
+      pkt.size = 0;
+
+      if(pts != AV_NOPTS_VALUE)
+	mb->mb_time = (pts - pvc->pvc_fctx->start_time) / AV_TIME_BASE;
+      else
+	mb->mb_time = -1;
+
+      /* Enqueue packet */
+
+      mb_enqueue(mp, mq, mb);
+    }
+    av_free_packet(&pkt);
+
+    media_update_playstatus_prop(mp->mp_prop_playstatus, mp->mp_playstatus);
+
+    if(mp->mp_playstatus == MP_PLAY && mp_is_audio_silenced(mp))
+      mp_set_playstatus(mp, MP_PAUSE, 0);
+
+    seek_delta = 0;
+    seek_abs   = 0;
+
+    if((seek_delta && seek_ref != AV_NOPTS_VALUE) || seek_abs) {
+      /* Seeking requested */
+
+      /* Reset restart cache threshold to force writeout */
+      pvc->pvc_rcache_last = INT64_MIN;
+
+      /* Just make it display the seek widget */
+      media_update_playstatus_prop(mp->mp_prop_playstatus, MP_VIDEOSEEK_PLAY);
+
+      if(seek_abs)
+	seek_ref = seek_abs;
+      else
+	seek_ref += seek_delta;
+
+      if(seek_ref < pvc->pvc_fctx->start_time)
+	seek_ref = pvc->pvc_fctx->start_time;
+
+      i = av_seek_frame(pvc->pvc_fctx, -1, seek_ref, AVSEEK_FLAG_BACKWARD);
+
+      if(i < 0)
+	printf("Seeking failed\n");
+
+      mp_flush(mp);
+      
+      mp->mp_videoseekdts = seek_ref;
+
+      switch(mp->mp_playstatus) {
+      case MP_VIDEOSEEK_PAUSE:
+      case MP_PAUSE:
+	mp_set_playstatus(mp, MP_VIDEOSEEK_PAUSE, 0);
+	break;
+      case MP_VIDEOSEEK_PLAY:
+      case MP_PLAY:
+	mp_set_playstatus(mp, MP_VIDEOSEEK_PLAY, 0);
+	break;
+      default:
+	abort();
+      }
+    }
+  }
+}
+
+
+
+
+
+
+
+static void *
+video_play_thread(void *aux)
+{
+  play_video_ctrl_t *pvc = aux;
+  AVCodecContext *ctx;
+  formatwrap_t *fw;
+  int i ;
+  media_pipe_t *mp = pvc->pvc_mp;
+  char faurl[1000];
+
+  /**
+   * Open input file
+   */
+
+  snprintf(faurl, sizeof(faurl), "showtime:%s", pvc->pvc_url);
+  printf("lavf open(%s)\n", faurl);
+  if(av_open_input_file(&pvc->pvc_fctx, faurl, NULL, 0, NULL) != 0) {
+    fprintf(stderr, "Unable to open input file %s\n", pvc->pvc_url);
+    return NULL;
+  }
+
+  pvc->pvc_fctx->flags |= AVFMT_FLAG_GENPTS;
+
+
+  printf("tut\n");
+  if(av_find_stream_info(pvc->pvc_fctx) < 0) {
+    av_close_input_file(pvc->pvc_fctx);
+    fprintf(stderr, "Unable to find stream info\n");
+    return NULL;
+  }
+
+  /**
+   * Init codec contexts
+   */
+  pvc->pvc_cwvec = alloca(pvc->pvc_fctx->nb_streams * sizeof(void *));
+  memset(pvc->pvc_cwvec, 0, sizeof(void *) * pvc->pvc_fctx->nb_streams);
+  
+  mp->mp_audio.mq_stream = -1;
+  mp->mp_video.mq_stream = -1;
+
+  fw = wrap_format_create(pvc->pvc_fctx);
+
+  for(i = 0; i < pvc->pvc_fctx->nb_streams; i++) {
+    ctx = pvc->pvc_fctx->streams[i]->codec;
+
+    if(mp->mp_video.mq_stream == -1 && ctx->codec_type == CODEC_TYPE_VIDEO) {
+      mp->mp_video.mq_stream = i;
+    }
+
+    if(mp->mp_audio.mq_stream == -1 && ctx->codec_type == CODEC_TYPE_AUDIO) {
+      mp->mp_audio.mq_stream = i;
+    }
+
+    pvc->pvc_cwvec[i] = wrap_codec_create(ctx->codec_id,
+					 ctx->codec_type, 0, fw, ctx, 0);
+  }
+
+  mp->mp_format = pvc->pvc_fctx;
+
+  /**
+   * Restart playback at last position
+   */
+
+  mp->mp_videoseekdts = 0;
+
+  mp_set_playstatus(mp, MP_PLAY, 0); 
+  video_player_loop(pvc);
+  mp_set_playstatus(mp, MP_STOP, 0);
+
+  for(i = 0; i < pvc->pvc_fctx->nb_streams; i++)
+    if(pvc->pvc_cwvec[i] != NULL)
+      wrap_codec_deref(pvc->pvc_cwvec[i]);
+
+  wrap_format_destroy(fw);
+
+  if(mp->mp_subtitles) {
+    fprintf(stderr, "subtitles_free(mp->mp_subtitles);\n");
+    mp->mp_subtitles = NULL;
+  }
+  return NULL;
+}
+
+
+
+
+int
+play_video(const char *url, media_pipe_t *mp)
+{
+  play_video_ctrl_t *pvc = calloc(1, sizeof(play_video_ctrl_t));
+  pvc->pvc_url = strdup(url);
+  pvc->pvc_mp = mp;
+
+  hts_thread_create(&pvc->pvc_thread, video_play_thread, pvc);
+  return 0;
+}
+
+
+
+

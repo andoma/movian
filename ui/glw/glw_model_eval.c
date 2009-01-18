@@ -1160,6 +1160,7 @@ static struct strtab classtab[] = {
   { "mirror",        GLW_MIRROR},
   { "rotator",       GLW_ROTATOR},
   { "animator",      GLW_ANIMATOR},
+  { "video",         GLW_VIDEO},
   { "fx_texrot",     GLW_FX_TEXROT},
 };
 

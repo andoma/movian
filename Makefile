@@ -26,7 +26,7 @@ SRCS-$(CONFIG_POSIX_NETWORKING) += net_posix.c
 # Video support
 #
 VPATH += video
-SRCS  += yadif.c
+SRCS  += video_playback.c yadif.c
 
 #
 # Audio subsys

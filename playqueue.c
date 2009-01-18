@@ -729,8 +729,6 @@ playtrack(playqueue_entry_t *pqe, media_pipe_t *mp, event_queue_t *eq)
   }
 
  out:
-  mp->mp_total_time = 0;
-
   streams = fctx->nb_streams;
 
   wrap_codec_deref(cw);

@@ -124,12 +124,6 @@ typedef struct media_queue {
 } media_queue_t;
 
 
-
-
-/*
- * Media pipe
- */
-
 typedef enum {
   MP_STOP,
   MP_PAUSE,           /* Freeze playback */
@@ -141,6 +135,9 @@ typedef enum {
   MP_VIDEOSEEK_PAUSE, /* Same as above, but goto PAUSE */
 } mp_playstatus_t;
 
+/**
+ * Media pipe
+ */
 typedef struct media_pipe {
   int mp_refcount;
 
@@ -157,20 +154,11 @@ typedef struct media_pipe {
   int64_t mp_audio_clock;
   int mp_audio_clock_valid;
 
-  LIST_ENTRY(media_pipe) mp_asched_link;
-
-  int mp_total_time;
-
   AVFormatContext *mp_format;
-
-  float mp_speed_gain;
 
   struct subtitles *mp_subtitles;
 
   struct audio_decoder *mp_audio_decoder;
-
-  struct video_decoder *mp_video_decoder;
-  struct vd_conf *mp_video_conf;
 
   struct event_queue *mp_feedback;
 
@@ -182,6 +170,13 @@ typedef struct media_pipe {
   prop_t *mp_prop_meta;
   prop_t *mp_prop_playstatus;
   prop_t *mp_prop_currenttime;
+
+  /* Video playback */
+
+  void (*mp_video_decoder_start)(void *opaque);
+  void (*mp_video_decoder_stop)(void *opaque);
+  void *mp_video_opaque;
+  int mp_video_running;
 
 } media_pipe_t;
 
