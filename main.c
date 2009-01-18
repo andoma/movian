@@ -53,7 +53,7 @@ int concurrency;
 extern char *htsversion;
 static int stopcode;
 
-const char *themepath = "file://" HTS_CONTENT_PATH "/showtime/themes/new";
+const char *default_theme_path = SHOWTIME_DEFAULT_THEME_PATH;
 
 static int main_event_handler(event_t *e, void *opaque);
 
@@ -157,7 +157,7 @@ main(int argc, char **argv)
       settingspath = optarg;
       break;
     case 't':
-      themepath = optarg;
+      default_theme_path = optarg;
       break;
     }
   }

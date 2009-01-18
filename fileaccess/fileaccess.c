@@ -324,6 +324,7 @@ fileaccess_init(void)
   INITPROTO(zip);
   INITPROTO(http);
   INITPROTO(webdav);
+  INITPROTO(embedded);
 #ifdef HAVE_LIBSMBCLIENT
   INITPROTO(smb);
 #endif

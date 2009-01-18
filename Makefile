@@ -13,7 +13,9 @@ SRCS  += arch_${ARCHITECTURE}.c
 #
 VPATH += fileaccess
 SRCS  += fileaccess.c fa_probe.c  fa_imageloader.c fa_rawloader.c
-SRCS  += fa_fs.c fa_rar.c fa_smb.c fa_http.c fa_zip.c fa_zlib.c
+SRCS  += fa_fs.c fa_rar.c fa_smb.c fa_http.c fa_zip.c fa_zlib.c fa_embedded.c
+
+SRCS-$(CONFIG_EMBEDDED_THEME)  += embedded_theme.c
 
 #
 # Networking
@@ -122,3 +124,18 @@ CFLAGS += ${SHOWTIME_CFLAGS} ${HTS_CFLAGS}
 include ../build/prog.mk
 
 include mk/${ARCHITECTURE}.mk
+
+
+#
+# Embedded theme
+#
+embedded_theme.c: ../config.mak
+	find $(EMBEDDED_THEME_PATH) -type f | grep -v .svn|awk '{print "embedded_theme.c: " $$0}' > ${.OBJDIR}/embedded_theme_files.d
+	rm -f $(HTS_BUILD_ROOT)/showtime/${.OBJDIR}/embedded_theme.zip
+	cd $(EMBEDDED_THEME_PATH) && zip -9 -X -r $(HTS_BUILD_ROOT)/showtime/${.OBJDIR}/embedded_theme.zip . -x \*.svn\*
+	@echo >$@ unsigned char embedded_theme[]={
+	@cat ${.OBJDIR}/embedded_theme.zip | od -v -An -b | sed s/^\ */0/ | sed s/\ *$$/,/| sed s/\ /,\ 0/g >>$@
+	@echo >>$@ "};"
+	@echo >>$@ "int embedded_theme_size = sizeof(embedded_theme);"
+
+-include obj/embedded_theme_files.d
