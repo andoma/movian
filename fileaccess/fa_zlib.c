@@ -130,7 +130,7 @@ inflate_read(fa_handle_t *handle, void *buf, size_t size)
 
       c = MIN(fi->fi_bufsize - n, size);
 
-      memcpy(buf, fi->fi_buf + n, c);
+      memcpy(buf + total_read, fi->fi_buf + n, c);
 
       size -= c;
       total_read += c;
