@@ -98,10 +98,10 @@ typedef struct media_buf {
   int mb_data32;
 
   uint32_t mb_duration;
-  uint32_t mb_time;           /* in seconds, of current track */
   uint32_t mb_aspect_override;
   int64_t mb_dts;
   int64_t mb_pts;
+  int mb_mts;  /* in ms */
 
   codecwrap_t *mb_cw;
 
@@ -154,13 +154,9 @@ typedef struct media_pipe {
   int64_t mp_audio_clock;
   int mp_audio_clock_valid;
 
-  AVFormatContext *mp_format;
-
   struct subtitles *mp_subtitles;
 
   struct audio_decoder *mp_audio_decoder;
-
-  struct event_queue *mp_feedback;
 
   int64_t mp_videoseekdts;
 
@@ -205,7 +201,7 @@ static inline media_buf_t *
 media_buf_alloc(void)
 {
   media_buf_t *mb = calloc(1, sizeof(media_buf_t));
-  mb->mb_time = -1;
+  mb->mb_mts = -1;
   return mb;
 }
 
@@ -231,6 +227,10 @@ void mq_flush(media_queue_t *mq);
 
 void mb_enqueue(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
 int mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
+event_t *mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, 
+				media_buf_t *mb);
+
+
 void mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd);
 void mp_send_cmd_data(media_pipe_t *mp, media_queue_t *mq, int cmd, void *d);
 void mp_send_cmd_u32_head(media_pipe_t *mp, media_queue_t *mq, int cmd, 

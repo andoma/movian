@@ -122,6 +122,7 @@ typedef struct {
   int64_t dts;
   int duration;
   int stream;
+  int mts;
 } frame_meta_t;
 
 
@@ -134,6 +135,7 @@ gv_get_buffer(struct AVCodecContext *c, AVFrame *pic)
 
   fm->pts = mb->mb_pts;
   fm->dts = mb->mb_dts;
+  fm->mts = mb->mb_mts;
   fm->duration = mb->mb_duration;
   fm->stream = mb->mb_stream;
   pic->opaque = fm;
@@ -258,16 +260,8 @@ gv_decode_video(glw_video_t *gv, media_buf_t *mb)
     }
   }
 
-  if(mp->mp_feedback != NULL) {
-    event_ts_t *et;
-
-    et = event_create(EVENT_VIDEO_CLOCK, sizeof(event_ts_t));
-    et->dts    = fm->dts;
-    et->pts    = fm->pts;
-    et->stream = fm->stream;
-
-    event_enqueue(mp->mp_feedback, &et->h);
-    event_unref(&et->h);
+  if(fm->mts != -1) {
+    prop_set_int(mp->mp_prop_currenttime, fm->mts);
   }
 
   pts = fm->pts;

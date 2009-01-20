@@ -379,6 +379,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
     rate     = ctx->sample_rate;
     codec_id = ctx->codec_id;
 
+#if 0
     if(mp->mp_feedback != NULL) {
       event_ts_t *et;
 
@@ -390,9 +391,10 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
       event_enqueue(mp->mp_feedback, &et->h);
       event_unref(&et->h);
     }
+#endif
 
-    if(mb->mb_time != -1)
-      prop_set_int(mp->mp_prop_currenttime, mb->mb_time);
+    if(mb->mb_mts != -1)
+      prop_set_int(mp->mp_prop_currenttime, mb->mb_mts);
 
     frames = data_size / sizeof(int16_t) / channels;
 

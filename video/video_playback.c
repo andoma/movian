@@ -645,6 +645,18 @@ play_video(const char *url, media_pipe_t *mp)
 #endif
 
 
+/**
+ *
+ */
+static int64_t
+rescale(play_video_ctrl_t *pvc, int64_t ts, int si)
+{
+  if(ts == AV_NOPTS_VALUE)
+    return AV_NOPTS_VALUE;
+
+  return av_rescale_q(ts, pvc->pvc_fctx->streams[si]->time_base,
+		      AV_TIME_BASE_Q);
+}
 
 
 /**
@@ -653,84 +665,52 @@ play_video(const char *url, media_pipe_t *mp)
 static void
 video_player_loop(play_video_ctrl_t *pvc)
 {
-  //  appi_t *ai = pvc->pvc_ai;
   media_pipe_t *mp = pvc->pvc_mp;
-  media_buf_t *mb;
-  media_queue_t *mq;
-  int64_t pts, dts, seek_ref, seek_delta, seek_abs;
-  //  glw_event_appmethod_t *gea;
+  media_buf_t *mb = NULL;
+  media_queue_t *mq = NULL;
   AVCodecContext *ctx;
   AVPacket pkt;
-  int run, i;
-
-  pts          = AV_NOPTS_VALUE;
-  dts          = AV_NOPTS_VALUE;
-  seek_ref     = pvc->pvc_fctx->start_time;
-  run          = 1;
+  int run = 1, r, si;
+  event_t *e;
 
   while(run) {
-    i = av_read_frame(pvc->pvc_fctx, &pkt);
+    /**
+     * Need to fetch a new packet ?
+     */
+    if(mb == NULL) {
 
-    if(i < 0) {
-      printf("Read error %d\n", i);
-      mp_wait(mp, mp->mp_audio.mq_stream != -1, mp->mp_video.mq_stream != -1);
-      break;
-    }
+      if((r = av_read_frame(pvc->pvc_fctx, &pkt)) < 0) {
+	mp_wait(mp, mp->mp_audio.mq_stream != -1, 
+		mp->mp_video.mq_stream != -1);
+	break;
+      }
 
-    ctx = pvc->pvc_cwvec[pkt.stream_index] ? 
-      pvc->pvc_cwvec[pkt.stream_index]->codec_ctx : NULL;
-    mb = NULL;
-    
-    /* Rescale PTS / DTS to µsec */
-    if(pkt.pts != AV_NOPTS_VALUE) {
-      pts = av_rescale_q(pkt.pts, 
-			 pvc->pvc_fctx->streams[pkt.stream_index]->time_base,
-			 AV_TIME_BASE_Q);
-    } else {
-      pts = AV_NOPTS_VALUE;
-    }
- 
-    if(pkt.dts != AV_NOPTS_VALUE) {
-      dts = av_rescale_q(pkt.dts, 
-			 pvc->pvc_fctx->streams[pkt.stream_index]->time_base,
-			 AV_TIME_BASE_Q);
-    } else {
-      dts = AV_NOPTS_VALUE;
-    }
- 
+      si = pkt.stream_index;
 
-    if(ctx != NULL) {
-      if(pkt.stream_index == mp->mp_video.mq_stream) {
+      ctx = pvc->pvc_cwvec[si] ? pvc->pvc_cwvec[si]->codec_ctx : NULL;
+
+      if(ctx != NULL && si == mp->mp_video.mq_stream) {
 	/* Current video stream */
-
 	mb = media_buf_alloc();
 	mb->mb_data_type = MB_VIDEO;
 	mq = &mp->mp_video;
-
-      } else if(pkt.stream_index == mp->mp_audio.mq_stream) {
+	
+      } else if(ctx != NULL && si == mp->mp_audio.mq_stream) {
 	/* Current audio stream */
 	mb = media_buf_alloc();
 	mb->mb_data_type = MB_AUDIO;
 	mq = &mp->mp_audio;
+
+      } else {
+	av_free_packet(&pkt);
+	continue;
       }
-    }
 
-    if(mb == NULL) {
-      av_free_packet(&pkt);
-    } else {
+      mb->mb_pts      = rescale(pvc, pkt.pts,      si);
+      mb->mb_dts      = rescale(pvc, pkt.dts,      si);
+      mb->mb_duration = rescale(pvc, pkt.duration, si);
 
-      mb->mb_pts = pts;
-      mb->mb_dts = dts;
-   
-      /* Rescale duration */
-
-      mb->mb_duration =
-	av_rescale_q(pkt.duration, 
-		     pvc->pvc_fctx->streams[pkt.stream_index]->time_base,
-		     AV_TIME_BASE_Q);
-
-      
-      mb->mb_cw = wrap_codec_ref(pvc->pvc_cwvec[pkt.stream_index]);
+      mb->mb_cw = wrap_codec_ref(pvc->pvc_cwvec[si]);
 
       /* Move the data pointers from ffmpeg's packet */
 
@@ -742,70 +722,30 @@ video_player_loop(play_video_ctrl_t *pvc)
       mb->mb_size = pkt.size;
       pkt.size = 0;
 
-      if(pts != AV_NOPTS_VALUE)
-	mb->mb_time = (pts - pvc->pvc_fctx->start_time) / AV_TIME_BASE;
+      if(mb->mb_pts != AV_NOPTS_VALUE && mb->mb_data_type == MB_AUDIO)
+	mb->mb_mts = (mb->mb_pts - pvc->pvc_fctx->start_time) / 1000;
       else
-	mb->mb_time = -1;
+	mb->mb_mts = -1;
 
-      /* Enqueue packet */
-
-      mb_enqueue(mp, mq, mb);
+      av_free_packet(&pkt);
     }
-    av_free_packet(&pkt);
 
-    media_update_playstatus_prop(mp->mp_prop_playstatus, mp->mp_playstatus);
+    /*
+     * Try to send the buffer.  If mb_enqueue() returns something we
+     * catched an event instead of enqueueing the buffer. In this case
+     * 'mb' will be left untouched.
+     */
 
-    if(mp->mp_playstatus == MP_PLAY && mp_is_audio_silenced(mp))
-      mp_set_playstatus(mp, MP_PAUSE, 0);
-
-    seek_delta = 0;
-    seek_abs   = 0;
-
-    if((seek_delta && seek_ref != AV_NOPTS_VALUE) || seek_abs) {
-      /* Seeking requested */
-
-      /* Reset restart cache threshold to force writeout */
-      pvc->pvc_rcache_last = INT64_MIN;
-
-      /* Just make it display the seek widget */
-      media_update_playstatus_prop(mp->mp_prop_playstatus, MP_VIDEOSEEK_PLAY);
-
-      if(seek_abs)
-	seek_ref = seek_abs;
-      else
-	seek_ref += seek_delta;
-
-      if(seek_ref < pvc->pvc_fctx->start_time)
-	seek_ref = pvc->pvc_fctx->start_time;
-
-      i = av_seek_frame(pvc->pvc_fctx, -1, seek_ref, AVSEEK_FLAG_BACKWARD);
-
-      if(i < 0)
-	printf("Seeking failed\n");
-
-      mp_flush(mp);
-      
-      mp->mp_videoseekdts = seek_ref;
-
-      switch(mp->mp_playstatus) {
-      case MP_VIDEOSEEK_PAUSE:
-      case MP_PAUSE:
-	mp_set_playstatus(mp, MP_VIDEOSEEK_PAUSE, 0);
-	break;
-      case MP_VIDEOSEEK_PLAY:
-      case MP_PLAY:
-	mp_set_playstatus(mp, MP_VIDEOSEEK_PLAY, 0);
-	break;
-      default:
-	abort();
-      }
+    if((e = mb_enqueue_with_events(mp, mq, mb)) == NULL) {
+      mb = NULL; /* Enqueue succeeded */
+      continue;
     }
+    abort();
   }
+
+  if(mb != NULL)
+    media_buf_free(mb);
 }
-
-
-
-
 
 
 
@@ -822,9 +762,7 @@ video_play_thread(void *aux)
   /**
    * Open input file
    */
-
   snprintf(faurl, sizeof(faurl), "showtime:%s", pvc->pvc_url);
-  printf("lavf open(%s)\n", faurl);
   if(av_open_input_file(&pvc->pvc_fctx, faurl, NULL, 0, NULL) != 0) {
     fprintf(stderr, "Unable to open input file %s\n", pvc->pvc_url);
     return NULL;
@@ -832,8 +770,6 @@ video_play_thread(void *aux)
 
   pvc->pvc_fctx->flags |= AVFMT_FLAG_GENPTS;
 
-
-  printf("tut\n");
   if(av_find_stream_info(pvc->pvc_fctx) < 0) {
     av_close_input_file(pvc->pvc_fctx);
     fprintf(stderr, "Unable to find stream info\n");
@@ -854,19 +790,15 @@ video_play_thread(void *aux)
   for(i = 0; i < pvc->pvc_fctx->nb_streams; i++) {
     ctx = pvc->pvc_fctx->streams[i]->codec;
 
-    if(mp->mp_video.mq_stream == -1 && ctx->codec_type == CODEC_TYPE_VIDEO) {
+    if(mp->mp_video.mq_stream == -1 && ctx->codec_type == CODEC_TYPE_VIDEO)
       mp->mp_video.mq_stream = i;
-    }
 
-    if(mp->mp_audio.mq_stream == -1 && ctx->codec_type == CODEC_TYPE_AUDIO) {
+    if(mp->mp_audio.mq_stream == -1 && ctx->codec_type == CODEC_TYPE_AUDIO)
       mp->mp_audio.mq_stream = i;
-    }
 
     pvc->pvc_cwvec[i] = wrap_codec_create(ctx->codec_id,
-					 ctx->codec_type, 0, fw, ctx, 0);
+					  ctx->codec_type, 0, fw, ctx, 0);
   }
-
-  mp->mp_format = pvc->pvc_fctx;
 
   /**
    * Restart playback at last position
@@ -898,6 +830,7 @@ int
 play_video(const char *url, media_pipe_t *mp)
 {
   play_video_ctrl_t *pvc = calloc(1, sizeof(play_video_ctrl_t));
+
   pvc->pvc_url = strdup(url);
   pvc->pvc_mp = mp;
 

@@ -201,6 +201,35 @@ mb_enqueue(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 }
 
 
+
+/*
+ *
+ */
+event_t *
+mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
+{
+  media_queue_t *v = &mp->mp_video;
+  media_queue_t *a = &mp->mp_audio;
+
+  hts_mutex_lock(&mp->mp_mutex);
+  
+  if(a->mq_stream >= 0 && v->mq_stream >= 0) {
+    while(mp->mp_playstatus >= MP_PLAY &&
+	  ((a->mq_len > MQ_LOWWATER && v->mq_len > MQ_LOWWATER) ||
+	   a->mq_len > MQ_HIWATER || v->mq_len > MQ_HIWATER)) {
+      hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
+    }
+  } else {
+    while(mq->mq_len > MQ_LOWWATER && mp->mp_playstatus >= MP_PLAY)
+      hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
+  }
+  
+  mb_enq_tail(mq, mb);
+  hts_mutex_unlock(&mp->mp_mutex);
+  return NULL;
+}
+
+
 /**
  * Return -1 if queues are full. return 0 if enqueue succeeded.
  */
@@ -581,12 +610,10 @@ mp_set_playstatus(media_pipe_t *mp, int status, int flags)
       mp->mp_video_running = 0;
     }
 
-
     prop_set_void(mp->mp_prop_currenttime);
-    media_update_playstatus_prop(mp->mp_prop_playstatus, MP_STOP);
     break;
   }
-
+  media_update_playstatus_prop(mp->mp_prop_playstatus, status);
 }
 
 
@@ -784,24 +811,4 @@ media_set_currentmedia(media_pipe_t *mp)
 
   p = prop_create(prop_get_global(), "currentmediasource");
   prop_set_string(p, mp->mp_name);
-}
-
-
-/**
- *
- */
-void
-media_set_metatree(media_pipe_t *mp, prop_t *src)
-{
-  //  abort(); //hts_prop_linktree(src, mp->mp_prop_meta);
-}
-
-
-/**
- *
- */
-void
-media_clear_metatree(media_pipe_t *mp)
-{
-  //  abort(); //hts_prop_unlink(mp->mp_prop_meta);
 }

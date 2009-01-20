@@ -538,11 +538,7 @@ playtrack(playqueue_entry_t *pqe, media_pipe_t *mp, event_queue_t *eq)
     break;
   }
 
-  mp->mp_format = fctx;
-
   curtime = -1;
-
-  mp->mp_feedback = eq;
 
   while(1) {
 
@@ -698,9 +694,9 @@ playtrack(playqueue_entry_t *pqe, media_pipe_t *mp, event_queue_t *eq)
       }
 
       if(cur_pos_pts != AV_NOPTS_VALUE)
-	mb->mb_time = cur_pos_pts / AV_TIME_BASE;
+	mb->mb_mts = cur_pos_pts / 1000;
       else
-	mb->mb_time = -1;
+	mb->mb_mts = -1;
 
       mb->mb_data_type = MB_AUDIO;
       mb->mb_cw = wrap_codec_ref(cw);

@@ -795,6 +795,26 @@ gv_purge_queues(glw_video_t *gv)
 /**
  *
  */
+static int
+gl_video_widget_event(glw_video_t *gv, event_t *e)
+{
+  switch(e->e_type) {
+  case EVENT_PLAYPAUSE:
+  case EVENT_PLAY:
+  case EVENT_PAUSE:
+    mp_playpause(gv->gv_mp, e->e_type);
+    return 1;
+  default:
+    return 0;
+  }
+}
+
+
+
+
+/**
+ *
+ */
 static int 
 gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, 
 			 void *extra)
@@ -807,15 +827,7 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
     LIST_REMOVE(gv, gv_global_link);
 
-
     gv_purge_queues(gv);
-
-    hts_mutex_lock(&gv->gv_queue_mutex);
-
-    hts_cond_signal(&gv->gv_avail_queue_cond);
-    hts_cond_signal(&gv->gv_bufalloced_queue_cond);
-  
-    hts_mutex_unlock(&gv->gv_queue_mutex);
 
     /* XXX: Does this need any other locking ? */
 
@@ -832,6 +844,9 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     gv_buffer_allocator(gv);
     gv_new_frame(gv);
     return 0;
+
+  case GLW_SIGNAL_EVENT:
+    return gl_video_widget_event(gv, extra);
 
   default:
     return 0;
@@ -884,15 +899,17 @@ glw_video_ctor(glw_t *w, int init, va_list ap)
   glw_video_t *gv = (glw_video_t *)w;
   glw_root_t *gr = w->glw_root;
   glw_attribute_t attrib;
-  const char *filename;
+  const char *filename = NULL;
+  prop_t *p, *p2, *pm;
+  media_pipe_t *mp;
 
   if(init) {
 
-    gv->gv_mp = mp_create("Video decoder");
+    mp = gv->gv_mp = mp_create("Video decoder");
 
-    gv->gv_mp->mp_video_decoder_start = glw_video_decoder_start;
-    gv->gv_mp->mp_video_decoder_stop  = glw_video_decoder_stop;
-    gv->gv_mp->mp_video_opaque        = gv;
+    mp->mp_video_decoder_start = glw_video_decoder_start;
+    mp->mp_video_decoder_stop  = glw_video_decoder_stop;
+    mp->mp_video_opaque        = gv;
 
     glw_signal_handler_int(w, gl_video_widget_callback);
     glw_video_init(gv, gr);
@@ -908,7 +925,15 @@ glw_video_ctor(glw_t *w, int init, va_list ap)
 
     case GLW_ATTRIB_SOURCE:
       filename = va_arg(ap, char *);
-      play_video(filename, gv->gv_mp);
+      break;
+
+    case GLW_ATTRIB_PROPROOT:
+      p = va_arg(ap, void *);
+
+      p2 = prop_create(p, "video");
+      pm = prop_create(p2, "media");
+      
+      prop_link(gv->gv_mp->mp_prop_root, pm);
       break;
 
     default:
@@ -916,6 +941,9 @@ glw_video_ctor(glw_t *w, int init, va_list ap)
       break;
     }
   } while(attrib);
+
+  if(filename != NULL)
+    play_video(filename, gv->gv_mp);
 
 
 }
