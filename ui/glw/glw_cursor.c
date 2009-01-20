@@ -81,6 +81,9 @@ glw_cursor_layout_frame(glw_root_t *gr)
   float r;
   glw_loadable_texture_t *glt = gr->gr_cursor;
 
+  if(glt == NULL)
+    return;
+
   glw_tex_layout(gr, glt);
 
 #define F(v) (0.5 + 0.5 * (v))
