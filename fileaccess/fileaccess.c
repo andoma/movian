@@ -50,6 +50,8 @@ static char *
 fa_resolve_proto(const char *url, fa_protocol_t **p,
 		 const char *x_proto, const char *x_url)
 {
+  extern fa_protocol_t fa_protocol_fs;
+  struct stat st;
   fa_protocol_t *fap;
   const char *url0 = url;
   char buf[100];
@@ -60,8 +62,15 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
 
   buf[n] = 0;
 
-  if(url[0] != ':' || url[1] != '/' || url[2] != '/')
-    return NULL;
+  if(url[0] != ':' || url[1] != '/' || url[2] != '/') {
+    /* No protocol specified, assume a plain file */
+    fap = &fa_protocol_fs;
+    if(fap->fap_stat(fap, url0, &st))
+      return NULL;
+    
+    *p = fap;
+    return strdup(url0);
+  }
 
   url += 3;
 
