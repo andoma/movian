@@ -29,8 +29,6 @@
 #include "fileaccess/fa_probe.h"
 #include "playqueue.h"
 
-TAILQ_HEAD(be_file_entry_queue,  be_file_entry);
-
 nav_backend_t be_file;
 
 typedef struct be_file_page {
@@ -39,22 +37,7 @@ typedef struct be_file_page {
   prop_t *bfp_nodes;
   prop_t *bfp_viewprop;
 
-  struct be_file_entry_queue bfp_entries;
-
 } be_file_page_t;
-
-
-/**
- *
- */
-typedef struct be_file_entry {
-  TAILQ_ENTRY(be_file_entry) bfe_link;
-  char *bfe_uri;
-  prop_t *bfe_prop;
-  int bfe_type;
-
-} be_file_entry_t;
-
 
 
 /**
@@ -66,42 +49,6 @@ be_file_canhandle(const char *uri)
   return fa_can_handle(uri);
 }
 
-
-/**
- *
- */
-static void
-scanner_add(be_file_page_t *bfp, const char *uri, 
-	    const char *filename, int type)
-{
-  prop_t *p;
-  prop_t *urip, *media;
-  be_file_entry_t *bfe;
-
-  p = prop_create(NULL, "node");
-
-  prop_set_string(prop_create(p, "filename"), filename);
-
-  urip = prop_create(p, "url");
-  prop_set_string(urip, uri);
-
-  media = prop_create(p, "media");
-  prop_set_string(prop_create(media, "title"), filename);
-
-  prop_set_string(prop_create(media, "type"), 
-		  type == FA_DIR ? "directory" : "file");
-  
-  bfe = malloc(sizeof(be_file_entry_t));
-  bfe->bfe_type = type;
-  bfe->bfe_uri = strdup(uri);
-  bfe->bfe_prop = p;
-  prop_ref_inc(p);
-  TAILQ_INSERT_TAIL(&bfp->bfp_entries, bfe, bfe_link);
-
-  prop_set_parent(p, bfp->bfp_nodes);
-}
-
-
 /**
  *
  */
@@ -109,14 +56,12 @@ static void *
 scanner(void *aux)
 {
   be_file_page_t *bfp = aux;
-  be_file_entry_t *bfe;
   prop_t *media, *p;
   int r, destroyed = 0;
   fa_dir_t *fd;
   fa_dir_entry_t *fde;
   int images = 0;
 
-  TAILQ_INIT(&bfp->bfp_entries);
   if((fd = fa_scandir(bfp->h.np_uri)) == NULL)
     return NULL;
 
@@ -128,23 +73,33 @@ scanner(void *aux)
 
   fa_dir_sort(fd);
 
-  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link)
-    scanner_add(bfp, fde->fde_url, fde->fde_filename, fde->fde_type);
+  /* First pass, just add filename and type */
+  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
 
-  while((bfe = TAILQ_FIRST(&bfp->bfp_entries)) != NULL) {
-    TAILQ_REMOVE(&bfp->bfp_entries, bfe, bfe_link);
+    p = prop_create(NULL, "node");
+    prop_set_string(prop_create(p, "filename"), fde->fde_filename);
+    prop_set_string(prop_create(p, "url"), fde->fde_url);
 
-    p = bfe->bfe_prop;
+    media = prop_create(p, "media");
+    prop_set_string(prop_create(media, "title"), fde->fde_filename);
+
+    fa_set_type(media, fde->fde_type);
+
+    fde->fde_opaque = p;
+    prop_set_parent(p, bfp->bfp_nodes);
+  }
+
+  /* Second pass, do full probe */
+  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+
+    p = fde->fde_opaque;
     media = prop_create(p, "media");
 
-    if(bfe->bfe_type == FA_DIR) {
-      r = fa_probe_dir(media, bfe->bfe_uri);
+    if(fde->fde_type == FA_DIR) {
+      r = fa_probe_dir(media, fde->fde_url);
     } else {
-      r = fa_probe(media, bfe->bfe_uri, NULL, 0);
+      r = fa_probe(media, fde->fde_url, NULL, 0);
     }
-
-    free(bfe->bfe_uri);
-    free(bfe);
 
     switch(r) {
     case FA_UNKNOWN:
@@ -156,7 +111,6 @@ scanner(void *aux)
       images++;
       break;
     }
-    prop_ref_dec(p);
   }
 
   if(fd->fd_count == destroyed) {
