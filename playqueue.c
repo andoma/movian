@@ -696,7 +696,7 @@ playtrack(playqueue_entry_t *pqe, media_pipe_t *mp)
     media_buf_free(mb);
 
   wrap_codec_deref(cw);
-  wrap_format_destroy(fw);
+  wrap_format_deref(fw);
 
   //  media_update_playstatus_prop(mp->mp_prop_playstatus, MP_STOP);
   return pqe;

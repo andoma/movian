@@ -53,7 +53,7 @@ typedef struct audio_fifo {
 
 #define ab_dataptr(ab) ((void *)&(ab)->af_data[0])
 
-audio_buf_t *af_alloc(size_t size);
+audio_buf_t *af_alloc(size_t size, media_pipe_t *mp);
 
 void af_enq(audio_fifo_t *af, audio_buf_t *ab);
 

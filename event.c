@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 #include <libhts/hts_strtab.h>
 
 #include "showtime.h"
@@ -337,3 +338,15 @@ event_str2code(const char *str)
   return str2val(str, eventnames);
 }
 
+/**
+ *
+ */
+event_t *
+event_create_url(event_type_t et, const char *url)
+{
+  int l = strlen(url) + 1;
+
+  event_url_t *eu = event_create(et, sizeof(event_url_t) + l);
+  memcpy(eu->url, url, l);
+  return &eu->h;
+}

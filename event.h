@@ -78,7 +78,9 @@ typedef enum {
   EVENT_PLAYQUEUE,
   EVENT_TV,            /* TV specific events, see tv.h */
   EVENT_SEEK,
-  
+  EVENT_PLAY_URL,
+  EVENT_EXIT
+
 } event_type_t;
 
 
@@ -137,9 +139,17 @@ typedef struct event_seek {
 } event_seek_t;
 
 
+/**
+ *
+ */
+typedef struct event_url {
+  event_t h;
+  char url[0];
+} event_url_t;
+
+
+
 void event_generic_dtor(event_t *e);
-
-
 
 void *event_create(event_type_t type, size_t size);
 
@@ -157,15 +167,7 @@ void event_initqueue(event_queue_t *eq);
 
 void event_flushqueue(event_queue_t *eq);
 
-
-
-
-
-
-
-
-
-
+event_t *event_create_url(event_type_t et, const char *url);
 
 
 /**

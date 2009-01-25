@@ -27,91 +27,88 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "showtime.h"
-#include "media.h"
-#include "ui/glw/glw_video.h"
+#include "video_decoder.h"
 //#include "subtitles.h"
-#include "video/yadif.h"
+#include "yadif.h"
 #include "event.h"
 
-void
-gv_init_timings(glw_video_t *gv)
+static void
+vd_init_timings(video_decoder_t *vd)
 {
-  gv_kalman_init(&gv->gv_avfilter);
-  gv->gv_lastpts = AV_NOPTS_VALUE;
-  gv->gv_nextpts = AV_NOPTS_VALUE;
-  gv->gv_estimated_duration = 0;
-  gv->gv_last_subtitle_index = -1;
+  kalman_init(&vd->vd_avfilter);
+  vd->vd_lastpts = AV_NOPTS_VALUE;
+  vd->vd_nextpts = AV_NOPTS_VALUE;
+  vd->vd_estimated_duration = 0;
+  //  vd->vd_last_subtitle_index = -1;
 }
 
-/*
- * gv_dequeue_for_decode
+/**
+ * vd_dequeue_for_decode
  *
  * This function will return a frame with a mapped PBO that have w x h
  * according to the w[] and h[] arrays. If no widget is attached to
  * the decoder it wil return NULL.
  *
  */
-
-static gl_video_frame_t *
-gv_dequeue_for_decode(glw_video_t *gv, int w[3], int h[3])
+static video_decoder_frame_t *
+vd_dequeue_for_decode(video_decoder_t *vd, int w[3], int h[3])
 {
-  gl_video_frame_t *gvf;
+  video_decoder_frame_t *vdf;
 
-  hts_mutex_lock(&gv->gv_queue_mutex);
+  hts_mutex_lock(&vd->vd_queue_mutex);
   
-  while((gvf = TAILQ_FIRST(&gv->gv_avail_queue)) == NULL &&
-	gv->gv_display_running) {
-    hts_cond_wait(&gv->gv_avail_queue_cond, &gv->gv_queue_mutex);
+  while((vdf = TAILQ_FIRST(&vd->vd_avail_queue)) == NULL &&
+	vd->vd_decoder_running) {
+    hts_cond_wait(&vd->vd_avail_queue_cond, &vd->vd_queue_mutex);
   }
 
-  if(!gv->gv_display_running) {
-    hts_mutex_unlock(&gv->gv_queue_mutex);
+  if(!vd->vd_decoder_running) {
+    hts_mutex_unlock(&vd->vd_queue_mutex);
     return NULL;
   }
 
-  TAILQ_REMOVE(&gv->gv_avail_queue, gvf, link);
+  TAILQ_REMOVE(&vd->vd_avail_queue, vdf, vdf_link);
 
-  if(gvf->gvf_width[0] == w[0] && gvf->gvf_height[0] == h[0] && 
-     gvf->gvf_width[1] == w[1] && gvf->gvf_height[1] == h[1] && 
-     gvf->gvf_width[2] == w[2] && gvf->gvf_height[2] == h[2] && 
-     gvf->gvf_pbo_ptr != NULL) {
-    hts_mutex_unlock(&gv->gv_queue_mutex);
-    return gvf;
+  if(vdf->vdf_width[0] == w[0] && vdf->vdf_height[0] == h[0] && 
+     vdf->vdf_width[1] == w[1] && vdf->vdf_height[1] == h[1] && 
+     vdf->vdf_width[2] == w[2] && vdf->vdf_height[2] == h[2] && 
+     vdf->vdf_data[0] != NULL) {
+    hts_mutex_unlock(&vd->vd_queue_mutex);
+    return vdf;
   }
 
   /* Frame has not correct width / height, enqueue it for
      buffer (re-)allocation */
 
-  gvf->gvf_width[0]  = w[0];
-  gvf->gvf_height[0] = h[0];
-  gvf->gvf_width[1]  = w[1];
-  gvf->gvf_height[1] = h[1];
-  gvf->gvf_width[2]  = w[2];
-  gvf->gvf_height[2] = h[2];
+  vdf->vdf_width[0]  = w[0];
+  vdf->vdf_height[0] = h[0];
+  vdf->vdf_width[1]  = w[1];
+  vdf->vdf_height[1] = h[1];
+  vdf->vdf_width[2]  = w[2];
+  vdf->vdf_height[2] = h[2];
 
-  TAILQ_INSERT_TAIL(&gv->gv_bufalloc_queue, gvf, link);
+  TAILQ_INSERT_TAIL(&vd->vd_bufalloc_queue, vdf, vdf_link);
 
-  while((gvf = TAILQ_FIRST(&gv->gv_bufalloced_queue)) == NULL &&
-	gv->gv_display_running)
-    hts_cond_wait(&gv->gv_bufalloced_queue_cond, &gv->gv_queue_mutex);
+  while((vdf = TAILQ_FIRST(&vd->vd_bufalloced_queue)) == NULL &&
+	vd->vd_decoder_running)
+    hts_cond_wait(&vd->vd_bufalloced_queue_cond, &vd->vd_queue_mutex);
 
-  if(!gv->gv_display_running) {
-    hts_mutex_unlock(&gv->gv_queue_mutex);
+  if(!vd->vd_decoder_running) {
+    hts_mutex_unlock(&vd->vd_queue_mutex);
     return NULL;
   }
 
-  TAILQ_REMOVE(&gv->gv_bufalloced_queue, gvf, link);
+  TAILQ_REMOVE(&vd->vd_bufalloced_queue, vdf, vdf_link);
 
-  hts_mutex_unlock(&gv->gv_queue_mutex);
+  hts_mutex_unlock(&vd->vd_queue_mutex);
 
-  assert(gvf->gvf_pbo_ptr != NULL);
-  return gvf;
+  assert(vdf->vdf_data[0] != NULL);
+  return vdf;
 }
 
 
 static int
-display_or_skip(glw_video_t *gv, int duration)
+display_or_skip(video_decoder_t *vd, int duration)
 {
   return 1;
 }
@@ -127,7 +124,7 @@ typedef struct {
 
 
 static int
-gv_get_buffer(struct AVCodecContext *c, AVFrame *pic)
+vd_get_buffer(struct AVCodecContext *c, AVFrame *pic)
 {
   media_buf_t *mb = c->opaque;
   int ret = avcodec_default_get_buffer(c, pic);
@@ -143,7 +140,7 @@ gv_get_buffer(struct AVCodecContext *c, AVFrame *pic)
 }
 
 static void
-gv_release_buffer(struct AVCodecContext *c, AVFrame *pic)
+vd_release_buffer(struct AVCodecContext *c, AVFrame *pic)
 {
   frame_meta_t *fm = pic->opaque;
 
@@ -154,20 +151,20 @@ gv_release_buffer(struct AVCodecContext *c, AVFrame *pic)
 }
 
 
-#define gv_valid_duration(t) ((t) > 1000ULL && (t) < 10000000ULL)
+#define vd_valid_duration(t) ((t) > 1000ULL && (t) < 10000000ULL)
 
 static void 
-gv_decode_video(glw_video_t *gv, media_buf_t *mb, int justdecode)
+vd_decode_video(video_decoder_t *vd, media_buf_t *mb, int justdecode)
 {
-  gl_video_frame_t *gvf;
+  video_decoder_frame_t *vdf;
   int64_t pts, t;
   int i, j, got_pic, h, w, duration;
-  media_pipe_t *mp = gv->gv_mp;
+  media_pipe_t *mp = vd->vd_mp;
   unsigned char *src, *dst;
   float f;
   codecwrap_t *cw = mb->mb_cw;
   AVCodecContext *ctx = cw->codec_ctx;
-  AVFrame *frame = gv->gv_frame;
+  AVFrame *frame = vd->vd_frame;
   frame_meta_t *fm;
   time_t now;
   int hvec[3], wvec[3];
@@ -177,23 +174,23 @@ gv_decode_video(glw_video_t *gv, media_buf_t *mb, int justdecode)
 
   got_pic = 0;
 
-  if(gv->gv_do_flush) {
+  if(vd->vd_do_flush) {
     do {
       avcodec_decode_video(ctx, frame, &got_pic, NULL, 0);
     } while(got_pic);
 
-    gv->gv_do_flush = 0;
-    gv->gv_lastpts = AV_NOPTS_VALUE;
-    gv->gv_estimated_duration = 0;
+    vd->vd_do_flush = 0;
+    vd->vd_lastpts = AV_NOPTS_VALUE;
+    vd->vd_estimated_duration = 0;
     avcodec_flush_buffers(ctx);
-    gv->gv_compensate_thres = 5;
+    vd->vd_compensate_thres = 5;
   }
 
   time(&now);
 
   ctx->opaque = mb;
-  ctx->get_buffer = gv_get_buffer;
-  ctx->release_buffer = gv_release_buffer;
+  ctx->get_buffer = vd_get_buffer;
+  ctx->release_buffer = vd_release_buffer;
 
   /*
    * If we are seeking, drop any non-reference frames
@@ -206,9 +203,6 @@ gv_decode_video(glw_video_t *gv, media_buf_t *mb, int justdecode)
   if(got_pic == 0)
     return;
 
-  gv->gv_codectxt = ctx->codec->name;
-
-
   /* Update aspect ratio */
 
   switch(mb->mb_aspect_override) {
@@ -219,24 +213,24 @@ gv_decode_video(glw_video_t *gv, media_buf_t *mb, int justdecode)
     else
       f = (float)ctx->width / (float)ctx->height;
     
-    gv->gv_aspect = (av_q2d(ctx->sample_aspect_ratio) ?: 1) * f;
+    vd->vd_aspect = (av_q2d(ctx->sample_aspect_ratio) ?: 1) * f;
     break;
   case 1:
-    gv->gv_aspect = (4.0f / 3.0f);
+    vd->vd_aspect = (4.0f / 3.0f);
     break;
   case 2:
-    gv->gv_aspect = (16.0f / 9.0f);
+    vd->vd_aspect = (16.0f / 9.0f);
     break;
   }
 
-  if(gv->gv_deilace_conf == GV_DEILACE_AUTO) {
+  if(vd->vd_deilace_conf == VD_DEILACE_AUTO) {
     
     if(frame->interlaced_frame)
-      gv->gv_deilace_type = GV_DEILACE_HALF_RES;
+      vd->vd_deilace_type = VD_DEILACE_HALF_RES;
     else
-      gv->gv_deilace_type = GV_DEILACE_NONE;
+      vd->vd_deilace_type = VD_DEILACE_NONE;
   } else {
-    gv->gv_deilace_type = gv->gv_deilace_conf;
+    vd->vd_deilace_type = vd->vd_deilace_conf;
   }
   
   /* Compute duration and PTS of frame */
@@ -250,27 +244,27 @@ gv_decode_video(glw_video_t *gv, media_buf_t *mb, int justdecode)
   pts = fm->pts;
   duration = fm->duration;
 
-  if(!gv_valid_duration(duration)) {
+  if(!vd_valid_duration(duration)) {
     /* duration is zero or very invalid, use duration from last output */
-    duration = gv->gv_estimated_duration;
+    duration = vd->vd_estimated_duration;
   }
 
-  if(pts == AV_NOPTS_VALUE && gv->gv_nextpts != AV_NOPTS_VALUE)
-    pts = gv->gv_nextpts; /* no pts set, use estimated pts */
+  if(pts == AV_NOPTS_VALUE && vd->vd_nextpts != AV_NOPTS_VALUE)
+    pts = vd->vd_nextpts; /* no pts set, use estimated pts */
 
-  if(pts != AV_NOPTS_VALUE && gv->gv_lastpts != AV_NOPTS_VALUE) {
+  if(pts != AV_NOPTS_VALUE && vd->vd_lastpts != AV_NOPTS_VALUE) {
     /* we know pts of last frame */
-    t = pts - gv->gv_lastpts;
+    t = pts - vd->vd_lastpts;
 
-    if(gv_valid_duration(t)) {
+    if(vd_valid_duration(t)) {
       /* inter frame duration seems valid, store it */
-      gv->gv_estimated_duration = t;
+      vd->vd_estimated_duration = t;
       if(duration == 0)
 	duration = t;
 
     } else if(t < 0 || t > 10000000LL) {
       /* crazy pts jump, use estimated pts from last output instead */
-      pts = gv->gv_nextpts;
+      pts = vd->vd_nextpts;
     }
   }
   
@@ -279,32 +273,32 @@ gv_decode_video(glw_video_t *gv, media_buf_t *mb, int justdecode)
   duration += frame->repeat_pict * (duration * 0.5);
  
   if(pts != AV_NOPTS_VALUE) {
-    gv->gv_lastpts = pts;
-    gv->gv_nextpts = pts + duration;
+    vd->vd_lastpts = pts;
+    vd->vd_nextpts = pts + duration;
   }
 
   if(duration == 0 || pts == AV_NOPTS_VALUE)
     return;
 
 #if 0
-  if(gv->gv_mp->mp_subtitles) {
-    i = subtitles_index_by_pts(gv->gv_mp->mp_subtitles, pts);
-    if(i != gv->gv_last_subtitle_index) {
+  if(vd->vd_mp->mp_subtitles) {
+    i = subtitles_index_by_pts(vd->vd_mp->mp_subtitles, pts);
+    if(i != vd->vd_last_subtitle_index) {
 
-      if(gv->gv_subtitle_widget != NULL)
-	glw_destroy(gv->gv_subtitle_widget);
+      if(vd->vd_subtitle_widget != NULL)
+	glw_destroy(vd->vd_subtitle_widget);
       
-      gv->gv_subtitle_widget =
-	subtitles_make_widget(gv->gv_mp->mp_subtitles, i);
+      vd->vd_subtitle_widget =
+	subtitles_make_widget(vd->vd_mp->mp_subtitles, i);
       abort();
-      gv->gv_last_subtitle_index = i;
+      vd->vd_last_subtitle_index = i;
     }
   }
 #endif
 
   /* deinterlacer will generate two frames */
 
-  if(gv->gv_deilace_type == GV_DEILACE_HALF_RES)
+  if(vd->vd_deilace_type == VD_DEILACE_HALF_RES)
     duration /= 2;
 
   avcodec_get_chroma_sub_sample(ctx->pix_fmt, &hshift, &vshift);
@@ -316,30 +310,30 @@ gv_decode_video(glw_video_t *gv, media_buf_t *mb, int justdecode)
   hvec[1] = ctx->height >> vshift;
   hvec[2] = ctx->height >> vshift;
 
-  switch(gv->gv_deilace_type) {
+  switch(vd->vd_deilace_type) {
 
-  case GV_DEILACE_AUTO:
+  case VD_DEILACE_AUTO:
     return;
 
     /*
      *  No post processing
      */
 
-  case GV_DEILACE_NONE:
-    gv->gv_active_frames_needed = 3;
-    gv->gv_interlaced = 0;
-    if(!display_or_skip(gv, duration))
+  case VD_DEILACE_NONE:
+    vd->vd_active_frames_needed = 3;
+    vd->vd_interlaced = 0;
+    if(!display_or_skip(vd, duration))
       return;
 
-    if((gvf = gv_dequeue_for_decode(gv, wvec, hvec)) == NULL)
+    if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
       return;
 
     for(i = 0; i < 3; i++) {
-      h = gvf->gvf_height[i];
-      w = gvf->gvf_width[i];
+      h = vdf->vdf_height[i];
+      w = vdf->vdf_width[i];
       
       src = frame->data[i];
-      dst = gvf->gvf_pbo_ptr + gvf->gvf_pbo_offset[i];
+      dst = vdf->vdf_data[i];
  
       while(h--) {
 	memcpy(dst, src, w);
@@ -348,38 +342,38 @@ gv_decode_video(glw_video_t *gv, media_buf_t *mb, int justdecode)
       }
     }
     
-    gv->gv_interlaced = 0;
-    gvf->gvf_pts = pts;
-    gvf->gvf_duration = duration;
-    TAILQ_INSERT_TAIL(&gv->gv_display_queue, gvf, link);
+    vd->vd_interlaced = 0;
+    vdf->vdf_pts = pts;
+    vdf->vdf_duration = duration;
+    TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
     return;
 
-  case GV_DEILACE_HALF_RES:
-    tff = !!frame->top_field_first ^ gv->gv_field_parity;
+  case VD_DEILACE_HALF_RES:
+    tff = !!frame->top_field_first ^ vd->vd_field_parity;
 
-    gv->gv_active_frames_needed = 3;
+    vd->vd_active_frames_needed = 3;
 
     /*
      *  Deinterlace by 2 x framerate and 0.5 * y-res,
      *  OpenGL does bledning for us
      */
 
-    gv->gv_interlaced = 1;
+    vd->vd_interlaced = 1;
 
     hvec[0] = hvec[0] / 2;
     hvec[1] = hvec[1] / 2;
     hvec[2] = hvec[2] / 2;
 
-    if(display_or_skip(gv, duration)) {
-      if((gvf = gv_dequeue_for_decode(gv, wvec, hvec)) == NULL)
+    if(display_or_skip(vd, duration)) {
+      if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
 	return;
 
       for(i = 0; i < 3; i++) {
 
 	src = frame->data[i]; 
-	dst = gvf->gvf_pbo_ptr + gvf->gvf_pbo_offset[i];
-	h = gvf->gvf_height[i];
-	w = gvf->gvf_width[i];
+	dst = vdf->vdf_data[i];
+	h = vdf->vdf_height[i];
+	w = vdf->vdf_width[i];
 
 	while(h -= 2 > 0) {
 	  memcpy(dst, src, w);
@@ -388,24 +382,24 @@ gv_decode_video(glw_video_t *gv, media_buf_t *mb, int justdecode)
 	}
       }
 
-      gvf->gvf_debob = !tff;
+      vdf->vdf_debob = !tff;
       
-      gvf->gvf_pts = pts;
-      gvf->gvf_duration = duration;
-      TAILQ_INSERT_TAIL(&gv->gv_display_queue, gvf, link);
+      vdf->vdf_pts = pts;
+      vdf->vdf_duration = duration;
+      TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
     }
 
-    if(display_or_skip(gv, duration)) {
+    if(display_or_skip(vd, duration)) {
 
-      if((gvf = gv_dequeue_for_decode(gv, wvec, hvec)) == NULL)
+      if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
 	return;
 
       for(i = 0; i < 3; i++) {
       
 	src = frame->data[i] + frame->linesize[i];
-	dst = gvf->gvf_pbo_ptr + gvf->gvf_pbo_offset[i];
-	h = gvf->gvf_height[i];
-	w = gvf->gvf_width[i];
+	dst = vdf->vdf_data[i];
+	h = vdf->vdf_height[i];
+	w = vdf->vdf_width[i];
 	
 	while(h -= 2 > 0) {
 	  memcpy(dst, src, w);
@@ -414,46 +408,46 @@ gv_decode_video(glw_video_t *gv, media_buf_t *mb, int justdecode)
 	}
       }
 
-      gvf->gvf_debob = tff;
+      vdf->vdf_debob = tff;
 
-      gvf->gvf_pts = pts + duration;
-      gvf->gvf_duration = duration;
-      TAILQ_INSERT_TAIL(&gv->gv_display_queue, gvf, link);
+      vdf->vdf_pts = pts + duration;
+      vdf->vdf_duration = duration;
+      TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
     }
     return;
     
-  case GV_DEILACE_YADIF_FRAME:
+  case VD_DEILACE_YADIF_FRAME:
     mode = 0; goto yadif;
-  case GV_DEILACE_YADIF_FIELD:
+  case VD_DEILACE_YADIF_FIELD:
     mode = 1; goto yadif;
-  case GV_DEILACE_YADIF_FRAME_NO_SPATIAL_ILACE:
+  case VD_DEILACE_YADIF_FRAME_NO_SPATIAL_ILACE:
     mode = 2; goto yadif;
-  case GV_DEILACE_YADIF_FIELD_NO_SPATIAL_ILACE:
+  case VD_DEILACE_YADIF_FIELD_NO_SPATIAL_ILACE:
     mode = 3;
   yadif:
-    if(gv->gv_yadif_width   != ctx->width  ||
-       gv->gv_yadif_height  != ctx->height ||
-       gv->gv_yadif_pix_fmt != ctx->pix_fmt) {
+    if(vd->vd_yadif_width   != ctx->width  ||
+       vd->vd_yadif_height  != ctx->height ||
+       vd->vd_yadif_pix_fmt != ctx->pix_fmt) {
       
-      gv->gv_yadif_width   = ctx->width;
-      gv->gv_yadif_height  = ctx->height;
-      gv->gv_yadif_pix_fmt = ctx->pix_fmt;
+      vd->vd_yadif_width   = ctx->width;
+      vd->vd_yadif_height  = ctx->height;
+      vd->vd_yadif_pix_fmt = ctx->pix_fmt;
 
       for(i = 0; i < 3; i++) {
-	avpicture_free(&gv->gv_yadif_pic[i]);
-	avpicture_alloc(&gv->gv_yadif_pic[i], ctx->pix_fmt, 
+	avpicture_free(&vd->vd_yadif_pic[i]);
+	avpicture_alloc(&vd->vd_yadif_pic[i], ctx->pix_fmt, 
 			ctx->width, ctx->height);
       }
     }
 
-    gv->gv_active_frames_needed = 3;
-    gv->gv_interlaced = 1;
+    vd->vd_active_frames_needed = 3;
+    vd->vd_interlaced = 1;
 
     for(i = 0; i < 3; i++) {
-      w = gv->gv_yadif_width  >> (i ? hshift : 0);
-      h = gv->gv_yadif_height >> (i ? vshift : 0);
+      w = vd->vd_yadif_width  >> (i ? hshift : 0);
+      h = vd->vd_yadif_height >> (i ? vshift : 0);
       src = frame->data[i];
-      dst = gv->gv_yadif_pic[gv->gv_yadif_phase].data[i];
+      dst = vd->vd_yadif_pic[vd->vd_yadif_phase].data[i];
       while(h--) {
 	memcpy(dst, src, w);
 	dst += w;
@@ -461,34 +455,34 @@ gv_decode_video(glw_video_t *gv, media_buf_t *mb, int justdecode)
       }
     }
 
-    if(!display_or_skip(gv, duration))
+    if(!display_or_skip(vd, duration))
       return;
 
-    tff = !!frame->top_field_first ^ gv->gv_field_parity;
+    tff = !!frame->top_field_first ^ vd->vd_field_parity;
 
     if(mode & 1) 
       duration /= 2;
 
     for(j = 0; j <= (mode & 1); j++) {
 
-      if((gvf = gv_dequeue_for_decode(gv, wvec, hvec)) == NULL)
+      if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
 	return;
 
       for(i = 0; i < 3; i++) {
 	int y;
 	int parity = j ^ tff ^ 1;
 
-	h = gv->gv_yadif_phase;
-	next = gv->gv_yadif_pic[h].data[i];
+	h = vd->vd_yadif_phase;
+	next = vd->vd_yadif_pic[h].data[i];
 	if(--h < 0) h = 2;
-	cur = gv->gv_yadif_pic[h].data[i];
+	cur = vd->vd_yadif_pic[h].data[i];
 	if(--h < 0) h = 2;
-	prev = gv->gv_yadif_pic[h].data[i];
+	prev = vd->vd_yadif_pic[h].data[i];
 
-	dst = gvf->gvf_pbo_ptr + gvf->gvf_pbo_offset[i];
-	h = gvf->gvf_height[i];
-	w = gvf->gvf_width[i];
-	w2 = gv->gv_yadif_width >> (i ? hshift : 0);
+	dst = vdf->vdf_data[i];
+	h = vdf->vdf_height[i];
+	w = vdf->vdf_width[i];
+	w2 = vd->vd_yadif_width >> (i ? hshift : 0);
 
 	for(y = 0; y < 2; y++) {
 	  memcpy(dst, cur, w);
@@ -512,14 +506,14 @@ gv_decode_video(glw_video_t *gv, media_buf_t *mb, int justdecode)
       }
 
       asm volatile("emms \n\t" : : : "memory");
-      gvf->gvf_pts = pts + j * duration;
-      gvf->gvf_duration = duration;
-      TAILQ_INSERT_TAIL(&gv->gv_display_queue, gvf, link);
+      vdf->vdf_pts = pts + j * duration;
+      vdf->vdf_duration = duration;
+      TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
     }
 
-    gv->gv_yadif_phase++;
-    if(gv->gv_yadif_phase > 2)
-      gv->gv_yadif_phase = 0;
+    vd->vd_yadif_phase++;
+    if(vd->vd_yadif_phase > 2)
+      vd->vd_yadif_phase = 0;
     return;
   }
 }
@@ -528,16 +522,16 @@ gv_decode_video(glw_video_t *gv, media_buf_t *mb, int justdecode)
  * Video decoder thread
  */
 static void *
-gv_thread(void *aux)
+vd_thread(void *aux)
 {
-  glw_video_t *gv = aux;
-  media_pipe_t *mp = gv->gv_mp;
+  video_decoder_t *vd = aux;
+  media_pipe_t *mp = vd->vd_mp;
   media_queue_t *mq = &mp->mp_video;
   media_buf_t *mb;
   int i;
   int run = 1;
 
-  gv->gv_frame = avcodec_alloc_frame();
+  vd->vd_frame = avcodec_alloc_frame();
 
   hts_mutex_lock(&mp->mp_mutex);
 
@@ -548,7 +542,7 @@ gv_thread(void *aux)
       continue;
     }
 
-    if(mb->mb_data_type == MB_VIDEO && gv->gv_hold) {
+    if(mb->mb_data_type == MB_VIDEO && vd->vd_hold) {
       hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
       continue;
     }
@@ -564,20 +558,20 @@ gv_thread(void *aux)
       break;
 
     case MB_CTRL_PAUSE:
-      gv->gv_hold = 1;
+      vd->vd_hold = 1;
       break;
 
     case MB_CTRL_PLAY:
-      gv->gv_hold = 0;
+      vd->vd_hold = 0;
       break;
 
     case MB_FLUSH:
-      gv_init_timings(gv);
-      gv->gv_do_flush = 1;
+      vd_init_timings(vd);
+      vd->vd_do_flush = 1;
       break;
 
     case MB_VIDEO:
-      gv_decode_video(gv, mb, 0);
+      vd_decode_video(vd, mb, 0);
       break;
 
     default:
@@ -591,62 +585,81 @@ gv_thread(void *aux)
   hts_mutex_unlock(&mp->mp_mutex);
 
   /* Free YADIF frames */
-  if(gv->gv_yadif_width)
+  if(vd->vd_yadif_width)
     for(i = 0; i < 3; i++)
-      avpicture_free(&gv->gv_yadif_pic[i]);
+      avpicture_free(&vd->vd_yadif_pic[i]);
 
   /* Free ffmpeg frame */
-  av_free(gv->gv_frame);
-
+  av_free(vd->vd_frame);
   return NULL;
 }
 
 
 
 
+video_decoder_t *
+video_decoder_create(media_pipe_t *mp)
+{
+  video_decoder_t *vd = calloc(1, sizeof(video_decoder_t));
+
+  vd->vd_mp = mp;
+  vd->vd_decoder_running = 1;
+
+  vd_init_timings(vd);
+
+  /* For the exact meaning of these, see gl_video.h */
+    
+  TAILQ_INIT(&vd->vd_avail_queue);
+  TAILQ_INIT(&vd->vd_displaying_queue);
+  TAILQ_INIT(&vd->vd_display_queue);
+  TAILQ_INIT(&vd->vd_bufalloc_queue);
+  TAILQ_INIT(&vd->vd_bufalloced_queue);
+
+  hts_cond_init(&vd->vd_avail_queue_cond);
+  hts_cond_init(&vd->vd_bufalloced_queue_cond);
+  hts_mutex_init(&vd->vd_queue_mutex);
+
+  hts_thread_create_joinable(&vd->vd_decoder_thread, vd_thread, vd);
+  
+  return vd;
+}
+
+
 /**
  *
  */
 void
-glw_video_decoder_start(glw_video_t *gv)
+video_decoder_stop(video_decoder_t *vd)
 {
-  hts_thread_create_joinable(&gv->gv_ptid, gv_thread, gv);
+  media_pipe_t *mp = vd->vd_mp;
+
+  mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_EXIT);
+
+  hts_mutex_lock(&vd->vd_queue_mutex);
+  vd->vd_decoder_running = 0;
+  hts_cond_signal(&vd->vd_avail_queue_cond);
+  hts_cond_signal(&vd->vd_bufalloced_queue_cond);
+  hts_mutex_unlock(&vd->vd_queue_mutex);
+
+  hts_thread_join(&vd->vd_decoder_thread);
+  vd->vd_mp = NULL;
 }
 
 
-#if 0
 /**
  *
  */
 void
-glw_video_decoder_stop(void *opaque)
+video_decoder_destroy(video_decoder_t *vd)
 {
-  glw_video_t *gv = opaque;
+  assert(TAILQ_FIRST(&vd->vd_avail_queue) == NULL);
+  assert(TAILQ_FIRST(&vd->vd_displaying_queue) == NULL);
+  assert(TAILQ_FIRST(&vd->vd_display_queue) == NULL);
+  assert(TAILQ_FIRST(&vd->vd_bufalloc_queue) == NULL);
+  assert(TAILQ_FIRST(&vd->vd_bufalloced_queue) == NULL);
 
-  hts_mutex_lock(&gv->gv_queue_mutex);
-
-  gv->gv_run_decoder = 0;
-
-  hts_cond_signal(&gv->gv_bufalloced_queue_cond);
-  hts_cond_signal(&gv->gv_avail_queue_cond);
-
-  hts_mutex_unlock(&gv->gv_queue_mutex);
-
-  printf("Waiting for video decoder\n");
-  hts_thread_join(gv->gv_ptid);
-  printf("Video decoder joined\n");
+  hts_cond_destroy(&vd->vd_avail_queue_cond);
+  hts_cond_destroy(&vd->vd_bufalloced_queue_cond);
+  hts_mutex_destroy(&vd->vd_queue_mutex);
+  free(vd);
 }
-#endif
-
-
-
-
-
-#if 0
-void
-gv_set_dvd(media_pipe_t *mp, struct dvd_player *dvd)
-{
-  glw_video_t *gv = mp->mp_video_decoder;
-  gv->gv_dvd = dvd;
-}
-#endif

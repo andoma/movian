@@ -29,11 +29,14 @@
  *
  */
 audio_buf_t *
-af_alloc(size_t size)
+af_alloc(size_t size, media_pipe_t *mp)
 {
   audio_buf_t *ab;
   ab = malloc(size + sizeof(audio_buf_t));
-  ab->ab_mp = NULL;
+  ab->ab_mp = mp;
+  assert(mp != NULL);
+  if(mp != NULL)
+    mp_ref_inc(mp);
   return ab;
 }
 
@@ -123,7 +126,7 @@ void
 ab_free(audio_buf_t *ab)
 {
   if(ab->ab_mp != NULL)
-    mp_unref(ab->ab_mp);
+    mp_ref_dec(ab->ab_mp);
   free(ab);
 }
 

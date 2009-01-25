@@ -650,51 +650,50 @@ play_video(const char *url, media_pipe_t *mp)
  *
  */
 static int64_t
-rescale(play_video_ctrl_t *pvc, int64_t ts, int si)
+rescale(AVFormatContext *fctx, int64_t ts, int si)
 {
   if(ts == AV_NOPTS_VALUE)
     return AV_NOPTS_VALUE;
 
-  return av_rescale_q(ts, pvc->pvc_fctx->streams[si]->time_base,
-		      AV_TIME_BASE_Q);
+  return av_rescale_q(ts, fctx->streams[si]->time_base, AV_TIME_BASE_Q);
 }
 
 
 /**
  * Thread for reading from lavf and sending to lavc
  */
-static void
-video_player_loop(play_video_ctrl_t *pvc)
+static event_t *
+video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp)
 {
-  media_pipe_t *mp = pvc->pvc_mp;
   media_buf_t *mb = NULL;
   media_queue_t *mq = NULL;
   AVCodecContext *ctx;
   AVPacket pkt;
-  int run = 1, r, si;
+  int r, si;
   event_t *e;
   event_seek_t *es;
   int64_t ts;
   int hold = 0;
 
-  while(run) {
+  while(1) {
     /**
      * Need to fetch a new packet ?
      */
     if(mb == NULL) {
 
-      if((r = av_read_frame(pvc->pvc_fctx, &pkt)) < 0) {
+      if((r = av_read_frame(fctx, &pkt)) < 0) {
 
 	printf("READ error %d\n", r);
 	mp_wait(mp, mp->mp_audio.mq_stream != -1, 
 		mp->mp_video.mq_stream != -1);
 	printf("All fifos empty\n");
+	e = NULL;
 	break;
       }
 
       si = pkt.stream_index;
 
-      ctx = pvc->pvc_cwvec[si] ? pvc->pvc_cwvec[si]->codec_ctx : NULL;
+      ctx = cwvec[si] ? cwvec[si]->codec_ctx : NULL;
 
       if(ctx != NULL && si == mp->mp_video.mq_stream) {
 	/* Current video stream */
@@ -714,11 +713,11 @@ video_player_loop(play_video_ctrl_t *pvc)
 	continue;
       }
 
-      mb->mb_pts      = rescale(pvc, pkt.pts,      si);
-      mb->mb_dts      = rescale(pvc, pkt.dts,      si);
-      mb->mb_duration = rescale(pvc, pkt.duration, si);
+      mb->mb_pts      = rescale(fctx, pkt.pts,      si);
+      mb->mb_dts      = rescale(fctx, pkt.dts,      si);
+      mb->mb_duration = rescale(fctx, pkt.duration, si);
 
-      mb->mb_cw = wrap_codec_ref(pvc->pvc_cwvec[si]);
+      mb->mb_cw = wrap_codec_ref(cwvec[si]);
 
       /* Move the data pointers from ffmpeg's packet */
 
@@ -731,7 +730,7 @@ video_player_loop(play_video_ctrl_t *pvc)
       pkt.size = 0;
 
       if(mb->mb_pts != AV_NOPTS_VALUE && mb->mb_data_type == MB_AUDIO)
-	mb->mb_mts = (mb->mb_pts - pvc->pvc_fctx->start_time) / 1000;
+	mb->mb_mts = (mb->mb_pts - fctx->start_time) / 1000;
       else
 	mb->mb_mts = -1;
 
@@ -764,10 +763,10 @@ video_player_loop(play_video_ctrl_t *pvc)
       
       ts = es->ts;
 
-      if(ts < pvc->pvc_fctx->start_time)
-	ts = pvc->pvc_fctx->start_time;
+      if(ts < fctx->start_time)
+	ts = fctx->start_time;
 
-      r = av_seek_frame(pvc->pvc_fctx, -1, ts, AVSEEK_FLAG_BACKWARD);
+      r = av_seek_frame(fctx, -1, ts, AVSEEK_FLAG_BACKWARD);
 
       if(r < 0)
 	printf("Seeking failed\n");
@@ -796,41 +795,48 @@ video_player_loop(play_video_ctrl_t *pvc)
 
     default:
       break;
-    }
 
+    case EVENT_EXIT:
+    case EVENT_PLAY_URL:
+      goto out;
+
+    }
     event_unref(e);
   }
 
+ out:
   if(mb != NULL)
     media_buf_free(mb);
+  return e;
 }
 
 /**
  *
  */
-static void *
-video_play_thread(void *aux)
+static event_t *
+video_play_file(media_pipe_t *mp, const char *url)
 {
-  play_video_ctrl_t *pvc = aux;
+  AVFormatContext *fctx;
   AVCodecContext *ctx;
   formatwrap_t *fw;
   int i ;
-  media_pipe_t *mp = pvc->pvc_mp;
   char faurl[1000];
+  codecwrap_t **cwvec;
+  event_t *e;
 
   /**
    * Open input file
    */
-  snprintf(faurl, sizeof(faurl), "showtime:%s", pvc->pvc_url);
-  if(av_open_input_file(&pvc->pvc_fctx, faurl, NULL, 0, NULL) != 0) {
-    fprintf(stderr, "Unable to open input file %s\n", pvc->pvc_url);
+  snprintf(faurl, sizeof(faurl), "showtime:%s", url);
+  if(av_open_input_file(&fctx, faurl, NULL, 0, NULL) != 0) {
+    fprintf(stderr, "Unable to open input file %s\n", url);
     return NULL;
   }
 
-  pvc->pvc_fctx->flags |= AVFMT_FLAG_GENPTS;
+  fctx->flags |= AVFMT_FLAG_GENPTS;
 
-  if(av_find_stream_info(pvc->pvc_fctx) < 0) {
-    av_close_input_file(pvc->pvc_fctx);
+  if(av_find_stream_info(fctx) < 0) {
+    av_close_input_file(fctx);
     fprintf(stderr, "Unable to find stream info\n");
     return NULL;
   }
@@ -839,21 +845,21 @@ video_play_thread(void *aux)
    * Update property metadata
    */
 
-  fa_lavf_load_meta(mp->mp_prop_meta, pvc->pvc_fctx, faurl);
+  fa_lavf_load_meta(mp->mp_prop_meta, fctx, faurl);
 
   /**
    * Init codec contexts
    */
-  pvc->pvc_cwvec = alloca(pvc->pvc_fctx->nb_streams * sizeof(void *));
-  memset(pvc->pvc_cwvec, 0, sizeof(void *) * pvc->pvc_fctx->nb_streams);
+  cwvec = alloca(fctx->nb_streams * sizeof(void *));
+  memset(cwvec, 0, sizeof(void *) * fctx->nb_streams);
   
   mp->mp_audio.mq_stream = -1;
   mp->mp_video.mq_stream = -1;
 
-  fw = wrap_format_create(pvc->pvc_fctx);
+  fw = wrap_format_create(fctx);
 
-  for(i = 0; i < pvc->pvc_fctx->nb_streams; i++) {
-    ctx = pvc->pvc_fctx->streams[i]->codec;
+  for(i = 0; i < fctx->nb_streams; i++) {
+    ctx = fctx->streams[i]->codec;
 
     if(mp->mp_video.mq_stream == -1 && ctx->codec_type == CODEC_TYPE_VIDEO)
       mp->mp_video.mq_stream = i;
@@ -861,7 +867,7 @@ video_play_thread(void *aux)
     if(mp->mp_audio.mq_stream == -1 && ctx->codec_type == CODEC_TYPE_AUDIO)
       mp->mp_audio.mq_stream = i;
 
-    pvc->pvc_cwvec[i] = wrap_codec_create(ctx->codec_id,
+    cwvec[i] = wrap_codec_create(ctx->codec_id,
 					  ctx->codec_type, 0, fw, ctx, 0);
   }
 
@@ -871,37 +877,93 @@ video_play_thread(void *aux)
 
   mp_prepare(mp, MP_GRAB_AUDIO);
 
-  video_player_loop(pvc);
+  e = video_player_loop(fctx, cwvec, mp);
 
-  for(i = 0; i < pvc->pvc_fctx->nb_streams; i++)
-    if(pvc->pvc_cwvec[i] != NULL)
-      wrap_codec_deref(pvc->pvc_cwvec[i]);
+  mp_flush(mp);
 
-  wrap_format_destroy(fw);
+  mp_hibernate(mp);
 
+  for(i = 0; i < fctx->nb_streams; i++)
+    if(cwvec[i] != NULL)
+      wrap_codec_deref(cwvec[i]);
+
+  wrap_format_deref(fw);
+#if 0
   if(mp->mp_subtitles) {
     fprintf(stderr, "subtitles_free(mp->mp_subtitles);\n");
     mp->mp_subtitles = NULL;
   }
+#endif
+  return e;
+}
+
+
+
+
+
+/**
+ *
+ */
+static void *
+video_player_idle(void *aux)
+{
+  video_playback_t *vp = aux;
+  int run = 1;
+  event_t *e = NULL;
+  event_url_t *eu;
+  media_pipe_t *mp = vp->vp_mp;
+
+  while(run) {
+
+    if(e == NULL)
+      e = mp_dequeue_event(mp);
+    
+    switch(e->e_type) {
+    default:
+      break;
+
+    case EVENT_PLAY_URL:
+      eu = (event_url_t *)e;
+      e = video_play_file(mp, eu->url);
+      event_unref(&eu->h);
+      continue;
+
+    case EVENT_EXIT:
+      run = 0;
+      break;
+    }
+    event_unref(e);
+  }
   return NULL;
 }
 
-
-
-
-int
-play_video(const char *url, media_pipe_t *mp)
+/**
+ *
+ */
+video_playback_t *
+video_playback_create(media_pipe_t *mp)
 {
-  play_video_ctrl_t *pvc = calloc(1, sizeof(play_video_ctrl_t));
-
-  pvc->pvc_url = strdup(url);
-  pvc->pvc_mp = mp;
-
-
-  hts_thread_create_joinable(&pvc->pvc_thread, video_play_thread, pvc);
-  return 0;
+  video_playback_t *vp = calloc(1, sizeof(video_playback_t));
+  vp->vp_mp = mp;
+  hts_thread_create_joinable(&vp->vp_thread, video_player_idle, vp);
+  return vp;
 }
 
 
+/**
+ *
+ */
+void
+video_playback_destroy(video_playback_t *vp)
+{
+  event_t *e = event_create_simple(EVENT_EXIT);
 
+  mp_enqueue_event(vp->vp_mp, e);
+  event_unref(e);
 
+  hts_thread_join(&vp->vp_thread);
+
+  
+
+  free(vp);
+}

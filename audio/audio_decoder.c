@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <assert.h>
 
 #include "showtime.h"
 #include "audio_decoder.h"
@@ -112,6 +113,10 @@ audio_decoder_destroy(audio_decoder_t *ad)
 
   close_resampler(ad);
   av_freep(&ad->ad_outbuf);
+
+  if(ad->ad_buf != NULL)
+    ab_free(ad->ad_buf);
+
   free(ad);
 }
 
@@ -279,6 +284,7 @@ ad_thread(void *aux)
     hts_mutex_lock(&mp->mp_mutex);
   }
   hts_mutex_unlock(&mp->mp_mutex);
+  audio_fifo_purge(thefifo, ad, NULL);
   return NULL;
 }
 
@@ -286,12 +292,13 @@ ad_thread(void *aux)
  *
  */
 static void
-audio_deliver_passthru(media_buf_t *mb, audio_decoder_t *ad, int format)
+audio_deliver_passthru(media_buf_t *mb, audio_decoder_t *ad, int format,
+		       media_pipe_t *mp)
 {
   audio_fifo_t *af = thefifo;
   audio_buf_t *ab;
 
-  ab = af_alloc(mb->mb_size);
+  ab = af_alloc(mb->mb_size, mp);
   ab->ab_channels = 2;
   ab->ab_format   = format;
   ab->ab_rate     = AM_SR_48000;
@@ -329,14 +336,14 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
     switch(ctx->codec_id) {
     case CODEC_ID_AC3:
       if(am->am_formats & AM_FORMAT_AC3) {
-	audio_deliver_passthru(mb, ad, AM_FORMAT_AC3);
+	audio_deliver_passthru(mb, ad, AM_FORMAT_AC3, mp);
 	return;
       }
       break;
 
     case CODEC_ID_DTS:
       if(am->am_formats & AM_FORMAT_DTS) {
-	audio_deliver_passthru(mb, ad, AM_FORMAT_DTS);
+	audio_deliver_passthru(mb, ad, AM_FORMAT_DTS, mp);
 	return;
       }
       break;
@@ -800,7 +807,7 @@ audio_mix2(audio_decoder_t *ad, audio_mode_t *am,
      }
 
      if(ab == NULL) {
-       ab = af_alloc(sizeof(int16_t) * channels * outsize);
+       ab = af_alloc(sizeof(int16_t) * channels * outsize, mp);
        ab->ab_channels = channels;
        ab->ab_alloced = outsize;
        ab->ab_format = format;
@@ -812,8 +819,6 @@ audio_mix2(audio_decoder_t *ad, audio_mode_t *am,
      if(ab->ab_pts == AV_NOPTS_VALUE && pts != AV_NOPTS_VALUE) {
        pts -= 1000000LL * ab->ab_frames / rate;
        ab->ab_pts = pts; 
-       ab->ab_mp = mp;
-       mp_ref(mp);
        pts = AV_NOPTS_VALUE;
      }
 

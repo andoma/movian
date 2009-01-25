@@ -46,35 +46,25 @@ TAILQ_HEAD(media_buf_queue, media_buf);
 TAILQ_HEAD(media_pipe_queue, media_pipe);
 LIST_HEAD(media_pipe_list, media_pipe);
 
-/*
- * ffmpeg does not have mutexes itself, we keep a wrapper struct
- */
-
-typedef struct formatwrap {
-  AVFormatContext *format;
-
-  hts_mutex_t fw_mutex;
-  hts_cond_t fw_cond;
-  LIST_HEAD(, codecwrap) codecs;
+typedef struct formatcwrap {
+  int refcount;
+  AVFormatContext *fctx;
 } formatwrap_t;
-
-
 
 typedef struct codecwrap {
   int refcount;
+  formatwrap_t *fw;
   AVCodec *codec;
   AVCodecContext *codec_ctx;
   AVCodecParserContext *parser_ctx;
-  formatwrap_t *format;
-  LIST_ENTRY(codecwrap) format_link;
 } codecwrap_t;
 
 
 
-/*
+
+/**
  * A buffer
  */
-
 typedef struct media_buf {
   TAILQ_ENTRY(media_buf) mb_link;
 
@@ -167,11 +157,11 @@ typedef struct media_pipe {
 
 
 /**
- * Format
+ *
  */
 formatwrap_t *wrap_format_create(AVFormatContext *fctx);
 
-void wrap_format_destroy(formatwrap_t *fw);
+void wrap_format_deref(formatwrap_t *fw);
 
 /**
  * Codecs
@@ -198,8 +188,8 @@ media_buf_alloc(void)
 
 media_pipe_t *mp_create(const char *name);
 
-#define mp_ref(mp) atomic_add(&(mp)->mp_refcount, 1)
-void mp_unref(media_pipe_t *mp);
+#define mp_ref_inc(mp) atomic_add(&(mp)->mp_refcount, 1)
+void mp_ref_dec(media_pipe_t *mp);
 
 void mq_flush(media_queue_t *mq);
 

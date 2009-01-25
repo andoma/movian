@@ -122,9 +122,18 @@ mp_destroy(media_pipe_t *mp)
 {
   event_t *e;
 
-  abort(); /* prop_courier_destroy */
-
   assert(mp->mp_audio_decoder == NULL);
+
+  prop_unsubscribe(mp->mp_sub_currenttime);
+
+  prop_courier_destroy(mp->mp_pc);
+
+  hts_mutex_lock(&mp->mp_mutex);
+  while((e = TAILQ_FIRST(&mp->mp_eq)) != NULL) {
+    TAILQ_REMOVE(&mp->mp_eq, e, e_link);
+    event_unref(e);
+  }
+  hts_mutex_unlock(&mp->mp_mutex);
 
   mq_destroy(&mp->mp_audio);
   mq_destroy(&mp->mp_video);
@@ -134,11 +143,6 @@ mp_destroy(media_pipe_t *mp)
   hts_cond_destroy(&mp->mp_backpressure);
   hts_mutex_destroy(&mp->mp_mutex);
 
-  while((e = TAILQ_FIRST(&mp->mp_eq)) != NULL) {
-    TAILQ_REMOVE(&mp->mp_eq, e, e_link);
-    event_unref(e);
-  }
-
   free(mp);
 }
 
@@ -147,9 +151,9 @@ mp_destroy(media_pipe_t *mp)
  *
  */
 void
-mp_unref(media_pipe_t *mp)
+mp_ref_dec(media_pipe_t *mp)
 {
-  if(atomic_add(&mp->mp_refcount, -1) == 0)
+  if(atomic_add(&mp->mp_refcount, -1) == 1)
     mp_destroy(mp);
 }
 
@@ -472,7 +476,7 @@ wrap_codec_ref(codecwrap_t *cw)
 void
 wrap_codec_deref(codecwrap_t *cw)
 {
-  formatwrap_t *fw = cw->format;
+  formatwrap_t *fw = cw->fw;
 
   if(atomic_add(&cw->refcount, -1) > 1)
     return;
@@ -480,6 +484,7 @@ wrap_codec_deref(codecwrap_t *cw)
   fflock();
 
   avcodec_close(cw->codec_ctx);
+
   if(fw == NULL)
     free(cw->codec_ctx);
 
@@ -488,12 +493,9 @@ wrap_codec_deref(codecwrap_t *cw)
   
   ffunlock();
 
-  if((fw = cw->format) != NULL) {
-    hts_mutex_lock(&fw->fw_mutex);
-    LIST_REMOVE(cw, format_link);
-    hts_cond_signal(&fw->fw_cond);
-    hts_mutex_unlock(&fw->fw_mutex);
-  }
+  if(fw != NULL)
+    wrap_format_deref(fw);
+
   free(cw);
 }
 
@@ -529,13 +531,10 @@ wrap_codec_create(enum CodecID id, enum CodecType type, int parser,
   cw->parser_ctx = parser ? av_parser_init(id) : NULL;
 
   cw->refcount = 1;
-  cw->format = fw;
+  cw->fw = fw;
   
-  if(fw != NULL) {
-    hts_mutex_lock(&fw->fw_mutex);
-    LIST_INSERT_HEAD(&fw->codecs, cw, format_link);
-    hts_mutex_unlock(&fw->fw_mutex);
-  }
+  if(fw != NULL)
+    atomic_add(&fw->refcount, 1);
 
   if(type == CODEC_TYPE_VIDEO && concurrency > 1) {
     avcodec_thread_init(cw->codec_ctx, concurrency);
@@ -556,11 +555,8 @@ formatwrap_t *
 wrap_format_create(AVFormatContext *fctx)
 {
   formatwrap_t *fw = malloc(sizeof(formatwrap_t));
-
-  hts_mutex_init(&fw->fw_mutex);
-  hts_cond_init(&fw->fw_cond);
-  LIST_INIT(&fw->codecs);
-  fw->format = fctx;
+  fw->refcount = 1;
+  fw->fctx = fctx;
   return fw;
 }
 
@@ -569,97 +565,13 @@ wrap_format_create(AVFormatContext *fctx)
  *
  */
 void
-wrap_format_destroy(formatwrap_t *fw)
+wrap_format_deref(formatwrap_t *fw)
 {
-  /* Wait for all codecs to be released */
-  hts_mutex_lock(&fw->fw_mutex);
-  while((LIST_FIRST(&fw->codecs)) != NULL)
-    hts_cond_wait(&fw->fw_cond, &fw->fw_mutex);
-  hts_mutex_unlock(&fw->fw_mutex);
-
-  if(fw->format != NULL)
-    av_close_input_file(fw->format);
-
-  hts_cond_destroy(&fw->fw_cond);
-  hts_mutex_destroy(&fw->fw_mutex);
+  if(atomic_add(&fw->refcount, -1) > 1)
+    return;
+  av_close_input_file(fw->fctx);
   free(fw);
 }
-
-#if 0
-/**
- * mp_set_playstatus() is responsible for starting and stopping
- * decoder threads
- */
-void
-mp_set_playstatus(media_pipe_t *mp, int status, int flags)
-{
-  if(mp->mp_playstatus == status)
-    return;
-
-  switch(status) {
-
-  case MP_PLAY:
-  case MP_VIDEOSEEK_PLAY:
-  case MP_VIDEOSEEK_PAUSE:
-  case MP_PAUSE:
-    hts_mutex_lock(&mp->mp_mutex);
-    mp->mp_playstatus = status;
-    hts_cond_signal(&mp->mp_backpressure);
-    hts_cond_signal(&mp->mp_audio.mq_avail);
-    hts_cond_signal(&mp->mp_video.mq_avail);
-    hts_mutex_unlock(&mp->mp_mutex);
-
-    if(mp->mp_video_decoder_start != NULL && mp->mp_video_running == 0) {
-      mp->mp_video_decoder_start(mp->mp_video_opaque);
-      mp->mp_video_running = 1;
-    }
-
-    if(mp->mp_audio_decoder == NULL)
-      mp->mp_audio_decoder = audio_decoder_create(mp);
-
-    if(status == MP_PLAY && !(flags & MP_DONT_GRAB_AUDIO))
-      audio_decoder_acquire_output(mp->mp_audio_decoder);
-    break;
-
-    
-  case MP_STOP:
-
-    /* Lock queues */
-
-    hts_mutex_lock(&mp->mp_mutex);
-
-    /* Flush all media in queues */
-
-    mq_flush(&mp->mp_audio);
-    mq_flush(&mp->mp_video);
-
-    /* set playstatus to STOP and signal on conditioners,
-       this will make mb_dequeue_wait return NULL next time it returns */
-    
-    mp->mp_playstatus = MP_STOP;
-    hts_cond_signal(&mp->mp_audio.mq_avail);
-    hts_cond_signal(&mp->mp_video.mq_avail);
-    hts_cond_signal(&mp->mp_backpressure);
-    hts_mutex_unlock(&mp->mp_mutex);
-
-    /* We should now be able to collect the threads */
-
-    if(mp->mp_audio_decoder != NULL) {
-      audio_decoder_destroy(mp->mp_audio_decoder);
-      mp->mp_audio_decoder = NULL;
-    }
-
-    if(mp->mp_video_running) {
-      mp->mp_video_decoder_stop(mp->mp_video_opaque);
-      mp->mp_video_running = 0;
-    }
-
-    prop_set_void(mp->mp_prop_currenttime);
-    break;
-  }
-  media_update_playstatus_prop(mp->mp_prop_playstatus, status);
-}
-#endif
 
 
 
@@ -813,38 +725,6 @@ media_update_codec_info_prop(prop_t *p, AVCodecContext *ctx)
   }
   prop_set_string(p, tmp);
 }
-
-
-#if 0
-/**
- *
- */
-void
-media_update_playstatus_prop(prop_t *p, mp_playstatus_t mps)
-{
-  const char *s;
-
-  switch(mps) {
-  case MP_PLAY:
-    s = "play";
-    break;
-
-  case MP_PAUSE:
-    s = "pause";
-    break;
-
-  case MP_VIDEOSEEK_PLAY:
-  case MP_VIDEOSEEK_PAUSE:
-    s = "seek";
-    break;
-
-  default:
-    s = "stop";
-    break;
-  }
-  prop_set_string(p, s);
-}
-#endif
 
 
 /**
