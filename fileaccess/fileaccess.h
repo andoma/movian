@@ -38,6 +38,7 @@ typedef struct fa_dir_entry {
   char *fde_filename;
   char *fde_url;
   int fde_type; /* FA_ .. types above */
+  void *fde_opaque;
 } fa_dir_entry_t;
 
 /**
