@@ -274,6 +274,8 @@ void prop_request_delete_child_by_subscription(prop_sub_t *s);
 
 prop_courier_t *prop_courier_create(hts_mutex_t *entrymutex);
 
+void prop_courier_destroy(prop_courier_t *pc);
+
 /* DEBUGish */
 const char *propname(prop_t *p);
 

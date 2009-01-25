@@ -212,6 +212,7 @@ prop_courier(void *aux)
     prop_sub_ref_dec(s);
     free(n);
   }
+  hts_mutex_unlock(&prop_mutex);
   return NULL;
 }
 
@@ -1322,6 +1323,68 @@ prop_courier_create(hts_mutex_t *entrymutex)
   hts_thread_create_joinable(&pc->pc_thread, prop_courier, pc);
   return pc;
 }
+
+
+/**
+ *
+ */
+void
+prop_courier_destroy(prop_courier_t *pc)
+{
+  prop_notify_t *n;
+
+  hts_mutex_lock(&prop_mutex);
+  pc->pc_run = 0;
+  hts_cond_signal(&pc->pc_cond);
+  hts_mutex_unlock(&prop_mutex);
+
+  hts_thread_join(&pc->pc_thread);
+
+  hts_cond_destroy(&pc->pc_cond);
+
+  while((n = TAILQ_FIRST(&pc->pc_queue)) != NULL) {
+    TAILQ_REMOVE(&pc->pc_queue, n, hpn_link);
+    
+    switch(n->hpn_event) {
+    case PROP_SET_DIR:
+    case PROP_SET_VOID:
+      if(n->hpn_prop2 != NULL)
+	prop_ref_dec(n->hpn_prop2);
+      break;
+
+    case PROP_SET_STRING:
+      free(n->hpn_string);
+      prop_ref_dec(n->hpn_prop2);
+      break;
+
+    case PROP_SET_INT:
+      prop_ref_dec(n->hpn_prop2);
+      break;
+
+    case PROP_SET_FLOAT:
+      prop_ref_dec(n->hpn_prop2);
+      break;
+
+    case PROP_ADD_CHILD:
+    case PROP_ADD_SELECTED_CHILD:
+    case PROP_DEL_CHILD:
+    case PROP_SELECT_CHILD:
+    case PROP_REQ_DELETE:
+    case PROP_REQ_NEW_CHILD:
+      if(n->hpn_prop != NULL)
+	prop_ref_dec(n->hpn_prop);
+      break;
+
+    case PROP_ADD_CHILD_BEFORE:
+      prop_ref_dec(n->hpn_prop);
+      prop_ref_dec(n->hpn_prop2);
+      break;
+    }
+    free(n); 
+  }
+  free(pc);
+}
+
 
 
 
