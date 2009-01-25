@@ -244,6 +244,7 @@ static void
 prop_callback(prop_sub_t *s, prop_event_t event, ...)
 {
   glw_slider_t *sl = (glw_slider_t *)s->hps_opaque;
+  glw_root_t *gr = sl->w.glw_root;
   float v;
   prop_t *p;
 
@@ -278,6 +279,9 @@ prop_callback(prop_sub_t *s, prop_event_t event, ...)
   sl->p = p;
   prop_ref_inc(p);
   
+  if(gr->gr_pointer_focus == &sl->w)
+    return;
+
   v = GLW_RESCALE(v, sl->min, sl->max);
   sl->value = GLW_MAX(0, GLW_MIN(1.0, v));
 }
