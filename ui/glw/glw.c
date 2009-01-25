@@ -42,6 +42,7 @@
 #include "glw_fx_texrot.h"
 #include "glw_event.h"
 #include "glw_video.h"
+#include "glw_slider.h"
 
 static const size_t glw_class_to_size[] = {
   [GLW_DUMMY] = sizeof(glw_t),
@@ -67,6 +68,8 @@ static const size_t glw_class_to_size[] = {
   [GLW_ANIMATOR] = sizeof(glw_animator_t),
   [GLW_FX_TEXROT] = sizeof(glw_fx_texrot_t),
   [GLW_VIDEO] = sizeof(glw_video_t),
+  [GLW_SLIDER_X] = sizeof(glw_slider_t),
+  [GLW_SLIDER_Y] = sizeof(glw_slider_t),
 };
 
 /*
@@ -389,6 +392,11 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
   case GLW_VIDEO:
     glw_video_ctor(w, init, apx);
     break;
+
+  case GLW_SLIDER_X:
+  case GLW_SLIDER_Y:
+    glw_slider_ctor(w, init, apx);
+    break;
   }
 
   va_end(apx);
@@ -559,6 +567,9 @@ glw_destroy0(glw_t *w)
   glw_t *c, *p;
   glw_root_t *gr = w->glw_root;
   glw_event_map_t *gem;
+
+  if(gr->gr_pointer_focus == w)
+    gr->gr_pointer_focus = NULL;
 
   glw_prop_subscription_destroy_list(&w->glw_prop_subscriptions);
 
@@ -985,11 +996,13 @@ glw_event(glw_root_t *gr, event_t *e)
  *
  */
 static int
-pointer_event0(glw_t *w, float x, float y, event_t *e)
+pointer_event0(glw_t *w, glw_pointer_event_t *gpe)
 {
   glw_t *c;
   float *m;
+  event_t *e;
   float x1, x2, y1, y2;
+  glw_pointer_event_t gpe0;
 
   switch(w->glw_focus_mode) {
   case GLW_FOCUS_NONE:
@@ -1000,32 +1013,41 @@ pointer_event0(glw_t *w, float x, float y, event_t *e)
       return 0;
 
     TAILQ_FOREACH(c, &w->glw_focus_childs, glw_focus_parent_link)
-      if(pointer_event0(c, x, y, e))
+      if(pointer_event0(c, gpe))
 	return 1;
     return 0;
 
   case GLW_FOCUS_TARGET:
-    if((m = w->glw_matrix) != NULL) {
+    if((m = w->glw_matrix) == NULL)
+      break;
       
-      x1 = m[12] - m[0];
-      x2 = m[12] + m[0];
+    x1 = m[12] - m[0];
+    x2 = m[12] + m[0];
 
-      y1 = m[13] - m[5];
-      y2 = m[13] + m[5];
+    y1 = m[13] - m[5];
+    y2 = m[13] + m[5];
       
-      if(x >= x1 && x <= x2 && y >= y1 && y <= y2) {
+    if(gpe->x < x1 || gpe->x > x2 || gpe->y < y1 || gpe->y > y2)
+      break;
+      
+    gpe0.type = gpe->type;
+    /* Rescale to widget local coordinates */
+    gpe0.x = -1 + 2 * (gpe->x - x1) / (x2 - x1);
+    gpe0.y = -1 + 2 * (gpe->y - y1) / (y2 - y1);
 
-	if(e != NULL) {
-	  if(glw_event_to_widget(w, e) == 0) {
-	    /* If it does not react, at least focus it */
-	    glw_focus_set(w);
-	  }
-	}
-
-	return 1;
-      }
+    if(glw_signal0(w, GLW_SIGNAL_POINTER_EVENT, &gpe0))
+      return 1;
+      
+    if(gpe->type == GLW_POINTER_CLICK) {
+      e = event_create_simple(EVENT_ENTER);
+      
+      if(glw_event_to_widget(w, e) == 0)
+	/* If it does not react, at least focus it */
+	glw_focus_set(w);
+      
+      event_unref(e);
     }
-    break;
+    return 1;
   }
   return 0;
 }
@@ -1035,12 +1057,40 @@ pointer_event0(glw_t *w, float x, float y, event_t *e)
  *
  */
 void
-glw_pointer_event(glw_root_t *gr, float x, float y, event_t *e)
+glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
 {
-  glw_t *c;
+  glw_t *c, *w;
+  glw_pointer_event_t gpe0;
+  float x1, x2, y1, y2, *m;
+
+  if((w = gr->gr_pointer_focus) != NULL) {
+    if(gpe->type == GLW_POINTER_MOTION) {
+
+      if((m = w->glw_matrix) == NULL)
+	return;
+
+      x1 = m[12] - m[0];
+      x2 = m[12] + m[0];
+      
+      y1 = m[13] - m[5];
+      y2 = m[13] + m[5];
+      
+      gpe0.type = GLW_POINTER_FOCUS_MOTION;
+      gpe0.x = -1 + 2 * GLW_RESCALE(gpe->x, x1, x2);
+      gpe0.y = -1 + 2 * GLW_RESCALE(gpe->y, y1, y2);
+ 
+      glw_signal0(w, GLW_SIGNAL_POINTER_EVENT, &gpe0);
+      return;
+    }
+  }
+
+  if(gpe->type == GLW_POINTER_RELEASE) {
+    gr->gr_pointer_focus = NULL;
+    return;
+  }
 
   TAILQ_FOREACH(c, &gr->gr_focus_childs, glw_focus_parent_link)
-    if(pointer_event0(c, x, y, e))
+    if(pointer_event0(c, gpe))
       break;
 }
 
@@ -1111,6 +1161,7 @@ glw_pointer_scroll(glw_root_t *gr, float x, float y, int direction)
     if(pointer_scroll0(c, x, y, direction))
       break;
 }
+
 
 
 /**

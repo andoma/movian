@@ -58,6 +58,7 @@ LIST_HEAD(glw_video_list, glw_video);
 #define GLW_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define GLW_MAX(a, b) ((a) > (b) ? (a) : (b))
 #define GLW_DEG2RAD(a) ((a) * M_PI * 2.0f / 360.0f)
+#define GLW_RESCALE(x, min, max) (((x) - (min)) / ((max) - (min)))
 
 typedef enum {
   GLW_DUMMY,        /* Emtpy placeholder, wont render anything */
@@ -81,6 +82,8 @@ typedef enum {
   GLW_MIRROR,
   GLW_FX_TEXROT,
   GLW_VIDEO,
+  GLW_SLIDER_X,
+  GLW_SLIDER_Y,
 } glw_class_t;
 
 
@@ -92,7 +95,7 @@ typedef enum {
   GLW_ATTRIB_SIGNAL_HANDLER,
   GLW_ATTRIB_WEIGHT,
   GLW_ATTRIB_CAPTION,
-  GLW_ATTRIB_INT,
+  GLW_ATTRIB_VALUE,
   GLW_ATTRIB_SOURCE,
   GLW_ATTRIB_ASPECT,
   GLW_ATTRIB_ALPHA,
@@ -122,6 +125,7 @@ typedef enum {
   GLW_ATTRIB_TRANSITION_EFFECT,
   GLW_ATTRIB_FOCUSABLE,
   GLW_ATTRIB_EXPAND,
+  GLW_ATTRIB_BIND_TO_PROPERTY,
 } glw_attribute_t;
 
 #define GLW_MIRROR_X   0x1
@@ -196,6 +200,11 @@ typedef enum {
    */
   GLW_SIGNAL_FOCUS_CHANGED,
 
+  /**
+   *
+   */
+  GLW_SIGNAL_POINTER_EVENT,
+
 } glw_signal_t;
 
 
@@ -251,6 +260,8 @@ typedef struct glw_root {
    * Root focus leader
    */
   struct glw_queue gr_focus_childs;
+
+  struct glw *gr_pointer_focus;
 
   /**
    * Backend specifics
@@ -468,6 +479,7 @@ do {						\
     (void)va_arg(ap, int);			\
     break;                                      \
   case GLW_ATTRIB_PARENT_BEFORE:		\
+  case GLW_ATTRIB_BIND_TO_PROPERTY:		\
     (void)va_arg(ap, void *);			\
   case GLW_ATTRIB_PARENT:			\
   case GLW_ATTRIB_PARENT_HEAD:			\
@@ -488,10 +500,6 @@ do {						\
   case GLW_ATTRIB_Y_SLICES:                     \
   case GLW_ATTRIB_MODE:                         \
   case GLW_ATTRIB_MIRROR:                       \
-  case GLW_ATTRIB_INT:                          \
-  case GLW_ATTRIB_INT_STEP:                     \
-  case GLW_ATTRIB_INT_MIN:                      \
-  case GLW_ATTRIB_INT_MAX:                      \
   case GLW_ATTRIB_TRANSITION_EFFECT:            \
   case GLW_ATTRIB_FOCUSABLE:                    \
     (void)va_arg(ap, int);			\
@@ -510,6 +518,10 @@ do {						\
   case GLW_ATTRIB_EXTRA:			\
   case GLW_ATTRIB_TIME:                         \
   case GLW_ATTRIB_EXPAND:                       \
+  case GLW_ATTRIB_VALUE:                        \
+  case GLW_ATTRIB_INT_STEP:                     \
+  case GLW_ATTRIB_INT_MIN:                      \
+  case GLW_ATTRIB_INT_MAX:                      \
     (void)va_arg(ap, double);			\
     break;					\
   }						\
@@ -567,9 +579,24 @@ int glw_event(glw_root_t *gr, event_t *e);
 
 int glw_event_to_widget(glw_t *w, event_t *e);
 
-void glw_pointer_event(glw_root_t *gr, float x, float y, event_t *e);
+typedef enum {
+  GLW_POINTER_CLICK,
+  GLW_POINTER_MOTION,
+  GLW_POINTER_FOCUS_MOTION,
+  GLW_POINTER_RELEASE,
+  GLW_POINTER_SCROLL_UP,
+  GLW_POINTER_SCROLL_DOWN,
+} glw_pointer_event_type_t;
+
+typedef struct glw_pointer_event {
+  float x, y;
+  glw_pointer_event_type_t type;
+} glw_pointer_event_t;
+
+void glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe);
 
 void glw_pointer_scroll(glw_root_t *gr, float x, float y, int direction);
+
 
 int glw_navigate(glw_t *w, event_t *e);
 

@@ -958,7 +958,7 @@ glw_model_eval_rpn0(token_t *t0, glw_model_eval_context_t *ec)
 	return -1;
       break;
 
-    case TOKEN_PROPERTY_NAME:
+    case TOKEN_PROPERTY_SUBSCRIPTION_NAME:
       if(subscribe_prop(ec, t))
 	return -1;
       break;
@@ -969,6 +969,7 @@ glw_model_eval_rpn0(token_t *t0, glw_model_eval_context_t *ec)
     case TOKEN_IDENTIFIER:
     case TOKEN_OBJECT_ATTRIBUTE:
     case TOKEN_VOID:
+    case TOKEN_PROPERTY_REFERENCE_NAME:
       eval_push(ec, t);
       break;
 
@@ -1162,6 +1163,8 @@ static struct strtab classtab[] = {
   { "animator",      GLW_ANIMATOR},
   { "video",         GLW_VIDEO},
   { "fx_texrot",     GLW_FX_TEXROT},
+  { "slider_x",      GLW_SLIDER_X},
+  { "slider_y",      GLW_SLIDER_Y},
 };
 
 /**
@@ -2063,6 +2066,31 @@ glwf_getCaption(glw_model_eval_context_t *ec, struct token *self)
 }
 
 
+
+/**
+ * 
+ */
+static int 
+glwf_bind(glw_model_eval_context_t *ec, struct token *self)
+{
+  token_t *t, *a = eval_pop(ec);
+  const char *propname[16];
+  int i;
+
+  if(a != NULL && a->type == TOKEN_PROPERTY_REFERENCE_NAME) {
+
+    for(i = 0, t = a; t != NULL && i < 15; t = t->child)
+      propname[i++]  = t->t_string;
+    propname[i] = NULL;
+
+    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY, ec->prop, propname, NULL);
+  } else {
+    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY, NULL, NULL, NULL);
+  }
+  return 0;
+}
+
+
 /**
  *
  */
@@ -2090,6 +2118,7 @@ static const token_func_t funcvec[] = {
   {"devoidify", glwf_devoidify},
   {"focusedChild", glwf_focusedChild},
   {"getCaption", glwf_getCaption},
+  {"bind", glwf_bind},
 };
 
 

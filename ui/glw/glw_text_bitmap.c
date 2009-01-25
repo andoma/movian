@@ -610,7 +610,7 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
       case EVENT_INCR:
 	if(glw_get_int0(w, &v) == 0) {
 	  v = GLW_MIN(v + gtb->gtb_int_step, gtb->gtb_int_max);
-	  glw_set_i(w, GLW_ATTRIB_INT, v, NULL);
+	  glw_set_i(w, GLW_ATTRIB_VALUE, (double)v, NULL);
 	  glw_signal0(w, GLW_SIGNAL_CHANGED, NULL);
 	}
 	return 1;
@@ -618,7 +618,7 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
       case EVENT_DECR:
 	if(glw_get_int0(w, &v) == 0) {
 	  v = GLW_MAX(v - gtb->gtb_int_step, gtb->gtb_int_min);
-	  glw_set_i(w, GLW_ATTRIB_INT, v, NULL);
+	  glw_set_i(w, GLW_ATTRIB_VALUE, (double)v, NULL);
 	  glw_signal0(w, GLW_SIGNAL_CHANGED, NULL);
 	}
 	return 1;
@@ -753,8 +753,8 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
   do {
     attrib = va_arg(ap, int);
     switch(attrib) {
-    case GLW_ATTRIB_INT:
-      *gtb->gtb_int_ptr = va_arg(ap, int);
+    case GLW_ATTRIB_VALUE:
+      *gtb->gtb_int_ptr = va_arg(ap, double);
       update = 1;
       break;
 
@@ -771,15 +771,15 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
       break;
 
     case GLW_ATTRIB_INT_STEP:
-      gtb->gtb_int_step = va_arg(ap, int);
+      gtb->gtb_int_step = va_arg(ap, double);
       break;
 
     case GLW_ATTRIB_INT_MIN:
-      gtb->gtb_int_min = va_arg(ap, int);
+      gtb->gtb_int_min = va_arg(ap, double);
       break;
 
     case GLW_ATTRIB_INT_MAX:
-      gtb->gtb_int_max = va_arg(ap, int);
+      gtb->gtb_int_max = va_arg(ap, double);
       break;
 
     default:

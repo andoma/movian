@@ -5,13 +5,9 @@ widget(cursor, {
 
   widget(container_z, {
 
-    .displacement = [0, 0, 1];
-
     widget(fx_texrot, {
       .source = "theme://images/caribbean.png";
     });
-
-
     
     widget(container_y, {
       

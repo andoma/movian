@@ -753,7 +753,7 @@ layout_draw(glw_x11_t *gx11, float aspect)
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  gluLookAt(0, 0, 3.4,
+  gluLookAt(0, 0, 2.4,
 	    0, 0, 1,
 	    0, 1, 0);
 
@@ -788,9 +788,8 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 {
   XEvent event;
   int w, h;
-  float x, y;
   unsigned int retraceCount = 0;
-  event_t *e;
+  glw_pointer_event_t gpe;
 
   gx11->glXGetVideoSyncSGI(&retraceCount);
 
@@ -843,37 +842,48 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 	  if(!gx11->is_pointer_enabled)
 	    break;
 
-	  x = (2.0 * event.xmotion.x / gx11->window_width) - 1;
-	  y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
-	  
+	  gpe.x =  (2.0 * event.xmotion.x / gx11->window_width ) - 1;
+	  gpe.y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
+	  gpe.type = GLW_POINTER_MOTION;
+
 	  glw_lock(&gx11->gr);
-	  glw_pointer_event(&gx11->gr, x, y, NULL);
+	  glw_pointer_event(&gx11->gr, &gpe);
 	  glw_unlock(&gx11->gr);
 	  break;
 	  
+	case ButtonRelease:
+	  if(event.xbutton.button == 1) {
+	    gpe.x =  (2.0 * event.xmotion.x / gx11->window_width ) - 1;
+	    gpe.y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
+	    gpe.type = GLW_POINTER_RELEASE;
+	    glw_lock(&gx11->gr);
+	    glw_pointer_event(&gx11->gr, &gpe);
+	    glw_unlock(&gx11->gr);
+	  }
+	  break;
+
 	case ButtonPress:
 	  if(!gx11->is_pointer_enabled)
 	    break;
 
-	  x =  (2.0 * event.xmotion.x / gx11->window_width) - 1;
-	  y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
+	  gpe.x =  (2.0 * event.xmotion.x / gx11->window_width ) - 1;
+	  gpe.y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
+	  gpe.type = GLW_POINTER_CLICK;
 
 	  glw_lock(&gx11->gr);
 
 	  switch(event.xbutton.button) {
 	  case 1:
 	    /* Left click */
-	    e = event_create_simple(EVENT_ENTER);
-	    glw_pointer_event(&gx11->gr, x, y, e);
-	    event_unref(e);
+	    glw_pointer_event(&gx11->gr, &gpe);
 	    break;
 	  case 4:
 	    /* Scroll up */
-	    glw_pointer_scroll(&gx11->gr, x, y, 0);
+	    glw_pointer_scroll(&gx11->gr, gpe.x, gpe.y, 0);
 	    break;
 	  case 5:
 	    /* Scroll down */
-	    glw_pointer_scroll(&gx11->gr, x, y, 1);
+	    glw_pointer_scroll(&gx11->gr, gpe.x, gpe.y, 1);
 	    break;
 
 	  default:

@@ -71,6 +71,7 @@ typedef enum {
   TOKEN_DIVIDE,                // /
   TOKEN_MODULO,                // %
   TOKEN_DOLLAR,                // $
+  TOKEN_AMPERSAND,             // &
   TOKEN_BOOLEAN_AND,           // &&
   TOKEN_BOOLEAN_OR,            // ||
   TOKEN_BOOLEAN_XOR,           // ^^
@@ -80,7 +81,8 @@ typedef enum {
   TOKEN_IDENTIFIER,
   TOKEN_FUNCTION,              //
   TOKEN_PROPERTY,
-  TOKEN_PROPERTY_NAME,
+  TOKEN_PROPERTY_SUBSCRIPTION_NAME,
+  TOKEN_PROPERTY_REFERENCE_NAME,
   TOKEN_PROPERTY_SUBSCRIPTION,
   TOKEN_OBJECT_ATTRIBUTE,
   TOKEN_VOID,                 // Void property

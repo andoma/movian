@@ -72,23 +72,23 @@ static int
 set_float(glw_model_eval_context_t *ec, const token_attrib_t *a, 
 	  struct token *t)
 {
-  float f;
+  double d;
 
   switch(t->type) {
   case TOKEN_STRING:
-    f = strtod(t->t_string, NULL);
+    d = strtod(t->t_string, NULL);
     break;
 
   case TOKEN_FLOAT:
-    f = t->t_float;
+    d = t->t_float;
     break;
 
   case TOKEN_INT:
-    f = t->t_int;
+    d = t->t_int;
     break;
 
   case TOKEN_VOID:
-    f = 0;
+    d = 0;
     break;
 
   default:
@@ -96,7 +96,7 @@ set_float(glw_model_eval_context_t *ec, const token_attrib_t *a,
 			    a->name);
   }
 
-  glw_set_i(ec->w, a->attrib, f, NULL);
+  glw_set_i(ec->w, a->attrib, d, NULL);
   return 0;
 }
 
@@ -324,8 +324,6 @@ set_focus(glw_model_eval_context_t *ec, const token_attrib_t *a,
 }
 
 
-
-
 /**
  *
  */
@@ -343,10 +341,6 @@ static const token_attrib_t attribtab[] = {
   {"mirrory",         set_mirror, GLW_MIRROR_Y},
 
   {"slices",          set_int,    GLW_ATTRIB_SLICES},
-  {"min",             set_int,    GLW_ATTRIB_INT_MIN},
-  {"max",             set_int,    GLW_ATTRIB_INT_MAX},
-  {"step",            set_int,    GLW_ATTRIB_INT_STEP},
-  {"value",           set_int,    GLW_ATTRIB_INT},
   {"xslices",         set_int,    GLW_ATTRIB_X_SLICES},
   {"yslices",         set_int,    GLW_ATTRIB_Y_SLICES},
 
@@ -357,6 +351,10 @@ static const token_attrib_t attribtab[] = {
   {"time",            set_float,  GLW_ATTRIB_TIME},
   {"angle",           set_float,  GLW_ATTRIB_ANGLE},
   {"expand",          set_float,  GLW_ATTRIB_EXPAND},
+  {"min",             set_float,  GLW_ATTRIB_INT_MIN},
+  {"max",             set_float,  GLW_ATTRIB_INT_MAX},
+  {"step",            set_float,  GLW_ATTRIB_INT_STEP},
+  {"value",           set_float,  GLW_ATTRIB_VALUE},
 
   {"displacement",    set_float3, GLW_ATTRIB_DISPLACEMENT},
   {"color",           set_float3, GLW_ATTRIB_RGB},
