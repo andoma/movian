@@ -276,8 +276,10 @@ prop_callback(prop_sub_t *s, prop_event_t event, ...)
 
   if(sl->p != NULL)
     prop_ref_dec(sl->p);
+
   sl->p = p;
-  prop_ref_inc(p);
+  if(p != NULL)
+    prop_ref_inc(p);
   
   if(gr->gr_pointer_focus == &sl->w)
     return;

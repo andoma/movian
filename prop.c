@@ -165,10 +165,11 @@ prop_courier(void *aux)
       hts_mutex_lock(pc->pc_entry_mutex);
     
     switch(n->hpn_event) {
-    case PROP_SET_VOID:
     case PROP_SET_DIR:
+    case PROP_SET_VOID:
       s->hps_callback(s, n->hpn_event, n->hpn_prop2);
-      prop_ref_dec(n->hpn_prop2);
+      if(n->hpn_prop2 != NULL)
+	prop_ref_dec(n->hpn_prop2);
       break;
 
     case PROP_SET_STRING:
@@ -325,6 +326,7 @@ prop_notify_void(prop_sub_t *s)
   prop_notify_t *n = get_notify(s);
 
   n->hpn_event = PROP_SET_VOID;
+  n->hpn_prop2 = NULL;
   courier_enqueue(s->hps_courier, n);
 }
 
