@@ -1036,7 +1036,6 @@ glw_text_bitmap_init(glw_root_t *gr)
   int error;
   const void *r;
   size_t size;
-  hts_thread_t font_render_ptid;
   const char *font_variable = "theme://font.ttf";
 
   error = FT_Init_FreeType(&glw_text_library);
@@ -1062,6 +1061,6 @@ glw_text_bitmap_init(glw_root_t *gr)
 
   hts_cond_init(&gr->gr_gtb_render_cond);
 
-  hts_thread_create(&font_render_ptid, font_render_thread, gr);
+  hts_thread_create_detached(font_render_thread, gr);
   return 0;
 }

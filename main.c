@@ -111,8 +111,6 @@ global_prop_init(void)
 {
   prop_t *p;
   prop_t *cpu;
-  hts_thread_t tid;
-
 
   p = prop_create(prop_get_global(), "version");
   prop_set_string(p, htsversion);
@@ -133,7 +131,7 @@ global_prop_init(void)
   prop_date = prop_create(p, "date");
   prop_day = prop_create(p, "day");
 
-  hts_thread_create_detached(&tid, propupdater, NULL);
+  hts_thread_create_detached(propupdater, NULL);
 }
 
 

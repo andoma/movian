@@ -252,12 +252,11 @@ audio_mixer_thread(void *aux)
 void
 audio_mixer_init(void)
 {
-  hts_thread_t tid;
   prop_t *prop_audio;
 
   prop_audio = prop_create(prop_get_global(), "audio");
   prop_mastervol  = prop_create(prop_audio, "mastervolume");
   prop_mastermute = prop_create(prop_audio, "mastermute");
 
-  hts_thread_create(&tid, audio_mixer_thread, NULL);
+  hts_thread_create_detached(audio_mixer_thread, NULL);
 }

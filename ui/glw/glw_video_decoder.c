@@ -610,7 +610,7 @@ gv_thread(void *aux)
 void
 glw_video_decoder_start(glw_video_t *gv)
 {
-  hts_thread_create(&gv->gv_ptid, gv_thread, gv);
+  hts_thread_create_joinable(&gv->gv_ptid, gv_thread, gv);
 }
 
 

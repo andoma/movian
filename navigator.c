@@ -61,8 +61,6 @@ nav_init_be(nav_backend_t *be)
 void
 nav_init(void)
 {
-  hts_thread_t tid;
-
   hts_mutex_init(&nav_mutex);
 
   TAILQ_INIT(&nav_pages);
@@ -84,7 +82,7 @@ nav_init(void)
   NAV_INIT_BE(settings);
   NAV_INIT_BE(playqueue);
 
-  hts_thread_create(&tid, navigator_thread, NULL);
+  hts_thread_create_detached(navigator_thread, NULL);
 }
 
 

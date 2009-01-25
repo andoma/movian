@@ -898,10 +898,7 @@ play_video(const char *url, media_pipe_t *mp)
   pvc->pvc_mp = mp;
 
 
-  
-
-
-  hts_thread_create(&pvc->pvc_thread, video_play_thread, pvc);
+  hts_thread_create_joinable(&pvc->pvc_thread, video_play_thread, pvc);
   return 0;
 }
 

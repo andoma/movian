@@ -1319,7 +1319,7 @@ prop_courier_create(hts_mutex_t *entrymutex)
   TAILQ_INIT(&pc->pc_queue);
   pc->pc_run = 1;
 
-  hts_thread_create(&pc->pc_thread, prop_courier, pc);
+  hts_thread_create_joinable(&pc->pc_thread, prop_courier, pc);
   return pc;
 }
 

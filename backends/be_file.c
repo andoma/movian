@@ -36,8 +36,6 @@ nav_backend_t be_file;
 typedef struct be_file_page {
   nav_page_t h;
 
-  hts_thread_t bfp_scanner;
-
   prop_t *bfp_nodes;
   prop_t *bfp_viewprop;
 
@@ -195,7 +193,7 @@ file_open_dir(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
   
   bfp->bfp_nodes = prop_create(p, "nodes");
   
-  hts_thread_create_detached(&bfp->bfp_scanner, scanner, bfp);
+  hts_thread_create_detached(scanner, bfp);
   *npp = &bfp->h;
   return 0;
 }

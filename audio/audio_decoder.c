@@ -88,7 +88,7 @@ audio_decoder_create(media_pipe_t *mp)
   TAILQ_INSERT_TAIL(&audio_decoders, ad, ad_link);
   hts_mutex_unlock(&audio_decoders_mutex);
 
-  hts_thread_create(&ad->ad_tid, ad_thread, ad);
+  hts_thread_create_joinable(&ad->ad_tid, ad_thread, ad);
   return ad;
 }
 
@@ -104,7 +104,7 @@ audio_decoder_destroy(audio_decoder_t *ad)
 {
   mp_send_cmd_head(ad->ad_mp, &ad->ad_mp->mp_audio, MB_CTRL_EXIT);
 
-  hts_thread_join(ad->ad_tid);
+  hts_thread_join(&ad->ad_tid);
   audio_fifo_clear_queue(&ad->ad_hold_queue);
   hts_mutex_lock(&audio_decoders_mutex);
   TAILQ_REMOVE(&audio_decoders, ad, ad_link);

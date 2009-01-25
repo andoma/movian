@@ -388,8 +388,6 @@ playqueue_play(const char *uri, const char *parent, prop_t *meta,
 void
 playqueue_init(void)
 {
-  hts_thread_t tid;
-
   hts_mutex_init(&playqueue_mutex);
 
   playqueue_mp = mp_create("playqueue");
@@ -401,8 +399,8 @@ playqueue_init(void)
    
   playqueue_root = prop_create(prop_get_global(), "playqueue");
 
-  hts_thread_create(&tid, playqueue_thread, NULL);
-  hts_thread_create(&tid, player_thread, NULL);
+  hts_thread_create_detached(playqueue_thread, NULL);
+  hts_thread_create_detached(player_thread, NULL);
 }
 
 

@@ -96,8 +96,6 @@ audio_change_output_device(void *opaque, const char *string)
 void
 audio_init(void)
 {
-  hts_thread_t ptid;
-
   audio_settings_root = settings_add_dir(NULL, "audio", "Audio settings",
 					 "audio");
   
@@ -122,7 +120,7 @@ audio_init(void)
 #endif
   AUDIO_INIT_SUBSYS(dummy);
 
-  hts_thread_create(&ptid, audio_output_thread, NULL);
+  hts_thread_create_detached(audio_output_thread, NULL);
 
   audio_mixer_init();
 }

@@ -498,12 +498,10 @@ screensaver_query(glw_x11_t *gx11)
 static void
 screensaver_inhibitor_init(glw_x11_t *gx11)
 {
-  hts_thread_t tid;
-
   if(screensaver_query(gx11) == -1)
     return;
 
-  hts_thread_create_detached(&tid, screensaver_inhibitor, gx11);
+  hts_thread_create_detached(screensaver_inhibitor, gx11);
 }
 
 
@@ -991,7 +989,7 @@ glw_x11_start(ui_t *ui, const char *arg)
 
   gx11->gr.gr_uii.uii_ui = ui;
 
-  hts_thread_create(&gx11->threadid, glw_x11_thread, gx11);
+  hts_thread_create_joinable(&gx11->threadid, glw_x11_thread, gx11);
   return &gx11->gr.gr_uii;
 }
 

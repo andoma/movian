@@ -111,7 +111,6 @@ void
 glw_tex_init(glw_root_t *gr)
 {
   int i;
-  hts_thread_t imageptid;
   extern int concurrency;
 
   hts_mutex_init(&gr->gr_tex_mutex);
@@ -123,7 +122,7 @@ glw_tex_init(glw_root_t *gr)
 
   /* Start multiple workers for decoding images */
   for(i = 0; i < concurrency; i++)
-    hts_thread_create(&imageptid, loader_thread, gr);
+    hts_thread_create_detached(loader_thread, gr);
 }
 
 /**
