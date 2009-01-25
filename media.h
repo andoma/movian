@@ -83,11 +83,9 @@ typedef struct media_buf {
     MB_VIDEO,
     MB_CLUT,
     MB_RESET_SPU,
-    MB_DISCONT,
     MB_DVD_SPU,
     MB_DVD_PCI,
     MB_DVD_HILITE,
-    MB_DVD_NAVKEY,
     MB_EXIT,
     MB_AUDIO,
   } mb_data_type;
@@ -160,6 +158,8 @@ typedef struct media_pipe {
 
   int64_t mp_videoseekdts;
 
+  struct event_q mp_eq;
+  
   /* Props */
 
   prop_t *mp_prop_root;
@@ -229,6 +229,7 @@ void mb_enqueue(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
 int mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
 event_t *mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, 
 				media_buf_t *mb);
+void mp_enqueue_event(media_pipe_t *mp, event_t *e);
 
 
 void mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd);

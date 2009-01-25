@@ -673,6 +673,8 @@ video_player_loop(play_video_ctrl_t *pvc)
   AVPacket pkt;
   int run = 1, r, si;
   event_t *e;
+  event_seek_t *es;
+  int64_t ts;
 
   while(run) {
     /**
@@ -741,7 +743,46 @@ video_player_loop(play_video_ctrl_t *pvc)
       mb = NULL; /* Enqueue succeeded */
       continue;
     }
-    abort();
+
+    switch(e->e_type) {
+    case EVENT_SEEK:
+      es = (event_seek_t *)e;
+      
+      ts = es->ts;
+
+      if(ts < pvc->pvc_fctx->start_time)
+	ts = pvc->pvc_fctx->start_time;
+
+      r = av_seek_frame(pvc->pvc_fctx, -1, ts, AVSEEK_FLAG_BACKWARD);
+
+      if(r < 0)
+	printf("Seeking failed\n");
+
+      mp_flush(mp);
+
+      if(mb != NULL) {
+	media_buf_free(mb);
+	mb = NULL;
+      }
+      
+      switch(mp->mp_playstatus) {
+      case MP_VIDEOSEEK_PAUSE:
+      case MP_PAUSE:
+	mp_set_playstatus(mp, MP_VIDEOSEEK_PAUSE, 0);
+	break;
+      case MP_VIDEOSEEK_PLAY:
+      case MP_PLAY:
+	mp_set_playstatus(mp, MP_VIDEOSEEK_PLAY, 0);
+	break;
+      default:
+	abort();
+      }
+      break;
+    default:
+      break;
+    }
+
+    event_unref(e);
   }
 
   if(mb != NULL)

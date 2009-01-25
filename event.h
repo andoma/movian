@@ -19,6 +19,7 @@
 #ifndef EVENT_H
 #define EVENT_H
 
+#include <inttypes.h>
 #include <libhts/htsq.h>
 #include <libhts/htsthreads.h>
 #include <libhts/htsatomic.h>
@@ -76,8 +77,8 @@ typedef enum {
   EVENT_VIDEO_CLOCK,
   EVENT_PLAYQUEUE,
   EVENT_TV,            /* TV specific events, see tv.h */
-
-
+  EVENT_SEEK,
+  
 } event_type_t;
 
 
@@ -125,6 +126,16 @@ typedef struct event_generic {
   char *method;
   char *argument;
 } event_generic_t;
+
+
+/**
+ *
+ */
+typedef struct event_seek {
+  event_t h;
+  int64_t ts;
+} event_seek_t;
+
 
 void event_generic_dtor(event_t *e);
 

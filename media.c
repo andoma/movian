@@ -67,6 +67,8 @@ mp_create(const char *name)
 
   mp = calloc(1, sizeof(media_pipe_t));
   
+  TAILQ_INIT(&mp->mp_eq);
+
   mp->mp_refcount = 1;
 
   mp->mp_name = name;
@@ -93,6 +95,8 @@ mp_create(const char *name)
 static void
 mp_destroy(media_pipe_t *mp)
 {
+  event_t *e;
+
   mq_destroy(&mp->mp_audio);
   mq_destroy(&mp->mp_video);
   mp_set_playstatus(mp, MP_STOP, 0);
@@ -100,6 +104,11 @@ mp_destroy(media_pipe_t *mp)
 
   hts_cond_destroy(&mp->mp_backpressure);
   hts_mutex_destroy(&mp->mp_mutex);
+
+  while((e = TAILQ_FIRST(&mp->mp_eq)) != NULL) {
+    TAILQ_REMOVE(&mp->mp_eq, e, e_link);
+    event_unref(e);
+  }
 
   free(mp);
 }
@@ -113,6 +122,19 @@ mp_unref(media_pipe_t *mp)
 {
   if(atomic_add(&mp->mp_refcount, -1) == 0)
     mp_destroy(mp);
+}
+
+
+/**
+ *
+ */
+void
+mp_enqueue_event(media_pipe_t *mp, event_t *e)
+{
+  hts_mutex_lock(&mp->mp_mutex);
+  TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
+  hts_cond_signal(&mp->mp_backpressure);
+  hts_mutex_unlock(&mp->mp_mutex);
 }
 
 
@@ -202,7 +224,7 @@ mb_enqueue(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 
 
 
-/*
+/**
  *
  */
 event_t *
@@ -210,24 +232,35 @@ mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 {
   media_queue_t *v = &mp->mp_video;
   media_queue_t *a = &mp->mp_audio;
+  event_t *e = NULL;
 
   hts_mutex_lock(&mp->mp_mutex);
   
   if(a->mq_stream >= 0 && v->mq_stream >= 0) {
-    while(mp->mp_playstatus >= MP_PLAY &&
+    while(mp->mp_playstatus >= MP_PLAY && 
+	  (e = TAILQ_FIRST(&mp->mp_eq)) == NULL &&
 	  ((a->mq_len > MQ_LOWWATER && v->mq_len > MQ_LOWWATER) ||
 	   a->mq_len > MQ_HIWATER || v->mq_len > MQ_HIWATER)) {
       hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
     }
   } else {
-    while(mq->mq_len > MQ_LOWWATER && mp->mp_playstatus >= MP_PLAY)
+    while(mp->mp_playstatus >= MP_PLAY &&
+	  (e = TAILQ_FIRST(&mp->mp_eq)) == NULL &&
+	  mq->mq_len > MQ_LOWWATER)
       hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
   }
-  
+
+  if(e != NULL) {
+    TAILQ_REMOVE(&mp->mp_eq, e, e_link);
+    hts_mutex_unlock(&mp->mp_mutex);
+    return e;
+  }
+
   mb_enq_tail(mq, mb);
   hts_mutex_unlock(&mp->mp_mutex);
   return NULL;
 }
+
 
 
 /**
