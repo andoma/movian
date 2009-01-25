@@ -505,7 +505,11 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb, int justdecode)
 	}
       }
 
+      /* XXXX: Ugly */
+#if defined(__i386__) || defined(__x86_64__)
       asm volatile("emms \n\t" : : : "memory");
+#endif
+
       vdf->vdf_pts = pts + j * duration;
       vdf->vdf_duration = duration;
       TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
