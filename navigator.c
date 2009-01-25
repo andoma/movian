@@ -202,7 +202,6 @@ nav_page_create(struct nav_backend *be, const char *uri, size_t allocsize)
 {
   nav_page_t *np = calloc(1, allocsize);
 
-  event_initqueue(&np->np_eq);
   np->np_uri = strdup(uri);
   np->np_be = be;
 

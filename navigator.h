@@ -30,8 +30,6 @@ LIST_HEAD(nav_backend_list, nav_backend);
  *
  */
 typedef struct nav_page {
-  event_queue_t np_eq;
- 
   TAILQ_ENTRY(nav_page) np_global_link;
   TAILQ_ENTRY(nav_page) np_history_link;
   int np_inhistory;
