@@ -33,8 +33,6 @@
 
 #define PLAYQUEUE_URI "playqueue:"
 
-nav_backend_t be_playqueue;
-
 static prop_t *playqueue_root;
 
 static void *player_thread(void *aux);
@@ -416,7 +414,7 @@ be_playqueue_open(const char *url0, nav_page_t **npp,
   nav_page_t *n;
   prop_t *type, *nodes;
 
-  *npp = n = nav_page_create(&be_playqueue, url0, sizeof(nav_page_t));
+  *npp = n = nav_page_create(url0, sizeof(nav_page_t));
 
   type  = prop_create(n->np_prop_root, "type");
   prop_set_string(type, "playqueue");

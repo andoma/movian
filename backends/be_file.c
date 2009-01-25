@@ -29,8 +29,6 @@
 #include "fileaccess/fa_probe.h"
 #include "playqueue.h"
 
-nav_backend_t be_file;
-
 typedef struct be_file_page {
   nav_page_t h;
 
@@ -137,7 +135,7 @@ file_open_dir(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
 
   /* TODO: Check if it is a DVD */
 
-  bfp = nav_page_create(&be_file, uri0, sizeof(be_file_page_t));
+  bfp = nav_page_create(uri0, sizeof(be_file_page_t));
   p = bfp->h.np_prop_root;
 
   prop_set_string(prop_create(p, "type"), "filedirectory");

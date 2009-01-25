@@ -46,7 +46,7 @@ be_page_open(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
   nav_page_t *n;
   prop_t *p;
 
-  *npp = n = nav_page_create(&be_page, url0, sizeof(nav_page_t));
+  *npp = n = nav_page_create(url0, sizeof(nav_page_t));
 
   p = n->np_prop_root;
 

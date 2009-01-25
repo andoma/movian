@@ -196,12 +196,11 @@ nav_back(void)
  *
  */
 void *
-nav_page_create(struct nav_backend *be, const char *uri, size_t allocsize)
+nav_page_create(const char *uri, size_t allocsize)
 {
   nav_page_t *np = calloc(1, allocsize);
 
   np->np_uri = strdup(uri);
-  np->np_be = be;
 
   TAILQ_INSERT_TAIL(&nav_pages, np, np_global_link);
 

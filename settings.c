@@ -30,7 +30,6 @@
 
 #define SETTINGS_URI "settings:"
 
-nav_backend_t be_settings;
 static prop_t *settings_root;
 
 
@@ -288,7 +287,7 @@ be_settings_open(const char *uri0, nav_page_t **npp,
   /* Decompose URI and try to find representative node */
 
   if(*uri == 0) {
-    n = nav_page_create(&be_settings, uri0, sizeof(nav_page_t));
+    n = nav_page_create(uri0, sizeof(nav_page_t));
 
     type  = prop_create(n->np_prop_root, "type");
     nodes = prop_create(n->np_prop_root, "nodes");
@@ -317,7 +316,7 @@ be_settings_open(const char *uri0, nav_page_t **npp,
     p  = prop_create(p2, "nodes");
   }
 
-  n = nav_page_create(&be_settings, uri0, sizeof(nav_page_t));
+  n = nav_page_create(uri0, sizeof(nav_page_t));
   prop_link(p2, n->np_prop_root);
   *npp = n;
   return 0;

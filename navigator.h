@@ -37,8 +37,6 @@ typedef struct nav_page {
   prop_t *np_prop_root;
   char *np_uri;
 
-  struct nav_backend *np_be;
-
 } nav_page_t;
 
 
@@ -66,7 +64,6 @@ void nav_close(nav_page_t *np);
 
 void nav_open(const char *uri);
 
-void *nav_page_create(struct nav_backend *be, const char *uri, 
-		      size_t allocsize);
+void *nav_page_create(const char *uri, size_t allocsize);
 
 #endif /* NAVIGATOR_H__ */
