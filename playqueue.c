@@ -414,7 +414,8 @@ be_playqueue_open(const char *url0, nav_page_t **npp,
   nav_page_t *n;
   prop_t *type, *nodes;
 
-  *npp = n = nav_page_create(url0, sizeof(nav_page_t));
+  *npp = n = nav_page_create(url0, sizeof(nav_page_t), NULL,
+			     NAV_PAGE_DONT_CLOSE_ON_BACK);
 
   type  = prop_create(n->np_prop_root, "type");
   prop_set_string(type, "playqueue");

@@ -287,7 +287,7 @@ be_settings_open(const char *uri0, nav_page_t **npp,
   /* Decompose URI and try to find representative node */
 
   if(*uri == 0) {
-    n = nav_page_create(uri0, sizeof(nav_page_t));
+    n = nav_page_create(uri0, sizeof(nav_page_t), NULL, 0);
 
     type  = prop_create(n->np_prop_root, "type");
     nodes = prop_create(n->np_prop_root, "nodes");
@@ -316,7 +316,7 @@ be_settings_open(const char *uri0, nav_page_t **npp,
     p  = prop_create(p2, "nodes");
   }
 
-  n = nav_page_create(uri0, sizeof(nav_page_t));
+  n = nav_page_create(uri0, sizeof(nav_page_t), NULL, 0);
   prop_link(p2, n->np_prop_root);
   *npp = n;
   return 0;

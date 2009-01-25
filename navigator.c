@@ -103,11 +103,19 @@ nav_remove_from_history(nav_page_t *np)
 void
 nav_close(nav_page_t *np)
 {
-#if 0
-  LIST_REMOVE(np, np_global_link);
+  if(nav_page_current == np)
+    nav_page_current = NULL;
+
+  if(np->np_inhistory)
+    nav_remove_from_history(np);
+
+  if(np->np_close != NULL)
+    np->np_close(np);
+
+  TAILQ_REMOVE(&nav_pages, np, np_global_link);
   prop_destroy(np->np_prop_root);
+  free(np->np_uri);
   free(np);
-#endif
 }
 
 
@@ -165,7 +173,7 @@ nav_open(const char *uri)
        */
       
       while((np2 = TAILQ_NEXT(nav_page_current, np_history_link)) != NULL)
-	nav_remove_from_history(np2);
+	nav_close(np2);
     }
 
     TAILQ_INSERT_TAIL(&nav_history, np, np_history_link);
@@ -182,13 +190,16 @@ nav_open(const char *uri)
 static void
 nav_back(void)
 {
-  nav_page_t *np = nav_page_current;
+  nav_page_t *prev, *np = nav_page_current;
 
-  if(np == NULL || 
-     (np = TAILQ_PREV(np, nav_page_queue, np_history_link)) == NULL)
-    return;
-  
-  nav_open(np->np_uri);
+  if(np == NULL ||
+     (prev = TAILQ_PREV(np, nav_page_queue, np_history_link)) == NULL)
+     return;
+
+  nav_open(prev->np_uri);
+
+  if(!(np->np_flags & NAV_PAGE_DONT_CLOSE_ON_BACK))
+    nav_close(np);
 }
 
 
@@ -196,11 +207,14 @@ nav_back(void)
  *
  */
 void *
-nav_page_create(const char *uri, size_t allocsize)
+nav_page_create(const char *uri, size_t allocsize,
+		void (*closefunc)(struct nav_page *np), int flags)
 {
   nav_page_t *np = calloc(1, allocsize);
 
+  np->np_flags = flags;
   np->np_uri = strdup(uri);
+  np->np_close = closefunc;
 
   TAILQ_INSERT_TAIL(&nav_pages, np, np_global_link);
 

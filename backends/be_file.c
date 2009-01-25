@@ -35,6 +35,10 @@ typedef struct be_file_page {
   prop_t *bfp_nodes;
   prop_t *bfp_viewprop;
 
+  int bfp_stop;
+
+  hts_thread_t bfp_scanner_thread;
+
 } be_file_page_t;
 
 
@@ -74,6 +78,9 @@ scanner(void *aux)
   /* First pass, just add filename and type */
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
 
+    if(bfp->bfp_stop)
+      break;
+
     p = prop_create(NULL, "node");
     prop_set_string(prop_create(p, "filename"), fde->fde_filename);
     prop_set_string(prop_create(p, "url"), fde->fde_url);
@@ -89,6 +96,9 @@ scanner(void *aux)
 
   /* Second pass, do full probe */
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+
+    if(bfp->bfp_stop)
+      break;
 
     p = fde->fde_opaque;
     media = prop_create(p, "media");
@@ -111,18 +121,31 @@ scanner(void *aux)
     }
   }
 
-  if(fd->fd_count == destroyed) {
-    prop_set_string(bfp->bfp_viewprop, "empty");
-    return NULL;
-  }
+  if(!bfp->bfp_stop) {
 
-  if(images * 4 > fd->fd_count * 3) {
-    prop_set_string(bfp->bfp_viewprop, "images");
+    if(fd->fd_count == destroyed)
+      prop_set_string(bfp->bfp_viewprop, "empty");
+    else if(images * 4 > fd->fd_count * 3) {
+      prop_set_string(bfp->bfp_viewprop, "images");
+    }
   }
 
   fa_dir_free(fd);
   return NULL;
 }
+
+/**
+ *
+ */
+static void
+dir_close_page(nav_page_t *np)
+{
+  be_file_page_t *bfp = (be_file_page_t *)np;
+
+  bfp->bfp_stop = 1; 
+  hts_thread_join(&bfp->bfp_scanner_thread);
+}
+
 
 /**
  *
@@ -135,7 +158,8 @@ file_open_dir(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
 
   /* TODO: Check if it is a DVD */
 
-  bfp = nav_page_create(uri0, sizeof(be_file_page_t));
+  bfp = nav_page_create(uri0, sizeof(be_file_page_t), dir_close_page,
+			NAV_PAGE_DONT_CLOSE_ON_BACK);
   p = bfp->h.np_prop_root;
 
   prop_set_string(prop_create(p, "type"), "filedirectory");
@@ -145,7 +169,7 @@ file_open_dir(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
   
   bfp->bfp_nodes = prop_create(p, "nodes");
   
-  hts_thread_create_detached(scanner, bfp);
+  hts_thread_create_joinable(&bfp->bfp_scanner_thread, scanner, bfp);
   *npp = &bfp->h;
   return 0;
 }
