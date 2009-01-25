@@ -778,14 +778,13 @@ player_thread(void *aux)
   playqueue_entry_t *pqe = NULL;
   playqueue_event_t *pe;
   event_t *e;
-  prop_t *meta = prop_create(mp->mp_prop_root, "meta");
   void *eh;
 
   while(1) {
     
     while(pqe == NULL) {
 
-      prop_unlink(meta);
+      prop_unlink(mp->mp_prop_meta);
 
       /* Got nothing to play, enter STOP mode */
       mp_set_playstatus(mp, MP_STOP, 0);
@@ -800,7 +799,7 @@ player_thread(void *aux)
 
     mp_set_playstatus(mp, MP_PLAY, 0);
 
-    prop_link(pqe->pqe_meta, meta);
+    prop_link(pqe->pqe_meta, mp->mp_prop_meta);
     
     eh = event_handler_register("playqueue", pqe_event_handler,
 				EVENTPRI_MEDIACONTROLS_PLAYQUEUE, NULL);
