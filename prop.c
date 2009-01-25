@@ -787,6 +787,8 @@ prop_unsubscribe(prop_sub_t *s)
 {
   hts_mutex_lock(&prop_mutex);
 
+  s->hps_opaque = NULL;
+
   if(s->hps_value_prop != NULL) {
     LIST_REMOVE(s, hps_value_prop_link);
     s->hps_value_prop = NULL;
