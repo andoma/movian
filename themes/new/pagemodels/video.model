@@ -1,0 +1,32 @@
+#include "theme://include/plates.model"
+
+widget(container_y, {
+  widget(video, {
+    .weight = 10.0;
+    .focus = true;
+    .focusCursor = true;
+    .source = $self.uri;
+  });
+
+
+  widget(label, {
+    .caption = int2duration($self.video.media.currenttime / 1000);
+  });
+
+  widget(label, {
+    .caption = int2duration($self.video.media.playstatus);
+  });
+
+  widget(slider_x, {
+    bind(&self.video.media.currenttime);
+    .focus = true;
+    .max = $self.video.media.meta.duration;
+
+    PLATE_SQUARE_MID(
+    widget(label, {
+      .caption = int2duration($self.video.media.currenttime / 1000);
+    });
+    );
+  });
+
+});

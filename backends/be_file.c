@@ -174,6 +174,24 @@ file_open_dir(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
   return 0;
 }
 
+
+/**
+ *
+ */
+static void
+file_open_video(const char *uri0, nav_page_t **npp)
+{
+  nav_page_t *np;
+  prop_t *p;
+
+  np = nav_page_create(uri0, sizeof(nav_page_t), NULL, 0);
+
+  p = np->np_prop_root;
+  prop_set_string(prop_create(p, "type"), "video");
+  *npp = np;
+}
+
+
 /**
  *
  */
@@ -195,6 +213,10 @@ file_open_file(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
   case FA_AUDIO:
     playqueue_play(uri0, NULL, media, 0);
     *npp = NULL;
+    return 0;
+  case FA_VIDEO:
+    prop_destroy(media);
+    file_open_video(uri0, npp);
     return 0;
 
   default:
