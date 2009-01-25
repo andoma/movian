@@ -243,6 +243,7 @@ fa_probe_iso(prop_t *proproot, fa_handle_t *fh)
 
 
 const char *type2str[] = {
+  [FA_DIR]      = "directory",
   [FA_FILE]     = "file",
   [FA_AUDIO]    = "audio",
   [FA_ARCHIVE]  = "archive",
