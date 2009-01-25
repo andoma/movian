@@ -167,20 +167,24 @@ prop_courier(void *aux)
     switch(n->hpn_event) {
     case PROP_SET_VOID:
     case PROP_SET_DIR:
-      s->hps_callback(s, n->hpn_event);
+      s->hps_callback(s, n->hpn_event, n->hpn_prop2);
+      prop_ref_dec(n->hpn_prop2);
       break;
 
     case PROP_SET_STRING:
-      s->hps_callback(s, n->hpn_event, n->hpn_string);
+      s->hps_callback(s, n->hpn_event, n->hpn_string, n->hpn_prop2);
       free(n->hpn_string);
+      prop_ref_dec(n->hpn_prop2);
       break;
 
     case PROP_SET_INT:
-      s->hps_callback(s, n->hpn_event, n->hpn_int);
+      s->hps_callback(s, n->hpn_event, n->hpn_int, n->hpn_prop2);
+      prop_ref_dec(n->hpn_prop2);
       break;
 
     case PROP_SET_FLOAT:
-      s->hps_callback(s, n->hpn_event, n->hpn_float);
+      s->hps_callback(s, n->hpn_event, n->hpn_float, n->hpn_prop2);
+      prop_ref_dec(n->hpn_prop2);
       break;
 
     case PROP_ADD_CHILD:
@@ -250,23 +254,23 @@ prop_build_notify_value(prop_sub_t *s, int direct)
 
     switch(p->hp_type) {
     case PROP_STRING:
-      s->hps_callback(s, PROP_SET_STRING, p->hp_string);
+      s->hps_callback(s, PROP_SET_STRING, p->hp_string, p);
       break;
 
     case PROP_FLOAT:
-      s->hps_callback(s, PROP_SET_FLOAT, p->hp_float);
+      s->hps_callback(s, PROP_SET_FLOAT, p->hp_float, p);
       break;
 
     case PROP_INT:
-      s->hps_callback(s, PROP_SET_INT, p->hp_int);
+      s->hps_callback(s, PROP_SET_INT, p->hp_int, p);
       break;
 
     case PROP_DIR:
-      s->hps_callback(s, PROP_SET_DIR);
+      s->hps_callback(s, PROP_SET_DIR, p);
       break;
 
     case PROP_VOID:
-      s->hps_callback(s, PROP_SET_VOID);
+      s->hps_callback(s, PROP_SET_VOID, p);
       break;
 
     case PROP_ZOMBIE:
@@ -276,6 +280,10 @@ prop_build_notify_value(prop_sub_t *s, int direct)
   }
 
   n = get_notify(s);
+
+  n->hpn_prop2 = p;
+  prop_ref_inc(p);
+
   switch(p->hp_type) {
   case PROP_STRING:
     n->hpn_string = strdup(p->hp_string);
