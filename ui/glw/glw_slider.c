@@ -244,15 +244,16 @@ static void
 prop_callback(prop_sub_t *s, prop_event_t event, ...)
 {
   glw_slider_t *sl = (glw_slider_t *)s->hps_opaque;
-  glw_root_t *gr = sl->w.glw_root;
+  glw_root_t *gr;
   float v;
   prop_t *p;
 
+  if(sl == NULL)
+    return;
+
+  gr = sl->w.glw_root;
   va_list ap;
   va_start(ap, event);
-
-  if(s == NULL)
-    return;
 
   switch(event) {
   case PROP_SET_VOID:
