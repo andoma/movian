@@ -28,7 +28,7 @@ SRCS-$(CONFIG_POSIX_NETWORKING) += net_posix.c
 # Video support
 #
 VPATH += video
-SRCS  += video_playback.c yadif.c
+SRCS  += video_playback.c video_decoder.c yadif.c
 
 #
 # Audio subsys
@@ -104,7 +104,7 @@ SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += glw_opengl.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += glw_texture_opengl.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += glw_render_opengl.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += glw_mirror.c
-SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += glw_video.c glw_video_decoder.c
+SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += glw_video.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += glw_fx_texrot.c
 
 

@@ -29,7 +29,7 @@
 
 #include "showtime.h"
 #include "media.h"
-#include "glw_video.h"
+#include "ui/glw/glw_video.h"
 //#include "subtitles.h"
 #include "video/yadif.h"
 #include "event.h"
