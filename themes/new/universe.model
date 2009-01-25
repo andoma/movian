@@ -92,10 +92,10 @@ widget(cursor, {
 
 	  widget(container_x, {
 	    widget(label, {
-	      .caption = int2duration($global.currentmedia.currenttime);
+	      .caption = int2duration($global.currentmedia.currenttime / 1000);
 	    });
 	    widget(label, {
-	      .caption = int2duration($global.currentmedia.meta.duration);
+	      .caption = int2duration($global.currentmedia.meta.duration / 1000);
 	    });
 	  });
 

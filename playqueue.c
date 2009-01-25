@@ -39,8 +39,7 @@ static prop_t *playqueue_root;
 
 static void *player_thread(void *aux);
 
-
-static event_queue_t player_eventqueue;
+static media_pipe_t *playqueue_mp;
 
 /**
  *
@@ -259,7 +258,7 @@ playqueue_load(const char *uri, const char *parent, prop_t *meta, int enq)
     if(!strcmp(pqe->pqe_uri, uri) && !strcmp(pqe->pqe_parent, parent)) {
       /* Already in, go to it */
       e = pqe_event_create(pqe, 1);
-      event_enqueue(&player_eventqueue, e);
+      mp_enqueue_event(playqueue_mp, e);
       event_unref(e);
 
       hts_mutex_unlock(&playqueue_mutex);
@@ -311,7 +310,7 @@ playqueue_load(const char *uri, const char *parent, prop_t *meta, int enq)
 
   /* Tick player to play it */
   e = pqe_event_create(pqe, 1);
-  event_enqueue(&player_eventqueue, e);
+  mp_enqueue_event(playqueue_mp, e);
   event_unref(e);
 
   /* Scan dir (if provided) for additional tracks (siblings) */
@@ -393,7 +392,7 @@ playqueue_init(void)
 
   hts_mutex_init(&playqueue_mutex);
 
-  event_initqueue(&player_eventqueue);
+  playqueue_mp = mp_create("playqueue");
 
   hts_mutex_init(&playqueue_request_mutex);
   hts_cond_init(&playqueue_request_cond);
@@ -483,30 +482,39 @@ playqueue_advance(playqueue_entry_t *pqe, int prev)
 }
 
 
+/**
+ *
+ */
+static int64_t
+rescale(AVFormatContext *fctx, int64_t ts, int si)
+{
+  if(ts == AV_NOPTS_VALUE)
+    return AV_NOPTS_VALUE;
+
+  return av_rescale_q(ts, fctx->streams[si]->time_base, AV_TIME_BASE_Q);
+}
+
 
 /**
  *
  */
 static playqueue_entry_t *
-playtrack(playqueue_entry_t *pqe, media_pipe_t *mp, event_queue_t *eq)
+playtrack(playqueue_entry_t *pqe, media_pipe_t *mp)
 {
   AVFormatContext *fctx;
   AVCodecContext *ctx;
   AVPacket pkt;
   formatwrap_t *fw;
-  int i;
-  media_buf_t *mb;
+  int i, r, si;
+  media_buf_t *mb = NULL;
   media_queue_t *mq;
   int64_t pts4seek = 0;
-  int streams;
-  int64_t cur_pos_pts = AV_NOPTS_VALUE;
-  int curtime;
   codecwrap_t *cw;
-  event_ts_t *et;
-  int64_t pts;
   char faurl[1000];
   event_t *e;
   playqueue_event_t *pe;
+  int run = 1;
+  int hold = 0;
 
   snprintf(faurl, sizeof(faurl), "showtime:%s", pqe->pqe_uri);
 
@@ -538,200 +546,162 @@ playtrack(playqueue_entry_t *pqe, media_pipe_t *mp, event_queue_t *eq)
     break;
   }
 
-  curtime = -1;
+  mp_prepare(mp, MP_GRAB_AUDIO);
+  mq = &mp->mp_audio;
 
-  while(1) {
+  while(run) {
 
-    if(mp->mp_playstatus == MP_PLAY && mp_is_audio_silenced(mp)) {
-      mp_set_playstatus(mp, MP_PAUSE, 0);
-      media_update_playstatus_prop(mp->mp_prop_playstatus, MP_PAUSE);
-    }
+    /**
+     * Need to fetch a new packet ?
+     */
+    if(mb == NULL) {
 
-
-    e = event_get(mp_is_paused(mp) ? -1 : 0, eq);
-
-    if(e != NULL) {
-      switch(e->e_type) {
-	
-      default:
-	break;
-
-      case EVENT_AUDIO_CLOCK:
-	et = (void *)e;
-	if(et->pts != AV_NOPTS_VALUE) {
-
-	  pts = et->pts - fctx->start_time;
-	  pts /= AV_TIME_BASE;
-
-	  if(curtime != pts) {
-	    curtime = pts;
-
-	    prop_set_int(mp->mp_prop_currenttime, pts);
-
-#if 0
-	    hts_mutex_lock(&playlistlock);
-	  
-	    if(pqe->pqe_pl != NULL)
-	      glw_prop_set_int(pqe->pqe_pl->pl_prop_time_current,
-			       pqe->pqe_time_offset + pts);
-	  
-	    hts_mutex_unlock(&playlistlock);
-#endif
-	  }
-	}
-	break;
-
-      case EVENT_PLAYQUEUE:
-	pe = (playqueue_event_t *)e;
-	if(!pe->jump) {
-	  /* Entry added without request to start playing it at once.
-	     Just ignore this */
-	  pqe_unref(pe->pqe);
-	  break;
-	}
-
-	/* Switch to track in request */
-	pqe_unref(pqe);
-	pqe = pe->pqe;
-
-	mp_flush(mp);
-	event_unref(e);
-	goto out;
-
-
-      case EVENT_SEEK_FAST_BACKWARD:
-	av_seek_frame(fctx, -1, pts4seek - 60000000, AVSEEK_FLAG_BACKWARD);
-	goto seekflush;
-
-      case EVENT_SEEK_BACKWARD:
-	av_seek_frame(fctx, -1, pts4seek - 15000000, AVSEEK_FLAG_BACKWARD);
-	goto seekflush;
-
-      case EVENT_SEEK_FAST_FORWARD:
-	av_seek_frame(fctx, -1, pts4seek + 60000000, 0);
-	goto seekflush;
-
-      case EVENT_SEEK_FORWARD:
-	av_seek_frame(fctx, -1, pts4seek + 15000000, 0);
-	goto seekflush;
-
-      case EVENT_RESTART_TRACK:
-	av_seek_frame(fctx, -1, 0, AVSEEK_FLAG_BACKWARD);
-
-      seekflush:
-	mp_flush(mp);
-	event_flushqueue(eq);
-	break;
-	
-      case EVENT_PLAYPAUSE:
-      case EVENT_PLAY:
-      case EVENT_PAUSE:
-	mp_playpause(mp, e->e_type);
-
-	media_update_playstatus_prop(mp->mp_prop_playstatus,
-				     mp->mp_playstatus);
-	break;
-
-      case EVENT_PREV:
-	pqe = playqueue_advance(pqe, 1);
-	mp_flush(mp);
-	event_unref(e);
-	goto out;
-      
-      case EVENT_NEXT:
+      if((r = av_read_frame(fctx, &pkt)) < 0) {
 	pqe = playqueue_advance(pqe, 0);
-	mp_flush(mp);
-	event_unref(e);
-	goto out;
-
-      case EVENT_STOP:
-	pqe_unref(pqe);
-	pqe = NULL;
-	mp_flush(mp);
-	event_unref(e);
-	goto out;
-      }
-      event_unref(e);
-    }
-    
-    if(mp_is_paused(mp))
-      continue;
-
-    mb = media_buf_alloc();
-
-    i = av_read_frame(fctx, &pkt);
-
-    if(i < 0) {
-      /* End of stream (or some other type of error), next track */
-      pqe = playqueue_advance(pqe, 0);
-      break;
-    }
-
-    mb->mb_data = NULL;
-    mb->mb_size = pkt.size;
-
-    if(pkt.pts != AV_NOPTS_VALUE) {
-      mb->mb_pts = av_rescale_q(pkt.pts,
-				fctx->streams[pkt.stream_index]->time_base,
-				AV_TIME_BASE_Q);
-      pts4seek = mb->mb_pts;
-    } else {
-      mb->mb_pts = AV_NOPTS_VALUE;
-    }
-    
-    mb->mb_duration = av_rescale_q(pkt.duration,
-				   fctx->streams[pkt.stream_index]->time_base,
-				   AV_TIME_BASE_Q);
-
-    if(pkt.stream_index == mp->mp_audio.mq_stream) {
-      ctx = cw->codec_ctx;
-
-      if(mb->mb_pts != AV_NOPTS_VALUE) {
-	if(fctx->start_time != AV_NOPTS_VALUE)
-	  cur_pos_pts = mb->mb_pts - fctx->start_time;
-	else
-	  cur_pos_pts = mb->mb_pts;
+	printf("Read error, pqe = %p\n", pqe);
+	break;
       }
 
-      if(cur_pos_pts != AV_NOPTS_VALUE)
-	mb->mb_mts = cur_pos_pts / 1000;
-      else
-	mb->mb_mts = -1;
+      si = pkt.stream_index;
 
-      mb->mb_data_type = MB_AUDIO;
+      if(si == mp->mp_audio.mq_stream) {
+	/* Current audio stream */
+	mb = media_buf_alloc();
+	mb->mb_data_type = MB_AUDIO;
+
+      } else {
+	/* Check event queue ? */
+	av_free_packet(&pkt);
+	continue;
+      }
+
+
+      mb->mb_pts      = rescale(fctx, pkt.pts,      si);
+      mb->mb_dts      = rescale(fctx, pkt.dts,      si);
+      mb->mb_duration = rescale(fctx, pkt.duration, si);
+
       mb->mb_cw = wrap_codec_ref(cw);
 
-      mb->mb_data = malloc(pkt.size +  FF_INPUT_BUFFER_PADDING_SIZE);
-      memset(mb->mb_data + pkt.size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
- 
-      memcpy(mb->mb_data, pkt.data, pkt.size);
-      mq = &mp->mp_audio;
-    } else {
-      mq = NULL;
-    }
+      /* Move the data pointers from ffmpeg's packet */
 
-    if(mq != NULL) {
-      mb_enqueue(mp, mq, mb);
+      mb->mb_stream = pkt.stream_index;
+
+      av_dup_packet(&pkt);
+
+      mb->mb_data = pkt.data;
+      pkt.data = NULL;
+
+      mb->mb_size = pkt.size;
+      pkt.size = 0;
+
+      if(mb->mb_pts != AV_NOPTS_VALUE) {
+	mb->mb_mts = (mb->mb_pts - fctx->start_time) / 1000;
+	pts4seek = mb->mb_pts;
+      } else
+	mb->mb_mts = -1;
+
+
       av_free_packet(&pkt);
-      continue;
     }
-    
-    av_free_packet(&pkt);
 
-    if(mb->mb_data != NULL)
-      free(mb->mb_data);
-    free(mb);
+    /*
+     * Try to send the buffer.  If mb_enqueue() returns something we
+     * catched an event instead of enqueueing the buffer. In this case
+     * 'mb' will be left untouched.
+     */
 
+    if((e = mb_enqueue_with_events(mp, mq, mb)) == NULL) {
+      mb = NULL; /* Enqueue succeeded */
+      continue;
+    }      
+
+    switch(e->e_type) {
+	
+    default:
+      break;
+      
+    case EVENT_PLAYQUEUE:
+      pe = (playqueue_event_t *)e;
+      if(!pe->jump) {
+	/* Entry added without request to start playing it at once.
+	   Just ignore this */
+	pqe_unref(pe->pqe);
+	break;
+      }
+
+      /* Switch to track in request */
+      pqe_unref(pqe);
+      pqe = pe->pqe;
+
+      mp_flush(mp);
+      run = 0;
+      break;
+      
+    case EVENT_SEEK_FAST_BACKWARD:
+      av_seek_frame(fctx, -1, pts4seek - 60000000, AVSEEK_FLAG_BACKWARD);
+      goto seekflush;
+      
+    case EVENT_SEEK_BACKWARD:
+      av_seek_frame(fctx, -1, pts4seek - 15000000, AVSEEK_FLAG_BACKWARD);
+      goto seekflush;
+
+    case EVENT_SEEK_FAST_FORWARD:
+      av_seek_frame(fctx, -1, pts4seek + 60000000, 0);
+      goto seekflush;
+
+    case EVENT_SEEK_FORWARD:
+      av_seek_frame(fctx, -1, pts4seek + 15000000, 0);
+      goto seekflush;
+
+    case EVENT_RESTART_TRACK:
+      av_seek_frame(fctx, -1, 0, AVSEEK_FLAG_BACKWARD);
+
+    seekflush:
+      mp_flush(mp);
+
+      if(mb != NULL) {
+	media_buf_free(mb);
+	mb = NULL;
+      }
+      break;
+	
+    case EVENT_PLAYPAUSE:
+    case EVENT_PLAY:
+    case EVENT_PAUSE:
+
+      hold =  mp_update_hold_by_event(hold, e->e_type);
+      mp_send_cmd_head(mp, mq, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
+      break;
+
+    case EVENT_PREV:
+      pqe = playqueue_advance(pqe, 1);
+      mp_flush(mp);
+      run = 0;
+      break;
+      
+    case EVENT_NEXT:
+      pqe = playqueue_advance(pqe, 0);
+      mp_flush(mp);
+      run = 0;
+      break;
+
+    case EVENT_STOP:
+      pqe_unref(pqe);
+      pqe = NULL;
+      mp_flush(mp);
+      run = 0;
+      break;
+    }
+    event_unref(e);
   }
 
- out:
-  streams = fctx->nb_streams;
+  if(mb != NULL)
+    media_buf_free(mb);
 
   wrap_codec_deref(cw);
-
   wrap_format_destroy(fw);
 
-  media_update_playstatus_prop(mp->mp_prop_playstatus, MP_STOP);
+  //  media_update_playstatus_prop(mp->mp_prop_playstatus, MP_STOP);
   return pqe;
 }
 
@@ -763,7 +733,7 @@ pqe_event_handler(event_t *e, void *opaque)
     return 0;
   }
 
-  event_enqueue(&player_eventqueue, e);
+  mp_enqueue_event(playqueue_mp, e);
   return 1;
 }
 
@@ -774,7 +744,7 @@ pqe_event_handler(event_t *e, void *opaque)
 static void *
 player_thread(void *aux)
 {
-  media_pipe_t *mp = mp_create("playqueue");
+  media_pipe_t *mp = playqueue_mp;
   playqueue_entry_t *pqe = NULL;
   playqueue_event_t *pe;
   event_t *e;
@@ -787,24 +757,30 @@ player_thread(void *aux)
       prop_unlink(mp->mp_prop_meta);
 
       /* Got nothing to play, enter STOP mode */
-      mp_set_playstatus(mp, MP_STOP, 0);
-      e = event_get(-1, &player_eventqueue);
-      
+      //      mp_set_playstatus(mp, MP_STOP, 0);
+
+      printf("Hibernating audio\n");
+      mp_hibernate(mp);
+      printf("Waiting for something..\n");
+      e = mp_dequeue_event(playqueue_mp);
+      printf("e = %p\n", e);
+
       if(e->e_type == EVENT_PLAYQUEUE) {
 	pe = (playqueue_event_t *)e;
 	pqe = pe->pqe;
       }
       event_unref(e);
+
     }
 
-    mp_set_playstatus(mp, MP_PLAY, 0);
+    //    mp_set_playstatus(mp, MP_PLAY, 0);
 
     prop_link(pqe->pqe_meta, mp->mp_prop_meta);
     
     eh = event_handler_register("playqueue", pqe_event_handler,
 				EVENTPRI_MEDIACONTROLS_PLAYQUEUE, NULL);
 
-    pqe = playtrack(pqe, mp, &player_eventqueue);
+    pqe = playtrack(pqe, mp);
 
     event_handler_unregister(eh);
 

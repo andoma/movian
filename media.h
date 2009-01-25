@@ -79,15 +79,20 @@ typedef struct media_buf {
   TAILQ_ENTRY(media_buf) mb_link;
 
   enum {
-    MB_RESET,
     MB_VIDEO,
     MB_CLUT,
     MB_RESET_SPU,
     MB_DVD_SPU,
     MB_DVD_PCI,
     MB_DVD_HILITE,
-    MB_EXIT,
     MB_AUDIO,
+
+    MB_FLUSH,
+
+    MB_CTRL_PAUSE,
+    MB_CTRL_PLAY,
+    MB_CTRL_EXIT,
+
   } mb_data_type;
 
   void *mb_data;
@@ -122,16 +127,6 @@ typedef struct media_queue {
 } media_queue_t;
 
 
-typedef enum {
-  MP_STOP,
-  MP_PAUSE,           /* Freeze playback */
-  MP_PLAY,
-  MP_VIDEOSEEK_PLAY,  /* Audio == silent
-		       * Video == decode until dts >= videoseekdts,
-		       *          then display that frame and goto MP_PLAY
-		       */
-  MP_VIDEOSEEK_PAUSE, /* Same as above, but goto PAUSE */
-} mp_playstatus_t;
 
 /**
  * Media pipe
@@ -139,7 +134,7 @@ typedef enum {
 typedef struct media_pipe {
   int mp_refcount;
 
-  mp_playstatus_t mp_playstatus;
+  //  mp_playstatus_t mp_playstatus;
 
   const char *mp_name;
 
@@ -156,8 +151,6 @@ typedef struct media_pipe {
 
   struct audio_decoder *mp_audio_decoder;
 
-  int64_t mp_videoseekdts;
-
   struct event_q mp_eq;
   
   /* Props */
@@ -165,14 +158,10 @@ typedef struct media_pipe {
   prop_t *mp_prop_root;
   prop_t *mp_prop_meta;
   prop_t *mp_prop_playstatus;
-  prop_t *mp_prop_currenttime;
+  prop_t *mp_prop_currenttime_x;
 
-  /* Video playback */
-
-  void (*mp_video_decoder_start)(void *opaque);
-  void (*mp_video_decoder_stop)(void *opaque);
-  void *mp_video_opaque;
-  int mp_video_running;
+  prop_courier_t *mp_pc;
+  prop_sub_t *mp_sub_currenttime;
 
 } media_pipe_t;
 
@@ -196,6 +185,8 @@ codecwrap_t *wrap_codec_create(enum CodecID id, enum CodecType type,
 			       AVCodecContext *ctx,
 			       int cheat_for_speed);
 
+void media_buf_free(media_buf_t *mb);
+
 
 static inline media_buf_t *
 media_buf_alloc(void)
@@ -205,19 +196,6 @@ media_buf_alloc(void)
   return mb;
 }
 
-static inline void
-media_buf_free(media_buf_t *mb)
-{
-  if(mb->mb_data != NULL)
-    free(mb->mb_data);
-
-  if(mb->mb_cw != NULL)
-    wrap_codec_deref(mb->mb_cw);
-  
-  free(mb);
-}
-
-
 media_pipe_t *mp_create(const char *name);
 
 #define mp_ref(mp) atomic_add(&(mp)->mp_refcount, 1)
@@ -225,20 +203,22 @@ void mp_unref(media_pipe_t *mp);
 
 void mq_flush(media_queue_t *mq);
 
-void mb_enqueue(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
 int mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
 event_t *mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, 
 				media_buf_t *mb);
 void mp_enqueue_event(media_pipe_t *mp, event_t *e);
+event_t *mp_dequeue_event(media_pipe_t *mp);
 
 
 void mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd);
+void mp_send_cmd_head(media_pipe_t *mp, media_queue_t *mq, int cmd);
 void mp_send_cmd_data(media_pipe_t *mp, media_queue_t *mq, int cmd, void *d);
 void mp_send_cmd_u32_head(media_pipe_t *mp, media_queue_t *mq, int cmd, 
 			  uint32_t u);
 
 void mp_flush(media_pipe_t *mp);
 
+int mp_update_hold_by_event(int hold, event_type_t et);
 
 void mp_wait(media_pipe_t *mp, int audio, int video);
 
@@ -248,18 +228,15 @@ void mp_codec_unlock(media_pipe_t *mp);
 
 void mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u);
 
-#define MP_DONT_GRAB_AUDIO 0x1
-void mp_set_playstatus(media_pipe_t *mp, int status, int flags);
-
-#define mp_get_playstatus(mp) ((mp)->mp_playstatus)
-
-static inline int 
-mp_is_paused(struct media_pipe *mp)
-{
-  return mp->mp_playstatus == MP_PAUSE;
-}
+//#define MP_DONT_GRAB_AUDIO 0x1
+//void mp_set_playstatus(media_pipe_t *mp, int status, int flags);
 
 void mp_playpause(struct media_pipe *mp, int key);
+
+#define MP_GRAB_AUDIO 0x1
+void mp_prepare(struct media_pipe *mp, int flags);
+
+void mp_hibernate(struct media_pipe *mp);
 
 void media_pipe_acquire_audio(struct media_pipe *mp);
 
@@ -269,7 +246,7 @@ int mp_is_audio_silenced(media_pipe_t *mp);
 
 void media_update_codec_info_prop(prop_t *p, AVCodecContext *ctx);
 
-void media_update_playstatus_prop(prop_t *p, mp_playstatus_t mps);
+//void media_update_playstatus_prop(prop_t *p, mp_playstatus_t mps);
 
 void media_get_codec_info(AVCodecContext *ctx, char *buf, size_t size);
 
@@ -282,5 +259,7 @@ void media_fill_properties(prop_t *root, const char *url, int type,
 void media_set_currentmedia(media_pipe_t *mp);
 void media_set_metatree(media_pipe_t *mp, prop_t *src);
 void media_clear_metatree(media_pipe_t *mp);
+
+void mp_set_current_time(media_pipe_t *mp, int mts);
 
 #endif /* MEDIA_H */

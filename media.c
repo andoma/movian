@@ -31,6 +31,25 @@
 
 extern int concurrency;
 
+static void seek_by_propchange(struct prop_sub *sub, prop_event_t event, ...);
+
+
+/**
+ *
+ */
+void
+media_buf_free(media_buf_t *mb)
+{
+  if(mb->mb_data != NULL)
+    free(mb->mb_data);
+
+  if(mb->mb_cw != NULL)
+    wrap_codec_deref(mb->mb_cw);
+  
+  free(mb);
+}
+
+
 
 /**
  *
@@ -83,8 +102,14 @@ mp_create(const char *name)
 
   mp->mp_prop_meta        = prop_create(mp->mp_prop_root, "meta");
   mp->mp_prop_playstatus  = prop_create(mp->mp_prop_root, "playstatus");
-  mp->mp_prop_currenttime = prop_create(mp->mp_prop_root, "currenttime");
+  mp->mp_prop_currenttime_x = prop_create(mp->mp_prop_root, "currenttime");
  
+  mp->mp_pc = prop_courier_create(&mp->mp_mutex);
+
+  mp->mp_sub_currenttime = prop_subscribe(mp->mp_prop_currenttime_x, NULL,
+					  seek_by_propchange,
+					  mp, mp->mp_pc,
+					  PROP_SUB_NO_INITIAL_UPDATE);
   return mp;
 }
 
@@ -97,9 +122,13 @@ mp_destroy(media_pipe_t *mp)
 {
   event_t *e;
 
+  abort(); /* prop_courier_destroy */
+
+  assert(mp->mp_audio_decoder == NULL);
+
   mq_destroy(&mp->mp_audio);
   mq_destroy(&mp->mp_video);
-  mp_set_playstatus(mp, MP_STOP, 0);
+
   prop_destroy(mp->mp_prop_root);
 
   hts_cond_destroy(&mp->mp_backpressure);
@@ -128,50 +157,48 @@ mp_unref(media_pipe_t *mp)
 /**
  *
  */
+static void
+mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
+{
+  atomic_add(&e->e_refcount, 1);
+  TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
+  hts_cond_signal(&mp->mp_backpressure);
+}
+
+/**
+ *
+ */
 void
 mp_enqueue_event(media_pipe_t *mp, event_t *e)
 {
   hts_mutex_lock(&mp->mp_mutex);
-  TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
-  hts_cond_signal(&mp->mp_backpressure);
+  mp_enqueue_event_locked(mp, e);
   hts_mutex_unlock(&mp->mp_mutex);
 }
 
 
-#if 0
-/*
+/**
  *
  */
-
-media_buf_t *
-mb_dequeue_wait(media_pipe_t *mp, media_queue_t *mq)
+event_t *
+mp_dequeue_event(media_pipe_t *mp)
 {
-  media_buf_t *mb;
+  event_t *e;
   hts_mutex_lock(&mp->mp_mutex);
 
-  while(1) {
-    if(mp->mp_playstatus == MP_STOP) {
-      hts_mutex_unlock(&mp->mp_mutex);
-      return NULL;
-    }
+  while((e = TAILQ_FIRST(&mp->mp_eq)) == NULL)
+    hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
 
-    if(mp->mp_playstatus >= MP_PLAY && (mb = TAILQ_FIRST(&mq->mq_q)) != NULL)
-      break;
-    hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
-  }
-
-  TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
-  mq->mq_len--;
-  hts_cond_signal(&mp->mp_backpressure);
+  TAILQ_REMOVE(&mp->mp_eq, e, e_link);
   hts_mutex_unlock(&mp->mp_mutex);
-  return mb;
+  return e;
 }
-#endif
 
-/*
+
+
+/**
  *
  */
-
 static void
 mb_enq_tail(media_queue_t *mq, media_buf_t *mb)
 {
@@ -181,10 +208,9 @@ mb_enq_tail(media_queue_t *mq, media_buf_t *mb)
   prop_set_int(mq->mq_prop_qlen_cur, mq->mq_len);
 }
 
-/*
+/**
  *
  */
-
 static void
 mb_enq_head(media_queue_t *mq, media_buf_t *mb)
 {
@@ -193,36 +219,6 @@ mb_enq_head(media_queue_t *mq, media_buf_t *mb)
   hts_cond_signal(&mq->mq_avail);
   prop_set_int(mq->mq_prop_qlen_cur, mq->mq_len);
 }
-
-
-/*
- *
- */
-
-void
-mb_enqueue(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
-{
-  media_queue_t *v = &mp->mp_video;
-  media_queue_t *a = &mp->mp_audio;
-
-  hts_mutex_lock(&mp->mp_mutex);
-  
-  if(a->mq_stream >= 0 && v->mq_stream >= 0) {
-    while(mp->mp_playstatus >= MP_PLAY &&
-	  ((a->mq_len > MQ_LOWWATER && v->mq_len > MQ_LOWWATER) ||
-	   a->mq_len > MQ_HIWATER || v->mq_len > MQ_HIWATER)) {
-      hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
-    }
-  } else {
-    while(mq->mq_len > MQ_LOWWATER && mp->mp_playstatus >= MP_PLAY)
-      hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
-  }
-  
-  mb_enq_tail(mq, mb);
-  hts_mutex_unlock(&mp->mp_mutex);
-}
-
-
 
 /**
  *
@@ -235,18 +231,15 @@ mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
   event_t *e = NULL;
 
   hts_mutex_lock(&mp->mp_mutex);
-  
+
   if(a->mq_stream >= 0 && v->mq_stream >= 0) {
-    while(mp->mp_playstatus >= MP_PLAY && 
-	  (e = TAILQ_FIRST(&mp->mp_eq)) == NULL &&
+    while((e = TAILQ_FIRST(&mp->mp_eq)) == NULL &&
 	  ((a->mq_len > MQ_LOWWATER && v->mq_len > MQ_LOWWATER) ||
 	   a->mq_len > MQ_HIWATER || v->mq_len > MQ_HIWATER)) {
       hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
     }
   } else {
-    while(mp->mp_playstatus >= MP_PLAY &&
-	  (e = TAILQ_FIRST(&mp->mp_eq)) == NULL &&
-	  mq->mq_len > MQ_LOWWATER)
+    while((e = TAILQ_FIRST(&mp->mp_eq)) == NULL && mq->mq_len > MQ_LOWWATER)
       hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
   }
 
@@ -333,13 +326,13 @@ mp_flush(media_pipe_t *mp)
 
   if(v->mq_stream >= 0) {
     mb = media_buf_alloc();
-    mb->mb_data_type = MB_RESET;
+    mb->mb_data_type = MB_FLUSH;
     mb_enq_tail(v, mb);
   }
 
   if(a->mq_stream >= 0) {
     mb = media_buf_alloc();
-    mb->mb_data_type = MB_RESET;
+    mb->mb_data_type = MB_FLUSH;
     mb_enq_tail(a, mb);
   }
 
@@ -381,6 +374,24 @@ mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd)
   mb->mb_data = NULL;
   mb->mb_data_type = cmd;
   mb_enq_tail(mq, mb);
+  hts_mutex_unlock(&mp->mp_mutex);
+}
+
+/*
+ *
+ */
+void
+mp_send_cmd_head(media_pipe_t *mp, media_queue_t *mq, int cmd)
+{
+  media_buf_t *mb;
+
+  hts_mutex_lock(&mp->mp_mutex);
+
+  mb = media_buf_alloc();
+  mb->mb_cw = NULL;
+  mb->mb_data = NULL;
+  mb->mb_data_type = cmd;
+  mb_enq_head(mq, mb);
   hts_mutex_unlock(&mp->mp_mutex);
 }
 
@@ -574,7 +585,7 @@ wrap_format_destroy(formatwrap_t *fw)
   free(fw);
 }
 
-
+#if 0
 /**
  * mp_set_playstatus() is responsible for starting and stopping
  * decoder threads
@@ -648,35 +659,56 @@ mp_set_playstatus(media_pipe_t *mp, int status, int flags)
   }
   media_update_playstatus_prop(mp->mp_prop_playstatus, status);
 }
+#endif
 
 
 
-
-
-/*
+/**
  *
  */
-
-void
-mp_playpause(struct media_pipe *mp, int key)
+int
+mp_update_hold_by_event(int hold, event_type_t et)
 {
-  int t;
-
-  switch(key) {
+  switch(et) {
   case EVENT_PLAYPAUSE:
-    t = mp->mp_playstatus == MP_PLAY ? MP_PAUSE : MP_PLAY;
-    break;
-  case EVENT_PLAY:
-    t = MP_PLAY;
-    break;
+    return !hold;
   case EVENT_PAUSE:
-    t = MP_PAUSE;
-    break;
+    return 1;
+  case EVENT_PLAY:
+    return 0;
   default:
-    return;
+    abort();
   }
-  mp_set_playstatus(mp, t, 0);
 }
+
+
+
+/**
+ *
+ */
+void
+mp_prepare(struct media_pipe *mp, int flags)
+{
+  if(mp->mp_audio_decoder == NULL)
+    mp->mp_audio_decoder = audio_decoder_create(mp);
+
+  if(flags & MP_GRAB_AUDIO)
+    audio_decoder_acquire_output(mp->mp_audio_decoder);
+}
+
+/**
+ *
+ */
+void
+mp_hibernate(struct media_pipe *mp)
+{
+  if(mp->mp_audio_decoder != NULL) {
+    audio_decoder_destroy(mp->mp_audio_decoder);
+    mp->mp_audio_decoder = NULL;
+  }
+}
+
+
 
 
 
@@ -783,7 +815,7 @@ media_update_codec_info_prop(prop_t *p, AVCodecContext *ctx)
 }
 
 
-
+#if 0
 /**
  *
  */
@@ -812,7 +844,7 @@ media_update_playstatus_prop(prop_t *p, mp_playstatus_t mps)
   }
   prop_set_string(p, s);
 }
-
+#endif
 
 
 /**
@@ -845,3 +877,57 @@ media_set_currentmedia(media_pipe_t *mp)
   p = prop_create(prop_get_global(), "currentmediasource");
   prop_set_string(p, mp->mp_name);
 }
+
+
+/**
+ *
+ */
+static void
+seek_by_propchange(struct prop_sub *sub, prop_event_t event, ...)
+{
+  event_seek_t *es;
+  event_t *e;
+  media_pipe_t *mp = sub->hps_opaque;
+  int64_t t;
+
+  va_list ap;
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_SET_INT:
+    t = va_arg(ap, int);
+    break;
+  case PROP_SET_FLOAT:
+    t = va_arg(ap, double);
+    break;
+  default:
+    return;
+  }
+
+  t *= 1000LL;
+
+  /* If there already is a seek event enqueued, update it */
+  TAILQ_FOREACH(e, &mp->mp_eq, e_link) {
+    if(e->e_type != EVENT_SEEK)
+      continue;
+
+    es = (event_seek_t *)e;
+    es->ts = t;
+    return;
+  }
+
+  es = event_create(EVENT_SEEK, sizeof(event_seek_t));
+  es->ts = t;
+  mp_enqueue_event_locked(mp, &es->h);
+  event_unref(&es->h);
+}
+
+/**
+ *
+ */
+void
+mp_set_current_time(media_pipe_t *mp, int mts)
+{
+  prop_set_int_ex(mp->mp_prop_currenttime_x, mp->mp_sub_currenttime, mts);
+}
+

@@ -675,6 +675,7 @@ video_player_loop(play_video_ctrl_t *pvc)
   event_t *e;
   event_seek_t *es;
   int64_t ts;
+  int hold = 0;
 
   while(run) {
     /**
@@ -683,8 +684,11 @@ video_player_loop(play_video_ctrl_t *pvc)
     if(mb == NULL) {
 
       if((r = av_read_frame(pvc->pvc_fctx, &pkt)) < 0) {
+
+	printf("READ error %d\n", r);
 	mp_wait(mp, mp->mp_audio.mq_stream != -1, 
 		mp->mp_video.mq_stream != -1);
+	printf("All fifos empty\n");
 	break;
       }
 
@@ -705,6 +709,7 @@ video_player_loop(play_video_ctrl_t *pvc)
 	mq = &mp->mp_audio;
 
       } else {
+	/* Check event queue ? */
 	av_free_packet(&pkt);
 	continue;
       }
@@ -745,6 +750,15 @@ video_player_loop(play_video_ctrl_t *pvc)
     }
 
     switch(e->e_type) {
+
+    case EVENT_PLAYPAUSE:
+    case EVENT_PLAY:
+    case EVENT_PAUSE:
+      hold = mp_update_hold_by_event(hold, e->e_type);
+      mp_send_cmd_head(mp, &mp->mp_video, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
+      mp_send_cmd_head(mp, &mp->mp_audio, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
+      break;
+
     case EVENT_SEEK:
       es = (event_seek_t *)e;
       
@@ -764,7 +778,7 @@ video_player_loop(play_video_ctrl_t *pvc)
 	media_buf_free(mb);
 	mb = NULL;
       }
-      
+#if 0      
       switch(mp->mp_playstatus) {
       case MP_VIDEOSEEK_PAUSE:
       case MP_PAUSE:
@@ -777,7 +791,9 @@ video_player_loop(play_video_ctrl_t *pvc)
       default:
 	abort();
       }
+#endif
       break;
+
     default:
       break;
     }
@@ -853,11 +869,9 @@ video_play_thread(void *aux)
    * Restart playback at last position
    */
 
-  mp->mp_videoseekdts = 0;
+  mp_prepare(mp, MP_GRAB_AUDIO);
 
-  mp_set_playstatus(mp, MP_PLAY, 0); 
   video_player_loop(pvc);
-  mp_set_playstatus(mp, MP_STOP, 0);
 
   for(i = 0; i < pvc->pvc_fctx->nb_streams; i++)
     if(pvc->pvc_cwvec[i] != NULL)
@@ -882,6 +896,10 @@ play_video(const char *url, media_pipe_t *mp)
 
   pvc->pvc_url = strdup(url);
   pvc->pvc_mp = mp;
+
+
+  
+
 
   hts_thread_create(&pvc->pvc_thread, video_play_thread, pvc);
   return 0;

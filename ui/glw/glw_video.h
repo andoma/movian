@@ -86,7 +86,7 @@ typedef struct glw_video {
 
   glw_t w;
 
-  int gv_run_decoder;
+  int gv_hold;
 
   int gv_compensate_thres;
 
@@ -110,6 +110,8 @@ typedef struct glw_video {
   /* Mutex for protecting access to the frame queues */
 
   hts_mutex_t gv_queue_mutex;
+
+  int gv_display_running;
 
   /* Unused frames are in the 'inactive' queue
      gv_buffer_allocator() is responsible for moving frames to/from
@@ -230,9 +232,9 @@ void gv_init_timings(glw_video_t *gv);
 
 void gv_kalman_init(gv_kalman_t *gvk);
 
-void glw_video_decoder_start(void *opaque);
+void glw_video_decoder_start(glw_video_t *gv);
 
-void glw_video_decoder_stop(void *opaque);
+//void glw_video_decoder_stop(void *opaque);
 
 void glw_video_ctor(glw_t *w, int init, va_list ap);
 

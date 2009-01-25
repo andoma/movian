@@ -102,6 +102,8 @@ audio_decoder_create(media_pipe_t *mp)
 void
 audio_decoder_destroy(audio_decoder_t *ad)
 {
+  mp_send_cmd_head(ad->ad_mp, &ad->ad_mp->mp_audio, MB_CTRL_EXIT);
+
   hts_thread_join(ad->ad_tid);
   audio_fifo_clear_queue(&ad->ad_hold_queue);
   hts_mutex_lock(&audio_decoders_mutex);
@@ -223,45 +225,21 @@ ad_thread(void *aux)
   media_pipe_t *mp = ad->ad_mp;
   media_queue_t *mq = &mp->mp_audio;
   media_buf_t *mb;
+  int hold = 0;
+  int run = 1;
 
   hts_mutex_lock(&mp->mp_mutex);
 
-  while(mp->mp_playstatus != MP_STOP) {
+  while(run) {
 
-    mb = TAILQ_FIRST(&mq->mq_q);
-    switch(mp->mp_playstatus) {
-    case MP_PAUSE:
-      audio_fifo_purge(thefifo, ad, &ad->ad_hold_queue);
+    if((mb = TAILQ_FIRST(&mq->mq_q)) == NULL) {
       hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
       continue;
+    }
 
-    case MP_PLAY:
-      if(mb == NULL) {
-	hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
-	continue;
-      }
-      break;
-
-    case MP_VIDEOSEEK_PLAY:
-    case MP_VIDEOSEEK_PAUSE:
-      if(mb == NULL) {
-	hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
-	continue;
-      }
-      if(mb->mb_dts < mp->mp_videoseekdts || mq->mq_len == MQ_HIWATER) {
-	TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
-	mq->mq_len--;
-	hts_cond_signal(&mp->mp_backpressure);
-	media_buf_free(mb);
-	continue;
-      }
-
-      audio_fifo_purge(thefifo, ad, &ad->ad_hold_queue);
+    if(mb->mb_data_type == MB_AUDIO && hold) {
       hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
       continue;
-
-    default:
-      abort();
     }
 
     TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
@@ -270,10 +248,21 @@ ad_thread(void *aux)
     hts_mutex_unlock(&mp->mp_mutex);
 
     switch(mb->mb_data_type) {
-    default:
+    case MB_CTRL_EXIT:
+      run = 0;
       break;
-      
-    case MB_RESET:
+
+    case MB_CTRL_PAUSE:
+      /* Copy back any pending audio in the output fifo */
+      audio_fifo_purge(thefifo, ad, &ad->ad_hold_queue);
+      hold = 1;
+      break;
+
+    case MB_CTRL_PLAY:
+      hold = 0;
+      break;
+
+    case MB_FLUSH:
       ad->ad_do_flush = 1;
       /* Flush any pending audio in the output fifo */
       audio_fifo_purge(thefifo, ad, NULL);
@@ -282,14 +271,17 @@ ad_thread(void *aux)
     case MB_AUDIO:
       ad_decode_buf(ad, mp, mb);
       break;
+
+    default:
+      abort();
     }
     media_buf_free(mb);
     hts_mutex_lock(&mp->mp_mutex);
   }
-
   hts_mutex_unlock(&mp->mp_mutex);
   return NULL;
 }
+
 /**
  *
  */
@@ -394,7 +386,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
 #endif
 
     if(mb->mb_mts != -1)
-      prop_set_int(mp->mp_prop_currenttime, mb->mb_mts);
+      mp_set_current_time(mp, mb->mb_mts);
 
     frames = data_size / sizeof(int16_t) / channels;
 

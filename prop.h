@@ -203,7 +203,7 @@ prop_sub_t *prop_subscribe(struct prop *prop, const char **name,
 			   prop_courier_t *pc, int flags);
 
 #define PROP_SUB_DIRECT_UPDATE 0x1
-
+#define PROP_SUB_NO_INITIAL_UPDATE 0x2
 
 void prop_unsubscribe(prop_sub_t *s);
 

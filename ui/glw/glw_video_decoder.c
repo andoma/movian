@@ -61,11 +61,11 @@ gv_dequeue_for_decode(glw_video_t *gv, int w[3], int h[3])
   hts_mutex_lock(&gv->gv_queue_mutex);
   
   while((gvf = TAILQ_FIRST(&gv->gv_avail_queue)) == NULL &&
-	gv->gv_run_decoder) {
+	gv->gv_display_running) {
     hts_cond_wait(&gv->gv_avail_queue_cond, &gv->gv_queue_mutex);
   }
 
-  if(!gv->gv_run_decoder) {
+  if(!gv->gv_display_running) {
     hts_mutex_unlock(&gv->gv_queue_mutex);
     return NULL;
   }
@@ -93,10 +93,10 @@ gv_dequeue_for_decode(glw_video_t *gv, int w[3], int h[3])
   TAILQ_INSERT_TAIL(&gv->gv_bufalloc_queue, gvf, link);
 
   while((gvf = TAILQ_FIRST(&gv->gv_bufalloced_queue)) == NULL &&
-	gv->gv_run_decoder)
+	gv->gv_display_running)
     hts_cond_wait(&gv->gv_bufalloced_queue_cond, &gv->gv_queue_mutex);
 
-  if(!gv->gv_run_decoder) {
+  if(!gv->gv_display_running) {
     hts_mutex_unlock(&gv->gv_queue_mutex);
     return NULL;
   }
@@ -157,7 +157,7 @@ gv_release_buffer(struct AVCodecContext *c, AVFrame *pic)
 #define gv_valid_duration(t) ((t) > 1000ULL && (t) < 10000000ULL)
 
 static void 
-gv_decode_video(glw_video_t *gv, media_buf_t *mb)
+gv_decode_video(glw_video_t *gv, media_buf_t *mb, int justdecode)
 {
   gl_video_frame_t *gvf;
   int64_t pts, t;
@@ -198,12 +198,8 @@ gv_decode_video(glw_video_t *gv, media_buf_t *mb)
   /*
    * If we are seeking, drop any non-reference frames
    */
-  if((mp->mp_playstatus == MP_VIDEOSEEK_PLAY || 
-      mp->mp_playstatus == MP_VIDEOSEEK_PAUSE) &&
-     mb->mb_dts < mp->mp_videoseekdts)
-    ctx->skip_frame = AVDISCARD_NONREF;
-  else
-    ctx->skip_frame = AVDISCARD_NONE;
+  ctx->skip_frame = justdecode ? AVDISCARD_NONREF : AVDISCARD_NONE;
+
 
   avcodec_decode_video(ctx, frame, &got_pic, mb->mb_data, mb->mb_size);
 
@@ -248,21 +244,8 @@ gv_decode_video(glw_video_t *gv, media_buf_t *mb)
   fm = frame->opaque;
   assert(fm != NULL);
 
-  if(mp->mp_playstatus == MP_VIDEOSEEK_PLAY || 
-     mp->mp_playstatus == MP_VIDEOSEEK_PAUSE) {
-    if(fm->dts < mp->mp_videoseekdts)
-      return;
-
-    if(mp->mp_playstatus == MP_VIDEOSEEK_PAUSE) {
-      mp_set_playstatus(mp, MP_PAUSE, 0);
-    } else {
-      mp_set_playstatus(mp, MP_PLAY, 0);
-    }
-  }
-
-  if(fm->mts != -1) {
-    prop_set_int(mp->mp_prop_currenttime, fm->mts);
-  }
+  if(fm->mts != -1)
+    mp_set_current_time(mp, fm->mts);
 
   pts = fm->pts;
   duration = fm->duration;
@@ -323,9 +306,6 @@ gv_decode_video(glw_video_t *gv, media_buf_t *mb)
 
   if(gv->gv_deilace_type == GV_DEILACE_HALF_RES)
     duration /= 2;
-
-  if(mp_get_playstatus(mp) == MP_STOP)
-    return;
 
   avcodec_get_chroma_sub_sample(ctx->pix_fmt, &hshift, &vshift);
 
@@ -555,22 +535,21 @@ gv_thread(void *aux)
   media_queue_t *mq = &mp->mp_video;
   media_buf_t *mb;
   int i;
+  int run = 1;
 
   gv->gv_frame = avcodec_alloc_frame();
 
   hts_mutex_lock(&mp->mp_mutex);
 
-  while(gv->gv_run_decoder) {
+  while(run) {
 
-    mb = TAILQ_FIRST(&mq->mq_q);
+    if((mb = TAILQ_FIRST(&mq->mq_q)) == NULL) {
+      hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
+      continue;
+    }
 
-    if(mb != NULL && mb->mb_data_type == MB_EXIT)
-      break;
-
-    if(mp->mp_playstatus < MP_PLAY || mb == NULL) {
-      hts_mutex_unlock(&mp->mp_mutex);
-      usleep(200000);
-      hts_mutex_lock(&mp->mp_mutex);
+    if(mb->mb_data_type == MB_VIDEO && gv->gv_hold) {
+      hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
       continue;
     }
 
@@ -580,31 +559,25 @@ gv_thread(void *aux)
     hts_mutex_unlock(&mp->mp_mutex);
 
     switch(mb->mb_data_type) {
-
-    case MB_VIDEO:
-      gv_decode_video(gv, mb);
+    case MB_CTRL_EXIT:
+      run = 0;
       break;
 
-    case MB_RESET:
+    case MB_CTRL_PAUSE:
+      gv->gv_hold = 1;
+      break;
+
+    case MB_CTRL_PLAY:
+      gv->gv_hold = 0;
+      break;
+
+    case MB_FLUSH:
       gv_init_timings(gv);
       gv->gv_do_flush = 1;
-      /* FALLTHRU */
-
-    case MB_RESET_SPU:
-#if 0
-      if(gv->gv_dvdspu != NULL)
-	gl_dvdspu_flush(gv->gv_dvdspu);
-#endif
       break;
 
-    case MB_DVD_SPU:
-    case MB_CLUT:
-    case MB_DVD_PCI:
-    case MB_DVD_HILITE:
-#if 0
-      if(gv->gv_dvdspu != NULL)
-	gl_dvdspu_dispatch(gv->gv_dvd, gv->gv_dvdspu, mb);
-#endif
+    case MB_VIDEO:
+      gv_decode_video(gv, mb, 0);
       break;
 
     default:
@@ -614,12 +587,6 @@ gv_thread(void *aux)
     media_buf_free(mb);
     hts_mutex_lock(&mp->mp_mutex);
   }
-
-  /* Flush any remaining packets in video decoder queue */
-  mq_flush(mq);
-
-  /* Wakeup any stalled sender */
-  hts_cond_signal(&mp->mp_backpressure);
 
   hts_mutex_unlock(&mp->mp_mutex);
 
@@ -631,7 +598,6 @@ gv_thread(void *aux)
   /* Free ffmpeg frame */
   av_free(gv->gv_frame);
 
-  free(gv);
   return NULL;
 }
 
@@ -642,15 +608,13 @@ gv_thread(void *aux)
  *
  */
 void
-glw_video_decoder_start(void *opaque)
+glw_video_decoder_start(glw_video_t *gv)
 {
-  glw_video_t *gv = opaque;
-  gv->gv_run_decoder = 1;
   hts_thread_create(&gv->gv_ptid, gv_thread, gv);
 }
 
 
-
+#if 0
 /**
  *
  */
@@ -672,7 +636,7 @@ glw_video_decoder_stop(void *opaque)
   hts_thread_join(gv->gv_ptid);
   printf("Video decoder joined\n");
 }
-
+#endif
 
 
 

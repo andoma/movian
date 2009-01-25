@@ -703,6 +703,7 @@ prop_subscribe(struct prop *prop, const char **name,
   prop_t *p, *value, *canonical, *c;
   prop_sub_t *s;
   int direct = !!(flags & PROP_SUB_DIRECT_UPDATE);
+  int notify_now = !(flags & PROP_SUB_NO_INITIAL_UPDATE);
 
   if(name == NULL) {
     /* No name given, just subscribe to the supplied prop */
@@ -759,14 +760,17 @@ prop_subscribe(struct prop *prop, const char **name,
   s->hps_opaque = opaque;
   s->hps_refcount = 1;
 
-  prop_build_notify_value(s, direct);
+  if(notify_now) {
 
-  if(value->hp_type == PROP_DIR) {
-    TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
-      prop_build_notify_child(s, c, 
-			      value->hp_selected == c ? 
-			      PROP_ADD_SELECTED_CHILD : PROP_ADD_CHILD,
-			      direct);
+    prop_build_notify_value(s, direct);
+
+    if(value->hp_type == PROP_DIR) {
+      TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
+	prop_build_notify_child(s, c, 
+				value->hp_selected == c ? 
+				PROP_ADD_SELECTED_CHILD : PROP_ADD_CHILD,
+				direct);
+    }
   }
 
   hts_mutex_unlock(&prop_mutex);

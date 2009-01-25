@@ -330,12 +330,13 @@ static float cmatrix_color[9] = {
   1.1643, -0.39173, -0.81290,
   1.1643,  2.017,    0
 };
-
+#if 0
 static float cmatrix_bw[9] = {
   1.1643,  0,        0,
   1.1643,  0,        0,
   1.1643,  0,        0
 };
+#endif
 
 static void
 gv_color_matrix_update(glw_video_t *gv, media_pipe_t *mp)
@@ -343,7 +344,7 @@ gv_color_matrix_update(glw_video_t *gv, media_pipe_t *mp)
   float *f;
   int i;
 
-  f = mp_get_playstatus(mp) == MP_PAUSE ? cmatrix_bw : cmatrix_color;
+  //  f = mp_get_playstatus(mp) == MP_PAUSE ? cmatrix_bw : cmatrix_color;
   f = cmatrix_color;
 
   for(i = 0; i < 9; i++)
@@ -415,7 +416,7 @@ gv_compute_avdiff(glw_video_t *gv, media_pipe_t *mp, int64_t pts)
 
 static int64_t
 gv_compute_blend(glw_video_t *gv, gl_video_frame_t *fra,
-		  gl_video_frame_t *frb, int output_duration, int paused)
+		  gl_video_frame_t *frb, int output_duration)
 {
   int64_t pts;
   int x;
@@ -507,10 +508,9 @@ gv_new_frame(glw_video_t *gv)
       
     frb = TAILQ_NEXT(fra, link);
 
-    pts = gv_compute_blend(gv, fra, frb, output_duration,
-			   mp_get_playstatus(mp) == MP_PAUSE);
+    pts = gv_compute_blend(gv, fra, frb, output_duration);
 
-    if(mp_get_playstatus(mp) != MP_PAUSE || frb != NULL) {
+    if(!gv->gv_hold || frb != NULL) {
       if(fra != NULL && fra->gvf_duration == 0)
 	gv_enqueue_for_display(gv, fra, dq);
     }
@@ -802,7 +802,7 @@ gl_video_widget_event(glw_video_t *gv, event_t *e)
   case EVENT_PLAYPAUSE:
   case EVENT_PLAY:
   case EVENT_PAUSE:
-    mp_playpause(gv->gv_mp, e->e_type);
+    mp_enqueue_event(gv->gv_mp, e);
     return 1;
   default:
     return 0;
@@ -905,11 +905,9 @@ glw_video_ctor(glw_t *w, int init, va_list ap)
 
   if(init) {
 
-    mp = gv->gv_mp = mp_create("Video decoder");
+    gv->gv_display_running = 1;
 
-    mp->mp_video_decoder_start = glw_video_decoder_start;
-    mp->mp_video_decoder_stop  = glw_video_decoder_stop;
-    mp->mp_video_opaque        = gv;
+    mp = gv->gv_mp = mp_create("Video decoder");
 
     glw_signal_handler_int(w, gl_video_widget_callback);
     glw_video_init(gv, gr);
@@ -917,6 +915,8 @@ glw_video_ctor(glw_t *w, int init, va_list ap)
     glw_set_i(w, 
 	      GLW_ATTRIB_SET_FLAGS, GLW_EVERY_FRAME, 
 	      NULL);
+
+    glw_video_decoder_start(gv);
   }
 
   do {
