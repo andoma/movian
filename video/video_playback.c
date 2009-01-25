@@ -35,6 +35,7 @@
 #include "subtitles.h"
 #include "event.h"
 #include "media.h"
+#include "fileaccess/fa_probe.h"
 
 
 #define INPUT_APP_SEEK_DIRECT               INPUT_APP + 0
@@ -747,8 +748,9 @@ video_player_loop(play_video_ctrl_t *pvc)
     media_buf_free(mb);
 }
 
-
-
+/**
+ *
+ */
 static void *
 video_play_thread(void *aux)
 {
@@ -775,6 +777,12 @@ video_play_thread(void *aux)
     fprintf(stderr, "Unable to find stream info\n");
     return NULL;
   }
+
+  /**
+   * Update property metadata
+   */
+
+  fa_lavf_load_meta(mp->mp_prop_meta, pvc->pvc_fctx, faurl);
 
   /**
    * Init codec contexts

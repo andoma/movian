@@ -20,6 +20,7 @@
 #define FA_PROBE_H
 
 #include "prop.h"
+#include <libavformat/avformat.h>
 
 unsigned int fa_probe(prop_t *proproot, const char *url,
 		      char *newurl, size_t newurlsize);
@@ -27,5 +28,8 @@ unsigned int fa_probe(prop_t *proproot, const char *url,
 unsigned int fa_probe_dir(prop_t *proproot, const char *url);
 
 void fa_set_type(prop_t *proproot, unsigned int type);
+
+unsigned int fa_lavf_load_meta(prop_t *proproot, AVFormatContext *fctx,
+			       const char *url);
 
 #endif /* FA_PROBE_H */

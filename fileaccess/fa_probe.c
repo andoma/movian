@@ -26,7 +26,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#include <libavformat/avformat.h>
 #include <libavutil/avstring.h>
 
 #ifdef CONFIG_LIBEXIF
@@ -265,13 +264,12 @@ fa_set_type(prop_t *proproot, unsigned int type)
 
 
 /**
- * Probe a file for its type
+ * 
  */
 unsigned int
-fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize)
+fa_lavf_load_meta(prop_t *proproot, AVFormatContext *fctx, const char *url)
 {
-  int i, r;
-  AVFormatContext *fctx;
+  int i;
   AVCodecContext *avctx;
   AVCodec *codec;
   const char *t;
@@ -279,43 +277,8 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize)
   char *p;
   int has_video = 0;
   int has_audio = 0;
-  const char *codectype, *url0 = url;
-  fa_handle_t *fh;
-  int type;
+  const char *codectype;
 
-  if((fh = fa_open(url)) == NULL)
-    return FA_UNKNOWN;
-
-  if((r = fa_probe_header(proproot, url0, fh, newurl, newurlsize)) != -1) {
-    fa_close(fh);
-    fa_set_type(proproot, r);
-    return r;
-  }
-
-  if(fa_probe_iso(proproot, fh) == 0) {
-    fa_close(fh);
-    fa_set_type(proproot, FA_DVD);
-    return FA_DVD;
-  }
-
-  fa_close(fh);
-
-  /* Okay, see if lavf can find out anything about the file */
-
-  snprintf(tmp1, sizeof(tmp1), "showtime:%s", url0);
-
-  fflock();
-  
-  if(av_open_input_file(&fctx, tmp1, NULL, 0, NULL) != 0) {
-    ffunlock();
-    return FA_UNKNOWN;
-  }
-
-  if(av_find_stream_info(fctx) < 0) {
-    av_close_input_file(fctx);
-    ffunlock();
-    return FA_UNKNOWN;
-  }
 
   if(proproot != NULL) {
 
@@ -343,6 +306,9 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize)
 
     prop_set_string(prop_create(proproot, "mediaformat"),
 		    fctx->iformat->long_name);
+
+    if(fctx->duration != AV_NOPTS_VALUE)
+      prop_set_int(prop_create(proproot, "duration"), fctx->duration / 1000);
   }
 
   /* Check each stream */
@@ -401,16 +367,62 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize)
     }
   }
 
-  type = FA_FILE;
-
   if(has_video)
-    type = FA_VIDEO;
+    return FA_VIDEO;
   else if(has_audio)
-    type = FA_AUDIO;
+    return FA_AUDIO;
 
-  if(proproot != NULL && fctx->duration != AV_NOPTS_VALUE)
-    prop_set_int(prop_create(proproot, "duration"),
-		 fctx->duration / AV_TIME_BASE);
+  return FA_FILE;
+}
+
+/**
+ * Probe a file for its type
+ */
+unsigned int
+fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize)
+{
+  int r;
+  AVFormatContext *fctx;
+  char tmp1[1024];
+  const char *url0 = url;
+  fa_handle_t *fh;
+  int type;
+
+  if((fh = fa_open(url)) == NULL)
+    return FA_UNKNOWN;
+
+  if((r = fa_probe_header(proproot, url0, fh, newurl, newurlsize)) != -1) {
+    fa_close(fh);
+    fa_set_type(proproot, r);
+    return r;
+  }
+
+  if(fa_probe_iso(proproot, fh) == 0) {
+    fa_close(fh);
+    fa_set_type(proproot, FA_DVD);
+    return FA_DVD;
+  }
+
+  fa_close(fh);
+
+  /* Okay, see if lavf can find out anything about the file */
+
+  snprintf(tmp1, sizeof(tmp1), "showtime:%s", url0);
+
+  fflock();
+  
+  if(av_open_input_file(&fctx, tmp1, NULL, 0, NULL) != 0) {
+    ffunlock();
+    return FA_UNKNOWN;
+  }
+
+  if(av_find_stream_info(fctx) < 0) {
+    av_close_input_file(fctx);
+    ffunlock();
+    return FA_UNKNOWN;
+  }
+
+  type = fa_lavf_load_meta(proproot, fctx, url);
 
   av_close_input_file(fctx);  
   ffunlock();
