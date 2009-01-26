@@ -25,8 +25,8 @@
 
 #include "showtime.h"
 #include "navigator.h"
-#include "fileaccess/fileaccess.h"
-#include "fileaccess/fa_probe.h"
+#include "fileaccess.h"
+#include "fa_probe.h"
 #include "playqueue.h"
 
 typedef struct be_file_page {

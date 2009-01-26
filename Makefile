@@ -12,7 +12,7 @@ SRCS  += arch_${ARCHITECTURE}.c
 # File access subsys
 #
 VPATH += fileaccess
-SRCS  += fileaccess.c fa_probe.c  fa_imageloader.c fa_rawloader.c
+SRCS  += fileaccess.c fa_probe.c  fa_imageloader.c fa_rawloader.c fa_backend.c
 SRCS  += fa_fs.c fa_rar.c fa_smb.c fa_http.c fa_zip.c fa_zlib.c fa_embedded.c
 
 SRCS-$(CONFIG_EMBEDDED_THEME)  += embedded_theme.c
@@ -49,7 +49,7 @@ SRCS  += dummy_audio.c
 # Various backends
 #
 VPATH += backends
-SRCS  += be_file.c be_page.c
+SRCS  += be_page.c
 
 #
 # Playqueue
