@@ -289,3 +289,22 @@ navigator_thread(void *aux)
 }
 
 
+/**
+ *
+ */
+event_t *
+nav_play_video( const char *url, struct media_pipe *mp,
+	       char *errbuf, size_t errlen)
+{
+  nav_backend_t *nb;
+
+  LIST_FOREACH(nb, &nav_backends, nb_global_link)
+    if(nb->nb_canhandle(url))
+      break;
+  
+  if(nb == NULL || nb->nb_play_video == NULL) {
+    snprintf(errbuf, errlen, "No backend for URL");
+    return NULL;
+  }
+  return nb->nb_play_video(url, mp, errbuf, errlen);
+}

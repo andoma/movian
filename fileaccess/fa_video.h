@@ -1,5 +1,5 @@
 /*
- *  Video playback
+ *  Video playback from file access
  *  Copyright (C) 2009 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,19 +16,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef VIDEO_PLAYBACK_H
-#define VIDEO_PLAYBACK_H
+#ifndef FA_VIDEO_H
+#define FA_VIDEO_H
 
 #include "media.h"
 
-typedef struct video_playback {
-  hts_thread_t vp_thread;
-  media_pipe_t *vp_mp;
-} video_playback_t;
+event_t *be_file_playvideo(const char *url, media_pipe_t *mp,
+			   char *errbuf, size_t errlen);
 
-
-video_playback_t *video_playback_create(media_pipe_t *mp);
-
-void video_playback_destroy(video_playback_t *vp);
-
-#endif /* PLAY_VIDEO_H */
+#endif /* FA_VIDEO_H */

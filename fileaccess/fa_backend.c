@@ -27,6 +27,7 @@
 #include "navigator.h"
 #include "fileaccess.h"
 #include "fa_probe.h"
+#include "fa_video.h"
 #include "playqueue.h"
 
 typedef struct be_file_page {
@@ -249,6 +250,7 @@ be_file_open(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
 nav_backend_t be_file = {
   .nb_canhandle = be_file_canhandle,
   .nb_open = be_file_open,
+  .nb_play_video = be_file_playvideo,
 };
 
 

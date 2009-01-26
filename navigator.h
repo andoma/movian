@@ -46,6 +46,7 @@ typedef struct nav_page {
 } nav_page_t;
 
 
+struct media_pipe;
 /**
  *
  */
@@ -58,6 +59,8 @@ typedef struct nav_backend {
   int (*nb_open)(const char *uri, nav_page_t **npp,
 		 char *errbuf, size_t errlen);
 
+  event_t *(*nb_play_video)(const char *url, struct media_pipe *mp,
+			   char *errbuf, size_t errlen);
 } nav_backend_t;
 
 
@@ -73,5 +76,8 @@ void nav_open(const char *uri);
 void *nav_page_create(const char *uri, size_t allocsize,
 		      void (*closefunc)(struct nav_page *np),
 		      int flags);
+
+event_t *nav_play_video(const char *url, struct media_pipe *mp,
+			char *errbuf, size_t errlen);
 
 #endif /* NAVIGATOR_H__ */
