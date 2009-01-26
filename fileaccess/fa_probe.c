@@ -453,6 +453,7 @@ fa_probe_dir(prop_t *proproot, const char *url)
       type = FA_DVD;
   }
 
-  fa_set_type(proproot, type);
+  if(proproot != NULL)
+    fa_set_type(proproot, type);
   return type;
 }
