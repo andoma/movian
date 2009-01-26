@@ -19,7 +19,7 @@
 #include "glw.h"
 #include "glw_container.h"
 
-void 
+static void 
 glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c;
@@ -43,7 +43,6 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
     xy = 1;
     break;
   case GLW_CONTAINER_Y:
-  case GLW_LABEL:
     xy = 0;
     break;
   default:
@@ -128,7 +127,7 @@ glw_container_z_layout(glw_t *w, glw_rctx_t *rc)
 
 
 
-void
+static void
 glw_container_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c;

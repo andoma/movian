@@ -190,7 +190,6 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
     return -1;
 
   siz_y = bbox.yMax - bbox.yMin;
-
   siz_y = (BITMAP_HEIGHT - 7) * 62;
 
   target_width  = 10 + (siz_x / 62);
@@ -671,63 +670,6 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
 /**
  *
  */
-static void
-glw_text_bitmap_multiline(glw_text_bitmap_t *gtb, int l)
-{
-  glw_t *w = &gtb->w;
-  char *buf = alloca(l + 1);
-  memcpy(buf, w->glw_caption, l);
-  buf[l] = 0;
-  char *s1, *s2;
-
-  s1 = buf;
-
-  while((s2 = strchr(s1, '\n')) != NULL) {
-    *s2 = 0;
-    glw_create_i(w->glw_root,
-		 GLW_LABEL,
-		 GLW_ATTRIB_PARENT, w,
-		 GLW_ATTRIB_CAPTION, s1,
-		 GLW_ATTRIB_ALIGNMENT, w->glw_alignment,
-		 NULL);
-    s1 = s2 + 1;
-  }
-
-  glw_create_i(w->glw_root,
-	       GLW_LABEL,
-	       GLW_ATTRIB_PARENT, w,
-	       GLW_ATTRIB_CAPTION, s1,
-	       GLW_ATTRIB_ALIGNMENT, w->glw_alignment,
-	       NULL);
-
-}
-
-
-/*
- *
- */
-static int
-glw_text_bitmap_multiline_callback(glw_t *w, void *opaque, glw_signal_t signal,
-				   void *extra)
-{
-  switch(signal) {
-  default:
-    break;
-  case GLW_SIGNAL_LAYOUT:
-    glw_container_xy_layout(w, extra);
-    return 1;
-  case GLW_SIGNAL_RENDER:
-    glw_container_render(w, extra);
-    return 1;
-  }
-  return 0;
-}
-
-
-
-/**
- *
- */
 void 
 glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
 {
@@ -810,6 +752,7 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
 
       l = w->glw_caption ? strlen(w->glw_caption) : 0;
 
+#if 0
       if(l && w->glw_class == GLW_LABEL && strchr(w->glw_caption, '\n')) {
 	/* Label is multiline */
 	glw_text_bitmap_multiline(gtb, l);
@@ -820,6 +763,7 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
 
       glw_signal_handler_unregister(w, glw_text_bitmap_multiline_callback,
 				    NULL);
+#endif
 
       l = w->glw_caption ? strlen(w->glw_caption) : 0;
       

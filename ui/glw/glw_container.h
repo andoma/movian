@@ -21,8 +21,4 @@
 
 void glw_container_ctor(glw_t *w, int init, va_list ap);
 
-void glw_container_render(glw_t *w, glw_rctx_t *rc);
-
-void glw_container_xy_layout(glw_t *w, glw_rctx_t *rc);
-
 #endif /* GLW_CONTAINER_H */
