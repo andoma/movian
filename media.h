@@ -70,11 +70,6 @@ typedef struct media_buf {
 
   enum {
     MB_VIDEO,
-    MB_CLUT,
-    MB_RESET_SPU,
-    MB_DVD_SPU,
-    MB_DVD_PCI,
-    MB_DVD_HILITE,
     MB_AUDIO,
 
     MB_FLUSH,
@@ -82,6 +77,12 @@ typedef struct media_buf {
     MB_CTRL_PAUSE,
     MB_CTRL_PLAY,
     MB_CTRL_EXIT,
+
+    MB_DVD_CLUT,
+    MB_DVD_RESET_SPU,
+    MB_DVD_SPU,
+    MB_DVD_PCI,
+    MB_DVD_HILITE,
 
   } mb_data_type;
 
@@ -196,8 +197,13 @@ void mq_flush(media_queue_t *mq);
 int mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
 event_t *mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, 
 				media_buf_t *mb);
+void mb_enqueue_always(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
+
 void mp_enqueue_event(media_pipe_t *mp, event_t *e);
 event_t *mp_dequeue_event(media_pipe_t *mp);
+event_t *mp_dequeue_event_deadline(media_pipe_t *mp, time_t deadline);
+
+event_t *mp_wait_for_empty_queues(media_pipe_t *mp);
 
 
 void mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd);

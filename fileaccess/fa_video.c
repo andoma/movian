@@ -35,6 +35,7 @@
 #include "media.h"
 #include "fa_probe.h"
 #include "fileaccess.h"
+#include "dvd/dvd.h"
 
 #define INPUT_APP_SEEK_DIRECT               INPUT_APP + 0
 
@@ -833,9 +834,9 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     
     t = fa_probe_dir(NULL, url);
 
-    if(t == FA_DVD) {
-      /* play DVD */
-    }
+    if(t == FA_DVD)
+      return dvd_play(url, mp, errbuf, errlen);
+
     return NULL;
   }
 

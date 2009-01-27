@@ -107,7 +107,7 @@ fa_can_handle(const char *url)
 /**
  *
  */
-fa_handle_t *
+void *
 fa_open(const char *url)
 {
   fa_protocol_t *fap;
@@ -127,7 +127,7 @@ fa_open(const char *url)
 /**
  *
  */
-fa_handle_t *
+void *
 fa_open_theme(const char *url, const char *themepath)
 {
   fa_protocol_t *fap;
@@ -147,8 +147,9 @@ fa_open_theme(const char *url, const char *themepath)
  *
  */
 void
-fa_close(fa_handle_t *fh)
+fa_close(void *fh_)
 {
+  fa_handle_t *fh = fh_;
   fh->fh_proto->fap_close(fh);
 }
 
@@ -156,8 +157,9 @@ fa_close(fa_handle_t *fh)
  *
  */
 int
-fa_read(fa_handle_t *fh, void *buf, size_t size)
+fa_read(void *fh_, void *buf, size_t size)
 {
+  fa_handle_t *fh = fh_;
   return fh->fh_proto->fap_read(fh, buf, size);
 }
 
@@ -165,8 +167,9 @@ fa_read(fa_handle_t *fh, void *buf, size_t size)
  *
  */
 int64_t
-fa_seek(fa_handle_t *fh, int64_t pos, int whence)
+fa_seek(void *fh_, int64_t pos, int whence)
 {
+  fa_handle_t *fh = fh_;
   return fh->fh_proto->fap_seek(fh, pos, whence);
 }
 
@@ -174,8 +177,9 @@ fa_seek(fa_handle_t *fh, int64_t pos, int whence)
  *
  */
 int64_t
-fa_fsize(fa_handle_t *fh)
+fa_fsize(void *fh_)
 {
+  fa_handle_t *fh = fh_;
   return fh->fh_proto->fap_fsize(fh);
 }
 
@@ -314,6 +318,34 @@ fa_dir_sort(fa_dir_t *fd)
   
   free(v);
 }
+
+
+/**
+ *
+ */
+int
+fa_findfile(const char *path, const char *file, 
+	    char *fullpath, size_t fullpathlen)
+{
+  fa_dir_t *fd = fa_scandir(path);
+  fa_dir_entry_t *fde;
+
+  if(fd == NULL)
+    return -2;
+
+  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link)
+    if(!strcasecmp(fde->fde_filename, file)) {
+      snprintf(fullpath, fullpathlen, "%s%s%s", path, 
+	       path[strlen(path)-1] == '/' ? "" : "/",
+	       fde->fde_filename);
+      fa_dir_free(fd);
+      return 0;
+    }
+
+  fa_dir_free(fd);
+  return -1;
+}
+
 
 /**
  *

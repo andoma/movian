@@ -58,6 +58,12 @@ SRCS  += be_page.c
 SRCS  += playqueue.c
 
 #
+# DVD
+#
+VPATH += dvd
+SRCS  += dvd.c
+
+#
 # User interface common
 #
 VPATH += ui

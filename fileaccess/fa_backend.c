@@ -151,11 +151,36 @@ dir_close_page(nav_page_t *np)
 /**
  *
  */
+static void
+file_open_video(const char *uri0, nav_page_t **npp)
+{
+  nav_page_t *np;
+  prop_t *p;
+
+  np = nav_page_create(uri0, sizeof(nav_page_t), NULL, 0);
+
+  p = np->np_prop_root;
+  prop_set_string(prop_create(p, "type"), "video");
+  *npp = np;
+}
+
+
+/**
+ *
+ */
 static int
 file_open_dir(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
 {
   be_file_page_t *bfp;
   prop_t *p;
+  int type;
+
+  type = fa_probe_dir(NULL, uri0);
+
+  if(type == FA_DVD) {
+    file_open_video(uri0, npp);
+    return 0;
+  }
 
   /* TODO: Check if it is a DVD */
 
@@ -175,22 +200,6 @@ file_open_dir(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
   return 0;
 }
 
-
-/**
- *
- */
-static void
-file_open_video(const char *uri0, nav_page_t **npp)
-{
-  nav_page_t *np;
-  prop_t *p;
-
-  np = nav_page_create(uri0, sizeof(nav_page_t), NULL, 0);
-
-  p = np->np_prop_root;
-  prop_set_string(prop_create(p, "type"), "video");
-  *npp = np;
-}
 
 
 /**

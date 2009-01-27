@@ -578,6 +578,14 @@ vd_thread(void *aux)
       vd_decode_video(vd, mb, 0);
       break;
 
+    case MB_DVD_HILITE:
+    case MB_DVD_RESET_SPU:
+    case MB_DVD_CLUT:
+    case MB_DVD_PCI:
+    case MB_DVD_SPU:
+      printf("VIDEO DECODER SPU EVENT %d\n", mb->mb_data_type);
+      break;
+
     default:
       abort();
     }

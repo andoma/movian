@@ -199,6 +199,53 @@ mp_dequeue_event(media_pipe_t *mp)
 }
 
 
+/**
+ *
+ */
+event_t *
+mp_dequeue_event_deadline(media_pipe_t *mp, time_t deadline)
+{
+  event_t *e;
+  struct timespec ts;
+
+  ts.tv_sec = deadline;
+  ts.tv_nsec = 0;
+
+  hts_mutex_lock(&mp->mp_mutex);
+
+  while((e = TAILQ_FIRST(&mp->mp_eq)) == NULL) {
+    if(hts_cond_wait_timeout(&mp->mp_backpressure, 
+			     &mp->mp_mutex, &ts) == ETIMEDOUT)
+      break;
+  }
+  if(e != NULL)
+    TAILQ_REMOVE(&mp->mp_eq, e, e_link);
+
+  hts_mutex_unlock(&mp->mp_mutex);
+  return e;
+}
+
+
+/**
+ *
+ */
+event_t *
+mp_wait_for_empty_queues(media_pipe_t *mp)
+{
+  event_t *e;
+  hts_mutex_lock(&mp->mp_mutex);
+
+  while((e = TAILQ_FIRST(&mp->mp_eq)) == NULL &&
+	mp->mp_audio.mq_len > 0 && mp->mp_video.mq_len > 0)
+    hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
+
+  if(e != NULL)
+    TAILQ_REMOVE(&mp->mp_eq, e, e_link);
+  hts_mutex_unlock(&mp->mp_mutex);
+  return e;
+}
+
+
 
 /**
  *
@@ -290,6 +337,18 @@ mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
   mb_enq_tail(mq, mb);
   hts_mutex_unlock(&mp->mp_mutex);
   return 0;
+}
+
+
+/**
+ *
+ */
+void
+mb_enqueue_always(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
+{
+  hts_mutex_lock(&mp->mp_mutex);
+  mb_enq_tail(mq, mb);
+  hts_mutex_unlock(&mp->mp_mutex);
 }
 
 

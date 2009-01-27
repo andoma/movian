@@ -104,6 +104,7 @@ event_t *
 event_get(int timeout, event_queue_t *eq)
 {
   event_t *e;
+  struct timespec ts;
 
   hts_mutex_lock(&eq->eq_mutex);
 
@@ -113,8 +114,11 @@ event_get(int timeout, event_queue_t *eq)
     while((e = TAILQ_FIRST(&eq->eq_q)) == NULL)
       hts_cond_wait(&eq->eq_cond, &eq->eq_mutex);
   } else {
+    ts.tv_sec = time(NULL) + timeout;
+    ts.tv_nsec = 0;
+
     while((e = TAILQ_FIRST(&eq->eq_q)) == NULL) {
-      if(hts_cond_wait_timeout(&eq->eq_cond, &eq->eq_mutex, timeout))
+      if(hts_cond_wait_timeout(&eq->eq_cond, &eq->eq_mutex, &ts) == ETIMEDOUT)
 	break;
     }
   }
