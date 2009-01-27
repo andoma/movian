@@ -407,18 +407,33 @@ window_change_displaymode(glw_x11_t *gx11)
  *
  */
 static int
+check_ext_string(const char *extensionsString, const char *extension)
+{
+  const char *pos = strstr(extensionsString, extension);
+  return pos!=NULL && (pos==extensionsString || pos[-1]==' ') &&
+    (pos[strlen(extension)]==' ' || pos[strlen(extension)]=='\0');
+}
+
+
+
+
+/**
+ *
+ */
+static int
 GLXExtensionSupported(Display *dpy, const char *extension)
 {
-    const char *extensionsString, *pos;
+  const char *s;
 
-    extensionsString = glXQueryExtensionsString(dpy, DefaultScreen(dpy));
-    if(extensionsString == NULL)
-      return 0;
+  s = glXQueryExtensionsString(dpy, DefaultScreen(dpy));
+  if(s != NULL && check_ext_string(s, extension))
+    return 1;
 
-    pos = strstr(extensionsString, extension);
+  s = glXGetClientString(dpy, GLX_EXTENSIONS);
+  if(s != NULL && check_ext_string(s, extension))
+    return 1;
 
-    return pos!=NULL && (pos==extensionsString || pos[-1]==' ') &&
-        (pos[strlen(extension)]==' ' || pos[strlen(extension)]=='\0');
+  return 0;
 }
 
 
@@ -711,6 +726,7 @@ update_timings(glw_x11_t *gx11)
       r = 1;
       deltaptr = 0;
 
+      //      printf("framerate = %f\n", 1000000.0 / (float)gx11->frame_duration);
       //      glw_set_framerate(1000000.0 / (float)frame_duration);
     }
   }

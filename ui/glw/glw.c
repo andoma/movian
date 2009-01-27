@@ -212,7 +212,7 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       if(w->glw_caption != NULL) {
 	if(!strcmp(w->glw_caption, v ?: ""))
 	  break; /* no change */
-	free((void *)w->glw_caption);
+	free(w->glw_caption);
       }
       w->glw_caption = strdup(v ?: "");
       break;

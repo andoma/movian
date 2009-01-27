@@ -240,7 +240,7 @@ glw_tex_deref_locked(glw_root_t *gr, glw_loadable_texture_t *glt)
       LIST_REMOVE(glt, glt_flush_link);
 
     LIST_REMOVE(glt, glt_global_link);
-    free((void *)glt->glt_filename);
+    free(glt->glt_filename);
   }
   
   glw_tex_backend_free_loader_resources(glt);

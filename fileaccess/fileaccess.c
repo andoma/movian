@@ -282,8 +282,8 @@ fa_dir_add(fa_dir_t *fd, const char *url, const char *filename, int type)
 static int 
 fa_dir_sort_compar(const void *A, const void *B)
 {
-  fa_dir_entry_t *a = *(fa_dir_entry_t **)A;
-  fa_dir_entry_t *b = *(fa_dir_entry_t **)B;
+  const fa_dir_entry_t *a = *(fa_dir_entry_t * const *)A;
+  const fa_dir_entry_t *b = *(fa_dir_entry_t * const *)B;
 
   return strcasecmp(a->fde_filename, b->fde_filename);
 }

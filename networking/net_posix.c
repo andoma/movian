@@ -45,7 +45,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
   struct hostent hostbuf, *hp;
   char *tmphstbuf;
   size_t hstbuflen;
-  int herr, fd, r, res, err;
+  int herr, fd, r, res, err, val;
   struct sockaddr_in6 in6;
   struct sockaddr_in in;
   socklen_t errlen = sizeof(int);
@@ -168,6 +168,10 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
   }
   
   fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~O_NONBLOCK);
+
+  val = 1;
+  setsockopt(fd, SOL_TCP, TCP_NODELAY, &val, sizeof(val));
+
   return fd;
 }
 

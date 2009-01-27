@@ -19,8 +19,7 @@
 #ifndef FA_RAWLOADER_H
 #define FA_RAWLOADER_H
 
-const void *fa_rawloader(const char *filename, size_t *sizeptr, 
-			 const char *theme);
-void fa_rawunload(const void *data);
+void *fa_rawloader(const char *filename, size_t *sizeptr, const char *theme);
+void fa_rawunload(void *data);
 
 #endif /* FA_RAWLOADER_H */

@@ -41,7 +41,7 @@ typedef struct glw_loadable_texture {
 
   glw_backend_texture_t glt_texture;
 
-  const char *glt_filename;
+  char *glt_filename;
 
   void *glt_bitmap;
   size_t glt_bitmap_size;

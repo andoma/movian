@@ -30,7 +30,7 @@
 #include "fileaccess.h"
 #include "fa_rawloader.h"
 
-const void *
+void *
 fa_rawloader(const char *filename, size_t *sizeptr, const char *theme)
 {
   fa_handle_t *fh;
@@ -62,7 +62,7 @@ fa_rawloader(const char *filename, size_t *sizeptr, const char *theme)
 
 
 void 
-fa_rawunload(const void *data)
+fa_rawunload(void *data)
 {
-  free((void *)data);
+  free(data);
 }

@@ -358,7 +358,7 @@ typedef struct glw {
   float glw_conf_weight;             /* Relative weight (configured) */
   float glw_norm_weight;             /* Relative weight (normalized) */
   float glw_aspect;                  /* Aspect */
-  const char *glw_caption;           /* Widget caption */
+  char *glw_caption;                 /* Widget caption */
   float glw_alpha;                   /* Alpha set by user */
   float glw_extra;
 
@@ -366,7 +366,7 @@ typedef struct glw {
 
   glw_alignment_t glw_alignment;
 
-  const char *glw_id;
+  char *glw_id;
 
   struct glw_event_map_list glw_event_maps;		  
 

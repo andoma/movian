@@ -288,7 +288,7 @@ token_t *
 glw_model_load1(glw_root_t *gr, const char *filename, 
 		errorinfo_t *ei, token_t *prev)
 {
-  const char *src;
+  char *src;
   refstr_t *f;
   token_t *last;
 

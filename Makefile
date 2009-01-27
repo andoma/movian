@@ -111,7 +111,8 @@ SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += glw_fx_texrot.c
 
 PROG = showtime
 MAN  = showtime.1
-CFLAGS += -g -Wall -Werror -funsigned-char -O2
+CFLAGS += -g -Wall -Werror -funsigned-char -O2 
+CFLAGS += -Wwrite-strings -Wcast-qual
 CFLAGS += -Wno-deprecated-declarations -Wmissing-prototypes
 CFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 CFLAGS += -I$(CURDIR) -I$(INCLUDES_INSTALL_BASE)
