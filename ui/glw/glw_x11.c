@@ -262,6 +262,9 @@ window_open(glw_x11_t *gx11)
   gx11->coords[0][2] = gx11->screen_width  * 3 / 4;
   gx11->coords[0][3] = gx11->screen_height * 3 / 4;
 
+  gx11->coords[0][2] = 640;
+  gx11->coords[0][3] = 480;
+
   gx11->coords[1][0] = 0;
   gx11->coords[1][1] = 0;
   gx11->coords[1][2] = gx11->screen_width;
@@ -750,13 +753,8 @@ layout_draw(glw_x11_t *gx11, float aspect)
   //  prop_set_float(prop_fullscreen, fullscreen_fader);
   
   memset(&rc, 0, sizeof(rc));
-  if(aspect > 1) {
-    rc.rc_scale_x = aspect;
-    rc.rc_scale_y = 1;
-  } else {
-    rc.rc_scale_x = 1;
-    rc.rc_scale_y = 1 / aspect;
-  }
+  rc.rc_size_x = gx11->window_width;
+  rc.rc_size_y = gx11->window_height;
   rc.rc_fullscreen = 0;
   glw_layout0(gx11->universe, &rc);
 

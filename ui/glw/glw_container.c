@@ -66,7 +66,7 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
 	c->glw_parent_scale.y = 1.0f;
 	c->glw_parent_scale.z = e1;
       
-	rc0.rc_scale_x = rc->rc_scale_x * e1;
+	rc0.rc_size_x = rc->rc_size_x * e1;
 
       } else {
 
@@ -78,7 +78,7 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
 	c->glw_parent_scale.y = e1;
 	c->glw_parent_scale.z = e1;
 
-	rc0.rc_scale_y = rc->rc_scale_y * e1;
+	rc0.rc_size_y = rc->rc_size_y * e1;
       }
 
       glw_layout0(c, &rc0);

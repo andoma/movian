@@ -278,8 +278,8 @@ typedef struct glw_root {
 typedef struct glw_rctx {
   float rc_alpha;
 
-  float rc_scale_x;
-  float rc_scale_y;
+  float rc_size_x;
+  float rc_size_y;
 
   float rc_zoom;
   float rc_fullscreen;

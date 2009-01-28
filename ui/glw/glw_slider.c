@@ -43,9 +43,9 @@ glw_slider_layout(glw_t *w, glw_rctx_t *rc)
 
   if(!s->fixed_knob_size) {
     if(w->glw_class == GLW_SLIDER_X)
-      s->knob_size = rc->rc_scale_y / rc->rc_scale_x;
+      s->knob_size = rc->rc_size_y / rc->rc_size_x;
     else
-      s->knob_size = rc->rc_scale_x / rc->rc_scale_y;
+      s->knob_size = rc->rc_size_x / rc->rc_size_y;
   }
 
   s->knob_pos = GLW_LP(4, (-1.0 + s->value * 2) * (1 - s->knob_size),
@@ -53,9 +53,9 @@ glw_slider_layout(glw_t *w, glw_rctx_t *rc)
   rc0 = *rc;
 
   if(w->glw_class == GLW_SLIDER_X)
-    rc0.rc_scale_x *= s->knob_size;
+    rc0.rc_size_x *= s->knob_size;
   else
-    rc0.rc_scale_y *= s->knob_size;
+    rc0.rc_size_y *= s->knob_size;
 
   if((c = TAILQ_FIRST(&w->glw_childs)) != NULL)
     glw_layout0(c, &rc0);
@@ -81,11 +81,11 @@ glw_slider_render(glw_t *w, glw_rctx_t *rc)
 
   if(w->glw_class == GLW_SLIDER_X) {
     glw_Translatef(&rc0, s->knob_pos, 0, 0);
-    rc0.rc_scale_x *= s->knob_size;
+    rc0.rc_size_x *= s->knob_size;
     glw_Scalef(&rc0, s->knob_size, 1.0, 1.0);
   } else {
     glw_Translatef(&rc0, 0, -s->knob_pos, 0);
-    rc0.rc_scale_y *= s->knob_size;
+    rc0.rc_size_y *= s->knob_size;
     glw_Scalef(&rc0, 1.0, s->knob_size, 1.0);
   }
 

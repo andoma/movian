@@ -55,8 +55,7 @@ glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     a->glw_parent_scale.x = 1.0f;
     a->glw_parent_scale.y = 1.0 / (z + 1);
     a->glw_parent_pos.y   = 1.0f - a->glw_parent_scale.y;
-//    rc0.rc_scale_x = rc->rc_scale_x * a->glw_parent_scale.x;
-    rc0.rc_scale_y = rc->rc_scale_y * a->glw_parent_scale.y;
+    rc0.rc_size_y = rc->rc_size_y * a->glw_parent_scale.y;
 
     glw_layout0(a, &rc0);
     rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, rc0.rc_exp_req);
@@ -68,8 +67,7 @@ glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     b->glw_parent_scale.x = 1.0f;
     b->glw_parent_scale.y = 1 - a->glw_parent_scale.y;
 
-//    rc0.rc_scale_x = rc->rc_scale_x * b->glw_parent_scale.x;
-    rc0.rc_scale_y = rc->rc_scale_y * b->glw_parent_scale.y;
+    rc0.rc_size_y = rc->rc_size_y * b->glw_parent_scale.y;
     glw_layout0(b, &rc0);
     rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, rc0.rc_exp_req);
     break;

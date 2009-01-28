@@ -25,8 +25,8 @@ static void
 glw_stack_x_layout(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c;
-  float pa  = rc->rc_scale_x / rc->rc_scale_y;
-  float ipa = rc->rc_scale_y / rc->rc_scale_x;
+  float pa  = rc->rc_size_x / rc->rc_size_y;
+  float ipa = rc->rc_size_y / rc->rc_size_x;
   float ta = 0;
   float n;
   float a;
@@ -101,8 +101,8 @@ glw_stack_x_layout(glw_t *w, glw_rctx_t *rc)
     c->glw_parent_scale.y = ys;
     c->glw_parent_scale.z = a;
       
-    rc0.rc_scale_x = rc->rc_scale_x * a;
-    rc0.rc_scale_y = rc->rc_scale_y * ys;
+    rc0.rc_size_x = rc->rc_size_x * a;
+    rc0.rc_size_y = rc->rc_size_y * ys;
 
     glw_layout0(c, &rc0);
     rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, rc0.rc_exp_req);
@@ -119,8 +119,8 @@ static void
 glw_stack_y_layout(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c;
-  float pa  = rc->rc_scale_y / rc->rc_scale_x;
-  float ipa = rc->rc_scale_x / rc->rc_scale_y;
+  float pa  = rc->rc_size_y / rc->rc_size_x;
+  float ipa = rc->rc_size_x / rc->rc_size_y;
   float ta = 0;
   float n;
   float a;
@@ -196,8 +196,8 @@ glw_stack_y_layout(glw_t *w, glw_rctx_t *rc)
     c->glw_parent_scale.y = a;
     c->glw_parent_scale.z = a;
       
-    rc0.rc_scale_x = rc->rc_scale_x * xs;
-    rc0.rc_scale_y = rc->rc_scale_y * a;
+    rc0.rc_size_x = rc->rc_size_x * xs;
+    rc0.rc_size_y = rc->rc_size_y * a;
 
     glw_layout0(c, &rc0);
     rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, rc0.rc_exp_req);

@@ -101,8 +101,8 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 
       glw_Scalef(&rc0, xs, ys, 1.0f);
 
-      rc0.rc_scale_x = rc->rc_scale_x * xs;
-      rc0.rc_scale_y = rc->rc_scale_y * ys;
+      rc0.rc_size_x = rc->rc_size_x * xs;
+      rc0.rc_size_y = rc->rc_size_y * ys;
 
       rc0.rc_alpha = rc->rc_alpha * w->glw_alpha;
       glw_render0(c, &rc0);
@@ -126,10 +126,10 @@ glw_image_layout_tesselated(glw_rctx_t *rc, glw_image_t *gi,
   float a, b;
   float t_aspect = glt->glt_aspect;
 
-  gi->gi_saved_scale_x = rc->rc_scale_x;
-  gi->gi_saved_scale_y = rc->rc_scale_y;
+  gi->gi_saved_size_x = rc->rc_size_x;
+  gi->gi_saved_size_y = rc->rc_size_y;
  
-  a = rc->rc_scale_x / rc->rc_scale_y;
+  a = rc->rc_size_x / rc->rc_size_y;
 
   /* Texture X coordinates */
   tex[0][0] = 0.0;
@@ -254,8 +254,8 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	glw_image_layout_tesselated(rc, gi, glt);
       }
     } else if(gi->gi_border_scaling &&
-	      (gi->gi_saved_scale_x != rc->rc_scale_x ||
-	       gi->gi_saved_scale_y != rc->rc_scale_y)) {
+	      (gi->gi_saved_size_x != rc->rc_size_x ||
+	       gi->gi_saved_size_y != rc->rc_size_y)) {
       glw_image_layout_tesselated(rc, gi, glt);
     }
   }

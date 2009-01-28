@@ -45,8 +45,8 @@ typedef struct glw_image {
 
   glw_renderer_t gi_gr;
 
-  float gi_saved_scale_x;
-  float gi_saved_scale_y;
+  float gi_saved_size_x;
+  float gi_saved_size_y;
 
   float gi_child_xs;
   float gi_child_ys;

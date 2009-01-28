@@ -228,9 +228,8 @@ static void
 gcp_render(glw_root_t *gr, glw_cursor_painter_t *gcp, glw_rctx_t *rc)
 {
   int i;
-
-  float scale_x = rc->rc_scale_x;
-  float scale_y = rc->rc_scale_y;
+  float size_x = rc->rc_size_x;
+  float size_y = rc->rc_size_y;
 
   glw_rctx_t rc0 = *rc;
 
@@ -238,18 +237,16 @@ gcp_render(glw_root_t *gr, glw_cursor_painter_t *gcp, glw_rctx_t *rc)
     gcp->gcp_m_prim[i] = GLW_LP(5, gcp->gcp_m_prim[i], gcp->gcp_m[i]);
 
   gcp->gcp_alpha_prim  = GLW_LP(5, gcp->gcp_alpha_prim, gcp->gcp_alpha);
-  gcp->gcp_scale_x_prim = GLW_LP(5, gcp->gcp_scale_x_prim, gcp->gcp_scale_x);
-  gcp->gcp_scale_y_prim = GLW_LP(5, gcp->gcp_scale_y_prim, gcp->gcp_scale_y);
-
 
   glw_PushMatrix(&rc0, rc);
 
   glw_LoadMatrixf(&rc0, gcp->gcp_m_prim);
 
   glw_cursor_draw(gr, gcp, &rc0,
-		  scale_y / (100 * fabs(gcp->gcp_m_prim[0])),
-		  scale_x / (100 * fabs(gcp->gcp_m_prim[5]))
+		  (size_y / 1000) / (100 * fabs(gcp->gcp_m_prim[0])),
+		  (size_x / 1000) / (100 * fabs(gcp->gcp_m_prim[5]))
 		  );
+
   glw_PopMatrix();
 }
 

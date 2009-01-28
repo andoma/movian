@@ -99,8 +99,8 @@ glw_list_layout_child(glw_list_t *l, glw_t *c, glw_rctx_t *rc,
 
   c->glw_parent_pos.z   = GLW_LP(8, c->glw_parent_pos.z,    zdisplace);
 
-  rc0.rc_scale_x = rc->rc_scale_x * c->glw_parent_scale.x;
-  rc0.rc_scale_y = rc->rc_scale_y * c->glw_parent_scale.y;
+  rc0.rc_size_x = rc->rc_size_x * c->glw_parent_scale.x;
+  rc0.rc_size_y = rc->rc_size_y * c->glw_parent_scale.y;
 
   c->glw_parent_alpha = GLW_LP(16, c->glw_parent_alpha, alpha);
 

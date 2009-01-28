@@ -1170,8 +1170,8 @@ glw_pointer_scroll(glw_root_t *gr, float x, float y, int direction)
 void
 glw_render_TS(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc)
 {
-  rc->rc_scale_x = prevrc->rc_scale_x * c->glw_parent_scale.x;
-  rc->rc_scale_y = prevrc->rc_scale_y * c->glw_parent_scale.y;
+  rc->rc_size_x = prevrc->rc_size_x * c->glw_parent_scale.x;
+  rc->rc_size_y = prevrc->rc_size_y * c->glw_parent_scale.y;
 
   glw_PushMatrix(rc, prevrc);
 
@@ -1215,13 +1215,16 @@ glw_render_T(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc)
 void
 glw_rescale(glw_rctx_t *rc, float t_aspect)
 {
-  float s_aspect = rc->rc_scale_x / rc->rc_scale_y;
+  float s_aspect = rc->rc_size_x / rc->rc_size_y;
   float a = s_aspect / t_aspect;
 
   if(a > 1.0f) {
-    glw_Scalef(rc, 1.0f / a, 1.0f, 1.0f);
+    a = 1.0 / a;
+    glw_Scalef(rc, a, 1.0f, 1.0f);
+    rc->rc_size_x *= a;
   } else {
     glw_Scalef(rc, 1.0f, a, 1.0f);
+    rc->rc_size_y *= a;
   }
 }
 

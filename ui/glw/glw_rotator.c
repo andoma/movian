@@ -55,8 +55,6 @@ glw_rotator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
     glw_Rotatef(&rc0, w->glw_extra, 0.0, 0.0f, 1.0f);
 
-    rc0.rc_scale_x = 1.0f;
-    rc0.rc_scale_y = 1.0f;
     glw_render0(c, &rc0);
     glw_PopMatrix();
     break;
