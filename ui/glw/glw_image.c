@@ -39,13 +39,18 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_image_t *gi = (void *)w;
   glw_loadable_texture_t *glt = gi->gi_tex;
-  float alpha_self = rc->rc_alpha * w->glw_alpha * gi->gi_alpha_self;
+  float alpha_self;
   glw_rctx_t rc0;
   glw_t *c;
   float xs, ys;
 
   if(glt == NULL || glt->glt_state != GLT_STATE_VALID)
     return;
+
+  if(!glw_is_tex_inited(&glt->glt_texture))
+    alpha_self = 0;
+  else
+    alpha_self = rc->rc_alpha * w->glw_alpha * gi->gi_alpha_self;
 
   if(!gi->gi_border_scaling) {
 
