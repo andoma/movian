@@ -25,8 +25,6 @@
 #include "showtime.h"
 #include "navigator.h"
 
-nav_backend_t be_page;
-
 /**
  *
  */
