@@ -289,11 +289,8 @@ window_open(glw_x11_t *gx11)
 		  gx11->xvi->visual, mask, &winAttr
 		  );
 
-  gx11->window_width  = 
-    gx11->coords[fullscreen][2] - gx11->coords[fullscreen][0];
-  gx11->window_height =
-    gx11->coords[fullscreen][3] - gx11->coords[fullscreen][1];
-
+  gx11->window_width  = gx11->coords[fullscreen][2];
+  gx11->window_height = gx11->coords[fullscreen][3];
 
   gx11->glxctx = glXCreateContext(gx11->display, gx11->xvi, NULL, 1);
 
