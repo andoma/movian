@@ -62,8 +62,9 @@ typedef struct glw_renderer {
   int gr_stride;
 } glw_renderer_t;
 
-#define GLW_RENDER_MODE_QUADS     GL_QUADS
-#define GLW_RENDER_MODE_LINESTRIP GL_LINESTRIP
+#define GLW_RENDER_MODE_QUADS      GL_QUADS
+#define GLW_RENDER_MODE_LINE_STRIP GL_LINE_STRIP
+#define GLW_RENDER_MODE_LINE_LOOP  GL_LINE_LOOP
 
 #define glw_render_set_pre(gr)
 
