@@ -26,7 +26,7 @@ typedef struct glw_text_bitmap_data {
   uint8_t *gtbd_data;
   int gtbd_siz_x;
   int gtbd_siz_y;
-  int gtbd_stride;
+  int gtbd_linewidth;
   float gtbd_texsize;
 
   float gtbd_aspect;
@@ -75,11 +75,13 @@ typedef struct glw_text_bitmap {
   int gtb_int_max;
   int *gtb_int_ptr;
 
+  float gtb_size;
+
 } glw_text_bitmap_t;
 
 
 
-int glw_text_bitmap_init(glw_root_t *gr);
+int glw_text_bitmap_init(glw_root_t *gr, float fontsize);
 
 void glw_text_bitmap_ctor(glw_t *w, int init, va_list ap);
 

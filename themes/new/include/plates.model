@@ -73,6 +73,7 @@
 	});
 	
 	widget(label, {
+	  .size = 0.75;
 	  .align = center;
 	  .caption = TEXT;
 	});   

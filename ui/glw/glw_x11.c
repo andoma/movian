@@ -259,8 +259,8 @@ window_open(glw_x11_t *gx11)
 
   gx11->coords[0][0] = gx11->screen_width  / 4;
   gx11->coords[0][1] = gx11->screen_height / 4;
-  gx11->coords[0][2] = gx11->screen_width  * 3 / 4;
-  gx11->coords[0][3] = gx11->screen_height * 3 / 4;
+  gx11->coords[0][2] = 640; //gx11->screen_width  * 3 / 4;
+  gx11->coords[0][3] = 480; //gx11->screen_height * 3 / 4;
 
   gx11->coords[1][0] = 0;
   gx11->coords[1][1] = 0;
@@ -784,6 +784,19 @@ layout_event_handler(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
 }
 
 
+/**
+ *
+ */
+static void
+glw_x11_compute_font_size(glw_x11_t *gx11)
+{
+  float s = (gx11->window_height - 480.0) / 22.0 + 14.0;
+  if(s < 14)
+    s = 14;
+  glw_font_change_size(&gx11->gr, s);
+}
+
+
 
 
 /**
@@ -796,6 +809,7 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
   int w, h;
   unsigned int retraceCount = 0;
   glw_pointer_event_t gpe;
+  int update_font_size_thres = 1;
 
   gx11->glXGetVideoSyncSGI(&retraceCount);
 
@@ -834,6 +848,7 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 	  gx11->aspect_ratio = (float)w / (float)h;
 	  gx11->window_width  = w;
 	  gx11->window_height = h;
+	  update_font_size_thres = 10;
 	  break;
 
 
@@ -904,6 +919,14 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
       }
     }
     glw_lock(&gx11->gr);
+
+    if(update_font_size_thres > 0) {
+      update_font_size_thres--;
+
+      if(update_font_size_thres == 0)
+	glw_x11_compute_font_size(gx11);
+    }
+
     glw_reaper0(&gx11->gr);
     layout_draw(gx11, gx11->aspect_ratio);
     glw_unlock(&gx11->gr);
@@ -933,7 +956,7 @@ glw_x11_thread(void *aux)
 
   glw_x11_init(gx11);
 
-  if(glw_init(&gx11->gr))
+  if(glw_init(&gx11->gr, 40))
     return NULL;
 
   gx11->running = 1;

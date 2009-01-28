@@ -355,6 +355,7 @@ static const token_attrib_t attribtab[] = {
   {"max",             set_float,  GLW_ATTRIB_INT_MAX},
   {"step",            set_float,  GLW_ATTRIB_INT_STEP},
   {"value",           set_float,  GLW_ATTRIB_VALUE},
+  {"size",            set_float,  GLW_ATTRIB_SIZE},
 
   {"displacement",    set_float3, GLW_ATTRIB_DISPLACEMENT},
   {"color",           set_float3, GLW_ATTRIB_RGB},

@@ -105,12 +105,12 @@ glw_cond_wait(glw_root_t *gr, hts_cond_t *c)
  *
  */
 int
-glw_init(glw_root_t *gr)
+glw_init(glw_root_t *gr, float fontsize)
 {
   hts_mutex_init(&gr->gr_mutex);
   gr->gr_courier = prop_courier_create(&gr->gr_mutex);
 
-  if(glw_text_bitmap_init(gr)) {
+  if(glw_text_bitmap_init(gr, fontsize)) {
     free(gr);
     return -1;
   }

@@ -126,6 +126,7 @@ typedef enum {
   GLW_ATTRIB_FOCUSABLE,
   GLW_ATTRIB_EXPAND,
   GLW_ATTRIB_BIND_TO_PROPERTY,
+  GLW_ATTRIB_SIZE,
 } glw_attribute_t;
 
 #define GLW_MIRROR_X   0x1
@@ -237,6 +238,7 @@ typedef struct glw_root {
   TAILQ_HEAD(, glw_text_bitmap) gr_gtb_render_queue;
   hts_cond_t gr_gtb_render_cond;
   FT_Face gr_gtb_face;
+  float gr_fontsize;
   
   /**
    * Image/Texture loader
@@ -389,7 +391,7 @@ typedef struct glw {
 
 } glw_t;
 
-int glw_init(glw_root_t *gr);
+int glw_init(glw_root_t *gr, float fontsize);
 
 void glw_flush0(glw_root_t *gr);
 
@@ -522,6 +524,7 @@ do {						\
   case GLW_ATTRIB_INT_STEP:                     \
   case GLW_ATTRIB_INT_MIN:                      \
   case GLW_ATTRIB_INT_MAX:                      \
+  case GLW_ATTRIB_SIZE:                         \
     (void)va_arg(ap, double);			\
     break;					\
   }						\
@@ -688,5 +691,7 @@ void glw_gf_register(glw_gf_ctrl_t *ggc);
 void glw_gf_unregister(glw_gf_ctrl_t *ggc);
 
 void glw_gf_do(void);
+
+void glw_font_change_size(glw_root_t *gr, float fontsize);
 
 #endif /* GLW_H */
