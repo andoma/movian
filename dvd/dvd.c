@@ -501,10 +501,6 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
     case DVDNAV_NAV_PACKET:
       pci = malloc(sizeof(pci_t));
       memcpy(pci, dvdnav_get_current_nav_pci(dp->dp_dvdnav), sizeof(pci_t));
-      
-      //      dp->dp_inmenu = pci->hli.hl_gi.hli_ss ? 1 : 0;
-      //      abort(); //      dvd_update_info(dp);
-      
       mp_send_cmd_data(mp, &mp->mp_video, MB_DVD_PCI, pci);
       break;
 
