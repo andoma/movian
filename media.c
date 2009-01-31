@@ -385,8 +385,6 @@ mp_flush(media_pipe_t *mp)
   mq_flush(a);
   mq_flush(v);
 
-  hts_cond_signal(&mp->mp_backpressure);
-
   if(v->mq_stream >= 0) {
     mb = media_buf_alloc();
     mb->mb_data_type = MB_FLUSH;
@@ -398,7 +396,6 @@ mp_flush(media_pipe_t *mp)
     mb->mb_data_type = MB_FLUSH;
     mb_enq_tail(a, mb);
   }
-
   hts_mutex_unlock(&mp->mp_mutex);
 
 }

@@ -194,8 +194,7 @@ typedef struct video_decoder {
 
   /* DVD / SPU related members */
 
-  //  gl_dvdspu_t *vd_dvdspu;
-  //  struct dvd_player *vd_dvd;
+  struct dvdspu_decoder *vd_dvdspu;
   
   /* Kalman filter for AVdiff compensation */
 

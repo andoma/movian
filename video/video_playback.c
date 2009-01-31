@@ -34,8 +34,7 @@ video_player_idle(void *aux)
 {
   video_playback_t *vp = aux;
   int run = 1;
-  event_t *e = NULL;
-  event_url_t *eu;
+  event_t *e = NULL, *next;
   media_pipe_t *mp = vp->vp_mp;
   char errbuf[100];
 
@@ -49,9 +48,9 @@ video_player_idle(void *aux)
       break;
 
     case EVENT_PLAY_URL:
-      eu = (event_url_t *)e;
-      e = nav_play_video(eu->url, mp, errbuf, sizeof(errbuf));
-      event_unref(&eu->h);
+      next = nav_play_video(e->e_payload, mp, errbuf, sizeof(errbuf));
+      event_unref(e);
+      e = next;
       continue;
 
     case EVENT_EXIT:

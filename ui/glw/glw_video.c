@@ -33,6 +33,7 @@
 //#include "subtitles.h"
 #include "video/yadif.h"
 #include "video/video_playback.h"
+#include "video/video_dvdspu.h"
 
 static const char *yuv2rbg_code =
 #include "cg/yuv2rgb.h"
@@ -435,12 +436,160 @@ gv_compute_blend(glw_video_t *gv, video_decoder_frame_t *fra,
   } else {
     gv->gv_fra = fra;
     gv->gv_frb = NULL;
-    pts = AV_NOPTS_VALUE;
+    fra->vdf_pts      += output_duration;
+
+    pts = fra->vdf_pts;
   }
 
   return pts;
 }
 
+
+
+/**
+ *
+ */
+static void
+spu_repaint(glw_video_t *gv, dvdspu_decoder_t *dd, dvdspu_t *d)
+{
+  int width  = d->d_x2 - d->d_x1;
+  int height = d->d_y2 - d->d_y1;
+  int outsize = width * height * 4;
+  uint32_t *tmp, *t0; 
+  int x, y, i;
+  uint8_t *buf = d->d_bitmap;
+  pci_t *pci = &dd->dd_pci;
+  dvdnav_highlight_area_t ha;
+  int hi_palette[4];
+  int hi_alpha[4];
+
+  if(dd->dd_clut == NULL)
+    return;
+  
+  gv->gv_in_menu = pci->hli.hl_gi.hli_ss;
+
+  if(pci->hli.hl_gi.hli_ss &&
+     dvdnav_get_highlight_area(pci, dd->dd_curbut, 0, &ha) 
+     == DVDNAV_STATUS_OK) {
+
+    hi_alpha[0] = (ha.palette >>  0) & 0xf;
+    hi_alpha[1] = (ha.palette >>  4) & 0xf;
+    hi_alpha[2] = (ha.palette >>  8) & 0xf;
+    hi_alpha[3] = (ha.palette >> 12) & 0xf;
+     
+    hi_palette[0] = (ha.palette >> 16) & 0xf;
+    hi_palette[1] = (ha.palette >> 20) & 0xf;
+    hi_palette[2] = (ha.palette >> 24) & 0xf;
+    hi_palette[3] = (ha.palette >> 28) & 0xf;
+  }
+
+  t0 = tmp = malloc(outsize);
+
+
+  ha.sx -= d->d_x1;
+  ha.ex -= d->d_x1;
+
+  ha.sy -= d->d_y1;
+  ha.ey -= d->d_y1;
+
+  /* XXX: this can be optimized in many ways */
+
+  for(y = 0; y < height; y++) {
+    for(x = 0; x < width; x++) {
+      i = buf[0];
+
+      if(pci->hli.hl_gi.hli_ss &&
+	 x >= ha.sx && y >= ha.sy && x <= ha.ex && y <= ha.ey) {
+
+	if(hi_alpha[i] == 0) {
+	  *tmp = 0;
+	} else {
+	  *tmp = dd->dd_clut[hi_palette[i] & 0xf] | 
+	    ((hi_alpha[i] * 0x11) << 24);
+	}
+
+      } else {
+
+	if(d->d_alpha[i] == 0) {
+	  
+	  /* If it's 100% transparent, write RGB as zero too, or weird
+	     aliasing effect will occure when GL scales texture */
+	  
+	  *tmp = 0;
+	} else {
+	  *tmp = dd->dd_clut[d->d_palette[i] & 0xf] | 
+	    ((d->d_alpha[i] * 0x11) << 24);
+	}
+      }
+
+      buf++;
+      tmp++;
+    }
+  }
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
+	       width, height, 0,
+	       GL_RGBA, GL_UNSIGNED_BYTE, t0);
+
+  free(t0);
+}
+
+
+
+
+static void
+spu_layout(glw_video_t *gv, dvdspu_decoder_t *dd, int64_t pts)
+{
+  dvdspu_t *d;
+  int x;
+
+  hts_mutex_lock(&dd->dd_mutex);
+
+ again:
+  d = TAILQ_FIRST(&dd->dd_queue);
+
+  if(d == NULL) {
+    hts_mutex_unlock(&dd->dd_mutex);
+    return;
+  }
+
+  if(d->d_destroyme == 1)
+    goto destroy;
+
+  x = dvdspu_decode(d, pts);
+
+  switch(x) {
+  case -1:
+  destroy:
+    dvdspu_destroy(dd, d);
+    gv->gv_in_menu = 0;
+
+    glDeleteTextures(1, &gv->gv_sputex);
+    gv->gv_sputex = 0;
+    goto again;
+
+  case 0:
+    if(dd->dd_repaint == 0)
+      break;
+
+    dd->dd_repaint = 0;
+    /* FALLTHRU */
+
+  case 1:
+    if(gv->gv_sputex == 0) {
+      glGenTextures(1, &gv->gv_sputex);
+
+      glBindTexture(GL_TEXTURE_2D, gv->gv_sputex);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    } else {
+      glBindTexture(GL_TEXTURE_2D, gv->gv_sputex);
+    }
+    spu_repaint(gv, dd, d);
+    break;
+  }
+  hts_mutex_unlock(&dd->dd_mutex);
+}
 
 
 
@@ -501,8 +650,10 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv)
   if(pts != AV_NOPTS_VALUE) {
     pts -= frame_duration * 2;
     compute_avdiff(vd, mp, pts);
+    if(vd->vd_dvdspu != NULL)
+      spu_layout(gv, vd->vd_dvdspu, pts);
   }
-  //gl_dvdspu_layout(gv->gv_dvd, gv->gv_dvdspu);
+
 }
 
 
@@ -655,7 +806,9 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
 {
   video_decoder_frame_t *fra, *frb;
   int width = 0, height = 0;
-
+  dvdspu_decoder_t *dd;
+  dvdspu_t *d;
+  
   /*
    * rescale
    */
@@ -695,25 +848,50 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
     }
   }
 
+  gv->gv_width  = width;
+  gv->gv_height = height;
+
   glEnable(GL_BLEND); 
 
-#if 0
-  if(width > 0)
-    gl_dvdspu_render(gv->gv_dvdspu, width, height, rc->rc_alpha);
-#endif
+  dd = vd->vd_dvdspu;
+  if(gv->gv_sputex != 0 && dd != NULL && width > 0) {
+    d = TAILQ_FIRST(&dd->dd_queue);
 
+    if(d != NULL) {
+      glBindTexture(GL_TEXTURE_2D, gv->gv_sputex);
+
+      glPushMatrix();
+
+      glScalef(2.0f / width, -2.0f / height, 0.0f);
+      glTranslatef(-width / 2, -height / 2, 0.0f);
+      
+      glColor4f(1.0, 1.0, 1.0, rc->rc_alpha);
+      
+      glBegin(GL_QUADS);
+      
+      glTexCoord2f(0, 0.0);
+      glVertex3f(d->d_x1, d->d_y1, 0.0f);
+    
+      glTexCoord2f(1.0, 0.0);
+      glVertex3f(d->d_x2, d->d_y1, 0.0f);
+    
+      glTexCoord2f(1.0, 1.0);
+      glVertex3f(d->d_x2, d->d_y2, 0.0f);
+    
+      glTexCoord2f(0, 1.0);
+      glVertex3f(d->d_x1, d->d_y2, 0.0f);
+
+      glEnd();
+
+      glPopMatrix();
+    }
+  }
   glPopMatrix();
-
-  //  if(gv->gv_subtitle_widget)
-  //    glw_render0(gv->gv_subtitle_widget, rc);
-
 }
 
-/*
+/**
  * 
  */
-
-
 static void
 vdf_purge(video_decoder_t *vd, video_decoder_frame_t *vdf)
 {
@@ -783,11 +961,94 @@ gl_video_widget_event(glw_video_t *gv, event_t *e)
   case EVENT_PLAYPAUSE:
   case EVENT_PLAY:
   case EVENT_PAUSE:
+  case EVENT_ENTER:
     mp_enqueue_event(gv->gv_mp, e);
     return 1;
+
+  case EVENT_UP:
+  case EVENT_DOWN:
+  case EVENT_LEFT:
+  case EVENT_RIGHT:
+    if(!gv->gv_in_menu)
+      return 0;
+    mp_enqueue_event(gv->gv_mp, e);
+    return 1;
+
   default:
     return 0;
   }
+}
+
+
+/**
+ *
+ */
+static int
+pointer_event(glw_video_t *gv, glw_pointer_event_t *gpe)
+{
+  dvdspu_decoder_t *dd = gv->gv_vd->vd_dvdspu;
+  pci_t *pci;
+  int x, y;
+  int32_t button, best, dist, d, mx, my, dx, dy;
+  event_t *e;
+
+  if(dd == NULL)
+    return 0;
+
+  pci = &dd->dd_pci;
+
+  if(!pci->hli.hl_gi.hli_ss)
+    return 1;
+  
+  x = (0.5 +  0.5 * gpe->x) * (float)gv->gv_width;
+  y = (0.5 + -0.5 * gpe->y) * (float)gv->gv_height;
+
+  best = 0;
+  dist = 0x08000000; /* >> than  (720*720)+(567*567); */
+  
+  /* Loop through all buttons */
+  for(button = 1; button <= pci->hli.hl_gi.btn_ns; button++) {
+    btni_t *button_ptr = &(pci->hli.btnit[button-1]);
+
+    if((x >= button_ptr->x_start) && (x <= button_ptr->x_end) &&
+       (y >= button_ptr->y_start) && (y <= button_ptr->y_end)) {
+      mx = (button_ptr->x_start + button_ptr->x_end)/2;
+      my = (button_ptr->y_start + button_ptr->y_end)/2;
+      dx = mx - x;
+      dy = my - y;
+      d = (dx*dx) + (dy*dy);
+      /* If the mouse is within the button and the mouse is closer
+       * to the center of this button then it is the best choice. */
+      if(d < dist) {
+        dist = d;
+        best = button;
+      }
+    }
+  }
+
+  if(best == 0)
+    return 1;
+
+  switch(gpe->type) {
+  case GLW_POINTER_CLICK:
+    e = event_create(EVENT_DVD_ACTIVATE_BUTTON, sizeof(event_t) + 1);
+    break;
+
+  case GLW_POINTER_MOTION:
+    if(dd->dd_curbut == best)
+      return 1;
+
+    e = event_create(EVENT_DVD_SELECT_BUTTON, sizeof(event_t) + 1);
+    break;
+
+  default:
+    return 1;
+  }
+
+  e->e_payload[0] = best;
+  mp_enqueue_event(gv->gv_mp, e);
+  event_unref(e);
+  return 1;
 }
 
 /**
@@ -804,6 +1065,9 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_DTOR:
     /* We are going away, flush out all frames (PBOs and textures)
        and destroy zombie video decoder */
+
+    if(gv->gv_sputex)
+      glDeleteTextures(1, &gv->gv_sputex);
 
     LIST_REMOVE(gv, gv_global_link);
     gv_purge_queues(vd);
@@ -828,6 +1092,10 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     mp_ref_dec(gv->gv_mp);
     gv->gv_mp = NULL;
     return 0;
+
+  case GLW_SIGNAL_POINTER_EVENT:
+    return pointer_event(gv, extra);
+
 
   default:
     return 0;

@@ -110,6 +110,8 @@ typedef struct dvd_player {
 
   uint8_t dp_buf[DVD_VIDEO_LB_LEN];
 
+  pci_t dp_pci;
+
 } dvd_player_t;
 
 
@@ -182,12 +184,21 @@ dvd_media_enqueue(dvd_player_t *dp, media_queue_t *mq, codecwrap_t *cw,
   mb->mb_dts = dts;
   mb->mb_pts = pts;
   
-  mb->mb_data = malloc(datalen);
+  mb->mb_data = malloc(datalen + FF_INPUT_BUFFER_PADDING_SIZE);
   mb->mb_size = datalen;
   memcpy(mb->mb_data, data, datalen);
-  
-  e = mb_enqueue_with_events(dp->dp_mp, mq, mb);
-  return e == NULL ? e : dvd_process_event(dp, e);
+  memset(mb->mb_data + datalen, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+
+  do {
+
+    if((e = mb_enqueue_with_events(dp->dp_mp, mq, mb)) == NULL)
+      break;
+    
+    e = dvd_process_event(dp, e);
+
+  } while(e == NULL);
+
+  return e;
 }
 
 
@@ -301,7 +312,7 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
     mq = &mp->mp_audio;
 
   } else if (sc >= 0x20 && sc <= 0x3f) {
-    
+
     if(dp->dp_spu_track == DP_SPU_DISABLE)
       return NULL;
     
@@ -338,6 +349,7 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
   
   if(pts != AV_NOPTS_VALUE)
     pts = av_rescale_q(pts, mpeg_tc, AV_TIME_BASE_Q);
+
 
   ctx = cw->codec_ctx;
  
@@ -427,6 +439,9 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
   ops = &faops;
 
   dp->dp_mp = mp;
+  
+  mp->mp_video.mq_stream = 0;
+  mp->mp_audio.mq_stream = 0;
 
   if(dvdnav_open(&dp->dp_dvdnav, url, ops) != DVDNAV_STATUS_OK) {
     snprintf(errstr, errlen, "Unable to open DVD");
@@ -470,15 +485,17 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
 
     case DVDNAV_AUDIO_STREAM_CHANGE:
       audio_event = (void *)block;
-      dp->dp_spu_track_vm = audio_event->physical & 0x7;
+      dp->dp_audio_track_vm = audio_event->physical & 0x7;
       break;
 
     case DVDNAV_VTS_CHANGE:
+      mp_send_cmd(mp, &mp->mp_video, MB_DVD_RESET_SPU);
+      dvd_video_push(dp);
       dvd_release_codecs(dp);
+      mp_send_cmd(mp, &mp->mp_video, MB_FLUSH);
       dp->dp_spu_track   = DP_SPU_FOLLOW_VM;
       dp->dp_audio_track = DP_AUDIO_FOLLOW_VM;
       dp->dp_aspect_override = dvdnav_get_video_aspect(dp->dp_dvdnav) ? 2 : 1;
-      mp_send_cmd(mp, &mp->mp_video, MB_DVD_RESET_SPU);
       break;
 
     case DVDNAV_NAV_PACKET:
@@ -540,6 +557,8 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
     dvdnav_free_cache_block(dp->dp_dvdnav, block);
   }
 
+  mp_hibernate(mp);
+
   dvd_release_codecs(dp);
   dvdnav_close(dp->dp_dvdnav);
   free(dp);
@@ -553,10 +572,40 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
 static event_t *
 dvd_process_event(dvd_player_t *dp, event_t *e)
 {
+  pci_t *pci = &dp->dp_pci;
+
   switch(e->e_type) {
   case EVENT_EXIT:
   case EVENT_PLAY_URL:
     return e;
+
+  case EVENT_ENTER:
+    dvdnav_button_activate(dp->dp_dvdnav, pci);
+    break;
+  case EVENT_UP:
+    dvdnav_upper_button_select(dp->dp_dvdnav, pci);
+    break;
+  case EVENT_DOWN:
+    dvdnav_lower_button_select(dp->dp_dvdnav, pci);
+    break;
+  case EVENT_LEFT:
+    dvdnav_left_button_select(dp->dp_dvdnav, pci);
+    break;
+  case EVENT_RIGHT:
+    dvdnav_right_button_select(dp->dp_dvdnav, pci);
+    break;
+
+  case EVENT_DVD_PCI:
+    memcpy(&dp->dp_pci, e->e_payload, sizeof(pci_t));
+    break;
+
+  case EVENT_DVD_SELECT_BUTTON:
+    dvdnav_button_select(dp->dp_dvdnav, pci, e->e_payload[0]);
+    break;
+
+  case EVENT_DVD_ACTIVATE_BUTTON:
+    dvdnav_button_select_and_activate(dp->dp_dvdnav, pci, e->e_payload[0]);
+    break;
 
   default:
     break;

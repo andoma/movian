@@ -22,8 +22,6 @@
 #include "glw.h"
 #include "video/video_decoder.h"
 #include "video/video_playback.h"
-#include "glw_dvdspu.h"
-
 
 /**
  *
@@ -66,7 +64,13 @@ typedef struct glw_video {
 
   media_pipe_t *gv_mp;
 
-  
+
+  unsigned int gv_sputex;
+
+  int gv_in_menu;
+
+  int gv_width;
+  int gv_height;
 
 } glw_video_t;
 

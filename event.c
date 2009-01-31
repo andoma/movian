@@ -349,8 +349,7 @@ event_t *
 event_create_url(event_type_t et, const char *url)
 {
   int l = strlen(url) + 1;
-
-  event_url_t *eu = event_create(et, sizeof(event_url_t) + l);
-  memcpy(eu->url, url, l);
-  return &eu->h;
+  event_t *e = event_create(et, sizeof(event_t) + l);
+  memcpy(e->e_payload, url, l);
+  return e;
 }

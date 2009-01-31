@@ -28,6 +28,7 @@
 #include <math.h>
 
 #include "video_decoder.h"
+#include "video_dvdspu.h"
 //#include "subtitles.h"
 #include "yadif.h"
 #include "event.h"
@@ -583,7 +584,7 @@ vd_thread(void *aux)
     case MB_DVD_CLUT:
     case MB_DVD_PCI:
     case MB_DVD_SPU:
-      printf("VIDEO DECODER SPU EVENT %d\n", mb->mb_data_type);
+      dvdspu_decoder_dispatch(vd, mb, mp);
       break;
 
     default:
@@ -664,6 +665,9 @@ video_decoder_stop(video_decoder_t *vd)
 void
 video_decoder_destroy(video_decoder_t *vd)
 {
+  if(vd->vd_dvdspu != NULL)
+    dvdspu_decoder_destroy(vd->vd_dvdspu);
+
   assert(TAILQ_FIRST(&vd->vd_avail_queue) == NULL);
   assert(TAILQ_FIRST(&vd->vd_displaying_queue) == NULL);
   assert(TAILQ_FIRST(&vd->vd_display_queue) == NULL);

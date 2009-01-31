@@ -18,7 +18,6 @@
 
 #include <sys/time.h>
 #include <time.h>
-#include <hts.h>
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -29,11 +28,15 @@
 
 #include <inttypes.h>
 
-#include "showtime.h"
+#include <dvdnav/dvdnav.h>
+
 #include "media.h"
-#include "video_decoder.h"
-#include "gl_dvdspu.h"
-#include "apps/dvdplayer/dvd.h"
+#include "video_dvdspu.h"
+
+
+
+
+#if 0
 
 typedef struct gl_dvdspu_pic {
 
@@ -59,25 +62,37 @@ typedef struct gl_dvdspu_pic {
 
 } gl_dvdspu_pic_t;
 
+#endif
 
-/*****************************************************************************
- *
- *
+
+
+
+
+
+
+
+/**
  *
  */
-
 static inline uint16_t
 getbe16(const uint8_t *p)
 {
   return (p[0] << 8) | p[1];
 }
 
+
+/**
+ *
+ */
 static int
 get_nibble(const uint8_t *buf, int nibble_offset)
 {
   return (buf[nibble_offset >> 1] >> ((1 - (nibble_offset & 1)) << 2)) & 0xf;
 }
 
+/**
+ *
+ */
 static int
 decode_rle(uint8_t *bitmap, int linesize, int w, int h, 
 	   const uint8_t *buf, int nibble_offset, int buf_size)
@@ -126,44 +141,41 @@ decode_rle(uint8_t *bitmap, int linesize, int w, int h,
   return 0;
 }
 
-/****************************************************************************
- *
- *  Public functions
+
+/**
  *
  */
-
-static int
-gl_dvdspu_chew(gl_dvdspu_t *gl, gl_dvdspu_pic_t *gdp)
+int
+dvdspu_decode(dvdspu_t *d, int64_t pts)
 {
   int retval = 0;
-  uint8_t *buf = gdp->gdp_spu;
+  uint8_t *buf = d->d_data;
   int date;
-  int64_t now = wallclock;
   int64_t picts;
   int stop;
   int pos, cmd, x1, y1, x2, y2, offset1, offset2, next_cmd_pos;
 
-  if(gdp->gdp_cmdpos == -1)
-    return TAILQ_NEXT(gdp, gdp_link) != NULL ? -1 : 0;
+
+  if(d->d_cmdpos == -1)
+    return TAILQ_NEXT(d, d_link) != NULL ? -1 : 0;
   
-  while(gdp->gdp_cmdpos + 4 < gdp->gdp_spusize) {
-    date = getbe16(buf + gdp->gdp_cmdpos);
-    picts = gdp->gdp_loadtime + ((date << 10) / 90) * 1000;
+  while(d->d_cmdpos + 4 < d->d_size) {
+    date = getbe16(buf + d->d_cmdpos);
+    picts = d->d_pts + ((date << 10) / 90) * 1000;
 
-    if(now < picts) {
+    if(pts < picts)
       return retval;
-    }
 
-    next_cmd_pos = getbe16(buf + gdp->gdp_cmdpos + 2);
+    next_cmd_pos = getbe16(buf + d->d_cmdpos + 2);
 
 
-    pos = gdp->gdp_cmdpos + 4;
+    pos = d->d_cmdpos + 4;
     offset1 = -1;
     offset2 = -1;
     x1 = y1 = x2 = y2 = 0;
     stop = 0;
 
-    while(!stop && pos < gdp->gdp_spusize) {
+    while(!stop && pos < d->d_size) {
       cmd = buf[pos++];
 
       switch(cmd) {
@@ -179,13 +191,13 @@ gl_dvdspu_chew(gl_dvdspu_t *gl, gl_dvdspu_pic_t *gdp)
 
       case 0x03:
 	/* set palette */
-	if(gdp->gdp_spusize - pos < 2)
+	if(d->d_size - pos < 2)
 	  return -1;
 
-	gdp->gdp_palette[3] = buf[pos] >> 4;
-	gdp->gdp_palette[2] = buf[pos] & 0x0f;
-	gdp->gdp_palette[1] = buf[pos + 1] >> 4;
-	gdp->gdp_palette[0] = buf[pos + 1] & 0x0f;
+	d->d_palette[3] = buf[pos] >> 4;
+	d->d_palette[2] = buf[pos] & 0x0f;
+	d->d_palette[1] = buf[pos + 1] >> 4;
+	d->d_palette[0] = buf[pos + 1] & 0x0f;
 
 	retval = 1;
 	pos += 2;
@@ -193,20 +205,20 @@ gl_dvdspu_chew(gl_dvdspu_t *gl, gl_dvdspu_pic_t *gdp)
 
       case 0x04:
 	/* set alpha */
-	if(gdp->gdp_spusize - pos < 2)
+	if(d->d_size - pos < 2)
 	  return -1;
 
-	gdp->gdp_alpha[3] = buf[pos] >> 4;
-	gdp->gdp_alpha[2] = buf[pos] & 0x0f;
-	gdp->gdp_alpha[1] = buf[pos + 1] >> 4;
-	gdp->gdp_alpha[0] = buf[pos + 1] & 0x0f;
+	d->d_alpha[3] = buf[pos] >> 4;
+	d->d_alpha[2] = buf[pos] & 0x0f;
+	d->d_alpha[1] = buf[pos + 1] >> 4;
+	d->d_alpha[0] = buf[pos + 1] & 0x0f;
 
 	retval = 1;
 	pos += 2;
 	break;
 
       case 0x05:
-	if(gdp->gdp_spusize - pos < 6)
+	if(d->d_size - pos < 6)
 	  return -1;
 
 	x1 = (buf[pos] << 4) | (buf[pos + 1] >> 4);
@@ -218,7 +230,7 @@ gl_dvdspu_chew(gl_dvdspu_t *gl, gl_dvdspu_pic_t *gdp)
 	break;
 
       case 0x06:
-	if(gdp->gdp_spusize - pos < 4)
+	if(d->d_size - pos < 4)
 	  return -1;
 
 	offset1 = getbe16(buf + pos);
@@ -231,10 +243,10 @@ gl_dvdspu_chew(gl_dvdspu_t *gl, gl_dvdspu_pic_t *gdp)
 
 	/* This is blindly reverse-engineered */
 
-	gdp->gdp_alpha[3] = buf[pos + 10] >> 4;
-	gdp->gdp_alpha[2] = buf[pos + 10] & 0x0f;
-	gdp->gdp_alpha[1] = buf[pos + 11] >> 4;
-	gdp->gdp_alpha[0] = buf[pos + 11] & 0x0f;
+	d->d_alpha[3] = buf[pos + 10] >> 4;
+	d->d_alpha[2] = buf[pos + 10] & 0x0f;
+	d->d_alpha[1] = buf[pos + 11] >> 4;
+	d->d_alpha[0] = buf[pos + 11] & 0x0f;
 
 	retval = 1;
 	stop = 1;
@@ -248,48 +260,42 @@ gl_dvdspu_chew(gl_dvdspu_t *gl, gl_dvdspu_pic_t *gdp)
 
     if(offset1 >= 0 && (x2 - x1 + 1) > 0 && (y2 - y1) > 0) {
 
-      gdp->gdp_cords.w = x2 - x1 + 1;
-      gdp->gdp_cords.h = y2 - y1;
-      gdp->gdp_cords.x = x1;
-      gdp->gdp_cords.y = y1;
+      int width  = x2 - x1 + 1;
+      int height = y2 - y1;
+
+      d->d_x1 = x1;
+      d->d_x2 = x2 + 1;
+      d->d_y1 = y1;
+      d->d_y2 = y2;
       
-      if(gdp->gdp_bitmap != NULL)
-	free(gdp->gdp_bitmap);
+      if(d->d_bitmap != NULL)
+	free(d->d_bitmap);
 
-      gdp->gdp_bitmap = malloc(gdp->gdp_cords.w * gdp->gdp_cords.h);
+      d->d_bitmap = malloc(width * height);
       
-      decode_rle(gdp->gdp_bitmap, 
-		 gdp->gdp_cords.w * 2,
-		 gdp->gdp_cords.w, 
-		 gdp->gdp_cords.h / 2 + (gdp->gdp_cords.h & 1),
+      decode_rle(d->d_bitmap, width * 2, width, height / 2 + (height & 1),
+		 buf, offset1 * 2, d->d_size);
 
-		 buf, offset1 * 2, gdp->gdp_spusize);
-
-      decode_rle(gdp->gdp_bitmap + gdp->gdp_cords.w, 
-		 gdp->gdp_cords.w * 2, 
-		 gdp->gdp_cords.w, 
-		 gdp->gdp_cords.h / 2,
-
-		 buf, offset2 * 2, gdp->gdp_spusize);
+      decode_rle(d->d_bitmap + width, width * 2, width, height / 2,
+		 buf, offset2 * 2, d->d_size);
     }
 
-    if(next_cmd_pos == gdp->gdp_cmdpos) {
-      gdp->gdp_cmdpos = -1;
+    if(next_cmd_pos == d->d_cmdpos) {
+      d->d_cmdpos = -1;
       break;
     }
-    gdp->gdp_cmdpos = next_cmd_pos;
+    d->d_cmdpos = next_cmd_pos;
   }
 
   return retval;
 }
 
-/****************************************************************************
- *
- *  Public functions
+#if 0
+/**
  *
  */
 static void
-spu_repaint(dvd_player_t *dp, gl_dvdspu_t *gd, gl_dvdspu_pic_t *gdp)
+spu_repaint(dvd_player_t *dp, gl_dvdspu_t *gd, gl_dvdspu_pic_t *d)
 {
   int dsize = gdp->gdp_cords.w * gdp->gdp_cords.h * 4;
   uint32_t *tmp, *t0; 
@@ -370,8 +376,9 @@ spu_repaint(dvd_player_t *dp, gl_dvdspu_t *gd, gl_dvdspu_pic_t *gdp)
   free(t0);
 }
 
+#endif
 
-
+#if 0
 static void
 gl_dvdspu_destroy_pic(gl_dvdspu_t *gd, gl_dvdspu_pic_t *gdp)
 {
@@ -388,131 +395,11 @@ gl_dvdspu_destroy_pic(gl_dvdspu_t *gd, gl_dvdspu_pic_t *gdp)
   free(gdp);
 
 }
-
-
-static void
-gl_dvdspu_new_clut(gl_dvdspu_t *gd, media_buf_t *mb)
-{
-  int i;
-  int C, D, E, Y, U, V, R, G, B;
-  uint32_t u32;
-
-  if(gd->gd_clut != NULL)
-    free(gd->gd_clut);
-
-  gd->gd_clut = mb->mb_data;
-
-  for(i = 0; i < 16; i++) {
-
-    u32 = gd->gd_clut[i];
-
-    Y = (u32 >> 16) & 0xff;
-    V = (u32 >> 8) & 0xff;
-    U = (u32 >> 0) & 0xff;
-
-    C = Y - 16;
-    D = U - 128;
-    E = V - 128;
-
-    R = ( 298 * C           + 409 * E + 128) >> 8;
-    G = ( 298 * C - 100 * D - 208 * E + 128) >> 8;
-    B = ( 298 * C + 516 * D           + 128) >> 8;
-
-#define clip256(x) ((x) < 0 ? 0 : ((x) > 255 ? 255 : (x)))
-
-    R = clip256(R);
-    G = clip256(G);
-    B = clip256(B);
-
-    u32 = R << 0 | G << 8 | B << 16;
-
-    gd->gd_clut[i] = u32;
-  }
-  mb->mb_data = NULL;
-}
-
-static void
-gl_dvdspu_load(gl_dvdspu_t *gd, media_buf_t *mb)
-{
-  gl_dvdspu_pic_t *gdp;
-
-  if(mb->mb_size < 4)
-    return;
-
-  gdp = calloc(1, sizeof(gl_dvdspu_pic_t));
-
-  gdp->gdp_spu = mb->mb_data;
-  gdp->gdp_cmdpos = getbe16(gdp->gdp_spu + 2);
-  gdp->gdp_spusize = mb->mb_size;
-  gdp->gdp_loadtime = wallclock;
-
-  mb->mb_data = NULL;
-
-  hts_mutex_lock(&gd->gd_mutex);
-  TAILQ_INSERT_TAIL(&gd->gd_pics, gdp, gdp_link);
-  hts_mutex_unlock(&gd->gd_mutex);
-
-}
+#endif
 
 
 
-/****************************************************************************
- *
- *  Public functions
- *
- */
-
-
-struct gl_dvdspu *
-gl_dvdspu_init(void)
-{
-  gl_dvdspu_t *gd = malloc(sizeof(gl_dvdspu_t));
-
-  TAILQ_INIT(&gd->gd_pics);
-  gd->gd_clut = NULL;
-  hts_mutex_init(&gd->gd_mutex, NULL);
-
-  return gd;
-}
-
-
-void
-gl_dvdspu_deinit(gl_dvdspu_t *gd)
-{
-  gl_dvdspu_pic_t *gdp;
-  
-  hts_mutex_lock(&gd->gd_mutex);
-
-  while((gdp = TAILQ_FIRST(&gd->gd_pics)) != NULL) {
-
-    TAILQ_REMOVE(&gd->gd_pics, gdp, gdp_link);
-
-    if(gdp->gdp_tex != 0)
-      glDeleteTextures(1, &gdp->gdp_tex);
-
-    free(gdp->gdp_spu);
-    free(gdp->gdp_bitmap);
-    free(gdp);
-  }
-
-  free(gd);
-}
-
-
-
-
-
-void
-gl_dvdspu_flush(gl_dvdspu_t *gd)
-{
-  gl_dvdspu_pic_t *gdp;
-
-  TAILQ_FOREACH(gdp, &gd->gd_pics, gdp_link) 
-    gdp->gdp_destroyme = 1;
-}
-
-
-
+#if 0
 /*
  *
  */
@@ -607,35 +494,185 @@ gl_dvdspu_render(struct gl_dvdspu *gd, float xsize, float ysize, float alpha)
   glPopMatrix();
 }
 
+#endif
 
 
 
-
-
-
-void
-gl_dvdspu_dispatch(dvd_player_t *dp, gl_dvdspu_t *gd, media_buf_t *mb)
+/**
+ *
+ */
+static void
+dvdspu_new_clut(dvdspu_decoder_t *dd, media_buf_t *mb)
 {
+  int i;
+  int C, D, E, Y, U, V, R, G, B;
+  uint32_t u32;
+
+  if(dd->dd_clut != NULL)
+    free(dd->dd_clut);
+
+  dd->dd_clut = mb->mb_data;
+
+  for(i = 0; i < 16; i++) {
+
+    u32 = dd->dd_clut[i];
+
+    Y = (u32 >> 16) & 0xff;
+    V = (u32 >> 8) & 0xff;
+    U = (u32 >> 0) & 0xff;
+
+    C = Y - 16;
+    D = U - 128;
+    E = V - 128;
+
+    R = ( 298 * C           + 409 * E + 128) >> 8;
+    G = ( 298 * C - 100 * D - 208 * E + 128) >> 8;
+    B = ( 298 * C + 516 * D           + 128) >> 8;
+
+#define clip256(x) ((x) < 0 ? 0 : ((x) > 255 ? 255 : (x)))
+
+    R = clip256(R);
+    G = clip256(G);
+    B = clip256(B);
+
+    u32 = R << 0 | G << 8 | B << 16;
+
+    dd->dd_clut[i] = u32;
+  }
+  mb->mb_data = NULL;
+}
+
+
+
+/**
+ *
+ */
+static dvdspu_decoder_t *
+dvdspu_decoder_create(video_decoder_t *vd)
+{
+  dvdspu_decoder_t *dd = calloc(1, sizeof(dvdspu_decoder_t));
+
+  TAILQ_INIT(&dd->dd_queue);
+
+  hts_mutex_init(&dd->dd_mutex);
+
+  return dd;
+
+}
+
+/**
+ *
+ */
+static void
+dvdspu_enqueue(dvdspu_decoder_t *dd, media_buf_t *mb)
+{
+  dvdspu_t *d;
+
+  if(mb->mb_size < 4)
+    return;
+
+  d = calloc(1, sizeof(dvdspu_t));
+  d->d_data = mb->mb_data;
+  d->d_size = mb->mb_size;
+  d->d_cmdpos = getbe16(d->d_data + 2);
+  d->d_pts = mb->mb_pts;
+
+  hts_mutex_lock(&dd->dd_mutex);
+  TAILQ_INSERT_TAIL(&dd->dd_queue, d, d_link);
+  hts_mutex_unlock(&dd->dd_mutex);
+
+  mb->mb_data = NULL;
+}
+
+/**
+ *
+ */
+void
+dvdspu_destroy(dvdspu_decoder_t *dd, dvdspu_t *d)
+{
+  TAILQ_REMOVE(&dd->dd_queue, d, d_link);
+  free(d->d_data);
+  free(d);
+}
+
+/**
+ *
+ */
+static void
+dvdspu_flush(dvdspu_decoder_t *dd)
+{
+  dvdspu_t *d;
+
+  hts_mutex_lock(&dd->dd_mutex);
+  
+  TAILQ_FOREACH(d, &dd->dd_queue, d_link)
+    d->d_destroyme = 1;
+
+  hts_mutex_unlock(&dd->dd_mutex);
+}
+
+/**
+ *
+ */
+void
+dvdspu_decoder_dispatch(video_decoder_t *vd, media_buf_t *mb, media_pipe_t *mp)
+{
+  event_t *e;
+
+  if(mb->mb_data_type == MB_DVD_RESET_SPU) {
+    if(vd->vd_dvdspu == NULL)
+      return;
+
+    vd->vd_dvdspu->dd_curbut = 1;
+    dvdspu_flush(vd->vd_dvdspu);
+    return;
+  }
+
+  if(vd->vd_dvdspu == NULL)
+    vd->vd_dvdspu = dvdspu_decoder_create(vd);
+
   switch(mb->mb_data_type) {
   case MB_DVD_SPU:
-    gl_dvdspu_load(gd, mb);
+    dvdspu_enqueue(vd->vd_dvdspu, mb);
     break;
     
-  case MB_CLUT:
-    gl_dvdspu_new_clut(gd, mb);
+  case MB_DVD_CLUT:
+    dvdspu_new_clut(vd->vd_dvdspu, mb);
     break;
     
   case MB_DVD_PCI:
-    memcpy(&dp->dp_pci, mb->mb_data, sizeof(pci_t));
-    gd->gd_repaint = 1;
+    memcpy(&vd->vd_dvdspu->dd_pci, mb->mb_data, sizeof(pci_t));
+    vd->vd_dvdspu->dd_repaint = 1;
+    
+    e = event_create(EVENT_DVD_PCI, sizeof(event_t) + sizeof(pci_t));
+    memcpy(e->e_payload, mb->mb_data, sizeof(pci_t));
+    mp_enqueue_event(mp, e);
+    event_unref(e);
     break;
       
   case MB_DVD_HILITE:
-    gd->gd_curbut = mb->mb_data32;
-    gd->gd_repaint = 1;
+    vd->vd_dvdspu->dd_curbut = mb->mb_data32;
+    vd->vd_dvdspu->dd_repaint = 1;
     break;
 
   default:
-    break;
+    printf("MB type %d not supported by dvdspu decoder\n", mb->mb_data_type);
+    abort();
   }
+}
+
+/**
+ * No need to lock here, noone else should be around.
+ */
+void
+dvdspu_decoder_destroy(dvdspu_decoder_t *dd)
+{
+  dvdspu_t *d;
+
+  while((d = TAILQ_FIRST(&dd->dd_queue)) != NULL)
+    dvdspu_destroy(dd, d);
+
+  hts_mutex_destroy(&dd->dd_mutex);
+  free(dd);
+
 }

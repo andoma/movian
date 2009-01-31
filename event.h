@@ -79,7 +79,11 @@ typedef enum {
   EVENT_TV,            /* TV specific events, see tv.h */
   EVENT_SEEK,
   EVENT_PLAY_URL,
-  EVENT_EXIT
+  EVENT_EXIT,
+  EVENT_DVD_PCI,
+  EVENT_DVD_,
+  EVENT_DVD_SELECT_BUTTON,
+  EVENT_DVD_ACTIVATE_BUTTON,  /* "Press" button */
 
 } event_type_t;
 
@@ -106,6 +110,7 @@ typedef struct event {
   event_type_t e_type;
   void (*e_dtor)(struct event *e);
   TAILQ_ENTRY(event) e_link;
+  char e_payload[0];
 } event_t;
 
 
@@ -137,16 +142,6 @@ typedef struct event_seek {
   event_t h;
   int64_t ts;
 } event_seek_t;
-
-
-/**
- *
- */
-typedef struct event_url {
-  event_t h;
-  char url[0];
-} event_url_t;
-
 
 
 void event_generic_dtor(event_t *e);
