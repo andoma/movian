@@ -350,6 +350,39 @@ fa_findfile(const char *path, const char *file,
 /**
  *
  */
+void *
+fa_reference(const char *url)
+{
+  fa_protocol_t *fap;
+  char *filename;
+  fa_handle_t *fh;
+
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL)) == NULL)
+    return NULL;
+
+  fh = fap->fap_reference != NULL ? fap->fap_reference(fap, filename) : NULL;
+  free(filename);
+  return fh;
+}
+
+
+/**
+ *
+ */
+void
+fa_unreference(void *fh_)
+{
+  fa_handle_t *fh = fh_;
+  if(fh_ == NULL)
+    return;
+
+  fh->fh_proto->fap_unreference(fh);
+}
+
+
+/**
+ *
+ */
 #define INITPROTO(a)							      \
  {									      \
    extern  fa_protocol_t fa_protocol_ ## a;				      \

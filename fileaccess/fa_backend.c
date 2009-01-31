@@ -63,14 +63,19 @@ scanner(void *aux)
   int r, destroyed = 0;
   fa_dir_t *fd;
   fa_dir_entry_t *fde;
+  void *ref;
   int images = 0;
 
-  if((fd = fa_scandir(bfp->h.np_uri)) == NULL)
-    return NULL;
+  ref = fa_reference(bfp->h.np_uri);
 
+  if((fd = fa_scandir(bfp->h.np_uri)) == NULL) {
+    fa_unreference(ref);
+    return NULL;
+  }
   if(fd->fd_count == 0) {
     prop_set_string(bfp->bfp_viewprop, "empty");
     fa_dir_free(fd);
+    fa_unreference(ref);
     return NULL;
   }
 
@@ -132,6 +137,7 @@ scanner(void *aux)
   }
 
   fa_dir_free(fd);
+  fa_unreference(ref);
   return NULL;
 }
 

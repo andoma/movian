@@ -488,6 +488,43 @@ zip_scandir(fa_dir_t *fd, const char *url)
 }
 
 
+typedef struct zip_ref {
+  fa_handle_t h;
+  zip_file_t *file;
+} zip_ref_t;
+
+/**
+ *
+ */
+static fa_handle_t *
+zip_reference(fa_protocol_t *fap, const char *url)
+{
+  zip_file_t *zf;
+  zip_ref_t *zr;
+
+  if((zf = zip_file_find(url)) == NULL)
+    return NULL;
+
+  zr = malloc(sizeof(zip_ref_t));
+  zr->h.fh_proto = fap;
+  zr->file = zf;
+  return &zr->h;
+}
+
+
+/**
+ *
+ */
+static void
+zip_unreference(fa_handle_t *fh)
+{
+  zip_ref_t *zr = (zip_ref_t *)fh;
+  
+  zip_file_unref(zr->file);
+  free(fh);
+}
+
+
 
 
 
@@ -790,4 +827,6 @@ fa_protocol_t fa_protocol_zip = {
   .fap_seek  = zip_seek,
   .fap_fsize = zip_fsize,
   .fap_stat  = zip_stat,
+  .fap_reference = zip_reference,
+  .fap_unreference = zip_unreference,
 };

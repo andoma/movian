@@ -43,6 +43,10 @@ typedef struct fa_protocol {
   int64_t (*fap_seek)(fa_handle_t *fh, int64_t pos, int whence);
   int64_t (*fap_fsize)(fa_handle_t *fh);
   int (*fap_stat)(struct fa_protocol *fap, const char *url, struct stat *buf);
+
+  fa_handle_t *(*fap_reference)(struct fa_protocol *fap, const char *url);
+  void (*fap_unreference)(fa_handle_t *fh);
+
 } fa_protocol_t;
 
 

@@ -98,4 +98,7 @@ int fa_findfile(const char *path, const char *file,
 
 int fa_can_handle(const char *url);
 
+void *fa_reference(const char *url);
+void fa_unreference(void *fh);
+
 #endif /* FILEACCESS_H */
