@@ -27,6 +27,7 @@
 
 
 
+
 static float cursor_alpha[5][5] = {
   {1.0f, 1.0f, 1.0f, 1.0f, 1.0f},
   {1.0f, 1.0f, 1.0f, 1.0f, 1.0f},
@@ -61,8 +62,7 @@ static float cursor_blue[5][5] = {
 };
 
 
-
-static float cursor_tex[5] = {
+static const float cursor_tex[5] = {
   0.0f, 1.0f / 3.0f, 0.5f, 2.0f / 3.0f, 1.0f
 };
 
@@ -79,12 +79,6 @@ glw_cursor_layout_frame(glw_root_t *gr)
 {
   static float v;
   float r;
-  glw_loadable_texture_t *glt = gr->gr_cursor;
-
-  if(glt == NULL)
-    return;
-
-  glw_tex_layout(gr, glt);
 
 #define F(v) (0.5 + 0.5 * (v))
 
@@ -142,16 +136,13 @@ glw_cursor_layout_frame(glw_root_t *gr)
  */
 static void
 glw_cursor_draw(glw_root_t *gr, glw_cursor_painter_t *gcp, 
-		glw_rctx_t *rc, float xscale, float yscale)
+		glw_rctx_t *rc, float xscale, float yscale,
+		glw_loadable_texture_t *glt)
 {
-  glw_loadable_texture_t *glt = gr->gr_cursor;
   float vex[5][2];
   int x, y, i = 0;
   float v, alpha;
   glw_renderer_t *r = &gcp->gcp_renderer;
-
-  if(!glw_is_tex_inited(&glt->glt_texture))
-    return;
 
   v = yscale;
 
@@ -225,7 +216,8 @@ glw_cursor_draw(glw_root_t *gr, glw_cursor_painter_t *gcp,
  *
  */
 static void
-gcp_render(glw_root_t *gr, glw_cursor_painter_t *gcp, glw_rctx_t *rc)
+gcp_render(glw_root_t *gr, glw_cursor_painter_t *gcp, glw_rctx_t *rc,
+	   glw_loadable_texture_t *glt)
 {
   int i;
   float size_x = rc->rc_size_x;
@@ -244,8 +236,8 @@ gcp_render(glw_root_t *gr, glw_cursor_painter_t *gcp, glw_rctx_t *rc)
 
   glw_cursor_draw(gr, gcp, &rc0,
 		  (size_y / 1000) / (100 * fabs(gcp->gcp_m_prim[0])),
-		  (size_x / 1000) / (100 * fabs(gcp->gcp_m_prim[5]))
-		  );
+		  (size_x / 1000) / (100 * fabs(gcp->gcp_m_prim[5])),
+		  glt);
 
   glw_PopMatrix();
 }
@@ -294,7 +286,7 @@ glw_cursor_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   glw_rctx_t *rc;
   glw_root_t *gr = w->glw_root;
   glw_cursor_painter_t *gcp = &gf->gcp;
-
+  glw_loadable_texture_t *glt = gf->tex;
 
   switch(signal) {
   default:
@@ -306,6 +298,11 @@ glw_cursor_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_LAYOUT:
+    if(glt == NULL)
+      break;
+
+    glw_tex_layout(gr, gf->tex);
+
     gcp = &gf->gcp;
     gcp->gcp_alpha = 0;
 
@@ -319,6 +316,10 @@ glw_cursor_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_RENDER:
+
+    if(glt == NULL || !glw_is_tex_inited(&glt->glt_texture))
+      break;
+
     rc = extra;
 
     if(gf->render_cycle == 0)
@@ -330,7 +331,7 @@ glw_cursor_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       glw_render0(c, rc);
 
     if(gf->render_cycle == 0)
-      gcp_render(gr, &gf->gcp, rc);
+      gcp_render(gr, &gf->gcp, rc, glt);
 
     gf->render_cycle++;
     break;
@@ -346,13 +347,34 @@ glw_cursor_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 void 
 glw_cursor_ctor(glw_t *w, int init, va_list ap)
 {
+  glw_cursor_t *gc = (glw_cursor_t *)w;
   glw_root_t *gr = w->glw_root;
+  glw_attribute_t attrib;
+  const char *filename = NULL;
 
-  if(init) {
-
-    if(gr->gr_cursor == NULL)
-      gr->gr_cursor = glw_tex_create(gr, "theme://images/cursor.png");
-
+  if(init)
     glw_signal_handler_int(w, glw_cursor_callback);
-  }
+
+  do {
+    attrib = va_arg(ap, int);
+    switch(attrib) {
+
+    case GLW_ATTRIB_SOURCE:
+      filename = va_arg(ap, char *);
+      break;
+    default:
+      GLW_ATTRIB_CHEW(attrib, ap);
+      break;
+    }
+  } while(attrib);
+
+  if(filename == NULL)
+    return;
+
+  if(gc->tex != NULL)
+    glw_tex_deref(gr, gc->tex);
+
+  gc->tex = glw_tex_create(gr, filename);
+
 }
+

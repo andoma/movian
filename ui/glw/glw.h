@@ -253,12 +253,6 @@ typedef struct glw_root {
   struct glw_loadable_texture_list gr_tex_list;
 
   /**
-   * Cursor and form
-   */
-  struct glw_loadable_texture *gr_cursor;
-
-
-  /**
    * Root focus leader
    */
   struct glw_queue gr_focus_childs;

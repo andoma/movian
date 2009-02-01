@@ -3,6 +3,8 @@
 
 widget(cursor, {
 
+  .source = "theme://images/cursor.png";
+
   widget(container_z, {
 
     widget(fx_texrot, {

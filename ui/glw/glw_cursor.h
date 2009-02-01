@@ -19,7 +19,7 @@
 #ifndef GLW_CURSOR_H
 #define GLW_CURSOR_H
 
-
+#include "glw_texture.h"
 
 /**
  *
@@ -47,6 +47,8 @@ typedef struct glw_cursor {
   int render_cycle;
 
   glw_cursor_painter_t gcp;
+
+  glw_loadable_texture_t *tex;
 
 } glw_cursor_t;
 
