@@ -55,8 +55,7 @@ glw_list_reposition_childs(glw_list_t *l)
  */
 static void
 glw_list_layout_child(glw_list_t *l, glw_t *c, glw_rctx_t *rc,
-		      float *xdp, float *ydp, float thres,
-		      float expansion_factor)
+		      float *xdp, float *ydp, float expansion_factor)
 {
   glw_rctx_t rc0 = *rc;
   float scale, xs, ys, zdisplace;
@@ -192,7 +191,7 @@ glw_list_layout(glw_t *w, glw_rctx_t *rc)
 
   i = 0;
   while(1) {
-    glw_list_layout_child(l, n, rc, &xd, &yd, 100000, expansion_factor);
+    glw_list_layout_child(l, n, rc, &xd, &yd, expansion_factor);
     
     if(n->glw_parent_pos.y < -thres || n->glw_parent_pos.x > thres)
       break;
@@ -210,7 +209,6 @@ glw_list_layout(glw_t *w, glw_rctx_t *rc)
     l->ycenter_target -= l->ys * 2;
   
   l->ycenter = GLW_LP(16, l->ycenter, l->ycenter_target);
-
 
   d = c->glw_parent_x - l->xcenter_target;
   if(d > 0.7f)
