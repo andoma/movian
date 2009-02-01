@@ -188,8 +188,6 @@ file_open_dir(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
     return 0;
   }
 
-  /* TODO: Check if it is a DVD */
-
   bfp = nav_page_create(uri0, sizeof(be_file_page_t), dir_close_page,
 			NAV_PAGE_DONT_CLOSE_ON_BACK);
   p = bfp->h.np_prop_root;
