@@ -229,6 +229,7 @@ file_open_file(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
     *npp = NULL;
     return 0;
   case FA_VIDEO:
+  case FA_DVD:
     prop_destroy(media);
     file_open_video(uri0, npp);
     return 0;

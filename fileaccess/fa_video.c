@@ -824,12 +824,17 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   codecwrap_t **cwvec;
   event_t *e;
   struct stat buf;
+  fa_handle_t *fh;
 
   if(fa_stat(url, &buf)) {
     snprintf(errbuf, errlen, "Unable to stat uri");
     return NULL;
   }
   
+  /**
+   * Is it a DVD ?
+   */
+
   if(S_ISDIR(buf.st_mode)) {
     
     t = fa_probe_dir(NULL, url);
@@ -839,6 +844,17 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
     return NULL;
   }
+
+  if((fh = fa_open(url)) == NULL) {
+    snprintf(errbuf, errlen, "Unable to open input file %s\n", url);
+    return NULL;
+  }
+
+  if(fa_probe_iso(NULL, fh) == 0) {
+    fa_close(fh);
+    return dvd_play(url, mp, errbuf, errlen);
+  }
+  fa_close(fh);
 
 
   /**

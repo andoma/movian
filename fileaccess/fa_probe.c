@@ -214,7 +214,7 @@ fa_probe_header(prop_t *proproot, const char *url, fa_handle_t *fh,
 /**
  * Check if file is an iso image
  */
-static int
+int
 fa_probe_iso(prop_t *proproot, fa_handle_t *fh)
 {
   char pb[128], *p;
