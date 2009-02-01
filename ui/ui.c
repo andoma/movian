@@ -68,6 +68,9 @@ ui_init(void)
 {
   ui_t *ui;
   uii_t *uii;
+  
+  hts_mutex_init(&ui_mutex);
+  hts_cond_init(&ui_cond);
 
   keymapper_init();
 
