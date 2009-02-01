@@ -819,7 +819,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   AVFormatContext *fctx;
   AVCodecContext *ctx;
   formatwrap_t *fw;
-  int i, t;
+  int i;
   char faurl[1000];
   codecwrap_t **cwvec;
   event_t *e;
@@ -837,9 +837,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   if(S_ISDIR(buf.st_mode)) {
     
-    t = fa_probe_dir(NULL, url);
-
-    if(t == FA_DVD)
+    if(fa_probe_dir(NULL, url) == FA_DVD)
       return dvd_play(url, mp, errbuf, errlen);
 
     return NULL;
