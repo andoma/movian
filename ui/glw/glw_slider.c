@@ -25,9 +25,16 @@
 static void
 update_value(glw_slider_t *s, float v)
 {
+  glw_scroll_t gs;
+
   s->value = GLW_MAX(0, GLW_MIN(1.0, v));
   if(s->p != NULL)
     prop_set_float_ex(s->p, s->sub, s->value * (s->max - s->min) + s->min);
+
+  if(s->bound_widget != NULL) {
+    gs.value = s->value;
+    glw_signal0(s->bound_widget, GLW_SIGNAL_SCROLL, &gs);
+  }
 }
 
 
@@ -189,14 +196,49 @@ pointer_event(glw_t *w, glw_pointer_event_t *gpe)
 /**
  *
  */
+static int
+slider_bound_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
+{
+  glw_slider_t *s = opaque;
+  glw_slider_metrics_t *m = extra;
+
+  switch(signal) {
+
+  case GLW_SIGNAL_DESTROY:
+    s->bound_widget = NULL;
+    break;
+
+  case GLW_SIGNAL_SLIDER_METRICS:
+    s->fixed_knob_size = 1;
+    s->value = m->position;
+    s->knob_size = m->knob_size;
+
+  default:
+    break;
+  }
+  return 0;
+}
+
+
+
+/**
+ *
+ */
 static void
-slider_destroy(glw_slider_t *s)
+slider_unbind(glw_slider_t *s)
 {
   if(s->sub != NULL)
     prop_unsubscribe(s->sub);
 
-  if(s->p != NULL)
+  if(s->p != NULL) {
     prop_ref_dec(s->p);
+    s->p = NULL;
+  }
+
+  if(s->bound_widget != NULL) {
+    glw_signal_handler_unregister(s->bound_widget, slider_bound_callback, s);
+    s->bound_widget = NULL;
+  }
 }
 
 
@@ -227,7 +269,7 @@ glw_slider_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     return pointer_event(w, extra);
 
   case GLW_SIGNAL_DESTROY:
-    slider_destroy(s);
+    slider_unbind(s);
     break;
 
   default:
@@ -289,6 +331,20 @@ prop_callback(prop_sub_t *s, prop_event_t event, ...)
   sl->value = GLW_MAX(0, GLW_MIN(1.0, v));
 }
 
+/**
+ *
+ */
+static void 
+slider_bind_by_id(glw_slider_t *s, const char *name)
+{
+  glw_t *t = glw_find_neighbour(&s->w, name);
+
+  if(t == NULL)
+    return;
+
+  s->bound_widget = t;
+  glw_signal_handler_register(t, slider_bound_callback, s, 1000);
+}
 
 /**
  *
@@ -300,6 +356,7 @@ glw_slider_ctor(glw_t *w, int init, va_list ap)
   glw_attribute_t attrib;
   prop_t *p;
   const char **pname;
+  const char *n;
 
   if(init) {
     glw_signal_handler_int(w, glw_slider_callback);
@@ -313,17 +370,21 @@ glw_slider_ctor(glw_t *w, int init, va_list ap)
     attrib = va_arg(ap, int);
 
     switch(attrib) {
+    case GLW_ATTRIB_BIND_TO_ID:
+      slider_unbind(s);
+      n = va_arg(ap, const char *);
+
+      slider_bind_by_id(s, n);
+      break;
+
     case GLW_ATTRIB_BIND_TO_PROPERTY:
       p = va_arg(ap, prop_t *);
       pname = va_arg(ap, void *);
 
-      if(s->sub != NULL)
-	prop_unsubscribe(s->sub);
+      slider_unbind(s);
 
-      if(s->p != NULL) {
-	prop_ref_dec(s->p);
-	s->p = NULL;
-      }
+      if(p == NULL || pname == NULL)
+	break;
 
       s->sub = prop_subscribe(p, pname, prop_callback, s, 
 			      w->glw_root->gr_courier, PROP_SUB_DIRECT_UPDATE);

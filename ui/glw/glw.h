@@ -126,6 +126,7 @@ typedef enum {
   GLW_ATTRIB_FOCUSABLE,
   GLW_ATTRIB_EXPAND,
   GLW_ATTRIB_BIND_TO_PROPERTY,
+  GLW_ATTRIB_BIND_TO_ID,
   GLW_ATTRIB_SIZE,
 } glw_attribute_t;
 
@@ -206,7 +207,29 @@ typedef enum {
    */
   GLW_SIGNAL_POINTER_EVENT,
 
+  /**
+   *
+   */
+  GLW_SIGNAL_SLIDER_METRICS,
+
+  /**
+   *
+   */
+  GLW_SIGNAL_SCROLL,
+
 } glw_signal_t;
+
+
+typedef struct {
+  float knob_size;
+  float position;
+} glw_slider_metrics_t;
+
+typedef struct {
+  float value;
+} glw_scroll_t;
+
+
 
 
 /**
@@ -486,6 +509,7 @@ do {						\
   case GLW_ATTRIB_ID:         			\
   case GLW_ATTRIB_INTPTR:         		\
   case GLW_ATTRIB_PROPROOT:         		\
+  case GLW_ATTRIB_BIND_TO_ID: 			\
     (void)va_arg(ap, void *);			\
     break;					\
   case GLW_ATTRIB_ALIGNMENT:			\

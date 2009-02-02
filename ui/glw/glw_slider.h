@@ -33,6 +33,8 @@ typedef struct {
   prop_sub_t *sub;
   prop_t *p;
 
+  glw_t *bound_widget;
+
 } glw_slider_t;
 
 void glw_slider_ctor(glw_t *w, int init, va_list ap);

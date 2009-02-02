@@ -34,6 +34,12 @@ typedef struct glw_list {
 
   glw_t *focused_child;
 
+  int extctrl;
+
+  glw_slider_metrics_t metrics;
+
+  float size;
+
 } glw_list_t;
 
 void glw_list_ctor(glw_t *w, int init, va_list ap);

@@ -2084,6 +2084,10 @@ glwf_bind(glw_model_eval_context_t *ec, struct token *self)
     propname[i] = NULL;
 
     glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY, ec->prop, propname, NULL);
+
+  } else if(a != NULL && a->type == TOKEN_STRING) {
+    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_ID, a->t_string, NULL);
+
   } else {
     glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY, NULL, NULL, NULL);
   }
