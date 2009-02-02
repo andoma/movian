@@ -19,6 +19,9 @@
 #ifndef GLW_OPENGL_H__
 #define GLW_OPENGL_H__
 
+#define GL_GLEXT_PROTOTYPES
+#define GLX_GLXEXT_PROTOTYPES
+
 #include <GL/gl.h>
 #include <GL/glu.h>
 
