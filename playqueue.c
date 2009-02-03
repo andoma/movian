@@ -31,7 +31,7 @@
 #include "fileaccess/fa_probe.h"
 #include "media.h"
 
-#define PLAYQUEUE_URI "playqueue:"
+#define PLAYQUEUE_URL "playqueue:"
 
 static prop_t *playqueue_root;
 
@@ -56,7 +56,7 @@ typedef struct playqueue_entry {
   /**
    * Read only members
    */
-  char *pqe_uri;
+  char *pqe_url;
   char *pqe_parent;
   prop_t *pqe_root;
   prop_t *pqe_meta;
@@ -85,7 +85,7 @@ static struct playqueue_request_queue playqueue_requests;
 
 typedef struct playqueue_request {
   TAILQ_ENTRY(playqueue_request) pqr_link;
-  char *pqr_uri;
+  char *pqr_url;
   char *pqr_parent;
   prop_t *pqr_meta;
   int pqr_enq;
@@ -113,7 +113,7 @@ pqe_unref(playqueue_entry_t *pqe)
 
   assert(pqe->pqe_linked == 0);
 
-  free(pqe->pqe_uri);
+  free(pqe->pqe_url);
   free(pqe->pqe_parent);
   prop_destroy(pqe->pqe_root);
 
@@ -173,7 +173,7 @@ playqueue_clear(void)
  *
  */
 static void
-playqueue_load_siblings(const char *uri, playqueue_entry_t *justadded)
+playqueue_load_siblings(const char *url, playqueue_entry_t *justadded)
 {
   fa_dir_t *fd;
   int before = 1;
@@ -182,13 +182,13 @@ playqueue_load_siblings(const char *uri, playqueue_entry_t *justadded)
   prop_t *media;
   int r;
 
-  if((fd = fa_scandir(uri)) == NULL)
+  if((fd = fa_scandir(url)) == NULL)
     return;
 
   fa_dir_sort(fd);
     
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
-    if(!strcmp(fde->fde_url, justadded->pqe_uri)) {
+    if(!strcmp(fde->fde_url, justadded->pqe_url)) {
       before = 0;
       continue;
     }
@@ -205,8 +205,8 @@ playqueue_load_siblings(const char *uri, playqueue_entry_t *justadded)
     }
 
     pqe = malloc(sizeof(playqueue_entry_t));
-    pqe->pqe_uri    = strdup(fde->fde_url);
-    pqe->pqe_parent = strdup(uri);
+    pqe->pqe_url    = strdup(fde->fde_url);
+    pqe->pqe_parent = strdup(url);
     pqe->pqe_root   = prop_create(NULL, NULL);
     pqe->pqe_enq    = 0;
     pqe->pqe_refcount = 1;
@@ -214,7 +214,7 @@ playqueue_load_siblings(const char *uri, playqueue_entry_t *justadded)
     pqe->pqe_meta = media;
     prop_set_parent(media, pqe->pqe_root);
     
-    prop_set_string(prop_create(pqe->pqe_root, "url"), pqe->pqe_uri);
+    prop_set_string(prop_create(pqe->pqe_root, "url"), pqe->pqe_url);
 
     if(before) {
       TAILQ_INSERT_BEFORE(justadded, pqe, pqe_link);
@@ -234,7 +234,7 @@ playqueue_load_siblings(const char *uri, playqueue_entry_t *justadded)
 
 
 /**
- * Load playqueue based on the given uri.
+ * Load playqueue based on the given url.
  *
  * This function is responsible for freeing (or using) the
  * supplied meta prop tree.
@@ -245,7 +245,7 @@ playqueue_load_siblings(const char *uri, playqueue_entry_t *justadded)
  * That way users may 'stick in' track in the current playqueue
  */
 static void
-playqueue_load(const char *uri, const char *parent, prop_t *meta, int enq)
+playqueue_load(const char *url, const char *parent, prop_t *meta, int enq)
 {
   playqueue_entry_t *pqe, *prev;
   event_t *e;
@@ -253,7 +253,7 @@ playqueue_load(const char *uri, const char *parent, prop_t *meta, int enq)
   hts_mutex_lock(&playqueue_mutex);
 
   TAILQ_FOREACH(pqe, &playqueue_entries, pqe_link) {
-    if(!strcmp(pqe->pqe_uri, uri) && !strcmp(pqe->pqe_parent, parent)) {
+    if(!strcmp(pqe->pqe_url, url) && !strcmp(pqe->pqe_parent, parent)) {
       /* Already in, go to it */
       e = pqe_event_create(pqe, 1);
       mp_enqueue_event(playqueue_mp, e);
@@ -269,7 +269,7 @@ playqueue_load(const char *uri, const char *parent, prop_t *meta, int enq)
 
 
   pqe = malloc(sizeof(playqueue_entry_t));
-  pqe->pqe_uri    = strdup(uri);
+  pqe->pqe_url    = strdup(url);
   pqe->pqe_parent = strdup(parent);
   pqe->pqe_root   = prop_create(NULL, NULL);
   pqe->pqe_enq    = enq;
@@ -278,7 +278,7 @@ playqueue_load(const char *uri, const char *parent, prop_t *meta, int enq)
   pqe->pqe_meta = meta;
   prop_set_parent(meta, pqe->pqe_root);
 
-  prop_set_string(prop_create(pqe->pqe_root, "url"), uri);
+  prop_set_string(prop_create(pqe->pqe_root, "url"), url);
 
   if(enq) {
 
@@ -336,11 +336,11 @@ playqueue_thread(void *aux)
     
     hts_mutex_unlock(&playqueue_request_mutex);
 
-    playqueue_load(pqr->pqr_uri, pqr->pqr_parent, pqr->pqr_meta,
+    playqueue_load(pqr->pqr_url, pqr->pqr_parent, pqr->pqr_meta,
 		   pqr->pqr_enq);
     
     free(pqr->pqr_parent);
-    free(pqr->pqr_uri);
+    free(pqr->pqr_url);
     free(pqr);
 
     hts_mutex_lock(&playqueue_request_mutex);
@@ -353,16 +353,16 @@ playqueue_thread(void *aux)
  * We don't want to hog caller, so we dispatch the request to a worker thread.
  */
 void
-playqueue_play(const char *uri, const char *parent, prop_t *meta,
+playqueue_play(const char *url, const char *parent, prop_t *meta,
 	       int enq)
 {
   playqueue_request_t *pqr = malloc(sizeof(playqueue_request_t));
   char *x;
 
-  pqr->pqr_uri = strdup(uri);
+  pqr->pqr_url = strdup(url);
 
   if(parent == NULL) {
-    pqr->pqr_parent = strdup(uri);
+    pqr->pqr_parent = strdup(url);
     if((x = strrchr(pqr->pqr_parent, '/')) != NULL)
       *x = 0;
     
@@ -433,7 +433,7 @@ be_playqueue_open(const char *url0, nav_page_t **npp,
 static int
 be_playqueue_canhandle(const char *url)
 {
-  return !strncmp(url, PLAYQUEUE_URI, strlen(PLAYQUEUE_URI));
+  return !strncmp(url, PLAYQUEUE_URL, strlen(PLAYQUEUE_URL));
 }
 
 
@@ -513,10 +513,10 @@ playtrack(playqueue_entry_t *pqe, media_pipe_t *mp)
   int run = 1;
   int hold = 0;
 
-  snprintf(faurl, sizeof(faurl), "showtime:%s", pqe->pqe_uri);
+  snprintf(faurl, sizeof(faurl), "showtime:%s", pqe->pqe_url);
 
   if(av_open_input_file(&fctx, faurl, NULL, 0, NULL) != 0) {
-    fprintf(stderr, "Unable to open input file %s\n", pqe->pqe_uri);
+    fprintf(stderr, "Unable to open input file %s\n", pqe->pqe_url);
     return 0;
   }
 

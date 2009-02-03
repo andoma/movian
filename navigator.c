@@ -114,7 +114,7 @@ nav_close(nav_page_t *np)
 
   TAILQ_REMOVE(&nav_pages, np, np_global_link);
   prop_destroy(np->np_prop_root);
-  free(np->np_uri);
+  free(np->np_url);
   free(np);
 }
 
@@ -123,7 +123,7 @@ nav_close(nav_page_t *np)
  *
  */
 void
-nav_open(const char *uri)
+nav_open(const char *url)
 {
   nav_page_t *np, *np2;
   nav_backend_t *nb;
@@ -132,7 +132,7 @@ nav_open(const char *uri)
   /* First, if a page is already open, go directly to it */
 
   TAILQ_FOREACH(np, &nav_pages, np_global_link) {
-    if(!strcmp(np->np_uri, uri)) {
+    if(!strcmp(np->np_url, url)) {
       prop_select(np->np_prop_root, 0);
       prop_link(np->np_prop_root, nav_prop_curpage);
       break;
@@ -142,16 +142,16 @@ nav_open(const char *uri)
   if(np == NULL) {
 
     LIST_FOREACH(nb, &nav_backends, nb_global_link)
-      if(nb->nb_canhandle(uri))
+      if(nb->nb_canhandle(url))
 	break;
   
     if(nb == NULL) {
-      fprintf(stderr, "Unable to open %s -- No handler\n", uri);
+      fprintf(stderr, "Unable to open %s -- No handler\n", url);
       return;
     }
 
-    if(nb->nb_open(uri, &np, errbuf, sizeof(errbuf))) {
-      fprintf(stderr, "Unable to open %s -- %s\n", uri, errbuf);
+    if(nb->nb_open(url, &np, errbuf, sizeof(errbuf))) {
+      fprintf(stderr, "Unable to open %s -- %s\n", url, errbuf);
       return;
     }
   
@@ -196,7 +196,7 @@ nav_back(void)
      (prev = TAILQ_PREV(np, nav_page_queue, np_history_link)) == NULL)
      return;
 
-  nav_open(prev->np_uri);
+  nav_open(prev->np_url);
 
   if(!(np->np_flags & NAV_PAGE_DONT_CLOSE_ON_BACK))
     nav_close(np);
@@ -207,20 +207,20 @@ nav_back(void)
  *
  */
 void *
-nav_page_create(const char *uri, size_t allocsize,
+nav_page_create(const char *url, size_t allocsize,
 		void (*closefunc)(struct nav_page *np), int flags)
 {
   nav_page_t *np = calloc(1, allocsize);
 
   np->np_flags = flags;
-  np->np_uri = strdup(uri);
+  np->np_url = strdup(url);
   np->np_close = closefunc;
 
   TAILQ_INSERT_TAIL(&nav_pages, np, np_global_link);
 
   np->np_prop_root = prop_create(NULL, "page");
 
-  prop_set_string(prop_create(np->np_prop_root, "uri"), uri);
+  prop_set_string(prop_create(np->np_prop_root, "url"), url);
   return np;
 }
 

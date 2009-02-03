@@ -35,7 +35,7 @@ typedef struct nav_page {
   int np_inhistory;
 
   prop_t *np_prop_root;
-  char *np_uri;
+  char *np_url;
 
   int np_flags;
 
@@ -54,9 +54,9 @@ typedef struct nav_backend {
 
   LIST_ENTRY(nav_backend) nb_global_link;
 
-  int (*nb_canhandle)(const char *uri);
+  int (*nb_canhandle)(const char *ur);
 
-  int (*nb_open)(const char *uri, nav_page_t **npp,
+  int (*nb_open)(const char *url, nav_page_t **npp,
 		 char *errbuf, size_t errlen);
 
   event_t *(*nb_play_video)(const char *url, struct media_pipe *mp,
@@ -71,9 +71,9 @@ void nav_init(void);
 
 void nav_close(nav_page_t *np);
 
-void nav_open(const char *uri);
+void nav_open(const char *url);
 
-void *nav_page_create(const char *uri, size_t allocsize,
+void *nav_page_create(const char *url, size_t allocsize,
 		      void (*closefunc)(struct nav_page *np),
 		      int flags);
 

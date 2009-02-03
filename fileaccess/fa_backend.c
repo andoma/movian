@@ -47,9 +47,9 @@ typedef struct be_file_page {
  *
  */
 static int
-be_file_canhandle(const char *uri)
+be_file_canhandle(const char *url)
 {
-  return fa_can_handle(uri);
+  return fa_can_handle(url);
 }
 
 /**
@@ -66,9 +66,9 @@ scanner(void *aux)
   void *ref;
   int images = 0;
 
-  ref = fa_reference(bfp->h.np_uri);
+  ref = fa_reference(bfp->h.np_url);
 
-  if((fd = fa_scandir(bfp->h.np_uri)) == NULL) {
+  if((fd = fa_scandir(bfp->h.np_url)) == NULL) {
     fa_unreference(ref);
     return NULL;
   }
@@ -158,12 +158,12 @@ dir_close_page(nav_page_t *np)
  *
  */
 static void
-file_open_video(const char *uri0, nav_page_t **npp)
+file_open_video(const char *url0, nav_page_t **npp)
 {
   nav_page_t *np;
   prop_t *p;
 
-  np = nav_page_create(uri0, sizeof(nav_page_t), NULL, 0);
+  np = nav_page_create(url0, sizeof(nav_page_t), NULL, 0);
 
   p = np->np_prop_root;
   prop_set_string(prop_create(p, "type"), "video");
@@ -175,20 +175,20 @@ file_open_video(const char *uri0, nav_page_t **npp)
  *
  */
 static int
-file_open_dir(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
+file_open_dir(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
 {
   be_file_page_t *bfp;
   prop_t *p;
   int type;
 
-  type = fa_probe_dir(NULL, uri0);
+  type = fa_probe_dir(NULL, url0);
 
   if(type == FA_DVD) {
-    file_open_video(uri0, npp);
+    file_open_video(url0, npp);
     return 0;
   }
 
-  bfp = nav_page_create(uri0, sizeof(be_file_page_t), dir_close_page,
+  bfp = nav_page_create(url0, sizeof(be_file_page_t), dir_close_page,
 			NAV_PAGE_DONT_CLOSE_ON_BACK);
   p = bfp->h.np_prop_root;
 
@@ -210,7 +210,7 @@ file_open_dir(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
  *
  */
 static int
-file_open_file(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
+file_open_file(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
 {
   char redir[512];
   int r;
@@ -218,20 +218,20 @@ file_open_file(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
 
   media = prop_create(NULL, "media");
 
-  r = fa_probe(media, uri0, redir, sizeof(redir));
+  r = fa_probe(media, url0, redir, sizeof(redir));
   
   switch(r) {
   case FA_ARCHIVE:
     prop_destroy(media);
     return file_open_dir(redir, npp, errbuf, errlen);
   case FA_AUDIO:
-    playqueue_play(uri0, NULL, media, 0);
+    playqueue_play(url0, NULL, media, 0);
     *npp = NULL;
     return 0;
   case FA_VIDEO:
   case FA_DVD:
     prop_destroy(media);
-    file_open_video(uri0, npp);
+    file_open_video(url0, npp);
     return 0;
 
   default:
@@ -244,17 +244,17 @@ file_open_file(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
  *
  */
 static int
-be_file_open(const char *uri0, nav_page_t **npp, char *errbuf, size_t errlen)
+be_file_open(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
 {
   struct stat buf;
 
-  if(fa_stat(uri0, &buf)) {
-    snprintf(errbuf, errlen, "Unable to stat uri");
+  if(fa_stat(url0, &buf)) {
+    snprintf(errbuf, errlen, "Unable to stat url");
     return -1;
   }
 
-  return S_ISDIR(buf.st_mode) ? file_open_dir(uri0, npp, errbuf, errlen) :
-    file_open_file(uri0, npp, errbuf, errlen);
+  return S_ISDIR(buf.st_mode) ? file_open_dir(url0, npp, errbuf, errlen) :
+    file_open_file(url0, npp, errbuf, errlen);
 }
 
 

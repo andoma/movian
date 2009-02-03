@@ -827,7 +827,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   fa_handle_t *fh;
 
   if(fa_stat(url, &buf)) {
-    snprintf(errbuf, errlen, "Unable to stat uri");
+    snprintf(errbuf, errlen, "Unable to stat url");
     return NULL;
   }
   

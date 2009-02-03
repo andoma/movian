@@ -21,6 +21,6 @@
 
 void playqueue_init(void);
 
-void playqueue_play(const char *uri, const char *parent, prop_t *p, int enq);
+void playqueue_play(const char *url, const char *parent, prop_t *p, int enq);
 
 #endif /* PLAYQUEUE_H__ */
