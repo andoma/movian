@@ -87,15 +87,22 @@ widget(cursor, {
 	    .caption = $global.currentmedia.meta.title;
 	  });
 
-	  widget(label, {
-	    .caption = $global.currentmediasource;
-	  });
-
-
 	  widget(container_x, {
 	    widget(label, {
 	      .caption = value2duration($global.currentmedia.currenttime);
 	    });
+
+	    widget(slider_x, {
+	      .weight = 20;
+	      bind(&global.currentmedia.currenttime);
+	      .focus = true;
+	      .max = $global.currentmedia.meta.duration;
+	      widget(image, {
+		.source = "theme://icons/bubble.png";
+		.keepAspect = true;
+	      });
+	    });
+
 	    widget(label, {
 	      .caption = value2duration($global.currentmedia.meta.duration);
 	    });
