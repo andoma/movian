@@ -51,6 +51,8 @@ typedef struct glw_text_bitmap {
   LIST_ENTRY(glw_text_bitmap) gtb_global_link;
 
   glw_text_bitmap_data_t gtb_data;
+  float gtb_aspect;
+  float gtb_siz_y;
 
   enum {
     GTB_NEED_RERENDER,

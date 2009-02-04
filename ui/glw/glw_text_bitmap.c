@@ -364,6 +364,10 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
     free(gtbd->gtbd_data);
     gtbd->gtbd_data = NULL;
+
+    gtb->gtb_siz_y  = gtbd->gtbd_siz_y;
+    gtb->gtb_aspect = gtbd->gtbd_aspect;
+
   }
 
 
@@ -421,7 +425,6 @@ static void
 glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_text_bitmap_t *gtb = (void *)w;
-  glw_text_bitmap_data_t *gtbd = &gtb->gtb_data;
   float alpha;
   glw_rctx_t rc0;
 
@@ -452,10 +455,10 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
     return;
   }
 
-  glw_rescale(&rc0, gtbd->gtbd_aspect);
+  glw_rescale(&rc0, gtb->gtb_aspect);
 
-  if(rc0.rc_size_y > gtbd->gtbd_siz_y) {
-    float s = (float)gtbd->gtbd_siz_y / rc0.rc_size_y;
+  if(rc0.rc_size_y > gtb->gtb_siz_y) {
+    float s = (float)gtb->gtb_siz_y / rc0.rc_size_y;
     glw_Scalef(&rc0, s, s, 1.0);
   }
 
