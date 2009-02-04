@@ -505,7 +505,8 @@ playtrack(playqueue_entry_t *pqe, media_pipe_t *mp)
   int i, r, si;
   media_buf_t *mb = NULL;
   media_queue_t *mq;
-  int64_t pts4seek = 0;
+  event_seek_t *es;
+  int64_t ts, pts4seek = 0;
   codecwrap_t *cw;
   char faurl[1000];
   event_t *e;
@@ -615,6 +616,7 @@ playtrack(playqueue_entry_t *pqe, media_pipe_t *mp)
     switch(e->e_type) {
 	
     default:
+
       break;
       
     case EVENT_PLAYQUEUE:
@@ -634,6 +636,17 @@ playtrack(playqueue_entry_t *pqe, media_pipe_t *mp)
       run = 0;
       break;
       
+    case EVENT_SEEK:
+      es = (event_seek_t *)e;
+      
+      ts = es->ts + fctx->start_time;
+
+      if(ts < fctx->start_time)
+	ts = fctx->start_time;
+
+      av_seek_frame(fctx, -1, ts, AVSEEK_FLAG_BACKWARD);
+      goto seekflush;
+
     case EVENT_SEEK_FAST_BACKWARD:
       av_seek_frame(fctx, -1, pts4seek - 60000000, AVSEEK_FLAG_BACKWARD);
       goto seekflush;
