@@ -3,7 +3,7 @@ widget(container_x, {
   .focusCursor = true;
   .focus = target;
 
-  onEvent(enter, genericEvent(navigator, open, $self.uri));
+  onEvent(enter, genericEvent(navigator, open, $self.url));
 
   widget(image, {
     .keepAspect = true;

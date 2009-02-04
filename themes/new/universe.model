@@ -38,7 +38,7 @@ widget(cursor, {
 	    widget(label, {
 	      .aspect = 40;
 	      .weight = 20;
-	      .caption = $global.nav.currentpage.uri;
+	      .caption = $global.nav.currentpage.url;
 	    });
 	  });
 	  space(0.1);
