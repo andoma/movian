@@ -65,9 +65,9 @@ typedef struct ui {
  */
 void ui_init(void);
 
-void ui_main_loop(void);
+int ui_main_loop(void);
 
-void ui_exit_showtime(void);
+void ui_exit_showtime(int retcode);
 
 void ui_dispatch_event(event_t *e, const char *buf, uii_t *uii);
 

@@ -26,19 +26,21 @@
 static hts_mutex_t ui_mutex;
 static hts_cond_t ui_cond;
 
-static int showtime_running;
+static int showtime_retcode = -1;
 
 static struct ui_list uis;
 static struct uii_list uiis;
+
+static int ui_event_handler(event_t *e, void *opaque);
 
 /**
  *
  */
 void
-ui_exit_showtime(void)
+ui_exit_showtime(int retcode)
 {
   hts_mutex_lock(&ui_mutex);
-  showtime_running = 0;
+  showtime_retcode = retcode;
   hts_cond_signal(&ui_cond);
   hts_mutex_unlock(&ui_mutex);
 }
@@ -76,8 +78,6 @@ ui_init(void)
 
   ui_initialize();
 
-  showtime_running = 1;
-
   ui = LIST_FIRST(&uis);
   if(ui != NULL) {
     uii = ui->ui_start(ui, NULL);
@@ -88,18 +88,22 @@ ui_init(void)
 /**
  *
  */
-void
+int
 ui_main_loop(void)
 {
-  /* Main loop */
+  /* Register an event handler  */
+  event_handler_register("uimain", ui_event_handler, EVENTPRI_MAIN, NULL);
 
+  /* Main loop */
   hts_mutex_lock(&ui_mutex);
-  while(showtime_running) {
+  while(showtime_retcode == -1) {
     hts_cond_wait(&ui_cond, &ui_mutex);
   }
   hts_mutex_unlock(&ui_mutex);
 
   //  uii->uii_ui->ui_stop(uii);
+
+  return showtime_retcode;
 }
 
 
@@ -143,4 +147,33 @@ ui_dispatch_event(event_t *e, const char *buf, uii_t *uii)
   } else {
     event_unref(e);
   }
+}
+
+
+/**
+ * Catch events used for exiting
+ */
+static int
+ui_event_handler(event_t *e, void *opaque)
+{
+  int v = 0;
+  switch(e->e_type) {
+  default:
+    return 0;
+
+  case EVENT_CLOSE:
+    v = 0;
+    break;
+
+  case EVENT_QUIT:
+    v = 0;
+    break;
+
+  case EVENT_POWER:
+    v = 10;
+    break;
+  }
+
+  ui_exit_showtime(v);
+  return 1;
 }

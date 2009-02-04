@@ -692,16 +692,13 @@ intcmp(const void *A, const void *B)
 static int
 update_timings(glw_x11_t *gx11)
 {
-  struct timeval tv;
   static int64_t lastts, firstsample;
   static int deltaarray[FRAME_DURATION_SAMPLES];
   static int deltaptr;
   static int lastframedur;
+  int64_t wallclock = showtime_get_ts();
   int d, r = 0;
   
-  gettimeofday(&tv, NULL);
-  wallclock = (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
-  walltime = tv.tv_sec;
   
   if(lastts != 0) {
     d = wallclock - lastts;
@@ -855,7 +852,7 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
         case ClientMessage:
 	  if((Atom)event.xclient.data.l[0] == gx11->deletewindow) {
 	    /* Window manager wants us to close */
-	    ui_exit_showtime();
+	    ui_exit_showtime(0);
 	  }
 	  break;
 	  
