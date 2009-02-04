@@ -1874,7 +1874,7 @@ glwf_time(glw_model_eval_context_t *ec, struct token *self)
  * Int to string
  */
 static int 
-glwf_int2duration(glw_model_eval_context_t *ec, struct token *self)
+glwf_value2duration(glw_model_eval_context_t *ec, struct token *self)
 {
   token_t *a = eval_pop(ec);
   token_t *r;
@@ -2115,7 +2115,7 @@ static const token_func_t funcvec[] = {
   {"strftime", glwf_strftime},
   {"isset", glwf_isset},
   {"time", glwf_time},
-  {"int2duration", glwf_int2duration},
+  {"value2duration", glwf_value2duration},
   {"createChild", glwf_createchild},
   {"delete", glwf_delete},
   {"isFocused", glwf_isFocused},

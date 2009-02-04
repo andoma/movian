@@ -729,9 +729,9 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp)
       pkt.size = 0;
 
       if(mb->mb_pts != AV_NOPTS_VALUE && mb->mb_data_type == MB_AUDIO)
-	mb->mb_mts = (mb->mb_pts - fctx->start_time) / 1000;
+	mb->mb_time = mb->mb_pts - fctx->start_time;
       else
-	mb->mb_mts = -1;
+	mb->mb_time = AV_NOPTS_VALUE;
 
       av_free_packet(&pkt);
     }
@@ -760,7 +760,7 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp)
     case EVENT_SEEK:
       es = (event_seek_t *)e;
       
-      ts = es->ts;
+      ts = es->ts + fctx->start_time;
 
       if(ts < fctx->start_time)
 	ts = fctx->start_time;

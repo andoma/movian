@@ -34,7 +34,7 @@ widget(list_y, {
 	    });
 		
 	    widget(label, {
-	      .caption = int2duration($self.media.duration);
+	      .caption = value2duration($self.media.duration);
 	      .weight = 0.1;
 	    });
 	  });

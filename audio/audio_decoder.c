@@ -392,8 +392,8 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
     }
 #endif
 
-    if(mb->mb_mts != -1)
-      mp_set_current_time(mp, mb->mb_mts);
+  if(mb->mb_time != AV_NOPTS_VALUE)
+    mp_set_current_time(mp, mb->mb_time);
 
     frames = data_size / sizeof(int16_t) / channels;
 

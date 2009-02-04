@@ -95,7 +95,7 @@ typedef struct media_buf {
   uint32_t mb_aspect_override;
   int64_t mb_dts;
   int64_t mb_pts;
-  int mb_mts;  /* in ms */
+  int64_t mb_time;  /* in ms */
 
   codecwrap_t *mb_cw;
 
@@ -149,7 +149,7 @@ typedef struct media_pipe {
   prop_t *mp_prop_root;
   prop_t *mp_prop_meta;
   prop_t *mp_prop_playstatus;
-  prop_t *mp_prop_currenttime_x;
+  prop_t *mp_prop_currenttime;
 
   prop_courier_t *mp_pc;
   prop_sub_t *mp_sub_currenttime;
@@ -183,7 +183,7 @@ static inline media_buf_t *
 media_buf_alloc(void)
 {
   media_buf_t *mb = calloc(1, sizeof(media_buf_t));
-  mb->mb_mts = -1;
+  mb->mb_time = AV_NOPTS_VALUE;
   return mb;
 }
 
@@ -256,6 +256,6 @@ void media_set_currentmedia(media_pipe_t *mp);
 void media_set_metatree(media_pipe_t *mp, prop_t *src);
 void media_clear_metatree(media_pipe_t *mp);
 
-void mp_set_current_time(media_pipe_t *mp, int mts);
+void mp_set_current_time(media_pipe_t *mp, int64_t mts);
 
 #endif /* MEDIA_H */

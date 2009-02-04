@@ -309,7 +309,8 @@ fa_lavf_load_meta(prop_t *proproot, AVFormatContext *fctx, const char *url)
 		    fctx->iformat->long_name);
 
     if(fctx->duration != AV_NOPTS_VALUE)
-      prop_set_int(prop_create(proproot, "duration"), fctx->duration / 1000);
+      prop_set_float(prop_create(proproot, "duration"), 
+		     (float)fctx->duration / 1000000);
   }
 
   /* Check each stream */

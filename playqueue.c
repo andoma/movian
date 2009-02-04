@@ -592,10 +592,10 @@ playtrack(playqueue_entry_t *pqe, media_pipe_t *mp)
       pkt.size = 0;
 
       if(mb->mb_pts != AV_NOPTS_VALUE) {
-	mb->mb_mts = (mb->mb_pts - fctx->start_time) / 1000;
+	mb->mb_time = mb->mb_pts - fctx->start_time;
 	pts4seek = mb->mb_pts;
       } else
-	mb->mb_mts = -1;
+	mb->mb_time = AV_NOPTS_VALUE;
 
 
       av_free_packet(&pkt);

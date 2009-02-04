@@ -102,11 +102,11 @@ mp_create(const char *name)
 
   mp->mp_prop_meta        = prop_create(mp->mp_prop_root, "meta");
   mp->mp_prop_playstatus  = prop_create(mp->mp_prop_root, "playstatus");
-  mp->mp_prop_currenttime_x = prop_create(mp->mp_prop_root, "currenttime");
+  mp->mp_prop_currenttime = prop_create(mp->mp_prop_root, "currenttime");
  
   mp->mp_pc = prop_courier_create(&mp->mp_mutex);
 
-  mp->mp_sub_currenttime = prop_subscribe(mp->mp_prop_currenttime_x, NULL,
+  mp->mp_sub_currenttime = prop_subscribe(mp->mp_prop_currenttime, NULL,
 					  seek_by_propchange,
 					  mp, mp->mp_pc,
 					  PROP_SUB_NO_INITIAL_UPDATE);
@@ -831,16 +831,14 @@ seek_by_propchange(struct prop_sub *sub, prop_event_t event, ...)
 
   switch(event) {
   case PROP_SET_INT:
-    t = va_arg(ap, int);
+    t = va_arg(ap, int) * 1000000LL;
     break;
   case PROP_SET_FLOAT:
-    t = va_arg(ap, double);
+    t = va_arg(ap, double) * 1000000.0;
     break;
   default:
     return;
   }
-
-  t *= 1000LL;
 
   /* If there already is a seek event enqueued, update it */
   TAILQ_FOREACH(e, &mp->mp_eq, e_link) {
@@ -862,8 +860,9 @@ seek_by_propchange(struct prop_sub *sub, prop_event_t event, ...)
  *
  */
 void
-mp_set_current_time(media_pipe_t *mp, int mts)
+mp_set_current_time(media_pipe_t *mp, int64_t pts)
 {
-  prop_set_int_ex(mp->mp_prop_currenttime_x, mp->mp_sub_currenttime, mts);
+  double d = pts / 1000000.0;
+  prop_set_float_ex(mp->mp_prop_currenttime, mp->mp_sub_currenttime, d);
 }
 

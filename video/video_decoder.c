@@ -120,7 +120,7 @@ typedef struct {
   int64_t dts;
   int duration;
   int stream;
-  int mts;
+  int64_t time;
 } frame_meta_t;
 
 
@@ -133,7 +133,7 @@ vd_get_buffer(struct AVCodecContext *c, AVFrame *pic)
 
   fm->pts = mb->mb_pts;
   fm->dts = mb->mb_dts;
-  fm->mts = mb->mb_mts;
+  fm->time = mb->mb_time;
   fm->duration = mb->mb_duration;
   fm->stream = mb->mb_stream;
   pic->opaque = fm;
@@ -239,8 +239,8 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb, int justdecode)
   fm = frame->opaque;
   assert(fm != NULL);
 
-  if(fm->mts != -1)
-    mp_set_current_time(mp, fm->mts);
+  if(fm->time != AV_NOPTS_VALUE)
+    mp_set_current_time(mp, fm->time);
 
   pts = fm->pts;
   duration = fm->duration;

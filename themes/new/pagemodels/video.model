@@ -10,11 +10,11 @@ widget(container_y, {
 
 
   widget(label, {
-    .caption = int2duration($self.video.media.currenttime / 1000);
+    .caption = value2duration($self.video.media.currenttime );
   });
 
   widget(label, {
-    .caption = int2duration($self.video.media.playstatus);
+    .caption = value2duration($self.video.media.playstatus);
   });
 
   widget(slider_x, {
@@ -24,7 +24,7 @@ widget(container_y, {
 
     PLATE_SQUARE_MID(
     widget(label, {
-      .caption = int2duration($self.video.media.currenttime / 1000);
+      .caption = value2duration($self.video.media.currenttime);
     });
     );
   });
