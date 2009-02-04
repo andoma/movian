@@ -756,7 +756,7 @@ layout_draw(glw_x11_t *gx11, float aspect)
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  gluLookAt(0, 0, 2.4,
+  gluLookAt(0, 0, 1 / tan(45 * M_PI / 360),
 	    0, 0, 1,
 	    0, 1, 0);
 
