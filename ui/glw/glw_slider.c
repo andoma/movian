@@ -383,9 +383,6 @@ glw_slider_ctor(glw_t *w, int init, va_list ap)
 
       slider_unbind(s);
 
-      if(p == NULL || pname == NULL)
-	break;
-
       s->sub = prop_subscribe(p, pname, prop_callback, s, 
 			      w->glw_root->gr_courier, PROP_SUB_DIRECT_UPDATE);
       break;
