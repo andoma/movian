@@ -1659,13 +1659,10 @@ glwf_iir(glw_model_eval_context_t *ec, struct token *self)
   y = self->t_extra_float * 100.;
   r = eval_alloc(self, ec, TOKEN_FLOAT);
 
-  if(x != y) {
-    r->t_float = self->t_extra_float;
+  if(x != y)
     ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_EVERY_FRAME;
-  } else {
-    r->t_float = f;
-  }
 
+  r->t_float = self->t_extra_float;
   eval_push(ec, r);
   return 0;
 }
