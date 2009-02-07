@@ -700,7 +700,6 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
     gtb->gtb_int_step = 1;
     gtb->gtb_int_min = INT_MIN;
     gtb->gtb_int_max = INT_MAX;
-    gtb->gtb_int_ptr = &gtb->gtb_int;
     gtb->gtb_size = 1.0;
     gtb->gtb_color.r = 1.0;
     gtb->gtb_color.g = 1.0;
@@ -713,14 +712,7 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
     attrib = va_arg(ap, int);
     switch(attrib) {
     case GLW_ATTRIB_VALUE:
-      *gtb->gtb_int_ptr = va_arg(ap, double);
-      update = 1;
-      break;
-
-    case GLW_ATTRIB_INTPTR:
-      gtb->gtb_int_ptr = va_arg(ap, void *);
-      if(gtb->gtb_int_ptr == NULL)
-	gtb->gtb_int_ptr = &gtb->gtb_int;
+      gtb->gtb_int = va_arg(ap, double);
       update = 1;
       break;
 
@@ -765,9 +757,9 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
     if(w->glw_class == GLW_INTEGER) {
 
       if(w->glw_caption != NULL) {
-	snprintf(buf, sizeof(buf), w->glw_caption, *gtb->gtb_int_ptr);
+	snprintf(buf, sizeof(buf), w->glw_caption, gtb->gtb_int);
       } else {
-	snprintf(buf, sizeof(buf), "%d", *gtb->gtb_int_ptr);
+	snprintf(buf, sizeof(buf), "%d", gtb->gtb_int);
       }
       str = buf;
       l = strlen(str);
@@ -922,7 +914,7 @@ glw_get_int0(glw_t *w, int *result)
   if(w->glw_class != GLW_INTEGER) 
     return -1;
 
-  *result = *gtb->gtb_int_ptr;
+  *result = gtb->gtb_int;
   return 0;
 }
 

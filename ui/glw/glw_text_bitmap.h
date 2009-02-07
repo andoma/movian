@@ -75,7 +75,6 @@ typedef struct glw_text_bitmap {
   int gtb_int_step;
   int gtb_int_min;
   int gtb_int_max;
-  int *gtb_int_ptr;
 
   float gtb_size;
 

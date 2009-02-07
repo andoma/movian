@@ -120,7 +120,6 @@ typedef enum {
   GLW_ATTRIB_INT_STEP,
   GLW_ATTRIB_INT_MIN,
   GLW_ATTRIB_INT_MAX,
-  GLW_ATTRIB_INTPTR,
   GLW_ATTRIB_PROPROOT,
   GLW_ATTRIB_TRANSITION_EFFECT,
   GLW_ATTRIB_FOCUSABLE,
@@ -506,7 +505,6 @@ do {						\
   case GLW_ATTRIB_PREVIEW:			\
   case GLW_ATTRIB_CONTENT:			\
   case GLW_ATTRIB_ID:         			\
-  case GLW_ATTRIB_INTPTR:         		\
   case GLW_ATTRIB_PROPROOT:         		\
   case GLW_ATTRIB_BIND_TO_ID: 			\
     (void)va_arg(ap, void *);			\
