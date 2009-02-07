@@ -58,7 +58,7 @@ main(int argc, char **argv)
   gettimeofday(&tv, NULL);
   srand(tv.tv_usec);
 
-  /* We read options ourselfs getopt() is broken on some (nintento wii)
+  /* We read options ourselfs since getopt() is broken on some (nintento wii)
      targets */
 
   argv++;
