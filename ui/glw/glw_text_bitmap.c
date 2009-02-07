@@ -475,7 +475,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
   glw_render(&gtb->gtb_text_renderer, &rc0, 
 	     GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
 	     &gtb->gtb_texture,
-	     1,1,1, alpha);
+	     gtb->gtb_color.r, gtb->gtb_color.g, gtb->gtb_color.b, alpha);
 
   glw_PopMatrix();
 }
@@ -703,6 +703,9 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
     gtb->gtb_int_max = INT_MAX;
     gtb->gtb_int_ptr = &gtb->gtb_int;
     gtb->gtb_size = 1.0;
+    gtb->gtb_color.r = 1.0;
+    gtb->gtb_color.g = 1.0;
+    gtb->gtb_color.b = 1.0;
     update = 1;
   }
 
@@ -740,6 +743,12 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
 
     case GLW_ATTRIB_SIZE:
       gtb->gtb_size = va_arg(ap, double);
+      break;
+
+    case GLW_ATTRIB_RGB:
+      gtb->gtb_color.r = va_arg(ap, double);
+      gtb->gtb_color.g = va_arg(ap, double);
+      gtb->gtb_color.b = va_arg(ap, double);
       break;
 
     default:

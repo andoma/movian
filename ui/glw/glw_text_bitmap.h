@@ -79,6 +79,8 @@ typedef struct glw_text_bitmap {
 
   float gtb_size;
 
+  glw_rgb_t gtb_color;
+
 } glw_text_bitmap_t;
 
 
