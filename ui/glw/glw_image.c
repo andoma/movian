@@ -313,6 +313,9 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
   if(init) {
     glw_signal_handler_int(w, glw_image_callback);
     gi->gi_alpha_self = 1;
+    gi->gi_color.r = 1.0;
+    gi->gi_color.g = 1.0;
+    gi->gi_color.b = 1.0;
   }
 
   do {
