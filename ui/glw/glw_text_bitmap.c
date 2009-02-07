@@ -692,7 +692,6 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
   int l, update = 0, x, c;
   const char *str;
   char buf[30];
-  glw_t *y;
 
   glw_signal_handler_int(w, glw_text_bitmap_callback);
 
@@ -707,6 +706,7 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
     gtb->gtb_color.g = 1.0;
     gtb->gtb_color.b = 1.0;
     update = 1;
+    LIST_INSERT_HEAD(&gr->gr_gtbs, gtb, gtb_global_link);
   }
 
   do {
@@ -774,24 +774,6 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
 
     } else {
 
-      while((y = TAILQ_FIRST(&w->glw_childs)) != NULL)
-	glw_destroy0(y);
-
-      l = w->glw_caption ? strlen(w->glw_caption) : 0;
-
-#if 0
-      if(l && w->glw_class == GLW_LABEL && strchr(w->glw_caption, '\n')) {
-	/* Label is multiline */
-	glw_text_bitmap_multiline(gtb, l);
-	glw_signal_handler_register(w, glw_text_bitmap_multiline_callback,
-				    NULL, GLW_SIGNAL_PRI_INTERNAL - 1);
-	return;
-      }
-
-      glw_signal_handler_unregister(w, glw_text_bitmap_multiline_callback,
-				    NULL);
-#endif
-
       l = w->glw_caption ? strlen(w->glw_caption) : 0;
       
       if(w->glw_class == GLW_TEXT) /* Editable */
@@ -818,8 +800,6 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
       gtb->gtb_status = GTB_NEED_RERENDER;
   }
 
-  if(init) /* We do this here in case we break out for multiline editing */
-    LIST_INSERT_HEAD(&gr->gr_gtbs, gtb, gtb_global_link);
 }
 
 
