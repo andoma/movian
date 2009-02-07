@@ -40,6 +40,8 @@ typedef struct glw_text_bitmap_data {
 typedef struct glw_text_bitmap {
   struct glw w;
 
+  char *gtb_caption;
+
   glw_backend_texture_t gtb_texture;
 
   int gtb_renderer_inited;

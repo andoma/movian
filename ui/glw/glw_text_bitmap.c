@@ -490,6 +490,8 @@ glw_text_bitmap_dtor(glw_t *w)
   glw_text_bitmap_t *gtb = (void *)w;
   glw_root_t *gr = w->glw_root;
 
+  free(gtb->gtb_caption);
+
   free(gtb->gtb_data.gtbd_data);
 
   LIST_REMOVE(gtb, gtb_global_link);
@@ -689,8 +691,8 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
   glw_text_bitmap_t *gtb = (void *)w;
   glw_root_t *gr = w->glw_root;
   glw_attribute_t attrib;
-  int l, update = 0, x, c;
-  const char *str;
+  int l, x, c, update = 0;
+  const char *str, *caption = NULL;
   char buf[30];
 
   glw_signal_handler_int(w, glw_text_bitmap_callback);
@@ -717,8 +719,16 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
       break;
 
     case GLW_ATTRIB_CAPTION:
-      (void)va_arg(ap, char *);
-      update = 1;
+      caption = va_arg(ap, char *);
+
+      update = strcmp(caption ?: "", gtb->gtb_caption ?: "");
+
+      free(gtb->gtb_caption);
+
+      if(caption != NULL) 
+	gtb->gtb_caption = strdup(caption);
+      else
+	gtb->gtb_caption = NULL;
       break;
 
     case GLW_ATTRIB_INT_STEP:
@@ -756,8 +766,8 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
 
     if(w->glw_class == GLW_INTEGER) {
 
-      if(w->glw_caption != NULL) {
-	snprintf(buf, sizeof(buf), w->glw_caption, gtb->gtb_int);
+      if(gtb->gtb_caption != NULL) {
+	snprintf(buf, sizeof(buf), gtb->gtb_caption, gtb->gtb_int);
       } else {
 	snprintf(buf, sizeof(buf), "%d", gtb->gtb_int);
       }
@@ -766,12 +776,12 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
 
     } else {
 
-      l = w->glw_caption ? strlen(w->glw_caption) : 0;
+      l = gtb->gtb_caption ? strlen(gtb->gtb_caption) : 0;
       
       if(w->glw_class == GLW_TEXT) /* Editable */
 	l = GLW_MAX(l, 100);
 
-      str = w->glw_caption;
+      str = gtb->gtb_caption;
     }
       
     gtb->gtb_uc_buffer = realloc(gtb->gtb_uc_buffer, l * sizeof(int));

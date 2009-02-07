@@ -207,16 +207,6 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       w->glw_aspect = va_arg(ap, double);
       break;
 
-    case GLW_ATTRIB_CAPTION:
-      v = va_arg(ap, char *);
-      if(w->glw_caption != NULL) {
-	if(!strcmp(w->glw_caption, v ?: ""))
-	  break; /* no change */
-	free(w->glw_caption);
-      }
-      w->glw_caption = strdup(v ?: "");
-      break;
-
     case GLW_ATTRIB_ID:
       v = va_arg(ap, char *);
       free((void *)w->glw_id);
@@ -602,9 +592,6 @@ glw_destroy0(glw_t *w)
 
     TAILQ_REMOVE(&p->glw_childs, w, glw_parent_link);
   }
-
-  if(w->glw_caption != NULL)
-    free((void *)w->glw_caption);
 
   free((void *)w->glw_id);
 
