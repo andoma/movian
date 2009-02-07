@@ -308,3 +308,40 @@ nav_play_video( const char *url, struct media_pipe *mp,
   }
   return nb->nb_play_video(url, mp, errbuf, errlen);
 }
+
+
+
+
+/**
+ * Static content
+ */
+static int
+be_page_canhandle(const char *url)
+{
+  return !strncmp(url, "page://", strlen("page://"));
+}
+
+
+/**
+ *
+ */
+static int
+be_page_open(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
+{
+  nav_page_t *n = nav_page_create(url0, sizeof(nav_page_t), NULL, 0);
+  prop_t *p = n->np_prop_root;
+  prop_set_string(prop_create(p, "type"), url0 + strlen("page://"));
+  *npp = n;
+  return 0;
+}
+
+
+/**
+ *
+ */
+nav_backend_t be_page = {
+  .nb_canhandle = be_page_canhandle,
+  .nb_open = be_page_open,
+};
+
+
