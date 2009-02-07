@@ -45,13 +45,6 @@ SRCS-$(CONFIG_LIBASOUND)  += alsa_audio.c
 VPATH += audio/dummy
 SRCS  += dummy_audio.c
 
-
-#
-# Various backends
-#
-VPATH += backends
-SRCS  += be_page.c
-
 #
 # Playqueue
 #
