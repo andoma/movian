@@ -75,7 +75,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
       glw_render(&gi->gi_gr, &rc0, 
 		 GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
 		 &glt->glt_texture,
-		 w->glw_col.r, w->glw_col.g, w->glw_col.b, alpha_self);
+		 gi->gi_color.r, gi->gi_color.g, gi->gi_color.b, alpha_self);
 
    
     if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
@@ -93,7 +93,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
       glw_render(&gi->gi_gr, rc, 
 		 GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
 		 &glt->glt_texture,
-		 w->glw_col.r, w->glw_col.g, w->glw_col.b, alpha_self);
+		 gi->gi_color.r, gi->gi_color.g, gi->gi_color.b, alpha_self);
 
     if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
 
@@ -343,6 +343,12 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
     case GLW_ATTRIB_MIRROR:
       gi->gi_mirror = va_arg(ap, int);
       gi->gi_render_init = 1;
+      break;
+
+    case GLW_ATTRIB_RGB:
+      gi->gi_color.r = va_arg(ap, double);
+      gi->gi_color.g = va_arg(ap, double);
+      gi->gi_color.b = va_arg(ap, double);
       break;
 
     default:

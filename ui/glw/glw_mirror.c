@@ -65,9 +65,7 @@ glw_mirror_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
     a = (1 - rc->rc_fullscreen) * rc->rc_alpha;
 
-    glColor3f(w->glw_col.r * a,
-	      w->glw_col.g * a,
-	      w->glw_col.b * a);
+    glColor3f(a, a, a);
 
     glVertex3f(-10.0f, -1.0f, 1.0f);
     glVertex3f( 10.0f, -1.0f, 1.0f);

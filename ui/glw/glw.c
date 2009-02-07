@@ -263,12 +263,6 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       w->glw_displacement.z = va_arg(ap, double);
       break;
 
-    case GLW_ATTRIB_RGB:
-      w->glw_col.r = va_arg(ap, double);
-      w->glw_col.g = va_arg(ap, double);
-      w->glw_col.b = va_arg(ap, double);
-      break;
-
     case GLW_ATTRIB_TIME:
       w->glw_time = va_arg(ap, double);
       break;
@@ -420,9 +414,6 @@ glw_create0(glw_root_t *gr, glw_class_t class, va_list ap)
   w->glw_class = class;
   w->glw_alpha = 1.0f;
   w->glw_conf_weight = 1.0f;
-  w->glw_col.r = 1.0f;
-  w->glw_col.g = 1.0f;
-  w->glw_col.b = 1.0f;
   w->glw_time = 1.0f;
 
   /* XXX: Not good */

@@ -373,7 +373,6 @@ typedef struct glw {
 
   glw_vertex_t glw_displacement;
 
-  glw_rgb_t glw_col;                 /* Primary widget color */
   float glw_conf_weight;             /* Relative weight (configured) */
   float glw_norm_weight;             /* Relative weight (normalized) */
   float glw_aspect;                  /* Aspect */

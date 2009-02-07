@@ -51,6 +51,8 @@ typedef struct glw_image {
   float gi_child_xs;
   float gi_child_ys;
 
+  glw_rgb_t gi_color;
+
 } glw_image_t;
 
 void glw_image_ctor(glw_t *w, int init, va_list ap);
