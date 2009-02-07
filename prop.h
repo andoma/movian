@@ -19,6 +19,7 @@
 #ifndef PROP_H__
 #define PROP_H__
 
+#include <libhts/htsthreads.h>
 #include <libhts/htsq.h>
 #include <stdlib.h>
 
