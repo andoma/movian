@@ -40,6 +40,9 @@
 
 static int glw_text_getutf8(const char **s);
 
+static void gtb_notify(glw_text_bitmap_t *gtb);
+
+
 static FT_Library glw_text_library;
 
 typedef struct glyph {
@@ -571,6 +574,21 @@ insert_char(glw_text_bitmap_t *gtb, int ch)
 }
 
 
+/**
+ *
+ */
+static void
+gtb_unbind(glw_text_bitmap_t *gtb)
+{
+  if(gtb->gtb_sub != NULL)
+    prop_unsubscribe(gtb->gtb_sub);
+
+  if(gtb->gtb_p != NULL) {
+    prop_ref_dec(gtb->gtb_p);
+    gtb->gtb_p = NULL;
+  }
+}
+
 
 
 /*
@@ -587,6 +605,9 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
   switch(signal) {
   default:
+    break;
+  case GLW_SIGNAL_DESTROY:
+    gtb_unbind(gtb);
     break;
   case GLW_SIGNAL_LAYOUT:
     glw_text_bitmap_layout(w, extra);
@@ -648,17 +669,14 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
       if(!del_char(gtb)) 
 	break;
       
-      if(gtb->gtb_status != GTB_ON_QUEUE)
-	gtb->gtb_status = GTB_NEED_RERENDER;
+      gtb_notify(gtb);
       return 1;
 
     case EVENT_UNICODE:
       eu = extra;
 
-      if(insert_char(gtb, eu->sym)) {
-	if(gtb->gtb_status != GTB_ON_QUEUE)
-	  gtb->gtb_status = GTB_NEED_RERENDER;
-      }
+      if(insert_char(gtb, eu->sym))
+	gtb_notify(gtb);
       return 1;
 
     case EVENT_LEFT:
@@ -681,6 +699,102 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
   return 0;
 }
 
+/**
+ *
+ */
+static void
+gtb_caption_has_changed(glw_text_bitmap_t *gtb)
+{
+  char buf[30];
+  int l, x, c;
+  const char *str;
+
+  /* Convert UTF8 string to unicode int[] */
+
+  if(gtb->w.glw_class == GLW_INTEGER) {
+    
+    if(gtb->gtb_caption != NULL) {
+      snprintf(buf, sizeof(buf), gtb->gtb_caption, gtb->gtb_int);
+    } else {
+      snprintf(buf, sizeof(buf), "%d", gtb->gtb_int);
+    }
+    str = buf;
+    l = strlen(str);
+
+  } else {
+
+    l = gtb->gtb_caption ? strlen(gtb->gtb_caption) : 0;
+    
+    if(gtb->w.glw_class == GLW_TEXT) /* Editable */
+      l = GLW_MAX(l, 100);
+    
+    str = gtb->gtb_caption;
+  }
+  
+  gtb->gtb_uc_buffer = realloc(gtb->gtb_uc_buffer, l * sizeof(int));
+  gtb->gtb_uc_size = l;
+  x = 0;
+  
+  if(str != NULL) 
+    while((c = glw_text_getutf8(&str)) != 0)
+      gtb->gtb_uc_buffer[x++] = c;
+  
+  gtb->gtb_uc_len   = x;
+  if(gtb->w.glw_class == GLW_TEXT) {
+    gtb->gtb_edit_ptr = x;
+    gtb->gtb_update_cursor = 1;
+  }
+  
+  if(gtb->gtb_status != GTB_ON_QUEUE)
+    gtb->gtb_status = GTB_NEED_RERENDER;
+}
+
+
+/**
+ *
+ */
+static void
+prop_callback(prop_sub_t *s, prop_event_t event, ...)
+{
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)s->hps_opaque;
+  glw_root_t *gr;
+  const char *caption;
+  prop_t *p;
+
+  if(gtb == NULL)
+    return;
+
+  gr = gtb->w.glw_root;
+  va_list ap;
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_SET_VOID:
+    caption = NULL;
+    p = va_arg(ap, prop_t *);
+    break;
+
+  case PROP_SET_STRING:
+    caption = va_arg(ap, char *);
+    p = va_arg(ap, prop_t *);
+    break;
+
+  default:
+    return;
+  }
+
+  if(gtb->gtb_p != NULL)
+    prop_ref_dec(gtb->gtb_p);
+
+  gtb->gtb_p = p;
+  if(p != NULL)
+    prop_ref_inc(p);
+  
+  free(gtb->gtb_caption);
+  gtb->gtb_caption = caption != NULL ? strdup(caption) : NULL;
+  gtb_caption_has_changed(gtb);
+}
+
 
 /**
  *
@@ -691,9 +805,9 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
   glw_text_bitmap_t *gtb = (void *)w;
   glw_root_t *gr = w->glw_root;
   glw_attribute_t attrib;
-  int l, x, c, update = 0;
-  const char *str, *caption = NULL;
-  char buf[30];
+  int update = 0;
+  prop_t *p;
+  const char **pname, *caption;
 
   glw_signal_handler_int(w, glw_text_bitmap_callback);
 
@@ -721,14 +835,12 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
     case GLW_ATTRIB_CAPTION:
       caption = va_arg(ap, char *);
 
+      gtb_unbind(gtb);
+
       update = strcmp(caption ?: "", gtb->gtb_caption ?: "");
 
       free(gtb->gtb_caption);
-
-      if(caption != NULL) 
-	gtb->gtb_caption = strdup(caption);
-      else
-	gtb->gtb_caption = NULL;
+      gtb->gtb_caption = caption != NULL ? strdup(caption) : NULL;
       break;
 
     case GLW_ATTRIB_INT_STEP:
@@ -753,6 +865,17 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
       gtb->gtb_color.b = va_arg(ap, double);
       break;
 
+   case GLW_ATTRIB_BIND_TO_PROPERTY:
+      p = va_arg(ap, prop_t *);
+      pname = va_arg(ap, void *);
+
+      gtb_unbind(gtb);
+
+      gtb->gtb_sub = prop_subscribe(p, pname, prop_callback, gtb, 
+				    w->glw_root->gr_courier,
+				    PROP_SUB_DIRECT_UPDATE);
+      break;
+
     default:
       GLW_ATTRIB_CHEW(attrib, ap);
       break;
@@ -760,48 +883,8 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
   } while(attrib);
 
 
-  if(update) {
-
-    /* Convert UTF8 string to unicode int[] */
-
-    if(w->glw_class == GLW_INTEGER) {
-
-      if(gtb->gtb_caption != NULL) {
-	snprintf(buf, sizeof(buf), gtb->gtb_caption, gtb->gtb_int);
-      } else {
-	snprintf(buf, sizeof(buf), "%d", gtb->gtb_int);
-      }
-      str = buf;
-      l = strlen(str);
-
-    } else {
-
-      l = gtb->gtb_caption ? strlen(gtb->gtb_caption) : 0;
-      
-      if(w->glw_class == GLW_TEXT) /* Editable */
-	l = GLW_MAX(l, 100);
-
-      str = gtb->gtb_caption;
-    }
-      
-    gtb->gtb_uc_buffer = realloc(gtb->gtb_uc_buffer, l * sizeof(int));
-    gtb->gtb_uc_size = l;
-    x = 0;
-
-    if(str != NULL) 
-      while((c = glw_text_getutf8(&str)) != 0)
-	gtb->gtb_uc_buffer[x++] = c;
-
-    gtb->gtb_uc_len   = x;
-    if(w->glw_class == GLW_TEXT) {
-      gtb->gtb_edit_ptr = x;
-      gtb->gtb_update_cursor = 1;
-    }
-
-    if(gtb->gtb_status != GTB_ON_QUEUE)
-      gtb->gtb_status = GTB_NEED_RERENDER;
-  }
-
+  if(update)
+    gtb_caption_has_changed(gtb);
 }
 
 
@@ -987,6 +1070,22 @@ glw_text_getutf8(const char **s)
 /**
  *
  */
+static void
+gtb_notify(glw_text_bitmap_t *gtb)
+{
+  char buf[100];
+  if(gtb->gtb_status != GTB_ON_QUEUE)
+    gtb->gtb_status = GTB_NEED_RERENDER;
+
+  if(gtb->gtb_p != NULL) {
+    glw_get_text0(&gtb->w, buf, sizeof(buf));
+    prop_set_string_ex(gtb->gtb_p, gtb->gtb_sub, buf);
+  }
+}
+
+/**
+ *
+ */
 int
 glw_text_bitmap_init(glw_root_t *gr, float fontsize)
 {
@@ -1035,3 +1134,5 @@ glw_font_change_size(glw_root_t *gr, float fontsize)
   gr->gr_fontsize = fontsize;
   glw_text_flush(gr);
 }
+
+
