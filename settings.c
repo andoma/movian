@@ -155,7 +155,8 @@ callback_bool(struct prop_sub *sub, prop_event_t event, ...)
 setting_t *
 settings_add_bool(prop_t *parent, const char *id, const char *title,
 		  int initial, htsmsg_t *store,
-		  setting_callback_bool_t *cb, void *opaque)
+		  setting_callback_bool_t *cb, void *opaque,
+		  int flags)
 {
   prop_t *r = settings_add(id, title, "bool");
   prop_t *v = prop_create(r, "value");
@@ -170,7 +171,9 @@ settings_add_bool(prop_t *parent, const char *id, const char *title,
   s->s_callback = cb;
   s->s_opaque = opaque;
   
-  sub = prop_subscribe(v, NULL, callback_bool, s, NULL, 0);
+  sub = prop_subscribe(v, NULL, callback_bool, s, NULL,
+		       flags & SETTINGS_INITIAL_UPDATE ?
+		       0 : PROP_SUB_NO_INITIAL_UPDATE);
   s->s_sub = sub;
   
   settings_set_parent(r, parent);
@@ -183,7 +186,7 @@ settings_add_bool(prop_t *parent, const char *id, const char *title,
  *
  */
 static void 
-callback_string(struct prop_sub *sub, prop_event_t event, ...)
+callback_opt(struct prop_sub *sub, prop_event_t event, ...)
 {
   setting_t *s = sub->hps_opaque;
   setting_callback_string_t *cb;
@@ -192,9 +195,10 @@ callback_string(struct prop_sub *sub, prop_event_t event, ...)
   va_list ap;
   va_start(ap, event);
 
+  cb = s->s_callback;
+
   if(event == PROP_SELECT_CHILD) {
     c = va_arg(ap, prop_t *);
-    cb = s->s_callback;
     cb(s->s_opaque, c ? c->hp_name : NULL);
   }
 }
@@ -216,7 +220,8 @@ settings_add_multiopt(prop_t *parent, const char *id, const char *title,
   s->s_opaque = opaque;
   s->s_prop = r;
   
-  sub = prop_subscribe(o, NULL, callback_string, s, NULL, 0);
+  sub = prop_subscribe(o, NULL, callback_opt, s, NULL, 0);
+
   s->s_sub = sub;
   
   settings_set_parent(r, parent);
@@ -243,6 +248,65 @@ settings_multiopt_add_opt(setting_t *parent, const char *id, const char *title,
     prop_select_ex(o, 0, parent->s_sub);
 }
 
+
+
+/**
+ *
+ */
+static void 
+callback_string(struct prop_sub *sub, prop_event_t event, ...)
+{
+  setting_t *s = sub->hps_opaque;
+  setting_callback_string_t *cb;
+  const char *str;
+
+  va_list ap;
+  va_start(ap, event);
+
+  cb = s->s_callback;
+
+  if(event == PROP_SET_STRING) {
+    str = va_arg(ap, char *);
+    cb(s->s_opaque, str);
+  } else {
+    cb(s->s_opaque, NULL);
+  }
+}
+
+
+
+/**
+ *
+ */
+setting_t *
+settings_add_string(prop_t *parent, const char *id, const char *title,
+		    const char *initial, htsmsg_t *store,
+		    setting_callback_string_t *cb, void *opaque,
+		    int flags)
+{
+  prop_t *r = settings_add(id, title, "string");
+  prop_t *v = prop_create(r, "value");
+  setting_t *s = malloc(sizeof(setting_t));
+  prop_sub_t *sub;
+
+  if(store != NULL)
+    initial = htsmsg_get_str(store, id);
+
+  if(initial != NULL)
+    prop_set_string(v, initial);
+
+  s->s_callback = cb;
+  s->s_opaque = opaque;
+  s->s_prop = r;
+  
+  sub = prop_subscribe(v, NULL, callback_string, s, NULL,
+		       flags & SETTINGS_INITIAL_UPDATE ?
+		       0 : PROP_SUB_NO_INITIAL_UPDATE);
+  s->s_sub = sub;
+  
+  settings_set_parent(r, parent);
+  return s;
+}
 
 
 /**

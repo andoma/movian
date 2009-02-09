@@ -20,6 +20,9 @@
 #define SETTINGS_H__
 
 #include "prop.h"
+#include <libhts/htsmsg.h>
+
+#define SETTINGS_INITIAL_UPDATE 0x1
 
 struct setting;
 typedef struct setting setting_t;
@@ -43,7 +46,8 @@ prop_t *settings_get_dirlist(prop_t *parent);
 
 setting_t *settings_add_bool(prop_t *parent, const char *id, 
 			     const char *title, int initial, htsmsg_t *store,
-			     setting_callback_bool_t *cb, void *opaque);
+			     setting_callback_bool_t *cb, void *opaque,
+			     int flags);
 
 setting_t *settings_add_multiopt(prop_t *parent, const char *id,
 				 const char *title,
@@ -51,6 +55,12 @@ setting_t *settings_add_multiopt(prop_t *parent, const char *id,
 
 void settings_multiopt_add_opt(setting_t *parent, const char *id,
 			       const char *title, int selected);
+
+setting_t *settings_add_string(prop_t *parent, const char *id, 
+			       const char *title, const char *initial, 
+			       htsmsg_t *store,
+			       setting_callback_string_t *cb, void *opaque,
+			       int flags);
 
 void settings_init(void);
 

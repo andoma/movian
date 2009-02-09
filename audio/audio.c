@@ -407,15 +407,20 @@ audio_mode_register(audio_mode_t *am)
 
   if(multich) {
     settings_add_bool(r, "phantom_center", "Phantom center",
-		      0, m, am_set_phantom_center, am);
+		      0, m, am_set_phantom_center, am,
+		      SETTINGS_INITIAL_UPDATE);
     settings_add_bool(r, "phantom_lfe", "Phantom LFE",
-		      0, m, am_set_phantom_lfe, am);
+		      0, m, am_set_phantom_lfe, am,
+		      SETTINGS_INITIAL_UPDATE);
     settings_add_bool(r, "small_front", "Small front speakers",
-		      0, m, am_set_small_front, am);
+		      0, m, am_set_small_front, am,
+		      SETTINGS_INITIAL_UPDATE);
     settings_add_bool(r, "force_downmix", "Force stereo downmix",
-		      0, m, am_set_force_downmix, am);
+		      0, m, am_set_force_downmix, am,
+		      SETTINGS_INITIAL_UPDATE);
     settings_add_bool(r, "swap_surround", "Swap LFE+center with surround",
-		      0, m, am_set_swap_surround, am);
+		      0, m, am_set_swap_surround, am,
+		      SETTINGS_INITIAL_UPDATE);
   }
 
   if(m != NULL) {

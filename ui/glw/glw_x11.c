@@ -165,11 +165,13 @@ display_settings_init(glw_x11_t *gx11)
   
   settings_add_bool(r, "fullscreen",
 		    "Fullscreen mode", 0, settings,
-		    display_set_mode, gx11);
+		    display_set_mode, gx11,
+		    SETTINGS_INITIAL_UPDATE);
 
   settings_add_bool(r, "pointer",
 		    "Mouse pointer", 1, settings,
-		    display_set_pointer, gx11);
+		    display_set_pointer, gx11,
+		    SETTINGS_INITIAL_UPDATE);
 
   htsmsg_destroy(settings);
 
