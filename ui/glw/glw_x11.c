@@ -618,6 +618,7 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
     case 8:          e = event_create_simple(EVENT_BACKSPACE); break;
     case 13:         e = event_create_simple(EVENT_ENTER);     break;
     case 27:         e = event_create_simple(EVENT_CLOSE);     break;
+    case 9:          e = event_create_simple(EVENT_FOCUS_NEXT);break;
       /* Always send 1 char ASCII */
     default:
       if(c < 32 || c == 127)
@@ -636,6 +637,8 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
     case XK_Up:      e = event_create_simple(EVENT_UP);    break;
     case XK_Down:    e = event_create_simple(EVENT_DOWN);  break;
     }
+  } else if(keysym == XK_ISO_Left_Tab) {
+    e = event_create_simple(EVENT_FOCUS_PREV);
   }
 
   if(e != NULL) {

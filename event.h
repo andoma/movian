@@ -33,6 +33,9 @@ typedef enum {
   EVENT_RIGHT,
   EVENT_ENTER,
 
+  EVENT_FOCUS_NEXT,  /* TAB */
+  EVENT_FOCUS_PREV,  /* Shift + TAB */
+
   EVENT_INCR,
   EVENT_DECR,
 
