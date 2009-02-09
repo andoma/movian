@@ -1501,7 +1501,9 @@ prop_print_tree0(prop_t *p, int indent)
 void
 prop_print_tree(prop_t *p)
 {
+  hts_mutex_lock(&prop_mutex);
   prop_print_tree0(p, 0);
+  hts_mutex_unlock(&prop_mutex);
 }
 
 
@@ -1552,6 +1554,8 @@ htsmsg_t *
 prop_tree_to_htsmsg(prop_t *p)
 {
   htsmsg_t *m = htsmsg_create();
+  hts_mutex_lock(&prop_mutex);
   prop_tree_to_htsmsg0(p, m);
+  hts_mutex_unlock(&prop_mutex);
   return m;
 }
