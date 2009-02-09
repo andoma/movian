@@ -841,6 +841,7 @@ prop_callback(prop_sub_t *s, prop_event_t event, ...)
 
     case PROP_REQ_NEW_CHILD:
     case PROP_REQ_DELETE:
+    case PROP_DESTROYED:
       return;
     }
 

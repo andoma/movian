@@ -39,6 +39,7 @@ typedef enum {
   PROP_SELECT_CHILD,
   PROP_REQ_NEW_CHILD,
   PROP_REQ_DELETE,
+  PROP_DESTROYED,
 } prop_event_t;
 
 typedef void (prop_callback_t)(struct prop_sub *sub, prop_event_t event, ...);
@@ -167,6 +168,11 @@ typedef struct prop_sub {
   prop_callback_t *hps_callback;
 
   /**
+   * Flags as passed to prop_subscribe()
+   */
+  int hps_flags;
+
+  /**
    * Pointer to courier, May never be changed. Not protected by mutex
    */
   prop_courier_t *hps_courier;
@@ -205,6 +211,7 @@ prop_sub_t *prop_subscribe(struct prop *prop, const char **name,
 
 #define PROP_SUB_DIRECT_UPDATE 0x1
 #define PROP_SUB_NO_INITIAL_UPDATE 0x2
+#define PROP_SUB_TRACK_DESTROY 0x4
 
 void prop_unsubscribe(prop_sub_t *s);
 

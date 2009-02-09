@@ -204,6 +204,11 @@ prop_courier(void *aux)
       prop_ref_dec(n->hpn_prop);
       prop_ref_dec(n->hpn_prop2);
       break;
+
+    case PROP_DESTROYED:
+      s->hps_callback(s, n->hpn_event, n->hpn_prop);
+      prop_ref_dec(n->hpn_prop);
+      break;
     }
 
     if(pc->pc_entry_mutex != NULL)
@@ -328,6 +333,21 @@ prop_notify_void(prop_sub_t *s)
 
   n->hpn_event = PROP_SET_VOID;
   n->hpn_prop2 = NULL;
+  courier_enqueue(s->hps_courier, n);
+}
+
+
+/**
+ *
+ */
+static void
+prop_notify_destroyed(prop_sub_t *s, prop_t *p)
+{
+  prop_notify_t *n = get_notify(s);
+
+  n->hpn_event = PROP_DESTROYED;
+  n->hpn_prop = p;
+  atomic_add(&p->hp_refcount, 1);
   courier_enqueue(s->hps_courier, n);
 }
 
@@ -598,6 +618,10 @@ prop_destroy0(prop_t *p)
   p->hp_type = PROP_ZOMBIE;
 
   while((s = LIST_FIRST(&p->hp_canonical_subscriptions)) != NULL) {
+
+    if(s->hps_flags & PROP_SUB_TRACK_DESTROY)
+      prop_notify_destroyed(s, p);
+
     LIST_REMOVE(s, hps_canonical_prop_link);
     s->hps_canonical_prop = NULL;
   }
@@ -746,6 +770,7 @@ prop_subscribe(struct prop *prop, const char **name,
 
   s = malloc(sizeof(prop_sub_t));
 
+  s->hps_flags = flags;
   s->hps_courier = pc ?: global_courier;
 
   LIST_INSERT_HEAD(&canonical->hp_canonical_subscriptions, s, 
@@ -1380,6 +1405,10 @@ prop_courier_destroy(prop_courier_t *pc)
     case PROP_ADD_CHILD_BEFORE:
       prop_ref_dec(n->hpn_prop);
       prop_ref_dec(n->hpn_prop2);
+      break;
+
+    case PROP_DESTROYED:
+      prop_ref_dec(n->hpn_prop);
       break;
     }
     free(n); 
