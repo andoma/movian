@@ -441,9 +441,15 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
   glw_PushMatrix(&rc0, rc);
   glw_align_1(&rc0, w->glw_alignment);
 
-  if(!glw_is_tex_inited(&gtb->gtb_texture)) {
+  if(!glw_is_tex_inited(&gtb->gtb_texture) || gtb->gtb_aspect == 0) {
 
     glw_rescale(&rc0, 1.0);
+
+    if(rc0.rc_size_y > gtb->gtb_siz_y) {
+      float s = (float)gtb->gtb_siz_y / rc0.rc_size_y;
+      glw_Scalef(&rc0, s, s, 1.0);
+    }
+
     glw_Translatef(&rc0, 1.0, 0, 0);
 
     if(gtb->gtb_paint_cursor)
@@ -820,6 +826,8 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
     gtb->gtb_color.r = 1.0;
     gtb->gtb_color.g = 1.0;
     gtb->gtb_color.b = 1.0;
+    gtb->gtb_siz_y = gr->gr_fontsize;
+
     update = 1;
     LIST_INSERT_HEAD(&gr->gr_gtbs, gtb, gtb_global_link);
   }
@@ -953,6 +961,9 @@ font_render_thread(void *aux)
     free(gtb->gtb_data.gtbd_data);
     free(gtb->gtb_data.gtbd_cursor_pos);
     memcpy(&gtb->gtb_data, &d, sizeof(glw_text_bitmap_data_t));
+
+    if(d.gtbd_siz_y == 0)
+      gtb->gtb_aspect = 0;
   }
 }
 
