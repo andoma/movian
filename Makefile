@@ -87,6 +87,7 @@ SRCS-$(CONFIG_GLW)     += glw.c \
 			glw_stack.c \
 			glw_list.c \
 			glw_deck.c \
+			glw_layer.c \
 			glw_expander.c \
 			glw_slider.c \
 			glw_rotator.c  \
