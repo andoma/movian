@@ -1488,3 +1488,55 @@ prop_print_tree(prop_t *p)
 {
   prop_print_tree0(p, 0);
 }
+
+
+
+/**
+ *
+ */
+static void
+prop_tree_to_htsmsg0(prop_t *p, htsmsg_t *m)
+{
+  prop_t *c;
+  htsmsg_t *sub;
+
+  //  fprintf(stderr, "%*.s%s: ", indent, "", p->hp_name);
+
+  switch(p->hp_type) {
+  case PROP_STRING:
+    htsmsg_add_str(m, p->hp_name, p->hp_string);
+    break;
+
+  case PROP_FLOAT:
+    break;
+
+  case PROP_INT:
+    htsmsg_add_s32(m, p->hp_name, p->hp_int);
+    break;
+
+  case PROP_DIR:
+
+    sub = htsmsg_create();
+    TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
+      prop_tree_to_htsmsg0(c, sub);
+    htsmsg_add_msg(m, p->hp_name ?: "", sub);
+    break;
+
+  case PROP_VOID:
+    break;
+    
+  case PROP_ZOMBIE:
+    break;
+  }
+}
+
+/**
+ *
+ */
+htsmsg_t *
+prop_tree_to_htsmsg(prop_t *p)
+{
+  htsmsg_t *m = htsmsg_create();
+  prop_tree_to_htsmsg0(p, m);
+  return m;
+}

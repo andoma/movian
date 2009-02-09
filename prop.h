@@ -21,6 +21,7 @@
 
 #include <libhts/htsthreads.h>
 #include <libhts/htsq.h>
+#include <libhts/htsmsg.h>
 #include <stdlib.h>
 
 struct prop;
@@ -283,6 +284,8 @@ void prop_request_delete_child_by_subscription(prop_sub_t *s);
 prop_courier_t *prop_courier_create(hts_mutex_t *entrymutex);
 
 void prop_courier_destroy(prop_courier_t *pc);
+
+htsmsg_t *prop_tree_to_htsmsg(prop_t *p);
 
 /* DEBUGish */
 const char *propname(prop_t *p);
