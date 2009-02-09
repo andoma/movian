@@ -356,6 +356,8 @@ be_settings_open(const char *url0, nav_page_t **npp,
     type  = prop_create(n->np_prop_root, "type");
     nodes = prop_create(n->np_prop_root, "nodes");
 
+    prop_set_string(prop_create(n->np_prop_root, "title"), "Global settings");
+
     prop_set_string(type, "settings");
 
     prop_link(p, nodes);
