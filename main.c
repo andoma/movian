@@ -40,6 +40,7 @@
 #include "ui/keymapper.h"
 #include "playqueue.h"
 #include "keyring.h"
+#include "bookmarks.h"
 
 hts_mutex_t ffmutex;
 int concurrency;
@@ -111,6 +112,9 @@ main(int argc, char **argv)
 
   /* Initialize audio subsystem */
   audio_init();
+
+  /* Initialize bookmarks */
+  bookmarks_init();
 
   /* Initialize user interfaces */
   ui_init();
