@@ -639,7 +639,6 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
 
   glw_model_eval_block(body, &n);
   glw_model_free_chain(body);
-
 }
 
 
@@ -1166,6 +1165,7 @@ static struct strtab classtab[] = {
   { "fx_texrot",     GLW_FX_TEXROT},
   { "slider_x",      GLW_SLIDER_X},
   { "slider_y",      GLW_SLIDER_Y},
+  { "layer",         GLW_LAYER},
 };
 
 /**

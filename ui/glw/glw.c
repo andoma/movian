@@ -43,6 +43,7 @@
 #include "glw_event.h"
 #include "glw_video.h"
 #include "glw_slider.h"
+#include "glw_layer.h"
 
 static const size_t glw_class_to_size[] = {
   [GLW_DUMMY] = sizeof(glw_t),
@@ -70,6 +71,7 @@ static const size_t glw_class_to_size[] = {
   [GLW_VIDEO] = sizeof(glw_video_t),
   [GLW_SLIDER_X] = sizeof(glw_slider_t),
   [GLW_SLIDER_Y] = sizeof(glw_slider_t),
+  [GLW_LAYER] = sizeof(glw_t),
 };
 
 /*
@@ -381,6 +383,11 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
   case GLW_SLIDER_Y:
     glw_slider_ctor(w, init, apx);
     break;
+
+  case GLW_LAYER:
+    glw_layer_ctor(w, init, apx);
+    break;
+
   }
 
   va_end(apx);

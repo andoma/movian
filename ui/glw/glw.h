@@ -84,6 +84,7 @@ typedef enum {
   GLW_VIDEO,
   GLW_SLIDER_X,
   GLW_SLIDER_Y,
+  GLW_LAYER,
 } glw_class_t;
 
 
