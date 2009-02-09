@@ -33,6 +33,8 @@ static prop_t *prop_global;
 
 static prop_courier_t *global_courier;
 
+static void prop_unsubscribe0(prop_sub_t *s);
+
 /**
  *
  */
@@ -624,6 +626,9 @@ prop_destroy0(prop_t *p)
 
     LIST_REMOVE(s, hps_canonical_prop_link);
     s->hps_canonical_prop = NULL;
+
+    if(s->hps_flags & PROP_SUB_AUTO_UNSUBSCRIBE)
+      prop_unsubscribe0(s);
   }
 
   while((s = LIST_FIRST(&p->hp_value_subscriptions)) != NULL) {
@@ -804,14 +809,13 @@ prop_subscribe(struct prop *prop, const char **name,
 }
 
 
+
 /**
  *
  */
-void
-prop_unsubscribe(prop_sub_t *s)
+static void
+prop_unsubscribe0(prop_sub_t *s)
 {
-  hts_mutex_lock(&prop_mutex);
-
   s->hps_opaque = NULL;
 
   if(s->hps_value_prop != NULL) {
@@ -823,10 +827,21 @@ prop_unsubscribe(prop_sub_t *s)
     LIST_REMOVE(s, hps_canonical_prop_link);
     s->hps_canonical_prop = NULL;
   }
-
-  hts_mutex_unlock(&prop_mutex);
-
   prop_sub_ref_dec(s);
+}
+
+
+
+
+/**
+ *
+ */
+void
+prop_unsubscribe(prop_sub_t *s)
+{
+  hts_mutex_lock(&prop_mutex);
+  prop_unsubscribe0(s);
+  hts_mutex_unlock(&prop_mutex);
 }
 
 
