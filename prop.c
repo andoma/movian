@@ -1517,8 +1517,6 @@ prop_tree_to_htsmsg0(prop_t *p, htsmsg_t *m)
   prop_t *c;
   htsmsg_t *sub;
 
-  //  fprintf(stderr, "%*.s%s: ", indent, "", p->hp_name);
-
   switch(p->hp_type) {
   case PROP_STRING:
     htsmsg_add_str(m, p->hp_name, p->hp_string);
