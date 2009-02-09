@@ -101,6 +101,9 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_CHILD_CREATED:
+    c = extra;
+    glw_set_i(c, GLW_ATTRIB_FOCUSABLE, GLW_FOCUS_LEADER, NULL);
+
     if(w->glw_selected == NULL) {
       switchfocus(w->glw_selected, extra);
       w->glw_selected = extra;
