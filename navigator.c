@@ -241,6 +241,7 @@ nav_input_event(event_t *e, void *opaque)
     return 0;
 
   case EVENT_BACKSPACE:
+  case EVENT_MAINMENU:
     break;
 
   default:
@@ -272,6 +273,9 @@ navigator_thread(void *aux)
       nav_back();
       break;
 
+    case EVENT_MAINMENU:
+      nav_open("page://mainmenu");
+      break;
 
     case EVENT_GENERIC:
       g = (event_generic_t *)e;
