@@ -466,49 +466,58 @@ eval_array(glw_model_eval_context_t *pec, token_t *t0)
 static int
 eval_assign(glw_model_eval_context_t *ec, struct token *self)
 {
-  token_t *b = eval_pop(ec), *a = eval_pop(ec);
+  token_t *b = eval_pop(ec), *a = eval_pop(ec), *t;
   prop_t *p;
-  prop_sub_t *s;
-  int r;
+  int r, i;
+  const char *propname[16];
 
-  if((a = token_resolve(ec, a)) == NULL)
-    return -1;
   if((b = token_resolve(ec, b)) == NULL)
     return -1;
 
-  if(a->propsubr != NULL) {
+  switch(a->type) {
+  case TOKEN_OBJECT_ATTRIBUTE:
+    r = a->t_attrib->set(ec, a->t_attrib, b);
+    break;
+
+  case TOKEN_PROPERTY_SUBSCRIPTION_NAME:
+    for(i = 0, t = a; t != NULL && i < 15; t = t->child)
+      propname[i++]  = t->t_string;
+    propname[i] = NULL;
+    p = prop_get_by_name(ec->prop, propname);
+
+    /* Transform TOKEN_PROPERTY_SUBSCRIPTION_NAME -> TOKEN_PROPERTY */
+
+    glw_model_free_chain(a->child);
+    a->child = NULL;
     
-    s = a->propsubr->gps_sub;
+    a->type = TOKEN_PROPERTY;
+    a->t_prop = p;
 
-    p = prop_get_by_subscription_canonical(s);
-
+  case TOKEN_PROPERTY:
+    
     switch(b->type) {
     case TOKEN_STRING:
-      prop_set_string_ex(p, s, b->t_string);
+      prop_set_string(a->t_prop, b->t_string);
       break;
     case TOKEN_INT:
-      prop_set_int_ex(p, s, b->t_int);
+      prop_set_int(a->t_prop, b->t_int);
       break;
     case TOKEN_FLOAT:
-      prop_set_float_ex(p, s, b->t_float);
+      prop_set_float(a->t_prop, b->t_float);
       break;
     case TOKEN_PROPERTY:
-      prop_link_ex(b->t_prop, p, s);
+      prop_link(b->t_prop, a->t_prop);
       break;
     default:
-      prop_set_void_ex(p, s);
+      prop_set_void(a->t_prop);
       break;
     }
-    prop_ref_dec(p);
-    eval_push(ec, b);
-    return 0;
-  }
+    r = 0;
+    break;
 
-
-  if(a->type != TOKEN_OBJECT_ATTRIBUTE)
+  default:
     return glw_model_seterr(ec->ei, self, "Invalid assignment");
-
-  r = a->t_attrib->set(ec, a->t_attrib, b);
+  }
 
   eval_push(ec, b);
   return r;
@@ -968,6 +977,7 @@ glw_model_eval_rpn0(token_t *t0, glw_model_eval_context_t *ec)
     case TOKEN_IDENTIFIER:
     case TOKEN_OBJECT_ATTRIBUTE:
     case TOKEN_VOID:
+    case TOKEN_PROPERTY:
     case TOKEN_PROPERTY_REFERENCE_NAME:
     case TOKEN_PROPERTY_SUBSCRIPTION_NAME:
     case TOKEN_PROPERTY_SUBSCRIPTION:
