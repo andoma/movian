@@ -177,11 +177,5 @@ bookmarks_init(void)
     }
 
     htsmsg_destroy(m);
-
-  } else {
-
-    bookmark_create("Video", "/storage/media/Video", NULL);
-    bookmark_create("Music", "/storage/media/Music", NULL);
-    bookmark_create("Photos", "/storage/media/Photos", NULL);
   }
 }
