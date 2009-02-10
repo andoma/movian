@@ -160,7 +160,7 @@ glw_cursor_draw(glw_root_t *gr, glw_cursor_painter_t *gcp,
   vex[3][0] =  1.0f - v * 0.5;
   vex[4][0] =  1.0f + v * 0.5;
   
-  alpha = rc->rc_alpha;
+  alpha = rc->rc_alpha * gcp->gcp_alpha_prim;
 
   glw_render_set_pre(r);
 
