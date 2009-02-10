@@ -125,7 +125,7 @@ glw_model_token_free(token_t *t)
 
   case TOKEN_STRING:
   case TOKEN_IDENTIFIER:
-  case TOKEN_PROPERTY_SUBSCRIPTION_NAME:
+  case TOKEN_PROPERTY_NAME:
     free(t->t_string);
     break;
 
@@ -189,7 +189,7 @@ glw_model_token_copy(token_t *src)
 
   case TOKEN_STRING:
   case TOKEN_IDENTIFIER:
-  case TOKEN_PROPERTY_SUBSCRIPTION_NAME:
+  case TOKEN_PROPERTY_NAME:
     dst->t_string = src->t_string ? strdup(src->t_string) : NULL;
     break;
 
@@ -328,7 +328,7 @@ token2name(token_t *t)
   case TOKEN_PROPERTY_SUBSCRIPTION:
     return "property subscription";
 
-  case TOKEN_PROPERTY_SUBSCRIPTION_NAME:
+  case TOKEN_PROPERTY_NAME:
     snprintf(buf, sizeof(buf), "<property> %s", t->t_string);
     return buf;
 

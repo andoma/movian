@@ -168,7 +168,7 @@ token_resolve(glw_model_eval_context_t *ec, token_t *t)
     return NULL;
   }
 
-  if(t->type == TOKEN_PROPERTY_SUBSCRIPTION_NAME && subscribe_prop(ec, t))
+  if(t->type == TOKEN_PROPERTY_NAME && subscribe_prop(ec, t))
       return NULL;
   
   if(t->type == TOKEN_PROPERTY_SUBSCRIPTION) {
@@ -479,13 +479,13 @@ eval_assign(glw_model_eval_context_t *ec, struct token *self)
     r = a->t_attrib->set(ec, a->t_attrib, b);
     break;
 
-  case TOKEN_PROPERTY_SUBSCRIPTION_NAME:
+  case TOKEN_PROPERTY_NAME:
     for(i = 0, t = a; t != NULL && i < 15; t = t->child)
       propname[i++]  = t->t_string;
     propname[i] = NULL;
     p = prop_get_by_name(ec->prop, propname);
 
-    /* Transform TOKEN_PROPERTY_SUBSCRIPTION_NAME -> TOKEN_PROPERTY */
+    /* Transform TOKEN_PROPERTY_NAME -> TOKEN_PROPERTY */
 
     glw_model_free_chain(a->child);
     a->child = NULL;
@@ -978,7 +978,7 @@ glw_model_eval_rpn0(token_t *t0, glw_model_eval_context_t *ec)
     case TOKEN_OBJECT_ATTRIBUTE:
     case TOKEN_VOID:
     case TOKEN_PROPERTY:
-    case TOKEN_PROPERTY_SUBSCRIPTION_NAME:
+    case TOKEN_PROPERTY_NAME:
     case TOKEN_PROPERTY_SUBSCRIPTION:
       eval_push(ec, t);
       break;
@@ -2120,7 +2120,7 @@ glwf_bind(glw_model_eval_context_t *ec, struct token *self)
   const char *propname[16];
   int i;
 
-  if(a != NULL && a->type == TOKEN_PROPERTY_SUBSCRIPTION_NAME) {
+  if(a != NULL && a->type == TOKEN_PROPERTY_NAME) {
 
     for(i = 0, t = a; t != NULL && i < 15; t = t->child)
       propname[i++]  = t->t_string;
