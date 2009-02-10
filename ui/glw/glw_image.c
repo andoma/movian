@@ -245,13 +245,13 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
       if(!gi->gi_border_scaling) {
 
 	glw_render_vtx_pos(&gi->gi_gr, 0, -1.0, -1.0, 0.0);
-	glw_render_vtx_st (&gi->gi_gr, 0,  0.0,  1.0);
+	glw_render_vtx_st (&gi->gi_gr, 0,  0.0,  1.0 * gi->gi_repeat_y);
 
 	glw_render_vtx_pos(&gi->gi_gr, 1,  1.0, -1.0, 0.0);
-	glw_render_vtx_st (&gi->gi_gr, 1,  1.0,  1.0);
+	glw_render_vtx_st (&gi->gi_gr, 1,  1.0 * gi->gi_repeat_x,  1.0 * gi->gi_repeat_y);
 
 	glw_render_vtx_pos(&gi->gi_gr, 2,  1.0,  1.0, 0.0);
-	glw_render_vtx_st (&gi->gi_gr, 2,  1.0,  0.0);
+	glw_render_vtx_st (&gi->gi_gr, 2,  1.0 * gi->gi_repeat_x,  0.0);
 
 	glw_render_vtx_pos(&gi->gi_gr, 3, -1.0,  1.0, 0.0);
 	glw_render_vtx_st (&gi->gi_gr, 3,  0.0,  0.0);
@@ -316,6 +316,8 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
     gi->gi_color.r = 1.0;
     gi->gi_color.g = 1.0;
     gi->gi_color.b = 1.0;
+    gi->gi_repeat_x = 1;
+    gi->gi_repeat_y = 1;
   }
 
   do {
@@ -352,6 +354,16 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
       gi->gi_color.r = va_arg(ap, double);
       gi->gi_color.g = va_arg(ap, double);
       gi->gi_color.b = va_arg(ap, double);
+      break;
+
+    case GLW_ATTRIB_REPEAT_X:
+      gi->gi_repeat_x = va_arg(ap, int);
+      gi->gi_render_init = 1;
+      break;
+
+    case GLW_ATTRIB_REPEAT_Y:
+      gi->gi_repeat_y = va_arg(ap, int);
+      gi->gi_render_init = 1;
       break;
 
     default:

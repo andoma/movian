@@ -53,6 +53,9 @@ typedef struct glw_image {
 
   glw_rgb_t gi_color;
 
+  int gi_repeat_x;
+  int gi_repeat_y;
+
 } glw_image_t;
 
 void glw_image_ctor(glw_t *w, int init, va_list ap);

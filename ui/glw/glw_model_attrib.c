@@ -344,6 +344,9 @@ static const token_attrib_t attribtab[] = {
   {"xslices",         set_int,    GLW_ATTRIB_X_SLICES},
   {"yslices",         set_int,    GLW_ATTRIB_Y_SLICES},
 
+  {"xrepeat",         set_int,    GLW_ATTRIB_REPEAT_X},
+  {"yrepeat",         set_int,    GLW_ATTRIB_REPEAT_Y},
+
   {"alpha",           set_float,  GLW_ATTRIB_ALPHA},
   {"alphaSelf",       set_float,  GLW_ATTRIB_ALPHA_SELF},
   {"aspect",          set_float,  GLW_ATTRIB_ASPECT},

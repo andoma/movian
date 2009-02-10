@@ -128,6 +128,8 @@ typedef enum {
   GLW_ATTRIB_BIND_TO_PROPERTY,
   GLW_ATTRIB_BIND_TO_ID,
   GLW_ATTRIB_SIZE,
+  GLW_ATTRIB_REPEAT_X,
+  GLW_ATTRIB_REPEAT_Y,
 } glw_attribute_t;
 
 #define GLW_MIRROR_X   0x1
@@ -519,6 +521,8 @@ do {						\
   case GLW_ATTRIB_MIRROR:                       \
   case GLW_ATTRIB_TRANSITION_EFFECT:            \
   case GLW_ATTRIB_FOCUSABLE:                    \
+  case GLW_ATTRIB_REPEAT_X:                     \
+  case GLW_ATTRIB_REPEAT_Y:                     \
     (void)va_arg(ap, int);			\
     break;					\
   case GLW_ATTRIB_TEXTURE_COORDS:               \
