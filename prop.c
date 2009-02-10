@@ -777,7 +777,9 @@ prop_subscribe(struct prop *prop, const char **name,
 
   } else {
 
-    p = prop_resolve_tree(name[0], prop);
+    if((p = prop_resolve_tree(name[0], prop)) == NULL)
+      return NULL;
+
     name++;
 
     hts_mutex_lock(&prop_mutex);
