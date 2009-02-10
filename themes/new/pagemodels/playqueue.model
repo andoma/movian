@@ -62,10 +62,9 @@ widget(container_y, {
 
 		.source = translate($self.media.type,
 		    [
-		     "audio",     "theme://mediameta/audio.model",
-		     "video",     "theme://mediameta/video.model"
+		     "audio", "theme://filedirectoryviews/list/audio.model",
 		     ],
-				    "theme://mediameta/void.model");
+		     "theme://filedirectoryviews/list/void.model");
 	      });
 	    });
 	  });
