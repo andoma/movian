@@ -38,8 +38,9 @@
 #define PLATE_WIDE(BODY)
 {
   widget(image, {
-    .source = "theme://images/plate256.png";
-    .textureCoords = [0.1, 0.1, 0.9, 0.9];
+    .source = "theme://images/blackbox.png";
+    .alphaSelf = 0.5;
+    .textureCoords = [0.15, 0.15, 0.85, 0.85];
     BODY;
   });
 }
@@ -55,13 +56,13 @@
 
     widget(image, {
       
-      .source = "theme://images/plate256.png";
       .focus = ENABLE;
       .focusCursor = ENABLE;
+
+      .source = "theme://images/blackbox.png";
+      .textureCoords = [0.15, 0.15, 0.85, 0.85];
       .alpha = iir(0.5 + 0.5 * isFocused(), 10);
       
-      .textureCoords = [0.1, 0.1, 0.9, 0.9];
-
       onEvent(enter, EVENTCODE);
       
       widget(container_y, {
@@ -91,12 +92,12 @@
 
     widget(image, {
       
-      .source = "theme://images/plate256.png";
       .focus = ENABLE;
       .focusCursor = ENABLE;
+
+      .source = "theme://images/blackbox.png";
+      .textureCoords = [0.15, 0.15, 0.85, 0.85];
       .alpha = iir(0.5 + 0.5 * isFocused(), 10);
-      
-      .textureCoords = [0.1, 0.1, 0.9, 0.9];
 
       onEvent(enter, EVENTCODE);
       

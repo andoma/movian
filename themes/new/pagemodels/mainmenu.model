@@ -1,15 +1,67 @@
-#include "theme://include/plates.model"
+
+#define MAINMENU_ITEM(ICON, TEXT, URL) {
+  .aspect = 1;
+  .alpha = iir(0.5 + 0.3 * isFocused(), 10);
+
+  .focus = true;
+  .focusCursor = true;
+  .source = "theme://images/blackbox.png";
+  .textureCoords = [0.15, 0.15, 0.85, 0.85];
+
+  onEvent(enter, genericEvent(navigator, open, URL));
+      
+  widget(container_y, {
+    widget(image, {
+      .source = ICON;
+      .keepAspect = true;
+    });
+
+    widget(label, {
+      .weight = 0.3;
+      .align = center;
+      .caption = TEXT;
+    });
+    
+  });
+}
+
 
 widget(container_y, {
 
-  space(8);
-
+  space(0.3);
 
   widget(stack_x, {
-    BUTTON(1, 2, "Settings", "theme://icons/config.png",
-	   genericEvent(navigator, open, "settings:"));
-
-    BUTTON(1, 2, "Playqueue", "theme://icons/config.png",
-	   genericEvent(navigator, open, "playqueue:"));
+    .align = center;
+    .slices = 6;
+    cloner($global.settings.bookmarks.nodes, image, {
+      MAINMENU_ITEM(devoidify($self.icon, "theme://icons/dir.png"),
+		    $self.title, $self.url);
+    });
   });
+
+  space(0.3);
+
+  widget(stack_x, {
+    .align = center;
+
+    /* TODO: Autodetected media */
+  });
+
+  space(0.3);
+
+  widget(stack_x, {
+    .align = center;
+
+    widget(image, {
+      MAINMENU_ITEM("theme://icons/config.png", "Settings", "settings:");
+    });
+
+    widget(image, {
+      MAINMENU_ITEM("theme://icons/playqueue.png", "Playqueue", "playqueue:");
+    });
+
+  });
+
+
+  space(0.3);
 });

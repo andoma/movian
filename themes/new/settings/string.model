@@ -1,0 +1,16 @@
+widget(container_x, {
+
+  widget(label, {
+    .aspect = 20;
+    .align = right;
+    .caption = $self.title + ":";
+  });
+
+  widget(text, {
+    .focusCursor = true;
+    .focus = true;
+
+    .aspect = 20;
+    bind(&self.value);
+  });
+});

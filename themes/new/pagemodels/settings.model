@@ -1,7 +1,12 @@
 #include "theme://include/plates.model"
 
-
 widget(container_y, {
+
+  widget(label, {
+    .size = 2.0f;
+    .align = center;
+    .caption = $self.title;
+  });
 
   widget(list_y, {
     .weight = 10;
@@ -9,19 +14,20 @@ widget(container_y, {
     .slices = 10;
     cloner($page.nodes, container_z, {
       PLATE_WIDE(
-        widget(animator, {
-	  .source = "theme://settings/" + $self.type + ".model";
-	});
-      );
+		 widget(animator, {
+		   .source = "theme://settings/" + $self.type + ".model";
+		 });
+		 );
     });
   });
 
-  widget(container_x, {
-    BUTTON_IMAGE($page.mayadd, 2.0, "theme://icons/add.png", {
+  widget(stack_x, {
+    .align = center;
+    BUTTON_IMAGE($page.mayadd, 1.0, "theme://icons/add.png", {
       createChild($page.nodes);
     });
-    space(6.0);
   });
+  space(1.0);
 });
 
 

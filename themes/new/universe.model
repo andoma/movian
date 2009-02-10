@@ -10,108 +10,20 @@ widget(cursor, {
     widget(fx_texrot, {
       .source = "theme://images/caribbean.png";
     });
-    
-    widget(container_y, {
+
+    widget(layer, {
+
+      widget(deck, {
+	cloner($global.nav.pages, animator, {
+	  .time = 0.3;
+	  .source = "theme://pagemodels/" + $page.type + ".model";
+	});
+      });
       
-      /**
-       * Top
-       */
-      widget(image, {
-	.source = "theme://images/alphashade.png";
-	.alphaSelf = 0.2;
-	
-	widget(container_y, {
-	  space(0.1);
-
-	  widget(container_x, {
-
-	    space(0.1);
-
-	    BUTTON(1, 1, "Home", "theme://icons/home.png",
-		   genericEvent(navigator, open, "page://mainmenu"));
-
-	    space(0.1);
-
-	    BUTTON(1, 1, "Back", "theme://icons/back.png",
-		   genericEvent(navigator, back, ""));
-	    
-	    widget(label, {
-	      .aspect = 40;
-	      .weight = 20;
-	      .caption = $global.nav.currentpage.url;
-	    });
-	  });
-	  space(0.1);
-	});
+      cloner($global.popups, animator, {
+	.source = "theme://popups/" + $self.type + ".model";
       });
-
-      /**
-       * Mid
-       */
-      widget(container_x, {
-	.weight = 10;
-	
-	cloner($global.popups, animator, {
-	  .source = "theme://popups/" + $self.type + ".model";
-	});
-
-	space(0.01);
-	
-	widget(deck, {
-	  .debug = true;
-	  
-	  cloner($global.nav.pages, animator, {
-	    .focus = leader;
-	    .time = 0.3;
-	    .source = "theme://pagemodels/" + $page.type + ".model";
-	  });
-	});
-	space(0.01);
-      });
-
-
-
-
-      /**
-       * Bottom 
-       */
-      widget(image, {
-	.mirrory = true;
-	.source = "theme://images/alphashade.png";
-	.alphaSelf = 0.2;
-	
-	widget(container_y, {
-	  space(0.1);
-
-	  widget(label, {
-	    .caption = $global.currentmedia.meta.title;
-	  });
-
-	  widget(container_x, {
-	    widget(label, {
-	      .caption = value2duration($global.currentmedia.currenttime);
-	    });
-
-	    widget(slider_x, {
-	      .weight = 20;
-	      bind(&global.currentmedia.currenttime);
-	      .focus = true;
-	      .max = $global.currentmedia.meta.duration;
-	      widget(image, {
-		.source = "theme://icons/bubble.png";
-		.keepAspect = true;
-	      });
-	    });
-
-	    widget(label, {
-	      .caption = value2duration($global.currentmedia.meta.duration);
-	    });
-	  });
-
-	  space(0.1);
-	});
-      });
-
     });
+
   });
 });

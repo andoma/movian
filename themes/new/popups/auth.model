@@ -1,68 +1,82 @@
 #include "theme://include/plates.model"
 
-widget(stack_y, {
-  .align = center;
+widget(container_y, {
 
-  widget(label, {
-    .aspect = 20;
-    .align = center;
-    .caption = $self.id;
+  space(0.5);
+
+  widget(stack_y, {
+    
+    widget(image, {
+      .aspect = 1.5;
+      .source = "theme://images/blackbox.png";
+      .alphaSelf = 0.8;
+      .textureCoords = [0.15, 0.15, 0.85, 0.85];
+   
+      
+      widget(container_y, {
+
+	widget(label, {
+	  .aspect = 20;
+	  .align = center;
+	  .caption = $self.id;
+	});
+	widget(label, {
+	  .aspect = 20;
+	  .align = center;
+	  .caption = $self.reason;
+	});
+
+
+
+	widget(container_y, {
+	  .aspect = 10;
+
+	  widget(label, {
+	    .caption = "Username:";
+	  });
+
+	  widget(text, {
+	    .id = "username";
+	    .focus = 1;
+	    .focusCursor = true;
+	    .weight = 2;
+	    .caption = $self.username;
+	  });
+	});
+
+	widget(container_y, {
+	  .aspect = 10;
+
+	  widget(label, {
+	    .caption = "Password:";
+	  });
+
+	  widget(text, {
+	    .id = "password";
+	    .focus = 1;
+	    .focusCursor = true;
+	    .password = true;
+	    .weight = 2;
+	    .caption = $self.password;
+	  });
+	});
+
+	widget(stack_x, {
+	  .aspect = 10;
+	  .align = center;
+
+	  BUTTON(1, 2, "Ok", "theme://icons/ok.png", {
+	    $self.username = getCaption("username");
+	    $self.password = getCaption("password");
+	    $self.result = "ok";
+	  });
+
+	  BUTTON(1, 2, "Cancel", "theme://icons/cancel.png", {
+	    $self.result = "cancel";
+	  });
+	});
+      });
+    });
   });
-  widget(label, {
-    .aspect = 20;
-    .align = center;
-    .caption = $self.reason;
-  });
-
-
-
-  widget(container_y, {
-    .aspect = 10;
-
-    widget(label, {
-      .caption = "Username:";
-    });
-
-    widget(text, {
-      .id = "username";
-      .focus = 1;
-      .focusCursor = true;
-      .align = center;
-      .weight = 2;
-      .caption = $self.username;
-    });
-  });
-
-  widget(container_y, {
-    .aspect = 10;
-
-    widget(label, {
-      .caption = "Password:";
-    });
-
-    widget(text, {
-      .id = "password";
-      .focus = 1;
-      .focusCursor = true;
-      .password = true;
-      .align = center;
-      .weight = 2;
-      .caption = $self.password;
-    });
-  });
-
-  widget(stack_x, {
-    .aspect = 10;
-    .align = center;
-
-    BUTTON(1, 2, "Ok", "theme://icons/ok.png", {
-      $self.username = getCaption("username");
-      $self.password = getCaption("password");
-      $self.result = "ok";
-    });
-
-    BUTTON(1, 2, "Cancel", "theme://icons/cancel.png", {
-      $self.result = "cancel";
-    });
-  });
+  space(0.5);
 });

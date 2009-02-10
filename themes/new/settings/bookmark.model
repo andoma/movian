@@ -1,0 +1,27 @@
+#include "theme://include/plates.model"
+
+widget(stack_x, {
+
+  widget(container_x, {
+
+    widget(text, {
+      .focusCursor = true;
+      .focus = target;
+
+      .weight = 10;
+      bind(&self.title);
+    });
+
+    widget(text, {
+      .focusCursor = true;
+      .focus = target;
+
+      .weight = 20;
+      bind(&self.url);
+    });
+  });
+  BUTTON(1, 1,  "Delete", "theme://icons/delete.png", {
+    delete($self);
+  });
+
+});
