@@ -721,6 +721,41 @@ prop_subfind(prop_t *p, const char **name, int follow_symlinks)
   return p;
 }
 
+/**
+ *
+ */
+static prop_t *
+prop_resolve_tree(const char *name, prop_t *p)
+{
+  if(!strcmp(name, "global"))
+    return prop_global;
+  else if(strcmp(name, "self") &&
+	  (p->hp_name == NULL || strcmp(name, p->hp_name)))
+    return NULL;
+  
+  return p->hp_type == PROP_ZOMBIE ? NULL : p;
+}
+
+/**
+ *
+ */
+prop_t *
+prop_get_by_name(struct prop *p, const char **name)
+{
+  p = prop_resolve_tree(name[0], p);
+
+  name++;
+
+  hts_mutex_lock(&prop_mutex);
+  p = prop_subfind(p, name, 0);
+
+  if(p != NULL)
+    prop_ref_inc(p);
+
+  hts_mutex_unlock(&prop_mutex);
+  return p;
+}
+
 
 /**
  *
@@ -742,19 +777,7 @@ prop_subscribe(struct prop *prop, const char **name,
 
   } else {
 
-    if(!strcmp(name[0], "global"))
-      p = prop_global;
-    else if(!strcmp(name[0], "self"))
-      p = prop;
-    else if(prop->hp_name != NULL && !strcmp(name[0], prop->hp_name))
-      p = prop;
-    else {
-      return NULL;
-    }
-
-    if(p->hp_type == PROP_ZOMBIE)
-      return NULL;
-
+    p = prop_resolve_tree(name[0], prop);
     name++;
 
     hts_mutex_lock(&prop_mutex);
