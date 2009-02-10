@@ -752,10 +752,8 @@ prop_subscribe(struct prop *prop, const char **name,
       return NULL;
     }
 
-    if(p->hp_type == PROP_ZOMBIE) {
-      hts_mutex_unlock(&prop_mutex);
+    if(p->hp_type == PROP_ZOMBIE)
       return NULL;
-    }
 
     name++;
 
