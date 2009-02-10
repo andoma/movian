@@ -978,7 +978,6 @@ glw_model_eval_rpn0(token_t *t0, glw_model_eval_context_t *ec)
     case TOKEN_OBJECT_ATTRIBUTE:
     case TOKEN_VOID:
     case TOKEN_PROPERTY:
-    case TOKEN_PROPERTY_REFERENCE_NAME:
     case TOKEN_PROPERTY_SUBSCRIPTION_NAME:
     case TOKEN_PROPERTY_SUBSCRIPTION:
       eval_push(ec, t);
@@ -2121,10 +2120,7 @@ glwf_bind(glw_model_eval_context_t *ec, struct token *self)
   const char *propname[16];
   int i;
 
-  if((a = token_resolve(ec, a)) == NULL)
-    return -1;
-
-  if(a != NULL && a->type == TOKEN_PROPERTY_REFERENCE_NAME) {
+  if(a != NULL && a->type == TOKEN_PROPERTY_SUBSCRIPTION_NAME) {
 
     for(i = 0, t = a; t != NULL && i < 15; t = t->child)
       propname[i++]  = t->t_string;

@@ -11,6 +11,6 @@ widget(container_x, {
     .focus = true;
 
     .aspect = 20;
-    bind(&self.value);
+    bind($self.value);
   });
 });

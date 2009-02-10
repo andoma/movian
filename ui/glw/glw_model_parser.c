@@ -114,7 +114,6 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
     case TOKEN_ARRAY:
     case TOKEN_BLOCK:
     case TOKEN_PROPERTY_SUBSCRIPTION_NAME:
-    case TOKEN_PROPERTY_REFERENCE_NAME:
     case TOKEN_VOID:
       t = tokenqueue_enqueue(&outq, t);
       continue;
@@ -204,13 +203,11 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei)
     /**
      * Transform [$&]foo.bar.etc into a property chain
      */
-    if((t->type == TOKEN_DOLLAR || t->type == TOKEN_AMPERSAND) &&
-       t1 != NULL && t1->type == TOKEN_IDENTIFIER) {
+    if(t->type == TOKEN_DOLLAR && t1 != NULL && t1->type == TOKEN_IDENTIFIER) {
 
       t0 = t2 = t;
       
-      t0->type = t->type == TOKEN_DOLLAR ? TOKEN_PROPERTY_SUBSCRIPTION_NAME :
-	TOKEN_PROPERTY_REFERENCE_NAME;
+      t0->type = TOKEN_PROPERTY_SUBSCRIPTION_NAME;
       t0->next = t1->next;
       t0->t_string = t1->t_string;
       t1->t_string = NULL;

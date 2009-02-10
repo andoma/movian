@@ -9,7 +9,7 @@ widget(stack_x, {
       .focus = target;
 
       .weight = 10;
-      bind(&self.title);
+      bind($self.title);
     });
 
     widget(text, {
@@ -17,7 +17,7 @@ widget(stack_x, {
       .focus = target;
 
       .weight = 20;
-      bind(&self.url);
+      bind($self.url);
     });
   });
   BUTTON(1, 1,  "Delete", "theme://icons/delete.png", {
