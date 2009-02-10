@@ -470,9 +470,23 @@ eval_assign(glw_model_eval_context_t *ec, struct token *self)
   prop_t *p;
   int r, i;
   const char *propname[16];
+  event_keydesc_t *ek;
 
-  if((b = token_resolve(ec, b)) == NULL)
+  /* Catch some special rvalues here */
+
+  if(b->type == TOKEN_PROPERTY_NAME && !strcmp(b->t_string, "event")) {
+    /* Assignment from $event, if our eval context has an event use it */
+    if(ec->event == NULL || ec->event->e_type != EVENT_KEYDESC)
+      return 0;
+    
+    ek = (event_keydesc_t *)ec->event;
+
+    b = eval_alloc(self, ec, TOKEN_STRING);
+    b->t_string = strdup(ek->desc);
+  } else if((b = token_resolve(ec, b)) == NULL) {
     return -1;
+  }
+
 
   switch(a->type) {
   case TOKEN_OBJECT_ATTRIBUTE:
@@ -902,22 +916,6 @@ subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
     propname[i++]  = t->t_string;
 
   propname[i] = NULL;
-
-  if(i == 1 && !strcmp(propname[0], "event") && ec->event != NULL &&
-     ec->event->e_type == EVENT_KEYDESC) {
-
-    event_keydesc_t *ek = (event_keydesc_t *)ec->event;
-
-    /* Hack, if user ask for $event, try to translate the event 
-     * into something clever.
-     * I don't like this very much, but it'll have to do for now 
-     */
-
-    t = eval_alloc(self, ec, TOKEN_STRING);
-    t->t_string = strdup(ek->desc);
-    eval_push(ec, t);
-    return 0;
-  }
 
   gps = calloc(1, sizeof(glw_prop_sub_t));
 
