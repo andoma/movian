@@ -1,8 +1,15 @@
 #include "theme://include/plates.model"
 
 widget(container_y, {
-  space(0.02);
+
+  widget(label, {
+    .size = 2.0f;
+    .align = center;
+    .caption = "Playqueue";
+  });
+
   widget(list_y, {
+    .weight = 10;
     .focus = leader;
     .slices = 20;
     cloner($page.nodes, container_y, {
@@ -67,5 +74,4 @@ widget(container_y, {
 
     });
   });
-  space(0.02);
 });
