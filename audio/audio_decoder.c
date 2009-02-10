@@ -440,177 +440,177 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
 
 
 
- /**
-  * Audio mixing stage 1
-  *
-  * All stages that reduces the number of channels is performed here.
-  * This reduces the CPU load required during the (optional) resampling.
-  */
- static void
- audio_mix1(audio_decoder_t *ad, audio_mode_t *am, 
-	    int channels, int rate, enum CodecID codec_id,
-	    int16_t *data0, int frames, int64_t pts,
-	    media_pipe_t *mp)
- {
-   const uint8_t *swizzle;
-   volume_control_t *vc = &global_volume; // Needed for soft-gain
-   int16_t tmp[AUDIO_CHAN_MAX];
-   int x, y, z, i, c;
-   int16_t *data, *src, *dst;
-   int rf = rateflag_from_rate(rate);
+/**
+ * Audio mixing stage 1
+ *
+ * All stages that reduces the number of channels is performed here.
+ * This reduces the CPU load required during the (optional) resampling.
+ */
+static void
+audio_mix1(audio_decoder_t *ad, audio_mode_t *am, 
+	   int channels, int rate, enum CodecID codec_id,
+	   int16_t *data0, int frames, int64_t pts,
+	   media_pipe_t *mp)
+{
+  const uint8_t *swizzle;
+  volume_control_t *vc = &global_volume; // Needed for soft-gain
+  int16_t tmp[AUDIO_CHAN_MAX];
+  int x, y, z, i, c;
+  int16_t *data, *src, *dst;
+  int rf = rateflag_from_rate(rate);
 
-   /**
-    * Source channel swizzling
-    */
-   swizzle = NULL;
-   switch(codec_id) {
-   case CODEC_ID_DTS:
-     if(channels > 2)
-       swizzle = swizzle_dts;
-     break;
+  /**
+   * Source channel swizzling
+   */
+  swizzle = NULL;
+  switch(codec_id) {
+  case CODEC_ID_DTS:
+    if(channels > 2)
+      swizzle = swizzle_dts;
+    break;
 
-   case CODEC_ID_AAC:
-     if(channels > 2)
-       swizzle = swizzle_aac;
-     break;
+  case CODEC_ID_AAC:
+    if(channels > 2)
+      swizzle = swizzle_aac;
+    break;
 
-   case CODEC_ID_AC3:
-     if(channels > 2)
-       swizzle = swizzle_ac3;
-     break;
-   default:
-     break;
-   }
+  case CODEC_ID_AC3:
+    if(channels > 2)
+      swizzle = swizzle_ac3;
+    break;
+  default:
+    break;
+  }
 
-   if(swizzle != NULL) {
-     data = data0;
-     for(i = 0; i < frames; i++) {
-       for(c = 0; c < channels; c++)
-	 tmp[c] = data[swizzle[c]];
+  if(swizzle != NULL) {
+    data = data0;
+    for(i = 0; i < frames; i++) {
+      for(c = 0; c < channels; c++)
+	tmp[c] = data[swizzle[c]];
 
-       for(c = 0; c < channels; c++)
-	 *data++ = tmp[c];
-     }
-   }
+      for(c = 0; c < channels; c++)
+	*data++ = tmp[c];
+    }
+  }
 
-   /**
-    * 5.1 to stereo downmixing, coeffs are stolen from AAC spec
-    */
-   if(channels == 6 && audio_mode_stereo_only(am)) {
+  /**
+   * 5.1 to stereo downmixing, coeffs are stolen from AAC spec
+   */
+  if(channels == 6 && audio_mode_stereo_only(am)) {
 
-     src = data0;
-     dst = data0;
+    src = data0;
+    dst = data0;
 
-     for(i = 0; i < frames; i++) {
+    for(i = 0; i < frames; i++) {
 
-       x = (src[0] * 26869) >> 16;
-       y = (src[1] * 26869) >> 16;
+      x = (src[0] * 26869) >> 16;
+      y = (src[1] * 26869) >> 16;
 
-       z = (src[4] * 19196) >> 16;
-       x += z;
-       y += z;
+      z = (src[4] * 19196) >> 16;
+      x += z;
+      y += z;
 
-       z = (src[5] * 13571) >> 16;
-       x += z;
-       y += z;
+      z = (src[5] * 13571) >> 16;
+      x += z;
+      y += z;
 
-       z = (src[2] * 13571) >> 16;
-       x -= z;
-       y += z;
+      z = (src[2] * 13571) >> 16;
+      x -= z;
+      y += z;
 
-       z = (src[3] * 19196) >> 16;
-       x -= z;
-       y += z;
+      z = (src[3] * 19196) >> 16;
+      x -= z;
+      y += z;
 
-       src += 6;
+      src += 6;
 
-       *dst++ = CLIP16(x);
-       *dst++ = CLIP16(y);
-     }
-     channels = 2;
-   }
+      *dst++ = CLIP16(x);
+      *dst++ = CLIP16(y);
+    }
+    channels = 2;
+  }
 
-   /**
-    * Phantom LFE, mix it into front speakers
-    */
-   if(am->am_phantom_lfe && channels > 5) {
-     data = data0;
-     for(i = 0; i < frames; i++) {
-       x = data[0];
-       y = data[1];
+  /**
+   * Phantom LFE, mix it into front speakers
+   */
+  if(am->am_phantom_lfe && channels > 5) {
+    data = data0;
+    for(i = 0; i < frames; i++) {
+      x = data[0];
+      y = data[1];
 
-       z = (data[5] * 46334) >> 16;
-       x += z;
-       y += z;
+      z = (data[5] * 46334) >> 16;
+      x += z;
+      y += z;
 
-       data[0] = CLIP16(x);
-       data[1] = CLIP16(y);
-       data[5] = 0;
-       data += channels;
-     }
-   }
-
-
-   /**
-    * Phantom center, mix it into front speakers
-    */
-   if(am->am_phantom_center && channels > 4) {
-     data = data0;
-     for(i = 0; i < frames; i++) {
-       x = data[0];
-       y = data[1];
-
-       z = (data[4] * 46334) >> 16;
-       x += z;
-       y += z;
-
-       data[0] = CLIP16(x);
-       data[1] = CLIP16(y);
-       data[4] = 0;
-       data += channels;
-     }
-   }
+      data[0] = CLIP16(x);
+      data[1] = CLIP16(y);
+      data[5] = 0;
+      data += channels;
+    }
+  }
 
 
-   /**
-    * Apply softgain, (if needed)
-    */
+  /**
+   * Phantom center, mix it into front speakers
+   */
+  if(am->am_phantom_center && channels > 4) {
+    data = data0;
+    for(i = 0; i < frames; i++) {
+      x = data[0];
+      y = data[1];
 
-   if(vc->vc_soft_gain_needed) {
-     data = data0;
-     for(i = 0; i < frames; i++) {
-       for(c = 0; c < channels; c++)
-	 data[c] = CLIP16((data[c] * vc->vc_soft_gain[c]) >> 16);
-       data += channels;
-     }
-   }
+      z = (data[4] * 46334) >> 16;
+      x += z;
+      y += z;
 
-   /**
-    * Resampling
-    */
-   if(!(rf & am->am_sample_rates)) {
+      data[0] = CLIP16(x);
+      data[1] = CLIP16(y);
+      data[4] = 0;
+      data += channels;
+    }
+  }
 
-     int dstrate = 48000;
-     int consumed;
-     int written;
-     int resbufsize = 4096;
 
-     if(ad->ad_resampler_srcrate  != rate    || 
-	ad->ad_resampler_dstrate  != dstrate ||
-	ad->ad_resampler_channels != channels) {
+  /**
+   * Apply softgain, (if needed)
+   */
 
-       /* Must reconfigure, close */
-       close_resampler(ad);
+  if(vc->vc_soft_gain_needed) {
+    data = data0;
+    for(i = 0; i < frames; i++) {
+      for(c = 0; c < channels; c++)
+	data[c] = CLIP16((data[c] * vc->vc_soft_gain[c]) >> 16);
+      data += channels;
+    }
+  }
 
-       ad->ad_resampler_srcrate  = rate;
-       ad->ad_resampler_dstrate  = dstrate;
-       ad->ad_resampler_channels = channels;
-     }
+  /**
+   * Resampling
+   */
+  if(!(rf & am->am_sample_rates)) {
 
-     if(ad->ad_resampler == NULL) {
-       ad->ad_resbuf = malloc(resbufsize * sizeof(int16_t) * channels);
-       ad->ad_resampler = av_resample_init(dstrate, rate, 16, 10, 0, 1.0);
-     }
+    int dstrate = 48000;
+    int consumed;
+    int written;
+    int resbufsize = 4096;
+
+    if(ad->ad_resampler_srcrate  != rate    || 
+       ad->ad_resampler_dstrate  != dstrate ||
+       ad->ad_resampler_channels != channels) {
+
+      /* Must reconfigure, close */
+      close_resampler(ad);
+
+      ad->ad_resampler_srcrate  = rate;
+      ad->ad_resampler_dstrate  = dstrate;
+      ad->ad_resampler_channels = channels;
+    }
+
+    if(ad->ad_resampler == NULL) {
+      ad->ad_resbuf = malloc(resbufsize * sizeof(int16_t) * channels);
+      ad->ad_resampler = av_resample_init(dstrate, rate, 16, 10, 0, 1.0);
+    }
 
     src = data0;
     rate= dstrate;
@@ -772,77 +772,77 @@ audio_mix2(audio_decoder_t *ad, audio_mode_t *am,
 }
 
 
- /**
-  * Enqueue audio into fifo.
-  * We slice the audio into fixed size blocks, if 'am_preferred_size' is
-  * set by the audio output module, we use that size, otherwise 1024 frames.
-  */
- static void
- audio_deliver(audio_decoder_t *ad, audio_mode_t *am, int16_t *src, 
-	       int channels, int frames, int rate, int64_t pts,
-	       media_pipe_t *mp)
- {
-   audio_buf_t *ab = ad->ad_buf;
-   audio_fifo_t *af = thefifo;
-   int outsize = am->am_preferred_size ?: 1024;
-   int c, r;
+/**
+ * Enqueue audio into fifo.
+ * We slice the audio into fixed size blocks, if 'am_preferred_size' is
+ * set by the audio output module, we use that size, otherwise 1024 frames.
+ */
+static void
+audio_deliver(audio_decoder_t *ad, audio_mode_t *am, int16_t *src, 
+	      int channels, int frames, int rate, int64_t pts,
+	      media_pipe_t *mp)
+{
+  audio_buf_t *ab = ad->ad_buf;
+  audio_fifo_t *af = thefifo;
+  int outsize = am->am_preferred_size ?: 1024;
+  int c, r;
 
-   int format;
-   int rf = rateflag_from_rate(rate);
+  int format;
+  int rf = rateflag_from_rate(rate);
 
-   switch(channels) {
-   case 2: format = AM_FORMAT_PCM_STEREO; break;
-   case 6: format = AM_FORMAT_PCM_5DOT1;  break;
-   case 8: format = AM_FORMAT_PCM_7DOT1;  break;
-   default:
-     return;
-   }
+  switch(channels) {
+  case 2: format = AM_FORMAT_PCM_STEREO; break;
+  case 6: format = AM_FORMAT_PCM_5DOT1;  break;
+  case 8: format = AM_FORMAT_PCM_7DOT1;  break;
+  default:
+    return;
+  }
 
-   while(frames > 0) {
+  while(frames > 0) {
 
-     if(ab != NULL && ab->ab_channels != channels) {
-       /* Channels have changed, flush buffer */
-       ab_free(ab);
-       ab = NULL;
-     }
+    if(ab != NULL && ab->ab_channels != channels) {
+      /* Channels have changed, flush buffer */
+      ab_free(ab);
+      ab = NULL;
+    }
 
-     if(ab == NULL) {
-       ab = af_alloc(sizeof(int16_t) * channels * outsize, mp);
-       ab->ab_channels = channels;
-       ab->ab_alloced = outsize;
-       ab->ab_format = format;
-       ab->ab_rate = rf;
-       ab->ab_frames = 0;
-       ab->ab_pts = AV_NOPTS_VALUE;
-     }
+    if(ab == NULL) {
+      ab = af_alloc(sizeof(int16_t) * channels * outsize, mp);
+      ab->ab_channels = channels;
+      ab->ab_alloced = outsize;
+      ab->ab_format = format;
+      ab->ab_rate = rf;
+      ab->ab_frames = 0;
+      ab->ab_pts = AV_NOPTS_VALUE;
+    }
 
-     if(ab->ab_pts == AV_NOPTS_VALUE && pts != AV_NOPTS_VALUE) {
-       pts -= 1000000LL * ab->ab_frames / rate;
-       ab->ab_pts = pts; 
-       pts = AV_NOPTS_VALUE;
-     }
+    if(ab->ab_pts == AV_NOPTS_VALUE && pts != AV_NOPTS_VALUE) {
+      pts -= 1000000LL * ab->ab_frames / rate;
+      ab->ab_pts = pts; 
+      pts = AV_NOPTS_VALUE;
+    }
 
 
-     r = ab->ab_alloced - ab->ab_frames;
-     c = r < frames ? r : frames;
+    r = ab->ab_alloced - ab->ab_frames;
+    c = r < frames ? r : frames;
 
-     memcpy(ab->ab_data + sizeof(int16_t) * channels * ab->ab_frames,
-	    src,          sizeof(int16_t) * channels * c);
+    memcpy(ab->ab_data + sizeof(int16_t) * channels * ab->ab_frames,
+	   src,          sizeof(int16_t) * channels * c);
 
-     src           += c * channels;
-     ab->ab_frames += c;
-     frames        -= c;
+    src           += c * channels;
+    ab->ab_frames += c;
+    frames        -= c;
 
-     if(ab->ab_frames == ab->ab_alloced) {
-       ab->ab_ref = ad; /* A reference to our decoder. This is used
-			   to revert out packets in the play queue during
-			   a pause event */
-       af_enq(af, ab);
-       ab = NULL;
-     }
-   }
-   ad->ad_buf = ab;
- }
+    if(ab->ab_frames == ab->ab_alloced) {
+      ab->ab_ref = ad; /* A reference to our decoder. This is used
+			  to revert out packets in the play queue during
+			  a pause event */
+      af_enq(af, ab);
+      ab = NULL;
+    }
+  }
+  ad->ad_buf = ab;
+}
 
 
 
