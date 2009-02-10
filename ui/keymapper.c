@@ -25,7 +25,6 @@
 #include "keymapper.h"
 #include "settings.h"
 
-static keymap_t *km_global;
 static hts_mutex_t km_mutex;
 
 /**
@@ -172,7 +171,6 @@ keymapper_resolve(const char *str, uii_t *uii)
   
   if(uii != NULL && uii->uii_km != NULL)
     keymapper_resolve0(uii->uii_km, str, uii);
-  keymapper_resolve0(km_global, str, uii);
 
   hts_mutex_unlock(&km_mutex);
 }
@@ -207,5 +205,4 @@ void
 keymapper_init(void)
 {
   hts_mutex_init(&km_mutex);
-  km_global = keymapper_create(NULL, "global", "Global keymap", NULL);
 }
