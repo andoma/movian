@@ -65,6 +65,8 @@ typedef struct glw_prop_sub {
 } glw_prop_sub_t;
 
 
+static int subscribe_prop(glw_model_eval_context_t *ec, struct token *self);
+
 /**
  *
  */
@@ -153,6 +155,33 @@ eval_alloc(token_t *src, glw_model_eval_context_t *ec, token_type_t type)
 }
 
 
+/**
+ *
+ */
+static token_t *
+token_resolve(glw_model_eval_context_t *ec, token_t *t)
+{
+  glw_prop_sub_t *gps;
+
+  if(t == NULL) {
+    glw_model_seterr(ec->ei, t, "Missing operand");
+    return NULL;
+  }
+
+  if(t->type == TOKEN_PROPERTY_SUBSCRIPTION_NAME && subscribe_prop(ec, t))
+      return NULL;
+  
+  if(t->type == TOKEN_PROPERTY_SUBSCRIPTION) {
+    ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_PROP;
+
+    gps = t->propsubr;
+
+    if((t = gps->gps_token) == NULL)
+      t = eval_alloc(t, ec, TOKEN_VOID);
+  }
+  return t;
+}
+
 
 /**
  *
@@ -179,9 +208,10 @@ eval_op(glw_model_eval_context_t *ec, struct token *self)
   int   (*i_fn)(int, int);
   int i, al, bl;
 
-  if(a == NULL || b == NULL)
-    return glw_model_seterr(ec->ei, self, "Missing operands");
-  
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+  if((b = token_resolve(ec, b)) == NULL)
+    return -1;
 
   switch(self->type) {
   case TOKEN_ADD:
@@ -314,9 +344,10 @@ eval_bool_op(glw_model_eval_context_t *ec, struct token *self)
   int   (*fn)(int, int);
   int aa, bb;
 
-  if(a == NULL || b == NULL)
-    return glw_model_seterr(ec->ei, self, "Missing operands");
-  
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+  if((b = token_resolve(ec, b)) == NULL)
+    return -1;
 
   aa = token2bool(a);
   bb = token2bool(b);
@@ -440,9 +471,11 @@ eval_assign(glw_model_eval_context_t *ec, struct token *self)
   prop_sub_t *s;
   int r;
 
-  if(a == NULL || b == NULL)
-    return glw_model_seterr(ec->ei, self, "Missing operands");
-  
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+  if((b = token_resolve(ec, b)) == NULL)
+    return -1;
+
   if(a->propsubr != NULL) {
     
     s = a->propsubr->gps_sub;
@@ -480,28 +513,6 @@ eval_assign(glw_model_eval_context_t *ec, struct token *self)
   eval_push(ec, b);
   return r;
 }
-
-
-
-/**
- *
- */
-static int
-eval_prop(glw_model_eval_context_t *ec, struct token *self)
-{
-  glw_prop_sub_t *gps = self->propsubr;
-  token_t *r;
-
-  ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_PROP;
-
-  if((r = gps->gps_token) == NULL)
-    r = eval_alloc(self, ec, TOKEN_VOID);
-
-  eval_push(ec, r);
-  return 0;
-}
-
-
 
 /**
  *
@@ -932,9 +943,7 @@ subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
 
   glw_model_free_chain(self->child);
   self->child = NULL;
-
-
-  return eval_prop(ec, self);
+  return 0;
 }
 
 
@@ -953,16 +962,6 @@ glw_model_eval_rpn0(token_t *t0, glw_model_eval_context_t *ec)
 	return -1;
       break;
 
-    case TOKEN_PROPERTY_SUBSCRIPTION:
-      if(eval_prop(ec, t))
-	return -1;
-      break;
-
-    case TOKEN_PROPERTY_SUBSCRIPTION_NAME:
-      if(subscribe_prop(ec, t))
-	return -1;
-      break;
-
     case TOKEN_BLOCK:
     case TOKEN_STRING:
     case TOKEN_FLOAT:
@@ -970,6 +969,8 @@ glw_model_eval_rpn0(token_t *t0, glw_model_eval_context_t *ec)
     case TOKEN_OBJECT_ATTRIBUTE:
     case TOKEN_VOID:
     case TOKEN_PROPERTY_REFERENCE_NAME:
+    case TOKEN_PROPERTY_SUBSCRIPTION_NAME:
+    case TOKEN_PROPERTY_SUBSCRIPTION:
       eval_push(ec, t);
       break;
 
@@ -1091,10 +1092,13 @@ static token_t *
 get_float_op(glw_model_eval_context_t *ec, token_t *self, const char *fname)
 {
   token_t *a = eval_pop(ec);
-  if(a == NULL || a->type != TOKEN_FLOAT) {
+
+  if((a = token_resolve(ec, a)) == NULL)
+    return NULL;
+  
+  if(a->type != TOKEN_FLOAT) {
     glw_model_seterr(ec->ei, self, 
-		     "%s operand to function %s",
-		     a ? "Invalid type of" : "Missing", fname);
+		     "Invalid operand to function %s", fname);
     return NULL;
   }
   return a;
@@ -1238,7 +1242,10 @@ glwf_cloner(glw_model_eval_context_t *ec, struct token *self)
     return glw_model_seterr(ec->ei, self, 
 			    "Cloner can not be created in this scope");
 
-  if(a == NULL || b == NULL || c == NULL)
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+
+  if(b == NULL || c == NULL)
     return glw_model_seterr(ec->ei, self, "Missing operands");
 
   if(b->type != TOKEN_IDENTIFIER)
@@ -1307,9 +1314,8 @@ glwf_space(glw_model_eval_context_t *ec, struct token *self)
     return glw_model_seterr(ec->ei, self, 
 			    "Widget can not be created in this scope");
 
-  if(a == NULL)
-    return glw_model_seterr(ec->ei, self, "Missing operands");
-
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
 
   if(a->type != TOKEN_FLOAT)
     return glw_model_seterr(ec->ei, self, 
@@ -1463,8 +1469,11 @@ glwf_genericEvent(glw_model_eval_context_t *ec, struct token *self)
   token_t *r;
   const char *s;
 
-  if(a == NULL || b == NULL || c == NULL)
+  if(a == NULL || b == NULL)
     return glw_model_seterr(ec->ei, self, "Missing operands");
+
+  if((c = token_resolve(ec, c)) == NULL)
+    return -1;
 
   if(a->type != TOKEN_IDENTIFIER)
     return glw_model_seterr(ec->ei, a, "genericEvent: "
@@ -1506,8 +1515,11 @@ glwf_internalEvent(glw_model_eval_context_t *ec, struct token *self)
   token_t *r;
   int dstevent;
 
-  if(a == NULL || b == NULL)
+  if(b == NULL)
     return glw_model_seterr(ec->ei, self, "Missing operands");
+
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
 
   if(a->type != TOKEN_STRING)
     return glw_model_seterr(ec->ei, a, "internalEvent: "
@@ -1551,8 +1563,10 @@ glwf_changed(glw_model_eval_context_t *ec, struct token *self)
   glwf_changed_extra_t *e = self->t_extra;
   int change = 0;
 
-  if(a == NULL || b == NULL)
-    return glw_model_seterr(ec->ei, self, "Missing operands");
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+  if((b = token_resolve(ec, b)) == NULL)
+    return -1;
 
   if(a->type != TOKEN_FLOAT && a->type != TOKEN_STRING)
     return glw_model_seterr(ec->ei, self, "Invalid first operand to changed()");
@@ -1641,6 +1655,11 @@ glwf_iir(glw_model_eval_context_t *ec, struct token *self)
 
   int x, y;
 
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+  if((b = token_resolve(ec, b)) == NULL)
+    return -1;
+
   if(a == NULL || (a->type != TOKEN_FLOAT && a->type != TOKEN_INT &&
 		   a->type != TOKEN_STRING))
     return glw_model_seterr(ec->ei, self, "Invalid first operand to iir()");
@@ -1680,10 +1699,10 @@ glwf_float2str(glw_model_eval_context_t *ec, struct token *self)
   char buf[30];
   int prec;
 
-  if(a == NULL || b == NULL) {
-    return glw_model_seterr(ec->ei, self, 
-			    "Missing operands to float2str()");
-  }
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+  if((b = token_resolve(ec, b)) == NULL)
+    return -1;
 
   if(a->type != TOKEN_FLOAT) {
     eval_push(ec, a);
@@ -1715,11 +1734,8 @@ glwf_int2str(glw_model_eval_context_t *ec, struct token *self)
   token_t *r;
   char buf[30];
 
-  if(a == NULL) {
-    return glw_model_seterr(ec->ei, self, 
-			    "Missing operant to int2str()");
-  }
-
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
 
   if(a->type == TOKEN_INT) {
     snprintf(buf, sizeof(buf), "%d", a->t_int);
@@ -1746,15 +1762,16 @@ glwf_translate(glw_model_eval_context_t *ec, struct token *self)
   int i;
   const char *s;
 
-  if(a == NULL)
-    return glw_model_seterr(ec->ei, self, 
-			    "Invalid first operand to translate()");
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+  if((c = token_resolve(ec, c)) == NULL)
+    return -1;
 
   if(b == NULL || b->type != TOKEN_VECTOR_STRING)
     return glw_model_seterr(ec->ei, self, 
 			    "Invalid second operand to translate()");
 
-  if(c == NULL || c->type != TOKEN_STRING)
+  if(c->type != TOKEN_STRING)
     return glw_model_seterr(ec->ei, self, 
 			    "Invalid third operand to translate()");
 
@@ -1788,11 +1805,16 @@ glwf_strftime(glw_model_eval_context_t *ec, struct token *self)
   struct tm tm;
   time_t t;
 
-  if(a == NULL || a->type != TOKEN_INT)
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+  if((b = token_resolve(ec, b)) == NULL)
+    return -1;
+
+  if(a->type != TOKEN_INT)
     return glw_model_seterr(ec->ei, self, 
 			    "Invalid first operand to strftime()");
 
-  if(b == NULL || b->type != TOKEN_STRING)
+  if(b->type != TOKEN_STRING)
     return glw_model_seterr(ec->ei, self, 
 			    "Invalid second operand to strftime()");
 
@@ -1820,9 +1842,8 @@ glwf_isset(glw_model_eval_context_t *ec, struct token *self)
   token_t *r;
   int rv;
 
-  if(a == NULL)
-    return glw_model_seterr(ec->ei, self, 
-			    "Missing operand to isset()");
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
 
   switch(a->type) {
   default:
@@ -1880,6 +1901,7 @@ glwf_value2duration(glw_model_eval_context_t *ec, struct token *self)
   const char *str = NULL;
   int s = 0;
 
+  a = token_resolve(ec, a);
 
   if(a == NULL) {
     str = "";
@@ -1929,7 +1951,10 @@ glwf_createchild(glw_model_eval_context_t *ec, struct token *self)
 {
   token_t *a = eval_pop(ec);
 
-  if(a == NULL || a->propsubr == NULL) {
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+
+  if(a->propsubr == NULL) {
     return glw_model_seterr(ec->ei, self, 
 			    "Invalid operand to createChild()");
   }
@@ -1948,7 +1973,10 @@ glwf_delete(glw_model_eval_context_t *ec, struct token *self)
 {
   token_t *a = eval_pop(ec);
 
-  if(a == NULL || a->propsubr == NULL) {
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+
+  if(a->propsubr == NULL) {
     return glw_model_seterr(ec->ei, self, 
 			    "Invalid operand to delete()");
   }
@@ -1987,7 +2015,12 @@ glwf_devoidify(glw_model_eval_context_t *ec, struct token *self)
   token_t *b = eval_pop(ec);
   token_t *a = eval_pop(ec);
 
-  if(a == NULL || a->type == TOKEN_VOID) {
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+  if((b = token_resolve(ec, b)) == NULL)
+    return -1;
+
+  if(a->type == TOKEN_VOID) {
     eval_push(ec, b);
   } else {
     eval_push(ec, a);
@@ -2047,6 +2080,9 @@ glwf_getCaption(glw_model_eval_context_t *ec, struct token *self)
   glw_t *w;
   char buf[100];
 
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+
   if(a != NULL && a->type == TOKEN_STRING) {
     w = glw_find_neighbour(ec->w, a->t_string);
 
@@ -2074,6 +2110,9 @@ glwf_bind(glw_model_eval_context_t *ec, struct token *self)
   token_t *t, *a = eval_pop(ec);
   const char *propname[16];
   int i;
+
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
 
   if(a != NULL && a->type == TOKEN_PROPERTY_REFERENCE_NAME) {
 
