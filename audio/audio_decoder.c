@@ -126,7 +126,6 @@ audio_decoder_destroy(audio_decoder_t *ad)
 void
 audio_decoder_acquire_output(audio_decoder_t *ad)
 {
-  printf("%s: Acquire output!\n",ad->ad_mp->mp_name);
   hts_mutex_lock(&audio_decoders_mutex);
   TAILQ_REMOVE(&audio_decoders, ad, ad_link);
   TAILQ_INSERT_HEAD(&audio_decoders, ad, ad_link);
@@ -141,23 +140,6 @@ audio_decoder_is_silenced(audio_decoder_t *ad)
 {
   return TAILQ_FIRST(&audio_decoders) != ad;
 }
-
-
-
-#if 0
-static void
-ab_enq_passthru(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb,
-		int format)
-{
-  audio_buf_t *ab;
-
-  ab = af_alloc_dynamic(mb->mb_size);
-  memcpy(ab_dataptr(ab), mb->mb_data, mb->mb_size);
-  ab->payload_type = format;
-  af_enq(&ad->ad_output->as_fifo, ab);
-  ad_update_clock(ad, mp, mb);
-}
-#endif
 
 /**
  *
@@ -378,22 +360,8 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
     rate     = ctx->sample_rate;
     codec_id = ctx->codec_id;
 
-#if 0
-    if(mp->mp_feedback != NULL) {
-      event_ts_t *et;
-
-      et = event_create(EVENT_AUDIO_CLOCK, sizeof(event_ts_t));
-      et->dts    = mb->mb_dts;
-      et->pts    = mb->mb_pts;
-      et->stream = mb->mb_stream;
-
-      event_enqueue(mp->mp_feedback, &et->h);
-      event_unref(&et->h);
-    }
-#endif
-
-  if(mb->mb_time != AV_NOPTS_VALUE)
-    mp_set_current_time(mp, mb->mb_time);
+    if(mb->mb_time != AV_NOPTS_VALUE)
+      mp_set_current_time(mp, mb->mb_time);
 
     frames = data_size / sizeof(int16_t) / channels;
 
