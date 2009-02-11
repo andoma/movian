@@ -64,7 +64,8 @@ scanner(void *aux)
   fa_dir_t *fd;
   fa_dir_entry_t *fde;
   void *ref;
-  int images = 0;
+  int images;
+  const char *s;
 
   ref = fa_reference(bfp->h.np_url);
 
@@ -81,7 +82,26 @@ scanner(void *aux)
 
   fa_dir_sort(fd);
 
-  /* First pass, just add filename and type */
+
+  images = 0;
+  /* Select a view based on filenames */
+  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+    if(bfp->bfp_stop)
+      break;
+
+    if((s = strchr(fde->fde_filename, '.')) == NULL)
+      continue;
+    s++;
+
+    if(!strcasecmp(s, "jpg") || !strcmp(s, "jpeg"))
+      images++;
+  }
+
+  if(images * 4 > fd->fd_count * 3)
+    prop_set_string(bfp->bfp_viewprop, "images");
+
+
+  /* Add filename and type */
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
 
     if(bfp->bfp_stop)
@@ -100,7 +120,8 @@ scanner(void *aux)
     prop_set_parent(p, bfp->bfp_nodes);
   }
 
-  /* Second pass, do full probe */
+  images = 0;
+  /* Do full probe */
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
 
     if(bfp->bfp_stop)
