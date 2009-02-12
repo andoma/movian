@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <assert.h>
+#include <math.h>
 
 #include "showtime.h"
 #include "audio_decoder.h"
@@ -35,7 +36,8 @@ static hts_mutex_t audio_decoders_mutex;
 #define CLIP16(a) ((a) > 32767 ? 32767 : ((a) < -32768 ? -32768 : a))
 
 static void audio_mix1(audio_decoder_t *ad, audio_mode_t *am, 
-		       int channels, int rate, enum CodecID codec_id,
+		       int channels, int rate, int64_t chlayout,
+		       enum CodecID codec_id,
 		       int16_t *data0, int frames, int64_t pts,
 		       media_pipe_t *mp);
 
@@ -112,7 +114,8 @@ audio_decoder_destroy(audio_decoder_t *ad)
   hts_mutex_unlock(&audio_decoders_mutex);
 
   close_resampler(ad);
-  av_freep(&ad->ad_outbuf);
+
+  av_free(ad->ad_outbuf);
 
   if(ad->ad_buf != NULL)
     ab_free(ad->ad_buf);
@@ -173,18 +176,6 @@ static const uint8_t swizzle_ac3[AUDIO_CHAN_MAX] = {
 /**
  *
  */
-static const uint8_t swizzle_dts[AUDIO_CHAN_MAX] = {
-  1, /* Left */
-  2, /* Right */
-  3, /* Back Left */
-  4, /* Back Right */
-  0, /* Center */
-  5, /* LFE */
-};
-
-/**
- *
- */
 static const uint8_t swizzle_aac[AUDIO_CHAN_MAX] = {
   1, /* Left */
   2, /* Right */
@@ -193,14 +184,6 @@ static const uint8_t swizzle_aac[AUDIO_CHAN_MAX] = {
   0, /* Center */
   3, /* LFE */
 };
-
-
-
-/**
- *
- */
- static const uint8_t swizzle_none[AUDIO_CHAN_MAX] = {
-   0, 1, 2, 3, 4, 5, 6, 7};
 
 /**
  *
@@ -296,6 +279,13 @@ audio_deliver_passthru(media_buf_t *mb, audio_decoder_t *ad, int format,
   af_enq(af, ab);
 }
 
+const static size_t sample_fmt_to_size[] = {
+  [SAMPLE_FMT_U8]  = sizeof(uint8_t),
+  [SAMPLE_FMT_S16] = sizeof(int16_t),
+  [SAMPLE_FMT_S32] = sizeof(int32_t),
+  [SAMPLE_FMT_FLT] = sizeof(float),
+  [SAMPLE_FMT_DBL] = sizeof(double),
+};
 
 /**
  *
@@ -305,12 +295,12 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
 {
   audio_mode_t *am = audio_mode_current;
   uint8_t *buf;
-  int size, r, data_size, channels, rate, frames, delay;
+  int size, r, data_size, channels, rate, frames, delay, i;
   codecwrap_t *cw = mb->mb_cw;
   AVCodecContext *ctx;
   enum CodecID codec_id;
-  int64_t pts;
-
+  int64_t pts, chlayout;
+  
   ctx = cw->codec_ctx;
 
 
@@ -359,11 +349,41 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
     channels = ctx->channels;
     rate     = ctx->sample_rate;
     codec_id = ctx->codec_id;
+    chlayout = ctx->channel_layout;
 
     if(mb->mb_time != AV_NOPTS_VALUE)
       mp_set_current_time(mp, mb->mb_time);
 
-    frames = data_size / sizeof(int16_t) / channels;
+    /* Convert to signed 16bit */
+
+    frames = data_size / sample_fmt_to_size[ctx->sample_fmt];
+
+    switch(ctx->sample_fmt) {
+    case SAMPLE_FMT_NONE:
+    case SAMPLE_FMT_NB:
+      return;
+
+    case SAMPLE_FMT_U8:
+      for(i = frames - 1; i >= 0; i--)
+	ad->ad_outbuf[i] = (((uint8_t *)ad->ad_outbuf)[i] - 0x80) << 8;
+	  break;
+    case SAMPLE_FMT_S16:
+      break;
+    case SAMPLE_FMT_S32:
+      for(i = 0; i < frames; i++)
+	ad->ad_outbuf[i] = ((int32_t *)ad->ad_outbuf)[i] >> 16;
+      break;
+    case SAMPLE_FMT_FLT:
+      for(i = 0; i < frames; i++)
+	ad->ad_outbuf[i] = rintf(((float *)ad->ad_outbuf)[i]) * (1 << 15);
+      break;
+    case SAMPLE_FMT_DBL:
+      for(i = 0; i < frames; i++)
+	ad->ad_outbuf[i] = rint(((float *)ad->ad_outbuf)[i]) * (1 << 15);
+      break;
+    }
+
+    frames /= channels;
 
     if(TAILQ_FIRST(&audio_decoders) == ad) {
 
@@ -376,7 +396,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
       audio_fifo_reinsert(thefifo, &ad->ad_hold_queue);
 
       if(data_size > 0)
-	audio_mix1(ad, am, channels, rate, codec_id, ad->ad_outbuf, 
+	audio_mix1(ad, am, channels, rate, chlayout, codec_id, ad->ad_outbuf, 
 		   frames, pts, mp);
 
       /**
@@ -416,11 +436,10 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
  */
 static void
 audio_mix1(audio_decoder_t *ad, audio_mode_t *am, 
-	   int channels, int rate, enum CodecID codec_id,
+	   int channels, int rate, int64_t chlayout, enum CodecID codec_id,
 	   int16_t *data0, int frames, int64_t pts,
 	   media_pipe_t *mp)
 {
-  const uint8_t *swizzle;
   volume_control_t *vc = &global_volume; // Needed for soft-gain
   int16_t tmp[AUDIO_CHAN_MAX];
   int x, y, z, i, c;
@@ -428,38 +447,104 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
   int rf = rateflag_from_rate(rate);
 
   /**
-   * Source channel swizzling
+   * Channel swizzling
    */
-  swizzle = NULL;
-  switch(codec_id) {
-  case CODEC_ID_DTS:
-    if(channels > 2)
-      swizzle = swizzle_dts;
-    break;
 
-  case CODEC_ID_AAC:
-    if(channels > 2)
-      swizzle = swizzle_aac;
-    break;
+  if(chlayout != 0 && channels > 2) {
 
-  case CODEC_ID_AC3:
-    if(channels > 2)
-      swizzle = swizzle_ac3;
-    break;
-  default:
-    break;
-  }
+    uint8_t s[AUDIO_CHAN_MAX], d[AUDIO_CHAN_MAX];
+    int ochan = 0;
 
-  if(swizzle != NULL) {
-    data = data0;
-    for(i = 0; i < frames; i++) {
-      for(c = 0; c < channels; c++)
-	tmp[c] = data[swizzle[c]];
+    x = 0;
+    i = 0;
 
-      for(c = 0; c < channels; c++)
-	*data++ = tmp[c];
+    if(chlayout & CH_FRONT_LEFT)            s[x] = i++; d[x++] = 0;
+    if(chlayout & CH_FRONT_RIGHT)           s[x] = i++; d[x++] = 1;
+    if(chlayout & CH_FRONT_CENTER)          s[x] = i++; d[x++] = 4;
+    if(chlayout & CH_LOW_FREQUENCY)         s[x] = i++; d[x++] = 5;
+    if(chlayout & CH_BACK_LEFT)             s[x] = i++; d[x++] = 6;
+    if(chlayout & CH_BACK_RIGHT)            s[x] = i++; d[x++] = 7;
+    if(chlayout & CH_FRONT_LEFT_OF_CENTER)         i++;
+    if(chlayout & CH_FRONT_RIGHT_OF_CENTER)        i++;
+    if(chlayout & CH_BACK_CENTER)                  i++;
+    if(chlayout & CH_SIDE_LEFT)             s[x] = i++; d[x++] = 2;
+    if(chlayout & CH_SIDE_RIGHT)            s[x] = i++; d[x++] = 3;
+ 
+    ochan = 0;
+    for(i = 0; i < x; i++) if(d[i] > ochan) ochan = d[i];
+    ochan++;
+
+    memset(tmp, 0, sizeof(tmp));
+
+    if(ochan > channels) {
+
+      src = data0 + frames * channels;
+      dst = data0 + frames * ochan;
+
+      for(i = 0; i < frames; i++) {
+
+	src -= channels;
+	dst -= ochan;
+
+	for(c = 0; c < x; c++)
+	  tmp[d[c]] = src[s[c]];
+      
+	for(c = 0; c < ochan; c++)
+	  dst[c] = tmp[c];
+      }
+
+    } else {
+
+      src = data0;
+      dst = data0;
+
+      for(i = 0; i < frames; i++) {
+
+	for(c = 0; c < x; c++)
+	  tmp[d[c]] = src[s[c]];
+      
+	for(c = 0; c < ochan; c++)
+	  dst[c] = tmp[c];
+
+	src += channels;
+	dst += ochan;
+      }
+    }
+
+    channels = ochan;
+
+  } else {
+
+    const uint8_t *swizzle = NULL; 
+
+    /* Fixed swizzle based on codec */
+    switch(codec_id) {
+
+    case CODEC_ID_AAC:
+      if(channels > 2)
+	swizzle = swizzle_aac;
+      break;
+
+    case CODEC_ID_AC3:
+      if(channels > 2)
+	swizzle = swizzle_ac3;
+      break;
+    default:
+      break;
+    }
+
+    if(swizzle != NULL) {
+      data = data0;
+      for(i = 0; i < frames; i++) {
+	for(c = 0; c < channels; c++)
+	  tmp[c] = data[swizzle[c]];
+
+	for(c = 0; c < channels; c++)
+	  *data++ = tmp[c];
+      }
     }
   }
+
 
   /**
    * 5.1 to stereo downmixing, coeffs are stolen from AAC spec
