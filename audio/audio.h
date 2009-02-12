@@ -28,12 +28,12 @@
  *
  * 0 - Front Left
  * 1 - Front Right
- * 2 - Rear Left
- * 3 - Rear Right
+ * 2 - Side Left
+ * 3 - Side Right
  * 4 - Center
  * 5 - LFE
- * 6 - Side Left
- * 7 - Side Right
+ * 6 - Rear Left
+ * 7 - Rear Right
  *
  */
 
