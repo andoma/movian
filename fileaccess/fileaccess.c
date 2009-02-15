@@ -32,8 +32,8 @@
 #include "fileaccess.h"
 
 #include <libavutil/avstring.h>
-#include <libavformat/avio.h>
 #include <libavcodec/avcodec.h>
+#include <libavformat/avio.h>
 
 #include <libhts/svfs.h>
 
@@ -402,7 +402,7 @@ fileaccess_init(void)
 #ifdef HAVE_LIBSMBCLIENT
   INITPROTO(smb);
 #endif
-  register_protocol(&fa_lavf_proto);
+  av_register_protocol(&fa_lavf_proto);
 }
 
 
