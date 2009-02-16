@@ -911,6 +911,11 @@ prop_set_epilogue(prop_sub_t *skipme, prop_t *p)
 void
 prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str)
 {
+  if(str == NULL) {
+    prop_set_void_ex(p, skipme);
+    return;
+  }
+
   hts_mutex_lock(&prop_mutex);
 
   if(p->hp_type == PROP_ZOMBIE) {
