@@ -57,6 +57,11 @@ SRCS  += playqueue.c
 VPATH += dvd
 SRCS  += dvd.c
 
+# HTSP
+#
+VPATH += tv
+SRCS  += htsp.c
+
 #
 # User interface common
 #
