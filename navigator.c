@@ -51,6 +51,8 @@ static void
 nav_init_be(nav_backend_t *be)
 {
   LIST_INSERT_HEAD(&nav_backends, be, nb_global_link);
+  if(be->nb_init != NULL)
+    be->nb_init();
 }
 
 

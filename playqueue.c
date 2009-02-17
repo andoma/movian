@@ -383,7 +383,7 @@ playqueue_play(const char *url, const char *parent, prop_t *meta,
 /**
  *
  */
-void
+static void
 playqueue_init(void)
 {
   hts_mutex_init(&playqueue_mutex);
@@ -442,6 +442,7 @@ be_playqueue_canhandle(const char *url)
  *
  */
 nav_backend_t be_playqueue = {
+  .nb_init = playqueue_init,
   .nb_canhandle = be_playqueue_canhandle,
   .nb_open = be_playqueue_open,
 };

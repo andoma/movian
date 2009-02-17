@@ -283,6 +283,7 @@ be_file_open(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
  *
  */
 nav_backend_t be_file = {
+  .nb_init = fileaccess_init,
   .nb_canhandle = be_file_canhandle,
   .nb_open = be_file_open,
   .nb_play_video = be_file_playvideo,

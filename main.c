@@ -31,14 +31,10 @@
 #include "arch/arch.h"
 
 #include "audio/audio.h"
-#include "fileaccess/fileaccess.h"
-#include "fileaccess/fa_imageloader.h"
-#include "fileaccess/fa_rawloader.h"
 #include "navigator.h"
 #include "settings.h"
 #include "ui/ui.h"
 #include "ui/keymapper.h"
-#include "playqueue.h"
 #include "keyring.h"
 #include "bookmarks.h"
 
@@ -101,13 +97,7 @@ main(int argc, char **argv)
   av_log_set_level(AV_LOG_QUIET);
   av_register_all();
 
-  /* Initialize fileaccess subsystem */
-  fileaccess_init();
-
-  /* Initialize playqueue */
-  playqueue_init();
-
-  /* Initialize navigator */
+  /* Initialize navigator and each of the content handlers */
   nav_init();
 
   /* Initialize audio subsystem */

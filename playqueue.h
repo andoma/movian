@@ -19,8 +19,6 @@
 #ifndef PLAYQUEUE_H__
 #define PLAYQUEUE_H__
 
-void playqueue_init(void);
-
 void playqueue_play(const char *url, const char *parent, prop_t *p, int enq);
 
 #endif /* PLAYQUEUE_H__ */
