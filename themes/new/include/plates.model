@@ -39,7 +39,7 @@
 {
   widget(image, {
     .source = "theme://images/blackbox.png";
-    .alphaSelf = 0.5;
+    .alphaSelf = iir(0.5 + 0.3 * isFocused(), 10);
     .textureCoords = [0.15, 0.15, 0.85, 0.85];
     BODY;
   });
