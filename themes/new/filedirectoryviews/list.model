@@ -13,7 +13,7 @@ widget(list_y, {
 	    
 	widget(image, {
 	  .keepAspect = true;
-	  .source = translate($self.media.type,
+	  .source = devoidify($self.media.icon, translate($self.media.type,
 			      [
 			       "archive",   "theme://icons/dir.png",
 			       "directory", "theme://icons/dir.png",
@@ -21,7 +21,7 @@ widget(list_y, {
 			       "video",     "theme://icons/movie.png",
 			       "dvd",       "theme://icons/movie.png"
 			       ],
-			      "theme://images/file.png");
+			      "theme://images/file.png"));
 	});
 	
 	    
