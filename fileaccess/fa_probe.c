@@ -278,8 +278,6 @@ fa_lavf_load_meta(prop_t *proproot, AVFormatContext *fctx, const char *url)
   char *p;
   int has_video = 0;
   int has_audio = 0;
-  const char *codectype;
-
 
   if(proproot != NULL) {
 
@@ -321,11 +319,9 @@ fa_lavf_load_meta(prop_t *proproot, AVFormatContext *fctx, const char *url)
 
     switch(avctx->codec_type) {
     case CODEC_TYPE_VIDEO:
-      codectype = "Video";
       has_video = !!codec;
       break;
     case CODEC_TYPE_AUDIO:
-      codectype = "Audio";
       has_audio = !!codec;
       break;
       
@@ -336,7 +332,7 @@ fa_lavf_load_meta(prop_t *proproot, AVFormatContext *fctx, const char *url)
     if(proproot != NULL) {
 
       if(codec == NULL) {
-	snprintf(tmp1, sizeof(tmp1), "Unsupported %s codec", codectype);
+	snprintf(tmp1, sizeof(tmp1), "Unsupported codec");
       } else {
 	snprintf(tmp1, sizeof(tmp1), "%s", codec->long_name);
 
