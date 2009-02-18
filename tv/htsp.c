@@ -293,7 +293,7 @@ static void
 htsp_channelAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
 {
   uint32_t id;
-  char txt[20];
+  char txt[200];
   prop_t *p, *media;
 
   if(htsmsg_get_u32(m, "channelId", &id))
@@ -302,6 +302,11 @@ htsp_channelAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
   snprintf(txt, sizeof(txt), "%d", id);
 
   p = prop_create(create ? NULL : hc->hc_prop_channels, txt);
+
+  snprintf(txt, sizeof(txt), "htsp://%s:%d/channel/%d",
+	   hc->hc_hostname, hc->hc_port, id);
+
+  prop_set_string(prop_create(p, "url"), txt);
 
   media = prop_create(p, "media");
 
