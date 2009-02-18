@@ -336,7 +336,7 @@ fa_lavf_load_meta(prop_t *proproot, AVFormatContext *fctx, const char *url)
     if(proproot != NULL) {
 
       if(codec == NULL) {
-	snprintf(tmp1, sizeof(tmp1), "%s: Unsupported codec", codectype);
+	snprintf(tmp1, sizeof(tmp1), "Unsupported %s codec", codectype);
       } else {
 	snprintf(tmp1, sizeof(tmp1), "%s", codec->long_name);
 
