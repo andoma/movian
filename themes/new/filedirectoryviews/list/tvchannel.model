@@ -2,12 +2,12 @@ widget(container_x, {
   .expand = 3;
 
   widget(image, {
-    .source = "theme://icons/movie.png";
+    .source = $self.media.icon;
     .keepAspect = true;
   });
 
   widget(expander, {
-    .weight = 20;
+    .weight = 10;
     
     widget(container_x, {
       widget(label, {
@@ -36,4 +36,6 @@ widget(container_x, {
       });
     });
   });
+
+
 });

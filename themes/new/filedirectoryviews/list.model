@@ -9,49 +9,11 @@ widget(list_y, {
     onEvent(enter, genericEvent(navigator, open, $self.url));
 
     PLATE_WIDE(
-      widget(container_x, {
-	    
-	widget(image, {
-	  .keepAspect = true;
-	  .source = devoidify($self.media.icon, translate($self.media.type,
-			      [
-			       "archive",   "theme://icons/dir.png",
-			       "directory", "theme://icons/dir.png",
-			       "audio",     "theme://icons/audio.png",
-			       "video",     "theme://icons/movie.png",
-			       "dvd",       "theme://icons/movie.png"
-			       ],
-			      "theme://images/file.png"));
-	});
-	
-	    
-	widget(expander, {
-	  .weight = 20;
-
-	  widget(container_x, {
-	    widget(label, {
-	      .caption = $self.media.title;
-	    });
-		
-	    widget(label, {
-	      .caption = value2duration($self.media.duration);
-	      .weight = 0.1;
-	    });
-	  });
-
-	  widget(animator, {
-	    .time = 0.3;
-	    
-	    .source = translate($self.media.type,
-		[
-		 "audio",     "theme://filedirectoryviews/list/audio.model",
-		 "video",     "theme://filedirectoryviews/list/video.model"
-		 ],
-		 "theme://filedirectoryviews/list/void.model"
-				);
-	  });
-	});
+      widget(animator, {
+	.time = 0.3;
+	.source = "theme://filedirectoryviews/list/" + 
+	   $self.media.type + ".model";
       });
-    );
+      );
   });
 });

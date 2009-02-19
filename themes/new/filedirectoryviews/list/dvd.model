@@ -1,0 +1,19 @@
+
+widget(container_x, {
+  .expand = 2.5;
+
+  widget(image, {
+    .source = "theme://icons/cd.png";
+    .keepAspect = true;
+  });
+
+  widget(expander, {
+    .weight = 20;
+    
+    widget(label, {
+      .caption = $self.filename;
+    });
+    
+    space(1.0);
+  });
+});
