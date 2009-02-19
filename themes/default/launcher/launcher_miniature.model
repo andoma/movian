@@ -1,2 +1,0 @@
-#include "theme://include/miniatures.model"
-MINIATURE("Launcher", "theme://images/exec.png");

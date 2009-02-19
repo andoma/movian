@@ -1,2 +1,0 @@
-#include "theme://include/icon.model"
-ICON("theme://images/folder_images.png");

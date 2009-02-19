@@ -1,2 +1,0 @@
-#include "theme://include/miniatures.model"
-MINIATURE("Display", "theme://images/tv.png");

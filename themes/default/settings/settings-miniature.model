@@ -1,2 +1,0 @@
-#include "theme://include/miniatures.model"
-MINIATURE("Settings", "theme://images/settings.png");

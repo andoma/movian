@@ -1,8 +1,0 @@
-#include "theme://browser/views/default/plate.model"
-
-BROWSER_PLATE(
-	      widget(bitmap, {
-		  .source = "thumb://" + media.url;
-		  .keepAspect = true;
-		});
-	      );

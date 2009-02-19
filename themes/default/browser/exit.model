@@ -1,6 +1,0 @@
-#include "theme://include/popups.model"
-
-widget(container_y, {
-    space(2.0);
-    ARE_YOU_SURE("Exit this browser?");
-  });

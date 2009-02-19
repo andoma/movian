@@ -1,3 +1,0 @@
-widget(container_z, {
-  .id = "videoplayer_container";
-  });

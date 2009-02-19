@@ -1,7 +1,0 @@
-#define ICON(ICON)
-{
-  widget(bitmap, {
-      .source = ICON;
-      .keepAspect = true;
-    });
-}

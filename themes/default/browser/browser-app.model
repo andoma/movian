@@ -1,3 +1,0 @@
-widget(cubestack, {
-    .id = "stack";
-  });

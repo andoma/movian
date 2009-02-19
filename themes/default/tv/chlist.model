@@ -1,6 +1,0 @@
-widget(list, {
-  .expandChilds = true;
-  .orientation = vertical;
-  .id = "channel_container";
-  .slices = 13  / global.uiscale;
-  });

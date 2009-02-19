@@ -1,2 +1,0 @@
-#include "theme://include/miniatures.model"
-MINIATURE2(app.title, nav.icon);
