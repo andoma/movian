@@ -770,30 +770,20 @@ player_thread(void *aux)
       /* Got nothing to play, enter STOP mode */
       //      mp_set_playstatus(mp, MP_STOP, 0);
 
-      printf("Hibernating audio\n");
       mp_hibernate(mp);
-      printf("Waiting for something..\n");
       e = mp_dequeue_event(playqueue_mp);
-      printf("e = %p\n", e);
 
       if(e->e_type == EVENT_PLAYQUEUE) {
 	pe = (playqueue_event_t *)e;
 	pqe = pe->pqe;
       }
       event_unref(e);
-
     }
 
-    //    mp_set_playstatus(mp, MP_PLAY, 0);
-
     prop_link(pqe->pqe_meta, mp->mp_prop_meta);
-    
     eh = event_handler_register("playqueue", pqe_event_handler,
 				EVENTPRI_MEDIACONTROLS_PLAYQUEUE, NULL);
-
     pqe = playtrack(pqe, mp);
-
     event_handler_unregister(eh);
-
   }
 }
