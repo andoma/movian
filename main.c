@@ -110,10 +110,7 @@ main(int argc, char **argv)
   ui_init();
 
   /* Load initial URL */
-  if(argc > 0)
-    nav_open(argv[0]);
-  else
-    nav_open("page://mainmenu");
+  nav_open(argc > 0 ? argv[0] : "page://mainmenu");
 
   /* Goto UI control dispatcher */
   returncode = ui_main_loop();
