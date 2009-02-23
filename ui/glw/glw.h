@@ -365,13 +365,13 @@ typedef struct glw {
 #define GLW_DESTROYED           0x4     /* was destroyed but someone
 					   is holding references */
 #define GLW_RENDER_LINKED       0x8     /* glw_render_link is linked */
-#define GLW_EVERY_FRAME         0x20    /* Want GLW_SIGNAL_NEW_FRAME
+#define GLW_EVERY_FRAME         0x10    /* Want GLW_SIGNAL_NEW_FRAME
 					   at all times */
-#define GLW_DRAW_SKEL           0x40    /* Draw extra lines to
+#define GLW_DRAW_SKEL           0x20    /* Draw extra lines to
 					    visualize details */
-#define GLW_FOCUS_DRAW_CURSOR   0x100   /* Draw cursor when we have focus */
-#define GLW_DEBUG               0x400   /* Debug this object */
-#define GLW_PASSWORD            0x4000  /* Don't display real contents */
+#define GLW_FOCUS_DRAW_CURSOR   0x40    /* Draw cursor when we have focus */
+#define GLW_DEBUG               0x80    /* Debug this object */
+#define GLW_PASSWORD            0x100   /* Don't display real contents */
 
   glw_vertex_t glw_displacement;
 
