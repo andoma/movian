@@ -1,7 +1,6 @@
 #include "theme://include/plates.model"
 
 widget(list_y, {
-  .focus = leader;
   .slices = 20;
   cloner($page.nodes, container_y, {
 

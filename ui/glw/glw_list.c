@@ -158,7 +158,7 @@ glw_list_layout(glw_t *w, glw_rctx_t *rc)
     glw_list_reposition_childs(l);
   }
 
-  c = glw_get_indirectly_focused_child(w);
+  c = w->glw_focused;
 
   if(c != NULL) {
     
@@ -295,7 +295,7 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_rctx_t *rc = extra;
   glw_list_t *l = (void *)w;
-  event_t *e;
+  glw_pointer_event_t *gpe;
 
   switch(signal) {
   default:
@@ -320,12 +320,18 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     w->glw_selected = extra;
     return 0;
 
-  case GLW_SIGNAL_EVENT:
-    if(w->glw_focus_mode != GLW_FOCUS_LEADER)
-      return 0; /* We must be a leader for this to work */
+  case GLW_SIGNAL_POINTER_EVENT:
+    gpe = extra;
 
-    e = extra;
-    return 0;
+    if(w->glw_focused == NULL)
+      break;
+
+    if(gpe->type == GLW_POINTER_SCROLL_DOWN)
+      return glw_focus_step(w, 1);
+    else if(gpe->type == GLW_POINTER_SCROLL_UP)
+      return glw_focus_step(w, 0);
+    break;
+
 
   case GLW_SIGNAL_SCROLL:
     glw_list_scroll(l, extra);

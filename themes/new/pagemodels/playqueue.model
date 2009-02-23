@@ -10,7 +10,6 @@ widget(container_y, {
 
   widget(list_y, {
     .weight = 10;
-    .focus = leader;
     .slices = 20;
     cloner($page.nodes, container_y, {
 

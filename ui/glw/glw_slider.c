@@ -173,7 +173,7 @@ pointer_event(glw_t *w, glw_pointer_event_t *gpe)
   switch(gpe->type) {
   case GLW_POINTER_CLICK:
     if(hitpos == 0) {
-      gr->gr_pointer_focus = w;
+      gr->gr_pointer_grab = w;
       s->value = v;
     } else {
       s->value += hitpos * s->knob_size;
@@ -324,7 +324,7 @@ prop_callback(prop_sub_t *s, prop_event_t event, ...)
   if(p != NULL)
     prop_ref_inc(p);
   
-  if(gr->gr_pointer_focus == &sl->w)
+  if(gr->gr_pointer_grab == &sl->w)
     return;
 
   v = GLW_RESCALE(v, sl->min, sl->max);

@@ -1,7 +1,7 @@
 widget(container_x, {
 
   .focusCursor = true;
-  .focus = target;
+  .focusable = true;
 
   onEvent(enter, genericEvent(navigator, open, $self.url));
 

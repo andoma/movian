@@ -37,7 +37,7 @@ widget(container_y, {
 
 	  widget(text, {
 	    .id = "username";
-	    .focus = 1;
+	    .focusable = true;
 	    .focusCursor = true;
 	    .weight = 2;
 	    .caption = $self.username;
@@ -53,7 +53,7 @@ widget(container_y, {
 
 	  widget(text, {
 	    .id = "password";
-	    .focus = 1;
+	    .focusable = true;
 	    .focusCursor = true;
 	    .password = true;
 	    .weight = 2;

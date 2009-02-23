@@ -10,7 +10,7 @@ widget(container_x, {
   widget(container_x, {
     widget(image, {
       .focusCursor = true;
-      .focus = true;
+      .focusable = true;
       .keepAspect = true;
       .weight = 0.1;
       .source = "theme://icons/left.png";
@@ -30,7 +30,7 @@ widget(container_x, {
 
     widget(image, {
       .focusCursor = true;
-      .focus = true;
+      .focusable = true;
 
       .keepAspect = true;
       .weight = 0.1;

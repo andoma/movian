@@ -8,7 +8,7 @@ widget(container_x, {
 
   widget(text, {
     .focusCursor = true;
-    .focus = true;
+    .focusable = true;
 
     .aspect = 20;
     bind($self.value);

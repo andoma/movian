@@ -20,21 +20,6 @@
 #include "glw_layer.h"
 #include "glw_transitions.h"
 
-/**
- *
- */
-static void
-switchfocus(glw_t *prev, glw_t *n)
-{
-  if(prev != NULL && prev->glw_focus_mode == GLW_FOCUS_LEADER) {
-    prev->glw_flags |= GLW_FOCUS_DISABLED;
-  }
-  if(n != NULL && n->glw_focus_mode == GLW_FOCUS_LEADER) {
-    n->glw_flags &= ~GLW_FOCUS_DISABLED;
-    glw_focus_set(n);
-  }
-}
-
 
 /**
  *
@@ -90,23 +75,18 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_CHILD_CREATED:
-    c = extra;
+    c = w->glw_selected = extra;
+    glw_focus_unblock_path(w->glw_selected);
 
-    glw_set_i(c, GLW_ATTRIB_FOCUSABLE, GLW_FOCUS_LEADER, NULL);
-
-    switchfocus(w->glw_selected, c);
-    w->glw_selected = c;
     c->glw_parent_pos.z = 1.0f;
     break;
 
   case GLW_SIGNAL_CHILD_DESTROYED:
     c = extra;
-    if(w->glw_selected != c)
-      break;
-
     c = TAILQ_PREV(c, glw_queue, glw_parent_link);
-    switchfocus(w->glw_selected, c);
     w->glw_selected = c;
+    if(c != NULL);
+    glw_focus_unblock_path(c);
     break;
   }
 

@@ -1,5 +1,5 @@
 #define PLATE_FOCUSABLE() {
-  .focus = true;
+  .focusable = true;
   .focusCursor = true;
 }
 
@@ -56,7 +56,7 @@
 
     widget(image, {
       
-      .focus = ENABLE;
+      .focusable = ENABLE;
       .focusCursor = ENABLE;
 
       .source = "theme://images/blackbox.png";
@@ -92,7 +92,7 @@
 
     widget(image, {
       
-      .focus = ENABLE;
+      .focusable = ENABLE;
       .focusCursor = ENABLE;
 
       .source = "theme://images/blackbox.png";

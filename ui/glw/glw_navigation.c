@@ -86,7 +86,7 @@ find_candidate(glw_t *w, query_t *query)
   glw_t *c;
   float x, y, distance, dx, dy;
 
-  if(w->glw_focus_mode == GLW_FOCUS_TARGET) {
+  if(w->glw_flags & GLW_FOCUSABLE) {
     
     x = compute_position(w, 1);
     y = compute_position(w, 0);
@@ -147,19 +147,18 @@ find_candidate(glw_t *w, query_t *query)
   }
 }
 
-
 /**
  *
  */
 int
-glw_navigate(glw_t *w, event_t *e)
+glw_navigate(glw_t *w, event_t *e, int local)
 {
-  glw_t  *p, *c, *t = NULL, *l;
+  glw_t  *p, *c, *t = NULL;
   float x, y;
   int direction;
   int orientation;
   query_t query;
-  struct glw_queue *q;
+
 
   x = compute_position(w, 1);
   y = compute_position(w, 0);
@@ -170,25 +169,16 @@ glw_navigate(glw_t *w, event_t *e)
   query.y = y;
   query.score = 100000000;
 
-  l = w->glw_focus_parent;
-  q = l != NULL ? &l->glw_focus_childs : &w->glw_root->gr_focus_childs;
-
   switch(e->e_type) {
   default:
     return 0;
 
   case EVENT_FOCUS_PREV:
-    w = TAILQ_LAST(q, glw_queue);
-    TAILQ_REMOVE(q, w, glw_focus_parent_link);
-    TAILQ_INSERT_HEAD(q, w, glw_focus_parent_link);
-    glw_signal0(w, GLW_SIGNAL_FOCUS_CHANGED, NULL);
-    return 0;
+    glw_focus_crawl(w, 0);
+    return 1;
 
   case EVENT_FOCUS_NEXT:
-    TAILQ_REMOVE(q, w, glw_focus_parent_link);
-    TAILQ_INSERT_TAIL(q, w, glw_focus_parent_link);
-    w = TAILQ_FIRST(q);
-    glw_signal0(w, GLW_SIGNAL_FOCUS_CHANGED, NULL);
+    glw_focus_crawl(w, 1);
     return 1;
 
   case EVENT_UP:
@@ -239,6 +229,16 @@ glw_navigate(glw_t *w, event_t *e)
   c = NULL;
   for(; (p = w->glw_parent) != NULL; w = p) {
 
+    if(local) {
+      switch(w->glw_class) {
+      case GLW_LIST_X:
+      case GLW_LIST_Y:
+	return 0;
+      default:
+	break;
+      }
+    }
+
     switch(p->glw_class) {
       
     default:
@@ -267,7 +267,6 @@ glw_navigate(glw_t *w, event_t *e)
 
     case GLW_LIST_X:
     case GLW_LIST_Y:
-
       if(p->glw_class != (orientation ? GLW_LIST_X : GLW_LIST_Y))
 	break;
 

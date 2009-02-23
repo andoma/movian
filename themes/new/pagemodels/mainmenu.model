@@ -3,7 +3,7 @@
   .aspect = 1;
   .alpha = iir(0.5 + 0.3 * isFocused(), 10);
 
-  .focus = true;
+  .focusable = true;
   .focusCursor = true;
   .source = "theme://images/blackbox.png";
   .textureCoords = [0.15, 0.15, 0.85, 0.85];

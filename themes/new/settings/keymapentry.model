@@ -16,7 +16,7 @@ widget(container_x, {
     
       PLATE_WIDE(
 		 .focusCursor = true;
-		 .focus = target;
+		 .focusable = true;
 		 .weight = 2;
 		 .alpha = iir(0.5 + 0.5 * isFocused(), 10);
 	       

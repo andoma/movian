@@ -74,6 +74,10 @@ static const size_t glw_class_to_size[] = {
   [GLW_LAYER] = sizeof(glw_t),
 };
 
+
+static void glw_focus_init_widget(glw_t *w);
+static void glw_focus_leave(glw_t *w);
+
 /*
  *
  */
@@ -117,8 +121,6 @@ glw_init(glw_root_t *gr, float fontsize)
     return -1;
   }
 
-  TAILQ_INIT(&gr->gr_focus_childs);
-
   TAILQ_INIT(&gr->gr_destroyer_queue);
   glw_tex_init(gr);
 
@@ -127,7 +129,7 @@ glw_init(glw_root_t *gr, float fontsize)
   glw_check_system_features(gr);
   return 0;
 }
-  
+
 
 /*
  *
@@ -140,7 +142,6 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
   void *v, *o;
   int pri, a, r = 0;
   glw_root_t *gr = w->glw_root;
-  glw_focus_mode_t gfm;
 
   va_list apx;
 
@@ -230,17 +231,27 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
     case GLW_ATTRIB_SET_FLAGS:
       a = va_arg(ap, int);
 
-      if(a & GLW_EVERY_FRAME && !(w->glw_flags & GLW_EVERY_FRAME)) 
-	LIST_INSERT_HEAD(&gr->gr_every_frame_list, w, glw_every_frame_link);
+      a &= ~w->glw_flags; // Mask out already set flags
 
+      if(a & GLW_EVERY_FRAME)
+	LIST_INSERT_HEAD(&gr->gr_every_frame_list, w, glw_every_frame_link);
+  
       w->glw_flags |= a;
+
+      if(a & GLW_FOCUSABLE)
+	glw_focus_init_widget(w);
       break;
 
     case GLW_ATTRIB_CLR_FLAGS:
       a = va_arg(ap, int);
 
-      if(a & GLW_EVERY_FRAME && (w->glw_flags & GLW_EVERY_FRAME)) 
+      a &= w->glw_flags; // Mask out already cleared flags
+
+      if(a & GLW_EVERY_FRAME)
 	LIST_REMOVE(w, glw_every_frame_link);
+
+      if(a & GLW_FOCUSABLE)
+	glw_focus_leave(w);
 
       w->glw_flags &= ~a;
       break;
@@ -257,37 +268,6 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 
     case GLW_ATTRIB_TIME:
       w->glw_time = va_arg(ap, double);
-      break;
-
-    case GLW_ATTRIB_FOCUSABLE:
-      gfm = va_arg(ap, int);
-
-      if(w->glw_focus_mode != GLW_FOCUS_NONE) {
-	p = w->glw_focus_parent;
-	if(p != NULL)
-	  TAILQ_REMOVE(&p->glw_focus_childs, w, glw_focus_parent_link);
-	else
-	  TAILQ_REMOVE(&gr->gr_focus_childs, w, glw_focus_parent_link);
-      }
-
-      w->glw_focus_mode = gfm;
-
-      if(gfm != GLW_FOCUS_NONE) {
-	/* Find first parent which is a focus leader */
-	for(p = w->glw_parent; p != NULL; p = p->glw_parent)
-	  if(p->glw_focus_mode == GLW_FOCUS_LEADER)
-	    break;
-
-	w->glw_focus_parent = p;
-
-	if(p != NULL) {
-	  TAILQ_INSERT_TAIL(&p->glw_focus_childs, w, glw_focus_parent_link);
-	  if(TAILQ_FIRST(&p->glw_focus_childs) == w)
-	    glw_signal0(p, GLW_SIGNAL_FOCUS_CHANGED, NULL);
-	}
-	else
-	  TAILQ_INSERT_TAIL(&gr->gr_focus_childs, w, glw_focus_parent_link);
-      }
       break;
 
     case GLW_ATTRIB_EXPAND:
@@ -437,7 +417,6 @@ glw_create0(glw_root_t *gr, glw_class_t class, va_list ap)
 
   TAILQ_INIT(&w->glw_childs);
   TAILQ_INIT(&w->glw_render_list);
-  TAILQ_INIT(&w->glw_focus_childs);
 
   /* Parse arguments */
   
@@ -556,8 +535,8 @@ glw_destroy0(glw_t *w)
   glw_root_t *gr = w->glw_root;
   glw_event_map_t *gem;
 
-  if(gr->gr_pointer_focus == w)
-    gr->gr_pointer_focus = NULL;
+  if(gr->gr_pointer_grab == w)
+    gr->gr_pointer_grab = NULL;
 
   glw_prop_subscription_destroy_list(&w->glw_prop_subscriptions);
 
@@ -569,14 +548,6 @@ glw_destroy0(glw_t *w)
   free(w->glw_matrix);
   w->glw_matrix = NULL;
   
-  if(w->glw_focus_mode != GLW_FOCUS_NONE) {
-    p = w->glw_focus_parent;
-    if(p != NULL)
-      TAILQ_REMOVE(&p->glw_focus_childs, w, glw_focus_parent_link);
-    else
-      TAILQ_REMOVE(&gr->gr_focus_childs, w, glw_focus_parent_link);
-  }
-
   if(w->glw_flags & GLW_EVERY_FRAME)
     LIST_REMOVE(w, glw_every_frame_link);
 
@@ -593,6 +564,8 @@ glw_destroy0(glw_t *w)
   if((p = w->glw_parent) != NULL) {
     /* Some classes needs to do some stuff is a child is destroyed */
     glw_signal0(p, GLW_SIGNAL_CHILD_DESTROYED, w);
+
+    glw_focus_leave(w);
 
     if(p->glw_selected == w)
       p->glw_selected = TAILQ_NEXT(w, glw_parent_link);
@@ -806,94 +779,22 @@ glw_detach0(glw_t *w)
 int
 glw_is_focused(glw_t *w)
 {
-  glw_t *p;
-  if(!glw_is_focusable(w))
-    return 0;
+  return w->glw_root->gr_current_focus == w;
+}
 
-  while(1) {
-    p = w->glw_focus_parent;
-
-    if(p == NULL)
-      return TAILQ_FIRST(&w->glw_root->gr_focus_childs) == w;
-
-    if(TAILQ_FIRST(&p->glw_focus_childs) != w)
+/**
+ *
+ */
+static int
+glw_path_in_focus(glw_t *w)
+{
+  while(w->glw_parent != NULL) {
+    if(w->glw_parent->glw_focused != w)
       return 0;
-    w = p;
+    w = w->glw_parent;
   }
+  return 1;
 }
-
-/**
- * Return the child of 'w' which in turn has one of its childs focused
- */
-glw_t *
-glw_get_indirectly_focused_child(glw_t *w)
-{
-  glw_t *l, *c;
-
-  /* Find closest focus leader */
-  for(l = w; l != NULL; l = l->glw_parent) {
-    if(l->glw_focus_mode == GLW_FOCUS_LEADER)
-      break;
-  }
-
-  if(l == NULL)
-    return l;
-
-  /* Find widgets currently focused by the leader */
-  while(1) {
-    c = TAILQ_FIRST(&l->glw_focus_childs);
-    if(c == NULL || c->glw_focus_mode == GLW_FOCUS_TARGET)
-      break;
-    l = c;
-  }
-
-  /* Trace back and se if we hit the list */
-  while(c != NULL) {
-    if(c->glw_parent == w)
-      return c;
-    c = c->glw_parent;
-  }
-  return NULL;
-}
-
-
-
-
-/**
- * Return true if we are indirectly focused
- */
-int
-glw_is_indirectly_focused(glw_t *w)
-{
-  glw_t *l, *c;
-
-  /* Find closest focus leader */
-  for(l = w; l != NULL; l = l->glw_parent) {
-    if(l->glw_focus_mode == GLW_FOCUS_LEADER)
-      break;
-  }
-
-  if(l == NULL)
-    return 0;
-
-  /* Find widgets currently focused by the leader */
-  while(1) {
-    c = TAILQ_FIRST(&l->glw_focus_childs);
-    if(c == NULL || c->glw_focus_mode == GLW_FOCUS_TARGET)
-      break;
-    l = c;
-  }
-
-  /* Trace back and se if we hit the list */
-  while(c != NULL) {
-    if(c == w)
-      return 1;
-    c = c->glw_parent;
-  }
-  return 0;
-}
-
-
 
 /**
  *
@@ -901,32 +802,235 @@ glw_is_indirectly_focused(glw_t *w)
 void
 glw_focus_set(glw_t *w)
 {
-  glw_t *l;
-  struct glw_queue *q;
+  w->glw_root->gr_current_focus = w;
 
-  while(1) {
+  while(w->glw_parent != NULL) {
+    if(w->glw_parent->glw_focused != w) {
+      w->glw_parent->glw_focused = w;
+      glw_signal0(w->glw_parent, GLW_SIGNAL_FOCUS_CHANGED, w);
+    }
+    w = w->glw_parent;
+  }
+}
 
-    assert(w->glw_focus_mode != GLW_FOCUS_NONE);
 
-    l = w->glw_focus_parent;
-    
-    q = l != NULL ? &l->glw_focus_childs : &w->glw_root->gr_focus_childs;
 
-    TAILQ_REMOVE(q, w, glw_focus_parent_link);
-    TAILQ_INSERT_HEAD(q, w, glw_focus_parent_link);
+/**
+ *
+ */
+static void
+glw_focus_set_current_by_path(glw_t *w)
+{
+  while(w->glw_focused != NULL) 
+    w = w->glw_focused;
+  w->glw_root->gr_current_focus = w;
+}
 
-    if(l == NULL)
-      break;
-    glw_signal0(l, GLW_SIGNAL_FOCUS_CHANGED, NULL);
-    w = l;
+
+/**
+ *
+ */
+static void
+glw_focus_init_widget(glw_t *w0)
+{
+  glw_t *w = w0;
+
+  while(w->glw_parent != NULL) {
+    if(w->glw_parent->glw_focused == NULL) {
+      w->glw_parent->glw_focused = w;
+      glw_signal0(w->glw_parent, GLW_SIGNAL_FOCUS_CHANGED, w);
+    } else if(w->glw_parent->glw_focused != w)
+      return;
+    w = w->glw_parent;
+  }
+
+  w0->glw_root->gr_current_focus = w0;
+}
+
+
+
+/**
+ *
+ */
+static glw_t *
+glw_focus_leave0(glw_t *w, glw_t *cur)
+{
+  glw_t *c, *r;
+
+  c = cur ? TAILQ_NEXT(cur, glw_parent_link) : TAILQ_FIRST(&w->glw_childs);
+
+  for(;;c = TAILQ_NEXT(c, glw_parent_link)) {
+     if(c == NULL)
+      c = TAILQ_FIRST(&w->glw_childs);
+
+    if(c == cur)
+      return NULL;
+    if(c->glw_flags & GLW_FOCUS_BLOCKED)
+      continue;
+    if(c->glw_flags & GLW_FOCUSABLE)
+      return c;
+    if(TAILQ_FIRST(&c->glw_childs))
+      if((r = glw_focus_leave0(c, NULL)) != NULL)
+	return r;
   }
 }
 
 /**
  *
  */
+static void
+glw_focus_leave(glw_t *w)
+{
+  glw_t *r = NULL;
+
+  if(!glw_path_in_focus(w))
+    return;  /* We were not even focused, don't do anything */
+
+  while(w->glw_parent != NULL) {
+    if((r = glw_focus_leave0(w->glw_parent, w)) != NULL)
+      break;
+    w = w->glw_parent;
+  }
+
+  if(r != NULL)
+    glw_focus_set(r);
+}
+
+
+/**
+ *
+ */
+static glw_t *
+glw_focus_crawl0(glw_t *w, glw_t *cur, int forward)
+{
+  glw_t *c, *r;
+
+  if(forward) {
+    c = cur ? TAILQ_NEXT(cur, glw_parent_link) : TAILQ_FIRST(&w->glw_childs);
+  } else {
+    c = cur ? TAILQ_PREV(cur, glw_queue, glw_parent_link) : 
+      TAILQ_LAST(&w->glw_childs, glw_queue);
+  }
+
+  for(; c != NULL; c = forward ? TAILQ_NEXT(c, glw_parent_link) : 
+	TAILQ_PREV(c, glw_queue, glw_parent_link)) {
+
+    if(c->glw_flags & GLW_FOCUS_BLOCKED)
+      continue;
+    if(c->glw_flags & GLW_FOCUSABLE)
+      return c;
+    if(TAILQ_FIRST(&c->glw_childs))
+      if((r = glw_focus_crawl0(c, NULL, forward)) != NULL)
+	return r;
+  }
+  return NULL;
+}
+
+
+/**
+ *
+ */
+static glw_t *
+glw_focus_crawl1(glw_t *w, int forward)
+{
+  glw_t *c, *r;
+
+  c = forward ? TAILQ_FIRST(&w->glw_childs) : 
+    TAILQ_LAST(&w->glw_childs, glw_queue);
+
+  for(; c != NULL; c = forward ? TAILQ_NEXT(c, glw_parent_link) : 
+	TAILQ_PREV(c, glw_queue, glw_parent_link)) {
+
+    if(!(c->glw_flags & GLW_FOCUS_BLOCKED)) {
+      if(c->glw_flags & GLW_FOCUSABLE)
+	return c;
+      if(TAILQ_FIRST(&c->glw_childs))
+	if((r = glw_focus_crawl1(c, forward)) != NULL)
+	return r;
+    }
+  }
+  return NULL;
+}
+
+
+/**
+ * Used to focus next (or previous) focusable widget.
+ */
+void
+glw_focus_crawl(glw_t *w, int forward)
+{
+  glw_t *r = NULL;
+
+  while(w->glw_parent != NULL) {
+    if((r = glw_focus_crawl0(w->glw_parent, w, forward)) != NULL)
+      break;
+    w = w->glw_parent;
+  }
+
+  if(r == NULL)
+    r = glw_focus_crawl1(w, forward);
+
+  if(r != NULL)
+    glw_focus_set(r);
+}
+
+
+/**
+ *
+ */
+void
+glw_focus_unblock_path(glw_t *w)
+{
+  glw_t *p = w->glw_parent;
+
+  if(p == NULL || p->glw_focused == w)
+    return;
+
+  if(p->glw_focused != NULL)
+    p->glw_focused->glw_flags |= GLW_FOCUS_BLOCKED;
+
+  w->glw_flags &= ~GLW_FOCUS_BLOCKED;
+  p->glw_focused = w;
+  glw_signal0(p, GLW_SIGNAL_FOCUS_CHANGED, w);
+
+  if(glw_path_in_focus(w))
+    glw_focus_set_current_by_path(w);
+}
+
+
+/**
+ *
+ */
 int
-glw_event_to_widget(glw_t *w, event_t *e)
+glw_focus_step(glw_t *w, int forward)
+{
+  event_t *e;
+
+  if(!glw_path_in_focus(w))
+    return 0;
+
+  e = event_create_simple(forward ? EVENT_DOWN : EVENT_UP);
+
+  while(w->glw_focused != NULL) {
+    w = w->glw_focused;
+    if(w->glw_flags & GLW_FOCUSABLE) {
+      if(glw_event_to_widget(w, e, 1))
+	break;
+    }
+  }
+
+  event_unref(e);
+  return 1;
+}
+
+
+
+
+/**
+ *
+ */
+int
+glw_event_to_widget(glw_t *w, event_t *e, int local)
 {
   if(glw_event_map_intercept(w, e))
     return 1;
@@ -934,28 +1038,7 @@ glw_event_to_widget(glw_t *w, event_t *e)
   if(glw_signal0(w, GLW_SIGNAL_EVENT, e))
     return 1;
 
-  return glw_navigate(w, e);
-}
-
-
-
-/**
- *
- */
-static int
-glw_event_i(glw_t *w, event_t *e)
-{
-  while(1) {
-    if(w->glw_focus_mode == GLW_FOCUS_TARGET)
-      break;
-    if(w->glw_focus_mode == GLW_FOCUS_LEADER &&
-       !(w->glw_flags & GLW_FOCUS_DISABLED)) {
-      w = TAILQ_FIRST(&w->glw_focus_childs);
-      if(w == NULL)
-	return 0;
-    }
-  }
-  return glw_event_to_widget(w, e);
+  return glw_navigate(w, e, local);
 }
 
 
@@ -965,14 +1048,22 @@ glw_event_i(glw_t *w, event_t *e)
 int
 glw_event(glw_root_t *gr, event_t *e)
 {
-  glw_t *w;
-
-  if((w = TAILQ_FIRST(&gr->gr_focus_childs)) == NULL)
-    return 0;
-
-  return glw_event_i(w, e);
+  glw_t *w = gr->gr_current_focus;
+  return w != NULL ? glw_event_to_widget(w, e, 0) : 0;
 }
 
+
+/**
+ * XXX: Replace with glProject
+ */
+static void
+glw_widget_project(float *m, float *x1, float *x2, float *y1, float *y2)
+{
+  *x1 = m[12] - m[0];
+  *x2 = m[12] + m[0];
+  *y1 = m[13] - m[5];
+  *y2 = m[13] + m[5];
+}
 
 
 
@@ -984,56 +1075,45 @@ static int
 pointer_event0(glw_t *w, glw_pointer_event_t *gpe)
 {
   glw_t *c;
-  float *m;
   event_t *e;
   float x1, x2, y1, y2;
   glw_pointer_event_t gpe0;
 
-  switch(w->glw_focus_mode) {
-  case GLW_FOCUS_NONE:
-    return 0;
+  if(w->glw_matrix != NULL) {
+    glw_widget_project(w->glw_matrix, &x1, &x2, &y1, &y2);
+    
+    if(gpe->x > x1 && gpe->x < x2 && gpe->y > y1 && gpe->y < y2) {
 
-  case GLW_FOCUS_LEADER:
-    if(w->glw_flags & GLW_FOCUS_DISABLED)
-      return 0;
+      gpe0.type = gpe->type;
+      /* Rescale to widget local coordinates */
+      gpe0.x = -1 + 2 * (gpe->x - x1) / (x2 - x1);
+      gpe0.y = -1 + 2 * (gpe->y - y1) / (y2 - y1);
 
-    TAILQ_FOREACH(c, &w->glw_focus_childs, glw_focus_parent_link)
-      if(pointer_event0(c, gpe))
+      if(glw_signal0(w, GLW_SIGNAL_POINTER_EVENT, &gpe0))
 	return 1;
-    return 0;
 
-  case GLW_FOCUS_TARGET:
-    if((m = w->glw_matrix) == NULL)
-      break;
-      
-    x1 = m[12] - m[0];
-    x2 = m[12] + m[0];
+      if(w->glw_flags & GLW_FOCUSABLE) {
 
-    y1 = m[13] - m[5];
-    y2 = m[13] + m[5];
-      
-    if(gpe->x < x1 || gpe->x > x2 || gpe->y < y1 || gpe->y > y2)
-      break;
-      
-    gpe0.type = gpe->type;
-    /* Rescale to widget local coordinates */
-    gpe0.x = -1 + 2 * (gpe->x - x1) / (x2 - x1);
-    gpe0.y = -1 + 2 * (gpe->y - y1) / (y2 - y1);
+	switch(gpe->type) {
+	case GLW_POINTER_CLICK:
+	  glw_focus_set(w);
+	  return 1;
 
-    if(glw_signal0(w, GLW_SIGNAL_POINTER_EVENT, &gpe0))
-      return 1;
-      
-    if(gpe->type == GLW_POINTER_CLICK) {
-      e = event_create_simple(EVENT_ENTER);
-      
-      if(glw_event_to_widget(w, e) == 0)
-	/* If it does not react, at least focus it */
-	glw_focus_set(w);
-      
-      event_unref(e);
+	case GLW_POINTER_RELEASE:
+	  e = event_create_simple(EVENT_ENTER);
+	  glw_event_to_widget(w, e, 0);
+	  event_unref(e);
+	  return 1;
+	default:
+	  break;
+	}
+      }
     }
-    return 1;
   }
+
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
+    if(!(c->glw_flags & GLW_FOCUS_BLOCKED) && pointer_event0(c, gpe))
+      return 1;
   return 0;
 }
 
@@ -1042,111 +1122,34 @@ pointer_event0(glw_t *w, glw_pointer_event_t *gpe)
  *
  */
 void
-glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
+glw_pointer_event(glw_root_t *gr, glw_t *top, glw_pointer_event_t *gpe)
 {
   glw_t *c, *w;
   glw_pointer_event_t gpe0;
-  float x1, x2, y1, y2, *m;
+  float x1, x2, y1, y2;
 
-  if((w = gr->gr_pointer_focus) != NULL) {
-    if(gpe->type == GLW_POINTER_MOTION) {
-
-      if((m = w->glw_matrix) == NULL)
-	return;
-
-      x1 = m[12] - m[0];
-      x2 = m[12] + m[0];
-      
-      y1 = m[13] - m[5];
-      y2 = m[13] + m[5];
-      
-      gpe0.type = GLW_POINTER_FOCUS_MOTION;
-      gpe0.x = -1 + 2 * GLW_RESCALE(gpe->x, x1, x2);
-      gpe0.y = -1 + 2 * GLW_RESCALE(gpe->y, y1, y2);
- 
-      glw_signal0(w, GLW_SIGNAL_POINTER_EVENT, &gpe0);
+  if((w = gr->gr_pointer_grab) != NULL && gpe->type == GLW_POINTER_MOTION) {
+    
+    if(w->glw_matrix == NULL)
       return;
-    }
-  }
 
-  if(gpe->type == GLW_POINTER_RELEASE) {
-    gr->gr_pointer_focus = NULL;
+    glw_widget_project(w->glw_matrix, &x1, &x2, &y1, &y2);
+    
+    gpe0.type = GLW_POINTER_FOCUS_MOTION;
+    gpe0.x = -1 + 2 * GLW_RESCALE(gpe->x, x1, x2);
+    gpe0.y = -1 + 2 * GLW_RESCALE(gpe->y, y1, y2);
+    
+    glw_signal0(w, GLW_SIGNAL_POINTER_EVENT, &gpe0);
     return;
   }
 
-  TAILQ_FOREACH(c, &gr->gr_focus_childs, glw_focus_parent_link)
-    if(pointer_event0(c, gpe))
+  if(gpe->type == GLW_POINTER_RELEASE)
+    gr->gr_pointer_grab = NULL;
+
+  TAILQ_FOREACH(c, &top->glw_childs, glw_parent_link)
+    if(!(c->glw_flags & GLW_FOCUS_BLOCKED) && pointer_event0(c, gpe))
       break;
 }
-
-
-
-
-/**
- *
- */
-static int
-pointer_scroll0(glw_t *w, float x, float y, int direction)
-{
-  glw_t *c;
-  float *m;
-  float x1, x2, y1, y2;
-  event_t *e;
-
-
-  switch(w->glw_focus_mode) {
-  case GLW_FOCUS_NONE:
-  case GLW_FOCUS_TARGET:
-    return 0;
-
-  case GLW_FOCUS_LEADER:
-    if(w->glw_flags & GLW_FOCUS_DISABLED)
-      return 0;
-
-    if((m = w->glw_matrix) != NULL) {
-      
-      x1 = m[12] - m[0];
-      x2 = m[12] + m[0];
-
-      y1 = m[13] - m[5];
-      y2 = m[13] + m[5];
-      
-      if(x >= x1 && x <= x2 && y >= y1 && y <= y2) {
-
-	glw_focus_set(w);
-
-	
-	e = event_create_simple(direction ? EVENT_DOWN : EVENT_UP);
-	glw_event_i(w, e);
-	event_unref(e);
-	return 1;
-      }
-    }
-
-    TAILQ_FOREACH(c, &w->glw_focus_childs, glw_focus_parent_link)
-      if(pointer_scroll0(c, x, y, direction))
-	return 1;
-    return 0;
-
-    break;
-  }
-  return 0;
-}
-
-
-/**
- *
- */
-void
-glw_pointer_scroll(glw_root_t *gr, float x, float y, int direction)
-{
-  glw_t *c;
-
-  TAILQ_FOREACH(c, &gr->gr_focus_childs, glw_focus_parent_link)
-    if(pointer_scroll0(c, x, y, direction))
-      break;
-}
-
 
 
 /**

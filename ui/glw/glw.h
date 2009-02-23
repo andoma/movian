@@ -123,7 +123,6 @@ typedef enum {
   GLW_ATTRIB_INT_MAX,
   GLW_ATTRIB_PROPROOT,
   GLW_ATTRIB_TRANSITION_EFFECT,
-  GLW_ATTRIB_FOCUSABLE,
   GLW_ATTRIB_EXPAND,
   GLW_ATTRIB_BIND_TO_PROPERTY,
   GLW_ATTRIB_BIND_TO_ID,
@@ -155,12 +154,6 @@ typedef enum {
   GLW_ALIGN_TOP,
 } glw_alignment_t;
 
-
-typedef enum {
-  GLW_FOCUS_NONE,
-  GLW_FOCUS_LEADER,
-  GLW_FOCUS_TARGET,
-} glw_focus_mode_t;
 
 /**
  * XXX Document these
@@ -200,7 +193,8 @@ typedef enum {
   GLW_SIGNAL_SELECTED_UPDATE,
 
   /**
-   *
+   * Sent to widget when its focused child is changed.
+   * Argument is newly focused child.
    */
   GLW_SIGNAL_FOCUS_CHANGED,
 
@@ -230,7 +224,6 @@ typedef struct {
 typedef struct {
   float value;
 } glw_scroll_t;
-
 
 
 
@@ -280,9 +273,8 @@ typedef struct glw_root {
   /**
    * Root focus leader
    */
-  struct glw_queue gr_focus_childs;
-
-  struct glw *gr_pointer_focus;
+  struct glw *gr_pointer_grab;
+  struct glw *gr_current_focus;
 
   /**
    * Backend specifics
@@ -348,6 +340,7 @@ typedef struct glw {
   TAILQ_ENTRY(glw) glw_render_link;
 		   
   struct glw *glw_selected;
+  struct glw *glw_focused;
 
   /** 
    * All the glw_parent stuff is operated by this widgets
@@ -372,6 +365,9 @@ typedef struct glw {
 #define GLW_FOCUS_DRAW_CURSOR   0x40    /* Draw cursor when we have focus */
 #define GLW_DEBUG               0x80    /* Debug this object */
 #define GLW_PASSWORD            0x100   /* Don't display real contents */
+#define GLW_FOCUSABLE           0x200
+#define GLW_FOCUS_BLOCKED       0x400
+
 
   glw_vertex_t glw_displacement;
 
@@ -397,15 +393,6 @@ typedef struct glw {
 
   float glw_exp_req;
 
-  /* Focus */
-  TAILQ_ENTRY(glw) glw_focus_parent_link;
-  struct glw *glw_focus_parent;
-
-  glw_focus_mode_t glw_focus_mode;
-
-  struct glw_queue glw_focus_childs; /* Only used if GLW_FOCUS_LEADER is set.
-					First is the currently focused one */
-
 } glw_t;
 
 int glw_init(glw_root_t *gr, float fontsize);
@@ -430,17 +417,19 @@ void glw_unlock(glw_root_t *gr);
 /**
  *
  */
-#define glw_is_focusable(w) ((w)->glw_focus_mode == GLW_FOCUS_TARGET)
+#define glw_is_focusable(w) (!!((w)->glw_flags & GLW_FOCUSABLE))
 
 int glw_is_focused(glw_t *w);
 
 void glw_store_matrix(glw_t *w, glw_rctx_t *rc);
 
-glw_t *glw_get_indirectly_focused_child(glw_t *w);
-
-int glw_is_indirectly_focused(glw_t *w);
-
 void glw_focus_set(glw_t *w);
+
+void glw_focus_unblock_path(glw_t *w);
+
+void glw_focus_crawl(glw_t *w, int forward);
+
+int glw_focus_step(glw_t *w, int forward);
 
 
 /**
@@ -520,7 +509,6 @@ do {						\
   case GLW_ATTRIB_MODE:                         \
   case GLW_ATTRIB_MIRROR:                       \
   case GLW_ATTRIB_TRANSITION_EFFECT:            \
-  case GLW_ATTRIB_FOCUSABLE:                    \
   case GLW_ATTRIB_REPEAT_X:                     \
   case GLW_ATTRIB_REPEAT_Y:                     \
     (void)va_arg(ap, int);			\
@@ -599,7 +587,7 @@ glw_t *glw_get_next_n_all(glw_t *c, int count);
 
 int glw_event(glw_root_t *gr, event_t *e);
 
-int glw_event_to_widget(glw_t *w, event_t *e);
+int glw_event_to_widget(glw_t *w, event_t *e, int local);
 
 typedef enum {
   GLW_POINTER_CLICK,
@@ -615,12 +603,10 @@ typedef struct glw_pointer_event {
   glw_pointer_event_type_t type;
 } glw_pointer_event_t;
 
-void glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe);
-
-void glw_pointer_scroll(glw_root_t *gr, float x, float y, int direction);
+void glw_pointer_event(glw_root_t *gr, glw_t *top, glw_pointer_event_t *gpe);
 
 
-int glw_navigate(glw_t *w, event_t *e);
+int glw_navigate(glw_t *w, event_t *e, int local);
 
 glw_t *glw_find_neighbour(glw_t *w, const char *id);
 

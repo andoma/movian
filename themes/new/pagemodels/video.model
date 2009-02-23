@@ -3,7 +3,7 @@
 widget(container_y, {
   widget(video, {
     .weight = 10.0;
-    .focus = true;
+    .focusable = true;
     .focusCursor = true;
     .source = $self.url;
   });
@@ -19,7 +19,7 @@ widget(container_y, {
 
   widget(slider_x, {
     bind($self.video.media.currenttime);
-    .focus = true;
+    .focusable = true;
     .max = $self.video.media.meta.duration;
 
     PLATE_SQUARE_MID(

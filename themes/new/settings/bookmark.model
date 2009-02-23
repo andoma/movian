@@ -6,7 +6,7 @@ widget(stack_x, {
 
     widget(text, {
       .focusCursor = true;
-      .focus = target;
+      .focusable = true;
 
       .weight = 10;
       bind($self.title);
@@ -14,7 +14,7 @@ widget(stack_x, {
 
     widget(text, {
       .focusCursor = true;
-      .focus = target;
+      .focusable = true;
 
       .weight = 20;
       bind($self.url);

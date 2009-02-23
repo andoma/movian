@@ -293,40 +293,6 @@ set_mirror(glw_model_eval_context_t *ec, const token_attrib_t *a,
 /**
  *
  */
-static int
-set_focus(glw_model_eval_context_t *ec, const token_attrib_t *a, 
-	  struct token *t)
-{
-  glw_focus_mode_t gfm;
-
-  if(t->type == TOKEN_IDENTIFIER) {
-
-    if(!strcmp(t->t_string, "target") || !strcmp(t->t_string, "true"))
-      gfm = GLW_FOCUS_TARGET;
-    else if(!strcmp(t->t_string, "leader"))
-      gfm = GLW_FOCUS_LEADER;
-    else
-      gfm = GLW_FOCUS_NONE;
-
-  } else if(t->type == TOKEN_INT)
-    gfm = t->t_int ? GLW_FOCUS_TARGET : 0;
-  else if(t->type == TOKEN_FLOAT)
-    gfm = t->t_float > 0.5  ? GLW_FOCUS_TARGET : 0;
-  else if(t->type == TOKEN_VOID)
-    gfm = GLW_FOCUS_NONE;
-  else
-    return glw_model_seterr(ec->ei, t, "Invalid assignment for attribute %s",
-			    a->name);
-  
-  glw_set_i(ec->w, GLW_ATTRIB_FOCUSABLE, gfm, NULL);
-
-  return 0;
-}
-
-
-/**
- *
- */
 static const token_attrib_t attribtab[] = {
   {"id",              set_string, GLW_ATTRIB_ID},
   {"caption",         set_string, GLW_ATTRIB_CAPTION},
@@ -337,6 +303,7 @@ static const token_attrib_t attribtab[] = {
   {"debug",           set_flag,   GLW_DEBUG},
   {"skeleton",        set_flag,   GLW_DRAW_SKEL},
   {"password",        set_flag,   GLW_PASSWORD},
+  {"focusable",       set_flag,   GLW_FOCUSABLE},
   {"mirrorx",         set_mirror, GLW_MIRROR_X},
   {"mirrory",         set_mirror, GLW_MIRROR_Y},
 
@@ -366,7 +333,6 @@ static const token_attrib_t attribtab[] = {
 
   {"align",           set_align,  0},
   {"effect",          set_transition_effect,  0},
-  {"focus",           set_focus, 0},
 };
 
 

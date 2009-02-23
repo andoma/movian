@@ -870,7 +870,7 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 	  gpe.type = GLW_POINTER_MOTION;
 
 	  glw_lock(&gx11->gr);
-	  glw_pointer_event(&gx11->gr, &gpe);
+	  glw_pointer_event(&gx11->gr, gx11->universe, &gpe);
 	  glw_unlock(&gx11->gr);
 	  break;
 	  
@@ -880,7 +880,7 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 	    gpe.y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
 	    gpe.type = GLW_POINTER_RELEASE;
 	    glw_lock(&gx11->gr);
-	    glw_pointer_event(&gx11->gr, &gpe);
+	    glw_pointer_event(&gx11->gr, gx11->universe, &gpe);
 	    glw_unlock(&gx11->gr);
 	  }
 	  break;
@@ -891,27 +891,28 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 
 	  gpe.x =  (2.0 * event.xmotion.x / gx11->window_width ) - 1;
 	  gpe.y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
-	  gpe.type = GLW_POINTER_CLICK;
 
 	  glw_lock(&gx11->gr);
 
 	  switch(event.xbutton.button) {
 	  case 1:
 	    /* Left click */
-	    glw_pointer_event(&gx11->gr, &gpe);
+	    gpe.type = GLW_POINTER_CLICK;
 	    break;
 	  case 4:
 	    /* Scroll up */
-	    glw_pointer_scroll(&gx11->gr, gpe.x, gpe.y, 0);
+	    gpe.type = GLW_POINTER_SCROLL_UP;
 	    break;
 	  case 5:
 	    /* Scroll down */
-	    glw_pointer_scroll(&gx11->gr, gpe.x, gpe.y, 1);
+	    gpe.type = GLW_POINTER_SCROLL_DOWN;
 	    break;
 
 	  default:
-	    break;
+	    goto noevent;
 	  }
+	  glw_pointer_event(&gx11->gr, gx11->universe, &gpe);
+	noevent:
 	  glw_unlock(&gx11->gr);
 	  break;
 

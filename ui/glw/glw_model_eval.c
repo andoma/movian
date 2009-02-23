@@ -2053,7 +2053,7 @@ glwf_focusedChild(glw_model_eval_context_t *ec, struct token *self)
 
   ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_FOCUS_CHANGE;
 
-  c = glw_get_indirectly_focused_child(w);
+  c = w->glw_focused;
   if(c != NULL) {
     LIST_FOREACH(gsh, &c->glw_signal_handlers, gsh_link)
       if(gsh->gsh_func == cloner_child_signal_handler)
