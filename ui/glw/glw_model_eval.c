@@ -497,7 +497,7 @@ eval_assign(glw_model_eval_context_t *ec, struct token *self)
     for(i = 0, t = a; t != NULL && i < 15; t = t->child)
       propname[i++]  = t->t_string;
     propname[i] = NULL;
-    p = prop_get_by_name(ec->prop, propname);
+    p = prop_get_by_name(ec->prop, propname, 0);
 
     /* Transform TOKEN_PROPERTY_NAME -> TOKEN_PROPERTY */
 
@@ -1956,17 +1956,22 @@ glwf_value2duration(glw_model_eval_context_t *ec, struct token *self)
 static int 
 glwf_createchild(glw_model_eval_context_t *ec, struct token *self)
 {
-  token_t *a = eval_pop(ec);
+  token_t *t, *a = eval_pop(ec);
+  const char *propname[16];
+  prop_t *p;
+  int i;
 
-  if((a = token_resolve(ec, a)) == NULL)
-    return -1;
-
-  if(a->propsubr == NULL) {
-    return glw_model_seterr(ec->ei, self, 
-			    "Invalid operand to createChild()");
+  if(a == NULL || a->type != TOKEN_PROPERTY_NAME)
+    return 0;
+  
+  for(i = 0, t = a; t != NULL && i < 15; t = t->child)
+    propname[i++]  = t->t_string;
+  propname[i] = NULL;
+  
+  if((p = prop_get_by_name(ec->prop, propname, 1)) != NULL) {
+    prop_request_new_child(p);
+    prop_ref_dec(p);
   }
-
-  prop_request_new_child_by_subscription(a->propsubr->gps_sub);
   return 0;
 }
 

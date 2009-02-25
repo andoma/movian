@@ -278,7 +278,10 @@ prop_t *prop_get_by_subscription(prop_sub_t *s);
 
 prop_t *prop_get_by_subscription_canonical(prop_sub_t *s);
 
-prop_t *prop_get_by_name(struct prop *p, const char **name);
+prop_t *prop_get_by_name(struct prop *p, const char **name,
+			 int follow_symlinks);
+
+void prop_request_new_child(prop_t *p);
 
 void prop_request_new_child_by_subscription(prop_sub_t *s);
 

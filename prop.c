@@ -740,14 +740,14 @@ prop_resolve_tree(const char *name, prop_t *p)
  *
  */
 prop_t *
-prop_get_by_name(struct prop *p, const char **name)
+prop_get_by_name(struct prop *p, const char **name, int follow_symlinks)
 {
   p = prop_resolve_tree(name[0], p);
 
   name++;
 
   hts_mutex_lock(&prop_mutex);
-  p = prop_subfind(p, name, 0);
+  p = prop_subfind(p, name, follow_symlinks);
 
   if(p != NULL)
     prop_ref_inc(p);
@@ -1342,14 +1342,12 @@ prop_get_by_subscription_canonical(prop_sub_t *s)
  *
  */
 void
-prop_request_new_child_by_subscription(prop_sub_t *s)
+prop_request_new_child(prop_t *p)
 {
-  prop_t *p;
   hts_mutex_lock(&prop_mutex);
 
-  p = s->hps_value_prop;
-  if(p->hp_type == PROP_DIR)
-    prop_notify_child(NULL, p, PROP_REQ_NEW_CHILD, s);
+  if(p->hp_type == PROP_DIR || p->hp_type == PROP_VOID)
+    prop_notify_child(NULL, p, PROP_REQ_NEW_CHILD, NULL);
 
   hts_mutex_unlock(&prop_mutex);
 }
