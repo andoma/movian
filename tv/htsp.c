@@ -27,6 +27,7 @@
 #include <libhts/htsmsg_binary.h>
 #include <libhts/htsthreads.h>
 #include <libhts/htsatomic.h>
+#include <libavutil/sha1.h>
 
 #include "networking/net.h"
 #include "navigator.h"
@@ -146,12 +147,67 @@ static void htsp_subscriptionStatus(htsp_connection_t *hc, htsmsg_t *m);
 static void htsp_queueStatus(htsp_connection_t *hc, htsmsg_t *m);
 static void htsp_mux_input(htsp_connection_t *hc, htsmsg_t *m);
 
+#define HTSP_DONT_INTERCEPT_NOACCESS 0x1
+static htsmsg_t *htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int flags);
+
+/**
+ *
+ */
+static int
+htsp_authenticate(htsp_connection_t *hc, htsmsg_t *m)
+{
+  const void *challenge;
+  size_t challengelen;
+  int r;
+  char *username;
+  char *password;
+  char id[100];
+  struct AVSHA1 *shactx = alloca(av_sha1_size);
+  uint8_t d[20];
+  int retry = 0;
+
+  do {
+    if(htsmsg_get_bin(m, "challenge", &challenge, &challengelen) ||
+       challengelen != 32)
+      return 0;
+  
+    htsmsg_destroy(m);
+
+    snprintf(id, sizeof(id), "htsp://%s:%d", hc->hc_hostname, hc->hc_port);
+
+    r = keyring_lookup(id, &username, &password, NULL, !!retry,
+		       "TV client", "Access denied");
+    if(r == -1) {
+      /* User rejected */
+      return 0;
+    }
+
+    m = htsmsg_create();
+    htsmsg_add_str(m, "username", username);
+
+    av_sha1_init(shactx);
+    av_sha1_update(shactx, (const uint8_t *)password, strlen(password));
+    av_sha1_update(shactx, challenge, 32);
+    av_sha1_final(shactx, d);
+  
+    htsmsg_add_bin(m, "digest", d, 20);
+    htsmsg_add_str(m, "method", "authenticate");
+
+    m = htsp_reqreply(hc, m, HTSP_DONT_INTERCEPT_NOACCESS);
+    retry++;
+
+  } while(htsmsg_get_u32_or_default(m, "noaccess", 0));
+
+  htsmsg_destroy(m);
+  return 1;
+}
+
 
 /**
  *
  */
 static htsmsg_t *
-htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
+htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int flags)
 {
   void *buf;
   size_t len;
@@ -161,43 +217,12 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
   htsmsg_t *reply;
   htsp_msg_t *hm = NULL;
   int retry = 0;
-  char *username;
-  char *password;
-  char id[100];
 
   /* Generate a sequence number for our message */
   seq = atomic_add(&hc->hc_seq_generator, 1);
-
   htsmsg_add_u32(m, "seq", seq);
 
  again:
-
-  snprintf(id, sizeof(id), "htsp://%s:%d", hc->hc_hostname, hc->hc_port);
-
-  r = keyring_lookup(id, &username, &password, NULL, !!retry,
-		     "TV client", "Access denied");
-
-  if(r == -1) {
-    /* User rejected */
-    htsmsg_destroy(m);
-    return NULL;
-  }
-
-  if(r == 0) {
-    /* Got auth credentials */
-    htsmsg_delete_field(m, "username");
-    htsmsg_delete_field(m, "password");
-
-    if(username != NULL) 
-      htsmsg_add_str(m, "username", username);
-
-    if(password != NULL) 
-      htsmsg_add_str(m, "password", password);
-
-    free(username);
-    free(password);
-  }
-
 
   if(htsmsg_binary_serialize(m, &buf, &len, -1) < 0) {
     htsmsg_destroy(m);
@@ -271,12 +296,20 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
       return NULL;
     }
   
-    reply = htsmsg_binary_deserialize(buf, l, buf); /* uses 'buf' */
+    reply = htsmsg_binary_deserialize(buf, l, buf); /* consumes 'buf' */
   }
 
-  if(!htsmsg_get_u32(reply, "_noaccess", &noaccess) && noaccess) {
-    /* Access denied, we need to try with new credentials */
-    htsmsg_destroy(reply);
+  
+  if(!(flags & HTSP_DONT_INTERCEPT_NOACCESS) && 
+     !htsmsg_get_u32(reply, "noaccess", &noaccess) && noaccess) {
+
+    r = htsp_authenticate(hc, reply);
+
+    if(r == 0) {
+      htsmsg_destroy(m);
+      return NULL;
+    }
+
     retry++;
     goto again;
   }
@@ -510,7 +543,7 @@ htsp_thread(void *aux)
     m = htsmsg_create();
 
     htsmsg_add_str(m, "method", "async");
-    m = htsp_reqreply(hc, m);
+    m = htsp_reqreply(hc, m, 0);
     if(m == NULL) {
       return NULL;
     }
@@ -569,7 +602,7 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
     }
   }
 
-  fd = tcp_connect(hostname, port, errbuf, sizeof(errbuf), 3000);
+  fd = tcp_connect(hostname, port, errbuf, errlen, 3000);
   if(fd == -1) {
     hts_mutex_unlock(&htsp_global_mutex);
     return NULL;
@@ -722,7 +755,7 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
   htsmsg_add_u32(m, "channelId", chid);
   htsmsg_add_u32(m, "subscriptionId", hs->hs_sid);
 
-  if((m = htsp_reqreply(hc, m)) == NULL) {
+  if((m = htsp_reqreply(hc, m, 0)) == NULL) {
     snprintf(errbuf, errlen, "Connection with server lost");
     return NULL;
   }
@@ -750,7 +783,7 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
   htsmsg_add_str(m, "method", "unsubscribe");
   htsmsg_add_u32(m, "subscriptionId", hs->hs_sid);
 
-  if((m = htsp_reqreply(hc, m)) != NULL)
+  if((m = htsp_reqreply(hc, m, 0)) != NULL)
     htsmsg_destroy(m);
 
   return e;
