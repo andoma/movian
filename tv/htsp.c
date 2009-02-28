@@ -542,7 +542,7 @@ htsp_thread(void *aux)
 
     m = htsmsg_create();
 
-    htsmsg_add_str(m, "method", "setAsync");
+    htsmsg_add_str(m, "method", "enableAsyncMetadata");
     m = htsp_reqreply(hc, m, 0);
     if(m == NULL) {
       return NULL;
