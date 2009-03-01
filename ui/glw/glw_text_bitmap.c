@@ -126,7 +126,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   int err;
   int pen_x = 0, pen_y = 0;
 
-  int c, i, d, e;
+  int c, i, d, e, h;
   glyph_t *g0, *g;
   int siz_x, siz_y, start_x, start_y;
   int target_width, target_height;
@@ -141,7 +141,17 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 
   /* Compute position for each glyph */
 
+  h = 64 * face->height * pixelheight / 2048;
+
   for(i = 0; i < len; i++) {
+
+    if(uc[i] == '\n') {
+      prev = 0;
+      pen_x = 0;
+      pen_y -= h;
+      continue;
+    }
+
     gi = FT_Get_Char_Index(face, uc[i]);
 
     if(use_kerning && gi && prev) {
@@ -174,7 +184,11 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   bbox.yMin = 62 * face->descender * pixelheight / 2048;
   bbox.yMax = 62 * face->ascender  * pixelheight / 2048;
 
+
   for(i = 0; i < len; i++) {
+    if(uc[i] == '\n')
+      continue;
+
     g = g0 + i;
 
     FT_Glyph_Get_CBox(g->glyph, FT_GLYPH_BBOX_UNSCALED, &glyph_bbox);
@@ -230,6 +244,9 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   }
 
   for(i = 0; i < len; i++) {
+    if(uc[i] == '\n')
+      continue;
+
     g = g0 + i;
 
     pen.x = start_x + g->pos.x;
@@ -742,10 +759,13 @@ gtb_caption_has_changed(glw_text_bitmap_t *gtb)
   x = 0;
   
   if(str != NULL) 
-    while((c = glw_text_getutf8(&str)) != 0)
+    while((c = glw_text_getutf8(&str)) != 0) {
+      if(c == '\r')
+	continue;
       gtb->gtb_uc_buffer[x++] = c;
-  
-  gtb->gtb_uc_len   = x;
+    }
+
+  gtb->gtb_uc_len = x;
   if(gtb->w.glw_class == GLW_TEXT) {
     gtb->gtb_edit_ptr = x;
     gtb->gtb_update_cursor = 1;
