@@ -492,6 +492,7 @@ prop_make_dir(prop_t *p, prop_sub_t *skipme)
   
   TAILQ_INIT(&p->hp_childs);
   p->hp_selected = NULL;
+  p->hp_focused = NULL;
   p->hp_type = PROP_DIR;
   
   prop_notify_value(p, skipme);
