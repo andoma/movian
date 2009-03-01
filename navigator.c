@@ -25,6 +25,7 @@
 #include "showtime.h"
 #include "navigator.h"
 #include "event.h"
+#include "notifications.h"
 
 static hts_mutex_t nav_mutex;
 
@@ -149,12 +150,14 @@ nav_open(const char *url)
 	break;
   
     if(nb == NULL) {
-      fprintf(stderr, "Unable to open %s -- No handler\n", url);
+      notify_add(NOTIFY_ERROR, NULL, 5, 
+		 "No handler for URL:\n%s", url);
       return;
     }
 
     if(nb->nb_open(url, &np, errbuf, sizeof(errbuf))) {
-      fprintf(stderr, "Unable to open %s -- %s\n", url, errbuf);
+      notify_add(NOTIFY_ERROR, NULL, 5, 
+		 "Error: %s:\n%s", errbuf, url);
       return;
     }
   
