@@ -887,8 +887,10 @@ glw_focus_leave(glw_t *w)
 {
   glw_t *r = NULL;
 
-  if(!glw_path_in_focus(w))
-    return;  /* We were not even focused, don't do anything */
+  if(!glw_path_in_focus(w)) {
+    w->glw_parent->glw_focused = glw_focus_leave0(w->glw_parent, w);
+    return;
+  }
 
   while(w->glw_parent != NULL) {
     if((r = glw_focus_leave0(w->glw_parent, w)) != NULL)
