@@ -37,6 +37,7 @@
 #include "ui/keymapper.h"
 #include "keyring.h"
 #include "bookmarks.h"
+#include "notifications.h"
 
 hts_mutex_t ffmutex;
 int concurrency;
@@ -76,6 +77,9 @@ main(int argc, char **argv)
 
   /* Initialize property tree */
   prop_init();
+
+  /* Notification framework */
+  notifications_init();
 
   /* Architecture specific init */
   arch_init();

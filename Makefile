@@ -3,7 +3,7 @@
 # core
 
 SRCS = 	main.c navigator.c media.c event.c keyring.c settings.c prop.c \
-	bookmarks.c
+	bookmarks.c notifications.c
 
 VPATH += arch
 SRCS  += arch_${ARCHITECTURE}.c
