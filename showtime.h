@@ -38,4 +38,22 @@ showtime_get_ts(void)
   return (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
 }
 
+typedef void (deferred_callback_t)(void *opaque);
+
+typedef struct deferred {
+  LIST_ENTRY(deferred) d_link;
+  deferred_callback_t *d_callback;
+  void *d_opaque;
+  time_t d_expire;
+} deferred_t;
+
+void deferred_arm(deferred_t *d, deferred_callback_t *callback,
+		  void *opaque, int delta);
+
+void deferred_arm_abs(deferred_t *d, deferred_callback_t *callback,
+		      void *opaque, time_t when);
+
+void deferred_disarm(deferred_t *d);
+
+
 #endif /* SHOWTIME_H */
