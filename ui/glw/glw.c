@@ -807,7 +807,8 @@ glw_focus_set(glw_t *w)
   while(w->glw_parent != NULL) {
     if(w->glw_parent->glw_focused != w) {
       w->glw_parent->glw_focused = w;
-      glw_signal0(w->glw_parent, GLW_SIGNAL_FOCUS_CHANGED, w);
+      glw_signal0(w->glw_parent, GLW_SIGNAL_FOCUS_CHILD_CHANGED, w);
+      glw_signal0(w, GLW_SIGNAL_FOCUS_SELF, NULL);
     }
     w = w->glw_parent;
   }
@@ -838,7 +839,10 @@ glw_focus_init_widget(glw_t *w0)
   while(w->glw_parent != NULL) {
     if(w->glw_parent->glw_focused == NULL) {
       w->glw_parent->glw_focused = w;
-      glw_signal0(w->glw_parent, GLW_SIGNAL_FOCUS_CHANGED, w);
+
+      glw_signal0(w->glw_parent, GLW_SIGNAL_FOCUS_CHILD_CHANGED, w);
+      glw_signal0(w, GLW_SIGNAL_FOCUS_SELF, NULL);
+
     } else if(w->glw_parent->glw_focused != w)
       return;
     w = w->glw_parent;
@@ -991,7 +995,30 @@ glw_focus_unblock_path(glw_t *w)
 
   w->glw_flags &= ~GLW_FOCUS_BLOCKED;
   p->glw_focused = w;
-  glw_signal0(p, GLW_SIGNAL_FOCUS_CHANGED, w);
+
+  glw_signal0(p, GLW_SIGNAL_FOCUS_CHILD_CHANGED, w);
+  glw_signal0(w, GLW_SIGNAL_FOCUS_SELF, NULL);
+
+  if(glw_path_in_focus(w))
+    glw_focus_set_current_by_path(w);
+}
+
+
+/**
+ *
+ */
+void
+glw_focus_set_if_parent_is_in_focus(glw_t *w)
+{
+  glw_t *p = w->glw_parent;
+
+  if(p->glw_focused == w)
+    return;
+
+  p->glw_focused = w;
+  return;
+
+  glw_signal0(p, GLW_SIGNAL_FOCUS_CHILD_CHANGED, w);
 
   if(glw_path_in_focus(w))
     glw_focus_set_current_by_path(w);
@@ -1096,7 +1123,7 @@ pointer_event0(glw_t *w, glw_pointer_event_t *gpe)
 
 	switch(gpe->type) {
 	case GLW_POINTER_CLICK:
-	  glw_focus_set(w);
+	  //	  glw_focus_set(w);
 	  return 1;
 
 	case GLW_POINTER_RELEASE:

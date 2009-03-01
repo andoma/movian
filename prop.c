@@ -93,7 +93,9 @@ typedef struct prop_notify {
 #define hpn_int    u.i
 #define hpn_string u.s
 
-  prop_t *hpn_prop2; /* pointless to put in union right now */
+
+  prop_t *hpn_prop2;
+  int hpn_flags;
 
 } prop_notify_t;
 
@@ -191,22 +193,27 @@ prop_courier(void *aux)
       break;
 
     case PROP_ADD_CHILD:
-    case PROP_ADD_SELECTED_CHILD:
+      s->hps_callback(s, n->hpn_event, n->hpn_prop, n->hpn_flags);
+      prop_ref_dec(n->hpn_prop);
+      break;
+
+    case PROP_ADD_CHILD_BEFORE:
+      s->hps_callback(s, n->hpn_event, n->hpn_prop, n->hpn_prop2, 
+		      n->hpn_flags);
+      prop_ref_dec(n->hpn_prop);
+      prop_ref_dec(n->hpn_prop2);
+      break;
+
     case PROP_DEL_CHILD:
     case PROP_SELECT_CHILD:
+    case PROP_FOCUS_CHILD:
     case PROP_REQ_DELETE:
     case PROP_REQ_NEW_CHILD:
       s->hps_callback(s, n->hpn_event, n->hpn_prop);
       if(n->hpn_prop != NULL)
 	prop_ref_dec(n->hpn_prop);
       break;
-
-    case PROP_ADD_CHILD_BEFORE:
-      s->hps_callback(s, n->hpn_event, n->hpn_prop, n->hpn_prop2);
-      prop_ref_dec(n->hpn_prop);
-      prop_ref_dec(n->hpn_prop2);
-      break;
-
+ 
     case PROP_DESTROYED:
       s->hps_callback(s, n->hpn_event, n->hpn_prop);
       prop_ref_dec(n->hpn_prop);
@@ -373,12 +380,12 @@ prop_notify_value(prop_t *p, prop_sub_t *skipme)
  */
 static void
 prop_build_notify_child(prop_sub_t *s, prop_t *p, prop_event_t event,
-			int direct)
+			int direct, int flags)
 {
   prop_notify_t *n;
 
   if(direct) {
-    s->hps_callback(s, event, p);
+    s->hps_callback(s, event, p, flags);
     return;
   }
 
@@ -386,7 +393,7 @@ prop_build_notify_child(prop_sub_t *s, prop_t *p, prop_event_t event,
 
   if(p != NULL)
     atomic_add(&p->hp_refcount, 1);
-
+  n->hpn_flags = flags;
   n->hpn_prop = p;
   n->hpn_event = event;
   courier_enqueue(s->hps_courier, n);
@@ -398,13 +405,13 @@ prop_build_notify_child(prop_sub_t *s, prop_t *p, prop_event_t event,
  */
 static void
 prop_notify_child(prop_t *child, prop_t *parent, prop_event_t event,
-		  prop_sub_t *skipme)
+		  prop_sub_t *skipme, int flags)
 {
   prop_sub_t *s;
 
   LIST_FOREACH(s, &parent->hp_value_subscriptions, hps_value_prop_link)
     if(s != skipme)
-      prop_build_notify_child(s, child, event, 0);
+      prop_build_notify_child(s, child, event, 0, flags);
 }
 
 
@@ -415,7 +422,7 @@ prop_notify_child(prop_t *child, prop_t *parent, prop_event_t event,
  */
 static void
 prop_build_notify_child2(prop_sub_t *s, prop_t *p, prop_t *sibling, 
-			 prop_event_t event)
+			 prop_event_t event, int flags)
 {
   prop_notify_t *n;
 
@@ -427,6 +434,7 @@ prop_build_notify_child2(prop_sub_t *s, prop_t *p, prop_t *sibling,
   n->hpn_prop = p;
   n->hpn_prop2 = sibling;
   n->hpn_event = event;
+  n->hpn_flags = flags;
   courier_enqueue(s->hps_courier, n);
 }
 
@@ -436,13 +444,13 @@ prop_build_notify_child2(prop_sub_t *s, prop_t *p, prop_t *sibling,
  */
 static void
 prop_notify_child2(prop_t *child, prop_t *parent, prop_t *sibling,
-		   prop_event_t event, prop_sub_t *skipme)
+		   prop_event_t event, prop_sub_t *skipme, int flags)
 {
   prop_sub_t *s;
 
   LIST_FOREACH(s, &parent->hp_value_subscriptions, hps_value_prop_link)
     if(s != skipme)
-      prop_build_notify_child2(s, child, sibling, event);
+      prop_build_notify_child2(s, child, sibling, event, flags);
 }
 
 
@@ -527,7 +535,7 @@ prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme)
 
   if(parent != NULL) {
     TAILQ_INSERT_TAIL(&parent->hp_childs, hp, hp_parent_link);
-    prop_notify_child(hp, parent, PROP_ADD_CHILD, skipme);
+    prop_notify_child(hp, parent, PROP_ADD_CHILD, skipme, 0);
   }
 
   return hp;
@@ -579,10 +587,10 @@ prop_set_parent_ex(prop_t *p, prop_t *parent, prop_t *before,
 
   if(before != NULL) {
     TAILQ_INSERT_BEFORE(before, p, hp_parent_link);
-    prop_notify_child2(p, parent, before, PROP_ADD_CHILD_BEFORE, skipme);
+    prop_notify_child2(p, parent, before, PROP_ADD_CHILD_BEFORE, skipme, 0);
   } else {
     TAILQ_INSERT_TAIL(&parent->hp_childs, p, hp_parent_link);
-    prop_notify_child(p, parent, PROP_ADD_CHILD, skipme);
+    prop_notify_child(p, parent, PROP_ADD_CHILD, skipme, 0);
   }
 
   hts_mutex_unlock(&prop_mutex);
@@ -644,24 +652,17 @@ prop_destroy0(prop_t *p)
   }
 
   if(p->hp_parent != NULL) {
-    prop_notify_child(p, p->hp_parent, PROP_DEL_CHILD, NULL);
+    prop_notify_child(p, p->hp_parent, PROP_DEL_CHILD, NULL, 0);
     parent = p->hp_parent;
 
     TAILQ_REMOVE(&parent->hp_childs, p, hp_parent_link);
     p->hp_parent = NULL;
 
-    if(parent->hp_selected == p) {
-
-      /* It's pointless for us to try to choose a different child
-	 to be selected. Why? .. All subscribers sort the props
-	 in their own order. Instead, notify them that nothing
-	 is selected. This should trig them to reselect somthing. 
-	 This will echo back to us as an advisory prop_select()
-      */
+    if(parent->hp_selected == p)
       parent->hp_selected = NULL;
-      prop_notify_child(NULL, parent, PROP_SELECT_CHILD, NULL);
-    }
 
+    if(parent->hp_focused == p)
+      parent->hp_focused = NULL;
   }
 
   prop_ref_dec(p);
@@ -760,6 +761,16 @@ prop_get_by_name(struct prop *p, const char **name, int follow_symlinks)
 /**
  *
  */
+static int
+gen_add_flags(prop_t *c, prop_t *p)
+{
+  return 
+    (c == p->hp_selected ? PROP_ADD_SELECTED : 0) |
+    (c == p->hp_focused  ? PROP_ADD_FOCUSED  : 0);
+}
+/**
+ *
+ */
 prop_sub_t *
 prop_subscribe(struct prop *prop, const char **name,
 	       prop_callback_t *cb, void *opaque, prop_courier_t *pc,
@@ -820,10 +831,8 @@ prop_subscribe(struct prop *prop, const char **name,
 
     if(value->hp_type == PROP_DIR) {
       TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
-	prop_build_notify_child(s, c, 
-				value->hp_selected == c ? 
-				PROP_ADD_SELECTED_CHILD : PROP_ADD_CHILD,
-				direct);
+	prop_build_notify_child(s, c, PROP_ADD_CHILD, direct,
+				gen_add_flags(c, value));
     }
   }
 
@@ -1093,9 +1102,8 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme)
 
     if(src->hp_type == PROP_DIR) {
       TAILQ_FOREACH(c, &src->hp_childs, hp_parent_link)
-	prop_build_notify_child(s, c,
-				src->hp_selected == c ? 
-				PROP_ADD_SELECTED_CHILD : PROP_ADD_CHILD, 0);
+	prop_build_notify_child(s, c, PROP_ADD_CHILD, 0,
+				gen_add_flags(c, src));
     }
   }
 
@@ -1236,13 +1244,45 @@ prop_select_ex(prop_t *p, int advisory, prop_sub_t *skipme)
     /* If in advisory mode and something is already selected,
        don't do anything */
     if(!advisory || parent->hp_selected == NULL) {
-      prop_notify_child(p, parent, PROP_SELECT_CHILD, skipme);
+      prop_notify_child(p, parent, PROP_SELECT_CHILD, skipme, 0);
       parent->hp_selected = p;
     }
   }
 
   hts_mutex_unlock(&prop_mutex);
 }
+
+
+/**
+ *
+ */
+void
+prop_focus_ex(prop_t *p, int advisory, prop_sub_t *skipme)
+{
+  prop_t *parent;
+
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type == PROP_ZOMBIE) {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
+
+  parent = p->hp_parent;
+
+  if(parent != NULL) {
+    assert(parent->hp_type == PROP_DIR);
+
+    /* If in advisory mode and something is already selected,
+       don't do anything */
+    if(!advisory || parent->hp_focused == NULL) {
+      prop_notify_child(p, parent, PROP_FOCUS_CHILD, skipme, 0);
+      parent->hp_focused = p;
+    }
+  }
+  hts_mutex_unlock(&prop_mutex);
+}
+
 
 
 /**
@@ -1347,7 +1387,7 @@ prop_request_new_child(prop_t *p)
   hts_mutex_lock(&prop_mutex);
 
   if(p->hp_type == PROP_DIR || p->hp_type == PROP_VOID)
-    prop_notify_child(NULL, p, PROP_REQ_NEW_CHILD, NULL);
+    prop_notify_child(NULL, p, PROP_REQ_NEW_CHILD, NULL, 0);
 
   hts_mutex_unlock(&prop_mutex);
 }
@@ -1367,7 +1407,7 @@ prop_request_delete_child_by_subscription(prop_sub_t *s)
     p = c->hp_parent;
 
     if(p->hp_type == PROP_DIR)
-      prop_notify_child(c, p, PROP_REQ_DELETE, s);
+      prop_notify_child(c, p, PROP_REQ_DELETE, s, 0);
   }
 
   hts_mutex_unlock(&prop_mutex);
@@ -1434,9 +1474,9 @@ prop_courier_destroy(prop_courier_t *pc)
       break;
 
     case PROP_ADD_CHILD:
-    case PROP_ADD_SELECTED_CHILD:
     case PROP_DEL_CHILD:
     case PROP_SELECT_CHILD:
+    case PROP_FOCUS_CHILD:
     case PROP_REQ_DELETE:
     case PROP_REQ_NEW_CHILD:
       if(n->hpn_prop != NULL)

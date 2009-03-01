@@ -27,17 +27,21 @@
 struct prop;
 struct prop_sub;
 
+#define PROP_ADD_SELECTED 0x1
+#define PROP_ADD_FOCUSED  0x2
+
 typedef enum {
   PROP_SET_VOID,
   PROP_SET_STRING,
   PROP_SET_INT,
   PROP_SET_FLOAT,
   PROP_SET_DIR,
+
   PROP_ADD_CHILD,
   PROP_ADD_CHILD_BEFORE,
-  PROP_ADD_SELECTED_CHILD,
   PROP_DEL_CHILD,
   PROP_SELECT_CHILD,
+  PROP_FOCUS_CHILD,
   PROP_REQ_NEW_CHILD,
   PROP_REQ_DELETE,
   PROP_DESTROYED,
@@ -138,6 +142,7 @@ typedef struct prop {
     struct {
       struct prop_queue childs;
       struct prop *selected;
+      struct prop *focused;
     } c;
   } u;
 
@@ -145,7 +150,8 @@ typedef struct prop {
 #define hp_float    u.f
 #define hp_int      u.i
 #define hp_childs   u.c.childs
-#define hp_selected  u.c.selected
+#define hp_selected u.c.selected
+#define hp_focused  u.c.focused
 
 
 } prop_t;
@@ -269,6 +275,10 @@ void prop_unlink_ex(prop_t *p, prop_sub_t *skipme);
 void prop_select_ex(prop_t *p, int advisory, prop_sub_t *skipme);
 
 #define prop_select(p, advisory) prop_select_ex(p, advisory, NULL)
+
+void prop_focus_ex(prop_t *p, int advisory, prop_sub_t *skipme);
+
+#define prop_focus(p, advisory) prop_focus_ex(p, advisory, NULL)
 
 prop_t **prop_get_ancestors(prop_t *p);
 

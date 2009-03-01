@@ -181,8 +181,8 @@ typedef enum {
 
 
   /**
-   * Sent to parent to switch current focused child.
-   * Parent should NOT send GLW_SIGNAL_FOCUSED_UPDATE to the child
+   * Sent to parent to switch currently selected child.
+   * Parent should NOT send GLW_SIGNAL_SELECTED_UPDATE to the child
    * in this case.
    */
   GLW_SIGNAL_SELECT,
@@ -196,7 +196,12 @@ typedef enum {
    * Sent to widget when its focused child is changed.
    * Argument is newly focused child.
    */
-  GLW_SIGNAL_FOCUS_CHANGED,
+  GLW_SIGNAL_FOCUS_CHILD_CHANGED,
+
+  /**
+   * Sent to widget when it is focused
+   */
+  GLW_SIGNAL_FOCUS_SELF,
 
   /**
    *
@@ -424,6 +429,8 @@ int glw_is_focused(glw_t *w);
 void glw_store_matrix(glw_t *w, glw_rctx_t *rc);
 
 void glw_focus_set(glw_t *w);
+
+void glw_focus_set_if_parent_is_in_focus(glw_t *w);
 
 void glw_focus_unblock_path(glw_t *w);
 
