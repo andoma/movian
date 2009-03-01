@@ -59,15 +59,12 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
     tmphstbuf = realloc(tmphstbuf, hstbuflen);
   }
   
-  if(res != 0) {
-    snprintf(errbuf, errbufsize, "Resolver internal error");
-    free(tmphstbuf);
-    return -1;
-  } else if(herr != 0) {
+  if(herr != 0) {
     switch(herr) {
     case HOST_NOT_FOUND:
-      errtxt = "The specified host is unknown";
+      errtxt = "Unknown host";
       break;
+
     case NO_ADDRESS:
       errtxt = "The requested name is valid but does not have an IP address";
       break;
