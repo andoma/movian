@@ -242,6 +242,7 @@ deferred_arm_abs(deferred_t *d, deferred_callback_t *callback, void *opaque,
 
   LIST_INSERT_SORTED(&deferreds, d, d_link, deferredcmp);
 
+  hts_cond_signal(&ui_cond);
   hts_mutex_unlock(&ui_mutex);
 }
 
@@ -264,8 +265,10 @@ deferred_arm(deferred_t *d, deferred_callback_t *callback,
 void
 deferred_disarm(deferred_t *d)
 {
+  hts_mutex_lock(&ui_mutex);
   if(d->d_callback) {
     LIST_REMOVE(d, d_link);
     d->d_callback = NULL;
   }
+  hts_mutex_unlock(&ui_mutex);
 }
