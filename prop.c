@@ -1598,7 +1598,7 @@ prop_tree_to_htsmsg0(prop_t *p, htsmsg_t *m)
 
   case PROP_DIR:
 
-    sub = htsmsg_create();
+    sub = htsmsg_create_map();
     TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
       prop_tree_to_htsmsg0(c, sub);
     htsmsg_add_msg(m, p->hp_name ?: "", sub);
@@ -1618,7 +1618,7 @@ prop_tree_to_htsmsg0(prop_t *p, htsmsg_t *m)
 htsmsg_t *
 prop_tree_to_htsmsg(prop_t *p)
 {
-  htsmsg_t *m = htsmsg_create();
+  htsmsg_t *m = htsmsg_create_map();
   hts_mutex_lock(&prop_mutex);
   prop_tree_to_htsmsg0(p, m);
   hts_mutex_unlock(&prop_mutex);

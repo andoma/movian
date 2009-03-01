@@ -40,7 +40,7 @@ keyring_init(void)
   hts_mutex_init(&keyring_mutex);
   keyring = hts_settings_load("keyring");
   if(keyring == NULL)
-    keyring = htsmsg_create();
+    keyring = htsmsg_create_map();
 }
 
 
@@ -163,7 +163,7 @@ keyring_lookup(const char *id, char **username, char **password,
     if(kp.result == 1) {
       /* OK */
 
-      m = htsmsg_create();
+      m = htsmsg_create_map();
 
       if(prop_get_string(user, buf, sizeof(buf)))
 	buf[0] = 0;
@@ -195,7 +195,7 @@ keyring_lookup(const char *id, char **username, char **password,
     }
   }
 
-  if((m = htsmsg_get_msg(keyring, id)) == NULL) {
+  if((m = htsmsg_get_map(keyring, id)) == NULL) {
     hts_mutex_unlock(&keyring_mutex);
     return 1;
   }

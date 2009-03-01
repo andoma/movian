@@ -48,7 +48,7 @@ static char *audio_stored_device;
 static void
 audio_global_save_settings(void)
 {
-  htsmsg_t *m = htsmsg_create();
+  htsmsg_t *m = htsmsg_create_map();
   htsmsg_add_str(m, "current", audio_mode_current->am_id);
   hts_settings_save(m, "audio/current");
   htsmsg_destroy(m);
@@ -203,7 +203,7 @@ audio_mode_save_mixer_map(htsmsg_t *m, audio_mode_t *am,
 static void
 audio_mode_save_settings(audio_mode_t *am)
 {
-  htsmsg_t *m = htsmsg_create();
+  htsmsg_t *m = htsmsg_create_map();
 
   htsmsg_add_u32(m, "phantom_center", am->am_phantom_center);
   htsmsg_add_u32(m, "phantom_lfe", am->am_phantom_lfe);

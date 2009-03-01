@@ -169,9 +169,9 @@ bookmarks_init(void)
   
   if((m = hts_settings_load("bookmarks")) != NULL) {
 
-    n = htsmsg_get_msg(m, "nodes");
+    n = htsmsg_get_map(m, "nodes");
     HTSMSG_FOREACH(f, n) {
-      if((o = htsmsg_get_msg_by_field(f)) == NULL)
+      if((o = htsmsg_get_map_by_field(f)) == NULL)
 	continue;
       bookmark_load(o);
     }

@@ -704,7 +704,7 @@ static const char *
 get_cdata_by_tag(htsmsg_t *tags, const char *name)
 {
   htsmsg_t *sub;
-  if((sub = htsmsg_get_msg(tags, name)) == NULL)
+  if((sub = htsmsg_get_map(tags, name)) == NULL)
     return NULL;
   return htsmsg_get_str(sub, "cdata");
 }
@@ -723,27 +723,27 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd)
   char path[256];
   char fname[128];
 
-  if((m = htsmsg_get_msg_multi(xml, "tags", 
+  if((m = htsmsg_get_map_multi(xml, "tags", 
 			       "DAV:multistatus", "tags", NULL)) == NULL)
     return -1;
 
   HTSMSG_FOREACH(f, m) {
     if(strcmp(f->hmf_name, "DAV:response"))
       continue;
-    if((c = htsmsg_get_msg_by_field(f)) == NULL)
+    if((c = htsmsg_get_map_by_field(f)) == NULL)
       continue;
 
-    if((c = htsmsg_get_msg(c, "tags")) == NULL)
+    if((c = htsmsg_get_map(c, "tags")) == NULL)
       continue;
 
     if((href = get_cdata_by_tag(c, "DAV:href")) == NULL)
       continue;
 
-    if((c = htsmsg_get_msg_multi(c, "DAV:propstat", "tags",
+    if((c = htsmsg_get_map_multi(c, "DAV:propstat", "tags",
 				 "DAV:prop", "tags", NULL)) == NULL)
       continue;
 
-    isdir = !!htsmsg_get_msg_multi(c, "DAV:resourcetype", "tags",
+    isdir = !!htsmsg_get_map_multi(c, "DAV:resourcetype", "tags",
 				   "DAV:collection", NULL);
 
     if(fd != NULL) {

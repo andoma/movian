@@ -186,7 +186,7 @@ audio_mixer_load(void)
 static void
 audio_mixer_save(void)
 {
-  htsmsg_t *m = htsmsg_create();
+  htsmsg_t *m = htsmsg_create_map();
 
   htsmsg_add_s32(m, "master-volume", 
 		 global_volume.vc_master_vol * 1000);

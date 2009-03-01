@@ -182,7 +182,7 @@ htsp_authenticate(htsp_connection_t *hc, htsmsg_t *m)
       return 0;
     }
 
-    m = htsmsg_create();
+    m = htsmsg_create_map();
     htsmsg_add_str(m, "username", username);
 
     av_sha1_init(shactx);
@@ -540,7 +540,7 @@ htsp_thread(void *aux)
 
   while(1) {
 
-    m = htsmsg_create();
+    m = htsmsg_create_map();
 
     htsmsg_add_str(m, "method", "enableAsyncMetadata");
     m = htsp_reqreply(hc, m, 0);
@@ -749,7 +749,7 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
   htsmsg_t *m;
   media_pipe_t *mp = hs->hs_mp;
 
-  m = htsmsg_create();
+  m = htsmsg_create_map();
 
   htsmsg_add_str(m, "method", "subscribe");
   htsmsg_add_u32(m, "channelId", chid);
@@ -778,7 +778,7 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
     }
   } while(e == NULL);
   
-  m = htsmsg_create();
+  m = htsmsg_create_map();
 
   htsmsg_add_str(m, "method", "unsubscribe");
   htsmsg_add_u32(m, "subscriptionId", hs->hs_sid);
@@ -972,9 +972,9 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
    * Parse each stream component and add it as a stream at our end
    */
 
-  if((streams = htsmsg_get_array(m, "streams")) != NULL) {
+  if((streams = htsmsg_get_list(m, "streams")) != NULL) {
     HTSMSG_FOREACH(f, streams) {
-      if(f->hmf_type != HMF_MSG)
+      if(f->hmf_type != HMF_MAP)
 	continue;
       sub = &f->hmf_msg;
 

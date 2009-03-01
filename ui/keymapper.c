@@ -34,7 +34,7 @@ static void
 km_save(keymap_t *km)
 {
   keymap_entry_t *ke;
-  htsmsg_t *m = htsmsg_create();
+  htsmsg_t *m = htsmsg_create_map();
   const char *e;
 
   LIST_FOREACH(ke, &km->km_entries, ke_link)

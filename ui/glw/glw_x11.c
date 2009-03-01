@@ -111,7 +111,7 @@ static void update_gpu_info(void);
 static void
 display_settings_save(glw_x11_t *gx11)
 {
-  htsmsg_t *m = htsmsg_create();
+  htsmsg_t *m = htsmsg_create_map();
 
   htsmsg_add_u32(m, "fullscreen", gx11->want_fullscreen);
   htsmsg_add_u32(m, "pointer",    gx11->want_pointer_enabled);
