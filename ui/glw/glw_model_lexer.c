@@ -225,11 +225,18 @@ lexer(const char *src, errorinfo_t *ei, refstr_t *f, token_t *prev)
       src++;
       start++;
 
-      while(*src != '"' && src[-1] != '\\') {
+      while((*src != '"' || src[-1] == '\\') && *src != 0) {
 	if(*src == '\n')
 	  line++;
 	src++;
       }
+      if(*src != '"') {
+	snprintf(ei->error, sizeof(ei->error), "Unterminated quote");
+	snprintf(ei->file,  sizeof(ei->file),  "%s", refstr_get(f));
+	ei->line = line;
+	return NULL;
+      }
+
       prev = lexer_add_token_string(prev, f, line, start, src, TOKEN_STRING);
       src++;
       continue;
