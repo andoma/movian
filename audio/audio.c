@@ -29,6 +29,7 @@
 #include "audio_ui.h"
 #include "audio_fifo.h"
 #include "audio_decoder.h"
+#include "notifications.h"
 
 audio_mode_t *audio_mode_current;
 hts_mutex_t audio_mode_mutex;
@@ -145,11 +146,11 @@ audio_output_thread(void *aux)
   if(audio_mode_current == NULL)
     audio_mode_current = TAILQ_FIRST(&audio_modes);
 
+  am = audio_mode_current;
 
   while(1) {
-    am = audio_mode_current;
-    fprintf(stderr, "Audio output using %s\n", am->am_title);
     r = am->am_entry(am, af);
+    am = audio_mode_current;
 
     if(r == -1) {
       /* Device error, sleep to avoid busy looping.
@@ -157,7 +158,12 @@ audio_output_thread(void *aux)
 	 is blocking output, etc)
       */
       sleep(1);
+    } else {
+
+      notify_add(NOTIFY_INFO, NULL, 5, "Switching audio output to %s", 
+		 am->am_title);
     }
+
   }
   return NULL;
 }
