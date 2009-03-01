@@ -119,7 +119,7 @@ ui_main_loop(void)
       dc = d->d_callback;
       LIST_REMOVE(d, d_link);
       d->d_callback = NULL;
-      dc(d->d_opaque);
+      dc(d, d->d_opaque);
     }
 
     if((d = LIST_FIRST(&deferreds)) != NULL) {

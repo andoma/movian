@@ -38,7 +38,8 @@ showtime_get_ts(void)
   return (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
 }
 
-typedef void (deferred_callback_t)(void *opaque);
+struct deferred;
+typedef void (deferred_callback_t)(struct deferred *d, void *opaque);
 
 typedef struct deferred {
   LIST_ENTRY(deferred) d_link;
