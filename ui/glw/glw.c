@@ -864,8 +864,11 @@ glw_focus_leave0(glw_t *w, glw_t *cur)
   c = cur ? TAILQ_NEXT(cur, glw_parent_link) : TAILQ_FIRST(&w->glw_childs);
 
   for(;;c = TAILQ_NEXT(c, glw_parent_link)) {
-     if(c == NULL)
+    if(c == NULL) {
+      if(cur == NULL)
+	return NULL;
       c = TAILQ_FIRST(&w->glw_childs);
+    }
 
     if(c == cur)
       return NULL;
