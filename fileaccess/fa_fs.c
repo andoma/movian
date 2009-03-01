@@ -50,7 +50,7 @@ fs_urlsnprintf(char *buf, size_t bufsize, const char *prefix, const char *base,
 
 
 static int
-fs_scandir(fa_dir_t *fd, const char *url)
+fs_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 {
   char buf[256];
   struct stat st;
@@ -58,8 +58,10 @@ fs_scandir(fa_dir_t *fd, const char *url)
   int type;
   DIR *dir;
 
-  if((dir = opendir(url)) == NULL)
-    return errno;
+  if((dir = opendir(url)) == NULL) {
+    snprintf(errbuf, errlen, "%s", strerror(errno));
+    return -1;
+  }
   
   while((d = readdir(dir)) != NULL) {
     fs_urlsnprintf(buf, sizeof(buf), "", url, d->d_name);
@@ -90,13 +92,15 @@ fs_scandir(fa_dir_t *fd, const char *url)
  * Open file
  */
 static fa_handle_t *
-fs_open(fa_protocol_t *fap, const char *url)
+fs_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
 {
   fs_handle_t *fh;
 
   int fd = open(url, O_RDONLY);
-  if(fd == -1)
+  if(fd == -1) {
+    snprintf(errbuf, errlen, "%s", strerror(errno));
     return NULL;
+  }
   fh = malloc(sizeof(fs_handle_t));
   fh->fd = fd;
 
@@ -157,9 +161,14 @@ fs_fsize(fa_handle_t *fh0)
  * Standard unix stat
  */
 static int
-fs_stat(fa_protocol_t *fap, const char *url, struct stat *buf)
+fs_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
+	char *errbuf, size_t errlen)
 {
-  return stat(url, buf);
+  if(stat(url, buf)) {
+    snprintf(errbuf, errlen, "%s", strerror(errno));
+    return -1;
+  }
+  return 0;
 }
 
 

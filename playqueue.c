@@ -182,7 +182,7 @@ playqueue_load_siblings(const char *url, playqueue_entry_t *justadded)
   prop_t *media;
   int r;
 
-  if((fd = fa_scandir(url)) == NULL)
+  if((fd = fa_scandir(url, NULL, 0)) == NULL)
     return;
 
   fa_dir_sort(fd);
@@ -197,7 +197,7 @@ playqueue_load_siblings(const char *url, playqueue_entry_t *justadded)
       continue;
     
     media = prop_create(NULL, "media");
-    r = fa_probe(media, fde->fde_url, NULL, 0);
+    r = fa_probe(media, fde->fde_url, NULL, 0, NULL, 0);
 
     if(r != FA_AUDIO) {
       prop_destroy(media);

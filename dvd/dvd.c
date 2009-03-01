@@ -73,15 +73,30 @@
   _pts;							\
 })
 
+
+
+static void *
+dvd_fa_open(const char *url)
+{
+  return fa_open(url, NULL, 0);
+}
+
+static int
+dvd_fa_stat(const char *url, struct stat *st)
+{
+  return fa_stat(url, st, NULL, 0);
+}
+
+
 /**
  *
  */
 static struct svfs_ops faops = {
-  .open = fa_open,
+  .open = dvd_fa_open,
   .close = fa_close,
   .read = fa_read,
   .seek = fa_seek,
-  .stat = fa_stat,
+  .stat = dvd_fa_stat,
   .findfile = fa_findfile,
 };
 

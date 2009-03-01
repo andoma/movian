@@ -24,7 +24,8 @@
 #include <libavformat/avformat.h>
 
 unsigned int fa_probe(prop_t *proproot, const char *url,
-		      char *newurl, size_t newurlsize);
+		      char *newurl, size_t newurlsize,
+		      char *errbuf, size_t errsize);
 
 unsigned int fa_probe_dir(prop_t *proproot, const char *url);
 

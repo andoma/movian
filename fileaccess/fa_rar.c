@@ -280,7 +280,7 @@ rar_archive_load(rar_archive_t *ra)
 
   volume_index++;
 
-  if((fh = fa_open(filename)) == NULL)
+  if((fh = fa_open(filename, NULL, 0)) == NULL)
     return -1;
 
   /* Read & Verify RAR file signature */
@@ -523,16 +523,18 @@ rar_file_unref(rar_file_t *rf)
  *
  */
 static int
-rar_scandir(fa_dir_t *fd, const char *url)
+rar_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 {
   rar_file_t *c, *rf;
   char buf[1000];
 
-  if((rf = rar_file_find(url)) == NULL)
+  if((rf = rar_file_find(url)) == NULL) {
+    snprintf(errbuf, errlen, "Entry not found in archive");
     return -1;
-  
+  }
   if(rf->rf_type != FA_DIR) {
     rar_file_unref(rf);
+    snprintf(errbuf, errlen, "Entry is not a directory");
     return -1;
   }
 
@@ -563,16 +565,19 @@ typedef struct rar_fd {
  *
  */
 static fa_handle_t *
-rar_open(fa_protocol_t *fap, const char *url)
+rar_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
 {
   rar_file_t *rf;
   rar_fd_t *rfd;
 
-  if((rf = rar_file_find(url)) == NULL)
+  if((rf = rar_file_find(url)) == NULL) {
+    snprintf(errbuf, errlen, "Entry not found in archive");
     return NULL;
-  
+  }
+
   if(rf->rf_type != FA_FILE) {
     rar_file_unref(rf);
+    snprintf(errbuf, errlen, "Entry is not a file");
     return NULL;
   }
 
@@ -638,7 +643,7 @@ rar_read(fa_handle_t *handle, void *buf, size_t size)
       r = w;
     
     if(rfd->rfd_fh == NULL) {
-      rfd->rfd_fh = fa_open(rs->rs_volume->rv_url);
+      rfd->rfd_fh = fa_open(rs->rs_volume->rv_url, NULL, 0);
       if(rfd->rfd_fh == NULL)
 	return -1;
     }
@@ -709,12 +714,15 @@ rar_fsize(fa_handle_t *handle)
  * Standard unix stat
  */
 static int
-rar_stat(fa_protocol_t *fap, const char *url, struct stat *buf)
+rar_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
+	 char *errbuf, size_t errlen)
 {
   rar_file_t *rf;
 
-  if((rf = rar_file_find(url)) == NULL)
+  if((rf = rar_file_find(url)) == NULL) {
+    snprintf(errbuf, errlen, "Entry not found in archive");
     return -1;
+  }
 
   memset(buf, 0, sizeof(struct stat));
 

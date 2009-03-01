@@ -85,18 +85,18 @@ typedef struct fa_handle {
 
 
 
-fa_dir_t *fa_scandir(const char *url);
-void *fa_open(const char *url);
+fa_dir_t *fa_scandir(const char *url, char *errbuf, size_t errsize);
+void *fa_open(const char *url, char *errbuf, size_t errsize);
 void *fa_open_theme(const char *url, const char *themepath);
 void fa_close(void *fh);
 int fa_read(void *fh, void *buf, size_t size);
 int64_t fa_seek(void *fh, int64_t pos, int whence);
 int64_t fa_fsize(void *fh);
-int fa_stat(const char *url, struct stat *buf);
+int fa_stat(const char *url, struct stat *buf, char *errbuf, size_t errsize);
 int fa_findfile(const char *path, const char *file, 
 		char *fullpath, size_t fullpathlen);
 
-int fa_can_handle(const char *url);
+int fa_can_handle(const char *url, char *errbuf, size_t errsize);
 
 void *fa_reference(const char *url);
 void fa_unreference(void *fh);

@@ -35,14 +35,18 @@ typedef struct fa_protocol {
 
   const char *fap_name;
 
-  int (*fap_scan)(fa_dir_t *fd, const char *url);
+  int (*fap_scan)(fa_dir_t *fd, const char *url,
+		  char *errbuf, size_t errsize);
 
-  fa_handle_t *(*fap_open)(struct fa_protocol *fap, const char *url);
+  fa_handle_t *(*fap_open)(struct fa_protocol *fap, const char *url,
+			   char *errbuf, size_t errsize);
+
   void (*fap_close)(fa_handle_t *fh);
   int (*fap_read)(fa_handle_t *fh, void *buf, size_t size);
   int64_t (*fap_seek)(fa_handle_t *fh, int64_t pos, int whence);
   int64_t (*fap_fsize)(fa_handle_t *fh);
-  int (*fap_stat)(struct fa_protocol *fap, const char *url, struct stat *buf);
+  int (*fap_stat)(struct fa_protocol *fap, const char *url, struct stat *buf,
+		  char *errbuf, size_t errsize);
 
   fa_handle_t *(*fap_reference)(struct fa_protocol *fap, const char *url);
   void (*fap_unreference)(fa_handle_t *fh);

@@ -377,7 +377,8 @@ fa_lavf_load_meta(prop_t *proproot, AVFormatContext *fctx, const char *url)
  * Probe a file for its type
  */
 unsigned int
-fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize)
+fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize,
+	 char *errbuf, size_t errsize)
 {
   int r;
   AVFormatContext *fctx;
@@ -386,7 +387,7 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize)
   fa_handle_t *fh;
   int type;
 
-  if((fh = fa_open(url)) == NULL)
+  if((fh = fa_open(url, errbuf, errsize)) == NULL)
     return FA_UNKNOWN;
 
   if((r = fa_probe_header(proproot, url0, fh, newurl, newurlsize)) != -1) {
@@ -411,12 +412,14 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize)
   
   if(av_open_input_file(&fctx, tmp1, NULL, 0, NULL) != 0) {
     ffunlock();
+    snprintf(errbuf, errsize, "Unable to open file (ffmpeg)");
     return FA_UNKNOWN;
   }
 
   if(av_find_stream_info(fctx) < 0) {
     av_close_input_file(fctx);
     ffunlock();
+    snprintf(errbuf, errsize, "Unable to handle file contents");
     return FA_UNKNOWN;
   }
 
@@ -442,11 +445,11 @@ fa_probe_dir(prop_t *proproot, const char *url)
   type = FA_DIR;
 
   snprintf(path, sizeof(path), "%s/VIDEO_TS", url);
-  if(fa_stat(path, &buf) == 0 && S_ISDIR(buf.st_mode)) {
+  if(fa_stat(path, &buf, NULL, 0) == 0 && S_ISDIR(buf.st_mode)) {
     type = FA_DVD;
   } else {
     snprintf(path, sizeof(path), "%s/video_ts", url);
-    if(fa_stat(path, &buf) == 0 && S_ISDIR(buf.st_mode))
+    if(fa_stat(path, &buf, NULL, 0) == 0 && S_ISDIR(buf.st_mode))
       type = FA_DVD;
   }
 

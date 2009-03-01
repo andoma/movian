@@ -39,7 +39,7 @@ typedef struct fa_embedded_fh {
  * Open file
  */
 static fa_handle_t *
-emb_open(fa_protocol_t *fap, const char *url)
+emb_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
 {
   fa_embedded_fh_t *fh;
   unsigned char *ptr;
@@ -54,6 +54,7 @@ emb_open(fa_protocol_t *fap, const char *url)
     size = embedded_theme_size;
 #endif
   } else {
+    snprintf(errbuf, errlen, "File not found");
     return NULL;
   }
   fh = calloc(1, sizeof(fa_embedded_fh_t));
@@ -143,12 +144,13 @@ emb_fsize(fa_handle_t *handle)
  * Standard unix stat
  */
 static int
-emb_stat(fa_protocol_t *fap, const char *url, struct stat *buf)
+emb_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
+	 char *errbuf, size_t errlen)
 {
   fa_handle_t *handle;
   fa_embedded_fh_t *fh;
 
-  if((handle = emb_open(fap, url)) == NULL)
+  if((handle = emb_open(fap, url, errbuf, errlen)) == NULL)
     return -1;
  
   fh = (fa_embedded_fh_t *)handle;

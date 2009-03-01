@@ -49,7 +49,7 @@ typedef struct be_file_page {
 static int
 be_file_canhandle(const char *url)
 {
-  return fa_can_handle(url);
+  return fa_can_handle(url, NULL, 0);
 }
 
 /**
@@ -69,7 +69,7 @@ scanner(void *aux)
 
   ref = fa_reference(bfp->h.np_url);
 
-  if((fd = fa_scandir(bfp->h.np_url)) == NULL) {
+  if((fd = fa_scandir(bfp->h.np_url, NULL, 0)) == NULL) {
     fa_unreference(ref);
     return NULL;
   }
@@ -133,7 +133,7 @@ scanner(void *aux)
     if(fde->fde_type == FA_DIR) {
       r = fa_probe_dir(media, fde->fde_url);
     } else {
-      r = fa_probe(media, fde->fde_url, NULL, 0);
+      r = fa_probe(media, fde->fde_url, NULL, 0, NULL, 0);
     }
 
     switch(r) {
@@ -239,7 +239,7 @@ file_open_file(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
 
   media = prop_create(NULL, "media");
 
-  r = fa_probe(media, url0, redir, sizeof(redir));
+  r = fa_probe(media, url0, redir, sizeof(redir), errbuf, errlen);
   
   switch(r) {
   case FA_ARCHIVE:
@@ -269,10 +269,8 @@ be_file_open(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
 {
   struct stat buf;
 
-  if(fa_stat(url0, &buf)) {
-    snprintf(errbuf, errlen, "Unable to stat url");
+  if(fa_stat(url0, &buf, errbuf, errlen))
     return -1;
-  }
 
   return S_ISDIR(buf.st_mode) ? file_open_dir(url0, npp, errbuf, errlen) :
     file_open_file(url0, npp, errbuf, errlen);

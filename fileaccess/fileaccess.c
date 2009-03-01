@@ -48,7 +48,8 @@ static URLProtocol fa_lavf_proto;
  */
 static char *
 fa_resolve_proto(const char *url, fa_protocol_t **p,
-		 const char *x_proto, const char *x_url)
+		 const char *x_proto, const char *x_url,
+		 char *errbuf, size_t errsize)
 {
   extern fa_protocol_t fa_protocol_fs;
   struct stat st;
@@ -65,9 +66,10 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
   if(url[0] != ':' || url[1] != '/' || url[2] != '/') {
     /* No protocol specified, assume a plain file */
     fap = &fa_protocol_fs;
-    if(fap->fap_stat(fap, url0, &st))
+    if(fap->fap_stat(fap, url0, &st, NULL, 0)) {
+      snprintf(errbuf, errsize, "File not found");
       return NULL;
-    
+    }
     *p = fap;
     return strdup(url0);
   }
@@ -77,7 +79,7 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
   if(x_proto != NULL && !strcmp(x_proto, buf)) {
     snprintf(buf, sizeof(buf), "%s%s%s", 
 	     x_url, x_url[strlen(x_url) - 1] == '/' ? "" : "/", url);
-    return fa_resolve_proto(buf, p, NULL, NULL);
+    return fa_resolve_proto(buf, p, NULL, NULL, errbuf, errsize);
   }
 
   LIST_FOREACH(fap, &fileaccess_all_protocols, fap_link) {
@@ -86,6 +88,7 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
     *p = fap;
     return strdup(fap->fap_flags & FAP_INCLUDE_PROTO_IN_URL ? url0 : url);
   }
+  snprintf(errbuf, errsize, "Protocol %s not supported", buf);
   return NULL;
 }
 
@@ -93,12 +96,13 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
  *
  */
 int
-fa_can_handle(const char *url)
+fa_can_handle(const char *url, char *errbuf, size_t errsize)
 {
   fa_protocol_t *fap;
   char *filename;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL,
+				  errbuf, errsize)) == NULL)
     return 0;
   free(filename);
   return 1;
@@ -108,16 +112,17 @@ fa_can_handle(const char *url)
  *
  */
 void *
-fa_open(const char *url)
+fa_open(const char *url, char *errbuf, size_t errsize)
 {
   fa_protocol_t *fap;
   char *filename;
   fa_handle_t *fh;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL,
+				  errbuf, errsize)) == NULL)
     return NULL;
   
-  fh = fap->fap_open(fap, filename);
+  fh = fap->fap_open(fap, filename, errbuf, errsize);
   free(filename);
 
   return fh;
@@ -134,10 +139,11 @@ fa_open_theme(const char *url, const char *themepath)
   char *filename;
   fa_handle_t *fh;
 
-  if((filename = fa_resolve_proto(url, &fap, "theme", themepath)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, "theme", themepath,
+				  NULL, 0)) == NULL)
     return NULL;
   
-  fh = fap->fap_open(fap, filename);
+  fh = fap->fap_open(fap, filename, NULL, 0);
   free(filename);
 
   return fh;
@@ -187,16 +193,17 @@ fa_fsize(void *fh_)
  *
  */
 int
-fa_stat(const char *url, struct stat *buf)
+fa_stat(const char *url, struct stat *buf, char *errbuf, size_t errsize)
 {
   fa_protocol_t *fap;
   char *filename;
   int r;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL,
+				  errbuf, errsize)) == NULL)
     return AVERROR_NOENT;
   
-  r = fap->fap_stat(fap, filename, buf);
+  r = fap->fap_stat(fap, filename, buf, errbuf, errsize);
   free(filename);
 
   return r;
@@ -208,18 +215,19 @@ fa_stat(const char *url, struct stat *buf)
  *
  */
 fa_dir_t *
-fa_scandir(const char *url)
+fa_scandir(const char *url, char *errbuf, size_t errsize)
 {
   fa_protocol_t *fap;
   fa_dir_t *fd;
   char *filename;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL,
+				  errbuf, errsize)) == NULL)
     return NULL;
 
   if(fap->fap_scan != NULL) {
     fd = fa_dir_alloc();
-    if(fap->fap_scan(fd, filename)) {
+    if(fap->fap_scan(fd, filename, errbuf, errsize)) {
       fa_dir_free(fd);
       fd = NULL;
     }
@@ -327,7 +335,7 @@ int
 fa_findfile(const char *path, const char *file, 
 	    char *fullpath, size_t fullpathlen)
 {
-  fa_dir_t *fd = fa_scandir(path);
+  fa_dir_t *fd = fa_scandir(path, NULL, 0);
   fa_dir_entry_t *fde;
 
   if(fd == NULL)
@@ -357,7 +365,8 @@ fa_reference(const char *url)
   char *filename;
   fa_handle_t *fh;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL,
+				  NULL, 0)) == NULL)
     return NULL;
 
   fh = fap->fap_reference != NULL ? fap->fap_reference(fap, filename) : NULL;
@@ -419,10 +428,10 @@ fa_lavf_open(URLContext *h, const char *url, int flags)
 
   av_strstart(url, "showtime:", &url);  
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, NULL, 0)) == NULL)
     return AVERROR_NOENT;
   
-  fh = fap->fap_open(fap, filename);
+  fh = fap->fap_open(fap, filename, NULL, 0);
   free(filename);
   
   if(fh == NULL) 

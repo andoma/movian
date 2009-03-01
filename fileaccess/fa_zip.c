@@ -249,7 +249,7 @@ zip_archive_load(zip_archive_t *za)
   size_t cds_size;
   char *fname;
 
-  if((fh = fa_open(za->za_url)) == NULL)
+  if((fh = fa_open(za->za_url, NULL, 0)) == NULL)
     return -1;
 
   asize = fa_fsize(fh);
@@ -465,16 +465,18 @@ zip_file_unref(zip_file_t *zf)
  *
  */
 static int
-zip_scandir(fa_dir_t *fd, const char *url)
+zip_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 {
   zip_file_t *c, *zf;
   char buf[512];
 
-  if((zf = zip_file_find(url)) == NULL)
+  if((zf = zip_file_find(url)) == NULL) {
+    snprintf(errbuf, errlen, "Entry not found in archive");
     return -1;
-  
+  }
   if(zf->zf_type != FA_DIR) {
     zip_file_unref(zf);
+    snprintf(errbuf, errlen, "Entry is not a directory");
     return -1;
   }
 
@@ -665,18 +667,21 @@ static fa_protocol_t zip_file_protocol = {
  *
  */
 static fa_handle_t *
-zip_open(fa_protocol_t *fap, const char *url)
+zip_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
 {
   zip_file_t *zf;
   zip_fh_t *zfh;
   zip_archive_t *za;
   zip_local_file_header_t h;
  
-  if((zf = zip_file_find(url)) == NULL)
+  if((zf = zip_file_find(url)) == NULL) {
+    snprintf(errbuf, errlen, "Entry not found in archive");
     return NULL;
+  }
 
   if(zf->zf_type != FA_FILE) {
     zip_file_unref(zf);
+    snprintf(errbuf, errlen, "Entry is not a file");
     return NULL;
   }
 
@@ -685,7 +690,7 @@ zip_open(fa_protocol_t *fap, const char *url)
   zfh->zfh_file = zf;
   zfh->h.fh_proto = fap;
 
-  if((zfh->zfh_archive_handle = fa_open(za->za_url)) == NULL) {
+  if((zfh->zfh_archive_handle = fa_open(za->za_url, errbuf, errlen)) == NULL) {
     zip_file_unref(zf);
     free(zfh);
     return NULL;
@@ -693,12 +698,16 @@ zip_open(fa_protocol_t *fap, const char *url)
 
   fa_seek(zfh->zfh_archive_handle, zf->zf_lhpos, SEEK_SET);
  
-  if(fa_read(zfh->zfh_archive_handle, &h, sizeof(h)) != sizeof(h))
+  if(fa_read(zfh->zfh_archive_handle, &h, sizeof(h)) != sizeof(h)) {
+    snprintf(errbuf, errlen, "Truncated ZIP file");
     goto bad;
+  }
 
   if(h.magic[0] != 'P' || h.magic[1] != 'K' ||
-     h.magic[2] != 3   || h.magic[3] != 4)
+     h.magic[2] != 3   || h.magic[3] != 4) {
+    snprintf(errbuf, errlen, "Bad ZIP magic");
     goto bad;
+  }
 
   zfh->zfh_file_start = zf->zf_lhpos + sizeof(h) + 
     ZIPHDR_GET16(&h, filename_len) + ZIPHDR_GET16(&h, extra_len);
@@ -716,15 +725,17 @@ zip_open(fa_protocol_t *fap, const char *url)
     /* Inflate (zlib) */
     zfh->zfh_reader_handle = fa_inflate_init(&zip_file_protocol, &zfh->h,
 					     zf->zf_uncompressed_size);
-    if(zfh->zfh_reader_handle == NULL)
+    if(zfh->zfh_reader_handle == NULL) {
+      snprintf(errbuf, errlen, "Unable to initialize inflator");
       goto bad;
+    }
 
     zfh->zfh_reader_proto = &fa_protocol_inflate;
     break;
 
   default:
-    fprintf(stderr, "%s -- Compression method %d not supported\n",
-	    za->za_url, zf->zf_method);
+    snprintf(errbuf, errlen, "Compression method %d not supported\n",
+	     zf->zf_method);
     /* FALLTHRU */
   bad:
     fa_close(zfh->zfh_archive_handle);
@@ -789,12 +800,15 @@ zip_fsize(fa_handle_t *handle)
  * Standard unix stat
  */
 static int
-zip_stat(fa_protocol_t *fap, const char *url, struct stat *buf)
+zip_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
+	 char *errbuf, size_t errlen)
 {
   zip_file_t *zf;
 
-  if((zf = zip_file_find(url)) == NULL)
+  if((zf = zip_file_find(url)) == NULL) {
+    snprintf(errbuf, errlen, "Entry not found in archive");
     return -1;
+  }
 
   memset(buf, 0, sizeof(struct stat));
 

@@ -324,14 +324,18 @@ http_disconnect(http_file_t *hf)
  *
  */
 static int
-redirect(http_file_t *hf, int *redircount)
+redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen)
 {
   (*redircount)++;
-  if(*redircount == 10)
+  if(*redircount == 10) {
+    snprintf(errbuf, errlen, "Too many redirects");
     return -1;
-  
-  if(hf->hf_location == NULL)
+  }
+
+  if(hf->hf_location == NULL) {
+    snprintf(errbuf, errlen, "Redirect respons without location");
     return -1;
+  }
 
   free(hf->hf_url);
   hf->hf_url = hf->hf_location;
@@ -345,7 +349,7 @@ redirect(http_file_t *hf, int *redircount)
  *
  */
 static int 
-authenticate(http_file_t *hf)
+authenticate(http_file_t *hf, char *errbuf, size_t errlen)
 {
   char *username;
   char *password;
@@ -353,12 +357,14 @@ authenticate(http_file_t *hf)
   char buf2[128];
   int r;
 
-  if(http_drain_content(hf))
+  if(http_drain_content(hf)) {
+    snprintf(errbuf, errlen, "Connection lost");
     return -1;
-
-  if(hf->hf_auth_realm == NULL)
+  }
+  if(hf->hf_auth_realm == NULL) {
+    snprintf(errbuf, errlen, "Authentication without realm");
     return -1;
-
+  }
   snprintf(buf1, sizeof(buf1), "%s @ %s", hf->hf_auth_realm, hf->hf_hostname);
 
   r = keyring_lookup(buf1, &username, &password, NULL, 
@@ -370,9 +376,11 @@ authenticate(http_file_t *hf)
   free(hf->hf_auth);
   hf->hf_auth = NULL;
 
-  if(r == -1)
+  if(r == -1) {
     /* Rejected */
+    snprintf(errbuf, errlen, "Authentication rejected by user");
     return -1;
+  }
 
   if(r == 0) {
     /* Got auth credentials */  
@@ -397,9 +405,8 @@ authenticate(http_file_t *hf)
  *
  */
 static int
-http_connect(http_file_t *hf, int probe)
+http_connect(http_file_t *hf, int probe, char *errbuf, int errlen)
 {
-  char errbuf[128];
   int port, code;
   htsbuf_queue_t q;
   int redircount = 0;
@@ -415,7 +422,7 @@ http_connect(http_file_t *hf, int probe)
   if(port < 0)
     port = 80;
 
-  hf->hf_fd = tcp_connect(hf->hf_hostname, port, errbuf, sizeof(errbuf), 3000);
+  hf->hf_fd = tcp_connect(hf->hf_hostname, port, errbuf, errlen, 3000);
   if(hf->hf_fd < 0) {
     hf->hf_size = -1;
     return -1;
@@ -449,24 +456,29 @@ http_connect(http_file_t *hf, int probe)
   case 200:
     hf->hf_auth_failed = 0;
     hf->hf_rsize = 0;
-    return hf->hf_size < 0 ? -1: 0;
+    if(hf->hf_size < 0) {
+      snprintf(errbuf, errlen, "Invalid HTTP 200 response");
+      return -1;
+    }
+    return 0;
     
   case 301:
   case 302:
   case 303:
   case 307:
     hf->hf_auth_failed = 0;
-    if(redirect(hf, &redircount))
+    if(redirect(hf, &redircount, errbuf, errlen))
       return -1;
     goto reconnect;
 
 
   case 401:
-    if(authenticate(hf))
+    if(authenticate(hf, errbuf, errlen))
       return -1;
     goto again;
 
   default:
+    snprintf(errbuf, errlen, "Unhandled HTTP response %d", code);
     return -1;
   }
 }
@@ -494,7 +506,7 @@ http_destroy(http_file_t *hf)
  * Open file
  */
 static fa_handle_t *
-http_open(fa_protocol_t *fap, const char *url)
+http_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   
@@ -502,7 +514,7 @@ http_open(fa_protocol_t *fap, const char *url)
 
   hf->hf_url = strdup(url);
 
-  if(!http_connect(hf, 1)) {
+  if(!http_connect(hf, 1, errbuf, errlen)) {
     hf->h.fh_proto = fap;
     return &hf->h;
   }
@@ -542,7 +554,7 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
   for(i = 0; i < 5; i++) {
 
     /* If not connected, try to (re-)connect */
-    if(hf->hf_fd == -1 && http_connect(hf, 0))
+    if(hf->hf_fd == -1 && http_connect(hf, 0, NULL, 0))
       return -1;
 
     if(hf->hf_rsize > 0) {
@@ -661,12 +673,13 @@ http_fsize(fa_handle_t *handle)
  * Standard unix stat
  */
 static int
-http_stat(fa_protocol_t *fap, const char *url, struct stat *buf)
+http_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
+	  char *errbuf, size_t errlen)
 {
   fa_handle_t *handle;
   http_file_t *hf;
 
-  if((handle = http_open(fap, url)) == NULL)
+  if((handle = http_open(fap, url, errbuf, errlen)) == NULL)
     return -1;
  
   hf = (http_file_t *)handle;
@@ -802,14 +815,14 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd)
  * Execute a webdav PROPFIND
  */
 static int
-dav_propfind(http_file_t *hf, fa_dir_t *fd)
+dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen)
 {
-  char errbuf[128];
   int code, retval;
   htsbuf_queue_t q;
   char *buf;
   htsmsg_t *xml;
   int redircount = 0;
+  char err0[128];
 
  reconnect:
   hf->hf_size = -1;
@@ -823,7 +836,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd)
     hf->hf_port = 80;
 
   hf->hf_fd = tcp_connect(hf->hf_hostname, hf->hf_port,
-			  errbuf, sizeof(errbuf), 3000);
+			  errbuf, errlen, 3000);
 
   if(hf->hf_fd < 0)
     return -1;
@@ -853,12 +866,15 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd)
   case 207: /* 207 Multi-part */
     hf->hf_auth_failed = 0;
 
-    if((buf = http_read_content(hf)) == NULL)
+    if((buf = http_read_content(hf)) == NULL) {
+      snprintf(errbuf, errlen, "Connection lost");
       return -1;
+    }
 
     /* XML parser consumes 'buf' */
-    if((xml = htsmsg_xml_deserialize(buf, errbuf, sizeof(errbuf))) == NULL) {
-      fprintf(stderr, "webdav/PROPFIND: XML parsing failed -- %s\n", errbuf);
+    if((xml = htsmsg_xml_deserialize(buf, err0, sizeof(err0))) == NULL) {
+      snprintf(errbuf, errlen,
+	       "WEBDAV/PROPFIND: XML parsing failed:\n%s", err0);
       return -1;
     }
     retval = parse_propfind(hf, xml, fd);
@@ -870,16 +886,17 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd)
   case 303:
   case 307:
     hf->hf_auth_failed = 0;
-     if(redirect(hf, &redircount))
+     if(redirect(hf, &redircount, errbuf, errlen))
       return -1;
     goto reconnect;
 
   case 401:
-    if(authenticate(hf))
+    if(authenticate(hf, errbuf, errlen))
       return -1;
     goto again;
 
   default:
+    snprintf(errbuf, errlen, "Unhandled HTTP response %d", code);
     return -1;
   }
 }
@@ -890,13 +907,14 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd)
  * Standard unix stat
  */
 static int
-dav_stat(fa_protocol_t *fap, const char *url, struct stat *buf)
+dav_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
+	 char *errbuf, size_t errlen)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   htsbuf_queue_init(&hf->hf_spill, 0);
   hf->hf_url = strdup(url);
   
-  if(dav_propfind(hf, NULL)) {
+  if(dav_propfind(hf, NULL, errbuf, errlen)) {
     http_destroy(hf);
     return -1;
   }
@@ -915,7 +933,7 @@ dav_stat(fa_protocol_t *fap, const char *url, struct stat *buf)
  *
  */
 static int
-dav_scandir(fa_dir_t *fd, const char *url)
+dav_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 {
   int retval;
   http_file_t *hf = calloc(1, sizeof(http_file_t));
@@ -923,7 +941,7 @@ dav_scandir(fa_dir_t *fd, const char *url)
   htsbuf_queue_init(&hf->hf_spill, 0);
   hf->hf_url = strdup(url);
   
-  retval = dav_propfind(hf, fd);
+  retval = dav_propfind(hf, fd, errbuf, errlen);
   http_destroy(hf);
   return retval;
 }
