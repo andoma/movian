@@ -150,14 +150,12 @@ nav_open(const char *url)
 	break;
   
     if(nb == NULL) {
-      notify_add(NOTIFY_ERROR, NULL, 5, 
-		 "No handler for URL:\n%s", url);
+      notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nNo handler for URL", url);
       return;
     }
 
     if(nb->nb_open(url, &np, errbuf, sizeof(errbuf))) {
-      notify_add(NOTIFY_ERROR, NULL, 5, 
-		 "Error: %s:\n%s", errbuf, url);
+      notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nError: %s", url, errbuf);
       return;
     }
   
