@@ -1,16 +1,16 @@
 #include "theme://include/plates.model"
 
 
-widget(cursor, {
+widget(container_z, {
 
-  .source = "theme://images/cursor.png";
+  widget(fx_texrot, {
+    .source = "theme://images/caribbean.png";
+  });
+  
+  widget(cursor, {
 
-  widget(container_z, {
-
-    widget(fx_texrot, {
-      .source = "theme://images/caribbean.png";
-    });
-
+    .source = "theme://images/cursor.png";
+  
     widget(layer, {
 
       widget(deck, {
@@ -24,22 +24,60 @@ widget(cursor, {
 	.source = "theme://popups/" + $self.type + ".model";
       });
     });
+  });
+  
+  widget(container_x, {
+    space(1);
+    
+    widget(stack_y, {
+      .align = bottom;
+      widget(image, {
+	.aspect = 10;
+	.debug = true;
 
-    widget(container_x, {
-      space(2);
+	.alpha = iir(changed($global.audio.mastervolume, 2.0), 7);
+	.alphaSelf = 0.8;
 
-      widget(stack_y, {
-	cloner($global.notifications, container_x, {
+	.source = "theme://images/blackbox.png";
+	.textureCoords = [0.15, 0.15, 0.85, 0.85];
+	  
+	widget(label, {
+	  .caption = "Master volume: " +
+	     float2str($global.audio.mastervolume, 0) + " dB";
+	  .align = center;
+	});
+      });
+
+
+      widget(image, {
+	.aspect = 10;
+	.debug = true;
+
+	.alpha = iir($global.audio.mastermute, 7);
+	.alphaSelf = 0.8;
+
+	.source = "theme://images/blackbox.png";
+	.textureCoords = [0.15, 0.15, 0.85, 0.85];
+	  
+	widget(label, {
+	  .caption = "Audio muted";
+	  .align = center;
+	});
+      });
+    });
+
+
+    widget(stack_y, {
+      cloner($global.notifications, container_x, {
        
-	  .aspect = 10;
+	.aspect = 10;
 
-	  widget(image, {
-	    .source = "theme://images/blackbox.png";
-	    .textureCoords = [0.15, 0.15, 0.85, 0.85];
-	    .alphaSelf = 0.75;
-	    widget(label, {
-	      .caption = $self.text;
-	    });
+	widget(image, {
+	  .source = "theme://images/blackbox.png";
+	  .textureCoords = [0.15, 0.15, 0.85, 0.85];
+	  .alphaSelf = 0.75;
+	  widget(label, {
+	    .caption = $self.text;
 	  });
 	});
       });
