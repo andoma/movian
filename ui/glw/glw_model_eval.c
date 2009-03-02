@@ -1722,11 +1722,11 @@ glwf_iir(glw_model_eval_context_t *ec, struct token *self)
   if(b == NULL || b->type != TOKEN_FLOAT)
     return glw_model_seterr(ec->ei, self, "Invalid second operand to iir()");
 
-  x = self->t_extra_float * 100.;
+  x = self->t_extra_float * 1000.;
 
   self->t_extra_float =  GLW_LP(b->t_float, self->t_extra_float, f);
 
-  y = self->t_extra_float * 100.;
+  y = self->t_extra_float * 1000.;
   r = eval_alloc(self, ec, TOKEN_FLOAT);
 
   if(x != y)
