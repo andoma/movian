@@ -34,6 +34,8 @@
 #include "keyring.h"
 #include "media.h"
 
+#define HTSP_PROTO_VERSION 1 // Protocol version we implement
+
 /* XXX: From lavf */
 extern void url_split(char *proto, int proto_size,
 		      char *authorization, int authorization_size,
@@ -57,6 +59,8 @@ static struct htsp_connection_list htsp_connections;
 typedef struct htsp_connection {
   LIST_ENTRY(htsp_connection) hc_global_link;
   int hc_fd;
+
+  uint8_t hc_challenge[32];
 
   int hc_is_async;
 
@@ -147,82 +151,107 @@ static void htsp_subscriptionStatus(htsp_connection_t *hc, htsmsg_t *m);
 static void htsp_queueStatus(htsp_connection_t *hc, htsmsg_t *m);
 static void htsp_mux_input(htsp_connection_t *hc, htsmsg_t *m);
 
-#define HTSP_DONT_INTERCEPT_NOACCESS 0x1
-static htsmsg_t *htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int flags);
+static htsmsg_t *htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m);
+
+
+
+static htsmsg_t *
+htsp_recv(htsp_connection_t *hc)
+{
+  void *buf;
+  int fd = hc->hc_fd;
+  uint8_t len[4];
+  uint32_t l;
+
+  if(tcp_read(fd, len, 4))
+    return NULL;
+  
+  l = (len[0] << 24) | (len[1] << 16) | (len[2] << 8) | len[3];
+  buf = malloc(l);
+
+  if(tcp_read(fd, buf, l)) {
+    free(buf);
+    return NULL;
+  }
+  
+  return htsmsg_binary_deserialize(buf, l, buf); /* consumes 'buf' */
+}
 
 /**
  *
  */
-static int
-htsp_authenticate(htsp_connection_t *hc, htsmsg_t *m)
+static void
+htsp_send(htsp_connection_t *hc, htsmsg_t *m)
 {
-  const void *challenge;
-  size_t challengelen;
-  int r;
-  char *username;
-  char *password;
-  char id[100];
-  struct AVSHA1 *shactx = alloca(av_sha1_size);
-  uint8_t d[20];
-  int retry = 0;
+  void *buf;
+  size_t len;
 
-  do {
-    if(htsmsg_get_bin(m, "challenge", &challenge, &challengelen) ||
-       challengelen != 32)
-      return 0;
-  
-    htsmsg_destroy(m);
-
-    snprintf(id, sizeof(id), "htsp://%s:%d", hc->hc_hostname, hc->hc_port);
-
-    r = keyring_lookup(id, &username, &password, NULL, !!retry,
-		       "TV client", "Access denied");
-    if(r == -1) {
-      /* User rejected */
-      return 0;
-    }
-
-    m = htsmsg_create_map();
-    htsmsg_add_str(m, "username", username);
-
-    av_sha1_init(shactx);
-    av_sha1_update(shactx, (const uint8_t *)password, strlen(password));
-    av_sha1_update(shactx, challenge, 32);
-    av_sha1_final(shactx, d);
-  
-    htsmsg_add_bin(m, "digest", d, 20);
-    htsmsg_add_str(m, "method", "authenticate");
-
-    m = htsp_reqreply(hc, m, HTSP_DONT_INTERCEPT_NOACCESS);
-    retry++;
-
-  } while(htsmsg_get_u32_or_default(m, "noaccess", 0));
-
+  if(htsmsg_binary_serialize(m, &buf, &len, -1) >= 0) {
+    send(hc->hc_fd, buf, len, MSG_NOSIGNAL);
+    free(buf);
+  }
   htsmsg_destroy(m);
-  return 1;
 }
-
 
 /**
  *
  */
 static htsmsg_t *
-htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int flags)
+htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
 {
   void *buf;
   size_t len;
-  uint32_t l, seq;
+  uint32_t seq;
   int r, fd = hc->hc_fd;
   uint32_t noaccess;
   htsmsg_t *reply;
   htsp_msg_t *hm = NULL;
   int retry = 0;
+  char id[100];
+  char *username;
+  char *password;
+  struct AVSHA1 *shactx = alloca(av_sha1_size);
+  uint8_t d[20];
 
   /* Generate a sequence number for our message */
   seq = atomic_add(&hc->hc_seq_generator, 1);
   htsmsg_add_u32(m, "seq", seq);
 
  again:
+
+  snprintf(id, sizeof(id), "htsp://%s:%d", hc->hc_hostname, hc->hc_port);
+
+  r = keyring_lookup(id, &username, &password, NULL, !!retry,
+		     "TV client", "Access denied");
+
+  if(r == -1) {
+    /* User rejected */
+    return NULL;
+  }
+
+  if(r == 0) {
+    /* Got auth credentials */
+    htsmsg_delete_field(m, "username");
+    htsmsg_delete_field(m, "digest");
+
+    if(username != NULL) 
+      htsmsg_add_str(m, "username", username);
+
+    if(password != NULL) {
+      av_sha1_init(shactx);
+      av_sha1_update(shactx, (const uint8_t *)password, strlen(password));
+      av_sha1_update(shactx, hc->hc_challenge, 32);
+      av_sha1_final(shactx, d);
+      htsmsg_add_bin(m, "digest", d, 20);
+    }
+
+    free(username);
+    free(password);
+  }
+
+  
+  
+
 
   if(htsmsg_binary_serialize(m, &buf, &len, -1) < 0) {
     htsmsg_destroy(m);
@@ -241,7 +270,7 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int flags)
     hts_mutex_unlock(&hc->hc_rpc_mutex);
   }
 
-  if(write(fd, buf, len) < 0) {
+  if(send(fd, buf, len, MSG_NOSIGNAL) < 0) {
     free(buf);
     htsmsg_destroy(m);
     
@@ -282,34 +311,14 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int flags)
 
   } else {
 
-    if(tcp_read(fd, &l, 4)) {
+    if((reply = htsp_recv(hc)) == NULL) {
       htsmsg_destroy(m);
       return NULL;
     }
-
-    l = ntohl(l);
-    buf = malloc(l);
-
-    if(tcp_read(fd, buf, l)) {
-      free(buf);
-      htsmsg_destroy(m);
-      return NULL;
-    }
-  
-    reply = htsmsg_binary_deserialize(buf, l, buf); /* consumes 'buf' */
   }
 
   
-  if(!(flags & HTSP_DONT_INTERCEPT_NOACCESS) && 
-     !htsmsg_get_u32(reply, "noaccess", &noaccess) && noaccess) {
-
-    r = htsp_authenticate(hc, reply);
-
-    if(r == 0) {
-      htsmsg_destroy(m);
-      return NULL;
-    }
-
+  if(!htsmsg_get_u32(reply, "noaccess", &noaccess) && noaccess) {
     retry++;
     goto again;
   }
@@ -317,6 +326,46 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m, int flags)
   htsmsg_destroy(m); /* Destroy original message */
   return reply;
 }
+
+
+/**
+ *
+ */
+static int
+htsp_login(htsp_connection_t *hc)
+{
+  const void *ch;
+  size_t chlen;
+  htsmsg_t *m;
+
+  if((m = htsp_recv(hc)) == NULL) {
+    /* Do something clever */
+    return -1;
+  }
+
+  if(htsmsg_get_bin(m, "challenge", &ch, &chlen) || chlen != 32) {
+    htsmsg_destroy(m);
+    return -1;
+  }
+
+  memcpy(hc->hc_challenge, ch, 32);
+
+  htsmsg_destroy(m);
+
+  m = htsmsg_create_map();
+  htsmsg_add_str(m, "method", "login");
+  htsmsg_add_u32(m, "htspversion", HTSP_PROTO_VERSION);
+  htsp_send(hc, m);
+
+  if((m = htsp_recv(hc)) == NULL) {
+    /* Do something clever */
+    return -1;
+  }
+
+  return 0;
+}
+
+
 
 
 /**
@@ -436,28 +485,6 @@ htsp_worker_thread(void *aux)
       else
 	fprintf(stderr, "HTSP: Unknown async method '%s' received\n",
 		method);
-#if 0
-      if(!strcmp(method, "tagAdd")) {
-	htsp_tagAddUpdate(tv, hc, m, 1);
-      } else if(!strcmp(method, "tagUpdate")) {
-	htsp_tagAddUpdate(tv, hc, m, 0);
-      } else if(!strcmp(method, "tagDelete")) {
-	htsp_tagDelete(tv, hc, m);
-      } else if(!strcmp(method, "channelAdd")) {
-	htsp_channelAddUpdate(tv, hc, m, 1);
-      } else if(!strcmp(method, "channelUpdate")) {
-	htsp_channelAddUpdate(tv, hc, m, 0);
-      } else if(!strcmp(method, "channelDelete")) {
-	htsp_channelDelete(tv, hc, m);
-      } else if(!strcmp(method, "subscriptionStart")) {
-	htsp_subscriptionStart(tv, m);
-      } else if(!strcmp(method, "subscriptionStop")) {
-	htsp_subscriptionStop(tv, m);
-      } else if(!strcmp(method, "subscriptionStatus")) {
-	htsp_subscriptionStatus(tv, m);
-      } else if(!strcmp(method, "queueStatus")) {
-	htsp_queueStatus(tv, m);
-#endif
     }
 
     htsmsg_destroy(m);
@@ -526,7 +553,6 @@ htsp_msg_dispatch(htsp_connection_t *hc, htsmsg_t *m)
 }
 
 
-
 /**
  *
  */
@@ -543,7 +569,7 @@ htsp_thread(void *aux)
     m = htsmsg_create_map();
 
     htsmsg_add_str(m, "method", "enableAsyncMetadata");
-    m = htsp_reqreply(hc, m, 0);
+    m = htsp_reqreply(hc, m);
     if(m == NULL) {
       return NULL;
     }
@@ -631,6 +657,8 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
   hc->hc_refcount = 1;
 
   LIST_INSERT_HEAD(&htsp_connections, hc, hc_global_link);
+
+  htsp_login(hc);
 
   hts_thread_create_detached(htsp_thread, hc);
   hts_thread_create_detached(htsp_worker_thread, hc);
@@ -755,7 +783,7 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
   htsmsg_add_u32(m, "channelId", chid);
   htsmsg_add_u32(m, "subscriptionId", hs->hs_sid);
 
-  if((m = htsp_reqreply(hc, m, 0)) == NULL) {
+  if((m = htsp_reqreply(hc, m)) == NULL) {
     snprintf(errbuf, errlen, "Connection with server lost");
     return NULL;
   }
@@ -783,7 +811,7 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
   htsmsg_add_str(m, "method", "unsubscribe");
   htsmsg_add_u32(m, "subscriptionId", hs->hs_sid);
 
-  if((m = htsp_reqreply(hc, m, 0)) != NULL)
+  if((m = htsp_reqreply(hc, m)) != NULL)
     htsmsg_destroy(m);
 
   return e;
