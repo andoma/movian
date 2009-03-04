@@ -20,6 +20,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <libswscale/swscale.h>
+
 #include "glw.h"
 #include "glw_image.h"
 #include "glw_scaler.h"
@@ -98,23 +100,6 @@ make_powerof2(int v)
 
 static int maxwidth = 2048;
 static int maxheight = 1024;
-
-
-typedef void *SwsFilter;
-
-extern struct SwsContext *sws_getContext(int srcW, int srcH, int srcFormat,
-					 int dstW, int dstH, int dstFormat,
-					 int flags,
-					 SwsFilter *srcFilter,
-					 SwsFilter *dstFilter,
-					 double *param);
-#define SWS_BICUBIC           4
-
-int sws_scale(struct SwsContext *context, uint8_t* src[], int srcStride[],
-	      int srcSliceY,
-              int srcSliceH, uint8_t* dst[], int dstStride[]);
-
-void sws_freeContext(struct SwsContext *swsContext);
 
 static void texture_load_direct(AVFrame *frame, glw_loadable_texture_t *glt);
 
@@ -312,6 +297,9 @@ texture_load_rescale_swscale(AVFrame *frame, int pix_fmt, int src_w, int src_h,
   sws = sws_getContext(src_w, src_h, pix_fmt, 
 		       w, h, PIX_FMT_RGB24,
 		       SWS_BICUBIC, NULL, NULL, NULL);
+  if(sws == NULL)
+    return;
+
   glt->glt_bpp = 3;
   glt->glt_format = GL_RGB;
   glt->glt_ext_format = GL_RGB;
@@ -325,10 +313,8 @@ texture_load_rescale_swscale(AVFrame *frame, int pix_fmt, int src_w, int src_h,
   pic.data[0] = glt->glt_bitmap;
   pic.linesize[0] = w * glt->glt_bpp;
   
-  if(sws_scale(sws, frame->data, frame->linesize, 0, 0,
-	       pic.data, pic.linesize) < 0) {
-    fprintf(stderr, "%s: scaling failed\n", glt->glt_filename);
-  }
+  sws_scale(sws, frame->data, frame->linesize, 0, src_h,
+	    pic.data, pic.linesize);
   
   sws_freeContext(sws);
 }
