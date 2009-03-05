@@ -25,6 +25,7 @@
 #include "event.h"
 #include "media.h"
 #include "navigator.h"
+#include "notifications.h"
 
 /**
  *
@@ -36,7 +37,7 @@ video_player_idle(void *aux)
   int run = 1;
   event_t *e = NULL, *next;
   media_pipe_t *mp = vp->vp_mp;
-  char errbuf[100];
+  char errbuf[256];
 
   while(run) {
 
@@ -49,6 +50,11 @@ video_player_idle(void *aux)
 
     case EVENT_PLAY_URL:
       next = nav_play_video(e->e_payload, mp, errbuf, sizeof(errbuf));
+
+      if(next == NULL)
+	notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nError: %s", 
+		   e->e_payload, errbuf);
+
       event_unref(e);
       e = next;
       continue;
