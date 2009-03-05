@@ -767,6 +767,7 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
   event_t *e;
   htsmsg_t *m;
   media_pipe_t *mp = hs->hs_mp;
+  const char *err;
 
   m = htsmsg_create_map();
 
@@ -776,6 +777,14 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
 
   if((m = htsp_reqreply(hc, m)) == NULL) {
     snprintf(errbuf, errlen, "Connection with server lost");
+    return NULL;
+  }
+
+  htsmsg_print(m);
+
+  if((err = htsmsg_get_str(m, "error")) != NULL) {
+    snprintf(errbuf, errlen, "From server: %s", err);
+    htsmsg_destroy(m);
     return NULL;
   }
 
