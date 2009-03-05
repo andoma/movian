@@ -177,21 +177,6 @@ htsp_recv(htsp_connection_t *hc)
   return htsmsg_binary_deserialize(buf, l, buf); /* consumes 'buf' */
 }
 
-/**
- *
- */
-static void
-htsp_send(htsp_connection_t *hc, htsmsg_t *m)
-{
-  void *buf;
-  size_t len;
-
-  if(htsmsg_binary_serialize(m, &buf, &len, -1) >= 0) {
-    send(hc->hc_fd, buf, len, MSG_NOSIGNAL);
-    free(buf);
-  }
-  htsmsg_destroy(m);
-}
 
 /**
  *
@@ -338,29 +323,35 @@ htsp_login(htsp_connection_t *hc)
   size_t chlen;
   htsmsg_t *m;
 
-  if((m = htsp_recv(hc)) == NULL) {
-    /* Do something clever */
+  m = htsmsg_create_map();
+  htsmsg_add_str(m, "clientname", "HTS Showtime");
+  htsmsg_add_u32(m, "htspversion", 1);
+  htsmsg_add_str(m, "method", "hello");
+  
+
+  if((m = htsp_reqreply(hc, m)) == NULL) {
     return -1;
   }
+
 
   if(htsmsg_get_bin(m, "challenge", &ch, &chlen) || chlen != 32) {
     htsmsg_destroy(m);
     return -1;
   }
-
   memcpy(hc->hc_challenge, ch, 32);
 
   htsmsg_destroy(m);
 
+
   m = htsmsg_create_map();
   htsmsg_add_str(m, "method", "login");
   htsmsg_add_u32(m, "htspversion", HTSP_PROTO_VERSION);
-  htsp_send(hc, m);
 
-  if((m = htsp_recv(hc)) == NULL) {
-    /* Do something clever */
+  if((m = htsp_reqreply(hc, m)) == NULL) {
     return -1;
   }
+
+  htsmsg_destroy(m);
 
   return 0;
 }
