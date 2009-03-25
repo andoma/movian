@@ -1,0 +1,4 @@
+widget(animator, {
+  .time = 0.1;
+  .source = "theme://directoryviews/" + $page.view + ".model";
+});

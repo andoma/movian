@@ -1,0 +1,37 @@
+#include "theme://include/plates.model"
+
+widget(container_y, {
+
+  widget(image, {
+    .weight = 4;
+    .source = $self.focused.url;
+    .keepAspect = true;
+  });
+
+  space(0.2);
+
+  widget(list_x, {
+    .slices = 8;
+
+    $self.focused = focusedChild();
+
+    cloner($page.nodes, container_y, {
+
+      PLATE_FOCUSABLE();
+      onEvent(enter, genericEvent(navigator, open, $self.url));
+
+      PLATE_SQUARE_MID(
+        widget(animator, {
+	  .time = 0.3;
+	    
+	  .source = translate($self.metadata.type,
+	      [
+	       "image",     "theme://directoryviews/square/image.model",
+	       ],
+			      "theme://directoryviews/square/void.model"
+			      );
+	});
+	);
+    });
+  });
+});

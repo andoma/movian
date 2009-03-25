@@ -1,4 +1,0 @@
-widget(animator, {
-  .time = 0.1;
-  .source = "theme://filedirectoryviews/" + $page.view + ".model";
-});
