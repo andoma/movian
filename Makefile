@@ -12,12 +12,11 @@ SRCS = 	main.c navigator.c media.c event.c keyring.c settings.c prop.c \
 # arch
 VPATH += src/arch
 SRCS  += arch_${ARCHITECTURE}.c
-SRCS  += settings.c
 
 # support
 VPATH += src/htsmsg
 SRCS  += htsbuf.c htsmsg.c htsmsg_json.c htsmsg_xml.c htsmsg_binary.c
-
+SRCS  += htsmsg_store_${ARCHITECTURE}.c
 
 #
 # File access subsys

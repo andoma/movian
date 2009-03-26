@@ -22,7 +22,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#include <arch/settings.h>
+#include <htsmsg/htsmsg_store.h>
 
 #include "settings.h"
 #include "bookmarks.h"
