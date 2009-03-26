@@ -5,7 +5,7 @@ include ${BUILDDIR}/config.mak
 PROG=showtime
 
 CFLAGS  = -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations 
-CFLAGS += -Wmissing-prototypes
+CFLAGS += -Wmissing-prototypes -Isrc/dvd
 
 #
 # Core
@@ -69,7 +69,7 @@ SRCS += src/video/video_playback.c \
 	src/video/video_decoder.c \
 	src/video/yadif.c \
 
-SRCS-$(CONFIG_DVDNAV) += src/video/video_dvdspu.c
+SRCS-$(CONFIG_DVD) += src/video/video_dvdspu.c
 
 #
 # Audio subsys
@@ -87,7 +87,54 @@ SRCS                      += src/audio/dummy/dummy_audio.c
 #
 # DVD
 #
-SRCS-$(CONFIG_DVDNAV)  += src/dvd/dvd.c \
+SRCS-$(CONFIG_DVD)  += src/dvd/dvd.c \
+
+#
+# libdvdcss
+#
+SRCS-$(CONFIG_DVD) += 	src/dvd/libdvdcss/css.c \
+			src/dvd/libdvdcss/device.c \
+			src/dvd/libdvdcss/error.c \
+			src/dvd/libdvdcss/ioctl.c \
+			src/dvd/libdvdcss/libdvdcss.c
+
+${BUILDDIR}/src/dvd/libdvdcss/%.o : CFLAGS = \
+ -DHAVE_LIMITS_H -DHAVE_UNISTD_H -DHAVE_ERRNO_H -DHAVE_LINUX_DVD_STRUCT \
+ -DDVD_STRUCT_IN_LINUX_CDROM_H -DVERSION="0"
+
+#
+# libdvdread
+#
+SRCS-$(CONFIG_DVD) += 	src/dvd/libdvdread/dvd_input.c \
+			src/dvd/libdvdread/dvd_reader.c \
+			src/dvd/libdvdread/dvd_udf.c \
+			src/dvd/libdvdread/ifo_print.c \
+			src/dvd/libdvdread/ifo_read.c \
+			src/dvd/libdvdread/md5.c \
+			src/dvd/libdvdread/nav_print.c \
+			src/dvd/libdvdread/nav_read.c \
+			src/dvd/libdvdread/bitreader.c
+
+${BUILDDIR}/src/dvd/libdvdread/%.o : CFLAGS = \
+ -DHAVE_DVDCSS_DVDCSS_H -DDVDNAV_COMPILE -Wno-strict-aliasing
+
+#
+# libdvdread
+#
+SRCS-$(CONFIG_DVD) += 	src/dvd/dvdnav/dvdnav.c \
+			src/dvd/dvdnav/highlight.c \
+			src/dvd/dvdnav/navigation.c \
+			src/dvd/dvdnav/read_cache.c \
+			src/dvd/dvdnav/remap.c \
+			src/dvd/dvdnav/settings.c \
+			src/dvd/dvdnav/vm/vm.c \
+			src/dvd/dvdnav/vm/decoder.c \
+			src/dvd/dvdnav/vm/vmcmd.c \
+			src/dvd/dvdnav/searching.c
+
+${BUILDDIR}/src/dvd/dvdnav/%.o : CFLAGS = \
+ -DVERSION=\"showtime\" -DDVDNAV_COMPILE -Wno-strict-aliasing -Isrc/dvd \
+ -Isrc/dvd/dvdnav
 
 #
 # TV

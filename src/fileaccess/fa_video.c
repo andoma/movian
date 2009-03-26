@@ -232,7 +232,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   if(fa_probe_iso(NULL, fh) == 0) {
     fa_close(fh);
   isdvd:
-#if ENABLE_DVDNAV
+#if ENABLE_DVD
     return dvd_play(url, mp, errbuf, errlen);
 #else
     snprintf(errbuf, errlen, "DVD playback is not supported");

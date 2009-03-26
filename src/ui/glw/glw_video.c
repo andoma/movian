@@ -33,7 +33,7 @@
 //#include "subtitles.h"
 #include "video/yadif.h"
 #include "video/video_playback.h"
-#if ENABLE_DVDNAV
+#if ENABLE_DVD
 #include "video/video_dvdspu.h"
 #endif
 
@@ -448,7 +448,7 @@ gv_compute_blend(glw_video_t *gv, video_decoder_frame_t *fra,
 
 
 
-#if ENABLE_DVDNAV
+#if ENABLE_DVD
 /**
  *
  */
@@ -654,7 +654,7 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv)
     pts -= frame_duration * 2;
     compute_avdiff(vd, mp, pts);
 
-#if ENABLE_DVDNAV
+#if ENABLE_DVD
     if(vd->vd_dvdspu != NULL)
       spu_layout(gv, vd->vd_dvdspu, pts);
 #endif
@@ -813,7 +813,7 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
 {
   video_decoder_frame_t *fra, *frb;
   int width = 0, height = 0;
-#if ENABLE_DVDNAV
+#if ENABLE_DVD
   dvdspu_decoder_t *dd;
   dvdspu_t *d;
 #endif
@@ -863,7 +863,7 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
 
   glEnable(GL_BLEND); 
 
-#if ENABLE_DVDNAV
+#if ENABLE_DVD
   dd = vd->vd_dvdspu;
   if(gv->gv_sputex != 0 && dd != NULL && width > 0) {
     d = TAILQ_FIRST(&dd->dd_queue);
@@ -994,7 +994,7 @@ gl_video_widget_event(glw_video_t *gv, event_t *e)
 
 
 
-#if ENABLE_DVDNAV
+#if ENABLE_DVD
 /**
  *
  */
@@ -1109,7 +1109,7 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     gv->gv_mp = NULL;
     return 0;
 
-#if ENABLE_DVDNAV
+#if ENABLE_DVD
   case GLW_SIGNAL_POINTER_EVENT:
     return pointer_event(gv, extra);
 #endif

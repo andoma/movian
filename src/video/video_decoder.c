@@ -28,7 +28,7 @@
 #include <math.h>
 
 #include "video_decoder.h"
-#ifdef CONFIG_DVDNAV
+#ifdef CONFIG_DVD
 #include "video_dvdspu.h"
 #endif
 //#include "subtitles.h"
@@ -581,7 +581,7 @@ vd_thread(void *aux)
       vd_decode_video(vd, mb, 0);
       break;
 
-#ifdef CONFIG_DVDNAV
+#ifdef CONFIG_DVD
     case MB_DVD_HILITE:
     case MB_DVD_RESET_SPU:
     case MB_DVD_CLUT:
@@ -669,7 +669,7 @@ video_decoder_stop(video_decoder_t *vd)
 void
 video_decoder_destroy(video_decoder_t *vd)
 {
-#ifdef CONFIG_DVDNAV
+#ifdef CONFIG_DVD
   if(vd->vd_dvdspu != NULL)
     dvdspu_decoder_destroy(vd->vd_dvdspu);
 #endif

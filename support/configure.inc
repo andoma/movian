@@ -27,7 +27,7 @@ CONFIG_LIST="
  libpthread
  zlib
  posix_networking
- dvdnav
+ dvd
  glw
  glw_frontend_x11
  glw_frontend_wii

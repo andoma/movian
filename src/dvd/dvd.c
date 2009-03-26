@@ -24,7 +24,7 @@
 #include "dvd.h"
 #include "notifications.h"
 
-#include <libhts/svfs.h>
+#include <fileaccess/svfs.h>
 #include <dvdnav/dvdnav.h>
 
 static char *make_nice_title(const char *t);
