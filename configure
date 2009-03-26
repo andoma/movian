@@ -13,7 +13,7 @@
 
 PLATFORM=`uname`.`uname -m`
 
-source configure.inc
+source support/configure.inc
 
 CPU=generic
 ARCH=`uname -m`
