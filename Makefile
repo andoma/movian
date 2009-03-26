@@ -146,6 +146,7 @@ CFLAGS += -Wwrite-strings
 CFLAGS += -Wno-deprecated-declarations -Wmissing-prototypes
 CFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 CFLAGS += -I${BUILDDIR} -I${CURDIR}/src -I${CURDIR}
+CFLAGS += ${CFLAGS_EXT}
 
 SRCS += $(SRCS-yes)
 DLIBS += $(DLIBS-yes)
@@ -171,7 +172,7 @@ version.h:
 
 
 ${PROG}: version.h $(OBJS) Makefile
-	cd $(.OBJDIR) && $(CC) -o $@ $(OBJS) $(LDFLAGS) 
+	cd $(.OBJDIR) && $(CC) -o $@ $(OBJS) $(LDFLAGS) ${LDFLAGS_EXT}
 
 .c.o:
 	mkdir -p $(.OBJDIR) && cd $(.OBJDIR) && $(CC) -MD $(CFLAGS) -c -o $@ $(CURDIR)/$<
