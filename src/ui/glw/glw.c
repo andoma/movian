@@ -352,11 +352,11 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
     break;
 
   case GLW_FX_TEXROT:
-    //    glw_fx_texrot_ctor(w, init, apx);
+    glw_fx_texrot_ctor(w, init, apx);
     break;
 
   case GLW_VIDEO:
-    //    glw_video_ctor(w, init, apx);
+    glw_video_ctor(w, init, apx);
     break;
 
   case GLW_SLIDER_X:
