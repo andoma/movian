@@ -191,7 +191,7 @@ $(addprefix ${.OBJDIR}/, ${DEPS}): ;
 -include $(addprefix ${.OBJDIR}/, ${DEPS})
 
 
-include mk/${ARCHITECTURE}.mk
+include support/${ARCHITECTURE}.mk
 
 
 #
