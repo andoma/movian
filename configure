@@ -21,7 +21,7 @@ RELEASE=no
 PREFIX=/usr/local
 DONT_SKIP_MISSING=0
 EMBEDDED_THEME=none
-
+DEFAULT_THEME=new
 
 
 show_help(){
@@ -233,7 +233,7 @@ if enabled embedded_theme; then
 elif [ ${RELEASE} = yes ]; then
     THEMEPATH="file://${PREFIX}/share/hts/themes/${DEFAULT_THEME}"
 else
-    THEMEPATH="file://${TOPDIR}/showtime/themes/${DEFAULT_THEME}"
+    THEMEPATH="file://${TOPDIR}/themes/${DEFAULT_THEME}"
 fi
 echo >>${CONFIG_H} "#define SHOWTIME_DEFAULT_THEME_PATH \"${THEMEPATH}\""
 
