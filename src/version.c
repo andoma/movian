@@ -1,4 +1,4 @@
-#include "version.h"
+#include "showtimeversion.h"
 #include "config.h"
 
 #ifdef HTS_RELEASE_TAG

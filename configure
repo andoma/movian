@@ -121,7 +121,9 @@ echo >>${CONFIG_MAK} $CC_CONFIG_MAK
 echo
 echo Configuring external lib: ffmpeg
 
-(mkdir -p ${BUILDDIR}/ffmpeg && cd ${BUILDDIR}/ffmpeg && ${TOPDIR}/../ext/ffmpeg/configure \
+(mkdir -p ${BUILDDIR}/ffmpeg && \
+ cd ${BUILDDIR}/ffmpeg && \
+ ${TOPDIR}/ext/ffmpeg/configure \
     $CC_FFMPEG \
     --enable-gpl \
     --cpu=${CPU} \
@@ -145,8 +147,8 @@ cd ${TOPDIR}
 #
 if pkg-config freetype2; then
     enable libfreetype
-    echo >>${CONFIG_MAK} "LDFLAGS_EXT +=  " `pkg-config --libs freetype2`
-    echo >>${CONFIG_MAK} "CFLAGS_EXT += " `pkg-config --cflags freetype2`
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg +=  " `pkg-config --libs freetype2`
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags freetype2`
 elif test $DONT_SKIP_MISSING -eq 0; then
     echo "FreeType 2 not found."
     die
@@ -169,7 +171,7 @@ if enabled libfreetype && checkglx; then
     enable glw
     enable glw_frontend_x11
     enable glw_backend_opengl
-    echo >>${CONFIG_MAK} "LDFLAGS_EXT += -lGLU -lGL"
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lGLU -lGL"
 elif test $DONT_SKIP_MISSING -eq 0; then
     echo "OpenGL development files not available. Can not build test program."
     die
@@ -181,8 +183,8 @@ fi
 #
 if pkg-config alsa; then
     enable libasound
-    echo >>${CONFIG_MAK} "CFLAGS_EXT  += " `pkg-config --cflags alsa`
-    echo >>${CONFIG_MAK} "LDFLAGS_EXT += " `pkg-config --libs alsa`
+    echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags alsa`
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs alsa`
 elif test $DONT_SKIP_MISSING -eq 0; then
     echo "libasound (ALSA) development files not found."
     die
@@ -194,8 +196,8 @@ fi
 #
 if pkg-config libexif; then
     enable libexif
-    echo >>${CONFIG_MAK} "CFLAGS_EXT  += " `pkg-config --cflags libexif`
-    echo >>${CONFIG_MAK} "LDFLAGS_EXT += " `pkg-config --libs libexif`
+    echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags libexif`
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libexif`
 elif test $DONT_SKIP_MISSING -eq 0; then
     echo "libexif (JPEG library) development files not found."
     die
@@ -242,9 +244,9 @@ echo >>${CONFIG_H} "#define SHOWTIME_DEFAULT_THEME_PATH \"${THEMEPATH}\""
 cat >> ${CONFIG_MAK} << EOF 
 INSTALLPREFIX=$PREFIX
 ARCHITECTURE=posix
-CFLAGS_EXT += -I${BUILDDIR}/destdir/include
-LDFLAGS_EXT += -L${BUILDDIR}/destdir/lib -lswscale -lavformat -lavcodec -lavutil
-LDFLAGS_EXT += -lm -lz -lpthread
+CFLAGS_cfg += -I${BUILDDIR}/ext/include
+LDFLAGS_cfg += -L${BUILDDIR}/ext/lib -lswscale -lavformat -lavcodec -lavutil
+LDFLAGS_cfg += -lm -lz -lpthread
 EOF
 
 print_config CONFIG_ ${CONFIG_H} ${CONFIG_MAK} $CONFIG_LIST
