@@ -152,7 +152,7 @@ SRCS += $(SRCS-yes)
 DLIBS += $(DLIBS-yes)
 SLIBS += $(SLIBS-yes)
 
-.OBJDIR= obj
+.OBJDIR= ${BUILDDIR}/obj
 DEPFLAG= -M
 
 OBJS=    $(patsubst %.c,  %.o,   $(SRCS))
