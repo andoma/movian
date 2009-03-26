@@ -22,7 +22,7 @@
 #include <errno.h>
 #include <assert.h>
 
-#include <libhts/htsthreads.h>
+#include <arch/threads.h>
 
 #include "glw.h"
 #include "glw_container.h"

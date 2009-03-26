@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <libhts/hts_strtab.h>
+#include <strtab.h>
 
 #include "glw_model.h"
 #include "glw.h"

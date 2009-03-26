@@ -21,8 +21,8 @@
 
 #include <inttypes.h>
 #include <sys/time.h>
-#include <libhts/htssettings.h>
-#include <libhts/htsthreads.h>
+#include <arch/settings.h>
+#include <arch/threads.h>
 
 extern hts_mutex_t ffmutex;
 

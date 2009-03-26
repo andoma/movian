@@ -25,7 +25,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <libhts/htssettings.h>
 #include <libavformat/avformat.h>
 
 #include "showtime.h"

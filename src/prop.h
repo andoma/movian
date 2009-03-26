@@ -19,11 +19,12 @@
 #ifndef PROP_H__
 #define PROP_H__
 
-#include <libavutil/pixfmt.h>
-#include <libhts/htsthreads.h>
-#include <libhts/htsq.h>
-#include <libhts/htsmsg.h>
 #include <stdlib.h>
+
+#include <libavutil/pixfmt.h>
+#include <arch/threads.h>
+#include <queue.h>
+#include <htsmsg/htsmsg.h>
 
 struct prop;
 struct prop_sub;

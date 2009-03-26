@@ -35,7 +35,7 @@
 #include <libavformat/avformat.h>
 #include <libavformat/avio.h>
 
-#include <libhts/svfs.h>
+#include <fileaccess/svfs.h>
 
 #include "fa_proto.h"
 

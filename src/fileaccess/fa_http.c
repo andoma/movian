@@ -22,7 +22,7 @@
 #include <string.h>
 #include <assert.h>
 #include <libavutil/base64.h>
-#include <libhts/htsmsg_xml.h>
+#include <htsmsg/htsmsg_xml.h>
 
 #include "keyring.h"
 #include "fileaccess.h"

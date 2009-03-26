@@ -17,7 +17,7 @@
  */
 
 #include <string.h>
-#include <libhts/htsthreads.h>
+#include <arch/threads.h>
 
 #include "showtime.h"
 #include "ui.h"

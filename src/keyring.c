@@ -20,7 +20,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <inttypes.h>
-#include <libhts/htssettings.h>
+#include <arch/settings.h>
 
 #include "showtime.h"
 #include "event.h"

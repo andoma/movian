@@ -19,8 +19,7 @@
 #ifndef KEYMAPPER_H
 #define KEYMAPPER_H
 
-#include <libhts/htsthreads.h>
-#include <libhts/hts_strtab.h>
+#include <arch/threads.h>
 #include "prop.h"
 #include "event.h"
 #include "ui.h"

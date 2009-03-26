@@ -1,18 +1,28 @@
--include ../config.mak
+
+BUILDDIR=/home/andoma/hts/showtime/build.Linux.i686
+
+include ${BUILDDIR}/config.mak
 
 # core
+VPATH += src/
 
 SRCS = 	main.c navigator.c media.c event.c keyring.c settings.c prop.c \
 	bookmarks.c notifications.c
 
-VPATH += arch
+# arch
+VPATH += src/arch
 SRCS  += arch_${ARCHITECTURE}.c
+SRCS  += settings.c
+
+# support
+VPATH += src/htsmsg
+SRCS  += htsbuf.c htsmsg.c htsmsg_json.c htsmsg_xml.c htsmsg_binary.c
 
 
 #
 # File access subsys
 #
-VPATH += fileaccess
+VPATH += src/fileaccess
 SRCS  += fileaccess.c fa_probe.c  fa_imageloader.c fa_rawloader.c fa_backend.c
 SRCS  += fa_video.c fa_audio.c
 SRCS  += fa_fs.c fa_rar.c fa_smb.c fa_http.c fa_zip.c fa_zlib.c fa_embedded.c
@@ -22,7 +32,7 @@ SRCS-$(CONFIG_EMBEDDED_THEME)  += embedded_theme.c
 #
 # Networking
 #
-VPATH += networking
+VPATH += src/networking
 SRCS += net_common.c
 SRCS-$(CONFIG_POSIX_NETWORKING) += net_posix.c
 SRCS-$(CONFIG_LIBOGC) += net_libogc.c
@@ -31,26 +41,26 @@ SRCS-$(CONFIG_LIBOGC) += net_libogc.c
 #
 # Video support
 #
-VPATH += video
+VPATH += src/video
 SRCS  += video_playback.c video_decoder.c yadif.c
 SRCS-$(CONFIG_DVDNAV) += video_dvdspu.c
 
 #
 # Audio subsys
 #
-VPATH += audio
+VPATH += src/audio
 SRCS  += audio.c audio_decoder.c audio_fifo.c audio_iec958.c audio_mixer.c
 
 # ALSA Audio support
-VPATH += audio/alsa
+VPATH += src/audio/alsa
 SRCS-$(CONFIG_LIBASOUND)  += alsa_audio.c
 
 # Wii Audio support (no output)
-VPATH += audio/wii
-SRCS  += wii_audio.c
+VPATH += src/audio/wii
+SRCS-$(CONFIG_LIBOGC)     += wii_audio.c
 
 # Dummy Audio support (no output)
-VPATH += audio/dummy
+VPATH += src/audio/dummy
 SRCS  += dummy_audio.c
 
 #
@@ -61,18 +71,18 @@ SRCS  += playqueue.c
 #
 # DVD
 #
-VPATH += dvd
+VPATH += src/dvd
 SRCS-$(CONFIG_DVDNAV)  += dvd.c
 
 # HTSP
 #
-VPATH += tv
+VPATH += src/tv
 SRCS  += htsp.c
 
 #
 # User interface common
 #
-VPATH += ui
+VPATH += src/ui
 SRCS += ui.c  keymapper.c
 
 #
@@ -84,7 +94,7 @@ SRCS += ui.c  keymapper.c
 #
 # GLW user interface
 #
-VPATH += ui/glw
+VPATH += src/ui/glw
 
 SRCS-$(CONFIG_GLW)     += glw.c \
 			glw_event.c \
@@ -136,16 +146,50 @@ CFLAGS += -g -Wall -Werror -funsigned-char -O2
 CFLAGS += -Wwrite-strings
 CFLAGS += -Wno-deprecated-declarations -Wmissing-prototypes
 CFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
-CFLAGS += -I$(CURDIR) -I$(INCLUDES_INSTALL_BASE)
-LDFLAGS += -L$(LIBS_INSTALL_BASE)
-#
-# 
-#
-DLIBS  += ${SHOWTIME_DLIBS}  ${HTS_DLIBS}
-SLIBS  += ${SHOWTIME_SLIBS}  ${HTS_SLIBS}
-CFLAGS += ${SHOWTIME_CFLAGS} ${HTS_CFLAGS}
+CFLAGS += -I${BUILDDIR} -I${CURDIR}/src -I${CURDIR}
 
-include ../build/prog.mk
+SRCS += $(SRCS-yes)
+DLIBS += $(DLIBS-yes)
+SLIBS += $(SLIBS-yes)
+
+.OBJDIR= obj
+DEPFLAG= -M
+
+OBJS=    $(patsubst %.c,  %.o,   $(SRCS))
+
+DEPS= ${OBJS:%.o=%.d}
+
+SRCS += version.c
+
+PROGPATH ?= $(TOPDIR)
+
+all:	$(PROG)
+
+.PHONY: version.h
+
+version.h:
+	$(TOPDIR)/version.sh $(PROGPATH) $(PROGPATH)/version.h
+
+
+${PROG}: version.h $(OBJS) Makefile
+	cd $(.OBJDIR) && $(CC) -o $@ $(OBJS) $(LDFLAGS) 
+
+.c.o:
+	mkdir -p $(.OBJDIR) && cd $(.OBJDIR) && $(CC) -MD $(CFLAGS) -c -o $@ $(CURDIR)/$<
+
+clean:
+	rm -rf core* obj version.h
+	find . -name "*~" | xargs rm -f
+
+vpath %.o ${.OBJDIR}
+vpath %.S ${.OBJDIR}
+vpath ${PROG} ${.OBJDIR}
+vpath ${PROGBIN} ${.OBJDIR}
+
+# include dependency files if they exist
+$(addprefix ${.OBJDIR}/, ${DEPS}): ;
+-include $(addprefix ${.OBJDIR}/, ${DEPS})
+
 
 include mk/${ARCHITECTURE}.mk
 

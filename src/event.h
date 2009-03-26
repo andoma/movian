@@ -20,9 +20,9 @@
 #define EVENT_H
 
 #include <inttypes.h>
-#include <libhts/htsq.h>
-#include <libhts/htsthreads.h>
-#include <libhts/htsatomic.h>
+#include <queue.h>
+#include <arch/threads.h>
+#include <arch/atomic.h>
 
 
 typedef enum {

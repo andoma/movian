@@ -21,8 +21,7 @@
 
 #include "config.h"
 
-#include <libhts/htsq.h>
-#include <libhts/htsthreads.h>
+#include <queue.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <inttypes.h>

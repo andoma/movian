@@ -33,7 +33,9 @@
 //#include "subtitles.h"
 #include "video/yadif.h"
 #include "video/video_playback.h"
+#if ENABLE_DVDNAV
 #include "video/video_dvdspu.h"
+#endif
 
 static const char *yuv2rbg_code =
 #include "cg/yuv2rgb.h"
@@ -446,6 +448,7 @@ gv_compute_blend(glw_video_t *gv, video_decoder_frame_t *fra,
 
 
 
+#if ENABLE_DVDNAV
 /**
  *
  */
@@ -590,7 +593,7 @@ spu_layout(glw_video_t *gv, dvdspu_decoder_t *dd, int64_t pts)
   }
   hts_mutex_unlock(&dd->dd_mutex);
 }
-
+#endif
 
 
 
@@ -650,8 +653,12 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv)
   if(pts != AV_NOPTS_VALUE) {
     pts -= frame_duration * 2;
     compute_avdiff(vd, mp, pts);
+
+#if ENABLE_DVDNAV
     if(vd->vd_dvdspu != NULL)
       spu_layout(gv, vd->vd_dvdspu, pts);
+#endif
+
   }
 
 }
@@ -806,8 +813,10 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
 {
   video_decoder_frame_t *fra, *frb;
   int width = 0, height = 0;
+#if ENABLE_DVDNAV
   dvdspu_decoder_t *dd;
   dvdspu_t *d;
+#endif
   
   /*
    * rescale
@@ -854,6 +863,7 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
 
   glEnable(GL_BLEND); 
 
+#if ENABLE_DVDNAV
   dd = vd->vd_dvdspu;
   if(gv->gv_sputex != 0 && dd != NULL && width > 0) {
     d = TAILQ_FIRST(&dd->dd_queue);
@@ -887,6 +897,8 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
       glPopMatrix();
     }
   }
+#endif
+
   glPopMatrix();
 }
 
@@ -981,6 +993,8 @@ gl_video_widget_event(glw_video_t *gv, event_t *e)
 }
 
 
+
+#if ENABLE_DVDNAV
 /**
  *
  */
@@ -1051,6 +1065,7 @@ pointer_event(glw_video_t *gv, glw_pointer_event_t *gpe)
   event_unref(e);
   return 1;
 }
+#endif
 
 /**
  *
@@ -1094,9 +1109,10 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     gv->gv_mp = NULL;
     return 0;
 
+#if ENABLE_DVDNAV
   case GLW_SIGNAL_POINTER_EVENT:
     return pointer_event(gv, extra);
-
+#endif
 
   default:
     return 0;

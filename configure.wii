@@ -1,0 +1,142 @@
+#!/bin/bash
+#
+# HTS configure script for Nintendo wii with devkitpro
+#
+# Copyright (c) 2005-2008 Andreas Öman
+#
+# Based on FFmpeg's configure script:
+#
+# Copyright (c) 2000-2002 Fabrice Bellard
+# Copyright (c) 2005-2008 Diego Biurrun
+# Copyright (c) 2005-2008 Mans Rullgard
+#
+
+source build/configure.shared
+LIB_BUILD_MODE=static
+
+DEVKITPRO="${HOME}/devkitpro"
+LIBFREETYPEPATH="${HOME}/freetype-ppc"
+
+EMBEDDED_THEME_PATH=`cd showtime/themes/${DEFAULT_THEME} && pwd`;
+enable embedded_theme
+
+show_help(){
+  echo "Usage: configure.wii [options]"
+  echo "Options: [defaults in brackets after descriptions]"
+  echo
+  echo "Standard options:"
+  echo "  --help                    Print this message"
+  echo "  --devkitpro=PATH          Path to devkitpro [$DEVKITPRO]"
+  echo "  --freetype=PATH           Path to freetype [$LIBFREETYPEPATH]"
+  exit 1
+}
+
+
+die() {
+    rm -rf $TMPDIR
+    exit
+}
+
+for opt do
+  optval="${opt#*=}"
+  case "$opt" in
+  --help) show_help
+  ;;
+  --target=*) TARGET="$optval"
+  ;;
+  --devkitpro=*) DEVKITPRO="$optval"
+  ;;
+  --freetype=*) LIBFREETYPEPATH="$optval"
+  ;;
+  esac
+done
+
+setup_env
+
+enable libogc
+enable glw_frontend_wii
+enable glw_backend_gx
+enable glw
+
+LIB_BUILD_MODE="static"
+LIBSPOSTFIX="SLIBS"
+
+DEVKITPPC=${DEVKITPRO}/devkitPPC
+LIBOGC=${DEVKITPRO}/libogc
+LIBFAT=${DEVKITPRO}/libfat
+
+
+cat >> ${CONFIG_MAK} <<EOF
+ARCHITECTURE=wii
+CC=${DEVKITPPC}/bin/powerpc-gekko-gcc
+STRIP=${DEVKITPPC}/bin/powerpc-gekko-strip
+
+HTS_CFLAGS += -I${LIBOGC}/include
+HTS_CFLAGS += -I${LIBFAT}/include
+HTS_CFLAGS +=  -DGEKKO -mrvl -mcpu=750 -meabi -mhard-float
+
+SHOWTIME_SLIBS += 	-DGEKKO -mrvl -mcpu=750 -meabi -mhard-float
+EOF
+
+
+cat >> ${CONFIG_H} <<EOF
+#define HTS_CONTENT_PATH "/"
+EOF
+
+
+#
+# freetype
+#
+cat >> ${CONFIG_MAK} <<EOF
+SHOWTIME_SLIBS  +=  -L${LIBFREETYPEPATH}/lib -lfreetype
+SHOWTIME_CFLAGS += -I${LIBFREETYPEPATH}/include 
+SHOWTIME_CFLAGS += -I${LIBFREETYPEPATH}/include/freetype2
+EOF
+
+#
+# configure ffmpeg
+#
+echo
+echo [HTS] Configuring external lib: ffmpeg
+
+cd ${TOPDIR}/ext/ffmpeg && ./configure \
+    --extra-cflags=-I${LIBOGC}/include \
+    --extra-ldflags=-L${DEVKITPRO}/libogc/lib/wii \
+    --cross-prefix=${DEVKITPPC}/bin/powerpc-gekko- \
+    --enable-cross-compile \
+    --arch=powerpc \
+    --cpu=750 \
+    --disable-altivec \
+    --disable-network \
+    --disable-devices \
+    --disable-ffmpeg \
+    --disable-ffserver \
+    --disable-ffplay \
+    --disable-bzlib \
+    --disable-muxers \
+    --disable-encoders \
+    --enable-gpl \
+    --prefix=${LLPREFIX} \
+    --enable-static \
+    --disable-shared
+
+cat >> ${CONFIG_MAK} << EOF 
+SHOWTIME_SLIBS  += -L${DEVKITPRO}/libfat/lib/wii  -lfat
+SHOWTIME_SLIBS  += -L${DEVKITPRO}/libogc/lib/wii  -lwiiuse -lbte -logc
+HTS_$LIBSPOSTFIX  += -lavformat -lswscale -lavcodec -lavutil -lhts -lz -lm
+EOF
+
+
+if enabled embedded_theme; then
+    THEMEPATH="zip://embedded://theme|"
+else
+    THEMEPATH="file:///showtime/themes/${THEMEPATH}"
+fi
+
+echo >>${CONFIG_H} "#define SHOWTIME_DEFAULT_THEME_PATH \"${THEMEPATH}\""
+
+
+print_config CONFIG_ ${CONFIG_H} ${CONFIG_MAK} $CONFIG_LIST
+
+die
+

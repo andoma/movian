@@ -1,6 +1,6 @@
 /*
- *  Networking
- *  Copyright (C) 2007-2008 Andreas Ã–man
+ *  Functions converting HTSMSGs to/from a simple binary format
+ *  Copyright (C) 2007 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,31 +16,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef NET_H__
-#define NET_H__
+#ifndef HTSMSG_BINARY_H_
+#define HTSMSG_BINARY_H_
 
-#include <sys/types.h>
-#include <stdint.h>
-#include <htsmsg/htsbuf.h>
+#include "htsmsg.h"
 
-void net_setup(void);
+/**
+ * htsmsg_binary_deserialize
+ */
+htsmsg_t *htsmsg_binary_deserialize(const void *data, size_t len,
+				    const void *buf);
 
-int tcp_connect(const char *hostname, int port, char *errbuf,
-		size_t errbufsize, int timeout);
+int htsmsg_binary_serialize(htsmsg_t *msg, void **datap, size_t *lenp,
+			    int maxlen);
 
-int tcp_write_queue(int fd, htsbuf_queue_t *q);
-
-int tcp_read_line(int fd, char *buf, const size_t bufsize,
-		  htsbuf_queue_t *spill);
-
-int tcp_read_data(int fd, char *buf, const size_t bufsize,
-		  htsbuf_queue_t *spill);
-
-int tcp_read(int fd, void *buf, size_t len, int all);
-
-int tcp_write(int fd, const void *data, size_t len);
-
-void tcp_close(int fd);
-
-
-#endif /* NET_H__ */
+#endif /* HTSMSG_BINARY_H_ */

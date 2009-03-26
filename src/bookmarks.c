@@ -22,8 +22,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#include <libhts/htsatomic.h>
-#include <libhts/htssettings.h>
+#include <arch/settings.h>
 
 #include "settings.h"
 #include "bookmarks.h"

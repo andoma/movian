@@ -21,7 +21,7 @@
 
 #include <stdlib.h>
 #include <libavformat/avformat.h>
-#include <libhts/htsatomic.h>
+#include <arch/atomic.h>
 
 #include "event.h"
 #include "prop.h"

@@ -1,0 +1,253 @@
+#!/bin/bash
+#
+# HTS configure script
+#
+# Copyright (c) 2005-2009 Andreas Öman
+#
+# Based on FFmpeg's configure script:
+#
+# Copyright (c) 2000-2002 Fabrice Bellard
+# Copyright (c) 2005-2008 Diego Biurrun
+# Copyright (c) 2005-2008 Mans Rullgard
+#
+
+PLATFORM=`uname`.`uname -m`
+
+source configure.inc
+
+CPU=generic
+ARCH=`uname -m`
+RELEASE=no
+PREFIX=/usr/local
+DONT_SKIP_MISSING=0
+EMBEDDED_THEME=none
+
+
+
+show_help(){
+  echo "Usage: configure [options]"
+  echo "Options: [defaults in brackets after descriptions]"
+  echo
+  echo "Standard options:"
+  echo "  --help                   print this message"
+  echo "  --prefix=PREFIX          install in PREFIX [$PREFIX]"
+  echo "  --arch=arch              Build for this architecture [$ARCH]"
+  echo "  --cpu=cpu                Build and optimize for specific CPU"
+  echo "  --cc=CC                  Build using the given compiler"
+  echo "  --release                Stage for release"
+  echo "  --embedded-theme         Embed theme in showtime [none]"
+  exit 1
+}
+
+
+die() {
+    rm -rf $TMPDIR
+    exit
+}
+
+for opt do
+  optval="${opt#*=}"
+  case "$opt" in
+  --prefix=*) PREFIX="$optval"
+  ;;
+  --cpu=*) CPU="$optval"
+  ;;
+  --help) show_help
+  ;;
+  --release) RELEASE=yes;
+  ;;
+  --cc=*) CC="$optval"
+  ;;
+  --embedded-theme=*) 
+	  EMBEDDED_THEME_PATH=`cd $optval && pwd`;
+	  enable embedded_theme
+  ;;
+  esac
+done
+
+setup_env
+
+enable libpthread
+enable zlib
+enable posix_networking
+#enable dvdnav
+
+    
+#
+# pkgconfig
+#
+
+which >/dev/null pkg-config
+if [ $? -ne 0 ]; then
+    echo "pkg-config not found. Can not configure."
+    die
+fi
+
+#
+# c compiler
+#
+
+checkcc() {
+    cat >$TMPDIR/1.c <<EOF
+int main() {
+ return 0;
+}
+EOF
+    $CC 2>/dev/null $TMPDIR/1.c -o $TMPDIR/1.bin 
+}
+    
+
+if [ "x$CC" != "x" ]; then
+    echo >${CONFIG_MAK} "CC=$CC"
+    CC_FFMPEG="--cc=$CC"
+else
+    CC=cc
+fi
+
+if checkcc; then 
+    echo "Using C compiler: $CC"
+else
+    echo "C compiler ($CC) is not working"
+    die
+fi
+
+echo >>${CONFIG_MAK} $CC_CONFIG_MAK 
+
+
+#
+# configure ffmpeg
+#
+
+echo
+echo Configuring external lib: ffmpeg
+
+(mkdir -p ${BUILDDIR}/ffmpeg && cd ${BUILDDIR}/ffmpeg && ${TOPDIR}/../ext/ffmpeg/configure \
+    $CC_FFMPEG \
+    --enable-gpl \
+    --cpu=${CPU} \
+    --disable-encoders \
+    --disable-muxers \
+    --disable-devices \
+    --disable-protocols \
+    --disable-stripping \
+    --disable-static \
+    --disable-shared \
+    --enable-static \
+    --enable-pthreads \
+    --prefix=${DESTDIR} \
+    --disable-ffserver \
+)
+
+cd ${TOPDIR}
+
+#
+# libfreetype2
+#
+if pkg-config freetype2; then
+    enable libfreetype
+    echo >>${CONFIG_MAK} "LDFLAGS +=  " `pkg-config --libs freetype2`
+    echo >>${CONFIG_MAK} "CFLAGS += " `pkg-config --cflags freetype2`
+elif test $DONT_SKIP_MISSING -eq 0; then
+    echo "FreeType 2 not found."
+    die
+fi
+
+
+#
+# opengl for GLW (depends on freetype)
+#
+checkglx() {
+    cat >$TMPDIR/1.c <<EOF
+#include <GL/glx.h>
+int main() {
+ return 0;
+}
+EOF
+    $CC 2>/dev/null $TMPDIR/1.c -o $TMPDIR/1.bin -lGLU -lGL
+}
+if enabled libfreetype && checkglx; then 
+    enable glw
+    enable glw_frontend_x11
+    enable glw_backend_opengl
+    echo >>${CONFIG_MAK} "LDFLAGS += -lGLU -lGL"
+elif test $DONT_SKIP_MISSING -eq 0; then
+    echo "OpenGL development files not available. Can not build test program."
+    die
+fi
+
+
+#
+# libasound (alsa)
+#
+if pkg-config alsa; then
+    enable libasound
+    echo >>${CONFIG_MAK} "CFLAGS  += " `pkg-config --cflags alsa`
+    echo >>${CONFIG_MAK} "LDFLAGS += " `pkg-config --libs alsa`
+elif test $DONT_SKIP_MISSING -eq 0; then
+    echo "libasound (ALSA) development files not found."
+    die
+fi
+
+
+#
+# libexif, JPEG exif
+#
+if pkg-config libexif; then
+    enable libexif
+    echo >>${CONFIG_MAK} "CFLAGS  += " `pkg-config --cflags libexif`
+    echo >>${CONFIG_MAK} "LDFLAGS += " `pkg-config --libs libexif`
+elif test $DONT_SKIP_MISSING -eq 0; then
+    echo "libexif (JPEG library) development files not found."
+    die
+fi
+
+#
+# configure local components
+#
+
+echo  Local libs are built ${LIB_BUILD_MODE}
+if [ ${RELEASE} = yes ]; then
+    echo  Release build: ${RELEASENAME}
+    echo
+    echo  The generated binaries will contained compild-in paths to
+    echo  ${PREFIX}/share/hts where parts of the sw will be installed.
+    echo  You must '"make install"' for HTS to function properly.
+else
+    echo  Development build. 
+    echo
+    echo  The generated binaries will contained compild-in paths to
+    echo  the current build tree. If you plan to install the binaries,
+    echo  please reconfigure with '--release'.
+    
+fi
+    
+
+
+if [ ${RELEASE} = yes ]; then
+    echo >>${CONFIG_H} "#define HTS_RELEASE_TAG \"${RELEASENAME}\""
+    echo >>${CONFIG_H} "#define HTS_INSTALL_PREFIX \"${PREFIX}\""
+fi
+
+if enabled embedded_theme; then
+    THEMEPATH="zip://embedded://theme|"
+elif [ ${RELEASE} = yes ]; then
+    THEMEPATH="file://${PREFIX}/share/hts/themes/${DEFAULT_THEME}"
+else
+    THEMEPATH="file://${TOPDIR}/showtime/themes/${DEFAULT_THEME}"
+fi
+echo >>${CONFIG_H} "#define SHOWTIME_DEFAULT_THEME_PATH \"${THEMEPATH}\""
+
+
+
+cat >> ${CONFIG_MAK} << EOF 
+INSTALLPREFIX=$PREFIX
+ARCHITECTURE=posix
+CFLAGS += -I${BUILDDIR}/destdir/include
+LDFLAGS += -L${BUILDDIR}/destdir/lib -lswscale -lavformat -lavcodec -lavutil
+LDFLAGS += -lm -lz -lpthread
+EOF
+
+print_config CONFIG_ ${CONFIG_H} ${CONFIG_MAK} $CONFIG_LIST
+
+die
+

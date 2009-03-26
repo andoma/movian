@@ -23,8 +23,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 
-#include <libhts/htsthreads.h>
-#include <libhts/htsatomic.h>
+#include <arch/atomic.h>
 
 #include "prop.h"
 

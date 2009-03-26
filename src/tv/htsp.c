@@ -21,10 +21,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <libhts/htsmsg.h>
-#include <libhts/htsmsg_binary.h>
-#include <libhts/htsthreads.h>
-#include <libhts/htsatomic.h>
+#include <htsmsg/htsmsg.h>
+#include <htsmsg/htsmsg_binary.h>
+#include <arch/threads.h>
+#include <arch/atomic.h>
 #include <libavutil/sha1.h>
 
 #include "networking/net.h"

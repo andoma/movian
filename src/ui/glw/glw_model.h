@@ -19,7 +19,7 @@
 #ifndef GLW_MODEL_H
 #define GLW_MODEL_H
 
-#include <libhts/htsq.h>
+#include <queue.h>
 #include <inttypes.h>
 #include <string.h>
 #include <stdarg.h>
