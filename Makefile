@@ -90,15 +90,15 @@ SRCS                      += src/audio/dummy/dummy_audio.c
 SRCS-$(CONFIG_DVD)  += src/dvd/dvd.c \
 
 #
-# libdvdcss
+# dvdcss
 #
-SRCS-$(CONFIG_DVD) += 	src/dvd/libdvdcss/css.c \
-			src/dvd/libdvdcss/device.c \
-			src/dvd/libdvdcss/error.c \
-			src/dvd/libdvdcss/ioctl.c \
-			src/dvd/libdvdcss/libdvdcss.c
+SRCS-$(CONFIG_DVD) += 	src/dvd/dvdcss/css.c \
+			src/dvd/dvdcss/device.c \
+			src/dvd/dvdcss/error.c \
+			src/dvd/dvdcss/ioctl.c \
+			src/dvd/dvdcss/libdvdcss.c
 
-${BUILDDIR}/src/dvd/libdvdcss/%.o : CFLAGS = \
+${BUILDDIR}/src/dvd/dvdcss/%.o : CFLAGS = \
  -DHAVE_LIMITS_H -DHAVE_UNISTD_H -DHAVE_ERRNO_H -DHAVE_LINUX_DVD_STRUCT \
  -DDVD_STRUCT_IN_LINUX_CDROM_H -DVERSION="0"
 
@@ -116,7 +116,7 @@ SRCS-$(CONFIG_DVD) += 	src/dvd/libdvdread/dvd_input.c \
 			src/dvd/libdvdread/bitreader.c
 
 ${BUILDDIR}/src/dvd/libdvdread/%.o : CFLAGS = \
- -DHAVE_DVDCSS_DVDCSS_H -DDVDNAV_COMPILE -Wno-strict-aliasing
+ -DHAVE_DVDCSS_DVDCSS_H -DDVDNAV_COMPILE -Wno-strict-aliasing  -Isrc/dvd 
 
 #
 # libdvdread

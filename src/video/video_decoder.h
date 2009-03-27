@@ -194,7 +194,7 @@ typedef struct video_decoder {
 
   /* DVD / SPU related members */
 
-#ifdef CONFIG_DVDNAV
+#ifdef CONFIG_DVD
   struct dvdspu_decoder *vd_dvdspu;
 #endif
   
