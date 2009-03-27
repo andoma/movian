@@ -212,6 +212,9 @@ clean:
 	rm -rf ${BUILDDIR}/src
 	find . -name "*~" | xargs rm -f
 
+distclean: clean
+	rm -rf build.*
+
 # Create showtimeversion.h
 $(BUILDDIR)/showtimeversion.h:
 	$(CURDIR)/support/version.sh $(CURDIR) $(BUILDDIR)/showtimeversion.h
