@@ -198,7 +198,9 @@ CFLAGS_com += -I${BUILDDIR} -I${CURDIR}/src -I${CURDIR}
 
 all:	${PROG}
 
-${PROG}: $(OBJDIRS) $(OBJS)
+.PHONY:	clean distclean ffmpeg
+
+${PROG}: ${BUILDDIR}/ffmpeg/install $(OBJDIRS) $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS) ${LDFLAGS_cfg}
 
 $(OBJDIRS):
@@ -207,6 +209,9 @@ $(OBJDIRS):
 ${BUILDDIR}/%.o: %.c
 	$(CC) -MD $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
 
+${BUILDDIR}/ffmpeg/install ffmpeg:
+	cd ${BUILDDIR}/ffmpeg/build && ${MAKE} all
+	cd ${BUILDDIR}/ffmpeg/build && ${MAKE} install
 
 clean:
 	rm -rf ${BUILDDIR}/src

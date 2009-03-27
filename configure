@@ -105,7 +105,7 @@ else
 fi
 
 if checkcc; then 
-    echo "Using C compiler: $CC"
+    echo "Using C compiler:      $CC"
 else
     echo "C compiler ($CC) is not working"
     die
@@ -115,40 +115,13 @@ echo >>${CONFIG_MAK} $CC_CONFIG_MAK
 
 
 #
-# configure ffmpeg
-#
-
-echo
-echo Configuring external lib: ffmpeg
-
-(mkdir -p ${BUILDDIR}/ffmpeg && \
- cd ${BUILDDIR}/ffmpeg && \
- ${TOPDIR}/ext/ffmpeg/configure \
-    $CC_FFMPEG \
-    --enable-gpl \
-    --cpu=${CPU} \
-    --disable-encoders \
-    --disable-muxers \
-    --disable-devices \
-    --disable-protocols \
-    --disable-stripping \
-    --disable-static \
-    --disable-shared \
-    --enable-static \
-    --enable-pthreads \
-    --prefix=${DESTDIR} \
-    --disable-ffserver \
-)
-
-cd ${TOPDIR}
-
-#
 # libfreetype2
 #
 if pkg-config freetype2; then
     enable libfreetype
     echo >>${CONFIG_MAK} "LDFLAGS_cfg +=  " `pkg-config --libs freetype2`
     echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags freetype2`
+    echo "Using Freetype2:       `pkg-config --modversion freetype2`"
 elif test $DONT_SKIP_MISSING -eq 0; then
     echo "FreeType 2 not found."
     die
@@ -185,6 +158,7 @@ if pkg-config alsa; then
     enable libasound
     echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags alsa`
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs alsa`
+    echo "Using ALSA:            `pkg-config --modversion alsa`"
 elif test $DONT_SKIP_MISSING -eq 0; then
     echo "libasound (ALSA) development files not found."
     die
@@ -198,32 +172,32 @@ if pkg-config libexif; then
     enable libexif
     echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags libexif`
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libexif`
+    echo "Using libexif:         `pkg-config --modversion libexif`"
 elif test $DONT_SKIP_MISSING -eq 0; then
     echo "libexif (JPEG library) development files not found."
     die
 fi
 
 #
-# configure local components
+# configure ffmpeg
+#
+setup_ffmpeg
+
+#
+# Configure paths, etc
 #
 
-echo  Local libs are built ${LIB_BUILD_MODE}
 if [ ${RELEASE} = yes ]; then
     echo  Release build: ${RELEASENAME}
-    echo
     echo  The generated binaries will contained compild-in paths to
     echo  ${PREFIX}/share/hts where parts of the sw will be installed.
     echo  You must '"make install"' for HTS to function properly.
 else
     echo  Development build. 
-    echo
     echo  The generated binaries will contained compild-in paths to
     echo  the current build tree. If you plan to install the binaries,
     echo  please reconfigure with '--release'.
-    
 fi
-    
-
 
 if [ ${RELEASE} = yes ]; then
     echo >>${CONFIG_H} "#define HTS_RELEASE_TAG \"${RELEASENAME}\""
@@ -239,13 +213,12 @@ else
 fi
 echo >>${CONFIG_H} "#define SHOWTIME_DEFAULT_THEME_PATH \"${THEMEPATH}\""
 
-
-
+#
+# Finalize
+#
 cat >> ${CONFIG_MAK} << EOF 
 INSTALLPREFIX=$PREFIX
 ARCHITECTURE=posix
-CFLAGS_cfg += -I${BUILDDIR}/ext/include
-LDFLAGS_cfg += -L${BUILDDIR}/ext/lib -lswscale -lavformat -lavcodec -lavutil
 LDFLAGS_cfg += -lm -lz -lpthread
 EOF
 
