@@ -181,12 +181,11 @@ fi
 #
 # configure ffmpeg
 #
-setup_ffmpeg
+setup_ffmpeg --cpu=${CPU} --enable-pthreads
 
 #
 # Configure paths, etc
 #
-
 if [ ${RELEASE} = yes ]; then
     echo  Release build: ${RELEASENAME}
     echo  The generated binaries will contained compild-in paths to

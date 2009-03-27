@@ -11,13 +11,13 @@
 # Copyright (c) 2005-2008 Mans Rullgard
 #
 
-source build/configure.shared
-LIB_BUILD_MODE=static
+PLATFORM="wii"
 
+source support/configure.inc
 DEVKITPRO="${HOME}/devkitpro"
 LIBFREETYPEPATH="${HOME}/freetype-ppc"
 
-EMBEDDED_THEME_PATH=`cd showtime/themes/${DEFAULT_THEME} && pwd`;
+EMBEDDED_THEME_PATH=`cd themes/${DEFAULT_THEME} && pwd`;
 enable embedded_theme
 
 show_help(){
@@ -58,24 +58,19 @@ enable glw_frontend_wii
 enable glw_backend_gx
 enable glw
 
-LIB_BUILD_MODE="static"
-LIBSPOSTFIX="SLIBS"
-
 DEVKITPPC=${DEVKITPRO}/devkitPPC
 LIBOGC=${DEVKITPRO}/libogc
 LIBFAT=${DEVKITPRO}/libfat
 
-
 cat >> ${CONFIG_MAK} <<EOF
-ARCHITECTURE=wii
 CC=${DEVKITPPC}/bin/powerpc-gekko-gcc
 STRIP=${DEVKITPPC}/bin/powerpc-gekko-strip
 
-HTS_CFLAGS += -I${LIBOGC}/include
-HTS_CFLAGS += -I${LIBFAT}/include
-HTS_CFLAGS +=  -DGEKKO -mrvl -mcpu=750 -meabi -mhard-float
+CFLAGS_cfg += -I${LIBOGC}/include
+CFLAGS_cfg += -I${LIBFAT}/include
+CFLAGS_cfg += -DGEKKO -mrvl -mcpu=750 -meabi -mhard-float
 
-SHOWTIME_SLIBS += 	-DGEKKO -mrvl -mcpu=750 -meabi -mhard-float
+LDFLAGS_cfg += -DGEKKO -mrvl -mcpu=750 -meabi -mhard-float
 EOF
 
 
@@ -88,43 +83,21 @@ EOF
 # freetype
 #
 cat >> ${CONFIG_MAK} <<EOF
-SHOWTIME_SLIBS  +=  -L${LIBFREETYPEPATH}/lib -lfreetype
-SHOWTIME_CFLAGS += -I${LIBFREETYPEPATH}/include 
-SHOWTIME_CFLAGS += -I${LIBFREETYPEPATH}/include/freetype2
+LDFLAGS_cfg  +=  -L${LIBFREETYPEPATH}/lib -lfreetype
+CFLAGS_cfg += -I${LIBFREETYPEPATH}/include 
+CFLAGS_cfg += -I${LIBFREETYPEPATH}/include/freetype2
 EOF
 
 #
 # configure ffmpeg
 #
-echo
-echo [HTS] Configuring external lib: ffmpeg
-
-cd ${TOPDIR}/ext/ffmpeg && ./configure \
-    --extra-cflags=-I${LIBOGC}/include \
+setup_ffmpeg --extra-cflags=-I${LIBOGC}/include \
     --extra-ldflags=-L${DEVKITPRO}/libogc/lib/wii \
     --cross-prefix=${DEVKITPPC}/bin/powerpc-gekko- \
     --enable-cross-compile \
     --arch=powerpc \
     --cpu=750 \
-    --disable-altivec \
-    --disable-network \
-    --disable-devices \
-    --disable-ffmpeg \
-    --disable-ffserver \
-    --disable-ffplay \
-    --disable-bzlib \
-    --disable-muxers \
-    --disable-encoders \
-    --enable-gpl \
-    --prefix=${LLPREFIX} \
-    --enable-static \
-    --disable-shared
-
-cat >> ${CONFIG_MAK} << EOF 
-SHOWTIME_SLIBS  += -L${DEVKITPRO}/libfat/lib/wii  -lfat
-SHOWTIME_SLIBS  += -L${DEVKITPRO}/libogc/lib/wii  -lwiiuse -lbte -logc
-HTS_$LIBSPOSTFIX  += -lavformat -lswscale -lavcodec -lavutil -lhts -lz -lm
-EOF
+    --disable-altivec
 
 
 if enabled embedded_theme; then
@@ -135,6 +108,15 @@ fi
 
 echo >>${CONFIG_H} "#define SHOWTIME_DEFAULT_THEME_PATH \"${THEMEPATH}\""
 
+#
+# Finalize
+#
+
+cat >> ${CONFIG_MAK} << EOF 
+ARCHITECTURE=wii
+LDFLAGS_cfg  += -L${DEVKITPRO}/libfat/lib/wii  -lfat
+LDFLAGS_cfg  += -L${DEVKITPRO}/libogc/lib/wii  -lwiiuse -lbte -logc
+EOF
 
 print_config CONFIG_ ${CONFIG_H} ${CONFIG_MAK} $CONFIG_LIST
 

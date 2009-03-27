@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# HTS configure shared functions
+# Showtime configure shared functions
 #
 # Copyright (c) 2005-2008 Andreas Öman
 #
@@ -117,21 +117,24 @@ setup_ffmpeg() {
     rm -rf ${BUILDDIR}/ffmpeg/install
 
     (cd ${BUILDDIR}/ffmpeg/build && \
-	${TOPDIR}/ext/ffmpeg/configure >/dev/null \
+	${TOPDIR}/ext/ffmpeg/configure  \
 	$CC_FFMPEG \
 	--enable-gpl \
-	--cpu=${CPU} \
 	--disable-encoders \
 	--disable-muxers \
 	--disable-devices \
 	--disable-protocols \
+	--disable-network \
 	--disable-stripping \
 	--disable-static \
 	--disable-shared \
 	--enable-static \
-	--enable-pthreads \
 	--prefix=${BUILDDIR}/ffmpeg/install \
 	--disable-ffserver \
+	--disable-ffmpeg \
+	--disable-ffplay \
+	--disable-bzlib \
+	$@
 	)
 
 cat >> ${CONFIG_MAK} << EOF 

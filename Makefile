@@ -1,4 +1,5 @@
-BUILDDIR=build.Linux.i686
+PLATFORM ?= Linux.i686
+BUILDDIR = build.${PLATFORM}
 
 include ${BUILDDIR}/config.mak
 
