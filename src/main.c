@@ -85,7 +85,7 @@ main(int argc, char **argv)
   arch_init();
 
   /* Initialize (and optionally load) settings */
-  hts_settings_init("showtime", settingspath);
+  htsmsg_store_init("showtime", settingspath);
 
   /* Initialize keyring */
   keyring_init();

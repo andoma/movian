@@ -51,7 +51,7 @@ audio_global_save_settings(void)
 {
   htsmsg_t *m = htsmsg_create_map();
   htsmsg_add_str(m, "current", audio_mode_current->am_id);
-  hts_settings_save(m, "audio/current");
+  htsmsg_store_save(m, "audio/current");
   htsmsg_destroy(m);
 }
 
@@ -61,7 +61,7 @@ audio_global_save_settings(void)
 static void
 audio_global_load_settings(void)
 {
-  htsmsg_t *m = hts_settings_load("audio/current");
+  htsmsg_t *m = htsmsg_store_load("audio/current");
   const char *cur;
 
   if(m == NULL)
@@ -229,7 +229,7 @@ audio_mode_save_settings(audio_mode_t *am)
   audio_mode_save_mixer_map(m, am, "mixer_center_lfe", AM_MIXER_CENTER_AND_LFE);
   audio_mode_save_mixer_map(m, am, "mixer_lfe",        AM_MIXER_LFE);
   audio_mode_save_mixer_map(m, am, "mixer_side",       AM_MIXER_SIDE);
-  hts_settings_save(m, "audio/devices/%s", am->am_id);
+  htsmsg_store_save(m, "audio/devices/%s", am->am_id);
   htsmsg_destroy(m);
 }
 
@@ -410,7 +410,7 @@ audio_mode_register(audio_mode_t *am)
   if(multich == 0 && TAILQ_FIRST(&am->am_mixer_controllers) == NULL)
     return;
 
-  m = hts_settings_load("audio/devices/%s", am->am_id);
+  m = htsmsg_store_load("audio/devices/%s", am->am_id);
 
 
   snprintf(buf, sizeof(buf), "Configuration for %s", am->am_title);

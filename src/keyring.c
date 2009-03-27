@@ -38,7 +38,7 @@ void
 keyring_init(void)
 {
   hts_mutex_init(&keyring_mutex);
-  keyring = hts_settings_load("keyring");
+  keyring = htsmsg_store_load("keyring");
   if(keyring == NULL)
     keyring = htsmsg_create_map();
 }
@@ -50,7 +50,7 @@ keyring_init(void)
 static void
 keyring_store(void)
 {
-  hts_settings_save(keyring, "keyring");
+  htsmsg_store_save(keyring, "keyring");
 }
 
 

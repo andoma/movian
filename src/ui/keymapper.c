@@ -41,7 +41,7 @@ km_save(keymap_t *km)
     if((e = event_code2str(ke->ke_event)) != NULL && ke->ke_keycode != NULL)
       htsmsg_add_str(m, e, ke->ke_keycode);
   
-  hts_settings_save(m, "keymaps/%s", km->km_name);
+  htsmsg_store_save(m, "keymaps/%s", km->km_name);
   htsmsg_destroy(m);
 }
 
@@ -126,7 +126,7 @@ keymapper_create_entries(keymap_t *km, const keymap_defmap_t *def)
   const char *keycode;
   int i;
 
-  m = hts_settings_load("keymaps/%s", km->km_name);
+  m = htsmsg_store_load("keymaps/%s", km->km_name);
   for(e = EVENT_NONE + 1; e < EVENT_last_mappable; e++) {
     if((eventname = event_code2str(e)) == NULL) 
       continue;

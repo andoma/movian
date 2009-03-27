@@ -38,7 +38,7 @@ static char *settingspath;
  *
  */
 const char *
-hts_settings_get_root(void)
+htsmsg_store_get_root(void)
 {
   return settingspath ?: "No settings dir";
 }
@@ -47,7 +47,7 @@ hts_settings_get_root(void)
  *
  */
 void
-hts_settings_init(const char *programname, const char *path)
+htsmsg_store_init(const char *programname, const char *path)
 {
   const char *homedir = getenv("HOME");
   char buf[256];
@@ -75,7 +75,7 @@ hts_settings_init(const char *programname, const char *path)
  *
  */
 void
-hts_settings_save(htsmsg_t *record, const char *pathfmt, ...)
+htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
 {
   char path[256];
   char fullpath[256];
@@ -148,7 +148,7 @@ hts_settings_save(htsmsg_t *record, const char *pathfmt, ...)
  *
  */
 static htsmsg_t *
-hts_settings_load_one(const char *filename)
+htsmsg_store_load_one(const char *filename)
 {
   struct stat st;
   int fd;
@@ -176,7 +176,7 @@ hts_settings_load_one(const char *filename)
  *
  */
 static int
-hts_settings_buildpath(char *dst, size_t dstsize, const char *fmt, va_list ap)
+htsmsg_store_buildpath(char *dst, size_t dstsize, const char *fmt, va_list ap)
 {
   char *n = dst;
 
@@ -199,7 +199,7 @@ hts_settings_buildpath(char *dst, size_t dstsize, const char *fmt, va_list ap)
  *
  */
 htsmsg_t *
-hts_settings_load(const char *pathfmt, ...)
+htsmsg_store_load(const char *pathfmt, ...)
 {
   char fullpath[256];
   char child[256];
@@ -210,7 +210,7 @@ hts_settings_load(const char *pathfmt, ...)
   int n, i;
 
   va_start(ap, pathfmt);
-  if(hts_settings_buildpath(fullpath, sizeof(fullpath), pathfmt, ap) < 0)
+  if(htsmsg_store_buildpath(fullpath, sizeof(fullpath), pathfmt, ap) < 0)
     return NULL;
 
   if(stat(fullpath, &st) != 0)
@@ -229,7 +229,7 @@ hts_settings_load(const char *pathfmt, ...)
 	continue;
       
       snprintf(child, sizeof(child), "%s/%s", fullpath, d->d_name);
-      c = hts_settings_load_one(child);
+      c = htsmsg_store_load_one(child);
       if(c != NULL)
 	htsmsg_add_msg(r, d->d_name, c);
 
@@ -237,7 +237,7 @@ hts_settings_load(const char *pathfmt, ...)
     free(namelist);
 
   } else {
-    r = hts_settings_load_one(fullpath);
+    r = htsmsg_store_load_one(fullpath);
   }
 
   return r;
@@ -247,13 +247,13 @@ hts_settings_load(const char *pathfmt, ...)
  *
  */
 void
-hts_settings_remove(const char *pathfmt, ...)
+htsmsg_store_remove(const char *pathfmt, ...)
 {
   char fullpath[256];
   va_list ap;
 
   va_start(ap, pathfmt);
-  if(hts_settings_buildpath(fullpath, sizeof(fullpath), pathfmt, ap) < 0)
+  if(htsmsg_store_buildpath(fullpath, sizeof(fullpath), pathfmt, ap) < 0)
     return;
   unlink(fullpath);
 }

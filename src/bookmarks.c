@@ -34,7 +34,7 @@ static void
 bookmark_save(void)
 {
   htsmsg_t *m = prop_tree_to_htsmsg(prop_create(bookmarks, "nodes"));
-  hts_settings_save(m, "bookmarks");
+  htsmsg_store_save(m, "bookmarks");
   htsmsg_destroy(m);
 }
 
@@ -168,7 +168,7 @@ bookmarks_init(void)
   prop_subscribe(NULL, bookmarks_callback, NULL, NULL, 0,
 		 prop_create(bookmarks, "nodes"), NULL);
   
-  if((m = hts_settings_load("bookmarks")) != NULL) {
+  if((m = htsmsg_store_load("bookmarks")) != NULL) {
 
     n = htsmsg_get_map(m, "nodes");
     HTSMSG_FOREACH(f, n) {

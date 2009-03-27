@@ -16,20 +16,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HTSSETTINGS_H__
-#define HTSSETTINGS_H__
+#ifndef HTSMSG_STORE_H__
+#define HTSMSG_STORE_H__
 
 #include <htsmsg/htsmsg.h>
 #include <stdarg.h>
 
-void hts_settings_init(const char *programname, const char *path);
+void htsmsg_store_init(const char *programname, const char *path);
 
-void hts_settings_save(htsmsg_t *record, const char *pathfmt, ...);
+void htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...);
 
-htsmsg_t *hts_settings_load(const char *pathfmt, ...);
+htsmsg_t *htsmsg_store_load(const char *pathfmt, ...);
 
-void hts_settings_remove(const char *pathfmt, ...);
+void htsmsg_store_remove(const char *pathfmt, ...);
 
-const char *hts_settings_get_root(void);
+const char *htsmsg_store_get_root(void);
 
-#endif /* HTSSETTINGS_H__ */ 
+#endif /* HTSMSG_STORE_H__ */ 

@@ -167,7 +167,7 @@ audio_mixer_event_handler(event_t *e, void *opaque)
 static void
 audio_mixer_load(void)
 {
-  htsmsg_t *m = hts_settings_load("audiomixer");
+  htsmsg_t *m = htsmsg_store_load("audiomixer");
   int32_t i32;
 
   if(m == NULL)
@@ -190,7 +190,7 @@ audio_mixer_save(void)
 
   htsmsg_add_s32(m, "master-volume", 
 		 global_volume.vc_master_vol * 1000);
-  hts_settings_save(m, "audiomixer");
+  htsmsg_store_save(m, "audiomixer");
   htsmsg_destroy(m);
 }
 

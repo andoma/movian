@@ -119,7 +119,7 @@ display_settings_save(glw_x11_t *gx11)
   htsmsg_add_u32(m, "fullscreen", gx11->want_fullscreen);
   htsmsg_add_u32(m, "pointer",    gx11->want_pointer_enabled);
   
-  hts_settings_save(m, "displays/%s", gx11->config_name);
+  htsmsg_store_save(m, "displays/%s", gx11->config_name);
   htsmsg_destroy(m);
 }
 
@@ -155,7 +155,7 @@ display_settings_init(glw_x11_t *gx11)
 {
   prop_t *r;
   char title[256];
-  htsmsg_t *settings = hts_settings_load("displays/%s", gx11->config_name);
+  htsmsg_t *settings = htsmsg_store_load("displays/%s", gx11->config_name);
 
   if(gx11->displayname_title) {
     snprintf(title, sizeof(title), "Display settings for GLW/X11 on screen %s",
