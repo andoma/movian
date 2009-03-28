@@ -216,7 +216,7 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 
   switch(pix_fmt) {
 
-  case PIX_FMT_RGBA32:
+  case PIX_FMT_RGB32:
     texels = convert_rgba(frame->data[0], frame->linesize[0], req_w, req_h);
     fmt = GX_TF_RGBA8;
     break;

@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <libhts/htsthreads.h>
+#include <arch/threads.h>
 #include <errno.h>
 
 static hts_mutex_t resolve_mutex;
@@ -134,15 +134,6 @@ tcp_read(int fd, void *buf, size_t bufsize, int all)
       break;
   }
   return tot;
-}
-
-/**
- *
- */
-int
-tcp_read_timeout(int fd, void *buf, size_t len, int timeout)
-{
-  return tcp_read(fd, buf, len, 1);
 }
 
 

@@ -116,6 +116,7 @@ cat >> ${CONFIG_MAK} << EOF
 ARCHITECTURE=wii
 LDFLAGS_cfg  += -L${DEVKITPRO}/libfat/lib/wii  -lfat
 LDFLAGS_cfg  += -L${DEVKITPRO}/libogc/lib/wii  -lwiiuse -lbte -logc
+LDFLAGS_cfg  += -lz -lm
 EOF
 
 print_config CONFIG_ ${CONFIG_H} ${CONFIG_MAK} $CONFIG_LIST
