@@ -182,15 +182,6 @@ if [ ${RELEASE} != yes ]; then
     echo  please reconfigure with '--release'.
 fi
 
-
-if enabled embedded_theme; then
-    THEMEPATH="zip://embedded://theme|"
-elif [ ${RELEASE} = yes ]; then
-    THEMEPATH="file://${PREFIX}/share/hts/themes/${DEFAULT_THEME}"
-else
-    THEMEPATH="file://${TOPDIR}/themes/${DEFAULT_THEME}"
-fi
-
 #
 # Finalize
 #
