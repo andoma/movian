@@ -10,11 +10,3 @@ Suggests: hts-tvheadend
 Description: OpenGL based Mediaplayer
  An OpenGL based media player focused for use as a home-entertainment-system.
  Based on ffmpeg 'http://www.ffmpeg.org'.
-
-Package: hts-tvheadend
-Architecture: any
-Depends: ${shlibs:Depends}
-Enhances: hts-showtime
-Description: TV headend for hts-showtime
- TV backend for use with hts-showtime
- Based on ffmpeg 'http://www.ffmpeg.org'.

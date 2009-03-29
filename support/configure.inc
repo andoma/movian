@@ -17,7 +17,7 @@ BUILDDIR=build.${PLATFORM}
 DEFAULT_THEME="new"
 RELEASE=no
 
-RELEASENAME=`head -n1 ${TOPDIR}/../ChangeLog | awk '{print $2}' | sed s/\(// | sed s/\)//`
+RELEASENAME=`head -n1 ${TOPDIR}/ChangeLog | awk '{print $2}' | sed s/\(// | sed s/\)//`
 
 CONFIG_LIST="
  libasound
