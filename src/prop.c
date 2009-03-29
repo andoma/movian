@@ -1608,7 +1608,7 @@ prop_get_string(prop_t *p, char *buf, size_t bufsize)
   hts_mutex_lock(&prop_mutex);
 
   if(p->hp_type == PROP_STRING) {
-    snprintf(buf, bufsize, p->hp_string);
+    snprintf(buf, bufsize, "%s", p->hp_string);
     r = 0;
   } else {
     r = -1;
