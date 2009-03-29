@@ -1,9 +1,11 @@
-PLATFORM ?= Linux.i686
+
+include ${CURDIR}/config.default
+
 BUILDDIR = build.${PLATFORM}
 
 include ${BUILDDIR}/config.mak
 
-PROG=showtime
+PROG=${BUILDDIR}/showtime
 
 CFLAGS  = -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations 
 CFLAGS += -Wmissing-prototypes -Isrc/dvd
