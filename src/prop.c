@@ -801,6 +801,9 @@ prop_get_by_name(const char **name, int follow_symlinks, prop_t *p1,
 {
   prop_t *p = prop_resolve_tree(name[0], p1, p2);
 
+  if(p == NULL)
+    return NULL;
+
   name++;
   hts_mutex_lock(&prop_mutex);
   p = prop_subfind(p, name, follow_symlinks);
