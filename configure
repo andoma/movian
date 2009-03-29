@@ -19,7 +19,6 @@ CPU=generic
 ARCH=`uname -m`
 OSENV="posix"
 PREFIX=/usr/local
-DONT_SKIP_MISSING=0
 
 show_help(){
   echo "Usage: configure [options]"
@@ -36,6 +35,11 @@ show_help(){
   exit 1
 }
 
+enable libfreetype
+enable glw
+enable libasound
+enable libexif
+
 for opt do
   optval="${opt#*=}"
   case "$opt" in
@@ -51,8 +55,13 @@ for opt do
   ;;
   --cc=*) CC="$optval"
   ;;
+  --enable-?*|--disable-?*)
+  eval $(echo "$opt" | sed 's/--/action=/;s/-/ option=/;s/-/_/g')
+  $action $option
+  ;;
   esac
 done
+
 
 setup_env
 
@@ -106,14 +115,16 @@ echo >>${CONFIG_MAK} $CC_CONFIG_MAK
 #
 # libfreetype2
 #
-if pkg-config freetype2; then
-    enable libfreetype
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg +=  " `pkg-config --libs freetype2`
-    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags freetype2`
-    echo "Using Freetype2:       `pkg-config --modversion freetype2`"
-elif test $DONT_SKIP_MISSING -eq 0; then
-    echo "FreeType 2 not found."
-    die
+if enabled libfreetype; then
+    if pkg-config freetype2; then
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg +=  " `pkg-config --libs freetype2`
+	echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags freetype2`
+	echo "Using Freetype2:       `pkg-config --modversion freetype2`"
+    else
+	echo "FreeType 2 not found"
+	echo "To compile without it, configure with: --disable-libfreetype"
+	die
+    fi
 fi
 
 
@@ -129,42 +140,54 @@ int main() {
 EOF
     $CC 2>/dev/null $TMPDIR/1.c -o $TMPDIR/1.bin -lGLU -lGL
 }
-if enabled libfreetype && checkglx; then 
-    enable glw
-    enable glw_frontend_x11
-    enable glw_backend_opengl
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lGLU -lGL"
-elif test $DONT_SKIP_MISSING -eq 0; then
-    echo "OpenGL development files not available. Can not build test program."
-    die
+
+if enabled glw; then
+
+    if disabled libfreetype; then
+	echo "GLW depends on libfreetype"
+	die
+    fi
+
+    if checkglx; then 
+	enable glw_frontend_x11
+	enable glw_backend_opengl
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lGLU -lGL"
+    else
+	echo "OpenGL development files not available."
+	die
+    fi
 fi
 
 
 #
 # libasound (alsa)
 #
-if pkg-config alsa; then
-    enable libasound
-    echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags alsa`
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs alsa`
-    echo "Using ALSA:            `pkg-config --modversion alsa`"
-elif test $DONT_SKIP_MISSING -eq 0; then
-    echo "libasound (ALSA) development files not found."
-    die
+if enabled libasound; then
+    if pkg-config alsa; then
+	echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags alsa`
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs alsa`
+	echo "Using ALSA:            `pkg-config --modversion alsa`"
+    else
+	echo "libasound (ALSA) development files not found."
+	echo "To compile without it, configure with: --disable-libasound"
+	die
+    fi
 fi
 
 
 #
 # libexif, JPEG exif
 #
-if pkg-config libexif; then
-    enable libexif
-    echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags libexif`
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libexif`
-    echo "Using libexif:         `pkg-config --modversion libexif`"
-elif test $DONT_SKIP_MISSING -eq 0; then
-    echo "libexif (JPEG library) development files not found."
-    die
+if enabled libexif; then
+    if pkg-config libexif; then
+	echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags libexif`
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libexif`
+	echo "Using libexif:         `pkg-config --modversion libexif`"
+    else
+	echo "libexif (JPEG library) development files not found."
+	echo "To compile without it, configure with: --disable-libexif"
+	die
+    fi
 fi
 
 #

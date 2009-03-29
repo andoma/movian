@@ -63,6 +63,11 @@ enabled(){
     eval test "x\$${1#!}" $op "xyes"
 }
 
+disabled(){
+    test "${1#!}" = "$1" && op== || op=!=
+    eval test "x\$${1#!}" $op "xno"
+}
+
 toupper(){
     echo "$@" | tr abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ
 }
