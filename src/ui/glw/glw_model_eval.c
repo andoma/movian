@@ -2021,9 +2021,9 @@ glwf_createchild(glw_model_eval_context_t *ec, struct token *self)
     propname[i++]  = t->t_string;
   propname[i] = NULL;
   
-  if((p = prop_get_by_name(propname, 1,
-			   ec->w ? ec->w->glw_root->gr_uii.uii_prop : NULL,
-			   NULL)) != NULL) {
+  if((p = prop_get_by_name(propname, 1, ec->prop,
+			   ec->w ? ec->w->glw_root->gr_uii.uii_prop : NULL
+			   )) != NULL) {
     prop_request_new_child(p);
     prop_ref_dec(p);
   }
