@@ -8,6 +8,7 @@ PROG=showtime
 CFLAGS  = -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations 
 CFLAGS += -Wmissing-prototypes -Isrc/dvd
 
+
 #
 # Core
 #
@@ -22,7 +23,7 @@ SRCS += src/main.c \
 	src/bookmarks.c \
 	src/notifications.c \
 	src/playqueue.c \
-	src/arch/arch_${ARCHITECTURE}.c \
+	src/arch/arch_${OSENV}.c \
 	src/ui/ui.c \
 	src/ui/keymapper.c \
 
@@ -35,7 +36,7 @@ SRCS +=	src/htsmsg/htsbuf.c \
 	src/htsmsg/htsmsg_json.c \
 	src/htsmsg/htsmsg_xml.c \
 	src/htsmsg/htsmsg_binary.c \
-	src/htsmsg/htsmsg_store_${ARCHITECTURE}.c \
+	src/htsmsg/htsmsg_store_${OSENV}.c \
 
 #
 # Virtual FS system
@@ -53,7 +54,7 @@ SRCS += src/fileaccess/fileaccess.c \
 	src/fileaccess/fa_http.c \
 	src/fileaccess/fa_zip.c \
 	src/fileaccess/fa_zlib.c \
-	src/fileaccess/fa_embedded.c \
+	src/fileaccess/fa_bundle.c \
 
 #
 # Networking
@@ -183,7 +184,6 @@ SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_texture_gx.c
 SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_render_gx.c
 SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_gx.c
 
-
 # Various transformations
 SRCS  += $(SRCS-yes)
 DLIBS += $(DLIBS-yes)
@@ -191,6 +191,13 @@ SLIBS += $(SLIBS-yes)
 OBJS=    $(SRCS:%.c=$(BUILDDIR)/%.o)
 DEPS=    ${OBJS:%.o=%.d}
 OBJDIRS= $(sort $(dir $(OBJS)))
+
+# File bundles
+BUNDLE_SRCS=$(BUNDLES:%=$(BUILDDIR)/bundles/%.c)
+BUNDLE_DEPS=$(BUNDLE_SRCS:%.c=%.d)
+BUNDLE_OBJS=$(BUNDLE_SRCS:%.c=%.o)
+OBJDIRS+= $(sort $(dir $(BUNDLE_OBJS)))
+.PRECIOUS: ${BUNDLE_SRCS}
 
 # Common CFLAGS for all files
 CFLAGS_com  = -g -funsigned-char -O2 
@@ -201,8 +208,8 @@ all:	${PROG}
 
 .PHONY:	clean distclean ffmpeg
 
-${PROG}: ${BUILDDIR}/ffmpeg/install $(OBJDIRS) $(OBJS)
-	$(CC) -o $@ $(OBJS) $(LDFLAGS) ${LDFLAGS_cfg}
+${PROG}: ${BUILDDIR}/ffmpeg/install $(OBJDIRS) $(OBJS) $(BUNDLE_OBJS) Makefile
+	$(CC) -o $@ $(OBJS) $(BUNDLE_OBJS) $(LDFLAGS) ${LDFLAGS_cfg}
 
 $(OBJDIRS):
 	@mkdir -p $@
@@ -215,7 +222,7 @@ ${BUILDDIR}/ffmpeg/install ffmpeg:
 	cd ${BUILDDIR}/ffmpeg/build && ${MAKE} install
 
 clean:
-	rm -rf ${BUILDDIR}/src
+	rm -rf ${BUILDDIR}/src ${BUILDDIR}/bundles
 	find . -name "*~" | xargs rm -f
 
 distclean: clean
@@ -228,8 +235,14 @@ $(BUILDDIR)/showtimeversion.h:
 src/version.c: $(BUILDDIR)/showtimeversion.h
 
 # Include dependency files if they exist.
--include $(DEPS)
+-include $(DEPS) $(BUNDLE_DEPS)
 
-# Include architecture specific targets
-include support/${ARCHITECTURE}.mk
+# Include OS specific targets
+include support/${OSENV}.mk
 
+# Bundle files
+$(BUILDDIR)/bundles/%.o: $(BUILDDIR)/bundles/%.c
+	$(CC) -I${CURDIR}/src/fileaccess -c -o $@ $<
+
+$(BUILDDIR)/bundles/%.c: % $(CURDIR)/support/mkbundle
+	$(CURDIR)/support/mkbundle >$@ $< $(subst /,_,$<) ${BUILDDIR}/bundles/$<.d $@

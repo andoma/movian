@@ -350,7 +350,7 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
   case GLW_ANIMATOR:
     glw_animator_ctor(w, init, apx);
     break;
-
+#if CONFIG_GLW_BACKEND_OPENGL
   case GLW_FX_TEXROT:
     glw_fx_texrot_ctor(w, init, apx);
     break;
@@ -358,6 +358,12 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
   case GLW_VIDEO:
     glw_video_ctor(w, init, apx);
     break;
+#else
+  case GLW_FX_TEXROT:
+  case GLW_VIDEO:
+    break;
+#endif
+
 
   case GLW_SLIDER_X:
   case GLW_SLIDER_Y:

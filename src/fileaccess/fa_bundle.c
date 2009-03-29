@@ -23,43 +23,62 @@
 #include <unistd.h>
 #include <string.h>
 #include "fileaccess.h"
+#include "filebundle.h"
 
 #include "fa_proto.h"
 
+struct filebundle *filebundles;
 
-typedef struct fa_embedded_fh {
+
+ typedef struct fa_bundle_fh {
   fa_handle_t h;
-  unsigned char *ptr;
+  const unsigned char *ptr;
   int size;
   int pos;
-} fa_embedded_fh_t;
+} fa_bundle_fh_t;
+
+
+static const struct filebundle_entry *
+resolve_entry(const char *url)
+{
+  struct filebundle *fb;
+  const struct filebundle_entry *fbe;
+  const char *u;
+
+  for(fb = filebundles; fb != NULL; fb = fb->next) {
+    if(strncmp(url, fb->prefix, strlen(fb->prefix)))
+      continue;
+
+    u = url + strlen(fb->prefix);
+    if(*u != '/')
+      continue;
+    u++;
+
+    for(fbe = fb->entries; fbe->filename != NULL; fbe++) {
+      if(!strcmp(fbe->filename, u))
+	return fbe;
+    }
+  }
+  return NULL;
+}
 
 
 /**
  * Open file
  */
 static fa_handle_t *
-emb_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
+b_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
 {
-  fa_embedded_fh_t *fh;
-  unsigned char *ptr;
-  int size;
+  const struct filebundle_entry *fbe;
+  fa_bundle_fh_t *fh;
 
-  if(0) {
-#ifdef CONFIG_EMBEDDED_THEME
-  } else if(!strcmp(url, "theme")) {
-    extern unsigned char embedded_theme[];
-    extern int embedded_theme_size;
-    ptr  = embedded_theme;
-    size = embedded_theme_size;
-#endif
-  } else {
+  if((fbe = resolve_entry(url)) == NULL) {
     snprintf(errbuf, errlen, "File not found");
     return NULL;
   }
-  fh = calloc(1, sizeof(fa_embedded_fh_t));
-  fh->ptr = ptr;
-  fh->size = size;
+  fh = calloc(1, sizeof(fa_bundle_fh_t));
+  fh->ptr = fbe->data;
+  fh->size = fbe->size;
 
   fh->h.fh_proto = fap;
   return &fh->h;
@@ -70,7 +89,7 @@ emb_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
  * Close file
  */
 static void
-emb_close(fa_handle_t *fh0)
+b_close(fa_handle_t *fh0)
 {
   free(fh0);
 }
@@ -80,9 +99,9 @@ emb_close(fa_handle_t *fh0)
  * Read from file
  */
 static int
-emb_read(fa_handle_t *fh0, void *buf, size_t size)
+b_read(fa_handle_t *fh0, void *buf, size_t size)
 {
-  fa_embedded_fh_t *fh = (fa_embedded_fh_t *)fh0;
+  fa_bundle_fh_t *fh = (fa_bundle_fh_t *)fh0;
 
   if(size < 1)
     return size;
@@ -98,9 +117,9 @@ emb_read(fa_handle_t *fh0, void *buf, size_t size)
  * Seek in file
  */
 static int64_t
-emb_seek(fa_handle_t *handle, int64_t pos, int whence)
+b_seek(fa_handle_t *handle, int64_t pos, int whence)
 {
-  fa_embedded_fh_t *fh = (fa_embedded_fh_t *)handle;
+  fa_bundle_fh_t *fh = (fa_bundle_fh_t *)handle;
   int np;
 
   switch(whence) {
@@ -132,9 +151,9 @@ emb_seek(fa_handle_t *handle, int64_t pos, int whence)
  * Return size of file
  */
 static int64_t
-emb_fsize(fa_handle_t *handle)
+b_fsize(fa_handle_t *handle)
 {
-  fa_embedded_fh_t *fh = (fa_embedded_fh_t *)handle;
+  fa_bundle_fh_t *fh = (fa_bundle_fh_t *)handle;
   return fh->size;
 }
 
@@ -144,16 +163,16 @@ emb_fsize(fa_handle_t *handle)
  * Standard unix stat
  */
 static int
-emb_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
+b_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
 	 char *errbuf, size_t errlen)
 {
   fa_handle_t *handle;
-  fa_embedded_fh_t *fh;
+  fa_bundle_fh_t *fh;
 
-  if((handle = emb_open(fap, url, errbuf, errlen)) == NULL)
+  if((handle = b_open(fap, url, errbuf, errlen)) == NULL)
     return -1;
  
-  fh = (fa_embedded_fh_t *)handle;
+  fh = (fa_bundle_fh_t *)handle;
 
   buf->st_mode = S_IFREG;
   buf->st_size = fh->size;
@@ -163,16 +182,13 @@ emb_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
 }
 
 
-
-
-
-fa_protocol_t fa_protocol_embedded = {
-  .fap_name  = "embedded",
+fa_protocol_t fa_protocol_bundle = {
+  .fap_name  = "bundle",
   .fap_scan  = NULL,
-  .fap_open  = emb_open,
-  .fap_close = emb_close,
-  .fap_read  = emb_read,
-  .fap_seek  = emb_seek,
-  .fap_fsize = emb_fsize,
-  .fap_stat  = emb_stat,
+  .fap_open  = b_open,
+  .fap_close = b_close,
+  .fap_read  = b_read,
+  .fap_seek  = b_seek,
+  .fap_fsize = b_fsize,
+  .fap_stat  = b_stat,
 };

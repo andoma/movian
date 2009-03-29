@@ -41,7 +41,7 @@
 
 hts_mutex_t ffmutex;
 int concurrency;
-const char *default_theme_path = SHOWTIME_DEFAULT_THEME_PATH;
+const char *default_theme_path = SHOWTIME_DEFAULT_THEME_URL;
 
 /**
  * Showtime main

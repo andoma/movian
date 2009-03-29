@@ -17,12 +17,9 @@ source support/configure.inc
 
 CPU=generic
 ARCH=`uname -m`
-RELEASE=no
+OSENV="posix"
 PREFIX=/usr/local
 DONT_SKIP_MISSING=0
-EMBEDDED_THEME=none
-DEFAULT_THEME=new
-
 
 show_help(){
   echo "Usage: configure [options]"
@@ -39,12 +36,6 @@ show_help(){
   exit 1
 }
 
-
-die() {
-    rm -rf $TMPDIR
-    exit
-}
-
 for opt do
   optval="${opt#*=}"
   case "$opt" in
@@ -54,13 +45,11 @@ for opt do
   ;;
   --help) show_help
   ;;
-  --release) RELEASE=yes;
+  --release) 
+	  RELEASE=yes
+	  enable embedded_theme
   ;;
   --cc=*) CC="$optval"
-  ;;
-  --embedded-theme=*) 
-	  EMBEDDED_THEME_PATH=`cd $optval && pwd`;
-	  enable embedded_theme
   ;;
   esac
 done
@@ -186,22 +175,13 @@ setup_ffmpeg --cpu=${CPU} --enable-pthreads
 #
 # Configure paths, etc
 #
-if [ ${RELEASE} = yes ]; then
-    echo  Release build: ${RELEASENAME}
-    echo  The generated binaries will contained compild-in paths to
-    echo  ${PREFIX}/share/hts where parts of the sw will be installed.
-    echo  You must '"make install"' for HTS to function properly.
-else
+if [ ${RELEASE} != yes ]; then
     echo  Development build. 
-    echo  The generated binaries will contained compild-in paths to
-    echo  the current build tree. If you plan to install the binaries,
+    echo  The generated binary will contained compild-in paths to
+    echo  the current build tree. If you plan to install the binary,
     echo  please reconfigure with '--release'.
 fi
 
-if [ ${RELEASE} = yes ]; then
-    echo >>${CONFIG_H} "#define HTS_RELEASE_TAG \"${RELEASENAME}\""
-    echo >>${CONFIG_H} "#define HTS_INSTALL_PREFIX \"${PREFIX}\""
-fi
 
 if enabled embedded_theme; then
     THEMEPATH="zip://embedded://theme|"
@@ -210,18 +190,13 @@ elif [ ${RELEASE} = yes ]; then
 else
     THEMEPATH="file://${TOPDIR}/themes/${DEFAULT_THEME}"
 fi
-echo >>${CONFIG_H} "#define SHOWTIME_DEFAULT_THEME_PATH \"${THEMEPATH}\""
 
 #
 # Finalize
 #
 cat >> ${CONFIG_MAK} << EOF 
 INSTALLPREFIX=$PREFIX
-ARCHITECTURE=posix
-LDFLAGS_cfg += -lm -lz -lpthread
+LDFLAGS_cfg += -lpthread
 EOF
 
-print_config CONFIG_ ${CONFIG_H} ${CONFIG_MAK} $CONFIG_LIST
-
-die
-
+finalize

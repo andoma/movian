@@ -12,12 +12,12 @@
 #
 
 PLATFORM="wii"
+OSENV="wii"
 
 source support/configure.inc
 DEVKITPRO="${HOME}/devkitpro"
 LIBFREETYPEPATH="${HOME}/freetype-ppc"
 
-EMBEDDED_THEME_PATH=`cd themes/${DEFAULT_THEME} && pwd`;
 enable embedded_theme
 
 show_help(){
@@ -29,12 +29,6 @@ show_help(){
   echo "  --devkitpro=PATH          Path to devkitpro [$DEVKITPRO]"
   echo "  --freetype=PATH           Path to freetype [$LIBFREETYPEPATH]"
   exit 1
-}
-
-
-die() {
-    rm -rf $TMPDIR
-    exit
 }
 
 for opt do
@@ -74,19 +68,7 @@ LDFLAGS_cfg += -DGEKKO -mrvl -mcpu=750 -meabi -mhard-float
 EOF
 
 
-cat >> ${CONFIG_H} <<EOF
-#define HTS_CONTENT_PATH "/"
-EOF
 
-
-#
-# freetype
-#
-cat >> ${CONFIG_MAK} <<EOF
-LDFLAGS_cfg  +=  -L${LIBFREETYPEPATH}/lib -lfreetype
-CFLAGS_cfg += -I${LIBFREETYPEPATH}/include 
-CFLAGS_cfg += -I${LIBFREETYPEPATH}/include/freetype2
-EOF
 
 #
 # configure ffmpeg
@@ -99,27 +81,15 @@ setup_ffmpeg --extra-cflags=-I${LIBOGC}/include \
     --cpu=750 \
     --disable-altivec
 
-
-if enabled embedded_theme; then
-    THEMEPATH="zip://embedded://theme|"
-else
-    THEMEPATH="file:///showtime/themes/${THEMEPATH}"
-fi
-
-echo >>${CONFIG_H} "#define SHOWTIME_DEFAULT_THEME_PATH \"${THEMEPATH}\""
-
 #
-# Finalize
+# 
 #
-
-cat >> ${CONFIG_MAK} << EOF 
-ARCHITECTURE=wii
+cat >> ${CONFIG_MAK} <<EOF
+LDFLAGS_cfg  +=  -L${LIBFREETYPEPATH}/lib -lfreetype
+CFLAGS_cfg += -I${LIBFREETYPEPATH}/include 
+CFLAGS_cfg += -I${LIBFREETYPEPATH}/include/freetype2
 LDFLAGS_cfg  += -L${DEVKITPRO}/libfat/lib/wii  -lfat
 LDFLAGS_cfg  += -L${DEVKITPRO}/libogc/lib/wii  -lwiiuse -lbte -logc
-LDFLAGS_cfg  += -lz -lm
 EOF
 
-print_config CONFIG_ ${CONFIG_H} ${CONFIG_MAK} $CONFIG_LIST
-
-die
-
+finalize

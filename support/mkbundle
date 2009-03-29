@@ -1,0 +1,59 @@
+#!/bin/bash
+
+DEPFILE=$PWD/$3
+
+cd $1
+
+CURDIR=`pwd`
+
+FILES=`find . \( -name .svn -and -prune \) -or -print`
+
+for f in $FILES; do
+    F=`echo $f | sed -e s#^\./##`
+
+    if [ -f $f ]; then
+
+	N=`echo $F | sed -e s#[/.-]#_#g`
+	
+	echo "// $F"
+	echo "static const unsigned char embedded_$N[]={"
+	cat <$f | od -v -An -b | sed s/^\ */0/ | sed s/\ *$$/,/| sed s/\ /,\ 0/g|sed s/$/,/
+	echo "};"
+    fi
+done
+
+echo "#include <filebundle.h>"
+echo "static const struct filebundle_entry filebundle_$2_entries[] = {"
+
+echo >${DEPFILE} -n "$4: "
+
+for f in $FILES; do
+    F=`echo $f | sed -e s#^\./##`
+    echo >>${DEPFILE} -n "${CURDIR}/$F "
+
+    if [ -f $f ]; then
+
+	N=`echo $F | sed -e s#[/.-]#_#g`
+	echo "{\"$F\", embedded_$N, sizeof(embedded_$N)},"
+    fi
+done
+
+echo "{(void *)0, 0, 0}};"
+echo >>${DEPFILE} ""
+
+cat <<EOF
+
+static struct filebundle filebundle_$2 = {
+  .entries = &filebundle_$2_entries[0],
+  .prefix = "$1"
+};
+
+void  __attribute__((constructor)) filebundle_$2_init(void)
+{
+  extern struct filebundle *filebundles;
+
+  filebundle_$2.next = filebundles;
+  filebundles = &filebundle_$2;
+}
+
+EOF
