@@ -1,0 +1,81 @@
+#!/usr/bin/make -f
+
+#
+# configure ourselfs
+#
+
+DEB_BUILD_GNU_TYPE := $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+
+config.mak: configure
+	dh_testdir
+	./configure --release --prefix=/usr
+
+
+#
+# Clean target
+#
+
+clean:  config.mak
+	dh_testdir
+	dh_testroot
+
+	rm -f config.mak config.h
+	rm -rf llinst
+	cd ext/ffmpeg        && make clean
+	cd libs/libhts       && make clean
+	cd tvheadend         && make clean
+	cd libs/libdvdcss    && make clean
+	cd libs/libdvdread   && make clean
+	cd libs/libdvdnav    && make clean
+	cd libs/libglw       && make clean
+	cd showtime          && make clean
+
+	dh_clean 
+
+
+# 
+# build
+#
+
+build: config.mak
+
+####### Build local libraries and install them
+
+	cd ext/ffmpeg        && make && make install
+	cd libs/libhts       && make all install
+	cd libs/libdvdcss    && make all install
+	cd libs/libdvdread   && make all install
+	cd libs/libdvdnav    && make all install
+	cd libs/libglw       && make all install
+
+####### Build binaries
+
+	cd tvheadend         && make all
+	cd showtime          && make all
+
+
+
+#
+# binary
+# 
+
+binary:
+	dh_testdir
+	dh_testroot
+	dh_installdirs
+	dh_install
+	cd tvheadend && $(MAKE) prefix=$(CURDIR)/debian/hts-tvheadend/usr install
+	cd showtime  && $(MAKE) prefix=$(CURDIR)/debian/hts-showtime/usr  install
+	dh_installchangelogs 
+	dh_installinit --name tvheadend
+	dh_installdocs
+	dh_link
+	dh_strip
+	dh_compress 
+	dh_fixperms
+	dh_makeshlibs
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
