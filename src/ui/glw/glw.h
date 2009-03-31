@@ -448,8 +448,6 @@ void glw_store_matrix(glw_t *w, glw_rctx_t *rc);
 
 void glw_focus_set(glw_t *w, int interactive);
 
-void glw_focus_set_if_parent_is_in_focus(glw_t *w);
-
 void glw_focus_unblock_path(glw_t *w);
 
 void glw_focus_crawl(glw_t *w, int forward);
