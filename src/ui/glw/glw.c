@@ -75,7 +75,7 @@ static const size_t glw_class_to_size[] = {
 };
 
 
-static void glw_focus_init_widget(glw_t *w, int interactive);
+static void glw_focus_init_widget(glw_t *w, int interactive, float weight);
 static void glw_focus_leave(glw_t *w);
 
 /*
@@ -142,6 +142,7 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
   void *v, *o;
   int pri, a, r = 0;
   glw_root_t *gr = w->glw_root;
+  float f;
 
   va_list apx;
 
@@ -237,9 +238,6 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 	LIST_INSERT_HEAD(&gr->gr_every_frame_list, w, glw_every_frame_link);
   
       w->glw_flags |= a;
-
-      if(a & GLW_FOCUSABLE)
-	glw_focus_init_widget(w, 0);
       break;
 
     case GLW_ATTRIB_CLR_FLAGS:
@@ -250,10 +248,17 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       if(a & GLW_EVERY_FRAME)
 	LIST_REMOVE(w, glw_every_frame_link);
 
-      if(a & GLW_FOCUSABLE)
+      w->glw_flags &= ~a;
+      break;
+
+    case GLW_ATTRIB_FOCUS_WEIGHT:
+      f = va_arg(ap, double);
+
+      if(w->glw_focus_weight > 0)
 	glw_focus_leave(w);
 
-      w->glw_flags &= ~a;
+      if(f > 0)
+	glw_focus_init_widget(w, 0, f);
       break;
 
     case GLW_ATTRIB_ANGLE:
@@ -871,9 +876,20 @@ glw_focus_set_current_by_path(glw_t *w, int interactive)
  *
  */
 static void
-glw_focus_init_widget(glw_t *w0, int interactive)
+glw_focus_init_widget(glw_t *w0, int interactive, float weight)
 {
   glw_t *w = w0;
+  glw_root_t *gr = w->glw_root;
+
+  assert(gr->gr_current_focus != w0);
+
+  w->glw_focus_weight = weight;
+
+  if(gr->gr_current_focus == NULL ||
+     gr->gr_current_focus->glw_focus_weight < weight) {
+    glw_focus_set(w, interactive);
+    return;
+  }
 
   while(w->glw_parent != NULL) {
     if(w->glw_parent->glw_focused == NULL) {
@@ -913,7 +929,7 @@ glw_focus_leave0(glw_t *w, glw_t *cur)
       return NULL;
     if(c->glw_flags & GLW_FOCUS_BLOCKED)
       continue;
-    if(c->glw_flags & GLW_FOCUSABLE)
+    if(glw_is_focusable(c))
       return c;
     if(TAILQ_FIRST(&c->glw_childs))
       if((r = glw_focus_leave0(c, NULL)) != NULL)
@@ -965,7 +981,7 @@ glw_focus_crawl0(glw_t *w, glw_t *cur, int forward)
 
     if(c->glw_flags & GLW_FOCUS_BLOCKED)
       continue;
-    if(c->glw_flags & GLW_FOCUSABLE)
+    if(glw_is_focusable(c))
       return c;
     if(TAILQ_FIRST(&c->glw_childs))
       if((r = glw_focus_crawl0(c, NULL, forward)) != NULL)
@@ -990,7 +1006,7 @@ glw_focus_crawl1(glw_t *w, int forward)
 	TAILQ_PREV(c, glw_queue, glw_parent_link)) {
 
     if(!(c->glw_flags & GLW_FOCUS_BLOCKED)) {
-      if(c->glw_flags & GLW_FOCUSABLE)
+      if(glw_is_focusable(c))
 	return c;
       if(TAILQ_FIRST(&c->glw_childs))
 	if((r = glw_focus_crawl1(c, forward)) != NULL)
@@ -1064,7 +1080,7 @@ glw_focus_step(glw_t *w, int forward)
 
   while(w->glw_focused != NULL) {
     w = w->glw_focused;
-    if(w->glw_flags & GLW_FOCUSABLE) {
+    if(glw_is_focusable(w)) {
       if(glw_event_to_widget(w, e, 1))
 	break;
     }
@@ -1142,7 +1158,7 @@ pointer_event0(glw_t *w, glw_pointer_event_t *gpe)
       if(glw_signal0(w, GLW_SIGNAL_POINTER_EVENT, &gpe0))
 	return 1;
 
-      if(w->glw_flags & GLW_FOCUSABLE) {
+      if(glw_is_focusable(w)) {
 
 	switch(gpe->type) {
 	case GLW_POINTER_CLICK:

@@ -91,6 +91,17 @@ set_float(glw_model_eval_context_t *ec, const token_attrib_t *a,
     d = 0;
     break;
 
+  case TOKEN_IDENTIFIER:
+    if(!strcmp(t->t_string, "true")) {
+      d = 1;
+      break;
+    }
+    if(!strcmp(t->t_string, "false")) {
+      d = 0;
+      break;
+    }
+    /* FALLTHRU */
+
   default:
     return glw_model_seterr(ec->ei, t, "Attribute '%s' expects a scalar",
 			    a->name);
@@ -126,6 +137,17 @@ set_int(glw_model_eval_context_t *ec, const token_attrib_t *a,
     v = 0;
     break;
 
+  case TOKEN_IDENTIFIER:
+    if(!strcmp(t->t_string, "true")) {
+      v = 1;
+      break;
+    }
+    if(!strcmp(t->t_string, "false")) {
+      v = 0;
+      break;
+    }
+    /* FALLTHRU */
+ 
   default:
     return glw_model_seterr(ec->ei, t, "Attribute '%s' expects a scalar",
 			    a->name);
@@ -332,7 +354,6 @@ static const token_attrib_t attribtab[] = {
   {"debug",           set_flag,   GLW_DEBUG},
   {"skeleton",        set_flag,   GLW_DRAW_SKEL},
   {"password",        set_flag,   GLW_PASSWORD},
-  {"focusable",       set_flag,   GLW_FOCUSABLE},
   {"mirrorx",         set_mirror, GLW_MIRROR_X},
   {"mirrory",         set_mirror, GLW_MIRROR_Y},
 
@@ -355,6 +376,7 @@ static const token_attrib_t attribtab[] = {
   {"step",            set_float,  GLW_ATTRIB_INT_STEP},
   {"value",           set_float,  GLW_ATTRIB_VALUE},
   {"size",            set_float,  GLW_ATTRIB_SIZE},
+  {"focusable",       set_float,  GLW_ATTRIB_FOCUS_WEIGHT},
 
   {"displacement",    set_float3, GLW_ATTRIB_DISPLACEMENT},
   {"color",           set_float3, GLW_ATTRIB_RGB},

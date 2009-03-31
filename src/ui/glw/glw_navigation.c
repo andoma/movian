@@ -86,7 +86,7 @@ find_candidate(glw_t *w, query_t *query)
   glw_t *c;
   float x, y, distance, dx, dy;
 
-  if(w->glw_flags & GLW_FOCUSABLE) {
+  if(glw_is_focusable(w)) {
     
     x = compute_position(w, 1);
     y = compute_position(w, 0);

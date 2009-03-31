@@ -132,6 +132,7 @@ typedef enum {
   GLW_ATTRIB_REPEAT_Y,
   GLW_ATTRIB_PIXMAP,
   GLW_ATTRIB_ORIGINATING_PROP,
+  GLW_ATTRIB_FOCUS_WEIGHT,
 } glw_attribute_t;
 
 #define GLW_MIRROR_X   0x1
@@ -386,8 +387,7 @@ typedef struct glw {
 #define GLW_FOCUS_DRAW_CURSOR   0x40    /* Draw cursor when we have focus */
 #define GLW_DEBUG               0x80    /* Debug this object */
 #define GLW_PASSWORD            0x100   /* Don't display real contents */
-#define GLW_FOCUSABLE           0x200
-#define GLW_FOCUS_BLOCKED       0x400
+#define GLW_FOCUS_BLOCKED       0x200
 
 
   glw_vertex_t glw_displacement;
@@ -397,6 +397,8 @@ typedef struct glw {
   float glw_aspect;                  /* Aspect */
   float glw_alpha;                   /* Alpha set by user */
   float glw_extra;
+
+  float glw_focus_weight;
 
   float glw_time;                    /* Time constant */
 
@@ -440,7 +442,7 @@ int glw_dispatch_event(uii_t *uii, event_t *e);
 /**
  *
  */
-#define glw_is_focusable(w) (!!((w)->glw_flags & GLW_FOCUSABLE))
+#define glw_is_focusable(w) ((w)->glw_focus_weight > 0)
 
 int glw_is_focused(glw_t *w);
 
@@ -557,6 +559,7 @@ do {						\
   case GLW_ATTRIB_INT_MIN:                      \
   case GLW_ATTRIB_INT_MAX:                      \
   case GLW_ATTRIB_SIZE:                         \
+  case GLW_ATTRIB_FOCUS_WEIGHT:                 \
     (void)va_arg(ap, double);			\
     break;					\
   }						\
