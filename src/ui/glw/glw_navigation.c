@@ -292,7 +292,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
   }
 
   if(t != NULL)
-    glw_focus_set(t);
+    glw_focus_set(t, 1);
 
   return 0;
 }

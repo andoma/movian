@@ -640,6 +640,9 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
 
   glw_model_eval_block(body, &n);
   glw_model_free_chain(body);
+
+  if(n.gr->gr_last_focused_interactive == p)
+    glw_focus_set(n.w, 0);
 }
 
 

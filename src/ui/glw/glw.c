@@ -75,7 +75,7 @@ static const size_t glw_class_to_size[] = {
 };
 
 
-static void glw_focus_init_widget(glw_t *w);
+static void glw_focus_init_widget(glw_t *w, int interactive);
 static void glw_focus_leave(glw_t *w);
 
 /*
@@ -239,7 +239,7 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       w->glw_flags |= a;
 
       if(a & GLW_FOCUSABLE)
-	glw_focus_init_widget(w);
+	glw_focus_init_widget(w, 0);
       break;
 
     case GLW_ATTRIB_CLR_FLAGS:
@@ -814,10 +814,34 @@ glw_path_in_focus(glw_t *w)
 /**
  *
  */
-void
-glw_focus_set(glw_t *w)
+static void
+glw_root_focus(glw_t *w, int interactive)
 {
+  glw_root_t *gr = w->glw_root;
+
   w->glw_root->gr_current_focus = w;
+ 
+  if(!interactive)
+    return;
+
+  if(w->glw_originating_prop != NULL) {
+    
+    if(gr->gr_last_focused_interactive != NULL)
+      prop_ref_dec(gr->gr_last_focused_interactive);
+
+    gr->gr_last_focused_interactive = w->glw_originating_prop;
+    prop_ref_inc(gr->gr_last_focused_interactive);
+  }
+}
+
+
+/**
+ *
+ */
+void
+glw_focus_set(glw_t *w, int interactive)
+{
+  glw_root_focus(w, interactive);
 
   while(w->glw_parent != NULL) {
     if(w->glw_parent->glw_focused != w) {
@@ -835,11 +859,11 @@ glw_focus_set(glw_t *w)
  *
  */
 static void
-glw_focus_set_current_by_path(glw_t *w)
+glw_focus_set_current_by_path(glw_t *w, int interactive)
 {
   while(w->glw_focused != NULL) 
     w = w->glw_focused;
-  w->glw_root->gr_current_focus = w;
+  glw_root_focus(w, interactive);
 }
 
 
@@ -847,7 +871,7 @@ glw_focus_set_current_by_path(glw_t *w)
  *
  */
 static void
-glw_focus_init_widget(glw_t *w0)
+glw_focus_init_widget(glw_t *w0, int interactive)
 {
   glw_t *w = w0;
 
@@ -863,7 +887,7 @@ glw_focus_init_widget(glw_t *w0)
     w = w->glw_parent;
   }
 
-  w0->glw_root->gr_current_focus = w0;
+  glw_root_focus(w0, interactive);
 }
 
 
@@ -917,7 +941,7 @@ glw_focus_leave(glw_t *w)
   }
 
   if(r != NULL)
-    glw_focus_set(r);
+    glw_focus_set(r, 0);
 }
 
 
@@ -995,7 +1019,7 @@ glw_focus_crawl(glw_t *w, int forward)
     r = glw_focus_crawl1(w, forward);
 
   if(r != NULL)
-    glw_focus_set(r);
+    glw_focus_set(r, 1);
 }
 
 
@@ -1020,7 +1044,7 @@ glw_focus_unblock_path(glw_t *w)
   glw_signal0(w, GLW_SIGNAL_FOCUS_SELF, NULL);
 
   if(glw_path_in_focus(w))
-    glw_focus_set_current_by_path(w);
+    glw_focus_set_current_by_path(w, 0);
 }
 
 
@@ -1041,7 +1065,7 @@ glw_focus_set_if_parent_is_in_focus(glw_t *w)
   glw_signal0(p, GLW_SIGNAL_FOCUS_CHILD_CHANGED, w);
 
   if(glw_path_in_focus(w))
-    glw_focus_set_current_by_path(w);
+    glw_focus_set_current_by_path(w, 0);
 }
 
 

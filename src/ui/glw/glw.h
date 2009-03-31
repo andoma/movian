@@ -283,6 +283,7 @@ typedef struct glw_root {
    */
   struct glw *gr_pointer_grab;
   struct glw *gr_current_focus;
+  prop_t *gr_last_focused_interactive;
 
   /**
    * Backend specifics
@@ -445,7 +446,7 @@ int glw_is_focused(glw_t *w);
 
 void glw_store_matrix(glw_t *w, glw_rctx_t *rc);
 
-void glw_focus_set(glw_t *w);
+void glw_focus_set(glw_t *w, int interactive);
 
 void glw_focus_set_if_parent_is_in_focus(glw_t *w);
 
