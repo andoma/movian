@@ -274,6 +274,12 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       w->glw_exp_req = va_arg(ap, double);
       break;
 
+    case GLW_ATTRIB_ORIGINATING_PROP:
+      assert(w->glw_originating_prop == NULL);
+      w->glw_originating_prop = va_arg(ap, void *);
+      prop_ref_inc(w->glw_originating_prop);
+      break;
+
     default:
       GLW_ATTRIB_CHEW(attrib, ap);
       break;
@@ -540,6 +546,9 @@ glw_destroy0(glw_t *w)
   glw_t *c, *p;
   glw_root_t *gr = w->glw_root;
   glw_event_map_t *gem;
+
+  if(w->glw_originating_prop != NULL)
+    prop_ref_dec(w->glw_originating_prop);
 
   if(gr->gr_pointer_grab == w)
     gr->gr_pointer_grab = NULL;

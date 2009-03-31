@@ -131,6 +131,7 @@ typedef enum {
   GLW_ATTRIB_REPEAT_X,
   GLW_ATTRIB_REPEAT_Y,
   GLW_ATTRIB_PIXMAP,
+  GLW_ATTRIB_ORIGINATING_PROP,
 } glw_attribute_t;
 
 #define GLW_MIRROR_X   0x1
@@ -344,6 +345,8 @@ typedef struct glw {
   glw_class_t glw_class;
   glw_root_t *glw_root;
   int glw_refcnt;
+  prop_t *glw_originating_prop;  /* Source prop we spawned from */
+
   LIST_ENTRY(glw) glw_active_link;
   LIST_ENTRY(glw) glw_every_frame_link;
 
@@ -520,6 +523,7 @@ do {						\
   case GLW_ATTRIB_PROPROOT:         		\
   case GLW_ATTRIB_BIND_TO_ID: 			\
   case GLW_ATTRIB_PIXMAP: 			\
+  case GLW_ATTRIB_ORIGINATING_PROP: 		\
     (void)va_arg(ap, void *);			\
     break;					\
   case GLW_ATTRIB_ALIGNMENT:			\

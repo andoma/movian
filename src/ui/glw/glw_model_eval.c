@@ -590,7 +590,7 @@ eval_dynamic(glw_t *w, token_t *rpn)
     glw_signal_handler_unregister(w, eval_dynamic_focus_change_sig, rpn);
 }
 
-
+#if 0
 /**
  *
  */
@@ -623,6 +623,7 @@ cloner_child_signal_handler(glw_t *w, void *opaque,
   }
   return 0;
 }
+#endif
 
 
 /**
@@ -632,13 +633,10 @@ static glw_t *
 cloner_find_child(prop_t *p, glw_t *parent)
 {
   glw_t *w;
-  glw_signal_handler_t *gsh;
 
   TAILQ_FOREACH(w, &parent->glw_childs, glw_parent_link)
-    LIST_FOREACH(gsh, &w->glw_signal_handlers, gsh_link)
-      if(gsh->gsh_func == cloner_child_signal_handler && 
-	 gsh->gsh_opaque == p)
-	return w;
+    if(w->glw_originating_prop == p)
+      return w;
   return NULL;
 }
 
@@ -665,10 +663,9 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
 
   n.w = glw_create_i(parent->glw_root,
 		     gps->gps_cloner_class,
-		     GLW_ATTRIB_SIGNAL_HANDLER, cloner_child_signal_handler,
-		     p, 500,
 		     GLW_ATTRIB_PARENT_BEFORE, parent, b,
 		     GLW_ATTRIB_PROPROOT, p,
+		     GLW_ATTRIB_ORIGINATING_PROP, p,
 		     NULL);
 
   if(flags & PROP_ADD_SELECTED)
@@ -690,8 +687,6 @@ cloner_add_child(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
 {
   glw_prop_sub_pending_t *gpsp;
 
-  prop_ref_inc(p); /* Decreased upon destroy in signal handler or
-		      if it is removed from the pending list */
 
   if(gps->gps_cloner_body == NULL) {
 
@@ -707,12 +702,15 @@ cloner_add_child(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
 
     gpsp = malloc(sizeof(glw_prop_sub_pending_t));
     gpsp->gpsp_prop = p;
+    prop_ref_inc(p);
+
     gpsp->gpsp_before = before;
 
     TAILQ_INSERT_TAIL(&gps->gps_pending, gpsp, gpsp_link);
 
     if(flags & PROP_ADD_SELECTED)
       gps->gps_pending_select = p;
+
     return;
   }
   cloner_add_child0(gps, p, before, parent, ei, flags);
@@ -1252,7 +1250,6 @@ glwf_cloner(glw_model_eval_context_t *ec, struct token *self)
   glw_prop_sub_pending_t *gpsp;
   int class, f;
   glw_t *w, *n;
-  glw_signal_handler_t *gsh;
 
   if(ec->w == NULL) 
     return glw_model_seterr(ec->ei, self, 
@@ -1281,11 +1278,7 @@ glwf_cloner(glw_model_eval_context_t *ec, struct token *self)
   for(w = TAILQ_FIRST(&ec->w->glw_childs); w != NULL; w = n) {
     n = TAILQ_NEXT(w, glw_parent_link);
 
-    LIST_FOREACH(gsh, &w->glw_signal_handlers, gsh_link)
-      if(gsh->gsh_func == cloner_child_signal_handler)
-	break;
-
-    if(gsh != NULL)
+    if(w->glw_originating_prop != NULL)
       glw_destroy0(w);
   }
 
@@ -1309,7 +1302,8 @@ glwf_cloner(glw_model_eval_context_t *ec, struct token *self)
 
       if(gpsp->gpsp_before)
 	prop_ref_dec(gpsp->gpsp_before);
-	
+      prop_ref_dec(gpsp->gpsp_prop);
+
       free(gpsp);
     }
     gps->gps_pending_select = NULL;
@@ -2064,7 +2058,6 @@ glwf_focusedChild(glw_model_eval_context_t *ec, struct token *self)
 {
   glw_t *w = ec->w, *c;
   token_t *r;
-  glw_signal_handler_t *gsh;
 
   if(w == NULL) 
     return glw_model_seterr(ec->ei, self, "focusedChild() without widget");
@@ -2072,18 +2065,12 @@ glwf_focusedChild(glw_model_eval_context_t *ec, struct token *self)
   ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_FOCUS_CHANGE;
 
   c = w->glw_focused;
-  if(c != NULL) {
-    LIST_FOREACH(gsh, &c->glw_signal_handlers, gsh_link)
-      if(gsh->gsh_func == cloner_child_signal_handler)
-	break;
-
-    if(gsh != NULL) {
-      r = eval_alloc(self, ec, TOKEN_PROPERTY);
-      r->t_prop = gsh->gsh_opaque;
-      prop_ref_inc(r->t_prop);
-      eval_push(ec, r);
-      return 0;
-    }
+  if(c != NULL && c->glw_originating_prop != NULL) {
+    r = eval_alloc(self, ec, TOKEN_PROPERTY);
+    r->t_prop = c->glw_originating_prop;
+    prop_ref_inc(r->t_prop);
+    eval_push(ec, r);
+    return 0;
   }
 
   r = eval_alloc(self, ec, TOKEN_VOID);
