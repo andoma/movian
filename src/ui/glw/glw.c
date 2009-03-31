@@ -1051,27 +1051,6 @@ glw_focus_unblock_path(glw_t *w)
 /**
  *
  */
-void
-glw_focus_set_if_parent_is_in_focus(glw_t *w)
-{
-  glw_t *p = w->glw_parent;
-
-  if(p->glw_focused == w)
-    return;
-
-  p->glw_focused = w;
-  return;
-
-  glw_signal0(p, GLW_SIGNAL_FOCUS_CHILD_CHANGED, w);
-
-  if(glw_path_in_focus(w))
-    glw_focus_set_current_by_path(w, 0);
-}
-
-
-/**
- *
- */
 int
 glw_focus_step(glw_t *w, int forward)
 {
