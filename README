@@ -1,19 +1,29 @@
-Showtime is:
-	
-* An OpenGL based media player (''Showtime'')
-* Hosted at http://www.lonelycoder.com/hts
-* A GPLed project
-* Maintained by Andreas Öman (andreas at lonelycoder.com)
+
+			 Showtime mediaplayer
+			 ====================
+
+		 (c) 2006 - 2009 Andreas Öman, et al.
 
 
-How to build
-============
 
-type:
+How to build for Linux
+======================
+
+First you need to configure:
 
 $ ./configure
+
+If any dependencies are missing the configure script will complain.
+You then have the option to disable that particular module/subsystem.
+
 $ make
 
+Build the binary, after build the binary resides in 'build.Linux/'.
+Thus, to start it, just type:
+
+$ build.Linux/showtime
+
+Settings are stored in ~andoma/.hts/showtime
 
 For more information and latest versions, please visit:
 http://www.lonelycoder.com/hts/
