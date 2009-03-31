@@ -1,3 +1,3 @@
 run:
-	${STRIP} -o obj/showtime.stripped obj/showtime
-	wiiload obj/showtime.stripped #webdav://www.olebyn.nu/media
+	${STRIP} -o ${BUILDDIR}/showtime.stripped ${BUILDDIR}/showtime
+	wiiload ${BUILDDIR}/showtime.stripped
