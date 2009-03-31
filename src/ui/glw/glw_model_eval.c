@@ -56,7 +56,6 @@ typedef struct glw_prop_sub {
   
   struct glw_prop_sub_pending_queue gps_pending;
   prop_t *gps_pending_select;
-  prop_t *gps_pending_focus;
 
 #ifdef GLW_MODEL_ERRORINFO
   refstr_t *gps_file;
@@ -611,7 +610,6 @@ cloner_child_signal_handler(glw_t *w, void *opaque,
     break;
 
   case GLW_SIGNAL_FOCUS_SELF:
-    prop_focus(p, 0);
     break;
 
 #if 0
@@ -676,9 +674,6 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
   if(flags & PROP_ADD_SELECTED)
     glw_signal0(parent, GLW_SIGNAL_SELECT, n.w);
 
-  if(flags & PROP_ADD_FOCUSED)
-    glw_focus_set_if_parent_is_in_focus(n.w);
-
   n.sublist = &n.w->glw_prop_subscriptions;
 
   glw_model_eval_block(body, &n);
@@ -718,8 +713,6 @@ cloner_add_child(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
 
     if(flags & PROP_ADD_SELECTED)
       gps->gps_pending_select = p;
-    if(flags & PROP_ADD_FOCUSED)
-      gps->gps_pending_focus = p;
     return;
   }
   cloner_add_child0(gps, p, before, parent, ei, flags);
@@ -747,9 +740,6 @@ cloner_del_child(glw_prop_sub_t *gps, prop_t *p, glw_t *parent)
 
       if(gps->gps_pending_select == p)
 	gps->gps_pending_select = NULL;
-
-      if(gps->gps_pending_focus == p)
-	gps->gps_pending_focus = NULL;
 
       prop_ref_dec(p);
       TAILQ_REMOVE(&gps->gps_pending, gpsp, gpsp_link);
@@ -782,31 +772,6 @@ cloner_select_child(glw_prop_sub_t *gps, prop_t *p, glw_t *parent)
 
   gps->gps_pending_select = p;
 }
-
-
-/**
- *
- */
-static void
-cloner_focus_child(glw_prop_sub_t *gps, prop_t *p, glw_t *parent)
-{
-#if 0
-  printf("cloner set from prop\n");
-  glw_t *w;
-
-  if(p == NULL)
-    return;
-
-  if((w = cloner_find_child(p, parent)) != NULL) {
-    glw_signal0(parent, GLW_SIGNAL_SELECT, w);
-    gps->gps_pending_select = NULL;
-    return;
-  }
-
-  gps->gps_pending_select = p;
-#endif
-}
-
 
 
 /**
@@ -914,11 +879,6 @@ prop_callback(prop_sub_t *s, prop_event_t event, ...)
     case PROP_SELECT_CHILD:
       p = va_arg(ap, prop_t *);
       cloner_select_child(gps, p, gps->gps_widget);
-      break;
-
-    case PROP_FOCUS_CHILD:
-      p = va_arg(ap, prop_t *);
-      cloner_focus_child(gps, p, gps->gps_widget);
       break;
 
     case PROP_REQ_NEW_CHILD:
@@ -1342,9 +1302,7 @@ glwf_cloner(glw_model_eval_context_t *ec, struct token *self)
     while((gpsp = TAILQ_FIRST(&gps->gps_pending)) != NULL) {
       TAILQ_REMOVE(&gps->gps_pending, gpsp, gpsp_link);
 
-      f = 
-	(gpsp->gpsp_prop == gps->gps_pending_select ? PROP_ADD_SELECTED : 0) |
-	(gpsp->gpsp_prop == gps->gps_pending_focus  ? PROP_ADD_FOCUSED  : 0);
+      f = gpsp->gpsp_prop == gps->gps_pending_select ? PROP_ADD_SELECTED : 0;
 	
       cloner_add_child0(gps, gpsp->gpsp_prop, gpsp->gpsp_before, ec->w, ec->ei,
 			f);

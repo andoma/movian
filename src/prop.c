@@ -234,7 +234,6 @@ prop_courier(void *aux)
 
     case PROP_DEL_CHILD:
     case PROP_SELECT_CHILD:
-    case PROP_FOCUS_CHILD:
     case PROP_REQ_DELETE:
     case PROP_REQ_NEW_CHILD:
       s->hps_callback(s, n->hpn_event, n->hpn_prop);
@@ -534,7 +533,6 @@ prop_make_dir(prop_t *p, prop_sub_t *skipme)
   
   TAILQ_INIT(&p->hp_childs);
   p->hp_selected = NULL;
-  p->hp_focused = NULL;
   p->hp_type = PROP_DIR;
   
   prop_notify_value(p, skipme);
@@ -707,9 +705,6 @@ prop_destroy0(prop_t *p)
 
     if(parent->hp_selected == p)
       parent->hp_selected = NULL;
-
-    if(parent->hp_focused == p)
-      parent->hp_focused = NULL;
   }
 
   prop_ref_dec(p);
@@ -822,9 +817,7 @@ prop_get_by_name(const char **name, int follow_symlinks, prop_t *p1,
 static int
 gen_add_flags(prop_t *c, prop_t *p)
 {
-  return 
-    (c == p->hp_selected ? PROP_ADD_SELECTED : 0) |
-    (c == p->hp_focused  ? PROP_ADD_FOCUSED  : 0);
+  return c == p->hp_selected ? PROP_ADD_SELECTED : 0;
 }
 /**
  *
@@ -1351,38 +1344,6 @@ prop_select_ex(prop_t *p, int advisory, prop_sub_t *skipme)
 /**
  *
  */
-void
-prop_focus_ex(prop_t *p, int advisory, prop_sub_t *skipme)
-{
-  prop_t *parent;
-
-  hts_mutex_lock(&prop_mutex);
-
-  if(p->hp_type == PROP_ZOMBIE) {
-    hts_mutex_unlock(&prop_mutex);
-    return;
-  }
-
-  parent = p->hp_parent;
-
-  if(parent != NULL) {
-    assert(parent->hp_type == PROP_DIR);
-
-    /* If in advisory mode and something is already selected,
-       don't do anything */
-    if(!advisory || parent->hp_focused == NULL) {
-      prop_notify_child(p, parent, PROP_FOCUS_CHILD, skipme, 0);
-      parent->hp_focused = p;
-    }
-  }
-  hts_mutex_unlock(&prop_mutex);
-}
-
-
-
-/**
- *
- */
 prop_t **
 prop_get_ancestors(prop_t *p)
 {
@@ -1576,7 +1537,6 @@ prop_courier_destroy(prop_courier_t *pc)
     case PROP_ADD_CHILD:
     case PROP_DEL_CHILD:
     case PROP_SELECT_CHILD:
-    case PROP_FOCUS_CHILD:
     case PROP_REQ_DELETE:
     case PROP_REQ_NEW_CHILD:
       if(n->hpn_prop != NULL)
