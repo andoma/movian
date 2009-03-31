@@ -135,6 +135,8 @@ fa_probe_exif(prop_t *proproot, fa_handle_t *fh, char *pb, size_t pbsize)
     
     exif_entry_get_value(e, tid, sizeof(tid));
 
+    memset(&tm, 0, sizeof(tm));
+
     if(sscanf(tid, "%04d:%02d:%02d %02d:%02d:%02d",
 	      &tm.tm_year, &tm.tm_mon, &tm.tm_mday,
 	      &tm.tm_hour, &tm.tm_min, &tm.tm_sec) == 6) {
