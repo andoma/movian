@@ -1198,6 +1198,20 @@ glw_pointer_event(glw_root_t *gr, glw_t *top, glw_pointer_event_t *gpe)
       break;
 }
 
+/**
+ *
+ */
+void
+glw_select(glw_t *p, glw_t *c)
+{
+  p->glw_selected = c;
+
+  glw_signal0(c, GLW_SIGNAL_SELECTED_UPDATE, NULL);
+
+  if(c->glw_originating_prop)
+    prop_select(c->glw_originating_prop, 0);
+}
+
 
 /**
  * Render a widget with prior translation and scaling

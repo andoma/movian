@@ -590,41 +590,6 @@ eval_dynamic(glw_t *w, token_t *rpn)
     glw_signal_handler_unregister(w, eval_dynamic_focus_change_sig, rpn);
 }
 
-#if 0
-/**
- *
- */
-static int
-cloner_child_signal_handler(glw_t *w, void *opaque, 
-			    glw_signal_t signal, void *extra)
-{
-  prop_t *p = opaque;
-
-  switch(signal) {
-  case GLW_SIGNAL_DESTROY:
-    prop_ref_dec(p);
-    break;
-
-  case GLW_SIGNAL_SELECTED_UPDATE:
-    prop_select(p, 0);
-    break;
-
-  case GLW_SIGNAL_FOCUS_SELF:
-    break;
-
-#if 0
-  case GLW_SIGNAL_SELECTED_UPDATE_ADVISORY:
-    prop_select(p, 1);
-    break;
-#endif
-
-  default:
-    break;
-  }
-  return 0;
-}
-#endif
-
 
 /**
  *

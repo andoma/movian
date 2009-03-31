@@ -652,6 +652,8 @@ int glw_signal0(glw_t *w, glw_signal_t sig, void *extra);
 #define glw_render0(w, rc) glw_signal0(w, GLW_SIGNAL_RENDER, rc)
 #define glw_layout0(w, rc) glw_signal0(w, GLW_SIGNAL_LAYOUT, rc)
 
+void glw_select(glw_t *p, glw_t *c);
+
 void glw_check_system_features(glw_root_t *gr);
 
 void glw_render_T(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc);
