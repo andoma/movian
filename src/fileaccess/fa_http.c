@@ -423,6 +423,10 @@ http_connect(http_file_t *hf, int probe, char *errbuf, int errlen)
   if(port < 0)
     port = 80;
 
+  /* empty path, default to "/" */ 
+  if(!hf->hf_path[0])
+    strcpy(hf->hf_path, "/");
+
   hf->hf_fd = tcp_connect(hf->hf_hostname, port, errbuf, errlen, 3000);
   if(hf->hf_fd < 0) {
     hf->hf_size = -1;
@@ -840,6 +844,10 @@ dav_propfind(http_file_t *hf, nav_dir_t *nd, char *errbuf, size_t errlen)
 
   if(hf->hf_port < 0)
     hf->hf_port = 80;
+
+  /* empty path, default to "/" */ 
+  if(!hf->hf_path[0])
+    strcpy(hf->hf_path, "/");
 
   hf->hf_fd = tcp_connect(hf->hf_hostname, hf->hf_port,
 			  errbuf, errlen, 3000);
