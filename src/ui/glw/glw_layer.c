@@ -85,8 +85,8 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     c = extra;
     c = TAILQ_PREV(c, glw_queue, glw_parent_link);
     w->glw_selected = c;
-    if(c != NULL);
-    glw_focus_unblock_path(c);
+    if(c != NULL)
+      glw_focus_unblock_path(c);
     break;
   }
 
