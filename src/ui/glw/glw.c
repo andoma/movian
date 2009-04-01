@@ -622,10 +622,9 @@ glw_signal_handler_register(glw_t *w, glw_callback_t *func, void *opaque,
   glw_signal_handler_t *gsh, *p = NULL;
 
   LIST_FOREACH(gsh, &w->glw_signal_handlers, gsh_link) {
-    if(gsh->gsh_func == func) {
-      gsh->gsh_opaque = opaque;
+    if(gsh->gsh_func == func && gsh->gsh_opaque == opaque)
       return;
-    }
+
     if(gsh->gsh_pri < pri)
       p = gsh;
   } 
