@@ -1548,7 +1548,8 @@ glwf_changed(glw_model_eval_context_t *ec, struct token *self)
   if((b = token_resolve(ec, b)) == NULL)
     return -1;
 
-  if(a->type != TOKEN_FLOAT && a->type != TOKEN_STRING)
+  if(a->type != TOKEN_FLOAT && a->type != TOKEN_STRING &&
+     a->type != TOKEN_VOID)
     return glw_model_seterr(ec->ei, self, "Invalid first operand to changed()");
 
   if(b->type != TOKEN_FLOAT)
@@ -1561,23 +1562,45 @@ glwf_changed(glw_model_eval_context_t *ec, struct token *self)
       free(e->u.str);
 
     e->type = a->type;
-    if(a->type == TOKEN_STRING)
+
+    switch(a->type) {
+
+    case TOKEN_STRING:
       e->u.str = strdup(a->t_string);
-    else
+      break;
+
+    case TOKEN_FLOAT:
       e->u.value = a->t_float;
+      break;
+
+    case TOKEN_VOID:
+    default:
+      break;
+    }
 
     change = 1;
 
-  } else if(e->type == TOKEN_STRING) {
-    if((change = strcmp(e->u.str, a->t_string))) {
-      free(e->u.str);
-      e->u.str = strdup(a->t_string);
-    }
   } else {
-    /* must be float */
-    if(e->u.value != a->t_float) {
-      e->u.value = a->t_float;
-      change = 1;
+
+   switch(a->type) {
+
+    case TOKEN_STRING:
+      if((change = strcmp(e->u.str, a->t_string))) {
+	free(e->u.str);
+	e->u.str = strdup(a->t_string);
+      }
+      break;
+
+    case TOKEN_FLOAT:
+      if(e->u.value != a->t_float) {
+	e->u.value = a->t_float;
+	change = 1;
+      }
+      break;
+
+    case TOKEN_VOID:
+    default:
+      break;
     }
   }
 
@@ -1640,11 +1663,11 @@ glwf_iir(glw_model_eval_context_t *ec, struct token *self)
   if((b = token_resolve(ec, b)) == NULL)
     return -1;
 
-  if(a == NULL || (a->type != TOKEN_FLOAT && a->type != TOKEN_INT &&
-		   a->type != TOKEN_STRING))
+  if(a == NULL || (a->type != TOKEN_FLOAT  && a->type != TOKEN_INT &&
+		   a->type != TOKEN_STRING && a->type != TOKEN_VOID))
     return glw_model_seterr(ec->ei, self, "Invalid first operand to iir()");
 
-  if(a->type == TOKEN_STRING)
+  if(a->type == TOKEN_STRING || a->type == TOKEN_VOID)
     f = 0;
   else
     f = a->type == TOKEN_INT ? a->t_int : a->t_float;
