@@ -101,6 +101,8 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
       
       glw_PushMatrix(&rc0, rc);
       
+      glw_Translatef(&rc0, gi->gi_child_xt, gi->gi_child_yt, 0.0f);
+
       xs = gi->gi_child_xs;
       ys = gi->gi_child_ys;
 
@@ -225,6 +227,10 @@ glw_image_layout_tesselated(glw_rctx_t *rc, glw_image_t *gi,
 
   glw_render_set_post(&gi->gi_gr);
     
+
+  gi->gi_child_xt = (vex[2][0] + vex[1][0]) * 0.5f;
+  gi->gi_child_yt = (vex[1][1] + vex[2][1]) * 0.5f;
+
   gi->gi_child_xs = (vex[2][0] - vex[1][0]) * 0.5f;
   gi->gi_child_ys = (vex[1][1] - vex[2][1]) * 0.5f;
 }

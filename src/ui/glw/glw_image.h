@@ -50,6 +50,8 @@ typedef struct glw_image {
 
   float gi_child_xs;
   float gi_child_ys;
+  float gi_child_xt;
+  float gi_child_yt;
 
   glw_rgb_t gi_color;
 
