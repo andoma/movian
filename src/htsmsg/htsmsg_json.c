@@ -352,7 +352,7 @@ htsmsg_json_parse_value(const char *s, htsmsg_t *parent, char *name)
 {
   const char *s2;
   char *str;
-  double d;
+  double d = 0;
   htsmsg_t *c;
 
   if((c = htsmsg_json_parse_object(s, &s2)) != NULL) {

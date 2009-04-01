@@ -38,6 +38,28 @@ get_system_concurrency(void)
       r++;
   return r?:1;
 }
+
+#elif defined(__APPLE__)
+
+#include <sys/types.h>
+#include <sys/sysctl.h>
+
+static int
+get_system_concurrency(void)
+{
+  int mib[2];
+  int ncpu;
+  size_t len;
+
+  mib[0] = CTL_HW;
+  mib[1] = HW_NCPU;
+  len = sizeof(ncpu);
+  sysctl(mib, 2, &ncpu, &len, NULL, 0);
+
+  return ncpu;
+
+}
+
 #else /* linux */
 
 static int

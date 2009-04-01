@@ -21,7 +21,6 @@
 #include <string.h>
 #include <inttypes.h>
 #include <math.h>
-#include <malloc.h>
 #include "yadif.h"
 
 #define MIN(a,b) ((a) > (b) ? (b) : (a))
