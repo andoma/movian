@@ -1,0 +1,45 @@
+3.0 MUST:
+
+* Revamp A/V sync. Check FFmpegs new PTS/DTS API.  
+  In particular, avctx->ticks_per_frame
+
+* Rename property 'media' -> 'metadata'
+
+* Decent fullscreen support
+
+* Per video playback settings
+
+* Per video display settings
+
+* Global setting for A/V sync
+
+* Slideshow
+
+* Finalize design
+
+* IR / Remote control
+
+* Probe extensions for glw_tex_rot.c feature
+
+* Use FFmpeg's new metadata API
+
+* Check strange back behaviour in settings
+
+--- 
+
+* Probe cache
+
+* DVD: Change language / track
+
+* Virtual keyboard
+
+* wii: Video playback
+
+* wii: dvdnav integration
+
+* SMB support
+
+* UPnP support
+
+* Better integration of GLW_LIST and GLW_SLIDER
+
