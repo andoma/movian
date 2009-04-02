@@ -100,16 +100,16 @@ paint_shadow(uint8_t *dst, uint8_t *src, int w, int h)
   }
 
   for(y = 1; y < h; y++) {
+    v = *src++;
+    *dst++ = v;
+    *dst++ = v;
     for(x = 1; x < w; x++) {
       v = src[0];
-      s = src[-1 - w];
+      s = src[-1-w];
       src++;
       *dst++ = v;
       *dst++ = GLW_MIN(s + v, 255);
     }
-    v = *src++;
-    *dst++ = v;
-    *dst++ = v;
   }
 }
 
