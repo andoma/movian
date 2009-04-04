@@ -164,6 +164,12 @@ glw_model_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	      e = ma->first;
 
 	      while(1) {
+
+		if(e == NULL)
+		  return glw_model_seterr(ei, t, 
+					  "Too few arguments to macro %s",
+					  m->name);
+		  
 		b = glw_model_token_copy(e);
 		p->next = b;
 		p = b;
