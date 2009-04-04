@@ -798,7 +798,15 @@ glw_detach0(glw_t *w)
 int
 glw_is_focused(glw_t *w)
 {
-  return w->glw_root->gr_current_focus == w;
+  glw_t *n;
+
+  if(w->glw_root->gr_current_focus == w)
+    return 1;
+
+  for(n = w->glw_root->gr_current_focus; n != NULL; n = n->glw_parent)
+    if(n == w)
+      return 1;
+  return 0;
 }
 
 /**
