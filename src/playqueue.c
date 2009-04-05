@@ -404,7 +404,7 @@ playqueue_play(const char *url, const char *parent, prop_t *meta,
 /**
  *
  */
-static void
+static int
 playqueue_init(void)
 {
   hts_mutex_init(&playqueue_mutex);
@@ -420,6 +420,7 @@ playqueue_init(void)
 
   hts_thread_create_detached(playqueue_thread, NULL);
   hts_thread_create_detached(player_thread, NULL);
+  return 0;
 }
 
 

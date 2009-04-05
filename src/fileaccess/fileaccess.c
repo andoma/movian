@@ -312,7 +312,7 @@ fa_unreference(void *fh_)
    if(fa_protocol_ ## a.fap_init != NULL) fa_protocol_ ## a.fap_init();	      \
  }
 
-void
+int
 fileaccess_init(void)
 {
   INITPROTO(fs);
@@ -325,6 +325,7 @@ fileaccess_init(void)
   INITPROTO(smb);
 #endif
   av_register_protocol(&fa_lavf_proto);
+  return 0;
 }
 
 

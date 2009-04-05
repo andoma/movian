@@ -90,7 +90,7 @@ typedef struct nav_backend {
 
   LIST_ENTRY(nav_backend) nb_global_link;
 
-  void (*nb_init)(void);
+  int (*nb_init)(void);
 
   int (*nb_canhandle)(const char *ur);
 

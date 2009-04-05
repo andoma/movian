@@ -51,9 +51,9 @@ static int nav_input_event(event_t *e, void *opaque);
 static void
 nav_init_be(nav_backend_t *be)
 {
+  if(be->nb_init != NULL && be->nb_init())
+    return;
   LIST_INSERT_HEAD(&nav_backends, be, nb_global_link);
-  if(be->nb_init != NULL)
-    be->nb_init();
 }
 
 
@@ -85,6 +85,7 @@ nav_init(void)
   NAV_INIT_BE(settings);
   NAV_INIT_BE(playqueue);
   NAV_INIT_BE(htsp);
+  NAV_INIT_BE(spotify);
 
   hts_thread_create_detached(navigator_thread, NULL);
 }

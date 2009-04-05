@@ -27,7 +27,7 @@
 
 #include "navigator.h"
 
-void fileaccess_init(void);
+int fileaccess_init(void);
 
 /**
  *

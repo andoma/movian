@@ -1147,10 +1147,11 @@ be_htsp_canhandle(const char *url)
 /**
  *
  */
-static void
+static int
 htsp_init(void)
 {
   hts_mutex_init(&htsp_global_mutex);
+  return 0;
 }
 
 
