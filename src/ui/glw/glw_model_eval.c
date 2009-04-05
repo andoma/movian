@@ -2014,6 +2014,23 @@ glwf_isFocused(glw_model_eval_context_t *ec, struct token *self)
 }
 
 
+/**
+ * Return 1 if the current widget is in focus
+ */
+static int 
+glwf_isHovered(glw_model_eval_context_t *ec, struct token *self)
+{
+  token_t *r;
+
+  ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_EVERY_FRAME;
+
+  r = eval_alloc(self, ec, TOKEN_INT);
+  r->t_int = glw_is_hovered(ec->w);
+  eval_push(ec, r);
+  return 0;
+}
+
+
 
 /**
  * Returns the second argument if the first is void, otherwise returns
@@ -2156,6 +2173,7 @@ static const token_func_t funcvec[] = {
   {"createChild", glwf_createchild},
   {"delete", glwf_delete},
   {"isFocused", glwf_isFocused},
+  {"isHovered", glwf_isHovered},
   {"devoidify", glwf_devoidify},
   {"focusedChild", glwf_focusedChild},
   {"getCaption", glwf_getCaption},

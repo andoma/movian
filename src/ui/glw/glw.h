@@ -283,6 +283,7 @@ typedef struct glw_root {
    * Root focus leader
    */
   struct glw *gr_pointer_grab;
+  struct glw *gr_pointer_hover;
   struct glw *gr_current_focus;
   prop_t *gr_last_focused_interactive;
 
@@ -445,6 +446,8 @@ int glw_dispatch_event(uii_t *uii, event_t *e);
 #define glw_is_focusable(w) ((w)->glw_focus_weight > 0)
 
 int glw_is_focused(glw_t *w);
+
+int glw_is_hovered(glw_t *w);
 
 void glw_store_matrix(glw_t *w, glw_rctx_t *rc);
 

@@ -558,6 +558,9 @@ glw_destroy0(glw_t *w)
   if(gr->gr_pointer_grab == w)
     gr->gr_pointer_grab = NULL;
 
+  if(gr->gr_pointer_hover == w)
+    gr->gr_pointer_hover = NULL;
+
   glw_prop_subscription_destroy_list(&w->glw_prop_subscriptions);
 
   while((gem = LIST_FIRST(&w->glw_event_maps)) != NULL) {
@@ -807,6 +810,16 @@ glw_is_focused(glw_t *w)
     if(n == w)
       return 1;
   return 0;
+}
+
+
+/**
+ *
+ */
+int
+glw_is_hovered(glw_t *w)
+{
+  return w->glw_root->gr_pointer_hover == w;
 }
 
 /**
@@ -1145,7 +1158,7 @@ glw_widget_project(float *m, float *x1, float *x2, float *y1, float *y2)
  *
  */
 static int
-pointer_event0(glw_t *w, glw_pointer_event_t *gpe)
+pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, glw_t **hp)
 {
   glw_t *c;
   event_t *e;
@@ -1166,10 +1179,13 @@ pointer_event0(glw_t *w, glw_pointer_event_t *gpe)
 	return 1;
 
       if(glw_is_focusable(w)) {
-
 	switch(gpe->type) {
+	case GLW_POINTER_MOTION:
+	  *hp = w;
+	  break;
+
 	case GLW_POINTER_CLICK:
-	  //	  glw_focus_set(w);
+	  //	  glw_focus_set(w, 1);
 	  return 1;
 
 	case GLW_POINTER_RELEASE:
@@ -1185,7 +1201,7 @@ pointer_event0(glw_t *w, glw_pointer_event_t *gpe)
   }
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-    if(!(c->glw_flags & GLW_FOCUS_BLOCKED) && pointer_event0(c, gpe))
+    if(!(c->glw_flags & GLW_FOCUS_BLOCKED) && pointer_event0(gr, c, gpe, hp))
       return 1;
   return 0;
 }
@@ -1200,6 +1216,10 @@ glw_pointer_event(glw_root_t *gr, glw_t *top, glw_pointer_event_t *gpe)
   glw_t *c, *w;
   glw_pointer_event_t gpe0;
   float x1, x2, y1, y2;
+  glw_t *hover = NULL;
+
+  /* If a widget has grabbed to pointer (such as when holding the button
+     on a slider), dispatch events there */
 
   if((w = gr->gr_pointer_grab) != NULL && gpe->type == GLW_POINTER_MOTION) {
     
@@ -1220,8 +1240,18 @@ glw_pointer_event(glw_root_t *gr, glw_t *top, glw_pointer_event_t *gpe)
     gr->gr_pointer_grab = NULL;
 
   TAILQ_FOREACH(c, &top->glw_childs, glw_parent_link)
-    if(!(c->glw_flags & GLW_FOCUS_BLOCKED) && pointer_event0(c, gpe))
+    if(!(c->glw_flags & GLW_FOCUS_BLOCKED) && 
+       pointer_event0(gr, c, gpe, &hover))
       break;
+
+  /* Pointer hover */
+  if(gr->gr_pointer_hover != NULL && hover != gr->gr_pointer_hover) {
+    gr->gr_pointer_hover = NULL;
+  }
+
+  if(hover != NULL && gr->gr_pointer_hover != hover) {
+    gr->gr_pointer_hover = hover;
+  }
 }
 
 /**
