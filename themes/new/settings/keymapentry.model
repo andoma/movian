@@ -1,39 +1,43 @@
 #include "theme://include/plates.model"
 
-
-widget(container_x, {
-  widget(stack_x, {
-    .weight = 20;
-
+widget(stack_x, {
+  widget(container_x, {
     widget(label, {
-      .aspect = 20;
-      .caption = $self.event + ":";
+      .caption = $self.event;
+      .align = right;
     });
 
-    widget(container_y, {
-      .aspect = 20;
-
-    
-      PLATE_WIDE(
-		 .focusCursor = true;
-		 .focusable = true;
-		 .weight = 2;
-		 .alpha = iir(0.5 + 0.5 * isFocused(), 10);
-	       
-		 onEvent(KeyCode, {
-		   $self.keycode = $event;
-		 });
-	       
-		 widget(label, {
-		   .align = center;
-		   .caption = devoidify($self.keycode, "<not set>");
-		 });
-		 );
-
-
-    }); 
+    widget(image, {
+      BUTTON_PROPS(1.0);
+      onEvent(KeyCode, {
+	$self.keycode = $event;
+      });
+      
+      widget(label, {
+	.align = center;
+	.caption = devoidify($self.keycode, "<not set>");
+      });
+    });
   });
-  BUTTON(1, 1,  "Clear", "theme://icons/delete.png", {
-    $self.keycode = void;
+
+
+  widget(image, {
+    .aspect = 1;
+    BUTTON_PROPS(1.0);
+    onEvent(enter, {
+      $self.keycode = void;
+    });
+    
+    widget(container_y, {
+      
+      widget(image, {
+	.source = "theme://icons/delete.png";
+	.keepAspect = true;
+      });
+      widget(label, {
+	.align = center;
+	.caption = "Clear";
+      });
+    });
   });
 });

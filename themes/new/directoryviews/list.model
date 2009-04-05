@@ -2,17 +2,14 @@
 
 widget(list_y, {
   .slices = 20;
-  cloner($page.nodes, container_y, {
-
-    PLATE_FOCUSABLE();
+  cloner($page.nodes, image, {
+    BUTTON_PROPS(1.0);
     onEvent(enter, genericEvent(navigator, open, $self.url));
-
-    PLATE_WIDE(
-      widget(animator, {
-	.time = 0.3;
-	.source = "theme://directoryviews/list/" + 
-	   $self.metadata.type + ".model";
-      });
-      );
+    
+    widget(animator, {
+      .time = 0.3;
+      .source = "theme://directoryviews/list/" + 
+	 $self.metadata.type + ".model";
+    });
   });
 });

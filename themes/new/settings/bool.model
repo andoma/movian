@@ -1,23 +1,33 @@
+#include "theme://include/plates.model"
+
 widget(container_x, {
 
-  .focusCursor = true;
-  .focusable = true;
+  widget(image, {
+    
+    PLATE_PROPS();
+    .alphaSelf = 0;
+    
+    widget(label, {
+      .aspect = 20;
+      .align = right;
+      .caption = $self.title;
+    });
 
-  onEvent(enter, {
-    $self.value = 1 ^^ $self.value;
   });
 
-  widget(label, {
-    .aspect = 20;
-    .align = right;
-    .caption = $self.title + ":";
-  });
-
-  widget(label, {
-    .aspect = 20;
-    .caption = translate(int2str($self.value),
-			 ["0", "Off",
-			  "1", "On"],
-			 "Unknown");
+  widget(image, {
+      BUTTON_PROPS(1.0);
+    
+    onEvent(enter, {
+      $self.value = 1 ^^ $self.value;
+    });
+    
+    widget(label, {
+      .aspect = 20;
+      .caption = translate(int2str($self.value),
+			   ["0", "Off",
+			    "1", "On"],
+			   "Unknown");
+    });
   });
 });

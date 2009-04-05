@@ -1,3 +1,5 @@
+#include "theme://include/plates.model"
+
 widget(container_x, {
 
   widget(label, {
@@ -7,14 +9,17 @@ widget(container_x, {
   });
 
 
-  widget(container_x, {
+  widget(stack_x, {
+
     widget(image, {
-      .focusCursor = true;
-      .focusable = true;
-      .keepAspect = true;
-      .weight = 0.1;
-      .source = "theme://icons/left.png";
+      .aspect = 1;
+      BUTTON_PROPS(1.0);
       onEvent(enter, internalEvent("choiceDeck", decr));
+      
+      widget(image, {
+	.keepAspect = true;
+	.source = "theme://icons/left.png";
+      });
     });
 
     widget(deck, {
@@ -29,14 +34,13 @@ widget(container_x, {
     });
 
     widget(image, {
-      .focusCursor = true;
-      .focusable = true;
-
-      .keepAspect = true;
-      .weight = 0.1;
-      .source = "theme://icons/right.png";
-
+      .aspect = 1;
+      BUTTON_PROPS(1.0);
       onEvent(enter, internalEvent("choiceDeck", incr));
+      widget(image, {
+	.keepAspect = true;
+	.source = "theme://icons/right.png";
+      });
     });
   });
 });

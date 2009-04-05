@@ -4,24 +4,45 @@ widget(stack_x, {
 
   widget(container_x, {
 
-    widget(text, {
-      .focusCursor = true;
-      .focusable = true;
-
+    widget(image, {
+      HIGHLITE_PROPS();
       .weight = 10;
-      bind($self.title);
+      
+      widget(text, {
+	.focusable = true;
+	bind($self.title);
+      });
     });
-
-    widget(text, {
-      .focusCursor = true;
-      .focusable = true;
-
+    
+    widget(image, {
+      HIGHLITE_PROPS();
       .weight = 20;
-      bind($self.url);
+      
+      widget(text, {
+	.focusable = true;
+	bind($self.url);
+      });
     });
   });
-  BUTTON(1, 1,  "Delete", "theme://icons/delete.png", {
-    delete($self);
-  });
 
+  widget(image, {
+    .aspect = 1;
+    BUTTON_PROPS(1.0);
+    onEvent(enter, {
+      delete($self);
+    });
+    
+    widget(container_y, {
+      
+      widget(image, {
+	.source = "theme://icons/delete.png";
+	.keepAspect = true;
+      });
+      widget(label, {
+	.align = center;
+	.caption = "Delete";
+      });
+      
+    });
+  });
 });

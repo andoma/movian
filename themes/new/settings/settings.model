@@ -1,24 +1,27 @@
-widget(container_x, {
+#include "theme://include/plates.model"
 
-  .focusCursor = true;
-  .focusable = true;
+widget(image, {
+  BUTTON_PROPS(1.0);
 
   onEvent(enter, genericEvent(navigator, open, $self.url));
 
-  widget(image, {
-    .keepAspect = true;
-    .source =  translate($self.subtype,
-			 [
-			  "audio", "theme://icons/speaker.png",
-			  "display", "theme://icons/screen.png"
+  widget(container_x, {
 
-			  ],
-			 "theme://icons/config.png");
-  });
+    widget(image, {
+      .keepAspect = true;
+      .source =  translate($self.subtype,
+			   [
+			    "audio", "theme://icons/speaker.png",
+			    "display", "theme://icons/screen.png"
 
-  widget(label, {
-    .aspect = 40;
-    .weight = 10;
-    .caption = $self.title;
+			    ],
+			   "theme://icons/config.png");
+    });
+
+    widget(label, {
+      .aspect = 40;
+      .weight = 10;
+      .caption = $self.title;
+    });
   });
 });

@@ -15,23 +15,19 @@ widget(container_y, {
 
     $self.focused = focusedChild();
 
-    cloner($page.nodes, container_y, {
-
-      PLATE_FOCUSABLE();
+    cloner($page.nodes, image, {
+      BUTTON_PROPS(1.0);
       onEvent(enter, genericEvent(navigator, open, $self.url));
 
-      PLATE_SQUARE_MID(
-        widget(animator, {
-	  .time = 0.3;
-	    
-	  .source = translate($self.metadata.type,
-	      [
-	       "image",     "theme://directoryviews/square/image.model",
-	       ],
-			      "theme://directoryviews/square/void.model"
-			      );
-	});
-	);
+      widget(animator, {
+	.time = 0.3;
+	.source = translate($self.metadata.type,
+			    [
+			     "image",     "theme://directoryviews/square/image.model",
+			     ],
+			    "theme://directoryviews/square/void.model"
+			    );
+      });
     });
   });
 });

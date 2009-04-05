@@ -12,20 +12,19 @@ widget(container_y, {
     .weight = 10;
     .slices = 10;
     cloner($page.nodes, container_z, {
-      PLATE_WIDE(
-		 widget(animator, {
-		   .source = "theme://settings/" + $self.type + ".model";
-		 });
-		 );
+      widget(animator, {
+	.source = "theme://settings/" + $self.type + ".model";
+      });
     });
   });
-
+  /*
   widget(stack_x, {
     .align = center;
     BUTTON_IMAGE($page.mayadd, 1.0, "theme://icons/add.png", {
       createChild($page.nodes);
     });
   });
+  */
   space(1.0);
 });
 
