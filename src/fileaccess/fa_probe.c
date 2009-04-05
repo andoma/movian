@@ -46,14 +46,19 @@ static const uint8_t isosig[8] = {0x1, 0x43, 0x44, 0x30, 0x30, 0x31, 0x1, 0x0};
  *
  */
 static void
-lavf_build_string_and_trim(prop_t *p, const char *pname, const char *str)
+metadata_to_prop(prop_t *p, const char *pname, AVMetadata *m, const char *key,
+		 int asint)
 {
-  int len = strlen(str);
+  AVMetadataTag *tag;
+  int len;
   char *ret;
-
-  if(len == 0)
+  const char *str;
+  
+  if((tag = av_metadata_get(m, key, NULL, AV_METADATA_IGNORE_SUFFIX)) == NULL)
     return;
 
+  str = tag->value;
+  len = strlen(str);
   ret = alloca(len + 1);
 
   memcpy(ret, str, len);
@@ -69,7 +74,11 @@ lavf_build_string_and_trim(prop_t *p, const char *pname, const char *str)
   if(*ret == 0)
     return;
 
-  prop_set_string(prop_create(p, pname), ret);
+  if(asint) {
+    prop_set_int(prop_create(p, pname), atoi(ret));
+  } else {
+    prop_set_string(prop_create(p, pname), ret);
+  }
 }
 
 /**
@@ -296,14 +305,14 @@ fa_lavf_load_meta(prop_t *proproot, AVFormatContext *fctx, const char *url)
 	p[i - 4] = 0;
       prop_set_string(prop_create(proproot, "title"), p);
     } else {
-      lavf_build_string_and_trim(proproot, "title", fctx->title);
+      metadata_to_prop(proproot, "title", fctx->metadata, "title", 0);
     }
 
-    lavf_build_string_and_trim(proproot, "author", fctx->author);
-    lavf_build_string_and_trim(proproot, "album", fctx->album);
-
-    if(fctx->track != 0)
-      prop_set_int(prop_create(proproot, "track"), fctx->track);
+    metadata_to_prop(proproot, "author", fctx->metadata, "author", 0);
+    metadata_to_prop(proproot, "album", fctx->metadata, "album", 0);
+    metadata_to_prop(proproot, "genre", fctx->metadata, "genre", 0);
+    metadata_to_prop(proproot, "copyright", fctx->metadata, "copyright", 0);
+    metadata_to_prop(proproot, "track", fctx->metadata, "track", 1);
 
     prop_set_string(prop_create(proproot, "mediaformat"),
 		    fctx->iformat->long_name);

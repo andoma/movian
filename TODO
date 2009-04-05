@@ -19,8 +19,6 @@
 
 * Probe extensions for glw_tex_rot.c feature
 
-* Use FFmpeg's new metadata API
-
 * Check strange back behaviour in settings
 
 --- 
