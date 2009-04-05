@@ -293,7 +293,7 @@ static int
 alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
 {
   snd_pcm_t *h = NULL; 
-
+  media_pipe_t *mp;
   alsa_audio_mode_t *aam = (void *)am;
   audio_buf_t *ab;
   int16_t *outbuf;
@@ -400,6 +400,8 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
 
     if(outlen > 0) {
 
+      snd_pcm_writei(h, outbuf, outlen);
+
       /* PTS is the time of the first frame of this audio packet */
 
       if((pts = ab->ab_pts) != AV_NOPTS_VALUE && ab->ab_mp != NULL) {
@@ -416,15 +418,19 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
 
 	d = (fr * 1000 / aam->aam_sample_rate) * 1000;
 
-	/* Add it to our timestamp */
-	pts += d;
+	/* Subtract it from our timestamp, this will yield
+	   the PTS for the sample currently played */
 
-	ab->ab_mp->mp_audio_clock = pts;
-	ab->ab_mp->mp_audio_clock_valid = 1;
+	pts -= d;
+
+	mp = ab->ab_mp;
+
+	hts_mutex_lock(&mp->mp_clock_mutex);
+	mp->mp_audio_clock = pts;
+	mp->mp_audio_clock_valid = 1;
+	mp->mp_audio_clock_realtime = showtime_get_ts();
+	hts_mutex_unlock(&mp->mp_clock_mutex);
       }
-
-      snd_pcm_writei(h, outbuf, outlen);
-
     }
     ab_free(ab);
   }

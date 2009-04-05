@@ -139,7 +139,9 @@ typedef struct media_pipe {
 
   media_queue_t mp_video, mp_audio;
   
+  hts_mutex_t mp_clock_mutex;
   int64_t mp_audio_clock;
+  int64_t mp_audio_clock_realtime;
   int mp_audio_clock_valid;
 
   struct subtitles *mp_subtitles;

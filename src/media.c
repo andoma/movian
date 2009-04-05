@@ -93,6 +93,7 @@ mp_create(const char *name)
   mp->mp_name = name;
 
   hts_mutex_init(&mp->mp_mutex);
+  hts_mutex_init(&mp->mp_clock_mutex);
   hts_cond_init(&mp->mp_backpressure);
   
   mp->mp_prop_root = prop_create(NULL, "media");
@@ -143,6 +144,7 @@ mp_destroy(media_pipe_t *mp)
 
   hts_cond_destroy(&mp->mp_backpressure);
   hts_mutex_destroy(&mp->mp_mutex);
+  hts_mutex_destroy(&mp->mp_clock_mutex);
 
   free(mp);
 }

@@ -363,6 +363,8 @@ compute_output_duration(video_decoder_t *vd, int frame_duration)
 static void
 compute_avdiff(video_decoder_t *vd, media_pipe_t *mp, int64_t pts)
 {
+  int64_t rt;
+
   if(!mp->mp_audio_clock_valid) {
     vd->vd_avdiff_x = 0;
     kalman_init(&vd->vd_avfilter);
@@ -377,7 +379,13 @@ compute_avdiff(video_decoder_t *vd, media_pipe_t *mp, int64_t pts)
   }
   
 
-  vd->vd_avdiff = mp->mp_audio_clock - pts - vd->vd_avd_delta;
+  hts_mutex_lock(&mp->mp_clock_mutex);
+
+  rt = showtime_get_ts();
+  vd->vd_avdiff = (mp->mp_audio_clock + rt - mp->mp_audio_clock_realtime)
+    - pts - vd->vd_avd_delta;
+
+  hts_mutex_unlock(&mp->mp_clock_mutex);
 
   if(abs(vd->vd_avdiff) < 10000000) {
 
