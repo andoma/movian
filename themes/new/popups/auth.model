@@ -8,8 +8,9 @@ widget(container_y, {
     
     widget(image, {
       .aspect = 1.5;
-      .source = "theme://images/blackbox.png";
+      .source = "theme://images/whitebox.png";
       .alphaSelf = 0.8;
+      .color = [0.3, 0.0, 0.0];
       .textureCoords = [0.15, 0.15, 0.85, 0.85];
    
       
@@ -65,14 +66,48 @@ widget(container_y, {
 	  .aspect = 10;
 	  .align = center;
 
-	  BUTTON(1, 2, "Ok", "theme://icons/ok.png", {
-	    $self.username = getCaption("username");
-	    $self.password = getCaption("password");
-	    $self.result = "ok";
+	  widget(image, {
+	    .aspect = 1;
+	    BUTTON_PROPS(0.5);
+	    onEvent(enter, {
+	      $self.username = getCaption("username");
+	      $self.password = getCaption("password");
+	      $self.result = "ok";
+	    });
+
+	    widget(container_y, {
+      
+	      widget(image, {
+		.source = "theme://icons/ok.png";
+		.keepAspect = true;
+	      });
+	      widget(label, {
+		.align = center;
+		.caption = "Ok";
+	      });
+	    });
 	  });
 
-	  BUTTON(1, 2, "Cancel", "theme://icons/cancel.png", {
-	    $self.result = "cancel";
+
+
+	  widget(image, {
+	    .aspect = 1;
+	    BUTTON_PROPS(0.5);
+	    onEvent(enter, {
+	      $self.result = "cancel";
+	    });
+
+	    widget(container_y, {
+      
+	      widget(image, {
+		.source = "theme://icons/cancel.png";
+		.keepAspect = true;
+	      });
+	      widget(label, {
+		.align = center;
+		.caption = "Cancel";
+	      });
+	    });
 	  });
 	});
       });
