@@ -3,8 +3,6 @@
 * Revamp A/V sync. Check FFmpegs new PTS/DTS API.  
   In particular, avctx->ticks_per_frame
 
-* Rename property 'media' -> 'metadata'
-
 * Decent fullscreen support
 
 * Per video playback settings
