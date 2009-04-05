@@ -85,7 +85,6 @@ nav_init(void)
   NAV_INIT_BE(settings);
   NAV_INIT_BE(playqueue);
   NAV_INIT_BE(htsp);
-  NAV_INIT_BE(spotify);
 
   hts_thread_create_detached(navigator_thread, NULL);
 }
