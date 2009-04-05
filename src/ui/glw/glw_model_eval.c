@@ -1862,10 +1862,13 @@ glwf_isset(glw_model_eval_context_t *ec, struct token *self)
   case TOKEN_INT:
     rv = a->t_int != 0;
     break;
+  case TOKEN_VOID:
+    rv = 0;
+    break;
   }
 
-  r = eval_alloc(self, ec, TOKEN_FLOAT);
-  r->t_float = rv;
+  r = eval_alloc(self, ec, TOKEN_INT);
+  r->t_int = rv;
   eval_push(ec, r);
   return 0;
 }
@@ -2167,7 +2170,7 @@ static const token_func_t funcvec[] = {
   {"sin", glwf_sin},
   {"cos", glwf_cos},
   {"strftime", glwf_strftime},
-  {"isset", glwf_isset},
+  {"isSet", glwf_isset},
   {"time", glwf_time},
   {"value2duration", glwf_value2duration},
   {"createChild", glwf_createchild},
