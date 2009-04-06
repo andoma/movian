@@ -819,7 +819,15 @@ glw_is_focused(glw_t *w)
 int
 glw_is_hovered(glw_t *w)
 {
-  return w->glw_root->gr_pointer_hover == w;
+  glw_t *n;
+
+  if(w->glw_root->gr_pointer_hover == w)
+    return 1;
+
+  for(n = w->glw_root->gr_pointer_hover; n != NULL; n = n->glw_parent)
+    if(n == w)
+      return 1;
+  return 0;
 }
 
 /**
@@ -1179,10 +1187,8 @@ pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, glw_t **hp)
 	return 1;
 
       if(glw_is_focusable(w)) {
+	*hp = w;
 	switch(gpe->type) {
-	case GLW_POINTER_MOTION:
-	  *hp = w;
-	  break;
 
 	case GLW_POINTER_CLICK:
 	  //	  glw_focus_set(w, 1);
