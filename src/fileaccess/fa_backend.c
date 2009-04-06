@@ -206,6 +206,7 @@ file_open_dir(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
   be_file_page_t *bfp;
   prop_t *p;
   int type;
+  const char *dirname;
 
   type = fa_probe_dir(NULL, url0);
 
@@ -223,6 +224,13 @@ file_open_dir(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
   bfp->bfp_viewprop = prop_create(p, "view");
   prop_set_string(bfp->bfp_viewprop, "list");
   
+  if((dirname = strrchr(url0, '/')) != NULL)
+    dirname++;
+  else
+    dirname = url0;
+
+  prop_set_string(prop_create(p, "title"), dirname);
+
   bfp->bfp_nodes = prop_create(p, "nodes");
   
   hts_thread_create_joinable(&bfp->bfp_scanner_thread, scanner, bfp);

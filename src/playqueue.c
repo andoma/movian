@@ -443,6 +443,7 @@ be_playqueue_open(const char *url0, nav_page_t **npp,
   prop_set_string(type, "playqueue");
 
   nodes = prop_create(n->np_prop_root, "nodes");
+  prop_set_string(prop_create(n->np_prop_root, "title"), "Playqueue");
 
   prop_link(playqueue_root, nodes);
   return 0;
