@@ -161,9 +161,7 @@ pointer_event(glw_t *w, glw_pointer_event_t *gpe)
   glw_root_t *gr = w->glw_root;
   glw_slider_t *s = (glw_slider_t *)w;
   int hitpos = 0;
-  float v, v0 = w->glw_class == GLW_SLIDER_X ? gpe->x : -gpe->y;
-
-  v = GLW_RESCALE(v0, -1.0 + s->knob_size, 1.0 - s->knob_size);
+  float v0 = w->glw_class == GLW_SLIDER_X ? gpe->x : -gpe->y;
 
   if(v0 < s->knob_pos - s->knob_size)
     hitpos = -1;
@@ -173,15 +171,16 @@ pointer_event(glw_t *w, glw_pointer_event_t *gpe)
   switch(gpe->type) {
   case GLW_POINTER_CLICK:
     if(hitpos == 0) {
+      s->grab_delta = s->knob_pos - v0;
       gr->gr_pointer_grab = w;
-      s->value = v;
     } else {
       s->value += hitpos * s->knob_size;
     }
     break;
 
   case GLW_POINTER_FOCUS_MOTION:
-    s->value = v;
+    s->value = GLW_RESCALE(v0 + s->grab_delta, 
+			   -1.0 + s->knob_size, 1.0 - s->knob_size);;
     break;
 
   default:

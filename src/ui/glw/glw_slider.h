@@ -32,6 +32,7 @@ typedef struct {
 
   prop_sub_t *sub;
   prop_t *p;
+  float grab_delta;
 
   glw_t *bound_widget;
 
