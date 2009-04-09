@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config.h"
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
@@ -85,6 +86,9 @@ nav_init(void)
   NAV_INIT_BE(settings);
   NAV_INIT_BE(playqueue);
   NAV_INIT_BE(htsp);
+#ifdef CONFIG_SPOTIFY
+  NAV_INIT_BE(spotify);
+#endif
 
   hts_thread_create_detached(navigator_thread, NULL);
 }

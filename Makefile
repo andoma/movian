@@ -163,6 +163,11 @@ ${BUILDDIR}/src/dvd/dvdnav/%.o : CFLAGS = \
 SRCS  += src/tv/htsp.c \
 
 #
+# Spotify
+#
+SRCS-${CONFIG_SPOTIFY} += src/spotify/spotify.c
+
+#
 # GLW user interface
 #
 SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \

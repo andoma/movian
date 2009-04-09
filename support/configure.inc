@@ -34,6 +34,7 @@ CONFIG_LIST="
  glw_backend_gx
  libogc
  embedded_theme
+ spotify
 "
 
 die() {
@@ -178,9 +179,19 @@ LDFLAGS_cfg += -lswscale -lavformat -lavcodec -lavutil
 EOF
 }
 
+spotify_setup() {
+    enable spotify
+    echo >${BUILDDIR}/spotify_app_key.h "static const uint8_t appkey[] = {"
+    od <"$1" -v -An -b | sed s/^\ */0/ | sed s/\ *$$/,/| sed s/\ /,\ 0/g|sed s/$/,/ >>${BUILDDIR}/spotify_app_key.h
+    echo >>${BUILDDIR}/spotify_app_key.h "};"
+}
 
 
 finalize() {
+
+if [ "x${SPOTIFY_KEYFILE}" != "x" ]; then
+    spotify_setup "${SPOTIFY_KEYFILE}"
+fi
 
 if [ ${RELEASE} = yes ]; then
     echo Release build: ${RELEASENAME}
