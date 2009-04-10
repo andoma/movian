@@ -199,7 +199,7 @@ nav_open(const char *url)
 /**
  *
  */
-static void
+void
 nav_back(void)
 {
   nav_page_t *prev, *np = nav_page_current;

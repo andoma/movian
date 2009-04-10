@@ -121,6 +121,8 @@ void nav_close(nav_page_t *np);
 
 void nav_open(const char *url);
 
+void nav_back(void);
+
 void *nav_page_create(const char *url, size_t allocsize,
 		      void (*closefunc)(struct nav_page *np),
 		      int flags);
