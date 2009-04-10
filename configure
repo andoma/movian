@@ -40,6 +40,7 @@ enable libfreetype
 enable glw
 enable libasound
 enable libexif
+enable gu
 
 for opt do
   optval="${opt#*=}"
@@ -192,6 +193,26 @@ if enabled libexif; then
 	die
     fi
 fi
+
+
+#
+# GTK2 UI
+#
+if enabled gu; then
+    if pkg-config gtk+-2.0 && pkg-config gthread-2.0; then
+	# CFLAGS are included by Makefile
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs gtk+-2.0`
+	echo "Using GTK+:            `pkg-config --modversion gtk+-2.0`"
+
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs gthread-2.0`
+	echo "Using GTK Threading:   `pkg-config --modversion gthread-2.0`"
+    else
+	echo "GTK2 not found. Unable to build GU (GTK user interface)."
+	echo "To compile without it, configure with: --disable-gu"
+	die
+    fi
+fi
+
 
 #
 # configure ffmpeg

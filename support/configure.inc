@@ -32,6 +32,7 @@ CONFIG_LIST="
  glw_frontend_wii
  glw_backend_opengl
  glw_backend_gx
+ gu
  libogc
  embedded_theme
  spotify

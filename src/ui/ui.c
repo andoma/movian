@@ -59,6 +59,9 @@ ui_initialize(void)
  LIST_INSERT_HEAD(&uis, &name ## _ui, ui_link);\
 }while(0)
 
+#ifdef CONFIG_GU
+  link_ui(gu);
+#endif
 #ifdef CONFIG_GLW_FRONTEND_X11
   link_ui(glw_x11);
 #endif
@@ -90,6 +93,7 @@ ui_init(void)
     LIST_INSERT_HEAD(&uiis, uii, uii_link);
   }
 }
+
 
 /**
  * Showtime mainloop
