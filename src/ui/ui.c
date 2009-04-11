@@ -17,6 +17,7 @@
  */
 
 #include <string.h>
+#include <stdio.h>
 #include <arch/threads.h>
 
 #include "showtime.h"
@@ -25,12 +26,9 @@
 
 
 static hts_mutex_t ui_mutex;
-static hts_cond_t ui_cond;
-
-static int showtime_retcode = -1;
-
 static struct ui_list uis;
 static struct uii_list uiis;
+//static uii_t *primary_uii;
 
 static int ui_event_handler(event_t *e, void *opaque);
 
@@ -40,11 +38,21 @@ static int ui_event_handler(event_t *e, void *opaque);
 void
 ui_exit_showtime(int retcode)
 {
+  exit(retcode);
+}
+
+/**
+ *
+ */
+void
+uii_register(uii_t *uii)
+{
   hts_mutex_lock(&ui_mutex);
-  showtime_retcode = retcode;
-  hts_cond_signal(&ui_cond);
+  LIST_INSERT_HEAD(&uiis, uii, uii_link);
   hts_mutex_unlock(&ui_mutex);
 }
+
+
 
 /**
  *
@@ -68,56 +76,64 @@ ui_register(void)
 #endif
 }
 
-
 /**
  *
  */
-void
-ui_init(void)
+static ui_t *
+ui_by_name(const char *name)
 {
   ui_t *ui;
-  uii_t *uii;
-  
-  hts_mutex_init(&ui_mutex);
-  hts_cond_init(&ui_cond);
-
-  keymapper_init();
-
-  ui_register();
-
-  ui = LIST_FIRST(&uis);
-  if(ui != NULL) {
-    uii = ui->ui_start(ui, NULL);
-    LIST_INSERT_HEAD(&uiis, uii, uii_link);
-  }
+  LIST_FOREACH(ui, &uis, ui_link)
+    if(!strcmp(ui->ui_title, name))
+      break;
+  return ui;
 }
 
 
 /**
- * Showtime mainloop
  *
- * We also drive a low resolution timer framework from here
+ */
+static ui_t *
+ui_default(void)
+{
+#ifdef SHOWTIME_DEFAULT_UI
+  return ui_by_name(SHOWTIME_DEFAULT_UI);
+#else
+  return NULL;
+#endif
+}
+
+
+/**
+ * Start the user interface(s)
  */
 int
-ui_main_loop(void)
+ui_start(int argc, const char *argv[], const char *argv0)
 {
-  /* Register an event handler  */
+  ui_t *ui;
+
+  hts_mutex_init(&ui_mutex);
+  keymapper_init();
+  ui_register();
   event_handler_register("uimain", ui_event_handler, EVENTPRI_MAIN, NULL);
 
-  hts_mutex_lock(&ui_mutex);
 
-  while(1) {
+  if(argc == 0) {
+    char *my_argv[1];
+    /* No UI arguments, simple case */
+    ui = ui_default();
 
-    if(showtime_retcode != -1)
-      break;
-    hts_cond_wait(&ui_cond, &ui_mutex);
+    if(ui == NULL) {
+      fprintf(stderr, "No default user interface specified, exiting\n");
+      return 2;
+    }
+
+    my_argv[0] = strdup(argv0);
+    return ui->ui_start(ui, 1, my_argv);
+  } else {
+    fprintf(stderr, "Multiple user interfaces not supported atm\n");
+    return 1;
   }
-
-  hts_mutex_unlock(&ui_mutex);
-
-  //  uii->uii_ui->ui_stop(uii);
-
-  return showtime_retcode;
 }
 
 

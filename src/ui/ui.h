@@ -51,23 +51,19 @@ typedef struct ui {
 
   LIST_ENTRY(ui) ui_link;
 
-  uii_t *(*ui_start)(struct ui *ui, const char *arg);
-
-  void (*ui_stop)(uii_t *uii);
+  int (*ui_start)(struct ui *ui, int argc, char **argv);
 
   int (*ui_dispatch_event)(uii_t *uii, event_t *e);
 
 } ui_t;
 
 
-
-
 /**
  *
  */
-void ui_init(void);
+int ui_start(int argc, const char *argv[], const char *argv0);
 
-int ui_main_loop(void);
+void uii_register(uii_t *uii);
 
 void ui_exit_showtime(int retcode);
 

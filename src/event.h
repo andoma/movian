@@ -89,6 +89,7 @@ typedef enum {
   EVENT_DVD_,
   EVENT_DVD_SELECT_BUTTON,
   EVENT_DVD_ACTIVATE_BUTTON,  /* "Press" button */
+  EVENT_OPENURL,
 
 } event_type_t;
 

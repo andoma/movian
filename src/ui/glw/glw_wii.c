@@ -226,11 +226,10 @@ wpad_render(glw_wii_t *gwii)
 /**
  *
  */
-static void *
-glw_wii_thread(void *aux)
+static void
+glw_wii_loop(glw_wii_t *gwii)
 {
   glw_rctx_t rc;
-  glw_wii_t *gwii = aux;
   void *gp_fifo;
   float yscale, w, h;
   uint32_t xfbHeight;
@@ -390,8 +389,6 @@ glw_wii_thread(void *aux)
     VIDEO_WaitVSync();
     rquad-=0.15f;
   }
-
-  return NULL;
 }
 
 
@@ -414,15 +411,13 @@ layout_event_handler(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
 /**
  *
  */
-static uii_t *
-glw_wii_start(ui_t *ui, const char *arg)
+static int
+glw_wii_start(ui_t *ui, int argc, char *argv[])
 {
-  extern char *default_theme_path;
-
+  const char *default_theme_path = SHOWTIME_DEFAULT_THEME_URL;
   glw_wii_t *gwii = calloc(1, sizeof(glw_wii_t));
 
   gwii->gr.gr_uii.uii_ui = ui;
-
   gwii->gr.gr_theme = strdup(default_theme_path);
 
   if(glw_init(&gwii->gr, 14)) {
@@ -438,8 +433,8 @@ glw_wii_start(ui_t *ui, const char *arg)
 	    GLW_ATTRIB_SIGNAL_HANDLER, layout_event_handler, gwii, 1000,
 	    NULL);
 
-  hts_thread_create_joinable(&gwii->threadid, glw_wii_thread, gwii);
-  return &gwii->gr.gr_uii;
+  glw_wii_loop(gwii);
+  return 0;
 }
 
 /**

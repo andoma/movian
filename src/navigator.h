@@ -119,7 +119,8 @@ void nav_init(void);
 
 void nav_close(nav_page_t *np);
 
-void nav_open(const char *url);
+#define NAV_OPEN_ASYNC 0x1
+void nav_open(const char *url, int flags);
 
 void nav_back(void);
 

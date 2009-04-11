@@ -130,8 +130,8 @@ nav_close(nav_page_t *np)
 /**
  *
  */
-void
-nav_open(const char *url)
+static void
+nav_open0(const char *url)
 {
   nav_page_t *np, *np2;
   nav_backend_t *nb;
@@ -195,6 +195,18 @@ nav_open(const char *url)
   nav_page_current = np;
 }
 
+/**
+ *
+ */
+void
+nav_open(const char *url, int flags)
+{
+  if(flags & NAV_OPEN_ASYNC)
+    event_enqueue(&nav_eq, event_create_url(EVENT_OPENURL, url));
+  else
+    nav_open0(url);
+}
+
 
 /**
  *
@@ -208,7 +220,7 @@ nav_back(void)
      (prev = TAILQ_PREV(np, nav_page_queue, np_history_link)) == NULL)
      return;
 
-  nav_open(prev->np_url);
+  nav_open0(prev->np_url);
 
   if(!(np->np_flags & NAV_PAGE_DONT_CLOSE_ON_BACK))
     nav_close(np);
@@ -286,14 +298,18 @@ navigator_thread(void *aux)
       break;
 
     case EVENT_MAINMENU:
-      nav_open("page://mainmenu");
+      nav_open0("page://mainmenu");
+      break;
+
+    case EVENT_OPENURL:
+      nav_open0(e->e_payload);
       break;
 
     case EVENT_GENERIC:
       g = (event_generic_t *)e;
     
       if(!strcmp(g->method, "open"))
-	nav_open(g->argument);
+	nav_open0(g->argument);
       
       if(!strcmp(g->method, "back"))
 	nav_back();

@@ -139,7 +139,7 @@ row_activated(GtkTreeView *tree_view, GtkTreePath *path,
 			   &iter, URL_COLUMN, &gv);
 
   if(G_VALUE_HOLDS_STRING(&gv))
-    nav_open(g_value_get_string(&gv));
+    nav_open(g_value_get_string(&gv), NAV_OPEN_ASYNC);
 
   g_value_unset(&gv);
 }

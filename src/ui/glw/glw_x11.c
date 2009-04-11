@@ -949,49 +949,21 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 /**
  *
  */
-static void *
-glw_x11_thread(void *aux)
-{
-  glw_x11_t *gx11 = aux;
-
-  glw_x11_init(gx11);
-
-  if(glw_init(&gx11->gr, 40))
-    return NULL;
-
-  gx11->running = 1;
-
-  
-  gx11->universe = glw_model_create(&gx11->gr,
-				    "theme://universe.model", NULL, 0, NULL);
-
-  glw_set_i(gx11->universe,
-	    GLW_ATTRIB_SIGNAL_HANDLER, layout_event_handler, gx11, 1000,
-	    NULL);
-
-  glw_sysglue_mainloop(gx11);
-
-  return NULL;
-}
-
-
-/**
- *
- */
-static uii_t *
-glw_x11_start(ui_t *ui, const char *arg)
+static int
+glw_x11_start(ui_t *ui, int argc, char *argv[])
 {
   glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
   char confname[256];
-  extern char *default_theme_path;
+  const char *default_theme_path = SHOWTIME_DEFAULT_THEME_URL;
 
-  if(arg == NULL) {
+  if(1) {
 
     gx11->displayname_real   = getenv("DISPLAY");
     snprintf(confname, sizeof(confname), "glw/x11/default");
     gx11->displayname_title  = NULL;
     
   } else {
+    const char *arg = "xxx";
 
     gx11->displayname_real   = arg;
     snprintf(confname, sizeof(confname), "glw/x11/%s", arg);
@@ -1006,8 +978,24 @@ glw_x11_start(ui_t *ui, const char *arg)
   gx11->gr.gr_uii.uii_ui = ui;
   gx11->gr.gr_uii.uii_prop = prop_create(NULL, "ui");
 
-  hts_thread_create_joinable(&gx11->threadid, glw_x11_thread, gx11);
-  return &gx11->gr.gr_uii;
+  glw_x11_init(gx11);
+
+  if(glw_init(&gx11->gr, 40))
+    return 1;
+
+  gx11->running = 1;
+
+  
+  gx11->universe = glw_model_create(&gx11->gr,
+				    "theme://universe.model", NULL, 0, NULL);
+
+  glw_set_i(gx11->universe,
+	    GLW_ATTRIB_SIGNAL_HANDLER, layout_event_handler, gx11, 1000,
+	    NULL);
+
+  glw_sysglue_mainloop(gx11);
+
+  return 0;
 }
 
 

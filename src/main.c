@@ -41,7 +41,7 @@
 
 hts_mutex_t ffmutex;
 int concurrency;
-const char *default_theme_path = SHOWTIME_DEFAULT_THEME_URL;
+//static const char *default_theme_path = SHOWTIME_DEFAULT_THEME_URL;
 
 /**
  * Showtime main
@@ -50,8 +50,11 @@ int
 main(int argc, char **argv)
 {
   struct timeval tv;
+  int rc;
   const char *settingspath = NULL;
-  int returncode;
+  const char *uiargs[16];
+  const char *argv0 = argc > 0 ? argv[0] : "showtime";
+  int nuiargs = 0;
 
   gettimeofday(&tv, NULL);
   srand(tv.tv_usec);
@@ -67,8 +70,9 @@ main(int argc, char **argv)
       settingspath = argv[1];
       argc -= 2; argv += 2;
       continue;
-    } else if(!strcmp(argv[0], "-t") && argc > 1) {
-      default_theme_path = argv[1];
+    } else if(!strcmp(argv[0], "--ui") && argc > 1) {
+      if(nuiargs < 16)
+	uiargs[nuiargs++] = argv[1];
       argc -= 2; argv += 2;
       continue;
     } else
@@ -113,14 +117,11 @@ main(int argc, char **argv)
   /* Initialize bookmarks */
   bookmarks_init();
 
+  /* Open initial page */
+  nav_open(argc > 0 ? argv[0] : "page://mainmenu", NAV_OPEN_ASYNC);
+
   /* Initialize user interfaces */
-  ui_init();
+  rc = ui_start(nuiargs, uiargs, argv0);
 
-  /* Load initial URL */
-  nav_open(argc > 0 ? argv[0] : "page://mainmenu");
-
-  /* Goto UI control dispatcher */
-  returncode = ui_main_loop();
-
-  return returncode;
+  return rc;
 }

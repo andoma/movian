@@ -165,15 +165,15 @@ gu_nav_url_updated(struct prop_sub *s, prop_event_t event, ...)
 static void
 gu_nav_url_set(GtkEntry *e, gpointer user_data)
 {
-  nav_open(gtk_entry_get_text(e));
+  nav_open(gtk_entry_get_text(e), NAV_OPEN_ASYNC);
 }
 
 
 /**
  *
  */
-static void *
-gu_thread(void *aux)
+static int
+gu_start(ui_t *ui, int argc, char **argv)
 {
   GtkWidget *win;
   GtkWidget *vbox;
@@ -181,7 +181,7 @@ gu_thread(void *aux)
   GtkWidget *toolbar;
   GtkWidget *w;
   GtkToolItem *ti;
-  gtk_ui_t *gu = aux;
+  gtk_ui_t *gu = calloc(1, sizeof(gtk_ui_t));
 
   hts_mutex_init(&gu_mutex);
 
@@ -192,7 +192,7 @@ gu_thread(void *aux)
   gdk_threads_init();
   gdk_threads_enter();
 
-  gtk_init(NULL, NULL);
+  gtk_init(&argc, &argv);
 
   gu->gu_pc = prop_courier_create(&gu_mutex);
 
@@ -268,19 +268,6 @@ gu_thread(void *aux)
   return 0;
 }
 
-
-/**
- *
- */
-static uii_t *
-gu_start(ui_t *ui, const char *arg)
-{
-  gtk_ui_t *gu = calloc(1, sizeof(gtk_ui_t));
-
-  hts_thread_create_joinable(&gu->gu_thread, gu_thread, gu);
-
-  return &gu->gu_uii;
-}
 
 
 /**
