@@ -38,23 +38,25 @@ showtime_get_ts(void)
   return (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
 }
 
-struct deferred;
-typedef void (deferred_callback_t)(struct deferred *d, void *opaque);
+struct callout;
+typedef void (callout_callback_t)(struct callout *c, void *opaque);
 
-typedef struct deferred {
-  LIST_ENTRY(deferred) d_link;
-  deferred_callback_t *d_callback;
-  void *d_opaque;
-  time_t d_expire;
-} deferred_t;
+typedef struct callout {
+  LIST_ENTRY(callout) c_link;
+  callout_callback_t *c_callback;
+  void *c_opaque;
+  time_t c_expire;
+} callout_t;
 
-void deferred_arm(deferred_t *d, deferred_callback_t *callback,
+void callout_arm(callout_t *c, callout_callback_t *callback,
 		  void *opaque, int delta);
 
-void deferred_arm_abs(deferred_t *d, deferred_callback_t *callback,
+void callout_arm_abs(callout_t *c, callout_callback_t *callback,
 		      void *opaque, time_t when);
 
-void deferred_disarm(deferred_t *d);
+void callout_disarm(callout_t *c);
+
+void callout_init(void);
 
 /**
  * Content types

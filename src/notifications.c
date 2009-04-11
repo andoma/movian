@@ -38,11 +38,11 @@ notifications_init(void)
  *
  */
 static void
-notify_timeout(deferred_t *d, void *aux)
+notify_timeout(callout_t *c, void *aux)
 {
   prop_t *p = aux;
   prop_destroy(p);
-  free(d);
+  free(c);
 }
 
 /**
@@ -52,7 +52,6 @@ void *
 notify_add(notify_type_t type, const char *icon, int delay,
 	   const char *fmt, ...)
 {
-  deferred_t *d;
   char msg[256];
   prop_t *p;
   const char *typestr;
@@ -84,8 +83,7 @@ notify_add(notify_type_t type, const char *icon, int delay,
     abort();
 
   if(delay != 0) {
-    d = calloc(1, sizeof(deferred_t));
-    deferred_arm(d, notify_timeout, p, delay);
+    callout_arm(NULL, notify_timeout, p, delay);
     return NULL;
   }
 

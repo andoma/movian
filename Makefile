@@ -33,6 +33,7 @@ CFLAGS += -Wmissing-prototypes -Isrc/dvd
 #
 SRCS += src/main.c \
 	src/version.c \
+	src/callout.c \
 	src/navigator.c \
 	src/media.c \
 	src/event.c \

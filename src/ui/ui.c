@@ -32,8 +32,6 @@ static int showtime_retcode = -1;
 static struct ui_list uis;
 static struct uii_list uiis;
 
-static LIST_HEAD(, deferred) deferreds;
-
 static int ui_event_handler(event_t *e, void *opaque);
 
 /**
@@ -103,13 +101,6 @@ ui_init(void)
 int
 ui_main_loop(void)
 {
-  time_t now;
-  struct timespec ts;
-  deferred_t *d;
-  deferred_callback_t *dc;
-
-  ts.tv_nsec = 0;
-
   /* Register an event handler  */
   event_handler_register("uimain", ui_event_handler, EVENTPRI_MAIN, NULL);
 
@@ -119,22 +110,7 @@ ui_main_loop(void)
 
     if(showtime_retcode != -1)
       break;
-
-    time(&now);
-    
-    while((d = LIST_FIRST(&deferreds)) != NULL && d->d_expire <= now) {
-      dc = d->d_callback;
-      LIST_REMOVE(d, d_link);
-      d->d_callback = NULL;
-      dc(d, d->d_opaque);
-    }
-
-    if((d = LIST_FIRST(&deferreds)) != NULL) {
-      ts.tv_sec = d->d_expire;
-      hts_cond_wait_timeout(&ui_cond, &ui_mutex, &ts);
-    } else {
-      hts_cond_wait(&ui_cond, &ui_mutex);
-    }
+    hts_cond_wait(&ui_cond, &ui_mutex);
   }
 
   hts_mutex_unlock(&ui_mutex);
@@ -216,66 +192,3 @@ ui_event_handler(event_t *e, void *opaque)
   return 1;
 }
 
-
-/**
- *
- */
-static int
-deferredcmp(deferred_t *a, deferred_t *b)
-{
-  if(a->d_expire < b->d_expire)
-    return -1;
-  else if(a->d_expire > b->d_expire)
-    return 1;
- return 0;
-}
-
-
-/**
- *
- */
-void
-deferred_arm_abs(deferred_t *d, deferred_callback_t *callback, void *opaque,
-		 time_t when)
-{
-  hts_mutex_lock(&ui_mutex);
-
-  if(d->d_callback != NULL)
-    LIST_REMOVE(d, d_link);
-    
-  d->d_callback = callback;
-  d->d_opaque = opaque;
-  d->d_expire = when;
-
-  LIST_INSERT_SORTED(&deferreds, d, d_link, deferredcmp);
-
-  hts_cond_signal(&ui_cond);
-  hts_mutex_unlock(&ui_mutex);
-}
-
-/**
- *
- */
-void
-deferred_arm(deferred_t *d, deferred_callback_t *callback,
-	     void *opaque, int delta)
-{
-  time_t now;
-  time(&now);
-  
-  deferred_arm_abs(d, callback, opaque, now + delta);
-}
-
-/**
- *
- */
-void
-deferred_disarm(deferred_t *d)
-{
-  hts_mutex_lock(&ui_mutex);
-  if(d->d_callback) {
-    LIST_REMOVE(d, d_link);
-    d->d_callback = NULL;
-  }
-  hts_mutex_unlock(&ui_mutex);
-}
