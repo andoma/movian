@@ -19,6 +19,7 @@
 #ifndef HTSMSG_H_
 #define HTSMSG_H_
 
+#include <stdlib.h>
 #include <inttypes.h>
 #include "queue.h"
 
