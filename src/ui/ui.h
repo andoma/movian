@@ -47,9 +47,15 @@ typedef struct uii {
  */
 typedef struct ui {
 
+  int ui_flags;
+#define UI_SINGLETON  0x1 // Only one instance may run
+#define UI_MAINTHREAD 0x2 // Must execute in main thread, implies UI_SINGLETON
+
   const char *ui_title;
 
   LIST_ENTRY(ui) ui_link;
+
+  int ui_num_instances;
 
   int (*ui_start)(struct ui *ui, int argc, char **argv);
 

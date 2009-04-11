@@ -414,13 +414,23 @@ layout_event_handler(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
 static int
 glw_wii_start(ui_t *ui, int argc, char *argv[])
 {
-  const char *default_theme_path = SHOWTIME_DEFAULT_THEME_URL;
+  const char *theme_path = SHOWTIME_DEFAULT_THEME_URL;
   glw_wii_t *gwii = calloc(1, sizeof(glw_wii_t));
 
-  gwii->gr.gr_uii.uii_ui = ui;
-  gwii->gr.gr_theme = strdup(default_theme_path);
+  /* Parse options */
+  argv++;
+  argc--;
 
-  if(glw_init(&gwii->gr, 14)) {
+  while(argc > 0) {
+    if(!strcmp(argv[0], "--theme") && argc > 1) {
+      theme_path = argv[1];
+      argc -= 2; argv += 2;
+      continue;
+    } else
+      break;
+  }
+
+  if(glw_init(&gwii->gr, 14, theme_path, ui)) {
     printf("GLW failed to init\n");
     sleep(3);
     exit(0);
@@ -444,4 +454,5 @@ ui_t glw_wii_ui = {
   .ui_title = "glw_wii",
   .ui_start = glw_wii_start,
   .ui_dispatch_event = glw_dispatch_event,
+  .ui_flags = UI_MAINTHREAD,
 };

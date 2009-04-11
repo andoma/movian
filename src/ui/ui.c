@@ -104,13 +104,37 @@ ui_default(void)
 }
 
 
+struct uiboot {
+  TAILQ_ENTRY(uiboot) link;
+  ui_t *ui;
+  int argc;
+  char *argv[32];
+};
+
+
+/**
+ *
+ */
+static void *
+ui_trampoline(void *aux)
+{
+  struct uiboot *ub = aux;
+  ub->ui->ui_start(ub->ui, ub->argc, ub->argv);
+  return NULL;
+}
+
 /**
  * Start the user interface(s)
  */
 int
-ui_start(int argc, const char *argv[], const char *argv0)
+ui_start(int argc, const char *argv[], const char *argv00)
 {
   ui_t *ui;
+  int i;
+  char *argv0 = strdup(argv00);
+  struct uiboot *ub, *prim = NULL;
+
+  TAILQ_HEAD(, uiboot) ubs;
 
   hts_mutex_init(&ui_mutex);
   keymapper_init();
@@ -119,7 +143,6 @@ ui_start(int argc, const char *argv[], const char *argv0)
 
 
   if(argc == 0) {
-    char *my_argv[1];
     /* No UI arguments, simple case */
     ui = ui_default();
 
@@ -128,12 +151,62 @@ ui_start(int argc, const char *argv[], const char *argv0)
       return 2;
     }
 
-    my_argv[0] = strdup(argv0);
-    return ui->ui_start(ui, 1, my_argv);
-  } else {
-    fprintf(stderr, "Multiple user interfaces not supported atm\n");
-    return 1;
+    return ui->ui_start(ui, 1, &argv0);
   }
+
+  TAILQ_INIT(&ubs);
+  // This is not exactly beautiful, but works.
+  for(i = 0; i < argc; i++) {
+    char *o, *s = strdup(argv[i]);
+
+    ub = malloc(sizeof(struct uiboot));
+
+    ub->argc = 0;
+
+    while(ub->argc < 32 && (o = strsep(&s, " ")) != NULL)
+      ub->argv[ub->argc++] = o;
+
+    if((ui = ui_by_name(ub->argv[0])) == NULL) {
+      fprintf(stderr, "User interface \"%s\" not found\n", ub->argv[0]);
+      continue;
+    }
+
+    ub->ui = ui;
+
+    if(ui->ui_flags & UI_MAINTHREAD) {
+      if(prim != NULL) {
+	fprintf(stderr, 
+		"User interface \"%s\" can not start because it must run "
+		"in main thread but \"%s\" already do\n",
+		argv[i], prim->ui->ui_title);
+	continue;
+      }
+      prim = ub;
+      ui->ui_num_instances++;
+      continue;
+
+    } else if(ui->ui_flags & UI_SINGLETON) {
+      if(ui->ui_num_instances > 0) {
+	fprintf(stderr, 
+		"User interface \"%s\" not starting, only one instance "
+		"is allowed to run\n", argv[i]);
+	continue;
+      }
+    }
+
+    ui->ui_num_instances++;
+    TAILQ_INSERT_TAIL(&ubs, ub, link);
+  }
+  
+  if(prim == NULL) {
+    prim = TAILQ_FIRST(&ubs);
+    TAILQ_REMOVE(&ubs, prim, link);
+  }
+
+  TAILQ_FOREACH(ub, &ubs, link)
+    hts_thread_create_detached(ui_trampoline, ub);
+
+  return prim->ui->ui_start(prim->ui, prim->argc, prim->argv);
 }
 
 

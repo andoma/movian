@@ -111,10 +111,14 @@ glw_cond_wait(glw_root_t *gr, hts_cond_t *c)
  *
  */
 int
-glw_init(glw_root_t *gr, float fontsize)
+glw_init(glw_root_t *gr, float fontsize, const char *theme, ui_t *ui)
 {
   hts_mutex_init(&gr->gr_mutex);
   gr->gr_courier = prop_courier_create(&gr->gr_mutex);
+  gr->gr_theme = theme;
+
+  gr->gr_uii.uii_ui = ui;
+  gr->gr_uii.uii_prop = prop_create(NULL, "ui");
 
   if(glw_text_bitmap_init(gr, fontsize)) {
     free(gr);

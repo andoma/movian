@@ -242,7 +242,7 @@ typedef struct {
 typedef struct glw_root {
   uii_t gr_uii;
 
-  char *gr_theme;
+  const char *gr_theme;
 
   hts_thread_t gr_thread;
   hts_mutex_t gr_mutex;
@@ -419,7 +419,7 @@ typedef struct glw {
 
 } glw_t;
 
-int glw_init(glw_root_t *gr, float fontsize);
+int glw_init(glw_root_t *gr, float fontsize, const char *theme, ui_t *ui);
 
 void glw_flush0(glw_root_t *gr);
 

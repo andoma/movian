@@ -288,6 +288,7 @@ ui_t gu_ui = {
   .ui_title = "gtk",
   .ui_start = gu_start,
   .ui_dispatch_event = gu_dispatch_event,
+  .ui_flags = UI_SINGLETON,
 };
 
 

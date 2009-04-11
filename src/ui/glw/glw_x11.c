@@ -954,37 +954,40 @@ glw_x11_start(ui_t *ui, int argc, char *argv[])
 {
   glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
   char confname[256];
-  const char *default_theme_path = SHOWTIME_DEFAULT_THEME_URL;
+  const char *theme_path = SHOWTIME_DEFAULT_THEME_URL;
 
-  if(1) {
+  gx11->displayname_real = getenv("DISPLAY");
+  snprintf(confname, sizeof(confname), "glw/x11/default");
+  gx11->displayname_title  = NULL;
 
-    gx11->displayname_real   = getenv("DISPLAY");
-    snprintf(confname, sizeof(confname), "glw/x11/default");
-    gx11->displayname_title  = NULL;
-    
-  } else {
-    const char *arg = "xxx";
+  /* Parse options */
 
-    gx11->displayname_real   = arg;
-    snprintf(confname, sizeof(confname), "glw/x11/%s", arg);
-    gx11->displayname_title  = arg;
+  argv++;
+  argc--;
 
+  while(argc > 0) {
+    if(!strcmp(argv[0], "--display") && argc > 1) {
+      gx11->displayname_real = argv[1];
+      snprintf(confname, sizeof(confname), "glw/x11/%s", argv[1]);
+      gx11->displayname_title  = argv[1];
+      argc -= 2; argv += 2;
+      continue;
+    } else if(!strcmp(argv[0], "--theme") && argc > 1) {
+      theme_path = argv[1];
+      argc -= 2; argv += 2;
+      continue;
+    } else
+      break;
   }
 
   gx11->config_name = strdup(confname);
-  gx11->gr.gr_theme = strdup(default_theme_path);
-
-  /* These should be common code */
-  gx11->gr.gr_uii.uii_ui = ui;
-  gx11->gr.gr_uii.uii_prop = prop_create(NULL, "ui");
 
   glw_x11_init(gx11);
 
-  if(glw_init(&gx11->gr, 40))
+  if(glw_init(&gx11->gr, 40, theme_path, ui))
     return 1;
 
   gx11->running = 1;
-
   
   gx11->universe = glw_model_create(&gx11->gr,
 				    "theme://universe.model", NULL, 0, NULL);
