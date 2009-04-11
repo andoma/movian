@@ -50,7 +50,7 @@ ui_exit_showtime(int retcode)
  *
  */
 static void
-ui_initialize(void)
+ui_register(void)
 {
 #define link_ui(name) do {\
  extern ui_t name ## _ui;\
@@ -83,7 +83,7 @@ ui_init(void)
 
   keymapper_init();
 
-  ui_initialize();
+  ui_register();
 
   ui = LIST_FIRST(&uis);
   if(ui != NULL) {
