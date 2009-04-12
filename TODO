@@ -1,8 +1,5 @@
 3.0 MUST:
 
-* Revamp A/V sync. Check FFmpegs new PTS/DTS API.  
-  In particular, avctx->ticks_per_frame
-
 * Decent fullscreen support
 
 * Per video playback settings
@@ -36,6 +33,3 @@
 * SMB support
 
 * UPnP support
-
-* Better integration of GLW_LIST and GLW_SLIDER
-
