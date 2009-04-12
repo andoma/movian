@@ -940,15 +940,20 @@ font_render_thread(void *aux)
     /* We are going to render unlocked so we cannot use gtb at all */
 
 
-    uc = malloc(gtb->gtb_uc_len * sizeof(int));
     len = gtb->gtb_uc_len;
+    if(len > 0) {
+      uc = malloc(len * sizeof(int));
 
-    if(gtb->w.glw_flags & GLW_PASSWORD) {
-      for(i = 0; i < len; i++)
-	uc[i] = '*';
+      if(gtb->w.glw_flags & GLW_PASSWORD) {
+	for(i = 0; i < len; i++)
+	  uc[i] = '*';
+      } else {
+	memcpy(uc, gtb->gtb_uc_buffer, len * sizeof(int));
+      }
     } else {
-      memcpy(uc, gtb->gtb_uc_buffer, len * sizeof(int));
+      uc = NULL;
     }
+
     gtb->w.glw_refcnt++;  /* just avoid glw_reaper from freeing us */
 
     TAILQ_REMOVE(&gr->gr_gtb_render_queue, gtb, gtb_workq_link);
