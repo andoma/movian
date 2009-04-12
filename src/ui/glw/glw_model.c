@@ -33,11 +33,14 @@
 static glw_t *
 glw_model_error(glw_root_t *gr, errorinfo_t *ei, glw_t *parent)
 {
-  char buf[128];
+  char buf[256];
 
-  snprintf(buf, sizeof(buf), "%s:%d: Error: %s",
+  snprintf(buf, sizeof(buf), "GLW %s:%d", ei->file, ei->line);
+
+  trace(TRACE_ERROR, buf, "%s", ei->error);
+
+  snprintf(buf, sizeof(buf), "GLW %s:%d: Error: %s",
 	   ei->file, ei->line, ei->error);
-  fprintf(stderr, "%s\n", buf);
 
   return glw_create_i(gr,
 		      GLW_LABEL,

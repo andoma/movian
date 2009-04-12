@@ -411,17 +411,16 @@ glw_model_print_tree(token_t *f, int indent)
 int
 glw_model_seterr(errorinfo_t *ei, token_t *b, const char *fmt, ...)
 {
+  char buf[128];
+
   va_list ap;
-
-
   va_start(ap, fmt);
 
   assert(b != NULL);
 
   if(ei == NULL) {
-    fprintf(stderr, "GLW: %s:%d: ", refstr_get(b->file), b->line);
-    vfprintf(stderr, fmt, ap);
-    fprintf(stderr, "\n");
+    snprintf(buf, sizeof(buf), "GLW: %s:%d", refstr_get(b->file), b->line);
+    tracev(TRACE_ERROR, buf, fmt, ap);
     return -1;
   }
 
