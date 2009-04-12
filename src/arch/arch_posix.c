@@ -71,11 +71,14 @@ get_system_concurrency(void)
 #endif /* linux */
 
 
+#include <stdio.h>
+#include <unistd.h>
 #include "arch.h"
 #include "showtime.h"
-#include <stdio.h>
 
 extern int concurrency;
+
+static int decorate_trace;
 
 /**
  *
@@ -84,6 +87,7 @@ void
 arch_init(void)
 {
   concurrency = get_system_concurrency();
+  decorate_trace = isatty(2);
 
   TRACE(TRACE_DEBUG, "core", "Using %d CPU(s)", concurrency);
 
@@ -118,17 +122,24 @@ tracev(int level, const char *subsys, const char *fmt, va_list ap)
   char buf[1024];
   char buf2[64];
   char *s, *p;
-  const char *leveltxt, *sgr;
+  const char *leveltxt, *sgr, *sgroff;
   int l;
 
   if(level > trace_level)
     return;
 
   switch(level) {
-  case TRACE_ERROR: leveltxt = "ERROR"; sgr = "31"; break;
-  case TRACE_INFO:  leveltxt = "INFO";  sgr = "33"; break;
-  case TRACE_DEBUG: leveltxt = "DEBUG"; sgr = "32"; break;
-  default:          leveltxt = "?????"; sgr = "35"; break;
+  case TRACE_ERROR: leveltxt = "ERROR"; sgr = "\033[31m"; break;
+  case TRACE_INFO:  leveltxt = "INFO";  sgr = "\033[33m"; break;
+  case TRACE_DEBUG: leveltxt = "DEBUG"; sgr = "\033[32m"; break;
+  default:          leveltxt = "?????"; sgr = "\033[35m"; break;
+  }
+
+  if(!decorate_trace) {
+    sgr = "";
+    sgroff = "";
+  } else {
+    sgroff = "\033[0m";
   }
 
   vsnprintf(buf, sizeof(buf), fmt, ap);
@@ -139,7 +150,7 @@ tracev(int level, const char *subsys, const char *fmt, va_list ap)
   l = strlen(buf2);
 
   while((s = strsep(&p, "\n")) != NULL) {
-    fprintf(stderr, "\033[%sm%s %s\033[0m\n", sgr, buf2, s);
+    fprintf(stderr, "%s%s %s%s\n", sgr, buf2, s, sgroff);
     memset(buf2, ' ', l);
   }
 }
