@@ -29,9 +29,14 @@ check_gl_ext(const uint8_t *s, const char *func)
 {
   int l = strlen(func);
   char *v;
+  int x;
 
   v = strstr((const char *)s, func);
-  return v != NULL && v[l] < 33;
+  x = v != NULL && v[l] < 33;
+
+  TRACE(TRACE_DEBUG, "OpenGL", "Feature \"%s\" %savailable",
+	func, x ? "" : "not ");
+  return x;
 }
 
 /**
