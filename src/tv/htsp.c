@@ -27,6 +27,7 @@
 #include <arch/atomic.h>
 #include <libavutil/sha1.h>
 
+#include "showtime.h"
 #include "networking/net.h"
 #include "navigator.h"
 #include "keyring.h"
@@ -472,7 +473,7 @@ htsp_worker_thread(void *aux)
       else if(!strcmp(method, "queueStatus"))
 	htsp_queueStatus(hc, m);
       else
-	fprintf(stderr, "HTSP: Unknown async method '%s' received\n",
+	TRACE(TRACE_INFO, "HTSP", "Unknown async method '%s' received",
 		method);
     }
 

@@ -147,7 +147,7 @@ ui_start(int argc, const char *argv[], const char *argv00)
     ui = ui_default();
 
     if(ui == NULL) {
-      fprintf(stderr, "No default user interface specified, exiting\n");
+      TRACE(TRACE_ERROR, "UI", "No default user interface specified, exiting");
       return 2;
     }
 
@@ -167,7 +167,8 @@ ui_start(int argc, const char *argv[], const char *argv00)
       ub->argv[ub->argc++] = o;
 
     if((ui = ui_by_name(ub->argv[0])) == NULL) {
-      fprintf(stderr, "User interface \"%s\" not found\n", ub->argv[0]);
+      TRACE(TRACE_ERROR, "UI", 
+	    "User interface \"%s\" not found", ub->argv[0]);
       continue;
     }
 
@@ -175,10 +176,10 @@ ui_start(int argc, const char *argv[], const char *argv00)
 
     if(ui->ui_flags & UI_MAINTHREAD) {
       if(prim != NULL) {
-	fprintf(stderr, 
-		"User interface \"%s\" can not start because it must run "
-		"in main thread but \"%s\" already do\n",
-		argv[i], prim->ui->ui_title);
+	TRACE(TRACE_ERROR, "UI", 
+	      "User interface \"%s\" can not start because it must run "
+	      "in main thread but \"%s\" already do",
+	      argv[i], prim->ui->ui_title);
 	continue;
       }
       prim = ub;
@@ -187,9 +188,9 @@ ui_start(int argc, const char *argv[], const char *argv00)
 
     } else if(ui->ui_flags & UI_SINGLETON) {
       if(ui->ui_num_instances > 0) {
-	fprintf(stderr, 
-		"User interface \"%s\" not starting, only one instance "
-		"is allowed to run\n", argv[i]);
+	TRACE(TRACE_ERROR, "UI", 
+	      "User interface \"%s\" not starting, only one instance "
+	      "is allowed to run", argv[i]);
 	continue;
       }
     }

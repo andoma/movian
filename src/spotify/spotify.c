@@ -1153,13 +1153,18 @@ static int
 be_spotify_init(void)
 {
   void *h;
+  const char *sym;
 
   h = dlopen("libspotify.so", RTLD_LAZY);
   if(h == NULL) {
-    fprintf(stderr, "spotify: Unable to load libspotify.so\n");
+    TRACE(TRACE_INFO, "spotify", "Unable to load libspotify.so");
     return 1;
   }
-  resolvesym(h);
+  if((sym = resolvesym(h)) != NULL) {
+    TRACE(TRACE_ERROR, "spotify", "Unable to resolve symbol \"%s\"", sym);
+    dlclose(h);
+    return 1;
+  }
   
   TAILQ_INIT(&spotify_msgs);
   TAILQ_INIT(&spotify_uri_pendings);

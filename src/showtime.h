@@ -20,6 +20,7 @@
 #define SHOWTIME_H
 
 #include <inttypes.h>
+#include <stdarg.h>
 #include <sys/time.h>
 #include <htsmsg/htsmsg_store.h>
 #include <arch/threads.h>
@@ -71,5 +72,20 @@ void callout_init(void);
 #define CONTENT_DVD      7
 #define CONTENT_IMAGE    8
 
+/**
+ *
+ */
+
+enum {
+  TRACE_ERROR,
+  TRACE_INFO,
+  TRACE_DEBUG
+};
+
+void tracev(int level, const char *subsys, const char *fmt, va_list ap);
+
+void trace(int level, const char *subsys, const char *fmt, ...);
+
+#define TRACE(level, subsys, fmt...) trace(level, subsys, fmt)
 
 #endif /* SHOWTIME_H */

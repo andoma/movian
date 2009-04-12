@@ -41,6 +41,8 @@
 
 hts_mutex_t ffmutex;
 int concurrency;
+int trace_level;
+
 //static const char *default_theme_path = SHOWTIME_DEFAULT_THEME_URL;
 
 /**
@@ -56,6 +58,8 @@ main(int argc, char **argv)
   const char *argv0 = argc > 0 ? argv[0] : "showtime";
   int nuiargs = 0;
 
+  trace_level = TRACE_ERROR;
+
   gettimeofday(&tv, NULL);
   srand(tv.tv_usec);
 
@@ -66,7 +70,15 @@ main(int argc, char **argv)
   argc--;
 
   while(argc > 0) {
-    if(!strcmp(argv[0], "-s") && argc > 1) {
+    if(!strcmp(argv[0], "-d")) {
+      trace_level++;
+      argc -= 1; argv += 1;
+      continue;
+    } else if(!strcmp(argv[0], "-dd")) {
+      trace_level+=2;
+      argc -= 1; argv += 1;
+      continue;
+    } else if(!strcmp(argv[0], "-s") && argc > 1) {
       settingspath = argv[1];
       argc -= 2; argv += 2;
       continue;

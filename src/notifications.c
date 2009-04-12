@@ -55,17 +55,19 @@ notify_add(notify_type_t type, const char *icon, int delay,
   char msg[256];
   prop_t *p;
   const char *typestr;
-
+  int tl;
   va_list ap;
 
   switch(type) {
-  case NOTIFY_INFO:    typestr = "info";    break;
-  case NOTIFY_WARNING: typestr = "warning"; break;
-  case NOTIFY_ERROR:   typestr = "error";   break;
+  case NOTIFY_INFO:    typestr = "info";    tl = TRACE_INFO;  break;
+  case NOTIFY_WARNING: typestr = "warning"; tl = TRACE_INFO;  break;
+  case NOTIFY_ERROR:   typestr = "error";   tl = TRACE_ERROR; break;
   default: return NULL;
   }
   
   va_start(ap, fmt);
+
+  tracev(tl, "notify", fmt, ap);
 
   vsnprintf(msg, sizeof(msg), fmt, ap);
 

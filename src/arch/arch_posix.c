@@ -72,6 +72,7 @@ get_system_concurrency(void)
 
 
 #include "arch.h"
+#include "showtime.h"
 #include <stdio.h>
 
 extern int concurrency;
@@ -84,7 +85,7 @@ arch_init(void)
 {
   concurrency = get_system_concurrency();
 
-  printf("Using %d CPU(s)\n", concurrency);
+  TRACE(TRACE_DEBUG, "core", "Using %d CPU(s)", concurrency);
 
 #ifdef RLIMIT_AS
   do {
@@ -103,4 +104,55 @@ arch_init(void)
     setrlimit(RLIMIT_DATA, &rlim);
   } while(0);
 #endif
+}
+
+
+extern int trace_level;
+
+/**
+ *
+ */
+void
+tracev(int level, const char *subsys, const char *fmt, va_list ap)
+{
+  char buf[1024];
+  char buf2[64];
+  char *s, *p;
+  const char *leveltxt, *sgr;
+  int l;
+
+  if(level > trace_level)
+    return;
+
+  switch(level) {
+  case TRACE_ERROR: leveltxt = "ERROR"; sgr = "31"; break;
+  case TRACE_INFO:  leveltxt = "INFO";  sgr = "33"; break;
+  case TRACE_DEBUG: leveltxt = "DEBUG"; sgr = "32"; break;
+  default:          leveltxt = "?????"; sgr = "35"; break;
+  }
+
+  vsnprintf(buf, sizeof(buf), fmt, ap);
+
+  p = buf;
+
+  snprintf(buf2, sizeof(buf2), "%s [%s]:", subsys, leveltxt);
+  l = strlen(buf2);
+
+  while((s = strsep(&p, "\n")) != NULL) {
+    fprintf(stderr, "\033[%sm%s %s\033[0m\n", sgr, buf2, s);
+    memset(buf2, ' ', l);
+  }
+}
+
+
+/**
+ *
+ */
+void
+trace(int level, const char *subsys, const char *fmt, ...)
+{
+  va_list ap;
+  va_start(ap, fmt);
+  tracev(level, subsys, fmt, ap);
+  va_end(ap);
 }

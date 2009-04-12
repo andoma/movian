@@ -56,10 +56,6 @@ typedef struct alsa_mixer_controller {
 
 static int alsa_probe_mixer(const char *device, audio_mode_t *am);
 
-#define hts_alsa_debug(fmt...) fprintf(stderr, fmt)
-
-//static int alsa_mixer_setup(void);
-
 /**
  *
  */
@@ -85,8 +81,8 @@ alsa_open(alsa_audio_mode_t *aam, int format, int rate)
     dev = buf;
   } 
 
-  fprintf(stderr, "ALSA: opening device \"%s\"\n", dev);
-  
+  TRACE(TRACE_DEBUG, "ALSA", "Opening device %s", dev);
+
   if((r = snd_pcm_open(&h, dev, SND_PCM_STREAM_PLAYBACK, 0) < 0))
     return NULL;
 
@@ -132,9 +128,6 @@ alsa_open(alsa_audio_mode_t *aam, int format, int rate)
 
   snd_pcm_hw_params_set_channels(h, hwp, ch);
 
-  fprintf(stderr, "audio: %d channels\n", ch);
-
-
   /* Configurue period */
 
   dir = 0;
@@ -146,15 +139,15 @@ alsa_open(alsa_audio_mode_t *aam, int format, int rate)
 
   period_size = 1024;
 
-  fprintf(stderr, "audio: attainable period size %lu - %lu, trying %lu\n",
+  TRACE(TRACE_DEBUG, "ALSA", "attainable period size %lu - %lu, trying %lu",
 	  period_size_min, period_size_max, period_size);
 
 
   dir = 0;
   r = snd_pcm_hw_params_set_period_size_near(h, hwp, &period_size, &dir);
   if(r < 0) {
-    fprintf(stderr, "audio: Unable to set period size %lu (%s)\n",
-	    period_size, snd_strerror(r));
+    TRACE(TRACE_ERROR, "ALSA", "%s: Unable to set period size %lu (%s)",
+	  dev, period_size, snd_strerror(r));
     snd_pcm_close(h);
     return NULL;
   }
@@ -163,8 +156,8 @@ alsa_open(alsa_audio_mode_t *aam, int format, int rate)
   dir = 0;
   r = snd_pcm_hw_params_get_period_size(hwp, &period_size, &dir);
   if(r < 0) {
-    fprintf(stderr, "audio: Unable to get period size (%s)\n",
-	    snd_strerror(r));
+    TRACE(TRACE_ERROR, "ALSA", "%s: Unable to get period size (%s)",
+	  dev, snd_strerror(r));
     snd_pcm_close(h);
     return NULL;
   }
@@ -175,23 +168,22 @@ alsa_open(alsa_audio_mode_t *aam, int format, int rate)
   snd_pcm_hw_params_get_buffer_size_max(hwp, &buffer_size_max);
   buffer_size = period_size * 4;
 
-  fprintf(stderr, "audio: attainable buffer size %lu - %lu, trying %lu\n",
-	  buffer_size_min, buffer_size_max, buffer_size);
-
+  TRACE(TRACE_DEBUG, "ALSA", "attainable buffer size %lu - %lu, trying %lu",
+	buffer_size_min, buffer_size_max, buffer_size);
 
   dir = 0;
   r = snd_pcm_hw_params_set_buffer_size_near(h, hwp, &buffer_size);
   if(r < 0) {
-    fprintf(stderr, "audio: Unable to set buffer size %lu (%s)\n",
-	    buffer_size, snd_strerror(r));
+    TRACE(TRACE_ERROR, "ALSA", "%s: Unable to set buffer size %lu (%s)",
+	  dev, buffer_size, snd_strerror(r));
     snd_pcm_close(h);
     return NULL;
   }
 
   r = snd_pcm_hw_params_get_buffer_size(hwp, &buffer_size);
   if(r < 0) {
-    fprintf(stderr, "audio: Unable to get buffer size (%s)\n",
-	    snd_strerror(r));
+    TRACE(TRACE_ERROR, "ALSA", "%s: Unable to get buffer size (%s)",
+	  dev, snd_strerror(r));
     snd_pcm_close(h);
     return NULL;
   }
@@ -200,8 +192,9 @@ alsa_open(alsa_audio_mode_t *aam, int format, int rate)
   /* write the hw params */
   r = snd_pcm_hw_params(h, hwp);
   if(r < 0) {
-    fprintf(stderr, "audio: Unable to configure hardware parameters (%s)\n",
-	    snd_strerror(r));
+    TRACE(TRACE_ERROR, "ALSA", 
+	  "%s: Unable to configure hardware parameters (%s)",
+	  dev, snd_strerror(r));
     snd_pcm_close(h);
     return NULL;
   }
@@ -219,16 +212,16 @@ alsa_open(alsa_audio_mode_t *aam, int format, int rate)
   r = snd_pcm_sw_params_set_avail_min(h, swp,  period_size);
 
   if(r < 0) {
-    fprintf(stderr, "audio: Unable to configure wakeup threshold (%s)\n",
-	    snd_strerror(r));
+    TRACE(TRACE_ERROR, "ALSA", "%s: Unable to configure wakeup threshold (%s)",
+	  dev, snd_strerror(r));
     snd_pcm_close(h);
     return NULL;
   }
 
   r = snd_pcm_sw_params_set_xfer_align(h, swp, 1);
   if(r < 0) {
-    fprintf(stderr, "audio: Unable to configure xfer alignment (%s)\n",
-	    snd_strerror(r));
+    TRACE(TRACE_ERROR, "ALSA", "%s: Unable to configure xfer alignment (%s)",
+	  dev, snd_strerror(r));
     snd_pcm_close(h);
     return NULL;
   }
@@ -236,33 +229,32 @@ alsa_open(alsa_audio_mode_t *aam, int format, int rate)
 
   snd_pcm_sw_params_set_start_threshold(h, swp, 0);
   if(r < 0) {
-    fprintf(stderr, "audio: Unable to configure start threshold (%s)\n",
-	    snd_strerror(r));
+    TRACE(TRACE_ERROR, "ALSA", "%s: Unable to configure start threshold (%s)",
+	  dev, snd_strerror(r));
     snd_pcm_close(h);
     return NULL;
   }
   
   r = snd_pcm_sw_params(h, swp);
   if(r < 0) {
-    fprintf(stderr, "audio: Cannot set soft parameters (%s)\n", 
-		snd_strerror(r));
+    TRACE(TRACE_ERROR, "ALSA", "%s: Cannot set soft parameters (%s)", 
+	  dev, snd_strerror(r));
     snd_pcm_close(h);
     return NULL;
   }
 
   r = snd_pcm_prepare(h);
   if(r < 0) {
-    fprintf(stderr, "audio: Cannot prepare audio for playback (%s)\n", 
-		snd_strerror(r));
+    TRACE(TRACE_ERROR, "ALSA", "%s: Cannot prepare audio for playback (%s)", 
+	  dev, snd_strerror(r));
     snd_pcm_close(h);
     return NULL;
   }
 
   aam->aam_head.am_preferred_size = period_size;
-
  
-  printf("audio: period size = %ld\n", period_size);
-  printf("audio: buffer size = %ld\n", buffer_size);
+  TRACE(TRACE_DEBUG, "ALSA", "period size = %ld", period_size);
+  TRACE(TRACE_DEBUG, "ALSA", "buffer size = %ld", buffer_size);
 
   return h;
 }
@@ -333,7 +325,8 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
       silence_threshold--;
       if(silence_threshold < 0) {
 	/* We've been silent for a while, close output device */
-	printf("Closing PCM device due to idling\n");
+
+	TRACE(TRACE_DEBUG, "ALSA", "No output, closing device");
 	snd_pcm_close(h);
 	h = NULL;
       }
@@ -459,16 +452,17 @@ alsa_probe(const char *card, const char *dev)
 
   info = alloca(snd_pcm_info_sizeof());
 
-  fprintf(stderr, "\n===============================================\n"
-	  "ALSA: probing device \"%s\"\n", dev);
+  TRACE(TRACE_DEBUG, "ALSA", "Probing device %s", dev);
 
   if((r = snd_pcm_open(&h, dev, SND_PCM_STREAM_PLAYBACK, 0) < 0)) {
-    printf("Unable to open -- %s\n", snd_strerror(r));
+    TRACE(TRACE_DEBUG, "ALSA", "Probing unable to open %s (%s)", 
+	  dev, snd_strerror(r));
     return -1;
   }
 
   if(snd_pcm_info(h, info) < 0) {
-    fprintf(stderr, "Unable to obtain info -- %s\n", snd_strerror(r));
+    TRACE(TRACE_DEBUG, "ALSA", 
+	  "%s: Unable to obtain info (%s)", dev, snd_strerror(r));
     snd_pcm_close(h);
     return -1;
   }
@@ -479,27 +473,30 @@ alsa_probe(const char *card, const char *dev)
 
   snprintf(longtitle, sizeof(longtitle), "Alsa - %s", name);
 
-  fprintf(stderr, "Device name: \"%s\"\n", name);
+  TRACE(TRACE_DEBUG, "ALSA", "%s: Device name: \"%s\"", dev, name);
 
   hwp = alloca(snd_pcm_hw_params_sizeof());
   memset(hwp, 0, snd_pcm_hw_params_sizeof());
 
   if((r = snd_pcm_hw_params_any(h, hwp)) < 0) {
-    fprintf(stderr, "Unable to query hw params -- %s\n", snd_strerror(r));
+    TRACE(TRACE_DEBUG, "ALSA", 
+	  "%s: Unable to query hw params (%s)", dev, snd_strerror(r));
     snd_pcm_close(h);
     return -1;
   }
 
   if((r = snd_pcm_hw_params_set_access(h, hwp,
 				       SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
-    fprintf(stderr, "No interleaved support -- %s\n", snd_strerror(r));
+    TRACE(TRACE_DEBUG, "ALSA", 
+	  "%s: No interleaved support (%s)", dev, snd_strerror(r));
     snd_pcm_close(h);
     return -1;
   }
 
   if((r = snd_pcm_hw_params_set_format(h, hwp,
 				       SND_PCM_FORMAT_S16_LE)) < 0) {
-    fprintf(stderr, "No 16bit LE support -- %s\n", snd_strerror(r));
+    TRACE(TRACE_DEBUG, "ALSA", 
+	  "%s: No 16bit LE support (%s)", dev, snd_strerror(r));
     snd_pcm_close(h);
     return -1;
   }
@@ -520,7 +517,7 @@ alsa_probe(const char *card, const char *dev)
     rates |= AM_SR_24000;
 
   if(rates == 0) {
-    fprintf(stderr, "No 48kHz support\n");
+    TRACE(TRACE_DEBUG, "ALSA", "%s: No 48kHz support", dev);
     snd_pcm_close(h);
     return -1;
   }
@@ -535,7 +532,7 @@ alsa_probe(const char *card, const char *dev)
     formats |= AM_FORMAT_PCM_7DOT1;
 
   if(formats == 0) {
-    fprintf(stderr, "No usable channel configuration\n");
+    TRACE(TRACE_DEBUG, "ALSA", "%s: No usable channel configuration", dev);
     snd_pcm_close(h);
     return -1;
   }
@@ -550,14 +547,16 @@ alsa_probe(const char *card, const char *dev)
   if(is_iec958) {
     /* Test if we can output passthru as well*/
 
-    fprintf(stderr, "Seems to be IEC859 (SPDIF), verifying passthru\n");
+    TRACE(TRACE_DEBUG, "ALSA", 
+	  "%s: Seems to be IEC859 (SPDIF), verifying passthru", dev);
 
 
     snprintf(buf, sizeof(buf), "%s:AES0=0x2,AES1=0x82,AES2=0x0,AES3=0x2",
 	     dev);
 
     if((r = snd_pcm_open(&h, buf, SND_PCM_STREAM_PLAYBACK, 0) < 0)) {
-      fprintf(stderr, "SPDIF passthru not working\n");
+      TRACE(TRACE_DEBUG, "ALSA", 
+	    "%s: SPDIF passthru not working", dev);
       return 0;
     } else {
       snd_pcm_close(h);
@@ -565,7 +564,8 @@ alsa_probe(const char *card, const char *dev)
     }
   }
 
-  fprintf(stderr, "Ok%s\n", is_iec958 ? ", SPDIF" : "");
+  TRACE(TRACE_DEBUG, "ALSA", 
+	"%s: Ok%s", dev, is_iec958 ? ", SPDIF" : "");
 
   aam = calloc(1, sizeof(alsa_audio_mode_t));
   aam->aam_head.am_formats = formats;
@@ -608,7 +608,7 @@ alsa_probe_devices(void)
     // Get next sound card's card number. When "cardNum" == -1, then ALSA
     // fetches the first card
     if((err = snd_card_next(&cardNum)) < 0) {
-      fprintf(stderr, "ALSA: Can't get the next card number: %s\n",
+      TRACE(TRACE_DEBUG, "ALSA", "Can't get the next card number: %s",
 	      snd_strerror(err));
       break;
     }
@@ -622,7 +622,8 @@ alsa_probe_devices(void)
 
     snprintf(cardname, sizeof(cardname), "hw:%i", cardNum);
     if((err = snd_ctl_open(&cardHandle, cardname, 0)) < 0) {
-      printf("ALSA: Can't open card %i: %s\n", cardNum, snd_strerror(err));
+      TRACE(TRACE_DEBUG, "ALSA", 
+	    "Can't open card %i: %s", cardNum, snd_strerror(err));
       continue;
     }
 
@@ -634,7 +635,8 @@ alsa_probe_devices(void)
 
       // Get the number of the next wave device on this card
       if((err = snd_ctl_pcm_next_device(cardHandle, &devNum)) < 0) {
-	fprintf(stderr, "ALSA: Can't get next wave device number: %s\n",
+	TRACE(TRACE_DEBUG, "ALSA", 
+	      "Can't get next wave device number: %s",
 		snd_strerror(err));
 	break;
       }
@@ -817,28 +819,28 @@ alsa_probe_mixer(const char *device, audio_mode_t *am)
   snd_mixer_elem_t *elem;
 	
   if((err = snd_mixer_open(&handle, 0)) < 0) {
-    fprintf(stderr, 
-	    "Mixer %s open error: %s\n", device, snd_strerror(err));
+    TRACE(TRACE_DEBUG, "ALSA", 
+	    "Mixer %s open error: %s", device, snd_strerror(err));
     return err;
   }
 
   if((err = snd_mixer_attach(handle, device)) < 0) {
-    fprintf(stderr, "Mixer attach %s error: %s",
-	    device, snd_strerror(err));
+    TRACE(TRACE_DEBUG, "ALSA", "Mixer attach %s error: %s",
+	  device, snd_strerror(err));
     snd_mixer_close(handle);
     return err;
   }
 
   if((err = snd_mixer_selem_register(handle, NULL, NULL)) < 0) {
-    fprintf(stderr, 
-	    "Mixer %s register error: %s", device, snd_strerror(err));
+    TRACE(TRACE_DEBUG, "ALSA", 
+	  "Mixer %s register error: %s", device, snd_strerror(err));
     snd_mixer_close(handle);
     return err;
   }
 
   if((err = snd_mixer_load(handle)) < 0) {
-    fprintf(stderr, 
-	    "Mixer %s load error: %s", device, snd_strerror(err));
+    TRACE(TRACE_DEBUG, "ALSA", 
+	  "Mixer %s load error: %s", device, snd_strerror(err));
     snd_mixer_close(handle);
     return err;
   }

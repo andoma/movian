@@ -64,7 +64,7 @@ fa_imageloader(fa_image_load_ctrl_t *ctrl, const char *theme)
     return -1;
 
   if(fa_read(fh, p, sizeof(p)) != sizeof(p)) {
-    fprintf(stderr, "%s: file too short\n", filename);
+    TRACE(TRACE_INFO, "imageloader", "%s: file too short", filename);
     fa_close(fh);
     return -1;
   }
@@ -79,7 +79,7 @@ fa_imageloader(fa_image_load_ctrl_t *ctrl, const char *theme)
   } else if(!memcmp(pngsig, p, 8)) {
     ctrl->codecid = CODEC_ID_PNG;
   } else {
-    fprintf(stderr, "%s: format not known\n", filename);
+    TRACE(TRACE_INFO, "imageloader", "%s: unknown format", filename);
     fa_close(fh);
     return -1;
   }
