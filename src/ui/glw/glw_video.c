@@ -68,7 +68,8 @@ glp_check_error(const char *name)
 
   errstr = glGetString(GL_PROGRAM_ERROR_STRING_ARB);
 
-  fprintf(stderr, "%s: error \"%s\" on line %d\n", name, errstr, errpos);
+  TRACE(TRACE_ERROR, "OpenGL Video", 
+	"%s: error \"%s\" on line %d", name, errstr, errpos);
   return 0;
 }
 
