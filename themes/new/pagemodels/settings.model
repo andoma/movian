@@ -1,31 +1,30 @@
 #include "theme://include/plates.model"
 
-widget(container_y, {
-
-  widget(label, {
-    .size = 2.0f;
-    .align = center;
-    .caption = $self.title;
-  });
-
+widget(container_x, {
   widget(list_y, {
-    .weight = 10;
-    .slices = 10;
+    .id = "list";
     cloner($page.nodes, container_z, {
       widget(animator, {
 	.source = "theme://settings/" + $self.type + ".model";
       });
     });
   });
-  /*
-  widget(stack_x, {
-    .align = center;
-    BUTTON_IMAGE($page.mayadd, 1.0, "theme://icons/add.png", {
-      createChild($page.nodes);
+  widget(slider_y, {
+    .weight = 0.035;
+    .focusable = 0.2;
+    bind("list");
+    
+    widget(image, {
+      KNOB_PROPS();
     });
   });
-  */
-  space(1.0);
 });
-
+/*
+  widget(stack_x, {
+  .align = center;
+  BUTTON_IMAGE($page.mayadd, 1.0, "theme://icons/add.png", {
+  createChild($page.nodes);
+  });
+  });
+*/
 

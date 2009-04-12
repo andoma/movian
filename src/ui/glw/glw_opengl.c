@@ -82,3 +82,50 @@ glw_store_matrix(glw_t *w, glw_rctx_t *rc)
   }
 }
 
+/**
+ *
+ */
+static const GLdouble clip_planes[4][4] = {
+  [GLW_CLIP_TOP]    = { 0.0, -1.0, 0.0, 1.0},
+  [GLW_CLIP_BOTTOM] = { 0.0,  1.0, 0.0, 1.0},
+  [GLW_CLIP_LEFT]   = {-1.0,  0.0, 0.0, 1.0},
+  [GLW_CLIP_RIGHT]  = { 1.0,  0.0, 0.0, 1.0},
+};
+
+
+/**
+ *
+ */
+int
+glw_clip_enable(glw_rctx_t *rc, glw_clip_boundary_t how)
+{
+  int i;
+  for(i = 0; i < 6; i++)
+    if(!(rc->rc_be.gbr_active_clippers & (1 << i)))
+      break;
+
+  if(i == 6)
+    return -1;
+
+  rc->rc_be.gbr_active_clippers |= (1 << i);
+
+  glClipPlane(GL_CLIP_PLANE0 + i, clip_planes[how]);
+  glEnable(GL_CLIP_PLANE0 + i);
+  return i;
+}
+
+
+/**
+ *
+ */
+void
+glw_clip_disable(glw_rctx_t *rc, int which)
+{
+  if(which == -1)
+    return;
+
+  rc->rc_be.gbr_active_clippers &= ~(1 << which);
+  glDisable(GL_CLIP_PLANE0 + which);
+}
+
+

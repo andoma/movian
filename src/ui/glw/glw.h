@@ -133,6 +133,7 @@ typedef enum {
   GLW_ATTRIB_PIXMAP,
   GLW_ATTRIB_ORIGINATING_PROP,
   GLW_ATTRIB_FOCUS_WEIGHT,
+  GLW_ATTRIB_CHILD_ASPECT,
 } glw_attribute_t;
 
 #define GLW_MIRROR_X   0x1
@@ -221,6 +222,13 @@ typedef enum {
    *
    */
   GLW_SIGNAL_SCROLL,
+
+  /**
+   * Sent to all parents of a widget that has been focused interactively.
+   * This allows various widgets to scroll the widget into viewable area
+   */
+  GLW_SIGNAL_FOCUS_INTERACTIVE,
+
 
 } glw_signal_t;
 
@@ -389,7 +397,7 @@ typedef struct glw {
 #define GLW_DEBUG               0x80    /* Debug this object */
 #define GLW_PASSWORD            0x100   /* Don't display real contents */
 #define GLW_FOCUS_BLOCKED       0x200
-
+#define GLW_UPDATE_METRICS      0x400
 
   glw_vertex_t glw_displacement;
 
@@ -458,6 +466,23 @@ void glw_focus_unblock_path(glw_t *w);
 void glw_focus_crawl(glw_t *w, int forward);
 
 int glw_focus_step(glw_t *w, int forward);
+
+void glw_focus_set_current_by_path(glw_t *w, int interactive);
+
+
+/**
+ * Clipping
+ */
+typedef enum {
+  GLW_CLIP_TOP,
+  GLW_CLIP_BOTTOM,
+  GLW_CLIP_LEFT,
+  GLW_CLIP_RIGHT,
+} glw_clip_boundary_t;
+
+int glw_clip_enable(glw_rctx_t *rc, glw_clip_boundary_t gcb);
+
+void glw_clip_disable(glw_rctx_t *rc, int which);
 
 
 /**
@@ -563,6 +588,7 @@ do {						\
   case GLW_ATTRIB_INT_MAX:                      \
   case GLW_ATTRIB_SIZE:                         \
   case GLW_ATTRIB_FOCUS_WEIGHT:                 \
+  case GLW_ATTRIB_CHILD_ASPECT:                 \
     (void)va_arg(ap, double);			\
     break;					\
   }						\

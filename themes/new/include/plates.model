@@ -17,6 +17,12 @@
   .focusable = FOCUS;
 }
 
+#define KNOB_PROPS() {
+  .source = "theme://images/slider.png";
+  .textureCoords = [0.22, 0.093, 0.56, 0.812];
+  .color = [0.0, 0.0, 0.0] + iir(isFocused(), 4) * BUTTON_COLOR() + iir(isHovered(), 4) * [0.1, 0.3, 0.3];
+  .alphaSelf = iir(0.5 + 0.5 * (isFocused()), 4);
+}
 
 
 

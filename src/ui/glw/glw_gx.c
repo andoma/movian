@@ -34,3 +34,25 @@ glw_store_matrix(glw_t *w, glw_rctx_t *rc)
     memcpy(gcp->gcp_m, w->glw_matrix, 16 * sizeof(float));
   }
 }
+
+
+/**
+ *
+ */
+int
+glw_clip_enable(glw_rctx_t *rc, glw_clip_boundary_t how)
+{
+  // XXX: TODO
+  return 0;
+}
+
+
+/**
+ *
+ */
+void
+glw_clip_disable(glw_rctx_t *rc, int which)
+{
+  // XXX: TODO
+}
+

@@ -119,8 +119,9 @@ find_candidate(glw_t *w, query_t *query)
 
   case GLW_LIST_X:
   case GLW_LIST_Y:
-    /* We end up here if we try to enter a GLW_LIST from outside */
-    if(query->direction) {
+    if(w->glw_focused) {
+      c = w->glw_focused;
+    } else if(query->direction) {
       c = TAILQ_FIRST(&w->glw_childs);
     } else {
       c = TAILQ_LAST(&w->glw_childs, glw_queue);
@@ -128,7 +129,6 @@ find_candidate(glw_t *w, query_t *query)
 
     if(c != NULL)
       find_candidate(c, query);
-
     break;
 
   case GLW_CONTAINER_Z:

@@ -19,347 +19,295 @@
 #include "glw.h"
 #include "glw_list.h"
 
-#define glw_parent_x      glw_parent_misc[0]
-#define glw_parent_y      glw_parent_misc[1]
-#define glw_parent_zoom   glw_parent_misc[2]
+#define glw_parent_size_x glw_parent_misc[0]
+#define glw_parent_size_y glw_parent_misc[1]
 
+/**
+ *
+ */
 static void
-glw_list_reposition_childs(glw_list_t *l)
+glw_list_update_metrics(glw_list_t *l, float max, float val)
+{
+  l->w.glw_flags &= ~GLW_UPDATE_METRICS;
+  l->metrics.knob_size = 2.0 / (max + 2.0);
+  if(max > 0)
+    l->metrics.position = val / max;
+  else
+    l->metrics.position = 0;
+
+  glw_signal0(&l->w, GLW_SIGNAL_SLIDER_METRICS, &l->metrics);
+}
+
+
+/**
+ *
+ */
+static void
+glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
 {
   glw_t *c, *w = &l->w;
-  float vd, v;
-  int n = 0;
+  float y = 0;
+  float da, sa, size_y, t, vy;
+  glw_rctx_t rc0 = *rc;
 
-  vd = 2. / l->visible;
-  v = -1.0f + vd * 0.5;
+  sa = rc->rc_size_x / rc->rc_size_y;
+
+  t = GLW_MIN(GLW_MAX(0, l->center_y_target), l->center_y_max);
+  l->center_y = GLW_LP(6, l->center_y, t);
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-    n++;
-    if(w->glw_class == GLW_LIST_X) {
-      c->glw_parent_x = w->glw_displacement.x + v;
-      c->glw_parent_y = w->glw_displacement.y;
-    } else {
-      c->glw_parent_x = w->glw_displacement.x;
-      c->glw_parent_y = w->glw_displacement.y - v;
+
+    da = GLW_MAX(c->glw_aspect ?: l->child_aspect, sa);
+
+    size_y = sa / da;
+    c->glw_parent_size_y = size_y;
+
+    vy = y + size_y;
+
+    c->glw_parent_pos.y = w->glw_displacement.y + 1.0 - vy + l->center_y;
+
+    if(c->glw_parent_pos.y - c->glw_parent_size_y <= 1.5f &&
+       c->glw_parent_pos.y + c->glw_parent_size_y >= -1.5f) {
+
+      c->glw_parent_pos.z = w->glw_displacement.z;
+      c->glw_parent_pos.x = w->glw_displacement.x;
+
+      c->glw_parent_scale.y = size_y;
+      rc0.rc_size_y = rc->rc_size_y * size_y;
+      glw_layout0(c, &rc0);
     }
-    c->glw_parent_pos.z = w->glw_displacement.z;
-    v += vd;
+
+    if(c == l->scroll_to_me) {
+      l->scroll_to_me = NULL;
+     
+      if(vy + size_y - l->center_y_target > 2) {
+	t = vy + size_y - 2;
+	l->w.glw_flags |= GLW_UPDATE_METRICS;
+      } else if(vy - size_y - l->center_y_target < 0) {
+	t = vy - size_y;
+	l->w.glw_flags |= GLW_UPDATE_METRICS;
+      }
+    }
+    y += size_y * 2;
   }
 
-  l->size = v + 1.0 - vd * 0.5;
+  y = GLW_MAX(y - 2, 0);
+  
+  if(l->center_y_max != y)
+    l->w.glw_flags |= GLW_UPDATE_METRICS;
 
-  l->metrics.knob_size = GLW_MIN(1.0, (float)l->visible / n);
-  glw_signal0(&l->w, GLW_SIGNAL_SLIDER_METRICS, &l->metrics);
+  l->center_y_max = y;
+  l->center_y_target = t;
+
+  if(l->w.glw_flags & GLW_UPDATE_METRICS)
+    glw_list_update_metrics(l, y, t);
 }
 
 
 
 /**
- * Return size consumed by child,
  *
- * If zero, we should no longer do any layouting
  */
 static void
-glw_list_layout_child(glw_list_t *l, glw_t *c, glw_rctx_t *rc,
-		      float *xdp, float *ydp, float expansion_factor)
+glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
 {
+  glw_t *c, *w = &l->w;
+  float x = 0;
+  float da, sa, size_x, t, vx;
   glw_rctx_t rc0 = *rc;
-  float scale, xs, ys, zdisplace;
-  int issel = l->focused_child == c;
-  float alpha = 1.0;
-  float v;
 
-  c->glw_parent_pos.x = c->glw_parent_x - l->xcenter - *xdp;
-  c->glw_parent_pos.y = c->glw_parent_y - l->ycenter - *ydp;
+  sa = rc->rc_size_x / rc->rc_size_y;
 
-  if(l->w.glw_class == GLW_LIST_X) {
-    c->glw_parent_pos.x -= expansion_factor / l->visible;
-  } else {
-    c->glw_parent_pos.y += expansion_factor / l->visible;
-  }
+  t = GLW_MIN(GLW_MAX(0, l->center_x_target), l->center_x_max);
+  l->center_x = GLW_LP(6, l->center_x, t);
 
-  scale = 1.0f;
-  zdisplace = 0.0f;
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
 
-  xs = ys = scale;
+    da = GLW_MIN(c->glw_aspect ?: l->child_aspect, sa);
 
-  rc0.rc_zoom = c->glw_parent_zoom;
+    size_x = da / sa;
 
-  if(l->w.glw_class == GLW_LIST_X) {
-    xs *= c->glw_parent_zoom + 1.;
-    *xdp -= 2 * c->glw_parent_zoom / (float)l->visible;
-    c->glw_parent_pos.x += c->glw_parent_zoom / (float)l->visible;
+    c->glw_parent_size_x = size_x;
+
+    vx = x + size_x;
+
+    c->glw_parent_pos.x = w->glw_displacement.x - 1.0 + vx - l->center_x;
+    c->glw_parent_pos.y = w->glw_displacement.y;
+    c->glw_parent_pos.z = w->glw_displacement.z;
     
-  } else {
-    ys *= c->glw_parent_zoom + 1.;
-    *ydp += 2 * c->glw_parent_zoom / (float)l->visible;
-    c->glw_parent_pos.y -= c->glw_parent_zoom / (float)l->visible;
-    
+    c->glw_parent_scale.x = size_x;
+
+    rc0.rc_size_x = rc->rc_size_x * size_x;
+
+    glw_layout0(c, &rc0);
+
+    if(c == l->scroll_to_me) {
+      l->scroll_to_me = NULL;
+     
+      if(vx + size_x - l->center_x_target > 2) {
+	t = vx + size_x - 2;
+	l->w.glw_flags |= GLW_UPDATE_METRICS;
+      } else if(vx - size_x - l->center_x_target < 0) {
+	t = vx - size_x;
+	l->w.glw_flags |= GLW_UPDATE_METRICS;
+      }
+    }
+    x += size_x * 2;
   }
 
-  c->glw_parent_scale.x = l->xs * xs;
-  c->glw_parent_scale.y = l->ys * ys;
+  x = GLW_MAX(x - 2, 0);
 
-  c->glw_parent_scale.z = (c->glw_parent_scale.x + c->glw_parent_scale.y) / 2;
+  if(l->center_x_max != x)
+    l->w.glw_flags |= GLW_UPDATE_METRICS;
 
-  c->glw_parent_pos.z   = GLW_LP(8, c->glw_parent_pos.z,    zdisplace);
 
-  rc0.rc_size_x = rc->rc_size_x * c->glw_parent_scale.x;
-  rc0.rc_size_y = rc->rc_size_y * c->glw_parent_scale.y;
+  l->center_x_max = x;
+  l->center_x_target = t;
 
-  c->glw_parent_alpha = GLW_LP(16, c->glw_parent_alpha, alpha);
-
-  if(l->w.glw_class == GLW_LIST_X) {
-    v = fabs(c->glw_parent_pos.x) - 0.9f;
-  } else {
-    v = fabs(c->glw_parent_pos.y) - 0.9f;
-  }
-
-  v = GLW_LERP(GLW_MIN(GLW_MAX(v * 6., 0), 1), 1.0f, 0.0f);
-  c->glw_parent_alpha *= v;
-
-  rc0.rc_exp_req = 1;
-  glw_layout0(c, &rc0);
-  c->glw_parent_zoom = GLW_LP(8, c->glw_parent_zoom, 
-			      issel ? rc0.rc_exp_req - 1.0 : 0);
-
-  if(c->glw_parent_alpha > 0.02)
-    glw_link_render_list(&l->w, c);
+  if(l->w.glw_flags & GLW_UPDATE_METRICS)
+    glw_list_update_metrics(l, x, t);
 }
 
 
-
+/**
+ *
+ */
 static void
-glw_list_layout(glw_t *w, glw_rctx_t *rc)
+glw_list_render(glw_list_t *l, glw_rctx_t *rc)
 {
-  glw_list_t *l = (void *)w;
-  glw_t *c, *p, *n;
-  float d, xx, yy, xd = 0, yd = 0, thres, v;
-  float expansion_factor;
-  int i;
-
-  if(w->glw_alpha < 0.01)
+  glw_t *c, *w = &l->w;
+  glw_rctx_t rc0;
+  int clip1, clip2;
+  if(rc->rc_alpha < 0.01)
     return;
-
-  glw_flush_render_list(w);
-
-  if(l->reposition_needed) {
-
-    if(w->glw_class == GLW_LIST_X) {
-      l->xs = 1.0f / (float)l->visible;
-      l->ys = 1.0f;
-      l->ycenter = l->ycenter_target = 0;
-    } else {
-      l->xs = 1.0f;
-      l->ys = 1.0f / (float)l->visible;
-      l->xcenter = l->xcenter_target = 0;
-    }
-    l->reposition_needed = 0;
-    glw_list_reposition_childs(l);
-  }
-
-  c = w->glw_focused;
-
-  if(c != NULL) {
-    
-    if(l->focused_child != c) {
-      /* Focus changed, grab back control of scroll position */
-      l->extctrl = 0;
-      l->focused_child = c;
-    }
-
-  } else {
-    c = l->focused_child;
-  }
-  if(c == NULL) {
-    c = TAILQ_FIRST(&w->glw_childs);
-    if(c == NULL)
-      return;
-  }
-
-  thres = 1 + 10 * 1.0f / (float)l->visible;
-
-  l->expansion_factor = GLW_LP(8, l->expansion_factor, c->glw_conf_weight - 1.0f);
-
-  expansion_factor = l->expansion_factor;
-    
-  i = 0;
-  n = c;
-  while(1) {
-    
-    p = TAILQ_PREV(n, glw_queue, glw_parent_link);
-    if(p == NULL)
-      break;
-
-    xx = p->glw_parent_x - l->xcenter;
-    yy = p->glw_parent_y - l->ycenter;
-    
-    if(yy > thres || xx < -thres)
-      break;
-    
-    n = p;
-    i++;
-  }
-
-  i = 0;
-  while(1) {
-    glw_list_layout_child(l, n, rc, &xd, &yd, expansion_factor);
-    
-    if(n->glw_parent_pos.y < -thres || n->glw_parent_pos.x > thres)
-      break;
-    
-    n = TAILQ_NEXT(n, glw_parent_link);
-    if(n == NULL)
-      break;
-    i++;
-  }
-
-  if(!l->extctrl) {
-
-    if(l->w.glw_class == GLW_LIST_X) {
-      d = c->glw_parent_x - l->xcenter_target;
-      if(d > 0.7f)
-	l->xcenter_target += l->xs * 2;
-      else if(d < -0.7f) 
-	l->xcenter_target -= l->xs * 2;
-      else
-	goto nochange;
-
-      v = l->xcenter_target / (l->size - 2.0);
-
-    } else {
-
-      d = c->glw_parent_y - l->ycenter_target;
-      if(d > 0.7f)
-	l->ycenter_target += l->ys * 2 * d;
-      else if(d < -0.7f) 
-	l->ycenter_target -= l->ys * 2 * -d;
-      else
-	goto nochange;
-
-      
-      v = -l->ycenter_target / (l->size - 2.0);
-    }
-
-    l->metrics.position = GLW_MIN(GLW_MAX(v, 0.0), 1.0);
-    glw_signal0(&l->w, GLW_SIGNAL_SLIDER_METRICS, &l->metrics);
-  }
- nochange:
-  l->xcenter = GLW_LP(16, l->xcenter, l->xcenter_target);
-  l->ycenter = GLW_LP(16, l->ycenter, l->ycenter_target);
-}
-
-
-
-
-static void
-glw_list_render(glw_t *w, glw_rctx_t *rc)
-{
-  glw_rctx_t rc0 = *rc;
-  glw_t *c;
-  float alpha = rc->rc_alpha * w->glw_alpha;
 
   glw_store_matrix(w, rc);
-
-  if(alpha < 0.01)
-    return;
-
-  TAILQ_FOREACH(c, &w->glw_render_list, glw_render_link) {
-
-    rc0.rc_alpha  = alpha * c->glw_parent_alpha;
-    rc0.rc_zoom = c->glw_parent_zoom;
-    glw_render_TS(c, &rc0, rc);
+  
+  if(w->glw_class == GLW_LIST_X) {
+    clip1 = glw_clip_enable(rc, GLW_CLIP_LEFT);
+    clip2 = glw_clip_enable(rc, GLW_CLIP_RIGHT);
+  } else {
+    clip1 = glw_clip_enable(rc, GLW_CLIP_TOP);
+    clip2 = glw_clip_enable(rc, GLW_CLIP_BOTTOM);
   }
+
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+
+    if(c->glw_parent_pos.y - c->glw_parent_size_y <= 1.0f &&
+       c->glw_parent_pos.y + c->glw_parent_size_y >= -1.0f &&
+       c->glw_parent_pos.x - c->glw_parent_size_x <= 1.0f &&
+       c->glw_parent_pos.x + c->glw_parent_size_x >= -1.0f) {
+      rc0 = *rc;
+      glw_render_TS(c, &rc0, rc);
+      c->glw_flags &= ~GLW_FOCUS_BLOCKED;
+    } else {
+      c->glw_flags |= GLW_FOCUS_BLOCKED;
+    }
+  }
+
+  glw_clip_disable(rc, clip1);
+  glw_clip_disable(rc, clip2);
 }
 
 
+/**
+ *
+ */
 static void
 glw_list_scroll(glw_list_t *l, glw_scroll_t *gs)
 {
-  float v = gs->value;
-
-  l->extctrl = 1;
-
-  if(l->w.glw_class == GLW_LIST_X) {
-
-  } else {
-
-    l->ycenter_target = -v * (l->size - 2.0);
-  }
+  if(l->w.glw_class == GLW_LIST_Y)
+    l->center_y_target = gs->value * l->center_y_max;
+  else
+    l->center_x_target = gs->value * l->center_x_max;
 }
 
 
-
+/**
+ *
+ */
 static int
 glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_rctx_t *rc = extra;
   glw_list_t *l = (void *)w;
   glw_pointer_event_t *gpe;
+  glw_t *c;
 
   switch(signal) {
   default:
     break;
   case GLW_SIGNAL_LAYOUT:
-    glw_list_layout(w, rc);
+    if(w->glw_class == GLW_LIST_Y)
+      glw_list_layout_y(l, rc);
+    else
+      glw_list_layout_x(l, rc);
     return 0;
 
   case GLW_SIGNAL_RENDER:
-    glw_list_render(w, rc);
+    glw_list_render(l, rc);
+    return 0;
+
+  case GLW_SIGNAL_FOCUS_INTERACTIVE:
+    l->scroll_to_me = extra;
     return 0;
 
   case GLW_SIGNAL_CHILD_CREATED:
+    c = extra;
+
+    c->glw_parent_size_x = 0.5;
+    c->glw_parent_size_y = 0.5;
+
+    c->glw_parent_scale.x = 1.0;
+    c->glw_parent_scale.y = 1.0;
+    c->glw_parent_scale.z = 1.0;
+    break;
+
   case GLW_SIGNAL_CHILD_DESTROYED:
-    if(l->focused_child == extra)
-      l->focused_child = NULL;
-
-    l->reposition_needed = 1;
-    return 0;
-
-  case GLW_SIGNAL_SELECT:
-    w->glw_selected = extra;
-    return 0;
+    if(l->scroll_to_me == extra)
+      l->scroll_to_me = NULL;
+    break;
 
   case GLW_SIGNAL_POINTER_EVENT:
     gpe = extra;
 
-    if(w->glw_focused == NULL)
-      break;
-
-    if(gpe->type == GLW_POINTER_SCROLL_DOWN)
-      return glw_focus_step(w, 1);
-    else if(gpe->type == GLW_POINTER_SCROLL_UP)
-      return glw_focus_step(w, 0);
+    if(gpe->type == GLW_POINTER_SCROLL_DOWN) {
+      l->center_y_target += 0.2;
+      l->w.glw_flags |= GLW_UPDATE_METRICS;
+    } else if(gpe->type == GLW_POINTER_SCROLL_UP) {
+      l->center_y_target -= 0.2;
+      l->w.glw_flags |= GLW_UPDATE_METRICS;
+    }
     break;
-
 
   case GLW_SIGNAL_SCROLL:
     glw_list_scroll(l, extra);
-    return 1;
-
+    break;
   }
   return 0;
 }
 
 
-
+/**
+ *
+ */
 void 
 glw_list_ctor(glw_t *w, int init, va_list ap)
 {
-  glw_list_t *h = (void *)w;
+  glw_list_t *l = (void *)w;
   glw_attribute_t attrib;
 
   if(init) {
     glw_signal_handler_int(w, glw_list_callback);
-    h->visible = 5;
+    l->child_aspect = w->glw_class == GLW_LIST_Y ? 20 : 1;
   }
 
   do {
     attrib = va_arg(ap, int);
     switch(attrib) {
-    case GLW_ATTRIB_SLICES:
-      h->reposition_needed = 1;
-      h->visible = va_arg(ap, int);
+
+    case GLW_ATTRIB_CHILD_ASPECT:
+      l->child_aspect = va_arg(ap, double);
       break;
 
     default:

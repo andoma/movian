@@ -43,7 +43,10 @@ typedef struct glw_backend_root {
 } glw_backend_root_t;
 
 
-typedef struct {} glw_backend_rctx_t;
+typedef struct {
+  int gbr_active_clippers; // Used by glw_clip()
+
+} glw_backend_rctx_t;
 
 
 typedef GLuint glw_backend_texture_t;

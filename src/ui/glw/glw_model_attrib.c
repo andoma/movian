@@ -377,6 +377,7 @@ static const token_attrib_t attribtab[] = {
   {"value",           set_float,  GLW_ATTRIB_VALUE},
   {"size",            set_float,  GLW_ATTRIB_SIZE},
   {"focusable",       set_float,  GLW_ATTRIB_FOCUS_WEIGHT},
+  {"childAspect",     set_float,  GLW_ATTRIB_CHILD_ASPECT},
 
   {"displacement",    set_float3, GLW_ATTRIB_DISPLACEMENT},
   {"color",           set_float3, GLW_ATTRIB_RGB},

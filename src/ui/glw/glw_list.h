@@ -22,23 +22,14 @@
 typedef struct glw_list {
   glw_t w;
 
-  int visible;
+  float child_aspect;
 
-  int reposition_needed;
+  float center_y, center_y_target, center_y_max;
+  float center_x, center_x_target, center_x_max;
 
-  float xs, ys; /* scale for childs */
-  float xcenter, xcenter_target;
-  float ycenter, ycenter_target;
-
-  float expansion_factor; /* factor */
-
-  glw_t *focused_child;
-
-  int extctrl;
+  glw_t *scroll_to_me;
 
   glw_slider_metrics_t metrics;
-
-  float size;
 
 } glw_list_t;
 

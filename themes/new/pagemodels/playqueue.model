@@ -1,22 +1,14 @@
 #include "theme://include/plates.model"
 
-widget(container_y, {
-
-  widget(label, {
-    .size = 2.0f;
-    .align = center;
-    .caption = "Playqueue";
-  });
-
+widget(container_x, {
   widget(list_y, {
-    .weight = 10;
-    .slices = 20;
+    .id = "list";
     cloner($page.nodes, container_y, {
 
       widget(image, {
 	BUTTON_PROPS(1.0);
 	onEvent(enter, genericEvent(navigator, open, $self.url));
-
+	
 	widget(animator, {
 	  .time = 0.3;
 	  .source = "theme://directoryviews/list/" + 
@@ -25,4 +17,15 @@ widget(container_y, {
       });
     });
   });
+  
+  widget(slider_y, {
+    .weight = 0.035;
+    .focusable = 0.2;
+    bind("list");
+
+    widget(image, {
+      KNOB_PROPS();
+    });
+  });
+
 });

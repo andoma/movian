@@ -813,6 +813,11 @@ glw_is_focused(glw_t *w)
   for(n = w->glw_root->gr_current_focus; n != NULL; n = n->glw_parent)
     if(n == w)
       return 1;
+
+  for(; w != NULL; w = w->glw_parent)
+    if(w->glw_root->gr_current_focus == w)
+      return 1;
+
   return 0;
 }
 
@@ -831,6 +836,11 @@ glw_is_hovered(glw_t *w)
   for(n = w->glw_root->gr_pointer_hover; n != NULL; n = n->glw_parent)
     if(n == w)
       return 1;
+
+  for(; w != NULL; w = w->glw_parent)
+    if(w->glw_root->gr_pointer_hover == w)
+      return 1;
+
   return 0;
 }
 
@@ -855,11 +865,15 @@ static void
 glw_root_focus(glw_t *w, int interactive)
 {
   glw_root_t *gr = w->glw_root;
+  glw_t *x;
 
   w->glw_root->gr_current_focus = w;
  
   if(!interactive)
     return;
+  
+  for(x = w; x->glw_parent != NULL; x = x->glw_parent) 
+    glw_signal0(x->glw_parent, GLW_SIGNAL_FOCUS_INTERACTIVE, x);
 
   if(w->glw_originating_prop != NULL) {
     
@@ -895,7 +909,7 @@ glw_focus_set(glw_t *w, int interactive)
 /**
  *
  */
-static void
+void
 glw_focus_set_current_by_path(glw_t *w, int interactive)
 {
   while(w->glw_focused != NULL) 
@@ -1195,7 +1209,7 @@ pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, glw_t **hp)
 	switch(gpe->type) {
 
 	case GLW_POINTER_CLICK:
-	  //	  glw_focus_set(w, 1);
+	  glw_focus_set(w, 1);
 	  return 1;
 
 	case GLW_POINTER_RELEASE:
@@ -1246,8 +1260,10 @@ glw_pointer_event(glw_root_t *gr, glw_t *top, glw_pointer_event_t *gpe)
     return;
   }
 
-  if(gpe->type == GLW_POINTER_RELEASE)
+  if(gpe->type == GLW_POINTER_RELEASE && gr->gr_pointer_grab != NULL) {
     gr->gr_pointer_grab = NULL;
+    return;
+  }
 
   TAILQ_FOREACH(c, &top->glw_childs, glw_parent_link)
     if(!(c->glw_flags & GLW_FOCUS_BLOCKED) && 

@@ -76,8 +76,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 		 GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
 		 &glt->glt_texture,
 		 gi->gi_color.r, gi->gi_color.g, gi->gi_color.b, alpha_self);
-
-   
+ 
     if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
       rc0.rc_alpha = rc->rc_alpha * w->glw_alpha;
       glw_render0(c, &rc0);

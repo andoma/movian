@@ -1,15 +1,28 @@
 #include "theme://include/plates.model"
 
-widget(list_y, {
-  .slices = 20;
-  cloner($page.nodes, image, {
-    BUTTON_PROPS(1.0);
-    onEvent(enter, genericEvent(navigator, open, $self.url));
+widget(container_x, {
+
+  widget(list_y, {
+    .id = "list";
+    cloner($page.nodes, image, {
+      BUTTON_PROPS(1.0);
+      onEvent(enter, genericEvent(navigator, open, $self.url));
     
-    widget(animator, {
-      .time = 0.3;
-      .source = "theme://directoryviews/list/" + 
-	 $self.metadata.type + ".model";
+      widget(animator, {
+	.time = 0.3;
+	.source = "theme://directoryviews/list/" + 
+	   $self.metadata.type + ".model";
+      });
+    });
+  });
+
+  widget(slider_y, {
+    .weight = 0.035;
+    .focusable = 0.2;
+    bind("list");
+
+    widget(image, {
+      KNOB_PROPS();
     });
   });
 });
