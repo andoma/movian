@@ -84,7 +84,7 @@ glw_animator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     c->glw_parent_anim_cur = -1;
     c->glw_parent_anim_tgt = 0;
     
-    glw_focus_unblock_path(c);
+    glw_focus_open_path(w, c);
 
     TAILQ_FOREACH(n, &w->glw_childs, glw_parent_link) {
       if(c == n)

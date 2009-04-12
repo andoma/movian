@@ -1027,7 +1027,7 @@ glw_focus_set(glw_t *w, int interactive)
 void
 glw_focus_set_current_by_path(glw_t *w, int interactive)
 {
-  while(w->glw_focused != NULL) 
+  while(w->glw_focused != NULL)
     w = w->glw_focused;
   glw_root_focus(w, interactive);
 }
@@ -1203,15 +1203,12 @@ glw_focus_crawl(glw_t *w, int forward)
  *
  */
 void
-glw_focus_unblock_path(glw_t *w)
+glw_focus_open_path(glw_t *p, glw_t *w)
 {
-  glw_t *p = w->glw_parent;
+  glw_t *c;
 
-  if(p == NULL || p->glw_focused == w)
-    return;
-
-  if(p->glw_focused != NULL)
-    p->glw_focused->glw_flags |= GLW_FOCUS_BLOCKED;
+  TAILQ_FOREACH(c, &p->glw_childs, glw_parent_link)
+    c->glw_flags |= GLW_FOCUS_BLOCKED;
 
   w->glw_flags &= ~GLW_FOCUS_BLOCKED;
   p->glw_focused = w;
