@@ -105,4 +105,53 @@ arch_init(void)
     printf("fatInitDefault failure\n");
 
   printf("Initializing network\n");
-  net_setup();}
+  net_setup();
+}
+
+
+
+extern int trace_level;
+
+static int decorate_trace = 1;
+
+/**
+ *
+ */
+void
+tracev(int level, const char *subsys, const char *fmt, va_list ap)
+{
+  char buf[1024];
+  char buf2[64];
+  char *s, *p;
+  const char *leveltxt, *sgr, *sgroff;
+  int l;
+
+  if(level > trace_level)
+    return;
+
+  switch(level) {
+  case TRACE_ERROR: leveltxt = "ERROR"; sgr = "\033[31m"; break;
+  case TRACE_INFO:  leveltxt = "INFO";  sgr = "\033[33m"; break;
+  case TRACE_DEBUG: leveltxt = "DEBUG"; sgr = "\033[32m"; break;
+  default:          leveltxt = "?????"; sgr = "\033[35m"; break;
+  }
+
+  if(!decorate_trace) {
+    sgr = "";
+    sgroff = "";
+  } else {
+    sgroff = "\033[0m";
+  }
+
+  vsnprintf(buf, sizeof(buf), fmt, ap);
+
+  p = buf;
+
+  snprintf(buf2, sizeof(buf2), "%s [%s]:", subsys, leveltxt);
+  l = strlen(buf2);
+
+  while((s = strsep(&p, "\n")) != NULL) {
+    printf("%s%s %s%s\n", sgr, buf2, s, sgroff);
+    memset(buf2, ' ', l);
+  }
+}
