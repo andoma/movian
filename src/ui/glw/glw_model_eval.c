@@ -555,8 +555,8 @@ eval_dynamic_every_frame_sig(glw_t *w, void *opaque,
  *
  */
 static int
-eval_dynamic_focus_change_sig(glw_t *w, void *opaque, 
-			      glw_signal_t signal, void *extra)
+eval_dynamic_focused_child_change_sig(glw_t *w, void *opaque, 
+				      glw_signal_t signal, void *extra)
 {
   if(signal == GLW_SIGNAL_FOCUS_CHILD_CHANGED)
     eval_dynamic(w, opaque);
@@ -584,10 +584,12 @@ eval_dynamic(glw_t *w, token_t *rpn)
   else
     glw_signal_handler_unregister(w, eval_dynamic_every_frame_sig, rpn);
 
-  if(ec.dynamic_eval & GLW_MODEL_DYNAMIC_EVAL_FOCUS_CHANGE)
-    glw_signal_handler_register(w, eval_dynamic_focus_change_sig, rpn, 1000);
+  if(ec.dynamic_eval & GLW_MODEL_DYNAMIC_EVAL_FOCUSED_CHILD_CHANGE)
+    glw_signal_handler_register(w, eval_dynamic_focused_child_change_sig,
+				rpn, 1000);
   else
-    glw_signal_handler_unregister(w, eval_dynamic_focus_change_sig, rpn);
+    glw_signal_handler_unregister(w, eval_dynamic_focused_child_change_sig,
+				  rpn);
 }
 
 
@@ -1053,8 +1055,9 @@ glw_model_eval_block(token_t *t, glw_model_eval_context_t *ec)
       if(copy & GLW_MODEL_DYNAMIC_EVAL_EVERY_FRAME)
 	glw_signal_handler_register(w, eval_dynamic_every_frame_sig, t, 1000);
 
-      if(copy & GLW_MODEL_DYNAMIC_EVAL_FOCUS_CHANGE)
-	glw_signal_handler_register(w, eval_dynamic_focus_change_sig, t, 1000);
+      if(copy & GLW_MODEL_DYNAMIC_EVAL_FOCUSED_CHILD_CHANGE)
+	glw_signal_handler_register(w, eval_dynamic_focused_child_change_sig,
+				    t, 1000);
       continue;
 
     default:
@@ -2073,7 +2076,7 @@ glwf_focusedChild(glw_model_eval_context_t *ec, struct token *self)
   if(w == NULL) 
     return glw_model_seterr(ec->ei, self, "focusedChild() without widget");
 
-  ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_FOCUS_CHANGE;
+  ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_FOCUSED_CHILD_CHANGE;
 
   c = w->glw_focused;
   if(c != NULL && c->glw_originating_prop != NULL) {
