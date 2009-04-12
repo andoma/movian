@@ -110,6 +110,22 @@ glw_cond_wait(glw_root_t *gr, hts_cond_t *c)
 /**
  *
  */
+static int
+top_event_handler(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
+{
+  event_t *e = extra;
+
+  if(sig != GLW_SIGNAL_EVENT_BUBBLE)
+    return 0;
+
+  event_post(e);
+  return 1;
+}
+
+
+/**
+ *
+ */
 int
 glw_init(glw_root_t *gr, float fontsize, const char *theme, ui_t *ui)
 {
@@ -131,6 +147,13 @@ glw_init(glw_root_t *gr, float fontsize, const char *theme, ui_t *ui)
   gr->gr_frameduration = 1000000 / 60;
 
   //  glw_check_system_features(gr);
+
+  gr->gr_universe = glw_model_create(gr,
+				     "theme://universe.model", NULL, 0, NULL);
+
+  glw_set_i(gr->gr_universe,
+	    GLW_ATTRIB_SIGNAL_HANDLER, top_event_handler, gr, 1000,
+	    NULL);
   return 0;
 }
 
@@ -1235,9 +1258,9 @@ pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, glw_t **hp)
  *
  */
 void
-glw_pointer_event(glw_root_t *gr, glw_t *top, glw_pointer_event_t *gpe)
+glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
 {
-  glw_t *c, *w;
+  glw_t *c, *w, *top;
   glw_pointer_event_t gpe0;
   float x1, x2, y1, y2;
   glw_t *hover = NULL;
@@ -1264,6 +1287,8 @@ glw_pointer_event(glw_root_t *gr, glw_t *top, glw_pointer_event_t *gpe)
     gr->gr_pointer_grab = NULL;
     return;
   }
+
+  top = gr->gr_universe;
 
   TAILQ_FOREACH(c, &top->glw_childs, glw_parent_link)
     if(!(c->glw_flags & GLW_FOCUS_BLOCKED) && 

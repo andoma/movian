@@ -250,6 +250,8 @@ typedef struct {
 typedef struct glw_root {
   uii_t gr_uii;
 
+  struct glw *gr_universe;
+
   const char *gr_theme;
 
   hts_thread_t gr_thread;
@@ -660,7 +662,7 @@ typedef struct glw_pointer_event {
   glw_pointer_event_type_t type;
 } glw_pointer_event_t;
 
-void glw_pointer_event(glw_root_t *gr, glw_t *top, glw_pointer_event_t *gpe);
+void glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe);
 
 
 int glw_navigate(glw_t *w, event_t *e, int local);

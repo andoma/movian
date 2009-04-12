@@ -45,8 +45,6 @@ typedef struct glw_x11 {
 
   int running;
 
-  glw_t *universe;
-
   Display *display;
   int screen;
   int screen_width;
@@ -657,7 +655,7 @@ layout_draw(glw_x11_t *gx11, float aspect)
   rc.rc_size_x = gx11->window_width;
   rc.rc_size_y = gx11->window_height;
   rc.rc_fullscreen = 0;
-  glw_layout0(gx11->universe, &rc);
+  glw_layout0(gx11->gr.gr_universe, &rc);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -671,24 +669,9 @@ layout_draw(glw_x11_t *gx11, float aspect)
 	    0, 1, 0);
 
   rc.rc_alpha = 1.0f;
-  glw_render0(gx11->universe, &rc);
+  glw_render0(gx11->gr.gr_universe, &rc);
 }
 
-
-/**
- *
- */
-static int
-layout_event_handler(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
-{
-  event_t *e = extra;
-
-  if(sig != GLW_SIGNAL_EVENT_BUBBLE)
-    return 0;
-
-  event_post(e);
-  return 1;
-}
 
 
 /**
@@ -775,7 +758,7 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 	  gpe.type = GLW_POINTER_MOTION;
 
 	  glw_lock(&gx11->gr);
-	  glw_pointer_event(&gx11->gr, gx11->universe, &gpe);
+	  glw_pointer_event(&gx11->gr, &gpe);
 	  glw_unlock(&gx11->gr);
 	  break;
 	  
@@ -785,7 +768,7 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 	    gpe.y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
 	    gpe.type = GLW_POINTER_RELEASE;
 	    glw_lock(&gx11->gr);
-	    glw_pointer_event(&gx11->gr, gx11->universe, &gpe);
+	    glw_pointer_event(&gx11->gr, &gpe);
 	    glw_unlock(&gx11->gr);
 	  }
 	  break;
@@ -816,7 +799,7 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 	  default:
 	    goto noevent;
 	  }
-	  glw_pointer_event(&gx11->gr, gx11->universe, &gpe);
+	  glw_pointer_event(&gx11->gr, &gpe);
 	noevent:
 	  glw_unlock(&gx11->gr);
 	  break;
@@ -896,14 +879,6 @@ glw_x11_start(ui_t *ui, int argc, char *argv[])
     return 1;
 
   gx11->running = 1;
-  
-  gx11->universe = glw_model_create(&gx11->gr,
-				    "theme://universe.model", NULL, 0, NULL);
-
-  glw_set_i(gx11->universe,
-	    GLW_ATTRIB_SIGNAL_HANDLER, layout_event_handler, gx11, 1000,
-	    NULL);
-
   glw_sysglue_mainloop(gx11);
 
   return 0;

@@ -47,8 +47,6 @@ typedef struct glw_wii {
 
   int running;
 
-  glw_t *universe;
-
   glw_loadable_texture_t *cursors[4];
   
   glw_renderer_t cursor_renderer;
@@ -155,17 +153,17 @@ wpad_every_frame(glw_wii_t *gwii)
     
     gpe.type = GLW_POINTER_CLICK;
 
-    glw_pointer_event(&gwii->gr, gwii->universe, &gpe);
+    glw_pointer_event(&gwii->gr, &gpe);
     a_held = 1;
   } else if(!(btn & WPAD_BUTTON_A) && a_held == 1) {
     
     gpe.type = GLW_POINTER_RELEASE;
 
-    glw_pointer_event(&gwii->gr, gwii->universe, &gpe);
+    glw_pointer_event(&gwii->gr, &gpe);
     a_held = 0;
   } else {
     gpe.type = GLW_POINTER_MOTION;
-    glw_pointer_event(&gwii->gr, gwii->universe, &gpe);
+    glw_pointer_event(&gwii->gr, &gpe);
   }
 
   glw_unlock(&gwii->gr);
@@ -367,10 +365,10 @@ glw_wii_loop(glw_wii_t *gwii)
 
     rc.rc_fullscreen = 0;
 
-    glw_layout0(gwii->universe, &rc);
+    glw_layout0(gwii->gr.gr_universe, &rc);
 
     rc.rc_alpha = 1.0f;
-    glw_render0(gwii->universe, &rc);
+    glw_render0(gwii->gr.gr_universe, &rc);
 
 
     /* Render cursor */
@@ -389,22 +387,6 @@ glw_wii_loop(glw_wii_t *gwii)
     VIDEO_WaitVSync();
     rquad-=0.15f;
   }
-}
-
-
-/**
- *
- */
-static int
-layout_event_handler(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
-{
-  event_t *e = extra;
-
-  if(sig != GLW_SIGNAL_EVENT_BUBBLE)
-    return 0;
-
-  event_post(e);
-  return 1;
 }
 
 
@@ -435,13 +417,6 @@ glw_wii_start(ui_t *ui, int argc, char *argv[])
     sleep(3);
     exit(0);
   }
-
-  gwii->universe = glw_model_create(&gwii->gr,
-				    "theme://universe.model", NULL, 0, NULL);
-
-  glw_set_i(gwii->universe,
-	    GLW_ATTRIB_SIGNAL_HANDLER, layout_event_handler, gwii, 1000,
-	    NULL);
 
   glw_wii_loop(gwii);
   return 0;
