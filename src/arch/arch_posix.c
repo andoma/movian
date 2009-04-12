@@ -154,16 +154,3 @@ tracev(int level, const char *subsys, const char *fmt, va_list ap)
     memset(buf2, ' ', l);
   }
 }
-
-
-/**
- *
- */
-void
-trace(int level, const char *subsys, const char *fmt, ...)
-{
-  va_list ap;
-  va_start(ap, fmt);
-  tracev(level, subsys, fmt, ap);
-  va_end(ap);
-}

@@ -137,3 +137,15 @@ main(int argc, char **argv)
 
   return rc;
 }
+
+/**
+ *
+ */
+void
+trace(int level, const char *subsys, const char *fmt, ...)
+{
+  va_list ap;
+  va_start(ap, fmt);
+  tracev(level, subsys, fmt, ap); // defined in arch/
+  va_end(ap);
+}
