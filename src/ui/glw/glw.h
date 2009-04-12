@@ -229,6 +229,12 @@ typedef enum {
    */
   GLW_SIGNAL_FOCUS_INTERACTIVE,
 
+  /**
+   * Sent to a widget when it enters or leaves the current 
+   * "path of focus / hover"
+   */
+  GLW_SIGNAL_FOCUS_HOVER_PATH_CHANGED,
+
 
 } glw_signal_t;
 
@@ -401,6 +407,9 @@ typedef struct glw {
 #define GLW_FOCUS_BLOCKED       0x200
 #define GLW_UPDATE_METRICS      0x400
 
+#define GLW_IN_FOCUS_PATH       0x800
+#define GLW_IN_HOVER_PATH       0x1000
+
   glw_vertex_t glw_displacement;
 
   float glw_conf_weight;             /* Relative weight (configured) */
@@ -455,9 +464,9 @@ int glw_dispatch_event(uii_t *uii, event_t *e);
  */
 #define glw_is_focusable(w) ((w)->glw_focus_weight > 0)
 
-int glw_is_focused(glw_t *w);
+#define glw_is_focused(w) (!!((w)->glw_flags & GLW_IN_FOCUS_PATH))
 
-int glw_is_hovered(glw_t *w);
+#define glw_is_hovered(w) (!!((w)->glw_flags & GLW_IN_HOVER_PATH))
 
 void glw_store_matrix(glw_t *w, glw_rctx_t *rc);
 
