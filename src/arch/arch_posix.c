@@ -17,23 +17,21 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-
-#include "arch.h"
-#include "showtime.h"
-
-extern int concurrency;
-
-static int decorate_trace;
-
-
+/*
+ * Note: Do not place #includes here.
+ *
+ * #define _GNU_SOURCE
+ * #include <sched.h>
+ * 
+ * Must be first or compilation might fail on linux
+ *
+ */
 #ifdef linux
 
 #define _GNU_SOURCE
 #include <sched.h>
 #include <pthread.h>
+#include <string.h>
 
 static int
 get_system_concurrency(void)
@@ -70,7 +68,7 @@ get_system_concurrency(void)
 
 }
 
-#else
+#else /* linux */
 
 static int
 get_system_concurrency(void)
@@ -78,8 +76,17 @@ get_system_concurrency(void)
   return 1;
 }
 
-#endif
+#endif /* linux */
 
+
+#include <stdio.h>
+#include <unistd.h>
+#include "arch.h"
+#include "showtime.h"
+
+extern int concurrency;
+
+static int decorate_trace;
 
 /**
  *
