@@ -351,7 +351,8 @@ typedef struct glw_signal_handler {
   LIST_ENTRY(glw_signal_handler) gsh_link;
   glw_callback_t *gsh_func;
   void *gsh_opaque;
-  int gsh_pri;
+  int16_t gsh_pri;
+  int16_t gsh_defer_remove;
 } glw_signal_handler_t;
 
 LIST_HEAD(glw_signal_handler_list, glw_signal_handler);
@@ -607,22 +608,11 @@ do {						\
 
 
 
-static inline int
-glw_signal0(glw_t *w, glw_signal_t sig, void *extra)
-{
-  glw_signal_handler_t *gsh, *next;
-  for(gsh = LIST_FIRST(&w->glw_signal_handlers); gsh != NULL; gsh = next) {
-    next = LIST_NEXT(gsh, gsh_link);
-    if(gsh->gsh_func(w, gsh->gsh_opaque, sig, extra))
-      return 1;
-  }
-  return 0;
-}
-
-
 void glw_render0(glw_t *w, glw_rctx_t *rc);
 
 void glw_layout0(glw_t *w, glw_rctx_t *rc);
+
+int glw_signal0(glw_t *w, glw_signal_t sig, void *extra);
 
 glw_t *glw_create0(glw_root_t *gr, glw_class_t class, va_list ap);
 

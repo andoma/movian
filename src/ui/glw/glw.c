@@ -664,6 +664,7 @@ glw_signal_handler_register(glw_t *w, glw_callback_t *func, void *opaque,
   gsh->gsh_func   = func;
   gsh->gsh_opaque = opaque;
   gsh->gsh_pri    = pri;
+  gsh->gsh_defer_remove = 0;
 
   if(p == NULL) {
     LIST_INSERT_HEAD(&w->glw_signal_handlers, gsh, gsh_link);
@@ -685,10 +686,52 @@ glw_signal_handler_unregister(glw_t *w, glw_callback_t *func, void *opaque)
       break;
   
   if(gsh != NULL) {
-    LIST_REMOVE(gsh, gsh_link);
-    free(gsh);
+    if(gsh->gsh_defer_remove) {
+      gsh->gsh_func = NULL;
+      gsh->gsh_opaque = NULL;
+
+    } else {
+      LIST_REMOVE(gsh, gsh_link);
+      free(gsh);
+    }
   }
 }
+
+
+/**
+ *
+ */
+int
+glw_signal0(glw_t *w, glw_signal_t sig, void *extra)
+{
+  glw_signal_handler_t *x, *gsh = LIST_FIRST(&w->glw_signal_handlers);
+  int r;
+
+  while(gsh != NULL) {
+    if(gsh->gsh_func != NULL) {
+      gsh->gsh_defer_remove = 1;
+
+      r = gsh->gsh_func(w, gsh->gsh_opaque, sig, extra);
+
+      if(gsh->gsh_func == NULL) {
+	/* Was inteded to be removed during call */
+	
+	x = gsh;
+	gsh = LIST_NEXT(gsh, gsh_link);
+
+	LIST_REMOVE(x, gsh_link);
+	free(x);
+	continue;
+      }
+
+      if(r)
+	return 1;
+    }
+    gsh = LIST_NEXT(gsh, gsh_link);
+  }
+  return 0;
+}
+
 
 /**
  *
