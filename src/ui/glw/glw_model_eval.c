@@ -571,7 +571,7 @@ static int
 eval_dynamic_focus_hover_change_sig(glw_t *w, void *opaque, 
 				    glw_signal_t signal, void *extra)
 {
-  if(signal == GLW_MODEL_DYNAMIC_EVAL_FOCUS_HOVER_CHANGE)
+  if(signal == GLW_SIGNAL_FOCUS_HOVER_PATH_CHANGED)
     eval_dynamic(w, opaque);
   return 0;
 }
