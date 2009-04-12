@@ -34,6 +34,7 @@
 
 #include "showtime.h"
 #include "ui/keymapper.h"
+#include "ui/linux/screensaver_inhibitor.h"
 #include "settings.h"
 
 typedef struct glw_x11 {
@@ -439,90 +440,6 @@ GLXExtensionSupported(Display *dpy, const char *extension)
 }
 
 
-
-/**
- * This thread keeps the screensaver from starting up.
- */
-static void *
-screensaver_inhibitor(void *aux)
-{
-  glw_x11_t *gx11 = aux;
-
-  while (gx11->screensaver.interval > 0) {
-    sleep(gx11->screensaver.interval);
-    switch (gx11->screensaver.mode)
-      {
-      case X11SS_XSCREENSAVER:
-	XResetScreenSaver(gx11->display);
-	break;
-	
-      case X11SS_GNOME:
-	if (system("gnome-screensaver-command -p") == -1) {
-	  static int failcnt = 0;
-	  printf("gnome-screensaver-command -p failed: %s", strerror(errno));
-	  if (++failcnt > 10) {
-	    printf("giving up screensaver inhibitor\n");
-	    gx11->screensaver.mode = X11SS_NONE;
-	    gx11->screensaver.interval = 0;
-	  }
-	}
-	break;
-	
-      default:
-	break;
-      }
-  }
-
-  return NULL;
-}
-
-
-/**
- * Try to figure out which screensaver to inhibit
- */
-static int
-screensaver_query(glw_x11_t *gx11)
-{
-  int r;
-  int tmo, itvl, prefbl, alexp;
-
-  /* Try xscreensaver */
-  r = XGetScreenSaver(gx11->display, &tmo, &itvl, &prefbl, &alexp);
-  if (r == 1 && tmo > 0) {
-    gx11->screensaver.mode = X11SS_XSCREENSAVER;
-    gx11->screensaver.interval = tmo / 2 + 5;
-    printf("Using xscreensaver (interval %i)\n",
-	   gx11->screensaver.interval);
-    return 0;
-  }
-
-  /* Try gnome-screensaver */
-  if (system("gnome-screensaver-command -p") == 0) {
-    gx11->screensaver.mode = X11SS_GNOME;
-    gx11->screensaver.interval = 30;
-    printf("Using gnome screensaver (interval %i)\n",
-	   gx11->screensaver.interval);
-    return 0;
-  }
-  
-  gx11->screensaver.mode = X11SS_NONE;
-  gx11->screensaver.interval = 0;
-  printf("No screensaver will be inhibited\n");
-  return -1;
-}
-
-
-static void
-screensaver_inhibitor_init(glw_x11_t *gx11)
-{
-  if(screensaver_query(gx11) == -1)
-    return;
-
-  hts_thread_create_detached(screensaver_inhibitor, gx11);
-}
-
-
-
 /**
  *
  */
@@ -585,7 +502,7 @@ glw_x11_init(glw_x11_t *gx11)
   gx11->glXWaitVideoSyncSGI = (PFNGLXWAITVIDEOSYNCSGIPROC)
     glXGetProcAddress((const GLubyte*)"glXWaitVideoSyncSGI");
 
-  screensaver_inhibitor_init(gx11);
+  screensaver_inhibitor_init(gx11->displayname_real);
 
   window_open(gx11);
 }
