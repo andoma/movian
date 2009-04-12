@@ -68,15 +68,6 @@ typedef struct glw_x11 {
 
   int coords[2][4];
   int do_videosync;
-  struct {
-    enum {
-      X11SS_NONE,
-      X11SS_XSCREENSAVER,
-      X11SS_GNOME,
-    }     mode;
-    int   interval;
-    pid_t pid;
-  } screensaver;
   Atom deletewindow;
 
   PFNGLXGETVIDEOSYNCSGIPROC glXGetVideoSyncSGI;
