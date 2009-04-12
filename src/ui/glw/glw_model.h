@@ -191,6 +191,7 @@ typedef struct glw_model_eval_context {
 #define GLW_MODEL_DYNAMIC_EVAL_PROP                 0x1
 #define GLW_MODEL_DYNAMIC_EVAL_EVERY_FRAME          0x2
 #define GLW_MODEL_DYNAMIC_EVAL_FOCUSED_CHILD_CHANGE 0x4
+#define GLW_MODEL_DYNAMIC_EVAL_FOCUS_HOVER_CHANGE   0x8
 
   token_t *rpn; 
 
