@@ -298,6 +298,7 @@ glw_list_ctor(glw_t *w, int init, va_list ap)
   glw_attribute_t attrib;
 
   if(init) {
+    w->glw_flags |= GLW_HONOUR_CHILD_ASPECT;
     glw_signal_handler_int(w, glw_list_callback);
     l->child_aspect = w->glw_class == GLW_LIST_Y ? 20 : 1;
   }

@@ -321,12 +321,9 @@ typedef struct glw_rctx {
   float rc_size_x;
   float rc_size_y;
 
-  float rc_zoom;
-  float rc_fullscreen;
-
   struct glw_cursor_painter *rc_cursor_painter;
 
-  float rc_exp_req;
+  //  float rc_expansion;
 
   /**
    * Backend specifics
@@ -410,6 +407,9 @@ typedef struct glw {
 
 #define GLW_IN_FOCUS_PATH       0x800
 #define GLW_IN_HOVER_PATH       0x1000
+
+#define GLW_HONOUR_CHILD_ASPECT 0x2000
+#define GLW_PUSH_ASPECT         0x4000
 
   glw_vertex_t glw_displacement;
 

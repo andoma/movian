@@ -63,6 +63,11 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     if(w->glw_flags & GLW_KEEP_ASPECT)
       glw_rescale(&rc0, glt->glt_aspect);
 
+    if(w->glw_flags & GLW_PUSH_ASPECT)
+      glw_set_i(w, 
+		GLW_ATTRIB_ASPECT, glt->glt_aspect,
+		NULL); // XXX: Not perfect
+
     if(gi->gi_angle != 0)
       glw_Rotatef(&rc0, -gi->gi_angle, 0, 0, 1);
 
@@ -244,8 +249,6 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   glw_image_t *gi = (void *)w;
   glw_loadable_texture_t *glt = gi->gi_tex;
   glw_t *c;
-
-  rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, w->glw_exp_req);
 
   if(glt == NULL)
     return;

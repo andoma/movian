@@ -34,8 +34,6 @@ glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_LAYOUT:
-    rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, w->glw_exp_req);
-
     if((a = TAILQ_FIRST(&w->glw_childs)) == NULL) {
       break;
     }
@@ -50,7 +48,7 @@ glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     }
 
     rc0 = *rc;
-    z = rc->rc_zoom;
+    z = 0.0; //rc->rc_zoom;
 
     a->glw_parent_scale.x = 1.0f;
     a->glw_parent_scale.y = 1.0 / (z + 1);
@@ -58,9 +56,8 @@ glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     rc0.rc_size_y = rc->rc_size_y * a->glw_parent_scale.y;
 
     glw_layout0(a, &rc0);
-    rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, rc0.rc_exp_req);
     
-    if(rc->rc_zoom < 0.01)
+    if(0.0 < 0.01)
       break;
 
     b->glw_parent_pos.y   = -1.0 + (0.5 * z * 2 / (z + 1));
@@ -69,7 +66,6 @@ glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
     rc0.rc_size_y = rc->rc_size_y * b->glw_parent_scale.y;
     glw_layout0(b, &rc0);
-    rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, rc0.rc_exp_req);
     break;
     
   case GLW_SIGNAL_RENDER:
@@ -84,10 +80,10 @@ glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     rc0 = *rc;
     glw_render_TS(a, &rc0, rc);
     
-    if(rc->rc_zoom < 0.01)
+    if(0.0 < 0.01)
       break;
 
-    rc0.rc_alpha = rc->rc_alpha * GLW_MIN(1.0f, rc->rc_zoom);
+//    rc0.rc_alpha = rc->rc_alpha * GLW_MIN(1.0f, rc->rc_zoom);
     glw_render_TS(b, &rc0, rc);
     break;
   }

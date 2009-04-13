@@ -50,11 +50,13 @@ glw_mirror_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 		 w->glw_displacement.y,
 		 w->glw_displacement.z);
 
+#if 0
     if(rc->rc_fullscreen > 0.99) {
       glw_render0(c, extra);
       glPopMatrix();
       return 1;
     }
+#endif
 
    /* Render bottom plate */
 
@@ -63,7 +65,7 @@ glw_mirror_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
     glBegin(GL_QUADS);
 
-    a = (1 - rc->rc_fullscreen) * rc->rc_alpha;
+    a = 1; //(1 - rc->rc_fullscreen) * rc->rc_alpha;
 
     glColor3f(a, a, a);
 

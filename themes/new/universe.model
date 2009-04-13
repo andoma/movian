@@ -98,13 +98,13 @@ widget(container_z, {
     widget(stack_y, {
       cloner($global.notifications, container_x, {
        
-	.aspect = 10;
-      
+    
 	PLATE(0, [0.0, 0.0, 0.0], 1.0, 
-	      widget(label, {
-		.caption = $self.text;
-	      });
-	      );
+	    widget(label, {
+		    .aspect = 10;
+		    .caption = $self.text;
+	    });
+		);
       });
     });
   });

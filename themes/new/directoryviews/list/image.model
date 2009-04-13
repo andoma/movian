@@ -1,0 +1,5 @@
+widget(image, {
+  .source = $self.url;
+  .keepAspect = true; 
+  .pushAspect = true;
+});

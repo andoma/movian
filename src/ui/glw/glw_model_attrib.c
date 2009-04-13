@@ -354,6 +354,7 @@ static const token_attrib_t attribtab[] = {
   {"debug",           set_flag,   GLW_DEBUG},
   {"skeleton",        set_flag,   GLW_DRAW_SKEL},
   {"password",        set_flag,   GLW_PASSWORD},
+  {"pushAspect",      set_flag,   GLW_PUSH_ASPECT},
   {"mirrorx",         set_mirror, GLW_MIRROR_X},
   {"mirrory",         set_mirror, GLW_MIRROR_Y},
 

@@ -2,8 +2,8 @@ widget(container_x, {
   .aspect = 30;
 
   widget(image, {
-    .source = "theme://icons/dir.png";
-    .keepAspect = true;
+    .source = "theme://icons/archive.png";
+    .keepAspect = true; 
   });
 
   widget(label, {

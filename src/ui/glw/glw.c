@@ -236,7 +236,14 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       break;
 
     case GLW_ATTRIB_ASPECT:
-      w->glw_aspect = va_arg(ap, double);
+      b = w;
+      while((p = b->glw_parent) != NULL) {
+	if(p->glw_flags & GLW_HONOUR_CHILD_ASPECT) {
+	  b->glw_aspect = va_arg(ap, double);
+	  break;
+	}
+	b = p;
+      }
       break;
 
     case GLW_ATTRIB_ID:

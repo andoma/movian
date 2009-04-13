@@ -41,7 +41,6 @@ glw_stack_x_layout(glw_t *w, glw_rctx_t *rc)
   if(w->glw_alpha < 0.01)
     return;
 
-  rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, w->glw_exp_req);
   rc0 = *rc;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
@@ -105,7 +104,6 @@ glw_stack_x_layout(glw_t *w, glw_rctx_t *rc)
     rc0.rc_size_y = rc->rc_size_y * ys;
 
     glw_layout0(c, &rc0);
-    rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, rc0.rc_exp_req);
 
     if(a > 0.01)
       glw_link_render_list(w, c);
@@ -135,7 +133,6 @@ glw_stack_y_layout(glw_t *w, glw_rctx_t *rc)
   if(w->glw_alpha < 0.01)
     return;
 
-  rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, w->glw_exp_req);
   rc0 = *rc;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
@@ -200,7 +197,6 @@ glw_stack_y_layout(glw_t *w, glw_rctx_t *rc)
     rc0.rc_size_y = rc->rc_size_y * a;
 
     glw_layout0(c, &rc0);
-    rc->rc_exp_req = GLW_MAX(rc->rc_exp_req, rc0.rc_exp_req);
 
     if(a > 0.01)
       glw_link_render_list(w, c);
@@ -264,6 +260,8 @@ glw_stack_callback(glw_t *w, void *opaque, glw_signal_t signal,
 void 
 glw_stack_ctor(glw_t *w, int init, va_list ap)
 {
-  if(init)
+  if(init) {
+    w->glw_flags |= GLW_HONOUR_CHILD_ASPECT;
     glw_signal_handler_int(w, glw_stack_callback);
+  }
 }
