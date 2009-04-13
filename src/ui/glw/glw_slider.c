@@ -138,10 +138,10 @@ glw_slider_event_x(glw_t *w, event_t *e)
 
   switch(e->e_type) {
   case EVENT_LEFT:
-    v = s->value - s->step;
+    v = s->value - s->step_i;
     break;
   case EVENT_RIGHT:
-    v = s->value + s->step;
+    v = s->value + s->step_i;
     break;
   default:
     return 0;
@@ -390,17 +390,17 @@ glw_slider_ctor(glw_t *w, int init, va_list ap)
 
     case GLW_ATTRIB_INT_MIN:
       s->min = va_arg(ap, double);
-      s->step_i = GLW_RESCALE(s->step, s->min, s->max);
+      s->step_i = s->step / (s->max - s->min);
       break;
 
     case GLW_ATTRIB_INT_MAX:
       s->max = va_arg(ap, double);
-      s->step_i = GLW_RESCALE(s->step, s->min, s->max);
+      s->step_i = s->step / (s->max - s->min);
       break;
 
     case GLW_ATTRIB_INT_STEP:
       s->step = va_arg(ap, double);
-      s->step_i = GLW_RESCALE(s->step, s->min, s->max);
+      s->step_i = s->step / (s->max - s->min);
       break;
 
     default:
