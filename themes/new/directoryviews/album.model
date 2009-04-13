@@ -1,0 +1,60 @@
+#include "theme://include/plates.model"
+
+widget(container_y, {
+
+  widget(stack_x, {
+    .weight = 0.2;
+
+    space(0.02);
+
+    widget(image, {
+      .aspect = 1.0;
+      .source = devoidify($self.album_art, "theme://icons/cd.png");
+      .keepAspect = true;
+      .pushAspect = true;
+    });
+
+    space(0.02);
+
+    widget(container_y, {
+
+      widget(label, {
+	.weight = 1.5;
+	.caption = $self.album_name;
+      });
+
+      widget(label, {
+	.caption = $self.album_year;
+      });
+
+      space(3);
+    });
+
+
+  });
+  widget(container_x, {
+
+    widget(list_y, {
+      .id = "list";
+      cloner($page.nodes, image, {
+	BUTTON_PROPS(1.0);
+	onEvent(enter, genericEvent(navigator, open, $self.url));
+    
+	widget(animator, {
+	  .time = 0.3;
+	  .source = "theme://directoryviews/album/track.model";
+	});
+      });
+    });
+
+    widget(slider_y, {
+      .weight = 0.035;
+      .focusable = 0.2;
+      bind("list");
+
+      widget(image, {
+	KNOB_PROPS();
+      });
+    });
+  });
+});

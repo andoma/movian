@@ -1,0 +1,27 @@
+
+widget(stack_x, {
+  .aspect = 35;
+
+  widget(image, {
+    .source = "theme://icons/audio.png";
+    .keepAspect = true;
+    .pushAspect = true;
+  });
+
+  widget(container_y, {
+    .weight = 13;
+
+    widget(label, {
+	.weight = 1.5; 
+	.caption = $self.metadata.title;
+    });
+  });
+
+  widget(container_y, {
+    widget(label, {
+      .align = right;
+      .caption = value2duration($self.metadata.duration);
+      .weight = 1.5;
+    });
+  });
+});

@@ -60,14 +60,16 @@ static void *
 scanner(void *aux)
 {
   be_file_page_t *bfp = aux;
-  prop_t *media, *p;
+  prop_t *metadata, *p, *p2;
   int r, destroyed = 0;
   nav_dir_t *nd;
   nav_dir_entry_t *nde;
   void *ref;
   int images;
+  int album_score = 0;
   const char *s;
-
+  char album_name[128];
+  
   ref = fa_reference(bfp->h.np_url);
 
   if((nd = fa_scandir(bfp->h.np_url, NULL, 0)) == NULL) {
@@ -112,10 +114,10 @@ scanner(void *aux)
     prop_set_string(prop_create(p, "filename"), nde->nde_filename);
     prop_set_string(prop_create(p, "url"), nde->nde_url);
 
-    media = prop_create(p, "metadata");
-    prop_set_string(prop_create(media, "title"), nde->nde_filename);
+    metadata = prop_create(p, "metadata");
+    prop_set_string(prop_create(metadata, "title"), nde->nde_filename);
 
-    fa_set_type(media, nde->nde_type);
+    fa_set_type(metadata, nde->nde_type);
 
     if(prop_set_parent(p, bfp->bfp_nodes))
       prop_destroy(p);
@@ -124,6 +126,7 @@ scanner(void *aux)
   }
 
   images = 0;
+  album_name[0] = 0;
   /* Do full probe */
   TAILQ_FOREACH(nde, &nd->nd_entries, nde_link) {
 
@@ -133,15 +136,34 @@ scanner(void *aux)
     if((p = nde->nde_opaque) == NULL)
       continue;
 
-    media = prop_create(p, "metadata");
+    metadata = prop_create(p, "metadata");
 
     if(nde->nde_type == CONTENT_DIR) {
-      r = fa_probe_dir(media, nde->nde_url);
+      r = fa_probe_dir(metadata, nde->nde_url);
     } else {
-      r = fa_probe(media, nde->nde_url, NULL, 0, NULL, 0);
+      r = fa_probe(metadata, nde->nde_url, NULL, 0, NULL, 0);
     }
 
+    nde->nde_type = r;
+
     switch(r) {
+    case CONTENT_AUDIO:
+      if((p2 = prop_get_by_names(metadata, "album", NULL)) != NULL) {
+	char buf[128];
+	if(!prop_get_string(p2, buf, sizeof(buf))) {
+
+	  if(album_name[0] == 0) {
+	    snprintf(album_name, sizeof(album_name), "%s", buf);
+	    album_score++;
+	  } else if(!strcasecmp(album_name, buf)) {
+	    album_score++;
+	  } else {
+	    album_score--;
+	  }
+	}
+      }
+      break;
+
     case CONTENT_UNKNOWN:
       destroyed++;
       prop_destroy(p);
@@ -150,14 +172,38 @@ scanner(void *aux)
     case CONTENT_IMAGE:
       images++;
       break;
+
+    default:
+      album_score--;
     }
   }
 
   if(!bfp->bfp_stop) {
 
-    if(nd->nd_count == destroyed)
+
+    if(album_score > 0) {
+      
+      /* It is an album */
+      prop_set_string(bfp->bfp_viewprop, "album");
+      
+      prop_set_string(prop_create(bfp->h.np_prop_root, "album_name"), 
+		      album_name);
+      
+      /* Remove everything that is not audio */
+      TAILQ_FOREACH(nde, &nd->nd_entries, nde_link) {
+	if(bfp->bfp_stop)
+	  break;
+	if((p = nde->nde_opaque) == NULL)
+	  continue;
+	
+	if(nde->nde_type != CONTENT_AUDIO) {
+	  prop_destroy(p);
+	}
+      }
+      
+    } else if(nd->nd_count == destroyed) {
       prop_set_string(bfp->bfp_viewprop, "empty");
-    else if(images * 4 > nd->nd_count * 3) {
+    } else if(images * 4 > nd->nd_count * 3) {
       prop_set_string(bfp->bfp_viewprop, "images");
     }
   }
