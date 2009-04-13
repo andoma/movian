@@ -114,7 +114,9 @@ callout_loop(void *aux)
       cc = c->c_callback;
       LIST_REMOVE(c, c_link);
       c->c_callback = NULL;
+      hts_mutex_unlock(&callout_mutex);
       cc(c, c->c_opaque);
+      hts_mutex_lock(&callout_mutex);
     }
 
     if((c = LIST_FIRST(&callouts)) != NULL) {
