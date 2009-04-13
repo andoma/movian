@@ -324,6 +324,9 @@ prop_courier_t *prop_courier_create(hts_mutex_t *entrymutex);
 
 void prop_courier_destroy(prop_courier_t *pc);
 
+prop_t *prop_get_by_names(prop_t *parent, ...) 
+     __attribute__((__sentinel__(0)));
+
 htsmsg_t *prop_tree_to_htsmsg(prop_t *p);
 
 prop_pixmap_t *prop_pixmap_create(int width, int height, int linesize,

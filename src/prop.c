@@ -1437,6 +1437,41 @@ prop_get_by_subscription_canonical(prop_sub_t *s)
 /**
  *
  */
+prop_t *
+prop_get_by_names(prop_t *p, ...)
+{
+  prop_t *c = NULL;
+  const char *n;
+  va_list ap;
+  va_start(ap, p);
+
+  hts_mutex_lock(&prop_mutex);
+
+  while((n = va_arg(ap, const char *)) != NULL) {
+
+    if(p->hp_type != PROP_DIR) {
+      c = NULL;
+      break;
+    }
+
+    TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
+      if(c->hp_name != NULL && !strcmp(c->hp_name, n))
+	break;
+    if(c == NULL)
+      break;
+    p = c;
+  }
+  
+  if(c != NULL)
+    prop_ref_inc(c);
+  hts_mutex_unlock(&prop_mutex);
+  return c;
+}
+
+
+/**
+ *
+ */
 void
 prop_request_new_child(prop_t *p)
 {
