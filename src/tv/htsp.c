@@ -382,7 +382,7 @@ htsp_channelAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
 
   metadata = prop_create(p, "metadata");
 
-  prop_set_string(prop_create(metadata, "type"), "tvchannel");
+  prop_set_string(prop_create(p, "type"), "tvchannel");
   prop_set_string(prop_create(metadata, "icon"), 
 		  htsmsg_get_str(m, "channelIcon"));
   prop_set_string(prop_create(metadata, "title"),
