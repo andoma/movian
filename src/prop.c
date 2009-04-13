@@ -971,6 +971,9 @@ prop_set_epilogue(prop_sub_t *skipme, prop_t *p)
 void
 prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str)
 {
+  if(p == NULL)
+    return;
+
   if(str == NULL) {
     prop_set_void_ex(p, skipme);
     return;
@@ -1026,6 +1029,9 @@ prop_set_stringf_ex(prop_t *p, prop_sub_t *skipme, const char *fmt, ...)
 void
 prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v)
 {
+  if(p == NULL)
+    return;
+
   hts_mutex_lock(&prop_mutex);
 
   if(p->hp_type == PROP_ZOMBIE) {
@@ -1057,6 +1063,9 @@ prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v)
 void
 prop_set_int_ex(prop_t *p, prop_sub_t *skipme, int v)
 {
+  if(p == NULL)
+    return;
+
   hts_mutex_lock(&prop_mutex);
 
   if(p->hp_type == PROP_ZOMBIE) {
@@ -1089,6 +1098,9 @@ prop_set_int_ex(prop_t *p, prop_sub_t *skipme, int v)
 void
 prop_set_void_ex(prop_t *p, prop_sub_t *skipme)
 {
+  if(p == NULL)
+    return;
+
   hts_mutex_lock(&prop_mutex);
 
   if(p->hp_type == PROP_ZOMBIE) {
@@ -1118,6 +1130,9 @@ prop_set_void_ex(prop_t *p, prop_sub_t *skipme)
 void
 prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, prop_pixmap_t *pp)
 {
+  if(p == NULL)
+    return;
+
   if(pp == NULL) {
     prop_set_void_ex(p, skipme);
     return;
