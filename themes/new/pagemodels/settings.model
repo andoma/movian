@@ -1,31 +1,53 @@
 #include "theme://include/plates.model"
 
-widget(container_x, {
-  widget(list_y, {
-    .childAspect = 20;
-    .id = "list";
-    cloner($page.nodes, container_z, {
-      widget(animator, {
-	.source = "theme://settings/" + $self.type + ".model";
+widget(container_y, {
+
+  widget(container_x, {
+    widget(list_y, {
+      .childAspect = 20;
+      .id = "list";
+      cloner($page.nodes, container_z, {
+	widget(animator, {
+	  .source = "theme://settings/" + $self.type + ".model";
+	});
+      });
+    });
+    widget(slider_y, {
+      .weight = 0.035;
+      .focusable = 0.2;
+      bind("list");
+  
+      widget(image, {
+	KNOB_PROPS();
       });
     });
   });
-  widget(slider_y, {
-    .weight = 0.035;
-    .focusable = 0.2;
-    bind("list");
   
+  widget(stack_x, {
+    .weight = 0.1;
+    
     widget(image, {
-      KNOB_PROPS();
+      .alpha = $page.mayadd;
+      .focusable = 0.1 * $page.mayadd;
+      .aspect = 3;
+      HIGHLITE_PROPS();
+
+
+      onEvent(enter, {
+	createChild($page.nodes);
+      });
+      
+      widget(stack_x, {
+	widget(image, {
+	  .source = "theme://icons/add.png";
+	  .keepAspect = true;
+	  .pushAspect = true;
+	});
+
+	widget(label, {
+	  .caption = "Add new entry";
+	});
+      });
     });
   });
 });
-/*
-  widget(stack_x, {
-  .align = center;
-  BUTTON_IMAGE($page.mayadd, 1.0, "theme://icons/add.png", {
-  createChild($page.nodes);
-  });
-  });
-*/
-
