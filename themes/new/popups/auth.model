@@ -17,12 +17,10 @@ widget(container_y, {
       widget(container_y, {
 
 	widget(label, {
-	  .aspect = 20;
 	  .align = center;
 	  .caption = $self.id;
 	});
 	widget(label, {
-	  .aspect = 20;
 	  .align = center;
 	  .caption = $self.reason;
 	});
@@ -30,7 +28,6 @@ widget(container_y, {
 
 
 	widget(container_y, {
-	  .aspect = 10;
 
 	  widget(label, {
 	    .caption = "Username:";
@@ -46,7 +43,6 @@ widget(container_y, {
 	});
 
 	widget(container_y, {
-	  .aspect = 10;
 
 	  widget(label, {
 	    .caption = "Password:";
@@ -63,7 +59,6 @@ widget(container_y, {
 	});
 
 	widget(stack_x, {
-	  .aspect = 10;
 	  .align = center;
 
 	  widget(image, {
