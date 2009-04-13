@@ -28,9 +28,9 @@ update_value(glw_slider_t *s, float v)
   glw_scroll_t gs;
 
   s->value = GLW_MAX(0, GLW_MIN(1.0, v));
-  if(s->p != NULL)
+  if(s->p != NULL) {
     prop_set_float_ex(s->p, s->sub, s->value * (s->max - s->min) + s->min);
-
+  }
   if(s->bound_widget != NULL) {
     gs.value = s->value;
     glw_signal0(s->bound_widget, GLW_SIGNAL_SCROLL, &gs);
@@ -48,7 +48,12 @@ glw_slider_layout(glw_t *w, glw_rctx_t *rc)
   glw_t *c;
   glw_rctx_t rc0;
 
-  if(!s->fixed_knob_size) {
+  if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)
+    return;
+
+  if(c->glw_aspect > 0) {
+    s->knob_size = rc->rc_size_y * c->glw_aspect / rc->rc_size_x;
+  } else if(!s->fixed_knob_size) {
     if(w->glw_class == GLW_SLIDER_X)
       s->knob_size = rc->rc_size_y / rc->rc_size_x;
     else
@@ -64,8 +69,7 @@ glw_slider_layout(glw_t *w, glw_rctx_t *rc)
   else
     rc0.rc_size_y *= s->knob_size;
 
-  if((c = TAILQ_FIRST(&w->glw_childs)) != NULL)
-    glw_layout0(c, &rc0);
+  glw_layout0(c, &rc0);
 }
 
 
@@ -359,6 +363,7 @@ glw_slider_ctor(glw_t *w, int init, va_list ap)
   const char *n;
 
   if(init) {
+    w->glw_flags |= GLW_HONOUR_CHILD_ASPECT;
     glw_signal_handler_int(w, glw_slider_callback);
     s->min = 0.0;
     s->max = 1.0;
