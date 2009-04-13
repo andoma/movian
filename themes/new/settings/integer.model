@@ -1,0 +1,37 @@
+#include "theme://include/plates.model"
+
+widget(container_x, {
+
+  widget(image, {
+    
+    PLATE_PROPS();
+    .alphaSelf = 0;
+    
+    widget(label, {
+      .aspect = 20;
+      .align = right;
+      .caption = $self.title;
+    });
+
+  });
+
+  widget(slider_x, {
+
+    .focusable = true;
+
+    .min = $self.min;
+    .max = $self.max;
+    .step = $self.step;
+    bind($self.value);
+
+    widget(image, {
+      HIGHLITE_PROPS();
+
+      widget(label, {
+	.aspect = 3;
+	.align = center;
+	.caption = float2str($self.value, 0) + $self.unit;
+      });
+    });
+  });
+});

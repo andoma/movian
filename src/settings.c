@@ -184,6 +184,70 @@ settings_add_bool(prop_t *parent, const char *id, const char *title,
 
 
 
+
+/**
+ *
+ */
+static void 
+callback_int(struct prop_sub *sub, prop_event_t event, ...)
+{
+  setting_t *s = sub->hps_opaque;
+  setting_callback_int_t *cb;
+
+  va_list ap;
+  va_start(ap, event);
+
+  cb = s->s_callback;
+  if(event == PROP_SET_INT) {
+    cb(s->s_opaque, va_arg(ap, int));
+  } else if(event == PROP_SET_FLOAT) {
+    cb(s->s_opaque, va_arg(ap, double));
+  } else if(event == PROP_SET_STRING) {
+    cb(s->s_opaque, atoi(va_arg(ap, const char *)));
+  } else {
+    cb(s->s_opaque, 0);
+  }
+}
+
+/**
+ *
+ */
+setting_t *
+settings_add_int(prop_t *parent, const char *id, const char *title,
+		 int initial, htsmsg_t *store,
+		 int min, int max, int step,
+		 setting_callback_int_t *cb, void *opaque,
+		 int flags, const char *unit)
+{
+  prop_t *r = settings_add(id, title, "integer");
+  prop_t *v = prop_create(r, "value");
+  setting_t *s = malloc(sizeof(setting_t));
+  prop_sub_t *sub;
+
+  if(store != NULL)
+    initial = htsmsg_get_s32_or_default(store, id, initial);
+
+  prop_set_int(prop_create(r, "min"), min);
+  prop_set_int(prop_create(r, "max"), max);
+  prop_set_int(prop_create(r, "step"), step);
+  prop_set_string(prop_create(r, "unit"), unit);
+
+  prop_set_int(v, initial);
+
+  s->s_callback = cb;
+  s->s_opaque = opaque;
+  
+  sub = prop_subscribe(NULL, callback_int, s, NULL,
+		       flags & SETTINGS_INITIAL_UPDATE ?
+		       0 : PROP_SUB_NO_INITIAL_UPDATE,
+		       v, NULL);
+  s->s_sub = sub;
+  
+  settings_set_parent(r, parent);
+  return s;
+}
+
+
 /**
  *
  */

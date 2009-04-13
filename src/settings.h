@@ -37,6 +37,8 @@ typedef void (setting_callback_bool_t)(void *opaque, int value);
 
 typedef void (setting_callback_string_t)(void *opaque, const char *str);
 
+typedef void (setting_callback_int_t)(void *opaque, int value);
+
 prop_t *settings_add_dir(prop_t *parent, const char *id, 
 			 const char *title, const char *subtype);
 
@@ -61,6 +63,14 @@ setting_t *settings_add_string(prop_t *parent, const char *id,
 			       htsmsg_t *store,
 			       setting_callback_string_t *cb, void *opaque,
 			       int flags);
+
+setting_t *settings_add_int(prop_t *parent, const char *id, 
+			    const char *title,
+			    int initial, htsmsg_t *store,
+			    int min, int max, int step,
+			    setting_callback_int_t *cb, void *opaque,
+			    int flags, const char *unit);
+
 
 void settings_init(void);
 
