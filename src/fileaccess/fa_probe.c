@@ -250,29 +250,6 @@ fa_probe_iso(prop_t *proproot, fa_handle_t *fh)
     prop_set_string(prop_create(proproot, "title"), &pb[40]);
   return 0;
 }
-  
-
-
-
-const char *type2str[] = {
-  [CONTENT_DIR]      = "directory",
-  [CONTENT_FILE]     = "file",
-  [CONTENT_AUDIO]    = "audio",
-  [CONTENT_ARCHIVE]  = "archive",
-  [CONTENT_VIDEO]    = "video",
-  [CONTENT_PLAYLIST] = "playlist",
-  [CONTENT_DVD]      = "dvd",
-  [CONTENT_IMAGE]    = "image",
-};
-
-
-void
-fa_set_type(prop_t *proproot, unsigned int type)
-{
-  if(type < sizeof(type2str) / sizeof(type2str[0]) && type2str[type] != NULL)
-    prop_set_string(prop_create(proproot, "type"), type2str[type]);
-}
-
 
 
 /**
@@ -403,13 +380,11 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize,
 
   if((r = fa_probe_header(proproot, url0, fh, newurl, newurlsize)) != -1) {
     fa_close(fh);
-    fa_set_type(proproot, r);
     return r;
   }
 
   if(fa_probe_iso(proproot, fh) == 0) {
     fa_close(fh);
-    fa_set_type(proproot, CONTENT_DVD);
     return CONTENT_DVD;
   }
 
@@ -439,7 +414,6 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize,
   av_close_input_file(fctx);  
   ffunlock();
 
-  fa_set_type(proproot, type);
   return type;
 }
 
@@ -464,7 +438,5 @@ fa_probe_dir(prop_t *proproot, const char *url)
       type = CONTENT_DVD;
   }
 
-  if(proproot != NULL)
-    fa_set_type(proproot, type);
   return type;
 }

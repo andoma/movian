@@ -53,6 +53,33 @@ be_file_canhandle(const char *url)
   return fa_can_handle(url, NULL, 0);
 }
 
+
+/**
+ *
+ */
+const char *type2str[] = {
+  [CONTENT_DIR]      = "directory",
+  [CONTENT_FILE]     = "file",
+  [CONTENT_AUDIO]    = "audio",
+  [CONTENT_ARCHIVE]  = "archive",
+  [CONTENT_VIDEO]    = "video",
+  [CONTENT_PLAYLIST] = "playlist",
+  [CONTENT_DVD]      = "dvd",
+  [CONTENT_IMAGE]    = "image",
+};
+
+
+/**
+ *
+ */
+static void
+set_type(prop_t *proproot, unsigned int type)
+{
+  if(type < sizeof(type2str) / sizeof(type2str[0]) && type2str[type] != NULL)
+    prop_set_string(prop_create(proproot, "type"), type2str[type]);
+}
+
+
 /**
  *
  */
@@ -111,13 +138,11 @@ scanner(void *aux)
       break;
 
     p = prop_create(NULL, "node");
-    prop_set_string(prop_create(p, "filename"), nde->nde_filename);
     prop_set_string(prop_create(p, "url"), nde->nde_url);
+    set_type(p, nde->nde_type);
 
     metadata = prop_create(p, "metadata");
     prop_set_string(prop_create(metadata, "title"), nde->nde_filename);
-
-    fa_set_type(metadata, nde->nde_type);
 
     if(prop_set_parent(p, bfp->bfp_nodes))
       prop_destroy(p);
@@ -144,6 +169,7 @@ scanner(void *aux)
       r = fa_probe(metadata, nde->nde_url, NULL, 0, NULL, 0);
     }
 
+    set_type(p, r);
     nde->nde_type = r;
 
     switch(r) {

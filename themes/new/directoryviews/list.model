@@ -10,8 +10,7 @@ widget(container_x, {
     
       widget(animator, {
 	.time = 0.3;
-	.source = "theme://directoryviews/list/" + 
-	   $self.metadata.type + ".model";
+	.source = "theme://directoryviews/list/" + $self.type + ".model";
       });
     });
   });

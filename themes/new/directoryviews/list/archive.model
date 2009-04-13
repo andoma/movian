@@ -8,6 +8,6 @@ widget(container_x, {
 
   widget(label, {
     .weight = 14;
-    .caption = $self.filename;
+    .caption = $self.metadata.title;
   });
 });

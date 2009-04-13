@@ -29,8 +29,6 @@ unsigned int fa_probe(prop_t *proproot, const char *url,
 
 unsigned int fa_probe_dir(prop_t *proproot, const char *url);
 
-void fa_set_type(prop_t *proproot, unsigned int type);
-
 int fa_probe_iso(prop_t *proproot, fa_handle_t *fh);
 
 unsigned int fa_lavf_load_meta(prop_t *proproot, AVFormatContext *fctx,

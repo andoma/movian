@@ -21,7 +21,7 @@ widget(container_y, {
 
       widget(animator, {
 	.time = 0.3;
-	.source = translate($self.metadata.type,
+	.source = translate($self.type,
 			    [
 			     "image",     "theme://directoryviews/square/image.model",
 			     ],
