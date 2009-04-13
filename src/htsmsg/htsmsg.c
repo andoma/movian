@@ -335,6 +335,17 @@ htsmsg_get_u32_or_default(htsmsg_t *msg, const char *name, uint32_t def)
 }
 
 
+/**
+ *
+ */
+int32_t
+htsmsg_get_s32_or_default(htsmsg_t *msg, const char *name, int32_t def)
+{
+  int32_t s32;
+  return htsmsg_get_s32(msg, name, &s32) ? def : s32;
+}
+
+
 
 /*
  *

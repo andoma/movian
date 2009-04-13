@@ -230,6 +230,15 @@ const char *htsmsg_field_get_string(htsmsg_field_t *f);
 int htsmsg_get_u32_or_default(htsmsg_t *msg, const char *name, uint32_t def);
 
 /**
+ * Return the field \p name as an s32.
+ *
+ * @return A signed 32 bit integer or NULL if the field can not be found
+ *         or if conversion is not possible.
+ */
+int32_t htsmsg_get_s32_or_default(htsmsg_t *msg, const char *name, 
+				  int32_t def);
+
+/**
  * Remove the given field called \p name from the message \p msg.
  */
 int htsmsg_delete_field(htsmsg_t *msg, const char *name);
