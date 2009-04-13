@@ -221,6 +221,7 @@ audio_mode_save_settings(audio_mode_t *am)
   htsmsg_add_u32(m, "small_front", am->am_small_front);
   htsmsg_add_u32(m, "force_downmix", am->am_force_downmix);
   htsmsg_add_u32(m, "swap_surround", am->am_swap_surround);
+  htsmsg_add_s32(m, "delay", am->am_audio_delay);
 
   audio_mode_save_mixer_map(m, am, "mixer_master",     AM_MIXER_MASTER);
   audio_mode_save_mixer_map(m, am, "mixer_front",      AM_MIXER_FRONT);
@@ -357,6 +358,15 @@ am_set_mixer_side(void *opaque, const char *string)
   am_set_mixer(opaque, AM_MIXER_SIDE, string);
 }
 
+static void 
+am_set_av_sync(void *opaque, int value)
+{
+  audio_mode_t *am = opaque;
+  am->am_audio_delay = value;
+  audio_mode_save_settings(am);
+}
+
+
 
 /**
  *
@@ -415,6 +425,10 @@ audio_mode_register(audio_mode_t *am)
 
   snprintf(buf, sizeof(buf), "Configuration for %s", am->am_title);
   r = settings_add_dir(audio_settings_root, am->am_id, buf, "audio");
+
+  settings_add_int(r, "delay", "Audio/Video sync delay",
+		   0, m, -1000, 1000, 10, am_set_av_sync, am,
+		   SETTINGS_INITIAL_UPDATE, "ms");
 
   if(multich) {
     settings_add_bool(r, "phantom_center", "Phantom center",

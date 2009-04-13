@@ -416,6 +416,10 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
 
 	pts -= d;
 
+	/* Offset with user configure delay */
+
+	pts += am->am_audio_delay * 1000;
+
 	mp = ab->ab_mp;
 
 	hts_mutex_lock(&mp->mp_clock_mutex);

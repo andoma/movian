@@ -1,12 +1,13 @@
 3.0 MUST:
 
+* Settings 'add' button
+
 * Decent fullscreen support
 
 * Per video playback settings
 
 * Per video display settings
-
-* Global setting for A/V sync
+  Interlaced support
 
 * Slideshow
 
@@ -17,6 +18,7 @@
 * Probe extensions for glw_tex_rot.c feature
 
 * Check strange back behaviour in settings
+
 
 --- 
 
