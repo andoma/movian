@@ -163,6 +163,9 @@ rar_archive_find_file(rar_archive_t *ra, rar_file_t *parent,
   const char *s, *n = name;
   char *b;
   int l;
+    
+  if(parent == NULL)
+    return NULL;
 
   s = strchr(name, '/');
   if(s == NULL)
@@ -248,7 +251,7 @@ rar_archive_scrub(rar_archive_t *ra)
 static int
 rar_archive_load(rar_archive_t *ra)
 {
-  char filename[512], *fname, *s;
+  char filename[512], *fname, *s, *s2;
   uint8_t buf[16], *hdr = NULL;
   void *fh = NULL;
   int volume_index = -1, size, x;
@@ -274,8 +277,26 @@ rar_archive_load(rar_archive_t *ra)
     if((s = strrchr(filename, '.')) == NULL) {
       return -1;
     }
-    s++;
-    sprintf(s, "r%02d", volume_index);
+    
+    /* find second last . */
+    for(s2 = s-1; s2 >= filename; s2--)
+      if(*s2 == '.')
+        break;
+    if(s2 >= filename && !strncmp(s2+1,"part", 4)) {
+      /* first was part01 */
+      if(volume_index == 0)
+        volume_index = 2;
+      s2 += strlen(".part");
+      if(strlen(s2) == strlen("00.rar"))
+        sprintf(s2, "%02d.rar", volume_index);
+      else if(strlen(s2) == strlen("000.rar"))
+        sprintf(s2, "%03d.rar", volume_index);
+      else
+        return -1;
+    } else {
+      s++;
+      sprintf(s, "r%02d", volume_index);
+    }    
   }
 
   volume_index++;
