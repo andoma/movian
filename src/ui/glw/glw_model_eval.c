@@ -1726,6 +1726,7 @@ glwf_float2str(glw_model_eval_context_t *ec, struct token *self)
   token_t *b = eval_pop(ec);
   token_t *a = eval_pop(ec);
   token_t *r;
+  float value;
   char buf[30];
   int prec;
 
@@ -1734,8 +1735,17 @@ glwf_float2str(glw_model_eval_context_t *ec, struct token *self)
   if((b = token_resolve(ec, b)) == NULL)
     return -1;
 
-  if(a->type != TOKEN_FLOAT) {
-    eval_push(ec, a);
+  switch(a->type) {
+  case TOKEN_FLOAT:
+    value = a->t_float;
+    break;
+  case TOKEN_INT:
+    value = a->t_int;
+    break;
+  default:
+    r = eval_alloc(self, ec, TOKEN_STRING);
+    r->t_string = strdup("0");
+    eval_push(ec, r);
     return 0;
   }
   
@@ -1745,7 +1755,7 @@ glwf_float2str(glw_model_eval_context_t *ec, struct token *self)
   if(b != NULL && b->type == TOKEN_INT)
     prec = b->t_int;
 
-  snprintf(buf, sizeof(buf), "%.*f", prec, a->t_float);
+  snprintf(buf, sizeof(buf), "%.*f", prec, value);
 
   r = eval_alloc(self, ec, TOKEN_STRING);
   r->t_string = strdup(buf);
