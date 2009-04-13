@@ -625,7 +625,7 @@ void glw_lock_check(const char *file, const int line);
 
 int glw_attrib_set0(glw_t *w, int init, va_list ap);
 
-void glw_set_i(glw_t *w, ...);
+void glw_set_i(glw_t *w, ...) __attribute__((__sentinel__(0)));
 
 void glw_destroy0(glw_t *w);
 
