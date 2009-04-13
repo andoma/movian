@@ -5,10 +5,11 @@ widget(image, {
 
   onEvent(enter, genericEvent(navigator, open, $self.url));
 
-  widget(container_x, {
+  widget(stack_x, {
 
     widget(image, {
       .keepAspect = true;
+      .pushAspect = true;
       .source =  translate($self.subtype,
 			   [
 			    "audio", "theme://icons/speaker.png",
@@ -19,8 +20,6 @@ widget(image, {
     });
 
     widget(label, {
-      .aspect = 40;
-      .weight = 10;
       .caption = $self.title;
     });
   });

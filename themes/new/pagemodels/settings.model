@@ -2,6 +2,7 @@
 
 widget(container_x, {
   widget(list_y, {
+    .childAspect = 20;
     .id = "list";
     cloner($page.nodes, container_z, {
       widget(animator, {
@@ -13,7 +14,7 @@ widget(container_x, {
     .weight = 0.035;
     .focusable = 0.2;
     bind("list");
-    
+  
     widget(image, {
       KNOB_PROPS();
     });
