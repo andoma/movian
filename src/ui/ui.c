@@ -201,6 +201,12 @@ ui_start(int argc, const char *argv[], const char *argv00)
   
   if(prim == NULL) {
     prim = TAILQ_FIRST(&ubs);
+
+    if(prim == NULL) {
+      TRACE(TRACE_ERROR, "UI", "No user interface to start, exiting");
+      return 1;
+    }
+
     TAILQ_REMOVE(&ubs, prim, link);
   }
 
