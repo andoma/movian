@@ -80,6 +80,17 @@ void
 glw_video_global_init(glw_root_t *gr)
 {
   glw_backend_root_t *gbr = &gr->gr_be;
+  int tu;
+
+  glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tu);
+  if(tu < 6) {
+    TRACE(TRACE_ERROR, "OpenGL", 
+	  "Insufficient number of texture image units (%d) "
+	  "for GLW video rendering widget. Video output will be corrupted",
+	  tu);
+  } else {
+    TRACE(TRACE_DEBUG, "OpenGL", "%d texture image units available", tu);
+  }
 
   glGenProgramsARB(1, &gbr->gbr_yuv2rbg_prog);
   glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, gbr->gbr_yuv2rbg_prog);
