@@ -615,7 +615,7 @@ update_timings(glw_x11_t *gx11)
       r = 1;
       deltaptr = 0;
       
-      printf("framerate = %f\n", 1000000.0 / (float)gx11->frame_duration);
+      // printf("framerate = %f\n", 1000000.0 / (float)gx11->frame_duration);
       //      glw_set_framerate(1000000.0 / (float)frame_duration);
     }
   }
