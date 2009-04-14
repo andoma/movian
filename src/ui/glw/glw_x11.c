@@ -65,11 +65,9 @@ typedef struct glw_x11 {
   char *config_name;
 
   int coords[2][4];
-  int do_videosync;
   Atom deletewindow;
 
-  PFNGLXGETVIDEOSYNCSGIPROC glXGetVideoSyncSGI;
-  PFNGLXWAITVIDEOSYNCSGIPROC glXWaitVideoSyncSGI;
+  PFNGLXSWAPINTERVALSGIPROC glXSwapIntervalSGI;
 
   int window_width;
   int window_height;
@@ -326,15 +324,6 @@ window_open(glw_x11_t *gx11)
   if(fullscreen)
     fullscreen_grab(gx11);
 
-  if(getenv("__GL_SYNC_TO_VBLANK") == 0) {
-    gx11->do_videosync = 1;
-    fprintf(stderr, 
-	    "Display: Using 'glXWaitVideoSyncSGI' for vertical sync\n");
-  } else {
-    fprintf(stderr, 
-	    "Display: Using '__GL_SYNC_TO_VBLANK' for vertical sync\n");
-  }
-
   gx11->is_fullscreen = gx11->want_fullscreen;
 
   update_gpu_info(gx11);
@@ -455,9 +444,9 @@ glw_x11_init(glw_x11_t *gx11)
     exit(1);
   }
 
-  if(!GLXExtensionSupported(gx11->display, "GLX_SGI_video_sync")) {
+  if(!GLXExtensionSupported(gx11->display, "GLX_SGI_swap_control")) {
     fprintf(stderr,
-	    "OpenGL GLX extension GLX_SGI_video_sync is not supported "
+	    "OpenGL GLX extension GLX_SGI_swap_control is not supported "
 	    "by display \"%s\"\n",
 	    gx11->displayname_real);
     exit(1);
@@ -486,10 +475,8 @@ glw_x11_init(glw_x11_t *gx11)
     exit(1);
   }
 
-  gx11->glXGetVideoSyncSGI = (PFNGLXGETVIDEOSYNCSGIPROC)
-    glXGetProcAddress((const GLubyte*)"glXGetVideoSyncSGI");
-  gx11->glXWaitVideoSyncSGI = (PFNGLXWAITVIDEOSYNCSGIPROC)
-    glXGetProcAddress((const GLubyte*)"glXWaitVideoSyncSGI");
+  gx11->glXSwapIntervalSGI = (PFNGLXSWAPINTERVALSGIPROC)
+    glXGetProcAddress((const GLubyte*)"glXSwapIntervalSGI");
 
   screensaver_inhibitor_init(gx11->displayname_real);
 
@@ -627,8 +614,8 @@ update_timings(glw_x11_t *gx11)
       gx11->frame_duration = lastframedur;
       r = 1;
       deltaptr = 0;
-
-      //      printf("framerate = %f\n", 1000000.0 / (float)gx11->frame_duration);
+      
+      printf("framerate = %f\n", 1000000.0 / (float)gx11->frame_duration);
       //      glw_set_framerate(1000000.0 / (float)frame_duration);
     }
   }
@@ -696,11 +683,10 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 {
   XEvent event;
   int w, h;
-  unsigned int retraceCount = 0;
   glw_pointer_event_t gpe;
   int update_font_size_thres = 1;
 
-  gx11->glXGetVideoSyncSGI(&retraceCount);
+  gx11->glXSwapIntervalSGI(1);
 
   while(gx11->running) {
     if(gx11->is_fullscreen != gx11->want_fullscreen) {
@@ -821,14 +807,7 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
     layout_draw(gx11, gx11->aspect_ratio);
     glw_unlock(&gx11->gr);
 
-
-    glFlush();
-
-    if(gx11->do_videosync)
-      gx11->glXWaitVideoSyncSGI(2, (retraceCount+1)%2, &retraceCount);
-
     glXSwapBuffers(gx11->display, gx11->win);
-
     update_timings(gx11);
   }
   window_shutdown(gx11);
