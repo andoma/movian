@@ -302,6 +302,8 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
   int64_t pts, chlayout;
   
   if(cw == NULL) {
+    media_set_currentmedia(mp);
+
     /* Raw PCM */
     audio_mix1(ad, am, mb->mb_channels, mb->mb_rate, 0,
 	       CODEC_ID_NONE, mb->mb_data, 
