@@ -168,6 +168,9 @@ zip_archive_find_file(zip_archive_t *za, zip_file_t *parent,
   char *b;
   int l;
 
+  if(parent == NULL)
+    return NULL;
+
   s = strchr(name, '/');
   if(s == NULL)
     s = strchr(name, '\\');
