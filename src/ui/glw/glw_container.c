@@ -57,9 +57,9 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
     if(c->glw_class != GLW_DUMMY) {
 
       if(xy) {
-	c->glw_parent_pos.x = d + e1 + w->glw_displacement.x;
-	c->glw_parent_pos.y = 0.0    + w->glw_displacement.y;
-	c->glw_parent_pos.z = 0.0    + w->glw_displacement.z;
+	c->glw_parent_pos.x = d + e1;
+	c->glw_parent_pos.y = 0.0;
+	c->glw_parent_pos.z = 0.0;
 
 	c->glw_parent_scale.x = e1;
 	c->glw_parent_scale.y = 1.0f;
@@ -69,9 +69,9 @@ glw_container_xy_layout(glw_t *w, glw_rctx_t *rc)
 
       } else {
 
-	c->glw_parent_pos.x = 0         + w->glw_displacement.x;
-	c->glw_parent_pos.y = -(d + e1) + w->glw_displacement.y;
-	c->glw_parent_pos.z = 0.0       + w->glw_displacement.z;
+	c->glw_parent_pos.x = 0;
+	c->glw_parent_pos.y = -(d + e1);
+	c->glw_parent_pos.z = 0.0;
 
 	c->glw_parent_scale.x = 1.0f;
 	c->glw_parent_scale.y = e1;
@@ -106,9 +106,9 @@ glw_container_z_layout(glw_t *w, glw_rctx_t *rc)
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     
-    c->glw_parent_pos.x = w->glw_displacement.x;
-    c->glw_parent_pos.y = w->glw_displacement.y;
-    c->glw_parent_pos.z = w->glw_displacement.z;
+    c->glw_parent_pos.x = 0;
+    c->glw_parent_pos.y = 0;
+    c->glw_parent_pos.z = 0;
 
     c->glw_parent_scale.x = 1.0f;
     c->glw_parent_scale.y = 1.0f;

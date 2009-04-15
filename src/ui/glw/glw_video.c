@@ -843,9 +843,6 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
    */
  
   glPushMatrix();
-  glTranslatef(w->glw_displacement.x,
-	       w->glw_displacement.y,
-	       w->glw_displacement.z);
 
 #if 0 
   if(gv->gv_zoom != 100)

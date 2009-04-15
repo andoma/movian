@@ -92,9 +92,9 @@ glw_stack_x_layout(glw_t *w, glw_rctx_t *rc)
 
     c->glw_norm_weight = a;
 
-    c->glw_parent_pos.x = d + a + w->glw_displacement.x;
-    c->glw_parent_pos.y = 0.0   + w->glw_displacement.y;
-    c->glw_parent_pos.z = 0.0   + w->glw_displacement.z;
+    c->glw_parent_pos.x = d + a;
+    c->glw_parent_pos.y = 0.0;
+    c->glw_parent_pos.z = 0.0;
 
     c->glw_parent_scale.x = a;
     c->glw_parent_scale.y = ys;
@@ -185,9 +185,9 @@ glw_stack_y_layout(glw_t *w, glw_rctx_t *rc)
 
     c->glw_norm_weight = a;
 
-    c->glw_parent_pos.x = 0     + w->glw_displacement.x;
-    c->glw_parent_pos.y = d - a + w->glw_displacement.y;
-    c->glw_parent_pos.z = 0.0   + w->glw_displacement.z;
+    c->glw_parent_pos.x = 0;
+    c->glw_parent_pos.y = d - a;
+    c->glw_parent_pos.z = 0.0;
 
     c->glw_parent_scale.x = xs;
     c->glw_parent_scale.y = a;

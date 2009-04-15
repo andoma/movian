@@ -46,10 +46,6 @@ glw_mirror_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_RENDER:
 
     glPushMatrix();
-    glTranslatef(w->glw_displacement.x,
-		 w->glw_displacement.y,
-		 w->glw_displacement.z);
-
 #if 0
     if(rc->rc_fullscreen > 0.99) {
       glw_render0(c, extra);

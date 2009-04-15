@@ -300,12 +300,6 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       w->glw_extra = va_arg(ap, double);
       break;
 
-    case GLW_ATTRIB_DISPLACEMENT:
-      w->glw_displacement.x = va_arg(ap, double);
-      w->glw_displacement.y = va_arg(ap, double);
-      w->glw_displacement.z = va_arg(ap, double);
-      break;
-
     case GLW_ATTRIB_TIME:
       w->glw_time = va_arg(ap, double);
       break;

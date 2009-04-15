@@ -64,13 +64,13 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
 
     vy = y + size_y;
 
-    c->glw_parent_pos.y = w->glw_displacement.y + 1.0 - vy + l->center_y;
+    c->glw_parent_pos.y = 1.0 - vy + l->center_y;
 
     if(c->glw_parent_pos.y - c->glw_parent_size_y <= 1.5f &&
        c->glw_parent_pos.y + c->glw_parent_size_y >= -1.5f) {
 
-      c->glw_parent_pos.z = w->glw_displacement.z;
-      c->glw_parent_pos.x = w->glw_displacement.x;
+      c->glw_parent_pos.z = 0;
+      c->glw_parent_pos.x = 0;
 
       c->glw_parent_scale.y = size_y;
       rc0.rc_size_y = rc->rc_size_y * size_y;
@@ -131,9 +131,9 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
 
     vx = x + size_x;
 
-    c->glw_parent_pos.x = w->glw_displacement.x - 1.0 + vx - l->center_x;
-    c->glw_parent_pos.y = w->glw_displacement.y;
-    c->glw_parent_pos.z = w->glw_displacement.z;
+    c->glw_parent_pos.x = -1.0 + vx - l->center_x;
+    c->glw_parent_pos.y = 0;
+    c->glw_parent_pos.z = 0;
     
     c->glw_parent_scale.x = size_x;
 

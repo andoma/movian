@@ -116,7 +116,6 @@ typedef enum {
   GLW_ATTRIB_TEXTURE_COORDS,
   GLW_ATTRIB_MIRROR,
   GLW_ATTRIB_ID,
-  GLW_ATTRIB_DISPLACEMENT,
   GLW_ATTRIB_RGB,
   GLW_ATTRIB_TIME,
   GLW_ATTRIB_INT_STEP,
@@ -411,8 +410,6 @@ typedef struct glw {
 #define GLW_HONOUR_CHILD_ASPECT 0x2000
 #define GLW_PUSH_ASPECT         0x4000
 
-  glw_vertex_t glw_displacement;
-
   float glw_conf_weight;             /* Relative weight (configured) */
   float glw_norm_weight;             /* Relative weight (normalized) */
   float glw_aspect;                  /* Aspect */
@@ -582,7 +579,6 @@ do {						\
     break;					\
   case GLW_ATTRIB_TEXTURE_COORDS:               \
     (void)va_arg(ap, double);			\
-  case GLW_ATTRIB_DISPLACEMENT:                 \
   case GLW_ATTRIB_RGB:                          \
     (void)va_arg(ap, double);			\
     (void)va_arg(ap, double);			\
