@@ -1312,6 +1312,7 @@ pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, glw_t **hp)
       /* Rescale to widget local coordinates */
       gpe0.x = -1 + 2 * (gpe->x - x1) / (x2 - x1);
       gpe0.y = -1 + 2 * (gpe->y - y1) / (y2 - y1);
+      gpe0.delta_y = gpe->delta_y;
 
       if(glw_signal0(w, GLW_SIGNAL_POINTER_EVENT, &gpe0))
 	return 1;

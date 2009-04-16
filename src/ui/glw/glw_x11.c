@@ -83,7 +83,7 @@ typedef struct glw_x11 {
 } glw_x11_t;
 
 static const keymap_defmap_t glw_default_keymap[] = {
-  { EVENT_PLAYPAUSE, "x11 - F2"},
+  { EVENT_PLAYPAUSE, "x11 - F2"},ShowtimeGLView
   { EVENT_NONE, NULL},
 };
 
@@ -774,11 +774,14 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 	    break;
 	  case 4:
 	    /* Scroll up */
-	    gpe.type = GLW_POINTER_SCROLL_UP;
+	    gpe.type = GLW_POINTER_SCROLL;
+	    gpe.delta_y = -0.2;
 	    break;
 	  case 5:
 	    /* Scroll down */
-	    gpe.type = GLW_POINTER_SCROLL_DOWN;
+	    gpe.type = GLW_POINTER_SCROLL;
+	    gpe.delta_y = 0.2;
+              
 	    break;
 
 	  default:

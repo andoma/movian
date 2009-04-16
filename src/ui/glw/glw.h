@@ -648,12 +648,12 @@ typedef enum {
   GLW_POINTER_MOTION,
   GLW_POINTER_FOCUS_MOTION,
   GLW_POINTER_RELEASE,
-  GLW_POINTER_SCROLL_UP,
-  GLW_POINTER_SCROLL_DOWN,
+  GLW_POINTER_SCROLL
 } glw_pointer_event_type_t;
 
 typedef struct glw_pointer_event {
   float x, y;
+  float delta_y;
   glw_pointer_event_type_t type;
 } glw_pointer_event_t;
 

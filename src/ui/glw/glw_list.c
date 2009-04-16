@@ -271,11 +271,8 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_POINTER_EVENT:
     gpe = extra;
 
-    if(gpe->type == GLW_POINTER_SCROLL_DOWN) {
-      l->center_y_target += 0.2;
-      l->w.glw_flags |= GLW_UPDATE_METRICS;
-    } else if(gpe->type == GLW_POINTER_SCROLL_UP) {
-      l->center_y_target -= 0.2;
+    if(gpe->type == GLW_POINTER_SCROLL) {
+      l->center_y_target += gpe->delta_y;
       l->w.glw_flags |= GLW_UPDATE_METRICS;
     }
     break;
