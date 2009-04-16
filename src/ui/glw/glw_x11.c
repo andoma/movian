@@ -83,7 +83,7 @@ typedef struct glw_x11 {
 } glw_x11_t;
 
 static const keymap_defmap_t glw_default_keymap[] = {
-  { EVENT_PLAYPAUSE, "x11 - F2"},ShowtimeGLView
+  { EVENT_PLAYPAUSE, "x11 - F2"},
   { EVENT_NONE, NULL},
 };
 
