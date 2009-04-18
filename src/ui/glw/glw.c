@@ -128,7 +128,7 @@ top_event_handler(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
  *
  */
 int
-glw_init(glw_root_t *gr, float fontsize, const char *theme, ui_t *ui)
+glw_init(glw_root_t *gr, int fontsize, const char *theme, ui_t *ui)
 {
   hts_mutex_init(&gr->gr_mutex);
   gr->gr_courier = prop_courier_create(&gr->gr_mutex);

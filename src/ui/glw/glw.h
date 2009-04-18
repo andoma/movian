@@ -280,7 +280,7 @@ typedef struct glw_root {
   TAILQ_HEAD(, glw_text_bitmap) gr_gtb_render_queue;
   hts_cond_t gr_gtb_render_cond;
   FT_Face gr_gtb_face;
-  float gr_fontsize;
+  int gr_fontsize;
   
   /**
    * Image/Texture loader
@@ -436,7 +436,7 @@ typedef struct glw {
 
 } glw_t;
 
-int glw_init(glw_root_t *gr, float fontsize, const char *theme, ui_t *ui);
+int glw_init(glw_root_t *gr, int fontsize, const char *theme, ui_t *ui);
 
 void glw_flush0(glw_root_t *gr);
 
@@ -753,6 +753,6 @@ void glw_gf_unregister(glw_gf_ctrl_t *ggc);
 
 void glw_gf_do(void);
 
-void glw_font_change_size(glw_root_t *gr, float fontsize);
+void glw_font_change_size(glw_root_t *gr, int fontsize);
 
 #endif /* GLW_H */

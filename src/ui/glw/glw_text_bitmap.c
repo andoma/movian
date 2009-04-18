@@ -1124,12 +1124,14 @@ gtb_notify(glw_text_bitmap_t *gtb)
  *
  */
 int
-glw_text_bitmap_init(glw_root_t *gr, float fontsize)
+glw_text_bitmap_init(glw_root_t *gr, int fontsize)
 {
   int error;
   const void *r;
   size_t size;
   const char *font_variable = "theme://font.ttf";
+
+  assert(fontsize > 10);
 
   error = FT_Init_FreeType(&glw_text_library);
   if(error) {
@@ -1163,8 +1165,9 @@ glw_text_bitmap_init(glw_root_t *gr, float fontsize)
  *
  */
 void
-glw_font_change_size(glw_root_t *gr, float fontsize)
+glw_font_change_size(glw_root_t *gr, int fontsize)
 {
+  assert(fontsize > 10);
   if(gr->gr_fontsize == fontsize)
     return;
 

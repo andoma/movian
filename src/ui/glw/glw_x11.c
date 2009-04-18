@@ -75,6 +75,9 @@ typedef struct glw_x11 {
   int is_pointer_enabled;
   int want_pointer_enabled;
 
+  int font_size;
+  int want_font_size;
+
   int frame_duration;
 
   prop_t *prop_display;
@@ -106,7 +109,8 @@ display_settings_save(glw_x11_t *gx11)
 
   htsmsg_add_u32(m, "fullscreen", gx11->want_fullscreen);
   htsmsg_add_u32(m, "pointer",    gx11->want_pointer_enabled);
-  
+  htsmsg_add_u32(m, "fontsize",   gx11->want_font_size);
+
   htsmsg_store_save(m, "displays/%s", gx11->config_name);
   htsmsg_destroy(m);
 }
@@ -124,7 +128,6 @@ display_set_mode(void *opaque, int value)
 }
 
 
-
 /**
  * Switch pointer on/off
  */
@@ -134,6 +137,18 @@ display_set_pointer(void *opaque, int value)
   glw_x11_t *gx11 = opaque;
   gx11->want_pointer_enabled = value;
 }
+
+
+/**
+ * Switch pointer on/off
+ */
+static void
+display_set_fontsize(void *opaque, int value)
+{
+  glw_x11_t *gx11 = opaque;
+  gx11->want_font_size = value;
+}
+
 
 /**
  * Add a settings pane with relevant settings
@@ -163,6 +178,11 @@ display_settings_init(glw_x11_t *gx11)
 		    "Mouse pointer", 1, settings,
 		    display_set_pointer, gx11,
 		    SETTINGS_INITIAL_UPDATE);
+
+  settings_add_int(r, "fontsize",
+		   "Font size", 20, settings, 14, 40, 1,
+		   display_set_fontsize, gx11,
+		   SETTINGS_INITIAL_UPDATE, "px");
 
   htsmsg_destroy(settings);
 
@@ -659,22 +679,6 @@ layout_draw(glw_x11_t *gx11, float aspect)
 }
 
 
-
-/**
- *
- */
-static void
-glw_x11_compute_font_size(glw_x11_t *gx11)
-{
-  float s = (gx11->window_height - 480.0) / 22.0 + 14.0;
-  if(s < 14)
-    s = 14;
-  glw_font_change_size(&gx11->gr, s);
-}
-
-
-
-
 /**
  *
  */
@@ -684,7 +688,6 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
   XEvent event;
   int w, h;
   glw_pointer_event_t gpe;
-  int update_font_size_thres = 1;
 
   gx11->glXSwapIntervalSGI(1);
 
@@ -706,6 +709,15 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
       display_settings_save(gx11);
     }
 
+    if(gx11->font_size != gx11->want_font_size) {
+
+      gx11->font_size = gx11->want_font_size;
+      glw_lock(&gx11->gr);
+      glw_font_change_size(&gx11->gr, gx11->font_size);
+      glw_unlock(&gx11->gr);
+      display_settings_save(gx11);
+    }
+
     if(gx11->frame_duration != 0) {
 
       while(XPending(gx11->display)) {
@@ -723,7 +735,6 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
 	  gx11->aspect_ratio = (float)w / (float)h;
 	  gx11->window_width  = w;
 	  gx11->window_height = h;
-	  update_font_size_thres = 10;
 	  break;
 
 
@@ -798,14 +809,6 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
       }
     }
     glw_lock(&gx11->gr);
-
-    if(update_font_size_thres > 0) {
-      update_font_size_thres--;
-
-      if(update_font_size_thres == 0)
-	glw_x11_compute_font_size(gx11);
-    }
-
     glw_reaper0(&gx11->gr);
     layout_draw(gx11, gx11->aspect_ratio);
     glw_unlock(&gx11->gr);
@@ -856,7 +859,8 @@ glw_x11_start(ui_t *ui, int argc, char *argv[])
 
   glw_x11_init(gx11);
 
-  if(glw_init(&gx11->gr, 40, theme_path, ui))
+  gx11->want_font_size = 20;
+  if(glw_init(&gx11->gr, 20, theme_path, ui))
     return 1;
 
   gx11->running = 1;
