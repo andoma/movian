@@ -164,18 +164,6 @@ rateflag_from_rate(int rate)
 /**
  *
  */
-static const uint8_t swizzle_ac3[AUDIO_CHAN_MAX] = {
-  0, /* Left */
-  2, /* Right */
-  3, /* Back Left */
-  4, /* Back Right */
-  1, /* Center */
-  5, /* LFE */
-};
-
-/**
- *
- */
 static const uint8_t swizzle_aac[AUDIO_CHAN_MAX] = {
   1, /* Left */
   2, /* Right */
@@ -536,10 +524,6 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
 	swizzle = swizzle_aac;
       break;
 
-    case CODEC_ID_AC3:
-      if(channels > 2)
-	swizzle = swizzle_ac3;
-      break;
     default:
       break;
     }
