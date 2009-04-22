@@ -17,7 +17,6 @@
  */
 
 #include <netdb.h>
-#include <sys/epoll.h>
 #include <poll.h>
 #include <assert.h>
 #include <stdio.h>
@@ -41,15 +40,27 @@ int
 tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 	    int timeout)
 {
-  const char *errtxt;
-  struct hostent hostbuf, *hp;
+  struct hostent *hp;
   char *tmphstbuf;
+  int fd, val, r, err, herr;
+  const char *errtxt;
+#if !defined(__APPLE__)
+  struct hostent hostbuf;
   size_t hstbuflen;
-  int herr, fd, r, res, err, val;
+  int res;
+#endif
   struct sockaddr_in6 in6;
   struct sockaddr_in in;
   socklen_t errlen = sizeof(int);
 
+#if defined(__APPLE__)
+  herr = 0;
+  tmphstbuf = NULL; /* free NULL is a nop */
+  /* TODO: AF_INET6 */
+  hp = gethostbyname(hostname);
+  if(hp == NULL)
+    herr = h_errno;
+#else
   hstbuflen = 1024;
   tmphstbuf = malloc(hstbuflen);
 
@@ -58,7 +69,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
     hstbuflen *= 2;
     tmphstbuf = realloc(tmphstbuf, hstbuflen);
   }
-  
+#endif
   if(herr != 0) {
     switch(herr) {
     case HOST_NOT_FOUND:
@@ -90,6 +101,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
     free(tmphstbuf);
     return -1;
   }
+
   fd = socket(hp->h_addrtype, SOCK_STREAM, 0);
   if(fd == -1) {
     snprintf(errbuf, errbufsize, "Unable to create socket: %s",
@@ -102,6 +114,16 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
    * Switch to nonblocking
    */
   fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+
+  /* Darwin send() does not have MSG_NOSIGNAL flag, but has a SO_NOSIGPIPE sockopt */
+#ifdef SO_NOSIGPIPE
+  if(setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &r, sizeof(r)) == -1) {
+    snprintf(errbuf, errbufsize, "setsockopt SO_NOSIGPIPE error: %s",
+	     strerror(errno));
+    free(tmphstbuf);
+    return -1; 
+  } 
+#endif
 
   switch(hp->h_addrtype) {
   case AF_INET:
@@ -167,7 +189,11 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
   fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~O_NONBLOCK);
 
   val = 1;
+#ifdef __APPLE__
+  setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val));
+#else
   setsockopt(fd, SOL_TCP, TCP_NODELAY, &val, sizeof(val));
+#endif
 
   return fd;
 }
@@ -180,8 +206,6 @@ tcp_write(int fd, const void *data, size_t len)
 {
 #ifdef MSG_NOSIGNAL
   return send(fd, data, len, MSG_NOSIGNAL) != len ? ECONNRESET : 0;
-#elif SO_NOSIGPIPE
-  return send(fd, data, len, SO_NOSIGPIPE) != len ? ECONNRESET : 0;
 #else
   return send(fd, data, len, 0           ) != len ? ECONNRESET : 0;
 #endif
