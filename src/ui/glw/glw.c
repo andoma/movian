@@ -26,7 +26,6 @@
 
 #include "glw.h"
 #include "glw_container.h"
-#include "glw_stack.h"
 #include "glw_text_bitmap.h"
 #include "glw_image.h"
 #include "glw_array.h"
