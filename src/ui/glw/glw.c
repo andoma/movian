@@ -1483,7 +1483,8 @@ glw_set_constraint_xy(glw_t *w, int x, int y)
   w->glw_req_aspect = 0;
   w->glw_req_size_x = x;
   w->glw_req_size_y = y;
-  glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, w);
+  if(w->glw_parent != NULL)
+    glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, w);
 }
 
 
@@ -1499,7 +1500,8 @@ glw_set_constraint_aspect(glw_t *w, float a)
   w->glw_req_aspect = a;
   w->glw_req_size_x = 0;
   w->glw_req_size_y = 0;
-  glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, w);
+  if(w->glw_parent != NULL)
+    glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, w);
 }
 
 
@@ -1518,5 +1520,6 @@ glw_copy_constraints(glw_t *w, glw_t *src)
   w->glw_req_aspect = src->glw_req_aspect;
   w->glw_req_size_x = src->glw_req_size_x;
   w->glw_req_size_y = src->glw_req_size_y;
-  glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, w);
+  if(w->glw_parent != NULL)
+    glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, w);
 }
