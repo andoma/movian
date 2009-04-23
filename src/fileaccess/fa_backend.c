@@ -193,6 +193,7 @@ scanner(void *aux)
     case CONTENT_UNKNOWN:
       destroyed++;
       prop_destroy(p);
+      nde->nde_opaque = NULL;
       break;
 
     case CONTENT_IMAGE:
