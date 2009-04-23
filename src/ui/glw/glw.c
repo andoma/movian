@@ -51,6 +51,7 @@ static const size_t glw_class_to_size[] = {
   [GLW_CONTAINER_Y] = sizeof(glw_container_t),
   [GLW_CONTAINER_Z] = sizeof(glw_container_t),
   [GLW_IMAGE]  = sizeof(glw_image_t),
+  [GLW_ICON]  = sizeof(glw_image_t),
   [GLW_BACKDROP]  = sizeof(glw_image_t),
   [GLW_LABEL]  = sizeof(glw_text_bitmap_t),
   [GLW_TEXT]  = sizeof(glw_text_bitmap_t),
@@ -326,6 +327,7 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
     glw_container_ctor(w, init, apx);
     break;
 
+  case GLW_ICON:
   case GLW_IMAGE:
   case GLW_BACKDROP:
     glw_image_ctor(w, init, apx);

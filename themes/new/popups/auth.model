@@ -1,63 +1,70 @@
 #include "theme://include/plates.model"
 
-widget(container_y, {
+widget(container_x, {
+  space(0.2);
 
-  space(1);
+  widget(container_y, {
 
-  widget(backdrop, {
-    PLATE_PROPS()
-    .alphaSelf = 0.8;
-    .color = [0.3, 0.0, 0.0];
+    .weight = 1.0;
+
+    .align = center;
+    
+    widget(backdrop, {
+      PLATE_PROPS()
+	.alphaSelf = 0.8;
+      .color = [0.3, 0.0, 0.0];
       
-    widget(container_y, {
+      widget(container_y, {
 
-      widget(label, {
-	.align = center;
-	.caption = $self.id;
-      });
-      widget(label, {
-	.align = center;
-	.caption = $self.reason;
-      });
-
-      widget(label, {
-	.caption = "Username:";
-	.size = 0.66;
-      });
-      
-      widget(text, {
-	.id = "username";
-	.focusable = true;
-	.caption = $self.username;
-      });
-
-      widget(label, {
-	.caption = "Password:";
-	.size = 0.66;
-      });
-      
-      widget(text, {
-	.id = "password";
-	.focusable = true;
-	.password = true;
-	.caption = $self.password;
-      });
-
-      widget(container_x, {
-	.align = center;
-
-	ACTION_BUTTON("Ok", "theme://icons/ok.png", {
-	  $self.username = getCaption("username");
-	  $self.password = getCaption("password");
-	  $self.result = "ok";
+	widget(label, {
+	  .align = center;
+	  .caption = $self.id;
+	});
+	widget(label, {
+	  .align = center;
+	  .caption = $self.reason;
 	});
 
+	widget(label, {
+	  .caption = "Username:";
+	  .size = 0.66;
+	});
+      
+	widget(text, {
+	  .id = "username";
+	  .focusable = true;
+	  .caption = $self.username;
+	});
 
-	ACTION_BUTTON("Cancel", "theme://icons/cancel.png", {
-	  $self.result = "cancel";
+	widget(label, {
+	  .caption = "Password:";
+	  .size = 0.66;
+	});
+      
+	widget(text, {
+	  .id = "password";
+	  .focusable = true;
+	  .password = true;
+	  .caption = $self.password;
+	});
+
+	widget(container_x, {
+
+	  .align = center;
+
+	  ACTION_BUTTON("Ok", "theme://icons/ok.png", {
+	    $self.username = getCaption("username");
+	    $self.password = getCaption("password");
+	    $self.result = "ok";
+	  });
+
+
+	  ACTION_BUTTON("Cancel", "theme://icons/cancel.png", {
+	    $self.result = "cancel";
+	  });
 	});
       });
     });
   });
-  space(1);
+  space(0.2);
 });

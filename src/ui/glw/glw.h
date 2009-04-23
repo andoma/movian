@@ -73,6 +73,7 @@ typedef enum {
   GLW_EXPANDER,
   GLW_ANIMATOR,
   GLW_IMAGE,
+  GLW_ICON,
   GLW_BACKDROP,
   GLW_LABEL,
   GLW_TEXT,

@@ -41,18 +41,16 @@
 #define ACTION_BUTTON(TEXT, ICON, EVENT)
 {
   widget(backdrop, {
-        .aspect = 1;
     BUTTON_PROPS(0.5);
     onEvent(enter, EVENT);
     
     widget(container_y, {
       
-      widget(image, {
+      widget(icon, {
 	.source = ICON;
       });
       widget(label, {
-	.size = 0.33;
-	.align = center;
+	.size = 0.75;
 	.caption = TEXT;
       });
     });

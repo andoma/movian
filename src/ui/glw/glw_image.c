@@ -49,7 +49,8 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
   else
     alpha_self = rc->rc_alpha * w->glw_alpha * gi->gi_alpha_self;
 
-  if(w->glw_class == GLW_IMAGE || !gi->gi_border_scaling) {
+  if(w->glw_class == GLW_IMAGE || w->glw_class == GLW_ICON || 
+     !gi->gi_border_scaling) {
 
     rc0 = *rc;
 
@@ -57,7 +58,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 
     //    glw_align_1(&rc0, w->glw_alignment);
       
-    if(w->glw_class == GLW_IMAGE)
+    if(w->glw_class == GLW_IMAGE || w->glw_class == GLW_ICON)
       glw_rescale(&rc0, glt->glt_aspect);
 
     if(gi->gi_angle != 0)
@@ -193,6 +194,7 @@ glw_image_update_constraints(glw_image_t *gi)
   glw_loadable_texture_t *glt = gi->gi_tex;
   glw_t *c;
   int y = 0, x = 0;
+  glw_root_t *gr = gi->w.glw_root;
 
   if(gi->w.glw_class == GLW_BACKDROP) {
 
@@ -208,6 +210,10 @@ glw_image_update_constraints(glw_image_t *gi)
     }
 
     glw_set_constraint_xy(&gi->w, x, y);
+
+  } else if(gi->w.glw_class == GLW_ICON) {
+
+    glw_set_constraint_xy(&gi->w, gr->gr_fontsize_px, gr->gr_fontsize_px); 
 
   } else {
 
@@ -326,6 +332,7 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
   glw_image_t *gi = (void *)w;
   glw_attribute_t attrib;
   const char *filename = NULL;
+  glw_root_t *gr = w->glw_root;
 
   if(init) {
     glw_signal_handler_int(w, glw_image_callback);
@@ -336,6 +343,9 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
 
     if(w->glw_class == GLW_IMAGE)
       glw_set_constraint_aspect(&gi->w, 1); 
+
+    if(w->glw_class == GLW_ICON)
+      glw_set_constraint_xy(&gi->w, gr->gr_fontsize_px, gr->gr_fontsize_px); 
   }
 
   do {
