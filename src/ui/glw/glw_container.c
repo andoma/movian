@@ -140,13 +140,15 @@ static int
 glw_container_y_constraints(glw_container_t *co, glw_t *skip)
 {
   glw_t *c;
-
+  int xmax = 0;
   int fix = 0;
   float weight = 0;
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
     if(c == skip)
       continue;
+
+    xmax = GLW_MAX(xmax, c->glw_req_size_x);
 
     if(c->glw_req_size_y) {
       fix += c->glw_req_size_y;
@@ -155,13 +157,14 @@ glw_container_y_constraints(glw_container_t *co, glw_t *skip)
     }
   }
 
+  co->x_sum = xmax;
   co->y_sum = fix;
   co->weight_sum = weight;
 
   if(weight)
     fix = 0;
 
-  glw_set_constraint_xy(&co->w, 0, fix);
+  glw_set_constraint_xy(&co->w, xmax, fix);
   return 1;
 }
 
