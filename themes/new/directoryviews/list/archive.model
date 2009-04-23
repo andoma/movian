@@ -1,13 +1,9 @@
 widget(container_x, {
-  .aspect = 30;
-
   widget(image, {
     .source = "theme://icons/archive.png";
-    .keepAspect = true; 
   });
 
   widget(label, {
-    .weight = 14;
     .caption = $self.metadata.title;
   });
 });

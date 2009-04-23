@@ -1,41 +1,9 @@
 widget(container_x, {
-  .expand = 3;
-
   widget(image, {
     .source = $self.metadata.icon;
-    .keepAspect = true;
   });
 
-  widget(expander, {
-    .weight = 10;
-    
-    widget(container_x, {
-      widget(label, {
-	.caption = $self.metadata.title;
-      });
-
-      widget(label, {
-	.align = right;
-	.caption = value2duration($self.metadata.duration);
-	.weight = 0.1;
-      });
-    });
-    widget(container_y, {
-      widget(label, {
-	.caption = $self.metadata.format;
-      });
-
-      widget(label, {
-	.align = right;
-	.caption = "Video: " + $self.metadata.videoinfo;
-      });
-
-      widget(label, {
-	.align = right;
-	.caption = "Audio: " + $self.metadata.audioinfo;
-      });
-    });
+  widget(label, {
+    .caption = $self.metadata.title;
   });
-
-
 });
