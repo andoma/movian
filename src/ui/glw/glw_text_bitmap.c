@@ -181,8 +181,8 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   bbox.xMin = bbox.yMin = 32000;
   bbox.xMax = bbox.yMax = -32000;
 
-  bbox.yMin = 62 * face->descender * pixelheight / 2048;
-  bbox.yMax = 62 * face->ascender  * pixelheight / 2048;
+  bbox.yMin = 62.2 * face->descender * pixelheight / 2048;
+  bbox.yMax = 62.2 * face->ascender  * pixelheight / 2048;
 
 
   for(i = 0; i < len; i++) {
@@ -212,10 +212,10 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 
   siz_y = bbox.yMax - bbox.yMin;
 
-  target_width  = (siz_x / 62) + 3;
-  target_height = (siz_y / 62) + 1;
+  target_width  = (siz_x / 62.2) + 3;
+  target_height = (siz_y / 62.2) + 1;
 
-  origin_y = -bbox.yMin / 62;
+  origin_y = -bbox.yMin / 62.2;
 
   if(glw_can_tnpo2(gr)) {
     gtbd->gtbd_linewidth = target_width;
@@ -387,7 +387,6 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
     gtb->gtb_siz_y  = gtbd->gtbd_siz_y;
     gtb->gtb_aspect = gtbd->gtbd_aspect;
-
   }
 
 
@@ -456,7 +455,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
   rc0 = *rc;
 
   glw_PushMatrix(&rc0, rc);
-  glw_align_1(&rc0, w->glw_alignment);
+  glw_align_1(&rc0, w->glw_alignment, GLW_ALIGN_LEFT);
 
   if(!glw_is_tex_inited(&gtb->gtb_texture) || gtb->gtb_aspect == 0) {
 
@@ -488,7 +487,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
     glw_Scalef(&rc0, s, s, 1.0);
   }
 
-  glw_align_2(&rc0, w->glw_alignment);
+  glw_align_2(&rc0, w->glw_alignment, GLW_ALIGN_LEFT);
 
   if(gtb->gtb_paint_cursor)
     glw_render(&gtb->gtb_cursor_renderer, &rc0,
@@ -531,6 +530,19 @@ glw_text_bitmap_dtor(glw_t *w)
   if(gtb->gtb_status == GTB_ON_QUEUE)
     TAILQ_REMOVE(&gr->gr_gtb_render_queue, gtb, gtb_workq_link);
 }
+
+
+/**
+ *
+ */
+static void
+gtb_set_estimated_size(glw_root_t *gr, glw_text_bitmap_t *gtb)
+{
+  int ys = gr->gr_fontsize_px * gtb->gtb_lines * gtb->gtb_size;
+
+  glw_set_constraint_xy(&gtb->w, 0, ys);
+}
+
 
 /**
  *
@@ -729,7 +741,7 @@ static void
 gtb_caption_has_changed(glw_text_bitmap_t *gtb)
 {
   char buf[30];
-  int l, x, c;
+  int l, x, c, lines = 1;
   const char *str;
 
   /* Convert UTF8 string to unicode int[] */
@@ -758,12 +770,16 @@ gtb_caption_has_changed(glw_text_bitmap_t *gtb)
   gtb->gtb_uc_size = l;
   x = 0;
   
-  if(str != NULL) 
+  if(str != NULL) {
     while((c = glw_text_getutf8(&str)) != 0) {
       if(c == '\r')
 	continue;
+      if(c == '\n') 
+	lines++;
       gtb->gtb_uc_buffer[x++] = c;
     }
+  }
+  gtb->gtb_lines = lines;
 
   gtb->gtb_uc_len = x;
   if(gtb->w.glw_class == GLW_TEXT) {
@@ -773,6 +789,8 @@ gtb_caption_has_changed(glw_text_bitmap_t *gtb)
   
   if(gtb->gtb_status != GTB_ON_QUEUE)
     gtb->gtb_status = GTB_NEED_RERENDER;
+
+  gtb_set_estimated_size(gtb->w.glw_root, gtb);
 }
 
 
@@ -885,6 +903,7 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
 
     case GLW_ATTRIB_SIZE:
       gtb->gtb_size = va_arg(ap, double);
+      gtb_set_estimated_size(gr, gtb);
       break;
 
     case GLW_ATTRIB_RGB:
@@ -939,7 +958,6 @@ font_render_thread(void *aux)
 
     /* We are going to render unlocked so we cannot use gtb at all */
 
-
     len = gtb->gtb_uc_len;
     if(len > 0) {
       uc = malloc(len * sizeof(int));
@@ -988,8 +1006,15 @@ font_render_thread(void *aux)
     free(gtb->gtb_data.gtbd_cursor_pos);
     memcpy(&gtb->gtb_data, &d, sizeof(glw_text_bitmap_data_t));
 
-    if(d.gtbd_siz_y == 0)
+    if(d.gtbd_siz_y) {
+      glw_set_constraint_xy(&gtb->w, 
+			    gtb->w.glw_alignment == GLW_ALIGN_NONE ? 
+			    d.gtbd_siz_x : 0,
+			    d.gtbd_siz_y);
+    } else {
       gtb->gtb_aspect = 0;
+      gtb_set_estimated_size(gr, gtb);
+    }
   }
 }
 
@@ -1000,8 +1025,10 @@ void
 glw_text_flush(glw_root_t *gr)
 {
   glw_text_bitmap_t *gtb;
-  LIST_FOREACH(gtb, &gr->gr_gtbs, gtb_global_link)
+  LIST_FOREACH(gtb, &gr->gr_gtbs, gtb_global_link) {
     gtb_flush(gtb);
+    gtb_set_estimated_size(gr, gtb);
+  }
 }
 
 /**
@@ -1152,6 +1179,7 @@ glw_text_bitmap_init(glw_root_t *gr, int fontsize)
   }
 
   gr->gr_fontsize = fontsize;
+  gr->gr_fontsize_px = gr->gr_gtb_face->height * fontsize / 2048;
 
   FT_Select_Charmap(gr->gr_gtb_face, FT_ENCODING_UNICODE);
 
@@ -1172,6 +1200,7 @@ glw_font_change_size(glw_root_t *gr, int fontsize)
     return;
 
   gr->gr_fontsize = fontsize;
+  gr->gr_fontsize_px = gr->gr_gtb_face->height * fontsize / 2048;
   glw_text_flush(gr);
 }
 

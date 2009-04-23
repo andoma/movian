@@ -55,7 +55,7 @@ typedef struct glw_text_bitmap {
   glw_text_bitmap_data_t gtb_data;
   float gtb_aspect;
   float gtb_siz_y;
-
+  float gtb_siz_x;
   enum {
     GTB_NEED_RERENDER,
     GTB_ON_QUEUE,
@@ -84,6 +84,8 @@ typedef struct glw_text_bitmap {
 
   prop_sub_t *gtb_sub;
   prop_t *gtb_p;
+
+  int gtb_lines;
 
 } glw_text_bitmap_t;
 

@@ -1,29 +1,22 @@
 
 widget(container_x, {
-  .aspect = 15;
 
   widget(image, {
     .source = "theme://icons/audio.png";
-    .keepAspect = true;
   });
 
   widget(container_y, {
-    .weight = 13;
 
-    widget(label, {.weight = 1.5; .caption = $self.metadata.title;});
-
-    widget(container_x, {
-      widget(label, {.caption = $self.metadata.author; });
-      widget(label, {.caption = $self.metadata.album; });
-    });
+    widget(label, {.caption = $self.metadata.title;});
+    widget(label, {.size = 0.75; .caption = $self.metadata.author; });
+    widget(label, {.size = 0.75; .caption = $self.metadata.album; });
   });
 
   widget(container_y, {
+    .aspect = 2;
     widget(label, {
       .align = right;
       .caption = value2duration($self.metadata.duration);
-      .weight = 1.5;
     });
-    space(1.0);
   });
 });

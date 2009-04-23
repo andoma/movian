@@ -111,6 +111,7 @@ set_float(glw_model_eval_context_t *ec, const token_attrib_t *a,
   return 0;
 }
 
+#if 0 // Not currently used by anything
 /**
  *
  */
@@ -156,6 +157,8 @@ set_int(glw_model_eval_context_t *ec, const token_attrib_t *a,
   glw_set_i(ec->w, a->attrib, v, NULL);
   return 0;
 }
+#endif
+
 
 
 
@@ -195,6 +198,28 @@ set_float4(glw_model_eval_context_t *ec, const token_attrib_t *a,
 	    t->t_float_vector[1],
 	    t->t_float_vector[2],
 	    t->t_float_vector[3],
+	    NULL);
+  return 0;
+}
+
+
+
+/**
+ *
+ */
+static int
+set_int4(glw_model_eval_context_t *ec, const token_attrib_t *a, 
+	 struct token *t)
+{
+  if(t->type != TOKEN_VECTOR_INT || t->t_elements != 4)
+    return glw_model_seterr(ec->ei, t, "Attribute '%s' expects a vec4",
+			    a->name);
+
+  glw_set_i(ec->w, a->attrib, 
+	    t->t_int_vector[0],
+	    t->t_int_vector[1],
+	    t->t_int_vector[2],
+	    t->t_int_vector[3],
 	    NULL);
   return 0;
 }
@@ -350,20 +375,11 @@ static const token_attrib_t attribtab[] = {
   {"source",          set_source, 0},
 
   {"focusCursor",     set_flag,   GLW_FOCUS_DRAW_CURSOR},
-  {"keepAspect",      set_flag,   GLW_KEEP_ASPECT},
   {"debug",           set_flag,   GLW_DEBUG},
   {"skeleton",        set_flag,   GLW_DRAW_SKEL},
   {"password",        set_flag,   GLW_PASSWORD},
-  {"pushAspect",      set_flag,   GLW_PUSH_ASPECT},
   {"mirrorx",         set_mirror, GLW_MIRROR_X},
   {"mirrory",         set_mirror, GLW_MIRROR_Y},
-
-  {"slices",          set_int,    GLW_ATTRIB_SLICES},
-  {"xslices",         set_int,    GLW_ATTRIB_X_SLICES},
-  {"yslices",         set_int,    GLW_ATTRIB_Y_SLICES},
-
-  {"xrepeat",         set_int,    GLW_ATTRIB_REPEAT_X},
-  {"yrepeat",         set_int,    GLW_ATTRIB_REPEAT_Y},
 
   {"alpha",           set_float,  GLW_ATTRIB_ALPHA},
   {"alphaSelf",       set_float,  GLW_ATTRIB_ALPHA_SELF},
@@ -381,7 +397,9 @@ static const token_attrib_t attribtab[] = {
   {"childAspect",     set_float,  GLW_ATTRIB_CHILD_ASPECT},
 
   {"color",           set_float3, GLW_ATTRIB_RGB},
-  {"textureCoords",   set_float4, GLW_ATTRIB_TEXTURE_COORDS},
+  {"borderSize",      set_float4, GLW_ATTRIB_BORDER_SIZE},
+
+  {"borderSize",      set_int4, GLW_ATTRIB_BORDER_SIZE},
 
   {"align",           set_align,  0},
   {"effect",          set_transition_effect,  0},

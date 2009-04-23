@@ -1,48 +1,29 @@
 #include "theme://include/plates.model"
 
-widget(stack_x, {
+widget(container_x, {
 
-  widget(container_x, {
-
-    widget(image, {
-      HIGHLITE_PROPS();
-      .weight = 10;
+  widget(backdrop, {
+    HIGHLITE_PROPS();
       
-      widget(text, {
-	.focusable = true;
-	bind($self.title);
-      });
-    });
-    
-    widget(image, {
-      HIGHLITE_PROPS();
-      .weight = 20;
-      
-      widget(text, {
-	.focusable = true;
-	bind($self.url);
-      });
+    widget(text, {
+      .align = left;
+      .focusable = true;
+      bind($self.title);
     });
   });
 
-  widget(image, {
-    .aspect = 1;
-    BUTTON_PROPS(1.0);
-    onEvent(enter, {
-      delete($self);
-    });
+  widget(backdrop, {
+    HIGHLITE_PROPS();
     
-    widget(container_y, {
-      
-      widget(image, {
-	.source = "theme://icons/delete.png";
-	.keepAspect = true;
-      });
-      widget(label, {
-	.align = center;
-	.caption = "Delete";
-      });
-      
+    widget(text, {
+      .align = left;
+      .focusable = true;
+      bind($self.url);
     });
   });
+
+  ACTION_BUTTON("Delete", "theme://icons/delete.png", {
+    delete($self);
+  });
+
 });

@@ -1,39 +1,20 @@
 widget(container_x, {
-  .expand = 3;
+
+  .debug = true;
 
   widget(image, {
     .source = "theme://icons/movie.png";
-    .keepAspect = true;
   });
 
-  widget(expander, {
-    .weight = 20;
-    
-    widget(container_x, {
-      widget(label, {
-	.caption = $self.metadata.title;
-      });
+  widget(container_y, {
+    widget(label, {.caption = $self.metadata.title;});
+  });
 
-      widget(label, {
-	.align = right;
-	.caption = value2duration($self.metadata.duration);
-	.weight = 0.1;
-      });
-    });
-    widget(container_y, {
-      widget(label, {
-	.caption = $self.metadata.format;
-      });
-
-      widget(label, {
-	.align = right;
-	.caption = "Video: " + $self.metadata.videoinfo;
-      });
-
-      widget(label, {
-	.align = right;
-	.caption = "Audio: " + $self.metadata.audioinfo;
-      });
+  widget(container_y, {
+    .aspect = 2;
+    widget(label, {
+      .align = right;
+      .caption = value2duration($self.metadata.duration);
     });
   });
 });

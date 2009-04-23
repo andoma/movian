@@ -4,7 +4,7 @@ widget(container_x, {
 
   widget(list_y, {
     .id = "list";
-    cloner($page.nodes, image, {
+    cloner($page.nodes, backdrop, {
       BUTTON_PROPS(1.0);
       onEvent(enter, genericEvent(navigator, open, $self.url));
     
@@ -20,7 +20,7 @@ widget(container_x, {
     .focusable = 0.2;
     bind("list");
 
-    widget(image, {
+    widget(backdrop, {
       KNOB_PROPS();
     });
   });

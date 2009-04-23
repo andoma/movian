@@ -67,14 +67,13 @@ typedef enum {
   GLW_CONTAINER_X,  /* Horizonal weight based container */
   GLW_CONTAINER_Y,  /* Vertical weight based container */
   GLW_CONTAINER_Z,  /* Depth container */
-  GLW_STACK_X,      /* Horizonal aspect based stack */
-  GLW_STACK_Y,      /* Vertical aspect based stack */
   GLW_LIST_X,
   GLW_LIST_Y,
   GLW_DECK,
   GLW_EXPANDER,
   GLW_ANIMATOR,
   GLW_IMAGE,
+  GLW_BACKDROP,
   GLW_LABEL,
   GLW_TEXT,
   GLW_INTEGER,
@@ -107,13 +106,10 @@ typedef enum {
   GLW_ATTRIB_SET_FLAGS,
   GLW_ATTRIB_CLR_FLAGS,
   GLW_ATTRIB_EXTRA,
-  GLW_ATTRIB_SLICES,
-  GLW_ATTRIB_X_SLICES,
-  GLW_ATTRIB_Y_SLICES,
   GLW_ATTRIB_PREVIEW,
   GLW_ATTRIB_CONTENT,
   GLW_ATTRIB_MODE,
-  GLW_ATTRIB_TEXTURE_COORDS,
+  GLW_ATTRIB_BORDER_SIZE,
   GLW_ATTRIB_MIRROR,
   GLW_ATTRIB_ID,
   GLW_ATTRIB_RGB,
@@ -127,8 +123,6 @@ typedef enum {
   GLW_ATTRIB_BIND_TO_PROPERTY,
   GLW_ATTRIB_BIND_TO_ID,
   GLW_ATTRIB_SIZE,
-  GLW_ATTRIB_REPEAT_X,
-  GLW_ATTRIB_REPEAT_Y,
   GLW_ATTRIB_PIXMAP,
   GLW_ATTRIB_ORIGINATING_PROP,
   GLW_ATTRIB_FOCUS_WEIGHT,
@@ -151,6 +145,7 @@ typedef struct glw_rgb {
 } glw_rgb_t;
 
 typedef enum {
+  GLW_ALIGN_NONE = 0,
   GLW_ALIGN_CENTER,
   GLW_ALIGN_LEFT,
   GLW_ALIGN_RIGHT,
@@ -234,6 +229,11 @@ typedef enum {
    */
   GLW_SIGNAL_FOCUS_HOVER_PATH_CHANGED,
 
+  /**
+   * Sent to a widget froms its child when the layout constraints changes
+   */
+  GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED,
+
 
 } glw_signal_t;
 
@@ -281,7 +281,8 @@ typedef struct glw_root {
   hts_cond_t gr_gtb_render_cond;
   FT_Face gr_gtb_face;
   int gr_fontsize;
-  
+  int gr_fontsize_px;
+
   /**
    * Image/Texture loader
    */
@@ -387,10 +388,17 @@ typedef struct glw {
   glw_vertex_t glw_parent_scale;
   float glw_parent_misc[4];
 
+  /**
+   * Layout contraints
+   */
+  int glw_req_size_x;
+  int glw_req_size_y;
+  float glw_req_aspect;
+
   int glw_flags;  
 
 #define GLW_FOCUS_DISABLED      0x1     /* Can not receive focus right now */
-#define GLW_KEEP_ASPECT         0x2     /* Keep aspect (for bitmaps) */
+#define GLW_LAYOUT_OVERRIDE     0x2     /* Layout fixed by user */
 #define GLW_DESTROYED           0x4     /* was destroyed but someone
 					   is holding references */
 #define GLW_RENDER_LINKED       0x8     /* glw_render_link is linked */
@@ -407,12 +415,10 @@ typedef struct glw {
 #define GLW_IN_FOCUS_PATH       0x800
 #define GLW_IN_HOVER_PATH       0x1000
 
-#define GLW_HONOUR_CHILD_ASPECT 0x2000
-#define GLW_PUSH_ASPECT         0x4000
+#define GLW_DESTROYING          0x2000  /* glw_destroy() has been called */
 
   float glw_conf_weight;             /* Relative weight (configured) */
   float glw_norm_weight;             /* Relative weight (normalized) */
-  float glw_aspect;                  /* Aspect */
   float glw_alpha;                   /* Alpha set by user */
   float glw_extra;
 
@@ -468,7 +474,7 @@ int glw_dispatch_event(uii_t *uii, event_t *e);
 
 void glw_store_matrix(glw_t *w, glw_rctx_t *rc);
 
-void glw_focus_set(glw_t *w, int interactive);
+void glw_focus_set(glw_root_t *gr, glw_t *w, int interactive);
 
 void glw_focus_open_path(glw_t *p, glw_t *w);
 
@@ -564,21 +570,18 @@ do {						\
   case GLW_ATTRIB_ORIGINATING_PROP: 		\
     (void)va_arg(ap, void *);			\
     break;					\
+  case GLW_ATTRIB_BORDER_SIZE:                  \
+    (void)va_arg(ap, int);			\
+    (void)va_arg(ap, int);			\
+    (void)va_arg(ap, int);			\
   case GLW_ATTRIB_ALIGNMENT:			\
   case GLW_ATTRIB_SET_FLAGS:			\
   case GLW_ATTRIB_CLR_FLAGS:			\
-  case GLW_ATTRIB_SLICES:                       \
-  case GLW_ATTRIB_X_SLICES:                     \
-  case GLW_ATTRIB_Y_SLICES:                     \
   case GLW_ATTRIB_MODE:                         \
   case GLW_ATTRIB_MIRROR:                       \
   case GLW_ATTRIB_TRANSITION_EFFECT:            \
-  case GLW_ATTRIB_REPEAT_X:                     \
-  case GLW_ATTRIB_REPEAT_Y:                     \
     (void)va_arg(ap, int);			\
     break;					\
-  case GLW_ATTRIB_TEXTURE_COORDS:               \
-    (void)va_arg(ap, double);			\
   case GLW_ATTRIB_RGB:                          \
     (void)va_arg(ap, double);			\
     (void)va_arg(ap, double);			\
@@ -693,8 +696,11 @@ void glw_rescale(glw_rctx_t *rc, float t_aspect);
 extern const glw_vertex_t align_vertices[];
 
 static inline void
-glw_align_1(glw_rctx_t *rc, glw_alignment_t a)
+glw_align_1(glw_rctx_t *rc, glw_alignment_t a, glw_alignment_t def)
 {
+  if(a == GLW_ALIGN_NONE)
+    a = def;
+
   if(a != GLW_ALIGN_CENTER)
     glw_Translatef(rc, 
 		   align_vertices[a].x, 
@@ -703,8 +709,11 @@ glw_align_1(glw_rctx_t *rc, glw_alignment_t a)
 }
 
 static inline void
-glw_align_2(glw_rctx_t *rc, glw_alignment_t a)
+glw_align_2(glw_rctx_t *rc, glw_alignment_t a, glw_alignment_t def)
 {
+  if(a == GLW_ALIGN_NONE)
+    a = def;
+
   if(a != GLW_ALIGN_CENTER)
     glw_Translatef(rc, 
 		   -align_vertices[a].x, 
@@ -754,5 +763,15 @@ void glw_gf_unregister(glw_gf_ctrl_t *ggc);
 void glw_gf_do(void);
 
 void glw_font_change_size(glw_root_t *gr, int fontsize);
+
+/**
+ *
+ */
+
+void glw_set_constraint_xy(glw_t *w, int x, int y);
+
+void glw_set_constraint_aspect(glw_t *w, float aspect);
+
+void glw_copy_constraints(glw_t *w, glw_t *src);
 
 #endif /* GLW_H */

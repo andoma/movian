@@ -424,6 +424,10 @@ eval_array(glw_model_eval_context_t *pec, token_t *t0)
     case TOKEN_STRING:
       vt = TOKEN_VECTOR_STRING;
       break;
+
+    case TOKEN_INT:
+      vt = TOKEN_VECTOR_INT;
+      break;
       
     default:
       glw_model_seterr(pec->ei, t, "Invalid vector component (%d)", 
@@ -442,6 +446,8 @@ eval_array(glw_model_eval_context_t *pec, token_t *t0)
 
     if(out->type == TOKEN_VECTOR_STRING) {
       out->t_string_vector[n] = strdup(ec.stack->t_string);
+    } else if(out->type == TOKEN_VECTOR_INT) {
+      out->t_int_vector[n] = ec.stack->t_int;
     } else {
       out->t_float_vector[n] = ec.stack->t_float;
     }
@@ -664,7 +670,7 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
   glw_model_free_chain(body);
 
   if(n.gr->gr_last_focused_interactive == p)
-    glw_focus_set(n.w, 0);
+    glw_focus_set(parent->glw_root, n.w, 0);
 }
 
 
@@ -1158,9 +1164,8 @@ static struct strtab classtab[] = {
   { "container_x",   GLW_CONTAINER_X},
   { "container_y",   GLW_CONTAINER_Y},
   { "container_z",   GLW_CONTAINER_Z},
-  { "stack_x",       GLW_STACK_X},
-  { "stack_y",       GLW_STACK_Y},
   { "image",         GLW_IMAGE},
+  { "backdrop",      GLW_BACKDROP},
   { "label",         GLW_LABEL},
   { "text",          GLW_TEXT},
   { "integer",       GLW_INTEGER},

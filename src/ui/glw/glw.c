@@ -48,12 +48,11 @@
 static const size_t glw_class_to_size[] = {
   [GLW_DUMMY] = sizeof(glw_t),
   [GLW_MODEL] = sizeof(glw_t),
-  [GLW_CONTAINER_X] = sizeof(glw_t),
-  [GLW_CONTAINER_Y] = sizeof(glw_t),
-  [GLW_CONTAINER_Z] = sizeof(glw_t),
-  [GLW_STACK_X] = sizeof(glw_t),
-  [GLW_STACK_Y] = sizeof(glw_t),
+  [GLW_CONTAINER_X] = sizeof(glw_container_t),
+  [GLW_CONTAINER_Y] = sizeof(glw_container_t),
+  [GLW_CONTAINER_Z] = sizeof(glw_container_t),
   [GLW_IMAGE]  = sizeof(glw_image_t),
+  [GLW_BACKDROP]  = sizeof(glw_image_t),
   [GLW_LABEL]  = sizeof(glw_text_bitmap_t),
   [GLW_TEXT]  = sizeof(glw_text_bitmap_t),
   [GLW_INTEGER]  = sizeof(glw_text_bitmap_t),
@@ -233,17 +232,14 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 
     case GLW_ATTRIB_WEIGHT:
       w->glw_conf_weight = va_arg(ap, double);
+      /// XXX ugly, should be via constraint funcs instead
+      w->glw_flags |= GLW_LAYOUT_OVERRIDE;
+      glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, w);
       break;
 
     case GLW_ATTRIB_ASPECT:
-      b = w;
-      while((p = b->glw_parent) != NULL) {
-	if(p->glw_flags & GLW_HONOUR_CHILD_ASPECT) {
-	  b->glw_aspect = va_arg(ap, double);
-	  break;
-	}
-	b = p;
-      }
+      glw_set_constraint_aspect(w, va_arg(ap, double));
+      w->glw_flags |= GLW_LAYOUT_OVERRIDE;
       break;
 
     case GLW_ATTRIB_ID:
@@ -331,13 +327,8 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
     glw_container_ctor(w, init, apx);
     break;
 
-
-  case GLW_STACK_X:
-  case GLW_STACK_Y:
-    glw_stack_ctor(w, init, apx);
-    break;
-
   case GLW_IMAGE:
+  case GLW_BACKDROP:
     glw_image_ctor(w, init, apx);
     break;
 
@@ -438,26 +429,6 @@ glw_create0(glw_root_t *gr, glw_class_t class, va_list ap)
   w->glw_alpha = 1.0f;
   w->glw_conf_weight = 1.0f;
   w->glw_time = 1.0f;
-
-  /* XXX: Not good */
-  switch(w->glw_class) {
-  default:
-    break;
-  case GLW_LABEL:
-  case GLW_TEXT:
-  case GLW_INTEGER:
-    w->glw_alignment = GLW_ALIGN_LEFT;
-    break;
-  case GLW_IMAGE:
-    w->glw_alignment = GLW_ALIGN_CENTER;
-    break;
-  case GLW_STACK_X:
-    w->glw_alignment = GLW_ALIGN_LEFT;
-    break;
-  case GLW_STACK_Y:
-    w->glw_alignment = GLW_ALIGN_TOP;
-    break;
-  }
 
   LIST_INSERT_HEAD(&gr->gr_active_dummy_list, w, glw_active_link);
 
@@ -581,6 +552,8 @@ glw_destroy0(glw_t *w)
   glw_root_t *gr = w->glw_root;
   glw_event_map_t *gem;
 
+  w->glw_flags |= GLW_DESTROYING;
+
   if(w->glw_originating_prop != NULL)
     prop_ref_dec(w->glw_originating_prop);
 
@@ -615,7 +588,9 @@ glw_destroy0(glw_t *w)
 
   if((p = w->glw_parent) != NULL) {
     /* Some classes needs to do some stuff is a child is destroyed */
-    glw_signal0(p, GLW_SIGNAL_CHILD_DESTROYED, w);
+
+    if(!(p->glw_flags & GLW_DESTROYING))
+      glw_signal0(p, GLW_SIGNAL_CHILD_DESTROYED, w);
 
     glw_focus_leave(w);
 
@@ -947,9 +922,8 @@ glw_path_in_focus(glw_t *w)
  *
  */
 static void
-glw_root_focus(glw_t *w, int interactive)
+glw_root_focus(glw_root_t *gr, glw_t *w, int interactive)
 {
-  glw_root_t *gr = w->glw_root;
   glw_t *x;
 
   if(gr->gr_current_focus == w)
@@ -1003,9 +977,9 @@ glw_root_set_hover(glw_root_t *gr, glw_t *w)
  *
  */
 void
-glw_focus_set(glw_t *w, int interactive)
+glw_focus_set(glw_root_t *gr, glw_t *w, int interactive)
 {
-  glw_root_focus(w, interactive);
+  glw_root_focus(gr, w, interactive);
 
   if(w == NULL)
     return;
@@ -1030,7 +1004,7 @@ glw_focus_set_current_by_path(glw_t *w, int interactive)
 {
   while(w->glw_focused != NULL)
     w = w->glw_focused;
-  glw_root_focus(w, interactive);
+  glw_root_focus(w->glw_root, w, interactive);
 }
 
 
@@ -1049,7 +1023,7 @@ glw_focus_init_widget(glw_t *w0, int interactive, float weight)
 
   if(gr->gr_current_focus == NULL ||
      gr->gr_current_focus->glw_focus_weight < weight) {
-    glw_focus_set(w, interactive);
+    glw_focus_set(gr, w, interactive);
     return;
   }
 
@@ -1065,7 +1039,7 @@ glw_focus_init_widget(glw_t *w0, int interactive, float weight)
     w = w->glw_parent;
   }
 
-  glw_root_focus(w0, interactive);
+  glw_root_focus(gr, w0, interactive);
 }
 
 
@@ -1118,7 +1092,7 @@ glw_focus_leave(glw_t *w)
     w = w->glw_parent;
   }
 
-  glw_focus_set(r, 0);
+  glw_focus_set(w->glw_root, r, 0);
 }
 
 
@@ -1196,7 +1170,7 @@ glw_focus_crawl(glw_t *w, int forward)
     r = glw_focus_crawl1(w, forward);
 
   if(r != NULL)
-    glw_focus_set(r, 1);
+    glw_focus_set(w->glw_root, r, 1);
 }
 
 
@@ -1322,7 +1296,7 @@ pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, glw_t **hp)
 	switch(gpe->type) {
 
 	case GLW_POINTER_CLICK:
-	  glw_focus_set(w, 1);
+	  glw_focus_set(gr, w, 1);
 	  return 1;
 
 	case GLW_POINTER_RELEASE:
@@ -1493,3 +1467,55 @@ const glw_vertex_t align_vertices[] =
     [GLW_ALIGN_BOTTOM] = {  0.0, -1.0, 0.0 },
     [GLW_ALIGN_TOP]    = {  0.0,  1.0, 0.0 },
   };
+
+
+/**
+ *
+ */
+void
+glw_set_constraint_xy(glw_t *w, int x, int y)
+{
+  if(w->glw_flags & GLW_LAYOUT_OVERRIDE ||
+     (w->glw_req_size_x == x && w->glw_req_size_y == y))
+    return;
+
+  w->glw_req_aspect = 0;
+  w->glw_req_size_x = x;
+  w->glw_req_size_y = y;
+  glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, w);
+}
+
+
+/**
+ *
+ */
+void
+glw_set_constraint_aspect(glw_t *w, float a)
+{
+  if(w->glw_flags & GLW_LAYOUT_OVERRIDE || w->glw_req_aspect == a)
+    return;
+
+  w->glw_req_aspect = a;
+  w->glw_req_size_x = 0;
+  w->glw_req_size_y = 0;
+  glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, w);
+}
+
+
+/**
+ *
+ */
+void
+glw_copy_constraints(glw_t *w, glw_t *src)
+{
+  if(w->glw_flags & GLW_LAYOUT_OVERRIDE ||
+     (w->glw_req_aspect == src->glw_req_aspect &&
+      w->glw_req_size_x == src->glw_req_size_x &&
+      w->glw_req_size_y == src->glw_req_size_y))
+    return;
+
+  w->glw_req_aspect = src->glw_req_aspect;
+  w->glw_req_size_x = src->glw_req_size_x;
+  w->glw_req_size_y = src->glw_req_size_y;
+  glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, w);
+}

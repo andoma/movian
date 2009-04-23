@@ -1,27 +1,5 @@
 #include "theme://include/plates.model"
 
-#define ICON_BUTTON(ICON, CAPTION, CODE) {
-  widget(image, {
-    .aspect = 1;
-    BUTTON_PROPS(0.1);
-    onEvent(enter, CODE);
-    
-    widget(container_y, {
-      
-      widget(image, {
-	.source = ICON;
-	.keepAspect = true;
-      });
-      /*
-      widget(label, {
-	.align = center;
-	.caption = CAPTION;
-      });
-      */
-    });
-  });
-}
-
 widget(container_z, {
 
   widget(fx_texrot, {
@@ -31,40 +9,10 @@ widget(container_z, {
   widget(layer, {
 
     /* Main display deck */
-
-    widget(stack_y, {
-
-      widget(stack_x, {
-	.aspect = 25;
-	ICON_BUTTON("theme://icons/home.png", "Home", 
-		    genericEvent(navigator, open, "page://mainmenu")
-		    );
-
-	ICON_BUTTON("theme://icons/back.png", "Back",
-		    genericEvent(navigator, back, void)
-		    );
-
-	widget(label, {
-	  .size = 1.6;
-	  .align = center;
-	  .caption = $global.nav.currentpage.title;
-	});
-	
-	widget(dummy, {
-	  .aspect = 1;
-	});
-	widget(dummy, {
-	  .aspect = 1;
-	});
-
-
-      });
-
-      widget(deck, {
-	cloner($global.nav.pages, animator, {
-	  .time = 0.3;
-	  .source = "theme://pagemodels/" + $page.type + ".model";
-	});
+    widget(deck, {
+      cloner($global.nav.pages, animator, {
+	.time = 0.3;
+	.source = "theme://pagemodels/" + $page.type + ".model";
       });
     });
 
@@ -73,6 +21,9 @@ widget(container_z, {
     });
   });
   
+
+  /*
+
   widget(container_x, {
     space(1);
     
@@ -94,17 +45,25 @@ widget(container_z, {
 	});
       });
     });
+  */
 
-    widget(stack_y, {
-      cloner($global.notifications, container_x, {
-       
-    
-	PLATE(0, [0.0, 0.0, 0.0], 1.0, 
-	    widget(label, {
-		    .aspect = 10;
-		    .caption = $self.text;
-	    });
-		);
+
+  /**
+   * Global notifications 
+   */
+  widget(container_y, {
+
+    cloner($global.notifications, container_x, {
+      .align = right;
+      
+      widget(backdrop, {
+	PLATE_PROPS();
+
+	.color = [0.2, 0.3, 0.6];
+
+	widget(label, {
+	  .caption = $self.text;
+	});
       });
     });
   });

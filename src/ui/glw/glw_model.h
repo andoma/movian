@@ -93,6 +93,7 @@ typedef enum {
   TOKEN_NOP,
   TOKEN_VECTOR_FLOAT,
   TOKEN_VECTOR_STRING,
+  TOKEN_VECTOR_INT,
   TOKEN_EVENT,
   TOKEN_PIXMAP,                // prop.c:prop_pixmap_t
   TOKEN_num,
@@ -129,6 +130,7 @@ typedef struct token {
 
   union {
     int  ival;
+    float int_vec[0];
 
     char *string;
     char *string_vec[0];
@@ -152,6 +154,7 @@ typedef struct token {
 #define t_float           u.value
 #define t_float_vector    u.value_vec
 #define t_int             u.ival
+#define t_int_vector      u.int_vec
 #define t_func            u.func
 #define t_attrib          u.attrib
 #define t_gem             u.gem

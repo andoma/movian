@@ -3,7 +3,7 @@
 
 #define PLATE_PROPS() {
   .source = "theme://images/whitebox.png";
-  .textureCoords = [0.1, 0.1, 0.812, 0.812];
+  .borderSize = [3, 3, 6, 6];
 }
 
 #define HIGHLITE_PROPS() {
@@ -18,8 +18,8 @@
 }
 
 #define KNOB_PROPS() {
-  .source = "theme://images/slider.png";
-  .textureCoords = [0.22, 0.093, 0.56, 0.812];
+  .source = "theme://images/whitebox.png";
+  .borderSize = [3, 3, 8, 8];
   .color = [0.0, 0.0, 0.0] + iir(isFocused(), 4) * BUTTON_COLOR() + iir(isHovered(), 4) * [0.1, 0.3, 0.3];
   .alphaSelf = iir(0.5 + 0.5 * (isFocused()), 4);
 }
@@ -28,7 +28,7 @@
 
 #define PLATE(ASPECT, COLOR, ALPHA, BODY)
 {
-  widget(image, {
+  widget(backdrop, {
     PLATE_PROPS();
     .aspect = ASPECT;
     .color = COLOR;
@@ -36,4 +36,25 @@
     .alphaSelf = 0.9;
     BODY;
   });
+}
+
+#define ACTION_BUTTON(TEXT, ICON, EVENT)
+{
+  widget(backdrop, {
+        .aspect = 1;
+    BUTTON_PROPS(0.5);
+    onEvent(enter, EVENT);
+    
+    widget(container_y, {
+      
+      widget(image, {
+	.source = ICON;
+      });
+      widget(label, {
+	.size = 0.33;
+	.align = center;
+	.caption = TEXT;
+      });
+    });
+  });  
 }

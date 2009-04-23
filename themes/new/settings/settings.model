@@ -1,15 +1,13 @@
 #include "theme://include/plates.model"
 
-widget(image, {
+widget(backdrop, {
   BUTTON_PROPS(1.0);
 
   onEvent(enter, genericEvent(navigator, open, $self.url));
 
-  widget(stack_x, {
+  widget(container_x, {
 
     widget(image, {
-      .keepAspect = true;
-      .pushAspect = true;
       .source =  translate($self.subtype,
 			   [
 			    "audio", "theme://icons/speaker.png",

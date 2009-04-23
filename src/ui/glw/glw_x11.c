@@ -857,10 +857,11 @@ glw_x11_start(ui_t *ui, int argc, char *argv[])
 
   gx11->config_name = strdup(confname);
 
+  gx11->want_font_size = 20;
+
   glw_x11_init(gx11);
 
-  gx11->want_font_size = 20;
-  if(glw_init(&gx11->gr, 20, theme_path, ui))
+  if(glw_init(&gx11->gr, gx11->want_font_size, theme_path, ui))
     return 1;
 
   gx11->running = 1;

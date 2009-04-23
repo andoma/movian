@@ -83,6 +83,7 @@ glw_model_token_free(token_t *t)
   case TOKEN_FLOAT:
   case TOKEN_INT:
   case TOKEN_VECTOR_FLOAT:
+  case TOKEN_VECTOR_INT:
   case TOKEN_OBJECT_ATTRIBUTE:
   case TOKEN_PROPERTY_SUBSCRIPTION:
   case TOKEN_VOID:
@@ -234,6 +235,7 @@ glw_model_token_copy(token_t *src)
 
   case TOKEN_VECTOR_FLOAT:
   case TOKEN_VECTOR_STRING:
+  case TOKEN_VECTOR_INT:
   case TOKEN_num:
   case TOKEN_EVENT:
     abort();

@@ -47,7 +47,7 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
 {
   glw_t *c, *w = &l->w;
   float y = 0;
-  float da, sa, size_y, t, vy;
+  float sa, size_y, t, vy;
   glw_rctx_t rc0 = *rc;
 
   sa = rc->rc_size_x / rc->rc_size_y;
@@ -57,9 +57,15 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
 
-    da = GLW_MAX(c->glw_aspect ?: l->child_aspect, sa);
+    if(c->glw_req_size_y) {
+      size_y = c->glw_req_size_y / rc->rc_size_y;
+    } else if(c->glw_req_aspect) {
+      size_y = sa / c->glw_req_aspect;
+    } else {
+      size_y = sa / 10;
+    }
+    
 
-    size_y = sa / da;
     c->glw_parent_size_y = size_y;
 
     vy = y + size_y;
@@ -113,19 +119,21 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
 {
   glw_t *c, *w = &l->w;
   float x = 0;
-  float da, sa, size_x, t, vx;
+  float isa, size_x, t, vx;
   glw_rctx_t rc0 = *rc;
 
-  sa = rc->rc_size_x / rc->rc_size_y;
+  isa = rc->rc_size_y / rc->rc_size_x;
 
   t = GLW_MIN(GLW_MAX(0, l->center_x_target), l->center_x_max);
   l->center_x = GLW_LP(6, l->center_x, t);
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
 
-    da = GLW_MIN(c->glw_aspect ?: l->child_aspect, sa);
-
-    size_x = da / sa;
+    if(c->glw_req_aspect) {
+      size_x = c->glw_req_aspect * isa;
+    } else {
+      size_x = isa;
+    }
 
     c->glw_parent_size_x = size_x;
 
@@ -295,7 +303,6 @@ glw_list_ctor(glw_t *w, int init, va_list ap)
   glw_attribute_t attrib;
 
   if(init) {
-    w->glw_flags |= GLW_HONOUR_CHILD_ASPECT;
     glw_signal_handler_int(w, glw_list_callback);
     l->child_aspect = w->glw_class == GLW_LIST_Y ? 20 : 1;
   }

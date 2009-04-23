@@ -1,8 +1,8 @@
-widget(stack_y, {
+widget(container_y, {
   .align = center;
   widget(label, {
-    .aspect = 30;
     .align = center;
+    .size = 2;
     .caption = "No contents";
   });
 });

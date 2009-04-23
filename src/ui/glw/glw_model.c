@@ -135,6 +135,10 @@ glw_model_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       return glw_signal0(c, signal, extra);
     return 0;
 
+  case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
+    glw_copy_constraints(w, c);
+    return 1;
+
   default:
     break;
   }

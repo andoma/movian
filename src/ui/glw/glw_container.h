@@ -19,6 +19,18 @@
 #ifndef GLW_CONTAINER_H
 #define GLW_CONTAINER_H
 
+typedef struct glw_container {
+  glw_t w;
+  
+  int x_sum;
+  int y_sum;
+  float weight_sum;
+  float aspect_sum;
+
+} glw_container_t;
+
+
+
 void glw_container_ctor(glw_t *w, int init, va_list ap);
 
 #endif /* GLW_CONTAINER_H */

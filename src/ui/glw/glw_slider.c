@@ -51,8 +51,12 @@ glw_slider_layout(glw_t *w, glw_rctx_t *rc)
   if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)
     return;
 
-  if(c->glw_aspect > 0) {
-    s->knob_size = rc->rc_size_y * c->glw_aspect / rc->rc_size_x;
+  if(c->glw_req_aspect > 0) {
+    s->knob_size = rc->rc_size_y * c->glw_req_aspect / rc->rc_size_x;
+  } else if(c->glw_req_size_x && w->glw_class == GLW_SLIDER_X) {
+    s->knob_size = c->glw_req_size_x / rc->rc_size_x;
+  } else if(c->glw_req_size_y && w->glw_class == GLW_SLIDER_Y) {
+    s->knob_size = c->glw_req_size_y / rc->rc_size_y;
   } else if(!s->fixed_knob_size) {
     if(w->glw_class == GLW_SLIDER_X)
       s->knob_size = rc->rc_size_y / rc->rc_size_x;
@@ -252,6 +256,7 @@ static int
 glw_slider_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_slider_t *s = (glw_slider_t *)w;
+  glw_t *c;
 
   switch(signal) {
   case GLW_SIGNAL_LAYOUT:
@@ -274,6 +279,16 @@ glw_slider_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_DESTROY:
     slider_unbind(s);
     break;
+
+  case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
+    c = extra;
+    
+    if(w->glw_class == GLW_SLIDER_Y) {
+      glw_set_constraint_xy(w, c->glw_req_size_x, 0);
+    } else {
+      glw_set_constraint_xy(w, 0, c->glw_req_size_y);
+    }
+    return 1;
 
   default:
     break;
@@ -363,7 +378,6 @@ glw_slider_ctor(glw_t *w, int init, va_list ap)
   const char *n;
 
   if(init) {
-    w->glw_flags |= GLW_HONOUR_CHILD_ASPECT;
     glw_signal_handler_int(w, glw_slider_callback);
     s->min = 0.0;
     s->max = 1.0;

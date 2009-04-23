@@ -48,13 +48,11 @@ compute_position(glw_t *w, int horizontal)
   for(; (p = w->glw_parent) != NULL; w = p) {
     switch(p->glw_class) {
     case GLW_CONTAINER_X:
-    case GLW_STACK_X:
       if(!horizontal)
 	continue;
       break;
 
     case GLW_CONTAINER_Y:
-    case GLW_STACK_Y:
       if(horizontal)
 	continue;
       break;
@@ -112,6 +110,7 @@ find_candidate(glw_t *w, query_t *query)
 
   case GLW_ANIMATOR:
   case GLW_IMAGE:
+  case GLW_BACKDROP:
   case GLW_MODEL:
     if((c = TAILQ_FIRST(&w->glw_childs)) != NULL)
       find_candidate(c, query);
@@ -139,8 +138,6 @@ find_candidate(glw_t *w, query_t *query)
   case GLW_EXPANDER:
   case GLW_CONTAINER_X:
   case GLW_CONTAINER_Y:
-  case GLW_STACK_X:
-  case GLW_STACK_Y:
     TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
       find_candidate(c, query);
     break;
@@ -245,6 +242,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
     case GLW_ANIMATOR:
     case GLW_IMAGE:
+    case GLW_BACKDROP:
     case GLW_DECK:
     case GLW_MODEL:
       break;
@@ -259,12 +257,6 @@ glw_navigate(glw_t *w, event_t *e, int local)
 	goto container;
       break;
 	      
-    case GLW_STACK_X:
-    case GLW_STACK_Y:
-      if(p->glw_class == (orientation ? GLW_STACK_X : GLW_STACK_Y))
-	goto container;
-      break;
-
     case GLW_LIST_X:
     case GLW_LIST_Y:
       if(p->glw_class != (orientation ? GLW_LIST_X : GLW_LIST_Y))
@@ -292,7 +284,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
   }
 
   if(t != NULL)
-    glw_focus_set(t, 1);
+    glw_focus_set(t->glw_root, t, 1);
 
   return 0;
 }

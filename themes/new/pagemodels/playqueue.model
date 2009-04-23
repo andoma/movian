@@ -3,16 +3,13 @@
 widget(container_x, {
   widget(list_y, {
     .id = "list";
-    cloner($page.nodes, container_y, {
-
-      widget(image, {
-	BUTTON_PROPS(1.0);
-	onEvent(enter, genericEvent(navigator, open, $self.url));
+    cloner($page.nodes, backdrop, {
+      BUTTON_PROPS(1.0);
+      onEvent(enter, genericEvent(navigator, open, $self.url));
 	
-	widget(animator, {
-	  .time = 0.3;
-	  .source = "theme://directoryviews/list/audio.model";
-	});
+      widget(animator, {
+	.time = 0.3;
+	.source = "theme://directoryviews/list/audio.model";
       });
     });
   });
@@ -22,9 +19,8 @@ widget(container_x, {
     .focusable = 0.2;
     bind("list");
 
-    widget(image, {
+    widget(backdrop, {
       KNOB_PROPS();
     });
   });
-
 });

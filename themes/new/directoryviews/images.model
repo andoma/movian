@@ -5,17 +5,15 @@ widget(container_y, {
   widget(image, {
     .weight = 4;
     .source = $self.focused.url;
-    .keepAspect = true;
   });
 
   space(0.2);
 
   widget(list_x, {
-    .slices = 8;
 
     $self.focused = focusedChild();
 
-    cloner($page.nodes, image, {
+    cloner($page.nodes, backdrop, {
       BUTTON_PROPS(1.0);
       onEvent(enter, genericEvent(navigator, open, $self.url));
 

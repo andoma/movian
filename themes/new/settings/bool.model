@@ -2,28 +2,21 @@
 
 widget(container_x, {
 
-  widget(image, {
-    
-    PLATE_PROPS();
-    .alphaSelf = 0;
-    
-    widget(label, {
-      .aspect = 20;
-      .align = right;
-      .caption = $self.title;
-    });
-
+  widget(label, {
+    .align = right;
+    .caption = $self.title;
   });
 
-  widget(image, {
-      BUTTON_PROPS(1.0);
+  widget(backdrop, {
+
+    BUTTON_PROPS(1.0);
     
     onEvent(enter, {
       $self.value = 1 ^^ $self.value;
     });
     
     widget(label, {
-      .aspect = 20;
+      .align = left;
       .caption = translate(int2str($self.value),
 			   ["0", "Off",
 			    "1", "On"],

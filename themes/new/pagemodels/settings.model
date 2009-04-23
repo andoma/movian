@@ -6,10 +6,8 @@ widget(container_y, {
     widget(list_y, {
       .childAspect = 20;
       .id = "list";
-      cloner($page.nodes, container_z, {
-	widget(animator, {
-	  .source = "theme://settings/" + $self.type + ".model";
-	});
+      cloner($page.nodes, animator, {
+	.source = "theme://settings/" + $self.type + ".model";
       });
     });
     widget(slider_y, {
@@ -17,16 +15,17 @@ widget(container_y, {
       .focusable = 0.2;
       bind("list");
   
-      widget(image, {
+      widget(backdrop, {
 	KNOB_PROPS();
       });
     });
   });
   
-  widget(stack_x, {
+  widget(container_x, {
     .weight = 0.1;
-    
-    widget(image, {
+    .align = center;
+
+    widget(backdrop, {
       .alpha = $page.mayadd;
       .focusable = 0.1 * $page.mayadd;
       .aspect = 3;
@@ -37,11 +36,9 @@ widget(container_y, {
 	createChild($page.nodes);
       });
       
-      widget(stack_x, {
+      widget(container_x, {
 	widget(image, {
 	  .source = "theme://icons/add.png";
-	  .keepAspect = true;
-	  .pushAspect = true;
 	});
 
 	widget(label, {

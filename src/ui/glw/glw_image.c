@@ -31,9 +31,6 @@ glw_image_dtor(glw_t *w)
     glw_render_free(&gi->gi_gr);
 }
 
-
-
-
 static void 
 glw_image_render(glw_t *w, glw_rctx_t *rc)
 {
@@ -52,26 +49,21 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
   else
     alpha_self = rc->rc_alpha * w->glw_alpha * gi->gi_alpha_self;
 
-  if(!gi->gi_border_scaling) {
+  if(w->glw_class == GLW_IMAGE || !gi->gi_border_scaling) {
 
     rc0 = *rc;
 
     glw_PushMatrix(&rc0, rc);
 
-    glw_align_1(&rc0, w->glw_alignment);
+    //    glw_align_1(&rc0, w->glw_alignment);
       
-    if(w->glw_flags & GLW_KEEP_ASPECT)
+    if(w->glw_class == GLW_IMAGE)
       glw_rescale(&rc0, glt->glt_aspect);
-
-    if(w->glw_flags & GLW_PUSH_ASPECT)
-      glw_set_i(w, 
-		GLW_ATTRIB_ASPECT, glt->glt_aspect,
-		NULL); // XXX: Not perfect
 
     if(gi->gi_angle != 0)
       glw_Rotatef(&rc0, -gi->gi_angle, 0, 0, 1);
 
-    glw_align_2(&rc0, w->glw_alignment);
+    //    glw_align_2(&rc0, w->glw_alignment);
 
     if(glw_is_focusable(w))
       glw_store_matrix(w, &rc0);
@@ -134,78 +126,30 @@ glw_image_layout_tesselated(glw_rctx_t *rc, glw_image_t *gi,
   float tex[4][2];
   float vex[4][2];
   int x, y, i = 0;
-  float a, b;
-  float t_aspect = glt->glt_aspect;
 
   gi->gi_saved_size_x = rc->rc_size_x;
   gi->gi_saved_size_y = rc->rc_size_y;
- 
-  a = rc->rc_size_x / rc->rc_size_y;
 
-  /* Texture X coordinates */
   tex[0][0] = 0.0;
-  tex[1][0] = gi->gi_tex_left;
-  tex[2][0] = gi->gi_tex_right;
+  tex[1][0] = 0.0 + gi->gi_border_left  / glt->glt_xs;
+  tex[2][0] = 1.0 - gi->gi_border_right / glt->glt_xs;
   tex[3][0] = 1.0;
 
-  /* Texture Y coordinates */
   tex[0][1] = 0.0;
-  tex[1][1] = gi->gi_tex_top;
-  tex[2][1] = gi->gi_tex_bottom;
+  tex[1][1] = 0.0 + gi->gi_border_top    / glt->glt_ys;
+  tex[2][1] = 1.0 - gi->gi_border_bottom / glt->glt_ys;
   tex[3][1] = 1.0;
 
-
-  vex[0][0] = -1.0;
-  vex[1][0] = -1.0 + gi->gi_tex_left * 2;
-  vex[2][0] =  1 - ((1 - gi->gi_tex_right) * 2);
-  vex[3][0] =  1.0;
+  vex[0][0] =         -1.0;
+  vex[1][0] = GLW_MIN(-1.0 + 2.0 * gi->gi_border_left  / rc->rc_size_x, 0.0);
+  vex[2][0] = GLW_MAX( 1.0 - 2.0 * gi->gi_border_right / rc->rc_size_x, 0.0);
+  vex[3][0] =          1.0;
     
-  vex[0][1] =  1.0;
-  vex[1][1] =  1 - gi->gi_tex_top * 2;
-  vex[2][1] = -1.0 + ((1 - gi->gi_tex_bottom) * 2);
-  vex[3][1] = -1.0;
+  vex[0][1] =          1.0;
+  vex[1][1] = GLW_MAX( 1.0 - 2.0 * gi->gi_border_top    / rc->rc_size_y, 0.0);
+  vex[2][1] = GLW_MIN(-1.0 + 2.0 * gi->gi_border_bottom / rc->rc_size_y, 0.0);
+  vex[3][1] =         -1.0;
 
-
-  if(a > t_aspect) {
-    
-    b = t_aspect / a;
-    
-    vex[1][0] = -1.0 + gi->gi_tex_left * 2 * b;
-    vex[2][0] =  1 - ((1 - gi->gi_tex_right) * 2 * b);
-    
-  } else {
-    
-    b = a / t_aspect;
-    
-    vex[1][1] =  1 - gi->gi_tex_top * 2 *b;
-    vex[2][1] = -1.0 + ((1 - gi->gi_tex_bottom) * 2 * b);
-  }
-
-  b = -1.0 + (glt->glt_xs * gi->gi_tex_left)      * 2 / rc->rc_size_x;
-  if(vex[1][0] > b)
-    vex[1][0] = b;
-
-  b = 1.0 - (glt->glt_xs * (1-gi->gi_tex_right)) * 2 / rc->rc_size_x;
-  if(vex[2][0] < b)
-    vex[2][0] = b;
-
-  b = 1.0 - (glt->glt_ys * gi->gi_tex_top)        * 2 / rc->rc_size_y;
-  if(vex[1][1] < b)
-    vex[1][1] = b;
-
-  b = -1.0 + (glt->glt_ys * (1-gi->gi_tex_bottom)) * 2 / rc->rc_size_y;
-  if(vex[2][1] > b)
-    vex[2][1] = b;
-
-  if(gi->gi_mirror & GLW_MIRROR_X)
-    for(x = 0; x < 4; x++)
-      tex[x][0] = 1.0f - tex[x][0];
-
-  if(gi->gi_mirror & GLW_MIRROR_Y)
-    for(y = 0; y < 4; y++)
-      tex[y][1] = 1.0f - tex[y][1];
-
-    
   glw_render_set_pre(&gi->gi_gr);
 
   for(y = 0; y < 3; y++) {
@@ -243,11 +187,46 @@ glw_image_layout_tesselated(glw_rctx_t *rc, glw_image_t *gi,
 /**
  *
  */
+static void
+glw_image_update_constraints(glw_image_t *gi)
+{
+  glw_loadable_texture_t *glt = gi->gi_tex;
+  glw_t *c;
+  int y = 0, x = 0;
+
+  if(gi->w.glw_class == GLW_BACKDROP) {
+
+    c = TAILQ_FIRST(&gi->w.glw_childs);
+
+    if(c != NULL) {
+
+      if(c->glw_req_size_y)
+	y = c->glw_req_size_y + gi->gi_border_top + gi->gi_border_bottom;
+
+      if(c->glw_req_size_x)
+	x = c->glw_req_size_x + gi->gi_border_left + gi->gi_border_right;
+    }
+
+    glw_set_constraint_xy(&gi->w, x, y);
+
+  } else {
+
+    glw_set_constraint_aspect(&gi->w, 
+			      glt && glt->glt_state == GLT_STATE_VALID ? 
+			      glt->glt_aspect : 1);
+  }
+}
+
+
+/**
+ *
+ */
 static void 
 glw_image_layout(glw_t *w, glw_rctx_t *rc)
 {
   glw_image_t *gi = (void *)w;
   glw_loadable_texture_t *glt = gi->gi_tex;
+  glw_rctx_t rc0;
   glw_t *c;
 
   if(glt == NULL)
@@ -268,14 +247,16 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 
       if(!gi->gi_border_scaling) {
 
+	glw_image_update_constraints(gi);
+
 	glw_render_vtx_pos(&gi->gi_gr, 0, -1.0, -1.0, 0.0);
-	glw_render_vtx_st (&gi->gi_gr, 0,  0.0,  1.0 * gi->gi_repeat_y);
+	glw_render_vtx_st (&gi->gi_gr, 0,  0.0,  1.0);
 
 	glw_render_vtx_pos(&gi->gi_gr, 1,  1.0, -1.0, 0.0);
-	glw_render_vtx_st (&gi->gi_gr, 1,  1.0 * gi->gi_repeat_x,  1.0 * gi->gi_repeat_y);
+	glw_render_vtx_st (&gi->gi_gr, 1,  1.0,  1.0);
 
 	glw_render_vtx_pos(&gi->gi_gr, 2,  1.0,  1.0, 0.0);
-	glw_render_vtx_st (&gi->gi_gr, 2,  1.0 * gi->gi_repeat_x,  0.0);
+	glw_render_vtx_st (&gi->gi_gr, 2,  1.0,  0.0);
 
 	glw_render_vtx_pos(&gi->gi_gr, 3, -1.0,  1.0, 0.0);
 	glw_render_vtx_st (&gi->gi_gr, 3,  0.0,  0.0);
@@ -289,10 +270,13 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
     }
   }
 
-  if((c = TAILQ_FIRST(&w->glw_childs)) != NULL)
-    glw_layout0(c, rc);
+  if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
+    rc0 = *rc;
+    rc0.rc_size_x = rc->rc_size_x * gi->gi_child_xs;
+    rc0.rc_size_y = rc->rc_size_y * gi->gi_child_ys;
+    glw_layout0(c, &rc0);
+  }
 }
-
 
 
 /*
@@ -311,7 +295,7 @@ glw_image_callback(glw_t *w, void *opaque, glw_signal_t signal,
     break;
   case GLW_SIGNAL_RENDER:
     glw_image_render(w, extra);
-    break;
+    return 1;
   case GLW_SIGNAL_DTOR:
     glw_image_dtor(w);
     break;
@@ -320,6 +304,15 @@ glw_image_callback(glw_t *w, void *opaque, glw_signal_t signal,
       if(glw_signal0(c, GLW_SIGNAL_EVENT, extra))
 	return 1;
     break;
+
+  case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
+  case GLW_SIGNAL_CHILD_CREATED:
+    glw_image_update_constraints((glw_image_t *)w);
+    return 1;
+  case GLW_SIGNAL_CHILD_DESTROYED:
+    glw_set_constraint_xy(w, 0, 0);
+    return 1;
+
   }
   return 0;
 }
@@ -340,20 +333,22 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
     gi->gi_color.r = 1.0;
     gi->gi_color.g = 1.0;
     gi->gi_color.b = 1.0;
-    gi->gi_repeat_x = 1;
-    gi->gi_repeat_y = 1;
+
+    if(w->glw_class == GLW_IMAGE)
+      glw_set_constraint_aspect(&gi->w, 1); 
   }
 
   do {
     attrib = va_arg(ap, int);
     switch(attrib) {
-    case GLW_ATTRIB_TEXTURE_COORDS:
+    case GLW_ATTRIB_BORDER_SIZE:
       gi->gi_border_scaling = 1;
-      gi->gi_tex_left   = va_arg(ap, double);
-      gi->gi_tex_top    = va_arg(ap, double);
-      gi->gi_tex_right  = va_arg(ap, double);
-      gi->gi_tex_bottom = va_arg(ap, double);
+      gi->gi_border_left   = va_arg(ap, double);
+      gi->gi_border_top    = va_arg(ap, double);
+      gi->gi_border_right  = va_arg(ap, double);
+      gi->gi_border_bottom = va_arg(ap, double);
       gi->gi_render_init = 1;
+      glw_image_update_constraints(gi);
       break;
 
     case GLW_ATTRIB_ANGLE:
@@ -389,16 +384,6 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
       gi->gi_color.r = va_arg(ap, double);
       gi->gi_color.g = va_arg(ap, double);
       gi->gi_color.b = va_arg(ap, double);
-      break;
-
-    case GLW_ATTRIB_REPEAT_X:
-      gi->gi_repeat_x = va_arg(ap, int);
-      gi->gi_render_init = 1;
-      break;
-
-    case GLW_ATTRIB_REPEAT_Y:
-      gi->gi_repeat_y = va_arg(ap, int);
-      gi->gi_render_init = 1;
       break;
 
     default:

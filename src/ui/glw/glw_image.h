@@ -22,7 +22,7 @@
 #include "glw_texture.h"
 
 typedef struct glw_image {
-  glw_t gi_head;
+  glw_t w;
 
   float gi_alpha_self;
 
@@ -33,10 +33,10 @@ typedef struct glw_image {
 
   int gi_border_scaling;
 
-  float gi_tex_left;
-  float gi_tex_right;
-  float gi_tex_top;
-  float gi_tex_bottom;
+  float gi_border_left;
+  float gi_border_right;
+  float gi_border_top;
+  float gi_border_bottom;
  
   int gi_mirror;
 
@@ -54,9 +54,6 @@ typedef struct glw_image {
   float gi_child_yt;
 
   glw_rgb_t gi_color;
-
-  int gi_repeat_x;
-  int gi_repeat_y;
 
 } glw_image_t;
 

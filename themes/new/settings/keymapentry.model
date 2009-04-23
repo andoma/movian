@@ -1,43 +1,24 @@
 #include "theme://include/plates.model"
 
-widget(stack_x, {
-  widget(container_x, {
-    widget(label, {
-      .caption = $self.event;
-      .align = right;
-    });
-
-    widget(image, {
-      BUTTON_PROPS(1.0);
-      onEvent(KeyCode, {
-	$self.keycode = $event;
-      });
-      
-      widget(label, {
-	.align = center;
-	.caption = devoidify($self.keycode, "<not set>");
-      });
-    });
+widget(container_x, {
+  widget(label, {
+    .caption = $self.event;
+    .align = right;
   });
 
-
-  widget(image, {
-    .aspect = 1;
+  widget(backdrop, {
     BUTTON_PROPS(1.0);
-    onEvent(enter, {
-      $self.keycode = void;
+    onEvent(KeyCode, {
+      $self.keycode = $event;
     });
-    
-    widget(container_y, {
       
-      widget(image, {
-	.source = "theme://icons/delete.png";
-	.keepAspect = true;
-      });
-      widget(label, {
-	.align = center;
-	.caption = "Clear";
-      });
+    widget(label, {
+      .align = center;
+      .caption = devoidify($self.keycode, "<not set>");
     });
+  });
+  
+  ACTION_BUTTON("Clear", "theme://icons/delete.png", {
+    $self.keycode = void;
   });
 });
