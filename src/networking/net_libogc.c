@@ -62,28 +62,28 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
   in.sin_family = AF_INET;
   in.sin_port = htons(port);
 
-  hts_mutex_lock(&resolve_mutex);
+  if(!inet_aton(hostname, &in.sin_addr)) {
 
- again:
-  while((h = net_gethostbyname((char *)hostname)) == NULL) {
-    retry++;
-    if(retry == 10) {
-      snprintf(errbuf, errbufsize, "Unable to resolve %s -- %d", hostname,
-	       errno);
-      hts_mutex_unlock(&resolve_mutex);
-      return -1;
-    }
-    
-    usleep(250000);
+    hts_mutex_lock(&resolve_mutex);
+
+    do {
+      while((h = net_gethostbyname((char *)hostname)) == NULL) {
+	retry++;
+	if(retry == 10) {
+	  snprintf(errbuf, errbufsize, "Unable to resolve %s -- %d", hostname,
+		   errno);
+	  hts_mutex_unlock(&resolve_mutex);
+	  return -1;
+	}
+    	usleep(250000);
+      }
+
+    } while(h->h_addr_list[0] == NULL);
+
+    memcpy(&in.sin_addr, h->h_addr_list[0], sizeof(struct in_addr));
+
+    hts_mutex_unlock(&resolve_mutex);
   }
-
-  if(h->h_addr_list[0] == NULL)
-    goto again;
-
-  memcpy(&in.sin_addr, h->h_addr_list[0], sizeof(struct in_addr));
-
-  hts_mutex_unlock(&resolve_mutex);
-
   if((fd = net_socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     snprintf(errbuf, errbufsize, "Can not create socket, error %d", fd);
     return -1;
