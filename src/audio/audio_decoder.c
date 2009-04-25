@@ -297,6 +297,10 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
 	       CODEC_ID_NONE, mb->mb_data, 
 	       mb->mb_size / sizeof(int16_t) / mb->mb_channels,
 	       mb->mb_pts, mp);
+
+    if(mb->mb_time != AV_NOPTS_VALUE)
+      mp_set_current_time(mp, mb->mb_time);
+
     return;
   }
 
