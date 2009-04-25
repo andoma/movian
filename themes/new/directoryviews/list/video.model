@@ -1,6 +1,7 @@
 widget(container_x, {
 
-  .debug = true;
+  .focusable = true;
+  onEvent(enter, genericEvent(navigator, open, $self.url));
 
   widget(image, {
     .source = "theme://icons/movie.png";

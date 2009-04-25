@@ -1,4 +1,7 @@
 widget(container_x, {
+  .focusable = true;
+  onEvent(enter, genericEvent(navigator, open, $self.url));
+
   widget(image, {
     .source = $self.metadata.icon;
   });

@@ -1,3 +1,6 @@
 widget(image, {
+  .focusable = true;
+  //onEvent(enter, genericEvent(navigator, open, $self.url));
+
   .source = "thumb://" + $self.url;
 });

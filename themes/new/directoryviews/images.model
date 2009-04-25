@@ -14,8 +14,7 @@ widget(container_y, {
     $self.focused = focusedChild();
 
     cloner($page.nodes, backdrop, {
-      BUTTON_PROPS(1.0);
-      onEvent(enter, genericEvent(navigator, open, $self.url));
+      HIGHLITE_PROPS();
 
       widget(animator, {
 	.time = 0.3;
