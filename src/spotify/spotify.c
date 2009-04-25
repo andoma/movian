@@ -405,6 +405,9 @@ spotify_music_delivery(sp_session *sess, const sp_audioformat *format,
     }
   }
 
+  if(pending_seek > 0)
+    return num_frames;
+
   hts_mutex_lock(&mp->mp_mutex);
 
   while((e = TAILQ_FIRST(&mp->mp_eq)) != NULL) {
@@ -440,9 +443,6 @@ spotify_music_delivery(sp_session *sess, const sp_audioformat *format,
   }
 
   hts_mutex_unlock(&mp->mp_mutex);
-
-  if(pending_seek > 0)
-    return num_frames;
 
   if(mq->mq_len > 20)
     return 0;
