@@ -36,6 +36,8 @@
 
 #include <dlfcn.h>
 #include "apifunctions.h"
+#include "spotify_app_key.h"
+
 
 /**
  *
@@ -1069,7 +1071,6 @@ static const sp_session_callbacks spotify_session_callbacks = {
   .music_delivery      = spotify_music_delivery,
   .play_token_lost     = spotify_play_token_lost,
 };
-#include "spotify_app_key.h"
 
 
 /**
@@ -1311,11 +1312,17 @@ spotify_thread(void *aux)
   sesconf.user_agent = ua;
   sesconf.callbacks = &spotify_session_callbacks;
   
+
   error = f_sp_session_init(&sesconf, &s);
+  hts_mutex_lock(&spotify_mutex);
+  if(error) {
+    spotify_login_result = error;
+    pthread_cond_broadcast(&spotify_cond_login);
+    hts_mutex_unlock(&spotify_mutex);
+    return NULL;
+  }
 
-  pthread_mutex_lock(&spotify_mutex);
   spotify_session = s;
-
 
   f_sp_playlistcontainer_add_callbacks(f_sp_session_playlistcontainer(s),
 				       &pc_callbacks,
