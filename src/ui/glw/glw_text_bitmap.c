@@ -790,7 +790,8 @@ gtb_caption_has_changed(glw_text_bitmap_t *gtb)
   if(gtb->gtb_status != GTB_ON_QUEUE)
     gtb->gtb_status = GTB_NEED_RERENDER;
 
-  gtb_set_estimated_size(gtb->w.glw_root, gtb);
+  if(gtb->w.glw_req_size_y == 0)
+    gtb_set_estimated_size(gtb->w.glw_root, gtb);
 }
 
 
