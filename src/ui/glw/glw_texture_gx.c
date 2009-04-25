@@ -69,10 +69,10 @@ glw_tex_backend_layout(glw_loadable_texture_t *glt)
 
 
 /**
- * Convert RGBA to GX texture format
+ * Convert ARGB to GX texture format
  */
 static void *
-convert_rgba(const uint8_t *src, int linesize, unsigned int w, unsigned int h)
+convert_argb(const uint8_t *src, int linesize, unsigned int w, unsigned int h)
 {
   unsigned int size = ((w + 3) & ~3) * ((h + 3) & ~3) * 4;
   int y, x, i;
@@ -193,8 +193,8 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 
   switch(pix_fmt) {
 
-  case PIX_FMT_RGB32:
-    texels = convert_rgba(frame->data[0], frame->linesize[0], req_w, req_h);
+  case PIX_FMT_ARGB:
+    texels = convert_argb(frame->data[0], frame->linesize[0], req_w, req_h);
     fmt = GX_TF_RGBA8;
     break;
 
@@ -204,6 +204,8 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
     break;
 
   default:
+    TRACE(TRACE_ERROR, "glw", "GX unsupported pixel format %s",
+	  avcodec_get_pix_fmt_name(pix_fmt));
     return 1;
   }
 
