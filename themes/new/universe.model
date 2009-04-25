@@ -93,15 +93,16 @@ widget(container_z, {
   });
   
 
-  /*
-
   widget(container_x, {
     space(1);
-    
-    widget(stack_y, {
-      .align = bottom;
+    widget(container_y, {
+      .align = center;
 
-      PLATE(10, [0.8, 1.0, 1.0], iir($global.audio.mastermute, 7), {
+      widget(backdrop, {
+	PLATE_PROPS();
+	.alpha = iir(changed($global.audio.mastervolume, 2), 7);
+	.color = [0.8, 0.9, 1.0];
+
 	widget(label, {
 	  .caption = "Master volume: " +
 	     float2str($global.audio.mastervolume, 0) + " dB";
@@ -109,15 +110,19 @@ widget(container_z, {
 	});
       });
       
-      PLATE(10, [1.0, 0.0, 0.0], iir($global.audio.mastermute, 7), {
+      widget(backdrop, {
+	PLATE_PROPS();
+	.alpha = iir($global.audio.mastermute, 7);
+	.color = [1.0, 0.0, 0.0];
+
         widget(label, {
 	  .caption = "Audio muted";
 	  .align = center;
 	});
       });
     });
-  */
-
+    space(1);
+  });
 
   /**
    * Global notifications 
