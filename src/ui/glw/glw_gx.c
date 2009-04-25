@@ -65,3 +65,15 @@ glw_clip_disable(glw_rctx_t *rc, int which)
   // XXX: TODO
 }
 
+
+/**
+ * XXX: Replace with something more clever
+ */
+void
+glw_widget_project(float *m, float *x1, float *x2, float *y1, float *y2)
+{
+  *x1 = m[3] - m[0];
+  *x2 = m[3] + m[0];
+  *y1 = m[7] - m[5];
+  *y2 = m[7] + m[5];
+}

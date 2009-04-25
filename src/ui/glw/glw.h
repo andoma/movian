@@ -614,6 +614,8 @@ void glw_layout0(glw_t *w, glw_rctx_t *rc);
 
 int glw_signal0(glw_t *w, glw_signal_t sig, void *extra);
 
+void glw_widget_project(float *m, float *x1, float *x2, float *y1, float *y2);
+
 glw_t *glw_create0(glw_root_t *gr, glw_class_t class, va_list ap);
 
 glw_t *glw_create_i(glw_root_t *gr, 

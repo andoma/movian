@@ -1253,21 +1253,6 @@ glw_event(glw_root_t *gr, event_t *e)
 
 
 /**
- * XXX: Replace with glProject
- */
-static void
-glw_widget_project(float *m, float *x1, float *x2, float *y1, float *y2)
-{
-  *x1 = m[12] - m[0];
-  *x2 = m[12] + m[0];
-  *y1 = m[13] - m[5];
-  *y2 = m[13] + m[5];
-}
-
-
-
-
-/**
  *
  */
 static int
