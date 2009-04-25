@@ -1,39 +1,39 @@
 #include "theme://include/plates.model"
 
 widget(container_y, {
+    
+    widget(backdrop, {
+	PLATE_PROPS();
+	.alphaSelf = 0.25;
 
-  widget(container_x, {
-    .weight = 0.2;
+	widget(container_x, {
+	    widget(image, {
+		.source = devoidify($self.album_art, "theme://icons/cd.png");
+	      });
 
-    space(0.02);
+	    widget(container_y, {
 
-    widget(image, {
-      .aspect = 1.0;
-      .source = devoidify($self.album_art, "theme://icons/cd.png");
-    });
+		widget(label, {
+		    .size = 2;
+		    .caption = $self.album_name;
+		    .align = left;
+		  });
 
-    space(0.02);
+		widget(label, {
+		    .size = 1.5;
+		    .caption = $self.album_artist;
+		    .align = left;
+		  });
 
-    widget(container_y, {
-
-      widget(label, {
-	.size = 2;
-	.caption = $self.album_name;
+		widget(label, {
+		    .size = 1.5;
+		    .caption = $self.album_year;
+		    .align = left;
+		  });
+	      });
+	  });
       });
 
-      widget(label, {
-	.size = 1.5;
-	.caption = $self.album_artist;
-      });
-
-      widget(label, {
-	.size = 1.5;
-	.caption = $self.album_year;
-      });
-    });
-
-
-  });
   widget(container_x, {
 
     widget(list_y, {
