@@ -525,7 +525,7 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
 
   buf[0] = 0;
 
-  if(len == 1) {
+  if((event->xkey.state & 0xf) == 0 && len == 1) {
     c = str[0];
     switch(c) {
       /* Static key mappings, these cannot be changed */
