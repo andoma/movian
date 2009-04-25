@@ -220,7 +220,7 @@ ui_start(int argc, const char *argv[], const char *argv00)
 /**
  *
  */
-void
+int
 ui_dispatch_event(event_t *e, const char *buf, uii_t *uii)
 {
   int r, l;
@@ -230,13 +230,14 @@ ui_dispatch_event(event_t *e, const char *buf, uii_t *uii)
     l = strlen(buf);
     ek = event_create(EVENT_KEYDESC, sizeof(event_keydesc_t) + l + 1);
     memcpy(ek->desc, buf, l + 1);
-    ui_dispatch_event(&ek->h, NULL, uii);
+    if(ui_dispatch_event(&ek->h, NULL, uii))
+      return 1;
 
     keymapper_resolve(buf, uii);
   }
 
   if(e == NULL)
-    return;
+    return 0;
 
   if(uii != NULL && uii->uii_ui->ui_dispatch_event != NULL) {
     r = uii->uii_ui->ui_dispatch_event(uii, e);
@@ -257,6 +258,7 @@ ui_dispatch_event(event_t *e, const char *buf, uii_t *uii)
   } else {
     event_unref(e);
   }
+  return r;
 }
 
 
