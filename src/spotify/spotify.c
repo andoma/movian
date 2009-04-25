@@ -670,6 +670,7 @@ static int
 spotify_get_metadata(spotify_uri_t *su)
 {
   sp_album *album;
+  sp_artist *artist;
   playlist_t *pl;
   prop_t *meta = su->su_metadata;
   char url[256];
@@ -692,35 +693,36 @@ spotify_get_metadata(spotify_uri_t *su)
     break;
     
   case SP_LINKTYPE_ALBUM:
+
+    if(su->su_nodes == NULL) {
+      su->su_nodes = prop_create(NULL, "nodes");
+      su->su_content_type = CONTENT_DIR;
+
+      prop_ref_inc(su->su_nodes);
+      f_sp_albumbrowse_create(spotify_session, su->su_album, 
+			      spotify_browse_album_callback, su->su_nodes);
+    }
+
     if(!f_sp_album_is_loaded(su->su_album))
       return 0;
 
-    su->su_album_name = strdup(f_sp_album_name(su->su_album));
+    if((artist = f_sp_album_artist(su->su_album)) == NULL)
+      return 0;
 
+    su->su_album_name = strdup(f_sp_album_name(su->su_album));
     TRACE(TRACE_DEBUG, "spotify", "Got metadata for album: %s (%s)", 
 	  su->su_uri, su->su_album_name);
-
-    su->su_nodes = prop_create(NULL, "nodes");
-    su->su_content_type = CONTENT_DIR;
-
-    prop_ref_inc(su->su_nodes);
-    f_sp_albumbrowse_create(spotify_session, su->su_album, 
-			  spotify_browse_album_callback, su->su_nodes);
 
     su->su_album_art = prop_create(NULL, "album_art");
 
     spotify_load_image(f_sp_image_create(spotify_session, 
 					 f_sp_album_cover(su->su_album)),
 		       su->su_album_art);
+    
     su->su_preferred_view = "album";
 
     su->su_album_year = f_sp_album_year(su->su_album);
-
-#if 0 // does not work
-    artist = f_sp_album_artist(su->su_album);
-    printf("artist = %p\n", artist);
     su->su_artist_name = strdup(f_sp_artist_name(artist));
-#endif
     break;
  
   case SP_LINKTYPE_ARTIST:
@@ -1303,7 +1305,7 @@ spotify_thread(void *aux)
   char ua[256];
   extern char *htsversion_full;
 
-  sesconf.api_version = 1;
+  sesconf.api_version = SPOTIFY_API_VERSION;
   sesconf.cache_location = "/tmp/spotify";
   sesconf.settings_location = "/tmp/spotify";
   sesconf.application_key = appkey;
