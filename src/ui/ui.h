@@ -73,6 +73,6 @@ void uii_register(uii_t *uii);
 
 void ui_exit_showtime(int retcode);
 
-void ui_dispatch_event(event_t *e, const char *buf, uii_t *uii);
+int ui_dispatch_event(event_t *e, const char *buf, uii_t *uii);
 
 #endif /* UI_H__ */
