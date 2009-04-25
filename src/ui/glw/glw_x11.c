@@ -83,6 +83,8 @@ typedef struct glw_x11 {
   prop_t *prop_display;
   prop_t *prop_gpu;
 
+  setting_t *fullscreen_setting;
+
 } glw_x11_t;
 
 static const keymap_defmap_t glw_default_keymap[] = {
@@ -169,10 +171,10 @@ display_settings_init(glw_x11_t *gx11)
 
   r = settings_add_dir(NULL, "display", title, "display");
   
-  settings_add_bool(r, "fullscreen",
-		    "Fullscreen mode", 0, settings,
-		    display_set_mode, gx11,
-		    SETTINGS_INITIAL_UPDATE);
+  gx11->fullscreen_setting = settings_add_bool(r, "fullscreen",
+					       "Fullscreen mode", 0, settings,
+					       display_set_mode, gx11,
+					       SETTINGS_INITIAL_UPDATE);
 
   settings_add_bool(r, "pointer",
 		    "Mouse pointer", 1, settings,
@@ -869,6 +871,23 @@ glw_x11_start(ui_t *ui, int argc, char *argv[])
   return 0;
 }
 
+/**
+ *
+ */
+static int
+glw_x11_dispatch_event(uii_t *uii, event_t *e)
+{
+  glw_x11_t *gx11 = (glw_x11_t *)uii;
+  
+  switch(e->e_type) {
+  case EVENT_FULLSCREEN_TOGGLE:
+    settings_toggle_bool(gx11->fullscreen_setting);
+    return 1;
+
+  default:
+    return glw_dispatch_event(uii, e);
+  }
+}
 
 /**
  *
@@ -876,7 +895,7 @@ glw_x11_start(ui_t *ui, int argc, char *argv[])
 ui_t glw_x11_ui = {
   .ui_title = "glw_x11",
   .ui_start = glw_x11_start,
-  .ui_dispatch_event = glw_dispatch_event,
+  .ui_dispatch_event = glw_x11_dispatch_event,
 };
 
 
