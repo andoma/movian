@@ -2,37 +2,37 @@
 
 widget(container_y, {
     
-    widget(backdrop, {
-	PLATE_PROPS();
-	.alphaSelf = 0.25;
+  widget(backdrop, {
+    PLATE_PROPS();
+    .alphaSelf = 0.25;
 
-	widget(container_x, {
-	    widget(image, {
-		.source = devoidify($self.album_art, "theme://icons/cd.png");
-	      });
-
-	    widget(container_y, {
-
-		widget(label, {
-		    .size = 2;
-		    .caption = $self.album_name;
-		    .align = left;
-		  });
-
-		widget(label, {
-		    .size = 1.5;
-		    .caption = $self.album_artist;
-		    .align = left;
-		  });
-
-		widget(label, {
-		    .size = 1.5;
-		    .caption = $self.album_year;
-		    .align = left;
-		  });
-	      });
-	  });
+    widget(container_x, {
+      widget(image, {
+	.source = devoidify($self.album_art, "theme://icons/cd.png");
       });
+
+      widget(container_y, {
+
+	widget(label, {
+	  .size = 2;
+	  .caption = $self.album_name;
+	  .align = left;
+	});
+
+	widget(label, {
+	  .size = 1.5;
+	  .caption = $self.artist_name;
+	  .align = left;
+	});
+
+	widget(label, {
+	  .size = 1.5;
+	  .caption = $self.album_year;
+	  .align = left;
+	});
+      });
+    });
+  });
 
   widget(container_x, {
 
