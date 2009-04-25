@@ -39,7 +39,7 @@ widget(container_z, {
 	  });
 	});
       });
-
+      /*
       widget(backdrop, {
 	PLATE_PROPS();
 	.alphaSelf = 0.25;
@@ -84,6 +84,7 @@ widget(container_z, {
 	  });
 	});
       });
+      */
     });
 
     cloner($global.popups, animator, {
