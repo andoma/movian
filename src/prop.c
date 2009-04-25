@@ -1096,6 +1096,37 @@ prop_set_int_ex(prop_t *p, prop_sub_t *skipme, int v)
  *
  */
 void
+prop_toggle_int_ex(prop_t *p, prop_sub_t *skipme)
+{
+  if(p == NULL)
+    return;
+
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type == PROP_ZOMBIE) {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
+
+  if(p->hp_type != PROP_INT) {
+
+    if(prop_clean(p)) {
+      hts_mutex_unlock(&prop_mutex);
+      return;
+    }
+   }
+
+  p->hp_int = !p->hp_int;
+  p->hp_type = PROP_INT;
+
+  prop_set_epilogue(skipme, p);
+}
+
+
+/**
+ *
+ */
+void
 prop_set_void_ex(prop_t *p, prop_sub_t *skipme)
 {
   if(p == NULL)
