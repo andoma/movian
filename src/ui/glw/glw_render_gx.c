@@ -20,6 +20,8 @@
 
 #include "glw.h"
 
+#define float_to_byte(f) GLW_MAX(0, GLW_MIN(255, (int)(f * 255.0)))
+
 /**
  * 
  */
@@ -75,10 +77,10 @@ void
 glw_render_vts_col(glw_renderer_t *gr, int vertex,
 		   float r, float g, float b, float a)
 {
-  gr->gr_buffer[vertex * gr->gr_stride + 5] = r;
-  gr->gr_buffer[vertex * gr->gr_stride + 6] = g;
-  gr->gr_buffer[vertex * gr->gr_stride + 7] = b;
-  gr->gr_buffer[vertex * gr->gr_stride + 8] = a;
+  gr->gr_buffer[vertex * gr->gr_stride + 5] = float_to_byte(r);
+  gr->gr_buffer[vertex * gr->gr_stride + 6] = float_to_byte(g);
+  gr->gr_buffer[vertex * gr->gr_stride + 7] = float_to_byte(b);
+  gr->gr_buffer[vertex * gr->gr_stride + 8] = float_to_byte(a);
 }
 
 
@@ -99,7 +101,10 @@ glw_render(glw_renderer_t *gr, glw_rctx_t *rc, int mode, int attribs,
   
   switch(attribs) {
   case GLW_RENDER_ATTRIBS_NONE:
-    r8 = r * 255.0; g8 = g * 255.0; b8 = b * 255.0; a8 = a * 255.0;
+    r8 = float_to_byte(r);
+    g8 = float_to_byte(g);
+    b8 = float_to_byte(b);
+    a8 = float_to_byte(a);
 
     GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
     GX_SetVtxDesc(GX_VA_TEX0, GX_NONE);
@@ -118,7 +123,10 @@ glw_render(glw_renderer_t *gr, glw_rctx_t *rc, int mode, int attribs,
     break;
 
   case GLW_RENDER_ATTRIBS_TEX:
-    r8 = r * 255.0; g8 = g * 255.0; b8 = b * 255.0; a8 = a * 255.0;
+    r8 = float_to_byte(r);
+    g8 = float_to_byte(g);
+    b8 = float_to_byte(b);
+    a8 = float_to_byte(a);
 
     GX_LoadTexObj(&be_tex->obj, GX_TEXMAP0);
     
@@ -134,7 +142,7 @@ glw_render(glw_renderer_t *gr, glw_rctx_t *rc, int mode, int attribs,
     break;
 
   case GLW_RENDER_ATTRIBS_TEX_COLOR:
-    a8 = a * 255.0;
+    a8 = float_to_byte(a);
 
     GX_LoadTexObj(&be_tex->obj, GX_TEXMAP0);
     
@@ -142,7 +150,7 @@ glw_render(glw_renderer_t *gr, glw_rctx_t *rc, int mode, int attribs,
  
     for(i = 0; i < gr->gr_vertices; i++) {
       GX_Position3f32(buf[0], buf[1], buf[2]);
-      GX_Color4u8(buf[5] * 255.0, buf[6] * 255.0, buf[7] * 255.0, a8);
+      GX_Color4u8(buf[5], buf[6], buf[7], a8);
       GX_TexCoord2f32(buf[3], buf[4]);
       buf += gr->gr_stride;
     }
