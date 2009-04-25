@@ -2,6 +2,12 @@
 
 widget(container_y, {
 
+  widget(label, {
+    .align = center;
+    .size = 2.0;
+    .caption = $self.title;
+  });
+
   widget(container_x, {
     widget(list_y, {
       .childAspect = 20;

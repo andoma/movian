@@ -1,27 +1,36 @@
 #include "theme://include/plates.model"
 
-widget(container_x, {
+widget(container_y, {
 
-  widget(list_y, {
-    .id = "list";
-    cloner($page.nodes, backdrop, {
-      BUTTON_PROPS(1.0);
-      onEvent(enter, genericEvent(navigator, open, $self.url));
-    
-      widget(animator, {
-	.time = 0.3;
-	.source = "theme://directoryviews/list/" + $self.type + ".model";
-      });
-    });
+  widget(label, {
+    .align = center;
+    .size = 2.0;
+    .caption = $self.title;
   });
 
-  widget(slider_y, {
-    .weight = 0.035;
-    .focusable = 0.2;
-    bind("list");
+  widget(container_x, {
 
-    widget(backdrop, {
-      KNOB_PROPS();
+    widget(list_y, {
+      .id = "list";
+      cloner($page.nodes, backdrop, {
+	BUTTON_PROPS(1.0);
+	onEvent(enter, genericEvent(navigator, open, $self.url));
+    
+	widget(animator, {
+	  .time = 0.3;
+	  .source = "theme://directoryviews/list/" + $self.type + ".model";
+	});
+      });
+    });
+
+    widget(slider_y, {
+      .weight = 0.035;
+      .focusable = 0.2;
+      bind("list");
+
+      widget(backdrop, {
+	KNOB_PROPS();
+      });
     });
   });
 });
