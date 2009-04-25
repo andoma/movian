@@ -171,7 +171,8 @@ settings_add_bool(prop_t *parent, const char *id, const char *title,
 
   s->s_callback = cb;
   s->s_opaque = opaque;
-  
+  s->s_prop = r;
+
   sub = prop_subscribe(NULL, callback_bool, s, NULL,
 		       flags & SETTINGS_INITIAL_UPDATE ?
 		       0 : PROP_SUB_NO_INITIAL_UPDATE,
@@ -182,6 +183,25 @@ settings_add_bool(prop_t *parent, const char *id, const char *title,
   return s;
 }
 
+
+/**
+ *
+ */
+void
+settings_set_bool(setting_t *s, int v)
+{
+  prop_set_int(prop_create(s->s_prop, "value"), v);
+}
+
+
+/**
+ *
+ */
+void
+settings_toggle_bool(setting_t *s)
+{
+  prop_toggle_int(prop_create(s->s_prop, "value"));
+}
 
 
 
@@ -236,7 +256,8 @@ settings_add_int(prop_t *parent, const char *id, const char *title,
 
   s->s_callback = cb;
   s->s_opaque = opaque;
-  
+  s->s_prop = r;
+
   sub = prop_subscribe(NULL, callback_int, s, NULL,
 		       flags & SETTINGS_INITIAL_UPDATE ?
 		       0 : PROP_SUB_NO_INITIAL_UPDATE,

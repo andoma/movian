@@ -51,6 +51,10 @@ setting_t *settings_add_bool(prop_t *parent, const char *id,
 			     setting_callback_bool_t *cb, void *opaque,
 			     int flags);
 
+void settings_set_bool(setting_t *s, int v);
+
+void settings_toggle_bool(setting_t *s);
+
 setting_t *settings_add_multiopt(prop_t *parent, const char *id,
 				 const char *title,
 				 setting_callback_string_t *cb, void *opaque);
