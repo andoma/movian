@@ -56,3 +56,16 @@
     });
   });  
 }
+
+
+#define ACTION_ICON(ICON, EVENT)
+{
+  widget(backdrop, {
+    BUTTON_PROPS(0.5);
+    onEvent(enter, EVENT);
+    
+    widget(icon, {
+      .source = ICON;
+    });
+  });  
+}
