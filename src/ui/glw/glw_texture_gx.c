@@ -177,34 +177,11 @@ convert_i8a8(const uint8_t *src, int linesize, unsigned int w, unsigned int h)
   DCFlushRange(dst, size);
   return dst;
 }
-	     
 
 
-
-
-
-
-
-//static int maxwidth  = 1024; /* Absolute max supported by the Wii GPU */
-//static int maxheight = 1024;
-
-
-typedef void *SwsFilter;
-
-extern struct SwsContext *sws_getContext(int srcW, int srcH, int srcFormat,
-					 int dstW, int dstH, int dstFormat,
-					 int flags,
-					 SwsFilter *srcFilter,
-					 SwsFilter *dstFilter,
-					 double *param);
-#define SWS_BICUBIC           4
-
-int sws_scale(struct SwsContext *context, uint8_t* src[], int srcStride[],
-	      int srcSliceY,
-              int srcSliceH, uint8_t* dst[], int dstStride[]);
-
-void sws_freeContext(struct SwsContext *swsContext);
-
+/**
+ *
+ */
 int
 glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 		     AVFrame *frame, int pix_fmt, 
