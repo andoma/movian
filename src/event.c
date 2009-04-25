@@ -294,6 +294,7 @@ event_generic_dtor(event_t *e)
 
 static struct strtab eventnames[] = {
   { "no-event",              EVENT_NONE },
+  { "KeyCode",               EVENT_KEYDESC },
   { "Up",                    EVENT_UP },
   { "Down",                  EVENT_DOWN },
   { "Left",                  EVENT_LEFT },
@@ -325,7 +326,7 @@ static struct strtab eventnames[] = {
   { "ChangeView",            EVENT_SWITCH_VIEW },
   { "Channel+",              EVENT_CHANNEL_PLUS },
   { "Channel-",              EVENT_CHANNEL_MINUS },
-  { "KeyCode",               EVENT_KEYDESC },
+  { "FullscreenToggle",      EVENT_FULLSCREEN_TOGGLE },
 };
 
 
