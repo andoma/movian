@@ -853,7 +853,8 @@ glw_path_flood_unset(glw_t *w, int flag)
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     glw_path_flood_unset(c, flag);
     c->glw_flags &= ~flag;
-    glw_signal0(c, GLW_SIGNAL_FOCUS_HOVER_PATH_CHANGED, NULL);
+    if(!(c->glw_flags & GLW_DESTROYING))
+      glw_signal0(c, GLW_SIGNAL_FOCUS_HOVER_PATH_CHANGED, NULL);
   }
 }
 
@@ -868,7 +869,8 @@ glw_path_unset(glw_t *w, int flag)
 
   for(; w != NULL; w = w->glw_parent) {
     w->glw_flags &= ~flag;
-    glw_signal0(w, GLW_SIGNAL_FOCUS_HOVER_PATH_CHANGED, NULL);
+    if(!(w->glw_flags & GLW_DESTROYING))
+      glw_signal0(w, GLW_SIGNAL_FOCUS_HOVER_PATH_CHANGED, NULL);
   }
 }
 
@@ -884,7 +886,8 @@ glw_path_flood_set(glw_t *w, int flag)
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     glw_path_flood_set(c, flag);
     c->glw_flags |= flag;
-    glw_signal0(c, GLW_SIGNAL_FOCUS_HOVER_PATH_CHANGED, NULL);
+    if(!(c->glw_flags & GLW_DESTROYING))
+      glw_signal0(c, GLW_SIGNAL_FOCUS_HOVER_PATH_CHANGED, NULL);
   }
 }
 
@@ -899,7 +902,8 @@ glw_path_set(glw_t *w, int flag)
 
   for(; w != NULL; w = w->glw_parent) {
     w->glw_flags |= flag;
-    glw_signal0(w, GLW_SIGNAL_FOCUS_HOVER_PATH_CHANGED, NULL);
+    if(!(w->glw_flags & GLW_DESTROYING))
+      glw_signal0(w, GLW_SIGNAL_FOCUS_HOVER_PATH_CHANGED, NULL);
   }
 }
 
