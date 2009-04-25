@@ -51,6 +51,9 @@ glw_slider_layout(glw_t *w, glw_rctx_t *rc)
   if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)
     return;
 
+  if(rc->rc_size_x == 0 || rc->rc_size_y == 0)
+    return;
+
   if(c->glw_req_aspect > 0) {
     s->knob_size = rc->rc_size_y * c->glw_req_aspect / rc->rc_size_x;
   } else if(c->glw_req_size_x && w->glw_class == GLW_SLIDER_X) {
@@ -66,6 +69,7 @@ glw_slider_layout(glw_t *w, glw_rctx_t *rc)
 
   s->knob_pos = GLW_LP(4, (-1.0 + s->value * 2) * (1 - s->knob_size),
 		       s->knob_pos);
+
   rc0 = *rc;
 
   if(w->glw_class == GLW_SLIDER_X)
@@ -104,8 +108,9 @@ glw_slider_render(glw_t *w, glw_rctx_t *rc)
     glw_Scalef(&rc0, 1.0, s->knob_size, 1.0);
   }
 
-  if((c = TAILQ_FIRST(&w->glw_childs)) != NULL)
+  if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
     glw_render0(c, &rc0);
+  }
 
   glw_PopMatrix();
 }
@@ -188,7 +193,7 @@ pointer_event(glw_t *w, glw_pointer_event_t *gpe)
 
   case GLW_POINTER_FOCUS_MOTION:
     s->value = GLW_RESCALE(v0 + s->grab_delta, 
-			   -1.0 + s->knob_size, 1.0 - s->knob_size);;
+			   -1.0 + s->knob_size, 1.0 - s->knob_size);
     break;
 
   default:
@@ -345,6 +350,9 @@ prop_callback(prop_sub_t *s, prop_event_t event, ...)
   if(gr->gr_pointer_grab == &sl->w)
     return;
 
+  if(sl->max - sl->min == 0)
+    return;
+
   v = GLW_RESCALE(v, sl->min, sl->max);
   sl->value = GLW_MAX(0, GLW_MIN(1.0, v));
 }
@@ -383,6 +391,7 @@ glw_slider_ctor(glw_t *w, int init, va_list ap)
     s->max = 1.0;
     s->step_i = 0.1;
     s->step = 0.1;
+    s->knob_pos = 0;
   }
 
   do {
