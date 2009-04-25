@@ -357,6 +357,7 @@ window_open(glw_x11_t *gx11)
   /* Load fragment shaders */
   glw_video_global_init(&gx11->gr);
 
+  gx11->glXSwapIntervalSGI(1);
 }
 
 /**
@@ -688,8 +689,6 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
   XEvent event;
   int w, h;
   glw_pointer_event_t gpe;
-
-  gx11->glXSwapIntervalSGI(1);
 
   while(gx11->running) {
     if(gx11->is_fullscreen != gx11->want_fullscreen) {
