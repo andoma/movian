@@ -48,6 +48,7 @@ static hts_cond_t spotify_cond_main;
 static hts_cond_t spotify_cond_login;
 static int spotify_started;
 static int spotify_login_result = -1;
+static int spotify_frame_position;
 
 static sp_session *spotify_session;
 TAILQ_HEAD(spotify_msg_queue, spotify_msg);
@@ -109,6 +110,7 @@ typedef enum {
   SPOTIFY_STOP_PLAYBACK,
   SPOTIFY_SEARCH,
   SPOTIFY_RELEASE_TRACK,
+  SPOTIFY_SEEK,
 } spotify_msg_type_t;
 
 /**
@@ -173,7 +175,10 @@ typedef struct spotify_search {
 typedef struct spotify_msg {
   TAILQ_ENTRY(spotify_msg) sm_link;
   spotify_msg_type_t sm_op;
-  void *sm_ptr;
+  union {
+    void *sm_ptr;
+    int sm_int;
+  };
 } spotify_msg_t;
 
 
@@ -186,6 +191,18 @@ spotify_msg_build(spotify_msg_type_t op, void *ptr)
   spotify_msg_t *sm = malloc(sizeof(spotify_msg_t));
   sm->sm_op = op;
   sm->sm_ptr = ptr;
+  return sm;
+}
+
+/**
+ *
+ */
+static spotify_msg_t *
+spotify_msg_build_int(spotify_msg_type_t op, int v)
+{
+  spotify_msg_t *sm = malloc(sizeof(spotify_msg_t));
+  sm->sm_op = op;
+  sm->sm_int = v;
   return sm;
 }
 
@@ -370,16 +387,22 @@ spotify_music_delivery(sp_session *sess, const sp_audioformat *format,
   media_queue_t *mq = &mp->mp_audio;
   media_buf_t *mb;
   event_t *e;
+  event_seek_t *es;
+  static int pending_seek;
 
   if(su == NULL)
     return num_frames;
 
   if(num_frames == 0) {
-    /* end of track */
-    su->su_event = event_create_simple(EVENT_EOF);
-    spotify_uri_return(su, 0);
-    su_playing = NULL;
-    return 0;
+    if(pending_seek > 0) {
+      pending_seek--;
+    } else {
+      /* end of track */
+      su->su_event = event_create_simple(EVENT_EOF);
+      spotify_uri_return(su, 0);
+      su_playing = NULL;
+      return 0;
+    }
   }
 
   hts_mutex_lock(&mp->mp_mutex);
@@ -399,14 +422,27 @@ spotify_music_delivery(sp_session *sess, const sp_audioformat *format,
       su_playing = NULL;
       mp_flush(mp);
       return 0;
+
+    case EVENT_SEEK:
+      hts_mutex_unlock(&mp->mp_mutex);
+
+      es = (event_seek_t *)e;
+      spotify_msg_enq(spotify_msg_build_int(SPOTIFY_SEEK, es->ts / 1000));
+      pending_seek += 2;
+      mp_flush(mp);
+      spotify_frame_position = (int64_t)es->ts * format->sample_rate / 1000000;
+      return num_frames;
+
     default:
       break;
     }
     event_unref(e);
   }
 
- 
   hts_mutex_unlock(&mp->mp_mutex);
+
+  if(pending_seek > 0)
+    return num_frames;
 
   if(mq->mq_len > 20)
     return 0;
@@ -418,6 +454,9 @@ spotify_music_delivery(sp_session *sess, const sp_audioformat *format,
   mb->mb_data = malloc(mb->mb_size);
   mb->mb_channels = format->channels;
   mb->mb_rate = format->sample_rate;
+
+  mb->mb_time = spotify_frame_position * 1000000LL / format->sample_rate;
+  spotify_frame_position += num_frames;
 
   memcpy(mb->mb_data, frames, mb->mb_size);
 
@@ -791,6 +830,8 @@ spotify_play_track(spotify_uri_t *su)
 	su->su_uri, f_sp_track_name(su->su_track));
 
   mp_prepare(spotify_mp, MP_GRAB_AUDIO);
+  spotify_mp->mp_audio.mq_stream = 0; // Must be set to somthing != -1
+  spotify_frame_position = 0;
 
   if((err = f_sp_session_player_play(spotify_session, 1))) {
     snprintf(su->su_errbuf, su->su_errlen, "Unable to play track:\n%s",
@@ -1377,8 +1418,10 @@ spotify_thread(void *aux)
 	spotify_search(sm->sm_ptr);
 	break;
       case SPOTIFY_RELEASE_TRACK:
-	printf("SPOTIFY_RELEASE_TRACK %p\n", sm->sm_ptr);
 	f_sp_track_release(sm->sm_ptr);
+	break;
+      case SPOTIFY_SEEK:
+	f_sp_session_player_seek(s, sm->sm_int);
 	break;
       }
       free(sm);
