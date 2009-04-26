@@ -19,6 +19,13 @@
 #ifndef GLW_EXPANDER_H
 #define GLW_EXPANDER_H
 
+typedef struct glw_expander {
+  glw_t w;
+
+  float expansion;
+
+} glw_expander_t;
+
 void glw_expander_ctor(glw_t *w, int init, va_list ap);
 
 #endif /* GLW_EXPANDER_H */

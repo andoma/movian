@@ -1177,7 +1177,7 @@ static struct strtab classtab[] = {
   { "list_x",        GLW_LIST_X},
   { "list_y",        GLW_LIST_Y},
   { "deck",          GLW_DECK},
-  { "expander",      GLW_EXPANDER},
+  { "expander_y",    GLW_EXPANDER_Y},
   //  { "slideshow",     GLW_SLIDESHOW},
   { "cursor",        GLW_CURSOR},
   { "mirror",        GLW_MIRROR},

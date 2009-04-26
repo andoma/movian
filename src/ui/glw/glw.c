@@ -63,7 +63,7 @@ static const size_t glw_class_to_size[] = {
   [GLW_LIST_X] = sizeof(glw_list_t),
   [GLW_LIST_Y] = sizeof(glw_list_t),
   [GLW_DECK] = sizeof(glw_deck_t),
-  [GLW_EXPANDER] = sizeof(glw_t),
+  [GLW_EXPANDER_Y] = sizeof(glw_expander_t),
   //  [GLW_SLIDESHOW] = sizeof(glw_slideshow_t),
   [GLW_CURSOR] = sizeof(glw_cursor_t),
   [GLW_MIRROR] = sizeof(glw_t),
@@ -311,10 +311,6 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       w->glw_time = va_arg(ap, double);
       break;
 
-    case GLW_ATTRIB_EXPAND:
-      w->glw_exp_req = va_arg(ap, double);
-      break;
-
     case GLW_ATTRIB_ORIGINATING_PROP:
       assert(w->glw_originating_prop == NULL);
       w->glw_originating_prop = va_arg(ap, void *);
@@ -371,7 +367,7 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
     glw_deck_ctor(w, init, apx);
     break;
 
-  case GLW_EXPANDER:
+  case GLW_EXPANDER_Y:
     glw_expander_ctor(w, init, apx);
     break;
 #if 0

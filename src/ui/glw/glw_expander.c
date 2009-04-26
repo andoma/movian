@@ -19,81 +19,87 @@
 #include "glw.h"
 #include "glw_expander.h"
 
-/*
+
+/**
+ *
+ */
+static void
+update_constraints(glw_expander_t *exp)
+{
+  glw_t *c = TAILQ_FIRST(&exp->w.glw_childs);
+  float e;
+
+  e = exp->expansion * (c != NULL ? c->glw_req_size_y : 0);
+
+  if(e < 1)
+    e = 1;  // XXX VERY VERY BAD
+  
+  glw_set_constraint_xy(&exp->w, 0, e);
+}
+
+
+/**
  *
  */
 static int
 glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
-  glw_t *a, *b;
-  glw_rctx_t *rc = extra, rc0;
-  float z;
+  glw_expander_t *exp = (glw_expander_t *)w;
+  glw_rctx_t *rc = extra;
+  glw_t *c;
 
   switch(signal) {
   default:
     break;
 
+  case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
+    update_constraints(exp);
+    return 1;
+
   case GLW_SIGNAL_LAYOUT:
-    if((a = TAILQ_FIRST(&w->glw_childs)) == NULL) {
-      break;
-    }
+    c = TAILQ_FIRST(&w->glw_childs);
 
-    if((b = TAILQ_NEXT(a, glw_parent_link)) == NULL) {
-      a->glw_parent_pos.y = 0;
-      a->glw_parent_scale.x = 1.0f;
-      a->glw_parent_scale.y = 1.0f;
-      a->glw_parent_scale.z = 1.0f;
-      glw_layout0(a, rc);
-      break;
-    }
-
-    rc0 = *rc;
-    z = 0.0; //rc->rc_zoom;
-
-    a->glw_parent_scale.x = 1.0f;
-    a->glw_parent_scale.y = 1.0 / (z + 1);
-    a->glw_parent_pos.y   = 1.0f - a->glw_parent_scale.y;
-    rc0.rc_size_y = rc->rc_size_y * a->glw_parent_scale.y;
-
-    glw_layout0(a, &rc0);
-    
-    if(0.0 < 0.01)
-      break;
-
-    b->glw_parent_pos.y   = -1.0 + (0.5 * z * 2 / (z + 1));
-    b->glw_parent_scale.x = 1.0f;
-    b->glw_parent_scale.y = 1 - a->glw_parent_scale.y;
-
-    rc0.rc_size_y = rc->rc_size_y * b->glw_parent_scale.y;
-    glw_layout0(b, &rc0);
+    if(c != NULL)
+      glw_layout0(c, rc);
     break;
     
   case GLW_SIGNAL_RENDER:
+    c = TAILQ_FIRST(&w->glw_childs);
 
-    if((a = TAILQ_FIRST(&w->glw_childs)) == NULL)
-      break;
-    if((b = TAILQ_NEXT(a, glw_parent_link)) == NULL) {
-      glw_render0(a, rc);
-      break;
-    }
-    
-    rc0 = *rc;
-    glw_render_TS(a, &rc0, rc);
-    
-    if(0.0 < 0.01)
-      break;
-
-//    rc0.rc_alpha = rc->rc_alpha * GLW_MIN(1.0f, rc->rc_zoom);
-    glw_render_TS(b, &rc0, rc);
+    if(c != NULL)
+      glw_render0(c, rc);
     break;
   }
   return 0;
 }
 
 
+/**
+ *
+ */
 void 
 glw_expander_ctor(glw_t *w, int init, va_list ap)
 {
-  if(init)
+  glw_expander_t *exp = (glw_expander_t *)w;
+  glw_attribute_t attrib;
+
+  if(init) {
     glw_signal_handler_int(w, glw_expander_callback);
+    update_constraints(exp);
+  }
+
+  do {
+    attrib = va_arg(ap, int);
+    switch(attrib) {
+    case GLW_ATTRIB_EXPANSION:
+      exp->expansion = va_arg(ap, double);
+      update_constraints(exp);
+      break;
+
+    default:
+      GLW_ATTRIB_CHEW(attrib, ap);
+      break;
+    }
+  } while(attrib);
+      
 }

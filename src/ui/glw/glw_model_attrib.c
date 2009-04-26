@@ -414,7 +414,7 @@ static const token_attrib_t attribtab[] = {
   {"weight",          set_float,  GLW_ATTRIB_WEIGHT},
   {"time",            set_float,  GLW_ATTRIB_TIME},
   {"angle",           set_float,  GLW_ATTRIB_ANGLE},
-  {"expand",          set_float,  GLW_ATTRIB_EXPAND},
+  {"expansion",       set_float,  GLW_ATTRIB_EXPANSION},
   {"min",             set_float,  GLW_ATTRIB_INT_MIN},
   {"max",             set_float,  GLW_ATTRIB_INT_MAX},
   {"step",            set_float,  GLW_ATTRIB_INT_STEP},

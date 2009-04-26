@@ -71,7 +71,7 @@ typedef enum {
   GLW_LIST_X,
   GLW_LIST_Y,
   GLW_DECK,
-  GLW_EXPANDER,
+  GLW_EXPANDER_Y,
   GLW_ANIMATOR,
   GLW_IMAGE,
   GLW_ICON,
@@ -121,7 +121,7 @@ typedef enum {
   GLW_ATTRIB_INT_MAX,
   GLW_ATTRIB_PROPROOT,
   GLW_ATTRIB_TRANSITION_EFFECT,
-  GLW_ATTRIB_EXPAND,
+  GLW_ATTRIB_EXPANSION,
   GLW_ATTRIB_BIND_TO_PROPERTY,
   GLW_ATTRIB_BIND_TO_ID,
   GLW_ATTRIB_SIZE,
@@ -608,7 +608,7 @@ do {						\
   case GLW_ATTRIB_ANGLE:			\
   case GLW_ATTRIB_EXTRA:			\
   case GLW_ATTRIB_TIME:                         \
-  case GLW_ATTRIB_EXPAND:                       \
+  case GLW_ATTRIB_EXPANSION:                    \
   case GLW_ATTRIB_VALUE:                        \
   case GLW_ATTRIB_INT_STEP:                     \
   case GLW_ATTRIB_INT_MIN:                      \
