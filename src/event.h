@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EVENT_H
-#define EVENT_H
+#ifndef EVENT_H__
+#define EVENT_H__
 
 #include <inttypes.h>
 #include <queue.h>
