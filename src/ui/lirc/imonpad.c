@@ -155,7 +155,6 @@ imonpad_start(ui_t *ui, int argc, char *argv[])
   while(1) {
 
     r = poll(&fds, 1, 100);
-
     time(&now);
 
     if(now > nextavg) {
@@ -165,7 +164,7 @@ imonpad_start(ui_t *ui, int argc, char *argv[])
     
     if(r != 1)
       continue;
-    
+  
     if(read(fd, buf, 4) != 4) {
       TRACE(TRACE_ERROR, "imonpad", "Read error from %s", dev);
       close(fd);
@@ -277,7 +276,8 @@ imonpad_start(ui_t *ui, int argc, char *argv[])
 
       if(k && delta > repeat_rate0) {
 	last_nav_generated_ts = ts;
-	event_post_simple(k);
+
+	ui_dispatch_event(event_create_simple(k), NULL, uii);
 	delta -= repeat_rate0;
       }
       continue;
@@ -287,7 +287,7 @@ imonpad_start(ui_t *ui, int argc, char *argv[])
       if(v == imonpadmap[i].code) {
 
 	if(imonpadmap[i].key)
-	  event_post_simple(imonpadmap[i].key);
+	  ui_dispatch_event(event_create_simple(imonpadmap[i].key), desc, uii);
 	else {
 	  snprintf(desc, sizeof(desc), "imonpad - %s", imonpadmap[i].name);
 	  ui_dispatch_event(NULL, desc, uii);
