@@ -1091,6 +1091,7 @@ static int
 gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, 
 			 void *extra)
 {
+  glw_root_t *gr = w->glw_root;
   glw_video_t *gv = (glw_video_t *)w;
   video_decoder_t *vd = gv->gv_vd;
 
@@ -1120,6 +1121,7 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     return gl_video_widget_event(gv, extra);
 
   case GLW_SIGNAL_DESTROY:
+    prop_add_int(gr->gr_fullscreen_req, -1);
     video_playback_destroy(gv->gv_vp);
     video_decoder_stop(vd);
     mp_ref_dec(gv->gv_mp);
@@ -1178,6 +1180,8 @@ glw_video_ctor(glw_t *w, int init, va_list ap)
 
     gv->gv_vd = video_decoder_create(gv->gv_mp);
     gv->gv_vp = video_playback_create(gv->gv_mp);
+
+    prop_add_int(gr->gr_fullscreen_req, 1);
   }
 
   do {

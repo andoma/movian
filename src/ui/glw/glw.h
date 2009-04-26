@@ -277,7 +277,9 @@ typedef struct glw_root {
   prop_courier_t *gr_courier;
 
   struct glw_queue gr_destroyer_queue;
-  
+
+  prop_t *gr_fullscreen_req;
+
   int gr_frameduration;
 
   struct glw_head gr_active_list;
