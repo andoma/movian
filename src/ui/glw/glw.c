@@ -43,7 +43,6 @@
 #include "glw_video.h"
 #include "glw_slider.h"
 #include "glw_layer.h"
-#include "glw_map.h"
 
 static const size_t glw_class_to_size[] = {
   [GLW_DUMMY] = sizeof(glw_t),
