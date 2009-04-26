@@ -1,8 +1,6 @@
 #include "theme://include/plates.model"
 
 widget(video, {
-  .weight = 10.0;
   .focusable = true;
-  .focusCursor = true;
   .source = $self.url;
 });
