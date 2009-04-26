@@ -281,8 +281,8 @@ src/version.c: $(BUILDDIR)/showtimeversion.h
 # Include dependency files if they exist.
 -include $(DEPS) $(BUNDLE_DEPS)
 
-# Include OS specific targets
-include support/${OSENV}.mk
+# Include Platform specific targets
+include support/${PLATFORM}.mk
 
 # Bundle files
 $(BUILDDIR)/bundles/%.o: $(BUILDDIR)/bundles/%.c

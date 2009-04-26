@@ -13,11 +13,11 @@
 
 PLATFORM="wii"
 OSENV="wii"
+DEFAULT_UI="glw"
 
 source support/configure.inc
 DEVKITPRO="${HOME}/devkitpro"
 LIBFREETYPEPATH="${HOME}/freetype-ppc"
-DEFAULT_UI="glw_wii"
 
 enable embedded_theme
 

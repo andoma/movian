@@ -11,15 +11,15 @@
 # Copyright (c) 2005-2008 Mans Rullgard
 #
 
-PLATFORM=`uname`
+PLATFORM="linux"
+OSENV="posix"
+DEFAULT_UI="glw"
 
 source support/configure.inc
 
 CPU=generic
 ARCH=`uname -m`
-OSENV="posix"
 PREFIX=/usr/local
-DEFAULT_UI="glw_x11"
 
 show_help(){
   echo "Usage: configure [options]"
