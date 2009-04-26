@@ -278,6 +278,33 @@ set_transition_effect(glw_model_eval_context_t *ec, const token_attrib_t *a,
 
 
 
+
+
+static struct strtab positiontab[] = {
+  { "north",    GLW_POS_NORTH},
+  { "south",    GLW_POS_SOUTH},
+  { "west",     GLW_POS_WEST},
+  { "east",     GLW_POS_EAST},
+};
+
+
+/**
+ *
+ */
+static int
+set_position(glw_model_eval_context_t *ec, const token_attrib_t *a, 
+	     struct token *t)
+{
+  int v;
+  if(t->type != TOKEN_IDENTIFIER || (v = str2val(t->t_string,
+						 positiontab)) < 0)
+    return glw_model_seterr(ec->ei, t, "Invalid assignment for attribute %s",
+			    a->name);
+  glw_set_i(ec->w, GLW_ATTRIB_POSITION, v, NULL);
+  return 0;
+}
+
+
 /**
  *
  */
@@ -403,6 +430,8 @@ static const token_attrib_t attribtab[] = {
 
   {"align",           set_align,  0},
   {"effect",          set_transition_effect,  0},
+  {"position",        set_position,  0},
+
 };
 
 

@@ -50,9 +50,9 @@ glw_animator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       if(c->glw_parent_anim_cur == 1) {
 	glw_destroy0(c);
 
-	if((c = TAILQ_FIRST(&w->glw_childs)) != NULL)
+	if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
 	  glw_copy_constraints(w, c);
-
+	}
       } else {
 	glw_layout0(c, rc);
       }
@@ -94,6 +94,11 @@ glw_animator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 	continue;
       n->glw_parent_anim_tgt = 1;
     }
+
+    if(c == TAILQ_FIRST(&w->glw_childs)) {
+      glw_copy_constraints(w, c);
+    }
+
     break;
 
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:

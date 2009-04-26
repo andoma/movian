@@ -9,82 +9,20 @@ widget(container_z, {
   widget(layer, {
 
     /* Main display deck */
-    widget(container_y, {
-
-      widget(container_x, {
-	/*
-	widget(backdrop, {
-	  PLATE_PROPS();
-	  .alphaSelf = 0.25;
-
-	  .weight = iir(isFocused() || isHovered(), 8) * 0.2 + 0.1;
-
-
-	  widget(container_y, {
-	    ACTION_BUTTON("Back", "theme://icons/back.png",
-			  genericEvent(navigator, back, void));
-	    
-	    ACTION_BUTTON("Home", "theme://icons/home.png",
-			  genericEvent(navigator, open, "page://mainmenu"));
-	    
-	  });
-	});
-	*/
-	widget(deck, {
-	  .weight = 1.0;
-
-	  cloner($global.nav.pages, animator, {
-	    .time = 0.3;
-	    .source = "theme://pagemodels/" + $page.type + ".model";
-	  });
+    widget(map, {
+      widget(deck, {
+	.weight = 1.0;
+	
+	cloner($global.nav.pages, animator, {
+	  .time = 0.3;
+	  .source = "theme://pagemodels/" + $page.type + ".model";
 	});
       });
-      /*
-      widget(backdrop, {
-	PLATE_PROPS();
-	.alphaSelf = 0.25;
-	widget(container_y, {
 
-	  widget(label, {
-	    .caption = $global.currentmedia.metadata.title;
-	  });
-	  
-	  widget(container_x, {
-	    ACTION_ICON("theme://icons/rew.png",
-			genericEvent(navigator, back, void));
-	    ACTION_ICON("theme://icons/play.png",
-			genericEvent(navigator, back, void));
-	    ACTION_ICON("theme://icons/fwd.png",
-			genericEvent(navigator, back, void));
-
-	    widget(container_y, {
-	      widget(label, {
-		.size = 0.75;
-		.caption = $global.currentmedia.metadata.author;
-	      });
-	      widget(label, {
-		.size = 0.75;
-		.caption = $global.currentmedia.metadata.album;
-	      });
-	    });
-	  });
-
-	  widget(slider_x, {
-	    .debug = true;
-	    .focusable = 0.2;
-	    .debug = true;
-	    .max = $global.currentmedia.metadata.duration;
-	    bind($global.currentmedia.currenttime);
-	    widget(backdrop, {
-	      KNOB_PROPS();
-	      widget(label, {
-		.caption = value2duration($global.currentmedia.currenttime);
-	      });
-	    });
-	  });
-	});
+      widget(animator, {
+	.time = 0.3;
+	.source = "theme://playdecks/" + $global.currentmedia.type + ".model";
       });
-      */
     });
 
     cloner($global.popups, animator, {

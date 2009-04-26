@@ -1,0 +1,49 @@
+#include "theme://include/plates.model"
+
+widget(backdrop, {
+  .position = south;
+  PLATE_PROPS();
+  .alphaSelf = 0.25;
+
+  widget(container_y, {
+
+    widget(label, {
+      .caption = $global.currentmedia.metadata.title;
+    });
+	  
+    widget(container_y, {
+      widget(label, {
+	.size = 0.66;
+	.caption = $global.currentmedia.metadata.author;
+      });
+      widget(label, {
+	.size = 0.66;
+	.caption = $global.currentmedia.metadata.album;
+      });
+    });
+
+
+    widget(container_x, {
+      ACTION_ICON("theme://icons/rew.png",
+		  genericEvent(navigator, back, void));
+      ACTION_ICON("theme://icons/play.png",
+		  genericEvent(navigator, back, void));
+	    
+      widget(slider_x, {
+	.focusable = 0.2;
+	.debug = true;
+	.max = $global.currentmedia.metadata.duration;
+	bind($global.currentmedia.currenttime);
+	widget(backdrop, {
+	  KNOB_PROPS();
+	  widget(label, {
+	    .caption = value2duration($global.currentmedia.currenttime);
+	  });
+	});
+      });
+      ACTION_ICON("theme://icons/fwd.png",
+		  genericEvent(navigator, back, void));
+
+    });
+  });
+});

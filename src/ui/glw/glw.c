@@ -43,6 +43,7 @@
 #include "glw_video.h"
 #include "glw_slider.h"
 #include "glw_layer.h"
+#include "glw_map.h"
 
 static const size_t glw_class_to_size[] = {
   [GLW_DUMMY] = sizeof(glw_t),
@@ -50,6 +51,7 @@ static const size_t glw_class_to_size[] = {
   [GLW_CONTAINER_X] = sizeof(glw_container_t),
   [GLW_CONTAINER_Y] = sizeof(glw_container_t),
   [GLW_CONTAINER_Z] = sizeof(glw_container_t),
+  [GLW_MAP] = sizeof(glw_map_t),
   [GLW_IMAGE]  = sizeof(glw_image_t),
   [GLW_ICON]  = sizeof(glw_image_t),
   [GLW_BACKDROP]  = sizeof(glw_image_t),
@@ -242,6 +244,10 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       w->glw_flags |= GLW_LAYOUT_OVERRIDE;
       break;
 
+    case GLW_ATTRIB_POSITION:
+      glw_set_constraint_pos(w, va_arg(ap, int));
+      break;
+
     case GLW_ATTRIB_ID:
       v = va_arg(ap, char *);
       free((void *)w->glw_id);
@@ -325,6 +331,10 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
   case GLW_CONTAINER_Y:
   case GLW_CONTAINER_Z:
     glw_container_ctor(w, init, apx);
+    break;
+
+  case GLW_MAP:
+    glw_map_ctor(w, init, apx);
     break;
 
   case GLW_ICON:
@@ -1472,6 +1482,7 @@ glw_set_constraint_xy(glw_t *w, int x, int y)
   w->glw_req_aspect = 0;
   w->glw_req_size_x = x;
   w->glw_req_size_y = y;
+
   if(w->glw_parent != NULL)
     glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, w);
 }
@@ -1489,6 +1500,23 @@ glw_set_constraint_aspect(glw_t *w, float a)
   w->glw_req_aspect = a;
   w->glw_req_size_x = 0;
   w->glw_req_size_y = 0;
+
+  if(w->glw_parent != NULL)
+    glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, w);
+}
+
+
+/**
+ *
+ */
+void
+glw_set_constraint_pos(glw_t *w, glw_position_t p)
+{
+  if(w->glw_flags & GLW_LAYOUT_OVERRIDE || w->glw_req_position == p)
+    return;
+
+  w->glw_req_position = p;
+
   if(w->glw_parent != NULL)
     glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, w);
 }
@@ -1501,14 +1529,17 @@ void
 glw_copy_constraints(glw_t *w, glw_t *src)
 {
   if(w->glw_flags & GLW_LAYOUT_OVERRIDE ||
-     (w->glw_req_aspect == src->glw_req_aspect &&
-      w->glw_req_size_x == src->glw_req_size_x &&
-      w->glw_req_size_y == src->glw_req_size_y))
+     (w->glw_req_aspect   == src->glw_req_aspect &&
+      w->glw_req_size_x   == src->glw_req_size_x &&
+      w->glw_req_size_y   == src->glw_req_size_y &&
+      w->glw_req_position == src->glw_req_position))
     return;
 
-  w->glw_req_aspect = src->glw_req_aspect;
-  w->glw_req_size_x = src->glw_req_size_x;
-  w->glw_req_size_y = src->glw_req_size_y;
+  w->glw_req_aspect   = src->glw_req_aspect;
+  w->glw_req_size_x   = src->glw_req_size_x;
+  w->glw_req_size_y   = src->glw_req_size_y;
+  w->glw_req_position = src->glw_req_position;
+
   if(w->glw_parent != NULL)
     glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, w);
 }

@@ -67,6 +67,7 @@ typedef enum {
   GLW_CONTAINER_X,  /* Horizonal weight based container */
   GLW_CONTAINER_Y,  /* Vertical weight based container */
   GLW_CONTAINER_Z,  /* Depth container */
+  GLW_MAP,
   GLW_LIST_X,
   GLW_LIST_Y,
   GLW_DECK,
@@ -128,6 +129,7 @@ typedef enum {
   GLW_ATTRIB_ORIGINATING_PROP,
   GLW_ATTRIB_FOCUS_WEIGHT,
   GLW_ATTRIB_CHILD_ASPECT,
+  GLW_ATTRIB_POSITION,
 } glw_attribute_t;
 
 #define GLW_MIRROR_X   0x1
@@ -153,6 +155,16 @@ typedef enum {
   GLW_ALIGN_BOTTOM,
   GLW_ALIGN_TOP,
 } glw_alignment_t;
+
+typedef enum {
+  GLW_POS_NONE,
+  GLW_POS_NORTH,
+  GLW_POS_SOUTH,
+  GLW_POS_WEST,
+  GLW_POS_EAST,
+  GLW_POS_num,
+} glw_position_t;
+
 
 
 /**
@@ -395,8 +407,9 @@ typedef struct glw {
   int glw_req_size_x;
   int glw_req_size_y;
   float glw_req_aspect;
+  glw_position_t glw_req_position;
 
-  int glw_flags;  
+  int glw_flags;
 
 #define GLW_FOCUS_DISABLED      0x1     /* Can not receive focus right now */
 #define GLW_LAYOUT_OVERRIDE     0x2     /* Layout fixed by user */
@@ -601,6 +614,7 @@ do {						\
   case GLW_ATTRIB_SIZE:                         \
   case GLW_ATTRIB_FOCUS_WEIGHT:                 \
   case GLW_ATTRIB_CHILD_ASPECT:                 \
+  case GLW_ATTRIB_POSITION:                     \
     (void)va_arg(ap, double);			\
     break;					\
   }						\
@@ -772,6 +786,8 @@ void glw_font_change_size(glw_root_t *gr, int fontsize);
  */
 
 void glw_set_constraint_xy(glw_t *w, int x, int y);
+
+void glw_set_constraint_pos(glw_t *w, glw_position_t p);
 
 void glw_set_constraint_aspect(glw_t *w, float aspect);
 
