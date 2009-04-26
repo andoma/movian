@@ -1704,7 +1704,8 @@ be_spotify_init(void)
 
   h = dlopen("libspotify.so", RTLD_LAZY);
   if(h == NULL) {
-    TRACE(TRACE_INFO, "spotify", "Unable to load libspotify.so");
+    TRACE(TRACE_INFO, "spotify", "Unable to load libspotify.so: %s",
+	  dlerror());
     return 1;
   }
   if((sym = resolvesym(h)) != NULL) {
