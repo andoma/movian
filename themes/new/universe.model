@@ -10,7 +10,7 @@ widget(container_z, {
   widget(layer, {
 
     /* Main display deck */
-    widget(map, {
+    widget(container_y, {
       widget(deck, {
 	.weight = 1.0;
 	
@@ -20,9 +20,13 @@ widget(container_z, {
 	});
       });
 
-      widget(animator, {
-	.time = 0.3;
-	.source = "theme://playdecks/" + $global.currentmedia.type + ".model";
+      widget(expander_y, {
+	.expansion = 1;
+
+	widget(animator, {
+	  .time = 0.3;
+	  .source = "theme://playdecks/" + $global.currentmedia.type + ".model";
+	});
       });
     });
 
