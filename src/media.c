@@ -80,7 +80,7 @@ mq_destroy(media_queue_t *mq)
  *
  */
 media_pipe_t *
-mp_create(const char *name)
+mp_create(const char *name, const char *type)
 {
   media_pipe_t *mp;
 
@@ -97,6 +97,8 @@ mp_create(const char *name)
   hts_cond_init(&mp->mp_backpressure);
   
   mp->mp_prop_root = prop_create(NULL, "media");
+
+  prop_set_string(prop_create(mp->mp_prop_root, "type"), type);
 
   mq_init(&mp->mp_audio, prop_create(mp->mp_prop_root, "audio"));
   mq_init(&mp->mp_video, prop_create(mp->mp_prop_root, "video"));

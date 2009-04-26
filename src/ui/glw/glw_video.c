@@ -1167,7 +1167,7 @@ glw_video_ctor(glw_t *w, int init, va_list ap)
 
   if(init) {
 
-    gv->gv_mp = mp_create("Video decoder");
+    gv->gv_mp = mp_create("Video decoder", "video");
 
     glw_signal_handler_int(w, gl_video_widget_callback);
     glw_video_init(gv, gr);

@@ -193,7 +193,7 @@ media_buf_alloc(void)
   return mb;
 }
 
-media_pipe_t *mp_create(const char *name);
+media_pipe_t *mp_create(const char *name, const char *type);
 
 #define mp_ref_inc(mp) atomic_add(&(mp)->mp_refcount, 1)
 void mp_ref_dec(media_pipe_t *mp);
