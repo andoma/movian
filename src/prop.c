@@ -1114,7 +1114,8 @@ prop_toggle_int_ex(prop_t *p, prop_sub_t *skipme)
       hts_mutex_unlock(&prop_mutex);
       return;
     }
-   }
+    p->hp_int = 0;
+  }
 
   p->hp_int = !p->hp_int;
   p->hp_type = PROP_INT;
