@@ -321,6 +321,8 @@ static int
 token2bool(token_t *t)
 {
   switch(t->type) {
+  case TOKEN_VOID:
+    return 0;
   case TOKEN_INT:
     return !!t->t_int;
   case TOKEN_FLOAT:
