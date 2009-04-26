@@ -1,0 +1,17 @@
+#!/bin/bash
+#
+# Showtime top level configure script
+#
+# Copyright (c) 2009 Andreas Öman
+#
+
+KNAME=`uname -s`
+
+if [ "$KNAME" == "Linux" ]; then
+    echo "Configuring for Linux environment"
+    `dirname $0`/configure.linux $@
+    exit $?
+else
+    echo "Showtime is not supported on this platform"
+    exit 1
+fi
