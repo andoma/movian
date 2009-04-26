@@ -156,6 +156,9 @@ glw_init(glw_root_t *gr, int fontsize, const char *theme, ui_t *ui)
   glw_set_i(gr->gr_universe,
 	    GLW_ATTRIB_SIGNAL_HANDLER, top_event_handler, gr, 1000,
 	    NULL);
+
+  uii_register(&gr->gr_uii);
+
   return 0;
 }
 
