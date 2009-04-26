@@ -233,10 +233,8 @@ fi
 
 #
 # Finalize
-#
-cat >> ${CONFIG_MAK} << EOF 
-INSTALLPREFIX=$PREFIX
-LDFLAGS_cfg += -lrt -lpthread
-EOF
+
+echo >>${CONFIG_MAK} INSTALLPREFIX=$PREFIX
+echo >>${CONFIG_MAK} LDFLAGS_cfg += -lpthread
 
 finalize
