@@ -36,6 +36,7 @@ CONFIG_LIST="
  libogc
  embedded_theme
  spotify
+ lirc
 "
 
 die() {

@@ -24,15 +24,14 @@
 #include <string.h>
 #include <poll.h>
 #include <sys/socket.h>
+#include <errno.h>
 
-#include <libhts/htsbuf.h>
+#include <htsmsg/htsbuf.h>
 
-#include "lircd.h"
 #include "event.h"
 #include "showtime.h"
-#include "hid/hid.h"
 #include "ui/keymapper.h"
-
+#include "settings.h"
 
 static const struct {
   const char *name;
@@ -47,36 +46,56 @@ static const struct {
   { "Backspace",    EVENT_BACKSPACE  },
 };
 
-void
-lircd_proc(void)
+static int
+lircd_start(ui_t *ui, int argc, char *argv[])
 {
   char buf[200];
   uint64_t ircode;
   uint32_t repeat;
   char keyname[100];
-  int i, r, fd, len;
+  int i, r, fd, len, n;
   htsbuf_queue_t q;
   struct pollfd fds;
   const char *dev = "/dev/lirc";
+  uii_t *uii;
+  prop_t *p;
 
-  if((fd = open(dev, O_RDONLY)) == -1) {
-    //    prop_set_stringf(status, "lirc: Unable to open \"%s\"", dev);
-    sleep(1);
-    return;
+  /* Parse options */
+  argv++;
+  argc--;
+
+  while(argc > 0) {
+    if(!strcmp(argv[0], "--device") && argc > 1) {
+      dev = argv[1];
+      argc -= 2; argv += 2;
+      continue;
+    } else
+      break;
   }
 
+  if((fd = open(dev, O_RDONLY)) == -1) {
+    TRACE(TRACE_ERROR, "lircd", "Unable to open %s", dev);
+    return 1;
+  }
 
+  uii = calloc(1, sizeof(uii_t));
+  uii->uii_ui = ui;
+  uii_register(uii);
+
+  p = settings_add_dir(NULL, "lircd", "Settings for LIRC", "display");
+  uii->uii_km = keymapper_create(p, "lircd", "Keymap", NULL);
+
+  htsbuf_queue_init(&q, 0);
   fds.fd = fd;
   fds.events = POLLIN;
 
-  htsbuf_queue_init(&q, 0);
-
-  while(hid_ir_mode == HID_IR_LIRC) {
+  while(1) {
 
     r = poll(&fds, 1, 1000);
     if(r > 0) {
-      if((r = recv(fd, buf, sizeof(buf), MSG_DONTWAIT)) < 1) {
-	//	prop_set_stringf(status, "lirc: Unable to read from \"%s\"", dev);
+      if((r = read(fd, buf, sizeof(buf))) < 1) {
+	TRACE(TRACE_ERROR, "lircd", "Read error from %s -- %s", dev,
+	      strerror(errno));
 	break;
       }
       htsbuf_append(&q, buf, r);
@@ -85,7 +104,7 @@ lircd_proc(void)
     while((len = htsbuf_find(&q, 0xa)) != -1) {
       
       if(len >= sizeof(buf) - 1) {
-	//	prop_set_stringf(status, "lirc: Command buffer size exceeded");
+	TRACE(TRACE_ERROR, "lircd", "Command buffer size exceeded");
 	goto out;
       }
 
@@ -96,8 +115,11 @@ lircd_proc(void)
 	buf[--len] = 0;
       htsbuf_drop(&q, 1); /* Drop the \n */
       
-      sscanf(buf, "%"PRIx64" %d %s", &ircode, &repeat, keyname);
-      
+      n = sscanf(buf, "%"PRIx64" %d %s", &ircode, &repeat, keyname);
+      if(n != 3) {
+	TRACE(TRACE_ERROR, "lircd", "Invalid LIRC input: \"%s\"", buf);
+	continue;
+      }
       
       if(keyname[0] && keyname[1] == 0) {
 	/* ASCII input */
@@ -111,14 +133,27 @@ lircd_proc(void)
 	}
       }
 
+      TRACE(TRACE_DEBUG, "imonpad", "Got key %s", buf);
+
       if(i == sizeof(lircmap) / sizeof(lircmap[0])) {
 	/* No hit, send to keymapper */
 	snprintf(buf, sizeof(buf), "lirc - %s", keyname);
-	keymapper_deliver(NULL, buf);
+	ui_dispatch_event(NULL, buf, uii);
       }
     }
   }
  out:
   close(fd);
-  htsbuf_queue_flush(&q);;
+  htsbuf_queue_flush(&q);
+  return 0;
 }
+
+
+/**
+ *
+ */
+ui_t lircd_ui = {
+  .ui_title = "lircd",
+  .ui_start = lircd_start,
+};
+

@@ -42,6 +42,7 @@ enable glw
 enable libasound
 enable libexif
 enable gu
+enable lirc
 
 for opt do
   optval="${opt#*=}"

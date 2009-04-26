@@ -212,15 +212,20 @@ SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_render_gx.c
 SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_gx.c
 
 #
+# GTK based interface
 #
-#
-
 SRCS-$(CONFIG_GU) +=    src/ui/gu/gu.c \
 			src/ui/gu/gu_pages.c \
 			src/ui/gu/gu_directory.c \
 
 ${BUILDDIR}/src/ui/gu/%.o : CFLAGS = $(shell pkg-config --cflags gtk+-2.0) \
 -Wall -Werror -Wmissing-prototypes -Wno-cast-qual
+
+#
+# LIRC UI
+#
+SRCS-$(CONFIG_LIRC) +=  src/ui/lirc/imonpad.c \
+			src/ui/lirc/lircd.c
 
 
 # Various transformations

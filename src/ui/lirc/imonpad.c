@@ -27,10 +27,9 @@
 #include <math.h>
 #include <poll.h>
 
-#include "imonpad.h"
 #include "showtime.h"
+#include "settings.h"
 #include "ui/keymapper.h"
-#include "hid/hid.h"
 
 /*
  * iMON PAD native decoder
@@ -105,8 +104,8 @@ static const struct {
 /**
  *
  */
-void
-imonpad_proc(void)
+static int
+imonpad_start(ui_t *ui, int argc, char *argv[])
 {
   int fd, i, l, repeat_rate, repeat_rate0, dx, dy, r, k;
   uint8_t buf[4];
@@ -117,24 +116,50 @@ imonpad_proc(void)
   int64_t nextavg = 0;
   struct pollfd fds;
   const char *dev = "/dev/lirc0";
+  time_t now;
+  uii_t *uii;
+  prop_t *p;
 
   repeat_rate = repeat_rate0 = REPEAT_RATE_SLOWEST;
 
-  if((fd = open(dev, O_RDONLY)) == -1) {
-    //    prop_set_stringf(status, "imonpad: Unable to open \"%s\"", dev);
-    sleep(1);
-    return;
+  /* Parse options */
+  argv++;
+  argc--;
+
+  while(argc > 0) {
+    if(!strcmp(argv[0], "--device") && argc > 1) {
+      dev = argv[1];
+      argc -= 2; argv += 2;
+      continue;
+    } else
+      break;
   }
+
+
+  if((fd = open(dev, O_RDONLY)) == -1) {
+    TRACE(TRACE_ERROR, "imonpad", "Unable to open %s", dev);
+    return 1;
+  }
+
+
+  uii = calloc(1, sizeof(uii_t));
+  uii->uii_ui = ui;
+  uii_register(uii);
+
+  p = settings_add_dir(NULL, "imonpad", "Settings for iMON Pad", "display");
+  uii->uii_km = keymapper_create(p, "imonpad", "Keymap", NULL);
 
   fds.fd = fd;
   fds.events = POLLIN;
 
-  while(hid_ir_mode == HID_IR_IMONPAD) {
+  while(1) {
 
     r = poll(&fds, 1, 100);
 
-    if(wallclock > nextavg) {
-      nextavg = wallclock + 100000;
+    time(&now);
+
+    if(now > nextavg) {
+      nextavg = now + 100000;
       repeat_rate = (repeat_rate * 7 + repeat_rate0) / 8;
     }
     
@@ -142,10 +167,9 @@ imonpad_proc(void)
       continue;
     
     if(read(fd, buf, 4) != 4) {
-      //prop_set_stringf(status, "imonpad: Read error from \"%s\"", dev);
+      TRACE(TRACE_ERROR, "imonpad", "Read error from %s", dev);
       close(fd);
-      sleep(1);
-      return;
+      return 1;
     }
 
     v = buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
@@ -266,13 +290,20 @@ imonpad_proc(void)
 	  event_post_simple(imonpadmap[i].key);
 	else {
 	  snprintf(desc, sizeof(desc), "imonpad - %s", imonpadmap[i].name);
-	  keymapper_deliver(NULL, desc);
+	  ui_dispatch_event(NULL, desc, uii);
 	}
 	break;
       }
     }
   }
-  close(fd);
-  return;
 }
+
+
+/**
+ *
+ */
+ui_t imonpad_ui = {
+  .ui_title = "imonpad",
+  .ui_start = imonpad_start,
+};
 
