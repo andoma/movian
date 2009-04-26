@@ -423,8 +423,8 @@ glw_wii_start(ui_t *ui, int argc, char *argv[])
 /**
  *
  */
-ui_t glw_wii_ui = {
-  .ui_title = "glw_wii",
+ui_t glw_ui = {
+  .ui_title = "glw",
   .ui_start = glw_wii_start,
   .ui_dispatch_event = glw_dispatch_event,
   .ui_flags = UI_MAINTHREAD,

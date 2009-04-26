@@ -892,8 +892,8 @@ glw_x11_dispatch_event(uii_t *uii, event_t *e)
 /**
  *
  */
-ui_t glw_x11_ui = {
-  .ui_title = "glw_x11",
+ui_t glw_ui = {
+  .ui_title = "glw",
   .ui_start = glw_x11_start,
   .ui_dispatch_event = glw_x11_dispatch_event,
 };

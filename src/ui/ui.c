@@ -72,11 +72,8 @@ ui_register(void)
 #ifdef CONFIG_GU
   link_ui(gu);
 #endif
-#ifdef CONFIG_GLW_FRONTEND_X11
-  link_ui(glw_x11);
-#endif
-#ifdef CONFIG_GLW_FRONTEND_WII
-  link_ui(glw_wii);
+#ifdef CONFIG_GLW
+  link_ui(glw);
 #endif
 }
 
