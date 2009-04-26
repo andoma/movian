@@ -260,6 +260,8 @@ void prop_set_int_ex(prop_t *p, prop_sub_t *skipme, int v);
 
 void prop_toggle_int_ex(prop_t *p, prop_sub_t *skipme);
 
+void prop_add_int_ex(prop_t *p, prop_sub_t *skipme, int v);
+
 void prop_set_void_ex(prop_t *p, prop_sub_t *skipme);
 
 void prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, prop_pixmap_t *pp);
@@ -271,6 +273,8 @@ void prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, prop_pixmap_t *pp);
 #define prop_set_float(p, v) prop_set_float_ex(p, NULL, v)
 
 #define prop_set_int(p, v) prop_set_int_ex(p, NULL, v)
+
+#define prop_add_int(p, v) prop_add_int_ex(p, NULL, v)
 
 #define prop_toggle_int(p) prop_toggle_int_ex(p, NULL)
 
