@@ -67,7 +67,6 @@ typedef enum {
   GLW_CONTAINER_X,  /* Horizonal weight based container */
   GLW_CONTAINER_Y,  /* Vertical weight based container */
   GLW_CONTAINER_Z,  /* Depth container */
-  GLW_MAP,
   GLW_LIST_X,
   GLW_LIST_Y,
   GLW_DECK,

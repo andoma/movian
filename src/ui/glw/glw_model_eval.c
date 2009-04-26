@@ -1166,7 +1166,6 @@ static struct strtab classtab[] = {
   { "container_x",   GLW_CONTAINER_X},
   { "container_y",   GLW_CONTAINER_Y},
   { "container_z",   GLW_CONTAINER_Z},
-  { "map",           GLW_MAP},
   { "icon",          GLW_ICON},
   { "image",         GLW_IMAGE},
   { "backdrop",      GLW_BACKDROP},
