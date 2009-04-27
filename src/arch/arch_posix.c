@@ -81,6 +81,7 @@ get_system_concurrency(void)
 
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 #include "arch.h"
 #include "showtime.h"
 

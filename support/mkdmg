@@ -1,0 +1,19 @@
+#!/bin/sh
+
+if [ $# != 1 ]; then
+  echo "Usage: $0 dmgfile"
+  exit
+fi
+
+rm -f $1
+hdiutil create -format UDRW -volname Showtime -srcfolder build.Darwin/Showtime.app $1
+mkdir tmpmnt
+hdiutil attach $1 -readwrite -mountroot tmpmnt
+ln -s /Applications tmpmnt/Showtime/Applications
+cp osx/hts.icns tmpmnt/Showtime/.VolumeIcon.icns
+/Developer/Tools/SetFile -a C tmpmnt/Showtime/.VolumeIcon.icns tmpmnt/Showtime
+hdiutil detach tmpmnt/Showtime
+rmdir tmpmnt
+mv $1 $1.UDRW
+hdiutil convert $1.UDRW -format UDBZ -o $1
+rm $1.UDRW

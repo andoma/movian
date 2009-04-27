@@ -1,6 +1,6 @@
 /*
  *  Showtime mediacenter
- *  Copyright (C) 2007-2009 Andreas Öman
+ *  Copyright (C) 2007-2009 Andreas Ã–man
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -87,6 +87,12 @@ main(int argc, char **argv)
 	uiargs[nuiargs++] = argv[1];
       argc -= 2; argv += 2;
       continue;
+#ifdef __APPLE__
+    /* ignore -psn argument, process serinal number */
+    } else if(!strncmp(argv[0], "-psn", 4)) {
+      argc -= 1; argv += 1;
+      continue;
+#endif
     } else
       break;
   }

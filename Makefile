@@ -105,6 +105,7 @@ SRCS += src/audio/audio.c \
 
 SRCS-$(CONFIG_LIBASOUND)  += src/audio/alsa/alsa_audio.c
 SRCS-$(CONFIG_LIBOGC)     += src/audio/wii/wii_audio.c
+SRCS-$(CONFIG_COREAUDIO)  += src/audio/coreaudio/coreaudio.c
 SRCS                      += src/audio/dummy/dummy_audio.c
 
 #
@@ -121,9 +122,15 @@ SRCS-$(CONFIG_DVD) += 	src/dvd/dvdcss/css.c \
 			src/dvd/dvdcss/ioctl.c \
 			src/dvd/dvdcss/libdvdcss.c
 
+ifeq ($(PLATFORM), darwin)
+DVDCSS_CFLAGS = -DDARWIN_DVD_IOCTL
+else
+DVDCSS_CFLAGS = -DHAVE_LINUX_DVD_STRUCT -DDVD_STRUCT_IN_LINUX_CDROM_H
+endif
+
+
 ${BUILDDIR}/src/dvd/dvdcss/%.o : CFLAGS = \
- -DHAVE_LIMITS_H -DHAVE_UNISTD_H -DHAVE_ERRNO_H -DHAVE_LINUX_DVD_STRUCT \
- -DDVD_STRUCT_IN_LINUX_CDROM_H -DVERSION="0"
+ -DHAVE_LIMITS_H -DHAVE_UNISTD_H -DHAVE_ERRNO_H -DVERSION="0" $(DVDCSS_CFLAGS)
 
 #
 # libdvdread
@@ -199,6 +206,7 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 
 SRCS-$(CONFIG_GLW_FRONTEND_X11)	  += src/ui/glw/glw_x11.c \
 				     src/ui/linux/screensaver_inhibitor.c
+SRCS-$(CONFIG_GLW_FRONTEND_COCOA) += src/ui/glw/glw_cocoa.m
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_opengl.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_texture_opengl.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_render_opengl.c
@@ -231,7 +239,8 @@ SRCS-$(CONFIG_LIRC) +=  src/ui/lirc/imonpad.c \
 SRCS  += $(SRCS-yes)
 DLIBS += $(DLIBS-yes)
 SLIBS += $(SLIBS-yes)
-OBJS=    $(SRCS:%.c=$(BUILDDIR)/%.o)
+OBJS2=   $(SRCS:%.c=$(BUILDDIR)/%.o)
+OBJS=    $(OBJS2:%.m=$(BUILDDIR)/%.o)
 DEPS=    ${OBJS:%.o=%.d}
 OBJDIRS= $(sort $(dir $(OBJS)))
 
@@ -257,7 +266,7 @@ ${PROG}: ${BUILDDIR}/ffmpeg/install $(OBJDIRS) $(OBJS) $(BUNDLE_OBJS) Makefile
 $(OBJDIRS):
 	@mkdir -p $@
 
-${BUILDDIR}/%.o: %.c
+${BUILDDIR}/%.o: %.[cm]
 	$(CC) -MD $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
 
 ${BUILDDIR}/ffmpeg/install ffmpeg:

@@ -11,6 +11,10 @@ if [ "$KNAME" == "Linux" ]; then
     echo "Configuring for Linux environment"
     `dirname $0`/configure.linux $@
     exit $?
+elif [ "$KNAME" == "Darwin" ]; then
+    echo "Configuring for Darwin OSX environment"
+    `dirname $0`/configure.darwin $@
+    exit $?
 else
     echo "Showtime is not supported on this platform"
     exit 1

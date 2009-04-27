@@ -30,6 +30,7 @@ CONFIG_LIST="
  glw
  glw_frontend_x11
  glw_frontend_wii
+ glw_frontend_cocoa
  glw_backend_opengl
  glw_backend_gx
  gu
@@ -37,6 +38,7 @@ CONFIG_LIST="
  embedded_theme
  spotify
  lirc
+ coreaudio
 "
 
 die() {

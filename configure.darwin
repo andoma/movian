@@ -1,0 +1,192 @@
+#!/bin/bash
+#
+# HTS configure script for Darwin OSX
+#
+# Copyright (c) 2005-2009 Andreas Öman
+#
+# Based on FFmpeg's configure script:
+#
+# Copyright (c) 2000-2002 Fabrice Bellard
+# Copyright (c) 2005-2008 Diego Biurrun
+# Copyright (c) 2005-2008 Mans Rullgard
+#
+
+PLATFORM="darwin"
+OSENV="posix"
+DEFAULT_UI="glw"
+
+source support/configure.inc
+
+CPU=generic
+ARCH=`uname -m`
+MACPORTSPREFIX="/opt/local"
+APPDIR=${BUILDDIR}/Showtime.app
+
+show_help(){
+  echo "Usage: configure [options]"
+  echo "Options: [defaults in brackets after descriptions]"
+  echo
+  echo "Standard options:"
+  echo "  --help                   print this message"
+  echo "  --prefix=PREFIX          install in PREFIX [$PREFIX]"
+  echo "  --arch=arch              Build for this architecture [$ARCH]"
+  echo "  --cpu=cpu                Build and optimize for specific CPU"
+  echo "  --cc=CC                  Build using the given compiler"
+  echo "  --release                Stage for release"
+  echo "  --embedded-theme         Embed theme in showtime [none]"
+  echo "  --macports=PATH          Path to freetype [$MACPORTSPREFIX]"
+  exit 1
+}
+
+enable libfreetype
+enable glw
+enable glw_frontend_cocoa
+enable glw_backend_opengl
+enable coreaudio
+
+for opt do
+  optval="${opt#*=}"
+  case "$opt" in
+  --prefix=*) PREFIX="$optval"
+  ;;
+  --cpu=*) CPU="$optval"
+  ;;
+  --help) show_help
+  ;;
+  --release) 
+	  RELEASE=yes
+	  enable embedded_theme
+  ;;
+  --cc=*) CC="$optval"
+  ;;
+  --macports=*) MACPORTSPREFIX="$optval"
+  ;;
+  --enable-?*|--disable-?*)
+  eval $(echo "$opt" | sed 's/--/action=/;s/-/ option=/;s/-/_/g')
+  $action $option
+  ;;
+  esac
+done
+
+
+setup_env
+
+enable libpthread
+enable zlib
+enable posix_networking
+enable dvd
+
+#
+# Application bundle
+# Override PROG to put binary inside app bundle
+#
+echo >>${CONFIG_MAK} "APPDIR=${APPDIR}"
+echo >>${CONFIG_MAK} "PROG=${APPDIR}/Contents/MacOS/showtime"
+
+
+#
+# pkgconfig
+#
+PKGCONFIG="${MACPORTSPREFIX}/bin/pkg-config"
+which >/dev/null ${PKGCONFIG}
+if [ $? -ne 0 ]; then
+    echo "pkg-config not found. Can not configure."
+    die
+fi
+
+#
+# c compiler
+#
+checkcc() {
+    cat >$TMPDIR/1.c <<EOF
+int main() {
+ return 0;
+}
+EOF
+    $CC 2>/dev/null $TMPDIR/1.c -o $TMPDIR/1.bin 
+}
+
+if [ "x$CC" != "x" ]; then
+    echo >>${CONFIG_MAK} "CC=$CC"
+    CC_FFMPEG="--cc=$CC"
+else
+    CC=cc
+fi
+
+if checkcc; then 
+    echo "Using C compiler:      $CC"
+else
+    echo "C compiler ($CC) is not working"
+    die
+fi
+
+echo >>${CONFIG_MAK} $CC_CONFIG_MAK 
+
+
+#
+# libfreetype2
+#
+if ${PKGCONFIG} freetype2; then
+    # FIXME: pkg-config for freetype in macport does not like --static
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += ${MACPORTSPREFIX}/lib/libfreetype.a"
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `${PKGCONFIG} --cflags freetype2`
+    echo "Using Freetype2:       `${PKGCONFIG} --modversion freetype2`"
+else
+    echo "FreeType 2 not found"
+    die
+fi
+
+# CoreFundation
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Foundation -framework CoreFoundation"
+
+# Cocoa
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Cocoa"
+
+# IOKit for dvd
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework IOKit"
+
+# OpenGL
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework OpenGL -framework GLUT"
+
+# CoreAudio
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreAudio"
+
+
+#
+# configure ffmpeg
+#
+setup_ffmpeg --cpu=${CPU} --enable-pthreads
+
+#
+# Configure paths, etc
+#
+if [ ${RELEASE} != yes ]; then
+    echo  Development build. 
+    echo  The generated binary will contained compild-in paths to
+    echo  the current build tree. If you plan to install the binary,
+    echo  please reconfigure with '--release'.
+fi
+
+#
+# Some compatibility defines
+#
+cat >> ${CONFIG_H} << EOF
+/* Darwin is default 64 bit */
+#define off64_t off_t
+#define lseek64 lseek
+
+/* Different name on darwin */
+#define MAP_ANONYMOUS MAP_ANON
+
+/* dvdcss, not defined on darwin is default large file and binary */
+#define O_LARGEFILE 0
+#define O_BINARY 0
+
+EOF
+
+#
+# Finalize
+
+echo >>${CONFIG_MAK} LDFLAGS_cfg += -lpthread
+
+finalize
