@@ -1,6 +1,6 @@
 /*
  *  GL Widgets, GLW_IMAGE widget and texture stuff
- *  Copyright (C) 2007 Andreas Öman
+ *  Copyright (C) 2007 Andreas Ã–man
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

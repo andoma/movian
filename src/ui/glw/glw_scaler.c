@@ -1,7 +1,7 @@
 /*
  * High quality image resampling with polyphase filters
  * Copyright (c) 2001 Fabrice Bellard.
- * Copyright (c) 2008 Andreas Öman.
+ * Copyright (c) 2008 Andreas Ã–man.
  *
  * This file is part of FFmpeg.
  *
