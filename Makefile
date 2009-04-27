@@ -22,7 +22,7 @@ BUILDDIR = build.${PLATFORM}
 
 include ${BUILDDIR}/config.mak
 
-PROG=${BUILDDIR}/showtime
+PROG ?= ${BUILDDIR}/showtime
 
 CFLAGS  = -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations 
 CFLAGS += -Wmissing-prototypes -Isrc/dvd
