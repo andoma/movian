@@ -88,7 +88,7 @@ main(int argc, char **argv)
       argc -= 2; argv += 2;
       continue;
 #ifdef __APPLE__
-    /* ignore -psn argument, process serinal number */
+    /* ignore -psn argument, process serial number */
     } else if(!strncmp(argv[0], "-psn", 4)) {
       argc -= 1; argv += 1;
       continue;

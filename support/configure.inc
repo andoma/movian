@@ -38,7 +38,6 @@ CONFIG_LIST="
  embedded_theme
  spotify
  lirc
- coreaudio
 "
 
 die() {

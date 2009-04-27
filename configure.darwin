@@ -149,7 +149,7 @@ echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework IOKit"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework OpenGL -framework GLUT"
 
 # CoreAudio
-echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreAudio"
+#echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreAudio"
 
 
 #
