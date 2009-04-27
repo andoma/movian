@@ -2,8 +2,13 @@
 			 Showtime mediaplayer
 			 ====================
 
-		 (c) 2006 - 2009 Andreas Öman, et al.
+		 (c) 2006 - 2009 Andreas Ã·man, et al.
 
+
+Settings are stored in ~/.hts/showtime
+
+For more information and latest versions, please visit:
+http://www.lonelycoder.com/hts/
 
 
 How to build for Linux
@@ -18,13 +23,42 @@ You then have the option to disable that particular module/subsystem.
 
 $ make
 
-Build the binary, after build the binary resides in 'build.Linux/'.
+Build the binary, after build the binary resides in 'build.linux/'.
 Thus, to start it, just type:
 
-$ build.Linux/showtime
+$ build.linux/showtime
 
-Settings are stored in ~andoma/.hts/showtime
 
-For more information and latest versions, please visit:
-http://www.lonelycoder.com/hts/
+How to build for OSX
+====================
 
+Install Xcode (http://developer.apple.com/Tools/) which includes Xcode IDE,
+gcc toolchain and much more.
+
+Install MacPorts (http://www.macports.org)
+
+Install freetype via MacPorts:
+
+$ sudo /opt/local/bin/port install freetype
+
+Now run configure
+
+$ ./configure
+
+If configured sucessfully, build the binary
+
+$ make
+
+Run showtime
+
+$ build.darwin/Showtime.app/Contents/MacOS/showtime
+
+Or
+
+$ open build.darwin/Showtime.app
+
+Optionally you can build Showtime.dmg disk image. Note that you should probably
+run configure with --release to embed theme files or else the binary will
+include paths your build tree.
+
+$ make Showtime.dmg
