@@ -80,7 +80,7 @@ void
 glw_video_global_init(glw_root_t *gr)
 {
   glw_backend_root_t *gbr = &gr->gr_be;
-  int tu;
+  GLint tu;
 
   glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tu);
   if(tu < 6) {

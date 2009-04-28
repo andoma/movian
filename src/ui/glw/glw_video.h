@@ -30,14 +30,14 @@ typedef struct gl_video_frame {
 
   video_decoder_frame_t gvf_vdf;
 
-  unsigned int gvf_pbo;
+  GLuint gvf_pbo;
   void *gvf_pbo_ptr;
 
   int gvf_pbo_offset[3];
   
   int gvf_uploaded;
 
-  unsigned int gvf_textures[3];
+  GLuint gvf_textures[3];
 
   unsigned int gvf_frame_buffer;
 
@@ -65,7 +65,7 @@ typedef struct glw_video {
   media_pipe_t *gv_mp;
 
 
-  unsigned int gv_sputex;
+  GLuint gv_sputex;
 
   int gv_in_menu;
 

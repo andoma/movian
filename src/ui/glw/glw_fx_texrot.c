@@ -165,7 +165,7 @@ glw_fx_texrot_render_internal(glw_fx_texrot_t *fx, glw_loadable_texture_t *glt)
 static void
 glw_fx_texrot_buildtex(glw_fx_texrot_t *fx, glw_loadable_texture_t *glt)
 {
-  int viewport[4];
+  GLint viewport[4];
  
   if(fx->fx_texsize == 0) {
     

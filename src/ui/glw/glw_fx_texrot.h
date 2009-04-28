@@ -45,8 +45,8 @@ typedef struct glw_fx_texrot {
 
   glw_loadable_texture_t *fx_tex;
 
-  unsigned int fx_fb;
-  unsigned int fx_fbtex;
+  GLuint fx_fb;
+  GLuint fx_fbtex;
 
   int fx_texsize;
 
