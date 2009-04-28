@@ -575,6 +575,12 @@ refresh_rate()
   
   NSOpenGLPixelFormat* pixelFormat = [[NSOpenGLPixelFormat alloc]
                                       initWithAttributes:attrs];
+  
+  if(!pixelFormat) {
+    TRACE(TRACE_ERROR, "opengl", "failed to alloc hardware pixelformat");
+    /* no reason to continue */
+    exit(1);
+  }
     
   self = [super initWithFrame:frameRect pixelFormat:pixelFormat];
   
