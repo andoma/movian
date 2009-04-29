@@ -98,7 +98,7 @@ arch_init(void)
   concurrency = get_system_concurrency();
   decorate_trace = isatty(2);
 
-  TRACE(TRACE_DEBUG, "core", "Using %d CPU(s)", concurrency);
+  TRACE(TRACE_INFO, "core", "Using %d CPU(s)", concurrency);
 
 #ifdef RLIMIT_AS
   do {
