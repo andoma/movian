@@ -53,7 +53,8 @@ rescale(AVFormatContext *fctx, int64_t ts, int si)
  * Thread for reading from lavf and sending to lavc
  */
 static event_t *
-video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp)
+video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
+		  char *errbuf, size_t errlen)
 {
   media_buf_t *mb = NULL;
   media_queue_t *mq = NULL;
@@ -87,7 +88,7 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp)
 	  continue;
 	}
 
-	notify_add(NOTIFY_INFO, NULL, 5, "Video read error");
+	snprintf(errbuf, errlen, "%s", fa_ffmpeg_error_to_txt(r));
 	e = NULL;
 	break;
       }
@@ -295,7 +296,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   mp_prepare(mp, MP_GRAB_AUDIO);
 
-  e = video_player_loop(fctx, cwvec, mp);
+  e = video_player_loop(fctx, cwvec, mp, errbuf, errlen);
 
   mp_flush(mp);
 
