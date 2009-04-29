@@ -174,6 +174,7 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb, int justdecode)
   int tff, w2, mode;
   uint8_t *prev, *cur, *next;
   int hshift, vshift;
+  deilace_type_t dt;
 
   got_pic = 0;
 
@@ -226,15 +227,10 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb, int justdecode)
     break;
   }
 
-  if(vd->vd_deilace_conf == VD_DEILACE_AUTO) {
-    
-    if(frame->interlaced_frame)
-      vd->vd_deilace_type = VD_DEILACE_HALF_RES;
-    else
-      vd->vd_deilace_type = VD_DEILACE_NONE;
-  } else {
-    vd->vd_deilace_type = vd->vd_deilace_conf;
-  }
+
+  dt = mb->mb_disable_deinterlacer ? VD_DEILACE_NONE : vd->vd_deilace_conf;
+  if(dt == VD_DEILACE_AUTO)
+    dt = frame->interlaced_frame ? VD_DEILACE_YADIF_FIELD : VD_DEILACE_NONE;
   
   /* Compute duration and PTS of frame */
 
@@ -301,7 +297,7 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb, int justdecode)
 
   /* deinterlacer will generate two frames */
 
-  if(vd->vd_deilace_type == VD_DEILACE_HALF_RES)
+  if(dt == VD_DEILACE_HALF_RES)
     duration /= 2;
 
   avcodec_get_chroma_sub_sample(ctx->pix_fmt, &hshift, &vshift);
@@ -313,7 +309,7 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb, int justdecode)
   hvec[1] = ctx->height >> vshift;
   hvec[2] = ctx->height >> vshift;
 
-  switch(vd->vd_deilace_type) {
+  switch(dt) {
 
   case VD_DEILACE_AUTO:
     return;
@@ -462,6 +458,8 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb, int justdecode)
       return;
 
     tff = !!frame->top_field_first ^ vd->vd_field_parity;
+
+    pts -= duration;
 
     if(mode & 1) 
       duration /= 2;

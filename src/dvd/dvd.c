@@ -174,6 +174,7 @@ dvd_video_push(dvd_player_t *dp)
   mb->mb_size = 0;
   mb->mb_data = NULL;
   mb->mb_aspect_override = dp->dp_aspect_override;
+  mb->mb_disable_deinterlacer = 1;
   mb->mb_data_type = MB_VIDEO;
   mb->mb_duration = 1000000LL * av_q2d(cw->codec_ctx->time_base);
   mb->mb_pts = AV_NOPTS_VALUE;
@@ -198,7 +199,8 @@ dvd_media_enqueue(dvd_player_t *dp, media_queue_t *mq, codecwrap_t *cw,
   mb->mb_cw = wrap_codec_ref(cw);
   mb->mb_data_type = data_type;
   mb->mb_duration = 1000000LL * av_q2d(ctx->time_base);
-  mb->mb_aspect_override = rate;
+  mb->mb_aspect_override = dp->dp_aspect_override;
+  mb->mb_disable_deinterlacer = 1;
   mb->mb_dts = dts;
   mb->mb_pts = pts;
   

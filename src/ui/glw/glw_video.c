@@ -395,7 +395,7 @@ compute_avdiff(video_decoder_t *vd, media_pipe_t *mp, int64_t pts)
 
   rt = showtime_get_ts();
   vd->vd_avdiff = (mp->mp_audio_clock + rt - mp->mp_audio_clock_realtime)
-    - pts - vd->vd_avd_delta;
+    - (pts - 16666) - vd->vd_avd_delta;
 
   hts_mutex_unlock(&mp->mp_clock_mutex);
 

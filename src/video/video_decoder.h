@@ -70,8 +70,8 @@ kalman(kalman_t *k, float z)
  *
  */
 typedef enum {
-  VD_DEILACE_NONE,
   VD_DEILACE_AUTO,
+  VD_DEILACE_NONE,
   VD_DEILACE_HALF_RES,
   VD_DEILACE_YADIF_FRAME,
   VD_DEILACE_YADIF_FIELD,
@@ -122,10 +122,6 @@ typedef struct video_decoder {
   deilace_type_t vd_deilace_conf;
   int vd_field_parity;
  
-
-  /* */
-  deilace_type_t vd_deilace_type; /* Actual deinterlacer running */
-
   media_pipe_t *vd_mp;
 
 

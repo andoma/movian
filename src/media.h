@@ -92,7 +92,10 @@ typedef struct media_buf {
   int mb_data32;
 
   uint32_t mb_duration;
-  uint32_t mb_aspect_override;
+
+  uint8_t mb_aspect_override;
+  uint8_t mb_disable_deinterlacer;
+
   int64_t mb_dts;
   int64_t mb_pts;
   int64_t mb_time;  /* in ms */
