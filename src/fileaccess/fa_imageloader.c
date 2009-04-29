@@ -60,6 +60,8 @@ fa_imageloader(fa_image_load_ctrl_t *ctrl, const char *theme)
     ctrl->want_thumb = 1;
   }
 
+  TRACE(TRACE_DEBUG, "imageloader", "Opening %s", filename);
+
   if((fh = fa_open_theme(filename, theme)) == NULL)
     return -1;
 
