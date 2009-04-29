@@ -1,7 +1,6 @@
 #include "theme://include/plates.model"
 
 widget(backdrop, {
-  .position = south;
   PLATE_PROPS();
   .alphaSelf = 0.25;
 
