@@ -5,9 +5,8 @@ widget(container_x, {
   });
 
   widget(container_y, {
-    
     widget(label, {
-      .weight = 1.5; 
+      .align = left;
       .caption = $self.metadata.title;
     });
   });

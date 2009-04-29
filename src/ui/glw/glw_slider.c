@@ -289,9 +289,9 @@ glw_slider_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     c = extra;
     
     if(w->glw_class == GLW_SLIDER_Y) {
-      glw_set_constraint_xy(w, c->glw_req_size_x, 0);
+      glw_set_constraints(w, c->glw_req_size_x, 0, 0, 0, GLW_CONSTRAINT_X, 0);
     } else {
-      glw_set_constraint_xy(w, 0, c->glw_req_size_y);
+      glw_set_constraints(w, 0, c->glw_req_size_y, 0, 0, GLW_CONSTRAINT_Y, 0);
     }
     return 1;
 

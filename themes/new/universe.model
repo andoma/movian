@@ -12,8 +12,6 @@ widget(container_z, {
     /* Main display deck */
     widget(container_y, {
       widget(deck, {
-	.weight = 1.0;
-	
 	cloner($global.nav.pages, animator, {
 	  .time = 0.3;
 	  .source = "theme://pagemodels/" + $page.type + ".model";
@@ -39,12 +37,16 @@ widget(container_z, {
   widget(container_x, {
     space(1);
     widget(container_y, {
-      .align = center;
+	.align = center;
+	
+	.debug = true;
 
       widget(backdrop, {
 	PLATE_PROPS();
 	.alpha = iir(changed($global.audio.mastervolume, 2), 7);
 	.color = [0.8, 0.9, 1.0];
+
+	.debug = true;
 
 	widget(label, {
 	  .caption = "Master volume: " +

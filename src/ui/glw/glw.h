@@ -128,7 +128,6 @@ typedef enum {
   GLW_ATTRIB_ORIGINATING_PROP,
   GLW_ATTRIB_FOCUS_WEIGHT,
   GLW_ATTRIB_CHILD_ASPECT,
-  GLW_ATTRIB_POSITION,
 } glw_attribute_t;
 
 #define GLW_MIRROR_X   0x1
@@ -154,16 +153,6 @@ typedef enum {
   GLW_ALIGN_BOTTOM,
   GLW_ALIGN_TOP,
 } glw_alignment_t;
-
-typedef enum {
-  GLW_POS_NONE,
-  GLW_POS_NORTH,
-  GLW_POS_SOUTH,
-  GLW_POS_WEST,
-  GLW_POS_EAST,
-  GLW_POS_num,
-} glw_position_t;
-
 
 
 /**
@@ -278,9 +267,9 @@ typedef struct glw_root {
   struct glw_queue gr_destroyer_queue;
 
   prop_t *gr_fullscreen_req;
-
+  
   int gr_frameduration;
-
+  
   struct glw_head gr_active_list;
   struct glw_head gr_active_flush_list;
   struct glw_head gr_active_dummy_list;
@@ -408,7 +397,7 @@ typedef struct glw {
   int glw_req_size_x;
   int glw_req_size_y;
   float glw_req_aspect;
-  glw_position_t glw_req_position;
+  float glw_req_weight;
 
   int glw_flags;
 
@@ -432,7 +421,16 @@ typedef struct glw {
 
 #define GLW_DESTROYING          0x2000  /* glw_destroy() has been called */
 
-  float glw_conf_weight;             /* Relative weight (configured) */
+#define GLW_CONSTRAINT_X        0x4000
+#define GLW_CONSTRAINT_Y        0x8000
+#define GLW_CONSTRAINT_A        0x10000
+#define GLW_CONSTRAINT_W        0x20000
+#define GLW_CONSTRAINT_CONFED   0x40000
+
+#define GLW_CONSTRAINT_FLAGS (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y | \
+                              GLW_CONSTRAINT_A | GLW_CONSTRAINT_W)
+
+
   float glw_norm_weight;             /* Relative weight (normalized) */
   float glw_alpha;                   /* Alpha set by user */
   float glw_extra;
@@ -615,7 +613,6 @@ do {						\
   case GLW_ATTRIB_SIZE:                         \
   case GLW_ATTRIB_FOCUS_WEIGHT:                 \
   case GLW_ATTRIB_CHILD_ASPECT:                 \
-  case GLW_ATTRIB_POSITION:                     \
     (void)va_arg(ap, double);			\
     break;					\
   }						\
@@ -786,11 +783,8 @@ void glw_font_change_size(glw_root_t *gr, int fontsize);
  *
  */
 
-void glw_set_constraint_xy(glw_t *w, int x, int y);
-
-void glw_set_constraint_pos(glw_t *w, glw_position_t p);
-
-void glw_set_constraint_aspect(glw_t *w, float aspect);
+void glw_set_constraints(glw_t *w, int x, int y, float a, float weight,
+			 int flags, int conf);
 
 void glw_copy_constraints(glw_t *w, glw_t *src);
 

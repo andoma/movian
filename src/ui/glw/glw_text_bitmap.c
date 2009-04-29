@@ -540,7 +540,7 @@ gtb_set_estimated_size(glw_root_t *gr, glw_text_bitmap_t *gtb)
 {
   int ys = gr->gr_fontsize_px * gtb->gtb_lines * gtb->gtb_size;
 
-  glw_set_constraint_xy(&gtb->w, 0, ys);
+  glw_set_constraints(&gtb->w, 0, ys, 0, 0, GLW_CONSTRAINT_Y, 0);
 }
 
 
@@ -1008,10 +1008,13 @@ font_render_thread(void *aux)
     memcpy(&gtb->gtb_data, &d, sizeof(glw_text_bitmap_data_t));
 
     if(d.gtbd_siz_y) {
-      glw_set_constraint_xy(&gtb->w, 
-			    gtb->w.glw_alignment == GLW_ALIGN_NONE ? 
-			    d.gtbd_siz_x : 0,
-			    d.gtbd_siz_y);
+      glw_set_constraints(&gtb->w,
+			  d.gtbd_siz_x,
+			  d.gtbd_siz_y,
+			  0, 0, 
+			  (gtb->w.glw_alignment == GLW_ALIGN_NONE ? 
+			   GLW_CONSTRAINT_X : 0) | GLW_CONSTRAINT_Y, 0);
+
     } else {
       gtb->gtb_aspect = 0;
       gtb_set_estimated_size(gr, gtb);

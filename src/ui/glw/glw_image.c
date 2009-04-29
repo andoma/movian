@@ -193,35 +193,37 @@ glw_image_update_constraints(glw_image_t *gi)
 {
   glw_loadable_texture_t *glt = gi->gi_tex;
   glw_t *c;
-  int y = 0, x = 0;
   glw_root_t *gr = gi->w.glw_root;
 
-  if(gi->w.glw_class == GLW_BACKDROP) {
+   if(gi->w.glw_class == GLW_BACKDROP) {
 
     c = TAILQ_FIRST(&gi->w.glw_childs);
 
     if(c != NULL) {
-
-      if(c->glw_req_size_y)
-	y = c->glw_req_size_y + gi->gi_border_top + gi->gi_border_bottom;
-
-      if(c->glw_req_size_x)
-	x = c->glw_req_size_x + gi->gi_border_left + gi->gi_border_right;
+      glw_set_constraints(&gi->w, 
+			  c->glw_req_size_x +
+			  gi->gi_border_left + gi->gi_border_right,
+			  c->glw_req_size_y + 
+			  gi->gi_border_top + gi->gi_border_bottom,
+			  0, 0, 
+			  c->glw_flags & GLW_CONSTRAINT_FLAGS,
+			  0);
     }
-
-    glw_set_constraint_xy(&gi->w, x, y);
 
   } else if(gi->w.glw_class == GLW_ICON) {
 
-    glw_set_constraint_xy(&gi->w, 
-			  gi->gi_size * gr->gr_fontsize_px, 
-			  gi->gi_size * gr->gr_fontsize_px); 
+    glw_set_constraints(&gi->w,
+			gi->gi_size * gr->gr_fontsize_px, 
+			gi->gi_size * gr->gr_fontsize_px,
+			0, 0,
+			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
 
   } else {
-
-    glw_set_constraint_aspect(&gi->w, 
-			      glt && glt->glt_state == GLT_STATE_VALID ? 
-			      glt->glt_aspect : 1);
+    
+    glw_set_constraints(&gi->w, 0, 0,
+			glt && glt->glt_state == GLT_STATE_VALID ? 
+			glt->glt_aspect : 1, 0,
+			GLW_CONSTRAINT_A, 0);
   }
 }
 
@@ -319,7 +321,7 @@ glw_image_callback(glw_t *w, void *opaque, glw_signal_t signal,
     glw_image_update_constraints((glw_image_t *)w);
     return 1;
   case GLW_SIGNAL_CHILD_DESTROYED:
-    glw_set_constraint_xy(w, 0, 0);
+    glw_set_constraints(w, 0, 0, 0, 0, 0, 0);
     return 1;
 
   }
@@ -346,7 +348,7 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
     gi->gi_size = 1.0;
 
     if(w->glw_class == GLW_IMAGE)
-      glw_set_constraint_aspect(&gi->w, 1); 
+      glw_set_constraints(&gi->w, 0, 0, 1, 0, GLW_CONSTRAINT_A, 0); 
 
   }
 
@@ -409,7 +411,9 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
   } while(attrib);
 
   if(w->glw_class == GLW_ICON)
-    glw_set_constraint_xy(&gi->w, 
-			  gi->gi_size * gr->gr_fontsize_px, 
-			  gi->gi_size * gr->gr_fontsize_px); 
+   glw_set_constraints(&gi->w,
+			gi->gi_size * gr->gr_fontsize_px, 
+			gi->gi_size * gr->gr_fontsize_px,
+			0, 0,
+			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
 }

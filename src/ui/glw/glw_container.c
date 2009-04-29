@@ -29,19 +29,24 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
   int ymax = 0, xsum = 0;
   float weight = 0;
   float aspect = 0;
+  int cflags = 0;
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
     if(c == skip)
       continue;
 
+    cflags |= c->glw_flags & (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
+
     ymax = GLW_MAX(ymax, c->glw_req_size_y);
 
-    if(c->glw_req_size_x) {
+    if(c->glw_flags & GLW_CONSTRAINT_X) {
       xsum += c->glw_req_size_x;
-    } else if(c->glw_req_aspect) {
+    } else if(c->glw_flags & GLW_CONSTRAINT_A) {
       aspect += c->glw_req_aspect;
+    } else if(c->glw_flags & GLW_CONSTRAINT_W) {
+      weight += c->glw_req_weight;
     } else {
-      weight += c->glw_conf_weight;
+      weight += 1.0f;
     }
   }
 
@@ -49,8 +54,9 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
   co->aspect_sum = aspect;
   co->x_sum = xsum;
   co->y_sum = ymax;
+  co->cflags = cflags;
 
-  glw_set_constraint_xy(&co->w, xsum, ymax);
+  glw_set_constraints(&co->w, xsum, ymax, 0, 0, cflags, 0);
   return 1;
 }
 
@@ -75,7 +81,7 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
   /* Add sum of requested aspect to width in pixels */
   ax = co->x_sum + co->aspect_sum * rc->rc_size_y; 
 
-  glw_set_constraint_xy(&co->w, ax, co->y_sum);
+  glw_set_constraints(&co->w, ax, co->y_sum, 0, 0, co->cflags, 0);
 
 
   x = -1.0f;
@@ -104,13 +110,14 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
 
     ys = rc->rc_size_y;
 
-    if(c->glw_req_size_x) {
+    if(c->glw_flags & GLW_CONSTRAINT_X) {
       xs = s_ax * c->glw_req_size_x;
-
-    } else if(c->glw_req_aspect) {
+    } else if(c->glw_flags & GLW_CONSTRAINT_A) {
       xs = s_ax * c->glw_req_aspect * rc->rc_size_y;
+    } else if(c->glw_flags & GLW_CONSTRAINT_W) {
+      xs = c->glw_req_weight * s_w;
     } else {
-      xs = c->glw_conf_weight * s_w;
+      xs = s_w;
     }
 
     c->glw_parent_scale.x = xs / rc->rc_size_x;
@@ -145,28 +152,34 @@ glw_container_y_constraints(glw_container_t *co, glw_t *skip)
   int xmax = 0;
   int fix = 0;
   float weight = 0;
+  int cflags = 0;
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
     if(c == skip)
       continue;
 
+    cflags |= c->glw_flags & (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
+
     xmax = GLW_MAX(xmax, c->glw_req_size_x);
 
-    if(c->glw_req_size_y) {
+    if(c->glw_flags & GLW_CONSTRAINT_Y) {
       fix += c->glw_req_size_y;
+    } else if(c->glw_flags & GLW_CONSTRAINT_W) {
+      weight += c->glw_req_weight;
     } else {
-      weight += c->glw_conf_weight;
+      weight += 1.0;
     }
   }
 
   co->x_sum = xmax;
   co->y_sum = fix;
   co->weight_sum = weight;
+  co->cflags = cflags;
 
   if(weight)
-    fix = 0;
+    cflags &= ~GLW_CONSTRAINT_Y;
 
-  glw_set_constraint_xy(&co->w, xmax, fix);
+  glw_set_constraints(&co->w, xmax, fix, 0, 0, cflags, 0);
   return 1;
 }
 
@@ -215,11 +228,12 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
 
     xs = rc->rc_size_x;
 
-     if(c->glw_req_size_y) {
+    if(c->glw_flags & GLW_CONSTRAINT_Y) {
       ys = s_fy * c->glw_req_size_y;
-
+    } else if(c->glw_flags & GLW_CONSTRAINT_W) {
+      ys = c->glw_req_weight * s_w;
     } else {
-      ys = c->glw_conf_weight * s_w;
+      ys = s_w;
     }
 
     c->glw_parent_scale.x = xs / rc->rc_size_x;

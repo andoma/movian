@@ -31,10 +31,7 @@ update_constraints(glw_expander_t *exp)
 
   e = exp->expansion * (c != NULL ? c->glw_req_size_y : 0);
 
-  if(e < 1)
-    e = 1;  // XXX VERY VERY BAD
-  
-  glw_set_constraint_xy(&exp->w, 0, e);
+  glw_set_constraints(&exp->w, 0, e, 0, 0, GLW_CONSTRAINT_Y, 0);
 }
 
 

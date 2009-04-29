@@ -22,6 +22,7 @@
 typedef struct glw_container {
   glw_t w;
   
+  int cflags;
   int x_sum;
   int y_sum;
   float weight_sum;
