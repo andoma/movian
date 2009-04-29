@@ -604,11 +604,17 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
     }
   }
 
+  trace(TRACE_DEBUG, "HTSP", "Connecting to %s:%d", hostname, port);
+
   fd = tcp_connect(hostname, port, errbuf, errlen, 3000);
   if(fd == -1) {
     hts_mutex_unlock(&htsp_global_mutex);
+    trace(TRACE_ERROR, "HTSP", "Connection to %s:%d failed: %s", 
+	  hostname, port, errbuf);
     return NULL;
   }
+
+  trace(TRACE_INFO, "HTSP", "Connected to %s:%d", hostname, port);
 
   hc = calloc(1, sizeof(htsp_connection_t));
 
