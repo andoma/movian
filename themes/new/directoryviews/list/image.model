@@ -1,3 +1,4 @@
 widget(image, {
+  .focusable = true;
   .source = $self.url;
 });
