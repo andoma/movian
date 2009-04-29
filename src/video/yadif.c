@@ -31,8 +31,6 @@
 #define MAX3(a,b,c) MAX(MAX(a,b),c)
 
 
-void (*yadif_filter_line)(int mode, uint8_t *dst, uint8_t *prev, uint8_t *cur, uint8_t *next, int w, int refs, int parity);
-
 #if defined(__i386__) || defined(__x86_64__)
 
 #define LOAD4(mem,dst) \
@@ -92,7 +90,7 @@ void (*yadif_filter_line)(int mode, uint8_t *dst, uint8_t *prev, uint8_t *cur, u
             "por       %%mm5, %%mm3 \n\t"\
             "movq      %%mm3, %%mm1 \n\t"
 
-static void filter_line_mmx2(int mode, uint8_t *dst, uint8_t *prev, uint8_t *cur, uint8_t *next, int w, int refs, int parity){
+void yadif_filter_line(int mode, uint8_t *dst, uint8_t *prev, uint8_t *cur, uint8_t *next, int w, int refs, int parity){
     static const uint64_t pw_1 = 0x0001000100010001ULL;
     static const uint64_t pb_1 = 0x0101010101010101ULL;
     uint64_t tmp0, tmp1, tmp2, tmp3;
@@ -245,9 +243,9 @@ static void filter_line_mmx2(int mode, uint8_t *dst, uint8_t *prev, uint8_t *cur
 #undef CHECK2
 #undef FILTER
 
-#endif
+#else
 
-static void filter_line_c(int mode, uint8_t *dst, uint8_t *prev, uint8_t *cur, uint8_t *next, int w, int refs, int parity){
+void yadif_filter_line(int mode, uint8_t *dst, uint8_t *prev, uint8_t *cur, uint8_t *next, int w, int refs, int parity){
     int x;
     uint8_t *prev2= parity ? prev : cur ;
     uint8_t *next2= parity ? cur  : next;
@@ -305,15 +303,4 @@ static void filter_line_c(int mode, uint8_t *dst, uint8_t *prev, uint8_t *cur, u
         next2++;
     }
 }
-
-
-
-int
-yadif_init(void)
-{
-   yadif_filter_line = filter_line_c;
-#if defined(__i386__) || defined(__x86_64__)
-   yadif_filter_line = filter_line_mmx2;
 #endif
-   return 0;
-}
