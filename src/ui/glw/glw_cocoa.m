@@ -341,6 +341,10 @@ refresh_rate()
 }
 
 - (void)glwResize:(int)width height:(int)height {
+  /* could be called before prepareOpenGL */
+  if(!gcocoa)
+    return;
+  
   gcocoa->window_width  = width;
   gcocoa->window_height = height;
   gcocoa->aspect_ratio = (float)width / (float)height;
@@ -412,8 +416,6 @@ refresh_rate()
   glw_render0(gcocoa->gr.gr_universe, &rc);
     
   glw_unlock(&gcocoa->gr);
-  
-  glFlush();
 }
 
 - (void)glwWindowedTimerStart {
@@ -529,6 +531,7 @@ refresh_rate()
 - (void)prepareOpenGL {
   gcocoa = calloc(1, sizeof(glw_cocoa_t));
   const char *theme_path = SHOWTIME_DEFAULT_THEME_URL;
+  GLint v = 1;
   
   /* default cursor is on at start */
   gcocoa->is_pointer_enabled = 1;
@@ -539,6 +542,8 @@ refresh_rate()
   /* must be called after GL is ready, calls GL functions */
   if(glw_init(&gcocoa->gr, gcocoa->want_font_size, theme_path, gcocoa_ui))
     return;
+  
+  [[self openGLContext] setValues:&v forParameter:NSOpenGLCPSwapInterval];
   
   NSRect bounds = [self bounds];
   [self glwResize:bounds.size.width height:bounds.size.height];
