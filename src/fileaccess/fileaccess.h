@@ -61,4 +61,6 @@ int fa_can_handle(const char *url, char *errbuf, size_t errsize);
 void *fa_reference(const char *url);
 void fa_unreference(void *fh);
 
+const char *fa_ffmpeg_error_to_txt(int err);
+
 #endif /* FILEACCESS_H */

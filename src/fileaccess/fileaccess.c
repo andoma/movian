@@ -395,3 +395,24 @@ static URLProtocol fa_lavf_proto = {
     fa_lavf_seek,
     fa_lavf_close,
 };
+
+
+/**
+ *
+ */
+const char *
+fa_ffmpeg_error_to_txt(int err)
+{
+  switch(err) {
+  case AVERROR_IO:           return "I/O error";
+  case AVERROR_NUMEXPECTED:  return "Number syntax expected in filename";
+  case AVERROR_INVALIDDATA:  return "Invalid data found";
+  case AVERROR_NOMEM:        return "Out of memory";
+  case AVERROR_NOFMT:        return "Unknown format";
+  case AVERROR_NOTSUPP:      return "Operation not supported";
+  case AVERROR_NOENT:        return "No such file or directory";
+  case AVERROR_EOF:          return "End of file";
+  case AVERROR_PATCHWELCOME: return "Not yet implemented, patch welcome";
+  }
+  return "Unknown errorcode";
+}
