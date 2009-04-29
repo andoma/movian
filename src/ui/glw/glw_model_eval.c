@@ -963,6 +963,34 @@ subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
  *
  */
 static int
+invoke_func(glw_model_eval_context_t *ec, token_t *t)
+{
+  token_t **vec;
+  int i;
+
+  if(t->t_func->nargs != t->t_num_args) {
+    glw_model_seterr(ec->ei, t, "%s(): Invalid number of arguments: %d, "
+		     "expected %d", t->t_func->name, t->t_num_args,
+		     t->t_func->nargs);
+    return -1;
+  }
+
+  if(t->t_num_args == 0)
+    return t->t_func->cb(ec, t, NULL, 0);
+
+  vec = alloca(t->t_num_args * sizeof(token_t *));
+
+  for(i = t->t_num_args - 1; i >= 0; i--)
+    vec[i] = eval_pop(ec);
+
+  return t->t_func->cb(ec, t, vec, t->t_num_args);
+}
+
+
+/**
+ *
+ */
+static int
 glw_model_eval_rpn0(token_t *t0, glw_model_eval_context_t *ec)
 {
   token_t *t;
@@ -1003,7 +1031,11 @@ glw_model_eval_rpn0(token_t *t0, glw_model_eval_context_t *ec)
       break;
 	
     case TOKEN_FUNCTION:
-      if(t->t_func->cb(ec, t))
+#if 0
+      printf("Invoking %s with %d arguments\n",
+	     t->t_func->name, t->t_num_args);
+#endif
+      if(invoke_func(ec, t))
 	return -1;
       break;
 
@@ -1105,62 +1137,6 @@ glw_model_eval_block(token_t *t, glw_model_eval_context_t *ec)
 /**
  *
  */
-static token_t *
-get_float_op(glw_model_eval_context_t *ec, token_t *self, const char *fname)
-{
-  token_t *a = eval_pop(ec);
-
-  if((a = token_resolve(ec, a)) == NULL)
-    return NULL;
-  
-  if(a->type != TOKEN_FLOAT) {
-    glw_model_seterr(ec->ei, self, 
-		     "Invalid operand to function %s", fname);
-    return NULL;
-  }
-  return a;
-}
-
-
-/**
- *
- */
-static int 
-glwf_sin(glw_model_eval_context_t *ec, struct token *self)
-{
-  token_t *a = get_float_op(ec, self, "sin");
-  token_t *r = eval_alloc(self, ec, TOKEN_FLOAT);
-
-  if(a == NULL)
-    return -1;
-
-  r->t_float = sin(a->t_float);
-  eval_push(ec, r);
-  return 0;
-}
-
-
-/**
- *
- */
-static int 
-glwf_cos(glw_model_eval_context_t *ec, struct token *self)
-{
-  token_t *a = get_float_op(ec, self, "cos");
-  token_t *r = eval_alloc(self, ec, TOKEN_FLOAT);
-
-  if(a == NULL)
-    return -1;
-
-  r->t_float = cos(a->t_float);
-  eval_push(ec, r);
-  return 0;
-}
-
-
-/**
- *
- */
 static struct strtab classtab[] = {
   { "dummy",         GLW_DUMMY},
   { "container_x",   GLW_CONTAINER_X},
@@ -1193,20 +1169,17 @@ static struct strtab classtab[] = {
  *
  */
 static int 
-glwf_widget(glw_model_eval_context_t *ec, struct token *self)
+glwf_widget(glw_model_eval_context_t *ec, struct token *self,
+	    token_t **argv, int argc)
 {
-  token_t *b = eval_pop(ec);
-  token_t *a = eval_pop(ec);
   int c;
   glw_model_eval_context_t n;
+  token_t *a = argv[0];
+  token_t *b = argv[1];
 
   if(ec->w == NULL) 
     return glw_model_seterr(ec->ei, self, 
 			    "Widget can not be created in this scope");
-
-  if(a == NULL || b == NULL)
-    return glw_model_seterr(ec->ei, self, "Missing operands");
-
 
   if(a->type != TOKEN_IDENTIFIER)
     return glw_model_seterr(ec->ei, self, 
@@ -1244,11 +1217,12 @@ glwf_widget(glw_model_eval_context_t *ec, struct token *self)
  *
  */
 static int 
-glwf_cloner(glw_model_eval_context_t *ec, struct token *self)
+glwf_cloner(glw_model_eval_context_t *ec, struct token *self,
+	    token_t **argv, int argc)
 {
-  token_t *c = eval_pop(ec); /* Block argument */
-  token_t *b = eval_pop(ec); /* Widget class */
-  token_t *a = eval_pop(ec); /* Prop source */
+  token_t *a = argv[0];
+  token_t *b = argv[1];
+  token_t *c = argv[2];
   glw_prop_sub_t *gps;
   glw_prop_sub_pending_t *gpsp;
   int class, f;
@@ -1260,9 +1234,6 @@ glwf_cloner(glw_model_eval_context_t *ec, struct token *self)
 
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
-
-  if(b == NULL || c == NULL)
-    return glw_model_seterr(ec->ei, self, "Missing operands");
 
   if(b->type != TOKEN_IDENTIFIER)
     return glw_model_seterr(ec->ei, self, 
@@ -1321,9 +1292,11 @@ glwf_cloner(glw_model_eval_context_t *ec, struct token *self)
  *
  */
 static int 
-glwf_space(glw_model_eval_context_t *ec, struct token *self)
+glwf_space(glw_model_eval_context_t *ec, struct token *self,
+	   token_t **argv, int argc)
+
 {
-  token_t *a = eval_pop(ec);
+  token_t *a = argv[0];
 
   if(ec->w == NULL) 
     return glw_model_seterr(ec->ei, self, 
@@ -1429,10 +1402,12 @@ glw_event_map_eval_block_create(glw_model_eval_context_t *ec,
  *
  */
 static int 
-glwf_onEvent(glw_model_eval_context_t *ec, struct token *self)
+glwf_onEvent(glw_model_eval_context_t *ec, struct token *self,
+	     token_t **argv, int argc)
+
 {
-  token_t *b = eval_pop(ec);  /* Target */
-  token_t *a = eval_pop(ec);  /* Source */
+  token_t *a = argv[0];  /* Source */
+  token_t *b = argv[1];  /* Target */
   int srcevent;
   glw_t *w = ec->w;
   glw_event_map_t *gem;
@@ -1476,16 +1451,14 @@ glwf_onEvent(glw_model_eval_context_t *ec, struct token *self)
  *
  */
 static int 
-glwf_genericEvent(glw_model_eval_context_t *ec, struct token *self)
+glwf_genericEvent(glw_model_eval_context_t *ec, struct token *self,
+		  token_t **argv, int argc)
 {
-  token_t *c = eval_pop(ec);  /* Argument */
-  token_t *b = eval_pop(ec);  /* Method */
-  token_t *a = eval_pop(ec);  /* Target name */
+  token_t *a = argv[0];       /* Target name */
+  token_t *b = argv[1];       /* Method */
+  token_t *c = argv[2];       /* Argument */
   token_t *r;
   const char *s;
-
-  if(a == NULL || b == NULL)
-    return glw_model_seterr(ec->ei, self, "Missing operands");
 
   if((c = token_resolve(ec, c)) == NULL)
     return -1;
@@ -1523,15 +1496,13 @@ glwf_genericEvent(glw_model_eval_context_t *ec, struct token *self)
  *
  */
 static int 
-glwf_internalEvent(glw_model_eval_context_t *ec, struct token *self)
+glwf_internalEvent(glw_model_eval_context_t *ec, struct token *self,
+		   token_t **argv, int argc)
 {
-  token_t *b = eval_pop(ec);  /* Event */
-  token_t *a = eval_pop(ec);  /* Target name */
+  token_t *a = argv[0];       /* Target name */
+  token_t *b = argv[1];       /* Event */
   token_t *r;
   int dstevent;
-
-  if(b == NULL)
-    return glw_model_seterr(ec->ei, self, "Missing operands");
 
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
@@ -1570,10 +1541,12 @@ typedef struct glwf_changed_extra {
  *
  */
 static int 
-glwf_changed(glw_model_eval_context_t *ec, struct token *self)
+glwf_changed(glw_model_eval_context_t *ec, struct token *self,
+	     token_t **argv, int argc)
+
 {
-  token_t *b = eval_pop(ec);
-  token_t *a = eval_pop(ec);
+  token_t *a = argv[0];
+  token_t *b = argv[1];
   token_t *r;
   glwf_changed_extra_t *e = self->t_extra;
   int change = 0;
@@ -1684,10 +1657,11 @@ glwf_changed_dtor(struct token *self)
  * Infinite Impulse Response filter
  */
 static int 
-glwf_iir(glw_model_eval_context_t *ec, struct token *self)
+glwf_iir(glw_model_eval_context_t *ec, struct token *self,
+	 token_t **argv, int argc)
 {
-  token_t *b = eval_pop(ec);
-  token_t *a = eval_pop(ec);
+  token_t *a = argv[0];
+  token_t *b = argv[1];
   token_t *r;
   float f;
 
@@ -1729,10 +1703,11 @@ glwf_iir(glw_model_eval_context_t *ec, struct token *self)
  * Float to string
  */
 static int 
-glwf_float2str(glw_model_eval_context_t *ec, struct token *self)
+glwf_float2str(glw_model_eval_context_t *ec, struct token *self,
+	       token_t **argv, int argc)
 {
-  token_t *b = eval_pop(ec);
-  token_t *a = eval_pop(ec);
+  token_t *a = argv[0];
+  token_t *b = argv[1];
   token_t *r;
   float value;
   char buf[30];
@@ -1776,9 +1751,10 @@ glwf_float2str(glw_model_eval_context_t *ec, struct token *self)
  * Int to string
  */
 static int 
-glwf_int2str(glw_model_eval_context_t *ec, struct token *self)
+glwf_int2str(glw_model_eval_context_t *ec, struct token *self,
+	     token_t **argv, int argc)
 {
-  token_t *a = eval_pop(ec);
+  token_t *a = argv[0];
   token_t *r;
   char buf[30];
 
@@ -1801,11 +1777,13 @@ glwf_int2str(glw_model_eval_context_t *ec, struct token *self)
  * Translate a string to another by using an array as a dictionary
  */
 static int 
-glwf_translate(glw_model_eval_context_t *ec, struct token *self)
+glwf_translate(glw_model_eval_context_t *ec, struct token *self,
+	       token_t **argv, int argc)
+
 {
-  token_t *c = eval_pop(ec);  // default is no match
-  token_t *b = eval_pop(ec);  // dictionary
-  token_t *a = eval_pop(ec);  // original string
+  token_t *a = argv[0];       // default is no match
+  token_t *b = argv[1];       // dictionary
+  token_t *c = argv[2];       // original string
   token_t *r;
   int i;
   const char *s;
@@ -1815,7 +1793,7 @@ glwf_translate(glw_model_eval_context_t *ec, struct token *self)
   if((c = token_resolve(ec, c)) == NULL)
     return -1;
 
-  if(b == NULL || b->type != TOKEN_VECTOR_STRING)
+  if(b->type != TOKEN_VECTOR_STRING)
     return glw_model_seterr(ec->ei, self, 
 			    "Invalid second operand to translate()");
 
@@ -1844,10 +1822,11 @@ glwf_translate(glw_model_eval_context_t *ec, struct token *self)
  * strftime support (only localtime)
  */
 static int 
-glwf_strftime(glw_model_eval_context_t *ec, struct token *self)
+glwf_strftime(glw_model_eval_context_t *ec, struct token *self,
+	       token_t **argv, int argc)
 {
-  token_t *b = eval_pop(ec);  // format
-  token_t *a = eval_pop(ec);  // unixtime
+  token_t *a = argv[0]; // format
+  token_t *b = argv[1];  // unixtime
   token_t *r;
   char buf[50];
   struct tm tm;
@@ -1884,9 +1863,10 @@ glwf_strftime(glw_model_eval_context_t *ec, struct token *self)
  * Return 1 if the given token is set (string is != "", value != 0)
  */
 static int 
-glwf_isset(glw_model_eval_context_t *ec, struct token *self)
+glwf_isset(glw_model_eval_context_t *ec, struct token *self,
+	   token_t **argv, int argc)
 {
-  token_t *a = eval_pop(ec);  // format
+  token_t *a = argv[0];
   token_t *r;
   int rv;
 
@@ -1924,7 +1904,8 @@ glwf_isset(glw_model_eval_context_t *ec, struct token *self)
  * Return current time
  */
 static int 
-glwf_time(glw_model_eval_context_t *ec, struct token *self)
+glwf_time(glw_model_eval_context_t *ec, struct token *self,
+	   token_t **argv, int argc)
 {
   token_t *r;
   time_t now;
@@ -1944,9 +1925,10 @@ glwf_time(glw_model_eval_context_t *ec, struct token *self)
  * Int to string
  */
 static int 
-glwf_value2duration(glw_model_eval_context_t *ec, struct token *self)
+glwf_value2duration(glw_model_eval_context_t *ec, struct token *self,
+		    token_t **argv, int argc)
 {
-  token_t *a = eval_pop(ec);
+  token_t *a = argv[0];
   token_t *r;
   char tmp[30];
   const char *str = NULL;
@@ -1998,14 +1980,16 @@ glwf_value2duration(glw_model_eval_context_t *ec, struct token *self)
  * Create a new child under the given property
  */
 static int 
-glwf_createchild(glw_model_eval_context_t *ec, struct token *self)
+glwf_createchild(glw_model_eval_context_t *ec, struct token *self,
+		 token_t **argv, int argc)
 {
-  token_t *t, *a = eval_pop(ec);
+  token_t *a = argv[0];
+  token_t *t;
   const char *propname[16];
   prop_t *p;
   int i;
 
-  if(a == NULL || a->type != TOKEN_PROPERTY_NAME)
+  if(a->type != TOKEN_PROPERTY_NAME)
     return 0;
   
   for(i = 0, t = a; t != NULL && i < 15; t = t->child)
@@ -2027,9 +2011,10 @@ glwf_createchild(glw_model_eval_context_t *ec, struct token *self)
  * Delete given property
  */
 static int 
-glwf_delete(glw_model_eval_context_t *ec, struct token *self)
+glwf_delete(glw_model_eval_context_t *ec, struct token *self,
+	    token_t **argv, int argc)
 {
-  token_t *a = eval_pop(ec);
+  token_t *a = argv[0];
 
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
@@ -2049,7 +2034,8 @@ glwf_delete(glw_model_eval_context_t *ec, struct token *self)
  * Return 1 if the current widget is in focus
  */
 static int 
-glwf_isFocused(glw_model_eval_context_t *ec, struct token *self)
+glwf_isFocused(glw_model_eval_context_t *ec, struct token *self,
+	       token_t **argv, int argc)
 {
   token_t *r;
 
@@ -2066,7 +2052,8 @@ glwf_isFocused(glw_model_eval_context_t *ec, struct token *self)
  * Return 1 if the current widget is in focus
  */
 static int 
-glwf_isHovered(glw_model_eval_context_t *ec, struct token *self)
+glwf_isHovered(glw_model_eval_context_t *ec, struct token *self,
+	       token_t **argv, int argc)
 {
   token_t *r;
 
@@ -2085,10 +2072,11 @@ glwf_isHovered(glw_model_eval_context_t *ec, struct token *self)
  * the first arg
  */
 static int 
-glwf_devoidify(glw_model_eval_context_t *ec, struct token *self)
+glwf_devoidify(glw_model_eval_context_t *ec, struct token *self,
+	       token_t **argv, int argc)
 {
-  token_t *b = eval_pop(ec);
-  token_t *a = eval_pop(ec);
+  token_t *a = argv[0];
+  token_t *b = argv[1];
 
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
@@ -2110,7 +2098,8 @@ glwf_devoidify(glw_model_eval_context_t *ec, struct token *self)
  * Returns the focused child (or void if nothing is focused)
  */
 static int 
-glwf_focusedChild(glw_model_eval_context_t *ec, struct token *self)
+glwf_focusedChild(glw_model_eval_context_t *ec, struct token *self,
+		  token_t **argv, int argc)
 {
   glw_t *w = ec->w, *c;
   token_t *r;
@@ -2141,9 +2130,10 @@ glwf_focusedChild(glw_model_eval_context_t *ec, struct token *self)
  * Return caption from the given widget
  */
 static int 
-glwf_getCaption(glw_model_eval_context_t *ec, struct token *self)
+glwf_getCaption(glw_model_eval_context_t *ec, struct token *self,
+		  token_t **argv, int argc)
 {
-  token_t *a = eval_pop(ec);
+  token_t *a = argv[0];
   token_t *r;
   glw_t *w;
   char buf[100];
@@ -2173,9 +2163,11 @@ glwf_getCaption(glw_model_eval_context_t *ec, struct token *self)
  * 
  */
 static int 
-glwf_bind(glw_model_eval_context_t *ec, struct token *self)
+glwf_bind(glw_model_eval_context_t *ec, struct token *self,
+		  token_t **argv, int argc)
 {
-  token_t *t, *a = eval_pop(ec);
+  token_t *a = argv[0];
+  token_t *t;
   const char *propname[16];
   int i;
 
@@ -2201,31 +2193,29 @@ glwf_bind(glw_model_eval_context_t *ec, struct token *self)
  *
  */
 static const token_func_t funcvec[] = {
-  {"widget", glwf_widget},
-  {"cloner", glwf_cloner},
-  {"space", glwf_space},
-  {"onEvent", glwf_onEvent},
-  {"genericEvent", glwf_genericEvent},
-  {"internalEvent", glwf_internalEvent},
-  {"changed", glwf_changed, glwf_changed_ctor, glwf_changed_dtor},
-  {"iir", glwf_iir},
-  {"float2str", glwf_float2str},
-  {"int2str", glwf_int2str},
-  {"translate", glwf_translate},
-  {"sin", glwf_sin},
-  {"cos", glwf_cos},
-  {"strftime", glwf_strftime},
-  {"isSet", glwf_isset},
-  {"time", glwf_time},
-  {"value2duration", glwf_value2duration},
-  {"createChild", glwf_createchild},
-  {"delete", glwf_delete},
-  {"isFocused", glwf_isFocused},
-  {"isHovered", glwf_isHovered},
-  {"devoidify", glwf_devoidify},
-  {"focusedChild", glwf_focusedChild},
-  {"getCaption", glwf_getCaption},
-  {"bind", glwf_bind},
+  {"widget", 2, glwf_widget},
+  {"cloner", 3, glwf_cloner},
+  {"space", 1, glwf_space},
+  {"onEvent", 2, glwf_onEvent},
+  {"genericEvent", 3, glwf_genericEvent},
+  {"internalEvent", 2, glwf_internalEvent},
+  {"changed", 2, glwf_changed, glwf_changed_ctor, glwf_changed_dtor},
+  {"iir", 2, glwf_iir},
+  {"float2str", 2, glwf_float2str},
+  {"int2str", 1, glwf_int2str},
+  {"translate", 3, glwf_translate},
+  {"strftime", 2, glwf_strftime},
+  {"isSet", 1, glwf_isset},
+  {"time", 0, glwf_time},
+  {"value2duration", 1, glwf_value2duration},
+  {"createChild", 1, glwf_createchild},
+  {"delete", 1, glwf_delete},
+  {"isFocused", 0, glwf_isFocused},
+  {"isHovered", 0, glwf_isHovered},
+  {"devoidify", 2, glwf_devoidify},
+  {"focusedChild", 0, glwf_focusedChild},
+  {"getCaption", 1, glwf_getCaption},
+  {"bind", 1, glwf_bind},
 };
 
 

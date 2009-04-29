@@ -122,11 +122,15 @@ typedef struct token {
     int elements;
     void *extra;
     float f;
+    int args;
   } arg;
 
 #define t_elements    arg.elements
 #define t_extra       arg.extra
 #define t_extra_float arg.f
+
+  int t_num_args;
+  struct glw_prop_sub *propsubr;
 
   union {
     int  ival;
@@ -149,6 +153,7 @@ typedef struct token {
 
   } u;
 
+
 #define t_string          u.string
 #define t_string_vector   u.string_vec
 #define t_float           u.value
@@ -161,7 +166,6 @@ typedef struct token {
 #define t_prop            u.prop
 #define t_pixmap          u.pixmap
 
-  struct glw_prop_sub *propsubr;
 
 } token_t;
 
@@ -212,7 +216,9 @@ typedef struct glw_model_eval_context {
  */
 typedef struct token_func {
   const char *name;
-  int (*cb)(glw_model_eval_context_t *ec, struct token *self);
+  int nargs;
+  int (*cb)(glw_model_eval_context_t *ec, struct token *self, 
+	    struct token **argv, int argc);
   void (*ctor)(struct token *self);
   void (*dtor)(struct token *self);
 } token_func_t;

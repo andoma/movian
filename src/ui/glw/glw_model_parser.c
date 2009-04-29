@@ -32,7 +32,7 @@ typedef struct tokenqueue {
  *
  */
 static token_t *
-tokenqueue_enqueue(tokenqueue_t *q, token_t *t)
+tokenqueue_enqueue(tokenqueue_t *q, token_t *t, token_t *f)
 {
   token_t *r = t->next;
   t->next = NULL;
@@ -43,6 +43,10 @@ tokenqueue_enqueue(tokenqueue_t *q, token_t *t)
     q->tail->next = t;
     q->tail = t;
   }
+
+  if(f != NULL && !(f->t_num_args & 1))
+    f->t_num_args++;
+
   return r;
 }
 
@@ -94,13 +98,24 @@ static const int tokenprecedence[TOKEN_num] = {
  * Convert an infix expression into an RPN expression
  *
  * Based on: http://en.wikipedia.org/wiki/Shunting_yard_algorithm
+ *
+ * Modified to keep track of number of arguments passed to a function.
+ * This is done by using t_num_args.
+ *  If it is even, and a value is to be pushed, it is increased by 1
+ *  If we stumble on a ',' (TOKEN_SEPARATOR) we increase it by 1 if
+ *  it is odd. If it is even we've stumbled on a syntax error (two
+ *  commas in a row)
+ *
+ *  Finally, the number of arguments is 1 + (num_args / 2)
  */
+
 static int
 parse_shunting_yard(token_t *expr, errorinfo_t *ei)
 {
   tokenqueue_t outq = {NULL, NULL};
   token_t *stack = NULL;
   token_t *t = expr->child, *x;
+  token_t *curfunc = NULL;
 
   expr->child = NULL;  /* Avoid duplicate free if we bail out */
 
@@ -115,12 +130,19 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
     case TOKEN_BLOCK:
     case TOKEN_PROPERTY_NAME:
     case TOKEN_VOID:
-      t = tokenqueue_enqueue(&outq, t);
+      t = tokenqueue_enqueue(&outq, t, curfunc);
       continue;
 
     case TOKEN_SEPARATOR:
       while(stack && stack->type != TOKEN_LEFT_PARENTHESIS)
-	tokenqueue_enqueue(&outq, tokenstack_pop(&stack));
+	tokenqueue_enqueue(&outq, tokenstack_pop(&stack), curfunc);
+      if(curfunc != NULL) {
+	if(!(curfunc->t_num_args & 1)) {
+	  glw_model_seterr(ei, t, "Unexpected separator '',''");
+ 	  goto err;
+	}
+      }
+      curfunc->t_num_args++;
       break;
 
     case TOKEN_ADD:
@@ -133,16 +155,22 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
     case TOKEN_BOOLEAN_XOR:
     case TOKEN_ASSIGNMENT:
       while(stack && tokenprecedence[t->type] <= tokenprecedence[stack->type])
-	tokenqueue_enqueue(&outq, tokenstack_pop(&stack));
+	tokenqueue_enqueue(&outq, tokenstack_pop(&stack), NULL);
       /* FALLTHRU */
     case TOKEN_LEFT_PARENTHESIS:
+      t = tokenstack_push(&stack, t);
+      continue;
+
     case TOKEN_FUNCTION:
+      t->tmp = curfunc;
+      curfunc = t;
+
       t = tokenstack_push(&stack, t);
       continue;
 
     case TOKEN_RIGHT_PARENTHESIS:
       while(stack && stack->type != TOKEN_LEFT_PARENTHESIS)
-	tokenqueue_enqueue(&outq, tokenstack_pop(&stack));
+	tokenqueue_enqueue(&outq, tokenstack_pop(&stack), curfunc);
 
       if(stack == NULL) {
 	glw_model_seterr(ei, t, "Unbalanced parentheses");
@@ -150,8 +178,18 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
       }
       glw_model_token_free(tokenstack_pop(&stack));
 
-      if(stack && stack->type == TOKEN_FUNCTION)
-	tokenqueue_enqueue(&outq, tokenstack_pop(&stack));
+      if(stack && stack->type == TOKEN_FUNCTION) {
+	assert(stack == curfunc);
+
+	if(stack->t_num_args && !(stack->t_num_args & 1)) {
+	  glw_model_seterr(ei, t, "Unexpected separator '',''");
+ 	  goto err;
+	}
+
+	stack->t_num_args = (1 + stack->t_num_args) / 2;
+	curfunc = stack->tmp;
+	tokenqueue_enqueue(&outq, tokenstack_pop(&stack), curfunc);
+      }
       break;
       
     default:
@@ -169,7 +207,7 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
       glw_model_seterr(ei, stack, "Unbalanced parentheses");
       goto err;
     }
-    tokenqueue_enqueue(&outq, tokenstack_pop(&stack));
+    tokenqueue_enqueue(&outq, tokenstack_pop(&stack), curfunc);
   }
 
   expr->child = outq.head;

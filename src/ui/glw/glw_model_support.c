@@ -186,6 +186,7 @@ glw_model_token_copy(token_t *src)
     dst->t_func = src->t_func;
     if(dst->t_func->ctor != NULL)
       dst->t_func->ctor(dst);
+    dst->t_num_args = src->t_num_args;
     break;
 
   case TOKEN_OBJECT_ATTRIBUTE:
