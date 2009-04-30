@@ -278,8 +278,8 @@ file_open_dir(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
 {
   be_file_page_t *bfp;
   prop_t *p;
-  int type;
-  const char *dirname;
+  int type, l;
+  char *dirname;
 
   type = fa_probe_dir(NULL, url0);
 
@@ -296,12 +296,15 @@ file_open_dir(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
 
   bfp->bfp_viewprop = prop_create(p, "view");
   prop_set_string(bfp->bfp_viewprop, "list");
-  
-  if((dirname = strrchr(url0, '/')) != NULL)
-    dirname++;
-  else
-    dirname = url0;
 
+  /* Find a meaningfull page title (last component of URL) */
+  l = strlen(url0);
+  dirname = alloca(l + 1);
+  memcpy(dirname, url0, l + 1);
+  if(l > 0 && dirname[l - 1] == '/')
+    dirname[l - 1] = 0;
+
+  dirname = strrchr(dirname, '/') ? strrchr(dirname, '/') + 1 : dirname;
   prop_set_string(prop_create(p, "title"), dirname);
 
   bfp->bfp_nodes = prop_create(p, "nodes");
