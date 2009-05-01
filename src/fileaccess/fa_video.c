@@ -64,7 +64,7 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
   event_t *e;
   event_seek_t *es;
   int64_t ts;
-  int hold = 0;
+  int hold = 0, lost_focus = 0;
 
   while(1) {
     /**
@@ -158,7 +158,25 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
       hold = mp_update_hold_by_event(hold, e->e_type);
       mp_send_cmd_head(mp, &mp->mp_video, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
       mp_send_cmd_head(mp, &mp->mp_audio, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
+      lost_focus = 0;
       break;
+
+    case EVENT_MP_NO_LONGER_PRIMARY:
+      hold = 1;
+      lost_focus = 1;
+      mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PAUSE);
+      mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PAUSE);
+      break;
+
+    case EVENT_MP_IS_PRIMARY:
+      if(lost_focus) {
+	hold = 0;
+	lost_focus = 0;
+	mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PLAY);
+	mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PLAY);
+      }
+      break;
+
 
     case EVENT_SEEK:
       es = (event_seek_t *)e;
