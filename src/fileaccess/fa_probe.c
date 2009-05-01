@@ -41,7 +41,7 @@
 
 static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
 static const uint8_t isosig[8] = {0x1, 0x43, 0x44, 0x30, 0x30, 0x31, 0x1, 0x0};
-
+static const uint8_t gifsig[6] = {'G', 'I', 'F', '8', '9', 'a'};
 /**
  *
  */
@@ -218,6 +218,11 @@ fa_probe_header(prop_t *proproot, const char *url, fa_handle_t *fh,
 
   if(!memcmp(pb, pngsig, 8)) {
     /* PNG */
+    return CONTENT_IMAGE;
+  }
+
+  if(!memcmp(pb, gifsig, sizeof(gifsig))) {
+    /* GIF */
     return CONTENT_IMAGE;
   }
   return -1;
