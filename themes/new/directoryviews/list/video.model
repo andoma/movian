@@ -8,11 +8,11 @@ widget(container_x, {
   });
 
   widget(container_y, {
-    widget(label, {.caption = $self.metadata.title;});
+    widget(label, {.align = left; .caption = $self.metadata.title;});
   });
 
   widget(container_y, {
-    .aspect = 2;
+    .aspect = 3;
     widget(label, {
       .align = right;
       .caption = value2duration($self.metadata.duration);
