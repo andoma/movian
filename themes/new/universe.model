@@ -43,7 +43,7 @@ widget(container_z, {
 
       widget(backdrop, {
 	PLATE_PROPS();
-	.alpha = iir(changed($global.audio.mastervolume, 2), 7);
+	.alpha = iir(changed($global.audio.mastervolume, 2, true), 7);
 	.color = [0.8, 0.9, 1.0];
 
 	.debug = true;
