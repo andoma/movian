@@ -80,7 +80,10 @@ widget(container_z, {
       widget(backdrop, {
 	PLATE_PROPS();
 
-	.color = [0.2, 0.3, 0.6];
+	.color = translate($self.type, [0.3, 0.3, 0.7],
+			   "info",     [0.3, 0.7, 0.45],
+			   "warning",  [0.7, 0.7, 0.45],
+			   "error",    [0.7, 0.3, 0.45]);
 
 	widget(label, {
 	  .caption = $self.text;
