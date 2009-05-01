@@ -491,7 +491,7 @@ spotify_track_update_metadata(prop_t *meta, sp_track *track)
 		 (float)f_sp_track_duration(track) / 1000.0);
   if(album != NULL)
     prop_set_string(prop_create(meta, "album"), f_sp_album_name(album));
-  prop_set_string(prop_create(meta, "author"), txt);
+  prop_set_string(prop_create(meta, "artist"), txt);
   return 1;
 }
 

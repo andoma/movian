@@ -13,7 +13,7 @@ widget(backdrop, {
     widget(container_y, {
       widget(label, {
 	.size = 0.66;
-	.caption = $self.metadata.author;
+	.caption = $self.metadata.artist;
       });
       widget(label, {
 	.size = 0.66;

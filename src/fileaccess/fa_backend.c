@@ -191,7 +191,7 @@ scanner(void *aux)
 	break;
       }
       
-      if((p2 = prop_get_by_names(metadata, "author", NULL)) == NULL ||
+      if((p2 = prop_get_by_names(metadata, "artist", NULL)) == NULL ||
 	 prop_get_string(p2, buf, sizeof(buf)))
 	break;
 

@@ -49,7 +49,7 @@ static const char **subpaths[] = {
   (const char *[]){"self", "url", NULL},
   (const char *[]){"self", "metadata", "title", NULL},
   (const char *[]){"self", "metadata", "album", NULL},
-  (const char *[]){"self", "metadata", "author", NULL},
+  (const char *[]){"self", "metadata", "artist", NULL},
 };
 
 

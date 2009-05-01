@@ -290,7 +290,7 @@ fa_lavf_load_meta(prop_t *proproot, AVFormatContext *fctx, const char *url)
       metadata_to_prop(proproot, "title", fctx->metadata, "title", 0);
     }
 
-    metadata_to_prop(proproot, "author", fctx->metadata, "author", 0);
+    metadata_to_prop(proproot, "artist", fctx->metadata, "author", 0);
     metadata_to_prop(proproot, "album", fctx->metadata, "album", 0);
     metadata_to_prop(proproot, "genre", fctx->metadata, "genre", 0);
     metadata_to_prop(proproot, "copyright", fctx->metadata, "copyright", 0);
