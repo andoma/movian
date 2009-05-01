@@ -968,7 +968,7 @@ invoke_func(glw_model_eval_context_t *ec, token_t *t)
   token_t **vec;
   int i;
 
-  if(t->t_func->nargs != t->t_num_args) {
+  if(t->t_func->nargs >= 0 && t->t_func->nargs != t->t_num_args) {
     glw_model_seterr(ec->ei, t, "%s(): Invalid number of arguments: %d, "
 		     "expected %d", t->t_func->name, t->t_num_args,
 		     t->t_func->nargs);
@@ -1772,48 +1772,71 @@ glwf_int2str(glw_model_eval_context_t *ec, struct token *self,
   return 0;
 }
 
+/**
+ *
+ */
+static int 
+token_cmp(token_t *a, token_t *b)
+{
+  if(a->type == TOKEN_INT   && b->type == TOKEN_FLOAT)
+    return a->t_int != b->t_float;
+  if(a->type == TOKEN_FLOAT && b->type == TOKEN_INT)
+    return a->t_float != b->t_int;
+
+  if(a->type != b->type)
+    return -1;
+
+  switch(a->type) {
+  case TOKEN_STRING:
+    return strcmp(a->t_string, b->t_string);
+  case TOKEN_INT:
+    return a->t_int - b->t_int;
+  case TOKEN_FLOAT:
+    return a->t_float - b->t_float;
+  default:
+    return -1;
+  }
+}
 
 /**
- * Translate a string to another by using an array as a dictionary
+ * Associative lookup
  */
 static int 
 glwf_translate(glw_model_eval_context_t *ec, struct token *self,
 	       token_t **argv, int argc)
 
 {
-  token_t *a = argv[0];       // default is no match
-  token_t *b = argv[1];       // dictionary
-  token_t *c = argv[2];       // original string
-  token_t *r;
+  token_t *idx, *def, *k, *v;
   int i;
-  const char *s;
 
-  if((a = token_resolve(ec, a)) == NULL)
+  if(argc < 2) 
+    return glw_model_seterr(ec->ei, self,
+			    "translate() requires at least two arguments");
+
+  if(argc & 1) 
+    return glw_model_seterr(ec->ei, self,
+			    "translate() requires even number of arguments");
+
+  if((idx = token_resolve(ec, argv[0])) == NULL)
     return -1;
-  if((c = token_resolve(ec, c)) == NULL)
+  if((def = token_resolve(ec, argv[1])) == NULL)
     return -1;
 
-  if(b->type != TOKEN_VECTOR_STRING)
-    return glw_model_seterr(ec->ei, self, 
-			    "Invalid second operand to translate()");
+  argc -= 2;
+  argv += 2;
 
-  if(c->type != TOKEN_STRING)
-    return glw_model_seterr(ec->ei, self, 
-			    "Invalid third operand to translate()");
-
-  s = c->t_string;
-  if(a->type == TOKEN_STRING) {
-    for(i = 0; i < b->t_elements; i += 2) {
-      if(!strcmp(a->t_string, b->t_string_vector[i])) {
-	s = b->t_string_vector[i + 1];
-	break;
-      }
+  for(i = 0; i < argc; i+=2) {
+    if((k = token_resolve(ec, *argv++)) == NULL)
+      return -1;
+    if((v = token_resolve(ec, *argv++)) == NULL)
+      return -1;
+    
+    if(!token_cmp(idx, k)) {
+      eval_push(ec, v);
+      return 0;
     }
   }
-
-  r = eval_alloc(self, ec, TOKEN_STRING);
-  r->t_string = strdup(s);
-  eval_push(ec, r);
+  eval_push(ec, def);
   return 0;
 }
 
@@ -2203,7 +2226,7 @@ static const token_func_t funcvec[] = {
   {"iir", 2, glwf_iir},
   {"float2str", 2, glwf_float2str},
   {"int2str", 1, glwf_int2str},
-  {"translate", 3, glwf_translate},
+  {"translate", -1, glwf_translate},
   {"strftime", 2, glwf_strftime},
   {"isSet", 1, glwf_isset},
   {"time", 0, glwf_time},

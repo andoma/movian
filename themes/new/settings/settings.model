@@ -8,13 +8,10 @@ widget(backdrop, {
   widget(container_x, {
 
     widget(image, {
-      .source =  translate($self.subtype,
-			   [
+      .source =  translate($self.subtype, "theme://icons/config.png",
 			    "audio", "theme://icons/speaker.png",
 			    "display", "theme://icons/screen.png"
-
-			    ],
-			   "theme://icons/config.png");
+			   );
     });
 
     widget(label, {

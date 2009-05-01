@@ -17,10 +17,9 @@ widget(container_x, {
     
     widget(label, {
       .align = left;
-      .caption = translate(int2str($self.value),
-			   ["0", "Off",
-			    "1", "On"],
-			   "Unknown");
+      .caption = translate($self.value, "Unknown",
+			   0, "Off",
+			   1, "On");
     });
   });
 });

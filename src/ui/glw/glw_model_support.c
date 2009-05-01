@@ -355,6 +355,14 @@ token2name(token_t *t)
     snprintf(buf, sizeof(buf), "%f", t->t_float);
     return buf;
 
+  case TOKEN_INT:
+    snprintf(buf, sizeof(buf), "%d", t->t_int);
+    return buf;
+
+  case TOKEN_VOID:
+    snprintf(buf, sizeof(buf), "(void)");
+    return buf;
+
   case TOKEN_VECTOR_FLOAT:
     buf[0] = '[';
     buf[1] = 0;
