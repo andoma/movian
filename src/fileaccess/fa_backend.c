@@ -96,7 +96,9 @@ scanner(void *aux)
   int album_score = 0;
   const char *s;
   char album_name[128];
-  
+  char artist_name[128];
+  char buf[128];
+
   ref = fa_reference(bfp->h.np_url);
 
   if((nd = fa_scandir(bfp->h.np_url, NULL, 0)) == NULL) {
@@ -152,6 +154,7 @@ scanner(void *aux)
 
   images = 0;
   album_name[0] = 0;
+  artist_name[0] = 0;
   /* Do full probe */
   TAILQ_FOREACH(nde, &nd->nd_entries, nde_link) {
 
@@ -174,20 +177,30 @@ scanner(void *aux)
 
     switch(r) {
     case CONTENT_AUDIO:
-      if((p2 = prop_get_by_names(metadata, "album", NULL)) != NULL) {
-	char buf[128];
-	if(!prop_get_string(p2, buf, sizeof(buf))) {
+      if((p2 = prop_get_by_names(metadata, "album", NULL)) == NULL ||
+	 prop_get_string(p2, buf, sizeof(buf)))
+	break;
 
-	  if(album_name[0] == 0) {
-	    snprintf(album_name, sizeof(album_name), "%s", buf);
-	    album_score++;
-	  } else if(!strcasecmp(album_name, buf)) {
-	    album_score++;
-	  } else {
-	    album_score--;
-	  }
-	}
+      if(album_name[0] == 0) {
+	snprintf(album_name, sizeof(album_name), "%s", buf);
+	album_score++;
+      } else if(!strcasecmp(album_name, buf)) {
+	album_score++;
+      } else {
+	album_score--;
+	break;
       }
+      
+      if((p2 = prop_get_by_names(metadata, "author", NULL)) == NULL ||
+	 prop_get_string(p2, buf, sizeof(buf)))
+	break;
+
+      if(strstr(artist_name, buf))
+	break;
+
+      snprintf(artist_name + strlen(artist_name),
+	       sizeof(artist_name) - strlen(artist_name),
+	       "%s%s", artist_name[0] ? ", " : "", buf);
       break;
 
     case CONTENT_UNKNOWN:
@@ -215,6 +228,10 @@ scanner(void *aux)
       
       prop_set_string(prop_create(bfp->h.np_prop_root, "album_name"), 
 		      album_name);
+
+      if(artist_name[0])
+	prop_set_string(prop_create(bfp->h.np_prop_root, "artist_name"), 
+			artist_name);
       
       /* Remove everything that is not audio */
       TAILQ_FOREACH(nde, &nd->nd_entries, nde_link) {
