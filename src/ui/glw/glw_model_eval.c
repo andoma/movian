@@ -327,6 +327,8 @@ token2bool(token_t *t)
     return !!t->t_int;
   case TOKEN_FLOAT:
     return t->t_float > 0.5;
+  case TOKEN_IDENTIFIER:
+    return !strcmp(t->t_string, "true");
   default:
     return 1;
   }
