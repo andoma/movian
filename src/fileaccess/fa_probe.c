@@ -85,8 +85,7 @@ metadata_to_prop(prop_t *p, const char *pname, AVMetadata *m, const char *key,
  * Obtain details from playlist
  */
 static void
-fa_probe_playlist(prop_t *proproot, const char *url,
-		  char *pb, size_t pbsize)
+fa_probe_playlist(prop_t *proproot, const char *url, char *pb, size_t pbsize)
 {
   const char *t;
   char tmp1[300];
