@@ -37,7 +37,6 @@ static struct nav_page_queue nav_history;
 static nav_page_t *nav_page_current;
 
 static prop_t *nav_prop_root;
-static prop_t *nav_prop_path;
 static prop_t *nav_prop_pages;
 static prop_t *nav_prop_curpage;
 static event_queue_t nav_eq;
@@ -72,7 +71,6 @@ nav_init(void)
   event_handler_register("navigator", nav_input_event, EVENTPRI_NAV, NULL);
 
   nav_prop_root    = prop_create(prop_get_global(), "nav");
-  nav_prop_path    = prop_create(nav_prop_root, "path");
   nav_prop_pages   = prop_create(nav_prop_root, "pages");
   nav_prop_curpage = prop_create(nav_prop_root, "currentpage");
 
