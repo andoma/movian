@@ -179,7 +179,6 @@ bookmarks_init(void)
 
     htsmsg_destroy(m);
   } else {
-    bookmark_add("SD Front", "/", NULL, 0);
-    bookmark_add("Elysia", "webdav://www.olebyn.nu/media", NULL, 0);
+
   }
 }
