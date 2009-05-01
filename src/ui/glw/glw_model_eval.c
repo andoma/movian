@@ -1534,6 +1534,8 @@ typedef struct glwf_changed_extra {
     float value;
   } u;
 
+  int transition;
+
 } glwf_changed_extra_t;
 
 
@@ -1545,16 +1547,24 @@ glwf_changed(glw_model_eval_context_t *ec, struct token *self,
 	     token_t **argv, int argc)
 
 {
-  token_t *a = argv[0];
-  token_t *b = argv[1];
-  token_t *r;
+  token_t *a, *b, *c, *r;
   glwf_changed_extra_t *e = self->t_extra;
   int change = 0;
+  int supp_first = 0;
 
-  if((a = token_resolve(ec, a)) == NULL)
+  if(argc < 2 || argc > 3)
+    return glw_model_seterr(ec->ei, self, 
+			    "changed(): Invalid number of arguments");
+
+  if((a = token_resolve(ec, argv[0])) == NULL)
     return -1;
-  if((b = token_resolve(ec, b)) == NULL)
+  if((b = token_resolve(ec, argv[1])) == NULL)
     return -1;
+  if(argc == 3) {
+    if((c = token_resolve(ec, argv[2])) == NULL)
+      return -1;
+    supp_first = token2bool(c);
+  }
 
   if(a->type != TOKEN_FLOAT && a->type != TOKEN_STRING &&
      a->type != TOKEN_VOID)
@@ -1612,8 +1622,11 @@ glwf_changed(glw_model_eval_context_t *ec, struct token *self,
     }
   }
 
-  if(change == 1)
-    e->threshold = b->t_float * (1000000 / ec->gr->gr_frameduration);
+  if(change == 1) {
+    if(e->transition > 0 || supp_first == 0)
+      e->threshold = b->t_float * (1000000 / ec->gr->gr_frameduration);
+    e->transition = 1;
+  }
 
   if(e->threshold > 0)
     e->threshold--;
@@ -2222,7 +2235,7 @@ static const token_func_t funcvec[] = {
   {"onEvent", 2, glwf_onEvent},
   {"genericEvent", 3, glwf_genericEvent},
   {"internalEvent", 2, glwf_internalEvent},
-  {"changed", 2, glwf_changed, glwf_changed_ctor, glwf_changed_dtor},
+  {"changed", -1, glwf_changed, glwf_changed_ctor, glwf_changed_dtor},
   {"iir", 2, glwf_iir},
   {"float2str", 2, glwf_float2str},
   {"int2str", 1, glwf_int2str},
