@@ -715,8 +715,8 @@ mp_become_primary(struct media_pipe *mp)
 
   if(media_primary != NULL) {
     
-    LIST_INSERT_HEAD(&media_pipe_stack, mp, mp_stack_link);
-    mp->mp_flags |= MP_ON_STACK;
+    LIST_INSERT_HEAD(&media_pipe_stack, media_primary, mp_stack_link);
+    media_primary->mp_flags |= MP_ON_STACK;
 
     mp_enqueue_event(media_primary, 
 		     event_create_simple(EVENT_MP_NO_LONGER_PRIMARY));
