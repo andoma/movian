@@ -123,9 +123,11 @@ fa_imageloader(fa_image_load_ctrl_t *ctrl, const char *theme)
   fa_seek(fh, SEEK_SET, 0);
 
   ctrl->datasize = fa_fsize(fh);
-  ctrl->data = malloc(ctrl->datasize);
+  ctrl->data = malloc(ctrl->datasize + FF_INPUT_BUFFER_PADDING_SIZE);
   
   r = fa_read(fh, ctrl->data, ctrl->datasize);
+
+  memset(ctrl->data + ctrl->datasize, 0, FF_INPUT_BUFFER_PADDING_SIZE);
 
   fa_close(fh);
 
