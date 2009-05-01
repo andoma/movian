@@ -99,7 +99,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     break;
   }
 
-  mp_prepare(mp, MP_GRAB_AUDIO);
+  mp_become_primary(mp);
   mq = &mp->mp_audio;
 
   while(1) {

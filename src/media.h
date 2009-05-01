@@ -26,6 +26,7 @@
 #include "event.h"
 #include "prop.h"
 
+void media_init(void);
 
 typedef struct event_ts {
   event_t h;
@@ -132,9 +133,12 @@ typedef struct media_queue {
 typedef struct media_pipe {
   int mp_refcount;
 
-  //  mp_playstatus_t mp_playstatus;
-
   const char *mp_name;
+
+  LIST_ENTRY(media_pipe) mp_stack_link;
+  int mp_flags;
+#define MP_PRIMABLE      0x1
+#define MP_ON_STACK      0x2
 
   hts_mutex_t mp_mutex;
 
@@ -146,8 +150,6 @@ typedef struct media_pipe {
   int64_t mp_audio_clock;
   int64_t mp_audio_clock_realtime;
   int mp_audio_clock_valid;
-
-  struct subtitles *mp_subtitles;
 
   struct audio_decoder *mp_audio_decoder;
 
@@ -235,10 +237,9 @@ void mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u);
 
 void mp_playpause(struct media_pipe *mp, int key);
 
-#define MP_GRAB_AUDIO 0x1
-void mp_prepare(struct media_pipe *mp, int flags);
+void mp_become_primary(struct media_pipe *mp);
 
-void mp_hibernate(struct media_pipe *mp);
+void mp_shutdown(struct media_pipe *mp);
 
 void media_pipe_acquire_audio(struct media_pipe *mp);
 
@@ -248,16 +249,20 @@ void media_update_codec_info_prop(prop_t *p, AVCodecContext *ctx);
 
 void media_get_codec_info(AVCodecContext *ctx, char *buf, size_t size);
 
-extern media_pipe_t *primary_audio;
 struct filetag_list;
 
 void media_fill_properties(prop_t *root, const char *url, int type,
 			   struct filetag_list *tags);
 
-void media_set_currentmedia(media_pipe_t *mp);
 void media_set_metatree(media_pipe_t *mp, prop_t *src);
+
 void media_clear_metatree(media_pipe_t *mp);
 
 void mp_set_current_time(media_pipe_t *mp, int64_t mts);
+
+
+extern media_pipe_t *media_primary;
+
+#define mp_is_primary(mp) ((mp) == media_primary)
 
 #endif /* MEDIA_H */

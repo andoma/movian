@@ -861,7 +861,7 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
   e = htsp_subscriber(hc, hs, atoi(path + strlen("/channel/")), 
 		      errbuf, errlen);
 
-  mp_hibernate(mp);
+  mp_shutdown(mp);
 
   hts_mutex_lock(&hc->hc_subscription_mutex);
   LIST_REMOVE(hs, hs_link);
@@ -1078,7 +1078,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
   mp->mp_audio.mq_stream = astream;
   mp->mp_video.mq_stream = vstream;
 
-  mp_prepare(mp, MP_GRAB_AUDIO);
+  mp_become_primary(mp);
 
   hts_mutex_unlock(&hc->hc_subscription_mutex);
 }

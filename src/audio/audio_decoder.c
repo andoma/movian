@@ -30,9 +30,6 @@
 
 extern audio_fifo_t *thefifo;
 
-static struct audio_decoder_queue audio_decoders;
-static hts_mutex_t audio_decoders_mutex;
-
 #define CLIP16(a) ((a) > 32767 ? 32767 : ((a) < -32768 ? -32768 : a))
 
 static void audio_mix1(audio_decoder_t *ad, audio_mode_t *am, 
@@ -61,15 +58,6 @@ static void audio_deliver(audio_decoder_t *ad, audio_mode_t *am, int16_t *src,
 
 static void *ad_thread(void *aux);
 
-/**
- *
- */
-void
-audio_decoder_init(void)
-{
-  TAILQ_INIT(&audio_decoders);
-}
-
 
 /**
  * Create an audio decoder pipeline.
@@ -86,10 +74,6 @@ audio_decoder_create(media_pipe_t *mp)
   ad->ad_outbuf = av_malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE);
 
   TAILQ_INIT(&ad->ad_hold_queue);
-
-  hts_mutex_lock(&audio_decoders_mutex);
-  TAILQ_INSERT_TAIL(&audio_decoders, ad, ad_link);
-  hts_mutex_unlock(&audio_decoders_mutex);
 
   hts_thread_create_joinable(&ad->ad_tid, ad_thread, ad);
   return ad;
@@ -109,9 +93,6 @@ audio_decoder_destroy(audio_decoder_t *ad)
 
   hts_thread_join(&ad->ad_tid);
   audio_fifo_clear_queue(&ad->ad_hold_queue);
-  hts_mutex_lock(&audio_decoders_mutex);
-  TAILQ_REMOVE(&audio_decoders, ad, ad_link);
-  hts_mutex_unlock(&audio_decoders_mutex);
 
   close_resampler(ad);
 
@@ -122,19 +103,6 @@ audio_decoder_destroy(audio_decoder_t *ad)
 
   free(ad);
 }
-
-/**
- * Acquire audio output
- */
-void
-audio_decoder_acquire_output(audio_decoder_t *ad)
-{
-  hts_mutex_lock(&audio_decoders_mutex);
-  TAILQ_REMOVE(&audio_decoders, ad, ad_link);
-  TAILQ_INSERT_HEAD(&audio_decoders, ad, ad_link);
-  hts_mutex_unlock(&audio_decoders_mutex);
-}
-
 
 /**
  *
@@ -282,8 +250,6 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
   int64_t pts, chlayout;
   
   if(cw == NULL) {
-    media_set_currentmedia(mp);
-
     /* Raw PCM */
     audio_mix1(ad, am, mb->mb_channels, mb->mb_rate, 0,
 	       CODEC_ID_NONE, mb->mb_data, 
@@ -299,7 +265,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
   ctx = cw->codec_ctx;
 
 
-  if(TAILQ_FIRST(&audio_decoders) == ad) {
+  if(mp_is_primary(mp)) {
     switch(ctx->codec_id) {
     case CODEC_ID_AC3:
       if(am->am_formats & AM_FORMAT_AC3) {
@@ -380,7 +346,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
 
     frames /= channels;
 
-    if(TAILQ_FIRST(&audio_decoders) == ad) {
+    if(mp_is_primary(mp)) {
 
       /* We are the primary audio decoder == we may play, forward
 	 to the mixer stages */
@@ -393,12 +359,6 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
       if(data_size > 0)
 	audio_mix1(ad, am, channels, rate, chlayout, codec_id, ad->ad_outbuf, 
 		   frames, pts, mp);
-
-      /**
-       * Force the global status to point to us
-       */
-
-      media_set_currentmedia(mp);
 
     } else {
 

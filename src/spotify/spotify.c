@@ -829,7 +829,7 @@ spotify_play_track(spotify_uri_t *su)
   TRACE(TRACE_DEBUG, "spotify", "Starting playback of track: %s (%s)", 
 	su->su_uri, f_sp_track_name(su->su_track));
 
-  mp_prepare(spotify_mp, MP_GRAB_AUDIO);
+  mp_become_primary(spotify_mp);
   spotify_mp->mp_audio.mq_stream = 0; // Must be set to somthing != -1
   spotify_frame_position = 0;
 

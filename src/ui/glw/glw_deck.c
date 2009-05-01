@@ -78,18 +78,21 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_SELECT:
-    c = extra;
-    w->glw_selected = c;
-    glw_focus_open_path(w, c);
+    w->glw_selected = extra;
+    glw_focus_open_path(w, w->glw_selected);
+    glw_copy_constraints(w, w->glw_selected);
     break;
 
+#if 0
   case GLW_SIGNAL_CHILD_CREATED:
     c = extra;
+
     if(w->glw_selected == NULL) {
       w->glw_selected = c;
       glw_focus_open_path(w, c);
     }
     break;
+#endif
   }
 
   return 0;

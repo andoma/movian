@@ -563,7 +563,6 @@ player_thread(void *aux)
 	mp_flush(mp);
       } else {
 	/* Nothing and media queues empty. Wait for an event */
-	mp_hibernate(mp);
 	e = mp_dequeue_event(playqueue_mp);
       }
 

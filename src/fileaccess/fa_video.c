@@ -290,17 +290,12 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 					  ctx->codec_type, 0, fw, ctx, 0);
   }
 
-  /**
-   * Restart playback at last position
-   */
-
-  mp_prepare(mp, MP_GRAB_AUDIO);
+  mp_become_primary(mp);
 
   e = video_player_loop(fctx, cwvec, mp, errbuf, errlen);
 
   mp_flush(mp);
-
-  mp_hibernate(mp);
+  mp_shutdown(mp);
 
   for(i = 0; i < fctx->nb_streams; i++)
     if(cwvec[i] != NULL)

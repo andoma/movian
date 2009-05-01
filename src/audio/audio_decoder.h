@@ -56,18 +56,11 @@ typedef struct audio_decoder {
      move them here */
 
   struct audio_buf_queue ad_hold_queue;
-  
-  TAILQ_ENTRY(audio_decoder) ad_link;
-
 
 } audio_decoder_t;
-
-void audio_decoder_init(void);
 
 audio_decoder_t *audio_decoder_create(media_pipe_t *mp);
 
 void audio_decoder_destroy(audio_decoder_t *ad);
-
-void audio_decoder_acquire_output(audio_decoder_t *ad);
 
 #endif /* AUDIO_DECODER_H */

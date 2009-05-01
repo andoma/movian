@@ -28,10 +28,32 @@
 #include "event.h"
 #include "fileaccess/fileaccess.h"
 
+static hts_mutex_t media_mutex;
 
-extern int concurrency;
+static prop_t *media_prop_root;
+static prop_t *media_prop_sources;
+static prop_t *media_prop_current;
+
+static struct media_pipe_list media_pipe_stack;
+media_pipe_t *media_primary;
 
 static void seek_by_propchange(struct prop_sub *sub, prop_event_t event, ...);
+
+
+/**
+ *
+ */
+void
+media_init(void)
+{
+  hts_mutex_init(&media_mutex);
+
+  LIST_INIT(&media_pipe_stack);
+
+  media_prop_root    = prop_create(prop_get_global(), "media");
+  media_prop_sources = prop_create(media_prop_root, "sources");
+  media_prop_current = prop_create(media_prop_root, "current");
+}
 
 
 /**
@@ -96,9 +118,12 @@ mp_create(const char *name, const char *type)
   hts_mutex_init(&mp->mp_clock_mutex);
   hts_cond_init(&mp->mp_backpressure);
   
-  mp->mp_prop_root = prop_create(NULL, "media");
+  mp->mp_prop_root = prop_create(media_prop_sources, NULL);
 
-  prop_set_string(prop_create(mp->mp_prop_root, "type"), type);
+  if(type != NULL) {
+    mp->mp_flags |= MP_PRIMABLE;
+    prop_set_string(prop_create(mp->mp_prop_root, "type"), type);
+  }
 
   mq_init(&mp->mp_audio, prop_create(mp->mp_prop_root, "audio"));
   mq_init(&mp->mp_video, prop_create(mp->mp_prop_root, "video"));
@@ -126,7 +151,10 @@ mp_destroy(media_pipe_t *mp)
 {
   event_t *e;
 
+  /* Make sure a clean shutdown has been made */
   assert(mp->mp_audio_decoder == NULL);
+  assert(mp != media_primary);
+  assert(mp->mp_flags == 0);
 
   prop_unsubscribe(mp->mp_sub_currenttime);
 
@@ -569,6 +597,7 @@ wrap_codec_create(enum CodecID id, enum CodecType type, int parser,
 		  formatwrap_t *fw, AVCodecContext *ctx,
 		  int cheat_for_speed)
 {
+  extern int concurrency;
   codecwrap_t *cw = malloc(sizeof(codecwrap_t));
 
   cw->codec = avcodec_find_decoder(id);
@@ -655,30 +684,92 @@ mp_update_hold_by_event(int hold, event_type_t et)
 }
 
 
+/**
+ * 
+ */
+static void
+mp_set_primary(media_pipe_t *mp)
+{
+  media_primary = mp;
+  mp_enqueue_event(mp, event_create_simple(EVENT_MP_IS_PRIMARY));
+
+  prop_select(mp->mp_prop_root, 0);
+}
+
 
 /**
- *
+ * 
  */
 void
-mp_prepare(struct media_pipe *mp, int flags)
+mp_become_primary(struct media_pipe *mp)
 {
   if(mp->mp_audio_decoder == NULL)
     mp->mp_audio_decoder = audio_decoder_create(mp);
+    
+  if(media_primary == mp)
+    return;
 
-  if(flags & MP_GRAB_AUDIO)
-    audio_decoder_acquire_output(mp->mp_audio_decoder);
+  hts_mutex_lock(&media_mutex);
+
+  assert(mp->mp_flags & MP_PRIMABLE);
+
+  if(media_primary != NULL) {
+    
+    LIST_INSERT_HEAD(&media_pipe_stack, mp, mp_stack_link);
+    mp->mp_flags |= MP_ON_STACK;
+
+    mp_enqueue_event(media_primary, 
+		     event_create_simple(EVENT_MP_NO_LONGER_PRIMARY));
+  }
+
+  mp_ref_inc(mp);
+  mp_set_primary(mp);
+
+  hts_mutex_unlock(&media_mutex);
 }
+
 
 /**
  *
  */
 void
-mp_hibernate(struct media_pipe *mp)
+mp_shutdown(struct media_pipe *mp)
 {
   if(mp->mp_audio_decoder != NULL) {
     audio_decoder_destroy(mp->mp_audio_decoder);
     mp->mp_audio_decoder = NULL;
   }
+
+  hts_mutex_lock(&media_mutex);
+
+  assert(mp->mp_flags & MP_PRIMABLE);
+  mp->mp_flags &= ~MP_PRIMABLE;
+
+  if(media_primary == mp) {
+    /* We were primary */
+
+    media_primary = NULL;
+    mp_ref_dec(mp); // mp could be free'd here */
+
+    /* Anyone waiting to regain playback focus? */
+    if((mp = LIST_FIRST(&media_pipe_stack)) != NULL) {
+
+      assert(mp->mp_flags & MP_ON_STACK);
+      LIST_REMOVE(mp, mp_stack_link);
+      mp->mp_flags &= ~MP_ON_STACK;
+      mp_set_primary(mp);
+    }
+
+  } else {
+
+    // We must be on the stack
+    assert(mp->mp_flags & MP_ON_STACK);
+    LIST_REMOVE(mp, mp_stack_link);
+    mp->mp_flags &= ~MP_ON_STACK;
+
+    mp_ref_dec(mp); // mp could be free'd here */
+  }
+  hts_mutex_unlock(&media_mutex);
 }
 
 
@@ -784,27 +875,6 @@ media_get_codec_info(AVCodecContext *ctx, char *buf, size_t size)
 {
   snprintf(buf, size, "%s\n", ctx->codec->long_name);
   codec_details(ctx, buf + strlen(buf), size - strlen(buf), "");
-}
-
-
-/**
- *
- */
-void
-media_set_currentmedia(media_pipe_t *mp)
-{
-  prop_t *p;
-  static media_pipe_t *lastmp;
-
-  if(lastmp == mp)
-    return;
-
-  lastmp = mp;
-  p = prop_create(prop_get_global(), "currentmedia");
-  prop_link(mp->mp_prop_root, p);
-
-  p = prop_create(prop_get_global(), "currentmediasource");
-  prop_set_string(p, mp->mp_name);
 }
 
 

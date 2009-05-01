@@ -479,7 +479,7 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
   dp->dp_audio_track = DP_AUDIO_FOLLOW_VM;
   dp->dp_spu_track   = DP_SPU_FOLLOW_VM;
 
-  mp_prepare(mp, MP_GRAB_AUDIO);
+  mp_become_primary(mp);
 
   /**
    * Popup loading
@@ -591,7 +591,7 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
     dvdnav_free_cache_block(dp->dp_dvdnav, block);
   }
 
-  mp_hibernate(mp);
+  mp_shutdown(mp);
 
   dvd_release_codecs(dp);
   dvdnav_close(dp->dp_dvdnav);

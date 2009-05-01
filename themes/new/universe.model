@@ -21,9 +21,11 @@ widget(container_z, {
       widget(expander_y, {
 	.expansion = 1;
 
-	widget(animator, {
-	  .time = 0.3;
-	  .source = "theme://playdecks/" + $global.currentmedia.type + ".model";
+	widget(deck, {
+	  cloner($global.media.sources, animator, {
+	    .time = 0.3;
+	    .source = "theme://playdecks/" + $self.type + ".model";
+	  });
 	});
       });
     });

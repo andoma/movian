@@ -92,6 +92,9 @@ typedef enum {
   EVENT_DVD_ACTIVATE_BUTTON,  /* "Press" button */
   EVENT_OPENURL,
 
+  EVENT_MP_NO_LONGER_PRIMARY,
+  EVENT_MP_IS_PRIMARY,
+
 } event_type_t;
 
 

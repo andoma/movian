@@ -111,8 +111,6 @@ audio_init(void)
 
   TAILQ_INIT(&audio_modes);
 
-  audio_decoder_init();
-
 #define AUDIO_INIT_SUBSYS(name) \
  do {extern void audio_## name ##_init(void); audio_## name ##_init();}while(0)
 

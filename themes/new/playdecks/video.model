@@ -7,7 +7,7 @@ widget(backdrop, {
   widget(container_y, {
 
     widget(label, {
-      .caption = $global.currentmedia.metadata.title;
+      .caption = $self.metadata.title;
     });
 	  
 
@@ -20,12 +20,12 @@ widget(backdrop, {
       widget(slider_x, {
 	.focusable = 0.2;
 	.debug = true;
-	.max = $global.currentmedia.metadata.duration;
-	bind($global.currentmedia.currenttime);
+	.max = $self.metadata.duration;
+	bind($self.currenttime);
 	widget(backdrop, {
 	  KNOB_PROPS();
 	  widget(label, {
-	    .caption = value2duration($global.currentmedia.currenttime);
+	    .caption = value2duration($self.currenttime);
 	  });
 	});
       });

@@ -126,6 +126,9 @@ main(int argc, char **argv)
   av_log_set_level(AV_LOG_QUIET);
   av_register_all();
 
+  /* Initialize media subsystem */
+  media_init();
+
   /* Initialize navigator and each of the content handlers */
   nav_init();
 
