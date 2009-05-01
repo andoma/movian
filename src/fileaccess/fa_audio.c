@@ -232,6 +232,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     case EVENT_MP_IS_PRIMARY:
       if(lost_focus) {
 	hold = 0;
+	lost_focus = 0;
 	mp_send_cmd_head(mp, mq, MB_CTRL_PLAY);
       }
       break;
