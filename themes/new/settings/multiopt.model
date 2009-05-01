@@ -6,12 +6,12 @@ widget(container_x, {
     .align = right;
     .caption = $self.title + ":";
   });
-
+    
   widget(backdrop, {
     BUTTON_PROPS(1.0);
     onEvent(enter, internalEvent("choiceDeck", decr));
       
-    widget(image, {
+    widget(icon, {
       .source = "theme://icons/left.png";
     });
   });
@@ -29,7 +29,7 @@ widget(container_x, {
   widget(backdrop, {
     BUTTON_PROPS(1.0);
     onEvent(enter, internalEvent("choiceDeck", incr));
-    widget(image, {
+    widget(icon, {
       .source = "theme://icons/right.png";
     });
   });
