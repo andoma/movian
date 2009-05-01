@@ -437,6 +437,9 @@ refresh_rate()
 }
 
 - (void)glwMouseEvent:(int)type event:(NSEvent*)event {
+  if(!gcocoa->is_pointer_enabled)
+    return;
+  
   NSPoint loc = [event locationInWindow];
   glw_pointer_event_t gpe;
   
