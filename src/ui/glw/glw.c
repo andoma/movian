@@ -1232,6 +1232,9 @@ glw_focus_step(glw_t *w, int forward)
 int
 glw_event_to_widget(glw_t *w, event_t *e, int local)
 {
+  if(glw_event_map_intercept(w->glw_root->gr_universe, e))
+    return 1;
+
   if(glw_event_map_intercept(w, e))
     return 1;
 
