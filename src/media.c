@@ -706,18 +706,6 @@ nice_codec_name(char *buf, int len, AVCodecContext *ctx)
 }
 
 
-
-/**
- *
- */
-int
-mp_is_audio_silenced(media_pipe_t *mp)
-{
-  return mp->mp_audio_decoder &&
-    audio_decoder_is_silenced(mp->mp_audio_decoder);
-}
-
-
 /**
  *
  */

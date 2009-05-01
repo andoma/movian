@@ -233,9 +233,6 @@ void mp_codec_unlock(media_pipe_t *mp);
 
 void mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u);
 
-//#define MP_DONT_GRAB_AUDIO 0x1
-//void mp_set_playstatus(media_pipe_t *mp, int status, int flags);
-
 void mp_playpause(struct media_pipe *mp, int key);
 
 #define MP_GRAB_AUDIO 0x1
@@ -247,11 +244,7 @@ void media_pipe_acquire_audio(struct media_pipe *mp);
 
 void nice_codec_name(char *buf, int len, AVCodecContext *ctx);
 
-int mp_is_audio_silenced(media_pipe_t *mp);
-
 void media_update_codec_info_prop(prop_t *p, AVCodecContext *ctx);
-
-//void media_update_playstatus_prop(prop_t *p, mp_playstatus_t mps);
 
 void media_get_codec_info(AVCodecContext *ctx, char *buf, size_t size);
 

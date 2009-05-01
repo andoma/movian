@@ -135,14 +135,6 @@ audio_decoder_acquire_output(audio_decoder_t *ad)
   hts_mutex_unlock(&audio_decoders_mutex);
 }
 
-/**
- * Return 1 if the audio output is currently silenced (not primary)
- */
-int
-audio_decoder_is_silenced(audio_decoder_t *ad)
-{
-  return TAILQ_FIRST(&audio_decoders) != ad;
-}
 
 /**
  *
