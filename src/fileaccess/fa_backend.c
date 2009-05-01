@@ -178,8 +178,10 @@ scanner(void *aux)
     switch(r) {
     case CONTENT_AUDIO:
       if((p2 = prop_get_by_names(metadata, "album", NULL)) == NULL ||
-	 prop_get_string(p2, buf, sizeof(buf)))
+	 prop_get_string(p2, buf, sizeof(buf))) {
+	album_score--;
 	break;
+      }
 
       if(album_name[0] == 0) {
 	snprintf(album_name, sizeof(album_name), "%s", buf);
