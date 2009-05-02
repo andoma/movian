@@ -1,6 +1,3 @@
-#include "theme://include/plates.model"
-
 widget(video, {
-  .focusable = true;
   .source = $self.url;
 });

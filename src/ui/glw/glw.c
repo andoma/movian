@@ -286,6 +286,9 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
     case GLW_ATTRIB_FOCUS_WEIGHT:
       f = va_arg(ap, double);
 
+      if(f == w->glw_focus_weight)
+	break;
+
       if(w->glw_focus_weight > 0)
 	glw_focus_leave(w);
 

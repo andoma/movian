@@ -1087,6 +1087,30 @@ pointer_event(glw_video_t *gv, glw_pointer_event_t *gpe)
 /**
  *
  */
+static void
+gv_update_focusable(video_decoder_t *vd, glw_video_t *gv)
+{
+  int want_focus = 0;
+#if ENABLE_DVD
+  dvdspu_decoder_t *dd = gv->gv_vd->vd_dvdspu;
+
+  if(dd != NULL) {
+    pci_t *pci = &dd->dd_pci;
+
+    if(pci->hli.hl_gi.hli_ss)
+      want_focus = 1;
+  }
+#endif
+  
+  glw_set_i(&gv->w, 
+	    GLW_ATTRIB_FOCUS_WEIGHT, want_focus ? 1.0 : 0.0, 
+	    NULL);
+}
+
+
+/**
+ *
+ */
 static int 
 gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, 
 			 void *extra)
@@ -1115,6 +1139,7 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_NEW_FRAME:
     gv_buffer_allocator(vd);
     gv_new_frame(vd, gv);
+    gv_update_focusable(vd, gv);
     return 0;
 
   case GLW_SIGNAL_EVENT:
