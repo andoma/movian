@@ -8,6 +8,8 @@
 
 * Slideshow
 
+* Read master volume on startup
+
 --- 
 
 * Probe extensions for glw_tex_rot.c feature
