@@ -373,11 +373,13 @@ compute_output_duration(video_decoder_t *vd, int frame_duration)
 }
 
 static void
-compute_avdiff(video_decoder_t *vd, media_pipe_t *mp, int64_t pts)
+compute_avdiff(video_decoder_t *vd, media_pipe_t *mp, int64_t pts, int epoch)
 {
   int64_t rt;
+  int64_t aclock;
 
-  if(!mp->mp_audio_clock_valid) {
+  if(mp->mp_audio_clock_epoch != epoch) {
+    /* Not the same clock epoch, can not sync */
     vd->vd_avdiff_x = 0;
     kalman_init(&vd->vd_avfilter);
     return;
@@ -394,10 +396,12 @@ compute_avdiff(video_decoder_t *vd, media_pipe_t *mp, int64_t pts)
   hts_mutex_lock(&mp->mp_clock_mutex);
 
   rt = showtime_get_ts();
-  vd->vd_avdiff = (mp->mp_audio_clock + rt - mp->mp_audio_clock_realtime)
-    - (pts - 16666) - vd->vd_avd_delta;
+
+  aclock = mp->mp_audio_clock + rt - mp->mp_audio_clock_realtime;
 
   hts_mutex_unlock(&mp->mp_clock_mutex);
+
+  vd->vd_avdiff = aclock - (pts - 16666) - vd->vd_avd_delta;
 
   if(abs(vd->vd_avdiff) < 10000000) {
 
@@ -408,10 +412,18 @@ compute_avdiff(video_decoder_t *vd, media_pipe_t *mp, int64_t pts)
     if(vd->vd_avdiff_x < -10.0f)
       vd->vd_avdiff_x = -10.0f;
   }
+
 #if 0
-  printf("%s: AVDIFF = %f %d %lld %lld\n", 
+ {
+   static int64_t lastpts, lastaclock;
+   
+  printf("%s: AVDIFF = %10f %10d %15lld %15lld %15lld %15lld %15lld\n", 
 	 mp->mp_name, vd->vd_avdiff_x, vd->vd_avdiff,
-	 mp->mp_audio_clock, pts);
+	 aclock, aclock - lastaclock, pts, pts - lastpts,
+	 mp->mp_audio_clock);
+  lastpts = pts;
+  lastaclock = aclock;
+ }
 #endif
 }
 
@@ -441,8 +453,6 @@ gv_compute_blend(glw_video_t *gv, video_decoder_frame_t *fra,
 
     if(fra->vdf_duration + 
        frb->vdf_duration < output_duration) {
-
-      printf("blend error\n");
 
       fra->vdf_duration = 0;
       pts = frb->vdf_pts;
@@ -626,6 +636,7 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv)
   int64_t pts = 0;
   struct video_decoder_frame_queue *dq;
   int frame_duration = gv->w.glw_root->gr_frameduration;
+  int epoch = 0;
 
   gv_color_matrix_update(gv, mp);
   output_duration = compute_output_duration(vd, frame_duration);
@@ -661,6 +672,7 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv)
     frb = TAILQ_NEXT(fra, vdf_link);
 
     pts = gv_compute_blend(gv, fra, frb, output_duration);
+    epoch = fra->vdf_epoch;
 
     if(!vd->vd_hold || frb != NULL) {
       if(fra != NULL && fra->vdf_duration == 0)
@@ -672,7 +684,7 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv)
 
   if(pts != AV_NOPTS_VALUE) {
     pts -= frame_duration * 2;
-    compute_avdiff(vd, mp, pts);
+    compute_avdiff(vd, mp, pts, epoch);
 
 #if ENABLE_DVD
     if(vd->vd_dvdspu != NULL)

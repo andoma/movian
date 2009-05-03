@@ -100,6 +100,7 @@ typedef struct media_buf {
   int64_t mb_dts;
   int64_t mb_pts;
   int64_t mb_time;  /* in ms */
+  int mb_epoch;
 
   codecwrap_t *mb_cw;
 
@@ -149,7 +150,7 @@ typedef struct media_pipe {
   hts_mutex_t mp_clock_mutex;
   int64_t mp_audio_clock;
   int64_t mp_audio_clock_realtime;
-  int mp_audio_clock_valid;
+  int mp_audio_clock_epoch;
 
   struct audio_decoder *mp_audio_decoder;
 

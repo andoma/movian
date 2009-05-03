@@ -120,6 +120,7 @@ typedef struct {
   int refcount;
   int64_t pts;
   int64_t dts;
+  int epoch;
   int duration;
   int stream;
   int64_t time;
@@ -138,6 +139,7 @@ vd_get_buffer(struct AVCodecContext *c, AVFrame *pic)
   fm->time = mb->mb_time;
   fm->duration = mb->mb_duration;
   fm->stream = mb->mb_stream;
+  fm->epoch = mb->mb_epoch;
   pic->opaque = fm;
   return ret;
 }
@@ -161,7 +163,7 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb, int justdecode)
 {
   video_decoder_frame_t *vdf;
   int64_t pts, t;
-  int i, j, got_pic, h, w, duration;
+  int i, j, got_pic, h, w, duration, epoch;
   media_pipe_t *mp = vd->vd_mp;
   unsigned char *src, *dst;
   float f;
@@ -242,6 +244,7 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb, int justdecode)
 
   pts = fm->pts;
   duration = fm->duration;
+  epoch = fm->epoch;
 
   if(!vd_valid_duration(duration)) {
     /* duration is zero or very invalid, use duration from last output */
@@ -343,6 +346,7 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb, int justdecode)
     
     vd->vd_interlaced = 0;
     vdf->vdf_pts = pts;
+    vdf->vdf_epoch = epoch;
     vdf->vdf_duration = duration;
     TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
     return;
@@ -384,6 +388,7 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb, int justdecode)
       vdf->vdf_debob = !tff;
       
       vdf->vdf_pts = pts;
+      vdf->vdf_epoch = epoch;
       vdf->vdf_duration = duration;
       TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
     }
@@ -410,6 +415,7 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb, int justdecode)
       vdf->vdf_debob = tff;
 
       vdf->vdf_pts = pts + duration;
+      vdf->vdf_epoch = epoch;
       vdf->vdf_duration = duration;
       TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
     }
@@ -512,6 +518,7 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb, int justdecode)
 #endif
 
       vdf->vdf_pts = pts + j * duration;
+      vdf->vdf_epoch = epoch;
       vdf->vdf_duration = duration;
       TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
     }

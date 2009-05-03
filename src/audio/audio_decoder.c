@@ -35,12 +35,12 @@ extern audio_fifo_t *thefifo;
 static void audio_mix1(audio_decoder_t *ad, audio_mode_t *am, 
 		       int channels, int rate, int64_t chlayout,
 		       enum CodecID codec_id,
-		       int16_t *data0, int frames, int64_t pts,
+		       int16_t *data0, int frames, int64_t pts, int epoch,
 		       media_pipe_t *mp);
 
 static void audio_mix2(audio_decoder_t *ad, audio_mode_t *am, 
 		       int channels, int rate,
-		       int16_t *data0, int frames, int64_t pts,
+		       int16_t *data0, int frames, int64_t pts, int epoch,
 		       media_pipe_t *mp);
 
 static void close_resampler(audio_decoder_t *ad);
@@ -54,7 +54,7 @@ static void ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp,
 
 static void audio_deliver(audio_decoder_t *ad, audio_mode_t *am, int16_t *src, 
 			  int channels, int frames, int rate, int64_t pts,
-			  media_pipe_t *mp);
+			  int epoch, media_pipe_t *mp);
 
 static void *ad_thread(void *aux);
 
@@ -217,6 +217,7 @@ audio_deliver_passthru(media_buf_t *mb, audio_decoder_t *ad, int format,
   ab->ab_rate     = AM_SR_48000;
   ab->ab_frames   = mb->mb_size;
   ab->ab_pts      = mb->mb_pts;
+  ab->ab_epoch    = mb->mb_epoch;
 
   memcpy(ab->ab_data, mb->mb_data, mb->mb_size);
   
@@ -254,7 +255,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
     audio_mix1(ad, am, mb->mb_channels, mb->mb_rate, 0,
 	       CODEC_ID_NONE, mb->mb_data, 
 	       mb->mb_size / sizeof(int16_t) / mb->mb_channels,
-	       mb->mb_pts, mp);
+	       mb->mb_pts, mb->mb_epoch, mp);
 
     if(mb->mb_time != AV_NOPTS_VALUE)
       mp_set_current_time(mp, mb->mb_time);
@@ -358,15 +359,15 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
 
       if(data_size > 0)
 	audio_mix1(ad, am, channels, rate, chlayout, codec_id, ad->ad_outbuf, 
-		   frames, pts, mp);
+		   frames, pts, mb->mb_epoch, mp);
 
     } else {
 
       /* We are just suppoed to be silent, emulate some kind of 
-	 delay, this is not accurate, so we also turn off the
-	 audio clock valid indicator */
+	 delay, this is not accurate, so we also set the clock epoch
+	 to zero to avoid AV sync */
 
-      mp->mp_audio_clock_valid = 0;
+      mp->mp_audio_clock_epoch = 0;
 
       delay = (int64_t)frames * 1000000LL / rate;
       usleep(delay); /* XXX: Must be better */
@@ -392,7 +393,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
 static void
 audio_mix1(audio_decoder_t *ad, audio_mode_t *am, 
 	   int channels, int rate, int64_t chlayout, enum CodecID codec_id,
-	   int16_t *data0, int frames, int64_t pts,
+	   int16_t *data0, int frames, int64_t pts, int epoch,
 	   media_pipe_t *mp)
 {
   volume_control_t *vc = &global_volume; // Needed for soft-gain
@@ -631,12 +632,13 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
       src += consumed * channels;
       frames -= consumed;
 
-      audio_mix2(ad, am, channels, rate, ad->ad_resbuf, written, pts, mp);
+      audio_mix2(ad, am, channels, rate, ad->ad_resbuf, written, 
+		 epoch, pts, mp);
       pts = AV_NOPTS_VALUE;
     }
   } else {
     close_resampler(ad);
-    audio_mix2(ad, am, channels, rate, data0, frames, pts, mp);
+    audio_mix2(ad, am, channels, rate, data0, frames, pts, epoch, mp);
   }
 }
 
@@ -650,7 +652,7 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
 static void
 audio_mix2(audio_decoder_t *ad, audio_mode_t *am, 
 	   int channels, int rate, int16_t *data0, int frames, int64_t pts,
-	   media_pipe_t *mp)
+	   int epoch, media_pipe_t *mp)
 {
   int x, y, i, c;
   int16_t *data, *src, *dst;
@@ -772,7 +774,7 @@ audio_mix2(audio_decoder_t *ad, audio_mode_t *am,
     }
   }
 
-  audio_deliver(ad, am, data0, channels, frames, rate, pts, mp);
+  audio_deliver(ad, am, data0, channels, frames, rate, pts, epoch, mp);
 }
 
 
@@ -783,7 +785,7 @@ audio_mix2(audio_decoder_t *ad, audio_mode_t *am,
  */
 static void
 audio_deliver(audio_decoder_t *ad, audio_mode_t *am, int16_t *src, 
-	      int channels, int frames, int rate, int64_t pts,
+	      int channels, int frames, int rate, int64_t pts, int epoch,
 	      media_pipe_t *mp)
 {
   audio_buf_t *ab = ad->ad_buf;
@@ -823,6 +825,7 @@ audio_deliver(audio_decoder_t *ad, audio_mode_t *am, int16_t *src,
     if(ab->ab_pts == AV_NOPTS_VALUE && pts != AV_NOPTS_VALUE) {
       pts -= 1000000LL * ab->ab_frames / rate;
       ab->ab_pts = pts; 
+      ab->ab_epoch = epoch;
       pts = AV_NOPTS_VALUE;
     }
 

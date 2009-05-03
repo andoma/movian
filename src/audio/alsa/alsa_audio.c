@@ -424,8 +424,9 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
 
 	hts_mutex_lock(&mp->mp_clock_mutex);
 	mp->mp_audio_clock = pts;
-	mp->mp_audio_clock_valid = 1;
 	mp->mp_audio_clock_realtime = showtime_get_ts();
+	mp->mp_audio_clock_epoch = ab->ab_epoch;
+
 	hts_mutex_unlock(&mp->mp_clock_mutex);
       }
     }

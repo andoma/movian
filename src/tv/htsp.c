@@ -938,6 +938,8 @@ htsp_mux_input(htsp_connection_t *hc, htsmsg_t *m)
       if(htsmsg_get_s64(m, "pts", &mb->mb_pts))
 	mb->mb_pts = AV_NOPTS_VALUE;
 
+      mb->mb_epoch = 1;
+
       mb->mb_cw = wrap_codec_ref(hss->hss_cw);
 
       mb->mb_data = malloc(binlen + FF_INPUT_BUFFER_PADDING_SIZE);

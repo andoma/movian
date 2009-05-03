@@ -64,7 +64,7 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
   event_t *e;
   event_seek_t *es;
   int64_t ts;
-  int hold = 0, lost_focus = 0;
+  int hold = 0, lost_focus = 0, epoch = 1;
 
   while(1) {
     /**
@@ -115,9 +115,10 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
 	continue;
       }
 
+      mb->mb_epoch    = epoch;
       mb->mb_pts      = rescale(fctx, pkt.pts,      si);
       mb->mb_dts      = rescale(fctx, pkt.dts,      si);
-      mb->mb_duration = rescale(fctx, pkt.duration, si);
+      mb->mb_duration = rescale(fctx, pkt.duration, si) * ctx->ticks_per_frame;
 
       mb->mb_cw = wrap_codec_ref(cwvec[si]);
 
@@ -179,6 +180,7 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
 
 
     case EVENT_SEEK:
+      epoch++;
       es = (event_seek_t *)e;
       
       ts = es->ts + fctx->start_time;

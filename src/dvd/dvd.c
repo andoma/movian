@@ -130,6 +130,10 @@ typedef struct dvd_player {
 
   pci_t dp_pci;
 
+  int dp_epoch;
+
+  uint32_t dp_end_ptm;  /* end ptm from last nav packet */
+
 } dvd_player_t;
 
 
@@ -176,9 +180,11 @@ dvd_video_push(dvd_player_t *dp)
   mb->mb_aspect_override = dp->dp_aspect_override;
   mb->mb_disable_deinterlacer = 1;
   mb->mb_data_type = MB_VIDEO;
-  mb->mb_duration = 1000000LL * av_q2d(cw->codec_ctx->time_base);
+  mb->mb_duration = cw->codec_ctx->ticks_per_frame * 
+    1000000LL * av_q2d(cw->codec_ctx->time_base);
   mb->mb_pts = AV_NOPTS_VALUE;
   mb->mb_dts = AV_NOPTS_VALUE;
+  mb->mb_epoch = dp->dp_epoch;
 
   mb_enqueue_always(mp, &mp->mp_video, mb);
 }
@@ -198,11 +204,13 @@ dvd_media_enqueue(dvd_player_t *dp, media_queue_t *mq, codecwrap_t *cw,
 
   mb->mb_cw = wrap_codec_ref(cw);
   mb->mb_data_type = data_type;
-  mb->mb_duration = 1000000LL * av_q2d(ctx->time_base);
+  mb->mb_duration = cw->codec_ctx->ticks_per_frame * 
+    1000000LL * av_q2d(ctx->time_base);
   mb->mb_aspect_override = dp->dp_aspect_override;
   mb->mb_disable_deinterlacer = 1;
   mb->mb_dts = dts;
   mb->mb_pts = pts;
+  mb->mb_epoch = dp->dp_epoch;
   
   mb->mb_data = malloc(datalen + FF_INPUT_BUFFER_PADDING_SIZE);
   mb->mb_size = datalen;
@@ -385,6 +393,8 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
       if(e != NULL)
 	return e;
     }
+    pts = AV_NOPTS_VALUE;
+    dts = AV_NOPTS_VALUE;
     buf += rlen;
     len -= rlen;
   }
@@ -459,6 +469,7 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
 
  restart:
   dp = calloc(1, sizeof(dvd_player_t));
+  dp->dp_epoch = 1;
 
   dp->dp_mp = mp;
   
@@ -534,11 +545,16 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
       dp->dp_spu_track   = DP_SPU_FOLLOW_VM;
       dp->dp_audio_track = DP_AUDIO_FOLLOW_VM;
       dp->dp_aspect_override = dvdnav_get_video_aspect(dp->dp_dvdnav) ? 2 : 1;
+      dp->dp_epoch++;
       break;
 
     case DVDNAV_NAV_PACKET:
       pci = malloc(sizeof(pci_t));
       memcpy(pci, dvdnav_get_current_nav_pci(dp->dp_dvdnav), sizeof(pci_t));
+      if(dp->dp_end_ptm != pci->pci_gi.vobu_s_ptm)
+	dp->dp_epoch++; // Discontinuity
+      dp->dp_end_ptm = pci->pci_gi.vobu_e_ptm;
+
       mp_send_cmd_data(mp, &mp->mp_video, MB_DVD_PCI, pci);
       break;
 

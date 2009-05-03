@@ -92,6 +92,7 @@ typedef struct video_decoder_frame {
 
   int vdf_duration;
   uint64_t vdf_pts;
+  int vdf_epoch;
 
   int vdf_debob;
 
