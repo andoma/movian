@@ -362,6 +362,7 @@ glw_wii_loop(glw_wii_t *gwii)
     
     rc.rc_size_x = 640 * 1.3333;
     rc.rc_size_y = 480;
+    rc.rc_fullscreen = 1;
 
     glw_layout0(gwii->gr.gr_universe, &rc);
 

@@ -399,6 +399,7 @@ refresh_rate()
   memset(&rc, 0, sizeof(rc));
   rc.rc_size_x = gcocoa->window_width;
   rc.rc_size_y = gcocoa->window_height;
+  rc.rc_fullscreen = 1;
   glw_layout0(gcocoa->gr.gr_universe, &rc);
   
   glMatrixMode(GL_PROJECTION);

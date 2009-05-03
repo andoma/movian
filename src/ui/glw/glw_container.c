@@ -68,7 +68,7 @@ static int
 glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
 {
   glw_t *c;
-  float x, ys, xs;
+  float x, xs;
   glw_rctx_t rc0 = *rc;
 
   float s_w, s_ax, ax;
@@ -108,8 +108,6 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
 
-    ys = rc->rc_size_y;
-
     if(c->glw_flags & GLW_CONSTRAINT_X) {
       xs = s_ax * c->glw_req_size_x;
     } else if(c->glw_flags & GLW_CONSTRAINT_A) {
@@ -120,9 +118,12 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
       xs = s_w;
     }
 
+    if(xs != rc->rc_size_x)
+      rc0.rc_fullscreen = 0;
+
     c->glw_parent_scale.x = xs / rc->rc_size_x;
-    c->glw_parent_scale.y = ys / rc->rc_size_y;
-    c->glw_parent_scale.z = ys / rc->rc_size_y;
+    c->glw_parent_scale.y = 1.0;
+    c->glw_parent_scale.z = 1.0;
       
     c->glw_norm_weight = c->glw_parent_scale.x;
 
@@ -130,7 +131,6 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
 
     x += 2 * c->glw_parent_scale.x;
       
-    rc0.rc_size_y = ys;
     rc0.rc_size_x = xs;
 
     glw_layout0(c, &rc0);
@@ -191,7 +191,7 @@ static int
 glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
 {
   glw_t *c;
-  float y, ys, xs;
+  float y, ys;
   glw_rctx_t rc0 = *rc;
 
   float s_w, s_fy;
@@ -226,8 +226,6 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
 
-    xs = rc->rc_size_x;
-
     if(c->glw_flags & GLW_CONSTRAINT_Y) {
       ys = s_fy * c->glw_req_size_y;
     } else if(c->glw_flags & GLW_CONSTRAINT_W) {
@@ -236,9 +234,12 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
       ys = s_w;
     }
 
-    c->glw_parent_scale.x = xs / rc->rc_size_x;
+    if(ys != rc->rc_size_y)
+      rc0.rc_fullscreen = 0;
+
+    c->glw_parent_scale.x = 1.0;
     c->glw_parent_scale.y = ys / rc->rc_size_y;
-    c->glw_parent_scale.z = ys / rc->rc_size_y;
+    c->glw_parent_scale.z = 1.0;
 
     c->glw_norm_weight = c->glw_parent_scale.y;
 
@@ -247,7 +248,6 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
     y -= 2 * c->glw_parent_scale.y;
       
     rc0.rc_size_y = ys;
-    rc0.rc_size_x = xs;
 
     glw_layout0(c, &rc0);
  

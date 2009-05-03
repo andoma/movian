@@ -664,6 +664,7 @@ layout_draw(glw_x11_t *gx11, float aspect)
   memset(&rc, 0, sizeof(rc));
   rc.rc_size_x = gx11->window_width;
   rc.rc_size_y = gx11->window_height;
+  rc.rc_fullscreen = 1;
   glw_layout0(gx11->gr.gr_universe, &rc);
 
   glMatrixMode(GL_PROJECTION);

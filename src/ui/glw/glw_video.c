@@ -1131,8 +1131,13 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
   glw_root_t *gr = w->glw_root;
   glw_video_t *gv = (glw_video_t *)w;
   video_decoder_t *vd = gv->gv_vd;
+  glw_rctx_t *rc = extra;
 
   switch(signal) {
+  case GLW_SIGNAL_LAYOUT:
+    gv->gv_fullscreen_check = rc->rc_fullscreen;
+    return 0;
+
   case GLW_SIGNAL_DTOR:
     /* We are going away, flush out all frames (PBOs and textures)
        and destroy zombie video decoder */
@@ -1150,6 +1155,28 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     return 0;
 
   case GLW_SIGNAL_NEW_FRAME:
+    
+    if(gv->gv_fullscreen_check) {
+      /* We are in fullscreen mode */
+
+      if(gv->gv_fullscreen_reported == 0) {
+	prop_add_int(gr->gr_fullscreen_req, 1);
+	gv->gv_fullscreen_reported = 1;
+	TRACE(TRACE_DEBUG, "GLW", "Video display entering fullscreen mode");
+      }
+
+    } else {
+      /* Not in fullscreen mode */
+     
+      if(gv->gv_fullscreen_reported) {
+	prop_add_int(gr->gr_fullscreen_req, -1);
+	gv->gv_fullscreen_reported = 0;
+	TRACE(TRACE_DEBUG, "GLW", "Video display leaving fullscreen mode");
+      }
+    }
+
+    gv->gv_fullscreen_check = 0;
+
     gv_buffer_allocator(vd);
     gv_new_frame(vd, gv);
     gv_update_focusable(vd, gv);
@@ -1159,7 +1186,9 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     return gl_video_widget_event(gv, extra);
 
   case GLW_SIGNAL_DESTROY:
-    prop_add_int(gr->gr_fullscreen_req, -1);
+    if(gv->gv_fullscreen_reported)
+      prop_add_int(gr->gr_fullscreen_req, -1);
+
     video_playback_destroy(gv->gv_vp);
     video_decoder_stop(vd);
     mp_ref_dec(gv->gv_mp);
@@ -1218,8 +1247,6 @@ glw_video_ctor(glw_t *w, int init, va_list ap)
 
     gv->gv_vd = video_decoder_create(gv->gv_mp);
     gv->gv_vp = video_playback_create(gv->gv_mp);
-
-    prop_add_int(gr->gr_fullscreen_req, 1);
   }
 
   do {
