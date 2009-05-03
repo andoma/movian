@@ -54,9 +54,9 @@ km_save(keymap_t *km)
  *
  */
 static void 
-km_set_code(struct prop_sub *sub, prop_event_t event, ...)
+km_set_code(void *opaque, prop_event_t event, ...)
 {
-  keymap_entry_t *ke = sub->hps_opaque;
+  keymap_entry_t *ke = opaque;
   const char *str;
 
   va_list ap;
@@ -104,7 +104,12 @@ keymapper_entry_add(keymap_t *km, const char *str, const char *eventname,
   else
     prop_set_void(p);
 
-  ke->ke_sub_keycode = prop_subscribe(NULL, km_set_code, ke, NULL, 0, p, NULL);
+  ke->ke_sub_keycode = 
+    prop_subscribe(0,
+		   NULL,
+		   PROP_TAG_CALLBACK, km_set_code, ke,
+		   PROP_TAG_ROOT, p,
+		   NULL);
 
   p = prop_create(ke->ke_prop, "event");
   prop_set_string(p, eventname);

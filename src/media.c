@@ -37,7 +37,7 @@ static prop_t *media_prop_current;
 static struct media_pipe_list media_pipe_stack;
 media_pipe_t *media_primary;
 
-static void seek_by_propchange(struct prop_sub *sub, prop_event_t event, ...);
+static void seek_by_propchange(void *opaque, prop_event_t event, ...);
 
 static int media_event_handler(event_t *e, void *opaque);
 
@@ -138,11 +138,12 @@ mp_create(const char *name, const char *type)
  
   mp->mp_pc = prop_courier_create(&mp->mp_mutex);
 
-  mp->mp_sub_currenttime = prop_subscribe(NULL,
-					  seek_by_propchange,
-					  mp, mp->mp_pc,
-					  PROP_SUB_NO_INITIAL_UPDATE,
-					  mp->mp_prop_currenttime, NULL);
+  mp->mp_sub_currenttime = 
+    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+		   PROP_TAG_CALLBACK, seek_by_propchange, mp,
+		   PROP_TAG_COURIER, mp->mp_pc,
+		   PROP_TAG_ROOT, mp->mp_prop_currenttime,
+		   NULL);
   return mp;
 }
 
@@ -889,11 +890,11 @@ media_get_codec_info(AVCodecContext *ctx, char *buf, size_t size)
  *
  */
 static void
-seek_by_propchange(struct prop_sub *sub, prop_event_t event, ...)
+seek_by_propchange(void *opaque, prop_event_t event, ...)
 {
   event_seek_t *es;
   event_t *e;
-  media_pipe_t *mp = sub->hps_opaque;
+  media_pipe_t *mp = opaque;
   int64_t t;
 
   va_list ap;

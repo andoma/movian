@@ -516,12 +516,9 @@ metadata_update(void)
  *
  */
 static void
-metadata_prop_cb(struct prop_sub *sub, prop_event_t event, ...)
+metadata_prop_cb(void *opaque, prop_event_t event, ...)
 {
-  track_meta_t *tm;
-
-  if((tm = sub->hps_opaque) == NULL)
-    return;
+  track_meta_t *tm = opaque;
 
   if(event != PROP_DESTROYED) 
     return;
@@ -556,10 +553,11 @@ track_meta_create(prop_t *metadata, sp_track *track)
   LIST_INSERT_HEAD(&track_metas, tm, tm_link);
   hts_mutex_unlock(&meta_mutex);
 
-  prop_subscribe(NULL, metadata_prop_cb, tm,
-		 meta_courier, 
-		 PROP_SUB_TRACK_DESTROY | PROP_SUB_AUTO_UNSUBSCRIBE,
-		 metadata, NULL);
+  prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_AUTO_UNSUBSCRIBE,
+		 PROP_TAG_CALLBACK, metadata_prop_cb, tm,
+		 PROP_TAG_COURIER, meta_courier,
+		 PROP_TAG_ROOT, metadata, 
+		 NULL);
 
   spotify_track_update_metadata(metadata, track);
 }

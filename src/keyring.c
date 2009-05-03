@@ -90,10 +90,10 @@ typedef struct keyring_popup {
  *
  */
 static void 
-result_set(struct prop_sub *sub, prop_event_t event, ...)
+result_set(void *opaque, prop_event_t event, ...)
 {
   const char *str;
-  keyring_popup_t *kp = sub->hps_opaque;
+  keyring_popup_t *kp = opaque;
 
   va_list ap;
   va_start(ap, event);
@@ -148,7 +148,10 @@ keyring_lookup(const char *id, char **username, char **password,
     pass = prop_create(p, "password");
  
     r = prop_create(p, "result");
-    s = prop_subscribe(NULL, result_set, &kp, NULL, 0, r, NULL);
+    s = prop_subscribe(0, 
+		       PROP_TAG_CALLBACK, result_set, &kp, 
+		       PROP_TAG_ROOT, r,
+		       NULL);
 
     /* Will show the popup */
     if(prop_set_parent(p, popuproot)) {

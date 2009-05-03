@@ -135,9 +135,9 @@ settings_add_dir(prop_t *parent, const char *id, const char *title,
  *
  */
 static void 
-callback_bool(struct prop_sub *sub, prop_event_t event, ...)
+callback_bool(void *opaque, prop_event_t event, ...)
 {
-  setting_t *s = sub->hps_opaque;
+  setting_t *s = opaque;
   setting_callback_bool_t *cb;
 
   va_list ap;
@@ -173,10 +173,11 @@ settings_add_bool(prop_t *parent, const char *id, const char *title,
   s->s_opaque = opaque;
   s->s_prop = r;
 
-  sub = prop_subscribe(NULL, callback_bool, s, NULL,
-		       flags & SETTINGS_INITIAL_UPDATE ?
+  sub = prop_subscribe(flags & SETTINGS_INITIAL_UPDATE ?
 		       0 : PROP_SUB_NO_INITIAL_UPDATE,
-		       v, NULL);
+		       PROP_TAG_CALLBACK, callback_bool, s,
+		       PROP_TAG_ROOT, v,
+		       NULL);
   s->s_sub = sub;
   
   settings_set_parent(r, parent);
@@ -209,9 +210,9 @@ settings_toggle_bool(setting_t *s)
  *
  */
 static void 
-callback_int(struct prop_sub *sub, prop_event_t event, ...)
+callback_int(void *opaque, prop_event_t event, ...)
 {
-  setting_t *s = sub->hps_opaque;
+  setting_t *s = opaque;
   setting_callback_int_t *cb;
 
   va_list ap;
@@ -258,10 +259,11 @@ settings_add_int(prop_t *parent, const char *id, const char *title,
   s->s_opaque = opaque;
   s->s_prop = r;
 
-  sub = prop_subscribe(NULL, callback_int, s, NULL,
-		       flags & SETTINGS_INITIAL_UPDATE ?
+  sub = prop_subscribe(flags & SETTINGS_INITIAL_UPDATE ?
 		       0 : PROP_SUB_NO_INITIAL_UPDATE,
-		       v, NULL);
+		       PROP_TAG_CALLBACK, callback_int, s,
+		       PROP_TAG_ROOT, v,
+		       NULL);
   s->s_sub = sub;
   
   settings_set_parent(r, parent);
@@ -273,9 +275,9 @@ settings_add_int(prop_t *parent, const char *id, const char *title,
  *
  */
 static void 
-callback_opt(struct prop_sub *sub, prop_event_t event, ...)
+callback_opt(void *opaque, prop_event_t event, ...)
 {
-  setting_t *s = sub->hps_opaque;
+  setting_t *s = opaque;
   setting_callback_string_t *cb;
   prop_t *c;
 
@@ -307,7 +309,10 @@ settings_add_multiopt(prop_t *parent, const char *id, const char *title,
   s->s_opaque = opaque;
   s->s_prop = r;
   
-  sub = prop_subscribe(NULL, callback_opt, s, NULL, 0, o, NULL);
+  sub = prop_subscribe(0,
+		       PROP_TAG_CALLBACK, callback_opt, s, 
+		       PROP_TAG_ROOT, o, 
+		       NULL);
 
   s->s_sub = sub;
   
@@ -341,9 +346,9 @@ settings_multiopt_add_opt(setting_t *parent, const char *id, const char *title,
  *
  */
 static void 
-callback_string(struct prop_sub *sub, prop_event_t event, ...)
+callback_string(void *opaque, prop_event_t event, ...)
 {
-  setting_t *s = sub->hps_opaque;
+  setting_t *s = opaque;
   setting_callback_string_t *cb;
   const char *str;
 
@@ -386,10 +391,11 @@ settings_add_string(prop_t *parent, const char *id, const char *title,
   s->s_opaque = opaque;
   s->s_prop = r;
   
-  sub = prop_subscribe(NULL, callback_string, s, NULL,
-		       flags & SETTINGS_INITIAL_UPDATE ?
+  sub = prop_subscribe(flags & SETTINGS_INITIAL_UPDATE ?
 		       0 : PROP_SUB_NO_INITIAL_UPDATE,
-		       v, NULL);
+		       PROP_TAG_CALLBACK, callback_string, s,
+		       PROP_TAG_ROOT, v,
+		       NULL);
   s->s_sub = sub;
   
   settings_set_parent(r, parent);

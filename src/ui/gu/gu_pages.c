@@ -24,9 +24,9 @@
  *
  */
 static void
-gu_nav_page_set_type(struct prop_sub *s, prop_event_t event, ...)
+gu_nav_page_set_type(void *opaque, prop_event_t event, ...)
 {
-  gu_nav_page_t *gnp = s->hps_opaque;
+  gu_nav_page_t *gnp = opaque;
   const char *type;
 
   va_list ap;
@@ -76,8 +76,12 @@ gu_nav_page_create(gtk_ui_t *gu, prop_t *p)
 
   LIST_INSERT_HEAD(&gu->gu_pages, gnp, gnp_link);
 
-  prop_subscribe((const char *[]){"self", "type", NULL},
-		 gu_nav_page_set_type, gnp, gu->gu_pc, 0, p, NULL);
+  prop_subscribe(0,
+		 PROP_TAG_NAME_VECTOR, (const char *[]){"self", "type", NULL},
+		 PROP_TAG_CALLBACK, gu_nav_page_set_type, gnp,
+		 PROP_TAG_COURIER, gu->gu_pc, 
+		 PROP_TAG_ROOT, p,
+		 NULL);
   return gnp;
 }
 
@@ -119,9 +123,9 @@ gu_nav_page_display(gtk_ui_t *gu, gu_nav_page_t *gnp)
  *
  */
 void
-gu_nav_pages(struct prop_sub *s, prop_event_t event, ...)
+gu_nav_pages(void *opaque, prop_event_t event, ...)
 {
-  gtk_ui_t *gu = s->hps_opaque;
+  gtk_ui_t *gu = opaque;
   prop_t *p;
   int flags;
   gu_nav_page_t *gnp;

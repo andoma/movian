@@ -149,9 +149,9 @@ gu_sub_to_str(va_list ap, prop_event_t event, GValue *gv)
  *
  */
 static void
-gu_nav_url_updated(struct prop_sub *s, prop_event_t event, ...)
+gu_nav_url_updated(void *opaque, prop_event_t event, ...)
 {
-  gtk_ui_t *gu = s->hps_opaque;
+  gtk_ui_t *gu = opaque;
   va_list ap;
   va_start(ap, event);
   gtk_entry_set_text(GTK_ENTRY(gu->gu_url), event == PROP_SET_STRING ? 
@@ -241,10 +241,12 @@ gu_start(ui_t *ui, int argc, char **argv)
   gtk_tool_item_set_expand(ti, TRUE);
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
 
-  prop_subscribe((const char *[]){"global","nav","currentpage","url",NULL},
-		 gu_nav_url_updated, gu, gu->gu_pc, 0, NULL, NULL);
-
-
+  prop_subscribe(0,
+		 PROP_TAG_NAME_VECTOR, 
+		 (const char *[]){"global","nav","currentpage","url",NULL},
+		 PROP_TAG_CALLBACK, gu_nav_url_updated, gu,
+		 PROP_TAG_COURIER, gu->gu_pc,
+		 NULL);
 
 #if 0
   /* Search entry */
@@ -260,8 +262,12 @@ gu_start(ui_t *ui, int argc, char **argv)
   gtk_container_set_border_width(GTK_CONTAINER(gu->gu_page_container), 0);
   gtk_container_add(GTK_CONTAINER(vbox), gu->gu_page_container);
 
-  prop_subscribe((const char *[]){"global","nav","pages",NULL},
-		 gu_nav_pages, gu, gu->gu_pc, 0, NULL, NULL);
+  prop_subscribe(0,
+		 PROP_TAG_NAME_VECTOR,
+		 (const char *[]){"global","nav","pages",NULL},
+		 PROP_TAG_CALLBACK, gu_nav_pages, gu, 
+		 PROP_TAG_COURIER, gu->gu_pc,
+		 NULL);
 
   gtk_widget_show_all(win);
   gtk_main();

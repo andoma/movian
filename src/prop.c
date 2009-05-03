@@ -160,6 +160,59 @@ prop_pixmap_ref_inc(prop_pixmap_t *pp)
 }
 
 
+/**
+ *
+ */
+static void
+prop_notify_free(prop_notify_t *n)
+{
+  switch(n->hpn_event) {
+  case PROP_SET_DIR:
+  case PROP_SET_VOID:
+    if(n->hpn_prop2 != NULL)
+      prop_ref_dec(n->hpn_prop2);
+    break;
+
+  case PROP_SET_STRING:
+    free(n->hpn_string);
+    prop_ref_dec(n->hpn_prop2);
+    break;
+
+  case PROP_SET_INT:
+    prop_ref_dec(n->hpn_prop2);
+    break;
+
+  case PROP_SET_FLOAT:
+    prop_ref_dec(n->hpn_prop2);
+    break;
+
+  case PROP_SET_PIXMAP:
+    prop_pixmap_ref_dec(n->hpn_pixmap);
+    prop_ref_dec(n->hpn_prop2);
+    break;
+
+  case PROP_ADD_CHILD:
+  case PROP_DEL_CHILD:
+  case PROP_SELECT_CHILD:
+  case PROP_REQ_DELETE:
+  case PROP_REQ_NEW_CHILD:
+    if(n->hpn_prop != NULL)
+      prop_ref_dec(n->hpn_prop);
+    break;
+
+  case PROP_ADD_CHILD_BEFORE:
+    prop_ref_dec(n->hpn_prop);
+    prop_ref_dec(n->hpn_prop2);
+    break;
+
+  case PROP_DESTROYED:
+    prop_ref_dec(n->hpn_prop);
+    break;
+  }
+  prop_sub_ref_dec(n->hpn_sub);
+  free(n); 
+}
+
 
 /**
  * Thread for dispatching prop_notify entries
@@ -183,9 +236,13 @@ prop_courier(void *aux)
 
     TAILQ_REMOVE(&pc->pc_queue, n, hpn_link);
     
-    hts_mutex_unlock(&prop_mutex);
-
     s = n->hpn_sub;
+    if(s->hps_flags & PROP_SUB_ZOMBIE) {
+      prop_notify_free(n); // subscription may be free'd here
+      continue;
+    }
+
+    hts_mutex_unlock(&prop_mutex);
 
     if(pc->pc_entry_mutex != NULL)
       hts_mutex_lock(pc->pc_entry_mutex);
@@ -193,40 +250,46 @@ prop_courier(void *aux)
     switch(n->hpn_event) {
     case PROP_SET_DIR:
     case PROP_SET_VOID:
-      s->hps_callback(s, n->hpn_event, n->hpn_prop2);
+      s->hps_callback(s->hps_opaque, n->hpn_event, n->hpn_prop2);
       if(n->hpn_prop2 != NULL)
 	prop_ref_dec(n->hpn_prop2);
       break;
 
     case PROP_SET_STRING:
-      s->hps_callback(s, n->hpn_event, n->hpn_string, n->hpn_prop2);
+      s->hps_callback(s->hps_opaque, n->hpn_event, 
+		      n->hpn_string, n->hpn_prop2);
       free(n->hpn_string);
       prop_ref_dec(n->hpn_prop2);
       break;
 
     case PROP_SET_INT:
-      s->hps_callback(s, n->hpn_event, n->hpn_int, n->hpn_prop2);
+      s->hps_callback(s->hps_opaque, n->hpn_event, 
+		      n->hpn_int, n->hpn_prop2);
       prop_ref_dec(n->hpn_prop2);
       break;
 
     case PROP_SET_FLOAT:
-      s->hps_callback(s, n->hpn_event, n->hpn_float, n->hpn_prop2);
+      s->hps_callback(s->hps_opaque, n->hpn_event, 
+		      n->hpn_float, n->hpn_prop2);
       prop_ref_dec(n->hpn_prop2);
       break;
 
     case PROP_SET_PIXMAP:
-      s->hps_callback(s, n->hpn_event, n->hpn_pixmap, n->hpn_prop2);
+      s->hps_callback(s->hps_opaque, n->hpn_event, 
+		      n->hpn_pixmap, n->hpn_prop2);
       prop_pixmap_ref_dec(n->hpn_pixmap);
       prop_ref_dec(n->hpn_prop2);
       break;
 
     case PROP_ADD_CHILD:
-      s->hps_callback(s, n->hpn_event, n->hpn_prop, n->hpn_flags);
+      s->hps_callback(s->hps_opaque, n->hpn_event, 
+		      n->hpn_prop, n->hpn_flags);
       prop_ref_dec(n->hpn_prop);
       break;
 
     case PROP_ADD_CHILD_BEFORE:
-      s->hps_callback(s, n->hpn_event, n->hpn_prop, n->hpn_prop2, 
+      s->hps_callback(s->hps_opaque, n->hpn_event, 
+		      n->hpn_prop, n->hpn_prop2, 
 		      n->hpn_flags);
       prop_ref_dec(n->hpn_prop);
       prop_ref_dec(n->hpn_prop2);
@@ -236,13 +299,13 @@ prop_courier(void *aux)
     case PROP_SELECT_CHILD:
     case PROP_REQ_DELETE:
     case PROP_REQ_NEW_CHILD:
-      s->hps_callback(s, n->hpn_event, n->hpn_prop);
+      s->hps_callback(s->hps_opaque, n->hpn_event, n->hpn_prop);
       if(n->hpn_prop != NULL)
 	prop_ref_dec(n->hpn_prop);
       break;
  
     case PROP_DESTROYED:
-      s->hps_callback(s, n->hpn_event, n->hpn_prop);
+      s->hps_callback(s->hps_opaque, n->hpn_event, n->hpn_prop);
       prop_ref_dec(n->hpn_prop);
       break;
     }
@@ -297,27 +360,27 @@ prop_build_notify_value(prop_sub_t *s, int direct)
 
     switch(p->hp_type) {
     case PROP_STRING:
-      s->hps_callback(s, PROP_SET_STRING, p->hp_string, p);
+      s->hps_callback(s->hps_opaque, PROP_SET_STRING, p->hp_string, p);
       break;
 
     case PROP_FLOAT:
-      s->hps_callback(s, PROP_SET_FLOAT, p->hp_float, p);
+      s->hps_callback(s->hps_opaque, PROP_SET_FLOAT, p->hp_float, p);
       break;
 
     case PROP_INT:
-      s->hps_callback(s, PROP_SET_INT, p->hp_int, p);
+      s->hps_callback(s->hps_opaque, PROP_SET_INT, p->hp_int, p);
       break;
 
     case PROP_DIR:
-      s->hps_callback(s, PROP_SET_DIR, p);
+      s->hps_callback(s->hps_opaque, PROP_SET_DIR, p);
       break;
 
     case PROP_VOID:
-      s->hps_callback(s, PROP_SET_VOID, p);
+      s->hps_callback(s->hps_opaque, PROP_SET_VOID, p);
       break;
 
     case PROP_PIXMAP:
-      s->hps_callback(s, PROP_SET_PIXMAP, p->hp_pixmap, p);
+      s->hps_callback(s->hps_opaque, PROP_SET_PIXMAP, p->hp_pixmap, p);
       break;
 
     case PROP_ZOMBIE:
@@ -422,7 +485,7 @@ prop_build_notify_child(prop_sub_t *s, prop_t *p, prop_event_t event,
   prop_notify_t *n;
 
   if(direct) {
-    s->hps_callback(s, event, p, flags);
+    s->hps_callback(s->hps_opaque, event, p, flags);
     return;
   }
 
@@ -764,37 +827,88 @@ prop_subfind(prop_t *p, const char **name, int follow_symlinks)
   return p;
 }
 
+
+LIST_HEAD(prop_root_list, prop_root);
+
+/**
+ *
+ */
+typedef struct prop_root {
+  prop_t *p;
+  const char *name;
+  LIST_ENTRY(prop_root) link;
+} prop_root_t;
+
+
+
 /**
  *
  */
 static prop_t *
-prop_resolve_tree(const char *name, prop_t *p1, prop_t *p2)
+prop_resolve_tree(const char *name, struct prop_root_list *prl)
 {
   prop_t *p;
+  prop_root_t *pr;
   
   if(!strcmp(name, "global")) {
     p = prop_global;
-  } else if(!strcmp(name, "self") || 
-	    (p1 != NULL && !strcmp(name, p1->hp_name))) {
-    p = p1;
-  } else if((p2 != NULL && !strcmp(name, p2->hp_name))) {
-    p = p2;
-  } else {
-    return NULL;
+    return p->hp_type == PROP_ZOMBIE ? NULL : p;
   }
-  if(p == NULL)
-    return NULL;
-  return p->hp_type == PROP_ZOMBIE ? NULL : p;
+  LIST_FOREACH(pr, prl, link) {
+    p = pr->p;
+    if(p->hp_name != NULL && !strcmp(name, p->hp_name))
+      return p->hp_type == PROP_ZOMBIE ? NULL : p;
+    if(pr->name != NULL   && !strcmp(name, pr->name))
+      return p->hp_type == PROP_ZOMBIE ? NULL : p;
+  }
+  return NULL;
 }
 
 /**
  *
  */
 prop_t *
-prop_get_by_name(const char **name, int follow_symlinks, prop_t *p1,
-		 prop_t *p2)
+prop_get_by_name(const char **name, int follow_symlinks, ...)
 {
-  prop_t *p = prop_resolve_tree(name[0], p1, p2);
+  prop_t *p;
+  prop_root_t *pr;
+  struct prop_root_list proproots;
+  int tag;
+  va_list ap;
+
+  va_start(ap, follow_symlinks);
+
+  LIST_INIT(&proproots);
+
+  do {
+    tag = va_arg(ap, int);
+    switch(tag) {
+
+    case PROP_TAG_ROOT:
+      pr = alloca(sizeof(prop_root_t));
+      pr->p = va_arg(ap, prop_t *);
+      pr->name = NULL;
+      LIST_INSERT_HEAD(&proproots, pr, link);
+      break;
+
+    case PROP_TAG_NAMED_ROOT:
+      pr = alloca(sizeof(prop_root_t));
+      pr->p = va_arg(ap, prop_t *);
+      pr->name = va_arg(ap, const char *);
+      LIST_INSERT_HEAD(&proproots, pr, link);
+      break;
+
+    case PROP_TAG_END:
+      break;
+
+    default:
+      abort();
+    }
+  } while(tag);
+  
+  va_end(ap);
+
+  p = prop_resolve_tree(name[0], &proproots);
 
   if(p == NULL)
     return NULL;
@@ -819,27 +933,88 @@ gen_add_flags(prop_t *c, prop_t *p)
 {
   return c == p->hp_selected ? PROP_ADD_SELECTED : 0;
 }
+
+
+
 /**
  *
  */
 prop_sub_t *
-prop_subscribe(const char **name, prop_callback_t *cb, void *opaque,
-	       prop_courier_t *pc, int flags, prop_t *p1, prop_t *p2)
+prop_subscribe(int flags, ...)
 {
   prop_t *p, *value, *canonical, *c;
   prop_sub_t *s;
   int direct = !!(flags & PROP_SUB_DIRECT_UPDATE);
   int notify_now = !(flags & PROP_SUB_NO_INITIAL_UPDATE);
-    
+  int tag;
+  const char **name = NULL;
+  prop_callback_t *cb = NULL;
+  void *opaque = NULL;
+  prop_courier_t *pc = NULL;
+  prop_root_t *pr;
+  struct prop_root_list proproots;
+
+  va_list ap;
+  va_start(ap, flags);
+
+  LIST_INIT(&proproots);
+
+  do {
+    tag = va_arg(ap, int);
+    switch(tag) {
+    case PROP_TAG_NAME_VECTOR:
+      name = va_arg(ap, const char **);
+      break;
+
+    case PROP_TAG_CALLBACK:
+      cb = va_arg(ap, prop_callback_t *);
+      opaque = va_arg(ap, void *);
+      break;
+
+    case PROP_TAG_COURIER:
+      pc = va_arg(ap, prop_courier_t *);
+      break;
+
+    case PROP_TAG_ROOT:
+      pr = alloca(sizeof(prop_root_t));
+      pr->p = va_arg(ap, prop_t *);
+      pr->name = NULL;
+      if(pr->p != NULL)
+	LIST_INSERT_HEAD(&proproots, pr, link);
+      break;
+
+    case PROP_TAG_NAMED_ROOT:
+      pr = alloca(sizeof(prop_root_t));
+      pr->p = va_arg(ap, prop_t *);
+      pr->name = va_arg(ap, const char *);
+      if(pr->p != NULL && pr->name != NULL)
+	LIST_INSERT_HEAD(&proproots, pr, link);
+      break;
+
+    case PROP_TAG_END:
+      break;
+
+    default:
+      abort();
+    }
+  } while(tag);
+  
+
+  va_end(ap);
+
+
   if(name == NULL) {
     /* No name given, just subscribe to the supplied prop */
 
-    canonical = value = p1;
+    if((pr = LIST_FIRST(&proproots)) == NULL)
+      return NULL;
+
+    canonical = value = pr->p;
     hts_mutex_lock(&prop_mutex);
 
   } else {
 
-    if((p = prop_resolve_tree(name[0], p1, p2)) == NULL) 
+    if((p = prop_resolve_tree(name[0], &proproots)) == NULL) 
       return NULL;
 
     name++;
@@ -899,7 +1074,7 @@ prop_subscribe(const char **name, prop_callback_t *cb, void *opaque,
 static void
 prop_unsubscribe0(prop_sub_t *s)
 {
-  s->hps_opaque = NULL;
+  s->hps_flags |= PROP_SUB_ZOMBIE;
 
   if(s->hps_value_prop != NULL) {
     LIST_REMOVE(s, hps_value_prop_link);
@@ -1622,51 +1797,7 @@ prop_courier_destroy(prop_courier_t *pc)
 
   while((n = TAILQ_FIRST(&pc->pc_queue)) != NULL) {
     TAILQ_REMOVE(&pc->pc_queue, n, hpn_link);
-    
-    switch(n->hpn_event) {
-    case PROP_SET_DIR:
-    case PROP_SET_VOID:
-      if(n->hpn_prop2 != NULL)
-	prop_ref_dec(n->hpn_prop2);
-      break;
-
-    case PROP_SET_STRING:
-      free(n->hpn_string);
-      prop_ref_dec(n->hpn_prop2);
-      break;
-
-    case PROP_SET_INT:
-      prop_ref_dec(n->hpn_prop2);
-      break;
-
-    case PROP_SET_FLOAT:
-      prop_ref_dec(n->hpn_prop2);
-      break;
-
-    case PROP_SET_PIXMAP:
-      prop_pixmap_ref_dec(n->hpn_pixmap);
-      prop_ref_dec(n->hpn_prop2);
-      break;
-
-    case PROP_ADD_CHILD:
-    case PROP_DEL_CHILD:
-    case PROP_SELECT_CHILD:
-    case PROP_REQ_DELETE:
-    case PROP_REQ_NEW_CHILD:
-      if(n->hpn_prop != NULL)
-	prop_ref_dec(n->hpn_prop);
-      break;
-
-    case PROP_ADD_CHILD_BEFORE:
-      prop_ref_dec(n->hpn_prop);
-      prop_ref_dec(n->hpn_prop2);
-      break;
-
-    case PROP_DESTROYED:
-      prop_ref_dec(n->hpn_prop);
-      break;
-    }
-    free(n); 
+    prop_notify_free(n);
   }
   free(pc);
 }

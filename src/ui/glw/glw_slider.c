@@ -306,9 +306,9 @@ glw_slider_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
  *
  */
 static void
-prop_callback(prop_sub_t *s, prop_event_t event, ...)
+prop_callback(void *opaque, prop_event_t event, ...)
 {
-  glw_slider_t *sl = (glw_slider_t *)s->hps_opaque;
+  glw_slider_t *sl = opaque;
   glw_root_t *gr;
   float v;
   prop_t *p;
@@ -411,9 +411,13 @@ glw_slider_ctor(glw_t *w, int init, va_list ap)
 
       slider_unbind(s);
 
-      s->sub = prop_subscribe(pname, prop_callback, s, 
-			      w->glw_root->gr_courier, PROP_SUB_DIRECT_UPDATE,
-			      p, w->glw_root->gr_uii.uii_prop);
+      s->sub = prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+			      PROP_TAG_NAME_VECTOR, pname,
+			      PROP_TAG_CALLBACK, prop_callback, s,
+			      PROP_TAG_COURIER, w->glw_root->gr_courier, 
+			      PROP_TAG_NAMED_ROOT, p, "self",
+			      PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
+			      NULL);
       break;
 
     case GLW_ATTRIB_INT_MIN:

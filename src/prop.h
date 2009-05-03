@@ -48,7 +48,7 @@ typedef enum {
   PROP_DESTROYED,
 } prop_event_t;
 
-typedef void (prop_callback_t)(struct prop_sub *sub, prop_event_t event, ...);
+typedef void (prop_callback_t)(void *opaque, prop_event_t event, ...);
 
 
 TAILQ_HEAD(prop_queue, prop);
@@ -229,16 +229,24 @@ prop_t *prop_get_global(void);
 
 void prop_init(void);
 
-prop_sub_t *prop_subscribe(const char **name,
-			   prop_callback_t *cb, void *opaque,
-			   prop_courier_t *pc, int flags,
-			   prop_t *p1, prop_t *p2)
-     __attribute__ ((malloc));
 
 #define PROP_SUB_DIRECT_UPDATE 0x1
 #define PROP_SUB_NO_INITIAL_UPDATE 0x2
 #define PROP_SUB_TRACK_DESTROY 0x4
 #define PROP_SUB_AUTO_UNSUBSCRIBE 0x8
+
+#define PROP_SUB_ZOMBIE 0x10 // Not user settable
+
+enum {
+  PROP_TAG_END = 0,
+  PROP_TAG_NAME_VECTOR,
+  PROP_TAG_CALLBACK,
+  PROP_TAG_COURIER,
+  PROP_TAG_ROOT,
+  PROP_TAG_NAMED_ROOT,
+};
+
+prop_sub_t *prop_subscribe(int flags, ...) __attribute__((__sentinel__(0)));
 
 void prop_unsubscribe(prop_sub_t *s);
 
@@ -319,8 +327,8 @@ prop_t *prop_get_by_subscription(prop_sub_t *s);
 
 prop_t *prop_get_by_subscription_canonical(prop_sub_t *s);
 
-prop_t *prop_get_by_name(const char **name, int follow_symlinks,
-			 prop_t *p1, prop_t *p2);
+prop_t *prop_get_by_name(const char **name, int follow_symlinks, ...)
+     __attribute__((__sentinel__(0)));
 
 void prop_request_new_child(prop_t *p);
 

@@ -517,7 +517,7 @@ static int
 eval_assign(glw_model_eval_context_t *ec, struct token *self)
 {
   token_t *b = eval_pop(ec), *a = eval_pop(ec), *t;
-  prop_t *p;
+  prop_t *p, *ui;
   int r, i;
   const char *propname[16];
   event_keydesc_t *ek;
@@ -548,8 +548,11 @@ eval_assign(glw_model_eval_context_t *ec, struct token *self)
       propname[i++]  = t->t_string;
     propname[i] = NULL;
 
-    p = prop_get_by_name(propname, 0, ec->prop,
-			 ec->w ? ec->w->glw_root->gr_uii.uii_prop : NULL);
+    ui = ec->w ? ec->w->glw_root->gr_uii.uii_prop : NULL;
+    p = prop_get_by_name(propname, 0, 
+			 PROP_TAG_NAMED_ROOT, ec->prop, "self",
+			 PROP_TAG_ROOT, ui,
+			 NULL);
 
     /* Transform TOKEN_PROPERTY_NAME -> TOKEN_PROPERTY */
 
@@ -837,7 +840,7 @@ prop_callback_alloc_token(glw_prop_sub_t *gps, token_type_t type)
  *
  */
 static void
-prop_callback(prop_sub_t *s, prop_event_t event, ...)
+prop_callback(void *opaque, prop_event_t event, ...)
 {
   glw_prop_sub_t *gps;
   prop_t *p, *p2;
@@ -846,97 +849,90 @@ prop_callback(prop_sub_t *s, prop_event_t event, ...)
   va_list ap;
   va_start(ap, event);
 
-  gps = s->hps_opaque;
+  gps = opaque;
 
-  /* The opaque value may be NULL if we have free'd the gps-struct.
-     Thus, if gps is NULL, we've no longer any interest in this
-     subscription, so just skip it all */
+  switch(event) {
+  case PROP_SET_VOID:
+    t = prop_callback_alloc_token(gps, TOKEN_VOID);
+    t->propsubr = gps;
+    rpn = gps->gps_rpn;
+    break;
 
-  if(gps != NULL) {
+  case PROP_SET_STRING:
+    t = prop_callback_alloc_token(gps, TOKEN_STRING);
+    t->propsubr = gps;
+    t->t_string = strdup(va_arg(ap, char *));
+    rpn = gps->gps_rpn;
+    break;
 
-    switch(event) {
-    case PROP_SET_VOID:
-      t = prop_callback_alloc_token(gps, TOKEN_VOID);
-      t->propsubr = gps;
-      rpn = gps->gps_rpn;
-      break;
+  case PROP_SET_INT:
+    t = prop_callback_alloc_token(gps, TOKEN_INT);
+    t->propsubr = gps;
+    t->t_int = va_arg(ap, int);
+    rpn = gps->gps_rpn;
+    break;
 
-    case PROP_SET_STRING:
-      t = prop_callback_alloc_token(gps, TOKEN_STRING);
-      t->propsubr = gps;
-      t->t_string = strdup(va_arg(ap, char *));
-      rpn = gps->gps_rpn;
-      break;
+  case PROP_SET_FLOAT:
+    t = prop_callback_alloc_token(gps, TOKEN_FLOAT);
+    t->propsubr = gps;
+    t->t_float = va_arg(ap, double);
+    rpn = gps->gps_rpn;
+    break;
 
-    case PROP_SET_INT:
-      t = prop_callback_alloc_token(gps, TOKEN_INT);
-      t->propsubr = gps;
-      t->t_int = va_arg(ap, int);
-      rpn = gps->gps_rpn;
-      break;
+  case PROP_SET_DIR:
+    t = prop_callback_alloc_token(gps, TOKEN_DIRECTORY);
+    t->propsubr = gps;
+    rpn = gps->gps_rpn;
+    break;
 
-    case PROP_SET_FLOAT:
-      t = prop_callback_alloc_token(gps, TOKEN_FLOAT);
-      t->propsubr = gps;
-      t->t_float = va_arg(ap, double);
-      rpn = gps->gps_rpn;
-      break;
+  case PROP_SET_PIXMAP:
+    t = prop_callback_alloc_token(gps, TOKEN_PIXMAP);
+    t->propsubr = gps;
+    t->t_pixmap = va_arg(ap, prop_pixmap_t *);
+    prop_pixmap_ref_inc(t->t_pixmap);
+    rpn = gps->gps_rpn;
+    break;
 
-    case PROP_SET_DIR:
-      t = prop_callback_alloc_token(gps, TOKEN_DIRECTORY);
-      t->propsubr = gps;
-      rpn = gps->gps_rpn;
-      break;
+  case PROP_ADD_CHILD:
+    p = va_arg(ap, prop_t *);
+    flags = va_arg(ap, int);
+    cloner_add_child(gps, p, NULL, gps->gps_widget, NULL, flags);
+    break;
 
-    case PROP_SET_PIXMAP:
-      t = prop_callback_alloc_token(gps, TOKEN_PIXMAP);
-      t->propsubr = gps;
-      t->t_pixmap = va_arg(ap, prop_pixmap_t *);
-      prop_pixmap_ref_inc(t->t_pixmap);
-      rpn = gps->gps_rpn;
-      break;
+  case PROP_ADD_CHILD_BEFORE:
+    p = va_arg(ap, prop_t *);
+    p2 = va_arg(ap, prop_t *);
+    flags = va_arg(ap, int);
+    cloner_add_child(gps, p, p2, gps->gps_widget, NULL, flags);
+    break;
 
-    case PROP_ADD_CHILD:
-      p = va_arg(ap, prop_t *);
-      flags = va_arg(ap, int);
-      cloner_add_child(gps, p, NULL, gps->gps_widget, NULL, flags);
-      break;
+  case PROP_DEL_CHILD:
+    p = va_arg(ap, prop_t *);
+    cloner_del_child(gps, p, gps->gps_widget);
+    break;
 
-    case PROP_ADD_CHILD_BEFORE:
-      p = va_arg(ap, prop_t *);
-      p2 = va_arg(ap, prop_t *);
-      flags = va_arg(ap, int);
-      cloner_add_child(gps, p, p2, gps->gps_widget, NULL, flags);
-      break;
+  case PROP_SELECT_CHILD:
+    p = va_arg(ap, prop_t *);
+    cloner_select_child(gps, p, gps->gps_widget);
+    break;
 
-    case PROP_DEL_CHILD:
-      p = va_arg(ap, prop_t *);
-      cloner_del_child(gps, p, gps->gps_widget);
-      break;
-
-    case PROP_SELECT_CHILD:
-      p = va_arg(ap, prop_t *);
-      cloner_select_child(gps, p, gps->gps_widget);
-      break;
-
-    case PROP_REQ_NEW_CHILD:
-    case PROP_REQ_DELETE:
-    case PROP_DESTROYED:
-      return;
-    }
-
-    if(t != NULL) {
-      
-      if(gps->gps_token != NULL) {
-	glw_model_token_free(gps->gps_token);
-	gps->gps_token = NULL;
-      }
-      gps->gps_token = t;
-    }
-
-    if(rpn != NULL) 
-      eval_dynamic(gps->gps_widget, rpn);
+  case PROP_REQ_NEW_CHILD:
+  case PROP_REQ_DELETE:
+  case PROP_DESTROYED:
+    return;
   }
+
+  if(t != NULL) {
+      
+    if(gps->gps_token != NULL) {
+      glw_model_token_free(gps->gps_token);
+      gps->gps_token = NULL;
+    }
+    gps->gps_token = t;
+  }
+
+  if(rpn != NULL) 
+    eval_dynamic(gps->gps_widget, rpn);
 }
 
 
@@ -973,9 +969,13 @@ subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
   gps->gps_line = self->line;
 #endif
 
-  s = prop_subscribe(propname, prop_callback, gps,
-		     w->glw_root->gr_courier, PROP_SUB_DIRECT_UPDATE,
-		     ec->prop, w->glw_root->gr_uii.uii_prop);
+  s = prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+		     PROP_TAG_CALLBACK, prop_callback, gps,
+		     PROP_TAG_NAME_VECTOR, propname,
+		     PROP_TAG_COURIER, w->glw_root->gr_courier,
+		     PROP_TAG_NAMED_ROOT, ec->prop, "self",
+		     PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
+		     NULL);
 
   if(s == NULL) {
     refstr_unref(gps->gps_file);
@@ -1517,9 +1517,9 @@ glwf_navOpen(glw_model_eval_context_t *ec, struct token *self,
   if(argc > 2 && (c = token_resolve(ec, argv[2])) == NULL)
     return -1;
 
-  if(a->type != TOKEN_STRING)
+  if(a->type != TOKEN_STRING && a->type != TOKEN_VOID)
     return glw_model_seterr(ec->ei, a, "navOpen(): "
-			    "First argument is not a string");
+			    "First argument is not a string or (void)");
   
   if(b != NULL && b->type != TOKEN_STRING && b->type != TOKEN_VOID)
     return glw_model_seterr(ec->ei, b, "navOpen(): "
@@ -1530,7 +1530,8 @@ glwf_navOpen(glw_model_eval_context_t *ec, struct token *self,
 			    "Third argument is not a string or (void)");
 
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  r->t_gem = glw_event_map_navOpen_create(a->t_string, 
+  r->t_gem = glw_event_map_navOpen_create(a && a->type == TOKEN_STRING ?
+					  a->t_string : NULL,
 					  b && b->type == TOKEN_STRING ?
 					  b->t_string : NULL,
 					  c && c->type == TOKEN_STRING ?
@@ -2070,7 +2071,7 @@ glwf_createchild(glw_model_eval_context_t *ec, struct token *self,
   token_t *a = argv[0];
   token_t *t;
   const char *propname[16];
-  prop_t *p;
+  prop_t *p, *r;
   int i;
 
   if(a->type != TOKEN_PROPERTY_NAME)
@@ -2080,9 +2081,14 @@ glwf_createchild(glw_model_eval_context_t *ec, struct token *self,
     propname[i++]  = t->t_string;
   propname[i] = NULL;
   
-  if((p = prop_get_by_name(propname, 1, ec->prop,
-			   ec->w ? ec->w->glw_root->gr_uii.uii_prop : NULL
-			   )) != NULL) {
+  r = ec->w ? ec->w->glw_root->gr_uii.uii_prop : NULL;
+
+  p = prop_get_by_name(propname, 1, 
+		       PROP_TAG_NAMED_ROOT, ec->prop, "self",
+		       PROP_TAG_ROOT, r,
+		       NULL);
+
+  if(p != NULL) {
     prop_request_new_child(p);
     prop_ref_dec(p);
   }

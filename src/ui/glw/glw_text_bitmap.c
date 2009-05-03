@@ -799,9 +799,9 @@ gtb_caption_has_changed(glw_text_bitmap_t *gtb)
  *
  */
 static void
-prop_callback(prop_sub_t *s, prop_event_t event, ...)
+prop_callback(void *opaque, prop_event_t event, ...)
 {
-  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)s->hps_opaque;
+  glw_text_bitmap_t *gtb = opaque;
   glw_root_t *gr;
   const char *caption;
   prop_t *p;
@@ -919,10 +919,15 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
 
       gtb_unbind(gtb);
 
-      gtb->gtb_sub = prop_subscribe(pname, prop_callback, gtb, 
-				    w->glw_root->gr_courier,
-				    PROP_SUB_DIRECT_UPDATE,
-				    p, w->glw_root->gr_uii.uii_prop);
+      gtb->gtb_sub = 
+	prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+		       PROP_TAG_NAME_VECTOR, pname, 
+		       PROP_TAG_CALLBACK, prop_callback, gtb, 
+		       PROP_TAG_COURIER, w->glw_root->gr_courier,
+		       PROP_TAG_NAMED_ROOT, p, "self",
+		       PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
+		       NULL);
+
       break;
 
     default:

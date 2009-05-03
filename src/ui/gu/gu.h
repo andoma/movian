@@ -61,7 +61,7 @@ typedef struct gu_nav_page {
 } gu_nav_page_t;
 
 
-void gu_nav_pages(struct prop_sub *s, prop_event_t event, ...);
+void gu_nav_pages(void *opaque, prop_event_t event, ...);
 
 void gu_directory_create(gu_nav_page_t *gnp);
 

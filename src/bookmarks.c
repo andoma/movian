@@ -42,7 +42,7 @@ bookmark_save(void)
  *
  */
 static void
-bookmark_destroyed(struct prop_sub *sub, prop_event_t event, ...)
+bookmark_destroyed(void *opaque, prop_event_t event, ...)
 {
   if(event == PROP_DESTROYED)
     bookmark_save();
@@ -53,7 +53,7 @@ bookmark_destroyed(struct prop_sub *sub, prop_event_t event, ...)
  *
  */
 static void
-bookmark_updated(struct prop_sub *sub, prop_event_t event, ...)
+bookmark_updated(void *opaque, prop_event_t event, ...)
 {
   if(event == PROP_SET_STRING || event == PROP_SET_VOID)
     bookmark_save();
@@ -70,9 +70,10 @@ bookmark_add_prop(prop_t *parent, const char *name, const char *value)
   prop_t *p = prop_create(parent, name);
   if(value != NULL) prop_set_string(p, value); else prop_set_void(p);
 
-  prop_subscribe(NULL, bookmark_updated, NULL, NULL,
-		 PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_AUTO_UNSUBSCRIBE,
-		 p, NULL);
+  prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_AUTO_UNSUBSCRIBE,
+		 PROP_TAG_CALLBACK, bookmark_updated, NULL,
+		 PROP_TAG_ROOT, p, 
+		 NULL);
 }
 
 
@@ -85,10 +86,12 @@ bookmark_add(const char *title, const char *url, const char *icon,
 {
   prop_t *p = prop_create(NULL, NULL);
 
-  prop_subscribe(NULL, bookmark_destroyed, NULL, NULL,
-		 PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE |
+  prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE |
 		 PROP_SUB_AUTO_UNSUBSCRIBE,
-		 p, NULL);
+
+		 PROP_TAG_CALLBACK, bookmark_destroyed, NULL,
+		 PROP_TAG_ROOT, p,
+		 NULL);
 
   prop_set_string(prop_create(p, "type"), "bookmark");
 
@@ -128,7 +131,7 @@ bookmark_create(const char *title, const char *url, const char *icon)
  * entries.
  */
 static void
-bookmarks_callback(struct prop_sub *sub, prop_event_t event, ...)
+bookmarks_callback(void *opaque, prop_event_t event, ...)
 {
   prop_t *p;
 
@@ -165,8 +168,10 @@ bookmarks_init(void)
 
   prop_set_int(prop_create(bookmarks, "mayadd"), 1);
 
-  prop_subscribe(NULL, bookmarks_callback, NULL, NULL, 0,
-		 prop_create(bookmarks, "nodes"), NULL);
+  prop_subscribe(0,
+		 PROP_TAG_CALLBACK, bookmarks_callback, NULL,
+		 PROP_TAG_ROOT, prop_create(bookmarks, "nodes"),
+		 NULL);
   
   if((m = htsmsg_store_load("bookmarks")) != NULL) {
 

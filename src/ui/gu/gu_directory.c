@@ -58,10 +58,10 @@ static const char **subpaths[] = {
  *
  */
 static void
-gu_col_sub(struct prop_sub *s, prop_event_t event, ...)
+gu_col_sub(void *opaque, prop_event_t event, ...)
 {
   const char *str;
-  dirnodecol_t *dnc = s->hps_opaque;
+  dirnodecol_t *dnc = opaque;
   dirnode_t *dn = dnc->dn;
 
   va_list ap;
@@ -89,9 +89,9 @@ gu_col_sub(struct prop_sub *s, prop_event_t event, ...)
  *
  */
 static void
-gu_node_sub(struct prop_sub *s, prop_event_t event, ...)
+gu_node_sub(void *opaque, prop_event_t event, ...)
 {
-  gu_nav_page_t *gnp = s->hps_opaque;
+  gu_nav_page_t *gnp = opaque;
   prop_t *p;
   int flags, i;
   dirnode_t *dn;
@@ -112,8 +112,13 @@ gu_node_sub(struct prop_sub *s, prop_event_t event, ...)
     for(i = 0; i < N_COLUMNS; i++) {
       dn->sub[i].col = i;
       dn->sub[i].dn = dn;
-      dn->sub[i].s = prop_subscribe(subpaths[i], gu_col_sub, &dn->sub[i],
-				    gnp->gnp_gu->gu_pc, 0, p, NULL);
+      dn->sub[i].s =
+	prop_subscribe(0, 
+		       PROP_TAG_NAME_VECTOR, subpaths[i],
+		       PROP_TAG_CALLBACK, gu_col_sub, &dn->sub[i],
+		       PROP_TAG_COURIER, gnp->gnp_gu->gu_pc, 
+		       PROP_TAG_ROOT, p,
+		       NULL);
     }
     break;
   default:
@@ -164,8 +169,13 @@ gu_directory_create(gu_nav_page_t *gnp)
 					   );
 
 
-  prop_subscribe((const char *[]){"page", "nodes", NULL},
-		 gu_node_sub, gnp, gnp->gnp_gu->gu_pc, 0, gnp->gnp_prop, NULL);
+  prop_subscribe(0,
+		 PROP_TAG_NAME_VECTOR, 
+		 (const char *[]){"page", "nodes", NULL},
+		 PROP_TAG_CALLBACK, gu_node_sub, gnp,
+		 PROP_TAG_COURIER, gnp->gnp_gu->gu_pc, 
+		 PROP_TAG_ROOT, gnp->gnp_prop, 
+		 NULL);
 
 
   tv = gtk_tree_view_new_with_model(GTK_TREE_MODEL(gnp->gnp_list_store));
