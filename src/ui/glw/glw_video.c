@@ -894,7 +894,8 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
 
 #if ENABLE_DVD
   dd = vd->vd_dvdspu;
-  if(gv->gv_sputex != 0 && dd != NULL && width > 0) {
+  if(gv->gv_sputex != 0 && dd != NULL && width > 0 &&
+     (glw_is_focused(w) || !dd->dd_pci.hli.hl_gi.hli_ss)) {
     d = TAILQ_FIRST(&dd->dd_queue);
 
     if(d != NULL) {
