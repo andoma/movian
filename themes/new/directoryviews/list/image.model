@@ -1,4 +1,4 @@
-widget(image, {
+widget(icon, {
   .focusable = true;
   .source = $self.url;
 });
