@@ -236,17 +236,20 @@ prop_courier(void *aux)
 
     TAILQ_REMOVE(&pc->pc_queue, n, hpn_link);
     
-    s = n->hpn_sub;
-    if(s->hps_flags & PROP_SUB_ZOMBIE) {
-      prop_notify_free(n); // subscription may be free'd here
-      continue;
-    }
-
     hts_mutex_unlock(&prop_mutex);
 
-    if(pc->pc_entry_mutex != NULL)
+    s = n->hpn_sub;
+
+    if(pc->pc_entry_mutex != NULL) {
       hts_mutex_lock(pc->pc_entry_mutex);
     
+      if(s->hps_flags & PROP_SUB_ZOMBIE) {
+	prop_notify_free(n); // subscription may be free'd here
+	hts_mutex_unlock(pc->pc_entry_mutex);
+	continue;
+      }
+    }
+
     switch(n->hpn_event) {
     case PROP_SET_DIR:
     case PROP_SET_VOID:
