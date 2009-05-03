@@ -62,6 +62,8 @@ typedef struct glw_prop_sub {
   int gps_line;
 #endif
 
+  prop_t *gps_originating_prop;
+
 } glw_prop_sub_t;
 
 
@@ -87,8 +89,11 @@ glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l)
     if(gps->gps_cloner_body != NULL)
       glw_model_token_free(gps->gps_cloner_body);
     
-
     LIST_REMOVE(gps, gps_link);
+
+    if(gps->gps_originating_prop)
+      prop_ref_dec(gps->gps_originating_prop);
+
     free(gps);
   }
 }
@@ -437,7 +442,8 @@ eval_array(glw_model_eval_context_t *pec, token_t *t0)
 
   memset(&ec, 0, sizeof(ec));
   ec.ei = pec->ei;
-  ec.prop = pec->prop;
+  ec.prop0 = pec->prop0;
+  ec.prop_parent = pec->prop_parent;
   ec.rpn = pec->rpn;
   ec.gr = pec->gr;
   ec.passive_subscriptions = pec->passive_subscriptions;
@@ -550,7 +556,8 @@ eval_assign(glw_model_eval_context_t *ec, struct token *self)
 
     ui = ec->w ? ec->w->glw_root->gr_uii.uii_prop : NULL;
     p = prop_get_by_name(propname, 0, 
-			 PROP_TAG_NAMED_ROOT, ec->prop, "self",
+			 PROP_TAG_NAMED_ROOT, ec->prop0, "self",
+			 PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
 			 PROP_TAG_ROOT, ui,
 			 NULL);
 
@@ -685,7 +692,7 @@ cloner_find_child(prop_t *p, glw_t *parent)
  *
  */
 static void
-cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
+cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before, 
 		  glw_t *parent, errorinfo_t *ei, int flags)
 {
   token_t *body;
@@ -697,14 +704,15 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
   b = before ? cloner_find_child(before, parent) : NULL;
 
   memset(&n, 0, sizeof(n));
-  n.prop = p;
+  n.prop0 = p;
+  n.prop_parent = gps->gps_originating_prop;
   n.ei = ei;
   n.gr = parent->glw_root;
 
   n.w = glw_create_i(parent->glw_root,
 		     gps->gps_cloner_class,
 		     GLW_ATTRIB_PARENT_BEFORE, parent, b,
-		     GLW_ATTRIB_PROPROOT, p,
+		     GLW_ATTRIB_PROPROOTS, p, gps->gps_originating_prop,
 		     GLW_ATTRIB_ORIGINATING_PROP, p,
 		     NULL);
 
@@ -729,7 +737,6 @@ cloner_add_child(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
 		 glw_t *parent, errorinfo_t *ei, int flags)
 {
   glw_prop_sub_pending_t *gpsp;
-
 
   if(gps->gps_cloner_body == NULL) {
 
@@ -962,6 +969,10 @@ subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
 
   gps = calloc(1, sizeof(glw_prop_sub_t));
 
+  gps->gps_originating_prop = ec->prop0;
+  if(ec->prop0 != NULL)
+    prop_ref_inc(ec->prop0);
+
   TAILQ_INIT(&gps->gps_pending);
 
 #ifdef GLW_MODEL_ERRORINFO
@@ -973,14 +984,20 @@ subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
 		     PROP_TAG_CALLBACK, prop_callback, gps,
 		     PROP_TAG_NAME_VECTOR, propname,
 		     PROP_TAG_COURIER, w->glw_root->gr_courier,
-		     PROP_TAG_NAMED_ROOT, ec->prop, "self",
+		     PROP_TAG_NAMED_ROOT, ec->prop0, "self",
+		     PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
 		     PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
 		     NULL);
 
   if(s == NULL) {
+
+    if(ec->prop0 != NULL)
+      prop_ref_dec(ec->prop0);
+
     refstr_unref(gps->gps_file);
     free(gps);
-    return glw_model_seterr(ec->ei, self, "Property does not exist");
+    return glw_model_seterr(ec->ei, self, "Property does not exist %p",
+			    ec->prop_parent);
   }
 
   gps->gps_sub = s;
@@ -1112,7 +1129,8 @@ glw_model_eval_rpn(token_t *t, glw_model_eval_context_t *pec, int *copyp)
 
   memset(&ec, 0, sizeof(ec));
   ec.ei = pec->ei;
-  ec.prop = pec->prop;
+  ec.prop0 = pec->prop0;
+  ec.prop_parent = pec->prop_parent;
   ec.w = pec->w;
   ec.rpn = t;
   ec.gr = pec->gr;
@@ -1243,13 +1261,14 @@ glwf_widget(glw_model_eval_context_t *ec, struct token *self,
     return glw_model_seterr(ec->ei, self, "widget: Invalid class");
 
   memset(&n, 0, sizeof(n));
-  n.prop = ec->prop;
+  n.prop0 = ec->prop0;
+  n.prop_parent = ec->prop_parent;
   n.ei = ec->ei;
   n.gr = ec->gr;
   n.w = glw_create_i(ec->gr,
 		     c,
 		     GLW_ATTRIB_PARENT, ec->w,
-		     GLW_ATTRIB_PROPROOT, ec->prop,
+		     GLW_ATTRIB_PROPROOTS, ec->prop0, ec->prop_parent,
 		     NULL);
   
   n.sublist = &n.w->glw_prop_subscriptions;
@@ -1392,7 +1411,8 @@ glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   LIST_INIT(&l);
 
   memset(&n, 0, sizeof(n));
-  n.prop = b->prop;
+  n.prop0 = b->prop;
+  n.prop_parent = NULL;
   n.ei = NULL;
   n.gr = w->glw_root;
   n.w = w;
@@ -1434,7 +1454,7 @@ glw_event_map_eval_block_create(glw_model_eval_context_t *ec,
   glw_event_map_eval_block_t *b = malloc(sizeof(glw_event_map_eval_block_t));
 
   b->block = glw_model_clone_chain(block);
-  b->prop = ec->prop;
+  b->prop = ec->prop0;
 
   if(b->prop)
     prop_ref_inc(b->prop);
@@ -2107,7 +2127,8 @@ glwf_createchild(glw_model_eval_context_t *ec, struct token *self,
   r = ec->w ? ec->w->glw_root->gr_uii.uii_prop : NULL;
 
   p = prop_get_by_name(propname, 1, 
-		       PROP_TAG_NAMED_ROOT, ec->prop, "self",
+		       PROP_TAG_NAMED_ROOT, ec->prop0, "self",
+		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
 		       PROP_TAG_ROOT, r,
 		       NULL);
 
@@ -2290,7 +2311,7 @@ glwf_bind(glw_model_eval_context_t *ec, struct token *self,
       propname[i++]  = t->t_string;
     propname[i] = NULL;
 
-    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY, ec->prop, propname, NULL);
+    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY, ec->prop0, propname, NULL);
 
   } else if(a != NULL && a->type == TOKEN_STRING) {
     glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_ID, a->t_string, NULL);

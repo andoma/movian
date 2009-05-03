@@ -118,7 +118,7 @@ typedef enum {
   GLW_ATTRIB_INT_STEP,
   GLW_ATTRIB_INT_MIN,
   GLW_ATTRIB_INT_MAX,
-  GLW_ATTRIB_PROPROOT,
+  GLW_ATTRIB_PROPROOTS,
   GLW_ATTRIB_TRANSITION_EFFECT,
   GLW_ATTRIB_EXPANSION,
   GLW_ATTRIB_BIND_TO_PROPERTY,
@@ -518,7 +518,7 @@ void glw_clip_disable(glw_rctx_t *rc, int which);
  */
 glw_t *glw_model_create(glw_root_t *gr, const char *src, 
 			glw_t *parent, int flags,
-			struct prop *prop);
+			struct prop *prop, struct prop *prop_parent);
 
 #define GLW_MODEL_CACHE 0x1
 
@@ -569,6 +569,7 @@ do {						\
     break;                                      \
   case GLW_ATTRIB_PARENT_BEFORE:		\
   case GLW_ATTRIB_BIND_TO_PROPERTY:		\
+  case GLW_ATTRIB_PROPROOTS:         		\
     (void)va_arg(ap, void *);			\
   case GLW_ATTRIB_PARENT:			\
   case GLW_ATTRIB_PARENT_HEAD:			\
@@ -577,7 +578,6 @@ do {						\
   case GLW_ATTRIB_PREVIEW:			\
   case GLW_ATTRIB_CONTENT:			\
   case GLW_ATTRIB_ID:         			\
-  case GLW_ATTRIB_PROPROOT:         		\
   case GLW_ATTRIB_BIND_TO_ID: 			\
   case GLW_ATTRIB_PIXMAP: 			\
   case GLW_ATTRIB_ORIGINATING_PROP: 		\

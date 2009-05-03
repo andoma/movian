@@ -23,6 +23,7 @@ typedef struct glw_animator {
   glw_t w;
   
   struct prop *prop;
+  struct prop *prop_parent;
 
   float delta;
 

@@ -151,7 +151,8 @@ glw_init(glw_root_t *gr, int fontsize, const char *theme, ui_t *ui)
   glw_check_system_features(gr);
 
   gr->gr_universe = glw_model_create(gr,
-				     "theme://universe.model", NULL, 0, NULL);
+				     "theme://universe.model", NULL, 0, NULL,
+				     NULL);
 
   glw_set_i(gr->gr_universe,
 	    GLW_ATTRIB_SIGNAL_HANDLER, top_event_handler, gr, 1000,

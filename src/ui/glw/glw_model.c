@@ -54,8 +54,8 @@ glw_model_error(glw_root_t *gr, errorinfo_t *ei, glw_t *parent)
  *
  */
 static glw_t *
-glw_model_create2(glw_root_t *gr, token_t *sof, const char *src, glw_t *parent,
-		  prop_t *prop, int flags)
+glw_model_create2(glw_root_t *gr, token_t *sof, const char *src,
+		  glw_t *parent, prop_t *prop, prop_t *prop_parent, int flags)
 {
   token_t *eof, *l;
   errorinfo_t ei;
@@ -86,7 +86,8 @@ glw_model_create2(glw_root_t *gr, token_t *sof, const char *src, glw_t *parent,
   ec.gr = gr;
   ec.w = r;
   ec.ei = &ei;
-  ec.prop = prop;
+  ec.prop0 = prop;
+  ec.prop_parent = prop_parent;
   ec.sublist = &ec.w->glw_prop_subscriptions;
 
   if(glw_model_eval_block(sof, &ec)) {
@@ -103,7 +104,7 @@ glw_model_create2(glw_root_t *gr, token_t *sof, const char *src, glw_t *parent,
  */
 glw_t *
 glw_model_create(glw_root_t *gr, const char *src,
-		 glw_t *parent, int flags, prop_t *prop)
+		 glw_t *parent, int flags, prop_t *prop, prop_t *prop_parent)
 {
   token_t *sof;
   glw_t *r;
@@ -112,7 +113,7 @@ glw_model_create(glw_root_t *gr, const char *src,
   sof->type = TOKEN_START;
   sof->file = refstr_create(src);
 
-  r = glw_model_create2(gr, sof, src, parent, prop, flags);
+  r = glw_model_create2(gr, sof, src, parent, prop, prop_parent, flags);
 
   glw_model_free_chain(sof);
   return r;

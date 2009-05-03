@@ -136,8 +136,9 @@ glw_animator_ctor(glw_t *w, int init, va_list ap)
     case GLW_ATTRIB_SOURCE:
       filename = va_arg(ap, char *);
       break;
-    case GLW_ATTRIB_PROPROOT:
+    case GLW_ATTRIB_PROPROOTS:
       a->prop = va_arg(ap, void *);
+      a->prop_parent = va_arg(ap, void *);
       /* REFcount ?? */
       break;
 
@@ -150,7 +151,8 @@ glw_animator_ctor(glw_t *w, int init, va_list ap)
   if(filename != NULL) {
 
     if(*filename) 
-	glw_model_create(w->glw_root, filename, w, 0, a->prop);
+	glw_model_create(w->glw_root, filename, w, 0, 
+			 a->prop, a->prop_parent);
     else {
       /* Fade out all */
       TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)

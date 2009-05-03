@@ -1257,13 +1257,15 @@ glw_video_ctor(glw_t *w, int init, va_list ap)
       filename = va_arg(ap, char *);
       break;
 
-    case GLW_ATTRIB_PROPROOT:
+    case GLW_ATTRIB_PROPROOTS:
       p = va_arg(ap, void *);
 
       p2 = prop_create(p, "video");
       pm = prop_create(p2, "metadata");
       
       prop_link(gv->gv_mp->mp_prop_root, pm);
+      
+      p = va_arg(ap, void *); // Parent, just throw it away
       break;
 
     default:

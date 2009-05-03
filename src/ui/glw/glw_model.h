@@ -193,7 +193,7 @@ typedef struct glw_model_eval_context {
   errorinfo_t *ei;
   token_t *alloc;
   struct glw *w;
-  struct prop *prop;
+  struct prop *prop0, *prop_parent;
   struct glw_root *gr;
   
   int dynamic_eval;
