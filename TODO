@@ -1,7 +1,5 @@
 3.0 MUST:
 
-* Decent fullscreen support
-
 * Per video playback settings
 
 * Per video display settings
@@ -9,6 +7,13 @@
 * Slideshow
 
 * Read master volume on startup
+
+* Fix play/pause in spotify
+
+* Add support for submitting parent URLs to give playqueue a decent context
+
+* Clicking on a button with the mouse should not give the button
+  retaining focus
 
 --- 
 
