@@ -1218,7 +1218,7 @@ static struct strtab classtab[] = {
  */
 static int 
 glwf_widget(glw_model_eval_context_t *ec, struct token *self,
-	    token_t **argv, int argc)
+	    token_t **argv, unsigned int argc)
 {
   int c;
   glw_model_eval_context_t n;
@@ -1266,7 +1266,7 @@ glwf_widget(glw_model_eval_context_t *ec, struct token *self,
  */
 static int 
 glwf_cloner(glw_model_eval_context_t *ec, struct token *self,
-	    token_t **argv, int argc)
+	    token_t **argv, unsigned int argc)
 {
   token_t *a = argv[0];
   token_t *b = argv[1];
@@ -1341,7 +1341,7 @@ glwf_cloner(glw_model_eval_context_t *ec, struct token *self,
  */
 static int 
 glwf_space(glw_model_eval_context_t *ec, struct token *self,
-	   token_t **argv, int argc)
+	   token_t **argv, unsigned int argc)
 
 {
   token_t *a = argv[0];
@@ -1451,7 +1451,7 @@ glw_event_map_eval_block_create(glw_model_eval_context_t *ec,
  */
 static int 
 glwf_onEvent(glw_model_eval_context_t *ec, struct token *self,
-	     token_t **argv, int argc)
+	     token_t **argv, unsigned int argc)
 
 {
   token_t *a = argv[0];  /* Source */
@@ -1500,7 +1500,7 @@ glwf_onEvent(glw_model_eval_context_t *ec, struct token *self,
  */
 static int 
 glwf_genericEvent(glw_model_eval_context_t *ec, struct token *self,
-		  token_t **argv, int argc)
+		  token_t **argv, unsigned int argc)
 {
   token_t *a = argv[0];       /* Target name */
   token_t *b = argv[1];       /* Method */
@@ -1545,7 +1545,7 @@ glwf_genericEvent(glw_model_eval_context_t *ec, struct token *self,
  */
 static int 
 glwf_internalEvent(glw_model_eval_context_t *ec, struct token *self,
-		   token_t **argv, int argc)
+		   token_t **argv, unsigned int argc)
 {
   token_t *a = argv[0];       /* Target name */
   token_t *b = argv[1];       /* Event */
@@ -1592,7 +1592,7 @@ typedef struct glwf_changed_extra {
  */
 static int 
 glwf_changed(glw_model_eval_context_t *ec, struct token *self,
-	     token_t **argv, int argc)
+	     token_t **argv, unsigned int argc)
 
 {
   token_t *a, *b, *c, *r;
@@ -1719,7 +1719,7 @@ glwf_changed_dtor(struct token *self)
  */
 static int 
 glwf_iir(glw_model_eval_context_t *ec, struct token *self,
-	 token_t **argv, int argc)
+	 token_t **argv, unsigned int argc)
 {
   token_t *a = argv[0];
   token_t *b = argv[1];
@@ -1765,7 +1765,7 @@ glwf_iir(glw_model_eval_context_t *ec, struct token *self,
  */
 static int 
 glwf_float2str(glw_model_eval_context_t *ec, struct token *self,
-	       token_t **argv, int argc)
+	       token_t **argv, unsigned int argc)
 {
   token_t *a = argv[0];
   token_t *b = argv[1];
@@ -1813,7 +1813,7 @@ glwf_float2str(glw_model_eval_context_t *ec, struct token *self,
  */
 static int 
 glwf_int2str(glw_model_eval_context_t *ec, struct token *self,
-	     token_t **argv, int argc)
+	     token_t **argv, unsigned int argc)
 {
   token_t *a = argv[0];
   token_t *r;
@@ -1864,7 +1864,7 @@ token_cmp(token_t *a, token_t *b)
  */
 static int 
 glwf_translate(glw_model_eval_context_t *ec, struct token *self,
-	       token_t **argv, int argc)
+	       token_t **argv, unsigned int argc)
 
 {
   token_t *idx, *def, *k, *v;
@@ -1907,7 +1907,7 @@ glwf_translate(glw_model_eval_context_t *ec, struct token *self,
  */
 static int 
 glwf_strftime(glw_model_eval_context_t *ec, struct token *self,
-	       token_t **argv, int argc)
+	       token_t **argv, unsigned int argc)
 {
   token_t *a = argv[0]; // format
   token_t *b = argv[1];  // unixtime
@@ -1948,7 +1948,7 @@ glwf_strftime(glw_model_eval_context_t *ec, struct token *self,
  */
 static int 
 glwf_isset(glw_model_eval_context_t *ec, struct token *self,
-	   token_t **argv, int argc)
+	   token_t **argv, unsigned int argc)
 {
   token_t *a = argv[0];
   token_t *r;
@@ -1989,7 +1989,7 @@ glwf_isset(glw_model_eval_context_t *ec, struct token *self,
  */
 static int 
 glwf_time(glw_model_eval_context_t *ec, struct token *self,
-	   token_t **argv, int argc)
+	   token_t **argv, unsigned int argc)
 {
   token_t *r;
   time_t now;
@@ -2010,7 +2010,7 @@ glwf_time(glw_model_eval_context_t *ec, struct token *self,
  */
 static int 
 glwf_value2duration(glw_model_eval_context_t *ec, struct token *self,
-		    token_t **argv, int argc)
+		    token_t **argv, unsigned int argc)
 {
   token_t *a = argv[0];
   token_t *r;
@@ -2065,7 +2065,7 @@ glwf_value2duration(glw_model_eval_context_t *ec, struct token *self,
  */
 static int 
 glwf_createchild(glw_model_eval_context_t *ec, struct token *self,
-		 token_t **argv, int argc)
+		 token_t **argv, unsigned int argc)
 {
   token_t *a = argv[0];
   token_t *t;
@@ -2096,7 +2096,7 @@ glwf_createchild(glw_model_eval_context_t *ec, struct token *self,
  */
 static int 
 glwf_delete(glw_model_eval_context_t *ec, struct token *self,
-	    token_t **argv, int argc)
+	    token_t **argv, unsigned int argc)
 {
   token_t *a = argv[0];
 
@@ -2119,7 +2119,7 @@ glwf_delete(glw_model_eval_context_t *ec, struct token *self,
  */
 static int 
 glwf_isFocused(glw_model_eval_context_t *ec, struct token *self,
-	       token_t **argv, int argc)
+	       token_t **argv, unsigned int argc)
 {
   token_t *r;
 
@@ -2137,7 +2137,7 @@ glwf_isFocused(glw_model_eval_context_t *ec, struct token *self,
  */
 static int 
 glwf_isHovered(glw_model_eval_context_t *ec, struct token *self,
-	       token_t **argv, int argc)
+	       token_t **argv, unsigned int argc)
 {
   token_t *r;
 
@@ -2157,7 +2157,7 @@ glwf_isHovered(glw_model_eval_context_t *ec, struct token *self,
  */
 static int 
 glwf_devoidify(glw_model_eval_context_t *ec, struct token *self,
-	       token_t **argv, int argc)
+	       token_t **argv, unsigned int argc)
 {
   token_t *a = argv[0];
   token_t *b = argv[1];
@@ -2183,7 +2183,7 @@ glwf_devoidify(glw_model_eval_context_t *ec, struct token *self,
  */
 static int 
 glwf_focusedChild(glw_model_eval_context_t *ec, struct token *self,
-		  token_t **argv, int argc)
+		  token_t **argv, unsigned int argc)
 {
   glw_t *w = ec->w, *c;
   token_t *r;
@@ -2215,7 +2215,7 @@ glwf_focusedChild(glw_model_eval_context_t *ec, struct token *self,
  */
 static int 
 glwf_getCaption(glw_model_eval_context_t *ec, struct token *self,
-		  token_t **argv, int argc)
+		  token_t **argv, unsigned int argc)
 {
   token_t *a = argv[0];
   token_t *r;
@@ -2248,7 +2248,7 @@ glwf_getCaption(glw_model_eval_context_t *ec, struct token *self,
  */
 static int 
 glwf_bind(glw_model_eval_context_t *ec, struct token *self,
-		  token_t **argv, int argc)
+		  token_t **argv, unsigned int argc)
 {
   token_t *a = argv[0];
   token_t *t;

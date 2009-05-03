@@ -220,7 +220,7 @@ typedef struct token_func {
   const char *name;
   int nargs;
   int (*cb)(glw_model_eval_context_t *ec, struct token *self, 
-	    struct token **argv, int argc);
+	    struct token **argv, unsigned int argc);
   void (*ctor)(struct token *self);
   void (*dtor)(struct token *self);
 } token_func_t;
