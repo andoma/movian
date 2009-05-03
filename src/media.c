@@ -698,6 +698,7 @@ mp_set_primary(media_pipe_t *mp)
   mp_enqueue_event(mp, event_create_simple(EVENT_MP_IS_PRIMARY));
 
   prop_select(mp->mp_prop_root, 0);
+  prop_link(mp->mp_prop_root, media_prop_current);
 }
 
 
@@ -762,6 +763,8 @@ mp_shutdown(struct media_pipe *mp)
       LIST_REMOVE(mp, mp_stack_link);
       mp->mp_flags &= ~MP_ON_STACK;
       mp_set_primary(mp);
+    } else {
+      prop_unlink(mp->mp_prop_root);
     }
 
   } else {
