@@ -503,39 +503,6 @@ playqueue_advance(playqueue_entry_t *pqe, int prev)
 }
 
 
-
-
-
-/**
- *
- */
-static int
-pqe_event_handler(event_t *e, void *opaque)
-{
-  
-  switch(e->e_type) {
-
-  case EVENT_SEEK_FAST_BACKWARD:
-  case EVENT_SEEK_BACKWARD:
-  case EVENT_SEEK_FAST_FORWARD:
-  case EVENT_SEEK_FORWARD:
-  case EVENT_PLAYPAUSE:
-  case EVENT_PLAY:
-  case EVENT_PAUSE:
-  case EVENT_STOP:
-  case EVENT_PREV:
-  case EVENT_NEXT:
-  case EVENT_RESTART_TRACK:
-    break;
-  default:
-    return 0;
-  }
-
-  mp_enqueue_event(playqueue_mp, e);
-  return 1;
-}
-
-
 /**
  * Thread for actual playback
  */
@@ -546,7 +513,6 @@ player_thread(void *aux)
   playqueue_entry_t *pqe = NULL;
   playqueue_event_t *pe;
   event_t *e;
-  void *eh;
   char errbuf[100];
 
   while(1) {
@@ -576,11 +542,8 @@ player_thread(void *aux)
     }
 
     prop_link(pqe->pqe_metadata, mp->mp_prop_metadata);
-    eh = event_handler_register("playqueue", pqe_event_handler,
-				EVENTPRI_MEDIACONTROLS_PLAYQUEUE, NULL);
 
     e = nav_play_audio(pqe->pqe_url, mp, errbuf, sizeof(errbuf));
-    event_handler_unregister(eh);
     
     if(e == NULL) {
       notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nPlayqueue error:%s",

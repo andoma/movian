@@ -39,6 +39,8 @@ media_pipe_t *media_primary;
 
 static void seek_by_propchange(struct prop_sub *sub, prop_event_t event, ...);
 
+static int media_event_handler(event_t *e, void *opaque);
+
 
 /**
  *
@@ -53,6 +55,8 @@ media_init(void)
   media_prop_root    = prop_create(prop_get_global(), "media");
   media_prop_sources = prop_create(media_prop_root, "sources");
   media_prop_current = prop_create(media_prop_root, "current");
+  event_handler_register("currentmedia", media_event_handler,
+			 EVENTPRI_CURRENT_MEDIA, NULL);
 }
 
 
@@ -929,3 +933,34 @@ mp_set_current_time(media_pipe_t *mp, int64_t pts)
   prop_set_float_ex(mp->mp_prop_currenttime, mp->mp_sub_currenttime, d);
 }
 
+
+/**
+ *
+ */
+static int
+media_event_handler(event_t *e, void *opaque)
+{
+  if(media_primary == NULL)
+    return 0;
+  
+  switch(e->e_type) {
+
+  case EVENT_SEEK_FAST_BACKWARD:
+  case EVENT_SEEK_BACKWARD:
+  case EVENT_SEEK_FAST_FORWARD:
+  case EVENT_SEEK_FORWARD:
+  case EVENT_PLAYPAUSE:
+  case EVENT_PLAY:
+  case EVENT_PAUSE:
+  case EVENT_STOP:
+  case EVENT_PREV:
+  case EVENT_NEXT:
+  case EVENT_RESTART_TRACK:
+    break;
+  default:
+    return 0;
+  }
+
+  mp_enqueue_event(media_primary, e);
+  return 1;
+}
