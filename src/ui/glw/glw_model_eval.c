@@ -383,6 +383,46 @@ eval_bool_op(glw_model_eval_context_t *ec, struct token *self)
  *
  */
 static int
+eval_eq(glw_model_eval_context_t *ec, struct token *self, int neq)
+{
+  token_t *b = eval_pop(ec), *a = eval_pop(ec), *r;
+  int rr;
+
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+  if((b = token_resolve(ec, b)) == NULL)
+    return -1;
+
+  if(a->type != b->type) {
+    rr = 0;
+  } else {
+
+    switch(a->type) {
+    case TOKEN_INT:
+      rr = a->t_int == b->t_int;
+      break;
+    case TOKEN_FLOAT:
+      rr = a->t_float == b->t_float;
+      break;
+    case TOKEN_STRING:
+      rr = !strcmp(a->t_string, b->t_string);
+      break;
+    default:
+      rr = 0;
+    }
+  }
+
+  r = eval_alloc(self, ec, TOKEN_INT);
+  r->t_int = rr ^ neq;
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
 eval_array(glw_model_eval_context_t *pec, token_t *t0)
 {
   token_t *t, *out = NULL;
@@ -1032,6 +1072,12 @@ glw_model_eval_rpn0(token_t *t0, glw_model_eval_context_t *ec)
 	return -1;
       break;
 	
+    case TOKEN_EQ:
+    case TOKEN_NEQ:
+      if(eval_eq(ec, t, t->type == TOKEN_NEQ))
+	return -1;
+      break;
+
     case TOKEN_FUNCTION:
 #if 0
       printf("Invoking %s with %d arguments\n",

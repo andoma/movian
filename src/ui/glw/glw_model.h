@@ -74,6 +74,8 @@ typedef enum {
   TOKEN_BOOLEAN_AND,           // &&
   TOKEN_BOOLEAN_OR,            // ||
   TOKEN_BOOLEAN_XOR,           // ^^
+  TOKEN_EQ,                    // ==
+  TOKEN_NEQ,                   // !=
   TOKEN_STRING,                // A quoted string: " ... "
   TOKEN_FLOAT,
   TOKEN_INT,
