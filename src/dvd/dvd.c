@@ -134,8 +134,12 @@ typedef struct dvd_player {
 
   uint32_t dp_end_ptm;  /* end ptm from last nav packet */
 
+  int dp_hold;
+  int dp_lost_focus;
+
 } dvd_player_t;
 
+#define dvd_in_menu(dp) ((dp)->dp_pci.hli.hl_gi.hli_ss)
 
 static event_t *dvd_process_event(dvd_player_t *dp, event_t *e);
 
@@ -623,11 +627,49 @@ static event_t *
 dvd_process_event(dvd_player_t *dp, event_t *e)
 {
   pci_t *pci = &dp->dp_pci;
+  media_pipe_t *mp = dp->dp_mp;
 
   switch(e->e_type) {
   case EVENT_EXIT:
   case EVENT_PLAY_URL:
     return e;
+
+  case EVENT_PLAYPAUSE:
+  case EVENT_PLAY:
+  case EVENT_PAUSE:
+    if(dvd_in_menu(dp))
+      break;
+
+    mp_become_primary(mp);
+    dp->dp_hold = mp_update_hold_by_event(dp->dp_hold, e->e_type);
+    mp_send_cmd_head(mp, &mp->mp_video, 
+		     dp->dp_hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
+    mp_send_cmd_head(mp, &mp->mp_audio, 
+		     dp->dp_hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
+    dp->dp_lost_focus = 0;
+    break;
+
+  case EVENT_MP_NO_LONGER_PRIMARY:
+    if(dvd_in_menu(dp))
+      break;
+
+    dp->dp_hold = 1;
+    dp->dp_lost_focus = 1;
+    mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PAUSE);
+    mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PAUSE);
+    break;
+
+  case EVENT_MP_IS_PRIMARY:
+    if(dvd_in_menu(dp))
+      break;
+
+    if(dp->dp_lost_focus) {
+      dp->dp_hold = 0;
+      dp->dp_lost_focus = 0;
+      mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PLAY);
+      mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PLAY);
+    }
+    break;
 
   case EVENT_ENTER:
     dvdnav_button_activate(dp->dp_dvdnav, pci);
