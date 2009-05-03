@@ -12,12 +12,6 @@ widget(backdrop, {
 	  
 
     widget(container_x, {
-      /*
-      ACTION_ICON("theme://icons/rew.png",
-		  genericEvent(navigator, back, void));
-      ACTION_ICON("theme://icons/play.png",
-		  genericEvent(navigator, back, void));
-      */    
       widget(slider_x, {
 	.focusable = 0.2;
 	.debug = true;
@@ -30,10 +24,6 @@ widget(backdrop, {
 	  });
 	});
       });
-      /*
-      ACTION_ICON("theme://icons/fwd.png",
-		  genericEvent(navigator, back, void));
-      */
     });
   });
 });

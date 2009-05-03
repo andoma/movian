@@ -22,6 +22,20 @@
 #include "glw_event.h"
 
 
+/**
+ *
+ */
+static void
+event_bubble(glw_t *w, event_t *e)
+{
+  while(w != NULL) {
+    if(glw_signal0(w, GLW_SIGNAL_EVENT_BUBBLE, e))
+      return; /* Taker gets our refcount */
+    w = w->glw_parent;
+  }
+  event_unref(e); /* Nobody took it */
+}
+
 
 typedef struct glw_event_navOpen {
   glw_event_map_t map;
@@ -60,14 +74,7 @@ glw_event_map_navOpen_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   event_t *e = event_create_openurl(no->url, no->type, no->parent);
   
   e->e_mapped = 1;
-
-  while(w != NULL) {
-    if(glw_signal0(w, GLW_SIGNAL_EVENT_BUBBLE, e))
-      return; /* Taker gets our refcount */
-    w = w->glw_parent;
-  }
-
-  event_unref(e); /* Nobody took it */
+  event_bubble(w, e);
 }
 
 
@@ -197,18 +204,25 @@ static void
 glw_event_map_internal_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
 {
   glw_event_internal_t *g = (glw_event_internal_t *)gem;
-  glw_t *t = glw_event_find_target(w, g->target);
+  glw_t *t;
   event_t *e;
 
-  if(t == NULL) {
-    fprintf(stderr, "%s widget not found\n", g->target);
-    return;
-  }
   e = event_create_simple(g->event);
   e->e_mapped = 1;
 
-  glw_signal0(t, GLW_SIGNAL_EVENT, e);
-  event_unref(e);
+  if(g->target != NULL) {
+
+    if((t = glw_event_find_target(w, g->target)) == NULL) {
+      TRACE(TRACE_ERROR, "GLW", "Targeted widget %s not found\n", g->target);
+      event_unref(e);
+      return;
+    }
+
+    glw_signal0(t, GLW_SIGNAL_EVENT, e);
+    event_unref(e);
+  } else {
+    event_bubble(w, e);
+  }
 }
 
 
@@ -221,14 +235,13 @@ glw_event_map_internal_create(const char *target, event_type_t event)
 {
   glw_event_internal_t *g = malloc(sizeof(glw_event_internal_t));
   
-  g->target = strdup(target);
+  g->target = target ? strdup(target) : NULL;
   g->event  = event;
 
   g->map.gem_dtor = glw_event_map_internal_dtor;
   g->map.gem_fire = glw_event_map_internal_fire;
   return &g->map;
 }
-
 
 
 /**

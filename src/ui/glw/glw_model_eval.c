@@ -1572,6 +1572,29 @@ glwf_targetedEvent(glw_model_eval_context_t *ec, struct token *self,
 }
 
 
+/**
+ *
+ */
+static int 
+glwf_event(glw_model_eval_context_t *ec, struct token *self,
+	   token_t **argv, unsigned int argc)
+{
+  token_t *a, *r;
+  int dstevent;
+
+  a = argv[0];
+
+  if(a->type != TOKEN_IDENTIFIER ||
+     (dstevent = event_str2code(a->t_string )) < 0)
+    return glw_model_seterr(ec->ei, a, "event(): Invalid target event");
+  
+  r = eval_alloc(self, ec, TOKEN_EVENT);
+  r->t_gem = glw_event_map_internal_create(NULL, dstevent);
+  eval_push(ec, r);
+  return 0;
+}
+
+
 
 typedef struct glwf_changed_extra {
 
@@ -2289,6 +2312,7 @@ static const token_func_t funcvec[] = {
   {"onEvent", 2, glwf_onEvent},
   {"navOpen", -1, glwf_navOpen},
   {"targetedEvent", 2, glwf_targetedEvent},
+  {"event", 1, glwf_event},
   {"changed", -1, glwf_changed, glwf_changed_ctor, glwf_changed_dtor},
   {"iir", 2, glwf_iir},
   {"float2str", 2, glwf_float2str},

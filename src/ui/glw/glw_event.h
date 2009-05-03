@@ -65,4 +65,10 @@ glw_event_map_t *glw_event_map_navOpen_create(const char *url,
 glw_event_map_t *glw_event_map_internal_create(const char *target,
 					       event_type_t event);
 
+
+/**
+ *
+ */
+glw_event_map_t *glw_event_map_generic_create(event_type_t event);
+
 #endif /* GLW_EVENT_H__ */
