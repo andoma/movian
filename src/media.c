@@ -753,6 +753,8 @@ mp_shutdown(struct media_pipe *mp)
   if(media_primary == mp) {
     /* We were primary */
 
+    prop_unlink(mp->mp_prop_root);
+
     media_primary = NULL;
     mp_ref_dec(mp); // mp could be free'd here */
 
@@ -763,8 +765,6 @@ mp_shutdown(struct media_pipe *mp)
       LIST_REMOVE(mp, mp_stack_link);
       mp->mp_flags &= ~MP_ON_STACK;
       mp_set_primary(mp);
-    } else {
-      prop_unlink(mp->mp_prop_root);
     }
 
   } else {
