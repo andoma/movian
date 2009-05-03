@@ -273,22 +273,6 @@ event_post_simple(event_type_t type)
 
 
 /**
- * Destroy a sys signal
- */
-void
-event_generic_dtor(event_t *e)
-{
-  event_generic_t *g = (void *)e;
-  free(g->target);
-  free(g->method);
-  free(g->argument);
-  free(g);
-}
-
-
-
-
-/**
  *
  */
 
@@ -353,4 +337,34 @@ event_create_url(event_type_t et, const char *url)
   event_t *e = event_create(et, sizeof(event_t) + l);
   memcpy(e->e_payload, url, l);
   return e;
+}
+
+
+/**
+ *
+ */
+static void
+event_openurl2_dtor(event_t *e)
+{
+  event_openurl2_t *ou = (void *)e;
+  free(ou->url);
+  free(ou->type);
+  free(ou->parent);
+  free(ou);
+}
+
+
+/**
+ *
+ */
+event_t *
+event_create_openurl(const char *url, const char *type, const char *parent)
+{
+  event_openurl2_t *e = event_create(EVENT_OPENURL2, sizeof(event_openurl2_t));
+
+  e->url      = url    ? strdup(url)    : NULL;
+  e->type     = type   ? strdup(type)   : NULL;
+  e->parent   = parent ? strdup(parent) : NULL;
+  e->h.e_dtor = event_openurl2_dtor;
+  return &e->h;
 }

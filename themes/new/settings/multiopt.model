@@ -9,7 +9,7 @@ widget(container_x, {
     
   widget(backdrop, {
     BUTTON_PROPS(1.0);
-    onEvent(enter, internalEvent("choiceDeck", decr));
+    onEvent(enter, targetedEvent("choiceDeck", decr));
       
     widget(icon, {
       .source = "theme://icons/left.png";
@@ -28,7 +28,7 @@ widget(container_x, {
 
   widget(backdrop, {
     BUTTON_PROPS(1.0);
-    onEvent(enter, internalEvent("choiceDeck", incr));
+    onEvent(enter, targetedEvent("choiceDeck", incr));
     widget(icon, {
       .source = "theme://icons/right.png";
     });

@@ -40,7 +40,7 @@ widget(container_y, {
       .id = "list";
       cloner($page.nodes, backdrop, {
 	BUTTON_PROPS(1.0);
-	onEvent(enter, genericEvent(navigator, open, $self.url));
+	onEvent(enter, navOpen($self.url, $self.type));
     
 	widget(animator, {
 	  .time = 0.3;

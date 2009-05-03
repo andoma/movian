@@ -253,15 +253,8 @@ nav_page_create(const char *url, size_t allocsize,
 static int
 nav_input_event(event_t *e, void *opaque)
 {
-  event_generic_t *g;
-
   switch(e->e_type) {
-  case EVENT_GENERIC:
-    g = (event_generic_t *)e;
-    if(!strcmp(g->target, "navigator"))
-      break;
-    return 0;
-
+  case EVENT_OPENURL2:
   case EVENT_BACKSPACE:
   case EVENT_MAINMENU:
     break;
@@ -282,7 +275,7 @@ static void *
 navigator_thread(void *aux)
 {
   event_t *e;
-  event_generic_t *g;
+  event_openurl2_t *ou;
  
   while(1) {
     e = event_get(-1, &nav_eq);
@@ -303,14 +296,10 @@ navigator_thread(void *aux)
       nav_open0(e->e_payload);
       break;
 
-    case EVENT_GENERIC:
-      g = (event_generic_t *)e;
+    case EVENT_OPENURL2:
+      ou = (event_openurl2_t *)e;
     
-      if(!strcmp(g->method, "open"))
-	nav_open0(g->argument);
-      
-      if(!strcmp(g->method, "back"))
-	nav_back();
+      nav_open0(ou->url);
       break;
     }
 

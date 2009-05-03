@@ -23,14 +23,14 @@
 
 
 
-typedef struct glw_event_generic {
+typedef struct glw_event_navOpen {
   glw_event_map_t map;
 
-  char *target;
-  char *method;
-  char *argument;
+  char *url;
+  char *type;
+  char *parent;
 
-} glw_event_generic_t;
+} glw_event_navOpen_t;
 
 
 
@@ -38,13 +38,13 @@ typedef struct glw_event_generic {
  *
  */
 static void
-glw_event_map_generic_dtor(glw_event_map_t *gem)
+glw_event_map_navOpen_dtor(glw_event_map_t *gem)
 {
-  glw_event_generic_t *g = (glw_event_generic_t *)gem;
+  glw_event_navOpen_t *g = (glw_event_navOpen_t *)gem;
 
-  free(g->target);
-  free(g->method);
-  free(g->argument);
+  free(g->url);
+  free(g->type);
+  free(g->parent);
 
   free(g);
 }
@@ -53,19 +53,13 @@ glw_event_map_generic_dtor(glw_event_map_t *gem)
  *
  */
 static void
-glw_event_map_generic_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
+glw_event_map_navOpen_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
 {
-  glw_event_generic_t *g = (glw_event_generic_t *)gem;
-  event_generic_t *e;
+  glw_event_navOpen_t *no = (glw_event_navOpen_t *)gem;
 
-  e = event_create(EVENT_GENERIC, sizeof(event_generic_t));
-  e->h.e_dtor = event_generic_dtor;
-    
-  e->target   = strdup(g->target);
-  e->method   = strdup(g->method);
-  e->argument = strdup(g->argument);
+  event_t *e = event_create_openurl(no->url, no->type, no->parent);
   
-  e->h.e_mapped = 1;
+  e->e_mapped = 1;
 
   while(w != NULL) {
     if(glw_signal0(w, GLW_SIGNAL_EVENT_BUBBLE, e))
@@ -73,7 +67,7 @@ glw_event_map_generic_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
     w = w->glw_parent;
   }
 
-  event_unref(&e->h); /* Nobody took it */
+  event_unref(e); /* Nobody took it */
 }
 
 
@@ -81,19 +75,19 @@ glw_event_map_generic_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
  *
  */
 glw_event_map_t *
-glw_event_map_generic_create(const char *target, 
-			     const char *method,
-			     const char *argument)
+glw_event_map_navOpen_create(const char *url, 
+			     const char *type,
+			     const char *parent)
 {
-  glw_event_generic_t *g = malloc(sizeof(glw_event_generic_t));
+  glw_event_navOpen_t *no = malloc(sizeof(glw_event_navOpen_t));
   
-  g->target   = strdup(target);
-  g->method   = strdup(method);
-  g->argument = strdup(argument);
+  no->url      = url    ? strdup(url)    : NULL;
+  no->type     = type   ? strdup(type)   : NULL;
+  no->parent   = parent ? strdup(parent) : NULL;
 
-  g->map.gem_dtor = glw_event_map_generic_dtor;
-  g->map.gem_fire = glw_event_map_generic_fire;
-  return &g->map;
+  no->map.gem_dtor = glw_event_map_navOpen_dtor;
+  no->map.gem_fire = glw_event_map_navOpen_fire;
+  return &no->map;
 }
 
 

@@ -1,6 +1,6 @@
 widget(container_x, {
   .focusable = true;
-  onEvent(enter, genericEvent(navigator, open, $self.url));
+  onEvent(enter, navOpen($self.url, $self.type));
 
   widget(image, {
     .source = "theme://icons/dir.png";

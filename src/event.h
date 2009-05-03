@@ -75,7 +75,6 @@ typedef enum {
 
 
   EVENT_UNICODE,
-  EVENT_GENERIC,
   EVENT_KEYDESC,
   EVENT_AUDIO_CLOCK,
   EVENT_VIDEO_CLOCK,
@@ -91,6 +90,7 @@ typedef enum {
   EVENT_DVD_SELECT_BUTTON,
   EVENT_DVD_ACTIVATE_BUTTON,  /* "Press" button */
   EVENT_OPENURL,
+  EVENT_OPENURL2,
 
   EVENT_MP_NO_LONGER_PRIMARY,
   EVENT_MP_IS_PRIMARY,
@@ -137,12 +137,12 @@ typedef struct event_unicode {
 /**
  *
  */
-typedef struct event_generic {
+typedef struct event_openurl2 {
   event_t h;
-  char *target;
-  char *method;
-  char *argument;
-} event_generic_t;
+  char *url;
+  char *type;
+  char *parent;
+} event_openurl2_t;
 
 
 /**
@@ -173,6 +173,9 @@ void event_initqueue(event_queue_t *eq);
 void event_flushqueue(event_queue_t *eq);
 
 event_t *event_create_url(event_type_t et, const char *url);
+
+event_t *event_create_openurl(const char *url, const char *type,
+			      const char *parent);
 
 
 /**

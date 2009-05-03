@@ -6,7 +6,7 @@
 
   BUTTON_PROPS(1.0);
   
-  onEvent(enter, genericEvent(navigator, open, URL));
+  onEvent(enter, navOpen(URL));
 
   widget(container_y, {
     widget(image, {

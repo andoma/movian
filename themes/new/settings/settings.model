@@ -3,7 +3,7 @@
 widget(backdrop, {
   BUTTON_PROPS(1.0);
 
-  onEvent(enter, genericEvent(navigator, open, $self.url));
+  onEvent(enter, navOpen($self.url));
 
   widget(container_x, {
 

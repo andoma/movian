@@ -1499,42 +1499,42 @@ glwf_onEvent(glw_model_eval_context_t *ec, struct token *self,
  *
  */
 static int 
-glwf_genericEvent(glw_model_eval_context_t *ec, struct token *self,
-		  token_t **argv, unsigned int argc)
+glwf_navOpen(glw_model_eval_context_t *ec, struct token *self,
+	     token_t **argv, unsigned int argc)
 {
-  token_t *a = argv[0];       /* Target name */
-  token_t *b = argv[1];       /* Method */
-  token_t *c = argv[2];       /* Argument */
-  token_t *r;
-  const char *s;
+  token_t *a, *b = NULL, *c = NULL, *r;
 
-  if((c = token_resolve(ec, c)) == NULL)
+  if(argc < 1 || argc > 3) 
+    return glw_model_seterr(ec->ei, self, "navOpen(): "
+			    "Invalid number of arguments");
+
+  if((a = token_resolve(ec, argv[0])) == NULL)
     return -1;
 
-  if(a->type != TOKEN_IDENTIFIER)
-    return glw_model_seterr(ec->ei, a, "genericEvent: "
-			    "First argument is not an identifier");
-  
-  if(b->type != TOKEN_IDENTIFIER)
-    return glw_model_seterr(ec->ei, b, "genericEvent: "
-			    "Second argument is not an identifier");
-  
-  switch(c->type) {
-  case TOKEN_STRING:
-    s = c->t_string;
-    break;
+  if(argc > 1 && (b = token_resolve(ec, argv[1])) == NULL)
+    return -1;
 
-  case TOKEN_VOID:
-    s = "";
-    break;
+  if(argc > 2 && (c = token_resolve(ec, argv[2])) == NULL)
+    return -1;
 
-  default:
-    return glw_model_seterr(ec->ei, c, "genericEvent: "
-			    "Third argument is not a string");
-  }
+  if(a->type != TOKEN_STRING)
+    return glw_model_seterr(ec->ei, a, "navOpen(): "
+			    "First argument is not a string");
+  
+  if(b != NULL && b->type != TOKEN_STRING && b->type != TOKEN_VOID)
+    return glw_model_seterr(ec->ei, b, "navOpen(): "
+			    "Second argument is not a string or (void)");
+
+  if(c != NULL && c->type != TOKEN_STRING && c->type != TOKEN_VOID)
+    return glw_model_seterr(ec->ei, c, "navOpen(): "
+			    "Third argument is not a string or (void)");
 
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  r->t_gem = glw_event_map_generic_create(a->t_string, b->t_string, s);
+  r->t_gem = glw_event_map_navOpen_create(a->t_string, 
+					  b && b->type == TOKEN_STRING ?
+					  b->t_string : NULL,
+					  c && c->type == TOKEN_STRING ?
+					  c->t_string : NULL);
   eval_push(ec, r);
   return 0;
 }
@@ -1544,8 +1544,8 @@ glwf_genericEvent(glw_model_eval_context_t *ec, struct token *self,
  *
  */
 static int 
-glwf_internalEvent(glw_model_eval_context_t *ec, struct token *self,
-		   token_t **argv, unsigned int argc)
+glwf_targetedEvent(glw_model_eval_context_t *ec, struct token *self,
+	   token_t **argv, unsigned int argc)
 {
   token_t *a = argv[0];       /* Target name */
   token_t *b = argv[1];       /* Event */
@@ -1556,12 +1556,12 @@ glwf_internalEvent(glw_model_eval_context_t *ec, struct token *self,
     return -1;
 
   if(a->type != TOKEN_STRING)
-    return glw_model_seterr(ec->ei, a, "internalEvent: "
+    return glw_model_seterr(ec->ei, a, "event(): "
 			    "First argument is not a string");
   
   if(b->type != TOKEN_IDENTIFIER ||
      (dstevent = event_str2code(b->t_string )) < 0)
-    return glw_model_seterr(ec->ei, b, "internalEvent: "
+    return glw_model_seterr(ec->ei, b, "event(): "
 			    "Invalid target event");
   
   r = eval_alloc(self, ec, TOKEN_EVENT);
@@ -2281,8 +2281,8 @@ static const token_func_t funcvec[] = {
   {"cloner", 3, glwf_cloner},
   {"space", 1, glwf_space},
   {"onEvent", 2, glwf_onEvent},
-  {"genericEvent", 3, glwf_genericEvent},
-  {"internalEvent", 2, glwf_internalEvent},
+  {"navOpen", -1, glwf_navOpen},
+  {"targetedEvent", 2, glwf_targetedEvent},
   {"changed", -1, glwf_changed, glwf_changed_ctor, glwf_changed_dtor},
   {"iir", 2, glwf_iir},
   {"float2str", 2, glwf_float2str},
