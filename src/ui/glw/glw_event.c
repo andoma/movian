@@ -71,6 +71,9 @@ glw_event_map_navOpen_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
 {
   glw_event_navOpen_t *no = (glw_event_navOpen_t *)gem;
 
+  if(no->url == NULL)
+    return; // Must have an URL to fire
+
   event_t *e = event_create_openurl(no->url, no->type, no->parent);
   
   e->e_mapped = 1;
