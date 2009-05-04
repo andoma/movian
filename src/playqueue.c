@@ -430,8 +430,8 @@ playqueue_init(void)
  *
  */
 static int
-be_playqueue_open(const char *url0, nav_page_t **npp, 
-		  char *errbuf, size_t errlen)
+be_playqueue_open(const char *url0, const char *type0, const char *parent0,
+		  nav_page_t **npp, char *errbuf, size_t errlen)
 {
   nav_page_t *n;
   prop_t *type, *nodes;

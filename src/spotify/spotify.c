@@ -1520,7 +1520,8 @@ be_spotify_rootlist(const char *url, nav_page_t **npp,
  *
  */
 static int
-be_spotify_open(const char *url, nav_page_t **npp, char *errbuf, size_t errlen)
+be_spotify_open(const char *url, const char *type, const char *parent,
+		nav_page_t **npp, char *errbuf, size_t errlen)
 {
   spotify_uri_t su;
   nav_page_t *np;

@@ -373,7 +373,8 @@ file_open_file(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
  *
  */
 static int
-be_file_open(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
+be_file_open(const char *url0, const char *type0, const char *parent,
+	     nav_page_t **npp, char *errbuf, size_t errlen)
 {
   struct stat buf;
 

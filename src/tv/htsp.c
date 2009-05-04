@@ -691,7 +691,8 @@ htsp_open_channel(const char *url, nav_page_t **npp)
  *
  */
 static int
-be_htsp_open(const char *url, nav_page_t **npp, char *errbuf, size_t errlen)
+be_htsp_open(const char *url, const char *type, const char *parent,
+	     nav_page_t **npp, char *errbuf, size_t errlen)
 {
   htsp_connection_t *hc;
   htsp_page_t *hp;

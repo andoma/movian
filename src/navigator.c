@@ -129,7 +129,7 @@ nav_close(nav_page_t *np)
  *
  */
 static void
-nav_open0(const char *url)
+nav_open0(const char *url, const char *type, const char *parent)
 {
   nav_page_t *np, *np2;
   nav_backend_t *nb;
@@ -156,7 +156,7 @@ nav_open0(const char *url)
       return;
     }
 
-    if(nb->nb_open(url, &np, errbuf, sizeof(errbuf))) {
+    if(nb->nb_open(url, type, parent, &np, errbuf, sizeof(errbuf))) {
       notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nError: %s", url, errbuf);
       return;
     }
@@ -202,7 +202,7 @@ nav_open(const char *url, int flags)
   if(flags & NAV_OPEN_ASYNC)
     event_enqueue(&nav_eq, event_create_url(EVENT_OPENURL, url));
   else
-    nav_open0(url);
+    nav_open0(url, NULL, NULL);
 }
 
 
@@ -218,7 +218,7 @@ nav_back(void)
      (prev = TAILQ_PREV(np, nav_page_queue, np_history_link)) == NULL)
      return;
 
-  nav_open0(prev->np_url);
+  nav_open0(prev->np_url, NULL, NULL);
 
   if(!(np->np_flags & NAV_PAGE_DONT_CLOSE_ON_BACK))
     nav_close(np);
@@ -289,17 +289,17 @@ navigator_thread(void *aux)
       break;
 
     case EVENT_MAINMENU:
-      nav_open0("page://mainmenu");
+      nav_open0("page://mainmenu", NULL, NULL);
       break;
 
     case EVENT_OPENURL:
-      nav_open0(e->e_payload);
+      nav_open0(e->e_payload, NULL, NULL);
       break;
 
     case EVENT_OPENURL2:
       ou = (event_openurl2_t *)e;
-    
-      nav_open0(ou->url);
+
+      nav_open0(ou->url, ou->type, ou->parent);
       break;
     }
 
@@ -407,7 +407,8 @@ be_page_canhandle(const char *url)
  *
  */
 static int
-be_page_open(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
+be_page_open(const char *url0, const char *type, const char *parent,
+	     nav_page_t **npp, char *errbuf, size_t errlen)
 {
   nav_page_t *n = nav_page_create(url0, sizeof(nav_page_t), NULL, 0);
   prop_t *p = n->np_prop_root;

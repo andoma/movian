@@ -94,8 +94,8 @@ typedef struct nav_backend {
 
   int (*nb_canhandle)(const char *ur);
 
-  int (*nb_open)(const char *url, nav_page_t **npp,
-		 char *errbuf, size_t errlen);
+  int (*nb_open)(const char *url, const char *type, const char *parent,
+		 nav_page_t **npp, char *errbuf, size_t errlen);
 
   event_t *(*nb_play_video)(const char *url, struct media_pipe *mp,
 			    char *errbuf, size_t errlen);
