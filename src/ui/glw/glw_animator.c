@@ -39,7 +39,7 @@ glw_animator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_LAYOUT:
-    a->delta = 1 / (w->glw_time * (1000000 / w->glw_root->gr_frameduration));
+    a->delta = 1 / (a->time * (1000000 / w->glw_root->gr_frameduration));
 
     for(c = TAILQ_FIRST(&w->glw_childs); c != NULL; c = n) {
       n = TAILQ_NEXT(c, glw_parent_link);
@@ -124,6 +124,7 @@ glw_animator_ctor(glw_t *w, int init, va_list ap)
 
   if(init) {
     glw_signal_handler_int(w, glw_animator_callback);
+    a->time = 1.0;
   }
 
   do {
@@ -136,6 +137,11 @@ glw_animator_ctor(glw_t *w, int init, va_list ap)
     case GLW_ATTRIB_SOURCE:
       filename = va_arg(ap, char *);
       break;
+
+    case GLW_ATTRIB_TIME:
+      a->time = va_arg(ap, double);
+      break;
+
     case GLW_ATTRIB_PROPROOTS:
       a->prop = va_arg(ap, void *);
       a->prop_parent = va_arg(ap, void *);

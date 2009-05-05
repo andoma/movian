@@ -26,6 +26,7 @@ typedef struct glw_animator {
   struct prop *prop_parent;
 
   float delta;
+  float time;
 
   glw_transition_type_t efx_conf;
 

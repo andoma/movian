@@ -196,6 +196,7 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_slider.c \
 			src/ui/glw/glw_rotator.c  \
 			src/ui/glw/glw_animator.c \
+			src/ui/glw/glw_slideshow.c \
 			src/ui/glw/glw_transitions.c \
 			src/ui/glw/glw_navigation.c \
 			src/ui/glw/glw_texture_loader.c \

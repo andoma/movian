@@ -1,6 +1,9 @@
 widget(image, {
   .focusable = true;
-  //onEvent(enter, genericEvent(navigator, open, $self.url));
+
+  onEvent(enter, {
+    $parent.view = "slideshow";
+  });
 
   .source = "thumb://" + $self.url;
 });

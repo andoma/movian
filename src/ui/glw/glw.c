@@ -62,7 +62,7 @@ static const size_t glw_class_to_size[] = {
   [GLW_LIST_Y] = sizeof(glw_list_t),
   [GLW_DECK] = sizeof(glw_deck_t),
   [GLW_EXPANDER_Y] = sizeof(glw_expander_t),
-  //  [GLW_SLIDESHOW] = sizeof(glw_slideshow_t),
+  [GLW_SLIDESHOW] = sizeof(glw_slideshow_t),
   [GLW_CURSOR] = sizeof(glw_cursor_t),
   [GLW_MIRROR] = sizeof(glw_t),
   [GLW_ANIMATOR] = sizeof(glw_animator_t),
@@ -301,10 +301,6 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       w->glw_extra = va_arg(ap, double);
       break;
 
-    case GLW_ATTRIB_TIME:
-      w->glw_time = va_arg(ap, double);
-      break;
-
     case GLW_ATTRIB_ORIGINATING_PROP:
       assert(w->glw_originating_prop == NULL);
       w->glw_originating_prop = va_arg(ap, void *);
@@ -360,11 +356,11 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
   case GLW_EXPANDER_Y:
     glw_expander_ctor(w, init, apx);
     break;
-#if 0
+
   case GLW_SLIDESHOW:
     glw_slideshow_ctor(w, init, apx);
     break;
-#endif
+
   case GLW_DUMMY:
     break;
 
@@ -429,7 +425,6 @@ glw_create0(glw_root_t *gr, glw_class_t class, va_list ap)
   w->glw_root = gr;
   w->glw_class = class;
   w->glw_alpha = 1.0f;
-  w->glw_time = 1.0f;
 
   LIST_INSERT_HEAD(&gr->gr_active_dummy_list, w, glw_active_link);
 

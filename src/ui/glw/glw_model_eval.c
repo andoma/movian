@@ -561,6 +561,9 @@ eval_assign(glw_model_eval_context_t *ec, struct token *self)
 			 PROP_TAG_ROOT, ui,
 			 NULL);
 
+    if(p == NULL)
+      return glw_model_seterr(ec->ei, a, "Unable to resolve property");
+
     /* Transform TOKEN_PROPERTY_NAME -> TOKEN_PROPERTY */
 
     glw_model_free_chain(a->child);
@@ -1219,7 +1222,7 @@ static struct strtab classtab[] = {
   { "list_y",        GLW_LIST_Y},
   { "deck",          GLW_DECK},
   { "expander_y",    GLW_EXPANDER_Y},
-  //  { "slideshow",     GLW_SLIDESHOW},
+  { "slideshow",     GLW_SLIDESHOW},
   { "cursor",        GLW_CURSOR},
   { "mirror",        GLW_MIRROR},
   { "rotator",       GLW_ROTATOR},
@@ -1394,6 +1397,7 @@ typedef struct glw_event_map_eval_block {
   glw_event_map_t map;
   token_t *block;
   prop_t *prop;
+  prop_t *prop_parent;
 } glw_event_map_eval_block_t;
 
 
@@ -1412,7 +1416,7 @@ glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
 
   memset(&n, 0, sizeof(n));
   n.prop0 = b->prop;
-  n.prop_parent = NULL;
+  n.prop_parent = b->prop_parent;
   n.ei = NULL;
   n.gr = w->glw_root;
   n.w = w;
@@ -1439,6 +1443,9 @@ glw_event_map_eval_block_dtor(glw_event_map_t *gem)
   if(b->prop)
     prop_ref_dec(b->prop);
 
+  if(b->prop_parent)
+    prop_ref_dec(b->prop_parent);
+
   free(b);
 }
 
@@ -1454,10 +1461,14 @@ glw_event_map_eval_block_create(glw_model_eval_context_t *ec,
   glw_event_map_eval_block_t *b = malloc(sizeof(glw_event_map_eval_block_t));
 
   b->block = glw_model_clone_chain(block);
-  b->prop = ec->prop0;
 
+  b->prop = ec->prop0;
   if(b->prop)
     prop_ref_inc(b->prop);
+
+  b->prop_parent = ec->prop_parent;
+  if(b->prop_parent)
+    prop_ref_inc(b->prop_parent);
 
   b->map.gem_dtor = glw_event_map_eval_block_dtor;
   b->map.gem_fire = glw_event_map_eval_block_fire;
@@ -1695,7 +1706,8 @@ glwf_changed(glw_model_eval_context_t *ec, struct token *self,
    switch(a->type) {
 
     case TOKEN_STRING:
-      if((change = strcmp(e->u.str, a->t_string))) {
+      if(strcmp(e->u.str, a->t_string)) {
+	change = 1;
 	free(e->u.str);
 	e->u.str = strdup(a->t_string);
       }

@@ -22,9 +22,14 @@
 typedef struct glw_slideshow {
   glw_t w;
 
+  int hold;
+
   int timer;
 
+  float time;
   int displaytime;
+
+  prop_t *playstatus;
 
 } glw_slideshow_t;
 

@@ -1,0 +1,35 @@
+#include "theme://include/plates.model"
+
+widget(container_z, {
+
+  widget(slideshow, {
+    
+    .focusable = true;
+    
+    cloner($self.nodes, image, {
+      .source = $self.url;
+    });
+  });
+
+  widget(container_x, {
+    space(1);
+    widget(container_y, {
+      .align = center;
+
+      widget(backdrop, {
+	PLATE_PROPS();
+	
+	.alphaSelf = 0.75;
+	.alpha = iir(changed($self.slideshow.playstatus, 2, true), 7);
+
+	widget(icon, {
+	  .size = 2.0;
+	  .source = translate($self.slideshow.playstatus, void,
+			      "pause", "theme://icons/pause.png",
+			      "play",  "theme://icons/play.png");
+	});
+      });
+    });
+    space(1);
+  });
+});

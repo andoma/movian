@@ -86,6 +86,7 @@ typedef enum {
   GLW_SLIDER_X,
   GLW_SLIDER_Y,
   GLW_LAYER,
+  GLW_SLIDESHOW,
 } glw_class_t;
 
 
@@ -269,7 +270,7 @@ typedef struct glw_root {
   prop_t *gr_fullscreen_req;
   
   int gr_frameduration;
-  
+
   struct glw_head gr_active_list;
   struct glw_head gr_active_flush_list;
   struct glw_head gr_active_dummy_list;
@@ -436,8 +437,6 @@ typedef struct glw {
   float glw_extra;
 
   float glw_focus_weight;
-
-  float glw_time;                    /* Time constant */
 
   glw_alignment_t glw_alignment;
 

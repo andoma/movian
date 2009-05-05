@@ -19,7 +19,155 @@
 #include "glw.h"
 #include "glw_slideshow.h"
 
-/*
+
+/**
+ *
+ */
+static void
+glw_slideshow_render(glw_slideshow_t *s, glw_rctx_t *rc)
+{
+  glw_t *c, *p, *n;
+  glw_rctx_t rc0;
+
+  if((c = s->w.glw_focused) == NULL)
+    return;
+
+  p = TAILQ_PREV(c, glw_queue, glw_parent_link);
+  if(p == NULL)
+    p = TAILQ_LAST(&s->w.glw_childs, glw_queue);
+  if(p != NULL && p != c) {
+    if(p->glw_parent_alpha > 0.01) {
+      rc0 = *rc;
+      rc0.rc_alpha *= p->glw_parent_alpha;
+      glw_render0(p, &rc0);
+    }
+  }
+
+  rc0 = *rc;
+  rc0.rc_alpha *= c->glw_parent_alpha;
+  glw_render0(c, &rc0);
+
+  n = TAILQ_NEXT(c, glw_parent_link);
+  if(n == NULL)
+    n = TAILQ_FIRST(&s->w.glw_childs);
+  if(n != NULL && n != c) {
+    if(n->glw_parent_alpha > 0.01) {
+      rc0 = *rc;
+      rc0.rc_alpha *= n->glw_parent_alpha;
+      glw_render0(n, &rc0);
+    }
+  }
+}
+
+
+/**
+ *
+ */
+static void
+glw_slideshow_layout(glw_slideshow_t *s, glw_rctx_t *rc)
+{
+  glw_t *c, *p, *n;
+  float delta;
+
+  if(s->time == 0) {
+    s->displaytime = INT32_MAX;
+    delta = 0.1f;
+  } else {
+    s->displaytime = 1000000 * s->time / s->w.glw_root->gr_frameduration;
+    delta = 1 / (s->displaytime * 0.1);
+  }
+
+    
+  if((c = s->w.glw_focused) == NULL)
+    c = s->w.glw_focused = TAILQ_FIRST(&s->w.glw_childs);
+  if(c == NULL)
+    return;
+
+  if(s->timer >= s->displaytime) {
+    c = s->w.glw_focused = TAILQ_NEXT(c, glw_parent_link);
+    if(c == NULL)
+      c = s->w.glw_focused = TAILQ_FIRST(&s->w.glw_childs);
+    s->timer = 0;
+  }
+  
+  if(!s->hold)
+    s->timer++;
+
+  glw_layout0(c, rc);
+  c->glw_parent_alpha = GLW_MIN(c->glw_parent_alpha + delta, 1.0f);
+
+  /**
+   * Keep previous and next images 'hot' (ie, loaded into texture memroy)
+   */
+  p = TAILQ_PREV(c, glw_queue, glw_parent_link);
+  if(p == NULL)
+    p = TAILQ_LAST(&s->w.glw_childs, glw_queue);
+  if(p != NULL && p != c) {
+    p->glw_parent_alpha = GLW_MAX(p->glw_parent_alpha - delta, 0.0f);
+    glw_layout0(p, rc);
+  }
+
+  n = TAILQ_NEXT(c, glw_parent_link);
+  if(n == NULL)
+    n = TAILQ_FIRST(&s->w.glw_childs);
+  if(n != NULL && n != c) {
+    n->glw_parent_alpha = GLW_MAX(n->glw_parent_alpha - delta, 0.0f);
+    glw_layout0(n, rc);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+glw_slideshow_update_playstatus(glw_slideshow_t *s)
+{
+  prop_set_string(s->playstatus, s->hold ? "pause" : "play");
+}
+
+
+/**
+ *
+ */
+static int
+glw_slideshow_event(glw_slideshow_t *s, event_t *e)
+{
+  glw_t *c;
+
+  switch(e->e_type) {
+  case EVENT_NEXT:
+    c = s->w.glw_focused ? TAILQ_NEXT(s->w.glw_focused, 
+				      glw_parent_link) : NULL;
+    if(c == NULL)
+      c = TAILQ_FIRST(&s->w.glw_childs);
+    s->w.glw_focused = c;
+    s->timer = 0;
+    return 1;
+    
+  case EVENT_PREV:
+    c = s->w.glw_focused ? TAILQ_PREV(s->w.glw_focused, glw_queue,
+				    glw_parent_link) : NULL;
+    if(c == NULL)
+      c = TAILQ_LAST(&s->w.glw_childs, glw_queue);
+    s->w.glw_focused = c;
+    s->timer = 0;
+    return 1;
+
+  case EVENT_PLAY:
+  case EVENT_PAUSE:
+  case EVENT_PLAYPAUSE:
+    s->hold = event_update_hold_by_type(s->hold, e->e_type);
+    glw_slideshow_update_playstatus(s);
+    return 1;
+
+  default:
+    return 0;
+  }
+}
+
+
+/**
  *
  */
 static int
@@ -27,127 +175,60 @@ glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
 		       void *extra)
 {
   glw_slideshow_t *s = (glw_slideshow_t *)w;
-  glw_t *c, *p, *n;
-  glw_rctx_t *rc = extra, rc0;
-  float delta;
-  event_t *e;
 
   switch(signal) {
   case GLW_SIGNAL_RENDER:
-    if((c = w->glw_focused) == NULL)
-      return 1;
-
-    p = TAILQ_PREV(c, glw_queue, glw_parent_link);
-    if(p == NULL)
-      p = TAILQ_LAST(&w->glw_childs, glw_queue);
-    if(p != NULL && p != c) {
-      if(p->glw_parent_alpha > 0.01) {
-	rc0 = *rc;
-	rc0.rc_alpha *= p->glw_parent_alpha;
-	glw_render0(p, &rc0);
-      }
-    }
-
-    rc0 = *rc;
-    rc0.rc_alpha *= c->glw_parent_alpha;
-    glw_render0(c, &rc0);
-
-    n = TAILQ_NEXT(c, glw_parent_link);
-    if(n == NULL)
-      n = TAILQ_FIRST(&w->glw_childs);
-    if(n != NULL && n != c) {
-      if(n->glw_parent_alpha > 0.01) {
-	rc0 = *rc;
-	rc0.rc_alpha *= n->glw_parent_alpha;
-	glw_render0(n, &rc0);
-      }
-    }
+    glw_slideshow_render(s, extra);
     return 1;
 
   case GLW_SIGNAL_LAYOUT:
-
-    if(w->glw_time == 0) {
-      s->displaytime = INT32_MAX;
-      delta = 0.1f;
-    } else {
-      s->displaytime = w->glw_root->gr_framerate * w->glw_time;
-      delta = 1 / (s->displaytime * 0.1);
-    }
-
-    
-    if((c = w->glw_focused) == NULL)
-      c = w->glw_focused = TAILQ_FIRST(&w->glw_childs);
-    if(c == NULL)
-      return 1;
-
-    if(s->timer >= s->displaytime) {
-      c = w->glw_focused = TAILQ_NEXT(c, glw_parent_link);
-      if(c == NULL)
-	c = w->glw_focused = TAILQ_FIRST(&w->glw_childs);
-      s->timer = 0;
-    }
-  
-    s->timer++;
-
-    glw_layout0(c, rc);
-    c->glw_parent_alpha = GLW_MIN(c->glw_parent_alpha + delta, 1.0f);
-
-    /**
-     * Keep previous and next images 'hot' (ie, loaded into texture memroy)
-     */
-    p = TAILQ_PREV(c, glw_queue, glw_parent_link);
-    if(p == NULL)
-      p = TAILQ_LAST(&w->glw_childs, glw_queue);
-    if(p != NULL && p != c) {
-      p->glw_parent_alpha = GLW_MAX(p->glw_parent_alpha - delta, 0.0f);
-      glw_layout0(p, rc);
-    }
-
-    n = TAILQ_NEXT(c, glw_parent_link);
-    if(n == NULL)
-      n = TAILQ_FIRST(&w->glw_childs);
-    if(n != NULL && n != c) {
-      n->glw_parent_alpha = GLW_MAX(n->glw_parent_alpha - delta, 0.0f);
-      glw_layout0(n, rc);
-    }
+    glw_slideshow_layout(s, extra);
     return 1;
 
   case GLW_SIGNAL_EVENT:
-    e = extra;
-    switch(e->e_type) {
-    case EVENT_INCR:
-      c = w->glw_focused ? TAILQ_NEXT(w->glw_focused, glw_parent_link) : NULL;
-      if(c == NULL)
-	c = TAILQ_FIRST(&w->glw_childs);
-      w->glw_focused = c;
-      s->timer = 0;
-      return 1;
+    return glw_slideshow_event(s, extra);
 
-    case EVENT_DECR:
-      c = w->glw_focused ? TAILQ_PREV(w->glw_focused, glw_queue,
-				       glw_parent_link) : NULL;
-      if(c == NULL)
-	c = TAILQ_LAST(&w->glw_childs, glw_queue);
-      w->glw_focused = c;
-      s->timer = 0;
-      return 1;
-    default:
-      return 0;
-    }
   default:
     break;
   }
-
   return 0;
 }
 
+
+/**
+ *
+ */
 void
 glw_slideshow_ctor(glw_t *w, int init, va_list ap)
 {
-  //  glw_slideshow_t *s = (glw_slideshow_t *)w;
+  glw_slideshow_t *s = (glw_slideshow_t *)w;
+  glw_attribute_t attrib;
+  prop_t *p;
 
   if(init) {
     glw_signal_handler_int(w, glw_slideshow_callback);
+    s->time = 5.0;
   }
-}
 
+  do {
+    attrib = va_arg(ap, int);
+    switch(attrib) {
+
+    case GLW_ATTRIB_TIME:
+      s->time = va_arg(ap, double);
+      break;
+
+    case GLW_ATTRIB_PROPROOTS:
+      p = va_arg(ap, void *);
+      s->playstatus = prop_create(prop_create(p, "slideshow"), "playstatus");
+
+      p = va_arg(ap, void *); // Parent, just throw it away
+      glw_slideshow_update_playstatus(s);
+      break;
+
+    default:
+      GLW_ATTRIB_CHEW(attrib, ap);
+      break;
+    }
+  } while(attrib);
+}
