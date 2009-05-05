@@ -212,4 +212,6 @@ const char *event_code2str(event_type_t code);
 event_type_t event_str2code(const char *str);
 
 
+int event_update_hold_by_type(int hold, event_type_t et);
+
 #endif /* EVENT_H */

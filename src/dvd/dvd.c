@@ -641,7 +641,7 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
       break;
 
     mp_become_primary(mp);
-    dp->dp_hold = mp_update_hold_by_event(dp->dp_hold, e->e_type);
+    dp->dp_hold = event_update_hold_by_type(dp->dp_hold, e->e_type);
     mp_send_cmd_head(mp, &mp->mp_video, 
 		     dp->dp_hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
     mp_send_cmd_head(mp, &mp->mp_audio, 

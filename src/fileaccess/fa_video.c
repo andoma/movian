@@ -156,7 +156,7 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
     case EVENT_PLAYPAUSE:
     case EVENT_PLAY:
     case EVENT_PAUSE:
-      hold = mp_update_hold_by_event(hold, e->e_type);
+      hold = event_update_hold_by_type(hold, e->e_type);
       mp_send_cmd_head(mp, &mp->mp_video, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
       mp_send_cmd_head(mp, &mp->mp_audio, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
       lost_focus = 0;

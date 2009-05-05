@@ -669,26 +669,6 @@ wrap_format_deref(formatwrap_t *fw)
 }
 
 
-
-/**
- *
- */
-int
-mp_update_hold_by_event(int hold, event_type_t et)
-{
-  switch(et) {
-  case EVENT_PLAYPAUSE:
-    return !hold;
-  case EVENT_PAUSE:
-    return 1;
-  case EVENT_PLAY:
-    return 0;
-  default:
-    abort();
-  }
-}
-
-
 /**
  * 
  */

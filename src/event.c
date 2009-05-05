@@ -368,3 +368,22 @@ event_create_openurl(const char *url, const char *type, const char *parent)
   e->h.e_dtor = event_openurl2_dtor;
   return &e->h;
 }
+
+
+/**
+ *
+ */
+int
+event_update_hold_by_type(int hold, event_type_t et)
+{
+  switch(et) {
+  case EVENT_PLAYPAUSE:
+    return !hold;
+  case EVENT_PAUSE:
+    return 1;
+  case EVENT_PLAY:
+    return 0;
+  default:
+    abort();
+  }
+}

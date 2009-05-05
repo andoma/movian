@@ -226,8 +226,6 @@ void mp_send_cmd_u32_head(media_pipe_t *mp, media_queue_t *mq, int cmd,
 
 void mp_flush(media_pipe_t *mp);
 
-int mp_update_hold_by_event(int hold, event_type_t et);
-
 void mp_wait(media_pipe_t *mp, int audio, int video);
 
 void mp_codec_lock(media_pipe_t *mp);
