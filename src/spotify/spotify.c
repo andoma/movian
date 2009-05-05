@@ -1010,9 +1010,6 @@ spotify_scandir_from_playlist(spotify_uri_t *su, playlist_t *pl)
 		      url, sizeof(url));
     nav_dir_add(nd, url, f_sp_track_name(plt->plt_track),
 		CONTENT_AUDIO, metadata);
-
-    prop_print_tree(plt->plt_prop_metadata);
-
   }
   su->su_dir = nd;
   spotify_uri_return(su, 0);
