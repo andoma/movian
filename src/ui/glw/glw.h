@@ -402,7 +402,7 @@ typedef struct glw {
   int glw_flags;
 
 #define GLW_FOCUS_DISABLED      0x1     /* Can not receive focus right now */
-#define GLW_LAYOUT_OVERRIDE     0x2     /* Layout fixed by user */
+
 #define GLW_DESTROYED           0x4     /* was destroyed but someone
 					   is holding references */
 #define GLW_RENDER_LINKED       0x8     /* glw_render_link is linked */
