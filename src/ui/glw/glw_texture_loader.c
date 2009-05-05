@@ -256,12 +256,13 @@ glw_tex_deref_locked(glw_root_t *gr, glw_loadable_texture_t *glt)
     if(glt->glt_state == GLT_STATE_VALID || glt->glt_state == GLT_STATE_ERROR)
       LIST_REMOVE(glt, glt_flush_link);
 
-    LIST_REMOVE(glt, glt_global_link);
     free(glt->glt_filename);
   }
   
   if(glt->glt_prop_pixmap != NULL)
     prop_pixmap_ref_dec(glt->glt_prop_pixmap);
+
+  LIST_REMOVE(glt, glt_global_link);
 
   glw_tex_backend_free_loader_resources(glt);
 
