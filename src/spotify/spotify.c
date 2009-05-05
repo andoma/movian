@@ -84,8 +84,6 @@ typedef struct metadata {
 
 static LIST_HEAD(, metadata) metadatas;
 static hts_mutex_t meta_mutex;
-static prop_courier_t *meta_courier;
-
 
 /**
  * Playlist support
@@ -752,7 +750,7 @@ metadata_create(prop_t *p, metadata_type_t type, void *source)
 
   prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_AUTO_UNSUBSCRIBE,
 		 PROP_TAG_CALLBACK, metadata_prop_cb, m,
-		 PROP_TAG_COURIER, meta_courier,
+		 PROP_TAG_MUTEX, &meta_mutex,
 		 PROP_TAG_ROOT, p,
 		 NULL);
   
@@ -1887,7 +1885,6 @@ be_spotify_init(void)
 
   /* Metadata tracking */
   hts_mutex_init(&meta_mutex);
-  meta_courier = prop_courier_create(&meta_mutex);
 
   return 0;
 }

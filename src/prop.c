@@ -240,12 +240,12 @@ prop_courier(void *aux)
 
     s = n->hpn_sub;
 
-    if(pc->pc_entry_mutex != NULL) {
-      hts_mutex_lock(pc->pc_entry_mutex);
+    if(s->hps_mutex != NULL) {
+      hts_mutex_lock(s->hps_mutex);
     
-      if(s->hps_flags & PROP_SUB_ZOMBIE) {
+      if(s->hps_zombie) {
 	prop_notify_free(n); // subscription may be free'd here
-	hts_mutex_unlock(pc->pc_entry_mutex);
+	hts_mutex_unlock(s->hps_mutex);
 	continue;
       }
     }
@@ -313,8 +313,8 @@ prop_courier(void *aux)
       break;
     }
 
-    if(pc->pc_entry_mutex != NULL)
-      hts_mutex_unlock(pc->pc_entry_mutex);
+    if(s->hps_mutex != NULL)
+      hts_mutex_unlock(s->hps_mutex);
  
     prop_sub_ref_dec(s);
     free(n);
@@ -707,10 +707,22 @@ prop_set_parent_ex(prop_t *p, prop_t *parent, prop_t *before,
 /**
  *
  */
+LIST_HEAD(prop_sub_destroyer_list, prop_sub_destroyer);
+typedef struct prop_sub_destroyer {
+  LIST_ENTRY(prop_sub_destroyer) link;
+  prop_sub_t *s;
+} prop_sub_destroyer_t;
+
+
+
+/**
+ *
+ */
 static void
-prop_destroy0(prop_t *p)
+prop_destroy0(prop_t *p, struct prop_sub_destroyer_list *psdl)
 {
   prop_t *c, *parent;
+  prop_sub_destroyer_t *psd;
   prop_sub_t *s;
 
   switch(p->hp_type) {
@@ -719,7 +731,7 @@ prop_destroy0(prop_t *p)
 
   case PROP_DIR:
     while((c = TAILQ_FIRST(&p->hp_childs)) != NULL)
-      prop_destroy0(c);
+      prop_destroy0(c, psdl);
     break;
 
   case PROP_STRING:
@@ -746,8 +758,11 @@ prop_destroy0(prop_t *p)
     LIST_REMOVE(s, hps_canonical_prop_link);
     s->hps_canonical_prop = NULL;
 
-    if(s->hps_flags & PROP_SUB_AUTO_UNSUBSCRIBE)
-      prop_unsubscribe0(s);
+    if(s->hps_flags & PROP_SUB_AUTO_UNSUBSCRIBE) {
+      psd = malloc(sizeof(prop_sub_destroyer_t));
+      psd->s = s;
+      LIST_INSERT_HEAD(psdl, psd, link);
+    }
   }
 
   while((s = LIST_FIRST(&p->hp_value_subscriptions)) != NULL) {
@@ -783,9 +798,22 @@ prop_destroy0(prop_t *p)
 void
 prop_destroy(prop_t *p)
 {
+  struct prop_sub_destroyer_list psdl;
+  struct prop_sub_destroyer *psd;
+
+  LIST_INIT(&psdl);
+
   hts_mutex_lock(&prop_mutex);
-  prop_destroy0(p);
+  prop_destroy0(p, &psdl);
   hts_mutex_unlock(&prop_mutex);
+
+  while((psd = LIST_FIRST(&psdl)) != NULL) {
+    LIST_REMOVE(psd, link);
+    hts_mutex_lock(psd->s->hps_mutex);
+    prop_unsubscribe(psd->s);
+    hts_mutex_unlock(psd->s->hps_mutex);
+    free(psd);
+  }
 }
 
 
@@ -891,14 +919,16 @@ prop_get_by_name(const char **name, int follow_symlinks, ...)
       pr = alloca(sizeof(prop_root_t));
       pr->p = va_arg(ap, prop_t *);
       pr->name = NULL;
-      LIST_INSERT_HEAD(&proproots, pr, link);
+      if(pr->p != NULL)
+	LIST_INSERT_HEAD(&proproots, pr, link);
       break;
 
     case PROP_TAG_NAMED_ROOT:
       pr = alloca(sizeof(prop_root_t));
       pr->p = va_arg(ap, prop_t *);
       pr->name = va_arg(ap, const char *);
-      LIST_INSERT_HEAD(&proproots, pr, link);
+      if(pr->p != NULL && pr->name != NULL)
+	LIST_INSERT_HEAD(&proproots, pr, link);
       break;
 
     case PROP_TAG_END:
@@ -954,9 +984,10 @@ prop_subscribe(int flags, ...)
   prop_callback_t *cb = NULL;
   void *opaque = NULL;
   prop_courier_t *pc = NULL;
+  hts_mutex_t *mutex = NULL;
   prop_root_t *pr;
   struct prop_root_list proproots;
-
+  
   va_list ap;
   va_start(ap, flags);
 
@@ -994,6 +1025,10 @@ prop_subscribe(int flags, ...)
 	LIST_INSERT_HEAD(&proproots, pr, link);
       break;
 
+    case PROP_TAG_MUTEX:
+      mutex = va_arg(ap, hts_mutex_t *);
+      break;
+
     case PROP_TAG_END:
       break;
 
@@ -1004,7 +1039,6 @@ prop_subscribe(int flags, ...)
   
 
   va_end(ap);
-
 
   if(name == NULL) {
     /* No name given, just subscribe to the supplied prop */
@@ -1038,8 +1072,15 @@ prop_subscribe(int flags, ...)
 
   s = malloc(sizeof(prop_sub_t));
 
+  s->hps_zombie = 0;
   s->hps_flags = flags;
-  s->hps_courier = pc ?: global_courier;
+  if(pc != NULL) {
+    s->hps_courier = pc;
+    s->hps_mutex = pc->pc_entry_mutex;
+  } else {
+    s->hps_courier = global_courier;
+    s->hps_mutex = mutex;
+  }
 
   LIST_INSERT_HEAD(&canonical->hp_canonical_subscriptions, s, 
 		   hps_canonical_prop_link);
@@ -1077,7 +1118,9 @@ prop_subscribe(int flags, ...)
 static void
 prop_unsubscribe0(prop_sub_t *s)
 {
-  s->hps_flags |= PROP_SUB_ZOMBIE;
+  assert(s->hps_mutex != NULL);
+  
+  s->hps_zombie = 1;
 
   if(s->hps_value_prop != NULL) {
     LIST_REMOVE(s, hps_value_prop_link);

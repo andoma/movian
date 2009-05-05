@@ -202,6 +202,21 @@ typedef struct prop_sub {
   prop_courier_t *hps_courier;
 
   /**
+   * Mutex to be held when invoking callback. It must also be held
+   * when destroying the subscription. If it is not set via
+   * PROP_TAG_MUTEX it will use the mutex specified by the courier.
+   */
+  hts_mutex_t *hps_mutex;
+
+  /**
+   * Set when a subscription is destroyed. Protected by hps_mutex.
+   * In other words. It's impossible to destroy a subscription
+   * if no lock is specified.
+   */
+  int hps_zombie;
+
+
+  /**
    *
    */
   void *hps_opaque;
@@ -235,8 +250,6 @@ void prop_init(void);
 #define PROP_SUB_TRACK_DESTROY 0x4
 #define PROP_SUB_AUTO_UNSUBSCRIBE 0x8
 
-#define PROP_SUB_ZOMBIE 0x10 // Not user settable
-
 enum {
   PROP_TAG_END = 0,
   PROP_TAG_NAME_VECTOR,
@@ -244,6 +257,7 @@ enum {
   PROP_TAG_COURIER,
   PROP_TAG_ROOT,
   PROP_TAG_NAMED_ROOT,
+  PROP_TAG_MUTEX,
 };
 
 prop_sub_t *prop_subscribe(int flags, ...) __attribute__((__sentinel__(0)));
