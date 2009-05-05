@@ -153,7 +153,7 @@ setup_ffmpeg() {
     echo "Configuring FFmpeg"
     mkdir -p ${BUILDDIR}/ffmpeg/build
     rm -rf ${BUILDDIR}/ffmpeg/install
-    fix_swscale ${TOPDIR}/ext/ffmpeg
+#    fix_swscale ${TOPDIR}/ext/ffmpeg
 
     (cd ${BUILDDIR}/ffmpeg/build && \
 	${TOPDIR}/ext/ffmpeg/configure  \
