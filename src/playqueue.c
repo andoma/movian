@@ -269,10 +269,14 @@ playqueue_load(const char *url, const char *parent, prop_t *metadata, int enq)
   playqueue_entry_t *pqe, *prev;
   event_t *e;
 
+  if(parent != NULL && !strcmp(parent, "playqueue:"))
+    parent = NULL;
+
   hts_mutex_lock(&playqueue_mutex);
 
   TAILQ_FOREACH(pqe, &playqueue_entries, pqe_link) {
-    if(!strcmp(pqe->pqe_url, url) && !strcmp(pqe->pqe_parent, parent)) {
+    if(!strcmp(pqe->pqe_url, url) && 
+       (parent == NULL || !strcmp(pqe->pqe_parent, parent))) {
       /* Already in, go to it */
       e = pqe_event_create(pqe, 1);
       mp_enqueue_event(playqueue_mp, e);
