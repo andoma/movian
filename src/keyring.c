@@ -136,6 +136,8 @@ keyring_lookup(const char *id, char **username, char **password,
     hts_mutex_init(&kp.mutex);
     hts_cond_init(&kp.cond);
 
+    hts_mutex_lock(&kp.mutex);
+
     popuproot = prop_create(prop_get_global(), "popups");
 
     p = prop_create(NULL, NULL);
@@ -151,6 +153,7 @@ keyring_lookup(const char *id, char **username, char **password,
     s = prop_subscribe(0, 
 		       PROP_TAG_CALLBACK, result_set, &kp, 
 		       PROP_TAG_ROOT, r,
+		       PROP_TAG_MUTEX, &kp.mutex,
 		       NULL);
 
     /* Will show the popup */
@@ -190,6 +193,8 @@ keyring_lookup(const char *id, char **username, char **password,
     }
 
     prop_destroy(p);
+
+    hts_mutex_unlock(&kp.mutex);
 
     hts_cond_destroy(&kp.cond);
     hts_mutex_destroy(&kp.mutex);
