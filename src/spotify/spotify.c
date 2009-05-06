@@ -50,7 +50,7 @@ static int spotify_started;
 static int spotify_login_result = -1;
 
 static int play_position;
-static int do_seek;
+static int in_seek;
 static int seek_pos;
 
 static sp_session *spotify_session;
@@ -378,16 +378,17 @@ spotify_music_delivery(sp_session *sess, const sp_audioformat *format,
   media_queue_t *mq = &mp->mp_audio;
   media_buf_t *mb;
 
-  if(do_seek) {
-    play_position = (int64_t)seek_pos * format->sample_rate / 1000;
-    return num_frames;
-  }
-
   if(su == NULL)
     return num_frames;
 
   if(num_frames == 0) {
-    mp_enqueue_event(mp, event_create_simple(EVENT_EOF));
+
+    if(in_seek) {
+      play_position = (int64_t)seek_pos * format->sample_rate / 1000;
+      in_seek--;
+    } else {
+      mp_enqueue_event(mp, event_create_simple(EVENT_EOF));
+    }
     return 0;
   }
 
@@ -1502,11 +1503,11 @@ spotify_thread(void *aux)
 
 	mp_flush(spotify_mp);
 	
-	do_seek = 1;
+	in_seek = 2;
 	seek_pos = sm->sm_int;
-	f_sp_session_player_seek(s, sm->sm_int);
-	do_seek = 0;
+	error = f_sp_session_player_seek(s, sm->sm_int);
 	break;
+
       case SPOTIFY_PAUSE:
 	f_sp_session_player_play(s, !sm->sm_int);
 	break;
