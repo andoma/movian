@@ -146,9 +146,6 @@ audio_output_thread(void *aux)
   audio_fifo_init(af, 16000, 8000);
   thefifo = af;
 
-  if(audio_mode_current == NULL)
-    audio_mode_current = TAILQ_FIRST(&audio_modes);
-
   am = audio_mode_current;
 
   while(1) {
@@ -399,22 +396,17 @@ audio_mode_register(audio_mode_t *am)
   prop_t *r;
   int multich = am->am_formats & (AM_FORMAT_PCM_5DOT1 | AM_FORMAT_PCM_7DOT1);
   htsmsg_t *m;
-  int selected;
   char buf[256];
 
   TAILQ_INSERT_TAIL(&audio_modes, am, am_link);
 
-  selected = audio_stored_device && !strcmp(audio_stored_device, am->am_id);
-
-
-  settings_multiopt_add_opt(audio_settings_current_device,
-			    am->am_id, am->am_title, selected);
-
-
-  if(selected)
+  if(audio_mode_current == NULL ||
+     (audio_stored_device && !strcmp(audio_stored_device, am->am_id)))
     audio_mode_current = am;
-
-
+  
+  settings_multiopt_add_opt(audio_settings_current_device,
+			    am->am_id, am->am_title, am == audio_mode_current);
+  
   if(multich == 0 && TAILQ_FIRST(&am->am_mixer_controllers) == NULL)
     return;
 
