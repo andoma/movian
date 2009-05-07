@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <regex.h>
 #include <assert.h>
 #include <libavutil/base64.h>
 #include <htsmsg/htsmsg_xml.h>
@@ -71,6 +72,8 @@ typedef struct http_file {
   int hf_port;
 
   int hf_auth_failed;
+  
+  char *hf_content_type;
 
 } http_file_t;
 
@@ -236,7 +239,7 @@ http_read_respone(http_file_t *hf)
     if(tcp_read_line(hf->hf_fd, hf->hf_line, sizeof(hf->hf_line),
 		     &hf->hf_spill) < 0)
       return -1;
-
+    
     if(hf->hf_line[0] == 0)
       break;
 
@@ -299,6 +302,10 @@ http_read_respone(http_file_t *hf)
 
       if(code == 200)
 	hf->hf_size = i64;
+    }
+    
+    if(!strcasecmp(argv[0], "Content-Type")) {
+      hf->hf_content_type = strdup(argv[1]);
     }
   }
   return code;
@@ -406,7 +413,8 @@ authenticate(http_file_t *hf, char *errbuf, size_t errlen)
  *
  */
 static int
-http_connect(http_file_t *hf, int probe, char *errbuf, int errlen)
+http_connect(http_file_t *hf, int probe, char *errbuf, int errlen,
+             int ignore_size)
 {
   int port, code;
   htsbuf_queue_t q;
@@ -459,12 +467,12 @@ http_connect(http_file_t *hf, int probe, char *errbuf, int errlen)
 
   switch(code) {
   case 200:
-    hf->hf_auth_failed = 0;
-    hf->hf_rsize = 0;
-    if(hf->hf_size < 0) {
+    if(!ignore_size && hf->hf_size < 0) {
       snprintf(errbuf, errlen, "Invalid HTTP 200 response");
       return -1;
     }
+    hf->hf_auth_failed = 0;
+    hf->hf_rsize = 0;
     return 0;
     
   case 301:
@@ -501,17 +509,194 @@ http_destroy(http_file_t *hf)
   free(hf->hf_auth);
   free(hf->hf_auth_realm);
   free(hf->hf_location);
+  free(hf->hf_content_type);
   free(hf);
 }
 
 
+/* inspired by http://xbmc.org/trac/browser/trunk/XBMC/xbmc/FileSystem/HTTPDirectory.cpp */
+
+static int
+http_strip_last(char *s, char c)
+{
+  int len = strlen(s);
+  
+  if(s[len - 1 ] == c) {
+    s[len - 1] = '\0';
+    return 1;
+  }
+  
+  return 0;
+}
+
+static int
+http_index_parse(http_file_t *hf, nav_dir_t *nd, char *buf)
+{
+  static regex_t *ahref_preg = NULL;
+  regmatch_t matches[3];
+  char *p, *n;
+  
+  if(!ahref_preg) {
+    ahref_preg = malloc(sizeof(ahref_preg));
+    regcomp(ahref_preg, "<a href=\"(.*)\">(.*)</a>", REG_EXTENDED);
+  }
+  
+  p = buf;
+  while((n = strchr(p, '\n'))) {
+    *n = '\0';
+    
+    if(regexec(ahref_preg, p, 3, matches, 0)) {
+      /* no match */
+    } else {
+      char *href, *name, *hrefd;
+      int isdir;
+      char url[500];
+      
+      href = &p[matches[1].rm_so];
+      p[matches[1].rm_eo] = '\0';
+      name = &p[matches[2].rm_so];
+      p[matches[2].rm_eo] = '\0';
+      
+      /* when does this happen? xmbc does it */
+      if(href[0] == '/')
+        href++;
+      
+      isdir = http_strip_last(name, '/');
+      http_strip_last(href, '/');
+      
+      hrefd = strdup(href);
+      http_deescape(hrefd);
+      
+      /* skip parent dir links etc */
+      if(strcmp(name, hrefd) == 0) {
+        snprintf(url, sizeof(url), "http://%s:%d%s%s%s",
+                 hf->hf_hostname, hf->hf_port, hf->hf_path,
+                 href,
+                 isdir ? "/" : "");
+        
+        nav_dir_add(nd, url, name,
+                    isdir ? CONTENT_DIR : CONTENT_FILE,
+                    NULL);
+      }
+      
+      free(hrefd);
+    }
+    
+    p = n + 1; /* skip '\0' */
+  }
+  
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+http_index_fetch(http_file_t *hf, nav_dir_t *nd, char *errbuf, size_t errlen)
+{
+  int code, retval;
+  htsbuf_queue_t q;
+  char *buf;
+  int redircount = 0;
+  
+reconnect:
+  hf->hf_size = -1;
+  hf->hf_fd = -1;
+  
+  url_split(NULL, 0, hf->hf_authurl, sizeof(hf->hf_authurl), 
+	    hf->hf_hostname, sizeof(hf->hf_hostname), &hf->hf_port,
+	    hf->hf_path, sizeof(hf->hf_path), hf->hf_url);
+  
+  if(hf->hf_port < 0)
+    hf->hf_port = 80;
+  
+  /* empty path, default to "/" */ 
+  if(!hf->hf_path[0])
+    strcpy(hf->hf_path, "/");
+  
+  hf->hf_fd = tcp_connect(hf->hf_hostname, hf->hf_port,
+			  errbuf, errlen, 3000);
+  
+  if(hf->hf_fd < 0)
+    return -1;
+  
+  htsbuf_queue_init(&q, 0);
+  
+again:
+  htsbuf_qprintf(&q, 
+		 "GET %s HTTP/1.1\r\n"
+		 "Accept: */*\r\n"
+		 "User-Agent: Showtime %s\r\n"
+		 "Host: %s\r\n"
+		 "%s%s"
+		 "\r\n",
+		 hf->hf_path,
+		 htsversion,
+		 hf->hf_hostname,
+		 hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
+  
+  tcp_write_queue(hf->hf_fd, &q);
+  code = http_read_respone(hf);
+  
+  switch(code) {
+      
+    case 200: /* 200 OK */
+      hf->hf_auth_failed = 0;
+      
+      if((buf = http_read_content(hf)) == NULL) {
+        snprintf(errbuf, errlen, "Connection lost");
+        return -1;
+      }
+      
+      retval = http_index_parse(hf, nd, buf);
+      free(buf);
+      return retval;
+      
+    case 301:
+    case 302:
+    case 303:
+    case 307:
+      hf->hf_auth_failed = 0;
+      if(redirect(hf, &redircount, errbuf, errlen))
+        return -1;
+      goto reconnect;
+      
+    case 401:
+      if(authenticate(hf, errbuf, errlen))
+        return -1;
+      goto again;
+      
+    default:
+      snprintf(errbuf, errlen, "Unhandled HTTP response %d", code);
+      return -1;
+  }
+}
+
+/**
+ *
+ */
+static int
+http_scandir(nav_dir_t *nd, const char *url, char *errbuf, size_t errlen)
+{
+  int retval;
+  http_file_t *hf = calloc(1, sizeof(http_file_t));
+  
+  htsbuf_queue_init(&hf->hf_spill, 0);
+  hf->hf_url = strdup(url);
+  
+  retval = http_index_fetch(hf, nd, errbuf, errlen);
+  http_destroy(hf);
+  return retval;
+}
 
 
 /**
  * Open file
  */
 static fa_handle_t *
-http_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
+http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
+             int ignore_size)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   
@@ -519,7 +704,7 @@ http_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
 
   hf->hf_url = strdup(url);
 
-  if(!http_connect(hf, 1, errbuf, errlen)) {
+  if(!http_connect(hf, 1, errbuf, errlen, ignore_size)) {
     hf->h.fh_proto = fap;
     return &hf->h;
   }
@@ -528,7 +713,11 @@ http_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
   return NULL;
 }
 
-
+static fa_handle_t *
+http_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
+{
+  return http_open_ex(fap, url, errbuf, errlen, 0);
+}
 
 
 /**
@@ -559,7 +748,7 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
   for(i = 0; i < 5; i++) {
 
     /* If not connected, try to (re-)connect */
-    if(hf->hf_fd == -1 && http_connect(hf, 0, NULL, 0))
+    if(hf->hf_fd == -1 && http_connect(hf, 0, NULL, 0, 0))
       return -1;
 
     if(hf->hf_rsize > 0) {
@@ -684,12 +873,17 @@ http_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
   fa_handle_t *handle;
   http_file_t *hf;
 
-  if((handle = http_open(fap, url, errbuf, errlen)) == NULL)
+  if((handle = http_open_ex(fap, url, errbuf, errlen, 1)) == NULL)
     return -1;
  
   hf = (http_file_t *)handle;
-
-  buf->st_mode = S_IFREG;
+  
+  /* no content length and text/html, assume "index of" page */
+  if(hf->hf_size < 0 &&
+     hf->hf_content_type && strstr(hf->hf_content_type, "text/html"))
+    buf->st_mode = S_IFDIR;
+  else
+    buf->st_mode = S_IFREG;
   buf->st_size = hf->hf_size;
   
   http_destroy(hf);
@@ -704,6 +898,7 @@ http_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
 fa_protocol_t fa_protocol_http = {
   .fap_flags = FAP_INCLUDE_PROTO_IN_URL,
   .fap_name  = "http",
+  .fap_scan  = http_scandir,
   .fap_open  = http_open,
   .fap_close = http_close,
   .fap_read  = http_read,
