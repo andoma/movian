@@ -37,6 +37,33 @@ show_help(){
   exit 1
 }
 
+
+check_header() {
+    cat >$TMPDIR/1.c <<EOF
+#include <$1>
+int main() {
+ return 0;
+}
+EOF
+    $CC 2>/dev/null $TMPDIR/1.c -o $TMPDIR/1.bin
+}
+
+check_lib() {
+    cat >$TMPDIR/1.c <<EOF
+int main() {
+ return 0;
+}
+EOF
+    $CC 2>/dev/null $TMPDIR/1.c -o $TMPDIR/1.bin -l$1
+}
+
+fatal() {
+    echo "$1: $2"
+    echo "configure with --disable-$1 to skip this module"
+    die
+}
+
+
 enable libfreetype
 enable glw
 enable libasound
@@ -137,16 +164,6 @@ fi
 #
 # opengl for GLW (depends on freetype)
 #
-checkglx() {
-    cat >$TMPDIR/1.c <<EOF
-#include <GL/glx.h>
-int main() {
- return 0;
-}
-EOF
-    $CC 2>/dev/null $TMPDIR/1.c -o $TMPDIR/1.bin -lGLU -lGL
-}
-
 if enabled glw; then
 
     if disabled libfreetype; then
@@ -154,14 +171,16 @@ if enabled glw; then
 	die
     fi
 
-    if checkglx; then 
-	enable glw_frontend_x11
-	enable glw_backend_opengl
-	echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lGLU -lGL"
-    else
-	echo "OpenGL development files not available."
-	die
-    fi
+    check_header "X11/Xlib.h" || fatal "glw" "Missing X11 include file X11/Xlib.h"
+    check_header "GL/gl.h"    || fatal "glw" "Missing OpenGL include file GL/gl.h"
+    check_header "GL/glx.h"   || fatal "glw" "Missing OpenGL include file GL/glx.h"
+    check_header "GL/glu.h"   || fatal "glw" "Missing OpenGL include file GL/glu.h"
+    check_lib    "GL"         || fatal "glw" "Unable to link with libGL"
+    check_lib    "GLU"        || fatal "glw" "Unable to link with libGLU"
+
+    enable glw_frontend_x11
+    enable glw_backend_opengl
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lGLU -lGL"
 fi
 
 
