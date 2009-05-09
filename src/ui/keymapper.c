@@ -73,7 +73,6 @@ km_set_code(void *opaque, prop_event_t event, ...)
 
     free(ke->ke_keycode);
     ke->ke_keycode = strdup(str);
-    km_save(ke->ke_km);
   }
   km_save(ke->ke_km);
 }
@@ -106,7 +105,6 @@ keymapper_entry_add(keymap_t *km, const char *str, const char *eventname,
 
   ke->ke_sub_keycode = 
     prop_subscribe(0,
-		   NULL,
 		   PROP_TAG_CALLBACK, km_set_code, ke,
 		   PROP_TAG_ROOT, p,
 		   NULL);
