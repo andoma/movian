@@ -104,7 +104,7 @@ keymapper_entry_add(keymap_t *km, const char *str, const char *eventname,
     prop_set_void(p);
 
   ke->ke_sub_keycode = 
-    prop_subscribe(0,
+    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 		   PROP_TAG_CALLBACK, km_set_code, ke,
 		   PROP_TAG_ROOT, p,
 		   NULL);
