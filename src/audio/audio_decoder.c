@@ -732,8 +732,8 @@ audio_mix2(audio_decoder_t *ad, audio_mode_t *am,
 	for(i = 0; i < frames; i++) {
 	  x = data[5] + (data[0] + data[1]) / 2;
 	  data[5] = CLIP16(x);
+	  data += channels;
 	}
-	data += channels;
       } else {
 	src = data0 + frames * channels;
 	dst = data0 + frames * 6;
