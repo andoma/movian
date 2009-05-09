@@ -39,6 +39,9 @@
 #include "bookmarks.h"
 #include "notifications.h"
 
+/**
+ *
+ */
 hts_mutex_t ffmutex;
 int concurrency;
 int trace_level;
@@ -143,6 +146,15 @@ main(int argc, char **argv)
   /* Initialize user interfaces */
   rc = ui_start(nuiargs, uiargs, argv0);
 
+
+  /* Very ugly */
+#ifdef ENABLE_SPOTIFY
+ {
+   extern void spotify_shutdown(void);
+   spotify_shutdown();
+ }
+#endif
+
   return rc;
 }
 
@@ -157,3 +169,4 @@ trace(int level, const char *subsys, const char *fmt, ...)
   tracev(level, subsys, fmt, ap); // defined in arch/
   va_end(ap);
 }
+

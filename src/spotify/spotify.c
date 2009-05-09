@@ -120,6 +120,7 @@ typedef struct playlist_track {
 
 typedef enum {
   SPOTIFY_PENDING_EVENT, //< event pending from libspotify
+  SPOTIFY_LOGOUT,
   SPOTIFY_LOAD_URI,
   SPOTIFY_PLAY_TRACK,
   SPOTIFY_SCANDIR,
@@ -300,6 +301,11 @@ static void
 spotify_logged_out(sp_session *sess)
 {
   notify_add(NOTIFY_INFO, NULL, 5, "Spotify: Logged out");
+
+  hts_mutex_lock(&spotify_mutex);
+  spotify_login_result = -1;
+  pthread_cond_broadcast(&spotify_cond_login);
+  hts_mutex_unlock(&spotify_mutex);
 }
 
 
@@ -1470,6 +1476,10 @@ spotify_thread(void *aux)
       switch(sm->sm_op) {
       case SPOTIFY_PENDING_EVENT:
 	break;
+      case SPOTIFY_LOGOUT:
+	TRACE(TRACE_DEBUG, "spotify", "Requesting logout");
+	f_sp_session_logout(s);
+	break;
       case SPOTIFY_LOAD_URI:
 	spotify_load_uri(sm->sm_ptr);
 	break;
@@ -1895,6 +1905,38 @@ static int
 be_spotify_canhandle(const char *url)
 {
   return !strncmp(url, "spotify", strlen("spotify"));
+}
+
+
+/**
+ *
+ */
+void spotify_shutdown(void);
+
+void
+spotify_shutdown(void)
+{
+  int done;
+  struct timespec ts;
+
+  ts.tv_sec = time(NULL) + 5; // Wait max 5 seconds for logout to succeed
+  ts.tv_nsec = 0;
+
+  hts_mutex_lock(&spotify_mutex);
+
+  if(spotify_started && spotify_login_result == 0) {
+
+    done = 0;
+
+    spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_LOGOUT, &done));
+
+    while(spotify_login_result != -1)
+      if(hts_cond_wait_timeout(&spotify_cond_login, 
+			       &spotify_mutex, &ts) == ETIMEDOUT)
+	break;
+  }
+
+  hts_mutex_unlock(&spotify_mutex);
 }
 
 
