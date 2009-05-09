@@ -47,7 +47,7 @@ static const struct {
 };
 
 static int
-lircd_start(ui_t *ui, int argc, char *argv[])
+lircd_start(ui_t *ui, int argc, char *argv[], int primary)
 {
   char buf[200];
   uint64_t ircode;
@@ -80,7 +80,7 @@ lircd_start(ui_t *ui, int argc, char *argv[])
 
   uii = calloc(1, sizeof(uii_t));
   uii->uii_ui = ui;
-  uii_register(uii);
+  uii_register(uii, primary);
 
   p = settings_add_dir(NULL, "lircd", "Settings for LIRC", "display");
   uii->uii_km = keymapper_create(p, "lircd", "Keymap", NULL);

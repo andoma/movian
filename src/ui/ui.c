@@ -28,7 +28,7 @@
 static hts_mutex_t ui_mutex;
 static struct ui_list uis;
 static struct uii_list uiis;
-//static uii_t *primary_uii;
+static uii_t *primary_uii;
 
 static int ui_event_handler(event_t *e, void *opaque);
 
@@ -38,15 +38,26 @@ static int ui_event_handler(event_t *e, void *opaque);
 void
 ui_exit_showtime(int retcode)
 {
-  exit(retcode);
+  ui_t *ui = primary_uii->uii_ui;
+
+  if(ui->ui_stop == NULL) {
+    TRACE(TRACE_ERROR, "UI", "Primary UI \"%s\" does not have a "
+	  "stop method, direct exit", ui->ui_title);
+    exit(retcode);
+  }
+
+  TRACE(TRACE_DEBUG, "UI", "Stopping UI \"%s\"", ui->ui_title);
+  ui->ui_stop(primary_uii, retcode);
 }
 
 /**
  *
  */
 void
-uii_register(uii_t *uii)
+uii_register(uii_t *uii, int primary)
 {
+  if(primary)
+    primary_uii = uii;
   hts_mutex_lock(&ui_mutex);
   LIST_INSERT_HEAD(&uiis, uii, uii_link);
   hts_mutex_unlock(&ui_mutex);
@@ -120,7 +131,7 @@ static void *
 ui_trampoline(void *aux)
 {
   struct uiboot *ub = aux;
-  ub->ui->ui_start(ub->ui, ub->argc, ub->argv);
+  ub->ui->ui_start(ub->ui, ub->argc, ub->argv, 0);
   return NULL;
 }
 
@@ -152,7 +163,7 @@ ui_start(int argc, const char *argv[], const char *argv00)
       return 2;
     }
 
-    return ui->ui_start(ui, 1, &argv0);
+    return ui->ui_start(ui, 1, &argv0, 1);
   }
 
   TAILQ_INIT(&ubs);
@@ -214,7 +225,7 @@ ui_start(int argc, const char *argv[], const char *argv00)
   TAILQ_FOREACH(ub, &ubs, link)
     hts_thread_create_detached(ui_trampoline, ub);
 
-  return prim->ui->ui_start(prim->ui, prim->argc, prim->argv);
+  return prim->ui->ui_start(prim->ui, prim->argc, prim->argv, 1);
 }
 
 

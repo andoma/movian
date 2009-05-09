@@ -63,6 +63,7 @@ struct glw_cocoa {
 
 /* used to pass ui pointer from glw_cocoa_start to prepareOpenGL */
 static ui_t *gcocoa_ui;
+static int gcocoa_primary;
 
 static const keymap_defmap_t glw_default_keymap[] = {
   {EVENT_NONE, NULL},
@@ -544,7 +545,8 @@ refresh_rate()
   gcocoa->config_name = strdup("glw/cocoa/default");
     
   /* must be called after GL is ready, calls GL functions */
-  if(glw_init(&gcocoa->gr, gcocoa->want_font_size, theme_path, gcocoa_ui))
+  if(glw_init(&gcocoa->gr, gcocoa->want_font_size, theme_path, gcocoa_ui,
+	      gcocoa_primary))
     return;
   
   [[self openGLContext] setValues:&v forParameter:NSOpenGLCPSwapInterval];
@@ -685,9 +687,10 @@ glw_cocoa_screensaver_inhibit(CFRunLoopTimerRef timer, void *info)
 }
 
 static int
-glw_cocoa_start(ui_t *ui, int argc, char *argv[])
+glw_cocoa_start(ui_t *ui, int argc, char *argv[], int primary)
 {
   gcocoa_ui = ui; 
+  gcocoa_primary = primary;
   CFRunLoopTimerRef timer;
   CFRunLoopTimerContext context = { 0, NULL, NULL, NULL, NULL };
   

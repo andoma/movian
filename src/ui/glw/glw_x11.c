@@ -43,6 +43,7 @@ typedef struct glw_x11 {
 
   hts_thread_t threadid;
 
+  int retcode;
   int running;
 
   Display *display;
@@ -687,7 +688,7 @@ layout_draw(glw_x11_t *gx11, float aspect)
  *
  */
 static void
-glw_sysglue_mainloop(glw_x11_t *gx11)
+glw_x11_mainloop(glw_x11_t *gx11)
 {
   XEvent event;
   int w, h;
@@ -827,7 +828,7 @@ glw_sysglue_mainloop(glw_x11_t *gx11)
  *
  */
 static int
-glw_x11_start(ui_t *ui, int argc, char *argv[])
+glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
 {
   glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
   char confname[256];
@@ -863,13 +864,13 @@ glw_x11_start(ui_t *ui, int argc, char *argv[])
 
   glw_x11_init(gx11);
 
-  if(glw_init(&gx11->gr, gx11->want_font_size, theme_path, ui))
+  if(glw_init(&gx11->gr, gx11->want_font_size, theme_path, ui, primary))
     return 1;
 
   gx11->running = 1;
-  glw_sysglue_mainloop(gx11);
+  glw_x11_mainloop(gx11);
 
-  return 0;
+  return gx11->retcode;
 }
 
 /**
@@ -890,6 +891,19 @@ glw_x11_dispatch_event(uii_t *uii, event_t *e)
   }
 }
 
+
+/**
+ *
+ */
+static void
+glw_x11_stop(uii_t *uii, int retcode)
+{
+  glw_x11_t *gx11 = (glw_x11_t *)uii;
+  gx11->retcode = retcode;
+  gx11->running = 0;
+}
+
+
 /**
  *
  */
@@ -897,6 +911,5 @@ ui_t glw_ui = {
   .ui_title = "glw",
   .ui_start = glw_x11_start,
   .ui_dispatch_event = glw_x11_dispatch_event,
+  .ui_stop = glw_x11_stop,
 };
-
-

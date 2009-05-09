@@ -105,7 +105,7 @@ static const struct {
  *
  */
 static int
-imonpad_start(ui_t *ui, int argc, char *argv[])
+imonpad_start(ui_t *ui, int argc, char *argv[], int primary)
 {
   int fd, i, l, repeat_rate, repeat_rate0, dx, dy, r, k;
   uint8_t buf[4];
@@ -144,7 +144,7 @@ imonpad_start(ui_t *ui, int argc, char *argv[])
 
   uii = calloc(1, sizeof(uii_t));
   uii->uii_ui = ui;
-  uii_register(uii);
+  uii_register(uii, primary);
 
   p = settings_add_dir(NULL, "imonpad", "Settings for iMON Pad", "display");
   uii->uii_km = keymapper_create(p, "imonpad", "Keymap", NULL);

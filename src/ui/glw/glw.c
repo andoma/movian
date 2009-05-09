@@ -127,7 +127,8 @@ top_event_handler(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
  *
  */
 int
-glw_init(glw_root_t *gr, int fontsize, const char *theme, ui_t *ui)
+glw_init(glw_root_t *gr, int fontsize, const char *theme, ui_t *ui,
+	 int primary)
 {
   hts_mutex_init(&gr->gr_mutex);
   gr->gr_courier = prop_courier_create(&gr->gr_mutex);
@@ -158,7 +159,7 @@ glw_init(glw_root_t *gr, int fontsize, const char *theme, ui_t *ui)
 	    GLW_ATTRIB_SIGNAL_HANDLER, top_event_handler, gr, 1000,
 	    NULL);
 
-  uii_register(&gr->gr_uii);
+  uii_register(&gr->gr_uii, primary);
 
   return 0;
 }

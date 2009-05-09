@@ -454,7 +454,8 @@ typedef struct glw {
 
 } glw_t;
 
-int glw_init(glw_root_t *gr, int fontsize, const char *theme, ui_t *ui);
+int glw_init(glw_root_t *gr, int fontsize, const char *theme, ui_t *ui,
+	     int primary);
 
 void glw_flush0(glw_root_t *gr);
 
