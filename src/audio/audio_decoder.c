@@ -414,17 +414,17 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
     x = 0;
     i = 0;
 
-    if(chlayout & CH_FRONT_LEFT)            s[x] = i++; d[x++] = 0;
-    if(chlayout & CH_FRONT_RIGHT)           s[x] = i++; d[x++] = 1;
-    if(chlayout & CH_FRONT_CENTER)          s[x] = i++; d[x++] = 4;
-    if(chlayout & CH_LOW_FREQUENCY)         s[x] = i++; d[x++] = 5;
-    if(chlayout & CH_BACK_LEFT)             s[x] = i++; d[x++] = 6;
-    if(chlayout & CH_BACK_RIGHT)            s[x] = i++; d[x++] = 7;
-    if(chlayout & CH_FRONT_LEFT_OF_CENTER)         i++;
-    if(chlayout & CH_FRONT_RIGHT_OF_CENTER)        i++;
-    if(chlayout & CH_BACK_CENTER)                  i++;
-    if(chlayout & CH_SIDE_LEFT)             s[x] = i++; d[x++] = 2;
-    if(chlayout & CH_SIDE_RIGHT)            s[x] = i++; d[x++] = 3;
+    if(chlayout & CH_FRONT_LEFT)            {s[x] = i++; d[x++] = 0;}
+    if(chlayout & CH_FRONT_RIGHT)           {s[x] = i++; d[x++] = 1;}
+    if(chlayout & CH_FRONT_CENTER)          {s[x] = i++; d[x++] = 4;}
+    if(chlayout & CH_LOW_FREQUENCY)         {s[x] = i++; d[x++] = 5;}
+    if(chlayout & CH_BACK_LEFT)             {s[x] = i++; d[x++] = 6;}
+    if(chlayout & CH_BACK_RIGHT)            {s[x] = i++; d[x++] = 7;}
+    if(chlayout & CH_FRONT_LEFT_OF_CENTER)          i++;
+    if(chlayout & CH_FRONT_RIGHT_OF_CENTER)         i++;
+    if(chlayout & CH_BACK_CENTER)                   i++;
+    if(chlayout & CH_SIDE_LEFT)             {s[x] = i++; d[x++] = 2;}
+    if(chlayout & CH_SIDE_RIGHT)            {s[x] = i++; d[x++] = 3;}
  
     ochan = 0;
     for(i = 0; i < x; i++) if(d[i] > ochan) ochan = d[i];
