@@ -401,6 +401,8 @@ compute_avdiff(video_decoder_t *vd, media_pipe_t *mp, int64_t pts, int epoch)
 
   hts_mutex_unlock(&mp->mp_clock_mutex);
 
+  aclock += mp->mp_avdelta;
+
   vd->vd_avdiff = aclock - (pts - 16666) - vd->vd_avd_delta;
 
   if(abs(vd->vd_avdiff) < 10000000) {

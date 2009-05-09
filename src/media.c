@@ -39,6 +39,8 @@ media_pipe_t *media_primary;
 
 static void seek_by_propchange(void *opaque, prop_event_t event, ...);
 
+static void update_avdelta(void *opaque, prop_event_t event, ...);
+
 static int media_event_handler(event_t *e, void *opaque);
 
 
@@ -135,6 +137,7 @@ mp_create(const char *name, const char *type)
   mp->mp_prop_metadata    = prop_create(mp->mp_prop_root, "metadata");
   mp->mp_prop_playstatus  = prop_create(mp->mp_prop_root, "playstatus");
   mp->mp_prop_currenttime = prop_create(mp->mp_prop_root, "currenttime");
+  mp->mp_prop_avdelta     = prop_create(mp->mp_prop_root, "avdelta");
  
   mp->mp_pc = prop_courier_create(&mp->mp_mutex);
 
@@ -143,6 +146,13 @@ mp_create(const char *name, const char *type)
 		   PROP_TAG_CALLBACK, seek_by_propchange, mp,
 		   PROP_TAG_COURIER, mp->mp_pc,
 		   PROP_TAG_ROOT, mp->mp_prop_currenttime,
+		   NULL);
+
+  mp->mp_sub_avdelta = 
+    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+		   PROP_TAG_CALLBACK, update_avdelta, mp,
+		   PROP_TAG_COURIER, mp->mp_pc,
+		   PROP_TAG_ROOT, mp->mp_prop_avdelta,
 		   NULL);
   return mp;
 }
@@ -162,6 +172,7 @@ mp_destroy(media_pipe_t *mp)
   assert(mp->mp_flags == 0);
 
   prop_unsubscribe(mp->mp_sub_currenttime);
+  prop_unsubscribe(mp->mp_sub_avdelta);
 
   prop_courier_destroy(mp->mp_pc);
 
@@ -906,6 +917,34 @@ seek_by_propchange(void *opaque, prop_event_t event, ...)
   mp_enqueue_event_locked(mp, &es->h);
   event_unref(&es->h);
 }
+
+
+/**
+ *
+ */
+static void
+update_avdelta(void *opaque, prop_event_t event, ...)
+{
+  media_pipe_t *mp = opaque;
+  int t;
+
+  va_list ap;
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_SET_INT:
+    t = va_arg(ap, int);
+    break;
+  case PROP_SET_FLOAT:
+    t = va_arg(ap, double);
+    break;
+  default:
+    return;
+  }
+
+  mp->mp_avdelta = t * 1000;
+}
+
 
 /**
  *

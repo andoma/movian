@@ -151,6 +151,7 @@ typedef struct media_pipe {
   int64_t mp_audio_clock;
   int64_t mp_audio_clock_realtime;
   int mp_audio_clock_epoch;
+  int mp_avdelta;
 
   struct audio_decoder *mp_audio_decoder;
 
@@ -162,9 +163,11 @@ typedef struct media_pipe {
   prop_t *mp_prop_metadata;
   prop_t *mp_prop_playstatus;
   prop_t *mp_prop_currenttime;
+  prop_t *mp_prop_avdelta;
 
   prop_courier_t *mp_pc;
   prop_sub_t *mp_sub_currenttime;
+  prop_sub_t *mp_sub_avdelta;
 
 } media_pipe_t;
 

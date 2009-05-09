@@ -25,5 +25,27 @@ widget(backdrop, {
 	});
       });
     });
+
+    widget(container_x, {
+      widget(label, {
+	.caption = "A/V sync";
+      });
+
+      widget(slider_x, {
+	.focusable = 0.2;
+	.min = -1000;
+	.max =  1000;
+	.step = 10;
+
+	bind($self.avdelta);
+	widget(backdrop, {
+	  KNOB_PROPS();
+	  widget(label, {
+	    .caption = float2str($self.avdelta, 0) + "ms";
+	  });
+	});
+      });
+
+    });
   });
 });
