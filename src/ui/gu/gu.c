@@ -291,7 +291,7 @@ gu_dispatch_event(uii_t *uii, event_t *e)
  *
  */
 ui_t gu_ui = {
-  .ui_title = "gtk",
+  .ui_title = "gu",
   .ui_start = gu_start,
   .ui_dispatch_event = gu_dispatch_event,
   .ui_flags = UI_SINGLETON,
