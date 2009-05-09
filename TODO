@@ -1,7 +1,5 @@
 3.0 MUST:
 
-* Per video playback settings
-
 * Read master volume on startup
 
 * Clicking on a button with the mouse should not give the button
