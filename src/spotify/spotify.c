@@ -1919,6 +1919,9 @@ spotify_shutdown(void)
   int done;
   struct timespec ts;
 
+  return;
+
+
   ts.tv_sec = time(NULL) + 5; // Wait max 5 seconds for logout to succeed
   ts.tv_nsec = 0;
 
