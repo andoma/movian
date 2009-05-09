@@ -148,7 +148,7 @@ main(int argc, char **argv)
 
 
   /* Very ugly */
-#ifdef ENABLE_SPOTIFY
+#ifdef CONFIG_SPOTIFY
  {
    extern void spotify_shutdown(void);
    spotify_shutdown();
