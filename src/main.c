@@ -43,7 +43,6 @@ hts_mutex_t ffmutex;
 int concurrency;
 int trace_level;
 
-//static const char *default_theme_path = SHOWTIME_DEFAULT_THEME_URL;
 
 /**
  * Showtime main
