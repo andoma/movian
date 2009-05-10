@@ -338,6 +338,9 @@ spotify_play_token_lost(sp_session *sess)
 {
   notify_add(NOTIFY_ERROR, NULL, 5, 
 	     "Spotify: Playback paused, another client is using this account");
+  if(spotify_mp != NULL)
+    mp_enqueue_event(spotify_mp, event_create_simple(EVENT_INTERNAL_PAUSE));
+
 }
 
 
@@ -1816,6 +1819,12 @@ be_spotify_play(const char *url, media_pipe_t *mp,
 	mp_send_cmd_head(mp, mq, MB_CTRL_PLAY);
       }
       goto unref;
+
+    case EVENT_INTERNAL_PAUSE:
+      hold = 1;
+      mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
+      goto unref;
+
 
     default:
     unref:

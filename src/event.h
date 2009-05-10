@@ -95,6 +95,8 @@ typedef enum {
   EVENT_MP_NO_LONGER_PRIMARY,
   EVENT_MP_IS_PRIMARY,
 
+  EVENT_INTERNAL_PAUSE,      /* Internal pause with a playback module */
+
 } event_type_t;
 
 
