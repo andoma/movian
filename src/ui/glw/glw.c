@@ -1489,6 +1489,18 @@ glw_set_constraints(glw_t *w, int x, int y, float a, float weight,
 }
 
 
+/**
+ *
+ */
+void
+glw_clear_constraints(glw_t *w)
+{
+  if(w->glw_flags & GLW_CONSTRAINT_CONFED)
+    return; // Fixed configuration always overrides
+
+  glw_set_constraints(w, 0, 0, 0, 0, 0, 0);
+}
+
 
 /**
  *

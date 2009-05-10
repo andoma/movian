@@ -812,8 +812,10 @@ cloner_select_child(glw_prop_sub_t *gps, prop_t *p, glw_t *parent)
 {
   glw_t *w;
 
-  if(p == NULL)
+  if(p == NULL) {
+    glw_signal0(parent, GLW_SIGNAL_SELECT, NULL);
     return;
+  }
 
   if((w = cloner_find_child(p, parent)) != NULL) {
     glw_signal0(parent, GLW_SIGNAL_SELECT, w);

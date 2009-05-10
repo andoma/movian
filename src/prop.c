@@ -1609,6 +1609,7 @@ prop_unlink_ex(prop_t *p, prop_sub_t *skipme)
   hts_mutex_unlock(&prop_mutex);
 }
 
+
 /**
  *
  */
@@ -1635,6 +1636,23 @@ prop_select_ex(prop_t *p, int advisory, prop_sub_t *skipme)
       prop_notify_child(p, parent, PROP_SELECT_CHILD, skipme, 0);
       parent->hp_selected = p;
     }
+  }
+
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
+ *
+ */
+void
+prop_unselect_ex(prop_t *parent, prop_sub_t *skipme)
+{
+  hts_mutex_lock(&prop_mutex);
+
+  if(parent->hp_type == PROP_DIR) {
+    prop_notify_child(NULL, parent, PROP_SELECT_CHILD, skipme, 0);
+    parent->hp_selected = NULL;
   }
 
   hts_mutex_unlock(&prop_mutex);

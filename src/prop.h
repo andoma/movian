@@ -333,6 +333,10 @@ void prop_select_ex(prop_t *p, int advisory, prop_sub_t *skipme);
 
 #define prop_select(p, advisory) prop_select_ex(p, advisory, NULL)
 
+void prop_unselect_ex(prop_t *parent, prop_sub_t *skipme);
+
+#define prop_unselect(parent) prop_unselect_ex(parent, NULL)
+
 prop_t **prop_get_ancestors(prop_t *p);
 
 void prop_ancestors_unref(prop_t **r);

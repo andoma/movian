@@ -788,4 +788,6 @@ void glw_set_constraints(glw_t *w, int x, int y, float a, float weight,
 
 void glw_copy_constraints(glw_t *w, glw_t *src);
 
+void glw_clear_constraints(glw_t *w);
+
 #endif /* GLW_H */
