@@ -430,7 +430,9 @@ spotify_play_track_try(void)
   if(su == NULL)
     return;
 
-  if(!f_sp_track_is_loaded(su->su_track)) {
+  err = f_sp_track_error(su->su_track);
+
+  if(err == SP_ERROR_IS_LOADING) {
     TRACE(TRACE_DEBUG, "spotify", 
 	  "Track requested for playback is not loaded, retrying");
     return;
@@ -438,11 +440,13 @@ spotify_play_track_try(void)
 
   su_pending = NULL;
 
-  if((err = f_sp_session_player_load(spotify_session, su->su_track))) {
+  if(err == SP_ERROR_OK)
+    err = f_sp_session_player_load(spotify_session, su->su_track);
+
+  if(err != SP_ERROR_OK) {
     snprintf(su->su_errbuf, su->su_errlen, "Unable to load track:\n%s",
 	     f_sp_error_message(err));
     spotify_uri_return(su, 1);
-    
     return;
   }
 
