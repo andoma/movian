@@ -637,7 +637,7 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
     }
 
     if(ad->ad_resampler == NULL) {
-      ad->ad_resbuf = malloc(resbufsize * sizeof(int16_t) * channels);
+      ad->ad_resbuf = malloc(resbufsize * sizeof(int16_t) * 6);
       ad->ad_resampler = av_resample_init(dstrate, rate, 16, 10, 0, 1.0);
     }
 
