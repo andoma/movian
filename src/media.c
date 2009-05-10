@@ -169,7 +169,7 @@ mp_destroy(media_pipe_t *mp)
   /* Make sure a clean shutdown has been made */
   assert(mp->mp_audio_decoder == NULL);
   assert(mp != media_primary);
-  assert(mp->mp_flags == 0);
+  assert(!(mp->mp_flags & MP_ON_STACK));
 
   prop_unsubscribe(mp->mp_sub_currenttime);
   prop_unsubscribe(mp->mp_sub_avdelta);
@@ -740,12 +740,11 @@ mp_shutdown(struct media_pipe *mp)
   hts_mutex_lock(&media_mutex);
 
   assert(mp->mp_flags & MP_PRIMABLE);
-  mp->mp_flags &= ~MP_PRIMABLE;
 
   if(media_primary == mp) {
     /* We were primary */
 
-    prop_unlink(mp->mp_prop_root);
+    prop_unlink(media_prop_current);
 
     media_primary = NULL;
     mp_ref_dec(mp); // mp could be free'd here */
@@ -757,12 +756,14 @@ mp_shutdown(struct media_pipe *mp)
       LIST_REMOVE(mp, mp_stack_link);
       mp->mp_flags &= ~MP_ON_STACK;
       mp_set_primary(mp);
+    } else {
+      prop_unselect(media_prop_sources);
     }
 
-  } else {
 
-    // We must be on the stack
-    assert(mp->mp_flags & MP_ON_STACK);
+  } else if(mp->mp_flags & MP_ON_STACK) {
+    // We are on the stack
+
     LIST_REMOVE(mp, mp_stack_link);
     mp->mp_flags &= ~MP_ON_STACK;
 
