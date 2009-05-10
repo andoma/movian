@@ -242,7 +242,7 @@ refresh_rate()
   pixelFormat = nil;
   
   if(fullScreenContext == nil) {
-    TRACE(TRACE_ERROR, "opengl", "failed to create fullscreen context");
+    TRACE(TRACE_ERROR, "OpenGL", "failed to create fullscreen context");
     return;
   }
   
@@ -250,7 +250,7 @@ refresh_rate()
   if(err != CGDisplayNoErr) {
     [fullScreenContext release];
     fullScreenContext = nil;
-    TRACE(TRACE_ERROR, "opengl", "CGCaptureAllDisplays failed");
+    TRACE(TRACE_ERROR, "OpenGL", "CGCaptureAllDisplays failed");
     return;
   }
 
@@ -526,8 +526,7 @@ refresh_rate()
 - (void)doCommandBySelector:(SEL)aSelector {  
 }
 
-- (void)setMarkedText:(id)aString selectedRange:(NSRange)selRange
-{
+- (void)setMarkedText:(id)aString selectedRange:(NSRange)selRange {
   NSString *s = aString;
   
   [self compositeClear];
@@ -702,7 +701,7 @@ refresh_rate()
                                       initWithAttributes:attrs];
   
   if(!pixelFormat) {
-    TRACE(TRACE_ERROR, "opengl", "failed to alloc hardware pixelformat");
+    TRACE(TRACE_ERROR, "OpenGL", "failed to alloc hardware pixelformat");
     /* no reason to continue */
     exit(1);
   }
@@ -838,13 +837,12 @@ static void
 glw_cocoa_stop(uii_t *uii, int retcode)
 {
   static int quitting = 0;
-
-  /* TOOD: [NSApp terminate] will will applicationWillTerminate */
-  if(quitting)
-    return;
-  
   glw_cocoa_t *gc = (glw_cocoa_t *)uii;
   
+  /* TOOD: [NSApp terminate] will call applicationWillTerminate */
+  if(quitting)
+    return;
+
   gc->retcode = retcode;
   
   quitting = 1;
