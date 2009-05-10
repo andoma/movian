@@ -19,6 +19,7 @@
 
 * Fix most basic HTSP status codes
 
+* Correctly pause internally when spotify play token is lost.
 
 --- 
 
