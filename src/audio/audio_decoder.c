@@ -251,15 +251,39 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
   int64_t pts, chlayout;
   
   if(cw == NULL) {
-    /* Raw PCM */
-    audio_mix1(ad, am, mb->mb_channels, mb->mb_rate, 0,
-	       CODEC_ID_NONE, mb->mb_data, 
-	       mb->mb_size / sizeof(int16_t) / mb->mb_channels,
-	       mb->mb_pts, mb->mb_epoch, mp);
+
+    /* Raw native endian PCM */
 
     if(mb->mb_time != AV_NOPTS_VALUE)
       mp_set_current_time(mp, mb->mb_time);
 
+    frames = mb->mb_size / sizeof(int16_t) / mb->mb_channels;
+
+
+    if(mp_is_primary(mp)) {
+
+      /* Must copy if auto pipeline does multichannel upmixing */
+      memcpy(ad->ad_outbuf, mb->mb_data, mb->mb_size);
+
+      audio_mix1(ad, am, mb->mb_channels, mb->mb_rate, 0,
+		 CODEC_ID_NONE, ad->ad_outbuf, frames,
+		 mb->mb_pts, mb->mb_epoch, mp);
+      
+    } else {
+
+      /* We are just suppoed to be silent, emulate some kind of 
+	 delay, this is not accurate, so we also set the clock epoch
+	 to zero to avoid AV sync */
+
+      mp->mp_audio_clock_epoch = 0;
+
+      delay = (int64_t)frames * 1000000LL / mb->mb_rate;
+      usleep(delay); /* XXX: Must be better */
+	
+      /* Flush any packets in the pause pending queue */
+      
+      audio_fifo_clear_queue(&ad->ad_hold_queue);
+    }
     return;
   }
 
