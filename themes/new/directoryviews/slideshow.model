@@ -4,6 +4,8 @@ widget(container_z, {
 
   widget(slideshow, {
     
+    delta($ui.forcefullscreen, isVisible());
+
     .focusable = true;
     
     cloner($self.nodes, image, {

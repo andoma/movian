@@ -8,7 +8,7 @@ onEvent(menu, {
 widget(container_z, {
 
   widget(fx_texrot, {
-    .alpha = iir(1 ^^ $ui.fullscreen, 16);
+    .alpha = iir(1 ^^ ($ui.fullscreen || $ui.forcefullscreen), 16);
     .source = "theme://images/caribbean.png";
   });
   
@@ -24,8 +24,9 @@ widget(container_z, {
       });
 
       widget(expander_y, {
-	.expansion = $ui.showplaydeck || 
-	   ($global.media.current.type != "video");
+	.expansion = (1 ^^ $ui.forcefullscreen) && 
+	   ($ui.showplaydeck || 
+	    ($global.media.current.type != "video"));
 
 	widget(deck, {
 	  cloner($global.media.sources, animator, {
