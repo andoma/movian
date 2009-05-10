@@ -1,11 +1,32 @@
 3.0 MUST:
 
-* Read master volume on startup
+* Create a global keymap
+
+* Keyboard based Seeking both audio and video
+
+* Page up / Page Down
+
+* Sometimes we just lose focus
 
 * Clicking on a button with the mouse should not give the button
   retaining focus
 
+* Stop must cleanup playdeck
+
+* Play in playqueue after stop does not work
+
+* Stop in slideshow
+
+* Slideshow should fade to black background and kill playdeck
+
+* Automatic hide/show of mouse-pointer (settings sucks)
+
+* Fix most basic HTSP status codes
+
+
 --- 
+
+* Read master volume on startup
 
 * Probe extensions for glw_tex_rot.c feature
 
