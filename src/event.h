@@ -185,10 +185,9 @@ typedef enum {
   EVENTPRI_NAV,
   EVENTPRI_MAIN,
   EVENTPRI_SPEEDBUTTONS,
-
   EVENTPRI_CURRENT_MEDIA,
-
   EVENTPRI_AUDIO_MIXER,
+  EVENTPRI_PLAYQUEUE,
 } eventpri_t;
 
 void event_post(event_t *ge);

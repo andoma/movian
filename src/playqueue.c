@@ -30,6 +30,8 @@
 #include "media.h"
 #include "notifications.h"
 
+static int playqueue_event_handler(event_t *e, void *opaque);
+
 #define PLAYQUEUE_URL "playqueue:"
 
 static prop_t *playqueue_root;
@@ -424,6 +426,9 @@ playqueue_init(void)
 
   hts_thread_create_detached(playqueue_thread, NULL);
   hts_thread_create_detached(player_thread, NULL);
+
+  event_handler_register("playqueue", playqueue_event_handler,
+			 EVENTPRI_PLAYQUEUE, NULL);
   return 0;
 }
 
@@ -532,15 +537,38 @@ player_thread(void *aux)
 	/* Got event while waiting for drain */
 	mp_flush(mp);
       } else {
-	/* Nothing and media queues empty. Wait for an event */
+	/* Nothing and media queues empty. */
+
+	TRACE(TRACE_DEBUG, "playqueue", "Nothing on queue, waiting");
+	/* Make sure we no longer claim current playback focus */
+	mp_shutdown(playqueue_mp);
+
+	/* ... and wait for an event */
 	e = mp_dequeue_event(playqueue_mp);
       }
 
-      if(e->e_type == EVENT_PLAYQUEUE_JUMP || 
-	 e->e_type == EVENT_PLAYQUEUE_ENQ) {
+      switch(e->e_type) {
+      default:
+	break;
+
+      case EVENT_PLAYQUEUE_JUMP:
+      case EVENT_PLAYQUEUE_ENQ:
 	pe = (playqueue_event_t *)e;
 	pqe = pe->pe_pqe;
 	pe->pe_pqe = NULL;
+	break;
+
+      case EVENT_PLAY:
+      case EVENT_PLAYPAUSE:
+	hts_mutex_lock(&playqueue_mutex);
+
+	pqe = TAILQ_FIRST(&playqueue_entries);
+	if(pqe != NULL)
+	  pqe_ref(pqe);
+
+	hts_mutex_unlock(&playqueue_mutex);
+	break;
+
       }
       event_unref(e);
     }
@@ -583,4 +611,23 @@ player_thread(void *aux)
     }
     event_unref(e);
   }
+}
+
+
+/**
+ *
+ */
+static int
+playqueue_event_handler(event_t *e, void *opaque)
+{
+  switch(e->e_type) {
+  case EVENT_PLAYPAUSE:
+  case EVENT_PLAY:
+    break;
+  default:
+    return 0;
+  }
+
+  mp_enqueue_event(playqueue_mp, e);
+  return 1;
 }
