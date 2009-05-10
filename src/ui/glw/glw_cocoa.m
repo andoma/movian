@@ -20,6 +20,7 @@
  * Some code based on GL example from apple
  *
  * Interface is built from MainMenu.xib
+ *
  */
 
 #import <Cocoa/Cocoa.h>
@@ -39,11 +40,17 @@
 #include "strtab.h"
 
 
-struct glw_cocoa {  
+typedef struct glw_cocoa {  
   glw_root_t gr;
-  char *config_name;
   
+  /* used to pass ui pointer from glw_cocoa_start to prepareOpenGL */
+  ui_t *ui;
+  
+  int glready; /* prepareOpenGL has been run */
+  char *config_name;  
   int running;
+  int retcode;
+  int primary;
   
   glw_t *universe;
   
@@ -59,11 +66,10 @@ struct glw_cocoa {
   int want_pointer_enabled;
   
   setting_t *fullscreen_setting;
-};
+} glw_cocoa_t;
 
-/* used to pass ui pointer from glw_cocoa_start to prepareOpenGL */
-static ui_t *gcocoa_ui;
-static int gcocoa_primary;
+
+static glw_cocoa_t gcocoa;
 
 static const keymap_defmap_t glw_default_keymap[] = {
   {EVENT_NONE, NULL},
@@ -179,13 +185,18 @@ refresh_rate()
 
 @implementation GLWGLView
 
+- (void)applicationWillTerminate:(NSNotification *)aNotification {
+  ui_exit_showtime(0);
+}
+
 /* delegated from window */
-- (void)windowWillClose:(NSNotification *)notification {
-  [NSApp terminate:self];
+- (BOOL)windowWillClose:(id)window {
+  ui_exit_showtime(0);
+  return YES;
 }
 
 - (IBAction)clickFullscreen:(id)sender {
-  settings_toggle_bool(gcocoa->fullscreen_setting);
+  settings_toggle_bool(gcocoa.fullscreen_setting);
 }
 
 - (IBAction)clickAbout:(id)sender {
@@ -260,7 +271,7 @@ refresh_rate()
            height:CGDisplayPixelsHigh(kCGDirectMainDisplay)];
   [self glwInit];
   
-  while(gcocoa->is_fullscreen) {
+  while(gcocoa.is_fullscreen) {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
     /* dispatch events to the usual event methods */
@@ -343,12 +354,12 @@ refresh_rate()
 
 - (void)glwResize:(int)width height:(int)height {
   /* could be called before prepareOpenGL */
-  if(!gcocoa)
+  if(!gcocoa.glready)
     return;
   
-  gcocoa->window_width  = width;
-  gcocoa->window_height = height;
-  gcocoa->aspect_ratio = (float)width / (float)height;
+  gcocoa.window_width  = width;
+  gcocoa.window_height = height;
+  gcocoa.aspect_ratio = (float)width / (float)height;
   
   glViewport(0, 0, width, height);
 }
@@ -362,28 +373,28 @@ refresh_rate()
 }
 
 - (void)glwRender {
-  if(gcocoa->font_size != gcocoa->want_font_size) {
-    gcocoa->font_size = gcocoa->want_font_size;
-    glw_lock(&gcocoa->gr);
-    glw_font_change_size(&gcocoa->gr, gcocoa->font_size);
-    glw_unlock(&gcocoa->gr);
-    display_settings_save(gcocoa);
+  if(gcocoa.font_size != gcocoa.want_font_size) {
+    gcocoa.font_size = gcocoa.want_font_size;
+    glw_lock(&gcocoa.gr);
+    glw_font_change_size(&gcocoa.gr, gcocoa.font_size);
+    glw_unlock(&gcocoa.gr);
+    display_settings_save(&gcocoa);
   }
   
-  if(gcocoa->want_pointer_enabled != gcocoa->is_pointer_enabled) {
-    gcocoa->is_pointer_enabled = gcocoa->want_pointer_enabled;
-    if(gcocoa->want_pointer_enabled)
+  if(gcocoa.want_pointer_enabled != gcocoa.is_pointer_enabled) {
+    gcocoa.is_pointer_enabled = gcocoa.want_pointer_enabled;
+    if(gcocoa.want_pointer_enabled)
       [NSCursor unhide];
     else
       [NSCursor hide];
-    display_settings_save(gcocoa);
+    display_settings_save(&gcocoa);
   }
   
-  if(gcocoa->want_fullscreen != gcocoa->is_fullscreen) {
-    gcocoa->is_fullscreen = gcocoa->want_fullscreen;
-    display_settings_save(gcocoa);
+  if(gcocoa.want_fullscreen != gcocoa.is_fullscreen) {
+    gcocoa.is_fullscreen = gcocoa.want_fullscreen;
+    display_settings_save(&gcocoa);
     
-    if(gcocoa->want_fullscreen) {
+    if(gcocoa.want_fullscreen) {
       [self fullscreenLoop];
       return;
     }
@@ -391,17 +402,17 @@ refresh_rate()
 
   glw_rctx_t rc;
   
-  glw_lock(&gcocoa->gr);
+  glw_lock(&gcocoa.gr);
   
-  glw_reaper0(&gcocoa->gr);
+  glw_reaper0(&gcocoa.gr);
   
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
   
   memset(&rc, 0, sizeof(rc));
-  rc.rc_size_x = gcocoa->window_width;
-  rc.rc_size_y = gcocoa->window_height;
+  rc.rc_size_x = gcocoa.window_width;
+  rc.rc_size_y = gcocoa.window_height;
   rc.rc_fullscreen = 1;
-  glw_layout0(gcocoa->gr.gr_universe, &rc);
+  glw_layout0(gcocoa.gr.gr_universe, &rc);
   
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -415,9 +426,9 @@ refresh_rate()
             0, 1, 0);
   
   rc.rc_alpha = 1.0f;
-  glw_render0(gcocoa->gr.gr_universe, &rc);
+  glw_render0(gcocoa.gr.gr_universe, &rc);
     
-  glw_unlock(&gcocoa->gr);
+  glw_unlock(&gcocoa.gr);
 }
 
 - (void)glwWindowedTimerStart {
@@ -439,21 +450,21 @@ refresh_rate()
 }
 
 - (void)glwMouseEvent:(int)type event:(NSEvent*)event {
-  if(!gcocoa->is_pointer_enabled)
+  if(!gcocoa.is_pointer_enabled)
     return;
   
   NSPoint loc = [event locationInWindow];
   glw_pointer_event_t gpe;
   
-  gpe.x = (2.0 * loc.x / gcocoa->window_width ) - 1;
-  gpe.y = (2.0 * loc.y / gcocoa->window_height) - 1;
+  gpe.x = (2.0 * loc.x / gcocoa.window_width ) - 1;
+  gpe.y = (2.0 * loc.y / gcocoa.window_height) - 1;
   gpe.type = type;
   if(type == GLW_POINTER_SCROLL)
     gpe.delta_y = -[event deltaY];
   
-  glw_lock(&gcocoa->gr);
-  glw_pointer_event(&gcocoa->gr, &gpe);
-  glw_unlock(&gcocoa->gr);  
+  glw_lock(&gcocoa.gr);
+  glw_pointer_event(&gcocoa.gr, &gpe);
+  glw_unlock(&gcocoa.gr);  
 }
 
 - (void)scrollWheel:(NSEvent*)event {
@@ -476,19 +487,121 @@ refresh_rate()
   [self glwMouseEvent:GLW_POINTER_RELEASE event:event];
 }
 
+- (void)compositeClear {
+  compositeKey = NO;
+  if(compositeString) {
+    [compositeString release];
+    compositeString = nil;
+  }
+}
+
+/* start of NSTextInput protocol */
+
+- (NSArray *)validAttributesForMarkedText {
+  static NSArray *a = nil;
+  if(!a)
+    a = [NSArray new];
+  return a;
+}
+
+- (unsigned int)characterIndexForPoint:(NSPoint)thePoint {
+  return 0;
+}
+
+- (NSRect)firstRectForCharacterRange:(NSRange)theRange {
+  return NSZeroRect;
+}
+
+- (NSAttributedString *)attributedSubstringFromRange:(NSRange)theRange {
+  static NSAttributedString *as = nil;
+  if(!as)
+    as = [NSAttributedString new];
+  return as;
+}
+
+- (long)conversationIdentifier {
+  return (long)self;
+}
+
+- (void)doCommandBySelector:(SEL)aSelector {  
+}
+
+- (void)setMarkedText:(id)aString selectedRange:(NSRange)selRange
+{
+  NSString *s = aString;
+  
+  [self compositeClear];
+  if([s length] == 0)
+    return;
+  
+  compositeKey = YES;
+  compositeString = [s copy];
+}
+
+- (BOOL)hasMarkedText {
+  return compositeString != nil;
+}
+
+- (NSRange)markedRange {
+  return NSMakeRange(NSNotFound, 0);
+}
+
+- (NSRange)selectedRange {
+  return NSMakeRange(0, compositeString ? [compositeString length] : 0);
+}
+
+- (void)unmarkText {
+  [self compositeClear];
+}
+
+/* end of NSTextInput protocol */
+
+- (void)insertText:(id)aString {
+  int i;
+  NSString *s = aString;
+  event_t *e = NULL;
+  char buf[2] = {0};
+
+  [self compositeClear];
+  
+  for(i = 0; i < [s length]; i++) {
+    buf[0] = [s characterAtIndex:i];
+    e = event_create_unicode(buf[0]);
+    ui_dispatch_event(e, buf, &gcocoa.gr.gr_uii);
+  }
+}
+
 - (void)keyDown:(NSEvent *)event {
-  unichar c = [[event characters] characterAtIndex:0];
+  static NSMutableArray *eventArray;
+  NSString *chars = [event characters];
+  NSString *charsim = [event charactersIgnoringModifiers];
+  
+  [NSCursor setHiddenUntilMouseMoves:YES];
+  
+  if(compositeKey || [chars length] == 0  || [charsim length] == 0) {
+    if(!eventArray)
+      eventArray = [[NSMutableArray alloc] initWithCapacity:1];
+
+    compositeKey = YES;
+    [eventArray addObject:event];
+    /* uses NSTextInput protocol and results in calls to insertText: */
+    [self interpretKeyEvents:eventArray];
+    [eventArray removeObject:event];
+    return;
+  }
+  
+  unichar c = [chars characterAtIndex:0];
   unichar cim = [[event charactersIgnoringModifiers] characterAtIndex:0];
   int mod = [event modifierFlags];
   char buf[64], buf2[64];
   event_t *e = NULL;
   
   /* command+f is always available */
-  if(gcocoa->is_fullscreen && c == 'f' && mod & NSCommandKeyMask) {
-    settings_toggle_bool(gcocoa->fullscreen_setting);
+  if(gcocoa.is_fullscreen && c == 'f' && mod & NSCommandKeyMask) {
+    settings_toggle_bool(gcocoa.fullscreen_setting);
     return;
   }
-
+  
   switch(cim) {
     case NSRightArrowFunctionKey: e = event_create_simple(EVENT_RIGHT); break;
     case NSLeftArrowFunctionKey: e = event_create_simple(EVENT_LEFT); break;
@@ -505,7 +618,7 @@ refresh_rate()
   }
   
   if(e) {
-    ui_dispatch_event(e, NULL, &gcocoa->gr.gr_uii);
+    ui_dispatch_event(e, NULL, &gcocoa.gr.gr_uii);
     return;
   }
   
@@ -524,8 +637,8 @@ refresh_rate()
            mod & NSCommandKeyMask ? "Command - " : "",
            buf2);
   
-  e = event_create_unicode(c);
-  ui_dispatch_event(e, buf, &gcocoa->gr.gr_uii);
+  e = event_create_unicode(cim);
+  ui_dispatch_event(e, buf, &gcocoa.gr.gr_uii);
 }
 
 - (void)reshape {
@@ -534,19 +647,20 @@ refresh_rate()
 }
 
 - (void)prepareOpenGL {
-  gcocoa = calloc(1, sizeof(glw_cocoa_t));
   const char *theme_path = SHOWTIME_DEFAULT_THEME_URL;
   GLint v = 1;
   
+  gcocoa.glready = 1;
+  
   /* default cursor is on at start */
-  gcocoa->is_pointer_enabled = 1;
-  gcocoa->want_font_size = 40;
+  gcocoa.is_pointer_enabled = 1;
+  gcocoa.want_font_size = 40;
     
-  gcocoa->config_name = strdup("glw/cocoa/default");
+  gcocoa.config_name = strdup("glw/cocoa/default");
     
   /* must be called after GL is ready, calls GL functions */
-  if(glw_init(&gcocoa->gr, gcocoa->want_font_size, theme_path, gcocoa_ui,
-	      gcocoa_primary))
+  if(glw_init(&gcocoa.gr, gcocoa.want_font_size, theme_path, gcocoa.ui,
+	      gcocoa.primary))
     return;
   
   [[self openGLContext] setValues:&v forParameter:NSOpenGLCPSwapInterval];
@@ -556,11 +670,11 @@ refresh_rate()
   [self glwInit];
   
   /* Load fragment shaders */
-  glw_video_global_init(&gcocoa->gr);
+  glw_video_global_init(&gcocoa.gr);
 
-  display_settings_init(gcocoa);
+  display_settings_init(&gcocoa);
   
-  [self glwWindowedTimerStart];
+  [self glwWindowedTimerStart];  
 }
 
 - (void)drawRect:(NSRect)rect {
@@ -607,8 +721,8 @@ refresh_rate()
 static void
 display_set_mode(void *opaque, int value)
 {
-  glw_cocoa_t *gcocoa   = opaque;
-  gcocoa->want_fullscreen = value;
+  glw_cocoa_t *gc = opaque;
+  gc->want_fullscreen = value;
 }
 
 /**
@@ -617,8 +731,8 @@ display_set_mode(void *opaque, int value)
 static void
 display_set_pointer(void *opaque, int value)
 {
-  glw_cocoa_t *gcocoa = opaque;
-  gcocoa->want_pointer_enabled = value;
+  glw_cocoa_t *gc = opaque;
+  gc->want_pointer_enabled = value;
 }
 
 /**
@@ -627,8 +741,8 @@ display_set_pointer(void *opaque, int value)
 static void
 display_set_fontsize(void *opaque, int value)
 {
-  glw_cocoa_t *gcocoa = opaque;
-  gcocoa->want_font_size = value;
+  glw_cocoa_t *gc = opaque;
+  gc->want_font_size = value;
 }
 
 /**
@@ -668,15 +782,15 @@ display_settings_init(glw_cocoa_t *gc)
  * Save display settings
  */
 static void
-display_settings_save(glw_cocoa_t *gcocoa)
+display_settings_save(glw_cocoa_t *gc)
 {
   htsmsg_t *m = htsmsg_create_map();
   
-  htsmsg_add_u32(m, "fullscreen", gcocoa->want_fullscreen);
-  htsmsg_add_u32(m, "pointer",    gcocoa->want_pointer_enabled);
-  htsmsg_add_u32(m, "fontsize",   gcocoa->want_font_size);
+  htsmsg_add_u32(m, "fullscreen", gc->want_fullscreen);
+  htsmsg_add_u32(m, "pointer",    gc->want_pointer_enabled);
+  htsmsg_add_u32(m, "fontsize",   gc->want_font_size);
   
-  htsmsg_store_save(m, "displays/%s", gcocoa->config_name);
+  htsmsg_store_save(m, "displays/%s", gc->config_name);
   htsmsg_destroy(m);
 }
 
@@ -689,28 +803,30 @@ glw_cocoa_screensaver_inhibit(CFRunLoopTimerRef timer, void *info)
 static int
 glw_cocoa_start(ui_t *ui, int argc, char *argv[], int primary)
 {
-  gcocoa_ui = ui; 
-  gcocoa_primary = primary;
+  gcocoa.ui = ui;
+  gcocoa.primary = primary;
+  
   CFRunLoopTimerRef timer;
   CFRunLoopTimerContext context = { 0, NULL, NULL, NULL, NULL };
-  
   timer = CFRunLoopTimerCreate(NULL, CFAbsoluteTimeGetCurrent(), 30, 0, 0,
                                glw_cocoa_screensaver_inhibit, &context);
   CFRunLoopAddTimer(CFRunLoopGetCurrent(), timer, kCFRunLoopCommonModes);
   
   NSApplicationMain(0, NULL);
+
+  /* TODO: not reached */
   
-  return 0;
+  return gcocoa.retcode;
 }
 
 static int
 glw_cocoa_dispatch_event(uii_t *uii, event_t *e)
 {
-  glw_cocoa_t *gcocoa = (glw_cocoa_t *)uii;
+  glw_cocoa_t *gc = (glw_cocoa_t *)uii;
   
   switch(e->e_type) {
     case EVENT_FULLSCREEN_TOGGLE:
-      settings_toggle_bool(gcocoa->fullscreen_setting);
+      settings_toggle_bool(gc->fullscreen_setting);
       return 1;
       
     default:
@@ -718,9 +834,27 @@ glw_cocoa_dispatch_event(uii_t *uii, event_t *e)
   }
 }
 
+static void
+glw_cocoa_stop(uii_t *uii, int retcode)
+{
+  static int quitting = 0;
+
+  /* TOOD: [NSApp terminate] will will applicationWillTerminate */
+  if(quitting)
+    return;
+  
+  glw_cocoa_t *gc = (glw_cocoa_t *)uii;
+  
+  gc->retcode = retcode;
+  
+  quitting = 1;
+  [NSApp terminate:nil];
+}
+
 ui_t glw_ui = {
   .ui_title = "glw",
   .ui_start = glw_cocoa_start,
+  .ui_stop = glw_cocoa_stop,
   .ui_dispatch_event = glw_cocoa_dispatch_event,
   .ui_flags = UI_MAINTHREAD,
 };

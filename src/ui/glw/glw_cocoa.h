@@ -26,13 +26,11 @@
 #import <Cocoa/Cocoa.h>
 
 
-struct glw_cocoa;
-typedef struct glw_cocoa glw_cocoa_t;
-
-@interface GLWGLView: NSOpenGLView
+@interface GLWGLView: NSOpenGLView <NSTextInput>
 {
   NSTimer *timer;
-  glw_cocoa_t *gcocoa;
+  bool compositeKey;
+  NSString *compositeString;
 }
 - (void)glwResize:(int)width height:(int)height;
 - (void)glwInit;
