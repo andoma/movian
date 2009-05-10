@@ -179,11 +179,11 @@ glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
   switch(signal) {
   case GLW_SIGNAL_RENDER:
     glw_slideshow_render(s, extra);
-    return 1;
+    return 0;
 
   case GLW_SIGNAL_LAYOUT:
     glw_slideshow_layout(s, extra);
-    return 1;
+    return 0;
 
   case GLW_SIGNAL_EVENT:
     return glw_slideshow_event(s, extra);
