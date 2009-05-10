@@ -163,6 +163,7 @@ typedef enum {
   GLW_SIGNAL_NONE,
   GLW_SIGNAL_DESTROY,
   GLW_SIGNAL_DTOR,
+  GLW_SIGNAL_ACTIVE,
   GLW_SIGNAL_INACTIVE,
   GLW_SIGNAL_LAYOUT,
   GLW_SIGNAL_RENDER,
@@ -403,7 +404,7 @@ typedef struct glw {
   int glw_flags;
 
 #define GLW_FOCUS_DISABLED      0x1     /* Can not receive focus right now */
-
+#define GLW_ACTIVE              0x2
 #define GLW_DESTROYED           0x4     /* was destroyed but someone
 					   is holding references */
 #define GLW_RENDER_LINKED       0x8     /* glw_render_link is linked */
@@ -460,8 +461,6 @@ int glw_init(glw_root_t *gr, int fontsize, const char *theme, ui_t *ui,
 void glw_flush0(glw_root_t *gr);
 
 void *glw_get_opaque(glw_t *w, glw_callback_t *func);
-
-void glw_set_active0(glw_t *w);
 
 void glw_reaper0(glw_root_t *gr);
 
@@ -618,12 +617,6 @@ do {						\
   }						\
 } while(0)
 
-
-
-void glw_render0(glw_t *w, glw_rctx_t *rc);
-
-void glw_layout0(glw_t *w, glw_rctx_t *rc);
-
 int glw_signal0(glw_t *w, glw_signal_t sig, void *extra);
 
 void glw_widget_project(float *m, float *x1, float *x2, float *y1, float *y2);
@@ -696,7 +689,20 @@ void glw_signal_handler_unregister(glw_t *w, glw_callback_t *func,
 int glw_signal0(glw_t *w, glw_signal_t sig, void *extra);
 
 #define glw_render0(w, rc) glw_signal0(w, GLW_SIGNAL_RENDER, rc)
-#define glw_layout0(w, rc) glw_signal0(w, GLW_SIGNAL_LAYOUT, rc)
+
+static inline void 
+glw_layout0(glw_t *w, glw_rctx_t *rc)
+{
+  glw_root_t *gr = w->glw_root;
+  LIST_REMOVE(w, glw_active_link);
+  LIST_INSERT_HEAD(&gr->gr_active_list, w, glw_active_link);
+  if(!(w->glw_flags & GLW_ACTIVE)) {
+    w->glw_flags |= GLW_ACTIVE;
+    glw_signal0(w, GLW_SIGNAL_ACTIVE, NULL);
+  }
+  glw_signal0(w, GLW_SIGNAL_LAYOUT, rc);
+}
+
 
 void glw_select(glw_t *p, glw_t *c);
 

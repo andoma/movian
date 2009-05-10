@@ -639,6 +639,19 @@ eval_dynamic_focus_hover_change_sig(glw_t *w, void *opaque,
   return 0;
 }
 
+
+/**
+ *
+ */
+static int
+eval_dynamic_visibility_sig(glw_t *w, void *opaque, 
+			    glw_signal_t signal, void *extra)
+{
+  if(signal == GLW_SIGNAL_ACTIVE || signal == GLW_SIGNAL_INACTIVE)
+    eval_dynamic(w, opaque);
+  return 0;
+}
+
 /**
  *
  */
@@ -673,6 +686,11 @@ eval_dynamic(glw_t *w, token_t *rpn)
   else
     glw_signal_handler_unregister(w, eval_dynamic_focus_hover_change_sig,
 				  rpn);
+
+  if(ec.dynamic_eval & GLW_MODEL_DYNAMIC_EVAL_VISIBILITY)
+    glw_signal_handler_register(w, eval_dynamic_visibility_sig, rpn, 1000);
+  else
+    glw_signal_handler_unregister(w, eval_dynamic_visibility_sig, rpn);
 }
 
 
@@ -1193,6 +1211,10 @@ glw_model_eval_block(token_t *t, glw_model_eval_context_t *ec)
       if(copy & GLW_MODEL_DYNAMIC_EVAL_FOCUS_HOVER_CHANGE)
 	glw_signal_handler_register(w, eval_dynamic_focus_hover_change_sig,
 				    t, 1000);
+
+      if(copy & GLW_MODEL_DYNAMIC_EVAL_VISIBILITY)
+	glw_signal_handler_register(w, eval_dynamic_visibility_sig, t, 1000);
+
       continue;
 
     default:
@@ -2340,6 +2362,119 @@ glwf_bind(glw_model_eval_context_t *ec, struct token *self,
 /**
  *
  */
+typedef struct glwf_delta_extra {
+  prop_t *p;
+  int v;
+} glwf_delta_extra_t;
+
+
+/**
+ * 
+ */
+static int 
+glwf_delta(glw_model_eval_context_t *ec, struct token *self,
+	   token_t **argv, unsigned int argc)
+{
+  glwf_delta_extra_t *de = self->t_extra;
+  token_t *a = argv[0], *b = argv[1], *t;
+  const char *propname[16];
+  int i, v;
+  prop_t *p;
+
+  if(a->type != TOKEN_PROPERTY_NAME)
+    return glw_model_seterr(ec->ei, a, "delta() first arg is not a property");
+  
+  if(b->type != TOKEN_FLOAT && b->type != TOKEN_INT)
+    return glw_model_seterr(ec->ei, b, "delta() second arg is not scalar");
+
+  if(ec->w == NULL)
+    return glw_model_seterr(ec->ei, b, "delta() in non widget scope");
+  
+  for(i = 0, t = a; t != NULL && i < 15; t = t->child)
+    propname[i++]  = t->t_string;
+  propname[i] = NULL;
+
+  p = prop_get_by_name(propname, 0, 
+		       PROP_TAG_NAMED_ROOT, ec->prop0, "self",
+		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
+		       PROP_TAG_ROOT, ec->w->glw_root->gr_uii.uii_prop,
+		       NULL);
+
+  if(p == NULL)
+    return glw_model_seterr(ec->ei, a, "Unable to resolve property");
+  
+  v = b->type == TOKEN_FLOAT ? b->t_float : b->t_int;
+
+  ec->dynamic_eval |= GLW_MODEL_DYNAMIC_KEEP;
+
+  if(p == de->p && de->v + v == 0) {
+    prop_ref_dec(p);
+    return 0;
+  }
+
+  prop_add_int(p, v);
+
+  if(de->p) {
+    prop_add_int(de->p, de->v);
+    prop_ref_dec(de->p);
+  }
+
+  de->v = -v;
+  de->p = p;
+
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+glwf_delta_ctor(struct token *self)
+{
+  self->t_extra = calloc(1, sizeof(glwf_delta_extra_t));
+}
+
+
+/**
+ *
+ */
+static void
+glwf_delta_dtor(struct token *self)
+{
+  glwf_delta_extra_t *de = self->t_extra;
+
+  if(de->p) {
+    prop_add_int(de->p, de->v);
+    prop_ref_dec(de->p);
+  }
+
+  free(de);
+}
+
+
+/**
+ * Return 1 if the current widget is visible (rendered)
+ */
+static int 
+glwf_isVisible(glw_model_eval_context_t *ec, struct token *self,
+	       token_t **argv, unsigned int argc)
+{
+  token_t *r;
+
+  ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_VISIBILITY;
+
+  r = eval_alloc(self, ec, TOKEN_INT);
+
+  r->t_int = ec->w->glw_flags & GLW_ACTIVE ? 1 : 0;
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
+ *
+ */
 static const token_func_t funcvec[] = {
   {"widget", 2, glwf_widget},
   {"cloner", 3, glwf_cloner},
@@ -2365,6 +2500,8 @@ static const token_func_t funcvec[] = {
   {"focusedChild", 0, glwf_focusedChild},
   {"getCaption", 1, glwf_getCaption},
   {"bind", 1, glwf_bind},
+  {"delta", 2, glwf_delta, glwf_delta_ctor, glwf_delta_dtor},
+  {"isVisible", 0, glwf_isVisible}
 };
 
 

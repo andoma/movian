@@ -504,6 +504,7 @@ glw_reaper0(glw_root_t *gr)
   while((w = LIST_FIRST(&gr->gr_active_flush_list)) != NULL) {
     LIST_REMOVE(w, glw_active_link);
     LIST_INSERT_HEAD(&gr->gr_active_dummy_list, w, glw_active_link);
+    w->glw_flags &= ~GLW_ACTIVE;
     glw_signal0(w, GLW_SIGNAL_INACTIVE, NULL);
   }
 
@@ -604,17 +605,6 @@ glw_destroy0(glw_t *w)
   glw_model_free_chain(w->glw_dynamic_expressions);
 }
 
-
-/*
- *
- */
-void
-glw_set_active0(glw_t *w)
-{
-  glw_root_t *gr = w->glw_root;
-  LIST_REMOVE(w, glw_active_link);
-  LIST_INSERT_HEAD(&gr->gr_active_list, w, glw_active_link);
-}
 
 /*
  *

@@ -341,11 +341,6 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
   float x1, x2, n;
   int i;
 
-  if(w->glw_alpha < 0.01)
-    return;
-
-  glw_set_active0(w);
-
   if(gtb->gtb_status == GTB_NEED_RERENDER) {
     TAILQ_INSERT_TAIL(&gr->gr_gtb_render_queue, gtb, gtb_workq_link);
     gtb->gtb_status = GTB_ON_QUEUE;
