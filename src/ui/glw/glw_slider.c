@@ -200,6 +200,9 @@ pointer_event(glw_t *w, glw_pointer_event_t *gpe)
     break;
 
   case GLW_POINTER_FOCUS_MOTION:
+    if(s->knob_size != 1.0)
+      break;
+    
     s->value = GLW_RESCALE(v0 + s->grab_delta, 
 			   -1.0 + s->knob_size, 1.0 - s->knob_size);
     break;
