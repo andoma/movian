@@ -44,8 +44,17 @@ bookmark_save(void)
 static void
 bookmark_destroyed(void *opaque, prop_event_t event, ...)
 {
-  if(event == PROP_DESTROYED)
+  prop_t *p;
+  prop_sub_t *s;
+  va_list ap;
+  va_start(ap, event);
+
+  if(event == PROP_DESTROYED) {
+    p = va_arg(ap, prop_t *);
+    s = va_arg(ap, prop_sub_t *);
     bookmark_save();
+    prop_unsubscribe(s);
+  }
 }
 
 
@@ -55,8 +64,25 @@ bookmark_destroyed(void *opaque, prop_event_t event, ...)
 static void
 bookmark_updated(void *opaque, prop_event_t event, ...)
 {
-  if(event == PROP_SET_STRING || event == PROP_SET_VOID)
+  prop_t *p;
+  prop_sub_t *s;
+  va_list ap;
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_DESTROYED:
+    p = va_arg(ap, prop_t *);
+    s = va_arg(ap, prop_sub_t *);
+    prop_unsubscribe(s);
+    break;
+
+  case PROP_SET_STRING:
+  case PROP_SET_VOID:
     bookmark_save();
+    break;
+  default:
+    break;
+  }
 }
 
 
@@ -70,7 +96,7 @@ bookmark_add_prop(prop_t *parent, const char *name, const char *value)
   prop_t *p = prop_create(parent, name);
   if(value != NULL) prop_set_string(p, value); else prop_set_void(p);
 
-  prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_AUTO_UNSUBSCRIBE,
+  prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE,
 		 PROP_TAG_CALLBACK, bookmark_updated, NULL,
 		 PROP_TAG_ROOT, p, 
 		 PROP_TAG_MUTEX, &bookmark_mutex,
@@ -87,9 +113,7 @@ bookmark_add(const char *title, const char *url, const char *icon,
 {
   prop_t *p = prop_create(NULL, NULL);
 
-  prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE |
-		 PROP_SUB_AUTO_UNSUBSCRIBE,
-
+  prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE,
 		 PROP_TAG_CALLBACK, bookmark_destroyed, NULL,
 		 PROP_TAG_ROOT, p,
 		 PROP_TAG_MUTEX, &bookmark_mutex,

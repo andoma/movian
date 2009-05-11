@@ -691,9 +691,18 @@ metadata_prop_cb(void *opaque, prop_event_t event, ...)
 {
   metadata_t *m = opaque;
   spotify_msg_type_t r;
+  prop_t *p;
+  prop_sub_t *s;
+  va_list ap;
+  va_start(ap, event);
 
   if(event != PROP_DESTROYED) 
     return;
+
+  p = va_arg(ap, prop_t *);
+  s = va_arg(ap, prop_sub_t *);
+
+  prop_unsubscribe(s);
 
   LIST_REMOVE(m, m_link);
   prop_ref_dec(m->m_prop);
@@ -762,7 +771,7 @@ metadata_create(prop_t *p, metadata_type_t type, void *source)
   LIST_INSERT_HEAD(&metadatas, m, m_link);
   hts_mutex_unlock(&meta_mutex);
 
-  prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_AUTO_UNSUBSCRIBE,
+  prop_subscribe(PROP_SUB_TRACK_DESTROY,
 		 PROP_TAG_CALLBACK, metadata_prop_cb, m,
 		 PROP_TAG_MUTEX, &meta_mutex,
 		 PROP_TAG_ROOT, p,

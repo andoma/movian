@@ -308,7 +308,7 @@ prop_courier(void *aux)
       break;
  
     case PROP_DESTROYED:
-      s->hps_callback(s->hps_opaque, n->hpn_event, n->hpn_prop);
+      s->hps_callback(s->hps_opaque, n->hpn_event, n->hpn_prop, s);
       prop_ref_dec(n->hpn_prop);
       break;
     }
@@ -707,22 +707,10 @@ prop_set_parent_ex(prop_t *p, prop_t *parent, prop_t *before,
 /**
  *
  */
-LIST_HEAD(prop_sub_destroyer_list, prop_sub_destroyer);
-typedef struct prop_sub_destroyer {
-  LIST_ENTRY(prop_sub_destroyer) link;
-  prop_sub_t *s;
-} prop_sub_destroyer_t;
-
-
-
-/**
- *
- */
 static void
-prop_destroy0(prop_t *p, struct prop_sub_destroyer_list *psdl)
+prop_destroy0(prop_t *p)
 {
   prop_t *c, *parent;
-  prop_sub_destroyer_t *psd;
   prop_sub_t *s;
 
   switch(p->hp_type) {
@@ -731,7 +719,7 @@ prop_destroy0(prop_t *p, struct prop_sub_destroyer_list *psdl)
 
   case PROP_DIR:
     while((c = TAILQ_FIRST(&p->hp_childs)) != NULL)
-      prop_destroy0(c, psdl);
+      prop_destroy0(c);
     break;
 
   case PROP_STRING:
@@ -757,12 +745,6 @@ prop_destroy0(prop_t *p, struct prop_sub_destroyer_list *psdl)
 
     LIST_REMOVE(s, hps_canonical_prop_link);
     s->hps_canonical_prop = NULL;
-
-    if(s->hps_flags & PROP_SUB_AUTO_UNSUBSCRIBE) {
-      psd = malloc(sizeof(prop_sub_destroyer_t));
-      psd->s = s;
-      LIST_INSERT_HEAD(psdl, psd, link);
-    }
   }
 
   while((s = LIST_FIRST(&p->hp_value_subscriptions)) != NULL) {
@@ -798,22 +780,9 @@ prop_destroy0(prop_t *p, struct prop_sub_destroyer_list *psdl)
 void
 prop_destroy(prop_t *p)
 {
-  struct prop_sub_destroyer_list psdl;
-  struct prop_sub_destroyer *psd;
-
-  LIST_INIT(&psdl);
-
   hts_mutex_lock(&prop_mutex);
-  prop_destroy0(p, &psdl);
+  prop_destroy0(p);
   hts_mutex_unlock(&prop_mutex);
-
-  while((psd = LIST_FIRST(&psdl)) != NULL) {
-    LIST_REMOVE(psd, link);
-    hts_mutex_lock(psd->s->hps_mutex);
-    prop_unsubscribe(psd->s);
-    hts_mutex_unlock(psd->s->hps_mutex);
-    free(psd);
-  }
 }
 
 
