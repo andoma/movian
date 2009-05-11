@@ -112,7 +112,7 @@ glw_event_map_add(glw_t *w, glw_event_map_t *gem)
   glw_event_map_t *o;
 
   LIST_FOREACH(o, &w->glw_event_maps, gem_link) {
-    if(o->gem_srcevent == gem->gem_srcevent) {
+    if(o->gem_action == gem->gem_action) {
       LIST_REMOVE(o, gem_link);
       o->gem_dtor(o);
       break;
@@ -210,7 +210,7 @@ glw_event_map_internal_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   glw_t *t;
   event_t *e;
 
-  e = event_create_simple(g->event);
+  e = event_create_action(g->event);
   e->e_mapped = 1;
 
   if(g->target != NULL) {
@@ -259,12 +259,13 @@ glw_event_map_intercept(glw_t *w, event_t *e)
     return 0; /* Avoid recursion */
 
   LIST_FOREACH(gem, &w->glw_event_maps, gem_link) {
-    if(gem->gem_srcevent == e->e_type)
-      break;
-  }
-  if(gem == NULL)
-    return 0;
 
-  gem->gem_fire(w, gem, e);
-  return 1;
+    if((gem->gem_action == -1 &&
+	event_is_type(e, EVENT_KEYDESC)) ||
+       event_is_action(e, gem->gem_action)) {
+      gem->gem_fire(w, gem, e);
+      return 1;
+    }
+  }
+  return 0;
 }

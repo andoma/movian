@@ -89,10 +89,10 @@ static const struct {
   {"SelectSpace",        0x2A9315B7, 0 },
   {"MouseMenu",          0x28B715B7, 0 },
   {"MouseRightClick",    0x688481B7, 0 },
-  {"Enter",              0x28A195B7, EVENT_ENTER },
+  {"Enter",              0x28A195B7, ACTION_ENTER },
   {"MouseLeftClick",     0x688301B7, 0 },
   {"WindowsKey",         0x2B8195B7, 0 },
-  {"Backspace",          0x28A115B7, EVENT_BACKSPACE },
+  {"Backspace",          0x28A115B7, ACTION_BACKSPACE },
   {"Power",              0x289155B7, 0 },
 };
 
@@ -263,21 +263,21 @@ imonpad_start(ui_t *ui, int argc, char *argv[], int primary)
       k = 0;
 
       if(angle > 360 - ALIMIT || angle < 0 + ALIMIT)
-	k = EVENT_LEFT;
+	k = ACTION_LEFT;
       
       if(angle > 90 - ALIMIT && angle < 90 + ALIMIT)
-	k = EVENT_UP;
+	k = ACTION_UP;
       
       if(angle > 180 - ALIMIT && angle < 180 + ALIMIT)
-	k = EVENT_RIGHT;
+	k = ACTION_RIGHT;
       
       if(angle > 270 - ALIMIT && angle < 270 + ALIMIT)
-	k = EVENT_DOWN;
+	k = ACTION_DOWN;
 
       if(k && delta > repeat_rate0) {
 	last_nav_generated_ts = ts;
 
-	ui_dispatch_event(event_create_simple(k), NULL, uii);
+	ui_dispatch_event(event_create_action(k), NULL, uii);
 	delta -= repeat_rate0;
       }
       continue;
@@ -287,7 +287,7 @@ imonpad_start(ui_t *ui, int argc, char *argv[], int primary)
       if(v == imonpadmap[i].code) {
 
 	if(imonpadmap[i].key)
-	  ui_dispatch_event(event_create_simple(imonpadmap[i].key), desc, uii);
+	  ui_dispatch_event(event_create_action(imonpadmap[i].key), desc, uii);
 	else {
 	  snprintf(desc, sizeof(desc), "imonpad - %s", imonpadmap[i].name);
 	  ui_dispatch_event(NULL, desc, uii);

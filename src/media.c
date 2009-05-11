@@ -687,7 +687,7 @@ static void
 mp_set_primary(media_pipe_t *mp)
 {
   media_primary = mp;
-  mp_enqueue_event(mp, event_create_simple(EVENT_MP_IS_PRIMARY));
+  mp_enqueue_event(mp, event_create_type(EVENT_MP_IS_PRIMARY));
 
   prop_select(mp->mp_prop_root, 0);
   prop_link(mp->mp_prop_root, media_prop_current);
@@ -716,7 +716,7 @@ mp_become_primary(struct media_pipe *mp)
     media_primary->mp_flags |= MP_ON_STACK;
 
     mp_enqueue_event(media_primary, 
-		     event_create_simple(EVENT_MP_NO_LONGER_PRIMARY));
+		     event_create_type(EVENT_MP_NO_LONGER_PRIMARY));
   }
 
   mp_ref_inc(mp);
@@ -905,7 +905,7 @@ seek_by_propchange(void *opaque, prop_event_t event, ...)
 
   /* If there already is a seek event enqueued, update it */
   TAILQ_FOREACH(e, &mp->mp_eq, e_link) {
-    if(e->e_type != EVENT_SEEK)
+    if(!event_is_type(e, EVENT_SEEK))
       continue;
 
     es = (event_seek_t *)e;
@@ -966,25 +966,20 @@ media_event_handler(event_t *e, void *opaque)
 {
   if(media_primary == NULL)
     return 0;
-  
-  switch(e->e_type) {
 
-  case EVENT_SEEK_FAST_BACKWARD:
-  case EVENT_SEEK_BACKWARD:
-  case EVENT_SEEK_FAST_FORWARD:
-  case EVENT_SEEK_FORWARD:
-  case EVENT_PLAYPAUSE:
-  case EVENT_PLAY:
-  case EVENT_PAUSE:
-  case EVENT_STOP:
-  case EVENT_PREV:
-  case EVENT_NEXT:
-  case EVENT_RESTART_TRACK:
-    break;
-  default:
-    return 0;
+  if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD) ||
+     event_is_action(e, ACTION_SEEK_BACKWARD) ||
+     event_is_action(e, ACTION_SEEK_FAST_FORWARD) ||
+     event_is_action(e, ACTION_SEEK_FORWARD) ||
+     event_is_action(e, ACTION_PLAYPAUSE) ||
+     event_is_action(e, ACTION_PLAY) ||
+     event_is_action(e, ACTION_PAUSE) ||
+     event_is_action(e, ACTION_STOP) ||
+     event_is_action(e, ACTION_PREV_TRACK) ||
+     event_is_action(e, ACTION_NEXT_TRACK) ||
+     event_is_action(e, ACTION_RESTART_TRACK)) {
+    mp_enqueue_event(media_primary, e);
+    return 1;
   }
-
-  mp_enqueue_event(media_primary, e);
-  return 1;
+  return 0;
 }

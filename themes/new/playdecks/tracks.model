@@ -23,7 +23,7 @@ widget(backdrop, {
 
 
     widget(container_x, {
-      ACTION_ICON("theme://icons/rew.png", event(Previous));
+      ACTION_ICON("theme://icons/rew.png", event(PreviousTrack));
       ACTION_ICON("theme://icons/play.png", event(PlayPause));
       widget(slider_x, {
 	.focusable = 0.2;
@@ -37,7 +37,7 @@ widget(backdrop, {
 	  });
 	});
       });
-      ACTION_ICON("theme://icons/fwd.png", event(Next));
+      ACTION_ICON("theme://icons/fwd.png", event(NextTrack));
     });
   });
 });

@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <strtab.h>
+#include <assert.h>
 
 #include "showtime.h"
 #include "event.h"
@@ -62,7 +63,8 @@ event_create(event_type_t type, size_t size)
   e->e_dtor = event_default_dtor;
   e->e_refcount = 1;
   e->e_mapped = 0;
-  e->e_type = type;
+  assert(type > EVENT_OFFSET);
+  e->e_type_x = type;
   return e;
 }
 
@@ -76,7 +78,7 @@ event_create_unicode(int sym)
   e->h.e_dtor = event_default_dtor;
   e->h.e_refcount = 1;
   e->h.e_mapped = 0;
-  e->h.e_type = EVENT_UNICODE;
+  e->h.e_type_x = EVENT_UNICODE;
   e->sym = sym;
   return e;
 }
@@ -276,55 +278,51 @@ event_post_simple(event_type_t type)
  *
  */
 
-static struct strtab eventnames[] = {
-  { "no-event",              EVENT_NONE },
-  { "KeyCode",               EVENT_KEYDESC },
-  { "Up",                    EVENT_UP },
-  { "Down",                  EVENT_DOWN },
-  { "Left",                  EVENT_LEFT },
-  { "Right",                 EVENT_RIGHT },
-  { "Enter",                 EVENT_ENTER },
-  { "Incr",                  EVENT_INCR },
-  { "Decr",                  EVENT_DECR },
-  { "Ok",                    EVENT_OK },
-  { "Cancel",                EVENT_CANCEL },
-  { "Close",                 EVENT_CLOSE },
-  { "Stop",                  EVENT_STOP },
-  { "PlayPause",             EVENT_PLAYPAUSE },
-  { "Play",                  EVENT_PLAY },
-  { "Pause",                 EVENT_PAUSE },
-  { "VolumeUp",              EVENT_VOLUME_UP },
-  { "VolumeDown",            EVENT_VOLUME_DOWN },
-  { "VolumeMuteToggle",      EVENT_VOLUME_MUTE_TOGGLE },
-  { "Menu",                  EVENT_MENU },
-  { "Back",                  EVENT_BACKSPACE },
-  { "Select",                EVENT_SELECT },
-  { "Eject",                 EVENT_EJECT },
-  { "Power",                 EVENT_POWER },
-  { "Previous",              EVENT_PREV },
-  { "Next",                  EVENT_NEXT },
-  { "SeekForward",           EVENT_SEEK_FORWARD },
-  { "SeekReverse",           EVENT_SEEK_BACKWARD },
-  { "Quit",                  EVENT_QUIT },
-  { "MainMenu",              EVENT_MAINMENU },
-  { "ChangeView",            EVENT_SWITCH_VIEW },
-  { "Channel+",              EVENT_CHANNEL_PLUS },
-  { "Channel-",              EVENT_CHANNEL_MINUS },
-  { "FullscreenToggle",      EVENT_FULLSCREEN_TOGGLE },
+static struct strtab actionnames[] = {
+  { "Up",                    ACTION_UP },
+  { "Down",                  ACTION_DOWN },
+  { "Left",                  ACTION_LEFT },
+  { "Right",                 ACTION_RIGHT },
+  { "Enter",                 ACTION_ENTER },
+  { "PageUp",                ACTION_PAGE_UP },
+  { "PageDown",              ACTION_PAGE_DOWN },
+  { "Close",                 ACTION_CLOSE },
+  { "Stop",                  ACTION_STOP },
+  { "PlayPause",             ACTION_PLAYPAUSE },
+  { "Play",                  ACTION_PLAY },
+  { "Pause",                 ACTION_PAUSE },
+  { "VolumeUp",              ACTION_VOLUME_UP },
+  { "VolumeDown",            ACTION_VOLUME_DOWN },
+  { "VolumeMuteToggle",      ACTION_VOLUME_MUTE_TOGGLE },
+  { "Menu",                  ACTION_MENU },
+  { "Back",                  ACTION_BACKSPACE },
+  { "Select",                ACTION_SELECT },
+  { "Eject",                 ACTION_EJECT },
+  { "Power",                 ACTION_POWER },
+  { "PreviousTrack",         ACTION_PREV_TRACK },
+  { "NextTrack",             ACTION_NEXT_TRACK },
+  { "SeekForward",           ACTION_SEEK_FORWARD },
+  { "SeekReverse",           ACTION_SEEK_BACKWARD },
+  { "Quit",                  ACTION_QUIT },
+  { "MainMenu",              ACTION_MAINMENU },
+  { "ChangeView",            ACTION_SWITCH_VIEW },
+  { "Channel+",              ACTION_CHANNEL_PLUS },
+  { "Channel-",              ACTION_CHANNEL_MINUS },
+  { "FullscreenToggle",      ACTION_FULLSCREEN_TOGGLE },
 };
 
 
 
 const char *
-event_code2str(event_type_t code)
+action_code2str(action_type_t code)
 {
-  return val2str(code, eventnames);
+  return val2str(code, actionnames);
 }
 
-event_type_t
-event_str2code(const char *str)
+action_type_t
+action_str2code(const char *str)
 {
-  return str2val(str, eventnames);
+  return str2val(str, actionnames);
 }
 
 /**
@@ -374,16 +372,63 @@ event_create_openurl(const char *url, const char *type, const char *parent)
  *
  */
 int
-event_update_hold_by_type(int hold, event_type_t et)
+action_update_hold_by_event(int hold, event_t *e)
 {
-  switch(et) {
-  case EVENT_PLAYPAUSE:
+  if(event_is_action(e, ACTION_PLAYPAUSE))
     return !hold;
-  case EVENT_PAUSE:
+  
+  if(event_is_action(e, ACTION_PAUSE))
     return 1;
-  case EVENT_PLAY:
+
+  if(event_is_action(e, ACTION_PLAY))
     return 0;
-  default:
-    abort();
-  }
+
+  return 0;
+}
+
+
+/**
+ *
+ */
+event_t *
+event_create_action_multi(action_type_t *actions, size_t numactions)
+{
+  event_action_vector_t *eav;
+  int s = sizeof(action_type_t) * numactions;
+
+  eav = event_create(EVENT_ACTION_VECTOR, sizeof(event_action_vector_t) + s);
+  memcpy(eav->actions, actions, s);
+  eav->num = numactions;
+  return &eav->h;
+}
+
+
+/**
+ *
+ */
+event_t *
+event_create_action(action_type_t action)
+{
+  return event_create_action_multi(&action, 1);
+}
+
+
+/**
+ *
+ */
+int
+event_is_action(event_t *e, action_type_t at)
+{
+  int i;
+  event_action_vector_t *eav;
+
+  if(e->e_type_x != EVENT_ACTION_VECTOR)
+    return 0;
+
+  eav = (event_action_vector_t *)e;
+
+  for(i = 0; i < eav->num; i++)
+    if(eav->actions[i] == at)
+      return 1;
+  return 0;
 }

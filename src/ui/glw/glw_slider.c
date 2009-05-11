@@ -125,16 +125,20 @@ glw_slider_event_y(glw_t *w, event_t *e)
   glw_slider_t *s = (glw_slider_t *)w;
   float v = s->value;
 
-  switch(e->e_type) {
-  case EVENT_UP:
+  if(event_is_action(e, ACTION_UP)) {
+
     v = s->value - s->step;
-    break;
-  case EVENT_DOWN:
+
+  } else if(event_is_action(e, ACTION_DOWN)) {
+
     v = s->value + s->step;
-    break;
-  default:
+
+  } else {
+
     return 0;
+
   }
+
   update_value(s, v);
   return 1;
 }
@@ -149,16 +153,20 @@ glw_slider_event_x(glw_t *w, event_t *e)
   glw_slider_t *s = (glw_slider_t *)w;
   float v = s->value;
 
-  switch(e->e_type) {
-  case EVENT_LEFT:
+  if(event_is_action(e, ACTION_LEFT)) {
+
     v = s->value - s->step_i;
-    break;
-  case EVENT_RIGHT:
+
+  } else if(event_is_action(e, ACTION_RIGHT)) {
+
     v = s->value + s->step_i;
-    break;
-  default:
+
+  } else {
+
     return 0;
+
   }
+
   update_value(s, v);
   return 1;
 }

@@ -27,6 +27,7 @@
 
 static hts_mutex_t km_mutex;
 
+
 /**
  *
  */
@@ -38,16 +39,12 @@ km_save(keymap_t *km)
   const char *e;
 
   LIST_FOREACH(ke, &km->km_entries, ke_link)
-    if((e = event_code2str(ke->ke_event)) != NULL && ke->ke_keycode != NULL)
+    if((e = action_code2str(ke->ke_action)) != NULL && ke->ke_keycode != NULL)
       htsmsg_add_str(m, e, ke->ke_keycode);
   
   htsmsg_store_save(m, "keymaps/%s", km->km_name);
   htsmsg_destroy(m);
 }
-
-
-
-
 
 
 /**
@@ -83,7 +80,7 @@ km_set_code(void *opaque, prop_event_t event, ...)
  */
 static void
 keymapper_entry_add(keymap_t *km, const char *str, const char *eventname,
-		    event_type_t e)
+		    action_type_t a)
 {
   keymap_entry_t *ke;
   prop_t *p;
@@ -91,7 +88,7 @@ keymapper_entry_add(keymap_t *km, const char *str, const char *eventname,
   ke = malloc(sizeof(keymap_entry_t));
   ke->ke_km = km;
   ke->ke_keycode = str ? strdup(str) : NULL;
-  ke->ke_event = e;
+  ke->ke_action = a;
   LIST_INSERT_HEAD(&km->km_entries, ke, ke_link);
 
   ke->ke_prop =  prop_create(NULL, NULL);
@@ -130,8 +127,8 @@ keymapper_create_entries(keymap_t *km, const keymap_defmap_t *def)
   int i;
 
   m = htsmsg_store_load("keymaps/%s", km->km_name);
-  for(e = EVENT_NONE + 1; e < EVENT_last_mappable; e++) {
-    if((eventname = event_code2str(e)) == NULL) 
+  for(e = ACTION_NONE + 1; e < ACTION_last_mappable; e++) {
+    if((eventname = action_code2str(e)) == NULL) 
       continue;
     
     keycode = NULL;
@@ -140,7 +137,7 @@ keymapper_create_entries(keymap_t *km, const keymap_defmap_t *def)
       keycode = htsmsg_get_str(m, eventname);
     } else if(def != NULL) {
       for(i = 0; def[i].kd_keycode != NULL; i++)
-	if(def[i].kd_event == e) {
+	if(def[i].kd_action == e) {
 	  keycode = def[i].kd_keycode;
 	  break;
 	}
@@ -154,29 +151,43 @@ keymapper_create_entries(keymap_t *km, const keymap_defmap_t *def)
 /**
  *
  */
-static void
+static event_t *
 keymapper_resolve0(keymap_t *km, const char *str, uii_t *uii)
 {
   keymap_entry_t *ke;
 
+#define MAX_ACTIONS 32
+
+  action_type_t vec[MAX_ACTIONS];
+  int vecptr = 0;
+
   LIST_FOREACH(ke, &km->km_entries, ke_link)
-    if(ke->ke_keycode != NULL && !strcmp(str, ke->ke_keycode))
-      ui_dispatch_event(event_create_simple(ke->ke_event), NULL, uii);
+    if(ke->ke_keycode != NULL && !strcmp(str, ke->ke_keycode) &&
+       vecptr < MAX_ACTIONS)
+      vec[vecptr++] = ke->ke_action;
+  
+  if(vecptr == 0)
+    return NULL;
+
+  return event_create_action_multi(vec, vecptr);
 }
 
 
 /**
  *
  */
-void
+event_t *
 keymapper_resolve(const char *str, uii_t *uii)
 {
+  event_t *e = NULL;
   hts_mutex_lock(&km_mutex);
   
   if(uii != NULL && uii->uii_km != NULL)
-    keymapper_resolve0(uii->uii_km, str, uii);
+    e = keymapper_resolve0(uii->uii_km, str, uii);
 
   hts_mutex_unlock(&km_mutex);
+
+  return e;
 }
 
 

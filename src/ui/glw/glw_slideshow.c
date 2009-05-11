@@ -135,35 +135,35 @@ glw_slideshow_event(glw_slideshow_t *s, event_t *e)
 {
   glw_t *c;
 
-  switch(e->e_type) {
-  case EVENT_NEXT:
+  if(event_is_action(e, ACTION_NEXT_TRACK)) {
+
     c = s->w.glw_focused ? TAILQ_NEXT(s->w.glw_focused, 
 				      glw_parent_link) : NULL;
     if(c == NULL)
       c = TAILQ_FIRST(&s->w.glw_childs);
     s->w.glw_focused = c;
     s->timer = 0;
-    return 1;
-    
-  case EVENT_PREV:
+
+  } else if(event_is_action(e, ACTION_PREV_TRACK)) {
+
     c = s->w.glw_focused ? TAILQ_PREV(s->w.glw_focused, glw_queue,
 				    glw_parent_link) : NULL;
     if(c == NULL)
       c = TAILQ_LAST(&s->w.glw_childs, glw_queue);
     s->w.glw_focused = c;
     s->timer = 0;
-    return 1;
 
-  case EVENT_PLAY:
-  case EVENT_PAUSE:
-  case EVENT_PLAYPAUSE:
-    s->hold = event_update_hold_by_type(s->hold, e->e_type);
+  } else if(event_is_action(e, ACTION_PLAYPAUSE) ||
+	    event_is_action(e, ACTION_PLAY) ||
+	    event_is_action(e, ACTION_PAUSE)) {
+
+    s->hold = action_update_hold_by_event(s->hold, e);
     glw_slideshow_update_playstatus(s);
-    return 1;
 
-  default:
+  } else
     return 0;
-  }
+
+  return 1;
 }
 
 

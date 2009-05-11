@@ -26,54 +26,58 @@
 
 
 typedef enum {
-  EVENT_NONE = 0,
-  EVENT_UP,
-  EVENT_DOWN,
-  EVENT_LEFT,
-  EVENT_RIGHT,
-  EVENT_ENTER,
 
-  EVENT_FOCUS_NEXT,  /* TAB */
-  EVENT_FOCUS_PREV,  /* Shift + TAB */
+  ACTION_NONE = 0,
+  ACTION_UP,
+  ACTION_DOWN,
+  ACTION_LEFT,
+  ACTION_RIGHT,
+  ACTION_ENTER,
+  ACTION_BACKSPACE,
 
-  EVENT_INCR,
-  EVENT_DECR,
+  ACTION_FOCUS_NEXT,  /* TAB */
+  ACTION_FOCUS_PREV,  /* Shift + TAB */
 
-  EVENT_OK,
-  EVENT_CANCEL,
+  ACTION_PAGE_UP,
+  ACTION_PAGE_DOWN,
 
-  EVENT_BACKSPACE,
+  ACTION_INCR,
+  ACTION_DECR,
+
+  ACTION_CLOSE,
+  ACTION_STOP,
+  ACTION_PLAYPAUSE,
+  ACTION_PLAY,
+  ACTION_PAUSE,
+  ACTION_VOLUME_UP,
+  ACTION_VOLUME_DOWN,
+  ACTION_VOLUME_MUTE_TOGGLE,
+  ACTION_MENU,
+  ACTION_SELECT,
+  ACTION_EJECT,
+  ACTION_POWER,
+  ACTION_QUIT,
+  ACTION_RESTART_TRACK,
+  ACTION_PREV_TRACK,
+  ACTION_NEXT_TRACK,
+  ACTION_SEEK_FORWARD,
+  ACTION_SEEK_BACKWARD,
+  ACTION_SEEK_FAST_FORWARD,
+  ACTION_SEEK_FAST_BACKWARD,
+  ACTION_MAINMENU,
+  ACTION_SWITCH_VIEW,
+  ACTION_CHANNEL_PLUS,
+  ACTION_CHANNEL_MINUS,
+  ACTION_FULLSCREEN_TOGGLE,
+
+  ACTION_last_mappable
+} action_type_t;
 
 
-  EVENT_CLOSE,
-  EVENT_STOP,
-  EVENT_PLAYPAUSE,
-  EVENT_PLAY,
-  EVENT_PAUSE,
-  EVENT_VOLUME_UP,
-  EVENT_VOLUME_DOWN,
-  EVENT_VOLUME_MUTE_TOGGLE,
-  EVENT_MENU,
-  EVENT_SELECT,
-  EVENT_EJECT,
-  EVENT_RESTART_TRACK,
-  EVENT_POWER,
-  EVENT_QUIT,
-  EVENT_PREV,
-  EVENT_NEXT,
-  EVENT_SEEK_FORWARD,
-  EVENT_SEEK_BACKWARD,
-  EVENT_SEEK_FAST_FORWARD,
-  EVENT_SEEK_FAST_BACKWARD,
-  EVENT_MAINMENU,
-  EVENT_SWITCH_VIEW,
-  EVENT_CHANNEL_PLUS,
-  EVENT_CHANNEL_MINUS,
-  EVENT_FULLSCREEN_TOGGLE,
 
-  EVENT_last_mappable,
-
-
+typedef enum {
+  EVENT_OFFSET = 5000,
+  EVENT_ACTION_VECTOR,
   EVENT_UNICODE,
   EVENT_KEYDESC,
   EVENT_AUDIO_CLOCK,
@@ -119,7 +123,7 @@ typedef struct event_queue {
 typedef struct event {
   int     e_refcount;
   int     e_mapped;
-  event_type_t e_type;
+  event_type_t e_type_x;
   void (*e_dtor)(struct event *e);
   TAILQ_ENTRY(event) e_link;
   char e_payload[0];
@@ -156,11 +160,25 @@ typedef struct event_seek {
 } event_seek_t;
 
 
+/**
+ *
+ */
+typedef struct event_action_vector {
+  event_t h;
+  int num;
+  action_type_t actions[0];
+} event_action_vector_t;
+
+
 void event_generic_dtor(event_t *e);
 
 void *event_create(event_type_t type, size_t size);
 
-#define event_create_simple(type) event_create(type, sizeof(event_t))
+event_t *event_create_action(action_type_t action);
+
+event_t *event_create_action_multi(action_type_t *actions, size_t numactions);
+
+#define event_create_type(type) event_create(type, sizeof(event_t))
 
 void *event_create_unicode(int sym);
 
@@ -209,10 +227,14 @@ typedef struct event_keydesc {
 
 void event_init(void);
 
-const char *event_code2str(event_type_t code);
-event_type_t event_str2code(const char *str);
+const char *action_code2str(action_type_t code);
 
+action_type_t action_str2code(const char *str);
 
-int event_update_hold_by_type(int hold, event_type_t et);
+int action_update_hold_by_event(int hold, event_t *e);
+
+#define event_is_type(e, et) ((e)->e_type_x == (et))
+
+int event_is_action(event_t *e, action_type_t at);
 
 #endif /* EVENT_H */

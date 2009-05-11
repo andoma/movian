@@ -28,7 +28,7 @@
 typedef struct glw_event_map {
   LIST_ENTRY(glw_event_map) gem_link;
 
-  event_type_t gem_srcevent;
+  action_type_t gem_action;
 
   void (*gem_fire)(glw_t *w, struct glw_event_map *gem, event_t *src);
   void (*gem_dtor)(struct glw_event_map *gem);

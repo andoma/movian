@@ -631,7 +631,6 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
   glw_text_bitmap_t *gtb = (void *)w;
   event_t *e;
   event_unicode_t *eu;
-  int v;
 
   switch(signal) {
   default:
@@ -657,71 +656,36 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
     e = extra;
 
-    if(w->glw_class == GLW_INTEGER) {
+    if(event_is_action(e, ACTION_BACKSPACE)) {
 
-      int type = e->e_type;
-
-      if(e->e_type == EVENT_UNICODE) {
-	eu = extra;
-	if(eu->sym == '+')
-	  type = EVENT_INCR;
-	if(eu->sym == '-')
-	  type = EVENT_DECR;
-      }
-
-      switch(type) {
-      default:
-	break;
-      case EVENT_INCR:
-	if(glw_get_int0(w, &v) == 0) {
-	  v = GLW_MIN(v + gtb->gtb_int_step, gtb->gtb_int_max);
-	  glw_set_i(w, GLW_ATTRIB_VALUE, (double)v, NULL);
-	  glw_signal0(w, GLW_SIGNAL_CHANGED, NULL);
-	}
-	return 1;
-	
-      case EVENT_DECR:
-	if(glw_get_int0(w, &v) == 0) {
-	  v = GLW_MAX(v - gtb->gtb_int_step, gtb->gtb_int_min);
-	  glw_set_i(w, GLW_ATTRIB_VALUE, (double)v, NULL);
-	  glw_signal0(w, GLW_SIGNAL_CHANGED, NULL);
-	}
-	return 1;
-      }
-      return 0;
-    }
-
-    switch(e->e_type) {
-    default:
-      break;
-
-    case EVENT_BACKSPACE:
       if(!del_char(gtb)) 
-	break;
+	return 0;
       
       gtb_notify(gtb);
       return 1;
+      
+    } else if(event_is_type(e, EVENT_UNICODE)) {
 
-    case EVENT_UNICODE:
       eu = extra;
 
       if(insert_char(gtb, eu->sym))
 	gtb_notify(gtb);
       return 1;
 
-    case EVENT_LEFT:
+    } else if(event_is_action(e, ACTION_LEFT)) {
+
       if(gtb->gtb_edit_ptr == 0)
-	break;
+	return 1;
       gtb->gtb_edit_ptr--;
       gtb->gtb_update_cursor = 1;
       return 1;
 
-    case EVENT_RIGHT:
+    } else if(event_is_action(e, ACTION_RIGHT)) {
+
       if(gtb->gtb_edit_ptr >= gtb->gtb_uc_len)
-	break;
+	return 1;
       gtb->gtb_edit_ptr++;
       gtb->gtb_update_cursor = 1;
-      return 1;
 
     }
     return 0;

@@ -37,13 +37,13 @@ static const struct {
   const char *name;
   event_type_t key;
 } lircmap[] = {
-  { "Up",           EVENT_UP    },
-  { "Down",         EVENT_DOWN  },
-  { "Left",         EVENT_LEFT  },
-  { "Right",        EVENT_RIGHT },
-  { "Enter",        EVENT_ENTER },
-  { "Back",         EVENT_BACKSPACE  },
-  { "Backspace",    EVENT_BACKSPACE  },
+  { "Up",           ACTION_UP    },
+  { "Down",         ACTION_DOWN  },
+  { "Left",         ACTION_LEFT  },
+  { "Right",        ACTION_RIGHT },
+  { "Enter",        ACTION_ENTER },
+  { "Back",         ACTION_BACKSPACE  },
+  { "Backspace",    ACTION_BACKSPACE  },
 };
 
 static int

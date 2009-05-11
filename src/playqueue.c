@@ -547,19 +547,15 @@ player_thread(void *aux)
 	e = mp_dequeue_event(playqueue_mp);
       }
 
-      switch(e->e_type) {
-      default:
-	break;
 
-      case EVENT_PLAYQUEUE_JUMP:
-      case EVENT_PLAYQUEUE_ENQ:
+      if(event_is_type(e, EVENT_PLAYQUEUE_JUMP) ||
+	 event_is_type(e, EVENT_PLAYQUEUE_ENQ)) {
 	pe = (playqueue_event_t *)e;
 	pqe = pe->pe_pqe;
 	pe->pe_pqe = NULL;
-	break;
 
-      case EVENT_PLAY:
-      case EVENT_PLAYPAUSE:
+      } else if(event_is_action(e, ACTION_PLAY) ||
+		event_is_action(e, ACTION_PLAYPAUSE)) {
 	hts_mutex_lock(&playqueue_mutex);
 
 	pqe = TAILQ_FIRST(&playqueue_entries);
@@ -567,9 +563,8 @@ player_thread(void *aux)
 	  pqe_ref(pqe);
 
 	hts_mutex_unlock(&playqueue_mutex);
-	break;
-
       }
+
       event_unref(e);
     }
 
@@ -583,30 +578,26 @@ player_thread(void *aux)
       pqe = playqueue_advance(pqe, 0);
       continue;
     }
-    switch(e->e_type) {
-     case EVENT_PREV:
+
+    if(event_is_action(e, ACTION_PREV_TRACK)) {
        pqe = playqueue_advance(pqe, 1);
-       break;
 
-     case EVENT_NEXT:
-     case EVENT_EOF:
+    } else if(event_is_action(e, ACTION_NEXT_TRACK) ||
+	      event_is_type  (e, EVENT_EOF)) {
        pqe = playqueue_advance(pqe, 0);
-       break;
 
-     case EVENT_STOP:
+    } else if(event_is_action(e, ACTION_STOP)) {
        pqe_unref(pqe);
        pqe = NULL;
-       break;
 
-    case EVENT_PLAYQUEUE_JUMP:
+    } else if(event_is_type(e, EVENT_PLAYQUEUE_JUMP)) {
       pqe_unref(pqe);
 
       pe = (playqueue_event_t *)e;
       pqe = pe->pe_pqe;
       pe->pe_pqe = NULL; // Avoid deref upon event unref
-      break;
 
-    default:
+    } else {
       abort();
     }
     event_unref(e);
@@ -620,14 +611,11 @@ player_thread(void *aux)
 static int
 playqueue_event_handler(event_t *e, void *opaque)
 {
-  switch(e->e_type) {
-  case EVENT_PLAYPAUSE:
-  case EVENT_PLAY:
-    break;
-  default:
-    return 0;
-  }
+  if(event_is_action(e, ACTION_PLAY) ||
+     event_is_action(e, ACTION_PLAYPAUSE)) {
+    mp_enqueue_event(playqueue_mp, e);
+    return 1;
 
-  mp_enqueue_event(playqueue_mp, e);
-  return 1;
+  }
+  return 0;
 }

@@ -532,7 +532,7 @@ eval_assign(glw_model_eval_context_t *ec, struct token *self)
 
   if(b->type == TOKEN_PROPERTY_NAME && !strcmp(b->t_string, "event")) {
     /* Assignment from $event, if our eval context has an event use it */
-    if(ec->event == NULL || ec->event->e_type != EVENT_KEYDESC)
+    if(ec->event == NULL || ec->event->e_type_x != EVENT_KEYDESC)
       return 0;
     
     ek = (event_keydesc_t *)ec->event;
@@ -1511,7 +1511,7 @@ glwf_onEvent(glw_model_eval_context_t *ec, struct token *self,
 {
   token_t *a = argv[0];  /* Source */
   token_t *b = argv[1];  /* Target */
-  int srcevent;
+  int action;
   glw_t *w = ec->w;
   glw_event_map_t *gem;
 
@@ -1522,10 +1522,17 @@ glwf_onEvent(glw_model_eval_context_t *ec, struct token *self,
   if(a == NULL || b == NULL)
     return glw_model_seterr(ec->ei, self, "Missing operands");
 
-  if(a->type != TOKEN_IDENTIFIER || 
-     (srcevent = event_str2code(a->t_string)) < 0)
+  if(a->type != TOKEN_IDENTIFIER)
     return glw_model_seterr(ec->ei, a, "Invalid source event type");
 
+  if(!strcmp(a->t_string, "KeyCode")) {
+    action = -1;
+  } else {
+    action = action_str2code(a->t_string);
+
+    if(action < 0)
+      return glw_model_seterr(ec->ei, a, "Invalid source event type");
+  }
 
   switch(b->type) {
 
@@ -1544,7 +1551,7 @@ glwf_onEvent(glw_model_eval_context_t *ec, struct token *self,
     return glw_model_seterr(ec->ei, a, "onEvent: Second arg is invalid");
   }
 
-  gem->gem_srcevent = srcevent;
+  gem->gem_action = action;
   glw_event_map_add(w, gem);
   return 0;
 }
@@ -1606,7 +1613,7 @@ glwf_targetedEvent(glw_model_eval_context_t *ec, struct token *self,
   token_t *a = argv[0];       /* Target name */
   token_t *b = argv[1];       /* Event */
   token_t *r;
-  int dstevent;
+  int action;
 
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
@@ -1616,12 +1623,12 @@ glwf_targetedEvent(glw_model_eval_context_t *ec, struct token *self,
 			    "First argument is not a string");
   
   if(b->type != TOKEN_IDENTIFIER ||
-     (dstevent = event_str2code(b->t_string )) < 0)
+     (action = action_str2code(b->t_string )) < 0)
     return glw_model_seterr(ec->ei, b, "event(): "
 			    "Invalid target event");
   
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  r->t_gem = glw_event_map_internal_create(a->t_string, dstevent);
+  r->t_gem = glw_event_map_internal_create(a->t_string, action);
   eval_push(ec, r);
   return 0;
 }
@@ -1635,16 +1642,16 @@ glwf_event(glw_model_eval_context_t *ec, struct token *self,
 	   token_t **argv, unsigned int argc)
 {
   token_t *a, *r;
-  int dstevent;
+  int action;
 
   a = argv[0];
 
   if(a->type != TOKEN_IDENTIFIER ||
-     (dstevent = event_str2code(a->t_string )) < 0)
+     (action = action_str2code(a->t_string)) < 0)
     return glw_model_seterr(ec->ei, a, "event(): Invalid target event");
   
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  r->t_gem = glw_event_map_internal_create(NULL, dstevent);
+  r->t_gem = glw_event_map_internal_create(NULL, action);
   eval_push(ec, r);
   return 0;
 }

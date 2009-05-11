@@ -1198,8 +1198,7 @@ glw_focus_step(glw_t *w, int forward)
   if(!glw_path_in_focus(w))
     return 0;
 
-  e = event_create_simple(forward ? EVENT_DOWN : EVENT_UP);
-
+  e = event_create_action(forward ? ACTION_DOWN : ACTION_UP);
 
   while(w->glw_focused != NULL) {
     w = w->glw_focused;
@@ -1279,7 +1278,7 @@ pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, glw_t **hp)
 	  return 1;
 
 	case GLW_POINTER_RELEASE:
-	  e = event_create_simple(EVENT_ENTER);
+	  e = event_create_action(ACTION_ENTER);
 	  glw_event_to_widget(w, e, 0);
 	  event_unref(e);
 	  return 1;

@@ -51,6 +51,20 @@ rescale(AVFormatContext *fctx, int64_t ts, int si)
 /**
  *
  */
+static void
+seekflush(media_pipe_t *mp, media_buf_t **mbp)
+{
+  mp_flush(mp);
+  
+  if(*mbp != NULL) {
+    media_buf_free(*mbp);
+    *mbp = NULL;
+  }
+}
+
+/**
+ *
+ */
 event_t *
 be_file_playaudio(const char *url, media_pipe_t *mp,
 		  char *errbuf, size_t errlen)
@@ -110,7 +124,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     if(mb == NULL) {
 
       if((r = av_read_frame(fctx, &pkt)) < 0) {
-	e = event_create_simple(EVENT_EOF);
+	e = event_create_type(EVENT_EOF);
 	break;
       }
 
@@ -167,86 +181,76 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       continue;
     }      
 
-    switch(e->e_type) {
-	
-    default:
-      break;
-      
-    case EVENT_PLAYQUEUE_JUMP:
-      mp_flush(mp);
-      goto out;
-      
-    case EVENT_SEEK:
-      es = (event_seek_t *)e;
-      
-      ts = es->ts + fctx->start_time;
+    if(event_is_type(e, EVENT_PLAYQUEUE_JUMP)) {
 
+      mp_flush(mp);
+      break;
+
+    } else if(event_is_type(e, EVENT_SEEK)) {
+
+      es = (event_seek_t *)e;
+      ts = es->ts + fctx->start_time;
       if(ts < fctx->start_time)
 	ts = fctx->start_time;
-
       av_seek_frame(fctx, -1, ts, AVSEEK_FLAG_BACKWARD);
-      goto seekflush;
-
-    case EVENT_SEEK_FAST_BACKWARD:
-      av_seek_frame(fctx, -1, pts4seek - 60000000, AVSEEK_FLAG_BACKWARD);
-      goto seekflush;
+      seekflush(mp, &mb);
       
-    case EVENT_SEEK_BACKWARD:
+    } else if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
+
+      av_seek_frame(fctx, -1, pts4seek - 60000000, AVSEEK_FLAG_BACKWARD);
+      seekflush(mp, &mb);
+
+    } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
+
       av_seek_frame(fctx, -1, pts4seek - 15000000, AVSEEK_FLAG_BACKWARD);
-      goto seekflush;
+      seekflush(mp, &mb);
 
-    case EVENT_SEEK_FAST_FORWARD:
+    } else if(event_is_action(e, ACTION_SEEK_FAST_FORWARD)) {
+
       av_seek_frame(fctx, -1, pts4seek + 60000000, 0);
-      goto seekflush;
+      seekflush(mp, &mb);
 
-    case EVENT_SEEK_FORWARD:
+    } else if(event_is_action(e, ACTION_SEEK_FORWARD)) {
+
       av_seek_frame(fctx, -1, pts4seek + 15000000, 0);
-      goto seekflush;
+      seekflush(mp, &mb);
 
-    case EVENT_RESTART_TRACK:
+    } else if(event_is_action(e, ACTION_RESTART_TRACK)) {
+
       av_seek_frame(fctx, -1, 0, AVSEEK_FLAG_BACKWARD);
+      seekflush(mp, &mb);
 
-    seekflush:
-      mp_flush(mp);
+    } else if(event_is_action(e, ACTION_PLAYPAUSE) ||
+	      event_is_action(e, ACTION_PLAY) ||
+	      event_is_action(e, ACTION_PAUSE)) {
 
-      if(mb != NULL) {
-	media_buf_free(mb);
-	mb = NULL;
-      }
-      break;
-	
-    case EVENT_PLAYPAUSE:
-    case EVENT_PLAY:
-    case EVENT_PAUSE:
-      hold = event_update_hold_by_type(hold, e->e_type);
+      hold = action_update_hold_by_event(hold, e);
       mp_send_cmd_head(mp, mq, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
       lost_focus = 0;
-      break;
 
-    case EVENT_MP_NO_LONGER_PRIMARY:
+    } else if(event_is_type(e, EVENT_MP_NO_LONGER_PRIMARY)) {
+
       hold = 1;
       lost_focus = 1;
       mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
-      break;
 
-    case EVENT_MP_IS_PRIMARY:
+    } else if(event_is_type(e, EVENT_MP_IS_PRIMARY)) {
+
       if(lost_focus) {
 	hold = 0;
 	lost_focus = 0;
 	mp_send_cmd_head(mp, mq, MB_CTRL_PLAY);
       }
-      break;
 
-
-    case EVENT_PREV:
-    case EVENT_NEXT:
-    case EVENT_STOP:
+    } else if(event_is_action(e, ACTION_PREV_TRACK) ||
+	      event_is_action(e, ACTION_NEXT_TRACK) ||
+	      event_is_action(e, ACTION_STOP)) {
       mp_flush(mp);
-      goto out;
+      break;
     }
     event_unref(e);
   }
- out:
+
   if(mb != NULL)
     media_buf_free(mb);
 

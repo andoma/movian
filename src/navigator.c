@@ -253,18 +253,13 @@ nav_page_create(const char *url, size_t allocsize,
 static int
 nav_input_event(event_t *e, void *opaque)
 {
-  switch(e->e_type) {
-  case EVENT_OPENURL2:
-  case EVENT_BACKSPACE:
-  case EVENT_MAINMENU:
-    break;
-
-  default:
-    return 0;
+  if(event_is_type(e, EVENT_OPENURL2) ||
+     event_is_action(e, ACTION_BACKSPACE) ||
+     event_is_action(e, ACTION_MAINMENU)) {
+    event_enqueue(&nav_eq, e);
+    return 1;
   }
-
-  event_enqueue(&nav_eq, e);
-  return 1;
+  return 0;
 }
 
 
@@ -280,27 +275,21 @@ navigator_thread(void *aux)
   while(1) {
     e = event_get(-1, &nav_eq);
 
-    switch(e->e_type) {
-    default:
-      break;
-      
-    case EVENT_BACKSPACE:
+    if(event_is_action(e, ACTION_BACKSPACE)) {
       nav_back();
-      break;
-
-    case EVENT_MAINMENU:
+      
+    } else if(event_is_action(e, ACTION_MAINMENU)) {
       nav_open0("page://mainmenu", NULL, NULL);
-      break;
 
-    case EVENT_OPENURL:
+    } else if(event_is_type(e, EVENT_OPENURL)) {
       nav_open0(e->e_payload, NULL, NULL);
-      break;
 
-    case EVENT_OPENURL2:
+    } else if(event_is_type(e, EVENT_OPENURL2)) {
       ou = (event_openurl2_t *)e;
-
       nav_open0(ou->url, ou->type, ou->parent);
-      break;
+
+    } else {
+      abort();
     }
 
     event_unref(e);

@@ -44,11 +44,9 @@ video_player_idle(void *aux)
     if(e == NULL)
       e = mp_dequeue_event(mp);
     
-    switch(e->e_type) {
-    default:
-      break;
 
-    case EVENT_PLAY_URL:
+    if(event_is_type(e, EVENT_PLAY_URL)) {
+
       next = nav_play_video(e->e_payload, mp, errbuf, sizeof(errbuf));
 
       if(next == NULL)
@@ -59,8 +57,8 @@ video_player_idle(void *aux)
       e = next;
       continue;
 
-    case EVENT_EXIT:
-      run = 0;
+    } else if(event_is_type(e, EVENT_EXIT)) {
+      event_unref(e);
       break;
     }
     event_unref(e);
@@ -87,7 +85,7 @@ video_playback_create(media_pipe_t *mp)
 void
 video_playback_destroy(video_playback_t *vp)
 {
-  event_t *e = event_create_simple(EVENT_EXIT);
+  event_t *e = event_create_type(EVENT_EXIT);
 
   mp_enqueue_event(vp->vp_mp, e);
   event_unref(e);

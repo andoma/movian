@@ -89,8 +89,8 @@ typedef struct glw_x11 {
 } glw_x11_t;
 
 static const keymap_defmap_t glw_default_keymap[] = {
-  { EVENT_PLAYPAUSE, "x11 - F2"},
-  { EVENT_NONE, NULL},
+  { ACTION_PLAYPAUSE, "x11 - F2"},
+  { ACTION_NONE, NULL},
 };
 
 
@@ -98,8 +98,6 @@ static const keymap_defmap_t glw_default_keymap[] = {
 
 
 static void update_gpu_info(glw_x11_t *gx11);
-
-
 
 
 /**
@@ -191,6 +189,7 @@ display_settings_init(glw_x11_t *gx11)
 
   gx11->gr.gr_uii.uii_km =
     keymapper_create(r, gx11->config_name, "Keymap", glw_default_keymap);
+
 }
 
 
@@ -530,10 +529,10 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
     c = str[0];
     switch(c) {
       /* Static key mappings, these cannot be changed */
-    case 8:          e = event_create_simple(EVENT_BACKSPACE); break;
-    case 13:         e = event_create_simple(EVENT_ENTER);     break;
-    case 27:         e = event_create_simple(EVENT_CLOSE);     break;
-    case 9:          e = event_create_simple(EVENT_FOCUS_NEXT);break;
+    case 8:          e = event_create_action(ACTION_BACKSPACE); break;
+    case 13:         e = event_create_action(ACTION_ENTER);     break;
+    case 27:         e = event_create_action(ACTION_CLOSE);     break;
+    case 9:          e = event_create_action(ACTION_FOCUS_NEXT);break;
       /* Always send 1 char ASCII */
     default:
       if(c < 32 || c == 127)
@@ -547,13 +546,13 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
     }
   } else if((event->xkey.state & 0xf) == 0) {
     switch(keysym) {
-    case XK_Left:    e = event_create_simple(EVENT_LEFT);  break;
-    case XK_Right:   e = event_create_simple(EVENT_RIGHT); break;
-    case XK_Up:      e = event_create_simple(EVENT_UP);    break;
-    case XK_Down:    e = event_create_simple(EVENT_DOWN);  break;
+    case XK_Left:    e = event_create_action(ACTION_LEFT);  break;
+    case XK_Right:   e = event_create_action(ACTION_RIGHT); break;
+    case XK_Up:      e = event_create_action(ACTION_UP);    break;
+    case XK_Down:    e = event_create_action(ACTION_DOWN);  break;
     }
   } else if(keysym == XK_ISO_Left_Tab) {
-    e = event_create_simple(EVENT_FOCUS_PREV);
+    e = event_create_action(ACTION_FOCUS_PREV);
   }
 
   if(e != NULL) {
@@ -574,7 +573,7 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
 	     "x11 - raw - 0x%x", event->xkey.keycode);
   }
 
-  ui_dispatch_event(e, buf, &gx11->gr.gr_uii);
+  ui_dispatch_event(NULL, buf, &gx11->gr.gr_uii);
 }
 
 /**
@@ -881,14 +880,13 @@ glw_x11_dispatch_event(uii_t *uii, event_t *e)
 {
   glw_x11_t *gx11 = (glw_x11_t *)uii;
   
-  switch(e->e_type) {
-  case EVENT_FULLSCREEN_TOGGLE:
+  if(event_is_action(e, ACTION_FULLSCREEN_TOGGLE)) {
+
     settings_toggle_bool(gx11->fullscreen_setting);
     return 1;
-
-  default:
-    return glw_dispatch_event(uii, e);
   }
+
+  return glw_dispatch_event(uii, e);
 }
 
 

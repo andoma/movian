@@ -602,16 +602,16 @@ refresh_rate()
   }
   
   switch(cim) {
-    case NSRightArrowFunctionKey: e = event_create_simple(EVENT_RIGHT); break;
-    case NSLeftArrowFunctionKey: e = event_create_simple(EVENT_LEFT); break;
-    case NSUpArrowFunctionKey: e = event_create_simple(EVENT_UP); break;
-    case NSDownArrowFunctionKey: e = event_create_simple(EVENT_DOWN); break;
-    case 8: e = event_create_simple(EVENT_BACKSPACE); break;
-    case 127 /* delete */ : e = event_create_simple(EVENT_BACKSPACE); break;
-    case 13: e = event_create_simple(EVENT_ENTER); break;
-    case 27 /* esc */: e = event_create_simple(EVENT_CLOSE); break;
-    case 9 /* tab */: e = event_create_simple(EVENT_FOCUS_NEXT); break;
-    case 25 /* shift+tab */: e = event_create_simple(EVENT_FOCUS_PREV); break;
+    case NSRightArrowFunctionKey: e = event_create_action(ACTION_RIGHT); break;
+    case NSLeftArrowFunctionKey: e = event_create_action(ACTION_LEFT); break;
+    case NSUpArrowFunctionKey: e = event_create_action(ACTION_UP); break;
+    case NSDownArrowFunctionKey: e = event_create_action(ACTION_DOWN); break;
+    case 8: e = event_create_action(ACTION_BACKSPACE); break;
+    case 127 /* delete */ : e = event_create_action(ACTION_BACKSPACE); break;
+    case 13: e = event_create_action(ACTION_ENTER); break;
+    case 27 /* esc */: e = event_create_action(ACTION_CLOSE); break;
+    case 9 /* tab */: e = event_create_action(ACTION_FOCUS_NEXT); break;
+    case 25 /* shift+tab */: e = event_create_action(ACTION_FOCUS_PREV); break;
     default:
       break;
   }
@@ -823,14 +823,11 @@ glw_cocoa_dispatch_event(uii_t *uii, event_t *e)
 {
   glw_cocoa_t *gc = (glw_cocoa_t *)uii;
   
-  switch(e->e_type) {
-    case EVENT_FULLSCREEN_TOGGLE:
-      settings_toggle_bool(gc->fullscreen_setting);
-      return 1;
-      
-    default:
-      return glw_dispatch_event(uii, e);
+  if(event_is_action(e, ACTION_FULLSCREEN_TOGGLE)) {
+    settings_toggle_bool(gc->fullscreen_setting);
+    return 1;
   }
+  return glw_dispatch_event(uii, e);
 }
 
 static void

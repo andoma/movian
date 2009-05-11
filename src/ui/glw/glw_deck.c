@@ -58,24 +58,23 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     /* Respond to some events ourselfs */
     e = extra;
 
-    switch(e->e_type) {
-    case EVENT_INCR:
+    if(event_is_action(e, ACTION_INCR)) {
+
       n = glw_get_next_n(c, 1);
-      break;
-    case EVENT_DECR:
+
+    } else if(event_is_action(e, ACTION_DECR)) {
+
       n = glw_get_prev_n(c, 1);
+      
+    } else {
+
       break;
-    default:
-      n = NULL;
-      break;
+
     }
 
-    if(n != NULL) {
-      if(n != c)
-	glw_select(w, n);
-      return 1;
-    }
-    break;
+    if(n != c)
+      glw_select(w, n);
+    return 1;
 
   case GLW_SIGNAL_SELECT:
     w->glw_selected = extra;

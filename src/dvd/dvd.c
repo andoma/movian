@@ -629,39 +629,31 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
   pci_t *pci = &dp->dp_pci;
   media_pipe_t *mp = dp->dp_mp;
 
-  switch(e->e_type) {
-  case EVENT_EXIT:
-  case EVENT_PLAY_URL:
+  if(event_is_type(e, EVENT_EXIT) ||
+     event_is_type(e, EVENT_PLAY_URL))
     return e;
 
-  case EVENT_PLAYPAUSE:
-  case EVENT_PLAY:
-  case EVENT_PAUSE:
-    if(dvd_in_menu(dp))
-      break;
+  if(!dvd_in_menu(dp) && 
+     (event_is_action(e, ACTION_PLAYPAUSE) ||
+      event_is_action(e, ACTION_PLAY) ||
+      event_is_action(e, ACTION_PAUSE))) {
 
     mp_become_primary(mp);
-    dp->dp_hold = event_update_hold_by_type(dp->dp_hold, e->e_type);
+    dp->dp_hold = action_update_hold_by_event(dp->dp_hold, e);
     mp_send_cmd_head(mp, &mp->mp_video, 
 		     dp->dp_hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
     mp_send_cmd_head(mp, &mp->mp_audio, 
 		     dp->dp_hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
     dp->dp_lost_focus = 0;
-    break;
 
-  case EVENT_MP_NO_LONGER_PRIMARY:
-    if(dvd_in_menu(dp))
-      break;
+  } else if(!dvd_in_menu(dp) && event_is_type(e, EVENT_MP_NO_LONGER_PRIMARY)) {
 
     dp->dp_hold = 1;
     dp->dp_lost_focus = 1;
     mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PAUSE);
     mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PAUSE);
-    break;
 
-  case EVENT_MP_IS_PRIMARY:
-    if(dvd_in_menu(dp))
-      break;
+  } else if(!dvd_in_menu(dp) && event_is_type(e, EVENT_MP_IS_PRIMARY)) {
 
     if(dp->dp_lost_focus) {
       dp->dp_hold = 0;
@@ -669,39 +661,40 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
       mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PLAY);
       mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PLAY);
     }
-    break;
 
-  case EVENT_ENTER:
+  } else if(event_is_action(e, ACTION_ENTER)) {
+
     dvdnav_button_activate(dp->dp_dvdnav, pci);
-    break;
-  case EVENT_UP:
+
+  } else if(event_is_action(e, ACTION_UP)) {
+
     dvdnav_upper_button_select(dp->dp_dvdnav, pci);
-    break;
-  case EVENT_DOWN:
+
+  } else if(event_is_action(e, ACTION_DOWN)) {
+
     dvdnav_lower_button_select(dp->dp_dvdnav, pci);
-    break;
-  case EVENT_LEFT:
+
+  } else if(event_is_action(e, ACTION_LEFT)) {
+
     dvdnav_left_button_select(dp->dp_dvdnav, pci);
-    break;
-  case EVENT_RIGHT:
+
+  } else if(event_is_action(e, ACTION_RIGHT)) {
+
     dvdnav_right_button_select(dp->dp_dvdnav, pci);
-    break;
 
-  case EVENT_DVD_PCI:
+  } else if(event_is_type(e, EVENT_DVD_PCI)) {
+
     memcpy(&dp->dp_pci, e->e_payload, sizeof(pci_t));
-    break;
 
-  case EVENT_DVD_SELECT_BUTTON:
+  } else if(event_is_type(e, EVENT_DVD_SELECT_BUTTON)) {
+
     dvdnav_button_select(dp->dp_dvdnav, pci, e->e_payload[0]);
-    break;
 
-  case EVENT_DVD_ACTIVATE_BUTTON:
+  } else if(event_is_type(e, EVENT_DVD_ACTIVATE_BUTTON)) {
+
     dvdnav_button_select_and_activate(dp->dp_dvdnav, pci, e->e_payload[0]);
-    break;
 
-  default:
-    break;
-  }
+  } 
 
   event_unref(e);
   return NULL;

@@ -339,7 +339,7 @@ spotify_play_token_lost(sp_session *sess)
   notify_add(NOTIFY_ERROR, NULL, 5, 
 	     "Spotify: Playback paused, another client is using this account");
   if(spotify_mp != NULL)
-    mp_enqueue_event(spotify_mp, event_create_simple(EVENT_INTERNAL_PAUSE));
+    mp_enqueue_event(spotify_mp, event_create_type(EVENT_INTERNAL_PAUSE));
 
 }
 
@@ -396,7 +396,7 @@ spotify_music_delivery(sp_session *sess, const sp_audioformat *format,
       play_position = (int64_t)seek_pos * format->sample_rate / 1000;
       in_seek--;
     } else {
-      mp_enqueue_event(mp, event_create_simple(EVENT_EOF));
+      mp_enqueue_event(mp, event_create_type(EVENT_EOF));
     }
     return 0;
   }
@@ -1777,63 +1777,56 @@ be_spotify_play(const char *url, media_pipe_t *mp,
   hts_mutex_unlock(&spotify_mutex);
 
   /* Playback successfully started, wait for events */
-  do {
+  while(1) {
     e = mp_dequeue_event(mp);
-    
-    switch(e->e_type) {
 
-    case EVENT_PREV:
-    case EVENT_NEXT:
-    case EVENT_STOP:
-    case EVENT_PLAYQUEUE_JUMP:
-    case EVENT_EOF: // Send from spotify music delivery, means end of track
+    if(event_is_action(e, ACTION_PREV_TRACK) ||
+       event_is_action(e, ACTION_NEXT_TRACK) ||
+       event_is_action(e, ACTION_STOP) ||
+       event_is_type  (e, EVENT_PLAYQUEUE_JUMP) ||
+       event_is_type (e, EVENT_EOF)) {
+
       mp_flush(mp);
       break;
 
-    case EVENT_SEEK:
+    } else if(event_is_type(e, EVENT_SEEK)) {
+
       es = (event_seek_t *)e;
       spotify_msg_enq(spotify_msg_build_int(SPOTIFY_SEEK, es->ts / 1000));
-      goto unref;
 
-    case EVENT_PLAYPAUSE:
-    case EVENT_PLAY:
-    case EVENT_PAUSE:
-      hold = event_update_hold_by_type(hold, e->e_type);
+    } else if(event_is_action(e, ACTION_PLAYPAUSE) ||
+	      event_is_action(e, ACTION_PLAY) ||
+	      event_is_action(e, ACTION_PAUSE)) {
+
+      hold = action_update_hold_by_event(hold, e);
       spotify_msg_enq(spotify_msg_build_int(SPOTIFY_PAUSE, hold));
       mp_send_cmd_head(mp, mq, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
       lost_focus = 0;
-      goto unref;
 
-    case EVENT_MP_NO_LONGER_PRIMARY:
+    } else if(event_is_type(e, EVENT_MP_NO_LONGER_PRIMARY)) {
+
       hold = 1;
       lost_focus = 1;
       spotify_msg_enq(spotify_msg_build_int(SPOTIFY_PAUSE, 1));
       mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
-      goto unref;
 
-    case EVENT_MP_IS_PRIMARY:
+    } else if(event_is_type(e, EVENT_MP_IS_PRIMARY)) {
+
       if(lost_focus) {
 	hold = 0;
 	lost_focus = 0;
 	spotify_msg_enq(spotify_msg_build_int(SPOTIFY_PAUSE, 0));
 	mp_send_cmd_head(mp, mq, MB_CTRL_PLAY);
       }
-      goto unref;
 
-    case EVENT_INTERNAL_PAUSE:
+    } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
+
       hold = 1;
       mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
-      goto unref;
-
-
-    default:
-    unref:
-      event_unref(e);
-      e = NULL;
-      break;
 
     }
-  } while(e == NULL);
+    event_unref(e);
+  }
 
   if(hold) // This is a bit ugly 
     mp_send_cmd_head(mp, mq, MB_CTRL_PLAY);

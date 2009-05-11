@@ -1002,26 +1002,26 @@ gv_purge_queues(video_decoder_t *vd)
 static int
 gl_video_widget_event(glw_video_t *gv, event_t *e)
 {
-  switch(e->e_type) {
-  case EVENT_PLAYPAUSE:
-  case EVENT_PLAY:
-  case EVENT_PAUSE:
-  case EVENT_ENTER:
+  if(event_is_action(e, ACTION_PLAYPAUSE) ||
+     event_is_action(e, ACTION_PLAY) ||
+     event_is_action(e, ACTION_PAUSE) ||
+     event_is_action(e, ACTION_ENTER)) {
     mp_enqueue_event(gv->gv_mp, e);
     return 1;
-
-  case EVENT_UP:
-  case EVENT_DOWN:
-  case EVENT_LEFT:
-  case EVENT_RIGHT:
-    if(!gv->gv_in_menu)
-      return 0;
-    mp_enqueue_event(gv->gv_mp, e);
-    return 1;
-
-  default:
-    return 0;
   }
+
+  if(event_is_action(e, ACTION_UP) ||
+     event_is_action(e, ACTION_DOWN) ||
+     event_is_action(e, ACTION_LEFT) ||
+     event_is_action(e, ACTION_RIGHT)) {
+    
+    if(gv->gv_in_menu) {
+      mp_enqueue_event(gv->gv_mp, e);
+      return 1;
+    }
+  }
+
+  return 0;
 }
 
 

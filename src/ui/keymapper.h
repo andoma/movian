@@ -33,7 +33,7 @@ LIST_HEAD(keymap_entry_list, keymap_entry);
 typedef struct keymap_entry {
   LIST_ENTRY(keymap_entry) ke_link;
   char *ke_keycode;
-  event_type_t ke_event;
+  action_type_t ke_action;
   prop_t *ke_prop;
 
   prop_sub_t *ke_sub_keycode;
@@ -57,7 +57,7 @@ typedef struct keymap {
  *
  */
 typedef struct keymap_default {
-  event_type_t kd_event;
+  action_type_t kd_action;
   const char *kd_keycode;
 } keymap_defmap_t;
 
@@ -66,7 +66,7 @@ typedef struct keymap_default {
  *
  */
 struct uii;
-void keymapper_resolve(const char *str, struct uii *uii);
+event_t *keymapper_resolve(const char *str, struct uii *uii);
 
 keymap_t *keymapper_create(prop_t *settingsparent, const char *name,
 			   const char *title, const keymap_defmap_t *def);

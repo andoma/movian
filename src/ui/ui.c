@@ -244,9 +244,10 @@ ui_dispatch_event(event_t *e, const char *buf, uii_t *uii)
     memcpy(ek->desc, buf, l + 1);
     if(ui_dispatch_event(&ek->h, NULL, uii))
       return 1;
-
-    keymapper_resolve(buf, uii);
   }
+
+  if(e == NULL)
+    e = keymapper_resolve(buf, uii);
 
   if(e == NULL)
     return 0;
@@ -280,25 +281,16 @@ ui_dispatch_event(event_t *e, const char *buf, uii_t *uii)
 static int
 ui_event_handler(event_t *e, void *opaque)
 {
-  int v = 0;
-  switch(e->e_type) {
-  default:
-    return 0;
+  if(event_is_action(e, ACTION_CLOSE) ||
+     event_is_action(e, ACTION_QUIT)) {
+    ui_exit_showtime(0);
+    return 1;
 
-  case EVENT_CLOSE:
-    v = 0;
-    break;
+  } else if(event_is_action(e, ACTION_POWER)) {
+    ui_exit_showtime(10);
+    return 1;
 
-  case EVENT_QUIT:
-    v = 0;
-    break;
-
-  case EVENT_POWER:
-    v = 10;
-    break;
   }
-
-  ui_exit_showtime(v);
-  return 1;
+  return 0;
 }
 

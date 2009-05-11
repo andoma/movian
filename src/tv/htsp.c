@@ -782,21 +782,15 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
 
   htsmsg_destroy(m);
 
-  do {
+  while(1) {
     e = mp_dequeue_event(mp);
-
-    switch(e->e_type) {
-
-    case EVENT_EXIT:
-    case EVENT_PLAY_URL:
+    
+    if(event_is_type(e, EVENT_EXIT) ||
+       event_is_type(e, EVENT_PLAY_URL))
       break;
 
-    default:
-      event_unref(e);
-      e = NULL;
-      break;
-    }
-  } while(e == NULL);
+    event_unref(e);
+  }
   
   m = htsmsg_create_map();
 

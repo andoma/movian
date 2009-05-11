@@ -166,19 +166,18 @@ glw_navigate(glw_t *w, event_t *e, int local)
   query.y = y;
   query.score = 100000000;
 
-  switch(e->e_type) {
-  default:
-    return 0;
+  if(event_is_action(e, ACTION_FOCUS_PREV)) {
 
-  case EVENT_FOCUS_PREV:
     glw_focus_crawl(w, 0);
     return 1;
 
-  case EVENT_FOCUS_NEXT:
+  } else if(event_is_action(e, ACTION_FOCUS_NEXT)) {
+
     glw_focus_crawl(w, 1);
     return 1;
 
-  case EVENT_UP:
+  } else if(event_is_action(e, ACTION_UP)) {
+
     orientation = 0;
     direction   = 0;
 
@@ -186,9 +185,9 @@ glw_navigate(glw_t *w, event_t *e, int local)
     query.xmax = 1;
     query.ymin = -1;
     query.ymax = y - 0.0001;
-    break;
 
-  case EVENT_DOWN:
+  } else if(event_is_action(e, ACTION_DOWN)) {
+
     orientation = 0;
     direction   = 1;
 
@@ -196,9 +195,9 @@ glw_navigate(glw_t *w, event_t *e, int local)
     query.xmax = 1;
     query.ymin = y + 0.0001;
     query.ymax = 1;
-    break;
 
-  case EVENT_LEFT:
+  } else if(event_is_action(e, ACTION_LEFT)) {
+
     orientation = 1;
     direction   = 0;
 
@@ -206,9 +205,9 @@ glw_navigate(glw_t *w, event_t *e, int local)
     query.xmax = x - 0.0001;
     query.ymin = -1;
     query.ymax = 1;
-    break;
 
-  case EVENT_RIGHT:
+  } else if(event_is_action(e, ACTION_RIGHT)) {
+
     orientation = 1;
     direction   = 1;
 
@@ -216,7 +215,11 @@ glw_navigate(glw_t *w, event_t *e, int local)
     query.xmax = 1;
     query.ymin = -1;
     query.ymax = 1;
-    break;
+
+  } else {
+
+    return 0;
+
   }
 
 
