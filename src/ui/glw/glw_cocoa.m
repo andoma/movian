@@ -62,8 +62,6 @@ typedef struct glw_cocoa {
   int want_font_size;
   int is_fullscreen;
   int want_fullscreen;
-  int is_pointer_enabled;
-  int want_pointer_enabled;
   
   setting_t *fullscreen_setting;
 } glw_cocoa_t;
@@ -72,7 +70,7 @@ typedef struct glw_cocoa {
 static glw_cocoa_t gcocoa;
 
 static const keymap_defmap_t glw_default_keymap[] = {
-  {EVENT_NONE, NULL},
+  {ACTION_NONE, NULL},
 };
 
 /* based on NSEvent function key enums */
@@ -186,12 +184,12 @@ refresh_rate()
 @implementation GLWGLView
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
-  ui_exit_showtime(0);
+  showtime_shutdown(0);
 }
 
 /* delegated from window */
 - (BOOL)windowWillClose:(id)window {
-  ui_exit_showtime(0);
+  showtime_shutdown(0);
   return YES;
 }
 
@@ -380,16 +378,7 @@ refresh_rate()
     glw_unlock(&gcocoa.gr);
     display_settings_save(&gcocoa);
   }
-  
-  if(gcocoa.want_pointer_enabled != gcocoa.is_pointer_enabled) {
-    gcocoa.is_pointer_enabled = gcocoa.want_pointer_enabled;
-    if(gcocoa.want_pointer_enabled)
-      [NSCursor unhide];
-    else
-      [NSCursor hide];
-    display_settings_save(&gcocoa);
-  }
-  
+    
   if(gcocoa.want_fullscreen != gcocoa.is_fullscreen) {
     gcocoa.is_fullscreen = gcocoa.want_fullscreen;
     display_settings_save(&gcocoa);
@@ -449,10 +438,7 @@ refresh_rate()
   [self setNeedsDisplay:YES];
 }
 
-- (void)glwMouseEvent:(int)type event:(NSEvent*)event {
-  if(!gcocoa.is_pointer_enabled)
-    return;
-  
+- (void)glwMouseEvent:(int)type event:(NSEvent*)event {  
   NSPoint loc = [event locationInWindow];
   glw_pointer_event_t gpe;
   
@@ -606,6 +592,10 @@ refresh_rate()
     case NSLeftArrowFunctionKey: e = event_create_action(ACTION_LEFT); break;
     case NSUpArrowFunctionKey: e = event_create_action(ACTION_UP); break;
     case NSDownArrowFunctionKey: e = event_create_action(ACTION_DOWN); break;
+    case NSPageUpFunctionKey: e = event_create_action(ACTION_PAGE_UP); break;
+    case NSPageDownFunctionKey: e = event_create_action(ACTION_PAGE_DOWN); break;
+    case NSHomeFunctionKey: e = event_create_action(ACTION_TOP); break;
+    case NSEndFunctionKey: e = event_create_action(ACTION_BOTTOM); break;
     case 8: e = event_create_action(ACTION_BACKSPACE); break;
     case 127 /* delete */ : e = event_create_action(ACTION_BACKSPACE); break;
     case 13: e = event_create_action(ACTION_ENTER); break;
@@ -652,7 +642,6 @@ refresh_rate()
   gcocoa.glready = 1;
   
   /* default cursor is on at start */
-  gcocoa.is_pointer_enabled = 1;
   gcocoa.want_font_size = 40;
     
   gcocoa.config_name = strdup("glw/cocoa/default");
@@ -725,16 +714,6 @@ display_set_mode(void *opaque, int value)
 }
 
 /**
- * Switch pointer on/off
- */
-static void
-display_set_pointer(void *opaque, int value)
-{
-  glw_cocoa_t *gc = opaque;
-  gc->want_pointer_enabled = value;
-}
-
-/**
  * Change font size
  */
 static void
@@ -760,12 +739,7 @@ display_settings_init(glw_cocoa_t *gc)
     settings_add_bool(r, "fullscreen", "Fullscreen mode", 0, settings,
                       display_set_mode, gc,
                       SETTINGS_INITIAL_UPDATE);
-    
-  settings_add_bool(r, "pointer",
-		    "Mouse pointer", 1, settings,
-		    display_set_pointer, gc,
-		    SETTINGS_INITIAL_UPDATE);
-  
+      
   settings_add_int(r, "fontsize",
 		   "Font size", 20, settings, 14, 40, 1,
 		   display_set_fontsize, gc,
@@ -786,7 +760,6 @@ display_settings_save(glw_cocoa_t *gc)
   htsmsg_t *m = htsmsg_create_map();
   
   htsmsg_add_u32(m, "fullscreen", gc->want_fullscreen);
-  htsmsg_add_u32(m, "pointer",    gc->want_pointer_enabled);
   htsmsg_add_u32(m, "fontsize",   gc->want_font_size);
   
   htsmsg_store_save(m, "displays/%s", gc->config_name);
