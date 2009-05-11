@@ -19,8 +19,6 @@
 #ifndef BOOKMARKS_H__
 #define BOOKMARKS_H__
 
-void bookmark_create(const char *title, const char *icon, const char *url);
-
 void bookmarks_init(void);
 
 #endif /* BOOKMARKS_H__ */

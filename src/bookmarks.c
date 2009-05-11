@@ -27,7 +27,7 @@
 #include "settings.h"
 #include "bookmarks.h"
 
-
+static hts_mutex_t bookmark_mutex;
 static prop_t *bookmarks;
 
 static void
@@ -73,6 +73,7 @@ bookmark_add_prop(prop_t *parent, const char *name, const char *value)
   prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_AUTO_UNSUBSCRIBE,
 		 PROP_TAG_CALLBACK, bookmark_updated, NULL,
 		 PROP_TAG_ROOT, p, 
+		 PROP_TAG_MUTEX, &bookmark_mutex,
 		 NULL);
 }
 
@@ -91,6 +92,7 @@ bookmark_add(const char *title, const char *url, const char *icon,
 
 		 PROP_TAG_CALLBACK, bookmark_destroyed, NULL,
 		 PROP_TAG_ROOT, p,
+		 PROP_TAG_MUTEX, &bookmark_mutex,
 		 NULL);
 
   prop_set_string(prop_create(p, "type"), "bookmark");
@@ -114,18 +116,6 @@ bookmark_load(htsmsg_t *m)
 }
 
 
-
-/**
- *
- */
-void
-bookmark_create(const char *title, const char *url, const char *icon)
-{
-  bookmark_add(title, url, icon, 1);
-}
-
-
-
 /**
  * Control function for bookmark parent. Here we create / destroy
  * entries.
@@ -145,7 +135,7 @@ bookmarks_callback(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_REQ_NEW_CHILD:
-    bookmark_create("New bookmark", "none:", NULL);
+    bookmark_add("New bookmark", "none:", NULL, 1);
     break;
 
   case PROP_REQ_DELETE:
@@ -164,6 +154,8 @@ bookmarks_init(void)
   htsmsg_field_t *f;
   htsmsg_t *m, *n, *o;
 
+  hts_mutex_init(&bookmark_mutex);
+
   bookmarks = settings_add_dir(NULL, "bookmarks", "Bookmarks", "bookmark");
 
   prop_set_int(prop_create(bookmarks, "mayadd"), 1);
@@ -171,6 +163,7 @@ bookmarks_init(void)
   prop_subscribe(0,
 		 PROP_TAG_CALLBACK, bookmarks_callback, NULL,
 		 PROP_TAG_ROOT, prop_create(bookmarks, "nodes"),
+		 PROP_TAG_MUTEX, &bookmark_mutex,
 		 NULL);
   
   if((m = htsmsg_store_load("bookmarks")) != NULL) {
