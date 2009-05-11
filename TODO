@@ -13,8 +13,6 @@
 
 * Fix most basic HTSP status codes
 
-* More robust X11 init
-
 * Rewrite shutdown code
 
 --- 

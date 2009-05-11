@@ -279,7 +279,7 @@ fullscreen_grab(glw_x11_t *gx11)
 /**
  *
  */
-static void
+static int
 window_open(glw_x11_t *gx11)
 {
   XSetWindowAttributes winAttr;
@@ -341,9 +341,9 @@ window_open(glw_x11_t *gx11)
   gx11->glxctx = glXCreateContext(gx11->display, gx11->xvi, NULL, 1);
 
   if(gx11->glxctx == NULL) {
-    fprintf(stderr, "Unable to create GLX context on \"%s\"\n",
+    TRACE(TRACE_ERROR, "GLW", "Unable to create GLX context on \"%s\"\n",
 	    gx11->displayname_real);
-    exit(1);
+    return 1;
   }
 
 
@@ -386,7 +386,7 @@ window_open(glw_x11_t *gx11)
   gx11->glXSwapIntervalSGI(1);
 
   hide_cursor(gx11);
-
+  return 0;
 }
 
 /**
@@ -429,7 +429,8 @@ static void
 window_change_displaymode(glw_x11_t *gx11)
 {
   window_shutdown(gx11);
-  window_open(gx11);
+  if(window_open(gx11))
+    exit(1);
   display_settings_save(gx11);
 }
 
@@ -471,7 +472,7 @@ GLXExtensionSupported(Display *dpy, const char *extension)
 /**
  *
  */
-static void
+static int
 glw_x11_init(glw_x11_t *gx11)
 {
   int attribs[10];
@@ -483,23 +484,24 @@ glw_x11_init(glw_x11_t *gx11)
   display_settings_init(gx11);
 
   if((gx11->display = XOpenDisplay(gx11->displayname_real)) == NULL) {
-    fprintf(stderr, "Unable to open X display \"%s\"\n",
+    TRACE(TRACE_ERROR, "GLW", "Unable to open X display \"%s\"\n",
 	    gx11->displayname_real);
-    exit(1);
+    return 1;
   }
 
   if(!glXQueryExtension(gx11->display, NULL, NULL)) {
-    fprintf(stderr, "OpenGL GLX extension not supported by display \"%s\"\n",
+    TRACE(TRACE_ERROR, "GLW", 
+	  "OpenGL GLX extension not supported by display \"%s\"\n",
 	    gx11->displayname_real);
-    exit(1);
+    return 1;
   }
 
   if(!GLXExtensionSupported(gx11->display, "GLX_SGI_swap_control")) {
-    fprintf(stderr,
+    TRACE(TRACE_ERROR, "GLW", 
 	    "OpenGL GLX extension GLX_SGI_swap_control is not supported "
 	    "by display \"%s\"\n",
 	    gx11->displayname_real);
-    exit(1);
+    return 1;
   }
 
   gx11->screen        = DefaultScreen(gx11->display);
@@ -520,9 +522,9 @@ glw_x11_init(glw_x11_t *gx11)
   gx11->xvi = glXChooseVisual(gx11->display, gx11->screen, attribs);
 
   if(gx11->xvi == NULL) {
-    fprintf(stderr, "Unable to find an adequate Visual on \"%s\"\n",
+    TRACE(TRACE_ERROR, "GLW", "Unable to find an adequate Visual on \"%s\"\n",
 	    gx11->displayname_real);
-    exit(1);
+    return 1;
   }
 
   gx11->glXSwapIntervalSGI = (PFNGLXSWAPINTERVALSGIPROC)
@@ -532,7 +534,7 @@ glw_x11_init(glw_x11_t *gx11)
 
   build_blank_cursor(gx11);
 
-  window_open(gx11);
+  return window_open(gx11);
 }
 
 
@@ -901,7 +903,8 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
 
   gx11->want_font_size = 20;
 
-  glw_x11_init(gx11);
+  if(glw_x11_init(gx11))
+     return 1;
 
   if(glw_init(&gx11->gr, gx11->want_font_size, theme_path, ui, primary))
     return 1;
