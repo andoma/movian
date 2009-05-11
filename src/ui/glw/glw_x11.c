@@ -54,6 +54,10 @@ typedef struct glw_x11 {
   XVisualInfo *xvi;
   Window win;
   GLXContext glxctx;
+  Cursor blank_cursor;
+
+  int cursor_hidden;
+
   float aspect_ratio;
 
   int is_fullscreen;
@@ -73,9 +77,6 @@ typedef struct glw_x11 {
   int window_width;
   int window_height;
 
-  int is_pointer_enabled;
-  int want_pointer_enabled;
-
   int font_size;
   int want_font_size;
 
@@ -86,7 +87,12 @@ typedef struct glw_x11 {
 
   setting_t *fullscreen_setting;
 
+  int internal_fullscreen;
+  int autohide_counter;
+
 } glw_x11_t;
+
+#define AUTOHIDE_TIMEOUT 100 // XXX: in frames.. bad
 
 static const keymap_defmap_t glw_default_keymap[] = {
   { ACTION_PLAYPAUSE, "x11 - F2"},
@@ -109,7 +115,6 @@ display_settings_save(glw_x11_t *gx11)
   htsmsg_t *m = htsmsg_create_map();
 
   htsmsg_add_u32(m, "fullscreen", gx11->want_fullscreen);
-  htsmsg_add_u32(m, "pointer",    gx11->want_pointer_enabled);
   htsmsg_add_u32(m, "fontsize",   gx11->want_font_size);
 
   htsmsg_store_save(m, "displays/%s", gx11->config_name);
@@ -126,17 +131,6 @@ display_set_mode(void *opaque, int value)
 {
   glw_x11_t *gx11 = opaque;
   gx11->want_fullscreen = value;
-}
-
-
-/**
- * Switch pointer on/off
- */
-static void
-display_set_pointer(void *opaque, int value)
-{
-  glw_x11_t *gx11 = opaque;
-  gx11->want_pointer_enabled = value;
 }
 
 
@@ -175,11 +169,6 @@ display_settings_init(glw_x11_t *gx11)
 					       display_set_mode, gx11,
 					       SETTINGS_INITIAL_UPDATE);
 
-  settings_add_bool(r, "pointer",
-		    "Mouse pointer", 1, settings,
-		    display_set_pointer, gx11,
-		    SETTINGS_INITIAL_UPDATE);
-
   settings_add_int(r, "fontsize",
 		   "Font size", 20, settings, 14, 40, 1,
 		   display_set_fontsize, gx11,
@@ -196,10 +185,9 @@ display_settings_init(glw_x11_t *gx11)
 /**
  *
  */
-static Cursor
-blank_cursor(glw_x11_t *gx11)
+static void
+build_blank_cursor(glw_x11_t *gx11)
 {
-  Cursor blank = None;
   char cursorNoneBits[32];
   XColor dontCare;
   Pixmap cursorNonePixmap;
@@ -210,13 +198,56 @@ blank_cursor(glw_x11_t *gx11)
     XCreateBitmapFromData(gx11->display, gx11->root,
 			  cursorNoneBits, 16, 16);
 
-  blank = XCreatePixmapCursor(gx11->display,
-			      cursorNonePixmap, cursorNonePixmap,
-			      &dontCare, &dontCare, 0, 0);
+  gx11->blank_cursor = XCreatePixmapCursor(gx11->display,
+					   cursorNonePixmap, cursorNonePixmap,
+					   &dontCare, &dontCare, 0, 0);
 
   XFreePixmap(gx11->display, cursorNonePixmap);
+}
 
-  return blank;
+
+/**
+ *
+ */
+static void
+hide_cursor(glw_x11_t *gx11)
+{
+  if(gx11->cursor_hidden)
+    return;
+
+  gx11->cursor_hidden = 1;
+  XDefineCursor(gx11->display, gx11->win, gx11->blank_cursor);
+}
+
+
+/**
+ *
+ */
+static void
+autohide_cursor(glw_x11_t *gx11)
+{
+  if(gx11->cursor_hidden)
+    return;
+
+  if(gx11->autohide_counter == 0)
+    hide_cursor(gx11);
+  else
+    gx11->autohide_counter--;
+}
+  
+
+/**
+ *
+ */
+static void
+show_cursor(glw_x11_t *gx11)
+{
+  if(!gx11->cursor_hidden)
+    return;
+
+  gx11->autohide_counter = AUTOHIDE_TIMEOUT;
+  gx11->cursor_hidden = 0;
+  XUndefineCursor(gx11->display, gx11->win);
 }
 
 /**
@@ -320,13 +351,6 @@ window_open(glw_x11_t *gx11)
 
   XMapWindow(gx11->display, gx11->win);
 
-  /* Make an empty / blank cursor */
-
-  if(gx11->want_pointer_enabled == 0)
-    XDefineCursor(gx11->display, gx11->win, blank_cursor(gx11));
-
-  gx11->is_pointer_enabled = gx11->want_pointer_enabled;
-
   /* Set window title */
   snprintf(buf, sizeof(buf), "HTS Showtime %s", htsversion);
 
@@ -360,6 +384,9 @@ window_open(glw_x11_t *gx11)
   glw_video_global_init(&gx11->gr);
 
   gx11->glXSwapIntervalSGI(1);
+
+  hide_cursor(gx11);
+
 }
 
 /**
@@ -368,7 +395,7 @@ window_open(glw_x11_t *gx11)
 static void
 window_close(glw_x11_t *gx11)
 {
-  XUndefineCursor(gx11->display, gx11->win);
+  show_cursor(gx11);
   XDestroyWindow(gx11->display, gx11->win);
   glXDestroyContext(gx11->display, gx11->glxctx);
   XFreeColormap(gx11->display, gx11->colormap);
@@ -502,6 +529,8 @@ glw_x11_init(glw_x11_t *gx11)
     glXGetProcAddress((const GLubyte*)"glXSwapIntervalSGI");
 
   screensaver_inhibitor_init(gx11->displayname_real);
+
+  build_blank_cursor(gx11);
 
   window_open(gx11);
 }
@@ -687,28 +716,42 @@ layout_draw(glw_x11_t *gx11, float aspect)
  *
  */
 static void
+glw_x11_in_fullscreen(void *opaque, prop_event_t event, ...)
+{
+  glw_x11_t *gx11 = opaque;
+  va_list ap;
+  va_start(ap, event);
+
+  gx11->internal_fullscreen = event == PROP_SET_INT ? va_arg(ap, int) : 0;
+}
+
+
+/**
+ *
+ */
+static void
 glw_x11_mainloop(glw_x11_t *gx11)
 {
   XEvent event;
   int w, h;
   glw_pointer_event_t gpe;
 
+  prop_subscribe(0,
+		 PROP_TAG_NAME_VECTOR, 
+		 (const char *[]){"ui","fullscreen",NULL},
+		 PROP_TAG_CALLBACK, glw_x11_in_fullscreen, gx11,
+		 PROP_TAG_ROOT, gx11->gr.gr_uii.uii_prop,
+		 NULL);
+
   while(gx11->running) {
+
+    if(gx11->internal_fullscreen)
+      autohide_cursor(gx11);
+
     if(gx11->is_fullscreen != gx11->want_fullscreen) {
       glw_lock(&gx11->gr);
       window_change_displaymode(gx11);
       glw_unlock(&gx11->gr);
-    }
-
-    if(gx11->is_pointer_enabled != gx11->want_pointer_enabled) {
-
-      if(gx11->want_pointer_enabled) {
-	XUndefineCursor(gx11->display, gx11->win);
-      } else {
-	XDefineCursor(gx11->display, gx11->win, blank_cursor(gx11));
-      }
-      gx11->is_pointer_enabled = gx11->want_pointer_enabled;
-      display_settings_save(gx11);
     }
 
     if(gx11->font_size != gx11->want_font_size) {
@@ -727,6 +770,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
       
 	switch(event.type) {
 	case KeyPress:
+	  hide_cursor(gx11);
 	  gl_keypress(gx11, &event);
 	  break;
 
@@ -748,8 +792,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	  break;
 	  
 	case MotionNotify:
-	  if(!gx11->is_pointer_enabled)
-	    break;
+	  show_cursor(gx11);
 
 	  gpe.x =  (2.0 * event.xmotion.x / gx11->window_width ) - 1;
 	  gpe.y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
@@ -772,9 +815,6 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	  break;
 
 	case ButtonPress:
-	  if(!gx11->is_pointer_enabled)
-	    break;
-
 	  gpe.x =  (2.0 * event.xmotion.x / gx11->window_width ) - 1;
 	  gpe.y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
 

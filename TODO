@@ -11,9 +11,11 @@
 
 * Stop in slideshow
 
-* Automatic hide/show of mouse-pointer (settings sucks)
-
 * Fix most basic HTSP status codes
+
+* More robust X11 init
+
+* Rewrite shutdown code
 
 --- 
 
