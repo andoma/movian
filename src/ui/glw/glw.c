@@ -1058,9 +1058,10 @@ glw_focus_leave0(glw_t *w, glw_t *cur)
       continue;
     if(glw_is_focusable(c))
       return c;
-    if(TAILQ_FIRST(&c->glw_childs))
+    if(TAILQ_FIRST(&c->glw_childs)) {
       if((r = glw_focus_leave0(c, NULL)) != NULL)
 	return r;
+    }
   }
 }
 
@@ -1168,22 +1169,59 @@ glw_focus_crawl(glw_t *w, int forward)
 /**
  *
  */
-void
-glw_focus_open_path(glw_t *p, glw_t *w)
+static void
+glw_focus_open_path0(glw_t *w)
 {
-  glw_t *c;
-
-  TAILQ_FOREACH(c, &p->glw_childs, glw_parent_link)
-    c->glw_flags |= GLW_FOCUS_BLOCKED;
-
   w->glw_flags &= ~GLW_FOCUS_BLOCKED;
-  p->glw_focused = w;
+  w->glw_parent->glw_focused = w;
 
-  glw_signal0(p, GLW_SIGNAL_FOCUS_CHILD_CHANGED, w);
+  glw_signal0(w->glw_parent, GLW_SIGNAL_FOCUS_CHILD_CHANGED, w);
   glw_signal0(w, GLW_SIGNAL_FOCUS_SELF, NULL);
 
   if(glw_path_in_focus(w))
     glw_focus_set_current_by_path(w, 0);
+}
+
+
+/**
+ *
+ */
+void
+glw_focus_open_path_close_other(glw_t *w)
+{
+  glw_t *c;
+
+  TAILQ_FOREACH(c, &w->glw_parent->glw_childs, glw_parent_link)
+    c->glw_flags |= GLW_FOCUS_BLOCKED;
+
+  glw_focus_open_path0(w);
+}
+
+
+/**
+ *
+ */
+void
+glw_focus_open_path(glw_t *w)
+{
+  if(!(w->glw_flags & GLW_FOCUS_BLOCKED))
+    return;
+  
+  glw_focus_open_path0(w);
+}
+
+
+/**
+ *
+ */
+void
+glw_focus_close_path(glw_t *w)
+{
+  if(w->glw_flags & GLW_FOCUS_BLOCKED)
+    return;
+  
+  w->glw_flags |= GLW_FOCUS_BLOCKED;
+  glw_focus_leave(w);
 }
 
 
@@ -1221,9 +1259,6 @@ glw_focus_step(glw_t *w, int forward)
 int
 glw_event_to_widget(glw_t *w, event_t *e, int local)
 {
-  if(glw_event_map_intercept(w->glw_root->gr_universe, e))
-    return 1;
-
   if(glw_event_map_intercept(w, e))
     return 1;
 
@@ -1239,8 +1274,15 @@ glw_event_to_widget(glw_t *w, event_t *e, int local)
 int
 glw_event(glw_root_t *gr, event_t *e)
 {
-  glw_t *w = gr->gr_current_focus;
-  return w != NULL ? glw_event_to_widget(w, e, 0) : 0;
+  glw_t *w;
+
+  if(glw_event_map_intercept(gr->gr_universe, e))
+    return 1;
+
+  if((w = gr->gr_current_focus) == NULL)
+    return 0;
+
+  return glw_event_to_widget(w, e, 0);
 }
 
 

@@ -31,6 +31,11 @@ update_constraints(glw_expander_t *exp)
 
   e = exp->expansion * (c != NULL ? c->glw_req_size_y : 0);
 
+  if(e == 0)
+    glw_focus_close_path(&exp->w);
+  else if(exp->w.glw_flags & GLW_FOCUS_BLOCKED)
+    glw_focus_open_path(&exp->w);
+
   glw_set_constraints(&exp->w, 0, e, 0, 0, GLW_CONSTRAINT_Y, 0);
 }
 

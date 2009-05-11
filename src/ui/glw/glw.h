@@ -488,7 +488,11 @@ void glw_store_matrix(glw_t *w, glw_rctx_t *rc);
 
 void glw_focus_set(glw_root_t *gr, glw_t *w, int interactive);
 
-void glw_focus_open_path(glw_t *p, glw_t *w);
+void glw_focus_open_path(glw_t *w);
+
+void glw_focus_open_path_close_other(glw_t *w);
+
+void glw_focus_close_path(glw_t *w);
 
 void glw_focus_crawl(glw_t *w, int forward);
 
