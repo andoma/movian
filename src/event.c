@@ -286,6 +286,8 @@ static struct strtab actionnames[] = {
   { "Enter",                 ACTION_ENTER },
   { "PageUp",                ACTION_PAGE_UP },
   { "PageDown",              ACTION_PAGE_DOWN },
+  { "Top",                   ACTION_TOP },
+  { "Bottom",                ACTION_BOTTOM },
   { "Close",                 ACTION_CLOSE },
   { "Stop",                  ACTION_STOP },
   { "PlayPause",             ACTION_PLAYPAUSE },

@@ -199,6 +199,18 @@ glw_navigate(glw_t *w, event_t *e, int local)
     query.ymin = -1;
     query.ymax = y - 0.0001;
 
+  } else if(event_is_action(e, ACTION_TOP)) {
+
+    orientation = 0;
+    direction   = 0;
+    pagemode    = 2;
+
+    query.xmin = -1;
+    query.xmax = 1;
+    query.ymin = -1;
+    query.ymax = y - 0.0001;
+
+
   } else if(event_is_action(e, ACTION_DOWN)) {
 
     orientation = 0;
@@ -214,6 +226,17 @@ glw_navigate(glw_t *w, event_t *e, int local)
     orientation = 0;
     direction   = 1;
     pagemode    = 1;
+
+    query.xmin = -1;
+    query.xmax = 1;
+    query.ymin = y + 0.0001;
+    query.ymax = 1;
+
+  } else if(event_is_action(e, ACTION_BOTTOM)) {
+
+    orientation = 0;
+    direction   = 1;
+    pagemode    = 2;
 
     query.xmin = -1;
     query.xmax = 1;
@@ -296,7 +319,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
       while(1) {
 	if(direction == 1) {
 	  /* Down / Right */
-	  if(pagemode) {
+	  if(pagemode == 1) {
 
 	    d = TAILQ_NEXT(c, glw_parent_link);
 	    if(d != NULL) {
@@ -309,13 +332,17 @@ glw_navigate(glw_t *w, event_t *e, int local)
 	      }
 	    }
 
+	  } else if(pagemode == 2) {
+
+	    c = TAILQ_LAST(&p->glw_childs, glw_queue);
+
 	  } else {
 	    c = TAILQ_NEXT(c, glw_parent_link);
 	  }
 
 	} else {
 	  /* Up / Left */
-	  if(pagemode) {
+	  if(pagemode == 1) {
 
 	    d = TAILQ_PREV(c, glw_queue, glw_parent_link);
 	    if(d != NULL) {
@@ -327,6 +354,10 @@ glw_navigate(glw_t *w, event_t *e, int local)
 		  break;
 	      }
 	    }
+
+	  } else if(pagemode == 2) {
+
+	    c = TAILQ_FIRST(&p->glw_childs);
 
 	  } else {
 	    c = TAILQ_PREV(c, glw_queue, glw_parent_link);
