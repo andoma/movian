@@ -13,8 +13,6 @@
 
 * Fix most basic HTSP status codes
 
-* Rewrite shutdown code
-
 --- 
 
 * Read master volume on startup

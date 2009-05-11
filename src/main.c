@@ -45,6 +45,7 @@
 hts_mutex_t ffmutex;
 int concurrency;
 int trace_level;
+static int showtime_retcode;
 
 
 /**
@@ -54,7 +55,6 @@ int
 main(int argc, char **argv)
 {
   struct timeval tv;
-  int rc;
   const char *settingspath = NULL;
   const char *uiargs[16];
   const char *argv0 = argc > 0 ? argv[0] : "showtime";
@@ -144,18 +144,9 @@ main(int argc, char **argv)
   nav_open(argc > 0 ? argv[0] : "page://mainmenu", NAV_OPEN_ASYNC);
 
   /* Initialize user interfaces */
-  rc = ui_start(nuiargs, uiargs, argv0);
+  ui_start(nuiargs, uiargs, argv0);
 
-
-  /* Very ugly */
-#ifdef CONFIG_SPOTIFY
- {
-   extern void spotify_shutdown(void);
-   spotify_shutdown();
- }
-#endif
-
-  return rc;
+  exit(0);
 }
 
 /**
@@ -170,3 +161,34 @@ trace(int level, const char *subsys, const char *fmt, ...)
   va_end(ap);
 }
 
+
+
+
+/**
+ *
+ */
+static void *
+showtime_shutdown0(void *aux)
+{
+  /* Very ugly */
+#ifdef CONFIG_SPOTIFY
+ {
+   extern void spotify_shutdown(void);
+   spotify_shutdown();
+ }
+#endif
+  exit(showtime_retcode);
+}
+
+
+/**
+ *
+ */
+void
+showtime_shutdown(int retcode)
+{
+  TRACE(TRACE_DEBUG, "core", "Shutdown requested, returncode = %d", retcode);
+
+  showtime_retcode = retcode;
+  hts_thread_create_detached(showtime_shutdown0, NULL);
+}

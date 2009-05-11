@@ -25,6 +25,8 @@
 #include <htsmsg/htsmsg_store.h>
 #include <arch/threads.h>
 
+void showtime_shutdown(int retcode);
+
 extern hts_mutex_t ffmutex;
 
 #define fflock() hts_mutex_lock(&ffmutex)

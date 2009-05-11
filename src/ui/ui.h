@@ -59,8 +59,6 @@ typedef struct ui {
 
   int (*ui_start)(struct ui *ui, int argc, char **argv, int primary);
 
-  void (*ui_stop)(uii_t *uii, int retcode);
-
   int (*ui_dispatch_event)(uii_t *uii, event_t *e);
 
 } ui_t;
@@ -72,8 +70,6 @@ typedef struct ui {
 int ui_start(int argc, const char *argv[], const char *argv0);
 
 void uii_register(uii_t *uii, int primary);
-
-void ui_exit_showtime(int retcode);
 
 int ui_dispatch_event(event_t *e, const char *buf, uii_t *uii);
 

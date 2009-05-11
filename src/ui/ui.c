@@ -32,23 +32,6 @@ static uii_t *primary_uii;
 
 static int ui_event_handler(event_t *e, void *opaque);
 
-/**
- *
- */
-void
-ui_exit_showtime(int retcode)
-{
-  ui_t *ui = primary_uii->uii_ui;
-
-  if(ui->ui_stop == NULL) {
-    TRACE(TRACE_ERROR, "UI", "Primary UI \"%s\" does not have a "
-	  "stop method, direct exit", ui->ui_title);
-    exit(retcode);
-  }
-
-  TRACE(TRACE_DEBUG, "UI", "Stopping UI \"%s\"", ui->ui_title);
-  ui->ui_stop(primary_uii, retcode);
-}
 
 /**
  *
@@ -283,11 +266,11 @@ ui_event_handler(event_t *e, void *opaque)
 {
   if(event_is_action(e, ACTION_CLOSE) ||
      event_is_action(e, ACTION_QUIT)) {
-    ui_exit_showtime(0);
+    showtime_shutdown(0);
     return 1;
 
   } else if(event_is_action(e, ACTION_POWER)) {
-    ui_exit_showtime(10);
+    showtime_shutdown(10);
     return 1;
 
   }

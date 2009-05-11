@@ -813,9 +813,7 @@ glw_cocoa_start(ui_t *ui, int argc, char *argv[], int primary)
   
   NSApplicationMain(0, NULL);
 
-  /* TODO: not reached */
-  
-  return gcocoa.retcode;
+  return 0;
 }
 
 static int
@@ -830,26 +828,10 @@ glw_cocoa_dispatch_event(uii_t *uii, event_t *e)
   return glw_dispatch_event(uii, e);
 }
 
-static void
-glw_cocoa_stop(uii_t *uii, int retcode)
-{
-  static int quitting = 0;
-  glw_cocoa_t *gc = (glw_cocoa_t *)uii;
-  
-  /* TOOD: [NSApp terminate] will call applicationWillTerminate */
-  if(quitting)
-    return;
-
-  gc->retcode = retcode;
-  
-  quitting = 1;
-  [NSApp terminate:nil];
-}
 
 ui_t glw_ui = {
   .ui_title = "glw",
   .ui_start = glw_cocoa_start,
-  .ui_stop = glw_cocoa_stop,
   .ui_dispatch_event = glw_cocoa_dispatch_event,
   .ui_flags = UI_MAINTHREAD,
 };

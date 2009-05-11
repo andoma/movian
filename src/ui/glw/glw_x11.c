@@ -43,9 +43,6 @@ typedef struct glw_x11 {
 
   hts_thread_t threadid;
 
-  int retcode;
-  int running;
-
   Display *display;
   int screen;
   int screen_width;
@@ -745,7 +742,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
 		 PROP_TAG_ROOT, gx11->gr.gr_uii.uii_prop,
 		 NULL);
 
-  while(gx11->running) {
+  while(1) {
 
     if(gx11->internal_fullscreen)
       autohide_cursor(gx11);
@@ -789,7 +786,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
         case ClientMessage:
 	  if((Atom)event.xclient.data.l[0] == gx11->deletewindow) {
 	    /* Window manager wants us to close */
-	    ui_exit_showtime(0);
+	    showtime_shutdown(0);
 	  }
 	  break;
 	  
@@ -909,10 +906,9 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
   if(glw_init(&gx11->gr, gx11->want_font_size, theme_path, ui, primary))
     return 1;
 
-  gx11->running = 1;
   glw_x11_mainloop(gx11);
 
-  return gx11->retcode;
+  return 0;
 }
 
 /**
@@ -936,21 +932,8 @@ glw_x11_dispatch_event(uii_t *uii, event_t *e)
 /**
  *
  */
-static void
-glw_x11_stop(uii_t *uii, int retcode)
-{
-  glw_x11_t *gx11 = (glw_x11_t *)uii;
-  gx11->retcode = retcode;
-  gx11->running = 0;
-}
-
-
-/**
- *
- */
 ui_t glw_ui = {
   .ui_title = "glw",
   .ui_start = glw_x11_start,
   .ui_dispatch_event = glw_x11_dispatch_event,
-  .ui_stop = glw_x11_stop,
 };
