@@ -150,10 +150,12 @@ find_candidate(glw_t *w, query_t *query)
 int
 glw_navigate(glw_t *w, event_t *e, int local)
 {
-  glw_t  *p, *c, *t = NULL;
+  glw_t  *p, *c, *t = NULL, *d;
   float x, y;
   int direction;
   int orientation;
+  int pagemode = 0;
+  int pagecnt;
   query_t query;
 
 
@@ -186,10 +188,32 @@ glw_navigate(glw_t *w, event_t *e, int local)
     query.ymin = -1;
     query.ymax = y - 0.0001;
 
+  } else if(event_is_action(e, ACTION_PAGE_UP)) {
+
+    orientation = 0;
+    direction   = 0;
+    pagemode    = 1;
+
+    query.xmin = -1;
+    query.xmax = 1;
+    query.ymin = -1;
+    query.ymax = y - 0.0001;
+
   } else if(event_is_action(e, ACTION_DOWN)) {
 
     orientation = 0;
     direction   = 1;
+
+    query.xmin = -1;
+    query.xmax = 1;
+    query.ymin = y + 0.0001;
+    query.ymax = 1;
+
+  } else if(event_is_action(e, ACTION_PAGE_DOWN)) {
+
+    orientation = 0;
+    direction   = 1;
+    pagemode    = 1;
 
     query.xmin = -1;
     query.xmax = 1;
@@ -225,6 +249,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
   query.orientation = orientation;
   query.direction   = direction;
+  pagecnt = 10;
 
   c = NULL;
   for(; (p = w->glw_parent) != NULL; w = p) {
@@ -254,6 +279,9 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
     case GLW_CONTAINER_X:
     case GLW_CONTAINER_Y:
+      if(pagemode)
+	break;
+
       if(p->glw_class == (orientation ? GLW_CONTAINER_X : GLW_CONTAINER_Y))
 	goto container;
       break;
@@ -266,10 +294,46 @@ glw_navigate(glw_t *w, event_t *e, int local)
       container:
       c = w;
       while(1) {
-	if(direction == 1)
-	  c = TAILQ_NEXT(c, glw_parent_link);
-	else
-	  c = TAILQ_PREV(c, glw_queue, glw_parent_link);
+	if(direction == 1) {
+	  /* Down / Right */
+	  if(pagemode) {
+
+	    d = TAILQ_NEXT(c, glw_parent_link);
+	    if(d != NULL) {
+
+	      while(pagecnt--) {
+		c = d;
+		d = TAILQ_NEXT(c, glw_parent_link);
+		if(d == NULL)
+		  break;
+	      }
+	    }
+
+	  } else {
+	    c = TAILQ_NEXT(c, glw_parent_link);
+	  }
+
+	} else {
+	  /* Up / Left */
+	  if(pagemode) {
+
+	    d = TAILQ_PREV(c, glw_queue, glw_parent_link);
+	    if(d != NULL) {
+
+	      while(pagecnt--) {
+		c = d;
+		d = TAILQ_PREV(c, glw_queue, glw_parent_link);
+		if(d == NULL)
+		  break;
+	      }
+	    }
+
+	  } else {
+	    c = TAILQ_PREV(c, glw_queue, glw_parent_link);
+	  }
+
+	}
+
 	if(c == NULL)
 	  break;
 	find_candidate(c, &query);
