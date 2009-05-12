@@ -102,7 +102,7 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
 	mb = media_buf_alloc();
 	mb->mb_data_type = MB_VIDEO;
 	mq = &mp->mp_video;
-	
+
       } else if(ctx != NULL && si == mp->mp_audio.mq_stream) {
 	/* Current audio stream */
 	mb = media_buf_alloc();
@@ -122,15 +122,23 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
 
       mb->mb_cw = wrap_codec_ref(cwvec[si]);
 
-      /* Move the data pointers from ffmpeg's packet */
-
       mb->mb_stream = pkt.stream_index;
 
-      mb->mb_data = pkt.data;
-      pkt.data = NULL;
+      if(pkt.destruct == av_destruct_packet) {
+	/* Move the data pointers from ffmpeg's packet */
+	mb->mb_data = pkt.data;
+	pkt.data = NULL;
 
-      mb->mb_size = pkt.size;
-      pkt.size = 0;
+	mb->mb_size = pkt.size;
+	pkt.size = 0;
+
+      } else {
+
+	mb->mb_data = malloc(pkt.size +   FF_INPUT_BUFFER_PADDING_SIZE);
+	memset(mb->mb_data + pkt.size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+	memcpy(mb->mb_data, pkt.data, pkt.size);
+
+      }
 
       if(mb->mb_pts != AV_NOPTS_VALUE && mb->mb_data_type == MB_AUDIO)
 	mb->mb_time = mb->mb_pts - fctx->start_time;
