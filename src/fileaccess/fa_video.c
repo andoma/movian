@@ -118,7 +118,9 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
       mb->mb_epoch    = epoch;
       mb->mb_pts      = rescale(fctx, pkt.pts,      si);
       mb->mb_dts      = rescale(fctx, pkt.dts,      si);
-      mb->mb_duration = rescale(fctx, pkt.duration, si) * ctx->ticks_per_frame;
+      mb->mb_duration = rescale(fctx, pkt.duration, si);
+
+      //      printf("dur = %d (*%d)\n", mb->mb_duration, ctx->ticks_per_frame);
 
       mb->mb_cw = wrap_codec_ref(cwvec[si]);
 
