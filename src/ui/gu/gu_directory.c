@@ -117,7 +117,7 @@ gu_node_sub(void *opaque, prop_event_t event, ...)
 		       PROP_TAG_NAME_VECTOR, subpaths[i],
 		       PROP_TAG_CALLBACK, gu_col_sub, &dn->sub[i],
 		       PROP_TAG_COURIER, gnp->gnp_gu->gu_pc, 
-		       PROP_TAG_ROOT, p,
+		       PROP_TAG_NAMED_ROOT, p, "self",
 		       NULL);
     }
     break;

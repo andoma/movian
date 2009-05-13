@@ -31,7 +31,7 @@ gu_nav_page_set_type(void *opaque, prop_event_t event, ...)
 
   va_list ap;
   va_start(ap, event);
-  
+
   switch(event) {
   case PROP_SET_STRING:
     type = va_arg(ap, const char *);
@@ -80,7 +80,7 @@ gu_nav_page_create(gtk_ui_t *gu, prop_t *p)
 		 PROP_TAG_NAME_VECTOR, (const char *[]){"self", "type", NULL},
 		 PROP_TAG_CALLBACK, gu_nav_page_set_type, gnp,
 		 PROP_TAG_COURIER, gu->gu_pc, 
-		 PROP_TAG_ROOT, p,
+		 PROP_TAG_NAMED_ROOT, p, "self",
 		 NULL);
   return gnp;
 }

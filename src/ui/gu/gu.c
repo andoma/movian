@@ -18,7 +18,7 @@
 
 #include "navigator.h"
 #include "gu.h"
-
+#include "showtime.h"
 
 static hts_mutex_t gu_mutex;
 
@@ -112,7 +112,7 @@ static GtkWidget *get_menubar_menu( GtkWidget  *window )
 static gboolean 
 gu_close(GtkWidget *widget, GdkEvent  *event, gpointer data)
 {
-  ui_exit_showtime(0);
+  showtime_shutdown(0);
   return TRUE;
 }
 
@@ -173,7 +173,7 @@ gu_nav_url_set(GtkEntry *e, gpointer user_data)
  *
  */
 static int
-gu_start(ui_t *ui, int argc, char **argv)
+gu_start(ui_t *ui, int argc, char **argv, int primary)
 {
   GtkWidget *win;
   GtkWidget *vbox;
@@ -260,7 +260,7 @@ gu_start(ui_t *ui, int argc, char **argv)
   /* Page container */
   gu->gu_page_container = gtk_vbox_new(FALSE, 0);
   gtk_container_set_border_width(GTK_CONTAINER(gu->gu_page_container), 0);
-  gtk_container_add(GTK_CONTAINER(vbox), gu->gu_page_container);
+  gtk_box_pack_start(GTK_BOX(vbox), gu->gu_page_container, TRUE, TRUE, 0);
 
   prop_subscribe(0,
 		 PROP_TAG_NAME_VECTOR,
