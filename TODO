@@ -2,6 +2,10 @@
 
 * Create a global keymap
 
+* Fix real shutdown hooks
+  nvidia does some stuff on exit(3) so we can not invoke that without
+  cleaning up the GLX context.
+
 * Keyboard based Seeking both audio and video
 
 * Clicking on a button with the mouse should not give the button
