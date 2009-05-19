@@ -292,7 +292,7 @@ window_open(glw_x11_t *gx11)
   char buf[60];
   int fevent;
 
-  winAttr.event_mask        = KeyPressMask | StructureNotifyMask |
+  winAttr.event_mask = KeyPressMask | StructureNotifyMask |
     ButtonPressMask | ButtonReleaseMask |
     PointerMotionMask | ButtonMotionMask;
 
@@ -397,9 +397,8 @@ window_open(glw_x11_t *gx11)
 		       XNClientWindow, gx11->win,
 		       NULL);
   XGetICValues(gx11->ic, XNFilterEvents, &fevent, NULL);
-  XSelectInput(gx11->display, gx11->win,
-	       fevent | ExposureMask | KeyPressMask | FocusChangeMask);
 
+  XSelectInput(gx11->display, gx11->win, fevent | winAttr.event_mask);
   return 0;
 }
 
