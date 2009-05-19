@@ -76,7 +76,7 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
   case GLW_SIGNAL_CHILD_CREATED:
     c = w->glw_selected = extra;
-    glw_focus_open_path_close_other(c);
+    glw_focus_open_path_close_all_other(c);
 
     c->glw_parent_pos.z = 1.0f;
     break;
@@ -86,7 +86,7 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     c = TAILQ_PREV(c, glw_queue, glw_parent_link);
     w->glw_selected = c;
     if(c != NULL)
-      glw_focus_open_path_close_other(c);
+      glw_focus_open_path_close_all_other(c);
     break;
   }
 

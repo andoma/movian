@@ -74,7 +74,7 @@ static const size_t glw_class_to_size[] = {
 };
 
 
-static void glw_focus_init_widget(glw_t *w, int interactive, float weight);
+static void glw_focus_init_widget(glw_t *w, float weight);
 static void glw_focus_leave(glw_t *w);
 static void glw_root_set_hover(glw_root_t *gr, glw_t *w);
 
@@ -295,7 +295,7 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 	glw_focus_leave(w);
 
       if(f > 0)
-	glw_focus_init_widget(w, 0, f);
+	glw_focus_init_widget(w, f);
       break;
 
     case GLW_ATTRIB_ANGLE:
@@ -592,6 +592,8 @@ glw_destroy0(glw_t *w)
 
     glw_focus_leave(w);
 
+    assert(w->glw_root->gr_current_focus != w);
+
     if(p->glw_selected == w)
       p->glw_selected = TAILQ_NEXT(w, glw_parent_link);
 
@@ -832,13 +834,13 @@ glw_detach0(glw_t *w)
  *
  */
 static void
-glw_path_flood_unset(glw_t *w, int flag)
+glw_path_flood(glw_t *w, int or, int and)
 {
   glw_t *c;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-    glw_path_flood_unset(c, flag);
-    c->glw_flags &= ~flag;
+    glw_path_flood(c, or, and);
+    c->glw_flags = (c->glw_flags | or) & and;
     if(!(c->glw_flags & GLW_DESTROYING))
       glw_signal0(c, GLW_SIGNAL_FOCUS_HOVER_PATH_CHANGED, NULL);
   }
@@ -849,100 +851,18 @@ glw_path_flood_unset(glw_t *w, int flag)
  *
  */
 static void
-glw_path_unset(glw_t *w, int flag)
+glw_path_modify(glw_t *w, int set, int clr)
 {
-  glw_path_flood_unset(w, flag);
+  clr = ~clr; // Invert so we can just AND it
+
+  glw_path_flood(w, set, clr);
 
   for(; w != NULL; w = w->glw_parent) {
-    w->glw_flags &= ~flag;
+    w->glw_flags = (w->glw_flags | set) & clr;
     if(!(w->glw_flags & GLW_DESTROYING))
       glw_signal0(w, GLW_SIGNAL_FOCUS_HOVER_PATH_CHANGED, NULL);
   }
 }
-
-
-/**
- *
- */
-static void
-glw_path_flood_set(glw_t *w, int flag)
-{
-  glw_t *c;
-
-  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-    glw_path_flood_set(c, flag);
-    c->glw_flags |= flag;
-    if(!(c->glw_flags & GLW_DESTROYING))
-      glw_signal0(c, GLW_SIGNAL_FOCUS_HOVER_PATH_CHANGED, NULL);
-  }
-}
-
-
-/**
- *
- */
-static void
-glw_path_set(glw_t *w, int flag)
-{
-  glw_path_flood_set(w, flag);
-
-  for(; w != NULL; w = w->glw_parent) {
-    w->glw_flags |= flag;
-    if(!(w->glw_flags & GLW_DESTROYING))
-      glw_signal0(w, GLW_SIGNAL_FOCUS_HOVER_PATH_CHANGED, NULL);
-  }
-}
-
-
-/**
- *
- */
-static int
-glw_path_in_focus(glw_t *w)
-{
-  while(w->glw_parent != NULL) {
-    if(w->glw_parent->glw_focused != w)
-      return 0;
-    w = w->glw_parent;
-  }
-  return 1;
-}
-
-
-/**
- *
- */
-static void
-glw_root_focus(glw_root_t *gr, glw_t *w, int interactive)
-{
-  glw_t *x;
-
-  if(gr->gr_current_focus == w)
-    return;
-
-  if(gr->gr_current_focus != NULL)
-    glw_path_unset(gr->gr_current_focus, GLW_IN_FOCUS_PATH);
-
-  gr->gr_current_focus = w;
-  if(w != NULL)
-    glw_path_set(w, GLW_IN_FOCUS_PATH);
- 
-  if(!interactive)
-    return;
-  
-  for(x = w; x->glw_parent != NULL; x = x->glw_parent) 
-    glw_signal0(x->glw_parent, GLW_SIGNAL_FOCUS_INTERACTIVE, x);
-
-  if(w->glw_originating_prop != NULL) {
-    
-    if(gr->gr_last_focused_interactive != NULL)
-      prop_ref_dec(gr->gr_last_focused_interactive);
-
-    gr->gr_last_focused_interactive = w->glw_originating_prop;
-    prop_ref_inc(gr->gr_last_focused_interactive);
-  }
-}
-
 
 
 /**
@@ -955,13 +875,37 @@ glw_root_set_hover(glw_root_t *gr, glw_t *w)
     return;
 
   if(gr->gr_pointer_hover != NULL)
-    glw_path_unset(gr->gr_pointer_hover, GLW_IN_HOVER_PATH);
+    glw_path_modify(gr->gr_pointer_hover, 0, GLW_IN_HOVER_PATH);
 
   gr->gr_pointer_hover = w;
   if(w != NULL)
-    glw_path_set(w, GLW_IN_HOVER_PATH);
+    glw_path_modify(w, GLW_IN_HOVER_PATH, 0);
 }
 
+
+/**
+ *
+ */
+static int
+glw_path_in_focus(glw_t *w)
+{
+  return !!(w->glw_flags & GLW_IN_FOCUS_PATH);
+}
+
+
+/**
+ *
+ */
+static glw_t *
+glw_focus_by_path(glw_t *w)
+{
+  while(w->glw_focused != NULL) {
+    if(w->glw_focused->glw_flags & (GLW_FOCUS_BLOCKED | GLW_DESTROYING))
+      return NULL;
+    w = w->glw_focused;
+  }
+  return w;
+}
 
 
 /**
@@ -970,32 +914,59 @@ glw_root_set_hover(glw_root_t *gr, glw_t *w)
 void
 glw_focus_set(glw_root_t *gr, glw_t *w, int interactive)
 {
-  glw_root_focus(gr, w, interactive);
+  glw_t *x, *y;
+  glw_signal_t sig;
+  float weight = w ? w->glw_focus_weight : 0;
 
+  if(interactive) {
+    sig = GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE;
+  } else {
+    sig = GLW_SIGNAL_FOCUS_CHILD_AUTOMATIC;
+  }
+
+  if(w != NULL) {
+
+    for(x = w; x->glw_parent != NULL; x = x->glw_parent) {
+
+      if(!interactive && x->glw_flags & GLW_FOCUS_BLOCKED)
+	return;
+
+      if(x->glw_parent->glw_focused != x) {
+	/* Path switches */
+      
+	y = glw_focus_by_path(x->glw_parent);
+      
+	if(y == NULL || interactive || weight > y->glw_focus_weight) {
+	  x->glw_parent->glw_focused = x;
+	  glw_signal0(x->glw_parent, sig, x);
+	} else {
+	  /* Other path outranks our weight, stop now */
+	  return;
+	}
+      }
+    }
+  }
+
+  if(gr->gr_current_focus == w)
+    return;
+
+  if(gr->gr_current_focus != NULL)
+    glw_path_modify(gr->gr_current_focus, 0, GLW_IN_FOCUS_PATH);
+
+  gr->gr_current_focus = w;
   if(w == NULL)
     return;
 
-  while(w->glw_parent != NULL) {
-    if(w->glw_parent->glw_focused != w) {
-      w->glw_parent->glw_focused = w;
-      glw_signal0(w->glw_parent, GLW_SIGNAL_FOCUS_CHILD_CHANGED, w);
-      glw_signal0(w, GLW_SIGNAL_FOCUS_SELF, NULL);
-    }
-    w = w->glw_parent;
+  glw_path_modify(w, GLW_IN_FOCUS_PATH, 0);
+
+  if(interactive && w->glw_originating_prop != NULL) {
+    
+    if(gr->gr_last_focused_interactive != NULL)
+      prop_ref_dec(gr->gr_last_focused_interactive);
+
+    gr->gr_last_focused_interactive = w->glw_originating_prop;
+    prop_ref_inc(gr->gr_last_focused_interactive);
   }
-}
-
-
-
-/**
- *
- */
-void
-glw_focus_set_current_by_path(glw_t *w, int interactive)
-{
-  while(w->glw_focused != NULL)
-    w = w->glw_focused;
-  glw_root_focus(w->glw_root, w, interactive);
 }
 
 
@@ -1003,36 +974,11 @@ glw_focus_set_current_by_path(glw_t *w, int interactive)
  *
  */
 static void
-glw_focus_init_widget(glw_t *w0, int interactive, float weight)
+glw_focus_init_widget(glw_t *w, float weight)
 {
-  glw_t *w = w0;
-  glw_root_t *gr = w->glw_root;
-
-  assert(gr->gr_current_focus != w0);
-
   w->glw_focus_weight = weight;
-
-  if(gr->gr_current_focus == NULL ||
-     gr->gr_current_focus->glw_focus_weight < weight) {
-    glw_focus_set(gr, w, interactive);
-    return;
-  }
-
-  while(w->glw_parent != NULL) {
-    if(w->glw_parent->glw_focused == NULL) {
-      w->glw_parent->glw_focused = w;
-
-      glw_signal0(w->glw_parent, GLW_SIGNAL_FOCUS_CHILD_CHANGED, w);
-      glw_signal0(w, GLW_SIGNAL_FOCUS_SELF, NULL);
-
-    } else if(w->glw_parent->glw_focused != w)
-      return;
-    w = w->glw_parent;
-  }
-
-  glw_root_focus(gr, w0, interactive);
+  glw_focus_set(w->glw_root, w, 0);
 }
-
 
 
 /**
@@ -1054,7 +1000,7 @@ glw_focus_leave0(glw_t *w, glw_t *cur)
 
     if(c == cur)
       return NULL;
-    if(c->glw_flags & GLW_FOCUS_BLOCKED)
+    if(c->glw_flags & (GLW_DESTROYING | GLW_FOCUS_BLOCKED))
       continue;
     if(glw_is_focusable(c))
       return c;
@@ -1065,6 +1011,7 @@ glw_focus_leave0(glw_t *w, glw_t *cur)
   }
 }
 
+
 /**
  *
  */
@@ -1073,18 +1020,19 @@ glw_focus_leave(glw_t *w)
 {
   glw_t *r = NULL;
 
-  if(!glw_path_in_focus(w)) {
-    w->glw_parent->glw_focused = glw_focus_leave0(w->glw_parent, w);
-    return;
-  }
-
   while(w->glw_parent != NULL) {
-    if((r = glw_focus_leave0(w->glw_parent, w)) != NULL)
-      break;
+
+    if(w->glw_parent->glw_focused != w)
+      return;
+
+    if(!(w->glw_parent->glw_flags & GLW_DESTROYING)) {
+      r = glw_focus_leave0(w->glw_parent, w);
+      if(r != NULL)
+	break;
+    }
     w = w->glw_parent;
   }
-
-  glw_focus_set(w->glw_root, r, 0);
+  glw_focus_set(w->glw_root, r, 1);
 }
 
 
@@ -1166,36 +1114,26 @@ glw_focus_crawl(glw_t *w, int forward)
 }
 
 
-/**
- *
- */
-static void
-glw_focus_open_path0(glw_t *w)
-{
-  w->glw_flags &= ~GLW_FOCUS_BLOCKED;
-  w->glw_parent->glw_focused = w;
-
-  glw_signal0(w->glw_parent, GLW_SIGNAL_FOCUS_CHILD_CHANGED, w);
-  glw_signal0(w, GLW_SIGNAL_FOCUS_SELF, NULL);
-
-  if(glw_path_in_focus(w))
-    glw_focus_set_current_by_path(w, 0);
-}
-
 
 /**
  *
  */
 void
-glw_focus_open_path_close_other(glw_t *w)
+glw_focus_open_path_close_all_other(glw_t *w)
 {
   glw_t *c;
 
   TAILQ_FOREACH(c, &w->glw_parent->glw_childs, glw_parent_link)
     c->glw_flags |= GLW_FOCUS_BLOCKED;
+  
+  w->glw_flags &= ~GLW_FOCUS_BLOCKED;
+  c = glw_focus_by_path(w);
 
-  glw_focus_open_path0(w);
+  assert(c != NULL);
+
+  glw_focus_set(w->glw_root, c, 0);
 }
+
 
 
 /**
@@ -1204,10 +1142,18 @@ glw_focus_open_path_close_other(glw_t *w)
 void
 glw_focus_open_path(glw_t *w)
 {
+  glw_t *c;
+
   if(!(w->glw_flags & GLW_FOCUS_BLOCKED))
     return;
-  
-  glw_focus_open_path0(w);
+
+  w->glw_flags &= ~GLW_FOCUS_BLOCKED;
+
+  c = glw_focus_by_path(w);
+
+  assert(c != NULL);
+
+  glw_focus_set(w->glw_root, c, 0);
 }
 
 
@@ -1221,6 +1167,10 @@ glw_focus_close_path(glw_t *w)
     return;
   
   w->glw_flags |= GLW_FOCUS_BLOCKED;
+
+  if(w->glw_parent->glw_focused != w)
+    return;
+
   glw_focus_leave(w);
 }
 

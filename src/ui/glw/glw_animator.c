@@ -87,7 +87,7 @@ glw_animator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     c->glw_parent_anim_cur = -1;
     c->glw_parent_anim_tgt = 0;
     
-    glw_focus_open_path_close_other(c);
+    glw_focus_open_path_close_all_other(c);
 
     TAILQ_FOREACH(n, &w->glw_childs, glw_parent_link) {
       if(c == n)
@@ -156,10 +156,10 @@ glw_animator_ctor(glw_t *w, int init, va_list ap)
 
   if(filename != NULL) {
 
-    if(*filename) 
-	glw_model_create(w->glw_root, filename, w, 0, 
-			 a->prop, a->prop_parent);
-    else {
+    if(*filename) {
+      glw_model_create(w->glw_root, filename, w, 0, 
+		       a->prop, a->prop_parent);
+    } else {
       /* Fade out all */
       TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
 	c->glw_parent_anim_tgt = 1;

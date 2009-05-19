@@ -621,7 +621,8 @@ static int
 eval_dynamic_focused_child_change_sig(glw_t *w, void *opaque, 
 				      glw_signal_t signal, void *extra)
 {
-  if(signal == GLW_SIGNAL_FOCUS_CHILD_CHANGED)
+  if(signal == GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE ||
+     signal == GLW_SIGNAL_FOCUS_CHILD_AUTOMATIC)
     eval_dynamic(w, opaque);
   return 0;
 }
@@ -746,7 +747,7 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
   glw_model_free_chain(body);
 
   if(n.gr->gr_last_focused_interactive == p)
-    glw_focus_set(parent->glw_root, n.w, 0);
+    glw_focus_set(n.w->glw_root, n.w, 0);
 }
 
 

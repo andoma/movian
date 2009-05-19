@@ -198,12 +198,8 @@ typedef enum {
    * Sent to widget when its focused child is changed.
    * Argument is newly focused child.
    */
-  GLW_SIGNAL_FOCUS_CHILD_CHANGED,
-
-  /**
-   * Sent to widget when it is focused
-   */
-  GLW_SIGNAL_FOCUS_SELF,
+  GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE,
+  GLW_SIGNAL_FOCUS_CHILD_AUTOMATIC,
 
   /**
    *
@@ -219,12 +215,6 @@ typedef enum {
    *
    */
   GLW_SIGNAL_SCROLL,
-
-  /**
-   * Sent to all parents of a widget that has been focused interactively.
-   * This allows various widgets to scroll the widget into viewable area
-   */
-  GLW_SIGNAL_FOCUS_INTERACTIVE,
 
   /**
    * Sent to a widget when it enters or leaves the current 
@@ -490,7 +480,7 @@ void glw_focus_set(glw_root_t *gr, glw_t *w, int interactive);
 
 void glw_focus_open_path(glw_t *w);
 
-void glw_focus_open_path_close_other(glw_t *w);
+void glw_focus_open_path_close_all_other(glw_t *w);
 
 void glw_focus_close_path(glw_t *w);
 

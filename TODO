@@ -4,8 +4,6 @@
 
 * Keyboard based Seeking both audio and video
 
-* Sometimes we just lose focus
-
 * Clicking on a button with the mouse should not give the button
   retaining focus
 

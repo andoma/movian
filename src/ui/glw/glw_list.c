@@ -256,7 +256,7 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     glw_list_render(l, rc);
     return 0;
 
-  case GLW_SIGNAL_FOCUS_INTERACTIVE:
+  case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
     l->scroll_to_me = extra;
     return 0;
 
