@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <errno.h>
+#include <wchar.h>
 
 #include "glw.h"
 #include "glw_video.h"
@@ -86,6 +87,10 @@ typedef struct glw_x11 {
 
   int internal_fullscreen;
   int autohide_counter;
+  
+  XIM im;
+  XIC ic;
+  Status status;
 
 } glw_x11_t;
 
@@ -285,6 +290,7 @@ window_open(glw_x11_t *gx11)
   XTextProperty text;
   extern char *htsversion;
   char buf[60];
+  int fevent;
 
   winAttr.event_mask        = KeyPressMask | StructureNotifyMask |
     ButtonPressMask | ButtonReleaseMask |
@@ -383,6 +389,17 @@ window_open(glw_x11_t *gx11)
   gx11->glXSwapIntervalSGI(1);
 
   hide_cursor(gx11);
+  
+  /* X Input method init */
+  gx11->im = XOpenIM(gx11->display, NULL, NULL, NULL);
+  gx11->ic = XCreateIC(gx11->im,
+		       XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+		       XNClientWindow, gx11->win,
+		       NULL);
+  XGetICValues(gx11->ic, XNFilterEvents, &fevent, NULL);
+  XSelectInput(gx11->display, gx11->win,
+	       fevent | ExposureMask | KeyPressMask | FocusChangeMask);
+
   return 0;
 }
 
@@ -474,6 +491,16 @@ glw_x11_init(glw_x11_t *gx11)
 {
   int attribs[10];
   int na = 0;
+  
+  if(!XSupportsLocale()) {
+    TRACE(TRACE_ERROR, "GLW", "XSupportsLocale returned false");
+    return 1;
+  }
+
+  if(XSetLocaleModifiers("") == NULL) {
+    TRACE(TRACE_ERROR, "GLW", "XSetLocaleModifiers returned NULL");
+    return 1;
+  }
 
   gx11->prop_display = prop_create(gx11->gr.gr_uii.uii_prop, "display");
   gx11->prop_gpu     = prop_create(gx11->gr.gr_uii.uii_prop, "gpu");
@@ -541,19 +568,32 @@ glw_x11_init(glw_x11_t *gx11)
 static void
 gl_keypress(glw_x11_t *gx11, XEvent *event)
 {
-  XComposeStatus composestatus;
   char str[16], c;
   KeySym keysym;
   int len;
   char buf[32];
   event_t *e = NULL;
+  wchar_t wc;
+  mbstate_t ps = {0};
+  int n;
+  char *s;
 
-
-  len = XLookupString(&event->xkey, str, sizeof(str), &keysym, &composestatus);
-
+  len = Xutf8LookupString(gx11->ic,(XKeyPressedEvent*)event,
+			  str, sizeof(str),
+			  &keysym, &gx11->status);
   buf[0] = 0;
 
-  if((event->xkey.state & ~ShiftMask) == 0 && len == 1) {
+  if(len > 1) {
+    s = str;
+    while((n = mbrtowc(&wc, s, 4, &ps))) {
+      strncpy(buf, s, n);
+      buf[n] = '\0';
+      e = event_create_unicode(wc);
+      ui_dispatch_event(e, buf, &gx11->gr.gr_uii);
+      s += n;
+    }
+    return;
+  } else if((event->xkey.state & ~ShiftMask) == 0 && len == 1) {
     c = str[0];
     switch(c) {
       /* Static key mappings, these cannot be changed */
@@ -766,8 +806,16 @@ glw_x11_mainloop(glw_x11_t *gx11)
 
       while(XPending(gx11->display)) {
 	XNextEvent(gx11->display, &event);
+	if(XFilterEvent(&event, gx11->win))
+	  continue;
       
 	switch(event.type) {
+	case FocusIn:
+	  XSetICFocus(gx11->ic);
+	  break;
+	case FocusOut:
+	  XUnsetICFocus(gx11->ic);
+	  break;
 	case KeyPress:
 	  hide_cursor(gx11);
 	  gl_keypress(gx11, &event);

@@ -82,6 +82,7 @@ get_system_concurrency(void)
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <locale.h>
 #include "arch.h"
 #include "showtime.h"
 
@@ -95,6 +96,7 @@ static int decorate_trace;
 void
 arch_init(void)
 {
+  setlocale(LC_ALL, "");
   concurrency = get_system_concurrency();
   decorate_trace = isatty(2);
 
