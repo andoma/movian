@@ -64,7 +64,11 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
   event_t *e;
   event_seek_t *es;
   int64_t ts;
+
   int hold = 0, lost_focus = 0, epoch = 1;
+
+  mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
+  mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
 
   while(1) {
     /**
@@ -120,7 +124,15 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
       mb->mb_dts      = rescale(fctx, pkt.dts,      si);
       mb->mb_duration = rescale(fctx, pkt.duration, si);
 
-      //      printf("dur = %d (*%d)\n", mb->mb_duration, ctx->ticks_per_frame);
+
+      if(mq->mq_seektarget != AV_NOPTS_VALUE) {
+	if(mb->mb_pts < mq->mq_seektarget) {
+	  mb->mb_skip = 1;
+	} else {
+	  mb->mb_skip = 2;
+	  mq->mq_seektarget = AV_NOPTS_VALUE;
+	}
+      }
 
       mb->mb_cw = wrap_codec_ref(cwvec[si]);
 
@@ -198,6 +210,8 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
 	ts = fctx->start_time;
 
       r = av_seek_frame(fctx, -1, ts, AVSEEK_FLAG_BACKWARD);
+      mp->mp_video.mq_seektarget = ts;
+      mp->mp_audio.mq_seektarget = ts;
 
       mp_flush(mp);
 

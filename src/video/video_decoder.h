@@ -174,6 +174,8 @@ typedef struct video_decoder {
 
   int vd_do_flush;
 
+  int vd_skip;
+
   int vd_interlaced;
 
   int64_t vd_nextpts;

@@ -141,6 +141,7 @@ vd_get_buffer(struct AVCodecContext *c, AVFrame *pic)
   fm->stream = mb->mb_stream;
   fm->epoch = mb->mb_epoch;
   pic->opaque = fm;
+
   return ret;
 }
 
@@ -159,7 +160,7 @@ vd_release_buffer(struct AVCodecContext *c, AVFrame *pic)
 #define vd_valid_duration(t) ((t) > 1000ULL && (t) < 10000000ULL)
 
 static void 
-vd_decode_video(video_decoder_t *vd, media_buf_t *mb, int justdecode)
+vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
 {
   video_decoder_frame_t *vdf;
   int64_t pts, t;
@@ -201,13 +202,17 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb, int justdecode)
   /*
    * If we are seeking, drop any non-reference frames
    */
-  ctx->skip_frame = justdecode ? AVDISCARD_NONREF : AVDISCARD_NONE;
+  ctx->skip_frame = mb->mb_skip == 1 ? AVDISCARD_NONREF : AVDISCARD_NONE;
 
+  if(mb->mb_skip == 2)
+    vd->vd_skip = 1;
 
   avcodec_decode_video(ctx, frame, &got_pic, mb->mb_data, mb->mb_size);
 
-  if(got_pic == 0)
+  if(got_pic == 0 || mb->mb_skip == 1)
     return;
+
+  vd->vd_skip = 0;
 
   /* Update aspect ratio */
 
@@ -554,7 +559,8 @@ vd_thread(void *aux)
       continue;
     }
 
-    if(mb->mb_data_type == MB_VIDEO && vd->vd_hold) {
+    if(mb->mb_data_type == MB_VIDEO && vd->vd_hold && 
+       vd->vd_skip == 0 && mb->mb_skip == 0) {
       hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
       continue;
     }
@@ -583,7 +589,7 @@ vd_thread(void *aux)
       break;
 
     case MB_VIDEO:
-      vd_decode_video(vd, mb, 0);
+      vd_decode_video(vd, mb);
       break;
 
 #ifdef CONFIG_DVD

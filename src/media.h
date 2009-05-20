@@ -97,6 +97,8 @@ typedef struct media_buf {
   uint8_t mb_aspect_override;
   uint8_t mb_disable_deinterlacer;
 
+  uint8_t mb_skip;
+
   int64_t mb_dts;
   int64_t mb_pts;
   int64_t mb_time;  /* in ms */
@@ -121,6 +123,8 @@ typedef struct media_queue {
   unsigned int mq_len;
   int mq_stream;             /* Stream id, or -1 if queue is inactive */
   hts_cond_t mq_avail;
+
+  int64_t mq_seektarget;
 
   prop_t *mq_prop_qlen_cur;
   prop_t *mq_prop_qlen_max;

@@ -155,7 +155,7 @@ ad_thread(void *aux)
       continue;
     }
 
-    if(mb->mb_data_type == MB_AUDIO && hold) {
+    if(mb->mb_data_type == MB_AUDIO && hold && mb->mb_skip == 0) {
       hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
       continue;
     }
@@ -187,7 +187,8 @@ ad_thread(void *aux)
       break;
 
     case MB_AUDIO:
-      ad_decode_buf(ad, mp, mb);
+      if(mb->mb_skip == 0)
+	ad_decode_buf(ad, mp, mb);
       break;
 
     default:
