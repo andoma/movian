@@ -16,6 +16,7 @@ widget(backdrop, {
 	.focusable = 0.2;
 	.debug = true;
 	.max = $self.metadata.duration;
+	.step = 15;
 	bind($self.currenttime);
 	widget(backdrop, {
 	  KNOB_PROPS();
