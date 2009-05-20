@@ -23,6 +23,7 @@
 #include <regex.h>
 #include <assert.h>
 #include <libavutil/base64.h>
+#include <libavutil/avstring.h>
 #include <htsmsg/htsmsg_xml.h>
 
 #include "keyring.h"
@@ -31,16 +32,9 @@
 #include "fa_proto.h"
 #include "showtime.h"
 
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 extern char *htsversion;
-
-/* XXX: From lavf */
-extern void url_split(char *proto, int proto_size,
-		      char *authorization, int authorization_size,
-		      char *hostname, int hostname_size,
-		      int *port_ptr,
-		      char *path, int path_size,
-		      const char *url);
-
 
 typedef struct http_file {
   fa_handle_t h;
@@ -129,6 +123,110 @@ http_deescape(char *s)
   }
   *d = 0;
 }
+
+static const char hexchars[16] = "0123456789abcdef";
+
+/**
+ *
+ */
+static void
+path_escape(char *dest, int size, const char *src)
+{
+  unsigned char s;
+
+  while(size > 1) {
+
+    s = *src++;
+    if(s == 0)
+      break;
+
+    if((s >= '0' && s <= '9') ||
+       (s >= 'a' && s <= 'z') ||
+       (s >= 'A' && s <= 'Z') ||
+       s == '/' ||
+       s == '_' ||
+       s == '.' ||
+       s == '-') {
+      *dest++ = s;
+      size--;
+    } else {
+      if(size > 4) {
+	*dest++ = '%';
+	*dest++ = hexchars[(s >> 4) & 0xf];
+	*dest++ = hexchars[s & 0xf];
+	size -= 3;
+      }
+    }
+  }
+  *dest = 0;
+}
+
+
+/**
+ *
+ */
+static void 
+url_split(char *proto, int proto_size,
+	  char *authorization, int authorization_size,
+	  char *hostname, int hostname_size,
+	  int *port_ptr,
+	  char *path, int path_size,
+	  const char *url)
+{
+  const char *p, *ls, *at, *col, *brk;
+
+  if (port_ptr)               *port_ptr = -1;
+  if (proto_size > 0)         proto[0] = 0;
+  if (authorization_size > 0) authorization[0] = 0;
+  if (hostname_size > 0)      hostname[0] = 0;
+  if (path_size > 0)          path[0] = 0;
+
+  /* parse protocol */
+  if ((p = strchr(url, ':'))) {
+    av_strlcpy(proto, url, MIN(proto_size, p + 1 - url));
+    p++; /* skip ':' */
+    if (*p == '/') p++;
+    if (*p == '/') p++;
+  } else {
+    /* no protocol means plain filename */
+    path_escape(path, path_size, url);
+    return;
+  }
+
+  /* separate path from hostname */
+  ls = strchr(p, '/');
+  if(!ls)
+    ls = strchr(p, '?');
+  if(ls)
+    path_escape(path, path_size, ls);
+  else
+    ls = &p[strlen(p)]; // XXX
+
+  /* the rest is hostname, use that to parse auth/port */
+  if (ls != p) {
+    /* authorization (user[:pass]@hostname) */
+    if ((at = strchr(p, '@')) && at < ls) {
+      av_strlcpy(authorization, p,
+		 MIN(authorization_size, at + 1 - p));
+      p = at + 1; /* skip '@' */
+    }
+
+    if (*p == '[' && (brk = strchr(p, ']')) && brk < ls) {
+      /* [host]:port */
+      av_strlcpy(hostname, p + 1,
+		 MIN(hostname_size, brk - p));
+      if (brk[1] == ':' && port_ptr)
+	*port_ptr = atoi(brk + 2);
+    } else if ((col = strchr(p, ':')) && col < ls) {
+      av_strlcpy(hostname, p,
+		 MIN(col + 1 - p, hostname_size));
+      if (port_ptr) *port_ptr = atoi(col + 1);
+    } else
+      av_strlcpy(hostname, p,
+		 MIN(ls + 1 - p, hostname_size));
+  }
+}
+
 
 /**
  *
@@ -422,7 +520,7 @@ http_connect(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   hf->hf_rsize = 0;
 
- reconnect:
+  reconnect:
   hf->hf_fd = -1;
   url_split(NULL, 0, hf->hf_authurl, sizeof(hf->hf_authurl), 
 	    hf->hf_hostname, sizeof(hf->hf_hostname), &port,
@@ -574,6 +672,8 @@ http_index_parse(http_file_t *hf, nav_dir_t *nd, char *buf)
                  href,
                  isdir ? "/" : "");
         
+	http_deescape(url);
+
         nav_dir_add(nd, url, name,
                     isdir ? CONTENT_DIR : CONTENT_FILE,
                     NULL);
@@ -990,6 +1090,8 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd)
 	    snprintf(fname, sizeof(fname), "%s", q);
 	  }
 	  http_deescape(fname);
+	  http_deescape(path);
+
 	  nav_dir_add(nd, path, fname, isdir ? CONTENT_DIR : CONTENT_FILE,
 		      NULL);
 	}
