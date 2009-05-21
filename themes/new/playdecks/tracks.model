@@ -4,41 +4,56 @@ widget(backdrop, {
   PLATE_PROPS();
   .alphaSelf = 0.25;
 
-  widget(container_y, {
-
-    widget(label, {
-      .caption = $self.metadata.title;
+  widget(container_x, {
+    widget(image, {
+      .source = devoidify($self.metadata.album_art, "theme://icons/cd.png");
     });
-	  
+
     widget(container_y, {
+
+      .filterConstraintX = true;
+
       widget(label, {
-	.size = 0.66;
+	.caption = $self.metadata.title;
+      });
+	  
+      widget(label, {
+	.size = 0.75;
 	.caption = $self.metadata.artist;
       });
+
       widget(label, {
-	.size = 0.66;
+	.size = 0.75;
 	.caption = $self.metadata.album;
       });
-    });
 
 
-    widget(container_x, {
-      ACTION_ICON("theme://icons/rew.png", event(PreviousTrack));
-      ACTION_ICON("theme://icons/play.png", event(PlayPause));
-      widget(slider_x, {
-	.focusable = 0.2;
-	.debug = true;
-	.max = $self.metadata.duration;
-	.step = 15;
-	bind($self.currenttime);
+      widget(container_x, {
+	ACTION_ICON("theme://icons/rew.png", event(PreviousTrack));
+	ACTION_ICON("theme://icons/play.png", event(PlayPause));
+	ACTION_ICON("theme://icons/fwd.png", event(NextTrack));
+
 	widget(backdrop, {
-	  KNOB_PROPS();
-	  widget(label, {
-	    .caption = value2duration($self.currenttime);
+
+	  PLATE_PROPS();
+	  .alphaSelf = 0.5;
+	  .color = [0.0, 0.0, 0.0];
+	  
+	  widget(slider_x, {
+	    .focusable = 0.2;
+	    .max = $self.metadata.duration;
+	    .step = 15;
+	    bind($self.currenttime);
+	    widget(backdrop, {
+	      KNOB_PROPS();
+	      widget(label, {
+		.caption = value2duration($self.currenttime);
+		.size = 0.6;
+	      });
+	    });
 	  });
 	});
       });
-      ACTION_ICON("theme://icons/fwd.png", event(NextTrack));
     });
   });
 });
