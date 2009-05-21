@@ -1,5 +1,7 @@
 3.0 MUST:
 
+* Next/Prev when music is paused
+
 * Create a global keymap
 
 * Fix real shutdown hooks
