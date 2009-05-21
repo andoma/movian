@@ -377,8 +377,14 @@ static const token_attrib_t attribtab[] = {
   {"debug",           set_flag,   GLW_DEBUG},
   {"skeleton",        set_flag,   GLW_DRAW_SKEL},
   {"password",        set_flag,   GLW_PASSWORD},
+  {"filterConstraintX",       set_flag, GLW_CONSTRAINT_IGNORE_X},
+  {"filterConstraintY",       set_flag, GLW_CONSTRAINT_IGNORE_Y},
+  {"filterConstraintAspect",  set_flag, GLW_CONSTRAINT_IGNORE_A},
+  {"filterConstraintWeight",  set_flag, GLW_CONSTRAINT_IGNORE_W},
+
   {"mirrorx",         set_mirror, GLW_MIRROR_X},
   {"mirrory",         set_mirror, GLW_MIRROR_Y},
+
 
   {"alpha",           set_float,  GLW_ATTRIB_ALPHA},
   {"alphaSelf",       set_float,  GLW_ATTRIB_ALPHA_SELF},

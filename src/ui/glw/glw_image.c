@@ -206,7 +206,7 @@ glw_image_update_constraints(glw_image_t *gi)
 			  c->glw_req_size_y + 
 			  gi->gi_border_top + gi->gi_border_bottom,
 			  0, 0, 
-			  c->glw_flags & GLW_CONSTRAINT_FLAGS,
+			  glw_filter_constraints(c->glw_flags),
 			  0);
     }
 

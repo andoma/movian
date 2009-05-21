@@ -413,11 +413,19 @@ typedef struct glw {
 
 #define GLW_DESTROYING          0x2000  /* glw_destroy() has been called */
 
-#define GLW_CONSTRAINT_X        0x4000
-#define GLW_CONSTRAINT_Y        0x8000
-#define GLW_CONSTRAINT_A        0x10000
-#define GLW_CONSTRAINT_W        0x20000
-#define GLW_CONSTRAINT_CONFED   0x40000
+
+#define GLW_CONSTRAINT_CONFED   0x8000
+#define GLW_CONSTRAINT_X        0x10000
+#define GLW_CONSTRAINT_Y        0x20000
+#define GLW_CONSTRAINT_A        0x40000
+#define GLW_CONSTRAINT_W        0x80000
+  // We rely on shifts to filter these against each other so they
+  // must be consectutive, see glw_filter_constraints()
+#define GLW_CONSTRAINT_IGNORE_X 0x100000
+#define GLW_CONSTRAINT_IGNORE_Y 0x200000
+#define GLW_CONSTRAINT_IGNORE_A 0x400000
+#define GLW_CONSTRAINT_IGNORE_W 0x800000
+
 
 #define GLW_CONSTRAINT_FLAGS (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y | \
                               GLW_CONSTRAINT_A | GLW_CONSTRAINT_W)
@@ -444,6 +452,20 @@ typedef struct glw {
   float glw_exp_req;
 
 } glw_t;
+
+
+#define glw_have_x_constraint(w) (((w)->glw_flags & GLW_CONSTRAINT_X) \
+                       && !((w)->glw_flags & GLW_CONSTRAINT_IGNORE_X))
+#define glw_have_y_constraint(w) (((w)->glw_flags & GLW_CONSTRAINT_Y) \
+                       && !((w)->glw_flags & GLW_CONSTRAINT_IGNORE_Y))
+#define glw_have_a_constraint(w) (((w)->glw_flags & GLW_CONSTRAINT_A) \
+                       && !((w)->glw_flags & GLW_CONSTRAINT_IGNORE_A))
+#define glw_have_w_constraint(w) (((w)->glw_flags & GLW_CONSTRAINT_W) \
+                       && !((w)->glw_flags & GLW_CONSTRAINT_IGNORE_W))
+
+#define glw_filter_constraints(f) \
+ (((f) & GLW_CONSTRAINT_FLAGS) & ~(((f) >> 4) & GLW_CONSTRAINT_FLAGS))
+
 
 int glw_init(glw_root_t *gr, int fontsize, const char *theme, ui_t *ui,
 	     int primary);
