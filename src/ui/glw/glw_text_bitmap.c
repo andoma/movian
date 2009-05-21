@@ -1130,19 +1130,20 @@ glw_text_bitmap_init(glw_root_t *gr, int fontsize)
 
   error = FT_Init_FreeType(&glw_text_library);
   if(error) {
-    fprintf(stderr, "Freetype init error\n");
+    TRACE(TRACE_ERROR, "glw", "Freetype init error\n");
     return -1;
   }
 
   if((r = fa_rawloader(font_variable, &size, gr->gr_theme)) == NULL) {
-    fprintf(stderr, "Unable to load font: %s\n", font_variable);
+    TRACE(TRACE_ERROR, "glw", "Unable to load font: %s\n", font_variable);
     return -1;
   }
 
   TAILQ_INIT(&gr->gr_gtb_render_queue);
 
   if(FT_New_Memory_Face(glw_text_library, r, size, 0, &gr->gr_gtb_face)) {
-    fprintf(stderr, "Unable to create font face: %s\n", font_variable);
+    TRACE(TRACE_ERROR, "glw", 
+	  "Unable to create font face: %s\n", font_variable);
     return -1;
   }
 
