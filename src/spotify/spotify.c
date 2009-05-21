@@ -1838,7 +1838,7 @@ be_spotify_play(const char *url, media_pipe_t *mp,
   }
 
   if(hold) // This is a bit ugly 
-    mp_send_cmd_head(mp, mq, MB_CTRL_PLAY);
+    mp_send_cmd(mp, mq, MB_CTRL_PLAY);
 
   spotify_mp = NULL;
   spotify_msg_enq(spotify_msg_build(SPOTIFY_STOP_PLAYBACK, NULL));

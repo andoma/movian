@@ -256,5 +256,9 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
   wrap_codec_deref(cw);
   wrap_format_deref(fw);
+
+  if(hold) // This is a bit ugly 
+    mp_send_cmd(mp, mq, MB_CTRL_PLAY);
+
   return e;
 }

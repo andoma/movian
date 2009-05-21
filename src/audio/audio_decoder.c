@@ -80,6 +80,26 @@ audio_decoder_create(media_pipe_t *mp)
 }
 
 
+/**
+ * Audio decoder flush
+ *
+ * Remove all audio data from decoder pipeline
+ */
+static void
+audio_decoder_flush(audio_decoder_t *ad)
+{
+  audio_fifo_clear_queue(&ad->ad_hold_queue);
+
+  close_resampler(ad);
+
+  if(ad->ad_buf != NULL) {
+    ab_free(ad->ad_buf);
+    ad->ad_buf = NULL;
+  }
+}
+
+
+
 
 /**
  * Destroy an audio decoder pipeline.
@@ -92,15 +112,11 @@ audio_decoder_destroy(audio_decoder_t *ad)
   mp_send_cmd_head(ad->ad_mp, &ad->ad_mp->mp_audio, MB_CTRL_EXIT);
 
   hts_thread_join(&ad->ad_tid);
-  audio_fifo_clear_queue(&ad->ad_hold_queue);
 
-  close_resampler(ad);
+  audio_decoder_flush(ad);
 
   av_free(ad->ad_outbuf);
-
-  if(ad->ad_buf != NULL)
-    ab_free(ad->ad_buf);
-
+ 
   free(ad);
 }
 
@@ -184,6 +200,7 @@ ad_thread(void *aux)
       ad->ad_do_flush = 1;
       /* Flush any pending audio in the output fifo */
       audio_fifo_purge(thefifo, ad, NULL);
+      audio_decoder_flush(ad);
       break;
 
     case MB_AUDIO:
