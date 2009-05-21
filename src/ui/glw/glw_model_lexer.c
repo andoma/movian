@@ -76,11 +76,45 @@ lexer_add_token_float(token_t *prev, refstr_t *f, int line,
 		       const char *start, const char *end)
 {
   token_t *t = lexer_add_token_simple(prev, f, line, TOKEN_FLOAT);
-  size_t len = end - start;
-  char *s = alloca(len + 1);
-  memcpy(s, start, len);
-  s[len] = 0;
-  t->t_float = strtod(s, NULL);
+  float sign = 1.0f;
+  int n, s, m = 0;
+
+  if(*start == '-') {
+    start++;
+    sign = -1.0;
+  }
+  
+  if(start == end) {
+    // A bit strange
+    t->t_float = -1.0;
+    return t;
+  }
+
+  n = 0;
+  while(start < end) {
+    s = *start++;
+    if(s < '0' || s > '9')
+      break;
+    n = n * 10 + s - '0';
+  }
+  
+  t->t_float = n;
+  if(start == end)
+    return t;
+
+  if(s != '.')
+    return t;
+
+  n = 0;
+  while(start < end) {
+    s = *start++;
+    if(s < '0' || s > '9')
+      break;
+    n = n * 10 + s - '0';
+    m++;
+  }
+
+  t->t_float += pow(10, -m) * n;
   return t;
 }
 
