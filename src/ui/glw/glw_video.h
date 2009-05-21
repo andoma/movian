@@ -30,11 +30,9 @@ typedef struct gl_video_frame {
 
   video_decoder_frame_t gvf_vdf;
 
-  GLuint gvf_pbo;
-  void *gvf_pbo_ptr;
+  GLuint gvf_pbo[3];
+  void *gvf_pbo_ptr[3];
 
-  int gvf_pbo_offset[3];
-  
   int gvf_uploaded;
 
   GLuint gvf_textures[3];

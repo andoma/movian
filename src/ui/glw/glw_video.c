@@ -141,6 +141,7 @@ gv_buffer_allocator(video_decoder_t *vd)
   gl_video_frame_t *gvf;
   video_decoder_frame_t *vdf;
   size_t siz;
+  int i;
 
   hts_mutex_lock(&vd->vd_queue_mutex);
   
@@ -156,9 +157,9 @@ gv_buffer_allocator(video_decoder_t *vd)
 
     gvf = (gl_video_frame_t *)vdf;
 
-    if(gvf->gvf_pbo != 0)
-      glDeleteBuffersARB(1, &gvf->gvf_pbo);
-    glGenBuffersARB(1, &gvf->gvf_pbo);
+    if(gvf->gvf_pbo[0] != 0)
+      glDeleteBuffersARB(3, gvf->gvf_pbo);
+    glGenBuffersARB(3, gvf->gvf_pbo);
 
 
     /* XXX: Do we really need to delete textures if they are already here ? */
@@ -168,27 +169,19 @@ gv_buffer_allocator(video_decoder_t *vd)
 
     glGenTextures(3, gvf->gvf_textures);
 
-    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo);
+    for(i = 0; i < 3; i++) {
 
-    siz = 
-      vdf->vdf_width[0] * vdf->vdf_height[0] + 
-      vdf->vdf_width[1] * vdf->vdf_height[1] + 
-      vdf->vdf_width[2] * vdf->vdf_height[2];
+      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo[i]);
 
-    glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, siz, NULL, GL_STREAM_DRAW_ARB);
+      glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB,
+		      vdf->vdf_width[i] * vdf->vdf_height[i],
+		      NULL, GL_STREAM_DRAW_ARB);
 
-    gvf->gvf_pbo_ptr = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 
-				      GL_WRITE_ONLY);
+      gvf->gvf_pbo_ptr[i] = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 
+					   GL_WRITE_ONLY);
 
-    gvf->gvf_pbo_offset[0] = 0;
-    gvf->gvf_pbo_offset[1] = vdf->vdf_width[0] * vdf->vdf_height[0];
-    gvf->gvf_pbo_offset[2] = 
-      gvf->gvf_pbo_offset[1] + vdf->vdf_width[1] * vdf->vdf_height[1];
-
-    vdf->vdf_data[0] = gvf->gvf_pbo_ptr + gvf->gvf_pbo_offset[0];
-    vdf->vdf_data[1] = gvf->gvf_pbo_ptr + gvf->gvf_pbo_offset[1];
-    vdf->vdf_data[2] = gvf->gvf_pbo_ptr + gvf->gvf_pbo_offset[2];
-
+      vdf->vdf_data[i] = gvf->gvf_pbo_ptr[i];
+    }
     glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
 
     TAILQ_INSERT_TAIL(&vd->vd_bufalloced_queue, vdf, vdf_link);
@@ -230,43 +223,48 @@ video_frame_upload(glw_video_t *gv, gl_video_frame_t *gvf)
 
   gvf->gvf_uploaded = 1;
 
-  glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo);
-
+  glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo[0]);
   glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
-  gvf->gvf_pbo_ptr = NULL;
+  gvf->gvf_pbo_ptr[0] = NULL;
 
   glBindTexture(GL_TEXTURE_2D, gv_tex_get(gv, gvf, GVF_TEX_L));
   gv_set_tex_meta();
   
   glTexImage2D(GL_TEXTURE_2D, 0, 1, 
 	       gvf->gvf_vdf.vdf_width[0], gvf->gvf_vdf.vdf_height[0],
-	       0, GL_RED, GL_UNSIGNED_BYTE,
-	       (char *)(intptr_t)gvf->gvf_pbo_offset[0]);
+	       0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
+
 
   /* Cr */
+
+  glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo[2]);
+  glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
+  gvf->gvf_pbo_ptr[1] = NULL;
 
   glBindTexture(GL_TEXTURE_2D, gv_tex_get(gv, gvf, GVF_TEX_Cr));
   gv_set_tex_meta();
 
+
   glTexImage2D(GL_TEXTURE_2D, 0, 1,
 	       gvf->gvf_vdf.vdf_width[1], gvf->gvf_vdf.vdf_height[1],
-	       0, GL_RED, GL_UNSIGNED_BYTE,
-	       (char *)(intptr_t)gvf->gvf_pbo_offset[2]);
+	       0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 
   /* Cb */
   
   
+  glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo[1]);
+  glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
+  gvf->gvf_pbo_ptr[2] = NULL;
+
   glBindTexture(GL_TEXTURE_2D, gv_tex_get(gv, gvf, GVF_TEX_Cb));
 
   gv_set_tex_meta();
   
   glTexImage2D(GL_TEXTURE_2D, 0, 1,
 	       gvf->gvf_vdf.vdf_width[2], gvf->gvf_vdf.vdf_height[2],
-	       0, GL_RED, GL_UNSIGNED_BYTE,
-	       (char *)(intptr_t)gvf->gvf_pbo_offset[1]);
+	       0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
   
   glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
-
 }
 
 
@@ -285,6 +283,7 @@ gv_enqueue_for_decode(video_decoder_t *vd, video_decoder_frame_t *vdf,
 		      struct video_decoder_frame_queue *fromqueue)
 {
   gl_video_frame_t *gvf = (gl_video_frame_t *)vdf;
+  int i;
 
   hts_mutex_lock(&vd->vd_queue_mutex);
 
@@ -293,15 +292,20 @@ gv_enqueue_for_decode(video_decoder_t *vd, video_decoder_frame_t *vdf,
   if(gvf->gvf_uploaded) {
     gvf->gvf_uploaded = 0;
 
-    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo);
-  
-    gvf->gvf_pbo_ptr = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 
-				      GL_WRITE_ONLY);
+    for(i = 0; i < 3; i++) {
+      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo[i]);
 
-    vdf->vdf_data[0] = gvf->gvf_pbo_ptr + gvf->gvf_pbo_offset[0];
-    vdf->vdf_data[1] = gvf->gvf_pbo_ptr + gvf->gvf_pbo_offset[1];
-    vdf->vdf_data[2] = gvf->gvf_pbo_ptr + gvf->gvf_pbo_offset[2];
+      // Setting the buffer to NULL tells the GPU it can assign
+      // us another piece of memory as backing store.
+      
+      glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB,
+		      vdf->vdf_width[i] * vdf->vdf_height[i],
+		      NULL, GL_STREAM_DRAW_ARB);
 
+      gvf->gvf_pbo_ptr[i] = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 
+					   GL_WRITE_ONLY);
+      vdf->vdf_data[i] = gvf->gvf_pbo_ptr[i];
+    }
     glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
   }
 
@@ -670,7 +674,7 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv)
       
     while((frb = TAILQ_FIRST(&vd->vd_displaying_queue)) != NULL)
       gv_enqueue_for_decode(vd, frb, &vd->vd_displaying_queue);
-      
+    
     frb = TAILQ_NEXT(fra, vdf_link);
 
     pts = gv_compute_blend(gv, fra, frb, output_duration);
@@ -941,16 +945,20 @@ static void
 vdf_purge(video_decoder_t *vd, video_decoder_frame_t *vdf)
 {
   gl_video_frame_t *gvf = (gl_video_frame_t *)vdf;
-  
-  if(gvf->gvf_pbo != 0) {
-    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo);
-    glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
-    gvf->gvf_pbo_ptr = NULL;
-    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
-    glDeleteBuffersARB(1, &gvf->gvf_pbo);
+  int i;
+
+  for(i = 0; i < 3; i++) {
+    if(gvf->gvf_pbo[i] != 0) {
+      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo[i]);
+      glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
+      gvf->gvf_pbo_ptr[i] = NULL;
+      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+    }
+    glDeleteBuffersARB(3, gvf->gvf_pbo);
   }
 
-  gvf->gvf_pbo = 0;
+  for(i = 0; i < 3; i++)
+    gvf->gvf_pbo[i] = 0;
 
   if(gvf->gvf_textures[0] != 0)
     glDeleteTextures(3, gvf->gvf_textures);
