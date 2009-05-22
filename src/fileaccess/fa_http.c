@@ -1027,7 +1027,8 @@ get_cdata_by_tag(htsmsg_t *tags, const char *name)
  * Parse WEBDAV PROPFIND results
  */
 static int
-parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd)
+parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd,
+	       char *errbuf, size_t errlen)
 {
   htsmsg_t *m, *c, *c2;
   htsmsg_field_t *f;
@@ -1045,8 +1046,10 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd)
   }
 
   if((m = htsmsg_get_map_multi(xml, "tags", 
-			       "DAV:multistatus", "tags", NULL)) == NULL)
+			       "DAV:multistatus", "tags", NULL)) == NULL) {
+    snprintf(errbuf, errlen, "WEBDAV: DAV:multistatus not found in XML");
     return -1;
+  }
 
   HTSMSG_FOREACH(f, m) {
     if(strcmp(f->hmf_name, "DAV:response"))
@@ -1124,8 +1127,13 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd)
     }
   }
 
-  if(nd == NULL)
-    return -1; /* We should have returned earlier */
+  if(nd == NULL) {
+    /* We should have returned earlier, server did not include the file 
+       we asked for in its reply. The server is probably broken. 
+       (It should respond with a 404 or something) */
+    snprintf(errbuf, errlen, "WEBDAV: File not found in XML reply");
+    return -1;
+  }
   return 0;
 }
 
@@ -1200,7 +1208,7 @@ dav_propfind(http_file_t *hf, nav_dir_t *nd, char *errbuf, size_t errlen)
 	       "WEBDAV/PROPFIND: XML parsing failed:\n%s", err0);
       return -1;
     }
-    retval = parse_propfind(hf, xml, nd);
+    retval = parse_propfind(hf, xml, nd, errbuf, errlen);
     htsmsg_destroy(xml);
     return retval;
 
