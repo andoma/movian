@@ -1036,6 +1036,14 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd)
   char path[256];
   char fname[128];
 
+  if(nd == NULL) {
+    // Single entry stat(2) (ie. not a directory scan)
+    // We need to compare paths and to do so, we must deescape the
+    // possible URL encoding. Do the searched-for path once
+    snprintf(path, sizeof(path), "%s", hf->hf_path);
+    http_deescape(path);
+  }
+
   if((m = htsmsg_get_map_multi(xml, "tags", 
 			       "DAV:multistatus", "tags", NULL)) == NULL)
     return -1;
@@ -1098,7 +1106,11 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd)
       }
     } else {
       /* single entry stat(2) */
-      if(!strcmp(hf->hf_path, href)) {
+
+      snprintf(fname, sizeof(fname), "%s", href);
+      http_deescape(fname);
+
+      if(!strcmp(path, fname)) {
 	/* This is the path we asked for */
 
 	hf->hf_isdir = isdir;
