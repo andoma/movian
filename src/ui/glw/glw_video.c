@@ -1240,7 +1240,7 @@ glw_video_ctor(glw_t *w, int init, va_list ap)
   glw_root_t *gr = w->glw_root;
   glw_attribute_t attrib;
   const char *filename = NULL;
-  prop_t *p, *p2, *pm;
+  prop_t *p, *p2;
   event_t *e;
 
   if(init) {
@@ -1270,9 +1270,8 @@ glw_video_ctor(glw_t *w, int init, va_list ap)
       p = va_arg(ap, void *);
 
       p2 = prop_create(p, "video");
-      pm = prop_create(p2, "metadata");
       
-      prop_link(gv->gv_mp->mp_prop_root, pm);
+      prop_link(gv->gv_mp->mp_prop_root, p2);
       
       p = va_arg(ap, void *); // Parent, just throw it away
       break;
