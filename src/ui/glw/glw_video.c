@@ -140,7 +140,6 @@ gv_buffer_allocator(video_decoder_t *vd)
 {
   gl_video_frame_t *gvf;
   video_decoder_frame_t *vdf;
-  size_t siz;
   int i;
 
   hts_mutex_lock(&vd->vd_queue_mutex);
