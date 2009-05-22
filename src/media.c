@@ -981,5 +981,15 @@ media_event_handler(event_t *e, void *opaque)
     mp_enqueue_event(media_primary, e);
     return 1;
   }
+
+  if(event_is_action(e, ACTION_LEFT)) {
+    mp_enqueue_event(media_primary, event_create_action(ACTION_SEEK_BACKWARD));
+    return 1;
+  }
+
+  if(event_is_action(e, ACTION_RIGHT)) {
+    mp_enqueue_event(media_primary, event_create_action(ACTION_SEEK_FORWARD));
+    return 1;
+  }
   return 0;
 }
