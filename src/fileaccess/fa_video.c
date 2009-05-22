@@ -50,6 +50,21 @@ rescale(AVFormatContext *fctx, int64_t ts, int si)
 
 
 /**
+ *
+ */
+static void
+seekflush(media_pipe_t *mp, media_buf_t **mbp)
+{
+  mp_flush(mp);
+  
+  if(*mbp != NULL) {
+    media_buf_free(*mbp);
+    *mbp = NULL;
+  }
+}
+
+
+/**
  * Thread for reading from lavf and sending to lavc
  */
 static event_t *
@@ -63,7 +78,7 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
   int r, si;
   event_t *e;
   event_seek_t *es;
-  int64_t ts;
+  int64_t ts, seekbase = AV_NOPTS_VALUE;
 
   int hold = 0, lost_focus = 0, epoch = 1;
 
@@ -159,6 +174,9 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
       else
 	mb->mb_time = AV_NOPTS_VALUE;
 
+      if(mb->mb_pts != AV_NOPTS_VALUE && mb->mb_data_type == MB_VIDEO)
+	seekbase = mb->mb_pts;
+
       av_free_packet(&pkt);
     }
 
@@ -213,12 +231,35 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
       mp->mp_video.mq_seektarget = ts;
       mp->mp_audio.mq_seektarget = ts;
 
-      mp_flush(mp);
+      seekflush(mp, &mb);
 
-      if(mb != NULL) {
-	media_buf_free(mb);
-	mb = NULL;
-      }
+    } else if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
+
+      seekbase = FFMAX(0, seekbase - 60000000);
+      TRACE(TRACE_DEBUG, "Video", "seek -60s to %.2f", seekbase / 1000000.0);
+      av_seek_frame(fctx, -1, seekbase, AVSEEK_FLAG_BACKWARD);
+      seekflush(mp, &mb);
+
+    } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
+
+      seekbase = FFMAX(0, seekbase - 15000000);
+      TRACE(TRACE_DEBUG, "Video", "seek -15s to %.2f", seekbase / 1000000.0);
+      av_seek_frame(fctx, -1, seekbase, AVSEEK_FLAG_BACKWARD);
+      seekflush(mp, &mb);
+
+    } else if(event_is_action(e, ACTION_SEEK_FAST_FORWARD)) {
+
+      seekbase = FFMIN(fctx->duration, seekbase + 60000000);
+      TRACE(TRACE_DEBUG, "Video", "seek +60s to %.2f", seekbase / 1000000.0);
+      av_seek_frame(fctx, -1, seekbase, 0);
+      seekflush(mp, &mb);
+
+    } else if(event_is_action(e, ACTION_SEEK_FORWARD)) {
+
+      seekbase = FFMIN(fctx->duration, seekbase + 15000000);
+      TRACE(TRACE_DEBUG, "Video", "seek +15s to %.2f", seekbase / 1000000.0);
+      av_seek_frame(fctx, -1, seekbase, 0);
+      seekflush(mp, &mb);
 
     } else if(event_is_type(e, EVENT_EXIT) ||
 	      event_is_type(e, EVENT_PLAY_URL)) {
