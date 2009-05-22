@@ -517,7 +517,7 @@ nav_dir_sort(nav_dir_t *nd)
 int
 nav_imageloader(const char *url, char *errbuf, size_t errlen,
 		int *thumb, void **data, size_t *datasize,
-		int *codecid, const char *theme)
+		int *codecid, const char *theme, prop_pixmap_t **pixmap)
 {
   nav_backend_t *nb;
 
@@ -530,5 +530,5 @@ nav_imageloader(const char *url, char *errbuf, size_t errlen,
     return -1;
   }
   return nb->nb_imageloader(url, errbuf, errlen, thumb, data, 
-			    datasize, codecid, theme);
+			    datasize, codecid, theme, pixmap);
 }

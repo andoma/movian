@@ -21,6 +21,6 @@
 
 int fa_imageloader(const char *url, char *errbuf, size_t errlen,
 		   int *thumb, void **data, size_t *datasize,
-		   int *codecid, const char *theme);
+		   int *codecid, const char *theme, prop_pixmap_t **pixmap);
 
 #endif /* FA_IMAGELOADER_H */

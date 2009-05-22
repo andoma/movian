@@ -113,7 +113,8 @@ typedef struct nav_backend {
 
   int (*nb_imageloader)(const char *url, char *errbuf, size_t errsize,
 			int *thumb, void **data, size_t *datasize,
-			int *codecid, const char *theme);
+			int *codecid, const char *theme,
+			prop_pixmap_t **pixmap);
 
 } nav_backend_t;
 
@@ -148,6 +149,6 @@ nav_dir_t *nav_scandir(const char *url, char *errbuf, size_t errlen);
 
 int nav_imageloader(const char *url, char *errbuf, size_t errlen,
 		    int *thumb, void **data, size_t *datasize,
-		    int *codecid, const char *theme);
+		    int *codecid, const char *theme, prop_pixmap_t **pixmap);
 
 #endif /* NAVIGATOR_H__ */

@@ -50,13 +50,14 @@ static const uint8_t gifsig[6] = {'G', 'I', 'F', '8', '9', 'a'};
 int 
 fa_imageloader(const char *url, char *errbuf, size_t errlen,
 	       int *thumb, void **data, size_t *datasize,
-	       int *codecid, const char *theme)
+	       int *codecid, const char *theme, prop_pixmap_t **pixmap)
 {
   fa_handle_t *fh;
   char p[16];
   int is_exif = 0;
   int r;
 
+  *pixmap = NULL;
 
   if((fh = fa_open_theme(url, theme)) == NULL)
     return -1;

@@ -24,6 +24,7 @@
 
 #include "glw.h"
 #include "glw_texture.h"
+#include "prop.h"
 
 #include "navigator.h"
 
@@ -189,8 +190,27 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
 
   got_thumb = want_thumb;
   if(nav_imageloader(url, NULL, 0, &got_thumb,
-		     &data, &datasize, &codecid, gr->gr_theme))
+		     &data, &datasize, &codecid, gr->gr_theme, &pp))
     return -1;
+
+
+  if(pp != NULL) {
+    /* TODO: Factorize code with above */
+    frame = avcodec_alloc_frame();
+    
+    frame->data[0] = pp->pp_pixels;
+    frame->linesize[0] = pp->pp_linesize;
+    
+    r = glw_tex_backend_load(gr, glt, frame, 
+			     pp->pp_pixfmt,
+			     pp->pp_width, pp->pp_height,
+			     pp->pp_width, pp->pp_height);
+    av_free(frame);
+    prop_pixmap_ref_dec(pp);
+    return r;
+  }
+
+
 
   fflock();
 

@@ -79,7 +79,6 @@ typedef struct metadata {
   prop_t *m_prop;
   void *m_source;
   metadata_type_t m_type;
-  sp_image *m_image;
 } metadata_t;
 
 static LIST_HEAD(, metadata) metadatas;
@@ -132,6 +131,7 @@ typedef enum {
   SPOTIFY_RELEASE_IMAGE,
   SPOTIFY_SEEK,
   SPOTIFY_PAUSE,
+  SPOTIFY_GET_IMAGE,
 } spotify_msg_type_t;
 
 /**
@@ -189,6 +189,21 @@ typedef struct spotify_msg {
     int sm_int;
   };
 } spotify_msg_t;
+
+
+/**
+ * Image load request
+ */
+typedef struct spotify_image {
+  uint8_t *si_id;
+
+  int si_errcode;
+  
+  prop_pixmap_t *si_pixmap;
+
+} spotify_image_t;
+
+static hts_cond_t spotify_cond_image;
 
 
 /**
@@ -508,6 +523,25 @@ spotify_play_track(spotify_uri_t *su)
  *
  */
 static void
+set_image_uri(prop_t *p, const uint8_t *id)
+{
+  if(id == NULL)
+    return;
+
+  prop_set_stringf(p, "spotify:image:"
+		   "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+		   "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+		   id[ 0],id[ 1],id[ 2],id[ 3],id[ 4], 
+		   id[ 5],id[ 6],id[ 7],id[ 8],id[ 9], 
+		   id[10],id[11],id[12],id[13],id[14], 
+		   id[15],id[16],id[17],id[18],id[19]);
+}
+
+
+/**
+ *
+ */
+static void
 spotify_metadata_update_track(prop_t *meta, sp_track *track)
 {
   sp_album *album;
@@ -532,8 +566,11 @@ spotify_metadata_update_track(prop_t *meta, sp_track *track)
   prop_set_int(prop_create(meta, "trackindex"), f_sp_track_index(track));
   prop_set_float(prop_create(meta, "duration"), 
 		 (float)f_sp_track_duration(track) / 1000.0);
-  if(album != NULL)
+  if(album != NULL) {
     prop_set_string(prop_create(meta, "album"), f_sp_album_name(album));
+    set_image_uri(prop_create(meta, "album_art"), f_sp_album_cover(album));
+  }
+		  
   prop_set_string(prop_create(meta, "artist"), txt);
 }
 
@@ -587,52 +624,9 @@ spotify_metadata_update_artistname(prop_t *p, sp_artist *artist)
  *
  */
 static void
-spotify_image_to_property(sp_image *image, void *userdata)
+spotify_metadata_update_albumimage(prop_t *p, sp_album *album)
 {
-  prop_t *p = userdata;
-  prop_pixmap_t *pp;
-  int pitch;
-  void *pixels;
-
-  pixels = f_sp_image_lock_pixels(image, &pitch);
-  pp = prop_pixmap_create(f_sp_image_width(image), f_sp_image_height(image),
-			  pitch, PIX_FMT_RGB24, pixels);
-
-  prop_set_pixmap(p, pp);
-  f_sp_image_unlock_pixels(image);
-  prop_pixmap_ref_dec(pp);
-  prop_ref_dec(p);
-}
-
-
-/**
- *
- */
-static void
-spotify_metadata_update_albumimage(metadata_t *m)
-{
-  sp_album *album = m->m_source;
-  sp_image *image;
-  const byte *id;
-
-  if((id = f_sp_album_cover(album)) == NULL)
-    return;
-
-  image = f_sp_image_create(spotify_session, id);
-
-  if(image == m->m_image) {
-    // Same image, do nothing 
-    f_sp_image_release(image);
-    return;
-  }
-
-  if(m->m_image != NULL)
-    f_sp_image_release(m->m_image);
-
-  m->m_image = image;
-
-  prop_ref_inc(m->m_prop);
-  f_sp_image_add_load_callback(image, spotify_image_to_property, m->m_prop);
+  set_image_uri(p, f_sp_album_cover(album));
 }
 
 
@@ -658,11 +652,11 @@ metadata_update(metadata_t *m)
   case METADATA_ALBUM_ARTIST_NAME:
     spotify_metadata_update_albumartistname(m->m_prop, m->m_source);
     break;
-    
-  case METADATA_ALBUM_IMAGE:
-    spotify_metadata_update_albumimage(m);
-    break;
 
+  case METADATA_ALBUM_IMAGE:
+    spotify_metadata_update_albumimage(m->m_prop, m->m_source);
+    break;
+    
   case METADATA_ARTIST_NAME:
     spotify_metadata_update_artistname(m->m_prop, m->m_source);
     break;
@@ -718,7 +712,6 @@ metadata_prop_cb(void *opaque, prop_event_t event, ...)
     
   case METADATA_ALBUM_NAME:
   case METADATA_ALBUM_YEAR:
-  case METADATA_ALBUM_IMAGE:
   case METADATA_ALBUM_ARTIST_NAME:
     r = SPOTIFY_RELEASE_ALBUM;
     break;
@@ -731,10 +724,6 @@ metadata_prop_cb(void *opaque, prop_event_t event, ...)
   }
 
   spotify_msg_enq(spotify_msg_build(r, m->m_source));
-
-  if(m->m_image != NULL)
-    spotify_msg_enq(spotify_msg_build(SPOTIFY_RELEASE_IMAGE, m->m_image));
-
   free(m);
 }
 
@@ -748,7 +737,6 @@ metadata_create(prop_t *p, metadata_type_t type, void *source)
   m->m_prop = p;
   m->m_type = type;
   m->m_source = source;
-  m->m_image = NULL;
 
   switch(m->m_type) {
   case METADATA_TRACK:
@@ -1147,7 +1135,7 @@ search_completed(sp_search *result, void *userdata)
 
     p_img = prop_create(metadata, "icon");
     prop_ref_inc(p_img);
-    f_sp_image_add_load_callback(image, spotify_image_to_property, p_img);
+    //    f_sp_image_add_load_callback(image, spotify_image_to_property, p_img);
 
     if(prop_set_parent(p, ss->ss_results))
       prop_destroy(p);
@@ -1415,6 +1403,38 @@ static sp_playlistcontainer_callbacks pc_callbacks = {
 };
 
 
+/**
+ *
+ */
+static void
+spotify_got_image(sp_image *image, void *userdata)
+{
+  spotify_image_t *si = userdata;
+  int pitch;
+  void *pixels;
+
+  pixels = f_sp_image_lock_pixels(image, &pitch);
+  si->si_pixmap = prop_pixmap_create(f_sp_image_width(image), 
+				     f_sp_image_height(image),
+				     pitch, PIX_FMT_RGB24, pixels);
+  f_sp_image_unlock_pixels(image);
+
+  pthread_mutex_lock(&spotify_mutex);
+  si->si_errcode = 0;
+  hts_cond_broadcast(&spotify_cond_image);
+  pthread_mutex_unlock(&spotify_mutex);
+}
+
+
+/**
+ *
+ */
+static void
+spotify_get_image(spotify_image_t *si)
+{
+  f_sp_image_add_load_callback(f_sp_image_create(spotify_session, si->si_id),
+			       spotify_got_image, si);
+}
 
 
 /**
@@ -1536,6 +1556,10 @@ spotify_thread(void *aux)
 
       case SPOTIFY_PAUSE:
 	f_sp_session_player_play(s, !sm->sm_int);
+	break;
+
+      case SPOTIFY_GET_IMAGE:
+	spotify_get_image(sm->sm_ptr);
 	break;
       }
       free(sm);
@@ -1875,6 +1899,98 @@ be_spotify_scandir(const char *url, char *errbuf, size_t errlen)
 }
 
 
+/**
+ *
+ */
+static unsigned int
+hex2v(int s)
+{
+  switch(s) {
+  case '0' ... '9':
+    return s - '0';
+  case 'a' ... 'f':
+    return s - 'a' + 10;
+  case 'A' ... 'F':
+    return s - 'A' + 10;
+  default:
+    return 0;
+  }
+}
+
+
+
+/**
+ *
+ */
+static int
+parse_image_url(uint8_t *out, const char *url)
+{
+  int i;
+  uint8_t v;
+
+  if(strncmp(url, "spotify:image:", strlen("spotify:image:")))
+    return -1;
+
+  url += strlen("spotify:image:");
+
+  for(i = 0; i < 20; i++) {
+
+    if(*url == 0)
+      return -1;
+
+    v = hex2v(*url++);
+    if(*url == 0)
+      return -1;
+
+    v = (v << 4) | hex2v(*url++);
+    *out++ = v;
+  }
+  return 0;
+}
+
+
+
+/**
+ *
+ */
+static int
+be_spotify_imageloader(const char *url, char *errbuf, size_t errlen,
+		       int *thumb, void **data, size_t *datasize,
+		       int *codecid, const char *theme, prop_pixmap_t **pp)
+{
+  spotify_image_t si;
+  uint8_t id[20];
+
+  memset(&si, 0, sizeof(si));
+
+  if(parse_image_url(id, url)) {
+    snprintf(errbuf, errlen, "Invalid URL for Spotify imageloader");
+    return -1;
+  }
+
+  if(spotify_start(errbuf, errlen))
+    return -1;
+
+  si.si_id = id;
+  si.si_errcode = -1;
+
+  spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_GET_IMAGE, &si));
+
+  while(si.si_errcode == -1)
+    hts_cond_wait(&spotify_cond_image, &spotify_mutex);
+
+  hts_mutex_unlock(&spotify_mutex);
+
+  if(si.si_errcode == 0) {
+    *pp = si.si_pixmap;
+    return 0;
+  } else {
+    snprintf(errbuf, errlen, "Unable to load image");
+    return -1;
+  }
+
+}
+
 
 /**
  *
@@ -1905,6 +2021,7 @@ be_spotify_init(void)
   hts_cond_init(&spotify_cond_main);
   hts_cond_init(&spotify_cond_login);
   hts_cond_init(&spotify_cond_uri);
+  hts_cond_init(&spotify_cond_image);
 
   /* Metadata tracking */
   hts_mutex_init(&meta_mutex);
@@ -1967,4 +2084,5 @@ nav_backend_t be_spotify = {
   .nb_open = be_spotify_open,
   .nb_play_audio = be_spotify_play,
   .nb_scandir = be_spotify_scandir,
+  .nb_imageloader = be_spotify_imageloader,
 };
