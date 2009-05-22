@@ -172,11 +172,13 @@ showtime_shutdown0(void *aux)
 {
   /* Very ugly */
 #ifdef CONFIG_SPOTIFY
- {
-   extern void spotify_shutdown(void);
-   spotify_shutdown();
- }
+  {
+    extern void spotify_shutdown(void);
+    spotify_shutdown();
+  }
 #endif
+  ui_shutdown();
+   
   exit(showtime_retcode);
 }
 

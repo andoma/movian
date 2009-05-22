@@ -979,8 +979,22 @@ glw_x11_dispatch_event(uii_t *uii, event_t *e)
 /**
  *
  */
+static void
+glw_x11_stop(uii_t *uii)
+{
+  glw_x11_t *gx11 = (glw_x11_t *)uii;
+  // Prevent it from running any more, Perhaps a bit ugly, but we're gonna
+  // exit() very soon, so who cares.
+  glw_lock(&gx11->gr);
+}
+
+
+/**
+ *
+ */
 ui_t glw_ui = {
   .ui_title = "glw",
   .ui_start = glw_x11_start,
   .ui_dispatch_event = glw_x11_dispatch_event,
+  .ui_stop = glw_x11_stop,
 };

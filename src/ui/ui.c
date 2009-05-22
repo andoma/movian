@@ -277,3 +277,16 @@ ui_event_handler(event_t *e, void *opaque)
   return 0;
 }
 
+
+/**
+ *
+ */
+void
+ui_shutdown(void)
+{
+  uii_t *uii;
+
+  LIST_FOREACH(uii, &uiis, uii_link) 
+    if(uii->uii_ui->ui_stop != NULL)
+      uii->uii_ui->ui_stop(uii);
+}
