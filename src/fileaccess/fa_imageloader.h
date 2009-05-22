@@ -19,15 +19,8 @@
 #ifndef FA_IMAGELOADER_H
 #define FA_IMAGELOADER_H
 
-typedef struct fa_image_load_ctrl {
-  const char *url;
-  int got_thumb;
-  int want_thumb;
-  void *data;
-  size_t datasize;
-  int codecid;              /* LAVC codec id */
-} fa_image_load_ctrl_t;
-
-int fa_imageloader(fa_image_load_ctrl_t *ctrl, const char *theme);
+int fa_imageloader(const char *url, char *errbuf, size_t errlen,
+		   int *thumb, void **data, size_t *datasize,
+		   int *codecid, const char *theme);
 
 #endif /* FA_IMAGELOADER_H */

@@ -22,7 +22,9 @@
 #include "event.h"
 #include "prop.h"
 
-
+/**
+ *
+ */
 TAILQ_HEAD(nav_dir_entry_queue, nav_dir_entry);
 
 /**
@@ -109,6 +111,10 @@ typedef struct nav_backend {
 
   nav_dir_t *(*nb_scandir)(const char *url, char *errbuf, size_t errsize);
 
+  int (*nb_imageloader)(const char *url, char *errbuf, size_t errsize,
+			int *thumb, void **data, size_t *datasize,
+			int *codecid, const char *theme);
+
 } nav_backend_t;
 
 
@@ -139,5 +145,9 @@ unsigned int nav_probe(prop_t *proproot, const char *url,
 		       char *errbuf, size_t errsize);
 
 nav_dir_t *nav_scandir(const char *url, char *errbuf, size_t errlen);
+
+int nav_imageloader(const char *url, char *errbuf, size_t errlen,
+		    int *thumb, void **data, size_t *datasize,
+		    int *codecid, const char *theme);
 
 #endif /* NAVIGATOR_H__ */

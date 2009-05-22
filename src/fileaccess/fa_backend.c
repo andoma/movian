@@ -29,6 +29,7 @@
 #include "fa_probe.h"
 #include "fa_video.h"
 #include "fa_audio.h"
+#include "fa_imageloader.h"
 #include "playqueue.h"
 
 typedef struct be_file_page {
@@ -410,6 +411,7 @@ nav_backend_t be_file = {
   .nb_play_audio = be_file_playaudio,
   .nb_probe = fa_probe,
   .nb_scandir = be_scandir,
+  .nb_imageloader = fa_imageloader,
 };
 
 

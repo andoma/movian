@@ -510,3 +510,25 @@ nav_dir_sort(nav_dir_t *nd)
   free(v);
 }
 
+
+/**
+ *
+ */
+int
+nav_imageloader(const char *url, char *errbuf, size_t errlen,
+		int *thumb, void **data, size_t *datasize,
+		int *codecid, const char *theme)
+{
+  nav_backend_t *nb;
+
+  LIST_FOREACH(nb, &nav_backends, nb_global_link)
+    if(nb->nb_canhandle(url))
+      break;
+  
+  if(nb == NULL || nb->nb_imageloader == NULL) {
+    snprintf(errbuf, errlen, "No backend for URL");
+    return -1;
+  }
+  return nb->nb_imageloader(url, errbuf, errlen, thumb, data, 
+			    datasize, codecid, theme);
+}

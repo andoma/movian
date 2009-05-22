@@ -25,8 +25,7 @@
 #include "glw.h"
 #include "glw_texture.h"
 
-#include "showtime.h"
-#include "fileaccess/fa_imageloader.h"
+#include "navigator.h"
 
 static void glw_tex_deref_locked(glw_root_t *gr, glw_loadable_texture_t *glt);
 
@@ -150,12 +149,16 @@ glw_tex_flush_all(glw_root_t *gr)
 static int
 glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
 {
-  fa_image_load_ctrl_t ctrl;
   AVCodecContext *ctx;
   AVCodec *codec;
   AVFrame *frame;
   int r, got_pic, w, h;
   prop_pixmap_t *pp;
+  int got_thumb, want_thumb;
+  void *data;
+  size_t datasize;
+  int codecid;
+  const char *url;
 
   if(glt->glt_prop_pixmap != NULL) {
     pp = glt->glt_prop_pixmap;
@@ -176,21 +179,28 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   if(glt->glt_filename == NULL)
     return -1;
 
-  memset(&ctrl, 0, sizeof(ctrl));
-  ctrl.url = glt->glt_filename;
-  
-  if(fa_imageloader(&ctrl, gr->gr_theme))
+  url = glt->glt_filename;
+  if(!strncmp(url, "thumb://", 8)) {
+    url = url + 8;
+    want_thumb = 1;
+  } else {
+    want_thumb = 0;
+  }
+
+  got_thumb = want_thumb;
+  if(nav_imageloader(url, NULL, 0, &got_thumb,
+		     &data, &datasize, &codecid, gr->gr_theme))
     return -1;
 
   fflock();
 
   ctx = avcodec_alloc_context();
-  codec = avcodec_find_decoder(ctrl.codecid);
+  codec = avcodec_find_decoder(codecid);
   
   if(avcodec_open(ctx, codec) < 0) {
     ffunlock();
     av_free(ctx);
-    free(ctrl.data);
+    free(data);
     return -1;
   }
   
@@ -198,11 +208,11 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
 
   frame = avcodec_alloc_frame();
 
-  r = avcodec_decode_video(ctx, frame, &got_pic, ctrl.data, ctrl.datasize);
+  r = avcodec_decode_video(ctx, frame, &got_pic, data, datasize);
 
-  free(ctrl.data);
+  free(data);
 
-  if(ctrl.want_thumb && ctrl.got_thumb) {
+  if(want_thumb && !got_thumb) {
     w = 160;
     h = 160 * ctx->height / ctx->width;
   } else {

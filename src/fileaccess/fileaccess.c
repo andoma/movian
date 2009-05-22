@@ -101,6 +101,9 @@ fa_can_handle(const char *url, char *errbuf, size_t errsize)
   fa_protocol_t *fap;
   char *filename;
 
+  if(!strncmp(url, "theme://", strlen("theme://")))
+    return 1;
+
   if((filename = fa_resolve_proto(url, &fap, NULL, NULL,
 				  errbuf, errsize)) == NULL)
     return 0;

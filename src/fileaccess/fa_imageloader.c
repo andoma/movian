@@ -47,27 +47,22 @@ static const uint8_t gifsig[6] = {'G', 'I', 'F', '8', '9', 'a'};
 /**
  *
  */
-int
-fa_imageloader(fa_image_load_ctrl_t *ctrl, const char *theme)
+int 
+fa_imageloader(const char *url, char *errbuf, size_t errlen,
+	       int *thumb, void **data, size_t *datasize,
+	       int *codecid, const char *theme)
 {
   fa_handle_t *fh;
-  const char *filename = ctrl->url;
   char p[16];
   int is_exif = 0;
   int r;
 
-  if(!strncmp(filename, "thumb://", 8)) {
-    filename = filename + 8;
-    ctrl->want_thumb = 1;
-  }
 
-  TRACE(TRACE_DEBUG, "imageloader", "Opening %s", filename);
-
-  if((fh = fa_open_theme(filename, theme)) == NULL)
+  if((fh = fa_open_theme(url, theme)) == NULL)
     return -1;
 
   if(fa_read(fh, p, sizeof(p)) != sizeof(p)) {
-    TRACE(TRACE_INFO, "imageloader", "%s: file too short", filename);
+    TRACE(TRACE_INFO, "imageloader", "%s: file too short", url);
     fa_close(fh);
     return -1;
   }
@@ -75,23 +70,23 @@ fa_imageloader(fa_image_load_ctrl_t *ctrl, const char *theme)
   /* figure format */
 
   if(p[6] == 'J' && p[7] == 'F' && p[8] == 'I' && p[9] == 'F') {
-    ctrl->codecid = CODEC_ID_MJPEG;
+    *codecid = CODEC_ID_MJPEG;
   } else if(p[6] == 'E' && p[7] == 'x' && p[8] == 'i' && p[9] == 'f') {
-    ctrl->codecid = CODEC_ID_MJPEG;
+    *codecid = CODEC_ID_MJPEG;
     is_exif = 1;
   } else if(!memcmp(pngsig, p, 8)) {
-    ctrl->codecid = CODEC_ID_PNG;
+    *codecid = CODEC_ID_PNG;
   } else if(!memcmp(gifsig, p, sizeof(gifsig))) {
-    ctrl->codecid = CODEC_ID_GIF;
+    *codecid = CODEC_ID_GIF;
   } else {
-    TRACE(TRACE_INFO, "imageloader", "%s: unknown format", filename);
+    TRACE(TRACE_INFO, "imageloader", "%s: unknown format", url);
     fa_close(fh);
     return -1;
   }
   
 
 #ifdef CONFIG_LIBEXIF
-  if(is_exif && ctrl->want_thumb) {
+  if(is_exif && *thumb) {
     unsigned char exifbuf[1024];
     int v, x;
     ExifLoader *l;
@@ -111,28 +106,28 @@ fa_imageloader(fa_image_load_ctrl_t *ctrl, const char *theme)
 
     if(ed != NULL && ed->data != NULL) {
       fa_close(fh);
-      ctrl->data = malloc(ed->size);
-      memcpy(ctrl->data, ed->data, ed->size);
-      ctrl->datasize = ed->size;
+      *data = malloc(ed->size);
+      memcpy(*data, ed->data, ed->size);
+      *datasize = ed->size;
       exif_data_unref(ed);
-      ctrl->got_thumb = 1;
       return 0;
     }
   }
 #endif
+  *thumb = 0;
   fa_seek(fh, SEEK_SET, 0);
 
-  ctrl->datasize = fa_fsize(fh);
-  ctrl->data = malloc(ctrl->datasize + FF_INPUT_BUFFER_PADDING_SIZE);
+  *datasize = fa_fsize(fh);
+  *data = malloc(*datasize + FF_INPUT_BUFFER_PADDING_SIZE);
   
-  r = fa_read(fh, ctrl->data, ctrl->datasize);
+  r = fa_read(fh, *data, *datasize);
 
-  memset(ctrl->data + ctrl->datasize, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+  memset(*data + *datasize, 0, FF_INPUT_BUFFER_PADDING_SIZE);
 
   fa_close(fh);
 
-  if(r != ctrl->datasize) {
-    free(ctrl->data);
+  if(r != *datasize) {
+    free(*data);
     return -1;
   }
   return 0;
