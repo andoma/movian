@@ -57,7 +57,10 @@ video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
 	   int64_t pos, int backward, const char *txt)
 {
 
-  TRACE(TRACE_DEBUG, "Video", "seek %s to %.2f", txt, pos / 1000000.0);
+  pos = FFMAX(fctx->start_time, FFMIN(fctx->start_time + fctx->duration, pos));
+
+  TRACE(TRACE_DEBUG, "Video", "seek %s to %.2f", txt, 
+	(pos - fctx->start_time) / 1000000.0);
  
   av_seek_frame(fctx, -1, pos, backward ? AVSEEK_FLAG_BACKWARD : 0);
 
@@ -71,7 +74,8 @@ video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
     *mbp = NULL;
   }
 
-  prop_set_float(prop_create(mp->mp_prop_root, "seektime"), pos / 1000000.0);
+  prop_set_float(prop_create(mp->mp_prop_root, "seektime"), 
+		 (pos - fctx->start_time) / 1000000.0);
 
   return pos;
 }
@@ -151,7 +155,6 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
       mb->mb_pts      = rescale(fctx, pkt.pts,      si);
       mb->mb_dts      = rescale(fctx, pkt.dts,      si);
       mb->mb_duration = rescale(fctx, pkt.duration, si);
-
 
       if(mq->mq_seektarget != AV_NOPTS_VALUE) {
 	if(mb->mb_pts < mq->mq_seektarget) {
@@ -244,24 +247,19 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
 
     } else if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
 
-      seekbase = video_seek(fctx, mp, &mb, FFMAX(0, seekbase - 60000000),
-			    1, "-60s");
+      seekbase = video_seek(fctx, mp, &mb, seekbase - 60000000, 1, "-60s");
 
     } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
 
-      seekbase = video_seek(fctx, mp, &mb, FFMAX(0, seekbase - 15000000),
-			    1, "-15s");
+      seekbase = video_seek(fctx, mp, &mb, seekbase - 15000000, 1, "-15s");
 
     } else if(event_is_action(e, ACTION_SEEK_FORWARD)) {
 
-      seekbase = video_seek(fctx, mp, &mb, 
-			    FFMIN(fctx->duration, seekbase + 15000000),
-			    1, "+15s");
+      seekbase = video_seek(fctx, mp, &mb, seekbase + 15000000, 1, "+15s");
+
     } else if(event_is_action(e, ACTION_SEEK_FAST_FORWARD)) {
 
-      seekbase = video_seek(fctx, mp, &mb, 
-			    FFMIN(fctx->duration, seekbase + 60000000),
-			    1, "+60s");
+      seekbase = video_seek(fctx, mp, &mb, seekbase + 60000000, 1, "+60s");
 
     } else if(event_is_type(e, EVENT_EXIT) ||
 	      event_is_type(e, EVENT_PLAY_URL)) {
@@ -339,6 +337,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     snprintf(errbuf, errlen, "Unable to find stream info");
     return NULL;
   }
+
+  TRACE(TRACE_DEBUG, "Video", "Starting playback of %s", url);
 
   /**
    * Update property metadata
