@@ -713,6 +713,7 @@ metadata_prop_cb(void *opaque, prop_event_t event, ...)
   case METADATA_ALBUM_NAME:
   case METADATA_ALBUM_YEAR:
   case METADATA_ALBUM_ARTIST_NAME:
+  case METADATA_ALBUM_IMAGE:
     r = SPOTIFY_RELEASE_ALBUM;
     break;
 
