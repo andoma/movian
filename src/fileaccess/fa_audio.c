@@ -96,6 +96,8 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     return NULL;
   }
 
+  TRACE(TRACE_DEBUG, "Audio", "Starting playback of %s", url);
+
   mp->mp_audio.mq_stream = -1;
   mp->mp_video.mq_stream = -1;
 
