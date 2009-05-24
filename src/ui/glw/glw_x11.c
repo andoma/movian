@@ -584,12 +584,13 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
 
   if(len > 1) {
     s = str;
-    while((n = mbrtowc(&wc, s, 4, &ps))) {
+    while((n = mbrtowc(&wc, s, len, &ps)) > 0) {
       strncpy(buf, s, n);
       buf[n] = '\0';
       e = event_create_unicode(wc);
       ui_dispatch_event(e, buf, &gx11->gr.gr_uii);
       s += n;
+      len -= n;
     }
     return;
   } else if((event->xkey.state & ~ShiftMask) == 0 && len == 1) {
