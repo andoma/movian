@@ -592,6 +592,9 @@ glw_destroy0(glw_t *w)
 
     glw_focus_leave(w);
 
+    if(w->glw_parent->glw_focused == w)
+      w->glw_parent->glw_focused = NULL;
+
     assert(w->glw_root->gr_current_focus != w);
 
     if(p->glw_selected == w)
