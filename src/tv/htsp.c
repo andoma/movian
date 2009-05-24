@@ -1069,11 +1069,16 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
       } else {
 	hss->hss_title = strdup(nicename);
       }
+      TRACE(TRACE_DEBUG, "HTSP", "Stream #%d: %s", idx, hss->hss_title);
+
       LIST_INSERT_HEAD(&hs->hs_streams, hss, hss_link);
     }
   }
   mp->mp_audio.mq_stream = astream;
   mp->mp_video.mq_stream = vstream;
+
+  TRACE(TRACE_DEBUG, "HTSP", "Video-stream:%d, Audio-stream: %d",
+	vstream, astream);
 
   mp_become_primary(mp);
 
