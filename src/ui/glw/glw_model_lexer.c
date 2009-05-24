@@ -77,7 +77,7 @@ lexer_add_token_float(token_t *prev, refstr_t *f, int line,
 {
   token_t *t = lexer_add_token_simple(prev, f, line, TOKEN_FLOAT);
   float sign = 1.0f;
-  int n, s, m = 0;
+  int n, s = 0, m = 0;
 
   if(*start == '-') {
     start++;
