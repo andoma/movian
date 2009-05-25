@@ -109,6 +109,8 @@ nav_remove_from_history(nav_page_t *np)
 void
 nav_close(nav_page_t *np)
 {
+  prop_unsubscribe(np->np_close_sub);
+
   if(nav_page_current == np)
     nav_page_current = NULL;
 
@@ -201,8 +203,11 @@ nav_open(const char *url, int flags)
 {
   if(flags & NAV_OPEN_ASYNC)
     event_enqueue(&nav_eq, event_create_url(EVENT_OPENURL, url));
-  else
+  else {
+    hts_mutex_lock(&nav_mutex);
     nav_open0(url, NULL, NULL);
+    hts_mutex_unlock(&nav_mutex);
+  }
 }
 
 
@@ -212,17 +217,46 @@ nav_open(const char *url, int flags)
 void
 nav_back(void)
 {
-  nav_page_t *prev, *np = nav_page_current;
+  nav_page_t *prev, *np;
 
-  if(np == NULL ||
-     (prev = TAILQ_PREV(np, nav_page_queue, np_history_link)) == NULL)
-     return;
+  hts_mutex_lock(&nav_mutex);
 
-  nav_open0(prev->np_url, NULL, NULL);
+  np = nav_page_current;
 
-  if(!(np->np_flags & NAV_PAGE_DONT_CLOSE_ON_BACK))
-    nav_close(np);
+  if(np != NULL &&
+     (prev = TAILQ_PREV(np, nav_page_queue, np_history_link)) != NULL) {
+
+    nav_open0(prev->np_url, NULL, NULL);
+
+    if(!(np->np_flags & NAV_PAGE_DONT_CLOSE_ON_BACK))
+      nav_close(np);
+  }
+  hts_mutex_unlock(&nav_mutex);
 }
+
+
+/**
+ *
+ */
+static void
+nav_page_close_set(void *opaque, int value)
+{
+  nav_page_t *np = opaque, *next;
+  
+  if(!value)
+    return;
+
+  next = TAILQ_NEXT(np, np_history_link);
+
+  nav_close(np);
+
+  if(next == NULL)
+    next = TAILQ_LAST(&nav_pages, nav_page_queue);
+
+  if(next != NULL)
+    nav_open0(next->np_url, NULL, NULL);
+}
+
 
 
 /**
@@ -241,6 +275,13 @@ nav_page_create(const char *url, size_t allocsize,
   TAILQ_INSERT_TAIL(&nav_pages, np, np_global_link);
 
   np->np_prop_root = prop_create(NULL, "page");
+
+  np->np_close_sub = 
+    prop_subscribe(0,
+		   PROP_TAG_ROOT, prop_create(np->np_prop_root, "close"),
+		   PROP_TAG_CALLBACK_INT, nav_page_close_set, np,
+		   PROP_TAG_MUTEX, &nav_mutex,
+		   NULL);
 
   prop_set_string(prop_create(np->np_prop_root, "url"), url);
   return np;

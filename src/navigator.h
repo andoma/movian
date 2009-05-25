@@ -81,6 +81,8 @@ typedef struct nav_page {
 
   void (*np_close)(struct nav_page *np);
 
+  prop_sub_t *np_close_sub;
+
 } nav_page_t;
 
 
