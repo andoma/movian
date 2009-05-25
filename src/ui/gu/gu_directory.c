@@ -58,29 +58,15 @@ static const char **subpaths[] = {
  *
  */
 static void
-gu_col_sub(void *opaque, prop_event_t event, ...)
+gu_col_sub(void *opaque, const char *str)
 {
-  const char *str;
   dirnodecol_t *dnc = opaque;
   dirnode_t *dn = dnc->dn;
 
-  va_list ap;
-  va_start(ap, event);
-
   GValue gv = { 0, };
  
-  switch(event) {
-  case PROP_SET_STRING:
-    g_value_init(&gv, G_TYPE_STRING);
-    str = va_arg(ap, const char *);
-    g_value_set_string(&gv, str);
-    break;
-
-  default:
-    g_value_init(&gv, G_TYPE_STRING);
-    g_value_set_string(&gv, "");
-    break;
-  }
+  g_value_init(&gv, G_TYPE_STRING);
+  g_value_set_string(&gv, str ?: "");
   gtk_list_store_set_value(dn->gnp->gnp_list_store, &dn->iter, dnc->col, &gv);
   g_value_unset(&gv);
 }
@@ -115,7 +101,7 @@ gu_node_sub(void *opaque, prop_event_t event, ...)
       dn->sub[i].s =
 	prop_subscribe(0, 
 		       PROP_TAG_NAME_VECTOR, subpaths[i],
-		       PROP_TAG_CALLBACK, gu_col_sub, &dn->sub[i],
+		       PROP_TAG_CALLBACK_STRING, gu_col_sub, &dn->sub[i],
 		       PROP_TAG_COURIER, gnp->gnp_gu->gu_pc, 
 		       PROP_TAG_NAMED_ROOT, p, "self",
 		       NULL);

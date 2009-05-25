@@ -149,13 +149,10 @@ gu_sub_to_str(va_list ap, prop_event_t event, GValue *gv)
  *
  */
 static void
-gu_nav_url_updated(void *opaque, prop_event_t event, ...)
+gu_nav_url_updated(void *opaque, const char *str)
 {
   gtk_ui_t *gu = opaque;
-  va_list ap;
-  va_start(ap, event);
-  gtk_entry_set_text(GTK_ENTRY(gu->gu_url), event == PROP_SET_STRING ? 
-		     va_arg(ap, const char *) : "");
+  gtk_entry_set_text(GTK_ENTRY(gu->gu_url), str ?: "");
 }
 
 
@@ -244,7 +241,7 @@ gu_start(ui_t *ui, int argc, char **argv, int primary)
   prop_subscribe(0,
 		 PROP_TAG_NAME_VECTOR, 
 		 (const char *[]){"global","nav","currentpage","url",NULL},
-		 PROP_TAG_CALLBACK, gu_nav_url_updated, gu,
+		 PROP_TAG_CALLBACK_STRING, gu_nav_url_updated, gu,
 		 PROP_TAG_COURIER, gu->gu_pc,
 		 NULL);
 

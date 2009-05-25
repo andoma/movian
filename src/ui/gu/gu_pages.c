@@ -24,38 +24,24 @@
  *
  */
 static void
-gu_nav_page_set_type(void *opaque, prop_event_t event, ...)
+gu_nav_page_set_type(void *opaque, const char *type)
 {
   gu_nav_page_t *gnp = opaque;
-  const char *type;
 
-  va_list ap;
-  va_start(ap, event);
+  if(gnp->gnp_view != NULL) {
+    gtk_widget_destroy(gnp->gnp_view);
+    gnp->gnp_view = NULL;
+  }
 
-  switch(event) {
-  case PROP_SET_STRING:
-    type = va_arg(ap, const char *);
+  if(gnp->gnp_list_store != NULL) {
+    abort();
+  }
 
-    if(gnp->gnp_view != NULL) {
-      gtk_widget_destroy(gnp->gnp_view);
-      gnp->gnp_view = NULL;
-    }
-
-    if(gnp->gnp_list_store != NULL) {
-      abort();
-    }
-
-    if(!strcmp(type, "directory")) {
-      gu_directory_create(gnp);
-      break;
-    }
-
-
-    break;
-  default:
-    break;
+  if(!strcmp(type, "directory")) {
+    gu_directory_create(gnp);
   }
 }
+
 
 /**
  *
@@ -78,7 +64,7 @@ gu_nav_page_create(gtk_ui_t *gu, prop_t *p)
 
   prop_subscribe(0,
 		 PROP_TAG_NAME_VECTOR, (const char *[]){"self", "type", NULL},
-		 PROP_TAG_CALLBACK, gu_nav_page_set_type, gnp,
+		 PROP_TAG_CALLBACK_STRING, gu_nav_page_set_type, gnp,
 		 PROP_TAG_COURIER, gu->gu_pc, 
 		 PROP_TAG_NAMED_ROOT, p, "self",
 		 NULL);
