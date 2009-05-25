@@ -134,29 +134,10 @@ settings_add_dir(prop_t *parent, const char *id, const char *title,
 /**
  *
  */
-static void 
-callback_bool(void *opaque, prop_event_t event, ...)
-{
-  setting_t *s = opaque;
-  setting_callback_bool_t *cb;
-
-  va_list ap;
-  va_start(ap, event);
-
-  if(event == PROP_SET_INT) {
-    cb = s->s_callback;
-    cb(s->s_opaque, va_arg(ap, int));
-  }
-}
-
-
-/**
- *
- */
 setting_t *
 settings_add_bool(prop_t *parent, const char *id, const char *title,
 		  int initial, htsmsg_t *store,
-		  setting_callback_bool_t *cb, void *opaque,
+		  prop_callback_int_t *cb, void *opaque,
 		  int flags)
 {
   prop_t *r = settings_add(id, title, "bool");
@@ -169,13 +150,11 @@ settings_add_bool(prop_t *parent, const char *id, const char *title,
 
   prop_set_int(v, !!initial);
 
-  s->s_callback = cb;
-  s->s_opaque = opaque;
   s->s_prop = r;
 
   sub = prop_subscribe(flags & SETTINGS_INITIAL_UPDATE ?
 		       0 : PROP_SUB_NO_INITIAL_UPDATE,
-		       PROP_TAG_CALLBACK, callback_bool, s,
+		       PROP_TAG_CALLBACK_INT, cb, opaque,
 		       PROP_TAG_ROOT, v,
 		       NULL);
   s->s_sub = sub;
@@ -205,31 +184,6 @@ settings_toggle_bool(setting_t *s)
 }
 
 
-
-/**
- *
- */
-static void 
-callback_int(void *opaque, prop_event_t event, ...)
-{
-  setting_t *s = opaque;
-  setting_callback_int_t *cb;
-
-  va_list ap;
-  va_start(ap, event);
-
-  cb = s->s_callback;
-  if(event == PROP_SET_INT) {
-    cb(s->s_opaque, va_arg(ap, int));
-  } else if(event == PROP_SET_FLOAT) {
-    cb(s->s_opaque, va_arg(ap, double));
-  } else if(event == PROP_SET_STRING) {
-    cb(s->s_opaque, atoi(va_arg(ap, const char *)));
-  } else {
-    cb(s->s_opaque, 0);
-  }
-}
-
 /**
  *
  */
@@ -237,7 +191,7 @@ setting_t *
 settings_add_int(prop_t *parent, const char *id, const char *title,
 		 int initial, htsmsg_t *store,
 		 int min, int max, int step,
-		 setting_callback_int_t *cb, void *opaque,
+		 prop_callback_int_t *cb, void *opaque,
 		 int flags, const char *unit)
 {
   prop_t *r = settings_add(id, title, "integer");
@@ -255,13 +209,11 @@ settings_add_int(prop_t *parent, const char *id, const char *title,
 
   prop_set_int(v, initial);
 
-  s->s_callback = cb;
-  s->s_opaque = opaque;
   s->s_prop = r;
 
   sub = prop_subscribe(flags & SETTINGS_INITIAL_UPDATE ?
 		       0 : PROP_SUB_NO_INITIAL_UPDATE,
-		       PROP_TAG_CALLBACK, callback_int, s,
+		       PROP_TAG_CALLBACK_INT, cb, opaque,
 		       PROP_TAG_ROOT, v,
 		       NULL);
   s->s_sub = sub;
@@ -278,7 +230,7 @@ static void
 callback_opt(void *opaque, prop_event_t event, ...)
 {
   setting_t *s = opaque;
-  setting_callback_string_t *cb;
+  prop_callback_string_t *cb;
   prop_t *c;
 
   va_list ap;
@@ -298,7 +250,7 @@ callback_opt(void *opaque, prop_event_t event, ...)
  */
 setting_t *
 settings_add_multiopt(prop_t *parent, const char *id, const char *title,
-		      setting_callback_string_t *cb, void *opaque)
+		      prop_callback_string_t *cb, void *opaque)
 {
   prop_t *r = settings_add(id, title, "multiopt");
   prop_t *o = prop_create(r, "options");
@@ -341,39 +293,13 @@ settings_multiopt_add_opt(setting_t *parent, const char *id, const char *title,
 }
 
 
-
-/**
- *
- */
-static void 
-callback_string(void *opaque, prop_event_t event, ...)
-{
-  setting_t *s = opaque;
-  setting_callback_string_t *cb;
-  const char *str;
-
-  va_list ap;
-  va_start(ap, event);
-
-  cb = s->s_callback;
-
-  if(event == PROP_SET_STRING) {
-    str = va_arg(ap, char *);
-    cb(s->s_opaque, str);
-  } else {
-    cb(s->s_opaque, NULL);
-  }
-}
-
-
-
 /**
  *
  */
 setting_t *
 settings_add_string(prop_t *parent, const char *id, const char *title,
 		    const char *initial, htsmsg_t *store,
-		    setting_callback_string_t *cb, void *opaque,
+		    prop_callback_string_t *cb, void *opaque,
 		    int flags)
 {
   prop_t *r = settings_add(id, title, "string");
@@ -387,13 +313,11 @@ settings_add_string(prop_t *parent, const char *id, const char *title,
   if(initial != NULL)
     prop_set_string(v, initial);
 
-  s->s_callback = cb;
-  s->s_opaque = opaque;
   s->s_prop = r;
   
   sub = prop_subscribe(flags & SETTINGS_INITIAL_UPDATE ?
 		       0 : PROP_SUB_NO_INITIAL_UPDATE,
-		       PROP_TAG_CALLBACK, callback_string, s,
+		       PROP_TAG_CALLBACK_STRING, cb, opaque,
 		       PROP_TAG_ROOT, v,
 		       NULL);
   s->s_sub = sub;

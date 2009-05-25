@@ -34,6 +34,7 @@ static prop_courier_t *global_courier;
 
 static void prop_unsubscribe0(prop_sub_t *s);
 
+
 /**
  *
  */
@@ -215,6 +216,48 @@ prop_notify_free(prop_notify_t *n)
 
 
 /**
+ *
+ */
+static void 
+trampoline_int(prop_sub_t *s, prop_event_t event, ...)
+{
+  prop_callback_int_t *cb = s->hps_callback;
+
+  va_list ap;
+  va_start(ap, event);
+
+  if(event == PROP_SET_INT) {
+    cb(s->hps_opaque, va_arg(ap, int));
+  } else if(event == PROP_SET_FLOAT) {
+    cb(s->hps_opaque, va_arg(ap, double));
+  } else if(event == PROP_SET_STRING) {
+    cb(s->hps_opaque, atoi(va_arg(ap, const char *)));
+  } else {
+    cb(s->hps_opaque, 0);
+  }
+}
+
+
+/**
+ *
+ */
+static void 
+trampoline_string(prop_sub_t *s, prop_event_t event, ...)
+{
+  prop_callback_string_t *cb = s->hps_callback;
+
+  va_list ap;
+  va_start(ap, event);
+
+  if(event == PROP_SET_STRING) {
+    cb(s->hps_opaque, va_arg(ap, char *));
+  } else {
+    cb(s->hps_opaque, NULL);
+  }
+}
+
+
+/**
  * Thread for dispatching prop_notify entries
  */
 static void *
@@ -224,6 +267,8 @@ prop_courier(void *aux)
 
   prop_notify_t *n;
   prop_sub_t *s;
+  prop_callback_t *cb;
+  prop_trampoline_t *pt;
 
   hts_mutex_lock(&prop_mutex);
 
@@ -250,50 +295,68 @@ prop_courier(void *aux)
       }
     }
 
+    cb = s->hps_callback;
+    pt = s->hps_trampoline;
+
     switch(n->hpn_event) {
     case PROP_SET_DIR:
     case PROP_SET_VOID:
-      s->hps_callback(s->hps_opaque, n->hpn_event, n->hpn_prop2);
+      if(pt != NULL)
+	pt(s, n->hpn_event, n->hpn_prop2);
+      else
+	cb(s->hps_opaque, n->hpn_event, n->hpn_prop2);
       if(n->hpn_prop2 != NULL)
 	prop_ref_dec(n->hpn_prop2);
       break;
 
     case PROP_SET_STRING:
-      s->hps_callback(s->hps_opaque, n->hpn_event, 
-		      n->hpn_string, n->hpn_prop2);
+      if(pt != NULL)
+	pt(s, n->hpn_event, n->hpn_string, n->hpn_prop2);
+      else
+	cb(s->hps_opaque, n->hpn_event, n->hpn_string, n->hpn_prop2);
       free(n->hpn_string);
       prop_ref_dec(n->hpn_prop2);
       break;
 
     case PROP_SET_INT:
-      s->hps_callback(s->hps_opaque, n->hpn_event, 
-		      n->hpn_int, n->hpn_prop2);
+      if(pt != NULL)
+	pt(s, n->hpn_event, n->hpn_int, n->hpn_prop2);
+      else
+	cb(s->hps_opaque, n->hpn_event, n->hpn_int, n->hpn_prop2);
       prop_ref_dec(n->hpn_prop2);
       break;
 
     case PROP_SET_FLOAT:
-      s->hps_callback(s->hps_opaque, n->hpn_event, 
-		      n->hpn_float, n->hpn_prop2);
+      if(pt != NULL)
+	pt(s, n->hpn_event, n->hpn_float, n->hpn_prop2);
+      else
+	cb(s->hps_opaque, n->hpn_event, n->hpn_float, n->hpn_prop2);
       prop_ref_dec(n->hpn_prop2);
       break;
 
     case PROP_SET_PIXMAP:
-      s->hps_callback(s->hps_opaque, n->hpn_event, 
-		      n->hpn_pixmap, n->hpn_prop2);
+      if(pt != NULL)
+	pt(s, n->hpn_event, n->hpn_pixmap, n->hpn_prop2);
+      else
+	cb(s->hps_opaque, n->hpn_event, n->hpn_pixmap, n->hpn_prop2);
       prop_pixmap_ref_dec(n->hpn_pixmap);
       prop_ref_dec(n->hpn_prop2);
       break;
 
     case PROP_ADD_CHILD:
-      s->hps_callback(s->hps_opaque, n->hpn_event, 
-		      n->hpn_prop, n->hpn_flags);
+      if(pt != NULL)
+	pt(s, n->hpn_event, n->hpn_prop, n->hpn_flags);
+      else
+	cb(s->hps_opaque, n->hpn_event, n->hpn_prop, n->hpn_flags);
       prop_ref_dec(n->hpn_prop);
       break;
 
     case PROP_ADD_CHILD_BEFORE:
-      s->hps_callback(s->hps_opaque, n->hpn_event, 
-		      n->hpn_prop, n->hpn_prop2, 
-		      n->hpn_flags);
+      if(pt != NULL)
+	cb(s, n->hpn_event, n->hpn_prop, n->hpn_prop2, n->hpn_flags);
+      else
+	cb(s->hps_opaque, n->hpn_event, n->hpn_prop, 
+	   n->hpn_prop2, n->hpn_flags);
       prop_ref_dec(n->hpn_prop);
       prop_ref_dec(n->hpn_prop2);
       break;
@@ -302,13 +365,19 @@ prop_courier(void *aux)
     case PROP_SELECT_CHILD:
     case PROP_REQ_DELETE:
     case PROP_REQ_NEW_CHILD:
-      s->hps_callback(s->hps_opaque, n->hpn_event, n->hpn_prop);
+      if(pt != NULL)
+	pt(s, n->hpn_event, n->hpn_prop);
+      else
+	cb(s->hps_opaque, n->hpn_event, n->hpn_prop);
       if(n->hpn_prop != NULL)
 	prop_ref_dec(n->hpn_prop);
       break;
  
     case PROP_DESTROYED:
-      s->hps_callback(s->hps_opaque, n->hpn_event, n->hpn_prop, s);
+      if(pt != NULL)
+	pt(s, n->hpn_event, n->hpn_prop, s);
+      else
+	cb(s->hps_opaque, n->hpn_event, n->hpn_prop, s);
       prop_ref_dec(n->hpn_prop);
       break;
     }
@@ -361,29 +430,50 @@ prop_build_notify_value(prop_sub_t *s, int direct)
        the current values updated directly without dispatch
        via the courier */
 
+    prop_callback_t *cb = s->hps_callback;
+    prop_trampoline_t *pt = s->hps_trampoline;
+
     switch(p->hp_type) {
     case PROP_STRING:
-      s->hps_callback(s->hps_opaque, PROP_SET_STRING, p->hp_string, p);
+      if(pt != NULL)
+	pt(s, PROP_SET_STRING, p->hp_string, p);
+      else
+	cb(s->hps_opaque, PROP_SET_STRING, p->hp_string, p);
       break;
 
     case PROP_FLOAT:
-      s->hps_callback(s->hps_opaque, PROP_SET_FLOAT, p->hp_float, p);
+      if(pt != NULL)
+	pt(s, PROP_SET_FLOAT, p->hp_float, p);
+      else
+	cb(s->hps_opaque, PROP_SET_FLOAT, p->hp_float, p);
       break;
 
     case PROP_INT:
-      s->hps_callback(s->hps_opaque, PROP_SET_INT, p->hp_int, p);
+      if(pt != NULL)
+	pt(s, PROP_SET_INT, p->hp_int, p);
+      else
+	cb(s->hps_opaque, PROP_SET_INT, p->hp_int, p);
       break;
 
     case PROP_DIR:
-      s->hps_callback(s->hps_opaque, PROP_SET_DIR, p);
+      if(pt != NULL)
+	pt(s, PROP_SET_DIR, p);
+      else
+	cb(s->hps_opaque, PROP_SET_DIR, p);
       break;
 
     case PROP_VOID:
-      s->hps_callback(s->hps_opaque, PROP_SET_VOID, p);
+      if(pt != NULL)
+	pt(s, PROP_SET_VOID, p);
+      else
+	cb(s->hps_opaque, PROP_SET_VOID, p);
       break;
 
     case PROP_PIXMAP:
-      s->hps_callback(s->hps_opaque, PROP_SET_PIXMAP, p->hp_pixmap, p);
+      if(pt != NULL)
+	pt(s, PROP_SET_PIXMAP, p->hp_pixmap, p);
+      else
+	cb(s->hps_opaque, PROP_SET_PIXMAP, p->hp_pixmap, p);
       break;
 
     case PROP_ZOMBIE:
@@ -488,7 +578,13 @@ prop_build_notify_child(prop_sub_t *s, prop_t *p, prop_event_t event,
   prop_notify_t *n;
 
   if(direct) {
-    s->hps_callback(s->hps_opaque, event, p, flags);
+    prop_callback_t *cb = s->hps_callback;
+    prop_trampoline_t *pt = s->hps_trampoline;
+
+    if(pt != NULL)
+      pt(s, event, p, flags);
+    else
+      cb(s->hps_opaque, event, p, flags);
     return;
   }
 
@@ -937,7 +1033,6 @@ gen_add_flags(prop_t *c, prop_t *p)
 }
 
 
-
 /**
  *
  */
@@ -950,12 +1045,13 @@ prop_subscribe(int flags, ...)
   int notify_now = !(flags & PROP_SUB_NO_INITIAL_UPDATE);
   int tag;
   const char **name = NULL;
-  prop_callback_t *cb = NULL;
   void *opaque = NULL;
   prop_courier_t *pc = NULL;
   hts_mutex_t *mutex = NULL;
   prop_root_t *pr;
   struct prop_root_list proproots;
+  void *cb = NULL;
+  prop_trampoline_t *trampoline = NULL;
   
   va_list ap;
   va_start(ap, flags);
@@ -971,6 +1067,19 @@ prop_subscribe(int flags, ...)
 
     case PROP_TAG_CALLBACK:
       cb = va_arg(ap, prop_callback_t *);
+      trampoline = NULL;
+      opaque = va_arg(ap, void *);
+      break;
+
+    case PROP_TAG_CALLBACK_STRING:
+      cb = va_arg(ap, void *);
+      trampoline = trampoline_string;
+      opaque = va_arg(ap, void *);
+      break;
+
+    case PROP_TAG_CALLBACK_INT:
+      cb = va_arg(ap, void *);
+      trampoline = trampoline_int;
       opaque = va_arg(ap, void *);
       break;
 
@@ -1060,6 +1169,7 @@ prop_subscribe(int flags, ...)
 		   hps_value_prop_link);
   s->hps_value_prop = value;
 
+  s->hps_trampoline = trampoline;
   s->hps_callback = cb;
   s->hps_opaque = opaque;
   s->hps_refcount = 1;

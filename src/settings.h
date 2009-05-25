@@ -33,12 +33,6 @@ typedef struct settings_multiopt {
   const char *icon;
 } settings_multiopt_t;
 
-typedef void (setting_callback_bool_t)(void *opaque, int value);
-
-typedef void (setting_callback_string_t)(void *opaque, const char *str);
-
-typedef void (setting_callback_int_t)(void *opaque, int value);
-
 prop_t *settings_add_dir(prop_t *parent, const char *id, 
 			 const char *title, const char *subtype);
 
@@ -48,7 +42,7 @@ prop_t *settings_get_dirlist(prop_t *parent);
 
 setting_t *settings_add_bool(prop_t *parent, const char *id, 
 			     const char *title, int initial, htsmsg_t *store,
-			     setting_callback_bool_t *cb, void *opaque,
+			     prop_callback_int_t *cb, void *opaque,
 			     int flags);
 
 void settings_set_bool(setting_t *s, int v);
@@ -57,7 +51,7 @@ void settings_toggle_bool(setting_t *s);
 
 setting_t *settings_add_multiopt(prop_t *parent, const char *id,
 				 const char *title,
-				 setting_callback_string_t *cb, void *opaque);
+				 prop_callback_string_t *cb, void *opaque);
 
 void settings_multiopt_add_opt(setting_t *parent, const char *id,
 			       const char *title, int selected);
@@ -65,14 +59,14 @@ void settings_multiopt_add_opt(setting_t *parent, const char *id,
 setting_t *settings_add_string(prop_t *parent, const char *id, 
 			       const char *title, const char *initial, 
 			       htsmsg_t *store,
-			       setting_callback_string_t *cb, void *opaque,
+			       prop_callback_string_t *cb, void *opaque,
 			       int flags);
 
 setting_t *settings_add_int(prop_t *parent, const char *id, 
 			    const char *title,
 			    int initial, htsmsg_t *store,
 			    int min, int max, int step,
-			    setting_callback_int_t *cb, void *opaque,
+			    prop_callback_int_t *cb, void *opaque,
 			    int flags, const char *unit);
 
 

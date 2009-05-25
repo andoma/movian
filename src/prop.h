@@ -49,7 +49,11 @@ typedef enum {
 } prop_event_t;
 
 typedef void (prop_callback_t)(void *opaque, prop_event_t event, ...);
+typedef void (prop_callback_string_t)(void *opaque, const char *str);
+typedef void (prop_callback_int_t)(void *opaque, int value);
 
+struct prop_sub;
+typedef void (prop_trampoline_t)(struct prop_sub *s, prop_event_t event, ...);
 
 TAILQ_HEAD(prop_queue, prop);
 LIST_HEAD(prop_list, prop);
@@ -189,7 +193,14 @@ typedef struct prop_sub {
   /**
    * Callback. May never be changed. Not protected by mutex
    */
-  prop_callback_t *hps_callback;
+  void *hps_callback;
+
+  /**
+   * Trampoline. A tranform function that invokes the actual user
+   * supplied callback.
+   * May never be changed. Not protected by mutex.
+   */
+  prop_trampoline_t *hps_trampoline;
 
   /**
    * Flags as passed to prop_subscribe()
@@ -253,6 +264,8 @@ enum {
   PROP_TAG_END = 0,
   PROP_TAG_NAME_VECTOR,
   PROP_TAG_CALLBACK,
+  PROP_TAG_CALLBACK_STRING,
+  PROP_TAG_CALLBACK_INT,
   PROP_TAG_COURIER,
   PROP_TAG_ROOT,
   PROP_TAG_NAMED_ROOT,
