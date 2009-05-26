@@ -255,11 +255,6 @@ void media_update_codec_info_prop(prop_t *p, AVCodecContext *ctx);
 
 void media_get_codec_info(AVCodecContext *ctx, char *buf, size_t size);
 
-struct filetag_list;
-
-void media_fill_properties(prop_t *root, const char *url, int type,
-			   struct filetag_list *tags);
-
 void media_set_metatree(media_pipe_t *mp, prop_t *src);
 
 void media_clear_metatree(media_pipe_t *mp);
