@@ -2504,6 +2504,46 @@ glwf_select(glw_model_eval_context_t *ec, struct token *self,
 
 
 /**
+ * TRACE() the second argument, prefixed with the first (which must
+ * be a string).
+ */
+static int 
+glwf_trace(glw_model_eval_context_t *ec, struct token *self,
+	   token_t **argv, unsigned int argc)
+{
+  token_t *a, *b;
+
+  if((a = token_resolve(ec, argv[0])) == NULL)
+    return -1;
+  if((b = token_resolve(ec, argv[1])) == NULL)
+    return -1;
+
+  if(a->type != TOKEN_STRING)
+    return 0;
+
+  switch(b->type) {
+  case TOKEN_STRING:
+  case TOKEN_IDENTIFIER:
+    TRACE(TRACE_DEBUG, "GLW", "%s: %s", a->t_string, b->t_string);
+    break;
+  case TOKEN_FLOAT:
+    TRACE(TRACE_DEBUG, "GLW", "%s: %f", a->t_string, b->t_float);
+    break;
+  case TOKEN_INT:
+    TRACE(TRACE_DEBUG, "GLW", "%s: %d", a->t_string, b->t_int);
+    break;
+  case TOKEN_VOID:
+    TRACE(TRACE_DEBUG, "GLW", "%s: (void)", a->t_string, b->t_int);
+    break;
+  default:
+    TRACE(TRACE_DEBUG, "GLW", "%s: ???", a->t_string);
+    break;
+  }
+  return 0;
+}
+
+
+/**
  *
  */
 static const token_func_t funcvec[] = {
@@ -2534,6 +2574,7 @@ static const token_func_t funcvec[] = {
   {"delta", 2, glwf_delta, glwf_delta_ctor, glwf_delta_dtor},
   {"isVisible", 0, glwf_isVisible},
   {"select", 3, glwf_select},
+  {"trace", 2, glwf_trace},
 };
 
 
