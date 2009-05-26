@@ -1980,6 +1980,11 @@ prop_print_tree0(prop_t *p, int indent)
 
   fprintf(stderr, "%*.s%s: ", indent, "", p->hp_name);
 
+  if(p->hp_originator != NULL) {
+    fprintf(stderr, "<linked>\n");
+    return;
+  }
+
   switch(p->hp_type) {
   case PROP_STRING:
     fprintf(stderr, "\"%s\"\n", p->hp_string);
