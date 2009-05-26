@@ -235,19 +235,11 @@ void mp_flush(media_pipe_t *mp);
 
 void mp_wait(media_pipe_t *mp, int audio, int video);
 
-void mp_codec_lock(media_pipe_t *mp);
-
-void mp_codec_unlock(media_pipe_t *mp);
-
 void mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u);
-
-void mp_playpause(struct media_pipe *mp, int key);
 
 void mp_become_primary(struct media_pipe *mp);
 
 void mp_shutdown(struct media_pipe *mp);
-
-void media_pipe_acquire_audio(struct media_pipe *mp);
 
 void nice_codec_name(char *buf, int len, AVCodecContext *ctx);
 
