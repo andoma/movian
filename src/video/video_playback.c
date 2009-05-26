@@ -62,6 +62,7 @@ video_player_idle(void *aux)
       break;
     }
     event_unref(e);
+    e = NULL;
   }
   return NULL;
 }
