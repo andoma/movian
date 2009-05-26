@@ -258,4 +258,8 @@ extern media_pipe_t *media_primary;
 
 #define mp_is_primary(mp) ((mp) == media_primary)
 
+void mp_set_playstatus_by_hold(media_pipe_t *mp, int hold);
+
+void mp_set_playstatus_stop(media_pipe_t *mp);
+
 #endif /* MEDIA_H */

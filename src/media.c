@@ -993,3 +993,22 @@ media_event_handler(event_t *e, void *opaque)
   }
   return 0;
 }
+
+/**
+ *
+ */
+void
+mp_set_playstatus_by_hold(media_pipe_t *mp, int hold)
+{
+  prop_set_string(mp->mp_prop_playstatus, hold ? "pause" : "play");
+}
+
+
+/**
+ *
+ */
+void
+mp_set_playstatus_stop(media_pipe_t *mp)
+{
+  prop_set_string(mp->mp_prop_playstatus, "stop");
+}
