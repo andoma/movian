@@ -127,7 +127,7 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
 
     c->glw_parent_scale.x = xs / rc->rc_size_x;
     c->glw_parent_scale.y = 1.0;
-    c->glw_parent_scale.z = 1.0;
+    c->glw_parent_scale.z = xs / rc->rc_size_x;
       
     c->glw_norm_weight = c->glw_parent_scale.x;
 
@@ -247,7 +247,7 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
 
     c->glw_parent_scale.x = 1.0;
     c->glw_parent_scale.y = ys / rc->rc_size_y;
-    c->glw_parent_scale.z = 1.0;
+    c->glw_parent_scale.z = ys / rc->rc_size_y;
 
     c->glw_norm_weight = c->glw_parent_scale.y;
 
