@@ -644,6 +644,7 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
 		     dp->dp_hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
     mp_send_cmd_head(mp, &mp->mp_audio, 
 		     dp->dp_hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
+    mp_set_playstatus_by_hold(mp, dp->dp_hold);
     dp->dp_lost_focus = 0;
 
   } else if(!dvd_in_menu(dp) && event_is_type(e, EVENT_MP_NO_LONGER_PRIMARY)) {
@@ -652,7 +653,8 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
     dp->dp_lost_focus = 1;
     mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PAUSE);
     mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PAUSE);
-
+    mp_set_playstatus_by_hold(mp, dp->dp_hold);
+    
   } else if(!dvd_in_menu(dp) && event_is_type(e, EVENT_MP_IS_PRIMARY)) {
 
     if(dp->dp_lost_focus) {
@@ -660,6 +662,7 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
       dp->dp_lost_focus = 0;
       mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PLAY);
       mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PLAY);
+      mp_set_playstatus_by_hold(mp, dp->dp_hold);
     }
 
   } else if(event_is_action(e, ACTION_ENTER)) {

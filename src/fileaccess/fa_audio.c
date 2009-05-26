@@ -83,6 +83,8 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   event_t *e;
   int hold = 0, lost_focus = 0;
 
+  mp_set_playstatus_by_hold(mp, hold);
+
   snprintf(faurl, sizeof(faurl), "showtime:%s", url);
 
   if(av_open_input_file(&fctx, faurl, NULL, 0, NULL) != 0) {
@@ -229,12 +231,14 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       hold = action_update_hold_by_event(hold, e);
       mp_send_cmd_head(mp, mq, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
       lost_focus = 0;
+      mp_set_playstatus_by_hold(mp, hold);
 
     } else if(event_is_type(e, EVENT_MP_NO_LONGER_PRIMARY)) {
 
       hold = 1;
       lost_focus = 1;
       mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
+      mp_set_playstatus_by_hold(mp, hold);
 
     } else if(event_is_type(e, EVENT_MP_IS_PRIMARY)) {
 
@@ -242,6 +246,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 	hold = 0;
 	lost_focus = 0;
 	mp_send_cmd_head(mp, mq, MB_CTRL_PLAY);
+	mp_set_playstatus_by_hold(mp, hold);
       }
 
     } else if(event_is_action(e, ACTION_PREV_TRACK) ||
@@ -259,8 +264,11 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   wrap_codec_deref(cw);
   wrap_format_deref(fw);
 
-  if(hold) // This is a bit ugly 
+  if(hold) { 
+    // If we were paused, release playback again.
     mp_send_cmd(mp, mq, MB_CTRL_PLAY);
+    mp_set_playstatus_by_hold(mp, 0);
+  }
 
   return e;
 }

@@ -1810,6 +1810,8 @@ be_spotify_play(const char *url, media_pipe_t *mp,
 
   hts_mutex_unlock(&spotify_mutex);
 
+  mp_set_playstatus_by_hold(mp, hold);
+
   /* Playback successfully started, wait for events */
   while(1) {
     e = mp_dequeue_event(mp);
@@ -1835,6 +1837,7 @@ be_spotify_play(const char *url, media_pipe_t *mp,
       hold = action_update_hold_by_event(hold, e);
       spotify_msg_enq(spotify_msg_build_int(SPOTIFY_PAUSE, hold));
       mp_send_cmd_head(mp, mq, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
+      mp_set_playstatus_by_hold(mp, hold);
       lost_focus = 0;
 
     } else if(event_is_type(e, EVENT_MP_NO_LONGER_PRIMARY)) {
@@ -1843,6 +1846,7 @@ be_spotify_play(const char *url, media_pipe_t *mp,
       lost_focus = 1;
       spotify_msg_enq(spotify_msg_build_int(SPOTIFY_PAUSE, 1));
       mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
+      mp_set_playstatus_by_hold(mp, hold);
 
     } else if(event_is_type(e, EVENT_MP_IS_PRIMARY)) {
 
@@ -1851,6 +1855,7 @@ be_spotify_play(const char *url, media_pipe_t *mp,
 	lost_focus = 0;
 	spotify_msg_enq(spotify_msg_build_int(SPOTIFY_PAUSE, 0));
 	mp_send_cmd_head(mp, mq, MB_CTRL_PLAY);
+	mp_set_playstatus_by_hold(mp, hold);
       }
 
     } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
@@ -1862,8 +1867,11 @@ be_spotify_play(const char *url, media_pipe_t *mp,
     event_unref(e);
   }
 
-  if(hold) // This is a bit ugly 
+  if(hold) {
+    // If we were paused, release playback again.
     mp_send_cmd(mp, mq, MB_CTRL_PLAY);
+    mp_set_playstatus_by_hold(mp, 0);
+  }
 
   spotify_mp = NULL;
   spotify_msg_enq(spotify_msg_build(SPOTIFY_STOP_PLAYBACK, NULL));

@@ -101,6 +101,7 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
 
   mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
   mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
+  mp_set_playstatus_by_hold(mp, 0);
 
   while(1) {
     /**
@@ -110,22 +111,20 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
 
       if((r = av_read_frame(fctx, &pkt)) < 0) {
 
-	if(r == AVERROR_EOF &&
-	   !av_seek_frame(fctx, -1, fctx->start_time, AVSEEK_FLAG_BACKWARD)) {
+	if(r == AVERROR_EOF) {
 
-	  mp_wait(mp,
-		  mp->mp_audio.mq_stream != -1, 
-		  mp->mp_video.mq_stream != -1);
+	  /* Wait for queues to drain */
+	  e = mp_wait_for_empty_queues(mp);
 
-	  mp_send_cmd(mp, &mp->mp_video, MB_FLUSH);
-	  mp_send_cmd(mp, &mp->mp_audio, MB_FLUSH);
-	  
-	  notify_add(NOTIFY_INFO, NULL, 5, "Video ended, restarting");
-	  continue;
+	  mp_set_playstatus_stop(mp);
+
+	  if(e == NULL)
+	    e = event_create_type(EVENT_EOF);
+
+	} else {
+	  snprintf(errbuf, errlen, "%s", fa_ffmpeg_error_to_txt(r));
+	  e = NULL;
 	}
-
-	snprintf(errbuf, errlen, "%s", fa_ffmpeg_error_to_txt(r));
-	e = NULL;
 	break;
       }
 
@@ -215,14 +214,16 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
       hold = action_update_hold_by_event(hold, e);
       mp_send_cmd_head(mp, &mp->mp_video, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
       mp_send_cmd_head(mp, &mp->mp_audio, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
+      mp_set_playstatus_by_hold(mp, hold);
       lost_focus = 0;
-
+      
     } else if(event_is_type(e, EVENT_MP_NO_LONGER_PRIMARY)) {
 
       hold = 1;
       lost_focus = 1;
       mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PAUSE);
       mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PAUSE);
+      mp_set_playstatus_by_hold(mp, hold);
 
     } else if(event_is_type(e, EVENT_MP_IS_PRIMARY)) {
 
@@ -231,6 +232,8 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
 	lost_focus = 0;
 	mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PLAY);
 	mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PLAY);
+	mp_set_playstatus_by_hold(mp, hold);
+
       }
 
     } else if(event_is_type(e, EVENT_SEEK)) {
