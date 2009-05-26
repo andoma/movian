@@ -2532,7 +2532,7 @@ static const token_func_t funcvec[] = {
   {"getCaption", 1, glwf_getCaption},
   {"bind", 1, glwf_bind},
   {"delta", 2, glwf_delta, glwf_delta_ctor, glwf_delta_dtor},
-  {"isVisible", 0, glwf_isVisible}
+  {"isVisible", 0, glwf_isVisible},
   {"select", 3, glwf_select},
 };
 
