@@ -11,6 +11,10 @@ widget(backdrop, {
     });
 	  
 
+    widget(label, {
+      .caption = $self.playstatus;
+    });
+
     widget(container_x, {
       widget(slider_x, {
 	.focusable = 0.2;

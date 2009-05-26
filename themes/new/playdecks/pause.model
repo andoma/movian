@@ -1,0 +1,4 @@
+#include "theme://include/plates.model"
+
+ACTION_ICON("theme://icons/pause.png", event(Pause));
+

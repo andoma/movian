@@ -30,7 +30,15 @@ widget(backdrop, {
 
       widget(container_x, {
 	ACTION_ICON("theme://icons/rew.png", event(PreviousTrack));
-	ACTION_ICON("theme://icons/play.png", event(PlayPause));
+	
+	widget(animator, {
+	  .time = 0.2;
+	  .effect = flipHorizontal;
+	  .source = translate($self.playstatus, void,
+			      "play", "theme://playdecks/pause.model",
+			      "pause", "theme://playdecks/play.model");
+	});
+
 	ACTION_ICON("theme://icons/fwd.png", event(NextTrack));
 
 	widget(backdrop, {
