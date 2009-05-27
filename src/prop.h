@@ -196,6 +196,11 @@ typedef struct prop_sub {
   void *hps_callback;
 
   /**
+   * Opaque value for callback
+   */
+  void *hps_opaque;
+
+  /**
    * Trampoline. A tranform function that invokes the actual user
    * supplied callback.
    * May never be changed. Not protected by mutex.
@@ -224,22 +229,21 @@ typedef struct prop_sub {
    * In other words. It's impossible to destroy a subscription
    * if no lock is specified.
    */
-  int hps_zombie;
-
+  uint8_t hps_zombie;
 
   /**
    *
    */
-  void *hps_opaque;
+  uint8_t hps_pending_unlink;
 
   /**
-   * Linkage to property. Protected by mutex
+   * Linkage to property. Protected by global mutex
    */
   LIST_ENTRY(prop_sub) hps_value_prop_link;
   prop_t *hps_value_prop;
 
   /**
-   * Linkage to property. Protected by mutex
+   * Linkage to property. Protected by global mutex
    */
   LIST_ENTRY(prop_sub) hps_canonical_prop_link;
   prop_t *hps_canonical_prop;

@@ -421,7 +421,8 @@ get_notify(prop_sub_t *s)
  *
  */
 static void
-prop_build_notify_value(prop_sub_t *s, int direct, const char *origin)
+prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
+			struct prop_notify_queue *pnq)
 {
   prop_t *p = s->hps_value_prop;
   prop_notify_t *n;
@@ -451,6 +452,9 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin)
     }
   }
   if(direct) {
+
+    assert(pnq == NULL); // Delayed updates are not compatile with direct mode
+
     /* Direct mode can be requested during subscribe to get
        the current values updated directly without dispatch
        via the courier */
@@ -545,7 +549,12 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin)
   case PROP_ZOMBIE:
     abort();
   }
-  courier_enqueue(s->hps_courier, n);
+
+  if(pnq) {
+    TAILQ_INSERT_TAIL(pnq, n, hpn_link);
+  } else {
+    courier_enqueue(s->hps_courier, n);
+  }
 }
 
 
@@ -589,7 +598,7 @@ prop_notify_value(prop_t *p, prop_sub_t *skipme, const char *origin)
 
   LIST_FOREACH(s, &p->hp_value_subscriptions, hps_value_prop_link)
     if(s != skipme)
-      prop_build_notify_value(s, 0, origin);
+      prop_build_notify_value(s, 0, origin, NULL);
 }
 
 
@@ -1201,7 +1210,7 @@ prop_subscribe(int flags, ...)
 
   if(notify_now) {
 
-    prop_build_notify_value(s, direct, "prop_subscribe()");
+    prop_build_notify_value(s, direct, "prop_subscribe()", NULL);
 
     if(value->hp_type == PROP_DIR) {
       TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
@@ -1564,7 +1573,7 @@ prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, prop_pixmap_t *pp)
  */
 static void
 relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
-		     const char *origin)
+		     const char *origin, struct prop_notify_queue *pnq)
 {
   prop_sub_t *s;
   prop_t *c, *z;
@@ -1591,7 +1600,8 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
     if(s == skipme) 
       continue; /* Unless it's to be skipped */
 
-    prop_build_notify_value(s, 0, origin);
+    s->hps_pending_unlink = pnq ? 1 : 0;
+    prop_build_notify_value(s, 0, origin, pnq);
 
     if(src->hp_type == PROP_DIR) {
       TAILQ_FOREACH(c, &src->hp_childs, hp_parent_link)
@@ -1618,7 +1628,7 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
       if(z != NULL) {
 	/* Found! Recurse */
 
-	relink_subscriptions(z, c, skipme, origin);
+	relink_subscriptions(z, c, skipme, origin, pnq);
 
       } else {
 	/* Nothing, blast the value */
@@ -1641,12 +1651,13 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
  *
  */
 static void
-prop_unlink0(prop_t *p, prop_sub_t *skipme, const char *origin)
+prop_unlink0(prop_t *p, prop_sub_t *skipme, const char *origin,
+	     struct prop_notify_queue *pnq)
 {
   LIST_REMOVE(p, hp_originator_link);
   p->hp_originator = NULL;
 
-  relink_subscriptions(p, p, skipme, origin);
+  relink_subscriptions(p, p, skipme, origin, pnq);
 }
 
 
@@ -1657,6 +1668,9 @@ void
 prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme)
 {
   prop_t *t;
+  prop_notify_t *n;
+  prop_sub_t *s;
+  struct prop_notify_queue pnq;
 
   hts_mutex_lock(&prop_mutex);
 
@@ -1665,8 +1679,10 @@ prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme)
     return;
   }
 
+  TAILQ_INIT(&pnq);
+
   if(dst->hp_originator != NULL)
-    prop_unlink0(dst, skipme, "prop_link()/unlink");
+    prop_unlink0(dst, skipme, "prop_link()/unlink", &pnq);
 
   dst->hp_originator = src;
   LIST_INSERT_HEAD(&src->hp_targets, dst, hp_originator_link);
@@ -1675,13 +1691,27 @@ prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme)
   while(src->hp_originator != NULL)
     src = src->hp_originator;
 
-  relink_subscriptions(src, dst, skipme, "prop_link()/linkchilds");
+  relink_subscriptions(src, dst, skipme, "prop_link()/linkchilds", NULL);
 
   while((dst = dst->hp_parent) != NULL) {
     LIST_FOREACH(t, &dst->hp_targets, hp_originator_link)
-      relink_subscriptions(dst, t, skipme, "prop_link()/linkparents");
+      relink_subscriptions(dst, t, skipme, "prop_link()/linkparents", NULL);
   }
 
+  while((n = TAILQ_FIRST(&pnq)) != NULL) {
+    TAILQ_REMOVE(&pnq, n, hpn_link);
+
+    s = n->hpn_sub;
+
+    if(s->hps_pending_unlink) {
+      s->hps_pending_unlink = 0;
+      courier_enqueue(s->hps_courier, n);
+    } else {
+      // Already updated by the new linkage
+      prop_notify_free(n);
+    }
+  }
+  
   hts_mutex_unlock(&prop_mutex);
 }
 
@@ -1704,11 +1734,11 @@ prop_unlink_ex(prop_t *p, prop_sub_t *skipme)
   }
 
   if(p->hp_originator != NULL)
-    prop_unlink0(p, skipme, "prop_unlink()/childs");
+    prop_unlink0(p, skipme, "prop_unlink()/childs", NULL);
 
   while((p = p->hp_parent) != NULL) {
     LIST_FOREACH(t, &p->hp_targets, hp_originator_link)
-      relink_subscriptions(p, t, skipme, "prop_unlink()/parents");
+      relink_subscriptions(p, t, skipme, "prop_unlink()/parents", NULL);
   }
 
   hts_mutex_unlock(&prop_mutex);
