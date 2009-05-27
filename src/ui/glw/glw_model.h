@@ -212,6 +212,8 @@ typedef struct glw_model_eval_context {
 
   struct event *event;
 
+  int debug;
+
 } glw_model_eval_context_t;
 
 

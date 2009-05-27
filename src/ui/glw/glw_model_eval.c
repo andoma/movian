@@ -441,6 +441,7 @@ eval_array(glw_model_eval_context_t *pec, token_t *t0)
   
 
   memset(&ec, 0, sizeof(ec));
+  ec.debug = pec->debug;
   ec.ei = pec->ei;
   ec.prop0 = pec->prop0;
   ec.prop_parent = pec->prop_parent;
@@ -1004,7 +1005,7 @@ subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
   gps->gps_line = self->line;
 #endif
 
-  s = prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+  s = prop_subscribe(PROP_SUB_DIRECT_UPDATE | (ec->debug ? PROP_SUB_DEBUG : 0),
 		     PROP_TAG_CALLBACK, prop_callback, gps,
 		     PROP_TAG_NAME_VECTOR, propname,
 		     PROP_TAG_COURIER, w->glw_root->gr_courier,
@@ -1152,6 +1153,7 @@ glw_model_eval_rpn(token_t *t, glw_model_eval_context_t *pec, int *copyp)
   int r;
 
   memset(&ec, 0, sizeof(ec));
+  ec.debug = pec->debug;
   ec.ei = pec->ei;
   ec.prop0 = pec->prop0;
   ec.prop_parent = pec->prop_parent;
@@ -2513,10 +2515,13 @@ glwf_trace(glw_model_eval_context_t *ec, struct token *self,
 {
   token_t *a, *b;
 
-  if((a = token_resolve(ec, argv[0])) == NULL)
+  ec->debug++;
+
+  if((a = token_resolve(ec, argv[0])) == NULL ||
+     (b = token_resolve(ec, argv[1])) == NULL) {
+    ec->debug--;
     return -1;
-  if((b = token_resolve(ec, argv[1])) == NULL)
-    return -1;
+  }
 
   if(a->type != TOKEN_STRING)
     return 0;
