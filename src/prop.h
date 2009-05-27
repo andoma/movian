@@ -259,6 +259,7 @@ void prop_init(void);
 #define PROP_SUB_DIRECT_UPDATE 0x1
 #define PROP_SUB_NO_INITIAL_UPDATE 0x2
 #define PROP_SUB_TRACK_DESTROY 0x4
+#define PROP_SUB_DEBUG         0x8 // TRACE(TRACE_DEBUG, ...) changes
 
 enum {
   PROP_TAG_END = 0,

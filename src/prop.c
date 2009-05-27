@@ -26,6 +26,7 @@
 #include <arch/atomic.h>
 
 #include "prop.h"
+#include "showtime.h"
 
 static hts_mutex_t prop_mutex;
 static prop_t *prop_global;
@@ -420,11 +421,35 @@ get_notify(prop_sub_t *s)
  *
  */
 static void
-prop_build_notify_value(prop_sub_t *s, int direct)
+prop_build_notify_value(prop_sub_t *s, int direct, const char *origin)
 {
   prop_t *p = s->hps_value_prop;
   prop_notify_t *n;
 
+  if(s->hps_flags & PROP_SUB_DEBUG) {
+    switch(p->hp_type) {
+    case PROP_STRING:
+      TRACE(TRACE_DEBUG, "prop", "str(%s) by %s", p->hp_string, origin);
+      break;
+    case PROP_FLOAT:
+      TRACE(TRACE_DEBUG, "prop", "float(%f) by %s", p->hp_float, origin);
+      break;
+    case PROP_INT:
+      TRACE(TRACE_DEBUG, "prop", "int(%d) by %s", p->hp_int, origin);
+      break;
+    case PROP_DIR:
+      TRACE(TRACE_DEBUG, "prop", "dir by %s", origin);
+      break;
+    case PROP_VOID:
+      TRACE(TRACE_DEBUG, "prop", "void by %s", origin);
+      break;
+    case PROP_PIXMAP:
+      TRACE(TRACE_DEBUG, "prop", "pixmap by %s", origin);
+      break;
+    case PROP_ZOMBIE:
+      break;
+    }
+  }
   if(direct) {
     /* Direct mode can be requested during subscribe to get
        the current values updated directly without dispatch
@@ -558,13 +583,13 @@ prop_notify_destroyed(prop_sub_t *s, prop_t *p)
  *
  */
 static void
-prop_notify_value(prop_t *p, prop_sub_t *skipme)
+prop_notify_value(prop_t *p, prop_sub_t *skipme, const char *origin)
 {
   prop_sub_t *s;
 
   LIST_FOREACH(s, &p->hp_value_subscriptions, hps_value_prop_link)
     if(s != skipme)
-      prop_build_notify_value(s, 0);
+      prop_build_notify_value(s, 0, origin);
 }
 
 
@@ -685,7 +710,7 @@ prop_clean(prop_t *p)
  *
  */
 static void
-prop_make_dir(prop_t *p, prop_sub_t *skipme)
+prop_make_dir(prop_t *p, prop_sub_t *skipme, const char *origin)
 {
   if(p->hp_type == PROP_DIR)
     return;
@@ -697,7 +722,7 @@ prop_make_dir(prop_t *p, prop_sub_t *skipme)
   p->hp_selected = NULL;
   p->hp_type = PROP_DIR;
   
-  prop_notify_value(p, skipme);
+  prop_notify_value(p, skipme, origin);
 }
 
 
@@ -713,7 +738,7 @@ prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme)
 
   if(parent != NULL) {
 
-    prop_make_dir(parent, skipme);
+    prop_make_dir(parent, skipme, "prop_create()");
 
     if(name != NULL) {
       TAILQ_FOREACH(hp, &parent->hp_childs, hp_parent_link) {
@@ -783,7 +808,7 @@ prop_set_parent_ex(prop_t *p, prop_t *parent, prop_t *before,
     return -1;
   }
 
-  prop_make_dir(parent, skipme);
+  prop_make_dir(parent, skipme, "prop_set_parent()");
 
   p->hp_parent = parent;
 
@@ -906,7 +931,7 @@ prop_subfind(prop_t *p, const char **name, int follow_symlinks)
       p->hp_selected = NULL;
       p->hp_type = PROP_DIR;
 
-      prop_notify_value(p, NULL);
+      prop_notify_value(p, NULL, "prop_subfind()");
     }
 
     TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link) {
@@ -1176,7 +1201,7 @@ prop_subscribe(int flags, ...)
 
   if(notify_now) {
 
-    prop_build_notify_value(s, direct);
+    prop_build_notify_value(s, direct, "prop_subscribe()");
 
     if(value->hp_type == PROP_DIR) {
       TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
@@ -1256,9 +1281,9 @@ prop_get_global(void)
  *
  */
 static void
-prop_set_epilogue(prop_sub_t *skipme, prop_t *p)
+prop_set_epilogue(prop_sub_t *skipme, prop_t *p, const char *origin)
 {
-  prop_notify_value(p, skipme);
+  prop_notify_value(p, skipme, origin);
 
   hts_mutex_unlock(&prop_mutex);
 }
@@ -1303,7 +1328,7 @@ prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str)
   p->hp_string = strdup(str);
   p->hp_type = PROP_STRING;
 
-  prop_set_epilogue(skipme, p);
+  prop_set_epilogue(skipme, p, "prop_set_string()");
 }
 
 /**
@@ -1354,7 +1379,7 @@ prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v)
   p->hp_float = v;
   p->hp_type = PROP_FLOAT;
 
-  prop_set_epilogue(skipme, p);
+  prop_set_epilogue(skipme, p, "prop_set_float()");
 }
 
 /**
@@ -1388,7 +1413,7 @@ prop_set_int_ex(prop_t *p, prop_sub_t *skipme, int v)
   p->hp_int = v;
   p->hp_type = PROP_INT;
 
-  prop_set_epilogue(skipme, p);
+  prop_set_epilogue(skipme, p, "prop_set_int()");
 }
 
 
@@ -1420,7 +1445,7 @@ prop_add_int_ex(prop_t *p, prop_sub_t *skipme, int v)
   p->hp_int += v;
   p->hp_type = PROP_INT;
 
-  prop_set_epilogue(skipme, p);
+  prop_set_epilogue(skipme, p, "prop_add_int()");
 }
 
 
@@ -1452,7 +1477,7 @@ prop_toggle_int_ex(prop_t *p, prop_sub_t *skipme)
   p->hp_int = !p->hp_int;
   p->hp_type = PROP_INT;
 
-  prop_set_epilogue(skipme, p);
+  prop_set_epilogue(skipme, p, "prop_toggle_int()");
 }
 
 
@@ -1485,7 +1510,7 @@ prop_set_void_ex(prop_t *p, prop_sub_t *skipme)
   }
 
   p->hp_type = PROP_VOID;
-  prop_set_epilogue(skipme, p);
+  prop_set_epilogue(skipme, p, "prop_set_void()");
 }
 
 /**
@@ -1524,7 +1549,7 @@ prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, prop_pixmap_t *pp)
   prop_pixmap_ref_inc(pp);
   p->hp_type = PROP_PIXMAP;
 
-  prop_set_epilogue(skipme, p);
+  prop_set_epilogue(skipme, p, "prop_set_pixmap()");
 }
 
 
@@ -1538,7 +1563,8 @@ prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, prop_pixmap_t *pp)
  *
  */
 static void
-relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme)
+relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
+		     const char *origin)
 {
   prop_sub_t *s;
   prop_t *c, *z;
@@ -1565,7 +1591,7 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme)
     if(s == skipme) 
       continue; /* Unless it's to be skipped */
 
-    prop_build_notify_value(s, 0);
+    prop_build_notify_value(s, 0, origin);
 
     if(src->hp_type == PROP_DIR) {
       TAILQ_FOREACH(c, &src->hp_childs, hp_parent_link)
@@ -1592,7 +1618,7 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme)
       if(z != NULL) {
 	/* Found! Recurse */
 
-	relink_subscriptions(z, c, skipme);
+	relink_subscriptions(z, c, skipme, origin);
 
       } else {
 	/* Nothing, blast the value */
@@ -1615,12 +1641,12 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme)
  *
  */
 static void
-prop_unlink0(prop_t *p, prop_sub_t *skipme)
+prop_unlink0(prop_t *p, prop_sub_t *skipme, const char *origin)
 {
   LIST_REMOVE(p, hp_originator_link);
   p->hp_originator = NULL;
 
-  relink_subscriptions(p, p, skipme);
+  relink_subscriptions(p, p, skipme, origin);
 }
 
 
@@ -1640,7 +1666,7 @@ prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme)
   }
 
   if(dst->hp_originator != NULL)
-    prop_unlink0(dst, skipme);
+    prop_unlink0(dst, skipme, "prop_link()/unlink");
 
   dst->hp_originator = src;
   LIST_INSERT_HEAD(&src->hp_targets, dst, hp_originator_link);
@@ -1649,11 +1675,11 @@ prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme)
   while(src->hp_originator != NULL)
     src = src->hp_originator;
 
-  relink_subscriptions(src, dst, skipme);
+  relink_subscriptions(src, dst, skipme, "prop_link()/linkchilds");
 
   while((dst = dst->hp_parent) != NULL) {
     LIST_FOREACH(t, &dst->hp_targets, hp_originator_link)
-      relink_subscriptions(dst, t, skipme);
+      relink_subscriptions(dst, t, skipme, "prop_link()/linkparents");
   }
 
   hts_mutex_unlock(&prop_mutex);
@@ -1678,11 +1704,11 @@ prop_unlink_ex(prop_t *p, prop_sub_t *skipme)
   }
 
   if(p->hp_originator != NULL)
-    prop_unlink0(p, skipme);
+    prop_unlink0(p, skipme, "prop_unlink()/childs");
 
   while((p = p->hp_parent) != NULL) {
     LIST_FOREACH(t, &p->hp_targets, hp_originator_link)
-      relink_subscriptions(p, t, skipme);
+      relink_subscriptions(p, t, skipme, "prop_unlink()/parents");
   }
 
   hts_mutex_unlock(&prop_mutex);
