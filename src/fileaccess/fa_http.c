@@ -447,6 +447,8 @@ redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen)
 
   free(hf->hf_url);
   hf->hf_url = hf->hf_location;
+  http_deescape(hf->hf_url);
+
   hf->hf_location = NULL;
   
   http_disconnect(hf);
