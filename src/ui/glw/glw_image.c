@@ -379,7 +379,7 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
 
       if(gi->gi_tex != NULL) {
 	// Don't reload image if it's the same URL.
-	if(gi->gi_tex->glt_filename != NULL &&
+	if(filename != NULL && gi->gi_tex->glt_filename != NULL &&
 	   !strcmp(filename, gi->gi_tex->glt_filename))
 	  break;
 	glw_tex_deref(w->glw_root, gi->gi_tex);
