@@ -376,8 +376,14 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
     case GLW_ATTRIB_SOURCE:
       filename = va_arg(ap, char *);
 
-      if(gi->gi_tex != NULL)
+
+      if(gi->gi_tex != NULL) {
+	// Don't reload image if it's the same URL.
+	if(gi->gi_tex->glt_filename != NULL &&
+	   !strcmp(filename, gi->gi_tex->glt_filename))
+	  break;
 	glw_tex_deref(w->glw_root, gi->gi_tex);
+      }
 
       gi->gi_tex = filename ? glw_tex_create(w->glw_root, filename) : NULL;
       gi->gi_render_init = 1;
