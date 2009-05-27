@@ -69,12 +69,12 @@ glw_slideshow_layout(glw_slideshow_t *s, glw_rctx_t *rc)
   glw_t *c, *p, *n;
   float delta;
 
+  delta = 0.1f;
+
   if(s->time == 0) {
     s->displaytime = INT32_MAX;
-    delta = 0.1f;
   } else {
     s->displaytime = 1000000 * s->time / s->w.glw_root->gr_frameduration;
-    delta = 1 / (s->displaytime * 0.1);
   }
 
     
