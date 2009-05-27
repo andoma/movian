@@ -160,6 +160,10 @@ glw_slideshow_event(glw_slideshow_t *s, event_t *e)
     s->hold = action_update_hold_by_event(s->hold, e);
     glw_slideshow_update_playstatus(s);
 
+  } else if(event_is_action(e, ACTION_STOP)) {
+
+    prop_set_string(s->playstatus, "stop");
+
   } else
     return 0;
 
