@@ -193,9 +193,12 @@ playqueue_load_siblings(const char *url, playqueue_entry_t *justadded)
   nav_dir_entry_t *nde;
   prop_t *metadata;
   int r;
+  char errbuf[200];
 
-  if((nd = nav_scandir(url, NULL, 0)) == NULL)
+  if((nd = nav_scandir(url, errbuf, sizeof(errbuf))) == NULL) {
+    TRACE(TRACE_ERROR, "playqueue", "Unable to scan %s: %s", url, errbuf);
     return;
+  }
 
   TAILQ_FOREACH(nde, &nd->nd_entries, nde_link) {
     if(!strcmp(nde->nde_url, justadded->pqe_url)) {
