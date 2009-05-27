@@ -382,6 +382,6 @@ prop_pixmap_t *prop_pixmap_create(int width, int height, int linesize,
 /* DEBUGish */
 const char *propname(prop_t *p);
 
-void prop_print_tree(prop_t *p);
+void prop_print_tree(prop_t *p, int followlinks);
 
 #endif /* PROP_H__ */

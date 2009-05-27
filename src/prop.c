@@ -1974,14 +1974,19 @@ prop_get_string(prop_t *p, char *buf, size_t bufsize)
  *
  */
 static void
-prop_print_tree0(prop_t *p, int indent)
+prop_print_tree0(prop_t *p, int indent, int followlinks)
 {
   prop_t *c;
 
   fprintf(stderr, "%*.s%s: ", indent, "", p->hp_name);
 
   if(p->hp_originator != NULL) {
-    fprintf(stderr, "<linked>\n");
+    if(followlinks) {
+      fprintf(stderr, "<symlink>\n");
+      prop_print_tree0(p->hp_originator, indent, followlinks);
+    } else {
+      fprintf(stderr, "<symlink> -> %s\n", p->hp_originator->hp_name);
+    }
     return;
   }
 
@@ -2001,7 +2006,7 @@ prop_print_tree0(prop_t *p, int indent)
   case PROP_DIR:
     fprintf(stderr, "<directory>\n");
     TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
-      prop_print_tree0(c, indent + 4);
+      prop_print_tree0(c, indent + 4, followlinks);
     break;
 
   case PROP_VOID:
@@ -2022,10 +2027,10 @@ prop_print_tree0(prop_t *p, int indent)
  *
  */
 void
-prop_print_tree(prop_t *p)
+prop_print_tree(prop_t *p, int followlinks)
 {
   hts_mutex_lock(&prop_mutex);
-  prop_print_tree0(p, 0);
+  prop_print_tree0(p, 0, followlinks);
   hts_mutex_unlock(&prop_mutex);
 }
 
