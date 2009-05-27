@@ -16,8 +16,8 @@ OSENV="wii"
 DEFAULT_UI="glw"
 
 source support/configure.inc
-DEVKITPRO="${HOME}/devkitpro"
-LIBFREETYPEPATH="${HOME}/freetype-ppc"
+DEVKITPRO="${TOPDIR}/wiisupport/devkitpro"
+LIBFREETYPEPATH="${TOPDIR}/wiisupport/freetype-ppc"
 
 enable embedded_theme
 

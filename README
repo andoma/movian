@@ -62,3 +62,42 @@ run configure with --release to embed theme files or else the binary will
 include paths your local build tree.
 
 $ make Showtime.dmg
+
+How to build for Nintendo Wii
+=============================
+
+For a Wii build you need:
+
+- devkitPro:
+    devkitPPC r16
+    libogc 1.7.1
+    libfat-ogc 1.0.4
+- freetype cross-compiled for PPC.
+
+For your convenience there is a script that will download/build all
+you need.  To run it just type:
+
+$ support/setupwii
+
+Do this directly from the showtime root directory. This will download,
+unpack, build and install all that's needed into a wiisupport/
+directory. By default configure.wii will look into these directories
+for devkitPro and freetype, so all you have to do now is:
+
+$ ./configure.wii
+
+$ make
+
+If you have wiiload (http://wiibrew.org/wiki/Wiiload) installed and
+homebrew channel is running on your wii, you can just type:
+
+$ make run
+
+To start showtime on your wii.
+
+If you have devkitpro and/or freetype someplace else, you can set
+the path to them in configure.wii (see ./configure.wii --help for details)
+
+Note: devkitPPC comes with a few bugs which is fixed by the support/setupwii
+script. If you compile devkitPPC yourself you might need to fixup these
+small issues. Please see the script for details.

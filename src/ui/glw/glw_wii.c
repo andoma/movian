@@ -71,7 +71,7 @@ typedef struct krepeat {
 static krepeat_t k_left, k_right, k_up, k_down, k_b;
 
 static void
-wpad_btn(glw_wii_t *gwii, krepeat_t *kr, event_type_t ev, int hold)
+wpad_btn(glw_wii_t *gwii, krepeat_t *kr, action_type_t ac, int hold)
 {
   event_t *e;
 
@@ -79,7 +79,7 @@ wpad_btn(glw_wii_t *gwii, krepeat_t *kr, event_type_t ev, int hold)
 
     if(kr->held_frames == 0 ||
        (kr->held_frames > 30 && (kr->held_frames % 10 == 0))) {
-      e = event_create_simple(ev);
+      e = event_create_action(ac);
       ui_dispatch_event(e, NULL, &gwii->gr.gr_uii);
     }
     kr->held_frames++;
@@ -169,11 +169,11 @@ wpad_every_frame(glw_wii_t *gwii)
   glw_unlock(&gwii->gr);
 
 
-  wpad_btn(gwii, &k_left,  EVENT_LEFT,  btn & WPAD_BUTTON_LEFT);
-  wpad_btn(gwii, &k_right, EVENT_RIGHT, btn & WPAD_BUTTON_RIGHT);
-  wpad_btn(gwii, &k_up,    EVENT_UP,    btn & WPAD_BUTTON_UP);
-  wpad_btn(gwii, &k_down,  EVENT_DOWN,  btn & WPAD_BUTTON_DOWN);
-  wpad_btn(gwii, &k_b,     EVENT_BACKSPACE,  btn & WPAD_BUTTON_B);
+  wpad_btn(gwii, &k_left,  ACTION_LEFT,  btn & WPAD_BUTTON_LEFT);
+  wpad_btn(gwii, &k_right, ACTION_RIGHT, btn & WPAD_BUTTON_RIGHT);
+  wpad_btn(gwii, &k_up,    ACTION_UP,    btn & WPAD_BUTTON_UP);
+  wpad_btn(gwii, &k_down,  ACTION_DOWN,  btn & WPAD_BUTTON_DOWN);
+  wpad_btn(gwii, &k_b,     ACTION_BACKSPACE,  btn & WPAD_BUTTON_B);
 }
 
 
@@ -393,7 +393,7 @@ glw_wii_loop(glw_wii_t *gwii)
  *
  */
 static int
-glw_wii_start(ui_t *ui, int argc, char *argv[])
+glw_wii_start(ui_t *ui, int argc, char *argv[], int primary)
 {
   const char *theme_path = SHOWTIME_DEFAULT_THEME_URL;
   glw_wii_t *gwii = calloc(1, sizeof(glw_wii_t));
@@ -411,7 +411,7 @@ glw_wii_start(ui_t *ui, int argc, char *argv[])
       break;
   }
 
-  if(glw_init(&gwii->gr, 14, theme_path, ui)) {
+  if(glw_init(&gwii->gr, 14, theme_path, ui, primary)) {
     printf("GLW failed to init\n");
     sleep(3);
     exit(0);

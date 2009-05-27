@@ -15,12 +15,14 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+#include "config.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef CONFIG_REGEX
 #include <regex.h>
+#endif
 #include <assert.h>
 #include <libavutil/base64.h>
 #include <libavutil/avstring.h>
@@ -611,6 +613,7 @@ http_destroy(http_file_t *hf)
   free(hf);
 }
 
+#ifdef CONFIG_REGEX
 
 /* inspired by http://xbmc.org/trac/browser/trunk/XBMC/xbmc/FileSystem/HTTPDirectory.cpp */
 
@@ -789,7 +792,7 @@ http_scandir(nav_dir_t *nd, const char *url, char *errbuf, size_t errlen)
   http_destroy(hf);
   return retval;
 }
-
+#endif
 
 /**
  * Open file
@@ -998,7 +1001,9 @@ http_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
 fa_protocol_t fa_protocol_http = {
   .fap_flags = FAP_INCLUDE_PROTO_IN_URL,
   .fap_name  = "http",
+#ifdef CONFIG_REGEX
   .fap_scan  = http_scandir,
+#endif
   .fap_open  = http_open,
   .fap_close = http_close,
   .fap_read  = http_read,

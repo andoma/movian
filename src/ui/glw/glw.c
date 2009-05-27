@@ -38,11 +38,14 @@
 #include "glw_slideshow.h"
 #include "glw_mirror.h"
 #include "glw_animator.h"
-#include "glw_fx_texrot.h"
 #include "glw_event.h"
-#include "glw_video.h"
 #include "glw_slider.h"
 #include "glw_layer.h"
+
+#if CONFIG_GLW_BACKEND_OPENGL
+#include "glw_fx_texrot.h"
+#include "glw_video.h"
+#endif
 
 static const size_t glw_class_to_size[] = {
   [GLW_DUMMY] = sizeof(glw_t),
@@ -57,7 +60,6 @@ static const size_t glw_class_to_size[] = {
   [GLW_TEXT]  = sizeof(glw_text_bitmap_t),
   [GLW_INTEGER]  = sizeof(glw_text_bitmap_t),
   [GLW_ROTATOR] = sizeof(glw_t),
-  //  [GLW_ARRAY] = sizeof(glw_array_t),
   [GLW_LIST_X] = sizeof(glw_list_t),
   [GLW_LIST_Y] = sizeof(glw_list_t),
   [GLW_DECK] = sizeof(glw_deck_t),
@@ -66,11 +68,14 @@ static const size_t glw_class_to_size[] = {
   [GLW_CURSOR] = sizeof(glw_cursor_t),
   [GLW_MIRROR] = sizeof(glw_t),
   [GLW_ANIMATOR] = sizeof(glw_animator_t),
-  [GLW_FX_TEXROT] = sizeof(glw_fx_texrot_t),
-  [GLW_VIDEO] = sizeof(glw_video_t),
   [GLW_SLIDER_X] = sizeof(glw_slider_t),
   [GLW_SLIDER_Y] = sizeof(glw_slider_t),
   [GLW_LAYER] = sizeof(glw_t),
+
+#if CONFIG_GLW_BACKEND_OPENGL
+  [GLW_FX_TEXROT] = sizeof(glw_fx_texrot_t),
+  [GLW_VIDEO] = sizeof(glw_video_t),
+#endif
 };
 
 

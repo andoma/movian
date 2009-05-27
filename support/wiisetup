@@ -1,0 +1,66 @@
+#!/bin/bash
+
+
+WIISUPPORT=${PWD}/wiisupport
+
+mkdir -p ${WIISUPPORT}
+
+DEVKITPRO=${WIISUPPORT}/devkitpro
+DEVKITPPC=${DEVKITPRO}/devkitPPC
+
+if ! test -e ${DEVKITPPC} ; then
+    mkdir -p ${DEVKITPRO}
+    cd ${DEVKITPRO}
+    wget http://sunet.dl.sourceforge.net/sourceforge/devkitpro/devkitPPC_r16-i686-linux.tar.bz2
+    tar xvf devkitPPC_r16-i686-linux.tar.bz2
+
+    # llrint() is defined by math.h but not provided by libm.a
+    # this break FFmpeg compilation, so do something ugly about it
+    sed -i.bak "s/llrint/llrintxxxxxxxxx/" ${DEVKITPRO}/devkitPPC/powerpc-gekko/include/math.h
+
+    # likewise, devkitppc lacks strings.h, where strcasecmp() should reside.
+    # It is in string.h instead
+    echo >>${DEVKITPRO}/devkitPPC/powerpc-gekko/include/strings.h '#include "string.h"'
+
+fi
+
+### Get and compile libogc
+
+
+if ! test -e ${DEVKITPRO}/libogc/lib/wii ; then
+    mkdir -p ${DEVKITPRO}/libogc-src
+    cd ${DEVKITPRO}/libogc-src
+    wget http://sunet.dl.sourceforge.net/sourceforge/devkitpro/libogc-src-1.7.1.tar.bz2
+    tar xvf libogc-src-1.7.1.tar.bz2
+    make wii install
+fi
+
+### Get libfat
+
+if ! test -e ${DEVKITPRO}/libfat/lib ; then
+    mkdir -p ${DEVKITPRO}/libfat
+    cd ${DEVKITPRO}/libfat
+    wget http://sunet.dl.sourceforge.net/sourceforge/devkitpro/libfat-ogc-1.0.4.tar.bz2
+    tar xvf libfat-ogc-1.0.4.tar.bz2
+fi
+
+### Get freetype
+
+if ! test -e ${WIISUPPORT}/freetype-ppc ; then
+    cd ${WIISUPPORT}
+    wget http://mirrors.zerg.biz/nongnu/freetype/freetype-2.3.9.tar.bz2
+    tar xvf freetype-2.3.9.tar.bz2
+    cd ${WIISUPPORT}/freetype-2.3.9
+    OBJDUMP="${DEVKITPRO}/devkitPPC/bin/powerpc-gekko-objdump" \
+	LD="${DEVKITPRO}/devkitPPC/bin/powerpc-gekko-ld" \
+	STRIP="${DEVKITPRO}/devkitPPC/bin/powerpc-gekko-strip" \
+	RANLIB="${DEVKITPRO}/devkitPPC/bin/powerpc-gekko-ranlib" \
+	AR="${DEVKITPRO}/devkitPPC/bin/powerpc-gekko-ar" \
+	CFLAGS="-mcpu=750 -O2" \
+	CC="${DEVKITPRO}/devkitPPC/bin/powerpc-gekko-gcc" \
+	./configure --host=ppc --prefix=${WIISUPPORT}/freetype-ppc \
+	--disable-static 
+
+    make && make install
+fi
+

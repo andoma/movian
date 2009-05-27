@@ -38,6 +38,7 @@ CONFIG_LIST="
  embedded_theme
  spotify
  lirc
+ regex
 "
 
 die() {
