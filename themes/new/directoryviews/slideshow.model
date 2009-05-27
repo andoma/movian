@@ -10,16 +10,16 @@ widget(container_z, {
     delta($ui.forcefullscreen, isVisible());
 
     .focusable = true;
-    
+
     cloner($self.nodes, image, {
       .source = $self.url;
     });
   });
 
   widget(container_x, {
-    space(1);
+    .align = top;
     widget(container_y, {
-      .align = center;
+      .align = left;
 
       widget(backdrop, {
 	PLATE_PROPS();
@@ -35,6 +35,5 @@ widget(container_z, {
 	});
       });
     });
-    space(1);
   });
 });
