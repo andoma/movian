@@ -27,12 +27,6 @@
 
 void showtime_shutdown(int retcode);
 
-extern hts_mutex_t ffmutex;
-
-#define fflock() hts_mutex_lock(&ffmutex)
-
-#define ffunlock() hts_mutex_unlock(&ffmutex)
-
 static inline int64_t
 showtime_get_ts(void)
 {

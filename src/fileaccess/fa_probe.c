@@ -398,17 +398,13 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize,
 
   snprintf(tmp1, sizeof(tmp1), "showtime:%s", url0);
 
-  fflock();
-  
   if(av_open_input_file(&fctx, tmp1, NULL, 0, NULL) != 0) {
-    ffunlock();
     snprintf(errbuf, errsize, "Unable to open file (ffmpeg)");
     return CONTENT_UNKNOWN;
   }
 
   if(av_find_stream_info(fctx) < 0) {
     av_close_input_file(fctx);
-    ffunlock();
     snprintf(errbuf, errsize, "Unable to handle file contents");
     return CONTENT_UNKNOWN;
   }
@@ -416,8 +412,6 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize,
   type = fa_lavf_load_meta(proproot, fctx, url);
 
   av_close_input_file(fctx);  
-  ffunlock();
-
   return type;
 }
 

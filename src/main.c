@@ -42,10 +42,31 @@
 /**
  *
  */
-hts_mutex_t ffmutex;
 int concurrency;
 int trace_level;
 static int showtime_retcode;
+
+
+static int
+fflockmgr(void **mtx, enum AVLockOp op)
+{
+  switch(op) {
+  case AV_LOCK_CREATE:
+    *mtx = malloc(sizeof(hts_mutex_t));
+    hts_mutex_init(*mtx);
+    break;
+  case AV_LOCK_OBTAIN:
+    hts_mutex_lock(*mtx);
+    break;
+  case AV_LOCK_RELEASE:
+    hts_mutex_unlock(*mtx);
+    break;
+  case AV_LOCK_DESTROY:
+    hts_mutex_destroy(*mtx);
+    break;
+  }
+  return 0;
+}
 
 
 /**
@@ -124,7 +145,7 @@ main(int argc, char **argv)
   event_init();
 
   /* Initialize libavcodec & libavformat */
-  hts_mutex_init(&ffmutex);
+  av_lockmgr_register(fflockmgr);
   av_log_set_level(AV_LOG_QUIET);
   av_register_all();
 

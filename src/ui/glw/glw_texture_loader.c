@@ -212,20 +212,15 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
 
 
 
-  fflock();
-
   ctx = avcodec_alloc_context();
   codec = avcodec_find_decoder(codecid);
   
   if(avcodec_open(ctx, codec) < 0) {
-    ffunlock();
     av_free(ctx);
     free(data);
     return -1;
   }
   
-  ffunlock();
-
   frame = avcodec_alloc_frame();
 
   r = avcodec_decode_video(ctx, frame, &got_pic, data, datasize);
@@ -245,9 +240,7 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
 
   av_free(frame);
 
-  fflock();
   avcodec_close(ctx);
-  ffunlock();
   av_free(ctx);
 
   return r;

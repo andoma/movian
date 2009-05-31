@@ -586,8 +586,6 @@ wrap_codec_deref(codecwrap_t *cw)
   if(atomic_add(&cw->refcount, -1) > 1)
     return;
 
-  fflock();
-
   avcodec_close(cw->codec_ctx);
 
   if(fw == NULL)
@@ -596,8 +594,6 @@ wrap_codec_deref(codecwrap_t *cw)
   if(cw->parser_ctx != NULL)
     av_parser_close(cw->parser_ctx);
   
-  ffunlock();
-
   if(fw != NULL)
     wrap_format_deref(fw);
 
@@ -624,13 +620,10 @@ wrap_codec_create(enum CodecID id, enum CodecType type, int parser,
   
   cw->codec_ctx = ctx ?: avcodec_alloc_context();
 
-  fflock();
-
   if(avcodec_open(cw->codec_ctx, cw->codec) < 0) {
     if(ctx == NULL)
       free(cw->codec_ctx);
     free(cw);
-    ffunlock();
     return NULL;
   }
 
@@ -648,8 +641,6 @@ wrap_codec_create(enum CodecID id, enum CodecType type, int parser,
     if(cheat_for_speed)
       cw->codec_ctx->flags2 |= CODEC_FLAG2_FAST;
   }
-
-  ffunlock();
 
   return cw;
 }
