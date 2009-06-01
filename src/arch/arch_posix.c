@@ -121,6 +121,16 @@ arch_init(void)
 #endif
 }
 
+/**
+ *
+ */
+void
+arch_exit(int retcode)
+{
+  _exit(retcode);
+}
+
+
 
 extern int trace_level;
 

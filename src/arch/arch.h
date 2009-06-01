@@ -21,4 +21,6 @@
 
 void arch_init(void);
 
+void arch_exit(int code);
+
 #endif /* ARCH_H__ */

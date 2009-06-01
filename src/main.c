@@ -199,8 +199,8 @@ showtime_shutdown0(void *aux)
   }
 #endif
   ui_shutdown();
-   
-  exit(showtime_retcode);
+
+  arch_exit(showtime_retcode);
 }
 
 

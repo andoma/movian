@@ -155,3 +155,12 @@ tracev(int level, const char *subsys, const char *fmt, va_list ap)
     memset(buf2, ' ', l);
   }
 }
+
+/**
+ *
+ */
+void
+arch_exit(int retcode)
+{
+  _exit(0);
+}
