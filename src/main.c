@@ -201,6 +201,8 @@ showtime_shutdown0(void *aux)
   ui_shutdown();
 
   arch_exit(showtime_retcode);
+  
+  return NULL;
 }
 
 
