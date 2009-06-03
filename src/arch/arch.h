@@ -21,6 +21,6 @@
 
 void arch_init(void);
 
-void arch_exit(int code);
+void arch_exit(int code) __attribute__((noreturn));
 
 #endif /* ARCH_H__ */
