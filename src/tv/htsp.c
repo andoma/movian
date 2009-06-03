@@ -962,7 +962,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
   htsp_subscription_t *hs;
   htsmsg_field_t *f;
   htsmsg_t *sub, *streams;
-  const char *type;
+  const char *type, *txt;
   uint32_t idx, s;
   enum CodecID   codec_id;
   enum CodecType codec_type;
@@ -984,10 +984,18 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 
   mp = hs->hs_mp;
 
+  TRACE(TRACE_DEBUG, "HTSP", "Got start notitification");
+
+
+  if((txt = htsmsg_get_str(m, "source")) != NULL)
+    TRACE(TRACE_DEBUG, "HTSP", "Source: %s", txt);
+
+  if((txt = htsmsg_get_str(m, "network")) != NULL)
+    TRACE(TRACE_DEBUG, "HTSP", "Network: %s", txt);
+
   /**
    * Parse each stream component and add it as a stream at our end
    */
-
   if((streams = htsmsg_get_list(m, "streams")) != NULL) {
     HTSMSG_FOREACH(f, streams) {
       if(f->hmf_type != HMF_MAP)
@@ -1077,7 +1085,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
   mp->mp_audio.mq_stream = astream;
   mp->mp_video.mq_stream = vstream;
 
-  TRACE(TRACE_DEBUG, "HTSP", "Video-stream:%d, Audio-stream: %d",
+  TRACE(TRACE_DEBUG, "HTSP", "Selecting Video-stream:%d, Audio-stream: %d",
 	vstream, astream);
 
   mp_become_primary(mp);
