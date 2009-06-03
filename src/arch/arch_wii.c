@@ -162,5 +162,5 @@ tracev(int level, const char *subsys, const char *fmt, va_list ap)
 void
 arch_exit(int retcode)
 {
-  _exit(0);
+  exit(retcode);
 }
