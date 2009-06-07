@@ -1117,9 +1117,13 @@ static void
 htsp_subscriptionStatus(htsp_connection_t *hc, htsmsg_t *m)
 {
   htsp_subscription_t *hs;
-
+  const char *status = htsmsg_get_str(m, "status");
+    
   if((hs = htsp_find_subscription_by_msg(hc, m)) == NULL)
     return;
+
+  if(status != NULL)
+    TRACE(TRACE_ERROR, "HTSP", "%s", status);
 
   hts_mutex_unlock(&hc->hc_subscription_mutex);
 }
