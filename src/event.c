@@ -311,6 +311,8 @@ static struct strtab actionnames[] = {
   { "Channel+",              ACTION_CHANNEL_PLUS },
   { "Channel-",              ACTION_CHANNEL_MINUS },
   { "FullscreenToggle",      ACTION_FULLSCREEN_TOGGLE },
+  { "Increase",              ACTION_INCR },
+  { "Decrease",              ACTION_DECR },
 };
 
 
