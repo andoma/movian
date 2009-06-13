@@ -72,7 +72,7 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
     }
 
-    if(n != c)
+    if(n != c && n != NULL)
       glw_select(w, n);
     return 1;
 
