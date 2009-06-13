@@ -392,13 +392,15 @@ window_open(glw_x11_t *gx11)
   
   /* X Input method init */
   gx11->im = XOpenIM(gx11->display, NULL, NULL, NULL);
-  gx11->ic = XCreateIC(gx11->im,
-		       XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
-		       XNClientWindow, gx11->win,
-		       NULL);
-  XGetICValues(gx11->ic, XNFilterEvents, &fevent, NULL);
+  if(gx11->im != NULL) {
+    gx11->ic = XCreateIC(gx11->im,
+			 XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+			 XNClientWindow, gx11->win,
+			 NULL);
+    XGetICValues(gx11->ic, XNFilterEvents, &fevent, NULL);
 
-  XSelectInput(gx11->display, gx11->win, fevent | winAttr.event_mask);
+    XSelectInput(gx11->display, gx11->win, fevent | winAttr.event_mask);
+  }
   return 0;
 }
 
@@ -576,12 +578,18 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
   mbstate_t ps = {0};
   int n;
   char *s;
+  XComposeStatus composestatus;
 
-  len = Xutf8LookupString(gx11->ic,(XKeyPressedEvent*)event,
-			  str, sizeof(str),
-			  &keysym, &gx11->status);
-  buf[0] = 0;
-
+  if(gx11->ic != NULL) {
+    len = Xutf8LookupString(gx11->ic,(XKeyPressedEvent*)event,
+			    str, sizeof(str),
+			    &keysym, &gx11->status);
+    buf[0] = 0;
+  } else {
+    len = XLookupString(&event->xkey, str, sizeof(str), 
+			&keysym, &composestatus); 
+  }
+  
   if(len > 1) {
     s = str;
     while((n = mbrtowc(&wc, s, len, &ps)) > 0) {
@@ -811,10 +819,12 @@ glw_x11_mainloop(glw_x11_t *gx11)
       
 	switch(event.type) {
 	case FocusIn:
-	  XSetICFocus(gx11->ic);
+	  if(gx11->ic != NULL)
+	    XSetICFocus(gx11->ic);
 	  break;
 	case FocusOut:
-	  XUnsetICFocus(gx11->ic);
+	  if(gx11->ic != NULL)
+	    XUnsetICFocus(gx11->ic);
 	  break;
 	case KeyPress:
 	  hide_cursor(gx11);
