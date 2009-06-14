@@ -67,6 +67,7 @@ fatal() {
 enable libfreetype
 enable glw
 enable libasound
+enable libpulse
 enable libexif
 enable lirc
 enable regex
@@ -185,7 +186,7 @@ fi
 
 
 #
-# libasound (alsa)
+# libasound (ALSA)
 #
 if enabled libasound; then
     if pkg-config alsa; then
@@ -195,6 +196,22 @@ if enabled libasound; then
     else
 	echo "libasound (ALSA) development files not found."
 	echo "To compile without it, configure with: --disable-libasound"
+	die
+    fi
+fi
+
+
+#
+# libpulse (PulseAudio)
+#
+if enabled libpulse; then
+    if pkg-config libpulse; then
+	echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags libpulse`
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libpulse`
+	echo "Using libpulse:        `pkg-config --modversion libpulse`"
+    else
+	echo "libpulbse (PulseAudio) development files not found."
+	echo "To compile without it, configure with: --disable-libpulse"
 	die
     fi
 fi

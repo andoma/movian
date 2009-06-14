@@ -104,6 +104,7 @@ SRCS += src/audio/audio.c \
 	src/audio/audio_mixer.c \
 
 SRCS-$(CONFIG_LIBASOUND)  += src/audio/alsa/alsa_audio.c
+SRCS-$(CONFIG_LIBPULSE)   += src/audio/pulseaudio/pulseaudio.c
 SRCS-$(CONFIG_LIBOGC)     += src/audio/wii/wii_audio.c
 #SRCS-$(CONFIG_COREAUDIO)  += src/audio/coreaudio/coreaudio.c
 SRCS                      += src/audio/dummy/dummy_audio.c

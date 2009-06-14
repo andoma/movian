@@ -122,6 +122,10 @@ audio_init(void)
   AUDIO_INIT_SUBSYS(alsa);
 #endif
 
+#define CONFIG_LIBPULSE
+  AUDIO_INIT_SUBSYS(pa);
+#endif
+
   AUDIO_INIT_SUBSYS(dummy);
 
   hts_thread_create_detached(audio_output_thread, NULL);

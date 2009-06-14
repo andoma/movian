@@ -34,6 +34,7 @@ typedef struct audio_buf {
   void *ab_ref;
   int ab_frames;
   int ab_alloced;
+  int ab_tmp;    // For output devices only
   char ab_data[0];
 } audio_buf_t;
 
