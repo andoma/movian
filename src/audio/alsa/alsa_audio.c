@@ -795,15 +795,10 @@ alsa_mixer_add_controller(audio_mode_t *am, snd_mixer_elem_t *elem)
 
     mc->mc_set_volume = alsa_mixer_volume_set;
 
-    if(snd_mixer_selem_has_common_switch(elem) || 
-       snd_mixer_selem_has_playback_switch(elem)) {
+    if(0 && snd_mixer_selem_has_playback_switch_joined(elem)) {
       mc->mc_set_mute = alsa_mixer_mute_set;
     }
     mc->mc_type = MC_TYPE_SLIDER;
-
-    if(!strcmp("Master", snd_mixer_selem_id_get_name(sid))) {
-      am->am_mixers[AM_MIXER_MASTER] = mc;
-    }
   } else {
     return;
   } 
