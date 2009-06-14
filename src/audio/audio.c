@@ -122,7 +122,7 @@ audio_init(void)
   AUDIO_INIT_SUBSYS(alsa);
 #endif
 
-#define CONFIG_LIBPULSE
+#ifdef CONFIG_LIBPULSE
   AUDIO_INIT_SUBSYS(pa);
 #endif
 
