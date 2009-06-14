@@ -72,6 +72,7 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
   pa_sample_spec ss;
   pa_proplist *pl;
   pa_channel_map map;
+  media_pipe_t *mp = ab->ab_mp;
 
   memset(&ss, 0, sizeof(ss));
 
@@ -110,8 +111,10 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
 	pa_sample_spec_snprint(buf, sizeof(buf), &ss));
 
   pl = pa_proplist_new();
-  //  pa_proplist_sets(pl, PA_PROP_MEDIA_TITLE, "Zero 7");
-  //  pa_proplist_sets(pl, PA_PROP_MEDIA_ROLE, "music");
+  if(mp->mp_flags & MP_VIDEO)
+    pa_proplist_sets(pl, PA_PROP_MEDIA_ROLE, "video");
+  else
+    pa_proplist_sets(pl, PA_PROP_MEDIA_ROLE, "music");
 
   s = pa_stream_new_with_proplist(pam->context, "Showtime playback", 
 				  &ss, &map, pl);  

@@ -108,12 +108,13 @@ mq_destroy(media_queue_t *mq)
  *
  */
 media_pipe_t *
-mp_create(const char *name, const char *type)
+mp_create(const char *name, const char *type, int flags)
 {
   media_pipe_t *mp;
 
   mp = calloc(1, sizeof(media_pipe_t));
-  
+  mp->mp_flags = flags;
+
   TAILQ_INIT(&mp->mp_eq);
 
   mp->mp_refcount = 1;

@@ -418,7 +418,7 @@ playqueue_init(void)
 {
   hts_mutex_init(&playqueue_mutex);
 
-  playqueue_mp = mp_create("playqueue", "tracks");
+  playqueue_mp = mp_create("playqueue", "tracks", 0);
 
   hts_mutex_init(&playqueue_request_mutex);
   hts_cond_init(&playqueue_request_cond);

@@ -130,8 +130,6 @@ typedef struct media_queue {
   prop_t *mq_prop_qlen_max;
 } media_queue_t;
 
-
-
 /**
  * Media pipe
  */
@@ -144,6 +142,7 @@ typedef struct media_pipe {
   int mp_flags;
 #define MP_PRIMABLE      0x1
 #define MP_ON_STACK      0x2
+#define MP_VIDEO         0x4
 
   hts_mutex_t mp_mutex;
 
@@ -206,7 +205,7 @@ media_buf_alloc(void)
   return mb;
 }
 
-media_pipe_t *mp_create(const char *name, const char *type);
+media_pipe_t *mp_create(const char *name, const char *type, int flags);
 
 #define mp_ref_inc(mp) atomic_add(&(mp)->mp_refcount, 1)
 void mp_ref_dec(media_pipe_t *mp);
