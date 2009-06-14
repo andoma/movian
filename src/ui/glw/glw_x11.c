@@ -78,8 +78,6 @@ typedef struct glw_x11 {
   int font_size;
   int want_font_size;
 
-  int frame_duration;
-
   prop_t *prop_display;
   prop_t *prop_gpu;
 
@@ -413,7 +411,7 @@ window_open(glw_x11_t *gx11)
 
   hide_cursor(gx11);
 
-  if(check_vsync(gx11)) {
+  if(0 && check_vsync(gx11)) {
     TRACE(TRACE_ERROR, "GLW", 
 	  "OpenGL on \"%s\" does not sync to vertical blank.\n"
 	  "This is required for Showtime's OpenGL interface to\n"
@@ -791,101 +789,100 @@ glw_x11_mainloop(glw_x11_t *gx11)
       display_settings_save(gx11);
     }
 
-    if(gx11->frame_duration != 0) {
+    while(XPending(gx11->display)) {
+      XNextEvent(gx11->display, &event);
+      printf("tut%d\n", event.type);
 
-      while(XPending(gx11->display)) {
-	XNextEvent(gx11->display, &event);
-	if(XFilterEvent(&event, gx11->win))
-	  continue;
+      if(XFilterEvent(&event, gx11->win))
+	continue;
       
-	switch(event.type) {
-	case FocusIn:
-	  if(gx11->ic != NULL)
-	    XSetICFocus(gx11->ic);
-	  break;
-	case FocusOut:
-	  if(gx11->ic != NULL)
-	    XUnsetICFocus(gx11->ic);
-	  break;
-	case KeyPress:
-	  hide_cursor(gx11);
-	  gl_keypress(gx11, &event);
-	  break;
+      switch(event.type) {
+      case FocusIn:
+	if(gx11->ic != NULL)
+	  XSetICFocus(gx11->ic);
+	break;
+      case FocusOut:
+	if(gx11->ic != NULL)
+	  XUnsetICFocus(gx11->ic);
+	break;
+      case KeyPress:
+	hide_cursor(gx11);
+	gl_keypress(gx11, &event);
+	break;
 
-	case ConfigureNotify:
-	  w = event.xconfigure.width;
-	  h = event.xconfigure.height;
-	  glViewport(0, 0, w, h);
-	  gx11->aspect_ratio = (float)w / (float)h;
-	  gx11->window_width  = w;
-	  gx11->window_height = h;
-	  break;
+      case ConfigureNotify:
+	w = event.xconfigure.width;
+	h = event.xconfigure.height;
+	glViewport(0, 0, w, h);
+	gx11->aspect_ratio = (float)w / (float)h;
+	gx11->window_width  = w;
+	gx11->window_height = h;
+	break;
 
 
-        case ClientMessage:
-	  if((Atom)event.xclient.data.l[0] == gx11->deletewindow) {
-	    /* Window manager wants us to close */
-	    showtime_shutdown(0);
-	  }
-	  break;
+      case ClientMessage:
+	if((Atom)event.xclient.data.l[0] == gx11->deletewindow) {
+	  /* Window manager wants us to close */
+	  showtime_shutdown(0);
+	}
+	break;
 	  
-	case MotionNotify:
-	  show_cursor(gx11);
+      case MotionNotify:
+	show_cursor(gx11);
 
+	gpe.x =  (2.0 * event.xmotion.x / gx11->window_width ) - 1;
+	gpe.y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
+	gpe.type = GLW_POINTER_MOTION;
+
+	glw_lock(&gx11->gr);
+	glw_pointer_event(&gx11->gr, &gpe);
+	glw_unlock(&gx11->gr);
+	break;
+	  
+      case ButtonRelease:
+	if(event.xbutton.button == 1) {
 	  gpe.x =  (2.0 * event.xmotion.x / gx11->window_width ) - 1;
 	  gpe.y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
-	  gpe.type = GLW_POINTER_MOTION;
-
+	  gpe.type = GLW_POINTER_RELEASE;
 	  glw_lock(&gx11->gr);
 	  glw_pointer_event(&gx11->gr, &gpe);
 	  glw_unlock(&gx11->gr);
+	}
+	break;
+
+      case ButtonPress:
+	gpe.x =  (2.0 * event.xmotion.x / gx11->window_width ) - 1;
+	gpe.y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
+
+	glw_lock(&gx11->gr);
+
+	switch(event.xbutton.button) {
+	case 1:
+	  /* Left click */
+	  gpe.type = GLW_POINTER_CLICK;
 	  break;
-	  
-	case ButtonRelease:
-	  if(event.xbutton.button == 1) {
-	    gpe.x =  (2.0 * event.xmotion.x / gx11->window_width ) - 1;
-	    gpe.y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
-	    gpe.type = GLW_POINTER_RELEASE;
-	    glw_lock(&gx11->gr);
-	    glw_pointer_event(&gx11->gr, &gpe);
-	    glw_unlock(&gx11->gr);
-	  }
+	case 4:
+	  /* Scroll up */
+	  gpe.type = GLW_POINTER_SCROLL;
+	  gpe.delta_y = -0.2;
 	  break;
-
-	case ButtonPress:
-	  gpe.x =  (2.0 * event.xmotion.x / gx11->window_width ) - 1;
-	  gpe.y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
-
-	  glw_lock(&gx11->gr);
-
-	  switch(event.xbutton.button) {
-	  case 1:
-	    /* Left click */
-	    gpe.type = GLW_POINTER_CLICK;
-	    break;
-	  case 4:
-	    /* Scroll up */
-	    gpe.type = GLW_POINTER_SCROLL;
-	    gpe.delta_y = -0.2;
-	    break;
-	  case 5:
-	    /* Scroll down */
-	    gpe.type = GLW_POINTER_SCROLL;
-	    gpe.delta_y = 0.2;
+	case 5:
+	  /* Scroll down */
+	  gpe.type = GLW_POINTER_SCROLL;
+	  gpe.delta_y = 0.2;
               
-	    break;
-
-	  default:
-	    goto noevent;
-	  }
-	  glw_pointer_event(&gx11->gr, &gpe);
-	noevent:
-	  glw_unlock(&gx11->gr);
 	  break;
 
 	default:
-	  break;
+	  goto noevent;
 	}
+	glw_pointer_event(&gx11->gr, &gpe);
+      noevent:
+	glw_unlock(&gx11->gr);
+	break;
+
+      default:
+	break;
       }
     }
     glw_lock(&gx11->gr);
