@@ -282,6 +282,29 @@ fullscreen_grab(glw_x11_t *gx11)
  *
  */
 static int
+check_vsync(glw_x11_t *gx11)
+{
+  int i;
+
+  int64_t c;
+
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+  glXSwapBuffers(gx11->display, gx11->win);
+  c = showtime_get_ts();
+  for(i = 0; i < 5; i++) {
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    glXSwapBuffers(gx11->display, gx11->win);
+  }
+  c = showtime_get_ts() - c;
+
+  return c < 10000; // Too fast refresh
+}
+
+
+/**
+ *
+ */
+static int
 window_open(glw_x11_t *gx11)
 {
   XSetWindowAttributes winAttr;
@@ -389,9 +412,17 @@ window_open(glw_x11_t *gx11)
   gx11->glXSwapIntervalSGI(1);
 
   hide_cursor(gx11);
+
+  if(check_vsync(gx11)) {
+    TRACE(TRACE_ERROR, "GLW", 
+	  "OpenGL on \"%s\" does not sync to vertical blank.\n"
+	  "This is required for Showtime's OpenGL interface to\n"
+	  "function property. Please fix this.\n",
+	  gx11->displayname_real);
+    return 1;
+  }
   
   /* X Input method init */
-  gx11->im = XOpenIM(gx11->display, NULL, NULL, NULL);
   if(gx11->im != NULL) {
     gx11->ic = XCreateIC(gx11->im,
 			 XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
@@ -410,6 +441,11 @@ window_open(glw_x11_t *gx11)
 static void
 window_close(glw_x11_t *gx11)
 {
+  if(gx11->ic != NULL) {
+    XDestroyIC(gx11->ic);
+    gx11->ic = NULL;
+  }
+  
   show_cursor(gx11);
   XDestroyWindow(gx11->display, gx11->win);
   glXDestroyContext(gx11->display, gx11->glxctx);
@@ -559,6 +595,8 @@ glw_x11_init(glw_x11_t *gx11)
 
   build_blank_cursor(gx11);
 
+  gx11->im = XOpenIM(gx11->display, NULL, NULL, NULL);
+
   return window_open(gx11);
 }
 
@@ -670,60 +708,6 @@ update_gpu_info(glw_x11_t *gx11)
 }
 
 
-
-
-static int
-intcmp(const void *A, const void *B)
-{
-  const int *a = A;
-  const int *b = B;
-  return *a - *b;
-}
-
-
-#define FRAME_DURATION_SAMPLES 31 /* should be an odd number */
-
-static int
-update_timings(glw_x11_t *gx11)
-{
-  static int64_t lastts, firstsample;
-  static int deltaarray[FRAME_DURATION_SAMPLES];
-  static int deltaptr;
-  static int lastframedur;
-  int64_t wallclock = showtime_get_ts();
-  int d, r = 0;
-  
-  
-  if(lastts != 0) {
-    d = wallclock - lastts;
-    if(deltaptr == 0)
-      firstsample = wallclock;
-
-    deltaarray[deltaptr++] = d;
-
-    if(deltaptr == FRAME_DURATION_SAMPLES) {
-      qsort(deltaarray, deltaptr, sizeof(int), intcmp);
-      d = deltaarray[FRAME_DURATION_SAMPLES / 2];
-      
-      if(lastframedur == 0) {
-	lastframedur = d;
-      } else {
-	lastframedur = (d + lastframedur) / 2;
-      }
-      gx11->frame_duration = lastframedur;
-      r = 1;
-      deltaptr = 0;
-      
-      // printf("framerate = %f\n", 1000000.0 / (float)gx11->frame_duration);
-      //      glw_set_framerate(1000000.0 / (float)frame_duration);
-    }
-  }
-  lastts = wallclock;
-  return r;
-}
-
-
-
 /**
  * Master scene rendering
  */
@@ -733,9 +717,6 @@ layout_draw(glw_x11_t *gx11, float aspect)
   glw_rctx_t rc;
 
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-  
-  //  fullscreen_fader = GLW_LP(16, fullscreen_fader, fullscreen);
-  //  prop_set_float(prop_fullscreen, fullscreen_fader);
   
   memset(&rc, 0, sizeof(rc));
   rc.rc_size_x = gx11->window_width;
@@ -913,7 +894,6 @@ glw_x11_mainloop(glw_x11_t *gx11)
     glw_unlock(&gx11->gr);
 
     glXSwapBuffers(gx11->display, gx11->win);
-    update_timings(gx11);
   }
   window_shutdown(gx11);
 }
@@ -929,6 +909,9 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
   glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
   char confname[256];
   const char *theme_path = SHOWTIME_DEFAULT_THEME_URL;
+
+  // This may aid some vsync problems with nVidia drivers
+  setenv("__GL_SYNC_TO_VBLANK", "1", 1);
 
   gx11->displayname_real = getenv("DISPLAY");
   snprintf(confname, sizeof(confname), "glw/x11/default");
