@@ -48,8 +48,10 @@ static int showtime_retcode;
 
 
 static int
-fflockmgr(void **mtx, enum AVLockOp op)
+fflockmgr(void **_mtx, enum AVLockOp op)
 {
+  hts_mutex_t **mtx = (hts_mutex_t **)_mtx;
+
   switch(op) {
   case AV_LOCK_CREATE:
     *mtx = malloc(sizeof(hts_mutex_t));
