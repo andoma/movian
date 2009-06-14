@@ -71,7 +71,7 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
   int n;
   int flags = 0;
   pa_sample_spec ss;
-#if PA_API_VERSION > 12
+#if PA_API_VERSION >= 12
   pa_proplist *pl;
   media_pipe_t *mp = ab->ab_mp;
 #endif
@@ -113,7 +113,7 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
   TRACE(TRACE_DEBUG, "PA", "Created stream %s",
 	pa_sample_spec_snprint(buf, sizeof(buf), &ss));
 
-#if PA_API_VERSION > 12
+#if PA_API_VERSION >= 12
   pl = pa_proplist_new();
   if(mp->mp_flags & MP_VIDEO)
     pa_proplist_sets(pl, PA_PROP_MEDIA_ROLE, "video");
@@ -223,7 +223,7 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
   //  pa_operation *o;
 
 
-#if PA_API_VERSION > 12
+#if PA_API_VERSION >= 12
   pa_proplist *pl = pa_proplist_new();
 
   pa_proplist_sets(pl, PA_PROP_APPLICATION_ID, "com.lonelycoder.hts.showtime");
