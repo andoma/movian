@@ -21,12 +21,13 @@
 #include "showtime.h"
 #include "audio/audio.h"
 
+static pa_threaded_mainloop *mainloop;
+static pa_mainloop_api *api;
+
 
 typedef struct pa_audio_mode {
   audio_mode_t am;
   pa_context *context;
-  pa_threaded_mainloop *mainloop;
-  pa_mainloop_api *api;
   pa_stream *stream;
   int framesize;
 
@@ -41,8 +42,8 @@ typedef struct pa_audio_mode {
 static void
 stream_write_callback(pa_stream *s, size_t length, void *userdata)
 {
-  pa_audio_mode_t *pam = (pa_audio_mode_t *)userdata;
-  pa_threaded_mainloop_signal(pam->mainloop, 0);
+  //  pa_audio_mode_t *pam = (pa_audio_mode_t *)userdata;
+  pa_threaded_mainloop_signal(mainloop, 0);
 }
 
 
@@ -54,8 +55,8 @@ stream_write_callback(pa_stream *s, size_t length, void *userdata)
 static void
 stream_state_callback(pa_stream *s, void *userdata)
 {
-  pa_audio_mode_t *pam = (pa_audio_mode_t *)userdata;
-  pa_threaded_mainloop_signal(pam->mainloop, 0);
+  //  pa_audio_mode_t *pam = (pa_audio_mode_t *)userdata;
+  pa_threaded_mainloop_signal(mainloop, 0);
 }
 
 
@@ -147,12 +148,23 @@ stream_destroy(pa_audio_mode_t *pam)
 
 
 /**
+ *
+ */
+static void
+subscription_event_callback(pa_context *c, pa_subscription_event_type_t t,
+			    uint32_t idx, void *userdata)
+{
+}
+
+
+/**
  * This is called whenever the context status changes 
  */
 static void 
 context_state_callback(pa_context *c, void *userdata)
 {
   pa_audio_mode_t *pam = (pa_audio_mode_t *)userdata;
+  pa_operation *o;
 
   switch(pa_context_get_state(c)) {
   case PA_CONTEXT_CONNECTING:
@@ -162,22 +174,33 @@ context_state_callback(pa_context *c, void *userdata)
     break;
 
   case PA_CONTEXT_READY:
+
+    pa_context_set_subscribe_callback(pam->context, 
+				      subscription_event_callback, pam);
+    
+    o = pa_context_subscribe(pam->context,
+			     PA_SUBSCRIPTION_MASK_ALL,
+			     NULL, NULL);
+    if(o != NULL)
+      pa_operation_unref(o);
+
     TRACE(TRACE_DEBUG, "PA", "Context ready");
-    pa_threaded_mainloop_signal(pam->mainloop, 0);
+    pa_threaded_mainloop_signal(mainloop, 0);
     break;
 
   case PA_CONTEXT_TERMINATED:
     TRACE(TRACE_ERROR, "PA", "Context terminated");
-    pa_threaded_mainloop_signal(pam->mainloop, 0);
+    pa_threaded_mainloop_signal(mainloop, 0);
     break;
 
   case PA_CONTEXT_FAILED:
     TRACE(TRACE_ERROR, "PA",
 	  "Connection failure: %s", pa_strerror(pa_context_errno(c)));
-    pa_threaded_mainloop_signal(pam->mainloop, 0);
+    pa_threaded_mainloop_signal(mainloop, 0);
     break;
   }
 }
+
 
 
 /**
@@ -192,9 +215,8 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
   size_t l, length;
   int64_t pts;
   media_pipe_t *mp;
+  //  pa_operation *o;
 
-  pam->mainloop = pa_threaded_mainloop_new();
-  pam->api = pa_threaded_mainloop_get_api(pam->mainloop);
 
   pl = pa_proplist_new();
 
@@ -202,7 +224,7 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
   pa_proplist_sets(pl, PA_PROP_APPLICATION_NAME, "Showtime");
   
   /* Create a new connection context */
-  pam->context = pa_context_new_with_proplist(pam->api, "Showtime", pl);
+  pam->context = pa_context_new_with_proplist(api, "Showtime", pl);
   if(pam->context == NULL) {
     return -1;
   }
@@ -216,19 +238,18 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
     return -1;
   }
 
+
   /* Need at least one packet of audio */
   ab = af_deq(af, 1);
 
-  pa_threaded_mainloop_lock(pam->mainloop);
-
-  pa_threaded_mainloop_start(pam->mainloop);
+  pa_threaded_mainloop_lock(mainloop);
 
   while(am == audio_mode_current) {
 
     if(ab == NULL) {
-      pa_threaded_mainloop_unlock(pam->mainloop);
+      pa_threaded_mainloop_unlock(mainloop);
       ab = af_deq(af, 1);
-      pa_threaded_mainloop_lock(pam->mainloop);
+      pa_threaded_mainloop_lock(mainloop);
     }
 
     if(pam->stream != NULL &&
@@ -244,19 +265,19 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
     }
 
     if(pam->stream == NULL) {
-      pa_threaded_mainloop_wait(pam->mainloop);
+      pa_threaded_mainloop_wait(mainloop);
       continue;
     }
 
     if(pa_stream_get_state(pam->stream) != PA_STREAM_READY) {
-      pa_threaded_mainloop_wait(pam->mainloop);
+      pa_threaded_mainloop_wait(mainloop);
       continue;
     }
     
     l = pa_stream_writable_size(pam->stream);
     
     if(l == 0) {
-      pa_threaded_mainloop_wait(pam->mainloop);
+      pa_threaded_mainloop_wait(mainloop);
       continue;
     }
 
@@ -299,11 +320,8 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
   if(pam->stream != NULL)
     stream_destroy(pam);
 
-  pa_threaded_mainloop_unlock(pam->mainloop);
-  
-  pa_threaded_mainloop_stop(pam->mainloop);
+  pa_threaded_mainloop_unlock(mainloop);
   pa_context_unref(pam->context);
-  pa_threaded_mainloop_free(pam->mainloop);
 
   if(ab != NULL) {
     ab_free(ab);
@@ -327,10 +345,12 @@ audio_pa_init(void)
   TRACE(TRACE_INFO, "PA", "Headerversion: %s, library: %s",
 	pa_get_headers_version(), pa_get_library_version());
 
-  pam = calloc(1, sizeof(pa_audio_mode_t));
-  //  pam->context = c;
-    //  pam->mainloop = m;
+  mainloop = pa_threaded_mainloop_new();
+  api = pa_threaded_mainloop_get_api(mainloop);
 
+  pa_threaded_mainloop_start(mainloop);
+
+  pam = calloc(1, sizeof(pa_audio_mode_t));
   am = &pam->am;
   am->am_formats = 
     AM_FORMAT_PCM_STEREO | AM_FORMAT_PCM_5DOT1 | AM_FORMAT_PCM_7DOT1;
@@ -343,6 +363,4 @@ audio_pa_init(void)
 
   TAILQ_INIT(&am->am_mixer_controllers);
   audio_mode_register(am);
-
-  //  pa_context_set_state_callback(c, context_state_callback, pam);
 }

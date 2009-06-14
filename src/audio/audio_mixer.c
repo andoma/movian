@@ -93,10 +93,6 @@ audio_mixer_update(volume_control_t *vc)
   if(am == NULL)
     return 0;
 
-  if(TAILQ_FIRST(&am->am_mixer_controllers) == NULL)
-    return -1; /* Can't change volume here */
-
-
   ms = volume_update_slider(am, AM_MIXER_MASTER, vc->vc_master_vol,
 			    vc->vc_master_mute);
 
