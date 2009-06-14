@@ -5,8 +5,8 @@ WIISUPPORT=${PWD}/wiisupport
 
 mkdir -p ${WIISUPPORT}
 
-DEVKITPRO=${WIISUPPORT}/devkitpro
-DEVKITPPC=${DEVKITPRO}/devkitPPC
+export DEVKITPRO=${WIISUPPORT}/devkitpro
+export DEVKITPPC=${DEVKITPRO}/devkitPPC
 
 if ! test -e ${DEVKITPPC} ; then
     mkdir -p ${DEVKITPRO}
