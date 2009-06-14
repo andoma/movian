@@ -791,7 +791,6 @@ glw_x11_mainloop(glw_x11_t *gx11)
 
     while(XPending(gx11->display)) {
       XNextEvent(gx11->display, &event);
-      printf("tut%d\n", event.type);
 
       if(XFilterEvent(&event, gx11->win))
 	continue;
