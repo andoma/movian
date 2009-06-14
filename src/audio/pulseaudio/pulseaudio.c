@@ -71,9 +71,11 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
   int n;
   int flags = 0;
   pa_sample_spec ss;
+#if PA_API_VERSION > 12
   pa_proplist *pl;
-  pa_channel_map map;
   media_pipe_t *mp = ab->ab_mp;
+#endif
+  pa_channel_map map;
 
   memset(&ss, 0, sizeof(ss));
 
@@ -111,6 +113,7 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
   TRACE(TRACE_DEBUG, "PA", "Created stream %s",
 	pa_sample_spec_snprint(buf, sizeof(buf), &ss));
 
+#if PA_API_VERSION > 12
   pl = pa_proplist_new();
   if(mp->mp_flags & MP_VIDEO)
     pa_proplist_sets(pl, PA_PROP_MEDIA_ROLE, "video");
@@ -119,9 +122,12 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
 
   s = pa_stream_new_with_proplist(pam->context, "Showtime playback", 
 				  &ss, &map, pl);  
-  
   pa_proplist_free(pl);
 
+#else
+  s = pa_stream_new(pam->context, "Showtime playback", &ss, &map);  
+#endif
+  
   pa_stream_set_state_callback(s, stream_state_callback, pam);
   pa_stream_set_write_callback(s, stream_write_callback, pam);
 
@@ -211,20 +217,24 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
 {
   pa_audio_mode_t *pam = (pa_audio_mode_t *)am;
   audio_buf_t *ab;
-  pa_proplist *pl;
   size_t l, length;
   int64_t pts;
   media_pipe_t *mp;
   //  pa_operation *o;
 
 
-  pl = pa_proplist_new();
+#if PA_API_VERSION > 12
+  pa_proplist *pl = pa_proplist_new();
 
   pa_proplist_sets(pl, PA_PROP_APPLICATION_ID, "com.lonelycoder.hts.showtime");
   pa_proplist_sets(pl, PA_PROP_APPLICATION_NAME, "Showtime");
   
   /* Create a new connection context */
   pam->context = pa_context_new_with_proplist(api, "Showtime", pl);
+  pa_proplist_free(pl);
+#else
+  pam->context = pa_context_new(api, "Showtime");
+#endif
   if(pam->context == NULL) {
     return -1;
   }
