@@ -222,6 +222,7 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
   media_pipe_t *mp;
   //  pa_operation *o;
 
+  pa_threaded_mainloop_lock(mainloop);
 
 #if PA_API_VERSION >= 12
   pa_proplist *pl = pa_proplist_new();
@@ -236,6 +237,7 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
   pam->context = pa_context_new(api, "Showtime");
 #endif
   if(pam->context == NULL) {
+    pa_threaded_mainloop_unlock(mainloop);
     return -1;
   }
 
@@ -245,14 +247,13 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
   if(pa_context_connect(pam->context, NULL, 0, NULL) < 0) {
     TRACE(TRACE_ERROR, "PA", "pa_context_connect() failed: %s",
 	  pa_strerror(pa_context_errno(pam->context)));
+    pa_threaded_mainloop_unlock(mainloop);
     return -1;
   }
 
 
   /* Need at least one packet of audio */
   ab = af_deq(af, 1);
-
-  pa_threaded_mainloop_lock(mainloop);
 
   while(am == audio_mode_current) {
 
@@ -358,7 +359,9 @@ audio_pa_init(void)
   mainloop = pa_threaded_mainloop_new();
   api = pa_threaded_mainloop_get_api(mainloop);
 
+  pa_threaded_mainloop_lock(mainloop);
   pa_threaded_mainloop_start(mainloop);
+  pa_threaded_mainloop_unlock(mainloop);
 
   pam = calloc(1, sizeof(pa_audio_mode_t));
   am = &pam->am;
