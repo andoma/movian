@@ -381,7 +381,7 @@ audio_add_mixer_map(prop_t *r, audio_mode_t *am, int type,
 
   p = settings_add_multiopt(r, id, title, setf, am);
   
-  settings_multiopt_add_opt(p, "notavail", "Not avilable",
+  settings_multiopt_add_opt(p, "notavail", "Not available",
 			    am->am_mixers[type] == NULL);
 
   TAILQ_FOREACH(mc, &am->am_mixer_controllers, mc_link)
