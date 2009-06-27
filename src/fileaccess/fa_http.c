@@ -1033,6 +1033,8 @@ get_cdata_by_tag(htsmsg_t *tags, const char *name)
 /**
  * Parse WEBDAV PROPFIND results
  */
+#define WEBDAV_MAX_PATH_LEN 2048
+
 static int
 parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd,
 	       char *errbuf, size_t errlen)
@@ -1041,20 +1043,22 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd,
   htsmsg_field_t *f;
   const char *href, *d, *q;
   int isdir, i;
-  char path[256];
-  char fname[128];
+  char *path  = malloc(WEBDAV_MAX_PATH_LEN);
+  char *fname = malloc(WEBDAV_MAX_PATH_LEN);
 
   if(nd == NULL) {
     // Single entry stat(2) (ie. not a directory scan)
     // We need to compare paths and to do so, we must deescape the
     // possible URL encoding. Do the searched-for path once
-    snprintf(path, sizeof(path), "%s", hf->hf_path);
+    snprintf(path, WEBDAV_MAX_PATH_LEN, "%s", hf->hf_path);
     http_deescape(path);
   }
 
   if((m = htsmsg_get_map_multi(xml, "tags", 
 			       "DAV:multistatus", "tags", NULL)) == NULL) {
     snprintf(errbuf, errlen, "WEBDAV: DAV:multistatus not found in XML");
+    free(path);
+    free(fname);
     return -1;
   }
 
@@ -1085,7 +1089,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd,
 
       if(strcmp(hf->hf_path, href)) {
 
-	snprintf(path, sizeof(path), "webdav://%s:%d%s", 
+	snprintf(path, WEBDAV_MAX_PATH_LEN, "webdav://%s:%d%s", 
 		 hf->hf_hostname, hf->hf_port, href);
 	
 	if((q = strrchr(path, '/')) != NULL) {
@@ -1100,12 +1104,12 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd,
 	    while(q != path && q[-1] != '/')
 	      q--;
 
-	    for(i = 0; i < sizeof(fname) - 1 && q[i] != '/'; i++)
+	    for(i = 0; i < WEBDAV_MAX_PATH_LEN - 1 && q[i] != '/'; i++)
 	      fname[i] = q[i];
 	    fname[i] = 0;
 
 	  } else {
-	    snprintf(fname, sizeof(fname), "%s", q);
+	    snprintf(fname, WEBDAV_MAX_PATH_LEN, "%s", q);
 	  }
 	  http_deescape(fname);
 	  http_deescape(path);
@@ -1117,7 +1121,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd,
     } else {
       /* single entry stat(2) */
 
-      snprintf(fname, sizeof(fname), "%s", href);
+      snprintf(fname, WEBDAV_MAX_PATH_LEN, "%s", href);
       http_deescape(fname);
 
       if(!strcmp(path, fname)) {
@@ -1129,6 +1133,8 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd,
 	  d = get_cdata_by_tag(c, "DAV:getcontentlength");
 	  hf->hf_size = strtoll(d, NULL, 10);
 	}
+	free(path);
+	free(fname);
 	return 0;
       } 
     }
@@ -1139,8 +1145,12 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd,
        we asked for in its reply. The server is probably broken. 
        (It should respond with a 404 or something) */
     snprintf(errbuf, errlen, "WEBDAV: File not found in XML reply");
+    free(path);
+    free(fname);
     return -1;
   }
+  free(path);
+  free(fname);
   return 0;
 }
 
