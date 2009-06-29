@@ -416,7 +416,7 @@ spotify_music_delivery(sp_session *sess, const sp_audioformat *format,
     return 0;
   }
 
-  if(mq->mq_len > 20)
+  if(mq->mq_len > 100)
     return 0;
 
   mb = media_buf_alloc();
