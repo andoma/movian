@@ -411,7 +411,7 @@ window_open(glw_x11_t *gx11)
 
   hide_cursor(gx11);
 
-  if(0 && check_vsync(gx11)) {
+  if(check_vsync(gx11)) {
     TRACE(TRACE_ERROR, "GLW", 
 	  "OpenGL on \"%s\" does not sync to vertical blank.\n"
 	  "This is required for Showtime's OpenGL interface to\n"
