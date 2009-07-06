@@ -876,7 +876,7 @@ media_get_codec_info(AVCodecContext *ctx, char *buf, size_t size)
 static void
 seek_by_propchange(void *opaque, prop_event_t event, ...)
 {
-  event_seek_t *es;
+  event_ts_t *ets;
   event_t *e;
   media_pipe_t *mp = opaque;
   int64_t t;
@@ -900,15 +900,15 @@ seek_by_propchange(void *opaque, prop_event_t event, ...)
     if(!event_is_type(e, EVENT_SEEK))
       continue;
 
-    es = (event_seek_t *)e;
-    es->ts = t;
+    ets = (event_ts_t *)e;
+    ets->pts = t;
     return;
   }
 
-  es = event_create(EVENT_SEEK, sizeof(event_seek_t));
-  es->ts = t;
-  mp_enqueue_event_locked(mp, &es->h);
-  event_unref(&es->h);
+  ets = event_create(EVENT_SEEK, sizeof(event_ts_t));
+  ets->pts = t;
+  mp_enqueue_event_locked(mp, &ets->h);
+  event_unref(&ets->h);
 }
 
 

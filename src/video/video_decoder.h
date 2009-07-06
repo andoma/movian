@@ -180,6 +180,7 @@ typedef struct video_decoder {
 
   int64_t vd_nextpts;
   int64_t vd_lastpts;
+  int vd_frames_since_last;
   int vd_estimated_duration;
 
   float vd_aspect;

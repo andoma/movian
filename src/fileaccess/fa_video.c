@@ -94,7 +94,7 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
   AVPacket pkt;
   int r, si;
   event_t *e;
-  event_seek_t *es;
+  event_ts_t *ets;
   int64_t ts, seekbase = AV_NOPTS_VALUE;
 
   int hold = 0, lost_focus = 0, epoch = 1;
@@ -161,7 +161,8 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
       mb->mb_duration = 0; //rescale(fctx, pkt.duration, si);
 
       if(mq->mq_seektarget != AV_NOPTS_VALUE) {
-	if(mb->mb_pts < mq->mq_seektarget) {
+	ts = mb->mb_pts != AV_NOPTS_VALUE ? mb->mb_pts : mb->mb_dts;
+	if(ts < mq->mq_seektarget) {
 	  mb->mb_skip = 1;
 	} else {
 	  mb->mb_skip = 2;
@@ -193,9 +194,6 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
 	mb->mb_time = mb->mb_pts - fctx->start_time;
       else
 	mb->mb_time = AV_NOPTS_VALUE;
-
-      if(mb->mb_pts != AV_NOPTS_VALUE && mb->mb_data_type == MB_VIDEO)
-	seekbase = mb->mb_pts;
 
       av_free_packet(&pkt);
     }
@@ -241,12 +239,17 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
 
       }
 
+    } else if(event_is_type(e, EVENT_CURRENT_PTS)) {
+
+      ets = (event_ts_t *)e;
+      seekbase = ets->pts;
+
     } else if(event_is_type(e, EVENT_SEEK)) {
 
       epoch++;
-      es = (event_seek_t *)e;
+      ets = (event_ts_t *)e;
       
-      ts = es->ts + fctx->start_time;
+      ts = ets->pts + fctx->start_time;
 
       if(ts < fctx->start_time)
 	ts = fctx->start_time;
@@ -338,7 +341,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     return NULL;
   }
 
-  fctx->flags |= AVFMT_FLAG_GENPTS;
+  // fctx->flags |= AVFMT_FLAG_GENPTS;
 
   if(av_find_stream_info(fctx) < 0) {
     av_close_input_file(fctx);

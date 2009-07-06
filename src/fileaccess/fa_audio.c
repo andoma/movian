@@ -76,7 +76,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   int i, r, si;
   media_buf_t *mb = NULL;
   media_queue_t *mq;
-  event_seek_t *es;
+  event_ts_t *ets;
   int64_t ts, pts4seek = 0;
   codecwrap_t *cw;
   char faurl[1000];
@@ -192,8 +192,8 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
     } else if(event_is_type(e, EVENT_SEEK)) {
 
-      es = (event_seek_t *)e;
-      ts = es->ts + fctx->start_time;
+      ets = (event_ts_t *)e;
+      ts = ets->pts + fctx->start_time;
       if(ts < fctx->start_time)
 	ts = fctx->start_time;
       av_seek_frame(fctx, -1, ts, AVSEEK_FLAG_BACKWARD);

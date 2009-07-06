@@ -163,7 +163,7 @@ static void
 vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
 {
   video_decoder_frame_t *vdf;
-  int64_t pts, t;
+  int64_t pts, dts, t;
   int i, j, got_pic, h, w, duration, epoch;
   media_pipe_t *mp = vd->vd_mp;
   unsigned char *src, *dst;
@@ -178,6 +178,7 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
   uint8_t *prev, *cur, *next;
   int hshift, vshift;
   deilace_type_t dt;
+  event_ts_t *ets;
 
   got_pic = 0;
 
@@ -209,7 +210,7 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
 
   avcodec_decode_video(ctx, frame, &got_pic, mb->mb_data, mb->mb_size);
 
-  if(got_pic == 0 || mb->mb_skip == 1)
+  if(got_pic == 0 || mb->mb_skip == 1) 
     return;
 
   vd->vd_skip = 0;
@@ -234,7 +235,6 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
     break;
   }
 
-
   dt = mb->mb_disable_deinterlacer ? VD_DEILACE_NONE : vd->vd_deilace_conf;
   if(dt == VD_DEILACE_AUTO)
     dt = frame->interlaced_frame ? VD_DEILACE_YADIF_FIELD : VD_DEILACE_NONE;
@@ -248,8 +248,14 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
     mp_set_current_time(mp, fm->time);
 
   pts = fm->pts;
+  dts = fm->dts;
   duration = fm->duration;
   epoch = fm->epoch;
+
+  if(pts == AV_NOPTS_VALUE && dts != AV_NOPTS_VALUE &&
+     (ctx->has_b_frames == 0 || frame->pict_type == FF_B_TYPE)) {
+    pts = dts;
+  }
 
   if(!vd_valid_duration(duration)) {
     /* duration is zero or very invalid, use duration from last output */
@@ -261,7 +267,7 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
 
   if(pts != AV_NOPTS_VALUE && vd->vd_lastpts != AV_NOPTS_VALUE) {
     /* we know pts of last frame */
-    t = pts - vd->vd_lastpts;
+    t = (pts - vd->vd_lastpts) / vd->vd_frames_since_last;
 
     if(vd_valid_duration(t)) {
       /* inter frame duration seems valid, store it */
@@ -281,11 +287,19 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
  
   if(pts != AV_NOPTS_VALUE) {
     vd->vd_lastpts = pts;
-    vd->vd_nextpts = pts + duration;
+    if(duration != 0)
+      vd->vd_nextpts = pts + duration;
+    vd->vd_frames_since_last = 0;
   }
+  vd->vd_frames_since_last++;
 
   if(duration == 0 || pts == AV_NOPTS_VALUE)
     return;
+
+  ets = event_create(EVENT_CURRENT_PTS, sizeof(event_ts_t));
+  ets->pts = pts;
+  ets->dts = dts;
+  mp_enqueue_event(mp, &ets->h);
 
 #if 0
   if(vd->vd_mp->mp_subtitles) {

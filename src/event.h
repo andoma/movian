@@ -104,6 +104,8 @@ typedef enum {
 
   EVENT_INTERNAL_PAUSE,      /* Internal pause with a playback module */
 
+  EVENT_CURRENT_PTS,
+
 } event_type_t;
 
 
@@ -152,15 +154,6 @@ typedef struct event_openurl2 {
   char *type;
   char *parent;
 } event_openurl2_t;
-
-
-/**
- *
- */
-typedef struct event_seek {
-  event_t h;
-  int64_t ts;
-} event_seek_t;
 
 
 /**
