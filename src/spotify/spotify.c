@@ -1779,7 +1779,7 @@ be_spotify_play(const char *url, media_pipe_t *mp,
 {
   spotify_uri_t su;
   event_t *e;
-  event_seek_t *es;
+  event_ts_t *ets;
   int hold = 0, lost_focus = 0;
   media_queue_t *mq = &mp->mp_audio;
   
@@ -1827,8 +1827,8 @@ be_spotify_play(const char *url, media_pipe_t *mp,
 
     } else if(event_is_type(e, EVENT_SEEK)) {
 
-      es = (event_seek_t *)e;
-      spotify_msg_enq(spotify_msg_build_int(SPOTIFY_SEEK, es->ts / 1000));
+      ets = (event_ts_t *)e;
+      spotify_msg_enq(spotify_msg_build_int(SPOTIFY_SEEK, ets->pts / 1000));
 
     } else if(event_is_action(e, ACTION_PLAYPAUSE) ||
 	      event_is_action(e, ACTION_PLAY) ||
