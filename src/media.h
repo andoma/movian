@@ -221,7 +221,7 @@ void mp_enqueue_event(media_pipe_t *mp, event_t *e);
 event_t *mp_dequeue_event(media_pipe_t *mp);
 event_t *mp_dequeue_event_deadline(media_pipe_t *mp, time_t deadline);
 
-event_t *mp_wait_for_empty_queues(media_pipe_t *mp);
+event_t *mp_wait_for_empty_queues(media_pipe_t *mp, int limit);
 
 
 void mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd);

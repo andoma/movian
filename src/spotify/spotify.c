@@ -1819,10 +1819,18 @@ be_spotify_play(const char *url, media_pipe_t *mp,
     if(event_is_action(e, ACTION_PREV_TRACK) ||
        event_is_action(e, ACTION_NEXT_TRACK) ||
        event_is_action(e, ACTION_STOP) ||
-       event_is_type  (e, EVENT_PLAYQUEUE_JUMP) ||
-       event_is_type (e, EVENT_EOF)) {
-
+       event_is_type  (e, EVENT_PLAYQUEUE_JUMP)) {
+      
       mp_flush(mp);
+      break;
+      
+    } else if(event_is_type (e, EVENT_EOF)) {
+      /* End of file, wait a while for queues to drain more */
+      e = mp_wait_for_empty_queues(mp, 20);
+
+      /* If an event occured while waiting for drainage, flush */
+      if(e != NULL)
+	mp_flush(mp);
       break;
 
     } else if(event_is_type(e, EVENT_SEEK)) {

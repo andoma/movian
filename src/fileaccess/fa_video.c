@@ -114,7 +114,7 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
 	if(r == AVERROR_EOF) {
 
 	  /* Wait for queues to drain */
-	  e = mp_wait_for_empty_queues(mp);
+	  e = mp_wait_for_empty_queues(mp, 0);
 
 	  mp_set_playstatus_stop(mp);
 

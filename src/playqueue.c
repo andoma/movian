@@ -535,7 +535,7 @@ player_thread(void *aux)
       prop_unlink(mp->mp_prop_metadata);
 
       /* Drain queues */
-      e = mp_wait_for_empty_queues(mp);
+      e = mp_wait_for_empty_queues(mp, 0);
       if(e != NULL) {
 	/* Got event while waiting for drain */
 	mp_flush(mp);

@@ -578,7 +578,7 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
       break;
 
     case DVDNAV_WAIT:
-      if((e = mp_wait_for_empty_queues(mp)) == NULL)
+      if((e = mp_wait_for_empty_queues(mp, 0)) == NULL)
 	dvdnav_wait_skip(dp->dp_dvdnav);
       else
 	e = dvd_process_event(dp, e);
