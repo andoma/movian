@@ -51,6 +51,7 @@ typedef enum {
 typedef void (prop_callback_t)(void *opaque, prop_event_t event, ...);
 typedef void (prop_callback_string_t)(void *opaque, const char *str);
 typedef void (prop_callback_int_t)(void *opaque, int value);
+typedef void (prop_callback_float_t)(void *opaque, float value);
 
 struct prop_sub;
 typedef void (prop_trampoline_t)(struct prop_sub *s, prop_event_t event, ...);
@@ -271,6 +272,7 @@ enum {
   PROP_TAG_CALLBACK,
   PROP_TAG_CALLBACK_STRING,
   PROP_TAG_CALLBACK_INT,
+  PROP_TAG_CALLBACK_FLOAT,
   PROP_TAG_COURIER,
   PROP_TAG_ROOT,
   PROP_TAG_NAMED_ROOT,
@@ -295,6 +297,9 @@ void prop_set_stringf_ex(prop_t *p, prop_sub_t *skipme, const char *fmt, ...);
 
 void prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v);
 
+void prop_add_clipped_float_ex(prop_t *p, prop_sub_t *skipme, float v,
+			       float v_min, float v_max);
+
 void prop_set_int_ex(prop_t *p, prop_sub_t *skipme, int v);
 
 void prop_toggle_int_ex(prop_t *p, prop_sub_t *skipme);
@@ -310,6 +315,9 @@ void prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, prop_pixmap_t *pp);
 #define prop_set_stringf(p, fmt...) prop_set_stringf_ex(p, NULL, fmt)
 
 #define prop_set_float(p, v) prop_set_float_ex(p, NULL, v)
+
+#define prop_add_clipped_float(p, v, min, max) \
+ prop_add_clipped_float_ex(p, NULL, v, min, max)
 
 #define prop_set_int(p, v) prop_set_int_ex(p, NULL, v)
 

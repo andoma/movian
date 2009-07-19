@@ -243,6 +243,27 @@ trampoline_int(prop_sub_t *s, prop_event_t event, ...)
  *
  */
 static void 
+trampoline_float(prop_sub_t *s, prop_event_t event, ...)
+{
+  prop_callback_float_t *cb = s->hps_callback;
+
+  va_list ap;
+  va_start(ap, event);
+
+  if(event == PROP_SET_INT) {
+    cb(s->hps_opaque, va_arg(ap, int));
+  } else if(event == PROP_SET_FLOAT) {
+    cb(s->hps_opaque, va_arg(ap, double));
+  } else {
+    cb(s->hps_opaque, 0);
+  }
+}
+
+
+/**
+ *
+ */
+static void 
 trampoline_string(prop_sub_t *s, prop_event_t event, ...)
 {
   prop_callback_string_t *cb = s->hps_callback;
@@ -1117,6 +1138,12 @@ prop_subscribe(int flags, ...)
       opaque = va_arg(ap, void *);
       break;
 
+    case PROP_TAG_CALLBACK_FLOAT:
+      cb = va_arg(ap, void *);
+      trampoline = trampoline_float;
+      opaque = va_arg(ap, void *);
+      break;
+
     case PROP_TAG_COURIER:
       pc = va_arg(ap, prop_courier_t *);
       break;
@@ -1390,6 +1417,50 @@ prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v)
 
   prop_set_epilogue(skipme, p, "prop_set_float()");
 }
+
+
+/**
+ *
+ */
+void
+prop_add_clipped_float_ex(prop_t *p, prop_sub_t *skipme, float v,
+			  float v_min, float v_max)
+{
+  float n;
+
+  if(p == NULL)
+    return;
+
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type == PROP_ZOMBIE) {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
+
+  if(p->hp_type != PROP_FLOAT) {
+
+    if(prop_clean(p)) {
+      hts_mutex_unlock(&prop_mutex);
+      return;
+    }
+    p->hp_float = 0;
+  }
+
+  n = p->hp_float + v;
+  if(n > v_max)
+    n = v_max;
+  if(n < v_min)
+    n = v_min;
+
+  if(n != p->hp_float) {
+    p->hp_float = n;
+    prop_notify_value(p, skipme, "prop_add_clipped_float()");
+  }
+
+  hts_mutex_unlock(&prop_mutex);
+}
+
 
 /**
  *
