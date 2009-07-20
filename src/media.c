@@ -177,12 +177,10 @@ mp_destroy(media_pipe_t *mp)
 
   prop_courier_destroy(mp->mp_pc);
 
-  hts_mutex_lock(&mp->mp_mutex);
   while((e = TAILQ_FIRST(&mp->mp_eq)) != NULL) {
     TAILQ_REMOVE(&mp->mp_eq, e, e_link);
     event_unref(e);
   }
-  hts_mutex_unlock(&mp->mp_mutex);
 
   mq_destroy(&mp->mp_audio);
   mq_destroy(&mp->mp_video);
