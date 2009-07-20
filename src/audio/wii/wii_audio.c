@@ -121,6 +121,5 @@ audio_wii_init(void)
 
   am->am_entry = wii_audio_start;
 
-  TAILQ_INIT(&am->am_mixer_controllers);
   audio_mode_register(am);
 }
