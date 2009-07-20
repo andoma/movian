@@ -56,6 +56,8 @@ typedef void (prop_callback_float_t)(void *opaque, float value);
 struct prop_sub;
 typedef void (prop_trampoline_t)(struct prop_sub *s, prop_event_t event, ...);
 
+typedef void (prop_lockmgr_t)(void *ptr, int lock);
+
 TAILQ_HEAD(prop_queue, prop);
 LIST_HEAD(prop_list, prop);
 LIST_HEAD(prop_sub_list, prop_sub);
@@ -209,33 +211,38 @@ typedef struct prop_sub {
   prop_trampoline_t *hps_trampoline;
 
   /**
-   * Flags as passed to prop_subscribe()
-   */
-  int hps_flags;
-
-  /**
    * Pointer to courier, May never be changed. Not protected by mutex
    */
   prop_courier_t *hps_courier;
 
   /**
-   * Mutex to be held when invoking callback. It must also be held
-   * when destroying the subscription. If it is not set via
-   * PROP_TAG_MUTEX it will use the mutex specified by the courier.
+   * Lock to be held when invoking callback. It must also be held
+   * when destroying the subscription.
    */
-  hts_mutex_t *hps_mutex;
+  void *hps_lock;
 
   /**
-   * Set when a subscription is destroyed. Protected by hps_mutex.
+   * Function to call to obtain / release the lock.
+   */
+  prop_lockmgr_t *hps_lockmgr;
+
+  /**
+   * Set when a subscription is destroyed. Protected by hps_lock.
    * In other words. It's impossible to destroy a subscription
    * if no lock is specified.
    */
   uint8_t hps_zombie;
 
   /**
-   *
+   * Used to avoid sending two notification when relinking
+   * to another tree. Protected by global mutex
    */
   uint8_t hps_pending_unlink;
+
+  /**
+   * Flags as passed to prop_subscribe(). May never be changed
+   */
+  uint8_t hps_flags;
 
   /**
    * Linkage to property. Protected by global mutex
@@ -277,6 +284,7 @@ enum {
   PROP_TAG_ROOT,
   PROP_TAG_NAMED_ROOT,
   PROP_TAG_MUTEX,
+  PROP_TAG_EXTERNAL_LOCK,
 };
 
 prop_sub_t *prop_subscribe(int flags, ...) __attribute__((__sentinel__(0)));

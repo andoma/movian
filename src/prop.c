@@ -103,6 +103,20 @@ typedef struct prop_notify {
 
 
 /**
+ * Default lockmanager for normal mutexes
+ */
+static void
+proplockmgr(void *ptr, int lock)
+{
+  if(lock)
+    hts_mutex_lock(ptr);
+  else
+    hts_mutex_unlock(ptr);
+}
+
+
+
+/**
  *
  */
 void
@@ -307,12 +321,12 @@ prop_courier(void *aux)
 
     s = n->hpn_sub;
 
-    if(s->hps_mutex != NULL) {
-      hts_mutex_lock(s->hps_mutex);
+    if(s->hps_lock != NULL) {
+      s->hps_lockmgr(s->hps_lock, 1);
     
       if(s->hps_zombie) {
 	prop_notify_free(n); // subscription may be free'd here
-	hts_mutex_unlock(s->hps_mutex);
+	s->hps_lockmgr(s->hps_lock, 0);
 	continue;
       }
     }
@@ -404,8 +418,8 @@ prop_courier(void *aux)
       break;
     }
 
-    if(s->hps_mutex != NULL)
-      hts_mutex_unlock(s->hps_mutex);
+    if(s->hps_lock != NULL)
+      s->hps_lockmgr(s->hps_lock, 0);
  
     prop_sub_ref_dec(s);
     free(n);
@@ -1102,7 +1116,8 @@ prop_subscribe(int flags, ...)
   const char **name = NULL;
   void *opaque = NULL;
   prop_courier_t *pc = NULL;
-  hts_mutex_t *mutex = NULL;
+  void *lock = NULL;
+  prop_lockmgr_t *lockmgr = proplockmgr;
   prop_root_t *pr;
   struct prop_root_list proproots;
   void *cb = NULL;
@@ -1165,7 +1180,12 @@ prop_subscribe(int flags, ...)
       break;
 
     case PROP_TAG_MUTEX:
-      mutex = va_arg(ap, hts_mutex_t *);
+      lock = va_arg(ap, void *);
+      break;
+
+    case PROP_TAG_EXTERNAL_LOCK:
+      lock    = va_arg(ap, void *);
+      lockmgr = va_arg(ap, void *);
       break;
 
     case PROP_TAG_END:
@@ -1215,11 +1235,12 @@ prop_subscribe(int flags, ...)
   s->hps_flags = flags;
   if(pc != NULL) {
     s->hps_courier = pc;
-    s->hps_mutex = pc->pc_entry_mutex;
+    s->hps_lock = pc->pc_entry_mutex;
   } else {
     s->hps_courier = global_courier;
-    s->hps_mutex = mutex;
+    s->hps_lock = lock;
   }
+  s->hps_lockmgr = lockmgr;
 
   LIST_INSERT_HEAD(&canonical->hp_canonical_subscriptions, s, 
 		   hps_canonical_prop_link);
@@ -1258,7 +1279,7 @@ prop_subscribe(int flags, ...)
 static void
 prop_unsubscribe0(prop_sub_t *s)
 {
-  assert(s->hps_mutex != NULL);
+  assert(s->hps_lock != NULL);
   
   s->hps_zombie = 1;
 
