@@ -108,10 +108,12 @@ typedef struct prop_notify {
 static void
 proplockmgr(void *ptr, int lock)
 {
+  hts_mutex_t *mtx = (hts_mutex_t *)ptr;
+
   if(lock)
-    hts_mutex_lock(ptr);
+    hts_mutex_lock(mtx);
   else
-    hts_mutex_unlock(ptr);
+    hts_mutex_unlock(mtx);
 }
 
 
