@@ -38,6 +38,9 @@ typedef struct pa_audio_mode {
 
   pa_sample_spec ss; // Active sample spec
 
+  pa_volume_t mastervol;
+  int muted;
+
 } pa_audio_mode_t;
 
 /**
@@ -78,6 +81,7 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
   media_pipe_t *mp = ab->ab_mp;
 #endif
   pa_channel_map map;
+  pa_cvolume cv;
 
   memset(&pam->ss, 0, sizeof(pa_sample_spec));
 
@@ -132,7 +136,14 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
   pa_stream_set_write_callback(s, stream_write_callback, pam);
 
   flags |= PA_STREAM_AUTO_TIMING_UPDATE | PA_STREAM_INTERPOLATE_TIMING;
-  n = pa_stream_connect_playback(s, NULL, NULL, flags, NULL, NULL);
+
+  pa_cvolume_init(&cv);
+  pa_cvolume_set(&cv, pam->ss.channels, pam->mastervol);
+
+  if(pam->muted)
+    flags |= PA_STREAM_START_MUTED;
+
+  n = pa_stream_connect_playback(s, NULL, NULL, flags, &cv, NULL);
 
   pam->stream = s;
   pam->cur_rate   = ab->ab_rate;
@@ -169,9 +180,12 @@ update_sink_input_info(pa_context *c, const pa_sink_input_info *i,
   if(i == NULL)
     return;
 
+  pam->mastervol = pa_cvolume_max(&i->volume);
+  pam->muted = !!i->mute;
+
   prop_set_float_ex(prop_mastervol, pam->sub_mvol, 
-		    pa_sw_volume_to_dB(pa_cvolume_max(&i->volume)));
-  prop_set_int_ex(prop_mastermute, pam->sub_mute, !!i->mute);
+		    pa_sw_volume_to_dB(pam->mastervol));
+  prop_set_int_ex(prop_mastermute, pam->sub_mute, pam->muted);
 }
 
 
@@ -260,12 +274,14 @@ set_mastervol(void *opaque, float value)
   pa_operation *o;
   pa_cvolume cv;
 
+  pam->mastervol = pa_sw_volume_from_dB(value);
+
   if(pam->stream == NULL ||
      pa_stream_get_state(pam->stream) != PA_STREAM_READY)
     return;
   
   pa_cvolume_init(&cv);
-  pa_cvolume_set(&cv, pam->ss.channels, pa_sw_volume_from_dB(value));
+  pa_cvolume_set(&cv, pam->ss.channels, pam->mastervol);
 
   o = pa_context_set_sink_input_volume(pam->context, 
 				       pa_stream_get_index(pam->stream),
@@ -286,13 +302,15 @@ set_mastermute(void *opaque, int value)
   pa_audio_mode_t *pam = opaque;
   pa_operation *o;
 
+  pam->muted = value;
+
   if(pam->stream == NULL ||
      pa_stream_get_state(pam->stream) != PA_STREAM_READY)
     return;
 
   o = pa_context_set_sink_input_mute(pam->context,
 				     pa_stream_get_index(pam->stream),
-				     value, NULL, NULL);
+				     pam->muted, NULL, NULL);
   if(o != NULL)
     pa_operation_unref(o);
 }
@@ -322,7 +340,6 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
   size_t l, length;
   int64_t pts;
   media_pipe_t *mp;
-  //  pa_operation *o;
 
   pa_threaded_mainloop_lock(mainloop);
 
