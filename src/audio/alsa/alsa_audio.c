@@ -283,6 +283,17 @@ set_mastervol(void *opaque, float value)
 
 
 /**
+ * Set mute flag
+ */
+static void
+set_mastermute(void *opaque, int v)
+{
+  int *ptr = opaque;
+  *ptr = v;
+}
+
+
+/**
  *
  */
 static int
@@ -304,16 +315,26 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
   int ret = 0;
   void *tmpbuf;
   int mastervol = 0;
+  int mastermute = 0;
 
-  prop_sub_t *s;
+  prop_sub_t *s_vol;
+  prop_sub_t *s_mute;
 
   hts_mutex_lock(&alsa_mutex);
+  
+  s_vol =
+    prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+		   PROP_TAG_CALLBACK_FLOAT, set_mastervol, &mastervol,
+		   PROP_TAG_ROOT, prop_mastervol,
+		   PROP_TAG_MUTEX, &alsa_mutex,
+		   NULL);
 
-  s = prop_subscribe(PROP_SUB_DIRECT_UPDATE,
-		     PROP_TAG_CALLBACK_FLOAT, set_mastervol, &mastervol,
-		     PROP_TAG_ROOT, prop_mastervol,
-		     PROP_TAG_MUTEX, &alsa_mutex,
-		     NULL);
+  s_mute =
+    prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+		   PROP_TAG_CALLBACK_INT, set_mastermute, &mastermute,
+		   PROP_TAG_ROOT, prop_mastermute,
+		   PROP_TAG_MUTEX, &alsa_mutex,
+		   NULL);
 
   hts_mutex_unlock(&alsa_mutex);
 
@@ -395,8 +416,12 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
       outbuf = (void *)ab->ab_data;
       outlen = ab->ab_frames;
 
-      for(i = 0; i < ab->ab_frames * ab->ab_channels; i++)
-	outbuf[i] = CLIP16((outbuf[i] * mastervol) >> 16);
+      if(mastermute) {
+	memset(outbuf, 0, ab->ab_frames * ab->ab_channels * sizeof(int16_t));
+      } else {
+	for(i = 0; i < ab->ab_frames * ab->ab_channels; i++)
+	  outbuf[i] = CLIP16((outbuf[i] * mastervol) >> 16);
+      }
       break;
     }
 
@@ -453,7 +478,8 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
   }
 
   hts_mutex_lock(&alsa_mutex);
-  prop_unsubscribe(s);
+  prop_unsubscribe(s_vol);
+  prop_unsubscribe(s_mute);
   hts_mutex_unlock(&alsa_mutex);
 
   free(tmpbuf);
