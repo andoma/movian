@@ -30,8 +30,6 @@
 
 extern audio_fifo_t *thefifo;
 
-#define CLIP16(a) ((a) > 32767 ? 32767 : ((a) < -32768 ? -32768 : a))
-
 static void audio_mix1(audio_decoder_t *ad, audio_mode_t *am, 
 		       int channels, int rate, int64_t chlayout,
 		       enum CodecID codec_id,
@@ -438,7 +436,6 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
 	   int16_t *data0, int frames, int64_t pts, int epoch,
 	   media_pipe_t *mp)
 {
-  volume_control_t *vc = &global_volume; // Needed for soft-gain
   int16_t tmp[AUDIO_CHAN_MAX];
   int x, y, z, i, c;
   int16_t *data, *src, *dst;
@@ -614,20 +611,6 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
       data[0] = CLIP16(x);
       data[1] = CLIP16(y);
       data[4] = 0;
-      data += channels;
-    }
-  }
-
-
-  /**
-   * Apply softgain, (if needed)
-   */
-
-  if(vc->vc_soft_gain_needed) {
-    data = data0;
-    for(i = 0; i < frames; i++) {
-      for(c = 0; c < channels; c++)
-	data[c] = CLIP16((data[c] * vc->vc_soft_gain[c]) >> 16);
       data += channels;
     }
   }

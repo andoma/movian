@@ -40,6 +40,7 @@ static prop_t *audio_settings_root;
 static setting_t *audio_settings_current_device;
 
 static void *audio_output_thread(void *aux);
+static void audio_mastervol_init(void);
 
 static char *audio_stored_device;
 
@@ -97,6 +98,8 @@ audio_change_output_device(void *opaque, const char *string)
 void
 audio_init(void)
 {
+  audio_mastervol_init();
+
   audio_settings_root = settings_add_dir(NULL, "audio", "Audio settings",
 					 "audio");
   
@@ -129,8 +132,6 @@ audio_init(void)
   AUDIO_INIT_SUBSYS(dummy);
 
   hts_thread_create_detached(audio_output_thread, NULL);
-
-  audio_mixer_init();
 }
 
 
@@ -173,39 +174,6 @@ audio_output_thread(void *aux)
 }
 
 
-/**
- *
- */
-static void
-audio_mode_load_mixer_map(htsmsg_t *m, audio_mode_t *am, 
-			  const char *name, int type)
-{
-  const char *s;
-  mixer_controller_t *mc;
-
-  if((s = htsmsg_get_str(m, name)) == NULL)
-    return;
-
-  TAILQ_FOREACH(mc, &am->am_mixer_controllers, mc_link) {
-    if(!strcmp(mc->mc_title, s))
-      am->am_mixers[type] = mc;
-  }
-}
-
-
-/**
- *
- */
-static void
-audio_mode_save_mixer_map(htsmsg_t *m, audio_mode_t *am, 
-			  const char *name, int type)
-{
-  if(am->am_mixers[type] == NULL)
-    return;
-  htsmsg_add_str(m, name, am->am_mixers[type]->mc_title);
-}
-
-
 
 /**
  *
@@ -222,13 +190,6 @@ audio_mode_save_settings(audio_mode_t *am)
   htsmsg_add_u32(m, "swap_surround", am->am_swap_surround);
   htsmsg_add_s32(m, "delay", am->am_audio_delay);
 
-  audio_mode_save_mixer_map(m, am, "mixer_master",     AM_MIXER_MASTER);
-  audio_mode_save_mixer_map(m, am, "mixer_front",      AM_MIXER_FRONT);
-  audio_mode_save_mixer_map(m, am, "mixer_rear",       AM_MIXER_REAR);
-  audio_mode_save_mixer_map(m, am, "mixer_center",     AM_MIXER_CENTER);
-  audio_mode_save_mixer_map(m, am, "mixer_center_lfe", AM_MIXER_CENTER_AND_LFE);
-  audio_mode_save_mixer_map(m, am, "mixer_lfe",        AM_MIXER_LFE);
-  audio_mode_save_mixer_map(m, am, "mixer_side",       AM_MIXER_SIDE);
   htsmsg_store_save(m, "audio/devices/%s", am->am_id);
   htsmsg_destroy(m);
 }
@@ -289,74 +250,10 @@ am_set_swap_surround(void *opaque, int value)
   audio_mode_save_settings(am);
 }
 
-/**
- *
- */
-static void
-am_set_mixer(audio_mode_t *am, int type, const char *string)
-{
-  mixer_controller_t *mc;
-
-  if(string == NULL || !strcmp(string, "notavail")) {
-    am->am_mixers[type] = NULL;
-  } else {
-    TAILQ_FOREACH(mc, &am->am_mixer_controllers, mc_link) {
-      if(!strcmp(mc->mc_title, string))
-	break;
-    }
-    am->am_mixers[type] = mc;
-  }
-  audio_mode_save_settings(am);
-}
-
-
-
 
 /**
  *
  */
-static void 
-am_set_mixer_master(void *opaque, const char *string)
-{
-  am_set_mixer(opaque, AM_MIXER_MASTER, string);
-}
-
-static void 
-am_set_mixer_front(void *opaque, const char *string)
-{
-  am_set_mixer(opaque, AM_MIXER_FRONT, string);
-}
-
-static void 
-am_set_mixer_rear(void *opaque, const char *string)
-{
-  am_set_mixer(opaque, AM_MIXER_REAR, string);
-}
-
-static void 
-am_set_mixer_center(void *opaque, const char *string)
-{
-  am_set_mixer(opaque, AM_MIXER_CENTER, string);
-}
-
-static void 
-am_set_mixer_center_lfe(void *opaque, const char *string)
-{
-  am_set_mixer(opaque, AM_MIXER_CENTER_AND_LFE, string);
-}
-
-static void 
-am_set_mixer_lfe(void *opaque, const char *string)
-{
-  am_set_mixer(opaque, AM_MIXER_LFE, string);
-}
-
-static void 
-am_set_mixer_side(void *opaque, const char *string)
-{
-  am_set_mixer(opaque, AM_MIXER_SIDE, string);
-}
-
 static void 
 am_set_av_sync(void *opaque, int value)
 {
@@ -364,31 +261,6 @@ am_set_av_sync(void *opaque, int value)
   am->am_audio_delay = value;
   audio_mode_save_settings(am);
 }
-
-
-
-/**
- *
- */
-
-static void
-audio_add_mixer_map(prop_t *r, audio_mode_t *am, int type, 
-		    const char *id, const char *title,
-		    void (*setf)(void *opaque, const char *string))
-{
-  mixer_controller_t *mc;
-  setting_t *p;
-
-  p = settings_add_multiopt(r, id, title, setf, am);
-  
-  settings_multiopt_add_opt(p, "notavail", "Not available",
-			    am->am_mixers[type] == NULL);
-
-  TAILQ_FOREACH(mc, &am->am_mixer_controllers, mc_link)
-    settings_multiopt_add_opt(p, mc->mc_title, mc->mc_title,
-			      am->am_mixers[type] == mc);
-}
-
 
  
 /**
@@ -411,9 +283,6 @@ audio_mode_register(audio_mode_t *am)
   settings_multiopt_add_opt(audio_settings_current_device,
 			    am->am_id, am->am_title, am == audio_mode_current);
   
-  if(multich == 0 && TAILQ_FIRST(&am->am_mixer_controllers) == NULL)
-    return;
-
   m = htsmsg_store_load("audio/devices/%s", am->am_id);
 
 
@@ -442,38 +311,81 @@ audio_mode_register(audio_mode_t *am)
 		      SETTINGS_INITIAL_UPDATE);
   }
 
-  if(m != NULL) {
-    audio_mode_load_mixer_map(m, am, "mixer_master",     AM_MIXER_MASTER);
-    audio_mode_load_mixer_map(m, am, "mixer_front",      AM_MIXER_FRONT);
-    audio_mode_load_mixer_map(m, am, "mixer_rear",       AM_MIXER_REAR);
-    audio_mode_load_mixer_map(m, am, "mixer_center",     AM_MIXER_CENTER);
-    audio_mode_load_mixer_map(m, am, "mixer_center_lfe", AM_MIXER_CENTER_AND_LFE);
-    audio_mode_load_mixer_map(m, am, "mixer_lfe",        AM_MIXER_LFE);
-    audio_mode_load_mixer_map(m, am, "mixer_side",       AM_MIXER_SIDE);
-  }
-
-  if(TAILQ_FIRST(&am->am_mixer_controllers) != NULL) {
-    audio_add_mixer_map(r, am, AM_MIXER_MASTER, "mixer_master",
-			"Master volume", am_set_mixer_master);
-    audio_add_mixer_map(r, am, AM_MIXER_FRONT, "mixer_front",
-			"Front speakers", am_set_mixer_front);
-
-    audio_add_mixer_map(r, am, AM_MIXER_REAR, "mixer_rear",
-			"Rear speakers", am_set_mixer_rear);
-
-    audio_add_mixer_map(r, am, AM_MIXER_CENTER, "mixer_center",
-			"Center speaker", am_set_mixer_center);
-
-    audio_add_mixer_map(r, am, AM_MIXER_CENTER_AND_LFE, "mixer_center_lfe",
-			"Center + LFE speakers", am_set_mixer_center_lfe);
-
-    audio_add_mixer_map(r, am, AM_MIXER_LFE, "mixer_lfe",
-			"LFE speaker", am_set_mixer_lfe);
-
-    audio_add_mixer_map(r, am, AM_MIXER_SIDE, "mixer_side",
-			"Side speakers", am_set_mixer_side);
-  }
-
   if(m != NULL)
     htsmsg_destroy(m);
+}
+
+
+
+prop_t *prop_mastervol, *prop_mastermute;
+
+/**
+ *
+ */
+static int
+audio_mixer_event_handler(event_t *e, void *opaque)
+{
+  if(event_is_action(e, ACTION_VOLUME_UP)) {
+    prop_add_clipped_float(prop_mastervol, 1, -75, 0);
+    return 1;
+  }
+
+  if(event_is_action(e, ACTION_VOLUME_DOWN)) {
+    prop_add_clipped_float(prop_mastervol, -1, -75, 0);
+    return 1;
+  }
+
+  if(event_is_action(e, ACTION_VOLUME_MUTE_TOGGLE)) {
+    prop_toggle_int(prop_mastermute);
+    return 1;
+  }
+
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+save_matervol(void *opaque, float value)
+{
+  htsmsg_t *m = htsmsg_create_map();
+  TRACE(TRACE_DEBUG, "audio", "Master volume set to %f dB", value);
+
+  htsmsg_add_s32(m, "master-volume", value * 1000);
+  htsmsg_store_save(m, "audiomixer");
+  htsmsg_destroy(m);
+}
+
+
+/**
+ *
+ */
+void
+audio_mastervol_init(void)
+{
+  htsmsg_t *m = htsmsg_store_load("audiomixer");
+  int32_t i32;
+  prop_t *prop_audio;
+
+  prop_audio = prop_create(prop_get_global(), "audio");
+  prop_mastervol  = prop_create(prop_audio, "mastervolume");
+  prop_mastermute = prop_create(prop_audio, "mastermute");
+
+  prop_set_int(prop_mastermute, 0);
+
+  if(m != NULL && !htsmsg_get_s32(m, "master-volume", &i32))
+    prop_set_float(prop_mastervol, (float)i32 / 1000);
+  
+  htsmsg_destroy(m);
+
+  prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+		 PROP_TAG_CALLBACK_FLOAT, save_matervol, NULL,
+		 PROP_TAG_ROOT, prop_mastervol,
+		 NULL);
+  
+  event_handler_register("audio mixer", audio_mixer_event_handler,
+			 EVENTPRI_AUDIO_MIXER, NULL);
+
 }

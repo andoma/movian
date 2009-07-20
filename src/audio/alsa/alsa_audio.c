@@ -31,6 +31,8 @@
 #include "audio/audio_ui.h"
 #include "audio/audio_iec958.h"
 
+static hts_mutex_t alsa_mutex;
+
 /**
  * Alsa representation of an audio mode
  */
@@ -42,19 +44,6 @@ typedef struct alsa_audio_mode {
   int aam_sample_rate;
 
 } alsa_audio_mode_t;
-
-/**
- * Alsa representation of a mixer controller
- */
-typedef struct alsa_mixer_controller {
-  mixer_controller_t h;
-  snd_mixer_elem_t *amc_elem;
-  int amc_joined;
-
-} alsa_mixer_controller_t;
-
-
-static int alsa_probe_mixer(const char *device, audio_mode_t *am);
 
 /**
  *
@@ -279,6 +268,21 @@ alsa_silence(snd_pcm_t *h, int format, int rate, void *tmpbuf)
 
 
 /**
+ * Convert dB to amplitude scale factor (-6dB ~= half volume)
+ */
+static void
+set_mastervol(void *opaque, float value)
+{
+  int *ptr = opaque;
+  int v;
+  v = 65536 * pow(10, (value / 20));
+  if(v > 65535)
+    v = 65535;
+  *ptr = v;
+}
+
+
+/**
  *
  */
 static int
@@ -290,7 +294,7 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
   audio_buf_t *ab;
   int16_t *outbuf;
   int outlen;
-  int c;
+  int c, i;
   int cur_format = 0;
   int cur_rate = 0;
   int silence_threshold = 0; 
@@ -299,6 +303,19 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
   int64_t pts = AV_NOPTS_VALUE;
   int ret = 0;
   void *tmpbuf;
+  int mastervol = 0;
+
+  prop_sub_t *s;
+
+  hts_mutex_lock(&alsa_mutex);
+
+  s = prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+		     PROP_TAG_CALLBACK_FLOAT, set_mastervol, &mastervol,
+		     PROP_TAG_ROOT, prop_mastervol,
+		     PROP_TAG_MUTEX, &alsa_mutex,
+		     NULL);
+
+  hts_mutex_unlock(&alsa_mutex);
 
   tmpbuf = calloc(1, IEC958_MAX_FRAME_SIZE);
 
@@ -377,8 +394,10 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
     default:
       outbuf = (void *)ab->ab_data;
       outlen = ab->ab_frames;
-      break;
 
+      for(i = 0; i < ab->ab_frames * ab->ab_channels; i++)
+	outbuf[i] = CLIP16((outbuf[i] * mastervol) >> 16);
+      break;
     }
 
     silence_threshold = 500; /* About 5 seconds */
@@ -433,6 +452,10 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
     ab_free(ab);
   }
 
+  hts_mutex_lock(&alsa_mutex);
+  prop_unsubscribe(s);
+  hts_mutex_unlock(&alsa_mutex);
+
   free(tmpbuf);
   return ret;
 }
@@ -453,7 +476,6 @@ alsa_probe(const char *card, const char *dev)
   char longtitle[128];
   char id[128];
   alsa_audio_mode_t *aam;
-  int i;
 
   info = alloca(snd_pcm_info_sizeof());
 
@@ -583,13 +605,6 @@ alsa_probe(const char *card, const char *dev)
 
   aam->aam_dev = strdup(dev);
 
-  for(i = 0; i < 8; i++)
-    aam->aam_head.am_swizzle[i] = i;
-
-  TAILQ_INIT(&aam->aam_head.am_mixer_controllers);
-  if(card != NULL)
-    alsa_probe_mixer(card, &aam->aam_head);
-
   audio_mode_register(&aam->aam_head);
 
   return 0;
@@ -704,151 +719,10 @@ void audio_alsa_init(void); /* Avoid warning */
 void
 audio_alsa_init(void)
 {
+  hts_mutex_init(&alsa_mutex);
+
   alsa_probe("default", "default");
   alsa_probe(NULL, "iec958");
 
   alsa_probe_devices();
-}
-
-
-
-
-/**
- *
- */
-static float
-alsa_mixer_volume_set(struct mixer_controller *mc, float in)
-{
-  alsa_mixer_controller_t *amc = (void *)mc;
-  long v;
-  float cur;
-
-  /* Some audiocards seem to behave a bit strange at the bottom of its
-     defined volume range, so we don't allow values lower than 
-     'min + 3dB' */
-
-#define ALSA_MIXER_BOTTOM_MARGIN 3 /* dB */
-
-  if(in < mc->mc_min + ALSA_MIXER_BOTTOM_MARGIN) {
-    v = (mc->mc_min + ALSA_MIXER_BOTTOM_MARGIN) * 100.0;
-  } else if(in > mc->mc_max) {
-    v = mc->mc_max * 100.0;
-  } else {
-    v = in * 100.0;
-  }
-
-  if(snd_mixer_selem_set_playback_dB_all(amc->amc_elem, v, 0) < 0)
-    return in;
-  
-  snd_mixer_selem_get_playback_dB(amc->amc_elem, 0, &v);
-  cur = (float)v / 100.0;
-  return in - cur;
-}
-
-
-/**
- *
- */
-static int
-alsa_mixer_mute_set(struct mixer_controller *mc, int mute)
-{
-  alsa_mixer_controller_t *amc = (void *)mc;
-
-  return snd_mixer_selem_set_playback_switch_all(amc->amc_elem, !mute);
-}
-
-/**
- *
- */
-static void
-alsa_mixer_add_controller(audio_mode_t *am, snd_mixer_elem_t *elem)
-{
-  alsa_mixer_controller_t *amc;
-  mixer_controller_t *mc;
-  long min, max;
-  char buf[30];
-  snd_mixer_selem_id_t *sid = alloca(snd_mixer_selem_id_sizeof());
-  
-  snd_mixer_selem_get_id(elem, sid);
-
-  amc = calloc(1, sizeof(alsa_mixer_controller_t));
-  mc = &amc->h;
-
-  snprintf(buf, sizeof(buf), "Alsa: %s", snd_mixer_selem_id_get_name(sid));
-  mc->mc_title = strdup(buf);
-
-  amc->amc_elem = elem;
-  
-  if(snd_mixer_selem_has_common_volume(elem) ||
-     snd_mixer_selem_has_playback_volume(elem)) {
-
-    amc->amc_joined = snd_mixer_selem_has_playback_volume_joined(elem);
-
-    /* Is a volume controller */
-
-    snd_mixer_selem_get_playback_dB_range(elem, &min, &max);
-
-    mc->mc_min = (float)min / 100.0f;
-    mc->mc_max = (float)max / 100.0f;
-
-    snd_mixer_selem_get_playback_dB(elem, 0, &min);
-
-    mc->mc_set_volume = alsa_mixer_volume_set;
-
-    if(0 && snd_mixer_selem_has_playback_switch_joined(elem)) {
-      mc->mc_set_mute = alsa_mixer_mute_set;
-    }
-    mc->mc_type = MC_TYPE_SLIDER;
-  } else {
-    return;
-  } 
-
-  TAILQ_INSERT_TAIL(&am->am_mixer_controllers, mc, mc_link);
-}
-
-
-
-/**
- *
- */
-static int
-alsa_probe_mixer(const char *device, audio_mode_t *am)
-{
-  int err;
-  snd_mixer_t *handle;
-  snd_mixer_elem_t *elem;
-	
-  if((err = snd_mixer_open(&handle, 0)) < 0) {
-    TRACE(TRACE_DEBUG, "ALSA", 
-	    "Mixer %s open error: %s", device, snd_strerror(err));
-    return err;
-  }
-
-  if((err = snd_mixer_attach(handle, device)) < 0) {
-    TRACE(TRACE_DEBUG, "ALSA", "Mixer attach %s error: %s",
-	  device, snd_strerror(err));
-    snd_mixer_close(handle);
-    return err;
-  }
-
-  if((err = snd_mixer_selem_register(handle, NULL, NULL)) < 0) {
-    TRACE(TRACE_DEBUG, "ALSA", 
-	  "Mixer %s register error: %s", device, snd_strerror(err));
-    snd_mixer_close(handle);
-    return err;
-  }
-
-  if((err = snd_mixer_load(handle)) < 0) {
-    TRACE(TRACE_DEBUG, "ALSA", 
-	  "Mixer %s load error: %s", device, snd_strerror(err));
-    snd_mixer_close(handle);
-    return err;
-  }
-
-  for(elem = snd_mixer_first_elem(handle); elem; 
-      elem = snd_mixer_elem_next(elem)) {
-
-    alsa_mixer_add_controller(am, elem);
-  }
-  return 0;
 }

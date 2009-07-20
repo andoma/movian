@@ -29,10 +29,14 @@ typedef struct pa_audio_mode {
   audio_mode_t am;
   pa_context *context;
   pa_stream *stream;
-  int framesize;
 
   int cur_format;
   int cur_rate;
+
+  prop_sub_t *sub_mvol; // Master volume subscription
+  prop_sub_t *sub_mute; // Master mute subscription
+
+  pa_sample_spec ss; // Active sample spec
 
 } pa_audio_mode_t;
 
@@ -55,7 +59,6 @@ stream_write_callback(pa_stream *s, size_t length, void *userdata)
 static void
 stream_state_callback(pa_stream *s, void *userdata)
 {
-  //  pa_audio_mode_t *pam = (pa_audio_mode_t *)userdata;
   pa_threaded_mainloop_signal(mainloop, 0);
 }
 
@@ -70,48 +73,45 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
   char buf[100];
   int n;
   int flags = 0;
-  pa_sample_spec ss;
 #if PA_API_VERSION >= 12
   pa_proplist *pl;
   media_pipe_t *mp = ab->ab_mp;
 #endif
   pa_channel_map map;
 
-  memset(&ss, 0, sizeof(ss));
+  memset(&pam->ss, 0, sizeof(pa_sample_spec));
 
-  ss.format = PA_SAMPLE_S16NE; 
+  pam->ss.format = PA_SAMPLE_S16NE; 
   switch(ab->ab_rate) {
   default:
-  case AM_SR_96000: ss.rate = 96000; break;
-  case AM_SR_48000: ss.rate = 48000; break;
-  case AM_SR_44100: ss.rate = 44100; break;
-  case AM_SR_32000: ss.rate = 32000; break;
-  case AM_SR_24000: ss.rate = 24000; break;
+  case AM_SR_96000: pam->ss.rate = 96000; break;
+  case AM_SR_48000: pam->ss.rate = 48000; break;
+  case AM_SR_44100: pam->ss.rate = 44100; break;
+  case AM_SR_32000: pam->ss.rate = 32000; break;
+  case AM_SR_24000: pam->ss.rate = 24000; break;
   }
 
   switch(ab->ab_format) {
   case AM_FORMAT_PCM_STEREO:
-    ss.channels = 2;
+    pam->ss.channels = 2;
     pa_channel_map_init_stereo(&map);
     break;
 
   case AM_FORMAT_PCM_5DOT1:
-    ss.channels = 6;
+    pam->ss.channels = 6;
     pa_channel_map_init_auto(&map, 6, PA_CHANNEL_MAP_ALSA);
     break;
 
   case AM_FORMAT_PCM_7DOT1:
-    ss.channels = 8;
+    pam->ss.channels = 8;
     pa_channel_map_init_auto(&map, 8, PA_CHANNEL_MAP_ALSA);
     break;
   default:
     abort();
   }
 
-  pam->framesize = pa_frame_size(&ss);
-
   TRACE(TRACE_DEBUG, "PA", "Created stream %s",
-	pa_sample_spec_snprint(buf, sizeof(buf), &ss));
+	pa_sample_spec_snprint(buf, sizeof(buf), &pam->ss));
 
 #if PA_API_VERSION >= 12
   pl = pa_proplist_new();
@@ -121,11 +121,11 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
     pa_proplist_sets(pl, PA_PROP_MEDIA_ROLE, "music");
 
   s = pa_stream_new_with_proplist(pam->context, "Showtime playback", 
-				  &ss, &map, pl);  
+				  &pam->ss, &map, pl);  
   pa_proplist_free(pl);
 
 #else
-  s = pa_stream_new(pam->context, "Showtime playback", &ss, &map);  
+  s = pa_stream_new(pam->context, "Showtime playback", &pam->ss, &map);  
 #endif
   
   pa_stream_set_state_callback(s, stream_state_callback, pam);
@@ -137,6 +137,8 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
   pam->stream = s;
   pam->cur_rate   = ab->ab_rate;
   pam->cur_format = ab->ab_format;
+
+
 }
 
 
@@ -153,6 +155,26 @@ stream_destroy(pa_audio_mode_t *pam)
 }
 
 
+
+/**
+ * Sink input updated, reflect master volume and mute status into
+ * showtime's properties.
+ */
+static void
+update_sink_input_info(pa_context *c, const pa_sink_input_info *i, 
+		       int eol, void *userdata)
+{
+  pa_audio_mode_t *pam = (pa_audio_mode_t *)userdata;
+
+  if(i == NULL)
+    return;
+
+  prop_set_float_ex(prop_mastervol, pam->sub_mvol, 
+		    pa_sw_volume_to_dB(pa_cvolume_max(&i->volume)));
+  prop_set_int_ex(prop_mastermute, pam->sub_mute, !!i->mute);
+}
+
+
 /**
  *
  */
@@ -160,6 +182,24 @@ static void
 subscription_event_callback(pa_context *c, pa_subscription_event_type_t t,
 			    uint32_t idx, void *userdata)
 {
+  pa_audio_mode_t *pam = (pa_audio_mode_t *)userdata;
+  pa_operation *o;
+
+  if(pam->stream == NULL ||
+     pa_stream_get_state(pam->stream) != PA_STREAM_READY)
+    return;
+
+  if((t & PA_SUBSCRIPTION_EVENT_FACILITY_MASK) !=
+     PA_SUBSCRIPTION_EVENT_SINK_INPUT)
+    return;
+
+  if(pa_stream_get_index(pam->stream) != idx)
+    return;
+
+  o = pa_context_get_sink_input_info(pam->context, idx,
+				     update_sink_input_info, pam);
+  if(o != NULL)
+    pa_operation_unref(o);
 }
 
 
@@ -185,7 +225,7 @@ context_state_callback(pa_context *c, void *userdata)
 				      subscription_event_callback, pam);
     
     o = pa_context_subscribe(pam->context,
-			     PA_SUBSCRIPTION_MASK_ALL,
+			     PA_SUBSCRIPTION_MASK_SINK_INPUT,
 			     NULL, NULL);
     if(o != NULL)
       pa_operation_unref(o);
@@ -208,6 +248,68 @@ context_state_callback(pa_context *c, void *userdata)
 }
 
 
+/**
+ * Volume adjusted (from within showtime), send update to PA
+ *
+ * Lock for PA mainloop is already held
+ */
+static void
+set_mastervol(void *opaque, float value)
+{
+  pa_audio_mode_t *pam = opaque;
+  pa_operation *o;
+  pa_cvolume cv;
+
+  if(pam->stream == NULL ||
+     pa_stream_get_state(pam->stream) != PA_STREAM_READY)
+    return;
+  
+  pa_cvolume_init(&cv);
+  pa_cvolume_set(&cv, pam->ss.channels, pa_sw_volume_from_dB(value));
+
+  o = pa_context_set_sink_input_volume(pam->context, 
+				       pa_stream_get_index(pam->stream),
+				       &cv, NULL, NULL);
+  if(o != NULL)
+    pa_operation_unref(o);
+}
+
+
+/**
+ * Mute (from within showtime), send update to PA
+ *
+ * Lock for PA mainloop is already held
+ */
+static void
+set_mastermute(void *opaque, int value)
+{
+  pa_audio_mode_t *pam = opaque;
+  pa_operation *o;
+
+  if(pam->stream == NULL ||
+     pa_stream_get_state(pam->stream) != PA_STREAM_READY)
+    return;
+
+  o = pa_context_set_sink_input_mute(pam->context,
+				     pa_stream_get_index(pam->stream),
+				     value, NULL, NULL);
+  if(o != NULL)
+    pa_operation_unref(o);
+}
+
+
+
+/**
+ * Prop lockmanager for locking PA mainloop
+ */
+static void
+prop_pa_lockmgr(void *ptr, int lock)
+{
+  if(lock)
+    pa_threaded_mainloop_lock(mainloop);
+  else
+    pa_threaded_mainloop_unlock(mainloop);
+}
 
 /**
  *
@@ -251,10 +353,25 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
     return -1;
   }
 
-
-  /* Need at least one packet of audio */
+ /* Need at least one packet of audio */
   ab = af_deq(af, 1);
 
+  /* Subscribe to updates of master volume */
+  pam->sub_mvol = 
+    prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+		   PROP_TAG_CALLBACK_FLOAT, set_mastervol, pam,
+		   PROP_TAG_ROOT, prop_mastervol,
+		   PROP_TAG_EXTERNAL_LOCK, mainloop, prop_pa_lockmgr,
+		   NULL);
+
+  /* Subscribe to updates of master volume mute */
+  pam->sub_mute = 
+    prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+		   PROP_TAG_CALLBACK_INT, set_mastermute, pam,
+		   PROP_TAG_ROOT, prop_mastermute,
+		   PROP_TAG_EXTERNAL_LOCK, mainloop, prop_pa_lockmgr,
+		   NULL);
+ 
   while(am == audio_mode_current) {
 
     if(ab == NULL) {
@@ -285,6 +402,7 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
       continue;
     }
     
+
     l = pa_stream_writable_size(pam->stream);
     
     if(l == 0) {
@@ -292,7 +410,7 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
       continue;
     }
 
-    length = ab->ab_frames * pam->framesize - ab->ab_tmp;
+    length = ab->ab_frames * pa_frame_size(&pam->ss) - ab->ab_tmp;
     
     if(l > length)
       l = length;
@@ -320,13 +438,16 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
 	hts_mutex_unlock(&mp->mp_clock_mutex);
       }
     }
-    assert(ab->ab_tmp <= ab->ab_frames * pam->framesize);
+    assert(ab->ab_tmp <= ab->ab_frames * pa_frame_size(&pam->ss));
 
-    if(ab->ab_frames * pam->framesize == ab->ab_tmp) {
+    if(ab->ab_frames * pa_frame_size(&pam->ss) == ab->ab_tmp) {
       ab_free(ab);
       ab = NULL;
     }
   }
+
+  prop_unsubscribe(pam->sub_mvol);
+  prop_unsubscribe(pam->sub_mute);
 
   if(pam->stream != NULL)
     stream_destroy(pam);
@@ -374,6 +495,6 @@ audio_pa_init(void)
   am->am_preferred_size = 4096;
   am->am_entry = pa_audio_start;
 
-  TAILQ_INIT(&am->am_mixer_controllers);
+
   audio_mode_register(am);
 }

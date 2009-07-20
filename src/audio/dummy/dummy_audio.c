@@ -65,6 +65,5 @@ audio_dummy_init(void)
 
   am->am_entry = dummy_audio_start;
 
-  TAILQ_INIT(&am->am_mixer_controllers);
   audio_mode_register(am);
 }

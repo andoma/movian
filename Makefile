@@ -101,7 +101,6 @@ SRCS += src/audio/audio.c \
 	src/audio/audio_decoder.c \
 	src/audio/audio_fifo.c \
 	src/audio/audio_iec958.c \
-	src/audio/audio_mixer.c \
 
 SRCS-$(CONFIG_LIBASOUND)  += src/audio/alsa/alsa_audio.c
 SRCS-$(CONFIG_LIBPULSE)   += src/audio/pulseaudio/pulseaudio.c

@@ -38,17 +38,6 @@
  */
 
 TAILQ_HEAD(audio_mode_queue, audio_mode);
-TAILQ_HEAD(mixer_controller_queue, mixer_controller);
-
-#define AM_MIXER_MASTER         0
-#define AM_MIXER_FRONT          1
-#define AM_MIXER_REAR           2
-#define AM_MIXER_CENTER         3
-#define AM_MIXER_LFE            4
-#define AM_MIXER_CENTER_AND_LFE 5
-#define AM_MIXER_SIDE           6
-#define AM_MIXER_NUM            7
-
 
 #define audio_mode_stereo_only(am) \
   ((((am)->am_formats & AM_FORMAT_PCM_MASK) == AM_FORMAT_PCM_STEREO) ||\
@@ -79,9 +68,6 @@ typedef struct audio_mode {
 
   int (*am_entry)(struct audio_mode *am, audio_fifo_t *af);
 
-  uint8_t am_swizzle[AUDIO_CHAN_MAX]; /* channel swizzling */
-
-
   uint32_t am_phantom_center;
   uint32_t am_phantom_lfe;
   uint32_t am_small_front;
@@ -90,10 +76,6 @@ typedef struct audio_mode {
   int am_audio_delay;
 
   int am_preferred_size;
-
-  struct mixer_controller_queue am_mixer_controllers;
-
-  struct mixer_controller *am_mixers[AM_MIXER_NUM];
 
   TAILQ_ENTRY(audio_mode) am_link;
 
@@ -105,57 +87,8 @@ void audio_mode_register(audio_mode_t *am);
 
 void audio_init(void);
 
+extern prop_t *prop_mastervol, *prop_mastermute;
 
-/**
- * Mixer controllers
- */
-typedef struct mixer_controller {
-  TAILQ_ENTRY(mixer_controller) mc_link;
-
-  const char *mc_title;
-  
-  enum {
-    MC_TYPE_SLIDER,
-    MC_TYPE_SWITCH
-  } mc_type;
-
-
-  float mc_min;
-  float mc_max;
-
-  float (*mc_get_volume)(struct mixer_controller *mc);
-  float (*mc_set_volume)(struct mixer_controller *mc, float db);
-
-  int (*mc_get_mute)(struct mixer_controller *mc);
-  int (*mc_set_mute)(struct mixer_controller *mc, int on);
-
-} mixer_controller_t;
-
-void audio_mixer_init(void);
-
-
-
-/**
- * Global struct for volume control
- */
-typedef struct volume_control {
-
-  int vc_master_mute;
-  float vc_master_vol;
-
-  float vc_front_vol;
-  float vc_center_vol;
-  float vc_lfe_vol;
-  float vc_rear_vol;
-  float vc_side_vol;
-
-  int vc_soft_gain[8];
-
-  int vc_soft_gain_needed;
-
-} volume_control_t;
-
-
-extern volume_control_t global_volume;
+#define CLIP16(a) ((a) > 32767 ? 32767 : ((a) < -32768 ? -32768 : a))
 
 #endif /* AUDIO__H */
