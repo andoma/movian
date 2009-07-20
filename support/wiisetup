@@ -17,6 +17,7 @@ if ! test -e ${DEVKITPPC} ; then
     # llrint() is defined by math.h but not provided by libm.a
     # this break FFmpeg compilation, so do something ugly about it
     sed -i.bak "s/llrint/llrintxxxxxxxxx/" ${DEVKITPRO}/devkitPPC/powerpc-gekko/include/math.h
+    sed -i.bak "s/log2(/log2xxxxx(/" ${DEVKITPRO}/devkitPPC/powerpc-gekko/include/math.h
 
     # likewise, devkitppc lacks strings.h, where strcasecmp() should reside.
     # It is in string.h instead
