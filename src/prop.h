@@ -267,6 +267,10 @@ prop_t *prop_get_global(void);
 
 void prop_init(void);
 
+/**
+ * Use with PROP_TAG_NAME_VECTOR
+ */
+#define PNVEC(name...) (const char *[]){name, NULL}
 
 #define PROP_SUB_DIRECT_UPDATE 0x1
 #define PROP_SUB_NO_INITIAL_UPDATE 0x2
