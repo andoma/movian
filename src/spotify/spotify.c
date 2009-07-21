@@ -104,6 +104,7 @@ typedef struct playlist {
   prop_t *pl_prop_root;
   prop_t *pl_prop_tracks;
   prop_t *pl_prop_title;
+  prop_t *pl_prop_num_tracks;
 
 } playlist_t;
 
@@ -1231,6 +1232,7 @@ tracks_added(sp_playlist *plist, const sp_track **tracks,
 
     ptrvec_insert_entry(&pl->pl_tracks, pos, plt);
   }
+  prop_set_int(pl->pl_prop_num_tracks, pl->pl_tracks.size);
 #if 0
   for(i = 0; i < ptrvec_size(&pl->pl_tracks); i++) {
     plt = ptrvec_get_entry(&pl->pl_tracks, i);
@@ -1272,6 +1274,7 @@ tracks_removed(sp_playlist *plist, const int *tracks,
     prop_destroy(plt->plt_prop_root);
     free(plt);
   }
+  prop_set_int(pl->pl_prop_num_tracks, pl->pl_tracks.size);
 
 #if 0
   for(i = 0; i < ptrvec_size(&pl->pl_tracks); i++) {
@@ -1384,6 +1387,8 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
   metadata = prop_create(pl->pl_prop_root, "metadata");
 
   pl->pl_prop_title = prop_create(metadata, "title");
+  pl->pl_prop_num_tracks = prop_create(metadata, "tracks");
+
   prop_set_string(pl->pl_prop_title, f_sp_playlist_name(plist));
 
   ptrvec_insert_entry(&playlists, position, pl);
