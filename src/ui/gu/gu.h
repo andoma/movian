@@ -55,9 +55,6 @@ typedef struct gu_nav_page {
   prop_t *gnp_prop;
   GtkWidget *gnp_rootbox;
 
-  GtkWidget *gnp_view;
-  GtkListStore *gnp_list_store;
-
 } gu_nav_page_t;
 
 

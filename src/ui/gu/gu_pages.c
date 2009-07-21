@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <string.h>
 #include "gu.h"
+#include "showtime.h"
 
 /**
  *
@@ -28,17 +29,13 @@ gu_nav_page_set_type(void *opaque, const char *type)
 {
   gu_nav_page_t *gnp = opaque;
 
-  if(gnp->gnp_view != NULL) {
-    gtk_widget_destroy(gnp->gnp_view);
-    gnp->gnp_view = NULL;
-  }
-
-  if(gnp->gnp_list_store != NULL) {
-    abort();
-  }
+  if(type == NULL)
+    return;
 
   if(!strcmp(type, "directory")) {
     gu_directory_create(gnp);
+  } else {
+    TRACE(TRACE_ERROR, "GU", "Can not display page type: %s", type);
   }
 }
 

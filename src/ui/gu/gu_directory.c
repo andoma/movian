@@ -17,59 +17,147 @@
  */
 
 #include <string.h>
+#include <assert.h>
 #include "navigator.h"
 #include "gu.h"
 
-
 enum {
   URL_COLUMN,
-  TITLE_COLUMN,
-  ALBUM_COLUMN,
+  NAME_COLUMN,
   ARTIST_COLUMN,
+  DURATION_COLUMN,
+  ALBUM_COLUMN,
+  TRACKS_COLUMN,
   N_COLUMNS
 };
 
 
-typedef struct dirnodecol {
-  prop_sub_t *s;
-  int col;
-  struct dirnode *dn; // points back to struct
-} dirnodecol_t;
-
-typedef struct dirnode {
-  GtkTreeIter iter;
-  gu_nav_page_t *gnp;
-
-  dirnodecol_t sub[N_COLUMNS];
-
-} dirnode_t;
-
-
+/**
+ *
+ */
 static const char **subpaths[] = {
-  (const char *[]){"self", "url", NULL},
-  (const char *[]){"self", "metadata", "title", NULL},
-  (const char *[]){"self", "metadata", "album", NULL},
-  (const char *[]){"self", "metadata", "artist", NULL},
+  [URL_COLUMN]      = PNVEC("self", "url"),
+  [NAME_COLUMN]     = PNVEC("self", "metadata", "title"),
+  [ARTIST_COLUMN]   = PNVEC("self", "metadata", "artist"),
+  [DURATION_COLUMN] = PNVEC("self", "metadata", "duration"),
+  [ALBUM_COLUMN]    = PNVEC("self", "metadata", "album"),
+  [TRACKS_COLUMN]   = PNVEC("self", "metadata", "tracks"),
 };
+
+
+/**
+ *
+ */
+static GType coltypes[] = {
+  [URL_COLUMN]      = G_TYPE_STRING,
+  [NAME_COLUMN]     = G_TYPE_STRING,
+  [ARTIST_COLUMN]   = G_TYPE_STRING,
+  [DURATION_COLUMN] = G_TYPE_FLOAT,
+  [ALBUM_COLUMN]    = G_TYPE_STRING,
+  [TRACKS_COLUMN]   = G_TYPE_INT,
+};
+
+
+/**
+ *
+ */
+typedef struct column {
+  GtkTreeViewColumn *col;
+  int contents; // Cells with actual contents
+} column_t;
 
 
 
 /**
  *
  */
+typedef struct directory {
+
+  GtkWidget *box, *tree;
+  GtkListStore *model;
+
+  gtk_ui_t *gu;
+
+  column_t columns[N_COLUMNS];
+
+} directory_t;
+
+
+/**
+ *
+ */
+typedef struct cell {
+  prop_sub_t *s;
+  int idx;
+  struct dirnode *dn; // points back to struct
+} cell_t;
+
+
+/**
+ *
+ */
+typedef struct dirnode {
+  GtkTreeIter iter;
+  directory_t *dir;
+
+  cell_t cells[N_COLUMNS];
+
+} dirnode_t;
+
+
+/**
+ * Make the column visible if we have any content in it
+ */
 static void
-gu_col_sub(void *opaque, const char *str)
+make_column_visible(directory_t *d, int idx)
 {
-  dirnodecol_t *dnc = opaque;
-  dirnode_t *dn = dnc->dn;
+  column_t *c;
+  c = &d->columns[idx];
+  if(c->col != NULL && c->contents == 0) {
+    gtk_tree_view_column_set_visible(c->col, TRUE);
+    c->contents = 1;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+gu_col_set(void *opaque, prop_event_t event, ...)
+{
+  cell_t *c = opaque;
+  dirnode_t *dn = c->dn;
+  directory_t *d = dn->dir;
 
   GValue gv = { 0, };
- 
-  g_value_init(&gv, G_TYPE_STRING);
-  g_value_set_string(&gv, str ?: "");
-  gtk_list_store_set_value(dn->gnp->gnp_list_store, &dn->iter, dnc->col, &gv);
+
+  va_list ap;
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_SET_STRING:
+    g_value_init(&gv, G_TYPE_STRING);
+    g_value_set_string(&gv, va_arg(ap, char *));
+    break;
+  case PROP_SET_INT:
+    g_value_init(&gv, G_TYPE_INT);
+    g_value_set_int(&gv, va_arg(ap, int));
+    break;
+  case PROP_SET_FLOAT:
+    g_value_init(&gv, G_TYPE_FLOAT);
+    g_value_set_float(&gv, va_arg(ap, double));
+    break;
+  default:
+    return;
+  }
+
+  gtk_list_store_set_value(dn->dir->model, &dn->iter, c->idx, &gv);
   g_value_unset(&gv);
+  make_column_visible(d, c->idx);
 }
+
+
 
 /**
  *
@@ -77,10 +165,11 @@ gu_col_sub(void *opaque, const char *str)
 static void
 gu_node_sub(void *opaque, prop_event_t event, ...)
 {
-  gu_nav_page_t *gnp = opaque;
+  directory_t *d = opaque;
   prop_t *p;
   int flags, i;
   dirnode_t *dn;
+  cell_t *c;
 
   va_list ap;
   va_start(ap, event);
@@ -91,20 +180,21 @@ gu_node_sub(void *opaque, prop_event_t event, ...)
     flags = va_arg(ap, int);
 
     dn = calloc(1, sizeof(dirnode_t));
-    dn->gnp = gnp;
+    dn->dir = d;
 
-    gtk_list_store_append(gnp->gnp_list_store, &dn->iter);
+    gtk_list_store_append(d->model, &dn->iter);
 
     for(i = 0; i < N_COLUMNS; i++) {
-      dn->sub[i].col = i;
-      dn->sub[i].dn = dn;
-      dn->sub[i].s =
-	prop_subscribe(0, 
-		       PROP_TAG_NAME_VECTOR, subpaths[i],
-		       PROP_TAG_CALLBACK_STRING, gu_col_sub, &dn->sub[i],
-		       PROP_TAG_COURIER, gnp->gnp_gu->gu_pc, 
-		       PROP_TAG_NAMED_ROOT, p, "self",
-		       NULL);
+      c = &dn->cells[i];
+      c->idx = i;
+      c->dn = dn;
+
+      c->s = prop_subscribe(0, 
+			    PROP_TAG_NAME_VECTOR, subpaths[i],
+			    PROP_TAG_CALLBACK, gu_col_set, c,
+			    PROP_TAG_COURIER, d->gu->gu_pc,
+			    PROP_TAG_NAMED_ROOT, p, "self",
+			    NULL);
     }
     break;
   default:
@@ -120,13 +210,13 @@ static void
 row_activated(GtkTreeView *tree_view, GtkTreePath *path,
 	      GtkTreeViewColumn *column, gpointer user_data)
 {
-  gu_nav_page_t *gnp = user_data;
+  directory_t *d = user_data;
   GtkTreeIter iter;
   GValue gv = { 0, };
 
-  gtk_tree_model_get_iter(GTK_TREE_MODEL(gnp->gnp_list_store), &iter, path);
+  gtk_tree_model_get_iter(GTK_TREE_MODEL(d->model), &iter, path);
   
-  gtk_tree_model_get_value(GTK_TREE_MODEL(gnp->gnp_list_store), 
+  gtk_tree_model_get_value(GTK_TREE_MODEL(d->model), 
 			   &iter, URL_COLUMN, &gv);
 
   if(G_VALUE_HOLDS_STRING(&gv))
@@ -139,79 +229,115 @@ row_activated(GtkTreeView *tree_view, GtkTreePath *path,
 /**
  *
  */
+static void
+init_text_col(directory_t *d, const char *title, int idx)
+{
+  GtkCellRenderer *r;
+  GtkTreeViewColumn *c;
+
+  r = gtk_cell_renderer_text_new();
+  c = gtk_tree_view_column_new_with_attributes(title,
+					       r,
+					       "text", idx,
+					       NULL);
+
+  gtk_tree_view_append_column(GTK_TREE_VIEW(d->tree), c);
+  gtk_tree_view_column_set_visible(c, FALSE);
+  d->columns[idx].col = c;
+}
+
+
+/**
+ *
+ */
+static void
+duration2txt(GtkTreeViewColumn *tree_column, GtkCellRenderer *cell,
+	     GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
+{
+  char buf[20];
+  int i;
+  GValue gv = { 0, };
+
+  gtk_tree_model_get_value(model, iter, DURATION_COLUMN, &gv);
+  
+  if(G_VALUE_HOLDS_FLOAT(&gv)) {
+    i = g_value_get_float(&gv);
+    if(i == 0)
+      buf[0] = 0;
+    else
+      snprintf(buf, sizeof(buf), "%d:%02d", i / 60, i % 60);
+    g_object_set(cell, "text", buf, NULL);
+  }
+  g_value_unset(&gv);
+}
+
+
+/**
+ *
+ */
+static void
+init_duration_col(directory_t *d, const char *title, int idx)
+{
+  GtkCellRenderer *r;
+  GtkTreeViewColumn *c;
+
+  r = gtk_cell_renderer_text_new();
+  c = gtk_tree_view_column_new_with_attributes(title,
+					       r,
+					       "text", idx,
+					       NULL);
+
+  gtk_tree_view_column_set_cell_data_func(c, r, duration2txt, NULL, NULL);
+
+
+  gtk_tree_view_append_column(GTK_TREE_VIEW(d->tree), c);
+  gtk_tree_view_column_set_visible(c, FALSE);
+  d->columns[idx].col = c;
+}
+
+
+/**
+ *
+ */
 void
 gu_directory_create(gu_nav_page_t *gnp)
 {
-  GtkContainer *parent = GTK_CONTAINER(gnp->gnp_rootbox);
-  GtkCellRenderer *renderer;
-  GtkTreeViewColumn *column;
-  GtkWidget *tv, *sw;
+  directory_t *d = calloc(1, sizeof(directory_t));
+  d->model = gtk_list_store_newv(N_COLUMNS, coltypes);
 
-  gnp->gnp_list_store = gtk_list_store_new(N_COLUMNS,
-					   G_TYPE_STRING,
-					   G_TYPE_STRING,
-					   G_TYPE_STRING,
-					   G_TYPE_STRING
-					   );
-
+  d->gu = gnp->gnp_gu;
 
   prop_subscribe(0,
 		 PROP_TAG_NAME_VECTOR, 
 		 (const char *[]){"page", "nodes", NULL},
-		 PROP_TAG_CALLBACK, gu_node_sub, gnp,
+		 PROP_TAG_CALLBACK, gu_node_sub, d,
 		 PROP_TAG_COURIER, gnp->gnp_gu->gu_pc, 
 		 PROP_TAG_ROOT, gnp->gnp_prop, 
 		 NULL);
 
 
-  tv = gtk_tree_view_new_with_model(GTK_TREE_MODEL(gnp->gnp_list_store));
+  d->tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(d->model));
+  gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(d->tree), TRUE);
 
-  renderer = gtk_cell_renderer_text_new();
-  column = gtk_tree_view_column_new_with_attributes("Title",
-						    renderer,
-						    "text", 
-						    TITLE_COLUMN,
-						    NULL);
+  init_text_col(d,     "Name",     NAME_COLUMN);
+  init_text_col(d,     "Artist",   ARTIST_COLUMN);
+  init_duration_col(d, "Duration", DURATION_COLUMN);
+  init_text_col(d,     "Album",    ALBUM_COLUMN);
+  init_text_col(d,     "Tracks",   TRACKS_COLUMN);
 
-  gtk_tree_view_append_column(GTK_TREE_VIEW(tv), column);
+  g_signal_connect(G_OBJECT(d->tree), "row-activated", 
+		   G_CALLBACK(row_activated), d);
 
-
-  renderer = gtk_cell_renderer_text_new();
-  column = gtk_tree_view_column_new_with_attributes("Album",
-						    renderer,
-						    "text", 
-						    ALBUM_COLUMN,
-						    NULL);
-
-  gtk_tree_view_append_column(GTK_TREE_VIEW(tv), column);
-
-
-  renderer = gtk_cell_renderer_text_new();
-  column = gtk_tree_view_column_new_with_attributes("Artist",
-						    renderer,
-						    "text", 
-						    ARTIST_COLUMN,
-						    NULL);
-
-  //  gtk_tree_view_set_headers_clickable(GTK_TREE_VIEW(gnp->gnp_root), TRUE);
-  //  gtk_tree_view_set_enable_search(GTK_TREE_VIEW(gnp->gnp_root), TRUE);
-
-  gtk_tree_view_append_column(GTK_TREE_VIEW(tv), column);
-
-  g_signal_connect(G_OBJECT(tv), "row-activated", 
-		   G_CALLBACK(row_activated), gnp);
-
-  sw = gtk_scrolled_window_new(NULL, NULL);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw),
+  d->box = gtk_scrolled_window_new(NULL, NULL);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(d->box),
 				 GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw),
+  gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(d->box),
 				      GTK_SHADOW_ETCHED_IN);
-  gtk_container_add(GTK_CONTAINER(sw), tv);
+  gtk_container_add(GTK_CONTAINER(d->box), d->tree);
 
-  gnp->gnp_view = sw;
-  gtk_container_add(parent, gnp->gnp_view);
+  gtk_container_add(GTK_CONTAINER(gnp->gnp_rootbox), d->box);
 
-  gtk_widget_show(tv);
+  gtk_widget_show(d->tree);
+  gtk_widget_show(d->box);
 
-  gtk_widget_show(sw);
- }
+}
