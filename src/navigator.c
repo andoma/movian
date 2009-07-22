@@ -215,7 +215,7 @@ nav_open(const char *url, const char *type, const char *parent, int flags)
  *
  */
 void
-nav_back(void)
+nav_back(int flags)
 {
   nav_page_t *prev, *np;
 
@@ -226,10 +226,36 @@ nav_back(void)
   if(np != NULL &&
      (prev = TAILQ_PREV(np, nav_page_queue, np_history_link)) != NULL) {
 
-    nav_open0(prev->np_url, NULL, NULL);
+    if(flags & NAV_OPEN_ASYNC)
+      event_enqueue(&nav_eq, event_create_openurl(prev->np_url, NULL, NULL));
+    else 
+      nav_open0(prev->np_url, NULL, NULL);
 
     if(!(np->np_flags & NAV_PAGE_DONT_CLOSE_ON_BACK))
       nav_close(np);
+  }
+  hts_mutex_unlock(&nav_mutex);
+}
+
+
+/**
+ *
+ */
+void
+nav_fwd(int flags)
+{
+  nav_page_t *next, *np;
+
+  hts_mutex_lock(&nav_mutex);
+
+  np = nav_page_current;
+
+  if(np != NULL && (next = TAILQ_NEXT(np, np_history_link)) != NULL) {
+
+    if(flags & NAV_OPEN_ASYNC)
+      event_enqueue(&nav_eq, event_create_openurl(next->np_url, NULL, NULL));
+    else 
+      nav_open0(next->np_url, NULL, NULL);
   }
   hts_mutex_unlock(&nav_mutex);
 }
@@ -317,7 +343,7 @@ navigator_thread(void *aux)
     e = event_get(-1, &nav_eq);
 
     if(event_is_action(e, ACTION_BACKSPACE)) {
-      nav_back();
+      nav_back(0);
       
     } else if(event_is_action(e, ACTION_MAINMENU)) {
       nav_open0("page://mainmenu", NULL, NULL);

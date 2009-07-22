@@ -26,8 +26,29 @@
 static void
 back_clicked(GtkToolButton *toolbutton, gpointer user_data)
 {
-  nav_back();
+  nav_back(NAV_OPEN_ASYNC);
 }
+
+
+/**
+ *
+ */
+static void
+fwd_clicked(GtkToolButton *toolbutton, gpointer user_data)
+{
+  nav_fwd(NAV_OPEN_ASYNC);
+}
+
+
+/**
+ *
+ */
+static void
+home_clicked(GtkToolButton *toolbutton, gpointer user_data)
+{
+  nav_open("page://mainmenu", NULL, NULL, NAV_OPEN_ASYNC);
+}
+
 
 /**
  *
@@ -67,14 +88,15 @@ gu_toolbar_add(gtk_ui_t *gu, GtkWidget *parent)
 
   ti = gtk_tool_button_new_from_stock(GTK_STOCK_GO_BACK);
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
-
   g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(back_clicked), gu);
 
   ti = gtk_tool_button_new_from_stock(GTK_STOCK_GO_FORWARD);
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
+  g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(fwd_clicked), gu);
 
   ti = gtk_tool_button_new_from_stock(GTK_STOCK_HOME);
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
+  g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(home_clicked), gu);
 
   /* URL entry */
   ti = gtk_tool_item_new();
