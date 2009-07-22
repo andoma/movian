@@ -35,6 +35,17 @@ gu_subscription_set_label(void *opaque, const char *str)
 /**
  *
  */
+void
+gu_subscription_set_sensitivity(void *opaque, int on)
+{
+  GtkWidget *w = opaque;
+  gtk_widget_set_sensitive(w, on);
+}
+
+
+/**
+ *
+ */
 static void
 gu_unsubscribe_callback(GtkObject *object, gpointer user_data)
 {

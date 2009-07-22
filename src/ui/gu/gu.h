@@ -88,6 +88,8 @@ void gu_popup_init(gtk_ui_t *gu);
  */
 void gu_subscription_set_label(void *opaque, const char *str);
 
+void gu_subscription_set_sensitivity(void *opaque, int on);
+
 void gu_unsubscribe_on_destroy(GtkObject *o, prop_sub_t *s);
 
 #endif /* GU_H__ */
