@@ -291,6 +291,9 @@ enum {
   PROP_TAG_EXTERNAL_LOCK,
 };
 
+#define PROP_TAG_NAME(name...) \
+ PROP_TAG_NAME_VECTOR, (const char *[]){name, NULL}
+
 prop_sub_t *prop_subscribe(int flags, ...) __attribute__((__sentinel__(0)));
 
 void prop_unsubscribe(prop_sub_t *s);
