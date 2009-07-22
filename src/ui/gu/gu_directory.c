@@ -180,7 +180,8 @@ dirnode_destroy(dirnode_t *dn, int remove)
   LIST_REMOVE(dn, link);
 
   for(i = 0; i < N_COLUMNS; i++)
-    prop_unsubscribe(dn->cells[i].s);
+    if(dn->cells[i].s != NULL)
+      prop_unsubscribe(dn->cells[i].s);
 
   free(dn);
 }
