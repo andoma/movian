@@ -211,6 +211,7 @@ row_activated(GtkTreeView *tree_view, GtkTreePath *path,
 	      GtkTreeViewColumn *column, gpointer user_data)
 {
   directory_t *d = user_data;
+  const char *str;
   GtkTreeIter iter;
   GValue gv = { 0, };
 
@@ -219,8 +220,11 @@ row_activated(GtkTreeView *tree_view, GtkTreePath *path,
   gtk_tree_model_get_value(GTK_TREE_MODEL(d->model), 
 			   &iter, URL_COLUMN, &gv);
 
-  if(G_VALUE_HOLDS_STRING(&gv))
-    nav_open(g_value_get_string(&gv), NAV_OPEN_ASYNC);
+  if(G_VALUE_HOLDS_STRING(&gv)) {
+    str = g_value_get_string(&gv);
+    if(str != NULL)
+      nav_open(str, NAV_OPEN_ASYNC);
+  }
 
   g_value_unset(&gv);
 }
