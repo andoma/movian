@@ -80,6 +80,10 @@ typedef struct directory {
 
   column_t columns[N_COLUMNS];
 
+  prop_sub_t *node_sub;
+
+  LIST_HEAD(, dirnode) nodes;
+
 } directory_t;
 
 
@@ -97,6 +101,8 @@ typedef struct cell {
  *
  */
 typedef struct dirnode {
+  LIST_ENTRY(dirnode) link;
+
   GtkTreeIter iter;
   directory_t *dir;
 
@@ -158,6 +164,22 @@ gu_col_set(void *opaque, prop_event_t event, ...)
 }
 
 
+/**
+ *
+ */
+static void
+dirnode_destroy(dirnode_t *dn)
+{
+  int i;
+  LIST_REMOVE(dn, link);
+
+  for(i = 0; i < N_COLUMNS; i++)
+    prop_unsubscribe(dn->cells[i].s);
+
+  free(dn);
+}
+
+
 
 /**
  *
@@ -181,6 +203,8 @@ gu_node_sub(void *opaque, prop_event_t event, ...)
 
     dn = calloc(1, sizeof(dirnode_t));
     dn->dir = d;
+
+    LIST_INSERT_HEAD(&d->nodes, dn, link);
 
     gtk_list_store_append(d->model, &dn->iter);
 
@@ -303,6 +327,27 @@ init_duration_col(directory_t *d, const char *title, int idx)
 /**
  *
  */
+static void
+gu_directory_destroy(void *opaque)
+{
+  directory_t *d = opaque;
+  dirnode_t *dn;
+
+  prop_unsubscribe(d->node_sub);
+
+  while((dn = LIST_FIRST(&d->nodes)) != NULL)
+    dirnode_destroy(dn);
+
+  g_object_unref(G_OBJECT(d->model));
+
+  gtk_widget_destroy(d->box);
+  free(d);
+}
+
+
+/**
+ *
+ */
 void
 gu_directory_create(gu_nav_page_t *gnp)
 {
@@ -311,13 +356,13 @@ gu_directory_create(gu_nav_page_t *gnp)
 
   d->gu = gnp->gnp_gu;
 
-  prop_subscribe(0,
-		 PROP_TAG_NAME_VECTOR, 
-		 (const char *[]){"page", "nodes", NULL},
-		 PROP_TAG_CALLBACK, gu_node_sub, d,
-		 PROP_TAG_COURIER, gnp->gnp_gu->gu_pc, 
-		 PROP_TAG_ROOT, gnp->gnp_prop, 
-		 NULL);
+  d->node_sub = prop_subscribe(0,
+			       PROP_TAG_NAME_VECTOR, 
+			       (const char *[]){"page", "nodes", NULL},
+			       PROP_TAG_CALLBACK, gu_node_sub, d,
+			       PROP_TAG_COURIER, gnp->gnp_gu->gu_pc, 
+			       PROP_TAG_ROOT, gnp->gnp_prop, 
+			       NULL);
 
 
   d->tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(d->model));
@@ -343,5 +388,8 @@ gu_directory_create(gu_nav_page_t *gnp)
 
   gtk_widget_show(d->tree);
   gtk_widget_show(d->box);
+
+  gnp->gnp_destroy = gu_directory_destroy;
+  gnp->gnp_opaque = d;
 
 }

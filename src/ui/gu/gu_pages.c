@@ -25,9 +25,24 @@
  *
  */
 static void
+gu_nav_page_clean(gu_nav_page_t *gnp)
+{
+  if(gnp->gnp_destroy == NULL)
+    return;
+  gnp->gnp_destroy(gnp->gnp_opaque);
+  gnp->gnp_destroy = NULL;
+}
+
+
+/**
+ *
+ */
+static void
 gu_nav_page_set_type(void *opaque, const char *type)
 {
   gu_nav_page_t *gnp = opaque;
+
+  gu_nav_page_clean(gnp);
 
   if(type == NULL)
     return;
@@ -60,12 +75,28 @@ gu_nav_page_create(gtk_ui_t *gu, prop_t *p)
   LIST_INSERT_HEAD(&gu->gu_pages, gnp, gnp_link);
 
   prop_subscribe(0,
-		 PROP_TAG_NAME_VECTOR, (const char *[]){"self", "type", NULL},
+		 PROP_TAG_NAME("self", "type"),
 		 PROP_TAG_CALLBACK_STRING, gu_nav_page_set_type, gnp,
 		 PROP_TAG_COURIER, gu->gu_pc, 
 		 PROP_TAG_NAMED_ROOT, p, "self",
 		 NULL);
   return gnp;
+}
+
+
+/**
+ *
+ */
+static void
+gu_nav_page_destroy(gu_nav_page_t *gnp)
+{
+  gu_nav_page_clean(gnp);
+  gtk_widget_destroy(gnp->gnp_rootbox);
+
+  LIST_REMOVE(gnp, gnp_link);
+  
+  prop_ref_dec(gnp->gnp_prop);
+  free(gnp);
 }
 
 
@@ -133,7 +164,20 @@ gu_nav_pages(void *opaque, prop_event_t event, ...)
     gu_nav_page_display(gu, gnp);
     break;
 
-  default:
+  case PROP_DEL_CHILD:
+    p = va_arg(ap, prop_t *);
+    gnp = gu_nav_page_find(gu, p);
+    assert(gnp != NULL);
+    gu_nav_page_destroy(gnp);
     break;
+
+  case PROP_SET_DIR:
+  case PROP_SET_VOID:
+    break;
+
+  default:
+    fprintf(stderr, 
+	    "gu_nav_pages(): Can not handle event %d, aborting()\n", event);
+    abort();
   }
 }
