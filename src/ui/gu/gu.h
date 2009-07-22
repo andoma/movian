@@ -42,6 +42,10 @@ typedef struct gtk_ui {
   
   GtkWidget *gu_url;
 
+  GtkWidget *gu_window;
+
+  LIST_HEAD(, popup) popups;
+
 } gtk_ui_t;
 
 
@@ -68,4 +72,15 @@ void gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent);
 
 void gu_statusbar_add(gtk_ui_t *gu, GtkWidget *parent);
 
+void gu_popup_init(gtk_ui_t *gu);
+
+
+/**
+ * gu_helpers.c
+ */
+void gu_subscription_set_label(void *opaque, const char *str);
+
+void gu_unsubscribe_on_destroy(GtkObject *o, prop_sub_t *s);
+
 #endif /* GU_H__ */
+

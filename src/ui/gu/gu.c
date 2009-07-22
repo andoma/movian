@@ -141,7 +141,7 @@ gu_start(ui_t *ui, int argc, char **argv, int primary)
 
   gu->gu_pc = prop_courier_create(&gu_mutex);
 
-  win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  gu->gu_window = win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
   gtk_window_set_title(GTK_WINDOW(win), "Showtime");
   gtk_window_set_default_size(GTK_WINDOW(win), 640, 280);
@@ -178,6 +178,9 @@ gu_start(ui_t *ui, int argc, char **argv, int primary)
 
   /* Statusbar */
   gu_statusbar_add(gu, vbox);
+
+  /* Init popup controller */
+  gu_popup_init(gu);
 
   gtk_widget_show_all(win);
   gtk_main();

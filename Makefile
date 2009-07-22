@@ -223,6 +223,8 @@ SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_gx.c
 # GTK based interface
 #
 SRCS-$(CONFIG_GU) +=    src/ui/gu/gu.c \
+			src/ui/gu/gu_helpers.c \
+			src/ui/gu/gu_popup.c \
 			src/ui/gu/gu_toolbar.c \
 			src/ui/gu/gu_statusbar.c \
 			src/ui/gu/gu_playdeck.c \
