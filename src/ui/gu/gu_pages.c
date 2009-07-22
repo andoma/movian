@@ -63,7 +63,7 @@ gu_nav_page_set_url(void *opaque, const char *url)
 {
   gu_nav_page_t *gnp = opaque;
   free(gnp->gnp_url);
-  gnp->gnp_url = strdup(url);
+  gnp->gnp_url = url ? strdup(url) : NULL;
 }
 
 
