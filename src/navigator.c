@@ -39,6 +39,8 @@ static nav_page_t *nav_page_current;
 static prop_t *nav_prop_root;
 static prop_t *nav_prop_pages;
 static prop_t *nav_prop_curpage;
+static prop_t *nav_prop_can_go_back;
+static prop_t *nav_prop_can_go_fwd;
 static event_queue_t nav_eq;
 
 static void *navigator_thread(void *aux);
@@ -73,6 +75,8 @@ nav_init(void)
   nav_prop_root    = prop_create(prop_get_global(), "nav");
   nav_prop_pages   = prop_create(nav_prop_root, "pages");
   nav_prop_curpage = prop_create(nav_prop_root, "currentpage");
+  nav_prop_can_go_back = prop_create(nav_prop_root, "canGoBack");
+  nav_prop_can_go_fwd  = prop_create(nav_prop_root, "canGoForward");
 
   event_initqueue(&nav_eq);
 
@@ -89,6 +93,26 @@ nav_init(void)
 #endif
 
   hts_thread_create_detached(navigator_thread, NULL);
+}
+
+/**
+ *
+ */
+static void
+nav_update_cango(void)
+{
+  nav_page_t *np = nav_page_current;
+
+  if(np == NULL) {
+    prop_set_int(nav_prop_can_go_back, 0);
+    prop_set_int(nav_prop_can_go_fwd, 0);
+    return;
+  }
+
+  prop_set_int(nav_prop_can_go_back,
+	       !!TAILQ_PREV(np, nav_page_queue, np_history_link));
+  prop_set_int(nav_prop_can_go_fwd,
+	       !!TAILQ_NEXT(np, np_history_link));
 }
 
 
@@ -124,6 +148,8 @@ nav_close(nav_page_t *np)
   prop_destroy(np->np_prop_root);
   free(np->np_url);
   free(np);
+
+  nav_update_cango();
 }
 
 
@@ -193,6 +219,7 @@ nav_open0(const char *url, const char *type, const char *parent)
   }
 
   nav_page_current = np;
+  nav_update_cango();
 }
 
 /**
