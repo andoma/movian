@@ -38,7 +38,6 @@ gu_subscription_set_label(void *opaque, const char *str)
 static void
 gu_unsubscribe_callback(GtkObject *object, gpointer user_data)
 {
-  printf("Subscription destroyed\n");
   prop_unsubscribe(user_data);
 }
 
