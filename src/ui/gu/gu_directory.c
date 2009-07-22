@@ -77,12 +77,14 @@ typedef struct directory {
   GtkListStore *model;
 
   gtk_ui_t *gu;
+  gu_nav_page_t *gnp;
 
   column_t columns[N_COLUMNS];
 
   prop_sub_t *node_sub;
 
   LIST_HEAD(, dirnode) nodes;
+
 
 } directory_t;
 
@@ -271,7 +273,7 @@ row_activated(GtkTreeView *tree_view, GtkTreePath *path,
   if(G_VALUE_HOLDS_STRING(&gv)) {
     str = g_value_get_string(&gv);
     if(str != NULL)
-      nav_open(str, NAV_OPEN_ASYNC);
+      nav_open(str, NULL, d->gnp->gnp_url, NAV_OPEN_ASYNC);
   }
 
   g_value_unset(&gv);
@@ -379,6 +381,7 @@ gu_directory_create(gu_nav_page_t *gnp)
   d->model = gtk_list_store_newv(N_COLUMNS, coltypes);
 
   d->gu = gnp->gnp_gu;
+  d->gnp = gnp;
 
   d->node_sub = prop_subscribe(0,
 			       PROP_TAG_NAME_VECTOR, 

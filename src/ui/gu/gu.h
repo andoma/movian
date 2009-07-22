@@ -62,6 +62,11 @@ typedef struct gu_nav_page {
   void (*gnp_destroy)(void *opaque);
   void *gnp_opaque;
 
+  char *gnp_url;
+
+  prop_sub_t *gnp_sub_type;
+  prop_sub_t *gnp_sub_url;
+
 } gu_nav_page_t;
 
 

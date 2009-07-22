@@ -58,6 +58,18 @@ gu_nav_page_set_type(void *opaque, const char *type)
 /**
  *
  */
+static void
+gu_nav_page_set_url(void *opaque, const char *url)
+{
+  gu_nav_page_t *gnp = opaque;
+  free(gnp->gnp_url);
+  gnp->gnp_url = strdup(url);
+}
+
+
+/**
+ *
+ */
 static gu_nav_page_t *
 gu_nav_page_create(gtk_ui_t *gu, prop_t *p)
 {
@@ -74,12 +86,22 @@ gu_nav_page_create(gtk_ui_t *gu, prop_t *p)
 
   LIST_INSERT_HEAD(&gu->gu_pages, gnp, gnp_link);
 
-  prop_subscribe(0,
-		 PROP_TAG_NAME("self", "type"),
-		 PROP_TAG_CALLBACK_STRING, gu_nav_page_set_type, gnp,
-		 PROP_TAG_COURIER, gu->gu_pc, 
-		 PROP_TAG_NAMED_ROOT, p, "self",
-		 NULL);
+  gnp->gnp_sub_type = 
+    prop_subscribe(0,
+		   PROP_TAG_NAME("self", "type"),
+		   PROP_TAG_CALLBACK_STRING, gu_nav_page_set_type, gnp,
+		   PROP_TAG_COURIER, gu->gu_pc, 
+		   PROP_TAG_NAMED_ROOT, p, "self",
+		   NULL);
+
+  gnp->gnp_sub_url =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("self", "url"),
+		   PROP_TAG_CALLBACK_STRING, gu_nav_page_set_url, gnp,
+		   PROP_TAG_COURIER, gu->gu_pc, 
+		   PROP_TAG_NAMED_ROOT, p, "self",
+		   NULL);
+
   return gnp;
 }
 
@@ -91,11 +113,16 @@ static void
 gu_nav_page_destroy(gu_nav_page_t *gnp)
 {
   gu_nav_page_clean(gnp);
+
+  prop_unsubscribe(gnp->gnp_sub_type);
+  prop_unsubscribe(gnp->gnp_sub_url);
+
   gtk_widget_destroy(gnp->gnp_rootbox);
 
   LIST_REMOVE(gnp, gnp_link);
   
   prop_ref_dec(gnp->gnp_prop);
+  free(gnp->gnp_url);
   free(gnp);
 }
 

@@ -46,7 +46,7 @@ gu_nav_url_updated(void *opaque, const char *str)
 static void
 gu_nav_url_set(GtkEntry *e, gpointer user_data)
 {
-  nav_open(gtk_entry_get_text(e), NAV_OPEN_ASYNC);
+  nav_open(gtk_entry_get_text(e), NULL, NULL, NAV_OPEN_ASYNC);
 }
 
 

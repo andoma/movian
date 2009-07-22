@@ -199,13 +199,13 @@ nav_open0(const char *url, const char *type, const char *parent)
  *
  */
 void
-nav_open(const char *url, int flags)
+nav_open(const char *url, const char *type, const char *parent, int flags)
 {
   if(flags & NAV_OPEN_ASYNC)
-    event_enqueue(&nav_eq, event_create_url(EVENT_OPENURL, url));
+    event_enqueue(&nav_eq, event_create_openurl(url, type, parent));
   else {
     hts_mutex_lock(&nav_mutex);
-    nav_open0(url, NULL, NULL);
+    nav_open0(url, type, parent);
     hts_mutex_unlock(&nav_mutex);
   }
 }
@@ -321,9 +321,6 @@ navigator_thread(void *aux)
       
     } else if(event_is_action(e, ACTION_MAINMENU)) {
       nav_open0("page://mainmenu", NULL, NULL);
-
-    } else if(event_is_type(e, EVENT_OPENURL)) {
-      nav_open0(e->e_payload, NULL, NULL);
 
     } else if(event_is_type(e, EVENT_OPENURL2)) {
       ou = (event_openurl2_t *)e;
