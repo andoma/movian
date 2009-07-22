@@ -116,55 +116,6 @@ gu_close(GtkWidget *widget, GdkEvent  *event, gpointer data)
   return TRUE;
 }
 
-/**
- *
- */
-static void
-back_clicked(GtkToolButton *toolbutton, gpointer user_data)
-{
-  nav_back();
-}
-
-#if 0
-/**
- * Convert a subscription callback into a gvalue string
- */
-void
-gu_sub_to_str(va_list ap, prop_event_t event, GValue *gv)
-{
-  memset(gv, 0 sizeof(GValue));
-	 
-  g_value_init(gv, G_TYPE_STRING);
-
-  if(event == PROP_SET_STRING)
-    g_value_set_string(&gv, va_arg(ap, const char *));
-  else
-    g_value_set_string(&gv, "");
-}
-#endif
-
-
-
-/**
- *
- */
-static void
-gu_nav_url_updated(void *opaque, const char *str)
-{
-  gtk_ui_t *gu = opaque;
-  gtk_entry_set_text(GTK_ENTRY(gu->gu_url), str ?: "");
-}
-
-
-/**
- *
- */
-static void
-gu_nav_url_set(GtkEntry *e, gpointer user_data)
-{
-  nav_open(gtk_entry_get_text(e), NAV_OPEN_ASYNC);
-}
-
 
 /**
  *
@@ -175,9 +126,6 @@ gu_start(ui_t *ui, int argc, char **argv, int primary)
   GtkWidget *win;
   GtkWidget *vbox;
   GtkWidget *menubar;
-  GtkWidget *toolbar;
-  GtkWidget *w;
-  GtkToolItem *ti;
   gtk_ui_t *gu = calloc(1, sizeof(gtk_ui_t));
 
   hts_mutex_init(&gu_mutex);
@@ -206,53 +154,12 @@ gu_start(ui_t *ui, int argc, char **argv, int primary)
   gtk_container_set_border_width(GTK_CONTAINER(vbox), 1);
   gtk_container_add(GTK_CONTAINER(win), vbox);
 
- /* Menubar */
-
+  /* Menubar */
   menubar = get_menubar_menu(win);
   gtk_box_pack_start(GTK_BOX(vbox), menubar, FALSE, TRUE, 0);
  
   /* Top Toolbar */
-  toolbar = gtk_toolbar_new();
-  gtk_toolbar_set_style(GTK_TOOLBAR(toolbar), GTK_TOOLBAR_ICONS);
-  gtk_box_pack_start(GTK_BOX(vbox), toolbar, FALSE, TRUE, 0);
-
-  ti = gtk_tool_button_new_from_stock(GTK_STOCK_GO_BACK);
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
-
-  g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(back_clicked), gu);
-
-  ti = gtk_tool_button_new_from_stock(GTK_STOCK_GO_FORWARD);
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
-
-  ti = gtk_tool_button_new_from_stock(GTK_STOCK_HOME);
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
-
-  /* URL entry */
-  ti = gtk_tool_item_new();
-  gu->gu_url = w = gtk_entry_new();
-
-  g_signal_connect(G_OBJECT(w), "activate", 
-		   G_CALLBACK(gu_nav_url_set), gu);
-
-  gtk_container_add(GTK_CONTAINER(ti), w);
-  gtk_tool_item_set_expand(ti, TRUE);
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
-
-  prop_subscribe(0,
-		 PROP_TAG_NAME_VECTOR, 
-		 (const char *[]){"global","nav","currentpage","url",NULL},
-		 PROP_TAG_CALLBACK_STRING, gu_nav_url_updated, gu,
-		 PROP_TAG_COURIER, gu->gu_pc,
-		 NULL);
-
-#if 0
-  /* Search entry */
-  ti = gtk_tool_item_new();
-  w = gtk_entry_new();
-  gtk_container_add(GTK_CONTAINER(ti), w);
-  gtk_tool_item_set_expand(ti, TRUE);
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
-#endif
+  gu_toolbar_add(gu, vbox);
 
   /* Page container */
   gu->gu_page_container = gtk_vbox_new(FALSE, 0);
@@ -265,6 +172,9 @@ gu_start(ui_t *ui, int argc, char **argv, int primary)
 		 PROP_TAG_CALLBACK, gu_nav_pages, gu, 
 		 PROP_TAG_COURIER, gu->gu_pc,
 		 NULL);
+
+  /* Playback controls */
+  gu_playdeck_add(gu, vbox);
 
   gtk_widget_show_all(win);
   gtk_main();
