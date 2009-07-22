@@ -405,6 +405,7 @@ http_read_respone(http_file_t *hf)
     }
     
     if(!strcasecmp(argv[0], "Content-Type")) {
+      free(hf->hf_content_type);
       hf->hf_content_type = strdup(argv[1]);
     }
   }
