@@ -96,7 +96,7 @@ typedef enum {
   EVENT_DVD_,
   EVENT_DVD_SELECT_BUTTON,
   EVENT_DVD_ACTIVATE_BUTTON,  /* "Press" button */
-  EVENT_OPENURL2,
+  EVENT_OPENURL,
 
   EVENT_MP_NO_LONGER_PRIMARY,
   EVENT_MP_IS_PRIMARY,
@@ -147,12 +147,12 @@ typedef struct event_unicode {
 /**
  *
  */
-typedef struct event_openurl2 {
+typedef struct event_openurl {
   event_t h;
   char *url;
   char *type;
   char *parent;
-} event_openurl2_t;
+} event_openurl_t;
 
 
 /**

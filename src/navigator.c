@@ -294,7 +294,7 @@ nav_page_create(const char *url, size_t allocsize,
 static int
 nav_input_event(event_t *e, void *opaque)
 {
-  if(event_is_type(e, EVENT_OPENURL2) ||
+  if(event_is_type(e, EVENT_OPENURL) ||
      event_is_action(e, ACTION_BACKSPACE) ||
      event_is_action(e, ACTION_MAINMENU)) {
     event_enqueue(&nav_eq, e);
@@ -311,7 +311,7 @@ static void *
 navigator_thread(void *aux)
 {
   event_t *e;
-  event_openurl2_t *ou;
+  event_openurl_t *ou;
  
   while(1) {
     e = event_get(-1, &nav_eq);
@@ -322,8 +322,8 @@ navigator_thread(void *aux)
     } else if(event_is_action(e, ACTION_MAINMENU)) {
       nav_open0("page://mainmenu", NULL, NULL);
 
-    } else if(event_is_type(e, EVENT_OPENURL2)) {
-      ou = (event_openurl2_t *)e;
+    } else if(event_is_type(e, EVENT_OPENURL)) {
+      ou = (event_openurl_t *)e;
       nav_open0(ou->url, ou->type, ou->parent);
 
     } else {

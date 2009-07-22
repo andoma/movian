@@ -348,7 +348,7 @@ event_create_url(event_type_t et, const char *url)
 static void
 event_openurl2_dtor(event_t *e)
 {
-  event_openurl2_t *ou = (void *)e;
+  event_openurl_t *ou = (void *)e;
   free(ou->url);
   free(ou->type);
   free(ou->parent);
@@ -362,7 +362,7 @@ event_openurl2_dtor(event_t *e)
 event_t *
 event_create_openurl(const char *url, const char *type, const char *parent)
 {
-  event_openurl2_t *e = event_create(EVENT_OPENURL2, sizeof(event_openurl2_t));
+  event_openurl_t *e = event_create(EVENT_OPENURL, sizeof(event_openurl_t));
 
   e->url      = url    ? strdup(url)    : NULL;
   e->type     = type   ? strdup(type)   : NULL;
