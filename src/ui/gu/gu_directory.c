@@ -102,7 +102,7 @@ typedef struct cell {
  */
 typedef struct dirnode {
   LIST_ENTRY(dirnode) link;
-
+  prop_t *p;
   GtkTreeIter iter;
   directory_t *dir;
 
@@ -168,9 +168,13 @@ gu_col_set(void *opaque, prop_event_t event, ...)
  *
  */
 static void
-dirnode_destroy(dirnode_t *dn)
+dirnode_destroy(dirnode_t *dn, int remove)
 {
   int i;
+
+  if(remove)
+    gtk_list_store_remove(dn->dir->model, &dn->iter);
+
   LIST_REMOVE(dn, link);
 
   for(i = 0; i < N_COLUMNS; i++)
@@ -203,6 +207,8 @@ gu_node_sub(void *opaque, prop_event_t event, ...)
 
     dn = calloc(1, sizeof(dirnode_t));
     dn->dir = d;
+    dn->p = p;
+    prop_ref_inc(p);
 
     LIST_INSERT_HEAD(&d->nodes, dn, link);
 
@@ -221,8 +227,26 @@ gu_node_sub(void *opaque, prop_event_t event, ...)
 			    NULL);
     }
     break;
-  default:
+
+  case PROP_DEL_CHILD:
+    p = va_arg(ap, prop_t *);
+
+    LIST_FOREACH(dn, &d->nodes, link)
+      if(dn->p == p)
+	break;
+
+    if(dn != NULL)
+      dirnode_destroy(dn, 1);
     break;
+
+  case PROP_SET_DIR:
+  case PROP_SET_VOID:
+    break;
+
+  default:
+    fprintf(stderr, 
+	    "gu_node_sub(): Can not handle event %d, aborting()\n", event);
+    abort();
   }
 }
 
@@ -336,7 +360,7 @@ gu_directory_destroy(void *opaque)
   prop_unsubscribe(d->node_sub);
 
   while((dn = LIST_FIRST(&d->nodes)) != NULL)
-    dirnode_destroy(dn);
+    dirnode_destroy(dn, 0);
 
   g_object_unref(G_OBJECT(d->model));
 
