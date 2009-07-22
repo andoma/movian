@@ -86,14 +86,27 @@ gu_toolbar_add(gtk_ui_t *gu, GtkWidget *parent)
   gtk_toolbar_set_style(GTK_TOOLBAR(toolbar), GTK_TOOLBAR_ICONS);
   gtk_box_pack_start(GTK_BOX(parent), toolbar, FALSE, TRUE, 0);
 
+  /* Back button */
   ti = gtk_tool_button_new_from_stock(GTK_STOCK_GO_BACK);
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
   g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(back_clicked), gu);
+  prop_subscribe(0,
+		 PROP_TAG_NAME("global", "nav", "canGoBack"),
+		 PROP_TAG_CALLBACK_INT, gu_subscription_set_sensitivity, ti,
+		 PROP_TAG_COURIER, gu->gu_pc,
+		 NULL);
 
+  /* Forward button */
   ti = gtk_tool_button_new_from_stock(GTK_STOCK_GO_FORWARD);
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
   g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(fwd_clicked), gu);
+  prop_subscribe(0,
+		 PROP_TAG_NAME("global", "nav", "canGoForward"),
+		 PROP_TAG_CALLBACK_INT, gu_subscription_set_sensitivity, ti,
+		 PROP_TAG_COURIER, gu->gu_pc,
+		 NULL);
 
+  /* Home button */
   ti = gtk_tool_button_new_from_stock(GTK_STOCK_HOME);
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
   g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(home_clicked), gu);
@@ -110,10 +123,10 @@ gu_toolbar_add(gtk_ui_t *gu, GtkWidget *parent)
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
 
   prop_subscribe(0,
-		 PROP_TAG_NAME_VECTOR, 
-		 PNVEC("global", "nav", "currentpage", "url"),
+		 PROP_TAG_NAME("global", "nav", "currentpage", "url"),
 		 PROP_TAG_CALLBACK_STRING, gu_nav_url_updated, gu,
 		 PROP_TAG_COURIER, gu->gu_pc,
 		 NULL);
+
 }
 
