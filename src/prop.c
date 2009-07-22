@@ -327,8 +327,14 @@ prop_courier(void *aux)
       s->hps_lockmgr(s->hps_lock, 1);
     
       if(s->hps_zombie) {
+	/* Copy pointers to lock and lockmgr since prop_notify_free()
+	 * may free the subscription (it decreses its refcount)
+	 */
+	prop_lockmgr_t *lockmgr = s->hps_lockmgr;
+	void *lock = s->hps_lock;
+
 	prop_notify_free(n); // subscription may be free'd here
-	s->hps_lockmgr(s->hps_lock, 0);
+	lockmgr(lock, 0);
 	continue;
       }
     }
