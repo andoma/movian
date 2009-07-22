@@ -176,6 +176,9 @@ gu_start(ui_t *ui, int argc, char **argv, int primary)
   /* Playback controls */
   gu_playdeck_add(gu, vbox);
 
+  /* Statusbar */
+  gu_statusbar_add(gu, vbox);
+
   gtk_widget_show_all(win);
   gtk_main();
   return 0;

@@ -66,4 +66,6 @@ void gu_toolbar_add(gtk_ui_t *gu, GtkWidget *parent);
 
 void gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent);
 
+void gu_statusbar_add(gtk_ui_t *gu, GtkWidget *parent);
+
 #endif /* GU_H__ */
