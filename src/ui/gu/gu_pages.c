@@ -49,6 +49,8 @@ gu_nav_page_set_type(void *opaque, const char *type)
 
   if(!strcmp(type, "directory")) {
     gu_directory_create(gnp);
+  } else if(!strcmp(type, "playqueue")) {
+    gu_directory_create(gnp);
   } else {
     TRACE(TRACE_ERROR, "GU", "Can not display page type: %s", type);
   }
