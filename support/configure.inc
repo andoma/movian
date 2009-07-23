@@ -14,7 +14,7 @@
 TOPDIR=`pwd`
 TMPDIR=${TOPDIR}/tmp
 BUILDDIR=build.${PLATFORM}
-DEFAULT_THEME="new"
+GLW_DEFAULT_THEME="default"
 RELEASE=no
 
 RELEASENAME=`head -n1 ${TOPDIR}/ChangeLog | awk '{print $2}' | sed s/\(// | sed s/\)//`
@@ -122,10 +122,10 @@ EOF
 
 	# Generate default theme URL
 	if enabled embedded_theme; then
-	    GLW_DEFAULT_THEME_URL="bundle://glwthemes/${DEFAULT_THEME}"
-	    echo >>${CONFIG_MAK} "BUNDLES+=glwthemes/${DEFAULT_THEME}"
+	    GLW_DEFAULT_THEME_URL="bundle://glwthemes/${GLW_DEFAULT_THEME}"
+	    echo >>${CONFIG_MAK} "BUNDLES+=glwthemes/${GLW_DEFAULT_THEME}"
 	else
-	    GLW_DEFAULT_THEME_URL="file://`cd glwthemes/$DEFAULT_THEME && pwd`"
+	    GLW_DEFAULT_THEME_URL="file://`cd glwthemes/$GLW_DEFAULT_THEME && pwd`"
 	fi
 
 	# Create config.h
