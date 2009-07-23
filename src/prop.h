@@ -412,4 +412,6 @@ const char *propname(prop_t *p);
 
 void prop_print_tree(prop_t *p, int followlinks);
 
+void prop_test(void);
+
 #endif /* PROP_H__ */

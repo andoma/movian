@@ -308,6 +308,7 @@ prop_courier(void *aux)
   prop_callback_t *cb;
   prop_trampoline_t *pt;
 
+
   hts_mutex_lock(&prop_mutex);
 
   while(pc->pc_run) {
@@ -335,6 +336,7 @@ prop_courier(void *aux)
 
 	prop_notify_free(n); // subscription may be free'd here
 	lockmgr(lock, 0);
+	hts_mutex_lock(&prop_mutex);
 	continue;
       }
     }
@@ -431,6 +433,7 @@ prop_courier(void *aux)
  
     prop_sub_ref_dec(s);
     free(n);
+    hts_mutex_lock(&prop_mutex);
   }
   hts_mutex_unlock(&prop_mutex);
   return NULL;
@@ -2263,4 +2266,45 @@ prop_pixmap_create(int width, int height, int linesize,
   pp->pp_pixfmt   = pixfmt;
   memcpy(pp->pp_pixels, pixels, payloadsize);
   return pp;
+}
+
+
+/**
+ *
+ */
+static void 
+prop_test_subscriber(prop_sub_t *s, prop_event_t event, ...)
+{
+}
+
+
+
+#define TEST_COURIERS 100
+
+void
+prop_test(void)
+{
+  int i;
+
+  prop_courier_t *couriers[TEST_COURIERS];
+  hts_mutex_t mtx[TEST_COURIERS];
+
+  prop_t *p = prop_create(NULL, NULL);
+
+  for(i = 0; i < TEST_COURIERS; i++) {
+    hts_mutex_init(&mtx[i]);
+    couriers[i] = prop_courier_create(&mtx[i]);
+
+    prop_subscribe(0,
+		   PROP_TAG_CALLBACK, prop_test_subscriber, NULL,
+		   PROP_TAG_COURIER, couriers[i],
+		   PROP_TAG_ROOT, p,
+		   NULL);
+  }
+
+  while(1) {
+    prop_set_int(p, i++);
+    usleep(1);
+  }
+  sleep(10000);
 }
