@@ -636,7 +636,7 @@ refresh_rate()
 }
 
 - (void)prepareOpenGL {
-  const char *theme_path = SHOWTIME_DEFAULT_THEME_URL;
+  const char *theme_path = SHOWTIME_GLW_DEFAULT_THEME_URL;
   GLint v = 1;
   
   gcocoa.glready = 1;

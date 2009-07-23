@@ -904,7 +904,7 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
 {
   glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
   char confname[256];
-  const char *theme_path = SHOWTIME_DEFAULT_THEME_URL;
+  const char *theme_path = SHOWTIME_GLW_DEFAULT_THEME_URL;
 
   // This may aid some vsync problems with nVidia drivers
   setenv("__GL_SYNC_TO_VBLANK", "1", 1);

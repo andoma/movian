@@ -395,7 +395,7 @@ glw_wii_loop(glw_wii_t *gwii)
 static int
 glw_wii_start(ui_t *ui, int argc, char *argv[], int primary)
 {
-  const char *theme_path = SHOWTIME_DEFAULT_THEME_URL;
+  const char *theme_path = SHOWTIME_GLW_DEFAULT_THEME_URL;
   glw_wii_t *gwii = calloc(1, sizeof(glw_wii_t));
 
   /* Parse options */
