@@ -225,6 +225,7 @@ SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_gx.c
 SRCS-$(CONFIG_GU) +=    src/ui/gu/gu.c \
 			src/ui/gu/gu_helpers.c \
 			src/ui/gu/gu_popup.c \
+			src/ui/gu/gu_menubar.c \
 			src/ui/gu/gu_toolbar.c \
 			src/ui/gu/gu_statusbar.c \
 			src/ui/gu/gu_playdeck.c \
@@ -258,7 +259,7 @@ OBJDIRS+= $(sort $(dir $(BUNDLE_OBJS)))
 .PRECIOUS: ${BUNDLE_SRCS}
 
 # Common CFLAGS for all files
-CFLAGS_com  = -g -funsigned-char -O2 
+CFLAGS_com  = -g -funsigned-char -O0 
 CFLAGS_com += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 CFLAGS_com += -I${BUILDDIR} -I${CURDIR}/src -I${CURDIR}
 

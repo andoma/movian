@@ -74,6 +74,8 @@ void gu_nav_pages(void *opaque, prop_event_t event, ...);
 
 void gu_directory_create(gu_nav_page_t *gnp);
 
+void gu_menubar_add(gtk_ui_t *gu, GtkWidget *parent);
+
 void gu_toolbar_add(gtk_ui_t *gu, GtkWidget *parent);
 
 void gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent);
@@ -81,7 +83,6 @@ void gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent);
 void gu_statusbar_add(gtk_ui_t *gu, GtkWidget *parent);
 
 void gu_popup_init(gtk_ui_t *gu);
-
 
 /**
  * gu_helpers.c
