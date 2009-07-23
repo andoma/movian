@@ -55,8 +55,8 @@ for opt do
   --help) show_help
   ;;
   --release) 
-	  RELEASE=yes
-	  enable embedded_theme
+	  enable release
+	  enable embedded_resources
   ;;
   --cc=*) CC="$optval"
   ;;

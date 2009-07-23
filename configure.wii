@@ -19,7 +19,7 @@ source support/configure.inc
 DEVKITPRO="${TOPDIR}/wiisupport/devkitpro"
 LIBFREETYPEPATH="${TOPDIR}/wiisupport/freetype-ppc"
 
-enable embedded_theme
+enable embedded_resources
 
 show_help(){
   echo "Usage: configure.wii [options]"

@@ -39,6 +39,7 @@ CONFIG_LIST="
  lirc
  regex
  release
+ embedded_resources
 "
 
 die() {
@@ -191,7 +192,7 @@ finalize() {
     # Generate default theme path for GLW
     # Optionally embed the theme if in release mode
     if enabled glw; then
-	if enabled release; then
+	if enabled embedded_resources; then
 	    GLW_DEFAULT_THEME_URL="bundle://glwthemes/${GLW_DEFAULT_THEME}"
 	    echo >>${CONFIG_MAK} "BUNDLES+=glwthemes/${GLW_DEFAULT_THEME}"
 	else

@@ -82,6 +82,7 @@ for opt do
   ;;
   --release) 
 	  enable release
+	  enable embedded_resources
   ;;
   --cc=*) CC="$optval"
   ;;
