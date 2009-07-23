@@ -32,7 +32,6 @@ show_help(){
   echo "  --cpu=cpu                Build and optimize for specific CPU"
   echo "  --cc=CC                  Build using the given compiler"
   echo "  --release                Stage for release"
-  echo "  --embedded-theme         Embed theme in showtime [none]"
   echo "  --enable-spotify=keyfile Compile support for Spotify (R) Core"
   exit 1
 }
@@ -83,7 +82,7 @@ for opt do
   ;;
   --release) 
 	  RELEASE=yes
-	  enable embedded_theme
+	  enable embedded_data
   ;;
   --cc=*) CC="$optval"
   ;;
@@ -260,7 +259,7 @@ setup_ffmpeg --cpu=${CPU} --enable-pthreads
 #
 # Configure paths, etc
 #
-if [ ${RELEASE} != yes ]; then
+if disabled release; then
     echo  Development build. 
     echo  The generated binary will contained compild-in paths to
     echo  the current build tree. If you plan to install the binary,
