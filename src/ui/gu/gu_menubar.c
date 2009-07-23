@@ -66,12 +66,78 @@ m_about(gpointer callback_data, guint callback_action, GtkWidget *menu_item)
 			NULL);
 }
 
+/**
+ *
+ */
+static void
+m_open_response(GtkDialog *dialog, gint response_id, gpointer user_data)
+{
+  GSList *l, *l0;
+  if(response_id == GTK_RESPONSE_ACCEPT) {
+    l0 = l = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
+
+    for(; l != NULL; l = l->next) {
+      nav_open((const char *)l->data, NULL, NULL, NAV_OPEN_ASYNC);
+    }
+    g_slist_free(l0);
+
+  }
+  gtk_widget_destroy(GTK_WIDGET(dialog));
+}
+
+/**
+ *
+ */
+static void
+m_openfile(gpointer callback_data, guint callback_action, GtkWidget *menu_item)
+{
+  gtk_ui_t *gu = callback_data;
+  GtkWidget *dialog;
+
+  dialog = gtk_file_chooser_dialog_new("Open File",
+				       GTK_WINDOW(gu->gu_window),
+				       GTK_FILE_CHOOSER_ACTION_OPEN,
+				       GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+				       GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+				       NULL);
+
+  gtk_widget_show(dialog);
+
+  g_signal_connect(G_OBJECT(dialog), "response",
+		   G_CALLBACK(m_open_response), gu);
+}
+
+/**
+ *
+ */
+static void
+m_opendir(gpointer callback_data, guint callback_action, GtkWidget *menu_item)
+{
+  gtk_ui_t *gu = callback_data;
+  GtkWidget *dialog;
+
+  dialog = gtk_file_chooser_dialog_new("Open Directory",
+				       GTK_WINDOW(gu->gu_window),
+				       GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
+				       GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+				       GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+				       NULL);
+
+  gtk_widget_show(dialog);
+
+  g_signal_connect(G_OBJECT(dialog), "response",
+		   G_CALLBACK(m_open_response), gu);
+}
+
 
 /**
  *
  */
 static GtkItemFactoryEntry menu_items[] = {
   { "/_File",         NULL,       NULL,           0, "<Branch>" },
+  { "/File/_Open File...", "<CTRL>O",  m_openfile, 0, "<StockItem>", GTK_STOCK_OPEN },
+  { "/File/_Open Directory...", "<CTRL>D",  m_opendir, 0, "<StockItem>", GTK_STOCK_OPEN },
+  { "/File/sep",      NULL,       NULL,           0, "<Separator>" },
   { "/File/_Quit",    "<CTRL>Q",  m_quit, 0, "<StockItem>", GTK_STOCK_QUIT },
   { "/_Options",      NULL,       NULL,           0, "<Branch>" },
   { "/Options/Check", NULL,       print_toggle,   1, "<CheckItem>" },
