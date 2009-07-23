@@ -35,7 +35,6 @@ CONFIG_LIST="
  glw_backend_gx
  gu
  libogc
- embedded_theme
  spotify
  lirc
  regex

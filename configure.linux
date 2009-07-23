@@ -81,8 +81,7 @@ for opt do
   --help) show_help
   ;;
   --release) 
-	  RELEASE=yes
-	  enable embedded_data
+	  enable release
   ;;
   --cc=*) CC="$optval"
   ;;
