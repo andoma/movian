@@ -1874,7 +1874,9 @@ be_spotify_play(const char *url, media_pipe_t *mp,
     } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
 
       hold = 1;
+      lost_focus = 0;
       mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
+      mp_set_playstatus_by_hold(mp, hold);
 
     }
     event_unref(e);

@@ -249,6 +249,13 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 	mp_set_playstatus_by_hold(mp, hold);
       }
 
+    } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
+
+      hold = 1;
+      lost_focus = 0;
+      mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
+      mp_set_playstatus_by_hold(mp, hold);
+
     } else if(event_is_action(e, ACTION_PREV_TRACK) ||
 	      event_is_action(e, ACTION_NEXT_TRACK) ||
 	      event_is_action(e, ACTION_STOP)) {
