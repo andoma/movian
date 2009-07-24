@@ -123,7 +123,7 @@ typedef struct dirnode {
  * Returns a reference to be free'd by caller
  */
 static GdkPixbuf *
-contentstr_to_icon(const char *str)
+contentstr_to_icon(const char *str, int height)
 {
   char buf[100];
 
@@ -132,7 +132,7 @@ contentstr_to_icon(const char *str)
 
   snprintf(buf, sizeof(buf), 
 	   SHOWTIME_GU_RESOURCES_URL"/content-%s.png", str);
-  return gu_pixbuf_get_sync(buf, 16, 16);
+  return gu_pixbuf_get_sync(buf, -1, height);
 }
 
 
@@ -383,7 +383,7 @@ type2pixbuf(GtkTreeViewColumn *tree_column, GtkCellRenderer *cell,
 
   gtk_tree_model_get_value(model, iter, TYPE_COLUMN, &gv);
   if(G_VALUE_HOLDS_STRING(&gv)) {
-    GdkPixbuf *pb = contentstr_to_icon(g_value_get_string(&gv));
+    GdkPixbuf *pb = contentstr_to_icon(g_value_get_string(&gv), 16);
     g_object_set(G_OBJECT(cell), 
 		 "pixbuf", pb,
 		 NULL);
@@ -439,7 +439,7 @@ view_list_header_set_title(void *opaque, const char *str)
 static void
 view_list_header_set_icon(void *opaque, const char *str)
 {
-  GdkPixbuf *pb = contentstr_to_icon(str);
+  GdkPixbuf *pb = contentstr_to_icon(str, 22);
   g_object_set(G_OBJECT(opaque), "pixbuf", pb, NULL);
   if(pb != NULL)
     g_object_unref(G_OBJECT(pb));
