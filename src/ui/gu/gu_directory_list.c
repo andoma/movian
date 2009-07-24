@@ -30,6 +30,7 @@ enum {
   DURATION_COLUMN,
   ALBUM_COLUMN,
   TRACKS_COLUMN,
+  TRACKINDEX_COLUMN,
   N_COLUMNS
 };
 
@@ -45,6 +46,7 @@ static const char **subpaths[] = {
   [DURATION_COLUMN] = PNVEC("self", "metadata", "duration"),
   [ALBUM_COLUMN]    = PNVEC("self", "metadata", "album"),
   [TRACKS_COLUMN]   = PNVEC("self", "metadata", "tracks"),
+  [TRACKINDEX_COLUMN] = PNVEC("self", "metadata", "trackindex"),
 };
 
 
@@ -59,6 +61,7 @@ static GType coltypes[] = {
   [DURATION_COLUMN] = G_TYPE_FLOAT,
   [ALBUM_COLUMN]    = G_TYPE_STRING,
   [TRACKS_COLUMN]   = G_TYPE_INT,
+  [TRACKINDEX_COLUMN] = G_TYPE_INT,
 };
 
 
@@ -83,7 +86,6 @@ typedef struct directory_list {
   GtkListStore *model;
 
   gtk_ui_t *gu;
-  gu_directory_t *gd;
 
   column_t columns[N_COLUMNS];
 
@@ -91,6 +93,7 @@ typedef struct directory_list {
 
   LIST_HEAD(, dirnode) nodes;
 
+  char **parenturlptr;
 
 } directory_list_t;
 
@@ -299,7 +302,7 @@ row_activated(GtkTreeView *tree_view, GtkTreePath *path,
   if(G_VALUE_HOLDS_STRING(&gv)) {
     str = g_value_get_string(&gv);
     if(str != NULL)
-      nav_open(str, NULL, d->gd->gd_gnp->gnp_url, NAV_OPEN_ASYNC);
+      nav_open(str, NULL, *d->parenturlptr, NAV_OPEN_ASYNC);
   }
 
   g_value_unset(&gv);
@@ -310,15 +313,27 @@ row_activated(GtkTreeView *tree_view, GtkTreePath *path,
  *
  */
 static void
-init_text_col(directory_list_t *d, const char *title, int idx)
+init_text_col(directory_list_t *d, const char *title, int idx, int autosize)
 {
   GtkCellRenderer *r;
   GtkTreeViewColumn *c;
 
   r = gtk_cell_renderer_text_new();
+  if(autosize)
+    g_object_set(G_OBJECT(r), "ellipsize", PANGO_ELLIPSIZE_END, NULL);
+
   c = gtk_tree_view_column_new_with_attributes(title, r,
 					       "text", idx,
 					       NULL);
+  if(autosize) {
+
+    //  gtk_tree_view_column_set_min_width(c, 180);
+    //  gtk_tree_view_column_set_max_width(c, 200);
+    gtk_tree_view_column_set_expand(c, TRUE);
+    //  gtk_tree_view_column_set_fixed_width(c, 180);
+    //  gtk_tree_view_column_set_sizing(c, GTK_TREE_VIEW_COLUMN_FIXED);
+    gtk_tree_view_column_set_resizable(c, TRUE);
+  }
 
   gtk_tree_view_append_column(GTK_TREE_VIEW(d->tree), c);
   gtk_tree_view_column_set_visible(c, FALSE);
@@ -511,35 +526,53 @@ directory_list_destroy(GtkObject *object, gpointer opaque)
 }
 
 
+
+
 /**
  *
  */
-void
-gu_directory_list_create(gu_directory_t *gd)
+GtkWidget *
+gu_directory_list_create(gtk_ui_t *gu, prop_t *root,
+			 char **parenturlptr, int flags)
 {
   directory_list_t *d = calloc(1, sizeof(directory_list_t));
   GtkWidget *view;
   d->model = gtk_list_store_newv(N_COLUMNS, coltypes);
 
-  d->gu = gd->gd_gu;
+  d->gu = gu;
+  d->parenturlptr = parenturlptr;
 
-  d->node_sub = prop_subscribe(0,
-			       PROP_TAG_NAME("page", "nodes"),
-			       PROP_TAG_CALLBACK, gu_node_sub, d,
-			       PROP_TAG_COURIER, d->gu->gu_pc, 
-			       PROP_TAG_ROOT, gd->gd_gnp->gnp_prop, 
-			       NULL);
+  d->node_sub = 
+    prop_subscribe(0,
+		   PROP_TAG_NAME("self", "nodes"),
+		   PROP_TAG_CALLBACK, gu_node_sub, d,
+		   PROP_TAG_COURIER, gu->gu_pc, 
+		   PROP_TAG_NAMED_ROOT, root, "self",
+		   NULL);
 
 
   d->tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(d->model));
   gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(d->tree), TRUE);
 
-  init_type_col(d,     "",         TYPE_COLUMN);
-  init_text_col(d,     "Name",     NAME_COLUMN);
-  init_text_col(d,     "Artist",   ARTIST_COLUMN);
-  init_duration_col(d, "Duration", DURATION_COLUMN);
-  init_text_col(d,     "Album",    ALBUM_COLUMN);
-  init_text_col(d,     "Tracks",   TRACKS_COLUMN);
+  if(flags & GU_DIR_COL_TYPE)
+    init_type_col(d,     "",         TYPE_COLUMN);
+
+  if(flags & GU_DIR_COL_TRACKINDEX)
+    init_text_col(d, "#",        TRACKINDEX_COLUMN, 0);
+
+  init_text_col(d,     "Name",     NAME_COLUMN, 1);
+
+  if(flags & GU_DIR_COL_DURATION)
+    init_duration_col(d, "Duration", DURATION_COLUMN);
+
+  if(flags & GU_DIR_COL_ARTIST)
+    init_text_col(d,     "Artist",   ARTIST_COLUMN, 1);
+
+  if(flags & GU_DIR_COL_ALBUM)
+    init_text_col(d,     "Album",    ALBUM_COLUMN, 1);
+
+  if(flags & GU_DIR_COL_NUM_TRACKS)
+    init_text_col(d,     "Tracks",   TRACKS_COLUMN, 0);
 
   g_signal_connect(G_OBJECT(d->tree), "row-activated", 
 		   G_CALLBACK(row_activated), d);
@@ -547,9 +580,10 @@ gu_directory_list_create(gu_directory_t *gd)
 
   /* Page vbox */
 
-  gd->gd_curview = view = gtk_vbox_new(FALSE, 1);
+  view = gtk_vbox_new(FALSE, 1);
 
-  add_headers(d->gu, view, gd->gd_gnp->gnp_prop);
+  if(flags & GU_DIR_HEADERS)
+    add_headers(d->gu, view, root);
 
   /* Scrollbox with tree */
 
@@ -563,9 +597,9 @@ gu_directory_list_create(gu_directory_t *gd)
 
   /* Attach to parent */
 
-  gtk_container_add(GTK_CONTAINER(gd->gd_gnp->gnp_pageroot), view);
   gtk_widget_show_all(view);
 
   g_signal_connect(GTK_OBJECT(view), 
 		   "destroy", G_CALLBACK(directory_list_destroy), d);
+  return view;
 }

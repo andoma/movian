@@ -19,23 +19,21 @@
 #ifndef GU_DIRECTORY_H__
 #define GU_DIRECTORY_H__
 
-/**
- *
- */
-typedef struct gu_directory {
-  GtkWidget *gd_curview;       /* Root widget for current view.
-				  Must always be the only child of
-				  gnp->gnp_pageroot (which is a vbox) */
-
-  gtk_ui_t *gd_gu;
-  gu_nav_page_t *gd_gnp;
-  prop_sub_t *gd_view_sub;
-} gu_directory_t;
+#define GU_DIR_HEADERS        0x1
+#define GU_DIR_COL_TYPE       0x2
+#define GU_DIR_COL_ARTIST     0x4
+#define GU_DIR_COL_DURATION   0x8
+#define GU_DIR_COL_ALBUM      0x10
+#define GU_DIR_COL_NUM_TRACKS 0x20
+#define GU_DIR_COL_TRACKINDEX 0x40
 
 
-void gu_directory_list_create(gu_directory_t *gu);
+GtkWidget *gu_directory_list_create(gtk_ui_t *gu, prop_t *root,
+				    char **parenturlptr,
+				    int flags);
 
-void gu_directory_album_create(gu_directory_t *gu);
+GtkWidget *gu_directory_album_create(gtk_ui_t *gu, prop_t *root,
+				     char **parenturlptr);
 
 #endif /* GU_DIRECTORY_H__ */
 

@@ -25,10 +25,28 @@
 /**
  *
  */
+typedef struct gu_directory {
+  GtkWidget *gd_curview;       /* Root widget for current view.
+				  Must always be the only child of
+				  gnp->gnp_pageroot (which is a vbox) */
+
+  gtk_ui_t *gd_gu;
+  gu_nav_page_t *gd_gnp;
+  prop_sub_t *gd_view_sub;
+} gu_directory_t;
+
+
+
+
+/**
+ *
+ */
 static void
 set_view(void *opaque, const char *str)
 {
   gu_directory_t *gd = opaque;
+  gu_nav_page_t *gnp = gd->gd_gnp;
+  GtkWidget *w;
 
   if(gd->gd_curview != NULL) {
     gtk_widget_destroy(gd->gd_curview);
@@ -39,10 +57,21 @@ set_view(void *opaque, const char *str)
     return;
 
   if(!strcmp(str, "list")) {
-    gu_directory_list_create(gd);
+    w = gu_directory_list_create(gd->gd_gu, gnp->gnp_prop, &gnp->gnp_url,
+				 GU_DIR_HEADERS |
+				 GU_DIR_COL_TYPE |
+				 GU_DIR_COL_ARTIST |
+				 GU_DIR_COL_DURATION |
+				 GU_DIR_COL_ALBUM);
+  } else if(!strcmp(str, "album")) {
+    w = gu_directory_album_create(gd->gd_gu, gnp->gnp_prop, &gnp->gnp_url);
   } else {
     TRACE(TRACE_ERROR, "GU", "Can not display directory view: %s", str);
+    return;
   }
+
+  gd->gd_curview = w;
+  gtk_container_add(GTK_CONTAINER(gnp->gnp_pageroot), w);
 }
 
 
