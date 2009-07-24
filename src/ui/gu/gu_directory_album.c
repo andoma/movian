@@ -131,7 +131,6 @@ static void
 add_header(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
 {
   GtkWidget *hbox, *w;
-  prop_sub_t *s;
   albuminfo_t *ai = calloc(1, sizeof(albuminfo_t));
 
 
@@ -174,7 +173,6 @@ add_header(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
   ai->widget = w;
 
   g_signal_connect(GTK_OBJECT(w), "destroy", G_CALLBACK(ai_destroy), ai);
-  gu_unsubscribe_on_destroy(GTK_OBJECT(w), s);
 }
 
 
