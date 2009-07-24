@@ -875,7 +875,7 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
 		     hf->hf_hostname,
 		     hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
 
-      if(size > 1024*1024) {
+      if(size > 1024) {
 	htsbuf_qprintf(&q, "Range: bytes=%"PRId64"-\r\n\r\n", hf->hf_pos);
       } else {
 	htsbuf_qprintf(&q, 
