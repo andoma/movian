@@ -23,7 +23,6 @@
 static hts_mutex_t gu_mutex;
 
 
-
 /**
  *
  */
@@ -75,6 +74,8 @@ gu_start(ui_t *ui, int argc, char **argv, int primary)
   gdk_threads_enter();
 
   gtk_init(&argc, &argv);
+
+  gu_pixbuf_init();
 
   gu->gu_pc = prop_courier_create(&gu_mutex);
 

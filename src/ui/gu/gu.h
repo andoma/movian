@@ -93,5 +93,13 @@ void gu_subscription_set_sensitivity(void *opaque, int on);
 
 void gu_unsubscribe_on_destroy(GtkObject *o, prop_sub_t *s);
 
+
+/**
+ * gu_pixbuf.c
+ */
+void gu_pixbuf_init(void);
+
+GdkPixbuf *gu_pixbuf_get_sync(const char *url);
+
 #endif /* GU_H__ */
 
