@@ -76,7 +76,10 @@ typedef struct column {
  */
 typedef struct directory {
 
-  GtkWidget *box, *tree;
+  GtkWidget *vbox;
+  GtkWidget *scrollbox;
+  GtkWidget *tree;
+
   GtkListStore *model;
 
   gtk_ui_t *gu;
@@ -425,8 +428,41 @@ gu_directory_destroy(void *opaque)
 
   g_object_unref(G_OBJECT(d->model));
 
-  gtk_widget_destroy(d->box);
+  gtk_widget_destroy(d->scrollbox);
   free(d);
+}
+
+
+/**
+ *
+ */
+static void
+add_page_header(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
+{
+  GtkWidget *hbox, *l;
+  prop_sub_t *s;
+
+  hbox = gtk_hbox_new(FALSE, 1);
+  gtk_box_pack_start(GTK_BOX(parent), hbox, FALSE, TRUE, 0);
+
+  /* Title */
+
+  l = gtk_label_new("");
+  gtk_misc_set_alignment(GTK_MISC(l), 0, 0);
+  gtk_label_set_ellipsize(GTK_LABEL(l), PANGO_ELLIPSIZE_END);
+
+  gtk_box_pack_start(GTK_BOX(hbox), l, TRUE, TRUE, 0);
+
+  s = prop_subscribe(0,
+		     PROP_TAG_NAME("self", "title"),
+		     PROP_TAG_CALLBACK_STRING, gu_subscription_set_label, l,
+		     PROP_TAG_COURIER, gu->gu_pc, 
+		     PROP_TAG_NAMED_ROOT, root, "self",
+		     NULL);
+
+  gu_unsubscribe_on_destroy(GTK_OBJECT(l), s);
+
+
 }
 
 
@@ -464,19 +500,28 @@ gu_directory_create(gu_nav_page_t *gnp)
   g_signal_connect(G_OBJECT(d->tree), "row-activated", 
 		   G_CALLBACK(row_activated), d);
 
-  d->box = gtk_scrolled_window_new(NULL, NULL);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(d->box),
+
+  /* Page vbox */
+
+  d->vbox = gtk_vbox_new(FALSE, 1);
+
+  add_page_header(d->gu, d->vbox, gnp->gnp_prop);
+
+  /* Scrollbox with tree */
+
+  d->scrollbox = gtk_scrolled_window_new(NULL, NULL);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(d->scrollbox),
 				 GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(d->box),
+  gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(d->scrollbox),
 				      GTK_SHADOW_ETCHED_IN);
-  gtk_container_add(GTK_CONTAINER(d->box), d->tree);
+  gtk_container_add(GTK_CONTAINER(d->scrollbox), d->tree);
+  gtk_box_pack_start(GTK_BOX(d->vbox), d->scrollbox, TRUE, TRUE, 0);
 
-  gtk_container_add(GTK_CONTAINER(gnp->gnp_rootbox), d->box);
+  /* Attach to parent */
 
-  gtk_widget_show(d->tree);
-  gtk_widget_show(d->box);
+  gtk_container_add(GTK_CONTAINER(gnp->gnp_rootbox), d->vbox);
+  gtk_widget_show_all(d->vbox);
 
   gnp->gnp_destroy = gu_directory_destroy;
   gnp->gnp_opaque = d;
-
 }
