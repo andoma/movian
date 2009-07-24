@@ -20,6 +20,7 @@
 
 #include "showtime.h"
 #include "audio/audio.h"
+#include "notifications.h"
 
 static pa_threaded_mainloop *mainloop;
 static pa_mainloop_api *api;
@@ -249,11 +250,21 @@ context_state_callback(pa_context *c, void *userdata)
     break;
 
   case PA_CONTEXT_TERMINATED:
+    if(pam->stream != NULL) {
+      pa_stream_unref(pam->stream);
+      pam->stream = NULL;
+    }
+
     TRACE(TRACE_ERROR, "PA", "Context terminated");
     pa_threaded_mainloop_signal(mainloop, 0);
     break;
 
   case PA_CONTEXT_FAILED:
+    if(pam->stream != NULL) {
+      pa_stream_unref(pam->stream);
+      pam->stream = NULL;
+    }
+
     TRACE(TRACE_ERROR, "PA",
 	  "Connection failure: %s", pa_strerror(pa_context_errno(c)));
     pa_threaded_mainloop_signal(mainloop, 0);
@@ -340,6 +351,7 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
   size_t l, length;
   int64_t pts;
   media_pipe_t *mp;
+  int r = 0;
 
   pa_threaded_mainloop_lock(mainloop);
 
@@ -397,6 +409,11 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
       pa_threaded_mainloop_lock(mainloop);
     }
 
+    if(pa_context_get_state(pam->context) == PA_CONTEXT_TERMINATED ||
+       pa_context_get_state(pam->context) == PA_CONTEXT_FAILED) {
+      r = -1;
+      break;
+    }
     if(pam->stream != NULL &&
        (pam->cur_format != ab->ab_format ||
 	pam->cur_rate   != ab->ab_rate)) {
@@ -414,11 +431,36 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
       continue;
     }
 
-    if(pa_stream_get_state(pam->stream) != PA_STREAM_READY) {
+
+    switch(pa_stream_get_state(pam->stream)) {
+    case PA_STREAM_UNCONNECTED:
+    case PA_STREAM_CREATING:
       pa_threaded_mainloop_wait(mainloop);
       continue;
-    }
     
+    case PA_STREAM_READY:
+      break;
+
+    case PA_STREAM_TERMINATED:
+    case PA_STREAM_FAILED:
+      pa_stream_unref(pam->stream);
+      pam->stream = NULL;
+
+      notify_add(NOTIFY_ERROR, NULL, 5, 
+		 "Audio stream disconnected from "
+		 "PulseAudio server, playback paused");
+      
+      mp_flush(ab->ab_mp);
+      mp_enqueue_event(ab->ab_mp, event_create_type(EVENT_INTERNAL_PAUSE));
+
+      audio_fifo_purge(af, NULL, NULL);
+
+      if(ab != NULL) {
+	ab_free(ab);
+	ab = NULL;
+      }
+      continue;
+    }
 
     l = pa_stream_writable_size(pam->stream);
     
@@ -477,7 +519,7 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
     ab = NULL;
   }
 
-  return 0;
+  return r;
 }
 
 /**
