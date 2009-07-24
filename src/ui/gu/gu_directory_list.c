@@ -440,7 +440,7 @@ view_list_header_set_title(void *opaque, const char *str)
 static void
 view_list_header_set_icon(void *opaque, const char *str)
 {
-  GdkPixbuf *pb = contentstr_to_icon(str, 22);
+  GdkPixbuf *pb = contentstr_to_icon(str, 16);
   g_object_set(G_OBJECT(opaque), "pixbuf", pb, NULL);
   if(pb != NULL)
     g_object_unref(G_OBJECT(pb));
@@ -461,6 +461,7 @@ add_headers(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
 
   /* Image */
   w = gtk_image_new();
+  gtk_misc_set_alignment(GTK_MISC(w), 0.5, 0.5);
   gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, TRUE, 0);
 
   s = prop_subscribe(0,
