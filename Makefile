@@ -224,6 +224,7 @@ SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_gx.c
 #
 SRCS-$(CONFIG_GU) +=    src/ui/gu/gu.c \
 			src/ui/gu/gu_helpers.c \
+			src/ui/gu/gu_pixbuf.c \
 			src/ui/gu/gu_popup.c \
 			src/ui/gu/gu_menubar.c \
 			src/ui/gu/gu_toolbar.c \
@@ -233,7 +234,7 @@ SRCS-$(CONFIG_GU) +=    src/ui/gu/gu.c \
 			src/ui/gu/gu_directory.c \
 
 ${BUILDDIR}/src/ui/gu/%.o : CFLAGS = $(shell pkg-config --cflags gtk+-2.0) \
--Wall -Werror -Wmissing-prototypes -Wno-cast-qual
+-Wall -Werror -Wmissing-prototypes -Wno-cast-qual -Wno-deprecated-declarations 
 
 #
 # LIRC UI
