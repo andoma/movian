@@ -187,7 +187,7 @@ gu_pixbuf_get_internal(const char *url, int *sizep,
   }
 
   if(pp != NULL)
-    prop_pixmap_ref_dec((prop_pixmap_t *)data);
+    prop_pixmap_ref_dec(pp);
 
   return gp;
 }
