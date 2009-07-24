@@ -99,6 +99,7 @@ scanner(void *aux)
   char album_name[128];
   char artist_name[128];
   char buf[128];
+  int trackidx;
 
   ref = fa_reference(bfp->h.np_url);
 
@@ -236,6 +237,8 @@ scanner(void *aux)
 	prop_set_string(prop_create(bfp->h.np_prop_root, "artist_name"), 
 			artist_name);
       
+      trackidx = 1;
+
       /* Remove everything that is not audio */
       TAILQ_FOREACH(nde, &nd->nd_entries, nde_link) {
 	if(bfp->bfp_stop)
@@ -245,6 +248,10 @@ scanner(void *aux)
 	
 	if(nde->nde_type != CONTENT_AUDIO) {
 	  prop_destroy(p);
+	} else {
+	  prop_set_int(prop_create(prop_create(p, "metadata"),
+				   "trackindex"), trackidx);
+	  trackidx++;
 	}
       }
       
