@@ -30,6 +30,7 @@ typedef struct pa_audio_mode {
   audio_mode_t am;
   pa_context *context;
   pa_stream *stream;
+  int stream_error;
 
   int cur_format;
   int cur_rate;
@@ -41,6 +42,7 @@ typedef struct pa_audio_mode {
 
   pa_volume_t mastervol;
   int muted;
+
 
 } pa_audio_mode_t;
 
@@ -63,6 +65,12 @@ stream_write_callback(pa_stream *s, size_t length, void *userdata)
 static void
 stream_state_callback(pa_stream *s, void *userdata)
 {
+  pa_audio_mode_t *pam = (pa_audio_mode_t *)userdata;
+  if(pa_stream_get_state(s) == PA_STREAM_FAILED) {
+    pam->stream_error = pa_context_errno(pam->context);
+    TRACE(TRACE_ERROR, "PA",
+	  "Stream failure: %s", pa_strerror(pam->stream_error));
+  }
   pa_threaded_mainloop_signal(mainloop, 0);
 }
 
@@ -448,7 +456,8 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
 
       notify_add(NOTIFY_ERROR, NULL, 5, 
 		 "Audio stream disconnected from "
-		 "PulseAudio server, playback paused");
+		 "PulseAudio server -- %s. Playback paused",
+		 pa_strerror(pam->stream_error));
       
       mp_flush(ab->ab_mp);
       mp_enqueue_event(ab->ab_mp, event_create_type(EVENT_INTERNAL_PAUSE));
