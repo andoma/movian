@@ -132,7 +132,7 @@ contentstr_to_icon(const char *str)
 
   snprintf(buf, sizeof(buf), 
 	   SHOWTIME_GU_RESOURCES_URL"/content-%s.png", str);
-  return gu_pixbuf_get_sync(buf);
+  return gu_pixbuf_get_sync(buf, 16, 16);
 }
 
 

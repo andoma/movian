@@ -36,6 +36,8 @@ typedef struct pbcache {
   GdkPixbuf *pbc_pixbuf;
   int pbc_bytes;
 
+  int pbc_width, pbc_height; // -1 == original
+
 } pbcache_t;
 
 
@@ -73,7 +75,8 @@ pixbuf_avfree_pixels(guchar *pixels, gpointer data)
  *
  */
 static GdkPixbuf *
-gu_pixbuf_get_internal(const char *url, int *sizep)
+gu_pixbuf_get_internal(const char *url, int *sizep,
+		       int req_width, int req_height)
 {
   AVCodecContext *ctx = NULL;
   AVCodec *codec;
@@ -138,17 +141,25 @@ gu_pixbuf_get_internal(const char *url, int *sizep)
     height = ctx->height;
     width  = ctx->width;
     pixfmt = ctx->pix_fmt;
-
   }
+
+  if(req_width == -1 && req_height == -1) {
+    req_width  = width; 
+    req_height = height;
+  } else if(req_width == -1) {
+    req_width = width * req_height / height;
+  } else if(req_height == -1) {
+    req_height = height * req_width / width;
+  } 
 
   outfmt = isALPHA(pixfmt) ? PIX_FMT_RGBA : PIX_FMT_RGB24;
 
   sws = sws_getContext(width, height, pixfmt, 
-		       width, height, outfmt,
+		       req_width, req_height, outfmt,
 		       SWS_BICUBIC, NULL, NULL, NULL);
 
 
-  avpicture_alloc(&pic, outfmt, width, height);
+  avpicture_alloc(&pic, outfmt, req_width, req_height);
 
   sws_scale(sws, frame->data, frame->linesize, 0, height,
 	    pic.data, pic.linesize);
@@ -156,14 +167,14 @@ gu_pixbuf_get_internal(const char *url, int *sizep)
   sws_freeContext(sws);
 
   if(sizep != NULL)
-    *sizep = pic.linesize[0] * height;
+    *sizep = pic.linesize[0] * req_height;
 
   gp = gdk_pixbuf_new_from_data(pic.data[0],
 				GDK_COLORSPACE_RGB,
 				isALPHA(pixfmt),
 				8,
-				width,
-				height,
+				req_width,
+				req_height,
 				pic.linesize[0],
 				pixbuf_avfree_pixels,
 				pic.data[0]);
@@ -175,9 +186,8 @@ gu_pixbuf_get_internal(const char *url, int *sizep)
     av_free(ctx);
   }
 
-  if(pp != NULL) {
+  if(pp != NULL)
     prop_pixmap_ref_dec((prop_pixmap_t *)data);
-  }
 
   return gp;
 }
@@ -187,14 +197,16 @@ gu_pixbuf_get_internal(const char *url, int *sizep)
  *
  */
 GdkPixbuf *
-gu_pixbuf_get_sync(const char *url)
+gu_pixbuf_get_sync(const char *url, int width, int height)
 {
   pbcache_t *pbc;
   GdkPixbuf *pb;
   int size;
 
   TAILQ_FOREACH(pbc, &pixbufcache, pbc_link) {
-    if(!strcmp(pbc->pbc_url, url)) {
+    if(!strcmp(pbc->pbc_url, url) &&
+       pbc->pbc_width == width &&
+       pbc->pbc_height == height) {
       /* Cache hit, move entry to front */
       TAILQ_REMOVE(&pixbufcache, pbc, pbc_link);
       TAILQ_INSERT_HEAD(&pixbufcache, pbc, pbc_link);
@@ -205,7 +217,7 @@ gu_pixbuf_get_sync(const char *url)
     }
   }
 
-  pb = gu_pixbuf_get_internal(url, &size);
+  pb = gu_pixbuf_get_internal(url, &size, width, height);
   if(pb == NULL)
     return NULL;
 
@@ -224,6 +236,8 @@ gu_pixbuf_get_sync(const char *url)
   pbc->pbc_url = strdup(url);
   pbc->pbc_pixbuf = pb;
   pbc->pbc_bytes = size;
+  pbc->pbc_width = width;
+  pbc->pbc_height = height;
 
   /* Keep a reference for the cache */
   g_object_ref(G_OBJECT(pbc->pbc_pixbuf));

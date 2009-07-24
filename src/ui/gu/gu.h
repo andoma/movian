@@ -105,7 +105,7 @@ void gu_unsubscribe_on_destroy(GtkObject *o, prop_sub_t *s);
  */
 void gu_pixbuf_init(void);
 
-GdkPixbuf *gu_pixbuf_get_sync(const char *url);
+GdkPixbuf *gu_pixbuf_get_sync(const char *url, int width, int height);
 
 #endif /* GU_H__ */
 
