@@ -65,13 +65,11 @@ disable(){
 
 
 enabled(){
-    test "${1#!}" = "$1" && op== || op=!=
-    eval test "x\$${1#!}" $op "xyes"
+    eval test "x${!1}" = "xyes"
 }
 
 disabled(){
-    test "${1#!}" = "$1" && op== || op=!=
-    eval test "x\$${1#!}" $op "xno"
+    eval test "x${!1}" = "xno" -o "x${!1}" = "x"
 }
 
 toupper(){
