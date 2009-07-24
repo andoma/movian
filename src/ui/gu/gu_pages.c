@@ -21,17 +21,6 @@
 #include "gu.h"
 #include "showtime.h"
 
-/**
- *
- */
-static void
-gu_nav_page_clean(gu_nav_page_t *gnp)
-{
-  if(gnp->gnp_destroy == NULL)
-    return;
-  gnp->gnp_destroy(gnp->gnp_opaque);
-  gnp->gnp_destroy = NULL;
-}
 
 
 /**
@@ -42,7 +31,8 @@ gu_nav_page_set_type(void *opaque, const char *type)
 {
   gu_nav_page_t *gnp = opaque;
 
-  gu_nav_page_clean(gnp);
+  if(gnp->gnp_pageroot != NULL)
+    gtk_widget_destroy(gnp->gnp_pageroot);
 
   if(type == NULL)
     return;
@@ -81,10 +71,10 @@ gu_nav_page_create(gtk_ui_t *gu, prop_t *p)
   gnp->gnp_prop = p;
   prop_ref_inc(p);
 
-  gnp->gnp_rootbox = gtk_vbox_new(FALSE, 0);
-  gtk_container_set_border_width(GTK_CONTAINER(gnp->gnp_rootbox), 0);
-  gtk_container_add(GTK_CONTAINER(gu->gu_page_container), gnp->gnp_rootbox);
-  gtk_widget_show(gnp->gnp_rootbox);
+  gnp->gnp_pagebin = gtk_vbox_new(FALSE, 0);
+  gtk_container_set_border_width(GTK_CONTAINER(gnp->gnp_pagebin), 0);
+  gtk_container_add(GTK_CONTAINER(gu->gu_page_container), gnp->gnp_pagebin);
+  gtk_widget_show(gnp->gnp_pagebin);
 
   LIST_INSERT_HEAD(&gu->gu_pages, gnp, gnp_link);
 
@@ -114,12 +104,10 @@ gu_nav_page_create(gtk_ui_t *gu, prop_t *p)
 static void
 gu_nav_page_destroy(gu_nav_page_t *gnp)
 {
-  gu_nav_page_clean(gnp);
-
   prop_unsubscribe(gnp->gnp_sub_type);
   prop_unsubscribe(gnp->gnp_sub_url);
 
-  gtk_widget_destroy(gnp->gnp_rootbox);
+  gtk_widget_destroy(gnp->gnp_pagebin);
 
   LIST_REMOVE(gnp, gnp_link);
   
@@ -154,10 +142,10 @@ gu_nav_page_display(gtk_ui_t *gu, gu_nav_page_t *gnp)
     return;
 
   if(gu->gu_page_current != NULL)
-    gtk_widget_hide(gu->gu_page_current->gnp_rootbox);
+    gtk_widget_hide(gu->gu_page_current->gnp_pagebin);
 
   gu->gu_page_current = gnp;
-  gtk_widget_show(gnp->gnp_rootbox);
+  gtk_widget_show(gnp->gnp_pagebin);
 }
 
 

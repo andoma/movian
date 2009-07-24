@@ -56,11 +56,17 @@ typedef struct gu_nav_page {
   gtk_ui_t *gnp_gu;
   LIST_ENTRY(gu_nav_page) gnp_link;
 
-  prop_t *gnp_prop;
-  GtkWidget *gnp_rootbox;
+  prop_t *gnp_prop;         // Root property for page
 
-  void (*gnp_destroy)(void *opaque);
-  void *gnp_opaque;
+  GtkWidget *gnp_pagebin;   /* Bin for the page to put its widget in.
+			     * This widget is hidden/shown depending
+			     * on if this page is currently shown
+			     * in the navigator 
+			     */
+
+  GtkWidget *gnp_pageroot;   /* Root widget for current page view.
+				Must always be the only child of
+				gnp_pagebin */
 
   char *gnp_url;
 

@@ -76,7 +76,6 @@ typedef struct column {
  */
 typedef struct directory {
 
-  GtkWidget *vbox;
   GtkWidget *scrollbox;
   GtkWidget *tree;
 
@@ -117,6 +116,25 @@ typedef struct dirnode {
   cell_t cells[N_COLUMNS];
 
 } dirnode_t;
+
+
+/**
+ * Based on a content type string, return a GdkPixbuf
+ * Returns a reference to be free'd by caller
+ */
+static GdkPixbuf *
+contentstr_to_icon(const char *str)
+{
+  char buf[100];
+
+  if(str == NULL)
+    return NULL;
+
+  snprintf(buf, sizeof(buf), 
+	   SHOWTIME_GU_RESOURCES_URL"/content-%s.png", str);
+  return gu_pixbuf_get_sync(buf);
+}
+
 
 
 /**
@@ -361,27 +379,14 @@ static void
 type2pixbuf(GtkTreeViewColumn *tree_column, GtkCellRenderer *cell,
 	     GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 {
-  const char *str;
-  char buf[256];
-
   GValue gv = { 0, };
 
   gtk_tree_model_get_value(model, iter, TYPE_COLUMN, &gv);
   if(G_VALUE_HOLDS_STRING(&gv)) {
-    str = g_value_get_string(&gv);
-
-    GdkPixbuf *pb = NULL;
-
-    if(str != NULL) {
-      snprintf(buf, sizeof(buf), 
-	       SHOWTIME_GU_RESOURCES_URL"/content-%s.png", str);
-      pb = gu_pixbuf_get_sync(buf);
-    }
-
+    GdkPixbuf *pb = contentstr_to_icon(g_value_get_string(&gv));
     g_object_set(G_OBJECT(cell), 
 		 "pixbuf", pb,
 		 NULL);
-
     if(pb != NULL)
       g_object_unref(G_OBJECT(pb));
 
@@ -416,7 +421,80 @@ init_type_col(directory_t *d, const char *title, int idx)
  *
  */
 static void
-gu_directory_destroy(void *opaque)
+view_list_header_set_title(void *opaque, const char *str)
+{
+  if(str != NULL) {
+    char *m = g_markup_printf_escaped("<span size=\"x-large\">%s</span>", str);
+    gtk_label_set_markup(GTK_LABEL(opaque), m);
+    g_free(m);
+  } else {
+    gtk_label_set(GTK_LABEL(opaque), "");
+  }
+}
+
+
+/**
+ *
+ */
+static void
+view_list_header_set_icon(void *opaque, const char *str)
+{
+  GdkPixbuf *pb = contentstr_to_icon(str);
+  g_object_set(G_OBJECT(opaque), "pixbuf", pb, NULL);
+  if(pb != NULL)
+    g_object_unref(G_OBJECT(pb));
+}
+
+
+/**
+ *
+ */
+static void
+add_headers(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
+{
+  GtkWidget *hbox, *w;
+  prop_sub_t *s;
+
+  hbox = gtk_hbox_new(FALSE, 1);
+  gtk_box_pack_start(GTK_BOX(parent), hbox, FALSE, TRUE, 0);
+
+  /* Image */
+  w = gtk_image_new();
+  gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, TRUE, 0);
+
+  s = prop_subscribe(0,
+		     PROP_TAG_NAME("self", "type"),
+		     PROP_TAG_CALLBACK_STRING, view_list_header_set_icon, w,
+		     PROP_TAG_COURIER, gu->gu_pc, 
+		     PROP_TAG_NAMED_ROOT, root, "self",
+		     NULL);
+
+  gu_unsubscribe_on_destroy(GTK_OBJECT(w), s);
+
+
+  /* Title */
+  w = gtk_label_new("");
+  gtk_misc_set_alignment(GTK_MISC(w), 0, 0);
+  gtk_label_set_ellipsize(GTK_LABEL(w), PANGO_ELLIPSIZE_END);
+
+  gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
+
+  s = prop_subscribe(0,
+		     PROP_TAG_NAME("self", "title"),
+		     PROP_TAG_CALLBACK_STRING, view_list_header_set_title, w,
+		     PROP_TAG_COURIER, gu->gu_pc, 
+		     PROP_TAG_NAMED_ROOT, root, "self",
+		     NULL);
+
+  gu_unsubscribe_on_destroy(GTK_OBJECT(w), s);
+}
+
+
+/**
+ *
+ */
+static void
+gu_directory_destroy(GtkObject *object, gpointer opaque)
 {
   directory_t *d = opaque;
   dirnode_t *dn;
@@ -427,42 +505,7 @@ gu_directory_destroy(void *opaque)
     dirnode_destroy(dn, 0);
 
   g_object_unref(G_OBJECT(d->model));
-
-  gtk_widget_destroy(d->scrollbox);
   free(d);
-}
-
-
-/**
- *
- */
-static void
-add_page_header(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
-{
-  GtkWidget *hbox, *l;
-  prop_sub_t *s;
-
-  hbox = gtk_hbox_new(FALSE, 1);
-  gtk_box_pack_start(GTK_BOX(parent), hbox, FALSE, TRUE, 0);
-
-  /* Title */
-
-  l = gtk_label_new("");
-  gtk_misc_set_alignment(GTK_MISC(l), 0, 0);
-  gtk_label_set_ellipsize(GTK_LABEL(l), PANGO_ELLIPSIZE_END);
-
-  gtk_box_pack_start(GTK_BOX(hbox), l, TRUE, TRUE, 0);
-
-  s = prop_subscribe(0,
-		     PROP_TAG_NAME("self", "title"),
-		     PROP_TAG_CALLBACK_STRING, gu_subscription_set_label, l,
-		     PROP_TAG_COURIER, gu->gu_pc, 
-		     PROP_TAG_NAMED_ROOT, root, "self",
-		     NULL);
-
-  gu_unsubscribe_on_destroy(GTK_OBJECT(l), s);
-
-
 }
 
 
@@ -503,9 +546,9 @@ gu_directory_create(gu_nav_page_t *gnp)
 
   /* Page vbox */
 
-  d->vbox = gtk_vbox_new(FALSE, 1);
+  gnp->gnp_pageroot = gtk_vbox_new(FALSE, 1);
 
-  add_page_header(d->gu, d->vbox, gnp->gnp_prop);
+  add_headers(d->gu, gnp->gnp_pageroot, gnp->gnp_prop);
 
   /* Scrollbox with tree */
 
@@ -515,13 +558,13 @@ gu_directory_create(gu_nav_page_t *gnp)
   gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(d->scrollbox),
 				      GTK_SHADOW_ETCHED_IN);
   gtk_container_add(GTK_CONTAINER(d->scrollbox), d->tree);
-  gtk_box_pack_start(GTK_BOX(d->vbox), d->scrollbox, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(gnp->gnp_pageroot), d->scrollbox, TRUE, TRUE, 0);
 
   /* Attach to parent */
 
-  gtk_container_add(GTK_CONTAINER(gnp->gnp_rootbox), d->vbox);
-  gtk_widget_show_all(d->vbox);
+  gtk_container_add(GTK_CONTAINER(gnp->gnp_pagebin), gnp->gnp_pageroot);
+  gtk_widget_show_all(gnp->gnp_pageroot);
 
-  gnp->gnp_destroy = gu_directory_destroy;
-  gnp->gnp_opaque = d;
+  g_signal_connect(GTK_OBJECT(gnp->gnp_pageroot), 
+		   "destroy", G_CALLBACK(gu_directory_destroy), d);
 }
