@@ -69,7 +69,6 @@ enable libasound
 enable libpulse
 enable libexif
 enable lirc
-enable regex
 
 for opt do
   optval="${opt#*=}"

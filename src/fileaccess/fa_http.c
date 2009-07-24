@@ -20,10 +20,6 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef CONFIG_REGEX
-#include <regex.h>
-#endif
-#include <assert.h>
 #include <libavutil/base64.h>
 #include <libavutil/avstring.h>
 #include <htsmsg/htsmsg_xml.h>
@@ -35,6 +31,8 @@
 #include "showtime.h"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
+
+#define HTTP_MAX_PATH_LEN 2048
 
 extern char *htsversion;
 
@@ -616,8 +614,6 @@ http_destroy(http_file_t *hf)
   free(hf);
 }
 
-#ifdef CONFIG_REGEX
-
 /* inspired by http://xbmc.org/trac/browser/trunk/XBMC/xbmc/FileSystem/HTTPDirectory.cpp */
 
 static int
@@ -636,61 +632,60 @@ http_strip_last(char *s, char c)
 static int
 http_index_parse(http_file_t *hf, nav_dir_t *nd, char *buf)
 {
-  static regex_t *ahref_preg = NULL;
-  regmatch_t matches[3];
   char *p, *n;
-  
-  if(!ahref_preg) {
-    ahref_preg = malloc(sizeof(ahref_preg));
-    regcomp(ahref_preg, "<a href=\"(.*)\">(.*)</a>", REG_EXTENDED);
-  }
+  char *url = malloc(HTTP_MAX_PATH_LEN);
   
   p = buf;
-  while((n = strchr(p, '\n'))) {
+  /* n + 1 to skip '\0' */
+  for(;(n = strchr(p, '\n')); p = n + 1) {
+    char *s, *href, *hrefd, *name;
+    int isdir;
+    
+    /* terminate line */
     *n = '\0';
     
-    if(regexec(ahref_preg, p, 3, matches, 0)) {
-      /* no match */
-    } else {
-      char *href, *name, *hrefd;
-      int isdir;
-      char url[500];
+    if(!(href = strstr(p, "<a href=\"")))
+      continue;
+    href += 9;
+    /* when does this happen? xmbc does it */
+    if(href[0] == '/')
+      href++;
+    
+    if(!(s = strstr(href, "\">")))
+      continue;
+    *s++ = '\0'; /* skip " and terminate */
+    s++; /* skip > */
+    
+    name = s;
+    if(!(s = strstr(name, "</a>")))
+      continue;
+    *s = '\0';
+    
+    isdir = http_strip_last(name, '/');
+    http_strip_last(href, '/');
+    
+    hrefd = strdup(href);
+    http_deescape(hrefd);
+    
+    /* skip parent dir links etc */
+    if(strcmp(name, hrefd) == 0) {
+      snprintf(url, HTTP_MAX_PATH_LEN, "http://%s:%d%s%s%s",
+               hf->hf_hostname, hf->hf_port, hf->hf_path,
+               href,
+               isdir ? "/" : "");
       
-      href = &p[matches[1].rm_so];
-      p[matches[1].rm_eo] = '\0';
-      name = &p[matches[2].rm_so];
-      p[matches[2].rm_eo] = '\0';
-      
-      /* when does this happen? xmbc does it */
-      if(href[0] == '/')
-        href++;
-      
-      isdir = http_strip_last(name, '/');
-      http_strip_last(href, '/');
-      
-      hrefd = strdup(href);
-      http_deescape(hrefd);
-      
-      /* skip parent dir links etc */
-      if(strcmp(name, hrefd) == 0) {
-        snprintf(url, sizeof(url), "http://%s:%d%s%s%s",
-                 hf->hf_hostname, hf->hf_port, hf->hf_path,
-                 href,
-                 isdir ? "/" : "");
-        
-	http_deescape(url);
+      http_deescape(url);
 
-        nav_dir_add(nd, url, name,
-                    isdir ? CONTENT_DIR : CONTENT_FILE,
-                    NULL);
-      }
-      
-      free(hrefd);
+      nav_dir_add(nd, url, name,
+                  isdir ? CONTENT_DIR : CONTENT_FILE,
+                  NULL);
     }
     
-    p = n + 1; /* skip '\0' */
+    free(hrefd);
   }
   
+  free(url);
+
   return 0;
 }
 
@@ -795,7 +790,6 @@ http_scandir(nav_dir_t *nd, const char *url, char *errbuf, size_t errlen)
   http_destroy(hf);
   return retval;
 }
-#endif
 
 /**
  * Open file
@@ -881,7 +875,7 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
 		     hf->hf_hostname,
 		     hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
 
-      if(size > 1024) {
+      if(size > 1024*1024) {
 	htsbuf_qprintf(&q, "Range: bytes=%"PRId64"-\r\n\r\n", hf->hf_pos);
       } else {
 	htsbuf_qprintf(&q, 
@@ -1004,9 +998,7 @@ http_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
 fa_protocol_t fa_protocol_http = {
   .fap_flags = FAP_INCLUDE_PROTO_IN_URL,
   .fap_name  = "http",
-#ifdef CONFIG_REGEX
   .fap_scan  = http_scandir,
-#endif
   .fap_open  = http_open,
   .fap_close = http_close,
   .fap_read  = http_read,
@@ -1034,7 +1026,6 @@ get_cdata_by_tag(htsmsg_t *tags, const char *name)
 /**
  * Parse WEBDAV PROPFIND results
  */
-#define WEBDAV_MAX_PATH_LEN 2048
 
 static int
 parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd,
@@ -1044,14 +1035,14 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd,
   htsmsg_field_t *f;
   const char *href, *d, *q;
   int isdir, i;
-  char *path  = malloc(WEBDAV_MAX_PATH_LEN);
-  char *fname = malloc(WEBDAV_MAX_PATH_LEN);
+  char *path  = malloc(HTTP_MAX_PATH_LEN);
+  char *fname = malloc(HTTP_MAX_PATH_LEN);
 
   if(nd == NULL) {
     // Single entry stat(2) (ie. not a directory scan)
     // We need to compare paths and to do so, we must deescape the
     // possible URL encoding. Do the searched-for path once
-    snprintf(path, WEBDAV_MAX_PATH_LEN, "%s", hf->hf_path);
+    snprintf(path, HTTP_MAX_PATH_LEN, "%s", hf->hf_path);
     http_deescape(path);
   }
 
@@ -1090,7 +1081,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd,
 
       if(strcmp(hf->hf_path, href)) {
 
-	snprintf(path, WEBDAV_MAX_PATH_LEN, "webdav://%s:%d%s", 
+	snprintf(path, HTTP_MAX_PATH_LEN, "webdav://%s:%d%s", 
 		 hf->hf_hostname, hf->hf_port, href);
 	
 	if((q = strrchr(path, '/')) != NULL) {
@@ -1105,12 +1096,12 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd,
 	    while(q != path && q[-1] != '/')
 	      q--;
 
-	    for(i = 0; i < WEBDAV_MAX_PATH_LEN - 1 && q[i] != '/'; i++)
+	    for(i = 0; i < HTTP_MAX_PATH_LEN - 1 && q[i] != '/'; i++)
 	      fname[i] = q[i];
 	    fname[i] = 0;
 
 	  } else {
-	    snprintf(fname, WEBDAV_MAX_PATH_LEN, "%s", q);
+	    snprintf(fname, HTTP_MAX_PATH_LEN, "%s", q);
 	  }
 	  http_deescape(fname);
 	  http_deescape(path);
@@ -1122,7 +1113,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd,
     } else {
       /* single entry stat(2) */
 
-      snprintf(fname, WEBDAV_MAX_PATH_LEN, "%s", href);
+      snprintf(fname, HTTP_MAX_PATH_LEN, "%s", href);
       http_deescape(fname);
 
       if(!strcmp(path, fname)) {

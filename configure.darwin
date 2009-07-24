@@ -43,7 +43,6 @@ enable glw
 enable glw_frontend_cocoa
 enable glw_backend_opengl
 enable coreaudio
-enable regex
 
 for opt do
   optval="${opt#*=}"
