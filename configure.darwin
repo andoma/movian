@@ -161,7 +161,7 @@ setup_ffmpeg --cpu=${CPU} --enable-pthreads
 #
 # Configure paths, etc
 #
-if [ ${RELEASE} != yes ]; then
+if disabled release; then
     echo  Development build. 
     echo  The generated binary will contained compild-in paths to
     echo  the current build tree. If you plan to install the binary,
