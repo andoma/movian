@@ -23,6 +23,7 @@
 
 enum {
   URL_COLUMN,
+  TYPE_COLUMN,
   NAME_COLUMN,
   ARTIST_COLUMN,
   DURATION_COLUMN,
@@ -37,6 +38,7 @@ enum {
  */
 static const char **subpaths[] = {
   [URL_COLUMN]      = PNVEC("self", "url"),
+  [TYPE_COLUMN]     = PNVEC("self", "type"),
   [NAME_COLUMN]     = PNVEC("self", "metadata", "title"),
   [ARTIST_COLUMN]   = PNVEC("self", "metadata", "artist"),
   [DURATION_COLUMN] = PNVEC("self", "metadata", "duration"),
@@ -50,6 +52,7 @@ static const char **subpaths[] = {
  */
 static GType coltypes[] = {
   [URL_COLUMN]      = G_TYPE_STRING,
+  [TYPE_COLUMN]     = G_TYPE_STRING,
   [NAME_COLUMN]     = G_TYPE_STRING,
   [ARTIST_COLUMN]   = G_TYPE_STRING,
   [DURATION_COLUMN] = G_TYPE_FLOAT,
@@ -291,8 +294,7 @@ init_text_col(directory_t *d, const char *title, int idx)
   GtkTreeViewColumn *c;
 
   r = gtk_cell_renderer_text_new();
-  c = gtk_tree_view_column_new_with_attributes(title,
-					       r,
+  c = gtk_tree_view_column_new_with_attributes(title, r,
 					       "text", idx,
 					       NULL);
 
@@ -337,9 +339,7 @@ init_duration_col(directory_t *d, const char *title, int idx)
   GtkTreeViewColumn *c;
 
   r = gtk_cell_renderer_text_new();
-  c = gtk_tree_view_column_new_with_attributes(title,
-					       r,
-					       "text", idx,
+  c = gtk_tree_view_column_new_with_attributes(title, r,
 					       NULL);
 
   gtk_tree_view_column_set_cell_data_func(c, r, duration2txt, NULL, NULL);
@@ -347,6 +347,64 @@ init_duration_col(directory_t *d, const char *title, int idx)
 
   gtk_tree_view_append_column(GTK_TREE_VIEW(d->tree), c);
   gtk_tree_view_column_set_visible(c, FALSE);
+  d->columns[idx].col = c;
+}
+
+
+/**
+ *
+ */
+static void
+type2pixbuf(GtkTreeViewColumn *tree_column, GtkCellRenderer *cell,
+	     GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
+{
+  const char *str;
+  char buf[256];
+
+  GValue gv = { 0, };
+
+  gtk_tree_model_get_value(model, iter, TYPE_COLUMN, &gv);
+  if(G_VALUE_HOLDS_STRING(&gv)) {
+    str = g_value_get_string(&gv);
+
+    GdkPixbuf *pb = NULL;
+
+    if(str != NULL) {
+      snprintf(buf, sizeof(buf), 
+	       SHOWTIME_GU_RESOURCES_URL"/content-%s.png", str);
+      pb = gu_pixbuf_get_sync(buf);
+    }
+
+    g_object_set(G_OBJECT(cell), 
+		 "pixbuf", pb,
+		 NULL);
+
+    if(pb != NULL)
+      g_object_unref(G_OBJECT(pb));
+
+  }
+  g_value_unset(&gv);
+}
+
+
+/**
+ *
+ */
+static void
+init_type_col(directory_t *d, const char *title, int idx)
+{
+  GtkCellRenderer *r;
+  GtkTreeViewColumn *c;
+
+  r = gtk_cell_renderer_pixbuf_new();
+  c = gtk_tree_view_column_new_with_attributes(title,
+					       r,
+					       NULL);
+
+  gtk_tree_view_column_set_cell_data_func(c, r, type2pixbuf, NULL, NULL);
+
+  gtk_tree_view_append_column(GTK_TREE_VIEW(d->tree), c);
+  gtk_tree_view_column_set_visible(c, TRUE);
   d->columns[idx].col = c;
 }
 
@@ -396,6 +454,7 @@ gu_directory_create(gu_nav_page_t *gnp)
   d->tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(d->model));
   gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(d->tree), TRUE);
 
+  init_type_col(d,     "",         TYPE_COLUMN);
   init_text_col(d,     "Name",     NAME_COLUMN);
   init_text_col(d,     "Artist",   ARTIST_COLUMN);
   init_duration_col(d, "Duration", DURATION_COLUMN);

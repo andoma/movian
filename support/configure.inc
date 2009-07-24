@@ -201,6 +201,18 @@ finalize() {
 	echo >>${CONFIG_H} "#define SHOWTIME_GLW_DEFAULT_THEME_URL \""${GLW_DEFAULT_THEME_URL}"\""
     fi
 
+    # Generate resource path for GU
+    # Optionally embed the stuff if in release mode
+    if enabled gu; then
+	if enabled embedded_resources; then
+	    GU_RESOURCES_URL="bundle://guresources"
+	    echo >>${CONFIG_MAK} "BUNDLES+=guresources"
+	else
+	    GU_RESOURCES_URL="file://`cd guresources && pwd`"
+	fi
+	echo >>${CONFIG_H} "#define SHOWTIME_GU_RESOURCES_URL \""${GU_RESOURCES_URL}"\""
+    fi
+
 
     # Release tag
     if enabled release; then
