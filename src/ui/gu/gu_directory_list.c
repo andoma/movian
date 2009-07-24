@@ -523,8 +523,7 @@ gu_directory_list_create(gu_directory_t *gd)
   d->gu = gd->gd_gu;
 
   d->node_sub = prop_subscribe(0,
-			       PROP_TAG_NAME_VECTOR, 
-			       (const char *[]){"page", "nodes", NULL},
+			       PROP_TAG_NAME("page", "nodes"),
 			       PROP_TAG_CALLBACK, gu_node_sub, d,
 			       PROP_TAG_COURIER, d->gu->gu_pc, 
 			       PROP_TAG_ROOT, gd->gd_gnp->gnp_prop, 
