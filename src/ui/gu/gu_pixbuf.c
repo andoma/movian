@@ -213,7 +213,7 @@ gu_pixbuf_get_sync(const char *url)
 
   while(pixbufcachesize > PIXBUFCACHE_SIZE && 
 	(pbc = TAILQ_FIRST(&pixbufcache)) != NULL) {
-    printf("Flushing one\n");
+    pixbufcachesize -= pbc->pbc_bytes;
     TAILQ_REMOVE(&pixbufcache, pbc, pbc_link);
     g_object_unref(G_OBJECT(pbc->pbc_pixbuf));
     free(pbc->pbc_url);
@@ -223,6 +223,7 @@ gu_pixbuf_get_sync(const char *url)
   pbc = malloc(sizeof(pbcache_t));
   pbc->pbc_url = strdup(url);
   pbc->pbc_pixbuf = pb;
+  pbc->pbc_bytes = size;
 
   /* Keep a reference for the cache */
   g_object_ref(G_OBJECT(pbc->pbc_pixbuf));
