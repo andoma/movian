@@ -232,6 +232,7 @@ SRCS-$(CONFIG_GU) +=    src/ui/gu/gu.c \
 			src/ui/gu/gu_playdeck.c \
 			src/ui/gu/gu_pages.c \
 			src/ui/gu/gu_directory.c \
+			src/ui/gu/gu_directory_list.c \
 
 ${BUILDDIR}/src/ui/gu/%.o : CFLAGS = $(shell pkg-config --cflags gtk+-2.0) \
 -Wall -Werror -Wmissing-prototypes -Wno-cast-qual -Wno-deprecated-declarations 

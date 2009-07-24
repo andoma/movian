@@ -64,7 +64,7 @@ typedef struct gu_nav_page {
 			     * in the navigator 
 			     */
 
-  GtkWidget *gnp_pageroot;   /* Root widget for current page view.
+  GtkWidget *gnp_pageroot;   /* Root widget for current page.
 				Must always be the only child of
 				gnp_pagebin */
 
