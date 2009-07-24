@@ -454,6 +454,9 @@ be_playqueue_open(const char *url0, const char *type0, const char *parent0,
   type  = prop_create(n->np_prop_root, "type");
   prop_set_string(type, "playqueue");
 
+  type  = prop_create(n->np_prop_root, "type");
+  prop_set_string(prop_create(n->np_prop_root, "view"), "list");
+
   nodes = prop_create(n->np_prop_root, "nodes");
   prop_set_string(prop_create(n->np_prop_root, "title"), "Playqueue");
 
