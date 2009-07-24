@@ -1729,6 +1729,7 @@ be_spotify_open(const char *url, const char *type, const char *parent,
 
     if(prop_set_parent(su.su_prop_album_name, p))
       abort();
+    prop_link(su.su_prop_album_name, prop_create(p, "title"));
     su.su_prop_album_name = NULL;
 
     if(prop_set_parent(su.su_prop_album_year, p))
