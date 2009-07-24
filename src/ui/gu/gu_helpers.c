@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <string.h>
+#include <assert.h>
 #include "gu.h"
 #include "showtime.h"
 
@@ -59,6 +59,7 @@ gu_unsubscribe_callback(GtkObject *object, gpointer user_data)
 void
 gu_unsubscribe_on_destroy(GtkObject *o, prop_sub_t *s)
 {
+  assert(s != NULL);
   g_signal_connect(o, "destroy", G_CALLBACK(gu_unsubscribe_callback), s);
 }
 
