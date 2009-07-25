@@ -157,6 +157,7 @@ typedef struct spotify_uri {
   prop_t *su_prop_album_name;
   prop_t *su_prop_album_year;
   prop_t *su_prop_album_image;
+  prop_t *su_prop_title;
   
   prop_t *su_playlist_title;
 
@@ -781,12 +782,10 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
 {
   prop_t *nodes = userdata, *p;
   sp_track *track;
-  sp_album *album;
   int i, ntracks;
   char url[256];
 
   ntracks = f_sp_albumbrowse_num_tracks(result);
-  album = f_sp_albumbrowse_album(result);
 
   for(i = 0; i < ntracks; i++) {
     track = f_sp_albumbrowse_track(result, i);
@@ -808,57 +807,92 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
   spotify_metadata_updated(spotify_session);
 }
 
-#if 0
+
 /**
- *
+ * Load an artist browse result into the property tree passed via userdata
  */
 static void
 spotify_browse_artist_callback(sp_artistbrowse *result, void *userdata)
 {
-  prop_t *nodes = userdata;
-#if 0
-  prop_t *p;
-  sp_artist *artist;
-  sp_album *album;
-  int i, nalbums;
-  char link[256];
-  prop_t *metadata, *tracks, *p_img;
+  prop_t *nodes = userdata, *albumroot = NULL, *albummeta = NULL;
+  prop_t *trackroot = NULL, *t;
+  sp_track *track;
+  sp_album *curalbum = NULL, *album;
+  int i, ntracks, atracks = 0, aduration = 0;
+  char url[256];
 
-  artist = f_sp_artistbrowse_artist(result);
-  nalbums = f_sp_artistbrowse_num_albums(result);
-  
-  for(i = 0; i < nalbums; i++) {
-    album = f_sp_artistbrowse_album(result, i);
-    artist = f_sp_album_artist(album);
+  ntracks = f_sp_artistbrowse_num_tracks(result);
 
-    p = prop_create(NULL, "node");
+  for(i = 0; i < ntracks; i++) {
+    track = f_sp_artistbrowse_track(result, i);
 
-    spotify_make_link(f_sp_album_link(album), link, sizeof(link));
-    prop_set_string(prop_create(p, "url"), link);
+    album = f_sp_track_album(track);
 
-    metadata = prop_create(p, "metadata");
-    prop_set_string(prop_create(metadata, "type"), "album");
-    prop_set_string(prop_create(metadata, "title"), f_sp_album_name(album));
-    prop_set_string(prop_create(metadata, "artist"), f_sp_artist_name(artist));
+    if(album != curalbum) {
+      curalbum = album;
 
-    tracks = prop_create(p, "tracks");
-    prop_ref_inc(tracks);
-    f_sp_create_albumbrowse(spotify_session, album, 
-			  spotify_browse_album_callback, tracks);
+      if(albumroot != NULL) {
+	prop_set_int(prop_create(albummeta, "tracks"), atracks);
+	prop_set_float(prop_create(albummeta, "duration"), aduration / 1000.0);
+
+	if(prop_set_parent(albumroot, nodes))
+	  prop_destroy(albumroot);
+      }
+
+      albumroot = prop_create(NULL, "node");
+      trackroot = prop_create(albumroot, "tracks");
+
+      spotify_make_link(f_sp_link_create_from_album(album), 
+			url, sizeof(url));
+      prop_set_string(prop_create(albumroot, "url"), url);
+      prop_set_string(prop_create(albumroot, "type"), "album");
+      
+      albummeta = prop_create(albumroot, "metadata");
+      
+      metadata_create(prop_create(albummeta, "title"),
+		      METADATA_ALBUM_NAME, album);
+      
+      metadata_create(prop_create(albummeta, "album_name"),
+		      METADATA_ALBUM_NAME, album);
+
+      metadata_create(prop_create(albummeta, "album_year"),
+		      METADATA_ALBUM_YEAR, album);
+
+      metadata_create(prop_create(albummeta, "album_art"),
+		      METADATA_ALBUM_IMAGE, album);
+
+      atracks = 0;    // Keep count of number of tracks per album
+      aduration = 0;  // And total duration
+    }
+
+    atracks++;
+    aduration += f_sp_track_duration(track);
+
+    t = prop_create(NULL, "node");
+
+    spotify_make_link(f_sp_link_create_from_track(track, 0), 
+		      url, sizeof(url));
+    prop_set_string(prop_create(t, "url"), url);
+
+    metadata_create(prop_create(t, "metadata"), METADATA_TRACK, track);
+
+    if(prop_set_parent(t, trackroot))
+      prop_destroy(t);
     
-    spotify_load_image(f_sp_image_create(spotify_session, 
-					 f_sp_album_cover(album)),
-		       prop_create(metadata, "icon"));
-
-    if(prop_set_parent(p, nodes))
-      prop_destroy(p);
   }
 
-#endif
+  if(albumroot != NULL) {
+    prop_set_int(prop_create(albummeta, "tracks"), atracks);
+    prop_set_float(prop_create(albummeta, "duration"), aduration / 1000.0);
+
+    if(prop_set_parent(albumroot, nodes))
+      prop_destroy(albumroot);
+  }
+
   prop_ref_dec(nodes);
   f_sp_artistbrowse_release(result);
+  spotify_metadata_updated(spotify_session);
 }
-#endif
 
 
 /**
@@ -921,6 +955,10 @@ spotify_load_uri(spotify_uri_t *su)
     metadata_create(su->su_prop_album_name, METADATA_ALBUM_NAME, 
 		    f_sp_link_as_album(l));
 
+    su->su_prop_title = prop_create(NULL, "title");
+    metadata_create(su->su_prop_title, METADATA_ALBUM_NAME, 
+		    f_sp_link_as_album(l));
+
     su->su_prop_album_year = prop_create(NULL, "album_year");
     metadata_create(su->su_prop_album_year, METADATA_ALBUM_YEAR,
 		    f_sp_link_as_album(l));
@@ -933,6 +971,27 @@ spotify_load_uri(spotify_uri_t *su)
     metadata_create(su->su_prop_artist_name, METADATA_ALBUM_ARTIST_NAME, 
 		    f_sp_link_as_album(l));
     break;
+
+  case SP_LINKTYPE_ARTIST:
+    su->su_content_type = CONTENT_DIR;
+
+    su->su_nodes = prop_create(NULL, "nodes");
+
+    /* Launch a browse request */
+
+    prop_ref_inc(su->su_nodes);
+    f_sp_artistbrowse_create(spotify_session, f_sp_link_as_artist(l), 
+			     spotify_browse_artist_callback, su->su_nodes);
+
+    su->su_prop_artist_name = prop_create(NULL, "artist_name");
+    metadata_create(su->su_prop_artist_name, METADATA_ARTIST_NAME, 
+		    f_sp_link_as_artist(l));
+
+    su->su_prop_title = prop_create(NULL, "title");
+    metadata_create(su->su_prop_title, METADATA_ARTIST_NAME, 
+		    f_sp_link_as_artist(l));
+    break;
+
 
   case SP_LINKTYPE_PLAYLIST:
 
@@ -974,7 +1033,6 @@ spotify_scandir_album_callback(sp_albumbrowse *result, void *userdata)
 {
   spotify_uri_t *su = userdata;
   sp_track *track;
-  sp_album *album;
   nav_dir_t *nd;
   int i, ntracks;
   char url[256];
@@ -983,10 +1041,42 @@ spotify_scandir_album_callback(sp_albumbrowse *result, void *userdata)
   nd = nav_dir_alloc();
   
   ntracks = f_sp_albumbrowse_num_tracks(result);
-  album = f_sp_albumbrowse_album(result);
 
   for(i = 0; i < ntracks; i++) {
     track = f_sp_albumbrowse_track(result, i);
+
+    metadata = prop_create(NULL, "metadata");
+    metadata_create(metadata, METADATA_TRACK, track);
+
+    spotify_make_link(f_sp_link_create_from_track(track, 0), 
+		      url, sizeof(url));
+    nav_dir_add(nd, url, f_sp_track_name(track), CONTENT_AUDIO, metadata);
+  }
+
+  su->su_dir = nd;
+  spotify_uri_return(su, 0);
+}
+
+
+/**
+ *
+ */
+static void
+spotify_scandir_artist_callback(sp_artistbrowse *result, void *userdata)
+{
+  spotify_uri_t *su = userdata;
+  sp_track *track;
+  nav_dir_t *nd;
+  int i, ntracks;
+  char url[256];
+  prop_t *metadata;
+
+  nd = nav_dir_alloc();
+  
+  ntracks = f_sp_artistbrowse_num_tracks(result);
+
+  for(i = 0; i < ntracks; i++) {
+    track = f_sp_artistbrowse_track(result, i);
 
     metadata = prop_create(NULL, "metadata");
     metadata_create(metadata, METADATA_TRACK, track);
@@ -1052,6 +1142,11 @@ spotify_scandir(spotify_uri_t *su)
   case SP_LINKTYPE_ALBUM:
     f_sp_albumbrowse_create(spotify_session, f_sp_link_as_album(l),
 			    spotify_scandir_album_callback, su);
+    return;
+
+  case SP_LINKTYPE_ARTIST:
+    f_sp_artistbrowse_create(spotify_session, f_sp_link_as_artist(l),
+			     spotify_scandir_artist_callback, su);
     return;
 
   case SP_LINKTYPE_PLAYLIST:
@@ -1720,26 +1815,29 @@ be_spotify_open(const char *url, const char *type, const char *parent,
     prop_set_string(prop_create(p, "type"), "directory");
     prop_set_string(prop_create(p, "view"), su.su_preferred_view);
 
-    if(prop_set_parent(su.su_nodes, p))
+    if(su.su_nodes && prop_set_parent(su.su_nodes, p))
       abort();
     su.su_nodes = NULL;
 
-    if(prop_set_parent(su.su_prop_artist_name, p))
+    if(su.su_prop_artist_name && prop_set_parent(su.su_prop_artist_name, p))
       abort();
     su.su_prop_artist_name = NULL;
 
-    if(prop_set_parent(su.su_prop_album_name, p))
+    if(su.su_prop_album_name && prop_set_parent(su.su_prop_album_name, p))
       abort();
-    prop_link(su.su_prop_album_name, prop_create(p, "title"));
     su.su_prop_album_name = NULL;
 
-    if(prop_set_parent(su.su_prop_album_year, p))
+    if(su.su_prop_album_year && prop_set_parent(su.su_prop_album_year, p))
       abort();
     su.su_prop_album_year = NULL;
 
-    if(prop_set_parent(su.su_prop_album_image, p))
+    if(su.su_prop_album_image && prop_set_parent(su.su_prop_album_image, p))
       abort();
     su.su_prop_album_image = NULL;
+
+    if(su.su_prop_title && prop_set_parent(su.su_prop_title, p))
+      abort();
+    su.su_prop_title = NULL;
 
     *npp = np;
     break;
@@ -1771,6 +1869,7 @@ be_spotify_open(const char *url, const char *type, const char *parent,
   assert(su.su_prop_album_name == NULL);
   assert(su.su_prop_album_year == NULL);
   assert(su.su_prop_album_image == NULL);
+  assert(su.su_prop_title == NULL);
   return 0;
 }
 
