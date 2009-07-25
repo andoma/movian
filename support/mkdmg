@@ -1,19 +1,24 @@
 #!/bin/sh
 
-if [ $# != 1 ]; then
-  echo "Usage: $0 dmgfile"
+if [ $# != 4 ]; then
+  echo "Usage: $0 srcdir volname iconfile dmgfile"
   exit
 fi
 
-rm -f $1
-hdiutil create -format UDRW -volname Showtime -srcfolder build.Darwin/Showtime.app $1
+SRCDIR=$1
+VOLNAME=$2
+ICONFILE=$3
+DMGFILE=$4
+
+rm -f $DMGFILE
+hdiutil create -format UDRW -volname $VOLNAME -srcfolder $SRCDIR $DMGFILE
 mkdir tmpmnt
-hdiutil attach $1 -readwrite -mountroot tmpmnt
-ln -s /Applications tmpmnt/Showtime/Applications
-cp osx/hts.icns tmpmnt/Showtime/.VolumeIcon.icns
-/Developer/Tools/SetFile -a C tmpmnt/Showtime/.VolumeIcon.icns tmpmnt/Showtime
-hdiutil detach tmpmnt/Showtime
+hdiutil attach $DMGFILE -readwrite -mountroot tmpmnt
+ln -s /Applications tmpmnt/$VOLNAME/Applications
+cp $ICONFILE tmpmnt/$VOLNAME/.VolumeIcon.icns
+/Developer/Tools/SetFile -a C tmpmnt/$VOLNAME/.VolumeIcon.icns tmpmnt/$VOLNAME
+hdiutil detach tmpmnt/$VOLNAME
 rmdir tmpmnt
-mv $1 $1.UDRW
-hdiutil convert $1.UDRW -format UDBZ -o $1
-rm $1.UDRW
+mv $DMGFILE $DMGFILE.UDRW
+hdiutil convert $DMGFILE.UDRW -format UDBZ -o $DMGFILE
+rm $DMGFILE.UDRW
