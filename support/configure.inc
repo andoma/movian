@@ -39,6 +39,7 @@ CONFIG_LIST="
  lirc
  release
  embedded_resources
+ coreaudio
 "
 
 die() {
