@@ -1885,7 +1885,7 @@ be_spotify_play(const char *url, media_pipe_t *mp,
 		char *errbuf, size_t errlen)
 {
   spotify_uri_t su;
-  event_t *e;
+  event_t *e, *eof = NULL;
   event_ts_t *ets;
   int hold = 0, lost_focus = 0;
   media_queue_t *mq = &mp->mp_audio;
@@ -1921,7 +1921,25 @@ be_spotify_play(const char *url, media_pipe_t *mp,
 
   /* Playback successfully started, wait for events */
   while(1) {
-    e = mp_dequeue_event(mp);
+
+    if(eof != NULL) {
+      /* End of file, wait a while for queues to drain more */
+      e = mp_wait_for_empty_queues(mp, 20);
+      if(e == NULL) {
+	e = eof;
+	eof = NULL;
+	break;
+      }
+
+    } else {
+      e = mp_dequeue_event(mp);
+    }
+
+    if(event_is_type (e, EVENT_EOF)) {
+      eof = e;
+      continue;
+    }
+
 
     if(event_is_action(e, ACTION_PREV_TRACK) ||
        event_is_action(e, ACTION_NEXT_TRACK) ||
@@ -1931,15 +1949,6 @@ be_spotify_play(const char *url, media_pipe_t *mp,
       mp_flush(mp);
       break;
       
-    } else if(event_is_type (e, EVENT_EOF)) {
-      /* End of file, wait a while for queues to drain more */
-      e = mp_wait_for_empty_queues(mp, 20);
-
-      /* If an event occured while waiting for drainage, flush */
-      if(e != NULL)
-	mp_flush(mp);
-      break;
-
     } else if(event_is_type(e, EVENT_SEEK)) {
 
       ets = (event_ts_t *)e;
@@ -1983,6 +1992,9 @@ be_spotify_play(const char *url, media_pipe_t *mp,
     }
     event_unref(e);
   }
+
+  if(eof != NULL)
+    event_unref(eof);
 
   if(hold) {
     // If we were paused, release playback again.
