@@ -120,7 +120,7 @@ SRCS-$(CONFIG_DVD) += 	src/dvd/dvdcss/css.c \
 			src/dvd/dvdcss/ioctl.c \
 			src/dvd/dvdcss/libdvdcss.c
 
-ifeq ($(PLATFORM), darwin)
+ifeq ($(PLATFORM), osx)
 DVDCSS_CFLAGS = -DDARWIN_DVD_IOCTL
 else
 DVDCSS_CFLAGS = -DHAVE_LINUX_DVD_STRUCT -DDVD_STRUCT_IN_LINUX_CDROM_H
@@ -261,7 +261,7 @@ OBJDIRS+= $(sort $(dir $(BUNDLE_OBJS)))
 .PRECIOUS: ${BUNDLE_SRCS}
 
 # Common CFLAGS for all files
-CFLAGS_com  = -g -funsigned-char -O0 
+CFLAGS_com  = -g -funsigned-char -O2 
 CFLAGS_com += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 CFLAGS_com += -I${BUILDDIR} -I${CURDIR}/src -I${CURDIR}
 
