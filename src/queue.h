@@ -75,6 +75,16 @@
         (*(((struct headname *)((elm)->field.tqe_prev))->tqh_last))
 #endif
 
+/* 
+ * In Mac OS 10.4 and earlier TAILQ_FOREACH_REVERSE was defined
+ * differently, redefined it.
+ */
+#ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
+#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
+#undef TAILQ_FOREACH_REVERSE
+#endif
+#endif
+
 #ifndef TAILQ_FOREACH_REVERSE
 #define	TAILQ_FOREACH_REVERSE(var, head, headname, field)		\
 	for ((var) = (*(((struct headname *)((head)->tqh_last))->tqh_last));	\
