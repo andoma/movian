@@ -1924,7 +1924,7 @@ be_spotify_play(const char *url, media_pipe_t *mp,
 
     if(eof != NULL) {
       /* End of file, wait a while for queues to drain more */
-      e = mp_wait_for_empty_queues(mp, 20);
+      e = mp_wait_for_empty_queues(mp, 0);
       if(e == NULL) {
 	e = eof;
 	eof = NULL;

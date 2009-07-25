@@ -128,7 +128,19 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     if(mb == NULL) {
 
       if((r = av_read_frame(fctx, &pkt)) < 0) {
-	e = event_create_type(EVENT_EOF);
+
+	while((e = mp_wait_for_empty_queues(mp, 0)) != NULL) {
+	  if(event_is_type(e, EVENT_PLAYQUEUE_JUMP) ||
+	     event_is_action(e, ACTION_PREV_TRACK) ||
+	     event_is_action(e, ACTION_NEXT_TRACK) ||
+	     event_is_action(e, ACTION_STOP)) {
+	    mp_flush(mp);
+	    break;
+	  }
+	  event_unref(e);
+	}
+	if(e == NULL)
+	  e = event_create_type(EVENT_EOF);
 	break;
       }
 
