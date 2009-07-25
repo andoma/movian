@@ -198,7 +198,7 @@ refresh_rate()
 }
 
 - (IBAction)clickAbout:(id)sender {
-  nav_open("page://about", 0);
+  nav_open("page://about", NULL, NULL, NAV_OPEN_ASYNC);
 }
 
 -(BOOL)acceptsFirstResponder {
