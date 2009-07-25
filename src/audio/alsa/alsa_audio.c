@@ -569,7 +569,7 @@ alsa_probe(const char *card, const char *dev)
   if(!snd_pcm_hw_params_test_rate(h, hwp, 24000, 0))
     rates |= AM_SR_24000;
 
-  if(!(rate & AM_SR_48000)) {
+  if(!(rates & AM_SR_48000)) {
     TRACE(TRACE_DEBUG, "ALSA", "%s: No 48kHz support", dev);
     snd_pcm_close(h);
     return -1;
