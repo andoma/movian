@@ -236,6 +236,7 @@ playqueue_load_siblings(const char *url, playqueue_entry_t *justadded)
       abort();
     
     prop_set_string(prop_create(pqe->pqe_root, "url"), pqe->pqe_url);
+    prop_set_string(prop_create(pqe->pqe_root, "type"), "audio");
 
     if(before) {
       TAILQ_INSERT_BEFORE(justadded, pqe, pqe_link);
@@ -308,6 +309,7 @@ playqueue_load(const char *url, const char *parent, prop_t *metadata, int enq)
     abort();
 
   prop_set_string(prop_create(pqe->pqe_root, "url"), url);
+  prop_set_string(prop_create(pqe->pqe_root, "type"), "audio");
 
   if(enq) {
 
