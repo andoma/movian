@@ -37,7 +37,6 @@ CONFIG_LIST="
  libogc
  spotify
  lirc
- regex
  release
  embedded_resources
 "
