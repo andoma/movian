@@ -554,6 +554,9 @@ gu_directory_list_create(gtk_ui_t *gu, prop_t *root,
   d->tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(d->model));
   gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(d->tree), TRUE);
 
+  gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(d->tree),
+				    !!(flags & GU_DIR_VISIBLE_HEADERS));
+
   if(flags & GU_DIR_COL_TYPE)
     init_type_col(d,     "",         TYPE_COLUMN);
 
@@ -585,20 +588,22 @@ gu_directory_list_create(gtk_ui_t *gu, prop_t *root,
   if(flags & GU_DIR_HEADERS)
     add_headers(d->gu, view, root);
 
-  /* Scrollbox with tree */
+  if(flags & GU_DIR_SCROLLBOX) {
 
-  d->scrollbox = gtk_scrolled_window_new(NULL, NULL);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(d->scrollbox),
-				 GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(d->scrollbox),
-				      GTK_SHADOW_ETCHED_IN);
-  gtk_container_add(GTK_CONTAINER(d->scrollbox), d->tree);
-  gtk_box_pack_start(GTK_BOX(view), d->scrollbox, TRUE, TRUE, 0);
+    /* Scrollbox with tree */
 
-  /* Attach to parent */
+    d->scrollbox = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(d->scrollbox),
+				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(d->scrollbox),
+					GTK_SHADOW_ETCHED_IN);
+    gtk_container_add(GTK_CONTAINER(d->scrollbox), d->tree);
+    gtk_box_pack_start(GTK_BOX(view), d->scrollbox, TRUE, TRUE, 0);
+  } else {
+    gtk_box_pack_start(GTK_BOX(view), d->tree, TRUE, TRUE, 0);
+  }
 
   gtk_widget_show_all(view);
-
   g_signal_connect(GTK_OBJECT(view), 
 		   "destroy", G_CALLBACK(directory_list_destroy), d);
   return view;

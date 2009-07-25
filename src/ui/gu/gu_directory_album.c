@@ -226,6 +226,7 @@ gu_add_album(gtk_ui_t *gu, GtkWidget *parent, prop_t *root,
   /* Tracklist */
 
   w = gu_directory_list_create(gu, root, parenturlptr,
+			       GU_DIR_SCROLLBOX |
 			       GU_DIR_COL_ARTIST |
 			       GU_DIR_COL_DURATION |
 			       GU_DIR_COL_TRACKINDEX);
