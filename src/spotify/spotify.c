@@ -840,7 +840,7 @@ spotify_browse_artist_callback(sp_artistbrowse *result, void *userdata)
       }
 
       albumroot = prop_create(NULL, "node");
-      trackroot = prop_create(albumroot, "tracks");
+      trackroot = prop_create(albumroot, "nodes");
 
       spotify_make_link(f_sp_link_create_from_album(album), 
 			url, sizeof(url));
@@ -975,6 +975,7 @@ spotify_load_uri(spotify_uri_t *su)
   case SP_LINKTYPE_ARTIST:
     su->su_content_type = CONTENT_DIR;
 
+    su->su_preferred_view = "artist";
     su->su_nodes = prop_create(NULL, "nodes");
 
     /* Launch a browse request */
