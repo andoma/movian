@@ -20,6 +20,8 @@ source support/configure.inc
 CPU=generic
 ARCH=`uname -m`
 MACPORTSPREFIX="/opt/local"
+MACOSXTARGET=""
+MACOSXSDK=""
 APPDIR=${BUILDDIR}/Showtime.app
 
 show_help(){
@@ -34,7 +36,9 @@ show_help(){
   echo "  --cc=CC                  Build using the given compiler"
   echo "  --release                Stage for release"
   echo "  --embedded-theme         Embed theme in showtime [none]"
-  echo "  --macports=PATH          Path to freetype [$MACPORTSPREFIX]"
+  echo "  --macports=PATH          MacPorts prefix (for freetype) [$MACPORTSPREFIX]"
+  echo "  --macosxtarget=TARGET    Mac OS X target version [$MACOSXTARGET]"
+  echo "  --macosxsdk=PATH         Mac OS X SDK path [$MACOSXSDK]"
   exit 1
 }
 
@@ -59,7 +63,13 @@ for opt do
   ;;
   --cc=*) CC="$optval"
   ;;
+  --arch=*) ARCH="$optval"
+  ;;
   --macports=*) MACPORTSPREFIX="$optval"
+  ;;
+  --macosxtarget=*) MACOSXTARGET="$optval"
+  ;;
+  --macosxsdk=*) MACOSXSDK="$optval"
   ;;
   --enable-?*|--disable-?*)
   eval $(echo "$opt" | sed 's/--/action=/;s/-/ option=/;s/-/_/g')
@@ -76,12 +86,28 @@ enable zlib
 enable posix_networking
 enable dvd
 
+
+# env variable used by osx linker
+# export for compiler test and ffmpeg configure
+if [ "$MACOSXTARGET" != "" ]; then
+    export MACOSX_DEPLOYMENT_TARGET="$MACOSXTARGET"
+    echo >>${CONFIG_MAK} "export MACOSX_DEPLOYMENT_TARGET = $MACOSXTARGET"
+    MACOSXSDK_CFLAGS="-mmacosx-version-min=$MACOSXTARGET"
+fi
+
+
+if [ "$MACOSXSDK" != "" ]; then
+    MACOSXSDK_CFLAGS="${MACOSXSDK_CFLAGS} -isysroot $MACOSXSDK"
+    MACOSXSDK_LDFLAGS="-isysroot $MACOSXSDK"
+fi
+
+
 #
 # Application bundle
 # Override PROG to put binary inside app bundle
 #
 echo >>${CONFIG_MAK} "APPDIR=${APPDIR}"
-echo >>${CONFIG_MAK} "PROG=${APPDIR}/Contents/MacOS/showtime"
+PROG="${APPDIR}/Contents/MacOS/showtime"
 
 
 #
@@ -155,8 +181,23 @@ echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreAudio"
 #
 # configure ffmpeg
 #
-setup_ffmpeg --cpu=${CPU} --enable-pthreads
+if [ "$ARCH" == "powerpc" ]; then
+    setup_ffmpeg \
+        --enable-pthreads \
+        --enable-cross-compile \
+        --arch=powerpc \
+        --disable-altivec \
+        --extra-cflags="$MACOSXSDK_CFLAGS" \
+        --extra-ldflags="$MACOSXSDK_LDFLAGS"
+else
+    setup_ffmpeg \
+        --cpu=${CPU} \
+        --enable-pthreads \
+        --extra-cflags="$MACOSXSDK_CFLAGS" \
+        --extra-ldflags="$MACOSXSDK_LDFLAGS"
+fi
 
+      
 #
 # Configure paths, etc
 #
@@ -188,5 +229,7 @@ EOF
 # Finalize
 
 echo >>${CONFIG_MAK} LDFLAGS_cfg += -lpthread
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += $MACOSXSDK_CFLAGS"
+echo >>${CONFIG_MAK} "CFLAGS_cfg += $MACOSXSDK_LDFLAGS"
 
 finalize

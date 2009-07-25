@@ -159,7 +159,7 @@ setup_ffmpeg() {
 	--disable-ffmpeg \
 	--disable-ffplay \
 	--disable-bzlib \
-	$@
+	"$@"
 	)
 
 cat >> ${CONFIG_MAK} << EOF 
@@ -222,9 +222,15 @@ finalize() {
 OSENV=${OSENV}
 LDFLAGS_cfg += -lz -lm
 EOF
+  
+    # PROG not set, set to default binary path
+    if [ "x${PROG}" == "x" ]; then
+        PROG="build.${PLATFORM}/showtime"
+    fi
+    echo >>${CONFIG_MAK} "PROG=${PROG}"
 
     # Generate config files
     print_config CONFIG_ ${CONFIG_H} ${CONFIG_MAK} $CONFIG_LIST
-    echo "Final binary is: build.${PLATFORM}/showtime"
+    echo "Final binary is: ${PROG}"
     die
 }

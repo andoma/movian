@@ -29,4 +29,5 @@ $(APPDIR)/Contents/Resources/MainMenu.nib: osx/MainMenu.xib
 
 .PHONY: Showtime.dmg
 Showtime.dmg:
-	support/mkdmg Showtime.dmg
+	support/mkdmg ${APPDIR} Showtime osx/hts.icns Showtime.dmg
+

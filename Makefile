@@ -22,8 +22,6 @@ BUILDDIR = build.${PLATFORM}
 
 include ${BUILDDIR}/config.mak
 
-PROG ?= ${BUILDDIR}/showtime
-
 CFLAGS  = -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations 
 CFLAGS += -Wmissing-prototypes -Isrc/dvd
 
@@ -277,7 +275,7 @@ ${PROG}: ${BUILDDIR}/ffmpeg/install $(OBJDIRS) $(OBJS) $(BUNDLE_OBJS) Makefile
 $(OBJDIRS):
 	@mkdir -p $@
 
-${BUILDDIR}/%.o: %.[cm]  ${BUILDDIR}/ffmpeg/install
+${BUILDDIR}/%.o: %.[cm] ${BUILDDIR}/ffmpeg/install
 	$(CC) -MD $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
 
 ${BUILDDIR}/ffmpeg/install ffmpeg:
