@@ -73,7 +73,7 @@ ai_update_widget(albuminfo_t *ai)
   m = g_markup_printf_escaped("<span size=\"xx-large\">%s%s%s</span>"
 			      "<span>%s</span>", 
 			      ai->artist ?: "",
-			      ai->artist ? ": " : "",
+			      ai->artist ? " - " : "",
 			      ai->title,
 			      yeartxt);
 
