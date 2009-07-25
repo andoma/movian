@@ -315,19 +315,6 @@ typedef struct pb_asyncload {
 } pb_asyncload_t;
 
 
-
-#if 0
-/**
- *
- */
-static void
-pixbuf_target_destroyed(GtkObject *object, gpointer user_data)
-{
-  pb_asyncload_t *pba = user_data;
-  pba->pba_target = NULL;
-}
-#endif
-
 /**
  *
  */
@@ -337,7 +324,6 @@ gu_pixbuf_async_set(const char *url, int width, int height, GtkObject *target)
   pb_asyncload_t *pba;
   GdkPixbuf *pb;
   
-
   pb = gu_pixbuf_get_from_cache(url, width, height);
   if(pb != NULL) {
     g_object_set(G_OBJECT(target), "pixbuf", pb, NULL);
@@ -350,18 +336,10 @@ gu_pixbuf_async_set(const char *url, int width, int height, GtkObject *target)
   pba->pba_width = width;
   pba->pba_height = height;
   pba->pba_target = target;
-
   g_object_ref(target);
 
   TAILQ_INSERT_TAIL(&pbaqueue, pba, pba_link);
-
   hts_cond_signal(&async_loader_cond);
-
-
-#if 0
-  gulong id = g_signal_connect(target, "destroy", 
-			       G_CALLBACK(pixbuf_target_destroyed), ab);
-#endif
 }
 
 
