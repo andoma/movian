@@ -613,9 +613,10 @@ refresh_rate()
   
   if(val2str(cim, function_key_map) != NULL)
     strcpy(buf2, val2str(cim, function_key_map));
-  else if(isgraph(cim))
+  else if(isgraph(cim)) {
+    e = event_create_unicode(cim);
     snprintf(buf2, sizeof(buf2), "%c", cim);
-  else
+  } else
     snprintf(buf2, sizeof(buf2), "%d", cim);
   
   snprintf(buf, sizeof(buf),
@@ -626,7 +627,6 @@ refresh_rate()
            mod & NSCommandKeyMask ? "Command - " : "",
            buf2);
   
-  e = event_create_unicode(cim);
   ui_dispatch_event(e, buf, &gcocoa.gr.gr_uii);
 }
 
