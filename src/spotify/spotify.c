@@ -805,6 +805,7 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
   }
   prop_ref_dec(nodes);
   f_sp_albumbrowse_release(result);
+  spotify_metadata_updated(spotify_session);
 }
 
 #if 0
