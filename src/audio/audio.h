@@ -64,7 +64,6 @@ typedef struct audio_mode {
 
   char *am_title;
   char *am_id;
-  char *am_icon;
 
   int (*am_entry)(struct audio_mode *am, audio_fifo_t *af);
 

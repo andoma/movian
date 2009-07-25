@@ -625,7 +625,6 @@ alsa_probe(const char *card, const char *dev)
   aam->aam_head.am_sample_rates = rates;
   aam->aam_head.am_title = strdup(name);
   aam->aam_head.am_id = strdup(id);
-  aam->aam_head.am_icon = strdup("icon://alsa.png");
 
   aam->aam_head.am_entry = alsa_audio_start;
 
