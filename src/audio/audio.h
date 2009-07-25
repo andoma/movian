@@ -82,6 +82,9 @@ typedef struct audio_mode {
 
 extern audio_mode_t *audio_mode_current;
 
+int audio_rateflag_from_rate(int rate);
+int audio_rate_from_rateflag(int flag);
+
 void audio_mode_register(audio_mode_t *am);
 
 void audio_init(void);

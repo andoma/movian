@@ -47,6 +47,38 @@ static char *audio_stored_device;
 /**
  *
  */
+int
+audio_rateflag_from_rate(int rate)
+{
+  switch(rate) {
+    case 96000: return AM_SR_96000;
+    case 48000: return AM_SR_48000;
+    case 44100: return AM_SR_44100;
+    case 32000: return AM_SR_32000;
+    case 24000: return AM_SR_24000;
+    default:    return 0;
+  }
+}
+
+/**
+ *
+ */
+int
+audio_rate_from_rateflag(int flag)
+{
+  switch(flag) {
+    case AM_SR_96000: return 96000; break;
+    case AM_SR_48000: return 48000; break;
+    case AM_SR_44100: return 44100; break;
+    case AM_SR_32000: return 32000; break;
+    case AM_SR_24000: return 24000; break;
+    default: return 0; break;
+  }
+}
+
+/**
+ *
+ */
 static void
 audio_global_save_settings(void)
 {
@@ -129,6 +161,10 @@ audio_init(void)
   AUDIO_INIT_SUBSYS(pa);
 #endif
 
+#ifdef CONFIG_COREAUDIO
+  AUDIO_INIT_SUBSYS(coreaudio);
+#endif
+    
   AUDIO_INIT_SUBSYS(dummy);
 
   hts_thread_create_detached(audio_output_thread, NULL);
@@ -324,7 +360,7 @@ prop_t *prop_mastervol, *prop_mastermute;
  */
 static int
 audio_mixer_event_handler(event_t *e, void *opaque)
-{
+{ 
   if(event_is_action(e, ACTION_VOLUME_UP)) {
     prop_add_clipped_float(prop_mastervol, 1, -75, 0);
     return 1;

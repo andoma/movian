@@ -118,22 +118,6 @@ audio_decoder_destroy(audio_decoder_t *ad)
   free(ad);
 }
 
-/**
- *
- */
-static int
-rateflag_from_rate(int rate)
-{
-  switch(rate) {
-  case 96000: return AM_SR_96000;
-  case 48000: return AM_SR_48000;
-  case 44100: return AM_SR_44100;
-  case 32000: return AM_SR_32000;
-  case 24000: return AM_SR_24000;
-  default:    return 0;
-  }
-}
-
 
 /**
  *
@@ -439,7 +423,7 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
   int16_t tmp[AUDIO_CHAN_MAX];
   int x, y, z, i, c;
   int16_t *data, *src, *dst;
-  int rf = rateflag_from_rate(rate);
+  int rf = audio_rateflag_from_rate(rate);
 
   /**
    * Channel swizzling
@@ -819,7 +803,7 @@ audio_deliver(audio_decoder_t *ad, audio_mode_t *am, int16_t *src,
   int c, r;
 
   int format;
-  int rf = rateflag_from_rate(rate);
+  int rf = audio_rateflag_from_rate(rate);
 
   switch(channels) {
   case 2: format = AM_FORMAT_PCM_STEREO; break;
