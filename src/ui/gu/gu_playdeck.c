@@ -25,7 +25,8 @@
  *
  */
 typedef struct playdeck {
-  GtkWidget *bar;
+  GtkWidget *root;
+  GtkWidget *tbar;
   GtkWidget *volume;
 
   GtkToolItem *prev, *next, *playpause;
@@ -38,6 +39,11 @@ typedef struct playdeck {
   GtkWidget *pos_slider;
   prop_sub_t *pos_sub;
   int pos_grabbed;
+
+  char *cur_artist;
+  char *cur_album;
+
+  GtkWidget *trackextra;
 
 } playdeck_t;
 
@@ -215,36 +221,189 @@ slider_value_callback(GtkScale *scale, gdouble value)
 /**
  *
  */
+static void
+pd_set_albumart(void *opaque, const char *str)
+{
+  GdkPixbuf *pb;
+
+  if(str == NULL) {
+    gtk_widget_hide(GTK_WIDGET(opaque));
+    return;
+  }
+
+  pb = gu_pixbuf_get_sync(str, -1, 84);
+  g_object_set(G_OBJECT(opaque), "pixbuf", pb, NULL);
+  if(pb != NULL)
+    g_object_unref(G_OBJECT(pb));
+  gtk_widget_show(GTK_WIDGET(opaque));
+}
+
+
+/**
+ *
+ */
+static void
+set_current_title(void *opaque, const char *str)
+{
+  char *m;
+
+  if(str == NULL) {
+    gtk_widget_hide(GTK_WIDGET(opaque));
+    return;
+  }
+
+  m = g_markup_printf_escaped("<span size=\"x-large\">%s</span>", str);
+  gtk_label_set_markup(GTK_LABEL(opaque), m);
+  g_free(m);
+  gtk_widget_show(GTK_WIDGET(opaque));
+}
+
+
+/**
+ *
+ */
+static void
+pd_update_trackextra(playdeck_t *pd)
+{
+  char *m;
+
+  if(pd->cur_artist == NULL &&
+     pd->cur_album == NULL) {
+    gtk_widget_hide(GTK_WIDGET(pd->trackextra));
+    return;
+  }
+
+  m = g_markup_printf_escaped("<span>%s%s%s</span>", 
+			      pd->cur_artist ?: "",
+			      pd->cur_artist && pd->cur_album ? " - " : "",
+			      pd->cur_album);
+
+  gtk_label_set_markup(GTK_LABEL(pd->trackextra), m);
+  g_free(m);
+  gtk_widget_show(GTK_WIDGET(pd->trackextra));
+}
+
+
+
+/**
+ *
+ */
+static void
+set_current_artist(void *opaque, const char *str)
+{
+  playdeck_t *pd = opaque;
+  free(pd->cur_artist);
+  pd->cur_artist = str ? strdup(str) : NULL;
+  pd_update_trackextra(pd);
+}
+
+
+/**
+ *
+ */
+static void
+set_current_album(void *opaque, const char *str)
+{
+  playdeck_t *pd = opaque;
+  free(pd->cur_album);
+  pd->cur_album = str ? strdup(str) : NULL;
+  pd_update_trackextra(pd);
+}
+
+
+/**
+ *
+ */
 void
 gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent)
 {
   GtkToolItem *ti;
+  GtkWidget *w;
+  GtkWidget *l;
+  GtkWidget *vbox;
 
   playdeck_t *pd = calloc(1, sizeof(playdeck_t));
 
-  /* The bar */
-  pd->bar = gtk_toolbar_new();
-  gtk_toolbar_set_style(GTK_TOOLBAR(pd->bar), GTK_TOOLBAR_ICONS);
-  gtk_box_pack_start(GTK_BOX(parent), pd->bar, FALSE, TRUE, 0);
+
+  w = gtk_hseparator_new();
+  gtk_box_pack_start(GTK_BOX(parent), w, FALSE, TRUE, 0);
+  
+
+  pd->root = gtk_hbox_new(FALSE, 1);
+  gtk_box_pack_start(GTK_BOX(parent), pd->root, FALSE, TRUE, 0);
+
+  /* Playdeck album art */
+  w = gtk_image_new();
+  gtk_misc_set_alignment(GTK_MISC(w), 0, 1);
+  gtk_box_pack_start(GTK_BOX(pd->root), w, FALSE, TRUE, 0);
+
+  prop_subscribe(0,
+		 PROP_TAG_NAME("global", "media", "current", 
+			       "metadata", "album_art"),
+		 PROP_TAG_CALLBACK_STRING, pd_set_albumart, w,
+		 PROP_TAG_COURIER, gu->gu_pc,
+		 NULL);
+
+  /* Middle vbox */
+  vbox = gtk_vbox_new(FALSE, 1);
+  gtk_box_pack_start(GTK_BOX(pd->root), vbox, TRUE, TRUE, 0);
+
+  
+  /* Title of current track */
+  l = gtk_label_new("");
+  gtk_misc_set_alignment(GTK_MISC(l), 0, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), l, TRUE, TRUE, 0);
+  prop_subscribe(0,
+		 PROP_TAG_NAME("global", "media", "current", 
+			       "metadata", "title"),
+		 PROP_TAG_CALLBACK_STRING, set_current_title, l,
+		 PROP_TAG_COURIER, gu->gu_pc,
+		 NULL);
+
+  /* Title of current track */
+  pd->trackextra = gtk_label_new("");
+  gtk_misc_set_alignment(GTK_MISC(pd->trackextra), 0, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), pd->trackextra, TRUE, TRUE, 0);
+
+  prop_subscribe(0,
+		 PROP_TAG_NAME("global", "media", "current", 
+			       "metadata", "album"),
+		 PROP_TAG_CALLBACK_STRING, set_current_album, pd,
+		 PROP_TAG_COURIER, gu->gu_pc,
+		 NULL);
+
+  prop_subscribe(0,
+		 PROP_TAG_NAME("global", "media", "current", 
+			       "metadata", "artist"),
+		 PROP_TAG_CALLBACK_STRING, set_current_artist, pd,
+		 PROP_TAG_COURIER, gu->gu_pc,
+		 NULL);
+
+
+
+  /* The toolbar */
+  pd->tbar = gtk_toolbar_new();
+  gtk_toolbar_set_style(GTK_TOOLBAR(pd->tbar), GTK_TOOLBAR_ICONS);
+  gtk_box_pack_start(GTK_BOX(vbox), pd->tbar, FALSE, TRUE, 0);
 
   /* Prev button */
   pd->prev = ti = gtk_tool_button_new_from_stock(GTK_STOCK_MEDIA_PREVIOUS);
-  gtk_toolbar_insert(GTK_TOOLBAR(pd->bar), ti, -1);
+  gtk_toolbar_insert(GTK_TOOLBAR(pd->tbar), ti, -1);
   g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(prev_clicked), pd);
 
   /* Play / Pause */
   pd->playpause = ti = gtk_tool_button_new_from_stock(GTK_STOCK_MEDIA_PLAY);
-  gtk_toolbar_insert(GTK_TOOLBAR(pd->bar), ti, -1);
+  gtk_toolbar_insert(GTK_TOOLBAR(pd->tbar), ti, -1);
   g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(playpause_clicked), pd);
 
   /* Next button */
   pd->next = ti = gtk_tool_button_new_from_stock(GTK_STOCK_MEDIA_NEXT);
-  gtk_toolbar_insert(GTK_TOOLBAR(pd->bar), ti, -1);
+  gtk_toolbar_insert(GTK_TOOLBAR(pd->tbar), ti, -1);
   g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(next_clicked), pd);
 
   /* Separator */
   ti = gtk_separator_tool_item_new();
-  gtk_toolbar_insert(GTK_TOOLBAR(pd->bar), ti, -1);
+  gtk_toolbar_insert(GTK_TOOLBAR(pd->tbar), ti, -1);
 
   /* Subscribe to playstatus */
   prop_subscribe(0,
@@ -273,7 +432,7 @@ gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent)
   ti = gtk_tool_item_new();
   gtk_tool_item_set_expand(ti, TRUE);
   gtk_container_add(GTK_CONTAINER(ti), pd->pos_slider);
-  gtk_toolbar_insert(GTK_TOOLBAR(pd->bar), ti, -1);
+  gtk_toolbar_insert(GTK_TOOLBAR(pd->tbar), ti, -1);
   
   /* Subscribe to current track position */
   pd->pos_sub = 
@@ -295,7 +454,7 @@ gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent)
 
   /* Separator */
   ti = gtk_separator_tool_item_new();
-  gtk_toolbar_insert(GTK_TOOLBAR(pd->bar), ti, -1);
+  gtk_toolbar_insert(GTK_TOOLBAR(pd->tbar), ti, -1);
 
   /**
    * Volume control
@@ -303,7 +462,7 @@ gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent)
   ti = gtk_tool_item_new();
   pd->volume = gtk_volume_button_new();
   gtk_container_add(GTK_CONTAINER(ti), pd->volume);
-  gtk_toolbar_insert(GTK_TOOLBAR(pd->bar), ti, -1);
+  gtk_toolbar_insert(GTK_TOOLBAR(pd->tbar), ti, -1);
 
   g_signal_connect(G_OBJECT(pd->volume), "value-changed", 
 		   G_CALLBACK(read_mastervol), pd);
