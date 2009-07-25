@@ -2,7 +2,7 @@
 			 Showtime mediaplayer
 			 ====================
 
-		 (c) 2006 - 2009 Andreas ÷man, et al.
+		 (c) 2006 - 2009 Andreas Öman, et al.
 
 
 Settings are stored in ~/.hts/showtime
@@ -29,17 +29,18 @@ Thus, to start it, just type:
 $ build.linux/showtime
 
 
-How to build for OSX
-====================
+How to build for Mac OS X
+=========================
 
 Install Xcode (http://developer.apple.com/Tools/) which includes Xcode IDE,
-gcc toolchain and much more.
+gcc toolchain and much more. iPhone SDK also includes Xcode and toolchain.
 
 Install MacPorts (http://www.macports.org)
 
 Install freetype via MacPorts:
 
-$ sudo /opt/local/bin/port install freetype
+$ sudo /opt/local/bin/port install freetype (see note below if you want to
+build with 10.4 support).
 
 Now run configure
 
@@ -49,11 +50,11 @@ If configured successfully, build the binary
 
 $ make
 
-Run showtime
+Run showtime binary from build directory
 
 $ build.darwin/Showtime.app/Contents/MacOS/showtime
 
-Or
+Run showtime app from build directory
 
 $ open build.darwin/Showtime.app
 
@@ -62,6 +63,18 @@ run configure with --release to embed theme files or else the binary will
 include paths your local build tree.
 
 $ make Showtime.dmg
+
+To build with 10.4 (Tiger) support, remember to build freetype with 10.4
+support (hint: macports.conf: sysroot=/Developer/SDKs/MacOSX10.4u.sdk). 10.4
+SDK is included as an optional package for Xcode.
+
+$ ./configure --macosxtarget=10.4 --macosxsdk=/Developer/SDKs/MacOSX10.4u.sdk
+
+To build with 10.4 (tiger) support for PPC
+
+$ ./configure --arch=powerpc --cc=powerpc-apple-darwin9-gcc-4.0.1 --macosxtarget=10.4 --macosxsdk=/Developer/SDKs/MacOSX10.4u.sdk
+
+TODO: universal binary
 
 How to build for Nintendo Wii
 =============================
