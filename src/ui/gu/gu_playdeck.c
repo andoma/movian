@@ -353,6 +353,9 @@ gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent)
   l = gtk_label_new("");
   gtk_misc_set_alignment(GTK_MISC(l), 0, 0);
   gtk_box_pack_start(GTK_BOX(vbox), l, TRUE, TRUE, 0);
+  g_object_set(G_OBJECT(l), 
+	       "ellipsize", PANGO_ELLIPSIZE_END, NULL);
+
   prop_subscribe(0,
 		 PROP_TAG_NAME("global", "media", "current", 
 			       "metadata", "title"),
@@ -362,6 +365,8 @@ gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent)
 
   /* Title of current track */
   pd->trackextra = gtk_label_new("");
+  g_object_set(G_OBJECT(pd->trackextra), 
+	       "ellipsize", PANGO_ELLIPSIZE_END, NULL);
   gtk_misc_set_alignment(GTK_MISC(pd->trackextra), 0, 0);
   gtk_box_pack_start(GTK_BOX(vbox), pd->trackextra, TRUE, TRUE, 0);
 
