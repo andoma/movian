@@ -107,5 +107,8 @@ void gu_pixbuf_init(void);
 
 GdkPixbuf *gu_pixbuf_get_sync(const char *url, int width, int height);
 
+void gu_pixbuf_async_set(const char *url, int width, int height, 
+			 GtkObject *target);
+
 #endif /* GU_H__ */
 

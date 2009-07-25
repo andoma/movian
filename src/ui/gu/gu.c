@@ -20,7 +20,7 @@
 #include "gu.h"
 #include "showtime.h"
 
-static hts_mutex_t gu_mutex;
+hts_mutex_t gu_mutex;
 
 
 /**

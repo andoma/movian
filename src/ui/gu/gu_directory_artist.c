@@ -105,11 +105,12 @@ album_set_art(void *opaque, const char *str)
 {
   GdkPixbuf *pb;
 
-  if(str != NULL)
-    pb = gu_pixbuf_get_sync(str, 256, -1);
-  else
-    pb = gu_pixbuf_get_sync(SHOWTIME_GU_RESOURCES_URL"/cd.png", 256, -1);
+  if(str != NULL) {
+    gu_pixbuf_async_set(str, 256, -1, GTK_OBJECT(opaque));
+    return;
+  }
 
+  pb = gu_pixbuf_get_sync(SHOWTIME_GU_RESOURCES_URL"/cd.png", 256, -1);
   g_object_set(G_OBJECT(opaque), "pixbuf", pb, NULL);
   if(pb != NULL)
     g_object_unref(G_OBJECT(pb));
