@@ -82,7 +82,7 @@ gu_start(ui_t *ui, int argc, char **argv, int primary)
   gu->gu_window = win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
   gtk_window_set_title(GTK_WINDOW(win), "Showtime");
-  gtk_window_set_default_size(GTK_WINDOW(win), 640, 280);
+  gtk_window_set_default_size(GTK_WINDOW(win), 640, 400);
 
   g_signal_connect(G_OBJECT(win), "delete_event",
 		   G_CALLBACK(gu_close), NULL);
