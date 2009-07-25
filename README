@@ -52,11 +52,11 @@ $ make
 
 Run showtime binary from build directory
 
-$ build.darwin/Showtime.app/Contents/MacOS/showtime
+$ build.osx/Showtime.app/Contents/MacOS/showtime
 
 Run showtime app from build directory
 
-$ open build.darwin/Showtime.app
+$ open build.osx/Showtime.app
 
 Optionally you can build Showtime.dmg disk image. Note that you should probably
 run configure with --release to embed theme files or else the binary will

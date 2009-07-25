@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# HTS configure script for Darwin OSX
+# HTS configure script for Mac OS X
 #
 # Copyright (c) 2005-2009 Andreas Öman
 #
@@ -11,7 +11,7 @@
 # Copyright (c) 2005-2008 Mans Rullgard
 #
 
-PLATFORM="darwin"
+PLATFORM="osx"
 OSENV="posix"
 DEFAULT_UI="glw"
 
