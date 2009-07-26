@@ -29,6 +29,7 @@
 @interface GLWGLView: NSOpenGLView <NSTextInput>
 {
   NSTimer *timer;
+  NSTimer *timer_cursor;
   bool compositeKey;
   NSString *compositeString;
 }

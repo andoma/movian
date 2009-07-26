@@ -384,7 +384,9 @@ refresh_rate()
     display_settings_save(&gcocoa);
     
     if(gcocoa.want_fullscreen) {
+      [NSCursor setHiddenUntilMouseMoves:YES];
       [self fullscreenLoop];
+      [NSCursor setHiddenUntilMouseMoves:NO];
       return;
     }
   }
@@ -426,16 +428,26 @@ refresh_rate()
                                          selector:@selector(glwWindowedTimer)
                                          userInfo:nil repeats:YES];
   [timer retain];
+ 
+  if(timer_cursor) {
+    [timer_cursor invalidate];
+    [timer_cursor release];
+    timer_cursor = nil;
+  }
 }
 
 - (void)glwWindowedTimerStop {
   [timer invalidate];
-  [timer release];
+  [timer release];  
 }
 
 - (void)glwWindowedTimer {
   /* force call to drawRect */
   [self setNeedsDisplay:YES];
+}
+
+- (void)glwHideCursor {
+  [NSCursor setHiddenUntilMouseMoves:YES];
 }
 
 - (void)glwMouseEvent:(int)type event:(NSEvent*)event {  
@@ -450,7 +462,20 @@ refresh_rate()
   
   glw_lock(&gcocoa.gr);
   glw_pointer_event(&gcocoa.gr, &gpe);
-  glw_unlock(&gcocoa.gr);  
+  glw_unlock(&gcocoa.gr);
+
+  if(gcocoa.is_fullscreen) {
+    if(timer_cursor) {
+      [timer_cursor invalidate];
+      [timer_cursor release];
+    }
+
+    timer_cursor = [NSTimer scheduledTimerWithTimeInterval:(1.0)
+						    target:self
+						  selector:@selector(glwHideCursor)
+						  userInfo:nil repeats:NO];
+    [timer_cursor retain];
+  }
 }
 
 - (void)scrollWheel:(NSEvent*)event {
@@ -640,8 +665,10 @@ refresh_rate()
   GLint v = 1;
   
   gcocoa.glready = 1;
-  
-  /* default cursor is on at start */
+
+  timer_cursor = nil;
+
+  /* default font size */
   gcocoa.want_font_size = 40;
     
   gcocoa.config_name = strdup("glw/cocoa/default");
