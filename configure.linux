@@ -251,6 +251,21 @@ fi
 
 
 #
+# D-Bus
+#
+if enabled dbus; then
+    if pkg-config dbus-1; then
+	# CFLAGS are included by Makefile
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs dbus-1`
+	echo "Using libdbus-1:       `pkg-config --modversion dbus-1`"
+    else
+	echo "libdbus-1 not found. Unable to build with D-Bus support."
+	die
+    fi
+fi
+
+
+#
 # configure ffmpeg
 #
 setup_ffmpeg --cpu=${CPU} --enable-pthreads

@@ -40,6 +40,7 @@ CONFIG_LIST="
  release
  embedded_resources
  coreaudio
+ dbus
 "
 
 die() {

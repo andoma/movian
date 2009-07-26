@@ -243,6 +243,15 @@ ${BUILDDIR}/src/ui/gu/%.o : CFLAGS = $(shell pkg-config --cflags gtk+-2.0) \
 SRCS-$(CONFIG_LIRC) +=  src/ui/lirc/imonpad.c \
 			src/ui/lirc/lircd.c
 
+#
+# D-Bus
+#
+SRCS-$(CONFIG_DBUS) +=  src/ui/dbus/dbus.c \
+			src/ui/dbus/mpris.c
+
+${BUILDDIR}/src/ui/dbus/%.o : CFLAGS =  $(shell pkg-config --cflags dbus-1) \
+-Wall -Werror -Wmissing-prototypes -Wno-cast-qual
+
 
 # Various transformations
 SRCS  += $(SRCS-yes)
