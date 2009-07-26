@@ -92,6 +92,13 @@ SRCS += src/video/video_playback.c \
 
 SRCS-$(CONFIG_DVD) += src/video/video_dvdspu.c
 
+# Temporary fix for http://gcc.gnu.org/bugzilla/show_bug.cgi?id=11203
+# -OO will result in compiler error
+ifeq ($(PLATFORM), osx)
+${BUILDDIR}/src/video/yadif.o : CFLAGS = -O2
+endif
+
+
 #
 # Audio subsys
 #
@@ -270,7 +277,7 @@ OBJDIRS+= $(sort $(dir $(BUNDLE_OBJS)))
 .PRECIOUS: ${BUNDLE_SRCS}
 
 # Common CFLAGS for all files
-CFLAGS_com  = -g -funsigned-char -O2 
+CFLAGS_com  = -g -funsigned-char -O0
 CFLAGS_com += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 CFLAGS_com += -I${BUILDDIR} -I${CURDIR}/src -I${CURDIR}
 
