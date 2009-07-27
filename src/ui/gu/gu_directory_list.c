@@ -211,7 +211,22 @@ dirnode_destroy(dirnode_t *dn, int remove)
     if(dn->cells[i].s != NULL)
       prop_unsubscribe(dn->cells[i].s);
 
+  prop_ref_dec(dn->p);
   free(dn);
+}
+
+/**
+ *
+ */
+static dirnode_t *
+gu_node_find(directory_list_t *d, prop_t *p)
+{
+  dirnode_t *dn;
+
+  LIST_FOREACH(dn, &d->nodes, link)
+    if(dn->p == p)
+      return dn;
+  return NULL;
 }
 
 
@@ -220,54 +235,69 @@ dirnode_destroy(dirnode_t *dn, int remove)
  *
  */
 static void
+gu_node_add(directory_list_t *d, prop_t *p, dirnode_t *before)
+{
+  dirnode_t *dn;
+  int i;
+  cell_t *c;
+
+  dn = calloc(1, sizeof(dirnode_t));
+  dn->dir = d;
+  dn->p = p;
+  prop_ref_inc(p);
+  
+  LIST_INSERT_HEAD(&d->nodes, dn, link);
+
+  if(before) {
+    gtk_list_store_insert_before(d->model, &dn->iter, &before->iter);
+  } else {
+    gtk_list_store_append(d->model, &dn->iter);
+  }
+
+  for(i = 0; i < N_COLUMNS; i++) {
+    c = &dn->cells[i];
+    c->idx = i;
+    c->dn = dn;
+
+    c->s = prop_subscribe(0, 
+			  PROP_TAG_NAME_VECTOR, subpaths[i],
+			  PROP_TAG_CALLBACK, gu_col_set, c,
+			  PROP_TAG_COURIER, d->gu->gu_pc,
+			  PROP_TAG_NAMED_ROOT, p, "self",
+			  NULL);
+  }
+}
+
+
+/**
+ *
+ */
+static void
 gu_node_sub(void *opaque, prop_event_t event, ...)
 {
+  dirnode_t *dn;
   directory_list_t *d = opaque;
   prop_t *p;
-  int flags, i;
-  dirnode_t *dn;
-  cell_t *c;
 
   va_list ap;
   va_start(ap, event);
   
   switch(event) {
   case PROP_ADD_CHILD:
+    gu_node_add(d, va_arg(ap, prop_t *), NULL);
+    break;
+
+  case PROP_ADD_CHILD_BEFORE:
     p = va_arg(ap, prop_t *);
-    flags = va_arg(ap, int);
-
-    dn = calloc(1, sizeof(dirnode_t));
-    dn->dir = d;
-    dn->p = p;
-    prop_ref_inc(p);
-
-    LIST_INSERT_HEAD(&d->nodes, dn, link);
-
-    gtk_list_store_append(d->model, &dn->iter);
-
-    for(i = 0; i < N_COLUMNS; i++) {
-      c = &dn->cells[i];
-      c->idx = i;
-      c->dn = dn;
-
-      c->s = prop_subscribe(0, 
-			    PROP_TAG_NAME_VECTOR, subpaths[i],
-			    PROP_TAG_CALLBACK, gu_col_set, c,
-			    PROP_TAG_COURIER, d->gu->gu_pc,
-			    PROP_TAG_NAMED_ROOT, p, "self",
-			    NULL);
-    }
+    dn = gu_node_find(d, va_arg(ap, prop_t *));
+    assert(dn != NULL);
+    gu_node_add(d, p, dn);
     break;
 
   case PROP_DEL_CHILD:
-    p = va_arg(ap, prop_t *);
-
-    LIST_FOREACH(dn, &d->nodes, link)
-      if(dn->p == p)
-	break;
-
-    if(dn != NULL)
-      dirnode_destroy(dn, 1);
+    dn = gu_node_find(d, va_arg(ap, prop_t *));
+    assert(dn != NULL);
+    dirnode_destroy(dn, 1);
     break;
 
   case PROP_SET_DIR:
