@@ -30,6 +30,8 @@
 #include "playqueue.h"
 
 typedef struct scanner {
+  int s_refcount;
+
   char *s_url;
 
   prop_t *s_nodes;
@@ -258,6 +260,19 @@ scannercore(scanner_t *s)
 /**
  *
  */
+static void
+scanner_unref(scanner_t *s)
+{
+  if(atomic_add(&s->s_refcount, -1) > 1)
+    return;
+
+  free(s);
+}
+
+
+/**
+ *
+ */
 static void *
 scanner(void *aux)
 {
@@ -272,13 +287,37 @@ scanner(void *aux)
   if(s->s_viewprop != NULL)
     prop_ref_dec(s->s_viewprop);
 
-  free(s);
+  scanner_unref(s);
   return NULL;
 }
 
 
+/**
+ *
+ */
+static void
+scanner_stop(void *opaque, prop_event_t event, ...)
+{
+  prop_t *p;
+  scanner_t *s = opaque;
+
+  va_list ap;
+  va_start(ap, event);
+
+  if(event != PROP_DESTROYED) 
+    return;
+
+  p = va_arg(ap, prop_t *);
+  prop_unsubscribe(va_arg(ap, prop_sub_t *));
+
+  s->s_stop = 1;
+  scanner_unref(s);
+}
 
 
+/**
+ *
+ */
 void
 fa_scanner(const char *url, prop_t *root, int flags)
 {
@@ -298,5 +337,12 @@ fa_scanner(const char *url, prop_t *root, int flags)
     prop_ref_inc(s->s_viewprop);
   }
 
+  s->s_refcount = 2; // One held by scanner thread, one by the subscription
+
   hts_thread_create_detached(scanner, s);
+
+  prop_subscribe(PROP_SUB_TRACK_DESTROY,
+		 PROP_TAG_CALLBACK, scanner_stop, s,
+		 PROP_TAG_ROOT, s->s_root,
+		 NULL);
 }
