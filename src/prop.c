@@ -1290,8 +1290,6 @@ prop_subscribe(int flags, ...)
 static void
 prop_unsubscribe0(prop_sub_t *s)
 {
-  assert(s->hps_lock != NULL);
-  
   s->hps_zombie = 1;
 
   if(s->hps_value_prop != NULL) {
