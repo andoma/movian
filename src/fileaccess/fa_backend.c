@@ -31,16 +31,11 @@
 #include "fa_audio.h"
 #include "fa_imageloader.h"
 #include "playqueue.h"
+#include "fileaccess.h"
+
 
 typedef struct be_file_page {
   nav_page_t h;
-
-  prop_t *bfp_nodes;
-  prop_t *bfp_viewprop;
-
-  int bfp_stop;
-
-  hts_thread_t bfp_scanner_thread;
 
 } be_file_page_t;
 
@@ -52,231 +47,6 @@ static int
 be_file_canhandle(const char *url)
 {
   return fa_can_handle(url, NULL, 0);
-}
-
-
-/**
- *
- */
-const char *type2str[] = {
-  [CONTENT_DIR]      = "directory",
-  [CONTENT_FILE]     = "file",
-  [CONTENT_AUDIO]    = "audio",
-  [CONTENT_ARCHIVE]  = "archive",
-  [CONTENT_VIDEO]    = "video",
-  [CONTENT_PLAYLIST] = "playlist",
-  [CONTENT_DVD]      = "dvd",
-  [CONTENT_IMAGE]    = "image",
-};
-
-
-/**
- *
- */
-static void
-set_type(prop_t *proproot, unsigned int type)
-{
-  if(type < sizeof(type2str) / sizeof(type2str[0]) && type2str[type] != NULL)
-    prop_set_string(prop_create(proproot, "type"), type2str[type]);
-}
-
-
-/**
- *
- */
-static void *
-scanner(void *aux)
-{
-  be_file_page_t *bfp = aux;
-  prop_t *metadata, *p, *p2;
-  int r, destroyed = 0;
-  nav_dir_t *nd;
-  nav_dir_entry_t *nde;
-  void *ref;
-  int images;
-  int album_score = 0;
-  const char *s;
-  char album_name[128];
-  char artist_name[128];
-  char buf[128];
-  int trackidx;
-
-  ref = fa_reference(bfp->h.np_url);
-
-  if((nd = fa_scandir(bfp->h.np_url, NULL, 0)) == NULL) {
-    fa_unreference(ref);
-    return NULL;
-  }
-  if(nd->nd_count == 0) {
-    prop_set_string(bfp->bfp_viewprop, "empty");
-    nav_dir_free(nd);
-    fa_unreference(ref);
-    return NULL;
-  }
-
-  nav_dir_sort(nd);
-
-
-  images = 0;
-  /* Select a view based on filenames */
-  TAILQ_FOREACH(nde, &nd->nd_entries, nde_link) {
-    if(bfp->bfp_stop)
-      break;
-
-    if((s = strchr(nde->nde_filename, '.')) == NULL)
-      continue;
-    s++;
-
-    if(!strcasecmp(s, "jpg") || !strcmp(s, "jpeg"))
-      images++;
-  }
-
-  if(images * 4 > nd->nd_count * 3)
-    prop_set_string(bfp->bfp_viewprop, "images");
-
-
-  /* Add filename and type */
-  TAILQ_FOREACH(nde, &nd->nd_entries, nde_link) {
-
-    if(bfp->bfp_stop)
-      break;
-
-    p = prop_create(NULL, "node");
-    prop_set_string(prop_create(p, "url"), nde->nde_url);
-    set_type(p, nde->nde_type);
-
-    metadata = prop_create(p, "metadata");
-    prop_set_string(prop_create(metadata, "title"), nde->nde_filename);
-
-    if(prop_set_parent(p, bfp->bfp_nodes))
-      prop_destroy(p);
-    else
-      nde->nde_opaque = p;
-  }
-
-  images = 0;
-  album_name[0] = 0;
-  artist_name[0] = 0;
-  /* Do full probe */
-  TAILQ_FOREACH(nde, &nd->nd_entries, nde_link) {
-
-    if(bfp->bfp_stop)
-      break;
-
-    if((p = nde->nde_opaque) == NULL)
-      continue;
-
-    metadata = prop_create(p, "metadata");
-
-    if(nde->nde_type == CONTENT_DIR) {
-      r = fa_probe_dir(metadata, nde->nde_url);
-    } else {
-      r = fa_probe(metadata, nde->nde_url, NULL, 0, NULL, 0);
-    }
-
-    set_type(p, r);
-    nde->nde_type = r;
-
-    switch(r) {
-    case CONTENT_AUDIO:
-      if((p2 = prop_get_by_names(metadata, "album", NULL)) == NULL ||
-	 prop_get_string(p2, buf, sizeof(buf))) {
-	album_score--;
-	break;
-      }
-
-      if(album_name[0] == 0) {
-	snprintf(album_name, sizeof(album_name), "%s", buf);
-	album_score++;
-      } else if(!strcasecmp(album_name, buf)) {
-	album_score++;
-      } else {
-	album_score--;
-	break;
-      }
-      
-      if((p2 = prop_get_by_names(metadata, "artist", NULL)) == NULL ||
-	 prop_get_string(p2, buf, sizeof(buf)))
-	break;
-
-      if(strstr(artist_name, buf))
-	break;
-
-      snprintf(artist_name + strlen(artist_name),
-	       sizeof(artist_name) - strlen(artist_name),
-	       "%s%s", artist_name[0] ? ", " : "", buf);
-      break;
-
-    case CONTENT_UNKNOWN:
-      destroyed++;
-      prop_destroy(p);
-      nde->nde_opaque = NULL;
-      break;
-
-    case CONTENT_IMAGE:
-      images++;
-      break;
-
-    default:
-      album_score--;
-    }
-  }
-
-  if(!bfp->bfp_stop) {
-
-
-    if(album_score > 0) {
-      
-      /* It is an album */
-      prop_set_string(bfp->bfp_viewprop, "album");
-      
-      prop_set_string(prop_create(bfp->h.np_prop_root, "album_name"), 
-		      album_name);
-
-      if(artist_name[0])
-	prop_set_string(prop_create(bfp->h.np_prop_root, "artist_name"), 
-			artist_name);
-      
-      trackidx = 1;
-
-      /* Remove everything that is not audio */
-      TAILQ_FOREACH(nde, &nd->nd_entries, nde_link) {
-	if(bfp->bfp_stop)
-	  break;
-	if((p = nde->nde_opaque) == NULL)
-	  continue;
-	
-	if(nde->nde_type != CONTENT_AUDIO) {
-	  prop_destroy(p);
-	} else {
-	  prop_set_int(prop_create(prop_create(p, "metadata"),
-				   "trackindex"), trackidx);
-	  trackidx++;
-	}
-      }
-      
-    } else if(nd->nd_count == destroyed) {
-      prop_set_string(bfp->bfp_viewprop, "empty");
-    } else if(images * 4 > nd->nd_count * 3) {
-      prop_set_string(bfp->bfp_viewprop, "images");
-    }
-  }
-
-  nav_dir_free(nd);
-  fa_unreference(ref);
-  return NULL;
-}
-
-/**
- *
- */
-static void
-dir_close_page(nav_page_t *np)
-{
-  be_file_page_t *bfp = (be_file_page_t *)np;
-
-  bfp->bfp_stop = 1; 
-  hts_thread_join(&bfp->bfp_scanner_thread);
 }
 
 
@@ -315,14 +85,12 @@ file_open_dir(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
     return 0;
   }
 
-  bfp = nav_page_create(url0, sizeof(be_file_page_t), dir_close_page,
+  bfp = nav_page_create(url0, sizeof(be_file_page_t), NULL,
 			NAV_PAGE_DONT_CLOSE_ON_BACK);
   p = bfp->h.np_prop_root;
 
   prop_set_string(prop_create(p, "type"), "directory");
-
-  bfp->bfp_viewprop = prop_create(p, "view");
-  prop_set_string(bfp->bfp_viewprop, "list");
+  prop_set_string(prop_create(p, "view"), "list");
 
   /* Find a meaningfull page title (last component of URL) */
   l = strlen(url0);
@@ -334,9 +102,8 @@ file_open_dir(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
   dirname = strrchr(dirname, '/') ? strrchr(dirname, '/') + 1 : dirname;
   prop_set_string(prop_create(p, "title"), dirname);
 
-  bfp->bfp_nodes = prop_create(p, "nodes");
-  
-  hts_thread_create_joinable(&bfp->bfp_scanner_thread, scanner, bfp);
+  fa_scanner(url0, p, FA_SCANNER_DETERMINE_VIEW);
+
   *npp = &bfp->h;
   return 0;
 }
@@ -393,18 +160,19 @@ be_file_open(const char *url0, const char *type0, const char *parent,
     file_open_file(url0, npp, errbuf, errlen);
 }
 
+
 /**
  *
  */
-static nav_dir_t *
-be_scandir(const char *url, char *errbuf, size_t errsize)
+static prop_t *
+be_list(const char *url, char *errbuf, size_t errsize)
 {
-  nav_dir_t *nd = fa_scandir(url, errbuf, errsize);
-  
-  if(nd != NULL)
-    nav_dir_sort(nd);
-  return nd;
+  prop_t *p = prop_create(NULL, NULL);
+
+  fa_scanner(url, p, 0);
+  return p;
 }
+
 
 
 /**
@@ -417,7 +185,7 @@ nav_backend_t be_file = {
   .nb_play_video = be_file_playvideo,
   .nb_play_audio = be_file_playaudio,
   .nb_probe = fa_probe,
-  .nb_scandir = be_scandir,
+  .nb_list = be_list,
   .nb_imageloader = fa_imageloader,
 };
 

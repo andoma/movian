@@ -65,6 +65,7 @@ SRCS += src/fileaccess/fileaccess.c \
 	src/fileaccess/fa_imageloader.c \
 	src/fileaccess/fa_rawloader.c \
 	src/fileaccess/fa_backend.c \
+	src/fileaccess/fa_scanner.c \
 	src/fileaccess/fa_video.c \
 	src/fileaccess/fa_audio.c \
 	src/fileaccess/fa_fs.c \

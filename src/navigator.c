@@ -454,8 +454,8 @@ unsigned int nav_probe(prop_t *proproot, const char *url,
 /**
  *
  */
-nav_dir_t *
-nav_scandir(const char *url, char *errbuf, size_t errlen)
+prop_t *
+nav_list(const char *url, char *errbuf, size_t errlen)
 {
   nav_backend_t *nb;
 
@@ -463,11 +463,11 @@ nav_scandir(const char *url, char *errbuf, size_t errlen)
     if(nb->nb_canhandle(url))
       break;
   
-  if(nb == NULL || nb->nb_scandir == NULL) {
+  if(nb == NULL || nb->nb_list == NULL) {
     snprintf(errbuf, errlen, "No backend for URL");
     return NULL;
   }
-  return nb->nb_scandir(url, errbuf, errlen);
+  return nb->nb_list(url, errbuf, errlen);
 }
 
 

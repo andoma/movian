@@ -59,15 +59,41 @@ typedef struct playqueue_entry {
    */
   char *pqe_url;
   char *pqe_parent;
-  prop_t *pqe_root;
-  prop_t *pqe_metadata;
+
+  prop_t *pqe_node;
+
+
+  /**
+   * Entry is enqueued (ie, not from source list)
+   */
   int pqe_enq;
 
   /**
-   * playqueue_mutex must be held when accessing these
+   * Global link. Protected by playqueue_mutex
    */
   TAILQ_ENTRY(playqueue_entry) pqe_link;
+
+  /**
+   * Set if globally linked. Protected by playqueue_mutex
+   */
   int pqe_linked;
+
+  /**
+   * Points back into node prop from source siblings
+   * A ref is held on this prop when it's not NULL.
+   */
+  prop_t *pqe_source;
+
+  /**
+   * Subscribes to source.url
+   * Used to match entries from source into the currently played track
+   */
+  prop_sub_t *pqe_urlsub;
+
+  /**
+   * Maintains order from source list. Protected by playqueue_mutex
+   */
+  TAILQ_ENTRY(playqueue_entry) pqe_source_link;
 
 } playqueue_entry_t;
 
@@ -104,6 +130,15 @@ typedef struct playqueue_event {
 /**
  *
  */
+static prop_t *playqueue_source; 
+static prop_sub_t *playqueue_source_sub;
+static playqueue_entry_t *playqueue_source_justadded;
+static struct playqueue_entry_queue playqueue_source_entries;
+static char *playqueue_source_parent;
+
+/**
+ *
+ */
 static void
 pqe_unref(playqueue_entry_t *pqe)
 {
@@ -111,10 +146,12 @@ pqe_unref(playqueue_entry_t *pqe)
     return;
 
   assert(pqe->pqe_linked == 0);
+  assert(pqe->pqe_source == NULL);
+  assert(pqe->pqe_urlsub == NULL);
 
   free(pqe->pqe_url);
   free(pqe->pqe_parent);
-  prop_destroy(pqe->pqe_root);
+  prop_destroy(pqe->pqe_node);
 
   free(pqe);
 }
@@ -158,6 +195,38 @@ pqe_event_create(playqueue_entry_t *pqe, int jump)
    return &e->h;
 }
 
+/**
+ *
+ */
+static void
+pqe_remove_from_sourcequeue(playqueue_entry_t *pqe)
+{
+  TAILQ_REMOVE(&playqueue_source_entries, pqe, pqe_source_link);
+
+  prop_ref_dec(pqe->pqe_source);
+  pqe->pqe_source = NULL;
+
+  if(pqe->pqe_urlsub != NULL) {
+    prop_unsubscribe(pqe->pqe_urlsub);
+    pqe->pqe_urlsub = NULL;
+  }
+
+  pqe_unref(pqe);
+}
+
+
+/**
+ *
+ */
+static void
+pqe_remove_from_globalqueue(playqueue_entry_t *pqe)
+{
+  TAILQ_REMOVE(&playqueue_entries, pqe, pqe_link);
+  pqe->pqe_linked = 0;
+  pqe_unref(pqe);
+}
+
+
 
 /**
  *
@@ -167,95 +236,291 @@ playqueue_clear(void)
 {
   playqueue_entry_t *pqe;
 
-  while((pqe = TAILQ_FIRST(&playqueue_entries)) != NULL) {
-    TAILQ_REMOVE(&playqueue_entries, pqe, pqe_link);
-    pqe->pqe_linked = 0;
-    pqe_unref(pqe);
+  if(playqueue_source_parent != NULL) {
+    free(playqueue_source_parent);
+    playqueue_source_parent = NULL;
+  }
+
+  if(playqueue_source != NULL) {
+    prop_destroy(playqueue_source);
+    playqueue_source = NULL;
+  }
+
+  if(playqueue_source_sub != NULL) {
+    prop_unsubscribe(playqueue_source_sub);
+    playqueue_source_sub = NULL;
+  }
+
+  if(playqueue_source_justadded != NULL) {
+    pqe_unref(playqueue_source_justadded);
+    playqueue_source_justadded = NULL;
+  }
+
+  while((pqe = TAILQ_FIRST(&playqueue_source_entries)) != NULL)
+    pqe_remove_from_sourcequeue(pqe);
+
+  while((pqe = TAILQ_FIRST(&playqueue_entries)) != NULL)
+    pqe_remove_from_globalqueue(pqe);
+}
+
+
+/**
+ *
+ */
+static void
+pq_fill_from_source_backwards(playqueue_entry_t *pqe)
+{
+  playqueue_entry_t *b = pqe;
+
+  while(1) {
+    pqe = TAILQ_PREV(pqe, playqueue_entry_queue, pqe_source_link);
+    if(pqe == NULL)
+      break;
+
+    assert(pqe->pqe_linked == 0);
+    pqe->pqe_linked = 1;
+    pqe_ref(pqe);
+
+    TAILQ_INSERT_BEFORE(b, pqe, pqe_link);
+    
+    if(prop_set_parent_ex(pqe->pqe_node, playqueue_root, b->pqe_node, NULL))
+      abort();
+    
+    b = pqe;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+pq_fill_from_source_forwards(playqueue_entry_t *pqe)
+{
+  while(1) {
+    pqe = TAILQ_NEXT(pqe, pqe_source_link);
+    if(pqe == NULL)
+      break;
+
+    assert(pqe->pqe_linked == 0);
+    pqe->pqe_linked = 1;
+    pqe_ref(pqe);
+
+    TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_link);
+
+    if(prop_set_parent_ex(pqe->pqe_node, playqueue_root, NULL, NULL))
+      abort();
+  }
+}
+
+
+/**
+ *
+ */
+static void
+source_set_url(void *opaque, const char *str)
+{
+  playqueue_entry_t *pqe = opaque;
+  playqueue_entry_t *ja = playqueue_source_justadded;
+  playqueue_entry_t *n;
+
+  if(str == NULL)
+    return;
+
+  free(pqe->pqe_url);
+  pqe->pqe_url = strdup(str);
+
+  if(ja == NULL || strcmp(ja->pqe_url, str))
+    return;
+
+  /* 'pqe' from the source list matches 'ja'.
+   * Transfer the location / binding of pqe in the source list to ja
+   * and destroy pqe
+   */
+
+  ja->pqe_source = pqe->pqe_source; // refcount transfered
+  pqe->pqe_source = NULL;
+
+  n = TAILQ_NEXT(pqe, pqe_source_link);
+
+  TAILQ_REMOVE(&playqueue_source_entries, pqe, pqe_source_link);
+
+  prop_unsubscribe(pqe->pqe_urlsub);
+  pqe->pqe_urlsub = NULL;
+
+  if(n == NULL) {
+    TAILQ_INSERT_TAIL(&playqueue_source_entries, ja, pqe_source_link);
+  } else {
+    TAILQ_INSERT_BEFORE(n, ja, pqe_source_link);
+  }
+
+  pqe_ref(ja); // Needs to refs now (for both queues)
+
+  pqe_unref(pqe); // Should go away
+
+  pqe_unref(playqueue_source_justadded);
+  playqueue_source_justadded = NULL;
+
+  pq_fill_from_source_backwards(ja);
+  pq_fill_from_source_forwards(ja);
+}
+
+
+/**
+ *
+ */
+static playqueue_entry_t *
+find_source_entry_by_prop(prop_t *p)
+{
+  playqueue_entry_t *pqe;
+
+  TAILQ_FOREACH(pqe, &playqueue_source_entries, pqe_source_link)
+    if(pqe->pqe_source == p)
+      return pqe;
+  return NULL;
+}
+
+
+/**
+ *
+ */
+static void
+add_from_source(prop_t *p, playqueue_entry_t *before)
+{
+  playqueue_entry_t *pqe;
+
+  pqe = calloc(1, sizeof(playqueue_entry_t));
+  pqe->pqe_parent = strdup(playqueue_source_parent);
+  pqe->pqe_refcount = 1;
+  pqe->pqe_source = p;
+
+  if(before != NULL) {
+    TAILQ_INSERT_BEFORE(before, pqe, pqe_source_link);
+  } else {
+    TAILQ_INSERT_TAIL(&playqueue_source_entries, pqe, pqe_source_link);
+  }
+
+  prop_ref_inc(p);
+
+  pqe->pqe_node = prop_create(NULL, NULL);
+  prop_link(p, pqe->pqe_node);
+
+  pqe->pqe_urlsub = 
+    prop_subscribe(0,
+		   PROP_TAG_NAME("self", "url"),
+		   PROP_TAG_CALLBACK_STRING, source_set_url, pqe,
+		   PROP_TAG_MUTEX, &playqueue_mutex,
+		   PROP_TAG_NAMED_ROOT, p, "self",
+		   NULL);
+
+
+  if(playqueue_source_justadded != NULL)
+    return;  // Still not jacked into global queue
+
+  pqe_ref(pqe); // Ref for global queue
+
+  pqe->pqe_linked = 1;
+  if(before != NULL) {
+    assert(before->pqe_linked == 1);
+    TAILQ_INSERT_BEFORE(before, pqe, pqe_link);
+  } else {
+    TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_link);
+  }
+
+  if(prop_set_parent_ex(pqe->pqe_node, playqueue_root, 
+			before ? before->pqe_node : NULL, NULL))
+    abort();
+}
+
+
+/**
+ *
+ */
+static void
+del_from_source(playqueue_entry_t *pqe)
+{
+  pqe_remove_from_sourcequeue(pqe);
+  pqe_remove_from_globalqueue(pqe);
+}
+
+
+/**
+ *
+ */
+static void
+siblings_populate(void *opaque, prop_event_t event, ...)
+{
+  prop_t *p;
+  playqueue_entry_t *pqe;
+
+  va_list ap;
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_ADD_CHILD:
+    p = va_arg(ap, prop_t *);
+    add_from_source(p, NULL);
+    break;
+
+ case PROP_ADD_CHILD_BEFORE:
+    p = va_arg(ap, prop_t *);
+    pqe = find_source_entry_by_prop(va_arg(ap, prop_t *));
+    assert(pqe != NULL);
+    add_from_source(p, pqe);
+    break;
+    
+  case PROP_SET_DIR:
+  case PROP_SET_VOID:
+    break;
+
+  case PROP_DEL_CHILD:
+    pqe = find_source_entry_by_prop(va_arg(ap, prop_t *));
+    assert(pqe != NULL);
+    del_from_source(pqe);
+    break;
+
+  default:
+    fprintf(stderr, "siblings_populate(): Can't handle event %d, aborting\n",
+	    event);
+    abort();
   }
 }
 
 
 /**
  * Load siblings to the 'justadded' track.
- *
- * We do this by scanning the parent directory of the track.
- *
- * The idea is that even if a user just comes to as with a single URL
- * we are able to grab info about all tracks on the album.
- *
  */
 static void
 playqueue_load_siblings(const char *url, playqueue_entry_t *justadded)
 {
-  nav_dir_t *nd;
-  int before = 1;
-  playqueue_entry_t *pqe;
-  nav_dir_entry_t *nde;
-  prop_t *metadata;
-  int r;
+  prop_t *p;
   char errbuf[200];
 
-  if((nd = nav_scandir(url, errbuf, sizeof(errbuf))) == NULL) {
+  assert(playqueue_source == NULL);
+
+  assert(TAILQ_FIRST(&playqueue_source_entries) == NULL);
+  
+  if((p = nav_list(url, errbuf, sizeof(errbuf))) == NULL) {
     TRACE(TRACE_ERROR, "playqueue", "Unable to scan %s: %s", url, errbuf);
     return;
   }
 
-  TAILQ_FOREACH(nde, &nd->nd_entries, nde_link) {
-    if(!strcmp(nde->nde_url, justadded->pqe_url)) {
-      before = 0;
-      continue;
-    }
+  playqueue_source_parent = strdup(url);
 
-    if(nde->nde_type == CONTENT_DIR)
-      continue;
-    
-    if(nde->nde_type == CONTENT_AUDIO && nde->nde_metadata != NULL) {
-      metadata = nde->nde_metadata;
-      nde->nde_metadata = NULL;
+  pqe_ref(justadded);
+  playqueue_source_justadded = justadded;
 
-    } else {
+  playqueue_source_sub = 
+    prop_subscribe(PROP_SUB_DEBUG,
+		   PROP_TAG_NAME("self", "nodes"),
+		   PROP_TAG_CALLBACK, siblings_populate, NULL,
+		   PROP_TAG_MUTEX, &playqueue_mutex,
+		   PROP_TAG_NAMED_ROOT, p, "self", 
+		   NULL);
 
-      metadata = prop_create(NULL, "metadata");
-      r = nav_probe(metadata, nde->nde_url, NULL, 0, NULL, 0);
+  playqueue_source = p;
 
-      if(r != CONTENT_AUDIO) {
-	prop_destroy(metadata);
-	continue;
-      }
-    }
-
-    pqe = malloc(sizeof(playqueue_entry_t));
-    pqe->pqe_url    = strdup(nde->nde_url);
-    pqe->pqe_parent = strdup(url);
-    pqe->pqe_root   = prop_create(NULL, NULL);
-    pqe->pqe_enq    = 0;
-    pqe->pqe_refcount = 1;
-    pqe->pqe_linked = 1;
-    pqe->pqe_metadata = metadata;
-    if(prop_set_parent(metadata, pqe->pqe_root))
-      abort();
-    
-    prop_set_string(prop_create(pqe->pqe_root, "url"), pqe->pqe_url);
-    prop_set_string(prop_create(pqe->pqe_root, "type"), "audio");
-
-    if(before) {
-      TAILQ_INSERT_BEFORE(justadded, pqe, pqe_link);
-      if(prop_set_parent_ex(pqe->pqe_root, playqueue_root, 
-			    justadded->pqe_root, NULL))
-	abort();
-
-    } else {
-      TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_link);
-      if(prop_set_parent(pqe->pqe_root, playqueue_root))
-	abort();
-    }
-
-  }
-  nav_dir_free(nd);
 }
-
-
-
 
 
 /**
@@ -281,7 +546,7 @@ playqueue_load(const char *url, const char *parent, prop_t *metadata, int enq)
   hts_mutex_lock(&playqueue_mutex);
 
   TAILQ_FOREACH(pqe, &playqueue_entries, pqe_link) {
-    if(!strcmp(pqe->pqe_url, url) && 
+    if(pqe->pqe_url != NULL && !strcmp(pqe->pqe_url, url) && 
        (parent == NULL || !strcmp(pqe->pqe_parent, parent))) {
       /* Already in, go to it */
       e = pqe_event_create(pqe, 1);
@@ -297,19 +562,18 @@ playqueue_load(const char *url, const char *parent, prop_t *metadata, int enq)
   }
 
 
-  pqe = malloc(sizeof(playqueue_entry_t));
+  pqe = calloc(1, sizeof(playqueue_entry_t));
   pqe->pqe_url    = strdup(url);
   pqe->pqe_parent = strdup(parent);
-  pqe->pqe_root   = prop_create(NULL, NULL);
+  pqe->pqe_node   = prop_create(NULL, NULL);
   pqe->pqe_enq    = enq;
   pqe->pqe_refcount = 1;
   pqe->pqe_linked = 1;
-  pqe->pqe_metadata = metadata;
-  if(prop_set_parent(metadata, pqe->pqe_root))
+  if(prop_set_parent(metadata, pqe->pqe_node))
     abort();
 
-  prop_set_string(prop_create(pqe->pqe_root, "url"), url);
-  prop_set_string(prop_create(pqe->pqe_root, "type"), "audio");
+  prop_set_string(prop_create(pqe->pqe_node, "url"), url);
+  prop_set_string(prop_create(pqe->pqe_node, "type"), "audio");
 
   if(enq) {
 
@@ -335,7 +599,7 @@ playqueue_load(const char *url, const char *parent, prop_t *metadata, int enq)
 
   /* Enqueue our new entry */
   TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_link);
-  if(prop_set_parent(pqe->pqe_root, playqueue_root))
+  if(prop_set_parent(pqe->pqe_node, playqueue_root))
     abort();
 
   /* Tick player to play it */
@@ -426,7 +690,8 @@ playqueue_init(void)
   hts_cond_init(&playqueue_request_cond);
   TAILQ_INIT(&playqueue_entries);
   TAILQ_INIT(&playqueue_requests);
-   
+  TAILQ_INIT(&playqueue_source_entries);
+
   playqueue_root = prop_create(prop_get_global(), "playqueue");
 
   hts_thread_create_detached(playqueue_thread, NULL);
@@ -530,6 +795,7 @@ player_thread(void *aux)
   playqueue_entry_t *pqe = NULL;
   playqueue_event_t *pe;
   event_t *e;
+  prop_t *p;
   char errbuf[100];
 
   while(1) {
@@ -576,12 +842,22 @@ player_thread(void *aux)
       event_unref(e);
     }
 
-    prop_link(pqe->pqe_metadata, mp->mp_prop_metadata);
+    p = prop_get_by_name(PNVEC("self", "metadata"), 1,
+			 PROP_TAG_NAMED_ROOT, pqe->pqe_node, "self",
+			 NULL);
+    prop_link(p, mp->mp_prop_metadata);
+    prop_ref_dec(p);
+
+    if(pqe->pqe_url == NULL) {
+      notify_add(NOTIFY_ERROR, NULL, 5, "Playqueue error: An entry lacks URL");
+      pqe = playqueue_advance(pqe, 0);
+      continue;
+    }
 
     e = nav_play_audio(pqe->pqe_url, mp, errbuf, sizeof(errbuf));
     
     if(e == NULL) {
-      notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nPlayqueue error:%s",
+      notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nPlayqueue error: %s",
 		 pqe->pqe_url, errbuf);
       pqe = playqueue_advance(pqe, 0);
       continue;

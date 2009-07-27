@@ -111,7 +111,7 @@ typedef struct nav_backend {
 			   char *newurl, size_t newurlsize,
 			   char *errbuf, size_t errsize);
 
-  nav_dir_t *(*nb_scandir)(const char *url, char *errbuf, size_t errsize);
+  prop_t *(*nb_list)(const char *url, char *errbuf, size_t errsize);
 
   int (*nb_imageloader)(const char *url, char *errbuf, size_t errsize,
 			int *thumb, void **data, size_t *datasize,
@@ -150,7 +150,7 @@ unsigned int nav_probe(prop_t *proproot, const char *url,
 		       char *newurl, size_t newurlsize,
 		       char *errbuf, size_t errsize);
 
-nav_dir_t *nav_scandir(const char *url, char *errbuf, size_t errlen);
+prop_t *nav_list(const char *url, char *errbuf, size_t errlen);
 
 int nav_imageloader(const char *url, char *errbuf, size_t errlen,
 		    int *thumb, void **data, size_t *datasize,

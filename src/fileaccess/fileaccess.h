@@ -63,4 +63,8 @@ void fa_unreference(void *fh);
 
 const char *fa_ffmpeg_error_to_txt(int err);
 
+#define FA_SCANNER_DETERMINE_VIEW 0x1
+
+void fa_scanner(const char *url, prop_t *root, int flags);
+
 #endif /* FILEACCESS_H */
