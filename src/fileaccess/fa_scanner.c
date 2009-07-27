@@ -263,10 +263,7 @@ scanner(void *aux)
 {
   scanner_t *s = aux;
 
-  printf("Starting scan of %s\n", s->s_url);
   scannercore(s);
-
-  printf("Scan of %s completed\n", s->s_url);
 
   free(s->s_url);
   prop_ref_dec(s->s_root);
