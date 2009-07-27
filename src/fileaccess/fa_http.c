@@ -675,10 +675,7 @@ http_index_parse(http_file_t *hf, fa_dir_t *fd, char *buf)
                isdir ? "/" : "");
       
       http_deescape(url);
-
-      fa_dir_add(fd, url, name,
-		 isdir ? CONTENT_DIR : CONTENT_FILE,
-		 NULL);
+      fa_dir_add(fd, url, name, isdir ? CONTENT_DIR : CONTENT_FILE);
     }
     
     free(hrefd);
@@ -1106,8 +1103,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
 	  http_deescape(fname);
 	  http_deescape(path);
 
-	  fa_dir_add(fd, path, fname, isdir ? CONTENT_DIR : CONTENT_FILE,
-		     NULL);
+	  fa_dir_add(fd, path, fname, isdir ? CONTENT_DIR : CONTENT_FILE);
 	}
       }
     } else {

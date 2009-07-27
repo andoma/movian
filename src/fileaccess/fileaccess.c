@@ -328,9 +328,6 @@ fa_dir_free(fa_dir_t *fd)
 
   while((fde = TAILQ_FIRST(&fd->fd_entries)) != NULL) {
     TAILQ_REMOVE(&fd->fd_entries, fde, fde_link);
-    if(fde->fde_metadata)
-      prop_destroy(fde->fde_metadata);
-
     free(fde->fde_filename);
     free(fde->fde_url);
     free(fde);
@@ -342,8 +339,7 @@ fa_dir_free(fa_dir_t *fd)
  *
  */
 void
-fa_dir_add(fa_dir_t *fd, const char *url, const char *filename, int type,
-	    prop_t *metadata)
+fa_dir_add(fa_dir_t *fd, const char *url, const char *filename, int type)
 {
   fa_dir_entry_t *fde;
 
@@ -355,7 +351,6 @@ fa_dir_add(fa_dir_t *fd, const char *url, const char *filename, int type,
   fde->fde_url      = strdup(url);
   fde->fde_filename = strdup(filename);
   fde->fde_type     = type;
-  fde->fde_metadata = metadata;
   fde->fde_opaque   = NULL;
   TAILQ_INSERT_TAIL(&fd->fd_entries, fde, fde_link);
   fd->fd_count++;

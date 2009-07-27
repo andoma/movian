@@ -561,7 +561,7 @@ rar_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 
   LIST_FOREACH(c, &rf->rf_files, rf_link) {
     snprintf(buf, sizeof(buf), "rar://%s/%s", url, c->rf_name);
-    fa_dir_add(fd, buf, c->rf_name, c->rf_type, NULL);
+    fa_dir_add(fd, buf, c->rf_name, c->rf_type);
   }
 
   rar_file_unref(rf);

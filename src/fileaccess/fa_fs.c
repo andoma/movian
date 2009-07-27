@@ -82,7 +82,7 @@ fs_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
     
     fs_urlsnprintf(buf, sizeof(buf), "file://", url, d->d_name);
 
-    fa_dir_add(fd, buf, d->d_name, type, NULL);
+    fa_dir_add(fd, buf, d->d_name, type);
   }
   closedir(dir);
   return 0;

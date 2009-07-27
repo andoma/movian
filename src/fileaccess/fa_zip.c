@@ -486,7 +486,7 @@ zip_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 
   LIST_FOREACH(c, &zf->zf_files, zf_link) {
     snprintf(buf, sizeof(buf), "zip://%s/%s", url, c->zf_name);
-    fa_dir_add(fd, buf, c->zf_name, c->zf_type, NULL);
+    fa_dir_add(fd, buf, c->zf_name, c->zf_type);
   }
 
   zip_file_unref(zf);
