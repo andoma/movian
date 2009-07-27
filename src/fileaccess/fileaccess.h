@@ -29,6 +29,43 @@
 
 int fileaccess_init(void);
 
+
+/**
+ *
+ */
+TAILQ_HEAD(fa_dir_entry_queue, fa_dir_entry);
+
+/**
+ *
+ */
+typedef struct fa_dir_entry {
+  TAILQ_ENTRY(fa_dir_entry) fde_link;
+  char *fde_filename;
+  char *fde_url;
+  int   fde_type; /* CONTENT_ .. types from showtime.h */
+  void *fde_opaque;
+  prop_t *fde_metadata;
+} fa_dir_entry_t;
+
+/**
+ *
+ */
+typedef struct fa_dir {
+  struct fa_dir_entry_queue fd_entries;
+  int fd_count;
+} fa_dir_t;
+
+fa_dir_t *fa_dir_alloc(void);
+
+void fa_dir_free(fa_dir_t *nd);
+
+void fa_dir_add(fa_dir_t *nd, const char *path, const char *name, int type,
+		 prop_t *metadata);
+
+void fa_dir_sort(fa_dir_t *nd);
+
+
+
 /**
  *
  */
@@ -45,7 +82,7 @@ typedef struct fa_handle {
 
 
 
-nav_dir_t *fa_scandir(const char *url, char *errbuf, size_t errsize);
+fa_dir_t *fa_scandir(const char *url, char *errbuf, size_t errsize);
 void *fa_open(const char *url, char *errbuf, size_t errsize);
 void *fa_open_theme(const char *url, const char *themepath);
 void fa_close(void *fh);

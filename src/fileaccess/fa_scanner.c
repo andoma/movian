@@ -77,8 +77,8 @@ scannercore(scanner_t *s)
 {
   prop_t *metadata, *p, *p2;
   int r, destroyed = 0;
-  nav_dir_t *nd;
-  nav_dir_entry_t *nde;
+  fa_dir_t *fd;
+  fa_dir_entry_t *fde;
   void *ref;
   int images;
   int album_score = 0;
@@ -90,28 +90,28 @@ scannercore(scanner_t *s)
 
   ref = fa_reference(s->s_url);
 
-  if((nd = fa_scandir(s->s_url, NULL, 0)) == NULL) {
+  if((fd = fa_scandir(s->s_url, NULL, 0)) == NULL) {
     fa_unreference(ref);
     return;
   }
-  if(nd->nd_count == 0) {
+  if(fd->fd_count == 0) {
     if(s->s_viewprop != NULL)
       prop_set_string(s->s_viewprop, "empty");
-    nav_dir_free(nd);
+    fa_dir_free(fd);
     fa_unreference(ref);
     return;
   }
 
-  nav_dir_sort(nd);
+  fa_dir_sort(fd);
 
   if(s->s_viewprop != NULL) {
     /* Select a view based on filenames */
     images = 0;
-    TAILQ_FOREACH(nde, &nd->nd_entries, nde_link) {
+    TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
       if(s->s_stop)
 	break;
 
-      if((str = strchr(nde->nde_filename, '.')) == NULL)
+      if((str = strchr(fde->fde_filename, '.')) == NULL)
 	continue;
       str++;
 
@@ -119,51 +119,51 @@ scannercore(scanner_t *s)
 	images++;
     }
 
-    if(images * 4 > nd->nd_count * 3)
+    if(images * 4 > fd->fd_count * 3)
       prop_set_string(s->s_viewprop, "images");
   }
 
   /* Add filename and type */
-  TAILQ_FOREACH(nde, &nd->nd_entries, nde_link) {
+  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
 
     if(s->s_stop)
       break;
 
     p = prop_create(NULL, "node");
-    prop_set_string(prop_create(p, "url"), nde->nde_url);
-    set_type(p, nde->nde_type);
+    prop_set_string(prop_create(p, "url"), fde->fde_url);
+    set_type(p, fde->fde_type);
 
     metadata = prop_create(p, "metadata");
-    prop_set_string(prop_create(metadata, "title"), nde->nde_filename);
+    prop_set_string(prop_create(metadata, "title"), fde->fde_filename);
 
     if(prop_set_parent(p, s->s_nodes))
       prop_destroy(p);
     else
-      nde->nde_opaque = p;
+      fde->fde_opaque = p;
   }
 
   images = 0;
   album_name[0] = 0;
   artist_name[0] = 0;
   /* Do full probe */
-  TAILQ_FOREACH(nde, &nd->nd_entries, nde_link) {
+  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
 
     if(s->s_stop)
       break;
 
-    if((p = nde->nde_opaque) == NULL)
+    if((p = fde->fde_opaque) == NULL)
       continue;
 
     metadata = prop_create(p, "metadata");
 
-    if(nde->nde_type == CONTENT_DIR) {
-      r = fa_probe_dir(metadata, nde->nde_url);
+    if(fde->fde_type == CONTENT_DIR) {
+      r = fa_probe_dir(metadata, fde->fde_url);
     } else {
-      r = fa_probe(metadata, nde->nde_url, NULL, 0, NULL, 0);
+      r = fa_probe(metadata, fde->fde_url, NULL, 0, NULL, 0);
     }
 
     set_type(p, r);
-    nde->nde_type = r;
+    fde->fde_type = r;
 
     switch(r) {
     case CONTENT_AUDIO:
@@ -198,7 +198,7 @@ scannercore(scanner_t *s)
     case CONTENT_UNKNOWN:
       destroyed++;
       prop_destroy(p);
-      nde->nde_opaque = NULL;
+      fde->fde_opaque = NULL;
       break;
 
     case CONTENT_IMAGE:
@@ -228,13 +228,13 @@ scannercore(scanner_t *s)
       trackidx = 1;
 
       /* Remove everything that is not audio */
-      TAILQ_FOREACH(nde, &nd->nd_entries, nde_link) {
+      TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
 	if(s->s_stop)
 	  break;
-	if((p = nde->nde_opaque) == NULL)
+	if((p = fde->fde_opaque) == NULL)
 	  continue;
 	
-	if(nde->nde_type != CONTENT_AUDIO) {
+	if(fde->fde_type != CONTENT_AUDIO) {
 	  prop_destroy(p);
 	} else {
 	  prop_set_int(prop_create(prop_create(p, "metadata"),
@@ -243,14 +243,14 @@ scannercore(scanner_t *s)
 	}
       }
       
-    } else if(nd->nd_count == destroyed) {
+    } else if(fd->fd_count == destroyed) {
       prop_set_string(s->s_viewprop, "empty");
-    } else if(images * 4 > nd->nd_count * 3) {
+    } else if(images * 4 > fd->fd_count * 3) {
       prop_set_string(s->s_viewprop, "images");
     }
   }
 
-  nav_dir_free(nd);
+  fa_dir_free(fd);
   fa_unreference(ref);
 }
 

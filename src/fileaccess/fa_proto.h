@@ -35,7 +35,7 @@ typedef struct fa_protocol {
 
   const char *fap_name;
 
-  int (*fap_scan)(nav_dir_t *nd, const char *url,
+  int (*fap_scan)(fa_dir_t *fa, const char *url,
 		  char *errbuf, size_t errsize);
 
   fa_handle_t *(*fap_open)(struct fa_protocol *fap, const char *url,

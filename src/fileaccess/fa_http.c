@@ -630,7 +630,7 @@ http_strip_last(char *s, char c)
 }
 
 static int
-http_index_parse(http_file_t *hf, nav_dir_t *nd, char *buf)
+http_index_parse(http_file_t *hf, fa_dir_t *fd, char *buf)
 {
   char *p, *n;
   char *url = malloc(HTTP_MAX_PATH_LEN);
@@ -676,9 +676,9 @@ http_index_parse(http_file_t *hf, nav_dir_t *nd, char *buf)
       
       http_deescape(url);
 
-      nav_dir_add(nd, url, name,
-                  isdir ? CONTENT_DIR : CONTENT_FILE,
-                  NULL);
+      fa_dir_add(fd, url, name,
+		 isdir ? CONTENT_DIR : CONTENT_FILE,
+		 NULL);
     }
     
     free(hrefd);
@@ -694,7 +694,7 @@ http_index_parse(http_file_t *hf, nav_dir_t *nd, char *buf)
  *
  */
 static int
-http_index_fetch(http_file_t *hf, nav_dir_t *nd, char *errbuf, size_t errlen)
+http_index_fetch(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen)
 {
   int code, retval;
   htsbuf_queue_t q;
@@ -750,7 +750,7 @@ again:
         return -1;
       }
       
-      retval = http_index_parse(hf, nd, buf);
+      retval = http_index_parse(hf, fd, buf);
       free(buf);
       return retval;
       
@@ -778,7 +778,7 @@ again:
  *
  */
 static int
-http_scandir(nav_dir_t *nd, const char *url, char *errbuf, size_t errlen)
+http_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 {
   int retval;
   http_file_t *hf = calloc(1, sizeof(http_file_t));
@@ -786,7 +786,7 @@ http_scandir(nav_dir_t *nd, const char *url, char *errbuf, size_t errlen)
   htsbuf_queue_init(&hf->hf_spill, 0);
   hf->hf_url = strdup(url);
   
-  retval = http_index_fetch(hf, nd, errbuf, errlen);
+  retval = http_index_fetch(hf, fd, errbuf, errlen);
   http_destroy(hf);
   return retval;
 }
@@ -1028,7 +1028,7 @@ get_cdata_by_tag(htsmsg_t *tags, const char *name)
  */
 
 static int
-parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd,
+parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
 	       char *errbuf, size_t errlen)
 {
   htsmsg_t *m, *c, *c2;
@@ -1038,7 +1038,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd,
   char *path  = malloc(HTTP_MAX_PATH_LEN);
   char *fname = malloc(HTTP_MAX_PATH_LEN);
 
-  if(nd == NULL) {
+  if(fd == NULL) {
     // Single entry stat(2) (ie. not a directory scan)
     // We need to compare paths and to do so, we must deescape the
     // possible URL encoding. Do the searched-for path once
@@ -1077,7 +1077,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd,
     isdir = !!htsmsg_get_map_multi(c, "DAV:resourcetype", "tags",
 				   "DAV:collection", NULL);
 
-    if(nd != NULL) {
+    if(fd != NULL) {
 
       if(strcmp(hf->hf_path, href)) {
 
@@ -1106,8 +1106,8 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd,
 	  http_deescape(fname);
 	  http_deescape(path);
 
-	  nav_dir_add(nd, path, fname, isdir ? CONTENT_DIR : CONTENT_FILE,
-		      NULL);
+	  fa_dir_add(fd, path, fname, isdir ? CONTENT_DIR : CONTENT_FILE,
+		     NULL);
 	}
       }
     } else {
@@ -1132,7 +1132,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd,
     }
   }
 
-  if(nd == NULL) {
+  if(fd == NULL) {
     /* We should have returned earlier, server did not include the file 
        we asked for in its reply. The server is probably broken. 
        (It should respond with a 404 or something) */
@@ -1151,7 +1151,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, nav_dir_t *nd,
  * Execute a webdav PROPFIND
  */
 static int
-dav_propfind(http_file_t *hf, nav_dir_t *nd, char *errbuf, size_t errlen)
+dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen)
 {
   int code, retval;
   htsbuf_queue_t q;
@@ -1193,7 +1193,7 @@ dav_propfind(http_file_t *hf, nav_dir_t *nd, char *errbuf, size_t errlen)
 		 "%s%s"
 		 "\r\n",
 		 hf->hf_path,
-		 nd != NULL ? 1 : 0,
+		 fd != NULL ? 1 : 0,
 		 htsversion,
 		 hf->hf_hostname,
 		 hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
@@ -1217,7 +1217,7 @@ dav_propfind(http_file_t *hf, nav_dir_t *nd, char *errbuf, size_t errlen)
 	       "WEBDAV/PROPFIND: XML parsing failed:\n%s", err0);
       return -1;
     }
-    retval = parse_propfind(hf, xml, nd, errbuf, errlen);
+    retval = parse_propfind(hf, xml, fd, errbuf, errlen);
     htsmsg_destroy(xml);
     return retval;
 
@@ -1273,7 +1273,7 @@ dav_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
  *
  */
 static int
-dav_scandir(nav_dir_t *nd, const char *url, char *errbuf, size_t errlen)
+dav_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 {
   int retval;
   http_file_t *hf = calloc(1, sizeof(http_file_t));
@@ -1281,7 +1281,7 @@ dav_scandir(nav_dir_t *nd, const char *url, char *errbuf, size_t errlen)
   htsbuf_queue_init(&hf->hf_spill, 0);
   hf->hf_url = strdup(url);
   
-  retval = dav_propfind(hf, nd, errbuf, errlen);
+  retval = dav_propfind(hf, fd, errbuf, errlen);
   http_destroy(hf);
   return retval;
 }

@@ -25,41 +25,6 @@
 /**
  *
  */
-TAILQ_HEAD(nav_dir_entry_queue, nav_dir_entry);
-
-/**
- *
- */
-typedef struct nav_dir_entry {
-  TAILQ_ENTRY(nav_dir_entry) nde_link;
-  char *nde_filename;
-  char *nde_url;
-  int   nde_type; /* CONTENT_ .. types from showtime.h */
-  void *nde_opaque;
-  prop_t *nde_metadata;
-} nav_dir_entry_t;
-
-/**
- *
- */
-typedef struct nav_dir {
-  struct nav_dir_entry_queue nd_entries;
-  int nd_count;
-} nav_dir_t;
-
-nav_dir_t *nav_dir_alloc(void);
-
-void nav_dir_free(nav_dir_t *nd);
-
-void nav_dir_add(nav_dir_t *nd, const char *path, const char *name, int type,
-		 prop_t *metadata);
-
-void nav_dir_sort(nav_dir_t *nd);
-
-
-/**
- *
- */
 TAILQ_HEAD(nav_page_queue, nav_page);
 LIST_HEAD(nav_backend_list, nav_backend);
 

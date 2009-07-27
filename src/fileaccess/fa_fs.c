@@ -50,7 +50,7 @@ fs_urlsnprintf(char *buf, size_t bufsize, const char *prefix, const char *base,
 
 
 static int
-fs_scandir(nav_dir_t *nd, const char *url, char *errbuf, size_t errlen)
+fs_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 {
   char buf[256];
   struct stat st;
@@ -82,7 +82,7 @@ fs_scandir(nav_dir_t *nd, const char *url, char *errbuf, size_t errlen)
     
     fs_urlsnprintf(buf, sizeof(buf), "file://", url, d->d_name);
 
-    nav_dir_add(nd, buf, d->d_name, type, NULL);
+    fa_dir_add(fd, buf, d->d_name, type, NULL);
   }
   closedir(dir);
   return 0;

@@ -218,11 +218,11 @@ fa_stat(const char *url, struct stat *buf, char *errbuf, size_t errsize)
 /**
  *
  */
-nav_dir_t *
+fa_dir_t *
 fa_scandir(const char *url, char *errbuf, size_t errsize)
 {
   fa_protocol_t *fap;
-  nav_dir_t *fd;
+  fa_dir_t *fd;
   char *filename;
 
   if((filename = fa_resolve_proto(url, &fap, NULL, NULL,
@@ -230,9 +230,9 @@ fa_scandir(const char *url, char *errbuf, size_t errsize)
     return NULL;
 
   if(fap->fap_scan != NULL) {
-    fd = nav_dir_alloc();
+    fd = fa_dir_alloc();
     if(fap->fap_scan(fd, filename, errbuf, errsize)) {
-      nav_dir_free(fd);
+      fa_dir_free(fd);
       fd = NULL;
     }
   } else {
@@ -251,22 +251,22 @@ int
 fa_findfile(const char *path, const char *file, 
 	    char *fullpath, size_t fullpathlen)
 {
-  nav_dir_t *nd = fa_scandir(path, NULL, 0);
-  nav_dir_entry_t *nde;
+  fa_dir_t *fd = fa_scandir(path, NULL, 0);
+  fa_dir_entry_t *fde;
 
-  if(nd == NULL)
+  if(fd == NULL)
     return -2;
 
-  TAILQ_FOREACH(nde, &nd->nd_entries, nde_link)
-    if(!strcasecmp(nde->nde_filename, file)) {
+  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link)
+    if(!strcasecmp(fde->fde_filename, file)) {
       snprintf(fullpath, fullpathlen, "%s%s%s", path, 
 	       path[strlen(path)-1] == '/' ? "" : "/",
-	       nde->nde_filename);
-      nav_dir_free(nd);
+	       fde->fde_filename);
+      fa_dir_free(fd);
       return 0;
     }
 
-  nav_dir_free(nd);
+  fa_dir_free(fd);
   return -1;
 }
 
@@ -303,6 +303,102 @@ fa_unreference(void *fh_)
 
   fh->fh_proto->fap_unreference(fh);
 }
+
+
+
+/**
+ *
+ */
+fa_dir_t *
+fa_dir_alloc(void)
+{
+  fa_dir_t *fd = malloc(sizeof(fa_dir_t));
+  TAILQ_INIT(&fd->fd_entries);
+  fd->fd_count = 0;
+  return fd;
+}
+
+/**
+ *
+ */
+void
+fa_dir_free(fa_dir_t *fd)
+{
+  fa_dir_entry_t *fde;
+
+  while((fde = TAILQ_FIRST(&fd->fd_entries)) != NULL) {
+    TAILQ_REMOVE(&fd->fd_entries, fde, fde_link);
+    if(fde->fde_metadata)
+      prop_destroy(fde->fde_metadata);
+
+    free(fde->fde_filename);
+    free(fde->fde_url);
+    free(fde);
+  }
+  free(fd);
+}
+
+/**
+ *
+ */
+void
+fa_dir_add(fa_dir_t *fd, const char *url, const char *filename, int type,
+	    prop_t *metadata)
+{
+  fa_dir_entry_t *fde;
+
+  if(filename[0] == '.')
+    return; /* Skip all dot-filenames */
+
+  fde = malloc(sizeof(fa_dir_entry_t));
+
+  fde->fde_url      = strdup(url);
+  fde->fde_filename = strdup(filename);
+  fde->fde_type     = type;
+  fde->fde_metadata = metadata;
+  fde->fde_opaque   = NULL;
+  TAILQ_INSERT_TAIL(&fd->fd_entries, fde, fde_link);
+  fd->fd_count++;
+}
+
+
+
+static int 
+fa_dir_sort_compar(const void *A, const void *B)
+{
+  const fa_dir_entry_t *a = *(fa_dir_entry_t * const *)A;
+  const fa_dir_entry_t *b = *(fa_dir_entry_t * const *)B;
+
+  return strcasecmp(a->fde_filename, b->fde_filename);
+}
+
+/**
+ *
+ */
+void
+fa_dir_sort(fa_dir_t *fd)
+{
+  fa_dir_entry_t **v;
+  fa_dir_entry_t *fde;
+  int i = 0;
+
+  if(fd->fd_count == 0)
+    return;
+
+  v = malloc(fd->fd_count * sizeof(fa_dir_entry_t *));
+
+  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link)
+    v[i++] = fde;
+
+  qsort(v, fd->fd_count, sizeof(fa_dir_entry_t *), fa_dir_sort_compar);
+
+  TAILQ_INIT(&fd->fd_entries);
+  for(i = 0; i < fd->fd_count; i++)
+    TAILQ_INSERT_TAIL(&fd->fd_entries, v[i], fde_link);
+  
+  free(v);
+}
+
 
 
 /**

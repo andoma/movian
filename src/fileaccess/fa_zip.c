@@ -469,7 +469,7 @@ zip_file_unref(zip_file_t *zf)
  *
  */
 static int
-zip_scandir(nav_dir_t *nd, const char *url, char *errbuf, size_t errlen)
+zip_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 {
   zip_file_t *c, *zf;
   char buf[512];
@@ -486,7 +486,7 @@ zip_scandir(nav_dir_t *nd, const char *url, char *errbuf, size_t errlen)
 
   LIST_FOREACH(c, &zf->zf_files, zf_link) {
     snprintf(buf, sizeof(buf), "zip://%s/%s", url, c->zf_name);
-    nav_dir_add(nd, buf, c->zf_name, c->zf_type, NULL);
+    fa_dir_add(fd, buf, c->zf_name, c->zf_type, NULL);
   }
 
   zip_file_unref(zf);
