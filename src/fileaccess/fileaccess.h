@@ -43,7 +43,7 @@ typedef struct fa_dir_entry {
   char *fde_filename;
   char *fde_url;
   int   fde_type; /* CONTENT_ .. types from showtime.h */
-  void *fde_opaque;
+  void *fde_prop;
 } fa_dir_entry_t;
 
 /**
@@ -60,8 +60,12 @@ void fa_dir_free(fa_dir_t *nd);
 
 void fa_dir_add(fa_dir_t *nd, const char *path, const char *name, int type);
 
+void fa_dir_entry_free(fa_dir_t *fd, fa_dir_entry_t *fde);
+
 void fa_dir_sort(fa_dir_t *nd);
 
+fa_dir_entry_t *fa_dir_insert(fa_dir_t *fd, const char *url,
+			      const char *filename, int type);
 
 
 /**
@@ -79,6 +83,14 @@ typedef struct fa_handle {
 } fa_handle_t;
 
 
+/**
+ *
+ */
+typedef enum {
+  FA_NOTIFY_ADD,
+  FA_NOTIFY_DEL,
+} fa_notify_op_t;
+
 
 fa_dir_t *fa_scandir(const char *url, char *errbuf, size_t errsize);
 void *fa_open(const char *url, char *errbuf, size_t errsize);
@@ -95,6 +107,14 @@ int fa_can_handle(const char *url, char *errbuf, size_t errsize);
 
 void *fa_reference(const char *url);
 void fa_unreference(void *fh);
+
+int fa_notify(const char *url, void *opaque,
+	      void (*change)(void *opaque,
+			     fa_notify_op_t op, 
+			     const char *filename,
+			     const char *url,
+			     int type),
+	      int (*breakcheck)(void *opaque));
 
 const char *fa_ffmpeg_error_to_txt(int err);
 

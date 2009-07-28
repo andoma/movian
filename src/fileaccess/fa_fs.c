@@ -172,6 +172,133 @@ fs_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
 }
 
 
+/**
+ * FS change notification 
+ */
+#ifdef linux
+#include <sys/inotify.h>
+#include <poll.h>
+
+typedef struct notify_created_file {
+  char *name;
+  LIST_ENTRY(notify_created_file) link;
+
+} notify_created_file_t;
+
+
+
+static void
+fs_notify(struct fa_protocol *fap, const char *url,
+	  void *opaque,
+	  void (*change)(void *opaque,
+			 fa_notify_op_t op, 
+			 const char *filename,
+			 const char *url,
+			 int type),
+	  int (*breakcheck)(void *opaque))
+{
+  int fd, n;
+  char buf[1024];
+  char buf2[256];
+  struct pollfd fds;
+  struct inotify_event *e;
+  LIST_HEAD(, notify_created_file) pending_create;
+  notify_created_file_t *ncf;
+
+  if((fd = inotify_init()) == -1)
+    return;
+
+  fds.fd = fd;
+  fds.events = POLLIN;
+
+  if(inotify_add_watch(fd, url, IN_ONLYDIR | IN_CREATE | IN_CLOSE_WRITE | 
+		       IN_DELETE | IN_MOVED_FROM | IN_MOVED_TO) == -1) {
+    TRACE(TRACE_DEBUG, "FS", "Unable to watch %s -- %s",
+	  url, strerror(errno));
+    return;
+  }
+
+  LIST_INIT(&pending_create);
+  
+  while(1) {
+    n = poll(&fds, 1, 5000); // We'd like to call breakcheck() every 5 secs
+    
+    if(n < 0)
+      break;
+
+    if(breakcheck(opaque))
+      break;
+
+    if(n != 1)
+      continue;
+      
+    n = read(fd, buf, sizeof(buf));
+    e = (struct inotify_event *)&buf[0];
+
+    if(e->len == 0)
+      continue;
+
+    fs_urlsnprintf(buf2, sizeof(buf2), "file://", url, e->name);
+
+    if(e->mask & IN_CREATE) {
+      if(e->mask & IN_ISDIR) {
+	TRACE(TRACE_DEBUG, "FS", "Directory %s created in %s", e->name, url);
+	change(opaque, FA_NOTIFY_ADD, e->name, buf2, CONTENT_DIR);
+      } else {
+	ncf = malloc(sizeof(notify_created_file_t));
+	ncf->name = strdup(e->name);
+	LIST_INSERT_HEAD(&pending_create, ncf, link);
+	TRACE(TRACE_DEBUG, "FS", "File %s created in %s", e->name, url);
+      }
+    }
+
+    if(e->mask & IN_CLOSE_WRITE) {
+
+      LIST_FOREACH(ncf, &pending_create, link) 
+	if(!strcmp(ncf->name, e->name))
+	  break;
+
+      if(ncf != NULL) {
+	TRACE(TRACE_DEBUG, "FS", "File %s created and closed", e->name);
+	change(opaque, FA_NOTIFY_ADD, e->name, buf2, 
+	       e->mask & IN_ISDIR ? CONTENT_DIR : CONTENT_FILE);
+	LIST_REMOVE(ncf, link);
+	free(ncf->name);
+	free(ncf);
+      }
+    }
+
+    if(e->mask & IN_DELETE) {
+      TRACE(TRACE_DEBUG, "FS", "File %s deleted", e->name);
+      change(opaque, FA_NOTIFY_DEL, e->name, buf2, 
+	     e->mask & IN_ISDIR ? CONTENT_DIR : CONTENT_FILE);
+    }
+
+    if(e->mask & IN_MOVED_FROM) {
+      TRACE(TRACE_DEBUG, "FS", "File %s moved away from %s", e->name, url);
+      change(opaque, FA_NOTIFY_DEL, e->name, buf2, 
+	     e->mask & IN_ISDIR ? CONTENT_DIR : CONTENT_FILE);
+    }
+
+    if(e->mask & IN_MOVED_TO) {
+      TRACE(TRACE_DEBUG, "FS", "File %s moved in to %s", e->name, url);
+      change(opaque, FA_NOTIFY_ADD, e->name, buf2, 
+	     e->mask & IN_ISDIR ? CONTENT_DIR : CONTENT_FILE);
+    }
+  }
+
+  while((ncf = LIST_FIRST(&pending_create)) != NULL) {
+    LIST_REMOVE(ncf, link);
+    free(ncf->name);
+    free(ncf);
+  }
+
+  close(fd);
+}
+
+#endif
+
+
 fa_protocol_t fa_protocol_fs = {
   .fap_name = "file",
   .fap_scan = fs_scandir,
@@ -181,4 +308,7 @@ fa_protocol_t fa_protocol_fs = {
   .fap_seek  = fs_seek,
   .fap_fsize = fs_fsize,
   .fap_stat  = fs_stat,
+#ifdef linux
+  .fap_notify = fs_notify,
+#endif
 };

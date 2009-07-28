@@ -21,6 +21,8 @@
 
 #include "fileaccess.h"
 
+
+
 /**
  * File access protocol
  */
@@ -50,6 +52,15 @@ typedef struct fa_protocol {
 
   fa_handle_t *(*fap_reference)(struct fa_protocol *fap, const char *url);
   void (*fap_unreference)(fa_handle_t *fh);
+
+  void (*fap_notify)(struct fa_protocol *fap, const char *url,
+		     void *opaque,
+		     void (*change)(void *opaque,
+				    fa_notify_op_t op, 
+				    const char *filename,
+				    const char *url,
+				    int type),
+		     int (*breakcheck)(void *opaque));
 
 } fa_protocol_t;
 

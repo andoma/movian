@@ -305,6 +305,36 @@ fa_unreference(void *fh_)
 }
 
 
+/**
+ *
+ */
+int
+fa_notify(const char *url, void *opaque,
+	  void (*change)(void *opaque,
+			 fa_notify_op_t op, 
+			 const char *filename,
+			 const char *url,
+			 int type),
+	  int (*breakcheck)(void *opaque))
+{
+  fa_protocol_t *fap;
+  char *filename;
+
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL,
+				  NULL, 0)) == NULL)
+    return -1;
+
+  if(fap->fap_notify == NULL) {
+    free(filename);
+    return -1;
+  }
+
+  fap->fap_notify(fap, filename, opaque, change, breakcheck);
+  free(filename);
+  return 0;
+}
+
+
 
 /**
  *
@@ -318,6 +348,24 @@ fa_dir_alloc(void)
   return fd;
 }
 
+
+/**
+ *
+ */
+void
+fa_dir_entry_free(fa_dir_t *fd, fa_dir_entry_t *fde)
+{
+  if(fde->fde_prop != NULL)
+    prop_ref_dec(fde->fde_prop);
+
+  fd->fd_count--;
+  TAILQ_REMOVE(&fd->fd_entries, fde, fde_link);
+  free(fde->fde_filename);
+  free(fde->fde_url);
+  free(fde);
+}
+
+
 /**
  *
  */
@@ -326,12 +374,8 @@ fa_dir_free(fa_dir_t *fd)
 {
   fa_dir_entry_t *fde;
 
-  while((fde = TAILQ_FIRST(&fd->fd_entries)) != NULL) {
-    TAILQ_REMOVE(&fd->fd_entries, fde, fde_link);
-    free(fde->fde_filename);
-    free(fde->fde_url);
-    free(fde);
-  }
+  while((fde = TAILQ_FIRST(&fd->fd_entries)) != NULL)
+    fa_dir_entry_free(fd, fde);
   free(fd);
 }
 
@@ -351,13 +395,46 @@ fa_dir_add(fa_dir_t *fd, const char *url, const char *filename, int type)
   fde->fde_url      = strdup(url);
   fde->fde_filename = strdup(filename);
   fde->fde_type     = type;
-  fde->fde_opaque   = NULL;
+  fde->fde_prop     = NULL;
   TAILQ_INSERT_TAIL(&fd->fd_entries, fde, fde_link);
   fd->fd_count++;
 }
 
 
+/**
+ *
+ */
+static int 
+fa_dir_insert_compar(fa_dir_entry_t *a, fa_dir_entry_t *b)
+{
+  return strcasecmp(a->fde_filename, b->fde_filename);
+}
 
+
+/**
+ *
+ */
+fa_dir_entry_t *
+fa_dir_insert(fa_dir_t *fd, const char *url, const char *filename, int type)
+{
+  fa_dir_entry_t *fde;
+
+  fde = malloc(sizeof(fa_dir_entry_t));
+
+  fde->fde_url      = strdup(url);
+  fde->fde_filename = strdup(filename);
+  fde->fde_type     = type;
+  fde->fde_prop     = NULL;
+  TAILQ_INSERT_SORTED(&fd->fd_entries, fde, fde_link, fa_dir_insert_compar);
+  fd->fd_count++;
+  return fde;
+
+}
+
+
+/**
+ *
+ */
 static int 
 fa_dir_sort_compar(const void *A, const void *B)
 {
@@ -366,6 +443,7 @@ fa_dir_sort_compar(const void *A, const void *B)
 
   return strcasecmp(a->fde_filename, b->fde_filename);
 }
+
 
 /**
  *
