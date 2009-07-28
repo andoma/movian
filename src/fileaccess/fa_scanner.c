@@ -270,9 +270,12 @@ meta_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
     /* Remove everything that is not audio */
     TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
       if(fde->fde_type != CONTENT_AUDIO) {
-	prop_destroy(fde->fde_prop);
-	prop_ref_dec(fde->fde_prop);
-	fde->fde_prop = NULL;
+	if(fde->fde_prop != NULL) {
+	  prop_destroy(fde->fde_prop);
+	  prop_ref_dec(fde->fde_prop);
+	  fde->fde_prop = NULL;
+	}
+
       } else {
 	metadata = prop_create(fde->fde_prop, "metadata");
 	prop_set_int(prop_create(metadata, "trackindex"), trackidx);
