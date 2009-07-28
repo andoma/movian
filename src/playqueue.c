@@ -30,6 +30,12 @@
 #include "media.h"
 #include "notifications.h"
 
+static int shuffle_lfg;
+
+static int playqueue_shuffle_mode = 0;
+
+static int playqueue_repeat_mode = 0;
+
 static int playqueue_event_handler(event_t *e, void *opaque);
 
 #define PLAYQUEUE_URL "playqueue:"
@@ -40,6 +46,7 @@ static void *player_thread(void *aux);
 
 static media_pipe_t *playqueue_mp;
 
+
 /**
  *
  */
@@ -49,6 +56,8 @@ static hts_mutex_t playqueue_mutex;
 TAILQ_HEAD(playqueue_entry_queue, playqueue_entry);
 
 static struct playqueue_entry_queue playqueue_entries;
+static struct playqueue_entry_queue playqueue_shuffled_entries;
+static int playqueue_length;
 
 typedef struct playqueue_entry {
 
@@ -71,7 +80,8 @@ typedef struct playqueue_entry {
   /**
    * Global link. Protected by playqueue_mutex
    */
-  TAILQ_ENTRY(playqueue_entry) pqe_link;
+  TAILQ_ENTRY(playqueue_entry) pqe_linear_link;
+  TAILQ_ENTRY(playqueue_entry) pqe_shuffled_link;
 
   /**
    * Set if globally linked. Protected by playqueue_mutex
@@ -98,7 +108,6 @@ typedef struct playqueue_entry {
 } playqueue_entry_t;
 
 playqueue_entry_t *pqe_current;
-
 
 /**
  *
@@ -221,7 +230,10 @@ pqe_remove_from_sourcequeue(playqueue_entry_t *pqe)
 static void
 pqe_remove_from_globalqueue(playqueue_entry_t *pqe)
 {
-  TAILQ_REMOVE(&playqueue_entries, pqe, pqe_link);
+  prop_unparent(pqe->pqe_node);
+  playqueue_length--;
+  TAILQ_REMOVE(&playqueue_entries, pqe, pqe_linear_link);
+  TAILQ_REMOVE(&playqueue_shuffled_entries, pqe, pqe_shuffled_link);
   pqe->pqe_linked = 0;
   pqe_unref(pqe);
 }
@@ -268,6 +280,34 @@ playqueue_clear(void)
  *
  */
 static void
+pqe_insert_shuffled(playqueue_entry_t *pqe)
+{
+  int v;
+  playqueue_entry_t *n;
+
+  shuffle_lfg = shuffle_lfg * 1664525 + 1013904223;
+
+  playqueue_length++;
+  v = (unsigned int)shuffle_lfg % playqueue_length;
+
+  n = TAILQ_FIRST(&playqueue_shuffled_entries);
+
+  for(; n != NULL && v >= 0; v--) {
+    n = TAILQ_NEXT(n, pqe_shuffled_link);
+  }
+
+  if(n != NULL) {
+    TAILQ_INSERT_BEFORE(n, pqe, pqe_shuffled_link);
+  } else {
+    TAILQ_INSERT_TAIL(&playqueue_shuffled_entries, pqe, pqe_shuffled_link);
+  }
+}
+
+
+/**
+ *
+ */
+static void
 pq_fill_from_source_backwards(playqueue_entry_t *pqe)
 {
   playqueue_entry_t *b = pqe;
@@ -281,8 +321,9 @@ pq_fill_from_source_backwards(playqueue_entry_t *pqe)
     pqe->pqe_linked = 1;
     pqe_ref(pqe);
 
-    TAILQ_INSERT_BEFORE(b, pqe, pqe_link);
-    
+    TAILQ_INSERT_BEFORE(b, pqe, pqe_linear_link);
+    pqe_insert_shuffled(pqe);
+
     if(prop_set_parent_ex(pqe->pqe_node, playqueue_root, b->pqe_node, NULL))
       abort();
     
@@ -306,7 +347,8 @@ pq_fill_from_source_forwards(playqueue_entry_t *pqe)
     pqe->pqe_linked = 1;
     pqe_ref(pqe);
 
-    TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_link);
+    TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_linear_link);
+    pqe_insert_shuffled(pqe);
 
     if(prop_set_parent_ex(pqe->pqe_node, playqueue_root, NULL, NULL))
       abort();
@@ -422,10 +464,11 @@ add_from_source(prop_t *p, playqueue_entry_t *before)
   pqe->pqe_linked = 1;
   if(before != NULL) {
     assert(before->pqe_linked == 1);
-    TAILQ_INSERT_BEFORE(before, pqe, pqe_link);
+    TAILQ_INSERT_BEFORE(before, pqe, pqe_linear_link);
   } else {
-    TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_link);
+    TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_linear_link);
   }
+  pqe_insert_shuffled(pqe);
 
   if(prop_set_parent_ex(pqe->pqe_node, playqueue_root, 
 			before ? before->pqe_node : NULL, NULL))
@@ -545,7 +588,7 @@ playqueue_load(const char *url, const char *parent, prop_t *metadata, int enq)
 
   hts_mutex_lock(&playqueue_mutex);
 
-  TAILQ_FOREACH(pqe, &playqueue_entries, pqe_link) {
+  TAILQ_FOREACH(pqe, &playqueue_entries, pqe_linear_link) {
     if(pqe->pqe_url != NULL && !strcmp(pqe->pqe_url, url) && 
        (parent == NULL || !strcmp(pqe->pqe_parent, parent))) {
       /* Already in, go to it */
@@ -581,14 +624,15 @@ playqueue_load(const char *url, const char *parent, prop_t *metadata, int enq)
 
     /* Skip past any previously enqueued entries */
     while(prev != NULL && prev->pqe_enq)
-      prev = TAILQ_NEXT(prev, pqe_link);
+      prev = TAILQ_NEXT(prev, pqe_linear_link);
 
     if(prev == NULL) {
-      TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_link);
+      TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_linear_link);
     } else {
-      TAILQ_INSERT_AFTER(&playqueue_entries, prev, pqe, pqe_link);
+      TAILQ_INSERT_AFTER(&playqueue_entries, prev, pqe, pqe_linear_link);
     }
-    
+    //pqe_insert_shuffled(pqe); // probably not???? 
+
     abort(); /* Not fully implemented */
 
   }
@@ -598,7 +642,8 @@ playqueue_load(const char *url, const char *parent, prop_t *metadata, int enq)
   playqueue_clear();
 
   /* Enqueue our new entry */
-  TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_link);
+  TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_linear_link);
+  pqe_insert_shuffled(pqe);
   if(prop_set_parent(pqe->pqe_node, playqueue_root))
     abort();
 
@@ -675,6 +720,25 @@ playqueue_play(const char *url, const char *parent, prop_t *meta,
 }
 
 
+/**
+ *
+ */
+static void
+playqueue_set_shuffle(void *opaque, int v)
+{
+  playqueue_shuffle_mode = v;
+}
+
+
+/**
+ *
+ */
+static void
+playqueue_set_repeat(void *opaque, int v)
+{
+  playqueue_repeat_mode = v;
+}
+
 
 /**
  *
@@ -682,6 +746,8 @@ playqueue_play(const char *url, const char *parent, prop_t *meta,
 static int
 playqueue_init(void)
 {
+  shuffle_lfg = time(NULL);
+
   hts_mutex_init(&playqueue_mutex);
 
   playqueue_mp = mp_create("playqueue", "tracks", 0);
@@ -691,6 +757,19 @@ playqueue_init(void)
   TAILQ_INIT(&playqueue_entries);
   TAILQ_INIT(&playqueue_requests);
   TAILQ_INIT(&playqueue_source_entries);
+  TAILQ_INIT(&playqueue_shuffled_entries);
+
+  prop_subscribe(0,
+		 PROP_TAG_NAME("self", "shuffle"),
+		 PROP_TAG_CALLBACK_INT, playqueue_set_shuffle, NULL,
+		 PROP_TAG_NAMED_ROOT, playqueue_mp->mp_prop_root, "self",
+		 NULL);
+
+  prop_subscribe(0,
+		 PROP_TAG_NAME("self", "repeat"),
+		 PROP_TAG_CALLBACK_INT, playqueue_set_repeat, NULL,
+		 PROP_TAG_NAMED_ROOT, playqueue_mp->mp_prop_root, "self",
+		 NULL);
 
   playqueue_root = prop_create(prop_get_global(), "playqueue");
 
@@ -765,10 +844,34 @@ playqueue_advance(playqueue_entry_t *pqe, int prev)
 
   if(pqe->pqe_linked) {
 
-    if(prev) {
-      r = TAILQ_PREV(pqe, playqueue_entry_queue, pqe_link);
+    if(playqueue_shuffle_mode) {
+      if(prev) {
+	r = TAILQ_PREV(pqe, playqueue_entry_queue, pqe_shuffled_link);
+
+	if(r == NULL)
+	  r = TAILQ_LAST(&playqueue_shuffled_entries, playqueue_entry_queue);
+
+      } else {
+	r = TAILQ_NEXT(pqe, pqe_shuffled_link);
+
+	if(playqueue_repeat_mode && r == NULL)
+	  r = TAILQ_FIRST(&playqueue_shuffled_entries);
+      }
+
     } else {
-      r = TAILQ_NEXT(pqe, pqe_link);
+
+      if(prev) {
+	r = TAILQ_PREV(pqe, playqueue_entry_queue, pqe_linear_link);
+
+	if(r == NULL)
+	  r = TAILQ_LAST(&playqueue_entries, playqueue_entry_queue);
+
+      } else {
+	r = TAILQ_NEXT(pqe, pqe_linear_link);
+
+	if(playqueue_repeat_mode && r == NULL)
+	  r = TAILQ_FIRST(&playqueue_entries);
+      }
     }
 
   } else {
