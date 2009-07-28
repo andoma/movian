@@ -16,9 +16,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <string.h>
 #include "navigator.h"
 #include "gu.h"
 #include "showtime.h"
+
+static char *up_url;
 
 /**
  *
@@ -74,6 +77,37 @@ gu_nav_url_set(GtkEntry *e, gpointer user_data)
 /**
  *
  */
+static void
+set_go_up(void *opaque, const char *str)
+{
+  GtkWidget *w = opaque;
+
+  free(up_url);
+
+  if(str == NULL) {
+    gtk_widget_set_sensitive(w, FALSE);
+    up_url = NULL;
+    return;
+  }
+
+  up_url = strdup(str);
+  gtk_widget_set_sensitive(w, TRUE);
+}
+
+/**
+ *
+ */
+static void
+up_clicked(GtkToolButton *toolbutton, gpointer user_data)
+{
+  if(up_url != NULL)
+    nav_open(up_url, NULL, NULL, NAV_OPEN_ASYNC);
+}
+
+
+/**
+ *
+ */
 void
 gu_toolbar_add(gtk_ui_t *gu, GtkWidget *parent)
 {
@@ -103,6 +137,16 @@ gu_toolbar_add(gtk_ui_t *gu, GtkWidget *parent)
   prop_subscribe(0,
 		 PROP_TAG_NAME("global", "nav", "canGoForward"),
 		 PROP_TAG_CALLBACK_INT, gu_subscription_set_sensitivity, ti,
+		 PROP_TAG_COURIER, gu->gu_pc,
+		 NULL);
+
+  /* Up button */
+  ti = gtk_tool_button_new_from_stock(GTK_STOCK_GO_UP);
+  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
+  g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(up_clicked), gu);
+  prop_subscribe(0,
+		 PROP_TAG_NAME("global", "nav", "currentpage", "parent"),
+		 PROP_TAG_CALLBACK_STRING, set_go_up, ti,
 		 PROP_TAG_COURIER, gu->gu_pc,
 		 NULL);
 
