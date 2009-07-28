@@ -554,7 +554,7 @@ playqueue_load_siblings(const char *url, playqueue_entry_t *justadded)
   playqueue_source_justadded = justadded;
 
   playqueue_source_sub = 
-    prop_subscribe(PROP_SUB_DEBUG,
+    prop_subscribe(0,
 		   PROP_TAG_NAME("self", "nodes"),
 		   PROP_TAG_CALLBACK, siblings_populate, NULL,
 		   PROP_TAG_MUTEX, &playqueue_mutex,
