@@ -396,7 +396,7 @@ source_set_url(void *opaque, const char *str)
     TAILQ_INSERT_BEFORE(n, ja, pqe_source_link);
   }
 
-  pqe_ref(ja); // Needs to refs now (for both queues)
+  pqe_ref(ja); // Needs two refs now (for both queues)
 
   pqe_unref(pqe); // Should go away
 
@@ -607,7 +607,7 @@ playqueue_load(const char *url, const char *parent, prop_t *metadata, int enq)
 
   pqe = calloc(1, sizeof(playqueue_entry_t));
   pqe->pqe_url    = strdup(url);
-  pqe->pqe_parent = strdup(parent);
+  pqe->pqe_parent = parent ? strdup(parent) : NULL;
   pqe->pqe_node   = prop_create(NULL, NULL);
   pqe->pqe_enq    = enq;
   pqe->pqe_refcount = 1;
@@ -653,7 +653,8 @@ playqueue_load(const char *url, const char *parent, prop_t *metadata, int enq)
   event_unref(e);
 
   /* Scan dir (if provided) for additional tracks (siblings) */
-  playqueue_load_siblings(parent, pqe);
+  if(parent != NULL)
+    playqueue_load_siblings(parent, pqe);
 
   hts_mutex_unlock(&playqueue_mutex);
 }
@@ -698,20 +699,11 @@ playqueue_play(const char *url, const char *parent, prop_t *meta,
 	       int enq)
 {
   playqueue_request_t *pqr = malloc(sizeof(playqueue_request_t));
-  char *x;
 
-  pqr->pqr_url = strdup(url);
-
-  if(parent == NULL) {
-    pqr->pqr_parent = strdup(url);
-    if((x = strrchr(pqr->pqr_parent, '/')) != NULL)
-      *x = 0;
-    
-  } else {
-    pqr->pqr_parent = strdup(parent);
-  }
-  pqr->pqr_meta = meta;
-  pqr->pqr_enq = enq;
+  pqr->pqr_url    = strdup(url);
+  pqr->pqr_parent = parent ? strdup(parent) : NULL;
+  pqr->pqr_meta   = meta;
+  pqr->pqr_enq    = enq;
 
   hts_mutex_lock(&playqueue_request_mutex);
   TAILQ_INSERT_TAIL(&playqueue_requests, pqr, pqr_link);

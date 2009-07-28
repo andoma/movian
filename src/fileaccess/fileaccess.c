@@ -396,6 +396,7 @@ fa_dir_add(fa_dir_t *fd, const char *url, const char *filename, int type)
   fde->fde_filename = strdup(filename);
   fde->fde_type     = type;
   fde->fde_prop     = NULL;
+  fde->fde_size     = 0;
   TAILQ_INSERT_TAIL(&fd->fd_entries, fde, fde_link);
   fd->fd_count++;
 }

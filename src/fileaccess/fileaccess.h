@@ -44,6 +44,8 @@ typedef struct fa_dir_entry {
   char *fde_url;
   int   fde_type; /* CONTENT_ .. types from showtime.h */
   void *fde_prop;
+  int64_t fde_size;
+
 } fa_dir_entry_t;
 
 /**
@@ -121,5 +123,7 @@ const char *fa_ffmpeg_error_to_txt(int err);
 #define FA_SCANNER_DETERMINE_VIEW 0x1
 
 void fa_scanner(const char *url, prop_t *root, int flags);
+
+void fa_scanner_find_albumart(const char *url, prop_t *album_art);
 
 #endif /* FILEACCESS_H */

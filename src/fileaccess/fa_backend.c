@@ -114,28 +114,47 @@ file_open_dir(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
  *
  */
 static int
-file_open_file(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
+file_open_file(const char *url, nav_page_t **npp, char *errbuf, size_t errlen)
 {
   char redir[512];
   int r;
-  prop_t *media;
+  char *parent, *x;
+  prop_t *meta, *album_art;
 
-  media = prop_create(NULL, "metadata");
+  meta = prop_create(NULL, "metadata");
 
-  r = fa_probe(media, url0, redir, sizeof(redir), errbuf, errlen);
+  r = fa_probe(meta, url, redir, sizeof(redir), errbuf, errlen);
   
   switch(r) {
   case CONTENT_ARCHIVE:
-    prop_destroy(media);
+    prop_destroy(meta);
     return file_open_dir(redir, npp, errbuf, errlen);
   case CONTENT_AUDIO:
-    playqueue_play(url0, NULL, media, 0);
+ 
+    parent = strdup(url);
+    if((x = strrchr(parent, '/')) != NULL)
+      *x = 0;
+    else {
+      free(parent);
+      parent = NULL;
+      
+    }
+    
+    if(parent != NULL) {
+      album_art = prop_create(meta, "album_art");
+      prop_ref_inc(album_art);
+      fa_scanner_find_albumart(parent, album_art);
+    }
+
+    playqueue_play(url, parent, meta, 0);
+    free(parent);
     *npp = NULL;
     return 0;
+
   case CONTENT_VIDEO:
   case CONTENT_DVD:
-    prop_destroy(media);
-    file_open_video(url0, npp);
+    prop_destroy(meta);
+    file_open_video(url, npp);
     return 0;
 
   default:
