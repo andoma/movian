@@ -46,7 +46,7 @@ fwd_clicked(GtkToolButton *toolbutton, gpointer user_data)
 static void
 home_clicked(GtkToolButton *toolbutton, gpointer user_data)
 {
-  nav_open("page://mainmenu", NULL, NULL, NAV_OPEN_ASYNC);
+  nav_open("page://home", NULL, NULL, NAV_OPEN_ASYNC);
 }
 
 

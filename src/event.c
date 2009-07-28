@@ -306,7 +306,7 @@ static struct strtab actionnames[] = {
   { "SeekForward",           ACTION_SEEK_FORWARD },
   { "SeekReverse",           ACTION_SEEK_BACKWARD },
   { "Quit",                  ACTION_QUIT },
-  { "MainMenu",              ACTION_MAINMENU },
+  { "Home",                  ACTION_HOME },
   { "ChangeView",            ACTION_SWITCH_VIEW },
   { "Channel+",              ACTION_CHANNEL_PLUS },
   { "Channel-",              ACTION_CHANNEL_MINUS },

@@ -349,7 +349,7 @@ nav_input_event(event_t *e, void *opaque)
 {
   if(event_is_type(e, EVENT_OPENURL) ||
      event_is_action(e, ACTION_BACKSPACE) ||
-     event_is_action(e, ACTION_MAINMENU)) {
+     event_is_action(e, ACTION_HOME)) {
     event_enqueue(&nav_eq, e);
     return 1;
   }
@@ -372,8 +372,8 @@ navigator_thread(void *aux)
     if(event_is_action(e, ACTION_BACKSPACE)) {
       nav_back(0);
       
-    } else if(event_is_action(e, ACTION_MAINMENU)) {
-      nav_open0("page://mainmenu", NULL, NULL);
+    } else if(event_is_action(e, ACTION_HOME)) {
+      nav_open0("page://home", NULL, NULL);
 
     } else if(event_is_type(e, EVENT_OPENURL)) {
       ou = (event_openurl_t *)e;
