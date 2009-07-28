@@ -1031,24 +1031,20 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
   htsmsg_t *m, *c, *c2;
   htsmsg_field_t *f;
   const char *href, *d, *q;
-  int isdir, i;
+  int isdir, i, r;
   char *path  = malloc(HTTP_MAX_PATH_LEN);
   char *fname = malloc(HTTP_MAX_PATH_LEN);
+  char *ehref = malloc(HTTP_MAX_PATH_LEN); // Escaped href
 
-  if(fd == NULL) {
-    // Single entry stat(2) (ie. not a directory scan)
-    // We need to compare paths and to do so, we must deescape the
-    // possible URL encoding. Do the searched-for path once
-    snprintf(path, HTTP_MAX_PATH_LEN, "%s", hf->hf_path);
-    http_deescape(path);
-  }
+  // We need to compare paths and to do so, we must deescape the
+  // possible URL encoding. Do the searched-for path once
+  snprintf(path, HTTP_MAX_PATH_LEN, "%s", hf->hf_path);
+  http_deescape(path);
 
   if((m = htsmsg_get_map_multi(xml, "tags", 
 			       "DAV:multistatus", "tags", NULL)) == NULL) {
     snprintf(errbuf, errlen, "WEBDAV: DAV:multistatus not found in XML");
-    free(path);
-    free(fname);
-    return -1;
+    goto err;
   }
 
   HTSMSG_FOREACH(f, m) {
@@ -1066,6 +1062,10 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
     /* Some DAV servers seams to send an empty href tag for root path "/" */
     if((href = htsmsg_get_str(c2, "cdata")) == NULL)
       href = "/";
+    else {
+      snprintf(ehref, HTTP_MAX_PATH_LEN, "%s", href);
+      http_deescape(ehref);
+    }
 
     if((c = htsmsg_get_map_multi(c, "DAV:propstat", "tags",
 				 "DAV:prop", "tags", NULL)) == NULL)
@@ -1076,7 +1076,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
 
     if(fd != NULL) {
 
-      if(strcmp(hf->hf_path, href)) {
+      if(strcmp(path, ehref)) {
 
 	snprintf(path, HTTP_MAX_PATH_LEN, "webdav://%s:%d%s", 
 		 hf->hf_hostname, hf->hf_port, href);
@@ -1121,9 +1121,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
 	  d = get_cdata_by_tag(c, "DAV:getcontentlength");
 	  hf->hf_size = strtoll(d, NULL, 10);
 	}
-	free(path);
-	free(fname);
-	return 0;
+	goto ok;
       } 
     }
   }
@@ -1133,13 +1131,16 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
        we asked for in its reply. The server is probably broken. 
        (It should respond with a 404 or something) */
     snprintf(errbuf, errlen, "WEBDAV: File not found in XML reply");
-    free(path);
-    free(fname);
-    return -1;
+  err:
+    r = -1;
+  } else {
+  ok:
+    r = 0;
   }
   free(path);
   free(fname);
-  return 0;
+  free(ehref);
+  return r;
 }
 
 
