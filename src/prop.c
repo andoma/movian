@@ -883,6 +883,32 @@ prop_set_parent_ex(prop_t *p, prop_t *parent, prop_t *before,
 /**
  *
  */
+void
+prop_unparent_ex(prop_t *p, prop_sub_t *skipme)
+{
+  prop_t *parent;
+
+  hts_mutex_lock(&prop_mutex);
+
+  parent = p->hp_parent;
+  if(parent != NULL) {
+
+    prop_notify_child(p, parent, PROP_DEL_CHILD, NULL, 0);
+
+    TAILQ_REMOVE(&parent->hp_childs, p, hp_parent_link);
+    p->hp_parent = NULL;
+
+    if(parent->hp_selected == p)
+      parent->hp_selected = NULL;
+  }
+
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
+ *
+ */
 static void
 prop_destroy0(prop_t *p)
 {

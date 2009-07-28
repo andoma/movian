@@ -361,6 +361,10 @@ int prop_set_parent_ex(prop_t *p, prop_t *parent, prop_t *before,
      
 #define prop_set_parent(p, parent) prop_set_parent_ex(p, parent, NULL, NULL)
 
+void prop_unparent_ex(prop_t *p, prop_sub_t *skipme);
+
+#define prop_unparent(p) prop_unparent_ex(p, NULL)
+
 void prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme);
 
 #define prop_link(src, dst) prop_link_ex(src, dst, NULL)
