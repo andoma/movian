@@ -77,7 +77,8 @@ file_open_dir(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
   prop_t *p;
   int type, l;
   char *dirname;
-
+  char *parent, *x;
+  const char *proto;
   type = fa_probe_dir(NULL, url0);
 
   if(type == CONTENT_DVD) {
@@ -92,15 +93,43 @@ file_open_dir(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
   prop_set_string(prop_create(p, "type"), "directory");
   prop_set_string(prop_create(p, "view"), "list");
 
-  /* Find a meaningfull page title (last component of URL) */
   l = strlen(url0);
   dirname = alloca(l + 1);
+  parent  = alloca(l + 1);
+
+  memcpy(dirname, url0, l + 1);
+  memcpy(parent,  url0, l + 1);
+
+  /* Find a meaningfull page title (last component of URL) */
   memcpy(dirname, url0, l + 1);
   if(l > 0 && dirname[l - 1] == '/')
     dirname[l - 1] = 0;
 
   dirname = strrchr(dirname, '/') ? strrchr(dirname, '/') + 1 : dirname;
   prop_set_string(prop_create(p, "title"), dirname);
+
+  x = strstr(parent, "://");
+  if(x != NULL) {
+    proto = parent;
+    *x = 0;
+    parent = x + 3;
+  } else {
+    proto = "file";
+  }
+
+  if(strcmp(parent, "/")) {
+    /* Set parent */
+    if((x = strrchr(parent, '/')) != NULL) {
+      *x = 0;
+      if(x[1] == 0) {
+	/* Trailing slash */
+	if((x = strrchr(parent, '/')) != NULL) {
+	  *x = 0;
+	}
+      }
+      prop_set_stringf(prop_create(p, "parent"), "%s://%s/", proto, parent);
+    }
+  }
 
   fa_scanner(url0, p, FA_SCANNER_DETERMINE_VIEW);
 
