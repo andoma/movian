@@ -1614,7 +1614,6 @@ spotify_thread(void *aux)
 	spotify_play_track(sm->sm_ptr);
 	break;
       case SPOTIFY_STOP_PLAYBACK:
-	printf("unload\n");
 	f_sp_session_player_unload(s);
 	break;
       case SPOTIFY_SEARCH:
