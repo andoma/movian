@@ -156,12 +156,26 @@ typedef struct prop {
   struct prop_sub_list hp_canonical_subscriptions;
 
   /**
-   * Payload
+   * Payload type
    * Protected by mutex
    */
   uint8_t hp_type;
+
+  /**
+   * Various flags
+   * Protected by mutex
+   */
+  uint8_t hp_flags;
+#define PROP_CLIPPED_VALUE 0x1
+
+  /**
+   * Actual payload
+   * Protected by mutex
+   */
   union {
-    float f;
+    struct {
+      float val, min, max;
+    } f;
     int i;
     char *str;
     struct {
@@ -172,7 +186,7 @@ typedef struct prop {
   } u;
 
 #define hp_string   u.str
-#define hp_float    u.f
+#define hp_float    u.f.val
 #define hp_int      u.i
 #define hp_childs   u.c.childs
 #define hp_selected u.c.selected
@@ -312,8 +326,9 @@ void prop_set_stringf_ex(prop_t *p, prop_sub_t *skipme, const char *fmt, ...);
 
 void prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v);
 
-void prop_add_clipped_float_ex(prop_t *p, prop_sub_t *skipme, float v,
-			       float v_min, float v_max);
+void prop_set_float_clipping_range(prop_t *p, float min, float max);
+
+void prop_add_float_ex(prop_t *p, prop_sub_t *skipme, float v);
 
 void prop_set_int_ex(prop_t *p, prop_sub_t *skipme, int v);
 
@@ -331,8 +346,7 @@ void prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, prop_pixmap_t *pp);
 
 #define prop_set_float(p, v) prop_set_float_ex(p, NULL, v)
 
-#define prop_add_clipped_float(p, v, min, max) \
- prop_add_clipped_float_ex(p, NULL, v, min, max)
+#define prop_add_float(p, v) prop_add_float_ex(p, NULL, v)
 
 #define prop_set_int(p, v) prop_set_int_ex(p, NULL, v)
 

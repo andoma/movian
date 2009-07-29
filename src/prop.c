@@ -739,6 +739,9 @@ prop_notify_child2(prop_t *child, prop_t *parent, prop_t *sibling,
 static int
 prop_clean(prop_t *p)
 {
+  if(p->hp_flags & PROP_CLIPPED_VALUE)
+    return 1;
+
   switch(p->hp_type) {
   case PROP_ZOMBIE:
   case PROP_DIR:
@@ -1440,36 +1443,57 @@ prop_set_stringf_ex(prop_t *p, prop_sub_t *skipme, const char *fmt, ...)
   prop_set_string_ex(p, skipme, buf);
 }
 
+
 /**
  *
  */
-void
-prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v)
+static prop_t *
+prop_get_float(prop_t *p)
 {
   if(p == NULL)
-    return;
+    return NULL;
 
   hts_mutex_lock(&prop_mutex);
 
   if(p->hp_type == PROP_ZOMBIE) {
     hts_mutex_unlock(&prop_mutex);
-    return;
+    return NULL;
   }
 
   if(p->hp_type != PROP_FLOAT) {
 
     if(prop_clean(p)) {
       hts_mutex_unlock(&prop_mutex);
-      return;
+      return NULL;
     }
+    p->hp_float = 0;
+    p->hp_type = PROP_FLOAT;
+  }
+  return p;
+}
 
-  } else if(p->hp_float == v) {
+/**
+ *
+ */
+void
+prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v)
+{
+  if((p = prop_get_float(p)) == NULL)
+    return;
+
+  if(p->hp_float == v) {
     hts_mutex_unlock(&prop_mutex);
     return;
   }
 
+  if(p->hp_flags & PROP_CLIPPED_VALUE) {
+    if(v > p->u.f.max)
+      v  = p->u.f.max;
+    if(v < p->u.f.min)
+      v  = p->u.f.min;
+  }
+
   p->hp_float = v;
-  p->hp_type = PROP_FLOAT;
 
   prop_set_epilogue(skipme, p, "prop_set_float()");
 }
@@ -1479,39 +1503,55 @@ prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v)
  *
  */
 void
-prop_add_clipped_float_ex(prop_t *p, prop_sub_t *skipme, float v,
-			  float v_min, float v_max)
+prop_add_float_ex(prop_t *p, prop_sub_t *skipme, float v)
+{
+  float n;
+  if((p = prop_get_float(p)) == NULL)
+    return;
+
+  n = p->hp_float + v;
+
+  if(p->hp_flags & PROP_CLIPPED_VALUE) {
+    if(n > p->u.f.max)
+      n  = p->u.f.max;
+    if(n < p->u.f.min)
+      n  = p->u.f.min;
+  }
+
+  if(p->hp_float != n) {
+    p->hp_float = n;
+    prop_notify_value(p, skipme, "prop_add_float()");
+  }
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
+ *
+ */
+void
+prop_set_float_clipping_range(prop_t *p, float min, float max)
 {
   float n;
 
-  if(p == NULL)
+  if((p = prop_get_float(p)) == NULL)
     return;
 
-  hts_mutex_lock(&prop_mutex);
+  p->hp_flags |= PROP_CLIPPED_VALUE;
 
-  if(p->hp_type == PROP_ZOMBIE) {
-    hts_mutex_unlock(&prop_mutex);
-    return;
-  }
+  p->u.f.min = min;
+  p->u.f.max = max;
 
-  if(p->hp_type != PROP_FLOAT) {
+  n = p->hp_float;
 
-    if(prop_clean(p)) {
-      hts_mutex_unlock(&prop_mutex);
-      return;
-    }
-    p->hp_float = 0;
-  }
-
-  n = p->hp_float + v;
-  if(n > v_max)
-    n = v_max;
-  if(n < v_min)
-    n = v_min;
+  if(n > max)
+    n  = max;
+  if(n < min)
+    n  = min;
 
   if(n != p->hp_float) {
     p->hp_float = n;
-    prop_notify_value(p, skipme, "prop_add_clipped_float()");
+    prop_notify_value(p, NULL, "prop_set_float_clipping_range()");
   }
 
   hts_mutex_unlock(&prop_mutex);

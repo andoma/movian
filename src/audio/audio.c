@@ -362,12 +362,12 @@ static int
 audio_mixer_event_handler(event_t *e, void *opaque)
 { 
   if(event_is_action(e, ACTION_VOLUME_UP)) {
-    prop_add_clipped_float(prop_mastervol, 1, -75, 0);
+    prop_add_float(prop_mastervol, 1);
     return 1;
   }
 
   if(event_is_action(e, ACTION_VOLUME_DOWN)) {
-    prop_add_clipped_float(prop_mastervol, -1, -75, 0);
+    prop_add_float(prop_mastervol, -1);
     return 1;
   }
 
@@ -408,6 +408,8 @@ audio_mastervol_init(void)
   prop_audio = prop_create(prop_get_global(), "audio");
   prop_mastervol  = prop_create(prop_audio, "mastervolume");
   prop_mastermute = prop_create(prop_audio, "mastermute");
+
+  prop_set_float_clipping_range(prop_mastervol, -75, 0);
 
   prop_set_int(prop_mastermute, 0);
 
