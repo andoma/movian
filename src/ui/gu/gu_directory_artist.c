@@ -62,7 +62,7 @@ add_header(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
 
   s = prop_subscribe(0,
 		   PROP_TAG_NAME("self", "artist_name"),
-		   PROP_TAG_CALLBACK_STRING, set_title, w,
+		   PROP_TAG_CALLBACK_STRING, gu_subscription_set_label_xl, w,
 		   PROP_TAG_COURIER, gu->gu_pc, 
 		   PROP_TAG_NAMED_ROOT, root, "self",
 		   NULL);

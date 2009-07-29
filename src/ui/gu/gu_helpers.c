@@ -32,6 +32,23 @@ gu_subscription_set_label(void *opaque, const char *str)
 }
 
 
+
+/**
+ *
+ */
+void
+gu_subscription_set_label_xl(void *opaque, const char *str)
+{
+  if(str != NULL) {
+    char *m = g_markup_printf_escaped("<span size=\"x-large\">%s</span>", str);
+    gtk_label_set_markup(GTK_LABEL(opaque), m);
+    g_free(m);
+  } else {
+    gtk_label_set(GTK_LABEL(opaque), "");
+  }
+}
+
+
 /**
  *
  */
@@ -62,5 +79,4 @@ gu_unsubscribe_on_destroy(GtkObject *o, prop_sub_t *s)
   assert(s != NULL);
   g_signal_connect(o, "destroy", G_CALLBACK(gu_unsubscribe_callback), s);
 }
-
 

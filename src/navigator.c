@@ -28,6 +28,8 @@
 #include "event.h"
 #include "notifications.h"
 
+prop_t *global_sources;
+
 static hts_mutex_t nav_mutex;
 
 static struct nav_backend_list nav_backends;
@@ -67,6 +69,8 @@ void
 nav_init(void)
 {
   hts_mutex_init(&nav_mutex);
+
+  global_sources = prop_create(prop_get_global(), "sources");
 
   TAILQ_INIT(&nav_pages);
   TAILQ_INIT(&nav_history);

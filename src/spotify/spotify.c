@@ -2125,6 +2125,8 @@ be_spotify_init(void)
 {
   void *h;
   const char *sym;
+  prop_t *p;
+  extern prop_t *global_sources;
 
   h = dlopen("libspotify.so", RTLD_LAZY);
   if(h == NULL) {
@@ -2150,6 +2152,20 @@ be_spotify_init(void)
 
   /* Metadata tracking */
   hts_mutex_init(&meta_mutex);
+
+  /* Register as a global source */
+
+  p = prop_create(NULL, "spotify");
+  
+  prop_set_string(prop_create(p, "title"), "Spotify");
+
+  prop_set_string(prop_create(p, "status"), "Not logged in");
+
+  prop_set_string(prop_create(p, "icon"), 
+		  "http://developer.spotify.com/wp-content/uploads_dev/2009/04/spotify-core-logo-96x96.png");
+
+  if(prop_set_parent(p, global_sources))
+    abort();
 
   return 0;
 }

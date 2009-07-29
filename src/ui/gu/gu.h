@@ -90,10 +90,14 @@ void gu_statusbar_add(gtk_ui_t *gu, GtkWidget *parent);
 
 void gu_popup_init(gtk_ui_t *gu);
 
+void gu_home_create(gu_nav_page_t *gnp);
+
 /**
  * gu_helpers.c
  */
 void gu_subscription_set_label(void *opaque, const char *str);
+
+void gu_subscription_set_label_xl(void *opaque, const char *str);
 
 void gu_subscription_set_sensitivity(void *opaque, int on);
 
