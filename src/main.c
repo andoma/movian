@@ -164,7 +164,7 @@ main(int argc, char **argv)
   bookmarks_init();
 
   /* Open initial page */
-  nav_open(argc > 0 ? argv[0] : "page://home", NULL, NULL, NAV_OPEN_ASYNC);
+  nav_open(argc > 0 ? argv[0] : NAV_HOME, NULL, NULL, NAV_OPEN_ASYNC);
 
   /* Initialize user interfaces */
   ui_start(nuiargs, uiargs, argv0);

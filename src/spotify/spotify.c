@@ -1219,9 +1219,9 @@ search_completed(sp_search *result, void *userdata)
 
     spotify_make_link(f_sp_link_create_from_album(album), link, sizeof(link));
     prop_set_string(prop_create(p, "url"), link);
+    prop_set_string(prop_create(p, "type"), "album");
 
     metadata = prop_create(p, "metadata");
-    prop_set_string(prop_create(metadata, "type"), "album");
     prop_set_string(prop_create(metadata, "title"), f_sp_album_name(album));
     prop_set_string(prop_create(metadata, "artist"), f_sp_artist_name(artist));
 

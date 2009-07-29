@@ -22,6 +22,8 @@
 #include "event.h"
 #include "prop.h"
 
+#define NAV_HOME "page:home"
+
 /**
  *
  */

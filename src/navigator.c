@@ -377,7 +377,7 @@ navigator_thread(void *aux)
       nav_back(0);
       
     } else if(event_is_action(e, ACTION_HOME)) {
-      nav_open0("page://home", NULL, NULL);
+      nav_open0(NAV_HOME, NULL, NULL);
 
     } else if(event_is_type(e, EVENT_OPENURL)) {
       ou = (event_openurl_t *)e;
@@ -483,7 +483,7 @@ nav_list(const char *url, char *errbuf, size_t errlen)
 static int
 be_page_canhandle(const char *url)
 {
-  return !strncmp(url, "page://", strlen("page://"));
+  return !strncmp(url, "page:", strlen("page:"));
 }
 
 
@@ -496,7 +496,7 @@ be_page_open(const char *url0, const char *type, const char *parent,
 {
   nav_page_t *n = nav_page_create(url0, sizeof(nav_page_t), NULL, 0);
   prop_t *p = n->np_prop_root;
-  prop_set_string(prop_create(p, "type"), url0 + strlen("page://"));
+  prop_set_string(prop_create(p, "type"), url0 + strlen("page:"));
   *npp = n;
   return 0;
 }
