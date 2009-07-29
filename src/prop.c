@@ -838,9 +838,12 @@ prop_create_ex(prop_t *parent, const char *name, prop_sub_t *skipme)
 {
   prop_t *p;
 
+  if(parent == NULL)
+    return prop_create0(NULL, name, skipme);
+
   hts_mutex_lock(&prop_mutex);
   
-  if(parent == NULL || parent->hp_type != PROP_ZOMBIE)
+  if(parent->hp_type != PROP_ZOMBIE)
     p = prop_create0(parent, name, skipme);
   else
     p = NULL;
