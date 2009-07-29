@@ -159,7 +159,7 @@ typedef struct prop {
    * Payload
    * Protected by mutex
    */
-  prop_type_t hp_type;
+  uint8_t hp_type;
   union {
     float f;
     int i;
