@@ -774,7 +774,7 @@ prop_make_dir(prop_t *p, prop_sub_t *skipme, const char *origin)
     return;
 
   if(prop_clean(p))
-    return;
+    abort();
   
   TAILQ_INIT(&p->hp_childs);
   p->hp_selected = NULL;
@@ -808,6 +808,7 @@ prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme)
   }
 
   hp = malloc(sizeof(prop_t));
+  hp->hp_flags = 0;
   hp->hp_originator = NULL;
   hp->hp_refcount = 1;
   hp->hp_type = PROP_VOID;
