@@ -20,30 +20,30 @@
 #include "gu.h"
 #include "showtime.h"
 
+#include <gdk/gdkkeysyms.h>
 
-/* XXX Example code */
-static void print_toggle( gpointer   callback_data,
-                          guint      callback_action,
-                          GtkWidget *menu_item )
-{
-   g_message ("Check button state - %d\n",
-              GTK_CHECK_MENU_ITEM (menu_item)->active);
-}
+#if 0
 
-/* XXX Example code */
-static void print_selected( gpointer   callback_data,
-                            guint      callback_action,
-                            GtkWidget *menu_item )
+static void
+fullscreen_toggle(gpointer callback_data, guint callback_action,
+		  GtkWidget *menu_item)
 {
-   if(GTK_CHECK_MENU_ITEM(menu_item)->active)
-     g_message ("Radio button %d selected\n", callback_action);
+  gtk_ui_t *gu = callback_data;
+  int v = GTK_CHECK_MENU_ITEM(menu_item)->active;
+  
+  if(v) 
+    gtk_window_fullscreen(GTK_WINDOW(gu->gu_window));
+  else
+    gtk_window_unfullscreen(GTK_WINDOW(gu->gu_window));
 }
+#endif
+
 
 /**
  *
  */
 static void
-m_quit(gpointer callback_data, guint callback_action, GtkWidget *menu_item)
+m_quit(GtkWidget *menu_item, gpointer callback_data)
 {
   showtime_shutdown(0);
 }
@@ -53,7 +53,17 @@ m_quit(gpointer callback_data, guint callback_action, GtkWidget *menu_item)
  *
  */
 static void
-m_about(gpointer callback_data, guint callback_action, GtkWidget *menu_item)
+m_openplayqueue(GtkWidget *menu_item, gpointer callback_data)
+{
+  nav_open("playqueue:", NULL, NULL, NAV_OPEN_ASYNC);
+}
+
+
+/**
+ *
+ */
+static void
+m_about(GtkWidget *menu_item, gpointer callback_data)
 {
   gtk_ui_t *gu = callback_data;
   extern const char *htsversion;
@@ -65,6 +75,7 @@ m_about(gpointer callback_data, guint callback_action, GtkWidget *menu_item)
 			"copyright", "2006 - 2009 Andreas Öman, et al.",
 			NULL);
 }
+
 
 /**
  *
@@ -89,7 +100,7 @@ m_open_response(GtkDialog *dialog, gint response_id, gpointer user_data)
  *
  */
 static void
-m_openfile(gpointer callback_data, guint callback_action, GtkWidget *menu_item)
+m_openfile(GtkWidget *menu_item, gpointer callback_data)
 {
   gtk_ui_t *gu = callback_data;
   GtkWidget *dialog;
@@ -111,7 +122,7 @@ m_openfile(gpointer callback_data, guint callback_action, GtkWidget *menu_item)
  *
  */
 static void
-m_opendir(gpointer callback_data, guint callback_action, GtkWidget *menu_item)
+m_opendir(GtkWidget *menu_item, gpointer callback_data)
 {
   gtk_ui_t *gu = callback_data;
   GtkWidget *dialog;
@@ -133,23 +144,131 @@ m_opendir(gpointer callback_data, guint callback_action, GtkWidget *menu_item)
 /**
  *
  */
-static GtkItemFactoryEntry menu_items[] = {
-  { "/_File",         NULL,       NULL,           0, "<Branch>" },
-  { "/File/_Open File...", "<CTRL>O",  m_openfile, 0, "<StockItem>", GTK_STOCK_OPEN },
-  { "/File/_Open Directory...", "<CTRL>D",  m_opendir, 0, "<StockItem>", GTK_STOCK_OPEN },
-  { "/File/sep",      NULL,       NULL,           0, "<Separator>" },
-  { "/File/_Quit",    "<CTRL>Q",  m_quit, 0, "<StockItem>", GTK_STOCK_QUIT },
-  { "/_Options",      NULL,       NULL,           0, "<Branch>" },
-  { "/Options/Check", NULL,       print_toggle,   1, "<CheckItem>" },
-  { "/Options/sep",   NULL,       NULL,           0, "<Separator>" },
-  { "/Options/Rad1",  NULL,       print_selected, 1, "<RadioItem>" },
-  { "/Options/Rad2",  NULL,       print_selected, 2, "/Options/Rad1" },
-  { "/Options/Rad3",  NULL,       print_selected, 3, "/Options/Rad1" },
-  { "/_Help",         NULL,       NULL,           0, "<LastBranch>" },
-  { "/_Help/About",   NULL,       m_about,        0, "<Item>" },
-};
+static const char *
+accel_path(const char *path, guint key,  GdkModifierType accel_mods)
+{
+  gtk_accel_map_add_entry(path, key, accel_mods);
+  return path;
+}
 
-static gint nmenu_items = sizeof (menu_items) / sizeof (menu_items[0]);
+
+
+/**
+ *
+ */
+static GtkWidget *
+add_item(GtkWidget *parent, const char *title,
+	 void (*cb)(GtkWidget *menuitem, gpointer aux),
+	 gpointer aux, const char *image, const char *accel)
+{
+  GtkWidget *w;
+  GtkWidget *img;
+
+  if(image != NULL) {
+    w = gtk_image_menu_item_new_with_mnemonic(title);
+
+    img = gtk_image_new_from_stock(image, GTK_ICON_SIZE_MENU);
+    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(w), img);
+
+
+  } else {
+    w = gtk_menu_item_new_with_mnemonic(title);
+  }
+
+  if(accel != NULL) {
+    gtk_menu_item_set_accel_path(GTK_MENU_ITEM(w), accel);
+  }
+
+  gtk_menu_shell_append(GTK_MENU_SHELL(parent), w);
+  g_signal_connect(G_OBJECT(w), "activate", (void *)cb, aux);
+  return w;
+}
+
+
+/**
+ *
+ */
+static void
+add_sep(GtkWidget *parent)
+{
+  GtkWidget *w = gtk_separator_menu_item_new();
+  gtk_menu_shell_append(GTK_MENU_SHELL(parent), w);
+}
+
+
+
+/**
+ * File menu
+ */
+static GtkWidget *
+gu_menu_File(gtk_ui_t *gu, GtkAccelGroup *accel_group)
+{
+  GtkWidget *M = gtk_menu_item_new_with_mnemonic("_File");
+  GtkWidget *m = gtk_menu_new();
+
+  gtk_menu_set_accel_group(GTK_MENU(m), accel_group);
+  gtk_menu_item_set_submenu(GTK_MENU_ITEM(M), m);
+
+
+  add_item(m, "_Open File...", 
+	   m_openfile, gu, GTK_STOCK_OPEN,
+	   accel_path("<Showtime-Main>/_File/OpenFile", 
+		      GDK_O, GDK_CONTROL_MASK));
+
+  add_item(m, "_Open Directory...", 
+	   m_opendir, gu, GTK_STOCK_OPEN,
+	   accel_path("<Showtime-Main>/_File/OpenDir", 
+		      GDK_D, GDK_CONTROL_MASK));
+
+  add_sep(m);
+
+  add_item(m, "_Quit", 
+	   m_quit, gu, GTK_STOCK_QUIT,
+	   accel_path("<Showtime-Main>/_File/Quit", 
+		      GDK_Q, GDK_CONTROL_MASK));
+  return M;
+}
+
+
+/**
+ * Go menu
+ */
+static GtkWidget *
+gu_menu_Go(gtk_ui_t *gu, GtkAccelGroup *accel_group)
+{
+  GtkWidget *M = gtk_menu_item_new_with_mnemonic("_Go");
+  GtkWidget *m = gtk_menu_new();
+
+  gtk_menu_set_accel_group(GTK_MENU(m), accel_group);
+  gtk_menu_item_set_submenu(GTK_MENU_ITEM(M), m);
+
+
+  add_item(m, "_Playqueue", 
+	   m_openplayqueue, gu, GTK_STOCK_EXECUTE,
+	   accel_path("<Showtime-Main>/_Go/Playqueue", 
+		      GDK_P, GDK_CONTROL_MASK));
+  return M;
+}
+
+
+/**
+ * Help menu
+ */
+static GtkWidget *
+gu_menu_Help(gtk_ui_t *gu, GtkAccelGroup *accel_group)
+{
+  GtkWidget *M = gtk_menu_item_new_with_mnemonic("_Help");
+  GtkWidget *m = gtk_menu_new();
+
+  gtk_menu_set_accel_group(GTK_MENU(m), accel_group);
+  gtk_menu_item_set_submenu(GTK_MENU_ITEM(M), m);
+
+  add_item(m, "_About Showtime", 
+	   m_about, gu, GTK_STOCK_ABOUT,
+	   NULL);
+  return M;
+}
+
 
 /**
  *
@@ -157,22 +276,25 @@ static gint nmenu_items = sizeof (menu_items) / sizeof (menu_items[0]);
 void
 gu_menubar_add(gtk_ui_t *gu, GtkWidget *parent)
 {
-  GtkItemFactory *item_factory;
   GtkAccelGroup *accel_group;
   GtkWidget *menubar;
 
   accel_group = gtk_accel_group_new();
-
-  item_factory = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>",
-				      accel_group);
-
-  gtk_item_factory_create_items(item_factory, nmenu_items, menu_items, gu);
-
-  gtk_window_add_accel_group(GTK_WINDOW(gu->gu_window), accel_group);
-
-  menubar = gtk_item_factory_get_widget(item_factory, "<main>");
+  menubar = gtk_menu_bar_new();
   gtk_box_pack_start(GTK_BOX(parent), menubar, FALSE, TRUE, 0);
 
+
+  gtk_menu_shell_append(GTK_MENU_SHELL(menubar),
+			gu_menu_File(gu, accel_group));
+
+  gtk_menu_shell_append(GTK_MENU_SHELL(menubar),
+			gu_menu_Go(gu, accel_group));
+
+  gtk_menu_shell_append(GTK_MENU_SHELL(menubar),
+			gu_menu_Help(gu, accel_group));
+
+
+  gtk_window_add_accel_group(GTK_WINDOW(gu->gu_window), accel_group);
 }
 
 
