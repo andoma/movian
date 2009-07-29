@@ -2125,7 +2125,7 @@ be_spotify_init(void)
 {
   void *h;
   const char *sym;
-  prop_t *p;
+  prop_t *p, *links, *link;
   extern prop_t *global_sources;
 
   h = dlopen("libspotify.so", RTLD_LAZY);
@@ -2163,6 +2163,16 @@ be_spotify_init(void)
 
   prop_set_string(prop_create(p, "icon"), 
 		  "http://developer.spotify.com/wp-content/uploads_dev/2009/04/spotify-core-logo-96x96.png");
+
+  links = prop_create(p, "links");
+
+  link = prop_create(links, NULL);
+  prop_set_string(prop_create(link, "title"), "Playlists");
+  prop_set_string(prop_create(link, "url"), "spotify:playlists");
+
+  link = prop_create(links, NULL);
+  prop_set_string(prop_create(link, "title"), "New album releases");
+  prop_set_string(prop_create(link, "url"), "spotify:search:tag:new");
 
   if(prop_set_parent(p, global_sources))
     abort();
