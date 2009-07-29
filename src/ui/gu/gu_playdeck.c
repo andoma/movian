@@ -276,7 +276,7 @@ pd_update_trackextra(playdeck_t *pd)
   m = g_markup_printf_escaped("<span>%s%s%s</span>", 
 			      pd->cur_artist ?: "",
 			      pd->cur_artist && pd->cur_album ? " - " : "",
-			      pd->cur_album);
+			      pd->cur_album ?: "");
 
   gtk_label_set_markup(GTK_LABEL(pd->trackextra), m);
   g_free(m);
