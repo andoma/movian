@@ -1056,6 +1056,7 @@ spotify_list_album_callback(sp_albumbrowse *result, void *userdata)
       prop_destroy(p);
   }
   prop_ref_dec(nodes);
+  f_sp_albumbrowse_release(result);
 }
 
 
@@ -1089,6 +1090,7 @@ spotify_list_artist_callback(sp_artistbrowse *result, void *userdata)
       prop_destroy(p);
   }
   prop_ref_dec(nodes);
+  f_sp_artistbrowse_release(result);
 }
 
 
