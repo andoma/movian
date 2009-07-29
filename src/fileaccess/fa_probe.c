@@ -77,6 +77,9 @@ metadata_to_prop(prop_t *p, const char *pname, AVMetadata *m, const char *key,
   if(asint) {
     prop_set_int(prop_create(p, pname), atoi(ret));
   } else {
+
+    if(!strncasecmp(ret, "http://", 7))
+      return;
     prop_set_string(prop_create(p, pname), ret);
   }
 }
