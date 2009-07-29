@@ -1032,14 +1032,15 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
   htsmsg_field_t *f;
   const char *href, *d, *q;
   int isdir, i, r;
+  char *rpath = malloc(HTTP_MAX_PATH_LEN);
   char *path  = malloc(HTTP_MAX_PATH_LEN);
   char *fname = malloc(HTTP_MAX_PATH_LEN);
   char *ehref = malloc(HTTP_MAX_PATH_LEN); // Escaped href
 
   // We need to compare paths and to do so, we must deescape the
   // possible URL encoding. Do the searched-for path once
-  snprintf(path, HTTP_MAX_PATH_LEN, "%s", hf->hf_path);
-  http_deescape(path);
+  snprintf(rpath, HTTP_MAX_PATH_LEN, "%s", hf->hf_path);
+  http_deescape(rpath);
 
   if((m = htsmsg_get_map_multi(xml, "tags", 
 			       "DAV:multistatus", "tags", NULL)) == NULL) {
@@ -1076,11 +1077,16 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
 
     if(fd != NULL) {
 
-      if(strcmp(path, ehref)) {
+      if(strcmp(rpath, ehref)) {
 
-	snprintf(path, HTTP_MAX_PATH_LEN, "webdav://%s:%d%s", 
-		 hf->hf_hostname, hf->hf_port, href);
-	
+	if(hf->hf_port != 80) {
+	  snprintf(path, HTTP_MAX_PATH_LEN, "webdav://%s:%d%s", 
+		   hf->hf_hostname, hf->hf_port, href);
+	} else {
+	  snprintf(path, HTTP_MAX_PATH_LEN, "webdav://%s%s", 
+		   hf->hf_hostname, href);
+	}
+
 	if((q = strrchr(path, '/')) != NULL) {
 	  q++;
 
@@ -1112,7 +1118,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
       snprintf(fname, HTTP_MAX_PATH_LEN, "%s", href);
       http_deescape(fname);
 
-      if(!strcmp(path, fname)) {
+      if(!strcmp(rpath, fname)) {
 	/* This is the path we asked for */
 
 	hf->hf_isdir = isdir;
@@ -1137,6 +1143,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
   ok:
     r = 0;
   }
+  free(rpath);
   free(path);
   free(fname);
   free(ehref);
