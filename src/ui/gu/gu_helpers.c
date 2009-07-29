@@ -27,8 +27,7 @@
 void
 gu_subscription_set_label(void *opaque, const char *str)
 {
-  GtkLabel *l = opaque;
-  gtk_label_set_text(l, str);
+  g_object_set(G_OBJECT(opaque), "label", str ?: "", NULL);
 }
 
 

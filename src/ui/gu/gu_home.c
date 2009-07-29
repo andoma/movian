@@ -19,10 +19,11 @@
 #include <string.h>
 #include <assert.h>
 #include "showtime.h"
+#include "navigator.h"
 #include "gu.h"
 
 TAILQ_HEAD(source_queue, source);
-
+TAILQ_HEAD(link_queue,   links);
 /**
  *
  */
@@ -43,9 +44,150 @@ typedef struct home {
  *
  */
 typedef struct source {
+
   prop_t *s_originator;
 
+  gtk_ui_t *s_gu;
+
+  TAILQ_ENTRY(source) s_link;
+
+  prop_sub_t *s_linksub;
+  struct source_queue s_links;
+
+  GtkWidget *s_bbox;
+
 } source_t;
+
+
+/**
+ *
+ */
+typedef struct link {
+
+  source_t *l_source;
+
+  prop_t *l_originator;
+
+  TAILQ_ENTRY(source) l_link;
+
+  GtkWidget *l_btn;
+
+  prop_sub_t *l_title_sub;
+  prop_sub_t *l_url_sub;
+
+  char *l_url;
+
+} link_t;
+
+
+/**
+ *
+ */
+static void
+link_destroy(GtkObject *object, gpointer opaque)
+{
+  link_t *l = opaque;
+
+  prop_unsubscribe(l->l_title_sub);
+  prop_unsubscribe(l->l_url_sub);
+  abort(); // TAILQ_REMOVE
+  free(l);
+}
+
+/**
+ *
+ */
+static void
+link_clicked(GtkObject *object, gpointer opaque)
+{
+  link_t *l = opaque;
+
+  if(l->l_url != NULL)
+    nav_open(l->l_url, NULL, NULL, NAV_OPEN_ASYNC);
+}
+
+
+/**
+ *
+ */
+static void
+link_set_url(void *opaque, const char *str)
+{
+  link_t *l = opaque;
+  free(l->l_url);
+  l->l_url = str ? strdup(str) : NULL;
+}
+
+
+/**
+ *
+ */
+static void
+link_add(source_t *s, prop_t *p, link_t *before)
+{
+  link_t *l = calloc(1, sizeof(link_t));
+
+  l->l_source = s;
+  l->l_btn = gtk_button_new();
+  
+  gtk_box_pack_start(GTK_BOX(s->s_bbox), l->l_btn, FALSE, FALSE, 0);
+
+  g_signal_connect(GTK_OBJECT(l->l_btn), 
+		   "destroy", G_CALLBACK(link_destroy), l);
+
+  g_signal_connect(GTK_OBJECT(l->l_btn),
+		   "clicked", G_CALLBACK(link_clicked), l);
+
+  l->l_title_sub = 
+    prop_subscribe(0,
+		   PROP_TAG_NAME("self", "title"),
+		   PROP_TAG_CALLBACK_STRING, 
+		   gu_subscription_set_label, l->l_btn,
+		   PROP_TAG_COURIER, s->s_gu->gu_pc, 
+		   PROP_TAG_NAMED_ROOT, p, "self",
+		   NULL);
+
+  l->l_url_sub = 
+    prop_subscribe(0,
+		   PROP_TAG_NAME("self", "url"),
+		   PROP_TAG_CALLBACK_STRING, link_set_url, l,
+		   PROP_TAG_COURIER, s->s_gu->gu_pc, 
+		   PROP_TAG_NAMED_ROOT, p, "self",
+		   NULL);
+
+
+  gtk_widget_show(l->l_btn);
+}
+
+
+/**
+ *
+ */
+static void
+source_links(void *opaque, prop_event_t event, ...)
+{
+  source_t *h = opaque;
+  //  prop_t *p;
+
+  va_list ap;
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_ADD_CHILD:
+    link_add(h, va_arg(ap, prop_t *), NULL);
+    break;
+
+  case PROP_SET_DIR:
+  case PROP_SET_VOID:
+    break;
+
+  default:
+    fprintf(stderr, 
+	    "gu_home_sources(): Can not handle event %d, aborting()\n", event);
+    abort();
+  }
+}
+
 
 
 /**
@@ -70,8 +212,9 @@ source_add(home_t *h, prop_t *p, source_t *before)
 {
   source_t *s = calloc(1, sizeof(source_t));
   prop_sub_t *sub;
-  GtkWidget *hbox, *w, *vbox, *bbox;
+  GtkWidget *hbox, *w, *vbox;
 
+  s->s_gu = h->h_gu;
   s->s_originator = p;
   prop_ref_inc(p);
 
@@ -141,18 +284,18 @@ source_add(home_t *h, prop_t *p, source_t *before)
 
   /* Links */
 
-  bbox = gtk_hbox_new(FALSE, 1);
-  gtk_box_pack_start(GTK_BOX(vbox), bbox, FALSE, FALSE, 0);
+  s->s_bbox = gtk_hbox_new(FALSE, 1);
+  gtk_box_pack_start(GTK_BOX(vbox), s->s_bbox, FALSE, FALSE, 0);
 
+  sub =
+    prop_subscribe(PROP_SUB_DEBUG,
+		   PROP_TAG_NAME("self", "links"),
+		   PROP_TAG_CALLBACK, source_links, s,
+		   PROP_TAG_COURIER, h->h_gu->gu_pc, 
+		   PROP_TAG_NAMED_ROOT, p, "self",
+		   NULL);
 
-  
-
-  w = gtk_button_new_with_label("Playlists");
-  gtk_box_pack_start(GTK_BOX(bbox), w, FALSE, FALSE, 0);
-
-  w = gtk_button_new_with_label("New albums");
-  gtk_box_pack_start(GTK_BOX(bbox), w, FALSE, FALSE, 0);
-
+  gu_unsubscribe_on_destroy(GTK_OBJECT(s->s_bbox), sub);
 
   /* Finalize */
   gtk_widget_show_all(hbox);
@@ -163,20 +306,17 @@ source_add(home_t *h, prop_t *p, source_t *before)
  *
  */
 static void
-gu_home_sources(void *opaque, prop_event_t event, ...)
+home_sources(void *opaque, prop_event_t event, ...)
 {
   home_t *h = opaque;
-  prop_t *p;
+  //  prop_t *p;
 
   va_list ap;
   va_start(ap, event);
   
   switch(event) {
   case PROP_ADD_CHILD:
-    p = va_arg(ap, prop_t *);
-    prop_print_tree(p, 0);
-
-    source_add(h, p, NULL);
+    source_add(h, va_arg(ap, prop_t *), NULL);
     break;
 
   case PROP_SET_DIR:
@@ -228,7 +368,7 @@ gu_home_create(gu_nav_page_t *gnp)
   h->h_src_sub =
     prop_subscribe(0,
 		   PROP_TAG_NAME("global", "sources"),
-		   PROP_TAG_CALLBACK, gu_home_sources, h,
+		   PROP_TAG_CALLBACK, home_sources, h,
 		   PROP_TAG_COURIER, h->h_gu->gu_pc, 
 		   NULL);
 
