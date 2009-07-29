@@ -53,6 +53,8 @@ static int play_position;
 static int in_seek;
 static int seek_pos;
 
+static prop_t *prop_status;
+
 static sp_session *spotify_session;
 TAILQ_HEAD(spotify_msg_queue, spotify_msg);
 static struct spotify_msg_queue spotify_msgs;
@@ -267,6 +269,8 @@ spotify_try_login(sp_session *s, int retry, const char *reason)
   char *password;
   int r;
 
+  prop_set_string(prop_status, "Attempting login");
+
   r = keyring_lookup("Login to Spotify", &username, &password, NULL, retry,
 		     "spotify:", reason);
 
@@ -297,16 +301,27 @@ spotify_try_login(sp_session *s, int retry, const char *reason)
 static void
 spotify_logged_in(sp_session *sess, sp_error error)
 {
+  sp_user *user;
+
   if(error == 0) {
     notify_add(NOTIFY_INFO, NULL, 5, "Spotify: Logged in");
     hts_mutex_lock(&spotify_mutex);
     spotify_login_result = 0;
     pthread_cond_broadcast(&spotify_cond_login);
     hts_mutex_unlock(&spotify_mutex);
+
+    user = f_sp_session_user(sess);
+
+    prop_set_stringf(prop_status, "Logged in as user: %s",
+		     f_sp_user_display_name(user));
+
   } else {
     notify_add(NOTIFY_ERROR, NULL, 5, "Spotify: Login failed -- %s",
 	       f_sp_error_message(error));
     spotify_try_login(sess, 1, f_sp_error_message(error));
+
+    prop_set_stringf(prop_status, "Login failed: %s ",
+		     f_sp_error_message(error));
   }
 }
 
@@ -2159,7 +2174,9 @@ be_spotify_init(void)
   
   prop_set_string(prop_create(p, "title"), "Spotify");
 
-  prop_set_string(prop_create(p, "status"), "Not logged in");
+  prop_status = prop_create(p, "status");
+
+  prop_set_string(prop_status, "Not logged in");
 
   prop_set_string(prop_create(p, "icon"), 
 		  "http://developer.spotify.com/wp-content/uploads_dev/2009/04/spotify-core-logo-96x96.png");
