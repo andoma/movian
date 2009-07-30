@@ -21,12 +21,13 @@
 
 #include "config.h"
 
-#include <queue.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <inttypes.h>
 #include <time.h>
 #include <math.h>
+
+#include "misc/queue.h"
 #include "prop.h"
 #include "event.h"
 #include "ui/ui.h"

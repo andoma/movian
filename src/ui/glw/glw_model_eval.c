@@ -20,8 +20,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <math.h>
-#include <strtab.h>
 
+#include "misc/strtab.h"
 #include "glw_model.h"
 #include "glw.h"
 #include "glw_event.h"

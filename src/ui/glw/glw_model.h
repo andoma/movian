@@ -19,7 +19,6 @@
 #ifndef GLW_MODEL_H
 #define GLW_MODEL_H
 
-#include <queue.h>
 #include <inttypes.h>
 #include <string.h>
 #include <stdarg.h>

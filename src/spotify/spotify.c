@@ -32,7 +32,7 @@
 #include "notifications.h"
 #include "api.h"
 #include "keyring.h"
-#include "ptrvec.h"
+#include "misc/ptrvec.h"
 
 #include <dlfcn.h>
 #include "apifunctions.h"

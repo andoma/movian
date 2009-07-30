@@ -22,9 +22,9 @@
 #include <stdlib.h>
 
 #include <libavutil/pixfmt.h>
-#include <arch/threads.h>
-#include <queue.h>
-#include <htsmsg/htsmsg.h>
+#include "arch/threads.h"
+#include "misc/queue.h"
+#include "htsmsg/htsmsg.h"
 
 struct prop;
 struct prop_sub;

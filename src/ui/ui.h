@@ -19,7 +19,6 @@
 #ifndef UI_H__
 #define UI_H__
 
-#include <queue.h>
 #include "event.h"
 
 LIST_HEAD(ui_list,  ui);

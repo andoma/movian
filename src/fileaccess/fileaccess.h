@@ -23,7 +23,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <queue.h>
+#include "misc/queue.h"
 
 #include "navigator.h"
 

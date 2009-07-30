@@ -32,7 +32,6 @@ CFLAGS += -Wmissing-prototypes -Isrc/dvd
 SRCS += src/main.c \
 	src/version.c \
 	src/callout.c \
-	src/ptrvec.c \
 	src/navigator.c \
 	src/media.c \
 	src/event.c \
@@ -46,6 +45,11 @@ SRCS += src/main.c \
 	src/ui/ui.c \
 	src/ui/keymapper.c \
 
+
+#
+# Misc support
+#
+SRCS +=	src/misc/ptrvec.c \
 
 #
 # HTSMSG

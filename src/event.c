@@ -22,11 +22,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <strtab.h>
 #include <assert.h>
 
 #include "showtime.h"
 #include "event.h"
+#include "misc/strtab.h"
 
 static hts_mutex_t ehmutex;
 static LIST_HEAD(, event_handler) event_handlers;

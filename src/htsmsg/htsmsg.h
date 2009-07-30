@@ -21,7 +21,7 @@
 
 #include <stdlib.h>
 #include <inttypes.h>
-#include "queue.h"
+#include "misc/queue.h"
 
 #define HTSMSG_ERR_FIELD_NOT_FOUND       -1
 #define HTSMSG_ERR_CONVERSION_IMPOSSIBLE -2

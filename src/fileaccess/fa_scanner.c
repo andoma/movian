@@ -28,7 +28,7 @@
 #include "fileaccess.h"
 #include "fa_probe.h"
 #include "playqueue.h"
-#include "strtab.h"
+#include "misc/strtab.h"
 
 typedef struct scanner {
   int s_refcount;

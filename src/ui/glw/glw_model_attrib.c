@@ -20,8 +20,8 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <strtab.h>
 
+#include "misc/strtab.h"
 #include "glw_model.h"
 #include "glw.h"
 
