@@ -32,10 +32,9 @@ typedef struct home {
   gtk_ui_t *h_gu;
 
   prop_sub_t *h_src_sub;
-
-  struct source_queue h_sources;
-
   GtkWidget *h_sourcebox;
+
+  gu_cloner_t h_sources;
 
 } home_t;
 
@@ -44,18 +43,12 @@ typedef struct home {
  *
  */
 typedef struct source {
-
-  prop_t *s_originator;
-
-  gtk_ui_t *s_gu;
-
-  TAILQ_ENTRY(source) s_link;
-
-  prop_sub_t *s_linksub;
-  struct source_queue s_links;
+  gu_cloner_node_t s_gcn;
+  gu_cloner_t s_links;
 
   GtkWidget *s_bbox;
 
+  prop_sub_t *s_linksub;
 } source_t;
 
 
@@ -63,12 +56,7 @@ typedef struct source {
  *
  */
 typedef struct link {
-
-  source_t *l_source;
-
-  prop_t *l_originator;
-
-  TAILQ_ENTRY(source) l_link;
+  gu_cloner_node_t l_gcn;
 
   GtkWidget *l_btn;
 
@@ -123,11 +111,8 @@ link_set_url(void *opaque, const char *str)
  *
  */
 static void
-link_add(source_t *s, prop_t *p, link_t *before)
+link_add(gtk_ui_t *gu, source_t *s, prop_t *p, link_t *l, source_t *before)
 {
-  link_t *l = calloc(1, sizeof(link_t));
-
-  l->l_source = s;
   l->l_btn = gtk_button_new();
   
   gtk_box_pack_start(GTK_BOX(s->s_bbox), l->l_btn, FALSE, FALSE, 0);
@@ -143,7 +128,7 @@ link_add(source_t *s, prop_t *p, link_t *before)
 		   PROP_TAG_NAME("self", "title"),
 		   PROP_TAG_CALLBACK_STRING, 
 		   gu_subscription_set_label, l->l_btn,
-		   PROP_TAG_COURIER, s->s_gu->gu_pc, 
+		   PROP_TAG_COURIER, gu->gu_pc, 
 		   PROP_TAG_NAMED_ROOT, p, "self",
 		   NULL);
 
@@ -151,7 +136,7 @@ link_add(source_t *s, prop_t *p, link_t *before)
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "url"),
 		   PROP_TAG_CALLBACK_STRING, link_set_url, l,
-		   PROP_TAG_COURIER, s->s_gu->gu_pc, 
+		   PROP_TAG_COURIER, gu->gu_pc, 
 		   PROP_TAG_NAMED_ROOT, p, "self",
 		   NULL);
 
@@ -164,30 +149,10 @@ link_add(source_t *s, prop_t *p, link_t *before)
  *
  */
 static void
-source_links(void *opaque, prop_event_t event, ...)
+link_del(gtk_ui_t *gu, source_t *s, link_t *l)
 {
-  source_t *h = opaque;
-  //  prop_t *p;
-
-  va_list ap;
-  va_start(ap, event);
-
-  switch(event) {
-  case PROP_ADD_CHILD:
-    link_add(h, va_arg(ap, prop_t *), NULL);
-    break;
-
-  case PROP_SET_DIR:
-  case PROP_SET_VOID:
-    break;
-
-  default:
-    fprintf(stderr, 
-	    "gu_home_sources(): Can not handle event %d, aborting()\n", event);
-    abort();
-  }
+  
 }
-
 
 
 /**
@@ -203,20 +168,14 @@ home_set_icon(void *opaque, const char *str)
 }
 
 
-
 /**
  *
  */
 static void
-source_add(home_t *h, prop_t *p, source_t *before)
+source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before)
 {
-  source_t *s = calloc(1, sizeof(source_t));
   prop_sub_t *sub;
   GtkWidget *hbox, *w, *vbox;
-
-  s->s_gu = h->h_gu;
-  s->s_originator = p;
-  prop_ref_inc(p);
 
   hbox = gtk_hbox_new(FALSE, 1);
   gtk_box_pack_start(GTK_BOX(h->h_sourcebox), hbox, FALSE, TRUE, 5);
@@ -287,10 +246,12 @@ source_add(home_t *h, prop_t *p, source_t *before)
   s->s_bbox = gtk_hbox_new(FALSE, 1);
   gtk_box_pack_start(GTK_BOX(vbox), s->s_bbox, FALSE, FALSE, 0);
 
+  gu_cloner_init(&s->s_links, s, link_add, link_del, sizeof(link_t), gu);
+
   sub =
     prop_subscribe(PROP_SUB_DEBUG,
 		   PROP_TAG_NAME("self", "links"),
-		   PROP_TAG_CALLBACK, source_links, s,
+		   PROP_TAG_CALLBACK, gu_cloner_subscription, &s->s_links,
 		   PROP_TAG_COURIER, h->h_gu->gu_pc, 
 		   PROP_TAG_NAMED_ROOT, p, "self",
 		   NULL);
@@ -306,29 +267,13 @@ source_add(home_t *h, prop_t *p, source_t *before)
  *
  */
 static void
-home_sources(void *opaque, prop_event_t event, ...)
+source_del(gtk_ui_t *gu, home_t *h, source_t *s)
 {
-  home_t *h = opaque;
-  //  prop_t *p;
-
-  va_list ap;
-  va_start(ap, event);
   
-  switch(event) {
-  case PROP_ADD_CHILD:
-    source_add(h, va_arg(ap, prop_t *), NULL);
-    break;
-
-  case PROP_SET_DIR:
-  case PROP_SET_VOID:
-    break;
-
-  default:
-    fprintf(stderr, 
-	    "gu_home_sources(): Can not handle event %d, aborting()\n", event);
-    abort();
-  }
+  
+ 
 }
+
 
 /**
  *
@@ -365,11 +310,15 @@ gu_home_create(gu_nav_page_t *gnp)
 
   h->h_sourcebox = vbox;
 
+
+  gu_cloner_init(&h->h_sources, h, source_add, source_del, sizeof(source_t),
+		 h->h_gu);
+
   h->h_src_sub =
     prop_subscribe(0,
 		   PROP_TAG_NAME("global", "sources"),
-		   PROP_TAG_CALLBACK, home_sources, h,
-		   PROP_TAG_COURIER, h->h_gu->gu_pc, 
+		   PROP_TAG_CALLBACK, gu_cloner_subscription, &h->h_sources,
+		   PROP_TAG_COURIER, h->h_gu->gu_pc,
 		   NULL);
 
 
