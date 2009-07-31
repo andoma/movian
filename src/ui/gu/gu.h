@@ -103,6 +103,36 @@ void gu_subscription_set_sensitivity(void *opaque, int on);
 
 void gu_unsubscribe_on_destroy(GtkObject *o, prop_sub_t *s);
 
+typedef void (gu_cloner_add_func_t)(gtk_ui_t *gu, void *opaque,
+				    prop_t *p, void *node, void *before);
+
+typedef void (gu_cloner_del_func_t)(gtk_ui_t *gu, void *opaque, void *node);
+
+TAILQ_HEAD(gu_cloner_node_queue, gu_cloner_node);
+
+typedef struct gu_cloner {
+  void *gc_opaque;
+  gu_cloner_add_func_t *gc_add;
+  gu_cloner_del_func_t *gc_del;
+  size_t gc_nodesize;
+  gtk_ui_t *gc_gu;
+
+  struct gu_cloner_node_queue gc_nodes;
+
+} gu_cloner_t;
+
+
+typedef struct gu_cloner_node {
+  TAILQ_ENTRY(gu_cloner_node) gcn_link;
+  prop_t *gcn_prop;
+
+} gu_cloner_node_t;
+
+void gu_cloner_init(gu_cloner_t *gc, void *opaque, void *addfunc,
+		    void *delfunc, size_t nodesize, gtk_ui_t *gu);
+
+void gu_cloner_subscription(void *opaque, prop_event_t event, ...);
+
 
 /**
  * gu_pixbuf.c

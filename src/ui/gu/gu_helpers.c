@@ -79,3 +79,119 @@ gu_unsubscribe_on_destroy(GtkObject *o, prop_sub_t *s)
   g_signal_connect(o, "destroy", G_CALLBACK(gu_unsubscribe_callback), s);
 }
 
+
+/**
+ *
+ */
+void
+gu_cloner_init(gu_cloner_t *gc,
+	       void *opaque,
+	       void *addfunc,
+	       void *delfunc,
+	       size_t nodesize,
+	       gtk_ui_t *gu)
+{
+  assert(nodesize >= sizeof(gu_cloner_node_t));
+
+  gc->gc_opaque = opaque;
+  gc->gc_add = addfunc;
+  gc->gc_del = delfunc;
+  gc->gc_nodesize = nodesize;
+  gc->gc_gu = gu;
+  TAILQ_INIT(&gc->gc_nodes);
+}
+
+/**
+ *
+ */
+static gu_cloner_node_t *
+cloner_node_find(gu_cloner_t *gc, prop_t *p)
+{
+  gu_cloner_node_t *gcn;
+  TAILQ_FOREACH(gcn, &gc->gc_nodes, gcn_link)
+    if(gcn->gcn_prop == p)
+      return gcn;
+  abort();
+}
+
+
+/**
+ *
+ */
+static void
+cloner_add(gu_cloner_t *gc, prop_t *p, prop_t *before)
+{
+  gu_cloner_node_t *gcn, *b;
+  gcn = calloc(1, gc->gc_nodesize);
+  gcn->gcn_prop = p;
+  prop_ref_inc(p);
+
+  b = before ? cloner_node_find(gc, before) : NULL;
+  
+  if(b == NULL) {
+    TAILQ_INSERT_TAIL(&gc->gc_nodes, gcn, gcn_link);
+  } else {
+    TAILQ_INSERT_BEFORE(b, gcn, gcn_link);
+  }
+
+  gc->gc_add(gc->gc_gu, gc->gc_opaque, p, gcn, b);
+}
+
+
+/**
+ *
+ */
+static void
+cloner_del(gu_cloner_t *gc, prop_t *p)
+{
+  gu_cloner_node_t *gcn = cloner_node_find(gc, p);
+
+  gc->gc_del(gc->gc_gu, gc->gc_opaque, gcn);
+  
+  prop_ref_dec(gcn->gcn_prop);
+  TAILQ_REMOVE(&gc->gc_nodes, gcn, gcn_link);
+  free(gcn);
+}
+
+
+/**
+ *
+ */
+void
+gu_cloner_subscription(void *opaque, prop_event_t event, ...)
+{
+  gu_cloner_t *gc = opaque;
+  prop_t *p1, *p2;
+
+  va_list ap;
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_ADD_CHILD:
+    cloner_add(gc, va_arg(ap, prop_t *), NULL);
+    break;
+
+  case PROP_ADD_CHILD_BEFORE:
+    p1 = va_arg(ap, prop_t *);
+    p2 = va_arg(ap, prop_t *);
+    cloner_add(gc, p1, p2);
+    break;
+
+  case PROP_DEL_CHILD:
+    cloner_del(gc, va_arg(ap, prop_t *));
+    break;
+
+  case PROP_SET_DIR:
+  case PROP_SET_VOID:
+    break;
+
+  default:
+    fprintf(stderr, 
+	    "gu_home_sources(): Can not handle event %d, aborting()\n", event);
+    abort();
+  }
+}
+
+
+
+
