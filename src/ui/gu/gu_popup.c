@@ -199,15 +199,15 @@ popup_create_auth(gtk_ui_t *gu, prop_t *p)
 
   /* Action buttons */
 
-  hbox = gtk_hbox_new(FALSE, 1);
+  hbox = gtk_hbutton_box_new();
   gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
 
   w = gtk_button_new_from_stock(GTK_STOCK_OK);
-  gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
+  gtk_container_add(GTK_CONTAINER(hbox), w);
   g_signal_connect(G_OBJECT(w), "clicked", G_CALLBACK(auth_ok), pop);
 
   w = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-  gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
+  gtk_container_add(GTK_CONTAINER(hbox), w);
   g_signal_connect(G_OBJECT(w), "clicked", G_CALLBACK(auth_cancel), pop);
 
   gtk_widget_show_all(win);
