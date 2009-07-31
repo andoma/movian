@@ -21,6 +21,13 @@
  *
  * Interface is built from MainMenu.xib
  *
+ * TODO:
+ * refresh rate in glw
+ * aspect not used
+ * core video
+ * unicode wide char input buf
+ * double click fullscreen
+ * display sleep? use better inhibiti
  */
 
 #import <Cocoa/Cocoa.h>
@@ -37,7 +44,7 @@
 #include "navigator.h"
 #include "glw_video.h"
 #include "ui/keymapper.h"
-#include "strtab.h"
+#include "misc/strtab.h"
 
 
 typedef struct glw_cocoa {  
@@ -47,9 +54,7 @@ typedef struct glw_cocoa {
   ui_t *ui;
   
   int glready; /* prepareOpenGL has been run */
-  char *config_name;  
-  int running;
-  int retcode;
+  char *config_name;
   int primary;
   
   glw_t *universe;
@@ -180,6 +185,17 @@ refresh_rate()
   return rate;
 }
 
+static CVReturn
+MyDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeStamp* now,
+                      const CVTimeStamp* outputTime, CVOptionFlags flagsIn,
+                      CVOptionFlags* flagsOut, void* displayLinkContext)
+{
+  //printf("dispalylinkcb context=%p\n", displayLinkContext);
+  [(GLWGLView*)displayLinkContext glwRender];
+  //printf("dispalylinkcb context=%p bla\n", displayLinkContext);
+  //glFlush();
+  return kCVReturnSuccess;
+}
 
 @implementation GLWGLView
 
@@ -240,7 +256,7 @@ refresh_rate()
   pixelFormat = nil;
   
   if(fullScreenContext == nil) {
-    TRACE(TRACE_ERROR, "OpenGL", "failed to create fullscreen context");
+    TRACE(TRACE_ERROR, "Cocoa", "failed to create fullscreen context");
     return;
   }
   
@@ -248,11 +264,13 @@ refresh_rate()
   if(err != CGDisplayNoErr) {
     [fullScreenContext release];
     fullScreenContext = nil;
-    TRACE(TRACE_ERROR, "OpenGL", "CGCaptureAllDisplays failed");
+    TRACE(TRACE_ERROR, "Cocoa", "CGCaptureAllDisplays failed");
     return;
   }
 
-  [self glwWindowedTimerStop];
+  CVDisplayLinkStop(displayLink);
+  
+  //[self glwWindowedTimerStop];
     
   /* go fullscreen and make switch to new gl context */
   [fullScreenContext setFullScreen];
@@ -346,8 +364,10 @@ refresh_rate()
   [[self window] setAcceptsMouseMovedEvents:YES];
   /* make sure window is focused when coming back */
   [[self window] makeKeyAndOrderFront:nil];
-  
-  [self glwWindowedTimerStart];
+
+  CVDisplayLinkStop(displayLink);
+
+//  [self glwWindowedTimerStart];
 }
 
 - (void)glwResize:(int)width height:(int)height {
@@ -360,6 +380,9 @@ refresh_rate()
   gcocoa.aspect_ratio = (float)width / (float)height;
   
   glViewport(0, 0, width, height);
+  
+  //[self glwRender];
+  //glFlush();
 }
 
 - (void)glwInit {
@@ -371,6 +394,8 @@ refresh_rate()
 }
 
 - (void)glwRender {
+  //printf("glwRender\n");
+  
   if(gcocoa.font_size != gcocoa.want_font_size) {
     gcocoa.font_size = gcocoa.want_font_size;
     glw_lock(&gcocoa.gr);
@@ -390,22 +415,26 @@ refresh_rate()
       return;
     }
   }
-
+  
   glw_rctx_t rc;
   
   glw_lock(&gcocoa.gr);
   
   glw_reaper0(&gcocoa.gr);
+
+  [[self openGLContext] makeCurrentContext];
   
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
   
   memset(&rc, 0, sizeof(rc));
+  
   rc.rc_size_x = gcocoa.window_width;
   rc.rc_size_y = gcocoa.window_height;
   rc.rc_fullscreen = 1;
   glw_layout0(gcocoa.gr.gr_universe, &rc);
   
   glMatrixMode(GL_PROJECTION);
+  
   glLoadIdentity();
   gluPerspective(45, 1.0, 1.0, 60.0);
   
@@ -419,7 +448,9 @@ refresh_rate()
   rc.rc_alpha = 1.0f;
   glw_render0(gcocoa.gr.gr_universe, &rc);
     
-  glw_unlock(&gcocoa.gr);
+  glw_unlock(&gcocoa.gr);  
+  
+  [[self openGLContext] flushBuffer];
 }
 
 - (void)glwWindowedTimerStart {
@@ -569,15 +600,19 @@ refresh_rate()
 - (void)insertText:(id)aString {
   int i;
   NSString *s = aString;
-  event_t *e = NULL;
-  char buf[2] = {0};
 
   [self compositeClear];
   
   for(i = 0; i < [s length]; i++) {
-    buf[0] = [s characterAtIndex:i];
-    e = event_create_unicode(buf[0]);
+    char buf[32] = {0};
+    unichar uc = [s characterAtIndex:i];
+    NSString *su = [[NSString alloc] initWithCharacters:&uc length:1];
+    event_t *e = NULL;
+    
+    e = event_create_unicode(uc);
+    [su getCString:buf maxLength:sizeof(buf) encoding:NSUTF8StringEncoding];
     ui_dispatch_event(e, buf, &gcocoa.gr.gr_uii);
+    [su release];
   }
 }
 
@@ -664,6 +699,8 @@ refresh_rate()
   const char *theme_path = SHOWTIME_GLW_DEFAULT_THEME_URL;
   GLint v = 1;
   
+  printf("preparegl\n");
+  
   gcocoa.glready = 1;
 
   timer_cursor = nil;
@@ -689,12 +726,23 @@ refresh_rate()
 
   display_settings_init(&gcocoa);
   
-  [self glwWindowedTimerStart];  
+  CVDisplayLinkCreateWithActiveCGDisplays(&displayLink);
+  CVDisplayLinkSetOutputCallback(displayLink, MyDisplayLinkCallback, self);
+  CGLContextObj cglContext = [[self openGLContext] CGLContextObj];
+  CGLPixelFormatObj cglPixelFormat = [[self pixelFormat] CGLPixelFormatObj];
+  CVDisplayLinkSetCurrentCGDisplayFromOpenGLContext(displayLink, cglContext,
+                                                    cglPixelFormat);
+  CVDisplayLinkStart(displayLink);
+  
+  
+  //[self glwWindowedTimerStart];  
 }
 
 - (void)drawRect:(NSRect)rect {
+  //printf("drawRect\n");
+  /*
   [self glwRender];
-  [[self openGLContext] flushBuffer];
+  [[self openGLContext] flushBuffer];*/
 }
 
 - initWithFrame:(NSRect)frameRect {
@@ -713,11 +761,13 @@ refresh_rate()
     0
   };
   
+  printf("initwithfram\n");
+  
   NSOpenGLPixelFormat* pixelFormat = [[NSOpenGLPixelFormat alloc]
                                       initWithAttributes:attrs];
   
   if(!pixelFormat) {
-    TRACE(TRACE_ERROR, "OpenGL", "failed to alloc hardware pixelformat");
+    TRACE(TRACE_ERROR, "Cocoa", "failed to alloc hardware pixelformat");
     /* no reason to continue */
     exit(1);
   }
