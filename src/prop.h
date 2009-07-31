@@ -399,16 +399,10 @@ prop_t **prop_get_ancestors(prop_t *p);
 
 void prop_ancestors_unref(prop_t **r);
 
-prop_t *prop_get_by_subscription(prop_sub_t *s);
-
-prop_t *prop_get_by_subscription_canonical(prop_sub_t *s);
-
 prop_t *prop_get_by_name(const char **name, int follow_symlinks, ...)
      __attribute__((__sentinel__(0)));
 
 void prop_request_new_child(prop_t *p);
-
-void prop_request_new_child_by_subscription(prop_sub_t *s);
 
 void prop_request_delete_child_by_subscription(prop_sub_t *s);
 

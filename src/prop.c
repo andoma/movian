@@ -2021,47 +2021,6 @@ prop_ancestors_unref(prop_t **r)
  *
  */
 prop_t *
-prop_get_by_subscription(prop_sub_t *s)
-{
-  prop_t *p;
-
-  hts_mutex_lock(&prop_mutex);
-
-  p = s->hps_value_prop;
-  if(p != NULL)
-    prop_ref_inc(p);
-
-  hts_mutex_unlock(&prop_mutex);
-
-  return p;
-}
-
-
-
-/**
- *
- */
-prop_t *
-prop_get_by_subscription_canonical(prop_sub_t *s)
-{
-  prop_t *p;
-
-  hts_mutex_lock(&prop_mutex);
-
-  p = s->hps_canonical_prop;
-  if(p != NULL)
-    prop_ref_inc(p);
-
-  hts_mutex_unlock(&prop_mutex);
-
-  return p;
-}
-
-
-/**
- *
- */
-prop_t *
 prop_get_by_names(prop_t *p, ...)
 {
   prop_t *c = NULL;
