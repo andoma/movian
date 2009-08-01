@@ -164,6 +164,7 @@ home_set_icon(void *opaque, const char *str)
   if(str == NULL)
     return;
   
+  gtk_misc_set_padding(GTK_MISC(opaque), 0, 0);
   gu_pixbuf_async_set(str, 72, -1, GTK_OBJECT(opaque));
 }
 
@@ -186,7 +187,6 @@ source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before)
 
   /* Icon */
   w = gtk_image_new();
-  gtk_misc_set_alignment(GTK_MISC(w), 0.5, 0.0);
   gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, TRUE, 5);
 
   sub = prop_subscribe(0,
@@ -197,6 +197,12 @@ source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before)
 		       NULL);
 
   gu_unsubscribe_on_destroy(GTK_OBJECT(w), sub);
+
+  gtk_image_set_from_stock(GTK_IMAGE(w), GTK_STOCK_DIRECTORY,
+			   GTK_ICON_SIZE_DIALOG);
+
+  gtk_misc_set_alignment(GTK_MISC(w), 0.5, 0.5);
+  gtk_misc_set_padding(GTK_MISC(w), 12, 0);
 
   /* vbox */
   vbox = gtk_vbox_new(FALSE, 1);
