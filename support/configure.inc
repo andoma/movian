@@ -41,6 +41,7 @@ CONFIG_LIST="
  embedded_resources
  coreaudio
  dbus
+ avahi
 "
 
 die() {

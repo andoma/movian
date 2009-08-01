@@ -81,6 +81,17 @@ SRCS += src/fileaccess/fileaccess.c \
 	src/fileaccess/fa_bundle.c \
 
 #
+# Service Discovery
+#
+
+SRCS 			+= src/sd/sd.c \
+
+SRCS-$(CONFIG_AVAHI) 	+= src/sd/avahi.c \
+
+${BUILDDIR}/src/sd/avahi.o : CFLAGS = \
+ $(shell pkg-config --cflags avahi-client) -Wall -Werror
+
+#
 # Networking
 #
 SRCS += src/networking/net_common.c \

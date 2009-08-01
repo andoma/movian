@@ -33,11 +33,11 @@
 #include "api.h"
 #include "keyring.h"
 #include "misc/ptrvec.h"
+#include "sd/sd.h"
 
 #include <dlfcn.h>
 #include "apifunctions.h"
 #include "spotify_app_key.h"
-
 
 /**
  *
@@ -2140,8 +2140,7 @@ be_spotify_init(void)
 {
   void *h;
   const char *sym;
-  prop_t *p, *links, *link;
-  extern prop_t *global_sources;
+  prop_t *p;
 
   h = dlopen("libspotify.so", RTLD_LAZY);
   if(h == NULL) {
@@ -2170,30 +2169,14 @@ be_spotify_init(void)
 
   /* Register as a global source */
 
-  p = prop_create(NULL, "spotify");
-  
-  prop_set_string(prop_create(p, "title"), "Spotify");
-
-  prop_status = prop_create(p, "status");
+  p = sd_add_service("spotify", "Spotify", 
+		     "http://developer.spotify.com/wp-content/uploads_dev/2009/04/spotify-core-logo-96x96.png",
+		     &prop_status);
 
   prop_set_string(prop_status, "Not logged in");
 
-  prop_set_string(prop_create(p, "icon"), 
-		  "http://developer.spotify.com/wp-content/uploads_dev/2009/04/spotify-core-logo-96x96.png");
-
-  links = prop_create(p, "links");
-
-  link = prop_create(links, NULL);
-  prop_set_string(prop_create(link, "title"), "Playlists");
-  prop_set_string(prop_create(link, "url"), "spotify:playlists");
-
-  link = prop_create(links, NULL);
-  prop_set_string(prop_create(link, "title"), "New album releases");
-  prop_set_string(prop_create(link, "url"), "spotify:search:tag:new");
-
-  if(prop_set_parent(p, global_sources))
-    abort();
-
+  sd_add_link(p, "Playlists", "spotify:playlists");
+  sd_add_link(p, "New album releases", "spotify:search:tag:new");
   return 0;
 }
 
