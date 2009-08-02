@@ -47,6 +47,8 @@ typedef struct source {
   gu_cloner_t s_links;
 
   GtkWidget *s_bbox;
+  GtkWidget *s_hbox;
+  GtkWidget *s_separator;
 
   prop_sub_t *s_linksub;
 } source_t;
@@ -67,20 +69,6 @@ typedef struct link {
 
 } link_t;
 
-
-/**
- *
- */
-static void
-link_destroy(GtkObject *object, gpointer opaque)
-{
-  link_t *l = opaque;
-
-  prop_unsubscribe(l->l_title_sub);
-  prop_unsubscribe(l->l_url_sub);
-  abort(); // TAILQ_REMOVE
-  free(l);
-}
 
 /**
  *
@@ -117,9 +105,6 @@ link_add(gtk_ui_t *gu, source_t *s, prop_t *p, link_t *l, source_t *before)
   
   gtk_box_pack_start(GTK_BOX(s->s_bbox), l->l_btn, FALSE, FALSE, 0);
 
-  g_signal_connect(GTK_OBJECT(l->l_btn), 
-		   "destroy", G_CALLBACK(link_destroy), l);
-
   g_signal_connect(GTK_OBJECT(l->l_btn),
 		   "clicked", G_CALLBACK(link_clicked), l);
 
@@ -151,7 +136,11 @@ link_add(gtk_ui_t *gu, source_t *s, prop_t *p, link_t *l, source_t *before)
 static void
 link_del(gtk_ui_t *gu, source_t *s, link_t *l)
 {
-  
+  prop_unsubscribe(l->l_title_sub);
+  prop_unsubscribe(l->l_url_sub);
+
+  gtk_widget_destroy(l->l_btn);
+  free(l->l_url);
 }
 
 
@@ -176,18 +165,18 @@ static void
 source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before)
 {
   prop_sub_t *sub;
-  GtkWidget *hbox, *w, *vbox;
+  GtkWidget *w, *vbox;
 
-  hbox = gtk_hbox_new(FALSE, 1);
-  gtk_box_pack_start(GTK_BOX(h->h_sourcebox), hbox, FALSE, TRUE, 5);
+  s->s_hbox = gtk_hbox_new(FALSE, 1);
+  gtk_box_pack_start(GTK_BOX(h->h_sourcebox), s->s_hbox, FALSE, TRUE, 5);
 
-  w = gtk_hseparator_new();
-  gtk_box_pack_start(GTK_BOX(h->h_sourcebox), w, FALSE, TRUE, 0);
-  gtk_widget_show(w);
+  s->s_separator = gtk_hseparator_new();
+  gtk_box_pack_start(GTK_BOX(h->h_sourcebox), s->s_separator, FALSE, TRUE, 0);
+  gtk_widget_show(s->s_separator);
 
   /* Icon */
   w = gtk_image_new();
-  gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, TRUE, 5);
+  gtk_box_pack_start(GTK_BOX(s->s_hbox), w, FALSE, TRUE, 5);
 
   sub = prop_subscribe(0,
 		       PROP_TAG_NAME("self", "icon"),
@@ -206,7 +195,7 @@ source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before)
 
   /* vbox */
   vbox = gtk_vbox_new(FALSE, 1);
-  gtk_box_pack_start(GTK_BOX(hbox), vbox, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(s->s_hbox), vbox, TRUE, TRUE, 0);
 
   /* Title */
   w = gtk_label_new("");
@@ -254,18 +243,16 @@ source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before)
 
   gu_cloner_init(&s->s_links, s, link_add, link_del, sizeof(link_t), gu);
 
-  sub =
-    prop_subscribe(PROP_SUB_DEBUG,
+  s->s_linksub =
+    prop_subscribe(0,
 		   PROP_TAG_NAME("self", "links"),
 		   PROP_TAG_CALLBACK, gu_cloner_subscription, &s->s_links,
 		   PROP_TAG_COURIER, h->h_gu->gu_pc, 
 		   PROP_TAG_NAMED_ROOT, p, "self",
 		   NULL);
 
-  gu_unsubscribe_on_destroy(GTK_OBJECT(s->s_bbox), sub);
-
   /* Finalize */
-  gtk_widget_show_all(hbox);
+  gtk_widget_show_all(s->s_hbox);
 }
 
 
@@ -275,9 +262,10 @@ source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before)
 static void
 source_del(gtk_ui_t *gu, home_t *h, source_t *s)
 {
-  
-  
- 
+  prop_unsubscribe(s->s_linksub);
+  gu_cloner_destroy(&s->s_links);
+  gtk_widget_destroy(s->s_hbox);
+  gtk_widget_destroy(s->s_separator);
 }
 
 
@@ -290,6 +278,9 @@ home_destroy(GtkObject *object, gpointer opaque)
   home_t *h = opaque;
 
   prop_unsubscribe(h->h_src_sub);
+
+  gu_cloner_destroy(&h->h_sources);
+
   free(h);
 }
 
