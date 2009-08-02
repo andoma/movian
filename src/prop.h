@@ -167,6 +167,7 @@ typedef struct prop {
    */
   uint8_t hp_flags;
 #define PROP_CLIPPED_VALUE 0x1
+#define PROP_SORTED_CHILDS 0x2
 
   /**
    * Actual payload
@@ -313,10 +314,10 @@ prop_sub_t *prop_subscribe(int flags, ...) __attribute__((__sentinel__(0)));
 void prop_unsubscribe(prop_sub_t *s);
 
 prop_t *prop_create_ex(prop_t *parent, const char *name,
-		       prop_sub_t *skipme)
+		       prop_sub_t *skipme, int flags)
      __attribute__ ((malloc));
 
-#define prop_create(parent, name) prop_create_ex(parent, name, NULL)
+#define prop_create(parent, name) prop_create_ex(parent, name, NULL, 0)
 
 void prop_destroy(prop_t *p);
 
