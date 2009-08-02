@@ -104,7 +104,8 @@ void gu_subscription_set_sensitivity(void *opaque, int on);
 void gu_unsubscribe_on_destroy(GtkObject *o, prop_sub_t *s);
 
 typedef void (gu_cloner_add_func_t)(gtk_ui_t *gu, void *opaque,
-				    prop_t *p, void *node, void *before);
+				    prop_t *p, void *node, void *before,
+				    int position);
 
 typedef void (gu_cloner_del_func_t)(gtk_ui_t *gu, void *opaque, void *node);
 
@@ -116,20 +117,22 @@ typedef struct gu_cloner {
   gu_cloner_del_func_t *gc_del;
   size_t gc_nodesize;
   gtk_ui_t *gc_gu;
-
   struct gu_cloner_node_queue gc_nodes;
-
+  int gc_flags;
 } gu_cloner_t;
 
 
 typedef struct gu_cloner_node {
   TAILQ_ENTRY(gu_cloner_node) gcn_link;
   prop_t *gcn_prop;
-
+  int gcn_position;
 } gu_cloner_node_t;
 
 void gu_cloner_init(gu_cloner_t *gc, void *opaque, void *addfunc,
-		    void *delfunc, size_t nodesize, gtk_ui_t *gu);
+		    void *delfunc, size_t nodesize, gtk_ui_t *gu,
+		    int flags);
+
+#define GU_CLONER_TRACK_POSITION 0x1
 
 void gu_cloner_subscription(void *opaque, prop_event_t event, ...);
 

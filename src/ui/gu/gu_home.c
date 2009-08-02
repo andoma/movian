@@ -162,16 +162,20 @@ home_set_icon(void *opaque, const char *str)
  *
  */
 static void
-source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before)
+source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before,
+	   int position)
 {
   prop_sub_t *sub;
   GtkWidget *w, *vbox;
 
   s->s_hbox = gtk_hbox_new(FALSE, 1);
   gtk_box_pack_start(GTK_BOX(h->h_sourcebox), s->s_hbox, FALSE, TRUE, 5);
+  gtk_box_reorder_child(GTK_BOX(h->h_sourcebox), s->s_hbox, position * 2);
 
   s->s_separator = gtk_hseparator_new();
   gtk_box_pack_start(GTK_BOX(h->h_sourcebox), s->s_separator, FALSE, TRUE, 0);
+  gtk_box_reorder_child(GTK_BOX(h->h_sourcebox), s->s_separator, 
+			position * 2 + 1);
   gtk_widget_show(s->s_separator);
 
   /* Icon */
@@ -241,7 +245,8 @@ source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before)
   s->s_bbox = gtk_hbox_new(FALSE, 1);
   gtk_box_pack_start(GTK_BOX(vbox), s->s_bbox, FALSE, FALSE, 0);
 
-  gu_cloner_init(&s->s_links, s, link_add, link_del, sizeof(link_t), gu);
+  gu_cloner_init(&s->s_links, s, link_add, link_del, sizeof(link_t), gu,
+		 GU_CLONER_TRACK_POSITION);
 
   s->s_linksub =
     prop_subscribe(0,
@@ -309,7 +314,7 @@ gu_home_create(gu_nav_page_t *gnp)
 
 
   gu_cloner_init(&h->h_sources, h, source_add, source_del, sizeof(source_t),
-		 h->h_gu);
+		 h->h_gu, GU_CLONER_TRACK_POSITION);
 
   h->h_src_sub =
     prop_subscribe(0,

@@ -89,7 +89,8 @@ gu_cloner_init(gu_cloner_t *gc,
 	       void *addfunc,
 	       void *delfunc,
 	       size_t nodesize,
-	       gtk_ui_t *gu)
+	       gtk_ui_t *gu,
+	       int flags)
 {
   assert(nodesize >= sizeof(gu_cloner_node_t));
 
@@ -99,6 +100,7 @@ gu_cloner_init(gu_cloner_t *gc,
   gc->gc_nodesize = nodesize;
   gc->gc_gu = gu;
   TAILQ_INIT(&gc->gc_nodes);
+  gc->gc_flags = flags;
 }
 
 /**
@@ -121,7 +123,9 @@ cloner_node_find(gu_cloner_t *gc, prop_t *p)
 static void
 cloner_add(gu_cloner_t *gc, prop_t *p, prop_t *before)
 {
-  gu_cloner_node_t *gcn, *b;
+  gu_cloner_node_t *gcn, *b, *x;
+  int pos;
+
   gcn = calloc(1, gc->gc_nodesize);
   gcn->gcn_prop = p;
   prop_ref_inc(p);
@@ -134,7 +138,15 @@ cloner_add(gu_cloner_t *gc, prop_t *p, prop_t *before)
     TAILQ_INSERT_BEFORE(b, gcn, gcn_link);
   }
 
-  gc->gc_add(gc->gc_gu, gc->gc_opaque, p, gcn, b);
+  if(gc->gc_flags & GU_CLONER_TRACK_POSITION) {
+
+    x = TAILQ_PREV(gcn, gu_cloner_node_queue, gcn_link);
+    pos = gcn->gcn_position = x != NULL ? x->gcn_position + 1 : 0;
+    x = gcn;
+    while((x = TAILQ_NEXT(x, gcn_link)) != NULL)
+      x->gcn_position = ++pos;
+  }
+  gc->gc_add(gc->gc_gu, gc->gc_opaque, p, gcn, b, gcn->gcn_position);
 }
 
 
@@ -142,13 +154,24 @@ cloner_add(gu_cloner_t *gc, prop_t *p, prop_t *before)
  *
  */
 static void
-cloner_del(gu_cloner_t *gc, gu_cloner_node_t *gcn)
+cloner_del(gu_cloner_t *gc, gu_cloner_node_t *gcn, int updatepos)
 {
+  int pos = gcn->gcn_position;
+  gu_cloner_node_t *x = gcn;
+
   gc->gc_del(gc->gc_gu, gc->gc_opaque, gcn);
   
   prop_ref_dec(gcn->gcn_prop);
+
+  if(updatepos) {
+    while((x = TAILQ_NEXT(x, gcn_link)) != NULL)
+      x->gcn_position = pos++;
+  }
+
   TAILQ_REMOVE(&gc->gc_nodes, gcn, gcn_link);
   free(gcn);
+
+
 }
 
 
@@ -161,7 +184,7 @@ gu_cloner_destroy(gu_cloner_t *gc)
   gu_cloner_node_t *gcn;
 
   while((gcn = TAILQ_FIRST(&gc->gc_nodes)) != NULL)
-    cloner_del(gc, gcn);
+    cloner_del(gc, gcn, 0);
 }
 
 /**
@@ -188,7 +211,8 @@ gu_cloner_subscription(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_DEL_CHILD:
-    cloner_del(gc, cloner_node_find(gc, va_arg(ap, prop_t *)));
+    cloner_del(gc, cloner_node_find(gc, va_arg(ap, prop_t *)),
+	       !!(gc->gc_flags & GU_CLONER_TRACK_POSITION));
     break;
 
   case PROP_SET_DIR:
