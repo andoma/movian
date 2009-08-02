@@ -142,10 +142,8 @@ cloner_add(gu_cloner_t *gc, prop_t *p, prop_t *before)
  *
  */
 static void
-cloner_del(gu_cloner_t *gc, prop_t *p)
+cloner_del(gu_cloner_t *gc, gu_cloner_node_t *gcn)
 {
-  gu_cloner_node_t *gcn = cloner_node_find(gc, p);
-
   gc->gc_del(gc->gc_gu, gc->gc_opaque, gcn);
   
   prop_ref_dec(gcn->gcn_prop);
@@ -153,6 +151,18 @@ cloner_del(gu_cloner_t *gc, prop_t *p)
   free(gcn);
 }
 
+
+/**
+ *
+ */
+void
+gu_cloner_destroy(gu_cloner_t *gc)
+{
+  gu_cloner_node_t *gcn;
+
+  while((gcn = TAILQ_FIRST(&gc->gc_nodes)) != NULL)
+    cloner_del(gc, gcn);
+}
 
 /**
  *
@@ -178,7 +188,7 @@ gu_cloner_subscription(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_DEL_CHILD:
-    cloner_del(gc, va_arg(ap, prop_t *));
+    cloner_del(gc, cloner_node_find(gc, va_arg(ap, prop_t *)));
     break;
 
   case PROP_SET_DIR:

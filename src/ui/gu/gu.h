@@ -133,6 +133,8 @@ void gu_cloner_init(gu_cloner_t *gc, void *opaque, void *addfunc,
 
 void gu_cloner_subscription(void *opaque, prop_event_t event, ...);
 
+void gu_cloner_destroy(gu_cloner_t *gc);
+
 
 /**
  * gu_pixbuf.c
