@@ -784,13 +784,48 @@ prop_make_dir(prop_t *p, prop_sub_t *skipme, const char *origin)
 }
 
 
+/**
+ *
+ */
+static int 
+prop_compar(prop_t *a, prop_t *b)
+{
+  return strcmp(a->hp_name ?: "", b->hp_name ?: "");
+}
+
+
+/**
+ *
+ */
+static void
+prop_insert(prop_t *p, prop_t *parent, prop_t *before, prop_sub_t *skipme)
+{
+  prop_t *n;
+
+  if(parent->hp_flags & PROP_SORTED_CHILDS) {
+    TAILQ_INSERT_SORTED(&parent->hp_childs, p, hp_parent_link, prop_compar);
+    n = TAILQ_NEXT(p, hp_parent_link);
+
+    if(n == NULL) {
+      prop_notify_child(p, parent, PROP_ADD_CHILD, skipme, 0);
+    } else {
+      prop_notify_child2(p, parent, n, PROP_ADD_CHILD_BEFORE, skipme, 0);
+    }
+  } else if(before != NULL) {
+    TAILQ_INSERT_BEFORE(before, p, hp_parent_link);
+    prop_notify_child2(p, parent, before, PROP_ADD_CHILD_BEFORE, skipme, 0);
+  } else {
+    TAILQ_INSERT_TAIL(&parent->hp_childs, p, hp_parent_link);
+    prop_notify_child(p, parent, PROP_ADD_CHILD, skipme, 0);
+  }
+}
 
 
 /**
  *
  */
 static prop_t *
-prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme)
+prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, int flags)
 {
   prop_t *hp;
 
@@ -808,7 +843,7 @@ prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme)
   }
 
   hp = malloc(sizeof(prop_t));
-  hp->hp_flags = 0;
+  hp->hp_flags = flags;
   hp->hp_originator = NULL;
   hp->hp_refcount = 1;
   hp->hp_type = PROP_VOID;
@@ -820,10 +855,8 @@ prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme)
 
   hp->hp_parent = parent;
 
-  if(parent != NULL) {
-    TAILQ_INSERT_TAIL(&parent->hp_childs, hp, hp_parent_link);
-    prop_notify_child(hp, parent, PROP_ADD_CHILD, skipme, 0);
-  }
+  if(parent != NULL)
+    prop_insert(hp, parent, NULL, skipme);
 
   return hp;
 }
@@ -834,17 +867,17 @@ prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme)
  *
  */
 prop_t *
-prop_create_ex(prop_t *parent, const char *name, prop_sub_t *skipme)
+prop_create_ex(prop_t *parent, const char *name, prop_sub_t *skipme, int flags)
 {
   prop_t *p;
 
   if(parent == NULL)
-    return prop_create0(NULL, name, skipme);
+    return prop_create0(NULL, name, skipme, flags);
 
   hts_mutex_lock(&prop_mutex);
   
   if(parent->hp_type != PROP_ZOMBIE)
-    p = prop_create0(parent, name, skipme);
+    p = prop_create0(parent, name, skipme, flags);
   else
     p = NULL;
 
@@ -874,14 +907,7 @@ prop_set_parent_ex(prop_t *p, prop_t *parent, prop_t *before,
 
   p->hp_parent = parent;
 
-  if(before != NULL) {
-    TAILQ_INSERT_BEFORE(before, p, hp_parent_link);
-    prop_notify_child2(p, parent, before, PROP_ADD_CHILD_BEFORE, skipme, 0);
-  } else {
-    TAILQ_INSERT_TAIL(&parent->hp_childs, p, hp_parent_link);
-    prop_notify_child(p, parent, PROP_ADD_CHILD, skipme, 0);
-  }
-
+  prop_insert(p, parent, before, skipme);
   hts_mutex_unlock(&prop_mutex);
   return 0;
 }
@@ -1026,7 +1052,7 @@ prop_subfind(prop_t *p, const char **name, int follow_symlinks)
       if(c->hp_name != NULL && !strcmp(c->hp_name, name[0]))
 	break;
     }
-    p = c ?: prop_create0(p, name[0], NULL);
+    p = c ?: prop_create0(p, name[0], NULL, 0);
     name++;
   }
 
@@ -1360,7 +1386,7 @@ void
 prop_init(void)
 {
   hts_mutex_init(&prop_mutex);
-  prop_global = prop_create0(NULL, "global", NULL);
+  prop_global = prop_create0(NULL, "global", NULL, 0);
 
   global_courier = prop_courier_create(NULL);
 }

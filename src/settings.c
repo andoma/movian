@@ -282,7 +282,7 @@ settings_multiopt_add_opt(setting_t *parent, const char *id, const char *title,
 			  int selected)
 {
   prop_t *r = parent->s_prop;
-  prop_t *opts = prop_create_ex(r, "options", parent->s_sub);
+  prop_t *opts = prop_create_ex(r, "options", parent->s_sub, 0);
   prop_t *o = prop_create(opts, id);
 
   prop_set_string(prop_create(o, "title"), title);
