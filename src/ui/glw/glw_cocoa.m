@@ -530,9 +530,15 @@ refresh_rate()
   return as;
 }
 
+#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
 - (long)conversationIdentifier {
   return (long)self;
 }
+#else
+- (NSInteger)conversationIdentifier {
+  return (NSInteger)self;
+}
+#endif
 
 - (void)doCommandBySelector:(SEL)aSelector {  
 }
