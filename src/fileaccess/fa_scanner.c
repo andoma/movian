@@ -304,14 +304,14 @@ meta_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
 /**
  *
  */
-static void
+static int
 scannercore(scanner_t *s)
 {
   fa_dir_entry_t *fde;
   fa_dir_t *fd;
 
   if((s->s_fd = fa_scandir(s->s_url, NULL, 0)) == NULL) 
-    return;
+    return -1;
 
   fd = s->s_fd;
 
@@ -322,11 +322,13 @@ scannercore(scanner_t *s)
   /* Add filename and type */
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
     if(s->s_stop)
-      return;
+      return 0;
     add_prop(fde, s->s_nodes, NULL);
   }
 
   meta_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
+  
+  return 0;
 }
 
 
@@ -414,12 +416,11 @@ scanner(void *aux)
 
   s->s_ref = fa_reference(s->s_url);
   
-  scannercore(s);
-
-  fa_notify(s->s_url, s, scanner_notification, scanner_checkstop);
-
-  fa_dir_free(s->s_fd);
-
+  if(scannercore(s) != -1) {
+    fa_notify(s->s_url, s, scanner_notification, scanner_checkstop);
+    fa_dir_free(s->s_fd);
+  }
+  
   free(s->s_url);
   prop_ref_dec(s->s_root);
   prop_ref_dec(s->s_nodes);
