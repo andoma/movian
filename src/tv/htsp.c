@@ -772,8 +772,6 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
     return NULL;
   }
 
-  htsmsg_print(m);
-
   if((err = htsmsg_get_str(m, "error")) != NULL) {
     snprintf(errbuf, errlen, "From server: %s", err);
     htsmsg_destroy(m);
