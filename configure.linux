@@ -69,6 +69,7 @@ enable libasound
 enable libpulse
 enable libexif
 enable lirc
+enable gu
 enable avahi
 
 for opt do
