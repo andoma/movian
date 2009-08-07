@@ -178,9 +178,6 @@ echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework OpenGL -framework GLUT"
 # CoreAudio
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreAudio"
 
-# CoreVideo
-echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreVideo"
-
 # Carbon, Remote Control Wrapper uses it
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Carbon"
 
