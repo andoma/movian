@@ -28,16 +28,24 @@
 //  Copyright 2006 martinkahr.com. All rights reserved.
 //
 
-#import "ShowtimeMainController.h"
 #import "AppleRemote.h"
 #import "KeyspanFrontRowControl.h"
 #import "GlobalKeyboardDevice.h"
 #import "RemoteControlContainer.h"
 #import "MultiClickRemoteBehavior.h"
 
-#include "event.h"
 #include "showtime.h"
+#include "event.h"
+#include "ui/ui.h"
 
+
+@interface ShowtimeMainController : NSObject {
+  RemoteControl* remoteControl;
+  MultiClickRemoteBehavior* remoteControlBehavior;
+  uii_t *uii;
+}
+
+@end
 
 @implementation ShowtimeMainController
 
