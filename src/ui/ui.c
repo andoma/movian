@@ -59,6 +59,7 @@ ui_register(void)
  LIST_INSERT_HEAD(&uis, &name ## _ui, ui_link);\
 }while(0)
 
+  
 #ifdef CONFIG_DBUS
   link_ui(dbus);
 #endif
@@ -66,12 +67,18 @@ ui_register(void)
   link_ui(lircd);
   link_ui(imonpad);
 #endif
+#ifdef CONFIG_APPLEREMOTE
+  link_ui(appleremote);
+#endif
 #ifdef CONFIG_GU
   link_ui(gu);
 #endif
 #ifdef CONFIG_GLW
   link_ui(glw);
 #endif
+
+  
+  
 }
 
 /**

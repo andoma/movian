@@ -42,6 +42,7 @@ CONFIG_LIST="
  coreaudio
  dbus
  avahi
+ appleremote
 "
 
 die() {

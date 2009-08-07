@@ -277,6 +277,20 @@ ${BUILDDIR}/src/ui/dbus/%.o : CFLAGS =  $(shell pkg-config --cflags dbus-1) \
 -Wall -Werror -Wmissing-prototypes -Wno-cast-qual
 
 
+#
+# Apple remote and keyspan front row remote
+#
+SRCS-$(CONFIG_APPLEREMOTE) += \
+			src/ui/appleremote/AppleRemote.m \
+			src/ui/appleremote/GlobalKeyboardDevice.m \
+			src/ui/appleremote/HIDRemoteControlDevice.m \
+			src/ui/appleremote/KeyspanFrontRowControl.m \
+			src/ui/appleremote/MultiClickRemoteBehavior.m \
+			src/ui/appleremote/RemoteControl.m \
+			src/ui/appleremote/RemoteControlContainer.m \
+			src/ui/appleremote/ShowtimeMainController.m
+
+
 # Various transformations
 SRCS  += $(SRCS-yes)
 DLIBS += $(DLIBS-yes)
