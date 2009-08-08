@@ -83,7 +83,7 @@ typedef struct glw_x11 {
 
   setting_t *fullscreen_setting;
 
-  int internal_fullscreen;
+  int fullwindow;
   int autohide_counter;
   
   XIM im;
@@ -719,7 +719,7 @@ layout_draw(glw_x11_t *gx11, float aspect)
   memset(&rc, 0, sizeof(rc));
   rc.rc_size_x = gx11->window_width;
   rc.rc_size_y = gx11->window_height;
-  rc.rc_fullscreen = 1;
+  rc.rc_fullwindow = 1;
   glw_layout0(gx11->gr.gr_universe, &rc);
 
   glMatrixMode(GL_PROJECTION);
@@ -748,7 +748,7 @@ glw_x11_in_fullscreen(void *opaque, prop_event_t event, ...)
   va_list ap;
   va_start(ap, event);
 
-  gx11->internal_fullscreen = event == PROP_SET_INT ? va_arg(ap, int) : 0;
+  gx11->fullwindow = event == PROP_SET_INT ? va_arg(ap, int) : 0;
 }
 
 
@@ -771,7 +771,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
 
   while(1) {
 
-    if(gx11->internal_fullscreen)
+    if(gx11->fullwindow)
       autohide_cursor(gx11);
 
     if(gx11->is_fullscreen != gx11->want_fullscreen) {

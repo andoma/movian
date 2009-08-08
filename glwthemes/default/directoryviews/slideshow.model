@@ -7,7 +7,7 @@ widget(container_z, {
 
   widget(slideshow, {
     
-    delta($ui.forcefullscreen, isVisible());
+    delta($ui.forcefullwindow, isVisible());
 
     .focusable = true;
 

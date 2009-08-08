@@ -70,8 +70,8 @@ typedef struct glw_video {
   int gv_width;
   int gv_height;
 
-  int gv_fullscreen_reported;
-  int gv_fullscreen_check;
+  int gv_fullwindow_reported;
+  int gv_fullwindow_check;
 
 } glw_video_t;
 

@@ -123,7 +123,7 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
     }
 
     if(xs != rc->rc_size_x)
-      rc0.rc_fullscreen = 0;
+      rc0.rc_fullwindow = 0;
 
     c->glw_parent_scale.x = xs / rc->rc_size_x;
     c->glw_parent_scale.y = 1.0;
@@ -243,7 +243,7 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
     }
 
     if(ys != rc->rc_size_y)
-      rc0.rc_fullscreen = 0;
+      rc0.rc_fullwindow = 0;
 
     c->glw_parent_scale.x = 1.0;
     c->glw_parent_scale.y = ys / rc->rc_size_y;

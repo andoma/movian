@@ -142,7 +142,7 @@ glw_init(glw_root_t *gr, int fontsize, const char *theme, ui_t *ui,
   gr->gr_uii.uii_ui = ui;
   gr->gr_uii.uii_prop = prop_create(NULL, "ui");
 
-  gr->gr_fullscreen_req = prop_create(gr->gr_uii.uii_prop, "fullscreen");
+  gr->gr_fullwindow_req = prop_create(gr->gr_uii.uii_prop, "fullwindow");
 
   if(glw_text_bitmap_init(gr, fontsize)) {
     free(gr);

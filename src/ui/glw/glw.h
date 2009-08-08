@@ -259,7 +259,7 @@ typedef struct glw_root {
 
   struct glw_queue gr_destroyer_queue;
 
-  prop_t *gr_fullscreen_req;
+  prop_t *gr_fullwindow_req;
   
   int gr_frameduration;
 
@@ -316,8 +316,8 @@ typedef struct glw_rctx {
 
   float rc_size_x;
   float rc_size_y;
-  int rc_fullscreen;   /* Set as long the context represents the entire
-			  visible screen */
+  int rc_fullwindow;   /* Set as long the context represents the entire
+			  window  */
 
   struct glw_cursor_painter *rc_cursor_painter;
 
