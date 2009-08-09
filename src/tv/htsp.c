@@ -166,6 +166,9 @@ htsp_recv(htsp_connection_t *hc)
     return NULL;
   
   l = (len[0] << 24) | (len[1] << 16) | (len[2] << 8) | len[3];
+  if(l > 16 * 1024 * 1024)
+    return NULL;
+
   buf = malloc(l);
 
   if(tcp_read(fd, buf, l, 1) < 0) {
