@@ -323,7 +323,7 @@ $(OBJDIRS):
 	@mkdir -p $@
 
 ${BUILDDIR}/%.o: %.[cm] ${BUILDDIR}/ffmpeg/install
-	$(CC) -MD $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
+	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
 
 ${BUILDDIR}/ffmpeg/install ffmpeg:
 	cd ${BUILDDIR}/ffmpeg/build && ${MAKE} all
