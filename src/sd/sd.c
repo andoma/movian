@@ -72,7 +72,7 @@ sd_add_service_htsp(service_instance_t *si, const char *name,
  
   if(si->si_root == NULL)
     si->si_root = sd_add_service(si->si_id, name, 
-                                 "http://www.lonelycoder.com/hts/tvheadend/docs/2_4/docresources/tvheadendlogo.png",
+				 "bundle://resources/tvheadend/logo.png",
                                  NULL);
   
   snprintf(url, sizeof(url), "htsp://%s:%d", host, port);

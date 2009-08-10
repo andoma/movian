@@ -91,6 +91,7 @@ SRCS-$(CONFIG_AVAHI) 	+= src/sd/avahi.c \
 ${BUILDDIR}/src/sd/avahi.o : CFLAGS = \
  $(shell pkg-config --cflags avahi-client) -Wall -Werror
 
+BUNDLES += resources/tvheadend
 
 SRCS-$(CONFIG_BONJOUR) 	+= src/sd/bonjour.c
 
@@ -200,7 +201,7 @@ SRCS  += src/tv/htsp.c \
 # Spotify
 #
 SRCS-${CONFIG_SPOTIFY} += src/spotify/spotify.c
-
+BUNDLES-$(CONFIG_SPOTIFY) += resources/spotify
 #
 # GLW user interface
 #
@@ -305,6 +306,7 @@ DEPS=    ${OBJS:%.o=%.d}
 OBJDIRS= $(sort $(dir $(OBJS)))
 
 # File bundles
+BUNDLES += $(BUNDLES-yes)
 BUNDLE_SRCS=$(BUNDLES:%=$(BUILDDIR)/bundles/%.c)
 BUNDLE_DEPS=$(BUNDLE_SRCS:%.c=%.d)
 BUNDLE_OBJS=$(BUNDLE_SRCS:%.c=%.o)

@@ -2170,7 +2170,7 @@ be_spotify_init(void)
   /* Register as a global source */
 
   p = sd_add_service("spotify", "Spotify", 
-		     "http://developer.spotify.com/wp-content/uploads_dev/2009/04/spotify-core-logo-96x96.png",
+		     "bundle://resources/spotify/spotify-core-logo-96x96.png",
 		     &prop_status);
 
   prop_set_string(prop_status, "Not logged in");
