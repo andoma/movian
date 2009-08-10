@@ -95,7 +95,7 @@ resolve_callback(AvahiServiceResolver *r,
 
     switch(sa->sa_type) {
     case SERVICE_HTSP:
-      sd_add_service_htsp(si, name, s, port);
+      sd_add_service_htsp(si, name, a, port);
       break;
 
     case SERVICE_WEBDAV:
