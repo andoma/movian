@@ -198,8 +198,26 @@ refresh_rate()
 }
 
 - (IBAction)clickAbout:(id)sender {
-  nav_open("page://about", NULL, NULL, NAV_OPEN_ASYNC);
+  nav_open("page:about", NULL, NULL, NAV_OPEN_ASYNC);
 }
+
+/* delegated from NSApplication */
+- (BOOL)application:(NSApplication *)theApplication
+	   openFile:(NSString *)filename {
+  /* stringWithFormat uses autorelease */
+  nav_open([[NSString stringWithFormat:@"file://%@", filename] UTF8String],
+	   NULL, NULL, NAV_OPEN_ASYNC);
+
+  return YES;
+}
+
+/* registered in initWithFrame */
+- (void)handleGetURLEvent:(NSAppleEventDescriptor *)event
+	   withReplyEvent:(NSAppleEventDescriptor *)replyEvent {
+  nav_open([[[event descriptorAtIndex:1] stringValue] UTF8String],
+	   NULL, NULL, NAV_OPEN_ASYNC);
+}
+
 
 -(BOOL)acceptsFirstResponder {
   return YES;
@@ -727,6 +745,10 @@ refresh_rate()
     /* no reason to continue */
     exit(1);
   }
+
+  [[NSAppleEventManager sharedAppleEventManager]
+    setEventHandler:self andSelector:@selector(handleGetURLEvent:withReplyEvent:)
+    forEventClass:kInternetEventClass andEventID:kAEGetURL];
     
   self = [super initWithFrame:frameRect pixelFormat:pixelFormat];
   

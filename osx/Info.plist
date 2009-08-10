@@ -24,5 +24,77 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+
+	<!-- output from Info.plist.py -->
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>AVI container</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>avi</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>hts</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>MPEG container</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>mpg</string>
+				<string>mpeg</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>hts</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>ISO disc image</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>iso</string>
+				<string>bin</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>hts</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>OGG audio file</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>ogg</string>
+			</array>
+			<key>CFBundleTypeMIMETypes</key>
+			<array>
+				<string>audio/ogg</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>hts</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+		</dict>
+	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>htsp url</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>htsp</string>
+			</array>
+			<key>CFBundleURLIconFile</key>
+			<string>generic</string>
+		</dict>
+	</array>
 </dict>
 </plist>
