@@ -31,7 +31,12 @@ void sd_add_service_htsp(service_instance_t *si, const char *name,
 
 void sd_add_service_webdav(service_instance_t *si, const char *name, 
                            const char *host, int port, const char *path);
-  
+
+prop_t *sd_add_service(const char *id, const char *title,
+		       const char *icon, prop_t **status);
+
+prop_t *sd_add_link(prop_t *svc, const char *title, const char *url);
+
 void sd_init(void);
 
 #endif

@@ -33,12 +33,6 @@
 extern prop_t *global_sources;
 
 
-static prop_t *sd_add_service(const char *id, const char *title,
-                              const char *icon, prop_t **status);
-
-static prop_t *sd_add_link(prop_t *svc, const char *title, const char *url);
-
-
 service_instance_t *
 si_find(struct service_instance_list *services,
         const char *id)
@@ -108,7 +102,7 @@ sd_add_service_webdav(service_instance_t *si, const char *name,
 /**
  *
  */
-static prop_t *
+prop_t *
 sd_add_service(const char *id, const char *title,
 	       const char *icon, prop_t **status)
 {
@@ -131,7 +125,7 @@ sd_add_service(const char *id, const char *title,
 /**
  *
  */
-static prop_t *
+prop_t *
 sd_add_link(prop_t *svc, const char *title, const char *url)
 {
   prop_t *links, *link;
