@@ -52,7 +52,7 @@ bonjour_resolve_callback(CFNetServiceRef theService,
 
   addresses = CFNetServiceGetAddressing(theService);
 
-  TRACE(TRACE_DEBUG, "Bonjour", "Resolve service %s with %d addresses",
+  TRACE(TRACE_DEBUG, "Bonjour", "Resolve service \"%s\" with %d addresses",
         name, CFArrayGetCount(addresses));
 
   for(i = 0; i < CFArrayGetCount(addresses); i++) {
@@ -100,13 +100,14 @@ bonjour_resolve_callback(CFNetServiceRef theService,
                    (const char *)CFDataGetBytePtr(key));
           path = pathbuf;
         }
+
+	CFRelease(dict);
       }
         
       TRACE(TRACE_DEBUG, "Bonjour", "Adding service webdav://%s:%d%s",
             host, port, path ? path : "");
       sd_add_service_webdav(si, name, host, port, path);
         
-      CFRelease(dict);
       break;
     }
   }
@@ -143,8 +144,8 @@ bonjour_browser_callback(CFNetServiceBrowserRef browser,
   /* unique enough? avahi has proto and interface too */
   snprintf(fullname, sizeof(fullname), "%s.%s.%s", name, type, domain);
   
-  TRACE(TRACE_DEBUG, "Bonjour", "Browse service %s %s",
-        fullname, !!(flags & kCFNetServiceFlagRemove) ? "removed" : "added");
+  TRACE(TRACE_DEBUG, "Bonjour", "Browse service \"%s\" %s",
+        fullname, flags & kCFNetServiceFlagRemove ? "removed" : "added");
 
   /* if exist, remove previous instance and resolver */
   si = si_find(&services, fullname);
