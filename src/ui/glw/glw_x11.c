@@ -760,7 +760,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
   glw_pointer_event_t gpe;
 
   prop_subscribe(0,
-		 PROP_TAG_NAME("ui","fullscreen"),
+		 PROP_TAG_NAME("ui","fullwindow"),
 		 PROP_TAG_CALLBACK_INT, glw_x11_in_fullwindow, gx11,
 		 PROP_TAG_ROOT, gx11->gr.gr_uii.uii_prop,
 		 NULL);
