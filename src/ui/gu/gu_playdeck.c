@@ -162,7 +162,7 @@ update_duration(void *opaque, float value)
 {
   playdeck_t *pd = opaque;
   gtk_adjustment_set_value(GTK_ADJUSTMENT(pd->pos_adjust), 0);
-  gtk_adjustment_set_upper(GTK_ADJUSTMENT(pd->pos_adjust), value);
+  g_object_set(G_OBJECT(pd->pos_adjust), "upper", (gdouble)value, NULL);
 }
 
 
