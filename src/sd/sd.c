@@ -92,8 +92,9 @@ sd_add_service_webdav(service_instance_t *si, const char *name,
   if(si->si_root == NULL)
     si->si_root = sd_add_service(si->si_id, name, NULL, NULL);
   
-  snprintf(url, sizeof(url), "webdav://%s:%d%s",
-	   host, port, path ? path : "");
+  snprintf(url, sizeof(url), "webdav://%s:%d%s%s",
+	   host, port, path == NULL || path[0] != '/' ? "/" : "",
+	   path ? path : "");
   sd_add_link(si->si_root, "Browse", url);
 }
 
