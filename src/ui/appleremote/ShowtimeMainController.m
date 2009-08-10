@@ -49,32 +49,39 @@
 
 @implementation ShowtimeMainController
 
-- (void) initWithUi:(ui_t *)ui primary:(int)primary {
-  [super init];
+- (id) initWithUi:(ui_t *)ui primary:(int)primary {
+  self = [super init];
   
   uii = calloc(1, sizeof(uii_t));
   uii->uii_ui = ui;
   uii_register(uii, primary);
   
-  remoteControlBehavior = [[MultiClickRemoteBehavior alloc] init];	
+  remoteControlBehavior = [[MultiClickRemoteBehavior alloc] init];
   [remoteControlBehavior setDelegate: self];
   
   RemoteControlContainer* container =
     [[RemoteControlContainer alloc] initWithDelegate: remoteControlBehavior];
-  [container instantiateAndAddRemoteControlDeviceWithClass: [AppleRemote class]];	
-  [container instantiateAndAddRemoteControlDeviceWithClass: [KeyspanFrontRowControl class]];
-  [container instantiateAndAddRemoteControlDeviceWithClass: [GlobalKeyboardDevice class]];	
+  [container instantiateAndAddRemoteControlDeviceWithClass:
+   [AppleRemote class]];
+  [container instantiateAndAddRemoteControlDeviceWithClass:
+   [KeyspanFrontRowControl class]];
+  [container instantiateAndAddRemoteControlDeviceWithClass:
+   [GlobalKeyboardDevice class]];
   
-  [[NSNotificationCenter defaultCenter] addObserver:self
-                                           selector:@selector(applicationDidBecomeActive:)
-                                               name:NSApplicationDidBecomeActiveNotification
-                                             object:NSApp];
-  [[NSNotificationCenter defaultCenter] addObserver:self
-                                           selector:@selector(applicationWillResignActive:)
-                                               name:NSApplicationWillResignActiveNotification
-                                             object:NSApp];
+  [[NSNotificationCenter defaultCenter]
+   addObserver:self
+   selector:@selector(applicationDidBecomeActive:)
+   name:NSApplicationDidBecomeActiveNotification
+   object:NSApp];
+  [[NSNotificationCenter defaultCenter]
+   addObserver:self
+   selector:@selector(applicationWillResignActive:)
+   name:NSApplicationWillResignActiveNotification
+   object:NSApp];
   
   remoteControl = container;
+  
+  return self;
 }
 
 // delegate method for the MultiClickRemoteBehavior
