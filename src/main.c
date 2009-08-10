@@ -38,8 +38,8 @@
 #include "keyring.h"
 #include "bookmarks.h"
 #include "notifications.h"
+#include "sd/sd.h"
 
-#include "sd/avahi.h"
 
 /**
  *
@@ -168,10 +168,8 @@ main(int argc, char **argv)
   /* Open initial page */
   nav_open(argc > 0 ? argv[0] : NAV_HOME, NULL, NULL, NAV_OPEN_ASYNC);
 
-  /* AVAHI based service discovery */
-#ifdef CONFIG_AVAHI
-  avahi_init();
-#endif
+  /* Service discovery */
+  sd_init();
 
   /* Initialize user interfaces */
   ui_start(nuiargs, uiargs, argv0);

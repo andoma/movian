@@ -32,33 +32,14 @@
 #include "avahi.h"
 #include "sd.h"
 
-extern prop_t *global_sources;
-
-LIST_HEAD(service_instance_list, service_instance);
 
 static struct service_instance_list services;
 
 
 typedef struct service_aux {
   AvahiClient *sa_c;
-  enum {
-    SERVICE_HTSP,
-    SERVICE_WEBDAV,
-  } sa_type;
-
+  service_type_t sa_type;
 } service_aux_t;
-
-
-typedef struct service_instance {
-  char *si_id;
-
-  prop_t *si_root;
-
-  LIST_ENTRY(service_instance) si_link;
-
-  service_aux_t *si_sa;
-
-} service_instance_t;
 
 
 
@@ -69,66 +50,6 @@ static void
 client_state_change(AvahiClient *c, AvahiClientState state, void *aux)
 {
 }
-
-
-/**
- *
- */
-static void
-si_destroy(service_instance_t *si)
-{
-  if(si->si_root != NULL)
-    prop_destroy(si->si_root);
-  free(si->si_id);
-  LIST_REMOVE(si, si_link);
-  free(si);
-}
-
-
-/**
- * HTSP service creator
- */
-static void
-add_service_htsp(service_instance_t *si, const char *name, 
-		 const char *hostport)
-{
-  char url[256];
-
-  si->si_root = sd_add_service(si->si_id, name, 
-			       "http://www.lonelycoder.com/hts/tvheadend/docs/2_4/docresources/tvheadendlogo.png",
-			       NULL);
-
-  snprintf(url, sizeof(url), "htsp://%s", hostport);
-  sd_add_link(si->si_root, "All TV Channels", url);
-}
-
-
-/**
- * HTSP service creator
- */
-static void
-add_service_webdav(service_instance_t *si, const char *name, 
-		   const char *hostport,
-		   AvahiStringList *txt)
-{
-  char url[512];
-  char *path;
-
-  txt = avahi_string_list_find(txt, "path");
-
-  if(avahi_string_list_get_pair(txt, NULL, &path, NULL))
-    path = NULL;
-
-  si->si_root = sd_add_service(si->si_id, name, NULL, NULL);
-
-  snprintf(url, sizeof(url), "webdav://%s%s%s", 
-	   hostport, path ? "/" : "", path);
-  sd_add_link(si->si_root, "Browse", url);
-
-  if(path)
-    avahi_free(path);
-}
-
 
 
 /**
@@ -150,9 +71,10 @@ resolve_callback(AvahiServiceResolver *r,
 		 void *userdata)
 {
   service_instance_t *si = userdata;
-  service_aux_t *sa = si->si_sa;
+  service_aux_t *sa = si->si_opaque;
   char a[AVAHI_ADDRESS_STR_MAX];
-  char hostport[AVAHI_ADDRESS_STR_MAX+16];
+  AvahiStringList *apath;
+  char *path;
 
   switch(event) {
   case AVAHI_RESOLVER_FAILURE:
@@ -171,15 +93,21 @@ resolve_callback(AvahiServiceResolver *r,
 	  "Found service '%s' of type '%s' at %s:%d (%s)",
 	  name, type, a, port, host_name);
 
-    snprintf(hostport, sizeof(hostport), "%s:%d", a, port);
-
     switch(sa->sa_type) {
     case SERVICE_HTSP:
-      add_service_htsp(si, name, hostport);
+      sd_add_service_htsp(si, name, s, port);
       break;
 
     case SERVICE_WEBDAV:
-      add_service_webdav(si, name, hostport, txt);
+      apath = avahi_string_list_find(txt, "path");
+      
+      if(avahi_string_list_get_pair(apath, NULL, &path, NULL))
+        path = NULL;
+        
+      sd_add_service_webdav(si, name, a, port, path);
+        
+      if(path)
+        avahi_free(path);
       break;
     }
   }
@@ -207,7 +135,7 @@ browser(AvahiServiceBrowser *b, AvahiIfIndex interface,
   switch(event) {
   case AVAHI_BROWSER_NEW:
     si = calloc(1, sizeof(service_instance_t));
-    si->si_sa = sa;
+    si->si_opaque = sa;
     si->si_id = strdup(fullname);
     LIST_INSERT_HEAD(&services, si, si_link);
 
@@ -223,10 +151,7 @@ browser(AvahiServiceBrowser *b, AvahiIfIndex interface,
     break;
 
   case AVAHI_BROWSER_REMOVE:
-    LIST_FOREACH(si, &services, si_link)
-      if(!strcmp(si->si_id, fullname))
-	break;
-
+    si = si_find(&services, fullname);
     if(si != NULL)
       si_destroy(si);
 

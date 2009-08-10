@@ -48,6 +48,7 @@ enable glw_frontend_cocoa
 enable glw_backend_opengl
 enable coreaudio
 enable appleremote
+enable bonjour
 
 for opt do
   optval="${opt#*=}"

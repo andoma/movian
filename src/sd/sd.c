@@ -1,5 +1,5 @@
 /*
- *  AVAHI based service discovery
+ *  Service discovery
  *  Copyright (C) 2009 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -22,12 +22,93 @@
 #include "prop.h"
 #include "sd.h"
 
+#ifdef CONFIG_AVAHI
+#include "avahi.h"
+#endif
+#ifdef CONFIG_BONJOUR
+#include "bonjour.h"
+#endif
+
+
 extern prop_t *global_sources;
+
+
+static prop_t *sd_add_service(const char *id, const char *title,
+                              const char *icon, prop_t **status);
+
+static prop_t *sd_add_link(prop_t *svc, const char *title, const char *url);
+
+
+service_instance_t *
+si_find(struct service_instance_list *services,
+        const char *id)
+{
+  service_instance_t *si;
+  
+  LIST_FOREACH(si, services, si_link)
+  if(!strcmp(si->si_id, id))
+    return si;
+  
+  return NULL;
+}
+
 
 /**
  *
  */
-prop_t *
+void
+si_destroy(service_instance_t *si)
+{
+  if(si->si_root != NULL)
+    prop_destroy(si->si_root);
+  free(si->si_id);
+  LIST_REMOVE(si, si_link);
+  free(si);
+}
+
+
+/**
+ * HTSP service creator
+ */
+void
+sd_add_service_htsp(service_instance_t *si, const char *name, 
+		 const char *host, int port)
+{
+  char url[256];
+ 
+  if(si->si_root == NULL)
+    si->si_root = sd_add_service(si->si_id, name, 
+                                 "http://www.lonelycoder.com/hts/tvheadend/docs/2_4/docresources/tvheadendlogo.png",
+                                 NULL);
+  
+  snprintf(url, sizeof(url), "htsp://%s:%d", host, port);
+  sd_add_link(si->si_root, "All TV Channels", url);
+}
+
+
+/**
+ * HTSP service creator
+ */
+void
+sd_add_service_webdav(service_instance_t *si, const char *name, 
+                      const char *host, int port, const char *path)
+{
+  char url[512];
+  
+  if(si->si_root == NULL)
+    si->si_root = sd_add_service(si->si_id, name, NULL, NULL);
+  
+  snprintf(url, sizeof(url), "webdav://%s:%d%s",
+	   host, port, path ? path : "");
+  sd_add_link(si->si_root, "Browse", url);
+}
+
+
+
+/**
+ *
+ */
+static prop_t *
 sd_add_service(const char *id, const char *title,
 	       const char *icon, prop_t **status)
 {
@@ -50,7 +131,7 @@ sd_add_service(const char *id, const char *title,
 /**
  *
  */
-prop_t *
+static prop_t *
 sd_add_link(prop_t *svc, const char *title, const char *url)
 {
   prop_t *links, *link;
@@ -62,4 +143,14 @@ sd_add_link(prop_t *svc, const char *title, const char *url)
   prop_set_string(prop_create(link, "url"),  url);
 
   return link;
+}
+
+void sd_init(void)
+{
+#ifdef CONFIG_AVAHI
+  avahi_init();
+#endif
+#ifdef CONFIG_BONJOUR
+  bonjour_init();
+#endif
 }

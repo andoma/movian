@@ -43,6 +43,7 @@ CONFIG_LIST="
  dbus
  avahi
  appleremote
+ bonjour
 "
 
 die() {

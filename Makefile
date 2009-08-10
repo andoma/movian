@@ -91,6 +91,10 @@ SRCS-$(CONFIG_AVAHI) 	+= src/sd/avahi.c \
 ${BUILDDIR}/src/sd/avahi.o : CFLAGS = \
  $(shell pkg-config --cflags avahi-client) -Wall -Werror
 
+
+SRCS-$(CONFIG_BONJOUR) 	+= src/sd/bonjour.c
+
+
 #
 # Networking
 #
