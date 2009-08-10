@@ -591,17 +591,19 @@ refresh_rate()
 /* end of NSTextInput protocol */
 
 - (void)insertText:(id)aString {
-  int i;
   NSString *s = aString;
-  event_t *e = NULL;
-  char buf[2] = {0};
+  int i;
 
   [self compositeClear];
   
   for(i = 0; i < [s length]; i++) {
-    buf[0] = [s characterAtIndex:i];
-    e = event_create_unicode(buf[0]);
-    ui_dispatch_event(e, buf, &gcocoa.gr.gr_uii);
+    unichar uc = [s characterAtIndex:i];
+    NSString *su = [[NSString alloc] initWithCharacters:&uc length:1];
+    event_t *e = NULL;
+
+    e = event_create_unicode(uc);
+    ui_dispatch_event(e, [su UTF8String], &gcocoa.gr.gr_uii);
+    [su release];
   }
 }
 
