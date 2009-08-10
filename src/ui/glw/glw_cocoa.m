@@ -152,34 +152,6 @@ static struct strtab function_key_map[] = {
 
 static void display_settings_init(glw_cocoa_t *gcocoa);
 static void display_settings_save(glw_cocoa_t *gcocoa);
-static int refresh_rate();
-
-/* based on example from:
- * http://developer.apple.com/documentation/Performance/Conceptual/Drawing/Articles/FlushingContent.html
- */
-static int
-refresh_rate()
-{
-  CFDictionaryRef mi;  
-  int rate = 60; /* assume LCD screen */
-  
-  mi = CGDisplayCurrentMode(CGMainDisplayID());
-  
-  if(mi) {
-    CFNumberRef v =
-    (CFNumberRef)CFDictionaryGetValue(mi, kCGDisplayRefreshRate);
-    
-    if(v) {
-      CFNumberGetValue(v, kCFNumberIntType, &rate);
-
-      if(rate == 0)
-        rate = 60;
-    }
-  }
-  
-  return rate;
-}
-
 
 @implementation GLWGLView
 
@@ -441,10 +413,16 @@ refresh_rate()
 }
 
 - (void)glwWindowedTimerStart {
-  timer = [NSTimer scheduledTimerWithTimeInterval:(1.0/refresh_rate())
-                                           target:self
-                                         selector:@selector(glwWindowedTimer)
-                                         userInfo:nil repeats:YES];
+  timer = [NSTimer timerWithTimeInterval:(0.001)
+				  target:self
+			        selector:@selector(glwWindowedTimer)
+			        userInfo:nil repeats:YES];
+
+  [[NSRunLoop currentRunLoop] addTimer:timer
+    forMode:NSDefaultRunLoopMode];
+  [[NSRunLoop currentRunLoop] addTimer:timer
+    forMode:NSEventTrackingRunLoopMode];
+
   [timer retain];
  
   if(timer_cursor) {
