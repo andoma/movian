@@ -742,13 +742,10 @@ layout_draw(glw_x11_t *gx11, float aspect)
  *
  */
 static void
-glw_x11_in_fullscreen(void *opaque, prop_event_t event, ...)
+glw_x11_in_fullwindow(void *opaque, int v)
 {
   glw_x11_t *gx11 = opaque;
-  va_list ap;
-  va_start(ap, event);
-
-  gx11->fullwindow = event == PROP_SET_INT ? va_arg(ap, int) : 0;
+  gx11->fullwindow = v;
 }
 
 
@@ -763,9 +760,8 @@ glw_x11_mainloop(glw_x11_t *gx11)
   glw_pointer_event_t gpe;
 
   prop_subscribe(0,
-		 PROP_TAG_NAME_VECTOR, 
-		 (const char *[]){"ui","fullscreen",NULL},
-		 PROP_TAG_CALLBACK, glw_x11_in_fullscreen, gx11,
+		 PROP_TAG_NAME("ui","fullscreen"),
+		 PROP_TAG_CALLBACK_INT, glw_x11_in_fullwindow, gx11,
 		 PROP_TAG_ROOT, gx11->gr.gr_uii.uii_prop,
 		 NULL);
 
