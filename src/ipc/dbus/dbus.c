@@ -21,15 +21,15 @@
 #include <dbus/dbus.h>
 
 #include "showtime.h"
-#include "ui/ui.h"
+#include "arch/threads.h"
 #include "dbus.h"
 
 
 /**
  *
  */
-static int
-dbus_start(ui_t *ui, int argc, char *argv[], int primary)
+static void *
+dbus_thread(void *aux)
 {
   DBusConnection *c;
   DBusError err;
@@ -38,7 +38,7 @@ dbus_start(ui_t *ui, int argc, char *argv[], int primary)
 
   if((c = dbus_bus_get(DBUS_BUS_SESSION, &err)) == NULL) {
     TRACE(TRACE_ERROR, "D-Bus", "Unable to connect to D-Bus: %s", err.message);
-    return 1;
+    return NULL;
   }
 
   dbus_mpris_init(c);
@@ -48,14 +48,17 @@ dbus_start(ui_t *ui, int argc, char *argv[], int primary)
   while(1) 
     dbus_connection_read_write_dispatch(c, -1);
 
-  return 0;
+  return NULL;
 }
 
 
 /**
  *
  */
-ui_t dbus_ui = {
-  .ui_title = "dbus",
-  .ui_start = dbus_start,
-};
+void dbus_start(void);
+
+void
+dbus_start(void)
+{
+  hts_thread_create_detached(dbus_thread, NULL);
+}

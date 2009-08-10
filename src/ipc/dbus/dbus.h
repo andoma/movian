@@ -21,8 +21,6 @@
 
 #include <dbus/dbus.h>
 
-void dbus_init(void);
-
 void dbus_mpris_init(DBusConnection *c);
 
 #endif 

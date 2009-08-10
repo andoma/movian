@@ -59,10 +59,6 @@ ui_register(void)
  LIST_INSERT_HEAD(&uis, &name ## _ui, ui_link);\
 }while(0)
 
-  
-#ifdef CONFIG_DBUS
-  link_ui(dbus);
-#endif
 #ifdef CONFIG_LIRC
   link_ui(lircd);
   link_ui(imonpad);

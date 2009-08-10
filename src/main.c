@@ -39,6 +39,7 @@
 #include "bookmarks.h"
 #include "notifications.h"
 #include "sd/sd.h"
+#include "ipc/ipc.h"
 
 
 /**
@@ -170,6 +171,9 @@ main(int argc, char **argv)
 
   /* Service discovery */
   sd_init();
+
+  /* Various interprocess communication stuff (D-Bus on Linux, etc) */
+  ipc_init();
 
   /* Initialize user interfaces */
   ui_start(nuiargs, uiargs, argv0);

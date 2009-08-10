@@ -273,12 +273,14 @@ SRCS-$(CONFIG_LIRC) +=  src/ui/lirc/imonpad.c \
 			src/ui/lirc/lircd.c
 
 #
-# D-Bus
+# IPC
 #
-SRCS-$(CONFIG_DBUS) +=  src/ui/dbus/dbus.c \
-			src/ui/dbus/mpris.c
+SRCS                +=  src/ipc/ipc.c
 
-${BUILDDIR}/src/ui/dbus/%.o : CFLAGS =  $(shell pkg-config --cflags dbus-1) \
+SRCS-$(CONFIG_DBUS) +=  src/ipc/dbus/dbus.c \
+			src/ipc/dbus/mpris.c
+
+${BUILDDIR}/src/ipc/dbus/%.o : CFLAGS =  $(shell pkg-config --cflags dbus-1) \
 -Wall -Werror -Wmissing-prototypes -Wno-cast-qual
 
 
