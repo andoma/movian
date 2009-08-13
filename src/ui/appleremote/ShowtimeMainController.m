@@ -175,10 +175,7 @@ appleremote_start(ui_t *ui, int argc, char *argv[], int primary)
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
   [[ShowtimeMainController alloc] initWithUi:ui primary:primary];
-  
-  while(1)
-    CFRunLoopRunInMode(kCFRunLoopDefaultMode, 1, false);
-  
+    
   [pool release];
   
   return 0;
