@@ -32,6 +32,7 @@
   NSTimer *timer_cursor;
   bool compositeKey;
   NSString *compositeString;
+  bool fullwindow;
 }
 - (void)glwResize:(int)width height:(int)height;
 - (void)glwInit;
@@ -40,6 +41,8 @@
 - (void)glwWindowedTimerStop;
 - (void)glwWindowedTimer;
 - (void)glwMouseEvent:(int)type event:(NSEvent*)event;
+- (void)glwDelayHideCursor;
+- (void)glwUnHideCursor;
 
 /* actions */
 - (IBAction)clickFullscreen:(id)sender;

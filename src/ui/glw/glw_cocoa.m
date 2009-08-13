@@ -62,6 +62,9 @@ typedef struct glw_cocoa {
   int want_font_size;
   int is_fullscreen;
   int want_fullscreen;
+
+  int is_cursor_hidden;
+  int is_fullwindow;
   
   setting_t *fullscreen_setting;
 } glw_cocoa_t;
@@ -152,6 +155,7 @@ static struct strtab function_key_map[] = {
 
 static void display_settings_init(glw_cocoa_t *gcocoa);
 static void display_settings_save(glw_cocoa_t *gcocoa);
+static void glw_cocoa_in_fullwindow(void *opaque, int v);
 
 @implementation GLWGLView
 
@@ -374,12 +378,16 @@ static void display_settings_save(glw_cocoa_t *gcocoa);
     display_settings_save(&gcocoa);
     
     if(gcocoa.want_fullscreen) {
-      [NSCursor setHiddenUntilMouseMoves:YES];
       [self fullscreenLoop];
-      [NSCursor setHiddenUntilMouseMoves:NO];
       return;
     }
   }
+
+  if(gcocoa.is_fullwindow && !gcocoa.is_cursor_hidden)
+    [self glwDelayHideCursor];
+
+  if(!gcocoa.is_fullwindow && gcocoa.is_cursor_hidden)
+    [self glwUnHideCursor];
 
   glw_rctx_t rc;
   
@@ -446,9 +454,40 @@ static void display_settings_save(glw_cocoa_t *gcocoa);
   [NSCursor setHiddenUntilMouseMoves:YES];
 }
 
+- (void)glwDelayHideCursor {
+  gcocoa.is_cursor_hidden = 1;
+  
+  if(timer_cursor) {
+    [timer_cursor invalidate];
+    [timer_cursor release];
+    timer_cursor = nil;
+  }
+
+  timer_cursor = 
+    [NSTimer scheduledTimerWithTimeInterval:(1.0) target:self
+      selector:@selector(glwHideCursor) userInfo:nil repeats:NO];
+
+  [timer_cursor retain];
+}
+
+- (void)glwUnHideCursor {
+  gcocoa.is_cursor_hidden = 0;
+  
+  if(timer_cursor) {
+    [timer_cursor invalidate];
+    [timer_cursor release];
+    timer_cursor = nil;
+  }
+
+  [NSCursor setHiddenUntilMouseMoves:NO];
+}
+
 - (void)glwMouseEvent:(int)type event:(NSEvent*)event {  
   NSPoint loc = [event locationInWindow];
   glw_pointer_event_t gpe;
+ 
+  if(gcocoa.is_cursor_hidden) 
+    [self glwUnHideCursor];
   
   gpe.x = (2.0 * loc.x / gcocoa.window_width ) - 1;
   gpe.y = (2.0 * loc.y / gcocoa.window_height) - 1;
@@ -459,19 +498,6 @@ static void display_settings_save(glw_cocoa_t *gcocoa);
   glw_lock(&gcocoa.gr);
   glw_pointer_event(&gcocoa.gr, &gpe);
   glw_unlock(&gcocoa.gr);
-
-  if(gcocoa.is_fullscreen) {
-    if(timer_cursor) {
-      [timer_cursor invalidate];
-      [timer_cursor release];
-    }
-
-    timer_cursor = [NSTimer scheduledTimerWithTimeInterval:(1.0)
-						    target:self
-						  selector:@selector(glwHideCursor)
-						  userInfo:nil repeats:NO];
-    [timer_cursor retain];
-  }
 }
 
 - (void)scrollWheel:(NSEvent*)event {
@@ -590,8 +616,6 @@ static void display_settings_save(glw_cocoa_t *gcocoa);
   NSString *chars = [event characters];
   NSString *charsim = [event charactersIgnoringModifiers];
   
-  [NSCursor setHiddenUntilMouseMoves:YES];
-  
   if(compositeKey || [chars length] == 0  || [charsim length] == 0) {
     if(!eventArray)
       eventArray = [[NSMutableArray alloc] initWithCapacity:1];
@@ -682,6 +706,12 @@ static void display_settings_save(glw_cocoa_t *gcocoa);
 	      gcocoa.primary))
     return;
   
+  prop_subscribe(0,
+		 PROP_TAG_NAME("ui","fullwindow"),
+		 PROP_TAG_CALLBACK_INT, glw_cocoa_in_fullwindow, self,
+		 PROP_TAG_ROOT, gcocoa.gr.gr_uii.uii_prop,
+		 NULL);
+  
   [[self openGLContext] setValues:&v forParameter:NSOpenGLCPSwapInterval];
   
   NSRect bounds = [self bounds];
@@ -727,7 +757,8 @@ static void display_settings_save(glw_cocoa_t *gcocoa);
   }
 
   [[NSAppleEventManager sharedAppleEventManager]
-    setEventHandler:self andSelector:@selector(handleGetURLEvent:withReplyEvent:)
+    setEventHandler:self
+    andSelector:@selector(handleGetURLEvent:withReplyEvent:)
     forEventClass:kInternetEventClass andEventID:kAEGetURL];
     
   self = [super initWithFrame:frameRect pixelFormat:pixelFormat];
@@ -807,12 +838,18 @@ glw_cocoa_screensaver_inhibit(CFRunLoopTimerRef timer, void *info)
   UpdateSystemActivity(OverallAct);
 }
 
+static void
+glw_cocoa_in_fullwindow(void *opaque, int v)
+{
+  gcocoa.is_fullwindow = v;
+}
+
 static int
 glw_cocoa_start(ui_t *ui, int argc, char *argv[], int primary)
 {
   gcocoa.ui = ui;
   gcocoa.primary = primary;
-  
+
   CFRunLoopTimerRef timer;
   CFRunLoopTimerContext context = { 0, NULL, NULL, NULL, NULL };
   timer = CFRunLoopTimerCreate(NULL, CFAbsoluteTimeGetCurrent(), 30, 0, 0,
