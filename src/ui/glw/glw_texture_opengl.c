@@ -185,6 +185,7 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
     r = glw_tex_backend_load(gr, glt, frame2, PIX_FMT_RGB32, 
 			     src_w, src_h, req_w, req_h);
 
+    av_free(frame2->data[0]);
     av_free(frame2);
     return r;
   }
