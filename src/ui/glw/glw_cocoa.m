@@ -66,6 +66,8 @@ typedef struct glw_cocoa {
   int is_cursor_hidden;
   int is_fullwindow;
   
+  int skip_first_openfile_check;
+  
   setting_t *fullscreen_setting;
 } glw_cocoa_t;
 
@@ -179,11 +181,24 @@ static void glw_cocoa_in_fullwindow(void *opaque, int v);
 
 /* delegated from NSApplication */
 - (BOOL)application:(NSApplication *)theApplication
-	   openFile:(NSString *)filename {
+           openFile:(NSString *)filename {
+  extern char ***_NSGetArgv();
+  extern int *_NSGetArgc();
+  char **_argv = *_NSGetArgv();
+  int _argc = *_NSGetArgc();
+  const char *cfilename = [filename UTF8String];
+  
+  if(!gcocoa.skip_first_openfile_check) {
+    if(_argc > 1 && strcmp(cfilename, _argv[_argc - 1]) == 0)
+      return NO;
+ 
+    gcocoa.skip_first_openfile_check = 1;
+  }
+  
   /* stringWithFormat uses autorelease */
   nav_open([[NSString stringWithFormat:@"file://%@", filename] UTF8String],
-	   NULL, NULL, NAV_OPEN_ASYNC);
-
+           NULL, NULL, NAV_OPEN_ASYNC);
+  
   return YES;
 }
 
