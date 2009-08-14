@@ -677,7 +677,9 @@ static void
 mp_set_primary(media_pipe_t *mp)
 {
   media_primary = mp;
-  mp_enqueue_event(mp, event_create_type(EVENT_MP_IS_PRIMARY));
+  event_t *e = event_create_type(EVENT_MP_IS_PRIMARY);
+  mp_enqueue_event(mp, e);
+  event_unref(e);
 
   prop_select(mp->mp_prop_root, 0);
   prop_link(mp->mp_prop_root, media_prop_current);

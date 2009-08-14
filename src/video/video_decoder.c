@@ -300,6 +300,7 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
   ets->pts = pts;
   ets->dts = dts;
   mp_enqueue_event(mp, &ets->h);
+  event_unref(&ets->h);
 
 #if 0
   if(vd->vd_mp->mp_subtitles) {
