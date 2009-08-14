@@ -189,10 +189,10 @@ static void glw_cocoa_in_fullwindow(void *opaque, int v);
   const char *cfilename = [filename UTF8String];
   
   if(!gcocoa.skip_first_openfile_check) {
+    gcocoa.skip_first_openfile_check = 1;
+    
     if(_argc > 1 && strcmp(cfilename, _argv[_argc - 1]) == 0)
       return NO;
- 
-    gcocoa.skip_first_openfile_check = 1;
   }
   
   /* stringWithFormat uses autorelease */
