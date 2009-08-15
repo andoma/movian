@@ -502,6 +502,7 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
   dvdnav_get_title_string(dp->dp_dvdnav, &rawtitle);
   title = make_nice_title(rawtitle);
   if(*title == 0) {
+    free(title);
     title = strrchr(url, '/');
     if(title != NULL)
       title = make_nice_title(title + 1);
