@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 2; indent-tabs-mode: nil -*- */
 #ifndef DVD_UDF_H_INCLUDED
 #define DVD_UDF_H_INCLUDED
 
@@ -45,17 +46,16 @@ extern "C" {
  * absolute pathname on the UDF filesystem, starting with '/'.  For example,
  * '/VIDEO_TS/VTS_01_1.IFO'.  On success, filesize will be set to the size of
  * the file in bytes.
+ * This implementation relies on that the file size is less than 2^32
+ * A DVD file can at most be 2^30 (-2048 ?).
  */
 uint32_t UDFFindFile( dvd_reader_t *device, char *filename, uint32_t *size );
-
-void FreeUDFCache(void *cache);
+  
+void FreeUDFCache(dvd_reader_t *device, void *cache);
 int UDFGetVolumeIdentifier(dvd_reader_t *device,
-			   char *volid, unsigned int volid_size);
+                           char *volid, unsigned int volid_size);
 int UDFGetVolumeSetIdentifier(dvd_reader_t *device,
-			      uint8_t *volsetid, unsigned int volsetid_size);
-void *GetUDFCacheHandle(dvd_reader_t *device);
-void SetUDFCacheHandle(dvd_reader_t *device, void *cache);
-
+                              uint8_t *volsetid, unsigned int volsetid_size);
 #ifdef __cplusplus
 };
 #endif

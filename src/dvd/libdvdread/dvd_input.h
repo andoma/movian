@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 2; indent-tabs-mode: nil -*- */
 #ifndef DVD_INPUT_H_INCLUDED
 #define DVD_INPUT_H_INCLUDED
 
@@ -40,6 +41,13 @@ extern int         (*dvdinput_seek)  (dvd_input_t, int);
 extern int         (*dvdinput_title) (dvd_input_t, int); 
 extern int         (*dvdinput_read)  (dvd_input_t, void *, int, int);
 extern char *      (*dvdinput_error) (dvd_input_t);
+
+/**
+ * Free any objects allocated by dvdinput_setup.
+ * Should only be called when libdvdread is not to be used any more.
+ * Closes dlopened libraries.
+ */
+void dvdinput_free(void);
 
 /**
  * Setup function accessed by dvd_reader.c.  Returns 1 if there is CSS support.

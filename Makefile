@@ -164,10 +164,8 @@ ${BUILDDIR}/src/dvd/dvdcss/%.o : CFLAGS = \
 SRCS-$(CONFIG_DVD) += 	src/dvd/libdvdread/dvd_input.c \
 			src/dvd/libdvdread/dvd_reader.c \
 			src/dvd/libdvdread/dvd_udf.c \
-			src/dvd/libdvdread/ifo_print.c \
 			src/dvd/libdvdread/ifo_read.c \
 			src/dvd/libdvdread/md5.c \
-			src/dvd/libdvdread/nav_print.c \
 			src/dvd/libdvdread/nav_read.c \
 			src/dvd/libdvdread/bitreader.c
 
