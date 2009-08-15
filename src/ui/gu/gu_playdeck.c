@@ -224,17 +224,12 @@ slider_value_callback(GtkScale *scale, gdouble value)
 static void
 pd_set_albumart(void *opaque, const char *str)
 {
-  GdkPixbuf *pb;
-
   if(str == NULL) {
     gtk_widget_hide(GTK_WIDGET(opaque));
     return;
   }
 
-  pb = gu_pixbuf_get_sync(str, -1, 84);
-  g_object_set(G_OBJECT(opaque), "pixbuf", pb, NULL);
-  if(pb != NULL)
-    g_object_unref(G_OBJECT(pb));
+  gu_pixbuf_async_set(str, -1, 84, GTK_OBJECT(opaque));
   gtk_widget_show(GTK_WIDGET(opaque));
 }
 

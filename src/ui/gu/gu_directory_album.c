@@ -182,15 +182,10 @@ add_header(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
 static void
 album_set_art(void *opaque, const char *str)
 {
-  GdkPixbuf *pb;
-
   if(str == NULL)
     return;
 
-  pb = gu_pixbuf_get_sync(str, 256, -1);
-  g_object_set(G_OBJECT(opaque), "pixbuf", pb, NULL);
-  if(pb != NULL)
-    g_object_unref(G_OBJECT(pb));
+  gu_pixbuf_async_set(str, 256, -1, GTK_OBJECT(opaque));
 }
 
 
