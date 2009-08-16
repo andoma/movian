@@ -36,7 +36,7 @@
 
 #include "showtime.h"
 #include "event.h"
-#include "ui/ui.h"
+#include "ui/glw/glw.h"
 
 
 @interface ShowtimeMainController : NSObject {
@@ -97,32 +97,32 @@
   switch(buttonIdentifier) {
     case kRemoteButtonPlus:
       if(pressedDown)
-        ui_dispatch_event(event_create_action(ACTION_UP), NULL, uii);
+        glw_dispatch_event(uii, event_create_action(ACTION_UP));
       buttonName = @"Volume up";			
       break;
     case kRemoteButtonMinus:
       if(pressedDown)
-        ui_dispatch_event(event_create_action(ACTION_DOWN), NULL, uii);
+        glw_dispatch_event(uii, event_create_action(ACTION_DOWN));
       buttonName = @"Volume down";
       break;			
     case kRemoteButtonMenu:
       if(pressedDown)
-        ui_dispatch_event(event_create_action(ACTION_BACKSPACE), NULL, uii);
+        glw_dispatch_event(uii, event_create_action(ACTION_NAV_BACK));
       buttonName = @"Menu";
       break;			
     case kRemoteButtonPlay:
       if(pressedDown)
-        ui_dispatch_event(event_create_action(ACTION_ENTER), NULL, uii);
+        glw_dispatch_event(uii, event_create_action(ACTION_ENTER));
       buttonName = @"Play";
       break;			
     case kRemoteButtonRight:
       if(pressedDown)
-        ui_dispatch_event(event_create_action(ACTION_RIGHT), NULL, uii);
+        glw_dispatch_event(uii, event_create_action(ACTION_RIGHT));
       buttonName = @"Right";
       break;			
     case kRemoteButtonLeft:
       if(pressedDown)
-        ui_dispatch_event(event_create_action(ACTION_LEFT), NULL, uii);
+        glw_dispatch_event(uii, event_create_action(ACTION_LEFT));
       buttonName = @"Left";
       break;			
     case kRemoteButtonRight_Hold:
