@@ -183,7 +183,7 @@ static struct strtab actionnames[] = {
   { "Back",                  ACTION_BS },
   { "Select",                ACTION_SELECT },
   { "Eject",                 ACTION_EJECT },
-  { "Power",                 ACTION_POWER },
+  { "Sleep",                 ACTION_SLEEP },
   { "PreviousTrack",         ACTION_PREV_TRACK },
   { "NextTrack",             ACTION_NEXT_TRACK },
   { "SeekForward",           ACTION_SEEK_FORWARD },
@@ -343,7 +343,7 @@ event_dispatch(event_t *e)
   if(event_is_action(e, ACTION_CLOSE) || event_is_action(e, ACTION_QUIT)) {
     showtime_shutdown(0);
 
-  } else if(event_is_action(e, ACTION_POWER)) {
+  } else if(event_is_action(e, ACTION_SLEEP)) {
     showtime_shutdown(10);
 
   } else if(event_is_action(e, ACTION_NAV_BACK) ||

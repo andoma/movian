@@ -636,6 +636,7 @@ static const struct {
   { XK_F6,                   ShiftMask,   ACTION_VOLUME_MUTE_TOGGLE },
   { XK_F7,                   ShiftMask,   ACTION_VOLUME_UP },
   
+  { XF86XK_Sleep,            0,           ACTION_SLEEP },
 };
 
 
