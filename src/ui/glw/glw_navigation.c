@@ -171,11 +171,13 @@ glw_navigate(glw_t *w, event_t *e, int local)
   if(event_is_action(e, ACTION_FOCUS_PREV)) {
 
     glw_focus_crawl(w, 0);
+    event_unref(e);
     return 1;
 
   } else if(event_is_action(e, ACTION_FOCUS_NEXT)) {
 
     glw_focus_crawl(w, 1);
+    event_unref(e);
     return 1;
 
   } else if(event_is_action(e, ACTION_UP)) {
@@ -379,8 +381,11 @@ glw_navigate(glw_t *w, event_t *e, int local)
       break;
   }
 
-  if(t != NULL)
+  if(t != NULL) {
     glw_focus_set(t->glw_root, t, 1);
+    event_unref(e);
+    return 1;
+  }
 
   return 0;
 }
