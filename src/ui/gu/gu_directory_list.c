@@ -332,7 +332,7 @@ row_activated(GtkTreeView *tree_view, GtkTreePath *path,
   if(G_VALUE_HOLDS_STRING(&gv)) {
     str = g_value_get_string(&gv);
     if(str != NULL)
-      nav_open(str, NULL, *d->parenturlptr, NAV_OPEN_ASYNC);
+      nav_open(str, NULL, *d->parenturlptr);
   }
 
   g_value_unset(&gv);

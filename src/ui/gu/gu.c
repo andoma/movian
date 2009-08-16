@@ -128,10 +128,10 @@ gu_start(ui_t *ui, int argc, char **argv, int primary)
 /**
  *
  */
-static int
+static void
 gu_dispatch_event(uii_t *uii, event_t *e)
 {
-  return 0;
+  return;
 }
 
 

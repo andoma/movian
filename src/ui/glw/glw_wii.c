@@ -28,7 +28,6 @@
 
 #include "showtime.h"
 #include "ui/ui.h"
-#include "ui/keymapper.h"
 #include "settings.h"
 #include "ui/glw/glw.h"
 #include "prop.h"
@@ -80,7 +79,7 @@ wpad_btn(glw_wii_t *gwii, krepeat_t *kr, action_type_t ac, int hold)
     if(kr->held_frames == 0 ||
        (kr->held_frames > 30 && (kr->held_frames % 10 == 0))) {
       e = event_create_action(ac);
-      ui_dispatch_event(e, NULL, &gwii->gr.gr_uii);
+      glw_dispatch_event(&gwii->gr.gr_uii, e);
     }
     kr->held_frames++;
   } else {
@@ -173,7 +172,7 @@ wpad_every_frame(glw_wii_t *gwii)
   wpad_btn(gwii, &k_right, ACTION_RIGHT, btn & WPAD_BUTTON_RIGHT);
   wpad_btn(gwii, &k_up,    ACTION_UP,    btn & WPAD_BUTTON_UP);
   wpad_btn(gwii, &k_down,  ACTION_DOWN,  btn & WPAD_BUTTON_DOWN);
-  wpad_btn(gwii, &k_b,     ACTION_BACKSPACE,  btn & WPAD_BUTTON_B);
+  wpad_btn(gwii, &k_b,     ACTION_NAV_BACK,  btn & WPAD_BUTTON_B);
 }
 
 
@@ -420,6 +419,7 @@ glw_wii_start(ui_t *ui, int argc, char *argv[], int primary)
   glw_wii_loop(gwii);
   return 0;
 }
+
 
 /**
  *

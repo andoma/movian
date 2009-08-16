@@ -32,9 +32,9 @@
 #include <GL/glx.h>
 #include <GL/glu.h>
 #include <X11/Xatom.h>
+#include <X11/XF86keysym.h>
 
 #include "showtime.h"
-#include "ui/keymapper.h"
 #include "ui/linux/screensaver_inhibitor.h"
 #include "settings.h"
 
@@ -94,11 +94,7 @@ typedef struct glw_x11 {
 
 #define AUTOHIDE_TIMEOUT 100 // XXX: in frames.. bad
 
-static const keymap_defmap_t glw_default_keymap[] = {
-  { ACTION_PLAYPAUSE, "x11 - F2"},
-  { ACTION_NONE, NULL},
-};
-
+static void glw_x11_dispatch_event(uii_t *uii, event_t *e);
 
 
 
@@ -175,10 +171,6 @@ display_settings_init(glw_x11_t *gx11)
 		   SETTINGS_INITIAL_UPDATE, "px");
 
   htsmsg_destroy(settings);
-
-  gx11->gr.gr_uii.uii_km =
-    keymapper_create(r, gx11->config_name, "Keymap", glw_default_keymap);
-
 }
 
 
@@ -602,6 +594,55 @@ glw_x11_init(glw_x11_t *gx11)
 /**
  *
  */
+static const struct {
+  int XK;
+  int modifier;
+  int action1;
+  int action2;
+  int action3;
+} keysym2action[] = {
+  
+  { XK_Left,         0,           ACTION_LEFT,        ACTION_SEEK_BACKWARD },
+  { XK_Right,        0,           ACTION_RIGHT,       ACTION_SEEK_FORWARD },
+  { XK_Up,           0,           ACTION_UP },
+  { XK_Down,         0,           ACTION_DOWN },
+  { XK_Page_Up,      0,           ACTION_PAGE_UP,     ACTION_CHANNEL_PREV },
+  { XK_Page_Down,    0,           ACTION_PAGE_DOWN,   ACTION_CHANNEL_NEXT },
+  { XK_Home,         0,           ACTION_TOP },
+  { XK_End,          0,           ACTION_BOTTOM },
+
+  { XK_ISO_Left_Tab, ShiftMask,   ACTION_FOCUS_PREV },
+  
+  { XK_F11,          0,           ACTION_FULLSCREEN_TOGGLE },
+  
+  { XF86XK_AudioLowerVolume, 0,   ACTION_VOLUME_DOWN },
+  { XF86XK_AudioRaiseVolume, 0,   ACTION_VOLUME_UP },
+  { XF86XK_AudioMute,        0,   ACTION_VOLUME_MUTE_TOGGLE },
+
+  { XF86XK_Back,             0,   ACTION_NAV_BACK },
+  { XF86XK_Forward,          0,   ACTION_NAV_FWD },
+  { XF86XK_AudioPlay,        0,   ACTION_PLAYPAUSE },
+  { XF86XK_AudioStop,        0,   ACTION_STOP },
+  { XF86XK_AudioPrev,        0,   ACTION_PREV_TRACK },
+  { XF86XK_AudioNext,        0,   ACTION_NEXT_TRACK },
+  { XF86XK_Eject,            0,   ACTION_EJECT },
+  
+  { XK_F1,                   ShiftMask,   ACTION_PREV_TRACK },
+  { XK_F2,                   ShiftMask,   ACTION_PLAYPAUSE },
+  { XK_F3,                   ShiftMask,   ACTION_NEXT_TRACK },
+  { XK_F4,                   ShiftMask,   ACTION_STOP },
+
+  { XK_F5,                   ShiftMask,   ACTION_VOLUME_DOWN },
+  { XK_F6,                   ShiftMask,   ACTION_VOLUME_MUTE_TOGGLE },
+  { XK_F7,                   ShiftMask,   ACTION_VOLUME_UP },
+  
+};
+
+
+
+/**
+ *
+ */
 static void
 gl_keypress(glw_x11_t *gx11, XEvent *event)
 {
@@ -612,36 +653,45 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
   event_t *e = NULL;
   wchar_t wc;
   mbstate_t ps = {0};
-  int n;
+  int n, i;
   char *s;
+  action_type_t av[10];
+
+  int state = event->xkey.state & (ShiftMask | ControlMask | Mod1Mask);
+
   XComposeStatus composestatus;
 
   if(gx11->ic != NULL) {
     len = Xutf8LookupString(gx11->ic,(XKeyPressedEvent*)event,
 			    str, sizeof(str),
 			    &keysym, &gx11->status);
-    buf[0] = 0;
   } else {
     len = XLookupString(&event->xkey, str, sizeof(str), 
 			&keysym, &composestatus); 
   }
   
   if(len > 1) {
+    buf[0] = 0;
     s = str;
     while((n = mbrtowc(&wc, s, len, &ps)) > 0) {
       strncpy(buf, s, n);
       buf[n] = '\0';
       e = event_create_unicode(wc);
-      ui_dispatch_event(e, buf, &gx11->gr.gr_uii);
+
+      glw_x11_dispatch_event(&gx11->gr.gr_uii, e);
       s += n;
       len -= n;
     }
     return;
-  } else if((event->xkey.state & ~ShiftMask) == 0 && len == 1) {
+  } else if((state & ~ShiftMask) == 0 && len == 1) {
     c = str[0];
     switch(c) {
       /* Static key mappings, these cannot be changed */
-    case 8:          e = event_create_action(ACTION_BACKSPACE); break;
+    case 8:          
+      e = event_create_action_multi(
+				    (const action_type_t[]){
+				      ACTION_BS, ACTION_NAV_BACK}, 2);
+      break;
     case 13:         e = event_create_action(ACTION_ENTER);     break;
     case 27:         e = event_create_action(ACTION_CLOSE);     break;
     case 9:          e = event_create_action(ACTION_FOCUS_NEXT);break;
@@ -650,42 +700,36 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
       if(c < 32 || c == 127)
 	break;
 
-      buf[0] = c;
-      buf[1] = 0;
       e = event_create_unicode(c);
-      ui_dispatch_event(e, buf, &gx11->gr.gr_uii);
-      return;
+      break;
     }
-  } else if((event->xkey.state & 0xf) == 0) {
-    switch(keysym) {
-    case XK_Left:    e = event_create_action(ACTION_LEFT);  break;
-    case XK_Right:   e = event_create_action(ACTION_RIGHT); break;
-    case XK_Up:      e = event_create_action(ACTION_UP);    break;
-    case XK_Down:    e = event_create_action(ACTION_DOWN);  break;
+  }
+
+  if(e == NULL) {
+
+    for(i = 0; i < sizeof(keysym2action) / sizeof(*keysym2action); i++) {
+      
+      if(keysym2action[i].XK == keysym &&
+	 keysym2action[i].modifier == state) {
+	
+	av[0] = keysym2action[i].action1;
+	av[1] = keysym2action[i].action2;
+	av[2] = keysym2action[i].action3;
+
+	if(keysym2action[i].action3 != ACTION_NONE)
+	  e = event_create_action_multi(av, 3);
+	if(keysym2action[i].action2 != ACTION_NONE)
+	  e = event_create_action_multi(av, 2);
+	else
+	  e = event_create_action_multi(av, 1);
+	break;
+      }
     }
-  } else if(keysym == XK_ISO_Left_Tab) {
-    e = event_create_action(ACTION_FOCUS_PREV);
   }
 
-  if(e != NULL) {
-    ui_dispatch_event(e, NULL, &gx11->gr.gr_uii);
-    return;
-  }
+  if(e != NULL)
+    glw_x11_dispatch_event(&gx11->gr.gr_uii, e);
 
-  /* Construct a string representing the key */
-  if(keysym != NoSymbol) {
-    snprintf(buf, sizeof(buf),
-	     "x11 %s%s%s- %s",
-	     event->xkey.state & ShiftMask   ? "- Shift " : "",
-	     event->xkey.state & Mod1Mask    ? "- Alt "   : "",
-	     event->xkey.state & ControlMask ? "- Ctrl "  : "",
-	     XKeysymToString(keysym));
-  } else {
-    snprintf(buf, sizeof(buf),
-	     "x11 - raw - 0x%x", event->xkey.keycode);
-  }
-
-  ui_dispatch_event(NULL, buf, &gx11->gr.gr_uii);
 }
 
 /**
@@ -947,18 +991,20 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
 /**
  *
  */
-static int
+static void
 glw_x11_dispatch_event(uii_t *uii, event_t *e)
 {
   glw_x11_t *gx11 = (glw_x11_t *)uii;
+
+  /* Take care of any X11 specific events first */
   
   if(event_is_action(e, ACTION_FULLSCREEN_TOGGLE)) {
-
     settings_toggle_bool(gx11->fullscreen_setting);
-    return 1;
+    event_unref(e);
+  } else {
+    /* Pass it on to GLW */
+    glw_dispatch_event(uii, e);
   }
-
-  return glw_dispatch_event(uii, e);
 }
 
 

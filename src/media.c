@@ -26,6 +26,7 @@
 #include "showtime.h"
 #include "audio/audio_decoder.h"
 #include "event.h"
+#include "playqueue.h"
 #include "fileaccess/fileaccess.h"
 
 static hts_mutex_t media_mutex;
@@ -41,7 +42,7 @@ static void seek_by_propchange(void *opaque, prop_event_t event, ...);
 
 static void update_avdelta(void *opaque, prop_event_t event, ...);
 
-static int media_event_handler(event_t *e, void *opaque);
+static void media_eventsink(void *opaque, prop_event_t event, ...);
 
 
 /**
@@ -50,6 +51,8 @@ static int media_event_handler(event_t *e, void *opaque);
 void
 media_init(void)
 {
+  prop_courier_t *pc;
+
   hts_mutex_init(&media_mutex);
 
   LIST_INIT(&media_pipe_stack);
@@ -57,8 +60,15 @@ media_init(void)
   media_prop_root    = prop_create(prop_get_global(), "media");
   media_prop_sources = prop_create(media_prop_root, "sources");
   media_prop_current = prop_create(media_prop_root, "current");
-  event_handler_register("currentmedia", media_event_handler,
-			 EVENTPRI_CURRENT_MEDIA, NULL);
+
+  pc = prop_courier_create(&media_mutex);
+
+  prop_subscribe(0,
+		 PROP_TAG_NAME("media", "eventsink"),
+		 PROP_TAG_CALLBACK, media_eventsink, NULL,
+		 PROP_TAG_COURIER, pc,
+		 PROP_TAG_ROOT, media_prop_root,
+		 NULL);
 }
 
 
@@ -953,37 +963,24 @@ mp_set_current_time(media_pipe_t *mp, int64_t pts)
 /**
  *
  */
-static int
-media_event_handler(event_t *e, void *opaque)
+static void
+media_eventsink(void *opaque, prop_event_t event, ...)
 {
-  if(media_primary == NULL)
-    return 0;
+  event_t *e;
 
-  if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD) ||
-     event_is_action(e, ACTION_SEEK_BACKWARD) ||
-     event_is_action(e, ACTION_SEEK_FAST_FORWARD) ||
-     event_is_action(e, ACTION_SEEK_FORWARD) ||
-     event_is_action(e, ACTION_PLAYPAUSE) ||
-     event_is_action(e, ACTION_PLAY) ||
-     event_is_action(e, ACTION_PAUSE) ||
-     event_is_action(e, ACTION_STOP) ||
-     event_is_action(e, ACTION_PREV_TRACK) ||
-     event_is_action(e, ACTION_NEXT_TRACK) ||
-     event_is_action(e, ACTION_RESTART_TRACK)) {
+  va_list ap;
+  va_start(ap, event);
+
+  if(event != PROP_EXT_EVENT)
+    return;
+
+  e = va_arg(ap, event_t *);
+
+  if(media_primary != NULL) {
     mp_enqueue_event(media_primary, e);
-    return 1;
+  } else {
+    playqueue_event_handler(e);
   }
-
-  if(event_is_action(e, ACTION_LEFT)) {
-    mp_enqueue_event(media_primary, event_create_action(ACTION_SEEK_BACKWARD));
-    return 1;
-  }
-
-  if(event_is_action(e, ACTION_RIGHT)) {
-    mp_enqueue_event(media_primary, event_create_action(ACTION_SEEK_FORWARD));
-    return 1;
-  }
-  return 0;
 }
 
 /**

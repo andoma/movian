@@ -485,7 +485,7 @@ void glw_lock(glw_root_t *gr);
 
 void glw_unlock(glw_root_t *gr);
 
-int glw_dispatch_event(uii_t *uii, event_t *e);
+void glw_dispatch_event(uii_t *uii, event_t *e);
 
 
 /**

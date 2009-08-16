@@ -79,7 +79,7 @@ link_clicked(GtkObject *object, gpointer opaque)
   link_t *l = opaque;
 
   if(l->l_url != NULL)
-    nav_open(l->l_url, NULL, NULL, NAV_OPEN_ASYNC);
+    nav_open(l->l_url, NULL, NULL);
 }
 
 

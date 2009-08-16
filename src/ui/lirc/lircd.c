@@ -30,20 +30,21 @@
 
 #include "event.h"
 #include "showtime.h"
-#include "ui/keymapper.h"
 #include "settings.h"
+#include "ui/ui.h"
+#include "event.h"
 
 static const struct {
   const char *name;
-  event_type_t key;
+  action_type_t key;
 } lircmap[] = {
   { "Up",           ACTION_UP    },
   { "Down",         ACTION_DOWN  },
   { "Left",         ACTION_LEFT  },
   { "Right",        ACTION_RIGHT },
   { "Enter",        ACTION_ENTER },
-  { "Back",         ACTION_BACKSPACE  },
-  { "Backspace",    ACTION_BACKSPACE  },
+  { "Back",         ACTION_BS  },
+  { "Backspace",    ACTION_BS  },
 };
 
 static int
@@ -83,7 +84,6 @@ lircd_start(ui_t *ui, int argc, char *argv[], int primary)
   uii_register(uii, primary);
 
   p = settings_add_dir(NULL, "lircd", "Settings for LIRC", "display");
-  uii->uii_km = keymapper_create(p, "lircd", "Keymap", NULL);
 
   htsbuf_queue_init(&q, 0);
   fds.fd = fd;
@@ -123,14 +123,16 @@ lircd_start(ui_t *ui, int argc, char *argv[], int primary)
       
       if(keyname[0] && keyname[1] == 0) {
 	/* ASCII input */
-	event_post(event_create_unicode(keyname[0]));
+	event_dispatch(event_create_unicode(keyname[0]));
 	continue;
       }
 
       for(i = 0; i < sizeof(lircmap) / sizeof(lircmap[0]); i++) {
+#if 0
 	if(!strcasecmp(keyname, lircmap[i].name)) {
 	  event_post_simple(lircmap[i].key);
 	}
+#endif
       }
 
       TRACE(TRACE_DEBUG, "imonpad", "Got key %s", buf);
@@ -138,7 +140,7 @@ lircd_start(ui_t *ui, int argc, char *argv[], int primary)
       if(i == sizeof(lircmap) / sizeof(lircmap[0])) {
 	/* No hit, send to keymapper */
 	snprintf(buf, sizeof(buf), "lirc - %s", keyname);
-	ui_dispatch_event(NULL, buf, uii);
+	//	ui_dispatch_event(NULL, buf, uii);
       }
     }
   }

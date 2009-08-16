@@ -656,7 +656,7 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
     e = extra;
 
-    if(event_is_action(e, ACTION_BACKSPACE)) {
+    if(event_is_action(e, ACTION_BS)) {
 
       if(!del_char(gtb)) 
 	return 0;

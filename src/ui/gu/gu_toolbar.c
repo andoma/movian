@@ -21,7 +21,7 @@
 #include "gu.h"
 #include "showtime.h"
 
-static char *up_url;
+static char *up_url; // XXX VERY UGLY
 
 /**
  *
@@ -29,7 +29,7 @@ static char *up_url;
 static void
 back_clicked(GtkToolButton *toolbutton, gpointer user_data)
 {
-  nav_back(NAV_OPEN_ASYNC);
+  event_dispatch(event_create_action(ACTION_NAV_BACK));
 }
 
 
@@ -39,7 +39,7 @@ back_clicked(GtkToolButton *toolbutton, gpointer user_data)
 static void
 fwd_clicked(GtkToolButton *toolbutton, gpointer user_data)
 {
-  nav_fwd(NAV_OPEN_ASYNC);
+  event_dispatch(event_create_action(ACTION_NAV_FWD));
 }
 
 
@@ -49,7 +49,7 @@ fwd_clicked(GtkToolButton *toolbutton, gpointer user_data)
 static void
 home_clicked(GtkToolButton *toolbutton, gpointer user_data)
 {
-  nav_open(NAV_HOME, NULL, NULL, NAV_OPEN_ASYNC);
+  event_dispatch(event_create_action(ACTION_HOME));
 }
 
 
@@ -70,7 +70,7 @@ gu_nav_url_updated(void *opaque, const char *str)
 static void
 gu_nav_url_set(GtkEntry *e, gpointer user_data)
 {
-  nav_open(gtk_entry_get_text(e), NULL, NULL, NAV_OPEN_ASYNC);
+  event_dispatch(event_create_openurl(gtk_entry_get_text(e), NULL, NULL));
 }
 
 
@@ -101,7 +101,7 @@ static void
 up_clicked(GtkToolButton *toolbutton, gpointer user_data)
 {
   if(up_url != NULL)
-    nav_open(up_url, NULL, NULL, NAV_OPEN_ASYNC);
+    event_dispatch(event_create_openurl(up_url, NULL, NULL));
 }
 
 

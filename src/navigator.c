@@ -46,8 +46,8 @@ static prop_t *nav_prop_can_go_fwd;
 static event_queue_t nav_eq;
 
 static void *navigator_thread(void *aux);
-static int nav_input_event(event_t *e, void *opaque);
 
+static void nav_eventsink(void *opaque, prop_event_t event, ...);
 
 /**
  *
@@ -68,6 +68,8 @@ nav_init_be(nav_backend_t *be)
 void
 nav_init(void)
 {
+  prop_courier_t *pc;
+
   hts_mutex_init(&nav_mutex);
 
   global_sources = prop_create_ex(prop_get_global(), "sources",
@@ -75,7 +77,6 @@ nav_init(void)
 
   TAILQ_INIT(&nav_pages);
   TAILQ_INIT(&nav_history);
-  event_handler_register("navigator", nav_input_event, EVENTPRI_NAV, NULL);
 
   nav_prop_root    = prop_create(prop_get_global(), "nav");
   nav_prop_pages   = prop_create(nav_prop_root, "pages");
@@ -98,6 +99,16 @@ nav_init(void)
 #endif
 
   hts_thread_create_detached(navigator_thread, NULL);
+
+  pc = prop_courier_create(&nav_mutex);
+
+  prop_subscribe(0,
+		 PROP_TAG_NAME("nav", "eventsink"),
+		 PROP_TAG_CALLBACK, nav_eventsink, NULL,
+		 PROP_TAG_COURIER, pc,
+		 PROP_TAG_ROOT, nav_prop_root,
+		 NULL);
+
 }
 
 /**
@@ -231,67 +242,45 @@ nav_open0(const char *url, const char *type, const char *parent)
  *
  */
 void
-nav_open(const char *url, const char *type, const char *parent, int flags)
+nav_open(const char *url, const char *type, const char *parent)
 {
-  if(flags & NAV_OPEN_ASYNC)
-    event_enqueue(&nav_eq, event_create_openurl(url, type, parent));
-  else {
-    hts_mutex_lock(&nav_mutex);
-    nav_open0(url, type, parent);
-    hts_mutex_unlock(&nav_mutex);
-  }
+  event_dispatch(event_create_openurl(url, type, parent));
 }
 
 
 /**
  *
  */
-void
-nav_back(int flags)
+static void
+nav_back(void)
 {
   nav_page_t *prev, *np;
-
-  hts_mutex_lock(&nav_mutex);
 
   np = nav_page_current;
 
   if(np != NULL &&
      (prev = TAILQ_PREV(np, nav_page_queue, np_history_link)) != NULL) {
 
-    if(flags & NAV_OPEN_ASYNC)
-      event_enqueue(&nav_eq, event_create_openurl(prev->np_url, NULL, NULL));
-    else 
-      nav_open0(prev->np_url, NULL, NULL);
-
+    nav_open0(prev->np_url, NULL, NULL);
     if(!(np->np_flags & NAV_PAGE_DONT_CLOSE_ON_BACK))
       nav_close(np);
   }
-  hts_mutex_unlock(&nav_mutex);
 }
 
 
 /**
  *
  */
-void
-nav_fwd(int flags)
+static void
+nav_fwd(void)
 {
   nav_page_t *next, *np;
 
-  hts_mutex_lock(&nav_mutex);
-
   np = nav_page_current;
 
-  if(np != NULL && (next = TAILQ_NEXT(np, np_history_link)) != NULL) {
-
-    if(flags & NAV_OPEN_ASYNC)
-      event_enqueue(&nav_eq, event_create_openurl(next->np_url, NULL, NULL));
-    else 
-      nav_open0(next->np_url, NULL, NULL);
-  }
-  hts_mutex_unlock(&nav_mutex);
+  if(np != NULL && (next = TAILQ_NEXT(np, np_history_link)) != NULL)
+    nav_open0(next->np_url, NULL, NULL);
 }
-
 
 /**
  *
@@ -349,22 +338,6 @@ nav_page_create(const char *url, size_t allocsize,
 /**
  *
  */
-static int
-nav_input_event(event_t *e, void *opaque)
-{
-  if(event_is_type(e, EVENT_OPENURL) ||
-     event_is_action(e, ACTION_BACKSPACE) ||
-     event_is_action(e, ACTION_HOME)) {
-    event_enqueue(&nav_eq, e);
-    return 1;
-  }
-  return 0;
-}
-
-
-/**
- *
- */
 static void *
 navigator_thread(void *aux)
 {
@@ -374,10 +347,7 @@ navigator_thread(void *aux)
   while(1) {
     e = event_get(-1, &nav_eq);
 
-    if(event_is_action(e, ACTION_BACKSPACE)) {
-      nav_back(0);
-      
-    } else if(event_is_action(e, ACTION_HOME)) {
+    if(event_is_action(e, ACTION_HOME)) {
       nav_open0(NAV_HOME, NULL, NULL);
 
     } else if(event_is_type(e, EVENT_OPENURL)) {
@@ -389,6 +359,39 @@ navigator_thread(void *aux)
     }
 
     event_unref(e);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+nav_eventsink(void *opaque, prop_event_t event, ...)
+{
+  event_t *e;
+  event_openurl_t *ou;
+
+  va_list ap;
+  va_start(ap, event);
+
+  if(event != PROP_EXT_EVENT)
+    return;
+
+  e = va_arg(ap, event_t *);
+  
+  if(event_is_action(e, ACTION_NAV_BACK)) {
+    nav_back();
+
+  } else if(event_is_action(e, ACTION_NAV_FWD)) {
+    nav_fwd();
+
+  } else if(event_is_action(e, ACTION_HOME)) {
+    nav_open0(NAV_HOME, NULL, NULL);
+
+  } else if(event_is_type(e, EVENT_OPENURL)) {
+    ou = (event_openurl_t *)e;
+    nav_open0(ou->url, ou->type, ou->parent);
   }
 }
 

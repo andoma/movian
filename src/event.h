@@ -33,7 +33,10 @@ typedef enum {
   ACTION_LEFT,
   ACTION_RIGHT,
   ACTION_ENTER,
-  ACTION_BACKSPACE,
+  ACTION_BS,
+
+  ACTION_NAV_FWD,
+  ACTION_NAV_BACK,
 
   ACTION_FOCUS_NEXT,  /* TAB */
   ACTION_FOCUS_PREV,  /* Shift + TAB */
@@ -69,8 +72,8 @@ typedef enum {
   ACTION_SEEK_FAST_BACKWARD,
   ACTION_HOME,
   ACTION_SWITCH_VIEW,
-  ACTION_CHANNEL_PLUS,
-  ACTION_CHANNEL_MINUS,
+  ACTION_CHANNEL_NEXT,
+  ACTION_CHANNEL_PREV,
   ACTION_FULLSCREEN_TOGGLE,
 
   ACTION_last_mappable
@@ -171,7 +174,7 @@ void *event_create(event_type_t type, size_t size);
 
 event_t *event_create_action(action_type_t action);
 
-event_t *event_create_action_multi(action_type_t *actions, size_t numactions);
+event_t *event_create_action_multi(const action_type_t *actions, size_t numactions);
 
 #define event_create_type(type) event_create(type, sizeof(event_t))
 
@@ -192,35 +195,10 @@ event_t *event_create_url(event_type_t et, const char *url);
 event_t *event_create_openurl(const char *url, const char *type,
 			      const char *parent);
 
-
-/**
- * The last entry in this list will be called first
- */
-typedef enum {
-  EVENTPRI_NAV,
-  EVENTPRI_MAIN,
-  EVENTPRI_SPEEDBUTTONS,
-  EVENTPRI_PLAYQUEUE,
-  EVENTPRI_CURRENT_MEDIA,
-  EVENTPRI_AUDIO_MIXER,
-} eventpri_t;
-
-void event_post(event_t *ge);
-
-void event_post_simple(event_type_t type);
-
-void *event_handler_register(const char *name, int (*callback)(event_t *ge,
-							       void *opaque),
-			     eventpri_t pri, void *opaque);
-
-void event_handler_unregister(void *ih);
-
 typedef struct event_keydesc {
   event_t h;
   char desc[0];
 } event_keydesc_t;
-
-void event_init(void);
 
 const char *action_code2str(action_type_t code);
 
@@ -231,5 +209,7 @@ int action_update_hold_by_event(int hold, event_t *e);
 #define event_is_type(e, et) ((e)->e_type_x == (et))
 
 int event_is_action(event_t *e, action_type_t at);
+
+void event_dispatch(event_t *e);
 
 #endif /* EVENT_H */

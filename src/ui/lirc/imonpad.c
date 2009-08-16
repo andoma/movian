@@ -29,7 +29,8 @@
 
 #include "showtime.h"
 #include "settings.h"
-#include "ui/keymapper.h"
+#include "ui/ui.h"
+#include "event.h"
 
 /*
  * iMON PAD native decoder
@@ -38,7 +39,7 @@
 static const struct {
   const char *name;
   uint32_t code;
-  event_type_t key;
+  action_type_t key;
 } imonpadmap[] = {
   {"AppExit",            0x288195B7, 0 },
   {"Record",             0x298115B7, 0 },
@@ -92,7 +93,7 @@ static const struct {
   {"Enter",              0x28A195B7, ACTION_ENTER },
   {"MouseLeftClick",     0x688301B7, 0 },
   {"WindowsKey",         0x2B8195B7, 0 },
-  {"Backspace",          0x28A115B7, ACTION_BACKSPACE },
+  {"Backspace",          0x28A115B7, ACTION_BS },
   {"Power",              0x289155B7, 0 },
 };
 
@@ -147,7 +148,6 @@ imonpad_start(ui_t *ui, int argc, char *argv[], int primary)
   uii_register(uii, primary);
 
   p = settings_add_dir(NULL, "imonpad", "Settings for iMON Pad", "display");
-  uii->uii_km = keymapper_create(p, "imonpad", "Keymap", NULL);
 
   fds.fd = fd;
   fds.events = POLLIN;
@@ -277,7 +277,7 @@ imonpad_start(ui_t *ui, int argc, char *argv[], int primary)
       if(k && delta > repeat_rate0) {
 	last_nav_generated_ts = ts;
 
-	ui_dispatch_event(event_create_action(k), NULL, uii);
+	//	ui_dispatch_event(event_create_action(k), NULL, uii);
 	delta -= repeat_rate0;
       }
       continue;
@@ -286,11 +286,11 @@ imonpad_start(ui_t *ui, int argc, char *argv[], int primary)
     for(i = 0; i < sizeof(imonpadmap) / sizeof(imonpadmap[0]); i++) {
       if(v == imonpadmap[i].code) {
 
-	if(imonpadmap[i].key)
-	  ui_dispatch_event(event_create_action(imonpadmap[i].key), desc, uii);
-	else {
+	if(imonpadmap[i].key) {
+	  //	  ui_dispatch_event(event_create_action(imonpadmap[i].key), desc, uii);
+	} else {
 	  snprintf(desc, sizeof(desc), "imonpad - %s", imonpadmap[i].name);
-	  ui_dispatch_event(NULL, desc, uii);
+	  //	  ui_dispatch_event(NULL, desc, uii);
 	}
 	break;
       }

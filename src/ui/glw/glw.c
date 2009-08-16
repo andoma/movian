@@ -123,7 +123,7 @@ top_event_handler(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
   if(sig != GLW_SIGNAL_EVENT_BUBBLE)
     return 0;
 
-  event_post(e);
+  event_dispatch(e);
   return 1;
 }
 
@@ -1426,7 +1426,7 @@ glw_rescale(glw_rctx_t *rc, float t_aspect)
 /**
  *
  */
-int
+void
 glw_dispatch_event(uii_t *uii, event_t *e)
 {
   glw_root_t *gr = (glw_root_t *)uii;
@@ -1436,7 +1436,8 @@ glw_dispatch_event(uii_t *uii, event_t *e)
   r = glw_event(gr, e);
   glw_unlock(gr);
 
-  return r;
+  if(!r)
+    event_dispatch(e);
 }
 
 const glw_vertex_t align_vertices[] = 

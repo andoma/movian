@@ -43,7 +43,6 @@ SRCS += src/main.c \
 	src/playqueue.c \
 	src/arch/arch_${OSENV}.c \
 	src/ui/ui.c \
-	src/ui/keymapper.c \
 
 
 #

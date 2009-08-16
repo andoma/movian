@@ -27,22 +27,7 @@
 #include "showtime.h"
 #include "event.h"
 #include "misc/strtab.h"
-
-static hts_mutex_t ehmutex;
-static LIST_HEAD(, event_handler) event_handlers;
-
-
-/**
- *
- */
-void
-event_init(void)
-{
-  hts_mutex_init(&ehmutex);
-}
-
-
-
+#include "prop.h"
 
 /**
  *
@@ -173,111 +158,9 @@ event_flushqueue(event_queue_t *eq)
 }
 
 
-
-
-
-
-
-
-
-
-/**
- *  Root input handler & events (from keyboard, remote controls, etc)
- */
-typedef struct event_handler {
-  const char *name;
-  void *opaque;
-  int pri;
-  int (*callback)(event_t *ge, void *opaque);
-  LIST_ENTRY(event_handler) link;
-} event_handler_t;
-
-
 /**
  *
  */
-static int 
-ihcmp(event_handler_t *a, event_handler_t *b)
-{
-  return b->pri - a->pri;
-}
-
-
-/**
- *
- */
-void *
-event_handler_register(const char *name, int (*callback)(event_t *ge,
-							 void *opaque), 
-		       eventpri_t pri, void *opaque)
-{
-  event_handler_t *ih;
-  ih = malloc(sizeof(event_handler_t));
-
-  ih->name = name;
-  ih->pri = pri;
-  ih->callback = callback;
-  ih->opaque = opaque;
-  hts_mutex_lock(&ehmutex);
-  LIST_INSERT_SORTED(&event_handlers, ih, link, ihcmp);
-  hts_mutex_unlock(&ehmutex);
-  return ih;
-}
-
-/**
- *
- */
-void
-event_handler_unregister(void *IH)
-{
-  event_handler_t *ih = IH;
-
-  hts_mutex_lock(&ehmutex);
-  LIST_REMOVE(ih, link);
-  hts_mutex_unlock(&ehmutex);
-  free(ih);
-}
-
-
-
-/**
- *
- */
-void
-event_post(event_t *e)
-{
-  event_handler_t *eh;
-  int r;
-
-  hts_mutex_lock(&ehmutex);
-
-  LIST_FOREACH(eh, &event_handlers, link) {
-    
-    r = eh->callback(e, eh->opaque);
-    if(r)
-      break;
-  }
-
-  hts_mutex_unlock(&ehmutex);
-
-  event_unref(e);
-}
-
-
-/**
- *
- */
-void
-event_post_simple(event_type_t type)
-{
-  event_post(event_create(type, sizeof(event_t)));
-}
-
-
-/**
- *
- */
-
 static struct strtab actionnames[] = {
   { "Up",                    ACTION_UP },
   { "Down",                  ACTION_DOWN },
@@ -297,7 +180,7 @@ static struct strtab actionnames[] = {
   { "VolumeDown",            ACTION_VOLUME_DOWN },
   { "VolumeMuteToggle",      ACTION_VOLUME_MUTE_TOGGLE },
   { "Menu",                  ACTION_MENU },
-  { "Back",                  ACTION_BACKSPACE },
+  { "Back",                  ACTION_BS },
   { "Select",                ACTION_SELECT },
   { "Eject",                 ACTION_EJECT },
   { "Power",                 ACTION_POWER },
@@ -308,8 +191,8 @@ static struct strtab actionnames[] = {
   { "Quit",                  ACTION_QUIT },
   { "Home",                  ACTION_HOME },
   { "ChangeView",            ACTION_SWITCH_VIEW },
-  { "Channel+",              ACTION_CHANNEL_PLUS },
-  { "Channel-",              ACTION_CHANNEL_MINUS },
+  { "Channel+",              ACTION_CHANNEL_NEXT },
+  { "Channel-",              ACTION_CHANNEL_PREV },
   { "FullscreenToggle",      ACTION_FULLSCREEN_TOGGLE },
   { "Increase",              ACTION_INCR },
   { "Decrease",              ACTION_DECR },
@@ -395,7 +278,7 @@ action_update_hold_by_event(int hold, event_t *e)
  *
  */
 event_t *
-event_create_action_multi(action_type_t *actions, size_t numactions)
+event_create_action_multi(const action_type_t *actions, size_t numactions)
 {
   event_action_vector_t *eav;
   int s = sizeof(action_type_t) * numactions;
@@ -436,3 +319,70 @@ event_is_action(event_t *e, action_type_t at)
       return 1;
   return 0;
 }
+
+
+/**
+ *
+ */
+static void
+event_to_prop(prop_t *p, event_t *e)
+{
+  prop_send_ext_event(p, e);
+  prop_ref_dec(p);
+}
+
+
+/**
+ *
+ */
+void
+event_dispatch(event_t *e)
+{
+  prop_t *p;
+
+  if(event_is_action(e, ACTION_CLOSE) || event_is_action(e, ACTION_QUIT)) {
+    showtime_shutdown(0);
+
+  } else if(event_is_action(e, ACTION_POWER)) {
+    showtime_shutdown(10);
+
+  } else if(event_is_action(e, ACTION_NAV_BACK) ||
+	    event_is_action(e, ACTION_NAV_FWD) ||
+	    event_is_action(e, ACTION_HOME) ||
+	    event_is_type(e, EVENT_OPENURL)) {
+    event_to_prop(prop_get_by_name(PNVEC("global", "nav", "eventsink"),
+				   1, NULL), e);
+
+  } else if(event_is_action(e, ACTION_VOLUME_UP) ||
+	    event_is_action(e, ACTION_VOLUME_DOWN)) {
+
+    p = prop_get_by_name(PNVEC("global", "audio", "mastervolume"), 1, NULL);
+    prop_add_float(p, event_is_action(e, ACTION_VOLUME_DOWN) ? -1 : 1);
+    prop_ref_dec(p);
+    
+  } else if(event_is_action(e, ACTION_VOLUME_MUTE_TOGGLE)) {
+
+    p = prop_get_by_name(PNVEC("global", "audio", "mastermute"), 1, NULL);
+    prop_toggle_int(p);
+    prop_ref_dec(p);
+
+  } else if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD) ||
+	    event_is_action(e, ACTION_SEEK_BACKWARD) ||
+	    event_is_action(e, ACTION_SEEK_FAST_FORWARD) ||
+	    event_is_action(e, ACTION_SEEK_FORWARD) ||
+	    event_is_action(e, ACTION_PLAYPAUSE) ||
+	    event_is_action(e, ACTION_PLAY) ||
+	    event_is_action(e, ACTION_PAUSE) ||
+	    event_is_action(e, ACTION_STOP) ||
+	    event_is_action(e, ACTION_PREV_TRACK) ||
+	    event_is_action(e, ACTION_NEXT_TRACK) ||
+	    event_is_action(e, ACTION_RESTART_TRACK)) {
+
+    event_to_prop(prop_get_by_name(PNVEC("global", "media", "eventsink"),
+				   1, NULL), e);
+  }
+
+
+  event_unref(e);
+}
+

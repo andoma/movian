@@ -22,6 +22,7 @@
 #include <stdlib.h>
 
 #include <libavutil/pixfmt.h>
+#include "event.h"
 #include "arch/threads.h"
 #include "misc/queue.h"
 #include "htsmsg/htsmsg.h"
@@ -46,6 +47,7 @@ typedef enum {
   PROP_REQ_NEW_CHILD,
   PROP_REQ_DELETE,
   PROP_DESTROYED,
+  PROP_EXT_EVENT,
 } prop_event_t;
 
 typedef void (prop_callback_t)(void *opaque, prop_event_t event, ...);
@@ -419,6 +421,8 @@ htsmsg_t *prop_tree_to_htsmsg(prop_t *p);
 prop_pixmap_t *prop_pixmap_create(int width, int height, int linesize,
 				  enum PixelFormat pixfmt, uint8_t *pixels)
      __attribute__ ((malloc));
+
+void prop_send_ext_event(prop_t *p, event_t *e);
 
 /* DEBUGish */
 const char *propname(prop_t *p);

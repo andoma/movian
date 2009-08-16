@@ -358,31 +358,6 @@ prop_t *prop_mastervol, *prop_mastermute;
 /**
  *
  */
-static int
-audio_mixer_event_handler(event_t *e, void *opaque)
-{ 
-  if(event_is_action(e, ACTION_VOLUME_UP)) {
-    prop_add_float(prop_mastervol, 1);
-    return 1;
-  }
-
-  if(event_is_action(e, ACTION_VOLUME_DOWN)) {
-    prop_add_float(prop_mastervol, -1);
-    return 1;
-  }
-
-  if(event_is_action(e, ACTION_VOLUME_MUTE_TOGGLE)) {
-    prop_toggle_int(prop_mastermute);
-    return 1;
-  }
-
-  return 0;
-}
-
-
-/**
- *
- */
 static void
 save_matervol(void *opaque, float value)
 {
@@ -422,8 +397,4 @@ audio_mastervol_init(void)
 		 PROP_TAG_CALLBACK_FLOAT, save_matervol, NULL,
 		 PROP_TAG_ROOT, prop_mastervol,
 		 NULL);
-  
-  event_handler_register("audio mixer", audio_mixer_event_handler,
-			 EVENTPRI_AUDIO_MIXER, NULL);
-
 }

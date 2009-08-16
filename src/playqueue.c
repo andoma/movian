@@ -36,8 +36,6 @@ static int playqueue_shuffle_mode = 0;
 
 static int playqueue_repeat_mode = 0;
 
-static int playqueue_event_handler(event_t *e, void *opaque);
-
 #define PLAYQUEUE_URL "playqueue:"
 
 static prop_t *playqueue_root;
@@ -767,9 +765,6 @@ playqueue_init(void)
 
   hts_thread_create_detached(playqueue_thread, NULL);
   hts_thread_create_detached(player_thread, NULL);
-
-  event_handler_register("playqueue", playqueue_event_handler,
-			 EVENTPRI_PLAYQUEUE, NULL);
   return 0;
 }
 
@@ -987,14 +982,11 @@ player_thread(void *aux)
 /**
  *
  */
-static int
-playqueue_event_handler(event_t *e, void *opaque)
+void
+playqueue_event_handler(event_t *e)
 {
   if(event_is_action(e, ACTION_PLAY) ||
      event_is_action(e, ACTION_PLAYPAUSE)) {
     mp_enqueue_event(playqueue_mp, e);
-    return 1;
-
   }
-  return 0;
 }

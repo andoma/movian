@@ -55,7 +55,7 @@ m_quit(GtkWidget *menu_item, gpointer callback_data)
 static void
 m_openplayqueue(GtkWidget *menu_item, gpointer callback_data)
 {
-  nav_open("playqueue:", NULL, NULL, NAV_OPEN_ASYNC);
+  nav_open("playqueue:", NULL, NULL);
 }
 
 
@@ -88,7 +88,7 @@ m_open_response(GtkDialog *dialog, gint response_id, gpointer user_data)
     l0 = l = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
 
     for(; l != NULL; l = l->next) {
-      nav_open((const char *)l->data, NULL, NULL, NAV_OPEN_ASYNC);
+      nav_open((const char *)l->data, NULL, NULL);
     }
     g_slist_free(l0);
 

@@ -34,7 +34,6 @@
 #include "navigator.h"
 #include "settings.h"
 #include "ui/ui.h"
-#include "ui/keymapper.h"
 #include "keyring.h"
 #include "bookmarks.h"
 #include "notifications.h"
@@ -146,9 +145,6 @@ main(int argc, char **argv)
   /* Initialize settings */
   settings_init();
 
-  /* Initialize event dispatcher */
-  event_init();
-
   /* Initialize libavcodec & libavformat */
   av_lockmgr_register(fflockmgr);
   av_log_set_level(AV_LOG_QUIET);
@@ -167,7 +163,7 @@ main(int argc, char **argv)
   bookmarks_init();
 
   /* Open initial page */
-  nav_open(argc > 0 ? argv[0] : NAV_HOME, NULL, NULL, NAV_OPEN_ASYNC);
+  nav_open(argc > 0 ? argv[0] : NAV_HOME, NULL, NULL);
 
   /* Service discovery */
   sd_init();

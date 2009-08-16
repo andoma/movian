@@ -88,6 +88,7 @@ typedef struct prop_notify {
     int i;
     char *s;
     prop_pixmap_t *pp;
+    event_t *e;
   } u;
 
 #define hpn_prop   u.p
@@ -95,6 +96,7 @@ typedef struct prop_notify {
 #define hpn_int    u.i
 #define hpn_string u.s
 #define hpn_pixmap u.pp
+#define hpn_ext_event  u.e
 
   prop_t *hpn_prop2;
   int hpn_flags;
@@ -226,6 +228,11 @@ prop_notify_free(prop_notify_t *n)
   case PROP_DESTROYED:
     prop_ref_dec(n->hpn_prop);
     break;
+
+  case PROP_EXT_EVENT:
+    event_unref(n->hpn_ext_event);
+    break;
+
   }
   prop_sub_ref_dec(n->hpn_sub);
   free(n); 
@@ -425,6 +432,14 @@ prop_courier(void *aux)
       else
 	cb(s->hps_opaque, n->hpn_event, n->hpn_prop, s);
       prop_ref_dec(n->hpn_prop);
+      break;
+
+    case PROP_EXT_EVENT:
+      if(pt != NULL)
+	pt(s, n->hpn_event, n->hpn_ext_event);
+      else
+	cb(s->hps_opaque, n->hpn_event, n->hpn_ext_event);
+      event_unref(n->hpn_ext_event);
       break;
     }
 
@@ -730,6 +745,38 @@ prop_notify_child2(prop_t *child, prop_t *parent, prop_t *sibling,
   LIST_FOREACH(s, &parent->hp_value_subscriptions, hps_value_prop_link)
     if(s != skipme)
       prop_build_notify_child2(s, child, sibling, event, flags);
+}
+
+
+/**
+ *
+ */
+static void
+prop_send_ext_event0(prop_t *p, event_t *e)
+{
+  prop_sub_t *s;
+  prop_notify_t *n;
+
+  LIST_FOREACH(s, &p->hp_value_subscriptions, hps_value_prop_link) {
+    n = get_notify(s);
+
+    n->hpn_event = PROP_EXT_EVENT;
+    atomic_add(&e->e_refcount, 1);
+    n->hpn_ext_event = e;
+    courier_enqueue(s->hps_courier, n);
+  }
+}
+
+
+/**
+ *
+ */
+void
+prop_send_ext_event(prop_t *p, event_t *e)
+{
+  hts_mutex_lock(&prop_mutex);
+  prop_send_ext_event0(p, e);
+  hts_mutex_unlock(&prop_mutex);
 }
 
 

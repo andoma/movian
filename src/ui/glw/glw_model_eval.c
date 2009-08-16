@@ -951,6 +951,7 @@ prop_callback(void *opaque, prop_event_t event, ...)
   case PROP_REQ_NEW_CHILD:
   case PROP_REQ_DELETE:
   case PROP_DESTROYED:
+  case PROP_EXT_EVENT:
     return;
   }
 

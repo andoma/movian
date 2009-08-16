@@ -22,16 +22,12 @@
 
 #include "showtime.h"
 #include "ui.h"
-#include "keymapper.h"
 
 
 static hts_mutex_t ui_mutex;
 static struct ui_list uis;
 static struct uii_list uiis;
 static uii_t *primary_uii;
-
-static int ui_event_handler(event_t *e, void *opaque);
-
 
 /**
  *
@@ -138,10 +134,7 @@ ui_start(int argc, const char *argv[], const char *argv00)
   TAILQ_HEAD(, uiboot) ubs;
 
   hts_mutex_init(&ui_mutex);
-  keymapper_init();
   ui_register();
-  event_handler_register("uimain", ui_event_handler, EVENTPRI_MAIN, NULL);
-
 
   if(argc == 0) {
     /* No UI arguments, simple case */
@@ -215,72 +208,6 @@ ui_start(int argc, const char *argv[], const char *argv00)
     hts_thread_create_detached(ui_trampoline, ub);
 
   return prim->ui->ui_start(prim->ui, prim->argc, prim->argv, 1);
-}
-
-
-/**
- *
- */
-int
-ui_dispatch_event(event_t *e, const char *buf, uii_t *uii)
-{
-  int r, l;
-  event_keydesc_t *ek;
-
-  if(buf != NULL) {
-    l = strlen(buf);
-    ek = event_create(EVENT_KEYDESC, sizeof(event_keydesc_t) + l + 1);
-    memcpy(ek->desc, buf, l + 1);
-    if(ui_dispatch_event(&ek->h, NULL, uii))
-      return 1;
-  }
-
-  if(e == NULL)
-    e = keymapper_resolve(buf, uii);
-
-  if(e == NULL)
-    return 0;
-
-  if(uii != NULL && uii->uii_ui->ui_dispatch_event != NULL) {
-    r = uii->uii_ui->ui_dispatch_event(uii, e);
-  } else {
-
-    r = 0;
-    
-    LIST_FOREACH(uii, &uiis, uii_link) {
-      if(uii->uii_ui->ui_dispatch_event != NULL) 
-	if((r = uii->uii_ui->ui_dispatch_event(uii, e)) != 0)
-	  break;
-    }
-  }
-
-  if(r == 0) {
-    /* Not consumed, drop it into the main event dispatcher */
-    event_post(e);
-  } else {
-    event_unref(e);
-  }
-  return r;
-}
-
-
-/**
- * Catch events used for exiting
- */
-static int
-ui_event_handler(event_t *e, void *opaque)
-{
-  if(event_is_action(e, ACTION_CLOSE) ||
-     event_is_action(e, ACTION_QUIT)) {
-    showtime_shutdown(0);
-    return 1;
-
-  } else if(event_is_action(e, ACTION_POWER)) {
-    showtime_shutdown(10);
-    return 1;
-
-  }
-  return 0;
 }
 
 

@@ -21,4 +21,6 @@
 
 void playqueue_play(const char *url, const char *parent, prop_t *p, int enq);
 
+void playqueue_event_handler(event_t *e);
+
 #endif /* PLAYQUEUE_H__ */
