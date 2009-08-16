@@ -610,7 +610,6 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 
     e = event_create_unicode(uc);
     glw_cocoa_dispatch_event(&gcocoa.gr.gr_uii, e);
-    //ui_dispatch_event(e, [su UTF8String], &gcocoa.gr.gr_uii);
     [su release];
   }
 }
@@ -635,18 +634,18 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   unichar c = [chars characterAtIndex:0];
   unichar cim = [[event charactersIgnoringModifiers] characterAtIndex:0];
   /* only care for some modifier keys */
-  int mod = [event modifierFlags] & (NSShiftKeyMask | NSCommandKeyMask);
+  int mod = [event modifierFlags] & 
+    (NSShiftKeyMask | NSCommandKeyMask | NSFunctionKeyMask);
   event_t *e = NULL;
-  int i;
   action_type_t av[3];
-    
+  int i;
+
   if((mod & ~NSShiftKeyMask) == 0 && (c == _NSSpaceKey || isgraph(c))) {
     e = event_create_unicode(c);
   } else {
     for(i = 0; i < sizeof(keysym2action) / sizeof(keysym2action[0]); i++) {
       if(keysym2action[i].key == cim &&
-         keysym2action[i].mod == mod) {
-
+	 keysym2action[i].mod == (mod & ~NSFunctionKeyMask)) {
 	av[0] = keysym2action[i].action1;
 	av[1] = keysym2action[i].action2;
 	av[2] = keysym2action[i].action3;
