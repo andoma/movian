@@ -36,7 +36,6 @@
 #include "settings.h"
 #include "navigator.h"
 #include "glw_video.h"
-#include "ui/keymapper.h"
 #include "misc/strtab.h"
 
 
@@ -74,90 +73,79 @@ typedef struct glw_cocoa {
 
 static glw_cocoa_t gcocoa;
 
-static const keymap_defmap_t glw_default_keymap[] = {
-  {ACTION_NONE, NULL},
+#define _NSTabKey 9
+#define _NSShiftTabKey 25 /* why other value when shift is pressed? */
+#define _NSEnterKey 13
+#define _NSBackspaceKey 127
+#define _NSEscapeKey 27
+#define _NSSpaceKey 32
+
+static const struct {
+  int key;
+  int mod;
+  int action1;
+  int action2;
+  int action3;
+} keysym2action[] = {
+{ NSLeftArrowFunctionKey,   0,                ACTION_LEFT, ACTION_SEEK_BACKWARD },
+{ NSRightArrowFunctionKey,  0,                ACTION_RIGHT, ACTION_SEEK_FORWARD },
+{ NSUpArrowFunctionKey,     0,                ACTION_UP },
+{ NSDownArrowFunctionKey,   0,                ACTION_DOWN },
+{ NSPageUpFunctionKey,      0,                ACTION_PAGE_UP, ACTION_CHANNEL_PREV },
+{ NSPageDownFunctionKey,    0,                ACTION_PAGE_DOWN, ACTION_CHANNEL_NEXT },
+{ NSHomeFunctionKey,        0,                ACTION_TOP },
+{ NSEndFunctionKey,         0,                ACTION_BOTTOM },
+
+{ _NSBackspaceKey,          0,                ACTION_BS, ACTION_NAV_BACK },
+{ _NSEnterKey,              0,                ACTION_ENTER },
+{ _NSEscapeKey,             0,                ACTION_CLOSE },
+{ _NSTabKey,                0,                ACTION_FOCUS_NEXT },
+{ _NSShiftTabKey,           NSShiftKeyMask,   ACTION_FOCUS_PREV },
+
+{ NSF11FunctionKey,         0,                ACTION_FULLSCREEN_TOGGLE },
+{ 'f',                      NSCommandKeyMask, ACTION_FULLSCREEN_TOGGLE },
+
+
+/*
+{ XF86XK_AudioLowerVolume, 0,   ACTION_VOLUME_DOWN },
+{ XF86XK_AudioRaiseVolume, 0,   ACTION_VOLUME_UP },
+{ XF86XK_AudioMute,        0,   ACTION_VOLUME_MUTE_TOGGLE },
+*/
+
+/*
+{ XF86XK_Back,             0,   ACTION_NAV_BACK },
+{ XF86XK_Forward,          0,   ACTION_NAV_FWD },
+{ XF86XK_AudioPlay,        0,   ACTION_PLAYPAUSE },
+{ XF86XK_AudioStop,        0,   ACTION_STOP },
+{ XF86XK_AudioPrev,        0,   ACTION_PREV_TRACK },
+{ XF86XK_AudioNext,        0,   ACTION_NEXT_TRACK },
+{ XF86XK_Eject,            0,   ACTION_EJECT },
+{ XF86XK_AudioMedia,       0,   ACTION_HOME },
+{ XK_Menu,                 0,   ACTION_HOME },
+*/
+
+{ NSF1FunctionKey,          NSShiftKeyMask,   ACTION_PREV_TRACK },
+{ NSF2FunctionKey,          NSShiftKeyMask,   ACTION_PLAYPAUSE },
+{ NSF3FunctionKey,          NSShiftKeyMask,   ACTION_NEXT_TRACK },
+{ NSF4FunctionKey,          NSShiftKeyMask,   ACTION_STOP },
+
+{ NSF5FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_DOWN },
+{ NSF6FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_MUTE_TOGGLE },
+{ NSF7FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_UP },
+
+/*
+{ XF86XK_Sleep,            0,           ACTION_SLEEP },
+ */
 };
 
-/* based on NSEvent function key enums */
-static struct strtab function_key_map[] = {
-  {"Up arrow", 0xF700},
-  {"Down arrow", 0xF701},
-  {"Left arrow", 0xF702},
-  {"Right arrow", 0xF703},
-  {"F1", 0xF704},
-  {"F2", 0xF705},
-  {"F3", 0xF706},
-  {"F4", 0xF707},
-  {"F5", 0xF708},
-  {"F6", 0xF709},
-  {"F7", 0xF70A},
-  {"F8", 0xF70B},
-  {"F9", 0xF70C},
-  {"F10", 0xF70D},
-  {"F11", 0xF70E},
-  {"F12", 0xF70F},
-  {"F13", 0xF710},
-  {"F14", 0xF711},
-  {"F15", 0xF712},
-  {"F16", 0xF713},
-  {"F17", 0xF714},
-  {"F18", 0xF715},
-  {"F19", 0xF716},
-  {"F20", 0xF717},
-  {"F21", 0xF718},
-  {"F22", 0xF719},
-  {"F23", 0xF71A},
-  {"F24", 0xF71B},
-  {"F25", 0xF71C},
-  {"F26", 0xF71D},
-  {"F27", 0xF71E},
-  {"F28", 0xF71F},
-  {"F29", 0xF720},
-  {"F30", 0xF721},
-  {"F31", 0xF722},
-  {"F32", 0xF723},
-  {"F33", 0xF724},
-  {"F34", 0xF725},
-  {"F35", 0xF726},
-  {"Insert", 0xF727},
-  {"Delete", 0xF728},
-  {"Home", 0xF729},
-  {"Begin", 0xF72A},
-  {"End", 0xF72B},
-  {"Page up", 0xF72C},
-  {"Page down", 0xF72D},
-  {"Print screen", 0xF72E},
-  {"Scroll lock", 0xF72F},
-  {"Pause", 0xF730},
-  {"SysReq", 0xF731},
-  {"Break", 0xF732},
-  {"Reset", 0xF733},
-  {"Stop", 0xF734},
-  {"Menu", 0xF735},
-  {"User", 0xF736},
-  {"System", 0xF737},
-  {"Print", 0xF738},
-  {"Clear line", 0xF739},
-  {"Clear display", 0xF73A},
-  {"Insert line", 0xF73B},
-  {"Delete line", 0xF73C},
-  {"Insert char", 0xF73D},
-  {"Delete char", 0xF73E},
-  {"Prev", 0xF73F},
-  {"Next", 0xF740},
-  {"Select", 0xF741},
-  {"Execute", 0xF742},
-  {"Undo", 0xF743},
-  {"Redo", 0xF744},
-  {"Find", 0xF745},
-  {"Help", 0xF746},
-  {"Mode switch", 0xF747}
-};
+
+
 
 
 static void display_settings_init(glw_cocoa_t *gcocoa);
 static void display_settings_save(glw_cocoa_t *gcocoa);
 static void glw_cocoa_in_fullwindow(void *opaque, int v);
+static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 
 @implementation GLWGLView
 
@@ -176,7 +164,7 @@ static void glw_cocoa_in_fullwindow(void *opaque, int v);
 }
 
 - (IBAction)clickAbout:(id)sender {
-  nav_open("page:about", NULL, NULL, NAV_OPEN_ASYNC);
+  nav_open("page:about", NULL, NULL);
 }
 
 /* delegated from NSApplication */
@@ -197,7 +185,7 @@ static void glw_cocoa_in_fullwindow(void *opaque, int v);
   
   /* stringWithFormat uses autorelease */
   nav_open([[NSString stringWithFormat:@"file://%@", filename] UTF8String],
-           NULL, NULL, NAV_OPEN_ASYNC);
+           NULL, NULL);
   
   return YES;
 }
@@ -206,7 +194,7 @@ static void glw_cocoa_in_fullwindow(void *opaque, int v);
 - (void)handleGetURLEvent:(NSAppleEventDescriptor *)event
 	   withReplyEvent:(NSAppleEventDescriptor *)replyEvent {
   nav_open([[[event descriptorAtIndex:1] stringValue] UTF8String],
-	   NULL, NULL, NAV_OPEN_ASYNC);
+	   NULL, NULL);
 }
 
 
@@ -621,7 +609,8 @@ static void glw_cocoa_in_fullwindow(void *opaque, int v);
     event_t *e = NULL;
 
     e = event_create_unicode(uc);
-    ui_dispatch_event(e, [su UTF8String], &gcocoa.gr.gr_uii);
+    glw_cocoa_dispatch_event(&gcocoa.gr.gr_uii, e);
+    //ui_dispatch_event(e, [su UTF8String], &gcocoa.gr.gr_uii);
     [su release];
   }
 }
@@ -645,57 +634,36 @@ static void glw_cocoa_in_fullwindow(void *opaque, int v);
   
   unichar c = [chars characterAtIndex:0];
   unichar cim = [[event charactersIgnoringModifiers] characterAtIndex:0];
-  int mod = [event modifierFlags];
-  char buf[64], buf2[64];
+  /* only care for some modifier keys */
+  int mod = [event modifierFlags] & (NSShiftKeyMask | NSCommandKeyMask);
   event_t *e = NULL;
-  
-  /* command+f is always available */
-  if(gcocoa.is_fullscreen && c == 'f' && mod & NSCommandKeyMask) {
-    settings_toggle_bool(gcocoa.fullscreen_setting);
-    return;
+  int i;
+  action_type_t av[3];
+    
+  if((mod & ~NSShiftKeyMask) == 0 && (c == _NSSpaceKey || isgraph(c))) {
+    e = event_create_unicode(c);
+  } else {
+    for(i = 0; i < sizeof(keysym2action) / sizeof(keysym2action[0]); i++) {
+      if(keysym2action[i].key == cim &&
+         keysym2action[i].mod == mod) {
+
+	av[0] = keysym2action[i].action1;
+	av[1] = keysym2action[i].action2;
+	av[2] = keysym2action[i].action3;
+        
+	if(keysym2action[i].action3 != ACTION_NONE)
+	  e = event_create_action_multi(av, 3);
+	if(keysym2action[i].action2 != ACTION_NONE)
+	  e = event_create_action_multi(av, 2);
+	else
+	  e = event_create_action_multi(av, 1);
+	break;
+      }
+    }
   }
   
-  switch(cim) {
-    case NSRightArrowFunctionKey: e = event_create_action(ACTION_RIGHT); break;
-    case NSLeftArrowFunctionKey: e = event_create_action(ACTION_LEFT); break;
-    case NSUpArrowFunctionKey: e = event_create_action(ACTION_UP); break;
-    case NSDownArrowFunctionKey: e = event_create_action(ACTION_DOWN); break;
-    case NSPageUpFunctionKey: e = event_create_action(ACTION_PAGE_UP); break;
-    case NSPageDownFunctionKey: e = event_create_action(ACTION_PAGE_DOWN); break;
-    case NSHomeFunctionKey: e = event_create_action(ACTION_TOP); break;
-    case NSEndFunctionKey: e = event_create_action(ACTION_BOTTOM); break;
-    case 8: e = event_create_action(ACTION_BACKSPACE); break;
-    case 127 /* delete */ : e = event_create_action(ACTION_BACKSPACE); break;
-    case 13: e = event_create_action(ACTION_ENTER); break;
-    case 27 /* esc */: e = event_create_action(ACTION_CLOSE); break;
-    case 9 /* tab */: e = event_create_action(ACTION_FOCUS_NEXT); break;
-    case 25 /* shift+tab */: e = event_create_action(ACTION_FOCUS_PREV); break;
-    default:
-      break;
-  }
-  
-  if(e) {
-    ui_dispatch_event(e, NULL, &gcocoa.gr.gr_uii);
-    return;
-  }
-  
-  if(val2str(cim, function_key_map) != NULL)
-    strcpy(buf2, val2str(cim, function_key_map));
-  else if(isgraph(cim)) {
-    e = event_create_unicode(cim);
-    snprintf(buf2, sizeof(buf2), "%c", cim);
-  } else
-    snprintf(buf2, sizeof(buf2), "%d", cim);
-  
-  snprintf(buf, sizeof(buf),
-           "%s%s%s%s%s",
-           mod & NSShiftKeyMask ? "Shift - " : "",
-           mod & NSAlternateKeyMask ? "Alt - ": "",
-           mod & NSControlKeyMask ? "Ctrl - " : "",
-           mod & NSCommandKeyMask ? "Command - " : "",
-           buf2);
-  
-  ui_dispatch_event(e, buf, &gcocoa.gr.gr_uii);
+  if(e != NULL)
+    glw_cocoa_dispatch_event(&gcocoa.gr.gr_uii, e);
 }
 
 - (void)reshape {
@@ -826,10 +794,7 @@ display_settings_init(glw_cocoa_t *gc)
 		   display_set_fontsize, gc,
 		   SETTINGS_INITIAL_UPDATE, "px");
   
-  htsmsg_destroy(settings);
-  
-  gc->gr.gr_uii.uii_km =
-    keymapper_create(r, gc->config_name, "Keymap", glw_default_keymap);
+  htsmsg_destroy(settings);  
 }
 
 /**
@@ -876,16 +841,17 @@ glw_cocoa_start(ui_t *ui, int argc, char *argv[], int primary)
   return 0;
 }
 
-static int
+static void
 glw_cocoa_dispatch_event(uii_t *uii, event_t *e)
 {
   glw_cocoa_t *gc = (glw_cocoa_t *)uii;
   
   if(event_is_action(e, ACTION_FULLSCREEN_TOGGLE)) {
     settings_toggle_bool(gc->fullscreen_setting);
-    return 1;
+    event_unref(e);
+  } else {
+    glw_dispatch_event(uii, e);
   }
-  return glw_dispatch_event(uii, e);
 }
 
 
