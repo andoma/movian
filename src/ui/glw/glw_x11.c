@@ -61,6 +61,8 @@ typedef struct glw_x11 {
   int is_fullscreen;
   int want_fullscreen;
 
+  int map_mouse_wheel_to_keys;
+
   Colormap colormap;
   const char *displayname_real;
   const char *displayname_title;
@@ -90,6 +92,8 @@ typedef struct glw_x11 {
   XIC ic;
   Status status;
 
+  int saveconf;
+
 } glw_x11_t;
 
 #define AUTOHIDE_TIMEOUT 100 // XXX: in frames.. bad
@@ -112,6 +116,7 @@ display_settings_save(glw_x11_t *gx11)
 
   htsmsg_add_u32(m, "fullscreen", gx11->want_fullscreen);
   htsmsg_add_u32(m, "fontsize",   gx11->want_font_size);
+  htsmsg_add_u32(m, "map_mouse_wheel_to_keys", gx11->map_mouse_wheel_to_keys);
 
   htsmsg_store_save(m, "displays/%s", gx11->config_name);
   htsmsg_destroy(m);
@@ -127,17 +132,31 @@ display_set_mode(void *opaque, int value)
 {
   glw_x11_t *gx11 = opaque;
   gx11->want_fullscreen = value;
+  gx11->saveconf = 1;
 }
 
 
 /**
- * Switch pointer on/off
+ * Use can remap mousewheel to up/down key actions
+ */
+static void
+display_set_map_mouse_wheel_to_keys(void *opaque, int value)
+{
+  glw_x11_t *gx11 = opaque;
+  gx11->map_mouse_wheel_to_keys = value;
+  gx11->saveconf = 1;
+}
+
+
+/**
+ * Change fontsize
  */
 static void
 display_set_fontsize(void *opaque, int value)
 {
   glw_x11_t *gx11 = opaque;
   gx11->want_font_size = value;
+  gx11->saveconf = 1;
 }
 
 
@@ -165,10 +184,17 @@ display_settings_init(glw_x11_t *gx11)
 					       display_set_mode, gx11,
 					       SETTINGS_INITIAL_UPDATE);
 
+  settings_add_bool(r, "map_mouse_wheel_to_keys",
+		    "Map mouse wheel to up/down", 0, settings,
+		    display_set_map_mouse_wheel_to_keys, gx11,
+		    SETTINGS_INITIAL_UPDATE);
+
   settings_add_int(r, "fontsize",
 		   "Font size", 20, settings, 14, 40, 1,
 		   display_set_fontsize, gx11,
 		   SETTINGS_INITIAL_UPDATE, "px");
+
+  gx11->saveconf = 0; // Don't need to save, cause we just loaded
 
   htsmsg_destroy(settings);
 }
@@ -472,7 +498,6 @@ window_change_displaymode(glw_x11_t *gx11)
   window_shutdown(gx11);
   if(window_open(gx11))
     exit(1);
-  display_settings_save(gx11);
 }
 
 
@@ -827,6 +852,10 @@ glw_x11_mainloop(glw_x11_t *gx11)
       glw_lock(&gx11->gr);
       glw_font_change_size(&gx11->gr, gx11->font_size);
       glw_unlock(&gx11->gr);
+    }
+
+    if(gx11->saveconf) {
+      gx11->saveconf = 0;
       display_settings_save(gx11);
     }
 
@@ -894,7 +923,6 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	gpe.x =  (2.0 * event.xmotion.x / gx11->window_width ) - 1;
 	gpe.y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
 
-	glw_lock(&gx11->gr);
 
 	switch(event.xbutton.button) {
 	case 1:
@@ -903,22 +931,35 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	  break;
 	case 4:
 	  /* Scroll up */
-	  gpe.type = GLW_POINTER_SCROLL;
-	  gpe.delta_y = -0.2;
+	  if(gx11->map_mouse_wheel_to_keys) {
+	    glw_x11_dispatch_event(&gx11->gr.gr_uii,
+				   event_create_action(ACTION_UP));
+	    goto noevent;
+	  } else {
+	    gpe.type = GLW_POINTER_SCROLL;
+	    gpe.delta_y = -0.2;
+	  }
 	  break;
 	case 5:
 	  /* Scroll down */
-	  gpe.type = GLW_POINTER_SCROLL;
-	  gpe.delta_y = 0.2;
-              
+	  if(gx11->map_mouse_wheel_to_keys) {
+	    glw_x11_dispatch_event(&gx11->gr.gr_uii,
+				   event_create_action(ACTION_DOWN));
+	    goto noevent;
+	    
+	  } else {
+	    gpe.type = GLW_POINTER_SCROLL;
+	    gpe.delta_y = 0.2;
+	  }
 	  break;
 
 	default:
 	  goto noevent;
 	}
+	glw_lock(&gx11->gr);
 	glw_pointer_event(&gx11->gr, &gpe);
-      noevent:
 	glw_unlock(&gx11->gr);
+      noevent:
 	break;
 
       default:
