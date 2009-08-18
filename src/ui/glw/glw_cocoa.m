@@ -197,13 +197,18 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 	   NULL, NULL);
 }
 
-
--(BOOL)acceptsFirstResponder {
+- (BOOL)acceptsFirstResponder {
   return YES;
 }
 
--(BOOL)becomeFirstResponder {
-  return YES;
+- (void)becomeKeyWindow {
+  if(gcocoa.is_fullwindow)
+    [self glwDelayHideCursor];
+}
+
+- (void)resignKeyWindow {
+  if(!gcocoa.is_fullwindow)
+    [self glwUnHideCursor];
 }
 
 - (void)viewDidMoveToWindow {
