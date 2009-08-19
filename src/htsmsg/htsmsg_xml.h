@@ -22,6 +22,9 @@
 #include "htsmsg.h"
 #include "htsbuf.h"
 
+
+int html_entity_lookup(const char *name);
+
 htsmsg_t *htsmsg_xml_deserialize(char *src, char *errbuf, size_t errbufsize);
 
 #endif /* HTSMSG_XML_H_ */

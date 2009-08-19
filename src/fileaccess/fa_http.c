@@ -22,6 +22,7 @@
 #include <string.h>
 #include <libavutil/base64.h>
 #include <libavutil/avstring.h>
+#include <libavutil/common.h>
 #include <htsmsg/htsmsg_xml.h>
 
 #include "keyring.h"
@@ -29,6 +30,8 @@
 #include "networking/net.h"
 #include "fa_proto.h"
 #include "showtime.h"
+#include "htsmsg/htsmsg_xml.h"
+
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
@@ -159,6 +162,40 @@ path_escape(char *dest, int size, const char *src)
     }
   }
   *dest = 0;
+}
+
+
+void html_entities_decode(char *s);
+
+/* inplace decode html entities, this relies on that no entity has a
+ * code point in utf8 that is more bytes then the entity string */
+void
+html_entities_decode(char *s)
+{
+  char *e;
+  int code;
+  char name[10];
+  uint8_t tmp;
+
+  for(; *s; s++) {
+    if(*s != '&')
+      continue;
+    
+    e = strchr(s, ';');
+    if(e == NULL)
+      continue;
+    
+    snprintf(name, sizeof(name), "%.*s", e - s - 1, s + 1);
+    code = html_entity_lookup(name);
+    
+    if(code == -1)
+      continue;
+
+    PUT_UTF8(code, tmp, *s++ = tmp;);
+    
+    memmove(s, e + 1, strlen(e + 1) + 1);
+    s--;
+  }
 }
 
 
@@ -667,11 +704,16 @@ http_index_parse(http_file_t *hf, fa_dir_t *fd, char *buf)
     hrefd = strdup(href);
     http_deescape(hrefd);
     
+    html_entities_decode(hrefd);
+    html_entities_decode(name);
+    
+    printf("'%s' '%s'\n", name, hrefd);
+    
     /* skip parent dir links etc */
     if(strcmp(name, hrefd) == 0) {
       snprintf(url, HTTP_MAX_PATH_LEN, "http://%s:%d%s%s%s",
                hf->hf_hostname, hf->hf_port, hf->hf_path,
-               href,
+               hrefd,
                isdir ? "/" : "");
       
       http_deescape(url);
