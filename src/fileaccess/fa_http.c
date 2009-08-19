@@ -684,7 +684,7 @@ http_index_parse(http_file_t *hf, fa_dir_t *fd, char *buf)
     if(!(href = strstr(p, "<a href=\"")))
       continue;
     href += 9;
-    /* when does this happen? xmbc does it */
+    /* when does this happen? xbmc does it */
     if(href[0] == '/')
       href++;
     
