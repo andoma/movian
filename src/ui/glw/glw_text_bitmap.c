@@ -375,7 +375,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
   if(gtb->gtb_status == GTB_NEED_RERENDER ||
      (w->glw_flags & GLW_ELLIPSIZE && gtb->gtb_status == GTB_VALID && 
-      gtb->gtb_xsize_max != rc->rc_size_x)) {
+      gtb->gtb_xsize_max != (int)rc->rc_size_x)) {
 
     TAILQ_INSERT_TAIL(&gr->gr_gtb_render_queue, gtb, gtb_workq_link);
     gtb->gtb_status = GTB_ON_QUEUE;
