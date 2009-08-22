@@ -235,6 +235,7 @@ slider_bound_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     s->fixed_knob_size = 1;
     s->value = m->position;
     s->knob_size = GLW_MAX(m->knob_size, 0.02);
+    break;
 
   default:
     break;
