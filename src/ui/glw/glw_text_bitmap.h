@@ -59,6 +59,7 @@ typedef struct glw_text_bitmap {
   enum {
     GTB_NEED_RERENDER,
     GTB_ON_QUEUE,
+    GTB_RENDERING,
     GTB_VALID
   } gtb_status;
 
@@ -86,6 +87,8 @@ typedef struct glw_text_bitmap {
   prop_t *gtb_p;
 
   int gtb_lines;
+
+  int gtb_xsize_max;
 
 } glw_text_bitmap_t;
 

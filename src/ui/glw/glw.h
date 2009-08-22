@@ -414,6 +414,7 @@ typedef struct glw {
 
 #define GLW_DESTROYING          0x2000  /* glw_destroy() has been called */
 
+#define GLW_ELLIPSIZE           0x4000
 
 #define GLW_CONSTRAINT_CONFED   0x8000
 #define GLW_CONSTRAINT_X        0x10000

@@ -381,6 +381,7 @@ static const token_attrib_t attribtab[] = {
   {"filterConstraintY",       set_flag, GLW_CONSTRAINT_IGNORE_Y},
   {"filterConstraintAspect",  set_flag, GLW_CONSTRAINT_IGNORE_A},
   {"filterConstraintWeight",  set_flag, GLW_CONSTRAINT_IGNORE_W},
+  {"ellipsize",               set_flag, GLW_ELLIPSIZE},
 
   {"mirrorx",         set_mirror, GLW_MIRROR_X},
   {"mirrory",         set_mirror, GLW_MIRROR_Y},
