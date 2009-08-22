@@ -707,8 +707,6 @@ http_index_parse(http_file_t *hf, fa_dir_t *fd, char *buf)
     html_entities_decode(hrefd);
     html_entities_decode(name);
     
-    printf("'%s' '%s'\n", name, hrefd);
-    
     /* skip parent dir links etc */
     if(strcmp(name, hrefd) == 0) {
       snprintf(url, HTTP_MAX_PATH_LEN, "http://%s:%d%s%s%s",
