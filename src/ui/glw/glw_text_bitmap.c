@@ -240,10 +240,8 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   siz_x = bbox.xMax - bbox.xMin;
   siz_y = bbox.yMax - bbox.yMin;
 
-  if(siz_x < 5) {
-    printf("bad texture size\n");
+  if(siz_x < 5)
     return -1;
-  }
 
   target_width  = (siz_x / 62.2) + 3;
   target_height = (siz_y / 62.2) + 1;
