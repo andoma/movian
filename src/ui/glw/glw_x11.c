@@ -638,6 +638,10 @@ static const struct {
 
   { XK_ISO_Left_Tab, ShiftMask,   ACTION_FOCUS_PREV },
   
+  { XK_Left,         Mod1Mask,    ACTION_NAV_BACK },
+  { XK_Right,        Mod1Mask,    ACTION_NAV_FWD },
+
+
   { XK_F11,          0,           ACTION_FULLSCREEN_TOGGLE },
   
   { XF86XK_AudioLowerVolume, 0,   ACTION_VOLUME_DOWN },
