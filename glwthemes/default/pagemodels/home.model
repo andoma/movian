@@ -97,6 +97,7 @@ widget(container_y, {
 	.align = left;
 	.sizeBias = 9 + 3;
 	.caption = "Bookmarks";
+	.ellipsize = true;
       });
 
       HORIZONTAL_SEPARATOR();
