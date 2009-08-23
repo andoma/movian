@@ -844,13 +844,27 @@ prop_compar(prop_t *a, prop_t *b)
 /**
  *
  */
+static int 
+prop_compar2(prop_t *a, prop_t *b)
+{
+  return strcasecmp(a->hp_name ?: "", b->hp_name ?: "");
+}
+
+
+/**
+ *
+ */
 static void
 prop_insert(prop_t *p, prop_t *parent, prop_t *before, prop_sub_t *skipme)
 {
   prop_t *n;
 
   if(parent->hp_flags & PROP_SORTED_CHILDS) {
-    TAILQ_INSERT_SORTED(&parent->hp_childs, p, hp_parent_link, prop_compar);
+    if(parent->hp_flags & PROP_SORT_CASE_INSENSITIVE)
+      TAILQ_INSERT_SORTED(&parent->hp_childs, p, hp_parent_link, prop_compar2);
+    else
+      TAILQ_INSERT_SORTED(&parent->hp_childs, p, hp_parent_link, prop_compar);
+
     n = TAILQ_NEXT(p, hp_parent_link);
 
     if(n == NULL) {

@@ -170,6 +170,7 @@ typedef struct prop {
   uint8_t hp_flags;
 #define PROP_CLIPPED_VALUE 0x1
 #define PROP_SORTED_CHILDS 0x2
+#define PROP_SORT_CASE_INSENSITIVE 0x4
 
   /**
    * Actual payload
