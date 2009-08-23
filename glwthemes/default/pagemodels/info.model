@@ -16,8 +16,6 @@ widget(container_y, {
 			"theme://icons/256x256/cd.png");
   });
 
-  HORIZONTAL_SEPARATOR();
-
   widget(label, {
     .align = center;
     .sizeScale = 3;
