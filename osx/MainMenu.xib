@@ -2,13 +2,13 @@
 <archive type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="7.03">
 	<data>
 		<int key="IBDocument.SystemTarget">1050</int>
-		<string key="IBDocument.SystemVersion">9J61</string>
+		<string key="IBDocument.SystemVersion">9L30</string>
 		<string key="IBDocument.InterfaceBuilderVersion">677</string>
-		<string key="IBDocument.AppKitVersion">949.46</string>
+		<string key="IBDocument.AppKitVersion">949.54</string>
 		<string key="IBDocument.HIToolboxVersion">353.00</string>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="491"/>
+			<integer value="490"/>
 			<integer value="29"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
@@ -198,7 +198,7 @@
 			<object class="NSWindowTemplate" id="214827973">
 				<int key="NSWindowStyleMask">15</int>
 				<int key="NSWindowBacking">2</int>
-				<string key="NSWindowRect">{{426, 336}, {640, 480}}</string>
+				<string key="NSWindowRect">{{426, 336}, {853, 480}}</string>
 				<int key="NSWTFlags">606601216</int>
 				<string key="NSWindowTitle">Showtime</string>
 				<string key="NSWindowClass">NSWindow</string>
@@ -212,12 +212,12 @@
 						<object class="NSCustomView" id="158186225">
 							<reference key="NSNextResponder" ref="77331198"/>
 							<int key="NSvFlags">274</int>
-							<string key="NSFrameSize">{640, 480}</string>
+							<string key="NSFrame">{{-0.5, 0}, {853, 480}}</string>
 							<reference key="NSSuperview" ref="77331198"/>
 							<string key="NSClassName">GLWGLView</string>
 						</object>
 					</object>
-					<string key="NSFrameSize">{640, 480}</string>
+					<string key="NSFrameSize">{853, 480}</string>
 					<reference key="NSSuperview"/>
 				</object>
 				<string key="NSScreenRect">{{0, 0}, {1680, 1028}}</string>
@@ -595,8 +595,8 @@
 					<string>{{475, 832}, {234, 43}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{244, 124}, {640, 480}}</string>
-					<string>{{244, 124}, {640, 480}}</string>
+					<string>{{356, 147}, {853, 480}}</string>
+					<string>{{356, 147}, {853, 480}}</string>
 					<reference ref="9"/>
 					<integer value="0"/>
 					<string>{673, 532}</string>
@@ -660,6 +660,7 @@
 				</object>
 				<object class="IBPartialClassDescription">
 					<string key="className">NSApplication</string>
+					<string key="superclassName">NSResponder</string>
 					<object class="IBClassDescriptionSource" key="sourceIdentifier">
 						<string key="majorKey">IBUserSource</string>
 						<string key="minorKey"/>

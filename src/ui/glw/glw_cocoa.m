@@ -87,6 +87,7 @@ static const struct {
   int action2;
   int action3;
 } keysym2action[] = {
+/* NSFunctionKeyMask is ignored when maching mappings */
 { NSLeftArrowFunctionKey,   0,                ACTION_LEFT, ACTION_SEEK_BACKWARD },
 { NSRightArrowFunctionKey,  0,                ACTION_RIGHT, ACTION_SEEK_FORWARD },
 { NSUpArrowFunctionKey,     0,                ACTION_UP },
@@ -96,33 +97,30 @@ static const struct {
 { NSHomeFunctionKey,        0,                ACTION_TOP },
 { NSEndFunctionKey,         0,                ACTION_BOTTOM },
 
-{ _NSBackspaceKey,          0,                ACTION_BS, ACTION_NAV_BACK },
-{ _NSEnterKey,              0,                ACTION_ENTER },
-{ _NSEscapeKey,             0,                ACTION_CLOSE },
-{ _NSTabKey,                0,                ACTION_FOCUS_NEXT },
 { _NSShiftTabKey,           NSShiftKeyMask,   ACTION_FOCUS_PREV },
 
+{ NSLeftArrowFunctionKey,   NSAlternateKeyMask,    ACTION_NAV_BACK },
+{ NSRightArrowFunctionKey,  NSAlternateKeyMask,    ACTION_NAV_FWD },
+
 { NSF11FunctionKey,         0,                ACTION_FULLSCREEN_TOGGLE },
-{ 'f',                      NSCommandKeyMask, ACTION_FULLSCREEN_TOGGLE },
 
+ /*
+ { XF86XK_AudioLowerVolume, 0,   ACTION_VOLUME_DOWN },
+ { XF86XK_AudioRaiseVolume, 0,   ACTION_VOLUME_UP },
+ { XF86XK_AudioMute,        0,   ACTION_VOLUME_MUTE_TOGGLE },
+ */
 
-/*
-{ XF86XK_AudioLowerVolume, 0,   ACTION_VOLUME_DOWN },
-{ XF86XK_AudioRaiseVolume, 0,   ACTION_VOLUME_UP },
-{ XF86XK_AudioMute,        0,   ACTION_VOLUME_MUTE_TOGGLE },
-*/
-
-/*
-{ XF86XK_Back,             0,   ACTION_NAV_BACK },
-{ XF86XK_Forward,          0,   ACTION_NAV_FWD },
-{ XF86XK_AudioPlay,        0,   ACTION_PLAYPAUSE },
-{ XF86XK_AudioStop,        0,   ACTION_STOP },
-{ XF86XK_AudioPrev,        0,   ACTION_PREV_TRACK },
-{ XF86XK_AudioNext,        0,   ACTION_NEXT_TRACK },
-{ XF86XK_Eject,            0,   ACTION_EJECT },
-{ XF86XK_AudioMedia,       0,   ACTION_HOME },
-{ XK_Menu,                 0,   ACTION_HOME },
-*/
+ /*
+ { XF86XK_Back,             0,   ACTION_NAV_BACK },
+ { XF86XK_Forward,          0,   ACTION_NAV_FWD },
+ { XF86XK_AudioPlay,        0,   ACTION_PLAYPAUSE },
+ { XF86XK_AudioStop,        0,   ACTION_STOP },
+ { XF86XK_AudioPrev,        0,   ACTION_PREV_TRACK },
+ { XF86XK_AudioNext,        0,   ACTION_NEXT_TRACK },
+ { XF86XK_Eject,            0,   ACTION_EJECT },
+ { XF86XK_AudioMedia,       0,   ACTION_HOME },
+ { XK_Menu,                 0,   ACTION_HOME },
+ */
 
 { NSF1FunctionKey,          NSShiftKeyMask,   ACTION_PREV_TRACK },
 { NSF2FunctionKey,          NSShiftKeyMask,   ACTION_PLAYPAUSE },
@@ -135,7 +133,14 @@ static const struct {
 
 /*
 { XF86XK_Sleep,            0,           ACTION_SLEEP },
- */
+*/
+
+{ 'f',                      NSCommandKeyMask, ACTION_FULLSCREEN_TOGGLE },
+
+{ _NSBackspaceKey,          0,                ACTION_BS, ACTION_NAV_BACK },
+{ _NSEnterKey,              0,                ACTION_ENTER },
+{ _NSEscapeKey,             0,                ACTION_CLOSE },
+{ _NSTabKey,                0,                ACTION_FOCUS_NEXT },
 };
 
 
