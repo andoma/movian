@@ -6,10 +6,13 @@ onEvent(menu, {
 });
 
 
+$ui.fullwindow = 0;
+$ui.forcefullwindow = 0;
+
 widget(container_z, {
 
   widget(fx_texrot, {
-    .alpha = iir(1 ^^ ($ui.fullwindow || $ui.forcefullwindow), 16);
+    .alpha = iir(1 - $ui.fullwindow - $ui.forcefullwindow, 16);
     .source = "theme://images/caribbean.png";
   });
   
@@ -45,6 +48,8 @@ widget(container_z, {
 	      widget(container_x, {
 		ACTION_ICON("theme://icons/32x32/notes_edit.png", 
 		    navOpen("playqueue:"));
+		ACTION_ICON("theme://icons/32x32/info.png", 
+		    navOpen("page:info"));
 	      });
 
 	      HORIZONTAL_SEPARATOR();

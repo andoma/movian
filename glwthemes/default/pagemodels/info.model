@@ -1,0 +1,39 @@
+#include "theme://include/separators.model"
+#include "theme://include/plates.model"
+
+
+widget(container_y, {
+
+  space(1);
+  
+  widget(image, {
+    // Fade down background to 30% if we are visible
+    delta($ui.forcefullwindow, 0.7 * isVisible());
+      
+    .height = 300;
+    .width  = 300;
+    .source = devoidify($global.media.current.metadata.album_art,
+			"theme://icons/256x256/cd.png");
+  });
+
+  HORIZONTAL_SEPARATOR();
+
+  widget(label, {
+    .align = center;
+    .sizeScale = 3;
+    .caption = $global.media.current.metadata.title;
+  });
+
+  widget(label, {
+    .align = center;
+    .sizeScale = 2;
+    .caption = $global.media.current.metadata.artist + 
+       select($global.media.current.metadata.artist &&
+	      $global.media.current.metadata.album, " - ", "") + 
+       $global.media.current.metadata.album;
+  });
+
+  space(1);
+
+});
+  
