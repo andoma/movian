@@ -2376,7 +2376,7 @@ glwf_bind(glw_model_eval_context_t *ec, struct token *self,
  */
 typedef struct glwf_delta_extra {
   prop_t *p;
-  int v;
+  float f;
 } glwf_delta_extra_t;
 
 
@@ -2390,7 +2390,8 @@ glwf_delta(glw_model_eval_context_t *ec, struct token *self,
   glwf_delta_extra_t *de = self->t_extra;
   token_t *a = argv[0], *b = argv[1], *t;
   const char *propname[16];
-  int i, v;
+  int i;
+  float f;
   prop_t *p;
 
   if(a->type != TOKEN_PROPERTY_NAME)
@@ -2415,23 +2416,23 @@ glwf_delta(glw_model_eval_context_t *ec, struct token *self,
   if(p == NULL)
     return glw_model_seterr(ec->ei, a, "Unable to resolve property");
   
-  v = b->type == TOKEN_FLOAT ? b->t_float : b->t_int;
+  f = b->type == TOKEN_FLOAT ? b->t_float : b->t_int;
 
   ec->dynamic_eval |= GLW_MODEL_DYNAMIC_KEEP;
 
-  if(p == de->p && de->v + v == 0) {
+  if(p == de->p && de->f + f == 0) {
     prop_ref_dec(p);
     return 0;
   }
 
-  prop_add_int(p, v);
+  prop_add_float(p, f);
 
   if(de->p) {
-    prop_add_int(de->p, de->v);
+    prop_add_float(de->p, de->f);
     prop_ref_dec(de->p);
   }
 
-  de->v = -v;
+  de->f = -f;
   de->p = p;
 
   return 0;
@@ -2457,7 +2458,7 @@ glwf_delta_dtor(struct token *self)
   glwf_delta_extra_t *de = self->t_extra;
 
   if(de->p) {
-    prop_add_int(de->p, de->v);
+    prop_add_float(de->p, de->f);
     prop_ref_dec(de->p);
   }
 
