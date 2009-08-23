@@ -1,38 +1,39 @@
+#include "theme://include/separators.model"
 #include "theme://include/plates.model"
 
 widget(container_y, {
     
-  widget(backdrop, {
-    PLATE_PROPS();
-    .alphaSelf = 0.25;
+  widget(container_x, {
 
-    widget(container_x, {
-      widget(image, {
-	.source = devoidify($self.album_art, "theme://icons/cd.png");
+    widget(image, {
+      .source = devoidify($self.album_art, "theme://icons/64x64/cd.png");
+    });
+
+    VERTICAL_SEPARATOR();
+
+    widget(container_y, {
+    
+      widget(label, {
+	.align = left;
+	.sizeBias = 9 + 3;
+	.caption = $self.artist_name;
+	.ellipsize = true;
       });
 
-      widget(container_y, {
+      HORIZONTAL_SEPARATOR();
 
-	widget(label, {
-	  .size = 2;
-	  .caption = $self.album_name;
-	  .align = left;
-	});
-
-	widget(label, {
-	  .size = 1.5;
-	  .caption = $self.artist_name;
-	  .align = left;
-	});
-
-	widget(label, {
-	  .size = 1.5;
-	  .caption = $self.album_year;
-	  .align = left;
-	});
+      widget(label, {
+	.sizeBias = 9;
+	.ellipsize = true;
+	.caption = $self.album_name + 
+	   select($self.album_year,
+		  " (" + int2str($self.album_year) + ")", "");
+	.align = left;
       });
     });
   });
+
+  HORIZONTAL_SEPARATOR();
 
   widget(container_x, {
 
@@ -50,7 +51,7 @@ widget(container_y, {
     });
 
     widget(slider_y, {
-      .weight = 0.035;
+      .width = SLIDER_WIDTH();
       .focusable = 0.2;
       bind("list");
 

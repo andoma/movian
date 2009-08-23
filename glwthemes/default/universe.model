@@ -1,4 +1,5 @@
 #include "theme://include/plates.model"
+#include "theme://include/separators.model"
 
 onEvent(menu, {
   $ui.showplaydeck = 1 ^^ $ui.showplaydeck;
@@ -15,27 +16,86 @@ widget(container_z, {
   widget(layer, {
 
     /* Main display deck */
-    widget(container_y, {
-      widget(deck, {
-	.id = "main display deck";
-	cloner($global.nav.pages, animator, {
-	  .time = 0.3;
-	  .source = "theme://pagemodels/" + $page.type + ".model";
+
+    widget(container_x, {
+
+      widget(expander_x, {
+	.expansion = (1 ^^ $ui.forcefullwindow) && 
+	     ($ui.showplaydeck || 
+		 ($global.media.current.type != "video"));
+
+	widget(container_y, {
+	  widget(backdrop, {
+	    .filterConstraintY = true;
+	    PLATE_PROPS();
+	    .alphaSelf = 0.25;
+	  
+	    widget(container_y, {
+	      
+	      widget(container_x, {
+		ACTION_ICON_SENS("theme://icons/32x32/back.png", 
+		    event(Back), $global.nav.canGoBack);
+		ACTION_ICON_SENS("theme://icons/32x32/next.png", 
+		    event(Forward), $global.nav.canGoForward);
+		ACTION_ICON("theme://icons/32x32/home.png", event(Home));
+	      });
+
+	      HORIZONTAL_SEPARATOR();
+
+	      widget(container_x, {
+		ACTION_ICON("theme://icons/32x32/notes_edit.png", 
+		    navOpen("playqueue:"));
+	      });
+
+	      HORIZONTAL_SEPARATOR();
+
+	      widget(dummy, {
+	      });
+
+	      HORIZONTAL_SEPARATOR();
+
+	      widget(icon, {
+		.height = $ui.fontsize * 5;
+		.source = "theme://images/clock.png";
+
+		widget(container_z, {
+		  widget(image, {
+		    .angle = ($global.clock.hour % 12) * 30 +
+			 $global.clock.minute / 2;
+		    .source = "theme://images/clock-hour-hand.png";
+		  });	
+
+		  widget(image, {
+		    .angle = $global.clock.minute * 6;
+		    .source = "theme://images/clock-minute-hand.png";
+		  });	
+		});
+	      });
+	    });
+	  });
 	});
       });
 
-      widget(expander_y, {
-	.expansion = (1 ^^ $ui.forcefullwindow) && 
-	   ($ui.showplaydeck || 
-	    ($global.media.current.type != "video"));
+      widget(container_y, {
 
 	widget(deck, {
-	  cloner($global.media.sources, animator, {
-	    .id = "playdeck animator for " + devoidify($self.type, "???");
-	    .debug = true;
+	  .filterConstraintX = true;
+	  cloner($global.nav.pages, animator, {
 	    .time = 0.3;
+	    .source = "theme://pagemodels/" + $page.type + ".model";
+	  });
+	});
 
-	    .source = "theme://playdecks/" + $self.type + ".model";
+	widget(expander_y, {
+	  .expansion = (1 ^^ $ui.forcefullwindow) && 
+	       ($ui.showplaydeck || 
+		   ($global.media.current.type != "video"));
+
+	  widget(deck, {
+	    cloner($global.media.sources, animator, {
+	      .time = 0.3;
+	      .source = "theme://playdecks/" + $self.type + ".model";
+	    });
 	  });
 	});
       });
@@ -59,7 +119,7 @@ widget(container_z, {
 
 	widget(label, {
 	  .caption = "Master volume: " +
-	     float2str($global.audio.mastervolume, 0) + " dB";
+	       float2str($global.audio.mastervolume, 0) + " dB";
 	  .align = center;
 	});
       });
@@ -90,9 +150,9 @@ widget(container_z, {
 	PLATE_PROPS();
 
 	.color = translate($self.type, [0.3, 0.3, 0.7],
-			   "info",     [0.3, 0.7, 0.45],
-			   "warning",  [0.7, 0.7, 0.45],
-			   "error",    [0.7, 0.2, 0.1]);
+	    "info",     [0.3, 0.7, 0.45],
+	    "warning",  [0.7, 0.7, 0.45],
+	    "error",    [0.7, 0.2, 0.1]);
 
 	widget(label, {
 	  .caption = $self.text;

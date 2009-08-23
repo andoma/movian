@@ -149,7 +149,8 @@ mp_create(const char *name, const char *type, int flags)
   mp->mp_prop_playstatus  = prop_create(mp->mp_prop_root, "playstatus");
   mp->mp_prop_currenttime = prop_create(mp->mp_prop_root, "currenttime");
   mp->mp_prop_avdelta     = prop_create(mp->mp_prop_root, "avdelta");
- 
+  mp->mp_prop_url         = prop_create(mp->mp_prop_root, "url");
+
   mp->mp_pc = prop_courier_create(&mp->mp_mutex);
 
   mp->mp_sub_currenttime = 
@@ -1000,4 +1001,13 @@ void
 mp_set_playstatus_stop(media_pipe_t *mp)
 {
   prop_set_string(mp->mp_prop_playstatus, "stop");
+}
+
+/**
+ *
+ */
+void
+mp_set_url(media_pipe_t *mp, const char *url)
+{
+  prop_set_string(mp->mp_prop_url, url);
 }

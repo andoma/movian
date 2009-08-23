@@ -208,14 +208,23 @@ glw_image_update_constraints(glw_image_t *gi)
 			  0, 0, 
 			  glw_filter_constraints(c->glw_flags),
 			  0);
+    } else if(gi->gi_tex != NULL) {
+      glw_set_constraints(&gi->w, 
+			  gi->gi_tex->glt_xs,
+			  gi->gi_tex->glt_ys,
+			  0, 0, 
+			  (gi->w.glw_flags & GLW_NOFILL_X ? 
+			   GLW_CONSTRAINT_X : 0 )|
+			  (gi->w.glw_flags & GLW_NOFILL_Y ? 
+			   GLW_CONSTRAINT_Y : 0 ),
+			  0);
     }
 
   } else if(gi->w.glw_class == GLW_ICON) {
 
-    glw_set_constraints(&gi->w,
-			gi->gi_size * gr->gr_fontsize_px, 
-			gi->gi_size * gr->gr_fontsize_px,
-			0, 0,
+    float siz = gi->gi_size_scale * gr->gr_fontsize_px + gi->gi_size_bias;
+
+    glw_set_constraints(&gi->w, siz, siz, 0, 0,
 			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
 
   } else {
@@ -278,8 +287,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
     }
   }
 
-  if(!gi->gi_border_scaling)
-    glw_image_update_constraints(gi);
+  glw_image_update_constraints(gi);
 
   if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
     rc0 = *rc;
@@ -345,7 +353,7 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
     gi->gi_color.r = 1.0;
     gi->gi_color.g = 1.0;
     gi->gi_color.b = 1.0;
-    gi->gi_size = 1.0;
+    gi->gi_size_scale = 1.0;
 
     if(w->glw_class == GLW_IMAGE)
       glw_set_constraints(&gi->w, 0, 0, 1, 0, GLW_CONSTRAINT_A, 0); 
@@ -363,6 +371,10 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
       gi->gi_border_bottom = va_arg(ap, double);
       gi->gi_render_init = 1;
       glw_image_update_constraints(gi);
+      break;
+
+    case GLW_ATTRIB_SET_FLAGS:
+      glw_image_update_constraints((glw_image_t *)w);
       break;
 
     case GLW_ATTRIB_ANGLE:
@@ -406,20 +418,23 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
       gi->gi_color.b = va_arg(ap, double);
       break;
 
-    case GLW_ATTRIB_SIZE:
-      gi->gi_size = va_arg(ap, double);
+    case GLW_ATTRIB_SIZE_SCALE:
+      gi->gi_size_scale = va_arg(ap, double);
       break;
 
+    case GLW_ATTRIB_SIZE_BIAS:
+      gi->gi_size_bias = va_arg(ap, double);
+      break;
+  
     default:
       GLW_ATTRIB_CHEW(attrib, ap);
       break;
     }
   } while(attrib);
 
-  if(w->glw_class == GLW_ICON)
-   glw_set_constraints(&gi->w,
-			gi->gi_size * gr->gr_fontsize_px, 
-			gi->gi_size * gr->gr_fontsize_px,
-			0, 0,
+  if(w->glw_class == GLW_ICON) {
+    float siz = gi->gi_size_scale * gr->gr_fontsize_px + gi->gi_size_bias;
+    glw_set_constraints(&gi->w, siz, siz, 0, 0,
 			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
+  }
 }

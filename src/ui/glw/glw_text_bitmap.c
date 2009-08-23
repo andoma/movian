@@ -116,8 +116,8 @@ paint_shadow(uint8_t *dst, uint8_t *src, int w, int h)
 
 static int
 gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face, 
-	     int *uc, int len, int flags, int docur, float size, 
-	     int x_size_max)
+	     int *uc, int len, int flags, int docur, float scale,
+	     float bias, int x_size_max)
 {
   FT_GlyphSlot slot = face->glyph;
   FT_Bool use_kerning = FT_HAS_KERNING( face );
@@ -134,9 +134,12 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   uint8_t *data;
   int shadow = 1;
   int origin_y;
-  int pixelheight = gr->gr_fontsize * size;
+  int pixelheight = (gr->gr_fontsize - shadow) * scale + bias;
   FT_Glyph glyph;
   int ellipsize_x;
+
+  if(pixelheight < 3)
+    return -1;
 
   // Always make place for 3 extra dots
   g0 = alloca(sizeof(glyph_t) * (len + 3)); 
@@ -244,7 +247,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
     return -1;
 
   target_width  = (siz_x / 62.2) + 3;
-  target_height = (siz_y / 62.2) + 1;
+  target_height = (siz_y / 62.2);
 
   origin_y = -bbox.yMin / 62.2;
 
@@ -437,7 +440,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
   }
   
   gtb->cursor_flash++;
-  gtb->gtb_cursor_alpha = cos((float)gtb->cursor_flash / 10.0f) * 0.5 + 0.5;
+  gtb->gtb_cursor_alpha = cos((float)gtb->cursor_flash / 7.5f) * 0.5 + 0.5;
  
   gtb->gtb_paint_cursor = 1;
 
@@ -574,7 +577,9 @@ glw_text_bitmap_dtor(glw_t *w)
 static void
 gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb)
 {
-  int ys = gr->gr_fontsize_px * gtb->gtb_lines * gtb->gtb_size;
+  int ys = 
+    (gtb->gtb_size_bias + gr->gr_fontsize_px * gtb->gtb_size_scale)
+    * gtb->gtb_lines;
   int flags = GLW_CONSTRAINT_Y;
 
   if(0 && gtb->w.glw_alignment == GLW_ALIGN_NONE &&
@@ -872,7 +877,7 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
     gtb->gtb_int_step = 1;
     gtb->gtb_int_min = INT_MIN;
     gtb->gtb_int_max = INT_MAX;
-    gtb->gtb_size = 1.0;
+    gtb->gtb_size_scale = 1.0;
     gtb->gtb_color.r = 1.0;
     gtb->gtb_color.g = 1.0;
     gtb->gtb_color.b = 1.0;
@@ -913,8 +918,14 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
       gtb->gtb_int_max = va_arg(ap, double);
       break;
 
-    case GLW_ATTRIB_SIZE:
-      gtb->gtb_size = va_arg(ap, double);
+    case GLW_ATTRIB_SIZE_SCALE:
+      gtb->gtb_size_scale = va_arg(ap, double);
+      if(!(gtb->w.glw_flags & GLW_CONSTRAINT_Y)) // Only update if yet unset
+	gtb_set_constraints(gtb->w.glw_root, gtb);
+      break;
+
+    case GLW_ATTRIB_SIZE_BIAS:
+      gtb->gtb_size_bias = va_arg(ap, double);
       if(!(gtb->w.glw_flags & GLW_CONSTRAINT_Y)) // Only update if yet unset
 	gtb_set_constraints(gtb->w.glw_root, gtb);
       break;
@@ -965,7 +976,7 @@ font_render_thread(void *aux)
   glw_text_bitmap_t *gtb;
   int *uc, len, docur, i;
   glw_text_bitmap_data_t d;
-  float size;
+  float scale, bias;
   int xsize_max;
 
   glw_lock(gr);
@@ -993,11 +1004,13 @@ font_render_thread(void *aux)
 
     gtb->w.glw_refcnt++;  /* just avoid glw_reaper from freeing us */
 
+    assert(gtb->gtb_status == GTB_ON_QUEUE);
     TAILQ_REMOVE(&gr->gr_gtb_render_queue, gtb, gtb_workq_link);
     gtb->gtb_status = GTB_RENDERING;
     
     docur = gtb->gtb_edit_ptr >= 0;
-    size = gtb->gtb_size;
+    scale = gtb->gtb_size_scale;
+    bias  = gtb->gtb_size_bias;
     xsize_max = gtb->gtb_xsize_max;
 
     /* gtb (i.e the widget) may be destroyed directly after we unlock,
@@ -1005,7 +1018,7 @@ font_render_thread(void *aux)
     glw_unlock(gr);
 
     if(uc == NULL || uc[0] == 0 || 
-       gtb_make_tex(gr, &d, gr->gr_gtb_face, uc, len, 0, docur, size, 
+       gtb_make_tex(gr, &d, gr->gr_gtb_face, uc, len, 0, docur, scale, bias,
 		    xsize_max)) {
       d.gtbd_data = NULL;
       d.gtbd_siz_x = 0;
@@ -1214,6 +1227,8 @@ glw_font_change_size(glw_root_t *gr, int fontsize)
   assert(fontsize > 10);
   if(gr->gr_fontsize == fontsize)
     return;
+
+  prop_set_int(gr->gr_fontsize_prop, fontsize);
 
   gr->gr_fontsize = fontsize;
   gr->gr_fontsize_px = gr->gr_gtb_face->height * fontsize / 2048;

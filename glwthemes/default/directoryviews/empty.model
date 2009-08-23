@@ -2,7 +2,7 @@ widget(container_y, {
   .align = center;
   widget(label, {
     .align = center;
-    .size = 2;
+    .sizeScale = 2;
     .caption = "No contents";
   });
 });

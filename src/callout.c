@@ -17,12 +17,12 @@
  */
 
 #include "showtime.h"
+#include "prop.h"
 
 static LIST_HEAD(, callout) callouts;
 
 static hts_mutex_t callout_mutex;
 static hts_cond_t callout_cond;
-
 
 /**
  *
@@ -129,14 +129,51 @@ callout_loop(void *aux)
 }
 
 
+static callout_t callout_clock;
+
+static prop_t *prop_hour;
+static prop_t *prop_minute;
+
+/**
+ *
+ */
+static void
+set_global_clock(struct callout *c, void *aux)
+{
+  time_t now, next;
+  struct tm tm;
+	
+  time(&now);
+	
+  localtime_r(&now, &tm);
+
+  prop_set_int(prop_hour, tm.tm_hour);
+  prop_set_int(prop_minute, tm.tm_min);
+
+  tm.tm_sec = 0;
+  tm.tm_min++;
+
+  next = mktime(&tm);
+  callout_arm_abs(&callout_clock, set_global_clock, NULL, next);
+}
+
+
 /**
  *
  */
 void
 callout_init(void)
 {
+  prop_t *clock;
+
   hts_mutex_init(&callout_mutex);
   hts_cond_init(&callout_cond);
 
   hts_thread_create_detached(callout_loop, NULL);
+
+  clock = prop_create(prop_get_global(), "clock");
+  prop_hour   = prop_create(clock, "hour");
+  prop_minute = prop_create(clock, "minute");
+
+  set_global_clock(NULL, NULL);
 }

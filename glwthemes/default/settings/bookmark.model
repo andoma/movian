@@ -22,7 +22,7 @@ widget(container_x, {
     });
   });
 
-  ACTION_BUTTON("Delete", "theme://icons/delete.png", {
+  ACTION_BUTTON("Delete", "theme://icons/32x32/remove.png", {
     delete($self);
   });
 

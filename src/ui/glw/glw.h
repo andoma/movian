@@ -71,6 +71,7 @@ typedef enum {
   GLW_LIST_X,
   GLW_LIST_Y,
   GLW_DECK,
+  GLW_EXPANDER_X,
   GLW_EXPANDER_Y,
   GLW_ANIMATOR,
   GLW_IMAGE,
@@ -125,11 +126,14 @@ typedef enum {
   GLW_ATTRIB_EXPANSION,
   GLW_ATTRIB_BIND_TO_PROPERTY,
   GLW_ATTRIB_BIND_TO_ID,
-  GLW_ATTRIB_SIZE,
+  GLW_ATTRIB_SIZE_SCALE,
+  GLW_ATTRIB_SIZE_BIAS,
   GLW_ATTRIB_PIXMAP,
   GLW_ATTRIB_ORIGINATING_PROP,
   GLW_ATTRIB_FOCUS_WEIGHT,
   GLW_ATTRIB_CHILD_ASPECT,
+  GLW_ATTRIB_HEIGHT,
+  GLW_ATTRIB_WIDTH,
 } glw_attribute_t;
 
 #define GLW_MIRROR_X   0x1
@@ -278,6 +282,7 @@ typedef struct glw_root {
   FT_Face gr_gtb_face;
   int gr_fontsize;
   int gr_fontsize_px;
+  prop_t *gr_fontsize_prop;
 
   /**
    * Image/Texture loader
@@ -432,6 +437,8 @@ typedef struct glw {
 #define GLW_CONSTRAINT_FLAGS (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y | \
                               GLW_CONSTRAINT_A | GLW_CONSTRAINT_W)
 
+#define GLW_NOFILL_X           0x1000000
+#define GLW_NOFILL_Y           0x2000000
 
   float glw_norm_weight;             /* Relative weight (normalized) */
   float glw_alpha;                   /* Alpha set by user */
@@ -627,9 +634,12 @@ do {						\
   case GLW_ATTRIB_INT_STEP:                     \
   case GLW_ATTRIB_INT_MIN:                      \
   case GLW_ATTRIB_INT_MAX:                      \
-  case GLW_ATTRIB_SIZE:                         \
+  case GLW_ATTRIB_SIZE_SCALE:                   \
+  case GLW_ATTRIB_SIZE_BIAS:                    \
   case GLW_ATTRIB_FOCUS_WEIGHT:                 \
   case GLW_ATTRIB_CHILD_ASPECT:                 \
+  case GLW_ATTRIB_HEIGHT:                       \
+  case GLW_ATTRIB_WIDTH:                        \
     (void)va_arg(ap, double);			\
     break;					\
   }						\

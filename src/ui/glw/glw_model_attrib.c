@@ -382,6 +382,8 @@ static const token_attrib_t attribtab[] = {
   {"filterConstraintAspect",  set_flag, GLW_CONSTRAINT_IGNORE_A},
   {"filterConstraintWeight",  set_flag, GLW_CONSTRAINT_IGNORE_W},
   {"ellipsize",               set_flag, GLW_ELLIPSIZE},
+  {"constraintX",             set_flag, GLW_NOFILL_X},
+  {"constraintY",             set_flag, GLW_NOFILL_Y},
 
   {"mirrorx",         set_mirror, GLW_MIRROR_X},
   {"mirrory",         set_mirror, GLW_MIRROR_Y},
@@ -398,9 +400,13 @@ static const token_attrib_t attribtab[] = {
   {"max",             set_float,  GLW_ATTRIB_INT_MAX},
   {"step",            set_float,  GLW_ATTRIB_INT_STEP},
   {"value",           set_float,  GLW_ATTRIB_VALUE},
-  {"size",            set_float,  GLW_ATTRIB_SIZE},
+  {"sizeScale",       set_float,  GLW_ATTRIB_SIZE_SCALE},
+  {"sizeBias",        set_float,  GLW_ATTRIB_SIZE_BIAS},
   {"focusable",       set_float,  GLW_ATTRIB_FOCUS_WEIGHT},
   {"childAspect",     set_float,  GLW_ATTRIB_CHILD_ASPECT},
+
+  {"height",          set_float,  GLW_ATTRIB_HEIGHT},
+  {"width",           set_float,  GLW_ATTRIB_WIDTH},
 
   {"color",           set_float3, GLW_ATTRIB_RGB},
   {"borderSize",      set_float4, GLW_ATTRIB_BORDER_SIZE},

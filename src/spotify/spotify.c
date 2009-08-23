@@ -2176,7 +2176,8 @@ be_spotify_init(void)
   prop_set_string(prop_status, "Not logged in");
 
   sd_add_link(p, "Playlists", "spotify:playlists");
-  sd_add_link(p, "New album releases", "spotify:search:tag:new");
+  // Does not work right now
+  //  sd_add_link(p, "New album releases", "spotify:search:tag:new");
   return 0;
 }
 

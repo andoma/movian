@@ -28,7 +28,7 @@ widget(container_z, {
 	.alpha = iir(changed($self.slideshow.playstatus, 2, true), 7);
 
 	widget(icon, {
-	  .size = 2.0;
+	  .sizeScale = 2.0;
 	  .source = translate($self.slideshow.playstatus, void,
 			      "pause", "theme://icons/pause.png",
 			      "play",  "theme://icons/play.png");

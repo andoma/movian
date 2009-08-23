@@ -167,6 +167,7 @@ typedef struct media_pipe {
   prop_t *mp_prop_playstatus;
   prop_t *mp_prop_currenttime;
   prop_t *mp_prop_avdelta;
+  prop_t *mp_prop_url;
 
   prop_courier_t *mp_pc;
   prop_sub_t *mp_sub_currenttime;
@@ -260,5 +261,7 @@ extern media_pipe_t *media_primary;
 void mp_set_playstatus_by_hold(media_pipe_t *mp, int hold);
 
 void mp_set_playstatus_stop(media_pipe_t *mp);
+
+void mp_set_url(media_pipe_t *mp, const char *url);
 
 #endif /* MEDIA_H */

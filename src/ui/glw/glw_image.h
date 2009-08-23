@@ -55,7 +55,8 @@ typedef struct glw_image {
 
   glw_rgb_t gi_color;
 
-  float gi_size;
+  float gi_size_scale;
+  float gi_size_bias;
 
 } glw_image_t;
 

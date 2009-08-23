@@ -1,12 +1,16 @@
 #include "theme://include/plates.model"
+#include "theme://include/separators.model"
 
 widget(container_y, {
 
   widget(label, {
-    .align = center;
-    .size = 2.0;
+    .align = left;
+    .sizeBias = 9 + 3;
     .caption = $self.title;
+    .ellipsize = true;
   });
+
+  HORIZONTAL_SEPARATOR();
 
   widget(container_x, {
     widget(list_y, {
@@ -17,7 +21,7 @@ widget(container_y, {
       });
     });
     widget(slider_y, {
-      .weight = 0.035;
+      .width = SLIDER_WIDTH();
       .focusable = 0.2;
       bind("list");
   
@@ -27,14 +31,18 @@ widget(container_y, {
     });
   });
   
+  HORIZONTAL_SEPARATOR();
+
   widget(container_x, {
-    .weight = 0.1;
-    .align = center;
+    .align = left;
 
     widget(backdrop, {
       .alpha = $page.mayadd;
       .focusable = 0.1 * $page.mayadd;
-      .aspect = 3;
+
+      .height = $ui.fontsize * 1.5;
+      .width = $ui.fontsize * 7;
+
       HIGHLITE_PROPS();
 
 
@@ -44,7 +52,11 @@ widget(container_y, {
       
       widget(container_x, {
 	widget(image, {
-	  .source = "theme://icons/add.png";
+	  .source = "theme://icons/32x32/add.png";
+	});
+
+	widget(dummy, {
+	    .width = 5;
 	});
 
 	widget(label, {

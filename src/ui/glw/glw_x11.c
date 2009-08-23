@@ -347,7 +347,7 @@ window_open(glw_x11_t *gx11)
 
   gx11->coords[0][0] = gx11->screen_width  / 4;
   gx11->coords[0][1] = gx11->screen_height / 4;
-  gx11->coords[0][2] = 640; //gx11->screen_width  * 3 / 4;
+  gx11->coords[0][2] = 853; //gx11->screen_width  * 3 / 4;
   gx11->coords[0][3] = 480; //gx11->screen_height * 3 / 4;
 
   gx11->coords[1][0] = 0;

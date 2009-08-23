@@ -1,35 +1,49 @@
 #include "theme://include/plates.model"
+#include "theme://include/separators.model"
 
 widget(backdrop, {
   PLATE_PROPS();
   .alphaSelf = 0.25;
+  .height = $ui.fontsize * 5 + 9;
 
   widget(container_x, {
     widget(image, {
-      .source = devoidify($self.metadata.album_art, "theme://icons/cd.png");
+      .source = devoidify($self.metadata.album_art, 
+			  "theme://icons/128x128/cd.png");
     });
+
+    VERTICAL_SEPARATOR();
 
     widget(container_y, {
 
       .filterConstraintX = true;
+      .filterConstraintY = true;
 
       widget(label, {
 	.caption = $self.metadata.title;
+	.align = left; 
+	.ellipsize = true;
+	.sizeScale = 1.4;
       });
 	  
       widget(label, {
-	.size = 0.75;
 	.caption = $self.metadata.artist;
+	.align = left; 
+	.ellipsize = true;
+	.sizeScale = 0.8;
       });
 
       widget(label, {
-	.size = 0.75;
 	.caption = $self.metadata.album;
+	.align = left; 
+	.ellipsize = true;
+	.sizeScale = 0.8;
       });
 
 
       widget(container_x, {
-	ACTION_ICON("theme://icons/rew.png", event(PreviousTrack));
+	ACTION_ICON("theme://icons/32x32/skip_backward.png",
+		    event(PreviousTrack));
 	
 	widget(animator, {
 	  .time = 0.2;
@@ -39,10 +53,10 @@ widget(backdrop, {
 			      "pause", "theme://playdecks/play.model");
 	});
 
-	ACTION_ICON("theme://icons/fwd.png", event(NextTrack));
+	ACTION_ICON("theme://icons/32x32/skip_forward.png",
+		    event(NextTrack));
 
 	widget(backdrop, {
-
 	  PLATE_PROPS();
 	  .alphaSelf = 0.5;
 	  .color = [0.0, 0.0, 0.0];
@@ -56,7 +70,7 @@ widget(backdrop, {
 	      KNOB_PROPS();
 	      widget(label, {
 		.caption = value2duration($self.currenttime);
-		.size = 0.6;
+		.sizeScale = 0.6;
 	      });
 	    });
 	  });

@@ -1,10 +1,14 @@
+#include "theme://include/separators.model"
+
 widget(container_x, {
   .focusable = true;
   onEvent(enter, navOpen($self.url, $self.type, $parent.url));
 
   widget(image, {
-    .source = "theme://icons/cd.png";
+    .source = "theme://icons/32x32/cd.png";
   });
+
+  VERTICAL_SEPARATOR();
 
   widget(label, {
     .caption = $self.metadata.title;

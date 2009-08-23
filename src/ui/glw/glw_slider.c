@@ -54,13 +54,15 @@ glw_slider_layout(glw_t *w, glw_rctx_t *rc)
   if(rc->rc_size_x == 0 || rc->rc_size_y == 0)
     return;
 
-  if(c->glw_req_aspect > 0) {
+  if(s->fixed_knob_size) {
+
+  } else if(c->glw_req_aspect > 0) {
     s->knob_size = rc->rc_size_y * c->glw_req_aspect / rc->rc_size_x;
   } else if(c->glw_req_size_x && w->glw_class == GLW_SLIDER_X) {
     s->knob_size = c->glw_req_size_x / rc->rc_size_x;
   } else if(c->glw_req_size_y && w->glw_class == GLW_SLIDER_Y) {
     s->knob_size = c->glw_req_size_y / rc->rc_size_y;
-  } else if(!s->fixed_knob_size) {
+  } else {
     if(w->glw_class == GLW_SLIDER_X)
       s->knob_size = rc->rc_size_y / rc->rc_size_x;
     else

@@ -124,11 +124,11 @@ main(int argc, char **argv)
       break;
   }
 
-  /* Callout framework */
-  callout_init();
-
   /* Initialize property tree */
   prop_init();
+
+  /* Callout framework */
+  callout_init();
 
   /* Notification framework */
   notifications_init();

@@ -63,6 +63,7 @@ static const size_t glw_class_to_size[] = {
   [GLW_LIST_X] = sizeof(glw_list_t),
   [GLW_LIST_Y] = sizeof(glw_list_t),
   [GLW_DECK] = sizeof(glw_deck_t),
+  [GLW_EXPANDER_X] = sizeof(glw_expander_t),
   [GLW_EXPANDER_Y] = sizeof(glw_expander_t),
   [GLW_SLIDESHOW] = sizeof(glw_slideshow_t),
   [GLW_CURSOR] = sizeof(glw_cursor_t),
@@ -143,6 +144,9 @@ glw_init(glw_root_t *gr, int fontsize, const char *theme, ui_t *ui,
   gr->gr_uii.uii_prop = prop_create(NULL, "ui");
 
   gr->gr_fullwindow_req = prop_create(gr->gr_uii.uii_prop, "fullwindow");
+
+  gr->gr_fontsize_prop = prop_create(gr->gr_uii.uii_prop, "fontsize");
+  prop_set_int(gr->gr_fontsize_prop, fontsize);
 
   if(glw_text_bitmap_init(gr, fontsize)) {
     free(gr);
@@ -248,6 +252,28 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 
     case GLW_ATTRIB_ASPECT:
       glw_set_constraints(w, 0, 0, va_arg(ap, double), 0, GLW_CONSTRAINT_A, 1);
+      break;
+
+    case GLW_ATTRIB_WIDTH:
+      glw_set_constraints(w, 
+			  va_arg(ap, double), 
+			  w->glw_req_size_y, 
+			  0, 0, 
+			  GLW_CONSTRAINT_X | 
+			  (w->glw_flags & GLW_CONSTRAINT_CONFED ?
+			   w->glw_flags & GLW_CONSTRAINT_Y : 0),
+			  1);
+      break;
+
+    case GLW_ATTRIB_HEIGHT:
+      glw_set_constraints(w, 
+			  w->glw_req_size_x, 
+			  va_arg(ap, double),
+			  0, 0, 
+			  GLW_CONSTRAINT_Y | 
+			  (w->glw_flags & GLW_CONSTRAINT_CONFED ?
+			   w->glw_flags & GLW_CONSTRAINT_X : 0),
+			  1);
       break;
 
     case GLW_ATTRIB_ID:
@@ -359,6 +385,7 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
     glw_deck_ctor(w, init, apx);
     break;
 
+  case GLW_EXPANDER_X:
   case GLW_EXPANDER_Y:
     glw_expander_ctor(w, init, apx);
     break;

@@ -68,7 +68,7 @@ typedef struct playqueue_entry {
   char *pqe_parent;
 
   prop_t *pqe_node;
-
+  prop_t *pqe_prop_url;
 
   /**
    * Entry is enqueued (ie, not from source list)
@@ -905,8 +905,9 @@ player_thread(void *aux)
 
 	TRACE(TRACE_DEBUG, "playqueue", "Nothing on queue, waiting");
 	/* Make sure we no longer claim current playback focus */
+	mp_set_url(mp, NULL);
 	mp_shutdown(playqueue_mp);
-
+    
 	/* ... and wait for an event */
 	e = mp_dequeue_event(playqueue_mp);
       }
@@ -944,8 +945,10 @@ player_thread(void *aux)
       continue;
     }
 
+    mp_set_url(mp, pqe->pqe_url);
+
     e = nav_play_audio(pqe->pqe_url, mp, errbuf, sizeof(errbuf));
-    
+
     if(e == NULL) {
       notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nPlayqueue error: %s",
 		 pqe->pqe_url, errbuf);

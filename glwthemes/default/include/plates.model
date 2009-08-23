@@ -1,4 +1,6 @@
 
+#define SLIDER_WIDTH() { 24 }
+
 #define BUTTON_COLOR() { [0.6, 0.85, 1] }
 
 #define PLATE_PROPS() {
@@ -11,6 +13,13 @@
   .color = [0.0, 0.0, 0.0] + iir(isFocused(), 4) * BUTTON_COLOR() + iir(isHovered(), 4) * [0.1, 0.3, 0.3];
   .alphaSelf = iir(0.5 + 0.5 * (isFocused()), 4);
 }
+
+#define SHADED_PROPS() {
+  PLATE_PROPS();
+  .color = [0.0, 0.0, 0.0];
+  .alphaSelf = 0.5;
+}
+
 
 #define BUTTON_PROPS(FOCUS) {
   HIGHLITE_PROPS();
@@ -50,7 +59,31 @@
 	.source = ICON;
       });
       widget(label, {
-	.size = 0.75;
+	.sizeScale = 0.75;
+	.caption = TEXT;
+      });
+    });
+  });  
+}
+
+
+#define ACTION_BUTTON2(TEXT, ICON, EVENT)
+{
+  widget(backdrop, {
+    BUTTON_PROPS(0.5);
+    onEvent(enter, EVENT);
+    
+    widget(container_x, {
+      .height = $ui.fontsize * 1.5;
+      .width = $ui.fontsize * 5;
+
+      widget(icon, {
+	.source = ICON;
+      });
+      widget(dummy, {
+	.width = 5;
+      });
+      widget(label, {
 	.caption = TEXT;
       });
     });
@@ -64,6 +97,22 @@
     BUTTON_PROPS(0.5);
     onEvent(enter, EVENT);
     
+    widget(icon, {
+      .source = ICON;
+    });
+  });  
+}
+
+
+#define ACTION_ICON_SENS(ICON, EVENT, SENSPROP)
+{
+  widget(backdrop, {
+    HIGHLITE_PROPS();
+    onEvent(enter, EVENT);
+
+    .focusable = SENSPROP * 0.5;
+    .alpha = iir(0.1 + SENSPROP * 0.9, 8);
+
     widget(icon, {
       .source = ICON;
     });

@@ -79,7 +79,8 @@ typedef struct glw_text_bitmap {
   int gtb_int_min;
   int gtb_int_max;
 
-  float gtb_size;
+  float gtb_size_scale;
+  float gtb_size_bias;
 
   glw_rgb_t gtb_color;
 

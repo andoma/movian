@@ -1,12 +1,16 @@
 #include "theme://include/plates.model"
+#include "theme://include/separators.model"
 
 widget(container_y, {
 
   widget(label, {
-    .align = center;
-    .size = 2.0;
+    .align = left;
+    .sizeBias = 9 + 3;
     .caption = $self.title;
+    .ellipsize = true;
   });
+
+  HORIZONTAL_SEPARATOR();
 
   widget(container_x, {
 
@@ -23,7 +27,7 @@ widget(container_y, {
     });
 
     widget(slider_y, {
-      .weight = 0.035;
+      .width = SLIDER_WIDTH();
       .focusable = 0.2;
       bind("list");
 

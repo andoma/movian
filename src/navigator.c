@@ -72,9 +72,10 @@ nav_init(void)
 
   hts_mutex_init(&nav_mutex);
 
-  global_sources = prop_create_ex(prop_get_global(), "sources",
-				  NULL, PROP_SORTED_CHILDS);
-
+  global_sources =
+    prop_create_ex(prop_get_global(), "sources", NULL, 
+		   PROP_SORTED_CHILDS | PROP_SORT_CASE_INSENSITIVE);
+  
   TAILQ_INIT(&nav_pages);
   TAILQ_INIT(&nav_history);
 
