@@ -111,7 +111,7 @@
     onEvent(enter, EVENT);
 
     .focusable = SENSPROP * 0.5;
-    .alpha = iir(0.1 + SENSPROP * 0.9, 8);
+    .alpha = iir(0.4 + SENSPROP * 0.6, 8);
 
     widget(icon, {
       .source = ICON;
