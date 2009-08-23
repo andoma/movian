@@ -603,7 +603,8 @@ static void
 gtb_flush(glw_text_bitmap_t *gtb)
 {
   glw_tex_destroy(&gtb->gtb_texture);
-  gtb->gtb_status = GTB_NEED_RERENDER;
+  if(gtb->gtb_status != GTB_ON_QUEUE)
+    gtb->gtb_status = GTB_NEED_RERENDER;
 }
 
 
@@ -1002,7 +1003,6 @@ font_render_thread(void *aux)
       uc = NULL;
     }
 
-    gtb->w.glw_refcnt++;  /* just avoid glw_reaper from freeing us */
 
     assert(gtb->gtb_status == GTB_ON_QUEUE);
     TAILQ_REMOVE(&gr->gr_gtb_render_queue, gtb, gtb_workq_link);
@@ -1014,7 +1014,10 @@ font_render_thread(void *aux)
     xsize_max = gtb->gtb_xsize_max;
 
     /* gtb (i.e the widget) may be destroyed directly after we unlock,
-       so we can't access it after this point */
+       so we can't access it after this point. We can hold a reference
+       though. But it will only guarantee that the pointer stays valid */
+
+    glw_ref(&gtb->w);
     glw_unlock(gr);
 
     if(uc == NULL || uc[0] == 0 || 
@@ -1031,15 +1034,19 @@ font_render_thread(void *aux)
 
     if(gtb->w.glw_flags & GLW_DESTROYED) {
       /* widget got destroyed while we were away, throw away the results */
-      glw_deref0(&gtb->w);
+      glw_unref(&gtb->w);
       free(d.gtbd_data);
+      free(d.gtbd_cursor_pos);
       continue;
     }
 
+    glw_unref(&gtb->w);
     free(gtb->gtb_data.gtbd_data);
     free(gtb->gtb_data.gtbd_cursor_pos);
     memcpy(&gtb->gtb_data, &d, sizeof(glw_text_bitmap_data_t));
-    gtb->gtb_status = GTB_VALID;
+
+    if(gtb->gtb_status == GTB_RENDERING)
+      gtb->gtb_status = GTB_VALID;
 
     gtb_set_constraints(gr, gtb);
   }

@@ -664,7 +664,9 @@ void glw_set_i(glw_t *w, ...) __attribute__((__sentinel__(0)));
 
 void glw_destroy0(glw_t *w);
 
-void glw_deref0(glw_t *w);
+void glw_unref(glw_t *w);
+
+#define glw_ref(w) ((w)->glw_refcnt++)
 
 int glw_get_text0(glw_t *w, char *buf, size_t buflen);
 

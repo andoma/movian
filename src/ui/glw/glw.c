@@ -458,6 +458,7 @@ glw_create0(glw_root_t *gr, glw_class_t class, va_list ap)
   w->glw_root = gr;
   w->glw_class = class;
   w->glw_alpha = 1.0f;
+  w->glw_refcnt = 1;
 
   LIST_INSERT_HEAD(&gr->gr_active_dummy_list, w, glw_active_link);
 
@@ -555,8 +556,7 @@ glw_reaper0(glw_root_t *gr)
     w->glw_flags |= GLW_DESTROYED;
     glw_signal_handler_clean(w);
 
-    if(w->glw_refcnt == 0)
-      free(w);
+    glw_unref(w);
   }
 }
 
@@ -564,7 +564,7 @@ glw_reaper0(glw_root_t *gr)
  *
  */
 void
-glw_deref0(glw_t *w)
+glw_unref(glw_t *w)
 {
   if(w->glw_refcnt == 1)
     free(w);
