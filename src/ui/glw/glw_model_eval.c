@@ -948,10 +948,7 @@ prop_callback(void *opaque, prop_event_t event, ...)
     cloner_select_child(gps, p, gps->gps_widget);
     break;
 
-  case PROP_REQ_NEW_CHILD:
-  case PROP_REQ_DELETE:
-  case PROP_DESTROYED:
-  case PROP_EXT_EVENT:
+  default:
     return;
   }
 
