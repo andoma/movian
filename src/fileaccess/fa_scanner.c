@@ -118,6 +118,7 @@ meta_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
   prop_t *metadata, *p;
 
   int album_score = 0;
+  int different_artists = 0;
   int images = 0;
   int unknown = 0;
   char album_name[128] = {0};
@@ -237,6 +238,7 @@ meta_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
       if(strstr(artist_name, buf))
 	break;
 
+      different_artists++;
       snprintf(artist_name + strlen(artist_name),
 	       sizeof(artist_name) - strlen(artist_name),
 	       "%s%s", artist_name[0] ? ", " : "", buf);
@@ -249,7 +251,8 @@ meta_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
     }
   }
 
-  if(album_score > 0) {
+  if(album_score > 0 && 
+     (different_artists < 2 || different_artists < album_score / 2)) {
       
     /* It is an album */
     if(viewprop != NULL)
