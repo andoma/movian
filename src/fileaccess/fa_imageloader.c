@@ -42,7 +42,8 @@
 #include "fa_imageloader.h"
 
 static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
-static const uint8_t gifsig[6] = {'G', 'I', 'F', '8', '9', 'a'};
+static const uint8_t gif89sig[6] = {'G', 'I', 'F', '8', '9', 'a'};
+static const uint8_t gif87sig[6] = {'G', 'I', 'F', '8', '7', 'a'};
 
 /**
  *
@@ -77,7 +78,8 @@ fa_imageloader(const char *url, char *errbuf, size_t errlen,
     is_exif = 1;
   } else if(!memcmp(pngsig, p, 8)) {
     *codecid = CODEC_ID_PNG;
-  } else if(!memcmp(gifsig, p, sizeof(gifsig))) {
+  } else if(!memcmp(gif87sig, p, sizeof(gif87sig)) ||
+	    !memcmp(gif89sig, p, sizeof(gif89sig))) {
     *codecid = CODEC_ID_GIF;
   } else {
     TRACE(TRACE_INFO, "imageloader", "%s: unknown format", url);
