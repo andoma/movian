@@ -66,11 +66,22 @@ static void
 stream_state_callback(pa_stream *s, void *userdata)
 {
   pa_audio_mode_t *pam = (pa_audio_mode_t *)userdata;
+  pa_operation *o;
+
   if(pa_stream_get_state(s) == PA_STREAM_FAILED) {
     pam->stream_error = pa_context_errno(pam->context);
     TRACE(TRACE_ERROR, "PA",
 	  "Stream failure: %s", pa_strerror(pam->stream_error));
   }
+
+  if(pa_stream_get_state(s) == PA_STREAM_READY && pam->muted) {
+    o = pa_context_set_sink_input_mute(pam->context,
+				       pa_stream_get_index(pam->stream),
+				       pam->muted, NULL, NULL);
+    if(o != NULL)
+      pa_operation_unref(o);
+  }
+
   pa_threaded_mainloop_signal(mainloop, 0);
 }
 
@@ -146,19 +157,14 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
 
   flags |= PA_STREAM_AUTO_TIMING_UPDATE | PA_STREAM_INTERPOLATE_TIMING;
 
-  pa_cvolume_init(&cv);
+  memset(&cv, 0, sizeof(cv));
   pa_cvolume_set(&cv, pam->ss.channels, pam->mastervol);
-
-  if(pam->muted)
-    flags |= PA_STREAM_START_MUTED;
 
   n = pa_stream_connect_playback(s, NULL, NULL, flags, &cv, NULL);
 
   pam->stream = s;
   pam->cur_rate   = ab->ab_rate;
   pam->cur_format = ab->ab_format;
-
-
 }
 
 
@@ -185,11 +191,18 @@ update_sink_input_info(pa_context *c, const pa_sink_input_info *i,
 		       int eol, void *userdata)
 {
   pa_audio_mode_t *pam = (pa_audio_mode_t *)userdata;
+  int n;
+  pa_volume_t max = PA_VOLUME_MUTED;
 
   if(i == NULL)
     return;
 
-  pam->mastervol = pa_cvolume_max(&i->volume);
+  for(n = 0; n < i->volume.channels; n++) {
+    if(i->volume.values[n] > max)
+      max = i->volume.values[n];
+  }
+
+  pam->mastervol = max;
   pam->muted = !!i->mute;
 
   prop_set_float_ex(prop_mastervol, pam->sub_mvol, 
