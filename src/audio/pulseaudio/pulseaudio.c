@@ -312,7 +312,7 @@ set_mastervol(void *opaque, float value)
      pa_stream_get_state(pam->stream) != PA_STREAM_READY)
     return;
   
-  pa_cvolume_init(&cv);
+  memset(&cv, 0, sizeof(cv));
   pa_cvolume_set(&cv, pam->ss.channels, pam->mastervol);
 
   o = pa_context_set_sink_input_volume(pam->context, 
