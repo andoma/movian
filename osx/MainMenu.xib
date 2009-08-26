@@ -8,8 +8,8 @@
 		<string key="IBDocument.HIToolboxVersion">353.00</string>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="490"/>
 			<integer value="29"/>
+			<integer value="490"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -212,7 +212,7 @@
 						<object class="NSCustomView" id="158186225">
 							<reference key="NSNextResponder" ref="77331198"/>
 							<int key="NSvFlags">274</int>
-							<string key="NSFrame">{{-0.5, 0}, {853, 480}}</string>
+							<string key="NSFrameSize">{853, 480}</string>
 							<reference key="NSSuperview" ref="77331198"/>
 							<string key="NSClassName">GLWGLView</string>
 						</object>
@@ -595,8 +595,8 @@
 					<string>{{475, 832}, {234, 43}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{356, 147}, {853, 480}}</string>
-					<string>{{356, 147}, {853, 480}}</string>
+					<string>{{212, 351}, {853, 480}}</string>
+					<string>{{212, 351}, {853, 480}}</string>
 					<reference ref="9"/>
 					<integer value="0"/>
 					<string>{673, 532}</string>
