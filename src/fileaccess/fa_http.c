@@ -23,7 +23,6 @@
 #include <libavutil/base64.h>
 #include <libavutil/avstring.h>
 #include <libavutil/common.h>
-#include <htsmsg/htsmsg_xml.h>
 
 #include "keyring.h"
 #include "fileaccess.h"
@@ -71,6 +70,11 @@ typedef struct http_file {
   int hf_auth_failed;
   
   char *hf_content_type;
+
+  enum {
+    CONNECTION_MODE_PERSISTENT,
+    CONNECTION_MODE_CLOSE,
+  } hf_connection_mode;
 
 } http_file_t;
 
@@ -366,7 +370,8 @@ http_read_respone(http_file_t *hf)
   char *c, *q, *argv[2];
   int code = -1;
   int64_t i64;
-
+  
+  hf->hf_connection_mode = CONNECTION_MODE_CLOSE;
   hf->hf_rsize = -1;
   hf->hf_chunked_transfer = 0;
 
@@ -442,6 +447,13 @@ http_read_respone(http_file_t *hf)
     if(!strcasecmp(argv[0], "Content-Type")) {
       free(hf->hf_content_type);
       hf->hf_content_type = strdup(argv[1]);
+    }
+
+
+    if(!strcasecmp(argv[0], "connection")) {
+
+      if(!strcasecmp(argv[1], "close"))
+	hf->hf_connection_mode = CONNECTION_MODE_CLOSE;
     }
   }
   return code;
@@ -633,7 +645,6 @@ http_connect(http_file_t *hf, int probe, char *errbuf, int errlen,
     return -1;
   }
 }
-
 
 
 /**
@@ -1346,3 +1357,110 @@ fa_protocol_t fa_protocol_webdav = {
   .fap_fsize = http_fsize,
   .fap_stat  = dav_stat,
 };
+
+
+/**
+ *
+ */
+int
+http_request(const char *hostname, int port, const char *path,
+	     const char **arguments, char **result, size_t *result_sizep,
+	     char *errbuf, size_t errlen)
+{
+  http_file_t *hf = calloc(1, sizeof(http_file_t));
+  htsbuf_queue_t q;
+  int code, r;
+  char buf[256];
+
+  hf->hf_fd = tcp_connect(hostname, port, errbuf, errlen, 3000);
+  if(hf->hf_fd < 0)
+    return -1;
+
+  htsbuf_queue_init(&q, 0);
+
+  htsbuf_qprintf(&q, "GET %s", path);
+
+  if(arguments != NULL) {
+    char prefix = '?';
+
+    while(arguments[0] != NULL) {
+      path_escape(buf, sizeof(buf), arguments[0]);
+      htsbuf_qprintf(&q, "%c%s", prefix, buf);
+      path_escape(buf, sizeof(buf), arguments[1]);
+      htsbuf_qprintf(&q, "=%s", buf);
+      arguments += 2;
+      prefix = '&';
+    }
+  }
+
+  htsbuf_qprintf(&q, 
+		 " HTTP/1.1\r\n"
+		 "Accept: */*\r\n"
+		 "User-Agent: Showtime %s\r\n"
+		 "Host: %s\r\n"
+		 "\r\n",
+		 htsversion,
+		 hostname);
+
+  tcp_write_queue(hf->hf_fd, &q);
+
+  htsbuf_queue_init(&hf->hf_spill, 0);
+
+  code = http_read_respone(hf);
+
+  if(code != 200) {
+    snprintf(errbuf, errlen, "HTTP error: %d", code);
+    http_destroy(hf);
+    return -1;
+  }
+
+  if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE) {
+    int capacity = 16384;
+    int size = 0;
+    char *mem = malloc(capacity + 1);
+
+    while(1) {
+
+      if(size == capacity) {
+	capacity *= 2;
+	mem = realloc(mem, capacity + 1);
+      }
+
+      r = tcp_read_data2(hf->hf_fd, mem + size, capacity - size, 
+			 &hf->hf_spill);
+      if(r < 0)
+	break;
+
+      size += r;
+    }
+
+    mem[size] = 0;
+
+    *result = mem;
+    *result_sizep = size;
+    
+  } else {
+
+    char *mem = malloc(hf->hf_size + 1);
+
+    r = tcp_read_data(hf->hf_fd, mem, hf->hf_size, &hf->hf_spill);
+
+    if(r == -1) {
+      snprintf(errbuf, errlen, "HTTP read error");
+      free(mem);
+      http_destroy(hf);
+      return -1;    
+    }
+
+    mem[hf->hf_size] = 0;
+    *result = mem;
+    *result_sizep = hf->hf_size;
+  }
+
+  http_destroy(hf);
+  return 0;
+}
+
+
+
+

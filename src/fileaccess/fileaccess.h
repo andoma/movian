@@ -126,4 +126,8 @@ void fa_scanner(const char *url, prop_t *root, int flags);
 
 void fa_scanner_find_albumart(const char *url, prop_t *album_art);
 
+int http_request(const char *hostname, int port, const char *path,
+		 const char **arguments, char **result, size_t *result_sizep,
+		 char *errbuf, size_t errlen);
+
 #endif /* FILEACCESS_H */
