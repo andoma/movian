@@ -233,6 +233,8 @@ prop_notify_free(prop_notify_t *n)
     event_unref(n->hpn_ext_event);
     break;
 
+  case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
+    break;
   }
   prop_sub_ref_dec(n->hpn_sub);
   free(n); 
@@ -440,6 +442,13 @@ prop_courier(void *aux)
       else
 	cb(s->hps_opaque, n->hpn_event, n->hpn_ext_event);
       event_unref(n->hpn_ext_event);
+      break;
+
+    case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
+      if(pt != NULL)
+	pt(s, n->hpn_event);
+      else
+	cb(s->hps_opaque, n->hpn_event);
       break;
     }
 
@@ -771,6 +780,25 @@ prop_send_ext_event0(prop_t *p, event_t *e)
 /**
  *
  */
+static void
+prop_send_subscription_monitor_active(prop_t *p)
+{
+  prop_sub_t *s;
+  prop_notify_t *n;
+
+  LIST_FOREACH(s, &p->hp_value_subscriptions, hps_value_prop_link) {
+    if(s->hps_flags & PROP_SUB_SUBSCRIPTION_MONITOR) {
+      n = get_notify(s);
+      n->hpn_event = PROP_SUBSCRIPTION_MONITOR_ACTIVE;
+      courier_enqueue(s->hps_courier, n);
+    }
+  }
+}
+
+
+/**
+ *
+ */
 void
 prop_send_ext_event(prop_t *p, event_t *e)
 {
@@ -907,6 +935,7 @@ prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, int flags)
   hp->hp_flags = flags;
   hp->hp_originator = NULL;
   hp->hp_refcount = 1;
+  hp->hp_monitors = 0;
   hp->hp_type = PROP_VOID;
   hp->hp_name = name ? strdup(name) : NULL;
 
@@ -1377,6 +1406,11 @@ prop_subscribe(int flags, ...)
 		   hps_canonical_prop_link);
   s->hps_canonical_prop = canonical;
 
+  if(s->hps_flags & PROP_SUB_SUBSCRIPTION_MONITOR) {
+    assert(canonical->hp_monitors < 255); // avoid wrap
+    canonical->hp_monitors++;
+  }
+
 
   LIST_INSERT_HEAD(&value->hp_value_subscriptions, s, 
 		   hps_value_prop_link);
@@ -1398,6 +1432,10 @@ prop_subscribe(int flags, ...)
     }
   }
 
+  /* If we have any subscribers monitoring for subscriptions, notify them */
+  if(!(s->hps_flags & PROP_SUB_SUBSCRIPTION_MONITOR) && value->hp_monitors > 0)
+    prop_send_subscription_monitor_active(value);
+
   hts_mutex_unlock(&prop_mutex);
   return s;
 }
@@ -1418,8 +1456,17 @@ prop_unsubscribe0(prop_sub_t *s)
   }
 
   if(s->hps_canonical_prop != NULL) {
+
+    if(s->hps_flags & PROP_SUB_SUBSCRIPTION_MONITOR) {
+      assert(s->hps_canonical_prop->hp_monitors > 0);
+      s->hps_canonical_prop->hp_monitors--;
+    }
+
+
     LIST_REMOVE(s, hps_canonical_prop_link);
     s->hps_canonical_prop = NULL;
+
+
   }
   prop_sub_ref_dec(s);
 }
@@ -1854,6 +1901,10 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
     LIST_INSERT_HEAD(&src->hp_value_subscriptions, s, hps_value_prop_link);
     s->hps_value_prop = src;
 
+    /* Monitors, activate ! */
+    if(src->hp_monitors > 0)
+      prop_send_subscription_monitor_active(src);
+    
     /* Update with new value */
     if(s == skipme) 
       continue; /* Unless it's to be skipped */

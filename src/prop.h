@@ -48,6 +48,7 @@ typedef enum {
   PROP_REQ_DELETE,
   PROP_DESTROYED,
   PROP_EXT_EVENT,
+  PROP_SUBSCRIPTION_MONITOR_ACTIVE,
 } prop_event_t;
 
 typedef void (prop_callback_t)(void *opaque, prop_event_t event, ...);
@@ -173,6 +174,15 @@ typedef struct prop {
 #define PROP_SORT_CASE_INSENSITIVE 0x4
 
   /**
+   * Number of monitoring subscriptions (linked via hp_value_subscriptions)
+   * We limit this to 255, should never be a problem. And it's checked
+   * in the code as well
+   * Protected by mutex
+   */
+  uint8_t hp_monitors;
+
+
+  /**
    * Actual payload
    * Protected by mutex
    */
@@ -294,6 +304,7 @@ void prop_init(void);
 #define PROP_SUB_NO_INITIAL_UPDATE 0x2
 #define PROP_SUB_TRACK_DESTROY 0x4
 #define PROP_SUB_DEBUG         0x8 // TRACE(TRACE_DEBUG, ...) changes
+#define PROP_SUB_SUBSCRIPTION_MONITOR 0x10
 
 enum {
   PROP_TAG_END = 0,
