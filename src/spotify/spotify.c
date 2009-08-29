@@ -34,6 +34,7 @@
 #include "keyring.h"
 #include "misc/ptrvec.h"
 #include "sd/sd.h"
+#include "scrappers/scrappers.h"
 
 #include <dlfcn.h>
 #include "apifunctions.h"
@@ -81,6 +82,9 @@ typedef struct metadata {
   prop_t *m_prop;
   void *m_source;
   metadata_type_t m_type;
+  int m_flags;
+#define METADATA_ARTIST_IMAGES_SCRAPPED 0x1
+
 } metadata_t;
 
 static LIST_HEAD(, metadata) metadatas;
@@ -559,9 +563,13 @@ set_image_uri(prop_t *p, const uint8_t *id)
  *
  */
 static void
-spotify_metadata_update_track(prop_t *meta, sp_track *track)
+spotify_metadata_update_track(metadata_t *m)
 {
+  prop_t *meta = m->m_prop;
+  prop_t *p;
+  sp_track *track = m->m_source;
   sp_album *album;
+  sp_artist *artist;
   char txt[1024];
   int nartists, i;
 
@@ -589,6 +597,16 @@ spotify_metadata_update_track(prop_t *meta, sp_track *track)
   }
 		  
   prop_set_string(prop_create(meta, "artist"), txt);
+
+  if(!(m->m_flags & METADATA_ARTIST_IMAGES_SCRAPPED) &&
+     f_sp_track_num_artists(track) > 0 && 
+     (artist = f_sp_track_artist(track, 0)) != NULL) {
+    m->m_flags |= METADATA_ARTIST_IMAGES_SCRAPPED;
+
+    p = prop_create(meta, "artist_images");
+
+    scrapper_artist_init(p, f_sp_artist_name(artist));
+  }
 }
 
 
@@ -655,7 +673,7 @@ metadata_update(metadata_t *m)
 {
   switch(m->m_type) {
   case METADATA_TRACK:
-    spotify_metadata_update_track(m->m_prop, m->m_source);
+    spotify_metadata_update_track(m);
     break;
     
   case METADATA_ALBUM_NAME:
@@ -755,6 +773,7 @@ metadata_create(prop_t *p, metadata_type_t type, void *source)
   m->m_prop = p;
   m->m_type = type;
   m->m_source = source;
+  m->m_flags = 0;
 
   switch(m->m_type) {
   case METADATA_TRACK:

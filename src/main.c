@@ -39,7 +39,7 @@
 #include "notifications.h"
 #include "sd/sd.h"
 #include "ipc/ipc.h"
-
+#include "scrappers/scrappers.h"
 
 /**
  *
@@ -152,6 +152,9 @@ main(int argc, char **argv)
 
   /* Initialize media subsystem */
   media_init();
+
+  /* Initialize scrapping subsystem */
+  scrappers_init();
 
   /* Initialize navigator and each of the content handlers */
   nav_init();

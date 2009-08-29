@@ -38,16 +38,18 @@
 #include "fileaccess.h"
 #include "fa_probe.h"
 #include "navigator.h"
+#include "scrappers/scrappers.h"
 
 static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
 static const uint8_t isosig[8] = {0x1, 0x43, 0x44, 0x30, 0x30, 0x31, 0x1, 0x0};
 static const uint8_t gifsig[6] = {'G', 'I', 'F', '8', '9', 'a'};
+
+
 /**
  *
  */
-static void
-metadata_to_prop(prop_t *p, const char *pname, AVMetadata *m, const char *key,
-		 int asint)
+static char *
+metadata_get(AVMetadata *m, const char *key)
 {
   AVMetadataTag *tag;
   int len;
@@ -55,12 +57,11 @@ metadata_to_prop(prop_t *p, const char *pname, AVMetadata *m, const char *key,
   const char *str;
   
   if((tag = av_metadata_get(m, key, NULL, AV_METADATA_IGNORE_SUFFIX)) == NULL)
-    return;
+    return NULL;
 
   str = tag->value;
   len = strlen(str);
-  ret = alloca(len + 1);
-
+  ret = malloc(len + 1);
   memcpy(ret, str, len);
   ret[len] = 0;
 
@@ -71,17 +72,32 @@ metadata_to_prop(prop_t *p, const char *pname, AVMetadata *m, const char *key,
     else
       break;
   }
-  if(*ret == 0)
+  if(*ret == 0 || !strncasecmp(ret, "http://", 7)) {
+    free(ret);
+    return NULL;
+  }
+  return ret;
+}
+
+
+/**
+ *
+ */
+static void
+metadata_to_prop(prop_t *p, const char *pname, AVMetadata *m, const char *key,
+		 int asint)
+{
+  char *str = metadata_get(m, key);
+
+  if(str == NULL)
     return;
 
   if(asint) {
-    prop_set_int(prop_create(p, pname), atoi(ret));
+    prop_set_int(prop_create(p, pname), atoi(str));
   } else {
-
-    if(!strncasecmp(ret, "http://", 7))
-      return;
-    prop_set_string(prop_create(p, pname), ret);
+    prop_set_string(prop_create(p, pname), str);
   }
+  free(str);
 }
 
 /**
@@ -270,7 +286,7 @@ fa_lavf_load_meta(prop_t *proproot, AVFormatContext *fctx, const char *url)
   AVCodec *codec;
   const char *t;
   char tmp1[1024];
-  char *p;
+  char *p, *str;
   int has_video = 0;
   int has_audio = 0;
 
@@ -292,7 +308,11 @@ fa_lavf_load_meta(prop_t *proproot, AVFormatContext *fctx, const char *url)
       metadata_to_prop(proproot, "title", fctx->metadata, "title", 0);
     }
 
-    metadata_to_prop(proproot, "artist", fctx->metadata, "author", 0);
+    if((str = metadata_get(fctx->metadata, "author")) != NULL) {
+      prop_set_string(prop_create(proproot, "artist"), str);
+      scrapper_artist_init(prop_create(proproot, "artist_images"), str);
+      free(str);
+    }
     metadata_to_prop(proproot, "album", fctx->metadata, "album", 0);
     metadata_to_prop(proproot, "genre", fctx->metadata, "genre", 0);
     metadata_to_prop(proproot, "copyright", fctx->metadata, "copyright", 0);

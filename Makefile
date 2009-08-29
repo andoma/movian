@@ -94,6 +94,11 @@ BUNDLES += resources/tvheadend
 
 SRCS-$(CONFIG_BONJOUR) 	+= src/sd/bonjour.c
 
+#
+# Scrapping
+#
+
+SRCS                   += src/scrappers/scrappers.c
 
 #
 # Networking
