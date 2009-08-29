@@ -108,8 +108,7 @@ bookmark_add_prop(prop_t *parent, const char *name, const char *value)
  *
  */
 static void
-bookmark_add(const char *title, const char *url, const char *icon,
-	     int save)
+bookmark_add(const char *title, const char *url, const char *icon)
 {
   prop_t *p = prop_create(NULL, NULL);
 
@@ -136,7 +135,7 @@ bookmark_load(htsmsg_t *m)
 {
   bookmark_add(htsmsg_get_str(m, "title"),
 	       htsmsg_get_str(m, "url"),
-	       htsmsg_get_str(m, "icon"), 0);
+	       htsmsg_get_str(m, "icon"));
 }
 
 
@@ -159,7 +158,7 @@ bookmarks_callback(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_REQ_NEW_CHILD:
-    bookmark_add("New bookmark", "none:", NULL, 1);
+    bookmark_add("New bookmark", "none:", NULL);
     break;
 
   case PROP_REQ_DELETE:
