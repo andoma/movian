@@ -94,7 +94,7 @@ static void
 bookmark_add_prop(prop_t *parent, const char *name, const char *value)
 {
   prop_t *p = prop_create(parent, name);
-  if(value != NULL) prop_set_string(p, value); else prop_set_void(p);
+  prop_set_string(p, value);
 
   prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE,
 		 PROP_TAG_CALLBACK, bookmark_updated, NULL,
