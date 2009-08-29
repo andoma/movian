@@ -1628,10 +1628,9 @@ spotify_thread(void *aux)
 
   TRACE(TRACE_DEBUG, "spotify", "Cache location: %s", sesconf.cache_location);
 
-  snprintf(settings, sizeof(settings), "%s/showtime/libspotify",
+  snprintf(settings, sizeof(settings), "%s/libspotify",
 	   htsmsg_store_get_root());
   sesconf.settings_location = settings;
-
 
   sesconf.application_key = appkey;
   sesconf.application_key_size = sizeof(appkey);
