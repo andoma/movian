@@ -1249,6 +1249,7 @@ static struct strtab classtab[] = {
   { "expander_x",    GLW_EXPANDER_X},
   { "expander_y",    GLW_EXPANDER_Y},
   { "slideshow",     GLW_SLIDESHOW},
+  { "freefloat",     GLW_FREEFLOAT},
   { "cursor",        GLW_CURSOR},
   { "mirror",        GLW_MIRROR},
   { "rotator",       GLW_ROTATOR},
@@ -1349,7 +1350,7 @@ glwf_cloner(glw_model_eval_context_t *ec, struct token *self,
     n = TAILQ_NEXT(w, glw_parent_link);
 
     if(w->glw_originating_prop != NULL)
-      glw_destroy0(w);
+      glw_detach0(w);
   }
 
   if(a->type == TOKEN_DIRECTORY) {

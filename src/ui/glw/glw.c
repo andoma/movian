@@ -36,6 +36,7 @@
 #include "glw_deck.h"
 #include "glw_expander.h"
 #include "glw_slideshow.h"
+#include "glw_freefloat.h"
 #include "glw_mirror.h"
 #include "glw_animator.h"
 #include "glw_event.h"
@@ -77,6 +78,8 @@ static const size_t glw_class_to_size[] = {
   [GLW_FX_TEXROT] = sizeof(glw_fx_texrot_t),
   [GLW_VIDEO] = sizeof(glw_video_t),
 #endif
+  [GLW_FREEFLOAT] = sizeof(glw_freefloat_t),
+
 };
 
 
@@ -394,6 +397,10 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
     glw_slideshow_ctor(w, init, apx);
     break;
 
+  case GLW_FREEFLOAT:
+    glw_freefloat_ctor(w, init, apx);
+    break;
+
   case GLW_DUMMY:
     break;
 
@@ -572,6 +579,29 @@ glw_unref(glw_t *w)
     w->glw_refcnt--;
 }
 
+
+/**
+ *
+ */
+void
+glw_remove_from_parent(glw_t *w, glw_t *p)
+{
+  assert(w->glw_parent == p);
+  glw_focus_leave(w);
+
+  if(p->glw_focused == w)
+    p->glw_focused = NULL;
+
+  assert(w->glw_root->gr_current_focus != w);
+
+  if(p->glw_selected == w)
+    p->glw_selected = TAILQ_NEXT(w, glw_parent_link);
+  
+  TAILQ_REMOVE(&p->glw_childs, w, glw_parent_link);
+  w->glw_parent = NULL;
+}
+
+
 /*
  *
  */
@@ -622,17 +652,7 @@ glw_destroy0(glw_t *w)
     if(!(p->glw_flags & GLW_DESTROYING))
       glw_signal0(p, GLW_SIGNAL_CHILD_DESTROYED, w);
 
-    glw_focus_leave(w);
-
-    if(w->glw_parent->glw_focused == w)
-      w->glw_parent->glw_focused = NULL;
-
-    assert(w->glw_root->gr_current_focus != w);
-
-    if(p->glw_selected == w)
-      p->glw_selected = TAILQ_NEXT(w, glw_parent_link);
-
-    TAILQ_REMOVE(&p->glw_childs, w, glw_parent_link);
+    glw_remove_from_parent(w, p);
   }
 
   free((void *)w->glw_id);

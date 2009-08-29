@@ -89,6 +89,7 @@ typedef enum {
   GLW_SLIDER_Y,
   GLW_LAYER,
   GLW_SLIDESHOW,
+  GLW_FREEFLOAT,
 } glw_class_t;
 
 
@@ -488,6 +489,8 @@ void glw_reaper0(glw_root_t *gr);
 void glw_cond_wait(glw_root_t *gr, hts_cond_t *c);
 
 void glw_detach0(glw_t *w);
+
+void glw_remove_from_parent(glw_t *w, glw_t *p);
 
 void glw_lock(glw_root_t *gr);
 
