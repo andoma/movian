@@ -129,7 +129,6 @@ prop_ref_dec(prop_t *p)
   if(atomic_add(&p->hp_refcount, -1) > 1)
     return;
 
-  free(p->hp_name);
   free(p);
 }
 
@@ -976,6 +975,29 @@ prop_create_ex(prop_t *parent, const char *name, prop_sub_t *skipme, int flags)
   return p;
 }
 
+/**
+ *
+ */
+void
+prop_rename_ex(prop_t *p, const char *name, prop_sub_t *skipme)
+{
+  prop_t *parent;
+
+  hts_mutex_lock(&prop_mutex);
+
+    free(p->hp_name);
+    p->hp_name = strdup(name);
+
+  if(p->hp_parent != NULL && (p->hp_parent->hp_flags & PROP_SORTED_CHILDS)) {
+
+    parent = p->hp_parent;
+    prop_notify_child(p, parent, PROP_DEL_CHILD, NULL, 0);
+    TAILQ_REMOVE(&parent->hp_childs, p, hp_parent_link);
+    prop_insert(p, parent, NULL, skipme);
+  }
+
+  hts_mutex_unlock(&prop_mutex);
+}
 
 /**
  *
@@ -1094,6 +1116,9 @@ prop_destroy0(prop_t *p)
     if(parent->hp_selected == p)
       parent->hp_selected = NULL;
   }
+
+  free(p->hp_name);
+  p->hp_name = NULL;
 
   prop_ref_dec(p);
 }

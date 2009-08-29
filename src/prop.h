@@ -128,7 +128,7 @@ typedef struct prop {
   int hp_refcount;
 
   /**
-   * The name never changes after creation. Not protected by mutex
+   * Property name. Protected by mutex
    */
   char *hp_name;
 
@@ -393,6 +393,10 @@ int prop_set_parent_ex(prop_t *p, prop_t *parent, prop_t *before,
 void prop_unparent_ex(prop_t *p, prop_sub_t *skipme);
 
 #define prop_unparent(p) prop_unparent_ex(p, NULL)
+
+void prop_rename_ex(prop_t *p, const char *name, prop_sub_t *skipme);
+
+#define prop_rename(p, name) prop_rename_ex(p, name, NULL)
 
 void prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme);
 
