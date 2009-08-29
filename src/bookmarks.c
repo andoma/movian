@@ -24,12 +24,28 @@
 
 #include <htsmsg/htsmsg_store.h>
 
+#include "sd/sd.h"
 #include "settings.h"
 #include "bookmarks.h"
+
+extern prop_t *global_sources;
 
 static hts_mutex_t bookmark_mutex;
 static prop_t *bookmarks;
 
+typedef struct bookmark {
+  prop_sub_t *bm_title_sub;
+  prop_sub_t *bm_url_sub;
+
+  prop_t *bm_source_root;
+  prop_t *bm_link_root;
+
+} bookmark_t;
+
+
+/**
+ *
+ */
 static void
 bookmark_save(void)
 {
@@ -38,23 +54,34 @@ bookmark_save(void)
   htsmsg_destroy(m);
 }
 
+
 /**
  *
  */
 static void
 bookmark_destroyed(void *opaque, prop_event_t event, ...)
 {
+  bookmark_t *bm = opaque;
   prop_t *p;
   prop_sub_t *s;
   va_list ap;
   va_start(ap, event);
 
-  if(event == PROP_DESTROYED) {
-    p = va_arg(ap, prop_t *);
-    s = va_arg(ap, prop_sub_t *);
-    bookmark_save();
-    prop_unsubscribe(s);
-  }
+  if(event != PROP_DESTROYED)
+    return;
+
+  p = va_arg(ap, prop_t *);
+  s = va_arg(ap, prop_sub_t *);
+
+  prop_unsubscribe(bm->bm_title_sub);
+  prop_unsubscribe(bm->bm_url_sub);
+
+  prop_destroy(bm->bm_source_root); // will also destroy bm_link_root
+
+  free(bm);
+
+  bookmark_save();
+  prop_unsubscribe(s);
 }
 
 
@@ -62,45 +89,47 @@ bookmark_destroyed(void *opaque, prop_event_t event, ...)
  *
  */
 static void
-bookmark_updated(void *opaque, prop_event_t event, ...)
+set_title(void *opaque, const char *str)
 {
-  prop_t *p;
-  prop_sub_t *s;
-  va_list ap;
-  va_start(ap, event);
+  bookmark_t *bm = opaque;
 
-  switch(event) {
-  case PROP_DESTROYED:
-    p = va_arg(ap, prop_t *);
-    s = va_arg(ap, prop_sub_t *);
-    prop_unsubscribe(s);
-    break;
+  if(str != NULL)
+    prop_rename(bm->bm_source_root, str);
+  prop_set_string(prop_create(bm->bm_source_root, "title"), str);
 
-  case PROP_SET_STRING:
-  case PROP_SET_VOID:
-    bookmark_save();
-    break;
-  default:
-    break;
-  }
+  bookmark_save();
 }
-
 
 
 /**
  *
  */
 static void
-bookmark_add_prop(prop_t *parent, const char *name, const char *value)
+set_url(void *opaque, const char *str)
+{
+  bookmark_t *bm = opaque;
+
+  prop_set_string(prop_create(bm->bm_link_root, "url"), str);
+
+  bookmark_save();
+}
+
+
+/**
+ *
+ */
+static prop_sub_t *
+bookmark_add_prop(prop_t *parent, const char *name, const char *value,
+		  bookmark_t *bm, prop_callback_string_t *cb)
 {
   prop_t *p = prop_create(parent, name);
   prop_set_string(p, value);
 
-  prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE,
-		 PROP_TAG_CALLBACK, bookmark_updated, NULL,
-		 PROP_TAG_ROOT, p, 
-		 PROP_TAG_MUTEX, &bookmark_mutex,
-		 NULL);
+  return prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+			PROP_TAG_CALLBACK_STRING, cb, bm,
+			PROP_TAG_ROOT, p, 
+			PROP_TAG_MUTEX, &bookmark_mutex,
+			NULL);
 }
 
 
@@ -110,22 +139,27 @@ bookmark_add_prop(prop_t *parent, const char *name, const char *value)
 static void
 bookmark_add(const char *title, const char *url, const char *icon)
 {
+  bookmark_t *bm = calloc(1, sizeof(bookmark_t));
   prop_t *p = prop_create(NULL, NULL);
-
-  prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE,
-		 PROP_TAG_CALLBACK, bookmark_destroyed, NULL,
-		 PROP_TAG_ROOT, p,
-		 PROP_TAG_MUTEX, &bookmark_mutex,
-		 NULL);
 
   prop_set_string(prop_create(p, "type"), "bookmark");
 
-  bookmark_add_prop(p, "title", title);
-  bookmark_add_prop(p, "url",   url);
+  bm->bm_title_sub = bookmark_add_prop(p, "title", title, bm, set_title);
+  bm->bm_url_sub   = bookmark_add_prop(p, "url",   url,   bm, set_url);
 
+  bm->bm_source_root = sd_add_service(title, title, NULL, NULL);
+  bm->bm_link_root   = sd_add_link(bm->bm_source_root, "open", url);
+
+  prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE,
+		 PROP_TAG_CALLBACK, bookmark_destroyed, bm,
+		 PROP_TAG_ROOT, p,
+		 PROP_TAG_MUTEX, &bookmark_mutex,
+		 NULL);
   if(prop_set_parent(p, prop_create(bookmarks, "nodes")))
     abort();
+
 }
+
 
 /**
  *
