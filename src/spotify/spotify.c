@@ -24,6 +24,11 @@
 #include <unistd.h>
 #include <errno.h>
 #include <assert.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
+
+#include <sys/file.h>
 
 #include "showtime.h"
 #include "navigator.h"
@@ -1564,6 +1569,42 @@ spotify_get_image(spotify_image_t *si)
 /**
  *
  */
+static int
+find_cachedir(char *path, size_t pathlen)
+{
+  int i, fd;
+  char buf[64];
+
+  mkdir("/tmp/hts", 0770);
+  mkdir("/tmp/hts/showtime/", 0770);
+  if(mkdir("/tmp/hts/showtime/libspotify", 0770)) {
+    if(errno != EEXIST)
+      return -1;
+  }
+
+  i = 0;
+  for(i = 0; i < 64; i++) {
+    snprintf(buf, sizeof(buf), "/tmp/hts/showtime/libspotify/%d.lock", i);
+    
+    fd = open(buf, O_CREAT | O_RDWR, 0770);
+    if(fd == -1)
+      return -1;
+
+    if(flock(fd, LOCK_EX | LOCK_NB)) {
+      close(fd);
+      continue;
+    }
+
+    snprintf(path, pathlen, "/tmp/hts/showtime/libspotify/%d.cache", i);
+    return 0;
+  }
+  return 1;
+}
+
+
+/**
+ *
+ */
 static void *
 spotify_thread(void *aux)
 {
@@ -1574,11 +1615,24 @@ spotify_thread(void *aux)
   spotify_msg_t *sm;
   int next_timeout = 0;
   char ua[256];
+  char cache[256];
+  char settings[256];
   extern char *htsversion_full;
 
   sesconf.api_version = SPOTIFY_API_VERSION;
-  sesconf.cache_location = "/tmp/spotify";
-  sesconf.settings_location = "/tmp/spotify";
+
+  if(find_cachedir(cache, sizeof(cache)))
+    sesconf.cache_location = "/tmp/libspotify";
+  else
+    sesconf.cache_location = cache;
+
+  TRACE(TRACE_DEBUG, "spotify", "Cache location: %s", sesconf.cache_location);
+
+  snprintf(settings, sizeof(settings), "%s/showtime/libspotify",
+	   htsmsg_store_get_root());
+  sesconf.settings_location = settings;
+
+
   sesconf.application_key = appkey;
   sesconf.application_key_size = sizeof(appkey);
   snprintf(ua, sizeof(ua), "Showtime %s", htsversion_full);
