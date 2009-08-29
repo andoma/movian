@@ -496,7 +496,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
   glw_PushMatrix(&rc0, rc);
   glw_align_1(&rc0, w->glw_alignment, GLW_ALIGN_LEFT);
 
-  if(!glw_is_tex_inited(&gtb->gtb_texture) || gtb->gtb_aspect == 0) {
+  if(!glw_is_tex_inited(&gtb->gtb_texture) || gtb->gtb_data.gtbd_siz_x == 0) {
     // No text available
     glw_rescale(&rc0, 1.0);
 
@@ -716,9 +716,7 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
     if(event_is_action(e, ACTION_BS)) {
 
-      if(!del_char(gtb)) 
-	return 0;
-      
+      del_char(gtb);
       gtb_notify(gtb);
       return 1;
       
