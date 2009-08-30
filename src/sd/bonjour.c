@@ -93,8 +93,6 @@ bonjour_resolve_callback(CFNetServiceRef theService,
       port = ntohs(addr_in6->sin6_port);
     }
     
-    /* TODO: show ip in name if more then one address? */
-    
     switch(sa->sa_type) {
     case SERVICE_HTSP:
       TRACE(TRACE_DEBUG, "Bonjour", "Adding service htsp://%s:%d", host, port);
