@@ -44,8 +44,10 @@ bonjour_resolve_callback(CFNetServiceRef theService,
   CFDictionaryRef dict;
   service_instance_t *si = info;
   service_aux_t *sa = si->si_opaque;
+  struct sockaddr* addr;
   char name[256];
   int i;
+  int has_ipv4 = 0;
 
   CFStringGetCString(CFNetServiceGetName(theService), name, sizeof(name),
                      kCFStringEncodingUTF8);
@@ -56,7 +58,16 @@ bonjour_resolve_callback(CFNetServiceRef theService,
         name, CFArrayGetCount(addresses));
 
   for(i = 0; i < CFArrayGetCount(addresses); i++) {
-    struct sockaddr* addr;
+    addr = (struct sockaddr* )
+      CFDataGetBytePtr(CFArrayGetValueAtIndex(addresses, i));
+    
+    if(addr->sa_family == AF_INET) {
+      has_ipv4 = 1;
+      break;
+    }
+  }
+  
+  for(i = 0; i < CFArrayGetCount(addresses); i++) {
     char host[256];
     char pathbuf[512];
     const char *path;
@@ -67,7 +78,9 @@ bonjour_resolve_callback(CFNetServiceRef theService,
     addr = (struct sockaddr* )
       CFDataGetBytePtr(CFArrayGetValueAtIndex(addresses, i));
 
-    if(!addr || !(addr->sa_family == AF_INET || addr->sa_family == AF_INET6))
+    if(!addr ||
+       (has_ipv4 && addr->sa_family != AF_INET) ||
+       !(addr->sa_family == AF_INET || addr->sa_family == AF_INET6))
       continue;
     
     if(addr->sa_family == AF_INET) {
