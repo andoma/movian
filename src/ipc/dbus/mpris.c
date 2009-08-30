@@ -20,7 +20,7 @@
 #include <unistd.h>
 
 #include "showtime.h"
-#include "ui/keymapper.h"
+#include "event.h"
 
 #include "mpris.h"
 #include "dbus.h"
@@ -132,7 +132,7 @@ static DBusHandlerResult
 doAction(DBusConnection *c, DBusMessage *in,
 	 DBusMessageIter *args, void *aux, int v)
 {
-  event_post(event_create_action(v));
+   event_dispatch(event_create_action(v));
   return DBUS_HANDLER_RESULT_HANDLED;
 }
 
