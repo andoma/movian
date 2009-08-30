@@ -34,6 +34,8 @@ dbus_thread(void *aux)
   DBusConnection *c;
   DBusError err;
 
+  dbus_threads_init_default();
+
   dbus_error_init(&err);
 
   if((c = dbus_bus_get(DBUS_BUS_SESSION, &err)) == NULL) {
@@ -42,11 +44,15 @@ dbus_thread(void *aux)
   }
 
   dbus_mpris_init(c);
+  dbus_mpkeys_init(c);
 
   dbus_connection_flush(c);
 
-  while(1) 
-    dbus_connection_read_write_dispatch(c, -1);
+  while(1) {
+    dbus_connection_read_write(c, 1000);
+    dbus_connection_dispatch(c);
+    dbus_connection_flush(c);
+  }
 
   return NULL;
 }

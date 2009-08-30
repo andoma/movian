@@ -23,4 +23,6 @@
 
 void dbus_mpris_init(DBusConnection *c);
 
+void dbus_mpkeys_init(DBusConnection *c);
+
 #endif 

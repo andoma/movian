@@ -168,11 +168,11 @@ main(int argc, char **argv)
   /* Open initial page */
   nav_open(argc > 0 ? argv[0] : NAV_HOME, NULL, NULL);
 
-  /* Service discovery */
-  sd_init();
-
   /* Various interprocess communication stuff (D-Bus on Linux, etc) */
   ipc_init();
+
+  /* Service discovery. Must be after ipc_init() (d-bus and threads, etc) */
+  sd_init();
 
   /* Initialize user interfaces */
   ui_start(nuiargs, uiargs, argv0);

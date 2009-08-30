@@ -37,6 +37,7 @@
 #include "showtime.h"
 #include "ui/linux/screensaver_inhibitor.h"
 #include "settings.h"
+#include "ipc/ipc.h"
 
 typedef struct glw_x11 {
 
@@ -333,7 +334,7 @@ window_open(glw_x11_t *gx11)
 
   winAttr.event_mask = KeyPressMask | StructureNotifyMask |
     ButtonPressMask | ButtonReleaseMask |
-    PointerMotionMask | ButtonMotionMask;
+    PointerMotionMask | ButtonMotionMask | EnterWindowMask;
 
   winAttr.background_pixmap = None;
   winAttr.background_pixel  = 0;
@@ -873,6 +874,13 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	continue;
       
       switch(event.type) {
+      case EnterNotify:
+	// This is _a_bit_ ugly
+#ifdef CONFIG_DBUS
+	mpkeys_grab();
+#endif
+	break;
+
       case FocusIn:
 	if(gx11->ic != NULL)
 	  XSetICFocus(gx11->ic);
