@@ -22,7 +22,8 @@ typedef struct service_instance {
 } service_instance_t;
 
 
-service_instance_t *si_find(struct service_instance_list *services, const char *id);
+service_instance_t *si_find(struct service_instance_list *services, 
+			    const char *id);
 
 void si_destroy(service_instance_t *si);
 
@@ -30,10 +31,12 @@ void sd_add_service_htsp(service_instance_t *si, const char *name,
                          const char *host, int port);
 
 void sd_add_service_webdav(service_instance_t *si, const char *name, 
-                           const char *host, int port, const char *path);
+                           const char *host, int port, const char *path,
+			   const char *contents);
 
 prop_t *sd_add_service(const char *id, const char *title,
-		       const char *icon, prop_t **status);
+		       const char *icon, prop_t **status,
+		       const char *contents);
 
 prop_t *sd_add_link(prop_t *svc, const char *title, const char *url);
 

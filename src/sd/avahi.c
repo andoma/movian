@@ -75,6 +75,8 @@ resolve_callback(AvahiServiceResolver *r,
   char a[AVAHI_ADDRESS_STR_MAX];
   AvahiStringList *apath;
   char *path;
+  AvahiStringList *acontents;
+  char *contents;
 
   switch(event) {
   case AVAHI_RESOLVER_FAILURE:
@@ -100,11 +102,16 @@ resolve_callback(AvahiServiceResolver *r,
 
     case SERVICE_WEBDAV:
       apath = avahi_string_list_find(txt, "path");
-      
-      if(avahi_string_list_get_pair(apath, NULL, &path, NULL))
+      if(apath == NULL ||
+	 avahi_string_list_get_pair(apath, NULL, &path, NULL))
         path = NULL;
+
+      acontents = avahi_string_list_find(txt, "contents");
+      if(acontents == NULL ||
+	 avahi_string_list_get_pair(acontents, NULL, &contents, NULL))
+        contents = NULL;
         
-      sd_add_service_webdav(si, name, a, port, path);
+      sd_add_service_webdav(si, name, a, port, path, contents);
         
       if(path)
         avahi_free(path);

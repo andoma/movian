@@ -147,8 +147,8 @@ bookmark_add(const char *title, const char *url, const char *icon)
   bm->bm_title_sub = bookmark_add_prop(p, "title", title, bm, set_title);
   bm->bm_url_sub   = bookmark_add_prop(p, "url",   url,   bm, set_url);
 
-  bm->bm_source_root = sd_add_service(title, title, NULL, NULL);
-  bm->bm_link_root   = sd_add_link(bm->bm_source_root, "open", url);
+  bm->bm_source_root = sd_add_service(title, title, NULL, NULL, NULL);
+  bm->bm_link_root   = sd_add_link(bm->bm_source_root, "Browse", url);
 
   prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE,
 		 PROP_TAG_CALLBACK, bookmark_destroyed, bm,

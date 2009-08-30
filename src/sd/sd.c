@@ -73,7 +73,7 @@ sd_add_service_htsp(service_instance_t *si, const char *name,
   if(si->si_root == NULL)
     si->si_root = sd_add_service(si->si_id, name, 
 				 "bundle://resources/tvheadend/logo.png",
-                                 NULL);
+                                 NULL, NULL);
   
   snprintf(url, sizeof(url), "htsp://%s:%d", host, port);
   sd_add_link(si->si_root, "All TV Channels", url);
@@ -85,12 +85,13 @@ sd_add_service_htsp(service_instance_t *si, const char *name,
  */
 void
 sd_add_service_webdav(service_instance_t *si, const char *name, 
-                      const char *host, int port, const char *path)
+                      const char *host, int port, const char *path,
+		      const char *contents)
 {
   char url[512];
   
   if(si->si_root == NULL)
-    si->si_root = sd_add_service(si->si_id, name, NULL, NULL);
+    si->si_root = sd_add_service(si->si_id, name, NULL, NULL, contents);
   
   snprintf(url, sizeof(url), "webdav://%s:%d%s%s",
 	   host, port, path == NULL || path[0] != '/' ? "/" : "",
@@ -105,7 +106,7 @@ sd_add_service_webdav(service_instance_t *si, const char *name,
  */
 prop_t *
 sd_add_service(const char *id, const char *title,
-	       const char *icon, prop_t **status)
+	       const char *icon, prop_t **status, const char *contents)
 {
   prop_t *p = prop_create(NULL, id);
   
@@ -115,6 +116,7 @@ sd_add_service(const char *id, const char *title,
     *status = prop_create(p, "status");
 
   prop_set_string(prop_create(p, "icon"), icon);
+  prop_set_string(prop_create(p, "contents"), contents);
 
   if(prop_set_parent(p, global_sources))
     abort();

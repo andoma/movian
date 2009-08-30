@@ -60,6 +60,8 @@ bonjour_resolve_callback(CFNetServiceRef theService,
     char host[256];
     char pathbuf[512];
     const char *path;
+    char contentsbuf[512];
+    const char *contents;
     int port;
     
     addr = (struct sockaddr* )
@@ -90,15 +92,25 @@ bonjour_resolve_callback(CFNetServiceRef theService,
       dict = CFNetServiceCreateDictionaryWithTXTData(kCFAllocatorDefault,
                                                      txt);
       path = NULL;
+      contents = NULL;
       
       if(dict != NULL) {
-        CFDataRef key = CFDictionaryGetValue(dict, CFSTR("path"));
-        
-        if(key != NULL) {
+        CFDataRef key;
+
+	key = CFDictionaryGetValue(dict, CFSTR("path"));
+	if(key != NULL) {
           snprintf(pathbuf, sizeof(pathbuf), "%.*s",
                    (int)CFDataGetLength(key),
                    (const char *)CFDataGetBytePtr(key));
           path = pathbuf;
+        }
+
+	key = CFDictionaryGetValue(dict, CFSTR("contents"));
+        if(key != NULL) {
+          snprintf(contentsbuf, sizeof(contentsbuf), "%.*s",
+                   (int)CFDataGetLength(key),
+                   (const char *)CFDataGetBytePtr(key));
+          contents = contentsbuf;
         }
 
 	CFRelease(dict);
@@ -106,7 +118,7 @@ bonjour_resolve_callback(CFNetServiceRef theService,
         
       TRACE(TRACE_DEBUG, "Bonjour", "Adding service webdav://%s:%d%s",
             host, port, path ? path : "");
-      sd_add_service_webdav(si, name, host, port, path);
+      sd_add_service_webdav(si, name, host, port, path, contents);
         
       break;
     }

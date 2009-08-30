@@ -28,8 +28,17 @@ widget(container_y, {
 
 	widget(container_x, {
 
+	  widget(dummy, {
+	    .width = 2;
+	  });
+
 	  widget(image, {
-	    .source = $self.icon;
+	    .source = select($self.icon, $self.icon, 
+			     "theme://icons/mediasources/" + 
+			     translate($self.contents, "generic.png",
+				       "music",    "music.png",
+				       "video",    "movies.png",
+				       "pictures", "pictures.png"));
 	  });
 
 	  VERTICAL_SEPARATOR();
@@ -40,7 +49,7 @@ widget(container_y, {
 	      .caption = $self.title;
 	      .ellipsize = true;
 	      .align = left;
-	      .sizeScale = 1.34;
+	      .sizeScale = 1.5;
 	    });
 
 	    widget(label, {
