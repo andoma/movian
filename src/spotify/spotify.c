@@ -56,7 +56,6 @@ static int spotify_started;
 static int spotify_login_result = -1;
 
 static int play_position;
-static int in_seek;
 static int seek_pos;
 
 static prop_t *prop_status;
@@ -128,6 +127,9 @@ typedef struct playlist_track {
   prop_t *plt_prop_title;
 
 } playlist_track_t;
+
+static void load_initial_playlists(sp_playlistcontainer *pc);
+
 
 typedef enum {
   SPOTIFY_PENDING_EVENT, //< event pending from libspotify
@@ -324,6 +326,8 @@ spotify_logged_in(sp_session *sess, sp_error error)
     prop_set_stringf(prop_status, "Logged in as user: %s",
 		     f_sp_user_display_name(user));
 
+    load_initial_playlists(f_sp_session_playlistcontainer(sess));
+
   } else {
     notify_add(NOTIFY_ERROR, NULL, 5, "Spotify: Login failed -- %s",
 	       f_sp_error_message(error));
@@ -419,6 +423,19 @@ spotify_uri_return(spotify_uri_t *su, int errcode)
 /**
  *
  */
+static void
+spotify_end_of_track(sp_session *sess)
+{
+  media_pipe_t *mp = spotify_mp;
+
+  if(mp != NULL)
+    mp_enqueue_event(mp, event_create_type(EVENT_EOF));
+}
+
+
+/**
+ *
+ */
 static int
 spotify_music_delivery(sp_session *sess, const sp_audioformat *format, 
 		       const void *frames, int num_frames)
@@ -432,13 +449,7 @@ spotify_music_delivery(sp_session *sess, const sp_audioformat *format,
     return num_frames;
 
   if(num_frames == 0) {
-
-    if(in_seek) {
-      play_position = (int64_t)seek_pos * format->sample_rate / 1000;
-      in_seek--;
-    } else {
-      mp_enqueue_event(mp, event_create_type(EVENT_EOF));
-    }
+    play_position = (int64_t)seek_pos * format->sample_rate / 1000;
     return 0;
   }
 
@@ -1219,9 +1230,8 @@ search_completed(sp_search *result, void *userdata)
   sp_track *track;
   sp_album *album;
   sp_artist *artist;
-  sp_image *image;
   char link[256];
-  prop_t *p, *metadata, *tracks, *p_img;
+  prop_t *p, *metadata, *tracks;
 
 
   printf("Search \"%s\" completed\n", ss->ss_query);
@@ -1255,13 +1265,13 @@ search_completed(sp_search *result, void *userdata)
     f_sp_albumbrowse_create(spotify_session, album, 
 			  spotify_browse_album_callback, tracks);
 
-    
+#if 0    
     image = f_sp_image_create(spotify_session, f_sp_album_cover(album));
 
     p_img = prop_create(metadata, "icon");
     prop_ref_inc(p_img);
     //    f_sp_image_add_load_callback(image, spotify_image_to_property, p_img);
-
+#endif
     if(prop_set_parent(p, ss->ss_results))
       prop_destroy(p);
   }
@@ -1298,7 +1308,7 @@ static void
 spotify_search(spotify_search_t *ss)
 {
   if(f_sp_search_create(spotify_session, ss->ss_query,
-		      0, 250, search_completed, ss) == NULL)
+			0, 250, 0, 250, 0, 250, search_completed, ss) == NULL)
     search_cleanup(ss);
 }
 
@@ -1313,6 +1323,7 @@ static const sp_session_callbacks spotify_session_callbacks = {
   .notify_main_thread  = spotify_events_pending,
   .music_delivery      = spotify_music_delivery,
   .play_token_lost     = spotify_play_token_lost,
+  .end_of_track        = spotify_end_of_track,
 };
 
 
@@ -1498,7 +1509,8 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
 {
   playlist_t *pl = calloc(1, sizeof(playlist_t));
   prop_t *metadata;
-  
+  int i, n;
+
   pl->pl_playlist = plist;
   pl->pl_position = position;
   pl->pl_prop_root = prop_create(prop_playlists, NULL);
@@ -1516,6 +1528,12 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
 
   ptrvec_insert_entry(&playlists, position, pl);
 
+  n = f_sp_playlist_num_tracks(plist);
+  for(i = 0; i < n; i++) {
+    const sp_track *t = f_sp_playlist_track(plist, i);
+    tracks_added(plist, &t, 1, i, pl);
+  }
+
   f_sp_playlist_add_callbacks(plist, &pl_callbacks, pl);
 
   TRACE(TRACE_DEBUG, "spotify", "Playlist %d added (%s)", 
@@ -1524,12 +1542,60 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
 
 
 /**
+ * A new playlist has been added to the users rootlist
+ */
+static void
+playlist_removed(sp_playlistcontainer *pc, sp_playlist *plist,
+		 int position, void *userdata)
+{
+  playlist_t *pl;
+  playlist_track_t *plt;
+  int i;
+
+  TRACE(TRACE_DEBUG, "spotify", "Playlist %d removed (%s)", 
+	position, f_sp_playlist_name(plist));
+
+  pl = ptrvec_remove_entry(&playlists, position);
+
+  // Destroys all properties, all tracks, etc
+  prop_destroy(pl->pl_prop_root);
+
+  for(i = 0; i < pl->pl_tracks.size; i++) {
+    plt = pl->pl_tracks.vec[i];
+    free(plt);
+  }
+
+  free(pl->pl_tracks.vec);
+  free(pl->pl_url);
+  free(pl);
+}
+
+
+/**
  * Playlist container callbacks
  */
 static sp_playlistcontainer_callbacks pc_callbacks = {
   .playlist_added   = playlist_added,
-  //  .playlist_removed = playlist_removed,
+  .playlist_removed = playlist_removed,
 };
+
+
+/**
+ *
+ */
+static void
+load_initial_playlists(sp_playlistcontainer *pc)
+{
+  int i, n;
+
+  n = f_sp_playlistcontainer_num_playlists(pc);
+
+  for(i = 0; i < n; i++) {
+    playlist_added(pc, f_sp_playlistcontainer_playlist(pc, i), i, NULL);
+  }
+
+  f_sp_playlistcontainer_add_callbacks(pc, &pc_callbacks, NULL);
+}
 
 
 /**
@@ -1616,7 +1682,6 @@ spotify_thread(void *aux)
   int next_timeout = 0;
   char ua[256];
   char cache[256];
-  char settings[256];
   extern char *htsversion_full;
 
   sesconf.api_version = SPOTIFY_API_VERSION;
@@ -1626,11 +1691,9 @@ spotify_thread(void *aux)
   else
     sesconf.cache_location = cache;
 
-  TRACE(TRACE_DEBUG, "spotify", "Cache location: %s", sesconf.cache_location);
+  sesconf.settings_location = sesconf.cache_location;
 
-  snprintf(settings, sizeof(settings), "%s/libspotify",
-	   htsmsg_store_get_root());
-  sesconf.settings_location = settings;
+  TRACE(TRACE_DEBUG, "spotify", "Cache location: %s", sesconf.cache_location);
 
   sesconf.application_key = appkey;
   sesconf.application_key_size = sizeof(appkey);
@@ -1650,9 +1713,6 @@ spotify_thread(void *aux)
 
   spotify_session = s;
 
-  f_sp_playlistcontainer_add_callbacks(f_sp_session_playlistcontainer(s),
-				       &pc_callbacks,
-				       NULL);
 
   spotify_try_login(s, 0, NULL);
 
@@ -1726,7 +1786,6 @@ spotify_thread(void *aux)
 
 	mp_flush(spotify_mp);
 	
-	in_seek = 2;
 	seek_pos = sm->sm_int;
 	error = f_sp_session_player_seek(s, sm->sm_int);
 	break;
@@ -2213,11 +2272,13 @@ be_spotify_init(void)
   void *h;
   const char *sym;
   prop_t *p;
+  char libname[64];
 
-  h = dlopen("libspotify.so", RTLD_LAZY);
+  snprintf(libname, sizeof(libname), "libspotify.so.%d", SPOTIFY_API_VERSION);
+
+  h = dlopen(libname, RTLD_NOW);
   if(h == NULL) {
-    TRACE(TRACE_INFO, "spotify", "Unable to load libspotify.so: %s",
-	  dlerror());
+    TRACE(TRACE_INFO, "spotify", "Unable to load %s: %s", libname, dlerror());
     return 1;
   }
   if((sym = resolvesym(h)) != NULL) {
@@ -2274,9 +2335,6 @@ spotify_shutdown(void)
 {
   int done;
   struct timespec ts;
-
-  return;
-
 
   ts.tv_sec = time(NULL) + 5; // Wait max 5 seconds for logout to succeed
   ts.tv_nsec = 0;

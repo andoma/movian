@@ -141,7 +141,7 @@ SP_LIBEXPORT(const char*) sp_error_message(sp_error error);
  * returned from sp_session_init(). Future versions of the library will provide you with some kind of mechanism
  * to request an updated version of the library.
  */
-#define SPOTIFY_API_VERSION 1
+#define SPOTIFY_API_VERSION 2
 
 /**
  * Describes the current state of the connection
@@ -248,6 +248,8 @@ typedef struct sp_session_callbacks {
 	 * @param[in]  format     Audio format descriptor sp_audioformat
 	 * @param[in]  frames     Points to raw PCM data as described by \p format
 	 * @param[in]  num_frames Number of available samples in \p frames.
+	 *                        If this is 0, a discontinuity has occured (such as after a seek). The application
+	 *                        should flush its audio fifos, etc.
 	 *
 	 * @return                Number of frames consumed.
 	 *                        This value can be used to rate limit the output from the library if your
@@ -274,6 +276,13 @@ typedef struct sp_session_callbacks {
 	 * @param[in]  data       Log data
 	 */
 	void (SP_CALLCONV *log_message)(sp_session *session, const char *data);
+
+	/**
+	 * End of track. Called when the currently played track has reached its end.
+	 *
+	 * @param[in]  session    Session
+	 */
+	void (SP_CALLCONV *end_of_track)(sp_session *session);
 } sp_session_callbacks;
 
 /**
@@ -656,6 +665,17 @@ SP_LIBEXPORT(bool) sp_track_is_loaded(sp_track *track);
  */
 SP_LIBEXPORT(sp_error) sp_track_error(sp_track *track);
 
+/**
+ * Return true if the track is available for playback.
+ *
+ * @param[in]   track      The track
+ *
+ * @return                 True if track is available for playback, otherwise false.
+ *
+ * @note The track must be loaded or this function will always return false.
+ * @see sp_track_is_loaded()
+ */
+SP_LIBEXPORT(bool) sp_track_is_available(sp_track *track);
 
 /**
  * The number of artists performing on the specified track
@@ -777,12 +797,35 @@ SP_LIBEXPORT(void) sp_track_release(sp_track *track);
  */
 
 /**
+ * Album types
+ */
+typedef enum {
+	SP_ALBUMTYPE_ALBUM       = 0, ///< Normal album
+	SP_ALBUMTYPE_SINGLE      = 1, ///< Single
+	SP_ALBUMTYPE_COMPILATION = 2, ///< Compilation
+	SP_ALBUMTYPE_UNKNOWN     = 3, ///< Unknown type
+} sp_albumtype;
+
+/**
  * Check if the album object is populated with data
  *
  * @param[in]  album       Album object
  * @return True if metadata is present, false if not
  */
 SP_LIBEXPORT(bool) sp_album_is_loaded(sp_album *album);
+
+
+/**
+ * Return true if the album is available in the current region.
+ *
+ * @param[in]   album      The album
+ *
+ * @return                 True if album is available for playback, otherwise false.
+ *
+ * @note The album must be loaded or this function will always return false.
+ * @see sp_album_is_loaded()
+ */
+SP_LIBEXPORT(bool) sp_album_is_available(sp_album *album);
 
 /**
  * Get the artist associated with the given album
@@ -824,6 +867,16 @@ SP_LIBEXPORT(const char *) sp_album_name(sp_album *album);
  * @return                 Release year
  */
 SP_LIBEXPORT(int) sp_album_year(sp_album *album);
+
+
+/**
+ * Return type of specified album
+ *
+ * @param[in]   album      Album object
+ *
+ * @return                 sp_albumtype
+ */
+SP_LIBEXPORT(sp_albumtype) sp_album_type(sp_album *album);
 
 
 /**
@@ -1413,14 +1466,18 @@ typedef void SP_CALLCONV search_complete_cb(sp_search *result, void *userdata);
  *
  * @param[in]  session    Session
  * @param[in]  query      Query search string, e.g. 'The Rolling Stones' or 'album:"The Black Album"'
- * @param[in]  offset     The offset in the total number of results available
- * @param[in]  count      The number of results to ask for
+ * @param[in]  track_offset     The offset among the tracks of the result
+ * @param[in]  track_count      The number of tracks to ask for
+ * @param[in]  album_offset     The offset among the albums of the result
+ * @param[in]  album_count      The number of albums to ask for
+ * @param[in]  artist_offset    The offset among the artists of the result
+ * @param[in]  artist_count      The number of artists to ask for
  * @param[in]  callback   Callback that will be called once the search operation is complete. Pass NULL if you are not interested in this event.
  * @param[in]  userdata   Opaque pointer passed to \p callback
  *
  * @return                Pointer to a search object. To free the object, use sp_search_release()
  */
-SP_LIBEXPORT(sp_search *) sp_search_create(sp_session *session, const char *query, int offset, int count, search_complete_cb *callback, void *userdata);
+SP_LIBEXPORT(sp_search *) sp_search_create(sp_session *session, const char *query, int track_offset, int track_count, int album_offset, int album_count, int artist_offset, int artist_count, search_complete_cb *callback, void *userdata);
 
 /**
  * Get load status for the specified search. Before it is loaded, it will behave as an empty search result.
@@ -1627,6 +1684,14 @@ typedef struct sp_playlist_callbacks {
 	 * @param[in]  userdata   Userdata passed to sp_playlist_add_callbacks()
 	 */
 	void (SP_CALLCONV *playlist_update_in_progress)(sp_playlist *pl, bool done, void *userdata);
+
+	/**
+	 * Called when metadata for one or more tracks in a playlist has been updated.
+	 *
+	 * @param[in]  pl         Playlist object
+	 * @param[in]  userdata   Userdata passed to sp_playlist_add_callbacks()
+	 */
+	void (SP_CALLCONV *playlist_metadata_updated)(sp_playlist *pl, void *userdata);
 } sp_playlist_callbacks;
 
 
