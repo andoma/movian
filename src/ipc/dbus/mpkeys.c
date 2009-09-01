@@ -177,6 +177,8 @@ dbus_mpkeys_init(DBusConnection *c)
   dbus_bus_add_match(c, "type='signal'", &err);
 
   dbus_connection_register_object_path(c, MK_PATH, &vt, c);
+
+  mpkeys_grab0(c);
 }
 
 
