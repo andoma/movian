@@ -255,6 +255,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
     gtbd->gtbd_linewidth = target_width;
   } else {
     gtbd->gtbd_linewidth = 1 << (av_log2(target_width) + 1);
+    target_height = 1 << (av_log2(target_height) + 1);
   }
 
   gtbd->gtbd_texsize = (double)target_width / (double)gtbd->gtbd_linewidth;
