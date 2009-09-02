@@ -189,7 +189,7 @@ html_entities_decode(char *s)
     if(e == NULL)
       continue;
     
-    snprintf(name, sizeof(name), "%.*s", e - s - 1, s + 1);
+    snprintf(name, sizeof(name), "%.*s", (int)(intptr_t)(e - s - 1), s + 1);
     code = html_entity_lookup(name);
     
     if(code == -1)
