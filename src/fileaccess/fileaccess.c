@@ -55,7 +55,7 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
   struct stat st;
   fa_protocol_t *fap;
   const char *url0 = url;
-  char buf[100];
+  char buf[512];
   int n = 0;
 
   while(*url != ':' && *url>31 && n < sizeof(buf) - 1)
