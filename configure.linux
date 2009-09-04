@@ -210,7 +210,7 @@ if enabled libpulse; then
 	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libpulse`
 	echo "Using libpulse:        `pkg-config --modversion libpulse`"
     else
-	echo "libpulbse (PulseAudio) development files not found."
+	echo "libpulse (PulseAudio) development files not found."
 	echo "To compile without it, configure with: --disable-libpulse"
 	die
     fi
