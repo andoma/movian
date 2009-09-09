@@ -18,12 +18,16 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "showtime.h"
 #include "event.h"
 
 #include "mpris.h"
 #include "dbus.h"
+#include "prop.h"
+
+static dbus_int32_t mpris_playstatus = 2; // stop
 
 /**
  *
@@ -137,6 +141,45 @@ doAction(DBusConnection *c, DBusMessage *in,
 }
 
 
+/**
+ *
+ */
+static DBusHandlerResult
+GetStatus(DBusConnection *c, DBusMessage *in,
+	  DBusMessageIter *args, void *aux, int v)
+{
+  int zero = 0;
+
+  dbus_message_iter_append_basic(args, DBUS_TYPE_INT32, &mpris_playstatus);
+  dbus_message_iter_append_basic(args, DBUS_TYPE_INT32, &zero);
+  dbus_message_iter_append_basic(args, DBUS_TYPE_INT32, &zero);
+  dbus_message_iter_append_basic(args, DBUS_TYPE_INT32, &zero);
+  return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+
+/**
+ *
+ */
+static DBusHandlerResult
+VolumeSet(DBusConnection *c, DBusMessage *in,
+	  DBusMessageIter *args, void *aux, int v)
+{
+  dbus_int32_t vol = 0;
+  prop_t *p;
+
+  if(!dbus_message_get_args(in, NULL, 
+			    DBUS_TYPE_INT32, &vol,
+			    DBUS_TYPE_INVALID))
+    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+
+  p = prop_get_by_name(PNVEC("global", "audio", "mastervolume"), 1, NULL);
+  prop_set_float(p, 0 - (float)vol);
+  prop_ref_dec(p);
+
+  return DBUS_HANDLER_RESULT_HANDLED;
+}
+
 
 
 
@@ -164,11 +207,13 @@ static struct obj Root = {
  * Player Methods
  */
 struct method Player_methods[] = {
-  { "Prev",               doAction,        NULL,   ACTION_PREV_TRACK},
-  { "Next",               doAction,        NULL,   ACTION_NEXT_TRACK},
-  { "Stop",               doAction,        NULL,   ACTION_STOP},
-  { "Pause",              doAction,        NULL,   ACTION_PLAYPAUSE},
-  { "Play",               doAction,        NULL,   ACTION_PLAY},
+  { "Prev",               doAction,        NULL,   ACTION_PREV_TRACK },
+  { "Next",               doAction,        NULL,   ACTION_NEXT_TRACK },
+  { "Stop",               doAction,        NULL,   ACTION_STOP },
+  { "Pause",              doAction,        NULL,   ACTION_PLAYPAUSE },
+  { "Play",               doAction,        NULL,   ACTION_PLAY },
+  { "VolumeSet",          VolumeSet,       NULL },
+  { "GetStatus",          GetStatus,       NULL },
 };
 
 
@@ -273,7 +318,8 @@ obj_handler(DBusConnection *c, DBusMessage *in, void *aux)
       return handle_method(c, in, &o->methods[i]);
   }
 
-  TRACE(TRACE_ERROR, "mpris", "Unknown method called");
+  TRACE(TRACE_ERROR, "mpris", "Unknown method %s.%s called",
+	dbus_message_get_interface(in), dbus_message_get_member(in));
   return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
@@ -285,6 +331,25 @@ static const DBusObjectPathVTable vt = {
   .message_function = obj_handler
 };
 
+
+/**
+ *
+ */
+static void
+playstatus_changed(void *opaque, const char *str)
+{
+  if(str == NULL || !strcmp(str, "stop"))
+    mpris_playstatus = 2;
+  else if(!strcmp(str, "pause")) 
+    mpris_playstatus = 1;
+  else if(!strcmp(str, "play")) 
+    mpris_playstatus = 0;
+  else
+    mpris_playstatus = 2;
+
+  
+
+}
 
 /**
  *
@@ -307,4 +372,11 @@ dbus_mpris_init(DBusConnection *c)
   dbus_connection_register_object_path(c, "/TrackList", &vt, &TrackList);
 
   TRACE(TRACE_DEBUG, "D-Bus", "MPRIS Initialized");
+
+  prop_subscribe(0,
+		 PROP_TAG_NAME("global", "media", "current", "playstatus"),
+		 PROP_TAG_CALLBACK_STRING, playstatus_changed, c,
+		 NULL);
+
+
 }
