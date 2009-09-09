@@ -22,14 +22,14 @@
  * For PCM coreaudio always uses 32 bit float samples.
  */
 
-#include <math.h>
- 
+
 #include <CoreFoundation/CoreFoundation.h>
 #include <CoreFoundation/CFString.h>
 #include <CoreAudio/CoreAudio.h>
 
 #include "showtime.h"
 #include "audio/audio.h"
+
 
 #define CATRACE(level, fmt...) TRACE(level, "CoreAudio", fmt)
 
@@ -234,6 +234,9 @@ coreaudio_change_format(coreaudio_audio_mode_t *cam, int format, int rate)
   asbd.mFormatID = kAudioFormatLinearPCM;
   asbd.mSampleRate = audio_rate_from_rateflag(rate);
   asbd.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
+#if defined(__BIG_ENDIAN__)
+  asbd.mFormatFlags |= kAudioFormatFlagIsBigEndian;
+#endif
   asbd.mBytesPerPacket = 8;
   asbd.mFramesPerPacket = 1;
   asbd.mBytesPerFrame = 8;
