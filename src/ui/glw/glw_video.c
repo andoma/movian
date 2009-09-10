@@ -45,16 +45,20 @@ static const char *yuv2rbg_2mix_code =
 #include "cg/yuv2rgb_2mix.h"
 ;
 
+static const char *yuv2rbg_rect_code =
+#include "cg/yuv2rgb_rect.h"
+;
+
+static const char *yuv2rbg_2mix_rect_code =
+#include "cg/yuv2rgb_2mix_rect.h"
+;
+
 static void gv_purge_queues(video_decoder_t *vd);
 
 
-/**************************************************************************
- *
+/**
  *  GL Video Init
- *
  */
-
-
 static int
 glp_check_error(const char *name)
 {
@@ -73,13 +77,15 @@ glp_check_error(const char *name)
   return 0;
 }
 
+
 /**
  *
  */
 void
-glw_video_global_init(glw_root_t *gr)
+glw_video_global_init(glw_root_t *gr, int rectmode)
 {
   glw_backend_root_t *gbr = &gr->gr_be;
+  const char *c;
   GLint tu;
 
   glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tu);
@@ -94,21 +100,26 @@ glw_video_global_init(glw_root_t *gr)
 
   glGenProgramsARB(1, &gbr->gbr_yuv2rbg_prog);
   glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, gbr->gbr_yuv2rbg_prog);
+  
+  c = rectmode ? yuv2rbg_rect_code : yuv2rbg_code;
   glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, 
-		     strlen(yuv2rbg_code), yuv2rbg_code);
+		     strlen(c), c);
 
   glp_check_error("yuv2rgb");
 
 
   glGenProgramsARB(1, &gbr->gbr_yuv2rbg_2mix_prog);
   glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, gbr->gbr_yuv2rbg_2mix_prog);
+
+  c = rectmode ? yuv2rbg_2mix_rect_code : yuv2rbg_2mix_code;
   glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, 
-		     strlen(yuv2rbg_2mix_code), yuv2rbg_2mix_code);
+		     strlen(c), c);
 
   glp_check_error("yuv2rgb_2mix");
 
   glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, 0);
 }
+
 
 /**
  *
@@ -129,7 +140,6 @@ glw_video_global_flush(glw_root_t *gr)
     hts_mutex_unlock(&vd->vd_queue_mutex);
   }
 }
-
 
 
 /**
@@ -191,20 +201,16 @@ gv_buffer_allocator(video_decoder_t *vd)
 
 }
 
-/**************************************************************************
- *
+/**
  *  Texture loader
- *
  */
-
-
 static void
-gv_set_tex_meta(void)
+gv_set_tex_meta(int textype)
 {
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(textype, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(textype, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(textype, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(textype, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
 static GLuint 
@@ -215,7 +221,7 @@ gv_tex_get(glw_video_t *gv, gl_video_frame_t *gvf, int plane)
 
 
 static void
-video_frame_upload(glw_video_t *gv, gl_video_frame_t *gvf)
+video_frame_upload(glw_video_t *gv, gl_video_frame_t *gvf, int textype)
 {
   if(gvf->gvf_uploaded)
     return;
@@ -226,10 +232,10 @@ video_frame_upload(glw_video_t *gv, gl_video_frame_t *gvf)
   glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
   gvf->gvf_pbo_ptr[0] = NULL;
 
-  glBindTexture(GL_TEXTURE_2D, gv_tex_get(gv, gvf, GVF_TEX_L));
-  gv_set_tex_meta();
+  glBindTexture(textype, gv_tex_get(gv, gvf, GVF_TEX_L));
+  gv_set_tex_meta(textype);
   
-  glTexImage2D(GL_TEXTURE_2D, 0, 1, 
+  glTexImage2D(textype, 0, 1, 
 	       gvf->gvf_vdf.vdf_width[0], gvf->gvf_vdf.vdf_height[0],
 	       0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 
@@ -240,11 +246,11 @@ video_frame_upload(glw_video_t *gv, gl_video_frame_t *gvf)
   glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
   gvf->gvf_pbo_ptr[1] = NULL;
 
-  glBindTexture(GL_TEXTURE_2D, gv_tex_get(gv, gvf, GVF_TEX_Cr));
-  gv_set_tex_meta();
+  glBindTexture(textype, gv_tex_get(gv, gvf, GVF_TEX_Cr));
+  gv_set_tex_meta(textype);
 
 
-  glTexImage2D(GL_TEXTURE_2D, 0, 1,
+  glTexImage2D(textype, 0, 1,
 	       gvf->gvf_vdf.vdf_width[1], gvf->gvf_vdf.vdf_height[1],
 	       0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 
@@ -255,11 +261,11 @@ video_frame_upload(glw_video_t *gv, gl_video_frame_t *gvf)
   glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
   gvf->gvf_pbo_ptr[2] = NULL;
 
-  glBindTexture(GL_TEXTURE_2D, gv_tex_get(gv, gvf, GVF_TEX_Cb));
+  glBindTexture(textype, gv_tex_get(gv, gvf, GVF_TEX_Cb));
 
-  gv_set_tex_meta();
+  gv_set_tex_meta(textype);
   
-  glTexImage2D(GL_TEXTURE_2D, 0, 1,
+  glTexImage2D(textype, 0, 1,
 	       gvf->gvf_vdf.vdf_width[2], gvf->gvf_vdf.vdf_height[2],
 	       0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
   
@@ -267,16 +273,9 @@ video_frame_upload(glw_video_t *gv, gl_video_frame_t *gvf)
 }
 
 
-
-
-/**************************************************************************
- *
+/**
  *  Video widget layout
- *
  */
-
-
-
 static void
 gv_enqueue_for_decode(video_decoder_t *vd, video_decoder_frame_t *vdf,
 		      struct video_decoder_frame_queue *fromqueue)
@@ -488,7 +487,8 @@ gv_compute_blend(glw_video_t *gv, video_decoder_frame_t *fra,
  *
  */
 static void
-spu_repaint(glw_video_t *gv, dvdspu_decoder_t *dd, dvdspu_t *d)
+spu_repaint(glw_video_t *gv, dvdspu_decoder_t *dd, dvdspu_t *d,
+	    const glw_root_t *gr)
 {
   int width  = d->d_x2 - d->d_x1;
   int height = d->d_y2 - d->d_y1;
@@ -565,7 +565,10 @@ spu_repaint(glw_video_t *gv, dvdspu_decoder_t *dd, dvdspu_t *d)
     }
   }
 
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
+  gv->gv_sputex_width  = gr->gr_normalized_texture_coords ? 1.0 : width;
+  gv->gv_sputex_height = gr->gr_normalized_texture_coords ? 1.0 : height;
+
+  glTexImage2D(gr->gr_be.gbr_primary_texture_mode, 0, GL_RGBA, 
 	       width, height, 0,
 	       GL_RGBA, GL_UNSIGNED_BYTE, t0);
 
@@ -576,8 +579,10 @@ spu_repaint(glw_video_t *gv, dvdspu_decoder_t *dd, dvdspu_t *d)
 
 
 static void
-spu_layout(glw_video_t *gv, dvdspu_decoder_t *dd, int64_t pts)
+spu_layout(glw_video_t *gv, dvdspu_decoder_t *dd, int64_t pts,
+	   const glw_root_t *gr)
 {
+  int textype = gr->gr_be.gbr_primary_texture_mode;
   dvdspu_t *d;
   int x;
 
@@ -615,15 +620,16 @@ spu_layout(glw_video_t *gv, dvdspu_decoder_t *dd, int64_t pts)
 
   case 1:
     if(gv->gv_sputex == 0) {
+
       glGenTextures(1, &gv->gv_sputex);
 
-      glBindTexture(GL_TEXTURE_2D, gv->gv_sputex);
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glBindTexture(textype, gv->gv_sputex);
+      glTexParameterf(textype, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameterf(textype, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     } else {
-      glBindTexture(GL_TEXTURE_2D, gv->gv_sputex);
+      glBindTexture(textype, gv->gv_sputex);
     }
-    spu_repaint(gv, dd, d);
+    spu_repaint(gv, dd, d, gr);
     break;
   }
   hts_mutex_unlock(&dd->dd_mutex);
@@ -633,7 +639,7 @@ spu_layout(glw_video_t *gv, dvdspu_decoder_t *dd, int64_t pts)
 
 
 static void 
-gv_new_frame(video_decoder_t *vd, glw_video_t *gv)
+gv_new_frame(video_decoder_t *vd, glw_video_t *gv, const glw_root_t *gr)
 {
   video_decoder_frame_t *fra, *frb;
   media_pipe_t *mp = gv->gv_mp;
@@ -693,36 +699,67 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv)
 
 #if ENABLE_DVD
     if(vd->vd_dvdspu != NULL)
-      spu_layout(gv, vd->vd_dvdspu, pts);
+      spu_layout(gv, vd->vd_dvdspu, pts, gr);
 #endif
-
   }
-
 }
-
-
 
 
 /**
  *  Video widget render
  */
 static void
-render_video_quad(video_decoder_t *vd)
+render_video_quad(int interlace, int rectmode, int width, int height)
 {
-  float tzoom = vd->vd_interlaced ? 0.01 : 0.00;
-  
+  float x1, x2, y1, y2;
+
+  if(rectmode) {
+
+    if(interlace) {
+
+      x1 = 1;
+      y1 = 1;
+      x2 = width  - 1;
+      y2 = height - 1;
+
+    } else {
+
+      x1 = 0;
+      y1 = 0;
+      x2 = width;
+      y2 = height;
+    }
+
+  } else {
+    
+    if(interlace) {
+
+      x1 = 0 + (1.0 / (float)width);
+      y1 = 0 + (1.0 / (float)height);
+      x2 = 1 - (1.0 / (float)width);
+      y2 = 1 - (1.0 / (float)height);
+
+    } else {
+
+      x1 = 0;
+      y1 = 0;
+      x2 = 1;
+      y2 = 1;
+    }
+  }
+ 
   glBegin(GL_QUADS);
 
-  glTexCoord2f(tzoom, tzoom);
+  glTexCoord2f(x1, y1);
   glVertex3f( -1.0f, 1.0f, 0.0f);
   
-  glTexCoord2f(1.0 - tzoom, tzoom);
+  glTexCoord2f(x2, y1);
   glVertex3f( 1.0f, 1.0f, 0.0f);
   
-  glTexCoord2f(1.0 - tzoom, 1.0 - tzoom);
+  glTexCoord2f(x2, y2);
   glVertex3f( 1.0f, -1.0f, 0.0f);
 
-  glTexCoord2f(tzoom, 1.0 - tzoom); 
+  glTexCoord2f(x1, y2);
   glVertex3f( -1.0f, -1.0f, 0.0f);
 
   glEnd();
@@ -733,13 +770,14 @@ render_video_quad(video_decoder_t *vd)
 
 static void
 render_video_1f(glw_video_t *gv, video_decoder_t *vd,
-		video_decoder_frame_t *vdf, float alpha)
+		video_decoder_frame_t *vdf, float alpha, int textype,
+		int rectmode)
 {
   gl_video_frame_t *gvf = (gl_video_frame_t *)vdf;
   int i;
   GLuint tex;
 
-  video_frame_upload(gv, gvf);
+  video_frame_upload(gv, gvf, textype);
 
   glEnable(GL_FRAGMENT_PROGRAM_ARB);
   glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, 
@@ -759,24 +797,25 @@ render_video_1f(glw_video_t *gv, video_decoder_t *vd,
   /* color matrix */
 
   for(i = 0; i < 3; i++)
-    glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 2 + i,
+    glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1 + i,
 				 gv->gv_cmatrix[i * 3 + 0],
 				 gv->gv_cmatrix[i * 3 + 1],
 				 gv->gv_cmatrix[i * 3 + 2], 0.0f);
 
   glActiveTextureARB(GL_TEXTURE2_ARB);
   tex = gv_tex_get(gv, gvf, GVF_TEX_Cb);
-  glBindTexture(GL_TEXTURE_2D, tex);
+  glBindTexture(textype, tex);
 
   glActiveTextureARB(GL_TEXTURE1_ARB);
   tex = gv_tex_get(gv, gvf, GVF_TEX_Cr);
-  glBindTexture(GL_TEXTURE_2D, tex);
+  glBindTexture(textype, tex);
 
   glActiveTextureARB(GL_TEXTURE0_ARB);
   tex = gv_tex_get(gv, gvf, GVF_TEX_L);
-  glBindTexture(GL_TEXTURE_2D, tex);
+  glBindTexture(textype, tex);
   
-  render_video_quad(vd);
+  render_video_quad(vd->vd_interlaced, rectmode, 
+		    vdf->vdf_width[0], vdf->vdf_height[0]);
   
   glDisable(GL_FRAGMENT_PROGRAM_ARB);
 }
@@ -785,15 +824,15 @@ render_video_1f(glw_video_t *gv, video_decoder_t *vd,
 static void
 gv_blend_frames(glw_video_t *gv, video_decoder_t *vd, 
 		video_decoder_frame_t *fra, video_decoder_frame_t *frb,
-		float alpha)
+		float alpha, int textype, int rectmode)
 {
   float blend = gv->gv_blend;
   gl_video_frame_t *gvf_a = (gl_video_frame_t *)fra;
   gl_video_frame_t *gvf_b = (gl_video_frame_t *)frb;
   int i;
   
-  video_frame_upload(gv, gvf_a);
-  video_frame_upload(gv, gvf_b);
+  video_frame_upload(gv, gvf_a, textype);
+  video_frame_upload(gv, gvf_b, textype);
     
   glEnable(GL_FRAGMENT_PROGRAM_ARB);
   glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,
@@ -814,30 +853,31 @@ gv_blend_frames(glw_video_t *gv, video_decoder_t *vd,
 				
   /* color matrix */
   for(i = 0; i < 3; i++)
-    glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 2 + i,
+    glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1 + i,
 				 gv->gv_cmatrix[i * 3 + 0],
 				 gv->gv_cmatrix[i * 3 + 1],
 				 gv->gv_cmatrix[i * 3 + 2], 0.0f);
 
   glActiveTextureARB(GL_TEXTURE5_ARB);
-  glBindTexture(GL_TEXTURE_2D, gv_tex_get(gv, gvf_b, GVF_TEX_Cb));
+  glBindTexture(textype, gv_tex_get(gv, gvf_b, GVF_TEX_Cb));
 
   glActiveTextureARB(GL_TEXTURE4_ARB);
-  glBindTexture(GL_TEXTURE_2D, gv_tex_get(gv, gvf_b, GVF_TEX_Cr));
+  glBindTexture(textype, gv_tex_get(gv, gvf_b, GVF_TEX_Cr));
 
   glActiveTextureARB(GL_TEXTURE3_ARB);
-  glBindTexture(GL_TEXTURE_2D, gv_tex_get(gv, gvf_b, GVF_TEX_L));
+  glBindTexture(textype, gv_tex_get(gv, gvf_b, GVF_TEX_L));
 
   glActiveTextureARB(GL_TEXTURE2_ARB);
-  glBindTexture(GL_TEXTURE_2D, gv_tex_get(gv, gvf_a, GVF_TEX_Cb));
+  glBindTexture(textype, gv_tex_get(gv, gvf_a, GVF_TEX_Cb));
 
   glActiveTextureARB(GL_TEXTURE1_ARB);
-  glBindTexture(GL_TEXTURE_2D, gv_tex_get(gv, gvf_a, GVF_TEX_Cr));
+  glBindTexture(textype, gv_tex_get(gv, gvf_a, GVF_TEX_Cr));
 
   glActiveTextureARB(GL_TEXTURE0_ARB);
-  glBindTexture(GL_TEXTURE_2D, gv_tex_get(gv, gvf_a, GVF_TEX_L));
+  glBindTexture(textype, gv_tex_get(gv, gvf_a, GVF_TEX_L));
 
-  render_video_quad(vd);
+  render_video_quad(vd->vd_interlaced, rectmode, 
+		    fra->vdf_width[0], fra->vdf_height[0]);
 
   glDisable(GL_FRAGMENT_PROGRAM_ARB);
 }
@@ -848,13 +888,16 @@ gv_blend_frames(glw_video_t *gv, video_decoder_t *vd,
 static void 
 render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
 {
+  glw_root_t *gr = w->glw_root;
   video_decoder_frame_t *fra, *frb;
   int width = 0, height = 0;
 #if ENABLE_DVD
   dvdspu_decoder_t *dd;
   dvdspu_t *d;
 #endif
-  
+  int textype = gr->gr_be.gbr_primary_texture_mode;
+  int rectmode = !gr->gr_normalized_texture_coords;
+
   /*
    * rescale
    */
@@ -886,9 +929,9 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
     height = fra->vdf_height[0];
 
     if(frb != NULL) {
-      gv_blend_frames(gv, vd, fra, frb, rc->rc_alpha);
+      gv_blend_frames(gv, vd, fra, frb, rc->rc_alpha, textype, rectmode);
     } else {
-      render_video_1f(gv, vd, fra, rc->rc_alpha);
+      render_video_1f(gv, vd, fra, rc->rc_alpha, textype, rectmode);
     }
   }
 
@@ -904,7 +947,7 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
     d = TAILQ_FIRST(&dd->dd_queue);
 
     if(d != NULL) {
-      glBindTexture(GL_TEXTURE_2D, gv->gv_sputex);
+      glBindTexture(textype, gv->gv_sputex);
 
       glPushMatrix();
 
@@ -915,16 +958,16 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
       
       glBegin(GL_QUADS);
       
-      glTexCoord2f(0, 0.0);
+      glTexCoord2f(0.0, 0.0);
       glVertex3f(d->d_x1, d->d_y1, 0.0f);
     
-      glTexCoord2f(1.0, 0.0);
+      glTexCoord2f(gv->gv_sputex_width, 0.0);
       glVertex3f(d->d_x2, d->d_y1, 0.0f);
     
-      glTexCoord2f(1.0, 1.0);
+      glTexCoord2f(gv->gv_sputex_width, gv->gv_sputex_height);
       glVertex3f(d->d_x2, d->d_y2, 0.0f);
     
-      glTexCoord2f(0, 1.0);
+      glTexCoord2f(0.0, gv->gv_sputex_height);
       glVertex3f(d->d_x1, d->d_y2, 0.0f);
 
       glEnd();
@@ -1187,7 +1230,7 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     gv->gv_fullwindow_check = 0;
 
     gv_buffer_allocator(vd);
-    gv_new_frame(vd, gv);
+    gv_new_frame(vd, gv, gr);
     gv_update_focusable(vd, gv);
     return 0;
 

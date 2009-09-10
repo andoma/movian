@@ -85,7 +85,8 @@ glw_render_vts_col(glw_renderer_t *gr, int vertex,
  * 
  */
 void
-glw_render(glw_renderer_t *gr, glw_rctx_t *rc, int mode, int attribs,
+glw_render(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc, 
+	   int mode, int attribs,
 	   glw_backend_texture_t *be_tex,
 	   float r, float g, float b, float a)
 {
@@ -95,7 +96,7 @@ glw_render(glw_renderer_t *gr, glw_rctx_t *rc, int mode, int attribs,
   switch(attribs) {
   case GLW_RENDER_ATTRIBS_NONE:
 
-    glDisable(GL_TEXTURE_2D);
+    glDisable(root->gr_be.gbr_primary_texture_mode);
 
     glColor4f(r, g, b, a);
     glBegin(mode);
@@ -106,11 +107,11 @@ glw_render(glw_renderer_t *gr, glw_rctx_t *rc, int mode, int attribs,
     }
     glEnd();
 
-    glEnable(GL_TEXTURE_2D);
+    glEnable(root->gr_be.gbr_primary_texture_mode);
     break;
 
   case GLW_RENDER_ATTRIBS_TEX:
-    glBindTexture(GL_TEXTURE_2D, *be_tex);
+    glBindTexture(root->gr_be.gbr_primary_texture_mode, *be_tex);
   
     glColor4f(r, g, b, a);
     glBegin(mode);
@@ -124,7 +125,7 @@ glw_render(glw_renderer_t *gr, glw_rctx_t *rc, int mode, int attribs,
     break;
 
   case GLW_RENDER_ATTRIBS_TEX_COLOR:
-    glBindTexture(GL_TEXTURE_2D, *be_tex);
+    glBindTexture(root->gr_be.gbr_primary_texture_mode, *be_tex);
   
     glBegin(mode);
     

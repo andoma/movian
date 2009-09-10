@@ -252,20 +252,27 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   origin_y = -bbox.yMin / 62.2;
 
   if(glw_can_tnpo2(gr)) {
-    gtbd->gtbd_linewidth = target_width;
+    gtbd->gtbd_texture_width  = target_width;
+    gtbd->gtbd_texture_height = target_height;
   } else {
-    gtbd->gtbd_linewidth = 1 << (av_log2(target_width) + 1);
-    target_height = 1 << (av_log2(target_height) + 1);
+    gtbd->gtbd_texture_width  = 1 << (av_log2(target_width)  + 1);
+    gtbd->gtbd_texture_height = 1 << (av_log2(target_height) + 1);
   }
 
-  gtbd->gtbd_texsize = (double)target_width / (double)gtbd->gtbd_linewidth;
+  if(gr->gr_normalized_texture_coords) {
+    gtbd->gtbd_u = (double)target_width  / (double)gtbd->gtbd_texture_width;
+    gtbd->gtbd_v = (double)target_height / (double)gtbd->gtbd_texture_height;
+  } else {
+    gtbd->gtbd_u = target_width;
+    gtbd->gtbd_v = target_height;
+  }
 
   start_x = 0;
   start_y = 0;
 
   /* Allocate drawing area */
 
-  data = calloc(1, gtbd->gtbd_linewidth * target_height);
+  data = calloc(1, gtbd->gtbd_texture_width * gtbd->gtbd_texture_height);
   gtbd->gtbd_siz_x = target_width;
   gtbd->gtbd_siz_y = target_height;
   gtbd->gtbd_aspect = (float)target_width / (float)target_height;
@@ -293,7 +300,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
       
       draw_glyph(gtbd, &bit->bitmap, data, 
 		 bit->left, target_height - 1 - origin_y - bit->top, 
-		 i, gtbd->gtbd_linewidth);
+		 i, gtbd->gtbd_texture_width);
     }
     FT_Done_Glyph(g->glyph); 
   }
@@ -348,9 +355,10 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 
   if(shadow) {
 
-    gtbd->gtbd_data = calloc(1, 2 * gtbd->gtbd_linewidth * target_height);
+    gtbd->gtbd_data = calloc(1, 2 * gtbd->gtbd_texture_width * 
+			     gtbd->gtbd_texture_height);
     paint_shadow(gtbd->gtbd_data, data, 
-		 gtbd->gtbd_linewidth, gtbd->gtbd_siz_y);
+		 gtbd->gtbd_texture_width, gtbd->gtbd_siz_y);
     free(data);
     gtbd->gtbd_pixel_format = GLW_TEXTURE_FORMAT_I8A8;
 
@@ -406,21 +414,22 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
     glw_render_set_pre(&gtb->gtb_text_renderer);
 
     glw_render_vtx_pos(&gtb->gtb_text_renderer, 0, -1.0, -1.0, 0.0);
-    glw_render_vtx_st (&gtb->gtb_text_renderer, 0,  0.0,  1.0);
+    glw_render_vtx_st (&gtb->gtb_text_renderer, 0,  0.0,         gtbd->gtbd_v);
 
     glw_render_vtx_pos(&gtb->gtb_text_renderer, 1,  1.0, -1.0, 0.0);
-    glw_render_vtx_st (&gtb->gtb_text_renderer, 1,  gtbd->gtbd_texsize,  1.0);
+    glw_render_vtx_st (&gtb->gtb_text_renderer, 1, gtbd->gtbd_u, gtbd->gtbd_v);
 
     glw_render_vtx_pos(&gtb->gtb_text_renderer, 2,  1.0,  1.0, 0.0);
-    glw_render_vtx_st (&gtb->gtb_text_renderer, 2,  gtbd->gtbd_texsize,  0.0);
+    glw_render_vtx_st (&gtb->gtb_text_renderer, 2, gtbd->gtbd_u, 0.0);
 
     glw_render_vtx_pos(&gtb->gtb_text_renderer, 3, -1.0,  1.0, 0.0);
     glw_render_vtx_st (&gtb->gtb_text_renderer, 3,  0.0,  0.0);
 
     glw_render_set_post(&gtb->gtb_text_renderer);
 
-    glw_tex_upload(&gtb->gtb_texture, gtbd->gtbd_data, gtbd->gtbd_pixel_format,
-		   gtbd->gtbd_linewidth, gtbd->gtbd_siz_y);
+    glw_tex_upload(gr, &gtb->gtb_texture, gtbd->gtbd_data, 
+		   gtbd->gtbd_pixel_format,
+		   gtbd->gtbd_texture_width, gtbd->gtbd_texture_height);
 
     free(gtbd->gtbd_data);
     gtbd->gtbd_data = NULL;
@@ -509,7 +518,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
     glw_Translatef(&rc0, 1.0, 0, 0);
 
     if(gtb->gtb_paint_cursor)
-      glw_render(&gtb->gtb_cursor_renderer, &rc0,
+      glw_render(&gtb->gtb_cursor_renderer, w->glw_root, &rc0,
 		 GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_NONE,
 		 NULL, 1, 1, 1, alpha * gtb->gtb_cursor_alpha);
 
@@ -530,14 +539,14 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
   glw_align_2(&rc0, w->glw_alignment, GLW_ALIGN_LEFT);
 
   if(gtb->gtb_paint_cursor)
-    glw_render(&gtb->gtb_cursor_renderer, &rc0,
+    glw_render(&gtb->gtb_cursor_renderer, w->glw_root, &rc0,
 	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_NONE,
 	       NULL, 1, 1, 1, alpha * gtb->gtb_cursor_alpha);
 
   if(glw_is_focusable(w))
     glw_store_matrix(w, &rc0);
 
-  glw_render(&gtb->gtb_text_renderer, &rc0, 
+  glw_render(&gtb->gtb_text_renderer, w->glw_root, &rc0, 
 	     GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
 	     &gtb->gtb_texture,
 	     gtb->gtb_color.r, gtb->gtb_color.g, gtb->gtb_color.b, alpha);

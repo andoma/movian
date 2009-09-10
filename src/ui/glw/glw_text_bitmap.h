@@ -26,8 +26,12 @@ typedef struct glw_text_bitmap_data {
   uint8_t *gtbd_data;
   int gtbd_siz_x;
   int gtbd_siz_y;
-  int gtbd_linewidth;
-  float gtbd_texsize;
+
+  int gtbd_texture_width;
+  int gtbd_texture_height;
+
+  float gtbd_u;
+  float gtbd_v;
 
   float gtbd_aspect;
 

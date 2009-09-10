@@ -56,28 +56,29 @@ glw_tex_backend_free_loader_resources(glw_loadable_texture_t *glt)
  * Invoked on every frame when status == VALID
  */
 void
-glw_tex_backend_layout(glw_loadable_texture_t *glt)
+glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
 {
   void *p;
-  
+  int m = gr->gr_be.gbr_primary_texture_mode;
+
   if(glt->glt_texture != 0)
     return;
 
   p = glt->glt_bitmap;
 
   glGenTextures(1, &glt->glt_texture);
-  glBindTexture(GL_TEXTURE_2D, glt->glt_texture);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+  glBindTexture(m, glt->glt_texture);
+  glTexParameteri(m, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(m, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(m, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(m, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     
-  glTexImage2D(GL_TEXTURE_2D, 0, glt->glt_format, 
+  glTexImage2D(m, 0, glt->glt_format, 
 	       glt->glt_xs, glt->glt_ys,
 	       0, glt->glt_ext_format,
 	       glt->glt_ext_type, p);
     
-  glBindTexture(GL_TEXTURE_2D, 0);
+  glBindTexture(m, 0);
     
   if(glt->glt_bitmap != NULL) {
     munmap(glt->glt_bitmap, glt->glt_bitmap_size);
@@ -204,7 +205,7 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 
   glt->glt_aspect = (float)req_w / (float)req_h;
 
-  if(!(gr->gr_be.gbr_sysfeatures & GLW_OPENGL_TNPO2)) {
+  if(!glw_can_tnpo2(gr)) {
     /* We lack non-power-of-two texture support, check if we must rescale.
      * Since the bitmap aspect is already calculated, it will automatically 
      * compensate the rescaling when we render the texture.
@@ -324,24 +325,24 @@ texture_load_rescale_swscale(AVFrame *frame, int pix_fmt, int src_w, int src_h,
  *
  */
 void
-glw_tex_upload(glw_backend_texture_t *tex, const void *src, int fmt,
-	       int width, int height)
+glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex, 
+	       const void *src, int fmt, int width, int height)
 {
   int format;
   int ext_format;
   int ext_type;
+  int m = gr->gr_be.gbr_primary_texture_mode;
 
   if(*tex == 0) {
     glGenTextures(1, tex);
-    glBindTexture(GL_TEXTURE_2D, *tex);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glBindTexture(m, *tex);
+    glTexParameteri(m, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(m, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(m, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(m, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     
   } else {
-    glBindTexture(GL_TEXTURE_2D, *tex);
+    glBindTexture(m, *tex);
   }
   
   switch(fmt) {
@@ -359,8 +360,7 @@ glw_tex_upload(glw_backend_texture_t *tex, const void *src, int fmt,
     return;
   }
 
-  glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0,
-	       ext_format, ext_type, src);
+  glTexImage2D(m, 0, format, width, height, 0, ext_format, ext_type, src);
 }
 
 

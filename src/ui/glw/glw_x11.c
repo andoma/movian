@@ -417,14 +417,7 @@ window_open(glw_x11_t *gx11)
 
   update_gpu_info(gx11);
 
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glDisable(GL_CULL_FACE);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glEnable(GL_TEXTURE_2D);
-
-  /* Load fragment shaders */
-  glw_video_global_init(&gx11->gr);
+  glw_opengl_init_context(&gx11->gr);
 
   gx11->glXSwapIntervalSGI(1);
 

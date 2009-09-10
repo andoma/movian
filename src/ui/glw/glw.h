@@ -297,6 +297,8 @@ typedef struct glw_root {
   struct glw_loadable_texture_queue gr_tex_load_queue[2];
   struct glw_loadable_texture_list gr_tex_list;
 
+  int gr_normalized_texture_coords;
+
   /**
    * Root focus leader
    */
@@ -739,7 +741,7 @@ glw_layout0(glw_t *w, glw_rctx_t *rc)
 
 void glw_select(glw_t *p, glw_t *c);
 
-void glw_check_system_features(glw_root_t *gr);
+int glw_check_system_features(glw_root_t *gr);
 
 void glw_render_T(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc);
 
@@ -797,7 +799,8 @@ void glw_render_vtx_st(glw_renderer_t *gr, int vertex,
 void glw_render_vts_col(glw_renderer_t *gr, int vertex,
 			float r, float g, float b, float a);
 
-void glw_render(glw_renderer_t *gr, glw_rctx_t *rc, int mode, int attribs,
+void glw_render(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc, 
+		int mode, int attribs,
 		glw_backend_texture_t *be_tex,
 		float r, float g, float b, float a);
 

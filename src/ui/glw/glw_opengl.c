@@ -19,6 +19,7 @@
 #include <string.h>
 
 #include "glw.h"
+#include "glw_video.h"
 #include "glw_cursor.h"
 
 /**
@@ -39,15 +40,16 @@ check_gl_ext(const uint8_t *s, const char *func)
   return x;
 }
 
+
 /**
  *
  */
-void
-glw_check_system_features(glw_root_t *gr)
+int
+glw_opengl_init_context(glw_root_t *gr)
 {
   const	GLubyte	*s;
   int x = 0;
-
+  int rectmode;
   /* Check OpenGL extensions we would like to have */
 
   s = glGetString(GL_EXTENSIONS);
@@ -55,18 +57,40 @@ glw_check_system_features(glw_root_t *gr)
   x |= check_gl_ext(s, "GL_ARB_pixel_buffer_object") ?
     GLW_OPENGL_PBO : 0;
 
-  x |= check_gl_ext(s, "GL_ARB_vertex_buffer_object") ?
-    GLW_OPENGL_VBO : 0;
-
   x |= check_gl_ext(s, "GL_ARB_fragment_program") ?
     GLW_OPENGL_FRAG_PROG : 0;
 
-  x |= check_gl_ext(s, "GL_ARB_texture_non_power_of_two") ? 
-    GLW_OPENGL_TNPO2 : 0;
-
   gr->gr_be.gbr_sysfeatures = x;
-}
 
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glDisable(GL_CULL_FACE);
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+  if(check_gl_ext(s, "GL_ARB_texture_non_power_of_two")) {
+    gr->gr_be.gbr_texmode = GLW_OPENGL_TEXTURE_NPOT;
+    gr->gr_be.gbr_primary_texture_mode = GL_TEXTURE_2D;
+    gr->gr_normalized_texture_coords = 1;
+    rectmode = 0;
+
+  } else if(check_gl_ext(s, "GL_ARB_texture_rectangle")) {
+    gr->gr_be.gbr_texmode = GLW_OPENGL_TEXTURE_RECTANGLE;
+    gr->gr_be.gbr_primary_texture_mode = GL_TEXTURE_RECTANGLE_ARB;
+    rectmode = 1;
+
+  } else {
+    gr->gr_be.gbr_texmode = GLW_OPENGL_TEXTURE_SIMPLE;
+    gr->gr_be.gbr_primary_texture_mode = GL_TEXTURE_2D;
+    gr->gr_normalized_texture_coords = 1;
+    rectmode = 0; // WRONG
+    
+  }
+
+  glEnable(gr->gr_be.gbr_primary_texture_mode);
+  glw_video_global_init(gr, rectmode);
+
+  return 0;
+}
 
 
 /**

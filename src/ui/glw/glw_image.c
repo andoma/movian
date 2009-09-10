@@ -70,7 +70,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
       glw_store_matrix(w, &rc0);
     
     if(alpha_self > 0.01)
-      glw_render(&gi->gi_gr, &rc0, 
+      glw_render(&gi->gi_gr, w->glw_root, &rc0, 
 		 GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
 		 &glt->glt_texture,
 		 gi->gi_color.r, gi->gi_color.g, gi->gi_color.b, alpha_self);
@@ -87,7 +87,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
       glw_store_matrix(w, rc);
 
     if(alpha_self > 0.01)
-      glw_render(&gi->gi_gr, rc, 
+      glw_render(&gi->gi_gr, w->glw_root, rc, 
 		 GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
 		 &glt->glt_texture,
 		 gi->gi_color.r, gi->gi_color.g, gi->gi_color.b, alpha_self);
@@ -121,7 +121,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
  *
  */
 static void
-glw_image_layout_tesselated(glw_rctx_t *rc, glw_image_t *gi, 
+glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi, 
 			    glw_loadable_texture_t *glt)
 {
   float tex[4][2];
@@ -131,15 +131,27 @@ glw_image_layout_tesselated(glw_rctx_t *rc, glw_image_t *gi,
   gi->gi_saved_size_x = rc->rc_size_x;
   gi->gi_saved_size_y = rc->rc_size_y;
 
-  tex[0][0] = 0.0;
-  tex[1][0] = 0.0 + gi->gi_border_left  / glt->glt_xs;
-  tex[2][0] = 1.0 - gi->gi_border_right / glt->glt_xs;
-  tex[3][0] = 1.0;
+  if(gr->gr_normalized_texture_coords) {
+    tex[0][0] = 0.0;
+    tex[1][0] = 0.0 + gi->gi_border_left  / glt->glt_xs;
+    tex[2][0] = 1.0 - gi->gi_border_right / glt->glt_xs;
+    tex[3][0] = 1.0;
 
-  tex[0][1] = 0.0;
-  tex[1][1] = 0.0 + gi->gi_border_top    / glt->glt_ys;
-  tex[2][1] = 1.0 - gi->gi_border_bottom / glt->glt_ys;
-  tex[3][1] = 1.0;
+    tex[0][1] = 0.0;
+    tex[1][1] = 0.0 + gi->gi_border_top    / glt->glt_ys;
+    tex[2][1] = 1.0 - gi->gi_border_bottom / glt->glt_ys;
+    tex[3][1] = 1.0;
+  } else {
+    tex[0][0] = 0.0;
+    tex[1][0] = gi->gi_border_left;
+    tex[2][0] = glt->glt_xs - gi->gi_border_right;
+    tex[3][0] = glt->glt_xs;
+
+    tex[0][1] = 0.0;
+    tex[1][1] = gi->gi_border_top;
+    tex[2][1] = glt->glt_ys - gi->gi_border_bottom;
+    tex[3][1] = glt->glt_ys;
+  }
 
   vex[0][0] =         -1.0;
   vex[1][0] = GLW_MIN(-1.0 + 2.0 * gi->gi_border_left  / rc->rc_size_x, 0.0);
@@ -244,6 +256,7 @@ static void
 glw_image_layout(glw_t *w, glw_rctx_t *rc)
 {
   glw_image_t *gi = (void *)w;
+  glw_root_t *gr = w->glw_root;
   glw_loadable_texture_t *glt = gi->gi_tex;
   glw_rctx_t rc0;
   glw_t *c;
@@ -251,7 +264,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   if(glt == NULL)
     return;
 
-  glw_tex_layout(w->glw_root, glt);
+  glw_tex_layout(gr, glt);
 
   if(glt->glt_state == GLT_STATE_VALID) {
     if(gi->gi_render_init == 1) {
@@ -266,24 +279,27 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 
       if(!gi->gi_border_scaling) {
 
+	float xs = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_xs;
+	float ys = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_ys;
+
 	glw_render_vtx_pos(&gi->gi_gr, 0, -1.0, -1.0, 0.0);
-	glw_render_vtx_st (&gi->gi_gr, 0,  0.0,  1.0);
+	glw_render_vtx_st (&gi->gi_gr, 0,  0.0,  ys);
 
 	glw_render_vtx_pos(&gi->gi_gr, 1,  1.0, -1.0, 0.0);
-	glw_render_vtx_st (&gi->gi_gr, 1,  1.0,  1.0);
+	glw_render_vtx_st (&gi->gi_gr, 1,  xs,   ys);
 
 	glw_render_vtx_pos(&gi->gi_gr, 2,  1.0,  1.0, 0.0);
-	glw_render_vtx_st (&gi->gi_gr, 2,  1.0,  0.0);
+	glw_render_vtx_st (&gi->gi_gr, 2,  xs,   0.0);
 
 	glw_render_vtx_pos(&gi->gi_gr, 3, -1.0,  1.0, 0.0);
 	glw_render_vtx_st (&gi->gi_gr, 3,  0.0,  0.0);
       } else {
-	glw_image_layout_tesselated(rc, gi, glt);
+	glw_image_layout_tesselated(gr, rc, gi, glt);
       }
     } else if(gi->gi_border_scaling &&
 	      (gi->gi_saved_size_x != rc->rc_size_x ||
 	       gi->gi_saved_size_y != rc->rc_size_y)) {
-      glw_image_layout_tesselated(rc, gi, glt);
+      glw_image_layout_tesselated(gr, rc, gi, glt);
     }
   }
 

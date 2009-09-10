@@ -410,6 +410,8 @@ glw_wii_start(ui_t *ui, int argc, char *argv[], int primary)
       break;
   }
 
+  gwii->gr.gr_normalized_texture_coords = 1;
+
   if(glw_init(&gwii->gr, 14, theme_path, ui, primary)) {
     printf("GLW failed to init\n");
     sleep(3);

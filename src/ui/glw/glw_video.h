@@ -64,6 +64,9 @@ typedef struct glw_video {
 
 
   GLuint gv_sputex;
+  int gv_sputex_height;
+  int gv_sputex_width;
+
 
   int gv_in_menu;
 
@@ -73,10 +76,13 @@ typedef struct glw_video {
   int gv_fullwindow_reported;
   int gv_fullwindow_check;
 
+  float gv_tex_x1, gv_tex_x2;
+  float gv_tex_y1, gv_tex_y2;
+
 } glw_video_t;
 
 
-void glw_video_global_init(glw_root_t *gr);
+void glw_video_global_init(glw_root_t *gr, int rectmode);
 
 void glw_video_global_flush(glw_root_t *gr);
 

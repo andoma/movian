@@ -207,7 +207,8 @@ glw_cursor_draw(glw_root_t *gr, glw_cursor_painter_t *gcp,
   }
   glw_render_set_post(r);
 
-  glw_render(r, rc, GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX_COLOR,
+  glw_render(r, gr, rc, 
+	     GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX_COLOR,
 	     &glt->glt_texture, 1, 1, 1, 1);
 }
 

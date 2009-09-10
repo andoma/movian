@@ -35,9 +35,16 @@ typedef struct glw_backend_root {
 
   int gbr_sysfeatures;
 #define GLW_OPENGL_PBO       0x1
-#define GLW_OPENGL_VBO       0x2
-#define GLW_OPENGL_FRAG_PROG 0x4
-#define GLW_OPENGL_TNPO2     0x8
+#define GLW_OPENGL_FRAG_PROG 0x2
+
+  enum {
+    GLW_OPENGL_TEXTURE_SIMPLE,
+    GLW_OPENGL_TEXTURE_RECTANGLE,
+    GLW_OPENGL_TEXTURE_NPOT
+  } gbr_texmode;
+
+  int gbr_primary_texture_mode; // GL_TEXTURE_2D or GL_TEXTURE_RECTANGLE_EXT
+
   
   /**
    * Video decoder and renderer
@@ -86,8 +93,11 @@ typedef struct glw_renderer {
 
 #define glw_render_set_post(gr)
 
-#define glw_can_tnpo2(gr) (!!(gr->gr_be.gbr_sysfeatures & GLW_OPENGL_TNPO2))
+#define glw_can_tnpo2(gr) (gr->gr_be.gbr_texmode != GLW_OPENGL_TEXTURE_SIMPLE)
 
 #define glw_is_tex_inited(n) (*(n) != 0)
+
+struct glw_root;
+int glw_opengl_init_context(struct glw_root *gr);
 
 #endif /* GLW_OPENGL_H__ */

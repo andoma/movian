@@ -396,7 +396,7 @@ glw_tex_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
     return;
 
   case GLT_STATE_VALID:
-    glw_tex_backend_layout(glt);
+    glw_tex_backend_layout(gr, glt);
     /* FALLTHRU */
 
   case GLT_STATE_ERROR:

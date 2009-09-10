@@ -47,6 +47,7 @@ glw_fx_texrot_dtor(glw_t *w)
 static void 
 glw_fx_texrot_render(glw_t *w, glw_rctx_t *rc)
 {
+  glw_root_t *gr = w->glw_root;
   glw_fx_texrot_t *fx = (void *)w;
   glw_loadable_texture_t *glt = fx->fx_tex;
   float a = rc->rc_alpha * w->glw_alpha;
@@ -54,6 +55,9 @@ glw_fx_texrot_render(glw_t *w, glw_rctx_t *rc)
   if(glt != NULL && glt->glt_state == GLT_STATE_VALID && a > 0.01) {
 
     glColor4f(1, 1, 1, a);
+
+    glDisable(gr->gr_be.gbr_primary_texture_mode);
+    glEnable(GL_TEXTURE_2D);
 
     glBindTexture(GL_TEXTURE_2D, fx->fx_fbtex);
 
@@ -72,6 +76,9 @@ glw_fx_texrot_render(glw_t *w, glw_rctx_t *rc)
     glVertex3f( -1.0, 1.0f, 0.0f);
     
     glEnd();
+
+    glDisable(GL_TEXTURE_2D);
+    glEnable(gr->gr_be.gbr_primary_texture_mode);
   }
 }
 
@@ -110,13 +117,16 @@ glw_fx_texrot_init(glw_fx_texrot_t *fx)
  *
  */
 static void
-glw_fx_texrot_render_internal(glw_fx_texrot_t *fx, glw_loadable_texture_t *glt)
+glw_fx_texrot_render_internal(glw_root_t *gr, 
+			      glw_fx_texrot_t *fx, glw_loadable_texture_t *glt)
 {
   int i;
+  float xs = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_xs;
+  float ys = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_ys;
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-  glBindTexture(GL_TEXTURE_2D, glt->glt_texture);
+  glBindTexture(gr->gr_be.gbr_primary_texture_mode, glt->glt_texture);
 
   glColor4f(1.0, 1.0, 1.0, 0.15);
 
@@ -138,13 +148,13 @@ glw_fx_texrot_render_internal(glw_fx_texrot_t *fx, glw_loadable_texture_t *glt)
     glTexCoord2f(0, 0);
     glVertex3f( -1.0f, -1.0f, 0.0f);
 
-    glTexCoord2f(0, 1);
+    glTexCoord2f(0, ys);
     glVertex3f( 1.0f, -1.0f, 0.0f);
 
-    glTexCoord2f(1, 1);
+    glTexCoord2f(xs, ys);
     glVertex3f( 1.0f, 1.0f, 0.0f);
 
-    glTexCoord2f(1, 0);
+    glTexCoord2f(xs, 0);
     glVertex3f( -1.0f, 1.0f, 0.0f);
     glEnd();
 
@@ -163,10 +173,11 @@ glw_fx_texrot_render_internal(glw_fx_texrot_t *fx, glw_loadable_texture_t *glt)
  *
  */
 static void
-glw_fx_texrot_buildtex(glw_fx_texrot_t *fx, glw_loadable_texture_t *glt)
+glw_fx_texrot_buildtex(glw_root_t *gr,
+		       glw_fx_texrot_t *fx, glw_loadable_texture_t *glt)
 {
   GLint viewport[4];
- 
+   
   if(fx->fx_texsize == 0) {
     
     fx->fx_texsize = 512;
@@ -217,7 +228,7 @@ glw_fx_texrot_buildtex(glw_fx_texrot_t *fx, glw_loadable_texture_t *glt)
 
   glClear(GL_COLOR_BUFFER_BIT);
 
-  glw_fx_texrot_render_internal(fx, glt);
+  glw_fx_texrot_render_internal(gr, fx, glt);
 
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
@@ -225,9 +236,6 @@ glw_fx_texrot_buildtex(glw_fx_texrot_t *fx, glw_loadable_texture_t *glt)
   glMatrixMode(GL_PROJECTION);
   glPopMatrix();
   glMatrixMode(GL_MODELVIEW);
-
-  
-
 
   /* Restore viewport */
   glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
@@ -247,7 +255,7 @@ glw_fx_texrot_layout(glw_t *w, glw_rctx_t *rc)
 
   if(glt != NULL) {
     glw_tex_layout(w->glw_root, glt);
-    glw_fx_texrot_buildtex(fx, glt);
+    glw_fx_texrot_buildtex(w->glw_root, fx, glt);
   }
 }
 

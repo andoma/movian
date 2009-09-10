@@ -32,10 +32,11 @@
 
 #include "glw_cocoa.h"
 #include "glw.h"
+#include "glw_video.h"
+
 #include "showtime.h"
 #include "settings.h"
 #include "navigator.h"
-#include "glw_video.h"
 #include "misc/strtab.h"
 
 
@@ -369,13 +370,6 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   glViewport(0, 0, width, height);
 }
 
-- (void)glwInit {
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glDisable(GL_CULL_FACE);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glEnable(GL_TEXTURE_2D);
-}
 
 - (void)glwRender {
   if(gcocoa.font_size != gcocoa.want_font_size) {
@@ -708,10 +702,9 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   
   NSRect bounds = [self bounds];
   [self glwResize:bounds.size.width height:bounds.size.height];
-  [self glwInit];
-  
-  /* Load fragment shaders */
-  glw_video_global_init(&gcocoa.gr);
+
+  /* Setup OpenGL state */
+  glw_opengl_init_context(&gcocoa.gr)
 
   display_settings_init(&gcocoa);
   
