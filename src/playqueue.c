@@ -685,6 +685,8 @@ playqueue_thread(void *aux)
 
     hts_mutex_lock(&playqueue_request_mutex);
   }
+
+  return NULL;
 }
 
 

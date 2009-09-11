@@ -385,6 +385,8 @@ pixbuf_loader_thread(void *aux)
     free(pba->pba_url);
     free(pba);
   }
+  
+  return NULL;
 }
 
 

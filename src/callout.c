@@ -126,6 +126,8 @@ callout_loop(void *aux)
       hts_cond_wait(&callout_cond, &callout_mutex);
     }
   }
+
+  return NULL;
 }
 
 

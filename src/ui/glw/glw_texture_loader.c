@@ -104,6 +104,8 @@ loader_thread(void *aux)
 
     glw_tex_deref_locked(gr, glt);
   }
+ 
+  return NULL;
 }
 
 
