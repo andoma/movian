@@ -1549,7 +1549,7 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
 
 
 /**
- * A new playlist has been added to the users rootlist
+ * A playlist has been removed
  */
 static void
 playlist_removed(sp_playlistcontainer *pc, sp_playlist *plist,
@@ -1579,11 +1579,38 @@ playlist_removed(sp_playlistcontainer *pc, sp_playlist *plist,
 
 
 /**
+ * A playlist has been moved
+ */
+static void
+playlist_moved(sp_playlistcontainer *pc, sp_playlist *plist,
+	       int old_position, int new_position, void *userdata)
+{
+  playlist_t *pl, *before;
+
+
+  TRACE(TRACE_DEBUG, "spotify", "Playlist %d (%s) moved to %d", 
+	old_position, f_sp_playlist_name(plist), new_position);
+
+  pl = ptrvec_remove_entry(&playlists, old_position);
+
+  if(new_position > old_position)
+    new_position--;
+  
+  ptrvec_insert_entry(&playlists, new_position, pl);
+
+  before = ptrvec_get_entry(&playlists, new_position + 1);
+
+  prop_move(pl->pl_prop_root, before ? before->pl_prop_root : NULL);
+}
+
+
+/**
  * Playlist container callbacks
  */
 static sp_playlistcontainer_callbacks pc_callbacks = {
   .playlist_added   = playlist_added,
   .playlist_removed = playlist_removed,
+  .playlist_moved   = playlist_moved,
 };
 
 
