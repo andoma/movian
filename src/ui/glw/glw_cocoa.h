@@ -35,7 +35,6 @@
   bool fullwindow;
 }
 - (void)glwResize:(int)width height:(int)height;
-- (void)glwInit;
 - (void)glwRender;
 - (void)glwWindowedTimerStart;
 - (void)glwWindowedTimerStop;
