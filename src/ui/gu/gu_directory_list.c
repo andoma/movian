@@ -215,6 +215,7 @@ dirnode_destroy(dirnode_t *dn, int remove)
   free(dn);
 }
 
+
 /**
  *
  */
@@ -228,7 +229,6 @@ gu_node_find(directory_list_t *d, prop_t *p)
       return dn;
   return NULL;
 }
-
 
 
 /**
@@ -273,11 +273,23 @@ gu_node_add(directory_list_t *d, prop_t *p, dirnode_t *before)
  *
  */
 static void
+dirnode_move(directory_list_t *d, dirnode_t *dn, dirnode_t *before)
+{
+  gtk_list_store_move_before(d->model, &dn->iter,
+			     before ? &before->iter : NULL);
+}
+
+
+/**
+ *
+ */
+static void
 gu_node_sub(void *opaque, prop_event_t event, ...)
 {
   dirnode_t *dn;
   directory_list_t *d = opaque;
   prop_t *p;
+  prop_t *p2;
 
   va_list ap;
   va_start(ap, event);
@@ -293,6 +305,16 @@ gu_node_sub(void *opaque, prop_event_t event, ...)
     assert(dn != NULL);
     gu_node_add(d, p, dn);
     break;
+
+  case PROP_MOVE_CHILD:
+    p = va_arg(ap, prop_t *);
+    
+    p2 = va_arg(ap, prop_t *);
+    dn = p2 ? gu_node_find(d, p2) : NULL; // if p2 == NULL then move to tail
+
+    dirnode_move(d, gu_node_find(d, p), dn);
+    break;
+
 
   case PROP_DEL_CHILD:
     dn = gu_node_find(d, va_arg(ap, prop_t *));

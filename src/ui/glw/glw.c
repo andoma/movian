@@ -886,6 +886,22 @@ glw_detach0(glw_t *w)
 /**
  *
  */
+void
+glw_move(glw_t *w, glw_t *b)
+{
+  TAILQ_REMOVE(&w->glw_parent->glw_childs, w, glw_parent_link);
+
+  if(b == NULL) {
+    TAILQ_INSERT_TAIL(&w->glw_parent->glw_childs, w, glw_parent_link);
+  } else {
+    TAILQ_INSERT_BEFORE(b, w, glw_parent_link);
+  }
+}
+
+
+/**
+ *
+ */
 static void
 glw_path_flood(glw_t *w, int or, int and)
 {

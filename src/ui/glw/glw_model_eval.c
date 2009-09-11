@@ -32,7 +32,6 @@
  */
 typedef struct glw_prop_sub_pending {
   prop_t *gpsp_prop;
-  prop_t *gpsp_before;
   TAILQ_ENTRY(glw_prop_sub_pending) gpsp_link;
 } glw_prop_sub_pending_t;
 
@@ -707,7 +706,28 @@ cloner_find_child(prop_t *p, glw_t *parent)
   TAILQ_FOREACH(w, &parent->glw_childs, glw_parent_link)
     if(w->glw_originating_prop == p)
       return w;
-  return NULL;
+
+  fprintf(stderr, "glw: Cloner searches for unknown child in widget list\n");
+  fprintf(stderr, "glw: This is a programming error, bailing out\n");
+  abort();
+}
+
+
+/**
+ *
+ */
+static glw_prop_sub_pending_t *
+find_in_pendinglist(prop_t *p, glw_prop_sub_t *gps)
+{
+  glw_prop_sub_pending_t *gpsp;
+
+  TAILQ_FOREACH(gpsp, &gps->gps_pending, gpsp_link)
+    if(gpsp->gpsp_prop == p)
+      return gpsp;
+
+  fprintf(stderr, "glw: Cloner searches for unknown child in pending list\n");
+  fprintf(stderr, "glw: This is a programming error, bailing out\n");
+  abort();
 }
 
 
@@ -759,36 +779,75 @@ static void
 cloner_add_child(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
 		 glw_t *parent, errorinfo_t *ei, int flags)
 {
-  glw_prop_sub_pending_t *gpsp;
+  glw_prop_sub_pending_t *gpsp, *b;
 
-  if(gps->gps_cloner_body == NULL) {
-
-    /*
-     * The cloner body has not been evaluated yet so we can not
-     * create the child. This happens when we subscribe initially.
-     * Put it on a pending list and add it once the cloner has been
-     * setup.
-     */
-
-    if(before != NULL)
-      prop_ref_inc(before);
-
-    gpsp = malloc(sizeof(glw_prop_sub_pending_t));
-    gpsp->gpsp_prop = p;
-    prop_ref_inc(p);
-
-    gpsp->gpsp_before = before;
-
-    TAILQ_INSERT_TAIL(&gps->gps_pending, gpsp, gpsp_link);
-
-    if(flags & PROP_ADD_SELECTED)
-      gps->gps_pending_select = p;
-
+  if(gps->gps_cloner_body != NULL) {
+    cloner_add_child0(gps, p, before, parent, ei, flags);
     return;
   }
-  cloner_add_child0(gps, p, before, parent, ei, flags);
+
+  /*
+   * The cloner body has not been evaluated yet so we can not
+   * create the child. This happens when we subscribe initially.
+   * Put it on a pending list and add it once the cloner has been
+   * setup.
+   */
+  
+  b = before ? find_in_pendinglist(before, gps) : NULL;
+
+  gpsp = malloc(sizeof(glw_prop_sub_pending_t));
+  gpsp->gpsp_prop = p;
+  prop_ref_inc(p);
+
+  if(before) {
+    TAILQ_INSERT_BEFORE(b, gpsp, gpsp_link);
+  } else {
+    TAILQ_INSERT_TAIL(&gps->gps_pending, gpsp, gpsp_link);
+  }
+  if(flags & PROP_ADD_SELECTED)
+    gps->gps_pending_select = p;
 }
 
+
+/**
+ *
+ */
+static void
+cloner_move_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
+		  glw_t *parent, errorinfo_t *ei)
+{
+  glw_t *w =          cloner_find_child(p,      parent);
+  glw_t *b = before ? cloner_find_child(before, parent) : NULL;
+
+  glw_move(w, b);
+}
+
+
+/**
+ *
+ */
+static void
+cloner_move_child(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
+		  glw_t *parent, errorinfo_t *ei)
+{
+  glw_prop_sub_pending_t *t, *b;
+
+  if(gps->gps_cloner_body != NULL) {
+    cloner_move_child0(gps, p, before, parent, ei);
+    return;
+  }
+
+  t =          find_in_pendinglist(p,      gps);
+  b = before ? find_in_pendinglist(before, gps) : NULL;
+
+  TAILQ_REMOVE(&gps->gps_pending, t, gpsp_link);
+
+  if(b != NULL) {
+    TAILQ_INSERT_BEFORE(b, t, gpsp_link);
+  } else {
+    TAILQ_INSERT_TAIL(&gps->gps_pending, t, gpsp_link);
+  }
+}
 
 
 /**
@@ -805,23 +864,14 @@ cloner_del_child(glw_prop_sub_t *gps, prop_t *p, glw_t *parent)
     return;
   }
 
-  /* It may reside in the pending list */
-  TAILQ_FOREACH(gpsp, &gps->gps_pending, gpsp_link) {
-    if(gpsp->gpsp_prop == p) {
-
-      if(gps->gps_pending_select == p)
-	gps->gps_pending_select = NULL;
-
-      prop_ref_dec(p);
-      TAILQ_REMOVE(&gps->gps_pending, gpsp, gpsp_link);
-      free(gpsp);
-      return;
-    }
-  }
+  // It must be in the pending list
+  gpsp = find_in_pendinglist(p, gps);
+  if(gps->gps_pending_select == p)
+    gps->gps_pending_select = NULL;
   
-  fprintf(stderr, "glw: warning, cloner deletes unknown child\n");
-  fprintf(stderr, "glw: This is a programming error, bailing out\n");
-  abort();
+  prop_ref_dec(p);
+  TAILQ_REMOVE(&gps->gps_pending, gpsp, gpsp_link);
+  free(gpsp);
 }
 
 /**
@@ -936,6 +986,12 @@ prop_callback(void *opaque, prop_event_t event, ...)
     p2 = va_arg(ap, prop_t *);
     flags = va_arg(ap, int);
     cloner_add_child(gps, p, p2, gps->gps_widget, NULL, flags);
+    break;
+
+  case PROP_MOVE_CHILD:
+    p = va_arg(ap, prop_t *);
+    p2 = va_arg(ap, prop_t *);
+    cloner_move_child(gps, p, p2, gps->gps_widget, NULL);
     break;
 
   case PROP_DEL_CHILD:
@@ -1368,13 +1424,8 @@ glwf_cloner(glw_model_eval_context_t *ec, struct token *self,
 
       f = gpsp->gpsp_prop == gps->gps_pending_select ? PROP_ADD_SELECTED : 0;
 	
-      cloner_add_child0(gps, gpsp->gpsp_prop, gpsp->gpsp_before, ec->w, ec->ei,
-			f);
-
-      if(gpsp->gpsp_before)
-	prop_ref_dec(gpsp->gpsp_before);
+      cloner_add_child0(gps, gpsp->gpsp_prop, NULL, ec->w, ec->ei, f);
       prop_ref_dec(gpsp->gpsp_prop);
-
       free(gpsp);
     }
     gps->gps_pending_select = NULL;

@@ -220,8 +220,10 @@ prop_notify_free(prop_notify_t *n)
     break;
 
   case PROP_ADD_CHILD_BEFORE:
+  case PROP_MOVE_CHILD:
     prop_ref_dec(n->hpn_prop);
-    prop_ref_dec(n->hpn_prop2);
+    if(n->hpn_prop2 != NULL)
+      prop_ref_dec(n->hpn_prop2);
     break;
 
   case PROP_DESTROYED:
@@ -406,13 +408,15 @@ prop_courier(void *aux)
       break;
 
     case PROP_ADD_CHILD_BEFORE:
+    case PROP_MOVE_CHILD:
       if(pt != NULL)
 	cb(s, n->hpn_event, n->hpn_prop, n->hpn_prop2, n->hpn_flags);
       else
 	cb(s->hps_opaque, n->hpn_event, n->hpn_prop, 
 	   n->hpn_prop2, n->hpn_flags);
       prop_ref_dec(n->hpn_prop);
-      prop_ref_dec(n->hpn_prop2);
+      if(n->hpn_prop2 != NULL)
+	prop_ref_dec(n->hpn_prop2);
       break;
 
     case PROP_DEL_CHILD:
@@ -731,7 +735,8 @@ prop_build_notify_child2(prop_sub_t *s, prop_t *p, prop_t *sibling,
   n = get_notify(s);
 
   atomic_add(&p->hp_refcount, 1);
-  atomic_add(&sibling->hp_refcount, 1);
+  if(sibling != NULL)
+    atomic_add(&sibling->hp_refcount, 1);
 
   n->hpn_prop = p;
   n->hpn_prop2 = sibling;
@@ -1132,6 +1137,33 @@ prop_destroy(prop_t *p)
 {
   hts_mutex_lock(&prop_mutex);
   prop_destroy0(p);
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
+ *
+ */
+void
+prop_move(prop_t *p, prop_t *before)
+{
+  prop_t *parent;
+
+  hts_mutex_lock(&prop_mutex);
+  
+  assert(p != before);
+
+  parent = p->hp_parent;
+ 
+  TAILQ_REMOVE(&parent->hp_childs, p, hp_parent_link);
+  
+  if(before != NULL) {
+    TAILQ_INSERT_BEFORE(before, p, hp_parent_link);
+  } else {
+    TAILQ_INSERT_TAIL(&parent->hp_childs, p, hp_parent_link);
+  }  
+  prop_notify_child2(p, parent, before, PROP_MOVE_CHILD, NULL, 0);
+
   hts_mutex_unlock(&prop_mutex);
 }
 

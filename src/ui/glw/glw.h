@@ -492,6 +492,8 @@ void glw_cond_wait(glw_root_t *gr, hts_cond_t *c);
 
 void glw_detach0(glw_t *w);
 
+void glw_move(glw_t *w, glw_t *b);
+
 void glw_remove_from_parent(glw_t *w, glw_t *p);
 
 void glw_lock(glw_root_t *gr);

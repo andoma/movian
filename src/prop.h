@@ -43,6 +43,7 @@ typedef enum {
   PROP_ADD_CHILD,
   PROP_ADD_CHILD_BEFORE,
   PROP_DEL_CHILD,
+  PROP_MOVE_CHILD,
   PROP_SELECT_CHILD,
   PROP_REQ_NEW_CHILD,
   PROP_REQ_DELETE,
@@ -334,6 +335,8 @@ prop_t *prop_create_ex(prop_t *parent, const char *name,
 #define prop_create(parent, name) prop_create_ex(parent, name, NULL, 0)
 
 void prop_destroy(prop_t *p);
+
+void prop_move(prop_t *p, prop_t *before);
 
 void prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str);
 
