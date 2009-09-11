@@ -275,7 +275,9 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
     
   [self glwResize:CGDisplayPixelsWide(kCGDirectMainDisplay)
            height:CGDisplayPixelsHigh(kCGDirectMainDisplay)];
-  [self glwInit];
+  
+  /* Setup OpenGL state */
+  glw_opengl_init_context(&gcocoa.gr);
   
   while(gcocoa.is_fullscreen) {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -704,7 +706,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   [self glwResize:bounds.size.width height:bounds.size.height];
 
   /* Setup OpenGL state */
-  glw_opengl_init_context(&gcocoa.gr)
+  glw_opengl_init_context(&gcocoa.gr);
 
   display_settings_init(&gcocoa);
   
