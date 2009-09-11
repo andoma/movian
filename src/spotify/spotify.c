@@ -877,6 +877,8 @@ spotify_browse_artist_callback(sp_artistbrowse *result, void *userdata)
     track = f_sp_artistbrowse_track(result, i);
 
     album = f_sp_track_album(track);
+    if(!f_sp_album_is_available(album))
+      continue;
 
     if(album != curalbum) {
       curalbum = album;
@@ -1118,6 +1120,7 @@ spotify_list_artist_callback(sp_artistbrowse *result, void *userdata)
 {
   prop_t *nodes = userdata; 
   sp_track *track;
+  sp_album *album;
   int i, ntracks;
   char url[256];
   prop_t *p;
@@ -1126,6 +1129,10 @@ spotify_list_artist_callback(sp_artistbrowse *result, void *userdata)
 
   for(i = 0; i < ntracks; i++) {
     track = f_sp_artistbrowse_track(result, i);
+
+    album = f_sp_track_album(track);
+    if(!f_sp_album_is_available(album))
+      continue;
 
     p = prop_create(NULL, NULL);
 
