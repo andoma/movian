@@ -131,7 +131,7 @@ typedef struct prop {
   /**
    * Property name. Protected by mutex
    */
-  char *hp_name;
+  const char *hp_name;
 
   /**
    * Parent linkage. Protected by mutex
@@ -173,6 +173,7 @@ typedef struct prop {
 #define PROP_CLIPPED_VALUE 0x1
 #define PROP_SORTED_CHILDS 0x2
 #define PROP_SORT_CASE_INSENSITIVE 0x4
+#define PROP_NAME_NOT_ALLOCATED    0x8
 
   /**
    * Number of monitoring subscriptions (linked via hp_value_subscriptions)
@@ -332,7 +333,9 @@ prop_t *prop_create_ex(prop_t *parent, const char *name,
 		       prop_sub_t *skipme, int flags)
      __attribute__ ((malloc));
 
-#define prop_create(parent, name) prop_create_ex(parent, name, NULL, 0)
+#define prop_create(parent, name) \
+ prop_create_ex(parent, name, NULL, __builtin_constant_p(name) ? \
+ PROP_NAME_NOT_ALLOCATED : 0)
 
 void prop_destroy(prop_t *p);
 

@@ -941,7 +941,10 @@ prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, int flags)
   hp->hp_refcount = 1;
   hp->hp_monitors = 0;
   hp->hp_type = PROP_VOID;
-  hp->hp_name = name ? strdup(name) : NULL;
+  if(flags & PROP_NAME_NOT_ALLOCATED)
+    hp->hp_name = name;
+  else
+    hp->hp_name = name ? strdup(name) : NULL;
 
   LIST_INIT(&hp->hp_targets);
   LIST_INIT(&hp->hp_value_subscriptions);
@@ -990,8 +993,10 @@ prop_rename_ex(prop_t *p, const char *name, prop_sub_t *skipme)
 
   hts_mutex_lock(&prop_mutex);
 
-    free(p->hp_name);
-    p->hp_name = strdup(name);
+  if(!(p->hp_flags & PROP_NAME_NOT_ALLOCATED))
+    free((void *)p->hp_name);
+
+  p->hp_name = strdup(name);
 
   if(p->hp_parent != NULL && (p->hp_parent->hp_flags & PROP_SORTED_CHILDS)) {
 
@@ -1122,7 +1127,8 @@ prop_destroy0(prop_t *p)
       parent->hp_selected = NULL;
   }
 
-  free(p->hp_name);
+  if(!(p->hp_flags & PROP_NAME_NOT_ALLOCATED))
+    free((void *)p->hp_name);
   p->hp_name = NULL;
 
   prop_ref_dec(p);
