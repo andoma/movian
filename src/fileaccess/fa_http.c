@@ -953,6 +953,8 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
       hf->hf_pos   += size;
       hf->hf_rsize -= size;
       return size;
+    } else {
+      http_disconnect(hf);
     }
   }
   http_disconnect(hf);
