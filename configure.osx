@@ -37,7 +37,6 @@ show_help(){
   echo "  --release                Stage for release"
   echo "  --embedded-theme         Embed theme in showtime [none]"
   echo "  --macports=PATH          MacPorts prefix (for freetype) [$MACPORTSPREFIX]"
-  echo "  --macosxtarget=TARGET    Mac OS X target version [$MACOSXTARGET]"
   echo "  --macosxsdk=PATH         Mac OS X SDK path [$MACOSXSDK]"
   exit 1
 }
@@ -69,8 +68,6 @@ for opt do
   ;;
   --macports=*) MACPORTSPREFIX="$optval"
   ;;
-  --macosxtarget=*) MACOSXTARGET="$optval"
-  ;;
   --macosxsdk=*) MACOSXSDK="$optval"
   ;;
   --enable-?*|--disable-?*)
@@ -89,19 +86,7 @@ enable posix_networking
 enable dvd
 
 
-# env variable used by osx linker
-# export for compiler test and ffmpeg configure
-if [ "$MACOSXTARGET" != "" ]; then
-    export MACOSX_DEPLOYMENT_TARGET="$MACOSXTARGET"
-    echo >>${CONFIG_MAK} "export MACOSX_DEPLOYMENT_TARGET = $MACOSXTARGET"
-    MACOSXSDK_CFLAGS="-mmacosx-version-min=$MACOSXTARGET"
-fi
 
-
-if [ "$MACOSXSDK" != "" ]; then
-    MACOSXSDK_CFLAGS="${MACOSXSDK_CFLAGS} -isysroot $MACOSXSDK"
-    MACOSXSDK_LDFLAGS="-isysroot $MACOSXSDK"
-fi
 
 
 #
@@ -116,9 +101,8 @@ PROG="${APPDIR}/Contents/MacOS/showtime"
 # pkgconfig
 #
 PKGCONFIG="${MACPORTSPREFIX}/bin/pkg-config"
-which >/dev/null ${PKGCONFIG}
-if [ $? -ne 0 ]; then
-    echo "pkg-config not found. Can not configure."
+if [ ! -x "$PKGCONFIG" ] ; then
+    echo "$PKGCONFIG does not exist"
     die
 fi
 
@@ -151,6 +135,48 @@ fi
 echo >>${CONFIG_MAK} $CC_CONFIG_MAK 
 
 
+if [ -d "$MACPORTSPREFIX" ] ; then
+    echo "MacPorts prefix:       $MACPORTSPREFIX"
+else
+    echo "MacPorts directory $MACPORTSPREFIX does not exist"
+    die
+fi
+
+if [ "x$MACOSXSDK" != "x" ] ; then
+    if [ -d "$MACOSXSDK" ] ; then
+        SDKSETTINGS="$MACOSXSDK/SDKSettings"
+        if [ ! -e "$SDKSETTINGS.plist" ] ; then
+            echo "Could not find $SDKSETTINGS.plist"
+            die
+        fi
+        
+        MACOSXTARGET=`defaults read $SDKSETTINGS Version`
+        echo "Mac OS X SDK:          $MACOSXSDK"
+        echo "Mac OS X target:       $MACOSXTARGET"
+    else
+        echo "Mac OS X SDK directory $MACOSXSDK does not exist"
+        die
+    fi
+else
+    echo "Mac OS X SDK:          default"
+    echo "Mac OS X target:       default (`sw_vers -productVersion`)"
+fi
+
+# env variable used by osx linker
+# export for compiler test and ffmpeg configure
+if [ "$MACOSXTARGET" != "" ]; then
+    export MACOSX_DEPLOYMENT_TARGET="$MACOSXTARGET"
+    echo >>${CONFIG_MAK} "export MACOSX_DEPLOYMENT_TARGET = $MACOSXTARGET"
+    MACOSXSDK_CFLAGS="-mmacosx-version-min=$MACOSXTARGET"
+fi
+
+
+if [ "$MACOSXSDK" != "" ]; then
+    MACOSXSDK_CFLAGS="${MACOSXSDK_CFLAGS} -isysroot $MACOSXSDK"
+    MACOSXSDK_LDFLAGS="-isysroot $MACOSXSDK"
+fi
+
+
 #
 # libfreetype2
 #
@@ -164,8 +190,11 @@ else
     die
 fi
 
+
+
 # CoreFundation
-echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Foundation -framework CoreFoundation"
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Foundation"
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreFoundation"
 
 # Cocoa
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Cocoa"
@@ -176,11 +205,15 @@ echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework IOKit"
 # OpenGL
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework OpenGL -framework GLUT"
 
-# CoreAudio
-echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreAudio"
+if enabled coreaudio; then
+    # CoreAudio
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreAudio"
+fi
 
-# Carbon, Remote Control Wrapper uses it
-echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Carbon"
+if enabled appleremote; then
+    # Carbon, Remote Control Wrapper uses it
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Carbon"
+fi
 
 #
 # configure ffmpeg
