@@ -100,6 +100,12 @@ PROG="${APPDIR}/Contents/MacOS/showtime"
 #
 # pkgconfig
 #
+if [ -d "$MACPORTSPREFIX" ] ; then
+    echo "MacPorts prefix:       $MACPORTSPREFIX"
+else
+    echo "MacPorts directory $MACPORTSPREFIX does not exist"
+    die
+fi
 PKGCONFIG="${MACPORTSPREFIX}/bin/pkg-config"
 if [ ! -x "$PKGCONFIG" ] ; then
     echo "$PKGCONFIG does not exist"
@@ -134,13 +140,6 @@ fi
 
 echo >>${CONFIG_MAK} $CC_CONFIG_MAK 
 
-
-if [ -d "$MACPORTSPREFIX" ] ; then
-    echo "MacPorts prefix:       $MACPORTSPREFIX"
-else
-    echo "MacPorts directory $MACPORTSPREFIX does not exist"
-    die
-fi
 
 if [ "x$MACOSXSDK" != "x" ] ; then
     if [ -d "$MACOSXSDK" ] ; then
