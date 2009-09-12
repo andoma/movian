@@ -84,6 +84,7 @@ typedef enum {
 typedef struct metadata {
   LIST_ENTRY(metadata) m_link;
   prop_t *m_prop;
+  prop_t **m_anchor;
   void *m_source;
   metadata_type_t m_type;
   int m_flags;
@@ -592,6 +593,13 @@ spotify_metadata_update_track(metadata_t *m)
   if(!f_sp_track_is_loaded(track))
     return;
 
+  if(!f_sp_track_is_available(track) && m->m_anchor != NULL) {
+    prop_destroy(*m->m_anchor);
+    *m->m_anchor = NULL;
+    return;
+  }
+
+
   album = f_sp_track_album(track);
 
   txt[0] = 0;
@@ -722,8 +730,12 @@ spotify_metadata_updated(sp_session *sess)
 {
   metadata_t *m;
 
+  hts_mutex_lock(&meta_mutex);
+
   LIST_FOREACH(m, &metadatas, m_link)
     metadata_update(m);
+
+  hts_mutex_unlock(&meta_mutex);
 
   spotify_play_track_try();
 }
@@ -781,11 +793,13 @@ metadata_prop_cb(void *opaque, prop_event_t event, ...)
 
 
 static void
-metadata_create(prop_t *p, metadata_type_t type, void *source)
+metadata_create0(prop_t *p, metadata_type_t type, void *source,
+		 prop_t **anchor)
 {
   metadata_t *m = malloc(sizeof(metadata_t));
 
   prop_ref_inc(p);
+  m->m_anchor = anchor;
   m->m_prop = p;
   m->m_type = type;
   m->m_source = source;
@@ -822,7 +836,15 @@ metadata_create(prop_t *p, metadata_type_t type, void *source)
 }
 
 
-
+/**
+ *
+ */
+static void
+metadata_create(prop_t *p, metadata_type_t type, void *source)
+{
+  metadata_create0(p, type, source, NULL);
+}
+		  
 
 /**
  * Load an album into the property tree passed via userdata
@@ -1344,16 +1366,19 @@ tracks_added(sp_playlist *plist, const sp_track **tracks,
   playlist_t *pl = userdata;
   sp_track *t;
   playlist_track_t *plt, *before;
-  int i, pos;
+  int i, pos, pos2;
   char url[128];
 
   for(i = 0; i < num_tracks; i++) {
-    pos = position + i;
+    pos2 = pos = position + i;
     plt = calloc(1, sizeof(playlist_track_t));
     t = (sp_track *)tracks[i];
     
-    before = ptrvec_get_entry(&pl->pl_tracks, pos);
-
+    // Find next non-hidden property to insert before
+    while((before = ptrvec_get_entry(&pl->pl_tracks, pos2)) != NULL &&
+	  before->plt_prop_root == NULL)
+      pos2++;
+      
     plt->plt_prop_root = prop_create(NULL, NULL);
     plt->plt_track = t;
 
@@ -1364,22 +1389,18 @@ tracks_added(sp_playlist *plist, const sp_track **tracks,
 
     plt->plt_prop_metadata = prop_create(plt->plt_prop_root, "metadata");
 
-    metadata_create(plt->plt_prop_metadata, METADATA_TRACK, t);
 
     if(prop_set_parent_ex(plt->plt_prop_root, pl->pl_prop_tracks,
 			  before ? before->plt_prop_root : NULL, NULL)) {
       abort();
     }
 
+    metadata_create0(plt->plt_prop_metadata, METADATA_TRACK, t,
+		     &plt->plt_prop_root);
+
     ptrvec_insert_entry(&pl->pl_tracks, pos, plt);
   }
   prop_set_int(pl->pl_prop_num_tracks, pl->pl_tracks.size);
-#if 0
-  for(i = 0; i < ptrvec_size(&pl->pl_tracks); i++) {
-    plt = ptrvec_get_entry(&pl->pl_tracks, i);
-    printf("%4d. %s\n", i, f_sp_track_name(plt->plt_track));
-  }
-#endif
 }
 
 
@@ -1416,13 +1437,6 @@ tracks_removed(sp_playlist *plist, const int *tracks,
     free(plt);
   }
   prop_set_int(pl->pl_prop_num_tracks, pl->pl_tracks.size);
-
-#if 0
-  for(i = 0; i < ptrvec_size(&pl->pl_tracks); i++) {
-    plt = ptrvec_get_entry(&pl->pl_tracks, i);
-    printf("%4d. %s\n", i, f_sp_track_name(plt->plt_track));
-  }
-#endif
 }
 
 
@@ -1451,7 +1465,8 @@ tracks_moved(sp_playlist *plist, const int *tracks,
   for(i = 0; i < num_tracks; i++) {
     plt = ptrvec_remove_entry(&pl->pl_tracks, positions[i]);
     tvec[num_tracks - i - 1] = plt->plt_track;
-    prop_destroy(plt->plt_prop_root);
+    if(plt->plt_prop_root != NULL)
+      prop_destroy(plt->plt_prop_root);
     free(plt);
   }
 
@@ -1564,13 +1579,15 @@ playlist_removed(sp_playlistcontainer *pc, sp_playlist *plist,
 
   pl = ptrvec_remove_entry(&playlists, position);
 
+  for(i = 0; i < pl->pl_tracks.size; i++) {
+    plt = pl->pl_tracks.vec[i];
+    prop_destroy(plt->plt_prop_root);
+    free(plt);
+  }
+
   // Destroys all properties, all tracks, etc
   prop_destroy(pl->pl_prop_root);
 
-  for(i = 0; i < pl->pl_tracks.size; i++) {
-    plt = pl->pl_tracks.vec[i];
-    free(plt);
-  }
 
   free(pl->pl_tracks.vec);
   free(pl->pl_url);
