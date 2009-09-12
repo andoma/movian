@@ -219,6 +219,9 @@ int
 tcp_read(int fd, void *buf, size_t len, int all)
 {
   int x = recv(fd, buf, len, all ? MSG_WAITALL : 0);
+  if(all && x != len)
+    return -1;
+
   return x < 1 ? -1 : x;
 }
 
