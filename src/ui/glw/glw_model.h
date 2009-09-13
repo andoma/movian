@@ -122,7 +122,7 @@ typedef struct token {
   union {
     int elements;
     void *extra;
-    float f;
+    double f;
     int args;
   } arg;
 
@@ -135,13 +135,13 @@ typedef struct token {
 
   union {
     int  ival;
-    float int_vec[0];
+    double int_vec[0];
 
     char *string;
     char *string_vec[0];
 
-    float value;
-    float value_vec[0];
+    double value;
+    double value_vec[0];
 
     const struct token_func   *func;
     const struct token_attrib *attrib;
