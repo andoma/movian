@@ -24,6 +24,7 @@
 
 #include <errno.h>
 #include <sys/time.h>
+#include <endian.h>
 #include <alsa/asoundlib.h>
 
 #include "showtime.h"
@@ -42,6 +43,7 @@ typedef struct alsa_audio_mode {
   char *aam_dev;
 
   int aam_sample_rate;
+  int aam_format;
 
 } alsa_audio_mode_t;
 
@@ -80,7 +82,7 @@ alsa_open(alsa_audio_mode_t *aam, int format, int rate)
   snd_pcm_hw_params_any(h, hwp);
 
   snd_pcm_hw_params_set_access(h, hwp, SND_PCM_ACCESS_RW_INTERLEAVED);
-  snd_pcm_hw_params_set_format(h, hwp, SND_PCM_FORMAT_S16_LE);
+  snd_pcm_hw_params_set_format(h, hwp, aam->aam_format);
 
   switch(rate) {
   default:
@@ -114,6 +116,10 @@ alsa_open(alsa_audio_mode_t *aam, int format, int rate)
     snd_pcm_close(h);
     return NULL;
   }
+
+  TRACE(TRACE_DEBUG, "ALSA", "ALSA format S16_%s %dch %dHz, input format %s",
+	aam->aam_format == SND_PCM_FORMAT_S16_BE ? "BE" : "LE", ch, rate,
+	audio_format_to_string(format));
 
   snd_pcm_hw_params_set_channels(h, hwp, ch);
 
@@ -419,8 +425,12 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
       if(mastermute) {
 	memset(outbuf, 0, ab->ab_frames * ab->ab_channels * sizeof(int16_t));
       } else {
-	for(i = 0; i < ab->ab_frames * ab->ab_channels; i++)
-	  outbuf[i] = CLIP16((outbuf[i] * mastervol) >> 16);
+	if(aam->aam_format == SND_PCM_FORMAT_S16_BE)
+	  for(i = 0; i < ab->ab_frames * ab->ab_channels; i++)
+	    outbuf[i] = htobe16(CLIP16((outbuf[i] * mastervol) >> 16));
+	else
+	  for(i = 0; i < ab->ab_frames * ab->ab_channels; i++)
+	    outbuf[i] = htole16(CLIP16((outbuf[i] * mastervol) >> 16));
       }
       break;
     }
@@ -502,6 +512,14 @@ alsa_probe(const char *card, const char *dev)
   char longtitle[128];
   char id[128];
   alsa_audio_mode_t *aam;
+#ifdef __BIG_ENDIAN__
+  int alsa_formats[] = {SND_PCM_FORMAT_S16_BE, SND_PCM_FORMAT_S16_LE};
+#else
+  int alsa_formats[] = {SND_PCM_FORMAT_S16_LE, SND_PCM_FORMAT_S16_BE};
+#endif
+  int alsa_format;
+  int i;
+  
 
   info = alloca(snd_pcm_info_sizeof());
 
@@ -546,13 +564,17 @@ alsa_probe(const char *card, const char *dev)
     return -1;
   }
 
-  if((r = snd_pcm_hw_params_set_format(h, hwp,
-				       SND_PCM_FORMAT_S16_LE)) < 0) {
+  for(i = 0; i < sizeof(alsa_formats)/sizeof(alsa_formats[0]); i++)
+    if((r = snd_pcm_hw_params_set_format(h, hwp, alsa_formats[i])) == 0)
+      break;
+  if(r < 0) {
     TRACE(TRACE_DEBUG, "ALSA", 
-	  "%s: No 16bit LE support (%s)", dev, snd_strerror(r));
+	  "%s: No 16bit support (%s)", dev, snd_strerror(r));
     snd_pcm_close(h);
+
     return -1;
   }
+  alsa_format = alsa_formats[i]; 
 
   if(!snd_pcm_hw_params_test_rate(h, hwp, 96000, 0))
     rates |= AM_SR_96000;
@@ -629,6 +651,7 @@ alsa_probe(const char *card, const char *dev)
   aam->aam_head.am_entry = alsa_audio_start;
 
   aam->aam_dev = strdup(dev);
+  aam->aam_format = alsa_format;
 
   audio_mode_register(&aam->aam_head);
 
