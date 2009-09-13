@@ -76,6 +76,19 @@ audio_rate_from_rateflag(int flag)
   }
 }
 
+const char *
+audio_format_to_string(int format)
+{
+  switch(format) {
+    case AM_FORMAT_PCM_STEREO: return "PCM stereo"; break;
+    case AM_FORMAT_PCM_5DOT1: return "PCM 5dot1"; break;
+    case AM_FORMAT_PCM_7DOT1: return "PCM 7dot1"; break;
+    case AM_FORMAT_AC3: return "AC3"; break;
+    case AM_FORMAT_DTS: return "DTS"; break;
+    default: return "unknown"; break;
+  }
+}
+
 /**
  *
  */

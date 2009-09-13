@@ -84,6 +84,7 @@ extern audio_mode_t *audio_mode_current;
 
 int audio_rateflag_from_rate(int rate);
 int audio_rate_from_rateflag(int flag);
+const char *audio_format_to_string(int format);
 
 void audio_mode_register(audio_mode_t *am);
 
