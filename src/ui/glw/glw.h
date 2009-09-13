@@ -614,10 +614,6 @@ do {						\
   case GLW_ATTRIB_ORIGINATING_PROP: 		\
     (void)va_arg(ap, void *);			\
     break;					\
-  case GLW_ATTRIB_BORDER_SIZE:                  \
-    (void)va_arg(ap, int);			\
-    (void)va_arg(ap, int);			\
-    (void)va_arg(ap, int);			\
   case GLW_ATTRIB_ALIGNMENT:			\
   case GLW_ATTRIB_SET_FLAGS:			\
   case GLW_ATTRIB_CLR_FLAGS:			\
@@ -626,6 +622,8 @@ do {						\
   case GLW_ATTRIB_TRANSITION_EFFECT:            \
     (void)va_arg(ap, int);			\
     break;					\
+  case GLW_ATTRIB_BORDER_SIZE:                  \
+    (void)va_arg(ap, double);			\
   case GLW_ATTRIB_RGB:                          \
     (void)va_arg(ap, double);			\
     (void)va_arg(ap, double);			\
