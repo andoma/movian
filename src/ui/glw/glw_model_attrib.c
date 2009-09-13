@@ -203,28 +203,6 @@ set_float4(glw_model_eval_context_t *ec, const token_attrib_t *a,
 }
 
 
-
-/**
- *
- */
-static int
-set_int4(glw_model_eval_context_t *ec, const token_attrib_t *a, 
-	 struct token *t)
-{
-  if(t->type != TOKEN_VECTOR_INT || t->t_elements != 4)
-    return glw_model_seterr(ec->ei, t, "Attribute '%s' expects a vec4",
-			    a->name);
-
-  glw_set_i(ec->w, a->attrib, 
-	    t->t_int_vector[0],
-	    t->t_int_vector[1],
-	    t->t_int_vector[2],
-	    t->t_int_vector[3],
-	    NULL);
-  return 0;
-}
-
-
 static struct strtab aligntab[] = {
   { "center",        GLW_ALIGN_CENTER},
   { "left",          GLW_ALIGN_LEFT},
@@ -410,8 +388,6 @@ static const token_attrib_t attribtab[] = {
 
   {"color",           set_float3, GLW_ATTRIB_RGB},
   {"borderSize",      set_float4, GLW_ATTRIB_BORDER_SIZE},
-
-  {"borderSize",      set_int4, GLW_ATTRIB_BORDER_SIZE},
 
   {"align",           set_align,  0},
   {"effect",          set_transition_effect,  0},
