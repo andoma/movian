@@ -135,6 +135,7 @@ typedef enum {
   GLW_ATTRIB_CHILD_ASPECT,
   GLW_ATTRIB_HEIGHT,
   GLW_ATTRIB_WIDTH,
+  GLW_ATTRIB_num,
 } glw_attribute_t;
 
 #define GLW_MIRROR_X   0x1
@@ -593,6 +594,9 @@ do {						\
   switch(attrib) {				\
   case GLW_ATTRIB_END:				\
     break;					\
+  case GLW_ATTRIB_num:                          \
+    abort();                                    \
+    break;                                      \
   case GLW_ATTRIB_SIGNAL_HANDLER:               \
     (void)va_arg(ap, void *);			\
     (void)va_arg(ap, void *);			\

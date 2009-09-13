@@ -194,6 +194,8 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 
   do {
     attrib = va_arg(ap, int);
+    
+    assert(attrib >= 0 && attrib < GLW_ATTRIB_num);
 
     switch(attrib) {
 
