@@ -69,7 +69,7 @@ audio_decoder_create(media_pipe_t *mp)
 
   ad = calloc(1, sizeof(audio_decoder_t));
   ad->ad_mp = mp;
-  ad->ad_outbuf = av_malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE);
+  ad->ad_outbuf = av_malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE * 2);
 
   TAILQ_INIT(&ad->ad_hold_queue);
 
