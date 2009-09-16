@@ -21,6 +21,7 @@
 
 #include "prop.h"
 #include "sd.h"
+#include "arch/arch.h"
 
 #ifdef CONFIG_AVAHI
 #include "avahi.h"
@@ -144,6 +145,8 @@ sd_add_link(prop_t *svc, const char *title, const char *url)
 
 void sd_init(void)
 {
+  arch_sd_init();
+
 #ifdef CONFIG_AVAHI
   avahi_init();
 #endif

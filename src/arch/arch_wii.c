@@ -36,6 +36,8 @@
 #include <stdarg.h>
 #include "prop.h"
 
+#include "sd/sd.h"
+
 extern char *htsversion;
 extern int concurrency;
 
@@ -163,4 +165,18 @@ void
 arch_exit(int retcode)
 {
   exit(retcode);
+}
+
+
+/**
+ *
+ */
+void
+arch_sd_init(void)
+{
+  prop_t *p;
+
+  p = sd_add_service("Front", "Front SD card", NULL, NULL, NULL);
+  sd_add_link(p, "Browse", "/");
+
 }
