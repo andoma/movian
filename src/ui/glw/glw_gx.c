@@ -38,10 +38,10 @@ glw_store_matrix(glw_t *w, glw_rctx_t *rc)
 /**
  *
  */
-void
+int
 glw_check_system_features(glw_root_t *gr)
 {
-
+  return 0;
 }
 
 

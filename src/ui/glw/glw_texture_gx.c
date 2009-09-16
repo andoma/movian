@@ -63,7 +63,7 @@ glw_tex_backend_free_loader_resources(glw_loadable_texture_t *glt)
  * Invoked on every frame when status == VALID
  */
 void
-glw_tex_backend_layout(glw_loadable_texture_t *glt)
+glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
 {
 }
 
@@ -226,8 +226,8 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
  *
  */
 void
-glw_tex_upload(glw_backend_texture_t *tex, const void *src, int fmt,
-	       int width, int height)
+glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex, 
+	       const void *src, int fmt, int width, int height)
 {
   int format;
   uint8_t *texels;

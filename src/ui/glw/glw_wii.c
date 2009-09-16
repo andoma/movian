@@ -211,7 +211,7 @@ wpad_render(glw_wii_t *gwii)
 
     glw_Rotatef(&rc, gwii->cursor_a, 0, 0, -1.0);
 
-    glw_render(&gwii->cursor_renderer, &rc, GLW_RENDER_MODE_QUADS,
+    glw_render(&gwii->cursor_renderer, &gwii->gr, &rc, GLW_RENDER_MODE_QUADS,
 	       GLW_RENDER_ATTRIBS_TEX,
 	       &gwii->cursors[i + grab * 2]->glt_texture, 1, 1, 1,
 	       gwii->cursor_alpha);
