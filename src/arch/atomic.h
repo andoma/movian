@@ -51,7 +51,7 @@ atomic_add(volatile int *ptr, int incr)
 
   return r;
 }
-#elif defined(__ppc__)
+#elif defined(__ppc__) || defined(__PPC__)
 
 /* somewhat based on code from darwin gcc  */
 static inline int
