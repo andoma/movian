@@ -42,9 +42,9 @@
 #include "glw_event.h"
 #include "glw_slider.h"
 #include "glw_layer.h"
+#include "glw_fx_texrot.h"
 
 #if CONFIG_GLW_BACKEND_OPENGL
-#include "glw_fx_texrot.h"
 #include "glw_video.h"
 #endif
 
@@ -73,9 +73,9 @@ static const size_t glw_class_to_size[] = {
   [GLW_SLIDER_X] = sizeof(glw_slider_t),
   [GLW_SLIDER_Y] = sizeof(glw_slider_t),
   [GLW_LAYER] = sizeof(glw_t),
+  [GLW_FX_TEXROT] = sizeof(glw_fx_texrot_t),
 
 #if CONFIG_GLW_BACKEND_OPENGL
-  [GLW_FX_TEXROT] = sizeof(glw_fx_texrot_t),
   [GLW_VIDEO] = sizeof(glw_video_t),
 #endif
   [GLW_FREEFLOAT] = sizeof(glw_freefloat_t),
@@ -419,16 +419,16 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
   case GLW_ANIMATOR:
     glw_animator_ctor(w, init, apx);
     break;
-#if CONFIG_GLW_BACKEND_OPENGL
+
   case GLW_FX_TEXROT:
     glw_fx_texrot_ctor(w, init, apx);
     break;
 
+#if CONFIG_GLW_BACKEND_OPENGL
   case GLW_VIDEO:
     glw_video_ctor(w, init, apx);
     break;
 #else
-  case GLW_FX_TEXROT:
   case GLW_VIDEO:
     break;
 #endif

@@ -233,6 +233,7 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_image.c \
 			src/ui/glw/glw_text_bitmap.c \
 			src/ui/glw/glw_cursor.c \
+			src/ui/glw/glw_fx_texrot.c \
 
 SRCS-$(CONFIG_GLW_FRONTEND_X11)	  += src/ui/glw/glw_x11.c \
 				     src/ui/linux/screensaver_inhibitor.c
@@ -242,7 +243,6 @@ SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_texture_opengl.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_render_opengl.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_mirror.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_video.c
-SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_fx_texrot.c
 SRCS-$(CONFIG_GLW_FRONTEND_WII)	  += src/ui/glw/glw_wii.c
 SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_texture_gx.c
 SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_render_gx.c

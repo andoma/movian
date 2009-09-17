@@ -35,11 +35,10 @@ glw_fx_texrot_dtor(glw_t *w)
   if(fx->fx_tex != NULL)
     glw_tex_deref(w->glw_root, fx->fx_tex);
 
-  if(fx->fx_texsize != 0) {
-    glDeleteTextures(1, &fx->fx_fbtex);
-    glDeleteFramebuffersEXT(1, &fx->fx_fb);
-  }
+  if(fx->fx_rtt_initialized)
+    glw_rtt_destroy(w->glw_root, &fx->fx_rtt);
 }
+
 
 /**
  *
@@ -47,43 +46,16 @@ glw_fx_texrot_dtor(glw_t *w)
 static void 
 glw_fx_texrot_render(glw_t *w, glw_rctx_t *rc)
 {
-  glw_root_t *gr = w->glw_root;
   glw_fx_texrot_t *fx = (void *)w;
   glw_loadable_texture_t *glt = fx->fx_tex;
   float a = rc->rc_alpha * w->glw_alpha;
 
   if(glt != NULL && glt->glt_state == GLT_STATE_VALID && a > 0.01) {
-
-    glColor4f(1, 1, 1, a);
-
-    glDisable(gr->gr_be.gbr_primary_texture_mode);
-    glEnable(GL_TEXTURE_2D);
-
-    glBindTexture(GL_TEXTURE_2D, fx->fx_fbtex);
-
-    glBegin(GL_QUADS);
-
-    glTexCoord2f(0.0, 1.0);
-    glVertex3f( -1.0, -1.0f, 0.0f);
-
-    glTexCoord2f(1.0, 1.0);
-    glVertex3f( 1.0, -1.0f, 0.0f);
-
-    glTexCoord2f(1.0, 0.0);
-    glVertex3f( 1.0, 1.0f, 0.0f);
-
-    glTexCoord2f(0.0, 0.0);
-    glVertex3f( -1.0, 1.0f, 0.0f);
-    
-    glEnd();
-
-    glDisable(GL_TEXTURE_2D);
-    glEnable(gr->gr_be.gbr_primary_texture_mode);
+    glw_render(&fx->fx_render, w->glw_root, rc, 
+	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
+	       &glw_rtt_texture(&fx->fx_rtt), 1, 1, 1, a);
   }
 }
-
-
-
 
 
 /**
@@ -98,150 +70,42 @@ glw_fx_texrot_init(glw_fx_texrot_t *fx)
     fx->fx_plates[i].angle = drand48() * 360;
     fx->fx_plates[i].inc = drand48() * 0.1;
 
-
-    fx->fx_plates[i].coldrive = drand48() * M_PI * 2;
-    fx->fx_plates[i].colinc = drand48() * 0.01;
-
     fx->fx_plates[i].x = (drand48() - 0.5) * 0.5;
     fx->fx_plates[i].y = (drand48() - 0.5) * 0.5;
-
-    fx->fx_plates[i].texalpha = drand48() * 2 * M_PI;
-    fx->fx_plates[i].texbeta = drand48() * 2 * M_PI;
-
-    fx->fx_plates[i].tex1 = drand48() * 0.001;
-    fx->fx_plates[i].tex2 = drand48() * 0.002;
   }
 }
+
 
 /**
  *
  */
 static void
-glw_fx_texrot_render_internal(glw_root_t *gr, 
+glw_fx_texrot_render_internal(glw_root_t *gr, glw_rctx_t *rc,
 			      glw_fx_texrot_t *fx, glw_loadable_texture_t *glt)
 {
   int i;
-  float xs = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_xs;
-  float ys = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_ys;
+  glw_rctx_t rc0 = *rc;
 
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+  glw_blendmode(GLW_BLEND_ADDITIVE);
 
-  glBindTexture(gr->gr_be.gbr_primary_texture_mode, glt->glt_texture);
-
-  glColor4f(1.0, 1.0, 1.0, 0.15);
-
-  glScalef(2.5, 2.5, 1.0);
+  glw_Scalef(rc, 2.0, 2.0, 1.0);
 
   for(i = 0; i < FX_NPLATES; i++) {
 
-    glPushMatrix();
+    glw_PushMatrix(&rc0, rc);
 
-    fx->fx_plates[i].coldrive += fx->fx_plates[i].colinc;
-
-    glTranslatef(fx->fx_plates[i].x, fx->fx_plates[i].y, 0);
-
-    glRotatef(fx->fx_plates[i].angle, 0, 0.0, 1);
     fx->fx_plates[i].angle += fx->fx_plates[i].inc;
 
-    glBegin(GL_QUADS);
+    glw_Translatef(&rc0, fx->fx_plates[i].x, fx->fx_plates[i].y, 0.0);
+    glw_Rotatef(&rc0, fx->fx_plates[i].angle, 0.0, 0.0, 1.0);
 
-    glTexCoord2f(0, 0);
-    glVertex3f( -1.0f, -1.0f, 0.0f);
-
-    glTexCoord2f(0, ys);
-    glVertex3f( 1.0f, -1.0f, 0.0f);
-
-    glTexCoord2f(xs, ys);
-    glVertex3f( 1.0f, 1.0f, 0.0f);
-
-    glTexCoord2f(xs, 0);
-    glVertex3f( -1.0f, 1.0f, 0.0f);
-    glEnd();
-
-    glPopMatrix();
+    glw_render(&fx->fx_source_render, gr, &rc0,
+	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
+	       &glt->glt_texture, 1, 1, 1, 0.15);
+    glw_PopMatrix();
   }
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glw_blendmode(GLW_BLEND_NORMAL);
 }
-
-
-
-
-
-
-
-/**
- *
- */
-static void
-glw_fx_texrot_buildtex(glw_root_t *gr,
-		       glw_fx_texrot_t *fx, glw_loadable_texture_t *glt)
-{
-  GLint viewport[4];
-   
-  if(fx->fx_texsize == 0) {
-    
-    fx->fx_texsize = 512;
-
-    glGenTextures(1, &fx->fx_fbtex);
-    
-    glBindTexture(GL_TEXTURE_2D, fx->fx_fbtex);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, fx->fx_texsize, fx->fx_texsize, 0,
-		 GL_RGB, GL_UNSIGNED_BYTE, NULL);
-
-
-
-    glGenFramebuffersEXT(1, &fx->fx_fb);
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fx->fx_fb);
-    glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
-			      GL_COLOR_ATTACHMENT0_EXT,
-			      GL_TEXTURE_2D, fx->fx_fbtex, 0);
-
-
-  }
-
-  /* Save viewport */
-  glGetIntegerv(GL_VIEWPORT, viewport);
-
-
-  glBindTexture(GL_TEXTURE_2D, 0);
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,  fx->fx_fb);
-  
-  glViewport(0, 0, fx->fx_texsize, fx->fx_texsize);
-
-  glMatrixMode(GL_PROJECTION);
-  glPushMatrix();
-  glLoadIdentity();
-  gluPerspective(45, 1.0, 1.0, 60.0);
-
-  glMatrixMode(GL_MODELVIEW);
-  glPushMatrix();
-  glLoadIdentity();
-
-  gluLookAt(0, 0, 2.4,
-	    0, 0, 0,
-	    0, 1, 0);
-
-  glClear(GL_COLOR_BUFFER_BIT);
-
-  glw_fx_texrot_render_internal(gr, fx, glt);
-
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-
-  glPopMatrix();
-  glMatrixMode(GL_PROJECTION);
-  glPopMatrix();
-  glMatrixMode(GL_MODELVIEW);
-
-  /* Restore viewport */
-  glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-}
-
-
 
 
 /**
@@ -252,11 +116,77 @@ glw_fx_texrot_layout(glw_t *w, glw_rctx_t *rc)
 {
   glw_fx_texrot_t *fx = (void *)w;
   glw_loadable_texture_t *glt = fx->fx_tex;
+  glw_root_t *gr = w->glw_root;
+  glw_rctx_t rc0;
 
-  if(glt != NULL) {
-    glw_tex_layout(w->glw_root, glt);
-    glw_fx_texrot_buildtex(w->glw_root, fx, glt);
+  int width  = 512;
+  int height = 512;
+
+  width  = 256;
+  height = 256;
+
+  if(glt == NULL)
+    return;
+
+  // Layout the source texture
+  glw_tex_layout(w->glw_root, glt);
+
+
+  if(!fx->fx_source_render_initialized) {
+    float xs = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_xs;
+    float ys = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_ys;
+
+    glw_render_init(&fx->fx_source_render, 4, GLW_RENDER_ATTRIBS_TEX);
+    fx->fx_source_render_initialized = 1;
+    
+    glw_render_vtx_pos(&fx->fx_source_render, 0, -1.0, -1.0, 0.0);
+    glw_render_vtx_st (&fx->fx_source_render, 0,  0.0,  ys);
+
+    glw_render_vtx_pos(&fx->fx_source_render, 1,  1.0, -1.0, 0.0);
+    glw_render_vtx_st (&fx->fx_source_render, 1,  xs,   ys);
+
+    glw_render_vtx_pos(&fx->fx_source_render, 2,  1.0,  1.0, 0.0);
+    glw_render_vtx_st (&fx->fx_source_render, 2,  xs,   0.0);
+
+    glw_render_vtx_pos(&fx->fx_source_render, 3, -1.0,  1.0, 0.0);
+    glw_render_vtx_st (&fx->fx_source_render, 3,  0.0,  0.0);
   }
+
+  // Init render to texture object
+  if(!fx->fx_rtt_initialized) {
+    fx->fx_rtt_initialized = 1;
+    glw_rtt_init(gr, &fx->fx_rtt, width, height);
+  }
+
+  // Initialize output texture
+  if(!fx->fx_render_initialized) {
+    float xs = gr->gr_normalized_texture_coords ? 1.0 : width;
+    float ys = gr->gr_normalized_texture_coords ? 1.0 : height;
+
+    glw_render_init(&fx->fx_render, 4, GLW_RENDER_ATTRIBS_TEX);
+    fx->fx_render_initialized = 1;
+
+    glw_render_vtx_pos(&fx->fx_render, 0, -1.0, -1.0, 0.0);
+    glw_render_vtx_st (&fx->fx_render, 0,  0.0,  ys);
+
+    glw_render_vtx_pos(&fx->fx_render, 1,  1.0, -1.0, 0.0);
+    glw_render_vtx_st (&fx->fx_render, 1,  xs,   ys);
+
+    glw_render_vtx_pos(&fx->fx_render, 2,  1.0,  1.0, 0.0);
+    glw_render_vtx_st (&fx->fx_render, 2,  xs,   0.0);
+
+    glw_render_vtx_pos(&fx->fx_render, 3, -1.0,  1.0, 0.0);
+    glw_render_vtx_st (&fx->fx_render, 3,  0.0,  0.0);
+  }
+
+  // Enter render-to-texture mode
+  glw_rtt_enter(gr, &fx->fx_rtt, &rc0);
+
+  // Render the gradients
+  glw_fx_texrot_render_internal(gr, &rc0, fx, glt);
+
+  // Leave render-to-texture mode
+  glw_rtt_restore(gr, &fx->fx_rtt);
 }
 
 /**
@@ -291,10 +221,9 @@ fxflush(void *aux)
 {
   glw_fx_texrot_t *fx = aux;
 
-  if(fx->fx_texsize != 0) {
-    glDeleteTextures(1, &fx->fx_fbtex);
-    glDeleteFramebuffersEXT(1, &fx->fx_fb);
-    fx->fx_texsize = 0;
+  if(fx->fx_rtt_initialized) {
+    glw_rtt_destroy(fx->w.glw_root, &fx->fx_rtt);
+    fx->fx_rtt_initialized = 0;
   }
 }
 

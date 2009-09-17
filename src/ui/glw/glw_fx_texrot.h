@@ -26,16 +26,6 @@ struct fxplate {
   float inc;
 
   float x, y;
-
-  float texalpha;
-  float texbeta;
-
-  float tex1;
-  float tex2;
-
-  float coldrive;
-  float colinc;
-
 };
 
 #define FX_NPLATES 10
@@ -45,14 +35,20 @@ typedef struct glw_fx_texrot {
 
   glw_loadable_texture_t *fx_tex;
 
-  GLuint fx_fb;
-  GLuint fx_fbtex;
+  int fx_source_render_initialized;
+  glw_renderer_t fx_source_render;
 
-  int fx_texsize;
 
   struct fxplate fx_plates[10];
 
   glw_gf_ctrl_t fx_flushctrl;
+
+  int fx_rtt_initialized;
+  glw_rtt_t fx_rtt;
+
+  int fx_render_initialized;
+  glw_renderer_t fx_render;
+  
 
 } glw_fx_texrot_t;
 

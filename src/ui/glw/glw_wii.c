@@ -384,6 +384,9 @@ glw_wii_loop(glw_wii_t *gwii)
     VIDEO_Flush();
     VIDEO_WaitVSync();
     rquad-=0.15f;
+
+    if(SYS_ResetButtonDown())
+      showtime_shutdown(0);
   }
 }
 

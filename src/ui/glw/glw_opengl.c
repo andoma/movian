@@ -169,3 +169,104 @@ glw_widget_project(float *m, float *x1, float *x2, float *y1, float *y2)
   *y1 = m[13] - m[5];
   *y2 = m[13] + m[5];
 }
+
+
+/**
+ *
+ */
+void
+glw_rtt_init(glw_root_t *gr, glw_rtt_t *grtt, int width, int height)
+{
+  int m = gr->gr_be.gbr_primary_texture_mode;
+
+  grtt->grtt_width  = width;
+  grtt->grtt_height = height;
+
+  glGenTextures(1, &grtt->grtt_texture);
+    
+  glBindTexture(m, grtt->grtt_texture);
+  glTexParameteri(m, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(m, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(m, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(m, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexImage2D(m, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+  
+  glGenFramebuffersEXT(1, &grtt->grtt_framebuffer);
+  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, grtt->grtt_framebuffer);
+  glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
+			    GL_COLOR_ATTACHMENT0_EXT,
+			    m, grtt->grtt_framebuffer, 0);
+
+  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+}
+
+
+/**
+ *
+ */
+void
+glw_rtt_enter(glw_root_t *gr, glw_rtt_t *grtt, glw_rctx_t *rc)
+{
+  int m = gr->gr_be.gbr_primary_texture_mode;
+
+  /* Save viewport */
+  glGetIntegerv(GL_VIEWPORT, grtt->grtt_viewport);
+
+  glBindTexture(m, 0);
+  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, grtt->grtt_framebuffer);
+  
+  glViewport(0, 0, grtt->grtt_width, grtt->grtt_height);
+
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  glLoadIdentity();
+  gluPerspective(45, 1.0, 1.0, 60.0);
+
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glLoadIdentity();
+
+  gluLookAt(0, 0, 1 / tan(45 * M_PI / 360),
+	    0, 0, 1,
+	    0, 1, 0);
+
+  glClear(GL_COLOR_BUFFER_BIT);
+
+
+  memset(rc, 0, sizeof(glw_rctx_t));
+  rc->rc_alpha = 1;
+  rc->rc_size_x = grtt->grtt_width;
+  rc->rc_size_y = grtt->grtt_height;
+}
+
+
+/**
+ *
+ */
+void
+glw_rtt_restore(glw_root_t *gr, glw_rtt_t *grtt)
+{
+  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+
+  glPopMatrix();
+  glMatrixMode(GL_PROJECTION);
+  glPopMatrix();
+  glMatrixMode(GL_MODELVIEW);
+
+  /* Restore viewport */
+  glViewport(grtt->grtt_viewport[0],
+	     grtt->grtt_viewport[1],
+	     grtt->grtt_viewport[2],
+	     grtt->grtt_viewport[3]);
+}
+
+
+/**
+ *
+ */
+void
+glw_rtt_destroy(glw_root_t *gr, glw_rtt_t *grtt)
+{
+  glDeleteTextures(1, &grtt->grtt_texture);
+  glDeleteFramebuffersEXT(1, &grtt->grtt_framebuffer);
+}

@@ -31,6 +31,10 @@
 #include <GL/glu.h>
 #endif
 
+
+struct glw_root;
+struct glw_rctx;
+
 typedef struct glw_backend_root {
 
   int gbr_sysfeatures;
@@ -97,7 +101,41 @@ typedef struct glw_renderer {
 
 #define glw_is_tex_inited(n) (*(n) != 0)
 
-struct glw_root;
 int glw_opengl_init_context(struct glw_root *gr);
+
+/**
+ * Render to texture support
+ */
+typedef struct {
+
+  GLuint grtt_framebuffer;
+  glw_backend_texture_t grtt_texture;
+  
+  int grtt_width;
+  int grtt_height;
+
+  GLint grtt_viewport[4];  // Saved viewport
+
+} glw_rtt_t;
+
+void glw_rtt_init(struct glw_root *gr, glw_rtt_t *grtt, int width, int height);
+
+void glw_rtt_enter(struct glw_root *gr, glw_rtt_t *grtt, struct glw_rctx *rc0);
+
+void glw_rtt_restore(struct glw_root *gr, glw_rtt_t *grtt);
+
+void glw_rtt_destroy(struct glw_root *gr, glw_rtt_t *grtt);
+
+#define glw_rtt_texture(grtt) ((grtt)->grtt_texture)
+
+
+/**
+ *
+ */
+
+#define GLW_BLEND_ADDITIVE GL_SRC_ALPHA, GL_ONE
+#define GLW_BLEND_NORMAL   GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA
+
+#define glw_blendmode(m) glBlendFunc(m)
 
 #endif /* GLW_OPENGL_H__ */

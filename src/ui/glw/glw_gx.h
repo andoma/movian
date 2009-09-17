@@ -21,6 +21,9 @@
 
 #include <gccore.h>
 
+struct glw_root;
+struct glw_rctx;
+
 /**
  *
  */
@@ -64,5 +67,33 @@ typedef struct glw_renderer {
 
 #define glw_is_tex_inited(n) ((n)->mem != NULL)
 
+
+/**
+ * Render to texture support
+ */
+typedef struct {
+  glw_backend_texture_t grtt_texture;
+  
+  int grtt_width;
+  int grtt_height;
+
+  int grtt_size;
+
+} glw_rtt_t;
+
+void glw_rtt_init(struct glw_root *gr, glw_rtt_t *grtt, int width, int height);
+
+void glw_rtt_enter(struct glw_root *gr, glw_rtt_t *grtt, struct glw_rctx *rc);
+
+void glw_rtt_restore(struct glw_root *gr, glw_rtt_t *grtt);
+
+void glw_rtt_destroy(struct glw_root *gr, glw_rtt_t *grtt);
+
+#define glw_rtt_texture(grtt) ((grtt)->grtt_texture)
+
+#define GLW_BLEND_NORMAL   0
+#define GLW_BLEND_ADDITIVE 1
+
+void glw_blendmode(int mode);
 
 #endif /* GLW_GX_H__ */
