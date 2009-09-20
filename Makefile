@@ -248,6 +248,8 @@ SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_texture_gx.c
 SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_render_gx.c
 SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_gx.c
 
+SRCS-$(CONFIG_NVCTRL)             += src/ui/linux/nvidia.c
+
 #
 # GTK based interface
 #

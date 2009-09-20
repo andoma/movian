@@ -44,6 +44,7 @@ CONFIG_LIST="
  avahi
  appleremote
  bonjour
+ nvctrl
 "
 
 die() {

@@ -284,6 +284,17 @@ fi
 
 
 #
+# NVCtrl
+#
+if enabled nvctrl; then
+    
+    check_header "NVCtrl/NVCtrl.h" || fatal "nvctrl" "Missing include file NVCtrl/NVCtrl.h"
+    check_lib    "XNVCtrl"         || fatal "nvctrl" "Unable to link with libXNVCtrl"
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lXNVCtrl"
+fi
+
+
+#
 # configure ffmpeg
 #
 setup_ffmpeg --cpu=${CPU} --enable-pthreads

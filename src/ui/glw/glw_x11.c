@@ -36,6 +36,7 @@
 
 #include "showtime.h"
 #include "ui/linux/screensaver_inhibitor.h"
+#include "ui/linux/nvidia.h"
 #include "settings.h"
 #include "ipc/ipc.h"
 
@@ -605,6 +606,10 @@ glw_x11_init(glw_x11_t *gx11)
   build_blank_cursor(gx11);
 
   gx11->im = XOpenIM(gx11->display, NULL, NULL, NULL);
+
+#ifdef CONFIG_NVCTRL
+  nvidia_init(gx11->display, gx11->screen);
+#endif
 
   return window_open(gx11);
 }
