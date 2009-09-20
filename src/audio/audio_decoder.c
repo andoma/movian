@@ -642,7 +642,7 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
       frames -= consumed;
 
       audio_mix2(ad, am, channels, rate, ad->ad_resbuf, written, 
-		 epoch, pts, mp);
+		 pts, epoch, mp);
       pts = AV_NOPTS_VALUE;
     }
   } else {
