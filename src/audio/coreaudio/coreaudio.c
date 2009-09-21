@@ -18,8 +18,11 @@
 
 /*
  * NOTES:
- * Only supports stereo PCM, AC3 and DTS not supported yet.
- * For PCM coreaudio always uses 32 bit float samples.
+ * Buffer from audio decoder delivers samples in native endian
+ *
+ * Only supports stereo PCM. Multi channel PCM, AC3 and DTS not supported yet.
+ *
+ * For PCM coreaudio always wants 32 bit float samples.
  */
 
 
@@ -148,7 +151,7 @@ coreaudio_format_dump(AudioStreamBasicDescription *d) {
           d->mFormatFlags & kAudioFormatFlagIsFloat ? "Float," : "",
           d->mFormatFlags & kAudioFormatFlagIsBigEndian ? "BigEndian," : "",
           d->mFormatFlags & kAudioFormatFlagIsSignedInteger ? "SignedInteger," : "",
-          d->mFormatFlags & kAudioFormatFlagIsPacked ? "Packet," : "",
+          d->mFormatFlags & kAudioFormatFlagIsPacked ? "Packed," : "",
           d->mFormatFlags & kAudioFormatFlagIsAlignedHigh ? "AlignedHigh," : "",
           d->mFormatFlags & kAudioFormatFlagIsNonInterleaved ? "NonInterleaved," : "",
           d->mFormatFlags & kAudioFormatFlagIsNonMixable ? "NonMixable," : "",
@@ -177,8 +180,8 @@ audioDeviceIOProc(AudioDeviceID inDevice,
   SInt16 *inbuf;
   audio_buf_t *ab;
   float vol = cam->cam_master_volume;
-
-  ab = af_deq(cam->cam_af, 0);
+  
+  ab = af_deq(cam->cam_af, 0 /* no wait */);
   if(ab == NULL) {
     /* outOutputData is zeroed out by default */
     return 0;
@@ -233,10 +236,10 @@ coreaudio_change_format(coreaudio_audio_mode_t *cam, int format, int rate)
     
   asbd.mFormatID = kAudioFormatLinearPCM;
   asbd.mSampleRate = audio_rate_from_rateflag(rate);
-  asbd.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
-#if defined(__BIG_ENDIAN__)
-  asbd.mFormatFlags |= kAudioFormatFlagIsBigEndian;
-#endif
+  asbd.mFormatFlags = 
+    kAudioFormatFlagIsFloat | 
+    kAudioFormatFlagIsPacked |
+    kAudioFormatFlagsNativeEndian;
   asbd.mBytesPerPacket = 8;
   asbd.mFramesPerPacket = 1;
   asbd.mBytesPerFrame = 8;
@@ -338,7 +341,6 @@ coreaudio_start(audio_mode_t *am, audio_fifo_t *af)
 {
   coreaudio_audio_mode_t *cam = (void *)am; 
   CFRunLoopSourceContext context = {};
-  audio_buf_t *ab;
 
   CATRACE(TRACE_DEBUG, "Starting");
 
@@ -369,12 +371,7 @@ coreaudio_start(audio_mode_t *am, audio_fifo_t *af)
   CFRunLoopAddSource(CFRunLoopGetCurrent(), cam->cam_noop_source,
                      kCFRunLoopDefaultMode);
 
-  /* block and wait for audio or mode change */
-  ab = af_deq(af, 1);
-  if(ab)
-    ab_free(ab);
-
-  if(am == audio_mode_current && coreaudio_open(cam)) {
+  if(coreaudio_open(cam)) {
     /* TODO: needed when NSApplicationMain? */
     
     while(am == audio_mode_current)
