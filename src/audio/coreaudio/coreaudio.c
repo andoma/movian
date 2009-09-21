@@ -18,7 +18,7 @@
 
 /*
  * NOTES:
- * Buffer from audio decoder delivers samples in native endian
+ * Buffers delivered from audio decoder is in native endian.
  *
  * Only supports stereo PCM. Multi channel PCM, AC3 and DTS not supported yet.
  *
@@ -216,7 +216,7 @@ audioDeviceIOProc(AudioDeviceID inDevice,
 
       for(j = 0; j < outframes; j++) {
         for(k = 0; k < outOutputData->mBuffers[i].mNumberChannels; k++) {
-          *samples++ = ((float)inbuf[j*2+k] / INT16_MAX) * vol;
+          *samples++ = ((Float32)inbuf[j*2+k] / INT16_MAX) * vol;
         }
       }
     }
