@@ -1433,7 +1433,8 @@ tracks_removed(sp_playlist *plist, const int *tracks,
 
   for(i = 0; i < num_tracks; i++) {
     plt = ptrvec_remove_entry(&pl->pl_tracks, positions[i]);
-    prop_destroy(plt->plt_prop_root);
+    if(plt->plt_prop_root != NULL)
+      prop_destroy(plt->plt_prop_root);
     free(plt);
   }
   prop_set_int(pl->pl_prop_num_tracks, pl->pl_tracks.size);
@@ -1581,7 +1582,8 @@ playlist_removed(sp_playlistcontainer *pc, sp_playlist *plist,
 
   for(i = 0; i < pl->pl_tracks.size; i++) {
     plt = pl->pl_tracks.vec[i];
-    prop_destroy(plt->plt_prop_root);
+    if(plt->plt_prop_root != NULL)
+      prop_destroy(plt->plt_prop_root);
     free(plt);
   }
 
