@@ -138,5 +138,5 @@ tcp_read_data2(int fd, char *buf, const size_t bufsize, htsbuf_queue_t *spill)
   if(tot > 0)
     return tot;
 
-  return tcp_read(fd, buf + tot, bufsize - tot, 1);
+  return tcp_read(fd, buf + tot, bufsize - tot, 0);
 }
