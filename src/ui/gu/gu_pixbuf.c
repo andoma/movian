@@ -128,6 +128,9 @@ gu_pixbuf_get_internal(const char *url, int *sizep,
     ctx = avcodec_alloc_context();
     codec = avcodec_find_decoder(codecid);
   
+    ctx->codec_id   = codec->id;
+    ctx->codec_type = codec->type;
+
     if(avcodec_open(ctx, codec) < 0) {
       av_free(frame);
       av_free(ctx);

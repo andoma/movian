@@ -217,9 +217,13 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   ctx = avcodec_alloc_context();
   codec = avcodec_find_decoder(codecid);
   
+  ctx->codec_id   = codec->id;
+  ctx->codec_type = codec->type;
+
   if(avcodec_open(ctx, codec) < 0) {
     av_free(ctx);
     free(data);
+    TRACE(TRACE_ERROR, "glw", "%s: unable to open codec", url);
     return -1;
   }
   
