@@ -77,7 +77,7 @@ typedef pthread_t hts_thread_t;
 #include <ogc/mutex.h>
 typedef mutex_t hts_mutex_t;
 
-#define hts_mutex_init(m)     LWP_MutexInit((m), 0)
+extern void hts_mutex_init(hts_mutex_t *m);
 #define hts_mutex_lock(m)     LWP_MutexLock(*(m))
 #define hts_mutex_unlock(m)   LWP_MutexUnlock(*(m))
 #define hts_mutex_destroy(m)  LWP_MutexDestroy(*(m))
@@ -89,7 +89,7 @@ typedef mutex_t hts_mutex_t;
 #include <ogc/cond.h>
 typedef cond_t hts_cond_t;
 
-#define hts_cond_init(c)               LWP_CondInit(c)
+extern void hts_cond_init(hts_cond_t *c);
 #define hts_cond_signal(c)             LWP_CondSignal(*(c))
 #define hts_cond_broadcast(c)          LWP_CondBroadcast(*(c))
 #define hts_cond_wait(c, m)            LWP_CondWait(*(c), *(m))
@@ -103,13 +103,10 @@ typedef cond_t hts_cond_t;
 
 typedef lwp_t hts_thread_t;
 
-#define hts_thread_create_detached(f, a) do {	\
-  lwp_t id;					\
-  LWP_CreateThread(&id, f, a, NULL, 65535, 80);	\
-} while(0);
+extern void hts_thread_create_detached(void *(*)(void *), void *);
 
-#define hts_thread_create_joinable(h, f, a) \
-  LWP_CreateThread(h, f, a, NULL, 65536, 80)
+extern void hts_thread_create_joinable(hts_thread_t *p, 
+				       void *(*)(void *), void *);
 
 #define hts_thread_join(t)       LWP_JoinThread(*(t), NULL)
 

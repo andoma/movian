@@ -31,6 +31,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "threads.h"
+
 #include "showtime.h"
 #include "arch.h"
 
@@ -51,6 +53,57 @@ extern char *remote_logtarget;
 int rlog_socket = -1;
 
 static hts_mutex_t log_mutex;
+
+
+static void 
+panic(const char *str)
+{
+  TRACE(TRACE_ERROR, "Wii", str);
+  sleep(1);
+  abort();
+}
+
+void
+hts_mutex_init(hts_mutex_t *m)
+{
+  if(LWP_MutexInit(m, 0)) {
+    panic("Unable to create mutex");
+  }
+}
+
+
+void
+hts_cond_init(hts_cond_t *c)
+{
+  if(LWP_CondInit(c)) {
+    panic("Unable to create condvar");
+  }
+}
+
+
+void
+hts_thread_create_detached(void *(*f)(void *), void *arg)
+{
+  lwp_t threadid;
+
+  if(LWP_CreateThread(&threadid, (void *)f, arg, NULL, 32768, 80)) {
+    panic("Unable to create thread");
+  } else {
+    TRACE(TRACE_DEBUG, "Wii", "Created thread 0x%08x", threadid);
+
+  }
+}
+
+void hts_thread_create_joinable(hts_thread_t *p, 
+				void *(*f)(void *), void *arg)
+{
+  if(LWP_CreateThread(p, (void *)f, arg, NULL, 32768, 80)) {
+    panic("Unable to create thread");
+  } else {
+    TRACE(TRACE_DEBUG, "Wii", "Created thread 0x%08x", *p);
+  }
+}
+
 
 /**
  *
