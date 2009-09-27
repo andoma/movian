@@ -22,6 +22,7 @@
 #include <gccore.h>
 #include <wiiuse/wpad.h>
 #include <fat.h>
+#include <network.h>
 
 #include <dirent.h>
 #include <string.h>
@@ -45,7 +46,11 @@ void *wii_xfb[2];
 GXRModeObj *wii_rmode;
 
 extern void net_setup(void);
+extern char *remote_logtarget;
 
+int rlog_socket = -1;
+
+static hts_mutex_t log_mutex;
 
 /**
  *
@@ -53,6 +58,8 @@ extern void net_setup(void);
 void
 arch_init(void)
 {
+  hts_mutex_init(&log_mutex);
+
   concurrency = 1;
 
   // Initialise the video system
@@ -106,8 +113,81 @@ arch_init(void)
   if (!fatInitDefault())
     printf("fatInitDefault failure\n");
 
-  printf("Initializing network\n");
+  printf("Initializing network%s%s\n",
+	 remote_logtarget ? ", remote logging to ":"", remote_logtarget?:"");
   net_setup();
+
+
+  if(remote_logtarget != NULL) {
+
+    if((rlog_socket = net_socket(AF_INET, SOCK_DGRAM, 0)) >= 0) {
+
+      struct sockaddr_in sin;
+      int r;
+      memset(&sin, 0, sizeof(sin));
+      sin.sin_family = AF_INET;
+      sin.sin_len = sizeof(sin);
+      sin.sin_port = htons(514);
+      r = inet_aton(remote_logtarget, &sin.sin_addr);
+
+      if((r = net_connect(rlog_socket, 
+			  (struct sockaddr *)&sin, sizeof(sin))) < 0) {
+	rlog_socket = -1;
+	printf("Failed to set remote logging destination, error = %d\n", r);
+	sleep(2);
+      }
+
+    } else {
+      printf("Failed to create remote logging socket, error = %d\n", 
+	     rlog_socket);
+      sleep(2);
+    }
+  }
+
+  TRACE(TRACE_INFO, "Wii", "Wii arch specific code initialized");
+
+}
+
+
+static const char *months[] = {
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+};
+
+
+/**
+ *
+ */
+static void
+rlog(const char *buf, const char *subsys, int level)
+{
+  static char packet[1024];
+  time_t now;
+  struct tm *tm;
+  int syslog_level;
+
+  time(&now);
+  tm = localtime(&now);
+
+#define SYSLOG_PRIO 23 // local7
+
+
+  switch(level) {
+  case TRACE_ERROR: syslog_level = 3; break;
+  case TRACE_INFO:  syslog_level = 6; break;
+  case TRACE_DEBUG: syslog_level = 7; break;
+  default:
+    syslog_level = 7;
+    break;
+  }
+
+  snprintf(packet, sizeof(packet), "<%d>%s %2d %02d:%02d:%02d %s [%s] %s", 
+	   SYSLOG_PRIO * 8 + syslog_level,
+	   months[tm->tm_mon], tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec,
+	   "showtimeWii",
+	   subsys, buf);
+
+  net_send(rlog_socket, packet, strlen(packet), 0);
 }
 
 
@@ -122,8 +202,10 @@ static int decorate_trace = 1;
 void
 tracev(int level, const char *subsys, const char *fmt, va_list ap)
 {
-  char buf[1024];
+  static char buf[1024];
+
   char buf2[64];
+
   char *s, *p;
   const char *leveltxt, *sgr, *sgroff;
   int l;
@@ -131,31 +213,40 @@ tracev(int level, const char *subsys, const char *fmt, va_list ap)
   if(level > trace_level)
     return;
 
-  switch(level) {
-  case TRACE_ERROR: leveltxt = "ERROR"; sgr = "\033[31m"; break;
-  case TRACE_INFO:  leveltxt = "INFO";  sgr = "\033[33m"; break;
-  case TRACE_DEBUG: leveltxt = "DEBUG"; sgr = "\033[32m"; break;
-  default:          leveltxt = "?????"; sgr = "\033[35m"; break;
-  }
-
-  if(!decorate_trace) {
-    sgr = "";
-    sgroff = "";
-  } else {
-    sgroff = "\033[0m";
-  }
+  hts_mutex_lock(&log_mutex);
 
   vsnprintf(buf, sizeof(buf), fmt, ap);
 
-  p = buf;
+  if(rlog_socket >= 0) {
+    rlog(buf, subsys, level);
+  } else {
 
-  snprintf(buf2, sizeof(buf2), "%s [%s]:", subsys, leveltxt);
-  l = strlen(buf2);
+    switch(level) {
+    case TRACE_ERROR: leveltxt = "ERROR"; sgr = "\033[31m"; break;
+    case TRACE_INFO:  leveltxt = "INFO";  sgr = "\033[33m"; break;
+    case TRACE_DEBUG: leveltxt = "DEBUG"; sgr = "\033[32m"; break;
+    default:          leveltxt = "?????"; sgr = "\033[35m"; break;
+    }
 
-  while((s = strsep(&p, "\n")) != NULL) {
-    printf("%s%s %s%s\n", sgr, buf2, s, sgroff);
-    memset(buf2, ' ', l);
+    if(!decorate_trace) {
+      sgr = "";
+      sgroff = "";
+    } else {
+      sgroff = "\033[0m";
+    }
+
+    p = buf;
+
+    snprintf(buf2, sizeof(buf2), "%s [%s]:", subsys, leveltxt);
+    l = strlen(buf2);
+
+    while((s = strsep(&p, "\n")) != NULL) {
+      printf("%s%s %s%s\n", sgr, buf2, s, sgroff);
+      memset(buf2, ' ', l);
+    }
   }
+
+  hts_mutex_unlock(&log_mutex);
 }
 
 /**

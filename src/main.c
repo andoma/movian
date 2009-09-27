@@ -47,7 +47,7 @@
 int concurrency;
 int trace_level;
 static int showtime_retcode;
-
+char *remote_logtarget; // Used on Wii
 
 static int
 fflockmgr(void **_mtx, enum AVLockOp op)
@@ -112,6 +112,10 @@ main(int argc, char **argv)
     } else if(!strcmp(argv[0], "--ui") && argc > 1) {
       if(nuiargs < 16)
 	uiargs[nuiargs++] = argv[1];
+      argc -= 2; argv += 2;
+      continue;
+    } else if(!strcmp(argv[0], "-L") && argc > 1) {
+      remote_logtarget = argv[1];
       argc -= 2; argv += 2;
       continue;
 #ifdef __APPLE__
