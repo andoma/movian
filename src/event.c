@@ -88,30 +88,16 @@ event_enqueue(event_queue_t *eq, event_t *e)
  * @param timeout Timeout in milliseconds
  */
 event_t *
-event_get(int timeout, event_queue_t *eq)
+event_get(event_queue_t *eq)
 {
   event_t *e;
-  struct timespec ts;
 
   hts_mutex_lock(&eq->eq_mutex);
 
-  if(timeout == 0) {
-    e = TAILQ_FIRST(&eq->eq_q);
-  } else if(timeout == -1) {
-    while((e = TAILQ_FIRST(&eq->eq_q)) == NULL)
-      hts_cond_wait(&eq->eq_cond, &eq->eq_mutex);
-  } else {
-    ts.tv_sec = time(NULL) + timeout;
-    ts.tv_nsec = 0;
+  while((e = TAILQ_FIRST(&eq->eq_q)) == NULL)
+    hts_cond_wait(&eq->eq_cond, &eq->eq_mutex);
 
-    while((e = TAILQ_FIRST(&eq->eq_q)) == NULL) {
-      if(hts_cond_wait_timeout(&eq->eq_cond, &eq->eq_mutex, &ts) == ETIMEDOUT)
-	break;
-    }
-  }
-
-  if(e != NULL)
-    TAILQ_REMOVE(&eq->eq_q, e, e_link);
+  TAILQ_REMOVE(&eq->eq_q, e, e_link);
   hts_mutex_unlock(&eq->eq_mutex);
   return e;
 }

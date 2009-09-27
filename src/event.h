@@ -182,7 +182,7 @@ void *event_create_unicode(int sym);
 
 void event_enqueue(event_queue_t *eq, event_t *e);
 
-event_t *event_get(int timeout, event_queue_t *eq);
+event_t *event_get(event_queue_t *eq);
 
 void event_unref(event_t *e);
 

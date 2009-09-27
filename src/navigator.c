@@ -346,7 +346,7 @@ navigator_thread(void *aux)
   event_openurl_t *ou;
  
   while(1) {
-    e = event_get(-1, &nav_eq);
+    e = event_get(&nav_eq);
 
     if(event_is_action(e, ACTION_HOME)) {
       nav_open0(NAV_HOME, NULL, NULL);
