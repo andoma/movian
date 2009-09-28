@@ -262,19 +262,14 @@ mp_dequeue_event(media_pipe_t *mp)
  *
  */
 event_t *
-mp_dequeue_event_deadline(media_pipe_t *mp, time_t deadline)
+mp_dequeue_event_deadline(media_pipe_t *mp, int timeout)
 {
   event_t *e;
-  struct timespec ts;
-
-  ts.tv_sec = deadline;
-  ts.tv_nsec = 0;
 
   hts_mutex_lock(&mp->mp_mutex);
 
   while((e = TAILQ_FIRST(&mp->mp_eq)) == NULL) {
-    if(hts_cond_wait_timeout(&mp->mp_backpressure, 
-			     &mp->mp_mutex, &ts) == ETIMEDOUT)
+    if(hts_cond_wait_timeout(&mp->mp_backpressure, &mp->mp_mutex, timeout))
       break;
   }
   if(e != NULL)

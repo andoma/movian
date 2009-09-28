@@ -23,6 +23,7 @@
 #include <wiiuse/wpad.h>
 #include <fat.h>
 #include <network.h>
+#include <errno.h>
 
 #include <dirent.h>
 #include <string.h>
@@ -102,6 +103,19 @@ void hts_thread_create_joinable(hts_thread_t *p,
   } else {
     TRACE(TRACE_DEBUG, "Wii", "Created thread 0x%08x", *p);
   }
+}
+
+
+/**
+ *
+ */
+int
+hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delta)
+{
+  struct timespec ts;
+  ts.tv_sec  =  delta / 1000;
+  ts.tv_nsec = (delta % 1000) * 1000000;
+  return LWP_CondTimedWait(*c, *m, &ts) == ETIMEDOUT;
 }
 
 

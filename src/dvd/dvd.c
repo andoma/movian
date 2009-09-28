@@ -467,7 +467,6 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
   void *data;
   pci_t *pci;
   event_t *e = NULL;
-  time_t deadline;
   char *title;
   const char *rawtitle;
 
@@ -595,8 +594,7 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
       if(t == 255) {
 	e = mp_dequeue_event(mp);
       } else {
-	deadline = time(NULL) + t;
-	if((e = mp_dequeue_event_deadline(mp, deadline)) == NULL) {
+	if((e = mp_dequeue_event_deadline(mp, t * 1000)) == NULL) {
 	  dvdnav_still_skip(dp->dp_dvdnav);
 	  break;
 	}

@@ -131,6 +131,29 @@ arch_exit(int retcode)
 }
 
 
+#include <errno.h>
+/**
+ *
+ */
+int
+hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delta)
+{
+  struct timespec ts;
+
+  clock_gettime(CLOCK_REALTIME, &ts);
+
+  ts.tv_sec  +=  delta / 1000;
+  ts.tv_nsec += (delta % 1000) * 1000000;
+
+  if(ts.tv_nsec > 1000000000) {
+    ts.tv_sec++;
+    ts.tv_nsec -= 1000000000;
+  }
+  return pthread_cond_timedwait(c, m, &ts) == ETIMEDOUT;
+}
+
+
+
 
 extern int trace_level;
 

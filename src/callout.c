@@ -120,8 +120,9 @@ callout_loop(void *aux)
     }
 
     if((c = LIST_FIRST(&callouts)) != NULL) {
-      ts.tv_sec = c->c_expire;
-      hts_cond_wait_timeout(&callout_cond, &callout_mutex, &ts);
+
+      int timeout = (c->c_expire - now) * 1000;
+      hts_cond_wait_timeout(&callout_cond, &callout_mutex, timeout);
     } else {
       hts_cond_wait(&callout_cond, &callout_mutex);
     }

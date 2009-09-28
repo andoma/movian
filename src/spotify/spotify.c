@@ -2387,10 +2387,6 @@ void
 spotify_shutdown(void)
 {
   int done;
-  struct timespec ts;
-
-  ts.tv_sec = time(NULL) + 5; // Wait max 5 seconds for logout to succeed
-  ts.tv_nsec = 0;
 
   hts_mutex_lock(&spotify_mutex);
 
@@ -2401,8 +2397,7 @@ spotify_shutdown(void)
     spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_LOGOUT, &done));
 
     while(spotify_login_result != -1)
-      if(hts_cond_wait_timeout(&spotify_cond_login, 
-			       &spotify_mutex, &ts) == ETIMEDOUT)
+      if(hts_cond_wait_timeout(&spotify_cond_login, &spotify_mutex, 5000))
 	break;
   }
 
