@@ -80,7 +80,11 @@ setup_ffmpeg --extra-cflags=-I${LIBOGC}/include \
     --enable-cross-compile \
     --arch=powerpc \
     --cpu=750 \
-    --disable-altivec
+    --disable-altivec \
+    --enable-small \
+    --disable-decoder=twinvq \
+    --disable-decoder=snow \
+    --disable-decoder=cavs
 
 #
 # 
