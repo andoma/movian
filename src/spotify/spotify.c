@@ -594,8 +594,9 @@ spotify_metadata_update_track(metadata_t *m)
     return;
 
   if(!f_sp_track_is_available(track) && m->m_anchor != NULL) {
-    prop_destroy(*m->m_anchor);
-    *m->m_anchor = NULL;
+    prop_t **anchor = m->m_anchor; // Keep anchor because ...
+    prop_destroy(*m->m_anchor);    // ... m might be free'd here
+    *anchor = NULL;
     return;
   }
 
