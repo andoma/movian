@@ -27,7 +27,7 @@
 #include <wchar.h>
 
 #include "glw.h"
-#include "glw_video.h"
+#include "glw_video_opengl.h"
 
 #include <GL/glx.h>
 #include <GL/glu.h>

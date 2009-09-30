@@ -19,7 +19,7 @@
 #include <string.h>
 
 #include "glw.h"
-#include "glw_video.h"
+#include "glw_video_opengl.h"
 #include "glw_cursor.h"
 
 /**
