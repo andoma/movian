@@ -45,7 +45,7 @@
 #include "glw_fx_texrot.h"
 
 #if CONFIG_GLW_BACKEND_OPENGL
-#include "glw_video.h"
+#include "glw_video_opengl.h"
 #endif
 
 static const size_t glw_class_to_size[] = {
