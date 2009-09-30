@@ -289,7 +289,7 @@ spotify_try_login(sp_session *s, int retry, const char *reason)
   if(r == -1) {
     hts_mutex_lock(&spotify_mutex);
     spotify_login_result = -2;
-    pthread_cond_broadcast(&spotify_cond_login);
+    hts_cond_broadcast(&spotify_cond_login);
     hts_mutex_unlock(&spotify_mutex);
     return -1;
   }
@@ -319,7 +319,7 @@ spotify_logged_in(sp_session *sess, sp_error error)
     notify_add(NOTIFY_INFO, NULL, 5, "Spotify: Logged in");
     hts_mutex_lock(&spotify_mutex);
     spotify_login_result = 0;
-    pthread_cond_broadcast(&spotify_cond_login);
+    hts_cond_broadcast(&spotify_cond_login);
     hts_mutex_unlock(&spotify_mutex);
 
     user = f_sp_session_user(sess);
@@ -350,7 +350,7 @@ spotify_logged_out(sp_session *sess)
 
   hts_mutex_lock(&spotify_mutex);
   spotify_login_result = -1;
-  pthread_cond_broadcast(&spotify_cond_login);
+  hts_cond_broadcast(&spotify_cond_login);
   hts_mutex_unlock(&spotify_mutex);
 }
 
@@ -414,10 +414,10 @@ spotify_uri_return(spotify_uri_t *su, int errcode)
   if(su->su_track != NULL)
     f_sp_track_release(su->su_track);
 
-  pthread_mutex_lock(&spotify_mutex);
+  hts_mutex_lock(&spotify_mutex);
   su->su_errcode = errcode;
   hts_cond_broadcast(&spotify_cond_uri);
-  pthread_mutex_unlock(&spotify_mutex);
+  hts_mutex_unlock(&spotify_mutex);
 }
 
 
@@ -1668,10 +1668,10 @@ spotify_got_image(sp_image *image, void *userdata)
 				     pitch, PIX_FMT_RGB24, pixels);
   f_sp_image_unlock_pixels(image);
 
-  pthread_mutex_lock(&spotify_mutex);
+  hts_mutex_lock(&spotify_mutex);
   si->si_errcode = 0;
   hts_cond_broadcast(&spotify_cond_image);
-  pthread_mutex_unlock(&spotify_mutex);
+  hts_mutex_unlock(&spotify_mutex);
 }
 
 
@@ -1731,7 +1731,6 @@ spotify_thread(void *aux)
   sp_session_config sesconf;
   sp_error error;
   sp_session *s;
-  struct timespec ts;
   spotify_msg_t *sm;
   int next_timeout = 0;
   char ua[256];
@@ -1760,7 +1759,7 @@ spotify_thread(void *aux)
   hts_mutex_lock(&spotify_mutex);
   if(error) {
     spotify_login_result = error;
-    pthread_cond_broadcast(&spotify_cond_login);
+    hts_cond_broadcast(&spotify_cond_login);
     hts_mutex_unlock(&spotify_mutex);
     return NULL;
   }
@@ -1775,29 +1774,19 @@ spotify_thread(void *aux)
   while(1) {
      if(next_timeout == 0) {
       while((sm = TAILQ_FIRST(&spotify_msgs)) == NULL)
-	pthread_cond_wait(&spotify_cond_main, &spotify_mutex);
+	hts_cond_wait(&spotify_cond_main, &spotify_mutex);
 
     } else {
-
-      clock_gettime(CLOCK_REALTIME, &ts);
-      
-      ts.tv_sec += next_timeout / 1000;
-      ts.tv_nsec += (next_timeout % 1000) * 1000000;
-      if(ts.tv_nsec > 1000000000) {
-	ts.tv_sec++;
-	ts.tv_nsec -= 1000000000;
-      }
-
       while((sm = TAILQ_FIRST(&spotify_msgs)) == NULL)
-	if(pthread_cond_timedwait(&spotify_cond_main,
-				  &spotify_mutex, &ts) == ETIMEDOUT)
+	if(hts_cond_wait_timeout(&spotify_cond_main,
+				 &spotify_mutex, next_timeout))
 	  break;
     }
 
     if(sm != NULL)
       TAILQ_REMOVE(&spotify_msgs, sm, sm_link);
    
-    pthread_mutex_unlock(&spotify_mutex);
+    hts_mutex_unlock(&spotify_mutex);
 
     if(sm != NULL) {
       switch(sm->sm_op) {
@@ -1859,7 +1848,7 @@ spotify_thread(void *aux)
       f_sp_session_process_events(s, &next_timeout);
     } while(next_timeout == 0);
 
-    pthread_mutex_lock(&spotify_mutex);
+    hts_mutex_lock(&spotify_mutex);
   }
 }
 
