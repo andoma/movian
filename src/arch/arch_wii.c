@@ -56,6 +56,19 @@ int rlog_socket = -1;
 static hts_mutex_t log_mutex;
 
 
+static callout_t memlogger;
+
+static void 
+memlogger_fn(callout_t *co, void *aux)
+{
+  callout_arm(&memlogger, memlogger_fn, NULL, 1);
+
+  TRACE(TRACE_DEBUG, "Wii", "Avail mem: Arena1 = %d, Arena2: %d",
+	SYS_GetArena1Size(), SYS_GetArena2Size());
+}
+
+
+
 static void 
 panic(const char *str)
 {
@@ -213,6 +226,8 @@ arch_init(void)
 
   TRACE(TRACE_INFO, "Wii", "Wii arch specific code initialized");
 
+  callout_arm(&memlogger, memlogger_fn, NULL, 1);
+
 }
 
 
@@ -250,7 +265,8 @@ rlog(const char *buf, const char *subsys, int level)
 
   snprintf(packet, sizeof(packet), "<%d>%s %2d %02d:%02d:%02d %s [%s] %s", 
 	   SYSLOG_PRIO * 8 + syslog_level,
-	   months[tm->tm_mon], tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec,
+	   months[tm->tm_mon], tm->tm_mday, tm->tm_hour, 
+	   tm->tm_min, tm->tm_sec,
 	   "showtimeWii",
 	   subsys, buf);
 
@@ -261,7 +277,7 @@ rlog(const char *buf, const char *subsys, int level)
 
 extern int trace_level;
 
-static int decorate_trace = 1;
+static int decorate_trace = 0;
 
 /**
  *
