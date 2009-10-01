@@ -153,12 +153,7 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
       mb->mb_epoch    = epoch;
       mb->mb_pts      = rescale(fctx, pkt.pts,      si);
       mb->mb_dts      = rescale(fctx, pkt.dts,      si);
-      /* pkt.duration is not stable enough, some formats (matroska)
-	 seem to assume that it should be multiplied with ticks_per_frame, 
-	 and some formats does not. We can just leave it to zero.
-	 The code downstream will figure it out by itself */
-	
-      mb->mb_duration = 0; //rescale(fctx, pkt.duration, si);
+      mb->mb_duration = rescale(fctx, pkt.duration, si);
 
       if(mq->mq_seektarget != AV_NOPTS_VALUE) {
 	ts = mb->mb_pts != AV_NOPTS_VALUE ? mb->mb_pts : mb->mb_dts;
