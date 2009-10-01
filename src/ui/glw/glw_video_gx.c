@@ -1,6 +1,12 @@
 /*
  *  Video output on GL surfaces
- *  Copyright (C) 2007 Andreas Öman
+ *  Copyright (C) 2009 Andreas Öman
+ *
+ *  Based on gx_supp.c from Mplayer CE/TT et al.
+ *
+ *      softdev 2007
+ *	dhewg 2008
+ *	sepp256 2008 - Coded YUV->RGB conversion in TEV.
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,7 +26,7 @@
 #include <assert.h>
 #include <sys/time.h>
 #include <time.h>
-
+#include <malloc.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -29,121 +35,11 @@
 
 #include "showtime.h"
 #include "media.h"
-#include "glw_video_opengl.h"
-//#include "subtitles.h"
-#include "video/yadif.h"
-#include "video/video_playback.h"
-#if ENABLE_DVD
-#include "video/video_dvdspu.h"
-#endif
-
-static const char *yuv2rbg_code =
-#include "cg/yuv2rgb.h"
-;
-
-static const char *yuv2rbg_2mix_code =
-#include "cg/yuv2rgb_2mix.h"
-;
-
-static const char *yuv2rbg_rect_code =
-#include "cg/yuv2rgb_rect.h"
-;
-
-static const char *yuv2rbg_2mix_rect_code =
-#include "cg/yuv2rgb_2mix_rect.h"
-;
-
-static void gv_purge_queues(video_decoder_t *vd);
+#include "glw_video_gx.h"
 
 static void glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
 				    AVFrame *frame, int64_t pts, int epoch, 
 				    int duration, int disable_deinterlacer);
-
-
-/**
- *  GL Video Init
- */
-static int
-glp_check_error(const char *name)
-{
-  GLint errpos;
-  const GLubyte *errstr;
-
-  glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errpos);
-
-  if(errpos == -1)
-    return 0;
-
-  errstr = glGetString(GL_PROGRAM_ERROR_STRING_ARB);
-
-  TRACE(TRACE_ERROR, "OpenGL Video", 
-	"%s: error \"%s\" on line %d", name, errstr, errpos);
-  return 0;
-}
-
-
-/**
- *
- */
-void
-glw_video_global_init(glw_root_t *gr, int rectmode)
-{
-  glw_backend_root_t *gbr = &gr->gr_be;
-  const char *c;
-  GLint tu;
-
-  glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tu);
-  if(tu < 6) {
-    TRACE(TRACE_ERROR, "OpenGL", 
-	  "Insufficient number of texture image units (%d) "
-	  "for GLW video rendering widget. Video output will be corrupted",
-	  tu);
-  } else {
-    TRACE(TRACE_DEBUG, "OpenGL", "%d texture image units available", tu);
-  }
-
-  glGenProgramsARB(1, &gbr->gbr_yuv2rbg_prog);
-  glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, gbr->gbr_yuv2rbg_prog);
-  
-  c = rectmode ? yuv2rbg_rect_code : yuv2rbg_code;
-  glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, 
-		     strlen(c), c);
-
-  glp_check_error("yuv2rgb");
-
-
-  glGenProgramsARB(1, &gbr->gbr_yuv2rbg_2mix_prog);
-  glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, gbr->gbr_yuv2rbg_2mix_prog);
-
-  c = rectmode ? yuv2rbg_2mix_rect_code : yuv2rbg_2mix_code;
-  glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, 
-		     strlen(c), c);
-
-  glp_check_error("yuv2rgb_2mix");
-
-  glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, 0);
-}
-
-
-/**
- *
- */
-void
-glw_video_global_flush(glw_root_t *gr)
-{
-  glw_video_t *gv;
-  video_decoder_t *vd;
-
-  LIST_FOREACH(gv, &gr->gr_be.gbr_video_decoders, gv_global_link) {
-    vd = gv->gv_vd;
-
-    hts_mutex_lock(&vd->vd_queue_mutex);
-    gv_purge_queues(vd);
-    hts_cond_signal(&vd->vd_avail_queue_cond);
-    hts_cond_signal(&vd->vd_bufalloced_queue_cond);
-    hts_mutex_unlock(&vd->vd_queue_mutex);
-  }
-}
 
 
 /**
@@ -152,14 +48,14 @@ glw_video_global_flush(glw_root_t *gr)
 static void
 gv_buffer_allocator(video_decoder_t *vd)
 {
-  gl_video_frame_t *gvf;
+  gx_video_frame_t *gvf;
   video_decoder_frame_t *vdf;
   int i;
 
   hts_mutex_lock(&vd->vd_queue_mutex);
   
   while(vd->vd_active_frames < vd->vd_active_frames_needed) {
-    vdf = calloc(1, sizeof(gl_video_frame_t));
+    vdf = calloc(1, sizeof(gx_video_frame_t));
     TAILQ_INSERT_TAIL(&vd->vd_avail_queue, vdf, vdf_link);
     hts_cond_signal(&vd->vd_avail_queue_cond);
     vd->vd_active_frames++;
@@ -168,34 +64,25 @@ gv_buffer_allocator(video_decoder_t *vd)
   while((vdf = TAILQ_FIRST(&vd->vd_bufalloc_queue)) != NULL) {
     TAILQ_REMOVE(&vd->vd_bufalloc_queue, vdf, vdf_link);
 
-    gvf = (gl_video_frame_t *)vdf;
 
-    if(gvf->gvf_pbo[0] != 0)
-      glDeleteBuffersARB(3, gvf->gvf_pbo);
-    glGenBuffersARB(3, gvf->gvf_pbo);
-
-
-    /* XXX: Do we really need to delete textures if they are already here ? */
-       
-    if(gvf->gvf_textures[0] != 0)
-      glDeleteTextures(3, gvf->gvf_textures);
-
-    glGenTextures(3, gvf->gvf_textures);
+    gvf = (gx_video_frame_t *)vdf;
 
     for(i = 0; i < 3; i++) {
+      gvf->gvf_size[i] = vdf->vdf_width[i] * vdf->vdf_height[i];
+      gvf->gvf_mem[i]  = memalign(32, gvf->gvf_size[i]);
 
-      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo[i]);
+      TRACE(TRACE_DEBUG, "Wii", "%p[%d]: Alloc %d bytes = %p", 
+	    gvf, i, gvf->gvf_size[i], gvf->gvf_mem[i]);
 
-      glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB,
-		      vdf->vdf_width[i] * vdf->vdf_height[i],
-		      NULL, GL_STREAM_DRAW_ARB);
+      if(gvf->gvf_mem[i] == NULL)
+	abort();
+      
+      vdf->vdf_data[i] = gvf->gvf_mem[i];
 
-      gvf->gvf_pbo_ptr[i] = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 
-					   GL_WRITE_ONLY);
-
-      vdf->vdf_data[i] = gvf->gvf_pbo_ptr[i];
+      GX_InitTexObj(&gvf->gvf_obj[i], gvf->gvf_mem[i], 
+		    vdf->vdf_width[i], vdf->vdf_height[i],
+		    GX_TF_I8, GX_CLAMP, GX_CLAMP, GX_FALSE);
     }
-    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
 
     TAILQ_INSERT_TAIL(&vd->vd_bufalloced_queue, vdf, vdf_link);
     hts_cond_signal(&vd->vd_bufalloced_queue_cond);
@@ -205,75 +92,20 @@ gv_buffer_allocator(video_decoder_t *vd)
 
 }
 
-/**
- *  Texture loader
- */
-static void
-gv_set_tex_meta(int textype)
-{
-  glTexParameteri(textype, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(textype, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(textype, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(textype, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-}
-
-static GLuint 
-gv_tex_get(glw_video_t *gv, gl_video_frame_t *gvf, int plane)
-{
-  return gvf->gvf_textures[plane];
-}
 
 
 static void
-video_frame_upload(glw_video_t *gv, gl_video_frame_t *gvf, int textype)
+video_frame_upload(glw_video_t *gv, gx_video_frame_t *gvf)
 {
+  int i;
+
   if(gvf->gvf_uploaded)
     return;
 
+  for(i = 0; i < 3; i++)
+    DCFlushRange(gvf->gvf_mem[i], gvf->gvf_size[i]);
+
   gvf->gvf_uploaded = 1;
-
-  glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo[0]);
-  glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
-  gvf->gvf_pbo_ptr[0] = NULL;
-
-  glBindTexture(textype, gv_tex_get(gv, gvf, GVF_TEX_L));
-  gv_set_tex_meta(textype);
-  
-  glTexImage2D(textype, 0, 1, 
-	       gvf->gvf_vdf.vdf_width[0], gvf->gvf_vdf.vdf_height[0],
-	       0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
-
-
-  /* Cr */
-
-  glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo[2]);
-  glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
-  gvf->gvf_pbo_ptr[1] = NULL;
-
-  glBindTexture(textype, gv_tex_get(gv, gvf, GVF_TEX_Cr));
-  gv_set_tex_meta(textype);
-
-
-  glTexImage2D(textype, 0, 1,
-	       gvf->gvf_vdf.vdf_width[1], gvf->gvf_vdf.vdf_height[1],
-	       0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
-
-  /* Cb */
-  
-  
-  glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo[1]);
-  glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
-  gvf->gvf_pbo_ptr[2] = NULL;
-
-  glBindTexture(textype, gv_tex_get(gv, gvf, GVF_TEX_Cb));
-
-  gv_set_tex_meta(textype);
-  
-  glTexImage2D(textype, 0, 1,
-	       gvf->gvf_vdf.vdf_width[2], gvf->gvf_vdf.vdf_height[2],
-	       0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
-  
-  glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
 }
 
 
@@ -284,32 +116,13 @@ static void
 gv_enqueue_for_decode(video_decoder_t *vd, video_decoder_frame_t *vdf,
 		      struct video_decoder_frame_queue *fromqueue)
 {
-  gl_video_frame_t *gvf = (gl_video_frame_t *)vdf;
-  int i;
+  gx_video_frame_t *gvf = (gx_video_frame_t *)vdf;
 
   hts_mutex_lock(&vd->vd_queue_mutex);
 
   TAILQ_REMOVE(fromqueue, vdf, vdf_link);
 
-  if(gvf->gvf_uploaded) {
-    gvf->gvf_uploaded = 0;
-
-    for(i = 0; i < 3; i++) {
-      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo[i]);
-
-      // Setting the buffer to NULL tells the GPU it can assign
-      // us another piece of memory as backing store.
-      
-      glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB,
-		      vdf->vdf_width[i] * vdf->vdf_height[i],
-		      NULL, GL_STREAM_DRAW_ARB);
-
-      gvf->gvf_pbo_ptr[i] = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 
-					   GL_WRITE_ONLY);
-      vdf->vdf_data[i] = gvf->gvf_pbo_ptr[i];
-    }
-    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
-  }
+  gvf->gvf_uploaded = 0;
 
   TAILQ_INSERT_TAIL(&vd->vd_avail_queue, vdf, vdf_link);
   hts_cond_signal(&vd->vd_avail_queue_cond);
@@ -324,37 +137,6 @@ gv_enqueue_for_display(video_decoder_t *vd, video_decoder_frame_t *vdf,
   TAILQ_REMOVE(fromqueue, vdf, vdf_link);
   TAILQ_INSERT_TAIL(&vd->vd_displaying_queue, vdf, vdf_link);
 }
-
-
-static float cmatrix_color[9] = {
-  1.1643,  0,        1.5958,
-  1.1643, -0.39173, -0.81290,
-  1.1643,  2.017,    0
-};
-#if 0
-static float cmatrix_bw[9] = {
-  1.1643,  0,        0,
-  1.1643,  0,        0,
-  1.1643,  0,        0
-};
-#endif
-
-static void
-gv_color_matrix_update(glw_video_t *gv, media_pipe_t *mp)
-{
-  float *f;
-  int i;
-
-  //  f = mp_get_playstatus(mp) == MP_PAUSE ? cmatrix_bw : cmatrix_color;
-  f = cmatrix_color;
-
-  for(i = 0; i < 9; i++)
-    gv->gv_cmatrix[i] = (gv->gv_cmatrix[i] * 15.0 + f[i]) / 16.0;
-
-}
-
-
-
 
 
 static int
@@ -443,11 +225,12 @@ gv_compute_blend(glw_video_t *gv, video_decoder_frame_t *fra,
   int64_t pts;
   int x;
 
+  gv->gv_fra = fra;
+
+  TRACE(TRACE_DEBUG, "glw", "duration=%d, od=%d", fra->vdf_duration, output_duration);
+
   if(fra->vdf_duration >= output_duration) {
   
-    gv->gv_fra = fra;
-    gv->gv_frb = NULL;
-
     pts = fra->vdf_pts;
 
     fra->vdf_duration -= output_duration;
@@ -455,14 +238,8 @@ gv_compute_blend(glw_video_t *gv, video_decoder_frame_t *fra,
 
   } else if(frb != NULL) {
 
-    gv->gv_fra = fra;
-    gv->gv_frb = frb;
-    gv->gv_blend = (float) fra->vdf_duration / (float)output_duration;
+    if(fra->vdf_duration + frb->vdf_duration < output_duration) {
 
-    if(fra->vdf_duration + 
-       frb->vdf_duration < output_duration) {
-
-      fra->vdf_duration = 0;
       pts = frb->vdf_pts;
 
     } else {
@@ -653,9 +430,7 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv, const glw_root_t *gr)
   int frame_duration = gv->w.glw_root->gr_frameduration;
   int epoch = 0;
 
-  gv_color_matrix_update(gv, mp);
   output_duration = compute_output_duration(vd, frame_duration);
-
 
   dq = &vd->vd_display_queue;
 
@@ -709,240 +484,217 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv, const glw_root_t *gr)
 }
 
 
+
 /**
- *  Video widget render
+ * Render
  */
 static void
-render_video_quad(int interlace, int rectmode, int width, int height)
-{
-  float x1, x2, y1, y2;
-
-  if(rectmode) {
-
-    if(interlace) {
-
-      x1 = 1;
-      y1 = 1;
-      x2 = width  - 1;
-      y2 = height - 1;
-
-    } else {
-
-      x1 = 0;
-      y1 = 0;
-      x2 = width;
-      y2 = height;
-    }
-
-  } else {
-    
-    if(interlace) {
-
-      x1 = 0 + (1.0 / (float)width);
-      y1 = 0 + (1.0 / (float)height);
-      x2 = 1 - (1.0 / (float)width);
-      y2 = 1 - (1.0 / (float)height);
-
-    } else {
-
-      x1 = 0;
-      y1 = 0;
-      x2 = 1;
-      y2 = 1;
-    }
-  }
- 
-  glBegin(GL_QUADS);
-
-  glTexCoord2f(x1, y1);
-  glVertex3f( -1.0f, 1.0f, 0.0f);
-  
-  glTexCoord2f(x2, y1);
-  glVertex3f( 1.0f, 1.0f, 0.0f);
-  
-  glTexCoord2f(x2, y2);
-  glVertex3f( 1.0f, -1.0f, 0.0f);
-
-  glTexCoord2f(x1, y2);
-  glVertex3f( -1.0f, -1.0f, 0.0f);
-
-  glEnd();
-}
-
-
-
-
-static void
 render_video_1f(glw_video_t *gv, video_decoder_t *vd,
-		video_decoder_frame_t *vdf, float alpha, int textype,
-		int rectmode)
+		video_decoder_frame_t *vdf, float alpha)
 {
-  gl_video_frame_t *gvf = (gl_video_frame_t *)vdf;
-  int i;
-  GLuint tex;
-
-  video_frame_upload(gv, gvf, textype);
-
-  glEnable(GL_FRAGMENT_PROGRAM_ARB);
-  glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, 
-		   gv->w.glw_root->gr_be.gbr_yuv2rbg_prog);
-
-
-  /* ctrl constants */
-  glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0,
-			       /* ctrl.x == alpha */
-			       alpha,
-			       /* ctrl.y == ishift */
-			       (-0.5f * vdf->vdf_debob) / 
-			       (float)vdf->vdf_height[0],
-			       0.0,
-			       0.0);
-
-  /* color matrix */
-
-  for(i = 0; i < 3; i++)
-    glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1 + i,
-				 gv->gv_cmatrix[i * 3 + 0],
-				 gv->gv_cmatrix[i * 3 + 1],
-				 gv->gv_cmatrix[i * 3 + 2], 0.0f);
-
-  glActiveTextureARB(GL_TEXTURE2_ARB);
-  tex = gv_tex_get(gv, gvf, GVF_TEX_Cb);
-  glBindTexture(textype, tex);
-
-  glActiveTextureARB(GL_TEXTURE1_ARB);
-  tex = gv_tex_get(gv, gvf, GVF_TEX_Cr);
-  glBindTexture(textype, tex);
-
-  glActiveTextureARB(GL_TEXTURE0_ARB);
-  tex = gv_tex_get(gv, gvf, GVF_TEX_L);
-  glBindTexture(textype, tex);
-  
-  render_video_quad(vd->vd_interlaced, rectmode, 
-		    vdf->vdf_width[0], vdf->vdf_height[0]);
-  
-  glDisable(GL_FRAGMENT_PROGRAM_ARB);
-}
-
-
-static void
-gv_blend_frames(glw_video_t *gv, video_decoder_t *vd, 
-		video_decoder_frame_t *fra, video_decoder_frame_t *frb,
-		float alpha, int textype, int rectmode)
-{
-  float blend = gv->gv_blend;
-  gl_video_frame_t *gvf_a = (gl_video_frame_t *)fra;
-  gl_video_frame_t *gvf_b = (gl_video_frame_t *)frb;
-  int i;
-  
-  video_frame_upload(gv, gvf_a, textype);
-  video_frame_upload(gv, gvf_b, textype);
+  gx_video_frame_t *gvf = (gx_video_frame_t *)vdf;
     
-  glEnable(GL_FRAGMENT_PROGRAM_ARB);
-  glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,
-		   gv->w.glw_root->gr_be.gbr_yuv2rbg_2mix_prog);
+  video_frame_upload(gv, gvf);
 
-  /* ctrl */
-  glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0,
-			       /* ctrl.x == alpha */
-			       alpha, 
-			       /* ctrl.y == blend */
-			       blend,
-			       /* ctrl.z == image a, y displace */
-			       (-0.5f * fra->vdf_debob) / 
-			       (float)fra->vdf_height[0],
-			       /* ctrl.w == image b, y displace */
-			       (-0.5f * frb->vdf_debob) / 
-			       (float)frb->vdf_height[0]);
-				
-  /* color matrix */
-  for(i = 0; i < 3; i++)
-    glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1 + i,
-				 gv->gv_cmatrix[i * 3 + 0],
-				 gv->gv_cmatrix[i * 3 + 1],
-				 gv->gv_cmatrix[i * 3 + 2], 0.0f);
+ // setup the vertex descriptor
+  GX_ClearVtxDesc();
+  GX_SetVtxDesc(GX_VA_POS, GX_DIRECT);
+  GX_SetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+  GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+  GX_SetVtxDesc(GX_VA_TEX1, GX_DIRECT);
 
-  glActiveTextureARB(GL_TEXTURE5_ARB);
-  glBindTexture(textype, gv_tex_get(gv, gvf_b, GVF_TEX_Cb));
 
-  glActiveTextureARB(GL_TEXTURE4_ARB);
-  glBindTexture(textype, gv_tex_get(gv, gvf_b, GVF_TEX_Cr));
+  GX_SetNumTexGens(3);
 
-  glActiveTextureARB(GL_TEXTURE3_ARB);
-  glBindTexture(textype, gv_tex_get(gv, gvf_b, GVF_TEX_L));
+  // 0 not needed?
+  GX_SetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
+  GX_SetTexCoordGen(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, GX_IDENTITY);
+  
 
-  glActiveTextureARB(GL_TEXTURE2_ARB);
-  glBindTexture(textype, gv_tex_get(gv, gvf_a, GVF_TEX_Cb));
+  //Y'UV->RGB formulation 2
+  GX_SetNumTevStages(12);
+  GX_SetTevKColor(GX_KCOLOR0, (GXColor) {255,   0,   0,  19});	//R {1, 0, 0, 16*1.164}
+  GX_SetTevKColor(GX_KCOLOR1, (GXColor) {  0,   0, 255,  42});	//B {0, 0, 1, 0.164}
+  GX_SetTevKColor(GX_KCOLOR2, (GXColor) {204,  104,   0, 255});	// {1.598/2, 0.813/2, 0}
+  GX_SetTevKColor(GX_KCOLOR3, (GXColor) {  0,  25, 129, 255});	// {0, 0.391/4, 2.016/4}
+  //Stage 0: TEVREG0 <- { 0, 2Um, 2Up }; TEVREG0A <- {16*1.164}
+  GX_SetTevKColorSel(GX_TEVSTAGE0,GX_TEV_KCSEL_K1);
+  GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD1, GX_TEXMAP1,GX_COLOR0A0);
+  GX_SetTevColorIn (GX_TEVSTAGE0, GX_CC_RASC, GX_CC_KONST, GX_CC_TEXC, GX_CC_ZERO);
+  GX_SetTevColorOp (GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_SUBHALF, GX_CS_SCALE_2, GX_ENABLE, GX_TEVREG0);
+  GX_SetTevKAlphaSel(GX_TEVSTAGE0,GX_TEV_KASEL_K0_A);
+  GX_SetTevAlphaIn (GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_RASA, GX_CA_KONST, GX_CA_ZERO);
+  GX_SetTevAlphaOp (GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVREG0);
+  //Stage 1: TEVREG1 <- { 0, 2Up, 2Um };
+  GX_SetTevKColorSel(GX_TEVSTAGE1,GX_TEV_KCSEL_K1);
+  GX_SetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD1, GX_TEXMAP1,GX_COLOR0A0);
+  GX_SetTevColorIn (GX_TEVSTAGE1, GX_CC_KONST, GX_CC_RASC, GX_CC_TEXC, GX_CC_ZERO);
+  GX_SetTevColorOp (GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_SUBHALF, GX_CS_SCALE_2, GX_ENABLE, GX_TEVREG1);
+  GX_SetTevAlphaIn (GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO);
+  GX_SetTevAlphaOp (GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
+  //Stage 2: TEVREG2 <- { Vp, Vm, 0 }
+  GX_SetTevKColorSel(GX_TEVSTAGE2,GX_TEV_KCSEL_K0);
+  GX_SetTevOrder(GX_TEVSTAGE2, GX_TEXCOORD1, GX_TEXMAP2,GX_COLOR0A0);
+  GX_SetTevColorIn (GX_TEVSTAGE2, GX_CC_RASC, GX_CC_KONST, GX_CC_TEXC, GX_CC_ZERO);
+  GX_SetTevColorOp (GX_TEVSTAGE2, GX_TEV_ADD, GX_TB_SUBHALF, GX_CS_SCALE_1, GX_ENABLE, GX_TEVREG2);
+  GX_SetTevAlphaIn (GX_TEVSTAGE2, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO);
+  GX_SetTevAlphaOp (GX_TEVSTAGE2, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
+  //Stage 3: TEVPREV <- { (Vm), (Vp), 0 }
+  GX_SetTevKColorSel(GX_TEVSTAGE3,GX_TEV_KCSEL_K0);
+  GX_SetTevOrder(GX_TEVSTAGE3, GX_TEXCOORD1, GX_TEXMAP2,GX_COLOR0A0);
+  GX_SetTevColorIn (GX_TEVSTAGE3, GX_CC_KONST, GX_CC_RASC, GX_CC_TEXC, GX_CC_ZERO);
+  GX_SetTevColorOp (GX_TEVSTAGE3, GX_TEV_ADD, GX_TB_SUBHALF, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
+  GX_SetTevAlphaIn (GX_TEVSTAGE3, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO);
+  GX_SetTevAlphaOp (GX_TEVSTAGE3, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
+  //Stage 4: TEVPREV <- { (-1.598Vm), (-0.813Vp), 0 }; TEVPREVA <- {Y' - 16*1.164}
+  GX_SetTevKColorSel(GX_TEVSTAGE4,GX_TEV_KCSEL_K2);
+  GX_SetTevOrder(GX_TEVSTAGE4, GX_TEXCOORD0, GX_TEXMAP0,GX_COLORNULL);
+  GX_SetTevColorIn (GX_TEVSTAGE4, GX_CC_ZERO, GX_CC_KONST, GX_CC_CPREV, GX_CC_ZERO);
+  GX_SetTevColorOp (GX_TEVSTAGE4, GX_TEV_SUB, GX_TB_ZERO, GX_CS_SCALE_2, GX_DISABLE, GX_TEVPREV);
+  GX_SetTevKAlphaSel(GX_TEVSTAGE4,GX_TEV_KASEL_1);
+  GX_SetTevAlphaIn (GX_TEVSTAGE4, GX_CA_ZERO, GX_CA_KONST, GX_CA_A0, GX_CA_TEXA);
+  GX_SetTevAlphaOp (GX_TEVSTAGE4, GX_TEV_SUB, GX_TB_ZERO, GX_CS_SCALE_1, GX_DISABLE, GX_TEVPREV);
+  //Stage 5: TEVPREV <- { -1.598Vm (+1.139/2Vp), -0.813Vp +0.813/2Vm), 0 }; TEVREG1A <- {Y' -16*1.164 - Y'*0.164} = {(Y'-16)*1.164}
+  GX_SetTevKColorSel(GX_TEVSTAGE5,GX_TEV_KCSEL_K2);
+  GX_SetTevOrder(GX_TEVSTAGE5, GX_TEXCOORD0, GX_TEXMAP0,GX_COLORNULL);
+  GX_SetTevColorIn (GX_TEVSTAGE5, GX_CC_ZERO, GX_CC_KONST, GX_CC_C2, GX_CC_CPREV);
+  GX_SetTevColorOp (GX_TEVSTAGE5, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_DISABLE, GX_TEVPREV);
+  GX_SetTevKAlphaSel(GX_TEVSTAGE5,GX_TEV_KASEL_K1_A);
+  GX_SetTevAlphaIn (GX_TEVSTAGE5, GX_CA_ZERO, GX_CA_KONST, GX_CA_TEXA, GX_CA_APREV);
+  GX_SetTevAlphaOp (GX_TEVSTAGE5, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVREG1);
+  //Stage 6: TEVPREV <- {	-1.598Vm (+1.598Vp), -0.813Vp (+0.813Vm), 0 } = {	(+1.598V), (-0.813V), 0 }
+  GX_SetTevKColorSel(GX_TEVSTAGE6,GX_TEV_KCSEL_K2);
+  GX_SetTevOrder(GX_TEVSTAGE6, GX_TEXCOORDNULL, GX_TEXMAP_NULL,GX_COLORNULL);
+  GX_SetTevColorIn (GX_TEVSTAGE6, GX_CC_ZERO, GX_CC_KONST, GX_CC_C2, GX_CC_CPREV);
+  GX_SetTevColorOp (GX_TEVSTAGE6, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_DISABLE, GX_TEVPREV);
+  GX_SetTevAlphaIn (GX_TEVSTAGE6, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO);
+  GX_SetTevAlphaOp (GX_TEVSTAGE6, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
+  //Stage 7: TEVPREV <- {	((Y'-16)*1.164) +1.598V, ((Y'-16)*1.164) -0.813V, ((Y'-16)*1.164) }
+  GX_SetTevKColorSel(GX_TEVSTAGE7,GX_TEV_KCSEL_1);
+  GX_SetTevOrder(GX_TEVSTAGE7, GX_TEXCOORDNULL, GX_TEXMAP_NULL,GX_COLORNULL);
+  GX_SetTevColorIn (GX_TEVSTAGE7, GX_CC_ZERO, GX_CC_ONE, GX_CC_A1, GX_CC_CPREV);
+  GX_SetTevColorOp (GX_TEVSTAGE7, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_DISABLE, GX_TEVPREV);
+  GX_SetTevAlphaIn (GX_TEVSTAGE7, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO);
+  GX_SetTevAlphaOp (GX_TEVSTAGE7, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
+  //Stage 8: TEVPREV <- {	(Y'-16)*1.164 +1.598V, (Y'-16)*1.164 -0.813V (-.394/2Up), (Y'-16)*1.164 (-2.032/2Um)}
+  GX_SetTevKColorSel(GX_TEVSTAGE8,GX_TEV_KCSEL_K3);
+  GX_SetTevOrder(GX_TEVSTAGE8, GX_TEXCOORDNULL, GX_TEXMAP_NULL,GX_COLORNULL);
+  GX_SetTevColorIn (GX_TEVSTAGE8, GX_CC_ZERO, GX_CC_KONST, GX_CC_C1, GX_CC_CPREV);
+  GX_SetTevColorOp (GX_TEVSTAGE8, GX_TEV_SUB, GX_TB_ZERO, GX_CS_SCALE_1, GX_DISABLE, GX_TEVPREV);
+  GX_SetTevAlphaIn (GX_TEVSTAGE8, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO);
+  GX_SetTevAlphaOp (GX_TEVSTAGE8, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
+  //Stage 9: TEVPREV <- { (Y'-16)*1.164 +1.598V, (Y'-16)*1.164 -0.813V (-.394Up), (Y'-16)*1.164 (-2.032Um)}
+  GX_SetTevKColorSel(GX_TEVSTAGE9,GX_TEV_KCSEL_K3);
+  GX_SetTevOrder(GX_TEVSTAGE9, GX_TEXCOORDNULL, GX_TEXMAP_NULL,GX_COLORNULL);
+  GX_SetTevColorIn (GX_TEVSTAGE9, GX_CC_ZERO, GX_CC_KONST, GX_CC_C1, GX_CC_CPREV);
+  GX_SetTevColorOp (GX_TEVSTAGE9, GX_TEV_SUB, GX_TB_ZERO, GX_CS_SCALE_1, GX_DISABLE, GX_TEVPREV);
+  GX_SetTevAlphaIn (GX_TEVSTAGE9, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO);
+  GX_SetTevAlphaOp (GX_TEVSTAGE9, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
+  //Stage 10: TEVPREV <- { (Y'-16)*1.164 +1.598V, (Y'-16)*1.164 -0.813V -.394Up (+.394/2Um), (Y'-16)*1.164 -2.032Um (+2.032/2Up)}
+  GX_SetTevKColorSel(GX_TEVSTAGE10,GX_TEV_KCSEL_K3);
+  GX_SetTevOrder(GX_TEVSTAGE10, GX_TEXCOORDNULL, GX_TEXMAP_NULL,GX_COLORNULL);
+  GX_SetTevColorIn (GX_TEVSTAGE10, GX_CC_ZERO, GX_CC_KONST, GX_CC_C0, GX_CC_CPREV);
+  GX_SetTevColorOp (GX_TEVSTAGE10, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_DISABLE, GX_TEVPREV);
+  GX_SetTevAlphaIn (GX_TEVSTAGE10, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO);
+  GX_SetTevAlphaOp (GX_TEVSTAGE10, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
+  //Stage 11: TEVPREV <- { (Y'-16)*1.164 +1.598V, (Y'-16)*1.164 -0.813V -.394Up (+.394Um), (Y'-16)*1.164 -2.032Um (+2.032Up)} = { (Y'-16)*1.164 +1.139V, (Y'-16)*1.164 -0.58V -.394U, (Y'-16)*1.164 +2.032U}
+  GX_SetTevKColorSel(GX_TEVSTAGE11,GX_TEV_KCSEL_K3);
+  GX_SetTevOrder(GX_TEVSTAGE11, GX_TEXCOORDNULL, GX_TEXMAP_NULL,GX_COLORNULL);
+  GX_SetTevColorIn (GX_TEVSTAGE11, GX_CC_ZERO, GX_CC_KONST, GX_CC_C0, GX_CC_CPREV);
+  GX_SetTevColorOp (GX_TEVSTAGE11, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
+  GX_SetTevKAlphaSel(GX_TEVSTAGE11,GX_TEV_KASEL_1);
+  GX_SetTevAlphaIn (GX_TEVSTAGE11, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_KONST);
+  GX_SetTevAlphaOp (GX_TEVSTAGE11, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
 
-  glActiveTextureARB(GL_TEXTURE1_ARB);
-  glBindTexture(textype, gv_tex_get(gv, gvf_a, GVF_TEX_Cr));
 
-  glActiveTextureARB(GL_TEXTURE0_ARB);
-  glBindTexture(textype, gv_tex_get(gv, gvf_a, GVF_TEX_L));
+  GX_LoadTexObj(&gvf->gvf_obj[0], GX_TEXMAP0);
+  GX_LoadTexObj(&gvf->gvf_obj[1], GX_TEXMAP1);
+  GX_LoadTexObj(&gvf->gvf_obj[2], GX_TEXMAP2);
 
-  render_video_quad(vd->vd_interlaced, rectmode, 
-		    fra->vdf_width[0], fra->vdf_height[0]);
 
-  glDisable(GL_FRAGMENT_PROGRAM_ARB);
+  GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+
+  GX_Position3f32(-1.0, -1.0, 0.0);
+  GX_Color4u8(0, 255, 0, 255);
+  GX_TexCoord2f32(0, 1);
+  GX_TexCoord2f32(0, 1);
+
+  GX_Position3f32( 1.0, -1.0, 0.0);
+  GX_Color4u8(0, 255, 0, 255);
+  GX_TexCoord2f32(1, 1);
+  GX_TexCoord2f32(1, 1);
+
+  GX_Position3f32( 1.0,  1.0, 0.0);
+  GX_Color4u8(0, 255, 0, 255);
+  GX_TexCoord2f32(1, 0);
+  GX_TexCoord2f32(1, 0);
+
+  GX_Position3f32(-1.0,  1.0, 0.0);
+  GX_Color4u8(0, 255, 0, 255);
+  GX_TexCoord2f32(0, 0);
+  GX_TexCoord2f32(0, 0);
+
+  GX_End();
+
+  GX_SetNumTexGens(1);
+
+ // setup the vertex descriptor
+  GX_ClearVtxDesc();
+  GX_SetVtxDesc(GX_VA_POS, GX_DIRECT);
+  GX_SetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+  GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
 }
 
 
 
-
+/**
+ *
+ */
 static void 
 render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
 {
-  glw_root_t *gr = w->glw_root;
-  video_decoder_frame_t *fra, *frb;
+  video_decoder_frame_t *fra;
   int width = 0, height = 0;
 #if ENABLE_DVD
   dvdspu_decoder_t *dd;
   dvdspu_t *d;
 #endif
-  int textype = gr->gr_be.gbr_primary_texture_mode;
-  int rectmode = !gr->gr_normalized_texture_coords;
 
   /*
    * rescale
    */
  
-  glPushMatrix();
-
 #if 0 
   if(gv->gv_zoom != 100)
     glScalef(gv->gv_zoom / 100.0f, gv->gv_zoom / 100.0f, 1.0f);
 #endif
 
   fra = gv->gv_fra;
-  frb = gv->gv_frb;
 
   glw_rescale(rc, vd->vd_aspect);
 
   if(fra != NULL && glw_is_focusable(w))
     glw_store_matrix(w, rc);
 
+#if 0
   if(rc->rc_alpha > 0.98f) 
     glDisable(GL_BLEND); 
   else
     glEnable(GL_BLEND); 
-  
+  #endif
 
   if(fra != NULL) {
 
     width = fra->vdf_width[0];
     height = fra->vdf_height[0];
 
-    if(frb != NULL) {
-      gv_blend_frames(gv, vd, fra, frb, rc->rc_alpha, textype, rectmode);
-    } else {
-      render_video_1f(gv, vd, fra, rc->rc_alpha, textype, rectmode);
-    }
+    render_video_1f(gv, vd, fra, rc->rc_alpha);
   }
 
   gv->gv_width  = width;
   gv->gv_height = height;
 
-  glEnable(GL_BLEND); 
+  //  glEnable(GL_BLEND); 
 
 #if ENABLE_DVD
   dd = vd->vd_dvdspu;
@@ -980,8 +732,6 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
     }
   }
 #endif
-
-  glPopMatrix();
 }
 
 /**
@@ -990,26 +740,11 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
 static void
 vdf_purge(video_decoder_t *vd, video_decoder_frame_t *vdf)
 {
-  gl_video_frame_t *gvf = (gl_video_frame_t *)vdf;
+  gx_video_frame_t *gvf = (gx_video_frame_t *)vdf;
   int i;
 
-  for(i = 0; i < 3; i++) {
-    if(gvf->gvf_pbo[i] != 0) {
-      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo[i]);
-      glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
-      gvf->gvf_pbo_ptr[i] = NULL;
-      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
-    }
-    glDeleteBuffersARB(3, gvf->gvf_pbo);
-  }
-
   for(i = 0; i < 3; i++)
-    gvf->gvf_pbo[i] = 0;
-
-  if(gvf->gvf_textures[0] != 0)
-    glDeleteTextures(3, gvf->gvf_textures);
-
-  gvf->gvf_textures[0] = 0;
+    free(gvf->gvf_mem[i]);
 
   free(vdf);
   assert(vd->vd_active_frames > 0);
@@ -1064,6 +799,7 @@ gl_video_widget_event(glw_video_t *gv, event_t *e)
     return 1;
   }
 
+#if 0
   if(event_is_action(e, ACTION_UP) ||
      event_is_action(e, ACTION_DOWN) ||
      event_is_action(e, ACTION_LEFT) ||
@@ -1074,6 +810,7 @@ gl_video_widget_event(glw_video_t *gv, event_t *e)
       return 1;
     }
   }
+#endif
 
   return 0;
 }
@@ -1197,11 +934,10 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_DTOR:
     /* We are going away, flush out all frames (PBOs and textures)
        and destroy zombie video decoder */
-
+#if 0
     if(gv->gv_sputex)
       glDeleteTextures(1, &gv->gv_sputex);
-
-    LIST_REMOVE(gv, gv_global_link);
+#endif
     gv_purge_queues(vd);
     video_decoder_destroy(vd);
     return 0;
@@ -1270,7 +1006,7 @@ glw_video_init(glw_video_t *gv, glw_root_t *gr)
 {
   //  gv->gv_dvdspu = gl_dvdspu_init();
  
-  LIST_INSERT_HEAD(&gr->gr_be.gbr_video_decoders, gv, gv_global_link);
+  //  LIST_INSERT_HEAD(&gr->gr_be.gbr_video_decoders, gv, gv_global_link);
 
   gv->gv_zoom = 100;
 }
@@ -1303,7 +1039,7 @@ glw_video_ctor(glw_t *w, int init, va_list ap)
 
     gv->gv_vd = video_decoder_create(gv->gv_mp);
     gv->gv_vd->vd_frame_deliver = glw_video_frame_deliver;
-    gv->gv_vp = video_playback_create(gv->gv_mp);
+     gv->gv_vp = video_playback_create(gv->gv_mp);
   }
 
   do {
@@ -1338,6 +1074,7 @@ glw_video_ctor(glw_t *w, int init, va_list ap)
 }
 
 
+
 /**
  * Frame delivery from video decoder
  */
@@ -1346,16 +1083,10 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
 			AVFrame *frame, int64_t pts, int epoch, int duration,
 			int disable_deinterlacer)
 {
-  int hvec[3], wvec[3];
-  int tff, w2, mode, i, j, h, w;
-  uint8_t *prev, *cur, *next, *src, *dst;
-  int hshift, vshift;
-  deilace_type_t dt;
   video_decoder_frame_t *vdf;
-
-  dt = disable_deinterlacer ? VD_DEILACE_NONE : vd->vd_deilace_conf;
-  if(dt == VD_DEILACE_AUTO)
-    dt = frame->interlaced_frame ? VD_DEILACE_YADIF_FIELD : VD_DEILACE_NONE;
+  int hvec[3], wvec[3];
+  int hshift, vshift;
+  int i, w, h;
 
   avcodec_get_chroma_sub_sample(ctx->pix_fmt, &hshift, &vshift);
 
@@ -1366,212 +1097,40 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
   hvec[1] = ctx->height >> vshift;
   hvec[2] = ctx->height >> vshift;
 
-  switch(dt) {
 
-  case VD_DEILACE_AUTO:
+  if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
     return;
 
-    /*
-     *  No post processing
-     */
-
-  case VD_DEILACE_NONE:
-    vd->vd_active_frames_needed = 3;
-    vd->vd_interlaced = 0;
-    if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
-      return;
-
-    for(i = 0; i < 3; i++) {
-      h = vdf->vdf_height[i];
-      w = vdf->vdf_width[i];
-      
-      src = frame->data[i];
-      dst = vdf->vdf_data[i];
- 
-      while(h--) {
-	memcpy(dst, src, w);
-	dst += w;
-	src += frame->linesize[i];
-      }
-    }
-
-    vd->vd_interlaced = 0;
-    vdf->vdf_pts = pts;
-    vdf->vdf_epoch = epoch;
-    vdf->vdf_duration = duration;
-    TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
-    return;
-
-  case VD_DEILACE_HALF_RES:
-    duration /= 2;
-
-    tff = !!frame->top_field_first ^ vd->vd_field_parity;
-
-    vd->vd_active_frames_needed = 3;
-
-    /*
-     *  Deinterlace by 2 x framerate and 0.5 * y-res,
-     *  OpenGL does bledning for us
-     */
-
-    vd->vd_interlaced = 1;
-
-    hvec[0] = hvec[0] / 2;
-    hvec[1] = hvec[1] / 2;
-    hvec[2] = hvec[2] / 2;
-
-    if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
-      return;
-
-    for(i = 0; i < 3; i++) {
-      
-      src = frame->data[i]; 
-      dst = vdf->vdf_data[i];
-      h = vdf->vdf_height[i];
-      w = vdf->vdf_width[i];
-      
-      while(h -= 2 > 0) {
-	memcpy(dst, src, w);
-	dst += w;
-	src += frame->linesize[i] * 2;
-      }
-    }
+  for(i = 0; i < 3; i++) {
+    uint64_t *dst = vdf->vdf_data[i];
+    uint64_t *src0 = (uint64_t *)(frame->data[i] + frame->linesize[i] * 0);
+    uint64_t *src1 = (uint64_t *)(frame->data[i] + frame->linesize[i] * 1);
+    uint64_t *src2 = (uint64_t *)(frame->data[i] + frame->linesize[i] * 2);
+    uint64_t *src3 = (uint64_t *)(frame->data[i] + frame->linesize[i] * 3);
     
-    vdf->vdf_debob = !tff;
-    
-    vdf->vdf_pts = pts;
-    vdf->vdf_epoch = epoch;
-    vdf->vdf_duration = duration;
-    TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
-
-
-    if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
-      return;
-
-    for(i = 0; i < 3; i++) {
+    int h1 = vdf->vdf_height[i] / 4;
+    int w1 = vdf->vdf_width[i] / 8;
       
-      src = frame->data[i] + frame->linesize[i];
-      dst = vdf->vdf_data[i];
-      h = vdf->vdf_height[i];
-      w = vdf->vdf_width[i];
-      
-      while(h -= 2 > 0) {
-	memcpy(dst, src, w);
-	dst += w;
-	src += frame->linesize[i] * 2;
-      }
-    }
-    
-    vdf->vdf_debob = tff;
-    
-    vdf->vdf_pts = pts + duration;
-    vdf->vdf_epoch = epoch;
-    vdf->vdf_duration = duration;
-    TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
-    return;
-    
-  case VD_DEILACE_YADIF_FRAME:
-    mode = 0; goto yadif;
-  case VD_DEILACE_YADIF_FIELD:
-    mode = 1; goto yadif;
-  case VD_DEILACE_YADIF_FRAME_NO_SPATIAL_ILACE:
-    mode = 2; goto yadif;
-  case VD_DEILACE_YADIF_FIELD_NO_SPATIAL_ILACE:
-    mode = 3;
-  yadif:
-    if(vd->vd_yadif_width   != ctx->width  ||
-       vd->vd_yadif_height  != ctx->height ||
-       vd->vd_yadif_pix_fmt != ctx->pix_fmt) {
-      
-      vd->vd_yadif_width   = ctx->width;
-      vd->vd_yadif_height  = ctx->height;
-      vd->vd_yadif_pix_fmt = ctx->pix_fmt;
+    int rp = ((frame->linesize[i] - vdf->vdf_width[i]) 
+	      + frame->linesize[i] * 3) / 8;
 
-      for(i = 0; i < 3; i++) {
-	avpicture_free(&vd->vd_yadif_pic[i]);
-	avpicture_alloc(&vd->vd_yadif_pic[i], ctx->pix_fmt, 
-			ctx->width, ctx->height);
-      }
-    }
-
-    vd->vd_active_frames_needed = 3;
-    vd->vd_interlaced = 1;
-
-    for(i = 0; i < 3; i++) {
-      w = vd->vd_yadif_width  >> (i ? hshift : 0);
-      h = vd->vd_yadif_height >> (i ? vshift : 0);
-      src = frame->data[i];
-      dst = vd->vd_yadif_pic[vd->vd_yadif_phase].data[i];
-      while(h--) {
-	memcpy(dst, src, w);
-	dst += w;
-	src += frame->linesize[i];
-      }
-    }
-
-    tff = !!frame->top_field_first ^ vd->vd_field_parity;
-
-    pts -= duration;
-
-    if(mode & 1) 
-      duration /= 2;
-
-    for(j = 0; j <= (mode & 1); j++) {
-
-      if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
-	return;
-
-      for(i = 0; i < 3; i++) {
-	int y;
-	int parity = j ^ tff ^ 1;
-
-	h = vd->vd_yadif_phase;
-	next = vd->vd_yadif_pic[h].data[i];
-	if(--h < 0) h = 2;
-	cur = vd->vd_yadif_pic[h].data[i];
-	if(--h < 0) h = 2;
-	prev = vd->vd_yadif_pic[h].data[i];
-
-	dst = vdf->vdf_data[i];
-	h = vdf->vdf_height[i];
-	w = vdf->vdf_width[i];
-	w2 = vd->vd_yadif_width >> (i ? hshift : 0);
-
-	for(y = 0; y < 2; y++) {
-	  memcpy(dst, cur, w);
-	  dst  += w; prev += w2; cur += w2; next += w2;
-	}
-
-	for(; y < h - 2; y++) {
-
-	  if((y ^ parity) & 1) {
-	    yadif_filter_line(mode, dst, prev, cur, next, w, w2, parity ^ tff);
-	  } else {
-	    memcpy(dst, cur, w);
-	  }
-	  dst  += w; prev += w2; cur += w2; next += w2;
-	}
-
-	for(; y < h; y++) {
-	  memcpy(dst, cur, w);
-	  dst  += w; prev += w2; cur += w2; next += w2;
-	}
+    for (h = 0; h < h1; h++) {
+      for (w = 0; w < w1; w++) {
+	*dst++ = *src0++;
+	*dst++ = *src1++;
+	*dst++ = *src2++;
+	*dst++ = *src3++;
       }
 
-      /* XXXX: Ugly */
-#if defined(__i386__) || defined(__x86_64__)
-      asm volatile("emms \n\t" : : : "memory");
-#endif
-
-      vdf->vdf_pts = pts + j * duration;
-      vdf->vdf_epoch = epoch;
-      vdf->vdf_duration = duration;
-      TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
+      src0 += rp;
+      src1 += rp;
+      src2 += rp;
+      src3 += rp;
     }
-
-    vd->vd_yadif_phase++;
-    if(vd->vd_yadif_phase > 2)
-      vd->vd_yadif_phase = 0;
-    return;
   }
+  vd->vd_interlaced = 0;
+  vdf->vdf_pts = pts;
+  vdf->vdf_epoch = epoch;
+  vdf->vdf_duration = duration;
+  TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
 }

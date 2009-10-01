@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "showtime.h"
 #include "video_decoder.h"
 #ifdef CONFIG_DVD
 #include "video_dvdspu.h"
@@ -53,7 +54,7 @@ vd_init_timings(video_decoder_t *vd)
  * the decoder it wil return NULL.
  *
  */
-static video_decoder_frame_t *
+video_decoder_frame_t *
 vd_dequeue_for_decode(video_decoder_t *vd, int w[3], int h[3])
 {
   video_decoder_frame_t *vdf;
@@ -110,12 +111,9 @@ vd_dequeue_for_decode(video_decoder_t *vd, int w[3], int h[3])
 }
 
 
-static int
-display_or_skip(video_decoder_t *vd, int duration)
-{
-  return 1;
-}
-
+/**
+ *
+ */
 typedef struct {
   int refcount;
   int64_t pts;
@@ -127,6 +125,9 @@ typedef struct {
 } frame_meta_t;
 
 
+/**
+ *
+ */
 static int
 vd_get_buffer(struct AVCodecContext *c, AVFrame *pic)
 {
@@ -162,22 +163,15 @@ vd_release_buffer(struct AVCodecContext *c, AVFrame *pic)
 static void 
 vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
 {
-  video_decoder_frame_t *vdf;
   int64_t pts, dts, t;
-  int i, j, got_pic, h, w, duration, epoch;
+  int got_pic, duration, epoch;
   media_pipe_t *mp = vd->vd_mp;
-  unsigned char *src, *dst;
   float f;
   codecwrap_t *cw = mb->mb_cw;
   AVCodecContext *ctx = cw->codec_ctx;
   AVFrame *frame = vd->vd_frame;
   frame_meta_t *fm;
   time_t now;
-  int hvec[3], wvec[3];
-  int tff, w2, mode;
-  uint8_t *prev, *cur, *next;
-  int hshift, vshift;
-  deilace_type_t dt;
   event_ts_t *ets;
 
   got_pic = 0;
@@ -235,9 +229,6 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
     break;
   }
 
-  dt = mb->mb_disable_deinterlacer ? VD_DEILACE_NONE : vd->vd_deilace_conf;
-  if(dt == VD_DEILACE_AUTO)
-    dt = frame->interlaced_frame ? VD_DEILACE_YADIF_FIELD : VD_DEILACE_NONE;
   
   /* Compute duration and PTS of frame */
 
@@ -318,236 +309,11 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
   }
 #endif
 
-  /* deinterlacer will generate two frames */
+  //  TRACE(TRACE_DEBUG, "frame", "%16lld %d %d\n", pts, epoch, duration);
 
-  if(dt == VD_DEILACE_HALF_RES)
-    duration /= 2;
-
-  avcodec_get_chroma_sub_sample(ctx->pix_fmt, &hshift, &vshift);
-
-  wvec[0] = ctx->width;
-  wvec[1] = ctx->width >> hshift;
-  wvec[2] = ctx->width >> hshift;
-  hvec[0] = ctx->height;
-  hvec[1] = ctx->height >> vshift;
-  hvec[2] = ctx->height >> vshift;
-
-  switch(dt) {
-
-  case VD_DEILACE_AUTO:
-    return;
-
-    /*
-     *  No post processing
-     */
-
-  case VD_DEILACE_NONE:
-    vd->vd_active_frames_needed = 3;
-    vd->vd_interlaced = 0;
-    if(!display_or_skip(vd, duration))
-      return;
-
-    if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
-      return;
-
-    for(i = 0; i < 3; i++) {
-      h = vdf->vdf_height[i];
-      w = vdf->vdf_width[i];
-      
-      src = frame->data[i];
-      dst = vdf->vdf_data[i];
- 
-      while(h--) {
-	memcpy(dst, src, w);
-	dst += w;
-	src += frame->linesize[i];
-      }
-    }
-    
-    vd->vd_interlaced = 0;
-    vdf->vdf_pts = pts;
-    vdf->vdf_epoch = epoch;
-    vdf->vdf_duration = duration;
-    TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
-    return;
-
-  case VD_DEILACE_HALF_RES:
-    tff = !!frame->top_field_first ^ vd->vd_field_parity;
-
-    vd->vd_active_frames_needed = 3;
-
-    /*
-     *  Deinterlace by 2 x framerate and 0.5 * y-res,
-     *  OpenGL does bledning for us
-     */
-
-    vd->vd_interlaced = 1;
-
-    hvec[0] = hvec[0] / 2;
-    hvec[1] = hvec[1] / 2;
-    hvec[2] = hvec[2] / 2;
-
-    if(display_or_skip(vd, duration)) {
-      if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
-	return;
-
-      for(i = 0; i < 3; i++) {
-
-	src = frame->data[i]; 
-	dst = vdf->vdf_data[i];
-	h = vdf->vdf_height[i];
-	w = vdf->vdf_width[i];
-
-	while(h -= 2 > 0) {
-	  memcpy(dst, src, w);
-	  dst += w;
-	  src += frame->linesize[i] * 2;
-	}
-      }
-
-      vdf->vdf_debob = !tff;
-      
-      vdf->vdf_pts = pts;
-      vdf->vdf_epoch = epoch;
-      vdf->vdf_duration = duration;
-      TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
-    }
-
-    if(display_or_skip(vd, duration)) {
-
-      if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
-	return;
-
-      for(i = 0; i < 3; i++) {
-      
-	src = frame->data[i] + frame->linesize[i];
-	dst = vdf->vdf_data[i];
-	h = vdf->vdf_height[i];
-	w = vdf->vdf_width[i];
-	
-	while(h -= 2 > 0) {
-	  memcpy(dst, src, w);
-	  dst += w;
-	  src += frame->linesize[i] * 2;
-	}
-      }
-
-      vdf->vdf_debob = tff;
-
-      vdf->vdf_pts = pts + duration;
-      vdf->vdf_epoch = epoch;
-      vdf->vdf_duration = duration;
-      TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
-    }
-    return;
-    
-  case VD_DEILACE_YADIF_FRAME:
-    mode = 0; goto yadif;
-  case VD_DEILACE_YADIF_FIELD:
-    mode = 1; goto yadif;
-  case VD_DEILACE_YADIF_FRAME_NO_SPATIAL_ILACE:
-    mode = 2; goto yadif;
-  case VD_DEILACE_YADIF_FIELD_NO_SPATIAL_ILACE:
-    mode = 3;
-  yadif:
-    if(vd->vd_yadif_width   != ctx->width  ||
-       vd->vd_yadif_height  != ctx->height ||
-       vd->vd_yadif_pix_fmt != ctx->pix_fmt) {
-      
-      vd->vd_yadif_width   = ctx->width;
-      vd->vd_yadif_height  = ctx->height;
-      vd->vd_yadif_pix_fmt = ctx->pix_fmt;
-
-      for(i = 0; i < 3; i++) {
-	avpicture_free(&vd->vd_yadif_pic[i]);
-	avpicture_alloc(&vd->vd_yadif_pic[i], ctx->pix_fmt, 
-			ctx->width, ctx->height);
-      }
-    }
-
-    vd->vd_active_frames_needed = 3;
-    vd->vd_interlaced = 1;
-
-    for(i = 0; i < 3; i++) {
-      w = vd->vd_yadif_width  >> (i ? hshift : 0);
-      h = vd->vd_yadif_height >> (i ? vshift : 0);
-      src = frame->data[i];
-      dst = vd->vd_yadif_pic[vd->vd_yadif_phase].data[i];
-      while(h--) {
-	memcpy(dst, src, w);
-	dst += w;
-	src += frame->linesize[i];
-      }
-    }
-
-    if(!display_or_skip(vd, duration))
-      return;
-
-    tff = !!frame->top_field_first ^ vd->vd_field_parity;
-
-    pts -= duration;
-
-    if(mode & 1) 
-      duration /= 2;
-
-    for(j = 0; j <= (mode & 1); j++) {
-
-      if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
-	return;
-
-      for(i = 0; i < 3; i++) {
-	int y;
-	int parity = j ^ tff ^ 1;
-
-	h = vd->vd_yadif_phase;
-	next = vd->vd_yadif_pic[h].data[i];
-	if(--h < 0) h = 2;
-	cur = vd->vd_yadif_pic[h].data[i];
-	if(--h < 0) h = 2;
-	prev = vd->vd_yadif_pic[h].data[i];
-
-	dst = vdf->vdf_data[i];
-	h = vdf->vdf_height[i];
-	w = vdf->vdf_width[i];
-	w2 = vd->vd_yadif_width >> (i ? hshift : 0);
-
-	for(y = 0; y < 2; y++) {
-	  memcpy(dst, cur, w);
-	  dst  += w; prev += w2; cur += w2; next += w2;
-	}
-
-	for(; y < h - 2; y++) {
-
-	  if((y ^ parity) & 1) {
-	    yadif_filter_line(mode, dst, prev, cur, next, w, w2, parity ^ tff);
-	  } else {
-	    memcpy(dst, cur, w);
-	  }
-	  dst  += w; prev += w2; cur += w2; next += w2;
-	}
-
-	for(; y < h; y++) {
-	  memcpy(dst, cur, w);
-	  dst  += w; prev += w2; cur += w2; next += w2;
-	}
-      }
-
-      /* XXXX: Ugly */
-#if defined(__i386__) || defined(__x86_64__)
-      asm volatile("emms \n\t" : : : "memory");
-#endif
-
-      vdf->vdf_pts = pts + j * duration;
-      vdf->vdf_epoch = epoch;
-      vdf->vdf_duration = duration;
-      TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
-    }
-
-    vd->vd_yadif_phase++;
-    if(vd->vd_yadif_phase > 2)
-      vd->vd_yadif_phase = 0;
-    return;
-  }
+  vd->vd_frame_deliver(vd, ctx, frame, 
+		       pts, epoch, duration,
+		       mb->mb_disable_deinterlacer);
 }
 
 /**

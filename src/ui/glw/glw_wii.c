@@ -285,6 +285,7 @@ glw_wii_loop(glw_wii_t *gwii)
 
   GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS,  GX_POS_XYZ,  GX_F32,  0);
   GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST,   GX_F32,  0);
+  GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX1, GX_TEX_ST,   GX_F32,  0);
   GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
 
   GX_InvalidateTexAll();
@@ -420,6 +421,8 @@ glw_wii_start(ui_t *ui, int argc, char *argv[], int primary)
     sleep(3);
     exit(0);
   }
+
+  gwii->gr.gr_frameduration = 1000000 / 50;
 
   glw_wii_loop(gwii);
   return 0;

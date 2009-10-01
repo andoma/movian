@@ -48,6 +48,10 @@
 #include "glw_video_opengl.h"
 #endif
 
+#if CONFIG_GLW_BACKEND_GX
+#include "glw_video_gx.h"
+#endif
+
 static const size_t glw_class_to_size[] = {
   [GLW_DUMMY] = sizeof(glw_t),
   [GLW_MODEL] = sizeof(glw_t),
@@ -74,10 +78,7 @@ static const size_t glw_class_to_size[] = {
   [GLW_SLIDER_Y] = sizeof(glw_slider_t),
   [GLW_LAYER] = sizeof(glw_t),
   [GLW_FX_TEXROT] = sizeof(glw_fx_texrot_t),
-
-#if CONFIG_GLW_BACKEND_OPENGL
   [GLW_VIDEO] = sizeof(glw_video_t),
-#endif
   [GLW_FREEFLOAT] = sizeof(glw_freefloat_t),
 
 };
@@ -424,15 +425,9 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
     glw_fx_texrot_ctor(w, init, apx);
     break;
 
-#if CONFIG_GLW_BACKEND_OPENGL
   case GLW_VIDEO:
     glw_video_ctor(w, init, apx);
     break;
-#else
-  case GLW_VIDEO:
-    break;
-#endif
-
 
   case GLW_SLIDER_X:
   case GLW_SLIDER_Y:

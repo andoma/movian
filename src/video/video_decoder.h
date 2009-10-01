@@ -21,6 +21,9 @@
 
 #include "media.h"
 
+struct AVCodecContext;
+struct AVFrame;
+
 #define GVF_TEX_L   0
 #define GVF_TEX_Cr  1
 #define GVF_TEX_Cb  2
@@ -211,6 +214,12 @@ typedef struct video_decoder {
   int vd_yadif_pix_fmt;
   int vd_yadif_phase;
   
+
+  void (*vd_frame_deliver)(struct video_decoder *vd,
+			   struct AVCodecContext *ctx, struct AVFrame *frame, 
+			   int64_t pts, int epoch, int duration,
+			   int disable_deinterlacer);
+
 } video_decoder_t;
 
 
@@ -219,6 +228,9 @@ video_decoder_t *video_decoder_create(media_pipe_t *mp);
 void video_decoder_stop(video_decoder_t *gv);
 
 void video_decoder_destroy(video_decoder_t *gv);
+
+video_decoder_frame_t *vd_dequeue_for_decode(video_decoder_t *vd, 
+					     int w[3], int h[3]);
 
 #endif /* VIDEO_DECODER_H */
 
