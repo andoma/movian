@@ -50,6 +50,8 @@ glw_fx_texrot_render(glw_t *w, glw_rctx_t *rc)
   glw_loadable_texture_t *glt = fx->fx_tex;
   float a = rc->rc_alpha * w->glw_alpha;
 
+  fx->fx_need_render = a > 0.01;
+
   if(glt != NULL && glt->glt_state == GLT_STATE_VALID && a > 0.01) {
     glw_render(&fx->fx_render, w->glw_root, rc, 
 	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
@@ -178,6 +180,9 @@ glw_fx_texrot_layout(glw_t *w, glw_rctx_t *rc)
     glw_render_vtx_pos(&fx->fx_render, 3, -1.0,  1.0, 0.0);
     glw_render_vtx_st (&fx->fx_render, 3,  0.0,  0.0);
   }
+
+  if(!fx->fx_need_render)
+    return;
 
   // Enter render-to-texture mode
   glw_rtt_enter(gr, &fx->fx_rtt, &rc0);

@@ -48,7 +48,8 @@ typedef struct glw_fx_texrot {
 
   int fx_render_initialized;
   glw_renderer_t fx_render;
-  
+
+  int fx_need_render;
 
 } glw_fx_texrot_t;
 
