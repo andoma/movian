@@ -1039,7 +1039,7 @@ glw_video_ctor(glw_t *w, int init, va_list ap)
 
     gv->gv_vd = video_decoder_create(gv->gv_mp);
     gv->gv_vd->vd_frame_deliver = glw_video_frame_deliver;
-     gv->gv_vp = video_playback_create(gv->gv_mp);
+    gv->gv_vp = video_playback_create(gv->gv_mp);
   }
 
   do {
@@ -1088,6 +1088,8 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
   int hshift, vshift;
   int i, w, h;
 
+  vd->vd_active_frames_needed = 2;
+
   avcodec_get_chroma_sub_sample(ctx->pix_fmt, &hshift, &vshift);
 
   wvec[0] = ctx->width;
@@ -1096,7 +1098,6 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
   hvec[0] = ctx->height;
   hvec[1] = ctx->height >> vshift;
   hvec[2] = ctx->height >> vshift;
-
 
   if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
     return;
