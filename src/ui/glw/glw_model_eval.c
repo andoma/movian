@@ -1895,6 +1895,8 @@ glwf_iir(glw_model_eval_context_t *ec, struct token *self,
 
   if(x != y)
     ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_EVERY_FRAME;
+  else
+    self->t_extra_float = f;
 
   r->t_float = self->t_extra_float;
   eval_push(ec, r);
