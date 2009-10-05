@@ -58,6 +58,8 @@ wii_audio_start(audio_mode_t *am, audio_fifo_t *af)
   audio_buf_t *ab;
   int tbuf = 0;
   uint32_t level;
+  int64_t pts;
+  media_pipe_t *mp;
 
   LWP_InitQueue(&audio_queue);
 
@@ -84,7 +86,39 @@ wii_audio_start(audio_mode_t *am, audio_fifo_t *af)
 
     if(ab != NULL) {
       memcpy(buffer[!tbuf], ab->ab_data, ADMA_BUFFER_SIZE);
-    ab_free(ab);
+
+
+      /* PTS is the time of the first frame of this audio packet */
+
+      if((pts = ab->ab_pts) != AV_NOPTS_VALUE && ab->ab_mp != NULL) {
+
+#if 0
+	/* Convert the frame delay into micro seconds */
+
+	d = (fr * 1000 / aam->aam_sample_rate) * 1000;
+
+	/* Subtract it from our timestamp, this will yield
+	   the PTS for the sample currently played */
+
+	pts -= d;
+
+	/* Offset with user configure delay */
+#endif
+
+	pts += am->am_audio_delay * 1000;
+
+	mp = ab->ab_mp;
+
+	hts_mutex_lock(&mp->mp_clock_mutex);
+	mp->mp_audio_clock = pts;
+	mp->mp_audio_clock_realtime = showtime_get_ts();
+	mp->mp_audio_clock_epoch = ab->ab_epoch;
+
+	hts_mutex_unlock(&mp->mp_clock_mutex);
+
+      }
+      ab_free(ab);
+
     } else {
       memset(buffer[!tbuf], 0, ADMA_BUFFER_SIZE);
     }
