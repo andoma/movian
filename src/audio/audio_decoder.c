@@ -122,18 +122,6 @@ audio_decoder_destroy(audio_decoder_t *ad)
 /**
  *
  */
-static const uint8_t swizzle_aac[AUDIO_CHAN_MAX] = {
-  1, /* Left */
-  2, /* Right */
-  4, /* Back Left */
-  5, /* Back Right */
-  0, /* Center */
-  3, /* LFE */
-};
-
-/**
- *
- */
 static void *
 ad_thread(void *aux)
 {
@@ -431,6 +419,9 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
 
   if(chlayout != 0 && channels > 2) {
 
+    if(chlayout == 0x3f)
+      chlayout = 0x60f;
+
     uint8_t s[AUDIO_CHAN_MAX], d[AUDIO_CHAN_MAX];
     int ochan = 0;
 
@@ -492,32 +483,6 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
 
     channels = ochan;
 
-  } else {
-
-    const uint8_t *swizzle = NULL; 
-
-    /* Fixed swizzle based on codec */
-    switch(codec_id) {
-
-    case CODEC_ID_AAC:
-      if(channels > 2)
-	swizzle = swizzle_aac;
-      break;
-
-    default:
-      break;
-    }
-
-    if(swizzle != NULL) {
-      data = data0;
-      for(i = 0; i < frames; i++) {
-	for(c = 0; c < channels; c++)
-	  tmp[c] = data[swizzle[c]];
-
-	for(c = 0; c < channels; c++)
-	  *data++ = tmp[c];
-      }
-    }
   }
 
 
