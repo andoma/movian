@@ -31,7 +31,6 @@ CFLAGS += -Wmissing-prototypes -Isrc/dvd
 #
 SRCS += src/main.c \
 	src/version.c \
-	src/callout.c \
 	src/navigator.c \
 	src/media.c \
 	src/event.c \
@@ -49,6 +48,7 @@ SRCS += src/main.c \
 # Misc support
 #
 SRCS +=	src/misc/ptrvec.c \
+	src/misc/callout.c \
 
 #
 # HTSMSG

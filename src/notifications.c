@@ -22,6 +22,7 @@
 #include "showtime.h"
 #include "prop.h"
 #include "notifications.h"
+#include "misc/callout.h"
 
 static prop_t *notify_prop_root;
 

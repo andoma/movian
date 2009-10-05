@@ -18,6 +18,7 @@
 
 #include "showtime.h"
 #include "prop.h"
+#include "callout.h"
 
 static LIST_HEAD(, callout) callouts;
 

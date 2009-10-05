@@ -41,6 +41,7 @@
 #include "prop.h"
 
 #include "sd/sd.h"
+#include "misc/callout.h"
 
 extern char *htsversion;
 extern int concurrency;

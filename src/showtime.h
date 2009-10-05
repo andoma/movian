@@ -29,26 +29,6 @@ void showtime_shutdown(int retcode);
 
 extern int64_t showtime_get_ts(void);
 
-struct callout;
-typedef void (callout_callback_t)(struct callout *c, void *opaque);
-
-typedef struct callout {
-  LIST_ENTRY(callout) c_link;
-  callout_callback_t *c_callback;
-  void *c_opaque;
-  time_t c_expire;
-} callout_t;
-
-void callout_arm(callout_t *c, callout_callback_t *callback,
-		  void *opaque, int delta);
-
-void callout_arm_abs(callout_t *c, callout_callback_t *callback,
-		      void *opaque, time_t when);
-
-void callout_disarm(callout_t *c);
-
-void callout_init(void);
-
 /**
  * Content types
  */

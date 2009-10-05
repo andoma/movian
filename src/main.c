@@ -40,6 +40,7 @@
 #include "sd/sd.h"
 #include "ipc/ipc.h"
 #include "scrappers/scrappers.h"
+#include "misc/callout.h"
 
 /**
  *

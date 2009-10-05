@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include "showtime.h"
 #include "screensaver_inhibitor.h"
+#include "misc/callout.h"
 
 struct inhibitor {
   Display *dpy;
