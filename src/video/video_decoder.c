@@ -36,6 +36,8 @@
 #include "yadif.h"
 #include "event.h"
 
+#include "misc/perftimer.h"
+
 static void
 vd_init_timings(video_decoder_t *vd)
 {

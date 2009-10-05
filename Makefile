@@ -248,6 +248,7 @@ SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_texture_gx.c
 SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_render_gx.c
 SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_gx.c
 SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_video_gx.c
+SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_gxasm.S
 
 SRCS-$(CONFIG_NVCTRL)             += src/ui/linux/nvidia.c
 
@@ -309,7 +310,8 @@ SRCS-$(CONFIG_APPLEREMOTE) += \
 SRCS  += $(SRCS-yes)
 DLIBS += $(DLIBS-yes)
 SLIBS += $(SLIBS-yes)
-OBJS2=   $(SRCS:%.c=$(BUILDDIR)/%.o)
+OBJS3=   $(SRCS:%.S=$(BUILDDIR)/%.o)
+OBJS2=   $(OBJS3:%.c=$(BUILDDIR)/%.o)
 OBJS=    $(OBJS2:%.m=$(BUILDDIR)/%.o)
 DEPS=    ${OBJS:%.o=%.d}
 OBJDIRS= $(sort $(dir $(OBJS)))

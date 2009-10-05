@@ -36,6 +36,7 @@
 #include "showtime.h"
 #include "media.h"
 #include "glw_video_gx.h"
+#include "misc/perftimer.h"
 
 static void glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
 				    AVFrame *frame, int64_t pts, int epoch, 
@@ -1076,7 +1077,14 @@ glw_video_ctor(glw_t *w, int init, va_list ap)
   }
 }
 
-
+extern void videotiler_asm(void *dst, 
+			   const void *src0,
+			   const void *src1,
+			   const void *src2,
+			   const void *src3,
+			   int h1,
+			   int w1,
+			   int rp);
 
 /**
  * Frame delivery from video decoder
@@ -1089,7 +1097,7 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
   video_decoder_frame_t *vdf;
   int hvec[3], wvec[3];
   int hshift, vshift;
-  int i, w, h;
+  int i;
 
   vd->vd_active_frames_needed = 2;
 
@@ -1105,36 +1113,23 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
   if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
     return;
 
-  for(i = 0; i < 3; i++) {
-    uint64_t *dst = vdf->vdf_data[i];
-    uint64_t *src0 = (uint64_t *)(frame->data[i] + frame->linesize[i] * 0);
-    uint64_t *src1 = (uint64_t *)(frame->data[i] + frame->linesize[i] * 1);
-    uint64_t *src2 = (uint64_t *)(frame->data[i] + frame->linesize[i] * 2);
-    uint64_t *src3 = (uint64_t *)(frame->data[i] + frame->linesize[i] * 3);
-    
-    int h1 = vdf->vdf_height[i] / 4;
-    int w1 = vdf->vdf_width[i] / 8;
-      
-    int rp = ((frame->linesize[i] - vdf->vdf_width[i]) 
-	      + frame->linesize[i] * 3) / 8;
+  static perftimer_t pt;
+  perftimer_start(&pt);
 
-    for (h = 0; h < h1; h++) {
-      for (w = 0; w < w1; w++) {
-	*dst++ = *src0++;
-	*dst++ = *src1++;
-	*dst++ = *src2++;
-	*dst++ = *src3++;
-      }
+  for(i = 0; i < 3; i++)
+    videotiler_asm(vdf->vdf_data[i],
+		   frame->data[i] + frame->linesize[i] * 0,
+		   frame->data[i] + frame->linesize[i] * 1,
+		   frame->data[i] + frame->linesize[i] * 2,
+		   frame->data[i] + frame->linesize[i] * 3,
+		   vdf->vdf_height[i] / 4,
+		   vdf->vdf_width[i]  / 8,
+		   4 * frame->linesize[i] - vdf->vdf_width[i]);
 
-      src0 += rp;
-      src1 += rp;
-      src2 += rp;
-      src3 += rp;
-    }
-  }
   vd->vd_interlaced = 0;
   vdf->vdf_pts = pts;
   vdf->vdf_epoch = epoch;
   vdf->vdf_duration = duration;
   TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
+  perftimer_stop(&pt, "framexfer");
 }
