@@ -1039,9 +1039,12 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 
       cw = wrap_codec_create(codec_id, codec_type, 0, NULL, NULL,
 			     codec_id == CODEC_ID_H264);
-      if(cw == NULL)
+      if(cw == NULL) {
+	TRACE(TRACE_ERROR, "HTSP", "Unable to create codec for %s (#%d)",
+	      nicename, idx);
 	continue; /* We should print something i guess .. */
-    
+      }
+
       hss = calloc(1, sizeof(htsp_subscription_stream_t));
       hss->hss_index = idx;
       hss->hss_cw = cw;
