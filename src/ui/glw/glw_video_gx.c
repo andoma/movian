@@ -207,7 +207,8 @@ compute_avdiff(video_decoder_t *vd, media_pipe_t *mp, int64_t pts, int epoch)
  {
    static int64_t lastpts, lastaclock;
    
-  printf("%s: AVDIFF = %10f %10d %15lld %15lld %15lld %15lld %15lld\n", 
+   TRACE(TRACE_DEBUG, "AVDIFF", 
+	 "%s: %10f %10d %15lld %15lld %15lld %15lld %15lld\n", 
 	 mp->mp_name, vd->vd_avdiff_x, vd->vd_avdiff,
 	 aclock, aclock - lastaclock, pts, pts - lastpts,
 	 mp->mp_audio_clock);
@@ -227,7 +228,7 @@ gv_compute_blend(glw_video_t *gv, video_decoder_frame_t *fra,
 
   gv->gv_fra = fra;
 
-  TRACE(TRACE_DEBUG, "glw", "duration=%d, od=%d", fra->vdf_duration, output_duration);
+  //  TRACE(TRACE_DEBUG, "glw", "duration=%d, od=%d", fra->vdf_duration, output_duration);
 
   if(fra->vdf_duration >= output_duration) {
   
@@ -490,9 +491,11 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv, const glw_root_t *gr)
  */
 static void
 render_video_1f(glw_video_t *gv, video_decoder_t *vd,
-		video_decoder_frame_t *vdf, float alpha)
+		video_decoder_frame_t *vdf, glw_rctx_t *rc)
 {
   gx_video_frame_t *gvf = (gx_video_frame_t *)vdf;
+
+  GX_LoadPosMtxImm(rc->rc_be.gbr_model_matrix, GX_PNMTX0);
     
   video_frame_upload(gv, gvf);
 
@@ -688,7 +691,7 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
     width = fra->vdf_width[0];
     height = fra->vdf_height[0];
 
-    render_video_1f(gv, vd, fra, rc->rc_alpha);
+    render_video_1f(gv, vd, fra, rc);
   }
 
   gv->gv_width  = width;
