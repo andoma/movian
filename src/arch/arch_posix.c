@@ -208,3 +208,15 @@ arch_sd_init(void)
 {
 
 }
+
+
+/**
+ *
+ */
+int64_t
+showtime_get_ts(void)
+{
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
+}

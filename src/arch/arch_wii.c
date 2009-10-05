@@ -354,3 +354,13 @@ arch_sd_init(void)
   sd_add_link(p, "Browse", "/");
 
 }
+/**
+ *
+ */
+int64_t
+showtime_get_ts(void)
+{
+  extern long long gettime();
+  long long t = gettime();
+  return (t * 1000LL) / 60750LL;
+}

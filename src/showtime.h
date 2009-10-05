@@ -27,13 +27,7 @@
 
 void showtime_shutdown(int retcode);
 
-static inline int64_t
-showtime_get_ts(void)
-{
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  return (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
-}
+extern int64_t showtime_get_ts(void);
 
 struct callout;
 typedef void (callout_callback_t)(struct callout *c, void *opaque);
