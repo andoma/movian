@@ -625,6 +625,9 @@ wrap_codec_create(enum CodecID id, enum CodecType type, int parser,
   
   cw->codec_ctx = ctx ?: avcodec_alloc_context();
 
+  cw->codec_ctx->codec_id   = cw->codec->id;
+  cw->codec_ctx->codec_type = cw->codec->type;
+
   if(avcodec_open(cw->codec_ctx, cw->codec) < 0) {
     if(ctx == NULL)
       free(cw->codec_ctx);
