@@ -1,0 +1,43 @@
+/*
+ *  Callout timers
+ *  Copyright (C) 2009 Andreas Öman
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifndef CALLOUT_H__
+#define CALLOUT_H__
+
+
+struct callout;
+typedef void (callout_callback_t)(struct callout *c, void *opaque);
+
+typedef struct callout {
+  LIST_ENTRY(callout) c_link;
+  callout_callback_t *c_callback;
+  void *c_opaque;
+  time_t c_expire;
+} callout_t;
+
+void callout_arm(callout_t *c, callout_callback_t *callback,
+		  void *opaque, int delta);
+
+void callout_arm_abs(callout_t *c, callout_callback_t *callback,
+		      void *opaque, time_t when);
+
+void callout_disarm(callout_t *c);
+
+void callout_init(void);
+
+#endif /* CALLOUT_H__ */
