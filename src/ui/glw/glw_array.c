@@ -16,280 +16,226 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <math.h>
 #include "glw.h"
 #include "glw_array.h"
 
-#define glw_parent_x glw_parent_misc[0]
-#define glw_parent_y glw_parent_misc[1]
-
+/**
+ *
+ */
 static void
-glw_array_reposition_childs(glw_array_t *a)
+glw_list_update_metrics(glw_array_t *a, float max, float val)
 {
-  glw_t *w = &a->w;
-  glw_t *c;
-  float xs = 1.0f / (float)a->xvisible;
-  float ys = 1.0f / (float)a->yvisible;
-  int x = 0, y = 0;
-  float xx;
+  a->w.glw_flags &= ~GLW_UPDATE_METRICS;
+  a->metrics.knob_size = 2.0 / (max + 2.0);
+  if(max > 0)
+    a->metrics.position = val / max;
+  else
+    a->metrics.position = 0;
 
-  if(a->visiblechilds < a->xvisible) {
-    /* if the number of childs does not even span a row, we 
-       center them instead */
+  glw_signal0(&a->w, GLW_SIGNAL_SLIDER_METRICS, &a->metrics);
+}
 
-    xx = -xs * (float)a->visiblechilds + xs;
 
-    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+/**
+ *
+ */
+static void
+glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
+{
+  glw_t *c, *w = &a->w;
+  float y = 0;
+  float size_y, t, vy;
+  glw_rctx_t rc0 = *rc;
+  int column = 0;
+  int xentries = GLW_MAX(1, rc->rc_size_x / a->child_width);
+  float size_x;
 
-      if(c->glw_flags & GLW_HIDE)
-	continue;
+  a->xentries = xentries;
 
-      c->glw_parent_x = xx;
-      c->glw_parent_y =  1.0 - ys;
+  t = GLW_MIN(GLW_MAX(0, a->center_y_target), a->center_y_max);
+  a->center_y = GLW_LP(6, a->center_y, t);
 
-      xx += 2 * xs;
-    }
-    return;
-  }
+  size_y = a->child_height / rc->rc_size_y;
+  size_x = 1.0 / xentries;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
 
-    if(c->glw_flags & GLW_HIDE)
-      continue;
+    vy = y + size_y;
 
-    c->glw_parent_x = -1.0 + xs + 2 * xs * x;
-    c->glw_parent_y =  1.0 - ys - 2 * ys * y;
+    c->glw_parent_pos.y = 1.0 - vy + a->center_y;
+    c->glw_parent_pos.x = -1.0 + (2 * size_x * column) + size_x;
 
-    x++;
-    if(x == a->xvisible) {
-      x = 0;
-      y++;
-    }
-  }
-}
+    if(c->glw_parent_pos.y - size_y <= 1.5f &&
+       c->glw_parent_pos.y + size_y >= -1.5f) {
 
+      c->glw_parent_scale.x = size_x;
+      c->glw_parent_scale.y = size_y;
+      c->glw_parent_scale.z = size_y;
 
-static int
-glw_array_layout_child(glw_array_t *a, glw_t *c, glw_rctx_t *rc,
-		       float xs, float ys)
-{
-  glw_rctx_t rc0 = *rc;
-  int issel = c == a->w.glw_focused;
-
-  c->glw_parent_pos.x = c->glw_parent_x;
-  c->glw_parent_pos.y = c->glw_parent_y - a->ycenter;
-
-  if(c->glw_parent_pos.y < -4 || c->glw_parent_pos.y > 4)
-    return 1;
-
-  c->glw_parent_scale.x = xs;
-  c->glw_parent_scale.y = ys;
-  c->glw_parent_scale.z = 1.0f; //(c->glw_scale.x + c->glw_scale.y) / 2;
-  rc0.rc_aspect = rc->rc_aspect * c->glw_parent_scale.x / c->glw_parent_scale.y;
-  rc0.rc_focused = rc->rc_focused && issel;
-
-  glw_layout0(c, &rc0);
-
-  if(c->glw_flags & GLW_HIDE)
-    return 0;
-
-  glw_link_render_list(&a->w, c);
-  return 0;
-}
-
-
-
-
-
-static void
-glw_array_layout(glw_t *w, glw_rctx_t *rc)
-{
-  glw_array_t *a = (void *)w;
-  glw_t *c, *n, *p;
-  float xs = 1.0f / (float)a->xvisible;
-  float ys = 1.0f / (float)a->yvisible;
-  float d;
-
-  glw_flush_render_list(w);
-
-  do {
-
-    if(a->reposition_needed) {
-      a->reposition_needed = 0;
-      glw_array_reposition_childs(a);
+      rc0.rc_size_x = rc->rc_size_x * c->glw_parent_scale.x;
+      rc0.rc_size_y = rc->rc_size_y * c->glw_parent_scale.y;
+      glw_layout0(c, &rc0);
     }
 
-    if(w->glw_focused == NULL) {
-      c = TAILQ_FIRST(&w->glw_childs);
-      if(c == NULL) {
-	/* If we have nothing to layout we should make sure our
-	   parent does not have us selected, it will mess up focus */
-	
-	if(w->glw_parent->glw_focused == w)
-	  w->glw_parent->glw_focused = NULL;
-	return;
+    if(c == a->scroll_to_me) {
+      a->scroll_to_me = NULL;
+     
+      if(vy + size_y - a->center_y_target > 2) {
+	t = vy + size_y - 2;
+	w->glw_flags |= GLW_UPDATE_METRICS;
+      } else if(vy - size_y - a->center_y_target < 0) {
+	t = vy - size_y;
+	w->glw_flags |= GLW_UPDATE_METRICS;
       }
-
-      a->curx = c->glw_parent_pos.x;
-      a->cury = c->glw_parent_pos.y;
-      w->glw_focused = c;
-      glw_signal0(c, GLW_SIGNAL_FOCUSED_UPDATE_ADVISORY, NULL);
     }
-    c = w->glw_focused;
 
-    glw_array_layout_child(a, c, rc, xs, ys);
-
-    p = c;
-    do {
-      p = TAILQ_PREV(p, glw_queue, glw_parent_link);
-    } while(p != NULL && !glw_array_layout_child(a, p, rc, xs, ys));
-
-    n = c;
-    do {
-      n = TAILQ_NEXT(n, glw_parent_link);
-    } while(n != NULL && !glw_array_layout_child(a, n, rc, xs, ys));
-  
-
-    d = c->glw_parent_y - a->ycenter_target;
-    if(d > 0.7f)
-      a->ycenter_target += ys * 2;
-    if(d < -0.7f) 
-      a->ycenter_target -= ys * 2;
-
-    a->ycenter_target = GLW_MIN(a->ycenter_target, 0.0f);
-    a->ycenter = GLW_LP(8, a->ycenter, a->ycenter_target);
-  } while(0 && a->reposition_needed);
-}
-
-
-
-
-static void
-glw_array_render(glw_t *w, glw_rctx_t *rc)
-{
-  glw_t *c;
-  glw_rctx_t rc0 = *rc;
-
-  TAILQ_FOREACH(c, &w->glw_render_list, glw_render_link) {
-
-    if(c->glw_parent_pos.y < -1.5 || c->glw_parent_pos.y > 1.5)
-      continue;
-
-    rc0.rc_focused = rc->rc_focused && c == w->glw_focused;
-    glw_render_TS(c, &rc0, rc);
+    column++;
+    if(column == xentries) {
+      y += size_y * 2;
+      column = 0;
+    }
   }
+
+  y = GLW_MAX(y - 2, 0);
+  
+  if(a->center_y_max != y)
+    w->glw_flags |= GLW_UPDATE_METRICS;
+
+  a->center_y_max = y;
+  a->center_y_target = t;
+
+  if(w->glw_flags & GLW_UPDATE_METRICS)
+    glw_list_update_metrics(a, y, t);
 }
 
 
-
-static int
-glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal,
-		   void *extra)
+/**
+ *
+ */
+static void
+glw_array_render(glw_array_t *a, glw_rctx_t *rc)
 {
-  glw_array_t *a = (void *)w;
-  glw_t *n, *c = w->glw_focused;
-  event_t *e;
+  glw_t *w = &a->w;
+  glw_t *c;
+  glw_rctx_t rc0;
+  int clip1, clip2;
+  float size_y;
+  if(rc->rc_alpha < 0.01)
+    return;
+
+  size_y = a->child_height / rc->rc_size_y;
+
+  glw_store_matrix(w, rc);
+  
+  clip1 = glw_clip_enable(rc, GLW_CLIP_TOP);
+  clip2 = glw_clip_enable(rc, GLW_CLIP_BOTTOM);
+
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+
+    if(c->glw_parent_pos.y - size_y <= 1.0f &&
+       c->glw_parent_pos.y + size_y >= -1.0f) {
+      rc0 = *rc;
+      glw_render_TS(c, &rc0, rc);
+      c->glw_flags &= ~GLW_FOCUS_BLOCKED;
+    } else {
+      c->glw_flags |= GLW_FOCUS_BLOCKED;
+    }
+  }
+
+  glw_clip_disable(rc, clip1);
+  glw_clip_disable(rc, clip2);
+}
+
+
+/**
+ *
+ */
+static void
+glw_array_scroll(glw_array_t *a, glw_scroll_t *gs)
+{
+  a->center_y_target = gs->value * a->center_y_max;
+}
+
+
+/**
+ *
+ */
+static int
+glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
+{
+  glw_rctx_t *rc = extra;
+  glw_array_t *a = (glw_array_t *)w;
+  glw_pointer_event_t *gpe;
+  glw_t *c;
 
   switch(signal) {
   default:
     break;
   case GLW_SIGNAL_LAYOUT:
-    glw_array_layout(w, extra);
+    glw_array_layout(a, rc);
     return 0;
 
   case GLW_SIGNAL_RENDER:
-    glw_array_render(w, extra);
+    glw_array_render(a, rc);
+    return 0;
+
+  case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
+    a->scroll_to_me = extra;
     return 0;
 
   case GLW_SIGNAL_CHILD_CREATED:
-    if(w->glw_focused == NULL) {
-      c = w->glw_focused = extra;
-      glw_signal0(c, GLW_SIGNAL_FOCUSED_UPDATE_ADVISORY, NULL);
-    }
-    /* FALLTHRU */
-  case GLW_SIGNAL_CHILD_VISIBLE:
-    a->visiblechilds++;
-    a->reposition_needed = 1;
-    return 0;
+    c = extra;
+
+    c->glw_parent_pos.z = 0.0;
+
+    c->glw_parent_scale.x = 1.0;
+    c->glw_parent_scale.y = 1.0;
+    c->glw_parent_scale.z = 1.0;
+    break;
 
   case GLW_SIGNAL_CHILD_DESTROYED:
-  case GLW_SIGNAL_CHILD_HIDDEN:
-    a->visiblechilds--;
-    a->reposition_needed = 1;
-    return 0;
+    if(a->scroll_to_me == extra)
+      a->scroll_to_me = NULL;
+    break;
 
-  case GLW_SIGNAL_FOCUS:
-    w->glw_focused = c;
-    a->curx = c->glw_parent_x;
-    a->cury = c->glw_parent_y;
-    return 0;
+  case GLW_SIGNAL_POINTER_EVENT:
+    gpe = extra;
 
-  case GLW_SIGNAL_EVENT:
-    if(c == NULL)
-      return 0;
-
-    e = extra;
-    n = NULL;
-
-    if(glw_signal0(c, GLW_SIGNAL_EVENT, e))
-      return 1;
-
-    switch(e->e_type) {
-    case EVENT_UP:
-      n = glw_get_prev_n_all(c, a->xvisible);
-      break;
-    case EVENT_DOWN:
-      n = glw_get_next_n_all(c, a->xvisible);
-      break;
-    case EVENT_LEFT:
-      n = glw_get_prev_n(c, 1);
-      break;
-    case EVENT_RIGHT:
-      n = glw_get_next_n(c, 1);
-      break;
-    default:
-      break;
+    if(gpe->type == GLW_POINTER_SCROLL) {
+      a->center_y_target += gpe->delta_y;
+      a->w.glw_flags |= GLW_UPDATE_METRICS;
     }
+    break;
 
-    if(n != NULL) {
-      glw_signal0(n, GLW_SIGNAL_FOCUSED_UPDATE, NULL);
-      w->glw_focused = n;
-      a->curx = n->glw_parent_x;
-      a->cury = n->glw_parent_y;
-      return 1;
-    }
-    return glw_navigate(w, extra);
+  case GLW_SIGNAL_SCROLL:
+    glw_array_scroll(a, extra);
+    break;
   }
   return 0;
 }
 
 
 
+/**
+ *
+ */
 void 
 glw_array_ctor(glw_t *w, int init, va_list ap)
 {
-  glw_array_t *a = (void *)w;
+  glw_array_t *a = (glw_array_t *)w;
   glw_attribute_t attrib;
 
   if(init) {
     glw_signal_handler_int(w, glw_array_callback);
-    a->cursor_width = 0.1f;
-    a->curx = -2;
-    a->cury = -2;
-
-    a->xvisible = 1;
-    a->yvisible = 1;
+    a->child_width  = 150;
+    a->child_height = 180;
   }
 
   do {
     attrib = va_arg(ap, int);
     switch(attrib) {
-    case GLW_ATTRIB_X_SLICES:
-      a->xvisible = va_arg(ap, int);
-      break;
-    case GLW_ATTRIB_Y_SLICES:
-      a->yvisible = va_arg(ap, int);
-      break;
+
+
 
     default:
       GLW_ATTRIB_CHEW(attrib, ap);

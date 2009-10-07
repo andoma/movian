@@ -22,19 +22,16 @@
 typedef struct glw_array {
   glw_t w;
 
-  int reposition_needed;
+  float center_y, center_y_target, center_y_max;
 
-  float curx, cury;
+  glw_t *scroll_to_me;
 
-  float ycenter;
-  float ycenter_target;
+  glw_slider_metrics_t metrics;
+  
+  int child_width;
+  int child_height;
 
-  int xvisible;
-  int yvisible;
-  float s0;
-  float cursor_width;
-
-  int visiblechilds;
+  int xentries;  // items per row
 
 } glw_array_t;
 

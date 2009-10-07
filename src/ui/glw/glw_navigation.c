@@ -18,7 +18,7 @@
 
 #include "glw.h"
 #include "glw_event.h"
-
+#include "glw_array.h"
 
 typedef struct query {
   float x, xmin, xmax;
@@ -116,6 +116,7 @@ find_candidate(glw_t *w, query_t *query)
       find_candidate(c, query);
     break;
 
+  case GLW_ARRAY:
   case GLW_LIST_X:
   case GLW_LIST_Y:
     if(w->glw_focused) {
@@ -282,6 +283,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
     if(local) {
       switch(w->glw_class) {
+      case GLW_ARRAY:
       case GLW_LIST_X:
       case GLW_LIST_Y:
 	return 0;
@@ -303,6 +305,19 @@ glw_navigate(glw_t *w, event_t *e, int local)
     case GLW_EXPANDER_X:
     case GLW_EXPANDER_Y:
       break;
+
+    case GLW_ARRAY: {
+      glw_array_t *a = (glw_array_t *)p;
+      if(orientation == 0) {
+	if(pagemode == 0) {
+	  pagemode = 1;
+	  pagecnt = a->xentries;
+	} else if(pagemode == 1) {
+	  pagecnt *= a->xentries;
+	}
+      }
+      goto container;
+    }
 
     case GLW_CONTAINER_X:
     case GLW_CONTAINER_Y:

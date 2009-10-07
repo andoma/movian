@@ -1298,7 +1298,7 @@ static struct strtab classtab[] = {
   { "label",         GLW_LABEL},
   { "text",          GLW_TEXT},
   { "integer",       GLW_INTEGER},
-  //  { "array",         GLW_ARRAY},
+  { "array",         GLW_ARRAY},
   { "list_x",        GLW_LIST_X},
   { "list_y",        GLW_LIST_Y},
   { "deck",          GLW_DECK},

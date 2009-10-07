@@ -80,7 +80,7 @@ static const size_t glw_class_to_size[] = {
   [GLW_FX_TEXROT] = sizeof(glw_fx_texrot_t),
   [GLW_VIDEO] = sizeof(glw_video_t),
   [GLW_FREEFLOAT] = sizeof(glw_freefloat_t),
-
+  [GLW_ARRAY] = sizeof(glw_array_t),
 };
 
 
@@ -371,11 +371,11 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
   case GLW_INTEGER:
     glw_text_bitmap_ctor(w, init, apx);
     break;
-#if 0
+
   case GLW_ARRAY:
     glw_array_ctor(w, init, apx);
     break;
-#endif
+
   case GLW_ROTATOR:
     glw_rotator_ctor(w, init, apx);
     break;
