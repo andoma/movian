@@ -1,0 +1,48 @@
+#include "theme://include/separators.model"
+#include "theme://include/plates.model"
+
+widget(container_y, {
+
+  widget(label, {
+    .align = left;
+    .sizeBias = 9 + 3;
+    .caption = $self.title;
+    .ellipsize = true;
+  });
+
+  HORIZONTAL_SEPARATOR();
+
+  widget(container_x, {
+
+    widget(array, {
+      .id = "array";
+ 
+      cloner($page.nodes, backdrop, {
+	BUTTON_PROPS(1.0);
+	onEvent(enter, navOpen($self.url, $self.type, $parent.url));
+ 
+	widget(container_y, {
+	  widget(image, {
+	    .source = $self.metadata.album_art;
+	  });
+
+	  widget(label, {
+	    .sizeScale = 0.75;
+	    .caption = $self.metadata.artist;
+	    .ellipsize = true;
+	  });
+	});
+      });
+    });
+
+    widget(slider_y, {
+      .width = SLIDER_WIDTH();
+      .focusable = 0.2;
+      bind("array");
+
+      widget(backdrop, {
+	KNOB_PROPS();
+      });
+    });
+  });
+});
