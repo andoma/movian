@@ -1290,12 +1290,14 @@ search_completed(sp_search *result, void *userdata)
       prop_destroy(p);
   }
 
-  prop_set_string(ss->ss_view, "list");
+  if(nalbums && nartists == 0 && ntracks == 0)
+    prop_set_string(ss->ss_view, "array");
+  else
+    prop_set_string(ss->ss_view, "list");
 
   f_sp_search_release(result);
   search_cleanup(ss);
 }
-
 
 
 /**
@@ -1874,6 +1876,7 @@ be_spotify_search(const char *url, const char *query, nav_page_t **npp,
   hts_mutex_unlock(&spotify_mutex);
 
   prop_set_string(prop_create(p, "type"), "directory");
+  prop_set_string(prop_create(p, "title"), "Search result");
   *npp = np;
   return 0;
 }
@@ -2321,8 +2324,7 @@ be_spotify_init(void)
   prop_set_string(prop_status, "Not logged in");
 
   sd_add_link(p, "Playlists", "spotify:playlists");
-  // Does not work right now
-  //  sd_add_link(p, "New album releases", "spotify:search:tag:new");
+  sd_add_link(p, "New album releases", "spotify:search:tag:new");
   return 0;
 }
 
