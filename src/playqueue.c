@@ -489,6 +489,33 @@ del_from_source(playqueue_entry_t *pqe)
  *
  */
 static void
+move_track(playqueue_entry_t *pqe, playqueue_entry_t *before)
+{
+  TAILQ_REMOVE(&playqueue_source_entries, pqe, pqe_source_link);
+  TAILQ_REMOVE(&playqueue_entries, pqe, pqe_linear_link);
+  TAILQ_REMOVE(&playqueue_shuffled_entries, pqe, pqe_shuffled_link);
+  
+  if(before != NULL) {
+    TAILQ_INSERT_BEFORE(before, pqe, pqe_source_link);
+  } else {
+    TAILQ_INSERT_TAIL(&playqueue_source_entries, pqe, pqe_source_link);
+  }
+
+  if(before != NULL) {
+    TAILQ_INSERT_BEFORE(before, pqe, pqe_linear_link);
+  } else {
+    TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_linear_link);
+  }
+  pqe_insert_shuffled(pqe);
+
+  prop_move(pqe->pqe_node, before ? before->pqe_node : NULL);
+}
+
+
+/**
+ *
+ */
+static void
 siblings_populate(void *opaque, prop_event_t event, ...)
 {
   prop_t *p;
@@ -518,6 +545,12 @@ siblings_populate(void *opaque, prop_event_t event, ...)
     pqe = find_source_entry_by_prop(va_arg(ap, prop_t *));
     assert(pqe != NULL);
     del_from_source(pqe);
+    break;
+
+  case PROP_MOVE_CHILD:
+    pqe  = find_source_entry_by_prop(va_arg(ap, prop_t *));
+    assert(pqe  != NULL);
+    move_track(pqe, find_source_entry_by_prop(va_arg(ap, prop_t *)));
     break;
 
   default:
