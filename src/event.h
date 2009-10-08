@@ -76,6 +76,9 @@ typedef enum {
   ACTION_CHANNEL_PREV,
   ACTION_FULLSCREEN_TOGGLE,
 
+  ACTION_ZOOM_UI_INCR,
+  ACTION_ZOOM_UI_DECR,
+
   ACTION_last_mappable
 } action_type_t;
 

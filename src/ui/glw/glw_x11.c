@@ -640,6 +640,10 @@ static const struct {
   { XK_Left,         Mod1Mask,    ACTION_NAV_BACK },
   { XK_Right,        Mod1Mask,    ACTION_NAV_FWD },
 
+  { '+',             ControlMask, ACTION_ZOOM_UI_INCR },
+  { XK_KP_Add,       ControlMask, ACTION_ZOOM_UI_INCR },
+  { '-',             ControlMask, ACTION_ZOOM_UI_DECR },
+  { XK_KP_Subtract,  ControlMask, ACTION_ZOOM_UI_DECR },
 
   { XK_F11,          0,           ACTION_FULLSCREEN_TOGGLE },
   
@@ -1055,11 +1059,29 @@ glw_x11_dispatch_event(uii_t *uii, event_t *e)
   
   if(event_is_action(e, ACTION_FULLSCREEN_TOGGLE)) {
     settings_toggle_bool(gx11->fullscreen_setting);
-    event_unref(e);
+  } else if(event_is_action(e, ACTION_ZOOM_UI_INCR)) {
+
+    gx11->want_font_size++;
+    if(gx11->want_font_size > 40)
+      gx11->want_font_size = 40;
+    else
+      gx11->saveconf = 1;
+
+  } else if(event_is_action(e, ACTION_ZOOM_UI_DECR)) {
+
+    gx11->want_font_size--;
+    if(gx11->want_font_size < 14)
+      gx11->want_font_size = 14;
+    else
+      gx11->saveconf = 1;
+
   } else {
     /* Pass it on to GLW */
     glw_dispatch_event(uii, e);
+    return;
+
   }
+  event_unref(e);
 }
 
 
