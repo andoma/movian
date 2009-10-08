@@ -32,8 +32,11 @@ static inline void perftimer_stop(perftimer_t *pt, const char *str)
 
   s = now / 1000000;
 
-  TRACE(TRACE_DEBUG, "timer", "%s: avg:%d, peak:%d",
-	str, pt->avg, pt->peak);
+  if(s != pt->logsec) {
+    TRACE(TRACE_DEBUG, "timer", "%s: avg:%d, peak:%d",
+	  str, pt->avg, pt->peak);
+    pt->logsec = s;
+  }
 }
 
 #endif /* PERFTIMER_H__ */
