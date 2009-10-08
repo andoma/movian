@@ -30,6 +30,7 @@ videotiler_asm:
 	stfdu		1,8(3)
 	stfdu		2,8(3)
 	stfdu		3,8(3)
+	dcbf		11,3
 		
 	bdnz		2b
 

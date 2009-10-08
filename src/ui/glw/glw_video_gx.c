@@ -94,22 +94,6 @@ gv_buffer_allocator(video_decoder_t *vd)
 }
 
 
-
-static void
-video_frame_upload(glw_video_t *gv, gx_video_frame_t *gvf)
-{
-  int i;
-
-  if(gvf->gvf_uploaded)
-    return;
-
-  for(i = 0; i < 3; i++)
-    DCFlushRange(gvf->gvf_mem[i], gvf->gvf_size[i]);
-
-  gvf->gvf_uploaded = 1;
-}
-
-
 /**
  *  Video widget layout
  */
@@ -117,13 +101,9 @@ static void
 gv_enqueue_for_decode(video_decoder_t *vd, video_decoder_frame_t *vdf,
 		      struct video_decoder_frame_queue *fromqueue)
 {
-  gx_video_frame_t *gvf = (gx_video_frame_t *)vdf;
-
   hts_mutex_lock(&vd->vd_queue_mutex);
 
   TAILQ_REMOVE(fromqueue, vdf, vdf_link);
-
-  gvf->gvf_uploaded = 0;
 
   TAILQ_INSERT_TAIL(&vd->vd_avail_queue, vdf, vdf_link);
   hts_cond_signal(&vd->vd_avail_queue_cond);
@@ -498,8 +478,6 @@ render_video_1f(glw_video_t *gv, video_decoder_t *vd,
 
   GX_LoadPosMtxImm(rc->rc_be.gbr_model_matrix, GX_PNMTX0);
     
-  video_frame_upload(gv, gvf);
-
  // setup the vertex descriptor
   GX_ClearVtxDesc();
   GX_SetVtxDesc(GX_VA_POS, GX_DIRECT);

@@ -39,8 +39,6 @@ typedef struct gx_video_frame {
   void *gvf_mem[3];
   int gvf_size[3];
 
-  int gvf_uploaded;
-
 } gx_video_frame_t;
 
 
