@@ -1419,10 +1419,9 @@ tracks_moved(sp_playlist *plist, const int *tracks,
 	     int num_tracks, int new_position, void *userdata)
 {
   playlist_t *pl = userdata;
-  int i;
+  int i, pos2;
   int *positions;
-  playlist_track_t *before, *plt;
-  const sp_track **tvec;
+  playlist_track_t *plt, *before, **vec;
 
   /* Sort so we always delete from the end. Better safe then sorry */
   positions = alloca(num_tracks * sizeof(int));
@@ -1430,22 +1429,27 @@ tracks_moved(sp_playlist *plist, const int *tracks,
   qsort(positions, num_tracks, sizeof(int), intcmp_dec);
 
   before = ptrvec_get_entry(&pl->pl_tracks, new_position);
-
-  tvec = alloca(num_tracks * sizeof(sp_track *));
+  vec = alloca(num_tracks * sizeof(playlist_track_t *));
 
   for(i = 0; i < num_tracks; i++) {
-    plt = ptrvec_remove_entry(&pl->pl_tracks, positions[i]);
-    tvec[num_tracks - i - 1] = plt->plt_track;
-    if(plt->plt_prop_root != NULL)
-      prop_destroy(plt->plt_prop_root);
-    free(plt);
+    vec[num_tracks-1-i] = ptrvec_remove_entry(&pl->pl_tracks, positions[i]);
+    if(positions[i] < new_position)
+      new_position--;
   }
+  for(i = num_tracks - 1; i >= 0; i--) {
+    plt = vec[i];
 
-  for(i = 0; i < ptrvec_size(&pl->pl_tracks); i++)
-    if(before == ptrvec_get_entry(&pl->pl_tracks, i))
-      break;
+    pos2 = new_position;
+    while((before = ptrvec_get_entry(&pl->pl_tracks, pos2)) != NULL &&
+	  before->plt_prop_root == NULL)
+      pos2++;
 
-  tracks_added(plist, tvec, num_tracks, i, userdata);
+    before = ptrvec_get_entry(&pl->pl_tracks, pos2);
+    ptrvec_insert_entry(&pl->pl_tracks, new_position, plt);
+
+    if(plt->plt_prop_root != NULL)
+      prop_move(plt->plt_prop_root, before ? before->plt_prop_root : NULL);
+  }
 }
 
 
