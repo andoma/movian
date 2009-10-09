@@ -32,7 +32,6 @@
 
 #include "glw_cocoa.h"
 #include "glw.h"
-#include "glw_video.h"
 
 #include "showtime.h"
 #include "settings.h"
