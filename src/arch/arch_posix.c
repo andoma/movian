@@ -140,7 +140,14 @@ hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delta)
 {
   struct timespec ts;
 
+#ifdef __APPLE__
+  /* darwin does not have clock_gettime */
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  TIMEVAL_TO_TIMESPEC(&tv, &ts);
+#else
   clock_gettime(CLOCK_REALTIME, &ts);
+#endif
 
   ts.tv_sec  +=  delta / 1000;
   ts.tv_nsec += (delta % 1000) * 1000000;
