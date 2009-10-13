@@ -19,7 +19,7 @@
 #ifndef STRTAB_H_
 #define STRTAB_H_
 
-#include <strings.h>
+#include <string.h>
 
 struct strtab {
   const char *str;
