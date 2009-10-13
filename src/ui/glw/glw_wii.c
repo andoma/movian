@@ -24,6 +24,7 @@
 #include <malloc.h>
 #include <unistd.h>
 
+#include <ogc/lwp_queue.h>
 #include <wiiuse/wpad.h>
 
 #include "showtime.h"

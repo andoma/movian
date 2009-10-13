@@ -11,18 +11,8 @@ export DEVKITPPC=${DEVKITPRO}/devkitPPC
 if ! test -e ${DEVKITPPC} ; then
     mkdir -p ${DEVKITPRO}
     cd ${DEVKITPRO}
-    wget http://sunet.dl.sourceforge.net/sourceforge/devkitpro/devkitPPC_r16-i686-linux.tar.bz2
-    tar xvf devkitPPC_r16-i686-linux.tar.bz2
-
-    # llrint() is defined by math.h but not provided by libm.a
-    # this break FFmpeg compilation, so do something ugly about it
-    sed -i.bak "s/llrint/llrintxxxxxxxxx/" ${DEVKITPRO}/devkitPPC/powerpc-gekko/include/math.h
-    sed -i.bak "s/log2(/log2xxxxx(/" ${DEVKITPRO}/devkitPPC/powerpc-gekko/include/math.h
-
-    # likewise, devkitppc lacks strings.h, where strcasecmp() should reside.
-    # It is in string.h instead
-    echo >>${DEVKITPRO}/devkitPPC/powerpc-gekko/include/strings.h '#include "string.h"'
-
+    wget http://sunet.dl.sourceforge.net/sourceforge/devkitpro/devkitPPC_r18-i686-linux.tar.bz2
+    tar xvf devkitPPC_r18-i686-linux.tar.bz2
 fi
 
 ### Get and compile libogc
@@ -31,8 +21,8 @@ fi
 if ! test -e ${DEVKITPRO}/libogc/lib/wii ; then
     mkdir -p ${DEVKITPRO}/libogc-src
     cd ${DEVKITPRO}/libogc-src
-    wget http://sunet.dl.sourceforge.net/sourceforge/devkitpro/libogc-src-1.7.1.tar.bz2
-    tar xvf libogc-src-1.7.1.tar.bz2
+    wget http://downloads.sourceforge.net/project/devkitpro/libogc/libogc-src-1.8.0.tar.bz2
+    tar xvf libogc-src-1.8.0.tar.bz2
     make wii install
 fi
 
@@ -41,8 +31,8 @@ fi
 if ! test -e ${DEVKITPRO}/libfat/lib ; then
     mkdir -p ${DEVKITPRO}/libfat
     cd ${DEVKITPRO}/libfat
-    wget http://sunet.dl.sourceforge.net/sourceforge/devkitpro/libfat-ogc-1.0.4.tar.bz2
-    tar xvf libfat-ogc-1.0.4.tar.bz2
+    wget http://sunet.dl.sourceforge.net/sourceforge/devkitpro/libfat-ogc-1.0.5.tar.bz2
+    tar xvf libfat-ogc-1.0.5.tar.bz2
 fi
 
 ### Get freetype
@@ -52,13 +42,13 @@ if ! test -e ${WIISUPPORT}/freetype-ppc ; then
     wget http://mirrors.zerg.biz/nongnu/freetype/freetype-2.3.9.tar.bz2
     tar xvf freetype-2.3.9.tar.bz2
     cd ${WIISUPPORT}/freetype-2.3.9
-    OBJDUMP="${DEVKITPRO}/devkitPPC/bin/powerpc-gekko-objdump" \
-	LD="${DEVKITPRO}/devkitPPC/bin/powerpc-gekko-ld" \
-	STRIP="${DEVKITPRO}/devkitPPC/bin/powerpc-gekko-strip" \
-	RANLIB="${DEVKITPRO}/devkitPPC/bin/powerpc-gekko-ranlib" \
-	AR="${DEVKITPRO}/devkitPPC/bin/powerpc-gekko-ar" \
+    OBJDUMP="${DEVKITPRO}/devkitPPC/bin/powerpc-eabi-objdump" \
+	LD="${DEVKITPRO}/devkitPPC/bin/powerpc-eabi-ld" \
+	STRIP="${DEVKITPRO}/devkitPPC/bin/powerpc-eabi-strip" \
+	RANLIB="${DEVKITPRO}/devkitPPC/bin/powerpc-eabi-ranlib" \
+	AR="${DEVKITPRO}/devkitPPC/bin/powerpc-eabi-ar" \
 	CFLAGS="-mcpu=750 -O2" \
-	CC="${DEVKITPRO}/devkitPPC/bin/powerpc-gekko-gcc" \
+	CC="${DEVKITPRO}/devkitPPC/bin/powerpc-eabi-gcc" \
 	./configure --host=ppc --prefix=${WIISUPPORT}/freetype-ppc \
 	--disable-static 
 

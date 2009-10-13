@@ -33,7 +33,7 @@ static inline void
 glw_Rotatef(glw_rctx_t *rc, float a, float x, float y, float z)
 {
   Mtx mtx;
-  Vector axis = {x,y,z};
+  guVector axis = {x,y,z};
 
   guMtxRotAxisDeg(mtx, &axis, a);
   guMtxConcat(rc->rc_be.gbr_model_matrix, mtx, rc->rc_be.gbr_model_matrix);
