@@ -173,7 +173,6 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
   AVCodecContext *ctx = cw->codec_ctx;
   AVFrame *frame = vd->vd_frame;
   frame_meta_t *fm;
-  time_t now;
   event_ts_t *ets;
 
   got_pic = 0;
@@ -190,8 +189,6 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
     vd->vd_compensate_thres = 5;
   }
 
-  time(&now);
-
   ctx->opaque = mb;
   ctx->get_buffer = vd_get_buffer;
   ctx->release_buffer = vd_release_buffer;
@@ -204,7 +201,10 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
   if(mb->mb_skip == 2)
     vd->vd_skip = 1;
 
+  //  static perftimer_t pt;
+  //  perftimer_start(&pt);
   avcodec_decode_video(ctx, frame, &got_pic, mb->mb_data, mb->mb_size);
+  //  perftimer_stop(&pt, "videodecode");
 
   if(got_pic == 0 || mb->mb_skip == 1) 
     return;
