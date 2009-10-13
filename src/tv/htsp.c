@@ -707,6 +707,8 @@ be_htsp_open(const char *url, const char *type, const char *parent,
     return -1;
   }
 
+  TRACE(TRACE_DEBUG, "HTSP", "Open %s", url);
+
 #if 0
   if(path[0] == 0) {
     hp = nav_page_create(url, sizeof(htsp_page_t), htsp_close_page,
