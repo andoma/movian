@@ -295,6 +295,17 @@ fi
 
 
 #
+# NVCtrl
+#
+if enabled libopenspc; then
+    
+    check_header "openspc.h" || fatal "openspc" "Missing include file openspc.h"
+    check_lib    "openspc"   || fatal "openxpc" "Unable to link with libopenspc"
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lopenspc"
+fi
+
+
+#
 # configure ffmpeg
 #
 setup_ffmpeg --cpu=${CPU} --enable-pthreads

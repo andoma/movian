@@ -104,7 +104,8 @@ metadata_to_prop(prop_t *p, const char *pname, AVMetadata *m, const char *key,
  * Obtain details from playlist
  */
 static void
-fa_probe_playlist(prop_t *proproot, const char *url, char *pb, size_t pbsize)
+fa_probe_playlist(prop_t *proproot, const char *url,
+		  uint8_t *pb, size_t pbsize)
 {
   const char *t;
   char tmp1[300];
@@ -120,7 +121,7 @@ fa_probe_playlist(prop_t *proproot, const char *url, char *pb, size_t pbsize)
   
   prop_set_string(prop_create(proproot, "title"), tmp1);
   
-  t = strstr(pb, "NumberOfEntries=");
+  t = strstr((char *)pb, "NumberOfEntries=");
   
   if(t != NULL)
     prop_set_int(prop_create(proproot, "ntracks"), atoi(t + 16));
@@ -131,7 +132,7 @@ fa_probe_playlist(prop_t *proproot, const char *url, char *pb, size_t pbsize)
  */
 #ifdef CONFIG_LIBEXIF
 static void
-fa_probe_exif(prop_t *proproot, fa_handle_t *fh, char *pb, size_t pbsize)
+fa_probe_exif(prop_t *proproot, fa_handle_t *fh, uint8_t *pb, size_t pbsize)
 {
   unsigned char buf[4096];
   int x, v;
@@ -141,7 +142,7 @@ fa_probe_exif(prop_t *proproot, fa_handle_t *fh, char *pb, size_t pbsize)
 
   l = exif_loader_new();
 
-  v = exif_loader_write(l, (unsigned char *)pb, pbsize);
+  v = exif_loader_write(l, pb, pbsize);
   while(v) {
     if((x = fa_read(fh, buf, sizeof(buf))) < 1)
       break;
@@ -179,6 +180,34 @@ fa_probe_exif(prop_t *proproot, fa_handle_t *fh, char *pb, size_t pbsize)
 }
 #endif
 
+/**
+ * Probe SPC files
+ */
+static void
+fa_probe_spc(prop_t *proproot, uint8_t *pb)
+{
+  char buf[33];
+  buf[32] = 0;
+
+  if(memcmp("v0.30", pb + 0x1c, 4))
+    return;
+
+  if(pb[0x23] != 0x1a)
+    return;
+
+  memcpy(buf, pb + 0x2e, 32);
+  prop_set_string(prop_create(proproot, "title"), buf);
+
+  memcpy(buf, pb + 0x4e, 32);
+  prop_set_string(prop_create(proproot, "album"), buf);
+
+  memcpy(buf, pb + 0xa9, 3);
+  buf[3] = 0;
+
+  prop_set_float(prop_create(proproot, "duration"), atoi(buf));
+
+  return;
+}
 
 /**
  * Probe file by checking its header
@@ -187,12 +216,18 @@ static int
 fa_probe_header(prop_t *proproot, const char *url, fa_handle_t *fh,
 		char *newurl, size_t newurlsize)
 {
-  char pb[128];
+  uint8_t pb[256];
   off_t psiz;
   uint16_t flags;
 
   memset(pb, 0, sizeof(pb));
   psiz = fa_read(fh, pb, sizeof(pb));
+
+  if(psiz == 256 && 
+     !memcmp(pb, "SNES-SPC700 Sound File Data", 27)) {
+    fa_probe_spc(proproot, pb); 
+    return CONTENT_AUDIO;
+  }
 
   if(pb[0] == 'R'  && pb[1] == 'a'  && pb[2] == 'r' && pb[3] == '!' &&
      pb[4] == 0x1a && pb[5] == 0x07 && pb[6] == 0x0 && pb[9] == 0x73) {
@@ -213,7 +248,7 @@ fa_probe_header(prop_t *proproot, const char *url, fa_handle_t *fh,
     return CONTENT_ARCHIVE;
   }
 
-  if(!strncasecmp(pb, "[playlist]", 10)) {
+  if(!strncasecmp((char *)pb, "[playlist]", 10)) {
     /* Playlist */
     if(proproot != NULL)
       fa_probe_playlist(proproot, url, pb, sizeof(pb));

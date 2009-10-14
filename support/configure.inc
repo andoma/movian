@@ -45,6 +45,7 @@ CONFIG_LIST="
  appleremote
  bonjour
  nvctrl
+ libopenspc
 "
 
 die() {
