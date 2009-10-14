@@ -484,6 +484,14 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
       continue;
     }
 
+    if(ab->ab_flush) {
+      pa_operation *o;
+      o = pa_stream_flush(pam->stream, NULL, NULL);
+      if(o != NULL)
+	pa_operation_unref(o);
+      ab->ab_flush = 0;
+    }
+
     l = pa_stream_writable_size(pam->stream);
     
     if(l == 0) {

@@ -240,6 +240,12 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
   
   if(cw == NULL) {
 
+    if(ad->ad_do_flush) {
+      ad->ad_do_flush = 0;
+      if(mp_is_primary(mp))
+	ad->ad_send_flush = 1;
+    }
+
     /* Raw native endian PCM */
 
     if(mb->mb_time != AV_NOPTS_VALUE)
@@ -307,6 +313,9 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
     if(ad->ad_do_flush) {
       avcodec_flush_buffers(cw->codec_ctx);
       ad->ad_do_flush = 0;
+      if(mp_is_primary(mp)) {
+	ad->ad_send_flush = 1;
+     }
     }
 
     if(audio_mode_stereo_only(am))
@@ -818,6 +827,11 @@ audio_deliver(audio_decoder_t *ad, audio_mode_t *am, int16_t *src,
       ab->ab_ref = ad; /* A reference to our decoder. This is used
 			  to revert out packets in the play queue during
 			  a pause event */
+      if(ad->ad_send_flush) {
+	ab->ab_flush = 1;
+	ad->ad_send_flush = 0;
+      }
+
       af_enq(af, ab);
       ab = NULL;
     }

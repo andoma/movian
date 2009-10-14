@@ -33,6 +33,7 @@ af_alloc(size_t size, media_pipe_t *mp)
 {
   audio_buf_t *ab;
   ab = malloc(size + sizeof(audio_buf_t));
+  ab->ab_flush = 0;
   ab->ab_tmp = 0;
   ab->ab_mp = mp;
   assert(mp != NULL);

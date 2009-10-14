@@ -25,6 +25,7 @@ TAILQ_HEAD(audio_buf_queue, audio_buf);
 
 typedef struct audio_buf {
   TAILQ_ENTRY(audio_buf) link;
+  unsigned int ab_flush;
   unsigned int ab_format;
   unsigned int ab_rate;
   unsigned int ab_channels;
