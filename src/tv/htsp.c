@@ -359,8 +359,6 @@ htsp_login(htsp_connection_t *hc)
 }
 
 
-
-
 /**
  *
  */
@@ -368,32 +366,67 @@ static void
 htsp_channelAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
 {
   uint32_t id;
-  char txt[200];
   prop_t *p, *metadata;
+  char txt[200];
+  const char *s;
+
+  const char *title = NULL;
 
   if(htsmsg_get_u32(m, "channelId", &id))
     return;
 
   snprintf(txt, sizeof(txt), "%d", id);
-
-  p = prop_create(create ? NULL : hc->hc_prop_channels, txt);
+  p = prop_create(hc->hc_prop_channels, txt);
 
   snprintf(txt, sizeof(txt), "htsp://%s:%d/channel/%d",
 	   hc->hc_hostname, hc->hc_port, id);
-
+  
   prop_set_string(prop_create(p, "url"), txt);
+  prop_set_string(prop_create(p, "type"), "tvchannel");
 
   metadata = prop_create(p, "metadata");
 
-  prop_set_string(prop_create(p, "type"), "tvchannel");
-  prop_set_string(prop_create(metadata, "icon"), 
-		  htsmsg_get_str(m, "channelIcon"));
-  prop_set_string(prop_create(metadata, "title"),
-		  htsmsg_get_str(m, "channelName"));
+  if((s = htsmsg_get_str(m, "channelIcon")) != NULL)
+    prop_set_string(prop_create(metadata, "icon"), s);
+  if((s = htsmsg_get_str(m, "channelName")) != NULL)
+    prop_set_string(prop_create(metadata, "title"), s);
 
 
-  if(create && prop_set_parent(p, hc->hc_prop_channels))
-    prop_destroy(p);
+  if(htsmsg_get_u32(m, "eventId", &id))
+    id = 0;
+  
+
+  if(id != 0) {
+    m = htsmsg_create_map();
+    htsmsg_add_str(m, "method", "getEvent");
+    htsmsg_add_u32(m, "eventId", id);
+
+    if((m = htsp_reqreply(hc, m)) != NULL) {
+      title = htsmsg_get_str(m, "title");
+    }
+  }
+
+  prop_set_string(prop_create(metadata, "programme"), title);
+}
+
+
+/**
+ *
+ */
+static void
+htsp_channelDelete(htsp_connection_t *hc, htsmsg_t *m)
+{
+  char txt[200];
+  uint32_t id;
+  prop_t *p;
+
+  if(htsmsg_get_u32(m, "channelId", &id))
+    return;
+
+  snprintf(txt, sizeof(txt), "%d", id);
+  p = prop_create(hc->hc_prop_channels, txt);
+
+  prop_destroy(p);
 }
 
 
@@ -465,6 +498,10 @@ htsp_worker_thread(void *aux)
 
       if(!strcmp(method, "channelAdd"))
 	htsp_channelAddUpdate(hc, m, 1);
+      else if(!strcmp(method, "channelUpdate"))
+	htsp_channelAddUpdate(hc, m, 1);
+      else if(!strcmp(method, "channelDelete"))
+	htsp_channelDelete(hc, m);
       else if(!strcmp(method, "tagAdd"))
 	htsp_tagAddUpdate(hc, m);
       else if(!strcmp(method, "subscriptionStart"))
@@ -475,7 +512,9 @@ htsp_worker_thread(void *aux)
 	htsp_subscriptionStatus(hc, m);
       else if(!strcmp(method, "queueStatus"))
 	htsp_queueStatus(hc, m);
-      else
+      else if(!strcmp(method, "initialSyncCompleted")) {
+	/* nop for us */
+      } else
 	TRACE(TRACE_INFO, "HTSP", "Unknown async method '%s' received",
 		method);
     }

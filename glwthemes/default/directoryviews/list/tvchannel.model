@@ -1,12 +1,29 @@
+#include "theme://include/separators.model"
+
 widget(container_x, {
   .focusable = true;
   onEvent(enter, navOpen($self.url, $self.type, $parent.url));
 
-  widget(image, {
+  widget(icon, {
     .source = $self.metadata.icon;
   });
 
+  VERTICAL_SEPARATOR();
+
   widget(label, {
     .caption = $self.metadata.title;
+    .align = left; 
+    .weight = 2.0;
+    .ellipsize = true;
   });
+
+  VERTICAL_SEPARATOR();
+
+  widget(label, {
+    .caption = $self.metadata.programme;
+    .align = left; 
+    .weight = 2.0;
+    .ellipsize = true;
+  });
+
 });
