@@ -295,7 +295,7 @@ fi
 
 
 #
-# NVCtrl
+# libopenspc
 #
 if enabled libopenspc; then
     
