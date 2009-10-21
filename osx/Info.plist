@@ -17,14 +17,14 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleSignature</key>
-	<string>SHTM</string>
+	<string>SHTI</string>
 	<key>CFBundleVersion</key>
 	<string>1.0</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
-
+        
 	<!-- output from Info.plist.py -->
 	<key>CFBundleDocumentTypes</key>
 	<array>
