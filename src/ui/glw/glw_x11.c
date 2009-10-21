@@ -81,6 +81,8 @@ typedef struct glw_x11 {
 
   int font_size;
   int want_font_size;
+  setting_t *font_size_setting;
+
 
   prop_t *prop_display;
   prop_t *prop_gpu;
@@ -191,10 +193,11 @@ display_settings_init(glw_x11_t *gx11)
 		    display_set_map_mouse_wheel_to_keys, gx11,
 		    SETTINGS_INITIAL_UPDATE);
 
-  settings_add_int(r, "fontsize",
-		   "Font size", 20, settings, 14, 40, 1,
-		   display_set_fontsize, gx11,
-		   SETTINGS_INITIAL_UPDATE, "px");
+  gx11->font_size_setting = 
+    settings_add_int(r, "fontsize",
+		     "Font size", 20, settings, 14, 40, 1,
+		     display_set_fontsize, gx11,
+		     SETTINGS_INITIAL_UPDATE, "px");
 
   gx11->saveconf = 0; // Don't need to save, cause we just loaded
 
@@ -1061,19 +1064,11 @@ glw_x11_dispatch_event(uii_t *uii, event_t *e)
     settings_toggle_bool(gx11->fullscreen_setting);
   } else if(event_is_action(e, ACTION_ZOOM_UI_INCR)) {
 
-    gx11->want_font_size++;
-    if(gx11->want_font_size > 40)
-      gx11->want_font_size = 40;
-    else
-      gx11->saveconf = 1;
+    settings_set_int(gx11->font_size_setting, gx11->want_font_size + 1);
 
   } else if(event_is_action(e, ACTION_ZOOM_UI_DECR)) {
 
-    gx11->want_font_size--;
-    if(gx11->want_font_size < 14)
-      gx11->want_font_size = 14;
-    else
-      gx11->saveconf = 1;
+    settings_set_int(gx11->font_size_setting, gx11->want_font_size - 1);
 
   } else {
     /* Pass it on to GLW */
