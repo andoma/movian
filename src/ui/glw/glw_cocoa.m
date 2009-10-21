@@ -561,7 +561,11 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   return a;
 }
 
+#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
 - (unsigned int)characterIndexForPoint:(NSPoint)thePoint {
+#else
+- (NSUInteger)characterIndexForPoint:(NSPoint)thePoint {
+#endif
   return 0;
 }
 
