@@ -59,6 +59,8 @@ typedef struct glw_cocoa {
   
   int font_size;
   int want_font_size;
+  setting_t *font_size_setting;
+  
   int is_fullscreen;
   int want_fullscreen;
 
@@ -805,11 +807,12 @@ display_settings_init(glw_cocoa_t *gc)
     settings_add_bool(r, "fullscreen", "Fullscreen mode", 0, settings,
                       display_set_mode, gc,
                       SETTINGS_INITIAL_UPDATE);
-      
-  settings_add_int(r, "fontsize",
-		   "Font size", 20, settings, 14, 40, 1,
-		   display_set_fontsize, gc,
-		   SETTINGS_INITIAL_UPDATE, "px");
+  
+  gc->font_size_setting =
+    settings_add_int(r, "fontsize",
+                     "Font size", 20, settings, 14, 40, 1,
+                     display_set_fontsize, gc,
+                     SETTINGS_INITIAL_UPDATE, "px");
   
   htsmsg_destroy(settings);  
 }
@@ -866,14 +869,10 @@ glw_cocoa_dispatch_event(uii_t *uii, event_t *e)
   if(event_is_action(e, ACTION_FULLSCREEN_TOGGLE)) {
     settings_toggle_bool(gc->fullscreen_setting);
     event_unref(e);
-  } else if(event_is_action(e, ACTION_ZOOM_UI_INCR)) { 
-    gc->want_font_size++; 
-    if(gc->want_font_size > 40) 
-      gc->want_font_size = 40; 
+  } else if(event_is_action(e, ACTION_ZOOM_UI_INCR)) {
+    settings_set_int(gc->font_size_setting, gc->want_font_size + 1);
   } else if(event_is_action(e, ACTION_ZOOM_UI_DECR)) { 
-    gc->want_font_size--; 
-    if(gc->want_font_size < 14) 
-      gc->want_font_size = 14; 
+    settings_set_int(gc->font_size_setting, gc->want_font_size - 1);
   } else {
     glw_dispatch_event(uii, e);
     return;
