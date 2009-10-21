@@ -69,6 +69,8 @@ setting_t *settings_add_int(prop_t *parent, const char *id,
 			    prop_callback_int_t *cb, void *opaque,
 			    int flags, const char *unit);
 
+void settings_set_int(setting_t *s, int v);
+
 
 void settings_init(void);
 

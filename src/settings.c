@@ -41,6 +41,9 @@ struct setting {
   void *s_callback;
   prop_sub_t *s_sub;
   prop_t *s_prop;
+  prop_t *s_val;
+  int s_min;
+  int s_max;
 };
 
 
@@ -210,16 +213,32 @@ settings_add_int(prop_t *parent, const char *id, const char *title,
   prop_set_int(v, initial);
 
   s->s_prop = r;
-
+  s->s_val = v;
+  s->s_min = min;
+  s->s_max = max;
   sub = prop_subscribe(flags & SETTINGS_INITIAL_UPDATE ?
 		       0 : PROP_SUB_NO_INITIAL_UPDATE,
 		       PROP_TAG_CALLBACK_INT, cb, opaque,
 		       PROP_TAG_ROOT, v,
 		       NULL);
   s->s_sub = sub;
-  
+
   settings_set_parent(r, parent);
   return s;
+}
+
+
+/**
+ *
+ */
+void
+settings_set_int(setting_t *s, int v)
+{
+  if(v > s->s_max)
+    v = s->s_max;
+  else if(v < s->s_min)
+    v = s->s_min;
+  prop_set_int(s->s_val, v);
 }
 
 
