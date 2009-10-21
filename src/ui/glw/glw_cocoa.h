@@ -16,7 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* This could be in glw_cocoa.m but interface builder seams to only read
+/* 
+ * This could be in glw_cocoa.m but interface builder seams to only read
  * interface definitions from header files
  */
 
@@ -44,6 +45,8 @@
 - (void)glwUnHideCursor;
 
 /* actions */
+- (IBAction)clickIncreaseZoom:(id)sender;
+- (IBAction)clickDecreaseZoom:(id)sender;
 - (IBAction)clickFullscreen:(id)sender;
 - (IBAction)clickAbout:(id)sender;
 

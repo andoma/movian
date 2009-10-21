@@ -102,6 +102,9 @@ static const struct {
 { NSLeftArrowFunctionKey,   NSAlternateKeyMask,    ACTION_NAV_BACK },
 { NSRightArrowFunctionKey,  NSAlternateKeyMask,    ACTION_NAV_FWD },
 
+{ '+',                      NSCommandKeyMask, ACTION_ZOOM_UI_INCR },
+{ '-',                      NSCommandKeyMask, ACTION_ZOOM_UI_DECR },
+
 { NSF11FunctionKey,         0,                ACTION_FULLSCREEN_TOGGLE },
 
  /*
@@ -164,8 +167,19 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   return YES;
 }
 
+- (IBAction)clickIncreaseZoom:(id)sender {
+  glw_cocoa_dispatch_event(&gcocoa.gr.gr_uii,
+                           event_create_action(ACTION_ZOOM_UI_INCR));
+}
+
+- (IBAction)clickDecreaseZoom:(id)sender {
+  glw_cocoa_dispatch_event(&gcocoa.gr.gr_uii,
+                           event_create_action(ACTION_ZOOM_UI_DECR));
+}
+
 - (IBAction)clickFullscreen:(id)sender {
-  settings_toggle_bool(gcocoa.fullscreen_setting);
+  glw_cocoa_dispatch_event(&gcocoa.gr.gr_uii,
+                           event_create_action(ACTION_FULLSCREEN_TOGGLE));
 }
 
 - (IBAction)clickAbout:(id)sender {
@@ -684,7 +698,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   timer_cursor = nil;
 
   /* default font size */
-  gcocoa.want_font_size = 40;
+  gcocoa.want_font_size = 20;
     
   gcocoa.config_name = strdup("glw/cocoa/default");
     
@@ -808,8 +822,8 @@ display_settings_save(glw_cocoa_t *gc)
 {
   htsmsg_t *m = htsmsg_create_map();
   
-  htsmsg_add_u32(m, "fullscreen", gc->want_fullscreen);
-  htsmsg_add_u32(m, "fontsize",   gc->want_font_size);
+  htsmsg_add_u32(m, "fullscreen", gc->is_fullscreen);
+  htsmsg_add_u32(m, "fontsize",   gc->font_size);
   
   htsmsg_store_save(m, "displays/%s", gc->config_name);
   htsmsg_destroy(m);
@@ -852,9 +866,20 @@ glw_cocoa_dispatch_event(uii_t *uii, event_t *e)
   if(event_is_action(e, ACTION_FULLSCREEN_TOGGLE)) {
     settings_toggle_bool(gc->fullscreen_setting);
     event_unref(e);
+  } else if(event_is_action(e, ACTION_ZOOM_UI_INCR)) { 
+    gc->want_font_size++; 
+    if(gc->want_font_size > 40) 
+      gc->want_font_size = 40; 
+  } else if(event_is_action(e, ACTION_ZOOM_UI_DECR)) { 
+    gc->want_font_size--; 
+    if(gc->want_font_size < 14) 
+      gc->want_font_size = 14; 
   } else {
     glw_dispatch_event(uii, e);
+    return;
   }
+  
+  event_unref(e);
 }
 
 
