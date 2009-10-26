@@ -98,6 +98,8 @@ typedef struct glw_x11 {
 
   int saveconf;
 
+  int working_vsync;
+  int force_no_vsync;
 } glw_x11_t;
 
 #define AUTOHIDE_TIMEOUT 100 // XXX: in frames.. bad
@@ -318,7 +320,7 @@ check_vsync(glw_x11_t *gx11)
   }
   c = showtime_get_ts() - c;
 
-  return c < 10000; // Too fast refresh
+  return c > 25000; // Probably working
 }
 
 
@@ -423,18 +425,18 @@ window_open(glw_x11_t *gx11)
 
   glw_opengl_init_context(&gx11->gr);
 
-  gx11->glXSwapIntervalSGI(1);
+  if(gx11->glXSwapIntervalSGI != NULL && gx11->force_no_vsync ==0)
+    gx11->glXSwapIntervalSGI(1);
+
+  gx11->working_vsync = check_vsync(gx11);
+
+  if(!gx11->working_vsync) {
+    TRACE(TRACE_INFO, "GLW", 
+	  "OpenGL driver does not provide adequate vertical sync "
+	  "capabilities. Using soft timers");
+  }
 
   hide_cursor(gx11);
-
-  if(check_vsync(gx11)) {
-    TRACE(TRACE_ERROR, "GLW", 
-	  "OpenGL on \"%s\" does not sync to vertical blank.\n"
-	  "This is required for Showtime's OpenGL interface to\n"
-	  "function property. Please fix this.\n",
-	  gx11->displayname_real);
-    return 1;
-  }
   
   /* X Input method init */
   if(gx11->im != NULL) {
@@ -570,13 +572,6 @@ glw_x11_init(glw_x11_t *gx11)
     return 1;
   }
 
-  if(!GLXExtensionSupported(gx11->display, "GLX_SGI_swap_control")) {
-    TRACE(TRACE_ERROR, "GLW", 
-	    "OpenGL GLX extension GLX_SGI_swap_control is not supported "
-	    "by display \"%s\"\n",
-	    gx11->displayname_real);
-    return 1;
-  }
 
   gx11->screen        = DefaultScreen(gx11->display);
   gx11->screen_width  = DisplayWidth(gx11->display, gx11->screen);
@@ -600,9 +595,12 @@ glw_x11_init(glw_x11_t *gx11)
 	    gx11->displayname_real);
     return 1;
   }
-
-  gx11->glXSwapIntervalSGI = (PFNGLXSWAPINTERVALSGIPROC)
-    glXGetProcAddress((const GLubyte*)"glXSwapIntervalSGI");
+  
+  if(GLXExtensionSupported(gx11->display, "GLX_SGI_swap_control")) {
+    TRACE(TRACE_DEBUG, "GLW", "GLX_SGI_swap_control extension is present");
+    gx11->glXSwapIntervalSGI = (PFNGLXSWAPINTERVALSGIPROC)
+      glXGetProcAddress((const GLubyte*)"glXSwapIntervalSGI");
+  }
 
   screensaver_inhibitor_init(gx11->displayname_real);
 
@@ -842,6 +840,13 @@ glw_x11_mainloop(glw_x11_t *gx11)
   int w, h;
   glw_pointer_event_t gpe;
 
+  struct timespec tp;
+  int64_t start;
+  int frame;
+
+  clock_gettime(CLOCK_MONOTONIC, &tp);
+  start = (int64_t)tp.tv_sec * 1000000LL + tp.tv_nsec / 1000;
+
   prop_subscribe(0,
 		 PROP_TAG_NAME("ui","fullwindow"),
 		 PROP_TAG_CALLBACK_INT, glw_x11_in_fullwindow, gx11,
@@ -991,6 +996,16 @@ glw_x11_mainloop(glw_x11_t *gx11)
     layout_draw(gx11, gx11->aspect_ratio);
     glw_unlock(&gx11->gr);
 
+    frame++;
+
+    if(!gx11->working_vsync) {
+      int64_t deadline = frame * 1000000LL / 60 + start;
+      struct timespec req;
+      req.tv_sec  =  deadline / 1000000;
+      req.tv_nsec = (deadline % 1000000) * 1000;
+
+      clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &req, NULL);
+    }
     glXSwapBuffers(gx11->display, gx11->win);
   }
   window_shutdown(gx11);
@@ -1007,9 +1022,6 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
   glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
   char confname[256];
   const char *theme_path = SHOWTIME_GLW_DEFAULT_THEME_URL;
-
-  // This may aid some vsync problems with nVidia drivers
-  setenv("__GL_SYNC_TO_VBLANK", "1", 1);
 
   gx11->displayname_real = getenv("DISPLAY");
   snprintf(confname, sizeof(confname), "glw/x11/default");
@@ -1031,9 +1043,19 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
       theme_path = argv[1];
       argc -= 2; argv += 2;
       continue;
-    } else
+    } else if(!strcmp(argv[0], "--force-no-vsync")) {
+      gx11->force_no_vsync = 1;
+      argc -= 1; argv += 1;
+      continue;
+    } else {
       break;
+    }
   }
+
+  // This may aid some vsync problems with nVidia drivers
+  if(!gx11->force_no_vsync)
+    setenv("__GL_SYNC_TO_VBLANK", "1", 1);
+
 
   gx11->config_name = strdup(confname);
 
