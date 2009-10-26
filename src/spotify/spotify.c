@@ -84,7 +84,7 @@ typedef enum {
 typedef struct metadata {
   LIST_ENTRY(metadata) m_link;
   prop_t *m_prop;
-  prop_t **m_anchor;
+  struct playlist_track *m_plt;
   void *m_source;
   metadata_type_t m_type;
   int m_flags;
@@ -594,10 +594,14 @@ spotify_metadata_update_track(metadata_t *m)
   if(!f_sp_track_is_loaded(track))
     return;
 
-  if(!f_sp_track_is_available(track) && m->m_anchor != NULL) {
-    prop_t **anchor = m->m_anchor; // Keep anchor because ...
-    prop_destroy(*m->m_anchor);    // ... m might be free'd here
-    *anchor = NULL;
+  if(!f_sp_track_is_available(track) && m->m_plt != NULL) {
+
+    playlist_track_t *plt = m->m_plt;
+
+    if(plt->plt_prop_root != NULL) {
+      prop_destroy(plt->plt_prop_root);
+      plt->plt_prop_root = NULL;
+    }
     return;
   }
 
@@ -796,12 +800,12 @@ metadata_prop_cb(void *opaque, prop_event_t event, ...)
 
 static void
 metadata_create0(prop_t *p, metadata_type_t type, void *source,
-		 prop_t **anchor)
+		 playlist_track_t *plt)
 {
   metadata_t *m = malloc(sizeof(metadata_t));
 
   prop_ref_inc(p);
-  m->m_anchor = anchor;
+  m->m_plt = plt;
   m->m_prop = p;
   m->m_type = type;
   m->m_source = source;
@@ -826,7 +830,6 @@ metadata_create0(prop_t *p, metadata_type_t type, void *source,
 
   hts_mutex_lock(&meta_mutex);
   LIST_INSERT_HEAD(&metadatas, m, m_link);
-  hts_mutex_unlock(&meta_mutex);
 
   prop_subscribe(PROP_SUB_TRACK_DESTROY,
 		 PROP_TAG_CALLBACK, metadata_prop_cb, m,
@@ -835,6 +838,7 @@ metadata_create0(prop_t *p, metadata_type_t type, void *source,
 		 NULL);
   
   metadata_update(m);
+  hts_mutex_unlock(&meta_mutex);
 }
 
 
@@ -1365,9 +1369,7 @@ tracks_added(sp_playlist *plist, const sp_track **tracks,
       abort();
     }
 
-    metadata_create0(plt->plt_prop_metadata, METADATA_TRACK, t,
-		     &plt->plt_prop_root);
-
+    metadata_create0(plt->plt_prop_metadata, METADATA_TRACK, t, plt);
     ptrvec_insert_entry(&pl->pl_tracks, pos, plt);
   }
   prop_set_int(pl->pl_prop_num_tracks, pl->pl_tracks.size);
