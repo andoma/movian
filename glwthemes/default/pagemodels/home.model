@@ -21,43 +21,35 @@ widget(container_y, {
       
     .filterConstraintX = true;
 
-    widget(list_y, {
-      .id = "list";
+    widget(array, {
+      .childTilesX = 6;
+      .childTilesY = 5;
+
+      .id = "array";
       cloner($global.sources, backdrop, {
 	BUTTON_PROPS(0.99);
 	onEvent(enter, navOpen($self.url));
 
-	widget(container_x, {
+	widget(bloom, {
 
-	  widget(dummy, {
-	    .width = 2;
-	  });
-
-	  widget(image, {
-	    .source = select($self.icon, $self.icon, 
-			     "theme://icons/mediasources/" + 
-			     translate($self.contents, "generic.png",
-				       "music",    "music.png",
-				       "video",    "movies.png",
-				       "pictures", "pictures.png"));
-	  });
-
-	  VERTICAL_SEPARATOR();
+	  .value = iir(isFocused() || isHovered(), 10);
 
 	  widget(container_y, {
-
-	    widget(label, {
-	      .caption = $self.title;
-	      .ellipsize = true;
-	      .align = left;
-	      .sizeScale = 1.5;
+	    
+	    widget(image, {
+	      .source = select($self.icon, $self.icon, 
+			       "theme://icons/mediasources/" + 
+			       translate($self.contents, "generic.png",
+					 "music",    "music.png",
+					 "video",    "movies.png",
+					 "pictures", "pictures.png"));
 	    });
 
 	    widget(label, {
-	      .caption = $self.status;
-	      .ellipsize = true;
-	      .align = left;
-	      .sizeScale = 0.66;
+	      .caption = $self.title;
+	      //	    .ellipsize = true;
+	      .align = center;
+	      .sizeScale = 1.5;
 	    });
 	  });
 	});
@@ -68,7 +60,7 @@ widget(container_y, {
     widget(slider_y, {
       .width = SLIDER_WIDTH();
       .focusable = 0.2;
-      bind("list");
+      bind("array");
 	
       widget(backdrop, {
 	KNOB_PROPS();
@@ -87,44 +79,3 @@ widget(container_y, {
   });
 });
 
-
-
-/*
-
-  space(0.3);
-
-  widget(container_x, {
-    .align = center;
-    cloner($global.settings.bookmarks.nodes, backdrop, {
-      MAINMENU_ITEM(devoidify($self.icon, "theme://icons/dir.png"),
-		    $self.title, $self.url);
-    });
-  });
-
-  space(0.3);
-
-  widget(container_x, {
-    .align = center;
-
-  });
-
-  space(0.3);
-
-  widget(container_x, {
-    .align = center;
-
-    widget(backdrop, {
-      MAINMENU_ITEM("theme://icons/config.png", "Settings", "settings:");
-    });
-
-    widget(backdrop, {
-      MAINMENU_ITEM("theme://icons/playqueue.png", "Playqueue", "playqueue:");
-    });
-
-  });
-
-
-  space(0.3);
-});
-
-*/
