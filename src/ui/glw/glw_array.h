@@ -31,6 +31,9 @@ typedef struct glw_array {
   int child_width;
   int child_height;
 
+  int child_tiles_x;
+  int child_tiles_y;
+
   int xentries;  // items per row
 
 } glw_array_t;

@@ -111,7 +111,6 @@ set_float(glw_model_eval_context_t *ec, const token_attrib_t *a,
   return 0;
 }
 
-#if 0 // Not currently used by anything
 /**
  *
  */
@@ -157,9 +156,6 @@ set_int(glw_model_eval_context_t *ec, const token_attrib_t *a,
   glw_set_i(ec->w, a->attrib, v, NULL);
   return 0;
 }
-#endif
-
-
 
 
 /**
@@ -385,6 +381,12 @@ static const token_attrib_t attribtab[] = {
 
   {"height",          set_float,  GLW_ATTRIB_HEIGHT},
   {"width",           set_float,  GLW_ATTRIB_WIDTH},
+
+  {"childWidth",      set_float,  GLW_ATTRIB_CHILD_WIDTH},
+  {"childHeight",     set_float,  GLW_ATTRIB_CHILD_HEIGHT},
+
+  {"childTilesX",     set_int,    GLW_ATTRIB_CHILD_TILES_X},
+  {"childTilesY",     set_int ,   GLW_ATTRIB_CHILD_TILES_Y},
 
   {"color",           set_float3, GLW_ATTRIB_RGB},
   {"borderSize",      set_float4, GLW_ATTRIB_BORDER_SIZE},

@@ -136,6 +136,10 @@ typedef enum {
   GLW_ATTRIB_CHILD_ASPECT,
   GLW_ATTRIB_HEIGHT,
   GLW_ATTRIB_WIDTH,
+  GLW_ATTRIB_CHILD_HEIGHT,
+  GLW_ATTRIB_CHILD_WIDTH,
+  GLW_ATTRIB_CHILD_TILES_X,
+  GLW_ATTRIB_CHILD_TILES_Y,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -625,6 +629,10 @@ do {						\
   case GLW_ATTRIB_MODE:                         \
   case GLW_ATTRIB_MIRROR:                       \
   case GLW_ATTRIB_TRANSITION_EFFECT:            \
+  case GLW_ATTRIB_CHILD_TILES_X:                \
+  case GLW_ATTRIB_CHILD_TILES_Y:                \
+  case GLW_ATTRIB_CHILD_HEIGHT:                 \
+  case GLW_ATTRIB_CHILD_WIDTH:                  \
     (void)va_arg(ap, int);			\
     break;					\
   case GLW_ATTRIB_BORDER_SIZE:                  \

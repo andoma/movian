@@ -47,16 +47,26 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
   float size_y, t, vy;
   glw_rctx_t rc0 = *rc;
   int column = 0;
-  int xentries = GLW_MAX(1, rc->rc_size_x / a->child_width);
+  int xentries;
   float size_x;
 
+  if(a->child_tiles_x && a->child_tiles_y) {
+
+    xentries = a->child_tiles_x;
+    size_y = 1.0 / a->child_tiles_y;
+
+  } else {
+
+    xentries = GLW_MAX(1, rc->rc_size_x / a->child_width);
+    size_y = a->child_height / rc->rc_size_y;
+  }
+
   a->xentries = xentries;
+  size_x = 1.0 / xentries;
 
   t = GLW_MIN(GLW_MAX(0, a->center_y_target), a->center_y_max);
   a->center_y = GLW_LP(6, a->center_y, t);
 
-  size_y = a->child_height / rc->rc_size_y;
-  size_x = 1.0 / xentries;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
 
@@ -227,15 +237,27 @@ glw_array_ctor(glw_t *w, int init, va_list ap)
 
   if(init) {
     glw_signal_handler_int(w, glw_array_callback);
-    a->child_width  = 150;
-    a->child_height = 180;
+
+    // Just something
+    a->child_width  = 100;
+    a->child_height = 100;
   }
 
   do {
     attrib = va_arg(ap, int);
     switch(attrib) {
-
-
+    case GLW_ATTRIB_CHILD_HEIGHT:
+      a->child_height = va_arg(ap, int);
+      break;
+    case GLW_ATTRIB_CHILD_WIDTH:
+      a->child_width  = va_arg(ap, int);
+      break;
+    case GLW_ATTRIB_CHILD_TILES_X:
+      a->child_tiles_x = va_arg(ap, int);
+      break;
+    case GLW_ATTRIB_CHILD_TILES_Y:
+      a->child_tiles_y = va_arg(ap, int);
+      break;
 
     default:
       GLW_ATTRIB_CHEW(attrib, ap);
