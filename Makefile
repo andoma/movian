@@ -235,6 +235,7 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_text_bitmap.c \
 			src/ui/glw/glw_cursor.c \
 			src/ui/glw/glw_fx_texrot.c \
+			src/ui/glw/glw_bloom.c \
 
 SRCS-$(CONFIG_GLW_FRONTEND_X11)	  += src/ui/glw/glw_x11.c \
 				     src/ui/linux/screensaver_inhibitor.c

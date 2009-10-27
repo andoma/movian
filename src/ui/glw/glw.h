@@ -91,6 +91,7 @@ typedef enum {
   GLW_SLIDESHOW,
   GLW_FREEFLOAT,
   GLW_ARRAY,
+  GLW_BLOOM,
 } glw_class_t;
 
 

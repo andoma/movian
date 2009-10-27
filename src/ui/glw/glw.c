@@ -43,6 +43,7 @@
 #include "glw_slider.h"
 #include "glw_layer.h"
 #include "glw_fx_texrot.h"
+#include "glw_bloom.h"
 
 #if CONFIG_GLW_BACKEND_OPENGL
 #include "glw_video_opengl.h"
@@ -81,6 +82,7 @@ static const size_t glw_class_to_size[] = {
   [GLW_VIDEO] = sizeof(glw_video_t),
   [GLW_FREEFLOAT] = sizeof(glw_freefloat_t),
   [GLW_ARRAY] = sizeof(glw_array_t),
+  [GLW_BLOOM] = sizeof(glw_bloom_t),
 };
 
 
@@ -436,6 +438,10 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 
   case GLW_LAYER:
     glw_layer_ctor(w, init, apx);
+    break;
+
+  case GLW_BLOOM:
+    glw_bloom_ctor(w, init, apx);
     break;
 
   }
