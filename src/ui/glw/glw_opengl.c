@@ -195,7 +195,7 @@ glw_rtt_init(glw_root_t *gr, glw_rtt_t *grtt, int width, int height)
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, grtt->grtt_framebuffer);
   glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
 			    GL_COLOR_ATTACHMENT0_EXT,
-			    m, grtt->grtt_framebuffer, 0);
+			    m, grtt->grtt_texture, 0);
 
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 }
