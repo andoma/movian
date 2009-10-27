@@ -2325,12 +2325,9 @@ be_spotify_init(void)
 
   p = sd_add_service("spotify", "Spotify", 
 		     "bundle://resources/spotify/spotify-core-logo-96x96.png",
-		     &prop_status, NULL);
+		     &prop_status, NULL, "spotify:playlists");
 
   prop_set_string(prop_status, "Not logged in");
-
-  sd_add_link(p, "Playlists", "spotify:playlists");
-  sd_add_link(p, "New album releases", "spotify:search:tag:new");
   return 0;
 }
 

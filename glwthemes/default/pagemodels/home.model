@@ -24,7 +24,8 @@ widget(container_y, {
     widget(list_y, {
       .id = "list";
       cloner($global.sources, backdrop, {
-	SHADED_PROPS();
+	BUTTON_PROPS(0.99);
+	onEvent(enter, navOpen($self.url));
 
 	widget(container_x, {
 
@@ -57,20 +58,6 @@ widget(container_y, {
 	      .ellipsize = true;
 	      .align = left;
 	      .sizeScale = 0.66;
-	    });
-
-	    widget(container_x, {
-	      .filterConstraintX = true;
-
-	      cloner($self.links, backdrop, {
-		BUTTON_PROPS(0.99);
-
-		onEvent(enter, navOpen($self.url));
-		
-		widget(label, {
-		  .caption = $self.title;
-		});
-	      });
 	    });
 	  });
 	});

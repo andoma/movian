@@ -349,11 +349,7 @@ arch_exit(int retcode)
 void
 arch_sd_init(void)
 {
-  prop_t *p;
-
-  p = sd_add_service("Front", "Front SD card", NULL, NULL, NULL);
-  sd_add_link(p, "Browse", "/");
-
+  sd_add_service("Front", "Front SD card", NULL, NULL, NULL, "/");
 }
 /**
  *

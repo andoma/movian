@@ -37,8 +37,7 @@ typedef struct bookmark {
   prop_sub_t *bm_title_sub;
   prop_sub_t *bm_url_sub;
 
-  prop_t *bm_source_root;
-  prop_t *bm_link_root;
+  prop_t *bm_service_root;
 
 } bookmark_t;
 
@@ -76,7 +75,7 @@ bookmark_destroyed(void *opaque, prop_event_t event, ...)
   prop_unsubscribe(bm->bm_title_sub);
   prop_unsubscribe(bm->bm_url_sub);
 
-  prop_destroy(bm->bm_source_root); // will also destroy bm_link_root
+  prop_destroy(bm->bm_service_root);
 
   free(bm);
 
@@ -94,8 +93,8 @@ set_title(void *opaque, const char *str)
   bookmark_t *bm = opaque;
 
   if(str != NULL)
-    prop_rename(bm->bm_source_root, str);
-  prop_set_string(prop_create(bm->bm_source_root, "title"), str);
+    prop_rename(bm->bm_service_root, str);
+  prop_set_string(prop_create(bm->bm_service_root, "title"), str);
 
   bookmark_save();
 }
@@ -109,7 +108,7 @@ set_url(void *opaque, const char *str)
 {
   bookmark_t *bm = opaque;
 
-  prop_set_string(prop_create(bm->bm_link_root, "url"), str);
+  prop_set_string(prop_create(bm->bm_service_root, "url"), str);
 
   bookmark_save();
 }
@@ -147,8 +146,7 @@ bookmark_add(const char *title, const char *url, const char *icon)
   bm->bm_title_sub = bookmark_add_prop(p, "title", title, bm, set_title);
   bm->bm_url_sub   = bookmark_add_prop(p, "url",   url,   bm, set_url);
 
-  bm->bm_source_root = sd_add_service(title, title, NULL, NULL, NULL);
-  bm->bm_link_root   = sd_add_link(bm->bm_source_root, "Browse", url);
+  bm->bm_service_root = sd_add_service(title, title, NULL, NULL, NULL, url);
 
   prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE,
 		 PROP_TAG_CALLBACK, bookmark_destroyed, bm,

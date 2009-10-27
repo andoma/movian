@@ -51,35 +51,24 @@ typedef struct source {
   GtkWidget *s_separator;
 
   prop_sub_t *s_linksub;
+
+
+  char *s_url;
+
 } source_t;
 
 
-/**
- *
- */
-typedef struct link {
-  gu_cloner_node_t l_gcn;
-
-  GtkWidget *l_btn;
-
-  prop_sub_t *l_title_sub;
-  prop_sub_t *l_url_sub;
-
-  char *l_url;
-
-} link_t;
-
 
 /**
  *
  */
 static void
-link_clicked(GtkObject *object, gpointer opaque)
+source_clicked(GtkObject *object, gpointer opaque)
 {
-  link_t *l = opaque;
+  source_t *s = opaque;
 
-  if(l->l_url != NULL)
-    nav_open(l->l_url, NULL, NULL);
+  if(s->s_url != NULL)
+    nav_open(s->s_url, NULL, NULL);
 }
 
 
@@ -87,61 +76,14 @@ link_clicked(GtkObject *object, gpointer opaque)
  *
  */
 static void
-link_set_url(void *opaque, const char *str)
+source_set_url(void *opaque, const char *str)
 {
-  link_t *l = opaque;
-  free(l->l_url);
-  l->l_url = str ? strdup(str) : NULL;
+  source_t *s = opaque;
+  free(s->s_url);
+  s->s_url = str ? strdup(str) : NULL;
 }
 
 
-/**
- *
- */
-static void
-link_add(gtk_ui_t *gu, source_t *s, prop_t *p, link_t *l, source_t *before)
-{
-  l->l_btn = gtk_button_new();
-  
-  gtk_box_pack_start(GTK_BOX(s->s_bbox), l->l_btn, FALSE, FALSE, 0);
-
-  g_signal_connect(GTK_OBJECT(l->l_btn),
-		   "clicked", G_CALLBACK(link_clicked), l);
-
-  l->l_title_sub = 
-    prop_subscribe(0,
-		   PROP_TAG_NAME("self", "title"),
-		   PROP_TAG_CALLBACK_STRING, 
-		   gu_subscription_set_label, l->l_btn,
-		   PROP_TAG_COURIER, gu->gu_pc, 
-		   PROP_TAG_NAMED_ROOT, p, "self",
-		   NULL);
-
-  l->l_url_sub = 
-    prop_subscribe(0,
-		   PROP_TAG_NAME("self", "url"),
-		   PROP_TAG_CALLBACK_STRING, link_set_url, l,
-		   PROP_TAG_COURIER, gu->gu_pc, 
-		   PROP_TAG_NAMED_ROOT, p, "self",
-		   NULL);
-
-
-  gtk_widget_show(l->l_btn);
-}
-
-
-/**
- *
- */
-static void
-link_del(gtk_ui_t *gu, source_t *s, link_t *l)
-{
-  prop_unsubscribe(l->l_title_sub);
-  prop_unsubscribe(l->l_url_sub);
-
-  gtk_widget_destroy(l->l_btn);
-  free(l->l_url);
-}
 
 
 /**
@@ -166,7 +108,7 @@ source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before,
 	   int position)
 {
   prop_sub_t *sub;
-  GtkWidget *w, *vbox;
+  GtkWidget *w, *vbox, *hbox;
 
   s->s_hbox = gtk_hbox_new(FALSE, 1);
   gtk_box_pack_start(GTK_BOX(h->h_sourcebox), s->s_hbox, FALSE, TRUE, 5);
@@ -240,21 +182,30 @@ source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before,
   w = gtk_hbox_new(FALSE, 1);
   gtk_box_pack_start(GTK_BOX(vbox), w, TRUE, FALSE, 0);
 
-  /* Links */
+  /* Link */
 
-  s->s_bbox = gtk_hbox_new(FALSE, 1);
-  gtk_box_pack_start(GTK_BOX(vbox), s->s_bbox, FALSE, FALSE, 0);
 
-  gu_cloner_init(&s->s_links, s, link_add, link_del, sizeof(link_t), gu,
-		 GU_CLONER_TRACK_POSITION);
 
-  s->s_linksub =
-    prop_subscribe(0,
-		   PROP_TAG_NAME("self", "links"),
-		   PROP_TAG_CALLBACK, gu_cloner_subscription, &s->s_links,
-		   PROP_TAG_COURIER, h->h_gu->gu_pc, 
-		   PROP_TAG_NAMED_ROOT, p, "self",
-		   NULL);
+  hbox = gtk_hbox_new(FALSE, 1);
+  gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, FALSE, 0);
+
+  w = gtk_button_new();
+  gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
+
+  g_signal_connect(GTK_OBJECT(w),
+		   "clicked", G_CALLBACK(source_clicked), s);
+
+  g_object_set(G_OBJECT(w), "label", "Open", NULL);
+
+
+  sub = prop_subscribe(0,
+		       PROP_TAG_NAME("self", "url"),
+		       PROP_TAG_CALLBACK_STRING, source_set_url, s,
+		       PROP_TAG_COURIER, gu->gu_pc, 
+		       PROP_TAG_NAMED_ROOT, p, "self",
+		       NULL);
+
+  gu_unsubscribe_on_destroy(GTK_OBJECT(w), sub);
 
   /* Finalize */
   gtk_widget_show_all(s->s_hbox);
@@ -267,8 +218,6 @@ source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before,
 static void
 source_del(gtk_ui_t *gu, home_t *h, source_t *s)
 {
-  prop_unsubscribe(s->s_linksub);
-  gu_cloner_destroy(&s->s_links);
   gtk_widget_destroy(s->s_hbox);
   gtk_widget_destroy(s->s_separator);
 }

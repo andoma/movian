@@ -36,9 +36,7 @@ void sd_add_service_webdav(service_instance_t *si, const char *name,
 
 prop_t *sd_add_service(const char *id, const char *title,
 		       const char *icon, prop_t **status,
-		       const char *contents);
-
-prop_t *sd_add_link(prop_t *svc, const char *title, const char *url);
+		       const char *contents, const char *url);
 
 void sd_init(void);
 

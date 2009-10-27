@@ -67,22 +67,22 @@ si_destroy(service_instance_t *si)
  */
 void
 sd_add_service_htsp(service_instance_t *si, const char *name, 
-		 const char *host, int port)
+		    const char *host, int port)
 {
   char url[256];
  
-  if(si->si_root == NULL)
-    si->si_root = sd_add_service(si->si_id, name, 
-				 "bundle://resources/tvheadend/logo.png",
-                                 NULL, NULL);
-  
+  if(si->si_root != NULL)
+    return;
+
   snprintf(url, sizeof(url), "htsp://%s:%d", host, port);
-  sd_add_link(si->si_root, "All TV Channels", url);
+  si->si_root = sd_add_service(si->si_id, name, 
+			       "bundle://resources/tvheadend/logo.png",
+			       NULL, NULL, url);
 }
 
 
 /**
- * HTSP service creator
+ * Webdav service creator
  */
 void
 sd_add_service_webdav(service_instance_t *si, const char *name, 
@@ -91,13 +91,14 @@ sd_add_service_webdav(service_instance_t *si, const char *name,
 {
   char url[512];
   
-  if(si->si_root == NULL)
-    si->si_root = sd_add_service(si->si_id, name, NULL, NULL, contents);
-  
+  if(si->si_root != NULL)
+    return;
+
   snprintf(url, sizeof(url), "webdav://%s:%d%s%s",
 	   host, port, path == NULL || path[0] != '/' ? "/" : "",
 	   path ? path : "");
-  sd_add_link(si->si_root, "Browse", url);
+
+  si->si_root = sd_add_service(si->si_id, name, NULL, NULL, contents, url);
 }
 
 
@@ -107,7 +108,8 @@ sd_add_service_webdav(service_instance_t *si, const char *name,
  */
 prop_t *
 sd_add_service(const char *id, const char *title,
-	       const char *icon, prop_t **status, const char *contents)
+	       const char *icon, prop_t **status, const char *contents,
+	       const char *url)
 {
   prop_t *p = prop_create(NULL, id);
   
@@ -118,6 +120,7 @@ sd_add_service(const char *id, const char *title,
 
   prop_set_string(prop_create(p, "icon"), icon);
   prop_set_string(prop_create(p, "contents"), contents);
+  prop_set_string(prop_create(p, "url"), url);
 
   if(prop_set_parent(p, global_sources))
     abort();
@@ -126,22 +129,6 @@ sd_add_service(const char *id, const char *title,
 }
 
 
-/**
- *
- */
-prop_t *
-sd_add_link(prop_t *svc, const char *title, const char *url)
-{
-  prop_t *links, *link;
-
-  links = prop_create(svc, "links");
-
-  link = prop_create(links, NULL);
-  prop_set_string(prop_create(link, "title"), title);
-  prop_set_string(prop_create(link, "url"),  url);
-
-  return link;
-}
 
 void sd_init(void)
 {
