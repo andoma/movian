@@ -157,7 +157,7 @@ glw_fx_texrot_layout(glw_t *w, glw_rctx_t *rc)
   // Init render to texture object
   if(!fx->fx_rtt_initialized) {
     fx->fx_rtt_initialized = 1;
-    glw_rtt_init(gr, &fx->fx_rtt, width, height);
+    glw_rtt_init(gr, &fx->fx_rtt, width, height, 0);
   }
 
   // Initialize output texture

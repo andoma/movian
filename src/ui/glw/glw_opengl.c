@@ -175,9 +175,11 @@ glw_widget_project(float *m, float *x1, float *x2, float *y1, float *y2)
  *
  */
 void
-glw_rtt_init(glw_root_t *gr, glw_rtt_t *grtt, int width, int height)
+glw_rtt_init(glw_root_t *gr, glw_rtt_t *grtt, int width, int height,
+	     int alpha)
 {
   int m = gr->gr_be.gbr_primary_texture_mode;
+  int mode;
 
   grtt->grtt_width  = width;
   grtt->grtt_height = height;
@@ -189,8 +191,10 @@ glw_rtt_init(glw_root_t *gr, glw_rtt_t *grtt, int width, int height)
   glTexParameteri(m, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(m, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(m, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexImage2D(m, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-  
+
+  mode = alpha ? GL_RGBA : GL_RGB;
+
+  glTexImage2D(m, 0, mode, width, height, 0, mode, GL_UNSIGNED_BYTE, NULL);
   glGenFramebuffersEXT(1, &grtt->grtt_framebuffer);
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, grtt->grtt_framebuffer);
   glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,

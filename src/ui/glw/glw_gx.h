@@ -81,7 +81,8 @@ typedef struct {
 
 } glw_rtt_t;
 
-void glw_rtt_init(struct glw_root *gr, glw_rtt_t *grtt, int width, int height);
+void glw_rtt_init(struct glw_root *gr, glw_rtt_t *grtt, int width, int height,
+		  int alpha);
 
 void glw_rtt_enter(struct glw_root *gr, glw_rtt_t *grtt, struct glw_rctx *rc);
 

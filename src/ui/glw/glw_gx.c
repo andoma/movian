@@ -85,7 +85,8 @@ glw_widget_project(float *m, float *x1, float *x2, float *y1, float *y2)
  *
  */
 void
-glw_rtt_init(struct glw_root *gr, glw_rtt_t *grtt, int width, int height)
+glw_rtt_init(struct glw_root *gr, glw_rtt_t *grtt, int width, int height,
+	     int alpha)
 {
   unsigned int size = ((width + 3) & ~3) * ((height + 3) & ~3) * 4;
   
