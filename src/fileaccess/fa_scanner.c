@@ -170,13 +170,15 @@ meta_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
       if(fde->fde_type == CONTENT_DIR) {
 	type = fa_probe_dir(metadata, fde->fde_url);
       } else if(fde->fde_type == CONTENT_FILE) {
-	type = fa_probe(metadata, fde->fde_url, NULL, 0, NULL, 0);
+	type = fa_probe(metadata, fde->fde_url, NULL, 0, buf, sizeof(buf));
+
+	if(type == CONTENT_UNKNOWN)
+	  TRACE(TRACE_DEBUG, "BROWSE",
+		"File \"%s\" not recognized: %s", fde->fde_url, buf);
       }
-      
       set_type(fde->fde_prop, type);
       fde->fde_type = type;
     }
-
 
     switch(fde->fde_type) {
 
@@ -257,7 +259,7 @@ meta_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
     /* It is an album */
     if(viewprop != NULL)
       prop_set_string(viewprop, "album");
-      
+
     if(root != NULL) {
       prop_set_string(prop_create(root, "album_name"), album_name);
 
@@ -302,39 +304,6 @@ meta_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
 }
 
 
-
-
-/**
- *
- */
-static int
-scannercore(scanner_t *s)
-{
-  fa_dir_entry_t *fde;
-  fa_dir_t *fd;
-
-  if((s->s_fd = fa_scandir(s->s_url, NULL, 0)) == NULL) 
-    return -1;
-
-  fd = s->s_fd;
-
-  fa_dir_sort(s->s_fd);
-
-  meta_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
-
-  /* Add filename and type */
-  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
-    if(s->s_stop)
-      return 0;
-    add_prop(fde, s->s_nodes, NULL);
-  }
-
-  meta_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
-  
-  return 0;
-}
-
-
 /**
  *
  */
@@ -347,6 +316,7 @@ scanner_unref(scanner_t *s)
   fa_unreference(s->s_ref);
   free(s);
 }
+
 
 /**
  *
@@ -363,50 +333,173 @@ scanner_checkstop(void *opaque)
  *
  */
 static void
+scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde)
+{
+  prop_t *metadata;
+  int r;
+
+  add_prop(fde, s->s_nodes, TAILQ_NEXT(fde, fde_link));
+    
+  metadata = prop_create(fde->fde_prop, "metadata");
+
+  if(fde->fde_type == CONTENT_DIR) {
+    r = fa_probe_dir(metadata, fde->fde_url);
+  } else {
+    r = fa_probe(metadata, fde->fde_url, NULL, 0, NULL, 0);
+  }
+
+  set_type(fde->fde_prop, r);
+  fde->fde_type = r;
+
+}
+
+/**
+ *
+ */
+static void
+scanner_entry_destroy(scanner_t *s, fa_dir_entry_t *fde)
+{
+  if(fde->fde_prop != NULL)
+    prop_destroy(fde->fde_prop);
+  fa_dir_entry_free(s->s_fd, fde);
+}
+
+/**
+ *
+ */
+static void
 scanner_notification(void *opaque, fa_notify_op_t op, const char *filename,
 		     const char *url, int type)
 {
   scanner_t *s = opaque;
   fa_dir_entry_t *fde;
-  prop_t *metadata;
-  int r;
 
   if(filename[0] == '.')
     return; /* Skip all dot-filenames */
 
   switch(op) {
   case FA_NOTIFY_DEL:
-
     TAILQ_FOREACH(fde, &s->s_fd->fd_entries, fde_link)
       if(!strcmp(filename, fde->fde_filename))
 	break;
 
-    if(fde == NULL)
-      break;
-    
-    if(fde->fde_prop != NULL)
-      prop_destroy(fde->fde_prop);
-
-    fa_dir_entry_free(s->s_fd, fde);
+    if(fde != NULL)
+      scanner_entry_destroy(s, fde);
     break;
 
   case FA_NOTIFY_ADD:
-    fde = fa_dir_insert(s->s_fd, url, filename, type);
-    add_prop(fde, s->s_nodes, TAILQ_NEXT(fde, fde_link));
-    
-    metadata = prop_create(fde->fde_prop, "metadata");
-
-    if(fde->fde_type == CONTENT_DIR) {
-      r = fa_probe_dir(metadata, fde->fde_url);
-    } else {
-      r = fa_probe(metadata, fde->fde_url, NULL, 0, NULL, 0);
-    }
-
-    set_type(fde->fde_prop, r);
-    fde->fde_type = r;
+    scanner_entry_setup(s, fa_dir_insert(s->s_fd, url, filename, type));
     break;
   }
   meta_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
+}
+
+
+/**
+ * Very simple and naive diff
+ */
+static void
+rescan(scanner_t *s)
+{
+  fa_dir_t *fd2;
+  fa_dir_entry_t *a, *b, *x, *y;
+  int change = 0;
+
+  if((fd2 = fa_scandir(s->s_url, NULL, 0)) == NULL)
+    return; 
+
+  fa_dir_sort(fd2);
+
+  a = TAILQ_FIRST(&s->s_fd->fd_entries);
+  x = TAILQ_FIRST(&fd2->fd_entries);
+  
+  while(a != NULL && x != NULL) {
+    
+    if(!strcmp(a->fde_url, x->fde_url)) {
+      a = TAILQ_NEXT(a, fde_link);
+      x = TAILQ_NEXT(x, fde_link);
+      continue;
+    }
+    
+    b =     TAILQ_NEXT(a, fde_link);
+    y =     TAILQ_NEXT(x, fde_link);
+
+    if(y != NULL && !strcmp(a->fde_url, y->fde_url)) {
+      TAILQ_REMOVE(&fd2->fd_entries, x, fde_link);
+      TAILQ_INSERT_BEFORE(a, x, fde_link);
+      s->s_fd->fd_count++;
+      scanner_entry_setup(s, x);
+      change = 1;
+      a = TAILQ_NEXT(a, fde_link);
+      x = TAILQ_NEXT(y, fde_link);
+      continue;
+    }
+
+    if(b != NULL && !strcmp(b->fde_url, x->fde_url)) {
+      scanner_entry_destroy(s, a);
+      change = 1;
+      a = b;
+      continue;
+    }
+
+    a = b;
+    x = y;
+  }
+
+  for(; x != NULL; x = y) {
+    y = TAILQ_NEXT(x, fde_link);
+    TAILQ_REMOVE(&fd2->fd_entries, x, fde_link);
+    TAILQ_INSERT_TAIL(&s->s_fd->fd_entries, x, fde_link);
+    s->s_fd->fd_count++;
+    scanner_entry_setup(s, x);
+    change = 1;
+  }
+
+  for(; a != NULL; a = b) {
+    b = TAILQ_NEXT(a, fde_link);
+    scanner_entry_destroy(s, a);
+    change = 1;
+  }
+
+  fa_dir_free(fd2);
+  fa_dir_sort(s->s_fd);
+
+  if(change)
+    meta_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
+}
+
+
+/**
+ *
+ */
+static void
+doscan(scanner_t *s)
+{
+  fa_dir_entry_t *fde;
+  fa_dir_t *fd = s->s_fd;
+
+  fa_dir_sort(s->s_fd);
+
+  meta_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
+
+  /* Add filename and type */
+  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+    if(s->s_stop)
+      return;
+    add_prop(fde, s->s_nodes, NULL);
+  }
+
+  meta_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
+
+  if(!fa_notify(s->s_url, s, scanner_notification, scanner_checkstop))
+    return;
+  
+  /* Can not do notifcations */
+
+  while(!s->s_stop) {
+    sleep(3);
+    rescan(s);
+  }
 }
 
 /**
@@ -419,11 +512,11 @@ scanner(void *aux)
 
   s->s_ref = fa_reference(s->s_url);
   
-  if(scannercore(s) != -1) {
-    fa_notify(s->s_url, s, scanner_notification, scanner_checkstop);
+  if((s->s_fd = fa_scandir(s->s_url, NULL, 0)) != NULL) {
+    doscan(s);
     fa_dir_free(s->s_fd);
   }
-  
+
   free(s->s_url);
   prop_ref_dec(s->s_root);
   prop_ref_dec(s->s_nodes);
