@@ -36,6 +36,7 @@ CONFIG_LIST="
  gu
  libogc
  spotify
+ libspotify_load_runtime
  lirc
  release
  embedded_resources

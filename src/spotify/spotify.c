@@ -16,7 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,7 +40,9 @@
 #include "sd/sd.h"
 #include "scrappers/scrappers.h"
 
+#ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
 #include <dlfcn.h>
+#endif
 #include "apifunctions.h"
 #include "spotify_app_key.h"
 
@@ -2280,19 +2281,18 @@ be_spotify_imageloader(const char *url, char *errbuf, size_t errlen,
     snprintf(errbuf, errlen, "Unable to load image");
     return -1;
   }
-
 }
 
 
+#ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
 /**
  *
  */
 static int
-be_spotify_init(void)
+be_spotify_dlopen(void)
 {
   void *h;
   const char *sym;
-  prop_t *p;
   char libname[64];
 
   snprintf(libname, sizeof(libname), "libspotify.so.%d", SPOTIFY_API_VERSION);
@@ -2307,6 +2307,22 @@ be_spotify_init(void)
     dlclose(h);
     return 1;
   }
+  return 0;
+}
+#endif
+
+/**
+ *
+ */
+static int
+be_spotify_init(void)
+{
+  prop_t *p;
+
+#ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
+  if(be_spotify_dlopen())
+    return 1;
+#endif
 
   prop_playlists = prop_create(prop_get_global(), "spotify_playlists");
 

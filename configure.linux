@@ -71,6 +71,7 @@ enable libexif
 enable lirc
 enable gu
 enable avahi
+enable libspotify_load_runtime
 
 for opt do
   optval="${opt#*=}"
@@ -103,7 +104,6 @@ enable libpthread
 enable zlib
 enable posix_networking
 enable dvd
-
     
 #
 # pkgconfig
