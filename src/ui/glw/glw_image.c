@@ -116,7 +116,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
   }
 }
 
-
+#define SWAP(a, b) do { typeof(a) c = (b); (b) = (a); (a) = (c); } while(0)
 /**
  *
  */
@@ -165,6 +165,24 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
 
   glw_render_set_pre(&gi->gi_gr);
 
+  gi->gi_child_xt = (vex[2][0] + vex[1][0]) * 0.5f;
+  gi->gi_child_yt = (vex[1][1] + vex[2][1]) * 0.5f;
+
+  gi->gi_child_xs = (vex[2][0] - vex[1][0]) * 0.5f;
+  gi->gi_child_ys = (vex[1][1] - vex[2][1]) * 0.5f;
+
+  if(gi->gi_mirror & GLW_MIRROR_X) {
+    SWAP(vex[0][1], vex[3][1]);
+    SWAP(vex[1][1], vex[2][1]);
+    gi->gi_child_xt = -gi->gi_child_xt;
+  }
+
+  if(gi->gi_mirror & GLW_MIRROR_Y) {
+    SWAP(vex[0][0], vex[3][0]);
+    SWAP(vex[1][0], vex[2][0]);
+    gi->gi_child_yt = -gi->gi_child_yt;
+  }
+
   for(y = 0; y < 3; y++) {
     for(x = 0; x < 3; x++) {
 
@@ -189,11 +207,6 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
   glw_render_set_post(&gi->gi_gr);
     
 
-  gi->gi_child_xt = (vex[2][0] + vex[1][0]) * 0.5f;
-  gi->gi_child_yt = (vex[1][1] + vex[2][1]) * 0.5f;
-
-  gi->gi_child_xs = (vex[2][0] - vex[1][0]) * 0.5f;
-  gi->gi_child_ys = (vex[1][1] - vex[2][1]) * 0.5f;
 }
 
 
@@ -282,17 +295,35 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	float xs = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_xs;
 	float ys = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_ys;
 
+	float x1, y1, x2, y2;
+
+	if(gi->gi_mirror & GLW_MIRROR_X) {
+	  x1 = xs;
+	  x2 = 0;
+	} else {
+	  x1 = 0;
+	  x2 = xs;
+	}
+
+	if(gi->gi_mirror & GLW_MIRROR_Y) {
+	  y1 = ys;
+	  y2 = 0;
+	} else {
+	  y1 = 0;
+	  y2 = ys;
+	}
+
 	glw_render_vtx_pos(&gi->gi_gr, 0, -1.0, -1.0, 0.0);
-	glw_render_vtx_st (&gi->gi_gr, 0,  0.0,  ys);
+	glw_render_vtx_st (&gi->gi_gr, 0,  x1,   y2);
 
 	glw_render_vtx_pos(&gi->gi_gr, 1,  1.0, -1.0, 0.0);
-	glw_render_vtx_st (&gi->gi_gr, 1,  xs,   ys);
+	glw_render_vtx_st (&gi->gi_gr, 1,  x2,   y2);
 
 	glw_render_vtx_pos(&gi->gi_gr, 2,  1.0,  1.0, 0.0);
-	glw_render_vtx_st (&gi->gi_gr, 2,  xs,   0.0);
+	glw_render_vtx_st (&gi->gi_gr, 2,  x2,   y1);
 
 	glw_render_vtx_pos(&gi->gi_gr, 3, -1.0,  1.0, 0.0);
-	glw_render_vtx_st (&gi->gi_gr, 3,  0.0,  0.0);
+	glw_render_vtx_st (&gi->gi_gr, 3,  x1,   y1);
       } else {
 	glw_image_layout_tesselated(gr, rc, gi, glt);
       }
