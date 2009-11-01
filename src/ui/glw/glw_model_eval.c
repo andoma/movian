@@ -25,6 +25,7 @@
 #include "glw_model.h"
 #include "glw.h"
 #include "glw_event.h"
+#include "navigator.h"
 
 
 /**
@@ -2604,6 +2605,38 @@ glwf_trace(glw_model_eval_context_t *ec, struct token *self,
 
 
 /**
+ * 
+ */
+static int 
+glwf_browse(glw_model_eval_context_t *ec, struct token *self,
+	   token_t **argv, unsigned int argc)
+{
+  token_t *a = argv[0];
+  prop_t *p;
+  char errbuf[100];
+  
+  if(a->type != TOKEN_PROPERTY) {
+
+    if(a->type != TOKEN_STRING)
+      return glw_model_seterr(ec->ei, a, "browse() first arg is not a string");
+  
+    p = nav_list(a->t_string, errbuf, sizeof(errbuf));
+    if(p == NULL) 
+      return glw_model_seterr(ec->ei, a, "browse(%s): %s", a->t_string, errbuf);
+    /* Transform TOKEN_STRING -> TOKEN_PROPERTY */
+
+    free(a->t_string);
+    a->t_prop = p;
+    a->type = TOKEN_PROPERTY;
+  }
+
+  eval_push(ec, a);
+  return 0;
+}
+
+
+
+/**
  *
  */
 static const token_func_t funcvec[] = {
@@ -2635,6 +2668,7 @@ static const token_func_t funcvec[] = {
   {"isVisible", 0, glwf_isVisible},
   {"select", 3, glwf_select},
   {"trace", 2, glwf_trace},
+  {"browse", 1, glwf_browse},
 };
 
 
