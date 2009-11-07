@@ -754,17 +754,17 @@ render_video_quad(int interlace, int rectmode, int width, int height)
  
   glBegin(GL_QUADS);
 
-  glTexCoord2f(x1, y1);
-  glVertex3f( -1.0f, 1.0f, 0.0f);
-  
-  glTexCoord2f(x2, y1);
-  glVertex3f( 1.0f, 1.0f, 0.0f);
+  glTexCoord2f(x1, y2);
+  glVertex3f( -1.0f, -1.0f, 0.0f);
   
   glTexCoord2f(x2, y2);
   glVertex3f( 1.0f, -1.0f, 0.0f);
+  
+  glTexCoord2f(x2, y1);
+  glVertex3f( 1.0f, 1.0f, 0.0f);
 
-  glTexCoord2f(x1, y2);
-  glVertex3f( -1.0f, -1.0f, 0.0f);
+  glTexCoord2f(x1, y1);
+  glVertex3f( -1.0f, 1.0f, 0.0f);
 
   glEnd();
 }
