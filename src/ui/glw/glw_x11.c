@@ -430,7 +430,19 @@ window_open(glw_x11_t *gx11)
 
   gx11->working_vsync = check_vsync(gx11);
 
+  printf("%s\n", glGetString(GL_VENDOR));
+
   if(!gx11->working_vsync) {
+
+    if(strstr((const char *)glGetString(GL_VENDOR) ?: "", "NVIDIA")) {
+      TRACE(TRACE_ERROR, "GLW", 
+	    "OpenGL on \"%s\" does not sync to vertical blank.\n"
+	    "This is required for Showtime's OpenGL interface to\n"
+	    "function property. Please fix this.\n",
+	    gx11->displayname_real);
+      return 1;
+    }
+
     TRACE(TRACE_INFO, "GLW", 
 	  "OpenGL driver does not provide adequate vertical sync "
 	  "capabilities. Using soft timers");
