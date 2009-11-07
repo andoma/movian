@@ -430,8 +430,6 @@ window_open(glw_x11_t *gx11)
 
   gx11->working_vsync = check_vsync(gx11);
 
-  printf("%s\n", glGetString(GL_VENDOR));
-
   if(!gx11->working_vsync) {
 
     if(strstr((const char *)glGetString(GL_VENDOR) ?: "", "NVIDIA")) {
