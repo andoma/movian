@@ -44,6 +44,7 @@
 #include "glw_layer.h"
 #include "glw_fx_texrot.h"
 #include "glw_bloom.h"
+#include "glw_cube.h"
 
 #if CONFIG_GLW_BACKEND_OPENGL
 #include "glw_video_opengl.h"
@@ -83,6 +84,7 @@ static const size_t glw_class_to_size[] = {
   [GLW_FREEFLOAT] = sizeof(glw_freefloat_t),
   [GLW_ARRAY] = sizeof(glw_array_t),
   [GLW_BLOOM] = sizeof(glw_bloom_t),
+  [GLW_CUBE] = sizeof(glw_t),
 };
 
 
@@ -442,6 +444,10 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 
   case GLW_BLOOM:
     glw_bloom_ctor(w, init, apx);
+    break;
+
+  case GLW_CUBE:
+    glw_cube_ctor(w, init, apx);
     break;
 
   }

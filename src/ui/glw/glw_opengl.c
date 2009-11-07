@@ -64,7 +64,7 @@ glw_opengl_init_context(glw_root_t *gr)
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glDisable(GL_CULL_FACE);
+  glEnable(GL_CULL_FACE);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
   if(check_gl_ext(s, "GL_ARB_texture_non_power_of_two")) {
