@@ -90,9 +90,9 @@ glw_video_global_init(glw_root_t *gr, int rectmode)
 {
   glw_backend_root_t *gbr = &gr->gr_be;
   const char *c;
-  GLint tu;
+  GLint tu = 0;
 
-  glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tu);
+  glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &tu);
   if(tu < 6) {
     TRACE(TRACE_ERROR, "OpenGL", 
 	  "Insufficient number of texture image units (%d) "
