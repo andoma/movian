@@ -385,6 +385,9 @@ vd_thread(void *aux)
       break;
 #endif
 
+    case MB_END:
+      break;
+
     default:
       abort();
     }

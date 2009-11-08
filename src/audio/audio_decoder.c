@@ -178,6 +178,10 @@ ad_thread(void *aux)
 	ad_decode_buf(ad, mp, mb);
       break;
 
+    case MB_END:
+      mp_set_current_time(mp, AV_NOPTS_VALUE);
+      break;
+
     default:
       abort();
     }
@@ -239,16 +243,14 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
   int64_t pts, chlayout;
   
   if(cw == NULL) {
+    /* Raw native endian PCM */
+
 
     if(ad->ad_do_flush) {
       ad->ad_do_flush = 0;
       if(mp_is_primary(mp))
 	ad->ad_send_flush = 1;
-    }
-
-    /* Raw native endian PCM */
-
-    if(mb->mb_time != AV_NOPTS_VALUE)
+    } else if(mb->mb_time != AV_NOPTS_VALUE)
       mp_set_current_time(mp, mb->mb_time);
 
     frames = mb->mb_size / sizeof(int16_t) / mb->mb_channels;
@@ -313,10 +315,10 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
     if(ad->ad_do_flush) {
       avcodec_flush_buffers(cw->codec_ctx);
       ad->ad_do_flush = 0;
-      if(mp_is_primary(mp)) {
+      if(mp_is_primary(mp))
 	ad->ad_send_flush = 1;
-     }
-    }
+    } else if(mb->mb_time != AV_NOPTS_VALUE)
+      mp_set_current_time(mp, mb->mb_time);
 
     if(audio_mode_stereo_only(am))
       ctx->request_channels = 2; /* We can only output stereo.
@@ -333,9 +335,6 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
     rate     = ctx->sample_rate;
     codec_id = ctx->codec_id;
     chlayout = ctx->channel_layout;
-
-    if(mb->mb_time != AV_NOPTS_VALUE)
-      mp_set_current_time(mp, mb->mb_time);
 
     /* Convert to signed 16bit */
 

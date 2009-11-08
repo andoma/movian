@@ -74,6 +74,7 @@ typedef struct media_buf {
     MB_AUDIO,
 
     MB_FLUSH,
+    MB_END,
 
     MB_CTRL_PAUSE,
     MB_CTRL_PLAY,
@@ -232,6 +233,8 @@ void mp_send_cmd_u32_head(media_pipe_t *mp, media_queue_t *mq, int cmd,
 			  uint32_t u);
 
 void mp_flush(media_pipe_t *mp);
+
+void mp_end(media_pipe_t *mp);
 
 void mp_wait(media_pipe_t *mp, int audio, int video);
 

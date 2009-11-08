@@ -454,6 +454,34 @@ mp_flush(media_pipe_t *mp)
 
 }
 
+/**
+ *
+ */
+void
+mp_end(media_pipe_t *mp)
+{
+  media_queue_t *v = &mp->mp_video;
+  media_queue_t *a = &mp->mp_audio;
+  media_buf_t *mb;
+
+  hts_mutex_lock(&mp->mp_mutex);
+
+  if(v->mq_stream >= 0) {
+    mb = media_buf_alloc();
+    mb->mb_data_type = MB_END;
+    mb_enq_tail(v, mb);
+  }
+
+  if(a->mq_stream >= 0) {
+    mb = media_buf_alloc();
+    mb->mb_data_type = MB_END;
+    mb_enq_tail(a, mb);
+  }
+  hts_mutex_unlock(&mp->mp_mutex);
+
+}
+
+
 /*
  *
  */
@@ -954,8 +982,11 @@ update_avdelta(void *opaque, prop_event_t event, ...)
 void
 mp_set_current_time(media_pipe_t *mp, int64_t pts)
 {
-  double d = pts / 1000000.0;
-  prop_set_float_ex(mp->mp_prop_currenttime, mp->mp_sub_currenttime, d);
+  if(pts != AV_NOPTS_VALUE)
+    prop_set_float_ex(mp->mp_prop_currenttime, mp->mp_sub_currenttime,
+		      pts / 1000000.0);
+  else
+    prop_set_void_ex(mp->mp_prop_currenttime, mp->mp_sub_currenttime);
 }
 
 

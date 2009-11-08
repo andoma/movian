@@ -996,6 +996,8 @@ player_thread(void *aux)
 
     } else if(event_is_action(e, ACTION_NEXT_TRACK) ||
 	      event_is_type  (e, EVENT_EOF)) {
+      mp_end(mp);
+
        pqe = playqueue_advance(pqe, 0);
 
     } else if(event_is_action(e, ACTION_STOP)) {
