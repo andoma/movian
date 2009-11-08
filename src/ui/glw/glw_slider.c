@@ -326,16 +326,20 @@ prop_callback(void *opaque, prop_event_t event, ...)
   glw_root_t *gr;
   float v;
   prop_t *p;
-
+  int grabbed;
   if(sl == NULL)
     return;
 
   gr = sl->w.glw_root;
   va_list ap;
   va_start(ap, event);
+  grabbed = gr->gr_pointer_grab == &sl->w;
 
   switch(event) {
   case PROP_SET_VOID:
+    if(grabbed)
+      gr->gr_pointer_grab = NULL;
+
     v = 0;
     p = va_arg(ap, prop_t *);
     break;
@@ -361,7 +365,7 @@ prop_callback(void *opaque, prop_event_t event, ...)
   if(p != NULL)
     prop_ref_inc(p);
   
-  if(gr->gr_pointer_grab == &sl->w)
+  if(grabbed)
     return;
 
   if(sl->max - sl->min == 0)
