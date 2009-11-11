@@ -9,11 +9,11 @@ KNAME=`uname -s`
 
 if [ "$KNAME" == "Linux" ]; then
     echo "Configuring for Linux environment"
-    `dirname $0`/configure.linux $@
+    `dirname $0`/configure.linux "$@"
     exit $?
 elif [ "$KNAME" == "Darwin" ]; then
     echo "Configuring for Mac OS X environment"
-    `dirname $0`/configure.osx $@
+    `dirname $0`/configure.osx "$@"
     exit $?
 else
     echo "Showtime is not supported on this platform"
