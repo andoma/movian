@@ -2,7 +2,7 @@
 #
 # HTS configure script for Mac OS X
 #
-# Copyright (c) 2005-2009 Andreas Öman
+# Copyright (c) 2005-2009 Mattias Wadman
 #
 # Based on FFmpeg's configure script:
 #
@@ -19,7 +19,8 @@ source support/configure.inc
 
 CPU=generic
 ARCH=`uname -m`
-MACPORTSPREFIX="/opt/local"
+PKGCONFIG="/opt/local/bin/pkg-config"
+PKGCONFIGDIR="/opt/local/lib/pkgconfig"
 MACOSXTARGET=""
 MACOSXSDK=""
 APPDIR=${BUILDDIR}/Showtime.app
@@ -36,10 +37,36 @@ show_help(){
   echo "  --cc=CC                  Build using the given compiler"
   echo "  --release                Stage for release"
   echo "  --embedded-theme         Embed theme in showtime [none]"
-  echo "  --macports=PATH          MacPorts prefix (for freetype) [$MACPORTSPREFIX]"
   echo "  --macosxsdk=PATH         Mac OS X SDK path [$MACOSXSDK]"
+  echo "  --pkg-config=PATH        pkg-config path [$PKGCONFIG]"
+  echo "  --pkg-config-dir=PATH    pkg-config config dir[$PKGCONFIGDIR]"
   exit 1
 }
+
+# figure out what archives to link with by modifying output
+# from pkg-config
+# this is done because gcc (on at least osx) cant be
+# forced to link some libraries static with -static using -l
+pkg_config_static() {
+  libdir=`$PKGCONFIG --variable=libdir $1`
+  args=""
+  for arg in `$PKGCONFIG --libs $*` ; do
+    if [ \
+        "$arg" = "-lm" -o \
+        "$arg" = "-lz" -o \
+        "$arg" = "-lpthread" ] \
+        ; then
+      continue
+    fi
+    if [ "${arg:0:2}" != "-l" ] ; then
+      args+="$arg "
+    else
+      args+="${arg/-l/$libdir/lib}.a "
+    fi
+  done
+  echo $args
+}
+
 
 enable libfreetype
 enable glw
@@ -59,20 +86,22 @@ for opt do
   --help) show_help
   ;;
   --release) 
-	  enable release
-	  enable embedded_resources
+    enable release
+    enable embedded_resources
   ;;
   --cc=*) CC="$optval"
   ;;
   --arch=*) ARCH="$optval"
   ;;
-  --macports=*) MACPORTSPREFIX="$optval"
+  --macosx-sdk=*) MACOSXSDK="$optval"
   ;;
-  --macosxsdk=*) MACOSXSDK="$optval"
+  --pkg-config=*) PKGCONFIG="$optval"
+  ;;
+  --pkg-config-dir=*) PKGCONFIGDIR="$optval"
   ;;
   --enable-?*|--disable-?*)
-  eval $(echo "$opt" | sed 's/--/action=/;s/-/ option=/;s/-/_/g')
-  $action $option
+    eval $(echo "$opt" | sed 's/--/action=/;s/-/ option=/;s/-/_/g')
+    $action $option
   ;;
   esac
 done
@@ -86,9 +115,6 @@ enable posix_networking
 enable dvd
 
 
-
-
-
 #
 # Application bundle
 # Override PROG to put binary inside app bundle
@@ -98,27 +124,12 @@ PROG="${APPDIR}/Contents/MacOS/showtime"
 
 
 #
-# pkgconfig
-#
-if [ -d "$MACPORTSPREFIX" ] ; then
-    echo "MacPorts prefix:       $MACPORTSPREFIX"
-else
-    echo "MacPorts directory $MACPORTSPREFIX does not exist"
-    die
-fi
-PKGCONFIG="${MACPORTSPREFIX}/bin/pkg-config"
-if [ ! -x "$PKGCONFIG" ] ; then
-    echo "$PKGCONFIG does not exist"
-    die
-fi
-
-#
 # c compiler
 #
 checkcc() {
     cat >$TMPDIR/1.c <<EOF
 int main() {
- return 0;
+  return 0;
 }
 EOF
     $CC 2>/dev/null $TMPDIR/1.c -o $TMPDIR/1.bin 
@@ -126,7 +137,7 @@ EOF
 
 if [ "x$CC" != "x" ]; then
     echo >>${CONFIG_MAK} "CC=$CC"
-    CC_FFMPEG="--cc=$CC"
+    CC="$CC"
 else
     CC=cc
 fi
@@ -140,7 +151,9 @@ fi
 
 echo >>${CONFIG_MAK} $CC_CONFIG_MAK 
 
-
+#
+# Check SDK path and set target version
+#
 if [ "x$MACOSXSDK" != "x" ] ; then
     if [ -d "$MACOSXSDK" ] ; then
         SDKSETTINGS="$MACOSXSDK/SDKSettings"
@@ -169,48 +182,58 @@ if [ "$MACOSXTARGET" != "" ]; then
     MACOSXSDK_CFLAGS="-mmacosx-version-min=$MACOSXTARGET"
 fi
 
-
 if [ "$MACOSXSDK" != "" ]; then
     MACOSXSDK_CFLAGS="${MACOSXSDK_CFLAGS} -isysroot $MACOSXSDK"
     MACOSXSDK_LDFLAGS="-isysroot $MACOSXSDK"
 fi
 
+#
+# pkg-config, set LIBDIR to makes pkg-config only search that path
+#
+if [ ! -x "$PKGCONFIG" ] ; then
+    echo "$PKGCONFIG does not exist or is not executable, make sure it is installed"
+    echo "You can also specify another path with --pkg-config"
+    die
+fi
+if [ ! -d "$PKGCONFIGDIR" ] ; then
+    echo "$PKGCONFIGDIR does not exist, make sure pkg-config is installed"
+    echo "You can also specify another directory with --pkg-config-dir"
+    die
+fi
+export PKG_CONFIG_LIBDIR=$PKGCONFIGDIR
+PKGS=""
 
 #
 # libfreetype2
 #
-if ${PKGCONFIG} freetype2; then
-    # FIXME: pkg-config for freetype in macport does not like --static
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += ${MACPORTSPREFIX}/lib/libfreetype.a"
-    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `${PKGCONFIG} --cflags freetype2`
-    echo "Using Freetype2:       `${PKGCONFIG} --modversion freetype2`"
+if $PKGCONFIG freetype2; then
+    PKGS+="freetype2 "
+    echo "Using Freetype2:       `$PKGCONFIG --modversion freetype2`"
 else
     echo "FreeType 2 not found"
     die
 fi
 
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg_config_static $PKGS`
+echo >>${CONFIG_MAK} "CFLAGS_cfg +=" `$PKGCONFIG --cflags $PKGS`
 
-
-# CoreFundation
+#
+# Standard Mac OS X frameworks
+#
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Foundation"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreFoundation"
-
-# Cocoa
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Cocoa"
-
 # IOKit for dvd
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework IOKit"
-
-# OpenGL
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework OpenGL -framework GLUT"
 
+# CoreAudio
 if enabled coreaudio; then
-    # CoreAudio
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreAudio"
 fi
 
+# Carbon, Remote Control Wrapper uses it
 if enabled appleremote; then
-    # Carbon, Remote Control Wrapper uses it
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Carbon"
 fi
 
@@ -224,15 +247,16 @@ if [ "$ARCH" == "powerpc" ]; then
         --arch=powerpc \
         --disable-altivec \
         --extra-cflags="$MACOSXSDK_CFLAGS" \
-        --extra-ldflags="$MACOSXSDK_LDFLAGS"
+        --extra-ldflags="$MACOSXSDK_LDFLAGS" \
+        --cc="$CC"
 else
     setup_ffmpeg \
         --cpu=${CPU} \
         --enable-pthreads \
         --extra-cflags="$MACOSXSDK_CFLAGS" \
-        --extra-ldflags="$MACOSXSDK_LDFLAGS"
+        --extra-ldflags="$MACOSXSDK_LDFLAGS" \
+        --cc="$CC"
 fi
-
       
 #
 # Configure paths, etc
@@ -263,7 +287,7 @@ EOF
 
 #
 # Finalize
-
+#
 echo >>${CONFIG_MAK} LDFLAGS_cfg += -lpthread
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += $MACOSXSDK_CFLAGS"
 echo >>${CONFIG_MAK} "CFLAGS_cfg += $MACOSXSDK_LDFLAGS"

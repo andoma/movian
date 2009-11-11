@@ -37,44 +37,44 @@ gcc toolchain and much more. iPhone SDK also includes Xcode and toolchain.
 
 Install MacPorts (http://www.macports.org)
 
-Install freetype via MacPorts:
+Install pkg-config using MacPorts
+$ sudo port install pkgconfig
 
-$ sudo /opt/local/bin/port install freetype (see note below if you want to
-build with 10.4 support).
+Now there are two possible ways to get a build environment, the MacPorts way
+or the custome build scripts way. If you dont plan to build for different
+architectures or SDKs as you are current running, or dont plan to compile with
+fancy extensions, i would recommend the MacPorts way.
+
+If you choose the custome script way, please continue to read osx/README
+
+MacPorts way:
+
+Install freetype using MacPorts:
+$ sudo /opt/local/bin/port install freetype 
 
 Now run configure
-
 $ ./configure
+Or if you build for release
+$ ./configure --release
 
-If configured successfully, build the binary
-
+If configured successfully
 $ make
 
 Run showtime binary from build directory
-
 $ build.osx/Showtime.app/Contents/MacOS/showtime
 
-Run showtime app from build directory
-
+Run showtime application from build directory
 $ open build.osx/Showtime.app
 
 Optionally you can build Showtime.dmg disk image. Note that you should probably
 run configure with --release to embed theme files or else the binary will
 include paths your local build tree.
-
 $ make Showtime.dmg
 
-To build with 10.4 (Tiger) support, remember to build freetype with 10.4
-support (hint: macports.conf: sysroot=/Developer/SDKs/MacOSX10.4u.sdk). 10.4
-SDK is included as an optional package for Xcode.
+For more information read osx/README
 
-$ ./configure --macosxtarget=10.4 --macosxsdk=/Developer/SDKs/MacOSX10.4u.sdk
-
-To build with 10.4 (tiger) support for PPC
-
-$ ./configure --arch=powerpc --cc=powerpc-apple-darwin9-gcc-4.0.1 --macosxtarget=10.4 --macosxsdk=/Developer/SDKs/MacOSX10.4u.sdk
-
-TODO: universal binary
+TODO: universal binary, cant be done i one step as ffmpeg does not
+build when using multiple arch arguments to gcc
 
 How to build for Nintendo Wii
 =============================
