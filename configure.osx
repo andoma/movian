@@ -169,22 +169,14 @@ if [ "x$MACOSXSDK" != "x" ] ; then
         echo "Mac OS X SDK directory $MACOSXSDK does not exist"
         die
     fi
+    
+    MACOSXSDK_CFLAGS="-mmacosx-version-min=$MACOSXTARGET -isysroot $MACOSXSDK"
+    MACOSXSDK_LDFLAGS="$MACOSXSDK_CFLAGS"
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += $MACOSXSDK_LDFLAGS"
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += $MACOSXSDK_CFLAGS"
 else
     echo "Mac OS X SDK:          default"
     echo "Mac OS X target:       default (`sw_vers -productVersion`)"
-fi
-
-# env variable used by osx linker
-# export for compiler test and ffmpeg configure
-if [ "$MACOSXTARGET" != "" ]; then
-    export MACOSX_DEPLOYMENT_TARGET="$MACOSXTARGET"
-    echo >>${CONFIG_MAK} "export MACOSX_DEPLOYMENT_TARGET = $MACOSXTARGET"
-    MACOSXSDK_CFLAGS="-mmacosx-version-min=$MACOSXTARGET"
-fi
-
-if [ "$MACOSXSDK" != "" ]; then
-    MACOSXSDK_CFLAGS="${MACOSXSDK_CFLAGS} -isysroot $MACOSXSDK"
-    MACOSXSDK_LDFLAGS="-isysroot $MACOSXSDK"
 fi
 
 #
@@ -289,7 +281,5 @@ EOF
 # Finalize
 #
 echo >>${CONFIG_MAK} LDFLAGS_cfg += -lpthread
-echo >>${CONFIG_MAK} "LDFLAGS_cfg += $MACOSXSDK_CFLAGS"
-echo >>${CONFIG_MAK} "CFLAGS_cfg += $MACOSXSDK_LDFLAGS"
 
 finalize
