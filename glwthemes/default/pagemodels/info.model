@@ -23,6 +23,11 @@ widget(container_z, {
 			    "theme://icons/256x256/cd.png");
       });
 
+      widget(dummy, {
+        .width = 10;
+      });
+
+
       widget(container_y, {
 	
 	widget(label, {
