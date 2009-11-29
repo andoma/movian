@@ -196,8 +196,8 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   bbox.xMin = bbox.yMin = 32000;
   bbox.xMax = bbox.yMax = -32000;
 
-  bbox.yMin = 62.2 * face->descender * pixelheight / 2048;
-  bbox.yMax = 62.2 * face->ascender  * pixelheight / 2048;
+  bbox.yMin = 64 * face->descender * pixelheight / 2048;
+  bbox.yMax = 64 * face->ascender  * pixelheight / 2048;
 
 
   for(i = 0; i < len; i++) {
@@ -220,7 +220,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 
     siz_x = bbox.xMax - bbox.xMin;
 
-    if((siz_x / 62.2) > x_size_max - ellipsize_x) {
+    if((siz_x / 64) > x_size_max - ellipsize_x) {
       int j;
 
       x_size_max = INT_MAX;
@@ -246,10 +246,12 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   if(siz_x < 5)
     return -1;
 
-  target_width  = (siz_x / 62.2) + 3;
-  target_height = (siz_y / 62.2);
+  target_width  = (siz_x / 64) + 2;
+  target_height = (siz_y / 64);
 
-  origin_y = -bbox.yMin / 62.2;
+  target_height = pixelheight;
+
+  origin_y = -bbox.yMin / 64;
 
   if(glw_can_tnpo2(gr)) {
     gtbd->gtbd_texture_width  = target_width;
@@ -267,7 +269,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
     gtbd->gtbd_v = target_height;
   }
 
-  start_x = 0;
+  start_x = -bbox.xMin;
   start_y = 0;
 
   /* Allocate drawing area */
@@ -275,7 +277,6 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   data = calloc(1, gtbd->gtbd_texture_width * gtbd->gtbd_texture_height);
   gtbd->gtbd_siz_x = target_width;
   gtbd->gtbd_siz_y = target_height;
-  gtbd->gtbd_aspect = (float)target_width / (float)target_height;
 
 
   if(docur) {
@@ -362,6 +363,11 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
     free(data);
     gtbd->gtbd_pixel_format = GLW_TEXTURE_FORMAT_I8A8;
 
+    if(0)memset(gtbd->gtbd_data + 
+	   gtbd->gtbd_texture_width * 8,
+	   0xff,
+	   gtbd->gtbd_texture_width * 2);
+
   } else {
 
     gtbd->gtbd_data = data;
@@ -434,8 +440,10 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
     free(gtbd->gtbd_data);
     gtbd->gtbd_data = NULL;
 
-    gtb->gtb_siz_y  = gtbd->gtbd_siz_y;
-    gtb->gtb_aspect = gtbd->gtbd_aspect;
+    gtb->gtb_siz_x = gtbd->gtbd_siz_x;
+    gtb->gtb_siz_y = gtbd->gtbd_siz_y;
+
+    gtb->gtb_aspect = (float)gtb->gtb_siz_x / (float)gtb->gtb_siz_y;
   }
 
 
@@ -529,15 +537,48 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
     return;
   }
 
+#if 1
   glw_rescale(&rc0, gtb->gtb_aspect);
 
-  if(rc0.rc_size_y > gtb->gtb_siz_y) {
+  if(rc0.rc_size_y > gtb->gtb_siz_y ||
+     rc0.rc_size_x > gtb->gtb_siz_x) {
     float s = (float)gtb->gtb_siz_y / rc0.rc_size_y;
     glw_Scalef(&rc0, s, s, 1.0);
   }
+#else
+
+  float xs, ys;
+
+  if(gtb->gtb_siz_x < rc0.rc_size_x) {
+    xs = (float)gtb->gtb_siz_x / (float)rc0.rc_size_x;
+  } else {
+    xs = 1;
+  }
+
+  if(gtb->gtb_siz_y < rc0.rc_size_y) {
+    ys = (float)gtb->gtb_siz_y / (float)rc0.rc_size_y;
+  } else {
+    ys = 1;
+  }
+
+  glw_Scalef(&rc0, xs, ys, 1.0f);
+
+  rc0.rc_size_x *= xs;
+  rc0.rc_size_y *= ys;
+#endif
 
   glw_align_2(&rc0, w->glw_alignment, GLW_ALIGN_LEFT);
-
+#if 0
+  glDisable(GL_TEXTURE_2D);
+  glBegin(GL_LINE_LOOP);
+  glColor4f(1,1,1,1);
+  glVertex3f(-1.0, -1.0, 0.0);
+  glVertex3f( 1.0, -1.0, 0.0);
+  glVertex3f( 1.0,  1.0, 0.0);
+  glVertex3f(-1.0,  1.0, 0.0);
+  glEnd();
+  glEnable(GL_TEXTURE_2D);
+#endif
   if(gtb->gtb_paint_cursor)
     glw_render(&gtb->gtb_cursor_renderer, w->glw_root, &rc0,
 	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_NONE,
@@ -591,6 +632,7 @@ gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb)
     (gtb->gtb_size_bias + gr->gr_fontsize_px * gtb->gtb_size_scale)
     * gtb->gtb_lines;
   int flags = GLW_CONSTRAINT_Y;
+
 
   if(0 && gtb->w.glw_alignment == GLW_ALIGN_NONE &&
      gtb->gtb_data.gtbd_siz_x > 0)

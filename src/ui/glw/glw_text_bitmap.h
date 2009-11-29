@@ -33,8 +33,6 @@ typedef struct glw_text_bitmap_data {
   float gtbd_u;
   float gtbd_v;
 
-  float gtbd_aspect;
-
   int *gtbd_cursor_pos;
   int gtbd_cursor_scale;
   int gtbd_cursor_pos_size;
