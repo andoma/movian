@@ -962,17 +962,17 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
       
       glBegin(GL_QUADS);
       
-      glTexCoord2f(0.0, 0.0);
-      glVertex3f(d->d_x1, d->d_y1, 0.0f);
+      glTexCoord2f(0.0, gv->gv_sputex_height);
+      glVertex3f(d->d_x1, d->d_y2, 0.0f);
+
+      glTexCoord2f(gv->gv_sputex_width, gv->gv_sputex_height);
+      glVertex3f(d->d_x2, d->d_y2, 0.0f);
     
       glTexCoord2f(gv->gv_sputex_width, 0.0);
       glVertex3f(d->d_x2, d->d_y1, 0.0f);
     
-      glTexCoord2f(gv->gv_sputex_width, gv->gv_sputex_height);
-      glVertex3f(d->d_x2, d->d_y2, 0.0f);
-    
-      glTexCoord2f(0.0, gv->gv_sputex_height);
-      glVertex3f(d->d_x1, d->d_y2, 0.0f);
+      glTexCoord2f(0.0, 0.0);
+      glVertex3f(d->d_x1, d->d_y1, 0.0f);
 
       glEnd();
 
