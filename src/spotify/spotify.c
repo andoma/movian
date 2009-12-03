@@ -1317,6 +1317,22 @@ spotify_search(spotify_search_t *ss)
 }
 
 /**
+ *
+ */
+static void
+spotify_log_message(sp_session *session, const char *msg)
+{
+  int l = strlen(msg);
+  char *s = alloca(l + 1);
+  memcpy(s, msg, l + 1);
+
+  if(l > 0 && s[l - 1] == '\n')
+    s[l - 1] = 0;
+  TRACE(TRACE_DEBUG, "libspotify", "%s", s);
+}
+
+
+/**
  * Session callbacks
  */
 static const sp_session_callbacks spotify_session_callbacks = {
@@ -1328,6 +1344,7 @@ static const sp_session_callbacks spotify_session_callbacks = {
   .music_delivery      = spotify_music_delivery,
   .play_token_lost     = spotify_play_token_lost,
   .end_of_track        = spotify_end_of_track,
+  .log_message         = spotify_log_message,
 };
 
 
