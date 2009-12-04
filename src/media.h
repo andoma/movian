@@ -86,6 +86,8 @@ typedef struct media_buf {
     MB_DVD_PCI,
     MB_DVD_HILITE,
 
+    MB_SUBTITLE,
+
   } mb_data_type;
 
   void *mb_data;
@@ -123,6 +125,7 @@ typedef struct media_queue {
   struct media_buf_queue mq_q;
   unsigned int mq_len;
   int mq_stream;             /* Stream id, or -1 if queue is inactive */
+  int mq_stream2;            /* Complementary stream */
   hts_cond_t mq_avail;
 
   int64_t mq_seektarget;
@@ -194,7 +197,7 @@ codecwrap_t *wrap_codec_ref(codecwrap_t *cw);
 codecwrap_t *wrap_codec_create(enum CodecID id, enum CodecType type, 
 			       int parser, formatwrap_t *fw,
 			       AVCodecContext *ctx,
-			       int cheat_for_speed);
+			       int cheat_for_speed, int sub_id);
 
 void media_buf_free(media_buf_t *mb);
 

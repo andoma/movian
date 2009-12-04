@@ -954,7 +954,8 @@ htsp_mux_input(htsp_connection_t *hc, htsmsg_t *m)
 
   mp = hs->hs_mp;
 
-  if(stream == mp->mp_audio.mq_stream || stream == mp->mp_video.mq_stream) {
+  if(stream == mp->mp_audio.mq_stream || stream == mp->mp_video.mq_stream ||
+     stream == mp->mp_video.mq_stream2) {
 
     LIST_FOREACH(hss, &hs->hs_streams, hss_link)
       if(hss->hss_index == stream)
@@ -1013,9 +1014,14 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 
   int vstream = -1; /* Initial video stream */
   int astream = -1; /* Initial audio stream */
+  int sstream = -1; /* Initial subtitle stream */
 
-  int ascore = 0;   /* Discriminator for chosing best stream */
-  int vscore = 0;   /* Discriminator for chosing best stream */
+  /* Discriminators for chosing best stream */
+  int ascore = 0;
+  int vscore = 0;
+  int sscore = 0;
+
+  int subid;
 
   htsp_subscription_stream_t *hss;
 
@@ -1050,6 +1056,8 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
       if(htsmsg_get_u32(sub, "index", &idx))
 	continue;
 
+      subid = 0;
+
       if(!strcmp(type, "AC3")) {
 	codec_id = CODEC_ID_AC3;
 	codec_type = CODEC_TYPE_AUDIO;
@@ -1070,6 +1078,28 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 	codec_type = CODEC_TYPE_VIDEO;
 	nicename = "H264";
 	s = 2;
+      } else if(0 && !strcmp(type, "DVBSUB")) {
+	codec_id = CODEC_ID_DVB_SUBTITLE;
+	codec_type = CODEC_TYPE_SUBTITLE;
+	nicename = "Subtitles";
+
+	uint32_t composition_id, ancillary_id;
+	
+	if(htsmsg_get_u32(sub, "composition_id", &composition_id)) {
+	  composition_id = 0;
+	  TRACE(TRACE_ERROR, "HTSP", 
+		"Subtitle stream #%d missing composition id", idx);
+	}
+
+	if(htsmsg_get_u32(sub, "ancillary_id", &ancillary_id)) {
+	  ancillary_id = 0;
+	  TRACE(TRACE_ERROR, "HTSP", 
+		"Subtitle stream #%d missing ancillary id", idx);
+	}
+
+	subid = (composition_id & 0xffff) | ((ancillary_id & 0xffff) << 16);
+	s = 1;
+
       } else {
 	continue;
       }
@@ -1079,7 +1109,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
        */
 
       cw = wrap_codec_create(codec_id, codec_type, 0, NULL, NULL,
-			     codec_id == CODEC_ID_H264);
+			     codec_id == CODEC_ID_H264, subid);
       if(cw == NULL) {
 	TRACE(TRACE_ERROR, "HTSP", "Unable to create codec for %s (#%d)",
 	      nicename, idx);
@@ -1101,6 +1131,16 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 	if(s > vscore) {
 	  vscore = s;
 	  vstream = idx;
+	}
+	break;
+
+      case CODEC_TYPE_SUBTITLE:
+	hss->hss_mq = &mp->mp_video;
+	hss->hss_data_type = MB_SUBTITLE;
+
+	if(s > sscore) {
+	  sscore = s;
+	  sstream = idx;
 	}
 	break;
 
@@ -1127,11 +1167,13 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
       LIST_INSERT_HEAD(&hs->hs_streams, hss, hss_link);
     }
   }
-  mp->mp_audio.mq_stream = astream;
-  mp->mp_video.mq_stream = vstream;
+  mp->mp_audio.mq_stream  = astream;
+  mp->mp_video.mq_stream  = vstream;
+  mp->mp_video.mq_stream2 = sstream;
 
-  TRACE(TRACE_DEBUG, "HTSP", "Selecting Video-stream:%d, Audio-stream: %d",
-	vstream, astream);
+  TRACE(TRACE_DEBUG, "HTSP", "Selecting Video-stream:%d, Audio-stream: %d, "
+	"Subtitle-stream: %d",
+	vstream, astream, sstream);
 
   mp_become_primary(mp);
 

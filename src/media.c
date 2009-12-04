@@ -640,7 +640,7 @@ wrap_codec_deref(codecwrap_t *cw)
 codecwrap_t *
 wrap_codec_create(enum CodecID id, enum CodecType type, int parser,
 		  formatwrap_t *fw, AVCodecContext *ctx,
-		  int cheat_for_speed)
+		  int cheat_for_speed, int sub_id)
 {
   extern int concurrency;
   codecwrap_t *cw = malloc(sizeof(codecwrap_t));
@@ -655,6 +655,7 @@ wrap_codec_create(enum CodecID id, enum CodecType type, int parser,
 
   cw->codec_ctx->codec_id   = cw->codec->id;
   cw->codec_ctx->codec_type = cw->codec->type;
+  cw->codec_ctx->sub_id = sub_id;
 
   if(avcodec_open(cw->codec_ctx, cw->codec) < 0) {
     if(ctx == NULL)

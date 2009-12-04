@@ -23,6 +23,29 @@
 #include "video/video_decoder.h"
 #include "video/video_playback.h"
 
+TAILQ_HEAD(gl_video_sub_queue, gl_video_sub);
+
+/**
+ *
+ */
+typedef struct gl_video_sub {
+  TAILQ_ENTRY(gl_video_sub) gvs_link;
+  
+  int gvs_x1, gvs_y1, gvs_x2, gvs_y2;
+  int gvs_width, gvs_height;
+
+  char *gvs_bitmap;
+
+  int64_t gvs_start;
+  int64_t gvs_end;
+
+  GLuint gvs_texture;
+
+  int gvs_tex_width;
+  int gvs_tex_height;
+} gl_video_sub_t;
+
+
 /**
  *
  */
@@ -78,6 +101,8 @@ typedef struct glw_video {
 
   float gv_tex_x1, gv_tex_x2;
   float gv_tex_y1, gv_tex_y2;
+
+  struct gl_video_sub_queue gv_subs;
 
 } glw_video_t;
 

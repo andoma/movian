@@ -220,6 +220,9 @@ typedef struct video_decoder {
 			   int64_t pts, int epoch, int duration,
 			   int disable_deinterlacer);
 
+  void (*vd_subtitle_deliver)(void *opaque, int64_t pts, AVSubtitle *sub);
+  void *vd_subtitle_opaque;
+
 } video_decoder_t;
 
 

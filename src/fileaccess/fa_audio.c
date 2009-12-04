@@ -266,7 +266,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     if(ctx->codec_type != CODEC_TYPE_AUDIO)
       continue;
 
-    cw = wrap_codec_create(ctx->codec_id, ctx->codec_type, 0, fw, ctx, 0);
+    cw = wrap_codec_create(ctx->codec_id, ctx->codec_type, 0, fw, ctx, 0, 0);
     mp->mp_audio.mq_stream = i;
     break;
   }

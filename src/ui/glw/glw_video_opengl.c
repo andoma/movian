@@ -59,6 +59,8 @@ static void glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
 				    AVFrame *frame, int64_t pts, int epoch, 
 				    int duration, int disable_deinterlacer);
 
+static void glw_video_subtitle_deliver(void *opaque, int64_t pts,
+				       AVSubtitle *sub);
 
 /**
  *  GL Video Init
@@ -640,8 +642,68 @@ spu_layout(glw_video_t *gv, dvdspu_decoder_t *dd, int64_t pts,
 }
 #endif
 
+/**
+ *
+ */
+static void
+subtitle_destroy(glw_video_t *gv, gl_video_sub_t *gvs)
+{
+
+  if(gvs->gvs_bitmap == NULL)
+    glDeleteTextures(1, &gvs->gvs_texture);
+  else
+    free(gvs->gvs_bitmap);
+
+  TAILQ_REMOVE(&gv->gv_subs, gvs, gvs_link);
+  free(gvs);
+}
 
 
+/**
+ *
+ */
+static void
+layout_subtitles(const glw_root_t *gr, glw_video_t *gv, int64_t pts)
+{
+  gl_video_sub_t *gvs, *next;
+  int textype = gr->gr_be.gbr_primary_texture_mode;
+
+  for(gvs = TAILQ_FIRST(&gv->gv_subs); gvs; gvs = next) {
+    next = TAILQ_NEXT(gvs, gvs_link);
+
+    if(pts > gvs->gvs_end) {
+      printf("Destroying %p\n", gvs);
+      subtitle_destroy(gv, gvs);
+      continue;
+    } else if(pts > gvs->gvs_start && gvs->gvs_bitmap != NULL) {
+
+      printf("Uploading %p to GPU\n", gvs);
+
+      glGenTextures(1, &gvs->gvs_texture);
+      printf("  tex = %d\n", gvs->gvs_texture);
+
+      glBindTexture(textype, gvs->gvs_texture);
+      glTexParameterf(textype, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameterf(textype, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	
+      int n = gr->gr_normalized_texture_coords;
+      gvs->gvs_tex_width  = n ? 1.0 : gvs->gvs_width;
+      gvs->gvs_tex_height = n ? 1.0 : gvs->gvs_height;
+      printf("%d %d\n", gvs->gvs_tex_width, gvs->gvs_tex_height);
+
+      glTexImage2D(textype, 0, GL_RGBA, 
+		   gvs->gvs_width, gvs->gvs_height, 0,
+		   GL_RGBA, GL_UNSIGNED_BYTE, gvs->gvs_bitmap);
+
+      free(gvs->gvs_bitmap);
+      gvs->gvs_bitmap = NULL;
+    }
+  }
+}
+
+/**
+ *
+ */
 static void 
 gv_new_frame(video_decoder_t *vd, glw_video_t *gv, const glw_root_t *gr)
 {
@@ -705,6 +767,9 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv, const glw_root_t *gr)
     if(vd->vd_dvdspu != NULL)
       spu_layout(gv, vd->vd_dvdspu, pts, gr);
 #endif
+
+    layout_subtitles(gr, gv, pts);
+
   }
 }
 
@@ -944,6 +1009,9 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
 
   glEnable(GL_BLEND); 
 
+  glScalef(2.0f / width, -2.0f / height, 0.0f);
+  glTranslatef(-width / 2, -height / 2, 0.0f);
+  
 #if ENABLE_DVD
   dd = vd->vd_dvdspu;
   if(gv->gv_sputex != 0 && dd != NULL && width > 0 &&
@@ -953,11 +1021,6 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
     if(d != NULL) {
       glBindTexture(textype, gv->gv_sputex);
 
-      glPushMatrix();
-
-      glScalef(2.0f / width, -2.0f / height, 0.0f);
-      glTranslatef(-width / 2, -height / 2, 0.0f);
-      
       glColor4f(1.0, 1.0, 1.0, rc->rc_alpha);
       
       glBegin(GL_QUADS);
@@ -976,10 +1039,36 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
 
       glEnd();
 
-      glPopMatrix();
     }
   }
 #endif
+
+  gl_video_sub_t *gvs;
+
+  TAILQ_FOREACH(gvs, &gv->gv_subs, gvs_link) {
+    if(gvs->gvs_texture) {
+
+      glBindTexture(textype, gvs->gvs_texture);
+      
+      glColor4f(1.0, 1.0, 1.0, rc->rc_alpha);
+      
+      glBegin(GL_QUADS);
+      
+      glTexCoord2f(0.0, gvs->gvs_tex_height);
+      glVertex3f(gvs->gvs_x1, gvs->gvs_y2, 0.0f);
+
+      glTexCoord2f(gvs->gvs_tex_width, gvs->gvs_tex_height);
+      glVertex3f(gvs->gvs_x2, gvs->gvs_y2, 0.0f);
+    
+      glTexCoord2f(gvs->gvs_tex_width, 0.0);
+      glVertex3f(gvs->gvs_x2, gvs->gvs_y1, 0.0f);
+    
+      glTexCoord2f(0.0, 0.0);
+      glVertex3f(gvs->gvs_x1, gvs->gvs_y1, 0.0f);
+      glEnd();
+    }
+  }
+
 
   glPopMatrix();
 }
@@ -1301,8 +1390,12 @@ glw_video_ctor(glw_t *w, int init, va_list ap)
 	      GLW_ATTRIB_SET_FLAGS, GLW_EVERY_FRAME, 
 	      NULL);
 
+    TAILQ_INIT(&gv->gv_subs);
+
     gv->gv_vd = video_decoder_create(gv->gv_mp);
     gv->gv_vd->vd_frame_deliver = glw_video_frame_deliver;
+    gv->gv_vd->vd_subtitle_deliver = glw_video_subtitle_deliver;
+    gv->gv_vd->vd_subtitle_opaque = gv;
     gv->gv_vp = video_playback_create(gv->gv_mp);
   }
 
@@ -1573,5 +1666,62 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
     if(vd->vd_yadif_phase > 2)
       vd->vd_yadif_phase = 0;
     return;
+  }
+}
+
+
+
+/**
+ *
+ */
+static void
+glw_video_subtitle_deliver(void *opaque, int64_t pts, AVSubtitle *sub)
+{
+  glw_video_t *gv = opaque;
+  int i, x, y;
+  const uint32_t *clut;
+  const uint8_t *src;
+  uint32_t *dst;
+  glw_root_t *gr = gv->w.glw_root;
+
+  for(i = 0; i < sub->num_rects; i++) {
+    AVSubtitleRect *r = sub->rects[i];
+
+    if(r->type != SUBTITLE_BITMAP)
+      continue;
+
+    gl_video_sub_t *gvs = calloc(1, sizeof(gl_video_sub_t));
+
+    gvs->gvs_x1 = r->x;
+    gvs->gvs_x2 = r->x + r->w;
+    gvs->gvs_y1 = r->y;
+    gvs->gvs_y2 = r->y + r->h;
+
+    gvs->gvs_width  = r->w;
+    gvs->gvs_height = r->h;
+    
+    src = r->pict.data[0];
+    clut = (uint32_t *)r->pict.data[1];
+    
+    gvs->gvs_bitmap = malloc(sizeof(uint32_t) * r->w * r->h);
+    dst = (uint32_t *)gvs->gvs_bitmap;
+
+    for(y = 0; y < r->h; y++) {
+      for(x = 0; x < r->w; x++) {
+	*dst++ = clut[src[x]];
+      }
+      src += r->pict.linesize[0];
+    }
+
+
+    gvs->gvs_start = pts + sub->start_display_time * 1000;
+    gvs->gvs_end   = pts + sub->end_display_time * 1000;
+
+    printf("Creating %p %lld %lld\n", gvs, gvs->gvs_start, gvs->gvs_end);
+
+
+    glw_lock(gr);
+    TAILQ_INSERT_TAIL(&gv->gv_subs, gvs, gvs_link);
+    glw_unlock(gr);
   }
 }

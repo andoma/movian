@@ -205,7 +205,7 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
   //  perftimer_start(&pt);
   avcodec_decode_video(ctx, frame, &got_pic, mb->mb_data, mb->mb_size);
   //  perftimer_stop(&pt, "videodecode");
-
+  printf("got_pic=%d\n", got_pic);
   if(got_pic == 0 || mb->mb_skip == 1) 
     return;
 
@@ -318,6 +318,28 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
 		       mb->mb_disable_deinterlacer);
 }
 
+
+/**
+ *
+ */
+static void 
+vd_decode_subtitle(video_decoder_t *vd, media_buf_t *mb)
+{
+  codecwrap_t *cw = mb->mb_cw;
+  AVCodecContext *ctx = cw->codec_ctx;
+  AVSubtitle sub;
+  int got_sub = 0;
+
+  if(vd->vd_subtitle_deliver == NULL)
+    return;
+
+  if(avcodec_decode_subtitle(ctx, &sub, &got_sub, mb->mb_data, mb->mb_size) > 0
+     && got_sub) 
+    vd->vd_subtitle_deliver(vd->vd_subtitle_opaque, mb->mb_pts, &sub);
+}
+
+
+
 /**
  * Video decoder thread
  */
@@ -384,6 +406,10 @@ vd_thread(void *aux)
       dvdspu_decoder_dispatch(vd, mb, mp);
       break;
 #endif
+
+    case MB_SUBTITLE:
+      vd_decode_subtitle(vd, mb);
+      break;
 
     case MB_END:
       break;

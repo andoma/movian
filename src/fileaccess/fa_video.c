@@ -380,7 +380,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
       mp->mp_audio.mq_stream = i;
 
     cwvec[i] = wrap_codec_create(ctx->codec_id,
-					  ctx->codec_type, 0, fw, ctx, 0);
+				 ctx->codec_type, 0, fw, ctx, 0, 0);
   }
 
   mp_become_primary(mp);
