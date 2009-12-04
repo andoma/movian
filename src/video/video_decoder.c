@@ -205,7 +205,7 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
   //  perftimer_start(&pt);
   avcodec_decode_video(ctx, frame, &got_pic, mb->mb_data, mb->mb_size);
   //  perftimer_stop(&pt, "videodecode");
-  printf("got_pic=%d\n", got_pic);
+
   if(got_pic == 0 || mb->mb_skip == 1) 
     return;
 
