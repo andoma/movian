@@ -241,6 +241,8 @@ typedef enum {
    */
   GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED,
 
+  GLW_SIGNAL_CHILD_HIDDEN,
+  GLW_SIGNAL_CHILD_UNHIDDEN,
 
 } glw_signal_t;
 
@@ -450,6 +452,10 @@ typedef struct glw {
 
 #define GLW_NOFILL_X           0x1000000
 #define GLW_NOFILL_Y           0x2000000
+
+#define GLW_HIDDEN             0x4000000
+
+#define GLW_DETACHED           0x8000000
 
   float glw_norm_weight;             /* Relative weight (normalized) */
   float glw_alpha;                   /* Alpha set by user */

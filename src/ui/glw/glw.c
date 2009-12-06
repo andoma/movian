@@ -309,8 +309,12 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 
       if(a & GLW_EVERY_FRAME)
 	LIST_INSERT_HEAD(&gr->gr_every_frame_list, w, glw_every_frame_link);
-  
+
       w->glw_flags |= a;
+
+      if(a & GLW_HIDDEN)
+	glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_HIDDEN, w);
+
       break;
 
     case GLW_ATTRIB_CLR_FLAGS:
@@ -322,6 +326,9 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 	LIST_REMOVE(w, glw_every_frame_link);
 
       w->glw_flags &= ~a;
+
+      if(a & GLW_HIDDEN)
+	glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_UNHIDDEN, w);
       break;
 
     case GLW_ATTRIB_FOCUS_WEIGHT:

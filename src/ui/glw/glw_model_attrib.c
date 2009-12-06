@@ -358,6 +358,7 @@ static const token_attrib_t attribtab[] = {
   {"ellipsize",               set_flag, GLW_ELLIPSIZE},
   {"constraintX",             set_flag, GLW_NOFILL_X},
   {"constraintY",             set_flag, GLW_NOFILL_Y},
+  {"hidden",                  set_flag, GLW_HIDDEN},
 
   {"mirrorx",         set_mirror, GLW_MIRROR_X},
   {"mirrory",         set_mirror, GLW_MIRROR_Y},

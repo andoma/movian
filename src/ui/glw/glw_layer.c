@@ -20,6 +20,21 @@
 #include "glw_layer.h"
 #include "glw_transitions.h"
 
+static void
+glw_layer_select_child(glw_t *w)
+{
+  glw_t *c;
+
+  TAILQ_FOREACH_REVERSE(c, &w->glw_childs, glw_queue, glw_parent_link)
+    if(!(c->glw_flags & (GLW_HIDDEN | GLW_DETACHED)))
+      break;
+
+  w->glw_selected = c;
+
+  if(c != NULL)
+    glw_focus_open_path_close_all_other(c);
+}
+
 
 /**
  *
@@ -28,32 +43,39 @@ static int
 glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_rctx_t rc0, *rc = extra;
-  glw_t *c;
-  float z;
-  float a;
+  glw_t *c = extra, *p;
+  float z, a0 = 1, a;
 
   switch(signal) {
   default:
     break;
 
   case GLW_SIGNAL_LAYOUT:
-    z = 0;
-    a = 1.0;
-    TAILQ_FOREACH_REVERSE(c, &w->glw_childs, glw_queue, glw_parent_link) {
-      c->glw_parent_pos.x = 0;
-      c->glw_parent_pos.y = 0;
-      c->glw_parent_pos.z = GLW_LP(8, c->glw_parent_pos.z, z);
 
-      c->glw_parent_scale.x = 1.0f;
-      c->glw_parent_scale.y = 1.0f;
-      c->glw_parent_scale.z = 1.0f;
+    for(c = TAILQ_LAST(&w->glw_childs, glw_queue); c != NULL; c = p) {
+      p = TAILQ_PREV(c, glw_queue, glw_parent_link);
 
+      z = 1.0;
+      a = 0;
+
+      if(c->glw_flags & GLW_DETACHED) {
+
+	if(c->glw_parent_pos.z > 0.99) {
+	  glw_destroy0(c);
+	  continue;
+	}
+	
+      } else if(!(c->glw_flags & GLW_HIDDEN)) {
+	z = 0.0;
+	a = a0;
+	a0 *= 0.25;
+      }
+
+      c->glw_parent_pos.z   = GLW_LP(8, c->glw_parent_pos.z,   z);
       c->glw_parent_misc[0] = GLW_LP(8, c->glw_parent_misc[0], a);
 
-      glw_layout0(c, rc);
-
-      z -= 1;
-      a = a * 0.25;
+      if(c->glw_parent_misc[0] > 0.01)
+	glw_layout0(c, rc);
     }
 
     break;
@@ -63,7 +85,8 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
     TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
       rc0.rc_alpha = rc->rc_alpha * c->glw_parent_misc[0];
-      glw_render_TS(c, &rc0, rc);
+      if(rc0.rc_alpha > 0.01)
+	glw_render_TS(c, &rc0, rc);
     }
     break;
 
@@ -75,18 +98,24 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_CHILD_CREATED:
-    c = w->glw_selected = extra;
-    glw_focus_open_path_close_all_other(c);
-
+    c->glw_parent_pos.x = 0.0f;
+    c->glw_parent_pos.y = 0.0f;
     c->glw_parent_pos.z = 1.0f;
+
+    c->glw_parent_scale.x = 1.0f;
+    c->glw_parent_scale.y = 1.0f;
+    c->glw_parent_scale.z = 1.0f;
+    glw_layer_select_child(w);
     break;
 
-  case GLW_SIGNAL_CHILD_DESTROYED:
-    c = extra;
-    c = TAILQ_PREV(c, glw_queue, glw_parent_link);
-    w->glw_selected = c;
-    if(c != NULL)
-      glw_focus_open_path_close_all_other(c);
+  case GLW_SIGNAL_DETACH_CHILD:
+    c->glw_flags |= GLW_DETACHED;
+    glw_layer_select_child(w);
+    return 1;
+
+  case GLW_SIGNAL_CHILD_HIDDEN:
+  case GLW_SIGNAL_CHILD_UNHIDDEN:
+    glw_layer_select_child(w);
     break;
   }
 

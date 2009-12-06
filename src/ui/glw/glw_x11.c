@@ -669,8 +669,9 @@ static const struct {
   { XF86XK_AudioPrev,        0,   ACTION_PREV_TRACK },
   { XF86XK_AudioNext,        0,   ACTION_NEXT_TRACK },
   { XF86XK_Eject,            0,   ACTION_EJECT },
-  { XF86XK_AudioMedia,       0,   ACTION_HOME },
-  { XK_Menu,                 0,   ACTION_HOME },
+  { XF86XK_AudioMedia,       0,   ACTION_MENU },
+  { XK_Menu,                 0,   ACTION_MENU },
+  { XK_F1,                   0,   ACTION_MENU },
   
   { XK_F1,                   ShiftMask,   ACTION_PREV_TRACK },
   { XK_F2,                   ShiftMask,   ACTION_PLAYPAUSE },
