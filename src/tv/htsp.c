@@ -1062,6 +1062,11 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 	codec_id = CODEC_ID_AC3;
 	codec_type = CODEC_TYPE_AUDIO;
 	nicename = "AC-3";
+	s = 3;
+      } else if(!strcmp(type, "AAC")) {
+	codec_id = CODEC_ID_AAC;
+	codec_type = CODEC_TYPE_AUDIO;
+	nicename = "AAC";
 	s = 2;
       } else if(!strcmp(type, "MPEG2AUDIO")) {
 	codec_id = CODEC_ID_MP2;
