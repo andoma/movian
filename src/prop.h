@@ -39,6 +39,7 @@ typedef enum {
   PROP_SET_FLOAT,
   PROP_SET_DIR,
   PROP_SET_PIXMAP,
+  PROP_SET_LINK,
 
   PROP_ADD_CHILD,
   PROP_ADD_CHILD_BEFORE,
@@ -97,6 +98,7 @@ typedef enum {
   PROP_FLOAT,
   PROP_INT,
   PROP_PIXMAP,
+  PROP_LINK,
   PROP_ZOMBIE, /* Destroyed can never be changed again */
 } prop_type_t;
 
@@ -199,6 +201,10 @@ typedef struct prop {
       struct prop *selected;
     } c;
     prop_pixmap_t *pixmap;
+    struct {
+      char *title;
+      char *url;
+    } link;
   } u;
 
 #define hp_string   u.str
@@ -207,6 +213,8 @@ typedef struct prop {
 #define hp_childs   u.c.childs
 #define hp_selected u.c.selected
 #define hp_pixmap   u.pixmap
+#define hp_link_title u.link.title
+#define hp_link_url   u.link.url
 
 } prop_t;
 
@@ -361,6 +369,9 @@ void prop_set_void_ex(prop_t *p, prop_sub_t *skipme);
 
 void prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, prop_pixmap_t *pp);
 
+void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
+		      const char *url);
+
 #define prop_set_string(p, str) prop_set_string_ex(p, NULL, str)
 
 #define prop_set_stringf(p, fmt...) prop_set_stringf_ex(p, NULL, fmt)
@@ -378,6 +389,8 @@ void prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, prop_pixmap_t *pp);
 #define prop_set_void(p) prop_set_void_ex(p, NULL)
 
 #define prop_set_pixmap(p, pp) prop_set_pixmap_ex(p, NULL, pp)
+
+#define prop_set_link(p, title, link) prop_set_link_ex(p, NULL, title, link)
 
 int prop_get_string(prop_t *p, char *buf, size_t bufsize)
      __attribute__ ((warn_unused_result));

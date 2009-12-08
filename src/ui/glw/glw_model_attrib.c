@@ -41,6 +41,7 @@ set_string(glw_model_eval_context_t *ec, const token_attrib_t *a,
     break;
 
   case TOKEN_STRING:
+  case TOKEN_LINK:
     str = t->t_string;
     break;
 
@@ -76,6 +77,7 @@ set_float(glw_model_eval_context_t *ec, const token_attrib_t *a,
 
   switch(t->type) {
   case TOKEN_STRING:
+  case TOKEN_LINK:
     d = strtod(t->t_string, NULL);
     break;
 
@@ -122,6 +124,7 @@ set_int(glw_model_eval_context_t *ec, const token_attrib_t *a,
 
   switch(t->type) {
   case TOKEN_STRING:
+  case TOKEN_LINK:
     v = atoi(t->t_string);
     break;
 
@@ -322,6 +325,7 @@ set_source(glw_model_eval_context_t *ec, const token_attrib_t *a,
     break;
 
   case TOKEN_STRING:
+  case TOKEN_LINK:
     glw_set_i(ec->w, GLW_ATTRIB_SOURCE, t->t_string, NULL);
     break;
 

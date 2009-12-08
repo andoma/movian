@@ -140,6 +140,11 @@ glw_model_token_free(token_t *t)
     t->t_gem->gem_dtor(t->t_gem);
     break;
 
+  case TOKEN_LINK:
+    free(t->t_link_title);
+    free(t->t_link_url);
+    break;
+
   case TOKEN_num:
     abort();
 
@@ -236,6 +241,11 @@ glw_model_token_copy(token_t *src)
   case TOKEN_PIXMAP:
     dst->t_pixmap = src->t_pixmap;
     prop_pixmap_ref_inc(dst->t_pixmap);
+    break;
+
+  case TOKEN_LINK:
+    dst->t_link_title = src->t_link_title ? strdup(src->t_link_title) : NULL;
+    dst->t_link_url   = src->t_link_url   ? strdup(src->t_link_url)   : NULL;
     break;
 
   case TOKEN_VECTOR_FLOAT:

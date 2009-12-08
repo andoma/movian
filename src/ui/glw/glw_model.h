@@ -97,6 +97,7 @@ typedef enum {
   TOKEN_VECTOR_INT,
   TOKEN_EVENT,
   TOKEN_PIXMAP,                // prop.c:prop_pixmap_t
+  TOKEN_LINK,                  // A link with title and url
   TOKEN_num,
 
 } token_type_t;
@@ -137,7 +138,6 @@ typedef struct token {
     int  ival;
     double int_vec[0];
 
-    char *string;
     char *string_vec[0];
 
     double value;
@@ -152,10 +152,15 @@ typedef struct token {
 
     struct prop_pixmap *pixmap;
 
+    struct {
+      char *title;
+      char *url;
+    } link;
+
   } u;
 
 
-#define t_string          u.string
+#define t_string          u.link.title  // STRING is a "superclass" to LINK
 #define t_string_vector   u.string_vec
 #define t_float           u.value
 #define t_float_vector    u.value_vec
@@ -166,11 +171,13 @@ typedef struct token {
 #define t_gem             u.gem
 #define t_prop            u.prop
 #define t_pixmap          u.pixmap
-
+#define t_link_title      u.link.title
+#define t_link_url        u.link.url
 
 } token_t;
 
-
+#define token_is_string(t) \
+  ((t)->type == TOKEN_STRING || (t)->type == TOKEN_LINK)
 
 
 /**

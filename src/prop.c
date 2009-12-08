@@ -89,6 +89,10 @@ typedef struct prop_notify {
     char *s;
     prop_pixmap_t *pp;
     event_t *e;
+    struct {
+      char *title;
+      char *url;
+    } link;
   } u;
 
 #define hpn_prop   u.p
@@ -97,6 +101,8 @@ typedef struct prop_notify {
 #define hpn_string u.s
 #define hpn_pixmap u.pp
 #define hpn_ext_event  u.e
+#define hpn_link_title u.link.title
+#define hpn_link_url   u.link.url
 
   prop_t *hpn_prop2;
   int hpn_flags;
@@ -194,6 +200,12 @@ prop_notify_free(prop_notify_t *n)
 
   case PROP_SET_STRING:
     free(n->hpn_string);
+    prop_ref_dec(n->hpn_prop2);
+    break;
+
+  case PROP_SET_LINK:
+    free(n->hpn_link_title);
+    free(n->hpn_link_url);
     prop_ref_dec(n->hpn_prop2);
     break;
 
@@ -299,6 +311,8 @@ trampoline_string(prop_sub_t *s, prop_event_t event, ...)
 
   if(event == PROP_SET_STRING) {
     cb(s->hps_opaque, va_arg(ap, char *));
+  } else if(event == PROP_SET_LINK) {
+    cb(s->hps_opaque, va_arg(ap, char *));
   } else {
     cb(s->hps_opaque, NULL);
   }
@@ -373,6 +387,18 @@ prop_courier(void *aux)
       free(n->hpn_string);
       prop_ref_dec(n->hpn_prop2);
       break;
+
+    case PROP_SET_LINK:
+      if(pt != NULL)
+	pt(s, n->hpn_event, n->hpn_link_title, n->hpn_link_url, n->hpn_prop2);
+      else
+	cb(s->hps_opaque, n->hpn_event, n->hpn_link_title, n->hpn_link_url,
+	   n->hpn_prop2);
+      free(n->hpn_link_title);
+      free(n->hpn_link_url);
+      prop_ref_dec(n->hpn_prop2);
+      break;
+
 
     case PROP_SET_INT:
       if(pt != NULL)
@@ -505,6 +531,10 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
     case PROP_STRING:
       TRACE(TRACE_DEBUG, "prop", "str(%s) by %s", p->hp_string, origin);
       break;
+    case PROP_LINK:
+      TRACE(TRACE_DEBUG, "prop", "link(%s,%s) by %s", 
+	    p->hp_link_title, p->hp_link_url, origin);
+      break;
     case PROP_FLOAT:
       TRACE(TRACE_DEBUG, "prop", "float(%f) by %s", p->hp_float, origin);
       break;
@@ -541,6 +571,13 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
 	pt(s, PROP_SET_STRING, p->hp_string, p);
       else
 	cb(s->hps_opaque, PROP_SET_STRING, p->hp_string, p);
+      break;
+
+    case PROP_LINK:
+      if(pt != NULL)
+	pt(s, PROP_SET_LINK, p->hp_link_title, p->hp_link_url, p);
+      else
+	cb(s->hps_opaque, PROP_SET_LINK, p->hp_link_title, p->hp_link_url, p);
       break;
 
     case PROP_FLOAT:
@@ -593,6 +630,12 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
   case PROP_STRING:
     n->hpn_string = strdup(p->hp_string);
     n->hpn_event = PROP_SET_STRING;
+    break;
+
+  case PROP_LINK:
+    n->hpn_link_title = p->hp_link_title ? strdup(p->hp_link_title) : NULL;
+    n->hpn_link_url   = p->hp_link_url   ? strdup(p->hp_link_url)   : NULL;
+    n->hpn_event = PROP_SET_LINK;
     break;
 
   case PROP_FLOAT:
@@ -833,6 +876,11 @@ prop_clean(prop_t *p)
 
   case PROP_STRING:
     free(p->hp_string);
+    break;
+
+  case PROP_LINK:
+    free(p->hp_link_title);
+    free(p->hp_link_url);
     break;
 
   case PROP_PIXMAP:
@@ -1081,6 +1129,11 @@ prop_destroy0(prop_t *p)
 
   case PROP_STRING:
     free(p->hp_string);
+    break;
+
+  case PROP_LINK:
+    free(p->hp_link_title);
+    free(p->hp_link_url);
     break;
 
   case PROP_PIXMAP:
@@ -1626,6 +1679,52 @@ prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str)
 
   prop_set_epilogue(skipme, p, "prop_set_string()");
 }
+
+/**
+ *
+ */
+void
+prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title, 
+		 const char *url)
+{
+  if(p == NULL)
+    return;
+
+  if(title == NULL && link == NULL) {
+    prop_set_void_ex(p, skipme);
+    return;
+  }
+
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type == PROP_ZOMBIE) {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
+
+  if(p->hp_type != PROP_LINK) {
+
+    if(prop_clean(p)) {
+      hts_mutex_unlock(&prop_mutex);
+      return;
+    }
+
+  } else if(!strcmp(p->hp_link_title ?: "", title ?: "") &&
+	    !strcmp(p->hp_link_url   ?: "", url   ?: "")) {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  } else {
+    free(p->hp_link_title);
+    free(p->hp_link_url);
+  }
+
+  p->hp_link_title = title ? strdup(title) : NULL;
+  p->hp_link_url   = url   ? strdup(url)   : NULL;
+  p->hp_type = PROP_LINK;
+
+  prop_set_epilogue(skipme, p, "prop_set_link()");
+}
+
 
 /**
  *

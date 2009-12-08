@@ -220,7 +220,7 @@ eval_op(glw_model_eval_context_t *ec, struct token *self)
 
   switch(self->type) {
   case TOKEN_ADD:
-    if(a->type == TOKEN_STRING && b->type == TOKEN_STRING) {
+    if(token_is_string(a) && token_is_string(b)) {
       /* Concatenation of strings */
       al = strlen(a->t_string);
       bl = strlen(b->t_string);
@@ -398,7 +398,9 @@ eval_eq(glw_model_eval_context_t *ec, struct token *self, int neq)
   if((b = token_resolve(ec, b)) == NULL)
     return -1;
 
-  if(a->type != b->type) {
+  if(token_is_string(a) && token_is_string(b)) {
+    rr = !strcmp(a->t_string, b->t_string);
+  } else if(a->type != b->type) {
     rr = 0;
   } else {
 
@@ -408,9 +410,6 @@ eval_eq(glw_model_eval_context_t *ec, struct token *self, int neq)
       break;
     case TOKEN_FLOAT:
       rr = a->t_float == b->t_float;
-      break;
-    case TOKEN_STRING:
-      rr = !strcmp(a->t_string, b->t_string);
       break;
     default:
       rr = 0;
@@ -578,6 +577,9 @@ eval_assign(glw_model_eval_context_t *ec, struct token *self)
     switch(b->type) {
     case TOKEN_STRING:
       prop_set_string(a->t_prop, b->t_string);
+      break;
+    case TOKEN_LINK:
+      prop_set_link(a->t_prop, b->t_link_title, b->t_link_url);
       break;
     case TOKEN_INT:
       prop_set_int(a->t_prop, b->t_int);
@@ -1005,8 +1007,20 @@ prop_callback(void *opaque, prop_event_t event, ...)
     cloner_select_child(gps, p, gps->gps_widget);
     break;
 
-  default:
-    return;
+  case PROP_SET_LINK:
+    t = prop_callback_alloc_token(gps, TOKEN_LINK);
+    t->propsubr = gps;
+    t->t_link_title = strdup(va_arg(ap, char *));
+    t->t_link_url   = strdup(va_arg(ap, char *));
+    rpn = gps->gps_rpn;
+    break;
+
+  case PROP_REQ_NEW_CHILD:
+  case PROP_REQ_DELETE:
+  case PROP_DESTROYED:
+  case PROP_EXT_EVENT:
+  case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
+    break;
   }
 
   if(t != NULL) {
@@ -1143,6 +1157,7 @@ glw_model_eval_rpn0(token_t *t0, glw_model_eval_context_t *ec)
 
     case TOKEN_BLOCK:
     case TOKEN_STRING:
+    case TOKEN_LINK:
     case TOKEN_FLOAT:
     case TOKEN_IDENTIFIER:
     case TOKEN_OBJECT_ATTRIBUTE:
@@ -1622,6 +1637,7 @@ glwf_navOpen(glw_model_eval_context_t *ec, struct token *self,
 	     token_t **argv, unsigned int argc)
 {
   token_t *a, *b = NULL, *c = NULL, *r;
+  const char *url, *parent;
 
   if(argc < 1 || argc > 3) 
     return glw_model_seterr(ec->ei, self, "navOpen(): "
@@ -1636,25 +1652,40 @@ glwf_navOpen(glw_model_eval_context_t *ec, struct token *self,
   if(argc > 2 && (c = token_resolve(ec, argv[2])) == NULL)
     return -1;
 
-  if(a->type != TOKEN_STRING && a->type != TOKEN_VOID)
+  if(a->type != TOKEN_STRING && a->type != TOKEN_VOID && a->type != TOKEN_LINK)
     return glw_model_seterr(ec->ei, a, "navOpen(): "
-			    "First argument is not a string or (void)");
+			    "First argument is not a string, link or (void)");
   
   if(b != NULL && b->type != TOKEN_STRING && b->type != TOKEN_VOID)
     return glw_model_seterr(ec->ei, b, "navOpen(): "
 			    "Second argument is not a string or (void)");
 
-  if(c != NULL && c->type != TOKEN_STRING && c->type != TOKEN_VOID)
+  if(c != NULL && c->type != TOKEN_STRING && c->type != TOKEN_VOID && 
+     c->type != TOKEN_LINK)
     return glw_model_seterr(ec->ei, c, "navOpen(): "
-			    "Third argument is not a string or (void)");
+			    "Third argument is not a string, link or (void)");
+
+
+  if(a == NULL || a->type == TOKEN_VOID)
+    url = NULL;
+  else if(a->type == TOKEN_STRING)
+    url = a->t_string;
+  else
+    url = a->t_link_url;
+
+  if(c == NULL || c->type == TOKEN_VOID)
+    parent = NULL;
+  else if(c->type == TOKEN_STRING)
+    parent = c->t_string;
+  else
+    parent = c->t_link_url;
+
 
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  r->t_gem = glw_event_map_navOpen_create(a && a->type == TOKEN_STRING ?
-					  a->t_string : NULL,
+  r->t_gem = glw_event_map_navOpen_create(url,
 					  b && b->type == TOKEN_STRING ?
 					  b->t_string : NULL,
-					  c && c->type == TOKEN_STRING ?
-					  c->t_string : NULL);
+					  parent);
   eval_push(ec, r);
   return 0;
 }
@@ -1990,12 +2021,13 @@ token_cmp(token_t *a, token_t *b)
   if(a->type == TOKEN_FLOAT && b->type == TOKEN_INT)
     return a->t_float != b->t_int;
 
+  if(token_is_string(a) && token_is_string(b))
+    return strcmp(a->t_string, b->t_string);
+
   if(a->type != b->type)
     return -1;
 
   switch(a->type) {
-  case TOKEN_STRING:
-    return strcmp(a->t_string, b->t_string);
   case TOKEN_INT:
     return a->t_int - b->t_int;
   case TOKEN_FLOAT:
@@ -2109,6 +2141,7 @@ glwf_isset(glw_model_eval_context_t *ec, struct token *self,
     break;
 
   case TOKEN_STRING:
+  case TOKEN_LINK:
     rv = a->t_string[0] != 0;
     break;
   case TOKEN_FLOAT:
@@ -2584,6 +2617,7 @@ glwf_trace(glw_model_eval_context_t *ec, struct token *self,
     return 0;
 
   switch(b->type) {
+  case TOKEN_LINK:
   case TOKEN_STRING:
   case TOKEN_IDENTIFIER:
     TRACE(TRACE_DEBUG, "GLW", "%s: %s", a->t_string, b->t_string);
