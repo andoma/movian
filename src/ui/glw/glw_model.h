@@ -26,26 +26,7 @@
 
 #include "glw.h"
 
-typedef struct refstr {
-  unsigned int refcnt;
-  char str[0];
-} refstr_t;
-
-refstr_t *refstr_create(const char *str);
-void refstr_unref(refstr_t *r);
-const char *refstr_get(refstr_t *r);
-
-static inline refstr_t *
-refstr_dup(refstr_t *r)
-{
-  r->refcnt++;
-  return r;
-}
-
-
 #define GLW_MODEL_ERRORINFO
-
-
 
 /**
  * 
@@ -116,7 +97,7 @@ typedef struct token {
   void *tmp;            /* Temporary link, used for various things */
 
 #ifdef GLW_MODEL_ERRORINFO
-  refstr_t *file;
+  rstr_t *file;
   int line;
 #endif
 
@@ -253,7 +234,7 @@ void glw_model_token_free(token_t *t);
 token_t *glw_model_token_copy(token_t *src);
 
 token_t *glw_model_lexer(const char *src, errorinfo_t *ei, 
-			 refstr_t *f, token_t *prev);
+			 rstr_t *f, token_t *prev);
 
 
 token_t *glw_model_load1(glw_root_t *gr, const char *filename,

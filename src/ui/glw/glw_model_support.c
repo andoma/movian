@@ -28,32 +28,6 @@
 #include "glw_model.h"
 #include "glw_event.h"
 
-refstr_t *
-refstr_create(const char *str)
-{
-  size_t l = strlen(str) + 1;
-  refstr_t *r = malloc(sizeof(refstr_t) + l);
-  r->refcnt = 1;
-  memcpy(r->str, str, l);
-  return r;
-}
-
-void
-refstr_unref(refstr_t *r)
-{
-  if(r->refcnt == 1) {
-    free(r);
-  }
-  else
-    r->refcnt--;
-}
-
-const char *
-refstr_get(refstr_t *r)
-{
-  return r->str;
-}
-
 
 
 /**
@@ -67,7 +41,7 @@ glw_model_token_free(token_t *t)
 
 #ifdef GLW_MODEL_ERRORINFO
   if(t->file != NULL)
-    refstr_unref(t->file);
+    rstr_release(t->file);
 #endif
 
   switch(t->type) {
@@ -164,7 +138,7 @@ glw_model_token_copy(token_t *src)
 
 #ifdef GLW_MODEL_ERRORINFO
   if(src->file != NULL)
-    dst->file = refstr_dup(src->file);
+    dst->file = rstr_dup(src->file);
   dst->line = src->line;
 #endif
 
@@ -444,7 +418,7 @@ glw_model_seterr(errorinfo_t *ei, token_t *b, const char *fmt, ...)
   assert(b != NULL);
 
   if(ei == NULL) {
-    snprintf(buf, sizeof(buf), "GLW: %s:%d", refstr_get(b->file), b->line);
+    snprintf(buf, sizeof(buf), "GLW: %s:%d", rstr_get(b->file), b->line);
     tracev(TRACE_ERROR, buf, fmt, ap);
     return -1;
   }
@@ -452,7 +426,7 @@ glw_model_seterr(errorinfo_t *ei, token_t *b, const char *fmt, ...)
   vsnprintf(ei->error, sizeof(ei->error), fmt, ap);
   va_end(ap);
 
-  snprintf(ei->file,  sizeof(ei->file),  "%s", refstr_get(b->file));
+  snprintf(ei->file,  sizeof(ei->file),  "%s", rstr_get(b->file));
   ei->line = b->line;
   return -1;
 }

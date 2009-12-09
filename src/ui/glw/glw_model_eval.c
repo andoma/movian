@@ -58,7 +58,7 @@ typedef struct glw_prop_sub {
   prop_t *gps_pending_select;
 
 #ifdef GLW_MODEL_ERRORINFO
-  refstr_t *gps_file;
+  rstr_t *gps_file;
   int gps_line;
 #endif
 
@@ -140,7 +140,7 @@ eval_alloc_sized(token_t *src, glw_model_eval_context_t *ec,
 
 #ifdef GLW_MODEL_ERRORINFO
   if(src->file != NULL)
-    r->file = refstr_dup(src->file);
+    r->file = rstr_dup(src->file);
   r->line = src->line;
 #endif
 
@@ -911,7 +911,7 @@ prop_callback_alloc_token(glw_prop_sub_t *gps, token_type_t type)
 
 #ifdef GLW_MODEL_ERRORINFO
   if(gps->gps_file != NULL)
-    t->file = refstr_dup(gps->gps_file);
+    t->file = rstr_dup(gps->gps_file);
   t->line = gps->gps_line;
 #endif    
   return t;
@@ -1070,7 +1070,7 @@ subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
   TAILQ_INIT(&gps->gps_pending);
 
 #ifdef GLW_MODEL_ERRORINFO
-  gps->gps_file = refstr_dup(self->file);
+  gps->gps_file = rstr_dup(self->file);
   gps->gps_line = self->line;
 #endif
 
@@ -1088,7 +1088,7 @@ subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
     if(ec->prop0 != NULL)
       prop_ref_dec(ec->prop0);
 
-    refstr_unref(gps->gps_file);
+    rstr_release(gps->gps_file);
     free(gps);
     return glw_model_seterr(ec->ei, self, "Property does not exist %p",
 			    ec->prop_parent);

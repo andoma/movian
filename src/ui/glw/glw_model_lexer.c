@@ -24,14 +24,14 @@
  *
  */
 static void
-lexer_link_token(token_t *prev, refstr_t *f, int line, token_t *t,
+lexer_link_token(token_t *prev, rstr_t *f, int line, token_t *t,
 		 token_type_t type)
 {
   t->type = type;
   prev->next = t;
 
 #ifdef GLW_MODEL_ERRORINFO
-  t->file = refstr_dup(f);
+  t->file = rstr_dup(f);
   t->line = line;
 #endif
 }
@@ -41,7 +41,7 @@ lexer_link_token(token_t *prev, refstr_t *f, int line, token_t *t,
  *
  */
 static token_t *
-lexer_add_token_simple(token_t *prev, refstr_t *f, int line, token_type_t type)
+lexer_add_token_simple(token_t *prev, rstr_t *f, int line, token_type_t type)
 {
   token_t *t = calloc(1, sizeof(token_t));
   lexer_link_token(prev, f, line, t, type);
@@ -53,7 +53,7 @@ lexer_add_token_simple(token_t *prev, refstr_t *f, int line, token_type_t type)
  *
  */
 static token_t *
-lexer_add_token_string(token_t *prev, refstr_t *f, int line,
+lexer_add_token_string(token_t *prev, rstr_t *f, int line,
 		       const char *start, const char *end, token_type_t type)
 {
   token_t *t = calloc(1, sizeof(token_t));
@@ -72,7 +72,7 @@ lexer_add_token_string(token_t *prev, refstr_t *f, int line,
  *
  */
 static token_t *
-lexer_add_token_float(token_t *prev, refstr_t *f, int line,
+lexer_add_token_float(token_t *prev, rstr_t *f, int line,
 		       const char *start, const char *end)
 {
   token_t *t = lexer_add_token_simple(prev, f, line, TOKEN_FLOAT);
@@ -123,7 +123,7 @@ lexer_add_token_float(token_t *prev, refstr_t *f, int line,
  *
  */
 static token_t *
-lexer_single_char(token_t *next, refstr_t *f, int line, char s)
+lexer_single_char(token_t *next, rstr_t *f, int line, char s)
 {
   token_type_t ty;
   switch(s) {
@@ -170,7 +170,7 @@ lexer_single_char(token_t *next, refstr_t *f, int line, char s)
  * If an error occured 'ei' will be filled with data
  */
 static token_t *
-lexer(const char *src, errorinfo_t *ei, refstr_t *f, token_t *prev)
+lexer(const char *src, errorinfo_t *ei, rstr_t *f, token_t *prev)
 {
   const char *start;
   int line = 1;
@@ -278,7 +278,7 @@ lexer(const char *src, errorinfo_t *ei, refstr_t *f, token_t *prev)
       }
       if(*src != '"') {
 	snprintf(ei->error, sizeof(ei->error), "Unterminated quote");
-	snprintf(ei->file,  sizeof(ei->file),  "%s", refstr_get(f));
+	snprintf(ei->file,  sizeof(ei->file),  "%s", rstr_get(f));
 	ei->line = line;
 	return NULL;
       }
@@ -321,7 +321,7 @@ lexer(const char *src, errorinfo_t *ei, refstr_t *f, token_t *prev)
 
     snprintf(ei->error, sizeof(ei->error), "Invalid char '%c'",
 	     *src > 31 ? *src : ' ');
-    snprintf(ei->file,  sizeof(ei->file),  "%s", refstr_get(f));
+    snprintf(ei->file,  sizeof(ei->file),  "%s", rstr_get(f));
     ei->line = line;
     return NULL;
   }
@@ -341,7 +341,7 @@ glw_model_load1(glw_root_t *gr, const char *filename,
 		errorinfo_t *ei, token_t *prev)
 {
   char *src;
-  refstr_t *f;
+  rstr_t *f;
   token_t *last;
 
   if((src = fa_rawloader(filename, NULL, gr->gr_theme)) == NULL) {
@@ -351,9 +351,9 @@ glw_model_load1(glw_root_t *gr, const char *filename,
     return NULL;
   }
 
-  f = refstr_create(filename);
+  f = rstr_alloc(filename);
   last = lexer(src, ei, f, prev);
-  refstr_unref(f);
+  rstr_release(f);
   fa_rawunload(src);
   return last;
 }
