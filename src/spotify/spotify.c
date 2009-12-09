@@ -590,6 +590,7 @@ spotify_metadata_update_track(metadata_t *m)
   sp_album *album;
   sp_artist *artist;
   char txt[1024];
+  char url[128];
   int nartists, i;
 
   if(!f_sp_track_is_loaded(track))
@@ -617,17 +618,24 @@ spotify_metadata_update_track(metadata_t *m)
 	     f_sp_artist_name(f_sp_track_artist(track, i)));
 
   prop_set_string(prop_create(meta, "mediaformat"), "spotify");
-  prop_set_string(prop_create(meta, "type"), "audio");
   prop_set_string(prop_create(meta, "title"), f_sp_track_name(track));
   prop_set_int(prop_create(meta, "trackindex"), f_sp_track_index(track));
   prop_set_float(prop_create(meta, "duration"), 
 		 (float)f_sp_track_duration(track) / 1000.0);
+
   if(album != NULL) {
-    prop_set_string(prop_create(meta, "album"), f_sp_album_name(album));
+    spotify_make_link(f_sp_link_create_from_album(album), url, sizeof(url));
+    prop_set_link(prop_create(meta, "album"), f_sp_album_name(album), url);
     set_image_uri(prop_create(meta, "album_art"), f_sp_album_cover(album));
   }
-		  
-  prop_set_string(prop_create(meta, "artist"), txt);
+  
+  if(nartists > 0) {
+    artist = f_sp_track_artist(track, 0);
+    spotify_make_link(f_sp_link_create_from_artist(artist), url, sizeof(url));
+    prop_set_link(prop_create(meta, "artist"), txt, url);
+  } else {
+    prop_set_string(prop_create(meta, "artist"), txt);
+  }
 
   if(!(m->m_flags & METADATA_ARTIST_IMAGES_SCRAPPED) &&
      f_sp_track_num_artists(track) > 0 && 
@@ -1131,7 +1139,7 @@ spotify_list_album_callback(sp_albumbrowse *result, void *userdata)
     spotify_make_link(f_sp_link_create_from_track(track, 0), 
 		      url, sizeof(url));
     prop_set_string(prop_create(p, "url"), url);
-    prop_set_string(prop_create(p, "type"), "audio");
+    prop_set_string(prop_create(p, "type"), "track");
 
     if(prop_set_parent(p, nodes))
       prop_destroy(p);
@@ -1170,7 +1178,7 @@ spotify_list_artist_callback(sp_artistbrowse *result, void *userdata)
     spotify_make_link(f_sp_link_create_from_track(track, 0), 
 		      url, sizeof(url));
     prop_set_string(prop_create(p, "url"), url);
-    prop_set_string(prop_create(p, "type"), "audio");
+    prop_set_string(prop_create(p, "type"), "track");
 
     if(prop_set_parent(p, nodes))
       prop_destroy(p);
@@ -1374,7 +1382,7 @@ tracks_added(sp_playlist *plist, const sp_track **tracks,
     plt->plt_prop_root = prop_create(NULL, NULL);
     plt->plt_track = t;
 
-    prop_set_string(prop_create(plt->plt_prop_root, "type"), "audio");
+    prop_set_string(prop_create(plt->plt_prop_root, "type"), "track");
 
     spotify_make_link(f_sp_link_create_from_track(t, 0), url, sizeof(url));
     prop_set_string(prop_create(plt->plt_prop_root, "url"), url);
