@@ -37,6 +37,16 @@ glw_render_init(glw_renderer_t *gr, int vertices, int attribs)
  * 
  */
 void
+glw_render_set_vertices(glw_renderer_t *gr, int vertices)
+{
+  gr->gr_vertices = vertices;
+}
+
+
+/**
+ * 
+ */
+void
 glw_render_free(glw_renderer_t *gr)
 {
   free(gr->gr_buffer);

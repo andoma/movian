@@ -5,7 +5,8 @@
 
 #define PLATE_PROPS() {
   .source = "theme://images/whitebox.png";
-  .borderSize = [3, 3, 6, 6];
+  .borderSize = [6, 3, 6, 6];
+  .padding = [2, 2, 3, 5];
 }
 
 #define HIGHLITE_PROPS() {

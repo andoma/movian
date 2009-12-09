@@ -1,18 +1,23 @@
+#include "theme://include/plates.model"
 #include "theme://include/separators.model"
 
-widget(container_x, {
-  .focusable = true;
-  onEvent(enter, navOpen($self.url, $self.type, $parent.url));
+widget(backdrop, {
+  HIGHLITE_PROPS();
 
-  widget(image, {
-    .source = $self.metadata.album_art;
-  });
+  widget(container_x, {
+    .focusable = true;
+    onEvent(enter, navOpen($self.url, $self.type, $parent.url));
+    
+    widget(image, {
+      .source = $self.metadata.album_art;
+    });
 
-  VERTICAL_SEPARATOR();
+    VERTICAL_SEPARATOR();
 
-  widget(label, {
-    .align = left; 
-    .caption = $self.metadata.title + " by " + $self.metadata.artist;
-    .ellipsize = true;
+    widget(label, {
+      .align = left; 
+      .caption = $self.metadata.title + " by " + $self.metadata.artist;
+      .ellipsize = true;
+    });
   });
 });

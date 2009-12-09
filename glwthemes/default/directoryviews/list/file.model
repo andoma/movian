@@ -1,14 +1,19 @@
 #include "theme://include/separators.model"
+#include "theme://include/plates.model"
 
-widget(container_x, {
+widget(backdrop, {
+  HIGHLITE_PROPS();
 
-  widget(image, {
-    .source = "theme://icons/32x32/page.png";
-  });
-
-  VERTICAL_SEPARATOR();
-
-  widget(label, {
-    .caption = $self.metadata.title;
+  widget(container_x, {
+    
+    widget(image, {
+      .source = "theme://icons/32x32/page.png";
+    });
+    
+    VERTICAL_SEPARATOR();
+    
+    widget(label, {
+      .caption = $self.metadata.title;
+    });
   });
 });

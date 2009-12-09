@@ -289,8 +289,8 @@ set_flag(glw_model_eval_context_t *ec, const token_attrib_t *a,
  *
  */
 static int
-set_mirror(glw_model_eval_context_t *ec, const token_attrib_t *a, 
-	   struct token *t)
+set_bitmap_flag(glw_model_eval_context_t *ec, const token_attrib_t *a, 
+		struct token *t)
 {
   int set = 0;
 
@@ -307,7 +307,9 @@ set_mirror(glw_model_eval_context_t *ec, const token_attrib_t *a,
 			    a->name);
 
   if(set)
-    glw_set_i(ec->w, GLW_ATTRIB_MIRROR, a->attrib, NULL);
+    glw_set_i(ec->w, GLW_ATTRIB_SET_BITMAP_FLAGS, a->attrib, NULL);
+  else
+    glw_set_i(ec->w, GLW_ATTRIB_CLR_BITMAP_FLAGS, a->attrib, NULL);
 
   return 0;
 }
@@ -364,8 +366,13 @@ static const token_attrib_t attribtab[] = {
   {"constraintY",             set_flag, GLW_NOFILL_Y},
   {"hidden",                  set_flag, GLW_HIDDEN},
 
-  {"mirrorx",         set_mirror, GLW_MIRROR_X},
-  {"mirrory",         set_mirror, GLW_MIRROR_Y},
+  {"mirrorx",         set_bitmap_flag, GLW_MIRROR_X},
+  {"mirrory",         set_bitmap_flag, GLW_MIRROR_Y},
+
+  {"borderLeft",      set_bitmap_flag, GLW_BORDER_LEFT},
+  {"borderRight",     set_bitmap_flag, GLW_BORDER_RIGHT},
+  {"borderTop",       set_bitmap_flag, GLW_BORDER_TOP},
+  {"borderBottom",    set_bitmap_flag, GLW_BORDER_BOTTOM},
 
 
   {"alpha",           set_float,  GLW_ATTRIB_ALPHA},
@@ -395,6 +402,7 @@ static const token_attrib_t attribtab[] = {
 
   {"color",           set_float3, GLW_ATTRIB_RGB},
   {"borderSize",      set_float4, GLW_ATTRIB_BORDER_SIZE},
+  {"padding",         set_float4, GLW_ATTRIB_PADDING},
 
   {"align",           set_align,  0},
   {"effect",          set_transition_effect,  0},

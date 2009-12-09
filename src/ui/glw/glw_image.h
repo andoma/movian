@@ -31,17 +31,23 @@ typedef struct glw_image {
 
   glw_loadable_texture_t *gi_tex;
 
-  int gi_border_scaling;
 
-  float gi_border_left;
-  float gi_border_right;
-  float gi_border_top;
-  float gi_border_bottom;
+  int16_t gi_border_left;
+  int16_t gi_border_right;
+  int16_t gi_border_top;
+  int16_t gi_border_bottom;
+
+  int16_t gi_padding_left;
+  int16_t gi_padding_right;
+  int16_t gi_padding_top;
+  int16_t gi_padding_bottom;
  
-  int gi_mirror;
+  int gi_bitmap_flags;
 
-  int gi_render_initialized;
-  int gi_render_init;
+  uint8_t gi_border_scaling;
+  uint8_t gi_render_initialized;
+  uint8_t gi_render_init;
+  uint8_t gi_explicit_padding;
 
   glw_renderer_t gi_gr;
 

@@ -118,7 +118,9 @@ typedef enum {
   GLW_ATTRIB_CONTENT,
   GLW_ATTRIB_MODE,
   GLW_ATTRIB_BORDER_SIZE,
-  GLW_ATTRIB_MIRROR,
+  GLW_ATTRIB_PADDING,
+  GLW_ATTRIB_SET_BITMAP_FLAGS,
+  GLW_ATTRIB_CLR_BITMAP_FLAGS,
   GLW_ATTRIB_ID,
   GLW_ATTRIB_RGB,
   GLW_ATTRIB_TIME,
@@ -145,9 +147,12 @@ typedef enum {
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
-#define GLW_MIRROR_X   0x1
-#define GLW_MIRROR_Y   0x2
-
+#define GLW_MIRROR_X      0x1
+#define GLW_MIRROR_Y      0x2
+#define GLW_BORDER_LEFT   0x4
+#define GLW_BORDER_RIGHT  0x8
+#define GLW_BORDER_TOP    0x10
+#define GLW_BORDER_BOTTOM 0x20
 
 #define GLW_MODE_XFADE    0
 #define GLW_MODE_SLIDE    1
@@ -635,7 +640,8 @@ do {						\
   case GLW_ATTRIB_SET_FLAGS:			\
   case GLW_ATTRIB_CLR_FLAGS:			\
   case GLW_ATTRIB_MODE:                         \
-  case GLW_ATTRIB_MIRROR:                       \
+  case GLW_ATTRIB_SET_BITMAP_FLAGS:             \
+  case GLW_ATTRIB_CLR_BITMAP_FLAGS:             \
   case GLW_ATTRIB_TRANSITION_EFFECT:            \
   case GLW_ATTRIB_CHILD_TILES_X:                \
   case GLW_ATTRIB_CHILD_TILES_Y:                \
@@ -644,6 +650,7 @@ do {						\
     (void)va_arg(ap, int);			\
     break;					\
   case GLW_ATTRIB_BORDER_SIZE:                  \
+  case GLW_ATTRIB_PADDING:                      \
     (void)va_arg(ap, double);			\
   case GLW_ATTRIB_RGB:                          \
     (void)va_arg(ap, double);			\
@@ -808,6 +815,8 @@ glw_align_2(glw_rctx_t *rc, glw_alignment_t a, glw_alignment_t def)
 
 
 void glw_render_init(glw_renderer_t *gr, int vertices, int attribs);
+
+void glw_render_set_vertices(glw_renderer_t *gr, int vertices);
 
 void glw_render_free(glw_renderer_t *gr);
 

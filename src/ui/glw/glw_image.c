@@ -133,13 +133,13 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
 
   if(gr->gr_normalized_texture_coords) {
     tex[0][0] = 0.0;
-    tex[1][0] = 0.0 + gi->gi_border_left  / glt->glt_xs;
-    tex[2][0] = 1.0 - gi->gi_border_right / glt->glt_xs;
+    tex[1][0] = 0.0 + (float)gi->gi_border_left  / glt->glt_xs;
+    tex[2][0] = 1.0 - (float)gi->gi_border_right / glt->glt_xs;
     tex[3][0] = 1.0;
 
     tex[0][1] = 0.0;
-    tex[1][1] = 0.0 + gi->gi_border_top    / glt->glt_ys;
-    tex[2][1] = 1.0 - gi->gi_border_bottom / glt->glt_ys;
+    tex[1][1] = 0.0 + (float)gi->gi_border_top    / glt->glt_ys;
+    tex[2][1] = 1.0 - (float)gi->gi_border_bottom / glt->glt_ys;
     tex[3][1] = 1.0;
   } else {
     tex[0][0] = 0.0;
@@ -154,37 +154,83 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
   }
 
   vex[0][0] =         -1.0;
-  vex[1][0] = GLW_MIN(-1.0 + 2.0 * gi->gi_border_left  / rc->rc_size_x, 0.0);
-  vex[2][0] = GLW_MAX( 1.0 - 2.0 * gi->gi_border_right / rc->rc_size_x, 0.0);
+  if(gi->gi_bitmap_flags & GLW_BORDER_LEFT)
+    vex[1][0] = GLW_MIN(-1.0 + 2.0 * gi->gi_border_left / rc->rc_size_x, 0.0);
+  else
+    vex[1][0] =       -1.0;
+
+  if(gi->gi_bitmap_flags & GLW_BORDER_RIGHT)
+    vex[2][0] = GLW_MAX(1.0 - 2.0 * gi->gi_border_right / rc->rc_size_x, 0.0);
+  else
+    vex[2][0] =        1.0;
   vex[3][0] =          1.0;
     
   vex[0][1] =          1.0;
-  vex[1][1] = GLW_MAX( 1.0 - 2.0 * gi->gi_border_top    / rc->rc_size_y, 0.0);
-  vex[2][1] = GLW_MIN(-1.0 + 2.0 * gi->gi_border_bottom / rc->rc_size_y, 0.0);
+  if(gi->gi_bitmap_flags & GLW_BORDER_TOP)
+    vex[1][1] = GLW_MAX( 1.0 - 2.0 * gi->gi_border_top / rc->rc_size_y, 0.0);
+  else
+    vex[1][1] = 1.0;
+
+  if(gi->gi_bitmap_flags & GLW_BORDER_BOTTOM)
+    vex[2][1] = GLW_MIN(-1.0 + 2.0 * gi->gi_border_bottom / rc->rc_size_y, 0.0);
+  else
+    vex[2][1] = -1.0;
   vex[3][1] =         -1.0;
 
-  glw_render_set_pre(&gi->gi_gr);
+  if(gi->gi_explicit_padding) {
 
-  gi->gi_child_xt = (vex[2][0] + vex[1][0]) * 0.5f;
-  gi->gi_child_yt = (vex[1][1] + vex[2][1]) * 0.5f;
+    float cvex[2][2];
 
-  gi->gi_child_xs = (vex[2][0] - vex[1][0]) * 0.5f;
-  gi->gi_child_ys = (vex[1][1] - vex[2][1]) * 0.5f;
+    cvex[0][0] = GLW_MIN(-1 + 2 * gi->gi_padding_left / rc->rc_size_x, 0.0);
+    cvex[1][0] = GLW_MAX(1 - 2 * gi->gi_padding_right / rc->rc_size_x, 0.0);
+    cvex[0][1] = GLW_MAX(1 - 2 * gi->gi_padding_top / rc->rc_size_y, 0.0);
+    cvex[1][1] = GLW_MIN(-1 + 2 * gi->gi_padding_bottom / rc->rc_size_y, 0.0);
+    
+    gi->gi_child_xt = (cvex[1][0] + cvex[0][0]) * 0.5f;
+    gi->gi_child_yt = (cvex[0][1] + cvex[1][1]) * 0.5f;
 
-  if(gi->gi_mirror & GLW_MIRROR_X) {
+    gi->gi_child_xs = (cvex[1][0] - cvex[0][0]) * 0.5f;
+    gi->gi_child_ys = (cvex[0][1] - cvex[1][1]) * 0.5f;
+
+  } else {
+
+    gi->gi_child_xt = (vex[2][0] + vex[1][0]) * 0.5f;
+    gi->gi_child_yt = (vex[1][1] + vex[2][1]) * 0.5f;
+  
+    gi->gi_child_xs = (vex[2][0] - vex[1][0]) * 0.5f;
+    gi->gi_child_ys = (vex[1][1] - vex[2][1]) * 0.5f;
+  }
+
+  if(gi->gi_bitmap_flags & GLW_MIRROR_X) {
     SWAP(vex[0][1], vex[3][1]);
     SWAP(vex[1][1], vex[2][1]);
     gi->gi_child_xt = -gi->gi_child_xt;
   }
 
-  if(gi->gi_mirror & GLW_MIRROR_Y) {
+  if(gi->gi_bitmap_flags & GLW_MIRROR_Y) {
     SWAP(vex[0][0], vex[3][0]);
     SWAP(vex[1][0], vex[2][0]);
     gi->gi_child_yt = -gi->gi_child_yt;
   }
 
+
+  glw_render_set_pre(&gi->gi_gr);
+
   for(y = 0; y < 3; y++) {
+    
+    if(y == 0 && !(gi->gi_bitmap_flags & GLW_BORDER_TOP))
+      continue;
+
+    if(y == 2 && !(gi->gi_bitmap_flags & GLW_BORDER_BOTTOM))
+      continue;
+
     for(x = 0; x < 3; x++) {
+
+      if(x == 0 && !(gi->gi_bitmap_flags & GLW_BORDER_LEFT))
+	continue;
+      
+      if(x == 2 && !(gi->gi_bitmap_flags & GLW_BORDER_RIGHT))
+	continue;
 
       glw_render_vtx_pos(&gi->gi_gr, i, vex[x + 0][0], vex[y + 1][1], 0.0f);
       glw_render_vtx_st (&gi->gi_gr, i, tex[x + 0][0], tex[y + 1][1]);
@@ -204,9 +250,8 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
     }
   }
 
+  glw_render_set_vertices(&gi->gi_gr, i);
   glw_render_set_post(&gi->gi_gr);
-    
-
 }
 
 
@@ -297,7 +342,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 
 	float x1, y1, x2, y2;
 
-	if(gi->gi_mirror & GLW_MIRROR_X) {
+	if(gi->gi_bitmap_flags & GLW_MIRROR_X) {
 	  x1 = xs;
 	  x2 = 0;
 	} else {
@@ -305,7 +350,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	  x2 = xs;
 	}
 
-	if(gi->gi_mirror & GLW_MIRROR_Y) {
+	if(gi->gi_bitmap_flags & GLW_MIRROR_Y) {
 	  y1 = ys;
 	  y2 = 0;
 	} else {
@@ -402,9 +447,11 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
     gi->gi_color.b = 1.0;
     gi->gi_size_scale = 1.0;
 
+    gi->gi_bitmap_flags =
+      GLW_BORDER_LEFT | GLW_BORDER_RIGHT | GLW_BORDER_TOP | GLW_BORDER_BOTTOM;
+
     if(w->glw_class == GLW_IMAGE)
       glw_set_constraints(&gi->w, 0, 0, 1, 0, GLW_CONSTRAINT_A, 0); 
-
   }
 
   do {
@@ -419,6 +466,17 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
       gi->gi_render_init = 1;
       glw_image_update_constraints(gi);
       break;
+
+    case GLW_ATTRIB_PADDING:
+      gi->gi_explicit_padding = 1;
+      gi->gi_padding_left   = va_arg(ap, double);
+      gi->gi_padding_top    = va_arg(ap, double);
+      gi->gi_padding_right  = va_arg(ap, double);
+      gi->gi_padding_bottom = va_arg(ap, double);
+      gi->gi_render_init = 1;
+      glw_image_update_constraints(gi);
+      break;
+      
 
     case GLW_ATTRIB_SET_FLAGS:
       glw_image_update_constraints((glw_image_t *)w);
@@ -454,8 +512,13 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
       gi->gi_render_init = 1;
       break;
 
-    case GLW_ATTRIB_MIRROR:
-      gi->gi_mirror = va_arg(ap, int);
+    case GLW_ATTRIB_SET_BITMAP_FLAGS:
+      gi->gi_bitmap_flags |= va_arg(ap, int);
+      gi->gi_render_init = 1;
+      break;
+
+    case GLW_ATTRIB_CLR_BITMAP_FLAGS:
+      gi->gi_bitmap_flags &= ~va_arg(ap, int);
       gi->gi_render_init = 1;
       break;
 

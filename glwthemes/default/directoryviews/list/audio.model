@@ -1,50 +1,54 @@
+#include "theme://include/plates.model"
 #include "theme://include/separators.model"
 
-widget(container_x, {
+widget(backdrop, {
+  HIGHLITE_PROPS();
 
-  .focusable = true;
-  onEvent(enter, navOpen($self.url, $self.type, $parent.url));
+  widget(container_x, {
 
-  widget(icon, {
-    .source = 
-       select($self.url == $global.media.current.url,
-	      "theme://icons/32x32/play.png",
-	      "theme://icons/32x32/audio.png");
+    .focusable = true;
+    onEvent(enter, navOpen($self.url, $self.type, $parent.url));
+    
+    widget(icon, {
+      .source = 
+	select($self.url == $global.media.current.url,
+	       "theme://icons/32x32/play.png",
+	       "theme://icons/32x32/audio.png");
+    });
+
+    VERTICAL_SEPARATOR();
+
+    widget(label, {
+      .align = left; 
+      .caption = $self.metadata.title;
+      .weight = 2.0;
+      .ellipsize = true;
+    });
+
+    VERTICAL_SEPARATOR();
+
+    widget(label, {
+      .align = left; 
+      .caption = $self.metadata.artist;
+      .weight = 1.0;
+      .ellipsize = true;
+    });
+
+    VERTICAL_SEPARATOR();
+
+    widget(label, {
+      .align = left; 
+      .caption = $self.metadata.album;
+      .weight = 1.0;
+      .ellipsize = true;
+    });
+
+    VERTICAL_SEPARATOR();
+
+    widget(label, {
+      .align = right; 
+      .caption = value2duration($self.metadata.duration);
+      .weight = 0.2;
+    });
   });
-
-  VERTICAL_SEPARATOR();
-
-  widget(label, {
-    .align = left; 
-    .caption = $self.metadata.title;
-    .weight = 2.0;
-    .ellipsize = true;
-  });
-
-  VERTICAL_SEPARATOR();
-
-  widget(label, {
-    .align = left; 
-    .caption = $self.metadata.artist;
-    .weight = 1.0;
-    .ellipsize = true;
-  });
-
-  VERTICAL_SEPARATOR();
-
-  widget(label, {
-    .align = left; 
-    .caption = $self.metadata.album;
-    .weight = 1.0;
-    .ellipsize = true;
-  });
-
-  VERTICAL_SEPARATOR();
-
-  widget(label, {
-    .align = right; 
-    .caption = value2duration($self.metadata.duration);
-    .weight = 0.2;
-  });
-
 });
