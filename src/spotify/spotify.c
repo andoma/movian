@@ -116,6 +116,7 @@ typedef struct playlist {
   prop_t *pl_prop_root;
   prop_t *pl_prop_tracks;
   prop_t *pl_prop_title;
+  prop_t *pl_prop_type;
   prop_t *pl_prop_num_tracks;
 
 } playlist_t;
@@ -1492,6 +1493,12 @@ playlist_renamed(sp_playlist *plist, void *userdata)
 
   prop_set_string(pl->pl_prop_title, name);
   TRACE(TRACE_DEBUG, "spotify", "Playlist renamed to %s", name);
+
+  if(!strcmp(name, "-")) {
+    prop_set_string(pl->pl_prop_type, "separator");
+  } else {
+    prop_set_string(pl->pl_prop_type, "directory");
+  }
 }
 
 
@@ -1541,8 +1548,9 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
   pl->pl_prop_root = prop_create(prop_playlists, NULL);
 
   pl->pl_prop_tracks = prop_create(pl->pl_prop_root, "nodes");
+  pl->pl_prop_type = prop_create(pl->pl_prop_root, "type");
 
-  prop_set_string(prop_create(pl->pl_prop_root, "type"), "directory");
+  prop_set_string(pl->pl_prop_type, "directory");
 
   metadata = prop_create(pl->pl_prop_root, "metadata");
 
