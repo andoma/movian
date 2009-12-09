@@ -249,8 +249,6 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   target_width  = (siz_x / 64) + 2;
   target_height = (siz_y / 64);
 
-  target_height = pixelheight;
-
   origin_y = -bbox.yMin / 64;
 
   if(glw_can_tnpo2(gr)) {
