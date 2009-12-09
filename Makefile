@@ -49,6 +49,7 @@ SRCS += src/main.c \
 #
 SRCS +=	src/misc/ptrvec.c \
 	src/misc/callout.c \
+	src/misc/rstr.c \
 
 #
 # HTSMSG

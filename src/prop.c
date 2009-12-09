@@ -86,23 +86,23 @@ typedef struct prop_notify {
     prop_t *p;
     float f;
     int i;
-    char *s;
+    rstr_t *rstr;
     prop_pixmap_t *pp;
     event_t *e;
     struct {
-      char *title;
-      char *url;
+      rstr_t *rtitle;
+      rstr_t *rurl;
     } link;
   } u;
 
 #define hpn_prop   u.p
 #define hpn_float  u.f
 #define hpn_int    u.i
-#define hpn_string u.s
+#define hpn_rstring u.rstr
 #define hpn_pixmap u.pp
 #define hpn_ext_event  u.e
-#define hpn_link_title u.link.title
-#define hpn_link_url   u.link.url
+#define hpn_link_rtitle u.link.rtitle
+#define hpn_link_rurl   u.link.rurl
 
   prop_t *hpn_prop2;
   int hpn_flags;
@@ -199,13 +199,13 @@ prop_notify_free(prop_notify_t *n)
     break;
 
   case PROP_SET_STRING:
-    free(n->hpn_string);
+    rstr_release(n->hpn_rstring);
     prop_ref_dec(n->hpn_prop2);
     break;
 
   case PROP_SET_LINK:
-    free(n->hpn_link_title);
-    free(n->hpn_link_url);
+    rstr_release(n->hpn_link_rtitle);
+    rstr_release(n->hpn_link_rurl);
     prop_ref_dec(n->hpn_prop2);
     break;
 
@@ -381,21 +381,23 @@ prop_courier(void *aux)
 
     case PROP_SET_STRING:
       if(pt != NULL)
-	pt(s, n->hpn_event, n->hpn_string, n->hpn_prop2);
+	pt(s, n->hpn_event, rstr_get(n->hpn_rstring), n->hpn_prop2);
       else
-	cb(s->hps_opaque, n->hpn_event, n->hpn_string, n->hpn_prop2);
-      free(n->hpn_string);
+	cb(s->hps_opaque, n->hpn_event, rstr_get(n->hpn_rstring), n->hpn_prop2);
+      rstr_release(n->hpn_rstring);
       prop_ref_dec(n->hpn_prop2);
       break;
 
     case PROP_SET_LINK:
       if(pt != NULL)
-	pt(s, n->hpn_event, n->hpn_link_title, n->hpn_link_url, n->hpn_prop2);
+	pt(s, n->hpn_event, rstr_get(n->hpn_link_rtitle), 
+	   rstr_get(n->hpn_link_rurl), n->hpn_prop2);
       else
-	cb(s->hps_opaque, n->hpn_event, n->hpn_link_title, n->hpn_link_url,
+	cb(s->hps_opaque, n->hpn_event, 
+	   rstr_get(n->hpn_link_rtitle), rstr_get(n->hpn_link_rurl),
 	   n->hpn_prop2);
-      free(n->hpn_link_title);
-      free(n->hpn_link_url);
+      rstr_release(n->hpn_link_rtitle);
+      rstr_release(n->hpn_link_rurl);
       prop_ref_dec(n->hpn_prop2);
       break;
 
@@ -529,11 +531,12 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
   if(s->hps_flags & PROP_SUB_DEBUG) {
     switch(p->hp_type) {
     case PROP_STRING:
-      TRACE(TRACE_DEBUG, "prop", "str(%s) by %s", p->hp_string, origin);
+      TRACE(TRACE_DEBUG, "prop", "str(%s) by %s", 
+	    rstr_get(p->hp_rstring), origin);
       break;
     case PROP_LINK:
       TRACE(TRACE_DEBUG, "prop", "link(%s,%s) by %s", 
-	    p->hp_link_title, p->hp_link_url, origin);
+	    rstr_get(p->hp_link_rtitle), rstr_get(p->hp_link_rurl), origin);
       break;
     case PROP_FLOAT:
       TRACE(TRACE_DEBUG, "prop", "float(%f) by %s", p->hp_float, origin);
@@ -568,16 +571,18 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
     switch(p->hp_type) {
     case PROP_STRING:
       if(pt != NULL)
-	pt(s, PROP_SET_STRING, p->hp_string, p);
+	pt(s, PROP_SET_STRING, rstr_get(p->hp_rstring), p);
       else
-	cb(s->hps_opaque, PROP_SET_STRING, p->hp_string, p);
+	cb(s->hps_opaque, PROP_SET_STRING, rstr_get(p->hp_rstring), p);
       break;
 
     case PROP_LINK:
       if(pt != NULL)
-	pt(s, PROP_SET_LINK, p->hp_link_title, p->hp_link_url, p);
+	pt(s, PROP_SET_LINK, rstr_get(p->hp_link_rtitle),
+	   rstr_get(p->hp_link_rurl), p);
       else
-	cb(s->hps_opaque, PROP_SET_LINK, p->hp_link_title, p->hp_link_url, p);
+	cb(s->hps_opaque, PROP_SET_LINK, 
+	   rstr_get(p->hp_link_rtitle), rstr_get(p->hp_link_rurl), p);
       break;
 
     case PROP_FLOAT:
@@ -628,13 +633,13 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
 
   switch(p->hp_type) {
   case PROP_STRING:
-    n->hpn_string = strdup(p->hp_string);
+    n->hpn_rstring = rstr_dup(p->hp_rstring);
     n->hpn_event = PROP_SET_STRING;
     break;
 
   case PROP_LINK:
-    n->hpn_link_title = p->hp_link_title ? strdup(p->hp_link_title) : NULL;
-    n->hpn_link_url   = p->hp_link_url   ? strdup(p->hp_link_url)   : NULL;
+    n->hpn_link_rtitle = rstr_dup(p->hp_link_rtitle);
+    n->hpn_link_rurl   = rstr_dup(p->hp_link_rurl);
     n->hpn_event = PROP_SET_LINK;
     break;
 
@@ -875,12 +880,12 @@ prop_clean(prop_t *p)
     break;
 
   case PROP_STRING:
-    free(p->hp_string);
+    rstr_release(p->hp_rstring);
     break;
 
   case PROP_LINK:
-    free(p->hp_link_title);
-    free(p->hp_link_url);
+    rstr_release(p->hp_link_rtitle);
+    rstr_release(p->hp_link_rurl);
     break;
 
   case PROP_PIXMAP:
@@ -1128,12 +1133,12 @@ prop_destroy0(prop_t *p)
     break;
 
   case PROP_STRING:
-    free(p->hp_string);
+    rstr_release(p->hp_rstring);
     break;
 
   case PROP_LINK:
-    free(p->hp_link_title);
-    free(p->hp_link_url);
+    rstr_release(p->hp_link_rtitle);
+    rstr_release(p->hp_link_rurl);
     break;
 
   case PROP_PIXMAP:
@@ -1667,14 +1672,14 @@ prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str)
       return;
     }
 
-  } else if(!strcmp(p->hp_string, str)) {
+  } else if(!strcmp(rstr_get(p->hp_rstring), str)) {
     hts_mutex_unlock(&prop_mutex);
     return;
   } else {
-    free(p->hp_string);
+    rstr_release(p->hp_rstring);
   }
 
-  p->hp_string = strdup(str);
+  p->hp_rstring = rstr_alloc(str);
   p->hp_type = PROP_STRING;
 
   prop_set_epilogue(skipme, p, "prop_set_string()");
@@ -1709,17 +1714,17 @@ prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
       return;
     }
 
-  } else if(!strcmp(p->hp_link_title ?: "", title ?: "") &&
-	    !strcmp(p->hp_link_url   ?: "", url   ?: "")) {
+  } else if(!strcmp(rstr_get(p->hp_link_rtitle) ?: "", title ?: "") &&
+	    !strcmp(rstr_get(p->hp_link_rurl)   ?: "", url   ?: "")) {
     hts_mutex_unlock(&prop_mutex);
     return;
   } else {
-    free(p->hp_link_title);
-    free(p->hp_link_url);
+    rstr_release(p->hp_link_rtitle);
+    rstr_release(p->hp_link_rurl);
   }
 
-  p->hp_link_title = title ? strdup(title) : NULL;
-  p->hp_link_url   = url   ? strdup(url)   : NULL;
+  p->hp_link_rtitle = rstr_alloc(title);
+  p->hp_link_rurl   = rstr_alloc(url);
   p->hp_type = PROP_LINK;
 
   prop_set_epilogue(skipme, p, "prop_set_link()");
@@ -2445,7 +2450,7 @@ prop_get_string(prop_t *p, char *buf, size_t bufsize)
   hts_mutex_lock(&prop_mutex);
 
   if(p->hp_type == PROP_STRING) {
-    snprintf(buf, bufsize, "%s", p->hp_string);
+    snprintf(buf, bufsize, "%s", rstr_get(p->hp_rstring));
     r = 0;
   } else {
     r = -1;
@@ -2478,7 +2483,7 @@ prop_print_tree0(prop_t *p, int indent, int followlinks)
 
   switch(p->hp_type) {
   case PROP_STRING:
-    fprintf(stderr, "\"%s\"\n", p->hp_string);
+    fprintf(stderr, "\"%s\"\n", rstr_get(p->hp_rstring));
     break;
 
   case PROP_FLOAT:
@@ -2533,7 +2538,7 @@ prop_tree_to_htsmsg0(prop_t *p, htsmsg_t *m)
 
   switch(p->hp_type) {
   case PROP_STRING:
-    htsmsg_add_str(m, p->hp_name, p->hp_string);
+    htsmsg_add_str(m, p->hp_name, rstr_get(p->hp_rstring));
     break;
 
   case PROP_FLOAT:

@@ -26,6 +26,7 @@
 #include "arch/threads.h"
 #include "misc/queue.h"
 #include "htsmsg/htsmsg.h"
+#include "misc/rstr.h"
 
 struct prop;
 struct prop_sub;
@@ -195,26 +196,26 @@ typedef struct prop {
       float val, min, max;
     } f;
     int i;
-    char *str;
+    rstr_t *rstr;
     struct {
       struct prop_queue childs;
       struct prop *selected;
     } c;
     prop_pixmap_t *pixmap;
     struct {
-      char *title;
-      char *url;
+      rstr_t *rtitle;
+      rstr_t *rurl;
     } link;
   } u;
 
-#define hp_string   u.str
+#define hp_rstring   u.rstr
 #define hp_float    u.f.val
 #define hp_int      u.i
 #define hp_childs   u.c.childs
 #define hp_selected u.c.selected
 #define hp_pixmap   u.pixmap
-#define hp_link_title u.link.title
-#define hp_link_url   u.link.url
+#define hp_link_rtitle u.link.rtitle
+#define hp_link_rurl   u.link.rurl
 
 } prop_t;
 
