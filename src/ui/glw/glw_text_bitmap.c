@@ -36,7 +36,7 @@
 #include "glw_container.h"
 #include "fileaccess/fa_rawloader.h"
 
-
+#define HORIZONTAL_ELLIPSIS_UNICODE 0x2026
 
 static int glw_text_getutf8(const char **s);
 
@@ -147,10 +147,10 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   FT_Set_Pixel_Sizes(face, 0, pixelheight);
 
   /* Compute xsize of three dots, for ellipsize */
-  gi = FT_Get_Char_Index(face, (int)'.');
+  gi = FT_Get_Char_Index(face, HORIZONTAL_ELLIPSIS_UNICODE);
   FT_Load_Glyph(face, gi, FT_LOAD_DEFAULT);
   FT_Get_Glyph(face->glyph, &glyph);
-  ellipsize_x = slot->advance.x * 3.0 / 62.2;
+  ellipsize_x = slot->advance.x / 64;
   FT_Done_Glyph(glyph); 
 
   /* Compute position for each glyph */
@@ -230,10 +230,8 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 	FT_Done_Glyph(g->glyph); 
       }
 
-      uc[i] = '.';
-      uc[i + 1] = '.';
-      uc[i + 2] = '.';
-      len = i + 3;
+      uc[i] = HORIZONTAL_ELLIPSIS_UNICODE;
+      len = i + 1;
       goto restart;
     }
   }
