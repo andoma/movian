@@ -1007,11 +1007,11 @@ prop_callback(void *opaque, prop_event_t event, ...)
     cloner_select_child(gps, p, gps->gps_widget);
     break;
 
-  case PROP_SET_LINK:
+  case PROP_SET_RLINK:
     t = prop_callback_alloc_token(gps, TOKEN_LINK);
     t->propsubr = gps;
-    t->t_link_title = strdup(va_arg(ap, char *));
-    t->t_link_url   = strdup(va_arg(ap, char *));
+    t->t_link_title = strdup(rstr_get(va_arg(ap, const rstr_t *)));
+    t->t_link_url   = strdup(rstr_get(va_arg(ap, const rstr_t *)));
     rpn = gps->gps_rpn;
     break;
 

@@ -173,12 +173,9 @@ gu_col_set(void *opaque, prop_event_t event, ...)
 
   switch(event) {
   case PROP_SET_RSTRING:
+  case PROP_SET_RLINK:
     g_value_init(&gv, G_TYPE_STRING);
     g_value_set_string(&gv, rstr_get(va_arg(ap, const rstr_t *)));
-    break;
-  case PROP_SET_LINK:
-    g_value_init(&gv, G_TYPE_STRING);
-    g_value_set_string(&gv, va_arg(ap, char *));
     break;
   case PROP_SET_INT:
     g_value_init(&gv, G_TYPE_INT);

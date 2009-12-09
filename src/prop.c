@@ -203,7 +203,7 @@ prop_notify_free(prop_notify_t *n)
     prop_ref_dec(n->hpn_prop2);
     break;
 
-  case PROP_SET_LINK:
+  case PROP_SET_RLINK:
     rstr_release(n->hpn_link_rtitle);
     rstr_release(n->hpn_link_rurl);
     prop_ref_dec(n->hpn_prop2);
@@ -311,8 +311,8 @@ trampoline_string(prop_sub_t *s, prop_event_t event, ...)
 
   if(event == PROP_SET_RSTRING) {
     cb(s->hps_opaque, rstr_get(va_arg(ap, const rstr_t *)));
-  } else if(event == PROP_SET_LINK) {
-    cb(s->hps_opaque, va_arg(ap, char *));
+  } else if(event == PROP_SET_RLINK) {
+    cb(s->hps_opaque, rstr_get(va_arg(ap, const rstr_t *)));
   } else {
     cb(s->hps_opaque, NULL);
   }
@@ -388,13 +388,11 @@ prop_courier(void *aux)
       prop_ref_dec(n->hpn_prop2);
       break;
 
-    case PROP_SET_LINK:
+    case PROP_SET_RLINK:
       if(pt != NULL)
-	pt(s, n->hpn_event, rstr_get(n->hpn_link_rtitle), 
-	   rstr_get(n->hpn_link_rurl), n->hpn_prop2);
+	pt(s, n->hpn_event, n->hpn_link_rtitle, n->hpn_link_rurl, n->hpn_prop2);
       else
-	cb(s->hps_opaque, n->hpn_event, 
-	   rstr_get(n->hpn_link_rtitle), rstr_get(n->hpn_link_rurl),
+	cb(s->hps_opaque, n->hpn_event, n->hpn_link_rtitle, n->hpn_link_rurl,
 	   n->hpn_prop2);
       rstr_release(n->hpn_link_rtitle);
       rstr_release(n->hpn_link_rurl);
@@ -578,11 +576,11 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
 
     case PROP_LINK:
       if(pt != NULL)
-	pt(s, PROP_SET_LINK, rstr_get(p->hp_link_rtitle),
-	   rstr_get(p->hp_link_rurl), p);
+	pt(s, PROP_SET_RLINK, p->hp_link_rtitle,
+	   p->hp_link_rurl, p);
       else
-	cb(s->hps_opaque, PROP_SET_LINK, 
-	   rstr_get(p->hp_link_rtitle), rstr_get(p->hp_link_rurl), p);
+	cb(s->hps_opaque, PROP_SET_RLINK, 
+	   p->hp_link_rtitle, p->hp_link_rurl, p);
       break;
 
     case PROP_FLOAT:
@@ -640,7 +638,7 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
   case PROP_LINK:
     n->hpn_link_rtitle = rstr_dup(p->hp_link_rtitle);
     n->hpn_link_rurl   = rstr_dup(p->hp_link_rurl);
-    n->hpn_event = PROP_SET_LINK;
+    n->hpn_event = PROP_SET_RLINK;
     break;
 
   case PROP_FLOAT:
