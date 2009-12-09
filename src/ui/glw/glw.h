@@ -461,6 +461,7 @@ typedef struct glw {
 #define GLW_HIDDEN             0x4000000
 
 #define GLW_DETACHED           0x8000000
+#define GLW_NO_INITIAL_TRANS   0x10000000
 
   float glw_norm_weight;             /* Relative weight (normalized) */
   float glw_alpha;                   /* Alpha set by user */

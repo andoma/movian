@@ -365,6 +365,7 @@ static const token_attrib_t attribtab[] = {
   {"constraintX",             set_flag, GLW_NOFILL_X},
   {"constraintY",             set_flag, GLW_NOFILL_Y},
   {"hidden",                  set_flag, GLW_HIDDEN},
+  {"noInitialTransform",      set_flag, GLW_NO_INITIAL_TRANS},
 
   {"mirrorx",         set_bitmap_flag, GLW_MIRROR_X},
   {"mirrory",         set_bitmap_flag, GLW_MIRROR_Y},

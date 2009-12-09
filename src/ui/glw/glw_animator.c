@@ -84,7 +84,15 @@ glw_animator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
   case GLW_SIGNAL_CHILD_CREATED:
     c = extra;
-    c->glw_parent_anim_cur = -1;
+
+    if(TAILQ_FIRST(&w->glw_childs) == c &&
+       TAILQ_NEXT(c, glw_parent_link) == NULL &&
+       w->glw_flags & GLW_NO_INITIAL_TRANS) {
+      c->glw_parent_anim_cur = 0;
+    } else {
+      c->glw_parent_anim_cur = -1;
+    }
+
     c->glw_parent_anim_tgt = 0;
     
     glw_focus_open_path_close_all_other(c);
