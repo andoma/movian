@@ -32,7 +32,7 @@ typedef struct rstr {
 
 rstr_t *rstr_alloc(const char *in) __attribute__ ((malloc));
 
-static inline const char *rstr_get(rstr_t *rs)
+static inline const char *rstr_get(const rstr_t *rs)
 {
   return rs ? rs->str : NULL;
 }
