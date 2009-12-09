@@ -18,6 +18,8 @@ widget(container_y, {
       .id = "list";
       cloner($page.nodes, animator, {
 	.time = 0.3;
+	.noInitialTransform = true;
+	.effect = flipHorizontal;
 	.source = "theme://directoryviews/list/" + $self.type + ".model";
       });
     });
