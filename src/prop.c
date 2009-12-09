@@ -198,7 +198,7 @@ prop_notify_free(prop_notify_t *n)
       prop_ref_dec(n->hpn_prop2);
     break;
 
-  case PROP_SET_STRING:
+  case PROP_SET_RSTRING:
     rstr_release(n->hpn_rstring);
     prop_ref_dec(n->hpn_prop2);
     break;
@@ -269,8 +269,8 @@ trampoline_int(prop_sub_t *s, prop_event_t event, ...)
     cb(s->hps_opaque, va_arg(ap, int));
   } else if(event == PROP_SET_FLOAT) {
     cb(s->hps_opaque, va_arg(ap, double));
-  } else if(event == PROP_SET_STRING) {
-    cb(s->hps_opaque, atoi(va_arg(ap, const char *)));
+  } else if(event == PROP_SET_RSTRING) {
+    cb(s->hps_opaque, atoi(rstr_get(va_arg(ap, rstr_t *))));
   } else {
     cb(s->hps_opaque, 0);
   }
@@ -309,8 +309,8 @@ trampoline_string(prop_sub_t *s, prop_event_t event, ...)
   va_list ap;
   va_start(ap, event);
 
-  if(event == PROP_SET_STRING) {
-    cb(s->hps_opaque, va_arg(ap, char *));
+  if(event == PROP_SET_RSTRING) {
+    cb(s->hps_opaque, rstr_get(va_arg(ap, const rstr_t *)));
   } else if(event == PROP_SET_LINK) {
     cb(s->hps_opaque, va_arg(ap, char *));
   } else {
@@ -379,11 +379,11 @@ prop_courier(void *aux)
 	prop_ref_dec(n->hpn_prop2);
       break;
 
-    case PROP_SET_STRING:
+    case PROP_SET_RSTRING:
       if(pt != NULL)
-	pt(s, n->hpn_event, rstr_get(n->hpn_rstring), n->hpn_prop2);
+	pt(s, n->hpn_event, n->hpn_rstring, n->hpn_prop2);
       else
-	cb(s->hps_opaque, n->hpn_event, rstr_get(n->hpn_rstring), n->hpn_prop2);
+	cb(s->hps_opaque, n->hpn_event, n->hpn_rstring, n->hpn_prop2);
       rstr_release(n->hpn_rstring);
       prop_ref_dec(n->hpn_prop2);
       break;
@@ -571,9 +571,9 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
     switch(p->hp_type) {
     case PROP_STRING:
       if(pt != NULL)
-	pt(s, PROP_SET_STRING, rstr_get(p->hp_rstring), p);
+	pt(s, PROP_SET_RSTRING, p->hp_rstring, p);
       else
-	cb(s->hps_opaque, PROP_SET_STRING, rstr_get(p->hp_rstring), p);
+	cb(s->hps_opaque, PROP_SET_RSTRING, p->hp_rstring, p);
       break;
 
     case PROP_LINK:
@@ -634,7 +634,7 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
   switch(p->hp_type) {
   case PROP_STRING:
     n->hpn_rstring = rstr_dup(p->hp_rstring);
-    n->hpn_event = PROP_SET_STRING;
+    n->hpn_event = PROP_SET_RSTRING;
     break;
 
   case PROP_LINK:

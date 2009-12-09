@@ -882,8 +882,8 @@ prop_callback(void *opaque, prop_event_t event, ...)
     p = va_arg(ap, prop_t *);
     break;
 
-  case PROP_SET_STRING:
-    caption = va_arg(ap, char *);
+  case PROP_SET_RSTRING:
+    caption = rstr_get(va_arg(ap, const rstr_t *));
     p = va_arg(ap, prop_t *);
     break;
 

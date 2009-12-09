@@ -35,7 +35,7 @@ struct prop_sub;
 
 typedef enum {
   PROP_SET_VOID,
-  PROP_SET_STRING,
+  PROP_SET_RSTRING,
   PROP_SET_INT,
   PROP_SET_FLOAT,
   PROP_SET_DIR,

@@ -943,10 +943,10 @@ prop_callback(void *opaque, prop_event_t event, ...)
     rpn = gps->gps_rpn;
     break;
 
-  case PROP_SET_STRING:
+  case PROP_SET_RSTRING:
     t = prop_callback_alloc_token(gps, TOKEN_STRING);
     t->propsubr = gps;
-    t->t_string = strdup(va_arg(ap, char *));
+    t->t_string = strdup(rstr_get(va_arg(ap, const rstr_t *)));
     rpn = gps->gps_rpn;
     break;
 

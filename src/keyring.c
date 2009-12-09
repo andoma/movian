@@ -98,10 +98,10 @@ result_set(void *opaque, prop_event_t event, ...)
   va_list ap;
   va_start(ap, event);
 
-  if(event != PROP_SET_STRING)
+  if(event != PROP_SET_RSTRING)
     return;
 
-  str = va_arg(ap, const char *);
+  str = rstr_get(va_arg(ap, const rstr_t *));
 
   if(!strcmp(str, "ok")) 
     kp->result = 1;
