@@ -1481,6 +1481,23 @@ tracks_moved(sp_playlist *plist, const int *tracks,
   }
 }
 
+/**
+ *
+ */
+static const char *
+playlist_name_update(sp_playlist *plist, playlist_t *pl)
+{
+  const char *name = f_sp_playlist_name(plist);
+
+  prop_set_string(pl->pl_prop_title, name);
+
+  if(name != NULL && !strcmp(name, "-")) {
+    prop_set_string(pl->pl_prop_type, "separator");
+  } else {
+    prop_set_string(pl->pl_prop_type, "directory");
+  }
+  return name;
+}
 
 /**
  *
@@ -1488,17 +1505,8 @@ tracks_moved(sp_playlist *plist, const int *tracks,
 static void 
 playlist_renamed(sp_playlist *plist, void *userdata)
 {
-  playlist_t *pl = userdata;
-  const char *name = f_sp_playlist_name(plist);
-
-  prop_set_string(pl->pl_prop_title, name);
+  const char *name = playlist_name_update(plist, userdata);
   TRACE(TRACE_DEBUG, "spotify", "Playlist renamed to %s", name);
-
-  if(!strcmp(name, "-")) {
-    prop_set_string(pl->pl_prop_type, "separator");
-  } else {
-    prop_set_string(pl->pl_prop_type, "directory");
-  }
 }
 
 
@@ -1550,14 +1558,14 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
   pl->pl_prop_tracks = prop_create(pl->pl_prop_root, "nodes");
   pl->pl_prop_type = prop_create(pl->pl_prop_root, "type");
 
-  prop_set_string(pl->pl_prop_type, "directory");
 
   metadata = prop_create(pl->pl_prop_root, "metadata");
 
   pl->pl_prop_title = prop_create(metadata, "title");
+  playlist_name_update(plist, pl);
+
   pl->pl_prop_num_tracks = prop_create(metadata, "tracks");
 
-  prop_set_string(pl->pl_prop_title, f_sp_playlist_name(plist));
 
   ptrvec_insert_entry(&playlists, position, pl);
 
