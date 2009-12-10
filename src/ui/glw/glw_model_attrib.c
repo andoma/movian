@@ -42,7 +42,7 @@ set_string(glw_model_eval_context_t *ec, const token_attrib_t *a,
 
   case TOKEN_STRING:
   case TOKEN_LINK:
-    str = t->t_string;
+    str = rstr_get(t->t_rstring);
     break;
 
   case TOKEN_INT:
@@ -78,7 +78,7 @@ set_float(glw_model_eval_context_t *ec, const token_attrib_t *a,
   switch(t->type) {
   case TOKEN_STRING:
   case TOKEN_LINK:
-    d = strtod(t->t_string, NULL);
+    d = strtod(rstr_get(t->t_rstring), NULL);
     break;
 
   case TOKEN_FLOAT:
@@ -94,11 +94,11 @@ set_float(glw_model_eval_context_t *ec, const token_attrib_t *a,
     break;
 
   case TOKEN_IDENTIFIER:
-    if(!strcmp(t->t_string, "true")) {
+    if(!strcmp(rstr_get(t->t_rstring), "true")) {
       d = 1;
       break;
     }
-    if(!strcmp(t->t_string, "false")) {
+    if(!strcmp(rstr_get(t->t_rstring), "false")) {
       d = 0;
       break;
     }
@@ -125,7 +125,7 @@ set_int(glw_model_eval_context_t *ec, const token_attrib_t *a,
   switch(t->type) {
   case TOKEN_STRING:
   case TOKEN_LINK:
-    v = atoi(t->t_string);
+    v = atoi(rstr_get(t->t_rstring));
     break;
 
   case TOKEN_FLOAT:
@@ -141,11 +141,11 @@ set_int(glw_model_eval_context_t *ec, const token_attrib_t *a,
     break;
 
   case TOKEN_IDENTIFIER:
-    if(!strcmp(t->t_string, "true")) {
+    if(!strcmp(rstr_get(t->t_rstring), "true")) {
       v = 1;
       break;
     }
-    if(!strcmp(t->t_string, "false")) {
+    if(!strcmp(rstr_get(t->t_rstring), "false")) {
       v = 0;
       break;
     }
@@ -219,7 +219,7 @@ set_align(glw_model_eval_context_t *ec, const token_attrib_t *a,
 	  struct token *t)
 {
   int v;
-  if(t->type != TOKEN_IDENTIFIER || (v = str2val(t->t_string, aligntab)) < 0)
+  if(t->type != TOKEN_IDENTIFIER || (v = str2val(rstr_get(t->t_rstring), aligntab)) < 0)
     return glw_model_seterr(ec->ei, t, "Invalid assignment for attribute %s",
 			    a->name);
   glw_set_i(ec->w, GLW_ATTRIB_ALIGNMENT, v, NULL);
@@ -245,7 +245,7 @@ set_transition_effect(glw_model_eval_context_t *ec, const token_attrib_t *a,
 		      struct token *t)
 {
   int v;
-  if(t->type != TOKEN_IDENTIFIER || (v = str2val(t->t_string,
+  if(t->type != TOKEN_IDENTIFIER || (v = str2val(rstr_get(t->t_rstring),
 						 transitiontab)) < 0)
     return glw_model_seterr(ec->ei, t, "Invalid assignment for attribute %s",
 			    a->name);
@@ -264,7 +264,7 @@ set_flag(glw_model_eval_context_t *ec, const token_attrib_t *a,
   int set = 0;
 
   if(t->type == TOKEN_IDENTIFIER)
-    set = !strcmp(t->t_string, "true");
+    set = !strcmp(rstr_get(t->t_rstring), "true");
   else if(t->type == TOKEN_INT)
     set = t->t_int;
   else if(t->type == TOKEN_FLOAT)
@@ -295,7 +295,7 @@ set_bitmap_flag(glw_model_eval_context_t *ec, const token_attrib_t *a,
   int set = 0;
 
   if(t->type == TOKEN_IDENTIFIER)
-    set = !strcmp(t->t_string, "true");
+    set = !strcmp(rstr_get(t->t_rstring), "true");
   else if(t->type == TOKEN_INT)
     set = t->t_int;
   else if(t->type == TOKEN_FLOAT)
@@ -328,7 +328,7 @@ set_source(glw_model_eval_context_t *ec, const token_attrib_t *a,
 
   case TOKEN_STRING:
   case TOKEN_LINK:
-    glw_set_i(ec->w, GLW_ATTRIB_SOURCE, t->t_string, NULL);
+    glw_set_i(ec->w, GLW_ATTRIB_SOURCE, rstr_get(t->t_rstring), NULL);
     break;
 
   case TOKEN_PIXMAP:
@@ -419,8 +419,8 @@ glw_model_attrib_resolve(token_t *t)
   int i;
 
   for(i = 0; i < sizeof(attribtab) / sizeof(attribtab[0]); i++)
-    if(!strcmp(attribtab[i].name, t->t_string)) {
-      free(t->t_string);
+    if(!strcmp(attribtab[i].name, rstr_get(t->t_rstring))) {
+      rstr_release(t->t_rstring);
       t->t_attrib = &attribtab[i];
       t->type = TOKEN_OBJECT_ATTRIBUTE;
       return 0;

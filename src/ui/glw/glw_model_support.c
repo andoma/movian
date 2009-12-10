@@ -103,7 +103,7 @@ glw_model_token_free(token_t *t)
   case TOKEN_STRING:
   case TOKEN_IDENTIFIER:
   case TOKEN_PROPERTY_NAME:
-    free(t->t_string);
+    rstr_release(t->t_rstring);
     break;
 
   case TOKEN_PIXMAP:
@@ -115,8 +115,8 @@ glw_model_token_free(token_t *t)
     break;
 
   case TOKEN_LINK:
-    free(t->t_link_title);
-    free(t->t_link_url);
+    rstr_release(t->t_link_rtitle);
+    rstr_release(t->t_link_rurl);
     break;
 
   case TOKEN_num:
@@ -177,7 +177,7 @@ glw_model_token_copy(token_t *src)
   case TOKEN_STRING:
   case TOKEN_IDENTIFIER:
   case TOKEN_PROPERTY_NAME:
-    dst->t_string = src->t_string ? strdup(src->t_string) : NULL;
+    dst->t_rstring = rstr_dup(src->t_rstring);
     break;
 
   case TOKEN_START:
@@ -218,8 +218,8 @@ glw_model_token_copy(token_t *src)
     break;
 
   case TOKEN_LINK:
-    dst->t_link_title = src->t_link_title ? strdup(src->t_link_title) : NULL;
-    dst->t_link_url   = src->t_link_url   ? strdup(src->t_link_url)   : NULL;
+    dst->t_link_rtitle = rstr_dup(src->t_link_rtitle);
+    dst->t_link_rurl   = rstr_dup(src->t_link_rurl);
     break;
 
   case TOKEN_VECTOR_FLOAT:
@@ -329,14 +329,14 @@ token2name(token_t *t)
     return "property subscription";
 
   case TOKEN_PROPERTY_NAME:
-    snprintf(buf, sizeof(buf), "<property> %s", t->t_string);
+    snprintf(buf, sizeof(buf), "<property> %s", rstr_get(t->t_rstring));
     return buf;
 
   case TOKEN_OBJECT_ATTRIBUTE:
     snprintf(buf, sizeof(buf), ".%s", t->t_attrib->name);
     return buf;
 
-  case TOKEN_IDENTIFIER:    return t->t_string;
+  case TOKEN_IDENTIFIER:    return rstr_get(t->t_rstring);
   case TOKEN_ASSIGNMENT:    return "=";
 
   case TOKEN_FLOAT:

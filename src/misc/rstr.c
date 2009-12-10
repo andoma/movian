@@ -30,3 +30,16 @@ rstr_alloc(const char *in)
   memcpy(rs->str, in, l + 1);
   return rs;
 }
+
+rstr_t *
+rstr_allocl(const char *in, size_t len)
+{
+  rstr_t *rs = malloc(sizeof(rstr_t) + len + 1);
+  rs->refcnt = 1;
+  if(in != NULL)
+    memcpy(rs->str, in, len);
+  rs->str[len] = 0;
+  return rs;
+
+  
+}

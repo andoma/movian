@@ -57,12 +57,7 @@ lexer_add_token_string(token_t *prev, rstr_t *f, int line,
 		       const char *start, const char *end, token_type_t type)
 {
   token_t *t = calloc(1, sizeof(token_t));
-  size_t len = end - start;
-
-  t->t_string = malloc(len + 1);
-  memcpy(t->t_string, start, len);
-  t->t_string[len] = 0;
-
+  t->t_rstring = rstr_allocl(start, end - start);
   lexer_link_token(prev, f, line, t, type);
   return t;
 }

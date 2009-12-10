@@ -32,6 +32,8 @@ typedef struct rstr {
 
 rstr_t *rstr_alloc(const char *in) __attribute__ ((malloc));
 
+rstr_t *rstr_allocl(const char *in, size_t len) __attribute__ ((malloc));
+
 static inline const char *rstr_get(const rstr_t *rs)
 {
   return rs ? rs->str : NULL;

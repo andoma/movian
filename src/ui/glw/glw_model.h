@@ -134,14 +134,14 @@ typedef struct token {
     struct prop_pixmap *pixmap;
 
     struct {
-      char *title;
-      char *url;
+      rstr_t *rtitle;
+      rstr_t *rurl;
     } link;
 
   } u;
 
 
-#define t_string          u.link.title  // STRING is a "superclass" to LINK
+#define t_rstring         u.link.rtitle  // STRING is a "superclass" to LINK
 #define t_string_vector   u.string_vec
 #define t_float           u.value
 #define t_float_vector    u.value_vec
@@ -152,8 +152,8 @@ typedef struct token {
 #define t_gem             u.gem
 #define t_prop            u.prop
 #define t_pixmap          u.pixmap
-#define t_link_title      u.link.title
-#define t_link_url        u.link.url
+#define t_link_rtitle     u.link.rtitle
+#define t_link_rurl       u.link.rurl
 
 } token_t;
 

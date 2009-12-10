@@ -251,8 +251,8 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei)
       
       t0->type = TOKEN_PROPERTY_NAME;
       t0->next = t1->next;
-      t0->t_string = t1->t_string;
-      t1->t_string = NULL;
+      t0->t_rstring = t1->t_rstring;
+      t1->t_rstring = NULL;
 
       glw_model_token_free(t1);
 
@@ -288,11 +288,12 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei)
 	return -1;
       }
       
-      t->t_string = t1->t_string;
-      t1->t_string = NULL;
+      t->t_rstring = t1->t_rstring;
+      t1->t_rstring = NULL;
 
       if(glw_model_attrib_resolve(t))
-	return glw_model_seterr(ei, t, "Unknown attribute: %s", t->t_string);
+	return glw_model_seterr(ei, t, "Unknown attribute: %s",
+				rstr_get(t->t_rstring));
 
       t->next = t1->next;
       t = t1->next;
@@ -309,7 +310,8 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei)
       if(t1->type == TOKEN_LEFT_PARENTHESIS) {
 	/* Yep, try to resolve the identifier into a function */
 	if(glw_model_function_resolve(t))
-	  return glw_model_seterr(ei, t, "Unknown function: %s", t->t_string);
+	  return glw_model_seterr(ei, t, "Unknown function: %s", 
+				  rstr_get(t->t_rstring));
 
 	t = t1->next;
 	continue;

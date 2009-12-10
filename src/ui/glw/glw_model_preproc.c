@@ -25,14 +25,14 @@ TAILQ_HEAD(macro_arg_queue, macro_arg);
 
 typedef struct macro_arg {
   token_t *first, *last;
-  char *name;
+  rstr_t *rname;
   TAILQ_ENTRY(macro_arg) link;
 } macro_arg_t;
 
 
 typedef struct macro {
   token_t *body;
-  char *name;
+  rstr_t *rname;
   struct macro_arg_queue args;
 
   LIST_ENTRY(macro) link;
@@ -49,13 +49,13 @@ macro_destroy(macro_t *m)
 
   while((ma = TAILQ_FIRST(&m->args)) != NULL) {
     TAILQ_REMOVE(&m->args, ma, link);
-    free(ma->name);
+    rstr_release(ma->rname);
     free(ma);
   }
 
   LIST_REMOVE(m, link);
   glw_model_free_chain(m->body);
-  free(m->name);
+  rstr_release(m->rname);
   free(m);
 }
 
@@ -63,10 +63,10 @@ macro_destroy(macro_t *m)
  *
  */
 static void
-macro_add_arg(macro_t *m, const char *name)
+macro_add_arg(macro_t *m, rstr_t *name)
 {
   macro_arg_t *ma = calloc(1, sizeof(macro_arg_t));
-  ma->name = strdup(name);
+  ma->rname = rstr_dup(name);
   TAILQ_INSERT_TAIL(&m->args, ma, link);
 }
 
@@ -96,7 +96,7 @@ glw_model_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
       n = t->next;
       if(n->type == TOKEN_LEFT_PARENTHESIS) {
 	LIST_FOREACH(m, ml, link)
-	  if(!strcmp(m->name, t->t_string))
+	  if(!strcmp(rstr_get(m->rname), rstr_get(t->t_rstring)))
 	    break;
 
 	if(m != NULL) {
@@ -120,7 +120,7 @@ glw_model_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 		if(TAILQ_NEXT(ma, link) != NULL)
 		  return glw_model_seterr(ei, t, 
 					  "Too few arguments to macro %s",
-					  m->name);
+					  rstr_get(m->rname));
 		break;
 	      }
 
@@ -148,7 +148,7 @@ glw_model_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	  if(t->type != TOKEN_RIGHT_PARENTHESIS)
 	    return glw_model_seterr(ei, t, 
 				    "Too many arguments to macro %s",
-				    m->name);
+				    rstr_get(m->rname));
 
 	  d = t->next;
 	  t->next = NULL;
@@ -168,7 +168,7 @@ glw_model_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 		if(e == NULL)
 		  return glw_model_seterr(ei, t, 
 					  "Too few arguments to macro %s",
-					  m->name);
+					  rstr_get(m->rname));
 		  
 		b = glw_model_token_copy(e);
 		p->next = b;
@@ -216,14 +216,14 @@ glw_model_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
       /**
        * Include another file
        */
-      if(!strcmp(t->t_string, "include")) {
+      if(!strcmp(rstr_get(t->t_rstring), "include")) {
 	consumetoken();
 
 	if(t->type != TOKEN_STRING) 
 	  return glw_model_seterr(ei, t, "Invalid filename after include");
 
 	x = t->next;
-	if((n = glw_model_load1(gr, t->t_string, ei, t)) == NULL)
+	if((n = glw_model_load1(gr, rstr_get(t->t_rstring), ei, t)) == NULL)
 	  return -1;
 
 	n->next = x;
@@ -235,7 +235,7 @@ glw_model_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
       /**
        * Define a macro
        */
-      if(!strcmp(t->t_string, "define")) {
+      if(!strcmp(rstr_get(t->t_rstring), "define")) {
 	consumetoken();
 	
 	if(t->type != TOKEN_IDENTIFIER)
@@ -244,8 +244,8 @@ glw_model_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	m = calloc(1, sizeof(macro_t));
 	TAILQ_INIT(&m->args);
 	LIST_INSERT_HEAD(ml, m, link);
-
-	m->name = strdup(t->t_string);
+	
+	m->rname = rstr_dup(t->t_rstring);
 	consumetoken();
 
 	if(t->type != TOKEN_LEFT_PARENTHESIS)
@@ -258,7 +258,7 @@ glw_model_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	    if(t->type != TOKEN_IDENTIFIER)
 	      return glw_model_seterr(ei, t, "Expected macro argument");
 	  
-	    macro_add_arg(m, t->t_string);
+	    macro_add_arg(m, t->t_rstring);
 	    consumetoken();
 	  
 	    if(t->type == TOKEN_RIGHT_PARENTHESIS) {
@@ -300,7 +300,7 @@ glw_model_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	  } else if(t->type == TOKEN_IDENTIFIER) {
 
 	    TAILQ_FOREACH(ma, &m->args, link) {
-	      if(!strcmp(ma->name, t->t_string)) {
+	      if(!strcmp(rstr_get(ma->rname), rstr_get(t->t_rstring))) {
 		t->tmp = ma;
 		break;
 	      }
