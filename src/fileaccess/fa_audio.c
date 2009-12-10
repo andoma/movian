@@ -242,7 +242,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   snprintf(faurl, sizeof(faurl), "showtime:%s", url);
 
   if(av_open_input_file(&fctx, faurl, NULL, 0, NULL) != 0) {
-    snprintf(errbuf, errlen, "Unable to open input file %s\n", url);
+    snprintf(errbuf, errlen, "Unable to open input file");
     return NULL;
   }
 
@@ -269,6 +269,12 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     cw = wrap_codec_create(ctx->codec_id, ctx->codec_type, 0, fw, ctx, 0, 0);
     mp->mp_audio.mq_stream = i;
     break;
+  }
+  
+  if(cw == NULL) {
+    wrap_format_deref(fw);
+    snprintf(errbuf, errlen, "Unable to open codec");
+    return NULL;
   }
 
   mp_become_primary(mp);
