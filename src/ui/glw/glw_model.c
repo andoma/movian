@@ -67,7 +67,9 @@ glw_model_create2(glw_root_t *gr, token_t *sof, const char *src,
 
   eof = calloc(1, sizeof(token_t));
   eof->type = TOKEN_END;
+#ifdef GLW_MODEL_ERRORINFO
   eof->file = rstr_alloc(src);
+#endif
   l->next = eof;
   
   if(glw_model_preproc(gr, sof, &ei))
@@ -111,7 +113,9 @@ glw_model_create(glw_root_t *gr, const char *src,
 
   sof = calloc(1, sizeof(token_t));
   sof->type = TOKEN_START;
+#ifdef GLW_MODEL_ERRORINFO
   sof->file = rstr_alloc(src);
+#endif
 
   r = glw_model_create2(gr, sof, src, parent, prop, prop_parent, flags);
 

@@ -40,8 +40,7 @@ glw_model_token_free(token_t *t)
   int i;
 
 #ifdef GLW_MODEL_ERRORINFO
-  if(t->file != NULL)
-    rstr_release(t->file);
+  rstr_release(t->file);
 #endif
 
   switch(t->type) {
@@ -137,8 +136,7 @@ glw_model_token_copy(token_t *src)
   token_t *dst = calloc(1, sizeof(token_t));
 
 #ifdef GLW_MODEL_ERRORINFO
-  if(src->file != NULL)
-    dst->file = rstr_dup(src->file);
+  dst->file = rstr_dup(src->file);
   dst->line = src->line;
 #endif
 
@@ -418,7 +416,11 @@ glw_model_seterr(errorinfo_t *ei, token_t *b, const char *fmt, ...)
   assert(b != NULL);
 
   if(ei == NULL) {
+#ifdef GLW_MODEL_ERRORINFO
     snprintf(buf, sizeof(buf), "GLW: %s:%d", rstr_get(b->file), b->line);
+#else
+    snprintf(buf, sizeof(buf), "GLW: file?:##");
+#endif
     tracev(TRACE_ERROR, buf, fmt, ap);
     return -1;
   }
@@ -426,7 +428,11 @@ glw_model_seterr(errorinfo_t *ei, token_t *b, const char *fmt, ...)
   vsnprintf(ei->error, sizeof(ei->error), fmt, ap);
   va_end(ap);
 
+#ifdef GLW_MODEL_ERRORINFO
   snprintf(ei->file,  sizeof(ei->file),  "%s", rstr_get(b->file));
   ei->line = b->line;
+#else
+  snprintf(ei->file,  sizeof(ei->file),  "file?");
+#endif
   return -1;
 }

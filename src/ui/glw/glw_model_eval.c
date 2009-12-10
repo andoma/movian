@@ -227,8 +227,8 @@ eval_op(glw_model_eval_context_t *ec, struct token *self)
 
       r = eval_alloc(self, ec, TOKEN_STRING);
       r->t_rstring = rstr_allocl(NULL, al + bl);
-      memcpy(&r->t_rstring->str[0],  rstr_get(a->t_rstring), al);
-      memcpy(&r->t_rstring->str[al], rstr_get(b->t_rstring), bl);
+      memcpy(rstr_data(r->t_rstring),      rstr_get(a->t_rstring), al);
+      memcpy(rstr_data(r->t_rstring) + al, rstr_get(b->t_rstring), bl);
       eval_push(ec, r);
       return 0;
     }
@@ -1089,7 +1089,9 @@ subscribe_prop(glw_model_eval_context_t *ec, struct token *self)
     if(ec->prop0 != NULL)
       prop_ref_dec(ec->prop0);
 
+#ifdef GLW_MODEL_ERRORINFO
     rstr_release(gps->gps_file);
+#endif
     free(gps);
     return glw_model_seterr(ec->ei, self, "Property does not exist %p",
 			    ec->prop_parent);
