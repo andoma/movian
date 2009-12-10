@@ -1717,9 +1717,6 @@ glw_video_subtitle_deliver(void *opaque, int64_t pts, AVSubtitle *sub)
     gvs->gvs_start = pts + sub->start_display_time * 1000;
     gvs->gvs_end   = pts + sub->end_display_time * 1000;
 
-    printf("Creating %p %lld %lld\n", gvs, gvs->gvs_start, gvs->gvs_end);
-
-
     glw_lock(gr);
     TAILQ_INSERT_TAIL(&gv->gv_subs, gvs, gvs_link);
     glw_unlock(gr);
