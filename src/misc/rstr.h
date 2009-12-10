@@ -24,6 +24,9 @@
 #include <stdint.h>
 #include "arch/atomic.h"
 
+#define USE_RSTR
+
+#ifdef USE_RSTR
 
 typedef struct rstr {
   int32_t refcnt;
@@ -37,6 +40,12 @@ rstr_t *rstr_allocl(const char *in, size_t len) __attribute__ ((malloc));
 static inline const char *rstr_get(const rstr_t *rs)
 {
   return rs ? rs->str : NULL;
+}
+
+
+static inline char *rstr_data(rstr_t *rs)
+{
+  return rs->str;
 }
 
 static inline rstr_t *
@@ -54,6 +63,39 @@ static inline void rstr_release(rstr_t *rs)
     free(rs);
 }
 
+#else
+
+#include <string.h>
+
+typedef char rstr_t;
+
+#define rstr_release(n) free(n)
+
+#define rstr_dup(n) ((n) ? strdup(n) : NULL)
+
+#define rstr_get(n) (n)
+
+#define rstr_data(n) (n)
+
+static inline rstr_t *rstr_alloc(const char *in)
+{
+  if(in)
+    return strdup(in);
+  else
+    return NULL;
+}
+
+static inline rstr_t *rstr_allocl(const char *in, size_t len)
+{
+  char *r = malloc(len + 1);
+
+  if(in)
+    memcpy(r, in, len);
+  r[len] = 0;
+  return r;
+}
+
+#endif
 
 
 #endif /* RSTR_H__ */

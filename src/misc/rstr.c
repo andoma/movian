@@ -19,6 +19,8 @@
 #include <string.h>
 #include "rstr.h"
 
+#ifdef USE_RSTR
+
 rstr_t *
 rstr_alloc(const char *in)
 {
@@ -43,3 +45,4 @@ rstr_allocl(const char *in, size_t len)
 
   
 }
+#endif
