@@ -225,7 +225,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 
       x_size_max = INT_MAX;
       
-      for(j = 0; j < i; j++) {
+      for(j = 0; j < len; j++) {
 	g = g0 + j;
 	FT_Done_Glyph(g->glyph); 
       }
