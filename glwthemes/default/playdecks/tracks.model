@@ -69,8 +69,8 @@ widget(backdrop, {
 	    widget(backdrop, {
 	      KNOB_PROPS();
 	      widget(label, {
+ 		.align = center;
 		.caption = value2duration($self.currenttime);
-		.sizeScale = 0.6;
 	      });
 	    });
 	  });

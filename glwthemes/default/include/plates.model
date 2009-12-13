@@ -32,6 +32,7 @@
   .borderSize = [3, 3, 8, 8];
   .color = [0.0, 0.0, 0.0] + iir(isFocused(), 4) * BUTTON_COLOR() + iir(isHovered(), 4) * [0.1, 0.3, 0.3];
   .alphaSelf = iir(0.5 + 0.5 * (isFocused()), 4);
+  .padding = [2, 2, 3, 5];
 }
 
 
