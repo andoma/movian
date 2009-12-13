@@ -343,7 +343,11 @@ fa_lavf_load_meta(prop_t *proproot, AVFormatContext *fctx, const char *url)
       metadata_to_prop(proproot, "title", fctx->metadata, "title", 0);
     }
 
-    if((str = metadata_get(fctx->metadata, "author")) != NULL) {
+    str = metadata_get(fctx->metadata, "artist");
+    if(str == NULL)
+      str = metadata_get(fctx->metadata, "author");
+
+    if(str != NULL) {
       prop_set_string(prop_create(proproot, "artist"), str);
       scrapper_artist_init(prop_create(proproot, "artist_images"), str);
       free(str);
