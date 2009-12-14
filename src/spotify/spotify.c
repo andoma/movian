@@ -228,8 +228,6 @@ typedef struct spotify_image {
 
 static hts_cond_t spotify_cond_image;
 
-#define VARIOUS_ARTISTS "spotify:artist:0LyfQWJT6nXafLPZqxe9Of"
-
 /**
  *
  */
