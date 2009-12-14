@@ -53,30 +53,49 @@ glw_model_error(glw_root_t *gr, errorinfo_t *ei, glw_t *parent)
 /**
  *
  */
-static glw_t *
-glw_model_create2(glw_root_t *gr, token_t *sof, const char *src,
-		  glw_t *parent, prop_t *prop, prop_t *prop_parent, int flags)
+glw_t *
+glw_model_create(glw_root_t *gr, const char *src,
+		 glw_t *parent, prop_t *prop, prop_t *prop_parent)
 {
-  token_t *eof, *l;
+  token_t *eof, *l, *t;
   errorinfo_t ei;
   glw_t *r;
   glw_model_eval_context_t ec;
+  glw_model_t *gm;
 
-  if((l = glw_model_load1(gr, src, &ei, sof)) == NULL)
-    return glw_model_error(gr, &ei, parent);
+  LIST_FOREACH(gm, &gr->gr_models, gm_link) {
+    if(!strcmp(gm->gm_source, src))
+      break;
+  }
 
-  eof = calloc(1, sizeof(token_t));
-  eof->type = TOKEN_END;
+  if(gm == NULL) {
+    token_t *sof = calloc(1, sizeof(token_t));
+    sof->type = TOKEN_START;
 #ifdef GLW_MODEL_ERRORINFO
-  eof->file = rstr_alloc(src);
+    sof->file = rstr_alloc(src);
 #endif
-  l->next = eof;
-  
-  if(glw_model_preproc(gr, sof, &ei))
-    return glw_model_error(gr, &ei, parent);
 
-  if(glw_model_parse(sof, &ei))
-    return glw_model_error(gr, &ei, parent);
+    if((l = glw_model_load1(gr, src, &ei, sof)) == NULL) {
+      glw_model_free_chain(sof);
+      return glw_model_error(gr, &ei, parent);
+    }
+    eof = calloc(1, sizeof(token_t));
+    eof->type = TOKEN_END;
+#ifdef GLW_MODEL_ERRORINFO
+    eof->file = rstr_alloc(src);
+#endif
+    l->next = eof;
+  
+    if(glw_model_preproc(gr, sof, &ei) || glw_model_parse(sof, &ei)) {
+      glw_model_free_chain(sof);
+      return glw_model_error(gr, &ei, parent);
+    }
+
+    gm = calloc(1, sizeof(glw_model_t));
+    gm->gm_sof = sof;
+    gm->gm_source = strdup(src);
+    LIST_INSERT_HEAD(&gr->gr_models, gm, gm_link);
+  }
 
   memset(&ec, 0, sizeof(ec));
 
@@ -92,34 +111,14 @@ glw_model_create2(glw_root_t *gr, token_t *sof, const char *src,
   ec.prop_parent = prop_parent;
   ec.sublist = &ec.w->glw_prop_subscriptions;
 
-  if(glw_model_eval_block(sof, &ec)) {
+  t = glw_model_clone_chain(gm->gm_sof);
+
+  if(glw_model_eval_block(t, &ec)) {
     glw_destroy0(ec.w);
+    glw_model_free_chain(t);
     return glw_model_error(gr, &ei, parent);
   }
-  
-  return r;
-}
-  
-
-/**
- *
- */
-glw_t *
-glw_model_create(glw_root_t *gr, const char *src,
-		 glw_t *parent, int flags, prop_t *prop, prop_t *prop_parent)
-{
-  token_t *sof;
-  glw_t *r;
-
-  sof = calloc(1, sizeof(token_t));
-  sof->type = TOKEN_START;
-#ifdef GLW_MODEL_ERRORINFO
-  sof->file = rstr_alloc(src);
-#endif
-
-  r = glw_model_create2(gr, sof, src, parent, prop, prop_parent, flags);
-
-  glw_model_free_chain(sof);
+  glw_model_free_chain(t);
   return r;
 }
 

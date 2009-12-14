@@ -271,6 +271,8 @@ typedef struct glw_root {
 
   struct glw *gr_universe;
 
+  LIST_HEAD(, glw_model) gr_models;
+
   const char *gr_theme;
 
   hts_thread_t gr_thread;
@@ -568,10 +570,8 @@ void glw_clip_disable(glw_rctx_t *rc, int which);
  * Models
  */
 glw_t *glw_model_create(glw_root_t *gr, const char *src, 
-			glw_t *parent, int flags,
-			struct prop *prop, struct prop *prop_parent);
-
-#define GLW_MODEL_CACHE 0x1
+			glw_t *parent, struct prop *prop,
+			struct prop *prop_parent);
 
 /**
  * Transitions

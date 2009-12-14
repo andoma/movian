@@ -167,7 +167,7 @@ glw_init(glw_root_t *gr, int fontsize, const char *theme, ui_t *ui,
   gr->gr_frameduration = 1000000 / 60;
 
   gr->gr_universe = glw_model_create(gr,
-				     "theme://universe.model", NULL, 0, NULL,
+				     "theme://universe.model", NULL, NULL,
 				     NULL);
 
   glw_set_i(gr->gr_universe,

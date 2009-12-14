@@ -266,4 +266,16 @@ void glw_model_ctor(struct glw *w, int init, va_list ap);
 struct glw_prop_sub_list;
 void glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l);
 
+
+/**
+ *
+ */
+typedef struct glw_model {
+  LIST_ENTRY(glw_model) gm_link;
+  token_t *gm_sof;
+  char *gm_source;
+} glw_model_t;
+
+
+
 #endif /* GLW_MODEL_H */
