@@ -106,6 +106,9 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
     }
   }
 
+  if(column != 0)
+    y += size_y * 2;
+
   y = GLW_MAX(y - 2, 0);
   
   if(a->center_y_max != y)
