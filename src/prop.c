@@ -320,31 +320,18 @@ trampoline_string(prop_sub_t *s, prop_event_t event, ...)
 
 
 /**
- * Thread for dispatching prop_notify entries
+ *
  */
-static void *
-prop_courier(void *aux)
+static void
+prop_notify_dispatch(struct prop_notify_queue *q)
 {
-  prop_courier_t *pc = aux;
-
-  prop_notify_t *n;
+  prop_notify_t *n, *next;
   prop_sub_t *s;
   prop_callback_t *cb;
   prop_trampoline_t *pt;
 
-
-  hts_mutex_lock(&prop_mutex);
-
-  while(pc->pc_run) {
-
-    if((n = TAILQ_FIRST(&pc->pc_queue)) == NULL) {
-      hts_cond_wait(&pc->pc_cond, &prop_mutex);
-      continue;
-    }
-
-    TAILQ_REMOVE(&pc->pc_queue, n, hpn_link);
-    
-    hts_mutex_unlock(&prop_mutex);
+  for(n = TAILQ_FIRST(q); n != NULL; n = next) {
+    next = TAILQ_NEXT(n, hpn_link);
 
     s = n->hpn_sub;
 
@@ -360,7 +347,6 @@ prop_courier(void *aux)
 
 	prop_notify_free(n); // subscription may be free'd here
 	lockmgr(lock, 0);
-	hts_mutex_lock(&prop_mutex);
 	continue;
       }
     }
@@ -486,8 +472,38 @@ prop_courier(void *aux)
  
     prop_sub_ref_dec(s);
     free(n);
+  }
+}
+
+
+
+/**
+ * Thread for dispatching prop_notify entries
+ */
+static void *
+prop_courier(void *aux)
+{
+  prop_courier_t *pc = aux;
+  struct prop_notify_queue q;
+  prop_notify_t *n;
+
+
+  hts_mutex_lock(&prop_mutex);
+
+  while(pc->pc_run) {
+
+    if((n = TAILQ_FIRST(&pc->pc_queue)) == NULL) {
+      hts_cond_wait(&pc->pc_cond, &prop_mutex);
+      continue;
+    }
+
+    TAILQ_MOVE(&q, &pc->pc_queue, hpn_link);
+    TAILQ_INIT(&pc->pc_queue);
+    hts_mutex_unlock(&prop_mutex);
+    prop_notify_dispatch(&q);
     hts_mutex_lock(&prop_mutex);
   }
+
   hts_mutex_unlock(&prop_mutex);
   return NULL;
 }
