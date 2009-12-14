@@ -16,7 +16,7 @@ gcc 4.0, 10.4 SDK, compiles for PPC and i386
 buildenv.10.6-i386-x86_64.sh:
 latest gcc (4.2 on 10.6), 10.6 SDK, compiles for i386 and x86 64
 
-buildenv.common.sh is helpt script used by both buildscripts
+buildenv.common.sh is a common help script used by both build scripts
 
 After you have copied the files you may want to change the
 INSTALLDIR variable in the build scripts
