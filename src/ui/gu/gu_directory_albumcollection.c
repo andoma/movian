@@ -121,7 +121,7 @@ album_set_art(void *opaque, const char *str)
  *
  */
 static void
-artist_albums(void *opaque, prop_event_t event, ...)
+collection_albums(void *opaque, prop_event_t event, ...)
 {
   albumbrowse_t *ab = opaque;
   prop_t *p;
@@ -233,7 +233,7 @@ add_albums(gtk_ui_t *gu, GtkWidget *parent, prop_t *root, char **parenturlptr)
   ab->sub =
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "nodes"),
-		   PROP_TAG_CALLBACK, artist_albums, ab,
+		   PROP_TAG_CALLBACK, collection_albums, ab,
 		   PROP_TAG_COURIER, gu->gu_pc, 
 		   PROP_TAG_NAMED_ROOT, root, "self",
 		   NULL);
@@ -245,7 +245,8 @@ add_albums(gtk_ui_t *gu, GtkWidget *parent, prop_t *root, char **parenturlptr)
  *
  */
 GtkWidget *
-gu_directory_artist_create(gtk_ui_t *gu, prop_t *root, char **parenturlptr)
+gu_directory_albumcollection_create(gtk_ui_t *gu, prop_t *root, 
+				    char **parenturlptr)
 {
   GtkWidget *view = gtk_vbox_new(FALSE, 1);
   

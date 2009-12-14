@@ -58,4 +58,9 @@ void trace(int level, const char *subsys, const char *fmt, ...);
 
 #define TRACE(level, subsys, fmt...) trace(level, subsys, fmt)
 
+#define mystrdupa(n) ({ int my_l = strlen(n); \
+ char *my_b = alloca(my_l + 1); \
+ memcpy(my_b, n, my_l + 1); })
+ 
+
 #endif /* SHOWTIME_H */

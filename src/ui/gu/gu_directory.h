@@ -36,8 +36,8 @@ GtkWidget *gu_directory_list_create(gtk_ui_t *gu, prop_t *root,
 GtkWidget *gu_directory_album_create(gtk_ui_t *gu, prop_t *root,
 				     char **parenturlptr);
 
-GtkWidget *gu_directory_artist_create(gtk_ui_t *gu, prop_t *root,
-				      char **parenturlptr);
+GtkWidget *gu_directory_albumcollection_create(gtk_ui_t *gu, prop_t *root,
+					       char **parenturlptr);
 
 #endif /* GU_DIRECTORY_H__ */
 

@@ -68,8 +68,9 @@ set_view(void *opaque, const char *str)
 				 GU_DIR_COL_ALBUM);
   } else if(!strcmp(str, "album")) {
     w = gu_directory_album_create(gd->gd_gu, gnp->gnp_prop, &gnp->gnp_url);
-  } else if(!strcmp(str, "artist")) {
-    w = gu_directory_artist_create(gd->gd_gu, gnp->gnp_prop, &gnp->gnp_url);
+  } else if(!strcmp(str, "albumcollection")) {
+    w = gu_directory_albumcollection_create(gd->gd_gu, gnp->gnp_prop, 
+					    &gnp->gnp_url);
   } else {
     TRACE(TRACE_ERROR, "GU", "Can not display directory view: %s", str);
     return;
