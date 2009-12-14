@@ -335,20 +335,21 @@ prop_notify_dispatch(struct prop_notify_queue *q)
 
     s = n->hpn_sub;
 
-    if(s->hps_lock != NULL) {
+    if(s->hps_lock != NULL)
       s->hps_lockmgr(s->hps_lock, 1);
     
-      if(s->hps_zombie) {
-	/* Copy pointers to lock and lockmgr since prop_notify_free()
-	 * may free the subscription (it decreses its refcount)
-	 */
-	prop_lockmgr_t *lockmgr = s->hps_lockmgr;
-	void *lock = s->hps_lock;
-
-	prop_notify_free(n); // subscription may be free'd here
+    if(s->hps_zombie) {
+      /* Copy pointers to lock and lockmgr since prop_notify_free()
+       * may free the subscription (it decreses its refcount)
+       */
+      prop_lockmgr_t *lockmgr = s->hps_lockmgr;
+      void *lock = s->hps_lock;
+      
+      prop_notify_free(n); // subscription may be free'd here
+      
+      if(lock)
 	lockmgr(lock, 0);
-	continue;
-      }
+      continue;
     }
 
     cb = s->hps_callback;
