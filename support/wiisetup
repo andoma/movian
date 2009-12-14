@@ -21,8 +21,8 @@ fi
 if ! test -e ${DEVKITPRO}/libogc/lib/wii ; then
     mkdir -p ${DEVKITPRO}/libogc-src
     cd ${DEVKITPRO}/libogc-src
-    wget http://downloads.sourceforge.net/project/devkitpro/libogc/libogc-src-1.8.0.tar.bz2
-    tar xvf libogc-src-1.8.0.tar.bz2
+    wget http://downloads.sourceforge.net/project/devkitpro/libogc/libogc-src-1.8.1.tar.bz2
+    tar xvf libogc-src-1.8.1.tar.bz2
     make wii install
 fi
 
