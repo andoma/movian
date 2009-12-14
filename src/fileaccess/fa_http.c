@@ -894,7 +894,6 @@ http_index_fetch(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen)
   htsbuf_queue_t q;
   char *buf;
   int redircount = 0;
-  char hostname[256];
 
 reconnect:
   hf->hf_size = -1;
@@ -914,7 +913,7 @@ again:
 		 "\r\n",
 		 hf->hf_path,
 		 htsversion,
-		 hostname,
+		 hf->hf_connection->hc_hostname,
 		 hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
   
   tcp_write_queue(hf->hf_connection->hc_fd, &q);
