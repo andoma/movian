@@ -101,7 +101,7 @@ nav_init(void)
 
   hts_thread_create_detached(navigator_thread, NULL);
 
-  pc = prop_courier_create(&nav_mutex);
+  pc = prop_courier_create(&nav_mutex, PROP_COURIER_THREAD);
 
   prop_subscribe(0,
 		 PROP_TAG_NAME("nav", "eventsink"),

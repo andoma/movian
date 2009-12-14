@@ -445,7 +445,11 @@ void prop_request_new_child(prop_t *p);
 
 void prop_request_delete_child_by_subscription(prop_sub_t *s);
 
-prop_courier_t *prop_courier_create(hts_mutex_t *entrymutex);
+#define PROP_COURIER_THREAD 0x1
+
+prop_courier_t *prop_courier_create(hts_mutex_t *entrymutex, int flags);
+
+void prop_courier_poll(prop_courier_t *pc);
 
 void prop_courier_destroy(prop_courier_t *pc);
 

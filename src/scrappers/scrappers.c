@@ -185,5 +185,5 @@ void
 scrappers_init(void)
 {
   hts_mutex_init(&scrapper_mutex);
-  scrapper_courier = prop_courier_create(&scrapper_mutex);
+  scrapper_courier = prop_courier_create(&scrapper_mutex, PROP_COURIER_THREAD);
 }

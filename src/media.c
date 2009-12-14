@@ -61,7 +61,7 @@ media_init(void)
   media_prop_sources = prop_create(media_prop_root, "sources");
   media_prop_current = prop_create(media_prop_root, "current");
 
-  pc = prop_courier_create(&media_mutex);
+  pc = prop_courier_create(&media_mutex, PROP_COURIER_THREAD);
 
   prop_subscribe(0,
 		 PROP_TAG_NAME("media", "eventsink"),
@@ -151,7 +151,7 @@ mp_create(const char *name, const char *type, int flags)
   mp->mp_prop_avdelta     = prop_create(mp->mp_prop_root, "avdelta");
   mp->mp_prop_url         = prop_create(mp->mp_prop_root, "url");
 
-  mp->mp_pc = prop_courier_create(&mp->mp_mutex);
+  mp->mp_pc = prop_courier_create(&mp->mp_mutex, PROP_COURIER_THREAD);
 
   mp->mp_sub_currenttime = 
     prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,

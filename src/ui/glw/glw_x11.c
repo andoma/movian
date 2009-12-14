@@ -1003,6 +1003,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
       }
     }
     glw_lock(&gx11->gr);
+    prop_courier_poll(gx11->gr.gr_courier);
     glw_reaper0(&gx11->gr);
     layout_draw(gx11, gx11->aspect_ratio);
     glw_unlock(&gx11->gr);

@@ -350,7 +350,7 @@ glw_wii_loop(glw_wii_t *gwii)
     GX_SetAlphaUpdate(GX_TRUE);
 
     glw_lock(&gwii->gr);
-
+    prop_courier_poll(gwii->gr.gr_courier);
     glw_reaper0(&gwii->gr);
 
 
