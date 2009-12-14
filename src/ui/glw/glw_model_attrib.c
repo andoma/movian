@@ -395,8 +395,8 @@ static const token_attrib_t attribtab[] = {
   {"height",          set_float,  GLW_ATTRIB_HEIGHT},
   {"width",           set_float,  GLW_ATTRIB_WIDTH},
 
-  {"childWidth",      set_float,  GLW_ATTRIB_CHILD_WIDTH},
-  {"childHeight",     set_float,  GLW_ATTRIB_CHILD_HEIGHT},
+  {"childWidth",      set_int,    GLW_ATTRIB_CHILD_WIDTH},
+  {"childHeight",     set_int,    GLW_ATTRIB_CHILD_HEIGHT},
 
   {"childTilesX",     set_int,    GLW_ATTRIB_CHILD_TILES_X},
   {"childTilesY",     set_int ,   GLW_ATTRIB_CHILD_TILES_Y},
