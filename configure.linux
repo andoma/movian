@@ -72,6 +72,7 @@ enable lirc
 enable gu
 enable avahi
 enable libspotify_load_runtime
+enable dbus
 
 for opt do
   optval="${opt#*=}"
