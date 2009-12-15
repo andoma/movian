@@ -40,7 +40,11 @@ atomic_add(volatile int *ptr, int incr)
 {
   int r, level;
 
-  /* XXX: Use atomic ops, but I need to read more about that on PPC */
+  /*
+   * Last time i checked libogc's context switcher did not do the
+   * necessary operations to clear locks held by lwarx/stwcx.
+   * Thus we need to resort to other means
+   */
 
   _CPU_ISR_Disable(level);
 
