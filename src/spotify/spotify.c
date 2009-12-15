@@ -149,6 +149,7 @@ typedef enum {
   SPOTIFY_SEEK,
   SPOTIFY_PAUSE,
   SPOTIFY_GET_IMAGE,
+  SPOTIFY_GET_PARENT,
 } spotify_msg_type_t;
 
 /**
@@ -227,6 +228,31 @@ typedef struct spotify_image {
 } spotify_image_t;
 
 static hts_cond_t spotify_cond_image;
+
+
+/**
+ * Get parent request (typically track -> its albums)
+ */
+typedef struct spotify_parent {
+  const char *sp_uri;
+  char *sp_errbuf;
+  size_t sp_errlen;
+
+  char *sp_parent;
+
+  int sp_errcode;
+
+  sp_track *sp_track;
+  
+  LIST_ENTRY(spotify_parent) sp_link;
+
+} spotify_parent_t;
+
+static LIST_HEAD(, spotify_parent) pending_get_parents;
+
+static hts_cond_t spotify_cond_parent;
+
+static void spotify_try_get_parents(void);
 
 /**
  *
@@ -549,6 +575,7 @@ spotify_play_track(spotify_uri_t *su)
     snprintf(su->su_errbuf, su->su_errlen, 
 	     "Invalid URI for playback (not a track)");
     spotify_uri_return(su, 1);
+    f_sp_link_release(l);
     return;
   }
 
@@ -758,6 +785,7 @@ spotify_metadata_updated(sp_session *sess)
   hts_mutex_unlock(&meta_mutex);
 
   spotify_play_track_try();
+  spotify_try_get_parents();
 }
 
 /**
@@ -1788,6 +1816,98 @@ spotify_get_image(spotify_image_t *si)
 			       spotify_got_image, si);
 }
 
+/**
+ *
+ */
+static void
+spotify_get_parent_return(spotify_parent_t *sp, int errcode)
+{
+  if(sp->sp_track != NULL)
+    f_sp_track_release(sp->sp_track);
+
+  hts_mutex_lock(&spotify_mutex);
+  sp->sp_errcode = errcode;
+  hts_cond_broadcast(&spotify_cond_parent);
+  hts_mutex_unlock(&spotify_mutex);
+}
+
+
+/**
+ *
+ */
+static void
+spotify_try_get_parent(spotify_parent_t *sp)
+{
+  sp_error err = f_sp_track_error(sp->sp_track);
+  char url[128];
+
+  if(err == SP_ERROR_IS_LOADING) {
+    TRACE(TRACE_DEBUG, "spotify", 
+	  "Track requested for album resolve is not loaded, retrying");
+    return;
+  }
+
+  if(err != SP_ERROR_OK) {
+    snprintf(sp->sp_errbuf, sp->sp_errlen, "Unable to resolve track:%s",
+	     f_sp_error_message(err));
+    spotify_get_parent_return(sp, 1);
+    return;
+  }
+
+  sp_album *album = f_sp_track_album(sp->sp_track);
+
+  spotify_make_link(f_sp_link_create_from_album(album), url, sizeof(url));
+  sp->sp_parent = strdup(url);
+  LIST_REMOVE(sp, sp_link);
+  spotify_get_parent_return(sp, 0);
+}
+
+
+/**
+ *
+ */
+static void
+spotify_get_parent(spotify_parent_t *sp)
+{
+  sp_link *l;
+
+  if((l = f_sp_link_create_from_string(sp->sp_uri)) == NULL) {
+    snprintf(sp->sp_errbuf, sp->sp_errlen, "Invalid spotify URI");
+    spotify_get_parent_return(sp, 1);
+    return;
+  }
+
+  sp_linktype type = f_sp_link_type(l);
+
+  if(type != SP_LINKTYPE_TRACK) {
+    snprintf(sp->sp_errbuf, sp->sp_errlen, "Not a spotify track");
+    f_sp_link_release(l);
+    spotify_get_parent_return(sp, 1);
+    return;
+  }
+
+  sp->sp_track = f_sp_link_as_track(l);
+  f_sp_track_add_ref(sp->sp_track);
+  f_sp_link_release(l);
+
+  LIST_INSERT_HEAD(&pending_get_parents, sp, sp_link);
+  spotify_try_get_parent(sp);
+}
+
+/**
+ *
+ */
+static void
+spotify_try_get_parents(void)
+{
+  spotify_parent_t *sp, *next;
+
+  for(sp = LIST_FIRST(&pending_get_parents); sp != NULL; sp = next) {
+    next = LIST_NEXT(sp, sp_link);
+    spotify_try_get_parent(sp);
+  }
+}
+
 
 /**
  *
@@ -1942,6 +2062,9 @@ spotify_thread(void *aux)
 
       case SPOTIFY_GET_IMAGE:
 	spotify_get_image(sm->sm_ptr);
+	break;
+      case SPOTIFY_GET_PARENT:
+	spotify_get_parent(sm->sm_ptr);
 	break;
       }
       free(sm);
@@ -2448,6 +2571,39 @@ be_spotify_imageloader(const char *url, char *errbuf, size_t errlen,
   }
 }
 
+/**
+ *
+ */
+static int
+be_spotify_get_parent(const char *url, 
+		      char *parent, size_t parentlen,
+		      char *errbuf, size_t errlen)
+{
+  spotify_parent_t sp = {0};
+
+  if(spotify_start(errbuf, errlen))
+    return -1;
+
+  sp.sp_errcode = -1;
+  sp.sp_uri = url;
+
+  spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_GET_PARENT, &sp));
+
+  while(sp.sp_errcode == -1)
+    hts_cond_wait(&spotify_cond_parent, &spotify_mutex);
+
+  hts_mutex_unlock(&spotify_mutex);
+
+  if(sp.sp_errcode == 0) {
+    snprintf(parent, parentlen, "%s", sp.sp_parent);
+    free(sp.sp_parent);
+    return 0;
+  }
+  snprintf(errbuf, errlen, "Unable to resolve parent");
+  return -1;
+}
+
+
 
 #ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
 /**
@@ -2498,6 +2654,7 @@ be_spotify_init(void)
   hts_cond_init(&spotify_cond_login);
   hts_cond_init(&spotify_cond_uri);
   hts_cond_init(&spotify_cond_image);
+  hts_cond_init(&spotify_cond_parent);
 
   /* Metadata tracking */
   hts_mutex_init(&meta_mutex);
@@ -2560,4 +2717,5 @@ nav_backend_t be_spotify = {
   .nb_play_audio = be_spotify_play,
   .nb_list = be_spotify_list,
   .nb_imageloader = be_spotify_imageloader,
+  .nb_get_parent = be_spotify_get_parent,
 };
