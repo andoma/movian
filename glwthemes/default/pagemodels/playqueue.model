@@ -35,13 +35,9 @@ widget(container_y, {
   widget(container_x, {
     widget(list_y, {
       .id = "list";
-      cloner($page.nodes, backdrop, {
-	HIGHLITE_PROPS();
-	
-	widget(animator, {
-	  .time = 0.3;
-	  .source = "theme://directoryviews/list/audio.model";
-	});
+      cloner($page.nodes, animator, {
+	.time = 0.3;
+	.source = "theme://directoryviews/list/track.model";
       });
     });
   
