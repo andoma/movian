@@ -480,7 +480,25 @@ nav_list(const char *url, char *errbuf, size_t errlen)
 }
 
 
+/**
+ *
+ */
+int
+nav_get_parent(const char *url, char *parent, size_t parentlen,
+	       char *errbuf, size_t errlen)
+{
+  nav_backend_t *nb;
 
+  LIST_FOREACH(nb, &nav_backends, nb_global_link)
+    if(nb->nb_canhandle(url))
+      break;
+  
+  if(nb == NULL || nb->nb_get_parent == NULL) {
+    snprintf(errbuf, errlen, "No backend for URL");
+    return -1;
+  }
+  return nb->nb_get_parent(url, parent, parentlen, errbuf, errlen);
+}
 
 /**
  * Static content

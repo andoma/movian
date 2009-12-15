@@ -80,6 +80,10 @@ typedef struct nav_backend {
 
   prop_t *(*nb_list)(const char *url, char *errbuf, size_t errsize);
 
+  int (*nb_get_parent)(const char *url, 
+		       char *parent, size_t parentlen,
+		       char *errbuf, size_t errlen);
+
   int (*nb_imageloader)(const char *url, char *errbuf, size_t errsize,
 			int *thumb, void **data, size_t *datasize,
 			int *codecid, const char *theme,
@@ -112,6 +116,9 @@ unsigned int nav_probe(prop_t *proproot, const char *url,
 		       char *errbuf, size_t errsize);
 
 prop_t *nav_list(const char *url, char *errbuf, size_t errlen);
+
+int nav_get_parent(const char *url, char *parent, size_t parentlen,
+		   char *errbuf, size_t errlen);
 
 int nav_imageloader(const char *url, char *errbuf, size_t errlen,
 		    int *thumb, void **data, size_t *datasize,

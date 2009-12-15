@@ -613,6 +613,12 @@ playqueue_load(const char *url, const char *parent, prop_t *metadata, int enq)
 {
   playqueue_entry_t *pqe, *prev;
   event_t *e;
+  char pbuf[256];
+
+  if(parent == NULL) {
+    if(!nav_get_parent(url, pbuf, sizeof(pbuf), NULL, 0))
+      parent = pbuf;
+  }
 
   if(parent != NULL && !strcmp(parent, "playqueue:"))
     parent = NULL;
