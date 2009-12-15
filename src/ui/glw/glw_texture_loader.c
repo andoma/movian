@@ -124,7 +124,7 @@ glw_tex_init(glw_root_t *gr)
 
   /* Start multiple workers for decoding images */
   for(i = 0; i < concurrency; i++)
-    hts_thread_create_detached(loader_thread, gr);
+    hts_thread_create_detached("GLW texture loader", loader_thread, gr);
 }
 
 /**

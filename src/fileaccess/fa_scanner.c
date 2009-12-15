@@ -576,7 +576,7 @@ fa_scanner(const char *url, prop_t *root, int flags)
 
   s->s_refcount = 2; // One held by scanner thread, one by the subscription
 
-  hts_thread_create_detached(scanner, s);
+  hts_thread_create_detached("fa scanner", scanner, s);
 
   prop_subscribe(PROP_SUB_TRACK_DESTROY,
 		 PROP_TAG_CALLBACK, scanner_stop, s,
@@ -649,6 +649,6 @@ fa_scanner_find_albumart(const char *url, prop_t *album_art)
   aas->aas_url = strdup(url);
   aas->aas_prop = album_art;
   
-  hts_thread_create_detached(album_art_scanner, aas);
+  hts_thread_create_detached("album art scanner", album_art_scanner, aas);
 
 }

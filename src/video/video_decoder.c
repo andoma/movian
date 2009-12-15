@@ -459,7 +459,8 @@ video_decoder_create(media_pipe_t *mp)
   hts_cond_init(&vd->vd_bufalloced_queue_cond);
   hts_mutex_init(&vd->vd_queue_mutex);
 
-  hts_thread_create_joinable(&vd->vd_decoder_thread, vd_thread, vd);
+  hts_thread_create_joinable("video decoder", 
+			     &vd->vd_decoder_thread, vd_thread, vd);
   
   return vd;
 }

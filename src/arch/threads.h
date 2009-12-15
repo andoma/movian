@@ -51,16 +51,12 @@ extern int hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delta);
  */
 typedef pthread_t hts_thread_t;
 
-#define hts_thread_create_detached(f, a)  do {		        \
- pthread_t id;                                                  \
- pthread_attr_t attr;						\
- pthread_attr_init(&attr);					\
- pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);	\
- pthread_create(&id, &attr, f, a);				\
- pthread_attr_destroy(&attr);					\
-} while(0)
+extern void hts_thread_create_detached(const char *, void *(*)(void *), void *);
 
-#define hts_thread_create_joinable(t, f, a) pthread_create(t, NULL, f, a)
+extern void hts_thread_create_joinable(const char *, hts_thread_t *, 
+				       void *(*)(void *), void *);
+
+
 #define hts_thread_join(t)                  pthread_join(*(t), NULL)
 
 #elif CONFIG_LIBOGC

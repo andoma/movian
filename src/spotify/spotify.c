@@ -1965,7 +1965,7 @@ spotify_start(char *errbuf, size_t errlen)
   hts_mutex_lock(&spotify_mutex);
   
   if(spotify_started == 0) {
-    hts_thread_create_detached(spotify_thread, NULL);
+    hts_thread_create_detached("spotify", spotify_thread, NULL);
     spotify_started = 1;
   }
 

@@ -99,7 +99,7 @@ nav_init(void)
   NAV_INIT_BE(spotify);
 #endif
 
-  hts_thread_create_detached(navigator_thread, NULL);
+  hts_thread_create_detached("navigator", navigator_thread, NULL);
 
   pc = prop_courier_create(&nav_mutex, PROP_COURIER_THREAD);
 

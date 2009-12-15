@@ -227,3 +227,26 @@ showtime_get_ts(void)
   gettimeofday(&tv, NULL);
   return (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
 }
+
+/**
+ *
+ */
+void
+hts_thread_create_detached(const char *title, void *(*func)(void *), void *aux)
+{
+ pthread_t id;
+ pthread_attr_t attr;
+ pthread_attr_init(&attr);
+ pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+ pthread_create(&id, &attr, func, aux);
+ pthread_attr_destroy(&attr);
+ TRACE(TRACE_DEBUG, "thread", "Created detached thread: %s", title);
+}
+
+void
+hts_thread_create_joinable(const char *title, hts_thread_t *p, 
+			   void *(*func)(void *), void *aux)
+{
+  pthread_create(p, NULL, func, aux);
+ TRACE(TRACE_DEBUG, "thread", "Created thread: %s", title);
+}

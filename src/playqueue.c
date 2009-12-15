@@ -798,8 +798,8 @@ playqueue_init(void)
 
   playqueue_root = prop_create(prop_get_global(), "playqueue");
 
-  hts_thread_create_detached(playqueue_thread, NULL);
-  hts_thread_create_detached(player_thread, NULL);
+  hts_thread_create_detached("playqueue", playqueue_thread, NULL);
+  hts_thread_create_detached("audioplayer", player_thread, NULL);
   return 0;
 }
 

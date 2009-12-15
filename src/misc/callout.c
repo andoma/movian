@@ -173,7 +173,7 @@ callout_init(void)
   hts_mutex_init(&callout_mutex);
   hts_cond_init(&callout_cond);
 
-  hts_thread_create_detached(callout_loop, NULL);
+  hts_thread_create_detached("callout", callout_loop, NULL);
 
   clock = prop_create(prop_get_global(), "clock");
   prop_hour   = prop_create(clock, "hour");

@@ -180,7 +180,7 @@ audio_init(void)
     
   AUDIO_INIT_SUBSYS(dummy);
 
-  hts_thread_create_detached(audio_output_thread, NULL);
+  hts_thread_create_detached("audio output", audio_output_thread, NULL);
 }
 
 

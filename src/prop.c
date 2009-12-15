@@ -2423,7 +2423,7 @@ prop_courier_create(hts_mutex_t *entrymutex, int flags)
   if(flags & PROP_COURIER_THREAD) {
     hts_cond_init(&pc->pc_cond);
     pc->pc_run = 1;
-    hts_thread_create_joinable(&pc->pc_thread, prop_courier, pc);
+    hts_thread_create_joinable("propcourier", &pc->pc_thread, prop_courier, pc);
   }
   return pc;
 }

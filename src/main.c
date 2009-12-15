@@ -230,5 +230,5 @@ showtime_shutdown(int retcode)
   TRACE(TRACE_DEBUG, "core", "Shutdown requested, returncode = %d", retcode);
 
   showtime_retcode = retcode;
-  hts_thread_create_detached(showtime_shutdown0, NULL);
+  hts_thread_create_detached("shutdown", showtime_shutdown0, NULL);
 }

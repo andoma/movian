@@ -66,5 +66,5 @@ void dbus_start(void);
 void
 dbus_start(void)
 {
-  hts_thread_create_detached(dbus_thread, NULL);
+  hts_thread_create_detached("D-BUS", dbus_thread, NULL);
 }

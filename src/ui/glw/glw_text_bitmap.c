@@ -1267,7 +1267,7 @@ glw_text_bitmap_init(glw_root_t *gr, int fontsize)
 
   hts_cond_init(&gr->gr_gtb_render_cond);
 
-  hts_thread_create_detached(font_render_thread, gr);
+  hts_thread_create_detached("GLW font renderer", font_render_thread, gr);
   return 0;
 }
 
