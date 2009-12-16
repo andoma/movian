@@ -153,6 +153,9 @@ typedef enum {
 #define GLW_BORDER_RIGHT  0x8
 #define GLW_BORDER_TOP    0x10
 #define GLW_BORDER_BOTTOM 0x20
+#define GLW_NOFILL_X      0x40
+#define GLW_NOFILL_Y      0x80
+
 
 #define GLW_MODE_XFADE    0
 #define GLW_MODE_SLIDE    1
@@ -457,13 +460,15 @@ typedef struct glw {
 #define GLW_CONSTRAINT_FLAGS (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y | \
                               GLW_CONSTRAINT_A | GLW_CONSTRAINT_W)
 
-#define GLW_NOFILL_X           0x1000000
-#define GLW_NOFILL_Y           0x2000000
+#define GLW_HIDDEN             0x1000000
 
-#define GLW_HIDDEN             0x4000000
+#define GLW_DETACHED           0x2000000
+#define GLW_NO_INITIAL_TRANS   0x4000000
 
-#define GLW_DETACHED           0x8000000
-#define GLW_NO_INITIAL_TRANS   0x10000000
+#define GLW_LEFT_EDGE          0x10000000
+#define GLW_TOP_EDGE           0x20000000
+#define GLW_RIGHT_EDGE         0x40000000
+#define GLW_BOTTOM_EDGE        0x80000000
 
   float glw_norm_weight;             /* Relative weight (normalized) */
   float glw_alpha;                   /* Alpha set by user */

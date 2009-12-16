@@ -56,7 +56,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 
     glw_PushMatrix(&rc0, rc);
 
-    //    glw_align_1(&rc0, w->glw_alignment);
+    glw_align_1(&rc0, w->glw_alignment, GLW_ALIGN_CENTER);
       
     if(w->glw_class == GLW_IMAGE || w->glw_class == GLW_ICON)
       glw_rescale(&rc0, glt->glt_aspect);
@@ -64,7 +64,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     if(gi->gi_angle != 0)
       glw_Rotatef(&rc0, -gi->gi_angle, 0, 0, 1);
 
-    //    glw_align_2(&rc0, w->glw_alignment);
+    glw_align_2(&rc0, w->glw_alignment, GLW_ALIGN_CENTER);
 
     if(glw_is_focusable(w))
       glw_store_matrix(w, &rc0);
@@ -283,9 +283,9 @@ glw_image_update_constraints(glw_image_t *gi)
 			  gi->gi_tex->glt_xs,
 			  gi->gi_tex->glt_ys,
 			  0, 0, 
-			  (gi->w.glw_flags & GLW_NOFILL_X ? 
+			  (gi->gi_bitmap_flags & GLW_NOFILL_X ? 
 			   GLW_CONSTRAINT_X : 0 )|
-			  (gi->w.glw_flags & GLW_NOFILL_Y ? 
+			  (gi->gi_bitmap_flags & GLW_NOFILL_Y ? 
 			   GLW_CONSTRAINT_Y : 0 ),
 			  0);
     }

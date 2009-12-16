@@ -42,13 +42,14 @@ glw_list_update_metrics(glw_array_t *a, float max, float val)
 static void
 glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
 {
-  glw_t *c, *w = &a->w;
+  glw_t *c, *w = &a->w, *last;
   float y = 0;
   float size_y, t, vy;
   glw_rctx_t rc0 = *rc;
   int column = 0;
   int xentries;
   float size_x;
+  int topedge = 1;
 
   if(a->child_tiles_x && a->child_tiles_y) {
 
@@ -99,10 +100,43 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
       }
     }
 
+    if(column == 0) {
+      c->glw_flags |= GLW_LEFT_EDGE;
+    } else {
+      c->glw_flags &= ~GLW_LEFT_EDGE;
+    }
+
+    if(column == xentries - 1) {
+      c->glw_flags |= GLW_RIGHT_EDGE;
+    } else {
+      c->glw_flags &= ~GLW_RIGHT_EDGE;
+    }
+
+    if(topedge) {
+      c->glw_flags |= GLW_TOP_EDGE;
+    } else {
+      c->glw_flags &= ~GLW_TOP_EDGE;
+    }
+
+    c->glw_flags &= ~GLW_BOTTOM_EDGE; // Will be set later
+
     column++;
     if(column == xentries) {
       y += size_y * 2;
       column = 0;
+      topedge = 0;
+    }
+  }
+
+  last = TAILQ_LAST(&w->glw_childs, glw_queue);
+  if(last != NULL) {
+    last->glw_flags |= GLW_BOTTOM_EDGE | GLW_RIGHT_EDGE;
+    c = last;
+    while((c = TAILQ_PREV(c, glw_queue, glw_parent_link)) != NULL) {
+      if(c->glw_parent_pos.y == last->glw_parent_pos.y)
+	c->glw_flags |= GLW_BOTTOM_EDGE;
+      else
+	break;
     }
   }
 

@@ -362,8 +362,6 @@ static const token_attrib_t attribtab[] = {
   {"filterConstraintAspect",  set_flag, GLW_CONSTRAINT_IGNORE_A},
   {"filterConstraintWeight",  set_flag, GLW_CONSTRAINT_IGNORE_W},
   {"ellipsize",               set_flag, GLW_ELLIPSIZE},
-  {"constraintX",             set_flag, GLW_NOFILL_X},
-  {"constraintY",             set_flag, GLW_NOFILL_Y},
   {"hidden",                  set_flag, GLW_HIDDEN},
   {"noInitialTransform",      set_flag, GLW_NO_INITIAL_TRANS},
 
@@ -374,6 +372,8 @@ static const token_attrib_t attribtab[] = {
   {"borderRight",     set_bitmap_flag, GLW_BORDER_RIGHT},
   {"borderTop",       set_bitmap_flag, GLW_BORDER_TOP},
   {"borderBottom",    set_bitmap_flag, GLW_BORDER_BOTTOM},
+  {"constraintX",     set_bitmap_flag, GLW_NOFILL_X},
+  {"constraintY",     set_bitmap_flag, GLW_NOFILL_Y},
 
 
   {"alpha",           set_float,  GLW_ATTRIB_ALPHA},

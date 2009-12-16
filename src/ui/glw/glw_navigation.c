@@ -292,6 +292,8 @@ glw_navigate(glw_t *w, event_t *e, int local)
       }
     }
 
+    glw_array_t *a = (glw_array_t *)p;
+ 
     switch(p->glw_class) {
       
     default:
@@ -306,8 +308,16 @@ glw_navigate(glw_t *w, event_t *e, int local)
     case GLW_EXPANDER_Y:
       break;
 
-    case GLW_ARRAY: {
-      glw_array_t *a = (glw_array_t *)p;
+    case GLW_ARRAY:
+      if(orientation == 0 && direction == 0 && w->glw_flags & GLW_TOP_EDGE)
+	break;
+      if(orientation == 0 && direction == 1 && w->glw_flags & GLW_BOTTOM_EDGE)
+	break;
+      if(orientation == 1 && direction == 0 && w->glw_flags & GLW_LEFT_EDGE)
+	break;
+      if(orientation == 1 && direction == 1 && w->glw_flags & GLW_RIGHT_EDGE)
+	break;
+
       if(orientation == 0) {
 	if(pagemode == 0) {
 	  pagemode = 1;
@@ -317,7 +327,6 @@ glw_navigate(glw_t *w, event_t *e, int local)
 	}
       }
       goto container;
-    }
 
     case GLW_CONTAINER_X:
     case GLW_CONTAINER_Y:
