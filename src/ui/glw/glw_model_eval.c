@@ -2165,28 +2165,6 @@ glwf_isset(glw_model_eval_context_t *ec, struct token *self,
 }
 
 
-
-/**
- * Return current time
- */
-static int 
-glwf_time(glw_model_eval_context_t *ec, struct token *self,
-	   token_t **argv, unsigned int argc)
-{
-  token_t *r;
-  time_t now;
-
-  time(&now);
-
-  r = eval_alloc(self, ec, TOKEN_INT);
-  r->t_int = now;
-  eval_push(ec, r);
-
-  ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_EVERY_FRAME;
-
-  return 0;
-}
-
 /**
  * Int to string
  */
@@ -2694,7 +2672,6 @@ static const token_func_t funcvec[] = {
   {"translate", -1, glwf_translate},
   {"strftime", 2, glwf_strftime},
   {"isSet", 1, glwf_isset},
-  {"time", 0, glwf_time},
   {"value2duration", 1, glwf_value2duration},
   {"createChild", 1, glwf_createchild},
   {"delete", 1, glwf_delete},
