@@ -2082,7 +2082,6 @@ glwf_translate(glw_model_eval_context_t *ec, struct token *self,
   return 0;
 }
 
-
 /**
  * strftime support (only localtime)
  */
@@ -2090,8 +2089,8 @@ static int
 glwf_strftime(glw_model_eval_context_t *ec, struct token *self,
 	       token_t **argv, unsigned int argc)
 {
-  token_t *a = argv[0]; // format
-  token_t *b = argv[1];  // unixtime
+  token_t *a = argv[0];  // unixtime
+  token_t *b = argv[1];  // format
   token_t *r;
   char buf[50];
   struct tm tm;
