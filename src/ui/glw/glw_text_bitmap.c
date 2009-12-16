@@ -244,7 +244,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   if(siz_x < 5)
     return -1;
 
-  target_width  = (siz_x / 64) + 2;
+  target_width  = (siz_x / 64) + 3;
   target_height = (siz_y / 64);
 
   origin_y = -bbox.yMin / 64;
@@ -296,7 +296,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
       FT_BitmapGlyph bit = (FT_BitmapGlyph)g->glyph;
       
       draw_glyph(gtbd, &bit->bitmap, data, 
-		 bit->left, target_height - 1 - origin_y - bit->top, 
+		 bit->left + 1, target_height - 1 - origin_y - bit->top, 
 		 i, gtbd->gtbd_texture_width);
     }
     FT_Done_Glyph(g->glyph); 
