@@ -649,8 +649,8 @@ eval_dynamic_focus_hover_change_sig(glw_t *w, void *opaque,
  *
  */
 static int
-eval_dynamic_visibility_sig(glw_t *w, void *opaque, 
-			    glw_signal_t signal, void *extra)
+eval_dynamic_widget_meta_sig(glw_t *w, void *opaque, 
+			     glw_signal_t signal, void *extra)
 {
   if(signal == GLW_SIGNAL_ACTIVE || signal == GLW_SIGNAL_INACTIVE)
     eval_dynamic(w, opaque);
@@ -692,10 +692,10 @@ eval_dynamic(glw_t *w, token_t *rpn)
     glw_signal_handler_unregister(w, eval_dynamic_focus_hover_change_sig,
 				  rpn);
 
-  if(ec.dynamic_eval & GLW_MODEL_DYNAMIC_EVAL_VISIBILITY)
-    glw_signal_handler_register(w, eval_dynamic_visibility_sig, rpn, 1000);
+  if(ec.dynamic_eval & GLW_MODEL_DYNAMIC_EVAL_WIDGET_META)
+    glw_signal_handler_register(w, eval_dynamic_widget_meta_sig, rpn, 1000);
   else
-    glw_signal_handler_unregister(w, eval_dynamic_visibility_sig, rpn);
+    glw_signal_handler_unregister(w, eval_dynamic_widget_meta_sig, rpn);
 }
 
 
@@ -1288,8 +1288,8 @@ glw_model_eval_block(token_t *t, glw_model_eval_context_t *ec)
 	glw_signal_handler_register(w, eval_dynamic_focus_hover_change_sig,
 				    t, 1000);
 
-      if(copy & GLW_MODEL_DYNAMIC_EVAL_VISIBILITY)
-	glw_signal_handler_register(w, eval_dynamic_visibility_sig, t, 1000);
+      if(copy & GLW_MODEL_DYNAMIC_EVAL_WIDGET_META)
+	glw_signal_handler_register(w, eval_dynamic_widget_meta_sig, t, 1000);
 
       continue;
 
@@ -2542,7 +2542,7 @@ glwf_isVisible(glw_model_eval_context_t *ec, struct token *self,
 {
   token_t *r;
 
-  ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_VISIBILITY;
+  ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_WIDGET_META;
 
   r = eval_alloc(self, ec, TOKEN_INT);
 

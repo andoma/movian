@@ -189,7 +189,7 @@ typedef struct glw_model_eval_context {
 #define GLW_MODEL_DYNAMIC_EVAL_FOCUSED_CHILD_CHANGE 0x4
 #define GLW_MODEL_DYNAMIC_EVAL_FOCUS_HOVER_CHANGE   0x8
 #define GLW_MODEL_DYNAMIC_KEEP                      0x10
-#define GLW_MODEL_DYNAMIC_EVAL_VISIBILITY           0x20
+#define GLW_MODEL_DYNAMIC_EVAL_WIDGET_META          0x20
 
   token_t *rpn; 
 
