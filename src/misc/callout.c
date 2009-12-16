@@ -137,6 +137,7 @@ static callout_t callout_clock;
 
 static prop_t *prop_hour;
 static prop_t *prop_minute;
+static prop_t *prop_unixtime;
 
 /**
  *
@@ -149,6 +150,8 @@ set_global_clock(struct callout *c, void *aux)
 	
   time(&now);
 	
+  prop_set_int(prop_unixtime, now);
+
   localtime_r(&now, &tm);
 
   prop_set_int(prop_hour, tm.tm_hour);
@@ -176,8 +179,9 @@ callout_init(void)
   hts_thread_create_detached("callout", callout_loop, NULL);
 
   clock = prop_create(prop_get_global(), "clock");
-  prop_hour   = prop_create(clock, "hour");
-  prop_minute = prop_create(clock, "minute");
+  prop_hour     = prop_create(clock, "hour");
+  prop_minute   = prop_create(clock, "minute");
+  prop_unixtime = prop_create(clock, "unixtime");
 
   set_global_clock(NULL, NULL);
 }
