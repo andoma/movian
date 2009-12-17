@@ -97,6 +97,7 @@ glw_slider_render(glw_t *w, glw_rctx_t *rc)
     glw_store_matrix(w, rc);
 
   rc0 = *rc;
+  rc0.rc_alpha *= w->glw_alpha;
 
   glw_PushMatrix(&rc0, rc);
 
