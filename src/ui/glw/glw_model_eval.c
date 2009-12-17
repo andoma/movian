@@ -652,7 +652,8 @@ static int
 eval_dynamic_widget_meta_sig(glw_t *w, void *opaque, 
 			     glw_signal_t signal, void *extra)
 {
-  if(signal == GLW_SIGNAL_ACTIVE || signal == GLW_SIGNAL_INACTIVE)
+  if(signal == GLW_SIGNAL_ACTIVE || signal == GLW_SIGNAL_INACTIVE ||
+     signal == GLW_SIGNAL_NEED_SCROLL_CHANGED)
     eval_dynamic(w, opaque);
   return 0;
 }
@@ -2552,6 +2553,27 @@ glwf_isVisible(glw_model_eval_context_t *ec, struct token *self,
 }
 
 
+
+/**
+ * Return 1 if the current widget is needs to be scrolled in order to
+ * display all its contents
+ */
+static int 
+glwf_needScroll(glw_model_eval_context_t *ec, struct token *self,
+	       token_t **argv, unsigned int argc)
+{
+  token_t *r;
+
+  ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_WIDGET_META;
+
+  r = eval_alloc(self, ec, TOKEN_INT);
+
+  r->t_int = ec->w->glw_flags & GLW_NEED_SCROLL ? 1 : 0;
+  eval_push(ec, r);
+  return 0;
+}
+
+
 /**
  * Evals the first arg, if true, the second arg is returned. 
  * Otherwise the third arg is returned.
@@ -2682,6 +2704,7 @@ static const token_func_t funcvec[] = {
   {"bind", 1, glwf_bind},
   {"delta", 2, glwf_delta, glwf_delta_ctor, glwf_delta_dtor},
   {"isVisible", 0, glwf_isVisible},
+  {"needScroll", 0, glwf_needScroll},
   {"select", 3, glwf_select},
   {"trace", 2, glwf_trace},
   {"browse", 1, glwf_browse},

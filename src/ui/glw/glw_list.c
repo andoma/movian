@@ -28,12 +28,35 @@
 static void
 glw_list_update_metrics(glw_list_t *l, float max, float val)
 {
+  float v;
+  int do_update = 0;
+
   l->w.glw_flags &= ~GLW_UPDATE_METRICS;
-  l->metrics.knob_size = 2.0 / (max + 2.0);
-  if(max > 0)
-    l->metrics.position = val / max;
-  else
-    l->metrics.position = 0;
+
+  v = 2.0 / (max + 2.0);
+  if(v != l->metrics.knob_size) {
+    do_update = 1;
+    l->metrics.knob_size = v;
+  }
+  
+  v = max > 0 ? val / max : 0;
+
+  if(v != l->metrics.position) {
+    do_update = 1;
+    l->metrics.position = v;
+  }
+  
+  if(!do_update)
+    return;
+
+  if(max > 0 && !(l->w.glw_flags & GLW_NEED_SCROLL)) {
+    l->w.glw_flags |= GLW_NEED_SCROLL;
+    glw_signal0(&l->w, GLW_SIGNAL_NEED_SCROLL_CHANGED, NULL);
+    
+  } else if(max == 0 && l->w.glw_flags & GLW_NEED_SCROLL) {
+    l->w.glw_flags &= ~GLW_NEED_SCROLL;
+    glw_signal0(&l->w, GLW_SIGNAL_NEED_SCROLL_CHANGED, NULL);
+  }
 
   glw_signal0(&l->w, GLW_SIGNAL_SLIDER_METRICS, &l->metrics);
 }

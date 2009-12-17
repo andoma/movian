@@ -252,6 +252,11 @@ typedef enum {
   GLW_SIGNAL_CHILD_HIDDEN,
   GLW_SIGNAL_CHILD_UNHIDDEN,
 
+  /**
+   * Emitted by a widget when it needs scrolling
+   */ 
+  GLW_SIGNAL_NEED_SCROLL_CHANGED,
+
 } glw_signal_t;
 
 
@@ -464,6 +469,8 @@ typedef struct glw {
 
 #define GLW_DETACHED           0x2000000
 #define GLW_NO_INITIAL_TRANS   0x4000000
+
+#define GLW_NEED_SCROLL        0x8000000
 
 #define GLW_LEFT_EDGE          0x10000000
 #define GLW_TOP_EDGE           0x20000000
