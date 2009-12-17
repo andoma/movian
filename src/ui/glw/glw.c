@@ -342,6 +342,8 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 
       if(f > 0)
 	glw_focus_init_widget(w, f);
+      else
+	w->glw_focus_weight = 0;
       break;
 
     case GLW_ATTRIB_ANGLE:
