@@ -97,25 +97,25 @@ hts_cond_init(hts_cond_t *c)
 
 
 void
-hts_thread_create_detached(void *(*f)(void *), void *arg)
+hts_thread_create_detached(const char *name, void *(*f)(void *), void *arg)
 {
   lwp_t threadid;
 
   if(LWP_CreateThread(&threadid, (void *)f, arg, NULL, 32768, 80)) {
     panic("Unable to create thread");
   } else {
-    TRACE(TRACE_DEBUG, "Wii", "Created thread 0x%08x", threadid);
+    TRACE(TRACE_DEBUG, "Wii", "Created thread %s: 0x%08x", name, threadid);
 
   }
 }
 
-void hts_thread_create_joinable(hts_thread_t *p, 
+void hts_thread_create_joinable(const char *name, hts_thread_t *p, 
 				void *(*f)(void *), void *arg)
 {
   if(LWP_CreateThread(p, (void *)f, arg, NULL, 32768, 80)) {
     panic("Unable to create thread");
   } else {
-    TRACE(TRACE_DEBUG, "Wii", "Created thread 0x%08x", *p);
+    TRACE(TRACE_DEBUG, "Wii", "Created thread %s: 0x%08x", name, *p);
   }
 }
 

@@ -99,9 +99,9 @@ extern int hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delta);
 
 typedef lwp_t hts_thread_t;
 
-extern void hts_thread_create_detached(void *(*)(void *), void *);
+extern void hts_thread_create_detached(const char *, void *(*)(void *), void *);
 
-extern void hts_thread_create_joinable(hts_thread_t *p, 
+extern void hts_thread_create_joinable(const char *, hts_thread_t *p, 
 				       void *(*)(void *), void *);
 
 #define hts_thread_join(t)       LWP_JoinThread(*(t), NULL)
