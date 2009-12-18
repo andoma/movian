@@ -77,7 +77,7 @@ gu_start(ui_t *ui, int argc, char **argv, int primary)
 
   gu_pixbuf_init();
 
-  gu->gu_pc = prop_courier_create(&gu_mutex, PROP_COURIER_THREAD);
+  gu->gu_pc = prop_courier_create(&gu_mutex, PROP_COURIER_THREAD, "GU");
 
   gu->gu_window = win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 

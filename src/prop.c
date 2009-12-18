@@ -1633,7 +1633,7 @@ prop_init(void)
   hts_mutex_init(&prop_mutex);
   prop_global = prop_create0(NULL, "global", NULL, 0);
 
-  global_courier = prop_courier_create(NULL, PROP_COURIER_THREAD);
+  global_courier = prop_courier_create(NULL, PROP_COURIER_THREAD, "global");
 }
 
 
@@ -2413,7 +2413,7 @@ prop_request_delete_child_by_subscription(prop_sub_t *s)
  *
  */
 prop_courier_t *
-prop_courier_create(hts_mutex_t *entrymutex, int flags)
+prop_courier_create(hts_mutex_t *entrymutex, int flags, const char *name)
 {
   prop_courier_t *pc = calloc(1, sizeof(prop_courier_t));
 
@@ -2421,9 +2421,11 @@ prop_courier_create(hts_mutex_t *entrymutex, int flags)
 
   TAILQ_INIT(&pc->pc_queue);
   if(flags & PROP_COURIER_THREAD) {
+    char buf[64];
+    snprintf(buf, sizeof(buf), "propcourier: %s", name);
     hts_cond_init(&pc->pc_cond);
     pc->pc_run = 1;
-    hts_thread_create_joinable("propcourier", &pc->pc_thread, prop_courier, pc);
+    hts_thread_create_joinable(buf, &pc->pc_thread, prop_courier, pc);
   }
   return pc;
 }
@@ -2656,7 +2658,7 @@ prop_test(void)
 
   for(i = 0; i < TEST_COURIERS; i++) {
     hts_mutex_init(&mtx[i]);
-    couriers[i] = prop_courier_create(&mtx[i], PROP_COURIER_THREAD);
+    couriers[i] = prop_courier_create(&mtx[i], PROP_COURIER_THREAD, "test");
 
     prop_subscribe(0,
 		   PROP_TAG_CALLBACK, prop_test_subscriber, NULL,
