@@ -57,7 +57,7 @@ notify_add(notify_type_t type, const char *icon, int delay,
   prop_t *p;
   const char *typestr;
   int tl;
-  va_list ap;
+  va_list ap, apx;
 
   switch(type) {
   case NOTIFY_INFO:    typestr = "info";    tl = TRACE_INFO;  break;
@@ -67,12 +67,14 @@ notify_add(notify_type_t type, const char *icon, int delay,
   }
   
   va_start(ap, fmt);
+  va_copy(apx, ap);
 
   tracev(tl, "notify", fmt, ap);
 
-  vsnprintf(msg, sizeof(msg), fmt, ap);
+  vsnprintf(msg, sizeof(msg), fmt, apx);
 
   va_end(ap);
+  va_end(apx);
 
   p = prop_create(NULL, NULL);
 
