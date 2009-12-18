@@ -31,6 +31,12 @@
 #include "showtime.h"
 #include "htsmsg/htsmsg_xml.h"
 
+/**
+ * If we read more than this in a sequence, we switch to a continous
+ * HTTP stream (instead of ranges)
+ */
+#define STREAMING_LIMIT 1000000
+
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
@@ -163,9 +169,11 @@ typedef struct http_file {
 
   int64_t hf_rsize; /* Size of reply, if chunked: don't care about this */
 
-  int64_t hf_size; /* Full size of file, if known */
+  int64_t hf_filesize;
 
   int64_t hf_pos;
+
+  int64_t hf_consecutive_read;
 
   int hf_isdir;
 
@@ -549,7 +557,7 @@ http_read_response(http_file_t *hf)
       hf->hf_rsize = i64;
 
       if(code == 200)
-	hf->hf_size = i64;
+	hf->hf_filesize = i64;
     }
     
     if(!strcasecmp(argv[0], "Content-Type")) {
@@ -689,6 +697,9 @@ http_connect(http_file_t *hf, char *errbuf, int errlen)
   char hostname[128];
   int port;
 
+  hf->hf_filesize = -1;
+  hf->hf_rsize = 0;
+
   if(hf->hf_connection != NULL)
     http_detach(hf, 0);
 
@@ -720,19 +731,13 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
   htsbuf_queue_t q;
   int redircount = 0;
 
-  hf->hf_rsize = 0;
-
   reconnect:
 
-  if(http_connect(hf, errbuf, errlen)) {
-    hf->hf_size = -1;
+  if(http_connect(hf, errbuf, errlen))
     return -1;
-  }
 
-  if(!probe && hf->hf_size != -1)
+  if(!probe && hf->hf_filesize != -1)
     return 0;
-
-  hf->hf_size = -1;
 
   htsbuf_queue_init(&q, 0);
 
@@ -759,12 +764,15 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   switch(code) {
   case 200:
-    if(!ignore_size && hf->hf_size < 0) {
+    if(!ignore_size && hf->hf_filesize < 0) {
       snprintf(errbuf, errlen, "Invalid HTTP 200 response");
       return -1;
     }
+    hf->hf_rsize = 0; /* This was just a HEAD request, we don't actually
+		       * get any data
+		       */
+ 
     hf->hf_auth_failed = 0;
-    hf->hf_rsize = 0;
     return 0;
     
   case 301:
@@ -896,8 +904,6 @@ http_index_fetch(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen)
   int redircount = 0;
 
 reconnect:
-  hf->hf_size = -1;
-
   if(http_connect(hf, errbuf, errlen))
     return -1;
 
@@ -1057,7 +1063,10 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
 		     hc->hc_hostname,
 		     hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
 
-      if(size > 65536) {
+      if(hf->hf_consecutive_read > STREAMING_LIMIT) {
+	TRACE(TRACE_DEBUG, "HTTP", "%s: switching to streaming mode",
+	      hf->hf_url);
+
 	htsbuf_qprintf(&q, "Range: bytes=%"PRId64"-\r\n\r\n", hf->hf_pos);
       } else {
 	htsbuf_qprintf(&q, 
@@ -1067,7 +1076,6 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
 
       tcp_write_queue(hc->hc_fd, &q);
       code = http_read_response(hf);
-
       if(code != 206) {
 	http_detach(hf, 0);
 	continue; // Try again
@@ -1086,6 +1094,9 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
     if(!tcp_read_data(hc->hc_fd, buf, size, &hc->hc_spill)) {
       hf->hf_pos   += size;
       hf->hf_rsize -= size;
+
+      hf->hf_consecutive_read += size;
+
       return size;
     } else {
       http_detach(hf, 0);
@@ -1115,7 +1126,7 @@ http_seek(fa_handle_t *handle, int64_t pos, int whence)
     break;
 
   case SEEK_END:
-    np = hf->hf_size + pos;
+    np = hf->hf_filesize + pos;
     break;
   default:
     return -1;
@@ -1129,6 +1140,7 @@ http_seek(fa_handle_t *handle, int64_t pos, int whence)
     if(hf->hf_rsize != 0)  // We've data pending on socket, disconnect
       http_detach(hf, 0);
     hf->hf_pos = np;
+    hf->hf_consecutive_read = 0;
   }
 
   return np;
@@ -1142,7 +1154,7 @@ static int64_t
 http_fsize(fa_handle_t *handle)
 {
   http_file_t *hf = (http_file_t *)handle;
-  return hf->hf_size;
+  return hf->hf_filesize;
 }
 
 
@@ -1162,12 +1174,12 @@ http_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
   hf = (http_file_t *)handle;
   
   /* no content length and text/html, assume "index of" page */
-  if(hf->hf_size < 0 &&
+  if(hf->hf_filesize < 0 &&
      hf->hf_content_type && strstr(hf->hf_content_type, "text/html"))
     buf->st_mode = S_IFDIR;
   else
     buf->st_mode = S_IFREG;
-  buf->st_size = hf->hf_size;
+  buf->st_size = hf->hf_filesize;
   
   http_destroy(hf);
   return 0;
@@ -1313,7 +1325,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
 
 	if(!isdir) {
 	  d = get_cdata_by_tag(c, "DAV:getcontentlength");
-	  hf->hf_size = strtoll(d, NULL, 10);
+	  hf->hf_filesize = strtoll(d, NULL, 10);
 	}
 	goto ok;
       } 
@@ -1353,8 +1365,6 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen)
   char err0[128];
 
  reconnect:
-  hf->hf_size = -1;
-
   if(http_connect(hf, errbuf, errlen))
     return -1;
 
@@ -1444,7 +1454,7 @@ dav_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
   memset(buf, 0, sizeof(struct stat));
 
   buf->st_mode = hf->hf_isdir ? S_IFDIR : S_IFREG;
-  buf->st_size = hf->hf_size;
+  buf->st_size = hf->hf_filesize;
   
   http_destroy(hf);
   return 0;
@@ -1572,9 +1582,9 @@ http_request(const char *hostname, int port, const char *path,
     
   } else {
 
-    char *mem = malloc(hf->hf_size + 1);
+    char *mem = malloc(hf->hf_filesize + 1);
 
-    r = tcp_read_data(hc->hc_fd, mem, hf->hf_size, &hc->hc_spill);
+    r = tcp_read_data(hc->hc_fd, mem, hf->hf_filesize, &hc->hc_spill);
 
     if(r == -1) {
       snprintf(errbuf, errlen, "HTTP read error");
@@ -1583,9 +1593,9 @@ http_request(const char *hostname, int port, const char *path,
       return -1;    
     }
 
-    mem[hf->hf_size] = 0;
+    mem[hf->hf_filesize] = 0;
     *result = mem;
-    *result_sizep = hf->hf_size;
+    *result_sizep = hf->hf_filesize;
   }
 
   http_destroy(hf);
