@@ -26,6 +26,7 @@
 
 #include <ogc/lwp_queue.h>
 #include <wiiuse/wpad.h>
+#include <wiikeyboard/keyboard.h>
 
 #include "showtime.h"
 #include "ui/ui.h"
@@ -58,6 +59,109 @@ typedef struct glw_wii {
   float cursor_alpha;
 
 } glw_wii_t;
+
+
+/**
+ *
+ */
+static const struct {
+  int KS;
+  int modifier;
+  int action1;
+  int action2;
+  int action3;
+} keysym2action[] = {
+  
+  { KS_Left,         0,           ACTION_LEFT,        ACTION_SEEK_BACKWARD },
+  { KS_Right,        0,           ACTION_RIGHT,       ACTION_SEEK_FORWARD },
+  { KS_Up,           0,           ACTION_UP },
+  { KS_Down,         0,           ACTION_DOWN },
+  { KS_Prior,        0,           ACTION_PAGE_UP,     ACTION_CHANNEL_PREV },
+  { KS_Next,         0,           ACTION_PAGE_DOWN,   ACTION_CHANNEL_NEXT },
+  { KS_Home,         0,           ACTION_TOP },
+  { KS_End,          0,           ACTION_BOTTOM },
+
+  { KS_Left,         MOD_ANYSHIFT,    ACTION_NAV_BACK },
+  { KS_Right,        MOD_ANYSHIFT,    ACTION_NAV_FWD },
+
+  { '+',             MOD_ANYCONTROL, ACTION_ZOOM_UI_INCR },
+  { KS_KP_Add,       MOD_ANYCONTROL, ACTION_ZOOM_UI_INCR },
+  { '-',             MOD_ANYCONTROL, ACTION_ZOOM_UI_DECR },
+  { KS_KP_Subtract,  MOD_ANYCONTROL, ACTION_ZOOM_UI_DECR },
+
+  { KS_f1,                   MOD_ANYSHIFT,   ACTION_PREV_TRACK },
+  { KS_f2,                   MOD_ANYSHIFT,   ACTION_PLAYPAUSE },
+  { KS_f3,                   MOD_ANYSHIFT,   ACTION_NEXT_TRACK },
+  { KS_f4,                   MOD_ANYSHIFT,   ACTION_STOP },
+
+  { KS_f5,                   MOD_ANYSHIFT,   ACTION_VOLUME_DOWN },
+  { KS_f6,                   MOD_ANYSHIFT,   ACTION_VOLUME_MUTE_TOGGLE },
+  { KS_f7,                   MOD_ANYSHIFT,   ACTION_VOLUME_UP },
+};
+
+
+
+/**
+ * Keyboard input
+ */
+static void
+process_keyboard_event(glw_wii_t *gwii, keyboard_event *ke)
+{
+  event_t *e = NULL;
+  int i;
+  action_type_t av[10];
+
+  TRACE(TRACE_DEBUG, "WiiKeyboard", "%d 0x%x 0x%x 0x%x",
+	ke->type, ke->modifiers, ke->keycode, ke->symbol);
+	
+
+  if(ke->type != KEYBOARD_PRESSED)
+    return;
+
+  switch(ke->symbol) {
+    /* Static key mappings, these cannot be changed */
+  case KS_BackSpace:
+    e = event_create_action_multi((const action_type_t[]){
+	ACTION_BS, ACTION_NAV_BACK}, 2);
+    break;
+  case KS_Return:  e = event_create_action(ACTION_ENTER);     break;
+  case KS_Escape:  e = event_create_action(ACTION_CLOSE);     break;
+  case KS_Tab:     e = event_create_action(ACTION_FOCUS_NEXT);break;
+    /* Always send 1 char ASCII */
+  default:
+    if(ke->symbol < 32 || ke->symbol > 127)
+      break;
+    
+    e = event_create_unicode(ke->symbol);
+    break;
+  }
+
+  if(e == NULL) {
+
+    for(i = 0; i < sizeof(keysym2action) / sizeof(*keysym2action); i++) {
+      
+      if(keysym2action[i].KS == ke->symbol &&
+	 (keysym2action[i].modifier & ke->modifiers) == 
+	 keysym2action[i].modifier) {
+	
+	av[0] = keysym2action[i].action1;
+	av[1] = keysym2action[i].action2;
+	av[2] = keysym2action[i].action3;
+
+	if(keysym2action[i].action3 != ACTION_NONE)
+	  e = event_create_action_multi(av, 3);
+	if(keysym2action[i].action2 != ACTION_NONE)
+	  e = event_create_action_multi(av, 2);
+	else
+	  e = event_create_action_multi(av, 1);
+	break;
+      }
+    }
+  }
+
+  if(e != NULL)
+   glw_dispatch_event(&gwii->gr.gr_uii, e);
+}
 
 
 /**
@@ -227,6 +331,7 @@ wpad_render(glw_wii_t *gwii)
 static void
 glw_wii_loop(glw_wii_t *gwii)
 {
+  keyboard_event event;
   glw_rctx_t rc;
   void *gp_fifo;
   float yscale, w, h;
@@ -339,6 +444,8 @@ glw_wii_loop(glw_wii_t *gwii)
 
   gwii->running = 1;
 
+  KEYBOARD_Init(NULL);
+
   while(1) {
 
     wpad_every_frame(gwii);
@@ -350,6 +457,10 @@ glw_wii_loop(glw_wii_t *gwii)
     GX_SetAlphaUpdate(GX_TRUE);
 
     glw_lock(&gwii->gr);
+
+    if(KEYBOARD_GetEvent(&event))
+      process_keyboard_event(gwii, &event);
+
     prop_courier_poll(gwii->gr.gr_courier);
     glw_reaper0(&gwii->gr);
 
@@ -417,14 +528,13 @@ glw_wii_start(ui_t *ui, int argc, char *argv[], int primary)
 
   gwii->gr.gr_normalized_texture_coords = 1;
 
-  if(glw_init(&gwii->gr, 14, theme_path, ui, primary)) {
+  if(glw_init(&gwii->gr, 20, theme_path, ui, primary)) {
     printf("GLW failed to init\n");
     sleep(3);
     exit(0);
   }
 
   gwii->gr.gr_frameduration = 1000000 / 50;
-
   glw_wii_loop(gwii);
   return 0;
 }

@@ -94,7 +94,7 @@ LDFLAGS_cfg  +=  -L${LIBFREETYPEPATH}/lib -lfreetype
 CFLAGS_cfg += -I${LIBFREETYPEPATH}/include 
 CFLAGS_cfg += -I${LIBFREETYPEPATH}/include/freetype2
 LDFLAGS_cfg  += -L${DEVKITPRO}/libfat/lib/wii  -lfat
-LDFLAGS_cfg  += -L${DEVKITPRO}/libogc/lib/wii  -lwiiuse -lbte -logc
+LDFLAGS_cfg  += -L${DEVKITPRO}/libogc/lib/wii  -lwiikeyboard -lwiiuse -lbte -logc
 EOF
 
 finalize
