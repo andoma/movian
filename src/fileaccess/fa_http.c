@@ -31,6 +31,12 @@
 #include "showtime.h"
 #include "htsmsg/htsmsg_xml.h"
 
+#if 0
+#define HTTP_TRACE(x...) TRACE(TRACE_DEBUG, "HTTP", x)
+#else
+#define HTTP_TRACE(x...)
+#endif
+
 /**
  * If we read more than this in a sequence, we switch to a continous
  * HTTP stream (instead of ranges)
@@ -81,6 +87,7 @@ http_connection_get(const char *hostname, int port, char *errbuf, int errlen)
       TAILQ_REMOVE(&http_connections, hc, hc_link);
       http_parked_connections--;
       hts_mutex_unlock(&http_connections_mutex);
+      HTTP_TRACE("Reusing connection to %s:%d", hc->hc_hostname, hc->hc_port);
       hc->hc_reused = 1;
       return hc;
     }
@@ -89,8 +96,11 @@ http_connection_get(const char *hostname, int port, char *errbuf, int errlen)
   hts_mutex_unlock(&http_connections_mutex);
 
   
-  if((fd = tcp_connect(hostname, port, errbuf, errlen, 3000)) < 0)
+  if((fd = tcp_connect(hostname, port, errbuf, errlen, 3000)) < 0) {
+    HTTP_TRACE("Connection to %s:%d failed", hostname, port);
     return NULL;
+  }
+  HTTP_TRACE("Connected to %s:%d", hostname, port);
 
   hc = malloc(sizeof(http_connection_t));
   snprintf(hc->hc_hostname, sizeof(hc->hc_hostname), "%s", hostname);
@@ -108,6 +118,7 @@ http_connection_get(const char *hostname, int port, char *errbuf, int errlen)
 static void
 http_connection_destroy(http_connection_t *hc)
 {
+  HTTP_TRACE("Disconnected from %s:%d", hc->hc_hostname, hc->hc_port);
   tcp_close(hc->hc_fd);
   htsbuf_queue_flush(&hc->hc_spill);
   free(hc);
@@ -120,6 +131,7 @@ http_connection_destroy(http_connection_t *hc)
 static void
 http_connection_park(http_connection_t *hc)
 {
+  HTTP_TRACE("Parking connection to %s:%d", hc->hc_hostname, hc->hc_port);
   hts_mutex_lock(&http_connections_mutex);
   TAILQ_INSERT_TAIL(&http_connections, hc, hc_link);
 
@@ -491,10 +503,14 @@ http_read_response(http_file_t *hf)
   hf->hf_rsize = -1;
   hf->hf_chunked_transfer = 0;
 
+  HTTP_TRACE("%s: Reponse:", hf->hf_url);
+
   for(li = 0; ;li++) {
     if(tcp_read_line(hc->hc_fd, hf->hf_line, sizeof(hf->hf_line),
 		     &hc->hc_spill) < 0)
       return -1;
+
+    HTTP_TRACE("  %s", hf->hf_line);
 
     if(hf->hf_line[0] == 0)
       break;
@@ -618,6 +634,8 @@ redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen)
     return -1;
   }
 
+  HTTP_TRACE("%s: Following redirect to %s", hf->hf_url, hf->hf_location);
+
   free(hf->hf_url);
   hf->hf_url = hf->hf_location;
   http_deescape(hf->hf_url);
@@ -670,6 +688,9 @@ authenticate(http_file_t *hf, char *errbuf, size_t errlen)
   }
 
   if(r == 0) {
+    HTTP_TRACE("%s: Authenticating with %s %s",
+	       hf->hf_url, username, password);
+
     /* Got auth credentials */  
     snprintf(buf1, sizeof(buf1), "%s:%s", username, password);
     av_base64_encode(buf2, sizeof(buf2), (uint8_t *)buf1, strlen(buf1));
@@ -702,6 +723,8 @@ http_connect(http_file_t *hf, char *errbuf, int errlen)
 
   if(hf->hf_connection != NULL)
     http_detach(hf, 0);
+
+  HTTP_TRACE("Connecting to %s", hf->hf_url);
 
   url_split(NULL, 0, hf->hf_authurl, sizeof(hf->hf_authurl), 
 	    hostname, sizeof(hostname), &port,
@@ -761,6 +784,8 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
     http_detach(hf, 0);
     goto reconnect;
   }
+
+  HTTP_TRACE("%s: HEAD %d", hf->hf_url, code);
 
   switch(code) {
   case 200:
@@ -1363,74 +1388,81 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen)
   htsmsg_t *xml;
   int redircount = 0;
   char err0[128];
+  int i;
 
- reconnect:
-  if(http_connect(hf, errbuf, errlen))
-    return -1;
-
-  htsbuf_queue_init(&q, 0);
-
- again:
-  htsbuf_qprintf(&q, 
-		 "PROPFIND %s HTTP/1.1\r\n"
-		 "Depth: %d\r\n"
-		 "Accept: */*\r\n"
-		 "User-Agent: Showtime %s\r\n"
-		 "Host: %s\r\n"
-		 "%s%s"
-		 "\r\n",
-		 hf->hf_path,
-		 fd != NULL ? 1 : 0,
-		 htsversion,
-		 hf->hf_connection->hc_hostname,
-		 hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
-
-  tcp_write_queue(hf->hf_connection->hc_fd, &q);
-  code = http_read_response(hf);
-  if(code == -1 && hf->hf_connection->hc_reused) {
-    http_detach(hf, 0);
-    goto reconnect;
-  }
-
-  switch(code) {
-
-  case 207: /* 207 Multi-part */
-    hf->hf_auth_failed = 0;
-
-    if((buf = http_read_content(hf)) == NULL) {
-      snprintf(errbuf, errlen, "Connection lost");
+  for(i = 0; i < 5; i++) {
+    if(http_connect(hf, errbuf, errlen))
       return -1;
+
+
+  again:
+    htsbuf_queue_init(&q, 0);
+    htsbuf_qprintf(&q, 
+		   "PROPFIND %s HTTP/1.1\r\n"
+		   "Depth: %d\r\n"
+		   "Accept: */*\r\n"
+		   "User-Agent: Showtime %s\r\n"
+		   "Host: %s\r\n"
+		   "%s%s"
+		   "\r\n",
+		   hf->hf_path,
+		   fd != NULL ? 1 : 0,
+		   htsversion,
+		   hf->hf_connection->hc_hostname,
+		   hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
+
+    tcp_write_queue(hf->hf_connection->hc_fd, &q);
+    code = http_read_response(hf);
+
+    HTTP_TRACE("%s: PROPFIND %d", hf->hf_url, code);
+
+    if(code == -1) {
+      http_detach(hf, 0);
+      continue;
     }
 
-    /* XML parser consumes 'buf' */
-    if((xml = htsmsg_xml_deserialize(buf, err0, sizeof(err0))) == NULL) {
-      snprintf(errbuf, errlen,
-	       "WEBDAV/PROPFIND: XML parsing failed:\n%s", err0);
+    switch(code) {
+      
+    case 207: /* 207 Multi-part */
+      hf->hf_auth_failed = 0;
+      
+      if((buf = http_read_content(hf)) == NULL) {
+	snprintf(errbuf, errlen, "Connection lost");
+	return -1;
+      }
+      
+      /* XML parser consumes 'buf' */
+      if((xml = htsmsg_xml_deserialize(buf, err0, sizeof(err0))) == NULL) {
+	snprintf(errbuf, errlen,
+		 "WEBDAV/PROPFIND: XML parsing failed:\n%s", err0);
+	return -1;
+      }
+      retval = parse_propfind(hf, xml, fd, errbuf, errlen);
+      htsmsg_destroy(xml);
+      return retval;
+
+    case 301:
+    case 302:
+    case 303:
+    case 307:
+      hf->hf_auth_failed = 0;
+      if(redirect(hf, &redircount, errbuf, errlen))
+	return -1;
+      continue;
+
+    case 401:
+      if(authenticate(hf, errbuf, errlen))
+	return -1;
+      goto again;
+
+    default:
+      http_drain_content(hf);
+      snprintf(errbuf, errlen, "Unhandled HTTP response %d", code);
       return -1;
     }
-    retval = parse_propfind(hf, xml, fd, errbuf, errlen);
-    htsmsg_destroy(xml);
-    return retval;
-
-  case 301:
-  case 302:
-  case 303:
-  case 307:
-    hf->hf_auth_failed = 0;
-     if(redirect(hf, &redircount, errbuf, errlen))
-      return -1;
-    goto reconnect;
-
-  case 401:
-    if(authenticate(hf, errbuf, errlen))
-      return -1;
-    goto again;
-
-  default:
-    http_drain_content(hf);
-    snprintf(errbuf, errlen, "Unhandled HTTP response %d", code);
-    return -1;
   }
+  snprintf(errbuf, errlen, "All attempts failed");
+  return -1;
 }
 
 
