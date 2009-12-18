@@ -43,9 +43,6 @@ static prop_t *nav_prop_pages;
 static prop_t *nav_prop_curpage;
 static prop_t *nav_prop_can_go_back;
 static prop_t *nav_prop_can_go_fwd;
-static event_queue_t nav_eq;
-
-static void *navigator_thread(void *aux);
 
 static void nav_eventsink(void *opaque, prop_event_t event, ...);
 
@@ -85,8 +82,6 @@ nav_init(void)
   nav_prop_can_go_back = prop_create(nav_prop_root, "canGoBack");
   nav_prop_can_go_fwd  = prop_create(nav_prop_root, "canGoForward");
 
-  event_initqueue(&nav_eq);
-
 #define NAV_INIT_BE(name) \
  {extern nav_backend_t be_ ## name; nav_init_be(&be_ ## name);}
 
@@ -98,8 +93,6 @@ nav_init(void)
 #ifdef CONFIG_SPOTIFY
   NAV_INIT_BE(spotify);
 #endif
-
-  hts_thread_create_detached("navigator", navigator_thread, NULL);
 
   pc = prop_courier_create(&nav_mutex, PROP_COURIER_THREAD, "navigator");
 
@@ -333,34 +326,6 @@ nav_page_create(const char *url, size_t allocsize,
 
   prop_set_string(prop_create(np->np_prop_root, "url"), url);
   return np;
-}
-
-
-/**
- *
- */
-static void *
-navigator_thread(void *aux)
-{
-  event_t *e;
-  event_openurl_t *ou;
- 
-  while(1) {
-    e = event_get(&nav_eq);
-
-    if(event_is_action(e, ACTION_HOME)) {
-      nav_open0(NAV_HOME, NULL, NULL);
-
-    } else if(event_is_type(e, EVENT_OPENURL)) {
-      ou = (event_openurl_t *)e;
-      nav_open0(ou->url, ou->type, ou->parent);
-
-    } else {
-      abort();
-    }
-
-    event_unref(e);
-  }
 }
 
 
