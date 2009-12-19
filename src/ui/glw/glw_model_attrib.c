@@ -326,7 +326,6 @@ static const token_attrib_t attribtab[] = {
   {"source",          set_source, 0},
 
   {"debug",           set_flag,   GLW_DEBUG},
-  {"skeleton",        set_flag,   GLW_DRAW_SKEL},
   {"password",        set_flag,   GLW_PASSWORD},
   {"filterConstraintX",       set_flag, GLW_CONSTRAINT_IGNORE_X},
   {"filterConstraintY",       set_flag, GLW_CONSTRAINT_IGNORE_Y},

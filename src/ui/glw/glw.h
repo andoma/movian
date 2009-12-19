@@ -435,8 +435,7 @@ typedef struct glw {
 #define GLW_RENDER_LINKED       0x8     /* glw_render_link is linked */
 #define GLW_EVERY_FRAME         0x10    /* Want GLW_SIGNAL_NEW_FRAME
 					   at all times */
-#define GLW_DRAW_SKEL           0x20    /* Draw extra lines to
-					    visualize details */
+
 #define GLW_IN_PRESSED_PATH     0x40
 #define GLW_DEBUG               0x80    /* Debug this object */
 #define GLW_PASSWORD            0x100   /* Don't display real contents */
