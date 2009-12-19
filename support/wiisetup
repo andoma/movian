@@ -1,6 +1,6 @@
 #!/bin/bash
 
-
+TOPDIR=${PWD}
 WIISUPPORT=${PWD}/wiisupport
 
 mkdir -p ${WIISUPPORT}
@@ -23,6 +23,8 @@ if ! test -e ${DEVKITPRO}/libogc/lib/wii ; then
     cd ${DEVKITPRO}/libogc-src
     wget http://downloads.sourceforge.net/project/devkitpro/libogc/libogc-src-1.8.1.tar.bz2
     tar xvf libogc-src-1.8.1.tar.bz2
+
+    cp ${TOPDIR}/support/lwp_config.h ${DEVKITPRO}/libogc-src/gc/ogc/lwp_config.h
     make wii install
 fi
 
