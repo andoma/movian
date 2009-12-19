@@ -22,6 +22,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <unistd.h>
+#include <math.h>
 
 #include <arch/atomic.h>
 
@@ -1769,7 +1770,7 @@ prop_set_stringf_ex(prop_t *p, prop_sub_t *skipme, const char *fmt, ...)
  *
  */
 static prop_t *
-prop_get_float(prop_t *p)
+prop_get_float(prop_t *p, int *forceupdate)
 {
   if(p == NULL)
     return NULL;
@@ -1787,6 +1788,8 @@ prop_get_float(prop_t *p)
       hts_mutex_unlock(&prop_mutex);
       return NULL;
     }
+    if(forceupdate != NULL)
+      *forceupdate = 1;
     p->hp_float = 0;
     p->hp_type = PROP_FLOAT;
   }
@@ -1799,10 +1802,12 @@ prop_get_float(prop_t *p)
 void
 prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v)
 {
-  if((p = prop_get_float(p)) == NULL)
-    return;
+  int forceupdate = 0;
 
-  if(p->hp_float == v) {
+  if((p = prop_get_float(p, &forceupdate)) == NULL)
+    return;
+  
+  if(!forceupdate && p->hp_float == v) {
     hts_mutex_unlock(&prop_mutex);
     return;
   }
@@ -1827,7 +1832,7 @@ void
 prop_add_float_ex(prop_t *p, prop_sub_t *skipme, float v)
 {
   float n;
-  if((p = prop_get_float(p)) == NULL)
+  if((p = prop_get_float(p, NULL)) == NULL)
     return;
 
   n = p->hp_float + v;
@@ -1855,7 +1860,7 @@ prop_set_float_clipping_range(prop_t *p, float min, float max)
 {
   float n;
 
-  if((p = prop_get_float(p)) == NULL)
+  if((p = prop_get_float(p, NULL)) == NULL)
     return;
 
   p->hp_flags |= PROP_CLIPPED_VALUE;
