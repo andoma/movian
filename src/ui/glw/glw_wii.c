@@ -81,22 +81,24 @@ static const struct {
   { KS_Home,         0,           ACTION_TOP },
   { KS_End,          0,           ACTION_BOTTOM },
 
-  { KS_Left,         MOD_ANYSHIFT,    ACTION_NAV_BACK },
-  { KS_Right,        MOD_ANYSHIFT,    ACTION_NAV_FWD },
+  { KS_Left,         MOD_ANYMETA,    ACTION_NAV_BACK },
+  { KS_Right,        MOD_ANYMETA,    ACTION_NAV_FWD },
 
   { '+',             MOD_ANYCONTROL, ACTION_ZOOM_UI_INCR },
   { KS_KP_Add,       MOD_ANYCONTROL, ACTION_ZOOM_UI_INCR },
   { '-',             MOD_ANYCONTROL, ACTION_ZOOM_UI_DECR },
   { KS_KP_Subtract,  MOD_ANYCONTROL, ACTION_ZOOM_UI_DECR },
 
-  { KS_f1,                   MOD_ANYSHIFT,   ACTION_PREV_TRACK },
-  { KS_f2,                   MOD_ANYSHIFT,   ACTION_PLAYPAUSE },
-  { KS_f3,                   MOD_ANYSHIFT,   ACTION_NEXT_TRACK },
-  { KS_f4,                   MOD_ANYSHIFT,   ACTION_STOP },
+  { KS_f1,                   0,   ACTION_MENU },
 
-  { KS_f5,                   MOD_ANYSHIFT,   ACTION_VOLUME_DOWN },
-  { KS_f6,                   MOD_ANYSHIFT,   ACTION_VOLUME_MUTE_TOGGLE },
-  { KS_f7,                   MOD_ANYSHIFT,   ACTION_VOLUME_UP },
+  { KS_F1,                   MOD_ANYSHIFT,   ACTION_PREV_TRACK },
+  { KS_F2,                   MOD_ANYSHIFT,   ACTION_PLAYPAUSE },
+  { KS_F3,                   MOD_ANYSHIFT,   ACTION_NEXT_TRACK },
+  { KS_F4,                   MOD_ANYSHIFT,   ACTION_STOP },
+
+  { KS_F5,                   MOD_ANYSHIFT,   ACTION_VOLUME_DOWN },
+  { KS_F6,                   MOD_ANYSHIFT,   ACTION_VOLUME_MUTE_TOGGLE },
+  { KS_F7,                   MOD_ANYSHIFT,   ACTION_VOLUME_UP },
 };
 
 
@@ -141,8 +143,8 @@ process_keyboard_event(glw_wii_t *gwii, keyboard_event *ke)
     for(i = 0; i < sizeof(keysym2action) / sizeof(*keysym2action); i++) {
       
       if(keysym2action[i].KS == ke->symbol &&
-	 (keysym2action[i].modifier & ke->modifiers) == 
-	 keysym2action[i].modifier) {
+	 ((keysym2action[i].modifier == 0 && ke->modifiers == 0) ||
+	  (keysym2action[i].modifier & ke->modifiers) == ke->modifiers)) {
 	
 	av[0] = keysym2action[i].action1;
 	av[1] = keysym2action[i].action2;
