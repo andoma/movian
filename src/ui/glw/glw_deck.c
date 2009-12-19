@@ -23,6 +23,24 @@
 /**
  *
  */
+static void
+glw_deck_update_constraints(glw_t *w)
+{
+  glw_t *c = w->glw_selected;
+
+  int was_fullscreen = w->glw_flags & GLW_CONSTRAINT_F;
+
+  glw_copy_constraints(w, c);
+
+  if((w->glw_flags & GLW_CONSTRAINT_F) == was_fullscreen)
+    return;
+
+  glw_signal0(w, GLW_SIGNAL_FULLSCREEN_CONSTRAINT_CHANGED, NULL);
+}
+
+/**
+ *
+ */
 static int
 glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
@@ -80,7 +98,7 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     w->glw_selected = extra;
     if(w->glw_selected != NULL) {
       glw_focus_open_path_close_all_other(w->glw_selected);
-      glw_copy_constraints(w, w->glw_selected);
+      glw_deck_update_constraints(w);
     } else {
       glw_clear_constraints(w);
     }
@@ -88,7 +106,7 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
     if(w->glw_selected == extra)
-      glw_copy_constraints(w, extra);
+      glw_deck_update_constraints(w);
     return 1;
   }
 

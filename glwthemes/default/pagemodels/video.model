@@ -1,6 +1,5 @@
 #include "theme://include/plates.model"
 
-
 // If playstatus is set to stop, close the page
 $self.close = $self.video.playstatus == "stop";
 

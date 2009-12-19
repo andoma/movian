@@ -1276,11 +1276,9 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
   glw_root_t *gr = w->glw_root;
   glw_video_t *gv = (glw_video_t *)w;
   video_decoder_t *vd = gv->gv_vd;
-  glw_rctx_t *rc = extra;
 
   switch(signal) {
   case GLW_SIGNAL_LAYOUT:
-    gv->gv_fullwindow_check = rc->rc_fullwindow;
     return 0;
 
   case GLW_SIGNAL_DTOR:
@@ -1300,28 +1298,6 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     return 0;
 
   case GLW_SIGNAL_NEW_FRAME:
-    
-    if(gv->gv_fullwindow_check) {
-      /* We are in fullwindow mode */
-
-      if(gv->gv_fullwindow_reported == 0) {
-	prop_add_int(gr->gr_fullwindow_req, 1);
-	gv->gv_fullwindow_reported = 1;
-	TRACE(TRACE_DEBUG, "GLW", "Video display entering full windowed mode");
-      }
-
-    } else {
-      /* Not in fullscreen mode */
-     
-      if(gv->gv_fullwindow_reported) {
-	prop_add_int(gr->gr_fullwindow_req, -1);
-	gv->gv_fullwindow_reported = 0;
-	TRACE(TRACE_DEBUG, "GLW", "Video display leaving fullscreen mode");
-      }
-    }
-
-    gv->gv_fullwindow_check = 0;
-
     gv_buffer_allocator(vd);
     gv_new_frame(vd, gv, gr);
     gv_update_focusable(vd, gv);
@@ -1331,9 +1307,6 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     return gl_video_widget_event(gv, extra);
 
   case GLW_SIGNAL_DESTROY:
-    if(gv->gv_fullwindow_reported)
-      prop_add_int(gr->gr_fullwindow_req, -1);
-
     video_playback_destroy(gv->gv_vp);
     video_decoder_stop(vd);
     mp_ref_dec(gv->gv_mp);
@@ -1397,6 +1370,9 @@ glw_video_ctor(glw_t *w, int init, va_list ap)
     gv->gv_vd->vd_subtitle_deliver = glw_video_subtitle_deliver;
     gv->gv_vd->vd_subtitle_opaque = gv;
     gv->gv_vp = video_playback_create(gv->gv_mp);
+
+    // We like fullwindow mode if possible (should be confiurable perhaps)
+    glw_set_constraints(w, 0, 0, 0, 0, GLW_CONSTRAINT_F, 0);
   }
 
   do {

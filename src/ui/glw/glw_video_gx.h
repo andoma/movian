@@ -68,9 +68,6 @@ typedef struct glw_video {
   int gv_width;
   int gv_height;
 
-  int gv_fullwindow_reported;
-  int gv_fullwindow_check;
-
   float gv_tex_x1, gv_tex_x2;
   float gv_tex_y1, gv_tex_y2;
 

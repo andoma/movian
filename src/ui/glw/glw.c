@@ -151,8 +151,6 @@ glw_init(glw_root_t *gr, int fontsize, const char *theme, ui_t *ui,
   gr->gr_uii.uii_ui = ui;
   gr->gr_uii.uii_prop = prop_create(NULL, "ui");
 
-  gr->gr_fullwindow_req = prop_create(gr->gr_uii.uii_prop, "fullwindow");
-
   gr->gr_fontsize_prop = prop_create(gr->gr_uii.uii_prop, "fontsize");
   prop_set_int(gr->gr_fontsize_prop, fontsize);
 

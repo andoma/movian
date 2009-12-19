@@ -6,8 +6,14 @@
   .source = "theme://images/whitebox.png";
   .borderSize = [6, 3, 6, 6];
   .padding = [5, 2, 5, 5];
-  .color = [0.0, 0.0, 0.0] + iir(isFocused(), 4) * BUTTON_COLOR() + iir(isHovered(), 4) * [0.1, 0.3, 0.3];
-  .alphaSelf = iir(0.5 + 0.5 * (isFocused()), 4);
+  .color = 
+    iir(isFocused(), 4) * BUTTON_COLOR() + 
+    iir(isHovered(), 4) * [0.1, 0.3, 0.3] +
+    iir(isPressed(), 4) * [1.0, 1.0, 1.0];
+
+
+
+  .alphaSelf = iir(0.5 + 0.5 * (isFocused() || isPressed()), 4);
 
   .borderLeft = false;
   .borderRight = false;

@@ -122,11 +122,6 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
       xs = s_w;
     }
 
-    if(xs != rc->rc_size_x)
-      rc0.rc_fullwindow = 0;
-    else
-      rc0.rc_fullwindow = rc->rc_fullwindow;
-
     c->glw_parent_scale.x = xs / rc->rc_size_x;
     c->glw_parent_scale.y = 1.0;
     c->glw_parent_scale.z = xs / rc->rc_size_x;
@@ -243,11 +238,6 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
       ys = s_w;
     }
 
-    if(ys != rc->rc_size_y)
-      rc0.rc_fullwindow = 0;
-    else
-      rc0.rc_fullwindow = rc->rc_fullwindow;
-
     c->glw_parent_scale.x = 1.0;
     c->glw_parent_scale.y = ys / rc->rc_size_y;
     c->glw_parent_scale.z = ys / rc->rc_size_y;
@@ -269,7 +259,30 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
 }
 
 
+/**
+ *
+ */
+static int
+glw_container_z_constraints(glw_t *w, glw_t *skip)
+{
+  glw_t *c;
 
+  c = TAILQ_FIRST(&w->glw_childs);
+  if(c == skip)
+    c = TAILQ_NEXT(c, glw_parent_link);
+  
+  if(c != NULL)
+    glw_copy_constraints(w, c);
+  else
+    glw_clear_constraints(w);
+
+  return 1;
+}
+
+
+/**
+ *
+ */
 static int
 glw_container_z_layout(glw_t *w, glw_rctx_t *rc)
 {
@@ -386,12 +399,18 @@ static int
 glw_container_z_callback(glw_t *w, void *opaque, glw_signal_t signal,
 			 void *extra)
 {
-  if(signal == GLW_SIGNAL_LAYOUT)
+  switch(signal) {
+  case GLW_SIGNAL_LAYOUT:
     return glw_container_z_layout(w, extra);
-  else
+  case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
+  case GLW_SIGNAL_CHILD_CREATED:
+    return glw_container_z_constraints(w, NULL);
+  case GLW_SIGNAL_CHILD_DESTROYED:
+    return glw_container_z_constraints(w, extra);
+  default:
     return glw_container_callback(w, opaque, signal, extra);
+  }
 }
-
 
 
 

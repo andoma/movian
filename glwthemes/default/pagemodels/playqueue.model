@@ -4,35 +4,6 @@
 widget(container_y, {
 
   widget(container_x, {
-
-    widget(image, {
-      .source = "theme://icons/64x64/notes_edit.png";
-    });
-    VERTICAL_SEPARATOR();
-
-    widget(container_y, {
-    
-      widget(label, {
-	.align = left;
-	.sizeBias = 12;
-	.caption = "Playqueue";
-	.ellipsize = true;
-      });
-
-      HORIZONTAL_SEPARATOR();
-
-      widget(label, {
-	.ellipsize = true;
-	.sizeBias = 9;
-	.caption = "";
-	.align = left;
-      });
-    });
-  });
-
-  HORIZONTAL_SEPARATOR();
-
-  widget(container_x, {
     widget(list_y, {
       .id = "list";
       cloner($page.nodes, animator, {

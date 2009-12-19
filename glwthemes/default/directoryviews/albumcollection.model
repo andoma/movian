@@ -3,15 +3,6 @@
 
 widget(container_y, {
 
-  widget(label, {
-    .align = left;
-    .sizeBias = 9 + 3;
-    .caption = $self.title;
-    .ellipsize = true;
-  });
-
-  HORIZONTAL_SEPARATOR();
-
   widget(container_x, {
 
     widget(array, {

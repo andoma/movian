@@ -1,56 +1,54 @@
 #include "theme://include/separators.model"
 #include "theme://include/plates.model"
 
-
-.filterConstraintY = true;
+$self.title = "Home";
 
 widget(container_y, {
-
-  .filterConstraintY = true;
-
-  widget(label, {
-    .align = left;
-    .sizeBias = 9 + 3;
-    .caption = "Media sources";
-    .ellipsize = true;
-  });
-
-  HORIZONTAL_SEPARATOR();
-
+  
   widget(container_x, {
       
     .filterConstraintX = true;
 
-    widget(array, {
-      .childTilesX = 6;
-      .childTilesY = 5;
+    widget(dummy, {
+      .width = SLIDER_WIDTH();
+    });
 
-      .id = "array";
+    widget(list_y, {
+      .id = "list";
+      $self.needScroll = needScroll();
+
       cloner($global.sources, backdrop, {
 	BUTTON_PROPS(0.99);
 	onEvent(enter, navOpen($self.url));
+	widget(container_x, {
+	  
+	  widget(dummy, {
+	    .width = 4;
+	  });
 
-	widget(bloom, {
+	  widget(image, {
+	    .source = select($self.icon, $self.icon, 
+			     "theme://icons/mediasources/" + 
+			     translate($self.contents, "generic.png",
+				       "music",    "music.png",
+				       "video",    "movies.png",
+				       "pictures", "pictures.png"));
+	  });
 
-	  .value = iir(isFocused() || isHovered(), 10);
-
+	  VERTICAL_SEPARATOR();
+	  
 	  widget(container_y, {
-	    
-	    widget(image, {
-	      .source = select($self.icon, $self.icon, 
-			       "theme://icons/mediasources/" + 
-			       translate($self.contents, "generic.png",
-					 "music",    "music.png",
-					 "video",    "movies.png",
-					 "pictures", "pictures.png"));
-	    });
 
 	    widget(label, {
 	      .caption = $self.title;
-	      //	    .ellipsize = true;
-	      .align = center;
 	      .sizeScale = 1.5;
 	    });
+
+	    widget(label, {
+	      .caption = "";
+	      .sizeScale = 1.5;
+	    });
+
 	  });
 	});
       });
@@ -58,9 +56,12 @@ widget(container_y, {
 
     
     widget(slider_y, {
+      .debug = true;
       .width = SLIDER_WIDTH();
-      .focusable = 0.2;
-      bind("array");
+      .focusable = 0.2 * $self.needScroll;
+      .alpha = iir($self.needScroll, 16);
+
+      bind("list");
 	
       widget(backdrop, {
 	KNOB_PROPS();

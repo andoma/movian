@@ -1,44 +1,47 @@
 #include "theme://include/separators.model"
 #include "theme://include/plates.model"
 
-widget(container_y, {
-    
-  widget(container_x, {
+widget(container_x, {
 
-    widget(image, {
-      .source = devoidify($self.album_art, "theme://icons/64x64/cd.png");
+  .weight = 1.0;
+
+  widget(dummy, {
+    .width = 4;
+  });
+
+  widget(container_y, {
+
+    widget(icon, {
+      .align = left;
+      .sizeScale = 10;
+      .source = devoidify($self.album_art, "theme://icons/128x128/cd.png");
     });
 
-    VERTICAL_SEPARATOR();
 
-    widget(container_y, {
+    widget(label, {
+      .caption = $self.artist_name;
+      .align = left;
+      .ellipsize = true;
+    });
     
-      widget(label, {
-	.align = left;
-	.sizeBias = 9 + 3;
-	.caption = $self.artist_name;
-	.ellipsize = true;
-      });
-
-      HORIZONTAL_SEPARATOR();
-
-      widget(label, {
-	.sizeBias = 9;
-	.ellipsize = true;
-	.caption = $self.album_name + 
-	   select($self.album_year,
-		  " (" + int2str($self.album_year) + ")", "");
-	.align = left;
-      });
+    
+    widget(label, {
+      .caption = $self.album_year;
+      .align = left;
+      .ellipsize = true;
     });
   });
 
-  HORIZONTAL_SEPARATOR();
+  VERTICAL_SEPARATOR();
 
   widget(container_x, {
+    .filterConstraintX = true;
 
     widget(list_y, {
+      .filterConstraintY = true;
       .id = "list";
+      $self.needScroll = needScroll();
+
       cloner($page.nodes, backdrop, {
 	BUTTON_PROPS(1.0);
 	onEvent(enter, navOpen($self.url, $self.type, $parent.url));
@@ -53,6 +56,9 @@ widget(container_y, {
     widget(slider_y, {
       .width = SLIDER_WIDTH();
       .focusable = 0.2;
+      .focusable = 0.2 * $self.needScroll;
+      .alpha = iir($self.needScroll, 16);
+
       bind("list");
 
       widget(backdrop, {

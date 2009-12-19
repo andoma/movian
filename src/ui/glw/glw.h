@@ -268,6 +268,11 @@ typedef enum {
    */ 
   GLW_SIGNAL_NEED_SCROLL_CHANGED,
 
+ /**
+   * Emitted by a widget when it needs scrolling
+   */ 
+  GLW_SIGNAL_FULLSCREEN_CONSTRAINT_CHANGED,
+
 } glw_signal_t;
 
 
@@ -300,8 +305,6 @@ typedef struct glw_root {
 
   struct glw_queue gr_destroyer_queue;
 
-  prop_t *gr_fullwindow_req;
-  
   int gr_frameduration;
 
   struct glw_head gr_active_list;
@@ -361,8 +364,6 @@ typedef struct glw_rctx {
 
   float rc_size_x;
   float rc_size_y;
-  int rc_fullwindow;   /* Set as long the context represents the entire
-			  window  */
 
   struct glw_cursor_painter *rc_cursor_painter;
 
@@ -468,18 +469,21 @@ typedef struct glw {
 #define GLW_CONSTRAINT_Y        0x20000
 #define GLW_CONSTRAINT_A        0x40000
 #define GLW_CONSTRAINT_W        0x80000
+#define GLW_CONSTRAINT_F        0x100000
 
   // We rely on shifts to filter these against each other so they
   // must be consecutive, see glw_filter_constraints()
-#define GLW_CONSTRAINT_IGNORE_X 0x100000
-#define GLW_CONSTRAINT_IGNORE_Y 0x200000
-#define GLW_CONSTRAINT_IGNORE_A 0x400000
-#define GLW_CONSTRAINT_IGNORE_W 0x800000
+#define GLW_CONSTRAINT_IGNORE_X 0x200000
+#define GLW_CONSTRAINT_IGNORE_Y 0x400000
+#define GLW_CONSTRAINT_IGNORE_A 0x800000
+#define GLW_CONSTRAINT_IGNORE_W 0x1000000
+#define GLW_CONSTRAINT_IGNORE_F 0x2000000
 
 
 
 #define GLW_CONSTRAINT_FLAGS (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y | \
-                              GLW_CONSTRAINT_A | GLW_CONSTRAINT_W)
+                              GLW_CONSTRAINT_A | GLW_CONSTRAINT_W | \
+			      GLW_CONSTRAINT_F )
 
 #define GLW_LEFT_EDGE          0x10000000
 #define GLW_TOP_EDGE           0x20000000
@@ -517,9 +521,11 @@ typedef struct glw {
                        && !((w)->glw_flags & GLW_CONSTRAINT_IGNORE_A))
 #define glw_have_w_constraint(w) (((w)->glw_flags & GLW_CONSTRAINT_W) \
                        && !((w)->glw_flags & GLW_CONSTRAINT_IGNORE_W))
+#define glw_have_f_constraint(w) (((w)->glw_flags & GLW_CONSTRAINT_F) \
+                       && !((w)->glw_flags & GLW_CONSTRAINT_IGNORE_F))
 
 #define glw_filter_constraints(f) \
- (((f) & GLW_CONSTRAINT_FLAGS) & ~(((f) >> 4) & GLW_CONSTRAINT_FLAGS))
+ (((f) & GLW_CONSTRAINT_FLAGS) & ~(((f) >> 5) & GLW_CONSTRAINT_FLAGS))
 
 
 int glw_init(glw_root_t *gr, int fontsize, const char *theme, ui_t *ui,

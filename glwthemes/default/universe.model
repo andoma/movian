@@ -1,130 +1,269 @@
 #include "theme://include/plates.model"
 #include "theme://include/separators.model"
 
+
+
+
+#define ACTION_ICON_SCALE(ICON, EVENT, SCALE)
+{
+  widget(backdrop, {
+    BUTTON_PROPS(0.5);
+    onEvent(enter, EVENT);
+    
+    widget(icon, {
+      .source = ICON;
+      .sizeScale = SCALE;
+    });
+  });  
+}
+
+
+#define ACTION_ICON_SCALE_SENS(ICON, EVENT, SCALE,SENSPROP)
+{
+  widget(backdrop, {
+    HIGHLITE_PROPS();
+    onEvent(enter, EVENT);
+
+    .focusable = SENSPROP * 0.5;
+    .alpha = iir(0.4 + SENSPROP * 0.6, 8);
+
+    widget(icon, {
+      .source = ICON;
+      .sizeScale = SCALE;
+    });
+  });  
+}
+
+
+
+
 onEvent(menu, {
-  $ui.showplaydeck = 1 ^^ $ui.showplaydeck;
+  $ui.menu = !$ui.menu;
 });
 
 
 $ui.fullwindow = 0;
-$ui.forcefullwindow = 0;
+
+trace("FULLWINDOW", $ui.fullwindow);
 
 widget(container_z, {
-
+  
   widget(fx_texrot, {
-    .alpha = iir(1 - $ui.fullwindow - $ui.forcefullwindow, 16);
+    .alpha = iir(1 - $ui.fullwindow, 16);
     .source = "theme://images/caribbean.png";
   });
-  
+    
   widget(layer, {
 
-    /* Main display deck */
+    widget(container_y, {
+      
+      widget(expander_y, {
 
-    widget(container_x, {
-
-      widget(expander_x, {
-	.expansion = (1 ^^ $ui.forcefullwindow) && 
-	     ($ui.showplaydeck || 
-		 ($global.media.current.type != "video"));
-
+	.expansion = !$ui.fullwindow;
+	
 	widget(container_y, {
-	  widget(backdrop, {
-	    .filterConstraintY = true;
-	    PLATE_PROPS();
-	    .alphaSelf = 0.25;
 	  
-	    widget(container_y, {
+	  widget(container_x, {
+	    widget(container_x, {
+	      .weight = 0.5;
+	      ACTION_ICON_SENS("theme://icons/32x32/back.png", 
+			       event(Back),
+			       $global.nav.canGoBack);
+
+	      ACTION_ICON_SENS("theme://icons/32x32/next.png", 
+			       event(Forward),
+			       $global.nav.canGoForward);
+
+	      ACTION_ICON("theme://icons/32x32/home.png", 
+			  event(Home));
+	    });
+	    
+	    widget(label, {
+	      .align = center;
+	      .sizeBias = 12;
+	      .caption = $global.nav.currentpage.title;
+	    });
+	  
+	    widget(container_x, {
+	      .weight = 0.5;
+	      widget(container_y, {
 	      
-	      widget(container_x, {
-		ACTION_ICON_SENS("theme://icons/32x32/back.png", 
-		    event(Back), $global.nav.canGoBack);
-		ACTION_ICON_SENS("theme://icons/32x32/next.png", 
-		    event(Forward), $global.nav.canGoForward);
-		ACTION_ICON("theme://icons/32x32/home.png", event(Home));
-	      });
+		.filterConstraintX = true;
+	      
+		widget(label, {
+		  .sizeScale = 0.5;
+		  .sizeBias = 6;
+		  .caption = "";
+		});
 
-	      HORIZONTAL_SEPARATOR();
-
-	      widget(container_x, {
-		ACTION_ICON("theme://icons/32x32/notes_edit.png", 
-		    navOpen("playqueue:"));
-		ACTION_ICON("theme://icons/32x32/info.png", 
-		    navOpen("page:info"));
-	      });
-
-	      HORIZONTAL_SEPARATOR();
-
-	      widget(dummy, {
-	      });
-
-	      HORIZONTAL_SEPARATOR();
-
-	      widget(icon, {
-		.height = $ui.fontsize * 5;
-		.source = "theme://images/clock.png";
-
-		widget(container_z, {
-		  widget(image, {
-		    .angle = ($global.clock.hour % 12) * 30 +
-			 $global.clock.minute / 2;
-		    .source = "theme://images/clock-hour-hand.png";
-		  });	
-
-		  widget(image, {
-		    .angle = $global.clock.minute * 6;
-		    .source = "theme://images/clock-minute-hand.png";
-		  });	
+	    	widget(label, {
+		  .align = right;
+		  .sizeScale = 0.5;
+		  .sizeBias = 6;
+		  .caption = strftime($global.clock.unixtime,
+				      "%a, %b %d, %H:%M");
 		});
 	      });
 	    });
 	  });
+	  HORIZONTAL_SEPARATOR();
 	});
       });
 
-      widget(container_y, {
 
+      widget(deck, {
+	.debug = true;
+	.filterConstraintX = true;
+	delta($ui.fullwindow, wantFullWindow());
+
+	cloner($global.nav.pages, animator, {
+	  .time = 0.3;
+	  .source = "theme://pagemodels/" + $page.type + ".model";
+	});
+      });
+
+      widget(expander_y, {
+	.expansion = !$ui.fullwindow;
+	
 	widget(deck, {
-	  .filterConstraintX = true;
-	  cloner($global.nav.pages, animator, {
+	  cloner($global.media.sources, animator, {
 	    .time = 0.3;
-	    .source = "theme://pagemodels/" + $page.type + ".model";
+	    .source = "theme://playdecks/" + $self.type + ".model";
 	  });
 	});
+      });
+    });
+	
 
-	widget(expander_y, {
-	  .expansion = (1 ^^ $ui.forcefullwindow) && 
-	       ($ui.showplaydeck || 
-		   ($global.media.current.type != "video"));
+    widget(container_x, {
+      .hidden = !$ui.menu;
 
-	  widget(deck, {
-	    cloner($global.media.sources, animator, {
-	      .time = 0.3;
-	      .source = "theme://playdecks/" + $self.type + ".model";
+      space(0.25);
+      
+      widget(backdrop, {
+	.source = "theme://images/whitebox.png";
+	.borderSize = [3, 3, 6, 6];
+	.color = [0.1, 0.5, 0.7];
+	.alphaSelf = 0.8;
+
+
+	widget(container_y, {
+
+	  widget(label, {
+	    .align = center;
+	    .caption = "Command menu";
+	    .sizeScale = 2;
+	  });
+
+	  HORIZONTAL_SEPARATOR();
+	  
+
+	  widget(container_x, {
+	    .filterConstraintX = true;
+
+	    widget(dummy, {
+	      .width = SLIDER_WIDTH();
+	    });
+
+	    widget(list_y, {
+	      .id = "list";
+	      $ui.cmdNeedScroll = needScroll();
+	      
+	      widget(label, {
+		.caption = "Navigation";
+	      });
+	      
+	      widget(container_x, {
+		ACTION_ICON_SCALE_SENS("theme://icons/64x64/back.png", 
+				       {
+					 $ui.menu = false;
+					 fireEvent(event(Back));
+				       },
+				       2, $global.nav.canGoBack);
+		
+		ACTION_ICON_SCALE_SENS("theme://icons/64x64/next.png", 
+				       {
+					 $ui.menu = false;
+					 fireEvent(event(Forward));
+				       },
+				       2, $global.nav.canGoForward);
+
+		ACTION_ICON_SCALE("theme://icons/64x64/home.png",
+				  {
+				    $ui.menu = false;
+				    fireEvent(event(Home));
+				  }, 2);
+	      });
+	      
+	      HORIZONTAL_SEPARATOR();
+
+	      widget(label, {
+		.caption = "Play control";
+	      });
+	      
+	      widget(container_x, {
+		ACTION_ICON_SCALE_SENS("theme://icons/64x64/skip_backward.png", 
+				       event(PreviousTrack), 2,
+				       1);
+		
+		ACTION_ICON_SCALE_SENS("theme://icons/64x64/rewind.png", 
+				       event(SeekReverse), 2,
+				       1);
+		
+		ACTION_ICON_SCALE_SENS("theme://icons/64x64/fast_forward.png", 
+				       event(SeekForward), 2,
+				       1);
+		
+		ACTION_ICON_SCALE_SENS("theme://icons/64x64/skip_forward.png", 
+				       event(NextTrack), 2,
+				       1);
+		
+		ACTION_ICON_SCALE_SENS("theme://icons/64x64/stop.png", 
+				       event(Stop), 2,
+				       1);
+	      });
+	      
+	      HORIZONTAL_SEPARATOR();
+	      
+	    });
+	    
+	    widget(slider_y, {
+	      .width = SLIDER_WIDTH();
+	      .focusable = 0.2 * $ui.cmdNeedScroll;
+	      .alpha = iir($ui.cmdNeedScroll, 16);
+	      bind("list");
+	      
+	      widget(backdrop, {
+		KNOB_PROPS();
+	      });
 	    });
 	  });
 	});
       });
+      
+      space(0.25);
     });
-
+    
+    
     cloner($global.popups, animator, {
       .source = "theme://popups/" + $self.type + ".model";
     });
   });
-  
-
+    
+    
   widget(container_x, {
     space(1);
     widget(container_y, {
       .align = center;
-
+      
       widget(backdrop, {
 	PLATE_PROPS();
 	.alpha = iir(changed($global.audio.mastervolume, 2, true), 7);
 	.color = [0.8, 0.9, 1.0];
-
+	
 	widget(label, {
 	  .caption = "Master volume: " +
-	       float2str($global.audio.mastervolume, 0) + " dB";
+	    float2str($global.audio.mastervolume, 0) + " dB";
 	  .align = center;
 	});
       });
@@ -133,7 +272,7 @@ widget(container_z, {
 	PLATE_PROPS();
 	.alpha = iir($global.audio.mastermute, 7);
 	.color = [1.0, 0.0, 0.0];
-
+	
         widget(label, {
 	  .caption = "Audio muted";
 	  .align = center;
