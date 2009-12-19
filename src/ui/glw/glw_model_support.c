@@ -315,6 +315,10 @@ token2name(token_t *t)
   case TOKEN_SUB:           return "-";
   case TOKEN_MULTIPLY:      return "*";
   case TOKEN_DIVIDE:        return "/";
+  case TOKEN_BOOLEAN_NOT:   return "NOT";
+  case TOKEN_BOOLEAN_AND:   return "AND";
+  case TOKEN_BOOLEAN_OR:    return "OR";
+  case TOKEN_BOOLEAN_XOR:   return "XOR";
 
   case TOKEN_BLOCK:         return "<block>";
   case TOKEN_EXPR:          return "<infix expr>";
