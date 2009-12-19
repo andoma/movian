@@ -113,9 +113,10 @@ process_keyboard_event(glw_wii_t *gwii, keyboard_event *ke)
   int i;
   action_type_t av[10];
 
+#if 0
   TRACE(TRACE_DEBUG, "WiiKeyboard", "%d 0x%x 0x%x 0x%x",
 	ke->type, ke->modifiers, ke->keycode, ke->symbol);
-	
+#endif
 
   if(ke->type != KEYBOARD_PRESSED)
     return;
@@ -174,17 +175,20 @@ typedef struct krepeat {
 } krepeat_t;
 
 
-static krepeat_t k_left, k_right, k_up, k_down, k_b;
+static krepeat_t k_left, k_right, k_up, k_down, k_b, k_2, k_home;
 
 static void
-wpad_btn(glw_wii_t *gwii, krepeat_t *kr, action_type_t ac, int hold)
+wpad_btn(glw_wii_t *gwii, krepeat_t *kr, int pressed, action_type_t ac)
 {
   event_t *e;
 
-  if(hold) {
+  if(ac == ACTION_NONE)
+    return;
+
+  if(pressed) {
 
     if(kr->held_frames == 0 ||
-       (kr->held_frames > 30 && (kr->held_frames % 10 == 0))) {
+       (kr->held_frames > 30 && (kr->held_frames % 3 == 0))) {
       e = event_create_action(ac);
       glw_dispatch_event(&gwii->gr.gr_uii, e);
     }
@@ -211,6 +215,7 @@ wpad_every_frame(glw_wii_t *gwii)
   int res, btn;
   uint32_t type;
   WPADData *wd;
+  int ir = 0;
 
   static int a_held;
 
@@ -236,12 +241,11 @@ wpad_every_frame(glw_wii_t *gwii)
       gwii->cursor_x = 1.1 * (    wd->ir.x / 320 - 1);
       gwii->cursor_y = 1.1 * (1 - wd->ir.y / 240    );
       gwii->cursor_alpha = 1.0;
+      ir = 1;
     } else if(gwii->cursor_alpha > 0.0) {
       gwii->cursor_alpha -= 0.02;
     }
       
-    if(wd->btns_h & WPAD_BUTTON_HOME)
-      exit(0);
   
     btn = wd->btns_h;
   } else {
@@ -272,14 +276,26 @@ wpad_every_frame(glw_wii_t *gwii)
     glw_pointer_event(&gwii->gr, &gpe);
   }
 
+  wpad_btn(gwii, &k_left,  btn & WPAD_BUTTON_LEFT,
+	   ir ? ACTION_LEFT    : ACTION_DOWN);
+  wpad_btn(gwii, &k_right, btn & WPAD_BUTTON_RIGHT,
+	   ir ? ACTION_RIGHT   : ACTION_UP);
+  wpad_btn(gwii, &k_up,    btn & WPAD_BUTTON_UP,
+	   ir ? ACTION_UP      : ACTION_LEFT);
+  wpad_btn(gwii, &k_down,  btn & WPAD_BUTTON_DOWN,
+	   ir ? ACTION_DOWN    : ACTION_RIGHT);
+  
+  wpad_btn(gwii, &k_b,     btn & WPAD_BUTTON_B,
+	   ACTION_NAV_BACK);
+
+  wpad_btn(gwii, &k_2,     btn & WPAD_BUTTON_2,
+	   ir ? ACTION_NONE    : ACTION_ENTER);
+
+  wpad_btn(gwii, &k_home,  btn & WPAD_BUTTON_HOME,
+	   ACTION_MENU);
+	   
+
   glw_unlock(&gwii->gr);
-
-
-  wpad_btn(gwii, &k_left,  ACTION_LEFT,  btn & WPAD_BUTTON_LEFT);
-  wpad_btn(gwii, &k_right, ACTION_RIGHT, btn & WPAD_BUTTON_RIGHT);
-  wpad_btn(gwii, &k_up,    ACTION_UP,    btn & WPAD_BUTTON_UP);
-  wpad_btn(gwii, &k_down,  ACTION_DOWN,  btn & WPAD_BUTTON_DOWN);
-  wpad_btn(gwii, &k_b,     ACTION_NAV_BACK,  btn & WPAD_BUTTON_B);
 }
 
 
