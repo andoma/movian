@@ -104,28 +104,33 @@ static const struct {
 { NSLeftArrowFunctionKey,   NSAlternateKeyMask,    ACTION_NAV_BACK },
 { NSRightArrowFunctionKey,  NSAlternateKeyMask,    ACTION_NAV_FWD },
 
+/* only used for fullscreen, in windowed mode we dont get events with
+ * NSCommandKeyMask set */
 { '+',                      NSCommandKeyMask, ACTION_ZOOM_UI_INCR },
 { '-',                      NSCommandKeyMask, ACTION_ZOOM_UI_DECR },
-
+{ 'f',                      NSCommandKeyMask, ACTION_FULLSCREEN_TOGGLE },
+  
 { NSF11FunctionKey,         0,                ACTION_FULLSCREEN_TOGGLE },
 
- /*
- { XF86XK_AudioLowerVolume, 0,   ACTION_VOLUME_DOWN },
- { XF86XK_AudioRaiseVolume, 0,   ACTION_VOLUME_UP },
- { XF86XK_AudioMute,        0,   ACTION_VOLUME_MUTE_TOGGLE },
- */
+/*
+{ XF86XK_AudioLowerVolume, 0,   ACTION_VOLUME_DOWN },
+{ XF86XK_AudioRaiseVolume, 0,   ACTION_VOLUME_UP },
+{ XF86XK_AudioMute,        0,   ACTION_VOLUME_MUTE_TOGGLE },
+*/
 
- /*
- { XF86XK_Back,             0,   ACTION_NAV_BACK },
- { XF86XK_Forward,          0,   ACTION_NAV_FWD },
- { XF86XK_AudioPlay,        0,   ACTION_PLAYPAUSE },
- { XF86XK_AudioStop,        0,   ACTION_STOP },
- { XF86XK_AudioPrev,        0,   ACTION_PREV_TRACK },
- { XF86XK_AudioNext,        0,   ACTION_NEXT_TRACK },
- { XF86XK_Eject,            0,   ACTION_EJECT },
- { XF86XK_AudioMedia,       0,   ACTION_HOME },
- { XK_Menu,                 0,   ACTION_HOME },
- */
+/*
+{ XF86XK_Back,             0,   ACTION_NAV_BACK },
+{ XF86XK_Forward,          0,   ACTION_NAV_FWD },
+{ XF86XK_AudioPlay,        0,   ACTION_PLAYPAUSE },
+{ XF86XK_AudioStop,        0,   ACTION_STOP },
+{ XF86XK_AudioPrev,        0,   ACTION_PREV_TRACK },
+{ XF86XK_AudioNext,        0,   ACTION_NEXT_TRACK },
+{ XF86XK_Eject,            0,   ACTION_EJECT },
+{ XF86XK_AudioMedia,       0,   ACTION_HOME },
+{ XK_Menu,                 0,   ACTION_HOME },
+*/
+  
+{ NSF1FunctionKey,         0,   ACTION_MENU },
 
 { NSF1FunctionKey,          NSShiftKeyMask,   ACTION_PREV_TRACK },
 { NSF2FunctionKey,          NSShiftKeyMask,   ACTION_PLAYPAUSE },
@@ -140,16 +145,12 @@ static const struct {
 { XF86XK_Sleep,            0,           ACTION_SLEEP },
 */
 
-{ 'f',                      NSCommandKeyMask, ACTION_FULLSCREEN_TOGGLE },
-
 { _NSBackspaceKey,          0,                ACTION_BS, ACTION_NAV_BACK },
 { _NSEnterKey,              0,                ACTION_ENTER },
 { _NSEscapeKey,             0,                ACTION_CLOSE },
 { _NSTabKey,                0,                ACTION_FOCUS_NEXT },
+
 };
-
-
-
 
 
 static void display_settings_init(glw_cocoa_t *gcocoa);
@@ -197,6 +198,8 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   int _argc = *_NSGetArgc();
   const char *cfilename = [filename UTF8String];
   
+  /* passing a command line argument will case a call to openFile: so ignore
+   * if first call and its the same file as last argv argument */
   if(!gcocoa.skip_first_openfile_check) {
     gcocoa.skip_first_openfile_check = 1;
     
@@ -387,7 +390,6 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   glViewport(0, 0, width, height);
 }
 
-
 - (void)glwRender {
   if(gcocoa.font_size != gcocoa.want_font_size) {
     gcocoa.font_size = gcocoa.want_font_size;
@@ -424,7 +426,6 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   memset(&rc, 0, sizeof(rc));
   rc.rc_size_x = gcocoa.window_width;
   rc.rc_size_y = gcocoa.window_height;
-  rc.rc_fullwindow = 1;
   glw_layout0(gcocoa.gr.gr_universe, &rc);
   
   glMatrixMode(GL_PROJECTION);
@@ -837,15 +838,15 @@ display_settings_save(glw_cocoa_t *gc)
 }
 
 static void
-glw_cocoa_screensaver_inhibit(CFRunLoopTimerRef timer, void *info)
-{
-  UpdateSystemActivity(OverallAct);
-}
-
-static void
 glw_cocoa_in_fullwindow(void *opaque, int v)
 {
   gcocoa.is_fullwindow = v;
+}
+
+static void
+glw_cocoa_screensaver_inhibit(CFRunLoopTimerRef timer, void *info)
+{
+  UpdateSystemActivity(OverallAct);
 }
 
 static int
@@ -874,9 +875,9 @@ glw_cocoa_dispatch_event(uii_t *uii, event_t *e)
     settings_toggle_bool(gc->fullscreen_setting);
     event_unref(e);
   } else if(event_is_action(e, ACTION_ZOOM_UI_INCR)) {
-    settings_set_int(gc->font_size_setting, gc->want_font_size + 1);
+    settings_set_int(gc->font_size_setting, gc->font_size + 1);
   } else if(event_is_action(e, ACTION_ZOOM_UI_DECR)) { 
-    settings_set_int(gc->font_size_setting, gc->want_font_size - 1);
+    settings_set_int(gc->font_size_setting, gc->font_size - 1);
   } else {
     glw_dispatch_event(uii, e);
     return;
@@ -890,5 +891,6 @@ ui_t glw_ui = {
   .ui_title = "glw",
   .ui_start = glw_cocoa_start,
   .ui_dispatch_event = glw_cocoa_dispatch_event,
+  /* NSApplicationMain must run in main thread */
   .ui_flags = UI_MAINTHREAD,
 };
