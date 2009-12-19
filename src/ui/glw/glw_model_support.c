@@ -90,6 +90,7 @@ glw_model_token_free(token_t *t)
   case TOKEN_BOOLEAN_AND:
   case TOKEN_BOOLEAN_OR:
   case TOKEN_BOOLEAN_XOR:
+  case TOKEN_BOOLEAN_NOT:
   case TOKEN_EQ:
   case TOKEN_NEQ:
   case TOKEN_EXPR:
@@ -200,6 +201,7 @@ glw_model_token_copy(token_t *src)
   case TOKEN_BOOLEAN_AND:
   case TOKEN_BOOLEAN_OR:
   case TOKEN_BOOLEAN_XOR:
+  case TOKEN_BOOLEAN_NOT:
   case TOKEN_EQ:
   case TOKEN_NEQ:
   case TOKEN_EXPR:

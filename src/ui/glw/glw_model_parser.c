@@ -162,6 +162,7 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
 	tokenqueue_enqueue(&outq, tokenstack_pop(&stack), NULL);
       /* FALLTHRU */
     case TOKEN_LEFT_PARENTHESIS:
+    case TOKEN_BOOLEAN_NOT:
       t = tokenstack_push(&stack, t);
       continue;
 

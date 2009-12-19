@@ -387,6 +387,24 @@ eval_bool_op(glw_model_eval_context_t *ec, struct token *self)
  *
  */
 static int
+eval_bool_not(glw_model_eval_context_t *ec, struct token *self)
+{
+  token_t *a = eval_pop(ec), *r;
+
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+
+  r = eval_alloc(self, ec, TOKEN_INT);
+  r->t_int = !token2bool(a);
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
 eval_eq(glw_model_eval_context_t *ec, struct token *self, int neq)
 {
   token_t *b = eval_pop(ec), *a = eval_pop(ec), *r;
@@ -1185,6 +1203,11 @@ glw_model_eval_rpn0(token_t *t0, glw_model_eval_context_t *ec)
     case TOKEN_BOOLEAN_XOR:
     case TOKEN_BOOLEAN_AND:
       if(eval_bool_op(ec, t))
+	return -1;
+      break;
+
+    case TOKEN_BOOLEAN_NOT:
+      if(eval_bool_not(ec, t))
 	return -1;
       break;
 	
