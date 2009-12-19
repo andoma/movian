@@ -99,7 +99,7 @@ for opt do
 done
 
 
-setup_env
+setup_env "$0 $@"
 
 enable libpthread
 enable zlib
