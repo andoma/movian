@@ -119,8 +119,8 @@ typedef enum {
   GLW_ATTRIB_MODE,
   GLW_ATTRIB_BORDER_SIZE,
   GLW_ATTRIB_PADDING,
-  GLW_ATTRIB_SET_BITMAP_FLAGS,
-  GLW_ATTRIB_CLR_BITMAP_FLAGS,
+  GLW_ATTRIB_SET_IMAGE_FLAGS,
+  GLW_ATTRIB_CLR_IMAGE_FLAGS,
   GLW_ATTRIB_ID,
   GLW_ATTRIB_RGB,
   GLW_ATTRIB_TIME,
@@ -655,8 +655,8 @@ do {						\
   case GLW_ATTRIB_SET_FLAGS:			\
   case GLW_ATTRIB_CLR_FLAGS:			\
   case GLW_ATTRIB_MODE:                         \
-  case GLW_ATTRIB_SET_BITMAP_FLAGS:             \
-  case GLW_ATTRIB_CLR_BITMAP_FLAGS:             \
+  case GLW_ATTRIB_SET_IMAGE_FLAGS:              \
+  case GLW_ATTRIB_CLR_IMAGE_FLAGS:              \
   case GLW_ATTRIB_TRANSITION_EFFECT:            \
   case GLW_ATTRIB_CHILD_TILES_X:                \
   case GLW_ATTRIB_CHILD_TILES_Y:                \

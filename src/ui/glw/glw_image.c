@@ -512,12 +512,12 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
       gi->gi_render_init = 1;
       break;
 
-    case GLW_ATTRIB_SET_BITMAP_FLAGS:
+    case GLW_ATTRIB_SET_IMAGE_FLAGS:
       gi->gi_bitmap_flags |= va_arg(ap, int);
       gi->gi_render_init = 1;
       break;
 
-    case GLW_ATTRIB_CLR_BITMAP_FLAGS:
+    case GLW_ATTRIB_CLR_IMAGE_FLAGS:
       gi->gi_bitmap_flags &= ~va_arg(ap, int);
       gi->gi_render_init = 1;
       break;
