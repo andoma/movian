@@ -471,10 +471,10 @@ typedef struct glw {
 
   // We rely on shifts to filter these against each other so they
   // must be consecutive, see glw_filter_constraints()
-#define GLW_CONSTRAINT_IGNORE_X 0x200000
-#define GLW_CONSTRAINT_IGNORE_Y 0x400000
-#define GLW_CONSTRAINT_IGNORE_A 0x800000
-#define GLW_CONSTRAINT_IGNORE_W 0x1000000
+#define GLW_CONSTRAINT_IGNORE_X 0x100000
+#define GLW_CONSTRAINT_IGNORE_Y 0x200000
+#define GLW_CONSTRAINT_IGNORE_A 0x400000
+#define GLW_CONSTRAINT_IGNORE_W 0x800000
 
 
 
