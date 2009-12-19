@@ -92,18 +92,6 @@ set_float(glw_model_eval_context_t *ec, const token_attrib_t *a,
   case TOKEN_VOID:
     d = 0;
     break;
-
-  case TOKEN_IDENTIFIER:
-    if(!strcmp(rstr_get(t->t_rstring), "true")) {
-      d = 1;
-      break;
-    }
-    if(!strcmp(rstr_get(t->t_rstring), "false")) {
-      d = 0;
-      break;
-    }
-    /* FALLTHRU */
-
   default:
     return glw_model_seterr(ec->ei, t, "Attribute '%s' expects a scalar",
 			    a->name);
@@ -139,18 +127,6 @@ set_int(glw_model_eval_context_t *ec, const token_attrib_t *a,
   case TOKEN_VOID:
     v = 0;
     break;
-
-  case TOKEN_IDENTIFIER:
-    if(!strcmp(rstr_get(t->t_rstring), "true")) {
-      v = 1;
-      break;
-    }
-    if(!strcmp(rstr_get(t->t_rstring), "false")) {
-      v = 0;
-      break;
-    }
-    /* FALLTHRU */
- 
   default:
     return glw_model_seterr(ec->ei, t, "Attribute '%s' expects a scalar",
 			    a->name);
@@ -263,9 +239,7 @@ set_flag(glw_model_eval_context_t *ec, const token_attrib_t *a,
 {
   int set = 0;
 
-  if(t->type == TOKEN_IDENTIFIER)
-    set = !strcmp(rstr_get(t->t_rstring), "true");
-  else if(t->type == TOKEN_INT)
+  if(t->type == TOKEN_INT)
     set = t->t_int;
   else if(t->type == TOKEN_FLOAT)
     set = t->t_float > 0.5;
@@ -294,9 +268,7 @@ set_bitmap_flag(glw_model_eval_context_t *ec, const token_attrib_t *a,
 {
   int set = 0;
 
-  if(t->type == TOKEN_IDENTIFIER)
-    set = !strcmp(rstr_get(t->t_rstring), "true");
-  else if(t->type == TOKEN_INT)
+  if(t->type == TOKEN_INT)
     set = t->t_int;
   else if(t->type == TOKEN_FLOAT)
     set = t->t_float > 0.5;

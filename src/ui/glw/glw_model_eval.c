@@ -1181,6 +1181,7 @@ glw_model_eval_rpn0(token_t *t0, glw_model_eval_context_t *ec)
     case TOKEN_STRING:
     case TOKEN_LINK:
     case TOKEN_FLOAT:
+    case TOKEN_INT:
     case TOKEN_IDENTIFIER:
     case TOKEN_OBJECT_ATTRIBUTE:
     case TOKEN_VOID:

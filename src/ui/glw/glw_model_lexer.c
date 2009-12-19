@@ -194,6 +194,20 @@ lexer(const char *src, errorinfo_t *ei, rstr_t *f, token_t *prev)
       continue;
     }
 
+    if(src[0] == 't' && src[1] == 'r' && src[2] == 'u' && src[3] == 'e') {
+      prev = lexer_add_token_simple(prev, f, line, TOKEN_INT);
+      src+=4;
+      prev->t_int = 1;
+      continue;
+    }
+
+    if(src[0] == 'f' && src[1] == 'a' && src[2] == 'l' && src[3] == 's' &&
+       src[4] == 'e') {
+      prev = lexer_add_token_simple(prev, f, line, TOKEN_INT);
+      src+=5;
+      prev->t_int = 0;
+      continue;
+    }
 
     if(*src == '/' && src[1] == '/') {
       // C++ style comment

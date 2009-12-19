@@ -126,6 +126,7 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
     switch(t->type) {
     case TOKEN_STRING:
     case TOKEN_FLOAT:
+    case TOKEN_INT:
     case TOKEN_IDENTIFIER:
     case TOKEN_OBJECT_ATTRIBUTE:
     case TOKEN_ARRAY:
