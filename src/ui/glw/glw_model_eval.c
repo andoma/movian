@@ -542,7 +542,7 @@ eval_assign(glw_model_eval_context_t *ec, struct token *self)
   token_t *b = eval_pop(ec), *a = eval_pop(ec), *t;
   prop_t *p, *ui;
   int r, i;
-  const char *propname[16];
+  const char *pname[16];
   event_keydesc_t *ek;
 
   /* Catch some special rvalues here */
@@ -569,11 +569,11 @@ eval_assign(glw_model_eval_context_t *ec, struct token *self)
 
   case TOKEN_PROPERTY_NAME:
     for(i = 0, t = a; t != NULL && i < 15; t = t->child)
-      propname[i++]  = rstr_get(t->t_rstring);
-    propname[i] = NULL;
+      pname[i++]  = rstr_get(t->t_rstring);
+    pname[i] = NULL;
 
     ui = ec->w ? ec->w->glw_root->gr_uii.uii_prop : NULL;
-    p = prop_get_by_name(propname, 0, 
+    p = prop_get_by_name(pname, 0, 
 			 PROP_TAG_NAMED_ROOT, ec->prop0, "self",
 			 PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
 			 PROP_TAG_ROOT, ui,
@@ -1722,6 +1722,26 @@ glwf_navOpen(glw_model_eval_context_t *ec, struct token *self,
  *
  */
 static int 
+glwf_fireEvent(glw_model_eval_context_t *ec, struct token *self,
+	       token_t **argv, unsigned int argc)
+{
+  token_t *a = argv[0];       /* Event */
+  if(a->type != TOKEN_EVENT)
+    return glw_model_seterr(ec->ei, a, "fireEvent(): "
+			    "First argument is not an event");
+
+  a->type = TOKEN_NOP; // Steal event
+  glw_event_map_t *gem = a->t_gem;
+  
+  gem->gem_fire(ec->w, gem, NULL);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int 
 glwf_targetedEvent(glw_model_eval_context_t *ec, struct token *self,
 	   token_t **argv, unsigned int argc)
 {
@@ -2708,6 +2728,7 @@ static const token_func_t funcvec[] = {
   {"onEvent", 2, glwf_onEvent},
   {"navOpen", -1, glwf_navOpen},
   {"targetedEvent", 2, glwf_targetedEvent},
+  {"fireEvent", 1, glwf_fireEvent},
   {"event", 1, glwf_event},
   {"changed", -1, glwf_changed, glwf_changed_ctor, glwf_changed_dtor},
   {"iir", 2, glwf_iir},
