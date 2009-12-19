@@ -654,10 +654,10 @@ eval_dynamic_focused_child_change_sig(glw_t *w, void *opaque,
  *
  */
 static int
-eval_dynamic_focus_hover_change_sig(glw_t *w, void *opaque, 
-				    glw_signal_t signal, void *extra)
+eval_dynamic_fhp_change_sig(glw_t *w, void *opaque, 
+			    glw_signal_t signal, void *extra)
 {
-  if(signal == GLW_SIGNAL_FOCUS_HOVER_PATH_CHANGED)
+  if(signal == GLW_SIGNAL_FHP_PATH_CHANGED)
     eval_dynamic(w, opaque);
   return 0;
 }
@@ -704,12 +704,10 @@ eval_dynamic(glw_t *w, token_t *rpn)
     glw_signal_handler_unregister(w, eval_dynamic_focused_child_change_sig,
 				  rpn);
 
-  if(ec.dynamic_eval & GLW_MODEL_DYNAMIC_EVAL_FOCUS_HOVER_CHANGE)
-    glw_signal_handler_register(w, eval_dynamic_focus_hover_change_sig,
-				rpn, 1000);
+  if(ec.dynamic_eval & GLW_MODEL_DYNAMIC_EVAL_FHP_CHANGE)
+    glw_signal_handler_register(w, eval_dynamic_fhp_change_sig, rpn, 1000);
   else
-    glw_signal_handler_unregister(w, eval_dynamic_focus_hover_change_sig,
-				  rpn);
+    glw_signal_handler_unregister(w, eval_dynamic_fhp_change_sig, rpn);
 
   if(ec.dynamic_eval & GLW_MODEL_DYNAMIC_EVAL_WIDGET_META)
     glw_signal_handler_register(w, eval_dynamic_widget_meta_sig, rpn, 1000);
@@ -1309,9 +1307,8 @@ glw_model_eval_block(token_t *t, glw_model_eval_context_t *ec)
 	glw_signal_handler_register(w, eval_dynamic_focused_child_change_sig,
 				    t, 1000);
 
-      if(copy & GLW_MODEL_DYNAMIC_EVAL_FOCUS_HOVER_CHANGE)
-	glw_signal_handler_register(w, eval_dynamic_focus_hover_change_sig,
-				    t, 1000);
+      if(copy & GLW_MODEL_DYNAMIC_EVAL_FHP_CHANGE)
+	glw_signal_handler_register(w, eval_dynamic_fhp_change_sig, t, 1000);
 
       if(copy & GLW_MODEL_DYNAMIC_EVAL_WIDGET_META)
 	glw_signal_handler_register(w, eval_dynamic_widget_meta_sig, t, 1000);
@@ -2333,7 +2330,7 @@ glwf_isFocused(glw_model_eval_context_t *ec, struct token *self,
 {
   token_t *r;
 
-  ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_FOCUS_HOVER_CHANGE;
+  ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_FHP_CHANGE;
 
   r = eval_alloc(self, ec, TOKEN_INT);
   r->t_int = glw_is_focused(ec->w);
@@ -2351,10 +2348,27 @@ glwf_isHovered(glw_model_eval_context_t *ec, struct token *self,
 {
   token_t *r;
 
-  ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_FOCUS_HOVER_CHANGE;
+  ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_FHP_CHANGE;
 
   r = eval_alloc(self, ec, TOKEN_INT);
   r->t_int = glw_is_hovered(ec->w);
+  eval_push(ec, r);
+  return 0;
+}
+
+/**
+ * Return 1 if the current widget is in focus
+ */
+static int 
+glwf_isPressed(glw_model_eval_context_t *ec, struct token *self,
+	       token_t **argv, unsigned int argc)
+{
+  token_t *r;
+
+  ec->dynamic_eval |= GLW_MODEL_DYNAMIC_EVAL_FHP_CHANGE;
+
+  r = eval_alloc(self, ec, TOKEN_INT);
+  r->t_int = glw_is_pressed(ec->w);
   eval_push(ec, r);
   return 0;
 }
@@ -2743,6 +2757,7 @@ static const token_func_t funcvec[] = {
   {"delete", 1, glwf_delete},
   {"isFocused", 0, glwf_isFocused},
   {"isHovered", 0, glwf_isHovered},
+  {"isPressed", 0, glwf_isPressed},
   {"devoidify", 2, glwf_devoidify},
   {"focusedChild", 0, glwf_focusedChild},
   {"getCaption", 1, glwf_getCaption},

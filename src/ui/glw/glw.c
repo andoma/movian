@@ -639,6 +639,9 @@ glw_destroy0(glw_t *w)
   if(gr->gr_pointer_hover == w)
     glw_root_set_hover(gr, NULL);
 
+  if(gr->gr_pointer_press == w)
+    gr->gr_pointer_press = NULL;
+
   glw_prop_subscription_destroy_list(&w->glw_prop_subscriptions);
 
   while((gem = LIST_FIRST(&w->glw_event_maps)) != NULL) {
@@ -929,7 +932,7 @@ glw_path_flood(glw_t *w, int or, int and)
     glw_path_flood(c, or, and);
     c->glw_flags = (c->glw_flags | or) & and;
     if(!(c->glw_flags & GLW_DESTROYING))
-      glw_signal0(c, GLW_SIGNAL_FOCUS_HOVER_PATH_CHANGED, NULL);
+      glw_signal0(c, GLW_SIGNAL_FHP_PATH_CHANGED, NULL);
   }
 }
 
@@ -947,7 +950,7 @@ glw_path_modify(glw_t *w, int set, int clr)
   for(; w != NULL; w = w->glw_parent) {
     w->glw_flags = (w->glw_flags | set) & clr;
     if(!(w->glw_flags & GLW_DESTROYING))
-      glw_signal0(w, GLW_SIGNAL_FOCUS_HOVER_PATH_CHANGED, NULL);
+      glw_signal0(w, GLW_SIGNAL_FHP_PATH_CHANGED, NULL);
   }
 }
 
@@ -1355,13 +1358,17 @@ pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, glw_t **hp)
 	switch(gpe->type) {
 
 	case GLW_POINTER_CLICK:
-	  glw_focus_set(gr, w, 1);
+	  gr->gr_pointer_press = w;
+	  glw_path_modify(w, GLW_IN_PRESSED_PATH, 0);
 	  return 1;
 
 	case GLW_POINTER_RELEASE:
-	  e = event_create_action(ACTION_ENTER);
-	  glw_event_to_widget(w, e, 0);
-	  event_unref(e);
+	  if(gr->gr_pointer_press == w) {
+	    glw_path_modify(w, 0, GLW_IN_PRESSED_PATH);
+	    e = event_create_action(ACTION_ENTER);
+	    glw_event_to_widget(w, e, 0);
+	    event_unref(e);
+	  }
 	  return 1;
 	default:
 	  break;
@@ -1385,25 +1392,35 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
 {
   glw_t *c, *w, *top;
   glw_pointer_event_t gpe0;
-  float x1, x2, y1, y2;
+  float x1, x2, y1, y2, x, y;
   glw_t *hover = NULL;
 
   /* If a widget has grabbed to pointer (such as when holding the button
      on a slider), dispatch events there */
 
-  if((w = gr->gr_pointer_grab) != NULL && gpe->type == GLW_POINTER_MOTION) {
-    
-    if(w->glw_matrix == NULL)
-      return;
+  if(gpe->type == GLW_POINTER_MOTION) {
+    if((w = gr->gr_pointer_grab) != NULL && w->glw_matrix != NULL) {
+      glw_widget_project(w->glw_matrix, &x1, &x2, &y1, &y2);
+      gpe0.type = GLW_POINTER_FOCUS_MOTION;
+      gpe0.x = -1 + 2 * GLW_RESCALE(gpe->x, x1, x2);
+      gpe0.y = -1 + 2 * GLW_RESCALE(gpe->y, y1, y2);
+      
+      glw_signal0(w, GLW_SIGNAL_POINTER_EVENT, &gpe0);
+    }
 
-    glw_widget_project(w->glw_matrix, &x1, &x2, &y1, &y2);
-    
-    gpe0.type = GLW_POINTER_FOCUS_MOTION;
-    gpe0.x = -1 + 2 * GLW_RESCALE(gpe->x, x1, x2);
-    gpe0.y = -1 + 2 * GLW_RESCALE(gpe->y, y1, y2);
-    
-    glw_signal0(w, GLW_SIGNAL_POINTER_EVENT, &gpe0);
-    return;
+    if((w = gr->gr_pointer_press) != NULL && w->glw_matrix != NULL) {
+      glw_widget_project(w->glw_matrix, &x1, &x2, &y1, &y2);
+
+      x = -1 + 2 * GLW_RESCALE(gpe->x, x1, x2);
+      y = -1 + 2 * GLW_RESCALE(gpe->y, y1, y2);
+
+      if(x < -1 || y < -1 || x > 1 || y > 1) {
+	// Moved outside button, release 
+
+	glw_path_modify(w, 0, GLW_IN_PRESSED_PATH);
+	gr->gr_pointer_press = NULL;
+      }
+    }
   }
 
   if(gpe->type == GLW_POINTER_RELEASE && gr->gr_pointer_grab != NULL) {

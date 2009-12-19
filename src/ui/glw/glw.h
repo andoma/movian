@@ -240,9 +240,9 @@ typedef enum {
 
   /**
    * Sent to a widget when it enters or leaves the current 
-   * "path of focus / hover"
+   * "path of focus / hover / pressed"
    */
-  GLW_SIGNAL_FOCUS_HOVER_PATH_CHANGED,
+  GLW_SIGNAL_FHP_PATH_CHANGED,
 
   /**
    * Sent to a widget froms its child when the layout constraints changes
@@ -329,6 +329,7 @@ typedef struct glw_root {
    */
   struct glw *gr_pointer_grab;
   struct glw *gr_pointer_hover;
+  struct glw *gr_pointer_press;
   struct glw *gr_current_focus;
   prop_t *gr_last_focused_interactive;
 
@@ -436,7 +437,7 @@ typedef struct glw {
 					   at all times */
 #define GLW_DRAW_SKEL           0x20    /* Draw extra lines to
 					    visualize details */
-#define GLW_FOCUS_DRAW_CURSOR   0x40    /* Draw cursor when we have focus */
+#define GLW_IN_PRESSED_PATH     0x40
 #define GLW_DEBUG               0x80    /* Debug this object */
 #define GLW_PASSWORD            0x100   /* Don't display real contents */
 #define GLW_FOCUS_BLOCKED       0x200
@@ -545,6 +546,8 @@ void glw_dispatch_event(uii_t *uii, event_t *e);
 #define glw_is_focused(w) (!!((w)->glw_flags & GLW_IN_FOCUS_PATH))
 
 #define glw_is_hovered(w) (!!((w)->glw_flags & GLW_IN_HOVER_PATH))
+
+#define glw_is_pressed(w) (!!((w)->glw_flags & GLW_IN_PRESSED_PATH))
 
 void glw_store_matrix(glw_t *w, glw_rctx_t *rc);
 

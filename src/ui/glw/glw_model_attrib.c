@@ -325,7 +325,6 @@ static const token_attrib_t attribtab[] = {
   {"caption",         set_string, GLW_ATTRIB_CAPTION},
   {"source",          set_source, 0},
 
-  {"focusCursor",     set_flag,   GLW_FOCUS_DRAW_CURSOR},
   {"debug",           set_flag,   GLW_DEBUG},
   {"skeleton",        set_flag,   GLW_DRAW_SKEL},
   {"password",        set_flag,   GLW_PASSWORD},
