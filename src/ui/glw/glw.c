@@ -168,7 +168,7 @@ glw_init(glw_root_t *gr, int fontsize, const char *theme, ui_t *ui,
 
   gr->gr_universe = glw_model_create(gr,
 				     "theme://universe.model", NULL, NULL,
-				     NULL);
+				     NULL, 0);
 
   glw_set_i(gr->gr_universe,
 	    GLW_ATTRIB_SIGNAL_HANDLER, top_event_handler, gr, 1000,

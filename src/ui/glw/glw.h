@@ -583,7 +583,7 @@ void glw_clip_disable(glw_rctx_t *rc, int which);
  */
 glw_t *glw_model_create(glw_root_t *gr, const char *src, 
 			glw_t *parent, struct prop *prop,
-			struct prop *prop_parent);
+			struct prop *prop_parent, int cache);
 
 /**
  * Transitions

@@ -55,7 +55,8 @@ glw_model_error(glw_root_t *gr, errorinfo_t *ei, glw_t *parent)
  */
 glw_t *
 glw_model_create(glw_root_t *gr, const char *src,
-		 glw_t *parent, prop_t *prop, prop_t *prop_parent)
+		 glw_t *parent, prop_t *prop, prop_t *prop_parent,
+		 int cache)
 {
   token_t *eof, *l, *t;
   errorinfo_t ei;
@@ -91,11 +92,19 @@ glw_model_create(glw_root_t *gr, const char *src,
       return glw_model_error(gr, &ei, parent);
     }
 
-    gm = calloc(1, sizeof(glw_model_t));
-    gm->gm_sof = sof;
-    gm->gm_source = strdup(src);
-    LIST_INSERT_HEAD(&gr->gr_models, gm, gm_link);
+    if(cache) {
+      gm = calloc(1, sizeof(glw_model_t));
+      gm->gm_sof = sof;
+      gm->gm_source = strdup(src);
+      LIST_INSERT_HEAD(&gr->gr_models, gm, gm_link);
+      t = glw_model_clone_chain(gm->gm_sof);
+    } else {
+      t = sof;
+    }
+  } else {
+    t = glw_model_clone_chain(gm->gm_sof);
   }
+
 
   memset(&ec, 0, sizeof(ec));
 
@@ -110,8 +119,6 @@ glw_model_create(glw_root_t *gr, const char *src,
   ec.prop0 = prop;
   ec.prop_parent = prop_parent;
   ec.sublist = &ec.w->glw_prop_subscriptions;
-
-  t = glw_model_clone_chain(gm->gm_sof);
 
   if(glw_model_eval_block(t, &ec)) {
     glw_destroy0(ec.w);
