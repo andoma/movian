@@ -235,7 +235,7 @@ set_transition_effect(glw_model_eval_context_t *ec, const token_attrib_t *a,
  */
 static int
 set_flag(glw_model_eval_context_t *ec, const token_attrib_t *a, 
-	  struct token *t)
+	 struct token *t, glw_attribute_t setter, glw_attribute_t clearer)
 {
   int set = 0;
 
@@ -250,13 +250,23 @@ set_flag(glw_model_eval_context_t *ec, const token_attrib_t *a,
 			    a->name);
 
   if(set)
-    glw_set_i(ec->w, GLW_ATTRIB_SET_FLAGS, a->attrib, NULL);
+    glw_set_i(ec->w, setter, a->attrib, NULL);
   else
-    glw_set_i(ec->w, GLW_ATTRIB_CLR_FLAGS, a->attrib, NULL);
+    glw_set_i(ec->w, clearer, a->attrib, NULL);
 
   return 0;
 }
 
+/**
+ *
+ */
+static int
+set_generic_flag(glw_model_eval_context_t *ec, const token_attrib_t *a, 
+	       struct token *t)
+{
+  return set_flag(ec, a, t, GLW_ATTRIB_SET_FLAGS,
+		  GLW_ATTRIB_CLR_FLAGS);
+}
 
 
 /**
@@ -266,25 +276,21 @@ static int
 set_image_flag(glw_model_eval_context_t *ec, const token_attrib_t *a, 
 	       struct token *t)
 {
-  int set = 0;
-
-  if(t->type == TOKEN_INT)
-    set = t->t_int;
-  else if(t->type == TOKEN_FLOAT)
-    set = t->t_float > 0.5;
-  else if(t->type == TOKEN_VOID)
-    set = 0;
-  else
-    return glw_model_seterr(ec->ei, t, "Invalid assignment for attribute %s",
-			    a->name);
-
-  if(set)
-    glw_set_i(ec->w, GLW_ATTRIB_SET_IMAGE_FLAGS, a->attrib, NULL);
-  else
-    glw_set_i(ec->w, GLW_ATTRIB_CLR_IMAGE_FLAGS, a->attrib, NULL);
-
-  return 0;
+  return set_flag(ec, a, t, GLW_ATTRIB_SET_IMAGE_FLAGS,
+		  GLW_ATTRIB_CLR_IMAGE_FLAGS);
 }
+
+/**
+ *
+ */
+static int
+set_text_flag(glw_model_eval_context_t *ec, const token_attrib_t *a, 
+	       struct token *t)
+{
+  return set_flag(ec, a, t, GLW_ATTRIB_SET_TEXT_FLAGS,
+		  GLW_ATTRIB_CLR_TEXT_FLAGS);
+}
+
 
 /**
  *
@@ -325,15 +331,13 @@ static const token_attrib_t attribtab[] = {
   {"caption",         set_string, GLW_ATTRIB_CAPTION},
   {"source",          set_source, 0},
 
-  {"debug",           set_flag,   GLW_DEBUG},
-  {"password",        set_flag,   GLW_PASSWORD},
-  {"filterConstraintX",       set_flag, GLW_CONSTRAINT_IGNORE_X},
-  {"filterConstraintY",       set_flag, GLW_CONSTRAINT_IGNORE_Y},
-  {"filterConstraintAspect",  set_flag, GLW_CONSTRAINT_IGNORE_A},
-  {"filterConstraintWeight",  set_flag, GLW_CONSTRAINT_IGNORE_W},
-  {"ellipsize",               set_flag, GLW_ELLIPSIZE},
-  {"hidden",                  set_flag, GLW_HIDDEN},
-  {"noInitialTransform",      set_flag, GLW_NO_INITIAL_TRANS},
+  {"debug",                   set_generic_flag, GLW_DEBUG},
+  {"filterConstraintX",       set_generic_flag, GLW_CONSTRAINT_IGNORE_X},
+  {"filterConstraintY",       set_generic_flag, GLW_CONSTRAINT_IGNORE_Y},
+  {"filterConstraintAspect",  set_generic_flag, GLW_CONSTRAINT_IGNORE_A},
+  {"filterConstraintWeight",  set_generic_flag, GLW_CONSTRAINT_IGNORE_W},
+  {"hidden",                  set_generic_flag, GLW_HIDDEN},
+  {"noInitialTransform",      set_generic_flag, GLW_NO_INITIAL_TRANS},
 
   {"mirrorx",         set_image_flag, GLW_MIRROR_X},
   {"mirrory",         set_image_flag, GLW_MIRROR_Y},
@@ -344,6 +348,9 @@ static const token_attrib_t attribtab[] = {
   {"borderBottom",    set_image_flag, GLW_BORDER_BOTTOM},
   {"constraintX",     set_image_flag, GLW_NOFILL_X},
   {"constraintY",     set_image_flag, GLW_NOFILL_Y},
+
+  {"password",        set_text_flag,  GTB_PASSWORD},
+  {"ellipsize",       set_text_flag,  GTB_ELLIPSIZE},
 
 
   {"alpha",           set_float,  GLW_ATTRIB_ALPHA},

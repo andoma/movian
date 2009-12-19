@@ -93,6 +93,8 @@ typedef struct glw_text_bitmap {
 
   int gtb_xsize_max;
 
+  int gtb_flags;
+
 } glw_text_bitmap_t;
 
 

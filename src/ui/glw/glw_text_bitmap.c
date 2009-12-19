@@ -388,13 +388,13 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
     
 
   if(gtb->gtb_status == GTB_NEED_RERENDER ||
-     (w->glw_flags & GLW_ELLIPSIZE && gtb->gtb_status == GTB_VALID && 
+     (gtb->gtb_flags & GTB_ELLIPSIZE && gtb->gtb_status == GTB_VALID && 
       gtb->gtb_xsize_max != (int)rc->rc_size_x)) {
 
     TAILQ_INSERT_TAIL(&gr->gr_gtb_render_queue, gtb, gtb_workq_link);
     gtb->gtb_status = GTB_ON_QUEUE;
 
-    if(w->glw_flags & GLW_ELLIPSIZE)
+    if(gtb->gtb_flags & GTB_ELLIPSIZE)
       gtb->gtb_xsize_max = rc->rc_size_x;
     else
       gtb->gtb_xsize_max = INT_MAX;
@@ -983,6 +983,16 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
       gtb->gtb_color.b = va_arg(ap, double);
       break;
 
+    case GLW_ATTRIB_SET_TEXT_FLAGS:
+      gtb->gtb_flags |= va_arg(ap, int);
+      update = 1;
+      break;
+
+    case GLW_ATTRIB_CLR_IMAGE_FLAGS:
+      gtb->gtb_flags &= ~va_arg(ap, int);
+      update = 1;
+      break;
+
    case GLW_ATTRIB_BIND_TO_PROPERTY:
       p = va_arg(ap, prop_t *);
       pname = va_arg(ap, void *);
@@ -1039,7 +1049,7 @@ font_render_thread(void *aux)
     if(len > 0) {
       uc = malloc((len + 3) * sizeof(int));
 
-      if(gtb->w.glw_flags & GLW_PASSWORD) {
+      if(gtb->gtb_flags & GTB_PASSWORD) {
 	for(i = 0; i < len; i++)
 	  uc[i] = '*';
       } else {

@@ -121,6 +121,8 @@ typedef enum {
   GLW_ATTRIB_PADDING,
   GLW_ATTRIB_SET_IMAGE_FLAGS,
   GLW_ATTRIB_CLR_IMAGE_FLAGS,
+  GLW_ATTRIB_SET_TEXT_FLAGS,
+  GLW_ATTRIB_CLR_TEXT_FLAGS,
   GLW_ATTRIB_ID,
   GLW_ATTRIB_RGB,
   GLW_ATTRIB_TIME,
@@ -147,6 +149,9 @@ typedef enum {
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
+/**
+ * Image flags
+ */
 #define GLW_MIRROR_X      0x1
 #define GLW_MIRROR_Y      0x2
 #define GLW_BORDER_LEFT   0x4
@@ -155,6 +160,12 @@ typedef enum {
 #define GLW_BORDER_BOTTOM 0x20
 #define GLW_NOFILL_X      0x40
 #define GLW_NOFILL_Y      0x80
+
+/**
+ * Text flags
+ */
+#define GTB_PASSWORD      0x1   /* Don't display real contents */
+#define GTB_ELLIPSIZE     0x2
 
 
 #define GLW_MODE_XFADE    0
@@ -428,49 +439,47 @@ typedef struct glw {
 
   int glw_flags;
 
-#define GLW_FOCUS_DISABLED      0x1     /* Can not receive focus right now */
-#define GLW_ACTIVE              0x2
-#define GLW_DESTROYED           0x4     /* was destroyed but someone
+#define GLW_ACTIVE              0x1
+#define GLW_DESTROYED           0x2     /* was destroyed but someone
 					   is holding references */
-#define GLW_RENDER_LINKED       0x8     /* glw_render_link is linked */
-#define GLW_EVERY_FRAME         0x10    /* Want GLW_SIGNAL_NEW_FRAME
+#define GLW_RENDER_LINKED       0x4     /* glw_render_link is linked */
+#define GLW_EVERY_FRAME         0x8     /* Want GLW_SIGNAL_NEW_FRAME
 					   at all times */
 
-#define GLW_IN_PRESSED_PATH     0x40
-#define GLW_DEBUG               0x80    /* Debug this object */
-#define GLW_PASSWORD            0x100   /* Don't display real contents */
-#define GLW_FOCUS_BLOCKED       0x200
-#define GLW_UPDATE_METRICS      0x400
+#define GLW_DEBUG               0x10    /* Debug this object */
+#define GLW_FOCUS_BLOCKED       0x20
+#define GLW_UPDATE_METRICS      0x40
 
-#define GLW_IN_FOCUS_PATH       0x800
-#define GLW_IN_HOVER_PATH       0x1000
+#define GLW_IN_FOCUS_PATH       0x80
+#define GLW_IN_PRESSED_PATH     0x100
+#define GLW_IN_HOVER_PATH       0x200
 
-#define GLW_DESTROYING          0x2000  /* glw_destroy() has been called */
+#define GLW_DESTROYING          0x400  /* glw_destroy() has been called */
 
-#define GLW_ELLIPSIZE           0x4000
 
-#define GLW_CONSTRAINT_CONFED   0x8000
+#define GLW_HIDDEN              0x800
+
+#define GLW_DETACHED            0x1000
+#define GLW_NO_INITIAL_TRANS    0x2000
+#define GLW_CONSTRAINT_CONFED   0x4000
+#define GLW_NEED_SCROLL         0x8000
+
 #define GLW_CONSTRAINT_X        0x10000
 #define GLW_CONSTRAINT_Y        0x20000
 #define GLW_CONSTRAINT_A        0x40000
 #define GLW_CONSTRAINT_W        0x80000
+
   // We rely on shifts to filter these against each other so they
   // must be consecutive, see glw_filter_constraints()
-#define GLW_CONSTRAINT_IGNORE_X 0x100000
-#define GLW_CONSTRAINT_IGNORE_Y 0x200000
-#define GLW_CONSTRAINT_IGNORE_A 0x400000
-#define GLW_CONSTRAINT_IGNORE_W 0x800000
+#define GLW_CONSTRAINT_IGNORE_X 0x200000
+#define GLW_CONSTRAINT_IGNORE_Y 0x400000
+#define GLW_CONSTRAINT_IGNORE_A 0x800000
+#define GLW_CONSTRAINT_IGNORE_W 0x1000000
+
 
 
 #define GLW_CONSTRAINT_FLAGS (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y | \
                               GLW_CONSTRAINT_A | GLW_CONSTRAINT_W)
-
-#define GLW_HIDDEN             0x1000000
-
-#define GLW_DETACHED           0x2000000
-#define GLW_NO_INITIAL_TRANS   0x4000000
-
-#define GLW_NEED_SCROLL        0x8000000
 
 #define GLW_LEFT_EDGE          0x10000000
 #define GLW_TOP_EDGE           0x20000000
@@ -657,6 +666,8 @@ do {						\
   case GLW_ATTRIB_MODE:                         \
   case GLW_ATTRIB_SET_IMAGE_FLAGS:              \
   case GLW_ATTRIB_CLR_IMAGE_FLAGS:              \
+  case GLW_ATTRIB_SET_TEXT_FLAGS:               \
+  case GLW_ATTRIB_CLR_TEXT_FLAGS:               \
   case GLW_ATTRIB_TRANSITION_EFFECT:            \
   case GLW_ATTRIB_CHILD_TILES_X:                \
   case GLW_ATTRIB_CHILD_TILES_Y:                \
