@@ -24,7 +24,8 @@
 #include "notifications.h"
 #include "misc/callout.h"
 
-static prop_t *notify_prop_root;
+static prop_t *notify_prop_entries;
+static prop_t *notify_prop_current;
 
 /**
  *
@@ -32,7 +33,11 @@ static prop_t *notify_prop_root;
 void
 notifications_init(void)
 {
-  notify_prop_root = prop_create(prop_get_global(), "notifications");
+  prop_t *root = prop_create(prop_get_global(), "notifications");
+  
+  notify_prop_entries = prop_create(root, "nodes");
+  notify_prop_current = prop_create(root, "current");
+
 }
 
 /**
@@ -84,9 +89,11 @@ notify_add(notify_type_t type, const char *icon, int delay,
   if(icon != NULL)
     prop_set_string(prop_create(p, "icon"), icon);
 
-  if(prop_set_parent(p, notify_prop_root))
+  if(prop_set_parent(p, notify_prop_entries))
     abort();
 
+  prop_link(p, notify_prop_current);
+  
   if(delay != 0) {
     callout_arm(NULL, notify_timeout, p, delay);
     return NULL;
