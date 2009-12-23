@@ -500,6 +500,9 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
   float alpha;
   glw_rctx_t rc0;
 
+  if(glw_is_focusable(w))
+    glw_store_matrix(w, rc);
+
   alpha = rc->rc_alpha * w->glw_alpha;
 
   if(alpha < 0.01)
@@ -525,9 +528,6 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
       glw_render(&gtb->gtb_cursor_renderer, w->glw_root, &rc0,
 		 GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_NONE,
 		 NULL, 1, 1, 1, alpha * gtb->gtb_cursor_alpha);
-
-    if(glw_is_focusable(w))
-      glw_store_matrix(w, &rc0);
 
     glw_PopMatrix();
     return;
@@ -579,9 +579,6 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
     glw_render(&gtb->gtb_cursor_renderer, w->glw_root, &rc0,
 	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_NONE,
 	       NULL, 1, 1, 1, alpha * gtb->gtb_cursor_alpha);
-
-  if(glw_is_focusable(w))
-    glw_store_matrix(w, &rc0);
 
   glw_render(&gtb->gtb_text_renderer, w->glw_root, &rc0, 
 	     GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
@@ -920,6 +917,7 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
   glw_signal_handler_int(w, glw_text_bitmap_callback);
 
   if(init) {
+    w->glw_flags |= GLW_FOCUS_ON_CLICK;
     gtb->gtb_edit_ptr = -1;
     gtb->gtb_int_step = 1;
     gtb->gtb_int_min = INT_MIN;

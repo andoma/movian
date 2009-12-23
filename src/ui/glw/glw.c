@@ -1362,10 +1362,14 @@ pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, glw_t **hp)
 
 	case GLW_POINTER_RELEASE:
 	  if(gr->gr_pointer_press == w) {
+	    if(w->glw_flags & GLW_FOCUS_ON_CLICK)
+	      glw_focus_set(gr, w, 1); 
+
 	    glw_path_modify(w, 0, GLW_IN_PRESSED_PATH);
 	    e = event_create_action(ACTION_ENTER);
 	    glw_event_to_widget(w, e, 0);
 	    event_unref(e);
+
 	  }
 	  return 1;
 	default:
