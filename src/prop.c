@@ -1702,6 +1702,47 @@ prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str)
   prop_set_epilogue(skipme, p, "prop_set_string()");
 }
 
+
+/**
+ *
+ */
+void
+prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr)
+{
+  if(p == NULL)
+    return;
+
+  if(rstr == NULL) {
+    prop_set_void_ex(p, skipme);
+    return;
+  }
+
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type == PROP_ZOMBIE) {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
+
+  if(p->hp_type != PROP_STRING) {
+
+    if(prop_clean(p)) {
+      hts_mutex_unlock(&prop_mutex);
+      return;
+    }
+
+  } else if(!strcmp(rstr_get(p->hp_rstring), rstr_get(rstr))) {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  } else {
+    rstr_release(p->hp_rstring);
+  }
+  p->hp_rstring = rstr_dup(rstr);
+  p->hp_type = PROP_STRING;
+
+  prop_set_epilogue(skipme, p, "prop_set_string()");
+}
+
 /**
  *
  */

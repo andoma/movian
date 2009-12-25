@@ -352,6 +352,8 @@ void prop_move(prop_t *p, prop_t *before);
 
 void prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str);
 
+void prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr);
+
 void prop_set_stringf_ex(prop_t *p, prop_sub_t *skipme, const char *fmt, ...);
 
 void prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v);
@@ -392,6 +394,8 @@ void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 #define prop_set_pixmap(p, pp) prop_set_pixmap_ex(p, NULL, pp)
 
 #define prop_set_link(p, title, link) prop_set_link_ex(p, NULL, title, link)
+
+#define prop_set_rstring(p, rstr) prop_set_rstring_ex(p, NULL, rstr)
 
 int prop_get_string(prop_t *p, char *buf, size_t bufsize)
      __attribute__ ((warn_unused_result));
