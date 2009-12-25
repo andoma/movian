@@ -143,7 +143,8 @@ file_open_dir(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
  *
  */
 static int
-file_open_file(const char *url, nav_page_t **npp, char *errbuf, size_t errlen)
+file_open_file(const char *url, nav_page_t **npp, char *errbuf, size_t errlen,
+	       struct stat *st)
 {
   char redir[512];
   int r;
@@ -152,7 +153,7 @@ file_open_file(const char *url, nav_page_t **npp, char *errbuf, size_t errlen)
 
   meta = prop_create(NULL, "metadata");
 
-  r = fa_probe(meta, url, redir, sizeof(redir), errbuf, errlen);
+  r = fa_probe(meta, url, redir, sizeof(redir), errbuf, errlen, st);
   
   switch(r) {
   case CONTENT_ARCHIVE:
@@ -205,7 +206,7 @@ be_file_open(const char *url0, const char *type0, const char *parent,
     return -1;
 
   return S_ISDIR(buf.st_mode) ? file_open_dir(url0, npp, errbuf, errlen) :
-    file_open_file(url0, npp, errbuf, errlen);
+    file_open_file(url0, npp, errbuf, errlen, &buf);
 }
 
 
@@ -232,7 +233,6 @@ nav_backend_t be_file = {
   .nb_open = be_file_open,
   .nb_play_video = be_file_playvideo,
   .nb_play_audio = be_file_playaudio,
-  .nb_probe = fa_probe,
   .nb_list = be_list,
   .nb_imageloader = fa_imageloader,
 };

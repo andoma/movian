@@ -356,8 +356,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   /**
    * Update property metadata
    */
-
-  fa_lavf_load_meta(mp->mp_prop_metadata, fctx, faurl);
+  fa_probe_load_metaprop(mp->mp_prop_metadata, fctx, faurl);
 
   /**
    * Init codec contexts

@@ -23,15 +23,19 @@
 #include "fileaccess.h"
 #include <libavformat/avformat.h>
 
+struct metadata;
+
 unsigned int fa_probe(prop_t *proproot, const char *url,
 		      char *newurl, size_t newurlsize,
-		      char *errbuf, size_t errsize);
+		      char *errbuf, size_t errsize,
+		      struct stat *st);
 
 unsigned int fa_probe_dir(prop_t *proproot, const char *url);
 
-int fa_probe_iso(prop_t *proproot, fa_handle_t *fh);
+int fa_probe_iso(struct metadata *md, fa_handle_t *fh);
 
-unsigned int fa_lavf_load_meta(prop_t *proproot, AVFormatContext *fctx,
-			       const char *url);
+void fa_probe_load_metaprop(prop_t *p, AVFormatContext *fctx, const char *url);
+
+void fa_probe_init(void);
 
 #endif /* FA_PROBE_H */

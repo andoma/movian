@@ -74,10 +74,6 @@ typedef struct nav_backend {
   event_t *(*nb_play_audio)(const char *url, struct media_pipe *mp,
 			    char *errbuf, size_t errlen);
 
-  unsigned int (*nb_probe)(prop_t *proproot, const char *url,
-			   char *newurl, size_t newurlsize,
-			   char *errbuf, size_t errsize);
-
   prop_t *(*nb_list)(const char *url, char *errbuf, size_t errsize);
 
   int (*nb_get_parent)(const char *url, 
@@ -110,10 +106,6 @@ event_t *nav_play_video(const char *url, struct media_pipe *mp,
 
 event_t *nav_play_audio(const char *url, struct media_pipe *mp,
 			char *errbuf, size_t errlen);
-
-unsigned int nav_probe(prop_t *proproot, const char *url,
-		       char *newurl, size_t newurlsize,
-		       char *errbuf, size_t errsize);
 
 prop_t *nav_list(const char *url, char *errbuf, size_t errlen);
 

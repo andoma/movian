@@ -61,6 +61,15 @@ void trace(int level, const char *subsys, const char *fmt, ...);
 #define mystrdupa(n) ({ int my_l = strlen(n); \
  char *my_b = alloca(my_l + 1); \
  memcpy(my_b, n, my_l + 1); })
+
+
+static inline unsigned int mystrhash(const char *s)
+{
+  unsigned int v = 5381;
+  while(*s)
+    v += (v << 5) + v + *s++;
+  return v;
+}
  
 
 #endif /* SHOWTIME_H */

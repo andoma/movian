@@ -1247,9 +1247,41 @@ get_cdata_by_tag(htsmsg_t *tags, const char *name)
 
 
 /**
+ *
+ */
+static int 
+dav_ctime(time_t *tp, const char *d)
+{
+  struct tm tm = {0};
+  char wday[4];
+  char month[4];
+  int i;
+  static const char *months[12] = {
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+  if(sscanf(d, "%3s, %d %s %d %d:%d:%d",
+	    wday, &tm.tm_mday, month, &tm.tm_year,
+	    &tm.tm_hour, &tm.tm_min, &tm.tm_sec) != 7)
+    return -1;
+
+  tm.tm_year -= 1900;;
+  tm.tm_isdst = -1;
+	      
+  for(i = 0; i < 12; i++)
+    if(!strcasecmp(months[i], month)) {
+      tm.tm_mon = i;
+      break;
+    }
+  
+  *tp = timegm(&tm);
+  return 0;
+}
+
+
+/**
  * Parse WEBDAV PROPFIND results
  */
-
 static int
 parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
 	       char *errbuf, size_t errlen)
@@ -1262,6 +1294,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
   char *path  = malloc(HTTP_MAX_PATH_LEN);
   char *fname = malloc(HTTP_MAX_PATH_LEN);
   char *ehref = malloc(HTTP_MAX_PATH_LEN); // Escaped href
+  fa_dir_entry_t *fde;
 
   // We need to compare paths and to do so, we must deescape the
   // possible URL encoding. Do the searched-for path once
@@ -1335,8 +1368,24 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
 	  }
 	  http_deescape(fname);
 	  http_deescape(path);
+	  
+	  fde = fa_dir_add(fd, path, fname, 
+			   isdir ? CONTENT_DIR : CONTENT_FILE);
 
-	  fa_dir_add(fd, path, fname, isdir ? CONTENT_DIR : CONTENT_FILE);
+	  if(fde != NULL && !isdir) {
+
+	    fde->fde_statdone = 1;
+
+	    if((d = get_cdata_by_tag(c, "DAV:getcontentlength")) != NULL)
+	      fde->fde_stat.st_size = strtoll(d, NULL, 10);
+	    else
+	      fde->fde_statdone = 0;
+	  
+	    if((d = get_cdata_by_tag(c, "DAV:getlastmodified")) == NULL ||
+	       dav_ctime(&fde->fde_stat.st_mtime, d))
+	      fde->fde_statdone = 1;
+
+	  }
 	}
       }
     } else {
@@ -1355,31 +1404,8 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
 	    hf->hf_filesize = strtoll(d, NULL, 10);
 
 	  hf->hf_mtime = 0;
-	  if((d = get_cdata_by_tag(c, "DAV:getlastmodified")) != NULL) {
-	    struct tm tm = {0};
-	    char wday[4];
-	    char month[4];
-	    static const char *months[12] = {
-	      "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
-	      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-
-	    if(sscanf(d, "%3s, %d %s %d %d:%d:%d",
-		      wday, &tm.tm_mday, month, &tm.tm_year,
-		      &tm.tm_hour, &tm.tm_min, &tm.tm_sec) == 7) {
-	      int i;
-
-	      tm.tm_year -= 1900;;
-	      tm.tm_isdst = -1;
-	      
-	      for(i = 0; i < 12; i++)
-		if(!strcasecmp(months[i], month)) {
-		  tm.tm_mon = i;
-		  break;
-		}
-
-	      hf->hf_mtime = timegm(&tm);
-	    }
-	  }
+	  if((d = get_cdata_by_tag(c, "DAV:getlastmodified")) != NULL)
+	    dav_ctime(&hf->hf_mtime, d);
 	}
 	goto ok;
       } 

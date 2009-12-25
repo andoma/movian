@@ -40,6 +40,76 @@
 #include "navigator.h"
 #include "scrappers/scrappers.h"
 
+
+#define METADATA_HASH_SIZE 101
+#define METADATA_CACHE_SIZE 1000
+
+LIST_HEAD(metadata_list, metadata);
+TAILQ_HEAD(metadata_queue, metadata);
+
+static struct metadata_queue metadata_entries;
+static int metadata_nentries;
+static struct metadata_list metadata_hash[METADATA_HASH_SIZE];
+
+
+/**
+ *
+ */
+typedef struct metadata {
+  char *md_url;
+  time_t md_mtime;
+
+  char *md_redirect;
+
+  LIST_ENTRY(metadata) md_hash_link;
+  TAILQ_ENTRY(metadata) md_queue_link;
+
+  int md_type;
+  float md_duration;
+  int md_tracks;
+  time_t md_time;
+
+  rstr_t *md_title;
+  rstr_t *md_album;
+  rstr_t *md_artist;
+  rstr_t *md_format;
+  rstr_t *md_videoinfo;
+  rstr_t *md_audioinfo;
+
+} metadata_t;
+
+
+
+
+static void
+metadata_clean(metadata_t *md)
+{
+  rstr_release(md->md_title);
+  rstr_release(md->md_album);
+  rstr_release(md->md_artist);
+  rstr_release(md->md_format);
+  rstr_release(md->md_videoinfo);
+  rstr_release(md->md_audioinfo);
+
+  free(md->md_url);
+  free(md->md_redirect);
+}
+
+
+/**
+ *
+ */
+static void
+metadata_destroy(metadata_t *md)
+{
+  metadata_clean(md);
+  TAILQ_REMOVE(&metadata_entries, md, md_queue_link);
+  LIST_REMOVE(md, md_hash_link);
+  free(md);
+}
+
+
+
 static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
 static const uint8_t isosig[8] = {0x1, 0x43, 0x44, 0x30, 0x30, 0x31, 0x1, 0x0};
 static const uint8_t gifsig[6] = {'G', 'I', 'F', '8', '9', 'a'};
@@ -49,7 +119,7 @@ static const uint8_t gifsig[6] = {'G', 'I', 'F', '8', '9', 'a'};
  *
  */
 static char *
-metadata_get(AVMetadata *m, const char *key)
+ffmpeg_metadata_get(AVMetadata *m, const char *key)
 {
   AVMetadataTag *tag;
   int len;
@@ -83,29 +153,17 @@ metadata_get(AVMetadata *m, const char *key)
 /**
  *
  */
-static void
-metadata_to_prop(prop_t *p, const char *pname, AVMetadata *m, const char *key,
-		 int asint)
+static rstr_t *
+ffmpeg_metadata_get_str(AVMetadata *m, const char *key)
 {
-  char *str = metadata_get(m, key);
-
-  if(str == NULL)
-    return;
-
-  if(asint) {
-    prop_set_int(prop_create(p, pname), atoi(str));
-  } else {
-    prop_set_string(prop_create(p, pname), str);
-  }
-  free(str);
+  return rstr_alloc(ffmpeg_metadata_get(m, key));
 }
 
 /**
  * Obtain details from playlist
  */
 static void
-fa_probe_playlist(prop_t *proproot, const char *url,
-		  uint8_t *pb, size_t pbsize)
+fa_probe_playlist(metadata_t *md, const char *url, uint8_t *pb, size_t pbsize)
 {
   const char *t;
   char tmp1[300];
@@ -119,12 +177,12 @@ fa_probe_playlist(prop_t *proproot, const char *url,
     tmp1[i++] = *t++;
   tmp1[i] = 0;
   
-  prop_set_string(prop_create(proproot, "title"), tmp1);
+  md->md_title = rstr_alloc(tmp1);
   
   t = strstr((char *)pb, "NumberOfEntries=");
   
   if(t != NULL)
-    prop_set_int(prop_create(proproot, "ntracks"), atoi(t + 16));
+    md->md_tracks = atoi(t + 16);
 }
 
 /**
@@ -132,7 +190,7 @@ fa_probe_playlist(prop_t *proproot, const char *url,
  */
 #ifdef CONFIG_LIBEXIF
 static void
-fa_probe_exif(prop_t *proproot, fa_handle_t *fh, uint8_t *pb, size_t pbsize)
+fa_probe_exif(metadata_t *md, fa_handle_t *fh, uint8_t *pb, size_t pbsize)
 {
   unsigned char buf[4096];
   int x, v;
@@ -171,9 +229,8 @@ fa_probe_exif(prop_t *proproot, fa_handle_t *fh, uint8_t *pb, size_t pbsize)
       tm.tm_year -= 1900;
       tm.tm_mon--;
       t = mktime(&tm);
-      if(t != (time_t)-1) {
-	prop_set_int(prop_create(proproot, "date"), t);
-      }
+      if(t != (time_t)-1)
+	md->md_time = t;
     }
   }
   exif_data_unref(ed);
@@ -184,7 +241,7 @@ fa_probe_exif(prop_t *proproot, fa_handle_t *fh, uint8_t *pb, size_t pbsize)
  * Probe SPC files
  */
 static void
-fa_probe_spc(prop_t *proproot, uint8_t *pb)
+fa_probe_spc(metadata_t *md, uint8_t *pb)
 {
   char buf[33];
   buf[32] = 0;
@@ -196,25 +253,39 @@ fa_probe_spc(prop_t *proproot, uint8_t *pb)
     return;
 
   memcpy(buf, pb + 0x2e, 32);
-  prop_set_string(prop_create(proproot, "title"), buf);
+  md->md_title = rstr_alloc(buf);
 
   memcpy(buf, pb + 0x4e, 32);
-  prop_set_string(prop_create(proproot, "album"), buf);
+  md->md_album = rstr_alloc(buf);
 
   memcpy(buf, pb + 0xa9, 3);
   buf[3] = 0;
 
-  prop_set_float(prop_create(proproot, "duration"), atoi(buf));
-
-  return;
+  md->md_duration = atoi(buf);
 }
+
+
+/**
+ * 
+ */
+static void
+metdata_set_redirect(metadata_t *md, const char *fmt, ...)
+{
+  char buf[512];
+  va_list ap;
+  va_start(ap, fmt);
+
+  vsnprintf(buf, sizeof(buf), fmt, ap);
+  va_end(ap);
+  md->md_redirect = strdup(buf);
+}
+
 
 /**
  * Probe file by checking its header
  */
 static int
-fa_probe_header(prop_t *proproot, const char *url, fa_handle_t *fh,
-		char *newurl, size_t newurlsize)
+fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh)
 {
   uint8_t pb[256];
   off_t psiz;
@@ -225,67 +296,73 @@ fa_probe_header(prop_t *proproot, const char *url, fa_handle_t *fh,
 
   if(psiz == 256 && 
      !memcmp(pb, "SNES-SPC700 Sound File Data", 27)) {
-    fa_probe_spc(proproot, pb); 
-    return CONTENT_AUDIO;
+    fa_probe_spc(md, pb); 
+    md->md_type = CONTENT_AUDIO;
+    return 1;
   }
 
   if(pb[0] == 'R'  && pb[1] == 'a'  && pb[2] == 'r' && pb[3] == '!' &&
      pb[4] == 0x1a && pb[5] == 0x07 && pb[6] == 0x0 && pb[9] == 0x73) {
 
     flags = pb[10] | pb[11] << 8;
-    if((flags & 0x101) == 1)
-      return CONTENT_UNKNOWN; /* Don't include slave volumes */
+    if((flags & 0x101) == 1) {
+      /* Don't include slave volumes */
+      md->md_type = CONTENT_UNKNOWN;
+      return 1;
+    }
 
-
-    if(newurl != NULL)
-      snprintf(newurl, newurlsize, "rar://%s|", url);
-    return CONTENT_ARCHIVE;
+    metdata_set_redirect(md, "rar://%s|", url);
+    md->md_type = CONTENT_ARCHIVE;
+    return 1;
   }
 
   if(pb[0] == 0x50 && pb[1] == 0x4b && pb[2] == 0x03 && pb[3] == 0x04) {
-    if(newurl != NULL)
-      snprintf(newurl, newurlsize, "zip://%s|", url);
-    return CONTENT_ARCHIVE;
+    metdata_set_redirect(md, "zip://%s|", url);
+    md->md_type = CONTENT_ARCHIVE;
+    return 1;
   }
 
   if(!strncasecmp((char *)pb, "[playlist]", 10)) {
     /* Playlist */
-    if(proproot != NULL)
-      fa_probe_playlist(proproot, url, pb, sizeof(pb));
-    return CONTENT_PLAYLIST;
+    fa_probe_playlist(md, url, pb, sizeof(pb));
+    md->md_type = CONTENT_PLAYLIST;
+    return 1;
   }
 
   if(pb[6] == 'J' && pb[7] == 'F' && pb[8] == 'I' && pb[9] == 'F') {
     /* JPEG image */
-    return CONTENT_IMAGE;
+    md->md_type = CONTENT_IMAGE;
+    return 1;
   }
 
   if(pb[6] == 'E' && pb[7] == 'x' && pb[8] == 'i' && pb[9] == 'f') {
     /* JPEG image with EXIF tag*/
 #ifdef CONFIG_LIBEXIF
-    if(proproot != NULL)
-      fa_probe_exif(proproot, fh, pb, psiz);
+    fa_probe_exif(md, fh, pb, psiz);
 #endif
-    return CONTENT_IMAGE;
+    md->md_type = CONTENT_IMAGE;
+    return 1;
   }
 
   if(!memcmp(pb, pngsig, 8)) {
     /* PNG */
-    return CONTENT_IMAGE;
+    md->md_type = CONTENT_IMAGE;
+    return 1;
   }
 
   if(!memcmp(pb, gifsig, sizeof(gifsig))) {
     /* GIF */
-    return CONTENT_IMAGE;
+    md->md_type = CONTENT_IMAGE;
+    return 1;
   }
-  return -1;
+  return 0;
 }
 
 /**
  * Check if file is an iso image
  */
 int
-fa_probe_iso(prop_t *proproot, fa_handle_t *fh)
+fa_probe_iso(metadata_t *md, fa_handle_t *fh)
 {
   char pb[128], *p;
 
@@ -304,8 +381,8 @@ fa_probe_iso(prop_t *proproot, fa_handle_t *fh)
 
   *p = 0;
 
-  if(proproot != NULL)
-    prop_set_string(prop_create(proproot, "title"), &pb[40]);
+  if(md != NULL)
+    md->md_title = rstr_alloc(pb + 40);
   return 0;
 }
 
@@ -313,19 +390,19 @@ fa_probe_iso(prop_t *proproot, fa_handle_t *fh)
 /**
  * 
  */
-unsigned int
-fa_lavf_load_meta(prop_t *proproot, AVFormatContext *fctx, const char *url)
+static void
+fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
 {
   int i;
   AVCodecContext *avctx;
   AVCodec *codec;
   const char *t;
   char tmp1[1024];
-  char *p, *str;
+  char *p;
   int has_video = 0;
   int has_audio = 0;
 
-  if(proproot != NULL) {
+  if(md != NULL) {
 
     /* Format meta info */
 
@@ -338,31 +415,21 @@ fa_lavf_load_meta(prop_t *proproot, AVFormatContext *fctx, const char *url)
     
       if(i > 4 && p[i - 4] == '.')
 	p[i - 4] = 0;
-      prop_set_string(prop_create(proproot, "title"), p);
+
+      md->md_title = rstr_alloc(p);
     } else {
-      metadata_to_prop(proproot, "title", fctx->metadata, "title", 0);
+      md->md_title = ffmpeg_metadata_get_str(fctx->metadata, "title");
     }
 
-    str = metadata_get(fctx->metadata, "artist");
-    if(str == NULL)
-      str = metadata_get(fctx->metadata, "author");
+    md->md_artist = ffmpeg_metadata_get_str(fctx->metadata, "artist") ?:
+      ffmpeg_metadata_get_str(fctx->metadata, "author");
 
-    if(str != NULL) {
-      prop_set_string(prop_create(proproot, "artist"), str);
-      scrapper_artist_init(prop_create(proproot, "artist_images"), str);
-      free(str);
-    }
-    metadata_to_prop(proproot, "album", fctx->metadata, "album", 0);
-    metadata_to_prop(proproot, "genre", fctx->metadata, "genre", 0);
-    metadata_to_prop(proproot, "copyright", fctx->metadata, "copyright", 0);
-    metadata_to_prop(proproot, "track", fctx->metadata, "track", 1);
+    md->md_album = ffmpeg_metadata_get_str(fctx->metadata, "album");
 
-    prop_set_string(prop_create(proproot, "mediaformat"),
-		    fctx->iformat->long_name);
+    md->md_format = rstr_alloc(fctx->iformat->long_name);
 
     if(fctx->duration != AV_NOPTS_VALUE)
-      prop_set_float(prop_create(proproot, "duration"), 
-		     (float)fctx->duration / 1000000);
+      md->md_duration = (float)fctx->duration / 1000000;
   }
 
   /* Check each stream */
@@ -383,7 +450,7 @@ fa_lavf_load_meta(prop_t *proproot, AVFormatContext *fctx, const char *url)
       continue;
     }
 
-    if(proproot != NULL) {
+    if(md != NULL) {
 
       if(codec == NULL) {
 	snprintf(tmp1, sizeof(tmp1), "Unsupported codec");
@@ -407,10 +474,12 @@ fa_lavf_load_meta(prop_t *proproot, AVFormatContext *fctx, const char *url)
 
       switch(avctx->codec_type) {
       case CODEC_TYPE_VIDEO:
-	prop_set_string(prop_create(proproot, "videoinfo"), tmp1);
+	if(md->md_videoinfo == NULL)
+	  md->md_videoinfo = rstr_alloc(tmp1);
 	break;
       case CODEC_TYPE_AUDIO:
-	prop_set_string(prop_create(proproot, "audioinfo"), tmp1);
+	if(md->md_audioinfo == NULL)
+	  md->md_audioinfo = rstr_alloc(tmp1);
 	break;
       
       default:
@@ -418,40 +487,38 @@ fa_lavf_load_meta(prop_t *proproot, AVFormatContext *fctx, const char *url)
       }
     }
   }
-
+  
+  md->md_type = CONTENT_FILE;
   if(has_video)
-    return CONTENT_VIDEO;
+    md->md_type = CONTENT_VIDEO;
   else if(has_audio)
-    return CONTENT_AUDIO;
-
-  return CONTENT_FILE;
+    md->md_type = CONTENT_AUDIO;
 }
+  
 
 /**
- * Probe a file for its type
+ *
  */
-unsigned int
-fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize,
-	 char *errbuf, size_t errsize)
+static int
+fa_probe_fill_cache(metadata_t *md, const char *url, char *errbuf, 
+		    size_t errsize)
 {
-  int r;
+  const char *url0 = url;
   AVFormatContext *fctx;
   char tmp1[1024];
-  const char *url0 = url;
   fa_handle_t *fh;
-  int type;
 
   if((fh = fa_open(url, errbuf, errsize)) == NULL)
-    return CONTENT_UNKNOWN;
+    return -1;
 
-  if((r = fa_probe_header(proproot, url0, fh, newurl, newurlsize)) != -1) {
+  if(fa_probe_header(md, url0, fh)) {
     fa_close(fh);
-    return r;
+    return 0;
   }
 
-  if(fa_probe_iso(proproot, fh) == 0) {
+  if(!fa_probe_iso(md, fh)) {
     fa_close(fh);
-    return CONTENT_DVD;
+    return 0;
   }
 
   fa_close(fh);
@@ -462,19 +529,121 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize,
 
   if(av_open_input_file(&fctx, tmp1, NULL, 0, NULL) != 0) {
     snprintf(errbuf, errsize, "Unable to open file (ffmpeg)");
-    return CONTENT_UNKNOWN;
+    return -1;
   }
 
   if(av_find_stream_info(fctx) < 0) {
     av_close_input_file(fctx);
     snprintf(errbuf, errsize, "Unable to handle file contents");
-    return CONTENT_UNKNOWN;
+    return -1;
   }
 
-  type = fa_lavf_load_meta(proproot, fctx, url);
-
+  fa_lavf_load_meta(md, fctx, url);
   av_close_input_file(fctx);  
-  return type;
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+fa_probe_set_from_cache(const metadata_t *md, prop_t *proproot, 
+			char *newurl, size_t newurlsize)
+{
+  if(md->md_redirect != NULL && newurl != NULL)
+    av_strlcpy(newurl, md->md_redirect, newurlsize);
+
+  if(md->md_title)
+    prop_set_rstring(prop_create(proproot, "title"),  md->md_title);
+
+  if(md->md_artist)
+    prop_set_rstring(prop_create(proproot, "artist"), md->md_artist);
+  
+  if(md->md_album)
+    prop_set_rstring(prop_create(proproot, "album"),  md->md_album);
+
+  if(md->md_audioinfo)
+    prop_set_rstring(prop_create(proproot, "audioinfo"),  md->md_audioinfo);
+
+  if(md->md_videoinfo)
+    prop_set_rstring(prop_create(proproot, "videoinfo"),  md->md_videoinfo);
+
+  if(md->md_format)
+    prop_set_rstring(prop_create(proproot, "format"),  md->md_format);
+
+  if(md->md_duration)
+    prop_set_float(prop_create(proproot, "duration"),  md->md_duration);
+
+  if(md->md_tracks)
+    prop_set_int(prop_create(proproot, "tracks"),  md->md_tracks);
+
+  return md->md_type;
+}
+
+
+
+
+/**
+ * Probe a file for its type
+ */
+unsigned int
+fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize,
+	 char *errbuf, size_t errsize, struct stat *st)
+{
+  struct stat st0;
+  unsigned int hash;
+  metadata_t *md;
+
+  if(st  == NULL) {
+    if(fa_stat(url, &st0, errbuf, errsize))
+      return CONTENT_UNKNOWN;
+    st = &st0;
+  }
+
+  hash = mystrhash(url) % METADATA_HASH_SIZE;
+  
+  LIST_FOREACH(md, &metadata_hash[hash], md_hash_link)
+    if(md->md_mtime == st->st_mtime && !strcmp(md->md_url, url))
+      break;
+
+  if(md != NULL) {
+    TAILQ_REMOVE(&metadata_entries, md, md_queue_link);
+    TAILQ_INSERT_TAIL(&metadata_entries, md, md_queue_link);
+
+  } else {
+    if(metadata_nentries == METADATA_CACHE_SIZE) {
+      md = TAILQ_FIRST(&metadata_entries);
+      metadata_destroy(md);
+    }
+
+    md = calloc(1, sizeof(metadata_t));
+    LIST_INSERT_HEAD(&metadata_hash[hash], md, md_hash_link);
+    TAILQ_INSERT_TAIL(&metadata_entries, md, md_queue_link);
+    md->md_mtime = st->st_mtime;
+    md->md_url = strdup(url);
+
+    if(fa_probe_fill_cache(md, url, errbuf, errsize)) {
+      metadata_destroy(md);
+      return CONTENT_UNKNOWN;
+    }
+  }
+
+  return fa_probe_set_from_cache(md, proproot, newurl, newurlsize);
+}
+
+
+/**
+ *
+ */
+void
+fa_probe_load_metaprop(prop_t *p, AVFormatContext *fctx, const char *url)
+{
+  metadata_t md = {0};
+
+  fa_lavf_load_meta(&md, fctx, url);
+  fa_probe_set_from_cache(&md, p, NULL, 0);
+  metadata_clean(&md);
 }
 
 /**
@@ -499,4 +668,14 @@ fa_probe_dir(prop_t *proproot, const char *url)
   }
 
   return type;
+}
+
+
+/**
+ *
+ */
+void
+fa_probe_init(void)
+{
+  TAILQ_INIT(&metadata_entries);
 }

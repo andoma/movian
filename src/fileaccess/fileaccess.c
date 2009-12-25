@@ -38,6 +38,7 @@
 #include <fileaccess/svfs.h>
 
 #include "fa_proto.h"
+#include "fa_probe.h"
 
 struct fa_protocol_list fileaccess_all_protocols;
 static URLProtocol fa_lavf_proto;
@@ -382,13 +383,13 @@ fa_dir_free(fa_dir_t *fd)
 /**
  *
  */
-void
+fa_dir_entry_t *
 fa_dir_add(fa_dir_t *fd, const char *url, const char *filename, int type)
 {
   fa_dir_entry_t *fde;
 
   if(filename[0] == '.')
-    return; /* Skip all dot-filenames */
+    return NULL; /* Skip all dot-filenames */
 
   fde = malloc(sizeof(fa_dir_entry_t));
 
@@ -396,9 +397,12 @@ fa_dir_add(fa_dir_t *fd, const char *url, const char *filename, int type)
   fde->fde_filename = strdup(filename);
   fde->fde_type     = type;
   fde->fde_prop     = NULL;
-  fde->fde_size     = 0;
+  fde->fde_statdone = 0;
+  memset(&fde->fde_stat, 0, sizeof(struct stat));
+
   TAILQ_INSERT_TAIL(&fd->fd_entries, fde, fde_link);
   fd->fd_count++;
+  return fde;
 }
 
 
@@ -429,7 +433,6 @@ fa_dir_insert(fa_dir_t *fd, const char *url, const char *filename, int type)
   TAILQ_INSERT_SORTED(&fd->fd_entries, fde, fde_link, fa_dir_insert_compar);
   fd->fd_count++;
   return fde;
-
 }
 
 
@@ -474,6 +477,21 @@ fa_dir_sort(fa_dir_t *fd)
 }
 
 
+/**
+ *
+ */
+int
+fa_dir_entry_stat(fa_dir_entry_t *fde)
+{
+  if(fde->fde_statdone)
+    return 0;
+
+  if(!fa_stat(fde->fde_url, &fde->fde_stat, NULL, 0))
+    fde->fde_statdone = 1;
+  return !fde->fde_statdone;
+}
+
+
 
 /**
  *
@@ -488,6 +506,7 @@ fa_dir_sort(fa_dir_t *fd)
 int
 fileaccess_init(void)
 {
+  fa_probe_init();
   INITPROTO(fs);
   INITPROTO(rar);
   INITPROTO(zip);

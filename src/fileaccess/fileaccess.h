@@ -44,8 +44,9 @@ typedef struct fa_dir_entry {
   char *fde_url;
   int   fde_type; /* CONTENT_ .. types from showtime.h */
   void *fde_prop;
-  int64_t fde_size;
 
+  int fde_statdone;
+  struct stat fde_stat;
 } fa_dir_entry_t;
 
 /**
@@ -60,7 +61,7 @@ fa_dir_t *fa_dir_alloc(void);
 
 void fa_dir_free(fa_dir_t *nd);
 
-void fa_dir_add(fa_dir_t *nd, const char *path, const char *name, int type);
+fa_dir_entry_t *fa_dir_add(fa_dir_t *nd, const char *path, const char *name, int type);
 
 void fa_dir_entry_free(fa_dir_t *fd, fa_dir_entry_t *fde);
 
@@ -69,6 +70,7 @@ void fa_dir_sort(fa_dir_t *nd);
 fa_dir_entry_t *fa_dir_insert(fa_dir_t *fd, const char *url,
 			      const char *filename, int type);
 
+int fa_dir_entry_stat(fa_dir_entry_t *fde);
 
 /**
  *

@@ -407,27 +407,6 @@ nav_play_audio(const char *url, struct media_pipe *mp,
 /**
  *
  */
-unsigned int nav_probe(prop_t *proproot, const char *url,
-		       char *newurl, size_t newurlsize,
-		       char *errbuf, size_t errsize)
-{
-  nav_backend_t *nb;
-
-  LIST_FOREACH(nb, &nav_backends, nb_global_link)
-    if(nb->nb_canhandle(url))
-      break;
-  
-  if(nb == NULL || nb->nb_probe == NULL) {
-    snprintf(errbuf, errsize, "No backend for URL");
-    return CONTENT_UNKNOWN;
-  }
-  return nb->nb_probe(proproot, url, newurl, newurlsize, errbuf, errsize);
-}
-
-
-/**
- *
- */
 prop_t *
 nav_list(const char *url, char *errbuf, size_t errlen)
 {

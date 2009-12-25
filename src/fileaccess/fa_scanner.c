@@ -170,7 +170,8 @@ meta_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
       if(fde->fde_type == CONTENT_DIR) {
 	type = fa_probe_dir(metadata, fde->fde_url);
       } else if(fde->fde_type == CONTENT_FILE) {
-	type = fa_probe(metadata, fde->fde_url, NULL, 0, buf, sizeof(buf));
+	type = fa_probe(metadata, fde->fde_url, NULL, 0, buf, sizeof(buf),
+			fde->fde_statdone ? &fde->fde_stat : NULL);
 
 	if(type == CONTENT_UNKNOWN)
 	  TRACE(TRACE_DEBUG, "BROWSE",
@@ -185,23 +186,13 @@ meta_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
     case CONTENT_IMAGE:
       images++;
 
-      if(metadata != NULL) {
-	/* Only check filesize when doing deep search */
+      if(!strncasecmp(fde->fde_filename, "albumart", 8) ||
+	 !strncasecmp(fde->fde_filename, "folder.", 7)) {
 
-	if(!strncasecmp(fde->fde_filename, "albumart", 8) ||
-	   !strncasecmp(fde->fde_filename, "folder.", 7)) {
-
-	  if(fde->fde_size == 0) {
-
-	    struct stat st;
-	    if(!fa_stat(fde->fde_url, &st, NULL, 0))
-	      fde->fde_size = st.st_size;
-
-	    if(fde->fde_size > album_art_score) {
-	      album_art_score = fde->fde_size;
-	      snprintf(album_art, sizeof(album_art), "%s", fde->fde_url);
-	    }
-	  }
+	if(fde->fde_statdone || 
+	   (metadata != NULL && !fa_dir_entry_stat(fde))) {
+	  album_art_score = fde->fde_stat.st_size;
+	  snprintf(album_art, sizeof(album_art), "%s", fde->fde_url);
 	}
       }
       break;
@@ -345,12 +336,12 @@ scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde)
   if(fde->fde_type == CONTENT_DIR) {
     r = fa_probe_dir(metadata, fde->fde_url);
   } else {
-    r = fa_probe(metadata, fde->fde_url, NULL, 0, NULL, 0);
+    r = fa_probe(metadata, fde->fde_url, NULL, 0, NULL, 0,
+		 fde->fde_statdone ? &fde->fde_stat : NULL);
   }
 
   set_type(fde->fde_prop, r);
   fde->fde_type = r;
-
 }
 
 /**
@@ -610,17 +601,9 @@ album_art_scanner(void *aux)
       if(!strncasecmp(fde->fde_filename, "albumart", 8) ||
 	 !strncasecmp(fde->fde_filename, "folder.", 7)) {
 
-	if(fde->fde_size == 0) {
-
-	  struct stat st;
-	  if(!fa_stat(fde->fde_url, &st, NULL, 0))
-	    fde->fde_size = st.st_size;
-
-	  if(fde->fde_size > album_art_score) {
-	    album_art_score = fde->fde_size;
-	    snprintf(album_art, sizeof(album_art), "%s", fde->fde_url);
-	  }
-	}
+	if(!fa_dir_entry_stat(fde))
+	  album_art_score = fde->fde_stat.st_size;
+	snprintf(album_art, sizeof(album_art), "%s", fde->fde_url);
       }
     }
 
