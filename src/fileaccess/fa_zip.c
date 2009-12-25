@@ -130,6 +130,9 @@ typedef struct zip_archive {
   struct zip_file *za_root;
 
   LIST_ENTRY(zip_archive) za_link;
+
+  time_t za_mtime;
+
 } zip_archive_t;
 
 
@@ -252,11 +255,16 @@ zip_archive_load(zip_archive_t *za)
   off_t cds_off;
   size_t cds_size;
   char *fname;
+  struct stat st;
+
+  if(fa_stat(za->za_url, &st, NULL, 0))
+    return -1;
+
+  asize = st.st_size;
+  za->za_mtime = st.st_mtime;
 
   if((fh = fa_open(za->za_url, NULL, 0)) == NULL)
     return -1;
-
-  asize = fa_fsize(fh);
 
   scan_off = asize - TRAILER_SCAN_SIZE;
   if(scan_off < 0) {
@@ -818,6 +826,7 @@ zip_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
 
   buf->st_mode = zf->zf_type == CONTENT_DIR ? S_IFDIR : S_IFREG;
   buf->st_size = zf->zf_uncompressed_size;
+  buf->st_mtime = zf->zf_archive->za_mtime;
 
   zip_file_unref(zf);
   return 0;

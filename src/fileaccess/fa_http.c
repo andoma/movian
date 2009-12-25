@@ -182,7 +182,6 @@ typedef struct http_file {
   int64_t hf_rsize; /* Size of reply, if chunked: don't care about this */
 
   int64_t hf_filesize;
-
   int64_t hf_pos;
 
   int64_t hf_consecutive_read;
@@ -197,6 +196,8 @@ typedef struct http_file {
     CONNECTION_MODE_PERSISTENT,
     CONNECTION_MODE_CLOSE,
   } hf_connection_mode;
+
+  time_t hf_mtime;
 
 } http_file_t;
 
@@ -1196,6 +1197,7 @@ http_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
   if((handle = http_open_ex(fap, url, errbuf, errlen, 1)) == NULL)
     return -1;
  
+  memset(buf, 0, sizeof(struct stat));
   hf = (http_file_t *)handle;
   
   /* no content length and text/html, assume "index of" page */
@@ -1349,8 +1351,35 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
 	hf->hf_isdir = isdir;
 
 	if(!isdir) {
-	  d = get_cdata_by_tag(c, "DAV:getcontentlength");
-	  hf->hf_filesize = strtoll(d, NULL, 10);
+	  if((d = get_cdata_by_tag(c, "DAV:getcontentlength")) != NULL)
+	    hf->hf_filesize = strtoll(d, NULL, 10);
+
+	  hf->hf_mtime = 0;
+	  if((d = get_cdata_by_tag(c, "DAV:getlastmodified")) != NULL) {
+	    struct tm tm = {0};
+	    char wday[4];
+	    char month[4];
+	    static const char *months[12] = {
+	      "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+	      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+	    if(sscanf(d, "%3s, %d %s %d %d:%d:%d",
+		      wday, &tm.tm_mday, month, &tm.tm_year,
+		      &tm.tm_hour, &tm.tm_min, &tm.tm_sec) == 7) {
+	      int i;
+
+	      tm.tm_year -= 1900;;
+	      tm.tm_isdst = -1;
+	      
+	      for(i = 0; i < 12; i++)
+		if(!strcasecmp(months[i], month)) {
+		  tm.tm_mon = i;
+		  break;
+		}
+
+	      hf->hf_mtime = timegm(&tm);
+	    }
+	  }
 	}
 	goto ok;
       } 
@@ -1430,7 +1459,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen)
 	snprintf(errbuf, errlen, "Connection lost");
 	return -1;
       }
-      
+
       /* XML parser consumes 'buf' */
       if((xml = htsmsg_xml_deserialize(buf, err0, sizeof(err0))) == NULL) {
 	snprintf(errbuf, errlen,
@@ -1487,7 +1516,8 @@ dav_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
 
   buf->st_mode = hf->hf_isdir ? S_IFDIR : S_IFREG;
   buf->st_size = hf->hf_filesize;
-  
+  buf->st_mtime = hf->hf_mtime;
+
   http_destroy(hf);
   return 0;
 }

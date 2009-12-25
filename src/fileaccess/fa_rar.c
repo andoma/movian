@@ -109,6 +109,9 @@ typedef struct rar_archive {
   struct rar_file *ra_root;
 
   LIST_ENTRY(rar_archive) ra_link;
+
+  time_t ra_mtime;
+
 } rar_archive_t;
 
 
@@ -264,6 +267,7 @@ rar_archive_load(rar_archive_t *ra)
   rar_volume_t *rv;
   rar_file_t *rf;
   rar_segment_t *rs;
+  struct stat st;
 
   ra->ra_root = calloc(1, sizeof(rar_file_t));
   ra->ra_root->rf_type = CONTENT_DIR;
@@ -316,6 +320,9 @@ rar_archive_load(rar_archive_t *ra)
   if(fa_read(fh, buf, 13) != 13)
     goto err;
 
+  if(ra->ra_mtime == 0 && !fa_stat(fh, &st, NULL, 0))
+    ra->ra_mtime = st.st_mtime;
+
   /* 2 bytes CRC */
   
   if(buf[2] != RAR_HEADER_MAIN)
@@ -330,7 +337,7 @@ rar_archive_load(rar_archive_t *ra)
   rv = calloc(1, sizeof(rar_volume_t));
   LIST_INSERT_HEAD(&ra->ra_volumes, rv, rv_link);
   rv->rv_url = strdup(filename);
-  
+
   voff = 13 + 7;
 
   while(1) {
@@ -749,6 +756,7 @@ rar_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
 
   buf->st_mode = rf->rf_type == CONTENT_DIR ? S_IFDIR : S_IFREG;
   buf->st_size = rf->rf_size;
+  buf->st_mtime = rf->rf_archive->ra_mtime;
 
   rar_file_unref(rf);
   return 0;
