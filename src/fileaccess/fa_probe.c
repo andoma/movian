@@ -50,7 +50,7 @@ TAILQ_HEAD(metadata_queue, metadata);
 static struct metadata_queue metadata_entries;
 static int metadata_nentries;
 static struct metadata_list metadata_hash[METADATA_HASH_SIZE];
-
+static hts_mutex_t metadata_mutex;
 
 /**
  *
@@ -592,7 +592,7 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize,
 	 char *errbuf, size_t errsize, struct stat *st)
 {
   struct stat st0;
-  unsigned int hash;
+  unsigned int hash, r;
   metadata_t *md;
 
   if(st  == NULL) {
@@ -602,6 +602,8 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize,
   }
 
   hash = mystrhash(url) % METADATA_HASH_SIZE;
+
+  hts_mutex_lock(&metadata_mutex);
   
   LIST_FOREACH(md, &metadata_hash[hash], md_hash_link)
     if(md->md_mtime == st->st_mtime && !strcmp(md->md_url, url))
@@ -629,7 +631,10 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize,
     }
   }
 
-  return fa_probe_set_from_cache(md, proproot, newurl, newurlsize);
+  r = fa_probe_set_from_cache(md, proproot, newurl, newurlsize);
+
+  hts_mutex_unlock(&metadata_mutex);
+  return r;
 }
 
 
@@ -678,4 +683,5 @@ void
 fa_probe_init(void)
 {
   TAILQ_INIT(&metadata_entries);
+  hts_mutex_init(&metadata_mutex);
 }
