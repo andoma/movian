@@ -30,6 +30,10 @@ pixmap_alloc_coded(const void *data, size_t size, enum CodecID codec)
   pixmap_t *pm = calloc(1, sizeof(pixmap_t));
   pm->pm_refcount = 1;
   pm->pm_size = size;
+
+  pm->pm_width = -1;
+  pm->pm_height = -1;
+
   pm->pm_data = malloc(size + FF_INPUT_BUFFER_PADDING_SIZE);
   if(data != NULL)
     memcpy(pm->pm_data, data, size);
