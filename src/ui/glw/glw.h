@@ -312,6 +312,8 @@ typedef struct glw_root {
   struct glw_head gr_active_dummy_list;
   struct glw_head gr_every_frame_list;
 
+  int gr_width;
+  int gr_height;
 
   /**
    * Font renderer

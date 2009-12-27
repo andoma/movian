@@ -99,9 +99,6 @@ make_powerof2(int v)
   return 1 << (av_log2(v) + (v > m));
 }
 
-static int maxwidth = 2048;
-static int maxheight = 1024;
-
 static void texture_load_direct(AVPicture *pict, glw_loadable_texture_t *glt);
 
 static void texture_load_rescale(AVPicture *pict, int src_w, int src_h,
@@ -190,18 +187,6 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 
     av_free(pict2.data[0]);
     return r;
-  }
-
-  /* Enforce a maximum size to limit texture transfer size */
-
-  if(req_w > maxwidth) {
-    req_h = req_h * maxwidth / req_w;
-    req_w = maxwidth;
-  }
-
-  if(req_h > maxheight) {
-    req_w = req_w * maxheight / req_h;
-    req_h = maxheight;
   }
 
   glt->glt_aspect = (float)req_w / (float)req_h;

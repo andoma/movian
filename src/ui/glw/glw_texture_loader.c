@@ -206,6 +206,11 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   
   frame = avcodec_alloc_frame();
 
+  if(pm->pm_width >= gr->gr_width * 3 && pm->pm_height >= gr->gr_height * 4)
+    ctx->lowres = 1;
+  if(pm->pm_width >= gr->gr_width * 5 && pm->pm_height >= gr->gr_height * 6)
+    ctx->lowres = 2;
+
   r = avcodec_decode_video(ctx, frame, &got_pic, pm->pm_data,  pm->pm_size);
 
   pixmap_release(pm);
@@ -216,6 +221,18 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   } else {
     w = ctx->width;
     h = ctx->height;
+  }
+
+  if(w > 64 && h > 64) {
+    if(w > gr->gr_width) {
+      h = h * gr->gr_width / w;
+      w = gr->gr_width;
+    }
+
+    if(h > gr->gr_height) {
+      w = w * gr->gr_height / h;
+      h = gr->gr_height;
+    }
   }
 
   r = glw_tex_backend_load(gr, glt, (AVPicture *)frame, 

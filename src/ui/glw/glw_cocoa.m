@@ -53,8 +53,6 @@ typedef struct glw_cocoa {
   
   glw_t *universe;
   
-  int window_width;
-  int window_height;
   float aspect_ratio;
   
   int font_size;
@@ -383,8 +381,8 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   if(!gcocoa.glready)
     return;
   
-  gcocoa.window_width  = width;
-  gcocoa.window_height = height;
+  gcocoa.gr.gr_width  = width;
+  gcocoa.gr.gr_height = height;
   gcocoa.aspect_ratio = (float)width / (float)height;
   
   glViewport(0, 0, width, height);
@@ -424,8 +422,8 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
   
   memset(&rc, 0, sizeof(rc));
-  rc.rc_size_x = gcocoa.window_width;
-  rc.rc_size_y = gcocoa.window_height;
+  rc.rc_size_x = gcocoa.gr.gr_width;
+  rc.rc_size_y = gcocoa.gr.gr_height;
   glw_layout0(gcocoa.gr.gr_universe, &rc);
   
   glMatrixMode(GL_PROJECTION);
@@ -514,8 +512,8 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   if(gcocoa.is_cursor_hidden) 
     [self glwUnHideCursor];
   
-  gpe.x = (2.0 * loc.x / gcocoa.window_width ) - 1;
-  gpe.y = (2.0 * loc.y / gcocoa.window_height) - 1;
+  gpe.x = (2.0 * loc.x / gcocoa.gr.gr_width ) - 1;
+  gpe.y = (2.0 * loc.y / gcocoa.gr.gr_height) - 1;
   gpe.type = type;
   if(type == GLW_POINTER_SCROLL)
     gpe.delta_y = -[event deltaY];

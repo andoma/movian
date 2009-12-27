@@ -76,9 +76,6 @@ typedef struct glw_x11 {
 
   PFNGLXSWAPINTERVALSGIPROC glXSwapIntervalSGI;
 
-  int window_width;
-  int window_height;
-
   int font_size;
   int want_font_size;
   setting_t *font_size_setting;
@@ -384,8 +381,8 @@ window_open(glw_x11_t *gx11)
 		  gx11->xvi->visual, mask, &winAttr
 		  );
 
-  gx11->window_width  = gx11->coords[fullscreen][2];
-  gx11->window_height = gx11->coords[fullscreen][3];
+  gx11->gr.gr_width  = gx11->coords[fullscreen][2];
+  gx11->gr.gr_height = gx11->coords[fullscreen][3];
 
   gx11->glxctx = glXCreateContext(gx11->display, gx11->xvi, NULL, 1);
 
@@ -809,8 +806,8 @@ layout_draw(glw_x11_t *gx11, float aspect)
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
   
   memset(&rc, 0, sizeof(rc));
-  rc.rc_size_x = gx11->window_width;
-  rc.rc_size_y = gx11->window_height;
+  rc.rc_size_x = gx11->gr.gr_width;
+  rc.rc_size_y = gx11->gr.gr_height;
   glw_layout0(gx11->gr.gr_universe, &rc);
 
   glMatrixMode(GL_PROJECTION);
@@ -919,8 +916,8 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	h = event.xconfigure.height;
 	glViewport(0, 0, w, h);
 	gx11->aspect_ratio = (float)w / (float)h;
-	gx11->window_width  = w;
-	gx11->window_height = h;
+	gx11->gr.gr_width  = w;
+	gx11->gr.gr_height = h;
 	break;
 
 
@@ -934,8 +931,8 @@ glw_x11_mainloop(glw_x11_t *gx11)
       case MotionNotify:
 	show_cursor(gx11);
 
-	gpe.x =  (2.0 * event.xmotion.x / gx11->window_width ) - 1;
-	gpe.y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
+	gpe.x =  (2.0 * event.xmotion.x / gx11->gr.gr_width ) - 1;
+	gpe.y = -(2.0 * event.xmotion.y / gx11->gr.gr_height) + 1;
 	gpe.type = GLW_POINTER_MOTION;
 
 	glw_lock(&gx11->gr);
@@ -945,8 +942,8 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	  
       case ButtonRelease:
 	if(event.xbutton.button == 1) {
-	  gpe.x =  (2.0 * event.xmotion.x / gx11->window_width ) - 1;
-	  gpe.y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
+	  gpe.x =  (2.0 * event.xmotion.x / gx11->gr.gr_width ) - 1;
+	  gpe.y = -(2.0 * event.xmotion.y / gx11->gr.gr_height) + 1;
 	  gpe.type = GLW_POINTER_RELEASE;
 	  glw_lock(&gx11->gr);
 	  glw_pointer_event(&gx11->gr, &gpe);
@@ -955,8 +952,8 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	break;
 
       case ButtonPress:
-	gpe.x =  (2.0 * event.xmotion.x / gx11->window_width ) - 1;
-	gpe.y = -(2.0 * event.xmotion.y / gx11->window_height) + 1;
+	gpe.x =  (2.0 * event.xmotion.x / gx11->gr.gr_width ) - 1;
+	gpe.y = -(2.0 * event.xmotion.y / gx11->gr.gr_height) + 1;
 
 
 	switch(event.xbutton.button) {
