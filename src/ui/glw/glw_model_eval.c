@@ -26,7 +26,7 @@
 #include "glw.h"
 #include "glw_event.h"
 #include "navigator.h"
-
+#include "misc/pixmap.h"
 
 /**
  *
@@ -992,8 +992,7 @@ prop_callback(void *opaque, prop_event_t event, ...)
   case PROP_SET_PIXMAP:
     t = prop_callback_alloc_token(gps, TOKEN_PIXMAP);
     t->propsubr = gps;
-    t->t_pixmap = va_arg(ap, prop_pixmap_t *);
-    prop_pixmap_ref_inc(t->t_pixmap);
+    t->t_pixmap = pixmap_dup(va_arg(ap, pixmap_t *));
     rpn = gps->gps_rpn;
     break;
 

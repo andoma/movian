@@ -508,7 +508,7 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
 
     case GLW_ATTRIB_PIXMAP:
       gi->gi_tex = glw_tex_create_from_pixmap(w->glw_root, 
-					      va_arg(ap, prop_pixmap_t *));
+					      va_arg(ap, pixmap_t *));
       gi->gi_render_init = 1;
       break;
 

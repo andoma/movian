@@ -16,7 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #ifndef RSTR_H__
 #define RSTR_H__
 

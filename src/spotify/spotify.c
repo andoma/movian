@@ -39,6 +39,7 @@
 #include "misc/ptrvec.h"
 #include "sd/sd.h"
 #include "scrappers/scrappers.h"
+#include "misc/pixmap.h"
 
 #ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
 #include <dlfcn.h>
@@ -223,7 +224,7 @@ typedef struct spotify_image {
 
   int si_errcode;
   
-  prop_pixmap_t *si_pixmap;
+  pixmap_t *si_pixmap;
 
 } spotify_image_t;
 
@@ -1794,9 +1795,9 @@ spotify_got_image(sp_image *image, void *userdata)
   void *pixels;
 
   pixels = f_sp_image_lock_pixels(image, &pitch);
-  si->si_pixmap = prop_pixmap_create(f_sp_image_width(image), 
-				     f_sp_image_height(image),
-				     pitch, PIX_FMT_RGB24, pixels);
+  si->si_pixmap = pixmap_create_rgb24(f_sp_image_width(image),
+				      f_sp_image_height(image),
+				      pixels, pitch);
   f_sp_image_unlock_pixels(image);
 
   hts_mutex_lock(&spotify_mutex);
@@ -2534,10 +2535,9 @@ parse_image_url(uint8_t *out, const char *url)
 /**
  *
  */
-static int
-be_spotify_imageloader(const char *url, char *errbuf, size_t errlen,
-		       int *thumb, void **data, size_t *datasize,
-		       int *codecid, const char *theme, prop_pixmap_t **pp)
+static pixmap_t *
+be_spotify_imageloader(const char *url, int want_thumb, const char *theme,
+		       char *errbuf, size_t errlen)
 {
   spotify_image_t si;
   uint8_t id[20];
@@ -2546,11 +2546,11 @@ be_spotify_imageloader(const char *url, char *errbuf, size_t errlen,
 
   if(parse_image_url(id, url)) {
     snprintf(errbuf, errlen, "Invalid URL for Spotify imageloader");
-    return -1;
+    return NULL;
   }
 
   if(spotify_start(errbuf, errlen))
-    return -1;
+    return NULL;
 
   si.si_id = id;
   si.si_errcode = -1;
@@ -2562,13 +2562,11 @@ be_spotify_imageloader(const char *url, char *errbuf, size_t errlen,
 
   hts_mutex_unlock(&spotify_mutex);
 
-  if(si.si_errcode == 0) {
-    *pp = si.si_pixmap;
-    return 0;
-  } else {
-    snprintf(errbuf, errlen, "Unable to load image");
-    return -1;
-  }
+  if(si.si_errcode == 0)
+    return si.si_pixmap;
+
+  snprintf(errbuf, errlen, "Unable to load image");
+  return NULL;
 }
 
 /**

@@ -483,10 +483,9 @@ nav_backend_t be_page = {
 /**
  *
  */
-int
-nav_imageloader(const char *url, char *errbuf, size_t errlen,
-		int *thumb, void **data, size_t *datasize,
-		int *codecid, const char *theme, prop_pixmap_t **pixmap)
+struct pixmap *
+nav_imageloader(const char *url, int want_thumb, const char *theme,
+		char *errbuf, size_t errlen)
 {
   nav_backend_t *nb;
 
@@ -496,8 +495,7 @@ nav_imageloader(const char *url, char *errbuf, size_t errlen,
   
   if(nb == NULL || nb->nb_imageloader == NULL) {
     snprintf(errbuf, errlen, "No backend for URL");
-    return -1;
+    return NULL;
   }
-  return nb->nb_imageloader(url, errbuf, errlen, thumb, data, 
-			    datasize, codecid, theme, pixmap);
+  return nb->nb_imageloader(url, want_thumb, theme, errbuf, errlen);
 }

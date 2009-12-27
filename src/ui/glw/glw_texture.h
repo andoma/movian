@@ -19,7 +19,7 @@
 #ifndef GLW_TEXTURE_H
 #define GLW_TEXTURE_H
 
-#include <libavcodec/avcodec.h>
+#include "misc/pixmap.h"
 
 typedef struct glw_loadable_texture {
 
@@ -53,7 +53,7 @@ typedef struct glw_loadable_texture {
   int glt_ext_format;
   int glt_ext_type;
 
-  struct prop_pixmap *glt_prop_pixmap;
+  struct pixmap *glt_pixmap;
 
 } glw_loadable_texture_t;
 
@@ -62,7 +62,7 @@ void glw_tex_init(glw_root_t *gr);
 glw_loadable_texture_t *glw_tex_create(glw_root_t *gr, const char *filename);
 
 glw_loadable_texture_t *glw_tex_create_from_pixmap(glw_root_t *gr, 
-						   prop_pixmap_t *pp);
+						   pixmap_t *pp);
  
 void glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *ht);
 
@@ -81,7 +81,7 @@ void glw_tex_flush_all(glw_root_t *gr);
  * Backend interface
  */
 int glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
-			 AVFrame *frame, int pix_fmt,
+			 AVPicture *pict, int pix_fmt,
 			 int src_w, int src_h,
 			 int req_w, int req_h);
 

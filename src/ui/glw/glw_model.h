@@ -132,7 +132,7 @@ typedef struct token {
 
     struct prop *prop;
 
-    struct prop_pixmap *pixmap;
+    struct pixmap *pixmap;
 
     struct {
       rstr_t *rtitle;

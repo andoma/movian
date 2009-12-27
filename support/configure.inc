@@ -22,7 +22,6 @@ CONFIG_LIST="
  libasound
  libpulse
  libfreetype
- libexif
  libpthread
  zlib
  posix_networking

@@ -50,6 +50,8 @@ SRCS += src/main.c \
 SRCS +=	src/misc/ptrvec.c \
 	src/misc/callout.c \
 	src/misc/rstr.c \
+	src/misc/pixmap.c \
+	src/misc/jpeg.c \
 
 #
 # HTSMSG

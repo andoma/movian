@@ -28,7 +28,7 @@
 #include "glw_model.h"
 #include "glw_event.h"
 
-
+#include "misc/pixmap.h"
 
 /**
  * Free a token.
@@ -107,7 +107,7 @@ glw_model_token_free(token_t *t)
     break;
 
   case TOKEN_PIXMAP:
-    prop_pixmap_ref_dec(t->t_pixmap);
+    pixmap_release(t->t_pixmap);
     break;
 
   case TOKEN_EVENT:
@@ -213,8 +213,7 @@ glw_model_token_copy(token_t *src)
     break;
 
   case TOKEN_PIXMAP:
-    dst->t_pixmap = src->t_pixmap;
-    prop_pixmap_ref_inc(dst->t_pixmap);
+    dst->t_pixmap = pixmap_dup(src->t_pixmap);
     break;
 
   case TOKEN_LINK:

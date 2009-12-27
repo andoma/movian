@@ -51,7 +51,7 @@ glw_tex_autoflush(glw_root_t *gr)
   hts_mutex_lock(&gr->gr_tex_mutex);
 
   while((glt = LIST_FIRST(&gr->gr_tex_flush_list)) != NULL) {
-    assert(glt->glt_filename != NULL || glt->glt_prop_pixmap != NULL);
+    assert(glt->glt_filename != NULL || glt->glt_pixmap != NULL);
     LIST_REMOVE(glt, glt_flush_link);
     glw_tex_backend_free_render_resources(glt);
     glt->glt_state = GLT_STATE_INACTIVE;
@@ -155,27 +155,15 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   AVCodecContext *ctx;
   AVCodec *codec;
   AVFrame *frame;
-  int r, got_pic, w, h;
-  prop_pixmap_t *pp;
-  int got_thumb, want_thumb;
-  void *data;
-  size_t datasize;
-  int codecid;
+  int r, got_pic, w, h, want_thumb;
   const char *url;
 
-  if(glt->glt_prop_pixmap != NULL) {
-    pp = glt->glt_prop_pixmap;
-
-    frame = avcodec_alloc_frame();
-    
-    frame->data[0] = pp->pp_pixels;
-    frame->linesize[0] = pp->pp_linesize;
-    
-    r = glw_tex_backend_load(gr, glt, frame, 
-			     pp->pp_pixfmt,
-			     pp->pp_width, pp->pp_height,
-			     pp->pp_width, pp->pp_height);
-    av_free(frame);
+  if(glt->glt_pixmap != NULL) {
+    pixmap_t *pm = glt->glt_pixmap;
+    r = glw_tex_backend_load(gr, glt, &pm->pm_pict,
+			     pm->pm_pixfmt,
+			     pm->pm_width, pm->pm_height,
+			     pm->pm_width, pm->pm_height);
     return r;
   }
 
@@ -190,50 +178,39 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
     want_thumb = 0;
   }
 
-  got_thumb = want_thumb;
-  if(nav_imageloader(url, NULL, 0, &got_thumb,
-		     &data, &datasize, &codecid, gr->gr_theme, &pp))
+  pixmap_t *pm = nav_imageloader(url, want_thumb, gr->gr_theme, NULL, 0);
+  if(pm == NULL)
     return -1;
 
-
-  if(pp != NULL) {
-    /* TODO: Factorize code with above */
-    frame = avcodec_alloc_frame();
-    
-    frame->data[0] = pp->pp_pixels;
-    frame->linesize[0] = pp->pp_linesize;
-    
-    r = glw_tex_backend_load(gr, glt, frame, 
-			     pp->pp_pixfmt,
-			     pp->pp_width, pp->pp_height,
-			     pp->pp_width, pp->pp_height);
-    av_free(frame);
-    prop_pixmap_ref_dec(pp);
+  if(pm->pm_codec == CODEC_ID_NONE) {
+    r = glw_tex_backend_load(gr, glt, &pm->pm_pict,
+			     pm->pm_pixfmt,
+			     pm->pm_width, pm->pm_height,
+			     pm->pm_width, pm->pm_height);
+    pixmap_release(pm);
     return r;
   }
 
-
-
   ctx = avcodec_alloc_context();
-  codec = avcodec_find_decoder(codecid);
+  codec = avcodec_find_decoder(pm->pm_codec);
   
   ctx->codec_id   = codec->id;
   ctx->codec_type = codec->type;
 
   if(avcodec_open(ctx, codec) < 0) {
     av_free(ctx);
-    free(data);
+    pixmap_release(pm);
     TRACE(TRACE_ERROR, "glw", "%s: unable to open codec", url);
     return -1;
   }
   
   frame = avcodec_alloc_frame();
 
-  r = avcodec_decode_video(ctx, frame, &got_pic, data, datasize);
+  r = avcodec_decode_video(ctx, frame, &got_pic, pm->pm_data,  pm->pm_size);
 
-  free(data);
+  pixmap_release(pm);
 
-  if(want_thumb && !got_thumb) {
+  if(want_thumb && pm->pm_flags & PIXMAP_THUMBNAIL) {
     w = 160;
     h = 160 * ctx->height / ctx->width;
   } else {
@@ -241,7 +218,7 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
     h = ctx->height;
   }
 
-  r = glw_tex_backend_load(gr, glt, frame, 
+  r = glw_tex_backend_load(gr, glt, (AVPicture *)frame, 
 			   ctx->pix_fmt, ctx->width, ctx->height, w, h);
 
   av_free(frame);
@@ -288,8 +265,8 @@ glw_tex_deref_locked(glw_root_t *gr, glw_loadable_texture_t *glt)
     free(glt->glt_filename);
   }
   
-  if(glt->glt_prop_pixmap != NULL)
-    prop_pixmap_ref_dec(glt->glt_prop_pixmap);
+  if(glt->glt_pixmap != NULL)
+    pixmap_release(glt->glt_pixmap);
 
   LIST_REMOVE(glt, glt_global_link);
 
@@ -343,7 +320,7 @@ glw_tex_create(glw_root_t *gr, const char *filename)
  *
  */
 glw_loadable_texture_t *
-glw_tex_create_from_pixmap(glw_root_t *gr, prop_pixmap_t *pp)
+glw_tex_create_from_pixmap(glw_root_t *gr, pixmap_t *pm)
 {
   glw_loadable_texture_t *glt;
 
@@ -351,8 +328,7 @@ glw_tex_create_from_pixmap(glw_root_t *gr, prop_pixmap_t *pp)
 
   glt = calloc(1, sizeof(glw_loadable_texture_t));
   glt->glt_filename = NULL;
-  glt->glt_prop_pixmap = pp;
-  prop_pixmap_ref_inc(pp);
+  glt->glt_pixmap = pixmap_dup(pm);
 
   LIST_INSERT_HEAD(&gr->gr_tex_list, glt, glt_global_link);
   glt->glt_state = GLT_STATE_INACTIVE;

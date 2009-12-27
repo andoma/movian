@@ -18,28 +18,16 @@
 
 #include "config.h"
 
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <ctype.h>
-#include <errno.h>
-
-#include <libavformat/avformat.h>
-#include <libavutil/avstring.h>
-
-
-#ifdef CONFIG_LIBEXIF
-#include <libexif/exif-data.h>
-#include <libexif/exif-utils.h>
-#include <libexif/exif-loader.h>
-#endif
 
 #include "showtime.h"
 #include "fileaccess.h"
 #include "fa_imageloader.h"
+#include "misc/pixmap.h"
+#include "misc/jpeg.h"
 
 static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
 static const uint8_t gif89sig[6] = {'G', 'I', 'F', '8', '9', 'a'};
@@ -48,90 +36,97 @@ static const uint8_t gif87sig[6] = {'G', 'I', 'F', '8', '7', 'a'};
 /**
  *
  */
-int 
-fa_imageloader(const char *url, char *errbuf, size_t errlen,
-	       int *thumb, void **data, size_t *datasize,
-	       int *codecid, const char *theme, prop_pixmap_t **pixmap)
+static int
+jpeginfo_reader(void *handle, void *buf, off_t offset, size_t size)
+{
+  if(fa_seek(handle, offset, SEEK_SET) != offset)
+    return -1;
+  return fa_read(handle, buf, size);
+}
+
+/**
+ *
+ */
+pixmap_t *
+fa_imageloader(const char *url, int want_thumb, const char *theme,
+	       char *errbuf, size_t errlen)
 {
   fa_handle_t *fh;
-  char p[16];
-  int is_exif = 0;
+  uint8_t p[16];
   int r;
+  enum CodecID codec;
+  int width = -1, height = -1;
 
-  *pixmap = NULL;
-
-  if((fh = fa_open_theme(url, theme)) == NULL)
-    return -1;
+  if((fh = fa_open_theme(url, theme)) == NULL) {
+    snprintf(errbuf, errlen, "%s: Unable to open file", url);
+    return NULL;
+  }
 
   if(fa_read(fh, p, sizeof(p)) != sizeof(p)) {
-    TRACE(TRACE_INFO, "imageloader", "%s: file too short", url);
+    snprintf(errbuf, errlen, "%s: file too short", url);
     fa_close(fh);
-    return -1;
+    return NULL;
   }
 
-  /* figure format */
+  /* Probe format */
 
-  if(p[6] == 'J' && p[7] == 'F' && p[8] == 'I' && p[9] == 'F') {
-    *codecid = CODEC_ID_MJPEG;
-  } else if(p[6] == 'E' && p[7] == 'x' && p[8] == 'i' && p[9] == 'f') {
-    *codecid = CODEC_ID_MJPEG;
-    is_exif = 1;
+  if((p[6] == 'J' && p[7] == 'F' && p[8] == 'I' && p[9] == 'F') ||
+     (p[6] == 'E' && p[7] == 'x' && p[8] == 'i' && p[9] == 'f')) {
+      
+    jpeginfo_t ji;
+    
+    if(jpeg_info(&ji, jpeginfo_reader, fh, 
+		 JPEG_INFO_DIMENSIONS |
+		 (want_thumb ? JPEG_INFO_THUMBNAIL : 0),
+		 p, sizeof(p), errbuf, errlen)) {
+      fa_close(fh);
+      return NULL;
+    }
+
+    if(want_thumb && ji.ji_thumbnail) {
+      pixmap_t *pm = pixmap_dup(ji.ji_thumbnail);
+      fa_close(fh);
+      jpeg_info_clear(&ji);
+      return pm;
+    }
+
+    codec = CODEC_ID_MJPEG;
+
+    width = ji.ji_width;
+    height = ji.ji_height;
+
+    jpeg_info_clear(&ji);
+
   } else if(!memcmp(pngsig, p, 8)) {
-    *codecid = CODEC_ID_PNG;
+    codec = CODEC_ID_PNG;
   } else if(!memcmp(gif87sig, p, sizeof(gif87sig)) ||
 	    !memcmp(gif89sig, p, sizeof(gif89sig))) {
-    *codecid = CODEC_ID_GIF;
+    codec = CODEC_ID_GIF;
   } else {
-    TRACE(TRACE_INFO, "imageloader", "%s: unknown format", url);
+    snprintf(errbuf, errlen, "%s: unknown format", url);
     fa_close(fh);
-    return -1;
+    return NULL;
   }
-  
 
-#ifdef CONFIG_LIBEXIF
-  if(is_exif && *thumb) {
-    unsigned char exifbuf[1024];
-    int v, x;
-    ExifLoader *l;
-    ExifData *ed;
+  pixmap_t *pm = pixmap_alloc_coded(NULL, fa_fsize(fh), codec);
 
-    l = exif_loader_new();
-
-    v = exif_loader_write(l, (unsigned char *)p, sizeof(p));
-    while(v) {
-      if((x = fa_read(fh, exifbuf, sizeof(exifbuf))) < 1)
-	break;
-      v = exif_loader_write(l, exifbuf, x);
-    }
-
-    ed = exif_loader_get_data(l);
-    exif_loader_unref (l);
-
-    if(ed != NULL && ed->data != NULL) {
-      fa_close(fh);
-      *data = malloc(ed->size);
-      memcpy(*data, ed->data, ed->size);
-      *datasize = ed->size;
-      exif_data_unref(ed);
-      return 0;
-    }
+  if(pm == NULL) {
+    snprintf(errbuf, errlen, "%s: no memory", url);
+    fa_close(fh);
+    return NULL;
   }
-#endif
-  *thumb = 0;
+
+  pm->pm_width  = width;
+  pm->pm_height = height;
+
   fa_seek(fh, SEEK_SET, 0);
-
-  *datasize = fa_fsize(fh);
-  *data = malloc(*datasize + FF_INPUT_BUFFER_PADDING_SIZE);
-  
-  r = fa_read(fh, *data, *datasize);
-
-  memset(*data + *datasize, 0, FF_INPUT_BUFFER_PADDING_SIZE);
-
+  r = fa_read(fh, pm->pm_data, pm->pm_size);
   fa_close(fh);
 
-  if(r != *datasize) {
-    free(*data);
-    return -1;
+  if(r != pm->pm_size) {
+    pixmap_release(pm);
+    snprintf(errbuf, errlen, "%s: read error", url);
+    return NULL;
   }
-  return 0;
+  return pm;
 }

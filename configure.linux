@@ -67,7 +67,6 @@ enable libfreetype
 enable glw
 enable libasound
 enable libpulse
-enable libexif
 enable lirc
 enable gu
 enable avahi
@@ -213,22 +212,6 @@ if enabled libpulse; then
     else
 	echo "libpulse (PulseAudio) development files not found."
 	echo "To compile without it, configure with: --disable-libpulse"
-	die
-    fi
-fi
-
-
-#
-# libexif, JPEG exif
-#
-if enabled libexif; then
-    if pkg-config libexif; then
-	echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags libexif`
-	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libexif`
-	echo "Using libexif:         `pkg-config --modversion libexif`"
-    else
-	echo "libexif (JPEG library) development files not found."
-	echo "To compile without it, configure with: --disable-libexif"
 	die
     fi
 fi

@@ -1,6 +1,6 @@
 /*
- *  Imageloader
- *  Copyright (C) 2008 Andreas Öman
+ *  JPEG / Exif parser
+ *  Copyright (C) 2009 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,12 +16,25 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FA_IMAGELOADER_H
-#define FA_IMAGELOADER_H
+#ifndef JPEG_H__
+#define JPEG_H__
 
-#include "misc/pixmap.h"
+typedef int (jpegreader_t)(void *handle, void *buf, off_t offset, size_t size);
 
-pixmap_t *fa_imageloader(const char *url, int want_thumb, const char *theme,
-			 char *errbuf, size_t errlen);
+typedef struct jpeginfo {
+  int ji_width;
+  int ji_height;
 
-#endif /* FA_IMAGELOADER_H */
+  struct pixmap *ji_thumbnail;
+
+} jpeginfo_t;
+
+#define JPEG_INFO_DIMENSIONS 0x1
+#define JPEG_INFO_THUMBNAIL  0x2
+
+int jpeg_info(jpeginfo_t *ji, jpegreader_t *reader, void *handle, int flags,
+	      const uint8_t *buf, size_t len, char *errbuf, size_t errlen);
+
+void jpeg_info_clear(jpeginfo_t *ji);
+
+#endif /* JPEG_H__ */

@@ -30,6 +30,7 @@
 
 struct prop;
 struct prop_sub;
+struct pixmap;
 
 #define PROP_ADD_SELECTED 0x1
 
@@ -102,22 +103,6 @@ typedef enum {
   PROP_LINK,
   PROP_ZOMBIE, /* Destroyed can never be changed again */
 } prop_type_t;
-
-
-/**
- *
- */
-typedef struct prop_pixmap {
-  int pp_refcount;
-
-  int pp_width;
-  int pp_height;
-  int pp_linesize;
-
-  enum PixelFormat pp_pixfmt;
-
-  uint8_t pp_pixels[0];
-} prop_pixmap_t;
 
 
 /**
@@ -201,7 +186,7 @@ typedef struct prop {
       struct prop_queue childs;
       struct prop *selected;
     } c;
-    prop_pixmap_t *pixmap;
+    struct pixmap *pixmap;
     struct {
       rstr_t *rtitle;
       rstr_t *rurl;
@@ -370,7 +355,7 @@ void prop_add_int_ex(prop_t *p, prop_sub_t *skipme, int v);
 
 void prop_set_void_ex(prop_t *p, prop_sub_t *skipme);
 
-void prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, prop_pixmap_t *pp);
+void prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, struct pixmap *pm);
 
 void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 		      const char *url);
@@ -403,10 +388,6 @@ int prop_get_string(prop_t *p, char *buf, size_t bufsize)
 void prop_ref_dec(prop_t *p);
 
 void prop_ref_inc(prop_t *p);
-
-void prop_pixmap_ref_dec(prop_pixmap_t *pp);
-
-void prop_pixmap_ref_inc(prop_pixmap_t *pp);
 
 int prop_set_parent_ex(prop_t *p, prop_t *parent, prop_t *before, 
 		       prop_sub_t *skipme)
@@ -462,10 +443,6 @@ prop_t *prop_get_by_names(prop_t *parent, ...)
      __attribute__((__sentinel__(0)));
 
 htsmsg_t *prop_tree_to_htsmsg(prop_t *p);
-
-prop_pixmap_t *prop_pixmap_create(int width, int height, int linesize,
-				  enum PixelFormat pixfmt, uint8_t *pixels)
-     __attribute__ ((malloc));
 
 void prop_send_ext_event(prop_t *p, event_t *e);
 

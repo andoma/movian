@@ -102,23 +102,22 @@ make_powerof2(int v)
 static int maxwidth = 2048;
 static int maxheight = 1024;
 
-static void texture_load_direct(AVFrame *frame, glw_loadable_texture_t *glt);
+static void texture_load_direct(AVPicture *pict, glw_loadable_texture_t *glt);
 
-static void texture_load_rescale(AVFrame *frame, int src_w, int src_h,
+static void texture_load_rescale(AVPicture *pict, int src_w, int src_h,
 				 glw_loadable_texture_t *glt);
 
-static void texture_load_rescale_swscale(AVFrame *frame, int pix_fmt, 
+static void texture_load_rescale_swscale(AVPicture *pict, int pix_fmt, 
 					 int src_w, int src_h,
 					 glw_loadable_texture_t *glt);
 
 int
 glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
-		     AVFrame *frame, int pix_fmt, 
+		     AVPicture *pict, int pix_fmt, 
 		     int src_w, int src_h,
 		     int req_w, int req_h)
 {
   int r, x, y, i;
-  AVFrame *frame2;
   int need_format_conv = 0;
   int need_rescale;
   uint32_t *palette, *u32p;
@@ -158,7 +157,7 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
        if alpha is set to zero. This resluts in ugly aliasing effects
        when scaling image in opengl, so if alpha == 0, clear RGB */
 
-    map = frame->data[1];
+    map = pict->data[1];
     for(i = 0; i < 4*256; i+=4) {
       if(map[i + 3] == 0) {
 	map[i + 0] = 0;
@@ -167,27 +166,29 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
       }
     }
 
-    map = frame->data[0];
-    palette = (uint32_t *)frame->data[1];
+    map = pict->data[0];
+    palette = (uint32_t *)pict->data[1];
 
-    frame2 = avcodec_alloc_frame();
-    frame2->data[0] = av_malloc(src_w * src_h * 4);
-    frame2->linesize[0] = src_w * 4;
+    AVPicture pict2;
+    
+    memset(&pict2, 0, sizeof(pict2));
+    
+    pict2.data[0] = av_malloc(src_w * src_h * 4);
+    pict2.linesize[0] = src_w * 4;
 
-    u32p = (void *)frame2->data[0];
+    u32p = (void *)pict2.data[0];
 
     for(y = 0; y < src_h; y++) {
       for(x = 0; x < src_w; x++) {
 	*u32p++ = palette[map[x]];
       }
-      map += frame->linesize[0];
+      map += pict->linesize[0];
     }
 
-    r = glw_tex_backend_load(gr, glt, frame2, PIX_FMT_RGB32, 
+    r = glw_tex_backend_load(gr, glt, &pict2, PIX_FMT_RGB32, 
 			     src_w, src_h, req_w, req_h);
 
-    av_free(frame2->data[0]);
-    av_free(frame2);
+    av_free(pict2.data[0]);
     return r;
   }
 
@@ -224,11 +225,11 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
   glt->glt_ys = req_h;
 
   if(need_rescale && !need_format_conv) {
-    texture_load_rescale(frame, src_w, src_h, glt);
+    texture_load_rescale(pict, src_w, src_h, glt);
   } else if(need_rescale || need_format_conv) {
-    texture_load_rescale_swscale(frame, pix_fmt, src_w, src_h, glt);
+    texture_load_rescale_swscale(pict, pix_fmt, src_w, src_h, glt);
   } else {
-    texture_load_direct(frame, glt);
+    texture_load_direct(pict, glt);
   }
   return 0;
 }
@@ -238,7 +239,7 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
  * format matches one the OpenGL supports by itself)
  */
 static void
-texture_load_direct(AVFrame *frame, glw_loadable_texture_t *glt)
+texture_load_direct(AVPicture *pict, glw_loadable_texture_t *glt)
 {
   uint8_t *src, *dst;
   int w = glt->glt_xs;
@@ -249,14 +250,14 @@ texture_load_direct(AVFrame *frame, glw_loadable_texture_t *glt)
   glt->glt_bitmap = mmap(NULL, glt->glt_bitmap_size, PROT_READ | PROT_WRITE,
 			 MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
-  src = frame->data[0];
+  src = pict->data[0];
   dst = glt->glt_bitmap;
   w *= glt->glt_bpp;
 
-  if(frame->linesize[0] != w) {
+  if(pict->linesize[0] != w) {
     while(h--) {
       memcpy(dst, src, w);
-      src += frame->linesize[0];
+      src += pict->linesize[0];
       dst += w;
     }
   } else {
@@ -270,7 +271,7 @@ texture_load_direct(AVFrame *frame, glw_loadable_texture_t *glt)
  * Rescaling with internal libglw scaler
  */
 static void
-texture_load_rescale(AVFrame *frame, int src_w, int src_h,
+texture_load_rescale(AVPicture *pict, int src_w, int src_h,
 		     glw_loadable_texture_t *glt)
 {
   glt->glt_bitmap_size = glt->glt_bpp * glt->glt_xs * glt->glt_ys;
@@ -278,7 +279,7 @@ texture_load_rescale(AVFrame *frame, int src_w, int src_h,
 			 PROT_READ | PROT_WRITE, 
 			 MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
-  glw_bitmap_rescale(frame->data[0], src_w, src_h, frame->linesize[0],
+  glw_bitmap_rescale(pict->data[0], src_w, src_h, pict->linesize[0],
 		     glt->glt_bitmap, glt->glt_xs, glt->glt_ys, 
 		     glt->glt_xs * glt->glt_bpp, glt->glt_bpp);
 }
@@ -288,7 +289,8 @@ texture_load_rescale(AVFrame *frame, int src_w, int src_h,
  * Rescaling with FFmpeg's swscaler
  */
 static void
-texture_load_rescale_swscale(AVFrame *frame, int pix_fmt, int src_w, int src_h,
+texture_load_rescale_swscale(AVPicture *pict, int pix_fmt, 
+			     int src_w, int src_h,
 			     glw_loadable_texture_t *glt)
 {
   AVPicture pic;
@@ -315,7 +317,7 @@ texture_load_rescale_swscale(AVFrame *frame, int pix_fmt, int src_w, int src_h,
   pic.data[0] = glt->glt_bitmap;
   pic.linesize[0] = w * glt->glt_bpp;
   
-  sws_scale(sws, frame->data, frame->linesize, 0, src_h,
+  sws_scale(sws, pict->data, pict->linesize, 0, src_h,
 	    pic.data, pic.linesize);
   
   sws_freeContext(sws);

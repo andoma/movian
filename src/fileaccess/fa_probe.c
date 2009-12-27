@@ -28,12 +28,6 @@
 
 #include <libavutil/avstring.h>
 
-#ifdef CONFIG_LIBEXIF
-#include <libexif/exif-data.h>
-#include <libexif/exif-utils.h>
-#include <libexif/exif-loader.h>
-#endif
-
 #include "showtime.h"
 #include "fileaccess.h"
 #include "fa_probe.h"
@@ -185,57 +179,6 @@ fa_probe_playlist(metadata_t *md, const char *url, uint8_t *pb, size_t pbsize)
     md->md_tracks = atoi(t + 16);
 }
 
-/**
- * Extract details from EXIF header
- */
-#ifdef CONFIG_LIBEXIF
-static void
-fa_probe_exif(metadata_t *md, fa_handle_t *fh, uint8_t *pb, size_t pbsize)
-{
-  unsigned char buf[4096];
-  int x, v;
-  ExifLoader *l;
-  ExifData *ed;
-  ExifEntry *e;
-
-  l = exif_loader_new();
-
-  v = exif_loader_write(l, pb, pbsize);
-  while(v) {
-    if((x = fa_read(fh, buf, sizeof(buf))) < 1)
-      break;
-    v = exif_loader_write(l, buf, x);
-  }
-
-  ed = exif_loader_get_data(l);
-  exif_loader_unref (l);
-  if(ed == NULL)
-    return;
-
-  e = exif_content_get_entry(ed->ifd[EXIF_IFD_EXIF],
-			     EXIF_TAG_DATE_TIME_ORIGINAL);
-  if(e != NULL) {
-    char tid[100];
-    struct tm tm;
-    time_t t;
-    
-    exif_entry_get_value(e, tid, sizeof(tid));
-
-    memset(&tm, 0, sizeof(tm));
-
-    if(sscanf(tid, "%04d:%02d:%02d %02d:%02d:%02d",
-	      &tm.tm_year, &tm.tm_mon, &tm.tm_mday,
-	      &tm.tm_hour, &tm.tm_min, &tm.tm_sec) == 6) {
-      tm.tm_year -= 1900;
-      tm.tm_mon--;
-      t = mktime(&tm);
-      if(t != (time_t)-1)
-	md->md_time = t;
-    }
-  }
-  exif_data_unref(ed);
-}
-#endif
 
 /**
  * Probe SPC files
@@ -336,10 +279,6 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh)
   }
 
   if(pb[6] == 'E' && pb[7] == 'x' && pb[8] == 'i' && pb[9] == 'f') {
-    /* JPEG image with EXIF tag*/
-#ifdef CONFIG_LIBEXIF
-    fa_probe_exif(md, fh, pb, psiz);
-#endif
     md->md_type = CONTENT_IMAGE;
     return 1;
   }

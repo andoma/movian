@@ -28,6 +28,7 @@
 
 #include "prop.h"
 #include "showtime.h"
+#include "misc/pixmap.h"
 
 static hts_mutex_t prop_mutex;
 static prop_t *prop_global;
@@ -88,7 +89,7 @@ typedef struct prop_notify {
     float f;
     int i;
     rstr_t *rstr;
-    prop_pixmap_t *pp;
+    struct pixmap *pp;
     event_t *e;
     struct {
       rstr_t *rtitle;
@@ -166,29 +167,6 @@ prop_sub_ref_dec(prop_sub_t *s)
 /**
  *
  */
-void
-prop_pixmap_ref_dec(prop_pixmap_t *pp)
-{
-  if(atomic_add(&pp->pp_refcount, -1) > 1)
-    return;
-
-  free(pp);
-}
-
-
-/**
- *
- */
-void
-prop_pixmap_ref_inc(prop_pixmap_t *pp)
-{
-  atomic_add(&pp->pp_refcount, 1);
-}
-
-
-/**
- *
- */
 static void
 prop_notify_free(prop_notify_t *n)
 {
@@ -219,7 +197,7 @@ prop_notify_free(prop_notify_t *n)
     break;
 
   case PROP_SET_PIXMAP:
-    prop_pixmap_ref_dec(n->hpn_pixmap);
+    pixmap_release(n->hpn_pixmap);
     prop_ref_dec(n->hpn_prop2);
     break;
 
@@ -409,7 +387,7 @@ prop_notify_dispatch(struct prop_notify_queue *q)
 	pt(s, n->hpn_event, n->hpn_pixmap, n->hpn_prop2);
       else
 	cb(s->hps_opaque, n->hpn_event, n->hpn_pixmap, n->hpn_prop2);
-      prop_pixmap_ref_dec(n->hpn_pixmap);
+      pixmap_release(n->hpn_pixmap);
       prop_ref_dec(n->hpn_prop2);
       break;
 
@@ -675,8 +653,7 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
     break;
 
   case PROP_PIXMAP:
-    n->hpn_pixmap = p->hp_pixmap;
-    prop_pixmap_ref_inc(n->hpn_pixmap);
+    n->hpn_pixmap = pixmap_dup(p->hp_pixmap);
     n->hpn_event = PROP_SET_PIXMAP;
     break;
 
@@ -906,7 +883,7 @@ prop_clean(prop_t *p)
     break;
 
   case PROP_PIXMAP:
-    prop_pixmap_ref_dec(p->hp_pixmap);
+    pixmap_release(p->hp_pixmap);
     break;
   }
   return 0;
@@ -1159,7 +1136,7 @@ prop_destroy0(prop_t *p)
     break;
 
   case PROP_PIXMAP:
-    prop_pixmap_ref_dec(p->hp_pixmap);
+    pixmap_release(p->hp_pixmap);
     break;
 
   case PROP_FLOAT:
@@ -2060,12 +2037,12 @@ prop_set_void_ex(prop_t *p, prop_sub_t *skipme)
  *
  */
 void
-prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, prop_pixmap_t *pp)
+prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, struct pixmap *pm)
 {
   if(p == NULL)
     return;
 
-  if(pp == NULL) {
+  if(pm == NULL) {
     prop_set_void_ex(p, skipme);
     return;
   }
@@ -2085,11 +2062,10 @@ prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, prop_pixmap_t *pp)
     }
 
   } else {
-    prop_pixmap_ref_dec(p->hp_pixmap);
+    pixmap_release(p->hp_pixmap);
   }
 
-  p->hp_pixmap = pp;
-  prop_pixmap_ref_inc(pp);
+  p->hp_pixmap = pixmap_dup(pm);
   p->hp_type = PROP_PIXMAP;
 
   prop_set_epilogue(skipme, p, "prop_set_pixmap()");
@@ -2657,26 +2633,6 @@ prop_tree_to_htsmsg(prop_t *p)
   prop_tree_to_htsmsg0(p, m);
   hts_mutex_unlock(&prop_mutex);
   return m;
-}
-
-
-/**
- *
- */
-prop_pixmap_t *
-prop_pixmap_create(int width, int height, int linesize, 
-		   enum PixelFormat pixfmt, uint8_t *pixels)
-{
-  int payloadsize = linesize * height;
-  prop_pixmap_t *pp = malloc(sizeof(prop_pixmap_t) + payloadsize);
-
-  pp->pp_refcount = 1;
-  pp->pp_width    = width;
-  pp->pp_height   = height;
-  pp->pp_linesize = linesize;
-  pp->pp_pixfmt   = pixfmt;
-  memcpy(pp->pp_pixels, pixels, payloadsize);
-  return pp;
 }
 
 

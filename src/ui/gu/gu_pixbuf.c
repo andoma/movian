@@ -22,7 +22,7 @@
 #include "navigator.h"
 #include "gu.h"
 #include "showtime.h"
-
+#include "misc/pixmap.h"
 
 extern hts_mutex_t gu_mutex;
 static hts_cond_t async_loader_cond;
@@ -85,14 +85,10 @@ gu_pixbuf_get_internal(const char *url, int *sizep,
 {
   AVCodecContext *ctx = NULL;
   AVCodec *codec;
-  AVFrame *frame;
-  AVPicture pic;
+  AVFrame *frame = NULL;
+  AVPicture *src, dst;
   struct SwsContext *sws;
-  void *data;
-  size_t datasize;
-  int codecid;
-  prop_pixmap_t *pp;
-  int got_thumb, want_thumb;
+  int want_thumb;
   GdkPixbuf *gp;
   int r;
   int got_pic;
@@ -101,54 +97,54 @@ gu_pixbuf_get_internal(const char *url, int *sizep,
   int width;
   int height;
 
+
   if(!strncmp(url, "thumb://", 8)) {
     url = url + 8;
     want_thumb = 1;
   } else {
     want_thumb = 0;
   }
-  got_thumb = want_thumb;
 
-  if(nav_imageloader(url, NULL, 0, &got_thumb,
-		     &data, &datasize, &codecid, NULL, &pp))
+  pixmap_t *pm = nav_imageloader(url, want_thumb, NULL, NULL, 0);
+  if(pm == NULL)
     return NULL;
 
-  frame = avcodec_alloc_frame();
+  if(pm->pm_codec == CODEC_ID_NONE) {
 
-  if(pp != NULL) {
-
-    width = pp->pp_width;
-    height = pp->pp_height;
-    pixfmt = pp->pp_pixfmt;
-    frame->data[0] = pp->pp_pixels;
-    frame->linesize[0] = pp->pp_linesize;
+    width  = pm->pm_width;
+    height = pm->pm_height;
+    pixfmt = pm->pm_pixfmt;
+    
+    src = &pm->pm_pict;
 
   } else {
     
     ctx = avcodec_alloc_context();
-    codec = avcodec_find_decoder(codecid);
+    codec = avcodec_find_decoder(pm->pm_codec);
   
     ctx->codec_id   = codec->id;
     ctx->codec_type = codec->type;
 
     if(avcodec_open(ctx, codec) < 0) {
-      av_free(frame);
       av_free(ctx);
-      free(data);
+      pixmap_release(pm);
       return NULL;
     }
-  
+    
+    frame = avcodec_alloc_frame();
 
-    r = avcodec_decode_video(ctx, frame, &got_pic, data, datasize);
+    r = avcodec_decode_video(ctx, frame, &got_pic, pm->pm_data, pm->pm_size);
     if(r < 0) {
       av_free(frame);
       av_free(ctx);
-      free(data);
+      pixmap_release(pm);
       return NULL;
     }
     height = ctx->height;
     width  = ctx->width;
     pixfmt = ctx->pix_fmt;
+
+    src = (AVPicture *)frame;
   }
 
   if(req_width == -1 && req_height == -1) {
@@ -167,40 +163,39 @@ gu_pixbuf_get_internal(const char *url, int *sizep,
 		       SWS_BICUBIC, NULL, NULL, NULL);
 
 
-  avpicture_alloc(&pic, outfmt, req_width, req_height);
+  avpicture_alloc(&dst, outfmt, req_width, req_height);
 
-  sws_scale(sws, frame->data, frame->linesize, 0, height,
-	    pic.data, pic.linesize);
+  sws_scale(sws, src->data, src->linesize, 0, height,
+	    dst.data, dst.linesize);
   
   sws_freeContext(sws);
 
   if(sizep != NULL)
-    *sizep = pic.linesize[0] * req_height;
+    *sizep = dst.linesize[0] * req_height;
 
 
   if(relock)
     hts_mutex_lock(&gu_mutex);
 
-  gp = gdk_pixbuf_new_from_data(pic.data[0],
+  gp = gdk_pixbuf_new_from_data(dst.data[0],
 				GDK_COLORSPACE_RGB,
 				isALPHA(pixfmt),
 				8,
 				req_width,
 				req_height,
-				pic.linesize[0],
+				dst.linesize[0],
 				pixbuf_avfree_pixels,
-				pic.data[0]);
+				dst.data[0]);
 
-  av_free(frame);
+  if(frame != NULL)
+    av_free(frame);
 
   if(ctx != NULL) {
     avcodec_close(ctx);
     av_free(ctx);
   }
 
-  if(pp != NULL)
-    prop_pixmap_ref_dec(pp);
-
+  pixmap_release(pm);
   return gp;
 }
 

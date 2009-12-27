@@ -22,6 +22,8 @@
 #include "event.h"
 #include "prop.h"
 
+struct pixmap;
+
 #define NAV_HOME "page:home"
 
 /**
@@ -80,10 +82,9 @@ typedef struct nav_backend {
 		       char *parent, size_t parentlen,
 		       char *errbuf, size_t errlen);
 
-  int (*nb_imageloader)(const char *url, char *errbuf, size_t errsize,
-			int *thumb, void **data, size_t *datasize,
-			int *codecid, const char *theme,
-			prop_pixmap_t **pixmap);
+  struct pixmap *(*nb_imageloader)(const char *url, int want_thumb,
+				   const char *theme,
+				   char *errbuf, size_t errlen);
 
 } nav_backend_t;
 
@@ -112,8 +113,8 @@ prop_t *nav_list(const char *url, char *errbuf, size_t errlen);
 int nav_get_parent(const char *url, char *parent, size_t parentlen,
 		   char *errbuf, size_t errlen);
 
-int nav_imageloader(const char *url, char *errbuf, size_t errlen,
-		    int *thumb, void **data, size_t *datasize,
-		    int *codecid, const char *theme, prop_pixmap_t **pixmap);
+struct pixmap *nav_imageloader(const char *url, int want_thumb,
+			       const char *theme,
+			       char *errbuf, size_t errlen);
 
 #endif /* NAVIGATOR_H__ */
