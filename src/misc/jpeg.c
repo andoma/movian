@@ -16,6 +16,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * EXIF Documentation
+ * http://park2.wakwak.com/~tsuruzoh/Computer/Digicams/exif-e.html
+ */
+
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
