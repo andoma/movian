@@ -63,7 +63,7 @@ STRIP=${DEVKITPPC}/bin/powerpc-eabi-strip
 
 CFLAGS_cfg += -I${LIBOGC}/include
 CFLAGS_cfg += -I${LIBFAT}/include
-CFLAGS_cfg += -DEABI -mrvl -mcpu=750 -meabi -mhard-float
+CFLAGS_cfg += -DWII -DEABI -mrvl -mcpu=750 -meabi -mhard-float
 
 LDFLAGS_cfg += -DEABI -mrvl -mcpu=750 -meabi -mhard-float
 EOF

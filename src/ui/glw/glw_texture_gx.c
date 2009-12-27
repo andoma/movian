@@ -184,7 +184,7 @@ convert_i8a8(const uint8_t *src, int linesize, unsigned int w, unsigned int h)
  */
 int
 glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
-		     AVFrame *frame, int pix_fmt, 
+		     AVPicture *pict, int pix_fmt, 
 		     int src_w, int src_h,
 		     int req_w, int req_h)
 {
@@ -194,12 +194,12 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
   switch(pix_fmt) {
 
   case PIX_FMT_ARGB:
-    texels = convert_argb(frame->data[0], frame->linesize[0], req_w, req_h);
+    texels = convert_argb(pict->data[0], pict->linesize[0], req_w, req_h);
     fmt = GX_TF_RGBA8;
     break;
 
   case PIX_FMT_RGB24:
-    texels = convert_rgb(frame->data[0], frame->linesize[0], req_w, req_h);
+    texels = convert_rgb(pict->data[0], pict->linesize[0], req_w, req_h);
     fmt = GX_TF_RGBA8;
     break;
 

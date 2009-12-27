@@ -31,7 +31,7 @@ atomic_add(volatile int *ptr, int incr)
 	       "=r"(r), "=m"(*ptr) : "0" (incr), "m" (*ptr) : "memory");
   return r;
 }
-#elif defined(GEKKO)
+#elif defined(WII)
 
 #include <ogc/machine/processor.h>
 
