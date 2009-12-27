@@ -158,7 +158,7 @@ parse_app1(jpeginfo_t *ji, const uint8_t *buf, size_t len)
       default:
 	value = 0;
       }
-
+      
       //      printf("  IFD%d  %04x (%d) * %d  ==  %d\n",  ifd, tag, type, c, value);
 
       switch(IFDTAG(ifd, tag)) {
@@ -167,6 +167,9 @@ parse_app1(jpeginfo_t *ji, const uint8_t *buf, size_t len)
 	break;
       case IFDTAG(1, 0x202):  // JPEG Thumbnail size
 	thumbnail_jpeg_size = value;
+	break;
+      case IFDTAG(0, 0x112):  // Orientation
+	ji->ji_orientation = value;
 	break;
       }
     }
@@ -183,9 +186,8 @@ parse_app1(jpeginfo_t *ji, const uint8_t *buf, size_t len)
 					  thumbnail_jpeg_size,
 					  CODEC_ID_MJPEG);
     ji->ji_thumbnail->pm_flags |= PIXMAP_THUMBNAIL;
+    ji->ji_thumbnail->pm_orientation = ji->ji_orientation;
   }
-
-
   return 0;
 }
 
@@ -274,7 +276,7 @@ jpeg_info(jpeginfo_t *ji, jpegreader_t *reader, void *handle, int flags,
       break;
 
     case 0xffe1: // APP1
-      if(flags & JPEG_INFO_THUMBNAIL)
+      if(flags & (JPEG_INFO_THUMBNAIL | JPEG_INFO_ORIENTATION))
 	jip = parse_app1;
       break;
     }

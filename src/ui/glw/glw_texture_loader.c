@@ -182,6 +182,8 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   if(pm == NULL)
     return -1;
 
+  glt->glt_orientation = pm->pm_orientation;
+
   if(pm->pm_codec == CODEC_ID_NONE) {
     r = glw_tex_backend_load(gr, glt, &pm->pm_pict,
 			     pm->pm_pixfmt,
@@ -234,6 +236,16 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
       h = gr->gr_height;
     }
   }
+
+  // Compute correct aspect ratio based on orientation
+  // See pixmap.h for the secret constant '5'
+  if(glt->glt_orientation < 5) {
+    glt->glt_aspect = (float)w / (float)h;
+  } else {
+    glt->glt_aspect = (float)h / (float)w;
+  }
+
+
 
   r = glw_tex_backend_load(gr, glt, (AVPicture *)frame, 
 			   ctx->pix_fmt, ctx->width, ctx->height, w, h);

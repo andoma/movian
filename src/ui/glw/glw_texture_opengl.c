@@ -189,8 +189,6 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
     return r;
   }
 
-  glt->glt_aspect = (float)req_w / (float)req_h;
-
   if(!glw_can_tnpo2(gr)) {
     /* We lack non-power-of-two texture support, check if we must rescale.
      * Since the bitmap aspect is already calculated, it will automatically 

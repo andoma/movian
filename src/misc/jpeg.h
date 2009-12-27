@@ -24,13 +24,15 @@ typedef int (jpegreader_t)(void *handle, void *buf, off_t offset, size_t size);
 typedef struct jpeginfo {
   int ji_width;
   int ji_height;
-
+  int ji_orientation;  // See orientation in pixmap.h
   struct pixmap *ji_thumbnail;
 
 } jpeginfo_t;
 
-#define JPEG_INFO_DIMENSIONS 0x1
-#define JPEG_INFO_THUMBNAIL  0x2
+
+#define JPEG_INFO_DIMENSIONS  0x1
+#define JPEG_INFO_THUMBNAIL   0x2
+#define JPEG_INFO_ORIENTATION 0x4
 
 int jpeg_info(jpeginfo_t *ji, jpegreader_t *reader, void *handle, int flags,
 	      const uint8_t *buf, size_t len, char *errbuf, size_t errlen);

@@ -55,7 +55,7 @@ fa_imageloader(const char *url, int want_thumb, const char *theme,
   uint8_t p[16];
   int r;
   enum CodecID codec;
-  int width = -1, height = -1;
+  int width = -1, height = -1, orientation = 0;
 
   if((fh = fa_open_theme(url, theme)) == NULL) {
     snprintf(errbuf, errlen, "%s: Unable to open file", url);
@@ -77,6 +77,7 @@ fa_imageloader(const char *url, int want_thumb, const char *theme,
     
     if(jpeg_info(&ji, jpeginfo_reader, fh, 
 		 JPEG_INFO_DIMENSIONS |
+		 JPEG_INFO_ORIENTATION |
 		 (want_thumb ? JPEG_INFO_THUMBNAIL : 0),
 		 p, sizeof(p), errbuf, errlen)) {
       fa_close(fh);
@@ -94,6 +95,7 @@ fa_imageloader(const char *url, int want_thumb, const char *theme,
 
     width = ji.ji_width;
     height = ji.ji_height;
+    orientation = ji.ji_orientation;
 
     jpeg_info_clear(&ji);
 
@@ -116,9 +118,9 @@ fa_imageloader(const char *url, int want_thumb, const char *theme,
     return NULL;
   }
 
-  pm->pm_width  = width;
+  pm->pm_width = width;
   pm->pm_height = height;
-
+  pm->pm_orientation = orientation;
   fa_seek(fh, SEEK_SET, 0);
   r = fa_read(fh, pm->pm_data, pm->pm_size);
   fa_close(fh);

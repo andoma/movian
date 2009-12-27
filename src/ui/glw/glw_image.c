@@ -19,6 +19,23 @@
 #include "glw.h"
 #include "glw_image.h"
 
+static uint8_t texcords[9][8] = {
+    { 0, 1,   1, 1,   1, 0,  0, 0},  // Normal
+    { 0, 1,   1, 1,   1, 0,  0, 0},  // Normal
+    { 1, 1,   0, 1,   0, 0,  1, 0},  // Mirror X
+    { 1, 0,   0, 0,   0, 1,  1, 1},  // 180 deg. rotate
+    { 0, 0,   1, 0,   1, 1,  0, 1},  // Mirror Y
+    { 0, 0,   0, 0,   0, 0,  0, 0},  // Transpose ???
+    { 1, 1,   1, 0,   0, 0,  0, 1},  // Rot 90
+    { 0, 0,   0, 0,   0, 0,  0, 0},  // Transverse ???
+    { 0, 0,   0, 1,   1, 1,  1, 0},  // Rot 270
+};
+
+
+
+
+
+
 static void
 glw_image_dtor(glw_t *w)
 {
@@ -340,35 +357,35 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	float xs = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_xs;
 	float ys = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_ys;
 
-	float x1, y1, x2, y2;
+	uint8_t tex[8];
+	memcpy(tex, texcords[glt->glt_orientation], 8);
 
 	if(gi->gi_bitmap_flags & GLW_MIRROR_X) {
-	  x1 = xs;
-	  x2 = 0;
-	} else {
-	  x1 = 0;
-	  x2 = xs;
+	  SWAP(tex[0], tex[2]);
+	  SWAP(tex[4], tex[6]);
 	}
-
+	
 	if(gi->gi_bitmap_flags & GLW_MIRROR_Y) {
-	  y1 = ys;
-	  y2 = 0;
-	} else {
-	  y1 = 0;
-	  y2 = ys;
+	  SWAP(tex[1], tex[7]);
+	  SWAP(tex[5], tex[3]);
 	}
 
 	glw_render_vtx_pos(&gi->gi_gr, 0, -1.0, -1.0, 0.0);
-	glw_render_vtx_st (&gi->gi_gr, 0,  x1,   y2);
+	glw_render_vtx_st (&gi->gi_gr, 0, 
+			   tex[0] * xs , tex[1] * ys);
 
 	glw_render_vtx_pos(&gi->gi_gr, 1,  1.0, -1.0, 0.0);
-	glw_render_vtx_st (&gi->gi_gr, 1,  x2,   y2);
+	glw_render_vtx_st (&gi->gi_gr, 1,
+			   tex[2] * xs , tex[3] * ys);
 
 	glw_render_vtx_pos(&gi->gi_gr, 2,  1.0,  1.0, 0.0);
-	glw_render_vtx_st (&gi->gi_gr, 2,  x2,   y1);
+	glw_render_vtx_st (&gi->gi_gr, 2,
+			   tex[4] * xs , tex[5] * ys);
 
 	glw_render_vtx_pos(&gi->gi_gr, 3, -1.0,  1.0, 0.0);
-	glw_render_vtx_st (&gi->gi_gr, 3,  x1,   y1);
+	glw_render_vtx_st (&gi->gi_gr, 3,
+			   tex[6] * xs , tex[7] * ys);
+
       } else {
 	glw_image_layout_tesselated(gr, rc, gi, glt);
       }

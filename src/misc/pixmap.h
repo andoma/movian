@@ -21,8 +21,29 @@
 
 #include <libavcodec/avcodec.h>
 
+/**
+ * Based on JPEG/EXIF orientations
+ *
+ * http://sylvana.net/jpegcrop/exif_orientation.html
+ */
+#define PIXMAP_ORIENTATION_NONE       0
+#define PIXMAP_ORIENTATION_NORMAL     1
+#define PIXMAP_ORIENTATION_MIRROR_X   2
+#define PIXMAP_ORIENTATION_ROT_180    3
+#define PIXMAP_ORIENTATION_MIRROR_Y   4
+#define PIXMAP_ORIENTATION_TRANSPOSE  5
+#define PIXMAP_ORIENTATION_ROT_90     6
+#define PIXMAP_ORIENTATION_TRANSVERSE 7
+#define PIXMAP_ORIENTATION_ROT_270    8
+
+
+/**
+ * Internal struct for passing immages
+ */
 typedef struct pixmap {
   int pm_refcount;
+
+  int pm_orientation;
 
   int pm_width;
   int pm_height;

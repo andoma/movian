@@ -55,6 +55,8 @@ typedef struct glw_loadable_texture {
 
   struct pixmap *glt_pixmap;
 
+  int glt_orientation;
+
 } glw_loadable_texture_t;
 
 void glw_tex_init(glw_root_t *gr);
