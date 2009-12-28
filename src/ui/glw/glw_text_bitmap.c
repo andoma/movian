@@ -88,32 +88,6 @@ draw_glyph(glw_text_bitmap_data_t *gtbd, FT_Bitmap *bmp, uint8_t *dst,
   }
 }
 
-static void
-paint_shadow(uint8_t *dst, uint8_t *src, int w, int h)
-{
-  int x, y, s, v;
-
-  for(x = 0; x < w; x++) {
-    v = *src++;
-    *dst++ = v;
-    *dst++ = v;
-  }
-
-  for(y = 1; y < h; y++) {
-    v = *src++;
-    *dst++ = v;
-    *dst++ = v;
-    for(x = 1; x < w; x++) {
-      v = src[0];
-      s = src[-1-w];
-      src++;
-      *dst++ = v;
-      *dst++ = GLW_MIN(s + v, 255);
-    }
-  }
-}
-
-
 static int
 gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face, 
 	     int *uc, int len, int flags, int docur, float scale,
@@ -132,9 +106,8 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   int siz_x, siz_y, start_x, start_y;
   int target_width, target_height;
   uint8_t *data;
-  int shadow = 1;
   int origin_y;
-  int pixelheight = (gr->gr_fontsize - shadow) * scale + bias;
+  int pixelheight = gr->gr_fontsize * scale + bias;
   FT_Glyph glyph;
   int ellipsize_x;
 
@@ -350,25 +323,8 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
     }
   }
 
-  if(shadow) {
-
-    gtbd->gtbd_data = calloc(1, 2 * gtbd->gtbd_texture_width * 
-			     gtbd->gtbd_texture_height);
-    paint_shadow(gtbd->gtbd_data, data, 
-		 gtbd->gtbd_texture_width, gtbd->gtbd_siz_y);
-    free(data);
-    gtbd->gtbd_pixel_format = GLW_TEXTURE_FORMAT_I8A8;
-
-    if(0)memset(gtbd->gtbd_data + 
-	   gtbd->gtbd_texture_width * 8,
-	   0xff,
-	   gtbd->gtbd_texture_width * 2);
-
-  } else {
-
-    gtbd->gtbd_data = data;
-    gtbd->gtbd_pixel_format = GLW_TEXTURE_FORMAT_I8;
-  }
+  gtbd->gtbd_data = data;
+  gtbd->gtbd_pixel_format = GLW_TEXTURE_FORMAT_I8;
   return 0;
 }
 
@@ -579,6 +535,21 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
     glw_render(&gtb->gtb_cursor_renderer, w->glw_root, &rc0,
 	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_NONE,
 	       NULL, 1, 1, 1, alpha * gtb->gtb_cursor_alpha);
+
+
+  float xd, yd;
+
+  xd =  3.0 / rc0.rc_size_x;
+  yd = -3.0 / rc0.rc_size_y;
+
+  glw_Translatef(&rc0, xd, yd, 0.0);
+
+  glw_render(&gtb->gtb_text_renderer, w->glw_root, &rc0, 
+	     GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
+	     &gtb->gtb_texture,
+	     0,0,0, alpha * 0.75);
+
+  glw_Translatef(&rc0, -xd, -yd, 0.0);
 
   glw_render(&gtb->gtb_text_renderer, w->glw_root, &rc0, 
 	     GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
