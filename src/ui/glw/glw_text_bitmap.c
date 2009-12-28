@@ -746,19 +746,19 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
     } else if(event_is_action(e, ACTION_LEFT)) {
 
-      if(gtb->gtb_edit_ptr == 0)
-	return 1;
-      gtb->gtb_edit_ptr--;
-      gtb->gtb_update_cursor = 1;
+      if(gtb->gtb_edit_ptr > 0) {
+	gtb->gtb_edit_ptr--;
+	gtb->gtb_update_cursor = 1;
+      }
       return 1;
 
     } else if(event_is_action(e, ACTION_RIGHT)) {
 
-      if(gtb->gtb_edit_ptr >= gtb->gtb_uc_len)
-	return 1;
-      gtb->gtb_edit_ptr++;
-      gtb->gtb_update_cursor = 1;
-
+      if(gtb->gtb_edit_ptr < gtb->gtb_uc_len) {
+	gtb->gtb_edit_ptr++;
+	gtb->gtb_update_cursor = 1;
+      }
+      return 1;
     }
     return 0;
   }
