@@ -157,6 +157,7 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   AVFrame *frame;
   int r, got_pic, w, h, want_thumb;
   const char *url;
+  char errbuf[128];
 
   if(glt->glt_pixmap != NULL) {
     pixmap_t *pm = glt->glt_pixmap;
@@ -178,13 +179,18 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
     want_thumb = 0;
   }
 
-  pixmap_t *pm = nav_imageloader(url, want_thumb, gr->gr_theme, NULL, 0);
-  if(pm == NULL)
+  pixmap_t *pm = nav_imageloader(url, want_thumb, gr->gr_theme, errbuf, 
+				 sizeof(errbuf));
+  if(pm == NULL) {
+    TRACE(TRACE_DEBUG, "GLW", "Unable to load %s -- %s", url, errbuf);
     return -1;
+  }
 
   glt->glt_orientation = pm->pm_orientation;
 
   if(pm->pm_codec == CODEC_ID_NONE) {
+    glt->glt_aspect = (float)pm->pm_width / (float)pm->pm_height;
+
     r = glw_tex_backend_load(gr, glt, &pm->pm_pict,
 			     pm->pm_pixfmt,
 			     pm->pm_width, pm->pm_height,
