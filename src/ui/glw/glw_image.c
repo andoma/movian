@@ -358,7 +358,8 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	float ys = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_ys;
 
 	uint8_t tex[8];
-	memcpy(tex, texcords[glt->glt_orientation], 8);
+	int o = glt->glt_orientation < 9 ? glt->glt_orientation : 0;
+	memcpy(tex, texcords[o], 8);
 
 	if(gi->gi_bitmap_flags & GLW_MIRROR_X) {
 	  SWAP(tex[0], tex[2]);
