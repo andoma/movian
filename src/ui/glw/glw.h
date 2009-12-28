@@ -61,6 +61,7 @@ LIST_HEAD(glw_video_list, glw_video);
 #define GLW_MAX(a, b) ((a) > (b) ? (a) : (b))
 #define GLW_DEG2RAD(a) ((a) * M_PI * 2.0f / 360.0f)
 #define GLW_RESCALE(x, min, max) (((x) - (min)) / ((max) - (min)))
+#define GLW_SWAP(a, b) do { typeof(a) c = (b); (b) = (a); (a) = (c); } while(0)
 
 typedef enum {
   GLW_DUMMY,        /* Emtpy placeholder, wont render anything */

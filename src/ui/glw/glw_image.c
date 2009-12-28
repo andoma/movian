@@ -133,7 +133,6 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
   }
 }
 
-#define SWAP(a, b) do { typeof(a) c = (b); (b) = (a); (a) = (c); } while(0)
 /**
  *
  */
@@ -219,14 +218,14 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
   }
 
   if(gi->gi_bitmap_flags & GLW_MIRROR_X) {
-    SWAP(vex[0][1], vex[3][1]);
-    SWAP(vex[1][1], vex[2][1]);
+    GLW_SWAP(vex[0][1], vex[3][1]);
+    GLW_SWAP(vex[1][1], vex[2][1]);
     gi->gi_child_xt = -gi->gi_child_xt;
   }
 
   if(gi->gi_bitmap_flags & GLW_MIRROR_Y) {
-    SWAP(vex[0][0], vex[3][0]);
-    SWAP(vex[1][0], vex[2][0]);
+    GLW_SWAP(vex[0][0], vex[3][0]);
+    GLW_SWAP(vex[1][0], vex[2][0]);
     gi->gi_child_yt = -gi->gi_child_yt;
   }
 
@@ -362,13 +361,13 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	memcpy(tex, texcords[o], 8);
 
 	if(gi->gi_bitmap_flags & GLW_MIRROR_X) {
-	  SWAP(tex[0], tex[2]);
-	  SWAP(tex[4], tex[6]);
+	  GLW_SWAP(tex[0], tex[2]);
+	  GLW_SWAP(tex[4], tex[6]);
 	}
 	
 	if(gi->gi_bitmap_flags & GLW_MIRROR_Y) {
-	  SWAP(tex[1], tex[7]);
-	  SWAP(tex[5], tex[3]);
+	  GLW_SWAP(tex[1], tex[7]);
+	  GLW_SWAP(tex[5], tex[3]);
 	}
 
 	glw_render_vtx_pos(&gi->gi_gr, 0, -1.0, -1.0, 0.0);
