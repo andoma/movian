@@ -511,8 +511,6 @@ typedef struct glw {
 
   float *glw_matrix;
 
-  float glw_exp_req;
-
 } glw_t;
 
 
