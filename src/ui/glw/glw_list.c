@@ -233,7 +233,7 @@ glw_list_render(glw_list_t *l, glw_rctx_t *rc)
       rc0 = *rc;
       glw_render_TS(c, &rc0, rc);
       c->glw_flags &= ~GLW_FOCUS_BLOCKED;
-    } else {
+    } else if(w->glw_focused != c) {
       c->glw_flags |= GLW_FOCUS_BLOCKED;
     }
   }

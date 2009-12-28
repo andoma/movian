@@ -184,7 +184,7 @@ glw_array_render(glw_array_t *a, glw_rctx_t *rc)
       rc0 = *rc;
       glw_render_TS(c, &rc0, rc);
       c->glw_flags &= ~GLW_FOCUS_BLOCKED;
-    } else {
+    } else if(w->glw_focused != c) {
       c->glw_flags |= GLW_FOCUS_BLOCKED;
     }
   }
