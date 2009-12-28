@@ -566,6 +566,7 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize,
 
     if(fa_probe_fill_cache(md, url, errbuf, errsize)) {
       metadata_destroy(md);
+      hts_mutex_unlock(&metadata_mutex);
       return CONTENT_UNKNOWN;
     }
   }
