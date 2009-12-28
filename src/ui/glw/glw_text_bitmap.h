@@ -65,7 +65,9 @@ typedef struct glw_text_bitmap {
     GTB_VALID
   } gtb_status;
 
-  int cursor_flash;
+  uint8_t cursor_flash;
+  uint8_t gtb_frozen;
+  uint8_t gtb_pending_update;
 
   int *gtb_uc_buffer; /* unicode buffer */
   int gtb_uc_len;

@@ -911,6 +911,16 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
       update = 1;
       break;
 
+    case GLW_ATTRIB_FREEZE:
+      if(va_arg(ap, int)) {
+	gtb->gtb_frozen = 1;
+      } else {
+	if(gtb->gtb_pending_update)
+	  update = 1;
+	gtb->gtb_frozen = 0;
+      }
+      break;
+
     case GLW_ATTRIB_CAPTION:
       caption = va_arg(ap, char *);
 
@@ -986,8 +996,15 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
   } while(attrib);
 
 
-  if(update)
+  if(!update)
+    return;
+
+  if(gtb->gtb_frozen) {
+    gtb->gtb_pending_update = 1;
+  } else {
     gtb_caption_has_changed(gtb);
+    gtb->gtb_pending_update = 0;
+  }
 }
 
 

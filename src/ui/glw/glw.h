@@ -147,6 +147,7 @@ typedef enum {
   GLW_ATTRIB_CHILD_WIDTH,
   GLW_ATTRIB_CHILD_TILES_X,
   GLW_ATTRIB_CHILD_TILES_Y,
+  GLW_ATTRIB_FREEZE,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -482,11 +483,11 @@ typedef struct glw {
 #define GLW_CONSTRAINT_IGNORE_W 0x1000000
 #define GLW_CONSTRAINT_IGNORE_F 0x2000000
 
-#define GLW_FOCUS_ON_CLICK      0x4000000
-
 #define GLW_CONSTRAINT_FLAGS (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y | \
                               GLW_CONSTRAINT_A | GLW_CONSTRAINT_W | \
 			      GLW_CONSTRAINT_F )
+
+#define GLW_FOCUS_ON_CLICK      0x4000000
 
 #define GLW_LEFT_EDGE          0x10000000
 #define GLW_TOP_EDGE           0x20000000
@@ -668,6 +669,7 @@ do {						\
     (void)va_arg(ap, void *);			\
     break;					\
   case GLW_ATTRIB_ALIGNMENT:			\
+  case GLW_ATTRIB_FREEZE:			\
   case GLW_ATTRIB_SET_FLAGS:			\
   case GLW_ATTRIB_CLR_FLAGS:			\
   case GLW_ATTRIB_MODE:                         \

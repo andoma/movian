@@ -776,6 +776,7 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
 
   n.w = glw_create_i(parent->glw_root,
 		     gps->gps_cloner_class,
+		     GLW_ATTRIB_FREEZE, 1,
 		     GLW_ATTRIB_PARENT_BEFORE, parent, b,
 		     GLW_ATTRIB_PROPROOTS, p, gps->gps_originating_prop,
 		     GLW_ATTRIB_ORIGINATING_PROP, p,
@@ -788,6 +789,8 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
 
   glw_model_eval_block(body, &n);
   glw_model_free_chain(body);
+
+  glw_set_i(n.w, GLW_ATTRIB_FREEZE, 0, NULL);
 
   if(n.gr->gr_last_focused_interactive == p)
     glw_focus_set(n.w->glw_root, n.w, 0);
@@ -1367,7 +1370,7 @@ static int
 glwf_widget(glw_model_eval_context_t *ec, struct token *self,
 	    token_t **argv, unsigned int argc)
 {
-  int c;
+  int c, r;
   glw_model_eval_context_t n;
   token_t *a = argv[0];
   token_t *b = argv[1];
@@ -1396,16 +1399,18 @@ glwf_widget(glw_model_eval_context_t *ec, struct token *self,
   n.gr = ec->gr;
   n.w = glw_create_i(ec->gr,
 		     c,
+		     GLW_ATTRIB_FREEZE, 1,
 		     GLW_ATTRIB_PARENT, ec->w,
 		     GLW_ATTRIB_PROPROOTS, ec->prop0, ec->prop_parent,
 		     NULL);
   
   n.sublist = &n.w->glw_prop_subscriptions;
 
-  if(glw_model_eval_block(b, &n))
-    return -1;
+  r = glw_model_eval_block(b, &n);
 
-  return 0;
+  glw_set_i(n.w, GLW_ATTRIB_FREEZE, 0, NULL);
+
+  return r ? -1 : 0;
 }
 
 
