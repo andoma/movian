@@ -359,6 +359,9 @@ clean:
 distclean: clean
 	rm -rf build.*
 
+reconfigure:
+	$(CURDIR)/configure $(CONFIGURE_ARGS)
+
 # Create showtimeversion.h
 $(BUILDDIR)/showtimeversion.h:
 	$(CURDIR)/support/version.sh $(CURDIR) $(BUILDDIR)/showtimeversion.h

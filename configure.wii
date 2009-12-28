@@ -46,7 +46,7 @@ for opt do
   esac
 done
 
-setup_env "$0 $@"
+setup_env "$@"
 
 enable libogc
 enable glw_frontend_wii
