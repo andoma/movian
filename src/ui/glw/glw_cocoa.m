@@ -277,6 +277,10 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   }
 
   [self glwWindowedTimerStop];
+  
+  /* mouse events seams to get passed to apple menu bar in fullscreen
+   * when using NSOpenGL */
+  [NSMenu setMenuBarVisible:NO];
     
   /* go fullscreen and make switch to new gl context */
   [fullScreenContext setFullScreen];
@@ -296,8 +300,6 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   glw_opengl_init_context(&gcocoa.gr);
   
   while(gcocoa.is_fullscreen) {
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-
     /* dispatch events to the usual event methods */
     NSEvent *event;
     while((event = [NSApp nextEventMatchingMask:NSAnyEventMask
@@ -342,9 +344,6 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
         
     [self glwRender];
     [fullScreenContext flushBuffer];
-
-    /* TODO: pool needed? does not call objc stuff */
-    [pool release];
   }
 
   /* make screen black before switching to non-fullscreen */
@@ -372,6 +371,8 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   [[self window] setAcceptsMouseMovedEvents:YES];
   /* make sure window is focused when coming back */
   [[self window] makeKeyAndOrderFront:nil];
+  
+  [NSMenu setMenuBarVisible:YES];
   
   [self glwWindowedTimerStart];
 }
@@ -523,7 +524,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   glw_unlock(&gcocoa.gr);
 }
 
-- (void)scrollWheel:(NSEvent*)event {
+- (void)scrollWheel:(NSEvent *)event {
   [self glwMouseEvent:GLW_POINTER_SCROLL event:event];
 }
 
@@ -531,7 +532,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   [self glwMouseEvent:GLW_POINTER_MOTION event:event];
 }
 
--(void)mouseDragged:(NSEvent*)event {
+-(void)mouseDragged:(NSEvent *)event {
   [self glwMouseEvent:GLW_POINTER_MOTION event:event];
 }
 
