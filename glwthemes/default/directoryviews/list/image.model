@@ -1,4 +1,25 @@
-widget(icon, {
-  .focusable = true;
-  .source = $self.url;
+#include "theme://include/plates.model"
+#include "theme://include/separators.model"
+
+widget(backdrop, {
+  HIGHLITE_PROPS();
+  widget(container_x, {
+
+    .focusable = true;
+    onEvent(enter, navOpen($self.url, $self.type, $parent.url));
+
+    widget(icon, {
+      .source = $self.url;
+      .sizeScale = 3;
+    });
+    
+    VERTICAL_SEPARATOR();
+
+    widget(label, {
+      .align = left; 
+      .caption = $self.metadata.title;
+      .weight = 4.0;
+      .ellipsize = true;
+    });
+  });
 });
