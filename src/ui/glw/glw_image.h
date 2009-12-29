@@ -41,8 +41,8 @@ typedef struct glw_image {
 
   float gi_angle;
 
-  glw_loadable_texture_t *gi_tex;
-
+  glw_loadable_texture_t *gi_current;
+  glw_loadable_texture_t *gi_pending;
 
   int16_t gi_border_left;
   int16_t gi_border_right;

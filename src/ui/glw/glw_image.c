@@ -41,8 +41,11 @@ glw_image_dtor(glw_t *w)
 {
   glw_image_t *gi = (void *)w;
 
-  if(gi->gi_tex != NULL)
-    glw_tex_deref(w->glw_root, gi->gi_tex);
+  if(gi->gi_current != NULL)
+    glw_tex_deref(w->glw_root, gi->gi_current);
+
+  if(gi->gi_pending != NULL)
+    glw_tex_deref(w->glw_root, gi->gi_pending);
 
   if(gi->gi_render_initialized)
     glw_render_free(&gi->gi_gr);
@@ -52,7 +55,7 @@ static void
 glw_image_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_image_t *gi = (void *)w;
-  glw_loadable_texture_t *glt = gi->gi_tex;
+  glw_loadable_texture_t *glt = gi->gi_current;
   float alpha_self;
   glw_rctx_t rc0;
   glw_t *c;
@@ -277,7 +280,7 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
 static void
 glw_image_update_constraints(glw_image_t *gi)
 {
-  glw_loadable_texture_t *glt = gi->gi_tex;
+  glw_loadable_texture_t *glt = gi->gi_current;
   glw_t *c;
   glw_root_t *gr = gi->w.glw_root;
 
@@ -294,10 +297,10 @@ glw_image_update_constraints(glw_image_t *gi)
 			  0, 0, 
 			  glw_filter_constraints(c->glw_flags),
 			  0);
-    } else if(gi->gi_tex != NULL) {
+    } else if(glt != NULL) {
       glw_set_constraints(&gi->w, 
-			  gi->gi_tex->glt_xs,
-			  gi->gi_tex->glt_ys,
+			  glt->glt_xs,
+			  glt->glt_ys,
 			  0, 0, 
 			  (gi->gi_bitmap_flags & GLW_IMAGE_NOFILL_X ? 
 			   GLW_CONSTRAINT_X : 0 )|
@@ -331,11 +334,26 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 {
   glw_image_t *gi = (void *)w;
   glw_root_t *gr = w->glw_root;
-  glw_loadable_texture_t *glt = gi->gi_tex;
+  glw_loadable_texture_t *glt;
   glw_rctx_t rc0;
   glw_t *c;
 
-  if(glt == NULL)
+  if((glt = gi->gi_pending) != NULL) {
+    glw_tex_layout(gr, glt);
+
+    if(glt->glt_state == GLT_STATE_VALID) {
+      // Pending texture ready, transfer to current
+
+      if(gi->gi_current != NULL)
+	glw_tex_deref(w->glw_root, gi->gi_current);
+
+      gi->gi_current = gi->gi_pending;
+      gi->gi_pending = NULL;
+      gi->gi_update = 1;
+    }
+  }
+
+  if((glt = gi->gi_current) == NULL)
     return;
 
   glw_tex_layout(gr, glt);
@@ -518,23 +536,30 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
     case GLW_ATTRIB_SOURCE:
       filename = va_arg(ap, char *);
 
+      char *curname;
 
-      if(gi->gi_tex != NULL) {
-	// Don't reload image if it's the same URL.
-	if(filename != NULL && gi->gi_tex->glt_filename != NULL &&
-	   !strcmp(filename, gi->gi_tex->glt_filename))
-	  break;
-	glw_tex_deref(w->glw_root, gi->gi_tex);
-      }
+      if(gi->gi_pending != NULL) 
+	curname = gi->gi_pending->glt_filename;
+      else if(gi->gi_current != NULL) 
+	curname = gi->gi_current->glt_filename;
+      else 
+	curname = NULL;
 
-      gi->gi_tex = filename ? glw_tex_create(w->glw_root, filename) : NULL;
-      gi->gi_update = 1;
+      if(curname != NULL && filename != NULL && !strcmp(filename, curname))
+	break;
+
+      if(gi->gi_pending != NULL)
+	glw_tex_deref(w->glw_root, gi->gi_pending);
+
+      gi->gi_pending = filename ? glw_tex_create(w->glw_root, filename) : NULL;
       break;
 
     case GLW_ATTRIB_PIXMAP:
-      gi->gi_tex = glw_tex_create_from_pixmap(w->glw_root, 
-					      va_arg(ap, pixmap_t *));
-      gi->gi_update = 1;
+      if(gi->gi_pending != NULL)
+	glw_tex_deref(w->glw_root, gi->gi_pending);
+
+      gi->gi_pending = glw_tex_create_from_pixmap(w->glw_root, 
+						  va_arg(ap, pixmap_t *));
       break;
 
     case GLW_ATTRIB_SET_IMAGE_FLAGS:
