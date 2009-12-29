@@ -27,7 +27,6 @@ typedef struct glw_image {
   float gi_alpha_self;
 
   float gi_angle;
-  float gi_angle0;
 
   glw_loadable_texture_t *gi_tex;
 
