@@ -31,6 +31,7 @@
 #define GLW_IMAGE_NOFILL_X      0x40
 #define GLW_IMAGE_NOFILL_Y      0x80
 
+#define GLW_EXPLICIT_PADDING    0x100
 
 #include "glw_texture.h"
 
@@ -58,8 +59,10 @@ typedef struct glw_image {
 
   uint8_t gi_border_scaling;
   uint8_t gi_render_initialized;
-  uint8_t gi_render_init;
+  uint8_t gi_update;
   uint8_t gi_explicit_padding;
+
+  uint8_t gi_frozen;
 
   glw_renderer_t gi_gr;
 

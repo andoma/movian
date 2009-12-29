@@ -341,8 +341,9 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   glw_tex_layout(gr, glt);
 
   if(glt->glt_state == GLT_STATE_VALID) {
-    if(gi->gi_render_init == 1) {
-      gi->gi_render_init = 0;
+
+    if(gi->gi_update && !gi->gi_frozen) {
+      gi->gi_update = 0;
 
       if(gi->gi_render_initialized)
 	glw_render_free(&gi->gi_gr);
@@ -477,13 +478,17 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
   do {
     attrib = va_arg(ap, int);
     switch(attrib) {
+    case GLW_ATTRIB_FREEZE:
+      gi->gi_frozen = va_arg(ap, int);
+      break;
+
     case GLW_ATTRIB_BORDER_SIZE:
       gi->gi_border_scaling = 1;
       gi->gi_border_left   = va_arg(ap, double);
       gi->gi_border_top    = va_arg(ap, double);
       gi->gi_border_right  = va_arg(ap, double);
       gi->gi_border_bottom = va_arg(ap, double);
-      gi->gi_render_init = 1;
+      gi->gi_update = 1;
       glw_image_update_constraints(gi);
       break;
 
@@ -493,7 +498,7 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
       gi->gi_padding_top    = va_arg(ap, double);
       gi->gi_padding_right  = va_arg(ap, double);
       gi->gi_padding_bottom = va_arg(ap, double);
-      gi->gi_render_init = 1;
+      gi->gi_update = 1;
       glw_image_update_constraints(gi);
       break;
       
@@ -523,23 +528,23 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
       }
 
       gi->gi_tex = filename ? glw_tex_create(w->glw_root, filename) : NULL;
-      gi->gi_render_init = 1;
+      gi->gi_update = 1;
       break;
 
     case GLW_ATTRIB_PIXMAP:
       gi->gi_tex = glw_tex_create_from_pixmap(w->glw_root, 
 					      va_arg(ap, pixmap_t *));
-      gi->gi_render_init = 1;
+      gi->gi_update = 1;
       break;
 
     case GLW_ATTRIB_SET_IMAGE_FLAGS:
       gi->gi_bitmap_flags |= va_arg(ap, int);
-      gi->gi_render_init = 1;
+      gi->gi_update = 1;
       break;
 
     case GLW_ATTRIB_CLR_IMAGE_FLAGS:
       gi->gi_bitmap_flags &= ~va_arg(ap, int);
-      gi->gi_render_init = 1;
+      gi->gi_update = 1;
       break;
 
     case GLW_ATTRIB_RGB:
