@@ -1036,8 +1036,6 @@ prop_create_ex(prop_t *parent, const char *name, prop_sub_t *skipme, int flags)
 void
 prop_rename_ex(prop_t *p, const char *name, prop_sub_t *skipme)
 {
-  prop_t *parent;
-
   hts_mutex_lock(&prop_mutex);
 
   if(!(p->hp_flags & PROP_NAME_NOT_ALLOCATED))
@@ -1045,12 +1043,19 @@ prop_rename_ex(prop_t *p, const char *name, prop_sub_t *skipme)
 
   p->hp_name = strdup(name);
 
-  if(p->hp_parent != NULL && (p->hp_parent->hp_flags & PROP_SORTED_CHILDS)) {
+  if(p->hp_parent != NULL && p->hp_parent->hp_flags & PROP_SORTED_CHILDS) {
 
-    parent = p->hp_parent;
-    prop_notify_child(p, parent, PROP_DEL_CHILD, NULL, 0);
+    prop_t *parent = p->hp_parent;
+    
     TAILQ_REMOVE(&parent->hp_childs, p, hp_parent_link);
-    prop_insert(p, parent, NULL, skipme);
+
+    if(parent->hp_flags & PROP_SORT_CASE_INSENSITIVE)
+      TAILQ_INSERT_SORTED(&parent->hp_childs, p, hp_parent_link, prop_compar2);
+    else
+      TAILQ_INSERT_SORTED(&parent->hp_childs, p, hp_parent_link, prop_compar);
+
+    prop_notify_child2(p, parent, TAILQ_NEXT(p, hp_parent_link),
+		       PROP_MOVE_CHILD, NULL, 0);
   }
 
   hts_mutex_unlock(&prop_mutex);
