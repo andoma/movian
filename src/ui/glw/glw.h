@@ -152,18 +152,6 @@ typedef enum {
 } glw_attribute_t;
 
 /**
- * Image flags
- */
-#define GLW_MIRROR_X      0x1
-#define GLW_MIRROR_Y      0x2
-#define GLW_BORDER_LEFT   0x4
-#define GLW_BORDER_RIGHT  0x8
-#define GLW_BORDER_TOP    0x10
-#define GLW_BORDER_BOTTOM 0x20
-#define GLW_NOFILL_X      0x40
-#define GLW_NOFILL_Y      0x80
-
-/**
  * Text flags
  */
 #define GTB_PASSWORD      0x1   /* Don't display real contents */

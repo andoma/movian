@@ -19,6 +19,19 @@
 #ifndef GLW_IMAGE_H
 #define GLW_IMAGE_H
 
+/**
+ * Image flags
+ */
+#define GLW_IMAGE_MIRROR_X      0x1
+#define GLW_IMAGE_MIRROR_Y      0x2
+#define GLW_IMAGE_BORDER_LEFT   0x4
+#define GLW_IMAGE_BORDER_RIGHT  0x8
+#define GLW_IMAGE_BORDER_TOP    0x10
+#define GLW_IMAGE_BORDER_BOTTOM 0x20
+#define GLW_IMAGE_NOFILL_X      0x40
+#define GLW_IMAGE_NOFILL_Y      0x80
+
+
 #include "glw_texture.h"
 
 typedef struct glw_image {

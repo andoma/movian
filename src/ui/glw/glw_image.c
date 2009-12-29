@@ -170,24 +170,24 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
   }
 
   vex[0][0] =         -1.0;
-  if(gi->gi_bitmap_flags & GLW_BORDER_LEFT)
+  if(gi->gi_bitmap_flags & GLW_IMAGE_BORDER_LEFT)
     vex[1][0] = GLW_MIN(-1.0 + 2.0 * gi->gi_border_left / rc->rc_size_x, 0.0);
   else
     vex[1][0] =       -1.0;
 
-  if(gi->gi_bitmap_flags & GLW_BORDER_RIGHT)
+  if(gi->gi_bitmap_flags & GLW_IMAGE_BORDER_RIGHT)
     vex[2][0] = GLW_MAX(1.0 - 2.0 * gi->gi_border_right / rc->rc_size_x, 0.0);
   else
     vex[2][0] =        1.0;
   vex[3][0] =          1.0;
     
   vex[0][1] =          1.0;
-  if(gi->gi_bitmap_flags & GLW_BORDER_TOP)
+  if(gi->gi_bitmap_flags & GLW_IMAGE_BORDER_TOP)
     vex[1][1] = GLW_MAX( 1.0 - 2.0 * gi->gi_border_top / rc->rc_size_y, 0.0);
   else
     vex[1][1] = 1.0;
 
-  if(gi->gi_bitmap_flags & GLW_BORDER_BOTTOM)
+  if(gi->gi_bitmap_flags & GLW_IMAGE_BORDER_BOTTOM)
     vex[2][1] = GLW_MIN(-1.0 + 2.0 * gi->gi_border_bottom / rc->rc_size_y, 0.0);
   else
     vex[2][1] = -1.0;
@@ -217,13 +217,13 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
     gi->gi_child_ys = (vex[1][1] - vex[2][1]) * 0.5f;
   }
 
-  if(gi->gi_bitmap_flags & GLW_MIRROR_X) {
+  if(gi->gi_bitmap_flags & GLW_IMAGE_MIRROR_X) {
     GLW_SWAP(vex[0][1], vex[3][1]);
     GLW_SWAP(vex[1][1], vex[2][1]);
     gi->gi_child_xt = -gi->gi_child_xt;
   }
 
-  if(gi->gi_bitmap_flags & GLW_MIRROR_Y) {
+  if(gi->gi_bitmap_flags & GLW_IMAGE_MIRROR_Y) {
     GLW_SWAP(vex[0][0], vex[3][0]);
     GLW_SWAP(vex[1][0], vex[2][0]);
     gi->gi_child_yt = -gi->gi_child_yt;
@@ -234,18 +234,18 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
 
   for(y = 0; y < 3; y++) {
     
-    if(y == 0 && !(gi->gi_bitmap_flags & GLW_BORDER_TOP))
+    if(y == 0 && !(gi->gi_bitmap_flags & GLW_IMAGE_BORDER_TOP))
       continue;
 
-    if(y == 2 && !(gi->gi_bitmap_flags & GLW_BORDER_BOTTOM))
+    if(y == 2 && !(gi->gi_bitmap_flags & GLW_IMAGE_BORDER_BOTTOM))
       continue;
 
     for(x = 0; x < 3; x++) {
 
-      if(x == 0 && !(gi->gi_bitmap_flags & GLW_BORDER_LEFT))
+      if(x == 0 && !(gi->gi_bitmap_flags & GLW_IMAGE_BORDER_LEFT))
 	continue;
       
-      if(x == 2 && !(gi->gi_bitmap_flags & GLW_BORDER_RIGHT))
+      if(x == 2 && !(gi->gi_bitmap_flags & GLW_IMAGE_BORDER_RIGHT))
 	continue;
 
       glw_render_vtx_pos(&gi->gi_gr, i, vex[x + 0][0], vex[y + 1][1], 0.0f);
@@ -299,9 +299,9 @@ glw_image_update_constraints(glw_image_t *gi)
 			  gi->gi_tex->glt_xs,
 			  gi->gi_tex->glt_ys,
 			  0, 0, 
-			  (gi->gi_bitmap_flags & GLW_NOFILL_X ? 
+			  (gi->gi_bitmap_flags & GLW_IMAGE_NOFILL_X ? 
 			   GLW_CONSTRAINT_X : 0 )|
-			  (gi->gi_bitmap_flags & GLW_NOFILL_Y ? 
+			  (gi->gi_bitmap_flags & GLW_IMAGE_NOFILL_Y ? 
 			   GLW_CONSTRAINT_Y : 0 ),
 			  0);
     }
@@ -360,12 +360,12 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	int o = glt->glt_orientation < 9 ? glt->glt_orientation : 0;
 	memcpy(tex, texcords[o], 8);
 
-	if(gi->gi_bitmap_flags & GLW_MIRROR_X) {
+	if(gi->gi_bitmap_flags & GLW_IMAGE_MIRROR_X) {
 	  GLW_SWAP(tex[0], tex[2]);
 	  GLW_SWAP(tex[4], tex[6]);
 	}
 	
-	if(gi->gi_bitmap_flags & GLW_MIRROR_Y) {
+	if(gi->gi_bitmap_flags & GLW_IMAGE_MIRROR_Y) {
 	  GLW_SWAP(tex[1], tex[7]);
 	  GLW_SWAP(tex[5], tex[3]);
 	}
@@ -465,7 +465,10 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
     gi->gi_size_scale = 1.0;
 
     gi->gi_bitmap_flags =
-      GLW_BORDER_LEFT | GLW_BORDER_RIGHT | GLW_BORDER_TOP | GLW_BORDER_BOTTOM;
+      GLW_IMAGE_BORDER_LEFT |
+      GLW_IMAGE_BORDER_RIGHT |
+      GLW_IMAGE_BORDER_TOP |
+      GLW_IMAGE_BORDER_BOTTOM;
 
     if(w->glw_class == GLW_IMAGE)
       glw_set_constraints(&gi->w, 0, 0, 1, 0, GLW_CONSTRAINT_A, 0); 

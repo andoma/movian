@@ -24,6 +24,7 @@
 #include "misc/strtab.h"
 #include "glw_model.h"
 #include "glw.h"
+#include "glw_image.h"
 
 /**
  *
@@ -339,15 +340,15 @@ static const token_attrib_t attribtab[] = {
   {"hidden",                  set_generic_flag, GLW_HIDDEN},
   {"noInitialTransform",      set_generic_flag, GLW_NO_INITIAL_TRANS},
 
-  {"mirrorx",         set_image_flag, GLW_MIRROR_X},
-  {"mirrory",         set_image_flag, GLW_MIRROR_Y},
+  {"mirrorx",         set_image_flag, GLW_IMAGE_MIRROR_X},
+  {"mirrory",         set_image_flag, GLW_IMAGE_MIRROR_Y},
 
-  {"borderLeft",      set_image_flag, GLW_BORDER_LEFT},
-  {"borderRight",     set_image_flag, GLW_BORDER_RIGHT},
-  {"borderTop",       set_image_flag, GLW_BORDER_TOP},
-  {"borderBottom",    set_image_flag, GLW_BORDER_BOTTOM},
-  {"constraintX",     set_image_flag, GLW_NOFILL_X},
-  {"constraintY",     set_image_flag, GLW_NOFILL_Y},
+  {"borderLeft",      set_image_flag, GLW_IMAGE_BORDER_LEFT},
+  {"borderRight",     set_image_flag, GLW_IMAGE_BORDER_RIGHT},
+  {"borderTop",       set_image_flag, GLW_IMAGE_BORDER_TOP},
+  {"borderBottom",    set_image_flag, GLW_IMAGE_BORDER_BOTTOM},
+  {"constraintX",     set_image_flag, GLW_IMAGE_NOFILL_X},
+  {"constraintY",     set_image_flag, GLW_IMAGE_NOFILL_Y},
 
   {"password",        set_text_flag,  GTB_PASSWORD},
   {"ellipsize",       set_text_flag,  GTB_ELLIPSIZE},
