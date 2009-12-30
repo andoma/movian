@@ -1376,6 +1376,9 @@ pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, glw_t **hp)
 	  break;
 	}
       }
+    } else {
+      // Don't decend
+      return 0;
     }
   }
 
