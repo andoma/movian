@@ -1,9 +1,12 @@
 #include "theme://include/plates.model"
+#include "theme://include/separators.model"
 
 widget(container_x, {
 
   widget(backdrop, {
     HIGHLITE_PROPS();
+
+    .borderRight = false;
       
     widget(text, {
       .align = left;
@@ -14,7 +17,8 @@ widget(container_x, {
 
   widget(backdrop, {
     HIGHLITE_PROPS();
-    
+    .borderLeft = false;
+
     widget(text, {
       .align = left;
       .focusable = true;
@@ -22,8 +26,8 @@ widget(container_x, {
     });
   });
 
-  ACTION_BUTTON("Delete", "theme://icons/32x32/remove.png", {
+  ACTION_ICON2("theme://icons/32x32/remove.png", {
     delete($self);
-  });
+  }, 1, 1);
 
 });

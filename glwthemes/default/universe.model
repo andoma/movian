@@ -4,36 +4,6 @@
 
 
 
-#define ACTION_ICON_SCALE(ICON, EVENT, SCALE)
-{
-  widget(backdrop, {
-    BUTTON_PROPS(0.5);
-    onEvent(enter, EVENT);
-    
-    widget(icon, {
-      .source = ICON;
-      .sizeScale = SCALE;
-    });
-  });  
-}
-
-
-#define ACTION_ICON_SCALE_SENS(ICON, EVENT, SCALE,SENSPROP)
-{
-  widget(backdrop, {
-    HIGHLITE_PROPS();
-    onEvent(enter, EVENT);
-
-    .focusable = SENSPROP * 0.5;
-    .alpha = iir(0.4 + SENSPROP * 0.6, 8);
-
-    widget(icon, {
-      .source = ICON;
-      .sizeScale = SCALE;
-    });
-  });  
-}
-
 
 
 
@@ -64,16 +34,17 @@ widget(container_z, {
 	  widget(container_x, {
 	    widget(container_x, {
 	      .weight = 0.5;
-	      ACTION_ICON_SENS("theme://icons/32x32/back.png", 
-			       event(Back),
-			       $global.nav.canGoBack);
+	      ACTION_ICON2("theme://icons/32x32/back.png", 
+			   event(Back),
+			   1, $global.nav.canGoBack);
 
-	      ACTION_ICON_SENS("theme://icons/32x32/next.png", 
-			       event(Forward),
-			       $global.nav.canGoForward);
+	      ACTION_ICON2("theme://icons/32x32/next.png", 
+			   event(Forward),
+			   1, $global.nav.canGoForward);
 
-	      ACTION_ICON("theme://icons/32x32/home.png", 
-			  event(Home));
+	      ACTION_ICON2("theme://icons/32x32/home.png", 
+			   event(Home),
+			   1, $global.nav.canGoHome);
 	    });
 	    
 	    widget(label, {
@@ -186,25 +157,25 @@ widget(container_z, {
 	      });
 	      
 	      widget(container_x, {
-		ACTION_ICON_SCALE_SENS("theme://icons/64x64/back.png", 
-				       {
-					 $ui.menu = false;
-					 fireEvent(event(Back));
-				       },
-				       2, $global.nav.canGoBack);
+		ACTION_ICON2("theme://icons/64x64/back.png", 
+			     {
+			       $ui.menu = false;
+			       fireEvent(event(Back));
+			     },
+			     2, $global.nav.canGoBack);
 		
-		ACTION_ICON_SCALE_SENS("theme://icons/64x64/next.png", 
-				       {
-					 $ui.menu = false;
-					 fireEvent(event(Forward));
-				       },
-				       2, $global.nav.canGoForward);
+		ACTION_ICON2("theme://icons/64x64/next.png", 
+			     {
+			       $ui.menu = false;
+			       fireEvent(event(Forward));
+			     },
+			     2, $global.nav.canGoForward);
 
-		ACTION_ICON_SCALE("theme://icons/64x64/home.png",
-				  {
-				    $ui.menu = false;
-				    fireEvent(event(Home));
-				  }, 2);
+		ACTION_ICON2("theme://icons/64x64/home.png",
+			     {
+			       $ui.menu = false;
+			       fireEvent(event(Home));
+			     }, 2, 1);
 	      });
 	      
 	      HORIZONTAL_SEPARATOR();
@@ -214,18 +185,17 @@ widget(container_z, {
 	      });
 	      
 	      widget(container_x, {
-		ACTION_ICON_SCALE_SENS("theme://icons/64x64/skip_backward.png", 
-				       event(PreviousTrack), 2,
-				       $global.media.current.canSkipBackward);
+		ACTION_ICON2("theme://icons/64x64/skip_backward.png", 
+			     event(PreviousTrack), 2,
+			     $global.media.current.canSkipBackward);
 		
-		ACTION_ICON_SCALE_SENS("theme://icons/64x64/rewind.png", 
-				       event(SeekReverse), 2,
-				       $global.media.current.canSeek);
+		ACTION_ICON2("theme://icons/64x64/rewind.png", 
+			     event(SeekReverse), 2,
+			     $global.media.current.canSeek);
 		
 		widget(animator, {
 		  .hidden = !$global.media.current.canPause;
 		  .time = 0.2;
-		  .effect = flipHorizontal;
 		  .source = translate($global.media.current.playstatus, 
 				      void,
 				      "play",  "theme://cmdmenu/pause.model",
@@ -233,17 +203,17 @@ widget(container_z, {
 		});
 
 
-		ACTION_ICON_SCALE_SENS("theme://icons/64x64/fast_forward.png", 
-				       event(SeekForward), 2,
-				       $global.media.current.canSeek);
+		ACTION_ICON2("theme://icons/64x64/fast_forward.png", 
+			     event(SeekForward), 2,
+			     $global.media.current.canSeek);
 		
-		ACTION_ICON_SCALE_SENS("theme://icons/64x64/skip_forward.png", 
-				       event(NextTrack), 2,
-				       $global.media.current.canSkipForward);
+		ACTION_ICON2("theme://icons/64x64/skip_forward.png", 
+			     event(NextTrack), 2,
+			     $global.media.current.canSkipForward);
 		
-		ACTION_ICON_SCALE_SENS("theme://icons/64x64/stop.png", 
-				       event(Stop), 2,
-				       1);
+		ACTION_ICON2("theme://icons/64x64/stop.png", 
+			     event(Stop), 2,
+			     1);
 	      });
 	      
 	      widget(backdrop, {

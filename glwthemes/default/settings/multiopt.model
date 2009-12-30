@@ -7,14 +7,9 @@ widget(container_x, {
     .caption = $self.title + ":";
   });
     
-  widget(backdrop, {
-    BUTTON_PROPS(1.0);
-    onEvent(enter, targetedEvent("choiceDeck", Decrease));
-      
-    widget(icon, {
-      .source = "theme://icons/left.png";
-    });
-  });
+  ACTION_ICON2("theme://icons/32x32/back.png",
+	       targetedEvent("choiceDeck", Decrease),
+	       1, 1);
 
   widget(deck, {
     .id = "choiceDeck";
@@ -26,11 +21,7 @@ widget(container_x, {
     });
   });
 
-  widget(backdrop, {
-    BUTTON_PROPS(1.0);
-    onEvent(enter, targetedEvent("choiceDeck", Increase));
-    widget(icon, {
-      .source = "theme://icons/right.png";
-    });
-  });
+  ACTION_ICON2("theme://icons/32x32/next.png",
+	       targetedEvent("choiceDeck", Increase),
+	       1, 1);
 });

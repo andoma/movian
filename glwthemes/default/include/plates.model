@@ -128,3 +128,34 @@
     });
   });  
 }
+
+
+
+
+#define ACTION_ICON2(ICON, EVENT, SCALE, SENS)
+{
+  widget(backdrop, {
+    .source = "theme://images/whitebox.png";
+    .borderSize = [6, 3, 4, 4];
+    .padding = [2, 2, 5, 5];
+    .color = BUTTON_COLOR();
+
+    .alphaSelf = iir(isFocused() * 0.5, 8);
+
+    widget(bloom, {
+      .value = iir(isHovered() * 0.25 + isPressed() * 1.0, 8);
+
+      widget(icon, {
+	onEvent(enter, EVENT);
+    
+	.focusable = SENS * 0.5;
+	.alpha = iir(0.2 + SENS * 0.8, 8);
+
+	.source = ICON;
+	.sizeScale = SCALE;
+	.shadow = true;
+
+      });
+    });
+  });
+}

@@ -1,18 +1,4 @@
 #include "theme://include/plates.model"
 
-
-#define ACTION_ICON_SCALE(ICON, EVENT, SCALE)
-{
-  widget(backdrop, {
-    BUTTON_PROPS(0.5);
-    onEvent(enter, EVENT);
-    
-    widget(icon, {
-      .source = ICON;
-      .sizeScale = SCALE;
-    });
-  });  
-}
-
-ACTION_ICON_SCALE("theme://icons/64x64/pause.png", event(Pause), 2);
+ACTION_ICON2("theme://icons/64x64/pause.png", event(Pause), 2, 1);
 
