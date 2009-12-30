@@ -546,9 +546,11 @@ glw_signal_handler_clean(glw_t *w)
  *
  */
 void
-glw_reaper0(glw_root_t *gr)
+glw_prepare_frame(glw_root_t *gr)
 {
   glw_t *w;
+
+  prop_courier_poll(gr->gr_courier);
 
   glw_cursor_layout_frame(gr);
 

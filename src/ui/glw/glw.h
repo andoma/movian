@@ -529,7 +529,7 @@ void glw_flush0(glw_root_t *gr);
 
 void *glw_get_opaque(glw_t *w, glw_callback_t *func);
 
-void glw_reaper0(glw_root_t *gr);
+void glw_prepare_frame(glw_root_t *gr);
 
 void glw_cond_wait(glw_root_t *gr, hts_cond_t *c);
 

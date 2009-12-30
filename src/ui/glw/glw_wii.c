@@ -479,9 +479,7 @@ glw_wii_loop(glw_wii_t *gwii)
     if(KEYBOARD_GetEvent(&event))
       process_keyboard_event(gwii, &event);
 
-    prop_courier_poll(gwii->gr.gr_courier);
-    glw_reaper0(&gwii->gr);
-
+    glw_prepare_frame(&gwii->gr);
 
     memset(&rc, 0, sizeof(rc));
     
