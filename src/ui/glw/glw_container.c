@@ -32,6 +32,8 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
   int cflags = 0, f;
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
+    if(c->glw_flags & GLW_HIDDEN)
+      continue;
     if(c == skip)
       continue;
 
@@ -109,6 +111,8 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
   s_w /= co->weight_sum;
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
+    if(c->glw_flags & GLW_HIDDEN)
+      continue;
 
     f = glw_filter_constraints(c->glw_flags);
 
@@ -156,6 +160,9 @@ glw_container_y_constraints(glw_container_t *co, glw_t *skip)
   int cflags = 0, f;
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
+    if(c->glw_flags & GLW_HIDDEN)
+      continue;
+
     if(c == skip)
       continue;
 
@@ -227,6 +234,8 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
   s_w /= co->weight_sum;
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
+    if(c->glw_flags & GLW_HIDDEN)
+      continue;
     
     f = glw_filter_constraints(c->glw_flags);
     
@@ -297,6 +306,8 @@ glw_container_z_layout(glw_t *w, glw_rctx_t *rc)
   glw_flush_render_list(w);
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    if(c->glw_flags & GLW_HIDDEN)
+      continue;
     
     c->glw_parent_pos.x = 0;
     c->glw_parent_pos.y = 0;

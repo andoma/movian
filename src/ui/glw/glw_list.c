@@ -79,6 +79,8 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
   l->center_y = GLW_LP(6, l->center_y, t);
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    if(c->glw_flags & GLW_HIDDEN)
+      continue;
 
     if(c->glw_req_size_y) {
       size_y = c->glw_req_size_y / rc->rc_size_y;
@@ -152,6 +154,8 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
   l->center_x = GLW_LP(6, l->center_x, t);
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    if(c->glw_flags & GLW_HIDDEN)
+      continue;
 
     if(c->glw_req_aspect) {
       size_x = c->glw_req_aspect * isa;
@@ -225,6 +229,8 @@ glw_list_render(glw_list_t *l, glw_rctx_t *rc)
   }
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    if(c->glw_flags & GLW_HIDDEN)
+      continue;
 
     if(c->glw_parent_pos.y - c->glw_parent_size_y <= 1.0f &&
        c->glw_parent_pos.y + c->glw_parent_size_y >= -1.0f &&
