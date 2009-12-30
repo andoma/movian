@@ -28,6 +28,10 @@
 #include "navigator.h"
 #include "misc/pixmap.h"
 
+static token_t t_zero = {
+  .type = TOKEN_INT,
+};
+
 /**
  *
  */
@@ -217,6 +221,12 @@ eval_op(glw_model_eval_context_t *ec, struct token *self)
     return -1;
   if((b = token_resolve(ec, b)) == NULL)
     return -1;
+
+  if(a->type == TOKEN_VOID)
+    a = &t_zero;
+
+  if(b->type == TOKEN_VOID)
+    b = &t_zero;
 
   switch(self->type) {
   case TOKEN_ADD:
