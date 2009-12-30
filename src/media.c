@@ -151,6 +151,18 @@ mp_create(const char *name, const char *type, int flags)
   mp->mp_prop_avdelta     = prop_create(mp->mp_prop_root, "avdelta");
   mp->mp_prop_url         = prop_create(mp->mp_prop_root, "url");
 
+  mp->mp_prop_canSkipBackward = 
+    prop_create(mp->mp_prop_root, "canSkipBackward");
+
+  mp->mp_prop_canSkipForward = 
+    prop_create(mp->mp_prop_root, "canSkipForward");
+
+  mp->mp_prop_canSeek = 
+    prop_create(mp->mp_prop_root, "canSeek");
+
+  mp->mp_prop_canPause = 
+    prop_create(mp->mp_prop_root, "canPause");
+
   mp->mp_pc = prop_courier_create(&mp->mp_mutex, PROP_COURIER_THREAD, "mp");
 
   mp->mp_sub_currenttime = 
@@ -1040,4 +1052,14 @@ void
 mp_set_url(media_pipe_t *mp, const char *url)
 {
   prop_set_string(mp->mp_prop_url, url);
+}
+
+/**
+ *
+ */
+void
+mp_set_play_caps(media_pipe_t *mp, int caps)
+{
+  prop_set_int(mp->mp_prop_canSeek,  caps & MP_PLAY_CAPS_SEEK  ? 1 : 0);
+  prop_set_int(mp->mp_prop_canPause, caps & MP_PLAY_CAPS_PAUSE ? 1 : 0);
 }

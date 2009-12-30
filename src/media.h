@@ -173,6 +173,11 @@ typedef struct media_pipe {
   prop_t *mp_prop_avdelta;
   prop_t *mp_prop_url;
 
+  prop_t *mp_prop_canSkipBackward;
+  prop_t *mp_prop_canSkipForward;
+  prop_t *mp_prop_canSeek;
+  prop_t *mp_prop_canPause;
+
   prop_courier_t *mp_pc;
   prop_sub_t *mp_sub_currenttime;
   prop_sub_t *mp_sub_avdelta;
@@ -269,5 +274,10 @@ void mp_set_playstatus_by_hold(media_pipe_t *mp, int hold);
 void mp_set_playstatus_stop(media_pipe_t *mp);
 
 void mp_set_url(media_pipe_t *mp, const char *url);
+
+#define MP_PLAY_CAPS_SEEK 0x1
+#define MP_PLAY_CAPS_PAUSE 0x2
+
+void mp_set_play_caps(media_pipe_t *mp, int caps);
 
 #endif /* MEDIA_H */

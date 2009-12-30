@@ -4,9 +4,12 @@
 widget(backdrop, {
   PLATE_PROPS();
   .alphaSelf = 0.25;
-  .height = $ui.fontsize * 5 + 9;
 
   widget(container_x, {
+    widget(dummy, {
+      .width = 3;
+    });
+
     widget(image, {
       .source = devoidify($self.metadata.album_art, 
 			  "theme://icons/128x128/cd.png");
@@ -16,66 +19,44 @@ widget(backdrop, {
 
     widget(container_y, {
 
-      .filterConstraintX = true;
-      .filterConstraintY = true;
-
       widget(label, {
 	.caption = $self.metadata.title;
 	.align = left; 
 	.ellipsize = true;
-	.sizeScale = 1.4;
+	.sizeScale = 1.5;
       });
 	  
       widget(label, {
 	.caption = $self.metadata.artist;
 	.align = left; 
 	.ellipsize = true;
-	.sizeScale = 0.8;
+	.sizeScale = 1;
       });
 
       widget(label, {
 	.caption = $self.metadata.album;
 	.align = left; 
 	.ellipsize = true;
-	.sizeScale = 0.8;
-      });
-
-
-      widget(container_x, {
-	ACTION_ICON("theme://icons/32x32/skip_backward.png",
-		    event(PreviousTrack));
-	
-	widget(animator, {
-	  .time = 0.2;
-	  .effect = flipHorizontal;
-	  .source = translate($self.playstatus, void,
-			      "play", "theme://playdecks/pause.model",
-			      "pause", "theme://playdecks/play.model");
-	});
-
-	ACTION_ICON("theme://icons/32x32/skip_forward.png",
-		    event(NextTrack));
-
-	widget(backdrop, {
-	  PLATE_PROPS();
-	  .alphaSelf = 0.5;
-	  .color = [0.0, 0.0, 0.0];
-	  
-	  widget(slider_x, {
-	    .focusable = 0.2;
-	    .max = $self.metadata.duration;
-	    .step = 15;
-	    bind($self.currenttime);
-	    widget(backdrop, {
-	      KNOB_PROPS();
-	      widget(label, {
- 		.align = center;
-		.caption = value2duration($self.currenttime);
-	      });
-	    });
-	  });
-	});
+	.sizeScale = 1;
       });
     });
+
+    widget(container_y, {
+
+      .width = $ui.fontsize * 8;
+
+      widget(label, {
+	.sizeScale = 1.5;
+	.align = right; 
+	.caption = value2duration($self.currenttime) + 
+	  select($self.metadata.duration,
+		 " / " + value2duration($self.metadata.duration), "");
+      });
+    });
+
+    widget(dummy, {
+      .width = 3;
+    });
+ 
   });
 });

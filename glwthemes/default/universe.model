@@ -110,7 +110,6 @@ widget(container_z, {
 
 
       widget(deck, {
-	.debug = true;
 	.filterConstraintX = true;
 	delta($ui.fullwindow, wantFullWindow());
 
@@ -214,28 +213,63 @@ widget(container_z, {
 		.caption = "Play control";
 	      });
 	      
+	      trace("skipbackward", $global.media.current.canSkipBackward);
+	      trace("skipforward", $global.media.current.canSkipForward);
+
 	      widget(container_x, {
 		ACTION_ICON_SCALE_SENS("theme://icons/64x64/skip_backward.png", 
 				       event(PreviousTrack), 2,
-				       1);
+				       $global.media.current.canSkipBackward);
 		
 		ACTION_ICON_SCALE_SENS("theme://icons/64x64/rewind.png", 
 				       event(SeekReverse), 2,
-				       1);
+				       $global.media.current.canSeek);
 		
+		widget(animator, {
+		  .hidden = !$global.media.current.canPause;
+		  .time = 0.2;
+		  .effect = flipHorizontal;
+		  .source = translate($global.media.current.playstatus, 
+				      void,
+				      "play",  "theme://cmdmenu/pause.model",
+				      "pause", "theme://cmdmenu/play.model");
+		});
+
+
 		ACTION_ICON_SCALE_SENS("theme://icons/64x64/fast_forward.png", 
 				       event(SeekForward), 2,
-				       1);
+				       $global.media.current.canSeek);
 		
 		ACTION_ICON_SCALE_SENS("theme://icons/64x64/skip_forward.png", 
 				       event(NextTrack), 2,
-				       1);
+				       $global.media.current.canSkipForward);
 		
 		ACTION_ICON_SCALE_SENS("theme://icons/64x64/stop.png", 
 				       event(Stop), 2,
 				       1);
 	      });
 	      
+	      widget(backdrop, {
+		.hidden = !$global.media.current.canSeek;
+		PLATE_PROPS();
+		.alphaSelf = 0.5;
+		.color = [0.0, 0.0, 0.0];
+	  
+		widget(slider_x, {
+		  .focusable = 0.2 * $global.media.current.canSeek;
+		  .max = $global.media.current.metadata.duration;
+		  .step = 15;
+		  bind($global.media.current.currenttime);
+		  widget(backdrop, {
+		    KNOB_PROPS();
+		    widget(label, {
+ 		      .align = center;
+		      .caption = value2duration($global.media.current.currenttime);
+		    });
+		  });
+		});
+	      });
+
 	      HORIZONTAL_SEPARATOR();
 	      
 	    });

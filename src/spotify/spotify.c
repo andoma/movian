@@ -2355,6 +2355,8 @@ be_spotify_play(const char *url, media_pipe_t *mp,
 
   hts_mutex_unlock(&spotify_mutex);
 
+  mp_set_play_caps(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE);
+
   mp_set_playstatus_by_hold(mp, hold);
 
   /* Playback successfully started, wait for events */

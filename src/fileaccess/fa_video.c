@@ -385,6 +385,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 				 ctx->codec_type, 0, fw, ctx, 0, 0);
   }
 
+  mp_set_play_caps(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE);
+
   mp_become_primary(mp);
 
   e = video_player_loop(fctx, cwvec, mp, errbuf, errlen);

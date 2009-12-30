@@ -75,6 +75,8 @@ openspc_play(media_pipe_t *mp, void *fh, char *errbuf, size_t errlen)
     duration = atoi(str) * 32000;
   }
 
+  mp_set_play_caps(mp, MP_PLAY_CAPS_PAUSE);
+
   mp_become_primary(mp);
 
   while(1) {
@@ -253,6 +255,8 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   }
 
   TRACE(TRACE_DEBUG, "Audio", "Starting playback of %s", url);
+
+  mp_set_play_caps(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE);
 
   mp->mp_audio.mq_stream = -1;
   mp->mp_video.mq_stream = -1;
