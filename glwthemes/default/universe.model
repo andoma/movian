@@ -213,9 +213,6 @@ widget(container_z, {
 		.caption = "Play control";
 	      });
 	      
-	      trace("skipbackward", $global.media.current.canSkipBackward);
-	      trace("skipforward", $global.media.current.canSkipForward);
-
 	      widget(container_x, {
 		ACTION_ICON_SCALE_SENS("theme://icons/64x64/skip_backward.png", 
 				       event(PreviousTrack), 2,
