@@ -110,8 +110,10 @@ find_candidate(glw_t *w, query_t *query)
 
   case GLW_ANIMATOR:
   case GLW_IMAGE:
+  case GLW_ICON:
   case GLW_BACKDROP:
   case GLW_BLOOM:
+  case GLW_MODEL:
     if((c = TAILQ_FIRST(&w->glw_childs)) != NULL)
       find_candidate(c, query);
     break;
@@ -300,6 +302,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
     case GLW_ANIMATOR:
     case GLW_IMAGE:
+    case GLW_ICON:
     case GLW_BACKDROP:
     case GLW_DECK:
     case GLW_MODEL:
