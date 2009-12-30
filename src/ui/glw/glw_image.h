@@ -30,7 +30,7 @@
 #define GLW_IMAGE_BORDER_BOTTOM 0x20
 #define GLW_IMAGE_NOFILL_X      0x40
 #define GLW_IMAGE_NOFILL_Y      0x80
-
+#define GLW_IMAGE_INFRONT       0x100
 
 #include "glw_texture.h"
 

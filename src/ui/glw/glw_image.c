@@ -51,6 +51,56 @@ glw_image_dtor(glw_t *w)
     glw_render_free(&gi->gi_gr);
 }
 
+/**
+ *
+ */
+static void 
+render_child_simple(glw_t *w, glw_rctx_t *rc)
+{
+  glw_rctx_t rc0 = *rc;
+  glw_t *c;
+
+  if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
+    rc0.rc_alpha = rc->rc_alpha * w->glw_alpha;
+    glw_render0(c, &rc0);
+  }
+}
+
+/**
+ *
+ */
+static void 
+render_child_autocentered(glw_image_t *gi, glw_rctx_t *rc)
+{
+  glw_t *c;
+  glw_rctx_t rc0;
+  float xs, ys;
+
+  if((c = TAILQ_FIRST(&gi->w.glw_childs)) == NULL)
+    return;
+
+  rc0 = *rc;
+      
+  glw_PushMatrix(&rc0, rc);
+      
+  glw_Translatef(&rc0, gi->gi_child_xt, gi->gi_child_yt, 0.0f);
+
+  xs = gi->gi_child_xs;
+  ys = gi->gi_child_ys;
+
+  glw_Scalef(&rc0, xs, ys, 1.0f);
+
+  rc0.rc_size_x = rc->rc_size_x * xs;
+  rc0.rc_size_y = rc->rc_size_y * ys;
+
+  rc0.rc_alpha = rc->rc_alpha * gi->w.glw_alpha;
+  glw_render0(c, &rc0);
+
+  glw_PopMatrix();
+}
+/**
+ *
+ */
 static void 
 glw_image_render(glw_t *w, glw_rctx_t *rc)
 {
@@ -58,8 +108,6 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
   glw_loadable_texture_t *glt = gi->gi_current;
   float alpha_self;
   glw_rctx_t rc0;
-  glw_t *c;
-  float xs, ys;
 
   if(glt == NULL || glt->glt_state != GLT_STATE_VALID)
     return;
@@ -88,6 +136,9 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 
     if(glw_is_focusable(w))
       glw_store_matrix(w, &rc0);
+
+    if(gi->gi_bitmap_flags & GLW_IMAGE_INFRONT)
+      render_child_simple(w, &rc0);
     
     if(alpha_self > 0.01) {
 
@@ -113,10 +164,9 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 
     }
 
-    if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
-      rc0.rc_alpha = rc->rc_alpha * w->glw_alpha;
-      glw_render0(c, &rc0);
-    }
+    if(!(gi->gi_bitmap_flags & GLW_IMAGE_INFRONT))
+      render_child_simple(w, &rc0);
+
     glw_PopMatrix();
 
   } else {
@@ -124,33 +174,18 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     if(glw_is_focusable(w))
       glw_store_matrix(w, rc);
 
+    if(gi->gi_bitmap_flags & GLW_IMAGE_INFRONT)
+       render_child_autocentered(gi, rc);
+
     if(alpha_self > 0.01)
       glw_render(&gi->gi_gr, w->glw_root, rc, 
 		 GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
 		 &glt->glt_texture,
 		 gi->gi_color.r, gi->gi_color.g, gi->gi_color.b, alpha_self);
 
-    if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
+    if(!(gi->gi_bitmap_flags & GLW_IMAGE_INFRONT))
+      render_child_autocentered(gi, rc);
 
-      rc0 = *rc;
-      
-      glw_PushMatrix(&rc0, rc);
-      
-      glw_Translatef(&rc0, gi->gi_child_xt, gi->gi_child_yt, 0.0f);
-
-      xs = gi->gi_child_xs;
-      ys = gi->gi_child_ys;
-
-      glw_Scalef(&rc0, xs, ys, 1.0f);
-
-      rc0.rc_size_x = rc->rc_size_x * xs;
-      rc0.rc_size_y = rc->rc_size_y * ys;
-
-      rc0.rc_alpha = rc->rc_alpha * w->glw_alpha;
-      glw_render0(c, &rc0);
-
-      glw_PopMatrix();
-    }
   }
 }
 
