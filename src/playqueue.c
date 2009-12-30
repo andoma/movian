@@ -444,7 +444,7 @@ source_set_type(void *opaque, const char *str)
   playqueue_entry_t *pqe = opaque;
 
   if(str != NULL)
-    pqe->pqe_playable = !strcmp(str, "audio");
+    pqe->pqe_playable = !strcmp(str, "audio") || !strcmp(str, "track");
 }
 
 
