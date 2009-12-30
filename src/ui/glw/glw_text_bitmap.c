@@ -531,10 +531,6 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
   glEnd();
   glEnable(GL_TEXTURE_2D);
 #endif
-  if(gtb->gtb_paint_cursor)
-    glw_render(&gtb->gtb_cursor_renderer, w->glw_root, &rc0,
-	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_NONE,
-	       NULL, 1, 1, 1, alpha * gtb->gtb_cursor_alpha);
 
   if(w->glw_flags & GLW_SHADOW && !rc0.rc_inhibit_shadows) {
     float xd, yd;
@@ -555,6 +551,12 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 	     GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
 	     &gtb->gtb_texture,
 	     gtb->gtb_color.r, gtb->gtb_color.g, gtb->gtb_color.b, alpha);
+
+
+  if(gtb->gtb_paint_cursor)
+    glw_render(&gtb->gtb_cursor_renderer, w->glw_root, &rc0,
+	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_NONE,
+	       NULL, 1, 1, 1, alpha * gtb->gtb_cursor_alpha);
 
   glw_PopMatrix();
 }
