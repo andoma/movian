@@ -206,7 +206,7 @@ glw_bloom_layout(glw_t *w, glw_rctx_t *rc)
   rc0.rc_alpha  = 1;
   rc0.rc_size_x = b->b_width  - EDGE_SIZE;
   rc0.rc_size_y = b->b_height - EDGE_SIZE;
-
+  rc0.rc_inhibit_shadows = 1;
 
   if(!b->b_need_render)
     return;

@@ -536,7 +536,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_NONE,
 	       NULL, 1, 1, 1, alpha * gtb->gtb_cursor_alpha);
 
-  if(w->glw_flags & GLW_SHADOW) {
+  if(w->glw_flags & GLW_SHADOW && !rc0.rc_inhibit_shadows) {
     float xd, yd;
 
     xd =  3.0 / rc0.rc_size_x;

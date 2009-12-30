@@ -91,7 +91,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     
     if(alpha_self > 0.01) {
 
-      if(w->glw_flags & GLW_SHADOW) {
+      if(w->glw_flags & GLW_SHADOW && !rc0.rc_inhibit_shadows) {
 	float xd, yd;
 
 	xd =  3.0 / rc0.rc_size_x;

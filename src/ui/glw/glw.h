@@ -359,6 +359,8 @@ typedef struct glw_rctx {
 
   struct glw_cursor_painter *rc_cursor_painter;
 
+  int rc_inhibit_shadows; // Used when rendering low res passes in bloom filter
+
   /**
    * Backend specifics
    */ 
