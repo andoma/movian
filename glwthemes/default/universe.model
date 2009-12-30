@@ -44,8 +44,6 @@ onEvent(menu, {
 
 $ui.fullwindow = 0;
 
-trace("FULLWINDOW", $ui.fullwindow);
-
 widget(container_z, {
   
   widget(fx_texrot, {
