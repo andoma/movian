@@ -2077,6 +2077,41 @@ prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, struct pixmap *pm)
 }
 
 
+/**
+ * Compare the value of two props, return 1 if equal 0 if not equal
+ */
+static int
+prop_value_compare(prop_t *a, prop_t *b)
+{
+  if(a->hp_type != b->hp_type)
+    return 0;
+
+  switch(a->hp_type) {
+  case PROP_STRING:
+    return !strcmp(rstr_get(a->hp_rstring), rstr_get(b->hp_rstring));
+
+  case PROP_LINK:
+    return !strcmp(rstr_get(a->hp_link_rtitle), rstr_get(b->hp_link_rtitle)) &&
+      !strcmp(rstr_get(a->hp_link_rurl), rstr_get(b->hp_link_rurl));
+
+  case PROP_FLOAT:
+    return a->hp_float == b->hp_float;
+
+  case PROP_INT:
+    return a->hp_int == b->hp_int;
+
+  case PROP_PIXMAP:
+    return a->hp_pixmap == b->hp_pixmap;
+
+  case PROP_VOID:
+  case PROP_ZOMBIE:
+    return 1;
+    
+  default:
+    return 0;
+  }
+}
+
 
 /**
  * Relink subscriptions after a symlink has been changed
@@ -2092,6 +2127,7 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
 {
   prop_sub_t *s;
   prop_t *c, *z;
+  int equal;
 
   /* Follow any symlinks should we bump into 'em */
   while(src->hp_originator != NULL)
@@ -2106,6 +2142,9 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
 	  prop_notify_void(s);
       }
       LIST_REMOVE(s, hps_value_prop_link);
+      equal = prop_value_compare(s->hps_value_prop, src);
+    } else {
+      equal = 0;
     }
 
     LIST_INSERT_HEAD(&src->hp_value_subscriptions, s, hps_value_prop_link);
@@ -2116,7 +2155,7 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
       prop_send_subscription_monitor_active(src);
     
     /* Update with new value */
-    if(s == skipme) 
+    if(s == skipme || equal) 
       continue; /* Unless it's to be skipped */
 
     s->hps_pending_unlink = pnq ? 1 : 0;
