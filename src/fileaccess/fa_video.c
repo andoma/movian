@@ -274,6 +274,9 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
 
       seekbase = video_seek(fctx, mp, &mb, seekbase + 60000000, 1, "+60s");
 
+    } else if(event_is_action(e, ACTION_STOP)) {
+      mp_set_playstatus_stop(mp);
+
     } else if(event_is_type(e, EVENT_EXIT) ||
 	      event_is_type(e, EVENT_PLAY_URL)) {
       break;
@@ -385,6 +388,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   mp_become_primary(mp);
 
   e = video_player_loop(fctx, cwvec, mp, errbuf, errlen);
+
+  TRACE(TRACE_DEBUG, "Video", "Stopped playback of %s", url);
 
   mp_flush(mp);
   mp_shutdown(mp);
