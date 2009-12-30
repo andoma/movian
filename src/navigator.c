@@ -43,6 +43,7 @@ static prop_t *nav_prop_pages;
 static prop_t *nav_prop_curpage;
 static prop_t *nav_prop_can_go_back;
 static prop_t *nav_prop_can_go_fwd;
+static prop_t *nav_prop_can_go_home;
 
 static void nav_eventsink(void *opaque, prop_event_t event, ...);
 
@@ -81,6 +82,7 @@ nav_init(void)
   nav_prop_curpage = prop_create(nav_prop_root, "currentpage");
   nav_prop_can_go_back = prop_create(nav_prop_root, "canGoBack");
   nav_prop_can_go_fwd  = prop_create(nav_prop_root, "canGoForward");
+  nav_prop_can_go_home = prop_create(nav_prop_root, "canGoHome");
 
 #define NAV_INIT_BE(name) \
  {extern nav_backend_t be_ ## name; nav_init_be(&be_ ## name);}
@@ -116,6 +118,7 @@ nav_update_cango(void)
   if(np == NULL) {
     prop_set_int(nav_prop_can_go_back, 0);
     prop_set_int(nav_prop_can_go_fwd, 0);
+    prop_set_int(nav_prop_can_go_home, 1);
     return;
   }
 
@@ -123,6 +126,8 @@ nav_update_cango(void)
 	       !!TAILQ_PREV(np, nav_page_queue, np_history_link));
   prop_set_int(nav_prop_can_go_fwd,
 	       !!TAILQ_NEXT(np, np_history_link));
+  prop_set_int(nav_prop_can_go_home,
+	       strcmp(np->np_url, NAV_HOME));
 }
 
 
