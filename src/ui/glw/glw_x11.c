@@ -234,11 +234,18 @@ build_blank_cursor(glw_x11_t *gx11)
 static void
 hide_cursor(glw_x11_t *gx11)
 {
+  glw_pointer_event_t gpe;
+
   if(gx11->cursor_hidden)
     return;
 
   gx11->cursor_hidden = 1;
   XDefineCursor(gx11->display, gx11->win, gx11->blank_cursor);
+ 
+  gpe.type = GLW_POINTER_GONE;
+  glw_lock(&gx11->gr);
+  glw_pointer_event(&gx11->gr, &gpe);
+  glw_unlock(&gx11->gr);
 }
 
 

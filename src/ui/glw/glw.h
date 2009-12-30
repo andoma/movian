@@ -305,6 +305,10 @@ typedef struct glw_root {
   int gr_width;
   int gr_height;
 
+  float gr_mouse_x;
+  float gr_mouse_y;
+  int gr_mouse_valid;
+
   /**
    * Font renderer
    */
@@ -749,7 +753,8 @@ typedef enum {
   GLW_POINTER_MOTION,
   GLW_POINTER_FOCUS_MOTION,
   GLW_POINTER_RELEASE,
-  GLW_POINTER_SCROLL
+  GLW_POINTER_SCROLL,
+  GLW_POINTER_GONE,
 } glw_pointer_event_type_t;
 
 typedef struct glw_pointer_event {

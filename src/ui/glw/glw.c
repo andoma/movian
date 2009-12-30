@@ -581,6 +581,16 @@ glw_prepare_frame(glw_root_t *gr)
 
     glw_unref(w);
   }
+
+  if(gr->gr_mouse_valid) {
+    glw_pointer_event_t gpe;
+
+    gpe.x = gr->gr_mouse_x;
+    gpe.y = gr->gr_mouse_y;
+    gpe.type = GLW_POINTER_MOTION;
+    glw_pointer_event(gr, &gpe);
+  }
+
 }
 
 /*
@@ -1405,6 +1415,10 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
   /* If a widget has grabbed to pointer (such as when holding the button
      on a slider), dispatch events there */
 
+  gr->gr_mouse_x = gpe->x;
+  gr->gr_mouse_y = gpe->y;
+  gr->gr_mouse_valid = 1;
+
   if(gpe->type == GLW_POINTER_MOTION) {
     if((w = gr->gr_pointer_grab) != NULL && w->glw_matrix != NULL) {
       glw_widget_project(w->glw_matrix, &x1, &x2, &y1, &y2);
@@ -1432,6 +1446,14 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
 
   if(gpe->type == GLW_POINTER_RELEASE && gr->gr_pointer_grab != NULL) {
     gr->gr_pointer_grab = NULL;
+    return;
+  }
+
+  if(gpe->type == GLW_POINTER_GONE) {
+    // Mouse pointer left our screen
+    glw_root_set_hover(gr, NULL);
+    gr->gr_pointer_grab = NULL;
+    gr->gr_mouse_valid = 0;
     return;
   }
 
