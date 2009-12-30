@@ -89,12 +89,30 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     if(glw_is_focusable(w))
       glw_store_matrix(w, &rc0);
     
-    if(alpha_self > 0.01)
+    if(alpha_self > 0.01) {
+
+      if(w->glw_flags & GLW_SHADOW) {
+	float xd, yd;
+
+	xd =  3.0 / rc0.rc_size_x;
+	yd = -3.0 / rc0.rc_size_y;
+
+	glw_Translatef(&rc0, xd, yd, 0.0);
+	
+	glw_render(&gi->gi_gr, w->glw_root, &rc0, 
+		   GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
+		   &glt->glt_texture,
+		   0,0,0, alpha_self * 0.75);
+	glw_Translatef(&rc0, -xd, -yd, 0.0);
+      }
+
       glw_render(&gi->gi_gr, w->glw_root, &rc0, 
 		 GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
 		 &glt->glt_texture,
 		 gi->gi_color.r, gi->gi_color.g, gi->gi_color.b, alpha_self);
- 
+
+    }
+
     if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
       rc0.rc_alpha = rc->rc_alpha * w->glw_alpha;
       glw_render0(c, &rc0);

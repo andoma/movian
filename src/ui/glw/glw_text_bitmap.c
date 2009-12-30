@@ -536,21 +536,21 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_NONE,
 	       NULL, 1, 1, 1, alpha * gtb->gtb_cursor_alpha);
 
+  if(w->glw_flags & GLW_SHADOW) {
+    float xd, yd;
 
-  float xd, yd;
+    xd =  3.0 / rc0.rc_size_x;
+    yd = -3.0 / rc0.rc_size_y;
 
-  xd =  3.0 / rc0.rc_size_x;
-  yd = -3.0 / rc0.rc_size_y;
+    glw_Translatef(&rc0, xd, yd, 0.0);
 
-  glw_Translatef(&rc0, xd, yd, 0.0);
+    glw_render(&gtb->gtb_text_renderer, w->glw_root, &rc0, 
+	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
+	       &gtb->gtb_texture,
+	       0,0,0, alpha * 0.75);
 
-  glw_render(&gtb->gtb_text_renderer, w->glw_root, &rc0, 
-	     GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
-	     &gtb->gtb_texture,
-	     0,0,0, alpha * 0.75);
-
-  glw_Translatef(&rc0, -xd, -yd, 0.0);
-
+    glw_Translatef(&rc0, -xd, -yd, 0.0);
+  }
   glw_render(&gtb->gtb_text_renderer, w->glw_root, &rc0, 
 	     GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
 	     &gtb->gtb_texture,
@@ -888,7 +888,7 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
   glw_signal_handler_int(w, glw_text_bitmap_callback);
 
   if(init) {
-    w->glw_flags |= GLW_FOCUS_ON_CLICK;
+    w->glw_flags |= GLW_FOCUS_ON_CLICK | GLW_SHADOW;
     gtb->gtb_edit_ptr = -1;
     gtb->gtb_int_step = 1;
     gtb->gtb_int_min = INT_MIN;

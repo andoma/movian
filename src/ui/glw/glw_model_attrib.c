@@ -339,6 +339,7 @@ static const token_attrib_t attribtab[] = {
   {"filterConstraintWeight",  set_generic_flag, GLW_CONSTRAINT_IGNORE_W},
   {"hidden",                  set_generic_flag, GLW_HIDDEN},
   {"noInitialTransform",      set_generic_flag, GLW_NO_INITIAL_TRANS},
+  {"shadow",                  set_generic_flag, GLW_SHADOW},
 
   {"mirrorx",         set_image_flag, GLW_IMAGE_MIRROR_X},
   {"mirrory",         set_image_flag, GLW_IMAGE_MIRROR_Y},
