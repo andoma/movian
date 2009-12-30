@@ -30,8 +30,8 @@ widget(container_z, {
 	widget(icon, {
 	  .sizeScale = 2.0;
 	  .source = translate($self.slideshow.playstatus, void,
-			      "pause", "theme://icons/pause.png",
-			      "play",  "theme://icons/play.png");
+			      "pause", "theme://icons/64x64/pause.png",
+			      "play",  "theme://icons/64x64/play.png");
 	});
       });
     });
