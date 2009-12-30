@@ -132,20 +132,17 @@ widget(container_z, {
       });
 
 
-      widget(expander_y, {
-	.expansion = !!$global.notifications.current.text;
-      
-	widget(backdrop, {
+      widget(deck, {
+	cloner($global.notifications.nodes, backdrop, {
 	  PLATE_PROPS();
-
-	  .color = translate($global.notifications.current.type,
+	  .color = translate($self.type,
 			     [0.3, 0.3, 0.7],
 			     "info",     [0.3, 0.7, 0.45],
 			     "warning",  [0.7, 0.7, 0.45],
 			     "error",    [0.7, 0.2, 0.1]);
 	  
 	  widget(label, {
-	    .caption = $global.notifications.current.text;
+	    .caption = $self.text;
 	  });
 	});
       });

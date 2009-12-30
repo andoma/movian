@@ -25,7 +25,6 @@
 #include "misc/callout.h"
 
 static prop_t *notify_prop_entries;
-static prop_t *notify_prop_current;
 
 /**
  *
@@ -36,7 +35,6 @@ notifications_init(void)
   prop_t *root = prop_create(prop_get_global(), "notifications");
   
   notify_prop_entries = prop_create(root, "nodes");
-  notify_prop_current = prop_create(root, "current");
 
 }
 
@@ -92,7 +90,7 @@ notify_add(notify_type_t type, const char *icon, int delay,
   if(prop_set_parent(p, notify_prop_entries))
     abort();
 
-  prop_link(p, notify_prop_current);
+  prop_select(p, 0);
   
   if(delay != 0) {
     callout_arm(NULL, notify_timeout, p, delay);

@@ -24,6 +24,17 @@
  *
  */
 static void
+clear_constraints(glw_t *w)
+{
+  glw_set_constraints(w, 0, 0, 0, 0, GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
+}
+
+
+
+/**
+ *
+ */
+static void
 glw_deck_update_constraints(glw_t *w)
 {
   glw_t *c = w->glw_selected;
@@ -100,7 +111,7 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       glw_focus_open_path_close_all_other(w->glw_selected);
       glw_deck_update_constraints(w);
     } else {
-      glw_clear_constraints(w);
+      clear_constraints(w);
     }
     break;
 
@@ -108,6 +119,12 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     if(w->glw_selected == extra)
       glw_deck_update_constraints(w);
     return 1;
+
+  case GLW_SIGNAL_CHILD_DESTROYED:
+    c = extra;
+    if(w->glw_selected == extra)
+      clear_constraints(w);
+    return 0;
   }
 
   return 0;
@@ -119,8 +136,10 @@ glw_deck_ctor(glw_t *w, int init, va_list ap)
   glw_deck_t *gd = (glw_deck_t *)w;
   glw_attribute_t attrib;
 
-  if(init)
+  if(init) {
     glw_signal_handler_int(w, glw_deck_callback);
+    clear_constraints(w);
+  }
 
   do {
     attrib = va_arg(ap, int);
