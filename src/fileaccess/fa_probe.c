@@ -341,6 +341,8 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
   int has_video = 0;
   int has_audio = 0;
 
+  av_metadata_conv(fctx, NULL, fctx->iformat->metadata_conv);
+
   if(md != NULL) {
 
     /* Format meta info */
