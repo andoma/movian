@@ -258,6 +258,7 @@ pqe_remove_from_sourcequeue(playqueue_entry_t *pqe)
 static void
 pqe_remove_from_globalqueue(playqueue_entry_t *pqe)
 {
+  assert(pqe->pqe_linked == 1);
   prop_unparent(pqe->pqe_node);
   playqueue_length--;
   TAILQ_REMOVE(&playqueue_entries, pqe, pqe_linear_link);
@@ -535,7 +536,8 @@ static void
 del_from_source(playqueue_entry_t *pqe)
 {
   pqe_remove_from_sourcequeue(pqe);
-  pqe_remove_from_globalqueue(pqe);
+  if(pqe->pqe_linked)
+    pqe_remove_from_globalqueue(pqe);
 }
 
 
