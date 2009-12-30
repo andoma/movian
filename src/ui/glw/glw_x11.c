@@ -634,8 +634,8 @@ static const struct {
   int action3;
 } keysym2action[] = {
   
-  { XK_Left,         0,           ACTION_LEFT,        ACTION_SEEK_BACKWARD },
-  { XK_Right,        0,           ACTION_RIGHT,       ACTION_SEEK_FORWARD },
+  { XK_Left,         0,           ACTION_LEFT },
+  { XK_Right,        0,           ACTION_RIGHT },
   { XK_Up,           0,           ACTION_UP },
   { XK_Down,         0,           ACTION_DOWN },
   { XK_Page_Up,      0,           ACTION_PAGE_UP,     ACTION_CHANNEL_PREV },
