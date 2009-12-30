@@ -247,6 +247,9 @@ glw_bloom_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_DTOR:
     glw_bloom_dtor(w);
     break;
+  case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
+    glw_copy_constraints(w, extra);
+    return 1;
   }
   return 0;
 }
