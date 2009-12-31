@@ -165,8 +165,6 @@ glw_rtt_destroy(struct glw_root *gr, glw_rtt_t *grtt)
 void
 glw_blendmode(int mode)
 {
-  return;
-
   switch(mode) {
   case GLW_BLEND_NORMAL:
     GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, 
