@@ -34,6 +34,7 @@
 #include "ui/glw/glw.h"
 #include "prop.h"
 #include "glw_texture.h"
+#include "notifications.h"
 
 #define DEFAULT_FIFO_SIZE	(256*1024)
 
@@ -113,10 +114,17 @@ process_keyboard_event(glw_wii_t *gwii, keyboard_event *ke)
   int i;
   action_type_t av[10];
 
-#if 0
   TRACE(TRACE_DEBUG, "WiiKeyboard", "%d 0x%x 0x%x 0x%x",
 	ke->type, ke->modifiers, ke->keycode, ke->symbol);
-#endif
+
+  if(ke->type == KEYBOARD_CONNECTED) {
+
+    notify_add(NOTIFY_INFO, NULL, 5, "USB keyboard connected");
+    return;
+  } else if(ke->type == KEYBOARD_DISCONNECTED) {
+    notify_add(NOTIFY_WARNING, NULL, 5, "USB keyboard disconnected");
+    return;
+  }
 
   if(ke->type != KEYBOARD_PRESSED)
     return;
