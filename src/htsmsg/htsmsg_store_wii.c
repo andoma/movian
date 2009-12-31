@@ -30,17 +30,6 @@
 #include "htsmsg_json.h"
 #include "htsmsg_store.h"
 
-static char *settingspath;
-
-/**
- *
- */
-const char *
-htsmsg_store_get_root(void)
-{
-  return settingspath ?: "No settings dir";
-}
-
 /**
  *
  */

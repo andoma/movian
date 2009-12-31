@@ -37,15 +37,6 @@ static char *settingspath;
 /**
  *
  */
-const char *
-htsmsg_store_get_root(void)
-{
-  return settingspath ?: "No settings dir";
-}
-
-/**
- *
- */
 void
 htsmsg_store_init(const char *programname, const char *path)
 {

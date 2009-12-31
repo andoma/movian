@@ -30,6 +30,4 @@ htsmsg_t *htsmsg_store_load(const char *pathfmt, ...);
 
 void htsmsg_store_remove(const char *pathfmt, ...);
 
-const char *htsmsg_store_get_root(void);
-
 #endif /* HTSMSG_STORE_H__ */ 
