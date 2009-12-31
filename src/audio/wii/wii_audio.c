@@ -36,6 +36,7 @@ static uint8_t buffer[2][ADMA_BUFFER_SIZE] ATTRIBUTE_ALIGN(32);
 static int buffer_size[2] = {ADMA_BUFFER_SIZE, ADMA_BUFFER_SIZE};
 static int cur_buffer;
 static lwpq_t audio_queue;
+static int audio_vol;
 
 static void 
 switch_buffers(void)
@@ -52,14 +53,37 @@ switch_buffers(void)
 
 
 
+
+/**
+ * Convert dB to amplitude scale factor (-6dB ~= half volume)
+ */
+static void
+set_mastervol(void *opaque, float value)
+{
+  int v;
+  v = 65536 * pow(10, (value / 20));
+  if(v > 65535)
+    v = 65535;
+  audio_vol = v;
+}
+
+
 static int
 wii_audio_start(audio_mode_t *am, audio_fifo_t *af)
 {
   audio_buf_t *ab;
-  int tbuf = 0;
+  int tbuf = 0, i;
   uint32_t level;
   int64_t pts;
   media_pipe_t *mp;
+
+  prop_sub_t *s_vol;
+
+  s_vol =
+    prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+		   PROP_TAG_CALLBACK_FLOAT, set_mastervol, NULL,
+		   PROP_TAG_ROOT, prop_mastervol,
+		   NULL);
 
   LWP_InitQueue(&audio_queue);
 
@@ -86,8 +110,10 @@ wii_audio_start(audio_mode_t *am, audio_fifo_t *af)
     }
 
     if(ab != NULL) {
-      memcpy(buffer[!tbuf], ab->ab_data, ADMA_BUFFER_SIZE);
-
+      const int16_t *src = (const int16_t *)ab->ab_data;
+      int16_t *dst = (int16_t *)buffer[!tbuf];
+      for(i = 0; i < ADMA_BUFFER_SIZE / 2; i++)
+	*dst++ = (*src++ * audio_vol) >> 16;
 
       /* PTS is the time of the first frame of this audio packet */
 
@@ -130,6 +156,8 @@ wii_audio_start(audio_mode_t *am, audio_fifo_t *af)
   AUDIO_StopDMA();
   AUDIO_RegisterDMACallback(NULL);
   LWP_CloseQueue(audio_queue);
+
+  prop_unsubscribe(s_vol);
 
   return 0;
 }

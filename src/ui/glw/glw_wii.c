@@ -175,7 +175,8 @@ typedef struct krepeat {
 } krepeat_t;
 
 
-static krepeat_t k_left, k_right, k_up, k_down, k_b, k_2, k_home;
+static krepeat_t k_left, k_right, k_up, k_down;
+static krepeat_t k_b, k_2, k_home, k_plus, k_minus;
 
 static void
 wpad_btn(glw_wii_t *gwii, krepeat_t *kr, int pressed, action_type_t ac)
@@ -293,7 +294,12 @@ wpad_every_frame(glw_wii_t *gwii)
 
   wpad_btn(gwii, &k_home,  btn & WPAD_BUTTON_HOME,
 	   ACTION_MENU);
-	   
+
+  wpad_btn(gwii, &k_plus,  btn & WPAD_BUTTON_PLUS,
+	   ACTION_VOLUME_UP);
+
+  wpad_btn(gwii, &k_minus, btn & WPAD_BUTTON_MINUS,
+	   ACTION_VOLUME_DOWN);
 
   glw_unlock(&gwii->gr);
 }
