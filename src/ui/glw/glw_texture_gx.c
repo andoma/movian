@@ -180,6 +180,38 @@ convert_i8a8(const uint8_t *src, int linesize, unsigned int w, unsigned int h)
 
 
 /**
+ * Convert I8 (8 bit luma) to I4 (4 bit) GX texture format. 
+ */
+static void *
+convert_i8_to_i4(const uint8_t *src, int linesize, 
+		 unsigned int w, unsigned int h)
+{
+  unsigned int size = ((w + 7) & ~7) * ((h + 7) & ~7) / 2;
+  int y, x, r;
+  const uint8_t *s;
+  uint8_t *dst, *d;
+
+  d = dst = memalign(32, size);
+
+  for(y = 0; y < h; y += 8) {
+    for(x = 0; x < w; x += 8) {
+      for(r = 0; r < 8; r++) {
+
+	s = src + linesize * (y + r) + x;
+
+	*d++ = (s[0x0] & 0xf0) | (s[0x1] >> 4);
+	*d++ = (s[0x2] & 0xf0) | (s[0x3] >> 4);
+	*d++ = (s[0x4] & 0xf0) | (s[0x5] >> 4);
+	*d++ = (s[0x6] & 0xf0) | (s[0x7] >> 4);
+      }
+    }
+  }
+  DCFlushRange(dst, size);
+  return dst;
+}
+
+
+/**
  *
  */
 int
@@ -239,6 +271,11 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
   case GLW_TEXTURE_FORMAT_I8A8:
     format = GX_TF_IA4;
     texels = convert_i8a8(src, width * 2, width, height);
+    break;
+
+  case GLW_TEXTURE_FORMAT_I8:
+    format = GX_TF_I4;
+    texels = convert_i8_to_i4(src, width, width, height);
     break;
 
   default:
