@@ -327,10 +327,10 @@ wpad_render(glw_wii_t *gwii)
 		    rc.rc_be.gbr_model_matrix,
 		    0, 0, -2.6);
     glw_Translatef(&rc, gwii->cursor_x, gwii->cursor_y, 0);
-    glw_Scalef(&rc, 0.2, 0.2, 1.0);
+    glw_Scalef(&rc, 0.1, 0.1, 1.0);
 
     if(i == 0)
-      glw_Translatef(&rc, 0.2, -0.2, 0);
+      glw_Translatef(&rc, 0.1, -0.1, 0);
 
     glw_Rotatef(&rc, gwii->cursor_a, 0, 0, -1.0);
 
@@ -463,6 +463,9 @@ glw_wii_loop(glw_wii_t *gwii)
   gwii->running = 1;
 
   KEYBOARD_Init(NULL);
+
+  gwii->gr.gr_width  = 640;
+  gwii->gr.gr_height = 480;
 
   while(1) {
 
