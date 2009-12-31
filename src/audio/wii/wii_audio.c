@@ -80,7 +80,8 @@ wii_audio_start(audio_mode_t *am, audio_fifo_t *af)
     
     if(am != audio_mode_current) {
       /* We're not the selected audio output anymore, return. */
-      ab_free(ab);
+      if(ab != NULL)
+	ab_free(ab);
       break;
     }
 
