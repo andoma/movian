@@ -108,7 +108,7 @@ tcp_write(int fd, const void *data, size_t len)
 
 
 
-#define MAX_READ_SIZE 1024
+#define MAX_READ_SIZE 4096
 /**
  *
  */
