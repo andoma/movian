@@ -320,8 +320,10 @@ fa_probe_iso(metadata_t *md, fa_handle_t *fh)
 
   *p = 0;
 
-  if(md != NULL)
+  if(md != NULL) {
     md->md_title = rstr_alloc(pb + 40);
+    md->md_type = CONTENT_DVD;
+  }
   return 0;
 }
 
