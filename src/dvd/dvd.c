@@ -722,10 +722,10 @@ make_nice_title(const char *t)
       *r++ = ' ';
       uc = 1;
     } else if(uc) {
-      *r++ = toupper(*t);
+      *r++ = toupper((int)*t);
       uc = 0;
     } else {
-      *r++ = tolower(*t);
+      *r++ = tolower((int)*t);
     }
     t++;
   }
