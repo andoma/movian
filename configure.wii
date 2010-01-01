@@ -20,6 +20,7 @@ DEVKITPRO="${TOPDIR}/wiisupport/devkitpro"
 LIBFREETYPEPATH="${TOPDIR}/wiisupport/freetype-ppc"
 
 enable embedded_resources
+enable tinysmb
 
 show_help(){
   echo "Usage: configure.wii [options]"
@@ -69,6 +70,12 @@ LDFLAGS_cfg += -DEABI -mrvl -mcpu=750 -meabi -mhard-float
 EOF
 
 
+#
+# tinysmb
+#
+if enabled tinysmb; then
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -ltinysmb"
+fi
 
 
 #

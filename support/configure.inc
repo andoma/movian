@@ -46,6 +46,7 @@ CONFIG_LIST="
  bonjour
  nvctrl
  libopenspc
+ tinysmb
 "
 
 die() {

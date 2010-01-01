@@ -516,6 +516,9 @@ fileaccess_init(void)
 #ifdef HAVE_LIBSMBCLIENT
   INITPROTO(smb);
 #endif
+#ifdef ENABLE_TINYSMB
+  INITPROTO(tinysmb);
+#endif
   av_register_protocol(&fa_lavf_proto);
   return 0;
 }

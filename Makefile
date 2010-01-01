@@ -82,6 +82,8 @@ SRCS += src/fileaccess/fileaccess.c \
 	src/fileaccess/fa_zlib.c \
 	src/fileaccess/fa_bundle.c \
 
+SRCS-$(CONFIG_TINYSMB)  += src/fileaccess/fa_tinysmb.c
+
 #
 # Service Discovery
 #
