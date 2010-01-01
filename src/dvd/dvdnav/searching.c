@@ -117,11 +117,11 @@ dvdnav_status_t dvdnav_time_search(dvdnav_t *this,
     return DVDNAV_STATUS_ERR;
   }
   
-  pthread_mutex_lock(&this->vm_lock);
+  hts_mutex_lock(&this->vm_lock);
   state = &(this->vm->state);
   if(!state->pgc) {
     printerr("No current PGC.");
-    pthread_mutex_unlock(&this->vm_lock);
+    hts_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
 
@@ -173,7 +173,7 @@ dvdnav_status_t dvdnav_time_search(dvdnav_t *this,
           state->cellN, state->blockN, target, vobu, start);
 #endif
         this->vm->hop_channel += HOP_SEEK;
-        pthread_mutex_unlock(&this->vm_lock);
+        hts_mutex_unlock(&this->vm_lock);
         return DVDNAV_STATUS_OK;
       }
     }
@@ -181,7 +181,7 @@ dvdnav_status_t dvdnav_time_search(dvdnav_t *this,
   
   fprintf(MSG_OUT, "libdvdnav: Error when seeking\n");
   printerr("Error when seeking.");
-  pthread_mutex_unlock(&this->vm_lock);
+  hts_mutex_unlock(&this->vm_lock);
   return DVDNAV_STATUS_ERR;
 }
 
@@ -205,11 +205,11 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
     return DVDNAV_STATUS_ERR;
   }
  
-  pthread_mutex_lock(&this->vm_lock);
+  hts_mutex_lock(&this->vm_lock);
   state = &(this->vm->state);
   if(!state->pgc) {
     printerr("No current PGC.");
-    pthread_mutex_unlock(&this->vm_lock);
+    hts_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
 #ifdef LOG_DEBUG
@@ -221,7 +221,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
    case SEEK_SET:
     if(offset >= length) {
       printerr("Request to seek behind end.");
-      pthread_mutex_unlock(&this->vm_lock);
+      hts_mutex_unlock(&this->vm_lock);
       return DVDNAV_STATUS_ERR;
     }
     target = offset;
@@ -229,7 +229,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
    case SEEK_CUR:
     if(target + offset >= length) {
       printerr("Request to seek behind end.");
-      pthread_mutex_unlock(&this->vm_lock);
+      hts_mutex_unlock(&this->vm_lock);
       return DVDNAV_STATUS_ERR;
     }
     target += offset;
@@ -237,7 +237,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
    case SEEK_END:
     if(length < offset) {
       printerr("Request to seek before start.");
-      pthread_mutex_unlock(&this->vm_lock);
+      hts_mutex_unlock(&this->vm_lock);
       return DVDNAV_STATUS_ERR;
     }
     target = length - offset;
@@ -245,7 +245,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
    default:
     /* Error occured */
     printerr("Illegal seek mode.");
-    pthread_mutex_unlock(&this->vm_lock);
+    hts_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
   
@@ -294,7 +294,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
           state->cellN, state->blockN, target, vobu, start);
 #endif
         this->vm->hop_channel += HOP_SEEK;
-        pthread_mutex_unlock(&this->vm_lock);
+        hts_mutex_unlock(&this->vm_lock);
         return DVDNAV_STATUS_OK;
       }
     }
@@ -303,7 +303,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
   fprintf(MSG_OUT, "libdvdnav: Error when seeking\n");
   fprintf(MSG_OUT, "libdvdnav: FIXME: Implement seeking to location %u\n", target); 
   printerr("Error when seeking.");
-  pthread_mutex_unlock(&this->vm_lock);
+  hts_mutex_unlock(&this->vm_lock);
   return DVDNAV_STATUS_ERR;
 }
 
@@ -316,10 +316,10 @@ dvdnav_status_t dvdnav_part_search(dvdnav_t *this, int32_t part) {
 }
 
 dvdnav_status_t dvdnav_prev_pg_search(dvdnav_t *this) {
-  pthread_mutex_lock(&this->vm_lock);
+  hts_mutex_lock(&this->vm_lock);
   if(!this->vm->state.pgc) {
     printerr("No current PGC.");
-    pthread_mutex_unlock(&this->vm_lock);
+    hts_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
 
@@ -329,7 +329,7 @@ dvdnav_status_t dvdnav_prev_pg_search(dvdnav_t *this) {
   if (!vm_jump_prev_pg(this->vm)) {
     fprintf(MSG_OUT, "libdvdnav: previous chapter failed.\n");
     printerr("Skip to previous chapter failed.");
-    pthread_mutex_unlock(&this->vm_lock);
+    hts_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
   this->cur_cell_time = 0;
@@ -338,16 +338,16 @@ dvdnav_status_t dvdnav_prev_pg_search(dvdnav_t *this) {
 #ifdef LOG_DEBUG
   fprintf(MSG_OUT, "libdvdnav: previous chapter done\n");
 #endif
-  pthread_mutex_unlock(&this->vm_lock);
+  hts_mutex_unlock(&this->vm_lock);
 
   return DVDNAV_STATUS_OK;
 }
 
 dvdnav_status_t dvdnav_top_pg_search(dvdnav_t *this) {
-  pthread_mutex_lock(&this->vm_lock);
+  hts_mutex_lock(&this->vm_lock);
   if(!this->vm->state.pgc) {
     printerr("No current PGC.");
-    pthread_mutex_unlock(&this->vm_lock);
+    hts_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
 
@@ -357,7 +357,7 @@ dvdnav_status_t dvdnav_top_pg_search(dvdnav_t *this) {
   if (!vm_jump_top_pg(this->vm)) {
     fprintf(MSG_OUT, "libdvdnav: top chapter failed.\n");
     printerr("Skip to top chapter failed.");
-    pthread_mutex_unlock(&this->vm_lock);
+    hts_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
   this->cur_cell_time = 0;
@@ -366,7 +366,7 @@ dvdnav_status_t dvdnav_top_pg_search(dvdnav_t *this) {
 #ifdef LOG_DEBUG
   fprintf(MSG_OUT, "libdvdnav: top chapter done\n");
 #endif
-  pthread_mutex_unlock(&this->vm_lock);
+  hts_mutex_unlock(&this->vm_lock);
 
   return DVDNAV_STATUS_OK;
 }
@@ -374,10 +374,10 @@ dvdnav_status_t dvdnav_top_pg_search(dvdnav_t *this) {
 dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
   vm_t *try_vm;
 
-  pthread_mutex_lock(&this->vm_lock);
+  hts_mutex_lock(&this->vm_lock);
   if(!this->vm->state.pgc) {
     printerr("No current PGC.");
-    pthread_mutex_unlock(&this->vm_lock);
+    hts_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
 
@@ -395,7 +395,7 @@ dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
       vm_free_copy(try_vm);
       fprintf(MSG_OUT, "libdvdnav: next chapter failed.\n");
       printerr("Skip to next chapter failed.");
-      pthread_mutex_unlock(&this->vm_lock);
+      hts_mutex_unlock(&this->vm_lock);
       return DVDNAV_STATUS_ERR;
     }
   }
@@ -408,7 +408,7 @@ dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
 #ifdef LOG_DEBUG
   fprintf(MSG_OUT, "libdvdnav: next chapter done\n");
 #endif
-  pthread_mutex_unlock(&this->vm_lock);
+  hts_mutex_unlock(&this->vm_lock);
 
   return DVDNAV_STATUS_OK;
 }
@@ -416,10 +416,10 @@ dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
 dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
   vm_t *try_vm;
   
-  pthread_mutex_lock(&this->vm_lock);
+  hts_mutex_lock(&this->vm_lock);
   if(!this->vm->state.pgc) {
     printerr("No current PGC.");
-    pthread_mutex_unlock(&this->vm_lock);
+    hts_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
   
@@ -434,7 +434,7 @@ dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
         vm_free_copy(try_vm);
         this->position_current.still = 0;
         this->vm->hop_channel++;
-        pthread_mutex_unlock(&this->vm_lock); 
+        hts_mutex_unlock(&this->vm_lock); 
         return DVDNAV_STATUS_OK;
     }
   }
@@ -446,12 +446,12 @@ dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
     vm_free_copy(try_vm);
     this->position_current.still = 0;
     this->vm->hop_channel++;
-    pthread_mutex_unlock(&this->vm_lock); 
+    hts_mutex_unlock(&this->vm_lock); 
     return DVDNAV_STATUS_OK;
   } else {
     vm_free_copy(try_vm);
     printerr("No such menu or menu not reachable.");
-    pthread_mutex_unlock(&this->vm_lock); 
+    hts_mutex_unlock(&this->vm_lock); 
     return DVDNAV_STATUS_ERR;
   }
 }
@@ -468,11 +468,11 @@ dvdnav_status_t dvdnav_get_position(dvdnav_t *this, uint32_t *pos,
     return DVDNAV_STATUS_ERR;
   }
 
-  pthread_mutex_lock(&this->vm_lock);
+  hts_mutex_lock(&this->vm_lock);
   state = &(this->vm->state);
   if(!state->pgc || this->vm->stopped) {
     printerr("No current PGC.");
-    pthread_mutex_unlock(&this->vm_lock);
+    hts_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
   if (this->position_current.hop_channel  != this->vm->hop_channel ||
@@ -480,7 +480,7 @@ dvdnav_status_t dvdnav_get_position(dvdnav_t *this, uint32_t *pos,
       this->position_current.vts          != state->vtsN           ||
       this->position_current.cell_restart != state->cell_restart) {
     printerr("New position not yet determined.");
-    pthread_mutex_unlock(&this->vm_lock);
+    hts_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
 
@@ -514,7 +514,7 @@ dvdnav_status_t dvdnav_get_position(dvdnav_t *this, uint32_t *pos,
   
   assert((signed)*pos != -1);
 
-  pthread_mutex_unlock(&this->vm_lock);
+  hts_mutex_unlock(&this->vm_lock);
 
   return DVDNAV_STATUS_OK;
 }
@@ -562,7 +562,7 @@ uint32_t dvdnav_describe_title_chapters(dvdnav_t *this, int32_t title, uint64_t 
 
   *times = NULL;
   *duration = 0;
-  pthread_mutex_lock(&this->vm_lock);
+  hts_mutex_lock(&this->vm_lock);
   if(!this->vm->vmgi) {
     printerr("Bad VM state or missing VTSI.");
     goto fail;
@@ -619,7 +619,7 @@ uint32_t dvdnav_describe_title_chapters(dvdnav_t *this, int32_t title, uint64_t 
   *times = tmp;
 
 fail:
-  pthread_mutex_unlock(&this->vm_lock);
+  hts_mutex_unlock(&this->vm_lock);
   if(!retval && tmp)
     free(tmp);
   return retval;

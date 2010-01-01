@@ -30,15 +30,6 @@
 
 #ifdef WIN32
 
-/* pthread_mutex_* wrapper for win32 */
-#include <windows.h>
-#include <process.h>
-typedef CRITICAL_SECTION pthread_mutex_t;
-#define pthread_mutex_init(a, b) InitializeCriticalSection(a)
-#define pthread_mutex_lock(a)    EnterCriticalSection(a)
-#define pthread_mutex_unlock(a)  LeaveCriticalSection(a)
-#define pthread_mutex_destroy(a)
-
 #ifndef HAVE_GETTIMEOFDAY
 /* replacement gettimeofday implementation */
 #include <sys/timeb.h>
@@ -58,7 +49,7 @@ static inline int _private_gettimeofday( struct timeval *tv, void *tz )
 
 #else
 
-#include <pthread.h>
+#include <arch/threads.h>
 
 #endif /* WIN32 */
 
@@ -164,7 +155,7 @@ struct dvdnav_s {
   
   /* VM */
   vm_t *vm;
-  pthread_mutex_t vm_lock;
+  hts_mutex_t vm_lock;
 
   /* Read-ahead cache */
   read_cache_t *cache;
