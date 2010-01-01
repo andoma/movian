@@ -114,7 +114,7 @@ process_keyboard_event(glw_wii_t *gwii, keyboard_event *ke)
   int i;
   action_type_t av[10];
 
-  TRACE(TRACE_DEBUG, "WiiKeyboard", "%d 0x%x 0x%x 0x%x",
+  if(0)TRACE(TRACE_DEBUG, "WiiKeyboard", "%d 0x%x 0x%x 0x%x",
 	ke->type, ke->modifiers, ke->keycode, ke->symbol);
 
   if(ke->type == KEYBOARD_CONNECTED) {
