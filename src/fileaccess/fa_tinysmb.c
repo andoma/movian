@@ -103,9 +103,9 @@ get_connection(const char *url, const char **fname,
   char buf1[128];
   char *username;
   char *password;
-
+  SMBCONN conn;
+  int smb_err, kr_ret, retry = 0, i;
   smb_connection_t *sc;
-  int r, i, retry = 0;
 
   for(i = 0; *url != '/' && *url != '\\' && url && i < sizeof(host) - 1; i++)
     host[i] = *url++;
@@ -149,27 +149,26 @@ get_connection(const char *url, const char **fname,
 
   while(1) {
 
-    r = keyring_lookup(buf1, &username, &password, NULL, 
-		       retry,
-		       "SMB Client", "Unable to connect");
-    if(r == -1) {
+    kr_ret = keyring_lookup(buf1, &username, &password, NULL, 
+			    retry,
+			    "SMB Client", "Unable to connect");
+    if(kr_ret == -1) {
       /* Rejected */
       snprintf(errbuf, errlen, "Authentication rejected by user");
       return NULL;
     }
 
-    sc = calloc(1, sizeof(smb_connection_t));
-    r = SMB_Connect(&sc->sc_conn, 
-		    r == 0 ? username : "GUEST",
-		    r == 0 ? password : "",
-		    share, host);
+    smb_err = SMB_Connect(&conn, 
+			  kr_ret == 0 ? username : "GUEST",
+			  kr_ret == 0 ? password : "",
+			  share, host);
 
-    if(r == 0) {
+    if(kr_ret == 0) {
       free(username);
       free(password);
     }
 
-    if(r != SMB_SUCCESS) {
+    if(smb_err != SMB_SUCCESS) {
       if(retry == 0) {
 	retry++;
 	continue;
@@ -177,12 +176,14 @@ get_connection(const char *url, const char **fname,
       TRACE(TRACE_ERROR, "SMB", 
 	    "SMB_Connect() host=\"%s\", service=\"%s\", username=\"%s\", "
 	    "password=\"%s\" failed: %s", host, share, username, password, 
-	    smberr2str(r));
+	    smberr2str(smb_err));
 
-      snprintf(errbuf, errlen, "SMB Connection failed: %s", smberr2str(r));
-      free(sc);
+      snprintf(errbuf, errlen, "SMB Connection failed: %s", 
+	       smberr2str(smb_err));
       return NULL;
     }
+    sc = calloc(1, sizeof(smb_connection_t));
+    sc->sc_conn = conn;
     sc->sc_host = strdup(host);
     sc->sc_share = strdup(share);
     return sc;
