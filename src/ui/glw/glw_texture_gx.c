@@ -27,15 +27,13 @@
 
 #include <malloc.h>
 
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
+#include <libswscale/swscale.h>
 
 #include "glw.h"
 #include "glw_texture.h"
 #include "glw_scaler.h"
 
 #include "showtime.h"
-#include "fileaccess/fa_imageloader.h"
 
 /**
  * Free texture (always invoked in main rendering thread)
@@ -214,6 +212,49 @@ convert_i8_to_i4(const uint8_t *src, int linesize,
 /**
  *
  */
+static int
+convert_with_swscale(glw_loadable_texture_t *glt, AVPicture *pict, int pix_fmt, 
+		     int w, int h)
+{
+  struct SwsContext *sws;
+  AVPicture dst;
+  uint8_t *texels;
+
+  TRACE(TRACE_DEBUG, "GLW", "Loading texture %d x %d", w, h);
+
+  sws = sws_getContext(w, h, pix_fmt, 
+		       w, h, PIX_FMT_RGB24,
+		       SWS_BICUBIC, NULL, NULL, NULL);
+  if(sws == NULL)
+    return 1;
+
+  memset(&dst, 0, sizeof(dst));
+  dst.data[0] = malloc(w * h * 3);
+  dst.linesize[0] = 3 * w;
+
+  sws_scale(sws, pict->data, pict->linesize, 0, h,
+	    dst.data, dst.linesize);  
+
+  texels = convert_rgb(dst.data[0], dst.linesize[0], w, h);
+
+  glt->glt_xs = w;
+  glt->glt_ys = h;
+
+  glt->glt_texture.mem = texels;
+  
+  GX_InitTexObj(&glt->glt_texture.obj, texels, w, h,
+		GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+
+  free(dst.data[0]);
+  sws_freeContext(sws);
+  return 0;
+}
+
+
+
+/**
+ *
+ */
 int
 glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 		     AVPicture *pict, int pix_fmt, 
@@ -236,12 +277,9 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
     break;
 
   default:
-    TRACE(TRACE_ERROR, "glw", "GX unsupported pixel format %s",
-	  avcodec_get_pix_fmt_name(pix_fmt));
-    return 1;
+    return convert_with_swscale(glt, pict, pix_fmt, src_w, src_h);
   }
 
-  glt->glt_aspect = (float)req_w / (float)req_h;
   glt->glt_xs = req_w;
   glt->glt_ys = req_h;
 

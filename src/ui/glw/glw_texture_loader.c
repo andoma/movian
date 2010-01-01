@@ -214,10 +214,16 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   
   frame = avcodec_alloc_frame();
 
-  if(pm->pm_width >= gr->gr_width * 3 && pm->pm_height >= gr->gr_height * 4)
+#ifdef WII
+  if(pm->pm_width > 1280 || pm->pm_height > 960)
     ctx->lowres = 1;
-  if(pm->pm_width >= gr->gr_width * 5 && pm->pm_height >= gr->gr_height * 6)
+  if(pm->pm_width > 2560  || pm->pm_height > 1920)
     ctx->lowres = 2;
+#endif
+
+  if(ctx->lowres)
+    TRACE(TRACE_DEBUG, "GLW", "%s: DCT-Scaling image down by factor %d",
+	  url, 1 << ctx->lowres);
 
   r = avcodec_decode_video(ctx, frame, &got_pic, pm->pm_data,  pm->pm_size);
 
