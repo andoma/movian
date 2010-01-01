@@ -139,6 +139,8 @@ glw_rtt_restore(struct glw_root *gr, glw_rtt_t *grtt)
   GX_CopyTex(grtt->grtt_texture.mem, GX_TRUE);
   GX_PixModeSync();  
 
+  DCFlushRange(grtt->grtt_texture.mem, grtt->grtt_size);
+
   extern GXRModeObj *wii_rmode;
   GXRModeObj *rmode = wii_rmode;
 
