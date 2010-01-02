@@ -159,8 +159,10 @@ SRCS-$(CONFIG_DVD) += 	src/dvd/dvdcss/css.c \
 
 ifeq ($(PLATFORM), osx)
 DVDCSS_CFLAGS = -DDARWIN_DVD_IOCTL
-elif ($(PLATFORM), linux)
+else
+ifeq ($(PLATFORM), linux)
 DVDCSS_CFLAGS = -DHAVE_LINUX_DVD_STRUCT -DDVD_STRUCT_IN_LINUX_CDROM_H
+endif
 endif
 
 
