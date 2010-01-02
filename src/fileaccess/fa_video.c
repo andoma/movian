@@ -328,7 +328,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     fa_close(fh);
   isdvd:
 #if ENABLE_DVD
-    return dvd_play(url, mp, errbuf, errlen);
+    return dvd_play(url, mp, errbuf, errlen, 1);
 #else
     snprintf(errbuf, errlen, "DVD playback is not supported");
     return NULL;

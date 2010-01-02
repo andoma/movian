@@ -23,6 +23,7 @@
 #include "fileaccess/fileaccess.h"
 #include "dvd.h"
 #include "notifications.h"
+#include "showtime.h"
 
 #include <fileaccess/svfs.h>
 #include <dvdnav/dvdnav.h>
@@ -456,7 +457,8 @@ dvd_block(dvd_player_t *dp, uint8_t *buf, int len)
  *
  */
 event_t *
-dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
+dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
+	 int vfs)
 {
   dvd_player_t *dp;
   dvdnav_highlight_event_t *hevent;
@@ -470,6 +472,8 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
   char *title;
   const char *rawtitle;
 
+  TRACE(TRACE_DEBUG, "DVD", "Staring playback of %s", url);
+
  restart:
   dp = calloc(1, sizeof(dvd_player_t));
   dp->dp_epoch = 1;
@@ -479,8 +483,9 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
   mp->mp_video.mq_stream = 0;
   mp->mp_audio.mq_stream = 0;
 
-  if(dvdnav_open(&dp->dp_dvdnav, url, &faops) != DVDNAV_STATUS_OK) {
-    snprintf(errstr, errlen, "Unable to open DVD");
+  if(dvdnav_open(&dp->dp_dvdnav, url, 
+		 vfs ? &faops : NULL) != DVDNAV_STATUS_OK) {
+    snprintf(errstr, errlen, "dvdnav: Unable to open DVD");
     free(dp);
     return NULL;
   }
@@ -731,3 +736,55 @@ make_nice_title(const char *t)
   }
   return ret;
 }
+
+/**
+ *
+ */
+static int
+be_dvd_canhandle(const char *url)
+{
+  return !strncmp(url, "dvd:", strlen("dvd:"));
+}
+
+
+/**
+ *
+ */
+static int
+be_dvd_openpage(const char *url0, const char *type0, const char *parent,
+		nav_page_t **npp, char *errbuf, size_t errlen)
+{
+  nav_page_t *np;
+  prop_t *p;
+
+  np = nav_page_create(url0, sizeof(nav_page_t), NULL, 0);
+
+  p = np->np_prop_root;
+  prop_set_string(prop_create(p, "type"), "video");
+  *npp = np;
+  return 0;
+}
+
+/**
+ *
+ */
+static event_t *
+be_dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
+{
+  if(strncmp(url, "dvd:", strlen("dvd:"))) {
+    snprintf(errstr, errlen, "dvd: Invalid URL");
+    return NULL;
+  }
+
+  url += 4;
+  return dvd_play(url, mp, errstr, errlen, 0);
+}
+
+/**
+ *
+ */
+nav_backend_t be_dvd = {
+  .nb_canhandle = be_dvd_canhandle,
+  .nb_open = be_dvd_openpage,
+  .nb_play_video = be_dvd_play,
+};
