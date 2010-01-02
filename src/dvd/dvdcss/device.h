@@ -30,10 +30,14 @@
 #   include <io.h>                                                 /* read() */
 #else
 #   include <sys/types.h>
+
+#ifndef WII
 #   include <sys/uio.h>                                      /* struct iovec */
 #endif
 
-#if defined( WIN32 ) && !defined( SYS_CYGWIN )
+#endif
+
+#if ( defined( WIN32 ) && !defined( SYS_CYGWIN ) ) || defined ( WII )
 struct iovec
 {
     void *iov_base;     /* Pointer to data. */

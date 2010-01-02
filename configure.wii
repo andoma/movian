@@ -21,6 +21,7 @@ LIBFREETYPEPATH="${TOPDIR}/wiisupport/freetype-ppc"
 
 enable embedded_resources
 enable tinysmb
+enable dvd
 
 show_help(){
   echo "Usage: configure.wii [options]"
@@ -98,10 +99,10 @@ setup_ffmpeg --extra-cflags=-I${LIBOGC}/include \
 #
 cat >> ${CONFIG_MAK} <<EOF
 LDFLAGS_cfg  +=  -L${LIBFREETYPEPATH}/lib -lfreetype
-CFLAGS_cfg += -I${LIBFREETYPEPATH}/include 
+CFLAGS_cfg += -I${LIBFREETYPEPATH}/include -DWORDS_BIGENDIAN
 CFLAGS_cfg += -I${LIBFREETYPEPATH}/include/freetype2
 LDFLAGS_cfg  += -L${DEVKITPRO}/libfat/lib/wii  -lfat
-LDFLAGS_cfg  += -L${DEVKITPRO}/libogc/lib/wii  -lwiikeyboard -lwiiuse -lbte -logc
+LDFLAGS_cfg  += -L${DEVKITPRO}/libogc/lib/wii  -ldi -lwiikeyboard -lwiiuse -lbte -logc
 EOF
 
 finalize

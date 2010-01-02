@@ -49,6 +49,7 @@
 #include "read_cache.h"
 #include <libdvdread/nav_read.h>
 #include "remap.h"
+#include "showtime.h"
 
 static dvdnav_status_t dvdnav_clear(dvdnav_t * this) {
   /* clear everything except file, vm, mutex, readahead */
@@ -102,6 +103,7 @@ dvdnav_status_t dvdnav_open(dvdnav_t** dest, const char *path, void *svfs_ops) {
     return DVDNAV_STATUS_ERR;
   }
   if(!vm_reset(this->vm, path, this->svfs_ops)) {
+    TRACE(TRACE_ERROR, "dvdnav", "Unable to start VM: %s", path);
     printerr("Error starting the VM / opening the DVD device.");
     hts_mutex_destroy(&this->vm_lock);
     vm_free_vm(this->vm);

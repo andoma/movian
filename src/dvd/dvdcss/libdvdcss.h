@@ -23,6 +23,7 @@
  *****************************************************************************/
 
 #include <fileaccess/svfs.h>
+#include "showtime.h"
 
 struct iovec;
 
@@ -83,6 +84,7 @@ struct dvdcss_s
  * Functions used across the library
  *****************************************************************************/
 #define print_error(dvdcss,msg) _print_error(dvdcss,msg)
+#if 0
 #if defined( _MSC_VER )
 #include <stdarg.h>
 __forceinline void print_debug(dvdcss_t dvdcss, const char *msg,...)
@@ -104,6 +106,9 @@ __forceinline void print_debug(dvdcss_t dvdcss, const char *msg,...)
         fprintf( stderr, "\n" ); \
     }
 #endif
+#endif
+
+#define print_debug(dvdcss, msg...) TRACE(TRACE_DEBUG, "DVDCSS", msg)
 
 void _print_error ( dvdcss_t, char * );
 

@@ -28,6 +28,10 @@
  *****************************************************************************/
 #include "config.h"
 
+#ifndef WII
+#define CSS_LIBC
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,7 +56,9 @@
 #if defined( WIN32 ) && !defined( SYS_CYGWIN )
 #   include <io.h>                                                 /* read() */
 #else
+#ifdef CSS_LIBC
 #   include <sys/uio.h>                                      /* struct iovec */
+#endif
 #endif
 
 #ifdef DARWIN_DVD_IOCTL
@@ -76,10 +82,19 @@
 /*****************************************************************************
  * Device reading prototypes
  *****************************************************************************/
+#ifdef CSS_LIBC
 static int libc_open  ( dvdcss_t, char const * );
 static int libc_seek  ( dvdcss_t, int );
 static int libc_read  ( dvdcss_t, void *, int );
 static int libc_readv ( dvdcss_t, struct iovec *, int );
+#endif
+
+#ifdef WII
+static int di_open  ( dvdcss_t, char const * );
+static int di_seek  ( dvdcss_t, int );
+static int di_read  ( dvdcss_t, void *, int );
+static int di_readv ( dvdcss_t, struct iovec *, int );
+#endif
 
 /* Showtime Virtual File System */
 static int svfs_open  ( dvdcss_t, char const * );
@@ -105,6 +120,10 @@ static int aspi_read_internal  ( int, void *, int );
 
 int _dvdcss_use_ioctls( dvdcss_t dvdcss )
 {
+#ifdef WII
+    return 0;
+#endif
+
 #if defined( WIN32 )
     if( dvdcss->b_file )
     {
@@ -301,8 +320,16 @@ void _dvdcss_check ( dvdcss_t dvdcss )
 int _dvdcss_open ( dvdcss_t dvdcss, struct svfs_ops *svfs_ops )
 {
     char const *psz_device = dvdcss->psz_device;
-
     print_debug( dvdcss, "opening target `%s'", psz_device );
+
+#ifdef WII
+    if(!strcmp(psz_device, "/dev/di")) {
+        dvdcss->pf_seek  = di_seek;
+        dvdcss->pf_read  = di_read;
+        dvdcss->pf_readv = di_readv;
+        return di_open(dvdcss, psz_device);
+    }
+#endif
 
     dvdcss->svfs_ops = svfs_ops;
     if(svfs_ops != NULL) {
@@ -342,11 +369,15 @@ int _dvdcss_open ( dvdcss_t dvdcss, struct svfs_ops *svfs_ops )
     else
 #endif
     {
+#ifdef CSS_LIBC
         print_debug( dvdcss, "using libc for access" );
         dvdcss->pf_seek  = libc_seek;
         dvdcss->pf_read  = libc_read;
         dvdcss->pf_readv = libc_readv;
         return libc_open( dvdcss, psz_device );
+#else
+	return -1;
+#endif
     }
 }
 
@@ -423,6 +454,7 @@ int _dvdcss_close ( dvdcss_t dvdcss )
 /*****************************************************************************
  * Open commands.
  *****************************************************************************/
+#ifndef WII
 static int libc_open ( dvdcss_t dvdcss, char const *psz_device )
 {
 #if !defined( WIN32 )
@@ -443,6 +475,7 @@ static int libc_open ( dvdcss_t dvdcss, char const *psz_device )
 
     return 0;
 }
+#endif
 
 #if defined( WIN32 )
 static int win2k_open ( dvdcss_t dvdcss, char const *psz_device )
@@ -604,6 +637,7 @@ static int aspi_open( dvdcss_t dvdcss, char const * psz_device )
 /*****************************************************************************
  * Seek commands.
  *****************************************************************************/
+#ifdef CSS_LIBC
 static int libc_seek( dvdcss_t dvdcss, int i_blocks )
 {
     off64_t   off;
@@ -621,6 +655,7 @@ static int libc_seek( dvdcss_t dvdcss, int i_blocks )
     dvdcss->i_pos = i_blocks;
     return dvdcss->i_pos;
 }
+#endif
 
 #if defined( WIN32 )
 static int win2k_seek( dvdcss_t dvdcss, int i_blocks )
@@ -1002,12 +1037,12 @@ static int svfs_open ( dvdcss_t dvdcss, char const *psz_device )
 
 static int svfs_seek( dvdcss_t dvdcss, int i_blocks )
 {
-    off64_t   off;
+    int64_t   off;
 
     if(dvdcss->i_pos == i_blocks)
 	return i_blocks;
 
-    off = (off64_t)i_blocks * (off64_t)DVDCSS_BLOCK_SIZE;
+    off = (int64_t)i_blocks * (int64_t)DVDCSS_BLOCK_SIZE;
 
     off = dvdcss->svfs_ops->seek(dvdcss->svfs_handle, off, SEEK_SET);
     if(off < 0) {
@@ -1106,3 +1141,103 @@ static int svfs_readv ( dvdcss_t dvdcss, struct iovec *p_iovec, int i_blocks )
     dvdcss->i_pos += i_total / DVDCSS_BLOCK_SIZE;
     return i_total / DVDCSS_BLOCK_SIZE;
 }
+
+#ifdef WII
+
+#include <di/di.h>
+#include <malloc.h>
+
+static int di_open ( dvdcss_t dvdcss, char const *psz_device )
+{
+    int i;
+    for(i = 0; i < 20; i++) {
+	if(DI_GetStatus() & DVD_READY) {
+	    dvdcss->i_pos = 0;
+	    TRACE(TRACE_DEBUG, "DI", "Disc ready");
+	    return 0;
+	}
+
+	sleep(1);
+    }
+    return -1;
+}
+
+static int di_seek( dvdcss_t dvdcss, int i_blocks )
+{
+    if(dvdcss->i_pos == i_blocks)
+	return i_blocks;
+
+    dvdcss->i_pos = i_blocks;
+    return dvdcss->i_pos;
+}
+
+static int di_read ( dvdcss_t dvdcss, void *buffer, int blocks )
+{
+    void *bfr;
+    int ret;
+
+    bfr = memalign(32, blocks * DVDCSS_BLOCK_SIZE);
+    if (bfr == NULL) {
+	print_debug(dvdcss, "DI: can't allocate %d bytes",
+		    blocks * DVDCSS_BLOCK_SIZE);
+	return -1;
+    }
+
+    ret = DI_ReadDVD(bfr, blocks, dvdcss->i_pos);
+
+    if (ret < 0) {
+	print_debug(dvdcss, "DI: read failed with %d", ret);
+	free(bfr);
+	return -1;
+    }
+
+    dvdcss->i_pos += blocks;
+    memcpy(buffer, bfr, blocks * DVDCSS_BLOCK_SIZE);
+    free(bfr);
+
+    return blocks;
+}
+
+
+static int di_readv ( dvdcss_t dvdcss, struct iovec *iov, int i_blocks )
+{
+    int len;
+    int i;
+    int ret;
+    void *bfr, *ptr;
+
+    TRACE(TRACE_DEBUG, "DI", "Readv %d blocks", i_blocks);
+
+    bfr = memalign(32, i_blocks * DVDCSS_BLOCK_SIZE);
+    if (bfr == NULL) {
+	print_debug(dvdcss, "DI: can't allocate %d bytes",
+		    i_blocks * DVDCSS_BLOCK_SIZE);
+	return -1;
+    }
+
+    ret = DI_ReadDVD(bfr, i_blocks, dvdcss->i_pos);
+    if (ret < 0) {
+	print_debug( dvdcss, "DI: readv failed with %d", ret);
+	free(bfr);
+	return -1;
+    }
+
+    ptr = bfr;
+
+    len = i_blocks * DVDCSS_BLOCK_SIZE;
+
+    int offset = 0;
+
+    while(offset < len) {
+	memcpy(iov[i].iov_base, ptr + offset, iov[i].iov_len);
+	offset += iov[i].iov_len;
+	i++;
+    }
+
+    dvdcss->i_pos += len / DVDCSS_BLOCK_SIZE;
+    free(bfr);
+
+    return i_blocks;
+
+}
+#endif

@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <gccore.h>
 #include <wiiuse/wpad.h>
+#include <di/di.h>
 #include <fat.h>
 #include <network.h>
 #include <errno.h>
@@ -31,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <malloc.h>
 
 #include "threads.h"
 
@@ -67,7 +69,6 @@ memlogger_fn(callout_t *co, void *aux)
   TRACE(TRACE_DEBUG, "Wii", "Avail mem: Arena1 = %d, Arena2: %d",
 	SYS_GetArena1Size(), SYS_GetArena2Size());
 }
-
 
 
 static void 
@@ -139,6 +140,8 @@ hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delta)
 void
 arch_init(void)
 {
+  DI_Init();
+
   hts_mutex_init(&log_mutex);
 
   concurrency = 1;
@@ -229,6 +232,7 @@ arch_init(void)
 
   callout_arm(&memlogger, memlogger_fn, NULL, 1);
 
+  DI_Mount();
 }
 
 

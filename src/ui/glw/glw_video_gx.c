@@ -245,7 +245,7 @@ gv_compute_blend(glw_video_t *gv, video_decoder_frame_t *fra,
 
 
 
-#if ENABLE_DVD
+#if 0 && ENABLE_DVD
 /**
  *
  */
@@ -458,7 +458,7 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv, const glw_root_t *gr)
     pts -= frame_duration * 2;
     compute_avdiff(vd, mp, pts, epoch);
 
-#if ENABLE_DVD
+#if 0 && ENABLE_DVD
     if(vd->vd_dvdspu != NULL)
       spu_layout(gv, vd->vd_dvdspu, pts, gr);
 #endif
@@ -647,7 +647,7 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
 {
   video_decoder_frame_t *fra;
   int width = 0, height = 0;
-#if ENABLE_DVD
+#if 0 && ENABLE_DVD
   dvdspu_decoder_t *dd;
   dvdspu_t *d;
 #endif
@@ -688,7 +688,7 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
 
   //  glEnable(GL_BLEND); 
 
-#if ENABLE_DVD
+#if 0 && ENABLE_DVD
   dd = vd->vd_dvdspu;
   if(gv->gv_sputex != 0 && dd != NULL && width > 0 &&
      (glw_is_focused(w) || !dd->dd_pci.hli.hl_gi.hli_ss)) {
@@ -809,7 +809,7 @@ gl_video_widget_event(glw_video_t *gv, event_t *e)
 
 
 
-#if ENABLE_DVD
+#if 0 && ENABLE_DVD
 /**
  *
  */
@@ -889,7 +889,7 @@ static void
 gv_update_focusable(video_decoder_t *vd, glw_video_t *gv)
 {
   int want_focus = 0;
-#if ENABLE_DVD
+#if 0 && ENABLE_DVD
   dvdspu_decoder_t *dd = gv->gv_vd->vd_dvdspu;
 
   if(dd != NULL) {
@@ -952,7 +952,7 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     gv->gv_mp = NULL;
     return 0;
 
-#if ENABLE_DVD
+#if 0 && ENABLE_DVD
   case GLW_SIGNAL_POINTER_EVENT:
     return pointer_event(gv, extra);
 #endif

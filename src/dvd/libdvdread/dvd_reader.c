@@ -52,6 +52,8 @@
 
 #include "dvdread_internal.h"
 
+#include "showtime.h"
+
 #define DEFAULT_UDF_CACHE_LEVEL 1
 
 struct dvd_reader_s {
@@ -459,7 +461,14 @@ dvd_reader_t *DVDOpen( const char *path, struct svfs_ops *svfs_ops )
   
   verbose = get_verbose();
 
-#ifdef WIN32
+  /* Try to open libdvdcss or fall back to standard functions */
+  have_css = dvdinput_setup();
+
+ if(!strcmp(path, "/dev/di"))
+    return DVDOpenImageFile( path, have_css, svfs_ops );
+
+
+ #ifdef WIN32
   /* Stat doesn't work on devices under mingwin/cygwin. */
   if( path[0] && path[1] == ':' && path[2] == '\0' )
     {
@@ -477,13 +486,11 @@ dvd_reader_t *DVDOpen( const char *path, struct svfs_ops *svfs_ops )
           fprintf( stderr, "libdvdread: Can't stat '%s': %s\n",
                    path, strerror(errno));
         }
+        TRACE(TRACE_ERROR, "DVDREAD", "Unable to stat %s", path);
         errno = tmp_errno;
         return NULL;
       }
     }
-
-  /* Try to open libdvdcss or fall back to standard functions */
-  have_css = dvdinput_setup();
 
   /* First check if this is a block/char device or a file*/
   if( S_ISBLK( fileinfo.st_mode ) || 

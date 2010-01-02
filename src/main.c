@@ -84,6 +84,7 @@ main(int argc, char **argv)
   const char *settingspath = NULL;
   const char *uiargs[16];
   const char *argv0 = argc > 0 ? argv[0] : "showtime";
+  const char *startpage;
   int nuiargs = 0;
 
   trace_level = TRACE_ERROR;
@@ -129,6 +130,8 @@ main(int argc, char **argv)
       break;
   }
 
+  startpage = argc > 0 ? argv[0] : NAV_HOME;
+
   /* Initialize property tree */
   prop_init();
 
@@ -171,13 +174,15 @@ main(int argc, char **argv)
   bookmarks_init();
 
   /* Open initial page */
-  nav_open(argc > 0 ? argv[0] : NAV_HOME, NULL, NULL);
+  nav_open(startpage, NULL, NULL);
 
   /* Various interprocess communication stuff (D-Bus on Linux, etc) */
   ipc_init();
 
   /* Service discovery. Must be after ipc_init() (d-bus and threads, etc) */
   sd_init();
+
+  TRACE(TRACE_DEBUG, "core", "Starting UI");
 
   /* Initialize user interfaces */
   ui_start(nuiargs, uiargs, argv0);

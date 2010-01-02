@@ -40,16 +40,14 @@
 #include "css.h"
 #include "libdvdcss.h"
 
+#include "showtime.h"
+
 /*****************************************************************************
  * Error messages
  *****************************************************************************/
 void _print_error( dvdcss_t dvdcss, char *psz_string )
 {
-    if( dvdcss->b_errors )
-    {
-        fprintf( stderr, "libdvdcss error: %s\n", psz_string );
-    }
-
+    TRACE(TRACE_ERROR, "DVDCSS", "%s", psz_string);
     dvdcss->psz_error = psz_string;
 }
 

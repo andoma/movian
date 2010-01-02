@@ -51,6 +51,8 @@
 #include "dvdnav.h"
 #include "dvdnav_internal.h"
 
+#include "showtime.h"
+
 #ifdef _MSC_VER
 #include <io.h>   /* read() */
 #endif /* _MSC_VER */
@@ -99,30 +101,29 @@ static pgcit_t* get_PGCIT(vm_t *vm);
 
 /* Helper functions */
 
-#ifdef TRACE
 static void vm_print_current_domain_state(vm_t *vm) {
   switch((vm->state).domain) {
     case VTS_DOMAIN:
-      fprintf(MSG_OUT, "libdvdnav: Video Title Domain: -\n");
+      TRACE(TRACE_DEBUG, "DVDNAV", "Video Title Domain: -");
       break;
 
     case VTSM_DOMAIN:
-      fprintf(MSG_OUT, "libdvdnav: Video Title Menu Domain: -\n");
+      TRACE(TRACE_DEBUG, "DVDNAV", "Video Title Menu Domain: -");
       break;
 
     case VMGM_DOMAIN:
-      fprintf(MSG_OUT, "libdvdnav: Video Manager Menu Domain: -\n");
+      TRACE(TRACE_DEBUG, "DVDNAV", "Video Manager Menu Domain: -");
       break;
 
     case FP_DOMAIN: 
-      fprintf(MSG_OUT, "libdvdnav: First Play Domain: -\n");
+      TRACE(TRACE_DEBUG, "DVDNAV", "First Play Domain: -");
       break;
 
     default:
-      fprintf(MSG_OUT, "libdvdnav: Unknown Domain: -\n");
+      TRACE(TRACE_DEBUG, "DVDNAV", "Unknown Domain: -");
       break;
   }
-  fprintf(MSG_OUT, "libdvdnav: VTS:%d PGC:%d PG:%u CELL:%u BLOCK:%u VTS_TTN:%u TTN:%u TT_PGCN:%u\n", 
+  TRACE(TRACE_DEBUG, "DVDNAV", "VTS:%d PGC:%d PG:%u CELL:%u BLOCK:%u VTS_TTN:%u TTN:%u TT_PGCN:%u", 
                    (vm->state).vtsN,
                    get_PGCN(vm),
                    (vm->state).pgN,
@@ -132,7 +133,6 @@ static void vm_print_current_domain_state(vm_t *vm) {
                    (vm->state).TTN_REG,
                    (vm->state).TT_PGCN_REG);
 }
-#endif
 
 static void dvd_read_name(char *name, const char *device) {
     /* Because we are compiling with _FILE_OFFSET_BITS=64
@@ -150,13 +150,11 @@ static void dvd_read_name(char *name, const char *device) {
         off = read( fd, data, DVD_VIDEO_LB_LEN ); 
         close(fd);
         if (off == ( (off_t) DVD_VIDEO_LB_LEN )) {
-          fprintf(MSG_OUT, "libdvdnav: DVD Title: ");
+#if 0
           for(i=25; i < 73; i++ ) {
             if((data[i] == 0)) break;
             if((data[i] > 32) && (data[i] < 127)) {
-              fprintf(MSG_OUT, "%c", data[i]);
-            } else {
-              fprintf(MSG_OUT, " ");
+	      TRACE(TRACE_INFO, "DVDNAV", "DVD Title: %s", data[i]);
             }
           }
           strncpy(name, (char*) &data[25], 48);
@@ -179,16 +177,17 @@ static void dvd_read_name(char *name, const char *device) {
               fprintf(MSG_OUT, " ");
             }
           }
-          fprintf(MSG_OUT, "\n");
+          fprintf(MSG_OUT, "");
+#endif
         } else {
-          fprintf(MSG_OUT, "libdvdnav: Can't read name block. Probably not a DVD-ROM device.\n");
+          TRACE(TRACE_ERROR, "DVDNAV", "Can't read name block. Probably not a DVD-ROM device.");
         }
       } else {
-        fprintf(MSG_OUT, "libdvdnav: Can't seek to block %u\n", 32 );
+        TRACE(TRACE_ERROR, "DVDNAV", "Can't seek to block %u", 32 );
       }
       close(fd);
     } else {
-    fprintf(MSG_OUT, "NAME OPEN FAILED\n");
+      TRACE(TRACE_ERROR, "DVDNAV", "NAME OPEN FAILED");
   }
 }
 
@@ -202,27 +201,27 @@ static int ifoOpenNewVTSI(vm_t *vm, dvd_reader_t *dvd, int vtsN) {
   
   vm->vtsi = ifoOpenVTSI(dvd, vtsN);
   if(vm->vtsi == NULL) {
-    fprintf(MSG_OUT, "libdvdnav: ifoOpenVTSI failed\n");
+    TRACE(TRACE_ERROR, "DVDNAV", "ifoOpenVTSI failed");
     return 0;
   }
   if(!ifoRead_VTS_PTT_SRPT(vm->vtsi)) {
-    fprintf(MSG_OUT, "libdvdnav: ifoRead_VTS_PTT_SRPT failed\n");
+    TRACE(TRACE_ERROR, "DVDNAV", "ifoRead_VTS_PTT_SRPT failed");
     return 0;
   }
   if(!ifoRead_PGCIT(vm->vtsi)) {
-    fprintf(MSG_OUT, "libdvdnav: ifoRead_PGCIT failed\n");
+    TRACE(TRACE_ERROR, "DVDNAV", "ifoRead_PGCIT failed");
     return 0;
   }
   if(!ifoRead_PGCI_UT(vm->vtsi)) {
-    fprintf(MSG_OUT, "libdvdnav: ifoRead_PGCI_UT failed\n");
+    TRACE(TRACE_ERROR, "DVDNAV", "ifoRead_PGCI_UT failed");
     return 0;
   }
   if(!ifoRead_VOBU_ADMAP(vm->vtsi)) {
-    fprintf(MSG_OUT, "libdvdnav: ifoRead_VOBU_ADMAP vtsi failed\n");
+    TRACE(TRACE_ERROR, "DVDNAV", "ifoRead_VOBU_ADMAP vtsi failed");
     return 0;
   }
   if(!ifoRead_TITLE_VOBU_ADMAP(vm->vtsi)) {
-    fprintf(MSG_OUT, "libdvdnav: ifoRead_TITLE_VOBU_ADMAP vtsi failed\n");
+    TRACE(TRACE_ERROR, "DVDNAV", "ifoRead_TITLE_VOBU_ADMAP vtsi failed");
     return 0;
   }
   (vm->state).vtsN = vtsN;
@@ -327,50 +326,49 @@ int vm_reset(vm_t *vm, const char *dvdroot, void *svfs_ops) {
   if (!vm->dvd) {
       vm->dvd = DVDOpen(dvdroot, svfs_ops);
     if(!vm->dvd) {
-      fprintf(MSG_OUT, "libdvdnav: vm: failed to open/read the DVD\n");
+      TRACE(TRACE_ERROR, "DVDNAV", "vm: failed to open/read the DVD");
       return 0;
     }
     dvd_read_name(vm->dvd_name, dvdroot);
     vm->map  = remap_loadmap(vm->dvd_name);
     vm->vmgi = ifoOpenVMGI(vm->dvd);
     if(!vm->vmgi) {
-      fprintf(MSG_OUT, "libdvdnav: vm: failed to read VIDEO_TS.IFO\n");
+      TRACE(TRACE_ERROR, "DVDNAV", "vm: failed to read VIDEO_TS.IFO");
       return 0;
     }
     if(!ifoRead_FP_PGC(vm->vmgi)) {
-      fprintf(MSG_OUT, "libdvdnav: vm: ifoRead_FP_PGC failed\n");
+      TRACE(TRACE_ERROR, "DVDNAV", "vm: ifoRead_FP_PGC failed");
       return 0;
     }
     if(!ifoRead_TT_SRPT(vm->vmgi)) {
-      fprintf(MSG_OUT, "libdvdnav: vm: ifoRead_TT_SRPT failed\n");
+      TRACE(TRACE_ERROR, "DVDNAV", "vm: ifoRead_TT_SRPT failed");
       return 0;
     }
     if(!ifoRead_PGCI_UT(vm->vmgi)) {
-      fprintf(MSG_OUT, "libdvdnav: vm: ifoRead_PGCI_UT failed\n");
+      TRACE(TRACE_ERROR, "DVDNAV", "vm: ifoRead_PGCI_UT failed");
       return 0;
     }
     if(!ifoRead_PTL_MAIT(vm->vmgi)) {
-      fprintf(MSG_OUT, "libdvdnav: vm: ifoRead_PTL_MAIT failed\n");
+      TRACE(TRACE_ERROR, "DVDNAV", "vm: ifoRead_PTL_MAIT failed");
       /* return 0; Not really used for now.. */
     }
     if(!ifoRead_VTS_ATRT(vm->vmgi)) {
-      fprintf(MSG_OUT, "libdvdnav: vm: ifoRead_VTS_ATRT failed\n");
+      TRACE(TRACE_ERROR, "DVDNAV", "vm: ifoRead_VTS_ATRT failed");
       /* return 0; Not really used for now.. */
     }
     if(!ifoRead_VOBU_ADMAP(vm->vmgi)) {
-      fprintf(MSG_OUT, "libdvdnav: vm: ifoRead_VOBU_ADMAP vgmi failed\n");
+      TRACE(TRACE_ERROR, "DVDNAV", "vm: ifoRead_VOBU_ADMAP vgmi failed");
       /* return 0; Not really used for now.. */
     }
     /* ifoRead_TXTDT_MGI(vmgi); Not implemented yet */
   }
   if (vm->vmgi) {
     int i, mask;
-    fprintf(MSG_OUT, "libdvdnav: DVD disk reports itself with Region mask 0x%08x. Regions:",
+    TRACE(TRACE_DEBUG, "DVDNAV", "DVD disk reports itself with Region mask 0x%08x. Regions:",
       vm->vmgi->vmgi_mat->vmg_category);
     for (i = 1, mask = 1; i <= 8; i++, mask <<= 1)
       if (((vm->vmgi->vmgi_mat->vmg_category >> 16) & mask) == 0)
-        fprintf(MSG_OUT, " %d", i);
-    fprintf(MSG_OUT, "\n");
+        TRACE(TRACE_DEBUG, "DVDNAV", "Region: %d", i);
   }
   return 1;
 }
@@ -649,21 +647,19 @@ int vm_get_current_title_part(vm_t *vm, int *title_result, int *part_result) {
   part++;
   
   if (!found) {
-    fprintf(MSG_OUT, "libdvdnav: chapter NOT FOUND!\n");
+    TRACE(TRACE_ERROR, "DVDNAV", "chapter NOT FOUND!");
     return 0;
   }
 
   title = get_TT(vm, vm->state.vtsN, vts_ttn);
 
-#ifdef TRACE
   if (title) {
-    fprintf(MSG_OUT, "libdvdnav: ************ this chapter FOUND!\n");
-    fprintf(MSG_OUT, "libdvdnav: VTS_PTT_SRPT - Title %3i part %3i: PGC: %3i PG: %3i\n",
+    TRACE(TRACE_DEBUG, "DVDNAV", "************ this chapter FOUND!");
+    TRACE(TRACE_DEBUG, "DVDNAV", "VTS_PTT_SRPT - Title %3i part %3i: PGC: %3i PG: %3i",
              title, part,
              vts_ptt_srpt->title[vts_ttn-1].ptt[part-1].pgcn ,
              vts_ptt_srpt->title[vts_ttn-1].ptt[part-1].pgn );
   }
-#endif
   *title_result = title;
   *part_result = part;
   return 1;
@@ -919,14 +915,12 @@ subp_attr_t vm_get_subp_attr(vm_t *vm, int streamN) {
 static link_t play_PGC(vm_t *vm) {
   link_t link_values;
   
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: play_PGC:");
   if((vm->state).domain != FP_DOMAIN) {
-    fprintf(MSG_OUT, " (vm->state).pgcN (%i)\n", get_PGCN(vm));
+  TRACE(TRACE_DEBUG, "DVDNAV", "play_PGC: (vm->state).pgcN (%i)", 
+	get_PGCN(vm));
   } else {
-    fprintf(MSG_OUT, " first_play_pgc\n");
+    TRACE(TRACE_DEBUG, "DVDNAV", "play_PGC: first_play_pgc");
   }
-#endif
 
   /* This must be set before the pre-commands are executed because they
    * might contain a CallSS that will save resume state */
@@ -948,9 +942,7 @@ static link_t play_PGC(vm_t *vm) {
       /*  link_values contains the 'jump' return value */
       return link_values;
     } else {
-#ifdef TRACE
-      fprintf(MSG_OUT, "libdvdnav: PGC pre commands didn't do a Jump, Link or Call\n");
-#endif
+      TRACE(TRACE_DEBUG, "DVDNAV", "PGC pre commands didn't do a Jump, Link or Call");
     }
   }
   return play_PG(vm);
@@ -959,14 +951,12 @@ static link_t play_PGC(vm_t *vm) {
 static link_t play_PGC_PG(vm_t *vm, int pgN) {    
   link_t link_values;
   
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: play_PGC_PG:");
   if((vm->state).domain != FP_DOMAIN) {
-    fprintf(MSG_OUT, " (vm->state).pgcN (%i)\n", get_PGCN(vm));
+    TRACE(TRACE_DEBUG, "DVDNAV", "play_PGC_PG: (vm->state).pgcN (%i)", 
+	  get_PGCN(vm));
   } else {
-    fprintf(MSG_OUT, " first_play_pgc\n");
+    TRACE(TRACE_DEBUG, "DVDNAV", "play_PGC_PG: first_play_pgc");
   }
-#endif
 
   /*  This must be set before the pre-commands are executed because they
    *  might contain a CallSS that will save resume state */
@@ -988,9 +978,7 @@ static link_t play_PGC_PG(vm_t *vm, int pgN) {
       /*  link_values contains the 'jump' return value */
       return link_values;
     } else {
-#ifdef TRACE
-      fprintf(MSG_OUT, "libdvdnav: PGC pre commands didn't do a Jump, Link or Call\n");
-#endif
+      TRACE(TRACE_DEBUG, "DVDNAV", "PGC pre commands didn't do a Jump, Link or Call");
     }
   }
   return play_PG(vm);
@@ -998,10 +986,8 @@ static link_t play_PGC_PG(vm_t *vm, int pgN) {
 
 static link_t play_PGC_post(vm_t *vm) {
   link_t link_values;
-
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: play_PGC_post:\n");
-#endif
+  
+  TRACE(TRACE_DEBUG, "DVDNAV", "play_PGC_post:");
   
   /* eval -> updates the state and returns either 
      - some kind of jump (Jump(TT/SS/VTS_TTN/CallSS/link C/PG/PGC/PTTN)
@@ -1015,9 +1001,7 @@ static link_t play_PGC_post(vm_t *vm) {
     return link_values;
   }
   
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: ** Fell of the end of the pgc, continuing in NextPGC\n");
-#endif
+  TRACE(TRACE_DEBUG, "DVDNAV", "** Fell of the end of the pgc, continuing in NextPGC");
   /* Should end up in the STOP_DOMAIN if next_pgc is 0. */
   if(!set_PGCN(vm, (vm->state).pgc->next_pgc_nr)) {
     link_values.command = Exit;
@@ -1027,16 +1011,13 @@ static link_t play_PGC_post(vm_t *vm) {
 }
 
 static link_t play_PG(vm_t *vm) {
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: play_PG: (vm->state).pgN (%i)\n", (vm->state).pgN);
-#endif
+  TRACE(TRACE_DEBUG, "DVDNAV", "play_PG: (vm->state).pgN (%i)", (vm->state).pgN);
   
   assert((vm->state).pgN > 0);
   if((vm->state).pgN > (vm->state).pgc->nr_of_programs) {
-#ifdef TRACE
-    fprintf(MSG_OUT, "libdvdnav: play_PG: (vm->state).pgN (%i) > pgc->nr_of_programs (%i)\n", 
-	    (vm->state).pgN, (vm->state).pgc->nr_of_programs );
-#endif
+    TRACE(TRACE_DEBUG, "DVDNAV", 
+	  "play_PG: (vm->state).pgN (%i) > pgc->nr_of_programs (%i)", 
+	  (vm->state).pgN, (vm->state).pgc->nr_of_programs );
     assert((vm->state).pgN == (vm->state).pgc->nr_of_programs + 1); 
     return play_PGC_post(vm);
   }
@@ -1049,16 +1030,14 @@ static link_t play_PG(vm_t *vm) {
 static link_t play_Cell(vm_t *vm) {
   static const link_t play_this = {PlayThis, /* Block in Cell */ 0, 0, 0};
 
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: play_Cell: (vm->state).cellN (%i)\n", (vm->state).cellN);
-#endif
+  TRACE(TRACE_DEBUG, 
+	"DVDNAV", "play_Cell: (vm->state).cellN (%i)", (vm->state).cellN);
   
   assert((vm->state).cellN > 0);
   if((vm->state).cellN > (vm->state).pgc->nr_of_cells) {
-#ifdef TRACE
-    fprintf(MSG_OUT, "libdvdnav: (vm->state).cellN (%i) > pgc->nr_of_cells (%i)\n", 
-	    (vm->state).cellN, (vm->state).pgc->nr_of_cells );
-#endif
+    TRACE(TRACE_DEBUG, "DVDNAV", 
+	  "(vm->state).cellN (%i) > pgc->nr_of_cells (%i)", 
+	  (vm->state).cellN, (vm->state).pgc->nr_of_cells );
     assert((vm->state).cellN == (vm->state).pgc->nr_of_cells + 1); 
     return play_PGC_post(vm);
   }
@@ -1084,7 +1063,7 @@ static link_t play_Cell(vm_t *vm) {
       if (!((vm->state).cellN <= (vm->state).pgc->nr_of_cells) ||
           !((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_mode != 0) ||
 	  !((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type == 1)) {
-	fprintf(MSG_OUT, "libdvdnav: Invalid angle block\n");
+	TRACE(TRACE_ERROR, "DVDNAV", "Invalid angle block");
 	(vm->state).cellN -= (vm->state).AGL_REG - 1;
       }
 #endif
@@ -1092,7 +1071,7 @@ static link_t play_Cell(vm_t *vm) {
     case 2: /*  ?? */
     case 3: /*  ?? */
     default:
-      fprintf(MSG_OUT, "libdvdnav: Invalid? Cell block_mode (%d), block_type (%d)\n",
+      TRACE(TRACE_ERROR, "DVDNAV", "Invalid? Cell block_mode (%d), block_type (%d)",
 	      (vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_mode,
 	      (vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type);
       assert(0);
@@ -1102,7 +1081,7 @@ static link_t play_Cell(vm_t *vm) {
   case 3: /*  Last cell in the block */
   /* These might perhaps happen for RSM or LinkC commands? */
   default:
-    fprintf(MSG_OUT, "libdvdnav: Cell is in block but did not enter at first cell!\n");
+    TRACE(TRACE_ERROR, "DVDNAV", "Cell is in block but did not enter at first cell!");
   }
   
   /* Updates (vm->state).pgN and PTTN_REG */
@@ -1113,18 +1092,15 @@ static link_t play_Cell(vm_t *vm) {
   }
   (vm->state).cell_restart++;
   (vm->state).blockN = 0;
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: Cell should restart here\n");
-#endif
+  TRACE(TRACE_DEBUG, "DVDNAV", "Cell should restart here");
   return play_this;
 }
 
 static link_t play_Cell_post(vm_t *vm) {
   cell_playback_t *cell;
   
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: play_Cell_post: (vm->state).cellN (%i)\n", (vm->state).cellN);
-#endif
+  TRACE(TRACE_DEBUG, "DVDNAV",
+	"play_Cell_post: (vm->state).cellN (%i)", (vm->state).cellN);
   
   cell = &(vm->state).pgc->cell_playback[(vm->state).cellN - 1];
   
@@ -1145,21 +1121,16 @@ static link_t play_Cell_post(vm_t *vm) {
 
     if ((vm->state).pgc->command_tbl != NULL &&
         (vm->state).pgc->command_tbl->nr_of_cell >= cell->cell_cmd_nr) {
-#ifdef TRACE
-      fprintf(MSG_OUT, "libdvdnav: Cell command present, executing\n");
-#endif
+      TRACE(TRACE_DEBUG, "DVDNAV", "Cell command present, executing");
       if(vmEval_CMD(&(vm->state).pgc->command_tbl->cell_cmds[cell->cell_cmd_nr - 1], 1,
 		    &(vm->state).registers, &link_values)) {
         return link_values;
       } else {
-#ifdef TRACE
-        fprintf(MSG_OUT, "libdvdnav: Cell command didn't do a Jump, Link or Call\n");
-#endif
+        TRACE(TRACE_DEBUG, "DVDNAV", 
+	      "Cell command didn't do a Jump, Link or Call");
       }
     } else {
-#ifdef TRACE
-      fprintf(MSG_OUT, "libdvdnav: Invalid Cell command\n");
-#endif
+      TRACE(TRACE_DEBUG, "DVDNAV", "Invalid Cell command");
     }
   }
   
@@ -1189,7 +1160,7 @@ static link_t play_Cell_post(vm_t *vm) {
     case 2: /*  ?? */
     case 3: /*  ?? */
     default:
-      fprintf(MSG_OUT, "libdvdnav: Invalid? Cell block_mode (%d), block_type (%d)\n",
+      TRACE(TRACE_ERROR, "DVDNAV", "Invalid? Cell block_mode (%d), block_type (%d)",
 	      (vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_mode,
 	      (vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type);
       assert(0);
@@ -1199,9 +1170,7 @@ static link_t play_Cell_post(vm_t *vm) {
   
   /* Figure out the correct pgN for the new cell */ 
   if(!set_PGN(vm)) {
-#ifdef TRACE
-    fprintf(MSG_OUT, "libdvdnav: last cell in this PGC\n");
-#endif
+    TRACE(TRACE_DEBUG, "DVDNAV", "last cell in this PGC");
     return play_PGC_post(vm);
   }
   return play_Cell(vm);
@@ -1213,15 +1182,15 @@ static link_t play_Cell_post(vm_t *vm) {
 static int process_command(vm_t *vm, link_t link_values) {
   
   while(link_values.command != PlayThis) {
-    
-#ifdef TRACE
-    fprintf(MSG_OUT, "libdvdnav: Before printout starts:\n");
+#if 0    
+    TRACE(TRACE_DEBUG, "DVDNAV", "Before printout starts:");
     vm_print_link(link_values);
-    fprintf(MSG_OUT, "libdvdnav: Link values %i %i %i %i\n", link_values.command, 
-	    link_values.data1, link_values.data2, link_values.data3);
-    vm_print_current_domain_state(vm);
-    fprintf(MSG_OUT, "libdvdnav: Before printout ends.\n");
 #endif
+    TRACE(TRACE_DEBUG, "DVDNAV",
+	  "Link values %i %i %i %i", link_values.command, 
+	  link_values.data1, link_values.data2, link_values.data3);
+    vm_print_current_domain_state(vm);
+    TRACE(TRACE_DEBUG, "DVDNAV", "Before printout ends.");
     
     switch(link_values.command) {
     case LinkNoLink:
@@ -1335,7 +1304,7 @@ static int process_command(vm_t *vm, link_t link_values) {
 	
 	/* Check and see if there is any rsm info!! */
 	if (!(vm->state).rsm_vtsN) {
-	  fprintf(MSG_OUT, "libdvdnav: trying to resume without any resume info set\n");
+	  TRACE(TRACE_ERROR, "DVDNAV", "trying to resume without any resume info set");
 	  link_values.command = Exit;
 	  break;
 	}
@@ -1562,11 +1531,9 @@ static int process_command(vm_t *vm, link_t link_values) {
       break;
     }
 
-#ifdef TRACE
-    fprintf(MSG_OUT, "libdvdnav: After printout starts:\n");
+    TRACE(TRACE_DEBUG, "DVDNAV", "After printout starts:");
     vm_print_current_domain_state(vm);
-    fprintf(MSG_OUT, "libdvdnav: After printout ends.\n");
-#endif
+    TRACE(TRACE_DEBUG, "DVDNAV", "After printout ends.");
     
   }
   (vm->state).blockN = link_values.data1 | (link_values.data2 << 16);
@@ -1643,9 +1610,7 @@ static int set_PGCN(vm_t *vm, int pgcN) {
   assert(pgcit != NULL);  /* ?? Make this return -1 instead */
 
   if(pgcN < 1 || pgcN > pgcit->nr_of_pgci_srp) {
-#ifdef TRACE
-    fprintf(MSG_OUT, "libdvdnav:  ** No such pgcN = %d\n", pgcN);
-#endif
+    TRACE(TRACE_DEBUG, "DVDNAV", " ** No such pgcN = %d", pgcN);
     return 0;
   }
   
@@ -1684,7 +1649,7 @@ static int set_PGN(vm_t *vm) {
       (vm->state).PTTN_REG = part;
     } else {
       /* FIXME: Handle RANDOM or SHUFFLE titles. */
-      fprintf(MSG_OUT, "libdvdnav: RANDOM or SHUFFLE titles are NOT handled yet.\n");
+      TRACE(TRACE_ERROR, "DVDNAV", "RANDOM or SHUFFLE titles are NOT handled yet.");
     }
   }
   return 1;
@@ -1742,9 +1707,8 @@ static int get_ID(vm_t *vm, int id) {
   /* Relies on state to get the correct pgcit. */
   pgcit = get_PGCIT(vm);
   assert(pgcit != NULL);
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: ** Searching for menu (0x%x) entry PGC\n", id);
-#endif
+
+  TRACE(TRACE_DEBUG, "DVDNAV", "** Searching for menu (0x%x) entry PGC", id);
 
   /* Force high bit set. */
   id |=0x80;
@@ -1753,21 +1717,18 @@ static int get_ID(vm_t *vm, int id) {
   for(i = 0; i < pgcit->nr_of_pgci_srp; i++) {
     if( (pgcit->pgci_srp[i].entry_id) == id) {
       pgcN = i + 1;
-#ifdef TRACE
-      fprintf(MSG_OUT, "libdvdnav: Found menu.\n");
-#endif
+      TRACE(TRACE_DEBUG, "DVDNAV", "Found menu.");
       return pgcN;
     }
   }
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: ** No such id/menu (0x%02x) entry PGC\n", id & 0x7f);
+  TRACE(TRACE_DEBUG,
+	"DVDNAV", "** No such id/menu (0x%02x) entry PGC", id & 0x7f);
   for(i = 0; i < pgcit->nr_of_pgci_srp; i++) {
     if ( (pgcit->pgci_srp[i].entry_id & 0x80) == 0x80) {
-      fprintf(MSG_OUT, "libdvdnav: Available menus: 0x%x\n",
-                     pgcit->pgci_srp[i].entry_id & 0x7f);
+      TRACE(TRACE_DEBUG, "DVDNAV", "Available menus: 0x%x",
+	    pgcit->pgci_srp[i].entry_id & 0x7f);
     }
   }
-#endif
   return 0; /*  error */
 }
 
@@ -1787,7 +1748,7 @@ static int get_PGCN(vm_t *vm) {
       pgcN++;
     }
   }
-  fprintf(MSG_OUT, "libdvdnav: get_PGCN failed. Was trying to find pgcN in domain %d\n", 
+  TRACE(TRACE_ERROR, "DVDNAV", "get_PGCN failed. Was trying to find pgcN in domain %d", 
          (vm->state).domain);
   return 0; /*  error */
 }
@@ -1796,7 +1757,7 @@ static pgcit_t* get_MENU_PGCIT(vm_t *vm, ifo_handle_t *h, uint16_t lang) {
   int i;
   
   if(h == NULL || h->pgci_ut == NULL) {
-    fprintf(MSG_OUT, "libdvdnav: *** pgci_ut handle is NULL ***\n");
+    TRACE(TRACE_ERROR, "DVDNAV", "*** pgci_ut handle is NULL ***");
     return NULL; /*  error? */
   }
   
@@ -1805,17 +1766,19 @@ static pgcit_t* get_MENU_PGCIT(vm_t *vm, ifo_handle_t *h, uint16_t lang) {
 	&& h->pgci_ut->lu[i].lang_code != lang)
     i++;
   if(i == h->pgci_ut->nr_of_lus) {
-    fprintf(MSG_OUT, "libdvdnav: Language '%c%c' not found, using '%c%c' instead\n",
+    TRACE(TRACE_ERROR, "DVDNAV", "Language '%c%c' not found, using '%c%c' instead",
 	    (char)(lang >> 8), (char)(lang & 0xff),
  	    (char)(h->pgci_ut->lu[0].lang_code >> 8),
 	    (char)(h->pgci_ut->lu[0].lang_code & 0xff));
-    fprintf(MSG_OUT, "libdvdnav: Menu Languages available: ");
+#if 0
+    TRACE(TRACE_ERROR, "DVDNAV", "Menu Languages available: ");
     for(i = 0; i < h->pgci_ut->nr_of_lus; i++) {
       fprintf(MSG_OUT, "%c%c ",
  	    (char)(h->pgci_ut->lu[i].lang_code >> 8),
 	    (char)(h->pgci_ut->lu[i].lang_code & 0xff));
     }
-    fprintf(MSG_OUT, "\n");
+    fprintf(MSG_OUT, "");
+#endif
     i = 0; /*  error? */
   }
   
@@ -1866,9 +1829,8 @@ void vm_ifo_close(ifo_handle_t *ifo)
 
 /* Debug functions */
 
-#ifdef TRACE
 void vm_position_print(vm_t *vm, vm_position_t *position) {
-  fprintf(MSG_OUT, "libdvdnav: But=%x Spu=%x Aud=%x Ang=%x Hop=%x vts=%x dom=%x cell=%x cell_restart=%x cell_start=%x still=%x block=%x\n",
+  TRACE(TRACE_ERROR, "DVDNAV", "But=%x Spu=%x Aud=%x Ang=%x Hop=%x vts=%x dom=%x cell=%x cell_restart=%x cell_start=%x still=%x block=%x",
   position->button,
   position->spu_channel,
   position->audio_channel,
@@ -1882,5 +1844,4 @@ void vm_position_print(vm_t *vm, vm_position_t *position) {
   position->still,
   position->block);
 }
-#endif
 
