@@ -87,9 +87,11 @@ static const struct {
   int action2;
   int action3;
 } keysym2action[] = {
-/* NSFunctionKeyMask is ignored when maching mappings */
-{ NSLeftArrowFunctionKey,   0,                ACTION_LEFT, ACTION_SEEK_BACKWARD },
-{ NSRightArrowFunctionKey,  0,                ACTION_RIGHT, ACTION_SEEK_FORWARD },
+  
+/* NSFunctionKeyMask is filtered out when matching mappings */
+  
+{ NSLeftArrowFunctionKey,   0,                ACTION_LEFT },
+{ NSRightArrowFunctionKey,  0,                ACTION_RIGHT },
 { NSUpArrowFunctionKey,     0,                ACTION_UP },
 { NSDownArrowFunctionKey,   0,                ACTION_DOWN },
 { NSPageUpFunctionKey,      0,                ACTION_PAGE_UP, ACTION_CHANNEL_PREV },
@@ -456,7 +458,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 
   [timer retain];
  
-  if(timer_cursor) {
+  if(timer_cursor != nil) {
     [timer_cursor invalidate];
     [timer_cursor release];
     timer_cursor = nil;
@@ -474,13 +476,20 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 }
 
 - (void)glwHideCursor {
+  glw_pointer_event_t gpe;
+
   [NSCursor setHiddenUntilMouseMoves:YES];
+  
+  gpe.type = GLW_POINTER_GONE;   
+  glw_lock(&gcocoa.gr);
+  glw_pointer_event(&gcocoa.gr, &gpe);
+  glw_unlock(&gcocoa.gr);
 }
 
 - (void)glwDelayHideCursor {
   gcocoa.is_cursor_hidden = 1;
   
-  if(timer_cursor) {
+  if(timer_cursor != nil) {
     [timer_cursor invalidate];
     [timer_cursor release];
     timer_cursor = nil;
@@ -496,7 +505,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 - (void)glwUnHideCursor {
   gcocoa.is_cursor_hidden = 0;
   
-  if(timer_cursor) {
+  if(timer_cursor != nil) {
     [timer_cursor invalidate];
     [timer_cursor release];
     timer_cursor = nil;
