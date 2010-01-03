@@ -19,6 +19,8 @@
 #ifndef CALLOUT_H__
 #define CALLOUT_H__
 
+#include <time.h>
+#include "queue.h"
 
 struct callout;
 typedef void (callout_callback_t)(struct callout *c, void *opaque);
