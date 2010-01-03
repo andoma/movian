@@ -250,6 +250,12 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
   vex[2][1] = GLW_MIN(-1.0 + 2.0 * bb / rc->rc_size_y, 0.0);
   vex[3][1] = -1.0;
 
+
+  bl = gi->gi_border_left;
+  bt = gi->gi_border_top;
+  br = gi->gi_border_right;
+  bb = gi->gi_border_bottom;
+
   cvex[0][0] = GLW_MIN(-1.0 + 2.0 * (bl + pl) / rc->rc_size_x, 0.0);
   cvex[1][0] = GLW_MAX( 1.0 - 2.0 * (br + pr) / rc->rc_size_x, 0.0);
   cvex[0][1] = GLW_MAX( 1.0 - 2.0 * (bt + pt) / rc->rc_size_y, 0.0);
