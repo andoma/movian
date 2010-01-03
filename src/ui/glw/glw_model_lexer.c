@@ -93,7 +93,7 @@ lexer_add_token_float(token_t *prev, rstr_t *f, int line,
     n = n * 10 + s - '0';
   }
   
-  t->t_float = n;
+  t->t_float = n * sign;
   if(start == end)
     return t;
 
