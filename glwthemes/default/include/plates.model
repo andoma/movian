@@ -6,7 +6,7 @@
 #define PLATE_PROPS() {
   .source = "theme://images/whitebox.png";
   .border = [6, 3, 6, 6];
-  .padding = [2, 2, 3, 5];
+  .padding = [-4, -1, -3, -1];
 }
 
 #define HIGHLITE_PROPS() {
@@ -40,7 +40,7 @@
     iir(isPressed(), 4) * [1.0, 1.0, 1.0];
 
   .alphaSelf = iir(0.5 + 0.5 * (isFocused() || isPressed()), 4);
-  .padding = [2, 2, 3, 5];
+  .padding = [-1, -1, -5, -3];
 }
 
 
@@ -137,7 +137,7 @@
   widget(backdrop, {
     .source = "theme://images/whitebox.png";
     .border = [6, 3, 4, 4];
-    .padding = [2, 2, 5, 5];
+    .padding = [-4, -1, -1, -1];
     .color = BUTTON_COLOR();
 
     .alphaSelf = iir(isFocused() * 0.5, 8);

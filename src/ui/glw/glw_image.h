@@ -59,7 +59,6 @@ typedef struct glw_image {
   uint8_t gi_border_scaling;
   uint8_t gi_render_initialized;
   uint8_t gi_update;
-  uint8_t gi_explicit_padding;
 
   uint8_t gi_frozen;
 
