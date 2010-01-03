@@ -28,6 +28,11 @@ typedef struct glw_container {
   float weight_sum;
   float aspect_sum;
 
+  int16_t co_padding_left;
+  int16_t co_padding_right;
+  int16_t co_padding_top;
+  int16_t co_padding_bottom;
+
 } glw_container_t;
 
 

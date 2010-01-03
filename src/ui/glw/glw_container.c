@@ -77,33 +77,35 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
   int f;
   float s_w, s_ax, ax;
 
+  float size_x = rc->rc_size_x - co->co_padding_left - co->co_padding_right;
+
   glw_flush_render_list(&co->w);
 
   if(co->w.glw_alpha < 0.01)
     return 0;
 
   /* Add sum of requested aspect to width in pixels */
-  ax = co->x_sum + co->aspect_sum * rc->rc_size_y; 
+  ax = co->co_padding_left + co->co_padding_right + 
+    co->x_sum + co->aspect_sum * rc->rc_size_y; 
 
   glw_set_constraints(&co->w, ax, co->y_sum, 0, 0, co->cflags, 0);
 
+  x = -1.0f + 2.0 * co->co_padding_left / rc->rc_size_x;
 
-  x = -1.0f;
-
-  if(ax > rc->rc_size_x) {
+  if(ax > size_x) {
     // Requested pixel size > available width, must scale
-    s_ax = rc->rc_size_x / ax;
+    s_ax = size_x / ax;
     s_w = 0;
   } else {
     s_ax = 1.0f;
-    s_w = rc->rc_size_x - ax;
+    s_w = size_x - ax;
 
     if(co->weight_sum == 0) {
 
       if(co->w.glw_alignment == GLW_ALIGN_CENTER) {
-	x = 0 - ax / rc->rc_size_x;
+	x = 0 - ax / size_x;
       } else if(co->w.glw_alignment == GLW_ALIGN_RIGHT) {
-	x = 1.0 - 2 * ax / rc->rc_size_x;
+	x = 1.0 - 2 * ax / size_x;
       }
     }
   }
@@ -126,9 +128,9 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
       xs = s_w;
     }
 
-    c->glw_parent_scale.x = xs / rc->rc_size_x;
+    c->glw_parent_scale.x = xs / size_x;
     c->glw_parent_scale.y = 1.0;
-    c->glw_parent_scale.z = xs / rc->rc_size_x;
+    c->glw_parent_scale.z = xs / size_x;
       
     c->glw_norm_weight = c->glw_parent_scale.x;
 
@@ -206,27 +208,29 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
   int f;
   float s_w, s_fy;
 
+  float size_y = rc->rc_size_y - co->co_padding_top - co->co_padding_bottom;
+
   glw_flush_render_list(&co->w);
 
   if(co->w.glw_alpha < 0.01)
     return 0;
 
-  y = 1.0f;
+  y = 1.0f - 2.0 * co->co_padding_top / rc->rc_size_y;
 
-  if(co->y_sum > rc->rc_size_y) {
+  if(co->y_sum > size_y) {
     s_w = 0;
-    s_fy = rc->rc_size_y / co->y_sum;
+    s_fy = size_y / co->y_sum;
 
   } else {
-    s_w = rc->rc_size_y - co->y_sum;
+    s_w = size_y - co->y_sum;
     s_fy = 1.0f;
 
     if(co->weight_sum == 0) {
 
       if(co->w.glw_alignment == GLW_ALIGN_CENTER) {
-	y = co->y_sum / rc->rc_size_y;
+	y = co->y_sum / size_y;
       } else if(co->w.glw_alignment == GLW_ALIGN_BOTTOM) {
-	y = 1.0 - 2 * co->y_sum / rc->rc_size_y;
+	y = 1.0 - 2 * co->y_sum / size_y;
       }
     }
   }
@@ -248,8 +252,8 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
     }
 
     c->glw_parent_scale.x = 1.0;
-    c->glw_parent_scale.y = ys / rc->rc_size_y;
-    c->glw_parent_scale.z = ys / rc->rc_size_y;
+    c->glw_parent_scale.y = ys / size_y;
+    c->glw_parent_scale.z = ys / size_y;
 
     c->glw_norm_weight = c->glw_parent_scale.y;
 
@@ -428,6 +432,9 @@ glw_container_z_callback(glw_t *w, void *opaque, glw_signal_t signal,
 void 
 glw_container_ctor(glw_t *w, int init, va_list ap)
 {
+  glw_attribute_t attrib;
+  glw_container_t *co = (glw_container_t *)w;
+
   if(init) {
     switch(w->glw_class) {
     default:
@@ -446,4 +453,22 @@ glw_container_ctor(glw_t *w, int init, va_list ap)
       break;
     }
   }
+
+  do {
+    attrib = va_arg(ap, int);
+    switch(attrib) {
+
+    case GLW_ATTRIB_PADDING:
+      co->co_padding_left   = va_arg(ap, double);
+      co->co_padding_top    = va_arg(ap, double);
+      co->co_padding_right  = va_arg(ap, double);
+      co->co_padding_bottom = va_arg(ap, double);
+      break;
+
+    default:
+      GLW_ATTRIB_CHEW(attrib, ap);
+      break;
+    }
+  } while(attrib);
+
 }
