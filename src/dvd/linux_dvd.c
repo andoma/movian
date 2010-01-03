@@ -148,10 +148,12 @@ dvdprobe(callout_t *co, void *aux)
   if(fd == -1) {
     set_status(ds, DISC_NO_DRIVE, NULL);
   } else {
-    if(ioctl(fd, CDROM_DRIVE_STATUS, NULL) == CDS_DISC_OK)
-      check_disc_type(ds, fd);
-    else
+    if(ioctl(fd, CDROM_DRIVE_STATUS, NULL) == CDS_DISC_OK) {
+      if(ds->ds_prop == NULL)
+	check_disc_type(ds, fd);
+    } else {
       set_status(ds, DISC_NO_DISC, NULL);
+    }
     close(fd);
   }
 }
