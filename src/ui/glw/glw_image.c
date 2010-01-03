@@ -553,7 +553,7 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
       gi->gi_frozen = va_arg(ap, int);
       break;
 
-    case GLW_ATTRIB_BORDER_SIZE:
+    case GLW_ATTRIB_BORDER:
       gi->gi_border_scaling = 1;
       gi->gi_border_left   = va_arg(ap, double);
       gi->gi_border_top    = va_arg(ap, double);

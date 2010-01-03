@@ -125,7 +125,7 @@ widget(container_z, {
       
       widget(backdrop, {
 	.source = "theme://images/whitebox.png";
-	.borderSize = [3, 3, 6, 6];
+	.border = [3, 3, 6, 6];
 	.color = [0.1, 0.5, 0.7];
 	.alphaSelf = 0.8;
 

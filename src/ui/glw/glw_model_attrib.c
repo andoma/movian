@@ -382,7 +382,7 @@ static const token_attrib_t attribtab[] = {
   {"childTilesY",     set_int ,   GLW_ATTRIB_CHILD_TILES_Y},
 
   {"color",           set_float3, GLW_ATTRIB_RGB},
-  {"borderSize",      set_float4, GLW_ATTRIB_BORDER_SIZE},
+  {"border",          set_float4, GLW_ATTRIB_BORDER},
   {"padding",         set_float4, GLW_ATTRIB_PADDING},
 
   {"align",           set_align,  0},

@@ -4,7 +4,7 @@
 
 #define SUB_PLATE() {
   .source = "theme://images/whitebox.png";
-  .borderSize = [6, 3, 6, 6];
+  .border = [6, 3, 6, 6];
   .padding = [5, 2, 5, 5];
   .color = 
     iir(isFocused(), 4) * BUTTON_COLOR() + 

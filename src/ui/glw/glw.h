@@ -118,7 +118,7 @@ typedef enum {
   GLW_ATTRIB_PREVIEW,
   GLW_ATTRIB_CONTENT,
   GLW_ATTRIB_MODE,
-  GLW_ATTRIB_BORDER_SIZE,
+  GLW_ATTRIB_BORDER,
   GLW_ATTRIB_PADDING,
   GLW_ATTRIB_SET_IMAGE_FLAGS,
   GLW_ATTRIB_CLR_IMAGE_FLAGS,
@@ -680,7 +680,7 @@ do {						\
   case GLW_ATTRIB_CHILD_WIDTH:                  \
     (void)va_arg(ap, int);			\
     break;					\
-  case GLW_ATTRIB_BORDER_SIZE:                  \
+  case GLW_ATTRIB_BORDER:                       \
   case GLW_ATTRIB_PADDING:                      \
     (void)va_arg(ap, double);			\
   case GLW_ATTRIB_RGB:                          \
