@@ -130,7 +130,7 @@ nav_update_cango(void)
   prop_set_int(nav_prop_can_go_fwd,
 	       !!TAILQ_NEXT(np, np_history_link));
   prop_set_int(nav_prop_can_go_home,
-	       strcmp(np->np_url, NAV_HOME));
+	       !!strcmp(np->np_url, NAV_HOME));
 }
 
 
