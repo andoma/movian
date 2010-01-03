@@ -201,6 +201,8 @@ ${BUILDDIR}/src/dvd/dvdnav/%.o : CFLAGS = \
  -DVERSION=\"showtime\" -DDVDNAV_COMPILE -Wno-strict-aliasing -Isrc/dvd \
  -Isrc/dvd/dvdnav
 
+SRCS-$(CONFIG_DVD_LINUX) += src/dvd/linux_dvd.c
+
 #
 # TV
 #

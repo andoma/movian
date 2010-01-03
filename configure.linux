@@ -104,6 +104,7 @@ enable libpthread
 enable zlib
 enable posix_networking
 enable dvd
+enable dvd_linux
     
 #
 # pkgconfig

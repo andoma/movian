@@ -24,6 +24,7 @@
 #include "dvd.h"
 #include "notifications.h"
 #include "showtime.h"
+#include "linux_dvd.h"
 
 #include <fileaccess/svfs.h>
 #include <dvdnav/dvdnav.h>
@@ -783,8 +784,22 @@ be_dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
 /**
  *
  */
+static int
+be_dvd_init(void)
+{
+#if ENABLE_DVD_LINUX
+  linux_dvd_init();
+#endif
+  return 0;
+}
+
+
+/**
+ *
+ */
 nav_backend_t be_dvd = {
   .nb_canhandle = be_dvd_canhandle,
   .nb_open = be_dvd_openpage,
   .nb_play_video = be_dvd_play,
+  .nb_init = be_dvd_init,
 };

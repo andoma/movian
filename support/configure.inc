@@ -26,6 +26,7 @@ CONFIG_LIST="
  zlib
  posix_networking
  dvd
+ dvd_linux
  glw
  glw_frontend_x11
  glw_frontend_wii

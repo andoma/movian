@@ -32,6 +32,7 @@ widget(container_y, {
 			     translate($self.contents, "generic.png",
 				       "music",    "music.png",
 				       "video",    "movies.png",
+				       "dvd",      "cd.png",
 				       "pictures", "pictures.png"));
 	  });
 
