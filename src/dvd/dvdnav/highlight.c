@@ -48,7 +48,7 @@
 #ifdef BUTTON_TESTING
 
 #include "nav_print.h"
-
+#if 0
 static void print_time(dvd_time_t *dtime) {
   const char *rate;
 
@@ -214,6 +214,7 @@ void nav_print_PCI(pci_t *pci) {
 
 #endif
 
+#endif
 
 /* Highlighting API calls */
 

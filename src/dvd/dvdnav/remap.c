@@ -204,7 +204,7 @@ remap_t* remap_loadmap( char *title) {
     /* Build the map filename */
     home = getenv("HOME");
     if(!home) {
-        fprintf(MSG_OUT, "libdvdnav: Unable to find home directory" );
+//        fprintf(MSG_OUT, "libdvdnav: Unable to find home directory" );
         return NULL;
     }
     snprintf(fname, sizeof(fname), "%s/.dvdnav/%s.map", home, title);
@@ -212,7 +212,7 @@ remap_t* remap_loadmap( char *title) {
     /* Open the map file */
     fp = fopen( fname, "r");
     if (!fp) {
-	fprintf(MSG_OUT, "libdvdnav: Unable to find map file '%s'\n", fname);
+//	fprintf(MSG_OUT, "libdvdnav: Unable to find map file '%s'\n", fname);
 	return NULL;
     }
 
@@ -226,7 +226,7 @@ remap_t* remap_loadmap( char *title) {
 	    res = parseblock( buf, 
 		&tmp.domain, &tmp.title, &tmp.program, &tmp.start_block, &tmp.end_block);
 	    if (res != 5) {
-		fprintf(MSG_OUT, "libdvdnav: Ignoring map line (%d): %s\n", res, buf);
+//		fprintf(MSG_OUT, "libdvdnav: Ignoring map line (%d): %s\n", res, buf);
 		continue;
 	    }
 	    remap_add_node( map, tmp);
@@ -249,8 +249,7 @@ unsigned long remap_block(
     block_t *b;
 
     if (map->debug) {
-	fprintf(MSG_OUT, "libdvdnav: %s: domain %d, title %d, program %d, start %lx, next %lx\n",
-	    map->title, domain, title, program, cblock, cblock+offset);
+//	fprintf(MSG_OUT, "libdvdnav: %s: domain %d, title %d, program %d, start %lx, next %lx\n",	    map->title, domain, title, program, cblock, cblock+offset);
     }
 
     key.domain = domain;
@@ -261,7 +260,7 @@ unsigned long remap_block(
     
     if (b) {
        if (map->debug) {
-	   fprintf(MSG_OUT, "libdvdnav: Redirected to %lx\n", b->end_block);
+//	   fprintf(MSG_OUT, "libdvdnav: Redirected to %lx\n", b->end_block);
        }
        return b->end_block - cblock;
     }

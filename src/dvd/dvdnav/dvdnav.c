@@ -82,8 +82,6 @@ dvdnav_status_t dvdnav_open(dvdnav_t** dest, const char *path, void *svfs_ops) {
   struct timeval time;
   
   /* Create a new structure */
-  fprintf(MSG_OUT, "libdvdnav: Using dvdnav version %s from http://dvd.sf.net\n", VERSION);
-
   (*dest) = NULL;
   this = (dvdnav_t*)malloc(sizeof(dvdnav_t));
   if(!this)
@@ -134,16 +132,9 @@ dvdnav_status_t dvdnav_open(dvdnav_t** dest, const char *path, void *svfs_ops) {
 
 dvdnav_status_t dvdnav_close(dvdnav_t *this) {
 
-#ifdef LOG_DEBUG
-  fprintf(MSG_OUT, "libdvdnav: close:called\n");
-#endif
-
   if (this->file) {
     hts_mutex_lock(&this->vm_lock); 
     DVDCloseFile(this->file);
-#ifdef LOG_DEBUG
-    fprintf(MSG_OUT, "libdvdnav: close:file closing\n");
-#endif
     this->file = NULL;
     hts_mutex_unlock(&this->vm_lock); 
   }
@@ -168,23 +159,12 @@ dvdnav_status_t dvdnav_close(dvdnav_t *this) {
 dvdnav_status_t dvdnav_reset(dvdnav_t *this) {
   dvdnav_status_t result;
 
-#ifdef LOG_DEBUG
-  fprintf(MSG_OUT, "libdvdnav: reset:called\n");
-#endif
-
   hts_mutex_lock(&this->vm_lock); 
-
-#ifdef LOG_DEBUG
-  fprintf(MSG_OUT, "libdvdnav: reseting vm\n");
-#endif
   if(!vm_reset(this->vm, NULL, this->svfs_ops)) {
     printerr("Error restarting the VM.");
     hts_mutex_unlock(&this->vm_lock); 
     return DVDNAV_STATUS_ERR;
   }
-#ifdef LOG_DEBUG
-  fprintf(MSG_OUT, "libdvdnav: clearing dvdnav\n");
-#endif
   result = dvdnav_clear(this);
 
   hts_mutex_unlock(&this->vm_lock); 
@@ -261,7 +241,7 @@ static int32_t dvdnav_decode_packet(dvdnav_t *this, uint8_t *p, dsi_t *nav_dsi, 
 
   /* we should now have a PES packet here */
   if (p[0] || p[1] || (p[2] != 1)) {
-    fprintf(MSG_OUT, "libdvdnav: demux error! %02x %02x %02x (should be 0x000001) \n",p[0],p[1],p[2]);
+    TRACE(TRACE_ERROR, "DVDNAV", "libdvdnav: demux error! %02x %02x %02x (should be 0x000001) \n",p[0],p[1],p[2]);
     return 0;
   }
 
@@ -272,14 +252,6 @@ static int32_t dvdnav_decode_packet(dvdnav_t *this, uint8_t *p, dsi_t *nav_dsi, 
   p += nHeaderLen;
 
   if (nStreamID == 0xbf) { /* Private stream 2 */
-#if 0
-    int32_t i;
-    fprintf(MSG_OUT, "libdvdnav: nav packet=%u\n",p-p_start-6);
-    for(i=0;i<80;i++)
-      fprintf(MSG_OUT, "%02x ",p[i-6]);
-    fprintf(MSG_OUT, "\n");
-#endif
-
     if(p[0] == 0x00) {
       navRead_PCI(nav_pci, p+1);
     }
@@ -333,7 +305,6 @@ static int32_t dvdnav_get_vobu(dvdnav_t *this, dsi_t *nav_dsi, pci_t *nav_pci, d
   
   vm_get_angle_info(this->vm, &angle, &num_angle);
 
-  /* FIMXE: The angle reset doesn't work for some reason for the moment */
 #if 0
   if((num_angle < angle) && (angle != 1)) {
     fprintf(MSG_OUT, "libdvdnav: angle ends!\n");
