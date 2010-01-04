@@ -95,6 +95,9 @@ nav_init(void)
 #ifdef CONFIG_DVD
   NAV_INIT_BE(dvd);
 #endif
+#ifdef CONFIG_CDDA
+  NAV_INIT_BE(cdda);
+#endif
 #ifdef CONFIG_SPOTIFY
   NAV_INIT_BE(spotify);
 #endif

@@ -204,6 +204,11 @@ ${BUILDDIR}/src/dvd/dvdnav/%.o : CFLAGS = \
 SRCS-$(CONFIG_DVD_LINUX) += src/dvd/linux_dvd.c
 
 #
+# CD Audio playback
+#
+SRCS-$(CONFIG_CDDA)      += src/dvd/cdda.c
+
+#
 # TV
 #
 SRCS  += src/tv/htsp.c \

@@ -72,6 +72,8 @@ enable gu
 enable avahi
 enable libspotify_load_runtime
 enable dbus
+enable cdda
+enable cddb
 
 for opt do
   optval="${opt#*=}"
@@ -251,6 +253,34 @@ if enabled dbus; then
     fi
 fi
 
+
+#
+# libcdio_cdda
+#
+if enabled cdda; then
+    if pkg-config libcdio_cdda; then
+	# CFLAGS are included by Makefile
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libcdio_cdda`
+	echo "Using libcdio_cdda:    `pkg-config --modversion libcdio_cdda`"
+    else
+	echo "libcdio_cdda not found. Unable to build with Audio CD support."
+	die
+    fi
+fi
+
+#
+# libcddb
+#
+if enabled cddb; then
+    if pkg-config libcddb; then
+	# CFLAGS are included by Makefile
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libcddb`
+	echo "Using libcddb:         `pkg-config --modversion libcddb`"
+    else
+	echo "libcddb not found. Unable to build with Audio CD metadata support."
+	die
+    fi
+fi
 
 #
 # AVAHI

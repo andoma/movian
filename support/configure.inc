@@ -27,6 +27,8 @@ CONFIG_LIST="
  posix_networking
  dvd
  dvd_linux
+ cdda
+ cddb
  glw
  glw_frontend_x11
  glw_frontend_wii
