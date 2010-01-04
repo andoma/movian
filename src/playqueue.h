@@ -19,6 +19,80 @@
 #ifndef PLAYQUEUE_H__
 #define PLAYQUEUE_H__
 
+/**
+ *
+ */
+typedef struct playqueue_entry {
+
+  int pqe_refcount;
+
+  /**
+   * Read only members
+   */
+  char *pqe_url;
+  char *pqe_parent;
+
+  prop_t *pqe_node;
+  prop_t *pqe_prop_url;
+
+  /**
+   * Entry is enqueued (ie, not from source list)
+   */
+  uint8_t pqe_enq;
+
+  /**
+   * Set if globally linked. Protected by playqueue_mutex
+   */
+  uint8_t pqe_linked;
+
+  /**
+   * Set if this entry is playable
+   */
+  uint8_t pqe_playable;
+
+  /**
+   * Global link. Protected by playqueue_mutex
+   */
+  TAILQ_ENTRY(playqueue_entry) pqe_linear_link;
+  TAILQ_ENTRY(playqueue_entry) pqe_shuffled_link;
+
+
+  /**
+   * Points back into node prop from source siblings
+   * A ref is held on this prop when it's not NULL.
+   */
+  prop_t *pqe_source;
+
+  /**
+   * Subscribes to source.url
+   * Used to match entries from source into the currently played track
+   */
+  prop_sub_t *pqe_urlsub;
+
+
+  /**
+   * Subscribes to source.type
+   * Used to find out if we should play the entry or just skip over it
+   */
+  prop_sub_t *pqe_typesub;
+
+  /**
+   * Maintains order from source list. Protected by playqueue_mutex
+   */
+  TAILQ_ENTRY(playqueue_entry) pqe_source_link;
+
+} playqueue_entry_t;
+
+
+/**
+ *
+ */
+typedef struct playqueue_event {
+  event_t h;
+  playqueue_entry_t *pe_pqe;
+} playqueue_event_t;
+
+
 void playqueue_play(const char *url, const char *parent, prop_t *p, int enq);
 
 void playqueue_event_handler(event_t *e);

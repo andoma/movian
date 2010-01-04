@@ -57,67 +57,6 @@ static struct playqueue_entry_queue playqueue_entries;
 static struct playqueue_entry_queue playqueue_shuffled_entries;
 static int playqueue_length;
 
-typedef struct playqueue_entry {
-
-  int pqe_refcount;
-
-  /**
-   * Read only members
-   */
-  char *pqe_url;
-  char *pqe_parent;
-
-  prop_t *pqe_node;
-  prop_t *pqe_prop_url;
-
-  /**
-   * Entry is enqueued (ie, not from source list)
-   */
-  uint8_t pqe_enq;
-
-  /**
-   * Set if globally linked. Protected by playqueue_mutex
-   */
-  uint8_t pqe_linked;
-
-  /**
-   * Set if this entry is playable
-   */
-  uint8_t pqe_playable;
-
-  /**
-   * Global link. Protected by playqueue_mutex
-   */
-  TAILQ_ENTRY(playqueue_entry) pqe_linear_link;
-  TAILQ_ENTRY(playqueue_entry) pqe_shuffled_link;
-
-
-  /**
-   * Points back into node prop from source siblings
-   * A ref is held on this prop when it's not NULL.
-   */
-  prop_t *pqe_source;
-
-  /**
-   * Subscribes to source.url
-   * Used to match entries from source into the currently played track
-   */
-  prop_sub_t *pqe_urlsub;
-
-
-  /**
-   * Subscribes to source.type
-   * Used to find out if we should play the entry or just skip over it
-   */
-  prop_sub_t *pqe_typesub;
-
-  /**
-   * Maintains order from source list. Protected by playqueue_mutex
-   */
-  TAILQ_ENTRY(playqueue_entry) pqe_source_link;
-
-} playqueue_entry_t;
-
 playqueue_entry_t *pqe_current;
 
 /**
@@ -138,14 +77,6 @@ typedef struct playqueue_request {
   int pqr_enq;
 
 } playqueue_request_t;
-
-/**
- *
- */
-typedef struct playqueue_event {
-  event_t h;
-  playqueue_entry_t *pe_pqe;
-} playqueue_event_t;
 
 /**
  *
@@ -1082,17 +1013,17 @@ player_thread(void *aux)
       event_unref(e);
     }
 
-    p = prop_get_by_name(PNVEC("self", "metadata"), 1,
-			 PROP_TAG_NAMED_ROOT, pqe->pqe_node, "self",
-			 NULL);
-    prop_link(p, mp->mp_prop_metadata);
-    prop_ref_dec(p);
-
     if(pqe->pqe_url == NULL) {
       notify_add(NOTIFY_ERROR, NULL, 5, "Playqueue error: An entry lacks URL");
       pqe = playqueue_advance(pqe, 0);
       continue;
     }
+
+    p = prop_get_by_name(PNVEC("self", "metadata"), 1,
+			 PROP_TAG_NAMED_ROOT, pqe->pqe_node, "self",
+			 NULL);
+    prop_link(p, mp->mp_prop_metadata);
+    prop_ref_dec(p);
 
     hts_mutex_lock(&playqueue_mutex);
 
@@ -1111,17 +1042,17 @@ player_thread(void *aux)
     }
 
     if(event_is_action(e, ACTION_PREV_TRACK)) {
-       pqe = playqueue_advance(pqe, 1);
+      pqe = playqueue_advance(pqe, 1);
 
     } else if(event_is_action(e, ACTION_NEXT_TRACK) ||
 	      event_is_type  (e, EVENT_EOF)) {
       mp_end(mp);
 
-       pqe = playqueue_advance(pqe, 0);
+      pqe = playqueue_advance(pqe, 0);
 
     } else if(event_is_action(e, ACTION_STOP)) {
-       pqe_unref(pqe);
-       pqe = NULL;
+      pqe_unref(pqe);
+      pqe = NULL;
 
     } else if(event_is_type(e, EVENT_PLAYQUEUE_JUMP)) {
       pqe_unref(pqe);
