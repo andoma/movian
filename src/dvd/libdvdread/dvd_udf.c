@@ -135,12 +135,6 @@ static void *dvdalign_lbmalloc(dvd_reader_t *device, uint32_t num_lbs)
      Either there is a memory leak somewhere or we need to rewrite this to
      a more efficient version.
   */
-  if(a->ptrs_in_use > 50) {
-    if(dvdread_verbose(device) >= 0) {
-      fprintf(stderr, "libdvdread: dvdalign_lbmalloc(), more allocs than supposed: %u\n", a->ptrs_in_use);
-    }
-  }
-
   return  a->ptrs[n].aligned;
 }
 
@@ -173,9 +167,6 @@ static void dvdalign_lbfree(dvd_reader_t *device, void *ptr)
         return;
       }
     }
-  }
-  if(dvdread_verbose(device) >= 0) {
-    fprintf(stderr, "libdvdread: dvdalign_lbfree(), error trying to free mem: %08lx (%u)\n", (unsigned long)ptr, a ? a->ptrs_in_use : 0);
   }
 }
 
@@ -394,7 +385,6 @@ static int SetUDFCache(dvd_reader_t *device, UDFCacheType type,
   
   if(c == NULL) {
     c = calloc(1, sizeof(struct udf_cache));    
-    //    fprintf(stderr, "calloc: %d\n", sizeof(struct udf_cache));    
     if(c == NULL) {
       return 0;
     }
