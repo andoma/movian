@@ -50,6 +50,8 @@ openspc_play(media_pipe_t *mp, void *fh, char *errbuf, size_t errlen)
   int sample = 0;
   unsigned int duration = INT32_MAX;
 
+  mp_set_playstatus_by_hold(mp, hold);
+
   mp->mp_audio.mq_stream = 0;
 
   fa_seek(fh, 0, SEEK_SET);
