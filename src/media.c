@@ -51,8 +51,6 @@ static void media_eventsink(void *opaque, prop_event_t event, ...);
 void
 media_init(void)
 {
-  prop_courier_t *pc;
-
   hts_mutex_init(&media_mutex);
 
   LIST_INIT(&media_pipe_stack);
@@ -61,12 +59,10 @@ media_init(void)
   media_prop_sources = prop_create(media_prop_root, "sources");
   media_prop_current = prop_create(media_prop_root, "current");
 
-  pc = prop_courier_create(&media_mutex, PROP_COURIER_THREAD, "globalmp");
-
   prop_subscribe(0,
 		 PROP_TAG_NAME("media", "eventsink"),
 		 PROP_TAG_CALLBACK, media_eventsink, NULL,
-		 PROP_TAG_COURIER, pc,
+		 PROP_TAG_MUTEX, &media_mutex,
 		 PROP_TAG_ROOT, media_prop_root,
 		 NULL);
 }
