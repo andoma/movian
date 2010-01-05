@@ -1,0 +1,84 @@
+#include "theme://include/plates.view"
+#include "theme://include/separators.view"
+
+widget(container_x, {
+  space(0.2);
+
+  widget(container_y, {
+
+    .weight = 1.0;
+
+    .align = center;
+    
+    widget(backdrop, {
+      PLATE_PROPS();
+      .alphaSelf = 0.8;
+      .color = [0.3, 0.0, 0.0];
+      
+      widget(container_y, {
+
+	widget(container_x, {
+	  widget(icon, {
+	    .source = "theme://icons/64x64/lock.png";
+	    .sizeScale = 2;
+	  });
+
+	  VERTICAL_SEPARATOR();
+
+	  widget(container_y, {
+	    widget(label, {
+	      .align = left;
+	      .caption = $self.id;
+	    });
+	    widget(label, {
+	      .align = left;
+	      .caption = $self.reason;
+	    });
+	  });
+	});
+	HORIZONTAL_SEPARATOR();
+
+	widget(label, {
+	  .caption = "Username:";
+	  .sizeScale = 0.66;
+	});
+      
+	widget(text, {
+	  .id = "username";
+	  .focusable = true;
+	  .caption = $self.username;
+	});
+
+	widget(label, {
+	  .caption = "Password:";
+	  .sizeScale = 0.66;
+	});
+      
+	widget(text, {
+	  .id = "password";
+	  .focusable = true;
+	  .password = true;
+	  .caption = $self.password;
+	});
+
+	HORIZONTAL_SEPARATOR();
+
+	widget(container_x, {
+
+	  .align = center;
+
+	  ACTION_BUTTON2("Ok", "theme://icons/32x32/accept.png", {
+	    $self.username = getCaption("username");
+	    $self.password = getCaption("password");
+	    $self.result = "ok";
+	  });
+
+	  ACTION_BUTTON2("Cancel", "theme://icons/32x32/remove.png", {
+	    $self.result = "cancel";
+	  });
+	});
+      });
+    });
+  });
+  space(0.2);
+});

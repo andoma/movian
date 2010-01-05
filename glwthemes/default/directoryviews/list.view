@@ -1,0 +1,34 @@
+#include "theme://include/plates.view"
+#include "theme://include/separators.view"
+
+widget(container_y, {
+
+  widget(container_x, {
+
+    widget(dummy, {
+      .width = SLIDER_WIDTH();
+    });
+
+    widget(list_y, {
+      .id = "list";
+      $self.needScroll = needScroll();
+      cloner($page.nodes, animator, {
+	.time = 0.3;
+	.noInitialTransform = true;
+	.effect = flipHorizontal;
+	.source = "theme://directoryviews/list/" + $self.type + ".view";
+      });
+    });
+
+    widget(slider_y, {
+      .width = SLIDER_WIDTH();
+      .focusable = 0.2 * $self.needScroll;
+      .alpha = iir($self.needScroll, 16);
+      bind("list");
+
+      widget(backdrop, {
+	KNOB_PROPS();
+      });
+    });
+  });
+});

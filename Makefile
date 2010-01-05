@@ -223,13 +223,13 @@ BUNDLES-$(CONFIG_SPOTIFY) += resources/spotify
 #
 SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_event.c \
-			src/ui/glw/glw_model.c \
-		     	src/ui/glw/glw_model_lexer.c \
-		     	src/ui/glw/glw_model_parser.c \
-			src/ui/glw/glw_model_eval.c \
-			src/ui/glw/glw_model_preproc.c \
-			src/ui/glw/glw_model_support.c \
-			src/ui/glw/glw_model_attrib.c \
+			src/ui/glw/glw_view.c \
+		     	src/ui/glw/glw_view_lexer.c \
+		     	src/ui/glw/glw_view_parser.c \
+			src/ui/glw/glw_view_eval.c \
+			src/ui/glw/glw_view_preproc.c \
+			src/ui/glw/glw_view_support.c \
+			src/ui/glw/glw_view_attrib.c \
 			src/ui/glw/glw_container.c \
 			src/ui/glw/glw_list.c \
 			src/ui/glw/glw_array.c \

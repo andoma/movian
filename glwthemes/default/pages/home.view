@@ -1,0 +1,83 @@
+#include "theme://include/separators.view"
+#include "theme://include/plates.view"
+
+$self.title = "Home";
+
+widget(container_y, {
+  
+  widget(container_x, {
+      
+    .filterConstraintX = true;
+
+    widget(dummy, {
+      .width = SLIDER_WIDTH();
+    });
+
+    widget(list_y, {
+      .id = "list";
+      $self.needScroll = needScroll();
+
+      cloner($global.sources, backdrop, {
+	BUTTON_PROPS(0.99);
+	onEvent(enter, navOpen($self.url));
+	widget(container_x, {
+	  
+	  widget(dummy, {
+	    .width = 4;
+	  });
+
+	  widget(image, {
+	    .source = select($self.icon, $self.icon, 
+			     "theme://icons/mediasources/" + 
+			     translate($self.contents, "generic.png",
+				       "music",    "music.png",
+				       "video",    "movies.png",
+				       "dvd",      "cd.png",
+				       "pictures", "pictures.png"));
+	  });
+
+	  VERTICAL_SEPARATOR();
+	  
+	  widget(container_y, {
+
+	    widget(label, {
+	      .caption = $self.title;
+	      .sizeScale = 1.5;
+	    });
+
+	    widget(label, {
+	      .caption = "";
+	      .sizeScale = 1.5;
+	    });
+
+	  });
+	});
+      });
+    });
+
+    
+    widget(slider_y, {
+      .debug = true;
+      .width = SLIDER_WIDTH();
+      .focusable = 0.2 * $self.needScroll;
+      .alpha = iir($self.needScroll, 16);
+
+      bind("list");
+	
+      widget(backdrop, {
+	KNOB_PROPS();
+      });
+    });
+  });
+
+  HORIZONTAL_SEPARATOR();
+
+  widget(container_x, {
+
+    .align = left;
+
+    ACTION_BUTTON2("Settings", "theme://icons/32x32/process.png", 
+		   navOpen("settings:"));
+  });
+});
+

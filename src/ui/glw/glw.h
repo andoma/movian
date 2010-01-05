@@ -65,7 +65,7 @@ LIST_HEAD(glw_video_list, glw_video);
 
 typedef enum {
   GLW_DUMMY,        /* Emtpy placeholder, wont render anything */
-  GLW_MODEL,
+  GLW_VIEW,
   GLW_CONTAINER_X,  /* Horizonal weight based container */
   GLW_CONTAINER_Y,  /* Vertical weight based container */
   GLW_CONTAINER_Z,  /* Depth container */
@@ -285,7 +285,7 @@ typedef struct glw_root {
 
   struct glw *gr_universe;
 
-  LIST_HEAD(, glw_model) gr_models;
+  LIST_HEAD(, glw_view) gr_views;
 
   const char *gr_theme;
 
@@ -594,11 +594,11 @@ void glw_clip_disable(glw_rctx_t *rc, int which);
 
 
 /**
- * Models
+ * Views
  */
-glw_t *glw_model_create(glw_root_t *gr, const char *src, 
-			glw_t *parent, struct prop *prop,
-			struct prop *prop_parent, int cache);
+glw_t *glw_view_create(glw_root_t *gr, const char *src, 
+		       glw_t *parent, struct prop *prop,
+		       struct prop *prop_parent, int cache);
 
 /**
  * Transitions

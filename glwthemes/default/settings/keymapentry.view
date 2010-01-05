@@ -1,0 +1,24 @@
+#include "theme://include/plates.view"
+
+widget(container_x, {
+  widget(label, {
+    .caption = $self.event;
+    .align = right;
+  });
+
+  widget(backdrop, {
+    BUTTON_PROPS(1.0);
+    onEvent(KeyCode, {
+      $self.keycode = $event;
+    });
+      
+    widget(label, {
+      .align = center;
+      .caption = devoidify($self.keycode, "<not set>");
+    });
+  });
+  
+  ACTION_BUTTON("Clear", "theme://icons/delete.png", {
+    $self.keycode = void;
+  });
+});

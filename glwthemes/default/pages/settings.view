@@ -1,0 +1,59 @@
+#include "theme://include/plates.view"
+#include "theme://include/separators.view"
+
+widget(container_y, {
+
+  widget(container_x, {
+    widget(list_y, {
+      .childAspect = 20;
+      .id = "list";
+      cloner($page.nodes, animator, {
+	.source = "theme://settings/" + $self.type + ".view";
+      });
+    });
+    widget(slider_y, {
+      .width = SLIDER_WIDTH();
+      .focusable = 0.2;
+      bind("list");
+  
+      widget(backdrop, {
+	KNOB_PROPS();
+      });
+    });
+  });
+  
+  HORIZONTAL_SEPARATOR();
+
+  widget(container_x, {
+    .align = left;
+
+    widget(backdrop, {
+      .alpha = $page.mayadd;
+      .focusable = 0.1 * $page.mayadd;
+
+      .height = $ui.fontsize * 1.5;
+      .width = $ui.fontsize * 7;
+
+      HIGHLITE_PROPS();
+
+
+      onEvent(enter, {
+	createChild($page.nodes);
+      });
+      
+      widget(container_x, {
+	widget(image, {
+	  .source = "theme://icons/32x32/add.png";
+	});
+
+	widget(dummy, {
+	    .width = 5;
+	});
+
+	widget(label, {
+	  .caption = "Add new entry";
+	});
+      });
+    });
+  });
+});

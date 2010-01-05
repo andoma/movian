@@ -1,0 +1,40 @@
+#include "theme://include/separators.view"
+#include "theme://include/plates.view"
+
+widget(container_y, {
+
+  widget(container_x, {
+
+    widget(array, {
+      .id = "array";
+      .childWidth = 200;
+      .childHeight = 200;
+
+      cloner($page.nodes, backdrop, {
+	BUTTON_PROPS(1.0);
+	onEvent(enter, navOpen($self.url, $self.type, $parent.url));
+ 
+	widget(container_y, {
+	  widget(image, {
+	    .source = $self.metadata.album_art;
+	  });
+
+	  widget(label, {
+	    .caption = $self.metadata.title;
+	    .ellipsize = true;
+	  });
+	});
+      });
+    });
+
+    widget(slider_y, {
+      .width = SLIDER_WIDTH();
+      .focusable = 0.2;
+      bind("array");
+
+      widget(backdrop, {
+	KNOB_PROPS();
+      });
+    });
+  });
+});

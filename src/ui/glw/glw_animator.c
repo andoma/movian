@@ -165,8 +165,8 @@ glw_animator_ctor(glw_t *w, int init, va_list ap)
   if(filename != NULL) {
 
     if(*filename) {
-      glw_model_create(w->glw_root, filename, w,
-		       a->prop, a->prop_parent, 1);
+      glw_view_create(w->glw_root, filename, w,
+		      a->prop, a->prop_parent, 1);
     } else {
       /* Fade out all */
       TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)

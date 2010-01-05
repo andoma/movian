@@ -1,0 +1,32 @@
+#include "theme://include/plates.view"
+
+// If playstatus is set to stop, close the page
+$self.close = $self.video.playstatus == "stop";
+
+widget(container_z, {
+  widget(video, {
+    .source = $self.url;
+  });
+
+
+  /**
+   * 
+   */
+  widget(container_y, {
+
+    widget(container_x, {
+      .align = left;
+      
+      widget(backdrop, {
+	PLATE_PROPS();
+
+	.alpha = iir(changed($self.video.seektime, 2, true), 7);
+	.color = [0.3, 0.7, 0.45];
+
+	widget(label, {
+	  .caption = "Seeking to " + value2duration($self.video.seektime);
+	});
+      });
+    });
+  });
+});

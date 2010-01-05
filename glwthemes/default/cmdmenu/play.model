@@ -1,5 +1,0 @@
-#include "theme://include/plates.model"
-
-
-ACTION_ICON2("theme://icons/64x64/play.png", event(Play), 2, 1);
-

@@ -31,7 +31,7 @@
 #include "glw_array.h"
 #include "glw_cursor.h"
 #include "glw_rotator.h"
-#include "glw_model.h"
+#include "glw_view.h"
 #include "glw_list.h"
 #include "glw_deck.h"
 #include "glw_expander.h"
@@ -56,7 +56,7 @@
 
 static const size_t glw_class_to_size[] = {
   [GLW_DUMMY] = sizeof(glw_t),
-  [GLW_MODEL] = sizeof(glw_t),
+  [GLW_VIEW] = sizeof(glw_t),
   [GLW_CONTAINER_X] = sizeof(glw_container_t),
   [GLW_CONTAINER_Y] = sizeof(glw_container_t),
   [GLW_CONTAINER_Z] = sizeof(glw_container_t),
@@ -164,9 +164,9 @@ glw_init(glw_root_t *gr, int fontsize, const char *theme, ui_t *ui,
 
   gr->gr_frameduration = 1000000 / 60;
 
-  gr->gr_universe = glw_model_create(gr,
-				     "theme://universe.model", NULL, NULL,
-				     NULL, 0);
+  gr->gr_universe = glw_view_create(gr,
+				    "theme://universe.view", NULL, NULL,
+				    NULL, 0);
 
   glw_set_i(gr->gr_universe,
 	    GLW_ATTRIB_SIGNAL_HANDLER, top_event_handler, gr, 1000,
@@ -424,8 +424,8 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
     //    glw_mirror_ctor(w, init, apx);
     break;
 
-  case GLW_MODEL:
-    glw_model_ctor(w, init, apx);
+  case GLW_VIEW:
+    glw_view_ctor(w, init, apx);
     break;
 
   case GLW_ANIMATOR:
@@ -688,7 +688,7 @@ glw_destroy0(glw_t *w)
 
   TAILQ_INSERT_TAIL(&gr->gr_destroyer_queue, w, glw_parent_link);
 
-  glw_model_free_chain(w->glw_dynamic_expressions);
+  glw_view_free_chain(w->glw_dynamic_expressions);
 }
 
 
