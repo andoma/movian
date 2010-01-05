@@ -685,6 +685,9 @@ static const struct {
   { XK_F5,                   ShiftMask,   ACTION_VOLUME_DOWN },
   { XK_F6,                   ShiftMask,   ACTION_VOLUME_MUTE_TOGGLE },
   { XK_F7,                   ShiftMask,   ACTION_VOLUME_UP },
+
+  { XK_F1,                   ControlMask,   ACTION_SEEK_BACKWARD },
+  { XK_F3,                   ControlMask,   ACTION_SEEK_FORWARD },
   
   { XF86XK_Sleep,            0,           ACTION_SLEEP },
 
