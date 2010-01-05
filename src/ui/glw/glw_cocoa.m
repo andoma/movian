@@ -141,6 +141,10 @@ static const struct {
 { NSF6FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_MUTE_TOGGLE },
 { NSF7FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_UP },
 
+{ NSF1FunctionKey,          NSCommandKeyMask,   ACTION_SEEK_BACKWARD },
+{ NSF3FunctionKey,          NSCommandKeyMask,   ACTION_SEEK_FORWARD },
+
+  
 /*
 { XF86XK_Sleep,            0,           ACTION_SLEEP },
 */
@@ -668,7 +672,8 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   unichar cim = [[event charactersIgnoringModifiers] characterAtIndex:0];
   /* only care for some modifier keys */
   int mod = [event modifierFlags] & 
-    (NSShiftKeyMask | NSCommandKeyMask | NSFunctionKeyMask);
+    (NSShiftKeyMask | NSCommandKeyMask |
+     NSFunctionKeyMask | NSAlternateKeyMask);
   event_t *e = NULL;
   action_type_t av[3];
   int i;
