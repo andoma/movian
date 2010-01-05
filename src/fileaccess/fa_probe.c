@@ -46,6 +46,21 @@ static int metadata_nentries;
 static struct metadata_list metadata_hash[METADATA_HASH_SIZE];
 static hts_mutex_t metadata_mutex;
 
+TAILQ_HEAD(metadata_stream_queue, metadata_stream);
+
+typedef struct metadata_stream {
+  TAILQ_ENTRY(metadata_stream) ms_link;
+
+  int ms_streamindex;
+
+  rstr_t *ms_info;
+  rstr_t *ms_language;
+
+  AVCodec *ms_codec;
+  enum CodecType ms_type;
+
+} metadata_stream_t;
+
 /**
  *
  */
@@ -67,26 +82,51 @@ typedef struct metadata {
   rstr_t *md_album;
   rstr_t *md_artist;
   rstr_t *md_format;
-  rstr_t *md_videoinfo;
-  rstr_t *md_audioinfo;
+
+  struct metadata_stream_queue md_streams;
 
 } metadata_t;
 
 
-
-
+/**
+ *
+ */
 static void
 metadata_clean(metadata_t *md)
 {
+  metadata_stream_t *ms;
   rstr_release(md->md_title);
   rstr_release(md->md_album);
   rstr_release(md->md_artist);
   rstr_release(md->md_format);
-  rstr_release(md->md_videoinfo);
-  rstr_release(md->md_audioinfo);
 
   free(md->md_url);
   free(md->md_redirect);
+
+  while((ms = TAILQ_FIRST(&md->md_streams)) != NULL) {
+    TAILQ_REMOVE(&md->md_streams, ms, ms_link);
+    rstr_release(ms->ms_info);
+    rstr_release(ms->ms_language);
+    free(ms);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+metadata_add_stream(metadata_t *md, AVCodec *codec, enum CodecType type,
+		    int streamindex, const char *info, const char *language)
+{
+  metadata_stream_t *ms = malloc(sizeof(metadata_stream_t));
+  ms->ms_info = rstr_alloc(info);
+  ms->ms_language = rstr_alloc(language);
+
+  ms->ms_codec = codec;
+  ms->ms_type = type;
+  ms->ms_streamindex = streamindex;
+  TAILQ_INSERT_TAIL(&md->md_streams, ms, ms_link);
 }
 
 
@@ -102,6 +142,20 @@ metadata_destroy(metadata_t *md)
   free(md);
 }
 
+
+/**
+ *
+ */
+static void
+metadata_stream_make_prop(metadata_stream_t *ms, prop_t *parent)
+{
+  prop_t *p = prop_create(parent, NULL);
+
+  prop_set_int(prop_create(p, "index"), ms->ms_streamindex);
+  prop_set_rstring(prop_create(p, "description"), ms->ms_info);
+  if(ms->ms_language)
+    prop_set_rstring(prop_create(p, "language"), ms->ms_language);
+}
 
 
 static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
@@ -335,8 +389,6 @@ static void
 fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
 {
   int i;
-  AVCodecContext *avctx;
-  AVCodec *codec;
   const char *t;
   char tmp1[1024];
   char *p;
@@ -378,8 +430,9 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
   /* Check each stream */
 
   for(i = 0; i < fctx->nb_streams; i++) {
-    avctx = fctx->streams[i]->codec;
-    codec = avcodec_find_decoder(avctx->codec_id);
+    AVStream *stream = fctx->streams[i];
+    AVCodecContext *avctx = stream->codec;
+    AVCodec *codec = avcodec_find_decoder(avctx->codec_id);
 
     switch(avctx->codec_type) {
     case CODEC_TYPE_VIDEO:
@@ -388,47 +441,36 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
     case CODEC_TYPE_AUDIO:
       has_audio = !!codec;
       break;
-      
+    case CODEC_TYPE_SUBTITLE:
+      break;
+
     default:
       continue;
     }
 
-    if(md != NULL) {
+    if(md == NULL)
+      continue;
 
-      if(codec == NULL) {
-	snprintf(tmp1, sizeof(tmp1), "Unsupported codec");
-      } else {
-	snprintf(tmp1, sizeof(tmp1), "%s", codec->long_name);
+    if(codec == NULL) {
+      snprintf(tmp1, sizeof(tmp1), "Unsupported codec");
+    } else {
+      snprintf(tmp1, sizeof(tmp1), "%s", codec->long_name);
+    
+      if(avctx->codec_type == CODEC_TYPE_AUDIO)
+	snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
+		 ", %d Hz, %d channels", avctx->sample_rate, avctx->channels);
 
-	if(avctx->codec_type == CODEC_TYPE_AUDIO) {
-	  snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
-		   ", %d Hz, %d chanels", avctx->sample_rate, avctx->channels);
-	}
-
-	if(avctx->width)
-	  snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
-		   ", %dx%d",
-		   avctx->width, avctx->height);
+      if(avctx->width)
+	snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
+		 ", %dx%d", avctx->width, avctx->height);
       
-	if(avctx->bit_rate)
-	  snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
-		   ", %d kb/s", avctx->bit_rate / 1000);
-      }
-
-      switch(avctx->codec_type) {
-      case CODEC_TYPE_VIDEO:
-	if(md->md_videoinfo == NULL)
-	  md->md_videoinfo = rstr_alloc(tmp1);
-	break;
-      case CODEC_TYPE_AUDIO:
-	if(md->md_audioinfo == NULL)
-	  md->md_audioinfo = rstr_alloc(tmp1);
-	break;
-      
-      default:
-	continue;
-      }
+      if(avctx->bit_rate)
+	snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
+		 ", %d kb/s", avctx->bit_rate / 1000);
     }
+    
+    metadata_add_stream(md, codec, avctx->codec_type, i, tmp1, 
+			stream->language[0] ? stream->language : NULL);
   }
   
   md->md_type = CONTENT_FILE;
@@ -494,6 +536,8 @@ static int
 fa_probe_set_from_cache(const metadata_t *md, prop_t *proproot, 
 			char *newurl, size_t newurlsize)
 {
+  metadata_stream_t *ms;
+
   if(md->md_redirect != NULL && newurl != NULL)
     av_strlcpy(newurl, md->md_redirect, newurlsize);
 
@@ -506,11 +550,25 @@ fa_probe_set_from_cache(const metadata_t *md, prop_t *proproot,
   if(md->md_album)
     prop_set_rstring(prop_create(proproot, "album"),  md->md_album);
 
-  if(md->md_audioinfo)
-    prop_set_rstring(prop_create(proproot, "audioinfo"),  md->md_audioinfo);
+  TAILQ_FOREACH(ms, &md->md_streams, ms_link) {
 
-  if(md->md_videoinfo)
-    prop_set_rstring(prop_create(proproot, "videoinfo"),  md->md_videoinfo);
+    prop_t *parent;
+
+    switch(ms->ms_type) {
+    case CODEC_TYPE_AUDIO:
+      parent = prop_create(proproot, "audiostreams");
+      break;
+    case CODEC_TYPE_VIDEO:
+      parent = prop_create(proproot, "videostreams");
+      break;
+    case CODEC_TYPE_SUBTITLE:
+      parent = prop_create(proproot, "subtitlestreams");
+      break;
+    default:
+      continue;
+    }
+    metadata_stream_make_prop(ms, parent);
+  }
 
   if(md->md_format)
     prop_set_rstring(prop_create(proproot, "format"),  md->md_format);
@@ -563,6 +621,7 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize,
     }
 
     md = calloc(1, sizeof(metadata_t));
+    TAILQ_INIT(&md->md_streams);
     LIST_INSERT_HEAD(&metadata_hash[hash], md, md_hash_link);
     TAILQ_INSERT_TAIL(&metadata_entries, md, md_queue_link);
     md->md_mtime = st->st_mtime;
@@ -589,6 +648,7 @@ void
 fa_probe_load_metaprop(prop_t *p, AVFormatContext *fctx, const char *url)
 {
   metadata_t md = {0};
+  TAILQ_INIT(&md.md_streams);
 
   fa_lavf_load_meta(&md, fctx, url);
   fa_probe_set_from_cache(&md, p, NULL, 0);
