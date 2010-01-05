@@ -149,6 +149,8 @@ mp_create(const char *name, const char *type, int flags)
   mp->mp_prop_playstatus  = prop_create(mp->mp_prop_root, "playstatus");
   mp->mp_prop_currenttime = prop_create(mp->mp_prop_root, "currenttime");
   mp->mp_prop_avdelta     = prop_create(mp->mp_prop_root, "avdelta");
+  prop_set_float(mp->mp_prop_avdelta, 0);
+
   mp->mp_prop_url         = prop_create(mp->mp_prop_root, "url");
 
   mp->mp_prop_canSkipBackward = 
@@ -986,6 +988,7 @@ update_avdelta(void *opaque, prop_event_t event, ...)
   }
 
   mp->mp_avdelta = t * 1000;
+  TRACE(TRACE_DEBUG, "AVSYNC", "Set to %d ms", t);
 }
 
 
