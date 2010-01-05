@@ -41,6 +41,8 @@
 #include "dvdnav.h"
 #include "dvdnav_internal.h"
 
+#include "showtime.h"
+
 /*
 #define LOG_DEBUG
 */
@@ -327,8 +329,7 @@ dvdnav_status_t dvdnav_prev_pg_search(dvdnav_t *this) {
   fprintf(MSG_OUT, "libdvdnav: previous chapter\n");
 #endif
   if (!vm_jump_prev_pg(this->vm)) {
-    fprintf(MSG_OUT, "libdvdnav: previous chapter failed.\n");
-    printerr("Skip to previous chapter failed.");
+    TRACE(TRACE_ERROR, "DVDNAV", "previous chapter failed");
     hts_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
@@ -393,8 +394,7 @@ dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
     vm_get_next_cell(try_vm);
     if (try_vm->stopped) {
       vm_free_copy(try_vm);
-      fprintf(MSG_OUT, "libdvdnav: next chapter failed.\n");
-      printerr("Skip to next chapter failed.");
+      TRACE(TRACE_ERROR, "DVDNAV", "next chapter failed");
       hts_mutex_unlock(&this->vm_lock);
       return DVDNAV_STATUS_ERR;
     }
