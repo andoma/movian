@@ -75,6 +75,34 @@ fflockmgr(void **_mtx, enum AVLockOp op)
 
 
 /**
+ *
+ */
+static void
+fflog(void *ptr, int level, const char *fmt, va_list vl)
+{
+  static char line[1024];
+  AVClass *avc = ptr ? *(AVClass**)ptr : NULL;
+
+  if(level < AV_LOG_WARNING)
+    level = TRACE_ERROR;
+  else if(level < AV_LOG_DEBUG)
+    level = TRACE_INFO;
+  else
+    level = TRACE_DEBUG;
+
+  vsnprintf(line + strlen(line), sizeof(line) - strlen(line), fmt, vl);
+
+  if(line[strlen(line)-1] != '\n')
+    return;
+  line[strlen(line)-1] = 0;
+
+  TRACE(level, avc ? avc->item_name(ptr) : "FFmpeg", "%s", line);
+  line[0] = 0;
+}
+
+
+
+/**
  * Showtime main
  */
 int
@@ -155,7 +183,7 @@ main(int argc, char **argv)
 
   /* Initialize libavcodec & libavformat */
   av_lockmgr_register(fflockmgr);
-  av_log_set_level(AV_LOG_QUIET);
+  av_log_set_callback(fflog);
   av_register_all();
 
   /* Initialize media subsystem */
