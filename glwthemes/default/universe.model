@@ -238,8 +238,39 @@ widget(container_z, {
 	      });
 
 	      HORIZONTAL_SEPARATOR();
-	      
+
+	      widget(label, {
+		.hidden = $global.media.current.type != "video";
+		.caption = "Audio / Video synchronization";
+	      });
+
+	      widget(backdrop, {
+		.hidden = $global.media.current.type != "video";
+		PLATE_PROPS();
+		.alphaSelf = 0.5;
+		.color = [0.0, 0.0, 0.0];
+	  
+		widget(slider_x, {
+		  .focusable = 0.2;
+		  .min = -1000;
+		  .max =  1000;
+		  .step = 10;
+
+		  bind($global.media.current.avdelta);
+		  widget(backdrop, {
+		    KNOB_PROPS();
+		    widget(label, {
+ 		      .align = center;
+		      .caption = float2str($global.media.current.avdelta, 0) + "ms";
+		    });
+		  });
+		});
+	      });
+
+	      HORIZONTAL_SEPARATOR_HIDDEN($global.media.current.type != "video");
 	    });
+
+
 	    
 	    widget(slider_y, {
 	      .width = SLIDER_WIDTH();

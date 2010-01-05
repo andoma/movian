@@ -1,4 +1,0 @@
-#include "theme://include/plates.model"
-
-ACTION_ICON("theme://icons/play.png", event(Pause));
-
