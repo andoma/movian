@@ -29,7 +29,7 @@
 #include <fileaccess/svfs.h>
 #include <dvdnav/dvdnav.h>
 
-static char *make_nice_title(const char *t);
+//static char *make_nice_title(const char *t);
 
 
 #define PACK_START_CODE             ((unsigned int)0x000001ba)
@@ -470,8 +470,6 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
   void *data;
   pci_t *pci;
   event_t *e = NULL;
-  char *title;
-  const char *rawtitle;
 
   TRACE(TRACE_DEBUG, "DVD", "Staring playback of %s", url);
 
@@ -500,20 +498,6 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
   dp->dp_spu_track   = DP_SPU_FOLLOW_VM;
 
   mp_become_primary(mp);
-
-  /**
-   * Popup loading
-   */
-  dvdnav_get_title_string(dp->dp_dvdnav, &rawtitle);
-  title = make_nice_title(rawtitle);
-  if(*title == 0) {
-    free(title);
-    title = strrchr(url, '/');
-    if(title != NULL)
-      title = make_nice_title(title + 1);
-  }
-  notify_add(NOTIFY_INFO, NULL, 5, "Loading DVD: %s", title);
-  free(title);
 
   /**
    * DVD main loop
@@ -708,7 +692,7 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
   return NULL;
 }
 
-
+#if 0
 /**
  *
  */
@@ -737,6 +721,7 @@ make_nice_title(const char *t)
   }
   return ret;
 }
+#endif
 
 /**
  *
