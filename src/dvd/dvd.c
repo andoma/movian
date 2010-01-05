@@ -499,6 +499,9 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
 
   mp_become_primary(mp);
 
+  mp_set_play_caps(mp, MP_PLAY_CAPS_PAUSE);
+  mp_set_playstatus_by_hold(mp, dp->dp_hold);
+
   /**
    * DVD main loop
    */
