@@ -24,7 +24,6 @@
 #include "dvd.h"
 #include "notifications.h"
 #include "showtime.h"
-#include "linux_dvd.h"
 
 #include <fileaccess/svfs.h>
 #include <dvdnav/dvdnav.h>
@@ -740,69 +739,3 @@ make_nice_title(const char *t)
   return ret;
 }
 #endif
-
-/**
- *
- */
-static int
-be_dvd_canhandle(const char *url)
-{
-  return !strncmp(url, "dvd:", strlen("dvd:"));
-}
-
-
-/**
- *
- */
-static int
-be_dvd_openpage(const char *url0, const char *type0, const char *parent,
-		nav_page_t **npp, char *errbuf, size_t errlen)
-{
-  nav_page_t *np;
-  prop_t *p;
-
-  np = nav_page_create(url0, sizeof(nav_page_t), NULL, 0);
-
-  p = np->np_prop_root;
-  prop_set_string(prop_create(p, "type"), "video");
-  *npp = np;
-  return 0;
-}
-
-/**
- *
- */
-static event_t *
-be_dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
-{
-  if(strncmp(url, "dvd:", strlen("dvd:"))) {
-    snprintf(errstr, errlen, "dvd: Invalid URL");
-    return NULL;
-  }
-
-  url += 4;
-  return dvd_play(url, mp, errstr, errlen, 0);
-}
-
-/**
- *
- */
-static int
-be_dvd_init(void)
-{
-#if ENABLE_DVD_LINUX
-  linux_dvd_init();
-#endif
-  return 0;
-}
-
-
-/**
- *
- */
-nav_backend_t be_dvd = {
-  .nb_canhandle = be_dvd_canhandle,
-  .nb_open = be_dvd_openpage,
-  .nb_play_video = be_dvd_play,
-  .nb_init = be_dvd_init,
-};
