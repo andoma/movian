@@ -431,8 +431,8 @@ typedef struct glw {
   /**
    * Layout contraints
    */
-  int glw_req_size_x;
-  int glw_req_size_y;
+  int16_t glw_req_size_x;
+  int16_t glw_req_size_y;
   float glw_req_aspect;
   float glw_req_weight;
 
