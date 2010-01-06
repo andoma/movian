@@ -92,7 +92,7 @@ nav_init(void)
   NAV_INIT_BE(settings);
   NAV_INIT_BE(playqueue);
   NAV_INIT_BE(htsp);
-#ifdef CONFIG_DVD
+#ifdef CONFIG_LINUX_DVD
   NAV_INIT_BE(dvd);
 #endif
 #ifdef CONFIG_CDDA
