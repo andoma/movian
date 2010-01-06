@@ -26,6 +26,7 @@ TAILQ_HEAD(macro_arg_queue, macro_arg);
 typedef struct macro_arg {
   token_t *first, *last;
   rstr_t *rname;
+  token_t *def;
   TAILQ_ENTRY(macro_arg) link;
 } macro_arg_t;
 
@@ -50,6 +51,8 @@ macro_destroy(macro_t *m)
   while((ma = TAILQ_FIRST(&m->args)) != NULL) {
     TAILQ_REMOVE(&m->args, ma, link);
     rstr_release(ma->rname);
+    if(ma->def)
+      glw_view_token_free(ma->def);
     free(ma);
   }
 
@@ -62,12 +65,13 @@ macro_destroy(macro_t *m)
 /**
  *
  */
-static void
+static macro_arg_t *
 macro_add_arg(macro_t *m, rstr_t *name)
 {
   macro_arg_t *ma = calloc(1, sizeof(macro_arg_t));
   ma->rname = rstr_dup(name);
   TAILQ_INSERT_TAIL(&m->args, ma, link);
+  return ma;
 }
 
 
@@ -110,17 +114,25 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	  TAILQ_FOREACH(ma, &m->args, link) {
 	    ma->first = p->next;
 
+	    if(ma->first->type == TOKEN_RIGHT_PARENTHESIS) {
+	      ma->first = NULL;
+	      break;
+	    }
+
 	    while(1) {
 	      t = p->next;
 	      if(t->type == TOKEN_END)
 		return glw_view_seterr(ei, t, "Unexpected end of input in "
-					"macro invokation");
+				       "macro invokation");
 	      
 	      if(t->type == TOKEN_RIGHT_PARENTHESIS && balance == 0) {
-		if(TAILQ_NEXT(ma, link) != NULL)
-		  return glw_view_seterr(ei, t, 
-					  "Too few arguments to macro %s",
-					  rstr_get(m->rname));
+
+		macro_arg_t *x = TAILQ_NEXT(ma, link);
+		// Clear remaining arguments
+		while(x != NULL) {
+		  x->first = NULL;
+		  x = TAILQ_NEXT(x, link);
+		}
 		break;
 	      }
 
@@ -147,8 +159,8 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 
 	  if(t->type != TOKEN_RIGHT_PARENTHESIS)
 	    return glw_view_seterr(ei, t, 
-				    "Too many arguments to macro %s",
-				    rstr_get(m->rname));
+				   "Too many arguments to macro %s",
+				   rstr_get(m->rname));
 
 	  d = t->next;
 	  t->next = NULL;
@@ -163,22 +175,30 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	      ma = a->tmp;
 	      e = ma->first;
 
-	      while(1) {
-
-		if(e == NULL)
-		  return glw_view_seterr(ei, t, 
-					  "Too few arguments to macro %s",
-					  rstr_get(m->rname));
-		  
-		b = glw_view_token_copy(e);
+	      if(e == NULL && ma->def != NULL) {
+		b = glw_view_token_copy(ma->def);
 		p->next = b;
 		p = b;
-		
-		if(e == ma->last)
-		  break;
-		e = e->next;
-	      }
 
+
+	      } else {
+
+		while(1) {
+
+		  if(e == NULL)
+		    return glw_view_seterr(ei, t, 
+					   "Too few arguments to macro %s",
+					   rstr_get(m->rname));
+		  
+		  b = glw_view_token_copy(e);
+		  p->next = b;
+		  p = b;
+		
+		  if(e == ma->last)
+		    break;
+		  e = e->next;
+		}
+	      }
 	    } else {
 	      b = glw_view_token_copy(a);
 	      p->next = b;
@@ -254,13 +274,30 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 
 	if(t->type != TOKEN_RIGHT_PARENTHESIS) {
 
+	  int defaultargs = 0;
+
 	  while(1) {
 	    if(t->type != TOKEN_IDENTIFIER)
 	      return glw_view_seterr(ei, t, "Expected macro argument");
 	  
-	    macro_add_arg(m, t->t_rstring);
+	    macro_arg_t *ma = macro_add_arg(m, t->t_rstring);
 	    consumetoken();
 	  
+	    if(t->type == TOKEN_ASSIGNMENT) {
+	      // Default argument
+	      consumetoken();
+	      
+
+	      ma->def = t;
+	      t = t->next;
+	      ma->def->next = NULL;
+
+	      defaultargs = 1;
+	    } else if(defaultargs) {
+	      return glw_view_seterr(ei, t, 
+				     "Non default arg after default arg");
+	    }
+
 	    if(t->type == TOKEN_RIGHT_PARENTHESIS) {
 	      consumetoken();
 	      break;
@@ -268,8 +305,8 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 
 	    if(t->type != TOKEN_SEPARATOR)
 	      return glw_view_seterr(ei, t, 
-				      "Expected ',' or ')' "
-				      "after macro argument");
+				     "Expected ',' or ')' "
+				     "after macro argument");
 	    consumetoken();
 	  }
 	} else {
@@ -286,7 +323,7 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	  t = p->next;
 	  if(t->type == TOKEN_END)
 	    return glw_view_seterr(ei, t, "Unexpected end of input in "
-				    "macro definition");
+				   "macro definition");
 	  
 	  if(t->type == TOKEN_BLOCK_CLOSE) {
 	    if(balance == 0) {

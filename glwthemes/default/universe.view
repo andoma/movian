@@ -267,7 +267,7 @@ widget(container_z, {
 		});
 	      });
 
-	      HORIZONTAL_SEPARATOR_HIDDEN($global.media.current.type != "video");
+	      HORIZONTAL_SEPARATOR($global.media.current.type != "video");
 	    });
 
 
