@@ -27,6 +27,7 @@
 
 #include <linux/cdrom.h>
 
+#include "showtime.h"
 #include "misc/callout.h"
 #include "navigator.h"
 #include "media.h"
@@ -193,13 +194,29 @@ be_dvd_openpage(const char *url0, const char *type0, const char *parent,
 static event_t *
 be_dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
 {
+  event_t *e;
   if(strncmp(url, "dvd:", strlen("dvd:"))) {
     snprintf(errstr, errlen, "dvd: Invalid URL");
     return NULL;
   }
 
   url += 4;
-  return dvd_play(url, mp, errstr, errlen, 0);
+  e = dvd_play(url, mp, errstr, errlen, 0);
+
+  if(e != NULL && event_is_action(e, ACTION_EJECT)) {
+
+    int fd = open(url, O_RDONLY | O_NONBLOCK);
+    if(fd != -1) {
+      if(ioctl(fd, CDROMEJECT, NULL))
+	TRACE(TRACE_ERROR, "DVD", "Eject of %s failed -- %s",
+	      url, strerror(errno));
+      close(fd);
+    } else {
+      TRACE(TRACE_ERROR, "DVD", "Unable to open %s for eject -- %s",
+	    url, strerror(errno));
+    }
+  }
+  return e;
 }
 
 /**

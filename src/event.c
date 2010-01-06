@@ -361,6 +361,7 @@ event_dispatch(event_t *e)
 	    event_is_action(e, ACTION_PLAY) ||
 	    event_is_action(e, ACTION_PAUSE) ||
 	    event_is_action(e, ACTION_STOP) ||
+	    event_is_action(e, ACTION_EJECT) ||
 	    event_is_action(e, ACTION_PREV_TRACK) ||
 	    event_is_action(e, ACTION_NEXT_TRACK) ||
 	    event_is_action(e, ACTION_RESTART_TRACK)) {

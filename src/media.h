@@ -177,6 +177,7 @@ typedef struct media_pipe {
   prop_t *mp_prop_canSkipForward;
   prop_t *mp_prop_canSeek;
   prop_t *mp_prop_canPause;
+  prop_t *mp_prop_canEject;
 
   prop_courier_t *mp_pc;
   prop_sub_t *mp_sub_currenttime;
@@ -277,6 +278,7 @@ void mp_set_url(media_pipe_t *mp, const char *url);
 
 #define MP_PLAY_CAPS_SEEK 0x1
 #define MP_PLAY_CAPS_PAUSE 0x2
+#define MP_PLAY_CAPS_EJECT 0x4
 
 void mp_set_play_caps(media_pipe_t *mp, int caps);
 

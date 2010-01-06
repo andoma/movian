@@ -161,6 +161,9 @@ mp_create(const char *name, const char *type, int flags)
   mp->mp_prop_canPause = 
     prop_create(mp->mp_prop_root, "canPause");
 
+  mp->mp_prop_canEject = 
+    prop_create(mp->mp_prop_root, "canEject");
+
   mp->mp_pc = prop_courier_create(&mp->mp_mutex, PROP_COURIER_THREAD, "mp");
 
   mp->mp_sub_currenttime = 
@@ -1061,4 +1064,5 @@ mp_set_play_caps(media_pipe_t *mp, int caps)
 {
   prop_set_int(mp->mp_prop_canSeek,  caps & MP_PLAY_CAPS_SEEK  ? 1 : 0);
   prop_set_int(mp->mp_prop_canPause, caps & MP_PLAY_CAPS_PAUSE ? 1 : 0);
+  prop_set_int(mp->mp_prop_canEject, caps & MP_PLAY_CAPS_EJECT ? 1 : 0);
 }

@@ -420,7 +420,7 @@ playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
   media_buf_t *mb = NULL;
   media_queue_t *mq;
   event_t *e;
-  int hold = 0, lost_focus = 0;
+  int hold = 0, lost_focus = 0, eject = 0;
 
   if((track = parse_audiocd_url(url, device, sizeof(device))) < 1) {
     snprintf(errstr, errlen, "Invalid URL");
@@ -441,7 +441,8 @@ playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
  
   TRACE(TRACE_DEBUG, "AudioCD", "Starting playback of track %d", track);
 
-  mp_set_play_caps(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE);
+  mp_set_play_caps(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE | 
+		   MP_PLAY_CAPS_EJECT);
   mp_become_primary(mp);
   mq = &mp->mp_audio;
 
@@ -542,6 +543,10 @@ playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
 	      event_is_action(e, ACTION_STOP)) {
       mp_flush(mp);
       break;
+    } else if(event_is_action(e, ACTION_EJECT)) {
+      mp_flush(mp);
+      eject = 1;
+      break;
     }
     event_unref(e);
   }
@@ -550,6 +555,10 @@ playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
     media_buf_free(mb);
 
   cdio_cddap_close(cdda);
+
+  if(eject)
+    cdio_eject_media_drive(device);
+
   return e;
 }
 

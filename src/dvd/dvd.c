@@ -498,7 +498,7 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
 
   mp_become_primary(mp);
 
-  mp_set_play_caps(mp, MP_PLAY_CAPS_PAUSE);
+  mp_set_play_caps(mp, MP_PLAY_CAPS_PAUSE | MP_PLAY_CAPS_EJECT);
   mp_set_playstatus_by_hold(mp, dp->dp_hold);
 
   prop_set_int(mp->mp_prop_canSkipForward,  1);
@@ -703,6 +703,10 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
 
   } else if(event_is_action(e, ACTION_STOP)) {
     mp_set_playstatus_stop(mp);
+
+  } else if(event_is_action(e, ACTION_EJECT)) {
+    mp_set_playstatus_stop(mp);
+    return e;
   } 
 
   event_unref(e);

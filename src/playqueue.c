@@ -1050,7 +1050,8 @@ player_thread(void *aux)
 
       pqe = playqueue_advance(pqe, 0);
 
-    } else if(event_is_action(e, ACTION_STOP)) {
+    } else if(event_is_action(e, ACTION_STOP) ||
+	      event_is_action(e, ACTION_EJECT)) {
       pqe_unref(pqe);
       pqe = NULL;
 

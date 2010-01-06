@@ -214,6 +214,11 @@ widget(container_z, {
 		ACTION_ICON2("theme://icons/64x64/stop.png", 
 			     event(Stop), 2,
 			     1);
+
+		ACTION_ICON2("theme://icons/64x64/eject.png", 
+			     event(Eject), 2,
+			     $global.media.current.canEject);
+
 	      });
 	      
 	      widget(backdrop, {
