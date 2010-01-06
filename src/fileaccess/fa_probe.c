@@ -374,10 +374,8 @@ fa_probe_iso(metadata_t *md, fa_handle_t *fh)
 
   *p = 0;
 
-  if(md != NULL) {
-    md->md_title = rstr_alloc(pb + 40);
-    md->md_type = CONTENT_DVD;
-  }
+  md->md_title = rstr_alloc(pb + 40);
+  md->md_type = CONTENT_DVD;
   return 0;
 }
 
@@ -397,35 +395,32 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
 
   av_metadata_conv(fctx, NULL, fctx->iformat->metadata_conv);
 
-  if(md != NULL) {
-
-    /* Format meta info */
-
-    if(fctx->title[0] == 0) {
-      t = strrchr(url, '/');
-      t = t ? t + 1 : url;
-      i = strlen(t);
-      p = alloca(i + 1);
-      memcpy(p, t, i + 1);
+  /* Format meta info */
+  
+  if(fctx->title[0] == 0) {
+    t = strrchr(url, '/');
+    t = t ? t + 1 : url;
+    i = strlen(t);
+    p = alloca(i + 1);
+    memcpy(p, t, i + 1);
     
-      if(i > 4 && p[i - 4] == '.')
-	p[i - 4] = 0;
+    if(i > 4 && p[i - 4] == '.')
+      p[i - 4] = 0;
 
-      md->md_title = rstr_alloc(p);
-    } else {
-      md->md_title = ffmpeg_metadata_get_str(fctx->metadata, "title");
-    }
-
-    md->md_artist = ffmpeg_metadata_get_str(fctx->metadata, "artist") ?:
-      ffmpeg_metadata_get_str(fctx->metadata, "author");
-
-    md->md_album = ffmpeg_metadata_get_str(fctx->metadata, "album");
-
-    md->md_format = rstr_alloc(fctx->iformat->long_name);
-
-    if(fctx->duration != AV_NOPTS_VALUE)
-      md->md_duration = (float)fctx->duration / 1000000;
+    md->md_title = rstr_alloc(p);
+  } else {
+    md->md_title = ffmpeg_metadata_get_str(fctx->metadata, "title");
   }
+
+  md->md_artist = ffmpeg_metadata_get_str(fctx->metadata, "artist") ?:
+    ffmpeg_metadata_get_str(fctx->metadata, "author");
+
+  md->md_album = ffmpeg_metadata_get_str(fctx->metadata, "album");
+
+  md->md_format = rstr_alloc(fctx->iformat->long_name);
+
+  if(fctx->duration != AV_NOPTS_VALUE)
+    md->md_duration = (float)fctx->duration / 1000000;
 
   /* Check each stream */
 
@@ -447,9 +442,6 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
     default:
       continue;
     }
-
-    if(md == NULL)
-      continue;
 
     if(codec == NULL) {
       snprintf(tmp1, sizeof(tmp1), "Unsupported codec");
