@@ -22,6 +22,7 @@ LIBFREETYPEPATH="${TOPDIR}/wiisupport/freetype-ppc"
 enable embedded_resources
 enable tinysmb
 enable dvd
+enable dvd_wii
 
 show_help(){
   echo "Usage: configure.wii [options]"

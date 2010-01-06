@@ -140,6 +140,7 @@ hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delta)
 void
 arch_init(void)
 {
+  // Must be very early as it does weird tricks with the system
   DI_Init();
 
   hts_mutex_init(&log_mutex);
@@ -231,8 +232,6 @@ arch_init(void)
   TRACE(TRACE_INFO, "Wii", "Wii arch specific code initialized");
 
   callout_arm(&memlogger, memlogger_fn, NULL, 1);
-
-  DI_Mount();
 }
 
 

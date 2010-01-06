@@ -322,6 +322,8 @@ int _dvdcss_open ( dvdcss_t dvdcss, struct svfs_ops *svfs_ops )
     char const *psz_device = dvdcss->psz_device;
     print_debug( dvdcss, "opening target `%s'", psz_device );
 
+    dvdcss->svfs_ops = svfs_ops;
+
 #ifdef WII
     if(!strcmp(psz_device, "/dev/di")) {
         dvdcss->pf_seek  = di_seek;
@@ -331,7 +333,6 @@ int _dvdcss_open ( dvdcss_t dvdcss, struct svfs_ops *svfs_ops )
     }
 #endif
 
-    dvdcss->svfs_ops = svfs_ops;
     if(svfs_ops != NULL) {
         dvdcss->pf_seek  = svfs_seek;
         dvdcss->pf_read  = svfs_read;
@@ -437,7 +438,8 @@ int _dvdcss_close ( dvdcss_t dvdcss )
 
     return 0;
 #else
-    close( dvdcss->i_fd );
+    if (dvdcss->i_fd >= 0)
+      close( dvdcss->i_fd );
 
     if( dvdcss->i_raw_fd >= 0 )
     {
@@ -1154,6 +1156,8 @@ static int di_open ( dvdcss_t dvdcss, char const *psz_device )
 	if(DI_GetStatus() & DVD_READY) {
 	    dvdcss->i_pos = 0;
 	    TRACE(TRACE_DEBUG, "DI", "Disc ready");
+	    dvdcss->i_fd = -1;
+	    dvdcss->i_raw_fd = -1;
 	    return 0;
 	}
 

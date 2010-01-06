@@ -27,6 +27,7 @@ CONFIG_LIST="
  posix_networking
  dvd
  dvd_linux
+ dvd_wii
  cdda
  cddb
  glw

@@ -202,6 +202,7 @@ ${BUILDDIR}/src/dvd/dvdnav/%.o : CFLAGS = \
  -Isrc/dvd/dvdnav
 
 SRCS-$(CONFIG_DVD_LINUX) += src/dvd/linux_dvd.c
+SRCS-$(CONFIG_DVD_WII)   += src/dvd/wii_dvd.c
 
 #
 # CD Audio playback
