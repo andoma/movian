@@ -347,12 +347,7 @@ glw_image_update_constraints(glw_image_t *gi)
       glw_set_constraints(&gi->w, 
 			  glt->glt_xs,
 			  glt->glt_ys,
-			  0, 0, 
-			  (gi->gi_bitmap_flags & GLW_IMAGE_NOFILL_X ? 
-			   GLW_CONSTRAINT_X : 0 )|
-			  (gi->gi_bitmap_flags & GLW_IMAGE_NOFILL_Y ? 
-			   GLW_CONSTRAINT_Y : 0 ),
-			  0);
+			  0, 0, 0, 0);
     }
 
   } else if(gi->w.glw_class == GLW_ICON) {

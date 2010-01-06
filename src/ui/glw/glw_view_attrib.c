@@ -348,8 +348,6 @@ static const token_attrib_t attribtab[] = {
   {"borderRight",     set_image_flag, GLW_IMAGE_BORDER_RIGHT},
   {"borderTop",       set_image_flag, GLW_IMAGE_BORDER_TOP},
   {"borderBottom",    set_image_flag, GLW_IMAGE_BORDER_BOTTOM},
-  {"constraintX",     set_image_flag, GLW_IMAGE_NOFILL_X},
-  {"constraintY",     set_image_flag, GLW_IMAGE_NOFILL_Y},
   {"infront",         set_image_flag, GLW_IMAGE_INFRONT},
 
   {"password",        set_text_flag,  GTB_PASSWORD},
