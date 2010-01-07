@@ -285,11 +285,17 @@ settings_create_int(prop_t *parent, const char *id, const char *title,
 void
 settings_set_int(setting_t *s, int v)
 {
-  if(v > s->s_max)
-    v = s->s_max;
-  else if(v < s->s_min)
-    v = s->s_min;
   prop_set_int(s->s_val, v);
+}
+
+
+/**
+ *
+ */
+void 
+settings_add_int(setting_t *s, int delta)
+{
+  prop_add_int(s->s_val, delta);
 }
 
 

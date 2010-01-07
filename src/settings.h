@@ -77,6 +77,8 @@ setting_t *settings_create_int(prop_t *parent, const char *id,
 
 void settings_set_int(setting_t *s, int v);
 
+void settings_add_int(setting_t *s, int delta);
+
 prop_t *settings_get_value(setting_t *s);
 
 void settings_init(void);
