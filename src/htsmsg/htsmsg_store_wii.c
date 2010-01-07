@@ -25,10 +25,14 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/dirent.h>
 
 #include "htsmsg.h"
 #include "htsmsg_json.h"
 #include "htsmsg_store.h"
+#include "showtime.h"
+
+static char *settingspath;
 
 /**
  *
@@ -36,6 +40,26 @@
 void
 htsmsg_store_init(const char *programname, const char *path)
 {
+  char buf[256];
+  struct stat st;
+
+  if(path != NULL) {
+    settingspath = strdup(path);
+  } else {
+    snprintf(buf, sizeof(buf), "sd:/apps");
+    if(stat(buf, &st) == 0 || mkdir(buf, 0700) == 0) {
+      snprintf(buf, sizeof(buf), "sd:/apps/showtime");
+      if(stat(buf, &st) == 0 || mkdir(buf, 0700) == 0) {
+	snprintf(buf, sizeof(buf), "sd:/apps/showtime/settings");
+	if(stat(buf, &st) == 0 || mkdir(buf, 0700) == 0) {
+	  settingspath = strdup(buf);
+	}
+      }
+    }
+  }
+
+  if(settingspath)
+    TRACE(TRACE_INFO, "Settings", "Settings stored in %s", settingspath);
 }
 
 /**
@@ -44,7 +68,139 @@ htsmsg_store_init(const char *programname, const char *path)
 void
 htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
 {
+  char path[256];
+  char fullpath[256];
+  int x, l, fd;
+  va_list ap;
+  struct stat st;
+  htsbuf_queue_t hq;
+  htsbuf_data_t *hd;
+  char *n;
+  int ok;
 
+  if(settingspath == NULL)
+    return;
+
+  va_start(ap, pathfmt);
+  vsnprintf(path, sizeof(path), pathfmt, ap);
+  va_end(ap);
+
+  n = path;
+
+  TRACE(TRACE_DEBUG, "Settings", "Storing %s", path);
+
+  while(*n) {
+    if(*n == ':' || *n == '?' || *n == '*' || *n > 127 || *n < 32)
+      *n = '_';
+    n++;
+  }
+
+  l = strlen(path);
+
+  for(x = 0; x < l; x++) {
+    if(path[x] == '/') {
+      /* It's a directory here */
+
+      path[x] = 0;
+      snprintf(fullpath, sizeof(fullpath), "%s/%s", settingspath, path);
+
+      if(stat(fullpath, &st) && mkdir(fullpath, 0700)) {
+	TRACE(TRACE_ERROR, "settings", "Unable to create dir \"%s\": %s",
+	       fullpath, strerror(errno));
+	return;
+      }
+      path[x] = '/';
+    }
+  }
+
+  snprintf(fullpath, sizeof(fullpath), "%s/%s", settingspath, path);
+
+  if((fd = open(fullpath, O_CREAT | O_TRUNC | O_RDWR, 0700)) < 0) {
+    TRACE(TRACE_ERROR, "settings", "Unable to create \"%s\" - %s",
+	    fullpath, strerror(errno));
+    return;
+  }
+
+  ok = 1;
+
+  htsbuf_queue_init(&hq, 0);
+  htsmsg_json_serialize(record, &hq, 1);
+ 
+  TAILQ_FOREACH(hd, &hq.hq_q, hd_link)
+    if(write(fd, hd->hd_data + hd->hd_data_off, hd->hd_data_len) !=
+       hd->hd_data_len) {
+      trace(TRACE_ERROR, "settings", "Failed to write file \"%s\" - %s",
+	      fullpath, strerror(errno));
+      break;
+    }
+
+  close(fd);
+  htsbuf_queue_flush(&hq);
+}
+
+/**
+ *
+ */
+static htsmsg_t *
+htsmsg_store_load_one(const char *filename)
+{
+  struct stat st;
+  int fd;
+  char *mem;
+  htsmsg_t *r;
+  int n;
+
+  if(stat(filename, &st) < 0) {
+    TRACE(TRACE_DEBUG, "Settings", "Setting \"%s\" does not exist", filename);
+    return NULL;
+  }
+  if((fd = open(filename, O_RDONLY)) < 0) {
+    TRACE(TRACE_DEBUG, "Settings", "Setting \"%s\" unable to open", filename);
+    return NULL;
+  }
+  mem = malloc(st.st_size + 1);
+  mem[st.st_size] = 0;
+
+  n = read(fd, mem, st.st_size);
+  close(fd);
+  if(n == st.st_size) {
+    r = htsmsg_json_deserialize(mem);
+    if(r == NULL) {
+      TRACE(TRACE_DEBUG, "Settings", 
+	    "Setting \"%s\": Unable to decode JSON", filename);
+
+    }
+  } else {
+    r = NULL;
+  }
+
+  free(mem);
+
+  return r;
+}
+
+/**
+ *
+ */
+static int
+htsmsg_store_buildpath(char *dst, size_t dstsize, const char *fmt, va_list ap)
+{
+  char *n;
+
+  if(settingspath == NULL)
+     return -1;
+
+  snprintf(dst, dstsize, "%s/", settingspath);
+
+  n = dst + strlen(dst);
+  vsnprintf(n, dstsize - strlen(dst), fmt, ap);
+
+  while(*n) {
+    if(*n == ':' || *n == '?' || *n == '*' || *n > 127 || *n < 32)
+      *n = '_';
+    n++;
+  }
+  return 0;
 }
 
 /**
@@ -53,7 +209,48 @@ htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
 htsmsg_t *
 htsmsg_store_load(const char *pathfmt, ...)
 {
-  return NULL;
+  char fullpath[256];
+  char child[256];
+  va_list ap;
+  struct stat st;
+  struct dirent *d;
+  htsmsg_t *r, *c;
+  DIR *dir;
+
+  va_start(ap, pathfmt);
+  if(htsmsg_store_buildpath(fullpath, sizeof(fullpath), pathfmt, ap) < 0)
+    return NULL;
+
+  if(stat(fullpath, &st) != 0) {
+    TRACE(TRACE_DEBUG, "Settings", "Unable to stat %s", fullpath);
+    return NULL;
+  }
+  if(S_ISDIR(st.st_mode)) {
+
+    dir = opendir(fullpath);
+
+    if(dir == NULL)
+      return NULL;
+
+    r = htsmsg_create_map();
+
+    while((d = readdir(dir)) != NULL) {
+      if(d->d_name[0] == '.')
+	continue;
+      
+      snprintf(child, sizeof(child), "%s/%s", fullpath, d->d_name);
+      c = htsmsg_store_load_one(child);
+      if(c != NULL)
+	htsmsg_add_msg(r, d->d_name, c);
+      
+    }
+    closedir(dir);
+
+  } else {
+    r = htsmsg_store_load_one(fullpath);
+  }
+
+  return r;
 }
 
 /**
@@ -62,4 +259,11 @@ htsmsg_store_load(const char *pathfmt, ...)
 void
 htsmsg_store_remove(const char *pathfmt, ...)
 {
+  char fullpath[256];
+  va_list ap;
+
+  va_start(ap, pathfmt);
+  if(htsmsg_store_buildpath(fullpath, sizeof(fullpath), pathfmt, ap) < 0)
+    return;
+  unlink(fullpath);
 }
