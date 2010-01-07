@@ -248,6 +248,8 @@ settings_add_int(prop_t *parent, const char *id, const char *title,
   if(store != NULL)
     initial = htsmsg_get_s32_or_default(store, id, initial);
 
+  prop_set_int_clipping_range(v, min, max);
+
   prop_set_int(prop_create(r, "min"), min);
   prop_set_int(prop_create(r, "max"), max);
   prop_set_int(prop_create(r, "step"), step);
