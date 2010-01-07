@@ -343,6 +343,10 @@ tracev(int level, const char *subsys, const char *fmt, va_list ap)
 void
 arch_exit(int retcode)
 {
+  if(wii_sd_mounted) {
+    TRACE(TRACE_DEBUG, "Wii", "Unmounting front SD card");
+    fatUnmount("sd");
+  }
   exit(retcode);
 }
 
