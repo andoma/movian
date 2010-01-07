@@ -280,8 +280,8 @@ wpad_every_frame(glw_wii_t *gwii)
 
     glw_pointer_event(&gwii->gr, &gpe);
     a_held = 0;
-  } else {
-    gpe.type = GLW_POINTER_MOTION;
+  } else if(ir) {
+    gpe.type = GLW_POINTER_MOTION_UPDATE;
     glw_pointer_event(&gwii->gr, &gpe);
   }
 

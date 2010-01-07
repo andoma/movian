@@ -943,7 +943,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
 
 	gpe.x =  (2.0 * event.xmotion.x / gx11->gr.gr_width ) - 1;
 	gpe.y = -(2.0 * event.xmotion.y / gx11->gr.gr_height) + 1;
-	gpe.type = GLW_POINTER_MOTION;
+	gpe.type = GLW_POINTER_MOTION_UPDATE;
 
 	glw_lock(&gx11->gr);
 	glw_pointer_event(&gx11->gr, &gpe);

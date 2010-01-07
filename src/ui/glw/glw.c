@@ -587,7 +587,7 @@ glw_prepare_frame(glw_root_t *gr)
 
     gpe.x = gr->gr_mouse_x;
     gpe.y = gr->gr_mouse_y;
-    gpe.type = GLW_POINTER_MOTION;
+    gpe.type = GLW_POINTER_MOTION_REFRESH;
     glw_pointer_event(gr, &gpe);
   }
 
@@ -1419,7 +1419,8 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
   gr->gr_mouse_y = gpe->y;
   gr->gr_mouse_valid = 1;
 
-  if(gpe->type == GLW_POINTER_MOTION) {
+  if(gpe->type == GLW_POINTER_MOTION_UPDATE ||
+     gpe->type == GLW_POINTER_MOTION_REFRESH) {
     if((w = gr->gr_pointer_grab) != NULL && w->glw_matrix != NULL) {
       glw_widget_project(w->glw_matrix, &x1, &x2, &y1, &y2);
       gpe0.type = GLW_POINTER_FOCUS_MOTION;

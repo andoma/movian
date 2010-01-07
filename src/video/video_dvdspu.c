@@ -32,7 +32,7 @@
 
 #include "media.h"
 #include "video_dvdspu.h"
-
+#include "showtime.h"
 
 /**
  *
@@ -126,7 +126,7 @@ dvdspu_decode(dvdspu_t *d, int64_t pts)
     date = getbe16(buf + d->d_cmdpos);
     picts = d->d_pts + ((date << 10) / 90) * 1000;
 
-    if(pts < picts)
+    if(pts != AV_NOPTS_VALUE && pts < picts)
       return retval;
 
     next_cmd_pos = getbe16(buf + d->d_cmdpos + 2);

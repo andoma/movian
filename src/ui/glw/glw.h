@@ -750,7 +750,8 @@ int glw_event_to_widget(glw_t *w, event_t *e, int local);
 
 typedef enum {
   GLW_POINTER_CLICK,
-  GLW_POINTER_MOTION,
+  GLW_POINTER_MOTION_UPDATE,  // Updated (mouse did really move)
+  GLW_POINTER_MOTION_REFRESH, // GLW Internal refresh (every frame)
   GLW_POINTER_FOCUS_MOTION,
   GLW_POINTER_RELEASE,
   GLW_POINTER_SCROLL,
@@ -761,6 +762,7 @@ typedef struct glw_pointer_event {
   float x, y;
   float delta_y;
   glw_pointer_event_type_t type;
+  int flags;
 } glw_pointer_event_t;
 
 void glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe);

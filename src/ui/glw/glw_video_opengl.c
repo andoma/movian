@@ -1224,7 +1224,7 @@ pointer_event(glw_video_t *gv, glw_pointer_event_t *gpe)
     e = event_create(EVENT_DVD_ACTIVATE_BUTTON, sizeof(event_t) + 1);
     break;
 
-  case GLW_POINTER_MOTION:
+  case GLW_POINTER_MOTION_UPDATE:
     if(dd->dd_curbut == best)
       return 1;
 

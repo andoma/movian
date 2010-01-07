@@ -38,6 +38,10 @@
 #include "glw_video_gx.h"
 #include "misc/perftimer.h"
 
+#if ENABLE_DVD
+#include "video/video_dvdspu.h"
+#endif
+
 static void glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
 				    AVFrame *frame, int64_t pts, int epoch, 
 				    int duration, int disable_deinterlacer);
@@ -245,7 +249,7 @@ gv_compute_blend(glw_video_t *gv, video_decoder_frame_t *fra,
 
 
 
-#if 0 && ENABLE_DVD
+#if ENABLE_DVD
 /**
  *
  */
@@ -264,11 +268,14 @@ spu_repaint(glw_video_t *gv, dvdspu_decoder_t *dd, dvdspu_t *d,
   int hi_palette[4];
   int hi_alpha[4];
 
+  gv->gv_in_menu = pci->hli.hl_gi.hli_ss;
+
+  if(width < 1 || height < 1)
+    return;
+
   if(dd->dd_clut == NULL)
     return;
   
-  gv->gv_in_menu = pci->hli.hl_gi.hli_ss;
-
   if(pci->hli.hl_gi.hli_ss &&
      dvdnav_get_highlight_area(pci, dd->dd_curbut, 0, &ha) 
      == DVDNAV_STATUS_OK) {
@@ -328,12 +335,15 @@ spu_repaint(glw_video_t *gv, dvdspu_decoder_t *dd, dvdspu_t *d,
     }
   }
 
-  gv->gv_sputex_width  = gr->gr_normalized_texture_coords ? 1.0 : width;
-  gv->gv_sputex_height = gr->gr_normalized_texture_coords ? 1.0 : height;
+  free(gv->gv_texels);
+    
+  gv->gv_sputex_width  = width;
+  gv->gv_sputex_height = height;
 
-  glTexImage2D(gr->gr_be.gbr_primary_texture_mode, 0, GL_RGBA, 
-	       width, height, 0,
-	       GL_RGBA, GL_UNSIGNED_BYTE, t0);
+  gv->gv_texels = gx_convert_argb((void *)t0, width * 4, width, height);
+
+  GX_InitTexObj(&gv->gv_sputex, gv->gv_texels, width, height,
+		GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
 
   free(t0);
 }
@@ -345,7 +355,6 @@ static void
 spu_layout(glw_video_t *gv, dvdspu_decoder_t *dd, int64_t pts,
 	   const glw_root_t *gr)
 {
-  int textype = gr->gr_be.gbr_primary_texture_mode;
   dvdspu_t *d;
   int x;
 
@@ -370,28 +379,17 @@ spu_layout(glw_video_t *gv, dvdspu_decoder_t *dd, int64_t pts,
     dvdspu_destroy(dd, d);
     gv->gv_in_menu = 0;
 
-    glDeleteTextures(1, &gv->gv_sputex);
-    gv->gv_sputex = 0;
+    free(gv->gv_texels);
+    gv->gv_texels = NULL;
     goto again;
 
   case 0:
     if(dd->dd_repaint == 0)
       break;
-
     dd->dd_repaint = 0;
     /* FALLTHRU */
 
   case 1:
-    if(gv->gv_sputex == 0) {
-
-      glGenTextures(1, &gv->gv_sputex);
-
-      glBindTexture(textype, gv->gv_sputex);
-      glTexParameterf(textype, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      glTexParameterf(textype, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    } else {
-      glBindTexture(textype, gv->gv_sputex);
-    }
     spu_repaint(gv, dd, d, gr);
     break;
   }
@@ -432,7 +430,7 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv, const glw_root_t *gr)
     }
 
     pts = AV_NOPTS_VALUE;
-      
+
   } else {
       
     /* There are frames available that we are going to display,
@@ -457,12 +455,12 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv, const glw_root_t *gr)
   if(pts != AV_NOPTS_VALUE) {
     pts -= frame_duration * 2;
     compute_avdiff(vd, mp, pts, epoch);
-
-#if 0 && ENABLE_DVD
-    if(vd->vd_dvdspu != NULL)
-      spu_layout(gv, vd->vd_dvdspu, pts, gr);
-#endif
   }
+
+#if ENABLE_DVD
+  if(vd->vd_dvdspu != NULL)
+    spu_layout(gv, vd->vd_dvdspu, pts, gr);
+#endif
 }
 
 
@@ -647,18 +645,9 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
 {
   video_decoder_frame_t *fra;
   int width = 0, height = 0;
-#if 0 && ENABLE_DVD
+#if ENABLE_DVD
   dvdspu_decoder_t *dd;
   dvdspu_t *d;
-#endif
-
-  /*
-   * rescale
-   */
- 
-#if 0 
-  if(gv->gv_zoom != 100)
-    glScalef(gv->gv_zoom / 100.0f, gv->gv_zoom / 100.0f, 1.0f);
 #endif
 
   fra = gv->gv_fra;
@@ -668,12 +657,6 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
   if(fra != NULL && glw_is_focusable(w))
     glw_store_matrix(w, rc);
 
-#if 0
-  if(rc->rc_alpha > 0.98f) 
-    glDisable(GL_BLEND); 
-  else
-    glEnable(GL_BLEND); 
-  #endif
 
   if(fra != NULL) {
 
@@ -686,41 +669,45 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
   gv->gv_width  = width;
   gv->gv_height = height;
 
-  //  glEnable(GL_BLEND); 
-
-#if 0 && ENABLE_DVD
+#if ENABLE_DVD
   dd = vd->vd_dvdspu;
-  if(gv->gv_sputex != 0 && dd != NULL && width > 0 &&
+  if(gv->gv_texels != 0 && dd != NULL && width > 0 &&
      (glw_is_focused(w) || !dd->dd_pci.hli.hl_gi.hli_ss)) {
     d = TAILQ_FIRST(&dd->dd_queue);
 
     if(d != NULL) {
-      glBindTexture(textype, gv->gv_sputex);
+      GX_LoadTexObj(&gv->gv_sputex, GX_TEXMAP0);
 
-      glPushMatrix();
-
-      glScalef(2.0f / width, -2.0f / height, 0.0f);
-      glTranslatef(-width / 2, -height / 2, 0.0f);
+      glw_rctx_t rc0;
       
-      glColor4f(1.0, 1.0, 1.0, rc->rc_alpha);
-      
-      glBegin(GL_QUADS);
-      
-      glTexCoord2f(0.0, 0.0);
-      glVertex3f(d->d_x1, d->d_y1, 0.0f);
-    
-      glTexCoord2f(gv->gv_sputex_width, 0.0);
-      glVertex3f(d->d_x2, d->d_y1, 0.0f);
-    
-      glTexCoord2f(gv->gv_sputex_width, gv->gv_sputex_height);
-      glVertex3f(d->d_x2, d->d_y2, 0.0f);
-    
-      glTexCoord2f(0.0, gv->gv_sputex_height);
-      glVertex3f(d->d_x1, d->d_y2, 0.0f);
+      glw_PushMatrix(&rc0, rc);
 
-      glEnd();
+      glw_Scalef(&rc0, 2.0f / width, -2.0f / height, 1.0f);
+      glw_Translatef(&rc0, -width / 2.0, -height / 2.0, 0.0f);
 
-      glPopMatrix();
+      GX_LoadPosMtxImm(rc0.rc_be.gbr_model_matrix, GX_PNMTX0);
+      
+      uint8_t a8 = 255;
+
+      GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+      
+      GX_Position3f32(d->d_x1, d->d_y2, 0.0); 
+      GX_Color4u8(255, 255, 255, a8);
+      GX_TexCoord2f32(0.0, 1.0);
+
+      GX_Position3f32(d->d_x2, d->d_y2, 0.0); 
+      GX_Color4u8(255, 255, 255, a8);
+      GX_TexCoord2f32(1.0, 1.0);
+
+      GX_Position3f32(d->d_x2,  d->d_y1, 0.0); 
+      GX_Color4u8(255, 255, 255, a8);
+      GX_TexCoord2f32(1.0, 0.0);
+
+      GX_Position3f32(d->d_x1,  d->d_y1, 0); 
+      GX_Color4u8(255, 255, 255, a8);
+      GX_TexCoord2f32(0.0, 0.0);
+
+      GX_End();
     }
   }
 #endif
@@ -791,7 +778,7 @@ gl_video_widget_event(glw_video_t *gv, event_t *e)
     return 1;
   }
 
-#if 0
+
   if(event_is_action(e, ACTION_UP) ||
      event_is_action(e, ACTION_DOWN) ||
      event_is_action(e, ACTION_LEFT) ||
@@ -802,14 +789,13 @@ gl_video_widget_event(glw_video_t *gv, event_t *e)
       return 1;
     }
   }
-#endif
 
   return 0;
 }
 
 
 
-#if 0 && ENABLE_DVD
+#if ENABLE_DVD
 /**
  *
  */
@@ -864,10 +850,9 @@ pointer_event(glw_video_t *gv, glw_pointer_event_t *gpe)
     e = event_create(EVENT_DVD_ACTIVATE_BUTTON, sizeof(event_t) + 1);
     break;
 
-  case GLW_POINTER_MOTION:
+  case GLW_POINTER_MOTION_UPDATE:
     if(dd->dd_curbut == best)
       return 1;
-
     e = event_create(EVENT_DVD_SELECT_BUTTON, sizeof(event_t) + 1);
     break;
 
@@ -889,7 +874,7 @@ static void
 gv_update_focusable(video_decoder_t *vd, glw_video_t *gv)
 {
   int want_focus = 0;
-#if 0 && ENABLE_DVD
+#if ENABLE_DVD
   dvdspu_decoder_t *dd = gv->gv_vd->vd_dvdspu;
 
   if(dd != NULL) {
@@ -924,10 +909,7 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_DTOR:
     /* We are going away, flush out all frames (PBOs and textures)
        and destroy zombie video decoder */
-#if 0
-    if(gv->gv_sputex)
-      glDeleteTextures(1, &gv->gv_sputex);
-#endif
+    free(gv->gv_texels);
     gv_purge_queues(vd);
     video_decoder_destroy(vd);
     return 0;
@@ -952,7 +934,7 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     gv->gv_mp = NULL;
     return 0;
 
-#if 0 && ENABLE_DVD
+#if ENABLE_DVD
   case GLW_SIGNAL_POINTER_EVENT:
     return pointer_event(gv, extra);
 #endif

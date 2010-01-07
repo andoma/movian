@@ -541,11 +541,11 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 }
 
 -(void)mouseMoved:(NSEvent *)event {
-  [self glwMouseEvent:GLW_POINTER_MOTION event:event];
+  [self glwMouseEvent:GLW_POINTER_MOTION_UPDATE event:event];
 }
 
 -(void)mouseDragged:(NSEvent *)event {
-  [self glwMouseEvent:GLW_POINTER_MOTION event:event];
+  [self glwMouseEvent:GLW_POINTER_MOTION_UPDATE event:event];
 }
 
 - (void)mouseDown:(NSEvent *)event {

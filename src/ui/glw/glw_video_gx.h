@@ -58,12 +58,11 @@ typedef struct glw_video {
 
   media_pipe_t *gv_mp;
 
-#if 0 // DVD stuff
-  GLuint gv_sputex;
+  void *gv_texels;
+  GXTexObj gv_sputex;
   int gv_sputex_height;
   int gv_sputex_width;
   int gv_in_menu;
-#endif
 
   int gv_width;
   int gv_height;

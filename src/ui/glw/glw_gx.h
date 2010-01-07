@@ -97,4 +97,7 @@ void glw_rtt_destroy(struct glw_root *gr, glw_rtt_t *grtt);
 
 void glw_blendmode(int mode);
 
+void *gx_convert_argb(const uint8_t *src, int linesize, 
+		      unsigned int w, unsigned int h);
+
 #endif /* GLW_GX_H__ */
