@@ -1012,15 +1012,6 @@ glw_x11_dispatch_event(uii_t *uii, event_t *e)
   
   if(event_is_action(e, ACTION_FULLSCREEN_TOGGLE)) {
     //settings_toggle_bool(gx11->fullscreen_setting);
-#if 0
-  } else if(event_is_action(e, ACTION_ZOOM_UI_INCR)) {
-
-    settings_set_int(gx11->font_size_setting, gx11->want_font_size + 1);
-
-  } else if(event_is_action(e, ACTION_ZOOM_UI_DECR)) {
-
-    settings_set_int(gx11->font_size_setting, gx11->want_font_size - 1);
-#endif
 
   } else {
     /* Pass it on to GLW */
