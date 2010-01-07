@@ -860,9 +860,9 @@ prop_send_ext_event(prop_t *p, event_t *e)
 static int
 prop_clean(prop_t *p)
 {
-  if(p->hp_flags & PROP_CLIPPED_VALUE)
+  if(p->hp_flags & PROP_CLIPPED_VALUE) {
     return 1;
-
+  }
   switch(p->hp_type) {
   case PROP_ZOMBIE:
   case PROP_DIR:
@@ -1788,6 +1788,45 @@ prop_set_stringf_ex(prop_t *p, prop_sub_t *skipme, const char *fmt, ...)
   prop_set_string_ex(p, skipme, buf);
 }
 
+/**
+ *
+ */
+static void 
+prop_int_to_float(prop_t *p)
+{
+  int val, min, max;
+
+  val = p->u.i.val;
+  min = p->u.i.min;
+  max = p->u.i.max;
+  
+  p->u.f.val = val;
+  p->u.f.min = min;
+  p->u.f.max = max;
+  
+  p->hp_type = PROP_FLOAT;
+}
+
+ /**
+ *
+ */
+static void 
+prop_float_to_int(prop_t *p)
+{
+  float val, min, max;
+
+  val = p->u.f.val;
+  min = p->u.f.min;
+  max = p->u.f.max;
+  
+  p->u.i.val = val;
+  p->u.i.min = min;
+  p->u.i.max = max;
+  
+  p->hp_type = PROP_INT;
+}
+
+ 
 
 /**
  *
@@ -1803,6 +1842,13 @@ prop_get_float(prop_t *p, int *forceupdate)
   if(p->hp_type == PROP_ZOMBIE) {
     hts_mutex_unlock(&prop_mutex);
     return NULL;
+  }
+
+  if(p->hp_type == PROP_INT) {
+    prop_int_to_float(p);
+    if(forceupdate != NULL)
+      *forceupdate = 1;
+    return p;
   }
 
   if(p->hp_type != PROP_FLOAT) {
@@ -1925,18 +1971,26 @@ prop_set_int_ex(prop_t *p, prop_sub_t *skipme, int v)
 
   if(p->hp_type != PROP_INT) {
 
-    if(prop_clean(p)) {
+    if(p->hp_type == PROP_FLOAT) {
+      prop_float_to_int(p);
+    } else if(prop_clean(p)) {
       hts_mutex_unlock(&prop_mutex);
       return;
+    } else {
+      p->hp_type = PROP_INT;
     }
- 
+
   } else if(p->hp_int == v) {
     hts_mutex_unlock(&prop_mutex);
     return;
+  } else if(p->hp_flags & PROP_CLIPPED_VALUE) {
+    if(v > p->u.i.max)
+      v  = p->u.i.max;
+    if(v < p->u.i.min)
+      v  = p->u.i.min;
   }
 
   p->hp_int = v;
-  p->hp_type = PROP_INT;
 
   prop_set_epilogue(skipme, p, "prop_set_int()");
 }
@@ -1961,12 +2015,15 @@ prop_add_int_ex(prop_t *p, prop_sub_t *skipme, int v)
 
   if(p->hp_type != PROP_INT) {
 
-    if(prop_clean(p)) {
+    if(p->hp_type == PROP_FLOAT) {
+      prop_float_to_int(p);
+    } else if(prop_clean(p)) {
       hts_mutex_unlock(&prop_mutex);
       return;
+    } else {
+      p->hp_int = 0;
+      p->hp_type = PROP_INT;
     }
-    p->hp_int = 0;
-    p->hp_type = PROP_INT;
   }
 
 
@@ -1975,13 +2032,13 @@ prop_add_int_ex(prop_t *p, prop_sub_t *skipme, int v)
   if(p->hp_flags & PROP_CLIPPED_VALUE) {
     if(n > p->u.i.max)
       n  = p->u.i.max;
-    if(n < p->u.f.min)
+    if(n < p->u.i.min)
       n  = p->u.i.min;
   }
 
   if(n != p->hp_int) {
     p->hp_int = n;
-    prop_notify_value(p, NULL, "prop_add_int()");
+    prop_notify_value(p, skipme, "prop_add_int()");
   }
   hts_mutex_unlock(&prop_mutex);
 }
@@ -2005,15 +2062,18 @@ prop_toggle_int_ex(prop_t *p, prop_sub_t *skipme)
 
   if(p->hp_type != PROP_INT) {
 
-    if(prop_clean(p)) {
+    if(p->hp_type == PROP_FLOAT) {
+      prop_float_to_int(p);
+    } else if(prop_clean(p)) {
       hts_mutex_unlock(&prop_mutex);
       return;
+    } else {
+      p->hp_int = 0;
+      p->hp_type = PROP_INT;
     }
-    p->hp_int = 0;
   }
 
   p->hp_int = !p->hp_int;
-  p->hp_type = PROP_INT;
 
   prop_set_epilogue(skipme, p, "prop_toggle_int()");
 }
@@ -2038,11 +2098,15 @@ prop_set_int_clipping_range(prop_t *p, int min, int max)
 
   if(p->hp_type != PROP_INT) {
 
-    if(prop_clean(p)) {
+    if(p->hp_type == PROP_FLOAT) {
+      prop_float_to_int(p);
+    } else if(prop_clean(p)) {
       hts_mutex_unlock(&prop_mutex);
       return;
+    } else {
+      p->hp_int = 0;
+      p->hp_type = PROP_INT;
     }
-    p->hp_int = 0;
   }
 
   p->hp_flags |= PROP_CLIPPED_VALUE;
