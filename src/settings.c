@@ -141,7 +141,7 @@ setting_t *
 settings_add_bool(prop_t *parent, const char *id, const char *title,
 		  int initial, htsmsg_t *store,
 		  prop_callback_int_t *cb, void *opaque,
-		  int flags)
+		  int flags, prop_courier_t *pc)
 {
   prop_t *r = settings_add(id, title, "bool");
   prop_t *v = prop_create(r, "value");
@@ -159,6 +159,7 @@ settings_add_bool(prop_t *parent, const char *id, const char *title,
 		       0 : PROP_SUB_NO_INITIAL_UPDATE,
 		       PROP_TAG_CALLBACK_INT, cb, opaque,
 		       PROP_TAG_ROOT, v,
+		       PROP_TAG_COURIER, pc,
 		       NULL);
   s->s_sub = sub;
   
@@ -195,7 +196,8 @@ settings_add_int(prop_t *parent, const char *id, const char *title,
 		 int initial, htsmsg_t *store,
 		 int min, int max, int step,
 		 prop_callback_int_t *cb, void *opaque,
-		 int flags, const char *unit)
+		 int flags, const char *unit,
+		 prop_courier_t *pc)
 {
   prop_t *r = settings_add(id, title, "integer");
   prop_t *v = prop_create(r, "value");
@@ -220,6 +222,7 @@ settings_add_int(prop_t *parent, const char *id, const char *title,
 		       0 : PROP_SUB_NO_INITIAL_UPDATE,
 		       PROP_TAG_CALLBACK_INT, cb, opaque,
 		       PROP_TAG_ROOT, v,
+		       PROP_TAG_COURIER, pc,
 		       NULL);
   s->s_sub = sub;
 
@@ -319,7 +322,7 @@ setting_t *
 settings_add_string(prop_t *parent, const char *id, const char *title,
 		    const char *initial, htsmsg_t *store,
 		    prop_callback_string_t *cb, void *opaque,
-		    int flags)
+		    int flags, prop_courier_t *pc)
 {
   prop_t *r = settings_add(id, title, "string");
   prop_t *v = prop_create(r, "value");
@@ -338,6 +341,7 @@ settings_add_string(prop_t *parent, const char *id, const char *title,
 		       0 : PROP_SUB_NO_INITIAL_UPDATE,
 		       PROP_TAG_CALLBACK_STRING, cb, opaque,
 		       PROP_TAG_ROOT, v,
+		       PROP_TAG_COURIER, pc,
 		       NULL);
   s->s_sub = sub;
   

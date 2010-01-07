@@ -43,7 +43,7 @@ prop_t *settings_get_dirlist(prop_t *parent);
 setting_t *settings_add_bool(prop_t *parent, const char *id, 
 			     const char *title, int initial, htsmsg_t *store,
 			     prop_callback_int_t *cb, void *opaque,
-			     int flags);
+			     int flags, prop_courier_t *pc);
 
 void settings_set_bool(setting_t *s, int v);
 
@@ -60,14 +60,15 @@ setting_t *settings_add_string(prop_t *parent, const char *id,
 			       const char *title, const char *initial, 
 			       htsmsg_t *store,
 			       prop_callback_string_t *cb, void *opaque,
-			       int flags);
+			       int flags, prop_courier_t *pc);
 
 setting_t *settings_add_int(prop_t *parent, const char *id, 
 			    const char *title,
 			    int initial, htsmsg_t *store,
 			    int min, int max, int step,
 			    prop_callback_int_t *cb, void *opaque,
-			    int flags, const char *unit);
+			    int flags, const char *unit,
+			    prop_courier_t *pc);
 
 void settings_set_int(setting_t *s, int v);
 

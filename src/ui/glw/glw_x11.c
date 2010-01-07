@@ -185,18 +185,19 @@ display_settings_init(glw_x11_t *gx11)
   gx11->fullscreen_setting = settings_add_bool(r, "fullscreen",
 					       "Fullscreen mode", 0, settings,
 					       display_set_mode, gx11,
-					       SETTINGS_INITIAL_UPDATE);
+					       SETTINGS_INITIAL_UPDATE, 
+					       NULL);
 
   settings_add_bool(r, "map_mouse_wheel_to_keys",
 		    "Map mouse wheel to up/down", 0, settings,
 		    display_set_map_mouse_wheel_to_keys, gx11,
-		    SETTINGS_INITIAL_UPDATE);
+		    SETTINGS_INITIAL_UPDATE, NULL);
 
   gx11->font_size_setting = 
     settings_add_int(r, "fontsize",
 		     "Font size", 20, settings, 14, 40, 1,
 		     display_set_fontsize, gx11,
-		     SETTINGS_INITIAL_UPDATE, "px");
+		     SETTINGS_INITIAL_UPDATE, "px", NULL);
 
   gx11->saveconf = 0; // Don't need to save, cause we just loaded
 
