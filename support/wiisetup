@@ -19,20 +19,16 @@ fi
 
 
 if ! test -e ${DEVKITPRO}/libogc/lib/wii ; then
-    mkdir -p ${DEVKITPRO}/libogc-src
-    cd ${DEVKITPRO}/libogc-src
+    mkdir -p ${DEVKITPRO}/libogc
+    cd ${DEVKITPRO}/libogc
     wget http://downloads.sourceforge.net/project/devkitpro/libogc/libogc-src-1.8.1.tar.bz2
     tar xvf libogc-src-1.8.1.tar.bz2
 
-    cp ${TOPDIR}/support/lwp_config.h ${DEVKITPRO}/libogc-src/gc/ogc/lwp_config.h
-    make wii install
-fi
+    cp ${TOPDIR}/support/lwp_config.h ${DEVKITPRO}/libogc/gc/ogc/lwp_config.h
+    make wii install-headers
 
-### Get libfat
-
-if ! test -e ${DEVKITPRO}/libfat/lib ; then
-    mkdir -p ${DEVKITPRO}/libfat
-    cd ${DEVKITPRO}/libfat
+    # And libfat
+    cd ${DEVKITPRO}/libogc
     wget http://sunet.dl.sourceforge.net/sourceforge/devkitpro/libfat-ogc-1.0.5.tar.bz2
     tar xvf libfat-ogc-1.0.5.tar.bz2
 fi
