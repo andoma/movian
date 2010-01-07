@@ -1229,9 +1229,10 @@ glw_focus_open_path_close_all_other(glw_t *w)
   w->glw_flags &= ~GLW_FOCUS_BLOCKED;
   c = glw_focus_by_path(w);
 
-  assert(c != NULL);
-
-  glw_focus_set(w->glw_root, c, 0);
+  if(c != NULL)
+    glw_focus_set(w->glw_root, c, 0);
+  else
+    TRACE(TRACE_DEBUG, "GLW", "Nothing can be (re-)focused");
 }
 
 
