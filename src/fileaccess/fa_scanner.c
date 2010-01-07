@@ -487,6 +487,11 @@ doscan(scanner_t *s)
   
   /* Can not do notifcations */
 
+#ifdef WII
+  // We don't want to keep threads running on wii 
+  return;
+#endif
+
   while(!s->s_stop) {
     sleep(3);
     rescan(s);
