@@ -27,6 +27,7 @@
 #include "glw_event.h"
 #include "navigator.h"
 #include "misc/pixmap.h"
+#include "settings.h"
 
 static token_t t_zero = {
   .type = TOKEN_INT,
@@ -332,6 +333,21 @@ eval_op(glw_view_eval_context_t *ec, struct token *self)
  *
  */
 static int
+token2int(token_t *t)
+{
+  switch(t->type) {
+  case TOKEN_INT:
+    return t->t_int;
+  case TOKEN_FLOAT:
+    return t->t_float;
+  default:
+    return 0;
+  }
+}
+/**
+ *
+ */
+static int
 token2bool(token_t *t)
 {
   switch(t->type) {
@@ -542,6 +558,40 @@ eval_array(glw_view_eval_context_t *pec, token_t *t0)
   return -1;
 }
 
+/**
+ *
+ */
+static int
+resolve_property_name(glw_view_eval_context_t *ec, token_t *a)
+{
+  token_t *t;
+  const char *pname[16];
+  prop_t *p, *ui;
+  int i;
+  
+  for(i = 0, t = a; t != NULL && i < 15; t = t->child)
+    pname[i++]  = rstr_get(t->t_rstring);
+  pname[i] = NULL;
+  
+  ui = ec->w ? ec->w->glw_root->gr_uii.uii_prop : NULL;
+  p = prop_get_by_name(pname, 0, 
+		       PROP_TAG_NAMED_ROOT, ec->prop0, "self",
+		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
+		       PROP_TAG_ROOT, ui,
+		       NULL);
+
+  if(p == NULL)
+    return glw_view_seterr(ec->ei, a, "Unable to resolve property");
+  
+  /* Transform TOKEN_PROPERTY_NAME -> TOKEN_PROPERTY */
+  
+  glw_view_free_chain(a->child);
+  a->child = NULL;
+  
+  a->type = TOKEN_PROPERTY;
+  a->t_prop = p;
+  return 0;
+}
 
 /**
  *
@@ -549,10 +599,8 @@ eval_array(glw_view_eval_context_t *pec, token_t *t0)
 static int
 eval_assign(glw_view_eval_context_t *ec, struct token *self)
 {
-  token_t *b = eval_pop(ec), *a = eval_pop(ec), *t;
-  prop_t *p, *ui;
-  int r, i;
-  const char *pname[16];
+  token_t *b = eval_pop(ec), *a = eval_pop(ec);
+  int r;
   event_keydesc_t *ek;
 
   /* Catch some special rvalues here */
@@ -578,27 +626,8 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self)
     break;
 
   case TOKEN_PROPERTY_NAME:
-    for(i = 0, t = a; t != NULL && i < 15; t = t->child)
-      pname[i++]  = rstr_get(t->t_rstring);
-    pname[i] = NULL;
-
-    ui = ec->w ? ec->w->glw_root->gr_uii.uii_prop : NULL;
-    p = prop_get_by_name(pname, 0, 
-			 PROP_TAG_NAMED_ROOT, ec->prop0, "self",
-			 PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
-			 PROP_TAG_ROOT, ui,
-			 NULL);
-
-    if(p == NULL)
-      return glw_view_seterr(ec->ei, a, "Unable to resolve property");
-
-    /* Transform TOKEN_PROPERTY_NAME -> TOKEN_PROPERTY */
-
-    glw_view_free_chain(a->child);
-    a->child = NULL;
-    
-    a->type = TOKEN_PROPERTY;
-    a->t_prop = p;
+    if(resolve_property_name(ec, a))
+      return -1;
 
   case TOKEN_PROPERTY:
     
@@ -2767,6 +2796,90 @@ glwf_browse(glw_view_eval_context_t *ec, struct token *self,
 }
 
 
+/**
+ *
+ */
+static int
+glw_settingInt(glw_view_eval_context_t *ec, struct token *self,
+	       token_t **argv, unsigned int argc)
+{
+  token_t *title = argv[0];
+  token_t *id    = argv[1];
+  token_t *def   = argv[2];
+  token_t *unit  = argv[3];
+  token_t *min   = argv[4];
+  token_t *max   = argv[5];
+  token_t *step  = argv[6];
+  token_t *prop  = argv[7];
+
+   glw_root_t *gr = ec->w->glw_root;
+
+  if(resolve_property_name(ec, prop))
+    return -1;
+
+  if(title->type != TOKEN_STRING)
+    return glw_view_seterr(ec->ei, title, "Title argument is not a string");
+  
+  if(id->type != TOKEN_STRING)
+    return glw_view_seterr(ec->ei, id, "ID argument is not a string");
+  
+  if(unit->type != TOKEN_STRING)
+    return glw_view_seterr(ec->ei, unit, "Unit argument is not a string");
+  
+  setting_t *s = 
+    settings_create_int(gr->gr_settings, rstr_get(id->t_rstring),
+			rstr_get(title->t_rstring), 
+			token2int(def), gr->gr_settings_store, 
+			token2int(min), token2int(max), token2int(step),
+			NULL, NULL,
+			SETTINGS_INITIAL_UPDATE, rstr_get(unit->t_rstring),
+			gr->gr_courier,
+			glw_settings_save, gr);
+
+  prop_link(settings_get_value(s), prop->t_prop);
+
+  self->type = TOKEN_NOP; // Can never be reevaluated
+
+  return 0;
+}
+
+/**
+ *
+ */
+static int
+glw_settingBool(glw_view_eval_context_t *ec, struct token *self,
+	       token_t **argv, unsigned int argc)
+{
+  token_t *title = argv[0];
+  token_t *id    = argv[1];
+  token_t *def   = argv[2];
+  token_t *prop  = argv[3];
+
+  glw_root_t *gr = ec->w->glw_root;
+
+  if(resolve_property_name(ec, prop))
+    return -1;
+
+  if(title->type != TOKEN_STRING)
+    return glw_view_seterr(ec->ei, title, "First argument is not a string");
+  
+  if(id->type != TOKEN_STRING)
+    return glw_view_seterr(ec->ei, id, "Second argument is not a string");
+  
+  setting_t *s =
+    settings_create_bool(gr->gr_settings, rstr_get(id->t_rstring),
+			 rstr_get(title->t_rstring), 
+			 token2int(def), gr->gr_settings_store, 
+			 NULL, NULL,
+			 SETTINGS_INITIAL_UPDATE,
+			 gr->gr_courier,
+			 glw_settings_save, gr);
+
+  prop_link(settings_get_value(s), prop->t_prop);
+  self->type = TOKEN_NOP; // Can never be reevaluated
+  return 0;
+}
+
 
 /**
  *
@@ -2804,6 +2917,8 @@ static const token_func_t funcvec[] = {
   {"select", 3, glwf_select},
   {"trace", 2, glwf_trace},
   {"browse", 1, glwf_browse},
+  {"addSettingInt", 8, glw_settingInt},
+  {"addSettingBool", 4, glw_settingBool},
 };
 
 
