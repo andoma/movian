@@ -492,6 +492,7 @@ eval_array(glw_view_eval_context_t *pec, token_t *t0)
   ec.passive_subscriptions = pec->passive_subscriptions;
   ec.sublist = pec->sublist;
   ec.event = pec->event;
+  ec.w = pec->w;
 
   for(t = t0->child; t != NULL; t = t->next) {
     ec.alloc = NULL;
