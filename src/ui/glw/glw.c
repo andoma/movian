@@ -175,11 +175,11 @@ glw_init_settings(glw_root_t *gr, const char *instance,
 
   gr->gr_settings = settings_add_dir(NULL, "display", title, "display");
 
-  s = settings_add_int(gr->gr_settings, "fontsize",
-		       "Font size", 20, gr->gr_settings_store, 14, 40, 1,
-		       glw_font_change_size, gr,
-		       SETTINGS_INITIAL_UPDATE, "px", gr->gr_courier,
-		       glw_settings_save, gr);
+  s = settings_create_int(gr->gr_settings, "fontsize",
+			  "Font size", 20, gr->gr_settings_store, 14, 40, 1,
+			  glw_font_change_size, gr,
+			  SETTINGS_INITIAL_UPDATE, "px", gr->gr_courier,
+			  glw_settings_save, gr);
 
   prop_link(settings_get_value(s),
 	    prop_create(gr->gr_uii.uii_prop, "fontsize"));

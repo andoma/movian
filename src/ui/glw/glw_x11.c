@@ -983,17 +983,17 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
   if(glw_init(gr, theme_path, ui, primary, confname, displayname_title))
     return 1;
 
-  settings_add_bool(gr->gr_settings, "map_mouse_wheel_to_keys",
-		    "Map mouse wheel to up/down", 0, gr->gr_settings_store,
-		    gx11_set_wheel_mapping, gx11, 
-		    SETTINGS_INITIAL_UPDATE, gr->gr_courier,
-		    glw_settings_save, gr);
+  settings_create_bool(gr->gr_settings, "map_mouse_wheel_to_keys",
+		       "Map mouse wheel to up/down", 0, gr->gr_settings_store,
+		       gx11_set_wheel_mapping, gx11, 
+		       SETTINGS_INITIAL_UPDATE, gr->gr_courier,
+		       glw_settings_save, gr);
 
-  settings_add_bool(gr->gr_settings, "fullscreen",
-		    "Fullscreen mode", 0, gr->gr_settings_store,
-		    gx11_set_fullscreen, gx11, 
-		    SETTINGS_INITIAL_UPDATE, gr->gr_courier,
-		    glw_settings_save, gr);
+  settings_create_bool(gr->gr_settings, "fullscreen",
+		       "Fullscreen mode", 0, gr->gr_settings_store,
+		       gx11_set_fullscreen, gx11, 
+		       SETTINGS_INITIAL_UPDATE, gr->gr_courier,
+		       glw_settings_save, gr);
 
   glw_x11_mainloop(gx11);
 

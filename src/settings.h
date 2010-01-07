@@ -42,38 +42,38 @@ prop_t *settings_get_dirlist(prop_t *parent);
 
 
 
-setting_t *settings_add_bool(prop_t *parent, const char *id, 
-			     const char *title, int initial, htsmsg_t *store,
-			     prop_callback_int_t *cb, void *opaque,
-			     int flags, prop_courier_t *pc,
-			     settings_saver_t *saver, void *saver_opaque);
+setting_t *settings_create_bool(prop_t *parent, const char *id, 
+				const char *title, int initial, htsmsg_t *store,
+				prop_callback_int_t *cb, void *opaque,
+				int flags, prop_courier_t *pc,
+				settings_saver_t *saver, void *saver_opaque);
 
 void settings_set_bool(setting_t *s, int v);
 
 void settings_toggle_bool(setting_t *s);
 
-setting_t *settings_add_multiopt(prop_t *parent, const char *id,
-				 const char *title,
-				 prop_callback_string_t *cb, void *opaque);
+setting_t *settings_create_multiopt(prop_t *parent, const char *id,
+				    const char *title,
+				    prop_callback_string_t *cb, void *opaque);
 
 void settings_multiopt_add_opt(setting_t *parent, const char *id,
 			       const char *title, int selected);
 
-setting_t *settings_add_string(prop_t *parent, const char *id, 
-			       const char *title, const char *initial, 
-			       htsmsg_t *store,
-			       prop_callback_string_t *cb, void *opaque,
-			       int flags, prop_courier_t *pc,
-			       settings_saver_t *saver, void *saver_opaque);
+setting_t *settings_create_string(prop_t *parent, const char *id, 
+				  const char *title, const char *initial, 
+				  htsmsg_t *store,
+				  prop_callback_string_t *cb, void *opaque,
+				  int flags, prop_courier_t *pc,
+				  settings_saver_t *saver, void *saver_opaque);
 
-setting_t *settings_add_int(prop_t *parent, const char *id, 
-			    const char *title,
-			    int initial, htsmsg_t *store,
-			    int min, int max, int step,
-			    prop_callback_int_t *cb, void *opaque,
-			    int flags, const char *unit,
-			    prop_courier_t *pc,
-			    settings_saver_t *saver, void *saver_opaque);
+setting_t *settings_create_int(prop_t *parent, const char *id, 
+			       const char *title,
+			       int initial, htsmsg_t *store,
+			       int min, int max, int step,
+			       prop_callback_int_t *cb, void *opaque,
+			       int flags, const char *unit,
+			       prop_courier_t *pc,
+			       settings_saver_t *saver, void *saver_opaque);
 
 void settings_set_int(setting_t *s, int v);
 

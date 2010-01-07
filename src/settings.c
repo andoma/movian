@@ -163,11 +163,11 @@ settings_int_callback(void *opaque, int v)
  *
  */
 setting_t *
-settings_add_bool(prop_t *parent, const char *id, const char *title,
-		  int initial, htsmsg_t *store,
-		  prop_callback_int_t *cb, void *opaque,
-		  int flags, prop_courier_t *pc,
-		  settings_saver_t *saver, void *saver_opaque)
+settings_create_bool(prop_t *parent, const char *id, const char *title,
+		     int initial, htsmsg_t *store,
+		     prop_callback_int_t *cb, void *opaque,
+		     int flags, prop_courier_t *pc,
+		     settings_saver_t *saver, void *saver_opaque)
 {
   prop_t *r = settings_add(id, title, "bool");
   prop_t *v = prop_create(r, "value");
@@ -227,13 +227,13 @@ settings_toggle_bool(setting_t *s)
  *
  */
 setting_t *
-settings_add_int(prop_t *parent, const char *id, const char *title,
-		 int initial, htsmsg_t *store,
-		 int min, int max, int step,
-		 prop_callback_int_t *cb, void *opaque,
-		 int flags, const char *unit,
-		 prop_courier_t *pc,
-		 settings_saver_t *saver, void *saver_opaque)
+settings_create_int(prop_t *parent, const char *id, const char *title,
+		    int initial, htsmsg_t *store,
+		    int min, int max, int step,
+		    prop_callback_int_t *cb, void *opaque,
+		    int flags, const char *unit,
+		    prop_courier_t *pc,
+		    settings_saver_t *saver, void *saver_opaque)
 {
   prop_t *r = settings_add(id, title, "integer");
   prop_t *v = prop_create(r, "value");
@@ -319,8 +319,8 @@ callback_opt(void *opaque, prop_event_t event, ...)
  *
  */
 setting_t *
-settings_add_multiopt(prop_t *parent, const char *id, const char *title,
-		      prop_callback_string_t *cb, void *opaque)
+settings_create_multiopt(prop_t *parent, const char *id, const char *title,
+			 prop_callback_string_t *cb, void *opaque)
 {
   prop_t *r = settings_add(id, title, "multiopt");
   prop_t *o = prop_create(r, "options");
@@ -387,12 +387,11 @@ settings_string_callback(void *opaque, const char *str)
  *
  */
 setting_t *
-settings_add_string(prop_t *parent, const char *id, const char *title,
-		    const char *initial, htsmsg_t *store,
-		    prop_callback_string_t *cb, void *opaque,
-		    int flags, prop_courier_t *pc,
-		    settings_saver_t *saver, void *saver_opaque)
-
+settings_create_string(prop_t *parent, const char *id, const char *title,
+		       const char *initial, htsmsg_t *store,
+		       prop_callback_string_t *cb, void *opaque,
+		       int flags, prop_courier_t *pc,
+		       settings_saver_t *saver, void *saver_opaque)
 {
   prop_t *r = settings_add(id, title, "string");
   prop_t *v = prop_create(r, "value");

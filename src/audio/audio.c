@@ -149,10 +149,10 @@ audio_init(void)
 					 "audio");
   
   audio_settings_current_device = 
-    settings_add_multiopt(audio_settings_root, "currentdevice", 
-			  "Current output device",
-			  audio_change_output_device, NULL);
-
+    settings_create_multiopt(audio_settings_root, "currentdevice", 
+			     "Current output device",
+			     audio_change_output_device, NULL);
+  
   audio_global_load_settings();
 
   hts_mutex_init(&audio_mode_mutex);
@@ -338,24 +338,24 @@ audio_mode_register(audio_mode_t *am)
   snprintf(buf, sizeof(buf), "Configuration for %s", am->am_title);
   r = settings_add_dir(audio_settings_root, am->am_id, buf, "audio");
 
-  settings_add_int(r, "delay", "Audio/Video sync delay",
-		   0, m, -1000, 1000, 10, am_set_av_sync, am,
-		   SETTINGS_INITIAL_UPDATE, "ms", NULL, NULL, NULL);
+  settings_create_int(r, "delay", "Audio/Video sync delay",
+		      0, m, -1000, 1000, 10, am_set_av_sync, am,
+		      SETTINGS_INITIAL_UPDATE, "ms", NULL, NULL, NULL);
 
   if(multich) {
-    settings_add_bool(r, "phantom_center", "Phantom center",
+    settings_create_bool(r, "phantom_center", "Phantom center",
 		      0, m, am_set_phantom_center, am,
 		      SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);
-    settings_add_bool(r, "phantom_lfe", "Phantom LFE",
+    settings_create_bool(r, "phantom_lfe", "Phantom LFE",
 		      0, m, am_set_phantom_lfe, am,
 		      SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);
-    settings_add_bool(r, "small_front", "Small front speakers",
+    settings_create_bool(r, "small_front", "Small front speakers",
 		      0, m, am_set_small_front, am,
 		      SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);
-    settings_add_bool(r, "force_downmix", "Force stereo downmix",
+    settings_create_bool(r, "force_downmix", "Force stereo downmix",
 		      0, m, am_set_force_downmix, am,
 		      SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);
-    settings_add_bool(r, "swap_surround", "Swap LFE+center with surround",
+    settings_create_bool(r, "swap_surround", "Swap LFE+center with surround",
 		      0, m, am_set_swap_surround, am,
 		      SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);
   }
