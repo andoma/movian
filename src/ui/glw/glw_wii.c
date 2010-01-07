@@ -371,6 +371,7 @@ glw_wii_loop(glw_wii_t *gwii)
   int curframe;
   float rquad = 0.0f;
   GXColor background = {0,0,0, 0xff};
+  int not_resetted = 0;
 
   GXRModeObj *rmode = wii_rmode;
 
@@ -530,8 +531,10 @@ glw_wii_loop(glw_wii_t *gwii)
     VIDEO_WaitVSync();
     rquad-=0.15f;
 
-    if(SYS_ResetButtonDown())
+    if(SYS_ResetButtonDown() && not_resetted) {
+      not_resetted = 1;
       showtime_shutdown(0);
+    }
   }
 }
 
