@@ -25,6 +25,7 @@
 #include <fat.h>
 #include <network.h>
 #include <errno.h>
+#include <sdcard/wiisd_io.h>
 
 #include <dirent.h>
 #include <string.h>
@@ -44,6 +45,7 @@
 
 #include "sd/sd.h"
 #include "misc/callout.h"
+#include "notifications.h"
 
 extern char *htsversion;
 extern int concurrency;
@@ -194,9 +196,6 @@ arch_init(void)
   printf("Showtime %s, starting...\n", htsversion);
   printf("screen size = %d x %d\n", wii_rmode->viWidth, wii_rmode->viHeight);
   VIDEO_WaitVSync();
-
-  if (!fatInitDefault())
-    printf("fatInitDefault failure\n");
 
   printf("Initializing network%s%s\n",
 	 remote_logtarget ? ", remote logging to ":"", remote_logtarget?:"");
@@ -352,7 +351,10 @@ arch_exit(int retcode)
 void
 arch_sd_init(void)
 {
-  sd_add_service("Front", "Front SD card", NULL, NULL, NULL, "/");
+  if(fatMountSimple("sd", &__io_wiisd)) {
+    sd_add_service("Front", "Front SD card", NULL, NULL, NULL, 
+		   "file://sd:/");
+  }
 }
 /**
  *
