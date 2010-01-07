@@ -32,6 +32,7 @@
 #include "event.h"
 #include "ui/ui.h"
 #include "showtime.h"
+#include "settings.h"
 
 TAILQ_HEAD(glw_queue, glw);
 LIST_HEAD(glw_head, glw);
@@ -348,8 +349,19 @@ typedef struct glw_root {
    */ 
   glw_backend_root_t gr_be;
 
+  /**
+   * Settings
+   */
+  prop_t *gr_settings;        // Root prop
+
+  char *gr_settings_instance; // Name of configuration file
+
+  htsmsg_t *gr_settings_store;  // Loaded settings
+
 } glw_root_t;
 
+
+void glw_settings_save(void *opaque, htsmsg_t *msg);
 
 
 /**
@@ -526,8 +538,8 @@ typedef struct glw {
  (((f) & GLW_CONSTRAINT_FLAGS) & ~(((f) >> 5) & GLW_CONSTRAINT_FLAGS))
 
 
-int glw_init(glw_root_t *gr, int fontsize, const char *theme, ui_t *ui,
-	     int primary);
+int glw_init(glw_root_t *gr, const char *theme, ui_t *ui, int primary,
+	     const char *instance, const char *instance_title );
 
 void glw_flush0(glw_root_t *gr);
 
@@ -883,7 +895,7 @@ void glw_gf_unregister(glw_gf_ctrl_t *ggc);
 
 void glw_gf_do(void);
 
-void glw_font_change_size(glw_root_t *gr, int fontsize);
+void glw_font_change_size(void *opaque, int fontsize);
 
 /**
  *

@@ -371,7 +371,7 @@ glw_wii_loop(glw_wii_t *gwii)
   int curframe;
   float rquad = 0.0f;
   GXColor background = {0,0,0, 0xff};
-  int not_resetted = 0;
+  int resetted = 0;
 
   GXRModeObj *rmode = wii_rmode;
 
@@ -531,8 +531,8 @@ glw_wii_loop(glw_wii_t *gwii)
     VIDEO_WaitVSync();
     rquad-=0.15f;
 
-    if(SYS_ResetButtonDown() && not_resetted) {
-      not_resetted = 1;
+    if(SYS_ResetButtonDown() && !resetted) {
+      resetted = 1;
       showtime_shutdown(0);
     }
   }
@@ -563,7 +563,7 @@ glw_wii_start(ui_t *ui, int argc, char *argv[], int primary)
 
   gwii->gr.gr_normalized_texture_coords = 1;
 
-  if(glw_init(&gwii->gr, 20, theme_path, ui, primary)) {
+  if(glw_init(&gwii->gr, theme_path, ui, primary, "wii", NULL)) {
     printf("GLW failed to init\n");
     sleep(3);
     exit(0);

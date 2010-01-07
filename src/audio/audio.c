@@ -340,24 +340,24 @@ audio_mode_register(audio_mode_t *am)
 
   settings_add_int(r, "delay", "Audio/Video sync delay",
 		   0, m, -1000, 1000, 10, am_set_av_sync, am,
-		   SETTINGS_INITIAL_UPDATE, "ms", NULL);
+		   SETTINGS_INITIAL_UPDATE, "ms", NULL, NULL, NULL);
 
   if(multich) {
     settings_add_bool(r, "phantom_center", "Phantom center",
 		      0, m, am_set_phantom_center, am,
-		      SETTINGS_INITIAL_UPDATE, NULL);
+		      SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);
     settings_add_bool(r, "phantom_lfe", "Phantom LFE",
 		      0, m, am_set_phantom_lfe, am,
-		      SETTINGS_INITIAL_UPDATE, NULL);
+		      SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);
     settings_add_bool(r, "small_front", "Small front speakers",
 		      0, m, am_set_small_front, am,
-		      SETTINGS_INITIAL_UPDATE, NULL);
+		      SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);
     settings_add_bool(r, "force_downmix", "Force stereo downmix",
 		      0, m, am_set_force_downmix, am,
-		      SETTINGS_INITIAL_UPDATE, NULL);
+		      SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);
     settings_add_bool(r, "swap_surround", "Swap LFE+center with surround",
 		      0, m, am_set_swap_surround, am,
-		      SETTINGS_INITIAL_UPDATE, NULL);
+		      SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);
   }
 
   if(m != NULL)

@@ -44,6 +44,13 @@ struct setting {
   prop_t *s_val;
   int s_min;
   int s_max;
+
+  settings_saver_t *s_saver;
+  void *s_saver_opaque;
+  htsmsg_t *s_store;
+
+  char *s_id;
+
 };
 
 
@@ -137,16 +144,39 @@ settings_add_dir(prop_t *parent, const char *id, const char *title,
 /**
  *
  */
+static void
+settings_int_callback(void *opaque, int v)
+{
+  setting_t *s = opaque;
+  prop_callback_int_t *cb = s->s_callback;
+
+  cb(s->s_opaque, v);
+
+  if(s->s_store && s->s_saver) {
+    htsmsg_delete_field(s->s_store, s->s_id);
+    htsmsg_add_s32(s->s_store, s->s_id, v);
+    s->s_saver(s->s_saver_opaque, s->s_store);
+  }
+}
+
+/**
+ *
+ */
 setting_t *
 settings_add_bool(prop_t *parent, const char *id, const char *title,
 		  int initial, htsmsg_t *store,
 		  prop_callback_int_t *cb, void *opaque,
-		  int flags, prop_courier_t *pc)
+		  int flags, prop_courier_t *pc,
+		  settings_saver_t *saver, void *saver_opaque)
 {
   prop_t *r = settings_add(id, title, "bool");
   prop_t *v = prop_create(r, "value");
   setting_t *s = malloc(sizeof(setting_t));
   prop_sub_t *sub;
+
+  s->s_id = strdup(id);
+  s->s_callback = cb;
+  s->s_opaque = opaque;
 
   if(store != NULL)
     initial = htsmsg_get_u32_or_default(store, id, initial);
@@ -157,13 +187,18 @@ settings_add_bool(prop_t *parent, const char *id, const char *title,
 
   sub = prop_subscribe(flags & SETTINGS_INITIAL_UPDATE ?
 		       0 : PROP_SUB_NO_INITIAL_UPDATE,
-		       PROP_TAG_CALLBACK_INT, cb, opaque,
+		       PROP_TAG_CALLBACK_INT, settings_int_callback, s,
 		       PROP_TAG_ROOT, v,
 		       PROP_TAG_COURIER, pc,
 		       NULL);
   s->s_sub = sub;
   
   settings_set_parent(r, parent);
+
+  s->s_store = store;
+  s->s_saver = saver;
+  s->s_saver_opaque = saver_opaque;
+
   return s;
 }
 
@@ -197,12 +232,18 @@ settings_add_int(prop_t *parent, const char *id, const char *title,
 		 int min, int max, int step,
 		 prop_callback_int_t *cb, void *opaque,
 		 int flags, const char *unit,
-		 prop_courier_t *pc)
+		 prop_courier_t *pc,
+		 settings_saver_t *saver, void *saver_opaque)
 {
   prop_t *r = settings_add(id, title, "integer");
   prop_t *v = prop_create(r, "value");
   setting_t *s = malloc(sizeof(setting_t));
   prop_sub_t *sub;
+
+  s->s_id = strdup(id);
+  s->s_callback = cb;
+  s->s_opaque = opaque;
+
 
   if(store != NULL)
     initial = htsmsg_get_s32_or_default(store, id, initial);
@@ -220,13 +261,18 @@ settings_add_int(prop_t *parent, const char *id, const char *title,
   s->s_max = max;
   sub = prop_subscribe(flags & SETTINGS_INITIAL_UPDATE ?
 		       0 : PROP_SUB_NO_INITIAL_UPDATE,
-		       PROP_TAG_CALLBACK_INT, cb, opaque,
+		       PROP_TAG_CALLBACK_INT, settings_int_callback, s,
 		       PROP_TAG_ROOT, v,
 		       PROP_TAG_COURIER, pc,
 		       NULL);
   s->s_sub = sub;
 
   settings_set_parent(r, parent);
+
+  s->s_store = store;
+  s->s_saver = saver;
+  s->s_saver_opaque = saver_opaque;
+
   return s;
 }
 
@@ -318,16 +364,42 @@ settings_multiopt_add_opt(setting_t *parent, const char *id, const char *title,
 /**
  *
  */
+static void
+settings_string_callback(void *opaque, const char *str)
+{
+  setting_t *s = opaque;
+  prop_callback_string_t *cb = s->s_callback;
+
+  cb(s->s_opaque, str);
+
+  if(s->s_store && s->s_saver) {
+    htsmsg_delete_field(s->s_store, s->s_id);
+    htsmsg_add_str(s->s_store, s->s_id, str);
+    s->s_saver(s->s_saver_opaque, s->s_store);
+  }
+}
+
+
+
+/**
+ *
+ */
 setting_t *
 settings_add_string(prop_t *parent, const char *id, const char *title,
 		    const char *initial, htsmsg_t *store,
 		    prop_callback_string_t *cb, void *opaque,
-		    int flags, prop_courier_t *pc)
+		    int flags, prop_courier_t *pc,
+		    settings_saver_t *saver, void *saver_opaque)
+
 {
   prop_t *r = settings_add(id, title, "string");
   prop_t *v = prop_create(r, "value");
   setting_t *s = malloc(sizeof(setting_t));
   prop_sub_t *sub;
+
+  s->s_id = strdup(id);
+  s->s_callback = cb;
+  s->s_opaque = opaque;
 
   if(store != NULL)
     initial = htsmsg_get_str(store, id);
@@ -339,16 +411,29 @@ settings_add_string(prop_t *parent, const char *id, const char *title,
   
   sub = prop_subscribe(flags & SETTINGS_INITIAL_UPDATE ?
 		       0 : PROP_SUB_NO_INITIAL_UPDATE,
-		       PROP_TAG_CALLBACK_STRING, cb, opaque,
+		       PROP_TAG_CALLBACK_STRING, settings_string_callback, s,
 		       PROP_TAG_ROOT, v,
 		       PROP_TAG_COURIER, pc,
 		       NULL);
   s->s_sub = sub;
   
   settings_set_parent(r, parent);
+
+  s->s_store = store;
+  s->s_saver = saver;
+  s->s_saver_opaque = saver_opaque;
   return s;
 }
 
+
+/**
+ *
+ */
+prop_t *
+settings_get_value(setting_t *s)
+{
+  return prop_create(s->s_prop, "value");
+}
 
 /**
  *
@@ -358,8 +443,6 @@ settings_init(void)
 {
   settings_root = prop_create(prop_get_global(), "settings");
 }
-
-
 
 
 /**

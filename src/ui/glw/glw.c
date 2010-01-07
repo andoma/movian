@@ -137,13 +137,62 @@ top_event_handler(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
 }
 
 
+
+/**
+ * Save settings
+ */
+void 
+glw_settings_save(void *opaque, htsmsg_t *msg)
+{
+  glw_root_t *gr = opaque;
+
+  assert(msg == gr->gr_settings_store);
+  htsmsg_store_save(msg, "displays/%s", gr->gr_settings_instance);
+}
+
+/**
+ *
+ */
+static void
+glw_init_settings(glw_root_t *gr, const char *instance,
+		  const char *instance_title)
+{
+  char title[256];
+  setting_t *s;
+  gr->gr_settings_instance = strdup(instance);
+
+  gr->gr_settings_store = htsmsg_store_load("displays/%s", instance);
+  
+  if(gr->gr_settings_store == NULL)
+    gr->gr_settings_store = htsmsg_create_map();
+
+  if(instance_title) {
+    snprintf(title, sizeof(title), "Display settings for GLW on screen %s",
+	     instance_title);
+  } else {
+    snprintf(title, sizeof(title), "Display settings for GLW");
+  }
+
+  gr->gr_settings = settings_add_dir(NULL, "display", title, "display");
+
+  s = settings_add_int(gr->gr_settings, "fontsize",
+		       "Font size", 20, gr->gr_settings_store, 14, 40, 1,
+		       glw_font_change_size, gr,
+		       SETTINGS_INITIAL_UPDATE, "px", gr->gr_courier,
+		       glw_settings_save, gr);
+
+  prop_link(settings_get_value(s),
+	    prop_create(gr->gr_uii.uii_prop, "fontsize"));
+}
+
 /**
  *
  */
 int
-glw_init(glw_root_t *gr, int fontsize, const char *theme, ui_t *ui,
-	 int primary)
+glw_init(glw_root_t *gr, const char *theme, ui_t *ui, int primary,
+	 const char *instance, const char *instance_title)
 {
+
   hts_mutex_init(&gr->gr_mutex);
   gr->gr_courier = prop_courier_create(NULL, 0, "GLW");
   gr->gr_theme = theme;
@@ -151,13 +200,10 @@ glw_init(glw_root_t *gr, int fontsize, const char *theme, ui_t *ui,
   gr->gr_uii.uii_ui = ui;
   gr->gr_uii.uii_prop = prop_create(NULL, "ui");
 
-  gr->gr_fontsize_prop = prop_create(gr->gr_uii.uii_prop, "fontsize");
-  prop_set_int(gr->gr_fontsize_prop, fontsize);
-
-  if(glw_text_bitmap_init(gr, fontsize)) {
-    free(gr);
+  if(glw_text_bitmap_init(gr))
     return -1;
-  }
+
+  glw_init_settings(gr, instance, instance_title);
 
   TAILQ_INIT(&gr->gr_destroyer_queue);
   glw_tex_init(gr);

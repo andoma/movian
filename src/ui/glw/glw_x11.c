@@ -44,8 +44,6 @@ typedef struct glw_x11 {
 
   glw_root_t gr;
 
-  hts_thread_t threadid;
-
   Display *display;
   int screen;
   int screen_width;
@@ -69,22 +67,13 @@ typedef struct glw_x11 {
   const char *displayname_real;
   const char *displayname_title;
 
-  char *config_name;
-
   int coords[2][4];
   Atom deletewindow;
 
   PFNGLXSWAPINTERVALSGIPROC glXSwapIntervalSGI;
 
-  int font_size;
-  int want_font_size;
-  setting_t *font_size_setting;
-
-
   prop_t *prop_display;
   prop_t *prop_gpu;
-
-  setting_t *fullscreen_setting;
 
   int fullwindow;
   int autohide_counter;
@@ -92,8 +81,6 @@ typedef struct glw_x11 {
   XIM im;
   XIC ic;
   Status status;
-
-  int saveconf;
 
   int working_vsync;
   int force_no_vsync;
@@ -110,99 +97,28 @@ static void update_gpu_info(glw_x11_t *gx11);
 
 
 /**
- * Save display settings
- */
-static void
-display_settings_save(glw_x11_t *gx11)
-{
-  htsmsg_t *m = htsmsg_create_map();
-
-  htsmsg_add_u32(m, "fullscreen", gx11->want_fullscreen);
-  htsmsg_add_u32(m, "fontsize",   gx11->want_font_size);
-  htsmsg_add_u32(m, "map_mouse_wheel_to_keys", gx11->map_mouse_wheel_to_keys);
-
-  htsmsg_store_save(m, "displays/%s", gx11->config_name);
-  htsmsg_destroy(m);
-}
-
-
-/**
  * Switch displaymode, we just set a variable and let mainloop switch
  * later on
  */
 static void
-display_set_mode(void *opaque, int value)
+gx11_set_fullscreen(void *opaque, int value)
 {
   glw_x11_t *gx11 = opaque;
   gx11->want_fullscreen = value;
-  gx11->saveconf = 1;
 }
+
 
 
 /**
  * Use can remap mousewheel to up/down key actions
  */
 static void
-display_set_map_mouse_wheel_to_keys(void *opaque, int value)
+gx11_set_wheel_mapping(void *opaque, int value)
 {
   glw_x11_t *gx11 = opaque;
   gx11->map_mouse_wheel_to_keys = value;
-  gx11->saveconf = 1;
 }
 
-
-/**
- * Change fontsize
- */
-static void
-display_set_fontsize(void *opaque, int value)
-{
-  glw_x11_t *gx11 = opaque;
-  gx11->want_font_size = value;
-  gx11->saveconf = 1;
-}
-
-
-/**
- * Add a settings pane with relevant settings
- */
-static void
-display_settings_init(glw_x11_t *gx11)
-{
-  prop_t *r;
-  char title[256];
-  htsmsg_t *settings = htsmsg_store_load("displays/%s", gx11->config_name);
-
-  if(gx11->displayname_title) {
-    snprintf(title, sizeof(title), "Display settings for GLW/X11 on screen %s",
-	     gx11->displayname_title);
-  } else {
-    snprintf(title, sizeof(title), "Display settings for GLW/X11");
-  }
-
-  r = settings_add_dir(NULL, "display", title, "display");
-  
-  gx11->fullscreen_setting = settings_add_bool(r, "fullscreen",
-					       "Fullscreen mode", 0, settings,
-					       display_set_mode, gx11,
-					       SETTINGS_INITIAL_UPDATE, 
-					       NULL);
-
-  settings_add_bool(r, "map_mouse_wheel_to_keys",
-		    "Map mouse wheel to up/down", 0, settings,
-		    display_set_map_mouse_wheel_to_keys, gx11,
-		    SETTINGS_INITIAL_UPDATE, NULL);
-
-  gx11->font_size_setting = 
-    settings_add_int(r, "fontsize",
-		     "Font size", 20, settings, 14, 40, 1,
-		     display_set_fontsize, gx11,
-		     SETTINGS_INITIAL_UPDATE, "px", NULL);
-
-  gx11->saveconf = 0; // Don't need to save, cause we just loaded
-
-  htsmsg_destroy(settings);
-}
 
 
 /**
@@ -503,7 +419,6 @@ window_shutdown(glw_x11_t *gx11)
   window_close(gx11);
 }
 
-
 /**
  *
  */
@@ -571,8 +486,6 @@ glw_x11_init(glw_x11_t *gx11)
 
   gx11->prop_display = prop_create(gx11->gr.gr_uii.uii_prop, "display");
   gx11->prop_gpu     = prop_create(gx11->gr.gr_uii.uii_prop, "gpu");
-
-  display_settings_init(gx11);
 
   if((gx11->display = XOpenDisplay(gx11->displayname_real)) == NULL) {
     TRACE(TRACE_ERROR, "GLW", "Unable to open X display \"%s\"\n",
@@ -882,19 +795,6 @@ glw_x11_mainloop(glw_x11_t *gx11)
       glw_unlock(&gx11->gr);
     }
 
-    if(gx11->font_size != gx11->want_font_size) {
-
-      gx11->font_size = gx11->want_font_size;
-      glw_lock(&gx11->gr);
-      glw_font_change_size(&gx11->gr, gx11->font_size);
-      glw_unlock(&gx11->gr);
-    }
-
-    if(gx11->saveconf) {
-      gx11->saveconf = 0;
-      display_settings_save(gx11);
-    }
-
     while(XPending(gx11->display)) {
       XNextEvent(gx11->display, &event);
 
@@ -1040,10 +940,10 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
   glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
   char confname[256];
   const char *theme_path = SHOWTIME_GLW_DEFAULT_THEME_URL;
+  const char *displayname_title  = NULL;
 
   gx11->displayname_real = getenv("DISPLAY");
   snprintf(confname, sizeof(confname), "glw/x11/default");
-  gx11->displayname_title  = NULL;
 
   /* Parse options */
 
@@ -1054,7 +954,7 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
     if(!strcmp(argv[0], "--display") && argc > 1) {
       gx11->displayname_real = argv[1];
       snprintf(confname, sizeof(confname), "glw/x11/%s", argv[1]);
-      gx11->displayname_title  = argv[1];
+      displayname_title  = argv[1];
       argc -= 2; argv += 2;
       continue;
     } else if(!strcmp(argv[0], "--theme") && argc > 1) {
@@ -1075,15 +975,25 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
     setenv("__GL_SYNC_TO_VBLANK", "1", 1);
 
 
-  gx11->config_name = strdup(confname);
-
-  gx11->want_font_size = 20;
-
   if(glw_x11_init(gx11))
      return 1;
 
-  if(glw_init(&gx11->gr, gx11->want_font_size, theme_path, ui, primary))
+  glw_root_t *gr = &gx11->gr;
+
+  if(glw_init(gr, theme_path, ui, primary, confname, displayname_title))
     return 1;
+
+  settings_add_bool(gr->gr_settings, "map_mouse_wheel_to_keys",
+		    "Map mouse wheel to up/down", 0, gr->gr_settings_store,
+		    gx11_set_wheel_mapping, gx11, 
+		    SETTINGS_INITIAL_UPDATE, gr->gr_courier,
+		    glw_settings_save, gr);
+
+  settings_add_bool(gr->gr_settings, "fullscreen",
+		    "Fullscreen mode", 0, gr->gr_settings_store,
+		    gx11_set_fullscreen, gx11, 
+		    SETTINGS_INITIAL_UPDATE, gr->gr_courier,
+		    glw_settings_save, gr);
 
   glw_x11_mainloop(gx11);
 
@@ -1096,12 +1006,13 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
 static void
 glw_x11_dispatch_event(uii_t *uii, event_t *e)
 {
-  glw_x11_t *gx11 = (glw_x11_t *)uii;
+  //  glw_x11_t *gx11 = (glw_x11_t *)uii;
 
   /* Take care of any X11 specific events first */
   
   if(event_is_action(e, ACTION_FULLSCREEN_TOGGLE)) {
-    settings_toggle_bool(gx11->fullscreen_setting);
+    //settings_toggle_bool(gx11->fullscreen_setting);
+#if 0
   } else if(event_is_action(e, ACTION_ZOOM_UI_INCR)) {
 
     settings_set_int(gx11->font_size_setting, gx11->want_font_size + 1);
@@ -1109,6 +1020,7 @@ glw_x11_dispatch_event(uii_t *uii, event_t *e)
   } else if(event_is_action(e, ACTION_ZOOM_UI_DECR)) {
 
     settings_set_int(gx11->font_size_setting, gx11->want_font_size - 1);
+#endif
 
   } else {
     /* Pass it on to GLW */
