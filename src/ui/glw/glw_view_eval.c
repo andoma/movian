@@ -2917,8 +2917,8 @@ static const token_func_t funcvec[] = {
   {"select", 3, glwf_select},
   {"trace", 2, glwf_trace},
   {"browse", 1, glwf_browse},
-  {"addSettingInt", 8, glw_settingInt},
-  {"addSettingBool", 4, glw_settingBool},
+  {"settingInt", 8, glw_settingInt},
+  {"settingBool", 4, glw_settingBool},
 };
 
 
