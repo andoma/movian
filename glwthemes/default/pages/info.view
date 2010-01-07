@@ -18,7 +18,7 @@ widget(container_z, {
 
       widget(image, {
 	// Fade down background to 30% if we are visible
-	delta($ui.forcefullwindow, 0.7 * isVisible());
+	delta($ui.fullwindow, 0.7 * isVisible());
 	.source = devoidify($global.media.current.metadata.album_art,
 			    "theme://icons/256x256/cd.png");
       });
@@ -41,7 +41,7 @@ widget(container_z, {
 	  .align = left;
 	  .ellipsize = true;
 	  .sizeScale = 2;
-	  .caption = $global.media.current.metadata.artist + 
+	  .caption = devoidify($global.media.current.metadata.artist, "") + 
 	     select($global.media.current.metadata.artist &&
 		    $global.media.current.metadata.album, " - ", "") + 
 	     $global.media.current.metadata.album;

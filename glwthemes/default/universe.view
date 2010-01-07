@@ -176,6 +176,12 @@ widget(container_z, {
 			       $ui.menu = false;
 			       fireEvent(event(Home));
 			     }, 2, 1);
+
+		  ACTION_ICON2("theme://icons/64x64/info.png", 
+			     {
+			       $ui.menu = false;
+			       fireEvent(navOpen("page:info"));
+			     }, 2, 1);
 	      });
 	      
 	      HORIZONTAL_SEPARATOR();
