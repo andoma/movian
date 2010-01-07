@@ -60,6 +60,7 @@ int rlog_socket = -1;
 
 static hts_mutex_t log_mutex;
 
+int wii_sd_mounted;
 
 static callout_t memlogger;
 
@@ -201,6 +202,7 @@ arch_init(void)
 	 remote_logtarget ? ", remote logging to ":"", remote_logtarget?:"");
   net_setup();
 
+  wii_sd_mounted = fatMountSimple("sd", &__io_wiisd);
 
   if(remote_logtarget != NULL) {
 
@@ -351,10 +353,9 @@ arch_exit(int retcode)
 void
 arch_sd_init(void)
 {
-  if(fatMountSimple("sd", &__io_wiisd)) {
+  if(wii_sd_mounted)
     sd_add_service("Front", "Front SD card", NULL, NULL, NULL, 
 		   "file://sd:/");
-  }
 }
 /**
  *
