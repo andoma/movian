@@ -150,7 +150,7 @@ settings_int_callback(void *opaque, int v)
   setting_t *s = opaque;
   prop_callback_int_t *cb = s->s_callback;
 
-  cb(s->s_opaque, v);
+  if(cb) cb(s->s_opaque, v);
 
   if(s->s_store && s->s_saver) {
     htsmsg_delete_field(s->s_store, s->s_id);
@@ -378,7 +378,7 @@ settings_string_callback(void *opaque, const char *str)
   setting_t *s = opaque;
   prop_callback_string_t *cb = s->s_callback;
 
-  cb(s->s_opaque, str);
+  if(cb) cb(s->s_opaque, str);
 
   if(s->s_store && s->s_saver) {
     htsmsg_delete_field(s->s_store, s->s_id);
