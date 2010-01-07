@@ -180,7 +180,9 @@ typedef struct prop {
     struct {
       float val, min, max;
     } f;
-    int i;
+    struct {
+      int val, min, max;
+    } i;
     rstr_t *rstr;
     struct {
       struct prop_queue childs;
@@ -195,7 +197,7 @@ typedef struct prop {
 
 #define hp_rstring   u.rstr
 #define hp_float    u.f.val
-#define hp_int      u.i
+#define hp_int      u.i.val
 #define hp_childs   u.c.childs
 #define hp_selected u.c.selected
 #define hp_pixmap   u.pixmap
@@ -352,6 +354,8 @@ void prop_set_int_ex(prop_t *p, prop_sub_t *skipme, int v);
 void prop_toggle_int_ex(prop_t *p, prop_sub_t *skipme);
 
 void prop_add_int_ex(prop_t *p, prop_sub_t *skipme, int v);
+
+void prop_set_int_clipping_range(prop_t *p, int min, int max);
 
 void prop_set_void_ex(prop_t *p, prop_sub_t *skipme);
 
