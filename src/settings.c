@@ -184,7 +184,10 @@ settings_create_bool(prop_t *parent, const char *id, const char *title,
   prop_set_int(v, !!initial);
 
   s->s_prop = r;
-
+  s->s_store = store;
+  s->s_saver = saver;
+  s->s_saver_opaque = saver_opaque;
+  
   sub = prop_subscribe(flags & SETTINGS_INITIAL_UPDATE ?
 		       0 : PROP_SUB_NO_INITIAL_UPDATE,
 		       PROP_TAG_CALLBACK_INT, settings_int_callback, s,
@@ -195,9 +198,6 @@ settings_create_bool(prop_t *parent, const char *id, const char *title,
   
   settings_set_parent(r, parent);
 
-  s->s_store = store;
-  s->s_saver = saver;
-  s->s_saver_opaque = saver_opaque;
 
   return s;
 }
@@ -261,6 +261,9 @@ settings_create_int(prop_t *parent, const char *id, const char *title,
   s->s_val = v;
   s->s_min = min;
   s->s_max = max;
+  s->s_store = store;
+  s->s_saver = saver;
+  s->s_saver_opaque = saver_opaque;
   sub = prop_subscribe(flags & SETTINGS_INITIAL_UPDATE ?
 		       0 : PROP_SUB_NO_INITIAL_UPDATE,
 		       PROP_TAG_CALLBACK_INT, settings_int_callback, s,
@@ -270,10 +273,6 @@ settings_create_int(prop_t *parent, const char *id, const char *title,
   s->s_sub = sub;
 
   settings_set_parent(r, parent);
-
-  s->s_store = store;
-  s->s_saver = saver;
-  s->s_saver_opaque = saver_opaque;
 
   return s;
 }
