@@ -18,7 +18,7 @@ widget(container_x, {
       HIGHLITE_PROPS();
 
       widget(label, {
-	.caption = float2str($self.value, 0) + $self.unit;
+	.caption = int2str($self.value) + $self.unit;
       });
     });
   });

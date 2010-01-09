@@ -2084,18 +2084,27 @@ glwf_int2str(glw_view_eval_context_t *ec, struct token *self,
 {
   token_t *a = argv[0];
   token_t *r;
+  int value;
   char buf[30];
-
+  
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
-
-  if(a->type == TOKEN_INT) {
-    snprintf(buf, sizeof(buf), "%d", a->t_int);
-    r = eval_alloc(self, ec, TOKEN_STRING);
-    r->t_rstring = rstr_alloc(buf);
-  } else {
-    r = a;
-  }
+  
+  switch(a->type) {
+    case TOKEN_FLOAT:
+      value = a->t_float;
+      break;
+    case TOKEN_INT:
+      value = a->t_int;
+      break;
+    default:
+      value = 0;
+      break;
+  }  
+  
+  snprintf(buf, sizeof(buf), "%d", value);
+  r = eval_alloc(self, ec, TOKEN_STRING);
+  r->t_rstring = rstr_alloc(buf);
   eval_push(ec, r);
   return 0;
 }
