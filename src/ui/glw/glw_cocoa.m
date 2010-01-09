@@ -42,22 +42,12 @@
 typedef struct glw_cocoa {  
   glw_root_t gr;
   
-  /* used to pass ui pointer from glw_cocoa_start to prepareOpenGL */
-  ui_t *ui;
+  /* used to pass args from glw_cocoa_start to prepareOpenGL */
+  ui_t *start_ui;
+  int start_primary;
+  char *start_theme;
   
   int glready; /* prepareOpenGL has been run */
-  char *config_name;  
-  int running;
-  int retcode;
-  int primary;
-  
-  glw_t *universe;
-  
-  float aspect_ratio;
-  
-  int font_size;
-  int want_font_size;
-  setting_t *font_size_setting;
   
   int is_fullscreen;
   int want_fullscreen;
@@ -157,8 +147,7 @@ static const struct {
 };
 
 
-static void display_settings_init(glw_cocoa_t *gcocoa);
-static void display_settings_save(glw_cocoa_t *gcocoa);
+static void glw_cocoa_set_fullscreen(void *opaque, int value);
 static void glw_cocoa_in_fullwindow(void *opaque, int v);
 static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 
@@ -390,23 +379,13 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   
   gcocoa.gr.gr_width  = width;
   gcocoa.gr.gr_height = height;
-  gcocoa.aspect_ratio = (float)width / (float)height;
   
   glViewport(0, 0, width, height);
 }
 
-- (void)glwRender {
-  if(gcocoa.font_size != gcocoa.want_font_size) {
-    gcocoa.font_size = gcocoa.want_font_size;
-    glw_lock(&gcocoa.gr);
-    glw_font_change_size(&gcocoa.gr, gcocoa.font_size);
-    glw_unlock(&gcocoa.gr);
-    display_settings_save(&gcocoa);
-  }
-    
+- (void)glwRender {    
   if(gcocoa.want_fullscreen != gcocoa.is_fullscreen) {
     gcocoa.is_fullscreen = gcocoa.want_fullscreen;
-    display_settings_save(&gcocoa);
     
     if(gcocoa.want_fullscreen) {
       [self fullscreenLoop];
@@ -709,22 +688,22 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 }
 
 - (void)prepareOpenGL {
-  const char *theme_path = SHOWTIME_GLW_DEFAULT_THEME_URL;
-  GLint v = 1;
-  
   gcocoa.glready = 1;
 
   timer_cursor = nil;
-
-  /* default font size */
-  gcocoa.want_font_size = 20;
-    
-  gcocoa.config_name = strdup("glw/cocoa/default");
-    
+        
   /* must be called after GL is ready, calls GL functions */
-  if(glw_init(&gcocoa.gr, gcocoa.want_font_size, theme_path, gcocoa.ui,
-	      gcocoa.primary))
+  if(glw_init(&gcocoa.gr, SHOWTIME_GLW_DEFAULT_THEME_URL,
+              gcocoa.start_ui, gcocoa.start_primary,
+              "glw/cocoa/default", NULL))
     return;
+  
+  gcocoa.fullscreen_setting = 
+  settings_create_bool(gcocoa.gr.gr_settings, "fullscreen", "Fullscreen mode",
+                       0, gcocoa.gr.gr_settings_store,
+                       glw_cocoa_set_fullscreen, NULL,
+                       SETTINGS_INITIAL_UPDATE, gcocoa.gr.gr_courier,
+                       glw_settings_save, &gcocoa.gr);
   
   prop_subscribe(0,
 		 PROP_TAG_NAME("ui","fullwindow"),
@@ -732,6 +711,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 		 PROP_TAG_ROOT, gcocoa.gr.gr_uii.uii_prop,
 		 NULL);
   
+  GLint v = 1;
   [[self openGLContext] setValues:&v forParameter:NSOpenGLCPSwapInterval];
   
   NSRect bounds = [self bounds];
@@ -740,8 +720,6 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   /* Setup OpenGL state */
   glw_opengl_init_context(&gcocoa.gr);
 
-  display_settings_init(&gcocoa);
-  
   [self glwWindowedTimerStart];  
 }
 
@@ -787,72 +765,16 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 
 @end
 
-/**
- * Switch displaymode, we just set a variable and let mainloop switch
- * later on
- */
 static void
-display_set_mode(void *opaque, int value)
+glw_cocoa_set_fullscreen(void *opaque, int value)
 {
-  glw_cocoa_t *gc = opaque;
-  gc->want_fullscreen = value;
+  gcocoa.want_fullscreen = value;
 }
-
-/**
- * Change font size
- */
+  
 static void
-display_set_fontsize(void *opaque, int value)
+glw_cocoa_in_fullwindow(void *opaque, int value)
 {
-  glw_cocoa_t *gc = opaque;
-  gc->want_font_size = value;
-}
-
-/**
- * Add a settings pane with relevant settings
- */
-static void
-display_settings_init(glw_cocoa_t *gc)
-{
-  prop_t *r;
-  htsmsg_t *settings = htsmsg_store_load("displays/%s", gc->config_name);
-
-  r = settings_add_dir(NULL, "display",
-                       "Display settings for GLW/Cocoa", "display");
-  
-  gc->fullscreen_setting =
-    settings_add_bool(r, "fullscreen", "Fullscreen mode", 0, settings,
-                      display_set_mode, gc,
-                      SETTINGS_INITIAL_UPDATE);
-  
-  gc->font_size_setting =
-    settings_add_int(r, "fontsize",
-                     "Font size", 20, settings, 14, 40, 1,
-                     display_set_fontsize, gc,
-                     SETTINGS_INITIAL_UPDATE, "px");
-  
-  htsmsg_destroy(settings);  
-}
-
-/**
- * Save display settings
- */
-static void
-display_settings_save(glw_cocoa_t *gc)
-{
-  htsmsg_t *m = htsmsg_create_map();
-  
-  htsmsg_add_u32(m, "fullscreen", gc->is_fullscreen);
-  htsmsg_add_u32(m, "fontsize",   gc->font_size);
-  
-  htsmsg_store_save(m, "displays/%s", gc->config_name);
-  htsmsg_destroy(m);
-}
-
-static void
-glw_cocoa_in_fullwindow(void *opaque, int v)
-{
-  gcocoa.is_fullwindow = v;
+  gcocoa.is_fullwindow = value;
 }
 
 static void
@@ -864,8 +786,8 @@ glw_cocoa_screensaver_inhibit(CFRunLoopTimerRef timer, void *info)
 static int
 glw_cocoa_start(ui_t *ui, int argc, char *argv[], int primary)
 {
-  gcocoa.ui = ui;
-  gcocoa.primary = primary;
+  gcocoa.start_ui = ui;
+  gcocoa.start_primary = primary;
 
   CFRunLoopTimerRef timer;
   CFRunLoopTimerContext context = { 0, NULL, NULL, NULL, NULL };
@@ -885,11 +807,6 @@ glw_cocoa_dispatch_event(uii_t *uii, event_t *e)
   
   if(event_is_action(e, ACTION_FULLSCREEN_TOGGLE)) {
     settings_toggle_bool(gc->fullscreen_setting);
-    event_unref(e);
-  } else if(event_is_action(e, ACTION_ZOOM_UI_INCR)) {
-    settings_set_int(gc->font_size_setting, gc->font_size + 1);
-  } else if(event_is_action(e, ACTION_ZOOM_UI_DECR)) { 
-    settings_set_int(gc->font_size_setting, gc->font_size - 1);
   } else {
     glw_dispatch_event(uii, e);
     return;
@@ -897,7 +814,6 @@ glw_cocoa_dispatch_event(uii_t *uii, event_t *e)
   
   event_unref(e);
 }
-
 
 ui_t glw_ui = {
   .ui_title = "glw",
