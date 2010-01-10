@@ -95,6 +95,7 @@ typedef enum {
   GLW_ARRAY,
   GLW_BLOOM,
   GLW_CUBE,
+  GLW_DISPLACEMENT,
 } glw_class_t;
 
 

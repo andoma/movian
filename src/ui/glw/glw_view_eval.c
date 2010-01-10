@@ -1401,6 +1401,7 @@ static struct strtab classtab[] = {
   { "layer",         GLW_LAYER},
   { "bloom",         GLW_BLOOM},
   { "cube",          GLW_CUBE},
+  { "displacement",  GLW_DISPLACEMENT},
 };
 
 /**
