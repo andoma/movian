@@ -46,6 +46,7 @@
 #include "glw_bloom.h"
 #include "glw_cube.h"
 #include "glw_displacement.h"
+#include "glw_coverflow.h"
 
 #if CONFIG_GLW_BACKEND_OPENGL
 #include "glw_video_opengl.h"
@@ -87,6 +88,7 @@ static const size_t glw_class_to_size[] = {
   [GLW_BLOOM] = sizeof(glw_bloom_t),
   [GLW_CUBE] = sizeof(glw_t),
   [GLW_DISPLACEMENT] = sizeof(glw_displacement_t),
+  [GLW_COVERFLOW] = sizeof(glw_coverflow_t),
 };
 
 
@@ -508,6 +510,10 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 
   case GLW_DISPLACEMENT:
     glw_displacement_ctor(w, init, apx);
+    break;
+
+  case GLW_COVERFLOW:
+    glw_coverflow_ctor(w, init, apx);
     break;
   }
 

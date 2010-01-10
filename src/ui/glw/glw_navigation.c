@@ -119,6 +119,7 @@ find_candidate(glw_t *w, query_t *query)
     break;
 
   case GLW_ARRAY:
+  case GLW_COVERFLOW:
   case GLW_LIST_X:
   case GLW_LIST_Y:
     if(w->glw_focused) {
@@ -287,6 +288,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
       switch(w->glw_class) {
       case GLW_ARRAY:
       case GLW_LIST_X:
+      case GLW_COVERFLOW:
       case GLW_LIST_Y:
 	return 0;
       default:
@@ -341,6 +343,11 @@ glw_navigate(glw_t *w, event_t *e, int local)
 	goto container;
       break;
 	      
+    case GLW_COVERFLOW:
+      if(orientation)
+	goto container;
+      break;
+      
     case GLW_LIST_X:
     case GLW_LIST_Y:
       if(p->glw_class != (orientation ? GLW_LIST_X : GLW_LIST_Y))
