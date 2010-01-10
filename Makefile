@@ -372,7 +372,7 @@ distclean: clean
 	rm -rf build.*
 
 reconfigure:
-	$(CURDIR)/configure $(CONFIGURE_ARGS)
+	$(CURDIR)/configure.${PLATFORM} $(CONFIGURE_ARGS)
 
 # Create showtimeversion.h
 $(BUILDDIR)/showtimeversion.h:
