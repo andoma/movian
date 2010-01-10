@@ -276,7 +276,7 @@ widget(container_z, {
 		      KNOB_PROPS();
 		      widget(label, {
  			.align = center;
-			.caption = float2str($global.media.current.avdelta, 0) + "ms";
+			.caption = int2str($global.media.current.avdelta) + "ms";
 		      });
 		    });
 		  });
@@ -323,7 +323,7 @@ widget(container_z, {
 	
 	widget(label, {
 	  .caption = "Master volume: " +
-	    float2str($global.audio.mastervolume, 0) + " dB";
+	    int2str($global.audio.mastervolume) + " dB";
 	  .align = center;
 	});
       });

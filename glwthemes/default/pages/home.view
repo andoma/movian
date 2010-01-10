@@ -69,15 +69,5 @@ widget(container_y, {
       });
     });
   });
-
-  HORIZONTAL_SEPARATOR();
-
-  widget(container_x, {
-
-    .align = left;
-
-    ACTION_BUTTON2("Settings", "theme://icons/32x32/process.png", 
-		   navOpen("settings:"));
-  });
 });
 
