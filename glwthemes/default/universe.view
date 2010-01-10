@@ -2,10 +2,7 @@
 #include "theme://include/separators.view"
 
 
-
-
-
-
+settingInt("Underscan", "underscan", 0, "px", 0, 100, 1, $ui.underscan);
 
 onEvent(menu, {
   $ui.menu = !$ui.menu;
@@ -21,291 +18,298 @@ widget(container_z, {
     .source = "theme://images/caribbean.png";
   });
     
-  widget(layer, {
+  widget(displacement, {
+    .border = [$ui.underscan * 1,
+	       $ui.underscan * 1,
+	       $ui.underscan * 1,
+	       $ui.underscan * 1];
+	       
 
-    widget(container_y, {
+    widget(layer, {
 
-      widget(expander_y, {
-
-	.expansion = !$ui.fullwindow;
+      widget(container_y, {
 	
-	widget(container_y, {
+	widget(expander_y, {
 	  
-	  widget(container_x, {
+	  .expansion = !$ui.fullwindow;
+	  
+	  widget(container_y, {
+	    
 	    widget(container_x, {
-	      .weight = 0.5;
-	      ACTION_ICON2("theme://icons/32x32/back.png", 
-			   event(Back),
-			   1, $global.nav.canGoBack);
+	      widget(container_x, {
+		.weight = 0.5;
+		ACTION_ICON2("theme://icons/32x32/back.png", 
+			     event(Back),
+			     1, $global.nav.canGoBack);
 
-	      ACTION_ICON2("theme://icons/32x32/next.png", 
-			   event(Forward),
-			   1, $global.nav.canGoForward);
+		ACTION_ICON2("theme://icons/32x32/next.png", 
+			     event(Forward),
+			     1, $global.nav.canGoForward);
+		
+		ACTION_ICON2("theme://icons/32x32/home.png", 
+			     event(Home),
+			     1, $global.nav.canGoHome);
+	      });
+	      
+	      widget(label, {
+		.align = center;
+		.sizeBias = 12;
+		.caption = $global.nav.currentpage.title;
+	      });
+	      
+	      widget(container_x, {
+		.weight = 0.5;
+		widget(container_y, {
+		  
+		  .filterConstraintX = true;
+		  
+		  widget(label, {
+		    .sizeScale = 0.5;
+		    .sizeBias = 6;
+		    .caption = "";
+		  });
 
-	      ACTION_ICON2("theme://icons/32x32/home.png", 
-			   event(Home),
-			   1, $global.nav.canGoHome);
+	    	  widget(label, {
+		    .align = right;
+		    .sizeScale = 0.5;
+		    .sizeBias = 6;
+		    .caption = strftime($global.clock.unixtime,
+					"%a, %b %d, %H:%M");
+		  });
+		});
+	      });
 	    });
+	    HORIZONTAL_SEPARATOR();
+	  });
+	});
+
+
+	widget(deck, {
+	  .filterConstraintX = true;
+	  delta($ui.fullwindow, wantFullWindow());
+
+	  cloner($global.nav.pages, animator, {
+	    .time = 0.3;
+	    .source = "theme://pages/" + $page.type + ".view";
+	  });
+	});
+
+	widget(expander_y, {
+	  .expansion = !$ui.fullwindow;
+	  
+	  widget(deck, {
+	    cloner($global.media.sources, animator, {
+	      .time = 0.3;
+	      .source = "theme://playdecks/" + $self.type + ".view";
+	    });
+	  });
+	});
+
+
+	widget(deck, {
+	  cloner($global.notifications.nodes, backdrop, {
+	    PLATE_PROPS();
+	    .color = translate($self.type,
+			       [0.3, 0.3, 0.7],
+			       "info",     [0.3, 0.7, 0.45],
+			       "warning",  [0.7, 0.7, 0.45],
+			       "error",    [0.7, 0.2, 0.1]);
 	    
 	    widget(label, {
-	      .align = center;
-	      .sizeBias = 12;
-	      .caption = $global.nav.currentpage.title;
-	    });
-	  
-	    widget(container_x, {
-	      .weight = 0.5;
-	      widget(container_y, {
-	      
-		.filterConstraintX = true;
-	      
-		widget(label, {
-		  .sizeScale = 0.5;
-		  .sizeBias = 6;
-		  .caption = "";
-		});
-
-	    	widget(label, {
-		  .align = right;
-		  .sizeScale = 0.5;
-		  .sizeBias = 6;
-		  .caption = strftime($global.clock.unixtime,
-				      "%a, %b %d, %H:%M");
-		});
-	      });
+	      .caption = $self.text;
 	    });
 	  });
-	  HORIZONTAL_SEPARATOR();
 	});
       });
 
+      widget(container_x, {
+	.hidden = !$ui.menu;
 
-      widget(deck, {
-	.filterConstraintX = true;
-	delta($ui.fullwindow, wantFullWindow());
-
-	cloner($global.nav.pages, animator, {
-	  .time = 0.3;
-	  .source = "theme://pages/" + $page.type + ".view";
-	});
-      });
-
-      widget(expander_y, {
-	.expansion = !$ui.fullwindow;
+	space(0.25);
 	
-	widget(deck, {
-	  cloner($global.media.sources, animator, {
-	    .time = 0.3;
-	    .source = "theme://playdecks/" + $self.type + ".view";
-	  });
-	});
-      });
+	widget(backdrop, {
+	  .source = "theme://images/whitebox.png";
+	  .border = [3, 3, 6, 6];
+	  .color = [0.1, 0.5, 0.7];
+	  .alphaSelf = 0.8;
 
 
-      widget(deck, {
-	cloner($global.notifications.nodes, backdrop, {
-	  PLATE_PROPS();
-	  .color = translate($self.type,
-			     [0.3, 0.3, 0.7],
-			     "info",     [0.3, 0.7, 0.45],
-			     "warning",  [0.7, 0.7, 0.45],
-			     "error",    [0.7, 0.2, 0.1]);
-	  
-	  widget(label, {
-	    .caption = $self.text;
-	  });
-	});
-      });
-    });
+	  widget(container_y, {
 
-    widget(container_x, {
-      .hidden = !$ui.menu;
-
-      space(0.25);
-      
-      widget(backdrop, {
-	.source = "theme://images/whitebox.png";
-	.border = [3, 3, 6, 6];
-	.color = [0.1, 0.5, 0.7];
-	.alphaSelf = 0.8;
-
-
-	widget(container_y, {
-
-	  widget(label, {
-	    .align = center;
-	    .caption = "Command menu";
-	    .sizeScale = 2;
-	  });
-
-	  HORIZONTAL_SEPARATOR();
-	  
-
-	  widget(container_x, {
-	    .filterConstraintX = true;
-
-	    widget(dummy, {
-	      .width = SLIDER_WIDTH();
+	    widget(label, {
+	      .align = center;
+	      .caption = "Command menu";
+	      .sizeScale = 2;
 	    });
 
-	    widget(list_y, {
-	      .id = "list";
-	      $ui.cmdNeedScroll = needScroll();
-	      
-	      widget(label, {
-		.caption = "Navigation";
-	      });
-	      
-	      widget(container_x, {
-		ACTION_ICON2("theme://icons/64x64/back.png", 
-			     {
-			       $ui.menu = false;
-			       fireEvent(event(Back));
-			     },
-			     2, $global.nav.canGoBack);
-		
-		ACTION_ICON2("theme://icons/64x64/next.png", 
-			     {
-			       $ui.menu = false;
-			       fireEvent(event(Forward));
-			     },
-			     2, $global.nav.canGoForward);
+	    HORIZONTAL_SEPARATOR();
+	    
 
-		ACTION_ICON2("theme://icons/64x64/home.png",
-			     {
-			       $ui.menu = false;
-			       fireEvent(event(Home));
-			     }, 2, 1);
+	    widget(container_x, {
+	      .filterConstraintX = true;
+
+	      widget(dummy, {
+		.width = SLIDER_WIDTH();
+	      });
+
+	      widget(list_y, {
+		.id = "list";
+		$ui.cmdNeedScroll = needScroll();
+		
+		widget(label, {
+		  .caption = "Navigation";
+		});
+		
+		widget(container_x, {
+		  ACTION_ICON2("theme://icons/64x64/back.png", 
+			       {
+				 $ui.menu = false;
+				 fireEvent(event(Back));
+			       },
+			       2, $global.nav.canGoBack);
+		  
+		  ACTION_ICON2("theme://icons/64x64/next.png", 
+			       {
+				 $ui.menu = false;
+				 fireEvent(event(Forward));
+			       },
+			       2, $global.nav.canGoForward);
+
+		  ACTION_ICON2("theme://icons/64x64/home.png",
+			       {
+				 $ui.menu = false;
+				 fireEvent(event(Home));
+			       }, 2, 1);
 
 		  ACTION_ICON2("theme://icons/64x64/info.png", 
-			     {
-			       $ui.menu = false;
-			       fireEvent(navOpen("page:info"));
-			     }, 2, 1);
-	      });
-	      
-	      HORIZONTAL_SEPARATOR();
-
-	      widget(label, {
-		.caption = "Play control";
-	      });
-	      
-	      widget(container_x, {
-		ACTION_ICON2("theme://icons/64x64/skip_backward.png", 
-			     event(PreviousTrack), 2,
-			     $global.media.current.canSkipBackward);
-		
-		ACTION_ICON2("theme://icons/64x64/rewind.png", 
-			     event(SeekReverse), 2,
-			     $global.media.current.canSeek);
-		
-		widget(animator, {
-		  .hidden = !$global.media.current.canPause;
-		  .time = 0.2;
-		  .source = translate($global.media.current.playstatus, 
-				      void,
-				      "play",  "theme://cmdmenu/pause.view",
-				      "pause", "theme://cmdmenu/play.view");
+			       {
+				 $ui.menu = false;
+				 fireEvent(navOpen("page:info"));
+			       }, 2, 1);
 		});
-
-
-		ACTION_ICON2("theme://icons/64x64/fast_forward.png", 
-			     event(SeekForward), 2,
-			     $global.media.current.canSeek);
 		
-		ACTION_ICON2("theme://icons/64x64/skip_forward.png", 
-			     event(NextTrack), 2,
-			     $global.media.current.canSkipForward);
+		HORIZONTAL_SEPARATOR();
+
+		widget(label, {
+		  .caption = "Play control";
+		});
 		
-		ACTION_ICON2("theme://icons/64x64/stop.png", 
-			     event(Stop), 2,
-			     1);
+		widget(container_x, {
+		  ACTION_ICON2("theme://icons/64x64/skip_backward.png", 
+			       event(PreviousTrack), 2,
+			       $global.media.current.canSkipBackward);
+		  
+		  ACTION_ICON2("theme://icons/64x64/rewind.png", 
+			       event(SeekReverse), 2,
+			       $global.media.current.canSeek);
+		  
+		  widget(animator, {
+		    .hidden = !$global.media.current.canPause;
+		    .time = 0.2;
+		    .source = translate($global.media.current.playstatus, 
+					void,
+					"play",  "theme://cmdmenu/pause.view",
+					"pause", "theme://cmdmenu/play.view");
+		  });
 
-		ACTION_ICON2("theme://icons/64x64/eject.png", 
-			     event(Eject), 2,
-			     $global.media.current.canEject);
 
-	      });
-	      
-	      widget(backdrop, {
-		.hidden = !$global.media.current.canSeek;
-		PLATE_PROPS();
-		.alphaSelf = 0.5;
-		.color = [0.0, 0.0, 0.0];
-	  
-		widget(slider_x, {
-		  .focusable = 0.2 * $global.media.current.canSeek;
-		  .max = $global.media.current.metadata.duration;
-		  .step = 15;
-		  bind($global.media.current.currenttime);
-		  widget(backdrop, {
-		    KNOB_PROPS();
-		    widget(label, {
- 		      .align = center;
-		      .caption = value2duration($global.media.current.currenttime);
+		  ACTION_ICON2("theme://icons/64x64/fast_forward.png", 
+			       event(SeekForward), 2,
+			       $global.media.current.canSeek);
+		  
+		  ACTION_ICON2("theme://icons/64x64/skip_forward.png", 
+			       event(NextTrack), 2,
+			       $global.media.current.canSkipForward);
+		  
+		  ACTION_ICON2("theme://icons/64x64/stop.png", 
+			       event(Stop), 2,
+			       1);
+
+		  ACTION_ICON2("theme://icons/64x64/eject.png", 
+			       event(Eject), 2,
+			       $global.media.current.canEject);
+
+		});
+		
+		widget(backdrop, {
+		  .hidden = !$global.media.current.canSeek;
+		  PLATE_PROPS();
+		  .alphaSelf = 0.5;
+		  .color = [0.0, 0.0, 0.0];
+		  
+		  widget(slider_x, {
+		    .focusable = 0.2 * $global.media.current.canSeek;
+		    .max = $global.media.current.metadata.duration;
+		    .step = 15;
+		    bind($global.media.current.currenttime);
+		    widget(backdrop, {
+		      KNOB_PROPS();
+		      widget(label, {
+ 			.align = center;
+			.caption = value2duration($global.media.current.currenttime);
+		      });
 		    });
 		  });
 		});
-	      });
 
-	      HORIZONTAL_SEPARATOR();
+		HORIZONTAL_SEPARATOR();
 
-	      widget(label, {
-		.hidden = $global.media.current.type != "video";
-		.caption = "Audio / Video synchronization";
-	      });
+		widget(label, {
+		  .hidden = $global.media.current.type != "video";
+		  .caption = "Audio / Video synchronization";
+		});
 
-	      widget(backdrop, {
-		.hidden = $global.media.current.type != "video";
-		PLATE_PROPS();
-		.alphaSelf = 0.5;
-		.color = [0.0, 0.0, 0.0];
-	  
-		widget(slider_x, {
-		  .focusable = 0.2;
-		  .min = -1000;
-		  .max =  1000;
-		  .step = 10;
+		widget(backdrop, {
+		  .hidden = $global.media.current.type != "video";
+		  PLATE_PROPS();
+		  .alphaSelf = 0.5;
+		  .color = [0.0, 0.0, 0.0];
+		  
+		  widget(slider_x, {
+		    .focusable = 0.2;
+		    .min = -1000;
+		    .max =  1000;
+		    .step = 10;
 
-		  bind($global.media.current.avdelta);
-		  widget(backdrop, {
-		    KNOB_PROPS();
-		    widget(label, {
- 		      .align = center;
-		      .caption = float2str($global.media.current.avdelta, 0) + "ms";
+		    bind($global.media.current.avdelta);
+		    widget(backdrop, {
+		      KNOB_PROPS();
+		      widget(label, {
+ 			.align = center;
+			.caption = float2str($global.media.current.avdelta, 0) + "ms";
+		      });
 		    });
 		  });
 		});
+
+		HORIZONTAL_SEPARATOR($global.media.current.type != "video");
 	      });
 
-	      HORIZONTAL_SEPARATOR($global.media.current.type != "video");
-	    });
 
-
-	    
-	    widget(slider_y, {
-	      .width = SLIDER_WIDTH();
-	      .focusable = 0.2 * $ui.cmdNeedScroll;
-	      .alpha = iir($ui.cmdNeedScroll, 16);
-	      bind("list");
 	      
-	      widget(backdrop, {
-		KNOB_PROPS();
+	      widget(slider_y, {
+		.width = SLIDER_WIDTH();
+		.focusable = 0.2 * $ui.cmdNeedScroll;
+		.alpha = iir($ui.cmdNeedScroll, 16);
+		bind("list");
+		
+		widget(backdrop, {
+		  KNOB_PROPS();
+		});
 	      });
 	    });
 	  });
 	});
+	
+	space(0.25);
       });
       
-      space(0.25);
-    });
-    
-    
-    cloner($global.popups, animator, {
-      .source = "theme://popups/" + $self.type + ".view";
+      
+      cloner($global.popups, animator, {
+	.source = "theme://popups/" + $self.type + ".view";
+      });
     });
   });
-    
     
   widget(container_x, {
     space(1);
