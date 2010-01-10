@@ -171,7 +171,7 @@ settings_create_bool(prop_t *parent, const char *id, const char *title,
 {
   prop_t *r = settings_add(id, title, "bool");
   prop_t *v = prop_create(r, "value");
-  setting_t *s = malloc(sizeof(setting_t));
+  setting_t *s = calloc(1, sizeof(setting_t));
   prop_sub_t *sub;
 
   s->s_id = strdup(id);
@@ -184,9 +184,6 @@ settings_create_bool(prop_t *parent, const char *id, const char *title,
   prop_set_int(v, !!initial);
 
   s->s_prop = r;
-  s->s_store = store;
-  s->s_saver = saver;
-  s->s_saver_opaque = saver_opaque;
   
   sub = prop_subscribe(flags & SETTINGS_INITIAL_UPDATE ?
 		       0 : PROP_SUB_NO_INITIAL_UPDATE,
@@ -195,6 +192,9 @@ settings_create_bool(prop_t *parent, const char *id, const char *title,
 		       PROP_TAG_COURIER, pc,
 		       NULL);
   s->s_sub = sub;
+  s->s_store = store;
+  s->s_saver = saver;
+  s->s_saver_opaque = saver_opaque;
   
   settings_set_parent(r, parent);
 
@@ -237,7 +237,7 @@ settings_create_int(prop_t *parent, const char *id, const char *title,
 {
   prop_t *r = settings_add(id, title, "integer");
   prop_t *v = prop_create(r, "value");
-  setting_t *s = malloc(sizeof(setting_t));
+  setting_t *s = calloc(1, sizeof(setting_t));
   prop_sub_t *sub;
 
   s->s_id = strdup(id);
@@ -261,9 +261,6 @@ settings_create_int(prop_t *parent, const char *id, const char *title,
   s->s_val = v;
   s->s_min = min;
   s->s_max = max;
-  s->s_store = store;
-  s->s_saver = saver;
-  s->s_saver_opaque = saver_opaque;
   sub = prop_subscribe(flags & SETTINGS_INITIAL_UPDATE ?
 		       0 : PROP_SUB_NO_INITIAL_UPDATE,
 		       PROP_TAG_CALLBACK_INT, settings_int_callback, s,
@@ -271,6 +268,9 @@ settings_create_int(prop_t *parent, const char *id, const char *title,
 		       PROP_TAG_COURIER, pc,
 		       NULL);
   s->s_sub = sub;
+  s->s_store = store;
+  s->s_saver = saver;
+  s->s_saver_opaque = saver_opaque;
 
   settings_set_parent(r, parent);
 
@@ -400,7 +400,7 @@ settings_create_string(prop_t *parent, const char *id, const char *title,
 {
   prop_t *r = settings_add(id, title, "string");
   prop_t *v = prop_create(r, "value");
-  setting_t *s = malloc(sizeof(setting_t));
+  setting_t *s = calloc(1, sizeof(setting_t));
   prop_sub_t *sub;
 
   s->s_id = strdup(id);
