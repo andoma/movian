@@ -1,6 +1,6 @@
 /*
  *  Cocoa UI
- *  Copyright (C) 2009 Mattias Wadman
+ *  Copyright (C) 2009-2010 Mattias Wadman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 {
   NSTimer *timer;
   NSTimer *timer_cursor;
+  int mouse_down;
   bool compositeKey;
   NSString *compositeString;
   bool fullwindow;

@@ -1,6 +1,6 @@
 /*
  *  Cocoa UI
- *  Copyright (C) 2009 Mattias Wadman
+ *  Copyright (C) 2009-2010 Mattias Wadman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@ typedef struct glw_cocoa {
 
   int is_cursor_hidden;
   int is_fullwindow;
-  
+
   int skip_first_openfile_check;
   
   setting_t *fullscreen_setting;
@@ -471,7 +471,10 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 
 - (void)glwDelayHideCursor {
   gcocoa.is_cursor_hidden = 1;
-  
+ 
+  if(mouse_down > 0)
+    return;
+
   if(timer_cursor != nil) {
     [timer_cursor invalidate];
     [timer_cursor release];
@@ -528,10 +531,12 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 }
 
 - (void)mouseDown:(NSEvent *)event {
+  mouse_down++;
   [self glwMouseEvent:GLW_POINTER_CLICK event:event];
 }
 
 - (void)mouseUp:(NSEvent *)event {
+  mouse_down--;
   [self glwMouseEvent:GLW_POINTER_RELEASE event:event];
 }
 
