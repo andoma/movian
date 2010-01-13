@@ -728,7 +728,8 @@ do {						\
 
 int glw_signal0(glw_t *w, glw_signal_t sig, void *extra);
 
-void glw_widget_project(float *m, float *x1, float *x2, float *y1, float *y2);
+int glw_widget_unproject(const float *m, float *x, float *y, 
+			 const float *p, const float *dir);
 
 glw_t *glw_create0(glw_root_t *gr, glw_class_t class, va_list ap);
 

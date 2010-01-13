@@ -1399,22 +1399,21 @@ glw_event(glw_root_t *gr, event_t *e)
  *
  */
 static int
-pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, glw_t **hp)
+pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, glw_t **hp,
+	       float *p, float *dir)
 {
   glw_t *c;
   event_t *e;
-  float x1, x2, y1, y2;
+  float x, y;
   glw_pointer_event_t gpe0;
 
   if(w->glw_matrix != NULL) {
-    glw_widget_project(w->glw_matrix, &x1, &x2, &y1, &y2);
-    
-    if(gpe->x > x1 && gpe->x < x2 && gpe->y > y1 && gpe->y < y2) {
 
+    if(glw_widget_unproject(w->glw_matrix, &x, &y, p, dir) &&
+       x <= 1 && y <= 1 && x >= -1 && y >= -1) {
       gpe0.type = gpe->type;
-      /* Rescale to widget local coordinates */
-      gpe0.x = -1 + 2 * (gpe->x - x1) / (x2 - x1);
-      gpe0.y = -1 + 2 * (gpe->y - y1) / (y2 - y1);
+      gpe0.x = x;
+      gpe0.y = y;
       gpe0.delta_y = gpe->delta_y;
 
       if(glw_is_focusable(w))
@@ -1454,7 +1453,8 @@ pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, glw_t **hp)
   }
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-    if(!(c->glw_flags & GLW_FOCUS_BLOCKED) && pointer_event0(gr, c, gpe, hp))
+    if(!(c->glw_flags & GLW_FOCUS_BLOCKED) &&
+       pointer_event0(gr, c, gpe, hp, p, dir))
       return 1;
   return 0;
 }
@@ -1468,8 +1468,21 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
 {
   glw_t *c, *w, *top;
   glw_pointer_event_t gpe0;
-  float x1, x2, y1, y2, x, y;
+  float x, y;
   glw_t *hover = NULL;
+
+
+  float p[3];
+  float dir[3];
+
+  p[0] = gpe->x;
+  p[1] = gpe->y;
+  p[2] = -2.41;
+
+  dir[0] = p[0] - gpe->x * 42.38; // 42.38 comes from unprojecting
+  dir[1] = p[1] - gpe->y * 42.38; // this camera and projection matrix
+  dir[2] = p[2] - -100;
+ 
 
   /* If a widget has grabbed to pointer (such as when holding the button
      on a slider), dispatch events there */
@@ -1481,21 +1494,17 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
   if(gpe->type == GLW_POINTER_MOTION_UPDATE ||
      gpe->type == GLW_POINTER_MOTION_REFRESH) {
     if((w = gr->gr_pointer_grab) != NULL && w->glw_matrix != NULL) {
-      glw_widget_project(w->glw_matrix, &x1, &x2, &y1, &y2);
+      glw_widget_unproject(w->glw_matrix, &x, &y, p, dir);
       gpe0.type = GLW_POINTER_FOCUS_MOTION;
-      gpe0.x = -1 + 2 * GLW_RESCALE(gpe->x, x1, x2);
-      gpe0.y = -1 + 2 * GLW_RESCALE(gpe->y, y1, y2);
+      gpe0.x = x;
+      gpe0.y = y;
       
       glw_signal0(w, GLW_SIGNAL_POINTER_EVENT, &gpe0);
     }
 
     if((w = gr->gr_pointer_press) != NULL && w->glw_matrix != NULL) {
-      glw_widget_project(w->glw_matrix, &x1, &x2, &y1, &y2);
-
-      x = -1 + 2 * GLW_RESCALE(gpe->x, x1, x2);
-      y = -1 + 2 * GLW_RESCALE(gpe->y, y1, y2);
-
-      if(x < -1 || y < -1 || x > 1 || y > 1) {
+      if(!glw_widget_unproject(w->glw_matrix, &x, &y, p, dir) ||
+	 x < -1 || y < -1 || x > 1 || y > 1) {
 	// Moved outside button, release 
 
 	glw_path_modify(w, 0, GLW_IN_PRESSED_PATH);
@@ -1521,7 +1530,7 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
 
   TAILQ_FOREACH(c, &top->glw_childs, glw_parent_link)
     if(!(c->glw_flags & GLW_FOCUS_BLOCKED) && 
-       pointer_event0(gr, c, gpe, &hover))
+       pointer_event0(gr, c, gpe, &hover, p, dir))
       break;
 
   glw_root_set_hover(gr, hover);
