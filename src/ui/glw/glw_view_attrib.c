@@ -380,8 +380,13 @@ static const token_attrib_t attribtab[] = {
   {"childTilesY",     set_int ,   GLW_ATTRIB_CHILD_TILES_Y},
 
   {"color",           set_float3, GLW_ATTRIB_RGB},
+  {"translation",     set_float3, GLW_ATTRIB_TRANSLATION},
+  {"scaling",         set_float3, GLW_ATTRIB_SCALING},
+  {"color",           set_float3, GLW_ATTRIB_RGB},
+
   {"border",          set_float4, GLW_ATTRIB_BORDER},
   {"padding",         set_float4, GLW_ATTRIB_PADDING},
+  {"rotation",        set_float4, GLW_ATTRIB_ROTATION},
 
   {"align",           set_align,  0},
   {"effect",          set_transition_effect,  0},

@@ -75,6 +75,24 @@ glw_displacement_callback(glw_t *w, void *opaque,
     
     glw_PushMatrix(&rc0, rc);
       
+
+    glw_Translatef(&rc0,
+		   gd->gd_translate_x,
+		   gd->gd_translate_y,
+		   gd->gd_translate_z);
+
+    glw_Scalef(&rc0, 
+	       gd->gd_scale_x,
+	       gd->gd_scale_y,
+	       gd->gd_scale_z);
+
+    if(gd->gd_rotate_a)
+      glw_Rotatef(&rc0, 
+		  gd->gd_rotate_a,
+		  gd->gd_rotate_x,
+		  gd->gd_rotate_y,
+		  gd->gd_rotate_z);
+
     glw_Translatef(&rc0, gd->gd_border_xt, gd->gd_border_yt, 0.0f);
     xs = gd->gd_border_xs;
     ys = gd->gd_border_ys;
@@ -84,6 +102,12 @@ glw_displacement_callback(glw_t *w, void *opaque,
     rc0.rc_size_y = rc->rc_size_y * ys;
 
     rc0.rc_alpha = rc->rc_alpha * w->glw_alpha;
+
+
+
+
+
+
     glw_render0(c, &rc0);
     glw_PopMatrix();
     break;
@@ -103,8 +127,12 @@ glw_displacement_ctor(glw_t *w, int init, va_list ap)
   glw_displacement_t *gd = (glw_displacement_t *)w;
   glw_attribute_t attrib;
 
-  if(init)
+  if(init) {
     glw_signal_handler_int(w, glw_displacement_callback);
+    gd->gd_scale_x = 1;
+    gd->gd_scale_y = 1;
+    gd->gd_scale_z = 1;
+  }
 
   do {
     attrib = va_arg(ap, int);
@@ -115,8 +143,26 @@ glw_displacement_ctor(glw_t *w, int init, va_list ap)
       gd->gd_border_top    = va_arg(ap, double);
       gd->gd_border_right  = va_arg(ap, double);
       gd->gd_border_bottom = va_arg(ap, double);
-      //      glw_image_update_constraints(gi);
       break;
+
+   case GLW_ATTRIB_ROTATION:
+     gd->gd_rotate_a = va_arg(ap, double);
+     gd->gd_rotate_x = va_arg(ap, double);
+     gd->gd_rotate_y = va_arg(ap, double);
+     gd->gd_rotate_z = va_arg(ap, double);
+     break;
+
+   case GLW_ATTRIB_TRANSLATION:
+     gd->gd_translate_x = va_arg(ap, double);
+     gd->gd_translate_y = va_arg(ap, double);
+     gd->gd_translate_z = va_arg(ap, double);
+     break;
+
+   case GLW_ATTRIB_SCALING:
+     gd->gd_scale_x = va_arg(ap, double);
+     gd->gd_scale_y = va_arg(ap, double);
+     gd->gd_scale_z = va_arg(ap, double);
+     break;
 
     default:
       GLW_ATTRIB_CHEW(attrib, ap);

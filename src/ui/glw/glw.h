@@ -152,6 +152,9 @@ typedef enum {
   GLW_ATTRIB_CHILD_TILES_X,
   GLW_ATTRIB_CHILD_TILES_Y,
   GLW_ATTRIB_FREEZE,
+  GLW_ATTRIB_ROTATION,
+  GLW_ATTRIB_TRANSLATION,
+  GLW_ATTRIB_SCALING,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -699,8 +702,11 @@ do {						\
     break;					\
   case GLW_ATTRIB_BORDER:                       \
   case GLW_ATTRIB_PADDING:                      \
+  case GLW_ATTRIB_ROTATION:			\
     (void)va_arg(ap, double);			\
   case GLW_ATTRIB_RGB:                          \
+  case GLW_ATTRIB_SCALING:                      \
+  case GLW_ATTRIB_TRANSLATION:			\
     (void)va_arg(ap, double);			\
     (void)va_arg(ap, double);			\
   case GLW_ATTRIB_WEIGHT:			\

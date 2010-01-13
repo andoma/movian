@@ -31,7 +31,19 @@ typedef struct {
   float gd_border_ys;
   float gd_border_xt;
   float gd_border_yt;
+
+  float gd_scale_x;
+  float gd_scale_y;
+  float gd_scale_z;
+
+  float gd_translate_x;
+  float gd_translate_y;
+  float gd_translate_z;
   
+  float gd_rotate_a;
+  float gd_rotate_x;
+  float gd_rotate_y;
+  float gd_rotate_z;
 
 } glw_displacement_t;
 
