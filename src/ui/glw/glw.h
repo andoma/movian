@@ -302,6 +302,10 @@ typedef struct glw_class {
   int gc_flags;
 #define GLW_NAVIGATION_SEARCH_BOUNDARY 0x1
 
+  /**
+   * If the widget arranges its childer in horizontal or vertical order
+   * it should be defined here
+   */
   glw_orientation_t gc_child_orientation;
 
   /**
@@ -326,9 +330,20 @@ typedef struct glw_class {
   } gc_nav_search_mode;
 
 
+  /**
+   * Set attributes GLW_ATTRIB_... for the widget.
+   * Upon widget construction 'init' is also set to 1
+   */
   void (*gc_set)(struct glw *w, int init, va_list ap);
+
+  /**
+   * Ask widget to render itself in the current render context
+   */
   void (*gc_render)(struct glw *w, struct glw_rctx *rc);
 
+  /**
+   * Send a GLW_SIGNAL_... to all listeners
+   */
   glw_callback_t *gc_signal_handler;
 
 
