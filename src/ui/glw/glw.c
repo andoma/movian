@@ -376,8 +376,6 @@ glw_create0(glw_root_t *gr, const glw_class_t *class, va_list ap)
   glw_t *w; 
 
   /* Common initializers */
-  printf("Creating widget class %s (%d bytes)\n", 
-	 class->gc_name, class->gc_instance_size);
   w = calloc(1, class->gc_instance_size);
   w->glw_root = gr;
   w->glw_class = class;
@@ -1590,6 +1588,5 @@ glw_class_find_by_name(const char *name)
 void
 glw_register_class(glw_class_t *gc)
 {
-  printf("Registered GLW class %s\n", gc->gc_name);
   LIST_INSERT_HEAD(&glw_classes, gc, gc_link);
 }
