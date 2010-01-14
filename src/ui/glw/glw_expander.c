@@ -17,7 +17,16 @@
  */
 
 #include "glw.h"
-#include "glw_expander.h"
+
+static glw_class_t glw_expander_x;
+
+/**
+ *
+ */
+typedef struct glw_expander {
+  glw_t w;
+  float expansion;
+} glw_expander_t;
 
 
 /**
@@ -29,8 +38,7 @@ update_constraints(glw_expander_t *exp)
   glw_t *c = TAILQ_FIRST(&exp->w.glw_childs);
   float e;
 
-
-  if(exp->w.glw_class == GLW_EXPANDER_X)
+  if(exp->w.glw_class == &glw_expander_x)
     e = exp->expansion * (c != NULL ? c->glw_req_size_x : 0);
   else
     e = exp->expansion * (c != NULL ? c->glw_req_size_y : 0);
@@ -40,7 +48,7 @@ update_constraints(glw_expander_t *exp)
   else if(exp->w.glw_flags & GLW_FOCUS_BLOCKED)
     glw_focus_open_path(&exp->w);
 
-  if(exp->w.glw_class == GLW_EXPANDER_X)
+  if(exp->w.glw_class == &glw_expander_x)
     glw_set_constraints(&exp->w, e, 0, 0, 0, GLW_CONSTRAINT_X, 0);
   else
     glw_set_constraints(&exp->w, 0, e, 0, 0, GLW_CONSTRAINT_Y, 0);
@@ -71,13 +79,6 @@ glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     if(c != NULL)
       glw_layout0(c, rc);
     break;
-    
-  case GLW_SIGNAL_RENDER:
-    c = TAILQ_FIRST(&w->glw_childs);
-
-    if(c != NULL)
-      glw_render0(c, rc);
-    break;
   }
   return 0;
 }
@@ -86,16 +87,26 @@ glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 /**
  *
  */
-void 
-glw_expander_ctor(glw_t *w, int init, va_list ap)
+static void
+glw_expander_render(glw_t *w, glw_rctx_t *rc)
+{
+  glw_t *c = TAILQ_FIRST(&w->glw_childs);
+  if(c != NULL)
+    c->glw_class->gc_render(c, rc);
+}
+
+
+/**
+ *
+ */
+static void 
+glw_expander_set(glw_t *w, int init, va_list ap)
 {
   glw_expander_t *exp = (glw_expander_t *)w;
   glw_attribute_t attrib;
 
-  if(init) {
-    glw_signal_handler_int(w, glw_expander_callback);
+  if(init)
     update_constraints(exp);
-  }
 
   do {
     attrib = va_arg(ap, int);
@@ -110,5 +121,25 @@ glw_expander_ctor(glw_t *w, int init, va_list ap)
       break;
     }
   } while(attrib);
-      
 }
+
+
+
+static glw_class_t glw_expander_x = {
+  .gc_name = "expander_x",
+  .gc_instance_size = sizeof(glw_expander_t),
+  .gc_render = glw_expander_render,
+  .gc_set = glw_expander_set,
+  .gc_signal_handler = glw_expander_callback,
+};
+
+static glw_class_t glw_expander_y = {
+  .gc_name = "expander_y",
+  .gc_instance_size = sizeof(glw_expander_t),
+  .gc_render = glw_expander_render,
+  .gc_set = glw_expander_set,
+  .gc_signal_handler = glw_expander_callback,
+};
+
+GLW_REGISTER_CLASS(glw_expander_x);
+GLW_REGISTER_CLASS(glw_expander_y);

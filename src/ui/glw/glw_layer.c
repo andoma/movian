@@ -17,7 +17,6 @@
  */
 
 #include "glw.h"
-#include "glw_layer.h"
 #include "glw_transitions.h"
 
 static void
@@ -42,7 +41,7 @@ glw_layer_select_child(glw_t *w)
 static int
 glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
-  glw_rctx_t rc0, *rc = extra;
+  glw_rctx_t *rc = extra;
   glw_t *c = extra, *p;
   float z, a0 = 1, a;
 
@@ -80,15 +79,6 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
     break;
     
-  case GLW_SIGNAL_RENDER:
-    rc0 = *rc;
-
-    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-      rc0.rc_alpha = rc->rc_alpha * c->glw_parent_misc[0];
-      if(rc0.rc_alpha > 0.01)
-	glw_render_TS(c, &rc0, rc);
-    }
-    break;
 
   case GLW_SIGNAL_EVENT:
     if(w->glw_selected != NULL) {
@@ -118,26 +108,35 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     glw_layer_select_child(w);
     break;
   }
-
   return 0;
 }
 
-void 
-glw_layer_ctor(glw_t *w, int init, va_list ap)
+
+/**
+ *
+ */
+static void
+glw_layer_render(glw_t *w, glw_rctx_t *rc)
 {
-  glw_attribute_t attrib;
+  glw_rctx_t rc0 = *rc;
+  glw_t *c;
 
-  if(init)
-    glw_signal_handler_int(w, glw_layer_callback);
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    rc0.rc_alpha = rc->rc_alpha * c->glw_parent_misc[0];
+    if(rc0.rc_alpha > 0.01)
+      glw_render_TS(c, &rc0, rc);
+  }
+}
 
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
 
- }
+/**
+ *
+ */
+static glw_class_t glw_layer = {
+  .gc_name = "layer",
+  .gc_instance_size = sizeof(glw_t),
+  .gc_render = glw_layer_render,
+  .gc_signal_handler = glw_layer_callback,
+};
 
+GLW_REGISTER_CLASS(glw_layer);

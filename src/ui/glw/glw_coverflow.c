@@ -17,13 +17,31 @@
  */
 
 #include "glw.h"
-#include "glw_coverflow.h"
+
+
+/**
+ *
+ */
+typedef struct {
+  glw_t w;
+
+  glw_t *scroll_to_me;
+
+  float pos;
+  float pos_target;
+
+  glw_t *rstart;
+
+  float xs, ys;
+
+} glw_coverflow_t;
+
 
 /**
  *
  */
 static void
-layout(glw_coverflow_t *gc, glw_rctx_t *rc)
+glw_coverflow_layout(glw_coverflow_t *gc, glw_rctx_t *rc)
 {
   float n = 0;
   glw_t *c, *rstart = NULL;
@@ -106,7 +124,7 @@ renderone(glw_rctx_t *rc, glw_t *c, glw_coverflow_t *gc)
 
   rc0.rc_alpha *= GLW_CLAMP(1 - fabs(nv), 0, 1);
 
-  glw_signal0(c, GLW_SIGNAL_RENDER, &rc0);
+  glw_render0(c, &rc0);
   glw_PopMatrix();
 
 }
@@ -116,10 +134,11 @@ renderone(glw_rctx_t *rc, glw_t *c, glw_coverflow_t *gc)
  *
  */
 static void
-render(glw_coverflow_t *gc, glw_rctx_t *rc)
+glw_coverflow_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c, *p, *n;
   struct glw_queue rqueue;
+  glw_coverflow_t *gc = (glw_coverflow_t *)w;
 
   if((c = gc->rstart) == NULL)
     return;
@@ -150,7 +169,7 @@ render(glw_coverflow_t *gc, glw_rctx_t *rc)
  *
  */
 static int
-glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
+glw_coverflow_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_rctx_t *rc = extra;
   glw_coverflow_t *gc = (glw_coverflow_t *)w;
@@ -159,12 +178,9 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   default:
     break;
   case GLW_SIGNAL_LAYOUT:
-    layout(gc, rc);
+    glw_coverflow_layout(gc, rc);
     return 0;
 
-  case GLW_SIGNAL_RENDER:
-    render(gc, rc);
-    return 0;
 
   case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
     gc->scroll_to_me = extra;
@@ -185,21 +201,16 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 /**
  *
  */
-void 
-glw_coverflow_ctor(glw_t *w, int init, va_list ap)
-{
-  glw_attribute_t attrib;
+static glw_class_t glw_coverflow = {
+  .gc_name = "coverflow",
+  .gc_instance_size = sizeof(glw_coverflow_t),
+  .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY,
+  .gc_child_orientation = GLW_ORIENTATION_HORIZONTAL,
+  .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
+  .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING,
 
-  if(init)
-    glw_signal_handler_int(w, glw_list_callback);
+  .gc_render = glw_coverflow_render,
+  .gc_signal_handler = glw_coverflow_callback,
+};
 
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
-
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
-}
+GLW_REGISTER_CLASS(glw_coverflow);

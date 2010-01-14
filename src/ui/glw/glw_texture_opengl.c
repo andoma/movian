@@ -23,7 +23,7 @@
 #include <libswscale/swscale.h>
 
 #include "glw.h"
-#include "glw_image.h"
+#include "glw_texture.h"
 #include "glw_scaler.h"
 
 /**

@@ -24,7 +24,6 @@
 #include "misc/strtab.h"
 #include "glw_view.h"
 #include "glw.h"
-#include "glw_image.h"
 
 /**
  *

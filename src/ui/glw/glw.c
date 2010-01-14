@@ -25,28 +25,10 @@
 #include <arch/threads.h>
 
 #include "glw.h"
-#include "glw_container.h"
 #include "glw_text_bitmap.h"
-#include "glw_image.h"
-#include "glw_array.h"
-#include "glw_cursor.h"
-#include "glw_rotator.h"
+#include "glw_texture.h"
 #include "glw_view.h"
-#include "glw_list.h"
-#include "glw_deck.h"
-#include "glw_expander.h"
-#include "glw_slideshow.h"
-#include "glw_freefloat.h"
-#include "glw_mirror.h"
-#include "glw_animator.h"
 #include "glw_event.h"
-#include "glw_slider.h"
-#include "glw_layer.h"
-#include "glw_fx_texrot.h"
-#include "glw_bloom.h"
-#include "glw_cube.h"
-#include "glw_displacement.h"
-#include "glw_coverflow.h"
 
 #if CONFIG_GLW_BACKEND_OPENGL
 #include "glw_video_opengl.h"
@@ -55,42 +37,6 @@
 #if CONFIG_GLW_BACKEND_GX
 #include "glw_video_gx.h"
 #endif
-
-static const size_t glw_class_to_size[] = {
-  [GLW_DUMMY] = sizeof(glw_t),
-  [GLW_VIEW] = sizeof(glw_t),
-  [GLW_CONTAINER_X] = sizeof(glw_container_t),
-  [GLW_CONTAINER_Y] = sizeof(glw_container_t),
-  [GLW_CONTAINER_Z] = sizeof(glw_container_t),
-  [GLW_IMAGE]  = sizeof(glw_image_t),
-  [GLW_ICON]  = sizeof(glw_image_t),
-  [GLW_BACKDROP]  = sizeof(glw_image_t),
-  [GLW_LABEL]  = sizeof(glw_text_bitmap_t),
-  [GLW_TEXT]  = sizeof(glw_text_bitmap_t),
-  [GLW_INTEGER]  = sizeof(glw_text_bitmap_t),
-  [GLW_ROTATOR] = sizeof(glw_t),
-  [GLW_LIST_X] = sizeof(glw_list_t),
-  [GLW_LIST_Y] = sizeof(glw_list_t),
-  [GLW_DECK] = sizeof(glw_deck_t),
-  [GLW_EXPANDER_X] = sizeof(glw_expander_t),
-  [GLW_EXPANDER_Y] = sizeof(glw_expander_t),
-  [GLW_SLIDESHOW] = sizeof(glw_slideshow_t),
-  [GLW_CURSOR] = sizeof(glw_cursor_t),
-  [GLW_MIRROR] = sizeof(glw_t),
-  [GLW_ANIMATOR] = sizeof(glw_animator_t),
-  [GLW_SLIDER_X] = sizeof(glw_slider_t),
-  [GLW_SLIDER_Y] = sizeof(glw_slider_t),
-  [GLW_LAYER] = sizeof(glw_t),
-  [GLW_FX_TEXROT] = sizeof(glw_fx_texrot_t),
-  [GLW_VIDEO] = sizeof(glw_video_t),
-  [GLW_FREEFLOAT] = sizeof(glw_freefloat_t),
-  [GLW_ARRAY] = sizeof(glw_array_t),
-  [GLW_BLOOM] = sizeof(glw_bloom_t),
-  [GLW_CUBE] = sizeof(glw_t),
-  [GLW_DISPLACEMENT] = sizeof(glw_displacement_t),
-  [GLW_COVERFLOW] = sizeof(glw_coverflow_t),
-};
-
 
 static void glw_focus_init_widget(glw_t *w, float weight);
 static void glw_focus_leave(glw_t *w);
@@ -411,111 +357,11 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
     }
   } while(attrib);
 
-  /* Per-class attributes are parsed by class-specific parser,
-     this function also servers as a per-class constructor */
+  if(w->glw_class->gc_signal_handler != NULL)
+    glw_signal_handler_int(w, w->glw_class->gc_signal_handler);
 
-  switch(w->glw_class) {
-
-  case GLW_CONTAINER_X:
-  case GLW_CONTAINER_Y:
-  case GLW_CONTAINER_Z:
-    glw_container_ctor(w, init, apx);
-    break;
-
-  case GLW_ICON:
-  case GLW_IMAGE:
-  case GLW_BACKDROP:
-    glw_image_ctor(w, init, apx);
-    break;
-
-  case GLW_LABEL:
-  case GLW_TEXT:
-  case GLW_INTEGER:
-    glw_text_bitmap_ctor(w, init, apx);
-    break;
-
-  case GLW_ARRAY:
-    glw_array_ctor(w, init, apx);
-    break;
-
-  case GLW_ROTATOR:
-    glw_rotator_ctor(w, init, apx);
-    break;
-
-  case GLW_LIST_X:
-  case GLW_LIST_Y:
-    glw_list_ctor(w, init, apx);
-    break;
-
-  case GLW_DECK:
-    glw_deck_ctor(w, init, apx);
-    break;
-
-  case GLW_EXPANDER_X:
-  case GLW_EXPANDER_Y:
-    glw_expander_ctor(w, init, apx);
-    break;
-
-  case GLW_SLIDESHOW:
-    glw_slideshow_ctor(w, init, apx);
-    break;
-
-  case GLW_FREEFLOAT:
-    glw_freefloat_ctor(w, init, apx);
-    break;
-
-  case GLW_DUMMY:
-    break;
-
-  case GLW_CURSOR:
-    glw_cursor_ctor(w, init, apx);
-    break;
-
-  case GLW_MIRROR:
-    //    glw_mirror_ctor(w, init, apx);
-    break;
-
-  case GLW_VIEW:
-    glw_view_ctor(w, init, apx);
-    break;
-
-  case GLW_ANIMATOR:
-    glw_animator_ctor(w, init, apx);
-    break;
-
-  case GLW_FX_TEXROT:
-    glw_fx_texrot_ctor(w, init, apx);
-    break;
-
-  case GLW_VIDEO:
-    glw_video_ctor(w, init, apx);
-    break;
-
-  case GLW_SLIDER_X:
-  case GLW_SLIDER_Y:
-    glw_slider_ctor(w, init, apx);
-    break;
-
-  case GLW_LAYER:
-    glw_layer_ctor(w, init, apx);
-    break;
-
-  case GLW_BLOOM:
-    glw_bloom_ctor(w, init, apx);
-    break;
-
-  case GLW_CUBE:
-    glw_cube_ctor(w, init, apx);
-    break;
-
-  case GLW_DISPLACEMENT:
-    glw_displacement_ctor(w, init, apx);
-    break;
-
-  case GLW_COVERFLOW:
-    glw_coverflow_ctor(w, init, apx);
-    break;
-  }
+  if(w->glw_class->gc_set != NULL)
+    w->glw_class->gc_set(w, init, apx);
 
   va_end(apx);
   return r;
@@ -525,15 +371,14 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
  *
  */
 glw_t *
-glw_create0(glw_root_t *gr, glw_class_t class, va_list ap)
+glw_create0(glw_root_t *gr, const glw_class_t *class, va_list ap)
 {
-  size_t size; 
   glw_t *w; 
 
   /* Common initializers */
-
-  size = glw_class_to_size[class];
-  w = calloc(1, size);
+  printf("Creating widget class %s (%d bytes)\n", 
+	 class->gc_name, class->gc_instance_size);
+  w = calloc(1, class->gc_instance_size);
   w->glw_root = gr;
   w->glw_class = class;
   w->glw_alpha = 1.0f;
@@ -559,7 +404,7 @@ glw_create0(glw_root_t *gr, glw_class_t class, va_list ap)
  */
 
 glw_t *
-glw_create_i(glw_root_t *gr, glw_class_t class, ...)
+glw_create_i(glw_root_t *gr, const glw_class_t *class, ...)
 {
   glw_t *w; 
   va_list ap;
@@ -610,7 +455,7 @@ glw_prepare_frame(glw_root_t *gr)
 
   prop_courier_poll(gr->gr_courier);
 
-  glw_cursor_layout_frame(gr);
+  //  glw_cursor_layout_frame(gr);
 
   LIST_FOREACH(w, &gr->gr_every_frame_list, glw_every_frame_link)
     glw_signal0(w, GLW_SIGNAL_NEW_FRAME, NULL);
@@ -1572,7 +1417,7 @@ glw_render_TS(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc)
 	     c->glw_parent_scale.y,
 	     c->glw_parent_scale.z);
 
-  glw_signal0(c, GLW_SIGNAL_RENDER, rc);
+  c->glw_class->gc_render(c, rc);
   glw_PopMatrix();
 }
 
@@ -1590,7 +1435,7 @@ glw_render_T(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc)
 		 c->glw_parent_pos.y,
 		 c->glw_parent_pos.z);
 
-  glw_signal0(c, GLW_SIGNAL_RENDER, rc);
+  c->glw_class->gc_render(c, rc);
   glw_PopMatrix();
 }
 
@@ -1720,4 +1565,31 @@ glw_copy_constraints(glw_t *w, glw_t *src)
 		      src->glw_req_aspect,
 		      src->glw_req_weight,
 		      src->glw_flags & GLW_CONSTRAINT_FLAGS, 0);
+}
+
+
+static LIST_HEAD(, glw_class) glw_classes;
+
+/**
+ *
+ */
+const glw_class_t *
+glw_class_find_by_name(const char *name)
+{
+  glw_class_t *gc;
+
+  LIST_FOREACH(gc, &glw_classes, gc_link)
+    if(!strcmp(gc->gc_name, name))
+      break;
+  return gc;
+}
+
+/**
+ *
+ */
+void
+glw_register_class(glw_class_t *gc)
+{
+  printf("Registered GLW class %s\n", gc->gc_name);
+  LIST_INSERT_HEAD(&glw_classes, gc, gc_link);
 }

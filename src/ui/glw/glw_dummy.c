@@ -1,6 +1,6 @@
 /*
- *  GL Widgets
- *  Copyright (C) 2008 Andreas Öman
+ *  GL Widgets, Dummy widget
+ *  Copyright (C) 2007 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,43 +16,24 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef GLW_FX_TEXROT_H
-#define GLW_FX_TEXROT_H
+#include "glw.h"
 
-#include "glw_texture.h"
+/**
+ *
+ */
+static void
+glw_dummy_render(glw_t *w, glw_rctx_t *rc)
+{
+}
 
-struct fxplate {
-  float angle;
-  float inc;
 
-  float x, y;
+/**
+ *
+ */
+static glw_class_t glw_dummy = {
+  .gc_name = "dummy",
+  .gc_instance_size = sizeof(glw_t),
+  .gc_render = glw_dummy_render,
 };
 
-#define FX_NPLATES 10
-
-typedef struct glw_fx_texrot {
-  glw_t w;
-
-  glw_loadable_texture_t *fx_tex;
-
-  int fx_source_render_initialized;
-  glw_renderer_t fx_source_render;
-
-
-  struct fxplate fx_plates[10];
-
-  glw_gf_ctrl_t fx_flushctrl;
-
-  int fx_rtt_initialized;
-  glw_rtt_t fx_rtt;
-
-  int fx_render_initialized;
-  glw_renderer_t fx_render;
-
-  int fx_need_render;
-
-} glw_fx_texrot_t;
-
-void glw_fx_texrot_ctor(glw_t *w, int init, va_list ap);
-
-#endif /* GLW_FX_TEXROT_H */
+GLW_REGISTER_CLASS(glw_dummy);

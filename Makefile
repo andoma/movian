@@ -231,6 +231,7 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_view_preproc.c \
 			src/ui/glw/glw_view_support.c \
 			src/ui/glw/glw_view_attrib.c \
+			src/ui/glw/glw_dummy.c \
 			src/ui/glw/glw_container.c \
 			src/ui/glw/glw_list.c \
 			src/ui/glw/glw_array.c \
@@ -248,7 +249,6 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_scaler.c  \
 			src/ui/glw/glw_image.c \
 			src/ui/glw/glw_text_bitmap.c \
-			src/ui/glw/glw_cursor.c \
 			src/ui/glw/glw_fx_texrot.c \
 			src/ui/glw/glw_bloom.c \
 			src/ui/glw/glw_cube.c \
@@ -261,7 +261,6 @@ SRCS-$(CONFIG_GLW_FRONTEND_COCOA) += src/ui/glw/glw_cocoa.m
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_opengl.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_texture_opengl.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_render_opengl.c
-SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_mirror.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_video_opengl.c
 SRCS-$(CONFIG_GLW_FRONTEND_WII)	  += src/ui/glw/glw_wii.c
 SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_texture_gx.c

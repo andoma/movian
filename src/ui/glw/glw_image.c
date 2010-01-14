@@ -17,7 +17,54 @@
  */
 
 #include "glw.h"
-#include "glw_image.h"
+#include "glw_texture.h"
+
+typedef struct glw_image {
+  glw_t w;
+
+  float gi_alpha_self;
+
+  float gi_angle;
+
+  glw_loadable_texture_t *gi_current;
+  glw_loadable_texture_t *gi_pending;
+
+  int16_t gi_border_left;
+  int16_t gi_border_right;
+  int16_t gi_border_top;
+  int16_t gi_border_bottom;
+
+  int16_t gi_padding_left;
+  int16_t gi_padding_right;
+  int16_t gi_padding_top;
+  int16_t gi_padding_bottom;
+ 
+  int gi_bitmap_flags;
+
+  uint8_t gi_border_scaling;
+  uint8_t gi_render_initialized;
+  uint8_t gi_update;
+
+  uint8_t gi_frozen;
+
+  glw_renderer_t gi_gr;
+
+  float gi_saved_size_x;
+  float gi_saved_size_y;
+
+  float gi_child_xs;
+  float gi_child_ys;
+  float gi_child_xt;
+  float gi_child_yt;
+
+  glw_rgb_t gi_color;
+
+  float gi_size_scale;
+  float gi_size_bias;
+
+} glw_image_t;
+
+static glw_class_t glw_image, glw_icon, glw_backdrop;
 
 static uint8_t texcords[9][8] = {
     { 0, 1,   1, 1,   1, 0,  0, 0},  // Normal
@@ -117,7 +164,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
   else
     alpha_self = rc->rc_alpha * w->glw_alpha * gi->gi_alpha_self;
 
-  if(w->glw_class == GLW_IMAGE || w->glw_class == GLW_ICON || 
+  if(w->glw_class == &glw_image || w->glw_class == &glw_icon || 
      !gi->gi_border_scaling) {
 
     rc0 = *rc;
@@ -126,7 +173,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 
     glw_align_1(&rc0, w->glw_alignment, GLW_ALIGN_CENTER);
       
-    if(w->glw_class == GLW_IMAGE || w->glw_class == GLW_ICON)
+    if(w->glw_class == &glw_image || w->glw_class == &glw_icon)
       glw_rescale(&rc0, glt->glt_aspect);
 
     if(gi->gi_angle != 0)
@@ -330,7 +377,7 @@ glw_image_update_constraints(glw_image_t *gi)
   glw_t *c;
   glw_root_t *gr = gi->w.glw_root;
 
-   if(gi->w.glw_class == GLW_BACKDROP) {
+   if(gi->w.glw_class == &glw_backdrop) {
 
     c = TAILQ_FIRST(&gi->w.glw_childs);
 
@@ -350,7 +397,7 @@ glw_image_update_constraints(glw_image_t *gi)
 			  0, 0, 0, 0);
     }
 
-  } else if(gi->w.glw_class == GLW_ICON) {
+  } else if(gi->w.glw_class == &glw_icon) {
 
     float siz = gi->gi_size_scale * gr->gr_fontsize_px + gi->gi_size_bias;
 
@@ -481,9 +528,6 @@ glw_image_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_LAYOUT:
     glw_image_layout(w, extra);
     break;
-  case GLW_SIGNAL_RENDER:
-    glw_image_render(w, extra);
-    return 1;
   case GLW_SIGNAL_DTOR:
     glw_image_dtor(w);
     break;
@@ -508,8 +552,8 @@ glw_image_callback(glw_t *w, void *opaque, glw_signal_t signal,
 /*
  *
  */
-void 
-glw_image_ctor(glw_t *w, int init, va_list ap)
+static void 
+glw_image_set(glw_t *w, int init, va_list ap)
 {
   glw_image_t *gi = (void *)w;
   glw_attribute_t attrib;
@@ -517,7 +561,6 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
   glw_root_t *gr = w->glw_root;
 
   if(init) {
-    glw_signal_handler_int(w, glw_image_callback);
     gi->gi_alpha_self = 1;
     gi->gi_color.r = 1.0;
     gi->gi_color.g = 1.0;
@@ -530,7 +573,7 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
       GLW_IMAGE_BORDER_TOP |
       GLW_IMAGE_BORDER_BOTTOM;
 
-    if(w->glw_class == GLW_IMAGE)
+    if(w->glw_class == &glw_image)
       glw_set_constraints(&gi->w, 0, 0, 1, 0, GLW_CONSTRAINT_A, 0); 
   }
 
@@ -632,9 +675,52 @@ glw_image_ctor(glw_t *w, int init, va_list ap)
     }
   } while(attrib);
 
-  if(w->glw_class == GLW_ICON) {
+  if(w->glw_class == &glw_icon) {
     float siz = gi->gi_size_scale * gr->gr_fontsize_px + gi->gi_size_bias;
     glw_set_constraints(&gi->w, siz, siz, 0, 0,
 			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
   }
 }
+
+
+
+/**
+ *
+ */
+static glw_class_t glw_image = {
+  .gc_name = "image",
+  .gc_instance_size = sizeof(glw_image_t),
+  .gc_render = glw_image_render,
+  .gc_set = glw_image_set,
+  .gc_signal_handler = glw_image_callback,
+};
+
+GLW_REGISTER_CLASS(glw_image);
+
+
+/**
+ *
+ */
+static glw_class_t glw_icon = {
+  .gc_name = "icon",
+  .gc_instance_size = sizeof(glw_image_t),
+  .gc_render = glw_image_render,
+  .gc_set = glw_image_set,
+  .gc_signal_handler = glw_image_callback,
+};
+
+GLW_REGISTER_CLASS(glw_icon);
+
+
+/**
+ *
+ */
+static glw_class_t glw_backdrop = {
+  .gc_name = "backdrop",
+  .gc_instance_size = sizeof(glw_image_t),
+  .gc_render = glw_image_render,
+  .gc_set = glw_image_set,
+  .gc_signal_handler = glw_image_callback,
+};
+
+GLW_REGISTER_CLASS(glw_backdrop);

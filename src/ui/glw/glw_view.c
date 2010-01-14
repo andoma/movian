@@ -27,6 +27,55 @@
 #include "glw.h"
 #include "glw_view.h"
 
+
+/**
+ *
+ */
+static int
+glw_view_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
+{
+  glw_t *c = TAILQ_FIRST(&w->glw_childs);
+
+  switch(signal) {
+  case GLW_SIGNAL_LAYOUT:
+  case GLW_SIGNAL_EVENT:
+    if(c != NULL)
+      return glw_signal0(c, signal, extra);
+    return 0;
+
+  case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
+    glw_copy_constraints(w, extra);
+    return 1;
+
+  default:
+    break;
+  }
+  return 0;
+}
+
+/**
+ *
+ */
+static void
+glw_view_render(glw_t *w, glw_rctx_t *rc)
+{
+  glw_t *c = TAILQ_FIRST(&w->glw_childs);
+  if(c != NULL)
+    c->glw_class->gc_render(c, rc);
+}
+
+
+/**
+ *
+ */
+static glw_class_t glw_view = {
+  .gc_name = "view",
+  .gc_instance_size = sizeof(glw_t),
+  .gc_render = glw_view_render,
+  .gc_signal_handler = glw_view_callback,
+};
+
+
 /**
  *
  */
@@ -43,12 +92,21 @@ glw_view_error(glw_root_t *gr, errorinfo_t *ei, glw_t *parent)
 	   ei->file, ei->line, ei->error);
 
   return glw_create_i(gr,
-		      GLW_LABEL,
+		      glw_class_find_by_name("label"),
 		      GLW_ATTRIB_PARENT, parent,
 		      GLW_ATTRIB_CAPTION, buf,
 		      NULL);
 }
 
+
+/**
+ *
+ */
+typedef struct glw_cached_view {
+  LIST_ENTRY(glw_cached_view) gcv_link;
+  token_t *gcv_sof;
+  char *gcv_source;
+} glw_cached_view_t;
 
 /**
  *
@@ -62,14 +120,14 @@ glw_view_create(glw_root_t *gr, const char *src,
   errorinfo_t ei;
   glw_t *r;
   glw_view_eval_context_t ec;
-  glw_view_t *gm;
+  glw_cached_view_t *gcv;
 
-  LIST_FOREACH(gm, &gr->gr_views, gm_link) {
-    if(!strcmp(gm->gm_source, src))
+  LIST_FOREACH(gcv, &gr->gr_views, gcv_link) {
+    if(!strcmp(gcv->gcv_source, src))
       break;
   }
 
-  if(gm == NULL) {
+  if(gcv == NULL) {
     token_t *sof = calloc(1, sizeof(token_t));
     sof->type = TOKEN_START;
 #ifdef GLW_VIEW_ERRORINFO
@@ -93,23 +151,23 @@ glw_view_create(glw_root_t *gr, const char *src,
     }
 
     if(cache) {
-      gm = calloc(1, sizeof(glw_view_t));
-      gm->gm_sof = sof;
-      gm->gm_source = strdup(src);
-      LIST_INSERT_HEAD(&gr->gr_views, gm, gm_link);
-      t = glw_view_clone_chain(gm->gm_sof);
+      gcv = malloc(sizeof(glw_cached_view_t));
+      gcv->gcv_sof = sof;
+      gcv->gcv_source = strdup(src);
+      LIST_INSERT_HEAD(&gr->gr_views, gcv, gcv_link);
+      t = glw_view_clone_chain(gcv->gcv_sof);
     } else {
       t = sof;
     }
   } else {
-    t = glw_view_clone_chain(gm->gm_sof);
+    t = glw_view_clone_chain(gcv->gcv_sof);
   }
 
 
   memset(&ec, 0, sizeof(ec));
 
   r = glw_create_i(gr,
-		   GLW_VIEW,
+		   &glw_view,
 		   GLW_ATTRIB_CAPTION, src,
 		   GLW_ATTRIB_PARENT, parent,
 		   NULL);
@@ -129,40 +187,4 @@ glw_view_create(glw_root_t *gr, const char *src,
   return r;
 }
 
-
-/**
- *
- */
-static int
-glw_view_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
-{
-  glw_t *c = TAILQ_FIRST(&w->glw_childs);
-
-  switch(signal) {
-  case GLW_SIGNAL_LAYOUT:
-  case GLW_SIGNAL_RENDER:
-  case GLW_SIGNAL_EVENT:
-    if(c != NULL)
-      return glw_signal0(c, signal, extra);
-    return 0;
-
-  case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
-    glw_copy_constraints(w, extra);
-    return 1;
-
-  default:
-    break;
-  }
-  return 0;
-}
-
-/**
- *
- */
-void 
-glw_view_ctor(glw_t *w, int init, va_list ap)
-{
-  if(init)
-    glw_signal_handler_int(w, glw_view_callback);
-}
 

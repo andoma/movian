@@ -65,41 +65,6 @@ LIST_HEAD(glw_video_list, glw_video);
 #define GLW_SWAP(a, b) do { typeof(a) c = (b); (b) = (a); (a) = (c); } while(0)
 #define GLW_CLAMP(x, min, max) GLW_MIN(GLW_MAX((x), (min)), (max))
 
-typedef enum {
-  GLW_DUMMY,        /* Emtpy placeholder, wont render anything */
-  GLW_VIEW,
-  GLW_CONTAINER_X,  /* Horizonal weight based container */
-  GLW_CONTAINER_Y,  /* Vertical weight based container */
-  GLW_CONTAINER_Z,  /* Depth container */
-  GLW_LIST_X,
-  GLW_LIST_Y,
-  GLW_DECK,
-  GLW_EXPANDER_X,
-  GLW_EXPANDER_Y,
-  GLW_ANIMATOR,
-  GLW_IMAGE,
-  GLW_ICON,
-  GLW_BACKDROP,
-  GLW_LABEL,
-  GLW_TEXT,
-  GLW_INTEGER,
-  GLW_ROTATOR,      /* Rotating device */
-  GLW_CURSOR,
-  GLW_MIRROR,
-  GLW_FX_TEXROT,
-  GLW_VIDEO,
-  GLW_SLIDER_X,
-  GLW_SLIDER_Y,
-  GLW_LAYER,
-  GLW_SLIDESHOW,
-  GLW_FREEFLOAT,
-  GLW_ARRAY,
-  GLW_BLOOM,
-  GLW_CUBE,
-  GLW_DISPLACEMENT,
-  GLW_COVERFLOW,
-} glw_class_t;
-
 
 typedef enum {
   GLW_ATTRIB_END = 0,
@@ -187,6 +152,17 @@ typedef enum {
 
 
 /**
+ * Image flags
+ */
+#define GLW_IMAGE_MIRROR_X      0x1
+#define GLW_IMAGE_MIRROR_Y      0x2
+#define GLW_IMAGE_BORDER_LEFT   0x4
+#define GLW_IMAGE_BORDER_RIGHT  0x8
+#define GLW_IMAGE_BORDER_TOP    0x10
+#define GLW_IMAGE_BORDER_BOTTOM 0x20
+#define GLW_IMAGE_INFRONT       0x40
+
+/**
  * XXX Document these
  */
 typedef enum {
@@ -196,7 +172,6 @@ typedef enum {
   GLW_SIGNAL_ACTIVE,
   GLW_SIGNAL_INACTIVE,
   GLW_SIGNAL_LAYOUT,
-  GLW_SIGNAL_RENDER,
 
   GLW_SIGNAL_CHILD_CREATED,
   GLW_SIGNAL_CHILD_DESTROYED,
@@ -284,6 +259,70 @@ typedef struct {
 
 
 
+
+typedef int (glw_callback_t)(struct glw *w, void *opaque, 
+			     glw_signal_t signal, void *value);
+
+
+typedef enum {
+  GLW_ORIENTATION_NONE,
+  GLW_ORIENTATION_HORIZONTAL,
+  GLW_ORIENTATION_VERTICAL,
+} glw_orientation_t;
+
+
+/**
+ * GLW class definitions
+ */
+typedef struct glw_class {
+
+  const char *gc_name;
+  size_t gc_instance_size;
+  int gc_flags;
+#define GLW_NAVIGATION_SEARCH_BOUNDARY 0x1
+
+  glw_orientation_t gc_child_orientation;
+
+  /**
+   * Controls how navigation will filter a widget's children
+   * when searching for focus
+   */
+  enum {
+    GLW_NAV_DESCEND_ALL,
+    GLW_NAV_DESCEND_SELECTED,
+    GLW_NAV_DESCEND_FOCUSED,
+  } gc_nav_descend_mode;
+
+  /**
+   * Controls how navigation will search among a widget's children 
+   * when searching for focus
+   */
+  enum {
+    GLW_NAV_SEARCH_NONE,
+    GLW_NAV_SEARCH_BY_ORIENTATION,
+    GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING,
+    GLW_NAV_SEARCH_ARRAY,  // Special for array, not very elegant
+  } gc_nav_search_mode;
+
+
+  void (*gc_set)(struct glw *w, int init, va_list ap);
+  void (*gc_render)(struct glw *w, struct glw_rctx *rc);
+
+  glw_callback_t *gc_signal_handler;
+
+  LIST_ENTRY(glw_class) gc_link;
+
+} glw_class_t;
+
+void glw_register_class(glw_class_t *gc);
+
+#define GLW_REGISTER_CLASS(n) \
+static void  __attribute__((constructor)) widgetclassinit ## n(void) \
+{ glw_register_class(&n); }
+
+const glw_class_t *glw_class_find_by_name(const char *name);
+
+
 /**
  * GLW root context
  */
@@ -292,7 +331,7 @@ typedef struct glw_root {
 
   struct glw *gr_universe;
 
-  LIST_HEAD(, glw_view) gr_views;
+  LIST_HEAD(, glw_cached_view) gr_views;
 
   const char *gr_theme;
 
@@ -398,9 +437,6 @@ typedef struct glw_rctx {
 #endif
 
 
-typedef int (glw_callback_t)(struct glw *w, void *opaque, 
-			     glw_signal_t signal, void *value);
-
 /**
  * Signal handler
  */
@@ -419,7 +455,7 @@ LIST_HEAD(glw_signal_handler_list, glw_signal_handler);
  * GL widget
  */
 typedef struct glw {
-  glw_class_t glw_class;
+  const glw_class_t *glw_class;
   glw_root_t *glw_root;
   int glw_refcnt;
   prop_t *glw_originating_prop;  /* Source prop we spawned from */
@@ -737,10 +773,11 @@ int glw_signal0(glw_t *w, glw_signal_t sig, void *extra);
 int glw_widget_unproject(const float *m, float *x, float *y, 
 			 const float *p, const float *dir);
 
-glw_t *glw_create0(glw_root_t *gr, glw_class_t class, va_list ap);
+glw_t *glw_create0(glw_root_t *gr, const glw_class_t *class, va_list ap);
 
 glw_t *glw_create_i(glw_root_t *gr, 
-		    glw_class_t class, ...) __attribute__((__sentinel__(0)));
+		    const glw_class_t *class, ...)
+  __attribute__((__sentinel__(0)));
 
 #define glw_lock_assert() glw_lock_check(__FILE__, __LINE__)
 
@@ -809,7 +846,7 @@ void glw_signal_handler_unregister(glw_t *w, glw_callback_t *func,
 
 int glw_signal0(glw_t *w, glw_signal_t sig, void *extra);
 
-#define glw_render0(w, rc) glw_signal0(w, GLW_SIGNAL_RENDER, rc)
+#define glw_render0(w, rc) ((w)->glw_class->gc_render(w, rc))
 
 static inline void 
 glw_layout0(glw_t *w, glw_rctx_t *rc)
@@ -919,5 +956,7 @@ void glw_set_constraints(glw_t *w, int x, int y, float a, float weight,
 void glw_copy_constraints(glw_t *w, glw_t *src);
 
 void glw_clear_constraints(glw_t *w);
+
+int glw_array_get_xentries(glw_t *w);
 
 #endif /* GLW_H */

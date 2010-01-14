@@ -17,8 +17,22 @@
  */
 
 #include "glw.h"
-#include "glw_animator.h"
 #include "glw_transitions.h"
+
+
+typedef struct glw_animator {
+  glw_t w;
+  
+  struct prop *prop;
+  struct prop *prop_parent;
+
+  float delta;
+  float time;
+
+  glw_transition_type_t efx_conf;
+
+} glw_animator_t;
+
 
 #define glw_parent_anim_cur glw_parent_misc[0]
 #define glw_parent_anim_tgt glw_parent_misc[1]
@@ -31,8 +45,7 @@ glw_animator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_t *c, *n;
   glw_animator_t *a = (void *)w;
-  glw_rctx_t *rc = extra, rc0;
-  float alpha;
+  glw_rctx_t *rc = extra;
 
   switch(signal) {
   default:
@@ -59,24 +72,6 @@ glw_animator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     }
     return 0;
 
-  case GLW_SIGNAL_RENDER:
-    alpha = rc->rc_alpha * w->glw_alpha;
-    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-
-      rc0 = *rc;
-      if(c->glw_parent_anim_cur == 0) {
-	rc0.rc_alpha = alpha;
-	glw_render0(c, &rc0);
-	continue;
-      }
-
-      glw_PushMatrix(&rc0, rc);
-      glw_transition_render(a->efx_conf, c->glw_parent_anim_cur, alpha, &rc0);
-      glw_render0(c, &rc0);
-      glw_PopMatrix();
-    }
-    return 0;
-  
   case GLW_SIGNAL_DETACH_CHILD:
     c = extra;
     c->glw_parent_anim_tgt = 1;
@@ -118,11 +113,40 @@ glw_animator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   return 0;
 }
 
+
 /**
  *
  */
-void 
-glw_animator_ctor(glw_t *w, int init, va_list ap)
+static void
+glw_animator_render(glw_t *w, glw_rctx_t *rc)
+{
+  float alpha = rc->rc_alpha * w->glw_alpha;
+  glw_animator_t *a = (glw_animator_t *)w;
+  glw_t *c;
+  glw_rctx_t rc0;
+
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    
+    rc0 = *rc;
+    if(c->glw_parent_anim_cur == 0) {
+      rc0.rc_alpha = alpha;
+      glw_render0(c, &rc0);
+      continue;
+    }
+    
+    glw_PushMatrix(&rc0, rc);
+    glw_transition_render(a->efx_conf, c->glw_parent_anim_cur, alpha, &rc0);
+    glw_render0(c, &rc0);
+    glw_PopMatrix();
+  }
+}
+
+
+/**
+ *
+ */
+static void 
+glw_animator_set(glw_t *w, int init, va_list ap)
 {
   glw_animator_t *a = (void *)w;
 
@@ -130,10 +154,8 @@ glw_animator_ctor(glw_t *w, int init, va_list ap)
   const char *filename = NULL;
   glw_t *c;
 
-  if(init) {
-    glw_signal_handler_int(w, glw_animator_callback);
+  if(init)
     a->time = 1.0;
-  }
 
   do {
     attrib = va_arg(ap, int);
@@ -175,3 +197,16 @@ glw_animator_ctor(glw_t *w, int init, va_list ap)
   }
 }
 
+
+/**
+ *
+ */
+static glw_class_t glw_animator = {
+  .gc_name = "animator",
+  .gc_instance_size = sizeof(glw_animator_t),
+  .gc_set = glw_animator_set,
+  .gc_render = glw_animator_render,
+  .gc_signal_handler = glw_animator_callback,
+};
+
+GLW_REGISTER_CLASS(glw_animator);

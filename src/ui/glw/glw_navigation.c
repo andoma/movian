@@ -18,14 +18,13 @@
 
 #include "glw.h"
 #include "glw_event.h"
-#include "glw_array.h"
+//#include "glw_array.h"
 
 typedef struct query {
   float x, xmin, xmax;
   float y, ymin, ymax;
 
   int direction;
-  int orientation;
 
   glw_t *best;
   float score;
@@ -38,7 +37,7 @@ typedef struct query {
  *
  */
 static float
-compute_position(glw_t *w, int horizontal)
+compute_position(glw_t *w, glw_orientation_t o)
 {
   glw_t *p, *c;
   float a, x;
@@ -46,21 +45,9 @@ compute_position(glw_t *w, int horizontal)
   x = 0;
 
   for(; (p = w->glw_parent) != NULL; w = p) {
-    switch(p->glw_class) {
-    case GLW_CONTAINER_X:
-      if(!horizontal)
-	continue;
-      break;
-
-    case GLW_CONTAINER_Y:
-      if(horizontal)
-	continue;
-      break;
-
-    default:
+    if(p->glw_class->gc_child_orientation != o)
       continue;
-    }
-    
+
     a = w->glw_norm_weight / 2;
 
     TAILQ_FOREACH(c, &p->glw_childs, glw_parent_link) {
@@ -86,8 +73,8 @@ find_candidate(glw_t *w, query_t *query)
 
   if(glw_is_focusable(w)) {
     
-    x = compute_position(w, 1);
-    y = compute_position(w, 0);
+    x = compute_position(w, GLW_ORIENTATION_HORIZONTAL);
+    y = compute_position(w, GLW_ORIENTATION_VERTICAL);
 
     dx = query->x - x;
     dy = query->y - y;
@@ -99,29 +86,19 @@ find_candidate(glw_t *w, query_t *query)
     }
   }
 
-  switch(w->glw_class) {
-  default:
-    return;
+  switch(w->glw_class->gc_nav_descend_mode) {
 
-  case GLW_DECK:
+  case GLW_NAV_DESCEND_ALL:
+    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
+      find_candidate(c, query);
+    break;
+    
+  case GLW_NAV_DESCEND_SELECTED:
     if((c = w->glw_selected) != NULL)
       find_candidate(c, query);
     break;
 
-  case GLW_ANIMATOR:
-  case GLW_IMAGE:
-  case GLW_ICON:
-  case GLW_BACKDROP:
-  case GLW_BLOOM:
-  case GLW_VIEW:
-    if((c = TAILQ_FIRST(&w->glw_childs)) != NULL)
-      find_candidate(c, query);
-    break;
-
-  case GLW_ARRAY:
-  case GLW_COVERFLOW:
-  case GLW_LIST_X:
-  case GLW_LIST_Y:
+  case GLW_NAV_DESCEND_FOCUSED:
     if(w->glw_focused) {
       c = w->glw_focused;
     } else if(query->direction) {
@@ -131,19 +108,6 @@ find_candidate(glw_t *w, query_t *query)
     }
 
     if(c != NULL)
-      find_candidate(c, query);
-    break;
-
-  case GLW_CONTAINER_Z:
-    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-      find_candidate(c, query);
-    break;
-
-  case GLW_EXPANDER_X:
-  case GLW_EXPANDER_Y:
-  case GLW_CONTAINER_X:
-  case GLW_CONTAINER_Y:
-    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
       find_candidate(c, query);
     break;
   }
@@ -158,14 +122,14 @@ glw_navigate(glw_t *w, event_t *e, int local)
   glw_t  *p, *c, *t = NULL, *d;
   float x, y;
   int direction;
-  int orientation;
+  glw_orientation_t orientation;
   int pagemode = 0;
   int pagecnt;
   query_t query;
 
 
-  x = compute_position(w, 1);
-  y = compute_position(w, 0);
+  x = compute_position(w, GLW_ORIENTATION_HORIZONTAL);
+  y = compute_position(w, GLW_ORIENTATION_VERTICAL);
 
   memset(&query, 0, sizeof(query));
 
@@ -186,8 +150,8 @@ glw_navigate(glw_t *w, event_t *e, int local)
     return 1;
 
   } else if(event_is_action(e, ACTION_UP)) {
-
-    orientation = 0;
+    printf("up!\n");
+    orientation = GLW_ORIENTATION_VERTICAL;
     direction   = 0;
 
     query.xmin = -1;
@@ -197,7 +161,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
   } else if(event_is_action(e, ACTION_PAGE_UP)) {
 
-    orientation = 0;
+    orientation = GLW_ORIENTATION_VERTICAL;
     direction   = 0;
     pagemode    = 1;
 
@@ -208,7 +172,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
   } else if(event_is_action(e, ACTION_TOP)) {
 
-    orientation = 0;
+    orientation = GLW_ORIENTATION_VERTICAL;
     direction   = 0;
     pagemode    = 2;
 
@@ -220,7 +184,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
   } else if(event_is_action(e, ACTION_DOWN)) {
 
-    orientation = 0;
+    orientation = GLW_ORIENTATION_VERTICAL;
     direction   = 1;
 
     query.xmin = -1;
@@ -230,7 +194,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
   } else if(event_is_action(e, ACTION_PAGE_DOWN)) {
 
-    orientation = 0;
+    orientation = GLW_ORIENTATION_VERTICAL;
     direction   = 1;
     pagemode    = 1;
 
@@ -241,7 +205,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
   } else if(event_is_action(e, ACTION_BOTTOM)) {
 
-    orientation = 0;
+    orientation = GLW_ORIENTATION_VERTICAL;
     direction   = 1;
     pagemode    = 2;
 
@@ -252,7 +216,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
   } else if(event_is_action(e, ACTION_LEFT)) {
 
-    orientation = 1;
+    orientation = GLW_ORIENTATION_HORIZONTAL;
     direction   = 0;
 
     query.xmin = -1;
@@ -262,7 +226,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
   } else if(event_is_action(e, ACTION_RIGHT)) {
 
-    orientation = 1;
+    orientation = GLW_ORIENTATION_HORIZONTAL;
     direction   = 1;
 
     query.xmin = x + 0.0001;
@@ -276,84 +240,56 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
   }
 
-
-  query.orientation = orientation;
   query.direction   = direction;
   pagecnt = 10;
 
   c = NULL;
   for(; (p = w->glw_parent) != NULL; w = p) {
 
-    if(local) {
-      switch(w->glw_class) {
-      case GLW_ARRAY:
-      case GLW_LIST_X:
-      case GLW_COVERFLOW:
-      case GLW_LIST_Y:
-	return 0;
-      default:
-	break;
-      }
-    }
+    if(local && w->glw_class->gc_flags & GLW_NAVIGATION_SEARCH_BOUNDARY)
+      return 0;
 
-    glw_array_t *a = (glw_array_t *)p;
- 
-    switch(p->glw_class) {
-      
-    default:
-
-    case GLW_ANIMATOR:
-    case GLW_IMAGE:
-    case GLW_ICON:
-    case GLW_BACKDROP:
-    case GLW_DECK:
-    case GLW_VIEW:
-    case GLW_BLOOM:
-    case GLW_CONTAINER_Z:
-    case GLW_EXPANDER_X:
-    case GLW_EXPANDER_Y:
+    switch(p->glw_class->gc_nav_search_mode) {
+    case GLW_NAV_SEARCH_NONE:
       break;
 
-    case GLW_ARRAY:
-      if(orientation == 0 && direction == 0 && w->glw_flags & GLW_TOP_EDGE)
+    case GLW_NAV_SEARCH_ARRAY:
+
+      if(orientation == GLW_ORIENTATION_VERTICAL
+	 && direction == 0 && w->glw_flags & GLW_TOP_EDGE)
 	break;
-      if(orientation == 0 && direction == 1 && w->glw_flags & GLW_BOTTOM_EDGE)
+      if(orientation == GLW_ORIENTATION_VERTICAL
+	 && direction == 1 && w->glw_flags & GLW_BOTTOM_EDGE)
 	break;
-      if(orientation == 1 && direction == 0 && w->glw_flags & GLW_LEFT_EDGE)
+      if(orientation == GLW_ORIENTATION_HORIZONTAL &&
+	 direction == 0 && w->glw_flags & GLW_LEFT_EDGE)
 	break;
-      if(orientation == 1 && direction == 1 && w->glw_flags & GLW_RIGHT_EDGE)
+      if(orientation == GLW_ORIENTATION_HORIZONTAL &&
+	 direction == 1 && w->glw_flags & GLW_RIGHT_EDGE)
 	break;
 
       if(orientation == 0) {
+
+	int xentries = glw_array_get_xentries(p);
+
 	if(pagemode == 0) {
 	  pagemode = 1;
-	  pagecnt = a->xentries;
+	  pagecnt = xentries;
 	} else if(pagemode == 1) {
-	  pagecnt *= a->xentries;
+	  pagecnt *= xentries;
 	}
       }
       goto container;
 
-    case GLW_CONTAINER_X:
-    case GLW_CONTAINER_Y:
+
+    case GLW_NAV_SEARCH_BY_ORIENTATION:
       if(pagemode)
 	break;
-
-      if(p->glw_class == (orientation ? GLW_CONTAINER_X : GLW_CONTAINER_Y))
-	goto container;
-      break;
-	      
-    case GLW_COVERFLOW:
-      if(orientation)
-	goto container;
-      break;
-      
-    case GLW_LIST_X:
-    case GLW_LIST_Y:
-      if(p->glw_class != (orientation ? GLW_LIST_X : GLW_LIST_Y))
+      /* FALLTHROUGH */
+    case GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING:
+      if(p->glw_class->gc_child_orientation != orientation)
 	break;
-
-      container:
+    container:
       c = w;
       while(1) {
 	if(direction == 1) {

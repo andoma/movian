@@ -261,22 +261,9 @@ int glw_view_preproc(glw_root_t *gr, token_t *p, errorinfo_t *ei);
 
 token_t *glw_view_clone_chain(token_t *src);
 
-struct glw;
-void glw_view_ctor(struct glw *w, int init, va_list ap);
 
 struct glw_prop_sub_list;
 void glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l);
-
-
-/**
- *
- */
-typedef struct glw_view {
-  LIST_ENTRY(glw_view) gm_link;
-  token_t *gm_sof;
-  char *gm_source;
-} glw_view_t;
-
 
 
 #endif /* GLW_VIEW_H */

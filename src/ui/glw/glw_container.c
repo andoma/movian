@@ -17,7 +17,23 @@
  */
 
 #include "glw.h"
-#include "glw_container.h"
+
+typedef struct glw_container {
+  glw_t w;
+  
+  int cflags;
+  int x_sum;
+  int y_sum;
+  float weight_sum;
+  float aspect_sum;
+
+  int16_t co_padding_left;
+  int16_t co_padding_right;
+  int16_t co_padding_top;
+  int16_t co_padding_bottom;
+
+} glw_container_t;
+
 
 /**
  *
@@ -358,10 +374,6 @@ glw_container_callback(glw_t *w, void *opaque, glw_signal_t signal,
   glw_t *c;
 
   switch(signal) {
-  case GLW_SIGNAL_RENDER:
-    glw_container_render(w, extra);
-    break;
-
   case GLW_SIGNAL_EVENT:
     TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
       if(glw_signal0(c, GLW_SIGNAL_EVENT, extra))
@@ -428,31 +440,14 @@ glw_container_z_callback(glw_t *w, void *opaque, glw_signal_t signal,
 }
 
 
-
-void 
-glw_container_ctor(glw_t *w, int init, va_list ap)
+/**
+ *
+ */
+static void
+glw_container_set(glw_t *w, int init, va_list ap)
 {
   glw_attribute_t attrib;
   glw_container_t *co = (glw_container_t *)w;
-
-  if(init) {
-    switch(w->glw_class) {
-    default:
-      abort();
-
-    case GLW_CONTAINER_X:
-      glw_signal_handler_int(w, glw_container_x_callback);
-      break;
-
-    case GLW_CONTAINER_Y:
-      glw_signal_handler_int(w, glw_container_y_callback);
-      break;
-      
-    case GLW_CONTAINER_Z:
-      glw_signal_handler_int(w, glw_container_z_callback);
-      break;
-    }
-  }
 
   do {
     attrib = va_arg(ap, int);
@@ -470,5 +465,42 @@ glw_container_ctor(glw_t *w, int init, va_list ap)
       break;
     }
   } while(attrib);
-
 }
+
+
+/**
+ *
+ */
+static glw_class_t glw_container_x = {
+  .gc_name = "container_x",
+  .gc_instance_size = sizeof(glw_container_t),
+  .gc_set = glw_container_set,
+  .gc_render = glw_container_render,
+  .gc_signal_handler = glw_container_x_callback,
+  .gc_child_orientation = GLW_ORIENTATION_HORIZONTAL,
+  .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION,
+};
+
+static glw_class_t glw_container_y = {
+  .gc_name = "container_y",
+  .gc_instance_size = sizeof(glw_container_t),
+  .gc_set = glw_container_set,
+  .gc_render = glw_container_render,
+  .gc_signal_handler = glw_container_y_callback,
+  .gc_child_orientation = GLW_ORIENTATION_VERTICAL,
+  .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION,
+};
+
+static glw_class_t glw_container_z = {
+  .gc_name = "container_z",
+  .gc_instance_size = sizeof(glw_container_t),
+  .gc_set = glw_container_set,
+  .gc_render = glw_container_render,
+  .gc_signal_handler = glw_container_z_callback,
+};
+
+
+
+GLW_REGISTER_CLASS(glw_container_x);
+GLW_REGISTER_CLASS(glw_container_y);
+GLW_REGISTER_CLASS(glw_container_z);

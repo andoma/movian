@@ -133,8 +133,7 @@ glw_event_find_target2(glw_t *w, glw_t *forbidden, const char *id)
   if(w->glw_id != NULL && !strcmp(w->glw_id, id))
     return w;
 
-  if(w->glw_class == GLW_LIST_X ||
-     w->glw_class == GLW_LIST_Y/* || w->glw_class == GLW_ARRAY */)
+  if(w->glw_class->gc_flags & GLW_NAVIGATION_SEARCH_BOUNDARY)
     return NULL;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {

@@ -17,16 +17,15 @@
  */
 
 #include "glw.h"
-#include "glw_rotator.h"
 
-/*
+/**
  *
  */
 static int
 glw_rotator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_t *c;
-  glw_rctx_t *rc, rc0;
+  glw_rctx_t *rc;
 
   switch(signal) {
   default:
@@ -38,33 +37,43 @@ glw_rotator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     if(c != NULL)
       glw_layout0(c, rc);
     break;
-
-  case GLW_SIGNAL_RENDER:
-    rc = extra;
-
-    c = TAILQ_FIRST(&w->glw_childs);
-    if(c == NULL)
-      break;
-
-    rc0 = *rc;
-
-    glw_PushMatrix(&rc0, rc);
-    glw_Scalef(&rc0, 0.8, 0.8, 0.8);
-    glw_rescale(&rc0, 1.0f);
-
-
-    glw_Rotatef(&rc0, w->glw_extra, 0.0, 0.0f, 1.0f);
-
-    glw_render0(c, &rc0);
-    glw_PopMatrix();
-    break;
   }
   return 0;
 }
 
-void 
-glw_rotator_ctor(glw_t *w, int init, va_list ap)
+/**
+ *
+ */
+static void
+glw_rotator_render(glw_t *w, glw_rctx_t *rc)
 {
-  if(init)
-    glw_signal_handler_int(w, glw_rotator_callback);
+  glw_t *c;
+  glw_rctx_t rc0;
+
+  if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)
+    return;
+
+  rc0 = *rc;
+
+  glw_PushMatrix(&rc0, rc);
+  glw_Scalef(&rc0, 0.8, 0.8, 0.8);
+  glw_rescale(&rc0, 1.0f);
+
+  glw_Rotatef(&rc0, w->glw_extra, 0.0, 0.0f, 1.0f);
+
+  glw_render0(c, &rc0);
+  glw_PopMatrix();
 }
+
+
+/**
+ *
+ */
+static glw_class_t glw_rotator = {
+  .gc_name = "rotator",
+  .gc_instance_size = sizeof(glw_t),
+  .gc_render = glw_rotator_render,
+  .gc_signal_handler = glw_rotator_callback,
+};
+
+GLW_REGISTER_CLASS(glw_rotator);

@@ -20,7 +20,42 @@
 #include <string.h>
 
 #include "glw.h"
-#include "glw_fx_texrot.h"
+
+
+#include "glw_texture.h"
+
+struct fxplate {
+  float angle;
+  float inc;
+
+  float x, y;
+};
+
+#define FX_NPLATES 10
+
+typedef struct glw_fx_texrot {
+  glw_t w;
+
+  glw_loadable_texture_t *fx_tex;
+
+  int fx_source_render_initialized;
+  glw_renderer_t fx_source_render;
+
+
+  struct fxplate fx_plates[10];
+
+  glw_gf_ctrl_t fx_flushctrl;
+
+  int fx_rtt_initialized;
+  glw_rtt_t fx_rtt;
+
+  int fx_render_initialized;
+  glw_renderer_t fx_render;
+
+  int fx_need_render;
+
+} glw_fx_texrot_t;
+
 
 /**
  *
@@ -207,9 +242,6 @@ glw_fx_texrot_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_LAYOUT:
     glw_fx_texrot_layout(w, extra);
     break;
-  case GLW_SIGNAL_RENDER:
-    glw_fx_texrot_render(w, extra);
-    break;
   case GLW_SIGNAL_DTOR:
     glw_fx_texrot_dtor(w);
     break;
@@ -236,15 +268,14 @@ fxflush(void *aux)
 /*
  *
  */
-void 
-glw_fx_texrot_ctor(glw_t *w, int init, va_list ap)
+static void 
+glw_fx_texrot_set(glw_t *w, int init, va_list ap)
 {
   glw_fx_texrot_t *fx = (void *)w;
   glw_attribute_t attrib;
   const char *filename = NULL;
 
   if(init) {
-    glw_signal_handler_int(w, glw_fx_texrot_callback);
     glw_fx_texrot_init(fx);
 
     /* Flush due to opengl shutdown */
@@ -274,3 +305,17 @@ glw_fx_texrot_ctor(glw_t *w, int init, va_list ap)
 
   fx->fx_tex = glw_tex_create(w->glw_root, filename);
 }
+
+
+/**
+ *
+ */
+static glw_class_t glw_fx_texrot = {
+  .gc_name = "fx_texrot",
+  .gc_instance_size = sizeof(glw_fx_texrot_t),
+  .gc_set = glw_fx_texrot_set,
+  .gc_render = glw_fx_texrot_render,
+  .gc_signal_handler = glw_fx_texrot_callback,
+};
+
+GLW_REGISTER_CLASS(glw_fx_texrot);

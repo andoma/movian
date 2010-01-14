@@ -17,7 +17,34 @@
  */
 
 #include "glw.h"
-#include "glw_slider.h"
+
+/**
+ *
+ */
+typedef struct {
+  glw_t w;
+
+  float knob_pos;
+  float knob_size;
+  float value;
+
+  float min, max, step, step_i;
+
+  int fixed_knob_size;
+
+  prop_sub_t *sub;
+  prop_t *p;
+  float grab_delta;
+
+  glw_t *bound_widget;
+
+} glw_slider_t;
+
+
+/**
+ *
+ */
+static glw_class_t glw_slider_x, glw_slider_y;
 
 /**
  *
@@ -58,12 +85,12 @@ glw_slider_layout(glw_t *w, glw_rctx_t *rc)
 
   } else if(c->glw_req_aspect > 0) {
     s->knob_size = rc->rc_size_y * c->glw_req_aspect / rc->rc_size_x;
-  } else if(c->glw_req_size_x && w->glw_class == GLW_SLIDER_X) {
+  } else if(c->glw_req_size_x && w->glw_class == &glw_slider_x) {
     s->knob_size = c->glw_req_size_x / rc->rc_size_x;
-  } else if(c->glw_req_size_y && w->glw_class == GLW_SLIDER_Y) {
+  } else if(c->glw_req_size_y && w->glw_class == &glw_slider_y) {
     s->knob_size = c->glw_req_size_y / rc->rc_size_y;
   } else {
-    if(w->glw_class == GLW_SLIDER_X)
+    if(w->glw_class == &glw_slider_x)
       s->knob_size = rc->rc_size_y / rc->rc_size_x;
     else
       s->knob_size = rc->rc_size_x / rc->rc_size_y;
@@ -74,7 +101,7 @@ glw_slider_layout(glw_t *w, glw_rctx_t *rc)
 
   rc0 = *rc;
 
-  if(w->glw_class == GLW_SLIDER_X)
+  if(w->glw_class == &glw_slider_x)
     rc0.rc_size_x *= s->knob_size;
   else
     rc0.rc_size_y *= s->knob_size;
@@ -87,7 +114,7 @@ glw_slider_layout(glw_t *w, glw_rctx_t *rc)
  *
  */
 static void
-glw_slider_render(glw_t *w, glw_rctx_t *rc)
+glw_slider_render_x(glw_t *w, glw_rctx_t *rc)
 {
   glw_slider_t *s = (glw_slider_t *)w;
   glw_t *c;
@@ -96,24 +123,50 @@ glw_slider_render(glw_t *w, glw_rctx_t *rc)
   if(glw_is_focusable(w))
     glw_store_matrix(w, rc);
 
+  if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)
+    return;
+
   rc0 = *rc;
   rc0.rc_alpha *= w->glw_alpha;
 
   glw_PushMatrix(&rc0, rc);
 
-  if(w->glw_class == GLW_SLIDER_X) {
-    glw_Translatef(&rc0, s->knob_pos, 0, 0);
-    rc0.rc_size_x *= s->knob_size;
-    glw_Scalef(&rc0, s->knob_size, 1.0, 1.0);
-  } else {
-    glw_Translatef(&rc0, 0, -s->knob_pos, 0);
-    rc0.rc_size_y *= s->knob_size;
-    glw_Scalef(&rc0, 1.0, s->knob_size, 1.0);
-  }
+  glw_Translatef(&rc0, s->knob_pos, 0, 0);
+  rc0.rc_size_x *= s->knob_size;
+  glw_Scalef(&rc0, s->knob_size, 1.0, 1.0);
 
-  if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
-    glw_render0(c, &rc0);
-  }
+  c->glw_class->gc_render(c, &rc0);
+
+  glw_PopMatrix();
+}
+
+
+/**
+ *
+ */
+static void
+glw_slider_render_y(glw_t *w, glw_rctx_t *rc)
+{
+  glw_slider_t *s = (glw_slider_t *)w;
+  glw_t *c;
+  glw_rctx_t rc0;
+
+  if(glw_is_focusable(w))
+    glw_store_matrix(w, rc);
+
+  if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)
+    return;
+
+  rc0 = *rc;
+  rc0.rc_alpha *= w->glw_alpha;
+
+  glw_PushMatrix(&rc0, rc);
+
+  glw_Translatef(&rc0, 0, -s->knob_pos, 0);
+  rc0.rc_size_y *= s->knob_size;
+  glw_Scalef(&rc0, 1.0, s->knob_size, 1.0);
+
+  c->glw_class->gc_render(c, &rc0);
 
   glw_PopMatrix();
 }
@@ -185,7 +238,7 @@ pointer_event(glw_t *w, glw_pointer_event_t *gpe)
   glw_root_t *gr = w->glw_root;
   glw_slider_t *s = (glw_slider_t *)w;
   int hitpos = 0;
-  float v0 = w->glw_class == GLW_SLIDER_X ? gpe->x : -gpe->y;
+  float v0 = w->glw_class == &glw_slider_x ? gpe->x : -gpe->y;
 
   if(v0 < s->knob_pos - s->knob_size)
     hitpos = -1;
@@ -283,12 +336,8 @@ glw_slider_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     glw_slider_layout(w, extra);
     break;
 
-  case GLW_SIGNAL_RENDER:
-    glw_slider_render(w, extra);
-    break;
-
   case GLW_SIGNAL_EVENT:
-    if(w->glw_class == GLW_SLIDER_X)
+    if(w->glw_class == &glw_slider_x)
       return glw_slider_event_x(w, extra);
     else
       return glw_slider_event_y(w, extra);
@@ -303,7 +352,7 @@ glw_slider_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
     c = extra;
     
-    if(w->glw_class == GLW_SLIDER_Y) {
+    if(w->glw_class == &glw_slider_y) {
       glw_set_constraints(w, c->glw_req_size_x, 0, 0, 0, GLW_CONSTRAINT_X, 0);
     } else {
       glw_set_constraints(w, 0, c->glw_req_size_y, 0, 0, GLW_CONSTRAINT_Y, 0);
@@ -395,8 +444,8 @@ slider_bind_by_id(glw_slider_t *s, const char *name)
 /**
  *
  */
-void
-glw_slider_ctor(glw_t *w, int init, va_list ap)
+static void
+glw_slider_set(glw_t *w, int init, va_list ap)
 {
   glw_slider_t *s = (glw_slider_t *)w;
   glw_attribute_t attrib;
@@ -460,3 +509,25 @@ glw_slider_ctor(glw_t *w, int init, va_list ap)
     }
   } while(attrib);
 }
+
+
+
+
+static glw_class_t glw_slider_x = {
+  .gc_name = "slider_x",
+  .gc_instance_size = sizeof(glw_slider_t),
+  .gc_render = glw_slider_render_x,
+  .gc_set = glw_slider_set,
+  .gc_signal_handler = glw_slider_callback,
+};
+
+static glw_class_t glw_slider_y = {
+  .gc_name = "slider_y",
+  .gc_instance_size = sizeof(glw_slider_t),
+  .gc_render = glw_slider_render_y,
+  .gc_set = glw_slider_set,
+  .gc_signal_handler = glw_slider_callback,
+};
+
+GLW_REGISTER_CLASS(glw_slider_x);
+GLW_REGISTER_CLASS(glw_slider_y);

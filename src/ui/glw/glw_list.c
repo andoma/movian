@@ -17,7 +17,20 @@
  */
 
 #include "glw.h"
-#include "glw_list.h"
+
+typedef struct glw_list {
+  glw_t w;
+
+  float child_aspect;
+
+  float center_y, center_y_target, center_y_max;
+  float center_x, center_x_target, center_x_max;
+
+  glw_t *scroll_to_me;
+
+  glw_slider_metrics_t metrics;
+
+} glw_list_t;
 
 #define glw_parent_size_x glw_parent_misc[0]
 #define glw_parent_size_y glw_parent_misc[1]
@@ -65,7 +78,7 @@ glw_list_update_metrics(glw_list_t *l, float max, float val)
 /**
  *
  */
-static void
+static int
 glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
 {
   glw_t *c, *w = &l->w;
@@ -133,6 +146,7 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
 
   if(l->w.glw_flags & GLW_UPDATE_METRICS)
     glw_list_update_metrics(l, y, t);
+  return 0;
 }
 
 
@@ -140,7 +154,7 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
 /**
  *
  */
-static void
+static int
 glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
 {
   glw_t *c, *w = &l->w;
@@ -203,6 +217,7 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
 
   if(l->w.glw_flags & GLW_UPDATE_METRICS)
     glw_list_update_metrics(l, x, t);
+  return 0;
 }
 
 
@@ -210,23 +225,14 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
  *
  */
 static void
-glw_list_render(glw_list_t *l, glw_rctx_t *rc)
+glw_list_render(glw_t *w, glw_rctx_t *rc)
 {
-  glw_t *c, *w = &l->w;
+  glw_t *c;
   glw_rctx_t rc0;
-  int clip1, clip2;
   if(rc->rc_alpha < 0.01)
     return;
 
   glw_store_matrix(w, rc);
-  
-  if(w->glw_class == GLW_LIST_X) {
-    clip1 = glw_clip_enable(rc, GLW_CLIP_LEFT);
-    clip2 = glw_clip_enable(rc, GLW_CLIP_RIGHT);
-  } else {
-    clip1 = glw_clip_enable(rc, GLW_CLIP_TOP);
-    clip2 = glw_clip_enable(rc, GLW_CLIP_BOTTOM);
-  }
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
@@ -243,9 +249,6 @@ glw_list_render(glw_list_t *l, glw_rctx_t *rc)
       c->glw_flags |= GLW_FOCUS_BLOCKED;
     }
   }
-
-  glw_clip_disable(rc, clip1);
-  glw_clip_disable(rc, clip2);
 }
 
 
@@ -253,12 +256,36 @@ glw_list_render(glw_list_t *l, glw_rctx_t *rc)
  *
  */
 static void
+glw_list_render_x(glw_t *w, glw_rctx_t *rc)
+{
+  int l = glw_clip_enable(rc, GLW_CLIP_LEFT);
+  int r = glw_clip_enable(rc, GLW_CLIP_RIGHT);
+  glw_list_render(w, rc);
+  glw_clip_disable(rc, l);
+  glw_clip_disable(rc, r);
+}
+
+/**
+ *
+ */
+static void
+glw_list_render_y(glw_t *w, glw_rctx_t *rc)
+{
+  int t = glw_clip_enable(rc, GLW_CLIP_TOP);
+  int b = glw_clip_enable(rc, GLW_CLIP_BOTTOM);
+  glw_list_render(w, rc);
+  glw_clip_disable(rc, t);
+  glw_clip_disable(rc, b);
+}
+
+/**
+ *
+ */
+static void
 glw_list_scroll(glw_list_t *l, glw_scroll_t *gs)
 {
-  if(l->w.glw_class == GLW_LIST_Y)
-    l->center_y_target = gs->value * l->center_y_max;
-  else
-    l->center_x_target = gs->value * l->center_x_max;
+  l->center_y_target = gs->value * l->center_y_max;
+  l->center_x_target = gs->value * l->center_x_max;
 }
 
 
@@ -268,7 +295,6 @@ glw_list_scroll(glw_list_t *l, glw_scroll_t *gs)
 static int
 glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
-  glw_rctx_t *rc = extra;
   glw_list_t *l = (void *)w;
   glw_pointer_event_t *gpe;
   glw_t *c;
@@ -276,16 +302,6 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   switch(signal) {
   default:
     break;
-  case GLW_SIGNAL_LAYOUT:
-    if(w->glw_class == GLW_LIST_Y)
-      glw_list_layout_y(l, rc);
-    else
-      glw_list_layout_x(l, rc);
-    return 0;
-
-  case GLW_SIGNAL_RENDER:
-    glw_list_render(l, rc);
-    return 0;
 
   case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
     l->scroll_to_me = extra;
@@ -323,20 +339,38 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   return 0;
 }
 
+/**
+ *
+ */
+static int
+glw_list_callback_x(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
+{
+  if(signal == GLW_SIGNAL_LAYOUT)
+    return glw_list_layout_x((glw_list_t *)w, extra);
+  else
+    return glw_list_callback(w, opaque, signal, extra);
+}
 
 /**
  *
  */
-void 
-glw_list_ctor(glw_t *w, int init, va_list ap)
+static int
+glw_list_callback_y(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
-  glw_list_t *l = (void *)w;
-  glw_attribute_t attrib;
+  if(signal == GLW_SIGNAL_LAYOUT)
+    return glw_list_layout_y((glw_list_t *)w, extra);
+  else
+    return glw_list_callback(w, opaque, signal, extra);
+}
 
-  if(init) {
-    glw_signal_handler_int(w, glw_list_callback);
-    l->child_aspect = w->glw_class == GLW_LIST_Y ? 20 : 1;
-  }
+/**
+ *
+ */
+static void 
+glw_list_set(glw_t *w, va_list ap)
+{
+  glw_attribute_t attrib;
+  glw_list_t *l = (void *)w;
 
   do {
     attrib = va_arg(ap, int);
@@ -352,3 +386,59 @@ glw_list_ctor(glw_t *w, int init, va_list ap)
     }
   } while(attrib);
 }
+
+/**
+ *
+ */
+static void 
+glw_list_set_x(glw_t *w, int init, va_list ap)
+{
+  glw_list_t *l = (void *)w;
+
+  if(init)
+    l->child_aspect = 1;
+  glw_list_set(w, ap);
+}
+
+/**
+ *
+ */
+static void
+glw_list_set_y(glw_t *w, int init, va_list ap)
+{
+  glw_list_t *l = (void *)w;
+
+  if(init)
+    l->child_aspect = 20;
+  glw_list_set(w, ap);
+}
+
+
+static glw_class_t glw_list_x = {
+  .gc_name = "list_x",
+  .gc_instance_size = sizeof(glw_list_t),
+  .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY,
+  .gc_child_orientation = GLW_ORIENTATION_HORIZONTAL,
+  .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
+  .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING,
+
+  .gc_render = glw_list_render_x,
+  .gc_set = glw_list_set_x,
+  .gc_signal_handler = glw_list_callback_x,
+};
+
+static glw_class_t glw_list_y = {
+  .gc_name = "list_y",
+  .gc_instance_size = sizeof(glw_list_t),
+  .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY,
+  .gc_child_orientation = GLW_ORIENTATION_VERTICAL,
+  .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
+  .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING,
+
+  .gc_render = glw_list_render_y,
+  .gc_set = glw_list_set_y,
+  .gc_signal_handler = glw_list_callback_y,
+};
+
+GLW_REGISTER_CLASS(glw_list_x);
+GLW_REGISTER_CLASS(glw_list_y);

@@ -57,7 +57,7 @@ typedef struct glw_prop_sub {
   token_t *gps_token;
 
   token_t *gps_cloner_body;
-  glw_class_t gps_cloner_class;
+  const glw_class_t *gps_cloner_class;
   
   struct glw_prop_sub_pending_queue gps_pending;
   prop_t *gps_pending_select;
@@ -1367,44 +1367,6 @@ glw_view_eval_block(token_t *t, glw_view_eval_context_t *ec)
   return 0;
 }
 
-
-/**
- *
- */
-static struct strtab classtab[] = {
-  { "dummy",         GLW_DUMMY},
-  { "container_x",   GLW_CONTAINER_X},
-  { "container_y",   GLW_CONTAINER_Y},
-  { "container_z",   GLW_CONTAINER_Z},
-  { "icon",          GLW_ICON},
-  { "image",         GLW_IMAGE},
-  { "backdrop",      GLW_BACKDROP},
-  { "label",         GLW_LABEL},
-  { "text",          GLW_TEXT},
-  { "integer",       GLW_INTEGER},
-  { "array",         GLW_ARRAY},
-  { "list_x",        GLW_LIST_X},
-  { "list_y",        GLW_LIST_Y},
-  { "deck",          GLW_DECK},
-  { "expander_x",    GLW_EXPANDER_X},
-  { "expander_y",    GLW_EXPANDER_Y},
-  { "slideshow",     GLW_SLIDESHOW},
-  { "freefloat",     GLW_FREEFLOAT},
-  { "cursor",        GLW_CURSOR},
-  { "mirror",        GLW_MIRROR},
-  { "rotator",       GLW_ROTATOR},
-  { "animator",      GLW_ANIMATOR},
-  { "video",         GLW_VIDEO},
-  { "fx_texrot",     GLW_FX_TEXROT},
-  { "slider_x",      GLW_SLIDER_X},
-  { "slider_y",      GLW_SLIDER_Y},
-  { "layer",         GLW_LAYER},
-  { "bloom",         GLW_BLOOM},
-  { "cube",          GLW_CUBE},
-  { "displacement",  GLW_DISPLACEMENT},
-  { "coverflow",     GLW_COVERFLOW},
-};
-
 /**
  *
  */
@@ -1412,7 +1374,8 @@ static int
 glwf_widget(glw_view_eval_context_t *ec, struct token *self,
 	    token_t **argv, unsigned int argc)
 {
-  int c, r;
+  int r;
+  const glw_class_t *c;
   glw_view_eval_context_t n;
   token_t *a = argv[0];
   token_t *b = argv[1];
@@ -1431,7 +1394,7 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
 			    "widget: Invalid second argument, "
 			    "expected block");
 
-  if((c = str2val(rstr_get(a->t_rstring), classtab)) < 0)
+  if((c = glw_class_find_by_name(rstr_get(a->t_rstring))) == NULL)
     return glw_view_seterr(ec->ei, self, "widget: Invalid class");
 
   memset(&n, 0, sizeof(n));
@@ -1468,8 +1431,9 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
   token_t *c = argv[2];
   glw_prop_sub_t *gps;
   glw_prop_sub_pending_t *gpsp;
-  int class, f;
+  int f;
   glw_t *w, *n;
+  const glw_class_t *cl;
 
   if(ec->w == NULL) 
     return glw_view_seterr(ec->ei, self, 
@@ -1483,8 +1447,8 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
 			    "cloner: Invalid second argument, "
 			    "expected widget class");
     
-  if((class = str2val(rstr_get(b->t_rstring), classtab)) < 0)
-    return glw_view_seterr(ec->ei, self, "cloner: Invalid class");
+ if((cl = glw_class_find_by_name(rstr_get(b->t_rstring))) == NULL)
+     return glw_view_seterr(ec->ei, self, "cloner: Invalid class");
 
   if(c->type != TOKEN_BLOCK)
     return glw_view_seterr(ec->ei, self, 
@@ -1506,7 +1470,7 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
       glw_view_free_chain(gps->gps_cloner_body);
 
     gps->gps_cloner_body = glw_view_clone_chain(c);
-    gps->gps_cloner_class = class;
+    gps->gps_cloner_class = cl;
 
     /* Create pending childs */
     while((gpsp = TAILQ_FIRST(&gps->gps_pending)) != NULL) {
@@ -1535,7 +1499,7 @@ glwf_space(glw_view_eval_context_t *ec, struct token *self,
 
 {
   token_t *a = argv[0];
-
+  static const glw_class_t *dummy;
   if(ec->w == NULL) 
     return glw_view_seterr(ec->ei, self, 
 			    "Widget can not be created in this scope");
@@ -1547,8 +1511,12 @@ glwf_space(glw_view_eval_context_t *ec, struct token *self,
     return glw_view_seterr(ec->ei, self, 
 			    "widget: Invalid first argument, "
 			    "expected float");
+
+  if(dummy == NULL)
+    dummy = glw_class_find_by_name("dummy");
+
   glw_create_i(ec->gr, 
-	       GLW_DUMMY,
+	       dummy,
 	       GLW_ATTRIB_PARENT, ec->w,
 	       GLW_ATTRIB_WEIGHT, a->t_float,
 	       NULL);

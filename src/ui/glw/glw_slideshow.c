@@ -17,24 +17,37 @@
  */
 
 #include "glw.h"
-#include "glw_slideshow.h"
 
+
+typedef struct glw_slideshow {
+  glw_t w;
+
+  int hold;
+
+  int timer;
+
+  float time;
+  int displaytime;
+
+  prop_t *playstatus;
+
+} glw_slideshow_t;
 
 /**
  *
  */
 static void
-glw_slideshow_render(glw_slideshow_t *s, glw_rctx_t *rc)
+glw_slideshow_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c, *p, *n;
   glw_rctx_t rc0;
 
-  if((c = s->w.glw_focused) == NULL)
+  if((c = w->glw_focused) == NULL)
     return;
 
   p = TAILQ_PREV(c, glw_queue, glw_parent_link);
   if(p == NULL)
-    p = TAILQ_LAST(&s->w.glw_childs, glw_queue);
+    p = TAILQ_LAST(&w->glw_childs, glw_queue);
   if(p != NULL && p != c) {
     if(p->glw_parent_alpha > 0.01) {
       rc0 = *rc;
@@ -49,7 +62,7 @@ glw_slideshow_render(glw_slideshow_t *s, glw_rctx_t *rc)
 
   n = TAILQ_NEXT(c, glw_parent_link);
   if(n == NULL)
-    n = TAILQ_FIRST(&s->w.glw_childs);
+    n = TAILQ_FIRST(&w->glw_childs);
   if(n != NULL && n != c) {
     if(n->glw_parent_alpha > 0.01) {
       rc0 = *rc;
@@ -181,11 +194,7 @@ glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
   glw_slideshow_t *s = (glw_slideshow_t *)w;
 
   switch(signal) {
-  case GLW_SIGNAL_RENDER:
-    glw_slideshow_render(s, extra);
-    return 0;
-
-  case GLW_SIGNAL_LAYOUT:
+   case GLW_SIGNAL_LAYOUT:
     glw_slideshow_layout(s, extra);
     return 0;
 
@@ -202,17 +211,15 @@ glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
 /**
  *
  */
-void
-glw_slideshow_ctor(glw_t *w, int init, va_list ap)
+static void
+glw_slideshow_set(glw_t *w, int init, va_list ap)
 {
   glw_slideshow_t *s = (glw_slideshow_t *)w;
   glw_attribute_t attrib;
   prop_t *p;
 
-  if(init) {
-    glw_signal_handler_int(w, glw_slideshow_callback);
+  if(init)
     s->time = 5.0;
-  }
 
   do {
     attrib = va_arg(ap, int);
@@ -236,3 +243,18 @@ glw_slideshow_ctor(glw_t *w, int init, va_list ap)
     }
   } while(attrib);
 }
+
+
+
+/**
+ *
+ */
+static glw_class_t glw_slideshow = {
+  .gc_name = "slideshow",
+  .gc_instance_size = sizeof(glw_slideshow_t),
+  .gc_set = glw_slideshow_set,
+  .gc_render = glw_slideshow_render,
+  .gc_signal_handler = glw_slideshow_callback,
+};
+
+GLW_REGISTER_CLASS(glw_slideshow);

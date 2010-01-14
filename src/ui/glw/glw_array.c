@@ -17,7 +17,26 @@
  */
 
 #include "glw.h"
-#include "glw_array.h"
+
+
+typedef struct glw_array {
+  glw_t w;
+
+  float center_y, center_y_target, center_y_max;
+
+  glw_t *scroll_to_me;
+
+  glw_slider_metrics_t metrics;
+  
+  int child_width;
+  int child_height;
+
+  int child_tiles_x;
+  int child_tiles_y;
+
+  int xentries;  // items per row
+
+} glw_array_t;
 
 /**
  *
@@ -160,9 +179,9 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
  *
  */
 static void
-glw_array_render(glw_array_t *a, glw_rctx_t *rc)
+glw_array_render(glw_t *w, glw_rctx_t *rc)
 {
-  glw_t *w = &a->w;
+  glw_array_t *a = (glw_array_t *)w;
   glw_t *c;
   glw_rctx_t rc0;
   int clip1, clip2;
@@ -222,10 +241,6 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     glw_array_layout(a, rc);
     return 0;
 
-  case GLW_SIGNAL_RENDER:
-    glw_array_render(a, rc);
-    return 0;
-
   case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
     a->scroll_to_me = extra;
     return 0;
@@ -266,15 +281,13 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 /**
  *
  */
-void 
-glw_array_ctor(glw_t *w, int init, va_list ap)
+static void 
+glw_array_set(glw_t *w, int init, va_list ap)
 {
   glw_array_t *a = (glw_array_t *)w;
   glw_attribute_t attrib;
 
   if(init) {
-    glw_signal_handler_int(w, glw_array_callback);
-
     // Just something
     a->child_width  = 100;
     a->child_height = 100;
@@ -301,4 +314,23 @@ glw_array_ctor(glw_t *w, int init, va_list ap)
       break;
     }
   } while(attrib);
+}
+
+static glw_class_t glw_array = {
+  .gc_name = "array",
+  .gc_instance_size = sizeof(glw_array_t),
+  .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY,
+  .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
+  .gc_render = glw_array_render,
+  .gc_set = glw_array_set,
+  .gc_signal_handler = glw_array_callback,
+};
+
+GLW_REGISTER_CLASS(glw_array);
+
+int
+glw_array_get_xentries(glw_t *w)
+{
+  glw_array_t *a = (glw_array_t *)w;
+  return a->xentries;
 }

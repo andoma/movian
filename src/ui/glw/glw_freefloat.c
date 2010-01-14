@@ -18,7 +18,17 @@
 
 #include <assert.h>
 #include "glw.h"
-#include "glw_freefloat.h"
+
+#define GLW_FREEFLOAT_MAX_VISIBLE 3
+
+typedef struct glw_freefloat {
+  glw_t w;
+  int xpos;
+  int num_visible;
+  glw_t *pick;
+  glw_t *visible[GLW_FREEFLOAT_MAX_VISIBLE];
+} glw_freefloat_t;
+
 
 #define glw_parent_v glw_parent_misc[0]
 
@@ -40,8 +50,9 @@ is_visible(glw_freefloat_t *ff, glw_t *c)
  *
  */
 static void
-glw_freefloat_render(glw_freefloat_t *ff, glw_rctx_t *rc)
+glw_freefloat_render(glw_t *w, glw_rctx_t *rc)
 {
+  glw_freefloat_t *ff = (glw_freefloat_t *)w;
   glw_t *c;
   int i;
   float a;
@@ -63,8 +74,8 @@ glw_freefloat_render(glw_freefloat_t *ff, glw_rctx_t *rc)
 		   c->glw_parent_pos.y,
 		   -5 + c->glw_parent_v * 5);
 
-    glw_signal0(c, GLW_SIGNAL_RENDER, &rc0);
-    glw_PopMatrix();    
+    glw_render0(c, &rc0);
+    glw_PopMatrix();
   }
 }
 
@@ -155,10 +166,6 @@ glw_freefloat_callback(glw_t *w, void *opaque, glw_signal_t signal,
   glw_t *c = extra;
 
   switch(signal) {
-  case GLW_SIGNAL_RENDER:
-    glw_freefloat_render(ff, extra);
-    return 0;
-
   case GLW_SIGNAL_LAYOUT:
     glw_freefloat_layout(ff, extra);
     return 0;
@@ -192,25 +199,25 @@ glw_freefloat_callback(glw_t *w, void *opaque, glw_signal_t signal,
 /**
  *
  */
-void
-glw_freefloat_ctor(glw_t *w, int init, va_list ap)
+static void
+glw_freefloat_set(glw_t *w, int init, va_list ap)
 {
   glw_freefloat_t *ff = (glw_freefloat_t *)w;
-  glw_attribute_t attrib;
 
-  if(init) {
+  if(init)
     ff->num_visible = GLW_FREEFLOAT_MAX_VISIBLE;
-    glw_signal_handler_int(w, glw_freefloat_callback);
-  }
-
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
-
-
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
 }
+
+
+/**
+ *
+ */
+static glw_class_t glw_freefloat = {
+  .gc_name = "freefloat",
+  .gc_instance_size = sizeof(glw_freefloat_t),
+  .gc_set = glw_freefloat_set,
+  .gc_render = glw_freefloat_render,
+  .gc_signal_handler = glw_freefloat_callback,
+};
+
+GLW_REGISTER_CLASS(glw_freefloat);

@@ -33,8 +33,95 @@
 #include "glw.h"
 #include "glw_texture.h"
 #include "glw_text_bitmap.h"
-#include "glw_container.h"
 #include "fileaccess/fa_rawloader.h"
+
+
+
+
+typedef struct glw_text_bitmap_data {
+
+  int gtbd_pixel_format;
+  
+  uint8_t *gtbd_data;
+  int gtbd_siz_x;
+  int gtbd_siz_y;
+
+  int gtbd_texture_width;
+  int gtbd_texture_height;
+
+  float gtbd_u;
+  float gtbd_v;
+
+  int *gtbd_cursor_pos;
+  int gtbd_cursor_scale;
+  int gtbd_cursor_pos_size;
+} glw_text_bitmap_data_t;
+
+
+typedef struct glw_text_bitmap {
+  struct glw w;
+
+  char *gtb_caption;
+
+  glw_backend_texture_t gtb_texture;
+
+  int gtb_renderer_inited;
+
+  glw_renderer_t gtb_text_renderer;
+  glw_renderer_t gtb_cursor_renderer;
+
+  TAILQ_ENTRY(glw_text_bitmap) gtb_workq_link;
+  LIST_ENTRY(glw_text_bitmap) gtb_global_link;
+
+  glw_text_bitmap_data_t gtb_data;
+  float gtb_aspect;
+  float gtb_siz_y;
+  float gtb_siz_x;
+  enum {
+    GTB_NEED_RERENDER,
+    GTB_ON_QUEUE,
+    GTB_RENDERING,
+    GTB_VALID
+  } gtb_status;
+
+  uint8_t gtb_frozen;
+  uint8_t gtb_pending_update;
+
+  int cursor_flash;
+
+  int *gtb_uc_buffer; /* unicode buffer */
+  int gtb_uc_len;
+  int gtb_uc_size;
+
+  int gtb_edit_ptr;
+  int gtb_paint_cursor;
+  int gtb_update_cursor;
+  float gtb_cursor_alpha;
+
+  int gtb_int;
+  int gtb_int_step;
+  int gtb_int_min;
+  int gtb_int_max;
+
+  float gtb_size_scale;
+  float gtb_size_bias;
+
+  glw_rgb_t gtb_color;
+
+  prop_sub_t *gtb_sub;
+  prop_t *gtb_p;
+
+  int gtb_lines;
+
+  int gtb_xsize_max;
+
+  int gtb_flags;
+
+} glw_text_bitmap_t;
+
+static glw_class_t glw_text, glw_label, glw_integer;
+
+
 
 #define HORIZONTAL_ELLIPSIS_UNICODE 0x2026
 
@@ -363,7 +450,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
     gtb->gtb_renderer_inited = 1;
     glw_render_init(&gtb->gtb_text_renderer,   4, GLW_RENDER_ATTRIBS_TEX);
 
-    if(w->glw_class == GLW_TEXT)
+    if(w->glw_class == &glw_text)
       glw_render_init(&gtb->gtb_cursor_renderer, 4, GLW_RENDER_ATTRIBS_NONE);
   }
 
@@ -399,7 +486,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
   }
 
 
-  if(w->glw_class != GLW_TEXT)
+  if(w->glw_class != &glw_text)
     return;
 
   /* Cursor handling */
@@ -717,9 +804,6 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_LAYOUT:
     glw_text_bitmap_layout(w, extra);
     break;
-  case GLW_SIGNAL_RENDER:
-    glw_text_bitmap_render(w, extra);
-    break;
   case GLW_SIGNAL_DTOR:
     glw_text_bitmap_dtor(w);
     break;
@@ -727,7 +811,7 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
     gtb_flush(gtb);
     break;
   case GLW_SIGNAL_EVENT:
-    if(w->glw_class == GLW_LABEL)
+    if(w->glw_class == &glw_label)
       return 0;
 
     e = extra;
@@ -779,7 +863,7 @@ gtb_caption_has_changed(glw_text_bitmap_t *gtb)
 
   /* Convert UTF8 string to unicode int[] */
 
-  if(gtb->w.glw_class == GLW_INTEGER) {
+  if(gtb->w.glw_class == &glw_integer) {
     
     if(gtb->gtb_caption != NULL) {
       snprintf(buf, sizeof(buf), gtb->gtb_caption, gtb->gtb_int);
@@ -793,7 +877,7 @@ gtb_caption_has_changed(glw_text_bitmap_t *gtb)
 
     l = gtb->gtb_caption ? strlen(gtb->gtb_caption) : 0;
     
-    if(gtb->w.glw_class == GLW_TEXT) /* Editable */
+    if(gtb->w.glw_class == &glw_text) /* Editable */
       l = GLW_MAX(l, 100);
     
     str = gtb->gtb_caption;
@@ -815,7 +899,7 @@ gtb_caption_has_changed(glw_text_bitmap_t *gtb)
   gtb->gtb_lines = lines;
 
   gtb->gtb_uc_len = x;
-  if(gtb->w.glw_class == GLW_TEXT) {
+  if(gtb->w.glw_class == &glw_text) {
     gtb->gtb_edit_ptr = x;
     gtb->gtb_update_cursor = 1;
   }
@@ -877,8 +961,8 @@ prop_callback(void *opaque, prop_event_t event, ...)
 /**
  *
  */
-void 
-glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
+static void 
+glw_text_bitmap_set(glw_t *w, int init, va_list ap)
 {
   glw_text_bitmap_t *gtb = (void *)w;
   glw_root_t *gr = w->glw_root;
@@ -886,8 +970,6 @@ glw_text_bitmap_ctor(glw_t *w, int init, va_list ap)
   int update = 0;
   prop_t *p;
   const char **pname, *caption;
-
-  glw_signal_handler_int(w, glw_text_bitmap_callback);
 
   if(init) {
     w->glw_flags |= GLW_FOCUS_ON_CLICK | GLW_SHADOW;
@@ -1119,9 +1201,9 @@ glw_get_text0(glw_t *w, char *buf, size_t buflen)
   char *q;
   int i, c;
 
-  if(w->glw_class != GLW_LABEL &&
-     w->glw_class != GLW_TEXT &&
-     w->glw_class != GLW_INTEGER) {
+  if(w->glw_class != &glw_label &&
+     w->glw_class != &glw_text &&
+     w->glw_class != &glw_integer) {
     return -1;
   }
 
@@ -1146,7 +1228,7 @@ glw_get_int0(glw_t *w, int *result)
 {
   glw_text_bitmap_t *gtb = (void *)w;
 
-  if(w->glw_class != GLW_INTEGER) 
+  if(w->glw_class != &glw_integer) 
     return -1;
 
   *result = gtb->gtb_int;
@@ -1282,3 +1364,29 @@ glw_font_change_size(void *opaque, int fontsize)
 }
 
 
+/**
+ *
+ */
+static glw_class_t glw_label = {
+  .gc_name = "label",
+  .gc_instance_size = sizeof(glw_text_bitmap_t),
+  .gc_render = glw_text_bitmap_render,
+  .gc_set = glw_text_bitmap_set,
+  .gc_signal_handler = glw_text_bitmap_callback,
+};
+
+GLW_REGISTER_CLASS(glw_label);
+
+
+/**
+ *
+ */
+static glw_class_t glw_text = {
+  .gc_name = "text",
+  .gc_instance_size = sizeof(glw_text_bitmap_t),
+  .gc_render = glw_text_bitmap_render,
+  .gc_set = glw_text_bitmap_set,
+  .gc_signal_handler = glw_text_bitmap_callback,
+};
+
+GLW_REGISTER_CLASS(glw_text);

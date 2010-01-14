@@ -17,8 +17,21 @@
  */
 
 #include "glw.h"
-#include "glw_deck.h"
 #include "glw_transitions.h"
+
+/**
+ *
+ */
+typedef struct {
+  glw_t w;
+
+  float prev, tgt, k, inc;
+  glw_transition_type_t efx_conf;
+
+} glw_deck_t;
+
+
+
 
 /**
  *
@@ -69,12 +82,6 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     if(w->glw_alpha < 0.01 || w->glw_selected == NULL)
       break;
     glw_layout0(w->glw_selected, rc);
-    break;
-    
-  case GLW_SIGNAL_RENDER:
-    if(w->glw_alpha < 0.01 || w->glw_selected == NULL)
-      break;
-    glw_render0(w->glw_selected, rc);
     break;
 
   case GLW_SIGNAL_EVENT:
@@ -132,16 +139,31 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   return 0;
 }
 
-void 
-glw_deck_ctor(glw_t *w, int init, va_list ap)
+    
+/**
+ *
+ */
+static void 
+glw_deck_render(glw_t *w, glw_rctx_t *rc)
+{
+  if(w->glw_alpha < 0.01 || w->glw_selected == NULL)
+    return;
+  w->glw_selected->glw_class->gc_render(w->glw_selected, rc);
+}
+
+
+
+/**
+ *
+ */
+static void 
+glw_deck_set(glw_t *w, int init, va_list ap)
 {
   glw_deck_t *gd = (glw_deck_t *)w;
   glw_attribute_t attrib;
 
-  if(init) {
-    glw_signal_handler_int(w, glw_deck_callback);
+  if(init)
     clear_constraints(w);
-  }
 
   do {
     attrib = va_arg(ap, int);
@@ -157,3 +179,17 @@ glw_deck_ctor(glw_t *w, int init, va_list ap)
 
  }
 
+
+/**
+ *
+ */
+static glw_class_t glw_deck = {
+  .gc_name = "deck",
+  .gc_instance_size = sizeof(glw_deck_t),
+  .gc_nav_descend_mode = GLW_NAV_DESCEND_SELECTED,
+  .gc_render = glw_deck_render,
+  .gc_set = glw_deck_set,
+  .gc_signal_handler = glw_deck_callback,
+};
+
+GLW_REGISTER_CLASS(glw_deck);

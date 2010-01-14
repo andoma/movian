@@ -20,9 +20,28 @@
 #include <string.h>
 
 #include "glw.h"
-#include "glw_bloom.h"
+#include "glw_texture.h"
 
 #define EDGE_SIZE 16.0
+#define BLOOM_COUNT 3
+
+typedef struct glw_bloom {
+  glw_t w;
+
+  glw_gf_ctrl_t b_flushctrl;
+
+  float b_glow;
+
+  int b_width;
+  int b_height;
+  glw_rtt_t b_rtt[BLOOM_COUNT];
+
+  int b_render_initialized;
+  glw_renderer_t b_render;
+
+  int b_need_render;
+
+} glw_bloom_t;
 
 /**
  *
@@ -241,9 +260,6 @@ glw_bloom_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_LAYOUT:
     glw_bloom_layout(w, extra);
     break;
-  case GLW_SIGNAL_RENDER:
-    glw_bloom_render(w, extra);
-    break;
   case GLW_SIGNAL_DTOR:
     glw_bloom_dtor(w);
     break;
@@ -271,8 +287,8 @@ bflush(void *aux)
 /*
  *
  */
-void 
-glw_bloom_ctor(glw_t *w, int init, va_list ap)
+static void 
+glw_bloom_set(glw_t *w, int init, va_list ap)
 {
   glw_bloom_t *b = (void *)w;
   glw_attribute_t attrib;
@@ -299,3 +315,17 @@ glw_bloom_ctor(glw_t *w, int init, va_list ap)
     }
   } while(attrib);
 }
+
+
+/**
+ *
+ */
+static glw_class_t glw_bloom = {
+  .gc_name = "bloom",
+  .gc_instance_size = sizeof(glw_bloom_t),
+  .gc_set = glw_bloom_set,
+  .gc_render = glw_bloom_render,
+  .gc_signal_handler = glw_bloom_callback,
+};
+
+GLW_REGISTER_CLASS(glw_bloom);
