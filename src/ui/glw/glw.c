@@ -1241,14 +1241,17 @@ glw_event(glw_root_t *gr, event_t *e)
 /**
  *
  */
-static int
-pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, glw_t **hp,
-	       float *p, float *dir)
+int
+glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, 
+		   glw_t **hp, float *p, float *dir)
 {
   glw_t *c;
   event_t *e;
   float x, y;
   glw_pointer_event_t gpe0;
+
+  if(w->glw_flags & GLW_FOCUS_BLOCKED)
+    return 0;
 
   if(w->glw_matrix != NULL) {
 
@@ -1259,7 +1262,7 @@ pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, glw_t **hp,
       gpe0.y = y;
       gpe0.delta_y = gpe->delta_y;
 
-      if(glw_is_focusable(w))
+      if(glw_is_focusable(w) && *hp == NULL)
 	*hp = w;
 
       if(glw_signal0(w, GLW_SIGNAL_POINTER_EVENT, &gpe0))
@@ -1295,11 +1298,16 @@ pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, glw_t **hp,
     }
   }
 
-  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-    if(!(c->glw_flags & GLW_FOCUS_BLOCKED) &&
-       pointer_event0(gr, c, gpe, hp, p, dir))
-      return 1;
-  return 0;
+
+  if(w->glw_class->gc_gpe_iterator != NULL ) {
+    return w->glw_class->gc_gpe_iterator(gr, w, gpe, hp, p, dir);
+  } else {
+    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
+      if(glw_pointer_event0(gr, c, gpe, hp, p, dir))
+	return 1;
+    return 0;
+  }
+
 }
 
 
@@ -1372,8 +1380,7 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
   top = gr->gr_universe;
 
   TAILQ_FOREACH(c, &top->glw_childs, glw_parent_link)
-    if(!(c->glw_flags & GLW_FOCUS_BLOCKED) && 
-       pointer_event0(gr, c, gpe, &hover, p, dir))
+    if(glw_pointer_event0(gr, c, gpe, &hover, p, dir))
       break;
 
   glw_root_set_hover(gr, hover);

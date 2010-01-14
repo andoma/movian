@@ -162,6 +162,27 @@ typedef enum {
 #define GLW_IMAGE_BORDER_BOTTOM 0x20
 #define GLW_IMAGE_INFRONT       0x40
 
+
+
+typedef enum {
+  GLW_POINTER_CLICK,
+  GLW_POINTER_MOTION_UPDATE,  // Updated (mouse did really move)
+  GLW_POINTER_MOTION_REFRESH, // GLW Internal refresh (every frame)
+  GLW_POINTER_FOCUS_MOTION,
+  GLW_POINTER_RELEASE,
+  GLW_POINTER_SCROLL,
+  GLW_POINTER_GONE,
+} glw_pointer_event_type_t;
+
+typedef struct glw_pointer_event {
+  float x, y;
+  float delta_y;
+  glw_pointer_event_type_t type;
+  int flags;
+} glw_pointer_event_t;
+
+
+
 /**
  * XXX Document these
  */
@@ -310,6 +331,19 @@ typedef struct glw_class {
 
   glw_callback_t *gc_signal_handler;
 
+
+  /**
+   * Custom code for iterating of a widget's children when delivering
+   * pointer events
+   */ 
+  int (*gc_gpe_iterator)(struct glw_root *gr, struct glw *r, 
+			 glw_pointer_event_t *gpe, struct glw **hp,
+			 float *p, float *dir);
+
+
+  /**
+   * Registration link
+   */
   LIST_ENTRY(glw_class) gc_link;
 
 } glw_class_t;
@@ -809,24 +843,10 @@ int glw_event(glw_root_t *gr, event_t *e);
 
 int glw_event_to_widget(glw_t *w, event_t *e, int local);
 
-typedef enum {
-  GLW_POINTER_CLICK,
-  GLW_POINTER_MOTION_UPDATE,  // Updated (mouse did really move)
-  GLW_POINTER_MOTION_REFRESH, // GLW Internal refresh (every frame)
-  GLW_POINTER_FOCUS_MOTION,
-  GLW_POINTER_RELEASE,
-  GLW_POINTER_SCROLL,
-  GLW_POINTER_GONE,
-} glw_pointer_event_type_t;
-
-typedef struct glw_pointer_event {
-  float x, y;
-  float delta_y;
-  glw_pointer_event_type_t type;
-  int flags;
-} glw_pointer_event_t;
-
 void glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe);
+
+int glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, 
+		       glw_t **hp, float *p, float *dir);
 
 
 int glw_navigate(glw_t *w, event_t *e, int local);

@@ -197,6 +197,41 @@ glw_coverflow_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   return 0;
 }
 
+/**
+ *
+ */
+static int
+glw_coverflow_gpe_iterator(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
+			   glw_t **hp, float *ptr, float *dir)
+{
+  glw_t *c, *p, *n;
+  glw_coverflow_t *gc = (glw_coverflow_t *)w;
+
+   if((c = gc->rstart) == NULL)
+    return 0;
+ 
+ if(glw_pointer_event0(gr, c, gpe, hp, ptr, dir))
+    return 1;
+  
+  p = n = c;
+
+  while(1) {
+    p = p ? TAILQ_PREV(p, glw_queue, glw_parent_link) : NULL;
+    n = n ? TAILQ_NEXT(n, glw_parent_link) : NULL;
+
+    if(p == NULL && n == NULL)
+      break;
+
+   if(p != NULL && glw_pointer_event0(gr, p, gpe, hp, ptr, dir))
+      return 1;
+
+    if(n != NULL && glw_pointer_event0(gr, n, gpe, hp, ptr, dir))
+      return 1;
+  }
+  return 0;
+}
+
+
 
 /**
  *
@@ -208,9 +243,9 @@ static glw_class_t glw_coverflow = {
   .gc_child_orientation = GLW_ORIENTATION_HORIZONTAL,
   .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING,
-
   .gc_render = glw_coverflow_render,
   .gc_signal_handler = glw_coverflow_callback,
+  .gc_gpe_iterator = glw_coverflow_gpe_iterator,
 };
 
 GLW_REGISTER_CLASS(glw_coverflow);
