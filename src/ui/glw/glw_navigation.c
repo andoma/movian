@@ -150,7 +150,6 @@ glw_navigate(glw_t *w, event_t *e, int local)
     return 1;
 
   } else if(event_is_action(e, ACTION_UP)) {
-    printf("up!\n");
     orientation = GLW_ORIENTATION_VERTICAL;
     direction   = 0;
 
