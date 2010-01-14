@@ -760,15 +760,11 @@ layout_subtitles(const glw_root_t *gr, glw_video_t *gv, int64_t pts)
     next = TAILQ_NEXT(gvs, gvs_link);
 
     if(pts > gvs->gvs_end) {
-      printf("Destroying %p\n", gvs);
       subtitle_destroy(gv, gvs);
       continue;
     } else if(pts > gvs->gvs_start && gvs->gvs_bitmap != NULL) {
 
-      printf("Uploading %p to GPU\n", gvs);
-
       glGenTextures(1, &gvs->gvs_texture);
-      printf("  tex = %d\n", gvs->gvs_texture);
 
       glBindTexture(textype, gvs->gvs_texture);
       glTexParameterf(textype, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -777,7 +773,6 @@ layout_subtitles(const glw_root_t *gr, glw_video_t *gv, int64_t pts)
       int n = gr->gr_normalized_texture_coords;
       gvs->gvs_tex_width  = n ? 1.0 : gvs->gvs_width;
       gvs->gvs_tex_height = n ? 1.0 : gvs->gvs_height;
-      printf("%d %d\n", gvs->gvs_tex_width, gvs->gvs_tex_height);
 
       glTexImage2D(textype, 0, GL_RGBA, 
 		   gvs->gvs_width, gvs->gvs_height, 0,
