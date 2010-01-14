@@ -56,8 +56,7 @@ glw_cube_render(glw_t *w, glw_rctx_t *rc)
 
   glw_PushMatrix(&rc0, rc);
 
-  glw_rescale(&rc0, 1.0f);
-
+  glw_scale_to_aspect(&rc0, 1.0f);
 
   glw_Translatef(&rc0, 0, 0, -2.0);
 

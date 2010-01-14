@@ -1072,7 +1072,7 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
   fra = gv->gv_fra;
   frb = gv->gv_frb;
 
-  glw_rescale(rc, vd->vd_aspect);
+  glw_scale_to_aspect(rc, vd->vd_aspect);
 
   if(fra != NULL && glw_is_focusable(w))
     glw_store_matrix(w, rc);

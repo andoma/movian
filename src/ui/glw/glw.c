@@ -1443,7 +1443,7 @@ glw_render_T(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc)
  *
  */
 void
-glw_rescale(glw_rctx_t *rc, float t_aspect)
+glw_scale_to_aspect(glw_rctx_t *rc, float t_aspect)
 {
   float s_aspect = rc->rc_size_x / rc->rc_size_y;
   float a = s_aspect / t_aspect;

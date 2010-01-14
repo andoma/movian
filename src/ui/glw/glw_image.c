@@ -174,7 +174,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     glw_align_1(&rc0, w->glw_alignment, GLW_ALIGN_CENTER);
       
     if(w->glw_class == &glw_image || w->glw_class == &glw_icon)
-      glw_rescale(&rc0, glt->glt_aspect);
+      glw_scale_to_aspect(&rc0, glt->glt_aspect);
 
     if(gi->gi_angle != 0)
       glw_Rotatef(&rc0, -gi->gi_angle, 0, 0, 1);

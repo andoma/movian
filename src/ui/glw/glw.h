@@ -870,7 +870,7 @@ void glw_render_T(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc);
 
 void glw_render_TS(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc);
 
-void glw_rescale(glw_rctx_t *rc, float t_aspect);
+void glw_scale_to_aspect(glw_rctx_t *rc, float t_aspect);
 
 extern const glw_vertex_t align_vertices[];
 

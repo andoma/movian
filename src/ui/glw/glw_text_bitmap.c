@@ -558,7 +558,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
   if(!glw_is_tex_inited(&gtb->gtb_texture) || gtb->gtb_data.gtbd_siz_x == 0) {
     // No text available
-    glw_rescale(&rc0, 1.0);
+    glw_scale_to_aspect(&rc0, 1.0);
 
     if(rc0.rc_size_y > gtb->gtb_siz_y) {
       float s = (float)gtb->gtb_siz_y / rc0.rc_size_y;
@@ -577,7 +577,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
   }
 
 #if 1
-  glw_rescale(&rc0, gtb->gtb_aspect);
+  glw_scale_to_aspect(&rc0, gtb->gtb_aspect);
 
   if(rc0.rc_size_y > gtb->gtb_siz_y ||
      rc0.rc_size_x > gtb->gtb_siz_x) {
