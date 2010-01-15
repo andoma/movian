@@ -104,7 +104,7 @@ static void texture_load_direct(AVPicture *pict, glw_loadable_texture_t *glt);
 static void texture_load_rescale(AVPicture *pict, int src_w, int src_h,
 				 glw_loadable_texture_t *glt);
 
-static void texture_load_rescale_swscale(AVPicture *pict, int pix_fmt, 
+static void texture_load_rescale_swscale(const AVPicture *pict, int pix_fmt, 
 					 int src_w, int src_h,
 					 glw_loadable_texture_t *glt);
 
@@ -272,14 +272,26 @@ texture_load_rescale(AVPicture *pict, int src_w, int src_h,
  * Rescaling with FFmpeg's swscaler
  */
 static void
-texture_load_rescale_swscale(AVPicture *pict, int pix_fmt, 
+texture_load_rescale_swscale(const AVPicture *pict, int pix_fmt, 
 			     int src_w, int src_h,
 			     glw_loadable_texture_t *glt)
 {
   AVPicture pic;
   struct SwsContext *sws;
+  const uint8_t *ptr[4];
+  int strides[4];
   int w = glt->glt_xs;
   int h = glt->glt_ys;
+
+  ptr[0] = pict->data[0];
+  ptr[1] = pict->data[1];
+  ptr[2] = pict->data[2];
+  ptr[3] = pict->data[3];
+
+  strides[0] = pict->linesize[0];
+  strides[1] = pict->linesize[1];
+  strides[2] = pict->linesize[2];
+  strides[3] = pict->linesize[3];
 
   sws = sws_getContext(src_w, src_h, pix_fmt, 
 		       w, h, PIX_FMT_RGB24,
@@ -300,7 +312,7 @@ texture_load_rescale_swscale(AVPicture *pict, int pix_fmt,
   pic.data[0] = glt->glt_bitmap;
   pic.linesize[0] = w * glt->glt_bpp;
   
-  sws_scale(sws, pict->data, pict->linesize, 0, src_h,
+  sws_scale(sws, ptr, strides, 0, src_h,
 	    pic.data, pic.linesize);
   
   sws_freeContext(sws);

@@ -96,6 +96,7 @@ gu_pixbuf_get_internal(const char *url, int *sizep,
   int pixfmt;
   int width;
   int height;
+  const uint8_t *ptr[4];
 
 
   if(!strncmp(url, "thumb://", 8)) {
@@ -165,7 +166,12 @@ gu_pixbuf_get_internal(const char *url, int *sizep,
 
   avpicture_alloc(&dst, outfmt, req_width, req_height);
 
-  sws_scale(sws, src->data, src->linesize, 0, height,
+  ptr[0] = src->data[0];
+  ptr[1] = src->data[1];
+  ptr[2] = src->data[2];
+  ptr[3] = src->data[3];
+
+  sws_scale(sws, ptr, src->linesize, 0, height,
 	    dst.data, dst.linesize);
   
   sws_freeContext(sws);
