@@ -1905,13 +1905,13 @@ spotify_try_get_parents(void)
   }
 }
 
-
 /**
  *
  */
 static int
 find_cachedir(char *path, size_t pathlen)
 {
+#if defined(LOCK_EX) && defined(LOCK_NB)
   int i, fd;
   char buf[64];
 
@@ -1938,9 +1938,9 @@ find_cachedir(char *path, size_t pathlen)
     snprintf(path, pathlen, "/tmp/hts/showtime/libspotify/%d.cache", i);
     return 0;
   }
+#endif
   return 1;
 }
-
 
 /**
  *
