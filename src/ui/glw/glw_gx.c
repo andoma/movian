@@ -67,19 +67,60 @@ glw_clip_disable(glw_rctx_t *rc, int which)
   // XXX: TODO
 }
 
-
 /**
- * XXX: Replace with something more clever
+ * m   Model matrix
+ * x   Return x in model space
+ * y   Return y in model space
+ * p   Mouse pointer at camera z plane
+ * dir Mouse pointer direction vector
  */
-void
-glw_widget_project(float *m, float *x1, float *x2, float *y1, float *y2)
+int
+glw_widget_unproject(const float *m, float *xp, float *yp, 
+		     const float *p, const float *dir)
 {
-  *x1 = m[3] - m[0];
-  *x2 = m[3] + m[0];
-  *y1 = m[7] - m[5];
-  *y2 = m[7] + m[5];
-}
+  Mtx mt, inv;
+   
+  guVector u, v, n, w0, T0, T1, T2, out, I, A, pointer, direction;
+  float b;
 
+  memcpy(mt, m, sizeof(float) * 12);
+
+  A.x = -1;  A.y = -1;  A.z = 0;
+  guVecMultiply(mt, &A, &T0);
+  A.x =  1;  A.y = -1;  A.z = 0;
+  guVecMultiply(mt, &A, &T0);
+  A.x =  1;  A.y =  1;  A.z = 0;
+  guVecMultiply(mt, &A, &T0);
+
+  guVecSub(&T1, &T0, &u);
+  guVecSub(&T2, &T0, &v);
+
+  guVecCross(&u, &v, &n);
+
+  pointer.x = p[0];
+  pointer.y = p[1];
+  pointer.z = p[2];
+
+  direction.x = dir[0];
+  direction.y = dir[1];
+  direction.z = dir[2];
+
+  guVecSub(&pointer, &T0, &w0);
+  b = guVecDotProduct(&n, &direction);
+  if(fabs(b) < 0.000001)
+    return 0;
+
+  guVecScale(&direction, &I, -guVecDotProduct(&n, &w0) / b);
+  guVecAdd(&I, &pointer, &I);
+
+  if(!guMtxInverse(mt, inv))
+    return 0;
+  guVecMultiply(inv, &I, &out);
+  
+  *xp = out.x;
+  *yp = out.y;
+  return 1;
+}
 
 /**
  *
