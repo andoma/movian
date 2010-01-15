@@ -221,6 +221,20 @@ convert_with_swscale(glw_loadable_texture_t *glt, AVPicture *pict, int pix_fmt,
   AVPicture dst;
   uint8_t *texels;
 
+  const uint8_t *ptr[4];
+  int strides[4];
+
+  ptr[0] = pict->data[0];
+  ptr[1] = pict->data[1];
+  ptr[2] = pict->data[2];
+  ptr[3] = pict->data[3];
+
+  strides[0] = pict->linesize[0];
+  strides[1] = pict->linesize[1];
+  strides[2] = pict->linesize[2];
+  strides[3] = pict->linesize[3];
+
+
   TRACE(TRACE_DEBUG, "GLW", "Loading texture %d x %d", w, h);
 
   sws = sws_getContext(w, h, pix_fmt, 
@@ -233,8 +247,7 @@ convert_with_swscale(glw_loadable_texture_t *glt, AVPicture *pict, int pix_fmt,
   dst.data[0] = malloc(w * h * 3);
   dst.linesize[0] = 3 * w;
 
-  sws_scale(sws, pict->data, pict->linesize, 0, h,
-	    dst.data, dst.linesize);  
+  sws_scale(sws, ptr, strides, 0, h, dst.data, dst.linesize);  
 
   texels = convert_rgb(dst.data[0], dst.linesize[0], w, h);
 
