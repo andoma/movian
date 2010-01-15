@@ -188,7 +188,6 @@ spotify_setup() {
     echo >${BUILDDIR}/spotify_app_key.h "static const uint8_t appkey[] = {"
     od <"$1" -v -An -b | sed s/^\ */0/ | sed s/\ *$$/,/| sed s/\ /,\ 0/g|sed s/$/,/ >>${BUILDDIR}/spotify_app_key.h
     echo >>${BUILDDIR}/spotify_app_key.h "};"
-    echo >>${CONFIG_MAK} LDFLAGS_cfg += -lrt
 }
 
 

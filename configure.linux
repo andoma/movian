@@ -321,7 +321,7 @@ fi
 if enabled libopenspc; then
     
     check_header "openspc.h" || fatal "openspc" "Missing include file openspc.h"
-    check_lib    "openspc"   || fatal "openxpc" "Unable to link with libopenspc"
+    check_lib    "openspc"   || fatal "openspc" "Unable to link with libopenspc"
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lopenspc"
 fi
 
@@ -345,6 +345,6 @@ fi
 # Finalize
 
 echo >>${CONFIG_MAK} INSTALLPREFIX=$PREFIX
-echo >>${CONFIG_MAK} LDFLAGS_cfg += -lpthread
+echo >>${CONFIG_MAK} LDFLAGS_cfg += -lpthread -lrt
 
 finalize
