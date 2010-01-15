@@ -26,58 +26,6 @@
 #define GLW_VIDEO_GX_H
 
 #include "glw.h"
-#include "video/video_decoder.h"
-#include "video/video_playback.h"
-
-/**
- *
- */
-typedef struct gx_video_frame {
-  video_decoder_frame_t gvf_vdf;
-
-  GXTexObj gvf_obj[3];
-  void *gvf_mem[3];
-  int gvf_size[3];
-
-} gx_video_frame_t;
-
-
-/**
- *
- */
-typedef struct glw_video {
-  glw_t w;
-
-  video_decoder_t *gv_vd;
-  video_playback_t *gv_vp;
-
-  float gv_zoom;
-
-  video_decoder_frame_t *gv_fra, *gv_frb;
-  float gv_blend;
-
-  media_pipe_t *gv_mp;
-
-  void *gv_texels;
-  GXTexObj gv_sputex;
-  int gv_sputex_height;
-  int gv_sputex_width;
-  int gv_in_menu;
-
-  int gv_width;
-  int gv_height;
-
-  float gv_tex_x1, gv_tex_x2;
-  float gv_tex_y1, gv_tex_y2;
-
-} glw_video_t;
-
-
-void glw_video_global_init(glw_root_t *gr, int rectmode);
-
-void glw_video_global_flush(glw_root_t *gr);
-
-void glw_video_ctor(glw_t *w, int init, va_list ap);
 
 #endif /* GLW_VIDEO_GX_H */
 

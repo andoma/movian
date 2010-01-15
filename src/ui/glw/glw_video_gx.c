@@ -35,12 +35,60 @@
 
 #include "showtime.h"
 #include "media.h"
-#include "glw_video_gx.h"
+#include "glw.h"
 #include "misc/perftimer.h"
 
 #if ENABLE_DVD
 #include "video/video_dvdspu.h"
 #endif
+
+
+#include "video/video_decoder.h"
+#include "video/video_playback.h"
+
+/**
+ *
+ */
+typedef struct gx_video_frame {
+  video_decoder_frame_t gvf_vdf;
+
+  GXTexObj gvf_obj[3];
+  void *gvf_mem[3];
+  int gvf_size[3];
+
+} gx_video_frame_t;
+
+
+/**
+ *
+ */
+typedef struct glw_video {
+  glw_t w;
+
+  video_decoder_t *gv_vd;
+  video_playback_t *gv_vp;
+
+  float gv_zoom;
+
+  video_decoder_frame_t *gv_fra, *gv_frb;
+  float gv_blend;
+
+  media_pipe_t *gv_mp;
+
+  void *gv_texels;
+  GXTexObj gv_sputex;
+  int gv_sputex_height;
+  int gv_sputex_width;
+  int gv_in_menu;
+
+  int gv_width;
+  int gv_height;
+
+  float gv_tex_x1, gv_tex_x2;
+  float gv_tex_y1, gv_tex_y2;
+
+} glw_video_t;
+
 
 static void glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
 				    AVFrame *frame, int64_t pts, int epoch, 
@@ -641,8 +689,10 @@ render_video_1f(glw_video_t *gv, video_decoder_t *vd,
  *
  */
 static void 
-render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
-{
+glw_video_render(glw_t *w, glw_rctx_t *rc) 
+{ 
+  glw_video_t *gv = (glw_video_t *)w; 
+  video_decoder_t *vd = gv->gv_vd; 
   video_decoder_frame_t *fra;
   int width = 0, height = 0;
 #if ENABLE_DVD
@@ -652,7 +702,7 @@ render_video(glw_t *w, video_decoder_t *vd, glw_video_t *gv, glw_rctx_t *rc)
 
   fra = gv->gv_fra;
 
-  glw_rescale(rc, vd->vd_aspect);
+  glw_scale_to_aspect(rc, vd->vd_aspect);
 
   if(fra != NULL && glw_is_focusable(w))
     glw_store_matrix(w, rc);
@@ -895,8 +945,8 @@ gv_update_focusable(video_decoder_t *vd, glw_video_t *gv)
  *
  */
 static int 
-gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, 
-			 void *extra)
+glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, 
+			  void *extra)
 {
   glw_root_t *gr = w->glw_root;
   glw_video_t *gv = (glw_video_t *)w;
@@ -912,10 +962,6 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     free(gv->gv_texels);
     gv_purge_queues(vd);
     video_decoder_destroy(vd);
-    return 0;
-
-  case GLW_SIGNAL_RENDER:
-    render_video(w, vd, gv, extra);
     return 0;
 
   case GLW_SIGNAL_NEW_FRAME:
@@ -951,10 +997,6 @@ gl_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 static void
 glw_video_init(glw_video_t *gv, glw_root_t *gr)
 {
-  //  gv->gv_dvdspu = gl_dvdspu_init();
- 
-  //  LIST_INSERT_HEAD(&gr->gr_be.gbr_video_decoders, gv, gv_global_link);
-
   gv->gv_zoom = 100;
 }
 
@@ -963,8 +1005,8 @@ glw_video_init(glw_video_t *gv, glw_root_t *gr)
 /**
  *
  */
-void
-glw_video_ctor(glw_t *w, int init, va_list ap)
+static void
+glw_video_set(glw_t *w, int init, va_list ap)
 {
   glw_video_t *gv = (glw_video_t *)w;
   glw_root_t *gr = w->glw_root;
@@ -976,8 +1018,6 @@ glw_video_ctor(glw_t *w, int init, va_list ap)
   if(init) {
 
     gv->gv_mp = mp_create("Video decoder", "video", MP_VIDEO);
-
-    glw_signal_handler_int(w, gl_video_widget_callback);
     glw_video_init(gv, gr);
 
     glw_set_i(w, 
@@ -1022,6 +1062,19 @@ glw_video_ctor(glw_t *w, int init, va_list ap)
     event_unref(e);
   }
 }
+
+
+/** 
+ * 
+ */ 
+static glw_class_t glw_video = { 
+  .gc_name = "video", 
+  .gc_instance_size = sizeof(glw_video_t), 
+  .gc_set = glw_video_set, 
+  .gc_render = glw_video_render, 
+  .gc_signal_handler = glw_video_widget_callback, 
+}; 
+GLW_REGISTER_CLASS(glw_video); 
 
 extern void videotiler_asm(void *dst, 
 			   const void *src0,
