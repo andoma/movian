@@ -25,7 +25,7 @@
 #include <arch/threads.h>
 #include <errno.h>
 
-static hts_mutex_t resolve_mutex;
+hts_mutex_t resolve_mutex;
 
 /**
  *
