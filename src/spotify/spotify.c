@@ -1476,7 +1476,7 @@ static const sp_session_callbacks spotify_session_callbacks = {
  *
  */
 static void 
-tracks_added(sp_playlist *plist, const sp_track **tracks,
+tracks_added(sp_playlist *plist, sp_track * const * tracks,
 	     int num_tracks, int position, void *userdata)
 {
   playlist_t *pl = userdata;
@@ -1686,7 +1686,7 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
 
   n = f_sp_playlist_num_tracks(plist);
   for(i = 0; i < n; i++) {
-    const sp_track *t = f_sp_playlist_track(plist, i);
+    sp_track *t = f_sp_playlist_track(plist, i);
     tracks_added(plist, &t, 1, i, pl);
   }
 
@@ -1791,14 +1791,10 @@ static void
 spotify_got_image(sp_image *image, void *userdata)
 {
   spotify_image_t *si = userdata;
-  int pitch;
-  void *pixels;
+  size_t size;
+  const void *pixels = f_sp_image_data(image, &size);
 
-  pixels = f_sp_image_lock_pixels(image, &pitch);
-  si->si_pixmap = pixmap_create_rgb24(f_sp_image_width(image),
-				      f_sp_image_height(image),
-				      pixels, pitch);
-  f_sp_image_unlock_pixels(image);
+  si->si_pixmap = pixmap_alloc_coded(pixels, size, CODEC_ID_MJPEG);
 
   hts_mutex_lock(&spotify_mutex);
   si->si_errcode = 0;

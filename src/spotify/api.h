@@ -45,7 +45,7 @@ extern "C" {
 
 /* General types */
 
-#ifndef __cplusplus
+#if !defined(__cplusplus) && !defined(__bool_true_false_are_defined)
 typedef unsigned char bool;
 #endif
 
@@ -65,6 +65,7 @@ typedef struct sp_album sp_album; ///< An album handle
 typedef struct sp_artist sp_artist; ///< An artist handle
 typedef struct sp_artistbrowse sp_artistbrowse; ///< A handle to an artist browse result
 typedef struct sp_albumbrowse sp_albumbrowse; ///< A handle to an album browse result
+typedef struct sp_toplistbrowse sp_toplistbrowse; ///< A handle to a toplist browse result
 typedef struct sp_search sp_search; ///< A handle to a search result
 typedef struct sp_link sp_link; ///< A handle to the libspotify internal representation of a URI
 typedef struct sp_image sp_image; ///< A handle to an image
@@ -97,7 +98,7 @@ typedef enum sp_error {
 	SP_ERROR_USER_BANNED               = 7,  ///< The specified username is banned
 	SP_ERROR_UNABLE_TO_CONTACT_SERVER  = 8,  ///< Cannot connect to the Spotify backend system
 	SP_ERROR_CLIENT_TOO_OLD            = 9,  ///< Client is too old, library will need to be updated
-	SP_ERROR_OTHER_PERMAMENT           = 10, ///< Some other error occured, and it is permanent (e.g. trying to relogin will not help)
+	SP_ERROR_OTHER_PERMANENT           = 10, ///< Some other error occured, and it is permanent (e.g. trying to relogin will not help)
 	SP_ERROR_BAD_USER_AGENT            = 11, ///< The user agent string is invalid or too long
 	SP_ERROR_MISSING_CALLBACK          = 12, ///< No valid callback registered to handle events
 	SP_ERROR_INVALID_INDATA            = 13, ///< Input data was either missing or invalid
@@ -141,7 +142,7 @@ SP_LIBEXPORT(const char*) sp_error_message(sp_error error);
  * returned from sp_session_init(). Future versions of the library will provide you with some kind of mechanism
  * to request an updated version of the library.
  */
-#define SPOTIFY_API_VERSION 2
+#define SPOTIFY_API_VERSION 3
 
 /**
  * Describes the current state of the connection
@@ -278,7 +279,11 @@ typedef struct sp_session_callbacks {
 	void (SP_CALLCONV *log_message)(sp_session *session, const char *data);
 
 	/**
-	 * End of track. Called when the currently played track has reached its end.
+	 * End of track.
+	 * Called when the currently played track has reached its end.
+	 *
+	 * @note This function is invoked from the same internal thread
+	 * as the music delivery callback
 	 *
 	 * @param[in]  session    Session
 	 */
@@ -595,6 +600,18 @@ SP_LIBEXPORT(sp_linktype) sp_link_type(sp_link *link);
  *                         If the link is not of track type then NULL is returned.
  */
 SP_LIBEXPORT(sp_track *) sp_link_as_track(sp_link *link);
+
+/**
+ * The track and offset into track representation for the given link
+ *
+ * @param[in]   link       The Spotify link whose track you are interested in
+ * @param[out]  offset     Pointer to offset into track (in seconds). If the link
+ *                         does not contain an offset this will be set to 0.
+ *
+ * @return                 The track representation of the given track link
+ *                         If the link is not of track type then NULL is returned.
+ */
+SP_LIBEXPORT(sp_track *) sp_link_as_track_and_offset(sp_link *link, int *offset);
 
 /**
  * The album representation for the given link
@@ -1206,6 +1223,27 @@ SP_LIBEXPORT(int) sp_artistbrowse_num_tracks(sp_artistbrowse *arb);
 SP_LIBEXPORT(sp_track *) sp_artistbrowse_track(sp_artistbrowse *arb, int index);
 
 /**
+ * Given an artist browse object, return number of albums
+ *
+ * @param[in] arb             Artist browse object
+ *
+ * @return                    Number of albums for given artist
+ */
+SP_LIBEXPORT(int) sp_artistbrowse_num_albums(sp_artistbrowse *arb);
+
+/**
+ * Given an artist browse object, return one of its albums
+ *
+ * @param[in] arb             Album browse object
+ * @param[in] index           The index for the album. Should be in the interval [0, sp_artistbrowse_num_albums() - 1]
+ *
+ * @return                    A album object, or NULL if the index is out of range.
+ *
+ * @see album
+ */
+SP_LIBEXPORT(sp_album *) sp_artistbrowse_album(sp_artistbrowse *arb, int index);
+
+/**
  * Given an artist browse object, return number of similar artists
  *
  * @param[in] arb             Artist browse object
@@ -1266,12 +1304,7 @@ SP_LIBEXPORT(void) sp_artistbrowse_release(sp_artistbrowse *arb);
  */
 typedef enum {
 	SP_IMAGE_FORMAT_UNKNOWN = -1, ///< Unknown image format
-	SP_IMAGE_FORMAT_RGB   = 0,    ///< 24 bit image in RGB form
-	SP_IMAGE_FORMAT_BGR   = 1,    ///< 24 bit image in BGR form
-	SP_IMAGE_FORMAT_RGBA  = 2,    ///< 32 bit image in RGBA form
-	SP_IMAGE_FORMAT_RGBA_PRE= 3,  ///< 32 bit image in RGBA form with premultiplied alpha channel
-	SP_IMAGE_FORMAT_BGRA  = 4,    ///< 32 bit image in BGRA form
-	SP_IMAGE_FORMAT_BGRA_PRE= 5,  ///< 32 bit image in BGRA form with premultiplied alpha channel
+	SP_IMAGE_FORMAT_JPEG   = 0,   ///< JPEG image
 } sp_imageformat;
 
 /**
@@ -1350,65 +1383,24 @@ SP_LIBEXPORT(bool) sp_image_is_loaded(sp_image *image);
 SP_LIBEXPORT(sp_error) sp_image_error(sp_image *image);
 
 /**
- * Get image width
- *
- * @param[in]  image      Image object
- *
- * @return                Width of the image (in pixels)
- */
-SP_LIBEXPORT(int) sp_image_width(sp_image *image);
-
-/**
- * Get image height
- *
- * @param[in]  image      Image object
- *
- * @return                Height of the image (in pixels)
- */
-SP_LIBEXPORT(int) sp_image_height(sp_image *image);
-
-/**
  * Get image format
  *
  * @param[in]  image      Image object
  *
- * @return                Pixel format as described by sp_imageformat
+ * @return                Image format as described by sp_imageformat
  */
 SP_LIBEXPORT(sp_imageformat) sp_image_format(sp_image *image);
 
 /**
- * Lock pixels and return a pointer to the pixel data.
- *
- * You call sp_image_lock_pixels to obtain a pointer to the pixel buffer.
- * Then you call sp_image_unlock_pixels() when you are done. After you have
- * called sp_image_unlock_pixels() the pointer returned from sp_image_lock_pixels
- * is not valid anymore, and libspotify may move the image in memory or
- * delete it or compress it in any way it likes.
- *
- * Here is a snippet from \c track.c:
- * @dontinclude track.c
- * @skip sp_image_lock_pixels
- * @until sp_image_unlock_pixels
- *
- * @param[in]  image      Image object
- * @param[out] pitch      Offset in bytes between consecutive lines in pixel
- *                        data.
- *
- * @return                Pointer to pixels.
- */
-SP_LIBEXPORT(void *) sp_image_lock_pixels(sp_image *image, int *pitch);
+* Get image data
+*
+* @param[in]  image      Image object
+* @param[out] data_size  Size of raw image data
+*
+* @return                Pointer to raw image data
+*/
 
-/**
- * Unlock pixels.
- *
- * After this call it is no longer safe to assume that the pointer returned by
- * sp_image_lock_pixels() is safe to dereference.
- *
- * @param[in]  image      Image object
- * @sa sp_image_lock_pixels
- *
- */
-SP_LIBEXPORT(void) sp_image_unlock_pixels(sp_image *image);
+SP_LIBEXPORT(const void *) sp_image_data(sp_image *image, size_t *data_size);
 
 /**
  * Get image ID
@@ -1631,7 +1623,7 @@ typedef struct sp_playlist_callbacks {
 	 * @param[in]  position   Position in the playlist for the first track.
 	 * @param[in]  userdata   Userdata passed to sp_playlist_add_callbacks()
 	 */
-	void (SP_CALLCONV *tracks_added)(sp_playlist *pl, const sp_track **tracks, int num_tracks, int position, void *userdata);
+	void (SP_CALLCONV *tracks_added)(sp_playlist *pl, sp_track * const *tracks, int num_tracks, int position, void *userdata);
 
 	/**
 	 * Called when one or more tracks have been removed from a playlist
@@ -1891,6 +1883,14 @@ typedef struct sp_playlistcontainer_callbacks {
 	 * @param[in]  userdata   Userdata as set in sp_playlistcontainer_add_callbacks()
 	 */
 	void (SP_CALLCONV *playlist_moved)(sp_playlistcontainer *pc, sp_playlist *playlist, int position, int new_position, void *userdata);
+
+	/**
+	 * Called when the playlist conatiner is loaded
+	 *
+	 * @param[in]  pc         Playlist container
+	 * @param[in]  userdata   Userdata as set in sp_playlistcontainer_add_callbacks()
+	 */
+	void (SP_CALLCONV *container_loaded)(sp_playlistcontainer *pc, void *userdata);
 } sp_playlistcontainer_callbacks;
 
 
@@ -2019,6 +2019,163 @@ SP_LIBEXPORT(const char *) sp_user_display_name(sp_user *user);
 SP_LIBEXPORT(bool) sp_user_is_loaded(sp_user *user);
 
 /** @} */
+
+
+/**
+ * @defgroup toplist Toplist handling
+ * @{
+ */
+
+/**
+ * Toplist types
+ */
+typedef enum {
+	SP_TOPLIST_TYPE_ARTISTS = 0,
+	SP_TOPLIST_TYPE_ALBUMS  = 1,
+	SP_TOPLIST_TYPE_TRACKS  = 2,
+} sp_toplisttype;
+
+/**
+ * Toplist types
+ */
+typedef enum {
+	SP_TOPLIST_REGION_EVERYWHERE = 0,
+	SP_TOPLIST_REGION_MINE = 1,
+} sp_toplistregion;
+
+#define SP_TOPLIST_REGION(a, b) ((a) << 8 | (b))
+
+
+/**
+ * The type of a callback used in sp_toplistbrowse_create()
+ *
+ * When the callback is called, the metadata of all tracks belonging to it will have
+ * been loaded, so sp_track_is_loaded() will return non-zero. The same goes for the
+ * similar toplist data.
+ *
+ * @param[in]   result          The same pointer returned by sp_toplistbrowse_create()
+ * @param[in]   userdata        The opaque pointer given to sp_toplistbrowse_create()
+ */
+typedef void SP_CALLCONV toplistbrowse_complete_cb(sp_toplistbrowse *result, void *userdata);
+
+/**
+ * Initiate a request for browsing an toplist
+ *
+ * The user is responsible for freeing the returned toplist browse using sp_toplistbrowse_release(). This can be done in the callback.
+ *
+ * @param[in]   session         Session object
+ * @param[in]   type            Type of toplist to be browsed. see the sp_toplisttype enum for possible values
+ * @param[in]   region          Region. see sp_toplistregion enum. Country specific regions are coded as two chars in an integer.
+ *                              Sweden would correspond to 'S' << 8 | 'E'
+ * @param[in]   callback        Callback to be invoked when browsing has been completed. Pass NULL if you are not interested in this event.
+ * @param[in]   userdata        Userdata passed to callback.
+ *
+ * @return                      Toplist browse object
+ *
+ * @see ::toplistbrowse_complete_cb
+ */
+SP_LIBEXPORT(sp_toplistbrowse *) sp_toplistbrowse_create(sp_session *session, sp_toplisttype type, sp_toplistregion region, toplistbrowse_complete_cb *callback, void *userdata);
+
+
+/**
+ * Check if an toplist browse request is completed
+ *
+ * @param[in]   tlb        Toplist browse object
+ *
+ * @return                 True if browsing is completed, false if not
+ */
+SP_LIBEXPORT(bool) sp_toplistbrowse_is_loaded(sp_toplistbrowse *tlb);
+
+/**
+* Check if browsing returned an error code.
+*
+* @param[in]   tlb        Toplist browse object
+*
+* @return                 Error code
+*/
+SP_LIBEXPORT(sp_error) sp_toplistbrowse_error(sp_toplistbrowse *tlb);
+
+
+
+/**
+ * Increase the reference count of an toplist browse result
+ *
+ * @param[in]   tlb       The toplist browse result object
+ */
+SP_LIBEXPORT(void) sp_toplistbrowse_add_ref(sp_toplistbrowse *tlb);
+
+/**
+ * Decrease the reference count of an toplist browse result
+ *
+ * @param[in]   tlb       The toplist browse result object
+ */
+SP_LIBEXPORT(void) sp_toplistbrowse_release(sp_toplistbrowse *tlb);
+
+/**
+ * Given an toplist browse object, return number of artists
+ *
+ * @param[in]   tlb         Toplist browse object
+ *
+ * @return                  Number of artists on toplist
+ */
+SP_LIBEXPORT(int) sp_toplistbrowse_num_artists(sp_toplistbrowse *tlb);
+
+/**
+ * Return the artist at the given index in the given toplist browse object
+ *
+ * @param[in]  tlb        Toplist object
+ * @param[in]  index      Index of the wanted artist. Should be in the interval [0, sp_toplistbrowse_num_artists() - 1]
+ *
+ * @return                The artist at the given index in the given toplist browse object
+ */
+SP_LIBEXPORT(sp_artist *) sp_toplistbrowse_artist(sp_toplistbrowse *tlb, int index);
+
+
+/**
+ * Given an toplist browse object, return number of albums
+ *
+ * @param[in]   tlb         Toplist browse object
+ *
+ * @return                  Number of albums on toplist
+ */
+SP_LIBEXPORT(int) sp_toplistbrowse_num_albums(sp_toplistbrowse *tlb);
+
+
+/**
+ * Return the album at the given index in the given toplist browse object
+ *
+ * @param[in]  tlb        Toplist object
+ * @param[in]  index      Index of the wanted album. Should be in the interval [0, sp_toplistbrowse_num_albums() - 1]
+ *
+ * @return                The album at the given index in the given toplist browse object
+ */
+SP_LIBEXPORT(sp_album *) sp_toplistbrowse_album(sp_toplistbrowse *tlb, int index);
+
+
+/**
+ * Given an toplist browse object, return number of tracks
+ *
+ * @param[in]   tlb         Toplist browse object
+ *
+ * @return                  Number of tracks on toplist
+ */
+SP_LIBEXPORT(int) sp_toplistbrowse_num_tracks(sp_toplistbrowse *tlb);
+
+
+/**
+ * Return the track at the given index in the given toplist browse object
+ *
+ * @param[in]  tlb        Toplist object
+ * @param[in]  index      Index of the wanted track. Should be in the interval [0, sp_toplistbrowse_num_tracks() - 1]
+ *
+ * @return                The track at the given index in the given toplist browse object
+ */
+SP_LIBEXPORT(sp_track *) sp_toplistbrowse_track(sp_toplistbrowse *tlb, int index);
+
+
+/** @} */
+
+
 
 #ifdef __cplusplus
 }
