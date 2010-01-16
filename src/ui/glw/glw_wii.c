@@ -547,7 +547,7 @@ glw_wii_start(ui_t *ui, int argc, char *argv[], int primary)
 {
   const char *theme_path = SHOWTIME_GLW_DEFAULT_THEME_URL;
   glw_wii_t *gwii = calloc(1, sizeof(glw_wii_t));
-
+ 
   /* Parse options */
   argv++;
   argc--;
@@ -569,7 +569,9 @@ glw_wii_start(ui_t *ui, int argc, char *argv[], int primary)
     exit(0);
   }
 
-  
+  prop_t *def = prop_create(gwii->gr.gr_uii.uii_prop, "defaults");
+  prop_set_int(prop_create(def, "underscan_h"), 1);
+  prop_set_int(prop_create(def, "underscan_v"), 13);
 
   glw_load_universe(&gwii->gr);
 

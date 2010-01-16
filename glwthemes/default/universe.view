@@ -2,7 +2,10 @@
 #include "theme://include/separators.view"
 
 
-settingInt("Underscan", "underscan", 0, "px", 0, 100, 1, $ui.underscan);
+settingInt("Vertical underscan", "underscan_v", 
+	   $ui.defaults.underscan_v, "px", 0, 100, 1, $ui.underscan_v);
+settingInt("Horizontal underscan", "underscan_h", 
+	   $ui.defaults.underscan_h, "px", 0, 100, 1, $ui.underscan_h);
 
 onEvent(menu, {
   $ui.menu = !$ui.menu;
@@ -19,10 +22,10 @@ widget(container_z, {
   });
     
   widget(displacement, {
-    .border = [$ui.underscan * 1,
-	       $ui.underscan * 1,
-	       $ui.underscan * 1,
-	       $ui.underscan * 1];
+    .border = [$ui.underscan_h * 1,
+	       $ui.underscan_v * 1,
+	       $ui.underscan_h * 1,
+	       $ui.underscan_v * 1];
 	       
 
     widget(layer, {
