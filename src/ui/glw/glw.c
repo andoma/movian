@@ -160,7 +160,18 @@ glw_init(glw_root_t *gr, const char *theme, ui_t *ui, int primary,
   glw_tex_init(gr);
 
   gr->gr_frameduration = 1000000 / 60;
+  uii_register(&gr->gr_uii, primary);
 
+  return 0;
+}
+
+
+/**
+ *
+ */
+void
+glw_load_universe(glw_root_t *gr)
+{
   gr->gr_universe = glw_view_create(gr,
 				    "theme://universe.view", NULL, NULL,
 				    NULL, 0);
@@ -168,14 +179,9 @@ glw_init(glw_root_t *gr, const char *theme, ui_t *ui, int primary,
   glw_set_i(gr->gr_universe,
 	    GLW_ATTRIB_SIGNAL_HANDLER, top_event_handler, gr, 1000,
 	    NULL);
-
-  uii_register(&gr->gr_uii, primary);
-
-  return 0;
 }
 
-
-/*
+/**
  *
  */
 int

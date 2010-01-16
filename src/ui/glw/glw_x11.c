@@ -995,6 +995,8 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
 		       SETTINGS_INITIAL_UPDATE, gr->gr_courier,
 		       glw_settings_save, gr);
 
+  glw_load_universe(gr);
+
   glw_x11_mainloop(gx11);
 
   return 0;

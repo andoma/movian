@@ -569,6 +569,10 @@ glw_wii_start(ui_t *ui, int argc, char *argv[], int primary)
     exit(0);
   }
 
+  
+
+  glw_load_universe(&gwii->gr);
+
   gwii->gr.gr_frameduration = 1000000 / 50;
   glw_wii_loop(gwii);
   return 0;

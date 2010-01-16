@@ -716,6 +716,8 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 		 PROP_TAG_ROOT, gcocoa.gr.gr_uii.uii_prop,
 		 NULL);
   
+  glw_load_universe(&gcocoa.gr);
+
   GLint v = 1;
   [[self openGLContext] setValues:&v forParameter:NSOpenGLCPSwapInterval];
   
