@@ -88,9 +88,9 @@ glw_widget_unproject(const float *m, float *xp, float *yp,
   A.x = -1;  A.y = -1;  A.z = 0;
   guVecMultiply(mt, &A, &T0);
   A.x =  1;  A.y = -1;  A.z = 0;
-  guVecMultiply(mt, &A, &T0);
+  guVecMultiply(mt, &A, &T1);
   A.x =  1;  A.y =  1;  A.z = 0;
-  guVecMultiply(mt, &A, &T0);
+  guVecMultiply(mt, &A, &T2);
 
   guVecSub(&T1, &T0, &u);
   guVecSub(&T2, &T0, &v);
