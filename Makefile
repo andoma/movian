@@ -348,11 +348,11 @@ CFLAGS_com  = -g -funsigned-char -O2
 CFLAGS_com += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 CFLAGS_com += -I${BUILDDIR} -I${CURDIR}/src -I${CURDIR}
 
-all:	${PROG}
+all:	makever ${PROG}
 
-.PHONY:	clean distclean ffmpeg
+.PHONY:	clean distclean ffmpeg makever
 
-${PROG}: ${BUILDDIR}/ffmpeg/install $(OBJDIRS) $(OBJS) $(BUNDLE_OBJS) Makefile
+${PROG}: ${BUILDDIR}/ffmpeg/install $(OBJDIRS) $(OBJS) $(BUNDLE_OBJS) Makefile src/version.c
 	$(CC) -o $@ $(OBJS) $(BUNDLE_OBJS) $(LDFLAGS) ${LDFLAGS_cfg}
 
 $(OBJDIRS):
@@ -376,10 +376,11 @@ reconfigure:
 	$(CURDIR)/configure.${PLATFORM} $(CONFIGURE_ARGS)
 
 # Create showtimeversion.h
-$(BUILDDIR)/showtimeversion.h:
-	$(CURDIR)/support/version.sh $(CURDIR) $(BUILDDIR)/showtimeversion.h
-
 src/version.c: $(BUILDDIR)/showtimeversion.h
+
+makever:
+	@$(CURDIR)/support/version.sh $(CURDIR) $(BUILDDIR)/showtimeversion.h
+
 
 # Include dependency files if they exist.
 -include $(DEPS) $(BUNDLE_DEPS)
