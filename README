@@ -82,9 +82,9 @@ How to build for Nintendo Wii
 For a Wii build you need:
 
 - devkitPro:
-    devkitPPC r16
-    libogc 1.7.1
-    libfat-ogc 1.0.4
+    devkitPPC r18
+    libogc 1.8.1
+    libfat-ogc 1.0.5
 - freetype cross-compiled for PPC.
 
 For your convenience there is a script that will download/build all
@@ -111,6 +111,8 @@ To start showtime on your wii.
 If you have devkitpro and/or freetype someplace else, you can set
 the path to them in configure.wii (see ./configure.wii --help for details)
 
-Note: devkitPPC comes with a few bugs which is fixed by the support/setupwii
-script. If you compile devkitPPC yourself you might need to fixup these
-small issues. Please see the script for details.
+Note: libogc defaults to maximum of 16 threads.
+This is on the edge for showtime. Therefore, the wiisetup script will
+install a new version of lwp_config.h (see support/lwp_config.h) before
+compiling libogc. If you intend to use a stock libogc you need to be aware
+of this fact.
