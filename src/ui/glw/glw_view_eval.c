@@ -2797,6 +2797,17 @@ glw_settingInt(glw_view_eval_context_t *ec, struct token *self,
   if(resolve_property_name(ec, prop))
     return -1;
 
+  if((def  = token_resolve(ec, def)) == NULL)
+    return -1;
+  if((unit = token_resolve(ec, unit)) == NULL)
+    return -1;
+  if((min  = token_resolve(ec, min)) == NULL)
+    return -1;
+  if((max  = token_resolve(ec, max)) == NULL)
+    return -1;
+  if((step = token_resolve(ec, step)) == NULL)
+    return -1;
+
   if(title->type != TOKEN_STRING)
     return glw_view_seterr(ec->ei, title, "Title argument is not a string");
   
@@ -2836,6 +2847,9 @@ glw_settingBool(glw_view_eval_context_t *ec, struct token *self,
   token_t *prop  = argv[3];
 
   glw_root_t *gr = ec->w->glw_root;
+
+  if((def  = token_resolve(ec, def)) == NULL)
+    return -1;
 
   if(resolve_property_name(ec, prop))
     return -1;
