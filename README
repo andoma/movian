@@ -98,15 +98,7 @@ directory. By default configure.wii will look into these directories
 for devkitPro and freetype, so all you have to do now is:
 
 $ ./configure.wii
-
 $ make
-
-If you have wiiload (http://wiibrew.org/wiki/Wiiload) installed and
-homebrew channel is running on your wii, you can just type:
-
-$ make run
-
-To start showtime on your wii.
 
 If you have devkitpro and/or freetype someplace else, you can set
 the path to them in configure.wii (see ./configure.wii --help for details)
@@ -116,3 +108,22 @@ This is on the edge for showtime. Therefore, the wiisetup script will
 install a new version of lwp_config.h (see support/lwp_config.h) before
 compiling libogc. If you intend to use a stock libogc you need to be aware
 of this fact.
+
+
+Wiiload
+=======
+If you have wiiload (http://wiibrew.org/wiki/Wiiload) installed and
+homebrew channel is running on your wii, you can just type:
+
+$ make run
+
+To start showtime on your wii.
+
+Homebrew package
+================
+The makefile system can build a homebrew package. To do this, type:
+
+$ make homebrew
+
+The output will reside in "build.wii/bundle/". Both a app directory
+and a Zip file is generated.
