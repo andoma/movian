@@ -307,8 +307,7 @@ tracev(int level, const char *subsys, const char *fmt, va_list ap)
 
   if(rlog_socket >= 0) {
     rlog(buf, subsys, level);
-  } else {
-    return; // Don't do this, it will just paint over the graphics
+  } else if(0 /* No logging to console, will just mess up video output */) {
 
     switch(level) {
     case TRACE_ERROR: leveltxt = "ERROR"; sgr = "\033[31m"; break;
