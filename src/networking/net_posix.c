@@ -96,83 +96,83 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
   } else {
 
 #if defined(__APPLE__)
-  herr = 0;
-  tmphstbuf = NULL; /* free NULL is a nop */
-  /* TODO: AF_INET6 */
-  hp = gethostbyname(hostname);
-  if(hp == NULL)
-    herr = h_errno;
+    herr = 0;
+    tmphstbuf = NULL; /* free NULL is a nop */
+    /* TODO: AF_INET6 */
+    hp = gethostbyname(hostname);
+    if(hp == NULL)
+      herr = h_errno;
 #else
-  hstbuflen = 1024;
-  tmphstbuf = malloc(hstbuflen);
+    hstbuflen = 1024;
+    tmphstbuf = malloc(hstbuflen);
 
-  while((res = gethostbyname_r(hostname, &hostbuf, tmphstbuf, hstbuflen,
-			       &hp, &herr)) == ERANGE) {
-    hstbuflen *= 2;
-    tmphstbuf = realloc(tmphstbuf, hstbuflen);
-  }
+    while((res = gethostbyname_r(hostname, &hostbuf, tmphstbuf, hstbuflen,
+				 &hp, &herr)) == ERANGE) {
+      hstbuflen *= 2;
+      tmphstbuf = realloc(tmphstbuf, hstbuflen);
+    }
 #endif
-  if(herr != 0) {
-    switch(herr) {
-    case HOST_NOT_FOUND:
-      errtxt = "Unknown host";
-      break;
+    if(herr != 0) {
+      switch(herr) {
+      case HOST_NOT_FOUND:
+	errtxt = "Unknown host";
+	break;
 
-    case NO_ADDRESS:
-      errtxt = "The requested name is valid but does not have an IP address";
-      break;
+      case NO_ADDRESS:
+	errtxt = "The requested name is valid but does not have an IP address";
+	break;
       
-    case NO_RECOVERY:
-      errtxt = "A non-recoverable name server error occurred";
-      break;
+      case NO_RECOVERY:
+	errtxt = "A non-recoverable name server error occurred";
+	break;
       
-    case TRY_AGAIN:
-      errtxt = "A temporary error occurred on an authoritative name server";
-      break;
+      case TRY_AGAIN:
+	errtxt = "A temporary error occurred on an authoritative name server";
+	break;
       
-    default:
-      errtxt = "Unknown error";
-      break;
+      default:
+	errtxt = "Unknown error";
+	break;
+      }
+
+      snprintf(errbuf, errbufsize, "%s", errtxt);
+      free(tmphstbuf);
+      return -1;
+    } else if(hp == NULL) {
+      snprintf(errbuf, errbufsize, "Resolver internal error");
+      free(tmphstbuf);
+      return -1;
     }
 
-    snprintf(errbuf, errbufsize, "%s", errtxt);
+    if((fd = getstreamsocket(hp->h_addrtype, errbuf, errbufsize)) == -1) {
+      free(tmphstbuf);
+      return -1;  
+    }
+
+    switch(hp->h_addrtype) {
+    case AF_INET:
+      memset(&in, 0, sizeof(in));
+      in.sin_family = AF_INET;
+      in.sin_port = htons(port);
+      memcpy(&in.sin_addr, hp->h_addr_list[0], sizeof(struct in_addr));
+      r = connect(fd, (struct sockaddr *)&in, sizeof(struct sockaddr_in));
+      break;
+
+    case AF_INET6:
+      memset(&in6, 0, sizeof(in6));
+      in6.sin6_family = AF_INET6;
+      in6.sin6_port = htons(port);
+      memcpy(&in6.sin6_addr, hp->h_addr_list[0], sizeof(struct in6_addr));
+      r = connect(fd, (struct sockaddr *)&in, sizeof(struct sockaddr_in6));
+      break;
+
+    default:
+      snprintf(errbuf, errbufsize, "Invalid protocol family");
+      free(tmphstbuf);
+      return -1;
+    }
+
     free(tmphstbuf);
-    return -1;
-  } else if(hp == NULL) {
-    snprintf(errbuf, errbufsize, "Resolver internal error");
-    free(tmphstbuf);
-    return -1;
-  }
-
-  if((fd = getstreamsocket(hp->h_addrtype, errbuf, errbufsize)) == -1) {
-    free(tmphstbuf);
-    return -1;  
-  }
-
-  switch(hp->h_addrtype) {
-  case AF_INET:
-    memset(&in, 0, sizeof(in));
-    in.sin_family = AF_INET;
-    in.sin_port = htons(port);
-    memcpy(&in.sin_addr, hp->h_addr_list[0], sizeof(struct in_addr));
-    r = connect(fd, (struct sockaddr *)&in, sizeof(struct sockaddr_in));
-    break;
-
-  case AF_INET6:
-    memset(&in6, 0, sizeof(in6));
-    in6.sin6_family = AF_INET6;
-    in6.sin6_port = htons(port);
-    memcpy(&in6.sin6_addr, hp->h_addr_list[0], sizeof(struct in6_addr));
-    r = connect(fd, (struct sockaddr *)&in, sizeof(struct sockaddr_in6));
-    break;
-
-  default:
-    snprintf(errbuf, errbufsize, "Invalid protocol family");
-    free(tmphstbuf);
-    return -1;
-  }
-
-  free(tmphstbuf);
   }
   if(r == -1) {
     if(errno == EINPROGRESS) {
