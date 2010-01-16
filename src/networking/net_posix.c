@@ -33,6 +33,36 @@
 #include "net.h"
 
 
+
+
+static int
+getstreamsocket(int family, char *errbuf, size_t errbufsize)
+{
+  int fd;
+  fd = socket(family, SOCK_STREAM, 0);
+  if(fd == -1) {
+    snprintf(errbuf, errbufsize, "Unable to create socket: %s",
+	     strerror(errno));
+    return -1;  
+  }
+
+  /**
+   * Switch to nonblocking
+   */
+  fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+
+  /* Darwin send() does not have MSG_NOSIGNAL flag, but has a SO_NOSIGPIPE sockopt */
+#ifdef SO_NOSIGPIPE
+  if(setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &r, sizeof(r)) == -1) {
+    snprintf(errbuf, errbufsize, "setsockopt SO_NOSIGPIPE error: %s",
+	     strerror(errno));
+    close(fd);
+    return -1; 
+  } 
+#endif
+  return fd;
+}
+
 /**
  *
  */
@@ -52,6 +82,18 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
   struct sockaddr_in6 in6;
   struct sockaddr_in in;
   socklen_t errlen = sizeof(int);
+
+
+  if(!strcmp(hostname, "localhost")) {
+    if((fd = getstreamsocket(AF_INET, errbuf, errbufsize)) == -1)
+      return -1;  
+
+    memset(&in, 0, sizeof(in));
+    in.sin_family = AF_INET;
+    in.sin_port = htons(port);
+    in.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    r = connect(fd, (struct sockaddr *)&in, sizeof(struct sockaddr_in));
+  } else {
 
 #if defined(__APPLE__)
   herr = 0;
@@ -102,28 +144,10 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
     return -1;
   }
 
-  fd = socket(hp->h_addrtype, SOCK_STREAM, 0);
-  if(fd == -1) {
-    snprintf(errbuf, errbufsize, "Unable to create socket: %s",
-	     strerror(errno));
+  if((fd = getstreamsocket(hp->h_addrtype, errbuf, errbufsize)) == -1) {
     free(tmphstbuf);
-    return -1;
+    return -1;  
   }
-
-  /**
-   * Switch to nonblocking
-   */
-  fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
-
-  /* Darwin send() does not have MSG_NOSIGNAL flag, but has a SO_NOSIGPIPE sockopt */
-#ifdef SO_NOSIGPIPE
-  if(setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &r, sizeof(r)) == -1) {
-    snprintf(errbuf, errbufsize, "setsockopt SO_NOSIGPIPE error: %s",
-	     strerror(errno));
-    free(tmphstbuf);
-    return -1; 
-  } 
-#endif
 
   switch(hp->h_addrtype) {
   case AF_INET:
@@ -149,7 +173,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
   }
 
   free(tmphstbuf);
-
+  }
   if(r == -1) {
     if(errno == EINPROGRESS) {
       struct pollfd pfd;
