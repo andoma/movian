@@ -339,7 +339,7 @@ wpad_render(glw_wii_t *gwii)
     guMtxIdentity(rc.rc_be.gbr_model_matrix);
     guMtxTransApply(rc.rc_be.gbr_model_matrix,
 		    rc.rc_be.gbr_model_matrix,
-		    0, 0, -2.6);
+		    0, 0, -1 / tan(45 * M_PI / 360));
     glw_Translatef(&rc, gwii->cursor_x, gwii->cursor_y, 0);
     glw_Scalef(&rc, 0.1, 0.1, 1.0);
 
@@ -504,7 +504,7 @@ glw_wii_loop(glw_wii_t *gwii)
     guMtxIdentity(rc.rc_be.gbr_model_matrix);
     guMtxTransApply(rc.rc_be.gbr_model_matrix,
 		    rc.rc_be.gbr_model_matrix,
-		    0, 0, -2.6);
+		    0, 0, -1 / tan(45 * M_PI / 360));
     
     rc.rc_size_x = 640 * 1.3333;
     rc.rc_size_y = 480;
