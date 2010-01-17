@@ -1167,11 +1167,11 @@ spotify_load_artist(spotify_uri_t *su, sp_link *link)
 
     f_sp_link_as_string(link, prefix, sizeof(prefix));
 
-    snprintf(url, sizeof(url), "%s:albums", prefix);
+    snprintf(url, sizeof(url), "%s#albums", prefix);
     add_dir(su->su_nodes, "Albums", url);
-    snprintf(url, sizeof(url), "%s:singles", prefix);
+    snprintf(url, sizeof(url), "%s#singles", prefix);
     add_dir(su->su_nodes, "Singles", url);
-    snprintf(url, sizeof(url), "%s:compilations", prefix);
+    snprintf(url, sizeof(url), "%s#compilations", prefix);
     add_dir(su->su_nodes, "Compilations", url);
 
 
@@ -2172,11 +2172,11 @@ handle_artist_url(char *url, spotify_uri_t *su)
      strlen(url) <= 37)
     return 0;
 
-  if(!strcmp(url + 37, ":albums")) {
+  if(!strcmp(url + 37, "#albums")) {
     su->su_album_type = SP_ALBUMTYPE_ALBUM;
-  } else if(!strcmp(url + 37, ":singles")) {
+  } else if(!strcmp(url + 37, "#singles")) {
     su->su_album_type = SP_ALBUMTYPE_SINGLE;
-  } else if(!strcmp(url + 37, ":compilations")) {
+  } else if(!strcmp(url + 37, "#compilations")) {
     su->su_album_type = SP_ALBUMTYPE_COMPILATION;
   } else {
     return -1;
