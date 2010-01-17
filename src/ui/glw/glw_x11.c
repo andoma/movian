@@ -789,11 +789,8 @@ glw_x11_mainloop(glw_x11_t *gx11)
     if(gx11->fullwindow)
       autohide_cursor(gx11);
 
-    if(gx11->is_fullscreen != gx11->want_fullscreen) {
-      glw_lock(&gx11->gr);
+    if(gx11->is_fullscreen != gx11->want_fullscreen)
       window_change_displaymode(gx11);
-      glw_unlock(&gx11->gr);
-    }
 
     while(XPending(gx11->display)) {
       XNextEvent(gx11->display, &event);
