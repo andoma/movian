@@ -321,6 +321,7 @@ static glw_class_t glw_array = {
   .gc_instance_size = sizeof(glw_array_t),
   .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY,
   .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
+  .gc_nav_search_mode = GLW_NAV_SEARCH_ARRAY,
   .gc_render = glw_array_render,
   .gc_set = glw_array_set,
   .gc_signal_handler = glw_array_callback,
