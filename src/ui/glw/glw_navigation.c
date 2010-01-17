@@ -267,7 +267,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
 	 direction == 1 && w->glw_flags & GLW_RIGHT_EDGE)
 	break;
 
-      if(orientation == 0) {
+      if(orientation == GLW_ORIENTATION_VERTICAL) {
 
 	int xentries = glw_array_get_xentries(p);
 
