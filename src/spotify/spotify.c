@@ -1,6 +1,6 @@
 /*
  *  Backend using Spotify
- *  Copyright (C) 2009 Andreas Öman
+ *  Copyright (C) 2009, 2010 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -55,10 +55,10 @@ static hts_mutex_t spotify_mutex;
 static hts_cond_t spotify_cond_main;
 static hts_cond_t spotify_cond_login;
 static int spotify_started;
-static int spotify_login_result = -1;
 
 static int play_position;
 static int seek_pos;
+static int is_logged_in;
 
 static prop_t *prop_status;
 
@@ -138,11 +138,9 @@ static void load_initial_playlists(sp_playlistcontainer *pc);
 typedef enum {
   SPOTIFY_PENDING_EVENT, //< event pending from libspotify
   SPOTIFY_LOGOUT,
-  SPOTIFY_LOAD_URI,
   SPOTIFY_PLAY_TRACK,
   SPOTIFY_LIST,
   SPOTIFY_STOP_PLAYBACK,
-  SPOTIFY_SEARCH,
   SPOTIFY_RELEASE_TRACK,
   SPOTIFY_RELEASE_ALBUM,
   SPOTIFY_RELEASE_ARTIST,
@@ -151,6 +149,8 @@ typedef enum {
   SPOTIFY_PAUSE,
   SPOTIFY_GET_IMAGE,
   SPOTIFY_GET_PARENT,
+  SPOTIFY_PLAY_REQUEST,
+  SPOTIFY_OPEN_PAGE,
 } spotify_msg_type_t;
 
 /**
@@ -163,20 +163,9 @@ typedef struct spotify_uri {
   size_t su_errlen;
   int su_errcode;
 
-  int su_content_type; /* from showtime.h */
   prop_t *su_metadata;
   prop_t *su_list;     // for be_spotify_list()
 
-  prop_t *su_nodes;
-
-  const char *su_preferred_view;
-
-  prop_t *su_prop_artist_name;
-  prop_t *su_prop_album_name;
-  prop_t *su_prop_album_year;
-  prop_t *su_prop_album_image;
-  prop_t *su_prop_title;
-  
   prop_t *su_playlist_title;
 
   sp_link *su_playlist_link;
@@ -192,15 +181,25 @@ typedef struct spotify_uri {
 static hts_cond_t spotify_cond_uri;
 static spotify_uri_t *su_playing, *su_pending;
 
+/**
+ * A spotify page query
+ */
+typedef struct spotify_page {
+  prop_t *sp_root;
+  char *sp_url;
+
+} spotify_page_t;
 
 /**
- * A spotify search query
+ * A spotify play reuqest
  */
-typedef struct spotify_search {
-  char *ss_query;
-  prop_t *ss_results;
-  prop_t *ss_view;
-} spotify_search_t;
+typedef struct spotify_play_request {
+  char *spr_url;
+  char *spr_parent;
+} spotify_play_request_t;
+
+
+
 
 
 /**
@@ -254,6 +253,10 @@ static LIST_HEAD(, spotify_parent) pending_get_parents;
 static hts_cond_t spotify_cond_parent;
 
 static void spotify_try_get_parents(void);
+
+static void parse_search_reply(sp_search *result, prop_t *nodes, prop_t *view);
+
+static void handle_artist_url(char *url, sp_albumtype *type, int *albums);
 
 /**
  *
@@ -320,8 +323,8 @@ spotify_try_login(sp_session *s, int retry, const char *reason)
 		     "spotify:", reason);
 
   if(r == -1) {
+    // Login canceled by user
     hts_mutex_lock(&spotify_mutex);
-    spotify_login_result = -2;
     hts_cond_broadcast(&spotify_cond_login);
     hts_mutex_unlock(&spotify_mutex);
     return -1;
@@ -351,7 +354,7 @@ spotify_logged_in(sp_session *sess, sp_error error)
   if(error == 0) {
     notify_add(NOTIFY_INFO, NULL, 5, "Spotify: Logged in");
     hts_mutex_lock(&spotify_mutex);
-    spotify_login_result = 0;
+    is_logged_in = 1;
     hts_cond_broadcast(&spotify_cond_login);
     hts_mutex_unlock(&spotify_mutex);
 
@@ -382,7 +385,7 @@ spotify_logged_out(sp_session *sess)
   notify_add(NOTIFY_INFO, NULL, 5, "Spotify: Logged out");
 
   hts_mutex_lock(&spotify_mutex);
-  spotify_login_result = -1;
+  is_logged_in = 0;
   hts_cond_broadcast(&spotify_cond_login);
   hts_mutex_unlock(&spotify_mutex);
 }
@@ -1154,39 +1157,36 @@ add_dir(prop_t *parent, const char *title, const char *url)
  *
  */
 static void
-spotify_load_artist(spotify_uri_t *su, sp_link *link)
+spotify_open_artist(sp_link *l, prop_t *p, int albums, 
+		    sp_albumtype albtype)
 {
-  sp_artist *artist = f_sp_link_as_artist(link);
+  sp_artist *artist = f_sp_link_as_artist(l);
   char url[128];
   char prefix[128];
+  prop_t *n = prop_create(p, "nodes");
 
-  su->su_content_type = CONTENT_DIR;
-  su->su_nodes = prop_create(NULL, "nodes");
+  if(!albums) {
 
-  if(!su->su_artist_albums) {
-
-    f_sp_link_as_string(link, prefix, sizeof(prefix));
+    f_sp_link_as_string(l, prefix, sizeof(prefix));
 
     snprintf(url, sizeof(url), "%s#albums", prefix);
-    add_dir(su->su_nodes, "Albums", url);
+    add_dir(n, "Albums", url);
     snprintf(url, sizeof(url), "%s#singles", prefix);
-    add_dir(su->su_nodes, "Singles", url);
+    add_dir(n, "Singles", url);
     snprintf(url, sizeof(url), "%s#compilations", prefix);
-    add_dir(su->su_nodes, "Compilations", url);
+    add_dir(n, "Compilations", url);
 
+    prop_set_string(prop_create(p, "view"), "list");
 
   } else {
 
-    su->su_preferred_view = "albumcollection";
+    prop_set_string(prop_create(p, "view"), "albumcollection");
 
     f_sp_artistbrowse_create(spotify_session, artist,
 			     spotify_browse_artist_callback,
-			     bah_create(su->su_nodes, 0, su->su_album_type));
-
+			     bah_create(n, 0, albtype));
   }
-
-  su->su_prop_title = prop_create(NULL, "title");
-  metadata_create(su->su_prop_title, METADATA_ARTIST_NAME, artist);
+  metadata_create(prop_create(p, "title"), METADATA_ARTIST_NAME, artist);
 }
 
 
@@ -1213,96 +1213,171 @@ playlist_find(const char *url)
  *
  */
 static void
-spotify_load_uri(spotify_uri_t *su)
+spotify_page_destroy(spotify_page_t *sp)
 {
+  prop_ref_dec(sp->sp_root);
+  free(sp->sp_url);
+  free(sp);
+}
+
+/**
+ *
+ */
+static void
+spotify_open_rootlist(prop_t *p)
+{
+  prop_print_tree(prop_playlists, 1);
+
+  prop_set_string(prop_create(p, "view"), "list");
+  prop_set_string(prop_create(p, "title"), "Spotify playlists");
+  prop_link(prop_playlists, prop_create(p, "nodes"));
+}
+
+
+/**
+ *
+ */
+static void
+spotify_open_search_done(sp_search *result, void *userdata)
+{
+  spotify_page_t *sp = userdata;
+  prop_t *nodes = prop_create(NULL, "nodes");
+
+  parse_search_reply(result, nodes, prop_create(sp->sp_root, "view"));
+
+  if(prop_set_parent(nodes, sp->sp_root))
+    prop_destroy(nodes);
+
+  spotify_page_destroy(sp);
+}
+
+/**
+ *
+ */
+static int
+spotify_open_search(spotify_page_t *sp, const char *query)
+{
+  prop_set_string(prop_create(sp->sp_root, "type"), "directory");
+
+  return f_sp_search_create(spotify_session, query,
+			    0, 250, 0, 250, 0, 250, 
+			    spotify_open_search_done, sp) == NULL;
+}
+
+/**
+ *
+ */
+static void
+spotify_open_album(sp_album *alb, prop_t *p)
+{
+  prop_t *n = prop_create(p, "nodes");
+
+  prop_ref_inc(n);
+  f_sp_albumbrowse_create(spotify_session, alb, 
+			  spotify_browse_album_callback, n);
+
+  metadata_create(prop_create(p, "album_name"),  METADATA_ALBUM_NAME, alb);
+  metadata_create(prop_create(p, "title"),       METADATA_ALBUM_NAME, alb);
+  metadata_create(prop_create(p, "album_year"),  METADATA_ALBUM_YEAR, alb);
+  metadata_create(prop_create(p, "album_art"),   METADATA_ALBUM_IMAGE, alb);
+  metadata_create(prop_create(p, "artist_name"), METADATA_ALBUM_ARTIST_NAME,
+		  alb);
+
+  prop_set_string(prop_create(p, "view"), "album");
+}
+
+/**
+ *
+ */
+static void
+spotify_open_playlist(const char *url, prop_t *p)
+{
+  playlist_t *pl = playlist_find(url);
+  if(pl == NULL)
+    return;
+
+  prop_set_string(prop_create(p, "view"), "list");
+  prop_link(pl->pl_prop_title, prop_create(p, "title"));
+  prop_link(pl->pl_prop_tracks, prop_create(p, "nodes"));
+}
+
+
+/**
+ * Fill sp->sp_root with info from sp->sp_url
+ */
+static void
+spotify_open_page(spotify_page_t *sp)
+{
+  int artist_albums = 0;
+  sp_albumtype album_type = 0;
   sp_link *l;
   sp_linktype type;
-  playlist_t *pl;
 
-  if((l = f_sp_link_create_from_string(su->su_uri)) == NULL) {
-    snprintf(su->su_errbuf, su->su_errlen, "Invalid spotify URI");
-    spotify_uri_return(su, 1);
-    return;
-  }
+  printf("Loading %s\n", sp->sp_url);
 
-  type = f_sp_link_type(l);
+  if(!strcmp(sp->sp_url, "spotify:playlists")) {
+    spotify_open_rootlist(sp->sp_root);
+  } else if(!strncmp(sp->sp_url, "spotify:search:",
+		     strlen("spotify:search:"))) {
+    if(!spotify_open_search(sp, sp->sp_url + strlen("spotify:search:")))
+      return;
+  } else {
+    handle_artist_url(sp->sp_url, &album_type, &artist_albums);
 
-  switch(type) {
-  case SP_LINKTYPE_TRACK:
-    su->su_content_type = CONTENT_AUDIO;
-
-    su->su_metadata = prop_create(NULL, "metadata");
-    metadata_create(su->su_metadata, METADATA_TRACK, f_sp_link_as_track(l));
-    break;
-
-  case SP_LINKTYPE_ALBUM:
-    su->su_content_type = CONTENT_DIR;
-
-    su->su_preferred_view = "album";
-    su->su_nodes = prop_create(NULL, "nodes");
-
-    /* Launch a browse request */
-
-    prop_ref_inc(su->su_nodes);
-    f_sp_albumbrowse_create(spotify_session, f_sp_link_as_album(l), 
-			    spotify_browse_album_callback, su->su_nodes);
-
-    su->su_prop_album_name = prop_create(NULL, "album_name");
-    metadata_create(su->su_prop_album_name, METADATA_ALBUM_NAME, 
-		    f_sp_link_as_album(l));
-
-    su->su_prop_title = prop_create(NULL, "title");
-    metadata_create(su->su_prop_title, METADATA_ALBUM_NAME, 
-		    f_sp_link_as_album(l));
-
-    su->su_prop_album_year = prop_create(NULL, "album_year");
-    metadata_create(su->su_prop_album_year, METADATA_ALBUM_YEAR,
-		    f_sp_link_as_album(l));
-
-    su->su_prop_album_image = prop_create(NULL, "album_art");
-    metadata_create(su->su_prop_album_image, METADATA_ALBUM_IMAGE,
-		    f_sp_link_as_album(l));
-
-    su->su_prop_artist_name = prop_create(NULL, "artist_name");
-    metadata_create(su->su_prop_artist_name, METADATA_ALBUM_ARTIST_NAME, 
-		    f_sp_link_as_album(l));
-    break;
-
-  case SP_LINKTYPE_ARTIST:
-    spotify_load_artist(su, l);
-    break;
-
-
-  case SP_LINKTYPE_PLAYLIST:
-
-    pl = playlist_find(su->su_uri);
-
-    if(pl == NULL) {
-      snprintf(su->su_errbuf, su->su_errlen, "Playlist %s not found",
-	       su->su_uri);
-      f_sp_link_release(l);
-      spotify_uri_return(su, 1);
+    printf("%s\n", sp->sp_url);
+    if((l = f_sp_link_create_from_string(sp->sp_url)) == NULL) {
+      spotify_page_destroy(sp);
       return;
     }
 
-    su->su_playlist_title = pl->pl_prop_title;
-    prop_ref_inc(su->su_playlist_title);
+    type = f_sp_link_type(l);
 
-    su->su_nodes = pl->pl_prop_tracks;
-    su->su_content_type = CONTENT_PLAYLIST;
-    break;
+    switch(type) {
+    case SP_LINKTYPE_ALBUM:
+      spotify_open_album(f_sp_link_as_album(l), sp->sp_root);
+      break;
 
-  default:
-    snprintf(su->su_errbuf, su->su_errlen, "Can not handle linktype %d",
-	     type);
+    case SP_LINKTYPE_ARTIST:
+      spotify_open_artist(l, sp->sp_root, artist_albums, album_type);
+      break;
+
+    case SP_LINKTYPE_PLAYLIST:
+      spotify_open_playlist(sp->sp_url, sp->sp_root);
+      break;
+    default:
+      break;
+    }
     f_sp_link_release(l);
-    spotify_uri_return(su, 1);
-    return;
   }
+  prop_set_string(prop_create(sp->sp_root, "type"), "directory");
+  prop_print_tree(sp->sp_root, 1);
 
-  f_sp_link_release(l);
-  spotify_uri_return(su, 0);
+  spotify_page_destroy(sp);
 }
+
+
+/**
+ *
+ */
+static void
+spotify_play_request(spotify_play_request_t *spr)
+{
+  sp_link *l;
+
+  if((l = f_sp_link_create_from_string(spr->spr_url)) != NULL) {
+
+    if(f_sp_link_type(l) == SP_LINKTYPE_TRACK) {
+      prop_t *m = prop_create(NULL, "metadata");
+      metadata_create(m, METADATA_TRACK, f_sp_link_as_track(l));
+      playqueue_play(spr->spr_url, spr->spr_parent, m, 0);
+    }
+    f_sp_link_release(l);
+  }
+  free(spr->spr_url);
+  free(spr->spr_parent);
+  free(spr);
+}
+
 
 
 /**
@@ -1371,22 +1446,8 @@ spotify_list(spotify_uri_t *su)
  *
  */
 static void
-search_cleanup(spotify_search_t *ss)
+parse_search_reply(sp_search *result, prop_t *nodes, prop_t *view)
 {
-  prop_ref_dec(ss->ss_results);
-  prop_ref_dec(ss->ss_view);
-  free(ss->ss_query);
-  free(ss);
-}
-
-
-/**
- *
- */
-static void
-search_completed(sp_search *result, void *userdata)
-{
-  spotify_search_t *ss = userdata;
   int i, nalbums, ntracks, nartists;
   sp_album *album;
   sp_artist *artist;
@@ -1415,30 +1476,20 @@ search_completed(sp_search *result, void *userdata)
     prop_set_string(prop_create(metadata, "artist"), f_sp_artist_name(artist));
     set_image_uri(prop_create(metadata, "album_art"), f_sp_album_cover(album));
 
-    if(prop_set_parent(p, ss->ss_results))
+    if(prop_set_parent(p, nodes))
       prop_destroy(p);
   }
 
-  if(nalbums && nartists == 0 && ntracks == 0)
-    prop_set_string(ss->ss_view, "array");
-  else
-    prop_set_string(ss->ss_view, "list");
+  if(view != NULL) {
+    if(nalbums && nartists == 0 && ntracks == 0)
+      prop_set_string(view, "albumcollection");
+    else
+      prop_set_string(view, "list");
+  }
 
   f_sp_search_release(result);
-  search_cleanup(ss);
 }
 
-
-/**
- *
- */
-static void
-spotify_search(spotify_search_t *ss)
-{
-  if(f_sp_search_create(spotify_session, ss->ss_query,
-			0, 250, 0, 250, 0, 250, search_completed, ss) == NULL)
-    search_cleanup(ss);
-}
 
 /**
  *
@@ -1978,7 +2029,7 @@ spotify_thread(void *aux)
   error = f_sp_session_init(&sesconf, &s);
   hts_mutex_lock(&spotify_mutex);
   if(error) {
-    spotify_login_result = error;
+    exit(4);
     hts_cond_broadcast(&spotify_cond_login);
     hts_mutex_unlock(&spotify_mutex);
     return NULL;
@@ -2016,8 +2067,11 @@ spotify_thread(void *aux)
 	TRACE(TRACE_DEBUG, "spotify", "Requesting logout");
 	f_sp_session_logout(s);
 	break;
-      case SPOTIFY_LOAD_URI:
-	spotify_load_uri(sm->sm_ptr);
+      case SPOTIFY_OPEN_PAGE:
+	spotify_open_page(sm->sm_ptr);
+	break;
+      case SPOTIFY_PLAY_REQUEST:
+	spotify_play_request(sm->sm_ptr);
 	break;
       case SPOTIFY_LIST:
 	spotify_list(sm->sm_ptr);
@@ -2027,9 +2081,6 @@ spotify_thread(void *aux)
 	break;
       case SPOTIFY_STOP_PLAYBACK:
 	f_sp_session_player_unload(s);
-	break;
-      case SPOTIFY_SEARCH:
-	spotify_search(sm->sm_ptr);
 	break;
       case SPOTIFY_RELEASE_TRACK:
 	f_sp_track_release(sm->sm_ptr);
@@ -2079,8 +2130,8 @@ spotify_thread(void *aux)
 /**
  *
  */
-static int
-spotify_start(char *errbuf, size_t errlen)
+static void
+spotify_start(void)
 {
   hts_mutex_lock(&spotify_mutex);
   
@@ -2088,102 +2139,28 @@ spotify_start(char *errbuf, size_t errlen)
     hts_thread_create_detached("spotify", spotify_thread, NULL);
     spotify_started = 1;
   }
-
-  while(spotify_login_result == -1)
-    hts_cond_wait(&spotify_cond_login, &spotify_mutex);
-
-  if(spotify_login_result != 0) {
-    /* Login error occured */
-    snprintf(errbuf, errlen, "Unable to login\n%s",
-	     spotify_login_result == -2 ? "User rejected" :
-	     f_sp_error_message(spotify_login_result));
-    return 1;
-  }
-  return 0;
 }
 
 
 /**
  *
  */
-static int
-be_spotify_search(const char *url, const char *query, nav_page_t **npp,
-		  char *errbuf, size_t errlen)
-{
-  spotify_search_t *ss = malloc(sizeof(spotify_search_t));
-  nav_page_t *np;
-  prop_t *p;
-
-  np = nav_page_create(url, sizeof(nav_page_t), NULL,
-		       NAV_PAGE_DONT_CLOSE_ON_BACK);
-  p = np->np_prop_root;
-  
-  ss->ss_results = prop_create(p, "nodes");
-  prop_ref_inc(ss->ss_results);
-
-  ss->ss_view = prop_create(p, "view");
-  prop_ref_inc(ss->ss_view);
-
-  ss->ss_query = strdup(query);
-
-  spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_SEARCH, ss));
-  hts_mutex_unlock(&spotify_mutex);
-
-  prop_set_string(prop_create(p, "type"), "directory");
-  prop_set_string(prop_create(p, "title"), "Search result");
-  *npp = np;
-  return 0;
-}
-
-
-/**
- *
- */
-static int
-be_spotify_rootlist(const char *url, nav_page_t **npp,
-		    char *errbuf, size_t errlen)
-{
-  nav_page_t *n;
-  prop_t *nodes;
-
-  hts_mutex_unlock(&spotify_mutex);
-
-  *npp = n = nav_page_create(url, sizeof(nav_page_t), NULL,
-			     NAV_PAGE_DONT_CLOSE_ON_BACK);
-
-  prop_set_string(prop_create(n->np_prop_root, "type"), "directory");
-  prop_set_string(prop_create(n->np_prop_root, "view"), "list");
-
-  nodes = prop_create(n->np_prop_root, "nodes");
-  prop_set_string(prop_create(n->np_prop_root, "title"), "Spotify playlists");
-
-  prop_link(prop_playlists, nodes);
-  return 0;
-}
-
-
-/**
- *
- */
-static int
-handle_artist_url(char *url, spotify_uri_t *su)
+static void
+handle_artist_url(char *url, sp_albumtype *type, int *albums)
 {
   if(strncmp(url, "spotify:artist:", strlen("spotify:artist:")) || 
      strlen(url) <= 37)
-    return 0;
+    return;
 
   if(!strcmp(url + 37, "#albums")) {
-    su->su_album_type = SP_ALBUMTYPE_ALBUM;
+    *type = SP_ALBUMTYPE_ALBUM;
   } else if(!strcmp(url + 37, "#singles")) {
-    su->su_album_type = SP_ALBUMTYPE_SINGLE;
+    *type = SP_ALBUMTYPE_SINGLE;
   } else if(!strcmp(url + 37, "#compilations")) {
-    su->su_album_type = SP_ALBUMTYPE_COMPILATION;
-  } else {
-    return -1;
+    *type = SP_ALBUMTYPE_COMPILATION;
   }
   url[37] = 0;
-  su->su_artist_albums = 1; // Get albums
-  return 0;
+  *albums = 1; // Get albums
 }
 
 
@@ -2194,120 +2171,34 @@ static int
 be_spotify_open(const char *url0, const char *type, const char *parent,
 		nav_page_t **npp, char *errbuf, size_t errlen)
 {
-  spotify_uri_t su;
-  nav_page_t *np;
-  prop_t *p;
-  char *url = mystrdupa(url0);
+  nav_page_t *np = NULL;
+  char *url = strdup(url0);
 
-  memset(&su, 0, sizeof(su));
+  spotify_start();
 
-  if(handle_artist_url(url, &su)) {
-    snprintf(errbuf, errlen, "Invalid Artist URI");
-    return -1;
+  if(!strncmp(url, "spotify:track:", strlen("spotify:track:"))) {
+    spotify_play_request_t *spr = malloc(sizeof(spotify_play_request));
+
+    spr->spr_url = url;
+    spr->spr_parent = strdup(parent);
+    spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_PLAY_REQUEST, spr));
+
+  } else {
+
+    np = nav_page_create(url, sizeof(nav_page_t), NULL,
+			 NAV_PAGE_DONT_CLOSE_ON_BACK);
+    
+    spotify_page_t *sp = malloc(sizeof(spotify_page_t));
+    sp->sp_url = url;
+    sp->sp_root = np->np_prop_root;
+    prop_ref_inc(sp->sp_root);
+    
+    spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_OPEN_PAGE, sp));
   }
-
-  if(spotify_start(errbuf, errlen))
-    return -1;
-
-  if(!strncmp(url, "spotify:search:", strlen("spotify:search:")))
-    return be_spotify_search(url, url + strlen("spotify:search:"),
-					  npp, errbuf, errlen);
-
-  if(!strcmp(url, "spotify:playlists"))
-    return be_spotify_rootlist(url, npp, errbuf, errlen);
-
-  su.su_uri = url;
-  su.su_errbuf = errbuf;
-  su.su_errlen = errlen;
-  su.su_errcode = -1;
-  su.su_content_type = CONTENT_UNKNOWN;
-  su.su_preferred_view = "list";
-
-  TRACE(TRACE_DEBUG, "spotify", "Loading URL: %s", url0);
-
-  spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_LOAD_URI, &su));
-
-  while(su.su_errcode == -1)
-    hts_cond_wait(&spotify_cond_uri, &spotify_mutex);
-  
+  *npp = np;
   hts_mutex_unlock(&spotify_mutex);
-
-  if(su.su_errcode)
-    return -1; /* errbuf is filled in by spotify thread */
-
-  switch(su.su_content_type) {
-
-  case CONTENT_AUDIO:
-    playqueue_play(url0, parent, su.su_metadata, 0);
-    *npp = NULL;
-    break;
-
-  case CONTENT_DIR:
-    np = nav_page_create(url0, sizeof(nav_page_t), NULL,
-			  NAV_PAGE_DONT_CLOSE_ON_BACK);
-    p = np->np_prop_root;
-
-    prop_set_string(prop_create(p, "type"), "directory");
-    prop_set_string(prop_create(p, "view"), su.su_preferred_view);
-
-    if(su.su_nodes && prop_set_parent(su.su_nodes, p))
-      abort();
-    su.su_nodes = NULL;
-
-    if(su.su_prop_artist_name && prop_set_parent(su.su_prop_artist_name, p))
-      abort();
-    su.su_prop_artist_name = NULL;
-
-    if(su.su_prop_album_name && prop_set_parent(su.su_prop_album_name, p))
-      abort();
-    su.su_prop_album_name = NULL;
-
-    if(su.su_prop_album_year && prop_set_parent(su.su_prop_album_year, p))
-      abort();
-    su.su_prop_album_year = NULL;
-
-    if(su.su_prop_album_image && prop_set_parent(su.su_prop_album_image, p))
-      abort();
-    su.su_prop_album_image = NULL;
-
-    if(su.su_prop_title && prop_set_parent(su.su_prop_title, p))
-      abort();
-    su.su_prop_title = NULL;
-
-    *npp = np;
-    break;
-
-  case CONTENT_PLAYLIST:
-    np = nav_page_create(url0, sizeof(nav_page_t), NULL,
-			  NAV_PAGE_DONT_CLOSE_ON_BACK);
-    p = np->np_prop_root;
-
-    prop_set_string(prop_create(p, "type"), "directory");
-    prop_set_string(prop_create(p, "view"), su.su_preferred_view);
-    prop_link(su.su_playlist_title, prop_create(p, "title"));
-    prop_link(su.su_nodes, prop_create(p, "nodes"));
-
-    su.su_nodes = NULL;
-
-    *npp = np;
-    break;
-
-    break;
-
-  default:
-    snprintf(errbuf, errlen, "Can not handle contents");
-    return -1;
-  }
-
-  assert(su.su_nodes == NULL);
-  assert(su.su_prop_artist_name == NULL);
-  assert(su.su_prop_album_name == NULL);
-  assert(su.su_prop_album_year == NULL);
-  assert(su.su_prop_album_image == NULL);
-  assert(su.su_prop_title == NULL);
   return 0;
 }
-
 
 /**
  * Play given track.
@@ -2326,8 +2217,7 @@ be_spotify_play(const char *url, media_pipe_t *mp,
   
   memset(&su, 0, sizeof(su));
 
-  if(spotify_start(errbuf, errlen))
-    return NULL;
+  spotify_start();
 
   assert(spotify_mp == NULL);
   spotify_mp = mp;
@@ -2456,13 +2346,9 @@ be_spotify_list(const char *url0, char *errbuf, size_t errlen)
 
   memset(&su, 0, sizeof(su));
 
-  if(handle_artist_url(url, &su)) {
-    snprintf(errbuf, errlen, "Invalid Artist URI");
-    return NULL;
-  }
+  handle_artist_url(url, &su.su_album_type, &su.su_artist_albums);
 
-  if(spotify_start(errbuf, errlen))
-    return NULL;
+  spotify_start();
 
   su.su_uri = url;
   su.su_errbuf = errbuf;
@@ -2547,8 +2433,7 @@ be_spotify_imageloader(const char *url, int want_thumb, const char *theme,
     return NULL;
   }
 
-  if(spotify_start(errbuf, errlen))
-    return NULL;
+  spotify_start();
 
   si.si_id = id;
   si.si_errcode = -1;
@@ -2577,8 +2462,7 @@ be_spotify_get_parent(const char *url,
 {
   spotify_parent_t sp = {0};
 
-  if(spotify_start(errbuf, errlen))
-    return -1;
+  spotify_start();
 
   sp.sp_errcode = -1;
   sp.sp_uri = url;
@@ -2688,13 +2572,13 @@ spotify_shutdown(void)
 
   hts_mutex_lock(&spotify_mutex);
 
-  if(spotify_started && spotify_login_result == 0) {
+  if(is_logged_in) {
 
     done = 0;
 
     spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_LOGOUT, &done));
 
-    while(spotify_login_result != -1)
+    while(is_logged_in)
       if(hts_cond_wait_timeout(&spotify_cond_login, &spotify_mutex, 5000))
 	break;
   }
