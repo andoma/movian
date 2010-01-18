@@ -184,6 +184,8 @@ nav_open0(const char *url, const char *type, const char *parent)
   nav_backend_t *nb;
   char errbuf[128];
 
+  TRACE(TRACE_DEBUG, "navigator", "Opening %s", url);
+
   /* First, if a page is already open, go directly to it */
 
   TAILQ_FOREACH(np, &nav_pages, np_global_link) {
