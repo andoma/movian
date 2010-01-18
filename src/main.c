@@ -47,6 +47,7 @@
  */
 int concurrency;
 int trace_level;
+static int ffmpeglog;
 static int showtime_retcode;
 char *remote_logtarget; // Used on Wii
 
@@ -82,6 +83,8 @@ fflog(void *ptr, int level, const char *fmt, va_list vl)
 {
   static char line[1024];
   AVClass *avc = ptr ? *(AVClass**)ptr : NULL;
+  if(!ffmpeglog)
+    return;
 
   if(level < AV_LOG_WARNING)
     level = TRACE_ERROR;
@@ -133,6 +136,10 @@ main(int argc, char **argv)
       continue;
     } else if(!strcmp(argv[0], "-dd")) {
       trace_level+=2;
+      argc -= 1; argv += 1;
+      continue;
+    } else if(!strcmp(argv[0], "--ffmpeglog")) {
+      ffmpeglog = 1;
       argc -= 1; argv += 1;
       continue;
     } else if(!strcmp(argv[0], "-s") && argc > 1) {
