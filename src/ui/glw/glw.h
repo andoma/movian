@@ -942,8 +942,9 @@ glw_align_2(glw_rctx_t *rc, glw_alignment_t a, glw_alignment_t def)
  */
 
 #define GLW_RENDER_ATTRIBS_NONE       0
-#define GLW_RENDER_ATTRIBS_TEX        1
-#define GLW_RENDER_ATTRIBS_TEX_COLOR  2
+#define GLW_RENDER_ATTRIBS_COLOR      1
+#define GLW_RENDER_ATTRIBS_TEX        2
+#define GLW_RENDER_ATTRIBS_TEX_COLOR  3
 
 
 void glw_render_init(glw_renderer_t *gr, int vertices, int attribs);
