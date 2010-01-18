@@ -51,9 +51,10 @@ getstreamsocket(int family, char *errbuf, size_t errbufsize)
    */
   fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
 
-  /* Darwin send() does not have MSG_NOSIGNAL flag, but has a SO_NOSIGPIPE sockopt */
+  /* Darwin send() does not have MSG_NOSIGNAL, but has SO_NOSIGPIPE sockopt */
 #ifdef SO_NOSIGPIPE
-  if(setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &r, sizeof(r)) == -1) {
+  int val = 1;
+  if(setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, sizeof(val)) == -1) {
     snprintf(errbuf, errbufsize, "setsockopt SO_NOSIGPIPE error: %s",
 	     strerror(errno));
     close(fd);
