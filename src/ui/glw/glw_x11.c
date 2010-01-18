@@ -60,6 +60,7 @@ typedef struct glw_x11 {
 
   int is_fullscreen;
   int want_fullscreen;
+  setting_t *fullscreen_setting;
 
   int map_mouse_wheel_to_keys;
 
@@ -986,12 +987,13 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
 		       SETTINGS_INITIAL_UPDATE, gr->gr_courier,
 		       glw_settings_save, gr);
 
-  settings_create_bool(gr->gr_settings, "fullscreen",
-		       "Fullscreen mode", 0, gr->gr_settings_store,
-		       gx11_set_fullscreen, gx11, 
-		       SETTINGS_INITIAL_UPDATE, gr->gr_courier,
-		       glw_settings_save, gr);
-
+  gx11->fullscreen_setting = 
+    settings_create_bool(gr->gr_settings, "fullscreen",
+			 "Fullscreen mode", 0, gr->gr_settings_store,
+			 gx11_set_fullscreen, gx11, 
+			 SETTINGS_INITIAL_UPDATE, gr->gr_courier,
+			 glw_settings_save, gr);
+  
   glw_load_universe(gr);
 
   glw_x11_mainloop(gx11);
@@ -1005,12 +1007,12 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
 static void
 glw_x11_dispatch_event(uii_t *uii, event_t *e)
 {
-  //  glw_x11_t *gx11 = (glw_x11_t *)uii;
+  glw_x11_t *gx11 = (glw_x11_t *)uii;
 
   /* Take care of any X11 specific events first */
   
   if(event_is_action(e, ACTION_FULLSCREEN_TOGGLE)) {
-    //settings_toggle_bool(gx11->fullscreen_setting);
+    settings_toggle_bool(gx11->fullscreen_setting);
 
   } else {
     /* Pass it on to GLW */
