@@ -87,13 +87,22 @@ widget(container_z, {
 	});
 
 
-	widget(deck, {
-	  .filterConstraintX = true;
-	  delta($ui.fullwindow, wantFullWindow());
-
-	  cloner($global.nav.pages, animator, {
-	    .time = 0.3;
-	    .source = "theme://pages/" + $page.type + ".view";
+	widget(container_z, {
+	  widget(container_y, {
+	    space(1);
+	    widget(throbber3d, {
+	      .alpha = iir($global.nav.currentpage.loading, 4);
+	    });
+	    space(1);
+	  });
+	  widget(deck, {
+	    .filterConstraintX = true;
+	    delta($ui.fullwindow, wantFullWindow());
+	    
+	    cloner($global.nav.pages, animator, {
+	      .time = 0.3;
+	      .source = "theme://pages/" + $page.type + ".view";
+	    });
 	  });
 	});
 
