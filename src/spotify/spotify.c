@@ -353,7 +353,6 @@ spotify_logged_in(sp_session *sess, sp_error error)
   sp_user *user;
 
   if(error == 0) {
-    notify_add(NOTIFY_INFO, NULL, 5, "Spotify: Logged in");
     hts_mutex_lock(&spotify_mutex);
     is_logged_in = 1;
     hts_cond_broadcast(&spotify_cond_login);
