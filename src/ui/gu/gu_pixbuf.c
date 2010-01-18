@@ -47,10 +47,10 @@ typedef struct pbcache {
 
 
 #define isALPHA(x)      (           \
-           (x)==PIX_FMT_BGR32       \
-        || (x)==PIX_FMT_BGR32_1     \
-        || (x)==PIX_FMT_RGB32       \
-        || (x)==PIX_FMT_RGB32_1     \
+           (x)==PIX_FMT_ARGB        \
+        || (x)==PIX_FMT_RGBA        \
+        || (x)==PIX_FMT_ABGR        \
+        || (x)==PIX_FMT_BGRA        \
         || (x)==PIX_FMT_YUVA420P    \
     )
 

@@ -132,7 +132,7 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
     glt->glt_ext_type = GL_UNSIGNED_BYTE;
     break;
 
-  case PIX_FMT_RGB32:
+  case PIX_FMT_BGRA:
     glt->glt_bpp = 4;
     glt->glt_format = GL_RGBA;
     glt->glt_ext_format = GL_BGRA;
@@ -182,7 +182,7 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
       map += pict->linesize[0];
     }
 
-    r = glw_tex_backend_load(gr, glt, &pict2, PIX_FMT_RGB32, 
+    r = glw_tex_backend_load(gr, glt, &pict2, PIX_FMT_BGRA, 
 			     src_w, src_h, req_w, req_h);
 
     av_free(pict2.data[0]);
