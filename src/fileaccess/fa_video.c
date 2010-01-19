@@ -138,6 +138,13 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
 	mb->mb_data_type = MB_VIDEO;
 	mq = &mp->mp_video;
 
+	if(fctx->streams[si]->avg_frame_rate.num) {
+	  mb->mb_duration = 1000000 * fctx->streams[si]->avg_frame_rate.den /
+	    fctx->streams[si]->avg_frame_rate.num;
+	} else {
+	  mb->mb_duration = rescale(fctx, pkt.duration, si);
+	}
+
       } else if(ctx != NULL && si == mp->mp_audio.mq_stream) {
 	/* Current audio stream */
 	mb = media_buf_alloc();
@@ -153,7 +160,6 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
       mb->mb_epoch    = epoch;
       mb->mb_pts      = rescale(fctx, pkt.pts,      si);
       mb->mb_dts      = rescale(fctx, pkt.dts,      si);
-      mb->mb_duration = rescale(fctx, pkt.duration, si);
 
       if(mq->mq_seektarget != AV_NOPTS_VALUE) {
 	ts = mb->mb_pts != AV_NOPTS_VALUE ? mb->mb_pts : mb->mb_dts;
