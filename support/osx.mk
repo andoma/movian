@@ -29,5 +29,6 @@ $(APPDIR)/Contents/Resources/MainMenu.nib: osx/MainMenu.xib
 
 .PHONY: Showtime.dmg
 Showtime.dmg:
+	support/osxchecknonsyslink.sh ${PROG}
 	support/mkdmg ${APPDIR} Showtime osx/hts.icns Showtime.dmg
 
