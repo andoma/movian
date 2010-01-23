@@ -150,7 +150,7 @@ typedef enum {
   SPOTIFY_PAUSE,
   SPOTIFY_GET_IMAGE,
   SPOTIFY_GET_PARENT,
-  SPOTIFY_PLAY_REQUEST,
+  SPOTIFY_OPEN_TRACK,
   SPOTIFY_OPEN_PAGE,
 } spotify_msg_type_t;
 
@@ -194,10 +194,10 @@ typedef struct spotify_page {
 /**
  * A spotify play reuqest
  */
-typedef struct spotify_play_request {
-  char *spr_url;
-  char *spr_parent;
-} spotify_play_request_t;
+typedef struct spotify_open_track {
+  char *sot_url;
+  char *sot_parent;
+} spotify_open_track_t;
 
 
 
@@ -1376,22 +1376,22 @@ spotify_open_page(spotify_page_t *sp)
  *
  */
 static void
-spotify_play_request(spotify_play_request_t *spr)
+spotify_open_track(spotify_open_track_t *sot)
 {
   sp_link *l;
 
-  if((l = f_sp_link_create_from_string(spr->spr_url)) != NULL) {
+  if((l = f_sp_link_create_from_string(sot->sot_url)) != NULL) {
 
     if(f_sp_link_type(l) == SP_LINKTYPE_TRACK) {
       prop_t *m = prop_create(NULL, "metadata");
       metadata_create(m, METADATA_TRACK, f_sp_link_as_track(l));
-      playqueue_play(spr->spr_url, spr->spr_parent, m, 0);
+      playqueue_play(sot->sot_url, sot->sot_parent, m, 0);
     }
     f_sp_link_release(l);
   }
-  free(spr->spr_url);
-  free(spr->spr_parent);
-  free(spr);
+  free(sot->sot_url);
+  free(sot->sot_parent);
+  free(sot);
 }
 
 
@@ -2095,8 +2095,8 @@ spotify_thread(void *aux)
       case SPOTIFY_OPEN_PAGE:
 	spotify_open_page(sm->sm_ptr);
 	break;
-      case SPOTIFY_PLAY_REQUEST:
-	spotify_play_request(sm->sm_ptr);
+      case SPOTIFY_OPEN_TRACK:
+	spotify_open_track(sm->sm_ptr);
 	break;
       case SPOTIFY_LIST:
 	spotify_list(sm->sm_ptr);
@@ -2202,11 +2202,11 @@ be_spotify_open(const char *url0, const char *type, const char *parent,
   spotify_start();
 
   if(!strncmp(url, "spotify:track:", strlen("spotify:track:"))) {
-    spotify_play_request_t *spr = malloc(sizeof(spotify_play_request_t));
+    spotify_open_track_t *sot = malloc(sizeof(spotify_open_track_t));
 
-    spr->spr_url = url;
-    spr->spr_parent = parent ? strdup(parent) : NULL;
-    spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_PLAY_REQUEST, spr));
+    sot->sot_url = url;
+    sot->sot_parent = parent ? strdup(parent) : NULL;
+    spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_OPEN_TRACK, sot));
 
   } else {
 
