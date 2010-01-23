@@ -180,36 +180,6 @@ else
 fi
 
 #
-# pkg-config, set LIBDIR to makes pkg-config only search that path
-#
-if [ ! -x "$PKGCONFIG" ] ; then
-    echo "$PKGCONFIG does not exist or is not executable, make sure it is installed"
-    echo "You can also specify another path with --pkg-config"
-    die
-fi
-if [ ! -d "$PKGCONFIGDIR" ] ; then
-    echo "$PKGCONFIGDIR does not exist, make sure pkg-config is installed"
-    echo "You can also specify another directory with --pkg-config-dir"
-    die
-fi
-export PKG_CONFIG_LIBDIR=$PKGCONFIGDIR
-PKGS=""
-
-#
-# libfreetype2
-#
-if $PKGCONFIG freetype2; then
-    PKGS+="freetype2 "
-    echo "Using Freetype2:       `$PKGCONFIG --modversion freetype2`"
-else
-    echo "FreeType 2 not found"
-    die
-fi
-
-echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg_config_static $PKGS`
-echo >>${CONFIG_MAK} "CFLAGS_cfg +=" `$PKGCONFIG --cflags $PKGS`
-
-#
 # Standard Mac OS X frameworks
 #
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Foundation"
@@ -249,7 +219,36 @@ else
         --extra-ldflags="$MACOSXSDK_LDFLAGS" \
         --cc="$CC"
 fi
-      
+#
+# pkg-config, set LIBDIR to makes pkg-config only search that path
+#
+if [ ! -x "$PKGCONFIG" ] ; then
+    echo "$PKGCONFIG does not exist or is not executable, make sure it is installed"
+    echo "You can also specify another path with --pkg-config"
+    die
+fi
+if [ ! -d "$PKGCONFIGDIR" ] ; then
+    echo "$PKGCONFIGDIR does not exist, make sure pkg-config is installed"
+    echo "You can also specify another directory with --pkg-config-dir"
+    die
+fi
+export PKG_CONFIG_LIBDIR=$PKGCONFIGDIR
+PKGS=""
+
+#
+# libfreetype2
+#
+if $PKGCONFIG freetype2; then
+    PKGS+="freetype2 "
+    echo "Using Freetype2:       `$PKGCONFIG --modversion freetype2`"
+else
+    echo "FreeType 2 not found"
+    die
+fi
+
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg_config_static $PKGS`
+echo >>${CONFIG_MAK} "CFLAGS_cfg +=" `$PKGCONFIG --cflags $PKGS`
+
 #
 # Configure paths, etc
 #
