@@ -473,6 +473,9 @@ typedef struct glw_rctx {
 
   int rc_inhibit_shadows; // Used when rendering low res passes in bloom filter
 
+  int rc_inhibit_matrix_store; // Avoid storing matrix in mirrored view, etc
+  
+
   /**
    * Backend specifics
    */ 

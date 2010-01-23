@@ -25,6 +25,8 @@ void
 glw_store_matrix(glw_t *w, glw_rctx_t *rc)
 {
   glw_cursor_painter_t *gcp = rc->rc_cursor_painter;
+  if(rc->rc_inhibit_matrix_store)
+    return;
 
   if(w->glw_matrix == NULL)
     w->glw_matrix = malloc(sizeof(float) * 16);

@@ -65,6 +65,7 @@ glw_mirror_render(glw_t *w, glw_rctx_t *rc)
   glw_frontface(GLW_CW);
 
   rc0.rc_alpha *= 0.5;
+  rc0.rc_inhibit_matrix_store = 1;
 
   b = glw_clip_enable(&rc0, GLW_CLIP_BOTTOM);
   glw_render0(c, &rc0);
