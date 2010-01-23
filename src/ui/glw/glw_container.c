@@ -246,7 +246,7 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
       if(co->w.glw_alignment == GLW_ALIGN_CENTER) {
 	y = co->y_sum / size_y;
       } else if(co->w.glw_alignment == GLW_ALIGN_BOTTOM) {
-	y = 1.0 - 2 * co->y_sum / size_y;
+	y = -1.0 + 2 * co->y_sum / size_y;
       }
     }
   }
