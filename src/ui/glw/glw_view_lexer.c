@@ -93,12 +93,11 @@ lexer_add_token_float(token_t *prev, rstr_t *f, int line,
     n = n * 10 + s - '0';
   }
   
-  t->t_float = n * sign;
-  if(start == end)
+  t->t_float = n;
+  if(start == end || s != '.') {
+    t->t_float *= sign;
     return t;
-
-  if(s != '.')
-    return t;
+  }
 
   n = 0;
   while(start < end) {
@@ -110,6 +109,7 @@ lexer_add_token_float(token_t *prev, rstr_t *f, int line,
   }
 
   t->t_float += pow(10, -m) * n;
+  t->t_float *= sign;
   return t;
 }
 
