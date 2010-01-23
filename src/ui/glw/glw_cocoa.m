@@ -144,6 +144,7 @@ static const struct {
 { _NSEscapeKey,             0,                ACTION_CLOSE },
 { _NSTabKey,                0,                ACTION_FOCUS_NEXT },
 
+{ NSF5FunctionKey,	    0,	ACTION_RELOAD_UI },
 };
 
 
