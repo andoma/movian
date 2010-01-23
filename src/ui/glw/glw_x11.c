@@ -574,7 +574,8 @@ static const struct {
   { XK_KP_Add,       ControlMask, ACTION_ZOOM_UI_INCR },
   { '-',             ControlMask, ACTION_ZOOM_UI_DECR },
   { XK_KP_Subtract,  ControlMask, ACTION_ZOOM_UI_DECR },
-
+  
+  { XK_F5,           0,           ACTION_RELOAD_UI },
   { XK_F11,          0,           ACTION_FULLSCREEN_TOGGLE },
   
   { XF86XK_AudioLowerVolume, 0,   ACTION_VOLUME_DOWN },

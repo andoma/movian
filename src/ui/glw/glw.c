@@ -172,6 +172,11 @@ glw_init(glw_root_t *gr, const char *theme, ui_t *ui, int primary,
 void
 glw_load_universe(glw_root_t *gr)
 {
+  glw_view_cache_flush(gr);
+
+  if(gr->gr_universe != NULL)
+    glw_destroy0(gr->gr_universe);
+
   gr->gr_universe = glw_view_create(gr,
 				    "theme://universe.view", NULL, NULL,
 				    NULL, 0);
@@ -1484,7 +1489,13 @@ glw_dispatch_event(uii_t *uii, event_t *e)
 
   glw_lock(gr);
 
-  if(event_is_action(e, ACTION_ZOOM_UI_INCR)) {
+  if(event_is_action(e, ACTION_RELOAD_UI)) {
+    glw_load_universe(gr);
+    event_unref(e);
+    glw_unlock(gr);
+    return;
+
+  } else if(event_is_action(e, ACTION_ZOOM_UI_INCR)) {
 
     settings_add_int(gr->gr_setting_fontsize, 1);
     event_unref(e);

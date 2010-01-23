@@ -188,3 +188,18 @@ glw_view_create(glw_root_t *gr, const char *src,
 }
 
 
+/**
+ *
+ */
+void
+glw_view_cache_flush(glw_root_t *gr)
+{
+  glw_cached_view_t *gcv;
+
+  while((gcv = LIST_FIRST(&gr->gr_views)) != NULL) {
+    glw_view_free_chain(gcv->gcv_sof);
+    free(gcv->gcv_source);
+    LIST_REMOVE(gcv, gcv_link);
+    free(gcv);
+  }
+}
