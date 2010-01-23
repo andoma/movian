@@ -139,4 +139,12 @@ void glw_rtt_destroy(struct glw_root *gr, glw_rtt_t *grtt);
 
 #define glw_blendmode(m) glBlendFunc(m)
 
+/**
+ *
+ */
+#define GLW_CW  GL_CW
+#define GLW_CCW GL_CCW
+
+#define glw_frontface(x) glFrontFace(x) 
+
 #endif /* GLW_OPENGL_H__ */
