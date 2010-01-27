@@ -387,6 +387,9 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     if(mp->mp_audio.mq_stream == -1 && ctx->codec_type == CODEC_TYPE_AUDIO)
       mp->mp_audio.mq_stream = i;
 
+    if(ctx->codec_id == CODEC_ID_DTS)
+      ctx->channels = 0;
+
     cwvec[i] = wrap_codec_create(ctx->codec_id,
 				 ctx->codec_type, 0, fw, ctx, 0, 0);
   }
