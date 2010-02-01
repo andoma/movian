@@ -2775,6 +2775,25 @@ glwf_browse(glw_view_eval_context_t *ec, struct token *self,
   return 0;
 }
 
+/**
+ *
+ */
+static void
+glwf_setting_ctor(struct token *self)
+{
+  self->t_extra = NULL;
+}
+
+/**
+ *
+ */
+static void
+glwf_setting_dtor(struct token *self)
+{
+  if(self->t_extra != NULL)
+    setting_destroy(self->t_extra);
+}
+
 
 /**
  *
@@ -2792,7 +2811,10 @@ glw_settingInt(glw_view_eval_context_t *ec, struct token *self,
   token_t *step  = argv[6];
   token_t *prop  = argv[7];
 
-   glw_root_t *gr = ec->w->glw_root;
+  glw_root_t *gr = ec->w->glw_root;
+
+  if(self->t_extra != NULL)
+    return 0;
 
   if(resolve_property_name(ec, prop))
     return -1;
@@ -2829,7 +2851,7 @@ glw_settingInt(glw_view_eval_context_t *ec, struct token *self,
 
   prop_link(settings_get_value(s), prop->t_prop);
 
-  self->type = TOKEN_NOP; // Can never be reevaluated
+  self->t_extra = s; // Save setting for destruction
 
   return 0;
 }
@@ -2911,8 +2933,8 @@ static const token_func_t funcvec[] = {
   {"select", 3, glwf_select},
   {"trace", 2, glwf_trace},
   {"browse", 1, glwf_browse},
-  {"settingInt", 8, glw_settingInt},
-  {"settingBool", 4, glw_settingBool},
+  {"settingInt", 8, glw_settingInt, glwf_setting_ctor, glwf_setting_dtor},
+  {"settingBool", 4, glw_settingBool, glwf_setting_ctor, glwf_setting_dtor},
 };
 
 
