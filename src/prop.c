@@ -37,6 +37,8 @@ static prop_courier_t *global_courier;
 
 static void prop_unsubscribe0(prop_sub_t *s);
 
+static void prop_unlink0(prop_t *p, prop_sub_t *skipme, const char *origin,
+			 struct prop_notify_queue *pnq);
 
 /**
  *
@@ -1167,6 +1169,9 @@ prop_destroy0(prop_t *p)
     LIST_REMOVE(s, hps_value_prop_link);
     s->hps_value_prop = NULL;
   }
+
+  while((c = LIST_FIRST(&p->hp_targets)) != NULL)
+    prop_unlink0(c, NULL, "prop_destroy0", NULL);
 
   if(p->hp_originator != NULL) {
     p->hp_originator = NULL;
