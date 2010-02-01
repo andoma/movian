@@ -435,6 +435,19 @@ settings_create_string(prop_t *parent, const char *id, const char *title,
 /**
  *
  */
+void
+setting_destroy(setting_t *s)
+{
+  free(s->s_id);
+  prop_unsubscribe(s->s_sub);
+  prop_destroy(s->s_prop);
+  free(s);
+}
+
+
+/**
+ *
+ */
 prop_t *
 settings_get_value(setting_t *s)
 {

@@ -81,6 +81,8 @@ void settings_add_int(setting_t *s, int delta);
 
 prop_t *settings_get_value(setting_t *s);
 
+void setting_destroy(setting_t *s);
+
 void settings_init(void);
 
 #endif /* SETTINGS_H__ */
