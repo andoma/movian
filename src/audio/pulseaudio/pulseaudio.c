@@ -504,11 +504,6 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
     if(l > length)
       l = length;
     
-    pa_stream_write(pam->stream, ab->ab_data + ab->ab_tmp,
-		    l, NULL, 0LL, PA_SEEK_RELATIVE);
-
-    ab->ab_tmp += l;
-
     if((pts = ab->ab_pts) != AV_NOPTS_VALUE && ab->ab_mp != NULL) {
       int64_t pts;
       pa_usec_t delay;
@@ -523,10 +518,15 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
 	mp->mp_audio_clock = pts - delay;
 	mp->mp_audio_clock_realtime = showtime_get_ts();
 	mp->mp_audio_clock_epoch = ab->ab_epoch;
-
 	hts_mutex_unlock(&mp->mp_clock_mutex);
       }
     }
+
+    pa_stream_write(pam->stream, ab->ab_data + ab->ab_tmp,
+		    l, NULL, 0LL, PA_SEEK_RELATIVE);
+
+    ab->ab_tmp += l;
+
     assert(ab->ab_tmp <= ab->ab_frames * pa_frame_size(&pam->ss));
 
     if(ab->ab_frames * pa_frame_size(&pam->ss) == ab->ab_tmp) {
