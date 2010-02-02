@@ -695,7 +695,10 @@ gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb)
 		      gtb->gtb_data.gtbd_siz_x,
 		      ys,
 		      0, 0, 
-		      (gtb->w.glw_alignment == GLW_ALIGN_NONE ? 
+		      (gtb->w.glw_alignment == GLW_ALIGN_NONE ||
+		       gtb->w.glw_alignment == GLW_ALIGN_TOP ||
+		       gtb->w.glw_alignment == GLW_ALIGN_BOTTOM
+		       ? 
 		       GLW_CONSTRAINT_X : 0) | GLW_CONSTRAINT_Y, 0);
 
 }
