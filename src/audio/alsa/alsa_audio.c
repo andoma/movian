@@ -32,6 +32,17 @@
 #include "audio/audio_ui.h"
 #include "audio/audio_iec958.h"
 
+/* seams to only be defined in modern versions of endian.h */
+#if !defined(htobe16) && !defined(htole16)
+# if __BYTE_ORDER == __LITTLE_ENDIAN
+#  define htobe16(x) __bswap_16 (x)
+#  define htole16(x) (x)
+# else
+#  define htobe16(x) (x)
+#  define htole16(x) __bswap_16 (x)
+# endif
+#endif
+
 static hts_mutex_t alsa_mutex;
 
 /**
