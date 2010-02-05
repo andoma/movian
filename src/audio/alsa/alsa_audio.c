@@ -35,11 +35,11 @@
 /* seams to only be defined in modern versions of endian.h */
 #if !defined(htobe16) && !defined(htole16)
 # if __BYTE_ORDER == __LITTLE_ENDIAN
-#  define htobe16(x) __bswap_16 (x)
+#  define htobe16(x) ((((x) & 0xff00) >> 8) | (((x) & 0xff) << 8))
 #  define htole16(x) (x)
 # else
 #  define htobe16(x) (x)
-#  define htole16(x) __bswap_16 (x)
+#  define htole16(x) ((((x) & 0xff00) >> 8) | (((x) & 0xff) << 8))
 # endif
 #endif
 
