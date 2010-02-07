@@ -39,7 +39,7 @@
 #define DEFAULT_FIFO_SIZE	(256*1024)
 
 extern void *wii_xfb[2];
-extern GXRModeObj *wii_rmode;
+extern GXRModeObj wii_vmode;
 
 typedef struct glw_wii {
 
@@ -375,8 +375,6 @@ glw_wii_loop(glw_wii_t *gwii)
   GXColor background = {0,0,0, 0xff};
   int resetted = 0;
 
-  GXRModeObj *rmode = wii_rmode;
-
   Mtx44 perspective;
 
   gp_fifo = memalign(32, DEFAULT_FIFO_SIZE);
@@ -389,21 +387,21 @@ glw_wii_loop(glw_wii_t *gwii)
 
   // Setup frame buffers
 
-  GX_SetViewport(0, 0, rmode->fbWidth, rmode->efbHeight, 0, 1);
+  GX_SetViewport(0, 0, wii_vmode.fbWidth, wii_vmode.efbHeight, 0, 1);
 
-  yscale = GX_GetYScaleFactor(rmode->efbHeight, rmode->xfbHeight);
+  yscale = GX_GetYScaleFactor(wii_vmode.efbHeight, wii_vmode.xfbHeight);
   xfbHeight = GX_SetDispCopyYScale(yscale);
 
-  GX_SetScissor(0, 0, rmode->fbWidth, rmode->efbHeight);
-  GX_SetDispCopySrc(0, 0, rmode->fbWidth, rmode->efbHeight);
-  GX_SetDispCopyDst(rmode->fbWidth, xfbHeight);
-  GX_SetCopyFilter(rmode->aa, rmode->sample_pattern,
-		   GX_TRUE, rmode->vfilter);
-  GX_SetFieldMode(rmode->field_rendering,
-		  rmode->viHeight == 2 * rmode->xfbHeight 
+  GX_SetScissor(0, 0, wii_vmode.fbWidth, wii_vmode.efbHeight);
+  GX_SetDispCopySrc(0, 0, wii_vmode.fbWidth, wii_vmode.efbHeight);
+  GX_SetDispCopyDst(wii_vmode.fbWidth, xfbHeight);
+  GX_SetCopyFilter(wii_vmode.aa, wii_vmode.sample_pattern,
+		   GX_TRUE, wii_vmode.vfilter);
+  GX_SetFieldMode(wii_vmode.field_rendering,
+		  wii_vmode.viHeight == 2 * wii_vmode.xfbHeight 
 		  ? GX_ENABLE : GX_DISABLE);
 
-  if(rmode->aa)
+  if(wii_vmode.aa)
     GX_SetPixelFmt(GX_PF_RGB565_Z16, GX_ZC_LINEAR);
   else
     GX_SetPixelFmt(GX_PF_RGB8_Z24, GX_ZC_LINEAR);
@@ -455,7 +453,7 @@ glw_wii_loop(glw_wii_t *gwii)
 
   /* Setup cursor */
   WPAD_SetDataFormat(0, WPAD_FMT_BTNS_ACC_IR);
-  WPAD_SetVRes(0, rmode->fbWidth, rmode->xfbHeight);
+  WPAD_SetVRes(0, wii_vmode.fbWidth, wii_vmode.xfbHeight);
 
   glw_render_init(&gwii->cursor_renderer, 4, GLW_RENDER_ATTRIBS_TEX);
 
@@ -479,14 +477,14 @@ glw_wii_loop(glw_wii_t *gwii)
 
   KEYBOARD_Init(NULL);
 
-  gwii->gr.gr_width  = rmode->fbWidth;
-  gwii->gr.gr_height = rmode->efbHeight;
+  gwii->gr.gr_width  = wii_vmode.fbWidth;
+  gwii->gr.gr_height = wii_vmode.efbHeight;
 
   while(1) {
 
     wpad_every_frame(gwii);
 
-    GX_SetViewport(0, 0, rmode->fbWidth, rmode->efbHeight, 0, 1);
+    GX_SetViewport(0, 0, wii_vmode.fbWidth, wii_vmode.efbHeight, 0, 1);
 
     GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, 
 		    GX_BL_INVSRCALPHA, GX_LO_CLEAR);
@@ -574,20 +572,22 @@ glw_wii_start(ui_t *ui, int argc, char *argv[], int primary)
 
   gwii->gr.gr_normalized_texture_coords = 1;
 
-  if(glw_init(&gwii->gr, theme_path, ui, primary, "wii", NULL)) {
+  glw_root_t *gr = &gwii->gr;
+
+  if(glw_init(gr, theme_path, ui, primary, "wii", NULL)) {
     printf("GLW failed to init\n");
     sleep(3);
     exit(0);
   }
 
-  settings_create_bool(gwii->gr.gr_settings, "widescreen",
+  settings_create_bool(gr->gr_settings, "widescreen",
 		       "Widescreen", CONF_GetAspectRatio() == 1, NULL,
 		       gwii_set_widescreen, gwii,
-		       SETTINGS_INITIAL_UPDATE, gwii->gr.gr_courier,
+		       SETTINGS_INITIAL_UPDATE, gr->gr_courier,
 		       NULL, NULL);
 
   prop_t *def = prop_create(gwii->gr.gr_uii.uii_prop, "defaults");
-  prop_set_int(prop_create(def, "underscan_h"), 1);
+  prop_set_int(prop_create(def, "underscan_h"), 13);
   prop_set_int(prop_create(def, "underscan_v"), 13);
 
   glw_load_universe(&gwii->gr);

@@ -51,7 +51,7 @@ extern char *htsversion;
 extern int concurrency;
 
 void *wii_xfb[2];
-GXRModeObj *wii_rmode;
+GXRModeObj wii_vmode;
 
 extern void net_setup(void);
 extern char *remote_logtarget;
@@ -136,7 +136,6 @@ hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delta)
   return LWP_CondTimedWait(*c, *m, &ts) == ETIMEDOUT;
 }
 
-
 /**
  *
  */
@@ -161,19 +160,22 @@ arch_init(void)
 
   // Obtain the preferred video mode from the system
   // This will correspond to the settings in the Wii menu
-  wii_rmode = VIDEO_GetPreferredMode(NULL);
+  VIDEO_GetPreferredMode(&wii_vmode);
+  // Overscan slightly
+  wii_vmode.viWidth = 678;
+  wii_vmode.viXOrigin = (720 - 678) / 2;
 
   // Allocate memory for the display in the uncached region
-  wii_xfb[0] = MEM_K0_TO_K1(SYS_AllocateFramebuffer(wii_rmode));
-  wii_xfb[1] = MEM_K0_TO_K1(SYS_AllocateFramebuffer(wii_rmode));
+  wii_xfb[0] = MEM_K0_TO_K1(SYS_AllocateFramebuffer(&wii_vmode));
+  wii_xfb[1] = MEM_K0_TO_K1(SYS_AllocateFramebuffer(&wii_vmode));
 	
   // Initialise the console, required for printf
   console_init(wii_xfb[0], 20, 20,
-	       wii_rmode->fbWidth,wii_rmode->xfbHeight,
-	       wii_rmode->fbWidth*VI_DISPLAY_PIX_SZ);
+	       wii_vmode.fbWidth, wii_vmode.xfbHeight,
+	       wii_vmode.fbWidth*VI_DISPLAY_PIX_SZ);
 	
   // Set up the video registers with the chosen mode
-  VIDEO_Configure(wii_rmode);
+  VIDEO_Configure(&wii_vmode);
 	
   // Tell the video hardware where our display memory is
   VIDEO_SetNextFramebuffer(wii_xfb[0]);
@@ -186,7 +188,8 @@ arch_init(void)
 
   // Wait for Video setup to complete
   VIDEO_WaitVSync();
-  if(wii_rmode->viTVMode&VI_NON_INTERLACE) VIDEO_WaitVSync();
+  if(wii_vmode.viTVMode & VI_NON_INTERLACE)
+    VIDEO_WaitVSync();
 
   // The console understands VT terminal escape codes
   // This positions the cursor on row 2, column 0
@@ -195,7 +198,7 @@ arch_init(void)
   printf("\x1b[2;0H");
 
   printf("Showtime %s, starting...\n", htsversion);
-  printf("screen size = %d x %d\n", wii_rmode->viWidth, wii_rmode->viHeight);
+
   VIDEO_WaitVSync();
 
   printf("Initializing network%s%s\n",

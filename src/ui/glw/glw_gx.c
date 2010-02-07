@@ -184,11 +184,10 @@ glw_rtt_restore(struct glw_root *gr, glw_rtt_t *grtt)
 
   DCFlushRange(grtt->grtt_texture.mem, grtt->grtt_size);
 
-  extern GXRModeObj *wii_rmode;
-  GXRModeObj *rmode = wii_rmode;
+  extern GXRModeObj wii_vmode;
 
-  GX_SetViewport(0, 0, rmode->fbWidth, rmode->efbHeight, 0, 1);
-  GX_SetScissor(0, 0, rmode->fbWidth, rmode->efbHeight);
+  GX_SetViewport(0, 0, wii_vmode.fbWidth, wii_vmode.efbHeight, 0, 1);
+  GX_SetScissor(0, 0, wii_vmode.fbWidth, wii_vmode.efbHeight);
 }
 
 
