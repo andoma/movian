@@ -201,8 +201,6 @@ arch_init(void)
 
   VIDEO_WaitVSync();
 
-  printf("Initializing network%s%s\n",
-	 remote_logtarget ? ", remote logging to ":"", remote_logtarget?:"");
   net_setup();
 
   wii_sd_mounted = fatMountSimple("sd", &__io_wiisd);

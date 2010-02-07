@@ -25,7 +25,46 @@
 #include <arch/threads.h>
 #include <errno.h>
 
-hts_mutex_t resolve_mutex;
+hts_mutex_t net_resolve_mutex;
+hts_mutex_t net_setup_mutex;
+hts_cond_t  net_setup_cond;
+
+static int net_running;
+
+/**
+ *
+ */
+static void *
+net_setup_thread(void *aux)
+{
+  char localip[32];
+
+  hts_mutex_lock(&net_setup_mutex);
+
+  if(!net_running && !if_config(localip, NULL, NULL, 1))
+    net_running = 1;
+
+  hts_mutex_unlock(&net_setup_mutex);
+  return NULL;
+}
+
+
+int net_try_setup(void);
+/**
+ *
+ */
+int
+net_try_setup(void)
+{
+  int r;
+  char localip[32];
+
+  hts_mutex_lock(&net_setup_mutex);
+  r = !net_running && !if_config(localip, NULL, NULL, 1);
+  hts_mutex_unlock(&net_setup_mutex);
+  return r;
+}
+
 
 /**
  *
@@ -33,14 +72,11 @@ hts_mutex_t resolve_mutex;
 void
 net_setup(void)
 {
-  char localip[32];
 
-  if(if_config(localip, NULL, NULL, 1) == 0) {
-    printf("Network initialized: %s\n", localip);
-  } else {
-    printf("Network failed to initialize\n");
-    exit(0);
-  }
+  hts_mutex_init(&net_resolve_mutex);
+  hts_mutex_init(&net_setup_mutex);
+
+  hts_thread_create_detached("netboot", net_setup_thread, NULL);
 }
 
 
@@ -58,13 +94,18 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
   int fd, r, retry = 0;
   struct sockaddr_in in;
 
+  if(net_try_setup()) {
+    snprintf(errbuf, errbufsize, "Unable initialize networking");
+    return -1;
+  }
+
   memset(&in, 0, sizeof(in));
   in.sin_family = AF_INET;
   in.sin_port = htons(port);
 
   if(!inet_aton(hostname, &in.sin_addr)) {
 
-    hts_mutex_lock(&resolve_mutex);
+    hts_mutex_lock(&net_resolve_mutex);
 
     do {
       while((h = net_gethostbyname((char *)hostname)) == NULL) {
@@ -72,7 +113,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 	if(retry == 10) {
 	  snprintf(errbuf, errbufsize, "Unable to resolve %s -- %d", hostname,
 		   errno);
-	  hts_mutex_unlock(&resolve_mutex);
+	  hts_mutex_unlock(&net_resolve_mutex);
 	  return -1;
 	}
     	usleep(250000);
@@ -82,7 +123,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 
     memcpy(&in.sin_addr, h->h_addr_list[0], sizeof(struct in_addr));
 
-    hts_mutex_unlock(&resolve_mutex);
+    hts_mutex_unlock(&net_resolve_mutex);
   }
   if((fd = net_socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     snprintf(errbuf, errbufsize, "Can not create socket, error %d", fd);
