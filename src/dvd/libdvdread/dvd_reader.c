@@ -522,7 +522,7 @@ dvd_reader_t *DVDOpen( const char *path, struct svfs_ops *svfs_ops )
     /* XXX: We should scream real loud here. */
     if( !(path_copy = strdup( path ) ) ) return 0;
 
-#ifndef WIN32 /* don't have fchdir, and getcwd( NULL, ... ) is strange */
+#if 0 // #ifndef WIN32 /* don't have fchdir, and getcwd( NULL, ... ) is strange */
     /* Resolve any symlinks and get the absolut dir name. */
     {
       char *new_path;
