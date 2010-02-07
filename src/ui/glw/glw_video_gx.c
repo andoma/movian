@@ -1043,7 +1043,7 @@ glw_video_set(glw_t *w, int init, va_list ap)
     case GLW_ATTRIB_PROPROOTS:
       p = va_arg(ap, void *);
 
-      p2 = prop_create(p, "video");
+      p2 = prop_create(p, "media");
       
       prop_link(gv->gv_mp->mp_prop_root, p2);
       
