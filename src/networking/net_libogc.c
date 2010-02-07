@@ -24,6 +24,9 @@
 #include <string.h>
 #include <arch/threads.h>
 #include <errno.h>
+#include "showtime.h"
+#include <ogc/ipc.h>
+
 
 hts_mutex_t net_resolve_mutex;
 hts_mutex_t net_setup_mutex;
@@ -149,7 +152,6 @@ tcp_write(int fd, const void *data, size_t len)
 
 
 
-#define MAX_READ_SIZE 4096
 /**
  *
  */
@@ -158,14 +160,20 @@ tcp_read(int fd, void *buf, size_t bufsize, int all)
 {
   int tot = 0, r;
   int rlen;
+  int maxsize = 32768;
 
   while(tot < bufsize) {
 
     rlen = bufsize - tot;
-    if(rlen > MAX_READ_SIZE)
-      rlen = MAX_READ_SIZE;
+    if(rlen > maxsize)
+      rlen = maxsize;
 
-    r = net_recv(fd, buf + tot, rlen, 0);
+    while((r = net_recv(fd, buf + tot, rlen, 0)) == IPC_ENOMEM) {
+      maxsize = maxsize >> 1;
+      if(maxsize == 2048)
+	return -1;
+    }
+
     if(r < 1)
       return -1;
     tot += r;
