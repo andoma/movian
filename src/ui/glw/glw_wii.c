@@ -371,7 +371,6 @@ glw_wii_loop(glw_wii_t *gwii)
   float yscale;
   uint32_t xfbHeight;
   int curframe;
-  float rquad = 0.0f;
   GXColor background = {0,0,0, 0xff};
   int resetted = 0;
 
@@ -527,7 +526,6 @@ glw_wii_loop(glw_wii_t *gwii)
     VIDEO_SetNextFramebuffer(wii_xfb[curframe]);
     VIDEO_Flush();
     VIDEO_WaitVSync();
-    rquad-=0.15f;
 
     if(SYS_ResetButtonDown() && !resetted) {
       resetted = 1;
