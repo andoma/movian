@@ -177,6 +177,8 @@ glw_load_universe(glw_root_t *gr)
   if(gr->gr_universe != NULL)
     glw_destroy0(gr->gr_universe);
 
+  glw_flush0(gr);
+
   gr->gr_universe = glw_view_create(gr,
 				    "theme://universe.view", NULL, NULL,
 				    NULL, 0);
