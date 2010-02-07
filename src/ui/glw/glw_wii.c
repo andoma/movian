@@ -477,8 +477,8 @@ glw_wii_loop(glw_wii_t *gwii)
 
   KEYBOARD_Init(NULL);
 
-  gwii->gr.gr_width  = wii_vmode.fbWidth;
-  gwii->gr.gr_height = wii_vmode.efbHeight;
+  gwii->gr.gr_width  = wii_vmode.viWidth;
+  gwii->gr.gr_height = wii_vmode.viHeight;
 
   while(1) {
 
