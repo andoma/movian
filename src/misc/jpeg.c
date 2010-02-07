@@ -179,7 +179,7 @@ parse_app1(jpeginfo_t *ji, const uint8_t *buf, size_t len)
   }
 
   if(thumbnail_jpeg_offset != -1 && thumbnail_jpeg_size != -1 &&
-     thumbnail_jpeg_offset + thumbnail_jpeg_size < len) {
+     thumbnail_jpeg_offset + thumbnail_jpeg_size <= len) {
 
     //    printf("  Thumbnail @ %d, %d bytes\n", thumbnail_jpeg_offset, thumbnail_jpeg_size);
     ji->ji_thumbnail = pixmap_alloc_coded(buf + thumbnail_jpeg_offset,
