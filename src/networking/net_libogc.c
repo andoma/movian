@@ -166,10 +166,8 @@ tcp_read(int fd, void *buf, size_t bufsize, int all)
       rlen = MAX_READ_SIZE;
 
     r = net_recv(fd, buf + tot, rlen, 0);
-    if(r < 1) { 
-      printf("NET_RCV ERROR %d\n", r);
+    if(r < 1)
       return -1;
-    }
     tot += r;
     if(!all)
       break;
