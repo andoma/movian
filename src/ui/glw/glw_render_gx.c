@@ -132,6 +132,24 @@ glw_render(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
     GX_SetTevOp(GX_TEVSTAGE0, GX_MODULATE);
     break;
 
+
+  case GLW_RENDER_ATTRIBS_COLOR:
+    a8 = float_to_byte(a);
+
+    GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
+    GX_SetVtxDesc(GX_VA_TEX0, GX_NONE);
+    
+    GX_Begin(mode, GX_VTXFMT0, gr->gr_vertices);
+ 
+    for(i = 0; i < gr->gr_vertices; i++) {
+      GX_Position3f32(buf[0], buf[1], buf[2]);
+      GX_Color4u8(buf[5], buf[6], buf[7], a8);
+      buf += gr->gr_stride;
+    }
+    GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+    GX_SetTevOp(GX_TEVSTAGE0, GX_MODULATE);
+    break;
+
   case GLW_RENDER_ATTRIBS_TEX:
     r8 = float_to_byte(r);
     g8 = float_to_byte(g);
