@@ -100,4 +100,11 @@ void glw_blendmode(int mode);
 void *gx_convert_argb(const uint8_t *src, int linesize, 
 		      unsigned int w, unsigned int h);
 
+#define GLW_CW   GX_CULL_FRONT
+#define GLW_CCW  GX_CULL_BACK
+
+#define glw_frontface(x) GX_SetCullMode(x)
+
+
+
 #endif /* GLW_GX_H__ */
