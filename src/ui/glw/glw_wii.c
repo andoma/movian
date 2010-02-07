@@ -59,6 +59,8 @@ typedef struct glw_wii {
   float cursor_a; /* Angle */
   float cursor_alpha;
 
+  int wide;
+
 } glw_wii_t;
 
 
@@ -366,7 +368,7 @@ glw_wii_loop(glw_wii_t *gwii)
   keyboard_event event;
   glw_rctx_t rc;
   void *gp_fifo;
-  float yscale, w, h;
+  float yscale;
   uint32_t xfbHeight;
   int curframe;
   float rquad = 0.0f;
@@ -446,8 +448,6 @@ glw_wii_loop(glw_wii_t *gwii)
   // setup our projection matrix
   // this creates a perspective matrix with a view angle of 90,
   // and aspect ratio based on the display resolution
-  w = rmode->viWidth;
-  h = rmode->viHeight;
   guPerspective(perspective, 45, 1.0, 1.0F, 300.0F);
   GX_LoadProjectionMtx(perspective, GX_PERSPECTIVE);
 
@@ -479,8 +479,8 @@ glw_wii_loop(glw_wii_t *gwii)
 
   KEYBOARD_Init(NULL);
 
-  gwii->gr.gr_width  = 640;
-  gwii->gr.gr_height = 480;
+  gwii->gr.gr_width  = rmode->fbWidth;
+  gwii->gr.gr_height = rmode->efbHeight;
 
   while(1) {
 
@@ -506,8 +506,8 @@ glw_wii_loop(glw_wii_t *gwii)
 		    rc.rc_be.gbr_model_matrix,
 		    0, 0, -1 / tan(45 * M_PI / 360));
     
-    rc.rc_size_x = 640 * 1.3333;
-    rc.rc_size_y = 480;
+    rc.rc_size_x = gwii->gr.gr_width * (gwii->wide ? 1.3333 : 1);
+    rc.rc_size_y = gwii->gr.gr_height;
 
     glw_layout0(gwii->gr.gr_universe, &rc);
 
@@ -540,6 +540,17 @@ glw_wii_loop(glw_wii_t *gwii)
 
 
 /**
+ * Widescreen mode
+ */
+static void
+gwii_set_widescreen(void *opaque, int value)
+{
+  glw_wii_t *gwii = opaque;
+  gwii->wide = value;
+}
+
+
+/**
  *
  */
 static int
@@ -568,6 +579,12 @@ glw_wii_start(ui_t *ui, int argc, char *argv[], int primary)
     sleep(3);
     exit(0);
   }
+
+  settings_create_bool(gwii->gr.gr_settings, "widescreen",
+		       "Widescreen", CONF_GetAspectRatio() == 1, NULL,
+		       gwii_set_widescreen, gwii,
+		       SETTINGS_INITIAL_UPDATE, gwii->gr.gr_courier,
+		       NULL, NULL);
 
   prop_t *def = prop_create(gwii->gr.gr_uii.uii_prop, "defaults");
   prop_set_int(prop_create(def, "underscan_h"), 1);
