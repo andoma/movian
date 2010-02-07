@@ -207,6 +207,10 @@ arch_init(void)
 
   if(remote_logtarget != NULL) {
 
+    int net_try_setup(void);
+
+    net_try_setup();
+
     if((rlog_socket = net_socket(AF_INET, SOCK_DGRAM, 0)) >= 0) {
 
       struct sockaddr_in sin;
