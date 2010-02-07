@@ -410,7 +410,7 @@ glw_wii_loop(glw_wii_t *gwii)
 
   curframe = 1;
 
-  GX_SetCullMode(GX_CULL_NONE);
+  GX_SetCullMode(GX_CULL_FRONT);
   GX_CopyDisp(wii_xfb[curframe], GX_TRUE);
   GX_SetDispCopyGamma(GX_GM_1_0);
 
@@ -479,6 +479,9 @@ glw_wii_loop(glw_wii_t *gwii)
   gwii->gr.gr_width  = wii_vmode.viWidth;
   gwii->gr.gr_height = wii_vmode.viHeight;
 
+  GX_SetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
+  GX_SetColorUpdate(GX_TRUE);
+
   while(1) {
 
     wpad_every_frame(gwii);
@@ -519,8 +522,6 @@ glw_wii_loop(glw_wii_t *gwii)
 
     GX_DrawDone();
     curframe ^= 1;
-    GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
-    GX_SetColorUpdate(GX_TRUE);
     GX_CopyDisp(wii_xfb[curframe], GX_TRUE);
 
     VIDEO_SetNextFramebuffer(wii_xfb[curframe]);
