@@ -148,6 +148,8 @@ ad_thread(void *aux)
 
     TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
     mq->mq_len--;
+    if(mp->mp_stats)
+      prop_set_int(mq->mq_prop_qlen_cur, mq->mq_len);
     hts_cond_signal(&mp->mp_backpressure);
     hts_mutex_unlock(&mp->mp_mutex);
 
@@ -328,6 +330,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
 
     data_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
     r = avcodec_decode_audio2(ctx, ad->ad_outbuf, &data_size, buf, size);
+
     if(r == -1)
       break;
 

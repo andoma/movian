@@ -294,6 +294,29 @@ widget(container_z, {
 		  });
 		});
 
+		widget(container_x, {
+		  
+		  widget(label, {
+		    .align = right;
+		    .caption = "Show stats";
+		  });
+
+		  widget(backdrop, {
+		    
+		    BUTTON_PROPS(1.0);
+    
+		    onEvent(enter, event(MediaStats))
+		    
+		    widget(label, {
+		      .align = left;
+		      .caption = translate($global.media.current.stats,
+					   "Unknown",
+					   0, "Off",
+					   1, "On");
+		    });
+		  });
+		});
+
 		HORIZONTAL_SEPARATOR($global.media.current.type != "video");
 	      });
 

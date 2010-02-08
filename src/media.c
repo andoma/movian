@@ -40,7 +40,9 @@ media_pipe_t *media_primary;
 
 static void seek_by_propchange(void *opaque, prop_event_t event, ...);
 
-static void update_avdelta(void *opaque, prop_event_t event, ...);
+static void update_avdelta(void *opaque, int value);
+
+static void update_stats(void *opaque, int value);
 
 static void media_eventsink(void *opaque, prop_event_t event, ...);
 
@@ -95,8 +97,14 @@ mq_init(media_queue_t *mq, prop_t *p)
   mq->mq_len = 0;
   mq->mq_stream = -1;
   hts_cond_init(&mq->mq_avail);
-  mq->mq_prop_qlen_cur = prop_create(p, "qlen");
-  mq->mq_prop_qlen_max = prop_create(p, "qmax");
+  mq->mq_prop_qlen_cur = prop_create(p, "dqlen");
+  mq->mq_prop_qlen_max = prop_create(p, "dqmax");
+
+  mq->mq_prop_decode_avg  = prop_create(p, "decodetime_avg");
+  mq->mq_prop_decode_peak = prop_create(p, "decodetime_peak");
+
+  mq->mq_prop_upload_avg  = prop_create(p, "uploadtime_avg");
+  mq->mq_prop_upload_peak = prop_create(p, "uploadtime_peak");
 }
 
 
@@ -138,14 +146,20 @@ mp_create(const char *name, const char *type, int flags)
     prop_set_string(prop_create(mp->mp_prop_root, "type"), type);
   }
 
-  mq_init(&mp->mp_audio, prop_create(mp->mp_prop_root, "audio"));
-  mq_init(&mp->mp_video, prop_create(mp->mp_prop_root, "video"));
+  mp->mp_prop_audio = prop_create(mp->mp_prop_root, "audio");
+  mq_init(&mp->mp_audio, mp->mp_prop_audio);
+
+  mp->mp_prop_video = prop_create(mp->mp_prop_root, "video");
+  mq_init(&mp->mp_video, mp->mp_prop_video);
 
   mp->mp_prop_metadata    = prop_create(mp->mp_prop_root, "metadata");
   mp->mp_prop_playstatus  = prop_create(mp->mp_prop_root, "playstatus");
   mp->mp_prop_currenttime = prop_create(mp->mp_prop_root, "currenttime");
   mp->mp_prop_avdelta     = prop_create(mp->mp_prop_root, "avdelta");
   prop_set_float(mp->mp_prop_avdelta, 0);
+
+  mp->mp_prop_stats       = prop_create(mp->mp_prop_root, "stats");
+  prop_set_int(mp->mp_prop_stats, mp->mp_stats);
 
   mp->mp_prop_url         = prop_create(mp->mp_prop_root, "url");
 
@@ -175,9 +189,16 @@ mp_create(const char *name, const char *type, int flags)
 
   mp->mp_sub_avdelta = 
     prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
-		   PROP_TAG_CALLBACK, update_avdelta, mp,
+		   PROP_TAG_CALLBACK_INT, update_avdelta, mp,
 		   PROP_TAG_COURIER, mp->mp_pc,
 		   PROP_TAG_ROOT, mp->mp_prop_avdelta,
+		   NULL);
+
+  mp->mp_sub_stats =
+    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+		   PROP_TAG_CALLBACK_INT, update_stats, mp,
+		   PROP_TAG_COURIER, mp->mp_pc,
+		   PROP_TAG_ROOT, mp->mp_prop_stats,
 		   NULL);
   return mp;
 }
@@ -198,6 +219,7 @@ mp_destroy(media_pipe_t *mp)
 
   prop_unsubscribe(mp->mp_sub_currenttime);
   prop_unsubscribe(mp->mp_sub_avdelta);
+  prop_unsubscribe(mp->mp_sub_stats);
 
   prop_courier_destroy(mp->mp_pc);
 
@@ -318,24 +340,26 @@ mp_wait_for_empty_queues(media_pipe_t *mp, int limit)
  *
  */
 static void
-mb_enq_tail(media_queue_t *mq, media_buf_t *mb)
+mb_enq_tail(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 {
   TAILQ_INSERT_TAIL(&mq->mq_q, mb, mb_link);
   mq->mq_len++;
+  if(mp->mp_stats)
+    prop_set_int(mq->mq_prop_qlen_cur, mq->mq_len);
   hts_cond_signal(&mq->mq_avail);
-  prop_set_int(mq->mq_prop_qlen_cur, mq->mq_len);
 }
 
 /**
  *
  */
 static void
-mb_enq_head(media_queue_t *mq, media_buf_t *mb)
+mb_enq_head(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 {
   TAILQ_INSERT_HEAD(&mq->mq_q, mb, mb_link);
   mq->mq_len++;
+  if(mp->mp_stats)
+    prop_set_int(mq->mq_prop_qlen_cur, mq->mq_len);
   hts_cond_signal(&mq->mq_avail);
-  prop_set_int(mq->mq_prop_qlen_cur, mq->mq_len);
 }
 
 /**
@@ -367,7 +391,7 @@ mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
     return e;
   }
 
-  mb_enq_tail(mq, mb);
+  mb_enq_tail(mp, mq, mb);
   hts_mutex_unlock(&mp->mp_mutex);
   return NULL;
 }
@@ -401,7 +425,7 @@ mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
     }
   }
   
-  mb_enq_tail(mq, mb);
+  mb_enq_tail(mp, mq, mb);
   hts_mutex_unlock(&mp->mp_mutex);
   return 0;
 }
@@ -414,17 +438,16 @@ void
 mb_enqueue_always(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 {
   hts_mutex_lock(&mp->mp_mutex);
-  mb_enq_tail(mq, mb);
+  mb_enq_tail(mp, mq, mb);
   hts_mutex_unlock(&mp->mp_mutex);
 }
 
 
-/*
+/**
  * Must be called with mp locked
  */
-
-void
-mq_flush(media_queue_t *mq)
+static void
+mq_flush(media_pipe_t *mp, media_queue_t *mq)
 {
   media_buf_t *mb;
 
@@ -433,6 +456,8 @@ mq_flush(media_queue_t *mq)
     media_buf_free(mb);
   }
   mq->mq_len = 0;
+  if(mp->mp_stats)
+    prop_set_int(mq->mq_prop_qlen_cur, mq->mq_len);
 }
 
 
@@ -449,19 +474,19 @@ mp_flush(media_pipe_t *mp)
 
   hts_mutex_lock(&mp->mp_mutex);
 
-  mq_flush(a);
-  mq_flush(v);
+  mq_flush(mp, a);
+  mq_flush(mp, v);
 
   if(v->mq_stream >= 0) {
     mb = media_buf_alloc();
     mb->mb_data_type = MB_FLUSH;
-    mb_enq_tail(v, mb);
+    mb_enq_tail(mp, v, mb);
   }
 
   if(a->mq_stream >= 0) {
     mb = media_buf_alloc();
     mb->mb_data_type = MB_FLUSH;
-    mb_enq_tail(a, mb);
+    mb_enq_tail(mp, a, mb);
   }
   hts_mutex_unlock(&mp->mp_mutex);
 
@@ -482,13 +507,13 @@ mp_end(media_pipe_t *mp)
   if(v->mq_stream >= 0) {
     mb = media_buf_alloc();
     mb->mb_data_type = MB_END;
-    mb_enq_tail(v, mb);
+    mb_enq_tail(mp, v, mb);
   }
 
   if(a->mq_stream >= 0) {
     mb = media_buf_alloc();
     mb->mb_data_type = MB_END;
-    mb_enq_tail(a, mb);
+    mb_enq_tail(mp, a, mb);
   }
   hts_mutex_unlock(&mp->mp_mutex);
 
@@ -528,7 +553,7 @@ mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd)
   mb->mb_cw = NULL;
   mb->mb_data = NULL;
   mb->mb_data_type = cmd;
-  mb_enq_tail(mq, mb);
+  mb_enq_tail(mp, mq, mb);
   hts_mutex_unlock(&mp->mp_mutex);
 }
 
@@ -546,7 +571,7 @@ mp_send_cmd_head(media_pipe_t *mp, media_queue_t *mq, int cmd)
   mb->mb_cw = NULL;
   mb->mb_data = NULL;
   mb->mb_data_type = cmd;
-  mb_enq_head(mq, mb);
+  mb_enq_head(mp, mq, mb);
   hts_mutex_unlock(&mp->mp_mutex);
 }
 
@@ -565,7 +590,7 @@ mp_send_cmd_data(media_pipe_t *mp, media_queue_t *mq, int cmd, void *d)
   mb->mb_cw = NULL;
   mb->mb_data_type = cmd;
   mb->mb_data = d;
-  mb_enq_tail(mq, mb);
+  mb_enq_tail(mp, mq, mb);
   hts_mutex_unlock(&mp->mp_mutex);
 }
 
@@ -585,7 +610,7 @@ mp_send_cmd_u32_head(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u)
   mb->mb_data_type = cmd;
   mb->mb_data = NULL;
   mb->mb_data32 = u;
-  mb_enq_head(mq, mb);
+  mb_enq_head(mp, mq, mb);
   hts_mutex_unlock(&mp->mp_mutex);
 }
 
@@ -605,7 +630,7 @@ mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u)
   mb->mb_data_type = cmd;
   mb->mb_data = NULL;
   mb->mb_data32 = u;
-  mb_enq_tail(mq, mb);
+  mb_enq_tail(mp, mq, mb);
   hts_mutex_unlock(&mp->mp_mutex);
 }
 
@@ -967,27 +992,22 @@ seek_by_propchange(void *opaque, prop_event_t event, ...)
  *
  */
 static void
-update_avdelta(void *opaque, prop_event_t event, ...)
+update_avdelta(void *opaque, int v)
 {
   media_pipe_t *mp = opaque;
-  int t;
+  mp->mp_avdelta = v * 1000;
+  TRACE(TRACE_DEBUG, "AVSYNC", "Set to %d ms", v);
+}
 
-  va_list ap;
-  va_start(ap, event);
 
-  switch(event) {
-  case PROP_SET_INT:
-    t = va_arg(ap, int);
-    break;
-  case PROP_SET_FLOAT:
-    t = va_arg(ap, double);
-    break;
-  default:
-    return;
-  }
-
-  mp->mp_avdelta = t * 1000;
-  TRACE(TRACE_DEBUG, "AVSYNC", "Set to %d ms", t);
+/**
+ *
+ */
+static void
+update_stats(void *opaque, int v)
+{
+  media_pipe_t *mp = opaque;
+  mp->mp_stats = v;
 }
 
 
@@ -1022,7 +1042,13 @@ media_eventsink(void *opaque, prop_event_t event, ...)
   e = va_arg(ap, event_t *);
 
   if(media_primary != NULL) {
-    mp_enqueue_event(media_primary, e);
+
+
+    if(event_is_action(e, ACTION_SHOW_MEDIA_STATS)) {
+      prop_toggle_int(media_primary->mp_prop_stats);
+    } else {
+      mp_enqueue_event(media_primary, e);
+    }
   } else {
     playqueue_event_handler(e);
   }

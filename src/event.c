@@ -183,6 +183,7 @@ static struct strtab actionnames[] = {
   { "FullscreenToggle",      ACTION_FULLSCREEN_TOGGLE },
   { "Increase",              ACTION_INCR },
   { "Decrease",              ACTION_DECR },
+  { "MediaStats",            ACTION_SHOW_MEDIA_STATS },
 };
 
 
@@ -364,7 +365,9 @@ event_dispatch(event_t *e)
 	    event_is_action(e, ACTION_EJECT) ||
 	    event_is_action(e, ACTION_PREV_TRACK) ||
 	    event_is_action(e, ACTION_NEXT_TRACK) ||
-	    event_is_action(e, ACTION_RESTART_TRACK)) {
+	    event_is_action(e, ACTION_RESTART_TRACK) ||
+	    event_is_action(e, ACTION_SHOW_MEDIA_STATS)
+	    ) {
 
     event_to_prop(prop_get_by_name(PNVEC("global", "media", "eventsink"),
 				   1, NULL), e);

@@ -81,6 +81,8 @@ typedef enum {
 
   ACTION_RELOAD_UI,
 
+  ACTION_SHOW_MEDIA_STATS,
+
   ACTION_last_mappable
 } action_type_t;
 

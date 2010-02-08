@@ -28,5 +28,21 @@ widget(container_z, {
 	});
       });
     });
+
+    widget(label, {
+      .alpha = $self.media.stats;
+      .caption = "Video queue len: " + int2str($self.media.video.dqlen);
+    });
+
+    widget(label, {
+      .alpha = $self.media.stats;
+      .caption = "Audio queue len: " + int2str($self.media.audio.dqlen);
+    });
+
+    widget(label, {
+      .alpha = $self.media.stats;
+      .caption = "Video decode time: " +
+	int2str($self.media.video.decodetime_avg) + " ms";
+    });
   });
 });

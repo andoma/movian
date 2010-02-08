@@ -36,8 +36,6 @@
 #include "yadif.h"
 #include "event.h"
 
-#include "misc/perftimer.h"
-
 static void
 vd_init_timings(video_decoder_t *vd)
 {
@@ -163,7 +161,7 @@ vd_release_buffer(struct AVCodecContext *c, AVFrame *pic)
 #define vd_valid_duration(t) ((t) > 1000ULL && (t) < 10000000ULL)
 
 static void 
-vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
+vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
 {
   int64_t pts, dts, t;
   int got_pic, duration, epoch;
@@ -201,10 +199,14 @@ vd_decode_video(video_decoder_t *vd, media_buf_t *mb)
   if(mb->mb_skip == 2)
     vd->vd_skip = 1;
 
-  //  static perftimer_t pt;
-  //  perftimer_start(&pt);
+  if(mp->mp_stats)
+    avgtime_start(&vd->vd_decode_time);
+
   avcodec_decode_video(ctx, frame, &got_pic, mb->mb_data, mb->mb_size);
-  //  perftimer_stop(&pt, "videodecode");
+
+  if(mp->mp_stats)
+    avgtime_stop(&vd->vd_decode_time, mq->mq_prop_decode_avg,
+		 mq->mq_prop_decode_peak);
 
   if(got_pic == 0 || mb->mb_skip == 1) 
     return;
@@ -372,6 +374,9 @@ vd_thread(void *aux)
 
     TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
     mq->mq_len--;
+    if(mp->mp_stats)
+      prop_set_int(mq->mq_prop_qlen_cur, mq->mq_len);
+
     hts_cond_signal(&mp->mp_backpressure);
     hts_mutex_unlock(&mp->mp_mutex);
 
@@ -394,7 +399,7 @@ vd_thread(void *aux)
       break;
 
     case MB_VIDEO:
-      vd_decode_video(vd, mb);
+      vd_decode_video(vd, mq, mb);
       break;
 
 #ifdef CONFIG_DVD

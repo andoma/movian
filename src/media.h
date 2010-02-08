@@ -132,6 +132,12 @@ typedef struct media_queue {
 
   prop_t *mq_prop_qlen_cur;
   prop_t *mq_prop_qlen_max;
+
+  prop_t *mq_prop_decode_avg;
+  prop_t *mq_prop_decode_peak;
+
+  prop_t *mq_prop_upload_avg;
+  prop_t *mq_prop_upload_peak;
 } media_queue_t;
 
 /**
@@ -159,6 +165,7 @@ typedef struct media_pipe {
   int64_t mp_audio_clock_realtime;
   int mp_audio_clock_epoch;
   int mp_avdelta;
+  int mp_stats;
 
   struct audio_decoder *mp_audio_decoder;
 
@@ -171,6 +178,7 @@ typedef struct media_pipe {
   prop_t *mp_prop_playstatus;
   prop_t *mp_prop_currenttime;
   prop_t *mp_prop_avdelta;
+  prop_t *mp_prop_stats;
   prop_t *mp_prop_url;
 
   prop_t *mp_prop_canSkipBackward;
@@ -179,9 +187,13 @@ typedef struct media_pipe {
   prop_t *mp_prop_canPause;
   prop_t *mp_prop_canEject;
 
+  prop_t *mp_prop_video;
+  prop_t *mp_prop_audio;
+
   prop_courier_t *mp_pc;
   prop_sub_t *mp_sub_currenttime;
   prop_sub_t *mp_sub_avdelta;
+  prop_sub_t *mp_sub_stats;
 
 } media_pipe_t;
 
@@ -220,8 +232,6 @@ media_pipe_t *mp_create(const char *name, const char *type, int flags);
 
 #define mp_ref_inc(mp) atomic_add(&(mp)->mp_refcount, 1)
 void mp_ref_dec(media_pipe_t *mp);
-
-void mq_flush(media_queue_t *mq);
 
 int mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
 event_t *mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, 

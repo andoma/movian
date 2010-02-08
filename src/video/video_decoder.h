@@ -20,6 +20,7 @@
 #define VIDEO_DECODER_H
 
 #include "media.h"
+#include "misc/avgtime.h"
 
 struct AVCodecContext;
 struct AVFrame;
@@ -201,6 +202,12 @@ typedef struct video_decoder {
   struct dvdspu_decoder *vd_dvdspu;
 #endif
   
+  /* stats */
+
+  avgtime_t vd_decode_time;
+  avgtime_t vd_upload_time;
+
+
   /* Kalman filter for AVdiff compensation */
 
   kalman_t vd_avfilter;
