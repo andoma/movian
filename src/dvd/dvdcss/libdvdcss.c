@@ -347,6 +347,7 @@ LIBDVDCSS_EXPORT dvdcss_t dvdcss_open ( char *psz_target,
         return NULL;
     }
 
+    if(svfs_ops == NULL) {
     dvdcss->b_scrambled = 1; /* Assume the worst */
     dvdcss->b_ioctls = _dvdcss_use_ioctls( dvdcss );
 
@@ -367,7 +368,10 @@ LIBDVDCSS_EXPORT dvdcss_t dvdcss_open ( char *psz_target,
             dvdcss->b_scrambled = i_ret;
         }
     }
-
+    } else {
+      dvdcss->b_scrambled = 0;
+      dvdcss->b_ioctls = 0;
+    }
     /* If disc is CSS protected and the ioctls work, authenticate the drive */
     if( dvdcss->b_scrambled && dvdcss->b_ioctls )
     {
