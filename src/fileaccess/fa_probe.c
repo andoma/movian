@@ -348,6 +348,12 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh)
     md->md_type = CONTENT_IMAGE;
     return 1;
   }
+
+  if(pb[0] == '%' && pb[1] == 'P' && pb[2] == 'D' && pb[3] == 'F') {
+    md->md_type = CONTENT_UNKNOWN;
+    return 1;
+  }
+
   return 0;
 }
 
