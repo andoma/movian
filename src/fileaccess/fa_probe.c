@@ -33,7 +33,7 @@
 #include "fa_probe.h"
 #include "navigator.h"
 #include "scrappers/scrappers.h"
-
+#include "media.h"
 
 #define METADATA_HASH_SIZE 101
 #define METADATA_CACHE_SIZE 1000
@@ -454,21 +454,9 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
     if(codec == NULL) {
       snprintf(tmp1, sizeof(tmp1), "Unsupported codec");
     } else {
-      snprintf(tmp1, sizeof(tmp1), "%s", codec->long_name);
-    
-      if(avctx->codec_type == CODEC_TYPE_AUDIO)
-	snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
-		 ", %d Hz, %d channels", avctx->sample_rate, avctx->channels);
-
-      if(avctx->width)
-	snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
-		 ", %dx%d", avctx->width, avctx->height);
-      
-      if(avctx->bit_rate)
-	snprintf(tmp1 + strlen(tmp1), sizeof(tmp1) - strlen(tmp1),
-		 ", %d kb/s", avctx->bit_rate / 1000);
+      metadata_from_ffmpeg(tmp1, sizeof(tmp1), codec, avctx);
     }
-    
+
     metadata_add_stream(md, codec, avctx->codec_type, i, tmp1, 
 			stream->language[0] ? stream->language : NULL);
   }

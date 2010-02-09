@@ -48,7 +48,7 @@ static int resample(audio_decoder_t *ad, int16_t *dstmix, int dstavail,
 		    int channels);
 
 static void ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp,
-			  media_buf_t *mb);
+			  media_queue_t *mq, media_buf_t *mb);
 
 static void audio_deliver(audio_decoder_t *ad, audio_mode_t *am, int16_t *src, 
 			  int channels, int frames, int rate, int64_t pts,
@@ -177,7 +177,7 @@ ad_thread(void *aux)
 
     case MB_AUDIO:
       if(mb->mb_skip == 0)
-	ad_decode_buf(ad, mp, mb);
+	ad_decode_buf(ad, mp, mq, mb);
       break;
 
     case MB_END:
@@ -234,7 +234,8 @@ static const size_t sample_fmt_to_size[] = {
  *
  */
 static void
-ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
+ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq, 
+	      media_buf_t *mb)
 {
   audio_mode_t *am = audio_mode_current;
   uint8_t *buf;
@@ -333,6 +334,9 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_buf_t *mb)
 
     if(r == -1)
       break;
+
+    if(mp->mp_stats)
+      mp_set_mq_meta(mq, cw->codec, cw->codec_ctx);
 
     channels = ctx->channels;
     rate     = ctx->sample_rate;

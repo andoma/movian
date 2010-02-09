@@ -138,6 +138,9 @@ typedef struct media_queue {
 
   prop_t *mq_prop_upload_avg;
   prop_t *mq_prop_upload_peak;
+
+  prop_t *mq_prop_codec;
+
 } media_queue_t;
 
 /**
@@ -291,5 +294,10 @@ void mp_set_url(media_pipe_t *mp, const char *url);
 #define MP_PLAY_CAPS_EJECT 0x4
 
 void mp_set_play_caps(media_pipe_t *mp, int caps);
+
+void metadata_from_ffmpeg(char *dst, size_t dstlen, 
+			  AVCodec *codec, AVCodecContext *avctx);
+
+void mp_set_mq_meta(media_queue_t *mq, AVCodec *codec, AVCodecContext *avctx);
 
 #endif /* MEDIA_H */

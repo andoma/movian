@@ -105,6 +105,8 @@ mq_init(media_queue_t *mq, prop_t *p)
 
   mq->mq_prop_upload_avg  = prop_create(p, "uploadtime_avg");
   mq->mq_prop_upload_peak = prop_create(p, "uploadtime_peak");
+
+  mq->mq_prop_codec       = prop_create(p, "codec");
 }
 
 
@@ -1091,4 +1093,68 @@ mp_set_play_caps(media_pipe_t *mp, int caps)
   prop_set_int(mp->mp_prop_canSeek,  caps & MP_PLAY_CAPS_SEEK  ? 1 : 0);
   prop_set_int(mp->mp_prop_canPause, caps & MP_PLAY_CAPS_PAUSE ? 1 : 0);
   prop_set_int(mp->mp_prop_canEject, caps & MP_PLAY_CAPS_EJECT ? 1 : 0);
+}
+
+
+extern void avcodec_get_channel_layout_string(char *buf, int buf_size,
+					      int nb_channels,
+					      int64_t channel_layout);
+/**
+ * 
+ */
+void
+metadata_from_ffmpeg(char *dst, size_t dstlen, AVCodec *codec, 
+		     AVCodecContext *avctx)
+{
+  int off = snprintf(dst, dstlen, "%s", codec->long_name);
+
+  if(codec->id  == CODEC_ID_H264) {
+    const char *p;
+    switch(avctx->profile) {
+    case FF_PROFILE_H264_BASELINE:  p = "Baseline";  break;
+    case FF_PROFILE_H264_MAIN:      p = "Main";      break;
+    case FF_PROFILE_H264_EXTENDED:  p = "Extended";  break;
+    case FF_PROFILE_H264_HIGH:      p = "High";      break;
+    case FF_PROFILE_H264_HIGH_10:   p = "High 10";   break;
+    case FF_PROFILE_H264_HIGH_422:  p = "High 422";  break;
+    case FF_PROFILE_H264_HIGH_444:  p = "High 444";  break;
+    case FF_PROFILE_H264_CAVLC_444: p = "CAVLC 444"; break;
+    default:                        p = NULL;        break;
+    }
+
+    if(p != NULL && avctx->level != FF_LEVEL_UNKNOWN)
+      off += snprintf(dst + off, dstlen - off,
+		      ", %s (Level %d.%d)",
+		      p, avctx->level / 10, avctx->level % 10);
+  }
+    
+  if(avctx->codec_type == CODEC_TYPE_AUDIO) {
+    char buf[64];
+
+    avcodec_get_channel_layout_string(buf, sizeof(buf), avctx->channels,
+				      avctx->channel_layout);
+					    
+    off += snprintf(dst + off, dstlen - off, ", %d Hz, %s",
+		    avctx->sample_rate, buf);
+  }
+
+  if(avctx->width)
+    off += snprintf(dst + off, dstlen - off,
+		    ", %dx%d", avctx->width, avctx->height);
+  
+  if(avctx->bit_rate)
+    off += snprintf(dst + off, dstlen - off,
+		    ", %d kb/s", avctx->bit_rate / 1000);
+
+}
+
+/**
+ * 
+ */
+void
+mp_set_mq_meta(media_queue_t *mq, AVCodec *codec, AVCodecContext *avctx)
+{
+  char buf[128];
+  metadata_from_ffmpeg(buf, sizeof(buf), codec, avctx);
+  prop_set_string(mq->mq_prop_codec, buf);
 }

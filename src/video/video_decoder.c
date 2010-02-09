@@ -35,6 +35,7 @@
 //#include "subtitles.h"
 #include "yadif.h"
 #include "event.h"
+#include "media.h"
 
 static void
 vd_init_timings(video_decoder_t *vd)
@@ -207,6 +208,9 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
   if(mp->mp_stats)
     avgtime_stop(&vd->vd_decode_time, mq->mq_prop_decode_avg,
 		 mq->mq_prop_decode_peak);
+
+  if(mp->mp_stats)
+    mp_set_mq_meta(mq, cw->codec, cw->codec_ctx);
 
   if(got_pic == 0 || mb->mb_skip == 1) 
     return;
