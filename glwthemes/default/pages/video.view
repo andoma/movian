@@ -55,6 +55,12 @@ widget(container_z, {
 	int2str($self.media.video.decodetime_avg) + " ms";
     });
 
+    widget(label, {
+      .hidden = !$self.media.stats;
+      .caption = "A/V diff: " +
+	int2str($self.media.avdiff * 1000) + " ms";
+    });
+
 
   });
 });

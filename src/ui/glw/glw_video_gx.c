@@ -236,6 +236,15 @@ compute_avdiff(video_decoder_t *vd, media_pipe_t *mp, int64_t pts, int epoch)
       vd->vd_avdiff_x = -10.0f;
   }
 
+  if(mp->mp_stats) {
+    if(!vd->vd_may_update_avdiff) {
+      prop_set_float(mp->mp_prop_avdiff, vd->vd_avdiff_x);
+      vd->vd_may_update_avdiff = 5;
+    } else {
+      vd->vd_may_update_avdiff--;
+    }
+  }
+
 #if 0
  {
    static int64_t lastpts, lastaclock;

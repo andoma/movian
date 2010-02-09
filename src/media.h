@@ -183,6 +183,7 @@ typedef struct media_pipe {
   prop_t *mp_prop_avdelta;
   prop_t *mp_prop_stats;
   prop_t *mp_prop_url;
+  prop_t *mp_prop_avdiff;
 
   prop_t *mp_prop_canSkipBackward;
   prop_t *mp_prop_canSkipForward;
