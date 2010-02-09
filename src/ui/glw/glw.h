@@ -301,7 +301,7 @@ typedef struct glw_class {
   size_t gc_instance_size;
   int gc_flags;
 #define GLW_NAVIGATION_SEARCH_BOUNDARY 0x1
-
+#define GLW_EVERY_FRAME                0x2
   /**
    * If the widget arranges its childer in horizontal or vertical order
    * it should be defined here
@@ -550,8 +550,6 @@ typedef struct glw {
 #define GLW_DESTROYED           0x2     /* was destroyed but someone
 					   is holding references */
 #define GLW_RENDER_LINKED       0x4     /* glw_render_link is linked */
-#define GLW_EVERY_FRAME         0x8     /* Want GLW_SIGNAL_NEW_FRAME
-					   at all times */
 
 #define GLW_DEBUG               0x10    /* Debug this object */
 #define GLW_FOCUS_BLOCKED       0x20

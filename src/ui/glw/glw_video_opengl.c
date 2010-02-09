@@ -1428,10 +1428,6 @@ glw_video_set(glw_t *w, int init, va_list ap)
 
     LIST_INSERT_HEAD(&gr->gr_be.gbr_video_decoders, gv, gv_global_link);
 
-    glw_set_i(w, 
-	      GLW_ATTRIB_SET_FLAGS, GLW_EVERY_FRAME, 
-	      NULL);
-
     TAILQ_INIT(&gv->gv_subs);
 
     gv->gv_vd = video_decoder_create(gv->gv_mp);
@@ -1481,6 +1477,7 @@ glw_video_set(glw_t *w, int init, va_list ap)
  */
 static glw_class_t glw_video = {
   .gc_name = "video",
+  .gc_flags = GLW_EVERY_FRAME,
   .gc_instance_size = sizeof(glw_video_t),
   .gc_set = glw_video_set,
   .gc_render = glw_video_render,

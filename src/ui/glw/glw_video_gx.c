@@ -1014,10 +1014,6 @@ glw_video_set(glw_t *w, int init, va_list ap)
 
     gv->gv_mp = mp_create("Video decoder", "video", MP_VIDEO);
 
-    glw_set_i(w, 
-	      GLW_ATTRIB_SET_FLAGS, GLW_EVERY_FRAME, 
-	      NULL);
-
     gv->gv_vd = video_decoder_create(gv->gv_mp);
     gv->gv_vd->vd_frame_deliver = glw_video_frame_deliver;
     gv->gv_vp = video_playback_create(gv->gv_mp);
@@ -1063,6 +1059,7 @@ glw_video_set(glw_t *w, int init, va_list ap)
  */ 
 static glw_class_t glw_video = { 
   .gc_name = "video", 
+  .gc_flags = GLW_EVERY_FRAME,
   .gc_instance_size = sizeof(glw_video_t), 
   .gc_set = glw_video_set, 
   .gc_render = glw_video_render, 

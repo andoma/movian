@@ -198,7 +198,6 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
   glw_t *p, *b;
   void *v, *o;
   int pri, a, r = 0;
-  glw_root_t *gr = w->glw_root;
   float f;
 
   va_list apx;
@@ -315,8 +314,6 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 
       a &= ~w->glw_flags; // Mask out already set flags
 
-      if(a & GLW_EVERY_FRAME)
-	LIST_INSERT_HEAD(&gr->gr_every_frame_list, w, glw_every_frame_link);
 
       w->glw_flags |= a;
 
@@ -329,9 +326,6 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       a = va_arg(ap, int);
 
       a &= w->glw_flags; // Mask out already cleared flags
-
-      if(a & GLW_EVERY_FRAME)
-	LIST_REMOVE(w, glw_every_frame_link);
 
       w->glw_flags &= ~a;
 
@@ -396,6 +390,9 @@ glw_create0(glw_root_t *gr, const glw_class_t *class, va_list ap)
   w->glw_refcnt = 1;
 
   LIST_INSERT_HEAD(&gr->gr_active_dummy_list, w, glw_active_link);
+
+  if(class->gc_flags & GLW_EVERY_FRAME)
+    LIST_INSERT_HEAD(&gr->gr_every_frame_list, w, glw_every_frame_link);
 
   TAILQ_INIT(&w->glw_childs);
   TAILQ_INIT(&w->glw_render_list);
@@ -576,7 +573,7 @@ glw_destroy0(glw_t *w)
   free(w->glw_matrix);
   w->glw_matrix = NULL;
   
-  if(w->glw_flags & GLW_EVERY_FRAME)
+  if(w->glw_class->gc_flags & GLW_EVERY_FRAME)
     LIST_REMOVE(w, glw_every_frame_link);
 
   if(w->glw_flags & GLW_RENDER_LINKED)
