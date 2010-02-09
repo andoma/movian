@@ -68,8 +68,6 @@ typedef struct glw_video {
   video_decoder_t *gv_vd;
   video_playback_t *gv_vp;
 
-  float gv_zoom;
-
   video_decoder_frame_t *gv_fra, *gv_frb;
   float gv_blend;
 
@@ -1004,21 +1002,9 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
  *
  */
 static void
-glw_video_init(glw_video_t *gv, glw_root_t *gr)
-{
-  gv->gv_zoom = 100;
-}
-
-
-
-/**
- *
- */
-static void
 glw_video_set(glw_t *w, int init, va_list ap)
 {
   glw_video_t *gv = (glw_video_t *)w;
-  glw_root_t *gr = w->glw_root;
   glw_attribute_t attrib;
   const char *filename = NULL;
   prop_t *p, *p2;
@@ -1027,7 +1013,6 @@ glw_video_set(glw_t *w, int init, va_list ap)
   if(init) {
 
     gv->gv_mp = mp_create("Video decoder", "video", MP_VIDEO);
-    glw_video_init(gv, gr);
 
     glw_set_i(w, 
 	      GLW_ATTRIB_SET_FLAGS, GLW_EVERY_FRAME, 

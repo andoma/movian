@@ -114,7 +114,6 @@ typedef struct glw_video {
   video_playback_t *gv_vp;
 
   float gv_cmatrix[9];
-  float gv_zoom;
 
   video_decoder_frame_t *gv_fra, *gv_frb;
   float gv_blend;
@@ -1068,11 +1067,6 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
  
   glPushMatrix();
 
-#if 0 
-  if(gv->gv_zoom != 100)
-    glScalef(gv->gv_zoom / 100.0f, gv->gv_zoom / 100.0f, 1.0f);
-#endif
-
   fra = gv->gv_fra;
   frb = gv->gv_frb;
 
@@ -1419,18 +1413,6 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
  *
  */
 static void
-glw_video_init(glw_video_t *gv, glw_root_t *gr)
-{
-  LIST_INSERT_HEAD(&gr->gr_be.gbr_video_decoders, gv, gv_global_link);
-  gv->gv_zoom = 100;
-}
-
-
-
-/**
- *
- */
-static void
 glw_video_set(glw_t *w, int init, va_list ap)
 {
   glw_video_t *gv = (glw_video_t *)w;
@@ -1444,7 +1426,7 @@ glw_video_set(glw_t *w, int init, va_list ap)
 
     gv->gv_mp = mp_create("Video decoder", "video", MP_VIDEO);
 
-    glw_video_init(gv, gr);
+    LIST_INSERT_HEAD(&gr->gr_be.gbr_video_decoders, gv, gv_global_link);
 
     glw_set_i(w, 
 	      GLW_ATTRIB_SET_FLAGS, GLW_EVERY_FRAME, 
