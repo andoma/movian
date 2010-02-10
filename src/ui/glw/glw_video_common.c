@@ -279,12 +279,32 @@ glw_video_purge_queues(video_decoder_t *vd,
 void
 gvo_deinit(glw_video_overlay_t *gvo)
 {
-  if(!gvo->gvo_enabled)
-    return;
-  glw_tex_destroy(&gvo->gvo_texture);
-  glw_render_free(&gvo->gvo_renderer);
-  gvo->gvo_enabled = 0;
+  int i;
+  for(i = 0; i < gvo->gvo_entries; i++) {
+    glw_tex_destroy(&gvo->gvo_textures[i]);
+    glw_render_free(&gvo->gvo_renderers[i]);
+  }
+  free(gvo->gvo_textures);
+  free(gvo->gvo_renderers);
+  gvo->gvo_textures = NULL;
+  gvo->gvo_renderers = NULL;
+  gvo->gvo_entries = 0;
+}
 
+/**
+ * 
+ */
+static int
+gvo_setup(glw_video_overlay_t *gvo, int entries)
+{
+  if(gvo->gvo_entries == entries)
+    return 0;
+  gvo_deinit(gvo);
+
+  gvo->gvo_entries = entries;
+  gvo->gvo_textures  = calloc(entries, sizeof(glw_backend_texture_t));
+  gvo->gvo_renderers = calloc(entries, sizeof(glw_renderer_t));
+  return 1;
 }
 
 
@@ -294,9 +314,12 @@ gvo_deinit(glw_video_overlay_t *gvo)
 void
 gvo_render(glw_video_overlay_t *gvo, glw_root_t *gr, glw_rctx_t *rc)
 {
-  glw_render(&gvo->gvo_renderer, gr, rc,
-	     GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX, 
-	     &gvo->gvo_texture, 1, 1, 1, rc->rc_alpha);
+  int i;
+  for(i = 0; i < gvo->gvo_entries; i++) {
+    glw_render(&gvo->gvo_renderers[i], gr, rc,
+	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX, 
+	       &gvo->gvo_textures[i], 1, 1, 1, rc->rc_alpha);
+  }
 }
 
 
@@ -383,14 +406,12 @@ spu_repaint(glw_video_overlay_t *gvo, video_decoder_t *vd, dvdspu_t *d,
     }
   }
 
-  if(!gvo->gvo_enabled) {
-    glw_render_init(&gvo->gvo_renderer, 4, GLW_RENDER_ATTRIBS_TEX);
-    gvo->gvo_enabled = 1;
-  }
+  if(gvo_setup(gvo, 1))
+    glw_render_init(&gvo->gvo_renderers[0], 4, GLW_RENDER_ATTRIBS_TEX);
 
   float w = gr->gr_normalized_texture_coords ? 1.0 : width;
   float h = gr->gr_normalized_texture_coords ? 1.0 : height;
-  glw_renderer_t *r = &gvo->gvo_renderer;
+  glw_renderer_t *r = &gvo->gvo_renderers[0];
   
   glw_render_vtx_pos(r, 0, d->d_x1, d->d_y2, 0.0f);
   glw_render_vtx_st (r, 0, 0, h);
@@ -404,7 +425,7 @@ spu_repaint(glw_video_overlay_t *gvo, video_decoder_t *vd, dvdspu_t *d,
   glw_render_vtx_pos(r, 3, d->d_x1, d->d_y1, 0.0f);
   glw_render_vtx_st (r, 3, 0, 0);
 
-  glw_tex_upload(gr, &gvo->gvo_texture, t0, GLW_TEXTURE_FORMAT_RGBA,
+  glw_tex_upload(gr, &gvo->gvo_textures[0], t0, GLW_TEXTURE_FORMAT_RGBA,
 		 width, height);
   free(t0);
 }
@@ -459,3 +480,64 @@ glw_video_spu_layout(video_decoder_t *vd, glw_video_overlay_t *gvo,
 }
 
 #endif
+
+
+
+
+
+/**
+ *
+ */
+void
+glw_video_sub_layout(video_decoder_t *vd, glw_video_overlay_t *gvo, 
+		     const glw_root_t *gr, int64_t pts)
+{
+  subtitle_t *s;
+
+  hts_mutex_lock(&vd->vd_sub_mutex);
+  if((s = TAILQ_FIRST(&vd->vd_sub_queue)) != NULL && s->s_start <= pts) {
+    
+    if(!s->s_active) {
+      int i;
+      s->s_active = 1;
+
+      if(gvo_setup(gvo, s->s_num_rects))
+	for(i = 0; i < s->s_num_rects; i++)
+	  glw_render_init(&gvo->gvo_renderers[i], 4, GLW_RENDER_ATTRIBS_TEX);
+      
+      for(i = 0; i < s->s_num_rects; i++) {
+	subtitle_rect_t *sr = &s->s_rects[i];
+	
+	float w = gr->gr_normalized_texture_coords ? 1.0 : sr->w;
+	float h = gr->gr_normalized_texture_coords ? 1.0 : sr->h;
+
+	glw_renderer_t *r = &gvo->gvo_renderers[i];
+	
+	glw_render_vtx_pos(r, 0, sr->x,         sr->y + sr->h, 0.0f);
+	glw_render_vtx_st (r, 0, 0, h);
+	
+	glw_render_vtx_pos(r, 1, sr->x + sr->w, sr->y + sr->h, 0.0f);
+	glw_render_vtx_st (r, 1, w, h);
+	
+	glw_render_vtx_pos(r, 2, sr->x + sr->w, sr->y,         0.0f);
+	glw_render_vtx_st (r, 2, w, 0);
+	
+	glw_render_vtx_pos(r, 3, sr->x,         sr->y,         0.0f);
+	glw_render_vtx_st (r, 3, 0, 0);
+
+	glw_tex_upload(gr, &gvo->gvo_textures[i], sr->bitmap,
+		       GLW_TEXTURE_FORMAT_RGBA, sr->w, sr->h);
+      }
+
+    } else {
+      
+      subtitle_t *n = TAILQ_NEXT(s, s_link);
+      if(s->s_stop <= pts || (n != NULL && n->s_start <= pts)) 
+	video_subtitle_destroy(vd, s);
+    }
+
+  } else {
+    gvo_deinit(gvo);
+  }
+  hts_mutex_unlock(&vd->vd_sub_mutex);
+}

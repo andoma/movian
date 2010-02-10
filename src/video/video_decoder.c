@@ -1,6 +1,6 @@
 /*
- *  Video output on GL surfaces
- *  Copyright (C) 2007 Andreas Öman
+ *  Video decoder
+ *  Copyright (C) 2007 - 2010 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -297,49 +297,12 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
   mp_enqueue_event(mp, &ets->h);
   event_unref(&ets->h);
 
-#if 0
-  if(vd->vd_mp->mp_subtitles) {
-    i = subtitles_index_by_pts(vd->vd_mp->mp_subtitles, pts);
-    if(i != vd->vd_last_subtitle_index) {
-
-      if(vd->vd_subtitle_widget != NULL)
-	glw_destroy(vd->vd_subtitle_widget);
-      
-      vd->vd_subtitle_widget =
-	subtitles_make_widget(vd->vd_mp->mp_subtitles, i);
-      abort();
-      vd->vd_last_subtitle_index = i;
-    }
-  }
-#endif
-
   //  TRACE(TRACE_DEBUG, "frame", "%16lld %d %d\n", pts, epoch, duration);
 
   vd->vd_frame_deliver(vd, ctx, frame, 
 		       pts, epoch, duration,
 		       mb->mb_disable_deinterlacer);
 }
-
-
-/**
- *
- */
-static void 
-vd_decode_subtitle(video_decoder_t *vd, media_buf_t *mb)
-{
-  codecwrap_t *cw = mb->mb_cw;
-  AVCodecContext *ctx = cw->codec_ctx;
-  AVSubtitle sub;
-  int got_sub = 0;
-
-  if(vd->vd_subtitle_deliver == NULL)
-    return;
-
-  if(avcodec_decode_subtitle(ctx, &sub, &got_sub, mb->mb_data, mb->mb_size) > 0
-     && got_sub) 
-    vd->vd_subtitle_deliver(vd->vd_subtitle_opaque, mb->mb_pts, &sub);
-}
-
 
 
 /**
@@ -413,7 +376,7 @@ vd_thread(void *aux)
 #endif
 
     case MB_SUBTITLE:
-      vd_decode_subtitle(vd, mb);
+      video_subtitles_decode(vd, mb);
       break;
 
     case MB_END:
@@ -469,6 +432,8 @@ video_decoder_create(media_pipe_t *mp)
   dvdspu_decoder_init(vd);
 #endif
 
+  video_subtitles_init(vd);
+
   hts_thread_create_joinable("video decoder", 
 			     &vd->vd_decoder_thread, vd_thread, vd);
   
@@ -506,6 +471,8 @@ video_decoder_destroy(video_decoder_t *vd)
 #ifdef CONFIG_DVD
   dvdspu_decoder_deinit(vd);
 #endif
+
+  video_subtitles_deinit(vd);
 
   assert(TAILQ_FIRST(&vd->vd_avail_queue) == NULL);
   assert(TAILQ_FIRST(&vd->vd_displaying_queue) == NULL);

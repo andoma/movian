@@ -72,7 +72,7 @@ typedef struct glw_video {
   int gv_height;
 
   glw_video_overlay_t gv_spu; // DVD SPU 
-
+  glw_video_overlay_t gv_sub; // Subtitles
 
 } glw_video_t;
 
@@ -258,6 +258,7 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv, const glw_root_t *gr)
 #if ENABLE_DVD
     glw_video_spu_layout(vd, &gv->gv_spu, gr, pts);
 #endif
+    glw_video_sub_layout(vd, &gv->gv_sub, gr, pts);
   }
 }
 
@@ -463,9 +464,10 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
   glw_Scalef(&rc0, 2.0f / gv->gv_width, -2.0f / gv->gv_height, 1.0f);
   glw_Translatef(&rc0, -gv->gv_width / 2.0, -gv->gv_height / 2.0, 0.0f);
 
-  if(gv->gv_spu.gvo_enabled && gv->gv_width > 0 &&
-     (glw_is_focused(w) || !vd->vd_pci.hli.hl_gi.hli_ss))
+  if(gv->gv_width > 0 && (glw_is_focused(w) || !vd->vd_pci.hli.hl_gi.hli_ss))
     gvo_render(&gv->gv_spu, w->glw_root, &rc0);
+
+  gvo_render(&gv->gv_sub, w->glw_root, &rc0);
 
   glw_PopMatrix();
 }
@@ -507,6 +509,7 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     /* We are going away, flush out all frames (PBOs and textures)
        and destroy zombie video decoder */
     gvo_deinit(&gv->gv_spu);
+    gvo_deinit(&gv->gv_sub);
 
     glw_video_purge_queues(vd, framepurge);
     video_decoder_destroy(vd);

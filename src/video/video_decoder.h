@@ -26,6 +26,8 @@ TAILQ_HEAD(dvdspu_queue, dvdspu);
 #include <dvdnav/dvdnav.h>
 #endif
 
+TAILQ_HEAD(subtitle_queue, subtitle);
+
 
 struct AVCodecContext;
 struct AVFrame;
@@ -227,17 +229,12 @@ typedef struct video_decoder {
 			   int64_t pts, int epoch, int duration,
 			   int disable_deinterlacer);
 
-  void (*vd_subtitle_deliver)(void *opaque, int64_t pts, AVSubtitle *sub);
-  void *vd_subtitle_opaque;
-
   int vd_may_update_avdiff;
 
   /**
    * DVD / SPU related members
    */
 #ifdef CONFIG_DVD
-
-
   struct dvdspu_queue vd_spu_queue;
 
   uint32_t *vd_spu_clut;
@@ -252,6 +249,12 @@ typedef struct video_decoder {
 #endif
   int vd_spu_in_menu;
 
+  /**
+   * Subtitling
+   */
+  struct subtitle_queue vd_sub_queue;
+  hts_mutex_t vd_sub_mutex;
+
 } video_decoder_t;
 
 
@@ -264,6 +267,12 @@ void video_decoder_destroy(video_decoder_t *gv);
 video_decoder_frame_t *vd_dequeue_for_decode(video_decoder_t *vd, 
 					     int w[3], int h[3]);
 
+
+/**
+ * DVD SPU (SubPicture Units)
+ *
+ * This include both subtitling and menus on DVDs
+ */
 #if ENABLE_DVD
 
 typedef struct dvdspu {
@@ -300,6 +309,38 @@ void dvdspu_decoder_dispatch(video_decoder_t *vd, media_buf_t *mb,
 int dvdspu_decode(dvdspu_t *d, int64_t pts);
 
 #endif
+
+
+typedef struct subtitle_rect {
+  int x,y,w,h;
+  char *bitmap;
+} subtitle_rect_t;
+
+/**
+ * Subtitling
+ */
+typedef struct subtitle {
+
+  TAILQ_ENTRY(subtitle) s_link;
+
+  int s_active;
+
+  int64_t s_start;
+  int64_t s_stop;
+
+  int s_num_rects;
+  subtitle_rect_t s_rects[0];
+
+} subtitle_t;
+
+void video_subtitle_destroy(video_decoder_t *vd, subtitle_t *s);
+
+void video_subtitles_init(video_decoder_t *vd);
+
+void video_subtitles_deinit(video_decoder_t *vd);
+
+void video_subtitles_decode(video_decoder_t *vd, media_buf_t *mb);
+
 
 #endif /* VIDEO_DECODER_H */
 

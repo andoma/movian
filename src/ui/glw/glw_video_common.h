@@ -26,11 +26,10 @@
 
 typedef struct glw_video_overlay {
   
-  glw_backend_texture_t gvo_texture;
+  glw_backend_texture_t *gvo_textures;
+  glw_renderer_t *gvo_renderers;
 
-  glw_renderer_t gvo_renderer;
-
-  int gvo_enabled;
+  int gvo_entries;
 
 } glw_video_overlay_t;
 
@@ -74,6 +73,9 @@ void gvo_deinit(glw_video_overlay_t *gvo);
 void gvo_render(glw_video_overlay_t *gvo, glw_root_t *gr, glw_rctx_t *rc);
 
 void glw_video_spu_layout(video_decoder_t *vd, glw_video_overlay_t *gvo, 
+			  const glw_root_t *gr, int64_t pts);
+
+void glw_video_sub_layout(video_decoder_t *vd, glw_video_overlay_t *gvo, 
 			  const glw_root_t *gr, int64_t pts);
 
 #endif /* GLW_VIDEO_COMMON_H */

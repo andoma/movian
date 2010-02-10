@@ -118,6 +118,7 @@ SRCS-$(CONFIG_LIBOGC) += src/networking/net_libogc.c
 #
 SRCS += src/video/video_playback.c \
 	src/video/video_decoder.c \
+	src/video/video_subtitles.c \
 	src/video/yadif.c \
 
 SRCS-$(CONFIG_DVD) += src/video/video_dvdspu.c
