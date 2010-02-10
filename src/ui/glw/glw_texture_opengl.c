@@ -322,7 +322,7 @@ texture_load_rescale_swscale(const AVPicture *pict, int pix_fmt,
  *
  */
 void
-glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex, 
+glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex, 
 	       const void *src, int fmt, int width, int height)
 {
   int format;
@@ -353,6 +353,13 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
     ext_format = GL_ALPHA;
     ext_type   = GL_UNSIGNED_BYTE;
     break;
+
+  case GLW_TEXTURE_FORMAT_RGBA:
+    format     = GL_RGBA;
+    ext_format = GL_BGRA;
+    ext_type   = GL_UNSIGNED_BYTE;
+    break;
+
   default:
     return;
   }

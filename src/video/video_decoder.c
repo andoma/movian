@@ -29,10 +29,6 @@
 
 #include "showtime.h"
 #include "video_decoder.h"
-#ifdef CONFIG_DVD
-#include "video_dvdspu.h"
-#endif
-//#include "subtitles.h"
 #include "yadif.h"
 #include "event.h"
 #include "media.h"
@@ -456,7 +452,7 @@ video_decoder_create(media_pipe_t *mp)
 
   vd_init_timings(vd);
 
-  /* For the exact meaning of these, see gl_video.h */
+  /* For the exact meaning of these, see glw_video_xxx.h */
     
   TAILQ_INIT(&vd->vd_avail_queue);
   TAILQ_INIT(&vd->vd_displaying_queue);
@@ -467,6 +463,11 @@ video_decoder_create(media_pipe_t *mp)
   hts_cond_init(&vd->vd_avail_queue_cond);
   hts_cond_init(&vd->vd_bufalloced_queue_cond);
   hts_mutex_init(&vd->vd_queue_mutex);
+
+
+#ifdef CONFIG_DVD
+  dvdspu_decoder_init(vd);
+#endif
 
   hts_thread_create_joinable("video decoder", 
 			     &vd->vd_decoder_thread, vd_thread, vd);
@@ -503,8 +504,7 @@ void
 video_decoder_destroy(video_decoder_t *vd)
 {
 #ifdef CONFIG_DVD
-  if(vd->vd_dvdspu != NULL)
-    dvdspu_decoder_destroy(vd->vd_dvdspu);
+  dvdspu_decoder_deinit(vd);
 #endif
 
   assert(TAILQ_FIRST(&vd->vd_avail_queue) == NULL);

@@ -115,19 +115,11 @@ typedef struct glw_video {
 
   media_pipe_t *gv_mp;
 
-
-  GLuint gv_sputex;
-  int gv_sputex_height;
-  int gv_sputex_width;
-
-
-  int gv_in_menu;
-
+  // Used to map mouse pointer coords to video frame pixels
   int gv_width;
   int gv_height;
 
-  float gv_tex_x1, gv_tex_x2;
-  float gv_tex_y1, gv_tex_y2;
+  glw_video_overlay_t gv_spu; // DVD SPU 
 
   struct gl_video_sub_queue gv_subs;
 
@@ -511,160 +503,6 @@ gv_compute_blend(glw_video_t *gv, video_decoder_frame_t *fra,
 
 
 
-#if ENABLE_DVD
-/**
- *
- */
-static void
-spu_repaint(glw_video_t *gv, dvdspu_decoder_t *dd, dvdspu_t *d,
-	    const glw_root_t *gr)
-{
-  int width  = d->d_x2 - d->d_x1;
-  int height = d->d_y2 - d->d_y1;
-  int outsize = width * height * 4;
-  uint32_t *tmp, *t0; 
-  int x, y, i;
-  uint8_t *buf = d->d_bitmap;
-  pci_t *pci = &dd->dd_pci;
-  dvdnav_highlight_area_t ha;
-  int hi_palette[4];
-  int hi_alpha[4];
-
-  if(dd->dd_clut == NULL)
-    return;
-  
-  gv->gv_in_menu = pci->hli.hl_gi.hli_ss;
-
-  if(pci->hli.hl_gi.hli_ss &&
-     dvdnav_get_highlight_area(pci, dd->dd_curbut, 0, &ha) 
-     == DVDNAV_STATUS_OK) {
-
-    hi_alpha[0] = (ha.palette >>  0) & 0xf;
-    hi_alpha[1] = (ha.palette >>  4) & 0xf;
-    hi_alpha[2] = (ha.palette >>  8) & 0xf;
-    hi_alpha[3] = (ha.palette >> 12) & 0xf;
-     
-    hi_palette[0] = (ha.palette >> 16) & 0xf;
-    hi_palette[1] = (ha.palette >> 20) & 0xf;
-    hi_palette[2] = (ha.palette >> 24) & 0xf;
-    hi_palette[3] = (ha.palette >> 28) & 0xf;
-  }
-
-  t0 = tmp = malloc(outsize);
-
-
-  ha.sx -= d->d_x1;
-  ha.ex -= d->d_x1;
-
-  ha.sy -= d->d_y1;
-  ha.ey -= d->d_y1;
-
-  /* XXX: this can be optimized in many ways */
-
-  for(y = 0; y < height; y++) {
-    for(x = 0; x < width; x++) {
-      i = buf[0];
-
-      if(pci->hli.hl_gi.hli_ss &&
-	 x >= ha.sx && y >= ha.sy && x <= ha.ex && y <= ha.ey) {
-
-	if(hi_alpha[i] == 0) {
-	  *tmp = 0;
-	} else {
-	  *tmp = dd->dd_clut[hi_palette[i] & 0xf] | 
-	    ((hi_alpha[i] * 0x11) << 24);
-	}
-
-      } else {
-
-	if(d->d_alpha[i] == 0) {
-	  
-	  /* If it's 100% transparent, write RGB as zero too, or weird
-	     aliasing effect will occure when GL scales texture */
-	  
-	  *tmp = 0;
-	} else {
-	  *tmp = dd->dd_clut[d->d_palette[i] & 0xf] | 
-	    ((d->d_alpha[i] * 0x11) << 24);
-	}
-      }
-
-      buf++;
-      tmp++;
-    }
-  }
-
-  gv->gv_sputex_width  = gr->gr_normalized_texture_coords ? 1.0 : width;
-  gv->gv_sputex_height = gr->gr_normalized_texture_coords ? 1.0 : height;
-
-  glTexImage2D(gr->gr_be.gbr_primary_texture_mode, 0, GL_RGBA, 
-	       width, height, 0,
-	       GL_RGBA, GL_UNSIGNED_BYTE, t0);
-
-  free(t0);
-}
-
-
-
-
-static void
-spu_layout(glw_video_t *gv, dvdspu_decoder_t *dd, int64_t pts,
-	   const glw_root_t *gr)
-{
-  int textype = gr->gr_be.gbr_primary_texture_mode;
-  dvdspu_t *d;
-  int x;
-
-  hts_mutex_lock(&dd->dd_mutex);
-
- again:
-  d = TAILQ_FIRST(&dd->dd_queue);
-
-  if(d == NULL) {
-    hts_mutex_unlock(&dd->dd_mutex);
-    return;
-  }
-
-  if(d->d_destroyme == 1)
-    goto destroy;
-
-  x = dvdspu_decode(d, pts);
-
-  switch(x) {
-  case -1:
-  destroy:
-    dvdspu_destroy(dd, d);
-    gv->gv_in_menu = 0;
-
-    glDeleteTextures(1, &gv->gv_sputex);
-    gv->gv_sputex = 0;
-    goto again;
-
-  case 0:
-    if(dd->dd_repaint == 0)
-      break;
-
-    dd->dd_repaint = 0;
-    /* FALLTHRU */
-
-  case 1:
-    if(gv->gv_sputex == 0) {
-
-      glGenTextures(1, &gv->gv_sputex);
-
-      glBindTexture(textype, gv->gv_sputex);
-      glTexParameterf(textype, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      glTexParameterf(textype, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    } else {
-      glBindTexture(textype, gv->gv_sputex);
-    }
-    spu_repaint(gv, dd, d, gr);
-    break;
-  }
-  hts_mutex_unlock(&dd->dd_mutex);
-}
-#endif
-
 /**
  *
  */
@@ -782,8 +620,7 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv, const glw_root_t *gr)
     glw_video_compute_avdiff(vd, mp, pts, epoch);
 
 #if ENABLE_DVD
-    if(vd->vd_dvdspu != NULL)
-      spu_layout(gv, vd->vd_dvdspu, pts, gr);
+    glw_video_spu_layout(vd, &gv->gv_spu, gr, pts);
 #endif
 
     layout_subtitles(gr, gv, pts);
@@ -981,10 +818,6 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
   glw_root_t *gr = w->glw_root;
   video_decoder_frame_t *fra, *frb;
   int width = 0, height = 0;
-#if ENABLE_DVD
-  dvdspu_decoder_t *dd;
-  dvdspu_t *d;
-#endif
   int textype = gr->gr_be.gbr_primary_texture_mode;
   int rectmode = !gr->gr_normalized_texture_coords;
 
@@ -1027,37 +860,10 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
 
   glScalef(2.0f / width, -2.0f / height, 0.0f);
   glTranslatef(-width / 2, -height / 2, 0.0f);
-  
-#if ENABLE_DVD
-  dd = vd->vd_dvdspu;
-  if(gv->gv_sputex != 0 && dd != NULL && width > 0 &&
-     (glw_is_focused(w) || !dd->dd_pci.hli.hl_gi.hli_ss)) {
-    d = TAILQ_FIRST(&dd->dd_queue);
 
-    if(d != NULL) {
-      glBindTexture(textype, gv->gv_sputex);
-
-      glColor4f(1.0, 1.0, 1.0, rc->rc_alpha);
-      
-      glBegin(GL_QUADS);
-      
-      glTexCoord2f(0.0, gv->gv_sputex_height);
-      glVertex3f(d->d_x1, d->d_y2, 0.0f);
-
-      glTexCoord2f(gv->gv_sputex_width, gv->gv_sputex_height);
-      glVertex3f(d->d_x2, d->d_y2, 0.0f);
-    
-      glTexCoord2f(gv->gv_sputex_width, 0.0);
-      glVertex3f(d->d_x2, d->d_y1, 0.0f);
-    
-      glTexCoord2f(0.0, 0.0);
-      glVertex3f(d->d_x1, d->d_y1, 0.0f);
-
-      glEnd();
-
-    }
-  }
-#endif
+  if(gv->gv_spu.gvo_enabled && width > 0 &&
+     (glw_is_focused(w) || !vd->vd_pci.hli.hl_gi.hli_ss))
+    gvo_render(&gv->gv_spu, w->glw_root, rc);
 
   gl_video_sub_t *gvs;
 
@@ -1109,8 +915,7 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     /* We are going away, flush out all frames (PBOs and textures)
        and destroy zombie video decoder */
 
-    if(gv->gv_sputex)
-      glDeleteTextures(1, &gv->gv_sputex);
+    gvo_deinit(&gv->gv_spu);
 
     LIST_REMOVE(gv, gv_global_link);
     glw_video_purge_queues(vd, framepurge);
@@ -1124,7 +929,7 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     return 0;
 
   case GLW_SIGNAL_EVENT:
-    return glw_video_widget_event(extra, gv->gv_mp, gv->gv_in_menu);
+    return glw_video_widget_event(extra, gv->gv_mp, vd->vd_spu_in_menu);
 
   case GLW_SIGNAL_DESTROY:
     video_playback_destroy(gv->gv_vp);
@@ -1135,7 +940,7 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
 #if ENABLE_DVD
   case GLW_SIGNAL_POINTER_EVENT:
-    return glw_video_pointer_event(vd->vd_dvdspu, gv->gv_width, gv->gv_height,
+    return glw_video_pointer_event(vd, gv->gv_width, gv->gv_height,
 				   extra, gv->gv_mp);
 #endif
 

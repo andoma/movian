@@ -21,12 +21,23 @@
 
 #include "glw.h"
 #include "media.h"
-#if ENABLE_DVD
-#include "video/video_dvdspu.h"
-#endif
 #include "video/video_playback.h"
+#include "video/video_decoder.h"
 
-int glw_video_pointer_event(dvdspu_decoder_t *dd, int width, int height,
+typedef struct glw_video_overlay {
+  
+  glw_backend_texture_t gvo_texture;
+
+  glw_renderer_t gvo_renderer;
+
+  int gvo_enabled;
+
+} glw_video_overlay_t;
+
+
+
+
+int glw_video_pointer_event(video_decoder_t *vd, int width, int height,
 			    glw_pointer_event_t *gpe, media_pipe_t *mp);
 
 void glw_video_update_focusable(video_decoder_t *vd, glw_t *w);
@@ -53,6 +64,17 @@ glw_video_enqueue_for_display(video_decoder_t *vd, video_decoder_frame_t *vdf,
   TAILQ_REMOVE(fromqueue, vdf, vdf_link);
   TAILQ_INSERT_TAIL(&vd->vd_displaying_queue, vdf, vdf_link);
 }
+
+
+/**
+ *
+ */
+void gvo_deinit(glw_video_overlay_t *gvo);
+
+void gvo_render(glw_video_overlay_t *gvo, glw_root_t *gr, glw_rctx_t *rc);
+
+void glw_video_spu_layout(video_decoder_t *vd, glw_video_overlay_t *gvo, 
+			  const glw_root_t *gr, int64_t pts);
 
 #endif /* GLW_VIDEO_COMMON_H */
 

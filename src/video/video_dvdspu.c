@@ -16,23 +16,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <sys/time.h>
-#include <time.h>
-
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-
 #include <inttypes.h>
 
-#include <dvdnav/dvdnav.h>
-
-#include "media.h"
-#include "video_dvdspu.h"
 #include "showtime.h"
+#include "video_decoder.h"
 
 /**
  *
@@ -258,20 +245,20 @@ dvdspu_decode(dvdspu_t *d, int64_t pts)
  *
  */
 static void
-dvdspu_new_clut(dvdspu_decoder_t *dd, media_buf_t *mb)
+dvdspu_new_clut(video_decoder_t *vd, media_buf_t *mb)
 {
   int i;
   int C, D, E, Y, U, V, R, G, B;
   uint32_t u32;
 
-  if(dd->dd_clut != NULL)
-    free(dd->dd_clut);
+  if(vd->vd_spu_clut != NULL)
+    free(vd->vd_spu_clut);
 
-  dd->dd_clut = mb->mb_data;
+  vd->vd_spu_clut = mb->mb_data;
 
   for(i = 0; i < 16; i++) {
 
-    u32 = dd->dd_clut[i];
+    u32 = vd->vd_spu_clut[i];
 
     Y = (u32 >> 16) & 0xff;
     V = (u32 >> 8) & 0xff;
@@ -293,34 +280,17 @@ dvdspu_new_clut(dvdspu_decoder_t *dd, media_buf_t *mb)
 
     u32 = R << 0 | G << 8 | B << 16;
 
-    dd->dd_clut[i] = u32;
+    vd->vd_spu_clut[i] = u32;
   }
   mb->mb_data = NULL;
 }
 
 
-
-/**
- *
- */
-static dvdspu_decoder_t *
-dvdspu_decoder_create(video_decoder_t *vd)
-{
-  dvdspu_decoder_t *dd = calloc(1, sizeof(dvdspu_decoder_t));
-
-  TAILQ_INIT(&dd->dd_queue);
-
-  hts_mutex_init(&dd->dd_mutex);
-
-  return dd;
-
-}
-
 /**
  *
  */
 static void
-dvdspu_enqueue(dvdspu_decoder_t *dd, media_buf_t *mb)
+dvdspu_enqueue(video_decoder_t *vd, media_buf_t *mb)
 {
   dvdspu_t *d;
 
@@ -333,9 +303,9 @@ dvdspu_enqueue(dvdspu_decoder_t *dd, media_buf_t *mb)
   d->d_cmdpos = getbe16(d->d_data + 2);
   d->d_pts = mb->mb_pts;
 
-  hts_mutex_lock(&dd->dd_mutex);
-  TAILQ_INSERT_TAIL(&dd->dd_queue, d, d_link);
-  hts_mutex_unlock(&dd->dd_mutex);
+  hts_mutex_lock(&vd->vd_spu_mutex);
+  TAILQ_INSERT_TAIL(&vd->vd_spu_queue, d, d_link);
+  hts_mutex_unlock(&vd->vd_spu_mutex);
 
   mb->mb_data = NULL;
 }
@@ -344,9 +314,9 @@ dvdspu_enqueue(dvdspu_decoder_t *dd, media_buf_t *mb)
  *
  */
 void
-dvdspu_destroy(dvdspu_decoder_t *dd, dvdspu_t *d)
+dvdspu_destroy(video_decoder_t *vd, dvdspu_t *d)
 {
-  TAILQ_REMOVE(&dd->dd_queue, d, d_link);
+  TAILQ_REMOVE(&vd->vd_spu_queue, d, d_link);
   free(d->d_data);
   free(d);
 }
@@ -355,16 +325,16 @@ dvdspu_destroy(dvdspu_decoder_t *dd, dvdspu_t *d)
  *
  */
 static void
-dvdspu_flush(dvdspu_decoder_t *dd)
+dvdspu_flush(video_decoder_t *vd)
 {
   dvdspu_t *d;
 
-  hts_mutex_lock(&dd->dd_mutex);
+  hts_mutex_lock(&vd->vd_spu_mutex);
   
-  TAILQ_FOREACH(d, &dd->dd_queue, d_link)
+  TAILQ_FOREACH(d, &vd->vd_spu_queue, d_link)
     d->d_destroyme = 1;
 
-  hts_mutex_unlock(&dd->dd_mutex);
+  hts_mutex_unlock(&vd->vd_spu_mutex);
 }
 
 /**
@@ -376,29 +346,23 @@ dvdspu_decoder_dispatch(video_decoder_t *vd, media_buf_t *mb, media_pipe_t *mp)
   event_t *e;
 
   if(mb->mb_data_type == MB_DVD_RESET_SPU) {
-    if(vd->vd_dvdspu == NULL)
-      return;
-
-    vd->vd_dvdspu->dd_curbut = 1;
-    dvdspu_flush(vd->vd_dvdspu);
+    vd->vd_spu_curbut = 1;
+    dvdspu_flush(vd);
     return;
   }
 
-  if(vd->vd_dvdspu == NULL)
-    vd->vd_dvdspu = dvdspu_decoder_create(vd);
-
   switch(mb->mb_data_type) {
   case MB_DVD_SPU:
-    dvdspu_enqueue(vd->vd_dvdspu, mb);
+    dvdspu_enqueue(vd, mb);
     break;
     
   case MB_DVD_CLUT:
-    dvdspu_new_clut(vd->vd_dvdspu, mb);
+    dvdspu_new_clut(vd, mb);
     break;
     
   case MB_DVD_PCI:
-    memcpy(&vd->vd_dvdspu->dd_pci, mb->mb_data, sizeof(pci_t));
-    vd->vd_dvdspu->dd_repaint = 1;
+    memcpy(&vd->vd_pci, mb->mb_data, sizeof(pci_t));
+    vd->vd_spu_repaint = 1;
     
     e = event_create(EVENT_DVD_PCI, sizeof(event_t) + sizeof(pci_t));
     memcpy(e->e_payload, mb->mb_data, sizeof(pci_t));
@@ -407,8 +371,8 @@ dvdspu_decoder_dispatch(video_decoder_t *vd, media_buf_t *mb, media_pipe_t *mp)
     break;
       
   case MB_DVD_HILITE:
-    vd->vd_dvdspu->dd_curbut = mb->mb_data32;
-    vd->vd_dvdspu->dd_repaint = 1;
+    vd->vd_spu_curbut = mb->mb_data32;
+    vd->vd_spu_repaint = 1;
     break;
 
   default:
@@ -417,18 +381,29 @@ dvdspu_decoder_dispatch(video_decoder_t *vd, media_buf_t *mb, media_pipe_t *mp)
   }
 }
 
+
+
 /**
- * No need to lock here, noone else should be around.
+ *
  */
 void
-dvdspu_decoder_destroy(dvdspu_decoder_t *dd)
+dvdspu_decoder_init(video_decoder_t *vd)
+{
+  TAILQ_INIT(&vd->vd_spu_queue);
+  hts_mutex_init(&vd->vd_spu_mutex);
+}
+
+
+/**
+ *
+ */
+void
+dvdspu_decoder_deinit(video_decoder_t *vd)
 {
   dvdspu_t *d;
 
-  while((d = TAILQ_FIRST(&dd->dd_queue)) != NULL)
-    dvdspu_destroy(dd, d);
+  while((d = TAILQ_FIRST(&vd->vd_spu_queue)) != NULL)
+    dvdspu_destroy(vd, d);
 
-  hts_mutex_destroy(&dd->dd_mutex);
-  free(dd);
-
+  hts_mutex_destroy(&vd->vd_spu_mutex);
 }

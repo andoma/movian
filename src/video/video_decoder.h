@@ -21,6 +21,11 @@
 
 #include "media.h"
 #include "misc/avgtime.h"
+#if ENABLE_DVD
+TAILQ_HEAD(dvdspu_queue, dvdspu);
+#include <dvdnav/dvdnav.h>
+#endif
+
 
 struct AVCodecContext;
 struct AVFrame;
@@ -196,12 +201,7 @@ typedef struct video_decoder {
   int vd_avdiff;
   int vd_avd_delta;
 
-  /* DVD / SPU related members */
-
-#ifdef CONFIG_DVD
-  struct dvdspu_decoder *vd_dvdspu;
-#endif
-  
+   
   /* stats */
 
   avgtime_t vd_decode_time;
@@ -232,6 +232,26 @@ typedef struct video_decoder {
 
   int vd_may_update_avdiff;
 
+  /**
+   * DVD / SPU related members
+   */
+#ifdef CONFIG_DVD
+
+
+  struct dvdspu_queue vd_spu_queue;
+
+  uint32_t *vd_spu_clut;
+  
+  hts_mutex_t vd_spu_mutex;
+
+  pci_t vd_pci;
+
+  int vd_spu_curbut;
+  int vd_spu_repaint;
+
+#endif
+  int vd_spu_in_menu;
+
 } video_decoder_t;
 
 
@@ -243,6 +263,43 @@ void video_decoder_destroy(video_decoder_t *gv);
 
 video_decoder_frame_t *vd_dequeue_for_decode(video_decoder_t *vd, 
 					     int w[3], int h[3]);
+
+#if ENABLE_DVD
+
+typedef struct dvdspu {
+
+  TAILQ_ENTRY(dvdspu) d_link;
+
+  uint8_t *d_data;
+  size_t d_size;
+
+  int d_cmdpos;
+  int64_t d_pts;
+
+  uint8_t d_palette[4];
+  uint8_t d_alpha[4];
+  
+  int d_x1, d_y1;
+  int d_x2, d_y2;
+
+  uint8_t *d_bitmap;
+
+  int d_destroyme;
+
+} dvdspu_t;
+
+void dvdspu_decoder_init(video_decoder_t *vd);
+
+void dvdspu_decoder_deinit(video_decoder_t *vd);
+
+void dvdspu_destroy(video_decoder_t *vd, dvdspu_t *d);
+
+void dvdspu_decoder_dispatch(video_decoder_t *vd, media_buf_t *mb,
+			     media_pipe_t *mp);
+
+int dvdspu_decode(dvdspu_t *d, int64_t pts);
+
+#endif
 
 #endif /* VIDEO_DECODER_H */
 

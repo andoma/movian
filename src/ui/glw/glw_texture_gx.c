@@ -142,6 +142,44 @@ convert_rgb(const uint8_t *src, int linesize, unsigned int w, unsigned int h)
   return dst;
 }
 
+/**
+ * Convert RGBA to GX texture format
+ */
+static void *
+convert_rgba(const uint8_t *src, int linesize, unsigned int w, unsigned int h)
+{
+  unsigned int size = ((w + 3) & ~3) * ((h + 3) & ~3) * 4;
+  int y, x, i;
+  const uint8_t *s;
+  uint8_t *dst, *d;
+
+  d = dst = memalign(32, size);
+
+  for(y = 0; y < h; y += 4) {
+    for(x = 0; x < w; x += 4) {
+      for(i = 0; i < 4; i++) {
+	s = src + linesize * (y + i) + x * 4;
+	*d++ = s[0];  *d++ = s[1];
+	*d++ = s[4];  *d++ = s[5];
+	*d++ = s[8];  *d++ = s[9];
+	*d++ = s[12]; *d++ = s[13];
+      }
+      
+      for(i = 0; i < 4; i++) {
+	s = src + linesize * (y + i) + x * 4;
+	*d++ = s[2];  *d++ = s[3];
+	*d++ = s[6];  *d++ = s[7];
+	*d++ = s[10]; *d++ = s[11];
+	*d++ = s[14]; *d++ = s[15];
+      }
+    }
+  }  
+
+  DCFlushRange(dst, size);
+  return dst;
+}
+
+
 
 /**
  * Convert I8A8 (16 bit) to I4A4 (8 bit) GX texture format. 
@@ -310,7 +348,7 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
  *
  */
 void
-glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex, 
+glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex, 
 	       const void *src, int fmt, int width, int height)
 {
   int format;
@@ -328,6 +366,11 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
   case GLW_TEXTURE_FORMAT_I8:
     format = GX_TF_I4;
     texels = convert_i8_to_i4(src, width, width, height);
+    break;
+
+  case GLW_TEXTURE_FORMAT_RGBA:
+    format = GX_TF_RGBA8;
+    texels = convert_rgba(src, width * 4, width, height);
     break;
 
   default:

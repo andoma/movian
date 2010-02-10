@@ -67,17 +67,12 @@ typedef struct glw_video {
 
   media_pipe_t *gv_mp;
 
-  void *gv_texels;
-  GXTexObj gv_sputex;
-  int gv_sputex_height;
-  int gv_sputex_width;
-  int gv_in_menu;
-
+  // Used to map mouse pointer coords to video frame pixels
   int gv_width;
   int gv_height;
 
-  float gv_tex_x1, gv_tex_x2;
-  float gv_tex_y1, gv_tex_y2;
+  glw_video_overlay_t gv_spu; // DVD SPU 
+
 
 } glw_video_t;
 
@@ -203,156 +198,6 @@ gv_compute_blend(glw_video_t *gv, video_decoder_frame_t *fra,
 
 
 
-#if ENABLE_DVD
-/**
- *
- */
-static void
-spu_repaint(glw_video_t *gv, dvdspu_decoder_t *dd, dvdspu_t *d,
-	    const glw_root_t *gr)
-{
-  int width  = d->d_x2 - d->d_x1;
-  int height = d->d_y2 - d->d_y1;
-  int outsize = width * height * 4;
-  uint32_t *tmp, *t0; 
-  int x, y, i;
-  uint8_t *buf = d->d_bitmap;
-  pci_t *pci = &dd->dd_pci;
-  dvdnav_highlight_area_t ha;
-  int hi_palette[4];
-  int hi_alpha[4];
-
-  gv->gv_in_menu = pci->hli.hl_gi.hli_ss;
-
-  if(width < 1 || height < 1)
-    return;
-
-  if(dd->dd_clut == NULL)
-    return;
-  
-  if(pci->hli.hl_gi.hli_ss &&
-     dvdnav_get_highlight_area(pci, dd->dd_curbut, 0, &ha) 
-     == DVDNAV_STATUS_OK) {
-
-    hi_alpha[0] = (ha.palette >>  0) & 0xf;
-    hi_alpha[1] = (ha.palette >>  4) & 0xf;
-    hi_alpha[2] = (ha.palette >>  8) & 0xf;
-    hi_alpha[3] = (ha.palette >> 12) & 0xf;
-     
-    hi_palette[0] = (ha.palette >> 16) & 0xf;
-    hi_palette[1] = (ha.palette >> 20) & 0xf;
-    hi_palette[2] = (ha.palette >> 24) & 0xf;
-    hi_palette[3] = (ha.palette >> 28) & 0xf;
-  }
-
-  t0 = tmp = malloc(outsize);
-
-
-  ha.sx -= d->d_x1;
-  ha.ex -= d->d_x1;
-
-  ha.sy -= d->d_y1;
-  ha.ey -= d->d_y1;
-
-  /* XXX: this can be optimized in many ways */
-
-  for(y = 0; y < height; y++) {
-    for(x = 0; x < width; x++) {
-      i = buf[0];
-
-      if(pci->hli.hl_gi.hli_ss &&
-	 x >= ha.sx && y >= ha.sy && x <= ha.ex && y <= ha.ey) {
-
-	if(hi_alpha[i] == 0) {
-	  *tmp = 0;
-	} else {
-	  *tmp = dd->dd_clut[hi_palette[i] & 0xf] | 
-	    ((hi_alpha[i] * 0x11) << 24);
-	}
-
-      } else {
-
-	if(d->d_alpha[i] == 0) {
-	  
-	  /* If it's 100% transparent, write RGB as zero too, or weird
-	     aliasing effect will occure when GL scales texture */
-	  
-	  *tmp = 0;
-	} else {
-	  *tmp = dd->dd_clut[d->d_palette[i] & 0xf] | 
-	    ((d->d_alpha[i] * 0x11) << 24);
-	}
-      }
-
-      buf++;
-      tmp++;
-    }
-  }
-
-  free(gv->gv_texels);
-    
-  gv->gv_sputex_width  = width;
-  gv->gv_sputex_height = height;
-
-  gv->gv_texels = gx_convert_argb((void *)t0, width * 4, width, height);
-
-  GX_InitTexObj(&gv->gv_sputex, gv->gv_texels, width, height,
-		GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-
-  free(t0);
-}
-
-
-
-
-static void
-spu_layout(glw_video_t *gv, dvdspu_decoder_t *dd, int64_t pts,
-	   const glw_root_t *gr)
-{
-  dvdspu_t *d;
-  int x;
-
-  hts_mutex_lock(&dd->dd_mutex);
-
- again:
-  d = TAILQ_FIRST(&dd->dd_queue);
-
-  if(d == NULL) {
-    hts_mutex_unlock(&dd->dd_mutex);
-    return;
-  }
-
-  if(d->d_destroyme == 1)
-    goto destroy;
-
-  x = dvdspu_decode(d, pts);
-
-  switch(x) {
-  case -1:
-  destroy:
-    dvdspu_destroy(dd, d);
-    gv->gv_in_menu = 0;
-
-    free(gv->gv_texels);
-    gv->gv_texels = NULL;
-    goto again;
-
-  case 0:
-    if(dd->dd_repaint == 0)
-      break;
-    dd->dd_repaint = 0;
-    /* FALLTHRU */
-
-  case 1:
-    spu_repaint(gv, dd, d, gr);
-    break;
-  }
-  hts_mutex_unlock(&dd->dd_mutex);
-}
-#endif
-
-
-
 static void 
 gv_new_frame(video_decoder_t *vd, glw_video_t *gv, const glw_root_t *gr)
 {
@@ -409,12 +254,11 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv, const glw_root_t *gr)
   if(pts != AV_NOPTS_VALUE) {
     pts -= frame_duration * 2;
     glw_video_compute_avdiff(vd, mp, pts, epoch);
-  }
 
 #if ENABLE_DVD
-  if(vd->vd_dvdspu != NULL)
-    spu_layout(gv, vd->vd_dvdspu, pts, gr);
+    glw_video_spu_layout(vd, &gv->gv_spu, gr, pts);
 #endif
+  }
 }
 
 
@@ -599,74 +443,31 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
 { 
   glw_video_t *gv = (glw_video_t *)w; 
   video_decoder_t *vd = gv->gv_vd; 
-  video_decoder_frame_t *fra;
-  int width = 0, height = 0;
-#if ENABLE_DVD
-  dvdspu_decoder_t *dd;
-  dvdspu_t *d;
-#endif
-
-  fra = gv->gv_fra;
+  video_decoder_frame_t *fra = gv->gv_fra;
 
   glw_scale_to_aspect(rc, vd->vd_aspect);
 
   if(fra != NULL && glw_is_focusable(w))
     glw_store_matrix(w, rc);
 
-
   if(fra != NULL) {
-
-    width = fra->vdf_width[0];
-    height = fra->vdf_height[0];
-
+    gv->gv_width  = fra->vdf_width[0];
+    gv->gv_height = fra->vdf_height[0];
     render_video_1f(gv, vd, fra, rc);
+  } else {
+    gv->gv_width = gv->gv_height = 0;
   }
 
-  gv->gv_width  = width;
-  gv->gv_height = height;
+  glw_rctx_t rc0 = *rc;
+  glw_PushMatrix(&rc0, rc);
+  glw_Scalef(&rc0, 2.0f / gv->gv_width, -2.0f / gv->gv_height, 1.0f);
+  glw_Translatef(&rc0, -gv->gv_width / 2.0, -gv->gv_height / 2.0, 0.0f);
 
-#if ENABLE_DVD
-  dd = vd->vd_dvdspu;
-  if(gv->gv_texels != 0 && dd != NULL && width > 0 &&
-     (glw_is_focused(w) || !dd->dd_pci.hli.hl_gi.hli_ss)) {
-    d = TAILQ_FIRST(&dd->dd_queue);
+  if(gv->gv_spu.gvo_enabled && gv->gv_width > 0 &&
+     (glw_is_focused(w) || !vd->vd_pci.hli.hl_gi.hli_ss))
+    gvo_render(&gv->gv_spu, w->glw_root, &rc0);
 
-    if(d != NULL) {
-      GX_LoadTexObj(&gv->gv_sputex, GX_TEXMAP0);
-
-      glw_rctx_t rc0;
-      
-      glw_PushMatrix(&rc0, rc);
-
-      glw_Scalef(&rc0, 2.0f / width, -2.0f / height, 1.0f);
-      glw_Translatef(&rc0, -width / 2.0, -height / 2.0, 0.0f);
-
-      GX_LoadPosMtxImm(rc0.rc_be.gbr_model_matrix, GX_PNMTX0);
-      
-      uint8_t a8 = 255;
-
-      GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
-      
-      GX_Position3f32(d->d_x1, d->d_y2, 0.0); 
-      GX_Color4u8(255, 255, 255, a8);
-      GX_TexCoord2f32(0.0, 1.0);
-
-      GX_Position3f32(d->d_x2, d->d_y2, 0.0); 
-      GX_Color4u8(255, 255, 255, a8);
-      GX_TexCoord2f32(1.0, 1.0);
-
-      GX_Position3f32(d->d_x2,  d->d_y1, 0.0); 
-      GX_Color4u8(255, 255, 255, a8);
-      GX_TexCoord2f32(1.0, 0.0);
-
-      GX_Position3f32(d->d_x1,  d->d_y1, 0); 
-      GX_Color4u8(255, 255, 255, a8);
-      GX_TexCoord2f32(0.0, 0.0);
-
-      GX_End();
-    }
-  }
-#endif
+  glw_PopMatrix();
 }
 
 /**
@@ -705,7 +506,8 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_DTOR:
     /* We are going away, flush out all frames (PBOs and textures)
        and destroy zombie video decoder */
-    free(gv->gv_texels);
+    gvo_deinit(&gv->gv_spu);
+
     glw_video_purge_queues(vd, framepurge);
     video_decoder_destroy(vd);
     return 0;
@@ -717,7 +519,7 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     return 0;
 
   case GLW_SIGNAL_EVENT:
-    return glw_video_widget_event(extra, gv->gv_mp, gv->gv_in_menu);
+    return glw_video_widget_event(extra, gv->gv_mp, vd->vd_spu_in_menu);
 
   case GLW_SIGNAL_DESTROY:
     video_playback_destroy(gv->gv_vp);
@@ -728,7 +530,7 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
 #if ENABLE_DVD
   case GLW_SIGNAL_POINTER_EVENT:
-    return glw_video_pointer_event(vd->vd_dvdspu, gv->gv_width, gv->gv_height, 
+    return glw_video_pointer_event(vd, gv->gv_width, gv->gv_height, 
 				   extra, gv->gv_mp);
 #endif
 

@@ -20,19 +20,15 @@
 #include "media.h"
 #include "glw_video_opengl.h"
 #include "glw_video_common.h"
+#include "glw_texture.h"
 #include "video/video_playback.h"
-#if ENABLE_DVD
-#include "video/video_dvdspu.h"
-#endif
-
-
 
 #if ENABLE_DVD
 /**
  *
  */
 int
-glw_video_pointer_event(dvdspu_decoder_t *dd, int width, int height,
+glw_video_pointer_event(video_decoder_t *vd, int width, int height,
 			glw_pointer_event_t *gpe, media_pipe_t *mp)
 {
   pci_t *pci;
@@ -40,11 +36,7 @@ glw_video_pointer_event(dvdspu_decoder_t *dd, int width, int height,
   int32_t button, best, dist, d, mx, my, dx, dy;
   event_t *e;
 
-  if(dd == NULL)
-    return 0;
-
-  pci = &dd->dd_pci;
-
+  pci = &vd->vd_pci;
   if(!pci->hli.hl_gi.hli_ss)
     return 1;
   
@@ -83,7 +75,7 @@ glw_video_pointer_event(dvdspu_decoder_t *dd, int width, int height,
     break;
 
   case GLW_POINTER_MOTION_UPDATE:
-    if(dd->dd_curbut == best)
+    if(vd->vd_spu_curbut == best)
       return 1;
 
     e = event_create(EVENT_DVD_SELECT_BUTTON, sizeof(event_t) + 1);
@@ -109,14 +101,8 @@ glw_video_update_focusable(video_decoder_t *vd, glw_t *w)
 {
   int want_focus = 0;
 #if ENABLE_DVD
-  dvdspu_decoder_t *dd = vd->vd_dvdspu;
-
-  if(dd != NULL) {
-    pci_t *pci = &dd->dd_pci;
-
-    if(pci->hli.hl_gi.hli_ss)
-      want_focus = 1;
-  }
+  if(vd->vd_pci.hli.hl_gi.hli_ss)
+    want_focus = 1;
 #endif
   
   glw_set_i(w, 
@@ -286,3 +272,190 @@ glw_video_purge_queues(video_decoder_t *vd,
   }
 }
 
+
+/**
+ * 
+ */
+void
+gvo_deinit(glw_video_overlay_t *gvo)
+{
+  if(!gvo->gvo_enabled)
+    return;
+  glw_tex_destroy(&gvo->gvo_texture);
+  glw_render_free(&gvo->gvo_renderer);
+  gvo->gvo_enabled = 0;
+
+}
+
+
+/**
+ * 
+ */
+void
+gvo_render(glw_video_overlay_t *gvo, glw_root_t *gr, glw_rctx_t *rc)
+{
+  glw_render(&gvo->gvo_renderer, gr, rc,
+	     GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX, 
+	     &gvo->gvo_texture, 1, 1, 1, rc->rc_alpha);
+}
+
+
+#if ENABLE_DVD
+/**
+ *
+ */
+static void
+spu_repaint(glw_video_overlay_t *gvo, video_decoder_t *vd, dvdspu_t *d,
+	    const glw_root_t *gr)
+{
+  int width  = d->d_x2 - d->d_x1;
+  int height = d->d_y2 - d->d_y1;
+  int outsize = width * height * 4;
+  uint32_t *tmp, *t0; 
+  int x, y, i;
+  uint8_t *buf = d->d_bitmap;
+  pci_t *pci = &vd->vd_pci;
+  dvdnav_highlight_area_t ha;
+  int hi_palette[4];
+  int hi_alpha[4];
+
+  if(vd->vd_spu_clut == NULL)
+    return;
+  
+  vd->vd_spu_in_menu = pci->hli.hl_gi.hli_ss;
+
+  if(pci->hli.hl_gi.hli_ss &&
+     dvdnav_get_highlight_area(pci, vd->vd_spu_curbut, 0, &ha) 
+     == DVDNAV_STATUS_OK) {
+
+    hi_alpha[0] = (ha.palette >>  0) & 0xf;
+    hi_alpha[1] = (ha.palette >>  4) & 0xf;
+    hi_alpha[2] = (ha.palette >>  8) & 0xf;
+    hi_alpha[3] = (ha.palette >> 12) & 0xf;
+     
+    hi_palette[0] = (ha.palette >> 16) & 0xf;
+    hi_palette[1] = (ha.palette >> 20) & 0xf;
+    hi_palette[2] = (ha.palette >> 24) & 0xf;
+    hi_palette[3] = (ha.palette >> 28) & 0xf;
+  }
+
+  t0 = tmp = malloc(outsize);
+
+
+  ha.sx -= d->d_x1;
+  ha.ex -= d->d_x1;
+
+  ha.sy -= d->d_y1;
+  ha.ey -= d->d_y1;
+
+  /* XXX: this can be optimized in many ways */
+
+  for(y = 0; y < height; y++) {
+    for(x = 0; x < width; x++) {
+      i = buf[0];
+
+      if(pci->hli.hl_gi.hli_ss &&
+	 x >= ha.sx && y >= ha.sy && x <= ha.ex && y <= ha.ey) {
+
+	if(hi_alpha[i] == 0) {
+	  *tmp = 0;
+	} else {
+	  *tmp = vd->vd_spu_clut[hi_palette[i] & 0xf] | 
+	    ((hi_alpha[i] * 0x11) << 24);
+	}
+
+      } else {
+
+	if(d->d_alpha[i] == 0) {
+	  
+	  /* If it's 100% transparent, write RGB as zero too, or weird
+	     aliasing effect will occure when GL scales texture */
+	  
+	  *tmp = 0;
+	} else {
+	  *tmp = vd->vd_spu_clut[d->d_palette[i] & 0xf] | 
+	    ((d->d_alpha[i] * 0x11) << 24);
+	}
+      }
+
+      buf++;
+      tmp++;
+    }
+  }
+
+  if(!gvo->gvo_enabled) {
+    glw_render_init(&gvo->gvo_renderer, 4, GLW_RENDER_ATTRIBS_TEX);
+    gvo->gvo_enabled = 1;
+  }
+
+  float w = gr->gr_normalized_texture_coords ? 1.0 : width;
+  float h = gr->gr_normalized_texture_coords ? 1.0 : height;
+  glw_renderer_t *r = &gvo->gvo_renderer;
+  
+  glw_render_vtx_pos(r, 0, d->d_x1, d->d_y2, 0.0f);
+  glw_render_vtx_st (r, 0, 0, h);
+  
+  glw_render_vtx_pos(r, 1, d->d_x2, d->d_y2, 0.0f);
+  glw_render_vtx_st (r, 1, w, h);
+  
+  glw_render_vtx_pos(r, 2, d->d_x2, d->d_y1, 0.0f);
+  glw_render_vtx_st (r, 2, w, 0);
+  
+  glw_render_vtx_pos(r, 3, d->d_x1, d->d_y1, 0.0f);
+  glw_render_vtx_st (r, 3, 0, 0);
+
+  glw_tex_upload(gr, &gvo->gvo_texture, t0, GLW_TEXTURE_FORMAT_RGBA,
+		 width, height);
+  free(t0);
+}
+
+
+
+/**
+ *
+ */
+void
+glw_video_spu_layout(video_decoder_t *vd, glw_video_overlay_t *gvo, 
+		     const glw_root_t *gr, int64_t pts)
+{
+  dvdspu_t *d;
+  int x;
+
+  hts_mutex_lock(&vd->vd_spu_mutex);
+
+ again:
+  d = TAILQ_FIRST(&vd->vd_spu_queue);
+
+  if(d == NULL) {
+    hts_mutex_unlock(&vd->vd_spu_mutex);
+    return;
+  }
+
+  if(d->d_destroyme == 1)
+    goto destroy;
+
+  x = dvdspu_decode(d, pts);
+
+  switch(x) {
+  case -1:
+  destroy:
+    dvdspu_destroy(vd, d);
+    vd->vd_spu_in_menu = 0;
+    gvo_deinit(gvo);
+    goto again;
+
+  case 0:
+    if(vd->vd_spu_repaint == 0)
+      break;
+
+    vd->vd_spu_repaint = 0;
+    /* FALLTHRU */
+
+  case 1:
+    spu_repaint(gvo, vd, d, gr);
+    break;
+  }
+  hts_mutex_unlock(&vd->vd_spu_mutex);
+}
+
+#endif
