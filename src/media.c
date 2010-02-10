@@ -1108,7 +1108,7 @@ void
 metadata_from_ffmpeg(char *dst, size_t dstlen, AVCodec *codec, 
 		     AVCodecContext *avctx)
 {
-  int off = snprintf(dst, dstlen, "%s", codec->long_name);
+  int off = snprintf(dst, dstlen, "%s", codec->long_name ?: codec->name);
 
   if(codec->id  == CODEC_ID_H264) {
     const char *p;
