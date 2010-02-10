@@ -135,8 +135,6 @@ typedef struct glw_video {
 
 
 
-static void gv_purge_queues(video_decoder_t *vd);
-
 static void glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
 				    AVFrame *frame, int64_t pts, int epoch, 
 				    int duration, int disable_deinterlacer);
@@ -210,6 +208,39 @@ glw_video_opengl_init(glw_root_t *gr, int rectmode)
 
 
 /**
+ * 
+ */
+static void
+framepurge(video_decoder_t *vd, video_decoder_frame_t *vdf)
+{
+  gl_video_frame_t *gvf = (gl_video_frame_t *)vdf;
+  int i;
+
+  for(i = 0; i < 3; i++) {
+    if(gvf->gvf_pbo[i] != 0) {
+      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo[i]);
+      glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
+      gvf->gvf_pbo_ptr[i] = NULL;
+      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+    }
+    glDeleteBuffersARB(3, gvf->gvf_pbo);
+  }
+
+  for(i = 0; i < 3; i++)
+    gvf->gvf_pbo[i] = 0;
+
+  if(gvf->gvf_textures[0] != 0)
+    glDeleteTextures(3, gvf->gvf_textures);
+
+  gvf->gvf_textures[0] = 0;
+
+  free(vdf);
+  assert(vd->vd_active_frames > 0);
+  vd->vd_active_frames--;
+}
+
+
+/**
  *
  */
 void
@@ -222,7 +253,7 @@ glw_video_opengl_flush(glw_root_t *gr)
     vd = gv->gv_vd;
 
     hts_mutex_lock(&vd->vd_queue_mutex);
-    gv_purge_queues(vd);
+    glw_video_purge_queues(vd, framepurge);
     hts_cond_signal(&vd->vd_avail_queue_cond);
     hts_cond_signal(&vd->vd_bufalloced_queue_cond);
     hts_mutex_unlock(&vd->vd_queue_mutex);
@@ -1058,71 +1089,6 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
   glPopMatrix();
 }
 
-/**
- * 
- */
-static void
-vdf_purge(video_decoder_t *vd, video_decoder_frame_t *vdf)
-{
-  gl_video_frame_t *gvf = (gl_video_frame_t *)vdf;
-  int i;
-
-  for(i = 0; i < 3; i++) {
-    if(gvf->gvf_pbo[i] != 0) {
-      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo[i]);
-      glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
-      gvf->gvf_pbo_ptr[i] = NULL;
-      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
-    }
-    glDeleteBuffersARB(3, gvf->gvf_pbo);
-  }
-
-  for(i = 0; i < 3; i++)
-    gvf->gvf_pbo[i] = 0;
-
-  if(gvf->gvf_textures[0] != 0)
-    glDeleteTextures(3, gvf->gvf_textures);
-
-  gvf->gvf_textures[0] = 0;
-
-  free(vdf);
-  assert(vd->vd_active_frames > 0);
-  vd->vd_active_frames--;
-}
-
-
-
-static void
-gv_purge_queues(video_decoder_t *vd)
-{
-  video_decoder_frame_t *vdf;
-
-  while((vdf = TAILQ_FIRST(&vd->vd_avail_queue)) != NULL) {
-    TAILQ_REMOVE(&vd->vd_avail_queue, vdf, vdf_link);
-    vdf_purge(vd, vdf);
-  }
-
-  while((vdf = TAILQ_FIRST(&vd->vd_bufalloc_queue)) != NULL) {
-    TAILQ_REMOVE(&vd->vd_bufalloc_queue, vdf, vdf_link);
-    vdf_purge(vd, vdf);
-  }
-
-  while((vdf = TAILQ_FIRST(&vd->vd_bufalloced_queue)) != NULL) {
-    TAILQ_REMOVE(&vd->vd_bufalloced_queue, vdf, vdf_link);
-    vdf_purge(vd, vdf);
-  }
-
-  while((vdf = TAILQ_FIRST(&vd->vd_displaying_queue)) != NULL) {
-    TAILQ_REMOVE(&vd->vd_displaying_queue, vdf, vdf_link);
-    vdf_purge(vd, vdf);
-  }
-
-  while((vdf = TAILQ_FIRST(&vd->vd_display_queue)) != NULL) {
-    TAILQ_REMOVE(&vd->vd_display_queue, vdf, vdf_link);
-    vdf_purge(vd, vdf);
-  }
-}
-
 
 /**
  *
@@ -1147,7 +1113,7 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
       glDeleteTextures(1, &gv->gv_sputex);
 
     LIST_REMOVE(gv, gv_global_link);
-    gv_purge_queues(vd);
+    glw_video_purge_queues(vd, framepurge);
     video_decoder_destroy(vd);
     return 0;
 

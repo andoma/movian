@@ -673,7 +673,7 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
  * 
  */
 static void
-vdf_purge(video_decoder_t *vd, video_decoder_frame_t *vdf)
+framepurge(video_decoder_t *vd, video_decoder_frame_t *vdf)
 {
   gx_video_frame_t *gvf = (gx_video_frame_t *)vdf;
   int i;
@@ -684,39 +684,6 @@ vdf_purge(video_decoder_t *vd, video_decoder_frame_t *vdf)
   free(vdf);
   assert(vd->vd_active_frames > 0);
   vd->vd_active_frames--;
-}
-
-
-
-static void
-gv_purge_queues(video_decoder_t *vd)
-{
-  video_decoder_frame_t *vdf;
-
-  while((vdf = TAILQ_FIRST(&vd->vd_avail_queue)) != NULL) {
-    TAILQ_REMOVE(&vd->vd_avail_queue, vdf, vdf_link);
-    vdf_purge(vd, vdf);
-  }
-
-  while((vdf = TAILQ_FIRST(&vd->vd_bufalloc_queue)) != NULL) {
-    TAILQ_REMOVE(&vd->vd_bufalloc_queue, vdf, vdf_link);
-    vdf_purge(vd, vdf);
-  }
-
-  while((vdf = TAILQ_FIRST(&vd->vd_bufalloced_queue)) != NULL) {
-    TAILQ_REMOVE(&vd->vd_bufalloced_queue, vdf, vdf_link);
-    vdf_purge(vd, vdf);
-  }
-
-  while((vdf = TAILQ_FIRST(&vd->vd_displaying_queue)) != NULL) {
-    TAILQ_REMOVE(&vd->vd_displaying_queue, vdf, vdf_link);
-    vdf_purge(vd, vdf);
-  }
-
-  while((vdf = TAILQ_FIRST(&vd->vd_display_queue)) != NULL) {
-    TAILQ_REMOVE(&vd->vd_display_queue, vdf, vdf_link);
-    vdf_purge(vd, vdf);
-  }
 }
 
 
@@ -739,7 +706,7 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     /* We are going away, flush out all frames (PBOs and textures)
        and destroy zombie video decoder */
     free(gv->gv_texels);
-    gv_purge_queues(vd);
+    glw_video_purge_queues(vd, framepurge);
     video_decoder_destroy(vd);
     return 0;
 

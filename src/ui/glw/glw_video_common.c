@@ -248,3 +248,41 @@ glw_video_compute_avdiff(video_decoder_t *vd, media_pipe_t *mp,
  }
 #endif
 }
+
+
+/**
+ * 
+ */
+void
+glw_video_purge_queues(video_decoder_t *vd,
+		       void (*purge)(video_decoder_t *vd,
+				     video_decoder_frame_t *vdf))
+{
+  video_decoder_frame_t *vdf;
+
+  while((vdf = TAILQ_FIRST(&vd->vd_avail_queue)) != NULL) {
+    TAILQ_REMOVE(&vd->vd_avail_queue, vdf, vdf_link);
+    purge(vd, vdf);
+  }
+
+  while((vdf = TAILQ_FIRST(&vd->vd_bufalloc_queue)) != NULL) {
+    TAILQ_REMOVE(&vd->vd_bufalloc_queue, vdf, vdf_link);
+    purge(vd, vdf);
+  }
+
+  while((vdf = TAILQ_FIRST(&vd->vd_bufalloced_queue)) != NULL) {
+    TAILQ_REMOVE(&vd->vd_bufalloced_queue, vdf, vdf_link);
+    purge(vd, vdf);
+  }
+
+  while((vdf = TAILQ_FIRST(&vd->vd_displaying_queue)) != NULL) {
+    TAILQ_REMOVE(&vd->vd_displaying_queue, vdf, vdf_link);
+    purge(vd, vdf);
+  }
+
+  while((vdf = TAILQ_FIRST(&vd->vd_display_queue)) != NULL) {
+    TAILQ_REMOVE(&vd->vd_display_queue, vdf, vdf_link);
+    purge(vd, vdf);
+  }
+}
+

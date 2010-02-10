@@ -38,6 +38,9 @@ int glw_video_compute_output_duration(video_decoder_t *vd, int frame_duration);
 void glw_video_compute_avdiff(video_decoder_t *vd, media_pipe_t *mp, 
 			      int64_t pts, int epoch);
 
+void glw_video_purge_queues(video_decoder_t *vd,
+			    void (*purge)(video_decoder_t *vd,
+					  video_decoder_frame_t *vdf));
 
 
 /**
