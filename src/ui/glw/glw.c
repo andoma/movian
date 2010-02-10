@@ -34,10 +34,6 @@
 #include "glw_video_opengl.h"
 #endif
 
-#if CONFIG_GLW_BACKEND_GX
-#include "glw_video_gx.h"
-#endif
-
 static void glw_focus_init_widget(glw_t *w, float weight);
 static void glw_focus_leave(glw_t *w);
 static void glw_root_set_hover(glw_root_t *gr, glw_t *w);

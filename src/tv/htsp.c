@@ -1083,7 +1083,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 	codec_type = CODEC_TYPE_VIDEO;
 	nicename = "H264";
 	s = 2;
-      } else if(0 && !strcmp(type, "DVBSUB")) {
+      } else if(!strcmp(type, "DVBSUB")) {
 	codec_id = CODEC_ID_DVB_SUBTITLE;
 	codec_type = CODEC_TYPE_SUBTITLE;
 	nicename = "Subtitles";

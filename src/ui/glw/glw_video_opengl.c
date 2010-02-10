@@ -1,6 +1,6 @@
 /*
  *  Video output on GL surfaces
- *  Copyright (C) 2007 Andreas Öman
+ *  Copyright (C) 2007-2010 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,14 +28,9 @@
 #include <math.h>
 
 #include "showtime.h"
-#include "media.h"
+#include "glw_video_common.h"
 #include "glw_video_opengl.h"
-//#include "subtitles.h"
 #include "video/yadif.h"
-#include "video/video_playback.h"
-#if ENABLE_DVD
-#include "video/video_dvdspu.h"
-#endif
 
 static const char *yuv2rbg_code =
 #include "cg/yuv2rgb.h"
@@ -175,7 +170,7 @@ glp_check_error(const char *name)
  *
  */
 void
-glw_video_global_init(glw_root_t *gr, int rectmode)
+glw_video_opengl_init(glw_root_t *gr, int rectmode)
 {
   glw_backend_root_t *gbr = &gr->gr_be;
   const char *c;
@@ -218,7 +213,7 @@ glw_video_global_init(glw_root_t *gr, int rectmode)
  *
  */
 void
-glw_video_global_flush(glw_root_t *gr)
+glw_video_opengl_flush(glw_root_t *gr)
 {
   glw_video_t *gv;
   video_decoder_t *vd;
@@ -406,15 +401,6 @@ gv_enqueue_for_decode(video_decoder_t *vd, video_decoder_frame_t *vdf,
 }
 
 
-static void
-gv_enqueue_for_display(video_decoder_t *vd, video_decoder_frame_t *vdf,
-		       struct video_decoder_frame_queue *fromqueue)
-{
-  TAILQ_REMOVE(fromqueue, vdf, vdf_link);
-  TAILQ_INSERT_TAIL(&vd->vd_displaying_queue, vdf, vdf_link);
-}
-
-
 static float cmatrix_color[9] = {
   1.1643,  0,        1.5958,
   1.1643, -0.39173, -0.81290,
@@ -442,96 +428,6 @@ gv_color_matrix_update(glw_video_t *gv, media_pipe_t *mp)
 
 }
 
-
-
-
-
-static int
-compute_output_duration(video_decoder_t *vd, int frame_duration)
-{
-  int delta;
-  const int maxdiff = 5000;
-
-  if(vd->vd_avdiff_x > 0) {
-    delta = pow(vd->vd_avdiff_x * 1000.0f, 2);
-    if(delta > maxdiff)
-      delta = maxdiff;
-
-  } else if(vd->vd_avdiff_x < 0) {
-    delta = -pow(-vd->vd_avdiff_x * 1000.0f, 2);
-    if(delta < -maxdiff)
-      delta = -maxdiff;
-  } else {
-    delta = 0;
-  }
-  return frame_duration + delta;
-}
-
-static void
-compute_avdiff(video_decoder_t *vd, media_pipe_t *mp, int64_t pts, int epoch)
-{
-  int64_t rt;
-  int64_t aclock;
-
-  if(mp->mp_audio_clock_epoch != epoch) {
-    /* Not the same clock epoch, can not sync */
-    vd->vd_avdiff_x = 0;
-    kalman_init(&vd->vd_avfilter);
-    return;
-  }
-
-  if(vd->vd_compensate_thres > 0) {
-    vd->vd_compensate_thres--;
-    vd->vd_avdiff_x = 0;
-    kalman_init(&vd->vd_avfilter);
-    return;
-  }
-  
-
-  hts_mutex_lock(&mp->mp_clock_mutex);
-
-  rt = showtime_get_ts();
-
-  aclock = mp->mp_audio_clock + rt - mp->mp_audio_clock_realtime;
-
-  hts_mutex_unlock(&mp->mp_clock_mutex);
-
-  aclock += mp->mp_avdelta;
-
-  vd->vd_avdiff = aclock - (pts - 16666) - vd->vd_avd_delta;
-
-  if(abs(vd->vd_avdiff) < 10000000) {
-
-    vd->vd_avdiff_x = kalman(&vd->vd_avfilter, (float)vd->vd_avdiff / 1000000);
-    if(vd->vd_avdiff_x > 10.0f)
-      vd->vd_avdiff_x = 10.0f;
-    
-    if(vd->vd_avdiff_x < -10.0f)
-      vd->vd_avdiff_x = -10.0f;
-  }
-
-  if(mp->mp_stats) {
-    if(!vd->vd_may_update_avdiff) {
-      prop_set_float(mp->mp_prop_avdiff, vd->vd_avdiff_x);
-      vd->vd_may_update_avdiff = 5;
-    } else {
-      vd->vd_may_update_avdiff--;
-    }
-  }
-
-#if 0
- {
-   static int64_t lastpts, lastaclock;
-   
-  printf("%s: AVDIFF = %10f %10d %15lld %15lld %15lld %15lld %15lld\n", 
-	 mp->mp_name, vd->vd_avdiff_x, vd->vd_avdiff,
-	 aclock, aclock - lastaclock, pts, pts - lastpts,
-	 mp->mp_audio_clock);
-  lastpts = pts;
-  lastaclock = aclock;
- }
-#endif
-}
 
 
 static int64_t
@@ -807,7 +703,7 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv, const glw_root_t *gr)
   int epoch = 0;
 
   gv_color_matrix_update(gv, mp);
-  output_duration = compute_output_duration(vd, frame_duration);
+  output_duration = glw_video_compute_output_duration(vd, frame_duration);
 
 
   dq = &vd->vd_display_queue;
@@ -844,15 +740,15 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv, const glw_root_t *gr)
 
     if(!vd->vd_hold || frb != NULL) {
       if(fra != NULL && fra->vdf_duration == 0)
-	gv_enqueue_for_display(vd, fra, dq);
+	glw_video_enqueue_for_display(vd, fra, dq);
     }
     if(frb != NULL && frb->vdf_duration == 0)
-      gv_enqueue_for_display(vd, frb, dq);
+      glw_video_enqueue_for_display(vd, frb, dq);
   }
 
   if(pts != AV_NOPTS_VALUE) {
     pts -= frame_duration * 2;
-    compute_avdiff(vd, mp, pts, epoch);
+    glw_video_compute_avdiff(vd, mp, pts, epoch);
 
 #if ENABLE_DVD
     if(vd->vd_dvdspu != NULL)
@@ -1231,133 +1127,6 @@ gv_purge_queues(video_decoder_t *vd)
 /**
  *
  */
-static int
-gl_video_widget_event(glw_video_t *gv, event_t *e)
-{
-  if(event_is_action(e, ACTION_PLAYPAUSE) ||
-     event_is_action(e, ACTION_PLAY) ||
-     event_is_action(e, ACTION_PAUSE) ||
-     event_is_action(e, ACTION_ENTER)) {
-    mp_enqueue_event(gv->gv_mp, e);
-    return 1;
-  }
-
-  if(event_is_action(e, ACTION_UP) ||
-     event_is_action(e, ACTION_DOWN) ||
-     event_is_action(e, ACTION_LEFT) ||
-     event_is_action(e, ACTION_RIGHT)) {
-    
-    if(gv->gv_in_menu) {
-      mp_enqueue_event(gv->gv_mp, e);
-      return 1;
-    }
-  }
-
-  return 0;
-}
-
-
-
-#if ENABLE_DVD
-/**
- *
- */
-static int
-pointer_event(glw_video_t *gv, glw_pointer_event_t *gpe)
-{
-  dvdspu_decoder_t *dd = gv->gv_vd->vd_dvdspu;
-  pci_t *pci;
-  int x, y;
-  int32_t button, best, dist, d, mx, my, dx, dy;
-  event_t *e;
-
-  if(dd == NULL)
-    return 0;
-
-  pci = &dd->dd_pci;
-
-  if(!pci->hli.hl_gi.hli_ss)
-    return 1;
-  
-  x = (0.5 +  0.5 * gpe->x) * (float)gv->gv_width;
-  y = (0.5 + -0.5 * gpe->y) * (float)gv->gv_height;
-
-  best = 0;
-  dist = 0x08000000; /* >> than  (720*720)+(567*567); */
-  
-  /* Loop through all buttons */
-  for(button = 1; button <= pci->hli.hl_gi.btn_ns; button++) {
-    btni_t *button_ptr = &(pci->hli.btnit[button-1]);
-
-    if((x >= button_ptr->x_start) && (x <= button_ptr->x_end) &&
-       (y >= button_ptr->y_start) && (y <= button_ptr->y_end)) {
-      mx = (button_ptr->x_start + button_ptr->x_end)/2;
-      my = (button_ptr->y_start + button_ptr->y_end)/2;
-      dx = mx - x;
-      dy = my - y;
-      d = (dx*dx) + (dy*dy);
-      /* If the mouse is within the button and the mouse is closer
-       * to the center of this button then it is the best choice. */
-      if(d < dist) {
-        dist = d;
-        best = button;
-      }
-    }
-  }
-
-  if(best == 0)
-    return 1;
-
-  switch(gpe->type) {
-  case GLW_POINTER_CLICK:
-    e = event_create(EVENT_DVD_ACTIVATE_BUTTON, sizeof(event_t) + 1);
-    break;
-
-  case GLW_POINTER_MOTION_UPDATE:
-    if(dd->dd_curbut == best)
-      return 1;
-
-    e = event_create(EVENT_DVD_SELECT_BUTTON, sizeof(event_t) + 1);
-    break;
-
-  default:
-    return 1;
-  }
-
-  e->e_payload[0] = best;
-  mp_enqueue_event(gv->gv_mp, e);
-  event_unref(e);
-  return 1;
-}
-#endif
-
-/**
- *
- */
-static void
-gv_update_focusable(video_decoder_t *vd, glw_video_t *gv)
-{
-  int want_focus = 0;
-#if ENABLE_DVD
-  dvdspu_decoder_t *dd = gv->gv_vd->vd_dvdspu;
-
-  if(dd != NULL) {
-    pci_t *pci = &dd->dd_pci;
-
-    if(pci->hli.hl_gi.hli_ss)
-      want_focus = 1;
-  }
-#endif
-  
-  glw_set_i(&gv->w, 
-	    GLW_ATTRIB_FOCUS_WEIGHT, want_focus ? 1.0 : 0.0, 
-	    NULL);
-}
-
-
-/**
- *
- */
 static int 
 glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, 
 			  void *extra)
@@ -1385,11 +1154,11 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_NEW_FRAME:
     gv_buffer_allocator(vd);
     gv_new_frame(vd, gv, gr);
-    gv_update_focusable(vd, gv);
+    glw_video_update_focusable(vd, w);
     return 0;
 
   case GLW_SIGNAL_EVENT:
-    return gl_video_widget_event(gv, extra);
+    return glw_video_widget_event(extra, gv->gv_mp, gv->gv_in_menu);
 
   case GLW_SIGNAL_DESTROY:
     video_playback_destroy(gv->gv_vp);
@@ -1400,7 +1169,8 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
 #if ENABLE_DVD
   case GLW_SIGNAL_POINTER_EVENT:
-    return pointer_event(gv, extra);
+    return glw_video_pointer_event(vd->vd_dvdspu, gv->gv_width, gv->gv_height,
+				   extra, gv->gv_mp);
 #endif
 
   default:

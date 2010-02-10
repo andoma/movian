@@ -256,6 +256,7 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_displacement.c \
 			src/ui/glw/glw_coverflow.c \
 			src/ui/glw/glw_mirror.c \
+			src/ui/glw/glw_video_common.c \
 
 SRCS-$(CONFIG_GLW_FRONTEND_X11)	  += src/ui/glw/glw_x11.c \
 				     src/ui/linux/screensaver_inhibitor.c

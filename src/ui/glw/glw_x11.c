@@ -407,7 +407,7 @@ window_close(glw_x11_t *gx11)
 static void
 window_shutdown(glw_x11_t *gx11)
 {
-  glw_video_global_flush(&gx11->gr);
+  glw_video_opengl_flush(&gx11->gr);
 
   glFlush();
   XSync(gx11->display, False);

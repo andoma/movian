@@ -16,16 +16,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef GLW_VIDEO_H
-#define GLW_VIDEO_H
+#ifndef GLW_VIDEO_OPENGL_H
+#define GLW_VIDEO_OPENGL_H
 
 #include "glw.h"
 
-void glw_video_global_init(glw_root_t *gr, int rectmode);
+void glw_video_opengl_init(glw_root_t *gr, int rectmode);
 
-void glw_video_global_flush(glw_root_t *gr);
-
-void glw_video_ctor(glw_t *w, int init, va_list ap);
+void glw_video_opengl_flush(glw_root_t *gr);
 
 #endif /* GLW_VIDEO_H */
 

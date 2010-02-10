@@ -87,7 +87,7 @@ glw_opengl_init_context(glw_root_t *gr)
   }
 
   glEnable(gr->gr_be.gbr_primary_texture_mode);
-  glw_video_global_init(gr, rectmode);
+  glw_video_opengl_init(gr, rectmode);
 
   return 0;
 }
