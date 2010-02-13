@@ -84,7 +84,11 @@ get_system_concurrency(void)
 #include <string.h>
 #include <locale.h>
 #include "arch.h"
+#ifdef XBMC_PLUGIN
+#include "xbmc-plugin.h"
+#else
 #include "showtime.h"
+#endif
 
 extern int concurrency;
 
