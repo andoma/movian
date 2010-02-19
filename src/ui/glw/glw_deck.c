@@ -186,6 +186,7 @@ glw_deck_set(glw_t *w, int init, va_list ap)
 static glw_class_t glw_deck = {
   .gc_name = "deck",
   .gc_instance_size = sizeof(glw_deck_t),
+  .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_nav_descend_mode = GLW_NAV_DESCEND_SELECTED,
   .gc_render = glw_deck_render,
   .gc_set = glw_deck_set,

@@ -239,7 +239,7 @@ glw_coverflow_gpe_iterator(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
 static glw_class_t glw_coverflow = {
   .gc_name = "coverflow",
   .gc_instance_size = sizeof(glw_coverflow_t),
-  .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY,
+  .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS,
   .gc_child_orientation = GLW_ORIENTATION_HORIZONTAL,
   .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING,

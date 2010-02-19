@@ -37,6 +37,9 @@ event_bubble(glw_t *w, event_t *e)
 }
 
 
+/**
+ *
+ */
 typedef struct glw_event_navOpen {
   glw_event_map_t map;
 
@@ -45,7 +48,6 @@ typedef struct glw_event_navOpen {
   char *parent;
 
 } glw_event_navOpen_t;
-
 
 
 /**
@@ -100,6 +102,60 @@ glw_event_map_navOpen_create(const char *url,
   return &no->map;
 }
 
+
+/**
+ *
+ */
+typedef struct glw_event_selectTrack {
+  glw_event_map_t map;
+  char *id;
+} glw_event_selectTrack_t;
+
+
+/**
+ *
+ */
+static void
+glw_event_map_selectTrack_dtor(glw_event_map_t *gem)
+{
+  glw_event_selectTrack_t *g = (glw_event_selectTrack_t *)gem;
+
+  free(g->id);
+  free(g);
+}
+
+/**
+ *
+ */
+static void
+glw_event_map_selectTrack_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
+{
+  glw_event_selectTrack_t *st = (glw_event_selectTrack_t *)gem;
+
+  if(st->id == NULL)
+    return; // Must have an ID to fire
+
+  event_t *e = event_create_select_track(st->id);
+  
+  e->e_mapped = 1;
+  event_bubble(w, e);
+}
+
+
+/**
+ *
+ */
+glw_event_map_t *
+glw_event_map_selectTrack_create(const char *id)
+{
+  glw_event_selectTrack_t *st = malloc(sizeof(glw_event_selectTrack_t));
+  
+  st->id = id ? strdup(id) : NULL;
+
+  st->map.gem_dtor = glw_event_map_selectTrack_dtor;
+  st->map.gem_fire = glw_event_map_selectTrack_fire;
+  return &st->map;
+}
 
 
 

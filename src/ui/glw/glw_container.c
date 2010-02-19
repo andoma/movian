@@ -474,6 +474,7 @@ glw_container_set(glw_t *w, int init, va_list ap)
 static glw_class_t glw_container_x = {
   .gc_name = "container_x",
   .gc_instance_size = sizeof(glw_container_t),
+  .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_set = glw_container_set,
   .gc_render = glw_container_render,
   .gc_signal_handler = glw_container_x_callback,
@@ -484,6 +485,7 @@ static glw_class_t glw_container_x = {
 static glw_class_t glw_container_y = {
   .gc_name = "container_y",
   .gc_instance_size = sizeof(glw_container_t),
+  .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_set = glw_container_set,
   .gc_render = glw_container_render,
   .gc_signal_handler = glw_container_y_callback,
@@ -493,6 +495,7 @@ static glw_class_t glw_container_y = {
 
 static glw_class_t glw_container_z = {
   .gc_name = "container_z",
+  .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_instance_size = sizeof(glw_container_t),
   .gc_set = glw_container_set,
   .gc_render = glw_container_render,

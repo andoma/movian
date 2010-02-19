@@ -302,6 +302,8 @@ typedef struct glw_class {
   int gc_flags;
 #define GLW_NAVIGATION_SEARCH_BOUNDARY 0x1
 #define GLW_EVERY_FRAME                0x2
+#define GLW_CAN_HIDE_CHILDS            0x4
+
   /**
    * If the widget arranges its childer in horizontal or vertical order
    * it should be defined here

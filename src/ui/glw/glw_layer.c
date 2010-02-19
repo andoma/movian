@@ -134,6 +134,7 @@ glw_layer_render(glw_t *w, glw_rctx_t *rc)
  */
 static glw_class_t glw_layer = {
   .gc_name = "layer",
+  .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_instance_size = sizeof(glw_t),
   .gc_render = glw_layer_render,
   .gc_signal_handler = glw_layer_callback,

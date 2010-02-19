@@ -69,6 +69,8 @@ typedef struct glw_prop_sub {
 
   prop_t *gps_originating_prop;
 
+  glw_t *gps_anchor;
+
 } glw_prop_sub_t;
 
 
@@ -806,7 +808,7 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
 
   body = glw_view_clone_chain(gps->gps_cloner_body);
 
-  b = before ? cloner_find_child(before, parent) : NULL;
+  b = before ? cloner_find_child(before, parent) : gps->gps_anchor;
 
   memset(&n, 0, sizeof(n));
   n.prop0 = p;
@@ -1116,7 +1118,7 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self)
   if(w == NULL) 
     return glw_view_seterr(ec->ei, self, 
 			    "Properties can not be mapped in this scope");
-
+  
   for(t = self; t != NULL && i < 15; t = t->child)
     propname[i++]  = rstr_get(t->t_rstring);
 
@@ -1432,10 +1434,10 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
   glw_prop_sub_t *gps;
   glw_prop_sub_pending_t *gpsp;
   int f;
-  glw_t *w, *n;
   const glw_class_t *cl;
+  glw_t *parent = ec->w, *w;
 
-  if(ec->w == NULL) 
+  if(parent == NULL) 
     return glw_view_seterr(ec->ei, self, 
 			    "Cloner can not be created in this scope");
 
@@ -1455,16 +1457,36 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
 			    "cloner: Invalid third argument, "
 			    "expected block");
 
-  /* Destroy any previous cloned entries */
-  for(w = TAILQ_FIRST(&ec->w->glw_childs); w != NULL; w = n) {
-    n = TAILQ_NEXT(w, glw_parent_link);
-
-    if(w->glw_originating_prop != NULL)
-      glw_detach0(w);
+  if(!(parent->glw_class->gc_flags & GLW_CAN_HIDE_CHILDS)) {
+    fprintf(stderr, "Parent %s can not hide childs, cannot clone\n",
+	    parent->glw_class->gc_name);
+    abort();
   }
+
+
+  if(self->t_extra == NULL) {
+    static const glw_class_t *dummy;
+
+    if(dummy == NULL)
+      dummy = glw_class_find_by_name("dummy");
+    
+    self->t_extra = glw_create_i(ec->gr, 
+				 dummy,
+				 GLW_ATTRIB_PARENT, parent,
+				 GLW_ATTRIB_SET_FLAGS, GLW_HIDDEN,
+				 NULL);
+  }
+
+
+  /* Destroy any previous cloned entries */
+  while((w = TAILQ_PREV((glw_t *)self->t_extra, 
+			glw_queue, glw_parent_link)) != NULL &&
+	w->glw_originating_prop != NULL)
+    glw_detach0(w);
 
   if(a->type == TOKEN_DIRECTORY) {
     gps = a->propsubr;
+    gps->gps_anchor = self->t_extra;
 
     if(gps->gps_cloner_body != NULL)
       glw_view_free_chain(gps->gps_cloner_body);
@@ -1478,7 +1500,7 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
 
       f = gpsp->gpsp_prop == gps->gps_pending_select ? PROP_ADD_SELECTED : 0;
 	
-      cloner_add_child0(gps, gpsp->gpsp_prop, NULL, ec->w, ec->ei, f);
+      cloner_add_child0(gps, gpsp->gpsp_prop, NULL, parent, ec->ei, f);
       prop_ref_dec(gpsp->gpsp_prop);
       free(gpsp);
     }
@@ -1726,6 +1748,26 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
 					  b && b->type == TOKEN_STRING ?
 					  rstr_get(b->t_rstring) : NULL,
 					  parent);
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int 
+glwf_selectTrack(glw_view_eval_context_t *ec, struct token *self,
+		 token_t **argv, unsigned int argc)
+{
+  token_t *a = argv[0];       /* ID */
+  token_t *r;
+
+  a = token_resolve(ec, a);
+  r = eval_alloc(self, ec, TOKEN_EVENT);
+  r->t_gem = glw_event_map_selectTrack_create(a && a->type == TOKEN_STRING ?
+					      rstr_get(a->t_rstring) : NULL);
+
   eval_push(ec, r);
   return 0;
 }
@@ -2906,6 +2948,7 @@ static const token_func_t funcvec[] = {
   {"space", 1, glwf_space},
   {"onEvent", 2, glwf_onEvent},
   {"navOpen", -1, glwf_navOpen},
+  {"selectTrack", 1, glwf_selectTrack},
   {"targetedEvent", 2, glwf_targetedEvent},
   {"fireEvent", 1, glwf_fireEvent},
   {"event", 1, glwf_event},
