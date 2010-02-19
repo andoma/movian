@@ -30,6 +30,8 @@
 
 //static char *make_nice_title(const char *t);
 
+static const char *dvd_langcode_to_string(uint16_t langcode);
+
 
 #define PACK_START_CODE             ((unsigned int)0x000001ba)
 #define SYSTEM_HEADER_START_CODE    ((unsigned int)0x000001bb)
@@ -137,6 +139,9 @@ typedef struct dvd_player {
 
   int dp_hold;
   int dp_lost_focus;
+
+  prop_t *dp_audio_props[8];
+  prop_t *dp_spu_props[32];
 
 } dvd_player_t;
 
@@ -456,6 +461,165 @@ dvd_block(dvd_player_t *dp, uint8_t *buf, int len)
 /**
  *
  */
+static void
+dvd_init_streams(media_pipe_t *mp)
+{
+  prop_t *p;
+
+  p = prop_create(mp->mp_prop_audio_tracks, NULL);
+  prop_set_string(prop_create(p, "title"), "Off");
+  prop_set_string(prop_create(p, "id"), "audio:off");
+
+  p = prop_create(mp->mp_prop_audio_tracks, NULL);
+  prop_set_string(prop_create(p, "title"), "Auto");
+  prop_set_string(prop_create(p, "id"), "audio:auto");
+
+
+
+  p = prop_create(mp->mp_prop_subtitle_tracks, NULL);
+  prop_set_string(prop_create(p, "title"), "Off");
+  prop_set_string(prop_create(p, "id"), "spu:off");
+
+  p = prop_create(mp->mp_prop_subtitle_tracks, NULL);
+  prop_set_string(prop_create(p, "title"), "Auto");
+  prop_set_string(prop_create(p, "id"), "spu:auto");
+
+}
+
+
+
+/**
+ *
+ */
+static void 
+dvd_set_audio_stream(dvd_player_t *dp, const char *id)
+{
+  if(!strcmp(id, "off")) {
+    dp->dp_audio_track = DP_AUDIO_DISABLE;
+  } else if(!strcmp(id, "auto")) {
+    dp->dp_audio_track = DP_AUDIO_FOLLOW_VM;
+  } else {
+    int idx = atoi(id);
+    dp->dp_audio_track = idx;
+  }
+
+  prop_set_stringf(dp->dp_mp->mp_prop_audio_track_current,  "audio:%s", id);
+}
+
+
+/**
+ *
+ */
+static void 
+dvd_set_spu_stream(dvd_player_t *dp, const char *id)
+{
+  if(!strcmp(id, "off")) {
+    dp->dp_spu_track = DP_SPU_DISABLE;
+  } else if(!strcmp(id, "auto")) {
+    dp->dp_spu_track = DP_SPU_FOLLOW_VM;
+  } else {
+    int idx = atoi(id);
+    dp->dp_spu_track = idx;
+  }
+  prop_set_stringf(dp->dp_mp->mp_prop_subtitle_track_current,  "spu:%s", id);
+}
+
+
+/**
+ *
+ */
+static void
+dvd_update_streams(dvd_player_t *dp)
+{
+  int i;
+  uint16_t lang;
+  prop_t *before = NULL, *p;
+
+  for(i = 7; i >= 0; i--) {
+
+    if(dvdnav_get_audio_logical_stream(dp->dp_dvdnav, i) == -1 ||
+       (lang = dvdnav_audio_stream_to_lang(dp->dp_dvdnav, i)) == 0xffff) {
+
+      /* Not present */
+
+      if(dp->dp_audio_props[i] != NULL) {
+	prop_destroy(dp->dp_audio_props[i]);
+	dp->dp_audio_props[i] = NULL;
+      }
+
+    } else {
+      
+      if((p = dp->dp_audio_props[i]) == NULL) {
+	p = dp->dp_audio_props[i] = prop_create(NULL, NULL);
+	if(prop_set_parent_ex(p, dp->dp_mp->mp_prop_audio_tracks, before, NULL))
+	  abort();
+      }
+
+      prop_set_string(prop_create(p, "title"), dvd_langcode_to_string(lang));
+      prop_set_stringf(prop_create(p, "id"), "audio:%d", i);
+
+
+      int channels = dvdnav_audio_stream_channels(dp->dp_dvdnav, i);
+      prop_set_int(prop_create(p, "channels"), channels);
+
+      const char *chtxt;
+      switch(channels) {
+      case 1:  chtxt = "mono";   break;
+      case 2:  chtxt = "stereo"; break;
+      case 6:  chtxt = "5.1";    break;
+      default: chtxt = "???";    break;
+      }
+      
+      prop_set_string(prop_create(p, "channelstext"), chtxt);
+
+      const char *format;
+      switch(dvdnav_audio_stream_format(dp->dp_dvdnav, i)) {
+      case DVDNAV_FORMAT_AC3:       format = "ac3";  break;
+      case DVDNAV_FORMAT_MPEGAUDIO: format = "mpeg"; break;
+      case DVDNAV_FORMAT_LPCM:      format = "pcm";  break;
+      case DVDNAV_FORMAT_DTS:       format = "dts";  break;
+      case DVDNAV_FORMAT_SDDS:      format = "sdds"; break;
+      default:                      format = "???";  break;
+      }
+
+      prop_set_string(prop_create(p, "type"), format);
+
+      before = p;
+    }
+  }
+
+  before = NULL;
+  for(i = 31; i >= 0; i--) {
+
+    if(dvdnav_get_spu_logical_stream(dp->dp_dvdnav, i) == -1 ||
+       (lang = dvdnav_spu_stream_to_lang(dp->dp_dvdnav, i)) == 0xffff) {
+
+      /* Not present */
+
+      if(dp->dp_spu_props[i] != NULL) {
+	prop_destroy(dp->dp_spu_props[i]);
+	dp->dp_spu_props[i] = NULL;
+      }
+
+    } else {
+      
+      if((p = dp->dp_spu_props[i]) == NULL) {
+	p = dp->dp_spu_props[i] = prop_create(NULL, NULL);
+	if(prop_set_parent_ex(p, dp->dp_mp->mp_prop_subtitle_tracks,
+			      before, NULL))
+	  abort();
+      }
+
+      prop_set_string(prop_create(p, "title"), dvd_langcode_to_string(lang));
+      prop_set_stringf(prop_create(p, "id"), "spu:%d", i);
+      before = p;
+    }
+  }
+}
+
+/**
+ *
+ */
 event_t *
 dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
 	 int vfs)
@@ -493,8 +657,8 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
   /**
    * By default, follow DVD VM machine
    */
-  dp->dp_audio_track = DP_AUDIO_FOLLOW_VM;
-  dp->dp_spu_track   = DP_SPU_FOLLOW_VM;
+  dvd_set_audio_stream(dp, "auto");
+  dvd_set_spu_stream(dp, "auto");
 
   mp_become_primary(mp);
 
@@ -503,6 +667,8 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
 
   prop_set_int(mp->mp_prop_canSkipForward,  1);
   prop_set_int(mp->mp_prop_canSkipBackward, 1);
+
+  dvd_init_streams(mp);
 
   /**
    * DVD main loop
@@ -541,10 +707,11 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
       dvd_video_push(dp);
       dvd_release_codecs(dp);
       mp_send_cmd(mp, &mp->mp_video, MB_FLUSH);
-      dp->dp_spu_track   = DP_SPU_FOLLOW_VM;
-      dp->dp_audio_track = DP_AUDIO_FOLLOW_VM;
+      dvd_set_audio_stream(dp, "auto");
+      dvd_set_spu_stream(dp, "auto");
       dp->dp_aspect_override = dvdnav_get_video_aspect(dp->dp_dvdnav) ? 2 : 1;
       dp->dp_epoch++;
+      dvd_update_streams(dp);
       break;
 
     case DVDNAV_NAV_PACKET:
@@ -627,7 +794,16 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
      event_is_type(e, EVENT_PLAY_URL))
     return e;
 
-  if(!dvd_in_menu(dp) && 
+  if(event_is_type(e, EVENT_SELECT_TRACK)) {
+    event_select_track_t *est = (event_select_track_t *)e;
+    
+    if(!strncmp(est->id, "audio:", strlen("audio:")))
+      dvd_set_audio_stream(dp, est->id + strlen("audio:"));
+    else if(!strncmp(est->id, "spu:", strlen("spu:")))
+      dvd_set_spu_stream(dp, est->id + strlen("spu:"));
+
+
+  } else if(!dvd_in_menu(dp) && 
      (event_is_action(e, ACTION_PLAYPAUSE) ||
       event_is_action(e, ACTION_PLAY) ||
       event_is_action(e, ACTION_PAUSE))) {
@@ -743,3 +919,173 @@ make_nice_title(const char *t)
   return ret;
 }
 #endif
+
+
+/**
+ * DVD language codes
+ */
+const struct {
+  const char *langcode;
+  const char *displayname;
+} langtbl[] = {
+  {"AB", "Abkhazian"},
+  {"LT", "Lithuanian"},
+  {"AA", "Afar"},
+  {"MK", "Macedonian"},
+  {"AF", "Afrikaans"},
+  {"MG", "Malagasy"},
+  {"SQ", "Albanian"},
+  {"MS", "Malay"},
+  {"AM", "Amharic"},
+  {"ML", "Malayalam"},
+  {"AR", "Arabic"},
+  {"MT", "Maltese"},
+  {"HY", "Armenian"},
+  {"MI", "Maori"},
+  {"AS", "Assamese"},
+  {"MR", "Marathi"},
+  {"AY", "Aymara"},
+  {"MO", "Moldavian"},
+  {"AZ", "Azerbaijani"},
+  {"MN", "Mongolian"},
+  {"BA", "Bashkir"},
+  {"NA", "Nauru"},
+  {"EU", "Basque"},
+  {"NE", "Nepali"},
+  {"BN", "Bengali"},
+  {"NO", "Norwegian"},
+  {"DZ", "Bhutani"},
+  {"OC", "Occitan"},
+  {"BH", "Bihari"},
+  {"OR", "Oriya"},
+  {"BI", "Bislama"},
+  {"OM", "Afan"},
+  {"BR", "Breton"},
+  {"PA", "Panjabi"},
+  {"BG", "Bulgarian"},
+  {"PS", "Pashto"},
+  {"MY", "Burmese"},
+  {"FA", "Persian"},
+  {"BE", "Byelorussian"},
+  {"PL", "Polish"},
+  {"KM", "Cambodian"},
+  {"PT", "Portuguese"},
+  {"CA", "Catalan"},
+  {"QU", "Quechua"},
+  {"ZH", "Chinese"},
+  {"RM", "Rhaeto-Romance"},
+  {"CO", "Corsican"},
+  {"RO", "Romanian"},
+  {"HR", "Croatian"},
+  {"RU", "Russian"},
+  {"CS", "Czech"},
+  {"SM", "Samoan"},
+  {"DA", "Danish"},
+  {"SG", "Sangho"},
+  {"NL", "Dutch"},
+  {"SA", "Sanskrit"},
+  {"EN", "English"},
+  {"GD", "Gaelic"},
+  {"EO", "Esperanto"},
+  {"SH", "Serbo-Crotain"},
+  {"ET", "Estonian"},
+  {"ST", "Sesotho"},
+  {"FO", "Faroese"},
+  {"SR", "Serbian"},
+  {"FJ", "Fiji"},
+  {"TN", "Setswana"},
+  {"FI", "Finnish"},
+  {"SN", "Shona"},
+  {"FR", "French"},
+  {"SD", "Sindhi"},
+  {"FY", "Frisian"},
+  {"SI", "Singhalese"},
+  {"GL", "Galician"},
+  {"SS", "Siswati"},
+  {"KA", "Georgian"},
+  {"SK", "Slovak"},
+  {"DE", "German"},
+  {"SL", "Slovenian"},
+  {"EL", "Greek"},
+  {"SO", "Somali"},
+  {"KL", "Greenlandic"},
+  {"ES", "Spanish"},
+  {"GN", "Guarani"},
+  {"SU", "Sundanese"},
+  {"GU", "Gujarati"},
+  {"SW", "Swahili"},
+  {"HA", "Hausa"},
+  {"SV", "Swedish"},
+  {"IW", "Hebrew"},
+  {"TL", "Tagalog"},
+  {"HI", "Hindi"},
+  {"TG", "Tajik"},
+  {"HU", "Hungarian"},
+  {"TT", "Tatar"},
+  {"IS", "Icelandic"},
+  {"TA", "Tamil"},
+  {"IN", "Indonesian"},
+  {"TE", "Telugu"},
+  {"IA", "Interlingua"},
+  {"TH", "Thai"},
+  {"IE", "Interlingue"},
+  {"BO", "Tibetian"},
+  {"IK", "Inupiak"},
+  {"TI", "Tigrinya"},
+  {"GA", "Irish"},
+  {"TO", "Tonga"},
+  {"IT", "Italian"},
+  {"TS", "Tsonga"},
+  {"JA", "Japanese"},
+  {"TR", "Turkish"},
+  {"JW", "Javanese"},
+  {"TK", "Turkmen"},
+  {"KN", "Kannada"},
+  {"TW", "Twi"},
+  {"KS", "Kashmiri"},
+  {"UK", "Ukranian"},
+  {"KK", "Kazakh"},
+  {"UR", "Urdu"},
+  {"RW", "Kinyarwanda"},
+  {"UZ", "Uzbek"},
+  {"KY", "Kirghiz"},
+  {"VI", "Vietnamese"},
+  {"RN", "Kirundi"},
+  {"VO", "Volapuk"},
+  {"KO", "Korean"},
+  {"CY", "Welsh"},
+  {"KU", "Kurdish"},
+  {"WO", "Wolof"},
+  {"LO", "Laothian"},
+  {"JI", "Yiddish"},
+  {"LA", "Latin"},
+  {"YO", "Yoruba"},
+  {"LV", "Lettish"},
+  {"XH", "Xhosa"},
+  {"LN", "Lingala"},
+  {"ZU", "Zulu"},
+  {NULL, NULL}
+};
+
+/**
+ *
+ */
+static const char *
+dvd_langcode_to_string(uint16_t langcode)
+{
+  char str[3];
+  int i;
+
+  str[0] = langcode >> 8;
+  str[1] = langcode & 0xff;
+  str[2] = 0;
+
+  i = 0;
+  
+  while(langtbl[i].langcode != NULL) {
+    if(!strcasecmp(langtbl[i].langcode, str))
+      return langtbl[i].displayname;
+    i++;
+  }
+  return "Other";
+}
