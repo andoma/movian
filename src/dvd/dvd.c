@@ -634,7 +634,7 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
   pci_t *pci;
   event_t *e = NULL;
 
-  TRACE(TRACE_DEBUG, "DVD", "Staring playback of %s", url);
+  TRACE(TRACE_DEBUG, "DVD", "Starting playback of %s", url);
 
  restart:
   dp = calloc(1, sizeof(dvd_player_t));
