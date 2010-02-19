@@ -423,6 +423,8 @@ void prop_unselect_ex(prop_t *parent, prop_sub_t *skipme);
 
 #define prop_unselect(parent) prop_unselect_ex(parent, NULL)
 
+void prop_destroy_childs(prop_t *parent);
+
 prop_t **prop_get_ancestors(prop_t *p);
 
 void prop_ancestors_unref(prop_t **r);

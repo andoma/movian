@@ -1213,6 +1213,22 @@ prop_destroy(prop_t *p)
  *
  */
 void
+prop_destroy_childs(prop_t *parent)
+{
+  hts_mutex_lock(&prop_mutex);
+  if(parent->hp_type == PROP_DIR) {
+    prop_t *c;
+    while((c = TAILQ_FIRST(&parent->hp_childs)) != NULL)
+      prop_destroy0(c);
+  }
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
+ *
+ */
+void
 prop_move(prop_t *p, prop_t *before)
 {
   prop_t *parent;
