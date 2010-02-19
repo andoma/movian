@@ -169,7 +169,7 @@ widget(container_x, {
 	    .caption = "Audio tracks:";
 	  });
 
-	  cloner($global.media.current.audio.tracks, backdrop, {
+	  cloner($global.media.current.metadata.audiostreams, backdrop, {
 	    BUTTON_PROPS(0.1);
 	    onEvent(enter, selectTrack($self.id));
 
@@ -186,7 +186,7 @@ widget(container_x, {
 	      });
 	      widget(label, {
 		.align = right;
-		.caption = $self.type;
+		.caption = $self.format;
 	      });
 	    });
 	  });
@@ -200,7 +200,7 @@ widget(container_x, {
 	    .caption = "Subtitles:";
 	  });
 
-	  cloner($global.media.current.subtitle.tracks, backdrop, {
+	  cloner($global.media.current.metadata.subtitlestreams, backdrop, {
 	    BUTTON_PROPS(0.1);
 	    onEvent(enter, selectTrack($self.id));
 
@@ -216,7 +216,7 @@ widget(container_x, {
 	      });
 	      widget(label, {
 		.align = right;
-		.caption = $self.type;
+		.caption = $self.format;
 	      });
 	    });
 	  });

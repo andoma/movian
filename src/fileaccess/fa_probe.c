@@ -142,6 +142,23 @@ metadata_destroy(metadata_t *md)
   free(md);
 }
 
+static const char *
+codecname(AVCodec *codec)
+{
+  switch(codec->id) {
+  case CODEC_ID_AC3:
+    return "AC3";
+  case CODEC_ID_EAC3:
+    return "EAC3";
+  case CODEC_ID_DTS:
+    return "DTS";
+  default:
+    return codec->name;
+  }
+}
+
+
+
 
 /**
  *
@@ -151,10 +168,17 @@ metadata_stream_make_prop(metadata_stream_t *ms, prop_t *parent)
 {
   prop_t *p = prop_create(parent, NULL);
 
-  prop_set_int(prop_create(p, "index"), ms->ms_streamindex);
-  prop_set_rstring(prop_create(p, "description"), ms->ms_info);
+  prop_set_int(prop_create(p, "id"), ms->ms_streamindex);
+
+  if(ms->ms_codec != NULL)
+    prop_set_string(prop_create(p, "format"), codecname(ms->ms_codec));
+
+  prop_set_rstring(prop_create(p, "longformat"), ms->ms_info);
+
   if(ms->ms_language)
-    prop_set_rstring(prop_create(p, "language"), ms->ms_language);
+    prop_set_rstring(prop_create(p, "title"), ms->ms_language);
+  else
+    prop_set_stringf(prop_create(p, "title"), "Stream %d", ms->ms_streamindex);
 }
 
 

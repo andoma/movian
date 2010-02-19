@@ -143,6 +143,9 @@ typedef struct dvd_player {
   prop_t *dp_audio_props[8];
   prop_t *dp_spu_props[32];
 
+  prop_t *dp_subtitle_tracks;
+  prop_t *dp_audio_tracks;
+
 } dvd_player_t;
 
 #define dvd_in_menu(dp) ((dp)->dp_pci.hli.hl_gi.hli_ss)
@@ -462,25 +465,25 @@ dvd_block(dvd_player_t *dp, uint8_t *buf, int len)
  *
  */
 static void
-dvd_init_streams(media_pipe_t *mp)
+dvd_init_streams(dvd_player_t *dp, media_pipe_t *mp)
 {
   prop_t *p;
 
-  p = prop_create(mp->mp_prop_audio_tracks, NULL);
+  p = prop_create(dp->dp_audio_tracks, NULL);
   prop_set_string(prop_create(p, "title"), "Off");
   prop_set_string(prop_create(p, "id"), "audio:off");
 
-  p = prop_create(mp->mp_prop_audio_tracks, NULL);
+  p = prop_create(dp->dp_audio_tracks, NULL);
   prop_set_string(prop_create(p, "title"), "Auto");
   prop_set_string(prop_create(p, "id"), "audio:auto");
 
 
 
-  p = prop_create(mp->mp_prop_subtitle_tracks, NULL);
+  p = prop_create(dp->dp_subtitle_tracks, NULL);
   prop_set_string(prop_create(p, "title"), "Off");
   prop_set_string(prop_create(p, "id"), "spu:off");
 
-  p = prop_create(mp->mp_prop_subtitle_tracks, NULL);
+  p = prop_create(dp->dp_subtitle_tracks, NULL);
   prop_set_string(prop_create(p, "title"), "Auto");
   prop_set_string(prop_create(p, "id"), "spu:auto");
 
@@ -551,7 +554,7 @@ dvd_update_streams(dvd_player_t *dp)
       
       if((p = dp->dp_audio_props[i]) == NULL) {
 	p = dp->dp_audio_props[i] = prop_create(NULL, NULL);
-	if(prop_set_parent_ex(p, dp->dp_mp->mp_prop_audio_tracks, before, NULL))
+	if(prop_set_parent_ex(p, dp->dp_audio_tracks, before, NULL))
 	  abort();
       }
 
@@ -574,15 +577,15 @@ dvd_update_streams(dvd_player_t *dp)
 
       const char *format;
       switch(dvdnav_audio_stream_format(dp->dp_dvdnav, i)) {
-      case DVDNAV_FORMAT_AC3:       format = "ac3";  break;
-      case DVDNAV_FORMAT_MPEGAUDIO: format = "mpeg"; break;
-      case DVDNAV_FORMAT_LPCM:      format = "pcm";  break;
-      case DVDNAV_FORMAT_DTS:       format = "dts";  break;
-      case DVDNAV_FORMAT_SDDS:      format = "sdds"; break;
+      case DVDNAV_FORMAT_AC3:       format = "AC3";  break;
+      case DVDNAV_FORMAT_MPEGAUDIO: format = "MPEG"; break;
+      case DVDNAV_FORMAT_LPCM:      format = "PCM";  break;
+      case DVDNAV_FORMAT_DTS:       format = "DTS";  break;
+      case DVDNAV_FORMAT_SDDS:      format = "SDDS"; break;
       default:                      format = "???";  break;
       }
 
-      prop_set_string(prop_create(p, "type"), format);
+      prop_set_string(prop_create(p, "format"), format);
 
       before = p;
     }
@@ -605,8 +608,7 @@ dvd_update_streams(dvd_player_t *dp)
       
       if((p = dp->dp_spu_props[i]) == NULL) {
 	p = dp->dp_spu_props[i] = prop_create(NULL, NULL);
-	if(prop_set_parent_ex(p, dp->dp_mp->mp_prop_subtitle_tracks,
-			      before, NULL))
+	if(prop_set_parent_ex(p, dp->dp_subtitle_tracks, before, NULL))
 	  abort();
       }
 
@@ -636,8 +638,12 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
 
   TRACE(TRACE_DEBUG, "DVD", "Starting playback of %s", url);
 
+
  restart:
   dp = calloc(1, sizeof(dvd_player_t));
+  dp->dp_audio_tracks = prop_create(mp->mp_prop_metadata, "audiostreams");
+  dp->dp_subtitle_tracks = prop_create(mp->mp_prop_metadata, "subtitlestreams");
+
   dp->dp_epoch = 1;
 
   dp->dp_mp = mp;
@@ -668,7 +674,7 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
   prop_set_int(mp->mp_prop_canSkipForward,  1);
   prop_set_int(mp->mp_prop_canSkipBackward, 1);
 
-  dvd_init_streams(mp);
+  dvd_init_streams(dp, mp);
 
   /**
    * DVD main loop

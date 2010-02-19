@@ -151,14 +151,12 @@ mp_create(const char *name, const char *type, int flags)
 
   mp->mp_prop_audio = prop_create(mp->mp_prop_root, "audio");
   mq_init(&mp->mp_audio, mp->mp_prop_audio);
-  mp->mp_prop_audio_tracks = prop_create(mp->mp_prop_audio, "tracks");
   mp->mp_prop_audio_track_current = prop_create(mp->mp_prop_audio, "current");
 
   mp->mp_prop_video = prop_create(mp->mp_prop_root, "video");
   mq_init(&mp->mp_video, mp->mp_prop_video);
 
   p = prop_create(mp->mp_prop_root, "subtitle");
-  mp->mp_prop_subtitle_tracks = prop_create(p, "tracks");
   mp->mp_prop_subtitle_track_current = prop_create(p, "current");
 
   mp->mp_prop_metadata    = prop_create(mp->mp_prop_root, "metadata");

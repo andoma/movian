@@ -194,10 +194,7 @@ typedef struct media_pipe {
   prop_t *mp_prop_video;
   prop_t *mp_prop_audio;
 
-  prop_t *mp_prop_audio_tracks;
   prop_t *mp_prop_audio_track_current;
-
-  prop_t *mp_prop_subtitle_tracks;
   prop_t *mp_prop_subtitle_track_current;
 
   prop_courier_t *mp_pc;
