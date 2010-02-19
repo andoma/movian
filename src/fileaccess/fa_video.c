@@ -283,6 +283,19 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
     } else if(event_is_action(e, ACTION_STOP)) {
       mp_set_playstatus_stop(mp);
 
+    } else if(event_is_type(e, EVENT_SELECT_TRACK)) {
+      event_select_track_t *est = (event_select_track_t *)e;
+      unsigned int idx = atoi(est->id);
+
+      if(idx < fctx->nb_streams) {
+	ctx = fctx->streams[idx]->codec;
+	if(ctx->codec_type == CODEC_TYPE_AUDIO) {
+	  mp->mp_audio.mq_stream = idx;
+	  prop_set_int(mp->mp_prop_audio_track_current, mp->mp_audio.mq_stream);
+	}
+      }
+
+
     } else if(event_is_type(e, EVENT_EXIT) ||
 	      event_is_type(e, EVENT_PLAY_URL)) {
       break;
@@ -393,6 +406,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     cwvec[i] = wrap_codec_create(ctx->codec_id,
 				 ctx->codec_type, 0, fw, ctx, 0, 0);
   }
+
+  prop_set_int(mp->mp_prop_audio_track_current, mp->mp_audio.mq_stream);
 
   mp_set_play_caps(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE);
 
