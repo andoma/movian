@@ -115,6 +115,8 @@ typedef enum {
 
   EVENT_CURRENT_PTS,
 
+  EVENT_SELECT_TRACK,
+
 } event_type_t;
 
 
@@ -168,6 +170,15 @@ typedef struct event_openurl {
 /**
  *
  */
+typedef struct event_select_track {
+  event_t h;
+  char *id;
+} event_select_track_t;
+
+
+/**
+ *
+ */
 typedef struct event_action_vector {
   event_t h;
   int num;
@@ -201,6 +212,8 @@ event_t *event_create_url(event_type_t et, const char *url);
 
 event_t *event_create_openurl(const char *url, const char *type,
 			      const char *parent);
+
+event_t *event_create_select_track(const char *id);
 
 typedef struct event_keydesc {
   event_t h;

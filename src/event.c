@@ -246,6 +246,32 @@ event_create_openurl(const char *url, const char *type, const char *parent)
 /**
  *
  */
+static void
+event_select_track_dtor(event_t *e)
+{
+  event_select_track_t *est = (void *)e;
+  free(est->id);
+  free(e);
+}
+
+
+/**
+ *
+ */
+event_t *
+event_create_select_track(const char *id)
+{
+  event_select_track_t *e = event_create(EVENT_SELECT_TRACK,
+					 sizeof(event_select_track_t));
+  e->id = strdup(id);
+  e->h.e_dtor = event_select_track_dtor;
+  return &e->h;
+}
+
+
+/**
+ *
+ */
 int
 action_update_hold_by_event(int hold, event_t *e)
 {
@@ -366,7 +392,8 @@ event_dispatch(event_t *e)
 	    event_is_action(e, ACTION_PREV_TRACK) ||
 	    event_is_action(e, ACTION_NEXT_TRACK) ||
 	    event_is_action(e, ACTION_RESTART_TRACK) ||
-	    event_is_action(e, ACTION_SHOW_MEDIA_STATS)
+	    event_is_action(e, ACTION_SHOW_MEDIA_STATS) ||
+	    event_is_type(e, EVENT_SELECT_TRACK)
 	    ) {
 
     event_to_prop(prop_get_by_name(PNVEC("global", "media", "eventsink"),
