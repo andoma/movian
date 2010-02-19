@@ -1762,12 +1762,22 @@ glwf_selectTrack(glw_view_eval_context_t *ec, struct token *self,
 {
   token_t *a = argv[0];       /* ID */
   token_t *r;
+  char buf[16];
+  const char *str;
 
   a = token_resolve(ec, a);
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  r->t_gem = glw_event_map_selectTrack_create(a && a->type == TOKEN_STRING ?
-					      rstr_get(a->t_rstring) : NULL);
 
+
+  if(a && a->type == TOKEN_STRING)
+    str = rstr_get(a->t_rstring);
+  else if(a && a->type == TOKEN_INT) {
+    snprintf(buf, sizeof(buf), "%d", a->t_int);
+    str = buf;
+  } else {
+    str = NULL;
+  }
+  r->t_gem = glw_event_map_selectTrack_create(str);
   eval_push(ec, r);
   return 0;
 }
