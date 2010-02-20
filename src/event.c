@@ -184,6 +184,9 @@ static struct strtab actionnames[] = {
   { "Increase",              ACTION_INCR },
   { "Decrease",              ACTION_DECR },
   { "MediaStats",            ACTION_SHOW_MEDIA_STATS },
+  { "Shuffle",               ACTION_SHUFFLE },
+  { "Repeat",                ACTION_REPEAT },
+
 };
 
 
@@ -393,6 +396,8 @@ event_dispatch(event_t *e)
 	    event_is_action(e, ACTION_NEXT_TRACK) ||
 	    event_is_action(e, ACTION_RESTART_TRACK) ||
 	    event_is_action(e, ACTION_SHOW_MEDIA_STATS) ||
+	    event_is_action(e, ACTION_SHUFFLE) ||
+	    event_is_action(e, ACTION_REPEAT) ||
 	    event_is_type(e, EVENT_SELECT_TRACK)
 	    ) {
 

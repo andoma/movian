@@ -167,6 +167,10 @@ mp_create(const char *name, const char *type, int flags)
 
   mp->mp_prop_stats       = prop_create(mp->mp_prop_root, "stats");
   prop_set_int(mp->mp_prop_stats, mp->mp_stats);
+  mp->mp_prop_shuffle     = prop_create(mp->mp_prop_root, "shuffle");
+  prop_set_int(mp->mp_prop_shuffle, 0);
+  mp->mp_prop_repeat      = prop_create(mp->mp_prop_root, "repeat");
+  prop_set_int(mp->mp_prop_repeat, 0);
 
   mp->mp_prop_url         = prop_create(mp->mp_prop_root, "url");
 
@@ -186,6 +190,13 @@ mp_create(const char *name, const char *type, int flags)
 
   mp->mp_prop_canEject = 
     prop_create(mp->mp_prop_root, "canEject");
+
+  mp->mp_prop_canShuffle = 
+    prop_create(mp->mp_prop_root, "canShuffle");
+
+  mp->mp_prop_canRepeat = 
+    prop_create(mp->mp_prop_root, "canRepeat");
+
 
   mp->mp_pc = prop_courier_create(&mp->mp_mutex, PROP_COURIER_THREAD, "mp");
 
@@ -1055,6 +1066,10 @@ media_eventsink(void *opaque, prop_event_t event, ...)
 
     if(event_is_action(e, ACTION_SHOW_MEDIA_STATS)) {
       prop_toggle_int(media_primary->mp_prop_stats);
+    } else if(event_is_action(e, ACTION_SHUFFLE)) {
+      prop_toggle_int(media_primary->mp_prop_shuffle);
+    } else if(event_is_action(e, ACTION_REPEAT)) {
+      prop_toggle_int(media_primary->mp_prop_repeat);
     } else {
       mp_enqueue_event(media_primary, e);
     }

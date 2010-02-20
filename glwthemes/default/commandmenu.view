@@ -172,6 +172,7 @@ widget(container_x, {
 	  cloner($global.media.current.metadata.audiostreams, backdrop, {
 	    BUTTON_PROPS(0.1);
 	    onEvent(enter, selectTrack($self.id));
+	    .hidden = $global.media.current.type != "video";
 
 	    widget(container_x, {
 	      
@@ -203,6 +204,7 @@ widget(container_x, {
 	  cloner($global.media.current.metadata.subtitlestreams, backdrop, {
 	    BUTTON_PROPS(0.1);
 	    onEvent(enter, selectTrack($self.id));
+	    .hidden = $global.media.current.type != "video";
 
 	    widget(container_x, {
 	      widget(icon, {
@@ -223,21 +225,62 @@ widget(container_x, {
 
 	  HORIZONTAL_SEPARATOR($global.media.current.type != "video");
 
+	  // ------- Shuffle button
+
+	  widget(container_x, {
+	    .hidden = !$global.media.current.canShuffle;
+	    widget(label, {
+	      .align = right;
+	      .caption = "Shuffle";
+	    });
+	    
+	    widget(backdrop, {
+	      BUTTON_PROPS(1.0);
+	      onEvent(enter, event(Shuffle))
+	      widget(label, {
+		.align = left;
+		.caption = translate($global.media.current.shuffle,
+				     "Unknown",
+				     0, "Off",
+				     1, "On");
+	      });
+	    });
+	  });
+
+	  // ------- Repeat button
+
+	  widget(container_x, {
+	    .hidden = !$global.media.current.canRepeat;
+	    widget(label, {
+	      .align = right;
+	      .caption = "Repeat";
+	    });
+	    
+	    widget(backdrop, {
+	      BUTTON_PROPS(1.0);
+	      onEvent(enter, event(Repeat))
+	      widget(label, {
+		.align = left;
+		.caption = translate($global.media.current.repeat,
+				     "Unknown",
+				     0, "Off",
+				     1, "On");
+	      });
+	    });
+	  });
+
 	  // ------- Stats button
 
 	  widget(container_x, {
-		  
+	    .hidden = $global.media.current.type != "video";
 	    widget(label, {
 	      .align = right;
 	      .caption = "Show stats";
 	    });
 	    
 	    widget(backdrop, {
-	      
 	      BUTTON_PROPS(1.0);
-	      
 	      onEvent(enter, event(MediaStats))
-	      
 	      widget(label, {
 		.align = left;
 		.caption = translate($global.media.current.stats,
@@ -247,7 +290,7 @@ widget(container_x, {
 	      });
 	    });
 	  });
-	  
+
 	});
 
 

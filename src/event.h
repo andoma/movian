@@ -83,6 +83,9 @@ typedef enum {
 
   ACTION_SHOW_MEDIA_STATS,
 
+  ACTION_SHUFFLE,
+  ACTION_REPEAT,
+
   ACTION_last_mappable
 } action_type_t;
 

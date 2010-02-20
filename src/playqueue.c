@@ -756,6 +756,7 @@ static void
 playqueue_set_shuffle(void *opaque, int v)
 {
   playqueue_shuffle_mode = v;
+  TRACE(TRACE_DEBUG, "playqueue", "Shuffle set to %s", v ? "on" : "off");
   update_prev_next();
 }
 
@@ -767,6 +768,7 @@ static void
 playqueue_set_repeat(void *opaque, int v)
 {
   playqueue_repeat_mode = v;
+  TRACE(TRACE_DEBUG, "playqueue", "Repeat set to %s", v ? "on" : "off");
   update_prev_next();
 }
 
@@ -789,6 +791,9 @@ playqueue_init(void)
   TAILQ_INIT(&playqueue_requests);
   TAILQ_INIT(&playqueue_source_entries);
   TAILQ_INIT(&playqueue_shuffled_entries);
+
+  prop_set_int(playqueue_mp->mp_prop_canShuffle, 1);
+  prop_set_int(playqueue_mp->mp_prop_canRepeat, 1);
 
   prop_subscribe(0,
 		 PROP_TAG_NAME("self", "shuffle"),
