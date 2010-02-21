@@ -31,6 +31,61 @@ typedef struct query {
 
 } query_t;
 
+/**
+ *
+ */
+static glw_t *
+next_widget(glw_t *w)
+{
+  do {
+    w = TAILQ_NEXT(w, glw_parent_link);
+  } while (w != NULL && w->glw_flags & GLW_HIDDEN);
+  return w;
+}
+
+
+/**
+ *
+ */
+static glw_t *
+prev_widget(glw_t *w)
+{
+  do {
+    w = TAILQ_PREV(w, glw_queue, glw_parent_link);
+  } while (w != NULL && w->glw_flags & GLW_HIDDEN);
+  return w;
+}
+
+
+/**
+ *
+ */
+static glw_t *
+first_widget(glw_t *w)
+{
+  w = TAILQ_FIRST(&w->glw_childs);
+
+  while(w != NULL && w->glw_flags & GLW_HIDDEN)
+    w = TAILQ_NEXT(w, glw_parent_link);
+
+  return w;
+}
+
+
+/**
+ *
+ */
+static glw_t *
+last_widget(glw_t *w)
+{
+  w = TAILQ_LAST(&w->glw_childs, glw_queue);
+
+  while(w != NULL && w->glw_flags & GLW_HIDDEN)
+    w = TAILQ_PREV(w, glw_queue, glw_parent_link);
+
+
+  return w;
+}
 
 
 /**
@@ -51,6 +106,9 @@ compute_position(glw_t *w, glw_orientation_t o)
     a = w->glw_norm_weight / 2;
 
     TAILQ_FOREACH(c, &p->glw_childs, glw_parent_link) {
+      if(c->glw_flags & GLW_HIDDEN)
+	continue;
+
       if(c == w)
 	break;
       a += c->glw_norm_weight;
@@ -89,8 +147,11 @@ find_candidate(glw_t *w, query_t *query)
   switch(w->glw_class->gc_nav_descend_mode) {
 
   case GLW_NAV_DESCEND_ALL:
-    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
+    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+      if(c->glw_flags & GLW_HIDDEN)
+	continue;
       find_candidate(c, query);
+    }
     break;
     
   case GLW_NAV_DESCEND_SELECTED:
@@ -295,12 +356,12 @@ glw_navigate(glw_t *w, event_t *e, int local)
 	  /* Down / Right */
 	  if(pagemode == 1) {
 
-	    d = TAILQ_NEXT(c, glw_parent_link);
+	    d = next_widget(c);
 	    if(d != NULL) {
 
 	      while(pagecnt--) {
 		c = d;
-		d = TAILQ_NEXT(c, glw_parent_link);
+		d = next_widget(c);
 		if(d == NULL)
 		  break;
 	      }
@@ -308,33 +369,33 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
 	  } else if(pagemode == 2) {
 
-	    c = TAILQ_LAST(&p->glw_childs, glw_queue);
+	    c = last_widget(p);
 
 	  } else {
-	    c = TAILQ_NEXT(c, glw_parent_link);
+	    c = next_widget(c);
 	  }
 
 	} else {
 	  /* Up / Left */
 	  if(pagemode == 1) {
 
-	    d = TAILQ_PREV(c, glw_queue, glw_parent_link);
+	    d = prev_widget(c);
 	    if(d != NULL) {
 
 	      while(pagecnt--) {
 		c = d;
-		d = TAILQ_PREV(c, glw_queue, glw_parent_link);
+		d = prev_widget(c);
 		if(d == NULL)
 		  break;
 	      }
 	    }
 
 	  } else if(pagemode == 2) {
-
-	    c = TAILQ_FIRST(&p->glw_childs);
+	    
+	    c = first_widget(p);
 
 	  } else {
-	    c = TAILQ_PREV(c, glw_queue, glw_parent_link);
+	    c = prev_widget(c);
 	  }
 
 	}
