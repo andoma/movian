@@ -89,6 +89,8 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
 
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    if(c->glw_flags & GLW_HIDDEN)
+      continue;
 
     vy = y + size_y;
 
@@ -319,7 +321,7 @@ glw_array_set(glw_t *w, int init, va_list ap)
 static glw_class_t glw_array = {
   .gc_name = "array",
   .gc_instance_size = sizeof(glw_array_t),
-  .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY,
+  .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS,
   .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
   .gc_nav_search_mode = GLW_NAV_SEARCH_ARRAY,
   .gc_render = glw_array_render,
