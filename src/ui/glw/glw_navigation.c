@@ -1,6 +1,6 @@
 /*
  *  GL Widgets, Navigation
- *  Copyright (C) 2008 Andreas Öman
+ *  Copyright (C) 2008 - 2010 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,7 +18,6 @@
 
 #include "glw.h"
 #include "glw_event.h"
-//#include "glw_array.h"
 
 typedef struct query {
   float x, xmin, xmax;
