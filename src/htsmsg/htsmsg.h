@@ -51,6 +51,7 @@ typedef struct htsmsg {
 #define HMF_STR  3
 #define HMF_BIN  4
 #define HMF_LIST 5
+#define HMF_DBL  6
 
 typedef struct htsmsg_field {
   TAILQ_ENTRY(htsmsg_field) hmf_link;
@@ -69,6 +70,7 @@ typedef struct htsmsg_field {
       size_t len;
     } bin;
     htsmsg_t msg;
+    double dbl;
   } u;
 } htsmsg_field_t;
 
@@ -77,6 +79,7 @@ typedef struct htsmsg_field {
 #define hmf_str     u.str
 #define hmf_bin     u.bin.data
 #define hmf_binsize u.bin.len
+#define hmf_dbl     u.dbl
 
 #define htsmsg_get_map_by_field(f) \
  ((f)->hmf_type == HMF_MAP ? &(f)->hmf_msg : NULL)
@@ -122,6 +125,11 @@ void htsmsg_add_str(htsmsg_t *msg, const char *name, const char *str);
  * Add an field where source is a list or map message.
  */
 void htsmsg_add_msg(htsmsg_t *msg, const char *name, htsmsg_t *sub);
+
+/**
+ * Add an field where source is a double
+ */
+void htsmsg_add_dbl(htsmsg_t *msg, const char *name, double dbl);
 
 /**
  * Add an field where source is a list or map message.
@@ -215,6 +223,15 @@ htsmsg_t *htsmsg_get_map(htsmsg_t *msg, const char *name);
  */
 htsmsg_t *htsmsg_get_map_multi(htsmsg_t *msg, ...)
   __attribute__((__sentinel__(0)));
+
+/**
+ * Get a field of type 'double'.
+ *
+ * @return HTSMSG_ERR_FIELD_NOT_FOUND - Field does not exist
+ *         HTSMSG_ERR_CONVERSION_IMPOSSIBLE - Field is not an integer or
+ *              out of range for the requested storage.
+ */
+int htsmsg_get_dbl(htsmsg_t *msg, const char *name, double *dblp);
 
 /**
  * Given the field \p f, return a string if it is of type string, otherwise

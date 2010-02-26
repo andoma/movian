@@ -207,6 +207,17 @@ htsmsg_add_s32(htsmsg_t *msg, const char *name, int32_t s32)
 }
 
 
+/*
+ *
+ */
+void
+htsmsg_add_dbl(htsmsg_t *msg, const char *name, double dbl)
+{
+  htsmsg_field_t *f = htsmsg_field_add(msg, name, HMF_DBL, HMF_NAME_ALLOCED);
+  f->hmf_dbl = dbl;
+}
+
+
 
 /*
  *
@@ -371,6 +382,25 @@ htsmsg_get_s32(htsmsg_t *msg, const char *name, int32_t *s32p)
  *
  */
 int
+htsmsg_get_dbl(htsmsg_t *msg, const char *name, double *dblp)
+{
+  htsmsg_field_t *f;
+
+  if((f = htsmsg_field_find(msg, name)) == NULL)
+    return HTSMSG_ERR_FIELD_NOT_FOUND;
+
+  if(f->hmf_type != HMF_DBL)
+    return HTSMSG_ERR_CONVERSION_IMPOSSIBLE;
+
+  *dblp = f->hmf_dbl;
+  return 0;
+}
+
+
+/*
+ *
+ */
+int
 htsmsg_get_bin(htsmsg_t *msg, const char *name, const void **binp,
 	       size_t *lenp)
 {
@@ -524,6 +554,10 @@ htsmsg_print0(htsmsg_t *msg, int indent)
     case HMF_S64:
       printf("S64) = %" PRId64 "\n", f->hmf_s64);
       break;
+
+    case HMF_DBL:
+      printf("DBL) = %f\n", f->hmf_dbl);
+      break;
     }
   }
 } 
@@ -569,6 +603,10 @@ htsmsg_copy_i(htsmsg_t *src, htsmsg_t *dst)
 
     case HMF_BIN:
       htsmsg_add_bin(dst, f->hmf_name, f->hmf_bin, f->hmf_binsize);
+      break;
+
+    case HMF_DBL:
+      htsmsg_add_dbl(dst, f->hmf_name, f->hmf_dbl);
       break;
     }
   }
