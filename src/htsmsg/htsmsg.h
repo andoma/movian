@@ -213,7 +213,8 @@ htsmsg_t *htsmsg_get_map(htsmsg_t *msg, const char *name);
 /**
  * Traverse a hierarchy of htsmsg's to find a specific child.
  */
-htsmsg_t *htsmsg_get_map_multi(htsmsg_t *msg, ...);
+htsmsg_t *htsmsg_get_map_multi(htsmsg_t *msg, ...)
+  __attribute__((__sentinel__(0)));
 
 /**
  * Given the field \p f, return a string if it is of type string, otherwise
