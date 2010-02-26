@@ -103,12 +103,13 @@ scrap_test(const char *artistname, prop_t *p)
   int n;
   htsmsg_t *xml;
 
-  n = http_request("ws.audioscrobbler.com", 80, "/2.0/",
+  n = http_request("http://ws.audioscrobbler.com/2.0/",
 		   (const char *[]){"method", "artist.getimages",
 				    "artist", artistname,
 				    "api_key", LASTFM_APIKEY,
 				    NULL, NULL},
-		   &result, &resultsize, errbuf, sizeof(errbuf));
+		   &result, &resultsize, errbuf, sizeof(errbuf),
+		   NULL, NULL);
 
   if(n) {
     TRACE(TRACE_DEBUG, "scrapper", "HTTP query to lastfm failed: %s",  errbuf);

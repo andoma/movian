@@ -1591,24 +1591,36 @@ fa_protocol_t fa_protocol_webdav = {
  *
  */
 int
-http_request(const char *hostname, int port, const char *path,
-	     const char **arguments, char **result, size_t *result_sizep,
-	     char *errbuf, size_t errlen)
+http_request(const char *url, const char **arguments, 
+	     char **result, size_t *result_sizep,
+	     char *errbuf, size_t errlen,
+	     htsbuf_queue_t *postdata, const char *postcontenttype)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   htsbuf_queue_t q;
-  int code, r;
-  char buf[256];
+  int code, r, port;
+  char buf[256], hostname[128];
   http_connection_t *hc;
+  int redircount = 0;
+
+  hf->hf_url = strdup(url);
 
  retry:
+
+  url_split(NULL, 0, hf->hf_authurl, sizeof(hf->hf_authurl), 
+	    hostname, sizeof(hostname), &port,
+	    hf->hf_path, sizeof(hf->hf_path), hf->hf_url);
+
+  if(port < 0)
+    port = 80;
+
   hc = hf->hf_connection = http_connection_get(hostname, port, errbuf, errlen);
   if(hf->hf_connection == NULL)
     return -1;
 
   htsbuf_queue_init(&q, 0);
 
-  htsbuf_qprintf(&q, "GET %s", path);
+  htsbuf_qprintf(&q, "%s %s", postdata ? "POST" : "GET", hf->hf_path);
 
   if(arguments != NULL) {
     char prefix = '?';
@@ -1627,16 +1639,34 @@ http_request(const char *hostname, int port, const char *path,
 		 " HTTP/1.1\r\n"
 		 "Accept: */*\r\n"
 		 "User-Agent: Showtime %s\r\n"
-		 "Host: %s\r\n"
-		 "\r\n",
+		 "Host: %s\r\n",
 		 htsversion,
 		 hostname);
 
+
+  if(postdata != NULL) 
+    htsbuf_qprintf(&q, "Content-Length: %d\r\n", postdata->hq_size);
+
+  if(postcontenttype != NULL) 
+    htsbuf_qprintf(&q, "Content-Type: %s\r\n", postcontenttype);
+
+  htsbuf_qprintf(&q, "\r\n");
+
   tcp_write_queue(hf->hf_connection->hc_fd, &q);
+
+  if(postdata != NULL)
+    tcp_write_queue_dontfree(hf->hf_connection->hc_fd, postdata);
 
   code = http_read_response(hf);
   if(code == -1 && hf->hf_connection->hc_reused) {
     http_detach(hf, 0);
+    goto retry;
+  }
+
+  if(code >= 300 && code < 400) {
+
+    if(redirect(hf, &redircount, errbuf, errlen))
+      return -1;
     goto retry;
   }
 
@@ -1674,20 +1704,53 @@ http_request(const char *hostname, int port, const char *path,
     
   } else {
 
-    char *mem = malloc(hf->hf_filesize + 1);
+    char *buf = NULL;
+    size_t size = 0;
 
-    r = tcp_read_data(hc->hc_fd, mem, hf->hf_filesize, &hc->hc_spill);
+    if(hf->hf_chunked_transfer) {
+      char chunkheader[100];
 
-    if(r == -1) {
-      snprintf(errbuf, errlen, "HTTP read error");
-      free(mem);
+      while(1) {
+	int csize;
+	if(tcp_read_line(hc->hc_fd, chunkheader, sizeof(chunkheader),
+			 &hc->hc_spill) < 0)
+	  break;
+ 
+	if((csize = strtol(chunkheader, NULL, 16)) == 0)
+	  goto done;
+
+	buf = realloc(buf, size + csize + 1);
+	if(tcp_read_data(hc->hc_fd, buf + size, csize, &hc->hc_spill))
+	  break;
+
+	size += csize;
+	
+	if(tcp_read_data(hc->hc_fd, chunkheader, 2, &hc->hc_spill))
+	  break;
+      }
+      free(buf);
+      snprintf(errbuf, errlen, "Chunked transfer error");
       http_destroy(hf);
-      return -1;    
-    }
+      return -1;
 
-    mem[hf->hf_filesize] = 0;
-    *result = mem;
-    *result_sizep = hf->hf_filesize;
+    } else {
+
+      size = hf->hf_filesize;
+      buf = malloc(hf->hf_filesize + 1);
+
+      r = tcp_read_data(hc->hc_fd, buf, hf->hf_filesize, &hc->hc_spill);
+      
+      if(r == -1) {
+	snprintf(errbuf, errlen, "HTTP read error");
+	free(buf);
+	http_destroy(hf);
+	return -1;    
+      }
+    }
+  done:
+    buf[size] = 0;
+    *result = buf;
+    *result_sizep = size;
   }
 
   http_destroy(hf);

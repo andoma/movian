@@ -30,6 +30,8 @@ int tcp_connect(const char *hostname, int port, char *errbuf,
 
 int tcp_write_queue(int fd, htsbuf_queue_t *q);
 
+int tcp_write_queue_dontfree(int fd, htsbuf_queue_t *q);
+
 int tcp_read_line(int fd, char *buf, const size_t bufsize,
 		  htsbuf_queue_t *spill);
 

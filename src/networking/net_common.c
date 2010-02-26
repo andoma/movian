@@ -44,6 +44,23 @@ tcp_write_queue(int fd, htsbuf_queue_t *q)
 /**
  *
  */
+int
+tcp_write_queue_dontfree(int fd, htsbuf_queue_t *q)
+{
+  htsbuf_data_t *hd;
+  int l, r = 0;
+
+  TAILQ_FOREACH(hd, &q->hq_q, hd_link) {
+    l = hd->hd_data_len - hd->hd_data_off;
+    r |= tcp_write(fd, hd->hd_data + hd->hd_data_off, l);
+  }
+  return 0;
+}
+
+
+/**
+ *
+ */
 static int
 tcp_fill_htsbuf_from_fd(int fd, htsbuf_queue_t *hq)
 {
