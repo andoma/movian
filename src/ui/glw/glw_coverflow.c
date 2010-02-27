@@ -148,8 +148,8 @@ glw_coverflow_render(glw_t *w, glw_rctx_t *rc)
   p = n = c;
 
   while(1) {
-    p = p ? TAILQ_PREV(p, glw_queue, glw_parent_link) : NULL;
-    n = n ? TAILQ_NEXT(n, glw_parent_link) : NULL;
+    p = p ? glw_prev_widget(p) : NULL;
+    n = n ? glw_next_widget(n) : NULL;
 
     if(p == NULL && n == NULL)
       break;

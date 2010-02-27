@@ -30,62 +30,6 @@ typedef struct query {
 
 } query_t;
 
-/**
- *
- */
-static glw_t *
-next_widget(glw_t *w)
-{
-  do {
-    w = TAILQ_NEXT(w, glw_parent_link);
-  } while (w != NULL && w->glw_flags & GLW_HIDDEN);
-  return w;
-}
-
-
-/**
- *
- */
-static glw_t *
-prev_widget(glw_t *w)
-{
-  do {
-    w = TAILQ_PREV(w, glw_queue, glw_parent_link);
-  } while (w != NULL && w->glw_flags & GLW_HIDDEN);
-  return w;
-}
-
-
-/**
- *
- */
-static glw_t *
-first_widget(glw_t *w)
-{
-  w = TAILQ_FIRST(&w->glw_childs);
-
-  while(w != NULL && w->glw_flags & GLW_HIDDEN)
-    w = TAILQ_NEXT(w, glw_parent_link);
-
-  return w;
-}
-
-
-/**
- *
- */
-static glw_t *
-last_widget(glw_t *w)
-{
-  w = TAILQ_LAST(&w->glw_childs, glw_queue);
-
-  while(w != NULL && w->glw_flags & GLW_HIDDEN)
-    w = TAILQ_PREV(w, glw_queue, glw_parent_link);
-
-
-  return w;
-}
-
 
 /**
  *
@@ -355,12 +299,12 @@ glw_navigate(glw_t *w, event_t *e, int local)
 	  /* Down / Right */
 	  if(pagemode == 1) {
 
-	    d = next_widget(c);
+	    d = glw_next_widget(c);
 	    if(d != NULL) {
 
 	      while(pagecnt--) {
 		c = d;
-		d = next_widget(c);
+		d = glw_next_widget(c);
 		if(d == NULL)
 		  break;
 	      }
@@ -368,22 +312,22 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
 	  } else if(pagemode == 2) {
 
-	    c = last_widget(p);
+	    c = glw_last_widget(p);
 
 	  } else {
-	    c = next_widget(c);
+	    c = glw_next_widget(c);
 	  }
 
 	} else {
 	  /* Up / Left */
 	  if(pagemode == 1) {
 
-	    d = prev_widget(c);
+	    d = glw_prev_widget(c);
 	    if(d != NULL) {
 
 	      while(pagecnt--) {
 		c = d;
-		d = prev_widget(c);
+		d = glw_prev_widget(c);
 		if(d == NULL)
 		  break;
 	      }
@@ -391,10 +335,10 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
 	  } else if(pagemode == 2) {
 	    
-	    c = first_widget(p);
+	    c = glw_first_widget(p);
 
 	  } else {
-	    c = prev_widget(c);
+	    c = glw_prev_widget(c);
 	  }
 
 	}

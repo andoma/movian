@@ -120,10 +120,10 @@ glw_freefloat_layout(glw_freefloat_t *ff, glw_rctx_t *rc)
     /* Insert new entry */
 
     if(ff->pick != NULL)
-      ff->pick = TAILQ_NEXT(ff->pick, glw_parent_link);
+      ff->pick = glw_next_widget(ff->pick);
     
     if(ff->pick == NULL)
-      ff->pick = TAILQ_FIRST(&w->glw_childs);
+      ff->pick = glw_first_widget(w);
 
     if(ff->pick != NULL && !is_visible(ff, ff->pick)) {
       ff->visible[candpos] = ff->pick;
@@ -148,7 +148,7 @@ glw_freefloat_layout(glw_freefloat_t *ff, glw_rctx_t *rc)
 
   // Layout next few items to pick, to preload textures, etc
 
-  for(i = 0; i < 3 && c != NULL; i++, c = TAILQ_NEXT(c, glw_parent_link)) {
+  for(i = 0; i < 3 && c != NULL; i++, c = glw_next_widget(c)) {
     if(!is_visible(ff, c))
       glw_layout0(c, rc);
   }
@@ -215,6 +215,7 @@ glw_freefloat_set(glw_t *w, int init, va_list ap)
 static glw_class_t glw_freefloat = {
   .gc_name = "freefloat",
   .gc_instance_size = sizeof(glw_freefloat_t),
+  .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_set = glw_freefloat_set,
   .gc_render = glw_freefloat_render,
   .gc_signal_handler = glw_freefloat_callback,

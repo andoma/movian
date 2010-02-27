@@ -1000,4 +1000,63 @@ void glw_clear_constraints(glw_t *w);
 
 int glw_array_get_xentries(glw_t *w);
 
+
+
+/**
+ *
+ */
+static inline glw_t *
+glw_next_widget(glw_t *w)
+{
+  do {
+    w = TAILQ_NEXT(w, glw_parent_link);
+  } while (w != NULL && w->glw_flags & GLW_HIDDEN);
+  return w;
+}
+
+
+/**
+ *
+ */
+static inline glw_t *
+glw_prev_widget(glw_t *w)
+{
+  do {
+    w = TAILQ_PREV(w, glw_queue, glw_parent_link);
+  } while (w != NULL && w->glw_flags & GLW_HIDDEN);
+  return w;
+}
+
+
+/**
+ *
+ */
+static inline glw_t *
+glw_first_widget(glw_t *w)
+{
+  w = TAILQ_FIRST(&w->glw_childs);
+
+  while(w != NULL && w->glw_flags & GLW_HIDDEN)
+    w = TAILQ_NEXT(w, glw_parent_link);
+
+  return w;
+}
+
+
+/**
+ *
+ */
+static inline glw_t *
+glw_last_widget(glw_t *w)
+{
+  w = TAILQ_LAST(&w->glw_childs, glw_queue);
+
+  while(w != NULL && w->glw_flags & GLW_HIDDEN)
+    w = TAILQ_PREV(w, glw_queue, glw_parent_link);
+
+
+  return w;
+}
+
+
 #endif /* GLW_H */
