@@ -1,6 +1,6 @@
 /*
- *  Video output on GL surfaces
- *  Copyright (C) 2007 Andreas Öman
+ *  Subtitles decoder / rendering
+ *  Copyright (C) 2007 - 2010 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,14 +18,15 @@
 #include "showtime.h"
 #include "video_decoder.h"
 
+
+
 /**
- *
+ * Decode subtitles from LAVC
  */
-void 
-video_subtitles_decode(video_decoder_t *vd, media_buf_t *mb)
+static void
+video_subtitles_decode_lavc(video_decoder_t *vd, media_buf_t *mb,
+			    AVCodecContext *ctx)
 {
-  codecwrap_t *cw = mb->mb_cw;
-  AVCodecContext *ctx = cw->codec_ctx;
   AVSubtitle sub;
   int size = 0, i, x, y;
   subtitle_t *s;
@@ -82,6 +83,29 @@ video_subtitles_decode(video_decoder_t *vd, media_buf_t *mb)
   hts_mutex_unlock(&vd->vd_sub_mutex);
 }
 
+
+
+/**
+ *
+ */
+static void
+video_subtitles_cleartext(video_decoder_t *vd, media_buf_t *mb)
+{
+}
+
+/**
+ *
+ */
+void 
+video_subtitles_decode(video_decoder_t *vd, media_buf_t *mb)
+{
+  codecwrap_t *cw = mb->mb_cw;
+
+  if(cw != NULL)
+    video_subtitles_decode_lavc(vd, mb, cw->codec_ctx);
+  else
+    video_subtitles_cleartext(vd, mb);
+}
 
 /**
  *
