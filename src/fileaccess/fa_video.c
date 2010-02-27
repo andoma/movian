@@ -1,6 +1,6 @@
 /*
  *  Playback of video
- *  Copyright (C) 2007-2008 Andreas Öman
+ *  Copyright (C) 2007-2010 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@
 #include "fileaccess.h"
 #include "dvd/dvd.h"
 #include "notifications.h"
+#include "video/subtitles.h"
 
 /**
  *
@@ -54,8 +55,9 @@ rescale(AVFormatContext *fctx, int64_t ts, int si)
  */
 static int64_t
 video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
-	   int64_t pos, int backward, const char *txt)
+	   int64_t pos, int backward, const char *txt, int64_t *lastsubpts)
 {
+  *lastsubpts = AV_NOPTS_VALUE;
 
   pos = FFMAX(fctx->start_time, FFMIN(fctx->start_time + fctx->duration, pos));
 
@@ -86,7 +88,7 @@ video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
  */
 static event_t *
 video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
-		  char *errbuf, size_t errlen)
+		  subtitles_t *sub, char *errbuf, size_t errlen)
 {
   media_buf_t *mb = NULL;
   media_queue_t *mq = NULL;
@@ -95,7 +97,7 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
   int r, si;
   event_t *e;
   event_ts_t *ets;
-  int64_t ts, seekbase = AV_NOPTS_VALUE;
+  int64_t ts, seekbase = AV_NOPTS_VALUE, subpts, lastsubpts = AV_NOPTS_VALUE;
 
   int hold = 0, lost_focus = 0, epoch = 1;
 
@@ -151,6 +153,21 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
 	mb->mb_data_type = MB_AUDIO;
 	mq = &mp->mp_audio;
 
+      } else if(si == mp->mp_video.mq_stream2) {
+#if 0
+	/* Subtitles */
+	printf("%d bytes\n", pkt.size);
+
+	int k;
+	char *sub = (char *)pkt.data;
+	for(k = 0; k < pkt.size; k++)
+	  printf("%c", sub[k] >= 32 ? sub[k] : '.');
+	printf("\n");
+#endif
+
+	av_free_packet(&pkt);
+	continue;
+
       } else {
 	/* Check event queue ? */
 	av_free_packet(&pkt);
@@ -160,6 +177,11 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
       mb->mb_epoch    = epoch;
       mb->mb_pts      = rescale(fctx, pkt.pts,      si);
       mb->mb_dts      = rescale(fctx, pkt.dts,      si);
+
+      if(mb->mb_data_type == MB_VIDEO && mb->mb_pts > lastsubpts)
+	lastsubpts = subpts = mb->mb_pts;
+      else
+	subpts = AV_NOPTS_VALUE;
 
       if(mq->mq_seektarget != AV_NOPTS_VALUE) {
 	ts = mb->mb_pts != AV_NOPTS_VALUE ? mb->mb_pts : mb->mb_dts;
@@ -207,6 +229,23 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
 
     if((e = mb_enqueue_with_events(mp, mq, mb)) == NULL) {
       mb = NULL; /* Enqueue succeeded */
+
+      if(subpts != AV_NOPTS_VALUE && sub != NULL) {
+	subtitle_entry_t *se = subtitles_pick(sub, subpts);
+	if(se != NULL) {
+
+	  media_buf_t *mb2 = media_buf_alloc();
+	  
+	  mb2->mb_pts = se->se_start;
+	  mb2->mb_duration = se->se_stop - se->se_start;
+	  mb2->mb_data_type = MB_SUBTITLE;
+
+	  mb2->mb_data = strdup(se->se_text);
+	  mb2->mb_size = 0;
+
+	  mb_enqueue_always(mp, mq, mb2);
+	}
+      }
       continue;
     }
 
@@ -262,38 +301,50 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
       if(ts < fctx->start_time)
 	ts = fctx->start_time;
 
-      seekbase = video_seek(fctx, mp, &mb, ts, 1, "direct");
+      seekbase = video_seek(fctx, mp, &mb, ts, 1, "direct", &lastsubpts);
 
     } else if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
 
-      seekbase = video_seek(fctx, mp, &mb, seekbase - 60000000, 1, "-60s");
+      seekbase = video_seek(fctx, mp, &mb, seekbase - 60000000, 1, "-60s",
+			    &lastsubpts);
 
     } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
 
-      seekbase = video_seek(fctx, mp, &mb, seekbase - 15000000, 1, "-15s");
+      seekbase = video_seek(fctx, mp, &mb, seekbase - 15000000, 1, "-15s",
+			    &lastsubpts);
 
     } else if(event_is_action(e, ACTION_SEEK_FORWARD)) {
 
-      seekbase = video_seek(fctx, mp, &mb, seekbase + 15000000, 1, "+15s");
+      seekbase = video_seek(fctx, mp, &mb, seekbase + 15000000, 1, "+15s",
+			    &lastsubpts);
 
     } else if(event_is_action(e, ACTION_SEEK_FAST_FORWARD)) {
 
-      seekbase = video_seek(fctx, mp, &mb, seekbase + 60000000, 1, "+60s");
+      seekbase = video_seek(fctx, mp, &mb, seekbase + 60000000, 1, "+60s",
+			    &lastsubpts);
 
     } else if(event_is_action(e, ACTION_STOP)) {
       mp_set_playstatus_stop(mp);
 
     } else if(event_is_type(e, EVENT_SELECT_TRACK)) {
       event_select_track_t *est = (event_select_track_t *)e;
-      unsigned int idx = atoi(est->id);
-
-      if(idx < fctx->nb_streams) {
-	ctx = fctx->streams[idx]->codec;
-	if(ctx->codec_type == CODEC_TYPE_AUDIO) {
-	  mp->mp_audio.mq_stream = idx;
-	  prop_set_int(mp->mp_prop_audio_track_current, mp->mp_audio.mq_stream);
+      const char *id = est->id;
+      
+      if(id[0] >= '0' && id[0] <= '9') {
+	unsigned int idx = atoi(est->id);
+	if(idx < fctx->nb_streams) {
+	  ctx = fctx->streams[idx]->codec;
+	  if(ctx->codec_type == CODEC_TYPE_AUDIO) {
+	    mp->mp_audio.mq_stream = idx;
+	    prop_set_int(mp->mp_prop_audio_track_current, idx);
+	  } else if(ctx->codec_type == CODEC_TYPE_SUBTITLE) {
+	    mp->mp_video.mq_stream2 = idx;
+	    prop_set_int(mp->mp_prop_subtitle_track_current, idx);
+	  }
 	}
       }
+
+      
 
 
     } else if(event_is_type(e, EVENT_EXIT) ||
@@ -388,6 +439,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   
   mp->mp_audio.mq_stream = -1;
   mp->mp_video.mq_stream = -1;
+  mp->mp_video.mq_stream2 = -1;
 
   fw = wrap_format_create(fctx);
 
@@ -413,7 +465,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   mp_become_primary(mp);
 
-  e = video_player_loop(fctx, cwvec, mp, errbuf, errlen);
+  e = video_player_loop(fctx, cwvec, mp, NULL, errbuf, errlen);
 
   TRACE(TRACE_DEBUG, "Video", "Stopped playback of %s", url);
 

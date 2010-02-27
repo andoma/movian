@@ -1,6 +1,6 @@
 /*
  *  Subtitling
- *  Copyright (C) 2007 Andreas Öman
+ *  Copyright (C) 2007, 2010 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,16 +16,17 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <fcntl.h>
-#include <ctype.h>
-#include <unistd.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
 #include <time.h>
+
 #include "showtime.h"
-#include "media.h"
 #include "subtitles.h"
 #include "fileaccess/fileaccess.h"
+#include <unistd.h>
+
+#if 0
 
 /*
  *
@@ -263,13 +264,6 @@ subtitles_load(const char *filename)
   }
 }
 
-
-
-
-
-
-
-
 /*
  *
  */
@@ -305,48 +299,332 @@ subtitles_index_by_pts(subtitles_t *sub, int64_t pts)
     return h;
   }
 }
-#if 0
-/*
+
+
+#endif
+
+
+/**
  *
  */
-glw_t *
-subtitles_make_widget(subtitles_t *sub, int index)
+static int
+se_cmp(const subtitle_entry_t *a, const subtitle_entry_t *b)
+{
+  if(a->se_start > b->se_start)
+    return 1;
+  if(a->se_start < b->se_start)
+    return -1;
+  return 0;
+}
+
+typedef struct {
+  const char *buf;
+  size_t len;       // Remaining bytes in buf
+  size_t ll;        // Length of current line
+} linereader_t;
+
+
+static void
+linereader_init(linereader_t *lr, const char *buf, size_t len)
+{
+  lr->buf = buf;
+  lr->len = len;
+  lr->ll = -1;
+}
+
+
+
+/**
+ * Find end of line
+ */
+static size_t
+linereader_next(linereader_t *lr)
+{
+  size_t i;
+
+  if(lr->ll != -1) {
+    // Skip over previous line
+    lr->buf += lr->ll;
+    lr->len -= lr->ll;
+
+    /* Skip over EOL */
+    if(lr->len > 0 && lr->buf[0] == 13) {
+      lr->len--;
+      lr->buf++;
+    }
+
+    if(lr->len > 0 && lr->buf[0] == 10) {
+      lr->len--;
+      lr->buf++; 
+    }
+
+  }
+
+  if(lr->len == 0)
+    return -1;
+
+  for(i = 0; i < lr->len; i++)
+    if(lr->buf[i] == 10 || lr->buf[i] == 13)
+      break;
+
+  lr->ll = i;
+  return i;
+}
+
+
+/**
+ *
+ */
+static int
+get_int(linereader_t *lr, int *vp)
+{
+  int i, r = 0;
+  for(i = 0; i < lr->ll; i++) {
+    if(lr->buf[i] < '0' || lr->buf[i] > '9')
+      return -1;
+    r = r * 10 + lr->buf[i] - '0';
+  }
+  *vp = r;
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int64_t
+get_srt_timestamp2(const char *buf)
+{
+  return 1000LL * (
+    (buf[ 0] - '0') * 36000000LL + 
+    (buf[ 1] - '0') *  3600000LL +
+    (buf[ 3] - '0') *   600000LL +
+    (buf[ 4] - '0') *    60000LL + 
+    (buf[ 6] - '0') *    10000LL + 
+    (buf[ 7] - '0') *     1000LL +
+    (buf[ 9] - '0') *      100LL +
+    (buf[10] - '0') *       10LL +
+    (buf[11] - '0'));
+}
+
+/**
+ *
+ */
+static int
+get_srt_timestamp(linereader_t *lr, int64_t *start, int64_t *stop)
+{
+  if(lr->ll != 29 || memcmp(lr->buf + 12, " --> ", 5))
+    return -1;
+
+  *start = get_srt_timestamp2(lr->buf);
+  *stop  = get_srt_timestamp2(lr->buf + 17);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+is_srt(const char *buf, size_t len)
+{
+  linereader_t lr;
+
+  int n;
+  int64_t start, stop;
+
+  linereader_init(&lr, buf, len);
+
+  if(linereader_next(&lr) < 0)
+    return 0;
+  if(get_int(&lr, &n))
+    return 0;
+  if(linereader_next(&lr) < 0)
+    return 0;
+  if(get_srt_timestamp(&lr, &start, &stop))
+    return 0;
+
+  if(stop < start)
+    return 0;
+
+  return 1;
+
+}
+
+
+/**
+ *
+ */
+static subtitles_t *
+load_srt(const char *buf, size_t len)
+{
+  int n;
+  size_t tlen;
+  int64_t start, stop;
+  linereader_t lr;
+  subtitles_t *s = calloc(1, sizeof(subtitles_t));
+  char *txt;
+
+  RB_INIT(&s->s_entries);
+  linereader_init(&lr, buf, len);
+  
+  while(1) {
+    if(linereader_next(&lr) < 0)
+      break;
+    if(get_int(&lr, &n) < 0)
+      break;
+    if(linereader_next(&lr) < 0)
+      break;
+    if(get_srt_timestamp(&lr, &start, &stop) < 0)
+      break;
+
+    tlen = 0;
+    txt = NULL;
+    // Text lines
+    while(lr.ll != -1) {
+      if(linereader_next(&lr) < 1)
+	break;
+
+      txt = realloc(txt, tlen + lr.ll + 1);
+      memcpy(txt + tlen, lr.buf, lr.ll);
+      txt[tlen + lr.ll] = 10;
+
+      tlen += lr.ll + 1;
+    }
+
+    if(txt != NULL) {
+      subtitle_entry_t *se = malloc(sizeof(subtitle_entry_t));
+      se->se_start = start;
+      se->se_stop = stop;
+      se->se_text = txt;
+      txt[tlen - 1] = 0;
+
+      if(RB_INSERT_SORTED(&s->s_entries, se, se_link, se_cmp)) {
+	// Collision
+	free(se);
+	free(txt);
+      }
+    }
+    if(lr.ll < 0)
+      break;
+  }
+  return s;
+}
+
+
+/**
+ *
+ */
+static void
+dump_subtitles(subtitles_t *s)
 {
   subtitle_entry_t *se;
-  glw_t *y, *x;
+
+  RB_FOREACH(se, &s->s_entries, se_link) {
+    printf("PAGE: %lld -> %lld\n--\n%s\n--\n", se->se_start, se->se_stop, se->se_text);
+  }
+}
+
+/**
+ *
+ */
+subtitles_t *
+subtitles_create(const char *buf, size_t len)
+{
+  subtitles_t *s;
+  if(is_srt(buf, len)) 
+    s = load_srt(buf, len);
+  else
+    s = NULL;
+
+  if(s && 0)
+    dump_subtitles(s);
+
+  return s;
+}
 
 
-  if(index < 0 || index >= sub->sub_nentries)
+/**
+ *
+ */
+static void
+subtitle_entry_destroy(subtitle_entry_t *se)
+{
+  if(se->se_link.left != NULL)
+    subtitle_entry_destroy(se->se_link.left);
+  if(se->se_link.right != NULL)
+    subtitle_entry_destroy(se->se_link.right);
+  free(se->se_text);
+  free(se);
+}
+
+
+
+/**
+ *
+ */
+void
+subtitles_destroy(subtitles_t *s)
+{
+  if(s->s_entries.root != NULL)
+    subtitle_entry_destroy(s->s_entries.root);
+
+  free(s);
+}
+
+
+/**
+ *
+ */
+subtitle_entry_t *
+subtitles_pick(subtitles_t *s, int64_t pts)
+{
+  subtitle_entry_t skel, *se = s->s_cur;
+
+  if(se != NULL && se->se_start <= pts && se->se_stop > pts)
+    return NULL; // Already sent
+  
+  if(se != NULL) {
+    se = RB_NEXT(se, se_link);
+    if(se != NULL && se->se_start <= pts && se->se_stop > pts)
+      return s->s_cur = se;
+  }
+  
+  skel.se_start = pts;
+  se = RB_FIND_LE(&s->s_entries, &skel, se_link, se_cmp);
+  if(se == NULL || se->se_stop <= pts) {
+    s->s_cur = NULL;
     return NULL;
-  
-  se = sub->sub_vec[index];
+  }
 
-  y = glw_create(GLW_CONTAINER_Y,
-		 NULL);
-  
-  glw_create(GLW_DUMMY,
-	     GLW_ATTRIB_PARENT, y,
-	     GLW_ATTRIB_WEIGHT, 4.0f,
-	     NULL);
+  return s->s_cur = se;
+}
 
-  x = glw_create(GLW_CONTAINER_X,
-		 GLW_ATTRIB_PARENT, y,
-		 NULL);
-
-  glw_create(GLW_DUMMY,
-	     GLW_ATTRIB_PARENT, x,
-	     GLW_ATTRIB_WEIGHT, 0.1f,
-	     NULL);
 #if 0
-  glw_text_multiline(x, GLW_TEXT_BITMAP, se->se_text,
-		     300, 3, 0, 27.0);
-#endif
 
-  glw_create(GLW_DUMMY,
-	     GLW_ATTRIB_PARENT, x,
-	     GLW_ATTRIB_WEIGHT, 0.1f,
-	     NULL);
-  return y;
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+
+
+subtitles_t *
+subtitles_test(const char *fname)
+{
+  struct stat st;
+  int fd = open(fname, O_RDONLY);
+  if(fd == -1)
+    return NULL;
+
+  if(fstat(fd, &st))
+    return NULL;
+
+  char *mem = malloc(st.st_size);
+  if(read(fd, mem, st.st_size) != st.st_size)
+    return NULL;
+
+  close(fd);
+  printf("Reading subtitles\n");
+  return subtitles_create(mem, st.st_size);
 }
 #endif
-

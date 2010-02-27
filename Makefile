@@ -120,6 +120,7 @@ SRCS += src/video/video_playback.c \
 	src/video/video_decoder.c \
 	src/video/video_subtitles.c \
 	src/video/yadif.c \
+	src/video/subtitles.c \
 
 SRCS-$(CONFIG_DVD) += src/video/video_dvdspu.c
 

@@ -1,6 +1,6 @@
 /*
  *  Subtitling
- *  Copyright (C) 2007 Andreas Öman
+ *  Copyright (C) 2007, 2010 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,38 +19,30 @@
 #ifndef SUBTITLES_H_
 #define SUBTITLES_H_
 
+#include "arch/atomic.h"
+#include "misc/redblack.h"
 
-typedef enum {
-  SUBTITLE_FORMAT_UNKNOWN,
-  SUBTITLE_FORMAT_SRT,
-  SUBTITLE_FORMAT_SUB,
-} subtitle_format_t;
+RB_HEAD(subtitle_entry_tree, subtitle_entry);
 
 typedef struct subtitle_entry {
-  const char *se_text;
+  char *se_text;
   int64_t se_start;
   int64_t se_stop;
-  TAILQ_ENTRY(subtitle_entry) se_link;
+  RB_ENTRY(subtitle_entry) se_link;
 } subtitle_entry_t;
 
 
 typedef struct subtitles {
-  TAILQ_HEAD(, subtitle_entry) sub_entries;
-  subtitle_entry_t **sub_vec;
-  int sub_nentries;
-  int sub_hint;
-
+  struct subtitle_entry_tree s_entries;
+  subtitle_entry_t *s_cur;
 } subtitles_t;
 
+subtitles_t *subtitles_create(const char *buf, size_t len);
 
-void subtitles_free(subtitles_t *sub);
+void subtitles_destroy(subtitles_t *sub);
 
-subtitles_t *subtitles_load(const char *filename);
+subtitles_t *subtitles_test(const char *fname);
 
-int subtitles_index_by_pts(subtitles_t *sub, int64_t pts);
-
-//glw_t *subtitles_make_widget(subtitles_t *sub, int index);
-
-subtitle_format_t subtitle_probe_file(const char *filename);
+subtitle_entry_t *subtitles_pick(subtitles_t *sub, int64_t pts);
 
 #endif /* SUBTITLES_H_ */
