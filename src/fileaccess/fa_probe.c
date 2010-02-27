@@ -556,9 +556,12 @@ fa_probe_set_from_cache(const metadata_t *md, prop_t *proproot,
   if(md->md_title)
     prop_set_rstring(prop_create(proproot, "title"),  md->md_title);
 
-  if(md->md_artist)
+  if(md->md_artist) {
     prop_set_rstring(prop_create(proproot, "artist"), md->md_artist);
-  
+    scrapper_artist_init(prop_create(proproot, "artist_images"), 
+			 rstr_get(md->md_artist)); 
+  }
+
   if(md->md_album)
     prop_set_rstring(prop_create(proproot, "album"),  md->md_album);
 
