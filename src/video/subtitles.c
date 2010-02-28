@@ -511,7 +511,7 @@ load_srt(const char *buf, size_t len)
   return s;
 }
 
-
+#if 0
 /**
  *
  */
@@ -524,6 +524,7 @@ dump_subtitles(subtitles_t *s)
     printf("PAGE: %lld -> %lld\n--\n%s\n--\n", se->se_start, se->se_stop, se->se_text);
   }
 }
+#endif
 
 /**
  *
@@ -536,9 +537,6 @@ subtitles_create(const char *buf, size_t len)
     s = load_srt(buf, len);
   else
     s = NULL;
-
-  if(s && 0)
-    dump_subtitles(s);
 
   return s;
 }
@@ -600,7 +598,7 @@ subtitles_pick(subtitles_t *s, int64_t pts)
   return s->s_cur = se;
 }
 
-#if 0
+#if 1
 
 #include <sys/types.h>
 #include <sys/stat.h>
