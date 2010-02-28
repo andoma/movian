@@ -497,7 +497,7 @@ gv_compute_blend(glw_video_t *gv, video_decoder_frame_t *fra,
  *
  */
 static void 
-gv_new_frame(video_decoder_t *vd, glw_video_t *gv, const glw_root_t *gr)
+gv_new_frame(video_decoder_t *vd, glw_video_t *gv, glw_root_t *gr)
 {
   video_decoder_frame_t *fra, *frb;
   media_pipe_t *mp = gv->gv_mp;
@@ -559,7 +559,7 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv, const glw_root_t *gr)
     glw_video_spu_layout(vd, &gv->gv_spu, gr, pts);
 #endif
 
-    glw_video_sub_layout(vd, &gv->gv_sub, gr, pts);
+    glw_video_sub_layout(vd, &gv->gv_sub, gr, pts, (glw_t *)gv);
   }
 }
 
@@ -754,7 +754,7 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_video_t *gv = (glw_video_t *)w;
   video_decoder_t *vd = gv->gv_vd;
-
+  glw_rctx_t rc0 = *rc;
   glw_root_t *gr = w->glw_root;
   video_decoder_frame_t *fra = gv->gv_fra, *frb = gv->gv_frb;
   int width = 0, height = 0;
@@ -763,12 +763,12 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
 
   glPushMatrix();
 
-  glw_scale_to_aspect(rc, vd->vd_aspect);
+  glw_scale_to_aspect(&rc0, vd->vd_aspect);
 
   if(fra != NULL && glw_is_focusable(w))
-    glw_store_matrix(w, rc);
+    glw_store_matrix(w, &rc0);
 
-  if(rc->rc_alpha > 0.98f) 
+  if(rc0.rc_alpha > 0.98f) 
     glDisable(GL_BLEND); 
   else
     glEnable(GL_BLEND); 
@@ -780,9 +780,9 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
     height = fra->vdf_height[0];
 
     if(frb != NULL) {
-      gv_blend_frames(gv, vd, fra, frb, rc->rc_alpha, textype, rectmode);
+      gv_blend_frames(gv, vd, fra, frb, rc0.rc_alpha, textype, rectmode);
     } else {
-      render_video_1f(gv, vd, fra, rc->rc_alpha, textype, rectmode);
+      render_video_1f(gv, vd, fra, rc0.rc_alpha, textype, rectmode);
     }
   }
 
@@ -795,11 +795,14 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
   glTranslatef(-width / 2, -height / 2, 0.0f);
 
   if(width > 0 && (glw_is_focused(w) || !vd->vd_pci.hli.hl_gi.hli_ss))
-    gvo_render(&gv->gv_spu, w->glw_root, rc);
+    gvo_render(&gv->gv_spu, w->glw_root, &rc0);
 
-  gvo_render(&gv->gv_sub, w->glw_root, rc);
+  gvo_render(&gv->gv_sub, w->glw_root, &rc0);
 
   glPopMatrix();
+
+  if(gv->gv_sub.gvo_child != NULL)
+    glw_render0(gv->gv_sub.gvo_child, rc);
 }
 
 
@@ -816,6 +819,8 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
   switch(signal) {
   case GLW_SIGNAL_LAYOUT:
+    if(gv->gv_sub.gvo_child != NULL)
+      glw_layout0(gv->gv_sub.gvo_child, extra);
     return 0;
 
   case GLW_SIGNAL_DTOR:
