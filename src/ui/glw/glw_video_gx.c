@@ -470,6 +470,9 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
   gvo_render(&gv->gv_sub, w->glw_root, &rc0);
 
   glw_PopMatrix();
+
+  if(gv->gv_sub.gvo_child != NULL)
+    glw_render0(gv->gv_sub.gvo_child, rc);
 }
 
 /**
@@ -503,6 +506,8 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
   switch(signal) {
   case GLW_SIGNAL_LAYOUT:
+    if(gv->gv_sub.gvo_child != NULL)
+      glw_layout0(gv->gv_sub.gvo_child, extra);
     return 0;
 
   case GLW_SIGNAL_DTOR:

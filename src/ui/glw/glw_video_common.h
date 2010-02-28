@@ -31,6 +31,8 @@ typedef struct glw_video_overlay {
 
   int gvo_entries;
 
+  glw_t *gvo_child; // Used to render text
+
 } glw_video_overlay_t;
 
 
@@ -76,7 +78,8 @@ void glw_video_spu_layout(video_decoder_t *vd, glw_video_overlay_t *gvo,
 			  const glw_root_t *gr, int64_t pts);
 
 void glw_video_sub_layout(video_decoder_t *vd, glw_video_overlay_t *gvo, 
-			  const glw_root_t *gr, int64_t pts);
+			  glw_root_t *gr, int64_t pts,
+			  glw_t *parent);
 
 #endif /* GLW_VIDEO_COMMON_H */
 

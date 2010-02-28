@@ -289,13 +289,18 @@ gvo_deinit(glw_video_overlay_t *gvo)
   gvo->gvo_textures = NULL;
   gvo->gvo_renderers = NULL;
   gvo->gvo_entries = 0;
+
+  if(gvo->gvo_child != NULL) {
+    glw_destroy0(gvo->gvo_child);
+    gvo->gvo_child = NULL;
+  }
 }
 
 /**
  * 
  */
 static int
-gvo_setup(glw_video_overlay_t *gvo, int entries)
+gvo_setup_bitmap(glw_video_overlay_t *gvo, int entries)
 {
   if(gvo->gvo_entries == entries)
     return 0;
@@ -315,6 +320,7 @@ void
 gvo_render(glw_video_overlay_t *gvo, glw_root_t *gr, glw_rctx_t *rc)
 {
   int i;
+
   for(i = 0; i < gvo->gvo_entries; i++) {
     glw_render(&gvo->gvo_renderers[i], gr, rc,
 	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX, 
@@ -406,7 +412,7 @@ spu_repaint(glw_video_overlay_t *gvo, video_decoder_t *vd, dvdspu_t *d,
     }
   }
 
-  if(gvo_setup(gvo, 1))
+  if(gvo_setup_bitmap(gvo, 1))
     glw_render_init(&gvo->gvo_renderers[0], 4, GLW_RENDER_ATTRIBS_TEX);
 
   float w = gr->gr_normalized_texture_coords ? 1.0 : width;
@@ -482,7 +488,65 @@ glw_video_spu_layout(video_decoder_t *vd, glw_video_overlay_t *gvo,
 #endif
 
 
+/**
+ *
+ */
+static void
+glw_video_sub_layout_bitmaps(video_decoder_t *vd, glw_video_overlay_t *gvo, 
+			     const glw_root_t *gr, subtitle_t *s)
+{
+  int i;
+  if(gvo_setup_bitmap(gvo, s->s_num_rects))
+    for(i = 0; i < s->s_num_rects; i++)
+      glw_render_init(&gvo->gvo_renderers[i], 4, GLW_RENDER_ATTRIBS_TEX);
+  
+  for(i = 0; i < s->s_num_rects; i++) {
+    subtitle_rect_t *sr = &s->s_rects[i];
+    
+    float w = gr->gr_normalized_texture_coords ? 1.0 : sr->w;
+    float h = gr->gr_normalized_texture_coords ? 1.0 : sr->h;
+    
+    glw_renderer_t *r = &gvo->gvo_renderers[i];
+    
+    glw_render_vtx_pos(r, 0, sr->x,         sr->y + sr->h, 0.0f);
+    glw_render_vtx_st (r, 0, 0, h);
+    
+    glw_render_vtx_pos(r, 1, sr->x + sr->w, sr->y + sr->h, 0.0f);
+    glw_render_vtx_st (r, 1, w, h);
+    
+    glw_render_vtx_pos(r, 2, sr->x + sr->w, sr->y,         0.0f);
+    glw_render_vtx_st (r, 2, w, 0);
+    
+    glw_render_vtx_pos(r, 3, sr->x,         sr->y,         0.0f);
+    glw_render_vtx_st (r, 3, 0, 0);
 
+    glw_tex_upload(gr, &gvo->gvo_textures[i], sr->bitmap,
+		   GLW_TEXTURE_FORMAT_RGBA, sr->w, sr->h);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+glw_video_sub_layout_text(video_decoder_t *vd, glw_video_overlay_t *gvo, 
+			  glw_root_t *gr, subtitle_t *s, glw_t *parent)
+{
+  if(gvo->gvo_child != NULL)
+    glw_destroy0(gvo->gvo_child);
+
+  printf("Creating widget %s\n", s->s_text);
+
+  gvo->gvo_child = glw_create_i(gr, 
+				glw_class_find_by_name("label"),
+				GLW_ATTRIB_PARENT, parent,
+				GLW_ATTRIB_CAPTION, s->s_text,
+				GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_BOTTOM,
+				GLW_ATTRIB_SIZE_SCALE, 2.0,
+				GLW_ATTRIB_PADDING, 0.0, 0.0, 0.0, 20.0,
+				NULL);
+}
 
 
 /**
@@ -490,7 +554,7 @@ glw_video_spu_layout(video_decoder_t *vd, glw_video_overlay_t *gvo,
  */
 void
 glw_video_sub_layout(video_decoder_t *vd, glw_video_overlay_t *gvo, 
-		     const glw_root_t *gr, int64_t pts)
+		     glw_root_t *gr, int64_t pts, glw_t *parent)
 {
   subtitle_t *s;
 
@@ -498,36 +562,12 @@ glw_video_sub_layout(video_decoder_t *vd, glw_video_overlay_t *gvo,
   if((s = TAILQ_FIRST(&vd->vd_sub_queue)) != NULL && s->s_start <= pts) {
     
     if(!s->s_active) {
-      int i;
       s->s_active = 1;
 
-      if(gvo_setup(gvo, s->s_num_rects))
-	for(i = 0; i < s->s_num_rects; i++)
-	  glw_render_init(&gvo->gvo_renderers[i], 4, GLW_RENDER_ATTRIBS_TEX);
-      
-      for(i = 0; i < s->s_num_rects; i++) {
-	subtitle_rect_t *sr = &s->s_rects[i];
-	
-	float w = gr->gr_normalized_texture_coords ? 1.0 : sr->w;
-	float h = gr->gr_normalized_texture_coords ? 1.0 : sr->h;
-
-	glw_renderer_t *r = &gvo->gvo_renderers[i];
-	
-	glw_render_vtx_pos(r, 0, sr->x,         sr->y + sr->h, 0.0f);
-	glw_render_vtx_st (r, 0, 0, h);
-	
-	glw_render_vtx_pos(r, 1, sr->x + sr->w, sr->y + sr->h, 0.0f);
-	glw_render_vtx_st (r, 1, w, h);
-	
-	glw_render_vtx_pos(r, 2, sr->x + sr->w, sr->y,         0.0f);
-	glw_render_vtx_st (r, 2, w, 0);
-	
-	glw_render_vtx_pos(r, 3, sr->x,         sr->y,         0.0f);
-	glw_render_vtx_st (r, 3, 0, 0);
-
-	glw_tex_upload(gr, &gvo->gvo_textures[i], sr->bitmap,
-		       GLW_TEXTURE_FORMAT_RGBA, sr->w, sr->h);
-      }
+      if(s->s_text != NULL)
+	glw_video_sub_layout_text(vd, gvo, gr, s, parent);
+      else
+	glw_video_sub_layout_bitmaps(vd, gvo, gr, s);
 
     } else {
       
