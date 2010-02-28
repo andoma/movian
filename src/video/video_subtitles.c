@@ -38,6 +38,7 @@ video_subtitles_decode_lavc(video_decoder_t *vd, media_buf_t *mb,
   s = malloc(sizeof(subtitle_t) + sizeof(subtitle_rect_t) * sub.num_rects);
 
   s->s_active = 0;
+  s->s_text = NULL;
   s->s_start = mb->mb_pts + sub.start_display_time * 1000;
   s->s_stop  = mb->mb_pts + sub.end_display_time * 1000;
   s->s_num_rects = sub.num_rects;
@@ -91,7 +92,19 @@ video_subtitles_decode_lavc(video_decoder_t *vd, media_buf_t *mb,
 static void
 video_subtitles_cleartext(video_decoder_t *vd, media_buf_t *mb)
 {
+  subtitle_t *s = malloc(sizeof(subtitle_t));
+
+  s->s_active = 0;
+  s->s_text = strdup(mb->mb_data);
+  s->s_start = mb->mb_pts;
+  s->s_stop  = mb->mb_pts + mb->mb_duration;
+  s->s_num_rects = 0;
+
+  hts_mutex_lock(&vd->vd_sub_mutex);
+  TAILQ_INSERT_TAIL(&vd->vd_sub_queue, s, s_link);
+  hts_mutex_unlock(&vd->vd_sub_mutex);
 }
+
 
 /**
  *
@@ -119,6 +132,8 @@ video_subtitle_destroy(video_decoder_t *vd, subtitle_t *s)
 
   for(i = 0; i < s->s_num_rects; i++)
     free(s->s_rects[i].bitmap);
+
+  free(s->s_text);
   free(s);
 }
 

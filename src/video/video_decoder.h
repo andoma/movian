@@ -328,6 +328,8 @@ typedef struct subtitle {
   int64_t s_start;
   int64_t s_stop;
 
+  char *s_text;
+
   int s_num_rects;
   subtitle_rect_t s_rects[0];
 
