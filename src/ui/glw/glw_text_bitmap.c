@@ -65,7 +65,6 @@ typedef struct glw_text_bitmap {
 
   glw_backend_texture_t gtb_texture;
 
-  int gtb_renderer_inited;
 
   glw_renderer_t gtb_text_renderer;
   glw_renderer_t gtb_cursor_renderer;
@@ -74,9 +73,10 @@ typedef struct glw_text_bitmap {
   LIST_ENTRY(glw_text_bitmap) gtb_global_link;
 
   glw_text_bitmap_data_t gtb_data;
-  float gtb_aspect;
-  float gtb_siz_y;
-  float gtb_siz_x;
+
+  int16_t gtb_siz_y;
+  int16_t gtb_siz_x;
+
   enum {
     GTB_NEED_RERENDER,
     GTB_ON_QUEUE,
@@ -86,16 +86,26 @@ typedef struct glw_text_bitmap {
 
   uint8_t gtb_frozen;
   uint8_t gtb_pending_update;
+  uint8_t gtb_paint_cursor;
+  uint8_t gtb_update_cursor;
+  uint8_t gtb_renderer_inited;
+  uint8_t gtb_padding;
+
+  int16_t gtb_edit_ptr;
+  int16_t gtb_lines;
+  int16_t gtb_xsize_max;
+
+  int16_t gtb_padding_left;
+  int16_t gtb_padding_right;
+  int16_t gtb_padding_top;
+  int16_t gtb_padding_bottom;
+
+  int16_t gtb_uc_len;
+  int16_t gtb_uc_size;
 
   int cursor_flash;
 
   int *gtb_uc_buffer; /* unicode buffer */
-  int gtb_uc_len;
-  int gtb_uc_size;
-
-  int gtb_edit_ptr;
-  int gtb_paint_cursor;
-  int gtb_update_cursor;
   float gtb_cursor_alpha;
 
   int gtb_int;
@@ -111,11 +121,8 @@ typedef struct glw_text_bitmap {
   prop_sub_t *gtb_sub;
   prop_t *gtb_p;
 
-  int gtb_lines;
-
-  int gtb_xsize_max;
-
   int gtb_flags;
+
 
 } glw_text_bitmap_t;
 
@@ -440,7 +447,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
     if(gtb->gtb_flags & GTB_ELLIPSIZE)
       gtb->gtb_xsize_max = rc->rc_size_x;
     else
-      gtb->gtb_xsize_max = INT_MAX;
+      gtb->gtb_xsize_max = INT16_MAX;
 
     hts_cond_signal(&gr->gr_gtb_render_cond);
     return;
@@ -481,8 +488,6 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
     gtb->gtb_siz_x = gtbd->gtbd_siz_x;
     gtb->gtb_siz_y = gtbd->gtbd_siz_y;
-
-    gtb->gtb_aspect = (float)gtb->gtb_siz_x / (float)gtb->gtb_siz_y;
   }
 
 
@@ -550,10 +555,43 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
   if(alpha < 0.01)
     return;
- 
-  rc0 = *rc;
+ #if 0
+  glDisable(GL_TEXTURE_2D);
+  glBegin(GL_LINE_LOOP);
+  glColor4f(1,1,1,1);
+  glVertex3f(-1.0, -1.0, 0.0);
+  glVertex3f( 1.0, -1.0, 0.0);
+  glVertex3f( 1.0,  1.0, 0.0);
+  glVertex3f(-1.0,  1.0, 0.0);
+  glEnd();
+  glEnable(GL_TEXTURE_2D);
+#endif
 
+  rc0 = *rc;
   glw_PushMatrix(&rc0, rc);
+
+
+  if(gtb->gtb_padding) {
+
+    float v00 = GLW_MIN(-1.0 + 2.0 * gtb->gtb_padding_left   / rc->rc_size_x, 0.0);
+    float v10 = GLW_MAX( 1.0 - 2.0 * gtb->gtb_padding_right  / rc->rc_size_x, 0.0);
+    float v01 = GLW_MAX( 1.0 - 2.0 * gtb->gtb_padding_top    / rc->rc_size_y, 0.0);
+    float v11 = GLW_MIN(-1.0 + 2.0 * gtb->gtb_padding_bottom / rc->rc_size_y, 0.0);
+    
+    float xt = (v10 + v00) * 0.5f;
+    float yt = (v01 + v11) * 0.5f;
+    float xs = (v10 - v00) * 0.5f;
+    float ys = (v01 - v11) * 0.5f;
+
+    glw_Translatef(&rc0, xt, yt, 0.0f);
+  
+    glw_Scalef(&rc0, xs, ys, 1.0f);
+
+    rc0.rc_size_x *= xs;
+    rc0.rc_size_y *= ys;
+  }
+
+
   glw_align_1(&rc0, w->glw_alignment, GLW_ALIGN_LEFT);
 
   if(!glw_is_tex_inited(&gtb->gtb_texture) || gtb->gtb_data.gtbd_siz_x == 0) {
@@ -575,38 +613,29 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
     glw_PopMatrix();
     return;
   }
+  
+  float a = gtb->gtb_siz_y * rc0.rc_size_x / (gtb->gtb_siz_x * rc0.rc_size_y);
 
-#if 1
-  glw_scale_to_aspect(&rc0, gtb->gtb_aspect);
+  float xs = 1.0, ys = 1.0;
 
-  if(rc0.rc_size_y > gtb->gtb_siz_y ||
-     rc0.rc_size_x > gtb->gtb_siz_x) {
-    float s = (float)gtb->gtb_siz_y / rc0.rc_size_y;
-    glw_Scalef(&rc0, s, s, 1.0);
-  }
-#else
-
-  float xs, ys;
-
-  if(gtb->gtb_siz_x < rc0.rc_size_x) {
-    xs = (float)gtb->gtb_siz_x / (float)rc0.rc_size_x;
+  if(a > 1.0f) {
+    xs = 1.0 / a;
+    rc0.rc_size_x *= xs;
   } else {
-    xs = 1;
+    ys = a;
+    rc0.rc_size_y *= ys;
+  }
+  
+  if(rc0.rc_size_y > gtb->gtb_siz_y) {
+    float s = gtb->gtb_siz_y / rc0.rc_size_y;
+    xs *= s;
+    ys *= s;
   }
 
-  if(gtb->gtb_siz_y < rc0.rc_size_y) {
-    ys = (float)gtb->gtb_siz_y / (float)rc0.rc_size_y;
-  } else {
-    ys = 1;
-  }
-
-  glw_Scalef(&rc0, xs, ys, 1.0f);
-
-  rc0.rc_size_x *= xs;
-  rc0.rc_size_y *= ys;
-#endif
+  glw_Scalef(&rc0, xs, ys, 1.0);
 
   glw_align_2(&rc0, w->glw_alignment, GLW_ALIGN_LEFT);
+
 #if 0
   glDisable(GL_TEXTURE_2D);
   glBegin(GL_LINE_LOOP);
@@ -681,18 +710,14 @@ glw_text_bitmap_dtor(glw_t *w)
 static void
 gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb)
 {
-  int ys = 
+  int ys = gtb->gtb_padding_top + gtb->gtb_padding_bottom + 
     (gtb->gtb_size_bias + gr->gr_fontsize_px * gtb->gtb_size_scale)
     * gtb->gtb_lines;
-  int flags = GLW_CONSTRAINT_Y;
-
-
-  if(0 && gtb->w.glw_alignment == GLW_ALIGN_NONE &&
-     gtb->gtb_data.gtbd_siz_x > 0)
-    flags |= GLW_CONSTRAINT_X;
+  int xs = gtb->gtb_padding_left + gtb->gtb_padding_right +
+    gtb->gtb_data.gtbd_siz_x;
 
   glw_set_constraints(&gtb->w,
-		      gtb->gtb_data.gtbd_siz_x,
+		      xs,
 		      ys,
 		      0, 0, 
 		      (gtb->w.glw_alignment == GLW_ALIGN_NONE ||
@@ -1073,6 +1098,19 @@ glw_text_bitmap_set(glw_t *w, int init, va_list ap)
 		       PROP_TAG_NAMED_ROOT, p, "self",
 		       PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
 		       NULL);
+
+      break;
+
+   case GLW_ATTRIB_PADDING:
+      gtb->gtb_padding_left   = va_arg(ap, double);
+      gtb->gtb_padding_top    = va_arg(ap, double);
+      gtb->gtb_padding_right  = va_arg(ap, double);
+      gtb->gtb_padding_bottom = va_arg(ap, double);
+      if(!(gtb->w.glw_flags & GLW_CONSTRAINT_Y)) // Only update if yet unset
+	gtb_set_constraints(gtb->w.glw_root, gtb);
+      gtb->gtb_padding = !!(gtb->gtb_padding_left | gtb->gtb_padding_right |
+			    gtb->gtb_padding_top  | gtb->gtb_padding_bottom);
+
 
       break;
 
