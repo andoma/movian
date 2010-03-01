@@ -1513,7 +1513,7 @@ glw_dispatch_event(uii_t *uii, event_t *e)
     event_dispatch(e);
 }
 
-const glw_vertex_t align_vertices[] = 
+const glw_vertex_t align_vertices[GLW_ALIGN_num] = 
   {
     [GLW_ALIGN_CENTER] = {  0.0,  0.0, 0.0 },
     [GLW_ALIGN_LEFT]   = { -1.0,  0.0, 0.0 },

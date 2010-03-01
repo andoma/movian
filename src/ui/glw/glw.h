@@ -148,6 +148,7 @@ typedef enum {
   GLW_ALIGN_RIGHT,
   GLW_ALIGN_BOTTOM,
   GLW_ALIGN_TOP,
+  GLW_ALIGN_num
 } glw_alignment_t;
 
 
@@ -912,7 +913,7 @@ void glw_render_TS(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc);
 
 void glw_scale_to_aspect(glw_rctx_t *rc, float t_aspect);
 
-extern const glw_vertex_t align_vertices[];
+extern const glw_vertex_t align_vertices[GLW_ALIGN_num];
 
 static inline void
 glw_align_1(glw_rctx_t *rc, glw_alignment_t a, glw_alignment_t def)
