@@ -18,7 +18,7 @@
 
 #include "glw.h"
 #include "glw_view.h"
-#include "fileaccess/fa_rawloader.h"
+#include "fileaccess/fileaccess.h"
 
 /**
  *
@@ -353,9 +353,12 @@ glw_view_load1(glw_root_t *gr, const char *filename,
   char *src;
   rstr_t *f;
   token_t *last;
+  char errbuf[256];
 
-  if((src = fa_rawloader(filename, NULL, gr->gr_theme)) == NULL) {
-    snprintf(ei->error, sizeof(ei->error), "Unable to open \"%s\"", filename);
+  if((src = fa_quickload(filename, NULL, gr->gr_theme, 
+			 errbuf, sizeof(errbuf))) == NULL) {
+    snprintf(ei->error, sizeof(ei->error), "Unable to open \"%s\" -- %s",
+	     filename, errbuf);
     snprintf(ei->file,  sizeof(ei->file),  "%s", filename);
     ei->line = 0;
     return NULL;
@@ -364,6 +367,6 @@ glw_view_load1(glw_root_t *gr, const char *filename,
   f = rstr_alloc(filename);
   last = lexer(src, ei, f, prev);
   rstr_release(f);
-  fa_rawunload(src);
+  free(src);
   return last;
 }

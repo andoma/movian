@@ -1213,6 +1213,21 @@ http_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
 }
 
 
+/**
+ *
+ */
+static void *
+http_quickload(struct fa_protocol *fap, const char *url,
+	       size_t *sizeptr, char *errbuf, size_t errlen)
+{
+  char *res;
+
+  if(http_request(url, NULL, &res, sizeptr, errbuf, errlen, NULL, 0))
+    return NULL;
+  return res;
+}
+
+
 
 /**
  *
@@ -1228,6 +1243,7 @@ fa_protocol_t fa_protocol_http = {
   .fap_seek  = http_seek,
   .fap_fsize = http_fsize,
   .fap_stat  = http_stat,
+  .fap_quickload = http_quickload,
 };
 
 
@@ -1584,6 +1600,7 @@ fa_protocol_t fa_protocol_webdav = {
   .fap_seek  = http_seek,
   .fap_fsize = http_fsize,
   .fap_stat  = dav_stat,
+  .fap_quickload = http_quickload,
 };
 
 

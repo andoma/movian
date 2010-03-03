@@ -33,10 +33,7 @@
 #include "glw.h"
 #include "glw_texture.h"
 #include "glw_text_bitmap.h"
-#include "fileaccess/fa_rawloader.h"
-
-
-
+#include "fileaccess/fileaccess.h"
 
 typedef struct glw_text_bitmap_data {
 
@@ -1358,6 +1355,7 @@ glw_text_bitmap_init(glw_root_t *gr)
   const void *r;
   size_t size;
   const char *font_variable = "theme://font.ttf";
+  char errbuf[256];
 
   error = FT_Init_FreeType(&glw_text_library);
   if(error) {
@@ -1365,9 +1363,10 @@ glw_text_bitmap_init(glw_root_t *gr)
     return -1;
   }
 
-  if((r = fa_rawloader(font_variable, &size, gr->gr_theme)) == NULL) {
-    TRACE(TRACE_ERROR, "glw", "Unable to load font: %s (theme: %s)\n",
-	  font_variable, gr->gr_theme);
+  if((r = fa_quickload(font_variable, &size, gr->gr_theme, 
+		       errbuf, sizeof(errbuf))) == NULL) {
+    TRACE(TRACE_ERROR, "glw", "Unable to load font: %s (theme: %s) -- %s\n",
+	  font_variable, gr->gr_theme, errbuf);
     return -1;
   }
 

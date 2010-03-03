@@ -611,3 +611,50 @@ fa_ffmpeg_error_to_txt(int err)
   }
   return "Unknown errorcode";
 }
+
+
+/**
+ *
+ */
+void *
+fa_quickload(const char *url, size_t *sizeptr, const char *theme,
+	     char *errbuf, size_t errlen)
+{
+  fa_protocol_t *fap;
+  fa_handle_t *fh;
+  size_t size;
+  char *data, *filename;
+  int r;
+
+  if((filename = fa_resolve_proto(url, &fap, theme ? "theme" : NULL, theme,
+				  errbuf, errlen)) == NULL)
+    return NULL;
+
+  if(fap->fap_quickload != NULL) {
+    data = fap->fap_quickload(fap, filename, sizeptr, errbuf, errlen);
+    free(filename);
+    return data;
+  }
+
+  if((fh = fap->fap_open(fap, filename, errbuf, errlen)) == NULL)
+    return NULL;
+
+  free(filename);
+
+  size = fa_fsize(fh);
+  data = malloc(size + 1);
+
+  r = fa_read(fh, data, size);
+
+  fa_close(fh);
+
+  if(r != size) {
+    snprintf(errbuf, errlen, "Short read");
+    free(data);
+    return NULL;
+  }
+  data[size] = 0;
+  if(sizeptr)
+    *sizeptr = size;
+  return data;
+}

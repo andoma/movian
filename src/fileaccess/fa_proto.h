@@ -62,6 +62,10 @@ typedef struct fa_protocol {
 				    int type),
 		     int (*breakcheck)(void *opaque));
 
+
+  void *(*fap_quickload)(struct fa_protocol *fap, const char *url,
+			 size_t *sizeptr, char *errbuf, size_t errlen);
+
 } fa_protocol_t;
 
 

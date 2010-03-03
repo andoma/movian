@@ -128,6 +128,9 @@ void fa_scanner(const char *url, prop_t *root, int flags);
 
 void fa_scanner_find_albumart(const char *url, prop_t *album_art);
 
+void *fa_quickload(const char *filename, size_t *sizeptr, const char *theme,
+		   char *errbuf, size_t errlen);
+
 struct htsbuf_queue;
 int http_request(const char *url, const char **arguments, 
 		 char **result, size_t *result_sizep,
