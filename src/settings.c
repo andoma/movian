@@ -416,6 +416,9 @@ settings_create_string(prop_t *parent, const char *id, const char *title,
 
   s->s_prop = r;
   
+  if(flags & SETTINGS_PASSWORD)
+    prop_set_int(prop_create(r, "password"), 1);
+
   sub = prop_subscribe(flags & SETTINGS_INITIAL_UPDATE ?
 		       0 : PROP_SUB_NO_INITIAL_UPDATE,
 		       PROP_TAG_CALLBACK_STRING, settings_string_callback, s,

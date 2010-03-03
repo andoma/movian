@@ -23,6 +23,7 @@
 #include <htsmsg/htsmsg.h>
 
 #define SETTINGS_INITIAL_UPDATE 0x1
+#define SETTINGS_PASSWORD       0x2 // Make a password entry (hidden display)
 
 typedef void (settings_saver_t)(void *opaque, htsmsg_t *htsmsg);
 
