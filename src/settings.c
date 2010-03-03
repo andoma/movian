@@ -381,7 +381,8 @@ settings_string_callback(void *opaque, const char *str)
 
   if(s->s_store && s->s_saver) {
     htsmsg_delete_field(s->s_store, s->s_id);
-    htsmsg_add_str(s->s_store, s->s_id, str);
+    if(str != NULL)
+      htsmsg_add_str(s->s_store, s->s_id, str);
     s->s_saver(s->s_saver_opaque, s->s_store);
   }
 }
