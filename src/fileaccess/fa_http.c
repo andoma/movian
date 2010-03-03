@@ -503,6 +503,8 @@ http_read_response(http_file_t *hf)
   hf->hf_connection_mode = CONNECTION_MODE_PERSISTENT;
   hf->hf_rsize = -1;
   hf->hf_chunked_transfer = 0;
+  free(hf->hf_content_type);
+  hf->hf_content_type = NULL;
 
   HTTP_TRACE("%s: Reponse:", hf->hf_url);
 
