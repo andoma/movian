@@ -1,16 +1,20 @@
+#include "theme://include/plates.view"
+
 widget(container_x, {
 
   widget(label, {
-    .aspect = 20;
     .align = right;
     .caption = $self.title + ":";
   });
 
-  widget(text, {
-    .focusCursor = true;
-    .focusable = true;
-
-    .aspect = 20;
-    bind($self.value);
+  widget(backdrop, {
+    HIGHLITE_PROPS();
+    
+    widget(text, {
+      .align = left;
+      .focusable = true;
+      .password = $self.password;
+      bind($self.value);
+    });
   });
 });
