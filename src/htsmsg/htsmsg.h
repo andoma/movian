@@ -287,4 +287,10 @@ htsmsg_t *htsmsg_copy(htsmsg_t *src);
 
 #define HTSMSG_FOREACH(f, msg) TAILQ_FOREACH(f, &(msg)->hm_fields, hmf_link)
 
+
+/**
+ * Misc
+ */
+htsmsg_t *htsmsg_get_map_in_list(htsmsg_t *m, int num);
+
 #endif /* HTSMSG_H_ */

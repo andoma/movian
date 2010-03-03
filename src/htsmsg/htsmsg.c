@@ -619,3 +619,20 @@ htsmsg_copy(htsmsg_t *src)
   htsmsg_copy_i(src, dst);
   return dst;
 }
+
+/**
+ *
+ */
+htsmsg_t *
+htsmsg_get_map_in_list(htsmsg_t *m, int num)
+{
+  htsmsg_field_t *f;
+
+  HTSMSG_FOREACH(f, m) {
+    if(!--num)
+      return htsmsg_get_map_by_field(f);
+  }
+  return NULL;
+}
+
+
