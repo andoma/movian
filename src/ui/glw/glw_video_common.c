@@ -536,8 +536,6 @@ glw_video_sub_layout_text(video_decoder_t *vd, glw_video_overlay_t *gvo,
   if(gvo->gvo_child != NULL)
     glw_destroy0(gvo->gvo_child);
 
-  printf("Creating widget %s\n", s->s_text);
-
   gvo->gvo_child = glw_create_i(gr, 
 				glw_class_find_by_name("label"),
 				GLW_ATTRIB_PARENT, parent,
