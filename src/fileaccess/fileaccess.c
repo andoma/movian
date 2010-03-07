@@ -636,10 +636,11 @@ fa_quickload(const char *url, size_t *sizeptr, const char *theme,
     return data;
   }
 
-  if((fh = fap->fap_open(fap, filename, errbuf, errlen)) == NULL)
-    return NULL;
-
+  fh = fap->fap_open(fap, filename, errbuf, errlen);
   free(filename);
+
+  if(fh == NULL)
+    return NULL;
 
   size = fa_fsize(fh);
   data = malloc(size + 1);
