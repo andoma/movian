@@ -1710,8 +1710,10 @@ http_request(const char *url, const char **arguments,
     port = 80;
 
   hc = hf->hf_connection = http_connection_get(hostname, port, errbuf, errlen);
-  if(hf->hf_connection == NULL)
+  if(hf->hf_connection == NULL) {
+    http_destroy(hf);
     return -1;
+  }
 
   htsbuf_queue_init(&q, 0);
 
@@ -1770,13 +1772,17 @@ http_request(const char *url, const char **arguments,
   case 302:
   case 303:
   case 307:
-    if(redirect(hf, &redircount, errbuf, errlen, code))
+    if(redirect(hf, &redircount, errbuf, errlen, code)) {
+      http_destroy(hf);
       return -1;
+    }
     goto retry;
 
   case 401:
-    if(authenticate(hf, errbuf, errlen))
+    if(authenticate(hf, errbuf, errlen)) {
+      http_destroy(hf);
       return -1;
+    }
     goto retry;
 
   default:
