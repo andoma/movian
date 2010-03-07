@@ -38,6 +38,36 @@
 #include "video/subtitles.h"
 #include "api/opensubtitles.h"
 
+static void
+scan_subtitles(prop_t *prop, const char *url)
+{
+  char parent[512];
+  fa_dir_t *fd;
+  fa_dir_entry_t *fde;
+  char errbuf[256];
+  const char *e;
+
+  fa_parent(parent, sizeof(parent), url);
+
+  if((fd = fa_scandir_recursive(parent, errbuf, sizeof(errbuf))) == NULL) {
+    TRACE(TRACE_DEBUG, "Video", "Unable to scan %s for subtitles: %s",
+	  parent, errbuf);
+    return;
+  }
+
+  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+    
+    e = strrchr(fde->fde_url, '.');
+    if(e != NULL && !strcasecmp(e, ".srt")) {
+
+      prop_t *p = prop_create(prop, NULL);
+      prop_set_string(prop_create(p, "id"), fde->fde_url);
+      prop_set_string(prop_create(p, "title"), fde->fde_filename);
+    }
+  }
+}
+
+
 /**
  *
  */
@@ -476,8 +506,9 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   TRACE(TRACE_DEBUG, "Video", "Starting playback of %s", url);
 
-  add_off_stream(prop_create(mp->mp_prop_metadata, "subtitlestreams"),
-		 "sub:off");
+  prop_t *subs = prop_create(mp->mp_prop_metadata, "subtitlestreams");
+
+  add_off_stream(subs, "sub:off");
 
   add_off_stream(prop_create(mp->mp_prop_metadata, "audiostreams"),
 		 "audio:off");
@@ -488,10 +519,14 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   fa_probe_load_metaprop(mp->mp_prop_metadata, fctx, faurl);
 
   /**
+   * Subtitles from filesystem
+   */
+  scan_subtitles(subs, url);
+
+  /**
    * Query opensubtitles.org
    */
-
-  opensub_add_subtitles(prop_create(mp->mp_prop_metadata, "subtitlestreams"),
+  opensub_add_subtitles(subs,
 			opensub_build_query(NULL, hash, fsize, NULL, NULL));
 
   /**
