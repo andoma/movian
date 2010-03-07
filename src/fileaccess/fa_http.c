@@ -147,6 +147,67 @@ http_connection_park(http_connection_t *hc)
 }
 
 
+
+/**
+ *
+ */
+LIST_HEAD(http_redirect_list, http_redirect);
+static struct http_redirect_list http_redirects;
+static hts_mutex_t http_redirects_mutex;
+
+/**
+ *
+ */
+typedef struct http_redirect {
+
+  LIST_ENTRY(http_redirect) hr_link;
+
+  char *hr_from;
+  char *hr_to;
+
+} http_redirect_t;
+
+
+static void
+add_premanent_redirect(const char *from, const char *to)
+{
+  http_redirect_t *hr;
+
+  hts_mutex_lock(&http_redirects_mutex);
+
+  LIST_FOREACH(hr, &http_redirects, hr_link) {
+    if(!strcmp(from, hr->hr_from))
+      break;
+  }
+
+  if(hr == NULL) {
+    hr = malloc(sizeof(http_redirect_t));
+    hr->hr_from = strdup(from);
+    LIST_INSERT_HEAD(&http_redirects, hr, hr_link);
+  } else {
+    free(hr->hr_to);
+  }
+  hr->hr_to = strdup(to);
+  hts_mutex_unlock(&http_redirects_mutex);
+}
+
+
+/**
+ *  http_redirects_mutex must be locked
+ */
+static const char *
+get_url_with_redirect(const char *url)
+{
+  http_redirect_t *hr;
+
+  LIST_FOREACH(hr, &http_redirects, hr_link)
+    if(!strcmp(url, hr->hr_from))
+      return hr->hr_to;
+  return url;
+}
+
+
+
 /**
  *
  */
@@ -155,6 +216,9 @@ http_init(void)
 {
   TAILQ_INIT(&http_connections);
   hts_mutex_init(&http_connections_mutex);
+
+  LIST_INIT(&http_redirects);
+  hts_mutex_init(&http_redirects_mutex);
 }
 
 
@@ -619,7 +683,8 @@ http_detach(http_file_t *hf, int reusable)
  *
  */
 static int
-redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen)
+redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen,
+	 int code)
 {
   (*redircount)++;
   if(*redircount == 10) {
@@ -637,7 +702,11 @@ redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen)
     return -1;
   }
 
-  HTTP_TRACE("%s: Following redirect to %s", hf->hf_url, hf->hf_location);
+  if(code == 301)
+    add_premanent_redirect(hf->hf_url, hf->hf_location);
+
+  HTTP_TRACE("%s: Following redirect to %s%s", hf->hf_url, hf->hf_location,
+	     code == 301 ? ", (premanent)" : "");
 
   free(hf->hf_url);
   hf->hf_url = hf->hf_location;
@@ -727,11 +796,14 @@ http_connect(http_file_t *hf, char *errbuf, int errlen)
   if(hf->hf_connection != NULL)
     http_detach(hf, 0);
 
-  HTTP_TRACE("Connecting to %s", hf->hf_url);
+  hts_mutex_lock(&http_redirects_mutex);
 
   url_split(NULL, 0, hf->hf_authurl, sizeof(hf->hf_authurl), 
 	    hostname, sizeof(hostname), &port,
-	    hf->hf_path, sizeof(hf->hf_path), hf->hf_url);
+	    hf->hf_path, sizeof(hf->hf_path), 
+	    get_url_with_redirect(hf->hf_url));
+
+  hts_mutex_unlock(&http_redirects_mutex);
 
   if(port < 0)
     port = 80;
@@ -808,7 +880,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
   case 303:
   case 307:
     hf->hf_auth_failed = 0;
-    if(redirect(hf, &redircount, errbuf, errlen))
+    if(redirect(hf, &redircount, errbuf, errlen, code))
       return -1;
     goto reconnect;
 
@@ -976,7 +1048,7 @@ again:
     case 303:
     case 307:
       hf->hf_auth_failed = 0;
-      if(redirect(hf, &redircount, errbuf, errlen))
+      if(redirect(hf, &redircount, errbuf, errlen, code))
         return -1;
       goto reconnect;
       
@@ -1523,7 +1595,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen)
     case 303:
     case 307:
       hf->hf_auth_failed = 0;
-      if(redirect(hf, &redircount, errbuf, errlen))
+      if(redirect(hf, &redircount, errbuf, errlen, code))
 	return -1;
       continue;
 
@@ -1621,14 +1693,18 @@ http_request(const char *url, const char **arguments,
   char buf[256], hostname[128];
   http_connection_t *hc;
   int redircount = 0;
-
   hf->hf_url = strdup(url);
 
  retry:
 
+  hts_mutex_lock(&http_redirects_mutex);
+
   url_split(NULL, 0, hf->hf_authurl, sizeof(hf->hf_authurl), 
 	    hostname, sizeof(hostname), &port,
-	    hf->hf_path, sizeof(hf->hf_path), hf->hf_url);
+	    hf->hf_path, sizeof(hf->hf_path),
+	    get_url_with_redirect(hf->hf_url));
+
+  hts_mutex_unlock(&http_redirects_mutex);
 
   if(port < 0)
     port = 80;
@@ -1682,19 +1758,23 @@ http_request(const char *url, const char **arguments,
     goto retry;
   }
 
-  if(code >= 300 && code < 400) {
+  switch(code) {
+  case 200:
+    break;
 
-    if(redirect(hf, &redircount, errbuf, errlen))
+  case 301:
+  case 302:
+  case 303:
+  case 307:
+    if(redirect(hf, &redircount, errbuf, errlen, code))
       return -1;
     goto retry;
-  }
 
-  if(code != 200) {
+  default:
     snprintf(errbuf, errlen, "HTTP error: %d", code);
     http_destroy(hf);
     return -1;
   }
-
   
 
   if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE) {
