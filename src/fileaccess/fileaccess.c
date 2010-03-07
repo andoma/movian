@@ -245,6 +245,78 @@ fa_scandir(const char *url, char *errbuf, size_t errsize)
 
 
 
+
+/**
+ *
+ */
+static void
+move_fdes(fa_dir_t *to, fa_dir_t *from)
+{
+  fa_dir_entry_t *fde;
+
+  while((fde = TAILQ_LAST(&from->fd_entries, fa_dir_entry_queue)) != NULL) {
+    TAILQ_REMOVE(&from->fd_entries, fde, fde_link);
+    TAILQ_INSERT_HEAD(&to->fd_entries, fde, fde_link);
+  }
+}
+
+
+/**
+ *
+ */
+fa_dir_t *
+fa_scandir_recursive(const char *url, char *errbuf, size_t errsize)
+{
+  fa_protocol_t *fap;
+  fa_dir_t *fd;
+  char *filename;
+  fa_dir_entry_t *fde;
+
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL,
+				  errbuf, errsize)) == NULL)
+    return NULL;
+
+  if(fap->fap_scan != NULL) {
+    
+    fd = fa_dir_alloc();
+    if(!fap->fap_scan(fd, filename, errbuf, errsize)) {
+      TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+	char *s = NULL;
+	if(fde->fde_type == CONTENT_DIR) {
+	  s = strdup(fde->fde_url);
+	} else if(fde->fde_type == CONTENT_FILE) {
+	  const char *f = strrchr(fde->fde_url, '.');
+	  if(f != NULL && !strcasecmp(f, ".rar")) {
+	    s = malloc(512);
+	    snprintf(s, 512, "rar://%s|", fde->fde_url);
+	  } else if(f != NULL && !strcasecmp(f, ".zip")) {
+	    s = malloc(512);
+	    snprintf(s, 512, "zip://%s|", fde->fde_url);
+	  }
+	}
+
+	if(s != NULL) {
+	  fa_dir_t *sub = fa_scandir_recursive(s, NULL, 0);
+	  free(s);
+	  if(sub != NULL) {
+	    move_fdes(fd, sub);
+	    fa_dir_free(sub);
+	  }
+	}
+      }
+    } else {
+      fa_dir_free(fd);
+      fd = NULL;
+    }
+  } else {
+    fd = NULL;
+  }
+  free(filename);
+  return fd;
+}
+
+
+
 /**
  *
  */
@@ -658,4 +730,43 @@ fa_quickload(const char *url, size_t *sizeptr, const char *theme,
   if(sizeptr)
     *sizeptr = size;
   return data;
+}
+
+
+/**
+ *
+ */
+int
+fa_parent(char *dst, size_t dstlen, const char *url)
+{
+  const char *proto;
+  int l = strlen(url);
+  char *x, *parent  = alloca(l + 1);
+
+  memcpy(parent, url, l + 1);
+
+  x = strstr(parent, "://");
+  if(x != NULL) {
+    proto = parent;
+    *x = 0;
+    parent = x + 3;
+  } else {
+    proto = "file";
+  }
+
+  if(strcmp(parent, "/")) {
+    /* Set parent */
+    if((x = strrchr(parent, '/')) != NULL) {
+      *x = 0;
+      if(x[1] == 0) {
+	/* Trailing slash */
+	if((x = strrchr(parent, '/')) != NULL) {
+	  *x = 0;
+	}
+      }
+      snprintf(dst, dstlen, "%s://%s/", proto, parent);
+      return 0;
+    }
+  }
+  return -1;
 }

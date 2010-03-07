@@ -97,6 +97,9 @@ typedef enum {
 
 
 fa_dir_t *fa_scandir(const char *url, char *errbuf, size_t errsize);
+
+fa_dir_t *fa_scandir_recursive(const char *url, char *errbuf, size_t errsize);
+
 void *fa_open(const char *url, char *errbuf, size_t errsize);
 void *fa_open_theme(const char *url, const char *themepath);
 void fa_close(void *fh);
@@ -130,6 +133,8 @@ void fa_scanner_find_albumart(const char *url, prop_t *album_art);
 
 void *fa_quickload(const char *filename, size_t *sizeptr, const char *theme,
 		   char *errbuf, size_t errlen);
+
+int fa_parent(char *dst, size_t dstlen, const char *url);
 
 struct htsbuf_queue;
 int http_request(const char *url, const char **arguments, 
