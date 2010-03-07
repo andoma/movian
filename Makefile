@@ -52,6 +52,7 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/rstr.c \
 	src/misc/pixmap.c \
 	src/misc/jpeg.c \
+	src/misc/gz.c \
 
 #
 # HTSMSG
@@ -103,6 +104,12 @@ SRCS-$(CONFIG_BONJOUR) 	+= src/sd/bonjour.c
 #
 
 SRCS                   += src/scrappers/scrappers.c
+
+#
+# APIs
+#
+SRCS += 		src/api/xmlrpc.c \
+			src/api/opensubtitles.c \
 
 #
 # Networking

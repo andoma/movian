@@ -36,6 +36,7 @@
 #include "dvd/dvd.h"
 #include "notifications.h"
 #include "video/subtitles.h"
+#include "api/opensubtitles.h"
 
 /**
  *
@@ -329,8 +330,22 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
     } else if(event_is_type(e, EVENT_SELECT_TRACK)) {
       event_select_track_t *est = (event_select_track_t *)e;
       const char *id = est->id;
-      
-      if(id[0] >= '0' && id[0] <= '9') {
+
+      if(!strcmp(id, "sub:off")) {
+	prop_set_string(mp->mp_prop_subtitle_track_current, id);
+	mp->mp_video.mq_stream2 = -1;
+
+	if(sub != NULL) {
+	  subtitles_destroy(sub);
+	  sub = NULL;
+	}
+
+
+      } else if(!strcmp(id, "audio:off")) {
+	prop_set_string(mp->mp_prop_subtitle_track_current, id);
+	mp->mp_video.mq_stream2 = -1;
+
+      } else if(id[0] >= '0' && id[0] <= '9') {
 	unsigned int idx = atoi(est->id);
 	if(idx < fctx->nb_streams) {
 	  ctx = fctx->streams[idx]->codec;
@@ -338,10 +353,25 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
 	    mp->mp_audio.mq_stream = idx;
 	    prop_set_int(mp->mp_prop_audio_track_current, idx);
 	  } else if(ctx->codec_type == CODEC_TYPE_SUBTITLE) {
+
+	    if(sub != NULL) {
+	      subtitles_destroy(sub);
+	      sub = NULL;
+	    }
+
 	    mp->mp_video.mq_stream2 = idx;
 	    prop_set_int(mp->mp_prop_subtitle_track_current, idx);
 	  }
 	}
+      } else {
+	mp->mp_video.mq_stream2 = -1;
+
+	prop_set_string(mp->mp_prop_subtitle_track_current, est->id);
+
+	if(sub != NULL)
+	  subtitles_destroy(sub);
+
+	sub = subtitles_load(est->id);
       }
 
       
@@ -362,6 +392,19 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
 /**
  *
  */
+static void
+add_off_stream(prop_t *prop, const char *id)
+{
+  prop_t *p = prop_create(prop, NULL);
+  
+  prop_set_string(prop_create(p, "id"), id);
+  prop_set_string(prop_create(p, "title"), "Off");
+}
+
+
+/**
+ *
+ */
 event_t *
 be_file_playvideo(const char *url, media_pipe_t *mp,
 		  char *errbuf, size_t errlen)
@@ -375,6 +418,10 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   event_t *e;
   struct stat buf;
   fa_handle_t *fh;
+
+  uint64_t hash;
+  uint64_t fsize;
+  int valid_hash = 0;
 
   if(fa_stat(url, &buf, errbuf, errlen))
     return NULL;
@@ -404,9 +451,12 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     return NULL;
 #endif
   }
+
+
+  valid_hash = !opensub_compute_hash(fh, &hash);
+  fsize = fa_fsize(fh);
   fa_close(fh);
-
-
+  
   /**
    * Open input file
    */
@@ -426,10 +476,23 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   TRACE(TRACE_DEBUG, "Video", "Starting playback of %s", url);
 
+  add_off_stream(prop_create(mp->mp_prop_metadata, "subtitlestreams"),
+		 "sub:off");
+
+  add_off_stream(prop_create(mp->mp_prop_metadata, "audiostreams"),
+		 "audio:off");
+
   /**
    * Update property metadata
    */
   fa_probe_load_metaprop(mp->mp_prop_metadata, fctx, faurl);
+
+  /**
+   * Query opensubtitles.org
+   */
+
+  opensub_add_subtitles(prop_create(mp->mp_prop_metadata, "subtitlestreams"),
+			opensub_build_query(NULL, hash, fsize, NULL, NULL));
 
   /**
    * Init codec contexts
@@ -460,6 +523,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   }
 
   prop_set_int(mp->mp_prop_audio_track_current, mp->mp_audio.mq_stream);
+
+  prop_set_string(mp->mp_prop_subtitle_track_current, "sub:off");
 
   mp_set_play_caps(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE);
 

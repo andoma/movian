@@ -41,6 +41,7 @@
 #include "ipc/ipc.h"
 #include "scrappers/scrappers.h"
 #include "misc/callout.h"
+#include "api/opensubtitles.h"
 
 /**
  *
@@ -216,6 +217,9 @@ main(int argc, char **argv)
 
   /* Service discovery. Must be after ipc_init() (d-bus and threads, etc) */
   sd_init();
+
+  /* opensubtitles.org */
+  opensub_init();
 
   TRACE(TRACE_DEBUG, "core", "Starting UI");
 

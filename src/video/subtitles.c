@@ -18,13 +18,12 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <sys/time.h>
-#include <time.h>
+#include <unistd.h>
 
 #include "showtime.h"
 #include "subtitles.h"
 #include "fileaccess/fileaccess.h"
-#include <unistd.h>
+#include "misc/gz.h"
 
 #if 0
 
@@ -598,31 +597,50 @@ subtitles_pick(subtitles_t *s, int64_t pts)
   return s->s_cur = se;
 }
 
-#if 1
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <fcntl.h>
-
-
+/**
+ *
+ */
 subtitles_t *
-subtitles_test(const char *fname)
+subtitles_load(const char *url)
 {
-  struct stat st;
-  int fd = open(fname, O_RDONLY);
-  if(fd == -1)
-    return NULL;
+  subtitles_t *sub;
+  char errbuf[256];
+  size_t datalen;
 
-  if(fstat(fd, &st))
-    return NULL;
+  char *data = fa_quickload(url, &datalen, NULL, errbuf, sizeof(errbuf));
 
-  char *mem = malloc(st.st_size);
-  if(read(fd, mem, st.st_size) != st.st_size)
+  if(data == NULL) {
+    TRACE(TRACE_ERROR, "Subtitles", "Unable to load %s -- %s", 
+	  url, errbuf);
     return NULL;
+  }
 
-  close(fd);
-  printf("Reading subtitles\n");
-  return subtitles_create(mem, st.st_size);
+  if(gz_check(data, datalen)) {
+    // is .gz compressed, inflate it
+
+    char *inflated;
+    size_t inflatedlen;
+
+    inflated = gz_inflate(data, datalen, &inflatedlen, errbuf, sizeof(errbuf));
+
+    free(data);
+    if(inflated == NULL) {
+      TRACE(TRACE_ERROR, "Subtitles", "Unable to decompress %s -- %s", 
+	    url, errbuf);
+      return NULL;
+    } else {
+      data = inflated;
+      datalen = inflatedlen;
+    }
+  }
+
+  sub = subtitles_create(data, datalen);
+
+  free(data);
+
+  if(sub == NULL)
+    TRACE(TRACE_ERROR, "Subtitles", "Unable to load %s -- Unknown format", 
+	  url);
+  return sub;
 }
-#endif

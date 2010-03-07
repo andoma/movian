@@ -45,4 +45,6 @@ subtitles_t *subtitles_test(const char *fname);
 
 subtitle_entry_t *subtitles_pick(subtitles_t *sub, int64_t pts);
 
+subtitles_t *subtitles_load(const char *url);
+
 #endif /* SUBTITLES_H_ */
