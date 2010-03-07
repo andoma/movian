@@ -1745,6 +1745,10 @@ http_request(const char *url, const char **arguments,
   if(postcontenttype != NULL) 
     htsbuf_qprintf(&q, "Content-Type: %s\r\n", postcontenttype);
 
+  if(hf->hf_auth != NULL)
+    htsbuf_qprintf(&q, "%s\r\n", hf->hf_auth);
+
+
   htsbuf_qprintf(&q, "\r\n");
 
   tcp_write_queue(hf->hf_connection->hc_fd, &q);
@@ -1767,6 +1771,11 @@ http_request(const char *url, const char **arguments,
   case 303:
   case 307:
     if(redirect(hf, &redircount, errbuf, errlen, code))
+      return -1;
+    goto retry;
+
+  case 401:
+    if(authenticate(hf, errbuf, errlen))
       return -1;
     goto retry;
 
@@ -1855,7 +1864,3 @@ http_request(const char *url, const char **arguments,
   http_destroy(hf);
   return 0;
 }
-
-
-
-
