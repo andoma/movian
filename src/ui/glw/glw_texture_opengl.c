@@ -24,7 +24,6 @@
 
 #include "glw.h"
 #include "glw_texture.h"
-#include "glw_scaler.h"
 
 /**
  * Free texture (always invoked in main rendering thread)
@@ -100,9 +99,6 @@ make_powerof2(int v)
 }
 
 static void texture_load_direct(AVPicture *pict, glw_loadable_texture_t *glt);
-
-static void texture_load_rescale(AVPicture *pict, int src_w, int src_h,
-				 glw_loadable_texture_t *glt);
 
 static void texture_load_rescale_swscale(const AVPicture *pict, int pix_fmt, 
 					 int src_w, int src_h,
@@ -189,7 +185,7 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
     return r;
   }
 
-  if(!glw_can_tnpo2(gr)) {
+  if(1 || !glw_can_tnpo2(gr)) {
     /* We lack non-power-of-two texture support, check if we must rescale.
      * Since the bitmap aspect is already calculated, it will automatically 
      * compensate the rescaling when we render the texture.
@@ -200,6 +196,10 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 
     if(1 << av_log2(req_h) != req_h)
       req_h = make_powerof2(req_h);
+
+    printf("Scale from %d,%d -> %d,%d\n",
+	   src_w, src_h, req_w, req_h);
+
   }
 
   need_rescale = req_w != src_w || req_h != src_h;
@@ -207,9 +207,7 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
   glt->glt_xs = req_w;
   glt->glt_ys = req_h;
 
-  if(need_rescale && !need_format_conv) {
-    texture_load_rescale(pict, src_w, src_h, glt);
-  } else if(need_rescale || need_format_conv) {
+  if(need_rescale || need_format_conv) {
     texture_load_rescale_swscale(pict, pix_fmt, src_w, src_h, glt);
   } else {
     texture_load_direct(pict, glt);
@@ -250,33 +248,17 @@ texture_load_direct(AVPicture *pict, glw_loadable_texture_t *glt)
   }
 }
 
-/**
- * Rescaling with internal libglw scaler
- */
-static void
-texture_load_rescale(AVPicture *pict, int src_w, int src_h,
-		     glw_loadable_texture_t *glt)
-{
-  glt->glt_bitmap_size = glt->glt_bpp * glt->glt_xs * glt->glt_ys;
-  glt->glt_bitmap = mmap(NULL, glt->glt_bitmap_size,
-			 PROT_READ | PROT_WRITE, 
-			 MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-
-  glw_bitmap_rescale(pict->data[0], src_w, src_h, pict->linesize[0],
-		     glt->glt_bitmap, glt->glt_xs, glt->glt_ys, 
-		     glt->glt_xs * glt->glt_bpp, glt->glt_bpp);
-}
-
 
 /**
  * Rescaling with FFmpeg's swscaler
  */
 static void
-texture_load_rescale_swscale(const AVPicture *pict, int pix_fmt, 
+texture_load_rescale_swscale(const AVPicture *pict, int src_pix_fmt, 
 			     int src_w, int src_h,
 			     glw_loadable_texture_t *glt)
 {
   AVPicture pic;
+  int dst_pix_fmt;
   struct SwsContext *sws;
   const uint8_t *ptr[4];
   int strides[4];
@@ -293,16 +275,31 @@ texture_load_rescale_swscale(const AVPicture *pict, int pix_fmt,
   strides[2] = pict->linesize[2];
   strides[3] = pict->linesize[3];
 
-  sws = sws_getContext(src_w, src_h, pix_fmt, 
-		       w, h, PIX_FMT_RGB24,
+  if(src_pix_fmt == PIX_FMT_BGRA) {
+
+    dst_pix_fmt = PIX_FMT_RGBA;
+
+    glt->glt_bpp = 4;
+    glt->glt_format = GL_RGBA;
+    glt->glt_ext_format = GL_RGBA;
+
+  } else {
+
+    dst_pix_fmt = PIX_FMT_RGB24;
+
+    glt->glt_bpp = 3;
+    glt->glt_format = GL_RGB;
+    glt->glt_ext_format = GL_RGB;
+
+  }
+
+  glt->glt_ext_type = GL_UNSIGNED_BYTE;
+
+  sws = sws_getContext(src_w, src_h, src_pix_fmt, 
+		       w, h, dst_pix_fmt,
 		       SWS_BICUBIC, NULL, NULL, NULL);
   if(sws == NULL)
     return;
-
-  glt->glt_bpp = 3;
-  glt->glt_format = GL_RGB;
-  glt->glt_ext_format = GL_RGB;
-  glt->glt_ext_type = GL_UNSIGNED_BYTE;
 
   glt->glt_bitmap_size = glt->glt_bpp * glt->glt_xs * glt->glt_ys;
   

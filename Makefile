@@ -255,7 +255,6 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_transitions.c \
 			src/ui/glw/glw_navigation.c \
 			src/ui/glw/glw_texture_loader.c \
-			src/ui/glw/glw_scaler.c  \
 			src/ui/glw/glw_image.c \
 			src/ui/glw/glw_text_bitmap.c \
 			src/ui/glw/glw_fx_texrot.c \
