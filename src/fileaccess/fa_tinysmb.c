@@ -280,7 +280,7 @@ smb_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
     return -1;
   }
 
-  while(1) {
+  do {
 
     if(entry.name[0] != '.') {
 
@@ -290,10 +290,7 @@ smb_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
       fa_dir_add(fd, eurl, entry.name, 
 		 entry.attributes & 0x10 ? CONTENT_DIR : CONTENT_FILE);
     }
-    r = SMB_FindNext(&entry, sc->sc_conn);
-    if(r != SMB_SUCCESS)
-      break;
-  }
+  } while(SMB_FindNext(&entry, sc->sc_conn) == SMB_SUCCESS);
   
   fa_dir_sort(fd);
   release_connection(sc);
