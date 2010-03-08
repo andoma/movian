@@ -86,6 +86,7 @@ setup_ffmpeg --extra-cflags=-I${LIBOGC}/include \
     --cross-prefix=${DEVKITPPC}/bin/powerpc-eabi- \
     --enable-cross-compile \
     --arch=powerpc \
+    --target-os=none \
     --cpu=750 \
     --disable-altivec \
     --enable-small \

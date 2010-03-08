@@ -199,7 +199,7 @@ gv_compute_blend(glw_video_t *gv, video_decoder_frame_t *fra,
 
 
 static void 
-gv_new_frame(video_decoder_t *vd, glw_video_t *gv, const glw_root_t *gr)
+gv_new_frame(video_decoder_t *vd, glw_video_t *gv, glw_root_t *gr)
 {
   video_decoder_frame_t *fra, *frb;
   media_pipe_t *mp = gv->gv_mp;
@@ -258,7 +258,7 @@ gv_new_frame(video_decoder_t *vd, glw_video_t *gv, const glw_root_t *gr)
 #if ENABLE_DVD
     glw_video_spu_layout(vd, &gv->gv_spu, gr, pts);
 #endif
-    glw_video_sub_layout(vd, &gv->gv_sub, gr, pts);
+    glw_video_sub_layout(vd, &gv->gv_sub, gr, pts, (glw_t *)gv);
   }
 }
 

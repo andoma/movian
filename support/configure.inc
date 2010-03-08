@@ -172,6 +172,7 @@ setup_ffmpeg() {
 	--disable-ffserver \
 	--disable-ffmpeg \
 	--disable-ffplay \
+	--disable-ffprobe \
 	--disable-bzlib \
 	"$@"
 	)

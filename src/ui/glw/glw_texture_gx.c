@@ -31,7 +31,6 @@
 
 #include "glw.h"
 #include "glw_texture.h"
-#include "glw_scaler.h"
 
 #include "showtime.h"
 
