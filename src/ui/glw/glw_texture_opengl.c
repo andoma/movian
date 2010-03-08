@@ -185,7 +185,7 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
     return r;
   }
 
-  if(1 || !glw_can_tnpo2(gr)) {
+  if(!glw_can_tnpo2(gr)) {
     /* We lack non-power-of-two texture support, check if we must rescale.
      * Since the bitmap aspect is already calculated, it will automatically 
      * compensate the rescaling when we render the texture.
@@ -196,10 +196,6 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 
     if(1 << av_log2(req_h) != req_h)
       req_h = make_powerof2(req_h);
-
-    printf("Scale from %d,%d -> %d,%d\n",
-	   src_w, src_h, req_w, req_h);
-
   }
 
   need_rescale = req_w != src_w || req_h != src_h;
