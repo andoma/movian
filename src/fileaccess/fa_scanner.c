@@ -81,16 +81,36 @@ set_type(prop_t *proproot, unsigned int type)
 /**
  *
  */
+static rstr_t *
+make_filename(const char *filename)
+{
+  char *s = mystrdupa(filename);
+  char *p = strrchr(s, '.');
+  if(p != NULL)
+    *p = 0;
+
+  return rstr_alloc(s);
+}
+
+
+
+/**
+ *
+ */
 static void
 add_prop(fa_dir_entry_t *fde, prop_t *root, fa_dir_entry_t *before)
 {
   prop_t *p = prop_create(NULL, "node");
+  rstr_t *fname = make_filename(fde->fde_filename);
 
   prop_set_string(prop_create(p, "url"), fde->fde_url);
   set_type(p, fde->fde_type);
 
-  prop_set_string(prop_create(prop_create(p, "metadata"), "title"), 
-		  fde->fde_filename);
+  prop_set_rstring(prop_create(p, "filename"), fname);
+
+  prop_set_rstring(prop_create(prop_create(p, "metadata"), "title"), fname);
+
+  rstr_release(fname);
 
   if(prop_set_parent_ex(p, root, before ? before->fde_prop : NULL, NULL)) {
     prop_destroy(p);

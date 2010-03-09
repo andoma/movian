@@ -16,7 +16,7 @@ widget(backdrop, {
 
     widget(label, {
       .align = left; 
-      .caption = $self.metadata.title;
+      .caption = $self.filename;
       .weight = 4.0;
       .ellipsize = true;
     });
