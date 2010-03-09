@@ -1,5 +1,5 @@
 /*
- *  GL Widgets, Animator
+ *  GL Widgets, View loader
  *  Copyright (C) 2008 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 #include "glw_transitions.h"
 
 
-typedef struct glw_animator {
+typedef struct glw_view_loader {
   glw_t w;
   
   struct prop *prop;
@@ -31,20 +31,20 @@ typedef struct glw_animator {
 
   glw_transition_type_t efx_conf;
 
-} glw_animator_t;
+} glw_view_loader_t;
 
 
-#define glw_parent_anim_cur glw_parent_misc[0]
-#define glw_parent_anim_tgt glw_parent_misc[1]
+#define glw_parent_vl_cur glw_parent_misc[0]
+#define glw_parent_vl_tgt glw_parent_misc[1]
 
 /**
  *
  */
 static int
-glw_animator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
+glw_view_loader_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_t *c, *n;
-  glw_animator_t *a = (void *)w;
+  glw_view_loader_t *a = (void *)w;
   glw_rctx_t *rc = extra;
 
   switch(signal) {
@@ -57,10 +57,10 @@ glw_animator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     for(c = TAILQ_FIRST(&w->glw_childs); c != NULL; c = n) {
       n = TAILQ_NEXT(c, glw_parent_link);
 
-      c->glw_parent_anim_cur = 
-	GLW_MIN(c->glw_parent_anim_cur + a->delta, c->glw_parent_anim_tgt);
+      c->glw_parent_vl_cur = 
+	GLW_MIN(c->glw_parent_vl_cur + a->delta, c->glw_parent_vl_tgt);
       
-      if(c->glw_parent_anim_cur == 1) {
+      if(c->glw_parent_vl_cur == 1) {
 	glw_destroy0(c);
 
 	if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
@@ -74,7 +74,7 @@ glw_animator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
   case GLW_SIGNAL_DETACH_CHILD:
     c = extra;
-    c->glw_parent_anim_tgt = 1;
+    c->glw_parent_vl_tgt = 1;
     return 1;
 
   case GLW_SIGNAL_CHILD_CREATED:
@@ -83,19 +83,19 @@ glw_animator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     if(TAILQ_FIRST(&w->glw_childs) == c &&
        TAILQ_NEXT(c, glw_parent_link) == NULL &&
        w->glw_flags & GLW_NO_INITIAL_TRANS) {
-      c->glw_parent_anim_cur = 0;
+      c->glw_parent_vl_cur = 0;
     } else {
-      c->glw_parent_anim_cur = -1;
+      c->glw_parent_vl_cur = -1;
     }
 
-    c->glw_parent_anim_tgt = 0;
+    c->glw_parent_vl_tgt = 0;
     
     glw_focus_open_path_close_all_other(c);
 
     TAILQ_FOREACH(n, &w->glw_childs, glw_parent_link) {
       if(c == n)
 	continue;
-      n->glw_parent_anim_tgt = 1;
+      n->glw_parent_vl_tgt = 1;
     }
 
     if(c == TAILQ_FIRST(&w->glw_childs)) {
@@ -118,24 +118,24 @@ glw_animator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
  *
  */
 static void
-glw_animator_render(glw_t *w, glw_rctx_t *rc)
+glw_view_loader_render(glw_t *w, glw_rctx_t *rc)
 {
   float alpha = rc->rc_alpha * w->glw_alpha;
-  glw_animator_t *a = (glw_animator_t *)w;
+  glw_view_loader_t *a = (glw_view_loader_t *)w;
   glw_t *c;
   glw_rctx_t rc0;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     
     rc0 = *rc;
-    if(c->glw_parent_anim_cur == 0) {
+    if(c->glw_parent_vl_cur == 0) {
       rc0.rc_alpha = alpha;
       glw_render0(c, &rc0);
       continue;
     }
     
     glw_PushMatrix(&rc0, rc);
-    glw_transition_render(a->efx_conf, c->glw_parent_anim_cur, alpha, &rc0);
+    glw_transition_render(a->efx_conf, c->glw_parent_vl_cur, alpha, &rc0);
     glw_render0(c, &rc0);
     glw_PopMatrix();
   }
@@ -146,9 +146,9 @@ glw_animator_render(glw_t *w, glw_rctx_t *rc)
  *
  */
 static void 
-glw_animator_set(glw_t *w, int init, va_list ap)
+glw_view_loader_set(glw_t *w, int init, va_list ap)
 {
-  glw_animator_t *a = (void *)w;
+  glw_view_loader_t *a = (void *)w;
 
   glw_attribute_t attrib;
   const char *filename = NULL;
@@ -192,7 +192,7 @@ glw_animator_set(glw_t *w, int init, va_list ap)
     } else {
       /* Fade out all */
       TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-	c->glw_parent_anim_tgt = 1;
+	c->glw_parent_vl_tgt = 1;
     }
   }
 }
@@ -201,12 +201,12 @@ glw_animator_set(glw_t *w, int init, va_list ap)
 /**
  *
  */
-static glw_class_t glw_animator = {
-  .gc_name = "animator",
-  .gc_instance_size = sizeof(glw_animator_t),
-  .gc_set = glw_animator_set,
-  .gc_render = glw_animator_render,
-  .gc_signal_handler = glw_animator_callback,
+static glw_class_t glw_view_loader = {
+  .gc_name = "loader",
+  .gc_instance_size = sizeof(glw_view_loader_t),
+  .gc_set = glw_view_loader_set,
+  .gc_render = glw_view_loader_render,
+  .gc_signal_handler = glw_view_loader_callback,
 };
 
-GLW_REGISTER_CLASS(glw_animator);
+GLW_REGISTER_CLASS(glw_view_loader);

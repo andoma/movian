@@ -6,7 +6,7 @@ widget(container_y, {
   widget(container_x, {
     widget(list_y, {
       .id = "list";
-      cloner($page.nodes, animator, {
+      cloner($page.nodes, loader, {
 	.time = 0.3;
 	.source = "theme://directoryviews/list/track.view";
       });

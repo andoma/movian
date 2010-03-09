@@ -1,4 +1,4 @@
-widget(animator, {
+widget(loader, {
   .time = 0.1;
   .source = "theme://directoryviews/" + $page.view + ".view";
 });

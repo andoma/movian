@@ -16,7 +16,7 @@ widget(container_y, {
     cloner($page.nodes, backdrop, {
       HIGHLITE_PROPS();
 
-      widget(animator, {
+      widget(loader, {
 	.time = 0.3;
 	.source = translate($self.type, 
 			    "theme://directoryviews/square/void.view",

@@ -46,7 +46,7 @@ widget(container_x, {
 	BUTTON_PROPS(1.0);
 	onEvent(enter, navOpen($self.url, $self.type, $parent.url));
     
-	widget(animator, {
+	widget(loader, {
 	  .time = 0.3;
 	  .source = "theme://directoryviews/album/track.view";
 	});

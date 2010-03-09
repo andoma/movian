@@ -78,7 +78,7 @@ widget(container_x, {
 			 event(SeekReverse), 2,
 			 $global.media.current.canSeek);
 	    
-	    widget(animator, {
+	    widget(loader, {
 	      .hidden = !$global.media.current.canPause;
 	      .time = 0.2;
 	      .source = translate($global.media.current.playstatus, 

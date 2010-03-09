@@ -7,7 +7,7 @@ widget(container_y, {
     widget(list_y, {
       .childAspect = 20;
       .id = "list";
-      cloner($page.nodes, animator, {
+      cloner($page.nodes, loader, {
 	.source = "theme://settings/" + $self.type + ".view";
       });
     });

@@ -12,7 +12,7 @@ widget(container_y, {
     widget(list_y, {
       .id = "list";
       $self.needScroll = needScroll();
-      cloner($page.nodes, animator, {
+      cloner($page.nodes, loader, {
 	.time = 0.3;
 	.noInitialTransform = true;
 	.effect = flipHorizontal;

@@ -99,7 +99,7 @@ widget(container_z, {
 	    .filterConstraintX = true;
 	    delta($ui.fullwindow, wantFullWindow());
 	    
-	    cloner($global.nav.pages, animator, {
+	    cloner($global.nav.pages, loader, {
 	      .time = 0.3;
 	      .source = "theme://pages/" + $page.type + ".view";
 	    });
@@ -110,7 +110,7 @@ widget(container_z, {
 	  .expansion = !$ui.fullwindow;
 	  
 	  widget(deck, {
-	    cloner($global.media.sources, animator, {
+	    cloner($global.media.sources, loader, {
 	      .time = 0.3;
 	      .source = "theme://playdecks/" + $self.type + ".view";
 	    });
@@ -136,7 +136,7 @@ widget(container_z, {
 
       #include "theme://commandmenu.view"
    
-      cloner($global.popups, animator, {
+      cloner($global.popups, loader, {
 	.source = "theme://popups/" + $self.type + ".view";
       });
     });

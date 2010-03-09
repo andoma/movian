@@ -240,6 +240,7 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_view_preproc.c \
 			src/ui/glw/glw_view_support.c \
 			src/ui/glw/glw_view_attrib.c \
+			src/ui/glw/glw_view_loader.c \
 			src/ui/glw/glw_dummy.c \
 			src/ui/glw/glw_container.c \
 			src/ui/glw/glw_list.c \
@@ -250,7 +251,6 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_slider.c \
 			src/ui/glw/glw_rotator.c  \
 			src/ui/glw/glw_throbber3d.c  \
-			src/ui/glw/glw_animator.c \
 			src/ui/glw/glw_slideshow.c \
 			src/ui/glw/glw_freefloat.c \
 			src/ui/glw/glw_transitions.c \
