@@ -49,7 +49,8 @@ scan_subtitles(prop_t *prop, const char *url)
 
   fa_parent(parent, sizeof(parent), url);
 
-  if((fd = fa_scandir_recursive(parent, errbuf, sizeof(errbuf))) == NULL) {
+  if((fd = fa_scandir_recursive(parent, errbuf, sizeof(errbuf),
+				FA_SCAN_ARCHIVES)) == NULL) {
     TRACE(TRACE_DEBUG, "Video", "Unable to scan %s for subtitles: %s",
 	  parent, errbuf);
     return;

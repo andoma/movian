@@ -265,7 +265,8 @@ move_fdes(fa_dir_t *to, fa_dir_t *from)
  *
  */
 fa_dir_t *
-fa_scandir_recursive(const char *url, char *errbuf, size_t errsize)
+fa_scandir_recursive(const char *url, char *errbuf, size_t errsize,
+		     int flags)
 {
   fa_protocol_t *fap;
   fa_dir_t *fd;
@@ -284,7 +285,7 @@ fa_scandir_recursive(const char *url, char *errbuf, size_t errsize)
 	char *s = NULL;
 	if(fde->fde_type == CONTENT_DIR) {
 	  s = strdup(fde->fde_url);
-	} else if(fde->fde_type == CONTENT_FILE) {
+	} else if(flags & FA_SCAN_ARCHIVES && fde->fde_type == CONTENT_FILE) {
 	  const char *f = strrchr(fde->fde_url, '.');
 	  if(f != NULL && !strcasecmp(f, ".rar")) {
 	    s = malloc(URL_MAX);
@@ -296,7 +297,7 @@ fa_scandir_recursive(const char *url, char *errbuf, size_t errsize)
 	}
 
 	if(s != NULL) {
-	  fa_dir_t *sub = fa_scandir_recursive(s, NULL, 0);
+	  fa_dir_t *sub = fa_scandir_recursive(s, NULL, 0, flags);
 	  free(s);
 	  if(sub != NULL) {
 	    move_fdes(fd, sub);
@@ -592,6 +593,9 @@ fileaccess_init(void)
   INITPROTO(tinysmb);
 #endif
   av_register_protocol(&fa_lavf_proto);
+
+  fa_vdb_init();
+
   return 0;
 }
 

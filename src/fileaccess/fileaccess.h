@@ -98,7 +98,10 @@ typedef enum {
 
 fa_dir_t *fa_scandir(const char *url, char *errbuf, size_t errsize);
 
-fa_dir_t *fa_scandir_recursive(const char *url, char *errbuf, size_t errsize);
+#define FA_SCAN_ARCHIVES 0x1
+
+fa_dir_t *fa_scandir_recursive(const char *url, char *errbuf, size_t errsize,
+			       int flags);
 
 void *fa_open(const char *url, char *errbuf, size_t errsize);
 void *fa_open_theme(const char *url, const char *themepath);
@@ -141,5 +144,7 @@ int http_request(const char *url, const char **arguments,
 		 char **result, size_t *result_sizep,
 		 char *errbuf, size_t errlen,
 		 struct htsbuf_queue *postdata, const char *postcontenttype);
+
+void fa_vdb_init(void);
 
 #endif /* FILEACCESS_H */
