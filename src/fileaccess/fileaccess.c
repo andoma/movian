@@ -594,8 +594,6 @@ fileaccess_init(void)
 #endif
   av_register_protocol(&fa_lavf_proto);
 
-  fa_vdb_init();
-
   return 0;
 }
 

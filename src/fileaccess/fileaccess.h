@@ -145,6 +145,4 @@ int http_request(const char *url, const char **arguments,
 		 char *errbuf, size_t errlen,
 		 struct htsbuf_queue *postdata, const char *postcontenttype);
 
-void fa_vdb_init(void);
-
 #endif /* FILEACCESS_H */
