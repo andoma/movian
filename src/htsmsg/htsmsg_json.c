@@ -27,6 +27,8 @@
 #include "htsbuf.h"
 #include "misc/string.h"
 
+#include <libavutil/common.h>
+
 /**
  *
  */
@@ -190,9 +192,30 @@ htsmsg_json_parse_string(const char *s, const char **endp)
 	    else if(*a == 't')
 	      *b++ = '\t';
 	    else if(*a == 'u') {
-	      /* 4 hexdigits: Not supported */
-	      free(r);
-	      return NULL;
+	      // Unicode character
+	      int i, v = 0;
+	      uint8_t tmp;
+
+	      a++;
+	      for(i = 0; i < 4; i++) {
+		v = v << 4;
+		switch(a[i]) {
+		case '0' ... '9':
+		  v |= a[i] - '0';
+		  break;
+		case 'a' ... 'f':
+		  v |= a[i] - 'a' + 10;
+		  break;
+		case 'A' ... 'F':
+		  v |= a[i] - 'F' + 10;
+		  break;
+		default:
+		  free(r);
+		  return NULL;
+		}
+	      }
+	      a+=3;
+	      PUT_UTF8(v, tmp, *b++ = tmp;)
 	    } else {
 	      *b++ = *a;
 	    }
