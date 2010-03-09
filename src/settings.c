@@ -76,7 +76,7 @@ settings_add(const char *id, const char *title, const char *type)
 static void
 settings_set_url(prop_t *p, prop_t *parent)
 {
-  char url[200];
+  char url[URL_MAX];
   prop_t **a;
   int i;
 

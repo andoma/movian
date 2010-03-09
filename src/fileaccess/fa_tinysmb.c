@@ -98,9 +98,9 @@ static smb_connection_t *
 get_connection(const char *url, const char **fname,
 	       char *errbuf, size_t errlen)
 {
-  char host[64];
-  char share[64];
-  char buf1[128];
+  char host[HOSTNAME_MAX];
+  char share[SMB_MAXPATH];
+  char buf1[512];
   char *username;
   char *password;
   SMBCONN conn;
@@ -252,7 +252,7 @@ smb_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
   int r;
   char path[SMB_MAXPATH];
   SMBDIRENTRY entry = {0};
-  char eurl[256];
+  char eurl[URL_MAX];
 
   if((sc = get_connection(url, &fname, errbuf, errlen)) == NULL)
     return -1;

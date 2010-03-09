@@ -52,7 +52,7 @@ fs_urlsnprintf(char *buf, size_t bufsize, const char *prefix, const char *base,
 static int
 fs_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 {
-  char buf[256];
+  char buf[URL_MAX];
   struct stat st;
   struct dirent *d;
   int type;
@@ -199,7 +199,7 @@ fs_notify(struct fa_protocol *fap, const char *url,
 {
   int fd, n;
   char buf[1024];
-  char buf2[256];
+  char buf2[URL_MAX];
   struct pollfd fds;
   struct inotify_event *e;
   LIST_HEAD(, notify_created_file) pending_create;

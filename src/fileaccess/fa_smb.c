@@ -123,7 +123,7 @@ smb_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
   SMBCCTX *ctx = smb_get_thread_context();
   SMBCFILE *fd;
   struct smbc_dirent *dirent;
-  char buf[256];
+  char buf[URL_MAX];
   int l, i;
 
   /* Sorting */

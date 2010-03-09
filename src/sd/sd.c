@@ -22,6 +22,7 @@
 #include "prop.h"
 #include "sd.h"
 #include "arch/arch.h"
+#include "showtime.h"
 
 #ifdef CONFIG_AVAHI
 #include "avahi.h"
@@ -69,7 +70,7 @@ void
 sd_add_service_htsp(service_instance_t *si, const char *name, 
 		    const char *host, int port)
 {
-  char url[256];
+  char url[URL_MAX];
  
   if(si->si_root != NULL)
     return;
@@ -89,7 +90,7 @@ sd_add_service_webdav(service_instance_t *si, const char *name,
                       const char *host, int port, const char *path,
 		      const char *contents)
 {
-  char url[512];
+  char url[URL_MAX];
   
   if(si->si_root != NULL)
     return;

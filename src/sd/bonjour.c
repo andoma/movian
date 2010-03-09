@@ -68,8 +68,8 @@ bonjour_resolve_callback(CFNetServiceRef theService,
   }
   
   for(i = 0; i < CFArrayGetCount(addresses); i++) {
-    char host[256];
-    char pathbuf[512];
+    char host[HOSTNAME_MAX];
+    char pathbuf[URL_MAX];
     const char *path;
     char contentsbuf[512];
     const char *contents;

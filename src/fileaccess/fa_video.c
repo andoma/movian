@@ -41,7 +41,7 @@
 static void
 scan_subtitles(prop_t *prop, const char *url)
 {
-  char parent[512];
+  char parent[URL_MAX];
   fa_dir_t *fd;
   fa_dir_entry_t *fde;
   char errbuf[256];
@@ -128,7 +128,10 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
   int r, si;
   event_t *e;
   event_ts_t *ets;
-  int64_t ts, seekbase = AV_NOPTS_VALUE, subpts, lastsubpts = AV_NOPTS_VALUE;
+  int64_t ts;
+  int64_t seekbase, subpts, lastsubpts;
+
+  seekbase = subpts = lastsubpts = AV_NOPTS_VALUE;
 
   int hold = 0, lost_focus = 0, epoch = 1;
 
@@ -443,7 +446,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   AVCodecContext *ctx;
   formatwrap_t *fw;
   int i;
-  char faurl[1000];
+  char faurl[URL_MAX];
   codecwrap_t **cwvec;
   event_t *e;
   struct stat buf;

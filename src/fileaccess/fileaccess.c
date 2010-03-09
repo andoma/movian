@@ -56,7 +56,7 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
   struct stat st;
   fa_protocol_t *fap;
   const char *url0 = url;
-  char buf[512];
+  char buf[URL_MAX];
   int n = 0;
 
   while(*url != ':' && *url>31 && n < sizeof(buf) - 1)
@@ -287,11 +287,11 @@ fa_scandir_recursive(const char *url, char *errbuf, size_t errsize)
 	} else if(fde->fde_type == CONTENT_FILE) {
 	  const char *f = strrchr(fde->fde_url, '.');
 	  if(f != NULL && !strcasecmp(f, ".rar")) {
-	    s = malloc(512);
-	    snprintf(s, 512, "rar://%s|", fde->fde_url);
+	    s = malloc(URL_MAX);
+	    snprintf(s, URL_MAX, "rar://%s|", fde->fde_url);
 	  } else if(f != NULL && !strcasecmp(f, ".zip")) {
-	    s = malloc(512);
-	    snprintf(s, 512, "zip://%s|", fde->fde_url);
+	    s = malloc(URL_MAX);
+	    snprintf(s, URL_MAX, "zip://%s|", fde->fde_url);
 	  }
 	}
 

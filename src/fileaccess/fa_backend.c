@@ -146,7 +146,7 @@ static int
 file_open_file(const char *url, nav_page_t **npp, char *errbuf, size_t errlen,
 	       struct stat *st)
 {
-  char redir[512];
+  char redir[URL_MAX];
   int r;
   char *parent, *x;
   prop_t *meta, *album_art;

@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <alloca.h>
+#include <limits.h>
 
 #include "glw.h"
 #include "glw_view.h"
@@ -413,7 +414,7 @@ glw_view_print_tree(token_t *f, int indent)
 int
 glw_view_seterr(errorinfo_t *ei, token_t *b, const char *fmt, ...)
 {
-  char buf[128];
+  char buf[PATH_MAX];
 
   va_list ap;
   va_start(ap, fmt);

@@ -23,6 +23,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "glw.h"
 
@@ -166,7 +167,7 @@ typedef struct token {
  *
  */
 typedef struct errorinfo {
-  char file[128];
+  char file[PATH_MAX];
   char error[128];
   int line;
 } errorinfo_t;

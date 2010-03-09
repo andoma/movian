@@ -26,7 +26,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
-
+#include <limits.h>
 #include <sys/file.h>
 
 #include "showtime.h"
@@ -627,7 +627,7 @@ spotify_metadata_update_track(metadata_t *m)
   sp_album *album;
   sp_artist *artist;
   char txt[1024];
-  char url[128];
+  char url[URL_MAX];
   int nartists, i;
 
   if(!f_sp_track_is_loaded(track))
@@ -943,7 +943,7 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
   prop_t *p;
   sp_track *track;
   int i, ntracks;
-  char url[256];
+  char url[URL_MAX];
 
   ntracks = f_sp_albumbrowse_num_tracks(result);
 
@@ -1015,7 +1015,7 @@ artist_add_album_tracks(sp_artistbrowse *result, int first, int num,
   int i;
   sp_track *t;
   prop_t *n;
-  char url[128];
+  char url[URL_MAX];
 
   for(i = first; i < first + num; i++) {
 
@@ -1056,7 +1056,7 @@ spotify_browse_artist_callback(sp_artistbrowse *result, void *userdata)
   sp_artist *artist;
   sp_track *t;
   album_t *av;
-  char url[128];
+  char url[URL_MAX];
 
   // libspotify does not return the albums in any particular order.
   // thus, we need to do some sorting and filtering
@@ -1181,7 +1181,7 @@ spotify_open_artist(sp_link *l, prop_t *p, int albums,
 		    sp_albumtype albtype)
 {
   sp_artist *artist = f_sp_link_as_artist(l);
-  char url[128];
+  char url[URL_MAX];
   char prefix[128];
   prop_t *n = prop_create(p, "nodes");
 
@@ -1465,7 +1465,7 @@ parse_search_reply(sp_search *result, prop_t *nodes, prop_t *view)
   int i, nalbums, ntracks, nartists;
   sp_album *album;
   sp_artist *artist;
-  char link[256];
+  char link[URL_MAX];
   prop_t *p, *metadata;
 
   nalbums  = f_sp_search_num_albums(result);
@@ -1548,7 +1548,7 @@ tracks_added(sp_playlist *plist, sp_track * const * tracks,
   sp_track *t;
   playlist_track_t *plt, *before;
   int i, pos, pos2;
-  char url[128];
+  char url[URL_MAX];
 
   for(i = 0; i < num_tracks; i++) {
     pos2 = pos = position + i;
@@ -1697,7 +1697,7 @@ static void
 playlist_update(sp_playlist *plist, bool done, void *userdata)
 {
   playlist_t *pl = userdata;
-  char url[128];
+  char url[URL_MAX];
 
   if(!done || !f_sp_playlist_is_loaded(plist))
     return;
@@ -1912,7 +1912,7 @@ static void
 spotify_try_get_parent(spotify_parent_t *sp)
 {
   sp_error err = f_sp_track_error(sp->sp_track);
-  char url[128];
+  char url[URL_MAX];
 
   if(err == SP_ERROR_IS_LOADING) {
     TRACE(TRACE_DEBUG, "spotify", 
@@ -1989,7 +1989,7 @@ find_cachedir(char *path, size_t pathlen)
 {
 #if defined(LOCK_EX) && defined(LOCK_NB)
   int i, fd;
-  char buf[64];
+  char buf[PATH_MAX];
 
   mkdir("/tmp/hts", 0770);
   mkdir("/tmp/hts/showtime/", 0770);
@@ -2030,7 +2030,7 @@ spotify_thread(void *aux)
   spotify_msg_t *sm;
   int next_timeout = 0;
   char ua[256];
-  char cache[256];
+  char cache[PATH_MAX];
   extern char *htsversion_full;
 
   sesconf.api_version = SPOTIFY_API_VERSION;

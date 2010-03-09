@@ -23,14 +23,7 @@
 
 #include "fileaccess.h"
 #include "fa_zlib.h"
-
-#ifndef MIN
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#endif
-
-#ifndef MAX
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#endif
+#include "showtime.h"
 
 
 typedef struct fa_inflator {

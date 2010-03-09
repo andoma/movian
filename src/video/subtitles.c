@@ -181,7 +181,7 @@ subtitles_load_sub(const char *filename)
   subtitle_entry_t *se;
   float framerate, m, v;
   int64_t start, stop;
-  char buf[1000];
+  char buf[URL_MAX];
   char *s;
   int i, l, nentries = 0;
 

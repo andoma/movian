@@ -32,16 +32,9 @@
 #include "navigator.h"
 #include "keyring.h"
 #include "media.h"
+#include "misc/string.h"
 
 #define HTSP_PROTO_VERSION 1 // Protocol version we implement
-
-/* XXX: From lavf */
-extern void url_split(char *proto, int proto_size,
-		      char *authorization, int authorization_size,
-		      char *hostname, int hostname_size,
-		      int *port_ptr,
-		      char *path, int path_size,
-		      const char *url);
 
 
 static hts_mutex_t htsp_global_mutex;
@@ -627,7 +620,7 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
 {
   htsp_connection_t *hc;
   int fd, port;
-  char hostname[128];
+  char hostname[HOSTNAME_MAX];
 
   url_split(NULL, 0, NULL, 0, hostname, sizeof(hostname), &port,
 	    path, pathlen, url);
@@ -738,7 +731,7 @@ be_htsp_open(const char *url, const char *type, const char *parent,
   htsp_connection_t *hc;
   htsp_page_t *hp;
   prop_t *p;
-  char path[128];
+  char path[URL_MAX];
 
   if((hc = htsp_connection_find(url, path, sizeof(path), 
 				errbuf, errlen)) == NULL) {
@@ -919,7 +912,7 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
 		  char *errbuf, size_t errlen)
 {
   htsp_connection_t *hc;
-  char path[100];
+  char path[URL_MAX];
   htsp_subscription_t *hs;
   event_t *e;
 
@@ -1070,7 +1063,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
   int sscore = 0;
 
   int subid;
-  prop_t *metaparent;
+  prop_t *metaparent = NULL;
   htsp_subscription_stream_t *hss;
   char titlebuf[64];
 

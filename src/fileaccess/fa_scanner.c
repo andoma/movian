@@ -125,7 +125,7 @@ meta_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
   char artist_name[128] = {0};
   char album_art[1024] = {0};
   int64_t album_art_score = 0;  // Bigger is better
-  char buf[128];
+  char buf[URL_MAX];
   int trackidx;
   fa_dir_entry_t *fde;
   const char *str;
@@ -596,7 +596,7 @@ album_art_scanner(void *aux)
 {
   album_art_scanner_t *aas = aux;
   int64_t album_art_score = 0;  // Bigger is better
-  char album_art[1024] = {0};
+  char album_art[URL_MAX] = {0};
   fa_dir_entry_t *fde;
   fa_dir_t *fd;
 

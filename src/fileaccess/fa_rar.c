@@ -254,7 +254,7 @@ rar_archive_scrub(rar_archive_t *ra)
 static int
 rar_archive_load(rar_archive_t *ra)
 {
-  char filename[512], *fname, *s, *s2;
+  char filename[URL_MAX], *fname, *s, *s2;
   uint8_t buf[16], *hdr = NULL;
   void *fh = NULL;
   int volume_index = -1, size, x;
@@ -554,7 +554,7 @@ static int
 rar_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 {
   rar_file_t *c, *rf;
-  char buf[1000];
+  char buf[URL_MAX];
 
   if((rf = rar_file_find(url)) == NULL) {
     snprintf(errbuf, errlen, "Entry not found in archive");

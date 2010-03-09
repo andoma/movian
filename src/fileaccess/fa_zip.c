@@ -33,14 +33,6 @@
 #include "showtime.h"
 
 
-#ifndef MIN
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#endif
-
-#ifndef MAX
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#endif
-
 static hts_mutex_t zip_global_mutex;
 
 
@@ -480,7 +472,7 @@ static int
 zip_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 {
   zip_file_t *c, *zf;
-  char buf[512];
+  char buf[URL_MAX];
 
   if((zf = zip_file_find(url)) == NULL) {
     snprintf(errbuf, errlen, "Entry not found in archive");

@@ -30,6 +30,7 @@
 #include "fa_proto.h"
 #include "showtime.h"
 #include "htsmsg/htsmsg_xml.h"
+#include "misc/string.h"
 
 #if 0
 #define HTTP_TRACE(x...) TRACE(TRACE_DEBUG, "HTTP", x)
@@ -44,10 +45,6 @@
 #define STREAMING_LIMIT 1000000
 
 
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-
-#define HTTP_MAX_PATH_LEN 2048
-
 extern char *htsversion;
 
 TAILQ_HEAD(http_connection_queue , http_connection);
@@ -57,7 +54,7 @@ static int http_parked_connections;
 static hts_mutex_t http_connections_mutex;
 
 typedef struct http_connection {
-  char hc_hostname[128];
+  char hc_hostname[HOSTNAME_MAX];
   int hc_port;
 
   int hc_fd;
@@ -239,7 +236,7 @@ typedef struct http_file {
   char hf_line[1024];
 
   char hf_authurl[128];
-  char hf_path[256];
+  char hf_path[URL_MAX];
 
   int hf_chunked_transfer;
 
@@ -267,195 +264,6 @@ typedef struct http_file {
 
 #define hf_fd(hf) ((hf)->hf_hc->hc_fd)
 
-/**
- * De-escape HTTP URL
- */
-static void
-http_deescape(char *s)
-{
-  char v, *d = s;
-
-  while(*s) {
-    if(*s == '+') {
-      *d++ = ' ';
-      s++;
-    } else if(*s == '%') {
-      s++;
-      switch(*s) {
-      case '0' ... '9':
-	v = (*s - '0') << 4;
-	break;
-      case 'a' ... 'f':
-	v = (*s - 'a' + 10) << 4;
-	break;
-      case 'A' ... 'F':
-	v = (*s - 'A' + 10) << 4;
-	break;
-      default:
-	*d = 0;
-	return;
-      }
-      s++;
-      switch(*s) {
-      case '0' ... '9':
-	v |= (*s - '0');
-	break;
-      case 'a' ... 'f':
-	v |= (*s - 'a' + 10);
-	break;
-      case 'A' ... 'F':
-	v |= (*s - 'A' + 10);
-	break;
-      default:
-	*d = 0;
-	return;
-      }
-      s++;
-
-      *d++ = v;
-    } else {
-      *d++ = *s++;
-    }
-  }
-  *d = 0;
-}
-
-static const char hexchars[16] = "0123456789abcdef";
-
-/**
- *
- */
-static void
-path_escape(char *dest, int size, const char *src)
-{
-  unsigned char s;
-
-  while(size > 1) {
-
-    s = *src++;
-    if(s == 0)
-      break;
-
-    if((s >= '0' && s <= '9') ||
-       (s >= 'a' && s <= 'z') ||
-       (s >= 'A' && s <= 'Z') ||
-       s == '/' ||
-       s == '_' ||
-       s == '.' ||
-       s == '-') {
-      *dest++ = s;
-      size--;
-    } else {
-      if(size > 4) {
-	*dest++ = '%';
-	*dest++ = hexchars[(s >> 4) & 0xf];
-	*dest++ = hexchars[s & 0xf];
-	size -= 3;
-      }
-    }
-  }
-  *dest = 0;
-}
-
-
-void html_entities_decode(char *s);
-
-/* inplace decode html entities, this relies on that no entity has a
- * code point in utf8 that is more bytes then the entity string */
-void
-html_entities_decode(char *s)
-{
-  char *e;
-  int code;
-  char name[10];
-  uint8_t tmp;
-
-  for(; *s; s++) {
-    if(*s != '&')
-      continue;
-    
-    e = strchr(s, ';');
-    if(e == NULL)
-      continue;
-    
-    snprintf(name, sizeof(name), "%.*s", (int)(intptr_t)(e - s - 1), s + 1);
-    code = html_entity_lookup(name);
-    
-    if(code == -1)
-      continue;
-
-    PUT_UTF8(code, tmp, *s++ = tmp;);
-    
-    memmove(s, e + 1, strlen(e + 1) + 1);
-    s--;
-  }
-}
-
-
-/**
- *
- */
-static void 
-url_split(char *proto, int proto_size,
-	  char *authorization, int authorization_size,
-	  char *hostname, int hostname_size,
-	  int *port_ptr,
-	  char *path, int path_size,
-	  const char *url)
-{
-  const char *p, *ls, *at, *col, *brk;
-
-  if (port_ptr)               *port_ptr = -1;
-  if (proto_size > 0)         proto[0] = 0;
-  if (authorization_size > 0) authorization[0] = 0;
-  if (hostname_size > 0)      hostname[0] = 0;
-  if (path_size > 0)          path[0] = 0;
-
-  /* parse protocol */
-  if ((p = strchr(url, ':'))) {
-    av_strlcpy(proto, url, MIN(proto_size, p + 1 - url));
-    p++; /* skip ':' */
-    if (*p == '/') p++;
-    if (*p == '/') p++;
-  } else {
-    /* no protocol means plain filename */
-    path_escape(path, path_size, url);
-    return;
-  }
-
-  /* separate path from hostname */
-  ls = strchr(p, '/');
-  if(!ls)
-    ls = strchr(p, '?');
-  if(ls)
-    path_escape(path, path_size, ls);
-  else
-    ls = &p[strlen(p)]; // XXX
-
-  /* the rest is hostname, use that to parse auth/port */
-  if (ls != p) {
-    /* authorization (user[:pass]@hostname) */
-    if ((at = strchr(p, '@')) && at < ls) {
-      av_strlcpy(authorization, p,
-		 MIN(authorization_size, at + 1 - p));
-      p = at + 1; /* skip '@' */
-    }
-
-    if (*p == '[' && (brk = strchr(p, ']')) && brk < ls) {
-      /* [host]:port */
-      av_strlcpy(hostname, p + 1,
-		 MIN(hostname_size, brk - p));
-      if (brk[1] == ':' && port_ptr)
-	*port_ptr = atoi(brk + 2);
-    } else if ((col = strchr(p, ':')) && col < ls) {
-      av_strlcpy(hostname, p,
-		 MIN(col + 1 - p, hostname_size));
-      if (port_ptr) *port_ptr = atoi(col + 1);
-    } else
-      av_strlcpy(hostname, p,
-		 MIN(ls + 1 - p, hostname_size));
-  }
-}
 
 
 /**
@@ -787,7 +595,7 @@ authenticate(http_file_t *hf, char *errbuf, size_t errlen)
 static int
 http_connect(http_file_t *hf, char *errbuf, int errlen)
 {
-  char hostname[128];
+  char hostname[HOSTNAME_MAX];
   int port;
 
   hf->hf_filesize = -1;
@@ -934,7 +742,7 @@ static int
 http_index_parse(http_file_t *hf, fa_dir_t *fd, char *buf)
 {
   char *p, *n;
-  char *url = malloc(HTTP_MAX_PATH_LEN);
+  char *url = malloc(URL_MAX);
   
   p = buf;
   /* n + 1 to skip '\0' */
@@ -973,7 +781,7 @@ http_index_parse(http_file_t *hf, fa_dir_t *fd, char *buf)
     
     /* skip parent dir links etc */
     if(strcmp(name, hrefd) == 0) {
-      snprintf(url, HTTP_MAX_PATH_LEN, "http://%s:%d%s%s%s",
+      snprintf(url, URL_MAX, "http://%s:%d%s%s%s",
                hf->hf_connection->hc_hostname, 
 	       hf->hf_connection->hc_port, hf->hf_path,
                hrefd,
@@ -1384,15 +1192,15 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
   htsmsg_field_t *f;
   const char *href, *d, *q;
   int isdir, i, r;
-  char *rpath = malloc(HTTP_MAX_PATH_LEN);
-  char *path  = malloc(HTTP_MAX_PATH_LEN);
-  char *fname = malloc(HTTP_MAX_PATH_LEN);
-  char *ehref = malloc(HTTP_MAX_PATH_LEN); // Escaped href
+  char *rpath = malloc(URL_MAX);
+  char *path  = malloc(URL_MAX);
+  char *fname = malloc(URL_MAX);
+  char *ehref = malloc(URL_MAX); // Escaped href
   fa_dir_entry_t *fde;
 
   // We need to compare paths and to do so, we must deescape the
   // possible URL encoding. Do the searched-for path once
-  snprintf(rpath, HTTP_MAX_PATH_LEN, "%s", hf->hf_path);
+  snprintf(rpath, URL_MAX, "%s", hf->hf_path);
   http_deescape(rpath);
 
   if((m = htsmsg_get_map_multi(xml, "tags", 
@@ -1417,7 +1225,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
     if((href = htsmsg_get_str(c2, "cdata")) == NULL)
       href = "/";
     else {
-      snprintf(ehref, HTTP_MAX_PATH_LEN, "%s", href);
+      snprintf(ehref, URL_MAX, "%s", href);
       http_deescape(ehref);
     }
 
@@ -1434,10 +1242,10 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
 	http_connection_t *hc = hf->hf_connection;
 
 	if(hc->hc_port != 80) {
-	  snprintf(path, HTTP_MAX_PATH_LEN, "webdav://%s:%d%s", 
+	  snprintf(path, URL_MAX, "webdav://%s:%d%s", 
 		   hc->hc_hostname, hc->hc_port, href);
 	} else {
-	  snprintf(path, HTTP_MAX_PATH_LEN, "webdav://%s%s", 
+	  snprintf(path, URL_MAX, "webdav://%s%s", 
 		   hc->hc_hostname, href);
 	}
 
@@ -1453,12 +1261,12 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
 	    while(q != path && q[-1] != '/')
 	      q--;
 
-	    for(i = 0; i < HTTP_MAX_PATH_LEN - 1 && q[i] != '/'; i++)
+	    for(i = 0; i < URL_MAX - 1 && q[i] != '/'; i++)
 	      fname[i] = q[i];
 	    fname[i] = 0;
 
 	  } else {
-	    snprintf(fname, HTTP_MAX_PATH_LEN, "%s", q);
+	    snprintf(fname, URL_MAX, "%s", q);
 	  }
 	  http_deescape(fname);
 	  http_deescape(path);
@@ -1485,7 +1293,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
     } else {
       /* single entry stat(2) */
 
-      snprintf(fname, HTTP_MAX_PATH_LEN, "%s", href);
+      snprintf(fname, URL_MAX, "%s", href);
       http_deescape(fname);
 
       if(!strcmp(rpath, fname)) {
@@ -1690,7 +1498,7 @@ http_request(const char *url, const char **arguments,
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   htsbuf_queue_t q;
   int code, r, port;
-  char buf[256], hostname[128];
+  char buf[URL_MAX], hostname[HOSTNAME_MAX];
   http_connection_t *hc;
   int redircount = 0;
   hf->hf_url = strdup(url);

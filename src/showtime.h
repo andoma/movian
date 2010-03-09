@@ -25,6 +25,16 @@
 #include <htsmsg/htsmsg_store.h>
 #include <arch/threads.h>
 
+#ifndef MIN
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+#ifndef MAX
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
+
+#define URL_MAX 2048
+#define HOSTNAME_MAX 256 /* FQDN is max 255 bytes including ending dot */
+
 void showtime_shutdown(int retcode);
 
 extern int64_t showtime_get_ts(void);
@@ -70,6 +80,5 @@ static inline unsigned int mystrhash(const char *s)
     v += (v << 5) + v + *s++;
   return v;
 }
- 
 
 #endif /* SHOWTIME_H */

@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <limits.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <errno.h>
@@ -41,7 +42,7 @@ void
 htsmsg_store_init(const char *programname, const char *path)
 {
   const char *homedir = getenv("HOME");
-  char buf[256];
+  char buf[PATH_MAX];
   struct stat st;
 
   if(path != NULL) {
@@ -68,9 +69,9 @@ htsmsg_store_init(const char *programname, const char *path)
 void
 htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
 {
-  char path[256];
-  char fullpath[256];
-  char fullpath2[256];
+  char path[PATH_MAX];
+  char fullpath[PATH_MAX];
+  char fullpath2[PATH_MAX];
   int x, l, fd;
   va_list ap;
   struct stat st;
@@ -208,8 +209,8 @@ htsmsg_store_buildpath(char *dst, size_t dstsize, const char *fmt, va_list ap)
 htsmsg_t *
 htsmsg_store_load(const char *pathfmt, ...)
 {
-  char fullpath[256];
-  char child[256];
+  char fullpath[PATH_MAX];
+  char child[PATH_MAX];
   va_list ap;
   struct stat st;
   struct dirent **namelist, *d;
@@ -256,7 +257,7 @@ htsmsg_store_load(const char *pathfmt, ...)
 void
 htsmsg_store_remove(const char *pathfmt, ...)
 {
-  char fullpath[256];
+  char fullpath[PATH_MAX];
   va_list ap;
 
   va_start(ap, pathfmt);

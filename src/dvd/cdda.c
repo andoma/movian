@@ -209,7 +209,7 @@ get_cd_meta(const char *device)
     for(i = 0; i < tracks; i++) {
       cd_track_t *ct = &cm->cm_tracks[i];
 
-      char trackurl[64];
+      char trackurl[URL_MAX];
       char title[64];
 
       ct->ct_root = prop_create(NULL, NULL);
@@ -333,7 +333,7 @@ openpage(const char *url, const char *type0, const char *parent,
   }
 
   if(track) {
-    char parent[64];
+    char parent[URL_MAX];
     cd_track_t *ct = get_track(cm, track);
     if(ct == NULL) {
       snprintf(errstr, errlen, "Invalid track");

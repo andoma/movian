@@ -292,7 +292,7 @@ fa_probe_spc(metadata_t *md, uint8_t *pb)
 static void
 metdata_set_redirect(metadata_t *md, const char *fmt, ...)
 {
-  char buf[512];
+  char buf[URL_MAX];
   va_list ap;
   va_start(ap, fmt);
 
@@ -502,7 +502,7 @@ fa_probe_fill_cache(metadata_t *md, const char *url, char *errbuf,
 {
   const char *url0 = url;
   AVFormatContext *fctx;
-  char tmp1[1024];
+  char tmp1[URL_MAX];
   fa_handle_t *fh;
 
   if((fh = fa_open(url, errbuf, errsize)) == NULL)
@@ -676,7 +676,7 @@ fa_probe_load_metaprop(prop_t *p, AVFormatContext *fctx, const char *url)
 unsigned int
 fa_probe_dir(prop_t *proproot, const char *url)
 {
-  char path[300];
+  char path[URL_MAX];
   struct stat buf;
   int type;
 

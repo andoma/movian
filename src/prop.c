@@ -2632,7 +2632,7 @@ prop_courier_create(hts_mutex_t *entrymutex, int flags, const char *name)
 
   TAILQ_INIT(&pc->pc_queue);
   if(flags & PROP_COURIER_THREAD) {
-    char buf[64];
+    char buf[URL_MAX];
     snprintf(buf, sizeof(buf), "propcourier: %s", name);
     hts_cond_init(&pc->pc_cond);
     pc->pc_run = 1;

@@ -214,7 +214,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   event_ts_t *ets;
   int64_t ts, pts4seek = 0;
   codecwrap_t *cw;
-  char faurl[1000];
+  char faurl[URL_MAX];
   event_t *e;
   int hold = 0, lost_focus = 0;
 

@@ -62,7 +62,7 @@ static void
 set_status(disc_scanner_t *ds, disc_status_t status, const char *title)
 {
   char buf[64];
-  char url[64];
+  char url[URL_MAX];
   if(ds->ds_status == status)
     return;
 
