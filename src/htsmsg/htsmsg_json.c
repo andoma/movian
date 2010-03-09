@@ -25,6 +25,7 @@
 
 #include "htsmsg_json.h"
 #include "htsbuf.h"
+#include "misc/string.h"
 
 /**
  *
@@ -330,50 +331,6 @@ htsmsg_json_parse_array(const char *s, const char **endp)
   return r;
 }
 
-/* 
- * locale independent strtod.
- * does not support hex floats as the standard strtod
- */
-static double
-_strntod(const char *s, char decimal_point_char, char **ep)
-{
-  static char locale_decimal_point_char = 0;
-  char buf[64];
-  const char *c;
-  double d;
-  
-  /* ugly but very portable way to get decimal point char */ 
-  if(locale_decimal_point_char == 0) {
-    snprintf(buf, sizeof(buf), "%f", 0.0);
-    locale_decimal_point_char = buf[1];
-    assert(locale_decimal_point_char != 0);
-  }
-  
-  for(c = s; 
-      *c != '\0' &&
-      ((*c > 0 && *c < 33) || /* skip whitespace */
-       (*c == decimal_point_char || strchr("+-0123456789", *c) != NULL)); c++)
-    ;
-  
-  strncpy(buf, s, c - s); 
-  buf[c - s] = '\0';
-  
-  /* replace if specified char is not same as current locale */
-  if(decimal_point_char != locale_decimal_point_char) {
-    char *r = strchr(buf, decimal_point_char);
-    if(r != NULL)
-      *r = locale_decimal_point_char;
-  }
-  
-  d = strtod(buf, ep);
-  
-  /* figure out offset in original string */
-  if(ep != NULL)
-    *ep = (char *)s + (*ep - buf);
-  
-  return d;
-}
-
 /**
  *
  */
@@ -381,7 +338,7 @@ static char *
 htsmsg_json_parse_number(const char *s, double *dp)
 {
   char *ep;
-  double d = _strntod(s, '.', &ep);
+  double d = strtod_ex(s, '.', &ep);
 
   if(ep == s)
     return NULL;
