@@ -359,6 +359,19 @@ CFLAGS_com  = -g -funsigned-char -O2
 CFLAGS_com += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 CFLAGS_com += -I${BUILDDIR} -I${CURDIR}/src -I${CURDIR}
 
+# Tools
+
+MKBUNDLE = $(CURDIR)/support/mkbundle
+
+ifndef V
+Q      = @
+ECHO   = printf "$(1)\t%s\n" $(2)
+BRIEF  = CC MKBUNDLE
+MSG    = $@
+$(foreach VAR,$(BRIEF), \
+    $(eval $(VAR) = @$$(call ECHO,$(VAR),$$(MSG)); $($(VAR))))
+endif
+
 all:	makever ${PROG}
 
 .PHONY:	clean distclean ffmpeg makever
@@ -404,5 +417,4 @@ $(BUILDDIR)/bundles/%.o: $(BUILDDIR)/bundles/%.c
 	$(CC) -I${CURDIR}/src/fileaccess -c -o $@ $<
 
 $(BUILDDIR)/bundles/%.c: % $(CURDIR)/support/mkbundle
-	$(CURDIR)/support/mkbundle \
-		-o $@ -s $< -d ${BUILDDIR}/bundles/$<.d -p $<
+	$(MKBUNDLE) -o $@ -s $< -d ${BUILDDIR}/bundles/$<.d -p $<
