@@ -967,10 +967,10 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
 
   const int parity = 0;
 
-  if(disable_deinterlacer) {
-    dt = DEINTERLACE_NONE;
-  } else {
+  if(frame->interlaced_frame && !disable_deinterlacer) {
     dt = DEINTERLACE_OPENGL;
+  } else {
+    dt = DEINTERLACE_NONE;
   }
 
   avcodec_get_chroma_sub_sample(ctx->pix_fmt, &hshift, &vshift);
