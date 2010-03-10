@@ -666,7 +666,6 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
 		   vdf->vdf_width[i]  / 8,
 		   4 * frame->linesize[i] - vdf->vdf_width[i]);
 
-  vd->vd_interlaced = 0;
   vdf->vdf_pts = pts;
   vdf->vdf_epoch = epoch;
   vdf->vdf_duration = duration;
