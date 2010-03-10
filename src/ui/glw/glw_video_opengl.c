@@ -572,14 +572,16 @@ render_video_quad(int interlace, int rectmode, int width, int height)
 {
   float x1, x2, y1, y2;
 
+  const int bordersize = 3;
+
   if(rectmode) {
 
     if(interlace) {
 
-      x1 = 1;
-      y1 = 1;
-      x2 = width  - 1;
-      y2 = height - 1;
+      x1 = bordersize;
+      y1 = bordersize;
+      x2 = width  - bordersize;
+      y2 = height - bordersize;
 
     } else {
 
@@ -593,10 +595,10 @@ render_video_quad(int interlace, int rectmode, int width, int height)
     
     if(interlace) {
 
-      x1 = 0 + (1.0 / (float)width);
-      y1 = 0 + (1.0 / (float)height);
-      x2 = 1 - (1.0 / (float)width);
-      y2 = 1 - (1.0 / (float)height);
+      x1 = 0 + (bordersize / (float)width);
+      y1 = 0 + (bordersize / (float)height);
+      x2 = 1 - (bordersize / (float)width);
+      y2 = 1 - (bordersize / (float)height);
 
     } else {
 
@@ -674,7 +676,7 @@ render_video_1f(glw_video_t *gv, video_decoder_t *vd,
   tex = gv_tex_get(gvf, GVF_TEX_L);
   glBindTexture(textype, tex);
   
-  render_video_quad(vd->vd_interlaced, rectmode, 
+  render_video_quad(vdf->vdf_cutborder, rectmode, 
 		    vdf->vdf_width[0], vdf->vdf_height[0]);
   
   glDisable(GL_FRAGMENT_PROGRAM_ARB);
@@ -739,7 +741,7 @@ gv_blend_frames(glw_video_t *gv, video_decoder_t *vd,
   glActiveTextureARB(GL_TEXTURE0_ARB);
   glBindTexture(textype, gv_tex_get(gvf_a, GVF_TEX_L));
 
-  render_video_quad(vd->vd_interlaced, rectmode, 
+  render_video_quad(fra->vdf_cutborder, rectmode, 
 		    fra->vdf_width[0], fra->vdf_height[0]);
 
   glDisable(GL_FRAGMENT_PROGRAM_ARB);
@@ -939,9 +941,14 @@ GLW_REGISTER_CLASS(glw_video);
 
 
 
-
-
-
+typedef enum {
+  DEINTERLACE_NONE,
+  DEINTERLACE_OPENGL,
+  DEINTERLACE_YADIF_FRAME,
+  DEINTERLACE_YADIF_FIELD, // Best YADIF version
+  DEINTERLACE_YADIF_FRAME_NO_SPATIAL_ILACE,
+  DEINTERLACE_YADIF_FIELD_NO_SPATIAL_ILACE,
+} deinterlacertype_t;
 
 /**
  * Frame delivery from video decoder
@@ -955,12 +962,16 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
   int tff, w2, mode, i, j, h, w;
   uint8_t *prev, *cur, *next, *src, *dst;
   int hshift, vshift;
-  deilace_type_t dt;
+  deinterlacertype_t dt;
   video_decoder_frame_t *vdf;
 
-  dt = disable_deinterlacer ? VD_DEILACE_NONE : vd->vd_deilace_conf;
-  if(dt == VD_DEILACE_AUTO)
-    dt = frame->interlaced_frame ? VD_DEILACE_YADIF_FIELD : VD_DEILACE_NONE;
+  const int parity = 0;
+
+  if(disable_deinterlacer) {
+    dt = DEINTERLACE_NONE;
+  } else {
+    dt = DEINTERLACE_OPENGL;
+  }
 
   avcodec_get_chroma_sub_sample(ctx->pix_fmt, &hshift, &vshift);
 
@@ -973,16 +984,8 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
 
   switch(dt) {
 
-  case VD_DEILACE_AUTO:
-    return;
-
-    /*
-     *  No post processing
-     */
-
-  case VD_DEILACE_NONE:
+  case DEINTERLACE_NONE:
     vd->vd_active_frames_needed = 3;
-    vd->vd_interlaced = 0;
     if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
       return;
 
@@ -1000,17 +1003,17 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
       }
     }
 
-    vd->vd_interlaced = 0;
     vdf->vdf_pts = pts;
     vdf->vdf_epoch = epoch;
     vdf->vdf_duration = duration;
+    vdf->vdf_cutborder = 0;
     TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
     return;
 
-  case VD_DEILACE_HALF_RES:
+  case DEINTERLACE_OPENGL:
     duration /= 2;
 
-    tff = !!frame->top_field_first ^ vd->vd_field_parity;
+    tff = !!frame->top_field_first ^ parity;
 
     vd->vd_active_frames_needed = 3;
 
@@ -1018,8 +1021,6 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
      *  Deinterlace by 2 x framerate and 0.5 * y-res,
      *  OpenGL does bledning for us
      */
-
-    vd->vd_interlaced = 1;
 
     hvec[0] = hvec[0] / 2;
     hvec[1] = hvec[1] / 2;
@@ -1068,20 +1069,21 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
     }
     
     vdf->vdf_debob = tff;
-    
+    vdf->vdf_cutborder = 1;
+
     vdf->vdf_pts = pts + duration;
     vdf->vdf_epoch = epoch;
     vdf->vdf_duration = duration;
     TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
     return;
     
-  case VD_DEILACE_YADIF_FRAME:
+  case DEINTERLACE_YADIF_FRAME:
     mode = 0; goto yadif;
-  case VD_DEILACE_YADIF_FIELD:
+  case DEINTERLACE_YADIF_FIELD:
     mode = 1; goto yadif;
-  case VD_DEILACE_YADIF_FRAME_NO_SPATIAL_ILACE:
+  case DEINTERLACE_YADIF_FRAME_NO_SPATIAL_ILACE:
     mode = 2; goto yadif;
-  case VD_DEILACE_YADIF_FIELD_NO_SPATIAL_ILACE:
+  case DEINTERLACE_YADIF_FIELD_NO_SPATIAL_ILACE:
     mode = 3;
   yadif:
     if(vd->vd_yadif_width   != ctx->width  ||
@@ -1100,8 +1102,6 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
     }
 
     vd->vd_active_frames_needed = 3;
-    vd->vd_interlaced = 1;
-
     for(i = 0; i < 3; i++) {
       w = vd->vd_yadif_width  >> (i ? hshift : 0);
       h = vd->vd_yadif_height >> (i ? vshift : 0);
@@ -1114,7 +1114,7 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
       }
     }
 
-    tff = !!frame->top_field_first ^ vd->vd_field_parity;
+    tff = !!frame->top_field_first ^ parity;
 
     pts -= duration;
 
@@ -1171,6 +1171,7 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
       vdf->vdf_pts = pts + j * duration;
       vdf->vdf_epoch = epoch;
       vdf->vdf_duration = duration;
+      vdf->vdf_cutborder = 0;
       TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
     }
 

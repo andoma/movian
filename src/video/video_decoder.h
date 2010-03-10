@@ -76,21 +76,6 @@ kalman(kalman_t *k, float z)
   return k->x_next = x;
 }
 
-
-/**
- *
- */
-typedef enum {
-  VD_DEILACE_AUTO,
-  VD_DEILACE_NONE,
-  VD_DEILACE_HALF_RES,
-  VD_DEILACE_YADIF_FRAME,
-  VD_DEILACE_YADIF_FIELD,
-  VD_DEILACE_YADIF_FRAME_NO_SPATIAL_ILACE,
-  VD_DEILACE_YADIF_FIELD_NO_SPATIAL_ILACE,
-} deilace_type_t;
-
-
 TAILQ_HEAD(video_decoder_frame_queue, video_decoder_frame);
 
 
@@ -105,7 +90,8 @@ typedef struct video_decoder_frame {
   uint64_t vdf_pts;
   int vdf_epoch;
 
-  int vdf_debob;
+  uint8_t vdf_debob;
+  uint8_t vdf_cutborder;
 
   void *vdf_data[3];
 
@@ -129,13 +115,7 @@ typedef struct video_decoder {
   LIST_ENTRY(glw_video) vd_global_link;
 
 
-  /* Configuration */
-
-  deilace_type_t vd_deilace_conf;
-  int vd_field_parity;
- 
   media_pipe_t *vd_mp;
-
 
   /* Mutex for protecting access to the frame queues */
 
@@ -186,8 +166,6 @@ typedef struct video_decoder {
   int vd_do_flush;
 
   int vd_skip;
-
-  int vd_interlaced;
 
   int64_t vd_nextpts;
   int64_t vd_lastpts;
