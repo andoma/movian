@@ -51,10 +51,10 @@ typedef struct glw_cocoa {
   
   int is_fullscreen;
   int want_fullscreen;
-
+  
   int is_cursor_hidden;
   int is_fullwindow;
-
+  
   int skip_first_openfile_check;
   
   setting_t *fullscreen_setting;
@@ -78,73 +78,73 @@ static const struct {
   int action3;
 } keysym2action[] = {
   
-/* NSFunctionKeyMask is filtered out when matching mappings */
+  /* NSFunctionKeyMask is filtered out when matching mappings */
   
-{ NSLeftArrowFunctionKey,   0,                ACTION_LEFT },
-{ NSRightArrowFunctionKey,  0,                ACTION_RIGHT },
-{ NSUpArrowFunctionKey,     0,                ACTION_UP },
-{ NSDownArrowFunctionKey,   0,                ACTION_DOWN },
-{ NSPageUpFunctionKey,      0,                ACTION_PAGE_UP, ACTION_CHANNEL_PREV },
-{ NSPageDownFunctionKey,    0,                ACTION_PAGE_DOWN, ACTION_CHANNEL_NEXT },
-{ NSHomeFunctionKey,        0,                ACTION_TOP },
-{ NSEndFunctionKey,         0,                ACTION_BOTTOM },
-
-{ _NSShiftTabKey,           NSShiftKeyMask,   ACTION_FOCUS_PREV },
-
-{ NSLeftArrowFunctionKey,   NSAlternateKeyMask,    ACTION_NAV_BACK },
-{ NSRightArrowFunctionKey,  NSAlternateKeyMask,    ACTION_NAV_FWD },
-
-/* only used for fullscreen, in windowed mode we dont get events with
- * NSCommandKeyMask set */
-{ '+',                      NSCommandKeyMask, ACTION_ZOOM_UI_INCR },
-{ '-',                      NSCommandKeyMask, ACTION_ZOOM_UI_DECR },
-{ 'f',                      NSCommandKeyMask, ACTION_FULLSCREEN_TOGGLE },
+  { NSLeftArrowFunctionKey,   0,                ACTION_LEFT },
+  { NSRightArrowFunctionKey,  0,                ACTION_RIGHT },
+  { NSUpArrowFunctionKey,     0,                ACTION_UP },
+  { NSDownArrowFunctionKey,   0,                ACTION_DOWN },
+  { NSPageUpFunctionKey,      0,                ACTION_PAGE_UP, ACTION_CHANNEL_PREV },
+  { NSPageDownFunctionKey,    0,                ACTION_PAGE_DOWN, ACTION_CHANNEL_NEXT },
+  { NSHomeFunctionKey,        0,                ACTION_TOP },
+  { NSEndFunctionKey,         0,                ACTION_BOTTOM },
   
-{ NSF11FunctionKey,         0,                ACTION_FULLSCREEN_TOGGLE },
-
-/*
-{ XF86XK_AudioLowerVolume, 0,   ACTION_VOLUME_DOWN },
-{ XF86XK_AudioRaiseVolume, 0,   ACTION_VOLUME_UP },
-{ XF86XK_AudioMute,        0,   ACTION_VOLUME_MUTE_TOGGLE },
-*/
-
-/*
-{ XF86XK_Back,             0,   ACTION_NAV_BACK },
-{ XF86XK_Forward,          0,   ACTION_NAV_FWD },
-{ XF86XK_AudioPlay,        0,   ACTION_PLAYPAUSE },
-{ XF86XK_AudioStop,        0,   ACTION_STOP },
-{ XF86XK_AudioPrev,        0,   ACTION_PREV_TRACK },
-{ XF86XK_AudioNext,        0,   ACTION_NEXT_TRACK },
-{ XF86XK_Eject,            0,   ACTION_EJECT },
-{ XF86XK_AudioMedia,       0,   ACTION_HOME },
-{ XK_Menu,                 0,   ACTION_HOME },
-*/
+  { _NSShiftTabKey,           NSShiftKeyMask,   ACTION_FOCUS_PREV },
   
-{ NSF1FunctionKey,         0,   ACTION_MENU },
-
-{ NSF1FunctionKey,          NSShiftKeyMask,   ACTION_PREV_TRACK },
-{ NSF2FunctionKey,          NSShiftKeyMask,   ACTION_PLAYPAUSE },
-{ NSF3FunctionKey,          NSShiftKeyMask,   ACTION_NEXT_TRACK },
-{ NSF4FunctionKey,          NSShiftKeyMask,   ACTION_STOP },
-
-{ NSF5FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_DOWN },
-{ NSF6FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_MUTE_TOGGLE },
-{ NSF7FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_UP },
-
-{ NSF1FunctionKey,          NSCommandKeyMask,   ACTION_SEEK_BACKWARD },
-{ NSF3FunctionKey,          NSCommandKeyMask,   ACTION_SEEK_FORWARD },
-
+  { NSLeftArrowFunctionKey,   NSAlternateKeyMask,    ACTION_NAV_BACK },
+  { NSRightArrowFunctionKey,  NSAlternateKeyMask,    ACTION_NAV_FWD },
   
-/*
-{ XF86XK_Sleep,            0,           ACTION_SLEEP },
-*/
-
-{ _NSBackspaceKey,          0,                ACTION_BS, ACTION_NAV_BACK },
-{ _NSEnterKey,              0,                ACTION_ENTER },
-{ _NSEscapeKey,             0,                ACTION_CLOSE },
-{ _NSTabKey,                0,                ACTION_FOCUS_NEXT },
-
-{ NSF5FunctionKey,	    0,	ACTION_RELOAD_UI },
+  /* only used for fullscreen, in windowed mode we dont get events with
+   * NSCommandKeyMask set */
+  { '+',                      NSCommandKeyMask, ACTION_ZOOM_UI_INCR },
+  { '-',                      NSCommandKeyMask, ACTION_ZOOM_UI_DECR },
+  { 'f',                      NSCommandKeyMask, ACTION_FULLSCREEN_TOGGLE },
+  
+  { NSF11FunctionKey,         0,                ACTION_FULLSCREEN_TOGGLE },
+  
+  /*
+   { XF86XK_AudioLowerVolume, 0,   ACTION_VOLUME_DOWN },
+   { XF86XK_AudioRaiseVolume, 0,   ACTION_VOLUME_UP },
+   { XF86XK_AudioMute,        0,   ACTION_VOLUME_MUTE_TOGGLE },
+   */
+  
+  /*
+   { XF86XK_Back,             0,   ACTION_NAV_BACK },
+   { XF86XK_Forward,          0,   ACTION_NAV_FWD },
+   { XF86XK_AudioPlay,        0,   ACTION_PLAYPAUSE },
+   { XF86XK_AudioStop,        0,   ACTION_STOP },
+   { XF86XK_AudioPrev,        0,   ACTION_PREV_TRACK },
+   { XF86XK_AudioNext,        0,   ACTION_NEXT_TRACK },
+   { XF86XK_Eject,            0,   ACTION_EJECT },
+   { XF86XK_AudioMedia,       0,   ACTION_HOME },
+   { XK_Menu,                 0,   ACTION_HOME },
+   */
+  
+  { NSF1FunctionKey,         0,   ACTION_MENU },
+  
+  { NSF1FunctionKey,          NSShiftKeyMask,   ACTION_PREV_TRACK },
+  { NSF2FunctionKey,          NSShiftKeyMask,   ACTION_PLAYPAUSE },
+  { NSF3FunctionKey,          NSShiftKeyMask,   ACTION_NEXT_TRACK },
+  { NSF4FunctionKey,          NSShiftKeyMask,   ACTION_STOP },
+  
+  { NSF5FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_DOWN },
+  { NSF6FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_MUTE_TOGGLE },
+  { NSF7FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_UP },
+  
+  { NSF1FunctionKey,          NSCommandKeyMask,   ACTION_SEEK_BACKWARD },
+  { NSF3FunctionKey,          NSCommandKeyMask,   ACTION_SEEK_FORWARD },
+  
+  
+  /*
+   { XF86XK_Sleep,            0,           ACTION_SLEEP },
+   */
+  
+  { _NSBackspaceKey,          0,                ACTION_BS, ACTION_NAV_BACK },
+  { _NSEnterKey,              0,                ACTION_ENTER },
+  { _NSEscapeKey,             0,                ACTION_CLOSE },
+  { _NSTabKey,                0,                ACTION_FOCUS_NEXT },
+  
+  { NSF5FunctionKey,	    0,	ACTION_RELOAD_UI },
 };
 
 
@@ -249,13 +249,13 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
     NSOpenGLPFAAccelerated,
     0
   };
-
+  
   /* allocate fullscreen context */
   NSOpenGLPixelFormat *pixelFormat = [[NSOpenGLPixelFormat alloc]
                                       initWithAttributes:attrs];    
   fullScreenContext =
-    [[NSOpenGLContext alloc] initWithFormat:pixelFormat
-                               shareContext:[self openGLContext]];
+  [[NSOpenGLContext alloc] initWithFormat:pixelFormat
+                             shareContext:[self openGLContext]];
   [pixelFormat release];
   pixelFormat = nil;
   
@@ -271,13 +271,13 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
     TRACE(TRACE_ERROR, "OpenGL", "CGCaptureAllDisplays failed");
     return;
   }
-
+  
   [self glwWindowedTimerStop];
   
   /* mouse events seams to get passed to apple menu bar in fullscreen
    * when using NSOpenGL */
   [NSMenu setMenuBarVisible:NO];
-    
+  
   /* go fullscreen and make switch to new gl context */
   [fullScreenContext setFullScreen];
   [fullScreenContext makeCurrentContext];
@@ -288,7 +288,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   CGLGetParameter(cglContext, kCGLCPSwapInterval, &oldSwapInterval);
   newSwapInterval = 1;
   CGLSetParameter(cglContext, kCGLCPSwapInterval, &newSwapInterval);
-    
+  
   [self glwResize:CGDisplayPixelsWide(kCGDirectMainDisplay)
            height:CGDisplayPixelsHigh(kCGDirectMainDisplay)];
   
@@ -310,7 +310,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
         case NSMouseMoved:
           [self mouseMoved:event];
           break;
-        
+          
         case NSLeftMouseDragged:
         case NSRightMouseDragged:
         case NSOtherMouseDragged:
@@ -328,7 +328,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
         case NSOtherMouseUp:
           [self mouseUp:event];
           break;
-
+          
         case NSScrollWheel:
           [self scrollWheel:event];
           break;
@@ -337,11 +337,11 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
           break;
       }
     }
-        
+    
     [self glwRender];
     [fullScreenContext flushBuffer];
   }
-
+  
   /* make screen black before switching to non-fullscreen */
   glClearColor(0.0, 0.0, 0.0, 0.0);
   glClear(GL_COLOR_BUFFER_BIT);
@@ -363,7 +363,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   
   [self setNeedsDisplay:YES];
   [self reshape];
-
+  
   [[self window] setAcceptsMouseMovedEvents:YES];
   /* make sure window is focused when coming back */
   [[self window] makeKeyAndOrderFront:nil];
@@ -393,13 +393,13 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
       return;
     }
   }
-
+  
   if(gcocoa.is_fullwindow && !gcocoa.is_cursor_hidden)
     [self glwDelayHideCursor];
-
+  
   if(!gcocoa.is_fullwindow && gcocoa.is_cursor_hidden)
     [self glwUnHideCursor];
-
+  
   glw_rctx_t rc;
   
   glw_lock(&gcocoa.gr);
@@ -425,7 +425,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   
   rc.rc_alpha = 1.0f;
   glw_render0(gcocoa.gr.gr_universe, &rc);
-    
+  
   glw_unlock(&gcocoa.gr);
 }
 
@@ -434,14 +434,14 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 				  target:self
 			        selector:@selector(glwWindowedTimer)
 			        userInfo:nil repeats:YES];
-
+  
   [[NSRunLoop currentRunLoop] addTimer:timer
-    forMode:NSDefaultRunLoopMode];
+                               forMode:NSDefaultRunLoopMode];
   [[NSRunLoop currentRunLoop] addTimer:timer
-    forMode:NSEventTrackingRunLoopMode];
-
+                               forMode:NSEventTrackingRunLoopMode];
+  
   [timer retain];
- 
+  
   if(timer_cursor != nil) {
     [timer_cursor invalidate];
     [timer_cursor release];
@@ -461,7 +461,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 
 - (void)glwHideCursor {
   glw_pointer_event_t gpe;
-
+  
   [NSCursor setHiddenUntilMouseMoves:YES];
   
   gpe.type = GLW_POINTER_GONE;   
@@ -472,20 +472,22 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 
 - (void)glwDelayHideCursor {
   gcocoa.is_cursor_hidden = 1;
- 
+  
   if(mouse_down > 0)
     return;
-
+  
   if(timer_cursor != nil) {
     [timer_cursor invalidate];
     [timer_cursor release];
     timer_cursor = nil;
   }
-
+  
   timer_cursor = 
-    [NSTimer scheduledTimerWithTimeInterval:(1.0) target:self
-      selector:@selector(glwHideCursor) userInfo:nil repeats:NO];
-
+  [NSTimer scheduledTimerWithTimeInterval:(1.0) target:self
+                                 selector:@selector(glwHideCursor)
+                                 userInfo:nil
+                                  repeats:NO];
+  
   [timer_cursor retain];
 }
 
@@ -497,14 +499,14 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
     [timer_cursor release];
     timer_cursor = nil;
   }
-
+  
   [NSCursor setHiddenUntilMouseMoves:NO];
 }
 
 - (void)glwMouseEvent:(int)type event:(NSEvent*)event {  
   NSPoint loc = [event locationInWindow];
   glw_pointer_event_t gpe;
- 
+  
   if(gcocoa.is_cursor_hidden) 
     [self glwUnHideCursor];
   
@@ -560,12 +562,13 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 
 #if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
 - (unsigned int)characterIndexForPoint:(NSPoint)thePoint {
-#else
-- (NSUInteger)characterIndexForPoint:(NSPoint)thePoint {
-#endif
   return 0;
 }
-
+#else
+- (NSUInteger)characterIndexForPoint:(NSPoint)thePoint {
+  return 0;
+}
+#endif
 - (NSRect)firstRectForCharacterRange:(NSRange)theRange {
   return NSZeroRect;
 }
@@ -576,7 +579,6 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
     as = [NSAttributedString new];
   return as;
 }
-
 #if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
 - (long)conversationIdentifier {
   return (long)self;
@@ -622,14 +624,14 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 - (void)insertText:(id)aString {
   NSString *s = aString;
   int i;
-
+  
   [self compositeClear];
   
   for(i = 0; i < [s length]; i++) {
     unichar uc = [s characterAtIndex:i];
     NSString *su = [[NSString alloc] initWithCharacters:&uc length:1];
     event_t *e = NULL;
-
+    
     e = event_create_unicode(uc);
     glw_cocoa_dispatch_event(&gcocoa.gr.gr_uii, e);
     [su release];
@@ -644,7 +646,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   if(compositeKey || [chars length] == 0  || [charsim length] == 0) {
     if(!eventArray)
       eventArray = [[NSMutableArray alloc] initWithCapacity:1];
-
+    
     compositeKey = YES;
     [eventArray addObject:event];
     /* uses NSTextInput protocol and results in calls to insertText: */
@@ -657,29 +659,29 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   unichar cim = [[event charactersIgnoringModifiers] characterAtIndex:0];
   /* only care for some modifier keys */
   int mod = [event modifierFlags] & 
-    (NSShiftKeyMask | NSCommandKeyMask |
-     NSFunctionKeyMask | NSAlternateKeyMask);
+  (NSShiftKeyMask | NSCommandKeyMask |
+   NSFunctionKeyMask | NSAlternateKeyMask);
   event_t *e = NULL;
   action_type_t av[3];
   int i;
-
+  
   if((mod & ~NSShiftKeyMask) == 0 && (c == _NSSpaceKey || isgraph(c))) {
     e = event_create_unicode(c);
   } else {
     for(i = 0; i < sizeof(keysym2action) / sizeof(keysym2action[0]); i++) {
       if(keysym2action[i].key == cim &&
-	 keysym2action[i].mod == (mod & ~NSFunctionKeyMask)) {
-	av[0] = keysym2action[i].action1;
-	av[1] = keysym2action[i].action2;
-	av[2] = keysym2action[i].action3;
+         keysym2action[i].mod == (mod & ~NSFunctionKeyMask)) {
+        av[0] = keysym2action[i].action1;
+        av[1] = keysym2action[i].action2;
+        av[2] = keysym2action[i].action3;
         
-	if(keysym2action[i].action3 != ACTION_NONE)
-	  e = event_create_action_multi(av, 3);
-	if(keysym2action[i].action2 != ACTION_NONE)
-	  e = event_create_action_multi(av, 2);
-	else
-	  e = event_create_action_multi(av, 1);
-	break;
+        if(keysym2action[i].action3 != ACTION_NONE)
+          e = event_create_action_multi(av, 3);
+        if(keysym2action[i].action2 != ACTION_NONE)
+          e = event_create_action_multi(av, 2);
+        else
+          e = event_create_action_multi(av, 1);
+        break;
       }
     }
   }
@@ -695,9 +697,9 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 
 - (void)prepareOpenGL {
   gcocoa.glready = 1;
-
+  
   timer_cursor = nil;
-        
+  
   /* must be called after GL is ready, calls GL functions */
   if(glw_init(&gcocoa.gr, SHOWTIME_GLW_DEFAULT_THEME_URL,
               gcocoa.start_ui, gcocoa.start_primary,
@@ -712,22 +714,22 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
                        glw_settings_save, &gcocoa.gr);
   
   prop_subscribe(0,
-		 PROP_TAG_NAME("ui","fullwindow"),
-		 PROP_TAG_CALLBACK_INT, glw_cocoa_in_fullwindow, self,
-		 PROP_TAG_ROOT, gcocoa.gr.gr_uii.uii_prop,
-		 NULL);
+                 PROP_TAG_NAME("ui","fullwindow"),
+                 PROP_TAG_CALLBACK_INT, glw_cocoa_in_fullwindow, self,
+                 PROP_TAG_ROOT, gcocoa.gr.gr_uii.uii_prop,
+                 NULL);
   
   glw_load_universe(&gcocoa.gr);
-
+  
   GLint v = 1;
   [[self openGLContext] setValues:&v forParameter:NSOpenGLCPSwapInterval];
   
   NSRect bounds = [self bounds];
   [self glwResize:bounds.size.width height:bounds.size.height];
-
+  
   /* Setup OpenGL state */
   glw_opengl_init_context(&gcocoa.gr);
-
+  
   [self glwWindowedTimerStart];  
 }
 
@@ -760,12 +762,12 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
     /* no reason to continue */
     exit(1);
   }
-
+  
   [[NSAppleEventManager sharedAppleEventManager]
-    setEventHandler:self
-    andSelector:@selector(handleGetURLEvent:withReplyEvent:)
-    forEventClass:kInternetEventClass andEventID:kAEGetURL];
-    
+   setEventHandler:self
+   andSelector:@selector(handleGetURLEvent:withReplyEvent:)
+   forEventClass:kInternetEventClass andEventID:kAEGetURL];
+  
   self = [super initWithFrame:frameRect pixelFormat:pixelFormat];
   
   return self;
@@ -778,7 +780,7 @@ glw_cocoa_set_fullscreen(void *opaque, int value)
 {
   gcocoa.want_fullscreen = value;
 }
-  
+
 static void
 glw_cocoa_in_fullwindow(void *opaque, int value)
 {
@@ -796,7 +798,7 @@ glw_cocoa_start(ui_t *ui, int argc, char *argv[], int primary)
 {
   gcocoa.start_ui = ui;
   gcocoa.start_primary = primary;
-
+  
   CFRunLoopTimerRef timer;
   CFRunLoopTimerContext context = { 0, NULL, NULL, NULL, NULL };
   timer = CFRunLoopTimerCreate(NULL, CFAbsoluteTimeGetCurrent(), 30, 0, 0,
@@ -804,7 +806,7 @@ glw_cocoa_start(ui_t *ui, int argc, char *argv[], int primary)
   CFRunLoopAddTimer(CFRunLoopGetCurrent(), timer, kCFRunLoopCommonModes);
   
   NSApplicationMain(0, NULL);
-
+  
   return 0;
 }
 
