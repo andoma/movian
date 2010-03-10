@@ -123,12 +123,12 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
 
   case AM_FORMAT_PCM_5DOT1:
     pam->ss.channels = 6;
-    pa_channel_map_init_auto(&map, 6, PA_CHANNEL_MAP_ALSA);
+    pa_channel_map_init_auto(&map, 6, PA_CHANNEL_MAP_WAVEEX);
     break;
 
   case AM_FORMAT_PCM_7DOT1:
     pam->ss.channels = 8;
-    pa_channel_map_init_auto(&map, 8, PA_CHANNEL_MAP_ALSA);
+    pa_channel_map_init_auto(&map, 8, PA_CHANNEL_MAP_WAVEEX);
     break;
   default:
     abort();
