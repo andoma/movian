@@ -159,26 +159,25 @@ audio_init(void)
 
   TAILQ_INIT(&audio_modes);
 
-#define AUDIO_INIT_SUBSYS(name) \
- do {extern void audio_## name ##_init(void); audio_## name ##_init();}while(0)
-
 #ifdef CONFIG_LIBOGC
-  AUDIO_INIT_SUBSYS(wii);
+  audio_wii_init();
+#endif
+
+  int have_pulse_audio  __attribute__((unused)) = 0;
+
+#ifdef CONFIG_LIBPULSE
+  have_pulse_audio |= audio_pa_init();
 #endif
 
 #ifdef CONFIG_LIBASOUND
-  AUDIO_INIT_SUBSYS(alsa);
-#endif
-
-#ifdef CONFIG_LIBPULSE
-  AUDIO_INIT_SUBSYS(pa);
+  audio_alsa_init(have_pulse_audio);
 #endif
 
 #ifdef CONFIG_COREAUDIO
-  AUDIO_INIT_SUBSYS(coreaudio);
+  audio_coreaudio_init();
 #endif
-    
-  AUDIO_INIT_SUBSYS(dummy);
+
+  audio_dummy_init();
 
   hts_thread_create_detached("audio output", audio_output_thread, NULL);
 }

@@ -94,4 +94,14 @@ extern prop_t *prop_mastervol, *prop_mastermute;
 
 #define CLIP16(a) ((a) > 32767 ? 32767 : ((a) < -32768 ? -32768 : a))
 
+
+/**
+ * Audio drivers
+ */
+extern void audio_wii_init(void);
+extern int audio_pa_init(void);
+extern void audio_alsa_init(int);
+extern void audio_coreaudio_init(void);
+extern void audio_dummy_init(void);
+
 #endif /* AUDIO__H */

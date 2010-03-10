@@ -555,9 +555,7 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
 /**
  *
  */
-void audio_pa_init(void);
-
-void
+int
 audio_pa_init(void)
 {
   pa_audio_mode_t *pam;
@@ -584,6 +582,6 @@ audio_pa_init(void)
   am->am_preferred_size = 4096;
   am->am_entry = pa_audio_start;
 
-
   audio_mode_register(am);
+  return 1;
 }

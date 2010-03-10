@@ -167,8 +167,6 @@ wii_audio_start(audio_mode_t *am, audio_fifo_t *af)
 /**
  *
  */
-void audio_wii_init(void);
-
 void
 audio_wii_init(void)
 {

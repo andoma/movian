@@ -550,8 +550,6 @@ coreaudio_default_output_device(void)
   return id;
 }
 
-void audio_coreaudio_init(void);
-
 void
 audio_coreaudio_init(void)
 {

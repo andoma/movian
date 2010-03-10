@@ -773,14 +773,13 @@ alsa_probe_devices(void)
 /**
  *
  */
-void audio_alsa_init(void); /* Avoid warning */
-
 void
-audio_alsa_init(void)
+audio_alsa_init(int have_pulse_audio)
 {
   hts_mutex_init(&alsa_mutex);
 
-  alsa_probe("default", "default");
+  if(!have_pulse_audio)
+    alsa_probe("default", "default");
   alsa_probe(NULL, "iec958");
 
   alsa_probe_devices();
