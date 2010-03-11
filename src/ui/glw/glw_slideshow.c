@@ -45,9 +45,9 @@ glw_slideshow_render(glw_t *w, glw_rctx_t *rc)
   if((c = w->glw_focused) == NULL)
     return;
 
-  p = TAILQ_PREV(c, glw_queue, glw_parent_link);
+  p = glw_prev_widget(c);
   if(p == NULL)
-    p = TAILQ_LAST(&w->glw_childs, glw_queue);
+    p = glw_last_widget(w);
   if(p != NULL && p != c) {
     if(p->glw_parent_alpha > 0.01) {
       rc0 = *rc;
@@ -60,9 +60,9 @@ glw_slideshow_render(glw_t *w, glw_rctx_t *rc)
   rc0.rc_alpha *= c->glw_parent_alpha;
   glw_render0(c, &rc0);
 
-  n = TAILQ_NEXT(c, glw_parent_link);
+  n = glw_next_widget(c);
   if(n == NULL)
-    n = TAILQ_FIRST(&w->glw_childs);
+    n = glw_first_widget(w);
   if(n != NULL && n != c) {
     if(n->glw_parent_alpha > 0.01) {
       rc0 = *rc;
@@ -92,14 +92,14 @@ glw_slideshow_layout(glw_slideshow_t *s, glw_rctx_t *rc)
 
     
   if((c = s->w.glw_focused) == NULL)
-    c = s->w.glw_focused = TAILQ_FIRST(&s->w.glw_childs);
+    c = s->w.glw_focused = glw_first_widget(&s->w);
   if(c == NULL)
     return;
 
   if(s->timer >= s->displaytime) {
-    c = s->w.glw_focused = TAILQ_NEXT(c, glw_parent_link);
+    c = s->w.glw_focused = glw_next_widget(c);
     if(c == NULL)
-      c = s->w.glw_focused = TAILQ_FIRST(&s->w.glw_childs);
+      c = s->w.glw_focused = glw_first_widget(&s->w);
     s->timer = 0;
   }
   
@@ -112,17 +112,17 @@ glw_slideshow_layout(glw_slideshow_t *s, glw_rctx_t *rc)
   /**
    * Keep previous and next images 'hot' (ie, loaded into texture memroy)
    */
-  p = TAILQ_PREV(c, glw_queue, glw_parent_link);
+  p = glw_prev_widget(c);
   if(p == NULL)
-    p = TAILQ_LAST(&s->w.glw_childs, glw_queue);
+    p = glw_last_widget(&s->w);
   if(p != NULL && p != c) {
     p->glw_parent_alpha = GLW_MAX(p->glw_parent_alpha - delta, 0.0f);
     glw_layout0(p, rc);
   }
 
-  n = TAILQ_NEXT(c, glw_parent_link);
+  n = glw_next_widget(c);
   if(n == NULL)
-    n = TAILQ_FIRST(&s->w.glw_childs);
+    n = glw_first_widget(&s->w);
   if(n != NULL && n != c) {
     n->glw_parent_alpha = GLW_MAX(n->glw_parent_alpha - delta, 0.0f);
     glw_layout0(n, rc);
@@ -150,19 +150,17 @@ glw_slideshow_event(glw_slideshow_t *s, event_t *e)
 
   if(event_is_action(e, ACTION_NEXT_TRACK)) {
 
-    c = s->w.glw_focused ? TAILQ_NEXT(s->w.glw_focused, 
-				      glw_parent_link) : NULL;
+    c = s->w.glw_focused ? glw_next_widget(s->w.glw_focused) : NULL;
     if(c == NULL)
-      c = TAILQ_FIRST(&s->w.glw_childs);
+      c = glw_first_widget(&s->w);
     s->w.glw_focused = c;
     s->timer = 0;
 
   } else if(event_is_action(e, ACTION_PREV_TRACK)) {
 
-    c = s->w.glw_focused ? TAILQ_PREV(s->w.glw_focused, glw_queue,
-				    glw_parent_link) : NULL;
+    c = s->w.glw_focused ? glw_prev_widget(s->w.glw_focused) : NULL;
     if(c == NULL)
-      c = TAILQ_LAST(&s->w.glw_childs, glw_queue);
+      c = glw_last_widget(&s->w);
     s->w.glw_focused = c;
     s->timer = 0;
 
@@ -252,6 +250,7 @@ glw_slideshow_set(glw_t *w, int init, va_list ap)
 static glw_class_t glw_slideshow = {
   .gc_name = "slideshow",
   .gc_instance_size = sizeof(glw_slideshow_t),
+  .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_set = glw_slideshow_set,
   .gc_render = glw_slideshow_render,
   .gc_signal_handler = glw_slideshow_callback,
