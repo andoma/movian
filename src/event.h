@@ -86,6 +86,8 @@ typedef enum {
   ACTION_SHUFFLE,
   ACTION_REPEAT,
 
+  ACTION_RECORD,
+
   ACTION_last_mappable
 } action_type_t;
 

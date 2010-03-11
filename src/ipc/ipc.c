@@ -8,4 +8,9 @@ ipc_init(void)
   extern void dbus_start(void);
   dbus_start();
 #endif
+
+#ifdef CONFIG_LIRC
+  extern void lirc_start(void);
+  lirc_start();
+#endif
 }

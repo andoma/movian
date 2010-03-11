@@ -304,12 +304,6 @@ ${BUILDDIR}/src/ui/gu/%.o : CFLAGS = $(shell pkg-config --cflags gtk+-2.0) \
 -Wall -Werror -Wmissing-prototypes -Wno-cast-qual -Wno-deprecated-declarations 
 
 #
-# LIRC UI
-#
-SRCS-$(CONFIG_LIRC) +=  src/ui/lirc/imonpad.c \
-			src/ui/lirc/lircd.c
-
-#
 # IPC
 #
 SRCS                +=  src/ipc/ipc.c
@@ -320,6 +314,8 @@ SRCS-$(CONFIG_DBUS) +=  src/ipc/dbus/dbus.c \
 
 ${BUILDDIR}/src/ipc/dbus/%.o : CFLAGS =  $(shell pkg-config --cflags dbus-1) \
 -Wall -Werror -Wmissing-prototypes -Wno-cast-qual
+
+SRCS-$(CONFIG_LIRC) +=  src/ipc/lirc.c
 
 
 #

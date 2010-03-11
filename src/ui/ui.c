@@ -55,10 +55,6 @@ ui_register(void)
  LIST_INSERT_HEAD(&uis, &name ## _ui, ui_link);\
 }while(0)
 
-#ifdef CONFIG_LIRC
-  link_ui(lircd);
-  link_ui(imonpad);
-#endif
 #ifdef CONFIG_APPLEREMOTE
   link_ui(appleremote);
 #endif
@@ -222,4 +218,20 @@ ui_shutdown(void)
   LIST_FOREACH(uii, &uiis, uii_link) 
     if(uii->uii_ui->ui_stop != NULL)
       uii->uii_ui->ui_stop(uii);
+}
+
+
+/**
+ * Deliver event to primary UI
+ */
+void
+ui_primary_event(event_t *e)
+{
+  uii_t *uii = primary_uii;
+
+  if(uii == NULL) {
+    event_unref(e);
+  } else {
+    uii->uii_ui->ui_dispatch_event(uii, e);
+  }
 }

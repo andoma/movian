@@ -72,4 +72,6 @@ void uii_register(uii_t *uii, int primary);
 
 void ui_shutdown(void);
 
+void ui_primary_event(event_t *e);
+
 #endif /* UI_H__ */

@@ -1,0 +1,206 @@
+/*
+ *  Lirc interface
+ *  Copyright (C) 2007 - 2010 Andreas Öman
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <poll.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <errno.h>
+
+#include <htsmsg/htsbuf.h>
+
+#include "event.h"
+#include "showtime.h"
+#include "ui/ui.h"
+#include "event.h"
+
+
+static int lirc_fd;
+
+static const struct {
+  const char *name;
+  uint16_t action1;
+  uint16_t action2;
+} lircmap[] = {
+  { "Up",           ACTION_UP    },
+  { "Down",         ACTION_DOWN  },
+  { "Left",         ACTION_LEFT  },
+  { "Right",        ACTION_RIGHT },
+  { "Enter",        ACTION_ENTER },
+  { "Back",         ACTION_BS, ACTION_NAV_BACK },
+  { "Backspace",    ACTION_BS, ACTION_NAV_BACK },
+
+  { "Record",       ACTION_RECORD },
+  { "Play",         ACTION_PLAY },
+  { "Eject",        ACTION_EJECT },
+
+  { "Rewind",       ACTION_SEEK_BACKWARD },
+  { "FastForward",  ACTION_SEEK_FORWARD },
+  { "Pause",        ACTION_PAUSE },
+
+  { "PrevChapter",  ACTION_PREV_TRACK },
+  { "Stop",         ACTION_STOP },
+  { "NextChapter",  ACTION_NEXT_TRACK },
+
+  { "Mute",         ACTION_VOLUME_MUTE_TOGGLE },
+  { "Vol+",         ACTION_VOLUME_UP },
+  { "Vol-",         ACTION_VOLUME_DOWN },
+
+  { "Tab",          ACTION_FOCUS_NEXT },
+  { "ShiftTab",     ACTION_FOCUS_PREV },
+
+};
+
+static void *
+lirc_thread(void *aux)
+{
+  char buf[200];
+  uint64_t ircode;
+  uint32_t repeat;
+  char keyname[100];
+  int i, r, fd, len, n;
+  htsbuf_queue_t q;
+  struct pollfd fds;
+  event_t *e;
+
+  fd = lirc_fd;
+
+  htsbuf_queue_init(&q, 0);
+  fds.fd = fd;
+  fds.events = POLLIN;
+
+  while(1) {
+
+    r = poll(&fds, 1, -1);
+    if(r > 0) {
+      if((r = read(fd, buf, sizeof(buf))) < 1) {
+	TRACE(TRACE_ERROR, "lircd", "Read error: %s", strerror(errno));
+	break;
+      }
+      htsbuf_append(&q, buf, r);
+    }
+
+    while((len = htsbuf_find(&q, 0xa)) != -1) {
+      
+      if(len >= sizeof(buf) - 1) {
+	TRACE(TRACE_ERROR, "lircd", "Command buffer size exceeded");
+	goto out;
+      }
+
+      htsbuf_read(&q, buf, len);
+      buf[len] = 0;
+      
+      while(len > 0 && buf[len - 1] < 32)
+	buf[--len] = 0;
+      htsbuf_drop(&q, 1); /* Drop the \n */
+      
+      n = sscanf(buf, "%"PRIx64" %x %s", &ircode, &repeat, keyname);
+      if(n != 3) {
+	TRACE(TRACE_INFO, "lircd", "Invalid LIRC input: \"%s\"", buf);
+	continue;
+      }
+      
+      if(keyname[0] && keyname[1] == 0) {
+	/* ASCII input */
+	e = event_create_unicode(keyname[0]);
+      } else {
+	e = NULL;
+	for(i = 0; i < sizeof(lircmap) / sizeof(lircmap[0]); i++) {
+	  if(!strcasecmp(keyname, lircmap[i].name)) {
+	    action_type_t av[3] = {
+	      lircmap[i].action1,
+	      lircmap[i].action2,
+	    };
+	    if(av[1] != ACTION_NONE)
+	      e = event_create_action_multi(av, 2);
+	    else
+	      e = event_create_action_multi(av, 1);
+	    break;
+	  }
+	}
+      }
+      if(e != NULL)
+	ui_primary_event(e);
+      else
+	TRACE(TRACE_DEBUG, "lircd", "Unhandled LIRC key: \"%s\"", keyname);
+
+    }
+  }
+ out:
+  close(fd);
+  htsbuf_queue_flush(&q);
+  return NULL;
+}
+
+
+/**
+ *
+ */
+static int
+lirc_open_socket(const char *path)
+{
+  int fd = socket(AF_UNIX, SOCK_STREAM, 0);
+  struct sockaddr_un sun;
+
+  sun.sun_family = AF_UNIX;
+  snprintf(sun.sun_path, sizeof(sun.sun_path), "%s", path);
+
+  if(connect(fd, (struct sockaddr *)&sun, sizeof(struct sockaddr_un))) {
+    close(fd);
+    return -1;
+  }
+  return fd;
+}
+
+/**
+ *
+ */
+static void
+lirc_open(void)
+{
+  int fd;
+
+  fd = lirc_open_socket("/var/run/lirc/lircd");
+  if(fd == -1)
+    fd = lirc_open_socket("/dev/lircd"); // Old path
+
+  if(fd == -1)
+    return;
+
+  lirc_fd = fd;
+  hts_thread_create_detached("lirc", lirc_thread, NULL);
+}
+
+
+
+
+/**
+ *
+ */
+void lirc_start(void);
+
+void
+lirc_start(void)
+{
+  lirc_open();
+}

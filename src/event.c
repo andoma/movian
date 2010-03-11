@@ -186,6 +186,7 @@ static struct strtab actionnames[] = {
   { "MediaStats",            ACTION_SHOW_MEDIA_STATS },
   { "Shuffle",               ACTION_SHUFFLE },
   { "Repeat",                ACTION_REPEAT },
+  { "Record",                ACTION_RECORD },
 
 };
 
