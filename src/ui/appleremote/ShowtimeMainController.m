@@ -60,7 +60,7 @@
   [remoteControlBehavior setDelegate: self];
   
   RemoteControlContainer* container =
-    [[RemoteControlContainer alloc] initWithDelegate: remoteControlBehavior];
+  [[RemoteControlContainer alloc] initWithDelegate: remoteControlBehavior];
   [container instantiateAndAddRemoteControlDeviceWithClass:
    [AppleRemote class]];
   [container instantiateAndAddRemoteControlDeviceWithClass:
@@ -150,7 +150,7 @@
       NSLog(@"Unmapped event for button %d", buttonIdentifier); 
       break;
   }
-
+  
   NSLog(@"Button %@ pressed %@ %d clicks", buttonName, pressed, clickCount);  
 }
 
@@ -175,7 +175,7 @@ appleremote_start(ui_t *ui, int argc, char *argv[], int primary)
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   
   [[ShowtimeMainController alloc] initWithUi:ui primary:primary];
-    
+  
   [pool release];
   
   return 0;
