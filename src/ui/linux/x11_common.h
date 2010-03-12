@@ -1,6 +1,6 @@
-/*
- *  Core for inhibiting screensaver on Linux
- *  Copyright (C) 2009 Andreas Öman
+/**
+ *  X11 common code
+ *  Copyright (C) 2010 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,9 +16,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCREENSAVER_INHIBITOR_H__
-#define SCREENSAVER_INHIBITOR_H__
 
-void *screensaver_inhibitor_init(const char *displayname);
+#ifndef X11_COMMON_H__
+#define X11_COMMON_H__
+
+#include <X11/Xlib.h>
+struct x11_screensaver_state;
+
+struct x11_screensaver_state *x11_screensaver_suspend(Display *dpy);
+
+void x11_screensaver_resume(struct x11_screensaver_state *s);
 
 #endif

@@ -35,7 +35,7 @@
 #include <X11/XF86keysym.h>
 
 #include "showtime.h"
-#include "ui/linux/screensaver_inhibitor.h"
+#include "ui/linux/x11_common.h"
 #include "ui/linux/nvidia.h"
 #include "settings.h"
 #include "ipc/ipc.h"
@@ -85,6 +85,9 @@ typedef struct glw_x11 {
 
   int working_vsync;
   int force_no_vsync;
+
+  struct x11_screensaver_state *sss;
+
 } glw_x11_t;
 
 #define AUTOHIDE_TIMEOUT 100 // XXX: in frames.. bad
@@ -531,8 +534,6 @@ glw_x11_init(glw_x11_t *gx11)
       glXGetProcAddress((const GLubyte*)"glXSwapIntervalSGI");
   }
 
-  screensaver_inhibitor_init(gx11->displayname_real);
-
   build_blank_cursor(gx11);
 
   gx11->im = XOpenIM(gx11->display, NULL, NULL, NULL);
@@ -792,6 +793,14 @@ glw_x11_mainloop(glw_x11_t *gx11)
     if(gx11->fullwindow)
       autohide_cursor(gx11);
 
+    if(gx11->fullwindow && gx11->sss == NULL)
+      gx11->sss = x11_screensaver_suspend(gx11->display);
+
+    if(!gx11->fullwindow && gx11->sss != NULL) {
+      x11_screensaver_resume(gx11->sss);
+      gx11->sss = NULL;
+    }
+
     if(gx11->is_fullscreen != gx11->want_fullscreen)
       window_change_displaymode(gx11);
 
@@ -926,7 +935,11 @@ glw_x11_mainloop(glw_x11_t *gx11)
     }
     glXSwapBuffers(gx11->display, gx11->win);
   }
+  if(gx11->sss != NULL)
+    x11_screensaver_resume(gx11->sss);
+
   window_shutdown(gx11);
+ 
 }
 
 

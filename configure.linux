@@ -74,6 +74,7 @@ enable libspotify_load_runtime
 enable dbus
 enable cdda
 enable cddb
+enable libxss
 
 for opt do
   optval="${opt#*=}"
@@ -107,7 +108,7 @@ enable zlib
 enable posix_networking
 enable dvd
 enable dvd_linux
-    
+
 #
 # pkgconfig
 #
@@ -240,6 +241,21 @@ if enabled gu; then
     else
 	echo "GTK2 not found. Unable to build GU (GTK user interface)."
 	echo "To compile without it, configure with: --disable-gu"
+	die
+    fi
+fi
+
+
+#
+# libXss (Screen saver control library)
+#
+if enabled libxss; then
+    if pkg-config xscrnsaver; then
+	echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags xscrnsaver`
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs xscrnsaver`
+	echo "Using libxscrnsaver:   `pkg-config --modversion xscrnsaver`"
+    else
+	echo "libXss not found. Unable to build with screensaver disable support."
 	die
     fi
 fi

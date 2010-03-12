@@ -51,6 +51,7 @@ CONFIG_LIST="
  nvctrl
  libopenspc
  tinysmb
+ libxss
 "
 
 die() {
