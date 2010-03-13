@@ -890,17 +890,24 @@ glw_x11_mainloop(glw_x11_t *gx11)
 		 PROP_TAG_ROOT, gx11->gr.gr_uii.uii_prop,
 		 NULL);
 
+  if(!gx11->wm_flags)
+    // No window manager, disable screensaver right away
+    gx11->sss = x11_screensaver_suspend(gx11->display);
+
   while(1) {
 
     if(gx11->fullwindow)
       autohide_cursor(gx11);
 
-    if(gx11->fullwindow && gx11->sss == NULL)
-      gx11->sss = x11_screensaver_suspend(gx11->display);
+    if(gx11->wm_flags) {
 
-    if(!gx11->fullwindow && gx11->sss != NULL) {
-      x11_screensaver_resume(gx11->sss);
-      gx11->sss = NULL;
+      if(gx11->fullwindow && gx11->sss == NULL)
+	gx11->sss = x11_screensaver_suspend(gx11->display);
+      
+      if(!gx11->fullwindow && gx11->sss != NULL) {
+	x11_screensaver_resume(gx11->sss);
+	gx11->sss = NULL;
+      }
     }
 
     if(gx11->is_fullscreen != gx11->want_fullscreen)
