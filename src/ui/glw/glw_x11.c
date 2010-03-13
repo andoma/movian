@@ -56,8 +56,6 @@ typedef struct glw_x11 {
 
   int cursor_hidden;
 
-  float aspect_ratio;
-
   int is_fullscreen;
   int want_fullscreen;
   setting_t *fullscreen_setting;
@@ -67,9 +65,6 @@ typedef struct glw_x11 {
   Colormap colormap;
   const char *displayname_real;
   const char *displayname_title;
-
-  int coords[2][4];
-  Atom deletewindow;
 
   PFNGLXSWAPINTERVALSGIPROC glXSwapIntervalSGI;
 
@@ -87,6 +82,13 @@ typedef struct glw_x11 {
   int force_no_vsync;
 
   struct x11_screensaver_state *sss;
+
+  Atom atom_deletewindow;
+
+  int wm_flags;
+#define GX11_WM_DETECTED       0x1 // A window manager is present
+#define GX11_WM_CAN_FULLSCREEN 0x2 // WM can fullscreen us
+
 
 } glw_x11_t;
 
@@ -220,7 +222,7 @@ fullscreen_grab(glw_x11_t *gx11)
   XSetInputFocus(gx11->display, gx11->win, RevertToNone, CurrentTime);
   XWarpPointer(gx11->display, None, gx11->root,
 	       0, 0, 0, 0,
-	       gx11->coords[0][2] / 2, gx11->coords[0][3] / 2);
+	       gx11->gr.gr_width / 2, gx11->gr.gr_height / 2);
   XGrabKeyboard(gx11->display,  gx11->win, False,
 		GrabModeAsync, GrabModeAsync, CurrentTime);
 
@@ -253,15 +255,14 @@ check_vsync(glw_x11_t *gx11)
  *
  */
 static int
-window_open(glw_x11_t *gx11)
+window_open(glw_x11_t *gx11, int fullscreen)
 {
   XSetWindowAttributes winAttr;
   unsigned long mask;
-  int fullscreen = gx11->want_fullscreen;
   XTextProperty text;
   extern char *htsversion;
   char buf[60];
-  int fevent;
+  int fevent, x, y, w, h;
 
   winAttr.event_mask = KeyPressMask | StructureNotifyMask |
     ButtonPressMask | ButtonReleaseMask |
@@ -277,40 +278,35 @@ window_open(glw_x11_t *gx11)
   
   mask = CWBackPixmap | CWBorderPixel | CWColormap | CWEventMask;
 
-  gx11->coords[0][0] = gx11->screen_width  / 4;
-  gx11->coords[0][1] = gx11->screen_height / 4;
-  gx11->coords[0][2] = 853; //gx11->screen_width  * 3 / 4;
-  gx11->coords[0][3] = 480; //gx11->screen_height * 3 / 4;
-
-  gx11->coords[1][0] = 0;
-  gx11->coords[1][1] = 0;
-  gx11->coords[1][2] = gx11->screen_width;
-  gx11->coords[1][3] = gx11->screen_height;
-
   if(fullscreen) {
+
+    x = 0;
+    y = 0;
+    w = gx11->screen_width;
+    h = gx11->screen_height;
 
     winAttr.override_redirect = True;
     mask |= CWOverrideRedirect;
-  }
 
-  gx11->aspect_ratio =
-    (float)gx11->coords[fullscreen][2] / 
-    (float)gx11->coords[fullscreen][3];
+  } else {
+
+    x = gx11->screen_width  / 4;
+    y = gx11->screen_height / 4;
+    w = 853; //gx11->screen_width  * 3 / 4;
+    h = 480; //gx11->screen_height * 3 / 4;
+  }
 
   gx11->win = 
     XCreateWindow(gx11->display,
 		  gx11->root,
-		  gx11->coords[fullscreen][0],
-		  gx11->coords[fullscreen][1],
-		  gx11->coords[fullscreen][2],
-		  gx11->coords[fullscreen][3],
+		  x, y, w, h,
 		  0,
 		  gx11->xvi->depth, InputOutput,
 		  gx11->xvi->visual, mask, &winAttr
 		  );
 
-  gx11->gr.gr_width  = gx11->coords[fullscreen][2];
-  gx11->gr.gr_height = gx11->coords[fullscreen][3];
+  gx11->gr.gr_width  = w;
+  gx11->gr.gr_height = h;
 
   gx11->glxctx = glXCreateContext(gx11->display, gx11->xvi, NULL, 1);
 
@@ -336,15 +332,10 @@ window_open(glw_x11_t *gx11)
   XSetWMName(gx11->display, gx11->win, &text);
 
   /* Create the window deletion atom */
-  gx11->deletewindow = XInternAtom(gx11->display, "WM_DELETE_WINDOW",
-				      0);
-
-  XSetWMProtocols(gx11->display, gx11->win, &gx11->deletewindow, 1);
+  XSetWMProtocols(gx11->display, gx11->win, &gx11->atom_deletewindow, 1);
 
   if(fullscreen)
     fullscreen_grab(gx11);
-
-  gx11->is_fullscreen = gx11->want_fullscreen;
 
   update_gpu_info(gx11);
 
@@ -423,17 +414,6 @@ window_shutdown(glw_x11_t *gx11)
   window_close(gx11);
 }
 
-/**
- *
- */
-static void
-window_change_displaymode(glw_x11_t *gx11)
-{
-  window_shutdown(gx11);
-  if(window_open(gx11))
-    exit(1);
-}
-
 
 /**
  *
@@ -466,6 +446,83 @@ GLXExtensionSupported(Display *dpy, const char *extension)
     return 1;
 
   return 0;
+}
+
+/**
+ *
+ */
+static int 
+get_x11_prop(glw_x11_t *gx11, Atom type, Atom **items)
+{
+  int format;
+  unsigned long bytes_after, r;
+
+    if(XGetWindowProperty(gx11->display, gx11->root, type, 0, 16384, False,
+			  AnyPropertyType, &type, &format, &r,
+			  &bytes_after, (unsigned char **)items) != Success) {
+      printf("FAIL\n");
+      return -1;
+    }
+    return r;
+}
+
+/**
+ * Try to figure out if we have a window manager and query some of its
+ * capabilities
+ */
+static void
+probe_wm(glw_x11_t *gx11)
+{
+  int nitems, i;
+  Atom *items;
+
+  Atom NET_SUPPORTED = XInternAtom(gx11->display, "_NET_SUPPORTED", 0);
+  Atom STATE_FS = XInternAtom(gx11->display, "_NET_WM_STATE_FULLSCREEN", 0);
+
+  if(NET_SUPPORTED == None ||
+     (nitems = get_x11_prop(gx11, NET_SUPPORTED, &items)) < 0 ||
+     nitems == 0) {
+    TRACE(TRACE_INFO, "GLW", "No window manager detected");
+    return;
+  }
+
+  gx11->wm_flags |= GX11_WM_DETECTED;
+
+  for(i = 0; i < nitems; i++) {
+    if(items[i] == STATE_FS)
+      gx11->wm_flags |= GX11_WM_CAN_FULLSCREEN;
+  }
+
+  TRACE(TRACE_DEBUG, "GLW", "Window manager detected%s",
+	gx11->wm_flags & GX11_WM_CAN_FULLSCREEN ? ", can fullscreen" : "");
+
+  XFree(items);
+}
+
+/**
+ *
+ */
+static void
+wm_set_fullscreen(glw_x11_t *gx11, int on)
+{
+  XEvent xev = {0};
+  Atom STATE_FS = XInternAtom(gx11->display, "_NET_WM_STATE_FULLSCREEN", 0);
+  Atom STATE = XInternAtom(gx11->display, "_NET_WM_STATE", 0);
+
+  TRACE(TRACE_DEBUG, "GLW", "Fullscreen via windowmanager: %s",
+	on ? "On" : "Off");
+
+  xev.xclient.type = ClientMessage;
+  xev.xclient.send_event = True;
+  xev.xclient.message_type = STATE;
+  xev.xclient.window = gx11->win;
+  xev.xclient.format = 32;
+  xev.xclient.data.l[0] = !!on;
+  xev.xclient.data.l[1] = STATE_FS;
+
+  XSendEvent(gx11->display, gx11->root, False,
+	     SubstructureRedirectMask | SubstructureNotifyMask,
+	     &xev);
 }
 
 
@@ -542,7 +599,52 @@ glw_x11_init(glw_x11_t *gx11)
   nvidia_init(gx11->display, gx11->screen);
 #endif
 
-  return window_open(gx11);
+  gx11->atom_deletewindow = 
+    XInternAtom(gx11->display, "WM_DELETE_WINDOW", 0);
+
+  probe_wm(gx11);
+
+
+  gx11->is_fullscreen = gx11->want_fullscreen;
+
+  int fs = 0;
+  if(gx11->wm_flags == 0) {
+    fs = 1; // No window manager, open in fullscreen mode
+  } else {
+    /* If window manager cannot do fullscreen, ask window to open 
+       in fullscreen mode */
+    fs = gx11->want_fullscreen && !(gx11->wm_flags & GX11_WM_CAN_FULLSCREEN);
+  }
+
+  if(window_open(gx11, fs))
+    return -1;
+
+  // Fullscreen via window manager
+  if(gx11->want_fullscreen && !fs)
+    wm_set_fullscreen(gx11, 1);
+
+  return 0;
+}
+
+
+
+/**
+ *
+ */
+static void
+window_change_fullscreen(glw_x11_t *gx11)
+{
+  if(gx11->wm_flags & GX11_WM_CAN_FULLSCREEN) {
+
+    wm_set_fullscreen(gx11, gx11->want_fullscreen);
+    gx11->is_fullscreen = gx11->want_fullscreen;
+    
+  } else {
+
+    window_shutdown(gx11);
+    if(window_open(gx11, gx11->want_fullscreen))
+      exit(1);
+  }
 }
 
 
@@ -727,7 +829,7 @@ update_gpu_info(glw_x11_t *gx11)
  * Master scene rendering
  */
 static void 
-layout_draw(glw_x11_t *gx11, float aspect)
+layout_draw(glw_x11_t *gx11)
 {
   glw_rctx_t rc;
 
@@ -802,7 +904,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
     }
 
     if(gx11->is_fullscreen != gx11->want_fullscreen)
-      window_change_displaymode(gx11);
+      window_change_fullscreen(gx11);
 
     while(XPending(gx11->display)) {
       XNextEvent(gx11->display, &event);
@@ -835,14 +937,13 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	w = event.xconfigure.width;
 	h = event.xconfigure.height;
 	glViewport(0, 0, w, h);
-	gx11->aspect_ratio = (float)w / (float)h;
 	gx11->gr.gr_width  = w;
 	gx11->gr.gr_height = h;
 	break;
 
 
       case ClientMessage:
-	if((Atom)event.xclient.data.l[0] == gx11->deletewindow) {
+	if((Atom)event.xclient.data.l[0] == gx11->atom_deletewindow) {
 	  /* Window manager wants us to close */
 	  showtime_shutdown(0);
 	}
@@ -920,7 +1021,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
     }
     glw_lock(&gx11->gr);
     glw_prepare_frame(&gx11->gr);
-    layout_draw(gx11, gx11->aspect_ratio);
+    layout_draw(gx11);
     glw_unlock(&gx11->gr);
 
     frame++;
@@ -1002,13 +1103,15 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
 		       SETTINGS_INITIAL_UPDATE, gr->gr_courier,
 		       glw_settings_save, gr);
 
-  gx11->fullscreen_setting = 
-    settings_create_bool(gr->gr_settings, "fullscreen",
-			 "Fullscreen mode", 0, gr->gr_settings_store,
-			 gx11_set_fullscreen, gx11, 
-			 SETTINGS_INITIAL_UPDATE, gr->gr_courier,
-			 glw_settings_save, gr);
-  
+  if(gx11->wm_flags) {
+    gx11->fullscreen_setting = 
+      settings_create_bool(gr->gr_settings, "fullscreen",
+			   "Fullscreen mode", 0, gr->gr_settings_store,
+			   gx11_set_fullscreen, gx11, 
+			   SETTINGS_INITIAL_UPDATE, gr->gr_courier,
+			   glw_settings_save, gr);
+  }
+
   glw_load_universe(gr);
 
   glw_x11_mainloop(gx11);
