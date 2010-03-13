@@ -133,7 +133,7 @@ opensub_build_query(const char *lang, int64_t hash, int64_t movsize,
 
   if(movsize) {
     char str[20];
-    snprintf(str, sizeof(str), "%016llx", hash);
+    snprintf(str, sizeof(str), "%" PRId64, hash);
     htsmsg_add_str(m, "moviehash", str);
     htsmsg_add_s64(m, "moviebytesize", movsize);
   }
