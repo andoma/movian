@@ -157,7 +157,6 @@ static struct strtab actionnames[] = {
   { "PageDown",              ACTION_PAGE_DOWN },
   { "Top",                   ACTION_TOP },
   { "Bottom",                ACTION_BOTTOM },
-  { "Close",                 ACTION_CLOSE },
   { "Stop",                  ACTION_STOP },
   { "PlayPause",             ACTION_PLAYPAUSE },
   { "Play",                  ACTION_PLAY },
@@ -170,12 +169,13 @@ static struct strtab actionnames[] = {
   { "Forward",               ACTION_NAV_FWD },
   { "Select",                ACTION_SELECT },
   { "Eject",                 ACTION_EJECT },
-  { "Sleep",                 ACTION_SLEEP },
-  { "PreviousTrack",         ACTION_PREV_TRACK },
+    { "PreviousTrack",         ACTION_PREV_TRACK },
   { "NextTrack",             ACTION_NEXT_TRACK },
   { "SeekForward",           ACTION_SEEK_FORWARD },
   { "SeekReverse",           ACTION_SEEK_BACKWARD },
   { "Quit",                  ACTION_QUIT },
+  { "Standby",               ACTION_STANDBY },
+  { "PowerOff",              ACTION_POWER_OFF },
   { "Home",                  ACTION_HOME },
   { "ChangeView",            ACTION_SWITCH_VIEW },
   { "Channel+",              ACTION_CHANNEL_NEXT },
@@ -358,11 +358,14 @@ event_dispatch(event_t *e)
 {
   prop_t *p;
 
-  if(event_is_action(e, ACTION_CLOSE) || event_is_action(e, ACTION_QUIT)) {
+  if(event_is_action(e, ACTION_QUIT)) {
     showtime_shutdown(0);
 
-  } else if(event_is_action(e, ACTION_SLEEP)) {
+  } else if(event_is_action(e, ACTION_STANDBY)) {
     showtime_shutdown(10);
+
+  } else if(event_is_action(e, ACTION_POWER_OFF)) {
+    showtime_shutdown(11);
 
   } else if(event_is_action(e, ACTION_NAV_BACK) ||
 	    event_is_action(e, ACTION_NAV_FWD) ||

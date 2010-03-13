@@ -709,7 +709,9 @@ static const struct {
   { XK_F1,                   ControlMask,   ACTION_SEEK_BACKWARD },
   { XK_F3,                   ControlMask,   ACTION_SEEK_FORWARD },
   
-  { XF86XK_Sleep,            0,           ACTION_SLEEP },
+  { XK_F4,                   Mod1Mask,    ACTION_QUIT },
+
+  { XF86XK_Sleep,            0,           ACTION_STANDBY },
 
 };
 
@@ -768,7 +770,6 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
 				      ACTION_BS, ACTION_NAV_BACK}, 2);
       break;
     case 13:         e = event_create_action(ACTION_ENTER);     break;
-    case 27:         e = event_create_action(ACTION_CLOSE);     break;
     case 9:          e = event_create_action(ACTION_FOCUS_NEXT);break;
       /* Always send 1 char ASCII */
     default:
