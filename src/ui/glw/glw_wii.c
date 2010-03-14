@@ -138,7 +138,7 @@ process_keyboard_event(glw_wii_t *gwii, keyboard_event *ke)
 	ACTION_BS, ACTION_NAV_BACK}, 2);
     break;
   case KS_Return:  e = event_create_action(ACTION_ENTER);     break;
-  case KS_Escape:  e = event_create_action(ACTION_CLOSE);     break;
+  case KS_Escape:  e = event_create_action(ACTION_QUIT);      break;
   case KS_Tab:     e = event_create_action(ACTION_FOCUS_NEXT);break;
     /* Always send 1 char ASCII */
   default:
