@@ -42,6 +42,7 @@
 #include "scrappers/scrappers.h"
 #include "misc/callout.h"
 #include "api/opensubtitles.h"
+#include "runcontrol.h"
 
 /**
  *
@@ -118,6 +119,8 @@ main(int argc, char **argv)
   const char *argv0 = argc > 0 ? argv[0] : "showtime";
   const char *startpage;
   int nuiargs = 0;
+  int can_standby = 0;
+  int can_poweroff = 0;
 
   trace_level = TRACE_ERROR;
 
@@ -141,6 +144,14 @@ main(int argc, char **argv)
       continue;
     } else if(!strcmp(argv[0], "--ffmpeglog")) {
       ffmpeglog = 1;
+      argc -= 1; argv += 1;
+      continue;
+    } else if(!strcmp(argv[0], "--with-standby")) {
+      can_standby = 1;
+      argc -= 1; argv += 1;
+      continue;
+    } else if(!strcmp(argv[0], "--with-poweroff")) {
+      can_poweroff = 1;
       argc -= 1; argv += 1;
       continue;
     } else if(!strcmp(argv[0], "-s") && argc > 1) {
@@ -220,6 +231,9 @@ main(int argc, char **argv)
 
   /* opensubtitles.org */
   opensub_init();
+
+  /* */
+  runcontrol_init(can_standby, can_poweroff);
 
   TRACE(TRACE_DEBUG, "core", "Starting UI");
 

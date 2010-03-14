@@ -1340,6 +1340,8 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
   dir[1] = p[1] - gpe->y * 42.38; // this camera and projection matrix
   dir[2] = p[2] - -100;
  
+  if(gpe->type != GLW_POINTER_MOTION_REFRESH)
+    runcontrol_activity();
 
   /* If a widget has grabbed to pointer (such as when holding the button
      on a slider), dispatch events there */
@@ -1481,6 +1483,8 @@ glw_dispatch_event(uii_t *uii, event_t *e)
 {
   glw_root_t *gr = (glw_root_t *)uii;
   int r;
+
+  runcontrol_activity();
 
   glw_lock(gr);
 

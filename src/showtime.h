@@ -81,4 +81,6 @@ static inline unsigned int mystrhash(const char *s)
   return v;
 }
 
+void runcontrol_activity(void);
+
 #endif /* SHOWTIME_H */
