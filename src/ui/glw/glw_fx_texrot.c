@@ -303,7 +303,7 @@ glw_fx_texrot_set(glw_t *w, int init, va_list ap)
   if(fx->fx_tex != NULL)
     glw_tex_deref(w->glw_root, fx->fx_tex);
 
-  fx->fx_tex = glw_tex_create(w->glw_root, filename);
+  fx->fx_tex = glw_tex_create(w->glw_root, filename, 0);
 }
 
 

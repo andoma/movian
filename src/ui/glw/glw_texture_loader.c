@@ -333,7 +333,7 @@ glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *glt)
  *
  */
 glw_loadable_texture_t *
-glw_tex_create(glw_root_t *gr, const char *filename)
+glw_tex_create(glw_root_t *gr, const char *filename, int flags)
 {
   glw_loadable_texture_t *glt;
 
@@ -348,6 +348,7 @@ glw_tex_create(glw_root_t *gr, const char *filename)
     glt->glt_filename = strdup(filename);
     LIST_INSERT_HEAD(&gr->gr_tex_list, glt, glt_global_link);
     glt->glt_state = GLT_STATE_INACTIVE;
+    glt->glt_flags = flags;
   }
 
   glt->glt_refcnt++;

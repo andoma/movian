@@ -69,9 +69,11 @@ glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
   glBindTexture(m, glt->glt_texture);
   glTexParameteri(m, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(m, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(m, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(m, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    
+
+  int wrapmode = glt->glt_flags & GLW_TEX_REPEAT ? GL_REPEAT : GL_CLAMP_TO_EDGE;
+  glTexParameteri(m, GL_TEXTURE_WRAP_S, wrapmode);
+  glTexParameteri(m, GL_TEXTURE_WRAP_T, wrapmode);
+
   glTexImage2D(m, 0, glt->glt_format, 
 	       glt->glt_xs, glt->glt_ys,
 	       0, glt->glt_ext_format,

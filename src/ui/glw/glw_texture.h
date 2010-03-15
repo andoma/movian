@@ -21,6 +21,8 @@
 
 #include "misc/pixmap.h"
 
+#define GLW_TEX_REPEAT 0x1
+
 typedef struct glw_loadable_texture {
 
   LIST_ENTRY(glw_loadable_texture) glt_global_link;
@@ -61,7 +63,8 @@ typedef struct glw_loadable_texture {
 
 void glw_tex_init(glw_root_t *gr);
 
-glw_loadable_texture_t *glw_tex_create(glw_root_t *gr, const char *filename);
+glw_loadable_texture_t *glw_tex_create(glw_root_t *gr, const char *filename,
+				       int flags);
 
 glw_loadable_texture_t *glw_tex_create_from_pixmap(glw_root_t *gr, 
 						   pixmap_t *pp);

@@ -41,7 +41,12 @@ typedef struct glw_image {
  
   int gi_bitmap_flags;
 
-  uint8_t gi_border_scaling;
+  uint8_t gi_mode;
+
+#define GI_MODE_NORMAL           0
+#define GI_MODE_BORDER_SCALING   1
+#define GI_MODE_REPEATED_TEXTURE 2
+
   uint8_t gi_render_initialized;
   uint8_t gi_update;
 
@@ -64,7 +69,7 @@ typedef struct glw_image {
 
 } glw_image_t;
 
-static glw_class_t glw_image, glw_icon, glw_backdrop;
+static glw_class_t glw_image, glw_icon, glw_backdrop, glw_repeatedimage;
 
 static uint8_t texcords[9][8] = {
     { 0, 1,   1, 1,   1, 0,  0, 0},  // Normal
@@ -164,8 +169,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
   else
     alpha_self = rc->rc_alpha * w->glw_alpha * gi->gi_alpha_self;
 
-  if(w->glw_class == &glw_image || w->glw_class == &glw_icon || 
-     !gi->gi_border_scaling) {
+  if(gi->gi_mode == GI_MODE_NORMAL) {
 
     rc0 = *rc;
 
@@ -371,6 +375,80 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
  *
  */
 static void
+glw_image_layout_normal(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi, 
+			glw_loadable_texture_t *glt)
+{
+  float xs = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_xs;
+  float ys = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_ys;
+
+  uint8_t tex[8];
+  int o = glt->glt_orientation < 9 ? glt->glt_orientation : 0;
+  memcpy(tex, texcords[o], 8);
+
+  if(gi->gi_bitmap_flags & GLW_IMAGE_MIRROR_X) {
+    GLW_SWAP(tex[0], tex[2]);
+    GLW_SWAP(tex[4], tex[6]);
+  }
+	
+  if(gi->gi_bitmap_flags & GLW_IMAGE_MIRROR_Y) {
+    GLW_SWAP(tex[1], tex[7]);
+    GLW_SWAP(tex[5], tex[3]);
+  }
+
+  glw_render_vtx_pos(&gi->gi_gr, 0, -1.0, -1.0, 0.0);
+  glw_render_vtx_st (&gi->gi_gr, 0, 
+		     tex[0] * xs , tex[1] * ys);
+
+  glw_render_vtx_pos(&gi->gi_gr, 1,  1.0, -1.0, 0.0);
+  glw_render_vtx_st (&gi->gi_gr, 1,
+		     tex[2] * xs , tex[3] * ys);
+
+  glw_render_vtx_pos(&gi->gi_gr, 2,  1.0,  1.0, 0.0);
+  glw_render_vtx_st (&gi->gi_gr, 2,
+		     tex[4] * xs , tex[5] * ys);
+
+  glw_render_vtx_pos(&gi->gi_gr, 3, -1.0,  1.0, 0.0);
+  glw_render_vtx_st (&gi->gi_gr, 3,
+		     tex[6] * xs , tex[7] * ys);
+}
+
+
+/**
+ *
+ */
+static void
+glw_image_layout_repeated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi, 
+			  glw_loadable_texture_t *glt)
+{
+  float xs = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_xs;
+  float ys = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_ys;
+  float xr = rc->rc_size_x / glt->glt_xs;
+  float yr = rc->rc_size_y / glt->glt_ys;
+
+  xs *= xr;
+  ys *= yr;
+
+  glw_render_vtx_pos(&gi->gi_gr, 0, -1.0, -1.0, 0.0);
+  glw_render_vtx_st (&gi->gi_gr, 0, 0, ys);
+
+  glw_render_vtx_pos(&gi->gi_gr, 1,  1.0, -1.0, 0.0);
+  glw_render_vtx_st (&gi->gi_gr, 1, xs, ys);
+
+  glw_render_vtx_pos(&gi->gi_gr, 2,  1.0,  1.0, 0.0);
+  glw_render_vtx_st (&gi->gi_gr, 2, xs, 0);
+
+  glw_render_vtx_pos(&gi->gi_gr, 3, -1.0,  1.0, 0.0);
+  glw_render_vtx_st (&gi->gi_gr, 3, 0, 0);
+
+  gi->gi_saved_size_x = rc->rc_size_x;
+  gi->gi_saved_size_y = rc->rc_size_y;
+}
+
+
+/**
+ *
+ */
+static void
 glw_image_update_constraints(glw_image_t *gi)
 {
   glw_loadable_texture_t *glt = gi->gi_current;
@@ -454,52 +532,40 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
       if(gi->gi_render_initialized)
 	glw_render_free(&gi->gi_gr);
 
-      glw_render_init(&gi->gi_gr, 4 * (gi->gi_border_scaling ? 9 : 1),
+      glw_render_init(&gi->gi_gr, 
+		      4 * (gi->gi_mode == GI_MODE_BORDER_SCALING ? 9 : 1),
 		      GLW_RENDER_ATTRIBS_TEX);
       gi->gi_render_initialized = 1;
 
-      if(!gi->gi_border_scaling) {
-
-	float xs = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_xs;
-	float ys = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_ys;
-
-	uint8_t tex[8];
-	int o = glt->glt_orientation < 9 ? glt->glt_orientation : 0;
-	memcpy(tex, texcords[o], 8);
-
-	if(gi->gi_bitmap_flags & GLW_IMAGE_MIRROR_X) {
-	  GLW_SWAP(tex[0], tex[2]);
-	  GLW_SWAP(tex[4], tex[6]);
-	}
+      switch(gi->gi_mode) {
 	
-	if(gi->gi_bitmap_flags & GLW_IMAGE_MIRROR_Y) {
-	  GLW_SWAP(tex[1], tex[7]);
-	  GLW_SWAP(tex[5], tex[3]);
-	}
-
-	glw_render_vtx_pos(&gi->gi_gr, 0, -1.0, -1.0, 0.0);
-	glw_render_vtx_st (&gi->gi_gr, 0, 
-			   tex[0] * xs , tex[1] * ys);
-
-	glw_render_vtx_pos(&gi->gi_gr, 1,  1.0, -1.0, 0.0);
-	glw_render_vtx_st (&gi->gi_gr, 1,
-			   tex[2] * xs , tex[3] * ys);
-
-	glw_render_vtx_pos(&gi->gi_gr, 2,  1.0,  1.0, 0.0);
-	glw_render_vtx_st (&gi->gi_gr, 2,
-			   tex[4] * xs , tex[5] * ys);
-
-	glw_render_vtx_pos(&gi->gi_gr, 3, -1.0,  1.0, 0.0);
-	glw_render_vtx_st (&gi->gi_gr, 3,
-			   tex[6] * xs , tex[7] * ys);
-
-      } else {
+      case GI_MODE_NORMAL:
+	glw_image_layout_normal(gr, rc, gi, glt);
+	break;
+      case GI_MODE_BORDER_SCALING:
 	glw_image_layout_tesselated(gr, rc, gi, glt);
+	break;
+      case GI_MODE_REPEATED_TEXTURE:
+	glw_image_layout_repeated(gr, rc, gi, glt);
+	break;
       }
-    } else if(gi->gi_border_scaling &&
-	      (gi->gi_saved_size_x != rc->rc_size_x ||
-	       gi->gi_saved_size_y != rc->rc_size_y)) {
-      glw_image_layout_tesselated(gr, rc, gi, glt);
+
+
+    } else if(gi->gi_saved_size_x != rc->rc_size_x ||
+	      gi->gi_saved_size_y != rc->rc_size_y) {
+
+      switch(gi->gi_mode) {
+	
+      case GI_MODE_NORMAL:
+	break;
+      case GI_MODE_BORDER_SCALING:
+	glw_image_layout_tesselated(gr, rc, gi, glt);
+	break;
+      case GI_MODE_REPEATED_TEXTURE:
+	glw_image_layout_repeated(gr, rc, gi, glt);
+	break;
+      }
+
     }
   }
 
@@ -575,6 +641,9 @@ glw_image_set(glw_t *w, int init, va_list ap)
 
     if(w->glw_class == &glw_image)
       glw_set_constraints(&gi->w, 0, 0, 1, 0, GLW_CONSTRAINT_A, 0); 
+
+    if(w->glw_class == &glw_repeatedimage)
+      gi->gi_mode = GI_MODE_REPEATED_TEXTURE;
   }
 
   do {
@@ -585,7 +654,7 @@ glw_image_set(glw_t *w, int init, va_list ap)
       break;
 
     case GLW_ATTRIB_BORDER:
-      gi->gi_border_scaling = 1;
+      gi->gi_mode = GI_MODE_BORDER_SCALING;
       gi->gi_border_left   = va_arg(ap, double);
       gi->gi_border_top    = va_arg(ap, double);
       gi->gi_border_right  = va_arg(ap, double);
@@ -634,7 +703,13 @@ glw_image_set(glw_t *w, int init, va_list ap)
       if(gi->gi_pending != NULL)
 	glw_tex_deref(w->glw_root, gi->gi_pending);
 
-      gi->gi_pending = filename ? glw_tex_create(w->glw_root, filename) : NULL;
+      int flags = 0;
+
+      if(w->glw_class == &glw_repeatedimage)
+	flags |= GLW_TEX_REPEAT;
+
+      gi->gi_pending = filename ? glw_tex_create(w->glw_root, filename,
+						 flags) : NULL;
       break;
 
     case GLW_ATTRIB_PIXMAP:
@@ -724,3 +799,18 @@ static glw_class_t glw_backdrop = {
 };
 
 GLW_REGISTER_CLASS(glw_backdrop);
+
+
+
+/**
+ *
+ */
+static glw_class_t glw_repeatedimage = {
+  .gc_name = "repeatedimage",
+  .gc_instance_size = sizeof(glw_image_t),
+  .gc_render = glw_image_render,
+  .gc_set = glw_image_set,
+  .gc_signal_handler = glw_image_callback,
+};
+
+GLW_REGISTER_CLASS(glw_repeatedimage);
