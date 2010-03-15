@@ -467,10 +467,14 @@ glw_wii_loop(glw_wii_t *gwii)
   glw_render_vtx_st(&gwii->cursor_renderer, 3, 0.0, 0.0);
 
 
-  gwii->cursors[0]= glw_tex_create(&gwii->gr, "theme://wii/shadow_point.png");
-  gwii->cursors[1]= glw_tex_create(&gwii->gr, "theme://wii/generic_point.png");
-  gwii->cursors[2]= glw_tex_create(&gwii->gr, "theme://wii/shadow_grab.png");
-  gwii->cursors[3]= glw_tex_create(&gwii->gr, "theme://wii/generic_grab.png");
+  gwii->cursors[0] =
+    glw_tex_create(&gwii->gr, "theme://wii/shadow_point.png", 0);
+  gwii->cursors[1] =
+    glw_tex_create(&gwii->gr, "theme://wii/generic_point.png", 0);
+  gwii->cursors[2] =
+    glw_tex_create(&gwii->gr, "theme://wii/shadow_grab.png", 0);
+  gwii->cursors[3] =
+    glw_tex_create(&gwii->gr, "theme://wii/generic_grab.png", 0);
 
   gwii->running = 1;
 

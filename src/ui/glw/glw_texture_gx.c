@@ -336,8 +336,10 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 
   glt->glt_texture.mem = texels;
   
+  int wrapmode = glt->glt_flags & GLW_TEX_REPEAT ? GX_REPEAT : GX_CLAMP;
+
   GX_InitTexObj(&glt->glt_texture.obj, texels, req_w, req_h, 
-		fmt, GX_CLAMP, GX_CLAMP, GX_FALSE);
+		fmt, wrapmode, wrapmode, GX_FALSE);
   return 0;
 }
 
