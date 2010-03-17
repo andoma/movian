@@ -343,6 +343,17 @@ fi
 
 
 #
+# libsmbclient
+#
+if enabled libsmbclient; then
+    
+    check_header "libsmbclient.h" || fatal "libsmbclient" "Missing include file libsmbclient.h"
+    check_lib    "smbclient"      || fatal "libsmbclient" "Unable to link with libsmbclient"
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lsmbclient"
+fi
+
+
+#
 # configure ffmpeg
 #
 setup_ffmpeg --cpu=${CPU} --enable-pthreads

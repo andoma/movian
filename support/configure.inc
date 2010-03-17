@@ -52,6 +52,7 @@ CONFIG_LIST="
  libopenspc
  tinysmb
  libxss
+ libsmbclient
 "
 
 die() {

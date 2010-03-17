@@ -17,8 +17,6 @@
  */
 
 #include "config.h"
-#ifdef HAVE_LIBSMBCLIENT
-
 #include <pthread.h>
 #include <assert.h>
 #include <sys/stat.h>
@@ -34,18 +32,14 @@
 
 #include "showtime.h"
 #include "fileaccess.h"
+#include "fa_proto.h"
+#include "keyring.h"
 
+// libsmbclient is not thread safe.
+// Welcome to 1980
 
-/**
- * We use pthread_key's to setup one smb client context per
- * thread. The contexts are destroyed when the threads exit.
- * Perhaps not perfect but without it we would have to pass
- * around a lot of pointers or have a global lock (ueck!)
- */
-
-static pthread_key_t smb_thread_key;
-
-static void smb_thread_destroyed(void *aux);
+static pthread_mutex_t smb_mutex;
+static SMBCCTX *smb_ctx;
 
 static void smb_auth(const char *server, const char *share,
 		     char *wrkgrp, int wrkgrplen,
@@ -58,69 +52,28 @@ static void smb_auth(const char *server, const char *share,
 static void
 smb_init(void)
 {
-  pthread_key_create(&smb_thread_key, smb_thread_destroyed);
+  smb_ctx = smbc_new_context();
+  smb_ctx->callbacks.auth_fn = smb_auth;
+  smbc_init_context(smb_ctx);
+  pthread_mutex_init(&smb_mutex, NULL);
 }
 
 
 /**
  *
  */
-static void 
-smb_thread_destroyed(void *aux)
-{
-  SMBCCTX *ctx = aux;
-  smbc_free_context(ctx, 1);
-}
-
-
-/**
- *
- */
-static SMBCCTX *
-smb_get_thread_context(void)
-{
-  SMBCCTX *ctx = pthread_getspecific(smb_thread_key);
-  if(ctx != NULL)
-    return ctx;
-
-  if((ctx = smbc_new_context()) == NULL)
-    return NULL;
-  
-  ctx->callbacks.auth_fn = smb_auth;
-
-  if(smbc_init_context(ctx) == NULL) {
-    smbc_free_context(ctx, 1);
-    return NULL;
-  }
-
-  pthread_setspecific(smb_thread_key, ctx);
-  return ctx;
-}
-  
-
-/**
- *
- */
-
 typedef struct smbdirentry {
   int type;
   char name[0];
 } smbdirentry_t;
 
+
+/**
+ *
+ */
 static int
-smb_scandir_sort(const void *A, const void *B)
+smb_scandir(fa_dir_t *fa, const char *url, char *errbuf, size_t errsize)
 {
-  const smbdirentry_t *a = *(smbdirentry_t * const *)A;
-  const smbdirentry_t *b = *(smbdirentry_t * const *)B;
-
-  return strcmp(a->name, b->name);
-
-}
-
-static int
-smb_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
-{
-  SMBCCTX *ctx = smb_get_thread_context();
   SMBCFILE *fd;
   struct smbc_dirent *dirent;
   char buf[URL_MAX];
@@ -130,17 +83,18 @@ smb_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
   int svec_len, svec_size;
   smbdirentry_t **svec, *sde;
 
-  if(ctx == NULL)
-    return -1;
+  pthread_mutex_lock(&smb_mutex);
 
-  if((fd = ctx->opendir(ctx, url)) == NULL)
+  if((fd = smb_ctx->opendir(smb_ctx, url)) == NULL) {
+    snprintf(errbuf, errsize, "%s", strerror(errno));
+    pthread_mutex_unlock(&smb_mutex);
     return -1;
-
+  }
   svec_size = 100;
   svec_len = 0;
   svec = malloc(svec_size * sizeof(struct smbdirentry_t *));
 
-  while((dirent = ctx->readdir(ctx, fd)) != NULL) {
+  while((dirent = smb_ctx->readdir(smb_ctx, fd)) != NULL) {
     if(dirent->name[0] == 0 || dirent->name[0] == '.')
       continue;
 
@@ -158,9 +112,7 @@ smb_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
     }
   }
 
-  ctx->close_fn(ctx, fd);
-
-  qsort(svec, svec_len, sizeof(struct smbdirentry_t *), smb_scandir_sort);
+  smb_ctx->close_fn(smb_ctx, fd);
 
   for(i = 0; i < svec_len; i++) {
   
@@ -171,28 +123,45 @@ smb_scandir(const char *url, fa_scandir_callback_t *cb, void *arg)
     switch(sde->type) {
     case SMBC_FILE_SHARE:
     case SMBC_DIR:
-      cb(arg, buf, sde->name, FA_DIR);
+      fa_dir_add(fa, buf, sde->name, CONTENT_DIR);
       break;
 
     case SMBC_FILE:
-      cb(arg, buf, sde->name, FA_FILE);
+      fa_dir_add(fa, buf, sde->name, CONTENT_FILE);
       break;
     }
     free(sde);
   }
   free(svec);
+  pthread_mutex_unlock(&smb_mutex);
   return 0;
 }
 
 
+typedef struct smb_handle {
+  fa_handle_t h;
+  void *fd;
+} smb_handle_t;
+
 /**
  * Open file
  */
-static void *
-smb_open(const char *url)
+static fa_handle_t *
+smb_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
 {
-  SMBCCTX *ctx = smb_get_thread_context();
-  return ctx->open(ctx, url, O_RDONLY, 0);
+  smb_handle_t *fh;
+  pthread_mutex_lock(&smb_mutex);
+  void *fd = smb_ctx->open(smb_ctx, url, O_RDONLY, 0);
+  if(fd == NULL) {
+    snprintf(errbuf, errlen, "%s", strerror(errno));
+    pthread_mutex_unlock(&smb_mutex);
+    return NULL;
+  }
+  fh = malloc(sizeof(smb_handle_t));
+  fh->fd = fd;
+  fh->h.fh_proto = fap;
+  pthread_mutex_unlock(&smb_mutex);
+  return &fh->h;
 }
 
 
@@ -200,10 +169,13 @@ smb_open(const char *url)
  * Close file
  */
 static void
-smb_close(void *handle)
+smb_close(fa_handle_t *fh_)
 {
-  SMBCCTX *ctx = smb_get_thread_context();
-  ctx->close_fn(ctx, handle);
+  smb_handle_t *fh = (smb_handle_t *)fh_;
+  pthread_mutex_lock(&smb_mutex);
+  smb_ctx->close_fn(smb_ctx, fh->fd);
+  free(fh);
+  pthread_mutex_unlock(&smb_mutex);
 }
 
 
@@ -211,21 +183,27 @@ smb_close(void *handle)
  * Read from file
  */
 static int
-smb_read(void *handle, void *buf, size_t size)
+smb_read(fa_handle_t *fh_, void *buf, size_t size)
 {
-  SMBCCTX *ctx = smb_get_thread_context();
-  return ctx->read(ctx, handle, buf, size);
+  smb_handle_t *fh = (smb_handle_t *)fh_;
+  pthread_mutex_lock(&smb_mutex);
+  int r = smb_ctx->read(smb_ctx, fh->fd, buf, size);
+  pthread_mutex_unlock(&smb_mutex);
+  return r;
 }
 
 
 /**
  * Seek in file
  */
-static off_t
-smb_seek(void *handle, off_t pos, int whence)
+static int64_t
+smb_seek(fa_handle_t *fh_, off_t pos, int whence)
 {
-  SMBCCTX *ctx = smb_get_thread_context();
-  return ctx->lseek(ctx, handle, pos, whence);
+  smb_handle_t *fh = (smb_handle_t *)fh_;
+  pthread_mutex_lock(&smb_mutex);
+  int64_t r = smb_ctx->lseek(smb_ctx, fh->fd, pos, whence);
+  pthread_mutex_unlock(&smb_mutex);
+  return r;
 }
 
 
@@ -233,12 +211,17 @@ smb_seek(void *handle, off_t pos, int whence)
  * Return size of file
  */
 static off_t
-smb_fsize(void *handle)
+smb_fsize(fa_handle_t *fh_)
 {
-  SMBCCTX *ctx = smb_get_thread_context();
+  smb_handle_t *fh = (smb_handle_t *)fh_;
   struct stat st;
-  if(ctx->fstat(ctx, handle, &st) < 0)
+
+  pthread_mutex_lock(&smb_mutex);
+  if(smb_ctx->fstat(smb_ctx, fh->fd, &st) < 0) {
+    pthread_mutex_unlock(&smb_mutex);
     return -1;
+  }
+  pthread_mutex_unlock(&smb_mutex);
   return st.st_size;
 }
 
@@ -247,10 +230,13 @@ smb_fsize(void *handle)
  * Standard unix stat
  */
 static int
-smb_stat(const char *url, struct stat *buf)
+smb_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
+	 char *errbuf, size_t errlen)
 {
-  SMBCCTX *ctx = smb_get_thread_context();
-  return ctx->stat(ctx, url, buf);
+  pthread_mutex_lock(&smb_mutex);
+  int r = smb_ctx->stat(smb_ctx, url, buf);
+  pthread_mutex_unlock(&smb_mutex);
+  return r;
 }
 
 
@@ -276,8 +262,36 @@ smb_auth(const char *server, const char *share,
 	 char *user,   int userlen,
 	 char *passwd, int passwdlen)
 {
-  
+  char buf[256];
+  char *username;
+  char *password;
+  char *domain;
+  int query;
+
   printf("libsmbclient: Auth required for %s %s\n", server, share);
+
+  snprintf(buf, sizeof(buf), "\\\\%s\\%s", server, share);
+  for(query = 0; query < 2; query++) {
+    int r = keyring_lookup(buf, &username, &password, &domain, 
+			   query,
+			   "SMB Client", "Access denied");
+    if(r == 0)
+      break;
+
+    if(r == -1)
+      return;
+  }
+
+  if(query == 2)
+    return;
+
+  if(domain)
+    snprintf(wrkgrp, wrkgrplen, "%s", domain);
+
+  if(username)
+    snprintf(user, userlen, "%s", username);
+
+  if(password)
+    snprintf(passwd, passwdlen, "%s", password);
 }
 
-#endif /* HAVE_LIBSMBCLIENT */

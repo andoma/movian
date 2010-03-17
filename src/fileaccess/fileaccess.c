@@ -586,7 +586,7 @@ fileaccess_init(void)
   INITPROTO(http);
   INITPROTO(webdav);
   INITPROTO(bundle);
-#ifdef HAVE_LIBSMBCLIENT
+#if ENABLE_LIBSMBCLIENT
   INITPROTO(smb);
 #endif
 #if ENABLE_TINYSMB
