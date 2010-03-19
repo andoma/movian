@@ -183,7 +183,7 @@ EOF
 spotify_setup() {
     enable spotify
     echo >${BUILDDIR}/spotify_app_key.h "static const uint8_t appkey[] = {"
-    od <"$1" -v -An -b | sed s/^\ */0/ | sed s/\ *$$/,/| sed s/\ /,\ 0/g|sed s/$/,/ >>${BUILDDIR}/spotify_app_key.h
+    od <"$1" -v -An -b | awk '{for(i = 1; i <= NF; i++) print "0"  $i  ","}' >>${BUILDDIR}/spotify_app_key.h
     echo >>${BUILDDIR}/spotify_app_key.h "};"
 }
 
