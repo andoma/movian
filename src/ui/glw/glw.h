@@ -162,6 +162,8 @@ typedef enum {
 #define GLW_IMAGE_BORDER_TOP    0x10
 #define GLW_IMAGE_BORDER_BOTTOM 0x20
 #define GLW_IMAGE_INFRONT       0x40
+#define GLW_IMAGE_STRETCH_X     0x80
+#define GLW_IMAGE_STRETCH_Y     0x100
 
 
 

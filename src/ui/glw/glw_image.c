@@ -422,11 +422,12 @@ glw_image_layout_repeated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
 {
   float xs = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_xs;
   float ys = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_ys;
-  float xr = rc->rc_size_x / glt->glt_xs;
-  float yr = rc->rc_size_y / glt->glt_ys;
 
-  xs *= xr;
-  ys *= yr;
+  if(!(gi->gi_bitmap_flags & GLW_IMAGE_STRETCH_X))
+    xs *= rc->rc_size_x / glt->glt_xs;
+
+  if(!(gi->gi_bitmap_flags & GLW_IMAGE_STRETCH_Y))
+    ys *= rc->rc_size_y / glt->glt_ys;
 
   glw_render_vtx_pos(&gi->gi_gr, 0, -1.0, -1.0, 0.0);
   glw_render_vtx_st (&gi->gi_gr, 0, 0, ys);
