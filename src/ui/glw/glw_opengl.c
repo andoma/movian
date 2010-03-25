@@ -385,3 +385,22 @@ glw_rtt_destroy(glw_root_t *gr, glw_rtt_t *grtt)
   glDeleteTextures(1, &grtt->grtt_texture);
   glDeleteFramebuffersEXT(1, &grtt->grtt_framebuffer);
 }
+
+
+/**
+ *
+ */
+void
+glw_wirebox(glw_rctx_t *rc)
+{
+  glDisable(GL_TEXTURE_2D);
+  glBegin(GL_LINE_LOOP);
+  glColor4f(1,1,1,1);
+  glVertex3f(-1.0, -1.0, 0.0);
+  glVertex3f( 1.0, -1.0, 0.0);
+  glVertex3f( 1.0,  1.0, 0.0);
+  glVertex3f(-1.0,  1.0, 0.0);
+  glEnd();
+  glEnable(GL_TEXTURE_2D);
+}
+
