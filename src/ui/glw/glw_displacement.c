@@ -90,8 +90,8 @@ glw_displacement_callback(glw_t *w, void *opaque,
       break;
     
     rc0 = *rc;
-    rc0.rc_size_x = rc->rc_size_x * gd->gd_border_xs;
-    rc0.rc_size_y = rc->rc_size_y * gd->gd_border_ys;
+    rc0.rc_size_x = rc->rc_size_x * gd->gd_border_xs * gd->gd_scale_x;
+    rc0.rc_size_y = rc->rc_size_y * gd->gd_border_ys * gd->gd_scale_y;
     
     glw_layout0(c, &rc0);
     break;
@@ -143,8 +143,8 @@ glw_displacement_render(glw_t *w, glw_rctx_t *rc)
   ys = gd->gd_border_ys;
 
   glw_Scalef(&rc0, xs, ys, 1.0f);
-  rc0.rc_size_x = rc->rc_size_x * xs;
-  rc0.rc_size_y = rc->rc_size_y * ys;
+  rc0.rc_size_x = rc->rc_size_x * xs * gd->gd_scale_x;
+  rc0.rc_size_y = rc->rc_size_y * ys * gd->gd_scale_y;
 
   rc0.rc_alpha = rc->rc_alpha * w->glw_alpha;
   glw_render0(c, &rc0);
