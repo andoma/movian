@@ -854,6 +854,7 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
 
   htsmsg_destroy(m);
 
+  prop_set_string(mp->mp_prop_playstatus, "play");
   prop_destroy_childs(mp->mp_prop_metadata);
 
   while(1) {
@@ -874,6 +875,7 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
     event_unref(e);
   }
 
+  prop_set_string(mp->mp_prop_playstatus, "stop");
   prop_destroy_childs(mp->mp_prop_metadata);
   
   m = htsmsg_create_map();
