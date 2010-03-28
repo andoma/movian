@@ -28,6 +28,7 @@
 #define GU_DIR_COL_TRACKINDEX 0x40
 #define GU_DIR_SCROLLBOX      0x80
 #define GU_DIR_VISIBLE_HEADERS 0x100
+#define GU_DIR_COL_POPULARITY 0x200
 
 GtkWidget *gu_directory_list_create(gtk_ui_t *gu, prop_t *root,
 				    char **parenturlptr,

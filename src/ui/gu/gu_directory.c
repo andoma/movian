@@ -65,7 +65,8 @@ set_view(void *opaque, const char *str)
 				 GU_DIR_COL_ARTIST |
 				 GU_DIR_COL_DURATION |
 				 GU_DIR_COL_NUM_TRACKS |
-				 GU_DIR_COL_ALBUM);
+				 GU_DIR_COL_ALBUM |
+				 GU_DIR_COL_POPULARITY);
   } else if(!strcmp(str, "album")) {
     w = gu_directory_album_create(gd->gd_gu, gnp->gnp_prop, &gnp->gnp_url);
   } else if(!strcmp(str, "albumcollection")) {
