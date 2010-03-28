@@ -2032,9 +2032,7 @@ spotify_thread(void *aux)
   sp_session *s;
   spotify_msg_t *sm;
   int next_timeout = 0;
-  char ua[256];
   char cache[PATH_MAX];
-  extern char *htsversion_full;
 
   sesconf.api_version = SPOTIFY_API_VERSION;
 
@@ -2049,8 +2047,7 @@ spotify_thread(void *aux)
 
   sesconf.application_key = appkey;
   sesconf.application_key_size = sizeof(appkey);
-  snprintf(ua, sizeof(ua), "Showtime %s", htsversion_full);
-  sesconf.user_agent = ua;
+  sesconf.user_agent = "Showtime";
   sesconf.callbacks = &spotify_session_callbacks;
   
 
