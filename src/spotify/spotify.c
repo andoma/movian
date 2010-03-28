@@ -660,6 +660,9 @@ spotify_metadata_update_track(metadata_t *m)
   prop_set_float(prop_create(meta, "duration"), 
 		 (float)f_sp_track_duration(track) / 1000.0);
 
+  prop_set_float(prop_create(meta, "popularity"), 
+		 (float)f_sp_track_popularity(track) / 100.0);
+
   if(album != NULL) {
     spotify_make_link(f_sp_link_create_from_album(album), url, sizeof(url));
     prop_set_link(prop_create(meta, "album"), f_sp_album_name(album), url);
