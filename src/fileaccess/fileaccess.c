@@ -641,8 +641,8 @@ fa_lavf_seek(URLContext *h, int64_t pos, int whence)
 {
   if(whence == AVSEEK_SIZE)
     return fa_fsize(h->priv_data);
-  
-  return fa_seek(h->priv_data, pos, whence);
+
+  return fa_seek(h->priv_data, pos, whence & ~AVSEEK_FORCE);
 }
 
 /**
