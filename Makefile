@@ -361,7 +361,6 @@ CFLAGS_com += -I${BUILDDIR} -I${CURDIR}/src -I${CURDIR}
 MKBUNDLE = $(CURDIR)/support/mkbundle
 
 ifndef V
-Q      = @
 ECHO   = printf "$(1)\t%s\n" $(2)
 BRIEF  = CC MKBUNDLE
 MSG    = $@
