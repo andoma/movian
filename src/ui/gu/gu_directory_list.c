@@ -448,12 +448,16 @@ mouse_do(directory_list_t *d, GtkTreeView *tree_view, int action, int x, int y)
     switch(action) {
 
     case MOUSE_MOTION:
-      if(c->url != NULL && d->currentcell != c) {
+      if(d->currentcell != c) {
 	if(d->currentcell)
 	  repaint_cell(d->currentcell);
 	
-	d->currentcell = c;
-	repaint_cell(d->currentcell);
+	if(c->url != NULL) {
+	  d->currentcell = c;
+	  repaint_cell(d->currentcell);
+	} else {
+	  d->currentcell = NULL;
+	}
       }
       break;
       
