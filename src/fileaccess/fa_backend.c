@@ -57,12 +57,12 @@ static void
 file_open_video(const char *url0, nav_page_t **npp)
 {
   nav_page_t *np;
-  prop_t *p;
+  prop_t *src;
 
   np = nav_page_create(url0, sizeof(nav_page_t), NULL, 0);
 
-  p = np->np_prop_root;
-  prop_set_string(prop_create(p, "type"), "video");
+  src = prop_create(np->np_prop_root, "source");
+  prop_set_string(prop_create(src, "type"), "video");
   *npp = np;
 }
 
@@ -74,7 +74,7 @@ static int
 file_open_dir(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
 {
   be_file_page_t *bfp;
-  prop_t *p;
+  prop_t *src, *view;
   int type, l;
   char *dirname;
   char *parent, *x;
@@ -88,10 +88,12 @@ file_open_dir(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
 
   bfp = nav_page_create(url0, sizeof(be_file_page_t), NULL,
 			NAV_PAGE_DONT_CLOSE_ON_BACK);
-  p = bfp->h.np_prop_root;
 
-  prop_set_string(prop_create(p, "type"), "directory");
-  prop_set_string(prop_create(p, "view"), "list");
+  view = prop_create(bfp->h.np_prop_root, "view");
+  prop_set_string(view, "list");
+
+  src = prop_create(bfp->h.np_prop_root, "source");
+  prop_set_string(prop_create(src, "type"), "directory");
 
   l = strlen(url0);
   dirname = alloca(l + 1);
@@ -106,7 +108,7 @@ file_open_dir(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
     dirname[l - 1] = 0;
 
   dirname = strrchr(dirname, '/') ? strrchr(dirname, '/') + 1 : dirname;
-  prop_set_string(prop_create(p, "title"), dirname);
+  prop_set_string(prop_create(src, "title"), dirname);
 
   x = strstr(parent, "://");
   if(x != NULL) {
@@ -127,11 +129,11 @@ file_open_dir(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
 	  *x = 0;
 	}
       }
-      prop_set_stringf(prop_create(p, "parent"), "%s://%s/", proto, parent);
+      prop_set_stringf(prop_create(src, "parent"), "%s://%s/", proto, parent);
     }
   }
 
-  fa_scanner(url0, p, FA_SCANNER_DETERMINE_VIEW);
+  fa_scanner(url0, src, view);
 
   *npp = &bfp->h;
   return 0;
@@ -217,8 +219,7 @@ static prop_t *
 be_list(const char *url, char *errbuf, size_t errsize)
 {
   prop_t *p = prop_create(NULL, NULL);
-
-  fa_scanner(url, p, 0);
+  fa_scanner(url, prop_create(p, "source"), NULL);
   return p;
 }
 

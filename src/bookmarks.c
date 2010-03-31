@@ -140,11 +140,12 @@ bookmark_add(const char *title, const char *url, const char *icon)
 {
   bookmark_t *bm = calloc(1, sizeof(bookmark_t));
   prop_t *p = prop_create(NULL, NULL);
+  prop_t *src = prop_create(p, "source");
 
-  prop_set_string(prop_create(p, "type"), "bookmark");
+  prop_set_string(prop_create(src, "type"), "bookmark");
 
-  bm->bm_title_sub = bookmark_add_prop(p, "title", title, bm, set_title);
-  bm->bm_url_sub   = bookmark_add_prop(p, "url",   url,   bm, set_url);
+  bm->bm_title_sub = bookmark_add_prop(src, "title", title, bm, set_title);
+  bm->bm_url_sub   = bookmark_add_prop(src, "url",   url,   bm, set_url);
 
   bm->bm_service_root = sd_add_service(title, title, NULL, NULL, NULL, url);
 
@@ -165,6 +166,9 @@ bookmark_add(const char *title, const char *url, const char *icon)
 static void
 bookmark_load(htsmsg_t *m)
 {
+  if((m = htsmsg_get_map(m, "source")) == NULL)
+    return;
+
   bookmark_add(htsmsg_get_str(m, "title"),
 	       htsmsg_get_str(m, "url"),
 	       htsmsg_get_str(m, "icon"));

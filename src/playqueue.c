@@ -581,7 +581,7 @@ playqueue_load_siblings(const char *url, playqueue_entry_t *justadded)
 
   playqueue_source_sub = 
     prop_subscribe(0,
-		   PROP_TAG_NAME("self", "nodes"),
+		   PROP_TAG_NAME("self", "source", "nodes"),
 		   PROP_TAG_CALLBACK, siblings_populate, NULL,
 		   PROP_TAG_MUTEX, &playqueue_mutex,
 		   PROP_TAG_NAMED_ROOT, p, "self", 
@@ -825,21 +825,16 @@ be_playqueue_open(const char *url0, const char *type0, const char *parent0,
 		  nav_page_t **npp, char *errbuf, size_t errlen)
 {
   nav_page_t *n;
-  prop_t *type, *nodes;
+  prop_t *src;
 
   *npp = n = nav_page_create(url0, sizeof(nav_page_t), NULL,
 			     NAV_PAGE_DONT_CLOSE_ON_BACK);
 
-  type  = prop_create(n->np_prop_root, "type");
-  prop_set_string(type, "playqueue");
-
-  type  = prop_create(n->np_prop_root, "type");
   prop_set_string(prop_create(n->np_prop_root, "view"), "list");
 
-  nodes = prop_create(n->np_prop_root, "nodes");
-  prop_set_string(prop_create(n->np_prop_root, "title"), "Playqueue");
-
-  prop_link(playqueue_root, nodes);
+  src = prop_create(n->np_prop_root, "source");
+  prop_set_string(prop_create(src, "type"), "playqueue");
+  prop_link(playqueue_root, prop_create(src, "nodes"));
   return 0;
 }
 

@@ -4,21 +4,21 @@ widget(container_x, {
     
   widget(label, {
     .align = right;
-    .caption = $self.title;
+    .caption = $self.source.title;
   });
   
   widget(slider_x, {
     .focusable = true;
-    .min = $self.min;
-    .max = $self.max;
-    .step = $self.step;
+    .min = $self.source.min;
+    .max = $self.source.max;
+    .step = $self.source.step;
     bind($self.value);
 
     widget(backdrop, {
       HIGHLITE_PROPS();
 
       widget(label, {
-	.caption = int2str($self.value) + $self.unit;
+	.caption = int2str($self.source.value) + $self.source.unit;
       });
     });
   });

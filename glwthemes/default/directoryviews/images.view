@@ -13,7 +13,7 @@ widget(container_y, {
 
     $self.focused = focusedChild();
 
-    cloner($page.nodes, backdrop, {
+    cloner($page.source.nodes, backdrop, {
       HIGHLITE_PROPS();
 
       widget(loader, {

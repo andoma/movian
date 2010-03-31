@@ -14,19 +14,19 @@ widget(container_x, {
     widget(icon, {
       .align = left;
       .sizeScale = 10;
-      .source = devoidify($self.album_art, "theme://icons/128x128/cd.png");
+      .source = devoidify($self.source.album_art, "theme://icons/128x128/cd.png");
     });
 
 
     widget(label, {
-      .caption = $self.artist_name;
+      .caption = $self.source.artist_name;
       .align = left;
       .ellipsize = true;
     });
     
     
     widget(label, {
-      .caption = $self.album_year;
+      .caption = $self.source.album_year;
       .align = left;
       .ellipsize = true;
     });
@@ -42,7 +42,7 @@ widget(container_x, {
       .id = "list";
       $self.needScroll = needScroll();
 
-      cloner($page.nodes, backdrop, {
+      cloner($page.source.nodes, backdrop, {
 	BUTTON_PROPS(1.0);
 	onEvent(enter, navOpen($self.url, $self.type, $parent.url));
     

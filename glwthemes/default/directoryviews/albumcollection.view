@@ -10,7 +10,7 @@ widget(container_y, {
       .childWidth = 200;
       .childHeight = 200;
 
-      cloner($page.nodes, backdrop, {
+      cloner($page.source.nodes, backdrop, {
 	BUTTON_PROPS(1.0);
 	onEvent(enter, navOpen($self.url, $self.type, $parent.url));
  

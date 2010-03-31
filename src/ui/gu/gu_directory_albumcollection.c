@@ -61,11 +61,11 @@ add_header(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
   gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
 
   s = prop_subscribe(0,
-		   PROP_TAG_NAME("self", "artist_name"),
-		   PROP_TAG_CALLBACK_STRING, gu_subscription_set_label_xl, w,
-		   PROP_TAG_COURIER, gu->gu_pc, 
-		   PROP_TAG_NAMED_ROOT, root, "self",
-		   NULL);
+		     PROP_TAG_NAME("self", "source", "artist_name"),
+		     PROP_TAG_CALLBACK_STRING, gu_subscription_set_label_xl, w,
+		     PROP_TAG_COURIER, gu->gu_pc, 
+		     PROP_TAG_NAMED_ROOT, root, "self",
+		     NULL);
 
   gu_unsubscribe_on_destroy(GTK_OBJECT(w), s);
 }
@@ -232,7 +232,7 @@ add_albums(gtk_ui_t *gu, GtkWidget *parent, prop_t *root, char **parenturlptr)
 
   ab->sub =
     prop_subscribe(0,
-		   PROP_TAG_NAME("self", "nodes"),
+		   PROP_TAG_NAME("self", "source", "nodes"),
 		   PROP_TAG_CALLBACK, collection_albums, ab,
 		   PROP_TAG_COURIER, gu->gu_pc, 
 		   PROP_TAG_NAMED_ROOT, root, "self",

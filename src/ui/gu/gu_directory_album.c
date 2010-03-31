@@ -148,7 +148,7 @@ add_header(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
 
   ai->title_sub = 
     prop_subscribe(0,
-		   PROP_TAG_NAME("self", "album_name"),
+		   PROP_TAG_NAME("self", "source", "album_name"),
 		   PROP_TAG_CALLBACK_STRING, album_set_title, ai,
 		   PROP_TAG_COURIER, gu->gu_pc, 
 		   PROP_TAG_NAMED_ROOT, root, "self",
@@ -156,7 +156,7 @@ add_header(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
 
   ai->artist_sub = 
     prop_subscribe(0,
-		   PROP_TAG_NAME("self", "artist_name"),
+		   PROP_TAG_NAME("self", "source", "artist_name"),
 		   PROP_TAG_CALLBACK_STRING, album_set_artist, ai,
 		   PROP_TAG_COURIER, gu->gu_pc, 
 		   PROP_TAG_NAMED_ROOT, root, "self",
@@ -164,7 +164,7 @@ add_header(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
 
   ai->year_sub = 
     prop_subscribe(0,
-		   PROP_TAG_NAME("self", "album_year"),
+		   PROP_TAG_NAME("self", "source", "album_year"),
 		   PROP_TAG_CALLBACK_INT, album_set_year, ai,
 		   PROP_TAG_COURIER, gu->gu_pc, 
 		   PROP_TAG_NAMED_ROOT, root, "self",
@@ -210,7 +210,7 @@ gu_add_album(gtk_ui_t *gu, GtkWidget *parent, prop_t *root,
   gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, TRUE, 0);
 
   s = prop_subscribe(0,
-		     PROP_TAG_NAME("self", "album_art"),
+		     PROP_TAG_NAME("self", "source", "album_art"),
 		     PROP_TAG_CALLBACK_STRING, album_set_art, w,
 		     PROP_TAG_COURIER, gu->gu_pc, 
 		     PROP_TAG_NAMED_ROOT, root, "self",

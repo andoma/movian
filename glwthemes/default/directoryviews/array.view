@@ -6,7 +6,7 @@ widget(container_y, {
   widget(label, {
     .align = left;
     .sizeBias = 9 + 3;
-    .caption = $self.title;
+    .caption = $self.source.title;
     .ellipsize = true;
   });
 
@@ -17,7 +17,7 @@ widget(container_y, {
     widget(array, {
       .id = "array";
  
-      cloner($page.nodes, backdrop, {
+      cloner($page.source.nodes, backdrop, {
 	BUTTON_PROPS(1.0);
 	onEvent(enter, navOpen($self.url, $self.type, $parent.url));
  

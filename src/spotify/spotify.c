@@ -100,10 +100,8 @@ static hts_mutex_t meta_mutex;
 
 /**
  * Playlist support
- *
- *
  */
-prop_t *prop_playlists;
+prop_t *prop_rootlist_source;
 
 static ptrvec_t playlists;
 
@@ -907,8 +905,8 @@ metadata_create(prop_t *p, metadata_type_t type, void *source)
  *
  */
 typedef struct browse_helper {
-  prop_t *root;
-  prop_t *loadingprop;
+  prop_t *nodes;
+  prop_t *loading;
   int flat;
   sp_albumtype type;
 } browse_helper_t;
@@ -918,16 +916,17 @@ typedef struct browse_helper {
  *
  */
 static browse_helper_t *
-bh_create(prop_t *root, int flat, sp_albumtype type, prop_t *loadingprop)
+bh_create(prop_t *root, int flat, sp_albumtype type)
 {
   browse_helper_t *bh = malloc(sizeof(browse_helper_t));
 
-  prop_ref_inc(root);
-  bh->root = root;
+  prop_set_string(prop_create(root, "type"), "directory");
 
-  if(loadingprop)
-    prop_ref_inc(loadingprop);
-  bh->loadingprop = loadingprop;
+  bh->nodes = prop_create(root, "nodes");
+  prop_ref_inc(bh->nodes);
+
+  bh->loading = prop_create(root, "loading");
+  prop_ref_inc(bh->loading);
 
   bh->flat = flat;
   bh->type = type;
@@ -962,19 +961,18 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
     prop_set_string(prop_create(p, "type"), "track");
     metadata_create(prop_create(p, "metadata"), METADATA_TRACK, track);
 
-    if(prop_set_parent(p, bh->root))
+    if(prop_set_parent(p, bh->nodes))
       prop_destroy(p);
 
   }
+  prop_ref_dec(bh->nodes);
+
   f_sp_albumbrowse_release(result);
   spotify_metadata_updated(spotify_session);
 
-  if(bh->loadingprop != NULL) {
-    prop_set_int(bh->loadingprop, 0);
-    prop_ref_dec(bh->loadingprop);
-  }
+  prop_set_int(bh->loading, 0);
+  prop_ref_dec(bh->loading);
 
-  prop_ref_dec(bh->root);
   free(bh);
 }
 
@@ -1108,11 +1106,11 @@ spotify_browse_artist_callback(sp_artistbrowse *result, void *userdata)
     if(bh->flat) {
       // No hierarchy (for playqueue track listing)
     
-      artist_add_album_tracks(result, a->firsttrack, a->tracks, bh->root);
+      artist_add_album_tracks(result, a->firsttrack, a->tracks, bh->nodes);
 
     } else {
 
-      prop_t *ar = prop_create(NULL, "node");
+      prop_t *ar = prop_create(NULL, NULL);
       prop_t *meta = prop_create(ar, "metadata");
 
       prop_set_int(prop_create(meta, "tracks"), a->tracks);
@@ -1139,7 +1137,7 @@ spotify_browse_artist_callback(sp_artistbrowse *result, void *userdata)
       artist_add_album_tracks(result, a->firsttrack, a->tracks,
 			      prop_create(ar, "nodes"));
       
-      if(prop_set_parent(ar, bh->root))
+      if(prop_set_parent(ar, bh->nodes))
 	prop_destroy(ar);
     }
   }
@@ -1147,11 +1145,8 @@ spotify_browse_artist_callback(sp_artistbrowse *result, void *userdata)
   f_sp_artistbrowse_release(result);
   spotify_metadata_updated(spotify_session);
 
-  if(bh->loadingprop != NULL) {
-    prop_set_int(bh->loadingprop, 0);
-    prop_ref_dec(bh->loadingprop);
-  }
-  prop_ref_dec(bh->root);
+  prop_set_int(bh->loading, 0);
+  prop_ref_dec(bh->nodes);
   free(bh);
 }
 
@@ -1186,9 +1181,13 @@ spotify_open_artist(sp_link *l, prop_t *p, int albums,
   sp_artist *artist = f_sp_link_as_artist(l);
   char url[URL_MAX];
   char prefix[128];
-  prop_t *n = prop_create(p, "nodes");
+  prop_t *src = prop_create(p, "source");
+
+  metadata_create(prop_create(src, "title"), METADATA_ARTIST_NAME, artist);
 
   if(!albums) {
+
+    prop_t *n = prop_create(src, "nodes");
 
     f_sp_link_as_string(l, prefix, sizeof(prefix));
 
@@ -1200,7 +1199,9 @@ spotify_open_artist(sp_link *l, prop_t *p, int albums,
     add_dir(n, "Compilations", url);
 
     prop_set_string(prop_create(p, "view"), "list");
-    prop_set_int(prop_create(p, "loading"), 0);
+    prop_set_int(prop_create(src, "loading"), 0);
+
+    prop_set_string(prop_create(src, "type"), "directory");
 
   } else {
 
@@ -1208,10 +1209,8 @@ spotify_open_artist(sp_link *l, prop_t *p, int albums,
 
     f_sp_artistbrowse_create(spotify_session, artist,
 			     spotify_browse_artist_callback,
-			     bh_create(n, 0, albtype,
-				       prop_create(p, "loading")));
+			     bh_create(src, 0, albtype));
   }
-  metadata_create(prop_create(p, "title"), METADATA_ARTIST_NAME, artist);
 }
 
 
@@ -1252,9 +1251,7 @@ static void
 spotify_open_rootlist(prop_t *p)
 {
   prop_set_string(prop_create(p, "view"), "list");
-  prop_set_string(prop_create(p, "title"), "Spotify playlists");
-  prop_link(prop_playlists, prop_create(p, "nodes"));
-  prop_link(prop_syncing_playlists, prop_create(p, "loading"));
+  prop_link(prop_rootlist_source, prop_create(p, "source"));
 }
 
 
@@ -1294,16 +1291,15 @@ spotify_open_search(spotify_page_t *sp, const char *query)
 static void
 spotify_open_album(sp_album *alb, prop_t *p)
 {
-  f_sp_albumbrowse_create(spotify_session, alb, 
-			  spotify_browse_album_callback,
-			  bh_create(prop_create(p, "nodes"), 0, 0,
-				    prop_create(p, "loading")));
+  prop_t *src = prop_create(p, "source");
+  f_sp_albumbrowse_create(spotify_session, alb, spotify_browse_album_callback,
+			  bh_create(src, 0, 0));
 
-  metadata_create(prop_create(p, "album_name"),  METADATA_ALBUM_NAME, alb);
-  metadata_create(prop_create(p, "title"),       METADATA_ALBUM_NAME, alb);
-  metadata_create(prop_create(p, "album_year"),  METADATA_ALBUM_YEAR, alb);
-  metadata_create(prop_create(p, "album_art"),   METADATA_ALBUM_IMAGE, alb);
-  metadata_create(prop_create(p, "artist_name"), METADATA_ALBUM_ARTIST_NAME,
+  metadata_create(prop_create(src, "album_name"),  METADATA_ALBUM_NAME, alb);
+  metadata_create(prop_create(src, "title"),       METADATA_ALBUM_NAME, alb);
+  metadata_create(prop_create(src, "album_year"),  METADATA_ALBUM_YEAR, alb);
+  metadata_create(prop_create(src, "album_art"),   METADATA_ALBUM_IMAGE, alb);
+  metadata_create(prop_create(src, "artist_name"), METADATA_ALBUM_ARTIST_NAME,
 		  alb);
 
   prop_set_string(prop_create(p, "view"), "album");
@@ -1320,9 +1316,7 @@ spotify_open_playlist(const char *url, prop_t *p)
     return;
 
   prop_set_string(prop_create(p, "view"), "list");
-  prop_link(pl->pl_prop_title, prop_create(p, "title"));
-  prop_link(pl->pl_prop_tracks, prop_create(p, "nodes"));
-  prop_link(prop_syncing_playlists, prop_create(p, "loading"));
+  prop_link(pl->pl_prop_root, prop_create(p, "source"));
 }
 
 
@@ -1370,7 +1364,6 @@ spotify_open_page(spotify_page_t *sp)
     }
     f_sp_link_release(l);
   }
-  prop_set_string(prop_create(sp->sp_root, "type"), "directory");
   spotify_page_destroy(sp);
 }
 
@@ -1408,7 +1401,7 @@ spotify_list(spotify_uri_t *su)
   sp_link *l;
   sp_linktype type;
   playlist_t *pl;
-  prop_t *root = NULL, *nodes;
+  prop_t *root = NULL;
   
   if((l = f_sp_link_create_from_string(su->su_uri)) == NULL) {
     snprintf(su->su_errbuf, su->su_errlen, "Invalid spotify URI");
@@ -1423,15 +1416,15 @@ spotify_list(spotify_uri_t *su)
     root = prop_create(NULL, NULL);
     f_sp_albumbrowse_create(spotify_session, f_sp_link_as_album(l),
 			    spotify_browse_album_callback, 
-			    bh_create(prop_create(root, "nodes"), 0, 0, NULL));
+			    bh_create(prop_create(root, "source"), 0, 0));
     break;
 
   case SP_LINKTYPE_ARTIST:
     root = prop_create(NULL, NULL);
     f_sp_artistbrowse_create(spotify_session, f_sp_link_as_artist(l),
 			     spotify_browse_artist_callback,
-			     bh_create(prop_create(root, "nodes"),
-				       1, su->su_album_type, NULL));
+			     bh_create(prop_create(root, "source"),
+				       1, su->su_album_type));
     break;
 
 
@@ -1443,8 +1436,7 @@ spotify_list(spotify_uri_t *su)
     }
 
     root = prop_create(NULL, NULL);
-    nodes = prop_create(root, "nodes");
-    prop_link(pl->pl_prop_tracks, nodes);
+    prop_link(pl->pl_prop_root, prop_create(root, "source"));
     break;
 
   default:
@@ -1746,7 +1738,10 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
 
   pl->pl_playlist = plist;
   pl->pl_position = position;
-  pl->pl_prop_root = prop_create(prop_playlists, NULL);
+  pl->pl_prop_root = prop_create(prop_create(prop_rootlist_source,
+					     "nodes"), NULL);
+
+  prop_link(prop_syncing_playlists, prop_create(pl->pl_prop_root, "loading"));
 
   pl->pl_prop_tracks = prop_create(pl->pl_prop_root, "nodes");
   pl->pl_prop_type = prop_create(pl->pl_prop_root, "type");
@@ -2230,7 +2225,8 @@ be_spotify_open(const char *url0, const char *type, const char *parent,
     sp->sp_root = np->np_prop_root;
     prop_ref_inc(sp->sp_root);
     
-    prop_set_int(prop_create(np->np_prop_root, "loading"), 1);
+    prop_set_int(prop_create(prop_create(np->np_prop_root, "source"), 
+			     "loading"), 1);
 
     spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_OPEN_PAGE, sp));
   }
@@ -2551,23 +2547,40 @@ be_spotify_dlopen(void)
 }
 #endif
 
+
+/**
+ *
+ */
+static void
+create_prop_rootlist(prop_t *parent)
+{
+  prop_t *p = prop_rootlist_source = prop_create(parent, "playlists");
+
+  prop_set_string(prop_create(p, "title"), "Spotify playlists");
+  prop_set_string(prop_create(p, "type"), "directory");
+  prop_link(prop_syncing_playlists, prop_create(p, "loading"));
+}
+
+
 /**
  *
  */
 static int
 be_spotify_init(void)
 {
-  prop_t *p;
+  prop_t *spotify, *p;
 
 #ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
   if(be_spotify_dlopen())
     return 1;
 #endif
 
-  prop_playlists = prop_create(prop_get_global(), "spotify_playlists");
+  spotify = prop_create(prop_get_global(), "spotify");
 
-  prop_syncing_playlists = prop_create(NULL, NULL);
+  prop_syncing_playlists = prop_create(spotify, "syncing_playlists");
   prop_set_int(prop_syncing_playlists, 1);
+
+  create_prop_rootlist(spotify);
 
   TAILQ_INIT(&spotify_msgs);
 

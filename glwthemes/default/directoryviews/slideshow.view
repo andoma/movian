@@ -11,7 +11,7 @@ widget(container_z, {
 
     .focusable = true;
 
-    cloner($self.nodes, image, {
+    cloner($self.source.nodes, image, {
       .source = $self.url;
     });
   });

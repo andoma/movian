@@ -224,7 +224,6 @@ static void
 dirnode_destroy(directory_list_t *d, dirnode_t *dn, int remove)
 {
   int i;
-
   if(remove)
     gtk_list_store_remove(dn->dir->model, &dn->iter);
 
@@ -242,6 +241,19 @@ dirnode_destroy(directory_list_t *d, dirnode_t *dn, int remove)
 
   prop_ref_dec(dn->p);
   free(dn);
+}
+
+
+/**
+ *
+ */
+static void
+dirnode_destroy_all(directory_list_t *d)
+{
+  dirnode_t *dn;
+
+  while((dn = LIST_FIRST(&d->nodes)) != NULL)
+    dirnode_destroy(d, dn, 1);
 }
 
 
@@ -358,7 +370,10 @@ gu_node_sub(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_SET_DIR:
+    break;
+
   case PROP_SET_VOID:
+    dirnode_destroy_all(d);
     break;
 
   default:
@@ -840,7 +855,7 @@ gu_directory_list_create(gtk_ui_t *gu, prop_t *root,
 
   d->node_sub = 
     prop_subscribe(0,
-		   PROP_TAG_NAME("self", "nodes"),
+		   PROP_TAG_NAME("self", "source", "nodes"),
 		   PROP_TAG_CALLBACK, gu_node_sub, d,
 		   PROP_TAG_COURIER, gu->gu_pc, 
 		   PROP_TAG_NAMED_ROOT, root, "self",

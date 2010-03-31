@@ -11,7 +11,7 @@ widget(container_x, {
     widget(text, {
       .align = left;
       .focusable = true;
-      bind($self.title);
+      bind($self.source.title);
     });
   });
 
@@ -22,7 +22,7 @@ widget(container_x, {
     widget(text, {
       .align = left;
       .focusable = true;
-      bind($self.url);
+      bind($self.source.url);
     });
   });
 

@@ -2717,7 +2717,7 @@ prop_print_tree0(prop_t *p, int indent, int followlinks)
 
   if(p->hp_originator != NULL) {
     if(followlinks) {
-      fprintf(stderr, "<symlink>\n");
+      fprintf(stderr, "<symlink> => ");
       prop_print_tree0(p->hp_originator, indent, followlinks);
     } else {
       fprintf(stderr, "<symlink> -> %s\n", p->hp_originator->hp_name);

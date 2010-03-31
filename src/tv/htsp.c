@@ -710,12 +710,12 @@ static int
 htsp_open_channel(const char *url, nav_page_t **npp)
 {
   nav_page_t *np;
-  prop_t *p;
+  prop_t *src;
 
   np = nav_page_create(url, sizeof(nav_page_t), NULL, 0);
 
-  p = np->np_prop_root;
-  prop_set_string(prop_create(p, "type"), "video");
+  src = prop_create(np->np_prop_root, "source");
+  prop_set_string(prop_create(src, "type"), "video");
   *npp = np;
   return 0;
 }
@@ -730,7 +730,7 @@ be_htsp_open(const char *url, const char *type, const char *parent,
 {
   htsp_connection_t *hc;
   htsp_page_t *hp;
-  prop_t *p;
+  prop_t *p, *src;
   char path[URL_MAX];
 
   if((hc = htsp_connection_find(url, path, sizeof(path), 
@@ -776,9 +776,12 @@ be_htsp_open(const char *url, const char *type, const char *parent,
 		       NAV_PAGE_DONT_CLOSE_ON_BACK);
   p = hp->h.np_prop_root;
   
-  prop_set_string(prop_create(p, "type"), "directory");
   prop_set_string(prop_create(p, "view"), "list");
-  prop_link(hc->hc_prop_channels, prop_create(p, "nodes"));
+
+  src = prop_create(p, "source");
+
+  prop_set_string(prop_create(src, "type"), "directory");
+  prop_link(hc->hc_prop_channels, prop_create(src, "nodes"));
 
   *npp = &hp->h;
   return 0;

@@ -9,7 +9,8 @@ widget(backdrop, {
   widget(container_x, {
 
     widget(image, {
-      .source =  translate($self.subtype,  "theme://icons/32x32/process.png",
+      .source =  translate($self.source.subtype,
+			   "theme://icons/32x32/process.png",
 			   "audio", "theme://icons/32x32/sound.png",
 			   "display", "theme://icons/32x32/computer.png"
 			   );
@@ -18,7 +19,7 @@ widget(backdrop, {
     VERTICAL_SEPARATOR();
 
     widget(label, {
-      .caption = $self.title;
+      .caption = $self.source.title;
     });
   });
 });

@@ -572,21 +572,20 @@ scanner_stop(void *opaque, prop_event_t event, ...)
  *
  */
 void
-fa_scanner(const char *url, prop_t *root, int flags)
+fa_scanner(const char *url, prop_t *source, prop_t *view)
 {
   scanner_t *s = calloc(1, sizeof(scanner_t));
 
   s->s_url = strdup(url);
 
-  s->s_root = root;
+  s->s_root = source;
   prop_ref_inc(s->s_root);
 
-  s->s_nodes = prop_create(root, "nodes");
+  s->s_nodes = prop_create(source, "nodes");
   prop_ref_inc(s->s_nodes);
 
-  if(flags & FA_SCANNER_DETERMINE_VIEW) {
-
-    s->s_viewprop = prop_create(root, "view");
+  if(view != NULL) {
+    s->s_viewprop = view;
     prop_ref_inc(s->s_viewprop);
   }
 

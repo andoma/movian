@@ -4,7 +4,7 @@ widget(container_x, {
 
   widget(label, {
     .align = right;
-    .caption = $self.title;
+    .caption = $self.source.title;
   });
 
   widget(backdrop, {
@@ -12,12 +12,12 @@ widget(container_x, {
     BUTTON_PROPS(1.0);
     
     onEvent(enter, {
-      $self.value = 1 ^^ $self.value;
+      $self.value = !$self.source.value;
     });
     
     widget(label, {
       .align = left;
-      .caption = translate($self.value, "Unknown",
+      .caption = translate($self.source.value, "Unknown",
 			   0, "Off",
 			   1, "On");
     });

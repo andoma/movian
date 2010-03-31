@@ -4,7 +4,7 @@ widget(container_x, {
 
   widget(label, {
     .align = right;
-    .caption = $self.title + ":";
+    .caption = $self.source.title + ":";
   });
     
   ACTION_ICON2("theme://icons/32x32/back.png",
@@ -13,10 +13,10 @@ widget(container_x, {
 
   widget(deck, {
     .id = "choiceDeck";
-    cloner($self.options, container_y, {
+    cloner($self.source.options, container_y, {
       widget(label, {
 	.align = center;
-	.caption = $self.title;
+	.caption = $self.source.title;
       });
     });
   });

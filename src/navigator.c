@@ -475,8 +475,8 @@ be_page_open(const char *url0, const char *type, const char *parent,
 	     nav_page_t **npp, char *errbuf, size_t errlen)
 {
   nav_page_t *n = nav_page_create(url0, sizeof(nav_page_t), NULL, 0);
-  prop_t *p = n->np_prop_root;
-  prop_set_string(prop_create(p, "type"), url0 + strlen("page:"));
+  prop_t *src = prop_create(n->np_prop_root, "source");
+  prop_set_string(prop_create(src, "type"), url0 + strlen("page:"));
   *npp = n;
   return 0;
 }

@@ -4,7 +4,7 @@ widget(container_x, {
 
   widget(label, {
     .align = right;
-    .caption = $self.title + ":";
+    .caption = $self.source.title + ":";
   });
 
   widget(backdrop, {
@@ -13,8 +13,8 @@ widget(container_x, {
     widget(text, {
       .align = left;
       .focusable = true;
-      .password = $self.password;
-      bind($self.value);
+      .password = $self.source.password;
+      bind($self.source.value);
     });
   });
 });
