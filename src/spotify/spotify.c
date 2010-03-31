@@ -1696,18 +1696,28 @@ playlist_renamed(sp_playlist *plist, void *userdata)
 /**
  *
  */
-static void 
-playlist_update(sp_playlist *plist, bool done, void *userdata)
+static void
+playlist_set_url(sp_playlist *plist, playlist_t *pl)
 {
-  playlist_t *pl = userdata;
   char url[URL_MAX];
 
-  if(!done || !f_sp_playlist_is_loaded(plist))
+  if(!f_sp_playlist_is_loaded(plist))
     return;
 
   spotify_make_link(f_sp_link_create_from_playlist(plist), url, sizeof(url));
   pl->pl_url = strdup(url);
   prop_set_string(prop_create(pl->pl_prop_root, "url"), url);
+}
+
+
+/**
+ *
+ */
+static void 
+playlist_state_changed(sp_playlist *plist, void *userdata)
+{
+  playlist_t *pl = userdata;
+  playlist_set_url(plist, pl);
 }
 
 
@@ -1719,7 +1729,7 @@ static sp_playlist_callbacks pl_callbacks = {
   .tracks_removed   = tracks_removed,
   .tracks_moved     = tracks_moved,
   .playlist_renamed = playlist_renamed,
-  .playlist_update_in_progress = playlist_update,
+  .playlist_state_changed = playlist_state_changed,
 };
 
 
@@ -1759,6 +1769,8 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
   }
 
   f_sp_playlist_add_callbacks(plist, &pl_callbacks, pl);
+
+  playlist_set_url(plist, pl);
 
   TRACE(TRACE_DEBUG, "spotify", "Playlist %d added (%s)", 
 	position, f_sp_playlist_name(plist));
