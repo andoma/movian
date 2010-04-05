@@ -16,7 +16,7 @@ widget(container_x, {
     cloner($self.source.options, container_y, {
       widget(label, {
 	.align = center;
-	.caption = $self.source.title;
+	.caption = $self.title;
       });
     });
   });
