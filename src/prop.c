@@ -2268,7 +2268,8 @@ prop_value_compare(prop_t *a, prop_t *b)
  */
 static void
 relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
-		     const char *origin, struct prop_notify_queue *pnq)
+		     const char *origin, struct prop_notify_queue *pnq,
+		     prop_t *no_descend)
 {
   prop_sub_t *s;
   prop_t *c, *z;
@@ -2281,6 +2282,9 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
   LIST_FOREACH(s, &dst->hp_canonical_subscriptions, hps_canonical_prop_link) {
 
     if(s->hps_value_prop != NULL) {
+
+      if(s->hps_value_prop == src)
+	continue;
       /* If we previously was a directory, flush it out */
       if(s->hps_value_prop->hp_type == PROP_DIR) {
 	if(s != skipme) 
@@ -2319,7 +2323,7 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
 
     TAILQ_FOREACH(c, &dst->hp_childs, hp_parent_link) {
       
-      if(c->hp_name == NULL)
+      if(c->hp_name == NULL || c == no_descend)
 	continue;
 
       /* Search for a matching source */
@@ -2331,7 +2335,7 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
       if(z != NULL) {
 	/* Found! Recurse */
 
-	relink_subscriptions(z, c, skipme, origin, pnq);
+	relink_subscriptions(z, c, skipme, origin, pnq, NULL);
 
       } else {
 	/* Nothing, blast the value */
@@ -2360,7 +2364,7 @@ prop_unlink0(prop_t *p, prop_sub_t *skipme, const char *origin,
   LIST_REMOVE(p, hp_originator_link);
   p->hp_originator = NULL;
 
-  relink_subscriptions(p, p, skipme, origin, pnq);
+  relink_subscriptions(p, p, skipme, origin, pnq, NULL);
 }
 
 
@@ -2370,7 +2374,7 @@ prop_unlink0(prop_t *p, prop_sub_t *skipme, const char *origin,
 void
 prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme)
 {
-  prop_t *t;
+  prop_t *t, *no_descend = NULL;
   prop_notify_t *n;
   prop_sub_t *s;
   struct prop_notify_queue pnq;
@@ -2394,11 +2398,13 @@ prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme)
   while(src->hp_originator != NULL)
     src = src->hp_originator;
 
-  relink_subscriptions(src, dst, skipme, "prop_link()/linkchilds", NULL);
+  relink_subscriptions(src, dst, skipme, "prop_link()/linkchilds", NULL, NULL);
 
   while((dst = dst->hp_parent) != NULL) {
     LIST_FOREACH(t, &dst->hp_targets, hp_originator_link)
-      relink_subscriptions(dst, t, skipme, "prop_link()/linkparents", NULL);
+      relink_subscriptions(dst, t, skipme, "prop_link()/linkparents", NULL,
+			   no_descend);
+    no_descend = dst;
   }
 
   while((n = TAILQ_FIRST(&pnq)) != NULL) {
@@ -2441,7 +2447,7 @@ prop_unlink_ex(prop_t *p, prop_sub_t *skipme)
 
   while((p = p->hp_parent) != NULL) {
     LIST_FOREACH(t, &p->hp_targets, hp_originator_link)
-      relink_subscriptions(p, t, skipme, "prop_unlink()/parents", NULL);
+      relink_subscriptions(p, t, skipme, "prop_unlink()/parents", NULL, NULL);
   }
 
   hts_mutex_unlock(&prop_mutex);
