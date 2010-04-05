@@ -12,7 +12,7 @@ widget(container_x, {
     BUTTON_PROPS(1.0);
     
     onEvent(enter, {
-      $self.value = !$self.source.value;
+      $self.source.value = !$self.source.value;
     });
     
     widget(label, {
