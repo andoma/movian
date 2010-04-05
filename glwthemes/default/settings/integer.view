@@ -12,7 +12,7 @@ widget(container_x, {
     .min = $self.source.min;
     .max = $self.source.max;
     .step = $self.source.step;
-    bind($self.value);
+    bind($self.source.value);
 
     widget(backdrop, {
       HIGHLITE_PROPS();
