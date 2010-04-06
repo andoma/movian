@@ -299,9 +299,13 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
 
   //  TRACE(TRACE_DEBUG, "frame", "%16lld %d %d\n", pts, epoch, duration);
 
-  vd->vd_frame_deliver(vd, ctx, frame, 
-		       pts, epoch, duration,
-		       mb->mb_disable_deinterlacer);
+  int deinterlace = 
+    frame->interlaced_frame && !mb->mb_disable_deinterlacer;
+
+  vd->vd_frame_deliver(vd, frame->data, frame->linesize,
+		       ctx->width, ctx->height, ctx->pix_fmt,
+		       pts, epoch, duration, deinterlace,
+		       !!frame->top_field_first);
 }
 
 
@@ -406,10 +410,15 @@ vd_thread(void *aux)
 
 
 video_decoder_t *
-video_decoder_create(media_pipe_t *mp)
+video_decoder_create(media_pipe_t *mp,vd_frame_deliver_t *frame_delivery,
+		     void *opaque)
 {
   video_decoder_t *vd = calloc(1, sizeof(video_decoder_t));
 
+  vd->vd_frame_deliver = frame_delivery;
+  vd->vd_opaque = opaque;
+
+  mp_ref_inc(mp);
   vd->vd_mp = mp;
   vd->vd_decoder_running = 1;
 
@@ -458,6 +467,7 @@ video_decoder_stop(video_decoder_t *vd)
   hts_mutex_unlock(&vd->vd_queue_mutex);
 
   hts_thread_join(&vd->vd_decoder_thread);
+  mp_ref_dec(vd->vd_mp);
   vd->vd_mp = NULL;
 }
 

@@ -103,9 +103,17 @@ typedef struct glw_video {
 
 
 
-static void glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
-				    AVFrame *frame, int64_t pts, int epoch, 
-				    int duration, int disable_deinterlacer);
+static void glw_video_frame_deliver(struct video_decoder *vd,
+				    uint8_t * const data[],
+				    const int pitch[],
+				    int width,
+				    int height,
+				    int pix_fmt,
+				    int64_t pts,
+				    int epoch,
+				    int duration,
+				    int deinterlace,
+				    int top_field_first);
 
 /**
  *  GL Video Init
@@ -884,8 +892,7 @@ glw_video_set(glw_t *w, int init, va_list ap)
 
     LIST_INSERT_HEAD(&gr->gr_be.gbr_video_decoders, gv, gv_global_link);
 
-    gv->gv_vd = video_decoder_create(gv->gv_mp);
-    gv->gv_vd->vd_frame_deliver = glw_video_frame_deliver;
+    gv->gv_vd = video_decoder_create(gv->gv_mp, glw_video_frame_deliver, NULL);
     gv->gv_vp = video_playback_create(gv->gv_mp);
 
     // We like fullwindow mode if possible (should be confiurable perhaps)
@@ -953,10 +960,18 @@ typedef enum {
 /**
  * Frame delivery from video decoder
  */
-static void
-glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
-			AVFrame *frame, int64_t pts, int epoch, int duration,
-			int disable_deinterlacer)
+static void 
+glw_video_frame_deliver(struct video_decoder *vd,
+			uint8_t * const data[],
+			const int pitch[],
+			int width,
+			int height,
+			int pix_fmt,
+			int64_t pts,
+			int epoch,
+			int duration,
+			int deinterlace,
+			int top_field_first)
 {
   int hvec[3], wvec[3];
   int tff, w2, mode, i, j, h, w;
@@ -967,20 +982,20 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
 
   const int parity = 0;
 
-  if(frame->interlaced_frame && !disable_deinterlacer) {
+  if(deinterlace) {
     dt = DEINTERLACE_OPENGL;
   } else {
     dt = DEINTERLACE_NONE;
   }
 
-  avcodec_get_chroma_sub_sample(ctx->pix_fmt, &hshift, &vshift);
+  avcodec_get_chroma_sub_sample(pix_fmt, &hshift, &vshift);
 
-  wvec[0] = ctx->width;
-  wvec[1] = ctx->width >> hshift;
-  wvec[2] = ctx->width >> hshift;
-  hvec[0] = ctx->height;
-  hvec[1] = ctx->height >> vshift;
-  hvec[2] = ctx->height >> vshift;
+  wvec[0] = width;
+  wvec[1] = width >> hshift;
+  wvec[2] = width >> hshift;
+  hvec[0] = height;
+  hvec[1] = height >> vshift;
+  hvec[2] = height >> vshift;
 
   switch(dt) {
 
@@ -993,13 +1008,13 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
       h = vdf->vdf_height[i];
       w = vdf->vdf_width[i];
       
-      src = frame->data[i];
+      src = data[i];
       dst = vdf->vdf_data[i];
  
       while(h--) {
 	memcpy(dst, src, w);
 	dst += w;
-	src += frame->linesize[i];
+	src += pitch[i];
       }
     }
 
@@ -1013,7 +1028,7 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
   case DEINTERLACE_OPENGL:
     duration /= 2;
 
-    tff = !!frame->top_field_first ^ parity;
+    tff = !!top_field_first ^ parity;
 
     vd->vd_active_frames_needed = 3;
 
@@ -1031,7 +1046,7 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
 
     for(i = 0; i < 3; i++) {
       
-      src = frame->data[i]; 
+      src = data[i]; 
       dst = vdf->vdf_data[i];
       h = vdf->vdf_height[i];
       w = vdf->vdf_width[i];
@@ -1039,7 +1054,7 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
       while(h -= 2 > 0) {
 	memcpy(dst, src, w);
 	dst += w;
-	src += frame->linesize[i] * 2;
+	src += pitch[i] * 2;
       }
     }
     
@@ -1056,7 +1071,7 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
 
     for(i = 0; i < 3; i++) {
       
-      src = frame->data[i] + frame->linesize[i];
+      src = data[i] + pitch[i];
       dst = vdf->vdf_data[i];
       h = vdf->vdf_height[i];
       w = vdf->vdf_width[i];
@@ -1064,7 +1079,7 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
       while(h -= 2 > 0) {
 	memcpy(dst, src, w);
 	dst += w;
-	src += frame->linesize[i] * 2;
+	src += pitch[i] * 2;
       }
     }
     
@@ -1086,18 +1101,17 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
   case DEINTERLACE_YADIF_FIELD_NO_SPATIAL_ILACE:
     mode = 3;
   yadif:
-    if(vd->vd_yadif_width   != ctx->width  ||
-       vd->vd_yadif_height  != ctx->height ||
-       vd->vd_yadif_pix_fmt != ctx->pix_fmt) {
+    if(vd->vd_yadif_width   != width  ||
+       vd->vd_yadif_height  != height ||
+       vd->vd_yadif_pix_fmt != pix_fmt) {
       
-      vd->vd_yadif_width   = ctx->width;
-      vd->vd_yadif_height  = ctx->height;
-      vd->vd_yadif_pix_fmt = ctx->pix_fmt;
+      vd->vd_yadif_width   = width;
+      vd->vd_yadif_height  = height;
+      vd->vd_yadif_pix_fmt = pix_fmt;
 
       for(i = 0; i < 3; i++) {
 	avpicture_free(&vd->vd_yadif_pic[i]);
-	avpicture_alloc(&vd->vd_yadif_pic[i], ctx->pix_fmt, 
-			ctx->width, ctx->height);
+	avpicture_alloc(&vd->vd_yadif_pic[i], pix_fmt, width, height);
       }
     }
 
@@ -1105,16 +1119,16 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
     for(i = 0; i < 3; i++) {
       w = vd->vd_yadif_width  >> (i ? hshift : 0);
       h = vd->vd_yadif_height >> (i ? vshift : 0);
-      src = frame->data[i];
+      src = data[i];
       dst = vd->vd_yadif_pic[vd->vd_yadif_phase].data[i];
       while(h--) {
 	memcpy(dst, src, w);
 	dst += w;
-	src += frame->linesize[i];
+	src += pitch[i];
       }
     }
 
-    tff = !!frame->top_field_first ^ parity;
+    tff = !!top_field_first ^ parity;
 
     pts -= duration;
 

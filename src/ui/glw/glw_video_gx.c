@@ -76,11 +76,17 @@ typedef struct glw_video {
 
 } glw_video_t;
 
-
-static void glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
-				    AVFrame *frame, int64_t pts, int epoch, 
-				    int duration, int disable_deinterlacer);
-
+static void glw_video_frame_deliver(struct video_decoder *vd,
+				    uint8_t * const data[],
+				    const int pitch[],
+				    int width,
+				    int height,
+				    int pix_fmt,
+				    int64_t pts,
+				    int epoch,
+				    int duration,
+				    int deinterlace,
+				    int top_field_first);
 
 /**
  *  Buffer allocator
@@ -564,8 +570,7 @@ glw_video_set(glw_t *w, int init, va_list ap)
 
     gv->gv_mp = mp_create("Video decoder", "video", MP_VIDEO);
 
-    gv->gv_vd = video_decoder_create(gv->gv_mp);
-    gv->gv_vd->vd_frame_deliver = glw_video_frame_deliver;
+    gv->gv_vd = video_decoder_create(gv->gv_mp, glw_video_frame_deliver, NULL);
     gv->gv_vp = video_playback_create(gv->gv_mp);
 
     // We like fullwindow mode if possible (should be confiurable perhaps)
@@ -629,10 +634,17 @@ extern void videotiler_asm(void *dst,
 /**
  * Frame delivery from video decoder
  */
-static void
-glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
-			AVFrame *frame, int64_t pts, int epoch, int duration,
-			int disable_deinterlacer)
+static void glw_video_frame_deliver(struct video_decoder *vd,
+				    uint8_t * const data[],
+				    const int linesize[],
+				    int width,
+				    int height,
+				    int pix_fmt,
+				    int64_t pts,
+				    int epoch,
+				    int duration,
+				    int deinterlace,
+				    int top_field_first)
 {
   video_decoder_frame_t *vdf;
   int hvec[3], wvec[3];
@@ -641,14 +653,14 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
 
   vd->vd_active_frames_needed = 2;
 
-  avcodec_get_chroma_sub_sample(ctx->pix_fmt, &hshift, &vshift);
+  avcodec_get_chroma_sub_sample(pix_fmt, &hshift, &vshift);
 
-  wvec[0] = ctx->width;
-  wvec[1] = ctx->width >> hshift;
-  wvec[2] = ctx->width >> hshift;
-  hvec[0] = ctx->height;
-  hvec[1] = ctx->height >> vshift;
-  hvec[2] = ctx->height >> vshift;
+  wvec[0] = width;
+  wvec[1] = width >> hshift;
+  wvec[2] = width >> hshift;
+  hvec[0] = height;
+  hvec[1] = height >> vshift;
+  hvec[2] = height >> vshift;
 
   if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
     return;
@@ -658,13 +670,13 @@ glw_video_frame_deliver(video_decoder_t *vd, AVCodecContext *ctx,
 
   for(i = 0; i < 3; i++)
     videotiler_asm(vdf->vdf_data[i],
-		   frame->data[i] + frame->linesize[i] * 0,
-		   frame->data[i] + frame->linesize[i] * 1,
-		   frame->data[i] + frame->linesize[i] * 2,
-		   frame->data[i] + frame->linesize[i] * 3,
+		   data[i] + linesize[i] * 0,
+		   data[i] + linesize[i] * 1,
+		   data[i] + linesize[i] * 2,
+		   data[i] + linesize[i] * 3,
 		   vdf->vdf_height[i] / 4,
 		   vdf->vdf_width[i]  / 8,
-		   4 * frame->linesize[i] - vdf->vdf_width[i]);
+		   4 * linesize[i] - vdf->vdf_width[i]);
 
   vdf->vdf_pts = pts;
   vdf->vdf_epoch = epoch;

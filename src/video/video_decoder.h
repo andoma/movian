@@ -31,6 +31,7 @@ TAILQ_HEAD(subtitle_queue, subtitle);
 
 struct AVCodecContext;
 struct AVFrame;
+struct video_decoder;
 
 #define GVF_TEX_L   0
 #define GVF_TEX_Cr  1
@@ -104,7 +105,28 @@ typedef struct video_decoder_frame {
 /**
  *
  */
+typedef void (vd_frame_deliver_t)(struct video_decoder *vd,
+				  uint8_t * const data[],
+				  const int pitch[],
+				  int width,
+				  int height,
+				  int pix_fmt,
+				  int64_t pts,
+				  int epoch,
+				  int duration,
+				  int deinterlace,
+				  int top_field_first);
+
+
+
+/**
+ *
+ */
 typedef struct video_decoder {
+
+  void *vd_opaque;
+
+  vd_frame_deliver_t *vd_frame_deliver;
 
   hts_thread_t vd_decoder_thread;
 
@@ -202,10 +224,6 @@ typedef struct video_decoder {
   int vd_yadif_phase;
   
 
-  void (*vd_frame_deliver)(struct video_decoder *vd,
-			   struct AVCodecContext *ctx, struct AVFrame *frame, 
-			   int64_t pts, int epoch, int duration,
-			   int disable_deinterlacer);
 
   int vd_may_update_avdiff;
 
@@ -236,7 +254,9 @@ typedef struct video_decoder {
 } video_decoder_t;
 
 
-video_decoder_t *video_decoder_create(media_pipe_t *mp);
+video_decoder_t *video_decoder_create(media_pipe_t *mp, 
+				      vd_frame_deliver_t *frame_delivery,
+				      void *opaque);
 
 void video_decoder_stop(video_decoder_t *gv);
 
