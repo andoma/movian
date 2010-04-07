@@ -301,6 +301,7 @@ SRCS-$(CONFIG_GU) +=    src/ui/gu/gu.c \
 			src/ui/gu/gu_directory_albumcollection.c \
 			src/ui/gu/gu_cell_bar.c \
 			src/ui/gu/gu_video.c \
+			src/ui/linux/x11_common.c \
 
 ${BUILDDIR}/src/ui/gu/%.o : CFLAGS = $(shell pkg-config --cflags gtk+-2.0) \
 -Wall -Werror -Wmissing-prototypes -Wno-cast-qual -Wno-deprecated-declarations 
@@ -338,7 +339,8 @@ SRCS-$(CONFIG_APPLEREMOTE) += \
 SRCS  += $(SRCS-yes)
 DLIBS += $(DLIBS-yes)
 SLIBS += $(SLIBS-yes)
-OBJS3=   $(SRCS:%.S=$(BUILDDIR)/%.o)
+SSRCS  = $(sort $(SRCS))
+OBJS3=   $(SSRCS:%.S=$(BUILDDIR)/%.o)
 OBJS2=   $(OBJS3:%.c=$(BUILDDIR)/%.o)
 OBJS=    $(OBJS2:%.m=$(BUILDDIR)/%.o)
 DEPS=    ${OBJS:%.o=%.d}
