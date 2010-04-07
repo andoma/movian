@@ -92,6 +92,8 @@ void gu_popup_init(gtk_ui_t *gu);
 
 void gu_home_create(gu_nav_page_t *gnp);
 
+void gu_video_create(gu_nav_page_t *gnp);
+
 /**
  * gu_helpers.c
  */

@@ -43,6 +43,8 @@ gu_nav_page_set_type(void *opaque, const char *type)
     gu_directory_create(gnp);
   } else if(!strcmp(type, "home")) {
     gu_home_create(gnp);
+  } else if(!strcmp(type, "video")) {
+    gu_video_create(gnp);
   } else {
     TRACE(TRACE_ERROR, "GU", "Can not display page type: %s", type);
   }

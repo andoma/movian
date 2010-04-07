@@ -300,6 +300,7 @@ SRCS-$(CONFIG_GU) +=    src/ui/gu/gu.c \
 			src/ui/gu/gu_directory_album.c \
 			src/ui/gu/gu_directory_albumcollection.c \
 			src/ui/gu/gu_cell_bar.c \
+			src/ui/gu/gu_video.c \
 
 ${BUILDDIR}/src/ui/gu/%.o : CFLAGS = $(shell pkg-config --cflags gtk+-2.0) \
 -Wall -Werror -Wmissing-prototypes -Wno-cast-qual -Wno-deprecated-declarations 

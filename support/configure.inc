@@ -53,6 +53,7 @@ CONFIG_LIST="
  tinysmb
  libxss
  libsmbclient
+ libxv
 "
 
 die() {

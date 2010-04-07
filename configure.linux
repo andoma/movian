@@ -75,6 +75,7 @@ enable dbus
 enable cdda
 enable cddb
 enable libxss
+enable libxv
 
 for opt do
   optval="${opt#*=}"
@@ -256,6 +257,21 @@ if enabled libxss; then
 	echo "Using libxscrnsaver:   `pkg-config --modversion xscrnsaver`"
     else
 	echo "libXss not found. Unable to build with screensaver disable support."
+	die
+    fi
+fi
+
+
+#
+# libxv (Xvideo)
+#
+if enabled libxv; then
+    if pkg-config xv; then
+	echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags xv`
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs xv`
+	echo "Using libXv:           `pkg-config --modversion xv`"
+    else
+	echo "libXv not found. Unable to build with Xv support."
 	die
     fi
 fi

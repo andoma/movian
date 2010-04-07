@@ -20,6 +20,8 @@
 #include "gu.h"
 #include "showtime.h"
 
+#include <X11/Xlib.h>
+
 hts_mutex_t gu_mutex;
 
 
@@ -63,6 +65,8 @@ gu_start(ui_t *ui, int argc, char **argv, int primary)
   GtkWidget *win;
   GtkWidget *vbox;
   gtk_ui_t *gu = calloc(1, sizeof(gtk_ui_t));
+
+  XInitThreads();
 
   hts_mutex_init(&gu_mutex);
 
