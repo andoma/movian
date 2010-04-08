@@ -45,7 +45,7 @@ static gboolean
 configure_event_callback(GtkWidget *w, GdkEventConfigure *e,
 			 gpointer user_data)
 {
-  x11_vo_position(user_data, e->x, e->y, e->width, e->height);
+  x11_vo_position(user_data, 0, 0, e->width, e->height);
   return FALSE;
 }
 
@@ -63,9 +63,8 @@ expose_event_callback(GtkWidget *w, GdkEventExpose *e,
   gdk_draw_rectangle(w->window, gc, TRUE,
 		     0, 0, w->allocation.width, w->allocation.height);
 
-
   g_object_unref(G_OBJECT(gc));
-  return TRUE;
+  return FALSE;
 }
 
 
@@ -80,11 +79,17 @@ gu_video_create(gu_nav_page_t *gnp)
   struct video_output *vo;
   char errbuf[256];
   char buf[512];
-  vo = x11_vo_create(GDK_WINDOW_XDISPLAY(gu->gu_window->window),
-		     GDK_WINDOW_XID(gu->gu_window->window),
+
+  gnp->gnp_pageroot = gtk_drawing_area_new();
+  gtk_container_add(GTK_CONTAINER(gnp->gnp_pagebin), gnp->gnp_pageroot);
+  gtk_widget_show_all(gnp->gnp_pageroot);
+
+  vo = x11_vo_create(GDK_WINDOW_XDISPLAY(gnp->gnp_pageroot->window),
+		     GDK_WINDOW_XID(gnp->gnp_pageroot->window),
 		     gu->gu_pc, gnp->gnp_prop, errbuf, sizeof(errbuf));
 
   if(vo == NULL) {
+    gtk_widget_destroy(gnp->gnp_pageroot);
 
     snprintf(buf, sizeof(buf), "Unable to start video: %s", errbuf);
 
@@ -93,13 +98,6 @@ gu_video_create(gu_nav_page_t *gnp)
     gtk_widget_show_all(gnp->gnp_pageroot);
     return;
   }
-
-  gnp->gnp_pageroot = gtk_drawing_area_new();
-
-  gtk_container_add(GTK_CONTAINER(gnp->gnp_pagebin), gnp->gnp_pageroot);
-  gtk_widget_show_all(gnp->gnp_pageroot);
-
-
 
   g_signal_connect(G_OBJECT(gnp->gnp_pageroot), 
 		   "expose_event",
