@@ -65,7 +65,8 @@ typedef struct media_codec {
 
   void *opaque;
   void (*data)(struct media_codec *mc, void *decoder, 
-	       struct media_queue *mq, struct media_buf *mb);
+	       struct media_queue *mq, struct media_buf *mb,
+	       int reqsize);
 
   void (*close)(struct media_codec *mc);
 
