@@ -369,10 +369,15 @@ vd_thread(void *aux)
       break;
 
     case MB_VIDEO:
-      if(mc->decode)
-	mc->decode(mc, vd, mq, mb);
+      if(mc->data)
+	mc->data(mc, vd, mq, mb);
       else
 	vd_decode_video(vd, mq, mb);
+      break;
+
+    case MB_REQ_OUTPUT_SIZE:
+      if(mc->data)
+	mc->data(mc, vd, mq, mb);
       break;
 
 #ifdef CONFIG_DVD

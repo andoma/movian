@@ -64,8 +64,8 @@ typedef struct media_codec {
   AVCodecParserContext *parser_ctx;
 
   void *opaque;
-  void (*decode)(struct media_codec *mc, void *decoder, 
-		 struct media_queue *mq, struct media_buf *mb);
+  void (*data)(struct media_codec *mc, void *decoder, 
+	       struct media_queue *mq, struct media_buf *mb);
 
   void (*close)(struct media_codec *mc);
 
@@ -97,12 +97,14 @@ typedef struct media_buf {
 
     MB_SUBTITLE,
 
+    MB_REQ_OUTPUT_SIZE,
+
   } mb_data_type;
 
   void *mb_data;
   int mb_size;
 
-  int mb_data32;
+  int32_t mb_data32;
 
   uint32_t mb_duration;
 
