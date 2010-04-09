@@ -135,6 +135,8 @@ typedef struct video_output {
 
   struct SwsContext *vo_scaler;
 
+  struct x11_screensaver_state *vo_xss;
+
 } video_output_t;
 
 
@@ -291,6 +293,8 @@ x11_vo_create(Display *dpy, int win, prop_courier_t *pc, prop_t *self,
 		   PROP_TAG_COURIER, pc, 
 		   PROP_TAG_NAMED_ROOT, self, "self",
 		   NULL);
+
+  vo->vo_xss = x11_screensaver_suspend(vo->vo_dpy);
   return vo;
 }
 
@@ -301,6 +305,9 @@ x11_vo_create(Display *dpy, int win, prop_courier_t *pc, prop_t *self,
 void
 x11_vo_destroy(struct video_output *vo)
 {
+  if(vo->vo_xss != NULL)
+    x11_screensaver_resume(vo->vo_xss);
+
   prop_unsubscribe(vo->vo_sub_url);
 
   video_playback_destroy(vo->vo_vp);
