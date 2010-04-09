@@ -501,6 +501,34 @@ xv_video_frame_deliver(struct video_decoder *vd,
 }
 #endif
 
+const static struct {
+  int rm, gm, bm, depth, pixfmt;
+} visual2pixfmt[] = {
+  {0x00ff0000, 0x0000ff00, 0x000000ff, 24, PIX_FMT_RGB32},
+};
+
+/**
+ *
+ */
+static int
+get_pix_fmt(video_output_t *vo)
+{
+  int rm = vo->vo_visualinfo.red_mask;
+  int gm = vo->vo_visualinfo.green_mask;
+  int bm = vo->vo_visualinfo.blue_mask;
+  int i;
+
+  for(i = 0; i < sizeof(visual2pixfmt) / sizeof(visual2pixfmt[0]); i++) {
+    if(visual2pixfmt[i].rm == rm &&
+       visual2pixfmt[i].gm == gm &&
+       visual2pixfmt[i].bm == bm &&
+       visual2pixfmt[i].depth == vo->vo_depth) {
+      return visual2pixfmt[i].pixfmt;
+    }
+  }
+  return -1;
+}
+
 
 /**
  *
@@ -565,8 +593,17 @@ xi_video_frame_deliver(struct video_decoder *vd,
     XSync(vo->vo_dpy, False);
     shmctl(vo->vo_shm.shmid, IPC_RMID, 0);
 
-    vo->vo_pix_fmt = PIX_FMT_RGB32;
+    if((vo->vo_pix_fmt = get_pix_fmt(vo)) == -1)
+      TRACE(TRACE_ERROR, "X11", 
+	    "No pixel format for visual: %08x %08x %08x %dbpp",
+	    vo->vo_visualinfo.red_mask,
+	    vo->vo_visualinfo.green_mask,
+	    vo->vo_visualinfo.blue_mask,
+	    vo->vo_depth);
   }
+
+  if(vo->vo_pix_fmt == -1)
+    return;
 
   vo->vo_scaler = sws_getCachedContext(vo->vo_scaler,
 				       width, height, pix_fmt,
