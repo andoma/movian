@@ -35,11 +35,6 @@ typedef struct event_ts {
   int64_t pts;
 } event_ts_t;
 
-
-#define MP_WIDGET_AUTO_DISPLAY_TIME 250
-
-struct appi;
-
 #define MQ_LOWWATER 20
 #define MQ_HIWATER  200
 
@@ -47,7 +42,7 @@ TAILQ_HEAD(media_buf_queue, media_buf);
 TAILQ_HEAD(media_pipe_queue, media_pipe);
 LIST_HEAD(media_pipe_list, media_pipe);
 
-typedef struct formatcwrap {
+typedef struct formatwrap {
   int refcount;
   AVFormatContext *fctx;
 } formatwrap_t;
