@@ -28,10 +28,12 @@
  */
 #ifdef linux
 
+
 #define _GNU_SOURCE
 #include <sched.h>
 #include <pthread.h>
 #include <string.h>
+#include <sys/prctl.h>
 
 static int
 get_system_concurrency(void)
@@ -232,25 +234,79 @@ showtime_get_ts(void)
   return (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
 }
 
+
+/**
+ *
+ */
+typedef struct {
+  char *title;
+  void *(*func)(void *);
+  void *aux;
+} trampoline_t;
+
+
+/**
+ *
+ */
+static trampoline_t *
+make_trampoline(const char *title, void *(*func)(void *), void *aux)
+{
+  char buf[64];
+  trampoline_t *t = malloc(sizeof(trampoline_t));
+  snprintf(buf, sizeof(buf), "ST:%s", title);
+  
+  t->title = strdup(buf);
+  t->func = func;
+  t->aux = aux;
+  return t;
+}
+
+/**
+ *
+ */
+static void *
+thread_trampoline(void *aux)
+{
+  trampoline_t *t = aux;
+  void *r;
+
+#ifdef linux
+  prctl(PR_SET_NAME, t->title, 0, 0, 0);
+#endif
+  free(t->title);
+
+  r = t->func(t->aux);
+  free(t);
+  return r;
+}
+
+
+
+
+
 /**
  *
  */
 void
 hts_thread_create_detached(const char *title, void *(*func)(void *), void *aux)
 {
- pthread_t id;
- pthread_attr_t attr;
- pthread_attr_init(&attr);
- pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
- pthread_create(&id, &attr, func, aux);
- pthread_attr_destroy(&attr);
- TRACE(TRACE_DEBUG, "thread", "Created detached thread: %s", title);
+  pthread_t id;
+  pthread_attr_t attr;
+  pthread_attr_init(&attr);
+  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+  pthread_create(&id, &attr, thread_trampoline,
+		 make_trampoline(title, func, aux));
+  pthread_attr_destroy(&attr);
+  TRACE(TRACE_DEBUG, "thread", "Created detached thread: %s", title);
+
 }
 
 void
 hts_thread_create_joinable(const char *title, hts_thread_t *p, 
 			   void *(*func)(void *), void *aux)
 {
-  pthread_create(p, NULL, func, aux);
- TRACE(TRACE_DEBUG, "thread", "Created thread: %s", title);
+  pthread_create(p, NULL, thread_trampoline,
+		make_trampoline(title, func, aux));
+
+  TRACE(TRACE_DEBUG, "thread", "Created thread: %s", title);
 }
