@@ -164,7 +164,7 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
   int got_pic, duration, epoch;
   media_pipe_t *mp = vd->vd_mp;
   float f;
-  codecwrap_t *cw = mb->mb_cw;
+  media_codec_t *cw = mb->mb_cw;
   AVCodecContext *ctx = cw->codec_ctx;
   AVFrame *frame = vd->vd_frame;
   frame_meta_t *fm;

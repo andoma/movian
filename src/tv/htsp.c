@@ -127,7 +127,7 @@ typedef struct htsp_subscription_stream {
   LIST_ENTRY(htsp_subscription_stream) hss_link;
 
   int hss_index;
-  codecwrap_t *hss_cw;
+  media_codec_t *hss_cw;
   media_queue_t *hss_mq;
   int hss_data_type;
 
@@ -903,7 +903,7 @@ htsp_free_streams(htsp_subscription_t *hs)
   
   while((hss = LIST_FIRST(&hs->hs_streams)) != NULL) {
     LIST_REMOVE(hss, hss_link);
-    wrap_codec_deref(hss->hss_cw);
+    media_codec_deref(hss->hss_cw);
     free(hss);
   }
 }
@@ -1024,7 +1024,7 @@ htsp_mux_input(htsp_connection_t *hc, htsmsg_t *m)
 
       mb->mb_epoch = 1;
 
-      mb->mb_cw = wrap_codec_ref(hss->hss_cw);
+      mb->mb_cw = media_codec_ref(hss->hss_cw);
 
       mb->mb_data = malloc(binlen + FF_INPUT_BUFFER_PADDING_SIZE);
       memcpy(mb->mb_data, bin, binlen);
@@ -1056,7 +1056,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
   enum CodecID   codec_id;
   enum CodecType codec_type;
   const char *nicename, *title;
-  codecwrap_t *cw;
+  media_codec_t *cw;
 
   int vstream = -1; /* Initial video stream */
   int astream = -1; /* Initial audio stream */
@@ -1172,7 +1172,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
        * Try to create the codec
        */
 
-      cw = wrap_codec_create(codec_id, codec_type, 0, NULL, NULL,
+      cw = media_codec_create(codec_id, codec_type, 0, NULL, NULL,
 			     codec_id == CODEC_ID_H264, subid);
       if(cw == NULL) {
 	TRACE(TRACE_ERROR, "HTSP", "Unable to create codec for %s (#%d)",

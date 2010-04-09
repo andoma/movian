@@ -42,18 +42,18 @@ TAILQ_HEAD(media_buf_queue, media_buf);
 TAILQ_HEAD(media_pipe_queue, media_pipe);
 LIST_HEAD(media_pipe_list, media_pipe);
 
-typedef struct formatwrap {
+typedef struct media_format {
   int refcount;
   AVFormatContext *fctx;
-} formatwrap_t;
+} media_format_t;
 
-typedef struct codecwrap {
+typedef struct media_codec {
   int refcount;
-  formatwrap_t *fw;
+  media_format_t *fw;
   AVCodec *codec;
   AVCodecContext *codec_ctx;
   AVCodecParserContext *parser_ctx;
-} codecwrap_t;
+} media_codec_t;
 
 
 
@@ -102,7 +102,7 @@ typedef struct media_buf {
   int64_t mb_time;  /* in ms */
   int mb_epoch;
 
-  codecwrap_t *mb_cw;
+  media_codec_t *mb_cw;
 
   int mb_stream; /* For feedback */
 
@@ -207,19 +207,19 @@ typedef struct media_pipe {
 /**
  *
  */
-formatwrap_t *wrap_format_create(AVFormatContext *fctx);
+media_format_t *media_format_create(AVFormatContext *fctx);
 
-void wrap_format_deref(formatwrap_t *fw);
+void media_format_deref(media_format_t *fw);
 
 /**
  * Codecs
  */
-void wrap_codec_deref(codecwrap_t *cw);
+void media_codec_deref(media_codec_t *cw);
 
-codecwrap_t *wrap_codec_ref(codecwrap_t *cw);
+media_codec_t *media_codec_ref(media_codec_t *cw);
 
-codecwrap_t *wrap_codec_create(enum CodecID id, enum CodecType type, 
-			       int parser, formatwrap_t *fw,
+media_codec_t *media_codec_create(enum CodecID id, enum CodecType type, 
+			       int parser, media_format_t *fw,
 			       AVCodecContext *ctx,
 			       int cheat_for_speed, int sub_id);
 

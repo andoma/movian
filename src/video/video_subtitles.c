@@ -112,7 +112,7 @@ video_subtitles_cleartext(video_decoder_t *vd, media_buf_t *mb)
 void 
 video_subtitles_decode(video_decoder_t *vd, media_buf_t *mb)
 {
-  codecwrap_t *cw = mb->mb_cw;
+  media_codec_t *cw = mb->mb_cw;
 
   if(cw != NULL)
     video_subtitles_decode_lavc(vd, mb, cw->codec_ctx);

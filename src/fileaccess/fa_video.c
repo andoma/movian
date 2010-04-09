@@ -119,7 +119,7 @@ video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
  * Thread for reading from lavf and sending to lavc
  */
 static event_t *
-video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
+video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec, media_pipe_t *mp,
 		  subtitles_t *sub, char *errbuf, size_t errlen)
 {
   media_buf_t *mb = NULL;
@@ -228,7 +228,7 @@ video_player_loop(AVFormatContext *fctx, codecwrap_t **cwvec, media_pipe_t *mp,
 	}
       }
 
-      mb->mb_cw = wrap_codec_ref(cwvec[si]);
+      mb->mb_cw = media_codec_ref(cwvec[si]);
 
       mb->mb_stream = pkt.stream_index;
 
@@ -445,10 +445,10 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 {
   AVFormatContext *fctx;
   AVCodecContext *ctx;
-  formatwrap_t *fw;
+  media_format_t *fw;
   int i;
   char faurl[URL_MAX];
-  codecwrap_t **cwvec;
+  media_codec_t **cwvec;
   event_t *e;
   struct stat buf;
   fa_handle_t *fh;
@@ -543,7 +543,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   mp->mp_video.mq_stream = -1;
   mp->mp_video.mq_stream2 = -1;
 
-  fw = wrap_format_create(fctx);
+  fw = media_format_create(fctx);
 
   for(i = 0; i < fctx->nb_streams; i++) {
     ctx = fctx->streams[i]->codec;
@@ -557,7 +557,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     if(ctx->codec_id == CODEC_ID_DTS)
       ctx->channels = 0;
 
-    cwvec[i] = wrap_codec_create(ctx->codec_id,
+    cwvec[i] = media_codec_create(ctx->codec_id,
 				 ctx->codec_type, 0, fw, ctx, 0, 0);
   }
 
@@ -578,8 +578,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   for(i = 0; i < fctx->nb_streams; i++)
     if(cwvec[i] != NULL)
-      wrap_codec_deref(cwvec[i]);
+      media_codec_deref(cwvec[i]);
 
-  wrap_format_deref(fw);
+  media_format_deref(fw);
   return e;
 }

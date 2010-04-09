@@ -207,13 +207,13 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   AVFormatContext *fctx;
   AVCodecContext *ctx;
   AVPacket pkt;
-  formatwrap_t *fw;
+  media_format_t *fw;
   int i, r, si;
   media_buf_t *mb = NULL;
   media_queue_t *mq;
   event_ts_t *ets;
   int64_t ts, pts4seek = 0;
-  codecwrap_t *cw;
+  media_codec_t *cw;
   char faurl[URL_MAX];
   event_t *e;
   int hold = 0, lost_focus = 0;
@@ -263,7 +263,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   mp->mp_audio.mq_stream = -1;
   mp->mp_video.mq_stream = -1;
 
-  fw = wrap_format_create(fctx);
+  fw = media_format_create(fctx);
 
   cw = NULL;
   for(i = 0; i < fctx->nb_streams; i++) {
@@ -272,13 +272,13 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     if(ctx->codec_type != CODEC_TYPE_AUDIO)
       continue;
 
-    cw = wrap_codec_create(ctx->codec_id, ctx->codec_type, 0, fw, ctx, 0, 0);
+    cw = media_codec_create(ctx->codec_id, ctx->codec_type, 0, fw, ctx, 0, 0);
     mp->mp_audio.mq_stream = i;
     break;
   }
   
   if(cw == NULL) {
-    wrap_format_deref(fw);
+    media_format_deref(fw);
     snprintf(errbuf, errlen, "Unable to open codec");
     return NULL;
   }
@@ -328,7 +328,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       mb->mb_dts      = rescale(fctx, pkt.dts,      si);
       mb->mb_duration = rescale(fctx, pkt.duration, si);
 
-      mb->mb_cw = wrap_codec_ref(cw);
+      mb->mb_cw = media_codec_ref(cw);
 
       /* Move the data pointers from ffmpeg's packet */
 
@@ -446,8 +446,8 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   if(mb != NULL)
     media_buf_free(mb);
 
-  wrap_codec_deref(cw);
-  wrap_format_deref(fw);
+  media_codec_deref(cw);
+  media_format_deref(fw);
 
   if(hold) { 
     // If we were paused, release playback again.

@@ -80,7 +80,7 @@ media_buf_free(media_buf_t *mb)
     free(mb->mb_data);
 
   if(mb->mb_cw != NULL)
-    wrap_codec_deref(mb->mb_cw);
+    media_codec_deref(mb->mb_cw);
   
   free(mb);
 }
@@ -659,8 +659,8 @@ mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u)
 /**
  *
  */
-codecwrap_t *
-wrap_codec_ref(codecwrap_t *cw)
+media_codec_t *
+media_codec_ref(media_codec_t *cw)
 {
   atomic_add(&cw->refcount, 1);
   return cw;
@@ -670,9 +670,9 @@ wrap_codec_ref(codecwrap_t *cw)
  *
  */
 void
-wrap_codec_deref(codecwrap_t *cw)
+media_codec_deref(media_codec_t *cw)
 {
-  formatwrap_t *fw = cw->fw;
+  media_format_t *fw = cw->fw;
 
   if(atomic_add(&cw->refcount, -1) > 1)
     return;
@@ -686,7 +686,7 @@ wrap_codec_deref(codecwrap_t *cw)
     av_parser_close(cw->parser_ctx);
   
   if(fw != NULL)
-    wrap_format_deref(fw);
+    media_format_deref(fw);
 
   free(cw);
 }
@@ -695,13 +695,13 @@ wrap_codec_deref(codecwrap_t *cw)
 /**
  *
  */
-codecwrap_t *
-wrap_codec_create(enum CodecID id, enum CodecType type, int parser,
-		  formatwrap_t *fw, AVCodecContext *ctx,
+media_codec_t *
+media_codec_create(enum CodecID id, enum CodecType type, int parser,
+		  media_format_t *fw, AVCodecContext *ctx,
 		  int cheat_for_speed, int sub_id)
 {
   extern int concurrency;
-  codecwrap_t *cw = malloc(sizeof(codecwrap_t));
+  media_codec_t *cw = malloc(sizeof(media_codec_t));
 
   cw->codec = avcodec_find_decoder(id);
   if(cw->codec == NULL) {
@@ -743,10 +743,10 @@ wrap_codec_create(enum CodecID id, enum CodecType type, int parser,
 /**
  *
  */
-formatwrap_t *
-wrap_format_create(AVFormatContext *fctx)
+media_format_t *
+media_format_create(AVFormatContext *fctx)
 {
-  formatwrap_t *fw = malloc(sizeof(formatwrap_t));
+  media_format_t *fw = malloc(sizeof(media_format_t));
   fw->refcount = 1;
   fw->fctx = fctx;
   return fw;
@@ -757,7 +757,7 @@ wrap_format_create(AVFormatContext *fctx)
  *
  */
 void
-wrap_format_deref(formatwrap_t *fw)
+media_format_deref(media_format_t *fw)
 {
   if(atomic_add(&fw->refcount, -1) > 1)
     return;

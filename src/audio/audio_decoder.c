@@ -240,7 +240,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
   audio_mode_t *am = audio_mode_current;
   uint8_t *buf;
   int size, r, data_size, channels, rate, frames, delay, i;
-  codecwrap_t *cw = mb->mb_cw;
+  media_codec_t *cw = mb->mb_cw;
   AVCodecContext *ctx;
   enum CodecID codec_id;
   int64_t pts, chlayout;
