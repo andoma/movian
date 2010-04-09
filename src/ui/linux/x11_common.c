@@ -160,14 +160,9 @@ vo_set_url(void *opaque, const char *url)
  *
  */
 static void xv_video_frame_deliver(struct video_decoder *vd,
-				   uint8_t * const data[],
-				   const int pitch[],
-				   int width,
-				   int height,
-				   int pix_fmt,
-				   int64_t pts,
-				   int epoch,
-				   int duration,
+				   uint8_t * const data[], const int pitch[],
+				   int width, int height, int pix_fmt,
+				   int64_t pts, int epoch, int duration,
 				   int flags);
 
 /**
@@ -211,14 +206,9 @@ init_with_xv(video_output_t *vo)
  *
  */
 static void xi_video_frame_deliver(struct video_decoder *vd,
-				   uint8_t * const data[],
-				   const int pitch[],
-				   int width,
-				   int height,
-				   int pix_fmt,
-				   int64_t pts,
-				   int epoch,
-				   int duration,
+				   uint8_t * const data[], const int pitch[],
+				   int width, int height, int pix_fmt,
+				   int64_t pts, int epoch, int duration,
 				   int flags);
 
 /**
@@ -417,15 +407,9 @@ compute_output_dimensions(struct video_decoder *vd, video_output_t *vo,
  */
 static void 
 xv_video_frame_deliver(struct video_decoder *vd,
-		       uint8_t * const data[],
-		       const int linesize[],
-		       int width,
-		       int height,
-		       int pix_fmt,
-		       int64_t pts,
-		       int epoch,
-		       int duration,
-		       int flags)
+		       uint8_t * const data[], const int linesize[],
+		       int width, int height, int pix_fmt,
+		       int64_t pts, int epoch, int duration, int flags)
 {
   video_output_t *vo = vd->vd_opaque;
   int syncok;
@@ -533,15 +517,9 @@ get_pix_fmt(video_output_t *vo)
  */
 static void
 xi_video_frame_deliver(struct video_decoder *vd,
-		       uint8_t * const data[],
-		       const int pitch[],
-		       int width,
-		       int height,
-		       int pix_fmt,
-		       int64_t pts,
-		       int epoch,
-		       int duration,
-		       int flags)
+		       uint8_t * const data[], const int pitch[],
+		       int width, int height,  int pix_fmt,
+		       int64_t pts, int epoch, int duration, int flags)
 {
   video_output_t *vo = vd->vd_opaque;
   uint8_t *dst[4] = {0,0,0,0};
