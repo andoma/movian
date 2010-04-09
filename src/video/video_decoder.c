@@ -319,6 +319,7 @@ vd_thread(void *aux)
   media_pipe_t *mp = vd->vd_mp;
   media_queue_t *mq = &mp->mp_video;
   media_buf_t *mb;
+  media_codec_t *mc;
   int i;
   int run = 1;
 
@@ -347,6 +348,8 @@ vd_thread(void *aux)
     hts_cond_signal(&mp->mp_backpressure);
     hts_mutex_unlock(&mp->mp_mutex);
 
+    mc = mb->mb_cw;
+
     switch(mb->mb_data_type) {
     case MB_CTRL_EXIT:
       run = 0;
@@ -366,7 +369,10 @@ vd_thread(void *aux)
       break;
 
     case MB_VIDEO:
-      vd_decode_video(vd, mq, mb);
+      if(mc->decode)
+	mc->decode(mc, vd, mq, mb);
+      else
+	vd_decode_video(vd, mq, mb);
       break;
 
 #ifdef CONFIG_DVD

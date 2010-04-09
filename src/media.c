@@ -677,7 +677,8 @@ media_codec_deref(media_codec_t *cw)
   if(atomic_add(&cw->refcount, -1) > 1)
     return;
 
-  avcodec_close(cw->codec_ctx);
+  if(cw->codec_ctx->codec != NULL)
+    avcodec_close(cw->codec_ctx);
 
   if(fw == NULL)
     free(cw->codec_ctx);
@@ -701,7 +702,7 @@ media_codec_create(enum CodecID id, enum CodecType type, int parser,
 		  int cheat_for_speed, int sub_id)
 {
   extern int concurrency;
-  media_codec_t *cw = malloc(sizeof(media_codec_t));
+  media_codec_t *cw = calloc(1, sizeof(media_codec_t));
 
   cw->codec = avcodec_find_decoder(id);
   if(cw->codec == NULL) {

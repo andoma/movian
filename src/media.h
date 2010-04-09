@@ -27,6 +27,8 @@
 #include "prop.h"
 
 void media_init(void);
+struct media_buf;
+struct media_queue;
 
 typedef struct event_ts {
   event_t h;
@@ -42,20 +44,32 @@ TAILQ_HEAD(media_buf_queue, media_buf);
 TAILQ_HEAD(media_pipe_queue, media_pipe);
 LIST_HEAD(media_pipe_list, media_pipe);
 
+/**
+ *
+ */
 typedef struct media_format {
   int refcount;
   AVFormatContext *fctx;
 } media_format_t;
 
+
+/**
+ *
+ */
 typedef struct media_codec {
   int refcount;
   media_format_t *fw;
   AVCodec *codec;
   AVCodecContext *codec_ctx;
   AVCodecParserContext *parser_ctx;
+
+  void *opaque;
+  void (*decode)(struct media_codec *mc, void *decoder, 
+		 struct media_queue *mq, struct media_buf *mb);
+
+  void (*close)(struct media_codec *mc);
+
 } media_codec_t;
-
-
 
 
 /**
