@@ -530,7 +530,11 @@ xi_video_frame_deliver(struct video_decoder *vd,
   if(vo->vo_w < 1 || vo->vo_h < 1)
     return;
 
-  compute_output_dimensions(vd, vo, &outw, &outh);
+  if(flags & VD_PRESCALED) {
+    outw = width; outh = height;
+  } else {
+    compute_output_dimensions(vd, vo, &outw, &outh);
+  }
 
   if(vo->vo_ximage != NULL && 
      (vo->vo_ximage->width  != outw ||
@@ -580,17 +584,31 @@ xi_video_frame_deliver(struct video_decoder *vd,
   if(vo->vo_pix_fmt == -1)
     return;
 
-  vo->vo_scaler = sws_getCachedContext(vo->vo_scaler,
-				       width, height, pix_fmt,
-				       vo->vo_ximage->width,
-				       vo->vo_ximage->height,
-				       vo->vo_pix_fmt,
-				       SWS_BICUBIC, NULL, NULL, NULL);
-  
-  dst[0] = (uint8_t *)vo->vo_ximage->data;
-  dstpitch[0] = vo->vo_ximage->bytes_per_line;
+  if(vo->vo_ximage->width          == width &&
+     vo->vo_ximage->height         == height &&
+     vo->vo_pix_fmt                == pix_fmt &&
+     vo->vo_ximage->bytes_per_line == pitch[0]) {
 
-  sws_scale(vo->vo_scaler, (void *)data, pitch, 0, height, dst, dstpitch);
+    memcpy(vo->vo_ximage->data, data[0], 
+	   vo->vo_ximage->bytes_per_line * vo->vo_ximage->height);
+
+  } else {
+
+    // Must do scaling and/or format conversion
+
+    vo->vo_scaler = sws_getCachedContext(vo->vo_scaler,
+					 width, height, pix_fmt,
+					 vo->vo_ximage->width,
+					 vo->vo_ximage->height,
+					 vo->vo_pix_fmt,
+					 SWS_BICUBIC, NULL, NULL, NULL);
+    
+    dst[0] = (uint8_t *)vo->vo_ximage->data;
+    dstpitch[0] = vo->vo_ximage->bytes_per_line;
+    
+    sws_scale(vo->vo_scaler, (void *)data, pitch, 0, height, dst, dstpitch);
+  }
+
 
   syncok = wait_for_aclock(vd->vd_mp, pts, epoch);
 

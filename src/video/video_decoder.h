@@ -118,6 +118,7 @@ typedef void (vd_frame_deliver_t)(struct video_decoder *vd,
 
 #define VD_INTERLACED 0x1  // Frame delivered is interlaced
 #define VD_TFF        0x2  // For interlaced frame, top-field-first
+#define VD_PRESCALED  0x4  // Output frame is prescaled to requested size
 
 /**
  *
