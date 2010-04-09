@@ -262,7 +262,7 @@ x11_vo_create(Display *dpy, int win, prop_courier_t *pc, prop_t *self,
 
 
 #if ENABLE_LIBXV
-  if(0 && init_with_xv(vo)) {
+  if(init_with_xv(vo)) {
 
     deliver_fn = xv_video_frame_deliver;
 
