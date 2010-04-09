@@ -74,6 +74,26 @@ atomic_add (volatile int *ptr, int incr)
   return res;
 }
 
+#elif defined(__arm__) 
+
+static inline int 
+atomic_add(volatile int *ptr, int val)
+{
+  int a, b, c;
+
+  asm volatile(  "0:\n\t"
+		 "ldr %0, [%3]\n\t"
+		 "add %1, %0, %4\n\t"
+		 "swp %2, %1, [%3]\n\t"
+		 "cmp %0, %2\n\t"
+		 "swpne %1, %2, [%3]\n\t"
+		 "bne 0b"
+		 : "=&r" (a), "=&r" (b), "=&r" (c)
+		 : "r" (ptr), "r" (val)
+		 : "cc", "memory");
+  return a;
+}
+
 #else
 #error Missing atomic ops
 #endif
