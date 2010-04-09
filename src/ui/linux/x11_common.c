@@ -168,8 +168,7 @@ static void xv_video_frame_deliver(struct video_decoder *vd,
 				   int64_t pts,
 				   int epoch,
 				   int duration,
-				   int deinterlace,
-				   int top_field_first);
+				   int flags);
 
 /**
  *
@@ -220,8 +219,7 @@ static void xi_video_frame_deliver(struct video_decoder *vd,
 				   int64_t pts,
 				   int epoch,
 				   int duration,
-				   int deinterlace,
-				   int top_field_first);
+				   int flags);
 
 /**
  *
@@ -427,8 +425,7 @@ xv_video_frame_deliver(struct video_decoder *vd,
 		       int64_t pts,
 		       int epoch,
 		       int duration,
-		       int deinterlace,
-		       int top_field_first)
+		       int flags)
 {
   video_output_t *vo = vd->vd_opaque;
   int syncok;
@@ -544,8 +541,7 @@ xi_video_frame_deliver(struct video_decoder *vd,
 		       int64_t pts,
 		       int epoch,
 		       int duration,
-		       int deinterlace,
-		       int top_field_first)
+		       int flags)
 {
   video_output_t *vo = vd->vd_opaque;
   uint8_t *dst[4] = {0,0,0,0};

@@ -114,10 +114,10 @@ typedef void (vd_frame_deliver_t)(struct video_decoder *vd,
 				  int64_t pts,
 				  int epoch,
 				  int duration,
-				  int deinterlace,
-				  int top_field_first);
+				  int flags);
 
-
+#define VD_INTERLACED 0x1  // Frame delivered is interlaced
+#define VD_TFF        0x2  // For interlaced frame, top-field-first
 
 /**
  *

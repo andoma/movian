@@ -112,8 +112,8 @@ static void glw_video_frame_deliver(struct video_decoder *vd,
 				    int64_t pts,
 				    int epoch,
 				    int duration,
-				    int deinterlace,
-				    int top_field_first);
+				    int flags);
+
 
 /**
  *  GL Video Init
@@ -970,8 +970,7 @@ glw_video_frame_deliver(struct video_decoder *vd,
 			int64_t pts,
 			int epoch,
 			int duration,
-			int deinterlace,
-			int top_field_first)
+			int flags)
 {
   int hvec[3], wvec[3];
   int tff, w2, mode, i, j, h, w;
@@ -982,7 +981,7 @@ glw_video_frame_deliver(struct video_decoder *vd,
 
   const int parity = 0;
 
-  if(deinterlace) {
+  if(flags & VD_INTERLACED) {
     dt = DEINTERLACE_OPENGL;
   } else {
     dt = DEINTERLACE_NONE;
@@ -1028,7 +1027,7 @@ glw_video_frame_deliver(struct video_decoder *vd,
   case DEINTERLACE_OPENGL:
     duration /= 2;
 
-    tff = !!top_field_first ^ parity;
+    tff = !!(flags & VD_TFF) ^ parity;
 
     vd->vd_active_frames_needed = 3;
 
@@ -1128,7 +1127,7 @@ glw_video_frame_deliver(struct video_decoder *vd,
       }
     }
 
-    tff = !!top_field_first ^ parity;
+    tff = !!(flags & VD_TFF) ^ parity;
 
     pts -= duration;
 

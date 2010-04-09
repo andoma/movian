@@ -85,8 +85,7 @@ static void glw_video_frame_deliver(struct video_decoder *vd,
 				    int64_t pts,
 				    int epoch,
 				    int duration,
-				    int deinterlace,
-				    int top_field_first);
+				    int flags);
 
 /**
  *  Buffer allocator
@@ -643,8 +642,7 @@ static void glw_video_frame_deliver(struct video_decoder *vd,
 				    int64_t pts,
 				    int epoch,
 				    int duration,
-				    int deinterlace,
-				    int top_field_first)
+				    int flags)
 {
   video_decoder_frame_t *vdf;
   int hvec[3], wvec[3];

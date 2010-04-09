@@ -304,8 +304,10 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
 
   vd->vd_frame_deliver(vd, frame->data, frame->linesize,
 		       ctx->width, ctx->height, ctx->pix_fmt,
-		       pts, epoch, duration, deinterlace,
-		       !!frame->top_field_first);
+		       pts, epoch, duration, 
+		       (deinterlace ? VD_INTERLACED : 0) |
+		       (frame->top_field_first ? VD_TFF : 0)
+		       );
 }
 
 
