@@ -21,11 +21,14 @@
 #include <string.h>
 
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #include <X11/extensions/XShm.h>
 #if ENABLE_LIBXV
 #include <X11/extensions/Xv.h>
 #include <X11/extensions/Xvlib.h>
 #endif
+
+#include <libswscale/swscale.h>
 
 #include "video/video_decoder.h"
 #include "video/video_playback.h"
@@ -97,22 +100,6 @@ x11_screensaver_resume(struct x11_screensaver_state *s)
 }
 
 
-#if ENABLE_LIBXV
-/**
- *
- */
-static void xv_video_frame_deliver(struct video_decoder *vd,
-				   uint8_t * const data[],
-				   const int pitch[],
-				   int width,
-				   int height,
-				   int pix_fmt,
-				   int64_t pts,
-				   int epoch,
-				   int duration,
-				   int deinterlace,
-				   int top_field_first);
-#endif
 
 /**
  *
@@ -134,10 +121,18 @@ typedef struct video_output {
   XvImage *vo_xv_image;
 #endif
 
+  XVisualInfo vo_visualinfo;
+
+  XImage *vo_ximage;
+  int vo_depth;
+  int vo_pix_fmt;
+
   XShmSegmentInfo vo_shm;
 
   // Position and dimension in window
   int vo_x, vo_y, vo_w, vo_h;
+
+  struct SwsContext *vo_scaler;
 
 } video_output_t;
 
@@ -163,12 +158,29 @@ vo_set_url(void *opaque, const char *url)
 /**
  *
  */
+static void xv_video_frame_deliver(struct video_decoder *vd,
+				   uint8_t * const data[],
+				   const int pitch[],
+				   int width,
+				   int height,
+				   int pix_fmt,
+				   int64_t pts,
+				   int epoch,
+				   int duration,
+				   int deinterlace,
+				   int top_field_first);
+
+/**
+ *
+ */
 static int
 init_with_xv(video_output_t *vo)
 {
   XvAdaptorInfo *ai;
   unsigned int num_ai;
   int i, j;
+
+  return 0;
 
   if(XvQueryAdaptors(vo->vo_dpy, DefaultRootWindow(vo->vo_dpy),
 		     &num_ai, &ai) != Success) {
@@ -198,6 +210,49 @@ init_with_xv(video_output_t *vo)
 /**
  *
  */
+static void xi_video_frame_deliver(struct video_decoder *vd,
+				   uint8_t * const data[],
+				   const int pitch[],
+				   int width,
+				   int height,
+				   int pix_fmt,
+				   int64_t pts,
+				   int epoch,
+				   int duration,
+				   int deinterlace,
+				   int top_field_first);
+
+/**
+ *
+ */
+static int
+init_with_ximage(video_output_t *vo)
+{
+  XWindowAttributes attr;
+
+  if(!XGetWindowAttributes(vo->vo_dpy, vo->vo_win, &attr)) {
+    TRACE(TRACE_INFO, "X11", "Ximage: Unable to query window attributes");
+    return 0;
+  }
+
+  if(!XMatchVisualInfo(vo->vo_dpy, DefaultScreen(vo->vo_dpy), attr.depth,
+		       TrueColor, &vo->vo_visualinfo)) {
+    TRACE(TRACE_INFO, "X11", "Ximage: Unable to find visual");
+    return 0;
+  }
+
+  vo->vo_depth = attr.depth;
+
+  TRACE(TRACE_DEBUG, "X11", "Ximage: Using visual 0x%x (%d bpp)", 
+	vo->vo_visualinfo.visualid, vo->vo_depth);
+
+  return 1;
+}
+
+
+/**
+ *
+ */
 struct video_output *
 x11_vo_create(Display *dpy, int win, prop_courier_t *pc, prop_t *self,
 	      char *errbuf, size_t errlen)
@@ -215,14 +270,20 @@ x11_vo_create(Display *dpy, int win, prop_courier_t *pc, prop_t *self,
   vo->vo_dpy = dpy;
   vo->vo_win = win;
 
+
+
 #if ENABLE_LIBXV
-  if(init_with_xv(vo)) {
+  if(0 && init_with_xv(vo)) {
 
     deliver_fn = xv_video_frame_deliver;
 
   } else
 #endif
-    {
+    if(init_with_ximage(vo)) {
+    
+    deliver_fn = xi_video_frame_deliver;
+    
+  } else {
     free(vo);
     snprintf(errbuf, errlen, "No suitable video display methods available");
     return NULL;
@@ -269,7 +330,13 @@ x11_vo_destroy(struct video_output *vo)
     XFree(vo->vo_xv_image);
 #endif
 
+  if(vo->vo_ximage)
+    XFree(vo->vo_ximage);
+
   XFreeGC(vo->vo_dpy, vo->vo_gc);
+
+  if(vo->vo_scaler)
+    sws_freeContext(vo->vo_scaler);
 
   free(vo);
 }
@@ -288,7 +355,6 @@ x11_vo_position(struct video_output *vo, int x, int y, int w, int h)
 }
 
 
-#if ENABLE_LIBXV
 /**
  *
  */
@@ -322,7 +388,25 @@ wait_for_aclock(media_pipe_t *mp, int64_t pts, int epoch)
   }
   return 1;
 }
-#endif
+
+
+/**
+ *
+ */
+static void
+compute_output_dimensions(struct video_decoder *vd, video_output_t *vo,
+			  int *w, int *h)
+{
+  float a = vo->vo_w / (vo->vo_h * vd->vd_aspect);
+
+  if(a > 1) {
+    *w = vo->vo_w / a;
+    *h = vo->vo_h;
+  } else {
+    *w = vo->vo_w;
+    *h = vo->vo_h * a;
+  }
+}
 
 
 #if ENABLE_LIBXV
@@ -344,6 +428,10 @@ xv_video_frame_deliver(struct video_decoder *vd,
 {
   video_output_t *vo = vd->vd_opaque;
   int syncok;
+  int outw, outh;
+
+  if(vo->vo_w < 1 || vo->vo_h < 1)
+    return;
 
   if(vo->vo_xv_image == NULL) {
     //    uint32_t xv_format = 0x32595559; // YV12
@@ -390,24 +478,16 @@ xv_video_frame_deliver(struct video_decoder *vd,
     }
   }
 
-  float a = vo->vo_w / (vo->vo_h * vd->vd_aspect);
-  int x, y, w, h;
-
-  if(a > 1) {
-    w = vo->vo_w / a;
-    h = vo->vo_h;
-  } else {
-    w = vo->vo_w;
-    h = vo->vo_h * a;
-  }
-
-  x = vo->vo_x + (vo->vo_w - w) / 2;
-  y = vo->vo_y + (vo->vo_h - h) / 2;
+  compute_output_dimensions(vd, vo, &outw, &outh);
 
   syncok = wait_for_aclock(vd->vd_mp, pts, epoch);
 
   XvShmPutImage(vo->vo_dpy, vo->vo_xv_port, vo->vo_win, vo->vo_gc,
-		vo->vo_xv_image, 0, 0, width, height, x, y, w, h, False);
+		vo->vo_xv_image, 0, 0, width, height,
+		vo->vo_x + (vo->vo_w - outw) / 2,
+		vo->vo_y + (vo->vo_h - outh) / 2,
+		outw, outh,
+		False);
 
   XFlush(vo->vo_dpy);
   XSync(vo->vo_dpy, False);
@@ -416,3 +496,98 @@ xv_video_frame_deliver(struct video_decoder *vd,
     usleep(duration);
 }
 #endif
+
+
+/**
+ *
+ */
+static void
+xi_video_frame_deliver(struct video_decoder *vd,
+		       uint8_t * const data[],
+		       const int pitch[],
+		       int width,
+		       int height,
+		       int pix_fmt,
+		       int64_t pts,
+		       int epoch,
+		       int duration,
+		       int deinterlace,
+		       int top_field_first)
+{
+  video_output_t *vo = vd->vd_opaque;
+  uint8_t *dst[4] = {0,0,0,0};
+  int dstpitch[4] = {0,0,0,0};
+  int syncok;
+  int outw, outh;
+
+  if(vo->vo_w < 1 || vo->vo_h < 1)
+    return;
+
+  compute_output_dimensions(vd, vo, &outw, &outh);
+
+  if(vo->vo_ximage != NULL && 
+     (vo->vo_ximage->width  != outw ||
+      vo->vo_ximage->height != outh)) {
+
+    XShmDetach(vo->vo_dpy, &vo->vo_shm);
+    shmdt(vo->vo_shm.shmaddr);
+
+    XFree(vo->vo_ximage);
+    vo->vo_ximage = NULL;
+  }
+
+
+  if(vo->vo_ximage == NULL) {
+   
+    vo->vo_ximage = XShmCreateImage(vo->vo_dpy, vo->vo_visualinfo.visual,
+				    vo->vo_depth, ZPixmap, NULL,
+				    &vo->vo_shm, outw, outh);
+
+    if(vo->vo_ximage == NULL)
+      return;
+
+    vo->vo_shm.shmid = shmget(IPC_PRIVATE, 
+			      vo->vo_ximage->bytes_per_line * 
+			      vo->vo_ximage->height,
+			      IPC_CREAT | 0777);
+
+    vo->vo_shm.shmaddr = (char *)shmat(vo->vo_shm.shmid, 0, 0);
+    vo->vo_shm.readOnly = False;
+
+    vo->vo_ximage->data = vo->vo_shm.shmaddr;
+
+    XShmAttach(vo->vo_dpy, &vo->vo_shm);
+
+    XSync(vo->vo_dpy, False);
+    shmctl(vo->vo_shm.shmid, IPC_RMID, 0);
+
+    vo->vo_pix_fmt = PIX_FMT_RGB32;
+  }
+
+  vo->vo_scaler = sws_getCachedContext(vo->vo_scaler,
+				       width, height, pix_fmt,
+				       vo->vo_ximage->width,
+				       vo->vo_ximage->height,
+				       vo->vo_pix_fmt,
+				       SWS_BICUBIC, NULL, NULL, NULL);
+  
+  dst[0] = (uint8_t *)vo->vo_ximage->data;
+  dstpitch[0] = vo->vo_ximage->bytes_per_line;
+
+  sws_scale(vo->vo_scaler, (void *)data, pitch, 0, height, dst, dstpitch);
+
+  syncok = wait_for_aclock(vd->vd_mp, pts, epoch);
+
+  XShmPutImage(vo->vo_dpy, vo->vo_win, vo->vo_gc, vo->vo_ximage,
+	       0, 0,
+	       vo->vo_x + (vo->vo_w - outw) / 2,
+	       vo->vo_y + (vo->vo_h - outh) / 2,
+	       outw, outh,
+	       True);
+
+  XFlush(vo->vo_dpy);
+  XSync(vo->vo_dpy, False);
+
+  if(!syncok)
+    usleep(duration);
+}
