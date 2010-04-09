@@ -130,7 +130,7 @@ typedef struct video_output {
 
   XShmSegmentInfo vo_shm;
 
-  // Position and dimension in window
+  // Dimension in window
   int vo_x, vo_y, vo_w, vo_h;
 
   struct SwsContext *vo_scaler;
@@ -347,7 +347,7 @@ x11_vo_destroy(struct video_output *vo)
  *
  */
 void
-x11_vo_position(struct video_output *vo, int x, int y, int w, int h)
+x11_vo_dimension(struct video_output *vo, int x, int y, int w, int h)
 {
   vo->vo_x = x;
   vo->vo_y = y;

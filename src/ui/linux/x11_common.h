@@ -36,7 +36,7 @@ struct video_output *x11_vo_create(Display *dpy, int win,
 				   prop_courier_t *pc, prop_t *self,
 				   char *errbuf, size_t errlen);
 
-void x11_vo_position(struct video_output *vo, int x, int y, int w, int h);
+void x11_vo_dimension(struct video_output *vo, int x, int y, int w, int h);
 
 void x11_vo_destroy(struct video_output *vo);
 

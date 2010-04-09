@@ -45,7 +45,7 @@ static gboolean
 configure_event_callback(GtkWidget *w, GdkEventConfigure *e,
 			 gpointer user_data)
 {
-  x11_vo_position(user_data, 0, 0, e->width, e->height);
+  x11_vo_dimension(user_data, 0, 0, e->width, e->height);
   return FALSE;
 }
 
