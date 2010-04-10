@@ -677,6 +677,9 @@ media_codec_deref(media_codec_t *cw)
   if(atomic_add(&cw->refcount, -1) > 1)
     return;
 
+  if(cw->close != NULL)
+    cw->close(cw);
+
   if(cw->codec_ctx->codec != NULL)
     avcodec_close(cw->codec_ctx);
 
