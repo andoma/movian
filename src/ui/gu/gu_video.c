@@ -32,7 +32,7 @@
  *
  */
 static void
-video_destroy(GtkObject *object, gpointer opaque)
+video_unrealize(GtkWidget *w, gpointer opaque)
 {
   x11_vo_destroy(opaque);
 }
@@ -108,7 +108,7 @@ gu_video_create(gu_nav_page_t *gnp)
                     G_CALLBACK(configure_event_callback), vo);
 
   g_signal_connect(GTK_OBJECT(gnp->gnp_pageroot), 
-		   "destroy", G_CALLBACK(video_destroy), vo);
+		   "unrealize", G_CALLBACK(video_unrealize), vo);
 }
 
 
