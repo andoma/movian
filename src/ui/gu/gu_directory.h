@@ -30,15 +30,11 @@
 #define GU_DIR_VISIBLE_HEADERS 0x100
 #define GU_DIR_COL_POPULARITY 0x200
 
-GtkWidget *gu_directory_list_create(gtk_ui_t *gu, prop_t *root,
-				    char **parenturlptr,
-				    int flags);
+GtkWidget *gu_directory_list_create(gtk_ui_t *gu, prop_t *root, int flags);
 
-GtkWidget *gu_directory_album_create(gtk_ui_t *gu, prop_t *root,
-				     char **parenturlptr);
+GtkWidget *gu_directory_album_create(gtk_ui_t *gu, prop_t *root);
 
-GtkWidget *gu_directory_albumcollection_create(gtk_ui_t *gu, prop_t *root,
-					       char **parenturlptr);
+GtkWidget *gu_directory_albumcollection_create(gtk_ui_t *gu, prop_t *root);
 
 #endif /* GU_DIRECTORY_H__ */
 

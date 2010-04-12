@@ -24,6 +24,7 @@
 #include "arch/threads.h"
 #include "arch/atomic.h"
 
+struct prop;
 
 typedef enum {
 
@@ -169,7 +170,7 @@ typedef struct event_openurl {
   event_t h;
   char *url;
   char *type;
-  char *parent;
+  struct prop *psource;
 } event_openurl_t;
 
 
@@ -217,7 +218,7 @@ void event_flushqueue(event_queue_t *eq);
 event_t *event_create_url(event_type_t et, const char *url);
 
 event_t *event_create_openurl(const char *url, const char *type,
-			      const char *parent);
+			      struct prop *psource);
 
 event_t *event_create_select_track(const char *id);
 

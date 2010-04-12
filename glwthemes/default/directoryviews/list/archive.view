@@ -6,7 +6,7 @@ widget(backdrop, {
 
   widget(container_x, {
     .focusable = true;
-    onEvent(enter, navOpen($self.url, $self.type, $parent.url));
+    onEvent(enter, navOpen($self.url, $self.type, $parent.source));
     
     widget(image, {
       .source = "theme://icons/32x32/archive.png";

@@ -76,7 +76,6 @@ add_header(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
 typedef struct albumbrowse {
   GtkWidget *vbox;
   prop_sub_t *sub;
-  char **parenturlptr;
   gtk_ui_t *gu;
 
   int albums;
@@ -186,7 +185,7 @@ collection_albums(void *opaque, prop_event_t event, ...)
     gtk_widget_show(w);
 
     /* Tracklist */
-    w = gu_directory_list_create(ab->gu, p, ab->parenturlptr,
+    w = gu_directory_list_create(ab->gu, p,
 				 GU_DIR_COL_ARTIST |
 				 GU_DIR_COL_DURATION |
 				 GU_DIR_COL_TRACKINDEX);
@@ -210,12 +209,11 @@ collection_albums(void *opaque, prop_event_t event, ...)
  *
  */
 static void
-add_albums(gtk_ui_t *gu, GtkWidget *parent, prop_t *root, char **parenturlptr)
+add_albums(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
 {
   GtkWidget *sbox;
   albumbrowse_t *ab = calloc(1, sizeof(albumbrowse_t));
 
-  ab->parenturlptr = parenturlptr;
   ab->gu = gu;
 
   /* Scrolled window */
@@ -245,13 +243,12 @@ add_albums(gtk_ui_t *gu, GtkWidget *parent, prop_t *root, char **parenturlptr)
  *
  */
 GtkWidget *
-gu_directory_albumcollection_create(gtk_ui_t *gu, prop_t *root, 
-				    char **parenturlptr)
+gu_directory_albumcollection_create(gtk_ui_t *gu, prop_t *root)
 {
   GtkWidget *view = gtk_vbox_new(FALSE, 1);
   
   add_header(gu, view, root);
-  add_albums(gu, view, root, parenturlptr);
+  add_albums(gu, view, root);
 
   gtk_widget_show_all(view);
   return view;

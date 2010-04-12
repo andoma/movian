@@ -178,7 +178,7 @@ nav_close(nav_page_t *np)
  *
  */
 static void
-nav_open0(const char *url, const char *type, const char *parent)
+nav_open0(const char *url, const char *type, prop_t *psource)
 {
   nav_page_t *np, *np2;
   nav_backend_t *nb;
@@ -207,7 +207,7 @@ nav_open0(const char *url, const char *type, const char *parent)
       return;
     }
 
-    if(nb->nb_open(url, type, parent, &np, errbuf, sizeof(errbuf))) {
+    if(nb->nb_open(url, type, psource, &np, errbuf, sizeof(errbuf))) {
       notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nError: %s", url, errbuf);
       return;
     }
@@ -249,9 +249,9 @@ nav_open0(const char *url, const char *type, const char *parent)
  *
  */
 void
-nav_open(const char *url, const char *type, const char *parent)
+nav_open(const char *url, const char *type, prop_t *psource)
 {
-  event_dispatch(event_create_openurl(url, type, parent));
+  event_dispatch(event_create_openurl(url, type, psource));
 }
 
 
@@ -370,7 +370,7 @@ nav_eventsink(void *opaque, prop_event_t event, ...)
 
   } else if(event_is_type(e, EVENT_OPENURL)) {
     ou = (event_openurl_t *)e;
-    nav_open0(ou->url, ou->type, ou->parent);
+    nav_open0(ou->url, ou->type, ou->psource);
   }
 }
 
@@ -471,7 +471,7 @@ be_page_canhandle(const char *url)
  *
  */
 static int
-be_page_open(const char *url0, const char *type, const char *parent,
+be_page_open(const char *url0, const char *type, prop_t *psource,
 	     nav_page_t **npp, char *errbuf, size_t errlen)
 {
   nav_page_t *n = nav_page_create(url0, sizeof(nav_page_t), NULL, 0);

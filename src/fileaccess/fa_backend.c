@@ -146,12 +146,12 @@ file_open_dir(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
  */
 static int
 file_open_file(const char *url, nav_page_t **npp, char *errbuf, size_t errlen,
-	       struct stat *st)
+	       struct stat *st, prop_t *psource)
 {
   char redir[URL_MAX];
   int r;
-  char *parent, *x;
-  prop_t *meta, *album_art;
+  //  char *parent;//, *x;
+  prop_t *meta;//, *album_art;
 
   meta = prop_create(NULL, "metadata");
 
@@ -162,7 +162,7 @@ file_open_file(const char *url, nav_page_t **npp, char *errbuf, size_t errlen,
     prop_destroy(meta);
     return file_open_dir(redir, npp, errbuf, errlen);
   case CONTENT_AUDIO:
- 
+#if 0 
     parent = strdup(url);
     if((x = strrchr(parent, '/')) != NULL)
       *x = 0;
@@ -177,9 +177,10 @@ file_open_file(const char *url, nav_page_t **npp, char *errbuf, size_t errlen,
       prop_ref_inc(album_art);
       fa_scanner_find_albumart(parent, album_art);
     }
+#endif
 
-    playqueue_play(url, parent, meta, 0);
-    free(parent);
+    playqueue_play(url, psource, meta, 0);
+    //    free(parent);
     *npp = NULL;
     return 0;
 
@@ -199,7 +200,7 @@ file_open_file(const char *url, nav_page_t **npp, char *errbuf, size_t errlen,
  *
  */
 static int
-be_file_open(const char *url0, const char *type0, const char *parent,
+be_file_open(const char *url0, const char *type0, prop_t *psource,
 	     nav_page_t **npp, char *errbuf, size_t errlen)
 {
   struct stat buf;
@@ -208,7 +209,7 @@ be_file_open(const char *url0, const char *type0, const char *parent,
     return -1;
 
   return S_ISDIR(buf.st_mode) ? file_open_dir(url0, npp, errbuf, errlen) :
-    file_open_file(url0, npp, errbuf, errlen, &buf);
+    file_open_file(url0, npp, errbuf, errlen, &buf, psource);
 }
 
 
@@ -219,7 +220,7 @@ static prop_t *
 be_list(const char *url, char *errbuf, size_t errsize)
 {
   prop_t *p = prop_create(NULL, NULL);
-  fa_scanner(url, prop_create(p, "source"), NULL);
+  fa_scanner(url, p, NULL);
   return p;
 }
 

@@ -104,10 +104,10 @@ typedef struct directory_list {
 
   LIST_HEAD(, dirnode) nodes;
 
-  char **parenturlptr;
-
   struct cell *currentcell;
   struct cell *presscell;
+
+  prop_t *psource;
 
 } directory_list_t;
 
@@ -401,7 +401,7 @@ row_activated(GtkTreeView *tree_view, GtkTreePath *path,
   if(G_VALUE_HOLDS_STRING(&gv)) {
     str = g_value_get_string(&gv);
     if(str != NULL)
-      nav_open(str, NULL, *d->parenturlptr);
+      nav_open(str, NULL, d->psource);
   }
 
   g_value_unset(&gv);
@@ -833,6 +833,7 @@ directory_list_destroy(GtkObject *object, gpointer opaque)
     dirnode_destroy(d, dn, 0);
 
   g_object_unref(G_OBJECT(d->model));
+  prop_ref_dec(d->psource);
   free(d);
 }
 
@@ -843,15 +844,16 @@ directory_list_destroy(GtkObject *object, gpointer opaque)
  *
  */
 GtkWidget *
-gu_directory_list_create(gtk_ui_t *gu, prop_t *root,
-			 char **parenturlptr, int flags)
+gu_directory_list_create(gtk_ui_t *gu, prop_t *root, int flags)
 {
   directory_list_t *d = calloc(1, sizeof(directory_list_t));
   GtkWidget *view;
   d->model = gtk_list_store_newv(N_COLUMNS + 1, coltypes);
 
+  d->psource = prop_create(root, "source");
+  prop_ref_inc(d->psource);
+
   d->gu = gu;
-  d->parenturlptr = parenturlptr;
 
   d->node_sub = 
     prop_subscribe(0,

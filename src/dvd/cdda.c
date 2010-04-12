@@ -312,7 +312,7 @@ canhandle(const char *url)
  *
  */
 static int
-openpage(const char *url, const char *type0, const char *parent,
+openpage(const char *url, const char *type0, prop_t *psource,
 	 nav_page_t **npp, char *errstr, size_t errlen)
 {
   nav_page_t *np;
@@ -333,18 +333,16 @@ openpage(const char *url, const char *type0, const char *parent,
   }
 
   if(track) {
-    char parent[URL_MAX];
     cd_track_t *ct = get_track(cm, track);
     if(ct == NULL) {
       snprintf(errstr, errlen, "Invalid track");
       return -1;
     }
-    snprintf(parent, sizeof(parent), "audiocd:%s", device);
 
     prop_t *meta = prop_create(NULL, "metadata");
     prop_link(ct->ct_metadata, meta);
 
-    playqueue_play(url, parent, meta, 0);
+    playqueue_play(url, psource, meta, 0);
     *npp = NULL;
     return 0;
   }

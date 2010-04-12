@@ -193,8 +193,7 @@ album_set_art(void *opaque, const char *str)
  *
  */
 static void
-gu_add_album(gtk_ui_t *gu, GtkWidget *parent, prop_t *root,
-	     char **parenturlptr)
+gu_add_album(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
 {
   GtkWidget *hbox;
   GtkWidget *w;
@@ -220,7 +219,7 @@ gu_add_album(gtk_ui_t *gu, GtkWidget *parent, prop_t *root,
   
   /* Tracklist */
 
-  w = gu_directory_list_create(gu, root, parenturlptr,
+  w = gu_directory_list_create(gu, root,
 			       GU_DIR_SCROLLBOX |
 			       GU_DIR_VISIBLE_HEADERS |
 			       GU_DIR_COL_ARTIST |
@@ -235,12 +234,12 @@ gu_add_album(gtk_ui_t *gu, GtkWidget *parent, prop_t *root,
  *
  */
 GtkWidget *
-gu_directory_album_create(gtk_ui_t *gu, prop_t *root, char **parenturlptr)
+gu_directory_album_create(gtk_ui_t *gu, prop_t *root)
 {
   GtkWidget *view = gtk_vbox_new(FALSE, 1);
   
   add_header(gu, view, root);
-  gu_add_album(gu, view, root, parenturlptr);
+  gu_add_album(gu, view, root);
   gtk_widget_show_all(view);
 
   return view;

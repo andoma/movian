@@ -30,7 +30,7 @@ typedef struct playqueue_entry {
    * Read only members
    */
   char *pqe_url;
-  char *pqe_parent;
+  prop_t *pqe_psource;
 
   prop_t *pqe_node;
   prop_t *pqe_prop_url;
@@ -93,7 +93,7 @@ typedef struct playqueue_event {
 } playqueue_event_t;
 
 
-void playqueue_play(const char *url, const char *parent, prop_t *p, int enq);
+void playqueue_play(const char *url, prop_t *psource, prop_t *p, int enq);
 
 void playqueue_event_handler(event_t *e);
 

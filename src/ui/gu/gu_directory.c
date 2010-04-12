@@ -57,7 +57,7 @@ set_view(void *opaque, const char *str)
     return;
 
   if(!strcmp(str, "list")) {
-    w = gu_directory_list_create(gd->gd_gu, gnp->gnp_prop, &gnp->gnp_url,
+    w = gu_directory_list_create(gd->gd_gu, gnp->gnp_prop,
 				 GU_DIR_VISIBLE_HEADERS |
 				 GU_DIR_HEADERS |
 				 GU_DIR_SCROLLBOX |
@@ -68,10 +68,9 @@ set_view(void *opaque, const char *str)
 				 GU_DIR_COL_ALBUM |
 				 GU_DIR_COL_POPULARITY);
   } else if(!strcmp(str, "album")) {
-    w = gu_directory_album_create(gd->gd_gu, gnp->gnp_prop, &gnp->gnp_url);
+    w = gu_directory_album_create(gd->gd_gu, gnp->gnp_prop);
   } else if(!strcmp(str, "albumcollection")) {
-    w = gu_directory_albumcollection_create(gd->gd_gu, gnp->gnp_prop, 
-					    &gnp->gnp_url);
+    w = gu_directory_albumcollection_create(gd->gd_gu, gnp->gnp_prop);
   } else {
     TRACE(TRACE_ERROR, "GU", "Can not display directory view: %s", str);
     return;

@@ -67,7 +67,7 @@ typedef struct nav_backend {
 
   int (*nb_canhandle)(const char *ur);
 
-  int (*nb_open)(const char *url, const char *type, const char *parent,
+  int (*nb_open)(const char *url, const char *type, prop_t *psource,
 		 nav_page_t **npp, char *errbuf, size_t errlen);
 
   event_t *(*nb_play_video)(const char *url, struct media_pipe *mp,
@@ -96,7 +96,7 @@ void nav_init(void);
 
 void nav_close(nav_page_t *np);
 
-void nav_open(const char *url, const char *type,  const char *parent);
+void nav_open(const char *url, const char *type, prop_t *psource);
 
 void *nav_page_create(const char *url, size_t allocsize,
 		      void (*closefunc)(struct nav_page *np),

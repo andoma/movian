@@ -192,7 +192,7 @@ typedef struct spotify_page {
  */
 typedef struct spotify_open_track {
   char *sot_url;
-  char *sot_parent;
+  prop_t *sot_psource;
 } spotify_open_track_t;
 
 
@@ -1293,12 +1293,12 @@ spotify_open_track(spotify_open_track_t *sot)
     if(f_sp_link_type(l) == SP_LINKTYPE_TRACK) {
       prop_t *m = prop_create(NULL, "metadata");
       metadata_create(m, METADATA_TRACK, f_sp_link_as_track(l));
-      playqueue_play(sot->sot_url, sot->sot_parent, m, 0);
+      playqueue_play(sot->sot_url, sot->sot_psource, m, 0);
     }
     f_sp_link_release(l);
   }
+  prop_ref_dec(sot->sot_psource);
   free(sot->sot_url);
-  free(sot->sot_parent);
   free(sot);
 }
 
@@ -1328,14 +1328,14 @@ spotify_list(spotify_uri_t *su)
     root = prop_create(NULL, NULL);
     f_sp_albumbrowse_create(spotify_session, f_sp_link_as_album(l),
 			    spotify_browse_album_callback, 
-			    bh_create(prop_create(root, "source")));
+			    bh_create(root));
     break;
 
   case SP_LINKTYPE_ARTIST:
     root = prop_create(NULL, NULL);
     f_sp_artistbrowse_create(spotify_session, f_sp_link_as_artist(l),
 			     spotify_browse_artist_callback,
-			     bh_create(prop_create(root, "source")));
+			     bh_create(root));
     break;
 
 
@@ -1347,7 +1347,7 @@ spotify_list(spotify_uri_t *su)
     }
 
     root = prop_create(NULL, NULL);
-    prop_link(pl->pl_prop_root, prop_create(root, "source"));
+    prop_link(pl->pl_prop_root, root);
     break;
 
   default:
@@ -2126,7 +2126,7 @@ spotify_start(void)
  *
  */
 static int
-be_spotify_open(const char *url0, const char *type, const char *parent,
+be_spotify_open(const char *url0, const char *type, prop_t *psource,
 		nav_page_t **npp, char *errbuf, size_t errlen)
 {
   nav_page_t *np = NULL;
@@ -2138,7 +2138,10 @@ be_spotify_open(const char *url0, const char *type, const char *parent,
     spotify_open_track_t *sot = malloc(sizeof(spotify_open_track_t));
 
     sot->sot_url = url;
-    sot->sot_parent = parent ? strdup(parent) : NULL;
+
+    prop_ref_inc(psource);
+    sot->sot_psource = psource;
+
     spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_OPEN_TRACK, sot));
 
   } else {

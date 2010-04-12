@@ -43,7 +43,7 @@ widget(container_x, {
     .weight = 2.0;
     SUB_PLATE();
 
-    onEvent(enter, navOpen($self.url, $self.type, $parent.url));
+    onEvent(enter, navOpen($self.url, $self.type, $parent.source));
     widget(label, {
       .align = left; 
       .caption = $self.metadata.title;

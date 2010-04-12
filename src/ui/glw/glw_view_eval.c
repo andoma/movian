@@ -1699,7 +1699,7 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
 	     token_t **argv, unsigned int argc)
 {
   token_t *a, *b = NULL, *c = NULL, *r;
-  const char *url, *parent;
+  const char *url;
 
   if(argc < 1 || argc > 3) 
     return glw_view_seterr(ec->ei, self, "navOpen(): "
@@ -1711,8 +1711,7 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
   if(argc > 1 && (b = token_resolve(ec, argv[1])) == NULL)
     return -1;
 
-  if(argc > 2 && (c = token_resolve(ec, argv[2])) == NULL)
-    return -1;
+  c = argc > 2 ? argv[2] : NULL;
 
   if(a->type != TOKEN_STRING && a->type != TOKEN_VOID && a->type != TOKEN_LINK)
     return glw_view_seterr(ec->ei, a, "navOpen(): "
@@ -1722,11 +1721,19 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
     return glw_view_seterr(ec->ei, b, "navOpen(): "
 			    "Second argument is not a string or (void)");
 
-  if(c != NULL && c->type != TOKEN_STRING && c->type != TOKEN_VOID && 
-     c->type != TOKEN_LINK)
-    return glw_view_seterr(ec->ei, c, "navOpen(): "
-			    "Third argument is not a string, link or (void)");
-
+  if(c != NULL) {
+    switch(c->type) {
+    case TOKEN_PROPERTY_NAME:
+      if(resolve_property_name(ec, c))
+	return -1;
+      /* FALLTHRU */
+    case TOKEN_PROPERTY:
+      break;
+    default:
+      return glw_view_seterr(ec->ei, b, "navOpen(): "
+			     "Third argument is not a property");
+    }
+  }
 
   if(a == NULL || a->type == TOKEN_VOID)
     url = NULL;
@@ -1735,19 +1742,11 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
   else
     url = rstr_get(a->t_link_rurl);
 
-  if(c == NULL || c->type == TOKEN_VOID)
-    parent = NULL;
-  else if(c->type == TOKEN_STRING)
-    parent = rstr_get(c->t_rstring);
-  else
-    parent = rstr_get(c->t_link_rurl);
-
-
   r = eval_alloc(self, ec, TOKEN_EVENT);
   r->t_gem = glw_event_map_navOpen_create(url,
 					  b && b->type == TOKEN_STRING ?
 					  rstr_get(b->t_rstring) : NULL,
-					  parent);
+					  c ? c->t_prop : NULL);
   eval_push(ec, r);
   return 0;
 }

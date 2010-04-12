@@ -112,7 +112,12 @@ typedef struct prop {
 
   /**
    * Refcount. Not protected by mutex. Modification needs to be issued
-   * using atomic ops.
+   * using atomic ops. This refcount only protects the memory allocated
+   * for this property, or in other words you can assume that a pointer
+   * to a prop_t is valid as long as you own a reference to it.
+   *
+   * Note: hp_xref which is another refcount protecting contents of the
+   * entire property
    */
   int hp_refcount;
 
@@ -170,6 +175,14 @@ typedef struct prop {
    * Protected by mutex
    */
   uint8_t hp_monitors;
+
+  /**
+   * Extended refcount. Used to keep contents of the property alive
+   * We limit this to 255, should never be a problem. And it's checked
+   * in the code as well
+   * Protected by mutex
+   */
+  uint8_t hp_xref;
 
 
   /**
@@ -392,6 +405,8 @@ int prop_get_string(prop_t *p, char *buf, size_t bufsize)
 void prop_ref_dec(prop_t *p);
 
 void prop_ref_inc(prop_t *p);
+
+prop_t *prop_xref_addref(prop_t *p) __attribute__ ((warn_unused_result));
 
 int prop_set_parent_ex(prop_t *p, prop_t *parent, prop_t *before, 
 		       prop_sub_t *skipme)

@@ -156,6 +156,22 @@ prop_ref_inc(prop_t *p)
 /**
  *
  */
+prop_t *
+prop_xref_addref(prop_t *p)
+{
+  if(p != NULL) {
+    hts_mutex_lock(&prop_mutex);
+    assert(p->hp_xref < 255);
+    p->hp_xref++;
+    hts_mutex_unlock(&prop_mutex);
+  }
+  return p;
+}
+
+
+/**
+ *
+ */
 static void
 prop_sub_ref_dec(prop_sub_t *s)
 {
@@ -989,6 +1005,7 @@ prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, int flags)
   hp->hp_originator = NULL;
   hp->hp_refcount = 1;
   hp->hp_monitors = 0;
+  hp->hp_xref = 1;
   hp->hp_type = PROP_VOID;
   if(flags & PROP_NAME_NOT_ALLOCATED)
     hp->hp_name = name;
@@ -1118,19 +1135,28 @@ prop_unparent_ex(prop_t *p, prop_sub_t *skipme)
 /**
  *
  */
-static void
+static int
 prop_destroy0(prop_t *p)
 {
-  prop_t *c, *parent;
+  prop_t *c, *next, *parent;
   prop_sub_t *s;
+
+  p->hp_xref--;
+  if(p->hp_xref)
+    return 0;
 
   switch(p->hp_type) {
   case PROP_ZOMBIE:
     abort();
 
   case PROP_DIR:
-    while((c = TAILQ_FIRST(&p->hp_childs)) != NULL)
-      prop_destroy0(c);
+    for(c = TAILQ_FIRST(&p->hp_childs); c != NULL; c = next) {
+      next = TAILQ_NEXT(c, hp_parent_link);
+      if(!prop_destroy0(c)) {
+	TAILQ_REMOVE(&p->hp_childs, c, hp_parent_link);
+	c->hp_parent = NULL;
+      }
+    }
     break;
 
   case PROP_STRING:
@@ -1194,6 +1220,7 @@ prop_destroy0(prop_t *p)
   p->hp_name = NULL;
 
   prop_ref_dec(p);
+  return 1;
 }
 
 
@@ -1213,13 +1240,18 @@ prop_destroy(prop_t *p)
  *
  */
 void
-prop_destroy_childs(prop_t *parent)
+prop_destroy_childs(prop_t *p)
 {
   hts_mutex_lock(&prop_mutex);
-  if(parent->hp_type == PROP_DIR) {
-    prop_t *c;
-    while((c = TAILQ_FIRST(&parent->hp_childs)) != NULL)
-      prop_destroy0(c);
+  if(p->hp_type == PROP_DIR) {
+    prop_t *c, *next;
+    for(c = TAILQ_FIRST(&p->hp_childs); c != NULL; c = next) {
+      next = TAILQ_NEXT(c, hp_parent_link);
+      if(!prop_destroy0(c)) {
+	TAILQ_REMOVE(&p->hp_childs, c, hp_parent_link);
+	c->hp_parent = NULL;
+      }
+    }
   }
   hts_mutex_unlock(&prop_mutex);
 }
@@ -2719,7 +2751,7 @@ prop_print_tree0(prop_t *p, int indent, int followlinks)
 {
   prop_t *c;
 
-  fprintf(stderr, "%*.s%s: ", indent, "", p->hp_name);
+  fprintf(stderr, "%*.s%s[%p %d]: ", indent, "", p->hp_name, p, p->hp_xref);
 
   if(p->hp_originator != NULL) {
     if(followlinks) {

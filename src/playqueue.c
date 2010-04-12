@@ -72,7 +72,7 @@ static struct playqueue_request_queue playqueue_requests;
 typedef struct playqueue_request {
   TAILQ_ENTRY(playqueue_request) pqr_link;
   char *pqr_url;
-  char *pqr_parent;
+  prop_t *pqr_psource;
   prop_t *pqr_meta;
   int pqr_enq;
 
@@ -85,7 +85,6 @@ static prop_t *playqueue_source;
 static prop_sub_t *playqueue_source_sub;
 static playqueue_entry_t *playqueue_source_justadded;
 static struct playqueue_entry_queue playqueue_source_entries;
-static char *playqueue_source_parent;
 
 static void update_prev_next(void);
 
@@ -104,7 +103,9 @@ pqe_unref(playqueue_entry_t *pqe)
   assert(pqe->pqe_typesub == NULL);
 
   free(pqe->pqe_url);
-  free(pqe->pqe_parent);
+  if(pqe->pqe_psource != NULL)
+    prop_ref_dec(pqe->pqe_psource);
+
   prop_destroy(pqe->pqe_node);
 
   free(pqe);
@@ -210,11 +211,6 @@ static void
 playqueue_clear(void)
 {
   playqueue_entry_t *pqe;
-
-  if(playqueue_source_parent != NULL) {
-    free(playqueue_source_parent);
-    playqueue_source_parent = NULL;
-  }
 
   if(playqueue_source != NULL) {
     prop_destroy(playqueue_source);
@@ -409,7 +405,8 @@ add_from_source(prop_t *p, playqueue_entry_t *before)
   playqueue_entry_t *pqe;
 
   pqe = calloc(1, sizeof(playqueue_entry_t));
-  pqe->pqe_parent = strdup(playqueue_source_parent);
+  prop_ref_inc(playqueue_source);
+  pqe->pqe_psource = playqueue_source;
   pqe->pqe_refcount = 1;
   pqe->pqe_source = p;
   /**
@@ -560,35 +557,24 @@ siblings_populate(void *opaque, prop_event_t event, ...)
  * Load siblings to the 'justadded' track.
  */
 static void
-playqueue_load_siblings(const char *url, playqueue_entry_t *justadded)
+playqueue_load_siblings(prop_t *psource, playqueue_entry_t *justadded)
 {
-  prop_t *p;
-  char errbuf[200];
-
   assert(playqueue_source == NULL);
 
   assert(TAILQ_FIRST(&playqueue_source_entries) == NULL);
   
-  if((p = nav_list(url, errbuf, sizeof(errbuf))) == NULL) {
-    TRACE(TRACE_ERROR, "playqueue", "Unable to scan %s: %s", url, errbuf);
-    return;
-  }
-
-  playqueue_source_parent = strdup(url);
-
   pqe_ref(justadded);
   playqueue_source_justadded = justadded;
 
   playqueue_source_sub = 
     prop_subscribe(0,
-		   PROP_TAG_NAME("self", "source", "nodes"),
+		   PROP_TAG_NAME("self", "nodes"),
 		   PROP_TAG_CALLBACK, siblings_populate, NULL,
 		   PROP_TAG_MUTEX, &playqueue_mutex,
-		   PROP_TAG_NAMED_ROOT, p, "self", 
+		   PROP_TAG_NAMED_ROOT, psource, "self", 
 		   NULL);
 
-  playqueue_source = p;
-
+  playqueue_source = prop_xref_addref(psource);;
 }
 
 
@@ -604,25 +590,28 @@ playqueue_load_siblings(const char *url, playqueue_entry_t *justadded)
  * That way users may 'stick in' track in the current playqueue
  */
 static void
-playqueue_load(const char *url, const char *parent, prop_t *metadata, int enq)
+playqueue_load(const char *url, prop_t *psource, prop_t *metadata, int enq)
 {
   playqueue_entry_t *pqe, *prev;
   event_t *e;
-  char pbuf[URL_MAX];
 
-  if(parent == NULL) {
-    if(!nav_get_parent(url, pbuf, sizeof(pbuf), NULL, 0))
-      parent = pbuf;
+
+  if(psource == NULL) {
+    char pbuf[URL_MAX];
+    if(!nav_get_parent(url, pbuf, sizeof(pbuf), NULL, 0)) {
+
+      char errbuf[256];
+      if((psource = nav_list(url, errbuf, sizeof(errbuf))) == NULL) {
+	TRACE(TRACE_ERROR, "playqueue", "Unable to scan %s: %s", url, errbuf);
+      }
+    }
   }
-
-  if(parent != NULL && !strcmp(parent, "playqueue:"))
-    parent = NULL;
 
   hts_mutex_lock(&playqueue_mutex);
 
   TAILQ_FOREACH(pqe, &playqueue_entries, pqe_linear_link) {
     if(pqe->pqe_url != NULL && !strcmp(pqe->pqe_url, url) && 
-       (parent == NULL || !strcmp(pqe->pqe_parent, parent))) {
+       playqueue_source == pqe->pqe_psource) {
       /* Already in, go to it */
       e = pqe_event_create(pqe, 1);
       mp_enqueue_event(playqueue_mp, e);
@@ -632,6 +621,9 @@ playqueue_load(const char *url, const char *parent, prop_t *metadata, int enq)
 
       if(metadata != NULL)
 	prop_destroy(metadata);
+
+      if(psource != NULL)
+	prop_destroy(psource);
       return;
     }
   }
@@ -639,7 +631,13 @@ playqueue_load(const char *url, const char *parent, prop_t *metadata, int enq)
 
   pqe = calloc(1, sizeof(playqueue_entry_t));
   pqe->pqe_url    = strdup(url);
-  pqe->pqe_parent = parent ? strdup(parent) : NULL;
+  if(psource != NULL) {
+    pqe->pqe_psource = psource;
+    prop_ref_inc(psource);
+  } else {
+    pqe->pqe_psource = NULL;
+  }
+
   pqe->pqe_node   = prop_create(NULL, NULL);
   pqe->pqe_enq    = enq;
   pqe->pqe_refcount = 1;
@@ -688,10 +686,13 @@ playqueue_load(const char *url, const char *parent, prop_t *metadata, int enq)
   event_unref(e);
 
   /* Scan dir (if provided) for additional tracks (siblings) */
-  if(parent != NULL)
-    playqueue_load_siblings(parent, pqe);
+  if(psource != NULL)
+    playqueue_load_siblings(psource, pqe);
 
   hts_mutex_unlock(&playqueue_mutex);
+
+  if(psource != NULL)
+    prop_destroy(psource);
 }
 
 /**
@@ -713,10 +714,9 @@ playqueue_thread(void *aux)
     
     hts_mutex_unlock(&playqueue_request_mutex);
 
-    playqueue_load(pqr->pqr_url, pqr->pqr_parent, pqr->pqr_meta,
+    playqueue_load(pqr->pqr_url, pqr->pqr_psource, pqr->pqr_meta,
 		   pqr->pqr_enq);
-    
-    free(pqr->pqr_parent);
+
     free(pqr->pqr_url);
     free(pqr);
 
@@ -732,15 +732,15 @@ playqueue_thread(void *aux)
  * We don't want to hog caller, so we dispatch the request to a worker thread.
  */
 void
-playqueue_play(const char *url, const char *parent, prop_t *meta,
+playqueue_play(const char *url, prop_t *psource, prop_t *meta,
 	       int enq)
 {
   playqueue_request_t *pqr = malloc(sizeof(playqueue_request_t));
 
-  pqr->pqr_url    = strdup(url);
-  pqr->pqr_parent = parent ? strdup(parent) : NULL;
-  pqr->pqr_meta   = meta;
-  pqr->pqr_enq    = enq;
+  pqr->pqr_url     = strdup(url);
+  pqr->pqr_psource = prop_xref_addref(psource);
+  pqr->pqr_meta    = meta;
+  pqr->pqr_enq     = enq;
 
   hts_mutex_lock(&playqueue_request_mutex);
   TAILQ_INSERT_TAIL(&playqueue_requests, pqr, pqr_link);
@@ -821,7 +821,7 @@ playqueue_init(void)
  *
  */
 static int
-be_playqueue_open(const char *url0, const char *type0, const char *parent0,
+be_playqueue_open(const char *url0, const char *type0, prop_t *psource,
 		  nav_page_t **npp, char *errbuf, size_t errlen)
 {
   nav_page_t *n;
