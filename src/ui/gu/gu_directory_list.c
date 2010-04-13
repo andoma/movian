@@ -21,56 +21,9 @@
 #include "navigator.h"
 #include "gu.h"
 #include "gu_directory.h"
+#include "gu_directory_store.h"
 
 #include "gu_cell_bar.h"
-
-enum {
-  URL_COLUMN,
-  TYPE_COLUMN,
-  NAME_COLUMN,
-  ARTIST_COLUMN,
-  DURATION_COLUMN,
-  ALBUM_COLUMN,
-  TRACKS_COLUMN,
-  TRACKINDEX_COLUMN,
-  POPULARITY_COLUMN,
-  N_COLUMNS
-};
-
-#define NODE_COLUMN N_COLUMNS // Pointer to the node
-
-
-/**
- *
- */
-static const char **subpaths[] = {
-  [URL_COLUMN]      = PNVEC("self", "url"),
-  [TYPE_COLUMN]     = PNVEC("self", "type"),
-  [NAME_COLUMN]     = PNVEC("self", "metadata", "title"),
-  [ARTIST_COLUMN]   = PNVEC("self", "metadata", "artist"),
-  [DURATION_COLUMN] = PNVEC("self", "metadata", "duration"),
-  [ALBUM_COLUMN]    = PNVEC("self", "metadata", "album"),
-  [TRACKS_COLUMN]   = PNVEC("self", "metadata", "tracks"),
-  [TRACKINDEX_COLUMN] = PNVEC("self", "metadata", "trackindex"),
-  [POPULARITY_COLUMN] = PNVEC("self", "metadata", "popularity"),
-};
-
-
-/**
- *
- */
-static GType coltypes[] = {
-  [URL_COLUMN]      = G_TYPE_STRING,
-  [TYPE_COLUMN]     = G_TYPE_STRING,
-  [NAME_COLUMN]     = G_TYPE_STRING,
-  [ARTIST_COLUMN]   = G_TYPE_STRING,
-  [DURATION_COLUMN] = G_TYPE_FLOAT,
-  [ALBUM_COLUMN]    = G_TYPE_STRING,
-  [TRACKS_COLUMN]   = G_TYPE_INT,
-  [TRACKINDEX_COLUMN] = G_TYPE_INT,
-  [POPULARITY_COLUMN] = G_TYPE_FLOAT,
-  [NODE_COLUMN] = G_TYPE_POINTER,
-};
 
 
 /**
@@ -79,7 +32,6 @@ static GType coltypes[] = {
 typedef struct column {
   GtkTreeViewColumn *col;
   GtkCellRenderer *r;
-  int contents; // Cells with actual contents
   struct directory_list *d;
   int idx;
 } column_t;
@@ -94,47 +46,20 @@ typedef struct directory_list {
   GtkWidget *scrollbox;
   GtkWidget *tree;
 
-  GtkListStore *model;
+  GuDirStore *model;
 
   gtk_ui_t *gu;
 
-  column_t columns[N_COLUMNS];
-
-  prop_sub_t *node_sub;
+  column_t columns[GDS_COL_num];
 
   LIST_HEAD(, dirnode) nodes;
 
-  struct cell *currentcell;
-  struct cell *presscell;
+  gds_cell_t *currentcell;
+  gds_cell_t *presscell;
 
   prop_t *psource;
 
 } directory_list_t;
-
-
-/**
- *
- */
-typedef struct cell {
-  prop_sub_t *s;
-  int16_t idx;
-  rstr_t *url;
-  struct dirnode *dn; // points back to struct
-} cell_t;
-
-
-/**
- *
- */
-typedef struct dirnode {
-  LIST_ENTRY(dirnode) link;
-  prop_t *p;
-  GtkTreeIter iter;
-  directory_list_t *dir;
-
-  cell_t cells[N_COLUMNS];
-
-} dirnode_t;
 
 
 /**
@@ -160,228 +85,14 @@ contentstr_to_icon(const char *str, int height)
  * Make the column visible if we have any content in it
  */
 static void
-make_column_visible(directory_list_t *d, int idx)
+column_activated(GuDirStore *gds, int col, gpointer user_data)
 {
-  column_t *c;
-  c = &d->columns[idx];
-  if(c->col != NULL && c->contents == 0) {
+  directory_list_t *d = user_data;
+  column_t *c = &d->columns[col];
+  if(c->col != NULL)
     gtk_tree_view_column_set_visible(c->col, TRUE);
-    c->contents = 1;
-  }
 }
 
-
-/**
- *
- */
-static void
-gu_col_set(void *opaque, prop_event_t event, ...)
-{
-  cell_t *c = opaque;
-  dirnode_t *dn = c->dn;
-  directory_list_t *d = dn->dir;
-
-  GValue gv = { 0, };
-
-  va_list ap;
-  va_start(ap, event);
-
-  switch(event) {
-  case PROP_SET_RLINK:
-    g_value_init(&gv, G_TYPE_STRING);
-    g_value_set_string(&gv, rstr_get(va_arg(ap, const rstr_t *)));
-
-    rstr_release(c->url);
-    c->url = rstr_dup(va_arg(ap, rstr_t *));
-    break;
-
-  case PROP_SET_RSTRING:
-    g_value_init(&gv, G_TYPE_STRING);
-    g_value_set_string(&gv, rstr_get(va_arg(ap, const rstr_t *)));
-    break;
-  case PROP_SET_INT:
-    g_value_init(&gv, G_TYPE_INT);
-    g_value_set_int(&gv, va_arg(ap, int));
-    break;
-  case PROP_SET_FLOAT:
-    g_value_init(&gv, G_TYPE_FLOAT);
-    g_value_set_float(&gv, va_arg(ap, double));
-    break;
-  default:
-    return;
-  }
-
-  gtk_list_store_set_value(dn->dir->model, &dn->iter, c->idx, &gv);
-  g_value_unset(&gv);
-  make_column_visible(d, c->idx);
-}
-
-
-/**
- *
- */
-static void
-dirnode_destroy(directory_list_t *d, dirnode_t *dn, int remove)
-{
-  int i;
-  if(remove)
-    gtk_list_store_remove(dn->dir->model, &dn->iter);
-
-  LIST_REMOVE(dn, link);
-
-  for(i = 0; i < N_COLUMNS; i++) {
-    if(dn->cells[i].s != NULL)
-      prop_unsubscribe(dn->cells[i].s);
-    rstr_release(dn->cells[i].url);
-    if(d->currentcell == &dn->cells[i])
-      d->currentcell = NULL;
-    if(d->presscell == &dn->cells[i])
-      d->presscell = NULL;
-  }
-
-  prop_ref_dec(dn->p);
-  free(dn);
-}
-
-
-/**
- *
- */
-static void
-dirnode_destroy_all(directory_list_t *d)
-{
-  dirnode_t *dn;
-
-  while((dn = LIST_FIRST(&d->nodes)) != NULL)
-    dirnode_destroy(d, dn, 1);
-}
-
-
-/**
- *
- */
-static dirnode_t *
-gu_node_find(directory_list_t *d, prop_t *p)
-{
-  dirnode_t *dn;
-
-  LIST_FOREACH(dn, &d->nodes, link)
-    if(dn->p == p)
-      return dn;
-  return NULL;
-}
-
-
-/**
- *
- */
-static void
-gu_node_add(directory_list_t *d, prop_t *p, dirnode_t *before)
-{
-  dirnode_t *dn;
-  int i;
-  cell_t *c;
-  GValue gv = { 0, };
-
-  dn = calloc(1, sizeof(dirnode_t));
-  dn->dir = d;
-  dn->p = p;
-  prop_ref_inc(p);
-  
-  LIST_INSERT_HEAD(&d->nodes, dn, link);
-
-  if(before) {
-    gtk_list_store_insert_before(d->model, &dn->iter, &before->iter);
-  } else {
-    gtk_list_store_append(d->model, &dn->iter);
-  }
-
-  g_value_init(&gv, G_TYPE_POINTER);
-  g_value_set_pointer(&gv, dn);
-  gtk_list_store_set_value(dn->dir->model, &dn->iter, NODE_COLUMN, &gv);
-  g_value_unset(&gv);
-
-  for(i = 0; i < N_COLUMNS; i++) {
-    c = &dn->cells[i];
-    c->idx = i;
-    c->dn = dn;
-
-    c->s = prop_subscribe(0, 
-			  PROP_TAG_NAME_VECTOR, subpaths[i],
-			  PROP_TAG_CALLBACK, gu_col_set, c,
-			  PROP_TAG_COURIER, d->gu->gu_pc,
-			  PROP_TAG_NAMED_ROOT, p, "self",
-			  NULL);
-  }
-}
-
-
-/**
- *
- */
-static void
-dirnode_move(directory_list_t *d, dirnode_t *dn, dirnode_t *before)
-{
-  gtk_list_store_move_before(d->model, &dn->iter,
-			     before ? &before->iter : NULL);
-}
-
-
-/**
- *
- */
-static void
-gu_node_sub(void *opaque, prop_event_t event, ...)
-{
-  dirnode_t *dn;
-  directory_list_t *d = opaque;
-  prop_t *p;
-  prop_t *p2;
-
-  va_list ap;
-  va_start(ap, event);
-  
-  switch(event) {
-  case PROP_ADD_CHILD:
-    gu_node_add(d, va_arg(ap, prop_t *), NULL);
-    break;
-
-  case PROP_ADD_CHILD_BEFORE:
-    p = va_arg(ap, prop_t *);
-    dn = gu_node_find(d, va_arg(ap, prop_t *));
-    assert(dn != NULL);
-    gu_node_add(d, p, dn);
-    break;
-
-  case PROP_MOVE_CHILD:
-    p = va_arg(ap, prop_t *);
-    
-    p2 = va_arg(ap, prop_t *);
-    dn = p2 ? gu_node_find(d, p2) : NULL; // if p2 == NULL then move to tail
-
-    dirnode_move(d, gu_node_find(d, p), dn);
-    break;
-
-
-  case PROP_DEL_CHILD:
-    dn = gu_node_find(d, va_arg(ap, prop_t *));
-    assert(dn != NULL);
-    dirnode_destroy(d, dn, 1);
-    break;
-
-  case PROP_SET_DIR:
-    break;
-
-  case PROP_SET_VOID:
-    dirnode_destroy_all(d);
-    break;
-
-  default:
-    fprintf(stderr, 
-	    "gu_node_sub(): Can not handle event %d, aborting()\n", event);
-    abort();
-  }
-}
 
 /**
  *
@@ -397,7 +108,7 @@ row_activated(GtkTreeView *tree_view, GtkTreePath *path,
 
   gtk_tree_model_get_iter(GTK_TREE_MODEL(d->model), &iter, path);
 
-  gtk_tree_model_get_value(GTK_TREE_MODEL(d->model), &iter, URL_COLUMN, &gv);
+  gtk_tree_model_get_value(GTK_TREE_MODEL(d->model), &iter, GDS_COL_URL, &gv);
   if(G_VALUE_HOLDS_STRING(&gv)) {
     str = g_value_get_string(&gv);
     if(str != NULL)
@@ -412,15 +123,14 @@ row_activated(GtkTreeView *tree_view, GtkTreePath *path,
  *
  */
 static void
-repaint_cell(cell_t *c)
+repaint_cell(directory_list_t *d, gds_cell_t *c)
 {
-  dirnode_t *dn = c->dn;
-  directory_list_t *dir = dn->dir;
+  GtkTreeIter iter;
+  GtkTreePath *path;
 
-  GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(dir->model), 
-					      &dn->iter);
-
-  gtk_tree_model_row_changed(GTK_TREE_MODEL(dir->model), path, &dn->iter);
+  gu_dir_store_iter_from_cell(c, &iter);
+  path = gtk_tree_model_get_path(GTK_TREE_MODEL(d->model),  &iter);
+  gtk_tree_model_row_changed(GTK_TREE_MODEL(d->model), path, &iter);
   gtk_tree_path_free(path);
 }
 
@@ -440,59 +150,55 @@ mouse_do(directory_list_t *d, GtkTreeView *tree_view, int action, int x, int y)
   GtkTreeViewColumn *column;
   int cx, cy, col;
   GtkTreeIter iter;
-  GValue gv = { 0, };
   int r = 0;
+  gds_cell_t *c;
+  const char *url;
 
-  if(!gtk_tree_view_get_path_at_pos(tree_view, x, y,
-				    &path, &column, &cx, &cy))
+  if(!gtk_tree_view_get_path_at_pos(tree_view, x, y, &path, &column, &cx, &cy))
     return 0;
   
-  for(col = 0; col < N_COLUMNS; col++) {
+  for(col = 0; col < GDS_COL_num; col++) {
     if(d->columns[col].col == column)
       break;
   }
 
   gtk_tree_model_get_iter(GTK_TREE_MODEL(d->model), &iter, path);
+  c = gu_dir_store_get_cell(GU_DIR_STORE(d->model), &iter, col);
 
-  gtk_tree_model_get_value(GTK_TREE_MODEL(d->model), &iter, NODE_COLUMN, &gv);
+  switch(action) {
 
-  if(G_VALUE_HOLDS_POINTER(&gv)) {
-    dirnode_t *dn = g_value_get_pointer(&gv);
-    cell_t *c = &dn->cells[col];
-
-    switch(action) {
-
-    case MOUSE_MOTION:
-      if(d->currentcell != c) {
-	if(d->currentcell)
-	  repaint_cell(d->currentcell);
-	
-	if(c->url != NULL) {
-	  d->currentcell = c;
-	  repaint_cell(d->currentcell);
-	} else {
-	  d->currentcell = NULL;
-	}
-      }
-      break;
+  case MOUSE_MOTION:
+    if(d->currentcell != c) {
+      if(d->currentcell)
+	repaint_cell(d, d->currentcell);
       
-    case MOUSE_LEFTCLICK:
-      if(c->url != NULL) {
-	d->presscell = c;
-	r = 1;
+      url = gu_dir_store_url_from_cell(c);
+      if(url != NULL) {
+	d->currentcell = c;
+	repaint_cell(d, d->currentcell);
+      } else {
+	d->currentcell = NULL;
       }
-      break;
-
-    case MOUSE_LEFTRELEASE:
-      if(c->url != NULL && c == d->presscell) {
-	nav_open(rstr_get(c->url), NULL, NULL);
-	r = 1;
-      }
-      d->presscell = NULL;
-      break;
     }
+    break;
+      
+  case MOUSE_LEFTCLICK:
+    url = gu_dir_store_url_from_cell(c);
+    if(url != NULL) {
+      d->presscell = c;
+      r = 1;
+    }
+    break;
+
+  case MOUSE_LEFTRELEASE:
+    url = gu_dir_store_url_from_cell(c);
+    if(url != NULL && c == d->presscell) {
+      nav_open(url, NULL, NULL);
+      r = 1;
+    }
+    d->presscell = NULL;
+    break;
   }
-  g_value_unset(&gv);
   gtk_tree_path_free(path);
   return r;
 }
@@ -517,7 +223,7 @@ mouse_leave(GtkTreeView *tree_view, GdkEventCrossing *event, gpointer user_data)
   directory_list_t *d = user_data;
 
   if(d->currentcell)
-    repaint_cell(d->currentcell);
+    repaint_cell(d, d->currentcell);
   
   d->currentcell = NULL;
 }
@@ -565,15 +271,9 @@ link2txt(GtkTreeViewColumn *tree_column, GtkCellRenderer *cell,
   column_t *col = data;
   directory_list_t *d = col->d;
   GValue gv = { 0, };
-  GValue ptr = { 0, };
-  dirnode_t *dn;
-  cell_t *c;
   PangoUnderline ul;
 
-  gtk_tree_model_get_value(model, iter, NODE_COLUMN, &ptr);
-  dn = g_value_get_pointer(&ptr);
-
-  c = &dn->cells[col->idx];
+  void *c = gu_dir_store_get_cell(GU_DIR_STORE(model), iter, col->idx);
 
   gtk_tree_model_get_value(model, iter, col->idx, &gv);
 
@@ -585,7 +285,6 @@ link2txt(GtkTreeViewColumn *tree_column, GtkCellRenderer *cell,
     g_object_set(cell, "text", g_value_get_string(&gv), NULL);
 
   g_value_unset(&gv);
-  g_value_unset(&ptr);
 }
 
 /**
@@ -642,7 +341,7 @@ duration2txt(GtkTreeViewColumn *tree_column, GtkCellRenderer *cell,
   int i;
   GValue gv = { 0, };
 
-  gtk_tree_model_get_value(model, iter, DURATION_COLUMN, &gv);
+  gtk_tree_model_get_value(model, iter, GDS_COL_DURATION, &gv);
   
   if(G_VALUE_HOLDS_FLOAT(&gv)) {
     i = g_value_get_float(&gv);
@@ -708,7 +407,7 @@ type2pixbuf(GtkTreeViewColumn *tree_column, GtkCellRenderer *cell,
 {
   GValue gv = { 0, };
 
-  gtk_tree_model_get_value(model, iter, TYPE_COLUMN, &gv);
+  gtk_tree_model_get_value(model, iter, GDS_COL_TYPE, &gv);
   if(G_VALUE_HOLDS_STRING(&gv)) {
     GdkPixbuf *pb = contentstr_to_icon(g_value_get_string(&gv), 16);
     g_object_set(G_OBJECT(cell), 
@@ -825,12 +524,6 @@ static void
 directory_list_destroy(GtkObject *object, gpointer opaque)
 {
   directory_list_t *d = opaque;
-  dirnode_t *dn;
-
-  prop_unsubscribe(d->node_sub);
-
-  while((dn = LIST_FIRST(&d->nodes)) != NULL)
-    dirnode_destroy(d, dn, 0);
 
   g_object_unref(G_OBJECT(d->model));
   prop_ref_dec(d->psource);
@@ -848,25 +541,14 @@ gu_directory_list_create(gtk_ui_t *gu, prop_t *root, int flags)
 {
   directory_list_t *d = calloc(1, sizeof(directory_list_t));
   GtkWidget *view;
-  d->model = gtk_list_store_newv(N_COLUMNS + 1, coltypes);
 
   d->psource = prop_create(root, "source");
   prop_ref_inc(d->psource);
 
   d->gu = gu;
 
-  d->node_sub = 
-    prop_subscribe(0,
-		   PROP_TAG_NAME("self", "source", "nodes"),
-		   PROP_TAG_CALLBACK, gu_node_sub, d,
-		   PROP_TAG_COURIER, gu->gu_pc, 
-		   PROP_TAG_NAMED_ROOT, root, "self",
-		   NULL);
-
-
+  d->model = gu_dir_store_new(gu, d->psource);
   d->tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(d->model));
-  
-  
 
   gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(d->tree), TRUE);
 
@@ -874,27 +556,27 @@ gu_directory_list_create(gtk_ui_t *gu, prop_t *root, int flags)
 				    !!(flags & GU_DIR_VISIBLE_HEADERS));
 
   if(flags & GU_DIR_COL_TYPE)
-    init_type_col(d,     "",         TYPE_COLUMN);
+    init_type_col(d, "", GDS_COL_TYPE);
 
   if(flags & GU_DIR_COL_TRACKINDEX)
-    init_text_col(d, "#",        TRACKINDEX_COLUMN, 0, 0);
+    init_text_col(d, "#", GDS_COL_TRACKINDEX, 0, 0);
 
-  init_text_col(d,     "Name",     NAME_COLUMN, 1, 0);
+  init_text_col(d, "Name", GDS_COL_NAME, 1, 0);
 
   if(flags & GU_DIR_COL_DURATION)
-    init_duration_col(d, "Duration", DURATION_COLUMN);
+    init_duration_col(d, "Duration", GDS_COL_DURATION);
 
   if(flags & GU_DIR_COL_ARTIST)
-    init_text_col(d,     "Artist",   ARTIST_COLUMN, 1, 1);
+    init_text_col(d,     "Artist",   GDS_COL_ARTIST, 1, 1);
 
   if(flags & GU_DIR_COL_ALBUM)
-    init_text_col(d,     "Album",    ALBUM_COLUMN, 1, 1);
+    init_text_col(d,     "Album",    GDS_COL_ALBUM, 1, 1);
 
   if(flags & GU_DIR_COL_NUM_TRACKS)
-    init_text_col(d,     "Tracks",   TRACKS_COLUMN, 0, 0);
+    init_text_col(d,     "Tracks",   GDS_COL_TRACKS, 0, 0);
 
   if(flags & GU_DIR_COL_POPULARITY)
-    init_bar_col(d, "Popularity", POPULARITY_COLUMN);
+    init_bar_col(d, "Popularity", GDS_COL_POPULARITY);
 
   g_signal_connect(G_OBJECT(d->tree), "row-activated", 
 		   G_CALLBACK(row_activated), d);
@@ -910,6 +592,10 @@ gu_directory_list_create(gtk_ui_t *gu, prop_t *root, int flags)
 
   g_signal_connect(G_OBJECT(d->tree), "leave-notify-event", 
 		   G_CALLBACK(mouse_leave), d);
+
+  g_signal_connect(G_OBJECT(d->model), 
+		   "column-activated", G_CALLBACK(column_activated), d);
+
 
 
   /* Page vbox */

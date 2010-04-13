@@ -296,6 +296,7 @@ SRCS-$(CONFIG_GU) +=    src/ui/gu/gu.c \
 			src/ui/gu/gu_pages.c \
 			src/ui/gu/gu_home.c \
 			src/ui/gu/gu_directory.c \
+			src/ui/gu/gu_directory_store.c \
 			src/ui/gu/gu_directory_list.c \
 			src/ui/gu/gu_directory_album.c \
 			src/ui/gu/gu_directory_albumcollection.c \
