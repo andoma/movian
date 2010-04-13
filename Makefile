@@ -95,8 +95,7 @@ SRCS 			+= src/sd/sd.c \
 
 SRCS-$(CONFIG_AVAHI) 	+= src/sd/avahi.c \
 
-${BUILDDIR}/src/sd/avahi.o : CFLAGS = \
- $(shell pkg-config --cflags avahi-client) -Wall -Werror
+${BUILDDIR}/src/sd/avahi.o : CFLAGS = $(CFLAGS_AVAHI) -Wall -Werror
 
 BUNDLES += resources/tvheadend
 
@@ -304,7 +303,7 @@ SRCS-$(CONFIG_GU) +=    src/ui/gu/gu.c \
 			src/ui/gu/gu_video.c \
 			src/ui/linux/x11_common.c \
 
-${BUILDDIR}/src/ui/gu/%.o : CFLAGS = $(shell pkg-config --cflags gtk+-2.0) \
+${BUILDDIR}/src/ui/gu/%.o : CFLAGS = $(CFLAGS_GTK) \
 -Wall -Werror -Wmissing-prototypes -Wno-cast-qual -Wno-deprecated-declarations 
 
 #
@@ -316,7 +315,7 @@ SRCS-$(CONFIG_DBUS) +=  src/ipc/dbus/dbus.c \
 			src/ipc/dbus/mpris.c \
 			src/ipc/dbus/mpkeys.c
 
-${BUILDDIR}/src/ipc/dbus/%.o : CFLAGS =  $(shell pkg-config --cflags dbus-1) \
+${BUILDDIR}/src/ipc/dbus/%.o : CFLAGS = $(CFLAGS_DBUS) \
 -Wall -Werror -Wmissing-prototypes -Wno-cast-qual
 
 SRCS-$(CONFIG_LIRC) +=  src/ipc/lirc.c

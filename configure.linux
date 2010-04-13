@@ -233,11 +233,13 @@ fi
 #
 if enabled gu; then
     if pkg-config gtk+-2.0 && pkg-config gthread-2.0; then
-	# CFLAGS are included by Makefile
+
 	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs gtk+-2.0`
+	echo >>${CONFIG_MAK} "CFLAGS_GTK += " `pkg-config --cflags gtk+-2.0`
 	echo "Using GTK+:            `pkg-config --modversion gtk+-2.0`"
 
 	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs gthread-2.0`
+	echo >>${CONFIG_MAK} "CFLAGS_GTK += " `pkg-config --cflags gthread-2.0`
 	echo "Using GTK Threading:   `pkg-config --modversion gthread-2.0`"
     else
 	echo "GTK2 not found. Unable to build GU (GTK user interface)."
@@ -282,8 +284,8 @@ fi
 #
 if enabled dbus; then
     if pkg-config dbus-1; then
-	# CFLAGS are included by Makefile
 	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs dbus-1`
+	echo >>${CONFIG_MAK} "CFLAGS_DBUS += " `pkg-config --cflags dbus-1`
 	echo "Using libdbus-1:       `pkg-config --modversion dbus-1`"
     else
 	echo "libdbus-1 not found. Unable to build with D-Bus support."
@@ -297,7 +299,6 @@ fi
 #
 if enabled cdda; then
     if pkg-config libcdio_cdda; then
-	# CFLAGS are included by Makefile
 	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libcdio_cdda`
 	echo "Using libcdio_cdda:    `pkg-config --modversion libcdio_cdda`"
     else
@@ -311,7 +312,6 @@ fi
 #
 if enabled cddb; then
     if pkg-config libcddb; then
-	# CFLAGS are included by Makefile
 	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libcddb`
 	echo "Using libcddb:         `pkg-config --modversion libcddb`"
     else
@@ -325,8 +325,8 @@ fi
 #
 if enabled avahi; then
     if pkg-config avahi-client; then
-	# CFLAGS are included by Makefile
 	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs avahi-client`
+	echo >>${CONFIG_MAK} "CFLAGS_AVAHI += "`pkg-config --cflags avahi-client`
 	echo "Using AVAHI client:    `pkg-config --modversion avahi-client`"
     else
 	echo "avahi-client not found. Unable to build with AVAHI support."
