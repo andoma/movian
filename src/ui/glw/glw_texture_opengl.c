@@ -137,6 +137,13 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
     glt->glt_ext_type = GL_UNSIGNED_BYTE;
     break;
     
+  case PIX_FMT_Y400A:
+    glt->glt_bpp = 2;
+    glt->glt_format = GL_LUMINANCE_ALPHA;
+    glt->glt_ext_format = GL_LUMINANCE_ALPHA;
+    glt->glt_ext_type = GL_UNSIGNED_BYTE;
+    break;
+
   case PIX_FMT_GRAY8:
     glt->glt_bpp = 1;
     glt->glt_format = GL_LUMINANCE;
