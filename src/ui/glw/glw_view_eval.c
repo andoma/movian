@@ -2949,6 +2949,24 @@ glw_settingBool(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
+ * Return true if the passed argument is a link
+ */
+static int 
+glwf_isLink(glw_view_eval_context_t *ec, struct token *self,
+	    token_t **argv, unsigned int argc)
+{
+  token_t *a, *r;
+  if((a = token_resolve(ec, argv[0])) == NULL)
+    return -1;
+  
+  r = eval_alloc(self, ec, TOKEN_INT);
+  r->t_int = a->type == TOKEN_LINK;
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
  *
  */
 static const token_func_t funcvec[] = {
@@ -2987,6 +3005,7 @@ static const token_func_t funcvec[] = {
   {"browse", 1, glwf_browse},
   {"settingInt", 8, glw_settingInt, glwf_setting_ctor, glwf_setting_dtor},
   {"settingBool", 4, glw_settingBool, glwf_setting_ctor, glwf_setting_dtor},
+  {"isLink", 1, glwf_isLink},
 };
 
 
