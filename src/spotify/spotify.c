@@ -964,7 +964,7 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
 		      url, sizeof(url));
 
     prop_set_string(prop_create(p, "url"), url);
-    prop_set_string(prop_create(p, "type"), "track");
+    prop_set_string(prop_create(p, "type"), "audio");
     metadata_create(prop_create(p, "metadata"), METADATA_TRACK, track);
 
     if(prop_set_parent(p, bh->nodes))
@@ -1503,7 +1503,7 @@ tracks_added(sp_playlist *plist, sp_track * const * tracks,
     plt->plt_prop_root = prop_create(NULL, NULL);
     plt->plt_track = t;
 
-    prop_set_string(prop_create(plt->plt_prop_root, "type"), "track");
+    prop_set_string(prop_create(plt->plt_prop_root, "type"), "audio");
 
     spotify_make_link(f_sp_link_create_from_track(t, 0), url, sizeof(url));
     prop_set_string(prop_create(plt->plt_prop_root, "url"), url);

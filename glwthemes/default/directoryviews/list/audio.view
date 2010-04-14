@@ -1,54 +1,94 @@
 #include "theme://include/plates.view"
 #include "theme://include/separators.view"
 
-widget(backdrop, {
-  HIGHLITE_PROPS();
 
-  widget(container_x, {
+#define SUB_PLATE(FOCUSABLE) {
+  .source = "theme://images/whitebox.png";
+  .border = [6, 3, 6, 6];
+  .padding = [-1, -1, -1, -1];
+  .color = 
+    iir(isFocused(), 4) * BUTTON_COLOR() + 
+    iir(isHovered(), 4) * [0.1, 0.3, 0.3] +
+    iir(isPressed(), 4) * [1.0, 1.0, 1.0];
 
-    .focusable = true;
-    onEvent(enter, navOpen($self.url, $self.type, $parent.source));
-    
+
+
+  .alphaSelf = iir(0.5 + 0.5 * (isFocused() || isPressed()), 4);
+
+  .borderLeft = false;
+  .borderRight = false;
+  .focusable = FOCUSABLE;
+   
+}
+
+
+widget(container_x, {
+
+  widget(backdrop, {
+    PLATE_PROPS();
+    .color = [0.0, 0.0, 0.0];
+    .alphaSelf = 0.5;
+
+    .borderRight = false;
+
     widget(icon, {
       .source = 
 	select($self.url == $global.media.current.url,
 	       "theme://icons/32x32/play.png",
 	       "theme://icons/32x32/audio.png");
     });
+  });
 
-    VERTICAL_SEPARATOR();
+  widget(backdrop, {
+    .weight = 2.0;
+    SUB_PLATE(true);
 
+    onEvent(enter, navOpen($self.url, $self.type, $parent.source));
     widget(label, {
       .align = left; 
       .caption = $self.metadata.title;
-      .weight = 2.0;
       .ellipsize = true;
     });
+  });
 
-    VERTICAL_SEPARATOR();
+  widget(backdrop, {
+    .weight = 1.0;
+    SUB_PLATE(isLink($self.metadata.artist));
+
+    onEvent(enter, navOpen($self.metadata.artist));
 
     widget(label, {
       .align = left; 
       .caption = $self.metadata.artist;
-      .weight = 1.0;
       .ellipsize = true;
     });
+  });
 
-    VERTICAL_SEPARATOR();
+  widget(backdrop, {
+    .weight = 1.0;
+    SUB_PLATE(isLink($self.metadata.album));
+
+    onEvent(enter, navOpen($self.metadata.album));
 
     widget(label, {
       .align = left; 
       .caption = $self.metadata.album;
-      .weight = 1.0;
       .ellipsize = true;
     });
+  });
 
-    VERTICAL_SEPARATOR();
+  widget(backdrop, {
+    .weight = 0.2;
+    .borderLeft = false;
+    PLATE_PROPS();
+
+    .color = [0.0, 0.0, 0.0];
+    .alphaSelf = 0.5;
 
     widget(label, {
       .align = right; 
       .caption = value2duration($self.metadata.duration);
-      .weight = 0.2;
     });
   });
+
 });
