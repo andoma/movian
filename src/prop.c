@@ -2802,6 +2802,11 @@ prop_print_tree0(prop_t *p, int indent, int followlinks)
     fprintf(stderr, "\"%s\"\n", rstr_get(p->hp_rstring));
     break;
 
+  case PROP_LINK:
+    fprintf(stderr, "\"%s\" <%s>\n", rstr_get(p->hpn_link_rtitle),
+	    rstr_get(p->hpn_link_rurl));
+    break;
+
   case PROP_FLOAT:
     fprintf(stderr, "%f\n", p->hp_float);
     break;
