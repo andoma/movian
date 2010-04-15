@@ -101,6 +101,7 @@ typedef enum {
   PROP_INT,
   PROP_PIXMAP,
   PROP_LINK,
+  PROP_PTR,
   PROP_ZOMBIE, /* Destroyed can never be changed again */
 } prop_type_t;
 
@@ -206,6 +207,7 @@ typedef struct prop {
       rstr_t *rtitle;
       rstr_t *rurl;
     } link;
+    void *ptr;
   } u;
 
 #define hp_rstring   u.rstr
@@ -216,6 +218,7 @@ typedef struct prop {
 #define hp_pixmap   u.pixmap
 #define hp_link_rtitle u.link.rtitle
 #define hp_link_rurl   u.link.rurl
+#define hp_ptr         u.ptr
 
 } prop_t;
 
@@ -376,6 +379,8 @@ void prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, struct pixmap *pm);
 
 void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 		      const char *url);
+
+void prop_set_ptr(prop_t *p, void *ptr);
 
 #define prop_set_string(p, str) prop_set_string_ex(p, NULL, str)
 

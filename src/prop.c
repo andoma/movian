@@ -635,9 +635,15 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
 
     case PROP_ZOMBIE:
       abort();
+
+    case PROP_PTR:
+      return;
     }
     return;
   }
+
+  if(p->hp_type == PROP_PTR)
+    return;
 
   n = get_notify(s);
 
@@ -2255,6 +2261,35 @@ prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, struct pixmap *pm)
 
 
 /**
+ *
+ */
+void
+prop_set_ptr(prop_t *p, void *ptr)
+{
+  if(p == NULL)
+    return;
+  
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type == PROP_ZOMBIE) {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
+
+  if(p->hp_type != PROP_PIXMAP) {
+
+    if(prop_clean(p)) {
+      hts_mutex_unlock(&prop_mutex);
+      return;
+    }
+  }
+  p->hp_ptr = ptr;
+  p->hp_type = PROP_PTR;
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
  * Compare the value of two props, return 1 if equal 0 if not equal
  */
 static int
@@ -2791,6 +2826,10 @@ prop_print_tree0(prop_t *p, int indent, int followlinks)
 
   case PROP_PIXMAP:
     fprintf(stderr, "<pixmap>\n");
+    break;
+
+  case PROP_PTR:
+    fprintf(stderr, "%p\n", p->hp_ptr);
     break;
   }
 }
