@@ -33,6 +33,7 @@
 #include "glw.h"
 #include "glw_texture.h"
 #include "glw_text_bitmap.h"
+#include "glw_unicode.h"
 #include "fileaccess/fileaccess.h"
 
 typedef struct glw_text_bitmap_data {
@@ -883,7 +884,7 @@ static void
 gtb_caption_has_changed(glw_text_bitmap_t *gtb)
 {
   char buf[30];
-  int l, x, c, lines = 1;
+  int l, x, c, lines = 1, p = -1, d;
   const char *str;
 
   /* Convert UTF8 string to unicode int[] */
@@ -918,7 +919,13 @@ gtb_caption_has_changed(glw_text_bitmap_t *gtb)
 	continue;
       if(c == '\n') 
 	lines++;
-      gtb->gtb_uc_buffer[x++] = c;
+
+      if(p != -1 && (d = glw_unicode_compose(p, c)) != -1) {
+	gtb->gtb_uc_buffer[x-1] = d;
+	p = -1;
+      } else {
+	gtb->gtb_uc_buffer[x++] = p = c;
+      }
     }
   }
   gtb->gtb_lines = lines;
