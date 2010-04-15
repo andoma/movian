@@ -449,7 +449,7 @@ prop_t *prop_get_by_name(const char **name, int follow_symlinks, ...)
 
 void prop_request_new_child(prop_t *p);
 
-void prop_request_delete_child_by_subscription(prop_sub_t *s);
+void prop_request_delete(prop_t *p);
 
 #define PROP_COURIER_THREAD 0x1
 

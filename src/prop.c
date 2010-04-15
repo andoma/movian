@@ -2641,17 +2641,16 @@ prop_request_new_child(prop_t *p)
  *
  */
 void
-prop_request_delete_child_by_subscription(prop_sub_t *s)
+prop_request_delete(prop_t *c)
 {
-  prop_t *p, *c;
+  prop_t *p;
   hts_mutex_lock(&prop_mutex);
 
-  c = s->hps_value_prop;
   if(c->hp_type != PROP_ZOMBIE) {
     p = c->hp_parent;
 
     if(p->hp_type == PROP_DIR)
-      prop_notify_child(c, p, PROP_REQ_DELETE, s, 0);
+      prop_notify_child(c, p, PROP_REQ_DELETE, NULL, 0);
   }
 
   hts_mutex_unlock(&prop_mutex);

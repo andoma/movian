@@ -2382,15 +2382,14 @@ glwf_delete(glw_view_eval_context_t *ec, struct token *self,
 {
   token_t *a = argv[0];
 
-  if((a = token_resolve(ec, a)) == NULL)
+  if(a->type == TOKEN_PROPERTY_NAME && resolve_property_name(ec, a))
     return -1;
 
-  if(a->propsubr == NULL) {
-    return glw_view_seterr(ec->ei, self, 
-			    "Invalid operand to delete()");
-  }
+  if(a->type != TOKEN_PROPERTY)
+    return glw_view_seterr(ec->ei, a, 
+			   "Invalid operand to delete()");
 
-  prop_request_delete_child_by_subscription(a->propsubr->gps_sub);
+  prop_request_delete(a->t_prop);
   return 0;
 }
 
