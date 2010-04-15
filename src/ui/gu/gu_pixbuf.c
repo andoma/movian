@@ -15,7 +15,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+#include <assert.h>
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
 
@@ -92,8 +92,8 @@ gu_pixbuf_get_internal(const char *url, int *sizep,
   GdkPixbuf *gp;
   int r;
   int got_pic;
-  int outfmt;
-  int pixfmt;
+  enum PixelFormat outfmt;
+  enum PixelFormat pixfmt;
   int width;
   int height;
   const uint8_t *ptr[4];
@@ -162,7 +162,12 @@ gu_pixbuf_get_internal(const char *url, int *sizep,
   sws = sws_getContext(width, height, pixfmt, 
 		       req_width, req_height, outfmt,
 		       SWS_BICUBIC, NULL, NULL, NULL);
-
+  if(sws == NULL) {
+    av_free(frame);
+    av_free(ctx);
+    pixmap_release(pm);
+    return NULL;
+  }
 
   avpicture_alloc(&dst, outfmt, req_width, req_height);
 
