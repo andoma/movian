@@ -58,12 +58,13 @@ enable glw
 
 DEVKITPPC=${DEVKITPRO}/devkitPPC
 LIBOGC=${DEVKITPRO}/libogc
+PORTLIBS=${DEVKITPRO}/portlibs/ppc
 
 cat >> ${CONFIG_MAK} <<EOF
 CC=${DEVKITPPC}/bin/powerpc-eabi-gcc
 STRIP=${DEVKITPPC}/bin/powerpc-eabi-strip
 
-CFLAGS_cfg += -I${LIBOGC}/include
+CFLAGS_cfg += -I${LIBOGC}/include -I${PORTLIBS}/include
 CFLAGS_cfg += -DWII -DEABI -mrvl -mcpu=750 -meabi -mhard-float
 
 LDFLAGS_cfg += -DEABI -mrvl -mcpu=750 -meabi -mhard-float
@@ -81,8 +82,8 @@ fi
 #
 # configure ffmpeg
 #
-setup_ffmpeg --extra-cflags=-I${LIBOGC}/include \
-    --extra-ldflags=-L${DEVKITPRO}/libogc/lib/wii \
+setup_ffmpeg --extra-cflags="-I${LIBOGC}/include -I${PORTLIBS}/include -D__LARGE64_FILES" \
+    --extra-ldflags="-L${DEVKITPRO}/libogc/lib/wii -L${PORTLIBS}/lib" \
     --cross-prefix=${DEVKITPPC}/bin/powerpc-eabi- \
     --enable-cross-compile \
     --arch=powerpc \
@@ -98,6 +99,7 @@ setup_ffmpeg --extra-cflags=-I${LIBOGC}/include \
 # 
 #
 cat >> ${CONFIG_MAK} <<EOF
+LDFLAGS_cfg  +=  -L${PORTLIBS}/lib -lz
 LDFLAGS_cfg  +=  -L${LIBFREETYPEPATH}/lib -lfreetype
 CFLAGS_cfg += -I${LIBFREETYPEPATH}/include -DWORDS_BIGENDIAN
 CFLAGS_cfg += -I${LIBFREETYPEPATH}/include/freetype2

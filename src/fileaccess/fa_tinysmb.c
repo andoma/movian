@@ -25,6 +25,7 @@
 #include "fa_proto.h"
 #include "keyring.h"
 
+#include <sys/statvfs.h>
 #include <smb.h>
 
 

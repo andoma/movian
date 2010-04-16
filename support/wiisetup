@@ -1,5 +1,6 @@
 #!/bin/bash
-
+set -e
+set -u
 TOPDIR=${PWD}
 WIISUPPORT=${PWD}/wiisupport
 
@@ -7,12 +8,15 @@ mkdir -p ${WIISUPPORT}
 
 export DEVKITPRO=${WIISUPPORT}/devkitpro
 export DEVKITPPC=${DEVKITPRO}/devkitPPC
+export PORTLIBS=${DEVKITPRO}/portlibs/ppc
+
+mkdir -p ${PORTLIBS}
 
 if ! test -e ${DEVKITPPC} ; then
     mkdir -p ${DEVKITPRO}
     cd ${DEVKITPRO}
-    wget http://sunet.dl.sourceforge.net/sourceforge/devkitpro/devkitPPC_r18-i686-linux.tar.bz2
-    tar xvf devkitPPC_r18-i686-linux.tar.bz2
+    wget http://sunet.dl.sourceforge.net/sourceforge/devkitpro/devkitPPC_r21-i686-linux.tar.bz2
+    tar xvf devkitPPC_r21-i686-linux.tar.bz2
 fi
 
 ### Get and compile libogc
@@ -21,8 +25,8 @@ fi
 if ! test -e ${DEVKITPRO}/libogc/lib/wii ; then
     mkdir -p ${DEVKITPRO}/libogc
     cd ${DEVKITPRO}/libogc
-    wget http://downloads.sourceforge.net/project/devkitpro/libogc/libogc-src-1.8.1.tar.bz2
-    tar xvf libogc-src-1.8.1.tar.bz2
+    wget http://downloads.sourceforge.net/project/devkitpro/libogc/libogc-src-1.8.3.tar.bz2
+    tar xvf libogc-src-1.8.3.tar.bz2
 
     cp ${TOPDIR}/support/lwp_config.h ${DEVKITPRO}/libogc/gc/ogc/lwp_config.h
     make wii install-headers
@@ -32,6 +36,16 @@ if ! test -e ${DEVKITPRO}/libogc/lib/wii ; then
     wget http://sunet.dl.sourceforge.net/sourceforge/devkitpro/libfat-ogc-1.0.5.tar.bz2
     tar xvf libfat-ogc-1.0.5.tar.bz2
 fi
+
+### Get and compile zlib
+
+
+if ! test -e ${PORTLIBS}/include/zlib.h ; then
+    cd ${PORTLIBS}
+    wget http://downloads.sourceforge.net/project/devkitpro/portlibs/zlib-1.2.4-ppc.tar.bz2
+    tar xvf zlib-1.2.4-ppc.tar.bz2
+fi
+
 
 ### Get freetype
 
