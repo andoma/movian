@@ -64,6 +64,7 @@ glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   glw_expander_t *exp = (glw_expander_t *)w;
   glw_rctx_t *rc = extra;
   glw_t *c;
+  glw_rctx_t rc0;
 
   switch(signal) {
   default:
@@ -74,10 +75,16 @@ glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     return 1;
 
   case GLW_SIGNAL_LAYOUT:
-    c = TAILQ_FIRST(&w->glw_childs);
+    if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)
+      break;
+    rc0 = *rc;
 
-    if(c != NULL)
-      glw_layout0(c, rc);
+    if(exp->w.glw_class == &glw_expander_x)
+      rc0.rc_size_x = c->glw_req_size_x;
+    else
+      rc0.rc_size_y = c->glw_req_size_y;
+    
+    glw_layout0(c, &rc0);
     break;
   }
   return 0;
@@ -90,9 +97,19 @@ glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 static void
 glw_expander_render(glw_t *w, glw_rctx_t *rc)
 {
+  glw_rctx_t rc0;
   glw_t *c = TAILQ_FIRST(&w->glw_childs);
-  if(c != NULL)
-    c->glw_class->gc_render(c, rc);
+  if(c == NULL)
+    return;
+
+  rc0 = *rc;
+  rc0.rc_alpha *= w->glw_alpha;
+
+  if(w->glw_class == &glw_expander_x)
+    rc0.rc_size_x = c->glw_req_size_x;
+  else
+    rc0.rc_size_y = c->glw_req_size_y;
+  c->glw_class->gc_render(c, &rc0);
 }
 
 
