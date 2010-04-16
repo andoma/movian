@@ -1654,11 +1654,29 @@ playlist_set_url(sp_playlist *plist, playlist_t *pl)
 /**
  *
  */
+static void
+playlist_update_editable(playlist_t *pl)
+{
+  int ownedself = f_sp_playlist_owner(pl->pl_playlist) == 
+    f_sp_session_user(spotify_session);
+
+  int colab = f_sp_playlist_is_collaborative(pl->pl_playlist);
+
+  prop_set_int(prop_create(pl->pl_prop_root, "canDelete"), ownedself || colab);
+}
+
+
+
+
+/**
+ *
+ */
 static void 
 playlist_state_changed(sp_playlist *plist, void *userdata)
 {
   playlist_t *pl = userdata;
   playlist_set_url(plist, pl);
+  playlist_update_editable(pl);
 }
 
 
@@ -1672,6 +1690,9 @@ static sp_playlist_callbacks pl_callbacks = {
   .playlist_renamed = playlist_renamed,
   .playlist_state_changed = playlist_state_changed,
 };
+
+
+  
 
 /**
  *
@@ -1729,7 +1750,7 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
   pl->pl_prop_title = prop_create(metadata, "title");
   playlist_name_update(plist, pl);
 
-  prop_set_int(prop_create(pl->pl_prop_root, "canDelete"), 1);
+  playlist_update_editable(pl);
 
   pl->pl_prop_num_tracks = prop_create(metadata, "tracks");
 
