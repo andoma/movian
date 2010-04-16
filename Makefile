@@ -357,7 +357,7 @@ OBJDIRS+= $(sort $(dir $(BUNDLE_OBJS)))
 
 # Common CFLAGS for all files
 CFLAGS_com  = -g -funsigned-char -O2
-CFLAGS_com += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
+CFLAGS_com += -D_FILE_OFFSET_BITS=64
 CFLAGS_com += -I${BUILDDIR} -I${CURDIR}/src -I${CURDIR}
 
 # Tools
