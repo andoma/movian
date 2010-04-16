@@ -61,9 +61,7 @@ struct _GuDirStore {
   struct gtk_ui *gu;
 
   struct prop_sub *node_sub;
-
   struct gds_row_queue rows;
-
   int num_rows;
 
   // Cache for fast row <> index translations
@@ -71,6 +69,10 @@ struct _GuDirStore {
   int cache_pos;
 
   int active[GDS_COL_num];
+
+
+  struct prop_sub *canDelete_sub;
+  int canDelete;
 };
 
 
@@ -84,5 +86,12 @@ gds_cell_t *gu_dir_store_get_cell(GuDirStore *gds,
 void gu_dir_store_iter_from_cell(gds_cell_t *c, GtkTreeIter *iter);
 
 const char *gu_dir_store_url_from_cell(gds_cell_t *c);
+
+gboolean gu_dir_store_can_delete(GuDirStore *gds);
+
+void gu_dir_store_delete(GuDirStore *gds, GtkTreeIter *iter);
+
+void gu_dir_store_delete_multi(GuDirStore *gds, GtkTreeIter *iter, int niter);
+
 
 #endif // GU_DIRECTORY_STORE_H__

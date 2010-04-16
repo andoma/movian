@@ -289,6 +289,7 @@ SRCS-$(CONFIG_GU) +=    src/ui/gu/gu.c \
 			src/ui/gu/gu_helpers.c \
 			src/ui/gu/gu_pixbuf.c \
 			src/ui/gu/gu_popup.c \
+			src/ui/gu/gu_menu.c \
 			src/ui/gu/gu_menubar.c \
 			src/ui/gu/gu_toolbar.c \
 			src/ui/gu/gu_statusbar.c \

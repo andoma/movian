@@ -631,6 +631,7 @@ gds_row_delete0(GuDirStore *gds, gds_row_t *gr, int notify)
   
   gds_set_cache(gds, NULL, 0);
   TAILQ_REMOVE(&gds->rows, gr, gr_link);
+  gds->num_rows--;
 
   if(notify) {
     GtkTreePath *path = gtk_tree_path_new();
@@ -745,6 +746,9 @@ gds_node_sub(void *opaque, prop_event_t event, ...)
     clear_model(gds, 1);
     break;
 
+  case PROP_REQ_DELETE_MULTI:
+    break;
+
   default:
     fprintf(stderr, 
 	    "gds_node_sub(): Can not handle event %d, aborting()\n", event);
@@ -769,6 +773,16 @@ clear_model(GuDirStore *gds, int notify)
 /**
  *
  */
+static void
+gds_canDelete_sub(void *opaque, int v)
+{
+  GuDirStore *gds = opaque;
+  gds->canDelete = !!v;
+}
+
+/**
+ *
+ */
 GuDirStore *
 gu_dir_store_new(gtk_ui_t *gu, prop_t *source)
 {
@@ -783,6 +797,14 @@ gu_dir_store_new(gtk_ui_t *gu, prop_t *source)
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "nodes"),
 		   PROP_TAG_CALLBACK, gds_node_sub, gds,
+		   PROP_TAG_COURIER, gu->gu_pc, 
+		   PROP_TAG_NAMED_ROOT, source, "self",
+		   NULL);
+
+  gds->canDelete_sub = 
+    prop_subscribe(0,
+		   PROP_TAG_NAME("self", "canDelete"),
+		   PROP_TAG_CALLBACK_INT, gds_canDelete_sub, gds,
 		   PROP_TAG_COURIER, gu->gu_pc, 
 		   PROP_TAG_NAMED_ROOT, source, "self",
 		   NULL);
@@ -816,4 +838,27 @@ gu_dir_store_iter_from_cell(gds_cell_t *c, GtkTreeIter *iter)
 
   gds_row_t *gr = c->r;
   iter->user_data = gr;
+}
+
+gboolean
+gu_dir_store_can_delete(GuDirStore *gds)
+{
+  return gds->canDelete;
+}
+
+void
+gu_dir_store_delete_multi(GuDirStore *gds, GtkTreeIter *iter, int len)
+{
+  int i;
+  gds_row_t *gr;
+  prop_t **vec = malloc((1 + len) * sizeof(prop_t *));
+
+  for(i = 0; i < len; i++) {
+    gr = iter[i].user_data;
+    vec[i] = gr->gr_root;
+  }
+  vec[i] = NULL;
+
+  prop_request_delete_multi(vec);
+  free(vec);
 }

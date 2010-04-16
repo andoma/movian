@@ -22,7 +22,7 @@
 #include "gu.h"
 #include "gu_directory.h"
 #include "gu_directory_store.h"
-
+#include "gu_menu.h"
 #include "gu_cell_bar.h"
 
 
@@ -45,6 +45,7 @@ typedef struct directory_list {
 
   GtkWidget *scrollbox;
   GtkWidget *tree;
+  GtkTreeSelection *sel;
 
   GuDirStore *model;
 
@@ -60,6 +61,172 @@ typedef struct directory_list {
   prop_t *psource;
 
 } directory_list_t;
+
+
+/**
+ *
+ */
+typedef struct selinfo {
+  directory_list_t *d;
+  GtkWidget *menu;
+
+  int num;
+  int p;
+  GtkTreeIter *iterv;
+
+  int primary_action;
+#define SELINFO_PA_OPEN 0x1
+#define SELINFO_PA_PLAY 0x2
+
+
+  char *url;
+} selinfo_t;
+
+
+
+/**
+ *
+ */
+static void
+popup_open(GtkWidget *menu_item, gpointer data)
+{
+  selinfo_t *si = data;
+  directory_list_t *d = si->d;
+  
+  nav_open(si->url, NULL, d->psource);
+  gtk_widget_destroy(si->menu);
+  
+}
+
+/**
+ *
+ */
+static void
+popup_delete(GtkWidget *menu_item, gpointer data)
+{
+  selinfo_t *si = data;
+  gu_dir_store_delete_multi(si->d->model, si->iterv, si->num);
+
+  gtk_widget_destroy(si->menu);
+}
+
+
+/**
+ *
+ */
+static void
+fillsel(GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *iter,
+	gpointer data)
+{
+  selinfo_t *si = data;
+  GValue gv = {0};
+
+  si->iterv[si->p] = *iter;
+  si->p++;
+
+  gtk_tree_model_get_value(model, iter, GDS_COL_TYPE, &gv);
+
+  if(G_VALUE_HOLDS_STRING(&gv)) {
+    const char *type = g_value_get_string(&gv);
+    if(!strcmp(type, "audio") || !strcmp(type, "video")) {
+      si->primary_action |= SELINFO_PA_PLAY;
+    } else {
+      si->primary_action |= SELINFO_PA_OPEN;
+    }
+    g_value_unset(&gv);
+
+    if(si->url == NULL) {
+      gtk_tree_model_get_value(model, iter, GDS_COL_URL, &gv);
+      
+      if(G_VALUE_HOLDS_STRING(&gv))
+	si->url = strdup(g_value_get_string(&gv));
+      g_value_unset(&gv);
+    }
+  }
+}
+
+
+/**
+ *
+ */
+static void
+popup_destroy(GtkWidget *menu, gpointer data)
+{
+  selinfo_t *si = data;
+  free(si->iterv);
+  free(si->url);
+  free(si);
+}
+
+
+/**
+ *
+ */
+static void
+do_popup_menu(directory_list_t *d, GdkEventButton *event, const char *url)
+{
+  int button, event_time;
+  selinfo_t *si = calloc(1, sizeof(selinfo_t));
+
+  si->d = d;
+  si->menu = gtk_menu_new();
+
+  if(url != NULL) {
+    si->url = strdup(url);
+
+    gu_menu_add_item(si->menu, "_Browse", popup_open, si, NULL, NULL);
+    //    gu_menu_add_sep(si->menu);
+    //    gu_menu_add_item(si->menu, "_Copy", popup_copy, si, NULL, NULL);
+
+  } else {
+    si->num = gtk_tree_selection_count_selected_rows(d->sel);
+    si->iterv = malloc(si->num * sizeof(GtkTreeIter));
+    gtk_tree_selection_selected_foreach(d->sel, fillsel, si);
+
+    if(si->primary_action == SELINFO_PA_OPEN) {
+      gu_menu_add_item(si->menu, "_Open", popup_open, si, NULL, NULL);
+    } else if(si->primary_action == SELINFO_PA_PLAY) {
+      gu_menu_add_item(si->menu, "_Play", popup_open, si, NULL, NULL);
+    }
+
+    // gu_menu_add_sep(si->menu);
+    // gu_menu_add_item(si->menu, "_Copy", popup_copy, si, NULL, NULL);
+
+    if(gu_dir_store_can_delete(d->model)) {
+      gu_menu_add_sep(si->menu);
+      gu_menu_add_item(si->menu, "_Delete", popup_delete, si, NULL, NULL);
+    }
+  }
+
+  if(event != NULL) {
+    button = event->button;
+    event_time = event->time;
+  } else {
+    button = 0;
+    event_time = gtk_get_current_event_time();
+  }
+
+  gtk_widget_show_all(si->menu);
+
+  gtk_menu_attach_to_widget(GTK_MENU(si->menu), GTK_WIDGET(d->tree), NULL);
+  gtk_menu_popup(GTK_MENU(si->menu), NULL, NULL, NULL, NULL, 
+		 button, event_time);
+
+  g_signal_connect(GTK_OBJECT(si->menu), 
+		   "destroy", G_CALLBACK(popup_destroy), si);
+}
+
+
+/**
+ * For menu popup keyboard button
+ */
+static gboolean
+widget_popup_menu_handler(GtkWidget *widget, gpointer opaque)
+{
+  directory_list_t *d = opaque;
+  do_popup_menu(d, NULL, NULL);
+  return TRUE;
+}
 
 
 /**
@@ -104,7 +271,7 @@ row_activated(GtkTreeView *tree_view, GtkTreePath *path,
   directory_list_t *d = user_data;
   const char *str;
   GtkTreeIter iter;
-  GValue gv = { 0, };
+  GValue gv = { 0 };
 
   gtk_tree_model_get_iter(GTK_TREE_MODEL(d->model), &iter, path);
 
@@ -142,9 +309,11 @@ repaint_cell(directory_list_t *d, gds_cell_t *c)
 #define MOUSE_MOTION      1
 #define MOUSE_LEFTCLICK   2
 #define MOUSE_LEFTRELEASE 3
+#define MOUSE_RIGHTCLICK  4
 
 static int
-mouse_do(directory_list_t *d, GtkTreeView *tree_view, int action, int x, int y)
+mouse_do(directory_list_t *d, GtkTreeView *tree_view, int action, int x, int y,
+	 GdkEventButton *evb)
 {
   GtkTreePath *path;
   GtkTreeViewColumn *column;
@@ -198,6 +367,18 @@ mouse_do(directory_list_t *d, GtkTreeView *tree_view, int action, int x, int y)
     }
     d->presscell = NULL;
     break;
+
+  case MOUSE_RIGHTCLICK:
+    // Clicked on row is selected, operate on entire selection
+    r = gtk_tree_selection_iter_is_selected(d->sel, &iter);
+
+    if(!r) {
+      gtk_tree_selection_unselect_all(d->sel);
+      gtk_tree_selection_select_iter(d->sel, &iter);
+    }
+    url = gu_dir_store_url_from_cell(c);
+    do_popup_menu(d, evb, url);
+    break;
   }
   gtk_tree_path_free(path);
   return r;
@@ -210,7 +391,7 @@ mouse_do(directory_list_t *d, GtkTreeView *tree_view, int action, int x, int y)
 static void
 mouse_motion(GtkTreeView *tree_view, GdkEventMotion *event, gpointer user_data)
 {
-  mouse_do(user_data, tree_view, MOUSE_MOTION, event->x, event->y);
+  mouse_do(user_data, tree_view, MOUSE_MOTION, event->x, event->y, NULL);
 }
 
 
@@ -236,7 +417,18 @@ mouse_leave(GtkTreeView *tree_view, GdkEventCrossing *event, gpointer user_data)
 static gboolean
 mouse_press(GtkTreeView *tree_view, GdkEventButton *event, gpointer user_data)
 {
-  return mouse_do(user_data, tree_view, MOUSE_LEFTCLICK, event->x, event->y);
+  int n;
+  if(event->type != GDK_BUTTON_PRESS)
+    return FALSE;
+
+  if(event->button == 1)
+    n = MOUSE_LEFTCLICK;
+  else if(event->button == 3)
+    n = MOUSE_RIGHTCLICK;
+  else
+    return FALSE;
+
+  return mouse_do(user_data, tree_view, n, event->x, event->y, event);
 }
 
 /**
@@ -245,7 +437,8 @@ mouse_press(GtkTreeView *tree_view, GdkEventButton *event, gpointer user_data)
 static gboolean
 mouse_release(GtkTreeView *tree_view, GdkEventButton *event, gpointer user_data)
 {
-  return mouse_do(user_data, tree_view, MOUSE_LEFTRELEASE, event->x, event->y);
+  return mouse_do(user_data, tree_view, MOUSE_LEFTRELEASE, event->x, event->y,
+		  event);
 }
 
 
@@ -255,7 +448,7 @@ after_scroll(GtkTreeView *tree_view, GdkEvent *event, gpointer user_data)
   directory_list_t *d = user_data;
   if(event->type == GDK_SCROLL) {
     GdkEventScroll *e = (GdkEventScroll *)event;
-    mouse_do(user_data, GTK_TREE_VIEW(d->tree), MOUSE_MOTION, e->x, e->y);
+    mouse_do(user_data, GTK_TREE_VIEW(d->tree), MOUSE_MOTION, e->x, e->y, NULL);
   }
 
   return 0;
@@ -549,6 +742,8 @@ gu_directory_list_create(gtk_ui_t *gu, prop_t *root, int flags)
 
   d->model = gu_dir_store_new(gu, d->psource);
   d->tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(d->model));
+  d->sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(d->tree));
+  gtk_tree_selection_set_mode(d->sel, GTK_SELECTION_MULTIPLE);
 
   gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(d->tree), TRUE);
 
@@ -592,6 +787,9 @@ gu_directory_list_create(gtk_ui_t *gu, prop_t *root, int flags)
 
   g_signal_connect(G_OBJECT(d->tree), "leave-notify-event", 
 		   G_CALLBACK(mouse_leave), d);
+
+  g_signal_connect(G_OBJECT(d->tree), "popup-menu",
+		   G_CALLBACK(widget_popup_menu_handler), d);
 
   g_signal_connect(G_OBJECT(d->model), 
 		   "column-activated", G_CALLBACK(column_activated), d);

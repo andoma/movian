@@ -19,6 +19,7 @@
 #include "navigator.h"
 #include "gu.h"
 #include "showtime.h"
+#include "gu_menu.h"
 
 #include <gdk/gdkkeysyms.h>
 
@@ -141,67 +142,13 @@ m_opendir(GtkWidget *menu_item, gpointer callback_data)
 }
 
 
-/**
- *
- */
-static const char *
-accel_path(const char *path, guint key,  GdkModifierType accel_mods)
-{
-  gtk_accel_map_add_entry(path, key, accel_mods);
-  return path;
-}
-
-
-
-/**
- *
- */
-static GtkWidget *
-add_item(GtkWidget *parent, const char *title,
-	 void (*cb)(GtkWidget *menuitem, gpointer aux),
-	 gpointer aux, const char *image, const char *accel)
-{
-  GtkWidget *w;
-  GtkWidget *img;
-
-  if(image != NULL) {
-    w = gtk_image_menu_item_new_with_mnemonic(title);
-
-    img = gtk_image_new_from_stock(image, GTK_ICON_SIZE_MENU);
-    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(w), img);
-
-
-  } else {
-    w = gtk_menu_item_new_with_mnemonic(title);
-  }
-
-  if(accel != NULL) {
-    gtk_menu_item_set_accel_path(GTK_MENU_ITEM(w), accel);
-  }
-
-  gtk_menu_shell_append(GTK_MENU_SHELL(parent), w);
-  g_signal_connect(G_OBJECT(w), "activate", (void *)cb, aux);
-  return w;
-}
-
-
-/**
- *
- */
-static void
-add_sep(GtkWidget *parent)
-{
-  GtkWidget *w = gtk_separator_menu_item_new();
-  gtk_menu_shell_append(GTK_MENU_SHELL(parent), w);
-}
-
 
 
 /**
  * File menu
  */
 static GtkWidget *
-gu_menu_File(gtk_ui_t *gu, GtkAccelGroup *accel_group)
+gu_menubar_File(gtk_ui_t *gu, GtkAccelGroup *accel_group)
 {
   GtkWidget *M = gtk_menu_item_new_with_mnemonic("_File");
   GtkWidget *m = gtk_menu_new();
@@ -210,22 +157,22 @@ gu_menu_File(gtk_ui_t *gu, GtkAccelGroup *accel_group)
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(M), m);
 
 
-  add_item(m, "_Open File...", 
-	   m_openfile, gu, GTK_STOCK_OPEN,
-	   accel_path("<Showtime-Main>/_File/OpenFile", 
-		      GDK_O, GDK_CONTROL_MASK));
+  gu_menu_add_item(m, "_Open File...", 
+		   m_openfile, gu, GTK_STOCK_OPEN,
+		   gu_menu_accel_path("<Showtime-Main>/_File/OpenFile", 
+				      GDK_O, GDK_CONTROL_MASK));
+  
+  gu_menu_add_item(m, "_Open Directory...", 
+		   m_opendir, gu, GTK_STOCK_OPEN,
+		   gu_menu_accel_path("<Showtime-Main>/_File/OpenDir", 
+				      GDK_D, GDK_CONTROL_MASK));
+  
+  gu_menu_add_sep(m);
 
-  add_item(m, "_Open Directory...", 
-	   m_opendir, gu, GTK_STOCK_OPEN,
-	   accel_path("<Showtime-Main>/_File/OpenDir", 
-		      GDK_D, GDK_CONTROL_MASK));
-
-  add_sep(m);
-
-  add_item(m, "_Quit", 
-	   m_quit, gu, GTK_STOCK_QUIT,
-	   accel_path("<Showtime-Main>/_File/Quit", 
-		      GDK_Q, GDK_CONTROL_MASK));
+  gu_menu_add_item(m, "_Quit", 
+		   m_quit, gu, GTK_STOCK_QUIT,
+		   gu_menu_accel_path("<Showtime-Main>/_File/Quit", 
+				      GDK_Q, GDK_CONTROL_MASK));
   return M;
 }
 
@@ -234,7 +181,7 @@ gu_menu_File(gtk_ui_t *gu, GtkAccelGroup *accel_group)
  * Go menu
  */
 static GtkWidget *
-gu_menu_Go(gtk_ui_t *gu, GtkAccelGroup *accel_group)
+gu_menubar_Go(gtk_ui_t *gu, GtkAccelGroup *accel_group)
 {
   GtkWidget *M = gtk_menu_item_new_with_mnemonic("_Go");
   GtkWidget *m = gtk_menu_new();
@@ -243,10 +190,10 @@ gu_menu_Go(gtk_ui_t *gu, GtkAccelGroup *accel_group)
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(M), m);
 
 
-  add_item(m, "_Playqueue", 
-	   m_openplayqueue, gu, GTK_STOCK_EXECUTE,
-	   accel_path("<Showtime-Main>/_Go/Playqueue", 
-		      GDK_P, GDK_CONTROL_MASK));
+  gu_menu_add_item(m, "_Playqueue", 
+		   m_openplayqueue, gu, GTK_STOCK_EXECUTE,
+		   gu_menu_accel_path("<Showtime-Main>/_Go/Playqueue", 
+				      GDK_P, GDK_CONTROL_MASK));
   return M;
 }
 
@@ -255,7 +202,7 @@ gu_menu_Go(gtk_ui_t *gu, GtkAccelGroup *accel_group)
  * Help menu
  */
 static GtkWidget *
-gu_menu_Help(gtk_ui_t *gu, GtkAccelGroup *accel_group)
+gu_menubar_Help(gtk_ui_t *gu, GtkAccelGroup *accel_group)
 {
   GtkWidget *M = gtk_menu_item_new_with_mnemonic("_Help");
   GtkWidget *m = gtk_menu_new();
@@ -263,9 +210,9 @@ gu_menu_Help(gtk_ui_t *gu, GtkAccelGroup *accel_group)
   gtk_menu_set_accel_group(GTK_MENU(m), accel_group);
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(M), m);
 
-  add_item(m, "_About Showtime", 
-	   m_about, gu, GTK_STOCK_ABOUT,
-	   NULL);
+  gu_menu_add_item(m, "_About Showtime", 
+		   m_about, gu, GTK_STOCK_ABOUT,
+		   NULL);
   return M;
 }
 
@@ -285,13 +232,13 @@ gu_menubar_add(gtk_ui_t *gu, GtkWidget *parent)
 
 
   gtk_menu_shell_append(GTK_MENU_SHELL(menubar),
-			gu_menu_File(gu, accel_group));
+			gu_menubar_File(gu, accel_group));
 
   gtk_menu_shell_append(GTK_MENU_SHELL(menubar),
-			gu_menu_Go(gu, accel_group));
+			gu_menubar_Go(gu, accel_group));
 
   gtk_menu_shell_append(GTK_MENU_SHELL(menubar),
-			gu_menu_Help(gu, accel_group));
+			gu_menubar_Help(gu, accel_group));
 
 
   gtk_window_add_accel_group(GTK_WINDOW(gu->gu_window), accel_group);
