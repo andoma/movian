@@ -140,7 +140,7 @@ be_dvd_canhandle(const char *url)
  *
  */
 static int
-be_dvd_openpage(const char *url0, const char *type0, const char *parent,
+be_dvd_openpage(const char *url0, const char *type0, prop_t *psource,
 		nav_page_t **npp, char *errbuf, size_t errlen)
 {
   nav_page_t *np;
