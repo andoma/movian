@@ -182,12 +182,10 @@ bookmark_load(htsmsg_t *m)
 static void
 bookmarks_callback(void *opaque, prop_event_t event, ...)
 {
-  prop_t *p;
+  prop_t **pv;
 
   va_list ap;
   va_start(ap, event);
-
-  p = va_arg(ap, prop_t *);
 
   switch(event) {
   default:
@@ -197,8 +195,10 @@ bookmarks_callback(void *opaque, prop_event_t event, ...)
     bookmark_add("New bookmark", "none:", NULL);
     break;
 
-  case PROP_REQ_DELETE:
-    prop_destroy(p);
+  case PROP_REQ_DELETE_MULTI:
+    pv = va_arg(ap, prop_t **);
+    for(;*pv != NULL; pv++)
+      prop_destroy(*pv);
     break;
   }
 }

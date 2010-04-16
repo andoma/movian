@@ -88,6 +88,7 @@ typedef struct prop_notify {
 
   union {
     prop_t *p;
+    prop_t **pv;
     float f;
     int i;
     rstr_t *rstr;
@@ -97,9 +98,11 @@ typedef struct prop_notify {
       rstr_t *rtitle;
       rstr_t *rurl;
     } link;
+
   } u;
 
 #define hpn_prop   u.p
+#define hpn_propv  u.pv
 #define hpn_float  u.f
 #define hpn_int    u.i
 #define hpn_rstring u.rstr
@@ -185,6 +188,49 @@ prop_sub_ref_dec(prop_sub_t *s)
 /**
  *
  */
+void
+prop_pvec_free(prop_t **a)
+{
+  void *A = a;
+  for(;*a != NULL; a++)
+    prop_ref_dec(*a);
+  free(A);
+}
+
+/**
+ *
+ */
+int
+prop_pvec_len(prop_t **src)
+{
+  int len = 0;
+  while(src[len] != NULL)
+    len++;
+  return len;
+}
+
+/**
+ *
+ */
+prop_t **
+prop_pvec_clone(prop_t **src)
+{
+  prop_t **r;
+  int i, len = prop_pvec_len(src);
+
+  r = malloc(sizeof(prop_t *) * (1 + len));
+  for(i = 0; i < len; i++) {
+    r[i] = src[i];
+    prop_ref_inc(r[i]);
+  }
+  r[i] = NULL;
+  return r;
+}
+
+
+/**
+ *
+ */
 static void
 prop_notify_free(prop_notify_t *n)
 {
@@ -222,7 +268,6 @@ prop_notify_free(prop_notify_t *n)
   case PROP_ADD_CHILD:
   case PROP_DEL_CHILD:
   case PROP_SELECT_CHILD:
-  case PROP_REQ_DELETE:
   case PROP_REQ_NEW_CHILD:
     if(n->hpn_prop != NULL)
       prop_ref_dec(n->hpn_prop);
@@ -244,6 +289,10 @@ prop_notify_free(prop_notify_t *n)
     break;
 
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
+    break;
+
+  case PROP_REQ_DELETE_MULTI:
+    prop_pvec_free(n->hpn_propv);
     break;
   }
   prop_sub_ref_dec(n->hpn_sub);
@@ -431,7 +480,6 @@ prop_notify_dispatch(struct prop_notify_queue *q)
 
     case PROP_DEL_CHILD:
     case PROP_SELECT_CHILD:
-    case PROP_REQ_DELETE:
     case PROP_REQ_NEW_CHILD:
       if(pt != NULL)
 	pt(s, n->hpn_event, n->hpn_prop);
@@ -462,6 +510,15 @@ prop_notify_dispatch(struct prop_notify_queue *q)
 	pt(s, n->hpn_event);
       else
 	cb(s->hps_opaque, n->hpn_event);
+      break;
+
+    case PROP_REQ_DELETE_MULTI:
+      if(pt != NULL)
+	pt(s, n->hpn_event, n->hpn_propv);
+      else
+	cb(s->hps_opaque, n->hpn_event, n->hpn_propv);
+
+      prop_pvec_free(n->hpn_propv);
       break;
     }
 
@@ -824,6 +881,47 @@ prop_notify_child2(prop_t *child, prop_t *parent, prop_t *sibling,
   LIST_FOREACH(s, &parent->hp_value_subscriptions, hps_value_prop_link)
     if(s != skipme)
       prop_build_notify_child2(s, child, sibling, event, flags);
+}
+
+
+
+/**
+ *
+ */
+static void
+prop_build_notify_childv(prop_sub_t *s, prop_t **childv, prop_event_t event)
+{
+  prop_notify_t *n;
+  int len = 0;
+
+  while(childv[len] != NULL) {
+    atomic_add(&childv[len]->hp_refcount, 1);
+    len++;
+  }
+
+  n = get_notify(s);
+
+
+  n->hpn_propv = malloc(sizeof(prop_t *) * (len + 1));
+  memcpy(n->hpn_propv, childv, sizeof(prop_t *) * (len + 1));
+  n->hpn_flags = 0;
+  n->hpn_event = event;
+  courier_enqueue(s->hps_courier, n);
+}
+
+
+/**
+ *
+ */
+static void
+prop_notify_childv(prop_t **childv, prop_t *parent, prop_event_t event,
+		   prop_sub_t *skipme)
+{
+  prop_sub_t *s;
+
+  LIST_FOREACH(s, &parent->hp_value_subscriptions, hps_value_prop_link)
+    if(s != skipme)
+      prop_build_notify_childv(s, childv, event);
 }
 
 
@@ -2607,18 +2705,12 @@ prop_get_ancestors(prop_t *p)
 
 
 /**
- *
+ * XXX: Remove this
  */
 void
 prop_ancestors_unref(prop_t **r)
 {
-  prop_t **a = r;
-
-  while(*a != NULL) {
-    prop_ref_dec(*a);
-    a++;
-  }
-  free(r);
+  prop_pvec_free(r);
 }
 
 
@@ -2684,10 +2776,25 @@ prop_request_delete(prop_t *c)
   if(c->hp_type != PROP_ZOMBIE) {
     p = c->hp_parent;
 
-    if(p->hp_type == PROP_DIR)
-      prop_notify_child(c, p, PROP_REQ_DELETE, NULL, 0);
+    if(p->hp_type == PROP_DIR) {
+      prop_t *vec[2];
+      vec[0] = c;
+      vec[1] = NULL;
+      prop_notify_childv(vec, p, PROP_REQ_DELETE_MULTI, NULL);
+    }
   }
+  hts_mutex_unlock(&prop_mutex);
+}
 
+
+/**
+ *
+ */
+void
+prop_request_delete_multi(prop_t **vec)
+{
+  hts_mutex_lock(&prop_mutex);
+  prop_notify_childv(vec, vec[0]->hp_parent, PROP_REQ_DELETE_MULTI, NULL);
   hts_mutex_unlock(&prop_mutex);
 }
 

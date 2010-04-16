@@ -49,7 +49,7 @@ typedef enum {
   PROP_MOVE_CHILD,
   PROP_SELECT_CHILD,
   PROP_REQ_NEW_CHILD,
-  PROP_REQ_DELETE,
+  PROP_REQ_DELETE_MULTI,
   PROP_DESTROYED,
   PROP_EXT_EVENT,
   PROP_SUBSCRIPTION_MONITOR_ACTIVE,
@@ -456,6 +456,8 @@ void prop_request_new_child(prop_t *p);
 
 void prop_request_delete(prop_t *p);
 
+void prop_request_delete_multi(prop_t **vec);
+
 #define PROP_COURIER_THREAD 0x1
 
 prop_courier_t *prop_courier_create(hts_mutex_t *entrymutex, int flags,
@@ -471,6 +473,12 @@ prop_t *prop_get_by_names(prop_t *parent, ...)
 htsmsg_t *prop_tree_to_htsmsg(prop_t *p);
 
 void prop_send_ext_event(prop_t *p, event_t *e);
+
+void prop_pvec_free(prop_t **a);
+
+int prop_pvec_len(prop_t **src);
+
+prop_t **prop_pvec_clone(prop_t **src);
 
 /* DEBUGish */
 const char *propname(prop_t *p);
