@@ -545,6 +545,9 @@ siblings_populate(void *opaque, prop_event_t event, ...)
     move_track(pqe, find_source_entry_by_prop(va_arg(ap, prop_t *)));
     break;
 
+  case PROP_REQ_DELETE_MULTI:
+    break;
+
   default:
     fprintf(stderr, "siblings_populate(): Can't handle event %d, aborting\n",
 	    event);
