@@ -187,6 +187,25 @@ glw_load_universe(glw_root_t *gr)
 /**
  *
  */
+static void
+update_in_path(glw_t *w)
+{
+  glw_root_t *gr = w->glw_root;
+  int f = 0;
+  glw_t *p;
+
+  for(p = w->glw_parent; p != NULL; p = p->glw_parent) {
+    if(p == gr->gr_current_focus) f |= GLW_IN_FOCUS_PATH;
+    if(p == gr->gr_pointer_hover) f |= GLW_IN_HOVER_PATH;
+    if(p == gr->gr_pointer_press) f |= GLW_IN_PRESSED_PATH;
+  }
+  w->glw_flags |= f;
+}
+
+
+/**
+ *
+ */
 int
 glw_attrib_set0(glw_t *w, int init, va_list ap)
 {
@@ -240,6 +259,9 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 
       w->glw_parent = p;
       if(p != NULL) {
+	
+	update_in_path(w);
+
 	if(attrib == GLW_ATTRIB_PARENT_BEFORE) {
 	  b = va_arg(ap, void *);
 	  if(b == NULL) {
