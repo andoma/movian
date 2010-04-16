@@ -174,7 +174,7 @@ do_popup_menu(directory_list_t *d, GdkEventButton *event, const char *url)
   if(url != NULL) {
     si->url = strdup(url);
 
-    gu_menu_add_item(si->menu, "_Browse", popup_open, si, NULL, NULL);
+    gu_menu_add_item(si->menu, "_Browse", popup_open, si, NULL, NULL, TRUE);
     //    gu_menu_add_sep(si->menu);
     //    gu_menu_add_item(si->menu, "_Copy", popup_copy, si, NULL, NULL);
 
@@ -184,18 +184,17 @@ do_popup_menu(directory_list_t *d, GdkEventButton *event, const char *url)
     gtk_tree_selection_selected_foreach(d->sel, fillsel, si);
 
     if(si->primary_action == SELINFO_PA_OPEN) {
-      gu_menu_add_item(si->menu, "_Open", popup_open, si, NULL, NULL);
+      gu_menu_add_item(si->menu, "_Open", popup_open, si, NULL, NULL, TRUE);
     } else if(si->primary_action == SELINFO_PA_PLAY) {
-      gu_menu_add_item(si->menu, "_Play", popup_open, si, NULL, NULL);
+      gu_menu_add_item(si->menu, "_Play", popup_open, si, NULL, NULL, TRUE);
     }
 
     // gu_menu_add_sep(si->menu);
     // gu_menu_add_item(si->menu, "_Copy", popup_copy, si, NULL, NULL);
 
-    if(gu_dir_store_can_delete(d->model)) {
-      gu_menu_add_sep(si->menu);
-      gu_menu_add_item(si->menu, "_Delete", popup_delete, si, NULL, NULL);
-    }
+    gu_menu_add_sep(si->menu);
+    gu_menu_add_item(si->menu, "_Delete", popup_delete, si, NULL, NULL,
+		     gu_dir_store_can_delete(d->model));
   }
 
   if(event != NULL) {

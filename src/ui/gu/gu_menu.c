@@ -37,7 +37,8 @@ gu_menu_accel_path(const char *path, guint key,  GdkModifierType accel_mods)
 GtkWidget *
 gu_menu_add_item(GtkWidget *parent, const char *title,
 		 void (*cb)(GtkWidget *menuitem, gpointer aux),
-		 gpointer aux, const char *image, const char *accel)
+		 gpointer aux, const char *image, const char *accel,
+		 gboolean sensitive)
 {
   GtkWidget *w;
   GtkWidget *img;
@@ -57,6 +58,7 @@ gu_menu_add_item(GtkWidget *parent, const char *title,
     gtk_menu_item_set_accel_path(GTK_MENU_ITEM(w), accel);
   }
 
+  gtk_widget_set_sensitive(w, sensitive);
   gtk_menu_shell_append(GTK_MENU_SHELL(parent), w);
   g_signal_connect(G_OBJECT(w), "activate", (void *)cb, aux);
   return w;

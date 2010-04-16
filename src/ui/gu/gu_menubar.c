@@ -160,19 +160,19 @@ gu_menubar_File(gtk_ui_t *gu, GtkAccelGroup *accel_group)
   gu_menu_add_item(m, "_Open File...", 
 		   m_openfile, gu, GTK_STOCK_OPEN,
 		   gu_menu_accel_path("<Showtime-Main>/_File/OpenFile", 
-				      GDK_O, GDK_CONTROL_MASK));
+				      GDK_O, GDK_CONTROL_MASK), TRUE);
   
   gu_menu_add_item(m, "_Open Directory...", 
 		   m_opendir, gu, GTK_STOCK_OPEN,
 		   gu_menu_accel_path("<Showtime-Main>/_File/OpenDir", 
-				      GDK_D, GDK_CONTROL_MASK));
+				      GDK_D, GDK_CONTROL_MASK), TRUE);
   
   gu_menu_add_sep(m);
 
   gu_menu_add_item(m, "_Quit", 
 		   m_quit, gu, GTK_STOCK_QUIT,
 		   gu_menu_accel_path("<Showtime-Main>/_File/Quit", 
-				      GDK_Q, GDK_CONTROL_MASK));
+				      GDK_Q, GDK_CONTROL_MASK), TRUE);
   return M;
 }
 
@@ -193,7 +193,7 @@ gu_menubar_Go(gtk_ui_t *gu, GtkAccelGroup *accel_group)
   gu_menu_add_item(m, "_Playqueue", 
 		   m_openplayqueue, gu, GTK_STOCK_EXECUTE,
 		   gu_menu_accel_path("<Showtime-Main>/_Go/Playqueue", 
-				      GDK_P, GDK_CONTROL_MASK));
+				      GDK_P, GDK_CONTROL_MASK), TRUE);
   return M;
 }
 
@@ -212,7 +212,7 @@ gu_menubar_Help(gtk_ui_t *gu, GtkAccelGroup *accel_group)
 
   gu_menu_add_item(m, "_About Showtime", 
 		   m_about, gu, GTK_STOCK_ABOUT,
-		   NULL);
+		   NULL, TRUE);
   return M;
 }
 

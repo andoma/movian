@@ -24,7 +24,8 @@ const char *gu_menu_accel_path(const char *path,
 
 GtkWidget *gu_menu_add_item(GtkWidget *parent, const char *title,
 			    void (*cb)(GtkWidget *menuitem, gpointer aux),
-			    gpointer aux, const char *image, const char *accel);
+			    gpointer aux, const char *image, const char *accel,
+			    gboolean sensitive);
 
 
 void gu_menu_add_sep(GtkWidget *parent);
