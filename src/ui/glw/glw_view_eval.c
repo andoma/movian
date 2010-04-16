@@ -1079,7 +1079,7 @@ prop_callback(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_REQ_NEW_CHILD:
-  case PROP_REQ_DELETE:
+  case PROP_REQ_DELETE_MULTI:
   case PROP_DESTROYED:
   case PROP_EXT_EVENT:
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
