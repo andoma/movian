@@ -487,8 +487,9 @@ eval_array(glw_view_eval_context_t *pec, token_t *t0)
   memset(&ec, 0, sizeof(ec));
   ec.debug = pec->debug;
   ec.ei = pec->ei;
-  ec.prop0 = pec->prop0;
+  ec.prop = pec->prop;
   ec.prop_parent = pec->prop_parent;
+  ec.prop_view = pec->prop_view;
   ec.rpn = pec->rpn;
   ec.gr = pec->gr;
   ec.passive_subscriptions = pec->passive_subscriptions;
@@ -578,8 +579,9 @@ resolve_property_name(glw_view_eval_context_t *ec, token_t *a)
   
   ui = ec->w ? ec->w->glw_root->gr_uii.uii_prop : NULL;
   p = prop_get_by_name(pname, 0, 
-		       PROP_TAG_NAMED_ROOT, ec->prop0, "self",
+		       PROP_TAG_NAMED_ROOT, ec->prop, "self",
 		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
+		       PROP_TAG_NAMED_ROOT, ec->prop_view, "view",
 		       PROP_TAG_ROOT, ui,
 		       NULL);
 
@@ -811,7 +813,7 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
   b = before ? cloner_find_child(before, parent) : gps->gps_anchor;
 
   memset(&n, 0, sizeof(n));
-  n.prop0 = p;
+  n.prop = p;
   n.prop_parent = gps->gps_originating_prop;
   n.ei = ei;
   n.gr = parent->glw_root;
@@ -1126,9 +1128,9 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self)
 
   gps = calloc(1, sizeof(glw_prop_sub_t));
 
-  gps->gps_originating_prop = ec->prop0;
-  if(ec->prop0 != NULL)
-    prop_ref_inc(ec->prop0);
+  gps->gps_originating_prop = ec->prop;
+  if(ec->prop != NULL)
+    prop_ref_inc(ec->prop);
 
   TAILQ_INIT(&gps->gps_pending);
 
@@ -1141,15 +1143,16 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self)
 		     PROP_TAG_CALLBACK, prop_callback, gps,
 		     PROP_TAG_NAME_VECTOR, propname,
 		     PROP_TAG_COURIER, w->glw_root->gr_courier,
-		     PROP_TAG_NAMED_ROOT, ec->prop0, "self",
+		     PROP_TAG_NAMED_ROOT, ec->prop, "self",
 		     PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
+		     PROP_TAG_NAMED_ROOT, ec->prop_view, "view",
 		     PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
 		     NULL);
 
   if(s == NULL) {
 
-    if(ec->prop0 != NULL)
-      prop_ref_dec(ec->prop0);
+    if(ec->prop != NULL)
+      prop_ref_dec(ec->prop);
 
 #ifdef GLW_VIEW_ERRORINFO
     rstr_release(gps->gps_file);
@@ -1296,8 +1299,9 @@ glw_view_eval_rpn(token_t *t, glw_view_eval_context_t *pec, int *copyp)
   memset(&ec, 0, sizeof(ec));
   ec.debug = pec->debug;
   ec.ei = pec->ei;
-  ec.prop0 = pec->prop0;
+  ec.prop = pec->prop;
   ec.prop_parent = pec->prop_parent;
+  ec.prop_view = pec->prop_view;
   ec.w = pec->w;
   ec.rpn = t;
   ec.gr = pec->gr;
@@ -1400,15 +1404,16 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
     return glw_view_seterr(ec->ei, self, "widget: Invalid class");
 
   memset(&n, 0, sizeof(n));
-  n.prop0 = ec->prop0;
+  n.prop = ec->prop;
   n.prop_parent = ec->prop_parent;
+  n.prop_view = ec->prop_view;
   n.ei = ec->ei;
   n.gr = ec->gr;
   n.w = glw_create_i(ec->gr,
 		     c,
 		     GLW_ATTRIB_FREEZE, 1,
 		     GLW_ATTRIB_PARENT, ec->w,
-		     GLW_ATTRIB_PROPROOTS, ec->prop0, ec->prop_parent,
+		     GLW_ATTRIB_PROPROOTS, ec->prop, ec->prop_parent,
 		     NULL);
   
   n.sublist = &n.w->glw_prop_subscriptions;
@@ -1573,9 +1578,8 @@ glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   LIST_INIT(&l);
 
   memset(&n, 0, sizeof(n));
-  n.prop0 = b->prop;
+  n.prop = b->prop;
   n.prop_parent = b->prop_parent;
-  n.ei = NULL;
   n.gr = w->glw_root;
   n.w = w;
   n.passive_subscriptions = 1;
@@ -1620,7 +1624,7 @@ glw_event_map_eval_block_create(glw_view_eval_context_t *ec,
 
   b->block = glw_view_clone_chain(block);
 
-  b->prop = ec->prop0;
+  b->prop = ec->prop;
   if(b->prop)
     prop_ref_inc(b->prop);
 
@@ -2359,7 +2363,7 @@ glwf_createchild(glw_view_eval_context_t *ec, struct token *self,
   r = ec->w ? ec->w->glw_root->gr_uii.uii_prop : NULL;
 
   p = prop_get_by_name(propname, 1, 
-		       PROP_TAG_NAMED_ROOT, ec->prop0, "self",
+		       PROP_TAG_NAMED_ROOT, ec->prop, "self",
 		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
 		       PROP_TAG_ROOT, r,
 		       NULL);
@@ -2559,7 +2563,7 @@ glwf_bind(glw_view_eval_context_t *ec, struct token *self,
       propname[i++]  = rstr_get(t->t_rstring);
     propname[i] = NULL;
 
-    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY, ec->prop0, propname, NULL);
+    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY, ec->prop, propname, NULL);
 
   } else if(a != NULL && a->type == TOKEN_STRING) {
     glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_ID, rstr_get(a->t_rstring), NULL);
@@ -2608,8 +2612,9 @@ glwf_delta(glw_view_eval_context_t *ec, struct token *self,
   propname[i] = NULL;
 
   p = prop_get_by_name(propname, 0, 
-		       PROP_TAG_NAMED_ROOT, ec->prop0, "self",
+		       PROP_TAG_NAMED_ROOT, ec->prop, "self",
 		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
+		       PROP_TAG_NAMED_ROOT, ec->prop_view, "view",
 		       PROP_TAG_ROOT, ec->w->glw_root->gr_uii.uii_prop,
 		       NULL);
 

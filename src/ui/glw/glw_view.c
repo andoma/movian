@@ -27,6 +27,12 @@
 #include "glw.h"
 #include "glw_view.h"
 
+typedef struct glw_view {
+  glw_t w;
+  prop_t *viewprop;
+
+} glw_view_t;
+
 
 /**
  *
@@ -35,6 +41,7 @@ static int
 glw_view_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_t *c = TAILQ_FIRST(&w->glw_childs);
+  glw_view_t *v = (glw_view_t *)w;
 
   switch(signal) {
   case GLW_SIGNAL_LAYOUT:
@@ -46,6 +53,10 @@ glw_view_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
     glw_copy_constraints(w, extra);
     return 1;
+
+  case GLW_SIGNAL_DTOR:
+    prop_destroy(v->viewprop);
+    break;
 
   default:
     break;
@@ -70,7 +81,7 @@ glw_view_render(glw_t *w, glw_rctx_t *rc)
  */
 static glw_class_t glw_view = {
   .gc_name = "view",
-  .gc_instance_size = sizeof(glw_t),
+  .gc_instance_size = sizeof(glw_view_t),
   .gc_render = glw_view_render,
   .gc_signal_handler = glw_view_callback,
 };
@@ -121,6 +132,7 @@ glw_view_create(glw_root_t *gr, const char *src,
   glw_t *r;
   glw_view_eval_context_t ec;
   glw_cached_view_t *gcv;
+  glw_view_t *v;
 
   LIST_FOREACH(gcv, &gr->gr_views, gcv_link) {
     if(!strcmp(gcv->gcv_source, src))
@@ -171,11 +183,13 @@ glw_view_create(glw_root_t *gr, const char *src,
 		   GLW_ATTRIB_CAPTION, src,
 		   GLW_ATTRIB_PARENT, parent,
 		   NULL);
+  v = (glw_view_t *)r;
   ec.gr = gr;
   ec.w = r;
   ec.ei = &ei;
-  ec.prop0 = prop;
+  ec.prop = prop;
   ec.prop_parent = prop_parent;
+  v->viewprop = ec.prop_view = prop_create(NULL, NULL);
   ec.sublist = &ec.w->glw_prop_subscriptions;
 
   if(glw_view_eval_block(t, &ec)) {
