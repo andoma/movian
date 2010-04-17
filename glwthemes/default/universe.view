@@ -57,7 +57,7 @@ widget(container_z, {
 	      widget(label, {
 		.align = center;
 		.sizeBias = 12;
-		.caption = $global.nav.currentpage.title;
+		.caption = $global.nav.currentpage.source.metadata.title;
 	      });
 	      
 	      widget(container_x, {

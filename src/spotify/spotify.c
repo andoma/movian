@@ -2602,8 +2602,9 @@ static void
 create_prop_rootlist(prop_t *parent)
 {
   prop_t *p = prop_rootlist_source = prop_create(parent, "playlists");
-
-  prop_set_string(prop_create(p, "title"), "Spotify playlists");
+  prop_t *metadata = prop_create(p, "metadata");
+  
+  prop_set_string(prop_create(metadata, "title"), "Spotify playlists");
   prop_set_string(prop_create(p, "type"), "directory");
   prop_link(prop_syncing_playlists, prop_create(p, "loading"));
 }

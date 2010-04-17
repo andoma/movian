@@ -74,7 +74,7 @@ static int
 file_open_dir(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
 {
   be_file_page_t *bfp;
-  prop_t *src, *view;
+  prop_t *src, *view, *metadata;
   int type, l;
   char *dirname;
   char *parent, *x;
@@ -108,7 +108,10 @@ file_open_dir(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
     dirname[l - 1] = 0;
 
   dirname = strrchr(dirname, '/') ? strrchr(dirname, '/') + 1 : dirname;
-  prop_set_string(prop_create(src, "title"), dirname);
+
+  metadata = prop_create(src, "metadata");
+
+  prop_set_string(prop_create(metadata, "title"), dirname);
 
   x = strstr(parent, "://");
   if(x != NULL) {

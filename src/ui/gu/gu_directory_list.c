@@ -699,7 +699,7 @@ add_headers(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
   gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
 
   s = prop_subscribe(0,
-		     PROP_TAG_NAME("self", "title"),
+		     PROP_TAG_NAME("self", "metadata", "title"),
 		     PROP_TAG_CALLBACK_STRING, view_list_header_set_title, w,
 		     PROP_TAG_COURIER, gu->gu_pc, 
 		     PROP_TAG_NAMED_ROOT, root, "self",
