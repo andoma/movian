@@ -38,6 +38,8 @@ struct video_output *x11_vo_create(Display *dpy, int win,
 
 void x11_vo_dimension(struct video_output *vo, int x, int y, int w, int h);
 
+void x11_vo_exposed(struct video_output *vo);
+
 void x11_vo_destroy(struct video_output *vo);
 
 

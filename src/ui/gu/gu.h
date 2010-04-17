@@ -46,7 +46,17 @@ typedef struct gtk_ui {
 
   LIST_HEAD(, popup) popups;
 
+  int gu_fullwindow;
+
+  GtkWidget *gu_vbox;
+  GtkWidget *gu_menubar;
+  GtkWidget *gu_toolbar;
+  GtkWidget *gu_playdeck;
+  GtkWidget *gu_statusbar;
+
 } gtk_ui_t;
+
+void gu_fullwindow_update(gtk_ui_t *gu);
 
 
 /**
@@ -73,26 +83,29 @@ typedef struct gu_nav_page {
   prop_sub_t *gnp_sub_type;
   prop_sub_t *gnp_sub_url;
 
-} gu_nav_page_t;
+  int gnp_fullwindow;
 
+} gu_nav_page_t;
 
 void gu_nav_pages(void *opaque, prop_event_t event, ...);
 
 void gu_directory_create(gu_nav_page_t *gnp);
 
-void gu_menubar_add(gtk_ui_t *gu, GtkWidget *parent);
+GtkWidget *gu_menubar_add(gtk_ui_t *gu, GtkWidget *parent);
 
-void gu_toolbar_add(gtk_ui_t *gu, GtkWidget *parent);
+GtkWidget *gu_toolbar_add(gtk_ui_t *gu, GtkWidget *parent);
 
-void gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent);
+GtkWidget *gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent);
 
-void gu_statusbar_add(gtk_ui_t *gu, GtkWidget *parent);
+GtkWidget *gu_statusbar_add(gtk_ui_t *gu, GtkWidget *parent);
 
 void gu_popup_init(gtk_ui_t *gu);
 
 void gu_home_create(gu_nav_page_t *gnp);
 
 void gu_video_create(gu_nav_page_t *gnp);
+
+void gu_page_set_fullwindow(gu_nav_page_t *gnp, int enable);
 
 /**
  * gu_helpers.c

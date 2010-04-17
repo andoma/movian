@@ -63,7 +63,6 @@ static int
 gu_start(ui_t *ui, int argc, char **argv, int primary)
 {
   GtkWidget *win;
-  GtkWidget *vbox;
   gtk_ui_t *gu = calloc(1, sizeof(gtk_ui_t));
 
   XInitThreads();
@@ -92,20 +91,19 @@ gu_start(ui_t *ui, int argc, char **argv, int primary)
 		   G_CALLBACK(gu_close), NULL);
 
 
-  vbox = gtk_vbox_new(FALSE, 1);
-  gtk_container_set_border_width(GTK_CONTAINER(vbox), 1);
-  gtk_container_add(GTK_CONTAINER(win), vbox);
+  gu->gu_vbox = gtk_vbox_new(FALSE, 1);
+  gtk_container_add(GTK_CONTAINER(win), gu->gu_vbox);
 
   /* Menubar */
-  gu_menubar_add(gu, vbox);
+  gu->gu_menubar = gu_menubar_add(gu, gu->gu_vbox);
  
   /* Top Toolbar */
-  gu_toolbar_add(gu, vbox);
+  gu->gu_toolbar = gu_toolbar_add(gu, gu->gu_vbox);
 
   /* Page container */
   gu->gu_page_container = gtk_vbox_new(FALSE, 0);
   gtk_container_set_border_width(GTK_CONTAINER(gu->gu_page_container), 0);
-  gtk_box_pack_start(GTK_BOX(vbox), gu->gu_page_container, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(gu->gu_vbox), gu->gu_page_container, TRUE, TRUE, 0);
 
   prop_subscribe(0,
 		 PROP_TAG_NAME("global", "nav", "pages"),
@@ -114,10 +112,10 @@ gu_start(ui_t *ui, int argc, char **argv, int primary)
 		 NULL);
 
   /* Playback controls */
-  gu_playdeck_add(gu, vbox);
+  gu->gu_playdeck = gu_playdeck_add(gu, gu->gu_vbox);
 
   /* Statusbar */
-  gu_statusbar_add(gu, vbox);
+  gu->gu_statusbar = gu_statusbar_add(gu, gu->gu_vbox);
 
   /* Init popup controller */
   gu_popup_init(gu);
@@ -127,6 +125,31 @@ gu_start(ui_t *ui, int argc, char **argv, int primary)
   return 0;
 }
 
+
+/**
+ *
+ */
+void
+gu_fullwindow_update(gtk_ui_t *gu)
+{
+  int req = gu->gu_page_current ? gu->gu_page_current->gnp_fullwindow : 0;
+  
+  if(req == gu->gu_fullwindow)
+    return;
+
+  gu->gu_fullwindow = req;
+  if(gu->gu_menubar != NULL)
+    g_object_set(G_OBJECT(gu->gu_menubar), "visible", !req, NULL);
+
+  if(gu->gu_toolbar != NULL)
+    g_object_set(G_OBJECT(gu->gu_toolbar), "visible", !req, NULL);
+
+  if(gu->gu_playdeck != NULL)
+    g_object_set(G_OBJECT(gu->gu_playdeck), "visible", !req, NULL);
+
+  if(gu->gu_statusbar != NULL)
+    g_object_set(G_OBJECT(gu->gu_statusbar), "visible", !req, NULL);
+}
 
 
 /**

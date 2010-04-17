@@ -220,7 +220,7 @@ gu_menubar_Help(gtk_ui_t *gu, GtkAccelGroup *accel_group)
 /**
  *
  */
-void
+GtkWidget *
 gu_menubar_add(gtk_ui_t *gu, GtkWidget *parent)
 {
   GtkAccelGroup *accel_group;
@@ -242,6 +242,7 @@ gu_menubar_add(gtk_ui_t *gu, GtkWidget *parent)
 
 
   gtk_window_add_accel_group(GTK_WINDOW(gu->gu_window), accel_group);
+  return menubar;
 }
 
 

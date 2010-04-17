@@ -150,6 +150,9 @@ gu_nav_page_display(gtk_ui_t *gu, gu_nav_page_t *gnp)
 
   gu->gu_page_current = gnp;
   gtk_widget_show(gnp->gnp_pagebin);
+
+  gu_fullwindow_update(gnp->gnp_gu);
+
 }
 
 
@@ -201,4 +204,15 @@ gu_nav_pages(void *opaque, prop_event_t event, ...)
 	    "gu_nav_pages(): Can not handle event %d, aborting()\n", event);
     abort();
   }
+}
+
+
+/**
+ *
+ */
+void
+gu_page_set_fullwindow(gu_nav_page_t *gnp, int enable)
+{
+  gnp->gnp_fullwindow = enable;
+  gu_fullwindow_update(gnp->gnp_gu);
 }

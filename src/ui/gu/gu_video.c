@@ -37,7 +37,6 @@ video_unrealize(GtkWidget *w, gpointer opaque)
   x11_vo_destroy(opaque);
 }
 
-
 /**
  *
  */
@@ -56,17 +55,25 @@ static gboolean
 expose_event_callback(GtkWidget *w, GdkEventExpose *e,
 			 gpointer user_data)
 {
-  GdkColor col = {0};
-  GdkGC *gc = gdk_gc_new(w->window);
-
-  gdk_gc_set_foreground(gc, &col);
-  gdk_draw_rectangle(w->window, gc, TRUE,
-		     0, 0, w->allocation.width, w->allocation.height);
-
-  g_object_unref(G_OBJECT(gc));
+  x11_vo_exposed(user_data);
   return FALSE;
 }
 
+
+/**
+ *
+ */
+static gboolean
+mouse_press(GtkWidget *w, GdkEventButton *event, gpointer user_data)
+{
+  gu_nav_page_t *gnp = user_data;
+
+  if(event->button == 1) {
+    gu_page_set_fullwindow(gnp, !gnp->gnp_fullwindow);
+    return TRUE;
+  }
+  return FALSE;
+}
 
 
 /**
@@ -101,14 +108,24 @@ gu_video_create(gu_nav_page_t *gnp)
 
   g_signal_connect(G_OBJECT(gnp->gnp_pageroot), 
 		   "expose_event",
-                    G_CALLBACK(expose_event_callback), NULL);
+                    G_CALLBACK(expose_event_callback), vo);
 
-  g_signal_connect(G_OBJECT(gnp->gnp_pageroot), 
+  g_signal_connect_after(G_OBJECT(gnp->gnp_pageroot), 
 		   "configure_event",
                     G_CALLBACK(configure_event_callback), vo);
 
   g_signal_connect(GTK_OBJECT(gnp->gnp_pageroot), 
 		   "unrealize", G_CALLBACK(video_unrealize), vo);
+
+  g_signal_connect(G_OBJECT(gnp->gnp_pageroot), 
+		   "button-press-event", 
+		   G_CALLBACK(mouse_press), gnp);
+
+  gtk_widget_add_events(gnp->gnp_pageroot, 
+			GDK_BUTTON_PRESS_MASK |
+			GDK_BUTTON_RELEASE_MASK);
+
+  gu_page_set_fullwindow(gnp, 1);
 }
 
 

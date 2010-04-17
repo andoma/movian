@@ -309,23 +309,25 @@ set_current_album(void *opaque, const char *str)
 /**
  *
  */
-void
+GtkWidget *
 gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent)
 {
   GtkToolItem *ti;
   GtkWidget *w;
   GtkWidget *l;
   GtkWidget *vbox;
-
+  GtkWidget *playdeck;
   playdeck_t *pd = calloc(1, sizeof(playdeck_t));
 
+  playdeck = gtk_vbox_new(FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(parent), playdeck, FALSE, TRUE, 0);
 
   w = gtk_hseparator_new();
-  gtk_box_pack_start(GTK_BOX(parent), w, FALSE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(playdeck), w, FALSE, TRUE, 0);
   
 
   pd->root = gtk_hbox_new(FALSE, 1);
-  gtk_box_pack_start(GTK_BOX(parent), pd->root, FALSE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(playdeck), pd->root, FALSE, TRUE, 0);
 
   /* Playdeck album art */
   w = gtk_image_new();
@@ -473,6 +475,6 @@ gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent)
 		   PROP_TAG_CALLBACK_FLOAT, update_mastervol, pd,
 		   PROP_TAG_COURIER, gu->gu_pc,
 		   NULL);
-
+  return playdeck;
 }
 

@@ -108,7 +108,7 @@ up_clicked(GtkToolButton *toolbutton, gpointer user_data)
 /**
  *
  */
-void
+GtkWidget *
 gu_toolbar_add(gtk_ui_t *gu, GtkWidget *parent)
 {
   GtkToolItem *ti;
@@ -172,5 +172,6 @@ gu_toolbar_add(gtk_ui_t *gu, GtkWidget *parent)
 		 PROP_TAG_COURIER, gu->gu_pc,
 		 NULL);
 
+  return toolbar;
 }
 

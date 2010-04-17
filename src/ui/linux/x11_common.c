@@ -137,6 +137,8 @@ typedef struct video_output {
 
   struct x11_screensaver_state *vo_xss;
 
+  int vo_repaint;
+
 } video_output_t;
 
 
@@ -346,9 +348,19 @@ x11_vo_dimension(struct video_output *vo, int x, int y, int w, int h)
   vo->vo_y = y;
   vo->vo_w = w;
   vo->vo_h = h;
+  vo->vo_repaint = 1;
 
   mp_send_cmd_u32_head(vo->vo_mp, &vo->vo_mp->mp_video, MB_REQ_OUTPUT_SIZE,
 		       (w << 16) | h);
+}
+
+/**
+ *
+ */
+void
+x11_vo_exposed(struct video_output *vo)
+{
+  vo->vo_repaint = 1;
 }
 
 
@@ -445,8 +457,14 @@ xv_video_frame_deliver(struct video_decoder *vd,
 
     XSync(vo->vo_dpy, False);
     shmctl(vo->vo_shm.shmid, IPC_RMID, 0);
+    vo->vo_repaint = 1;
   }
   
+  if(vo->vo_repaint) {
+    vo->vo_repaint = 0;
+    XFillRectangle(vo->vo_dpy, vo->vo_win, vo->vo_gc, 0, 0, vo->vo_w, vo->vo_h);
+  }
+
   int i;
   for(i = 0; i < 3; i++) {
     int w = width;
@@ -584,6 +602,13 @@ xi_video_frame_deliver(struct video_decoder *vd,
 	    vo->vo_visualinfo.green_mask,
 	    vo->vo_visualinfo.blue_mask,
 	    vo->vo_depth);
+
+    vo->vo_repaint = 1;
+  }
+
+  if(vo->vo_repaint) {
+    vo->vo_repaint = 0;
+    XFillRectangle(vo->vo_dpy, vo->vo_win, vo->vo_gc, 0, 0, vo->vo_w, vo->vo_h);
   }
 
   if(vo->vo_pix_fmt == -1)

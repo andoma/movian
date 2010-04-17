@@ -108,7 +108,7 @@ notifications_update(void *opaque, prop_event_t event, ...)
 /**
  *
  */
-void
+GtkWidget *
 gu_statusbar_add(gtk_ui_t *gu, GtkWidget *parent)
 {
 
@@ -126,7 +126,6 @@ gu_statusbar_add(gtk_ui_t *gu, GtkWidget *parent)
 		 PROP_TAG_CALLBACK, notifications_update, sb,
 		 PROP_TAG_COURIER, gu->gu_pc, 
 		 NULL);
-
-
+  return sb->bar;
 }
 
