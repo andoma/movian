@@ -124,15 +124,77 @@ add_prop(fa_dir_entry_t *fde, prop_t *root, fa_dir_entry_t *before)
  *
  */
 static struct strtab postfixtab[] = {
+  { "iso",             CONTENT_DVD },
+  
   { "jpeg",            CONTENT_IMAGE },
   { "jpg",             CONTENT_IMAGE },
+  { "png",             CONTENT_IMAGE },
+  { "gif",             CONTENT_IMAGE },
+
+  { "mp3",             CONTENT_AUDIO },
+  { "m4a",             CONTENT_AUDIO },
+  { "flac",            CONTENT_AUDIO },
+  { "aac",             CONTENT_AUDIO },
+  { "wma",             CONTENT_AUDIO },
+
+  { "mkv",             CONTENT_VIDEO },
+  { "avi",             CONTENT_VIDEO },
+  { "mov",             CONTENT_VIDEO },
+  { "m4v",             CONTENT_VIDEO },
+  { "ts",              CONTENT_VIDEO },
+  { "mpg",             CONTENT_VIDEO },
+  { "wmv",             CONTENT_VIDEO },
+
+  { "pdf",             CONTENT_UNKNOWN },
 };
+
 
 /**
  *
  */
 static void
-meta_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
+quick_analyzer(fa_dir_t *fd, prop_t *viewprop)
+{
+  fa_dir_entry_t *fde;
+  int type;
+  const char *str;
+  int images = 0;
+
+  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+
+    if(fde->fde_probestatus != FDE_PROBE_NONE)
+      continue;
+
+    if(fde->fde_type == CONTENT_DIR)
+      continue;
+    
+    if((str = strrchr(fde->fde_filename, '.')) == NULL)
+      continue;
+    str++;
+    
+    if((type = str2val(str, postfixtab)) == -1)
+      continue;
+
+    fde->fde_type = type;
+    fde->fde_probestatus = FDE_PROBE_FILENAME;
+
+    if(type == CONTENT_IMAGE)
+      images++;
+  }
+
+  if(viewprop == NULL)
+    return;
+  
+  if(images * 4 > fd->fd_count * 3)
+    prop_set_string(viewprop, "images");
+}
+
+
+/**
+ *
+ */
+static void
+deep_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
 {
   int type;
   prop_t *metadata, *p;
@@ -148,7 +210,6 @@ meta_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
   char buf[URL_MAX];
   int trackidx;
   fa_dir_entry_t *fde;
-  const char *str;
 
   /* Empty */
   if(fd->fd_count == 0) {
@@ -160,23 +221,10 @@ meta_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
   /* Scan all entries */
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
 
-    if(fde->fde_type == CONTENT_UNKNOWN)
+    if(fde->fde_probestatus == FDE_PROBE_DEEP)
       continue;
 
-    if(fde->fde_type == CONTENT_FILE) {
-
-      if((str = strrchr(fde->fde_filename, '.')) != NULL) {
-	str++;
-
-	/* Check filename postfix */
-	if((type = str2val(str, postfixtab)) >= 0) {
-
-	  fde->fde_type = type;
-	  if(fde->fde_prop != NULL)
-	    set_type(fde->fde_prop, fde->fde_type);
-	}
-      }
-    }
+    fde->fde_probestatus = FDE_PROBE_DEEP;
 
     metadata = fde->fde_prop ? prop_create(fde->fde_prop, "metadata") : NULL;
 
@@ -189,7 +237,7 @@ meta_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
     
       if(fde->fde_type == CONTENT_DIR) {
 	type = fa_probe_dir(metadata, fde->fde_url);
-      } else if(fde->fde_type == CONTENT_FILE) {
+      } else {
 	type = fa_probe(metadata, fde->fde_url, NULL, 0, buf, sizeof(buf),
 			fde->fde_statdone ? &fde->fde_stat : NULL);
 
@@ -402,7 +450,7 @@ scanner_notification(void *opaque, fa_notify_op_t op, const char *filename,
     scanner_entry_setup(s, fa_dir_insert(s->s_fd, url, filename, type));
     break;
   }
-  meta_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
+  deep_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
 }
 
 
@@ -476,7 +524,7 @@ rescan(scanner_t *s)
   fa_dir_sort(s->s_fd);
 
   if(change)
-    meta_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
+    deep_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
 }
 
 
@@ -491,16 +539,15 @@ doscan(scanner_t *s)
 
   fa_dir_sort(s->s_fd);
 
-  meta_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
+  quick_analyzer(s->s_fd, s->s_viewprop);
 
-  /* Add filename and type */
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
     if(s->s_stop)
       return;
     add_prop(fde, s->s_nodes, NULL);
   }
 
-  meta_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
+  deep_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
 
   if(!fa_notify(s->s_url, s, scanner_notification, scanner_checkstop))
     return;

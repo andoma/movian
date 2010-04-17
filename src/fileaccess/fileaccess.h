@@ -45,6 +45,13 @@ typedef struct fa_dir_entry {
   int   fde_type; /* CONTENT_ .. types from showtime.h */
   void *fde_prop;
 
+  enum {
+    FDE_PROBE_NONE,
+    FDE_PROBE_FILENAME,
+    FDE_PROBE_DEEP,
+
+  } fde_probestatus;
+
   int fde_statdone;
   struct stat fde_stat;
 } fa_dir_entry_t;
