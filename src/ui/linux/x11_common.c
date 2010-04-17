@@ -177,8 +177,6 @@ init_with_xv(video_output_t *vo)
   unsigned int num_ai;
   int i, j;
 
-  return 0;
-
   if(XvQueryAdaptors(vo->vo_dpy, DefaultRootWindow(vo->vo_dpy),
 		     &num_ai, &ai) != Success) {
     TRACE(TRACE_DEBUG, "X11", "No XV adaptors available");
