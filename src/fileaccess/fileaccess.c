@@ -453,31 +453,6 @@ fa_dir_free(fa_dir_t *fd)
   free(fd);
 }
 
-/**
- *
- */
-fa_dir_entry_t *
-fa_dir_add(fa_dir_t *fd, const char *url, const char *filename, int type)
-{
-  fa_dir_entry_t *fde;
-
-  if(filename[0] == '.')
-    return NULL; /* Skip all dot-filenames */
-
-  fde = malloc(sizeof(fa_dir_entry_t));
-
-  fde->fde_url      = strdup(url);
-  fde->fde_filename = strdup(filename);
-  fde->fde_type     = type;
-  fde->fde_prop     = NULL;
-  fde->fde_statdone = 0;
-  memset(&fde->fde_stat, 0, sizeof(struct stat));
-
-  TAILQ_INSERT_TAIL(&fd->fd_entries, fde, fde_link);
-  fd->fd_count++;
-  return fde;
-}
-
 
 /**
  *
@@ -492,20 +467,48 @@ fa_dir_insert_compar(fa_dir_entry_t *a, fa_dir_entry_t *b)
 /**
  *
  */
-fa_dir_entry_t *
-fa_dir_insert(fa_dir_t *fd, const char *url, const char *filename, int type)
+static fa_dir_entry_t *
+fde_create(fa_dir_t *fd, const char *url, const char *filename, int type,
+	   int sorted)
 {
   fa_dir_entry_t *fde;
+ 
+  if(filename[0] == '.')
+    return NULL; /* Skip all dot-filenames */
 
-  fde = malloc(sizeof(fa_dir_entry_t));
-
+  fde = calloc(1, sizeof(fa_dir_entry_t));
+ 
   fde->fde_url      = strdup(url);
   fde->fde_filename = strdup(filename);
   fde->fde_type     = type;
-  fde->fde_prop     = NULL;
-  TAILQ_INSERT_SORTED(&fd->fd_entries, fde, fde_link, fa_dir_insert_compar);
+
+  if(sorted) {
+    TAILQ_INSERT_SORTED(&fd->fd_entries, fde, fde_link, fa_dir_insert_compar);
+  } else {
+    TAILQ_INSERT_TAIL(&fd->fd_entries, fde, fde_link);
+  }
   fd->fd_count++;
   return fde;
+}
+
+/**
+ *
+ */
+fa_dir_entry_t *
+fa_dir_add(fa_dir_t *fd, const char *url, const char *filename, int type)
+{
+  return fde_create(fd, url, filename, type, 0);
+}
+
+
+
+/**
+ *
+ */
+fa_dir_entry_t *
+fa_dir_insert(fa_dir_t *fd, const char *url, const char *filename, int type)
+{
+  return fde_create(fd, url, filename, type, 1);
 }
 
 
