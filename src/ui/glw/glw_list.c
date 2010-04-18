@@ -62,13 +62,13 @@ glw_list_update_metrics(glw_list_t *l, float max, float val)
   if(!do_update)
     return;
 
-  if(max > 0 && !(l->w.glw_flags & GLW_NEED_SCROLL)) {
-    l->w.glw_flags |= GLW_NEED_SCROLL;
-    glw_signal0(&l->w, GLW_SIGNAL_NEED_SCROLL_CHANGED, NULL);
+  if(max > 0 && !(l->w.glw_flags & GLW_CAN_SCROLL)) {
+    l->w.glw_flags |= GLW_CAN_SCROLL;
+    glw_signal0(&l->w, GLW_SIGNAL_CAN_SCROLL_CHANGED, NULL);
     
-  } else if(max == 0 && l->w.glw_flags & GLW_NEED_SCROLL) {
-    l->w.glw_flags &= ~GLW_NEED_SCROLL;
-    glw_signal0(&l->w, GLW_SIGNAL_NEED_SCROLL_CHANGED, NULL);
+  } else if(max == 0 && l->w.glw_flags & GLW_CAN_SCROLL) {
+    l->w.glw_flags &= ~GLW_CAN_SCROLL;
+    glw_signal0(&l->w, GLW_SIGNAL_CAN_SCROLL_CHANGED, NULL);
   }
 
   glw_signal0(&l->w, GLW_SIGNAL_SLIDER_METRICS, &l->metrics);

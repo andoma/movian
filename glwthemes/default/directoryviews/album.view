@@ -40,7 +40,6 @@ widget(container_x, {
     widget(list_y, {
       .filterConstraintY = true;
       .id = "list";
-      $self.needScroll = needScroll();
 
       cloner($page.source.nodes, backdrop, {
 	BUTTON_PROPS(1.0);
@@ -56,8 +55,8 @@ widget(container_x, {
     widget(slider_y, {
       .width = SLIDER_WIDTH();
       .focusable = 0.2;
-      .focusable = 0.2 * $self.needScroll;
-      .alpha = iir($self.needScroll, 16);
+      .focusable = 0.2 * canScroll();
+      .alpha = iir(canScroll(), 16);
 
       bind("list");
 

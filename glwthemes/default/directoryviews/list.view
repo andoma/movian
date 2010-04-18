@@ -11,7 +11,6 @@ widget(container_y, {
 
     widget(list_y, {
       .id = "list";
-      $self.needScroll = needScroll();
       cloner($page.source.nodes, loader, {
 	.time = 0.3;
 	.noInitialTransform = true;
@@ -22,8 +21,8 @@ widget(container_y, {
 
     widget(slider_y, {
       .width = SLIDER_WIDTH();
-      .focusable = 0.2 * $self.needScroll;
-      .alpha = iir($self.needScroll, 16);
+      .focusable = 0.2 * canScroll()
+      .alpha = iir(canScroll(), 16);
       bind("list");
 
       widget(backdrop, {

@@ -291,6 +291,11 @@ slider_bound_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     s->fixed_knob_size = 1;
     s->value = m->position;
     s->knob_size = GLW_MAX(m->knob_size, 0.02);
+
+    if((s->knob_size != 1.0) == !(s->w.glw_flags & GLW_CAN_SCROLL)) {
+      s->w.glw_flags ^= GLW_CAN_SCROLL;
+      glw_signal0(&s->w, GLW_SIGNAL_CAN_SCROLL_CHANGED, NULL);
+    }
     break;
 
   default:

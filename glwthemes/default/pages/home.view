@@ -15,7 +15,6 @@ widget(container_y, {
 
     widget(list_y, {
       .id = "list";
-      $self.needScroll = needScroll();
 
       cloner($global.sources, backdrop, {
 	BUTTON_PROPS(0.99);
@@ -59,8 +58,8 @@ widget(container_y, {
     widget(slider_y, {
       .debug = true;
       .width = SLIDER_WIDTH();
-      .focusable = 0.2 * $self.needScroll;
-      .alpha = iir($self.needScroll, 16);
+      .focusable = 0.2 * canScroll();
+      .alpha = iir(canScroll(), 16);
 
       bind("list");
 	

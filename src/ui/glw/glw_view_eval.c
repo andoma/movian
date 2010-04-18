@@ -715,7 +715,7 @@ eval_dynamic_widget_meta_sig(glw_t *w, void *opaque,
 			     glw_signal_t signal, void *extra)
 {
   if(signal == GLW_SIGNAL_ACTIVE || signal == GLW_SIGNAL_INACTIVE ||
-     signal == GLW_SIGNAL_NEED_SCROLL_CHANGED ||
+     signal == GLW_SIGNAL_CAN_SCROLL_CHANGED ||
      signal == GLW_SIGNAL_FULLSCREEN_CONSTRAINT_CHANGED)
     eval_dynamic(w, opaque);
   return 0;
@@ -2692,11 +2692,10 @@ glwf_isVisible(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
- * Return 1 if the current widget is needs to be scrolled in order to
- * display all its contents
+ * Return 1 if the current widget is can to be scrolled / moved
  */
 static int 
-glwf_needScroll(glw_view_eval_context_t *ec, struct token *self,
+glwf_canScroll(glw_view_eval_context_t *ec, struct token *self,
 	       token_t **argv, unsigned int argc)
 {
   token_t *r;
@@ -2705,7 +2704,7 @@ glwf_needScroll(glw_view_eval_context_t *ec, struct token *self,
 
   r = eval_alloc(self, ec, TOKEN_INT);
 
-  r->t_int = ec->w->glw_flags & GLW_NEED_SCROLL ? 1 : 0;
+  r->t_int = ec->w->glw_flags & GLW_CAN_SCROLL ? 1 : 0;
   eval_push(ec, r);
   return 0;
 }
@@ -3002,7 +3001,7 @@ static const token_func_t funcvec[] = {
   {"bind", 1, glwf_bind},
   {"delta", 2, glwf_delta, glwf_delta_ctor, glwf_delta_dtor},
   {"isVisible", 0, glwf_isVisible},
-  {"needScroll", 0, glwf_needScroll},
+  {"canScroll", 0, glwf_canScroll},
   {"wantFullWindow", 0, glwf_wantFullWindow},
   {"select", 3, glwf_select},
   {"trace", 2, glwf_trace},

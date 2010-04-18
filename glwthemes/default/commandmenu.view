@@ -29,7 +29,6 @@ widget(container_x, {
 
 	widget(list_y, {
 	  .id = "list";
-	  $ui.cmdNeedScroll = needScroll();
 	  
 	  widget(label, {
 	    .caption = "Navigation";
@@ -298,8 +297,8 @@ widget(container_x, {
 	      
 	widget(slider_y, {
 	  .width = SLIDER_WIDTH();
-	  .focusable = 0.2 * $ui.cmdNeedScroll;
-	  .alpha = iir($ui.cmdNeedScroll, 16);
+	  .focusable = 0.2 * canScroll();
+	  .alpha = iir(canScroll(), 16);
 	  bind("list");
 	  
 	  widget(backdrop, {
