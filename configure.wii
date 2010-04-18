@@ -40,12 +40,12 @@ for opt do
   case "$opt" in
   --help) show_help
   ;;
-  --target=*) TARGET="$optval"
-  ;;
   --devkitpro=*) DEVKITPRO="$optval"
   ;;
   --freetype=*) LIBFREETYPEPATH="$optval"
   ;;
+  *)
+  common_opt $opt $optval
   esac
 done
 

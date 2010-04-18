@@ -61,6 +61,11 @@ die() {
     exit
 }
 
+die_invalid_opt() {
+    echo "Invalid option: $1"
+    die
+}
+
 set_all(){
     value=$1
     shift
@@ -90,6 +95,15 @@ toupper(){
     echo "$@" | tr abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ
 }
 
+is_in(){
+    value=$1
+    shift
+    for var in $*; do
+        [ $var = $value ] && return 0
+    done
+    return 1
+}
+
 print_config(){
     pfx=$1
     header=$2
@@ -107,6 +121,20 @@ print_config(){
     done
 }
 
+common_opt(){
+  case "$1" in
+  --enable-?*|--disable-?*)
+  eval $(echo "$1" | sed 's/--/action=/;s/-/ option=/;s/-/_/g')
+  if is_in $option $CONFIG_LIST; then
+      $action $option
+  else
+      die_invalid_opt $1
+  fi
+  ;;
+  *) 
+  die_invalid_opt $1
+  esac
+}
 
 
 setup_env(){

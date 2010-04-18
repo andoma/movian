@@ -94,10 +94,8 @@ for opt do
   ;;
   --enable-spotify=*) SPOTIFY_KEYFILE="$optval"
   ;;
-  --enable-?*|--disable-?*)
-  eval $(echo "$opt" | sed 's/--/action=/;s/-/ option=/;s/-/_/g')
-  $action $option
-  ;;
+  *)
+  common_opt $opt $optval
   esac
 done
 

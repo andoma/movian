@@ -36,7 +36,6 @@ show_help(){
   echo "  --cpu=cpu                Build and optimize for specific CPU"
   echo "  --cc=CC                  Build using the given compiler"
   echo "  --release                Stage for release"
-  echo "  --embedded-theme         Embed theme in showtime [none]"
   echo "  --macosxsdk=PATH         Mac OS X SDK path [$MACOSXSDK]"
   echo "  --pkg-config=PATH        pkg-config path [$PKGCONFIG]"
   echo "  --pkg-config-dir=PATH    pkg-config config dir[$PKGCONFIGDIR]"
@@ -99,10 +98,8 @@ for opt do
   ;;
   --pkg-config-dir=*) PKGCONFIGDIR="$optval"
   ;;
-  --enable-?*|--disable-?*)
-    eval $(echo "$opt" | sed 's/--/action=/;s/-/ option=/;s/-/_/g')
-    $action $option
-  ;;
+  *)
+  common_opt $opt $optval
   esac
 done
 
