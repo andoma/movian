@@ -377,16 +377,16 @@ all:	makever ${PROG}
 
 .PHONY:	clean distclean ffmpeg makever
 
-${PROG}: ${BUILDDIR}/ffmpeg/install $(OBJDIRS) $(OBJS) $(BUNDLE_OBJS) Makefile src/version.c
+${PROG}: ${FFBUILDDEP} $(OBJDIRS) $(OBJS) $(BUNDLE_OBJS) Makefile src/version.c
 	$(CC) -o $@ $(OBJS) $(BUNDLE_OBJS) $(LDFLAGS) ${LDFLAGS_cfg}
 
 $(OBJDIRS):
 	@mkdir -p $@
 
-${BUILDDIR}/%.o: %.[cm] ${BUILDDIR}/ffmpeg/install
+${BUILDDIR}/%.o: %.[cm] ${FFBUILDDEP}
 	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
 
-${BUILDDIR}/ffmpeg/install ffmpeg:
+ffmpeg ${FFBUILDDEP}:
 	cd ${BUILDDIR}/ffmpeg/build && ${MAKE} all
 	cd ${BUILDDIR}/ffmpeg/build && ${MAKE} install
 

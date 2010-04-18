@@ -123,6 +123,10 @@ print_config(){
 
 common_opt(){
   case "$1" in
+
+  --with-ffmpeg=*) FFMPEG_PATH="$2"
+  ;;
+
   --enable-?*|--disable-?*)
   eval $(echo "$1" | sed 's/--/action=/;s/-/ option=/;s/-/_/g')
   if is_in $option $CONFIG_LIST; then
@@ -131,7 +135,8 @@ common_opt(){
       die_invalid_opt $1
   fi
   ;;
-  *) 
+
+  *)
   die_invalid_opt $1
   esac
 }
@@ -175,38 +180,52 @@ EOF
 }
 
 setup_ffmpeg() {
-    echo "Configuring FFmpeg"
-    mkdir -p ${BUILDDIR}/ffmpeg/build
-    rm -rf ${BUILDDIR}/ffmpeg/install
+    
+    if [ "x${FFMPEG_PATH}" != "x" ]; then
+	echo "Using FFmpeg from:     ${FFMPEG_PATH}"
 
-    (cd ${BUILDDIR}/ffmpeg/build && \
-	${TOPDIR}/ext/ffmpeg/configure  \
-	$CC_FFMPEG \
-	--enable-gpl \
-	--disable-encoders \
-	--disable-muxers \
-	--disable-devices \
-	--disable-protocols \
-	--disable-network \
-	--disable-stripping \
-	--disable-static \
-	--disable-shared \
-	--disable-vdpau \
-	--enable-static \
-	--prefix=${BUILDDIR}/ffmpeg/install \
-	--disable-ffserver \
-	--disable-ffmpeg \
-	--disable-ffplay \
-	--disable-ffprobe \
-	--disable-bzlib \
-	"$@"
+	cat >> ${CONFIG_MAK} << EOF 
+CFLAGS_cfg  += -I${FFMPEG_PATH}/include
+LDFLAGS_cfg += -L${FFMPEG_PATH}/lib -Wl,-rpath=${FFMPEG_PATH}/lib
+LDFLAGS_cfg += -lswscale -lavformat -lavcodec -lavutil
+EOF
+
+    else
+
+	echo "Configuring FFmpeg"
+	mkdir -p ${BUILDDIR}/ffmpeg/build
+	rm -rf ${BUILDDIR}/ffmpeg/install
+
+	(cd ${BUILDDIR}/ffmpeg/build && \
+	    ${TOPDIR}/ext/ffmpeg/configure  \
+	    $CC_FFMPEG \
+	    --enable-gpl \
+	    --disable-encoders \
+	    --disable-muxers \
+	    --disable-devices \
+	    --disable-protocols \
+	    --disable-network \
+	    --disable-stripping \
+	    --disable-static \
+	    --disable-shared \
+	    --disable-vdpau \
+	    --enable-static \
+	    --prefix=${BUILDDIR}/ffmpeg/install \
+	    --disable-ffserver \
+	    --disable-ffmpeg \
+	    --disable-ffplay \
+	    --disable-ffprobe \
+	    --disable-bzlib \
+	    "$@"
 	)
 
-cat >> ${CONFIG_MAK} << EOF 
+	cat >> ${CONFIG_MAK} << EOF 
 CFLAGS_cfg  += -I${BUILDDIR}/ffmpeg/install/include
 LDFLAGS_cfg += -L${BUILDDIR}/ffmpeg/install/lib
 LDFLAGS_cfg += -lswscale -lavformat -lavcodec -lavutil
+FFBUILDDEP   = ${BUILDDIR}/ffmpeg/install
 EOF
+    fi
 }
 
 spotify_setup() {
