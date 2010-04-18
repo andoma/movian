@@ -106,12 +106,16 @@ gu_nav_page_create(gtk_ui_t *gu, prop_t *p)
  *
  */
 static void
-gu_nav_page_destroy(gu_nav_page_t *gnp)
+gu_nav_page_destroy(gtk_ui_t *gu, gu_nav_page_t *gnp)
 {
+  if(gu->gu_page_current == gnp) 
+    gu->gu_page_current = NULL;
+
   prop_unsubscribe(gnp->gnp_sub_type);
   prop_unsubscribe(gnp->gnp_sub_url);
 
   gtk_widget_destroy(gnp->gnp_pagebin);
+  gnp->gnp_pagebin = NULL;
 
   LIST_REMOVE(gnp, gnp_link);
   
@@ -192,7 +196,7 @@ gu_nav_pages(void *opaque, prop_event_t event, ...)
     p = va_arg(ap, prop_t *);
     gnp = gu_nav_page_find(gu, p);
     assert(gnp != NULL);
-    gu_nav_page_destroy(gnp);
+    gu_nav_page_destroy(gu, gnp);
     break;
 
   case PROP_SET_DIR:
