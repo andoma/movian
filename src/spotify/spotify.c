@@ -1617,7 +1617,7 @@ playlist_name_update(sp_playlist *plist, playlist_t *pl)
   if(name != NULL && !strcmp(name, "-")) {
     prop_set_string(pl->pl_prop_type, "separator");
   } else {
-    prop_set_string(pl->pl_prop_type, "directory");
+    prop_set_string(pl->pl_prop_type, "playlist");
   }
   return name;
 }

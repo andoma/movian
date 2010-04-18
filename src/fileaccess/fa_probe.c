@@ -231,6 +231,7 @@ ffmpeg_metadata_get_str(AVMetadata *m, const char *key)
   return rstr_alloc(ffmpeg_metadata_get(m, key));
 }
 
+#if 0
 /**
  * Obtain details from playlist
  */
@@ -256,7 +257,7 @@ fa_probe_playlist(metadata_t *md, const char *url, uint8_t *pb, size_t pbsize)
   if(t != NULL)
     md->md_tracks = atoi(t + 16);
 }
-
+#endif
 
 /**
  * Probe SPC files
@@ -343,12 +344,14 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh)
     return 1;
   }
 
+#if 0
   if(!strncasecmp((char *)pb, "[playlist]", 10)) {
     /* Playlist */
     fa_probe_playlist(md, url, pb, sizeof(pb));
     md->md_type = CONTENT_PLAYLIST;
     return 1;
   }
+#endif
 
   if(pb[6] == 'J' && pb[7] == 'F' && pb[8] == 'I' && pb[9] == 'F') {
     /* JPEG image */

@@ -37,7 +37,7 @@ gu_nav_page_set_type(void *opaque, const char *type)
   if(type == NULL)
     return;
 
-  if(!strcmp(type, "directory")) {
+  if(!strcmp(type, "directory") || !strcmp(type, "playlist")) {
     gu_directory_create(gnp);
   } else if(!strcmp(type, "playqueue")) {
     gu_directory_create(gnp);
