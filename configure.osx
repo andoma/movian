@@ -26,11 +26,7 @@ MACOSXSDK=""
 APPDIR=${BUILDDIR}/Showtime.app
 
 show_help(){
-  echo "Usage: configure [options]"
-  echo "Options: [defaults in brackets after descriptions]"
-  echo
-  echo "Standard options:"
-  echo "  --help                   print this message"
+  common_help
   echo "  --prefix=PREFIX          install in PREFIX [$PREFIX]"
   echo "  --arch=arch              Build for this architecture [$ARCH]"
   echo "  --cpu=cpu                Build and optimize for specific CPU"

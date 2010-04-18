@@ -25,13 +25,9 @@ enable dvd
 enable dvd_wii
 
 show_help(){
-  echo "Usage: configure.wii [options]"
-  echo "Options: [defaults in brackets after descriptions]"
-  echo
-  echo "Standard options:"
-  echo "  --help                    Print this message"
-  echo "  --devkitpro=PATH          Path to devkitpro [$DEVKITPRO]"
-  echo "  --freetype=PATH           Path to freetype [$LIBFREETYPEPATH]"
+  common_help
+  echo "  --devkitpro=PATH         Path to devkitpro [$DEVKITPRO]"
+  echo "  --freetype=PATH          Path to freetype [$LIBFREETYPEPATH]"
   exit 1
 }
 

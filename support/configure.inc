@@ -121,6 +121,22 @@ print_config(){
     done
 }
 
+common_help(){
+  echo "Usage: configure [options]"
+  echo "Options: [defaults in brackets after descriptions]"
+  echo
+  echo "Standard options:"
+  echo "  --help                   Print this message"
+  echo "  --with-ffmpeg=PREFIX     Path to where FFmpeg is installed."
+  echo "                           By default Showtime will build FFmpeg from"
+  echo "                           the checked out version in the source"
+  echo ""
+  echo "Target specific options:"
+}
+
+
+
+
 common_opt(){
   case "$1" in
 
