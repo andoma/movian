@@ -286,6 +286,8 @@ x11_vo_create(Display *dpy, int win, prop_courier_t *pc, prop_t *self,
   vo->vo_vd = video_decoder_create(vo->vo_mp, deliver_fn, vo);
   vo->vo_vp = video_playback_create(vo->vo_mp);
 
+  prop_link(vo->vo_mp->mp_prop_root, prop_create(self, "media"));
+
   vo->vo_sub_url = 
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "url"),
