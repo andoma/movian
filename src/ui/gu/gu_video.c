@@ -27,6 +27,33 @@
 
 #include "ui/linux/x11_common.h"
 
+typedef struct gu_video {
+  prop_t *gv_closeprop;
+  prop_sub_t *gv_status_sub;
+
+} gu_video_t;
+
+
+/**
+ *
+ */
+static void
+video_set_playstatus(gu_video_t *gv, const char *v)
+{
+  if(v != NULL && !strcmp(v, "stop"))
+    prop_set_int(gv->gv_closeprop, 1);
+}
+
+/**
+ *
+ */
+static void
+video_destroy(GtkWidget *w, gu_video_t *gv)
+{
+  prop_unsubscribe(gv->gv_status_sub);
+  prop_ref_dec(gv->gv_closeprop);
+  free(gv);
+}
 
 /**
  *
@@ -86,6 +113,8 @@ gu_video_create(gu_nav_page_t *gnp)
   struct video_output *vo;
   char errbuf[256];
   char buf[512];
+  gu_video_t *gv;
+  
 
   gnp->gnp_pageroot = gtk_drawing_area_new();
   gtk_container_add(GTK_CONTAINER(gnp->gnp_pagebin), gnp->gnp_pageroot);
@@ -105,6 +134,21 @@ gu_video_create(gu_nav_page_t *gnp)
     gtk_widget_show_all(gnp->gnp_pageroot);
     return;
   }
+
+  gv = calloc(1, sizeof(gu_video_t));
+
+  prop_ref_inc(gv->gv_closeprop = prop_create(gnp->gnp_prop, "close"));
+
+  gv->gv_status_sub = 
+    prop_subscribe(0,
+		   PROP_TAG_NAME("self", "media", "playstatus"),
+		   PROP_TAG_CALLBACK_STRING, video_set_playstatus, gv,
+		   PROP_TAG_COURIER, gu->gu_pc,
+		   PROP_TAG_NAMED_ROOT, gnp->gnp_prop, "self",
+		   NULL);
+
+  g_signal_connect(GTK_OBJECT(gnp->gnp_pageroot), 
+		   "destroy", G_CALLBACK(video_destroy), gv);
 
   g_signal_connect(G_OBJECT(gnp->gnp_pageroot), 
 		   "expose_event",
