@@ -21,7 +21,7 @@ widget(container_y, {
 
     widget(slider_y, {
       .width = SLIDER_WIDTH();
-      .focusable = 0.2 * canScroll()
+      .focusable = 0.2 * canScroll();
       .alpha = iir(canScroll(), 16);
       bind("list");
 
