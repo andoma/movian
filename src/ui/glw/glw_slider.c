@@ -268,7 +268,7 @@ pointer_event(glw_t *w, glw_pointer_event_t *gpe)
   }
 
   update_value(s, s->value);
-  return 1;
+  return 0;
 }
 
 
