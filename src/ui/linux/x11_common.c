@@ -317,8 +317,11 @@ x11_vo_destroy(struct video_output *vo)
   mp_ref_dec(vo->vo_mp);
   video_decoder_destroy(vo->vo_vd);
 
-  XShmDetach(vo->vo_dpy, &vo->vo_shm);
-  shmdt(vo->vo_shm.shmaddr);
+  if(vo->vo_shm.shmaddr != NULL)
+    shmdt(vo->vo_shm.shmaddr);
+
+  if(vo->vo_shm.shmid)
+    XShmDetach(vo->vo_dpy, &vo->vo_shm);
 
 #if ENABLE_LIBXV
   if(vo->vo_xv_port)
