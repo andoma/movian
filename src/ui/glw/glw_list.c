@@ -316,6 +316,7 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     c->glw_parent_scale.x = 1.0;
     c->glw_parent_scale.y = 1.0;
     c->glw_parent_scale.z = 1.0;
+    c->glw_norm_weight = 1.0;
     break;
 
   case GLW_SIGNAL_CHILD_DESTROYED:
