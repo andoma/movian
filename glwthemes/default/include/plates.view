@@ -44,19 +44,6 @@
 }
 
 
-
-#define PLATE(ASPECT, COLOR, ALPHA, BODY)
-{
-  widget(backdrop, {
-    PLATE_PROPS();
-    .aspect = ASPECT;
-    .color = COLOR;
-    .alpha = ALPHA;
-    .alphaSelf = 0.9;
-    BODY;
-  });
-}
-
 #define ACTION_BUTTON(TEXT, ICON, EVENT)
 {
   widget(backdrop, {
