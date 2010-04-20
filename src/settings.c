@@ -436,6 +436,7 @@ settings_init(void)
 {
   settings_root = prop_create(prop_get_global(), "settings");
   prop_set_string(prop_create(settings_root, "type"), "settings");
+  prop_set_string(prop_create(settings_root, "title"), "Global settings");
 }
 
 
