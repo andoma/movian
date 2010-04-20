@@ -83,7 +83,6 @@ typedef enum {
   GLW_ATTRIB_ALIGNMENT,
   GLW_ATTRIB_SET_FLAGS,
   GLW_ATTRIB_CLR_FLAGS,
-  GLW_ATTRIB_EXTRA,
   GLW_ATTRIB_PREVIEW,
   GLW_ATTRIB_CONTENT,
   GLW_ATTRIB_MODE,
@@ -603,7 +602,6 @@ typedef struct glw {
 
   float glw_norm_weight;             /* Relative weight (normalized) */
   float glw_alpha;                   /* Alpha set by user */
-  float glw_extra;
 
   float glw_focus_weight;
 
@@ -807,7 +805,6 @@ do {						\
   case GLW_ATTRIB_ALPHA:			\
   case GLW_ATTRIB_ALPHA_SELF:			\
   case GLW_ATTRIB_ANGLE:			\
-  case GLW_ATTRIB_EXTRA:			\
   case GLW_ATTRIB_TIME:                         \
   case GLW_ATTRIB_EXPANSION:                    \
   case GLW_ATTRIB_VALUE:                        \

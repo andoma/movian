@@ -319,10 +319,6 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       w->glw_alpha = va_arg(ap, double);
       break;
 
-    case GLW_ATTRIB_EXTRA:
-      w->glw_extra = va_arg(ap, double);
-      break;
-
     case GLW_ATTRIB_ALIGNMENT:
       w->glw_alignment = va_arg(ap, int);
       break;
@@ -364,10 +360,6 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 	glw_focus_init_widget(w, f);
       else
 	w->glw_focus_weight = 0;
-      break;
-
-    case GLW_ATTRIB_ANGLE:
-      w->glw_extra = va_arg(ap, double);
       break;
 
     case GLW_ATTRIB_ORIGINATING_PROP:

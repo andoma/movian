@@ -18,12 +18,18 @@
 
 #include "glw.h"
 
+typedef struct glw_rotator {
+  glw_t w;
+  float theta;
+} glw_rotator_t;
+
 /**
  *
  */
 static int
 glw_rotator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
+  glw_rotator_t *gr = (glw_rotator_t *)w;
   glw_t *c;
   glw_rctx_t *rc;
 
@@ -32,7 +38,7 @@ glw_rotator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
   case GLW_SIGNAL_LAYOUT:
     rc = extra;
-    w->glw_extra -= 5;
+    gr->theta -= 5;
     c = TAILQ_FIRST(&w->glw_childs);
     if(c != NULL)
       glw_layout0(c, rc);
@@ -47,6 +53,7 @@ glw_rotator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 static void
 glw_rotator_render(glw_t *w, glw_rctx_t *rc)
 {
+  glw_rotator_t *gr = (glw_rotator_t *)w;
   glw_t *c;
   glw_rctx_t rc0;
 
@@ -59,7 +66,7 @@ glw_rotator_render(glw_t *w, glw_rctx_t *rc)
   glw_Scalef(&rc0, 0.8, 0.8, 0.8);
   glw_scale_to_aspect(&rc0, 1.0f);
 
-  glw_Rotatef(&rc0, w->glw_extra, 0.0, 0.0f, 1.0f);
+  glw_Rotatef(&rc0, gr->theta, 0.0, 0.0f, 1.0f);
 
   glw_render0(c, &rc0);
   glw_PopMatrix();

@@ -18,20 +18,27 @@
 
 #include "glw.h"
 
+typedef struct glw_cube {
+  glw_t w;
+  float theta;
+} glw_cube_t;
+
+
 /*
  *
  */
 static int
 glw_cube_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
+  glw_cube_t *gc = (glw_cube_t *)w;
   glw_t *c;
 
   switch(signal) {
   default:
     break;
   case GLW_SIGNAL_LAYOUT:
-    w->glw_extra -= 1;
-    c = TAILQ_FIRST(&w->glw_childs);
+    gc->theta -= 1;
+    c = TAILQ_FIRST(&gc->w.glw_childs);
     if(c != NULL)
       glw_layout0(c, extra);
     break;
@@ -46,6 +53,7 @@ glw_cube_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 static void
 glw_cube_render(glw_t *w, glw_rctx_t *rc)
 {
+  glw_cube_t *gc = (glw_cube_t *)w;
   glw_rctx_t rc0, rc1;
   glw_t *c;
 
@@ -60,7 +68,7 @@ glw_cube_render(glw_t *w, glw_rctx_t *rc)
 
   glw_Translatef(&rc0, 0, 0, -2.0);
 
-  glw_Rotatef(&rc0, w->glw_extra, 1.1, 0.5f, 1.0f);
+  glw_Rotatef(&rc0, gc->theta, 1.1, 0.5f, 1.0f);
 
   rc1 = rc0;
 
@@ -115,7 +123,7 @@ glw_cube_render(glw_t *w, glw_rctx_t *rc)
  */
 static glw_class_t glw_cube = {
   .gc_name = "cube",
-  .gc_instance_size = sizeof(glw_t),
+  .gc_instance_size = sizeof(glw_cube_t),
   .gc_render = glw_cube_render,
   .gc_signal_handler = glw_cube_callback,
 };
