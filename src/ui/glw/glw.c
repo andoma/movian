@@ -280,11 +280,13 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       break;
 
     case GLW_ATTRIB_WEIGHT:
-      glw_set_constraints(w, 0, 0, 0, va_arg(ap, double), GLW_CONSTRAINT_W, 1);
+      glw_set_constraints(w, 0, 0, 0, va_arg(ap, double), GLW_CONSTRAINT_W,
+			  GLW_CONSTRAINT_CONF_WAF);
       break;
 
     case GLW_ATTRIB_ASPECT:
-      glw_set_constraints(w, 0, 0, va_arg(ap, double), 0, GLW_CONSTRAINT_A, 1);
+      glw_set_constraints(w, 0, 0, va_arg(ap, double), 0, GLW_CONSTRAINT_A,
+			  GLW_CONSTRAINT_CONF_WAF);
       break;
 
     case GLW_ATTRIB_WIDTH:
@@ -293,9 +295,9 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 			  w->glw_req_size_y, 
 			  0, 0, 
 			  GLW_CONSTRAINT_X | 
-			  (w->glw_flags & GLW_CONSTRAINT_CONFED ?
+			  (w->glw_flags & GLW_CONSTRAINT_CONF_XY ?
 			   w->glw_flags & GLW_CONSTRAINT_Y : 0),
-			  1);
+			  GLW_CONSTRAINT_CONF_XY);
       break;
 
     case GLW_ATTRIB_HEIGHT:
@@ -304,9 +306,9 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
 			  va_arg(ap, double),
 			  0, 0, 
 			  GLW_CONSTRAINT_Y | 
-			  (w->glw_flags & GLW_CONSTRAINT_CONFED ?
+			  (w->glw_flags & GLW_CONSTRAINT_CONF_XY ?
 			   w->glw_flags & GLW_CONSTRAINT_X : 0),
-			  1);
+			  GLW_CONSTRAINT_CONF_XY);
       break;
 
     case GLW_ATTRIB_ID:
@@ -1548,25 +1550,55 @@ void
 glw_set_constraints(glw_t *w, int x, int y, float a, float weight, 
 		    int flags, int conf)
 {
-  if(w->glw_flags & GLW_CONSTRAINT_CONFED && !conf)
-    return; // Fixed configuration always overrides
+  int ch = 0;
 
-  if(w->glw_req_size_x == x &&
-     w->glw_req_size_y == y &&
-     w->glw_req_aspect == a &&
-     w->glw_req_weight == weight &&
-     (w->glw_flags & GLW_CONSTRAINT_FLAGS) == flags)
-    return; // already set
+  if(flags & GLW_CONSTRAINT_FLAGS_XY) {
 
-  w->glw_req_size_x = x;
-  w->glw_req_size_y = y;
-  w->glw_req_aspect = a;
-  w->glw_req_weight = weight;
+    int f = flags & GLW_CONSTRAINT_FLAGS_XY;
 
-  assert((flags & ~GLW_CONSTRAINT_FLAGS) == 0);
+    if(!(w->glw_flags & GLW_CONSTRAINT_CONF_XY) ||
+       conf == GLW_CONSTRAINT_CONF_XY) {
 
-  w->glw_flags &= ~GLW_CONSTRAINT_FLAGS;
-  w->glw_flags |= flags | (conf ? GLW_CONSTRAINT_CONFED : 0);
+      if(!(w->glw_req_size_x == x &&
+	   w->glw_req_size_y == y && 
+	   (w->glw_flags & GLW_CONSTRAINT_FLAGS_XY) == f)) {
+
+	ch = 1;
+
+	w->glw_req_size_x = x;
+	w->glw_req_size_y = y;
+	
+	w->glw_flags &= ~GLW_CONSTRAINT_FLAGS_XY;
+	w->glw_flags |= f | conf;
+      }
+    }
+  }
+
+  if(flags & GLW_CONSTRAINT_FLAGS_WAF) {
+
+    int f = flags & GLW_CONSTRAINT_FLAGS_WAF;
+
+   if(!(w->glw_flags & GLW_CONSTRAINT_CONF_WAF) ||
+       conf == GLW_CONSTRAINT_CONF_WAF) {
+
+      if(!(w->glw_req_aspect == a &&
+	   w->glw_req_weight == weight && 
+	   (w->glw_flags & GLW_CONSTRAINT_FLAGS_WAF) == f)) {
+
+	ch = 1;
+
+	w->glw_req_aspect = a;
+	w->glw_req_weight = weight;
+	
+	w->glw_flags &= ~GLW_CONSTRAINT_FLAGS_WAF;
+	w->glw_flags |= f | conf;
+      }
+    }
+  }
+
+  if(!ch)
+    return;
+
   if(w->glw_parent != NULL)
     glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, w);
 }
@@ -1578,10 +1610,31 @@ glw_set_constraints(glw_t *w, int x, int y, float a, float weight,
 void
 glw_clear_constraints(glw_t *w)
 {
-  if(w->glw_flags & GLW_CONSTRAINT_CONFED)
-    return; // Fixed configuration always overrides
+  int ch = 0;
 
-  glw_set_constraints(w, 0, 0, 0, 0, 0, 0);
+  if(!(w->glw_flags & GLW_CONSTRAINT_CONF_XY)) {
+    if(w->glw_flags & GLW_CONSTRAINT_FLAGS_XY) {
+      w->glw_flags &= ~GLW_CONSTRAINT_FLAGS_XY;
+      w->glw_req_size_x = 0;
+      w->glw_req_size_y = 0;
+      ch = 1;
+    }
+  }
+
+  if(!(w->glw_flags & GLW_CONSTRAINT_CONF_WAF)) {
+    if(w->glw_flags & GLW_CONSTRAINT_FLAGS_WAF) {
+      w->glw_flags &= ~GLW_CONSTRAINT_FLAGS_WAF;
+      w->glw_req_aspect = 0;
+      w->glw_req_weight = 0;
+      ch = 1;
+    }
+  }
+  
+  if(!ch)
+    return;
+
+  if(w->glw_parent != NULL)
+    glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, w);
 }
 
 
@@ -1591,9 +1644,6 @@ glw_clear_constraints(glw_t *w)
 void
 glw_copy_constraints(glw_t *w, glw_t *src)
 {
-  if(w->glw_flags & GLW_CONSTRAINT_CONFED)
-    return; // Fixed configuration always overrides
-
   glw_set_constraints(w, 
 		      src->glw_req_size_x,
 		      src->glw_req_size_y,

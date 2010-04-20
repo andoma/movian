@@ -571,8 +571,8 @@ typedef struct glw {
 #define GLW_DETACHED             0x800
 #define GLW_NO_INITIAL_TRANS     0x1000
 #define GLW_CAN_SCROLL           0x2000
-#define GLW_CONSTRAINT_CONFED    0x4000
-
+#define GLW_CONSTRAINT_CONF_XY   0x4000
+#define GLW_CONSTRAINT_CONF_WAF  0x8000
 
 #define GLW_CONSTRAINT_X         0x10000
 #define GLW_CONSTRAINT_Y         0x20000
@@ -591,6 +591,11 @@ typedef struct glw {
 #define GLW_CONSTRAINT_FLAGS (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y | \
                               GLW_CONSTRAINT_A | GLW_CONSTRAINT_W | \
 			      GLW_CONSTRAINT_F )
+
+#define GLW_CONSTRAINT_FLAGS_XY  (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y)
+#define GLW_CONSTRAINT_FLAGS_WAF (GLW_CONSTRAINT_W | GLW_CONSTRAINT_A | \
+                                  GLW_CONSTRAINT_F)
+  
 
 #define GLW_FOCUS_ON_CLICK       0x4000000
 
