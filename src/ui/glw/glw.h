@@ -550,55 +550,56 @@ typedef struct glw {
 
   int glw_flags;
 
-#define GLW_ACTIVE              0x1
-#define GLW_DESTROYED           0x2     /* was destroyed but someone
-					   is holding references */
-#define GLW_RENDER_LINKED       0x4     /* glw_render_link is linked */
+#define GLW_ACTIVE               0x1
+#define GLW_DESTROYED            0x2     /* was destroyed but someone
+					    is holding references */
+#define GLW_RENDER_LINKED        0x4     /* glw_render_link is linked */
 
-#define GLW_DEBUG               0x10    /* Debug this object */
-#define GLW_FOCUS_BLOCKED       0x20
-#define GLW_UPDATE_METRICS      0x40
+#define GLW_DEBUG                0x8     /* Debug this object */
+#define GLW_FOCUS_BLOCKED        0x10
+#define GLW_UPDATE_METRICS       0x20
 
-#define GLW_IN_FOCUS_PATH       0x80
-#define GLW_IN_PRESSED_PATH     0x100
-#define GLW_IN_HOVER_PATH       0x200
+#define GLW_IN_FOCUS_PATH        0x40
+#define GLW_IN_PRESSED_PATH      0x80
+#define GLW_IN_HOVER_PATH        0x100
 
-#define GLW_DESTROYING          0x400  /* glw_destroy() has been called */
+#define GLW_DESTROYING           0x200  /* glw_destroy() has been called */
 
 
-#define GLW_HIDDEN              0x800
+#define GLW_HIDDEN               0x400
 
-#define GLW_DETACHED            0x1000
-#define GLW_NO_INITIAL_TRANS    0x2000
-#define GLW_CONSTRAINT_CONFED   0x4000
-#define GLW_CAN_SCROLL          0x8000
+#define GLW_DETACHED             0x800
+#define GLW_NO_INITIAL_TRANS     0x1000
+#define GLW_CAN_SCROLL           0x2000
+#define GLW_CONSTRAINT_CONFED    0x4000
 
-#define GLW_CONSTRAINT_X        0x10000
-#define GLW_CONSTRAINT_Y        0x20000
-#define GLW_CONSTRAINT_A        0x40000
-#define GLW_CONSTRAINT_W        0x80000
-#define GLW_CONSTRAINT_F        0x100000
+
+#define GLW_CONSTRAINT_X         0x10000
+#define GLW_CONSTRAINT_Y         0x20000
+#define GLW_CONSTRAINT_A         0x40000
+#define GLW_CONSTRAINT_W         0x80000
+#define GLW_CONSTRAINT_F         0x100000
 
   // We rely on shifts to filter these against each other so they
   // must be consecutive, see glw_filter_constraints()
-#define GLW_CONSTRAINT_IGNORE_X 0x200000
-#define GLW_CONSTRAINT_IGNORE_Y 0x400000
-#define GLW_CONSTRAINT_IGNORE_A 0x800000
-#define GLW_CONSTRAINT_IGNORE_W 0x1000000
-#define GLW_CONSTRAINT_IGNORE_F 0x2000000
+#define GLW_CONSTRAINT_IGNORE_X  0x200000
+#define GLW_CONSTRAINT_IGNORE_Y  0x400000
+#define GLW_CONSTRAINT_IGNORE_A  0x800000
+#define GLW_CONSTRAINT_IGNORE_W  0x1000000
+#define GLW_CONSTRAINT_IGNORE_F  0x2000000
 
 #define GLW_CONSTRAINT_FLAGS (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y | \
                               GLW_CONSTRAINT_A | GLW_CONSTRAINT_W | \
 			      GLW_CONSTRAINT_F )
 
-#define GLW_FOCUS_ON_CLICK      0x4000000
+#define GLW_FOCUS_ON_CLICK       0x4000000
 
-#define GLW_SHADOW              0x8000000
+#define GLW_SHADOW               0x8000000
 
-#define GLW_LEFT_EDGE          0x10000000
-#define GLW_TOP_EDGE           0x20000000
-#define GLW_RIGHT_EDGE         0x40000000
-#define GLW_BOTTOM_EDGE        0x80000000
+#define GLW_LEFT_EDGE            0x10000000
+#define GLW_TOP_EDGE             0x20000000
+#define GLW_RIGHT_EDGE           0x40000000
+#define GLW_BOTTOM_EDGE          0x80000000
 
   float glw_norm_weight;             /* Relative weight (normalized) */
   float glw_alpha;                   /* Alpha set by user */
