@@ -463,9 +463,11 @@ glw_image_update_constraints(glw_image_t *gi)
     if(c != NULL) {
       glw_set_constraints(&gi->w, 
 			  c->glw_req_size_x +
-			  gi->gi_border_left + gi->gi_border_right,
+			  gi->gi_border_left + gi->gi_border_right +
+			  gi->gi_padding_left + gi->gi_padding_right,
 			  c->glw_req_size_y + 
-			  gi->gi_border_top + gi->gi_border_bottom,
+			  gi->gi_border_top + gi->gi_border_bottom + 
+			  gi->gi_padding_top + gi->gi_padding_bottom,
 			  0, 0, 
 			  glw_filter_constraints(c->glw_flags),
 			  0);
