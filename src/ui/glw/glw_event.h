@@ -75,6 +75,6 @@ glw_event_map_t *glw_event_map_internal_create(const char *target,
 /**
  *
  */
-glw_event_map_t *glw_event_map_generic_create(event_type_t event);
+glw_event_map_t *glw_event_map_nop_create(void);
 
 #endif /* GLW_EVENT_H__ */

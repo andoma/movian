@@ -1647,15 +1647,16 @@ glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
 	     token_t **argv, unsigned int argc)
 
 {
-  token_t *a = argv[0];  /* Source */
-  token_t *b = argv[1];  /* Target */
-  int action;
+  token_t *a = argc > 0 ? argv[0] : NULL;  /* Source */
+  token_t *b = argc > 1 ? argv[1] : NULL;  /* Target */
+  token_t *c = argc > 2 ? argv[2] : NULL;  /* Enabled */
+  int action, enabled;
   glw_t *w = ec->w;
   glw_event_map_t *gem;
 
   if(w == NULL) 
     return glw_view_seterr(ec->ei, self, 
-			    "Events can not be mapped in this scope");
+			   "Events can not be mapped in this scope");
 
   if(a == NULL || b == NULL)
     return glw_view_seterr(ec->ei, self, "Missing operands");
@@ -1672,23 +1673,35 @@ glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
       return glw_view_seterr(ec->ei, a, "Invalid source event type");
   }
 
-  switch(b->type) {
-
-  case TOKEN_EVENT:
-    b->type = TOKEN_NOP; /* Steal 'gem' pointer from this token.
-			    It's okay since TOKEN_EVENT are always
-			    generated dynamically. */
-    gem = b->t_gem;
-    break;
-
-  case TOKEN_BLOCK:
-    gem = glw_event_map_eval_block_create(ec, b);
-    break;
-
-  default:
-    return glw_view_seterr(ec->ei, a, "onEvent: Second arg is invalid");
+  if(c != NULL) {
+    if((c = token_resolve(ec, c)) == NULL)
+      return -1;
+    enabled = token2bool(c);
+  } else {
+    enabled = 1;
   }
 
+  if(enabled) {
+
+    switch(b->type) {
+
+    case TOKEN_EVENT:
+      b->type = TOKEN_NOP; /* Steal 'gem' pointer from this token.
+			      It's okay since TOKEN_EVENT are always
+			      generated dynamically. */
+      gem = b->t_gem;
+      break;
+
+    case TOKEN_BLOCK:
+      gem = glw_event_map_eval_block_create(ec, b);
+      break;
+
+    default:
+      return glw_view_seterr(ec->ei, a, "onEvent: Second arg is invalid");
+    }
+  } else {
+    gem = glw_event_map_nop_create();
+  }
   gem->gem_action = action;
   glw_event_map_add(w, gem);
   return 0;
@@ -2976,7 +2989,7 @@ static const token_func_t funcvec[] = {
   {"widget", 2, glwf_widget},
   {"cloner", 3, glwf_cloner},
   {"space", 1, glwf_space},
-  {"onEvent", 2, glwf_onEvent},
+  {"onEvent", -1, glwf_onEvent},
   {"navOpen", -1, glwf_navOpen},
   {"selectTrack", 1, glwf_selectTrack},
   {"targetedEvent", 2, glwf_targetedEvent},

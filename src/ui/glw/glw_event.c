@@ -312,6 +312,20 @@ glw_event_map_internal_create(const char *target, event_type_t event)
 /**
  *
  */
+glw_event_map_t *
+glw_event_map_nop_create(void)
+{
+  glw_event_map_t *m = malloc(sizeof(glw_event_map_t));
+
+  m->gem_dtor = (void *)&free;
+  m->gem_fire = NULL;
+  return m;
+}
+
+
+/**
+ *
+ */
 int
 glw_event_map_intercept(glw_t *w, event_t *e)
 {
@@ -322,11 +336,13 @@ glw_event_map_intercept(glw_t *w, event_t *e)
 
   LIST_FOREACH(gem, &w->glw_event_maps, gem_link) {
 
-    if((gem->gem_action == -1 &&
-	event_is_type(e, EVENT_KEYDESC)) ||
+    if((gem->gem_action == -1 && event_is_type(e, EVENT_KEYDESC)) ||
        event_is_action(e, gem->gem_action)) {
-      gem->gem_fire(w, gem, e);
-      return 1;
+
+      if(gem->gem_fire != NULL) {
+	gem->gem_fire(w, gem, e);
+	return 1;
+      }
     }
   }
   return 0;
