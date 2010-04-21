@@ -35,6 +35,11 @@ typedef struct glw_event_map {
 
 } glw_event_map_t;
 
+/**
+ *
+ */
+void glw_event_map_remove_by_action(glw_t *w, action_type_t action);
+
 
 /**
  *
@@ -70,11 +75,5 @@ glw_event_map_t *glw_event_map_selectTrack_create(const char *id);
  */
 glw_event_map_t *glw_event_map_internal_create(const char *target,
 					       event_type_t event);
-
-
-/**
- *
- */
-glw_event_map_t *glw_event_map_nop_create(void);
 
 #endif /* GLW_EVENT_H__ */

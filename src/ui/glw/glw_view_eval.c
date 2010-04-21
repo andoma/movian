@@ -1699,12 +1699,16 @@ glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
     default:
       return glw_view_seterr(ec->ei, a, "onEvent: Second arg is invalid");
     }
+
+    gem->gem_action = action;
+    glw_event_map_add(w, gem);
+    return 0;
+    
   } else {
-    gem = glw_event_map_nop_create();
+    
+    glw_event_map_remove_by_action(w, action);
+    return 0;
   }
-  gem->gem_action = action;
-  glw_event_map_add(w, gem);
-  return 0;
 }
 
 
