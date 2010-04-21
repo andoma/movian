@@ -11,6 +11,9 @@ onEvent(menu, {
   $ui.menu = !$ui.menu;
 });
 
+onEvent(back, {
+  $ui.menu = false;
+}, $ui.menu);
 
 $ui.fullwindow = 0;
 
