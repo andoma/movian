@@ -136,6 +136,8 @@ static struct strtab postfixtab[] = {
   { "flac",            CONTENT_AUDIO },
   { "aac",             CONTENT_AUDIO },
   { "wma",             CONTENT_AUDIO },
+  { "ogg",             CONTENT_AUDIO },
+  { "spc",             CONTENT_AUDIO },
 
   { "mkv",             CONTENT_VIDEO },
   { "avi",             CONTENT_VIDEO },
