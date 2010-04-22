@@ -93,6 +93,7 @@ static const int tokenprecedence[TOKEN_num] = {
   [TOKEN_DIVIDE]     = 7,
   [TOKEN_MODULO]     = 7,
   [TOKEN_BLOCK]      = 10,
+  [TOKEN_BOOLEAN_NOT]= 11,
 };
 
 
@@ -159,11 +160,11 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
     case TOKEN_ASSIGNMENT:
     case TOKEN_EQ:
     case TOKEN_NEQ:
+    case TOKEN_BOOLEAN_NOT:
       while(stack && tokenprecedence[t->type] <= tokenprecedence[stack->type])
 	tokenqueue_enqueue(&outq, tokenstack_pop(&stack), NULL);
       /* FALLTHRU */
     case TOKEN_LEFT_PARENTHESIS:
-    case TOKEN_BOOLEAN_NOT:
       t = tokenstack_push(&stack, t);
       continue;
 
