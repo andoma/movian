@@ -339,6 +339,7 @@ static const token_attrib_t attribtab[] = {
   {"hidden",                  set_generic_flag, GLW_HIDDEN},
   {"noInitialTransform",      set_generic_flag, GLW_NO_INITIAL_TRANS},
   {"shadow",                  set_generic_flag, GLW_SHADOW},
+  {"focusOnClick",            set_generic_flag, GLW_FOCUS_ON_CLICK},
 
   {"mirrorx",         set_image_flag, GLW_IMAGE_MIRROR_X},
   {"mirrory",         set_image_flag, GLW_IMAGE_MIRROR_Y},
