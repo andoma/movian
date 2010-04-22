@@ -40,6 +40,15 @@ typedef struct macro {
 } macro_t;
 
 
+
+LIST_HEAD(import_list, import);
+
+typedef struct import {
+  rstr_t *rname;
+  LIST_ENTRY(import) link;
+} import_t;
+
+
 /**
  *
  */
@@ -84,7 +93,7 @@ macro_add_arg(macro_t *m, rstr_t *name)
  */
 static int
 glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
-		   struct macro_list *ml)
+		  struct macro_list *ml, struct import_list *il)
 {
   token_t *t, *n, *x, *a, *b, *c, *d, *e;
   macro_t *m;
@@ -253,6 +262,43 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 
 
       /**
+       * Import another file
+       */
+      if(!strcmp(rstr_get(t->t_rstring), "import")) {
+	import_t *i;
+	consumetoken();
+
+	if(t->type != TOKEN_STRING) 
+	  return glw_view_seterr(ei, t, "Invalid filename after import");
+
+	LIST_FOREACH(i, il, link) {
+	  if(!strcmp(rstr_get(i->rname), rstr_get(t->t_rstring)))
+	    break;
+	}
+
+	if(i == NULL) {
+
+	  i = malloc(sizeof(import_t));
+	  i->rname = rstr_dup(t->t_rstring);
+	  LIST_INSERT_HEAD(il, i, link);
+
+	  printf("import %s\n", rstr_get(t->t_rstring));
+
+	  x = t->next;
+	  if((n = glw_view_load1(gr, rstr_get(t->t_rstring), ei, t)) == NULL)
+	    return -1;
+	  
+	  n->next = x;
+	  consumetoken();
+	} else {
+	  printf("Skip import of %s\n", rstr_get(t->t_rstring));
+	}
+
+	continue;
+      }
+
+
+      /**
        * Define a macro
        */
       if(!strcmp(rstr_get(t->t_rstring), "define")) {
@@ -370,14 +416,23 @@ glw_view_preproc(glw_root_t *gr, token_t *p, errorinfo_t *ei)
 {
   struct macro_list ml;
   macro_t *m;
+  struct import_list il;
+  import_t *i;
   int r;
   
   LIST_INIT(&ml);
+  LIST_INIT(&il);
   
-  r = glw_view_preproc0(gr, p, ei, &ml);
+  r = glw_view_preproc0(gr, p, ei, &ml, &il);
   
   while((m = LIST_FIRST(&ml)) != NULL)
     macro_destroy(m);
+
+  while((i = LIST_FIRST(&il)) != NULL) {
+    LIST_REMOVE(i, link);
+    rstr_release(i->rname);
+    free(i);
+  }
   
   return r;
 }
