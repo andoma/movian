@@ -339,6 +339,11 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   gtbd->gtbd_siz_x = target_width;
   gtbd->gtbd_siz_y = target_height;
 
+#if 0
+  for(i = 0; i < target_height; i+=2) {
+    memset(data + i * target_width, 0xcc, target_width);
+  }
+#endif
 
   if(docur) {
     gtbd->gtbd_cursor_pos = malloc(2 * (1 + len) * sizeof(int));
