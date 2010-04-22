@@ -2787,6 +2787,7 @@ glwf_trace(glw_view_eval_context_t *ec, struct token *self,
     ec->debug--;
     return -1;
   }
+  ec->debug--;
 
   if(a->type != TOKEN_STRING)
     return 0;
