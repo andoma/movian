@@ -181,7 +181,7 @@ token_resolve(glw_view_eval_context_t *ec, token_t *t)
   }
 
   if(t->type == TOKEN_PROPERTY_NAME && subscribe_prop(ec, t))
-      return NULL;
+    return NULL;
   
   if(t->type == TOKEN_PROPERTY_SUBSCRIPTION) {
     ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_PROP;
