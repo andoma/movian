@@ -282,16 +282,12 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	  i->rname = rstr_dup(t->t_rstring);
 	  LIST_INSERT_HEAD(il, i, link);
 
-	  printf("import %s\n", rstr_get(t->t_rstring));
-
 	  x = t->next;
 	  if((n = glw_view_load1(gr, rstr_get(t->t_rstring), ei, t)) == NULL)
 	    return -1;
 	  
 	  n->next = x;
 	  consumetoken();
-	} else {
-	  printf("Skip import of %s\n", rstr_get(t->t_rstring));
 	}
 
 	continue;
