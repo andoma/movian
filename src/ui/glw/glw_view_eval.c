@@ -2069,6 +2069,94 @@ glwf_iir(glw_view_eval_context_t *ec, struct token *self,
   return 0;
 }
 
+
+typedef struct glw_scurve_extra {
+  float x;
+  float xd;
+
+  float start;
+  float current;
+  float target;
+  float time;
+
+} glw_scurve_extra_t;
+
+
+/**
+ * Scurve model
+ */
+static int 
+glwf_scurve(glw_view_eval_context_t *ec, struct token *self,
+	    token_t **argv, unsigned int argc)
+{
+  token_t *a = argv[0];
+  token_t *b = argv[1];
+  token_t *r;
+  float f, v;
+  glw_scurve_extra_t *s = self->t_extra;
+
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+  if((b = token_resolve(ec, b)) == NULL)
+    return -1;
+
+  if(a->type == TOKEN_FLOAT)
+    f = a->t_float;
+  else if(a->type == TOKEN_INT) {
+    f = a->t_int;
+  } else if(a->type == TOKEN_VOID) {
+    f = 0;
+  } else {
+    return glw_view_seterr(ec->ei, self, "Invalid first operand to scurve()");
+  }
+
+  if(b->type != TOKEN_FLOAT)
+    return glw_view_seterr(ec->ei, self, "Invalid second operand to scurve()");
+
+  if(s->target != f || s->time != b->t_float) {
+    s->start = s->target;
+    s->target = f;
+    s->time = b->t_float;
+    s->x = 0;
+    s->xd = 1.0 / (1000000 * s->time / ec->w->glw_root->gr_frameduration);
+  }
+
+  s->x += s->xd;
+
+  if(s->x < 1.0) {
+    v = GLW_S(s->x);
+    s->current = GLW_LERP(v, s->start, s->target);
+    ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME;
+  } else {
+    s->current = s->target;
+  }
+
+  r = eval_alloc(self, ec, TOKEN_FLOAT);
+  r->t_float = s->current;
+  eval_push(ec, r);
+  return 0;
+}
+
+/**
+ *
+ */
+static void
+glwf_scurve_ctor(struct token *self)
+{
+  self->t_extra = calloc(1, sizeof(glw_scurve_extra_t));
+}
+
+
+/**
+ *
+ */
+static void
+glwf_scurve_dtor(struct token *self)
+{
+  free(self->t_extra);
+}
+
+
 /**
  * Float to string
  */
@@ -3002,6 +3090,7 @@ static const token_func_t funcvec[] = {
   {"event", 1, glwf_event},
   {"changed", -1, glwf_changed, glwf_changed_ctor, glwf_changed_dtor},
   {"iir", 2, glwf_iir},
+  {"scurve", 2, glwf_scurve, glwf_scurve_ctor, glwf_scurve_dtor},
   {"float2str", 2, glwf_float2str},
   {"int2str", 1, glwf_int2str},
   {"translate", -1, glwf_translate},
