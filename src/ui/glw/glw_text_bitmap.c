@@ -295,6 +295,8 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 	FT_Done_Glyph(g->glyph); 
       }
 
+      while(i > 0 && uc[i - 1] == ' ')
+	i--;
       uc[i] = HORIZONTAL_ELLIPSIS_UNICODE;
       len = i + 1;
       goto restart;
