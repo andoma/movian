@@ -101,7 +101,13 @@ static void
 add_prop(fa_dir_entry_t *fde, prop_t *root, fa_dir_entry_t *before)
 {
   prop_t *p = prop_create(NULL, "node");
-  rstr_t *fname = make_filename(fde->fde_filename);
+  rstr_t *fname;
+
+  if(fde->fde_type == CONTENT_DIR) {
+    fname = rstr_alloc(fde->fde_filename);
+  } else {
+    fname = make_filename(fde->fde_filename);
+  }
 
   prop_set_string(prop_create(p, "url"), fde->fde_url);
   set_type(p, fde->fde_type);
