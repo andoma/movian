@@ -1716,20 +1716,19 @@ playlist_node_callback(void *opaque, prop_event_t event, ...)
   }
 }
 
+
 /**
- * A new playlist has been added to the users rootlist
+ *
  */
-static void
-playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
-	       int position, void *userdata)
+static playlist_t *
+pl_create(sp_playlist *plist)
 {
   playlist_t *pl = calloc(1, sizeof(playlist_t));
   prop_t *metadata;
   int i, n;
 
   pl->pl_playlist = plist;
-  pl->pl_prop_root = prop_create(prop_create(prop_rootlist_source,
-					     "nodes"), NULL);
+  pl->pl_prop_root = prop_create(NULL, NULL);
 
   prop_link(prop_syncing_playlists, prop_create(pl->pl_prop_root, "loading"));
 
@@ -1754,8 +1753,6 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
 
   pl->pl_prop_num_tracks = prop_create(metadata, "tracks");
 
-  ptrvec_insert_entry(&playlists, position, pl);
-
   n = f_sp_playlist_num_tracks(plist);
   for(i = 0; i < n; i++) {
     sp_track *t = f_sp_playlist_track(plist, i);
@@ -1765,6 +1762,28 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
   f_sp_playlist_add_callbacks(plist, &pl_callbacks, pl);
 
   playlist_set_url(plist, pl);
+  return pl;
+}
+
+
+/**
+ * A new playlist has been added to the users rootlist
+ */
+static void
+playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
+	       int position, void *userdata)
+{
+  playlist_t *pl = pl_create(plist);
+  prop_t *parent = prop_create(prop_rootlist_source, "nodes");
+  playlist_t *before;
+
+  before = ptrvec_get_entry(&playlists, position);
+  if(prop_set_parent_ex(pl->pl_prop_root, parent,
+			before ? before->pl_prop_root : NULL,
+			NULL))
+    abort();
+
+  ptrvec_insert_entry(&playlists, position, pl);
 
   TRACE(TRACE_DEBUG, "spotify", "Playlist %d added (%s)", 
 	position, f_sp_playlist_name(plist));
