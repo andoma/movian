@@ -13,6 +13,8 @@ static sp_error(*f_sp_session_player_seek)(sp_session *session, int offset);
 static sp_error(*f_sp_session_player_play)(sp_session *session, bool play);
 static void(*f_sp_session_player_unload)(sp_session *session);
 static sp_playlistcontainer *(*f_sp_session_playlistcontainer)(sp_session *session);
+static sp_playlist *(*f_sp_session_starred_create)(sp_session *session);
+static void(*f_sp_session_preferred_bitrate)(sp_session *session, sp_bitrate bitrate);
 static sp_link *(*f_sp_link_create_from_string)(const char *link);
 static sp_link *(*f_sp_link_create_from_track)(sp_track *track, int offset);
 static sp_link *(*f_sp_link_create_from_album)(sp_album *album);
@@ -30,6 +32,8 @@ static void(*f_sp_link_release)(sp_link *link);
 static bool(*f_sp_track_is_loaded)(sp_track *track);
 static sp_error(*f_sp_track_error)(sp_track *track);
 static bool(*f_sp_track_is_available)(sp_track *track);
+static bool(*f_sp_track_is_starred)(sp_track *track);
+static void(*f_sp_track_set_starred)(sp_session *session, const sp_track **tracks, int num_tracks, bool star);
 static int(*f_sp_track_num_artists)(sp_track *track);
 static sp_artist *(*f_sp_track_artist)(sp_track *track, int index);
 static sp_album *(*f_sp_track_album)(sp_track *track);
@@ -91,6 +95,7 @@ static const byte *(*f_sp_image_image_id)(sp_image *image);
 static void(*f_sp_image_add_ref)(sp_image *image);
 static void(*f_sp_image_release)(sp_image *image);
 static sp_search *(*f_sp_search_create)(sp_session *session, const char *query, int track_offset, int track_count, int album_offset, int album_count, int artist_offset, int artist_count, search_complete_cb *callback, void *userdata);
+static sp_search *(*f_sp_radio_search_create)(sp_session *session, unsigned int from_year, unsigned int to_year, sp_radio_genre genres, search_complete_cb *callback, void *userdata);
 static bool(*f_sp_search_is_loaded)(sp_search *search);
 static sp_error(*f_sp_search_error)(sp_search *search);
 static int(*f_sp_search_num_tracks)(sp_search *search);
@@ -115,9 +120,12 @@ static sp_user *(*f_sp_playlist_owner)(sp_playlist *playlist);
 static bool(*f_sp_playlist_is_collaborative)(sp_playlist *playlist);
 static void(*f_sp_playlist_set_collaborative)(sp_playlist *playlist, bool collaborative);
 static bool(*f_sp_playlist_has_pending_changes)(sp_playlist *playlist);
-static sp_error(*f_sp_playlist_add_tracks)(sp_playlist *playlist, const sp_track **tracks, int num_tracks, int position);
+static sp_error(*f_sp_playlist_add_tracks)(sp_playlist *playlist, const sp_track **tracks, int num_tracks, int position, sp_session *session);
 static sp_error(*f_sp_playlist_remove_tracks)(sp_playlist *playlist, const int *tracks, int num_tracks);
 static sp_error(*f_sp_playlist_reorder_tracks)(sp_playlist *playlist, const int *tracks, int num_tracks, int new_position);
+static sp_playlist *(*f_sp_playlist_create)(sp_session *session, sp_link *link);
+static void(*f_sp_playlist_add_ref)(sp_playlist *playlist);
+static void(*f_sp_playlist_release)(sp_playlist *playlist);
 static void(*f_sp_playlistcontainer_add_callbacks)(sp_playlistcontainer *pc, sp_playlistcontainer_callbacks *callbacks, void *userdata);
 static void(*f_sp_playlistcontainer_remove_callbacks)(sp_playlistcontainer *pc, sp_playlistcontainer_callbacks *callbacks, void *userdata);
 static int(*f_sp_playlistcontainer_num_playlists)(sp_playlistcontainer *pc);
@@ -154,6 +162,8 @@ if((f_sp_session_player_seek=dlsym(handle,"sp_session_player_seek"))==NULL) retu
 if((f_sp_session_player_play=dlsym(handle,"sp_session_player_play"))==NULL) return "sp_session_player_play";
 if((f_sp_session_player_unload=dlsym(handle,"sp_session_player_unload"))==NULL) return "sp_session_player_unload";
 if((f_sp_session_playlistcontainer=dlsym(handle,"sp_session_playlistcontainer"))==NULL) return "sp_session_playlistcontainer";
+if((f_sp_session_starred_create=dlsym(handle,"sp_session_starred_create"))==NULL) return "sp_session_starred_create";
+if((f_sp_session_preferred_bitrate=dlsym(handle,"sp_session_preferred_bitrate"))==NULL) return "sp_session_preferred_bitrate";
 if((f_sp_link_create_from_string=dlsym(handle,"sp_link_create_from_string"))==NULL) return "sp_link_create_from_string";
 if((f_sp_link_create_from_track=dlsym(handle,"sp_link_create_from_track"))==NULL) return "sp_link_create_from_track";
 if((f_sp_link_create_from_album=dlsym(handle,"sp_link_create_from_album"))==NULL) return "sp_link_create_from_album";
@@ -171,6 +181,8 @@ if((f_sp_link_release=dlsym(handle,"sp_link_release"))==NULL) return "sp_link_re
 if((f_sp_track_is_loaded=dlsym(handle,"sp_track_is_loaded"))==NULL) return "sp_track_is_loaded";
 if((f_sp_track_error=dlsym(handle,"sp_track_error"))==NULL) return "sp_track_error";
 if((f_sp_track_is_available=dlsym(handle,"sp_track_is_available"))==NULL) return "sp_track_is_available";
+if((f_sp_track_is_starred=dlsym(handle,"sp_track_is_starred"))==NULL) return "sp_track_is_starred";
+if((f_sp_track_set_starred=dlsym(handle,"sp_track_set_starred"))==NULL) return "sp_track_set_starred";
 if((f_sp_track_num_artists=dlsym(handle,"sp_track_num_artists"))==NULL) return "sp_track_num_artists";
 if((f_sp_track_artist=dlsym(handle,"sp_track_artist"))==NULL) return "sp_track_artist";
 if((f_sp_track_album=dlsym(handle,"sp_track_album"))==NULL) return "sp_track_album";
@@ -232,6 +244,7 @@ if((f_sp_image_image_id=dlsym(handle,"sp_image_image_id"))==NULL) return "sp_ima
 if((f_sp_image_add_ref=dlsym(handle,"sp_image_add_ref"))==NULL) return "sp_image_add_ref";
 if((f_sp_image_release=dlsym(handle,"sp_image_release"))==NULL) return "sp_image_release";
 if((f_sp_search_create=dlsym(handle,"sp_search_create"))==NULL) return "sp_search_create";
+if((f_sp_radio_search_create=dlsym(handle,"sp_radio_search_create"))==NULL) return "sp_radio_search_create";
 if((f_sp_search_is_loaded=dlsym(handle,"sp_search_is_loaded"))==NULL) return "sp_search_is_loaded";
 if((f_sp_search_error=dlsym(handle,"sp_search_error"))==NULL) return "sp_search_error";
 if((f_sp_search_num_tracks=dlsym(handle,"sp_search_num_tracks"))==NULL) return "sp_search_num_tracks";
@@ -259,6 +272,9 @@ if((f_sp_playlist_has_pending_changes=dlsym(handle,"sp_playlist_has_pending_chan
 if((f_sp_playlist_add_tracks=dlsym(handle,"sp_playlist_add_tracks"))==NULL) return "sp_playlist_add_tracks";
 if((f_sp_playlist_remove_tracks=dlsym(handle,"sp_playlist_remove_tracks"))==NULL) return "sp_playlist_remove_tracks";
 if((f_sp_playlist_reorder_tracks=dlsym(handle,"sp_playlist_reorder_tracks"))==NULL) return "sp_playlist_reorder_tracks";
+if((f_sp_playlist_create=dlsym(handle,"sp_playlist_create"))==NULL) return "sp_playlist_create";
+if((f_sp_playlist_add_ref=dlsym(handle,"sp_playlist_add_ref"))==NULL) return "sp_playlist_add_ref";
+if((f_sp_playlist_release=dlsym(handle,"sp_playlist_release"))==NULL) return "sp_playlist_release";
 if((f_sp_playlistcontainer_add_callbacks=dlsym(handle,"sp_playlistcontainer_add_callbacks"))==NULL) return "sp_playlistcontainer_add_callbacks";
 if((f_sp_playlistcontainer_remove_callbacks=dlsym(handle,"sp_playlistcontainer_remove_callbacks"))==NULL) return "sp_playlistcontainer_remove_callbacks";
 if((f_sp_playlistcontainer_num_playlists=dlsym(handle,"sp_playlistcontainer_num_playlists"))==NULL) return "sp_playlistcontainer_num_playlists";
@@ -296,6 +312,8 @@ return NULL;}
 #define f_sp_session_player_play sp_session_player_play
 #define f_sp_session_player_unload sp_session_player_unload
 #define f_sp_session_playlistcontainer sp_session_playlistcontainer
+#define f_sp_session_starred_create sp_session_starred_create
+#define f_sp_session_preferred_bitrate sp_session_preferred_bitrate
 #define f_sp_link_create_from_string sp_link_create_from_string
 #define f_sp_link_create_from_track sp_link_create_from_track
 #define f_sp_link_create_from_album sp_link_create_from_album
@@ -313,6 +331,8 @@ return NULL;}
 #define f_sp_track_is_loaded sp_track_is_loaded
 #define f_sp_track_error sp_track_error
 #define f_sp_track_is_available sp_track_is_available
+#define f_sp_track_is_starred sp_track_is_starred
+#define f_sp_track_set_starred sp_track_set_starred
 #define f_sp_track_num_artists sp_track_num_artists
 #define f_sp_track_artist sp_track_artist
 #define f_sp_track_album sp_track_album
@@ -374,6 +394,7 @@ return NULL;}
 #define f_sp_image_add_ref sp_image_add_ref
 #define f_sp_image_release sp_image_release
 #define f_sp_search_create sp_search_create
+#define f_sp_radio_search_create sp_radio_search_create
 #define f_sp_search_is_loaded sp_search_is_loaded
 #define f_sp_search_error sp_search_error
 #define f_sp_search_num_tracks sp_search_num_tracks
@@ -401,6 +422,9 @@ return NULL;}
 #define f_sp_playlist_add_tracks sp_playlist_add_tracks
 #define f_sp_playlist_remove_tracks sp_playlist_remove_tracks
 #define f_sp_playlist_reorder_tracks sp_playlist_reorder_tracks
+#define f_sp_playlist_create sp_playlist_create
+#define f_sp_playlist_add_ref sp_playlist_add_ref
+#define f_sp_playlist_release sp_playlist_release
 #define f_sp_playlistcontainer_add_callbacks sp_playlistcontainer_add_callbacks
 #define f_sp_playlistcontainer_remove_callbacks sp_playlistcontainer_remove_callbacks
 #define f_sp_playlistcontainer_num_playlists sp_playlistcontainer_num_playlists
