@@ -33,6 +33,7 @@ static const GType coltypes[] = {
   [GDS_COL_TRACKS]     = G_TYPE_INT,
   [GDS_COL_TRACKINDEX] = G_TYPE_INT,
   [GDS_COL_POPULARITY] = G_TYPE_FLOAT,
+  [GDS_COL_STARRED]    = G_TYPE_INT,
 };
 
 /**
@@ -48,6 +49,7 @@ static const char **subpaths[] = {
   [GDS_COL_TRACKS]     = PNVEC("self", "metadata", "tracks"),
   [GDS_COL_TRACKINDEX] = PNVEC("self", "metadata", "trackindex"),
   [GDS_COL_POPULARITY] = PNVEC("self", "metadata", "popularity"),
+  [GDS_COL_STARRED]    = PNVEC("self", "metadata", "starred"),
 };
 
 
@@ -861,4 +863,14 @@ gu_dir_store_delete_multi(GuDirStore *gds, GtkTreeIter *iter, int len)
 
   prop_request_delete_multi(vec);
   free(vec);
+}
+
+void
+gu_dir_store_toggle_star(GuDirStore *gds, GtkTreeIter *iter)
+{
+  gds_row_t *gr = iter->user_data;
+  prop_t *metadata = prop_create(gr->gr_root, "metadata");
+  prop_t *starred  = prop_create(metadata,    "starred");
+
+  prop_toggle_int(starred);
 }

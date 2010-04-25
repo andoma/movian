@@ -351,19 +351,26 @@ mouse_do(directory_list_t *d, GtkTreeView *tree_view, int action, int x, int y,
     break;
       
   case MOUSE_LEFTCLICK:
-    url = gu_dir_store_url_from_cell(c);
-    if(url != NULL) {
+    if(col == GDS_COL_STARRED) {
+      d->presscell = c;
+      r = 1;
+    } else if((url = gu_dir_store_url_from_cell(c)) != NULL) {
       d->presscell = c;
       r = 1;
     }
     break;
 
   case MOUSE_LEFTRELEASE:
-    url = gu_dir_store_url_from_cell(c);
-    if(url != NULL && c == d->presscell) {
-      nav_open(url, NULL, NULL);
-      r = 1;
+    if(c == d->presscell) {
+      if(col == GDS_COL_STARRED) {
+	gu_dir_store_toggle_star(GU_DIR_STORE(d->model), &iter);
+	r = 1;
+      } else if((url = gu_dir_store_url_from_cell(c)) != NULL) {
+	nav_open(url, NULL, NULL);
+	r = 1;
+      }
     }
+
     d->presscell = NULL;
     break;
 
@@ -569,6 +576,52 @@ init_duration_col(directory_list_t *d, const char *title, int idx)
 }
 
 
+/**
+ *
+ */
+static void
+starred2pixbuf(GtkTreeViewColumn *tree_column, GtkCellRenderer *cell,
+	       GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
+{
+  GValue gv = { 0, };
+
+  gtk_tree_model_get_value(model, iter, GDS_COL_STARRED, &gv);
+  if(G_VALUE_HOLDS_INT(&gv)) {
+    GdkPixbuf *pb;
+
+    if(g_value_get_int(&gv))
+      pb = gu_pixbuf_get_sync(SHOWTIME_GU_RESOURCES_URL"/star.png", -1, 16);
+    else
+      pb = gu_pixbuf_get_sync(SHOWTIME_GU_RESOURCES_URL"/nostar.png", -1, 16);
+
+    g_object_set(G_OBJECT(cell), "pixbuf", pb, NULL);
+    if(pb != NULL)
+      g_object_unref(G_OBJECT(pb));
+  }
+  g_value_unset(&gv);
+}
+
+
+
+/**
+ *
+ */
+static void
+init_starred_col(directory_list_t *d, const char *title, int idx)
+{
+  GtkCellRenderer *r;
+  GtkTreeViewColumn *c;
+
+  r = gtk_cell_renderer_pixbuf_new();
+  c = gtk_tree_view_column_new_with_attributes(title, r, NULL);
+
+  gtk_tree_view_column_set_cell_data_func(c, r, starred2pixbuf, NULL, NULL);
+
+  gtk_tree_view_append_column(GTK_TREE_VIEW(d->tree), c);
+  gtk_tree_view_column_set_visible(c, FALSE);
+  d->columns[idx].col = c;
+}
+
 
 /**
  *
@@ -751,6 +804,8 @@ gu_directory_list_create(gtk_ui_t *gu, prop_t *root, int flags)
 
   if(flags & GU_DIR_COL_TYPE)
     init_type_col(d, "", GDS_COL_TYPE);
+
+  init_starred_col(d, "", GDS_COL_STARRED);
 
   if(flags & GU_DIR_COL_TRACKINDEX)
     init_text_col(d, "#", GDS_COL_TRACKINDEX, 0, 0);

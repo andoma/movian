@@ -49,6 +49,7 @@ enum {
   GDS_COL_TRACKS,
   GDS_COL_TRACKINDEX,
   GDS_COL_POPULARITY,
+  GDS_COL_STARRED,
   GDS_COL_num,
 };
 
@@ -93,5 +94,6 @@ void gu_dir_store_delete(GuDirStore *gds, GtkTreeIter *iter);
 
 void gu_dir_store_delete_multi(GuDirStore *gds, GtkTreeIter *iter, int niter);
 
+void gu_dir_store_toggle_star(GuDirStore *gds, GtkTreeIter *iter);
 
 #endif // GU_DIRECTORY_STORE_H__
