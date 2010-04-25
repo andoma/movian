@@ -1,12 +1,24 @@
 #!/bin/sh
 
-LIBS=`otool -L $1 | tail +2 | grep -vE "/usr/lib|/System/Library"`
+BINDIR=`dirname $1`
 
-if [ "$LIBS" = "" ] ; then
-  exit 0
-fi
+otool -L $1 | tail +2 | cut -f 1 -d " "  | while read LIB ; do
+  echo "$LIB" | grep -qE "/usr/lib|/System/Library"
+  if [ "$?" = "0" ] ; then
+    continue
+  fi
 
-echo "ERROR: $1 is linked with non-system libraries"
-echo "$LIBS"
-exit 1
+  echo "$LIB" | grep -qE "@loader_path/"
+  if [ "$?" = "0" ] ; then
+    if [ -e "${LIB/@loader_path/$BINDIR}" ] ; then
+      continue 
+    fi
+  fi
+
+  echo "ERROR: $1 is linked with non-system libraries or libraries outside bundle"
+  echo "$LIB"
+  exit 1
+done
+
+exit 0
 
