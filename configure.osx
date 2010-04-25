@@ -35,6 +35,8 @@ show_help(){
   echo "  --macosxsdk=PATH         Mac OS X SDK path [$MACOSXSDK]"
   echo "  --pkg-config=PATH        pkg-config path [$PKGCONFIG]"
   echo "  --pkg-config-dir=PATH    pkg-config config dir[$PKGCONFIGDIR]"
+  echo "  --enable-spotify=keyfile Compile support for Spotify (R) Core"
+  echo "  --spotify-framework=PATH Path to libspotify.framework"
   exit 1
 }
 
@@ -94,11 +96,32 @@ for opt do
   ;;
   --pkg-config-dir=*) PKGCONFIGDIR="$optval"
   ;;
+  --enable-spotify=*) SPOTIFY_KEYFILE="$optval"
+  ;;
+  --spotify-framework=*) SPOTIFY_FRAMEWORK="$optval"
+  ;;
   *)
   common_opt $opt $optval
   esac
 done
 
+if [ "$SPOTIFY_KEYFILE" != "" ] ; then
+  if [ ! -f "$SPOTIFY_KEYFILE" ]  ; then
+    echo "$SPOTIFY_KEYFILE does not exist"  
+    die
+  fi
+  
+  if [ "$SPOTIFY_FRAMEWORK" = "" ] ; then
+    echo "You must specify where the libspotify.framework directory can be found."
+    echo "Use the --spotify-framework argument"
+    die
+  fi
+
+  if [ ! -d "$SPOTIFY_FRAMEWORK" ] ; then
+    echo "$SPOTIFY_FRAMEWORK does not exist"
+    die
+  fi
+fi
 
 setup_env "$@"
 
@@ -268,6 +291,11 @@ cat >> ${CONFIG_H} << EOF
 #define O_BINARY 0
 
 EOF
+
+if [ "$SPOTIFY_FRAMEWORK" != "" ] ; then
+    echo >>${CONFIG_MAK} "SPOTIFY_FRAMEWORK = ${SPOTIFY_FRAMEWORK}"
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -F\$(shell dirname \$(SPOTIFY_FRAMEWORK)) -framework libspotify"
+fi
 
 #
 # Finalize

@@ -27,6 +27,17 @@ $(APPDIR)/Contents/Resources/MainMenu.nib: osx/MainMenu.xib
 	mkdir -p `dirname $@`
 	ibtool --compile $@ $<
 
+ifdef SPOTIFY_FRAMEWORK
+Showtime.app: $(APPDIR)/Contents/Frameworks/libspotify.framework/libspotify
+
+$(APPDIR)/Contents/Frameworks/libspotify.framework/libspotify:
+	mkdir -p `dirname $@`
+	cp -a \
+	  "${SPOTIFY_FRAMEWORK}/Versions" \
+	  "${SPOTIFY_FRAMEWORK}/libspotify" \
+	  "`dirname $@`"
+endif
+
 .PHONY: Showtime.dmg
 Showtime.dmg:
 	support/osxchecknonsyslink.sh ${PROG}
