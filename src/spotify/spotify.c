@@ -138,8 +138,9 @@ typedef struct playlist_track {
 static void load_initial_playlists(sp_playlistcontainer *pc);
 
 
+static int spotify_pending_events;
+
 typedef enum {
-  SPOTIFY_PENDING_EVENT, //< event pending from libspotify
   SPOTIFY_LOGOUT,
   SPOTIFY_PLAY_TRACK,
   SPOTIFY_LIST,
@@ -416,7 +417,10 @@ spotify_connection_error(sp_session *sess, sp_error error)
 static void
 spotify_events_pending(sp_session *sess)
 {
-  spotify_msg_enq(spotify_msg_build(SPOTIFY_PENDING_EVENT, NULL));
+  hts_mutex_lock(&spotify_mutex);
+  spotify_pending_events = 1;
+  hts_cond_signal(&spotify_cond_main);
+  hts_mutex_unlock(&spotify_mutex);
 }
 
 
@@ -2159,26 +2163,30 @@ spotify_thread(void *aux)
   /* Wakeup any sleepers that are waiting for us to start */
 
   while(1) {
-     if(next_timeout == 0) {
-      while((sm = TAILQ_FIRST(&spotify_msgs)) == NULL)
-	hts_cond_wait(&spotify_cond_main, &spotify_mutex);
 
-    } else {
-      while((sm = TAILQ_FIRST(&spotify_msgs)) == NULL)
-	if(hts_cond_wait_timeout(&spotify_cond_main,
-				 &spotify_mutex, next_timeout))
-	  break;
+    sm = NULL;
+
+    while(!spotify_pending_events) {
+
+      if((sm = TAILQ_FIRST(&spotify_msgs)) != NULL)
+	break;
+
+     if(next_timeout == 0) 
+       hts_cond_wait(&spotify_cond_main, &spotify_mutex);
+     else if(hts_cond_wait_timeout(&spotify_cond_main,
+				   &spotify_mutex, next_timeout))
+       break;
     }
 
     if(sm != NULL)
       TAILQ_REMOVE(&spotify_msgs, sm, sm_link);
-   
+
+    spotify_pending_events = 0;
+
     hts_mutex_unlock(&spotify_mutex);
 
     if(sm != NULL) {
       switch(sm->sm_op) {
-      case SPOTIFY_PENDING_EVENT:
-	break;
       case SPOTIFY_LOGOUT:
 	TRACE(TRACE_DEBUG, "spotify", "Requesting logout");
 	f_sp_session_logout(s);
