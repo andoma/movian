@@ -1499,8 +1499,6 @@ tracks_added(sp_playlist *plist, sp_track * const * tracks,
 
     plt->plt_prop_metadata = prop_create(plt->plt_prop_root, "metadata");
 
-    prop_set_ptr(prop_create(plt->plt_prop_root, "plt"), plt);
-
     if(prop_set_parent_ex(plt->plt_prop_root, pl->pl_prop_tracks,
 			  before ? before->plt_prop_root : NULL,
 			  pl->pl_node_sub)) {
