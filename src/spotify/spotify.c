@@ -95,6 +95,8 @@ typedef struct metadata {
   int m_flags;
 #define METADATA_ARTIST_IMAGES_SCRAPPED 0x1
 
+  prop_sub_t *m_starred;
+
 } metadata_t;
 
 static LIST_HEAD(, metadata) metadatas;
@@ -134,7 +136,7 @@ typedef struct playlist_track {
   playlist_t *plt_pl;
 } playlist_track_t;
 
-static void load_initial_playlists(sp_playlistcontainer *pc);
+static void load_initial_playlists(sp_session *sess);
 
 
 static int spotify_pending_events;
@@ -355,7 +357,7 @@ spotify_logged_in(sp_session *sess, sp_error error)
     prop_set_stringf(prop_status, "Logged in as user: %s",
 		     f_sp_user_display_name(user));
 
-    load_initial_playlists(f_sp_session_playlistcontainer(sess));
+    load_initial_playlists(sess);
 
   } else {
     notify_add(NOTIFY_ERROR, NULL, 5, "Spotify: Login failed -- %s",
@@ -615,10 +617,29 @@ set_image_uri(prop_t *p, const uint8_t *id)
  *
  */
 static void
+metadata_prop_starred(void *opaque, prop_event_t event, ...)
+{
+  metadata_t *m = opaque;
+  const sp_track *track = m->m_source;
+  int v;
+  va_list ap;
+
+  if(event != PROP_SET_INT)
+    return;
+
+  va_start(ap, event);
+  v = va_arg(ap, int);
+  f_sp_track_set_starred(spotify_session, &track, 1, !!v);
+}
+
+/**
+ *
+ */
+static void
 spotify_metadata_update_track(metadata_t *m)
 {
   prop_t *meta = m->m_prop;
-  prop_t *p;
+  prop_t *p, *starred;
   sp_track *track = m->m_source;
   sp_album *album;
   sp_artist *artist;
@@ -684,6 +705,20 @@ spotify_metadata_update_track(metadata_t *m)
     if(p != NULL)
       scrapper_artist_init(p, f_sp_artist_name(artist));
   }
+
+  
+  starred = prop_create(meta, "starred");
+
+  if(m->m_starred == NULL) {
+    m->m_starred = 
+      prop_subscribe(0,
+		     PROP_TAG_CALLBACK, metadata_prop_starred, m,
+		     PROP_TAG_COURIER, spotify_courier,
+		     PROP_TAG_ROOT, starred,
+		     NULL);
+  }
+
+  prop_set_int_ex(starred, m->m_starred, f_sp_track_is_starred(track));
 }
 
 
@@ -811,6 +846,9 @@ metadata_prop_cb(void *opaque, prop_event_t event, ...)
 
   prop_unsubscribe(s);
 
+  if(m->m_starred != NULL)
+    prop_unsubscribe(m->m_starred);
+
   LIST_REMOVE(m, m_link);
   prop_ref_dec(m->m_prop);
 
@@ -841,14 +879,13 @@ static void
 metadata_create0(prop_t *p, metadata_type_t type, void *source,
 		 playlist_track_t *plt)
 {
-  metadata_t *m = malloc(sizeof(metadata_t));
+  metadata_t *m = calloc(1, sizeof(metadata_t));
 
   prop_ref_inc(p);
   m->m_plt = plt;
   m->m_prop = p;
   m->m_type = type;
   m->m_source = source;
-  m->m_flags = 0;
 
   switch(m->m_type) {
   case METADATA_TRACK:
@@ -1890,10 +1927,44 @@ static sp_playlistcontainer_callbacks pc_callbacks = {
 /**
  *
  */
+static void 
+star_added(sp_playlist *plist, sp_track * const * tracks,
+	   int num_tracks, int position, void *userdata)
+{
+  spotify_metadata_updated(spotify_session);
+}
+
+
+/**
+ *
+ */
 static void
-load_initial_playlists(sp_playlistcontainer *pc)
+star_removed(sp_playlist *plist, const int *tracks,
+	     int num_tracks, void *userdata)
+{
+  spotify_metadata_updated(spotify_session);
+}
+
+
+
+/**
+ * Callbacks for starred playlist
+ * We need this to catch updates to starred status
+ */
+static sp_playlist_callbacks star_callbacks = {
+  .tracks_added     = star_added,
+  .tracks_removed   = star_removed,
+};
+
+/**
+ *
+ */
+static void
+load_initial_playlists(sp_session *sess)
 {
   int i, n;
+  sp_playlistcontainer *pc = f_sp_session_playlistcontainer(sess);
+  sp_playlist *plist;
 
   n = f_sp_playlistcontainer_num_playlists(pc);
 
@@ -1902,6 +1973,11 @@ load_initial_playlists(sp_playlistcontainer *pc)
   }
 
   f_sp_playlistcontainer_add_callbacks(pc, &pc_callbacks, NULL);
+
+  // starred
+
+  plist = f_sp_session_starred_create(sess);
+  f_sp_playlist_add_callbacks(plist, &star_callbacks, NULL);
 }
 
 
