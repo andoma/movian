@@ -141,7 +141,7 @@ glw_init(glw_root_t *gr, const char *theme, ui_t *ui, int primary,
 {
 
   hts_mutex_init(&gr->gr_mutex);
-  gr->gr_courier = prop_courier_create(NULL, 0, "GLW");
+  gr->gr_courier = prop_courier_create_passive();
   gr->gr_theme = theme;
 
   gr->gr_uii.uii_ui = ui;

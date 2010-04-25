@@ -102,7 +102,7 @@ nav_init(void)
   NAV_INIT_BE(spotify);
 #endif
 
-  pc = prop_courier_create(&nav_mutex, PROP_COURIER_THREAD, "navigator");
+  pc = prop_courier_create_thread(&nav_mutex, "navigator");
 
   prop_subscribe(0,
 		 PROP_TAG_NAME("nav", "eventsink"),

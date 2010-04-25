@@ -198,7 +198,7 @@ mp_create(const char *name, const char *type, int flags)
     prop_create(mp->mp_prop_root, "canRepeat");
 
 
-  mp->mp_pc = prop_courier_create(&mp->mp_mutex, PROP_COURIER_THREAD, "mp");
+  mp->mp_pc = prop_courier_create_thread(&mp->mp_mutex, "mp");
 
   mp->mp_sub_currenttime = 
     prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,

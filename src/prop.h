@@ -86,6 +86,9 @@ typedef struct prop_courier {
 
   int pc_run;
 
+  void (*pc_notify)(void *opaque);
+  void *pc_opaque;
+  
 } prop_courier_t;
 
 
@@ -458,10 +461,13 @@ void prop_request_delete(prop_t *p);
 
 void prop_request_delete_multi(prop_t **vec);
 
-#define PROP_COURIER_THREAD 0x1
+prop_courier_t *prop_courier_create_thread(hts_mutex_t *entrymutex,
+					   const char *name);
 
-prop_courier_t *prop_courier_create(hts_mutex_t *entrymutex, int flags,
-				    const char *name);
+prop_courier_t *prop_courier_create_passive(void);
+
+prop_courier_t *prop_courier_create_notify(void (*notify)(void *opaque),
+					   void *opaque);
 
 void prop_courier_poll(prop_courier_t *pc);
 
