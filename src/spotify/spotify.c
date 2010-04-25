@@ -50,6 +50,7 @@
 /**
  *
  */
+static prop_courier_t *spotify_courier;
 static media_pipe_t *spotify_mp;
 static hts_mutex_t spotify_mutex;
 static hts_cond_t spotify_cond_main;
@@ -98,7 +99,6 @@ typedef struct metadata {
 } metadata_t;
 
 static LIST_HEAD(, metadata) metadatas;
-static hts_mutex_t meta_mutex;
 
 /**
  * Playlist support
@@ -132,7 +132,6 @@ typedef struct playlist_track {
   prop_t *plt_prop_metadata;
   prop_t *plt_prop_title;
   playlist_t *plt_pl;
-
 } playlist_track_t;
 
 static void load_initial_playlists(sp_playlistcontainer *pc);
@@ -145,17 +144,12 @@ typedef enum {
   SPOTIFY_PLAY_TRACK,
   SPOTIFY_LIST,
   SPOTIFY_STOP_PLAYBACK,
-  SPOTIFY_RELEASE_TRACK,
-  SPOTIFY_RELEASE_ALBUM,
-  SPOTIFY_RELEASE_ARTIST,
-  SPOTIFY_RELEASE_IMAGE,
   SPOTIFY_SEEK,
   SPOTIFY_PAUSE,
   SPOTIFY_GET_IMAGE,
   SPOTIFY_GET_PARENT,
   SPOTIFY_OPEN_TRACK,
   SPOTIFY_OPEN_PAGE,
-  SPOTIFY_DELETE_TRACK,
 } spotify_msg_type_t;
 
 /**
@@ -645,8 +639,8 @@ spotify_metadata_update_track(metadata_t *m)
   if(!f_sp_track_is_loaded(track))
     return;
 
+#if 0
   if(!f_sp_track_is_available(track) && m->m_plt != NULL) {
-
     playlist_track_t *plt = m->m_plt;
 
     if(plt->plt_prop_root != NULL) {
@@ -655,7 +649,7 @@ spotify_metadata_update_track(metadata_t *m)
     }
     return;
   }
-
+#endif
 
   album = f_sp_track_album(track);
 
@@ -697,7 +691,8 @@ spotify_metadata_update_track(metadata_t *m)
 
     p = prop_create(meta, "artist_images");
 
-    scrapper_artist_init(p, f_sp_artist_name(artist));
+    if(p != NULL)
+      scrapper_artist_init(p, f_sp_artist_name(artist));
   }
 }
 
@@ -798,16 +793,13 @@ spotify_metadata_updated(sp_session *sess)
 {
   metadata_t *m;
 
-  hts_mutex_lock(&meta_mutex);
-
   LIST_FOREACH(m, &metadatas, m_link)
     metadata_update(m);
-
-  hts_mutex_unlock(&meta_mutex);
 
   spotify_play_track_try();
   spotify_try_get_parents();
 }
+
 
 /**
  *
@@ -816,7 +808,6 @@ static void
 metadata_prop_cb(void *opaque, prop_event_t event, ...)
 {
   metadata_t *m = opaque;
-  spotify_msg_type_t r;
   prop_t *p;
   prop_sub_t *s;
   va_list ap;
@@ -833,30 +824,25 @@ metadata_prop_cb(void *opaque, prop_event_t event, ...)
   LIST_REMOVE(m, m_link);
   prop_ref_dec(m->m_prop);
 
-  /* Since we are not in the spotify thread, but all accessed to
-     the API must go there, we post a request to release
-     the reference */
-  
   switch(m->m_type) {
   case METADATA_TRACK:
-    r = SPOTIFY_RELEASE_TRACK;
+    f_sp_track_release(m->m_source);
     break;
     
   case METADATA_ALBUM_NAME:
   case METADATA_ALBUM_YEAR:
   case METADATA_ALBUM_ARTIST_NAME:
   case METADATA_ALBUM_IMAGE:
-    r = SPOTIFY_RELEASE_ALBUM;
+    f_sp_album_release(m->m_source);
     break;
 
    case METADATA_ARTIST_NAME:
-    r = SPOTIFY_RELEASE_ARTIST;
+    f_sp_artist_release(m->m_source);
     break;
+
   default:
     abort();
   }
-
-  spotify_msg_enq(spotify_msg_build(r, m->m_source));
   free(m);
 }
 
@@ -891,17 +877,15 @@ metadata_create0(prop_t *p, metadata_type_t type, void *source,
     break;
   }
 
-  hts_mutex_lock(&meta_mutex);
   LIST_INSERT_HEAD(&metadatas, m, m_link);
 
   prop_subscribe(PROP_SUB_TRACK_DESTROY,
 		 PROP_TAG_CALLBACK, metadata_prop_cb, m,
-		 PROP_TAG_MUTEX, &meta_mutex,
+		 PROP_TAG_COURIER, spotify_courier,
 		 PROP_TAG_ROOT, p,
 		 NULL);
   
   metadata_update(m);
-  hts_mutex_unlock(&meta_mutex);
 }
 
 
@@ -1524,6 +1508,7 @@ tracks_added(sp_playlist *plist, sp_track * const * tracks,
     }
 
     metadata_create0(plt->plt_prop_metadata, METADATA_TRACK, t, plt);
+
     ptrvec_insert_entry(&pl->pl_tracks, pos, plt);
   }
   prop_set_int(pl->pl_prop_num_tracks, pl->pl_tracks.size);
@@ -1696,6 +1681,36 @@ static sp_playlist_callbacks pl_callbacks = {
 };
 
 
+/**
+ *
+ */
+static void
+spotify_delete_tracks(playlist_t *pl, prop_t **pv)
+{
+  playlist_track_t *plt;
+  int *targets;
+  int k = 0, i, j = 0, m = 0, ntracks = prop_pvec_len(pv);
+  if(ntracks == 0)
+    return;
+
+  targets = malloc(sizeof(int) * ntracks);
+
+  for(i = 0; i < pl->pl_tracks.size; i++) {
+    plt = pl->pl_tracks.vec[i];
+    for(j = k; j < ntracks; j++) {
+      if(pv[j] == plt->plt_prop_root) {
+	if(j == k)
+	  k++;
+	targets[m++] = i;
+      }
+    }
+    if(k == ntracks)
+      break;
+  }
+
+  f_sp_playlist_remove_tracks(pl->pl_playlist, targets, m);
+  free(targets);
+}
   
 
 /**
@@ -1704,8 +1719,7 @@ static sp_playlist_callbacks pl_callbacks = {
 static void
 playlist_node_callback(void *opaque, prop_event_t event, ...)
 {
-  prop_t **pv;
-
+  playlist_t *pl = opaque;
   va_list ap;
   va_start(ap, event);
 
@@ -1714,8 +1728,7 @@ playlist_node_callback(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_REQ_DELETE_MULTI:
-    pv = prop_pvec_clone(va_arg(ap, prop_t **));
-    spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_DELETE_TRACK, pv));
+    spotify_delete_tracks(pl, va_arg(ap, prop_t **));
     break;
   }
 }
@@ -1742,7 +1755,7 @@ pl_create(sp_playlist *plist)
     prop_subscribe(0,
 		   PROP_TAG_CALLBACK, playlist_node_callback, pl,
 		   PROP_TAG_ROOT, pl->pl_prop_tracks,
-		   PROP_TAG_MUTEX, &spotify_mutex,
+		   PROP_TAG_COURIER, spotify_courier,
 		   NULL);
 
   pl->pl_prop_type = prop_create(pl->pl_prop_root, "type");
@@ -2019,69 +2032,6 @@ spotify_try_get_parents(void)
 /**
  *
  */
-static playlist_track_t *
-prop_to_plt(prop_t *p)
-{
-  playlist_track_t *r;
-  p = prop_get_by_names(p, "plt", NULL);
-  r = p != NULL && p->hp_type == PROP_PTR ? p->hp_ptr : NULL;
-  if(p)
-    prop_ref_dec(p);
-  return r;
-}
-
-
-/**
- *
- */
-static void
-pl_assign_track_positions(playlist_t *pl)
-{
-  int i;
-  playlist_track_t *plt;
-
-  for(i = 0; i < pl->pl_tracks.size; i++) {
-    plt = pl->pl_tracks.vec[i];
-    plt->plt_position = i;
-  }
-}
-
-
-/**
- *
- */
-static void
-spotify_delete_track(prop_t **pv)
-{
-  playlist_t *pl;
-  playlist_track_t *plt;
-  int *targets;
-  int i, j = 0, ntracks = prop_pvec_len(pv);
-  if(ntracks == 0)
-    return;
-
-  plt = prop_to_plt(pv[0]);
-  pl = plt->plt_pl;
-  
-  pl_assign_track_positions(pl);
-
-  targets = malloc(sizeof(int) * ntracks);
-
-  for(i = 0; i < ntracks; i++) {
-    plt = prop_to_plt(pv[i]);
-    if(plt != NULL)
-      targets[j++] = plt->plt_position;
-  }
-
-  f_sp_playlist_remove_tracks(pl->pl_playlist, targets, j);
-  free(targets);
-  prop_pvec_free(pv);
-}
-
-
-/**
- *
- */
 static int
 find_cachedir(char *path, size_t pathlen)
 {
@@ -2206,18 +2156,6 @@ spotify_thread(void *aux)
       case SPOTIFY_STOP_PLAYBACK:
 	f_sp_session_player_unload(s);
 	break;
-      case SPOTIFY_RELEASE_TRACK:
-	f_sp_track_release(sm->sm_ptr);
-	break;
-      case SPOTIFY_RELEASE_ALBUM:
-	f_sp_album_release(sm->sm_ptr);
-	break;
-      case SPOTIFY_RELEASE_ARTIST:
-	f_sp_artist_release(sm->sm_ptr);
-	break;
-      case SPOTIFY_RELEASE_IMAGE:
-	f_sp_image_release(sm->sm_ptr);
-	break;
       case SPOTIFY_SEEK:
 	if(spotify_mp == NULL)
 	  break;
@@ -2238,12 +2176,11 @@ spotify_thread(void *aux)
       case SPOTIFY_GET_PARENT:
 	spotify_get_parent(sm->sm_ptr);
 	break;
-      case SPOTIFY_DELETE_TRACK:
-	spotify_delete_track(sm->sm_ptr);
-	break;
       }
       free(sm);
     }
+
+    prop_courier_poll(spotify_courier);
 
     do {
       f_sp_session_process_events(s, &next_timeout);
@@ -2640,6 +2577,18 @@ create_prop_rootlist(prop_t *parent)
 /**
  *
  */
+static void
+courier_notify(void *opaque)
+{
+  hts_mutex_lock(&spotify_mutex);
+  spotify_pending_events = 1;
+  hts_cond_signal(&spotify_cond_main);
+  hts_mutex_unlock(&spotify_mutex);
+}
+
+/**
+ *
+ */
 static int
 be_spotify_init(void)
 {
@@ -2649,6 +2598,8 @@ be_spotify_init(void)
   if(be_spotify_dlopen())
     return 1;
 #endif
+
+  spotify_courier = prop_courier_create_notify(courier_notify, NULL);
 
   spotify = prop_create(prop_get_global(), "spotify");
 
@@ -2666,9 +2617,6 @@ be_spotify_init(void)
   hts_cond_init(&spotify_cond_uri);
   hts_cond_init(&spotify_cond_image);
   hts_cond_init(&spotify_cond_parent);
-
-  /* Metadata tracking */
-  hts_mutex_init(&meta_mutex);
 
   /* Register as a global source */
 
