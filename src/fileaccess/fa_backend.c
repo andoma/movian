@@ -55,12 +55,12 @@ be_file_canhandle(const char *url)
  *
  */
 static void
-file_open_video(const char *url0, nav_page_t **npp)
+file_open_video(struct navigator *nav, const char *url0, nav_page_t **npp)
 {
   nav_page_t *np;
   prop_t *src;
 
-  np = nav_page_create(url0, sizeof(nav_page_t), NULL, 0);
+  np = nav_page_create(nav, url0, sizeof(nav_page_t), NULL, 0);
 
   src = prop_create(np->np_prop_root, "source");
   prop_set_string(prop_create(src, "type"), "video");
@@ -72,7 +72,8 @@ file_open_video(const char *url0, nav_page_t **npp)
  *
  */
 static int
-file_open_dir(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
+file_open_dir(struct navigator *nav, 
+	      const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
 {
   be_file_page_t *bfp;
   prop_t *src, *view, *metadata;
@@ -83,11 +84,11 @@ file_open_dir(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
   type = fa_probe_dir(NULL, url0);
 
   if(type == CONTENT_DVD) {
-    file_open_video(url0, npp);
+    file_open_video(nav, url0, npp);
     return 0;
   }
 
-  bfp = nav_page_create(url0, sizeof(be_file_page_t), NULL,
+  bfp = nav_page_create(nav, url0, sizeof(be_file_page_t), NULL,
 			NAV_PAGE_DONT_CLOSE_ON_BACK);
 
   view = prop_create(bfp->h.np_prop_root, "view");
@@ -149,7 +150,8 @@ file_open_dir(const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
  *
  */
 static int
-file_open_file(const char *url, nav_page_t **npp, char *errbuf, size_t errlen,
+file_open_file(struct navigator *nav,
+	       const char *url, nav_page_t **npp, char *errbuf, size_t errlen,
 	       struct stat *st, prop_t *psource)
 {
   char redir[URL_MAX];
@@ -164,7 +166,7 @@ file_open_file(const char *url, nav_page_t **npp, char *errbuf, size_t errlen,
   switch(r) {
   case CONTENT_ARCHIVE:
     prop_destroy(meta);
-    return file_open_dir(redir, npp, errbuf, errlen);
+    return file_open_dir(nav, redir, npp, errbuf, errlen);
   case CONTENT_AUDIO:
 #if 0 
     parent = strdup(url);
@@ -191,7 +193,7 @@ file_open_file(const char *url, nav_page_t **npp, char *errbuf, size_t errlen,
   case CONTENT_VIDEO:
   case CONTENT_DVD:
     prop_destroy(meta);
-    file_open_video(url, npp);
+    file_open_video(nav, url, npp);
     return 0;
 
   default:
@@ -204,7 +206,8 @@ file_open_file(const char *url, nav_page_t **npp, char *errbuf, size_t errlen,
  *
  */
 static int
-be_file_open(const char *url0, const char *type0, prop_t *psource,
+be_file_open(struct navigator *nav,
+	     const char *url0, const char *type0, prop_t *psource,
 	     nav_page_t **npp, char *errbuf, size_t errlen)
 {
   struct stat buf;
@@ -212,8 +215,8 @@ be_file_open(const char *url0, const char *type0, prop_t *psource,
   if(fa_stat(url0, &buf, errbuf, errlen))
     return -1;
 
-  return S_ISDIR(buf.st_mode) ? file_open_dir(url0, npp, errbuf, errlen) :
-    file_open_file(url0, npp, errbuf, errlen, &buf, psource);
+  return S_ISDIR(buf.st_mode) ? file_open_dir(nav, url0, npp, errbuf, errlen) :
+    file_open_file(nav, url0, npp, errbuf, errlen, &buf, psource);
 }
 
 

@@ -2290,7 +2290,8 @@ spotify_start(void)
  *
  */
 static int
-be_spotify_open(const char *url0, const char *type, prop_t *psource,
+be_spotify_open(struct navigator *nav,
+		const char *url0, const char *type, prop_t *psource,
 		nav_page_t **npp, char *errbuf, size_t errlen)
 {
   nav_page_t *np = NULL;
@@ -2310,7 +2311,7 @@ be_spotify_open(const char *url0, const char *type, prop_t *psource,
 
   } else {
 
-    np = nav_page_create(url, sizeof(nav_page_t), NULL,
+    np = nav_page_create(nav, url, sizeof(nav_page_t), NULL,
 			 NAV_PAGE_DONT_CLOSE_ON_BACK);
     
     spotify_page_t *sp = malloc(sizeof(spotify_page_t));

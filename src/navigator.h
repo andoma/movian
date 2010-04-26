@@ -27,13 +27,9 @@
 /**
  *
  */
-TAILQ_HEAD(nav_page_queue, nav_page);
-
-
-/**
- *
- */
 typedef struct nav_page {
+  struct navigator *np_nav;
+
   TAILQ_ENTRY(nav_page) np_global_link;
   TAILQ_ENTRY(nav_page) np_history_link;
   int np_inhistory;
@@ -62,7 +58,7 @@ void nav_close(nav_page_t *np);
 
 void nav_open(const char *url, const char *type, prop_t *psource);
 
-void *nav_page_create(const char *url, size_t allocsize,
+void *nav_page_create(struct navigator *nav, const char *url, size_t allocsize,
 		      void (*closefunc)(struct nav_page *np),
 		      int flags);
 

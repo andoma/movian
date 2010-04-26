@@ -175,13 +175,14 @@ be_dvd_canhandle(const char *url)
  *
  */
 static int
-be_dvd_openpage(const char *url0, const char *type0, prop_t *psource,
+be_dvd_openpage(struct navigator *nav,
+		const char *url0, const char *type0, prop_t *psource,
 		nav_page_t **npp, char *errbuf, size_t errlen)
 {
   nav_page_t *np;
   prop_t *p;
 
-  np = nav_page_create(url0, sizeof(nav_page_t), NULL, 0);
+  np = nav_page_create(nav, url0, sizeof(nav_page_t), NULL, 0);
 
   p = np->np_prop_root;
   prop_set_string(prop_create(p, "type"), "video");
