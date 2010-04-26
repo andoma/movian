@@ -253,6 +253,8 @@ static void parse_search_reply(sp_search *result, prop_t *nodes, prop_t *view);
 static playlist_t *pl_create(sp_playlist *plist, prop_t *root,
 			     int withtracks, int autodestroy);
 
+static void spotify_shutdown(void *opaque);
+
 /**
  *
  */
@@ -2278,6 +2280,7 @@ spotify_start(void)
   if(spotify_started == 0) {
     hts_thread_create_detached("spotify", spotify_thread, NULL);
     spotify_started = 1;
+    shutdown_hook_add(spotify_shutdown, NULL);
   }
 }
 
@@ -2717,10 +2720,8 @@ be_spotify_canhandle(const char *url)
 /**
  *
  */
-void spotify_shutdown(void);
-
-void
-spotify_shutdown(void)
+static void
+spotify_shutdown(void *opaque)
 {
   int done;
 

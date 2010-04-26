@@ -256,6 +256,29 @@ trace(int level, const char *subsys, const char *fmt, ...)
 }
 
 
+/**
+ *
+ */
+static LIST_HEAD(, shutdown_hook) shutdown_hooks;
+
+typedef struct shutdown_hook {
+  LIST_ENTRY(shutdown_hook) link;
+  void (*fn)(void *opaque);
+  void *opaque;
+} shutdown_hook_t;
+
+/**
+ *
+ */
+void *
+shutdown_hook_add(void (*fn)(void *opaque), void *opaque)
+{
+  shutdown_hook_t *sh = malloc(sizeof(shutdown_hook_t));
+  sh->fn = fn;
+  sh->opaque = opaque;
+  LIST_INSERT_HEAD(&shutdown_hooks, sh, link);
+  return sh;
+}
 
 
 /**
@@ -264,13 +287,11 @@ trace(int level, const char *subsys, const char *fmt, ...)
 static void *
 showtime_shutdown0(void *aux)
 {
-  /* Very ugly */
-#ifdef CONFIG_SPOTIFY
-  {
-    extern void spotify_shutdown(void);
-    spotify_shutdown();
-  }
-#endif
+  shutdown_hook_t *sh;
+
+  LIST_FOREACH(sh, &shutdown_hooks, link)
+    sh->fn(sh->opaque);
+
   ui_shutdown();
 
   arch_exit(showtime_retcode);

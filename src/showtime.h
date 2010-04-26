@@ -83,4 +83,6 @@ static inline unsigned int mystrhash(const char *s)
 
 void runcontrol_activity(void);
 
+void *shutdown_hook_add(void (*fn)(void *opaque), void *opaque);
+
 #endif /* SHOWTIME_H */
