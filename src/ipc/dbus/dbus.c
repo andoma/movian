@@ -23,7 +23,7 @@
 #include "showtime.h"
 #include "arch/threads.h"
 #include "dbus.h"
-
+#include "ipc/ipc.h"
 
 /**
  *
@@ -61,8 +61,6 @@ dbus_thread(void *aux)
 /**
  *
  */
-void dbus_start(void);
-
 void
 dbus_start(void)
 {

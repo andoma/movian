@@ -32,6 +32,7 @@
 #include "event.h"
 #include "showtime.h"
 #include "ui/ui.h"
+#include "ipc/ipc.h"
 #include "event.h"
 
 
@@ -197,8 +198,6 @@ lirc_open(void)
 /**
  *
  */
-void lirc_start(void);
-
 void
 lirc_start(void)
 {
