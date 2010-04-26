@@ -26,6 +26,7 @@
 #include "showtime.h"
 #include "misc/callout.h"
 #include "navigator.h"
+#include "backend.h"
 #include "media.h"
 #include "dvd.h"
 #include "sd/sd.h"
@@ -140,13 +141,14 @@ be_dvd_canhandle(const char *url)
  *
  */
 static int
-be_dvd_openpage(const char *url0, const char *type0, prop_t *psource,
+be_dvd_openpage(struct navigator *nav,
+		const char *url0, const char *type0, prop_t *psource,
 		nav_page_t **npp, char *errbuf, size_t errlen)
 {
   nav_page_t *np;
   prop_t *p;
 
-  np = nav_page_create(url0, sizeof(nav_page_t), NULL, 0);
+  np = nav_page_create(nav, url0, sizeof(nav_page_t), NULL, 0);
 
   p = np->np_prop_root;
   prop_set_string(prop_create(p, "type"), "video");
@@ -198,9 +200,9 @@ be_dvd_init(void)
 /**
  *
  */
-nav_backend_t be_dvd = {
-  .nb_canhandle = be_dvd_canhandle,
-  .nb_open = be_dvd_openpage,
-  .nb_play_video = be_dvd_play,
-  .nb_init = be_dvd_init,
+backend_t be_dvd = {
+  .be_canhandle = be_dvd_canhandle,
+  .be_open = be_dvd_openpage,
+  .be_play_video = be_dvd_play,
+  .be_init = be_dvd_init,
 };
