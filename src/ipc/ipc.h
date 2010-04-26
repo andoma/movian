@@ -9,4 +9,6 @@ void dbus_start(void);
 
 void lirc_start(void);
 
+void serdev_start(void);
+
 #endif /* IPC_H__ */

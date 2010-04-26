@@ -73,6 +73,7 @@ enable cdda
 enable cddb
 enable libxss
 enable libxv
+enable serdev
 
 for opt do
   optval="${opt#*=}"

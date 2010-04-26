@@ -54,6 +54,7 @@ CONFIG_LIST="
  libxss
  libsmbclient
  libxv
+ serdev
 "
 
 die() {
