@@ -288,9 +288,18 @@ callback_opt(void *opaque, prop_event_t event, ...)
 
   cb = s->s_callback;
 
-  if(event == PROP_SELECT_CHILD) {
-    c = va_arg(ap, prop_t *);
-    cb(s->s_opaque, c ? c->hp_name : NULL);
+  if(event != PROP_SELECT_CHILD)
+    return;
+
+  c = va_arg(ap, prop_t *);
+
+  if(cb) cb(s->s_opaque, c ? c->hp_name : NULL);
+
+  if(s->s_store && s->s_saver) {
+    htsmsg_delete_field(s->s_store, s->s_id);
+    if(c != NULL)
+      htsmsg_add_str(s->s_store, s->s_id, c->hp_name);
+    s->s_saver(s->s_saver_opaque, s->s_store);
   }
 }
 
@@ -307,6 +316,7 @@ settings_create_multiopt(prop_t *parent, const char *id, const char *title,
   setting_t *s = malloc(sizeof(setting_t));
   prop_sub_t *sub;
 
+  s->s_id = strdup(id);
   s->s_callback = cb;
   s->s_opaque = opaque;
   s->s_prop = r;
@@ -338,6 +348,30 @@ settings_multiopt_add_opt(setting_t *parent, const char *id, const char *title,
 
   if(selected)
     prop_select_ex(o, 0, parent->s_sub);
+}
+
+
+/**
+ *
+ */
+void
+settings_multiopt_initiate(setting_t *s, htsmsg_t *store,
+			   settings_saver_t *saver, void *saver_opaque)
+{
+  const char *str = htsmsg_get_str(store, s->s_id);
+
+  if(str != NULL) {
+    prop_t *r = s->s_prop;
+    prop_t *opts = prop_create_ex(r, "options", s->s_sub, 0);
+    prop_t *o = prop_get_by_names(opts, str, NULL);
+
+    if(o != NULL)
+      prop_select_ex(o, 0, s->s_sub);
+  }
+
+  s->s_store = store;
+  s->s_saver = saver;
+  s->s_saver_opaque = saver_opaque;
 }
 
 

@@ -60,6 +60,9 @@ setting_t *settings_create_multiopt(prop_t *parent, const char *id,
 void settings_multiopt_add_opt(setting_t *parent, const char *id,
 			       const char *title, int selected);
 
+void settings_multiopt_initiate(setting_t *s, htsmsg_t *store,
+				settings_saver_t *saver, void *saver_opaque);
+
 setting_t *settings_create_string(prop_t *parent, const char *id, 
 				  const char *title, const char *initial, 
 				  htsmsg_t *store,
