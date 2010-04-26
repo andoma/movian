@@ -26,6 +26,7 @@
 
 #include "showtime.h"
 #include "navigator.h"
+#include "backend.h"
 #include "playqueue.h"
 #include "media.h"
 #include "notifications.h"
@@ -601,10 +602,10 @@ playqueue_load(const char *url, prop_t *psource, prop_t *metadata, int enq)
 
   if(psource == NULL) {
     char pbuf[URL_MAX];
-    if(!nav_get_parent(url, pbuf, sizeof(pbuf), NULL, 0)) {
+    if(!backend_get_parent(url, pbuf, sizeof(pbuf), NULL, 0)) {
 
       char errbuf[256];
-      if((psource = nav_list(url, errbuf, sizeof(errbuf))) == NULL) {
+      if((psource = backend_list(url, errbuf, sizeof(errbuf))) == NULL) {
 	TRACE(TRACE_ERROR, "playqueue", "Unable to scan %s: %s", url, errbuf);
       }
     }
@@ -856,10 +857,10 @@ be_playqueue_canhandle(const char *url)
 /**
  *
  */
-nav_backend_t be_playqueue = {
-  .nb_init = playqueue_init,
-  .nb_canhandle = be_playqueue_canhandle,
-  .nb_open = be_playqueue_open,
+backend_t be_playqueue = {
+  .be_init = playqueue_init,
+  .be_canhandle = be_playqueue_canhandle,
+  .be_open = be_playqueue_open,
 };
 
 /**
@@ -1035,7 +1036,7 @@ player_thread(void *aux)
     update_prev_next();
     hts_mutex_unlock(&playqueue_mutex);
 
-    e = nav_play_audio(pqe->pqe_url, mp, errbuf, sizeof(errbuf));
+    e = backend_play_audio(pqe->pqe_url, mp, errbuf, sizeof(errbuf));
 
     if(e == NULL) {
       notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nPlayqueue error: %s",

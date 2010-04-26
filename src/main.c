@@ -31,6 +31,7 @@
 #include "arch/arch.h"
 
 #include "audio/audio.h"
+#include "backend.h"
 #include "navigator.h"
 #include "settings.h"
 #include "ui/ui.h"
@@ -211,7 +212,10 @@ main(int argc, char **argv)
   /* Initialize scrapping subsystem */
   scrappers_init();
 
-  /* Initialize navigator and each of the content handlers */
+  /* Initialize backend content handlers */
+  backend_init();
+
+  /* Initialize navigator */
   nav_init();
 
   /* Initialize audio subsystem */

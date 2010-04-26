@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include "showtime.h"
+#include "backend.h"
 #include "navigator.h"
 #include "fileaccess.h"
 #include "fa_probe.h"
@@ -232,14 +233,14 @@ be_list(const char *url, char *errbuf, size_t errsize)
 /**
  *
  */
-nav_backend_t be_file = {
-  .nb_init = fileaccess_init,
-  .nb_canhandle = be_file_canhandle,
-  .nb_open = be_file_open,
-  .nb_play_video = be_file_playvideo,
-  .nb_play_audio = be_file_playaudio,
-  .nb_list = be_list,
-  .nb_imageloader = fa_imageloader,
+backend_t be_file = {
+  .be_init = fileaccess_init,
+  .be_canhandle = be_file_canhandle,
+  .be_open = be_file_open,
+  .be_play_video = be_file_playvideo,
+  .be_play_audio = be_file_playaudio,
+  .be_list = be_list,
+  .be_imageloader = fa_imageloader,
 };
 
 

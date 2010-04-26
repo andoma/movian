@@ -21,6 +21,7 @@
 #include "media.h"
 #include "showtime.h"
 #include "navigator.h"
+#include "backend.h"
 #include "playqueue.h"
 
 #include <cdio/cdda.h>
@@ -565,9 +566,9 @@ playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
 /**
  *
  */
-nav_backend_t be_cdda = {
-  .nb_canhandle = canhandle,
-  .nb_open = openpage,
-  .nb_list = listdisc,
-  .nb_play_audio = playaudio,
+backend_t be_cdda = {
+  .be_canhandle = canhandle,
+  .be_open = openpage,
+  .be_list = listdisc,
+  .be_play_audio = playaudio,
 };

@@ -30,6 +30,7 @@
 #include "showtime.h"
 #include "networking/net.h"
 #include "navigator.h"
+#include "backend.h"
 #include "keyring.h"
 #include "media.h"
 #include "misc/string.h"
@@ -1351,9 +1352,9 @@ htsp_init(void)
 /**
  *
  */
-nav_backend_t be_htsp = {
-  .nb_init       = htsp_init,
-  .nb_canhandle  = be_htsp_canhandle,
-  .nb_open       = be_htsp_open,
-  .nb_play_video = be_htsp_playvideo,
+backend_t be_htsp = {
+  .be_init       = htsp_init,
+  .be_canhandle  = be_htsp_canhandle,
+  .be_open       = be_htsp_open,
+  .be_play_video = be_htsp_playvideo,
 };

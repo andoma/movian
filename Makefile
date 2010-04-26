@@ -33,6 +33,7 @@ SRCS += src/main.c \
 	src/runcontrol.c \
 	src/version.c \
 	src/navigator.c \
+	src/backend.c \
 	src/media.c \
 	src/event.c \
 	src/keyring.c \

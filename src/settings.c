@@ -26,6 +26,7 @@
 #include "settings.h"
 #include "event.h"
 #include "navigator.h"
+#include "backend.h"
 #include "assert.h"
 
 #define SETTINGS_URL "settings:"
@@ -498,9 +499,9 @@ be_settings_open(const char *url0, const char *type0, prop_t *psource,
 /**
  *
  */
-nav_backend_t be_settings = {
-  .nb_canhandle = be_settings_canhandle,
-  .nb_open = be_settings_open,
+backend_t be_settings = {
+  .be_canhandle = be_settings_canhandle,
+  .be_open = be_settings_open,
 };
 
 

@@ -25,7 +25,7 @@
 #include "glw_view.h"
 #include "glw.h"
 #include "glw_event.h"
-#include "navigator.h"
+#include "backend.h"
 #include "misc/pixmap.h"
 #include "settings.h"
 
@@ -2920,7 +2920,7 @@ glwf_browse(glw_view_eval_context_t *ec, struct token *self,
     if(a->type != TOKEN_STRING)
       return glw_view_seterr(ec->ei, a, "browse() first arg is not a string");
   
-    p = nav_list(rstr_get(a->t_rstring), errbuf, sizeof(errbuf));
+    p = backend_list(rstr_get(a->t_rstring), errbuf, sizeof(errbuf));
     if(p == NULL) 
       return glw_view_seterr(ec->ei, a, "browse(%s): %s", 
 			      rstr_get(a->t_rstring), errbuf);

@@ -25,14 +25,12 @@
 
 #include "showtime.h"
 #include "navigator.h"
+#include "backend.h"
 #include "event.h"
 #include "notifications.h"
 
-prop_t *global_sources;
-
 static hts_mutex_t nav_mutex;
 
-static struct nav_backend_list nav_backends;
 static struct nav_page_queue nav_pages;
 static struct nav_page_queue nav_history;
 
@@ -50,19 +48,6 @@ static void nav_eventsink(void *opaque, prop_event_t event, ...);
 /**
  *
  */
-static void
-nav_init_be(nav_backend_t *be)
-{
-  if(be->nb_init != NULL && be->nb_init())
-    return;
-  LIST_INSERT_HEAD(&nav_backends, be, nb_global_link);
-}
-
-
-
-/**
- *
- */
 void
 nav_init(void)
 {
@@ -70,10 +55,6 @@ nav_init(void)
 
   hts_mutex_init(&nav_mutex);
 
-  global_sources =
-    prop_create_ex(prop_get_global(), "sources", NULL, 
-		   PROP_SORTED_CHILDS | PROP_SORT_CASE_INSENSITIVE);
-  
   TAILQ_INIT(&nav_pages);
   TAILQ_INIT(&nav_history);
 
@@ -84,24 +65,6 @@ nav_init(void)
   nav_prop_can_go_fwd  = prop_create(nav_prop_root, "canGoForward");
   nav_prop_can_go_home = prop_create(nav_prop_root, "canGoHome");
 
-#define NAV_INIT_BE(name) \
- {extern nav_backend_t be_ ## name; nav_init_be(&be_ ## name);}
-
-  NAV_INIT_BE(page);
-  NAV_INIT_BE(file);
-  NAV_INIT_BE(settings);
-  NAV_INIT_BE(playqueue);
-  NAV_INIT_BE(htsp);
-#if ENABLE_DVD_LINUX || ENABLE_DVD_WII
-  NAV_INIT_BE(dvd);
-#endif
-#ifdef CONFIG_CDDA
-  NAV_INIT_BE(cdda);
-#endif
-#ifdef CONFIG_SPOTIFY
-  NAV_INIT_BE(spotify);
-#endif
-
   pc = prop_courier_create_thread(&nav_mutex, "navigator");
 
   prop_subscribe(0,
@@ -110,8 +73,8 @@ nav_init(void)
 		 PROP_TAG_COURIER, pc,
 		 PROP_TAG_ROOT, nav_prop_root,
 		 NULL);
-
 }
+
 
 /**
  *
@@ -181,7 +144,7 @@ static void
 nav_open0(const char *url, const char *type, prop_t *psource)
 {
   nav_page_t *np, *np2;
-  nav_backend_t *nb;
+  backend_t *be;
   char errbuf[128];
 
   TRACE(TRACE_DEBUG, "navigator", "Opening %s", url);
@@ -198,16 +161,14 @@ nav_open0(const char *url, const char *type, prop_t *psource)
 
   if(np == NULL) {
 
-    LIST_FOREACH(nb, &nav_backends, nb_global_link)
-      if(nb->nb_canhandle(url))
-	break;
-  
-    if(nb == NULL) {
+    be = backend_canhandle(url);
+
+    if(be == NULL) {
       notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nNo handler for URL", url);
       return;
     }
 
-    if(nb->nb_open(url, type, psource, &np, errbuf, sizeof(errbuf))) {
+    if(be->be_open(url, type, psource, &np, errbuf, sizeof(errbuf))) {
       notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nError: %s", url, errbuf);
       return;
     }
@@ -372,143 +333,4 @@ nav_eventsink(void *opaque, prop_event_t event, ...)
     ou = (event_openurl_t *)e;
     nav_open0(ou->url, ou->type, ou->psource);
   }
-}
-
-
-/**
- *
- */
-event_t *
-nav_play_video(const char *url, struct media_pipe *mp,
-	       char *errbuf, size_t errlen)
-{
-  nav_backend_t *nb;
-
-  LIST_FOREACH(nb, &nav_backends, nb_global_link)
-    if(nb->nb_canhandle(url))
-      break;
-  
-  if(nb == NULL || nb->nb_play_video == NULL) {
-    snprintf(errbuf, errlen, "No backend for URL");
-    return NULL;
-  }
-  return nb->nb_play_video(url, mp, errbuf, errlen);
-}
-
-
-/**
- *
- */
-event_t *
-nav_play_audio(const char *url, struct media_pipe *mp,
-	       char *errbuf, size_t errlen)
-{
-  nav_backend_t *nb;
-
-  LIST_FOREACH(nb, &nav_backends, nb_global_link)
-    if(nb->nb_canhandle(url))
-      break;
-  
-  if(nb == NULL || nb->nb_play_audio == NULL) {
-    snprintf(errbuf, errlen, "No backend for URL");
-    return NULL;
-  }
-  return nb->nb_play_audio(url, mp, errbuf, errlen);
-}
-
-
-/**
- *
- */
-prop_t *
-nav_list(const char *url, char *errbuf, size_t errlen)
-{
-  nav_backend_t *nb;
-
-  LIST_FOREACH(nb, &nav_backends, nb_global_link)
-    if(nb->nb_canhandle(url))
-      break;
-  
-  if(nb == NULL || nb->nb_list == NULL) {
-    snprintf(errbuf, errlen, "No backend for URL");
-    return NULL;
-  }
-  return nb->nb_list(url, errbuf, errlen);
-}
-
-
-/**
- *
- */
-int
-nav_get_parent(const char *url, char *parent, size_t parentlen,
-	       char *errbuf, size_t errlen)
-{
-  nav_backend_t *nb;
-
-  LIST_FOREACH(nb, &nav_backends, nb_global_link)
-    if(nb->nb_canhandle(url))
-      break;
-  
-  if(nb == NULL || nb->nb_get_parent == NULL) {
-    snprintf(errbuf, errlen, "No backend for URL");
-    return -1;
-  }
-  return nb->nb_get_parent(url, parent, parentlen, errbuf, errlen);
-}
-
-/**
- * Static content
- */
-static int
-be_page_canhandle(const char *url)
-{
-  return !strncmp(url, "page:", strlen("page:"));
-}
-
-
-/**
- *
- */
-static int
-be_page_open(const char *url0, const char *type, prop_t *psource,
-	     nav_page_t **npp, char *errbuf, size_t errlen)
-{
-  nav_page_t *n = nav_page_create(url0, sizeof(nav_page_t), NULL, 0);
-  prop_t *src = prop_create(n->np_prop_root, "source");
-  prop_set_string(prop_create(src, "type"), url0 + strlen("page:"));
-  *npp = n;
-  return 0;
-}
-
-
-/**
- *
- */
-nav_backend_t be_page = {
-  .nb_canhandle = be_page_canhandle,
-  .nb_open = be_page_open,
-};
-
-
-
-
-/**
- *
- */
-struct pixmap *
-nav_imageloader(const char *url, int want_thumb, const char *theme,
-		char *errbuf, size_t errlen)
-{
-  nav_backend_t *nb;
-
-  LIST_FOREACH(nb, &nav_backends, nb_global_link)
-    if(nb->nb_canhandle(url))
-      break;
-  
-  if(nb == NULL || nb->nb_imageloader == NULL) {
-    snprintf(errbuf, errlen, "No backend for URL");
-    return NULL;
-  }
-  return nb->nb_imageloader(url, want_thumb, theme, errbuf, errlen);
 }

@@ -19,7 +19,7 @@
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
 
-#include "navigator.h"
+#include "backend.h"
 #include "gu.h"
 #include "showtime.h"
 #include "misc/pixmap.h"
@@ -106,7 +106,7 @@ gu_pixbuf_get_internal(const char *url, int *sizep,
     want_thumb = 0;
   }
 
-  pixmap_t *pm = nav_imageloader(url, want_thumb, NULL, NULL, 0);
+  pixmap_t *pm = backend_imageloader(url, want_thumb, NULL, NULL, 0);
   if(pm == NULL)
     return NULL;
 

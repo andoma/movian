@@ -31,6 +31,7 @@
 
 #include "showtime.h"
 #include "navigator.h"
+#include "backend.h"
 #include "playqueue.h"
 #include "media.h"
 #include "notifications.h"
@@ -2745,12 +2746,12 @@ spotify_shutdown(void *opaque)
 /**
  *
  */
-nav_backend_t be_spotify = {
-  .nb_init = be_spotify_init,
-  .nb_canhandle = be_spotify_canhandle,
-  .nb_open = be_spotify_open,
-  .nb_play_audio = be_spotify_play,
-  .nb_list = be_spotify_list,
-  .nb_imageloader = be_spotify_imageloader,
-  .nb_get_parent = be_spotify_get_parent,
+backend_t be_spotify = {
+  .be_init = be_spotify_init,
+  .be_canhandle = be_spotify_canhandle,
+  .be_open = be_spotify_open,
+  .be_play_audio = be_spotify_play,
+  .be_list = be_spotify_list,
+  .be_imageloader = be_spotify_imageloader,
+  .be_get_parent = be_spotify_get_parent,
 };

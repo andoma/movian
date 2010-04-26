@@ -22,15 +22,12 @@
 #include "event.h"
 #include "prop.h"
 
-struct pixmap;
-
 #define NAV_HOME "page:home"
 
 /**
  *
  */
 TAILQ_HEAD(nav_page_queue, nav_page);
-LIST_HEAD(nav_backend_list, nav_backend);
 
 
 /**
@@ -55,39 +52,6 @@ typedef struct nav_page {
 } nav_page_t;
 
 
-struct media_pipe;
-/**
- *
- */
-typedef struct nav_backend {
-
-  LIST_ENTRY(nav_backend) nb_global_link;
-
-  int (*nb_init)(void);
-
-  int (*nb_canhandle)(const char *ur);
-
-  int (*nb_open)(const char *url, const char *type, prop_t *psource,
-		 nav_page_t **npp, char *errbuf, size_t errlen);
-
-  event_t *(*nb_play_video)(const char *url, struct media_pipe *mp,
-			    char *errbuf, size_t errlen);
-
-  event_t *(*nb_play_audio)(const char *url, struct media_pipe *mp,
-			    char *errbuf, size_t errlen);
-
-  prop_t *(*nb_list)(const char *url, char *errbuf, size_t errsize);
-
-  int (*nb_get_parent)(const char *url, 
-		       char *parent, size_t parentlen,
-		       char *errbuf, size_t errlen);
-
-  struct pixmap *(*nb_imageloader)(const char *url, int want_thumb,
-				   const char *theme,
-				   char *errbuf, size_t errlen);
-
-} nav_backend_t;
-
 
 /**
  *
@@ -101,20 +65,5 @@ void nav_open(const char *url, const char *type, prop_t *psource);
 void *nav_page_create(const char *url, size_t allocsize,
 		      void (*closefunc)(struct nav_page *np),
 		      int flags);
-
-event_t *nav_play_video(const char *url, struct media_pipe *mp,
-			char *errbuf, size_t errlen);
-
-event_t *nav_play_audio(const char *url, struct media_pipe *mp,
-			char *errbuf, size_t errlen);
-
-prop_t *nav_list(const char *url, char *errbuf, size_t errlen);
-
-int nav_get_parent(const char *url, char *parent, size_t parentlen,
-		   char *errbuf, size_t errlen);
-
-struct pixmap *nav_imageloader(const char *url, int want_thumb,
-			       const char *theme,
-			       char *errbuf, size_t errlen);
 
 #endif /* NAVIGATOR_H__ */

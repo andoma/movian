@@ -30,6 +30,7 @@
 #include "showtime.h"
 #include "misc/callout.h"
 #include "navigator.h"
+#include "backend.h"
 #include "media.h"
 #include "dvd.h"
 #include "sd/sd.h"
@@ -236,9 +237,9 @@ be_dvd_init(void)
 /**
  *
  */
-nav_backend_t be_dvd = {
-  .nb_canhandle = be_dvd_canhandle,
-  .nb_open = be_dvd_openpage,
-  .nb_play_video = be_dvd_play,
-  .nb_init = be_dvd_init,
+backend_t be_dvd = {
+  .be_canhandle = be_dvd_canhandle,
+  .be_open = be_dvd_openpage,
+  .be_play_video = be_dvd_play,
+  .be_init = be_dvd_init,
 };

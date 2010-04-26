@@ -24,7 +24,7 @@
 #include "video_playback.h"
 #include "event.h"
 #include "media.h"
-#include "navigator.h"
+#include "backend.h"
 #include "notifications.h"
 
 /**
@@ -47,7 +47,7 @@ video_player_idle(void *aux)
 
     if(event_is_type(e, EVENT_PLAY_URL)) {
 
-      next = nav_play_video(e->e_payload, mp, errbuf, sizeof(errbuf));
+      next = backend_play_video(e->e_payload, mp, errbuf, sizeof(errbuf));
 
       if(next == NULL)
 	notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nError: %s", 
