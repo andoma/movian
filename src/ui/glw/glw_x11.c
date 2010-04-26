@@ -880,7 +880,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
 
   struct timespec tp;
   int64_t start;
-  int frame;
+  int frame = 0;
 
   clock_gettime(CLOCK_MONOTONIC, &tp);
   start = (int64_t)tp.tv_sec * 1000000LL + tp.tv_nsec / 1000;
