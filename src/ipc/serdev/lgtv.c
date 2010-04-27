@@ -246,7 +246,7 @@ lgtv_init(serdev_t *sd, int curpower)
 
   if(!curpower) {
     lgtv_set_power_state(lg->sd, 1);
-    sleep(3);
+    sleep(4);
   }
 
   if(lgtv_read_current_input(sd, &lg->prior_input))
