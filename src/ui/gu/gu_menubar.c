@@ -197,7 +197,7 @@ gu_menubar_File(gu_window_t *gw, GtkAccelGroup *accel_group)
 				      GDK_D, GDK_CONTROL_MASK), TRUE);
 
   gu_menu_add_item(m, "_Close Window", 
-		   m_closewindow, gw, GTK_STOCK_OPEN,
+		   m_closewindow, gw, GTK_STOCK_CLOSE,
 		   gu_menu_accel_path("<Showtime-Main>/_File/CloseWindow", 
 				      GDK_W, GDK_SHIFT_MASK | 
 				      GDK_CONTROL_MASK), TRUE);
