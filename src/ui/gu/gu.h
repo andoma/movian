@@ -86,6 +86,8 @@ void gu_nav_send_event(gu_window_t *gw, event_t *e);
 
 gu_window_t *gu_win_create(gtk_ui_t *gu, prop_t *nav);
 
+void gu_win_destroy(gu_window_t *gw);
+
 /**
  *
  */

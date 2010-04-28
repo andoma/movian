@@ -137,6 +137,17 @@ m_openwindow(GtkWidget *menu_item, gpointer callback_data)
  *
  */
 static void
+m_closewindow(GtkWidget *menu_item, gpointer callback_data)
+{
+  gu_window_t *gw = callback_data;
+  gu_win_destroy(gw);
+}
+
+
+/**
+ *
+ */
+static void
 m_opendir(GtkWidget *menu_item, gpointer callback_data)
 {
   gu_window_t *gw = callback_data;
@@ -184,6 +195,12 @@ gu_menubar_File(gu_window_t *gw, GtkAccelGroup *accel_group)
 		   m_opendir, gw, GTK_STOCK_OPEN,
 		   gu_menu_accel_path("<Showtime-Main>/_File/OpenDir", 
 				      GDK_D, GDK_CONTROL_MASK), TRUE);
+
+  gu_menu_add_item(m, "_Close Window...", 
+		   m_closewindow, gw, GTK_STOCK_OPEN,
+		   gu_menu_accel_path("<Showtime-Main>/_File/CloseWindow", 
+				      GDK_W, GDK_SHIFT_MASK | 
+				      GDK_CONTROL_MASK), TRUE);
   
   gu_menu_add_sep(m);
 

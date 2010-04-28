@@ -48,10 +48,9 @@ gu_leave(void)
 /**
  *
  */
-static gboolean 
-gw_close(GtkWidget *widget,GdkEvent *event, gpointer data)
+void
+gu_win_destroy(gu_window_t *gw)
 {
-  gu_window_t *gw = data;
   gtk_ui_t *gu = gw->gw_gu;
 
   gtk_widget_destroy(gw->gw_window);
@@ -63,6 +62,16 @@ gw_close(GtkWidget *widget,GdkEvent *event, gpointer data)
 
   if(LIST_FIRST(&gu->gu_windows) == NULL)
     showtime_shutdown(0);
+}
+
+
+/**
+ *
+ */
+static gboolean 
+gw_close(GtkWidget *widget,GdkEvent *event, gpointer data)
+{
+  gu_win_destroy(data);
   return TRUE;
 }
 
