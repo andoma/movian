@@ -56,6 +56,7 @@ extern void hts_thread_create_detached(const char *, void *(*)(void *), void *);
 extern void hts_thread_create_joinable(const char *, hts_thread_t *, 
 				       void *(*)(void *), void *);
 
+#define hts_thread_detach(t)                pthread_detach(*(t));
 
 #define hts_thread_join(t)                  pthread_join(*(t), NULL)
 
@@ -106,6 +107,7 @@ extern void hts_thread_create_joinable(const char *, hts_thread_t *p,
 
 #define hts_thread_join(t)       LWP_JoinThread(*(t), NULL)
 
+#define hts_thread_detach(t)
 
 #else
 

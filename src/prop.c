@@ -559,6 +559,14 @@ prop_courier(void *aux)
     hts_mutex_lock(&prop_mutex);
   }
 
+  while((n = TAILQ_FIRST(&pc->pc_queue)) != NULL) {
+    TAILQ_REMOVE(&pc->pc_queue, n, hpn_link);
+    prop_notify_free(n);
+  }
+
+  if(pc->pc_detached)
+    free(pc);
+
   hts_mutex_unlock(&prop_mutex);
   return NULL;
 }
@@ -2827,8 +2835,6 @@ prop_courier_create_notify(void (*notify)(void *opaque),
 void
 prop_courier_destroy(prop_courier_t *pc)
 {
-  prop_notify_t *n;
-
   if(pc->pc_run) {
     hts_mutex_lock(&prop_mutex);
     pc->pc_run = 0;
@@ -2838,12 +2844,19 @@ prop_courier_destroy(prop_courier_t *pc)
     hts_thread_join(&pc->pc_thread);
     hts_cond_destroy(&pc->pc_cond);
   }
-
-  while((n = TAILQ_FIRST(&pc->pc_queue)) != NULL) {
-    TAILQ_REMOVE(&pc->pc_queue, n, hpn_link);
-    prop_notify_free(n);
-  }
   free(pc);
+}
+
+
+/**
+ *
+ */
+void
+prop_courier_stop(prop_courier_t *pc)
+{
+  hts_thread_detach(&pc->pc_thread);
+  pc->pc_run = 0;
+  pc->pc_detached = 1;
 }
 
 

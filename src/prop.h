@@ -85,6 +85,7 @@ typedef struct prop_courier {
   hts_thread_t pc_thread;
 
   int pc_run;
+  int pc_detached;
 
   void (*pc_notify)(void *opaque);
   void *pc_opaque;
@@ -469,6 +470,8 @@ prop_courier_t *prop_courier_create_notify(void (*notify)(void *opaque),
 void prop_courier_poll(prop_courier_t *pc);
 
 void prop_courier_destroy(prop_courier_t *pc);
+
+void prop_courier_stop(prop_courier_t *pc);
 
 prop_t *prop_get_by_names(prop_t *parent, ...) 
      __attribute__((__sentinel__(0)));
