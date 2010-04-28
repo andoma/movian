@@ -29,6 +29,7 @@ typedef struct toolbar {
 
   prop_sub_t *sub_canGoBack;
   prop_sub_t *sub_canGoFwd;
+  prop_sub_t *sub_canGoHome;
   prop_sub_t *sub_parent;
   prop_sub_t *sub_url;
 
@@ -128,6 +129,7 @@ toolbar_dtor(GtkObject *object, gpointer user_data)
 
   prop_unsubscribe(t->sub_canGoBack);
   prop_unsubscribe(t->sub_canGoFwd);
+  prop_unsubscribe(t->sub_canGoHome);
   prop_unsubscribe(t->sub_parent);
   prop_unsubscribe(t->sub_url);
   free(t->parent_url);
@@ -196,6 +198,14 @@ gu_toolbar_add(gu_window_t *gw, GtkWidget *parent)
   ti = gtk_tool_button_new_from_stock(GTK_STOCK_HOME);
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
   g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(home_clicked), gw);
+
+  t->sub_canGoHome =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("nav", "canGoHome"),
+		   PROP_TAG_CALLBACK_INT, gu_subscription_set_sensitivity, ti,
+		   PROP_TAG_COURIER, pc,
+		   PROP_TAG_NAMED_ROOT, gw->gw_nav, "nav",
+		   NULL);
 
   /* URL entry */
   ti = gtk_tool_item_new();
