@@ -25,7 +25,7 @@
 #include <ui/ui.h>
 
 LIST_HEAD(gu_nav_page_list, gu_nav_page);
-
+LIST_HEAD(gu_window_list, gu_window);
 
 typedef struct gtk_ui {
   uii_t gu_uii;
@@ -34,36 +34,64 @@ typedef struct gtk_ui {
 
   prop_courier_t *gu_pc;
 
-  GtkWidget *gu_page_container;
-
-  struct gu_nav_page_list gu_pages;
-
-  struct gu_nav_page *gu_page_current;
-  
-  GtkWidget *gu_url;
-
-  GtkWidget *gu_window;
+  struct gu_window_list gu_windows;
 
   LIST_HEAD(, popup) popups;
 
-  int gu_fullwindow;
-
-  GtkWidget *gu_vbox;
-  GtkWidget *gu_menubar;
-  GtkWidget *gu_toolbar;
-  GtkWidget *gu_playdeck;
-  GtkWidget *gu_statusbar;
-
 } gtk_ui_t;
-
-void gu_fullwindow_update(gtk_ui_t *gu);
 
 
 /**
  *
  */
+typedef struct gu_window {
+
+  gtk_ui_t *gw_gu;
+
+  LIST_ENTRY(gu_window) gw_link;
+
+  GtkWidget *gw_page_container;
+
+  struct gu_nav_page_list gw_pages;
+
+  struct gu_nav_page *gw_page_current;
+  
+  GtkWidget *gw_url;
+
+  GtkWidget *gw_window;
+
+  int gw_fullwindow;
+
+  GtkWidget *gw_vbox;
+  GtkWidget *gw_menubar;
+  GtkWidget *gw_toolbar;
+  GtkWidget *gw_playdeck;
+  GtkWidget *gw_statusbar;
+
+  prop_t *gw_nav;
+
+} gu_window_t;
+
+
+
+void gu_fullwindow_update(gu_window_t *gw);
+
+void gu_nav_open(gu_window_t *gw, 
+		 const char *url, const char *type, prop_t *psource);
+
+void gu_nav_open_newwin(gtk_ui_t *gu, 
+			const char *url, const char *type, prop_t *psource);
+
+void gu_nav_send_event(gu_window_t *gw, event_t *e);
+
+gu_window_t *gu_win_create(gtk_ui_t *gu, prop_t *nav);
+
+/**
+ *
+ */
 typedef struct gu_nav_page {
-  gtk_ui_t *gnp_gu;
+  gu_window_t *gnp_gw;
+
   LIST_ENTRY(gu_nav_page) gnp_link;
 
   prop_t *gnp_prop;         // Root property for page
@@ -91,13 +119,13 @@ void gu_nav_pages(void *opaque, prop_event_t event, ...);
 
 void gu_directory_create(gu_nav_page_t *gnp);
 
-GtkWidget *gu_menubar_add(gtk_ui_t *gu, GtkWidget *parent);
+GtkWidget *gu_menubar_add(gu_window_t *gw, GtkWidget *parent);
 
-GtkWidget *gu_toolbar_add(gtk_ui_t *gu, GtkWidget *parent);
+GtkWidget *gu_toolbar_add(gu_window_t *gw, GtkWidget *parent);
 
-GtkWidget *gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent);
+GtkWidget *gu_playdeck_add(gu_window_t *gw, GtkWidget *parent);
 
-GtkWidget *gu_statusbar_add(gtk_ui_t *gu, GtkWidget *parent);
+GtkWidget *gu_statusbar_add(gu_window_t *gw, GtkWidget *parent);
 
 void gu_popup_init(gtk_ui_t *gu);
 

@@ -33,11 +33,19 @@ typedef struct playdeck {
 
   action_type_t pp_action;
 
-  prop_sub_t *volsub;
 
   GtkObject *pos_adjust;
   GtkWidget *pos_slider;
-  prop_sub_t *pos_sub;
+
+  prop_sub_t *sub_pos;
+  prop_sub_t *sub_volume;
+  prop_sub_t *sub_duration;
+  prop_sub_t *sub_album_art;
+  prop_sub_t *sub_title;
+  prop_sub_t *sub_album;
+  prop_sub_t *sub_artist;
+  prop_sub_t *sub_playstatus;
+
   int pos_grabbed;
 
   char *cur_artist;
@@ -150,7 +158,7 @@ read_mastervol(GtkScaleButton *button, gdouble value, gpointer user_data)
 				    easier */
   
   value = (value - 1) * 75;
-  prop_set_float_ex(prop_mastervol, pd->volsub, value);
+  prop_set_float_ex(prop_mastervol, pd->sub_volume, value);
 }
 
 
@@ -204,7 +212,7 @@ slider_updated(GtkRange *range, GtkScrollType scroll,
   p = prop_get_by_name(PNVEC("global", "media", "current", "currenttime"),
 		       1, NULL);
   if(p != NULL) {
-    prop_set_float_ex(p, pd->pos_sub, value);
+    prop_set_float_ex(p, pd->sub_pos, value);
     prop_ref_dec(p);
   }
   return FALSE;
@@ -305,12 +313,35 @@ set_current_album(void *opaque, const char *str)
   pd_update_trackextra(pd);
 }
 
+/**
+ *
+ */
+static void
+playdeck_dtor(GtkObject *object, gpointer user_data)
+{
+  playdeck_t *pd = user_data;
+
+  prop_unsubscribe(pd->sub_pos);
+  prop_unsubscribe(pd->sub_volume);
+  prop_unsubscribe(pd->sub_duration);
+  prop_unsubscribe(pd->sub_album_art);
+  prop_unsubscribe(pd->sub_title);
+  prop_unsubscribe(pd->sub_album);
+  prop_unsubscribe(pd->sub_artist);
+  prop_unsubscribe(pd->sub_playstatus);
+
+  free(pd->cur_artist);
+  free(pd->cur_album);
+
+  free(pd);
+}
+
 
 /**
  *
  */
 GtkWidget *
-gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent)
+gu_playdeck_add(gu_window_t *gw, GtkWidget *parent)
 {
   GtkToolItem *ti;
   GtkWidget *w;
@@ -318,6 +349,7 @@ gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent)
   GtkWidget *vbox;
   GtkWidget *playdeck;
   playdeck_t *pd = calloc(1, sizeof(playdeck_t));
+  prop_courier_t *pc = gw->gw_gu->gu_pc;
 
   playdeck = gtk_vbox_new(FALSE, 0);
   gtk_box_pack_start(GTK_BOX(parent), playdeck, FALSE, TRUE, 0);
@@ -334,12 +366,13 @@ gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent)
   gtk_misc_set_alignment(GTK_MISC(w), 0, 1);
   gtk_box_pack_start(GTK_BOX(pd->root), w, FALSE, TRUE, 0);
 
-  prop_subscribe(0,
-		 PROP_TAG_NAME("global", "media", "current", 
-			       "metadata", "album_art"),
-		 PROP_TAG_CALLBACK_STRING, pd_set_albumart, w,
-		 PROP_TAG_COURIER, gu->gu_pc,
-		 NULL);
+  pd->sub_album_art = 
+    prop_subscribe(0,
+		   PROP_TAG_NAME("global", "media", "current", 
+				 "metadata", "album_art"),
+		   PROP_TAG_CALLBACK_STRING, pd_set_albumart, w,
+		   PROP_TAG_COURIER, pc,
+		   NULL);
 
   /* Middle vbox */
   vbox = gtk_vbox_new(FALSE, 1);
@@ -353,12 +386,13 @@ gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent)
   g_object_set(G_OBJECT(l), 
 	       "ellipsize", PANGO_ELLIPSIZE_END, NULL);
 
-  prop_subscribe(0,
-		 PROP_TAG_NAME("global", "media", "current", 
-			       "metadata", "title"),
-		 PROP_TAG_CALLBACK_STRING, set_current_title, l,
-		 PROP_TAG_COURIER, gu->gu_pc,
-		 NULL);
+  pd->sub_title = 
+    prop_subscribe(0,
+		   PROP_TAG_NAME("global", "media", "current", 
+				 "metadata", "title"),
+		   PROP_TAG_CALLBACK_STRING, set_current_title, l,
+		   PROP_TAG_COURIER, pc,
+		   NULL);
 
   /* Title of current track */
   pd->trackextra = gtk_label_new("");
@@ -367,19 +401,21 @@ gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent)
   gtk_misc_set_alignment(GTK_MISC(pd->trackextra), 0, 0);
   gtk_box_pack_start(GTK_BOX(vbox), pd->trackextra, TRUE, TRUE, 0);
 
-  prop_subscribe(0,
-		 PROP_TAG_NAME("global", "media", "current", 
-			       "metadata", "album"),
-		 PROP_TAG_CALLBACK_STRING, set_current_album, pd,
-		 PROP_TAG_COURIER, gu->gu_pc,
-		 NULL);
-
-  prop_subscribe(0,
-		 PROP_TAG_NAME("global", "media", "current", 
-			       "metadata", "artist"),
-		 PROP_TAG_CALLBACK_STRING, set_current_artist, pd,
-		 PROP_TAG_COURIER, gu->gu_pc,
-		 NULL);
+  pd->sub_album = 
+    prop_subscribe(0,
+		   PROP_TAG_NAME("global", "media", "current", 
+				 "metadata", "album"),
+		   PROP_TAG_CALLBACK_STRING, set_current_album, pd,
+		   PROP_TAG_COURIER, pc,
+		   NULL);
+  
+  pd->sub_artist = 
+    prop_subscribe(0,
+		   PROP_TAG_NAME("global", "media", "current", 
+				 "metadata", "artist"),
+		   PROP_TAG_CALLBACK_STRING, set_current_artist, pd,
+		   PROP_TAG_COURIER, pc,
+		   NULL);
 
 
 
@@ -408,11 +444,12 @@ gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent)
   gtk_toolbar_insert(GTK_TOOLBAR(pd->tbar), ti, -1);
 
   /* Subscribe to playstatus */
-  prop_subscribe(0,
-		 PROP_TAG_NAME("global", "media", "current", "playstatus"),
-		 PROP_TAG_CALLBACK, update_playstatus, pd,
-		 PROP_TAG_COURIER, gu->gu_pc,
-		 NULL);
+  pd->sub_playstatus =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("global", "media", "current", "playstatus"),
+		   PROP_TAG_CALLBACK, update_playstatus, pd,
+		   PROP_TAG_COURIER, pc,
+		   NULL);
 
   /**
    * Media position
@@ -437,20 +474,21 @@ gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent)
   gtk_toolbar_insert(GTK_TOOLBAR(pd->tbar), ti, -1);
   
   /* Subscribe to current track position */
-  pd->pos_sub = 
+  pd->sub_pos = 
     prop_subscribe(0,
 		   PROP_TAG_NAME("global", "media", "current", "currenttime"),
 		   PROP_TAG_CALLBACK_FLOAT, update_curtime, pd,
-		   PROP_TAG_COURIER, gu->gu_pc,
+		   PROP_TAG_COURIER, pc,
 		   NULL);
 
   /* Subscribe to current track duration */
-  prop_subscribe(0,
-		 PROP_TAG_NAME("global", "media", "current", 
-			       "metadata", "duration"),
-		 PROP_TAG_CALLBACK_FLOAT, update_duration, pd,
-		 PROP_TAG_COURIER, gu->gu_pc,
-		 NULL);
+  pd->sub_duration = 
+    prop_subscribe(0,
+		   PROP_TAG_NAME("global", "media", "current", 
+				 "metadata", "duration"),
+		   PROP_TAG_CALLBACK_FLOAT, update_duration, pd,
+		   PROP_TAG_COURIER, pc,
+		   NULL);
 
 
 
@@ -469,12 +507,14 @@ gu_playdeck_add(gtk_ui_t *gu, GtkWidget *parent)
   g_signal_connect(G_OBJECT(pd->volume), "value-changed", 
 		   G_CALLBACK(read_mastervol), pd);
 
-  pd->volsub = 
+  pd->sub_volume = 
     prop_subscribe(0,
 		   PROP_TAG_NAME("global", "audio", "mastervolume"),
 		   PROP_TAG_CALLBACK_FLOAT, update_mastervol, pd,
-		   PROP_TAG_COURIER, gu->gu_pc,
+		   PROP_TAG_COURIER, pc,
 		   NULL);
+
+  g_signal_connect(playdeck, "destroy", G_CALLBACK(playdeck_dtor), pd);
   return playdeck;
 }
 

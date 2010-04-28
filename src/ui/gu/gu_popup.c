@@ -128,7 +128,7 @@ popup_create_auth(gtk_ui_t *gu, prop_t *p)
   gtk_window_set_default_size(GTK_WINDOW(win), 400, 180);
   gtk_window_set_resizable(GTK_WINDOW(win), FALSE);
   gtk_window_set_position(GTK_WINDOW(win), GTK_WIN_POS_CENTER_ON_PARENT);
-  gtk_window_set_transient_for(GTK_WINDOW(win), GTK_WINDOW(gu->gu_window));
+  //  gtk_window_set_transient_for(GTK_WINDOW(win), GTK_WINDOW(gu->gu_window));
 
 
   /* Vbox */

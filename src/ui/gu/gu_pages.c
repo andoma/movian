@@ -63,24 +63,47 @@ gu_nav_page_set_url(void *opaque, const char *url)
 }
 
 
+
+
+/**
+ *
+ */
+static void
+gnp_dtor(gu_window_t *gw, gu_nav_page_t *gnp)
+{
+  if(gw->gw_page_current == gnp) 
+    gw->gw_page_current = NULL;
+
+  prop_unsubscribe(gnp->gnp_sub_type);
+  prop_unsubscribe(gnp->gnp_sub_url);
+
+  LIST_REMOVE(gnp, gnp_link);
+  
+  prop_ref_dec(gnp->gnp_prop);
+  free(gnp->gnp_url);
+  free(gnp);
+}
+
+
 /**
  *
  */
 static gu_nav_page_t *
-gu_nav_page_create(gtk_ui_t *gu, prop_t *p)
+gu_nav_page_create(gu_window_t *gw, prop_t *p)
 {
   gu_nav_page_t *gnp = calloc(1, sizeof(gu_nav_page_t));
+  gtk_ui_t *gu = gw->gw_gu;
 
-  gnp->gnp_gu = gu;
+  gnp->gnp_gw = gw;
   gnp->gnp_prop = p;
   prop_ref_inc(p);
 
   gnp->gnp_pagebin = gtk_vbox_new(FALSE, 0);
   gtk_container_set_border_width(GTK_CONTAINER(gnp->gnp_pagebin), 0);
-  gtk_container_add(GTK_CONTAINER(gu->gu_page_container), gnp->gnp_pagebin);
+  gtk_container_add(GTK_CONTAINER(gw->gw_page_container), gnp->gnp_pagebin);
   gtk_widget_show(gnp->gnp_pagebin);
 
-  LIST_INSERT_HEAD(&gu->gu_pages, gnp, gnp_link);
+  LIST_INSERT_HEAD(&gw->gw_pages, gnp, gnp_link);
 
   gnp->gnp_sub_type = 
     prop_subscribe(0,
@@ -98,6 +121,7 @@ gu_nav_page_create(gtk_ui_t *gu, prop_t *p)
 		   PROP_TAG_NAMED_ROOT, p, "self",
 		   NULL);
 
+  g_signal_connect(gnp->gnp_pagebin, "destroy", G_CALLBACK(gnp_dtor), gnp);
   return gnp;
 }
 
@@ -105,35 +129,12 @@ gu_nav_page_create(gtk_ui_t *gu, prop_t *p)
 /**
  *
  */
-static void
-gu_nav_page_destroy(gtk_ui_t *gu, gu_nav_page_t *gnp)
-{
-  if(gu->gu_page_current == gnp) 
-    gu->gu_page_current = NULL;
-
-  prop_unsubscribe(gnp->gnp_sub_type);
-  prop_unsubscribe(gnp->gnp_sub_url);
-
-  gtk_widget_destroy(gnp->gnp_pagebin);
-  gnp->gnp_pagebin = NULL;
-
-  LIST_REMOVE(gnp, gnp_link);
-  
-  prop_ref_dec(gnp->gnp_prop);
-  free(gnp->gnp_url);
-  free(gnp);
-}
-
-
-/**
- *
- */
 static gu_nav_page_t *
-gu_nav_page_find(gtk_ui_t *gu, prop_t *p)
+gu_nav_page_find(gu_window_t *gw, prop_t *p)
 {
   gu_nav_page_t *gnp;
 
-  LIST_FOREACH(gnp, &gu->gu_pages, gnp_link)
+  LIST_FOREACH(gnp, &gw->gw_pages, gnp_link)
     if(p == gnp->gnp_prop)
       break;
   return gnp;
@@ -144,19 +145,18 @@ gu_nav_page_find(gtk_ui_t *gu, prop_t *p)
  *
  */
 static void
-gu_nav_page_display(gtk_ui_t *gu, gu_nav_page_t *gnp)
+gu_nav_page_display(gu_window_t *gw, gu_nav_page_t *gnp)
 {
-  if(gu->gu_page_current == gnp)
+  if(gw->gw_page_current == gnp)
     return;
 
-  if(gu->gu_page_current != NULL)
-    gtk_widget_hide(gu->gu_page_current->gnp_pagebin);
+  if(gw->gw_page_current != NULL)
+    gtk_widget_hide(gw->gw_page_current->gnp_pagebin);
 
-  gu->gu_page_current = gnp;
+  gw->gw_page_current = gnp;
   gtk_widget_show(gnp->gnp_pagebin);
 
-  gu_fullwindow_update(gnp->gnp_gu);
-
+  gu_fullwindow_update(gnp->gnp_gw);
 }
 
 
@@ -167,7 +167,7 @@ gu_nav_page_display(gtk_ui_t *gu, gu_nav_page_t *gnp)
 void
 gu_nav_pages(void *opaque, prop_event_t event, ...)
 {
-  gtk_ui_t *gu = opaque;
+  gu_window_t *gw = opaque;
   prop_t *p;
   int flags;
   gu_nav_page_t *gnp;
@@ -179,24 +179,24 @@ gu_nav_pages(void *opaque, prop_event_t event, ...)
   case PROP_ADD_CHILD:
     p = va_arg(ap, prop_t *);
     flags = va_arg(ap, int);
-    gnp = gu_nav_page_create(gu, p);
+    gnp = gu_nav_page_create(gw, p);
 
     if(flags & PROP_ADD_SELECTED)
-      gu_nav_page_display(gu, gnp);
+      gu_nav_page_display(gw, gnp);
     break;
 
   case PROP_SELECT_CHILD:
     p = va_arg(ap, prop_t *);
-    gnp = gu_nav_page_find(gu, p);
+    gnp = gu_nav_page_find(gw, p);
     assert(gnp != NULL);
-    gu_nav_page_display(gu, gnp);
+    gu_nav_page_display(gw, gnp);
     break;
 
   case PROP_DEL_CHILD:
     p = va_arg(ap, prop_t *);
-    gnp = gu_nav_page_find(gu, p);
+    gnp = gu_nav_page_find(gw, p);
     assert(gnp != NULL);
-    gu_nav_page_destroy(gu, gnp);
+    gtk_widget_destroy(gnp->gnp_pagebin);
     break;
 
   case PROP_SET_DIR:
@@ -218,5 +218,5 @@ void
 gu_page_set_fullwindow(gu_nav_page_t *gnp, int enable)
 {
   gnp->gnp_fullwindow = enable;
-  gu_fullwindow_update(gnp->gnp_gu);
+  gu_fullwindow_update(gnp->gnp_gw);
 }

@@ -49,10 +49,83 @@ gu_leave(void)
  *
  */
 static gboolean 
-gu_close(GtkWidget *widget, GdkEvent  *event, gpointer data)
+gw_close(GtkWidget *widget,GdkEvent *event, gpointer data)
 {
-  showtime_shutdown(0);
+  gu_window_t *gw = data;
+  gtk_ui_t *gu = gw->gw_gu;
+
+  gtk_widget_destroy(gw->gw_window);
+
+  prop_destroy(gw->gw_nav);
+
+  LIST_REMOVE(gw, gw_link);
+  free(gw);
+
+  if(LIST_FIRST(&gu->gu_windows) == NULL)
+    showtime_shutdown(0);
   return TRUE;
+}
+
+/**
+ *
+ */
+gu_window_t *
+gu_win_create(gtk_ui_t *gu, prop_t *nav)
+{
+  gu_window_t *gw = calloc(1, sizeof(gu_window_t));
+
+  if(nav == NULL) {
+    // No navigator supplied, spawn one
+    gw->gw_nav = nav_spawn();
+  } else {
+    gw->gw_nav = prop_xref_addref(nav);
+  }
+
+  LIST_INSERT_HEAD(&gu->gu_windows, gw, gw_link);
+
+  gw->gw_gu = gu;
+
+  gw->gw_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+
+  gtk_window_set_title(GTK_WINDOW(gw->gw_window), "Showtime");
+  gtk_window_set_default_size(GTK_WINDOW(gw->gw_window), 640, 400);
+
+  g_signal_connect(G_OBJECT(gw->gw_window), "delete_event",
+		   G_CALLBACK(gw_close), gw);
+
+  gw->gw_vbox = gtk_vbox_new(FALSE, 1);
+  gtk_container_add(GTK_CONTAINER(gw->gw_window), gw->gw_vbox);
+
+  /* Menubar */
+  gw->gw_menubar = gu_menubar_add(gw, gw->gw_vbox);
+ 
+  /* Top Toolbar */
+  gw->gw_toolbar = gu_toolbar_add(gw, gw->gw_vbox);
+
+  /* Page container */
+  gw->gw_page_container = gtk_vbox_new(FALSE, 0);
+  gtk_container_set_border_width(GTK_CONTAINER(gw->gw_page_container), 0);
+  gtk_box_pack_start(GTK_BOX(gw->gw_vbox),
+		     gw->gw_page_container, TRUE, TRUE, 0);
+
+  prop_sub_t *s = 
+    prop_subscribe(0,
+		   PROP_TAG_NAME("nav", "pages"),
+		   PROP_TAG_CALLBACK, gu_nav_pages, gw, 
+		   PROP_TAG_COURIER, gu->gu_pc,
+		   PROP_TAG_NAMED_ROOT, gw->gw_nav, "nav",
+		   NULL);
+
+  gu_unsubscribe_on_destroy(GTK_OBJECT(gw->gw_vbox), s);
+
+  /* Playback controls */
+  gw->gw_playdeck = gu_playdeck_add(gw, gw->gw_vbox);
+
+  /* Statusbar */
+  gw->gw_statusbar = gu_statusbar_add(gw, gw->gw_vbox);
+
+  gtk_widget_show_all(gw->gw_window);
+  return gw;
 }
 
 
@@ -62,7 +135,6 @@ gu_close(GtkWidget *widget, GdkEvent  *event, gpointer data)
 static int
 gu_start(ui_t *ui, int argc, char **argv, int primary)
 {
-  GtkWidget *win;
   gtk_ui_t *gu = calloc(1, sizeof(gtk_ui_t));
 
   XInitThreads();
@@ -82,45 +154,11 @@ gu_start(ui_t *ui, int argc, char **argv, int primary)
 
   gu->gu_pc = prop_courier_create_thread(&gu_mutex, "GU");
 
-  gu->gu_window = win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-
-  gtk_window_set_title(GTK_WINDOW(win), "Showtime");
-  gtk_window_set_default_size(GTK_WINDOW(win), 640, 400);
-
-  g_signal_connect(G_OBJECT(win), "delete_event",
-		   G_CALLBACK(gu_close), NULL);
-
-
-  gu->gu_vbox = gtk_vbox_new(FALSE, 1);
-  gtk_container_add(GTK_CONTAINER(win), gu->gu_vbox);
-
-  /* Menubar */
-  gu->gu_menubar = gu_menubar_add(gu, gu->gu_vbox);
- 
-  /* Top Toolbar */
-  gu->gu_toolbar = gu_toolbar_add(gu, gu->gu_vbox);
-
-  /* Page container */
-  gu->gu_page_container = gtk_vbox_new(FALSE, 0);
-  gtk_container_set_border_width(GTK_CONTAINER(gu->gu_page_container), 0);
-  gtk_box_pack_start(GTK_BOX(gu->gu_vbox), gu->gu_page_container, TRUE, TRUE, 0);
-
-  prop_subscribe(0,
-		 PROP_TAG_NAME("global", "nav", "pages"),
-		 PROP_TAG_CALLBACK, gu_nav_pages, gu, 
-		 PROP_TAG_COURIER, gu->gu_pc,
-		 NULL);
-
-  /* Playback controls */
-  gu->gu_playdeck = gu_playdeck_add(gu, gu->gu_vbox);
-
-  /* Statusbar */
-  gu->gu_statusbar = gu_statusbar_add(gu, gu->gu_vbox);
+  gu_win_create(gu, prop_create(prop_get_global(), "nav"));
 
   /* Init popup controller */
   gu_popup_init(gu);
 
-  gtk_widget_show_all(win);
   gtk_main();
   return 0;
 }
@@ -130,25 +168,63 @@ gu_start(ui_t *ui, int argc, char **argv, int primary)
  *
  */
 void
-gu_fullwindow_update(gtk_ui_t *gu)
+gu_fullwindow_update(gu_window_t *gw)
 {
-  int req = gu->gu_page_current ? gu->gu_page_current->gnp_fullwindow : 0;
+  int req = gw->gw_page_current ? gw->gw_page_current->gnp_fullwindow : 0;
   
-  if(req == gu->gu_fullwindow)
+  if(req == gw->gw_fullwindow)
     return;
 
-  gu->gu_fullwindow = req;
-  if(gu->gu_menubar != NULL)
-    g_object_set(G_OBJECT(gu->gu_menubar), "visible", !req, NULL);
+  gw->gw_fullwindow = req;
+  if(gw->gw_menubar != NULL)
+    g_object_set(G_OBJECT(gw->gw_menubar), "visible", !req, NULL);
 
-  if(gu->gu_toolbar != NULL)
-    g_object_set(G_OBJECT(gu->gu_toolbar), "visible", !req, NULL);
+  if(gw->gw_toolbar != NULL)
+    g_object_set(G_OBJECT(gw->gw_toolbar), "visible", !req, NULL);
 
-  if(gu->gu_playdeck != NULL)
-    g_object_set(G_OBJECT(gu->gu_playdeck), "visible", !req, NULL);
+  if(gw->gw_playdeck != NULL)
+    g_object_set(G_OBJECT(gw->gw_playdeck), "visible", !req, NULL);
 
-  if(gu->gu_statusbar != NULL)
-    g_object_set(G_OBJECT(gu->gu_statusbar), "visible", !req, NULL);
+  if(gw->gw_statusbar != NULL)
+    g_object_set(G_OBJECT(gw->gw_statusbar), "visible", !req, NULL);
+}
+
+
+/**
+ *
+ */
+void
+gu_nav_send_event(gu_window_t *gw, event_t *e)
+{
+  prop_t *p = prop_get_by_name(PNVEC("nav", "eventsink"), 1,
+			       PROP_TAG_NAMED_ROOT, gw->gw_nav, "nav",
+			       NULL);
+
+  prop_send_ext_event(p, e);
+  prop_ref_dec(p);
+  event_unref(e);
+}
+
+
+/**
+ *
+ */
+void
+gu_nav_open(gu_window_t *gw, const char *url, const char *type, prop_t *psource)
+{
+  gu_nav_send_event(gw, event_create_openurl(url, type, psource));
+}
+
+
+/**
+ *
+ */
+void
+gu_nav_open_newwin(gtk_ui_t *gu, const char *url, const char *type,
+		   prop_t *psource)
+{
+  gu_window_t *gw = gu_win_create(gu, NULL);
+  gu_nav_send_event(gw, event_create_openurl(url, type, psource));
 }
 
 

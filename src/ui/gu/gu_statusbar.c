@@ -109,7 +109,7 @@ notifications_update(void *opaque, prop_event_t event, ...)
  *
  */
 GtkWidget *
-gu_statusbar_add(gtk_ui_t *gu, GtkWidget *parent)
+gu_statusbar_add(gu_window_t *gw, GtkWidget *parent)
 {
 
   statusbar_t *sb = calloc(1, sizeof(statusbar_t));
@@ -124,7 +124,7 @@ gu_statusbar_add(gtk_ui_t *gu, GtkWidget *parent)
   prop_subscribe(0,
 		 PROP_TAG_NAME("global", "notifications", "nodes"),
 		 PROP_TAG_CALLBACK, notifications_update, sb,
-		 PROP_TAG_COURIER, gu->gu_pc, 
+		 PROP_TAG_COURIER, gw->gw_gu->gu_pc, 
 		 NULL);
   return sb->bar;
 }

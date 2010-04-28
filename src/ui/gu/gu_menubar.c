@@ -44,7 +44,7 @@ fullscreen_toggle(gpointer callback_data, guint callback_action,
  *
  */
 static void
-m_quit(GtkWidget *menu_item, gpointer callback_data)
+m_quit(GtkWidget *menu_item, gpointer data)
 {
   showtime_shutdown(0);
 }
@@ -54,9 +54,10 @@ m_quit(GtkWidget *menu_item, gpointer callback_data)
  *
  */
 static void
-m_openplayqueue(GtkWidget *menu_item, gpointer callback_data)
+m_openplayqueue(GtkWidget *menu_item, gpointer data)
 {
-  nav_open("playqueue:", NULL, NULL);
+  gu_window_t *gw = data;
+  gu_nav_open(gw, "playqueue:", NULL, NULL);
 }
 
 
@@ -66,10 +67,10 @@ m_openplayqueue(GtkWidget *menu_item, gpointer callback_data)
 static void
 m_about(GtkWidget *menu_item, gpointer callback_data)
 {
-  gtk_ui_t *gu = callback_data;
+  gu_window_t *gw = callback_data;
   extern const char *htsversion;
 
-  gtk_show_about_dialog(GTK_WINDOW(gu->gu_window),
+  gtk_show_about_dialog(GTK_WINDOW(gw->gw_window),
 			"program-name", "HTS Showtime",
 			"version", htsversion,
 			"website", "http://www.lonelycoder.com/hts",
@@ -82,14 +83,15 @@ m_about(GtkWidget *menu_item, gpointer callback_data)
  *
  */
 static void
-m_open_response(GtkDialog *dialog, gint response_id, gpointer user_data)
+m_open_response(GtkDialog *dialog, gint response_id, gpointer data)
 {
+  gu_window_t *gw = data;
   GSList *l, *l0;
   if(response_id == GTK_RESPONSE_ACCEPT) {
     l0 = l = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
 
     for(; l != NULL; l = l->next) {
-      nav_open((const char *)l->data, NULL, NULL);
+      gu_nav_open(gw, (const char *)l->data, NULL, NULL);
     }
     g_slist_free(l0);
 
@@ -103,11 +105,11 @@ m_open_response(GtkDialog *dialog, gint response_id, gpointer user_data)
 static void
 m_openfile(GtkWidget *menu_item, gpointer callback_data)
 {
-  gtk_ui_t *gu = callback_data;
+  gu_window_t *gw = callback_data;
   GtkWidget *dialog;
 
   dialog = gtk_file_chooser_dialog_new("Open File",
-				       GTK_WINDOW(gu->gu_window),
+				       GTK_WINDOW(gw->gw_window),
 				       GTK_FILE_CHOOSER_ACTION_OPEN,
 				       GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 				       GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
@@ -116,8 +118,20 @@ m_openfile(GtkWidget *menu_item, gpointer callback_data)
   gtk_widget_show(dialog);
 
   g_signal_connect(G_OBJECT(dialog), "response",
-		   G_CALLBACK(m_open_response), gu);
+		   G_CALLBACK(m_open_response), gw);
 }
+
+
+/**
+ *
+ */
+static void
+m_openwindow(GtkWidget *menu_item, gpointer callback_data)
+{
+  gu_window_t *gw = callback_data;
+  gu_win_create(gw->gw_gu, NULL);
+}
+
 
 /**
  *
@@ -125,11 +139,11 @@ m_openfile(GtkWidget *menu_item, gpointer callback_data)
 static void
 m_opendir(GtkWidget *menu_item, gpointer callback_data)
 {
-  gtk_ui_t *gu = callback_data;
+  gu_window_t *gw = callback_data;
   GtkWidget *dialog;
 
   dialog = gtk_file_chooser_dialog_new("Open Directory",
-				       GTK_WINDOW(gu->gu_window),
+				       GTK_WINDOW(gw->gw_window),
 				       GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
 				       GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 				       GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
@@ -138,7 +152,7 @@ m_opendir(GtkWidget *menu_item, gpointer callback_data)
   gtk_widget_show(dialog);
 
   g_signal_connect(G_OBJECT(dialog), "response",
-		   G_CALLBACK(m_open_response), gu);
+		   G_CALLBACK(m_open_response), gw);
 }
 
 
@@ -148,7 +162,7 @@ m_opendir(GtkWidget *menu_item, gpointer callback_data)
  * File menu
  */
 static GtkWidget *
-gu_menubar_File(gtk_ui_t *gu, GtkAccelGroup *accel_group)
+gu_menubar_File(gu_window_t *gw, GtkAccelGroup *accel_group)
 {
   GtkWidget *M = gtk_menu_item_new_with_mnemonic("_File");
   GtkWidget *m = gtk_menu_new();
@@ -157,20 +171,24 @@ gu_menubar_File(gtk_ui_t *gu, GtkAccelGroup *accel_group)
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(M), m);
 
 
+  gu_menu_add_item(m, "_New Window", 
+		   m_openwindow, gw, GTK_STOCK_NEW,
+		   gu_menu_accel_path("<Showtime-Main>/_File/NewWindow", 
+				      GDK_N, GDK_CONTROL_MASK), TRUE);
   gu_menu_add_item(m, "_Open File...", 
-		   m_openfile, gu, GTK_STOCK_OPEN,
+		   m_openfile, gw, GTK_STOCK_OPEN,
 		   gu_menu_accel_path("<Showtime-Main>/_File/OpenFile", 
 				      GDK_O, GDK_CONTROL_MASK), TRUE);
   
   gu_menu_add_item(m, "_Open Directory...", 
-		   m_opendir, gu, GTK_STOCK_OPEN,
+		   m_opendir, gw, GTK_STOCK_OPEN,
 		   gu_menu_accel_path("<Showtime-Main>/_File/OpenDir", 
 				      GDK_D, GDK_CONTROL_MASK), TRUE);
   
   gu_menu_add_sep(m);
 
   gu_menu_add_item(m, "_Quit", 
-		   m_quit, gu, GTK_STOCK_QUIT,
+		   m_quit, gw, GTK_STOCK_QUIT,
 		   gu_menu_accel_path("<Showtime-Main>/_File/Quit", 
 				      GDK_Q, GDK_CONTROL_MASK), TRUE);
   return M;
@@ -181,7 +199,7 @@ gu_menubar_File(gtk_ui_t *gu, GtkAccelGroup *accel_group)
  * Go menu
  */
 static GtkWidget *
-gu_menubar_Go(gtk_ui_t *gu, GtkAccelGroup *accel_group)
+gu_menubar_Go(gu_window_t *gw, GtkAccelGroup *accel_group)
 {
   GtkWidget *M = gtk_menu_item_new_with_mnemonic("_Go");
   GtkWidget *m = gtk_menu_new();
@@ -191,7 +209,7 @@ gu_menubar_Go(gtk_ui_t *gu, GtkAccelGroup *accel_group)
 
 
   gu_menu_add_item(m, "_Playqueue", 
-		   m_openplayqueue, gu, GTK_STOCK_EXECUTE,
+		   m_openplayqueue, gw, GTK_STOCK_EXECUTE,
 		   gu_menu_accel_path("<Showtime-Main>/_Go/Playqueue", 
 				      GDK_P, GDK_CONTROL_MASK), TRUE);
   return M;
@@ -202,7 +220,7 @@ gu_menubar_Go(gtk_ui_t *gu, GtkAccelGroup *accel_group)
  * Help menu
  */
 static GtkWidget *
-gu_menubar_Help(gtk_ui_t *gu, GtkAccelGroup *accel_group)
+gu_menubar_Help(gu_window_t *gw, GtkAccelGroup *accel_group)
 {
   GtkWidget *M = gtk_menu_item_new_with_mnemonic("_Help");
   GtkWidget *m = gtk_menu_new();
@@ -211,7 +229,7 @@ gu_menubar_Help(gtk_ui_t *gu, GtkAccelGroup *accel_group)
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(M), m);
 
   gu_menu_add_item(m, "_About Showtime", 
-		   m_about, gu, GTK_STOCK_ABOUT,
+		   m_about, gw, GTK_STOCK_ABOUT,
 		   NULL, TRUE);
   return M;
 }
@@ -221,7 +239,7 @@ gu_menubar_Help(gtk_ui_t *gu, GtkAccelGroup *accel_group)
  *
  */
 GtkWidget *
-gu_menubar_add(gtk_ui_t *gu, GtkWidget *parent)
+gu_menubar_add(gu_window_t *gw, GtkWidget *parent)
 {
   GtkAccelGroup *accel_group;
   GtkWidget *menubar;
@@ -232,16 +250,16 @@ gu_menubar_add(gtk_ui_t *gu, GtkWidget *parent)
 
 
   gtk_menu_shell_append(GTK_MENU_SHELL(menubar),
-			gu_menubar_File(gu, accel_group));
+			gu_menubar_File(gw, accel_group));
 
   gtk_menu_shell_append(GTK_MENU_SHELL(menubar),
-			gu_menubar_Go(gu, accel_group));
+			gu_menubar_Go(gw, accel_group));
 
   gtk_menu_shell_append(GTK_MENU_SHELL(menubar),
-			gu_menubar_Help(gu, accel_group));
+			gu_menubar_Help(gw, accel_group));
 
 
-  gtk_window_add_accel_group(GTK_WINDOW(gu->gu_window), accel_group);
+  gtk_window_add_accel_group(GTK_WINDOW(gw->gw_window), accel_group);
   return menubar;
 }
 

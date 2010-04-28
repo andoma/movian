@@ -54,7 +54,7 @@ typedef struct nav_page {
  */
 void nav_init(void);
 
-void nav_close(nav_page_t *np);
+prop_t *nav_spawn(void);
 
 void nav_open(const char *url, const char *type, prop_t *psource);
 

@@ -128,7 +128,7 @@ album_set_year(void *opaque, int year)
  *
  */
 static void
-add_header(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
+add_header(prop_courier_t *pc, GtkWidget *parent, prop_t *root)
 {
   GtkWidget *hbox, *w;
   albuminfo_t *ai = calloc(1, sizeof(albuminfo_t));
@@ -150,7 +150,7 @@ add_header(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "source", "album_name"),
 		   PROP_TAG_CALLBACK_STRING, album_set_title, ai,
-		   PROP_TAG_COURIER, gu->gu_pc, 
+		   PROP_TAG_COURIER, pc, 
 		   PROP_TAG_NAMED_ROOT, root, "self",
 		   NULL);
 
@@ -158,7 +158,7 @@ add_header(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "source", "artist_name"),
 		   PROP_TAG_CALLBACK_STRING, album_set_artist, ai,
-		   PROP_TAG_COURIER, gu->gu_pc, 
+		   PROP_TAG_COURIER, pc, 
 		   PROP_TAG_NAMED_ROOT, root, "self",
 		   NULL);
 
@@ -166,7 +166,7 @@ add_header(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "source", "album_year"),
 		   PROP_TAG_CALLBACK_INT, album_set_year, ai,
-		   PROP_TAG_COURIER, gu->gu_pc, 
+		   PROP_TAG_COURIER, pc, 
 		   PROP_TAG_NAMED_ROOT, root, "self",
 		   NULL);
 
@@ -193,7 +193,7 @@ album_set_art(void *opaque, const char *str)
  *
  */
 static void
-gu_add_album(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
+gu_add_album(gu_window_t *gw, GtkWidget *parent, prop_t *root)
 {
   GtkWidget *hbox;
   GtkWidget *w;
@@ -211,7 +211,7 @@ gu_add_album(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
   s = prop_subscribe(0,
 		     PROP_TAG_NAME("self", "source", "album_art"),
 		     PROP_TAG_CALLBACK_STRING, album_set_art, w,
-		     PROP_TAG_COURIER, gu->gu_pc, 
+		     PROP_TAG_COURIER, gw->gw_gu->gu_pc, 
 		     PROP_TAG_NAMED_ROOT, root, "self",
 		     NULL);
 
@@ -219,7 +219,7 @@ gu_add_album(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
   
   /* Tracklist */
 
-  w = gu_directory_list_create(gu, root,
+  w = gu_directory_list_create(gw, root,
 			       GU_DIR_SCROLLBOX |
 			       GU_DIR_VISIBLE_HEADERS |
 			       GU_DIR_COL_ARTIST |
@@ -234,12 +234,12 @@ gu_add_album(gtk_ui_t *gu, GtkWidget *parent, prop_t *root)
  *
  */
 GtkWidget *
-gu_directory_album_create(gtk_ui_t *gu, prop_t *root)
+gu_directory_album_create(gu_window_t *gw, prop_t *root)
 {
   GtkWidget *view = gtk_vbox_new(FALSE, 1);
   
-  add_header(gu, view, root);
-  gu_add_album(gu, view, root);
+  add_header(gw->gw_gu->gu_pc, view, root);
+  gu_add_album(gw, view, root);
   gtk_widget_show_all(view);
 
   return view;

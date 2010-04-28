@@ -21,7 +21,21 @@
 #include "gu.h"
 #include "showtime.h"
 
-static char *up_url; // XXX VERY UGLY
+typedef struct toolbar {
+
+  gu_window_t *gw;
+
+  char *parent_url;
+
+  prop_sub_t *sub_canGoBack;
+  prop_sub_t *sub_canGoFwd;
+  prop_sub_t *sub_parent;
+  prop_sub_t *sub_url;
+
+  GtkToolItem *up;
+
+} toolbar_t;
+
 
 /**
  *
@@ -29,7 +43,8 @@ static char *up_url; // XXX VERY UGLY
 static void
 back_clicked(GtkToolButton *toolbutton, gpointer user_data)
 {
-  event_dispatch(event_create_action(ACTION_NAV_BACK));
+  gu_window_t *gw = user_data;
+  gu_nav_send_event(gw, event_create_action(ACTION_NAV_BACK));
 }
 
 
@@ -39,7 +54,8 @@ back_clicked(GtkToolButton *toolbutton, gpointer user_data)
 static void
 fwd_clicked(GtkToolButton *toolbutton, gpointer user_data)
 {
-  event_dispatch(event_create_action(ACTION_NAV_FWD));
+  gu_window_t *gw = user_data;
+  gu_nav_send_event(gw, event_create_action(ACTION_NAV_FWD));
 }
 
 
@@ -49,7 +65,8 @@ fwd_clicked(GtkToolButton *toolbutton, gpointer user_data)
 static void
 home_clicked(GtkToolButton *toolbutton, gpointer user_data)
 {
-  event_dispatch(event_create_action(ACTION_HOME));
+  gu_window_t *gw = user_data;
+  gu_nav_send_event(gw, event_create_action(ACTION_HOME));
 }
 
 
@@ -59,8 +76,8 @@ home_clicked(GtkToolButton *toolbutton, gpointer user_data)
 static void
 gu_nav_url_updated(void *opaque, const char *str)
 {
-  gtk_ui_t *gu = opaque;
-  gtk_entry_set_text(GTK_ENTRY(gu->gu_url), str ?: "");
+  gu_window_t *gw = opaque;
+  gtk_entry_set_text(GTK_ENTRY(gw->gw_url), str ?: "");
 }
 
 
@@ -70,7 +87,8 @@ gu_nav_url_updated(void *opaque, const char *str)
 static void
 gu_nav_url_set(GtkEntry *e, gpointer user_data)
 {
-  event_dispatch(event_create_openurl(gtk_entry_get_text(e), NULL, NULL));
+  gu_window_t *gw = user_data;
+  gu_nav_open(gw, gtk_entry_get_text(e), NULL, NULL);
 }
 
 
@@ -80,18 +98,12 @@ gu_nav_url_set(GtkEntry *e, gpointer user_data)
 static void
 set_go_up(void *opaque, const char *str)
 {
-  GtkWidget *w = opaque;
+  toolbar_t *t = opaque;
 
-  free(up_url);
+  free(t->parent_url);
 
-  if(str == NULL) {
-    gtk_widget_set_sensitive(w, FALSE);
-    up_url = NULL;
-    return;
-  }
-
-  up_url = strdup(str);
-  gtk_widget_set_sensitive(w, TRUE);
+  gtk_widget_set_sensitive(GTK_WIDGET(t->up), !!str);
+  t->parent_url = str ? strdup(str) : NULL;
 }
 
 /**
@@ -100,20 +112,41 @@ set_go_up(void *opaque, const char *str)
 static void
 up_clicked(GtkToolButton *toolbutton, gpointer user_data)
 {
-  if(up_url != NULL)
-    event_dispatch(event_create_openurl(up_url, NULL, NULL));
+  toolbar_t *t = user_data;
+  if(t->parent_url != NULL)
+    gu_nav_open(t->gw, t->parent_url, NULL, NULL);
 }
 
 
 /**
  *
  */
-GtkWidget *
-gu_toolbar_add(gtk_ui_t *gu, GtkWidget *parent)
+static void
+toolbar_dtor(GtkObject *object, gpointer user_data)
 {
-  GtkToolItem *ti;
+  toolbar_t *t = user_data;
+
+  prop_unsubscribe(t->sub_canGoBack);
+  prop_unsubscribe(t->sub_canGoFwd);
+  prop_unsubscribe(t->sub_parent);
+  prop_unsubscribe(t->sub_url);
+  free(t->parent_url);
+  free(t);
+}
+
+/**
+ *
+ */
+GtkWidget *
+gu_toolbar_add(gu_window_t *gw, GtkWidget *parent)
+{
+  toolbar_t *t = calloc(1, sizeof(toolbar_t));
   GtkWidget *toolbar;
   GtkWidget *w;
+  prop_courier_t *pc = gw->gw_gu->gu_pc;
+  GtkToolItem *ti;
+
+  t->gw = gw;
 
   /* Top Toolbar */
   toolbar = gtk_toolbar_new();
@@ -123,54 +156,66 @@ gu_toolbar_add(gtk_ui_t *gu, GtkWidget *parent)
   /* Back button */
   ti = gtk_tool_button_new_from_stock(GTK_STOCK_GO_BACK);
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
-  g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(back_clicked), gu);
-  prop_subscribe(0,
-		 PROP_TAG_NAME("global", "nav", "canGoBack"),
-		 PROP_TAG_CALLBACK_INT, gu_subscription_set_sensitivity, ti,
-		 PROP_TAG_COURIER, gu->gu_pc,
-		 NULL);
+  g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(back_clicked), gw);
+
+  t->sub_canGoBack =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("nav", "canGoBack"),
+		   PROP_TAG_CALLBACK_INT, gu_subscription_set_sensitivity, ti,
+		   PROP_TAG_COURIER, pc,
+		   PROP_TAG_NAMED_ROOT, gw->gw_nav, "nav",
+		   NULL);
 
   /* Forward button */
   ti = gtk_tool_button_new_from_stock(GTK_STOCK_GO_FORWARD);
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
-  g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(fwd_clicked), gu);
-  prop_subscribe(0,
-		 PROP_TAG_NAME("global", "nav", "canGoForward"),
-		 PROP_TAG_CALLBACK_INT, gu_subscription_set_sensitivity, ti,
-		 PROP_TAG_COURIER, gu->gu_pc,
-		 NULL);
+  g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(fwd_clicked), gw);
 
+  t->sub_canGoFwd =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("nav", "canGoForward"),
+		   PROP_TAG_CALLBACK_INT, gu_subscription_set_sensitivity, ti,
+		   PROP_TAG_COURIER, pc,
+		   PROP_TAG_NAMED_ROOT, gw->gw_nav, "nav",
+		   NULL);
+  
   /* Up button */
-  ti = gtk_tool_button_new_from_stock(GTK_STOCK_GO_UP);
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
-  g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(up_clicked), gu);
-  prop_subscribe(0,
-		 PROP_TAG_NAME("global", "nav", "currentpage", "parent"),
-		 PROP_TAG_CALLBACK_STRING, set_go_up, ti,
-		 PROP_TAG_COURIER, gu->gu_pc,
-		 NULL);
+  t->up = gtk_tool_button_new_from_stock(GTK_STOCK_GO_UP);
+  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), t->up, -1);
+  g_signal_connect(G_OBJECT(t->up), "clicked", G_CALLBACK(up_clicked), t);
+
+  t->sub_parent =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("nav", "currentpage", "parent"),
+		   PROP_TAG_CALLBACK_STRING, set_go_up, t,
+		   PROP_TAG_COURIER, pc,
+		   PROP_TAG_NAMED_ROOT, gw->gw_nav, "nav",
+		   NULL);
 
   /* Home button */
   ti = gtk_tool_button_new_from_stock(GTK_STOCK_HOME);
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
-  g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(home_clicked), gu);
+  g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(home_clicked), gw);
 
   /* URL entry */
   ti = gtk_tool_item_new();
-  gu->gu_url = w = gtk_entry_new();
+  gw->gw_url = w = gtk_entry_new();
 
-  g_signal_connect(G_OBJECT(w), "activate", 
-		   G_CALLBACK(gu_nav_url_set), gu);
+  g_signal_connect(G_OBJECT(w), "activate", G_CALLBACK(gu_nav_url_set), gw);
 
   gtk_container_add(GTK_CONTAINER(ti), w);
   gtk_tool_item_set_expand(ti, TRUE);
   gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
 
-  prop_subscribe(0,
-		 PROP_TAG_NAME("global", "nav", "currentpage", "url"),
-		 PROP_TAG_CALLBACK_STRING, gu_nav_url_updated, gu,
-		 PROP_TAG_COURIER, gu->gu_pc,
-		 NULL);
+  t->sub_url =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("nav", "currentpage", "url"),
+		   PROP_TAG_CALLBACK_STRING, gu_nav_url_updated, gw,
+		   PROP_TAG_COURIER, pc,
+		   PROP_TAG_NAMED_ROOT, gw->gw_nav, "nav",
+		   NULL);
+
+  g_signal_connect(toolbar, "destroy", G_CALLBACK(toolbar_dtor), t);
 
   return toolbar;
 }

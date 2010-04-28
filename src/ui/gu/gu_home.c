@@ -29,7 +29,7 @@ TAILQ_HEAD(link_queue,   links);
  */
 typedef struct home {
 
-  gtk_ui_t *h_gu;
+  gu_window_t *h_gw;
 
   prop_sub_t *h_src_sub;
   GtkWidget *h_sourcebox;
@@ -52,6 +52,7 @@ typedef struct source {
 
   prop_sub_t *s_linksub;
 
+  home_t *s_home;
 
   char *s_url;
 
@@ -68,7 +69,7 @@ source_clicked(GtkObject *object, gpointer opaque)
   source_t *s = opaque;
 
   if(s->s_url != NULL)
-    nav_open(s->s_url, NULL, NULL);
+    gu_nav_open(s->s_home->h_gw, s->s_url, NULL, NULL);
 }
 
 
@@ -109,7 +110,9 @@ source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before,
 {
   prop_sub_t *sub;
   GtkWidget *w, *vbox, *hbox;
+  prop_courier_t *pc = gu->gu_pc;
 
+  s->s_home = h;
   s->s_hbox = gtk_hbox_new(FALSE, 1);
   gtk_box_pack_start(GTK_BOX(h->h_sourcebox), s->s_hbox, FALSE, TRUE, 5);
   gtk_box_reorder_child(GTK_BOX(h->h_sourcebox), s->s_hbox, position * 2);
@@ -127,7 +130,7 @@ source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before,
   sub = prop_subscribe(0,
 		       PROP_TAG_NAME("self", "icon"),
 		       PROP_TAG_CALLBACK_STRING, home_set_icon, w,
-		       PROP_TAG_COURIER, h->h_gu->gu_pc, 
+		       PROP_TAG_COURIER, pc, 
 		       PROP_TAG_NAMED_ROOT, p, "self",
 		       NULL);
 
@@ -153,7 +156,7 @@ source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before,
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "title"),
 		   PROP_TAG_CALLBACK_STRING, gu_subscription_set_label_xl, w,
-		   PROP_TAG_COURIER, h->h_gu->gu_pc, 
+		   PROP_TAG_COURIER, pc, 
 		   PROP_TAG_NAMED_ROOT, p, "self",
 		   NULL);
 
@@ -170,7 +173,7 @@ source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before,
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "status"),
 		   PROP_TAG_CALLBACK_STRING, gu_subscription_set_label, w,
-		   PROP_TAG_COURIER, h->h_gu->gu_pc, 
+		   PROP_TAG_COURIER, pc, 
 		   PROP_TAG_NAMED_ROOT, p, "self",
 		   NULL);
 
@@ -201,7 +204,7 @@ source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before,
   sub = prop_subscribe(0,
 		       PROP_TAG_NAME("self", "url"),
 		       PROP_TAG_CALLBACK_STRING, source_set_url, s,
-		       PROP_TAG_COURIER, gu->gu_pc, 
+		       PROP_TAG_COURIER, pc, 
 		       PROP_TAG_NAMED_ROOT, p, "self",
 		       NULL);
 
@@ -246,8 +249,11 @@ void
 gu_home_create(gu_nav_page_t *gnp)
 {
   GtkWidget *vbox;
+  gu_window_t *gw = gnp->gnp_gw;
+  gtk_ui_t *gu = gw->gw_gu;
+
   home_t *h = calloc(1, sizeof(home_t));
-  h->h_gu = gnp->gnp_gu;
+  h->h_gw = gnp->gnp_gw;
 
   /* Scrolled window */
   gnp->gnp_pageroot = gtk_scrolled_window_new(NULL, NULL);
@@ -263,13 +269,13 @@ gu_home_create(gu_nav_page_t *gnp)
 
 
   gu_cloner_init(&h->h_sources, h, source_add, source_del, sizeof(source_t),
-		 h->h_gu, GU_CLONER_TRACK_POSITION);
+		 gu, GU_CLONER_TRACK_POSITION);
 
   h->h_src_sub =
     prop_subscribe(0,
 		   PROP_TAG_NAME("global", "sources"),
 		   PROP_TAG_CALLBACK, gu_cloner_subscription, &h->h_sources,
-		   PROP_TAG_COURIER, h->h_gu->gu_pc,
+		   PROP_TAG_COURIER, gu->gu_pc,
 		   NULL);
 
 

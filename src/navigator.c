@@ -36,8 +36,6 @@ TAILQ_HEAD(nav_page_queue, nav_page);
  */
 typedef struct navigator {
 
-  hts_mutex_t nav_mutex;
-
   struct nav_page_queue nav_pages;
   struct nav_page_queue nav_history;
 
@@ -52,9 +50,14 @@ typedef struct navigator {
 
   prop_courier_t *nav_pc;
 
+  prop_sub_t *nav_eventsink;
+  prop_sub_t *nav_dtor_tracker;
+
 } navigator_t;
 
 static void nav_eventsink(void *opaque, prop_event_t event, ...);
+
+static void nav_dtor_tracker(void *opaque, prop_event_t event, ...);
 
 /**
  *
@@ -63,8 +66,6 @@ static navigator_t *
 nav_create(prop_t *parent)
 {
   navigator_t *nav = calloc(1, sizeof(navigator_t));
-
-  hts_mutex_init(&nav->nav_mutex);
 
   TAILQ_INIT(&nav->nav_pages);
   TAILQ_INIT(&nav->nav_history);
@@ -76,18 +77,35 @@ nav_create(prop_t *parent)
   nav->nav_prop_can_go_fwd  = prop_create(nav->nav_prop_root, "canGoForward");
   nav->nav_prop_can_go_home = prop_create(nav->nav_prop_root, "canGoHome");
 
-  nav->nav_pc = prop_courier_create_thread(&nav->nav_mutex, "navigator");
+  nav->nav_pc = prop_courier_create_thread(NULL, "navigator");
 
-  prop_subscribe(0,
-		 PROP_TAG_NAME("nav", "eventsink"),
-		 PROP_TAG_CALLBACK, nav_eventsink, nav,
-		 PROP_TAG_COURIER, nav->nav_pc,
-		 PROP_TAG_ROOT, nav->nav_prop_root,
-		 NULL);
+  nav->nav_eventsink = 
+    prop_subscribe(0,
+		   PROP_TAG_NAME("nav", "eventsink"),
+		   PROP_TAG_CALLBACK, nav_eventsink, nav,
+		   PROP_TAG_COURIER, nav->nav_pc,
+		   PROP_TAG_ROOT, nav->nav_prop_root,
+		   NULL);
+
+  nav->nav_dtor_tracker =
+    prop_subscribe(PROP_SUB_TRACK_DESTROY,
+		   PROP_TAG_CALLBACK, nav_dtor_tracker, nav,
+		   PROP_TAG_COURIER, nav->nav_pc,
+		   PROP_TAG_ROOT, nav->nav_prop_root,
+		   NULL);
+
   return nav;
 }
 
 
+/**
+ *
+ */
+prop_t *
+nav_spawn(void)
+{
+  return nav_create(NULL)->nav_prop_root;
+}
 
 
 /**
@@ -138,7 +156,7 @@ nav_remove_from_history(navigator_t *nav, nav_page_t *np)
 /**
  *
  */
-void
+static void
 nav_close(nav_page_t *np)
 {
   navigator_t *nav = np->np_nav;
@@ -160,6 +178,19 @@ nav_close(nav_page_t *np)
   free(np);
 
   nav_update_cango(nav);
+}
+
+
+/**
+ *
+ */
+static void
+nav_close_all(navigator_t *nav)
+{
+  nav_page_t *np;
+
+  while((np = TAILQ_LAST(&nav->nav_pages, nav_page_queue)) != NULL)
+    nav_close(np);
 }
 
 
@@ -321,7 +352,7 @@ nav_page_create(navigator_t *nav, const char *url, size_t allocsize,
     prop_subscribe(0,
 		   PROP_TAG_ROOT, prop_create(np->np_prop_root, "close"),
 		   PROP_TAG_CALLBACK_INT, nav_page_close_set, np,
-		   PROP_TAG_MUTEX, &nav->nav_mutex,
+		   PROP_TAG_COURIER, nav->nav_pc,
 		   NULL);
 
   prop_set_string(prop_create(np->np_prop_root, "url"), url);
@@ -360,4 +391,19 @@ nav_eventsink(void *opaque, prop_event_t event, ...)
     ou = (event_openurl_t *)e;
     nav_open0(nav, ou->url, ou->type, ou->psource);
   }
+}
+
+
+/**
+ *
+ */
+static void
+nav_dtor_tracker(void *opaque, prop_event_t event, ...)
+{
+  navigator_t *nav = opaque;
+
+  if(event != PROP_DESTROYED)
+    return;
+
+  if(0) nav_close_all(nav);
 }
