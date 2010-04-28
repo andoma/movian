@@ -2311,7 +2311,7 @@ be_spotify_open(struct navigator *nav,
 
   } else {
 
-    np = nav_page_create(nav, url, sizeof(nav_page_t), NULL,
+    np = nav_page_create(nav, url, sizeof(nav_page_t),
 			 NAV_PAGE_DONT_CLOSE_ON_BACK);
     
     spotify_page_t *sp = malloc(sizeof(spotify_page_t));

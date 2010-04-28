@@ -349,7 +349,7 @@ openpage(struct navigator *nav,
     return 0;
   }
 
-  np = nav_page_create(nav, url, sizeof(nav_page_t), NULL, 0);
+  np = nav_page_create(nav, url, sizeof(nav_page_t), 0);
 
   p = np->np_prop_root;
 

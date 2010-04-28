@@ -41,8 +41,6 @@ typedef struct nav_page {
 
 #define NAV_PAGE_DONT_CLOSE_ON_BACK 0x1
 
-  void (*np_close)(struct nav_page *np);
-
   prop_sub_t *np_close_sub;
 
 } nav_page_t;
@@ -59,7 +57,6 @@ prop_t *nav_spawn(void);
 void nav_open(const char *url, const char *type, prop_t *psource);
 
 void *nav_page_create(struct navigator *nav, const char *url, size_t allocsize,
-		      void (*closefunc)(struct nav_page *np),
 		      int flags);
 
 #endif /* NAVIGATOR_H__ */

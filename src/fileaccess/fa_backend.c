@@ -60,7 +60,7 @@ file_open_video(struct navigator *nav, const char *url0, nav_page_t **npp)
   nav_page_t *np;
   prop_t *src;
 
-  np = nav_page_create(nav, url0, sizeof(nav_page_t), NULL, 0);
+  np = nav_page_create(nav, url0, sizeof(nav_page_t), 0);
 
   src = prop_create(np->np_prop_root, "source");
   prop_set_string(prop_create(src, "type"), "video");
@@ -88,7 +88,7 @@ file_open_dir(struct navigator *nav,
     return 0;
   }
 
-  bfp = nav_page_create(nav, url0, sizeof(be_file_page_t), NULL,
+  bfp = nav_page_create(nav, url0, sizeof(be_file_page_t),
 			NAV_PAGE_DONT_CLOSE_ON_BACK);
 
   view = prop_create(bfp->h.np_prop_root, "view");

@@ -169,9 +169,6 @@ nav_close(nav_page_t *np)
   if(np->np_inhistory)
     nav_remove_from_history(nav, np);
 
-  if(np->np_close != NULL)
-    np->np_close(np);
-
   TAILQ_REMOVE(&nav->nav_pages, np, np_global_link);
   prop_destroy(np->np_prop_root);
   free(np->np_url);
@@ -334,15 +331,13 @@ nav_page_close_set(void *opaque, int value)
  *
  */
 void *
-nav_page_create(navigator_t *nav, const char *url, size_t allocsize,
-		void (*closefunc)(struct nav_page *np), int flags)
+nav_page_create(navigator_t *nav, const char *url, size_t allocsize, int flags)
 {
   nav_page_t *np = calloc(1, allocsize);
 
   np->np_nav = nav;
   np->np_flags = flags;
   np->np_url = strdup(url);
-  np->np_close = closefunc;
 
   TAILQ_INSERT_TAIL(&nav->nav_pages, np, np_global_link);
 

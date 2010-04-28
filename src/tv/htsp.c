@@ -695,16 +695,6 @@ htsp_connection_deref(htsp_connection_t *hc)
 
 
 /**
- *
- */
-static void
-htsp_close_page(nav_page_t *np)
-{
-  
-}
-
-
-/**
  * XXX: Same as file_open_video()
  */
 static int
@@ -713,7 +703,7 @@ htsp_open_channel(struct navigator *nav, const char *url, nav_page_t **npp)
   nav_page_t *np;
   prop_t *src;
 
-  np = nav_page_create(nav, url, sizeof(nav_page_t), NULL, 0);
+  np = nav_page_create(nav, url, sizeof(nav_page_t), 0);
 
   src = prop_create(np->np_prop_root, "source");
   prop_set_string(prop_create(src, "type"), "video");
@@ -744,7 +734,7 @@ be_htsp_open(struct navigator *nav,
 
 #if 0
   if(path[0] == 0) {
-    hp = nav_page_create(url, sizeof(htsp_page_t), htsp_close_page,
+    hp = nav_page_create(url, sizeof(htsp_page_t), NULL,
 			 NAV_PAGE_DONT_CLOSE_ON_BACK);
     p = hp->h.np_prop_root;
   
@@ -756,7 +746,7 @@ be_htsp_open(struct navigator *nav,
     src = prop_get_by_name(hc->hc_prop_tags, 
 			   (const char *[]){"self", path+5, "nodes", NULL});
 
-    hp = nav_page_create(url, sizeof(htsp_page_t), htsp_close_page,
+    hp = nav_page_create(url, sizeof(htsp_page_t), NULL,
 			 NAV_PAGE_DONT_CLOSE_ON_BACK);
     p = hp->h.np_prop_root;
   
@@ -774,7 +764,7 @@ be_htsp_open(struct navigator *nav,
   if(!strncmp(path, "/channel/", strlen("/channel/")))
     return htsp_open_channel(nav, url, npp);
 
-  hp = nav_page_create(nav, url, sizeof(htsp_page_t), htsp_close_page,
+  hp = nav_page_create(nav, url, sizeof(htsp_page_t),
 		       NAV_PAGE_DONT_CLOSE_ON_BACK);
   p = hp->h.np_prop_root;
   

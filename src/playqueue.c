@@ -832,7 +832,7 @@ be_playqueue_open(struct navigator *nav,
   nav_page_t *n;
   prop_t *src;
 
-  *npp = n = nav_page_create(nav, url0, sizeof(nav_page_t), NULL,
+  *npp = n = nav_page_create(nav, url0, sizeof(nav_page_t),
 			     NAV_PAGE_DONT_CLOSE_ON_BACK);
 
   prop_set_string(prop_create(n->np_prop_root, "view"), "list");
