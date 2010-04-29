@@ -68,6 +68,31 @@ gu_menu_add_item(GtkWidget *parent, const char *title,
 /**
  *
  */
+GtkWidget *
+gu_menu_add_toggle(GtkWidget *parent, const char *title,
+		   void (*cb)(GtkCheckMenuItem *menuitem, gpointer aux),
+		   gpointer aux, gboolean active, const char *accel,
+		   gboolean sensitive)
+{
+  GtkWidget *w;
+
+  w = gtk_check_menu_item_new_with_mnemonic(title);
+
+  if(accel != NULL) {
+    gtk_menu_item_set_accel_path(GTK_MENU_ITEM(w), accel);
+  }
+
+  gtk_widget_set_sensitive(w, sensitive);
+  gtk_menu_shell_append(GTK_MENU_SHELL(parent), w);
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(w), active);
+  g_signal_connect(G_OBJECT(w), "toggled", (void *)cb, aux);
+  return w;
+}
+
+
+/**
+ *
+ */
 void
 gu_menu_add_sep(GtkWidget *parent)
 {

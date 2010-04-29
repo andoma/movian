@@ -129,7 +129,7 @@ static void
 m_openwindow(GtkWidget *menu_item, gpointer callback_data)
 {
   gu_window_t *gw = callback_data;
-  gu_win_create(gw->gw_gu, NULL);
+  gu_win_create(gw->gw_gu, NULL, 0);
 }
 
 
@@ -211,6 +211,74 @@ gu_menubar_File(gu_window_t *gw, GtkAccelGroup *accel_group)
   return M;
 }
 
+/**
+ *
+ */
+static void
+m_toggle_toolbar(GtkCheckMenuItem *w, gpointer data)
+{
+  gu_window_t *gw = data;
+  gw->gw_view_toolbar = gtk_check_menu_item_get_active(w);
+  g_object_set(G_OBJECT(gw->gw_toolbar), "visible", 
+	       gw->gw_view_toolbar, NULL);
+}
+
+
+/**
+ *
+ */
+static void
+m_toggle_playdeck(GtkCheckMenuItem *w, gpointer data)
+{
+  gu_window_t *gw = data;
+  gw->gw_view_playdeck = gtk_check_menu_item_get_active(w);
+  g_object_set(G_OBJECT(gw->gw_playdeck), "visible", 
+	       gw->gw_view_playdeck, NULL);
+}
+
+
+
+/**
+ *
+ */
+static void
+m_toggle_statusbar(GtkCheckMenuItem *w, gpointer data)
+{
+  gu_window_t *gw = data;
+  gw->gw_view_statusbar = gtk_check_menu_item_get_active(w);
+  g_object_set(G_OBJECT(gw->gw_statusbar), "visible", 
+	       gw->gw_view_statusbar, NULL);
+}
+
+
+
+/**
+ * Go menu
+ */
+static GtkWidget *
+gu_menubar_View(gu_window_t *gw, GtkAccelGroup *accel_group)
+{
+  GtkWidget *M = gtk_menu_item_new_with_mnemonic("_View");
+  GtkWidget *m = gtk_menu_new();
+
+  gtk_menu_set_accel_group(GTK_MENU(m), accel_group);
+  gtk_menu_item_set_submenu(GTK_MENU_ITEM(M), m);
+
+  gu_menu_add_toggle(m, "_Toolbar", 
+		     m_toggle_toolbar, gw, gw->gw_view_toolbar,
+		     NULL, TRUE);
+
+  gu_menu_add_toggle(m, "_Playdeck", 
+		     m_toggle_playdeck, gw, gw->gw_view_playdeck,
+		     NULL, TRUE);
+
+  gu_menu_add_toggle(m, "_Statusbar", 
+		     m_toggle_statusbar, gw, gw->gw_view_statusbar,
+		     NULL, TRUE);
+
+  return M;
+}
+
 
 /**
  * Go menu
@@ -268,6 +336,9 @@ gu_menubar_add(gu_window_t *gw, GtkWidget *parent)
 
   gtk_menu_shell_append(GTK_MENU_SHELL(menubar),
 			gu_menubar_File(gw, accel_group));
+
+  gtk_menu_shell_append(GTK_MENU_SHELL(menubar),
+			gu_menubar_View(gw, accel_group));
 
   gtk_menu_shell_append(GTK_MENU_SHELL(menubar),
 			gu_menubar_Go(gw, accel_group));

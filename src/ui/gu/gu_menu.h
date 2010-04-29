@@ -27,6 +27,11 @@ GtkWidget *gu_menu_add_item(GtkWidget *parent, const char *title,
 			    gpointer aux, const char *image, const char *accel,
 			    gboolean sensitive);
 
+GtkWidget *gu_menu_add_toggle(GtkWidget *parent, const char *title,
+			      void (*cb)(GtkCheckMenuItem *item, gpointer aux),
+			      gpointer aux, gboolean active,
+			      const char *accel, gboolean sensitive);
+
 
 void gu_menu_add_sep(GtkWidget *parent);
 

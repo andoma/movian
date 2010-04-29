@@ -79,7 +79,7 @@ gw_close(GtkWidget *widget,GdkEvent *event, gpointer data)
  *
  */
 gu_window_t *
-gu_win_create(gtk_ui_t *gu, prop_t *nav)
+gu_win_create(gtk_ui_t *gu, prop_t *nav, int all)
 {
   gu_window_t *gw = calloc(1, sizeof(gu_window_t));
 
@@ -104,15 +104,26 @@ gu_win_create(gtk_ui_t *gu, prop_t *nav)
 
   gw->gw_vbox = gtk_vbox_new(FALSE, 1);
   gtk_container_add(GTK_CONTAINER(gw->gw_window), gw->gw_vbox);
+  gtk_widget_show(gw->gw_vbox);
+
+  gw->gw_view_toolbar = 1;
+  if(all) {
+    gw->gw_view_playdeck = 1;
+    gw->gw_view_statusbar = 1;
+  }
 
   /* Menubar */
   gw->gw_menubar = gu_menubar_add(gw, gw->gw_vbox);
+  gtk_widget_show_all(gw->gw_menubar);
  
   /* Top Toolbar */
   gw->gw_toolbar = gu_toolbar_add(gw, gw->gw_vbox);
+  if(gw->gw_view_toolbar)
+    gtk_widget_show(gw->gw_toolbar);
 
   /* Page container */
   gw->gw_page_container = gtk_vbox_new(FALSE, 0);
+  gtk_widget_show_all(gw->gw_page_container);
   gtk_container_set_border_width(GTK_CONTAINER(gw->gw_page_container), 0);
   gtk_box_pack_start(GTK_BOX(gw->gw_vbox),
 		     gw->gw_page_container, TRUE, TRUE, 0);
@@ -129,11 +140,15 @@ gu_win_create(gtk_ui_t *gu, prop_t *nav)
 
   /* Playback controls */
   gw->gw_playdeck = gu_playdeck_add(gw, gw->gw_vbox);
+  if(gw->gw_view_playdeck)
+    gtk_widget_show(gw->gw_playdeck);
 
   /* Statusbar */
   gw->gw_statusbar = gu_statusbar_add(gw, gw->gw_vbox);
+  if(gw->gw_view_statusbar)
+    gtk_widget_show(gw->gw_statusbar);
 
-  gtk_widget_show_all(gw->gw_window);
+  gtk_widget_show(gw->gw_window);
   return gw;
 }
 
@@ -163,7 +178,7 @@ gu_start(ui_t *ui, int argc, char **argv, int primary)
 
   gu->gu_pc = prop_courier_create_thread(&gu_mutex, "GU");
 
-  gu_win_create(gu, prop_create(prop_get_global(), "nav"));
+  gu_win_create(gu, prop_create(prop_get_global(), "nav"), 1);
 
   /* Init popup controller */
   gu_popup_init(gu);
@@ -186,16 +201,20 @@ gu_fullwindow_update(gu_window_t *gw)
 
   gw->gw_fullwindow = req;
   if(gw->gw_menubar != NULL)
-    g_object_set(G_OBJECT(gw->gw_menubar), "visible", !req, NULL);
+    g_object_set(G_OBJECT(gw->gw_menubar), "visible", 
+		 req ? 0 : 1, NULL);
 
   if(gw->gw_toolbar != NULL)
-    g_object_set(G_OBJECT(gw->gw_toolbar), "visible", !req, NULL);
+    g_object_set(G_OBJECT(gw->gw_toolbar), "visible", 
+		 req ? 0 : gw->gw_view_toolbar, NULL);
 
   if(gw->gw_playdeck != NULL)
-    g_object_set(G_OBJECT(gw->gw_playdeck), "visible", !req, NULL);
+    g_object_set(G_OBJECT(gw->gw_playdeck), "visible", 
+		 req ? 0 : gw->gw_view_playdeck, NULL);
 
   if(gw->gw_statusbar != NULL)
-    g_object_set(G_OBJECT(gw->gw_statusbar), "visible", !req, NULL);
+    g_object_set(G_OBJECT(gw->gw_statusbar), "visible", 
+		 req ? 0 : gw->gw_view_statusbar, NULL);
 }
 
 
@@ -232,7 +251,7 @@ void
 gu_nav_open_newwin(gtk_ui_t *gu, const char *url, const char *type,
 		   prop_t *psource)
 {
-  gu_window_t *gw = gu_win_create(gu, NULL);
+  gu_window_t *gw = gu_win_create(gu, NULL, 0);
   gu_nav_send_event(gw, event_create_openurl(url, type, psource));
 }
 

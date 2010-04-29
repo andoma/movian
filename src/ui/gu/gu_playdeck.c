@@ -355,14 +355,17 @@ gu_playdeck_add(gu_window_t *gw, GtkWidget *parent)
   gtk_box_pack_start(GTK_BOX(parent), playdeck, FALSE, TRUE, 0);
 
   w = gtk_hseparator_new();
+  gtk_widget_show(w);
   gtk_box_pack_start(GTK_BOX(playdeck), w, FALSE, TRUE, 0);
   
 
   pd->root = gtk_hbox_new(FALSE, 1);
+  gtk_widget_show(pd->root);
   gtk_box_pack_start(GTK_BOX(playdeck), pd->root, FALSE, TRUE, 0);
 
   /* Playdeck album art */
   w = gtk_image_new();
+  gtk_widget_show(w);
   gtk_misc_set_alignment(GTK_MISC(w), 0, 1);
   gtk_box_pack_start(GTK_BOX(pd->root), w, FALSE, TRUE, 0);
 
@@ -496,6 +499,8 @@ gu_playdeck_add(gu_window_t *gw, GtkWidget *parent)
   ti = gtk_separator_tool_item_new();
   gtk_toolbar_insert(GTK_TOOLBAR(pd->tbar), ti, -1);
 
+  gtk_widget_show_all(vbox);
+
   /**
    * Volume control
    */
@@ -513,6 +518,7 @@ gu_playdeck_add(gu_window_t *gw, GtkWidget *parent)
 		   PROP_TAG_CALLBACK_FLOAT, update_mastervol, pd,
 		   PROP_TAG_COURIER, pc,
 		   NULL);
+  gtk_widget_show_all(GTK_WIDGET(ti));
 
   g_signal_connect(playdeck, "destroy", G_CALLBACK(playdeck_dtor), pd);
   return playdeck;

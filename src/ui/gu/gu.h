@@ -70,6 +70,11 @@ typedef struct gu_window {
 
   prop_t *gw_nav;
 
+  int gw_view_toolbar;
+  int gw_view_playdeck;
+  int gw_view_statusbar;
+
+
 } gu_window_t;
 
 
@@ -84,7 +89,7 @@ void gu_nav_open_newwin(gtk_ui_t *gu,
 
 void gu_nav_send_event(gu_window_t *gw, event_t *e);
 
-gu_window_t *gu_win_create(gtk_ui_t *gu, prop_t *nav);
+gu_window_t *gu_win_create(gtk_ui_t *gu, prop_t *nav, int all);
 
 void gu_win_destroy(gu_window_t *gw);
 

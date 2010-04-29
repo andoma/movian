@@ -167,6 +167,7 @@ gu_toolbar_add(gu_window_t *gw, GtkWidget *parent)
 		   PROP_TAG_COURIER, pc,
 		   PROP_TAG_NAMED_ROOT, gw->gw_nav, "nav",
 		   NULL);
+  gtk_widget_show(GTK_WIDGET(ti));
 
   /* Forward button */
   ti = gtk_tool_button_new_from_stock(GTK_STOCK_GO_FORWARD);
@@ -180,6 +181,7 @@ gu_toolbar_add(gu_window_t *gw, GtkWidget *parent)
 		   PROP_TAG_COURIER, pc,
 		   PROP_TAG_NAMED_ROOT, gw->gw_nav, "nav",
 		   NULL);
+  gtk_widget_show(GTK_WIDGET(ti));
   
   /* Up button */
   t->up = gtk_tool_button_new_from_stock(GTK_STOCK_GO_UP);
@@ -193,6 +195,7 @@ gu_toolbar_add(gu_window_t *gw, GtkWidget *parent)
 		   PROP_TAG_COURIER, pc,
 		   PROP_TAG_NAMED_ROOT, gw->gw_nav, "nav",
 		   NULL);
+  gtk_widget_show(GTK_WIDGET(t->up));
 
   /* Home button */
   ti = gtk_tool_button_new_from_stock(GTK_STOCK_HOME);
@@ -206,6 +209,7 @@ gu_toolbar_add(gu_window_t *gw, GtkWidget *parent)
 		   PROP_TAG_COURIER, pc,
 		   PROP_TAG_NAMED_ROOT, gw->gw_nav, "nav",
 		   NULL);
+  gtk_widget_show(GTK_WIDGET(ti));
 
   /* URL entry */
   ti = gtk_tool_item_new();
@@ -224,6 +228,7 @@ gu_toolbar_add(gu_window_t *gw, GtkWidget *parent)
 		   PROP_TAG_COURIER, pc,
 		   PROP_TAG_NAMED_ROOT, gw->gw_nav, "nav",
 		   NULL);
+  gtk_widget_show_all(GTK_WIDGET(ti));
 
   g_signal_connect(toolbar, "destroy", G_CALLBACK(toolbar_dtor), t);
 
