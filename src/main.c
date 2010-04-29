@@ -31,7 +31,7 @@
 #include "arch/arch.h"
 
 #include "audio/audio.h"
-#include "backend.h"
+#include "backend/backend.h"
 #include "navigator.h"
 #include "settings.h"
 #include "ui/ui.h"

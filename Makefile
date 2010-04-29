@@ -33,7 +33,7 @@ SRCS += src/main.c \
 	src/runcontrol.c \
 	src/version.c \
 	src/navigator.c \
-	src/backend.c \
+	src/backend/backend.c \
 	src/media.c \
 	src/event.c \
 	src/keyring.c \
@@ -223,12 +223,12 @@ SRCS-$(CONFIG_CDDA)      += src/dvd/cdda.c
 #
 # TV
 #
-SRCS  += src/tv/htsp.c \
+SRCS  += src/backend/htsp/htsp.c \
 
 #
 # Spotify
 #
-SRCS-${CONFIG_SPOTIFY} += src/spotify/spotify.c
+SRCS-${CONFIG_SPOTIFY} += src/backend/spotify/spotify.c
 BUNDLES-$(CONFIG_SPOTIFY) += resources/spotify
 #
 # GLW user interface

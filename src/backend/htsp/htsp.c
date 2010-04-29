@@ -30,7 +30,7 @@
 #include "showtime.h"
 #include "networking/net.h"
 #include "navigator.h"
-#include "backend.h"
+#include "backend/backend.h"
 #include "keyring.h"
 #include "media.h"
 #include "misc/string.h"

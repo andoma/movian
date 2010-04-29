@@ -19,7 +19,7 @@
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
 
-#include "backend.h"
+#include "backend/backend.h"
 #include "gu.h"
 #include "showtime.h"
 #include "misc/pixmap.h"

@@ -26,7 +26,7 @@
 #include "settings.h"
 #include "event.h"
 #include "navigator.h"
-#include "backend.h"
+#include "backend/backend.h"
 #include "assert.h"
 
 #define SETTINGS_URL "settings:"

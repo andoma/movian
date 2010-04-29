@@ -26,7 +26,7 @@
 #include "glw_texture.h"
 #include "prop.h"
 
-#include "backend.h"
+#include "backend/backend.h"
 
 static void glw_tex_deref_locked(glw_root_t *gr, glw_loadable_texture_t *glt);
 

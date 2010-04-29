@@ -25,7 +25,7 @@
 #include "glw_view.h"
 #include "glw.h"
 #include "glw_event.h"
-#include "backend.h"
+#include "backend/backend.h"
 #include "misc/pixmap.h"
 #include "settings.h"
 

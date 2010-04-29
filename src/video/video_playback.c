@@ -24,7 +24,7 @@
 #include "video_playback.h"
 #include "event.h"
 #include "media.h"
-#include "backend.h"
+#include "backend/backend.h"
 #include "notifications.h"
 
 /**
