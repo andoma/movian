@@ -24,7 +24,7 @@
 #include <unistd.h>
 
 #include "showtime.h"
-#include "backend.h"
+#include "backend/backend.h"
 #include "navigator.h"
 #include "fileaccess.h"
 #include "fa_probe.h"
