@@ -30,7 +30,7 @@
 #include "showtime.h"
 #include "misc/callout.h"
 #include "navigator.h"
-#include "backend.h"
+#include "backend/backend.h"
 #include "media.h"
 #include "dvd.h"
 #include "sd/sd.h"

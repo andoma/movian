@@ -21,7 +21,7 @@
 #include "media.h"
 #include "showtime.h"
 #include "navigator.h"
-#include "backend.h"
+#include "backend/backend.h"
 #include "playqueue.h"
 
 #include <cdio/cdda.h>
