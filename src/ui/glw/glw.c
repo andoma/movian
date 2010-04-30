@@ -1552,7 +1552,7 @@ glw_set_constraints(glw_t *w, int x, int y, float a, float weight,
 {
   int ch = 0;
 
-  if(flags & GLW_CONSTRAINT_FLAGS_XY) {
+  if((w->glw_flags | flags) & GLW_CONSTRAINT_FLAGS_XY) {
 
     int f = flags & GLW_CONSTRAINT_FLAGS_XY;
 
@@ -1574,7 +1574,7 @@ glw_set_constraints(glw_t *w, int x, int y, float a, float weight,
     }
   }
 
-  if(flags & GLW_CONSTRAINT_FLAGS_WAF) {
+  if((w->glw_flags | flags) & GLW_CONSTRAINT_FLAGS_WAF) {
 
     int f = flags & GLW_CONSTRAINT_FLAGS_WAF;
 
