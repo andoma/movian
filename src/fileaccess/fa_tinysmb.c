@@ -456,3 +456,4 @@ fa_protocol_t fa_protocol_tinysmb = {
   .fap_fsize = smb_fsize,
   .fap_stat  = smb_stat,
 };
+FAP_INIT(smb);

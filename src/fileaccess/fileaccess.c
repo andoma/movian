@@ -568,35 +568,29 @@ fa_dir_entry_stat(fa_dir_entry_t *fde)
 }
 
 
+/**
+ *
+ */
+void
+fileaccess_register_entry(fa_protocol_t *fap)
+{
+  LIST_INSERT_HEAD(&fileaccess_all_protocols, fap, fap_link);
+}
 
 /**
  *
  */
-#define INITPROTO(a)							      \
- {									      \
-   extern  fa_protocol_t fa_protocol_ ## a;				      \
-   LIST_INSERT_HEAD(&fileaccess_all_protocols, &fa_protocol_ ## a, fap_link); \
-   if(fa_protocol_ ## a.fap_init != NULL) fa_protocol_ ## a.fap_init();	      \
- }
-
 int
 fileaccess_init(void)
 {
+  fa_protocol_t *fap;
   fa_probe_init();
-  INITPROTO(fs);
-  INITPROTO(rar);
-  INITPROTO(zip);
-  INITPROTO(http);
-  INITPROTO(webdav);
-  INITPROTO(bundle);
-#if ENABLE_LIBSMBCLIENT
-  INITPROTO(smb);
-#endif
-#if ENABLE_TINYSMB
-  INITPROTO(tinysmb);
-#endif
-  av_register_protocol(&fa_lavf_proto);
 
+  LIST_FOREACH(fap, &fileaccess_all_protocols, fap_link)
+    if(fap->fap_init != NULL)
+      fap->fap_init();
+
+  av_register_protocol(&fa_lavf_proto);
   return 0;
 }
 

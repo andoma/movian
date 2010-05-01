@@ -1128,6 +1128,7 @@ fa_protocol_t fa_protocol_http = {
   .fap_quickload = http_quickload,
 };
 
+FAP_INIT(http);
 
 
 
@@ -1484,6 +1485,7 @@ fa_protocol_t fa_protocol_webdav = {
   .fap_stat  = dav_stat,
   .fap_quickload = http_quickload,
 };
+FAP_INIT(webdav);
 
 
 /**

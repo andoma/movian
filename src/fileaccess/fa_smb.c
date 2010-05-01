@@ -252,6 +252,7 @@ fa_protocol_t fa_protocol_smb = {
   .fap_fsize = smb_fsize,
   .fap_stat  = smb_stat,
 };
+FAP_INIT(smb);
 
 /**
  * Authentication callback

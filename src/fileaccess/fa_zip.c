@@ -849,3 +849,4 @@ fa_protocol_t fa_protocol_zip = {
   .fap_reference = zip_reference,
   .fap_unreference = zip_unreference,
 };
+FAP_INIT(zip);

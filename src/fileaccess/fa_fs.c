@@ -312,3 +312,5 @@ fa_protocol_t fa_protocol_fs = {
   .fap_notify = fs_notify,
 #endif
 };
+
+FAP_INIT(fs);

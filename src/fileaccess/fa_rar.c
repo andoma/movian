@@ -784,3 +784,4 @@ fa_protocol_t fa_protocol_rar = {
   .fap_fsize = rar_fsize,
   .fap_stat  = rar_stat,
 };
+FAP_INIT(rar);

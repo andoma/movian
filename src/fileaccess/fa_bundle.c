@@ -192,3 +192,4 @@ fa_protocol_t fa_protocol_bundle = {
   .fap_fsize = b_fsize,
   .fap_stat  = b_stat,
 };
+FAP_INIT(bundle);

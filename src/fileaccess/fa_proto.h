@@ -120,4 +120,13 @@ typedef struct fa_protocol {
 } fa_protocol_t;
 
 
+
+void fileaccess_register_entry(fa_protocol_t *fap);
+
+#define FAP_INIT(name) \
+  static void  __attribute__((constructor)) fap_init_ ## name(void) {\
+    fileaccess_register_entry(&fa_protocol_ ## name); }
+
+
+
 #endif /* FA_PROTO_H__ */
