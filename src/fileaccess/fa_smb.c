@@ -240,7 +240,7 @@ smb_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
 }
 
 
-fa_protocol_t fa_protocol_smb = {
+static fa_protocol_t fa_protocol_smb = {
   .fap_flags = FAP_INCLUDE_PROTO_IN_URL,
   .fap_init  = smb_init,
   .fap_name  = "smb",
@@ -252,7 +252,7 @@ fa_protocol_t fa_protocol_smb = {
   .fap_fsize = smb_fsize,
   .fap_stat  = smb_stat,
 };
-FAP_INIT(smb);
+FAP_REGISTER(smb);
 
 /**
  * Authentication callback

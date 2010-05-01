@@ -313,4 +313,4 @@ fa_protocol_t fa_protocol_fs = {
 #endif
 };
 
-FAP_INIT(fs);
+FAP_REGISTER(fs);

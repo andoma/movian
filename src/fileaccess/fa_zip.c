@@ -836,7 +836,7 @@ zip_init(void)
 }
 
 
-fa_protocol_t fa_protocol_zip = {
+static fa_protocol_t fa_protocol_zip = {
   .fap_init = zip_init,
   .fap_name = "zip",
   .fap_scan =  zip_scandir,
@@ -849,4 +849,4 @@ fa_protocol_t fa_protocol_zip = {
   .fap_reference = zip_reference,
   .fap_unreference = zip_unreference,
 };
-FAP_INIT(zip);
+FAP_REGISTER(zip);

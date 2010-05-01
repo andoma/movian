@@ -182,7 +182,7 @@ b_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
 }
 
 
-fa_protocol_t fa_protocol_bundle = {
+static fa_protocol_t fa_protocol_bundle = {
   .fap_name  = "bundle",
   .fap_scan  = NULL,
   .fap_open  = b_open,
@@ -192,4 +192,4 @@ fa_protocol_t fa_protocol_bundle = {
   .fap_fsize = b_fsize,
   .fap_stat  = b_stat,
 };
-FAP_INIT(bundle);
+FAP_REGISTER(bundle);

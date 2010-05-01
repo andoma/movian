@@ -445,7 +445,7 @@ smb_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
 }
 
 
-fa_protocol_t fa_protocol_tinysmb = {
+static fa_protocol_t fa_protocol_tinysmb = {
   .fap_name  = "smb",
   .fap_init  = smb_init,
   .fap_scan  = smb_scandir,
@@ -456,4 +456,4 @@ fa_protocol_t fa_protocol_tinysmb = {
   .fap_fsize = smb_fsize,
   .fap_stat  = smb_stat,
 };
-FAP_INIT(smb);
+FAP_REGISTER(smb);

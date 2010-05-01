@@ -773,7 +773,7 @@ rar_init(void)
 }
 
 
-fa_protocol_t fa_protocol_rar = {
+static fa_protocol_t fa_protocol_rar = {
   .fap_init = rar_init,
   .fap_name = "rar",
   .fap_scan =  rar_scandir,
@@ -784,4 +784,4 @@ fa_protocol_t fa_protocol_rar = {
   .fap_fsize = rar_fsize,
   .fap_stat  = rar_stat,
 };
-FAP_INIT(rar);
+FAP_REGISTER(rar);

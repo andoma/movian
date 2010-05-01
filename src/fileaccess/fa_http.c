@@ -1114,7 +1114,7 @@ http_quickload(struct fa_protocol *fap, const char *url,
 /**
  *
  */
-fa_protocol_t fa_protocol_http = {
+static fa_protocol_t fa_protocol_http = {
   .fap_init  = http_init,
   .fap_flags = FAP_INCLUDE_PROTO_IN_URL,
   .fap_name  = "http",
@@ -1128,7 +1128,7 @@ fa_protocol_t fa_protocol_http = {
   .fap_quickload = http_quickload,
 };
 
-FAP_INIT(http);
+FAP_REGISTER(http);
 
 
 
@@ -1473,7 +1473,7 @@ dav_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 /**
  *
  */
-fa_protocol_t fa_protocol_webdav = {
+static fa_protocol_t fa_protocol_webdav = {
   .fap_flags = FAP_INCLUDE_PROTO_IN_URL,
   .fap_name  = "webdav",
   .fap_scan  = dav_scandir,
@@ -1485,7 +1485,7 @@ fa_protocol_t fa_protocol_webdav = {
   .fap_stat  = dav_stat,
   .fap_quickload = http_quickload,
 };
-FAP_INIT(webdav);
+FAP_REGISTER(webdav);
 
 
 /**
