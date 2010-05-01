@@ -664,6 +664,61 @@ static URLProtocol fa_lavf_proto = {
 
 
 /**
+ * lavf -> fileaccess open wrapper
+ */
+static int
+fa_lavf_open2(URLContext *h, const char *url, int flags)
+{
+  void *fh;
+
+  if(sscanf(url, "%p", &fh) != 1)
+    return AVERROR_NOENT;
+  h->priv_data = fh;
+  fa_seek(fh, 0, SEEK_SET);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static URLProtocol fa_lavf_proto2 = {
+    "showtime_ptr",
+    fa_lavf_open2,
+    fa_lavf_read,
+    NULL,            /* Write */
+    fa_lavf_seek,
+    fa_lavf_close,
+};
+
+
+/**
+ * Transform a fa_filehandle_t into FFmpeg ByteIOContext
+ *
+ * We do this by passing the pointer as an URL (in ascii) to the open
+ * function (above). This is insanity
+ */
+int
+fa_lavf_reopen(ByteIOContext **s, fa_handle_t *fh)
+{
+  char url[64];
+  URLContext *uc;
+  snprintf(url, sizeof(url), "%p", fh);
+  if(url_open_protocol(&uc, &fa_lavf_proto2, url, 0)) {
+    fa_close(fh);
+    return -1;
+  }
+
+  /* Okay, see if lavf can find out anything about the file */
+  if(url_fdopen(s, uc) < 0) {
+    url_close(uc);
+    return -1;
+  }
+  return 0;
+}
+
+
+/**
  *
  */
 const char *

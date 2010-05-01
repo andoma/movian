@@ -305,19 +305,15 @@ metdata_set_redirect(metadata_t *md, const char *fmt, ...)
 
 /**
  * Probe file by checking its header
+ *
+ * pb is guaranteed to point to at least 256 bytes of valid data
  */
 static int
-fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh)
+fa_probe_header(metadata_t *md, const char *url, uint8_t *pb)
 {
-  uint8_t pb[256];
-  off_t psiz;
   uint16_t flags;
 
-  memset(pb, 0, sizeof(pb));
-  psiz = fa_read(fh, pb, sizeof(pb));
-
-  if(psiz == 256 && 
-     !memcmp(pb, "SNES-SPC700 Sound File Data", 27)) {
+  if(!memcmp(pb, "SNES-SPC700 Sound File Data", 27)) {
     fa_probe_spc(md, pb); 
     md->md_type = CONTENT_AUDIO;
     return 1;
@@ -386,17 +382,13 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh)
 
 /**
  * Check if file is an iso image
+ * pb is guaranteed to point at 128 byts
+ * of data starting 0x8000 of start of file
  */
-int
-fa_probe_iso(metadata_t *md, fa_handle_t *fh)
+static int
+fa_probe_iso0(metadata_t *md, char *pb)
 {
-  char pb[128], *p;
-
-  if(fa_seek(fh, 0x8000, SEEK_SET) != 0x8000)
-    return -1;
-
-  if(fa_read(fh, pb, sizeof(pb)) != sizeof(pb))
-    return -1;
+  char *p;
 
   if(memcmp(pb, isosig, 8))
     return -1;
@@ -412,6 +404,25 @@ fa_probe_iso(metadata_t *md, fa_handle_t *fh)
     md->md_type = CONTENT_DVD;
   }
   return 0;
+}
+
+
+
+/**
+ * Check if file is an iso image
+ * pb is guaranteed to point at 64k of data
+ */
+int
+fa_probe_iso(metadata_t *md, fa_handle_t *fh)
+{
+  char pb[128];
+
+  if(fa_seek(fh, 0x8000, SEEK_SET) != 0x8000)
+    return -1;
+
+  if(fa_read(fh, pb, sizeof(pb)) != sizeof(pb))
+    return -1;
+  return fa_probe_iso0(md, pb);
 }
 
 
@@ -496,6 +507,9 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
 }
   
 
+#define PROBE1_SIZE 4096
+#define PROBE2_SIZE 65536
+
 /**
  *
  */
@@ -504,31 +518,69 @@ fa_probe_fill_cache(metadata_t *md, const char *url, char *errbuf,
 		    size_t errsize)
 {
   const char *url0 = url;
+  AVInputFormat *f;
   AVFormatContext *fctx;
-  char tmp1[URL_MAX];
   fa_handle_t *fh;
+  int score = 0;
+  AVProbeData pd;
+  ByteIOContext *s;
 
   if((fh = fa_open(url, errbuf, errsize)) == NULL)
     return -1;
 
-  if(fa_probe_header(md, url0, fh)) {
+  pd.filename = url;
+  pd.buf = malloc(PROBE1_SIZE + AVPROBE_PADDING_SIZE);
+
+  pd.buf_size = fa_read(fh, pd.buf, PROBE1_SIZE);
+  
+  if(pd.buf_size < PROBE1_SIZE) {
+    snprintf(errbuf, errsize, "Short file");
+    free(pd.buf);
+    return -1;
+  }
+
+  if(fa_probe_header(md, url0, pd.buf)) {
     fa_close(fh);
+    free(pd.buf);
     return 0;
   }
 
-  if(!fa_probe_iso(md, fh)) {
-    fa_close(fh);
-    return 0;
+  // First try using lavc
+
+  f = av_probe_input_format2(&pd, 1, &score);
+  
+  // If score is low and it is possible, read more
+  if(pd.buf_size == PROBE1_SIZE && score < AVPROBE_SCORE_MAX / 2) {
+    
+    pd.buf = realloc(pd.buf, PROBE2_SIZE + AVPROBE_PADDING_SIZE);
+    pd.buf_size += fa_read(fh, pd.buf + PROBE1_SIZE, PROBE2_SIZE - PROBE1_SIZE);
+    if(pd.buf_size == PROBE2_SIZE) {
+      if(!fa_probe_iso0(md, (char *)pd.buf + 0x8000)) {
+	free(pd.buf);
+	fa_close(fh);
+	return 0;
+      }
+    }
+
+    f = av_probe_input_format2(&pd, 1, &score);
   }
 
-  fa_close(fh);
+  free(pd.buf);
+	
+  if(f == NULL) {
+    snprintf(errbuf, errsize, "Unable to probe file (FFmpeg)");
+    fa_close(fh);
+    return -1;
+  }
 
-  /* Okay, see if lavf can find out anything about the file */
+  if(fa_lavf_reopen(&s, fh)) {
+    snprintf(errbuf, errsize, "Unable to reopen file (FFmpeg)");
+    return -1;
+  }
 
-  snprintf(tmp1, sizeof(tmp1), "showtime:%s", url0);
-
-  if(av_open_input_file(&fctx, tmp1, NULL, 0, NULL) != 0) {
-    snprintf(errbuf, errsize, "Unable to open file (ffmpeg)");
+  if(av_open_input_stream(&fctx, s, url0, f, NULL) != 0) {
+    snprintf(errbuf, errsize, "Unable to open stream (FFmpeg)");
+    url_fclose(s);
     return -1;
   }
 

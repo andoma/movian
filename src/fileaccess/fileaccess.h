@@ -150,7 +150,9 @@ int http_request(const char *url, const char **arguments,
 		 char *errbuf, size_t errlen,
 		 struct htsbuf_queue *postdata, const char *postcontenttype);
 
+#include <libavformat/avio.h>
 
+int fa_lavf_reopen(ByteIOContext **p, fa_handle_t *fa);
 
 
 #endif /* FILEACCESS_H */
