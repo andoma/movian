@@ -55,6 +55,8 @@ CONFIG_LIST="
  libsmbclient
  libxv
  serdev
+ ssl
+ librtmp
 "
 
 die() {

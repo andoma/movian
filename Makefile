@@ -340,6 +340,22 @@ SRCS-$(CONFIG_APPLEREMOTE) += \
 			src/ui/appleremote/RemoteControlContainer.m \
 			src/ui/appleremote/ShowtimeMainController.m
 
+#
+# librtmp
+#
+
+SRCS-$(CONFIG_LIBRTMP) +=	ext/rtmpdump/librtmp/amf.c \
+				ext/rtmpdump/librtmp/hashswf.c \
+				ext/rtmpdump/librtmp/log.c \
+				ext/rtmpdump/librtmp/rtmp.c \
+				ext/rtmpdump/librtmp/parseurl.c \
+
+${BUILDDIR}/ext/rtmpdump/%.o : CFLAGS = -O2
+
+SRCS-$(CONFIG_LIBRTMP)  +=      src/backend/rtmp/rtmp.c
+
+${BUILDDIR}/src/backend/rtmp/rtmp.o : CFLAGS = -Wall -Werror -Iext/rtmpdump
+
 
 # Various transformations
 SRCS  += $(SRCS-yes)

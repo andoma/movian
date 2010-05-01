@@ -74,6 +74,7 @@ enable cddb
 enable libxss
 enable libxv
 enable serdev
+enable ssl
 
 for opt do
   optval="${opt#*=}"
@@ -329,6 +330,26 @@ if enabled avahi; then
 	echo "To compile without it, configure with: --disable-avahi"
 	die
     fi
+fi
+
+
+#
+# SSL
+#
+if enabled ssl; then
+    if pkg-config libssl; then
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libssl`
+	echo "Using libssl:          `pkg-config --modversion libssl`"
+    elif pkg-config openssl; then
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs openssl`
+	echo "Using openssl:         `pkg-config --modversion openssl`"
+    else
+	echo "libssl or openssl not found"
+	echo "To compile without it, configure with: --disable-ssl"
+	die
+    fi
+
+    enable librtmp
 fi
 
 
