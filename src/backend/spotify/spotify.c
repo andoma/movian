@@ -1049,7 +1049,7 @@ artist_add_album_tracks(sp_artistbrowse *result, int first, int num,
     n = prop_create(NULL, "node");
     spotify_make_link(f_sp_link_create_from_track(t, 0), url, sizeof(url));
     prop_set_string(prop_create(n, "url"), url);
-    
+    prop_set_string(prop_create(n, "type"), "audio");
     metadata_create(prop_create(n, "metadata"), METADATA_TRACK, t);
     
     if(prop_set_parent(n, root))
