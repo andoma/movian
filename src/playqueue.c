@@ -858,11 +858,13 @@ be_playqueue_canhandle(const char *url)
 /**
  *
  */
-backend_t be_playqueue = {
+static backend_t be_playqueue = {
   .be_init = playqueue_init,
   .be_canhandle = be_playqueue_canhandle,
   .be_open = be_playqueue_open,
 };
+
+BE_REGISTER(playqueue);
 
 /**
  *

@@ -85,4 +85,12 @@ struct pixmap *backend_imageloader(const char *url, int want_thumb,
 
 backend_t *backend_canhandle(const char *url);
 
+void backend_register(backend_t *be);
+
+
+#define BE_REGISTER(name) \
+  static void  __attribute__((constructor)) backend_init_ ## name(void) {\
+    backend_register(&be_ ## name); }
+
+
 #endif /* BACKEND_H__ */

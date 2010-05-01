@@ -200,9 +200,11 @@ be_dvd_init(void)
 /**
  *
  */
-backend_t be_dvd = {
+static backend_t be_dvd = {
   .be_canhandle = be_dvd_canhandle,
   .be_open = be_dvd_openpage,
   .be_play_video = be_dvd_play,
   .be_init = be_dvd_init,
 };
+
+BE_REGISTER(dvd);

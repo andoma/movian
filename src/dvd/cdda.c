@@ -567,9 +567,11 @@ playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
 /**
  *
  */
-backend_t be_cdda = {
+static backend_t be_cdda = {
   .be_canhandle = canhandle,
   .be_open = openpage,
   .be_list = listdisc,
   .be_play_audio = playaudio,
 };
+
+BE_REGISTER(cdda);

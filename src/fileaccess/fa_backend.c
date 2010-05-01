@@ -246,4 +246,4 @@ backend_t be_file = {
   .be_imageloader = fa_imageloader,
 };
 
-
+BE_REGISTER(file);

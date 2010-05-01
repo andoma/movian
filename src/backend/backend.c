@@ -36,14 +36,11 @@ static struct backend_list backends;
 /**
  *
  */
-static void
-init_be(backend_t *be)
+void
+backend_register(backend_t *be)
 {
-  if(be->be_init != NULL && be->be_init())
-    return;
   LIST_INSERT_HEAD(&backends, be, be_global_link);
 }
-
 
 
 /**
@@ -52,27 +49,15 @@ init_be(backend_t *be)
 void
 backend_init(void)
 {
+  backend_t *be;
+
   global_sources =
     prop_create_ex(prop_get_global(), "sources", NULL, 
 		   PROP_SORTED_CHILDS | PROP_SORT_CASE_INSENSITIVE);
-  
-#define NAV_INIT_BE(name) \
- {extern backend_t be_ ## name; init_be(&be_ ## name);}
 
-  NAV_INIT_BE(page);
-  NAV_INIT_BE(file);
-  NAV_INIT_BE(settings);
-  NAV_INIT_BE(playqueue);
-  NAV_INIT_BE(htsp);
-#if ENABLE_DVD_LINUX || ENABLE_DVD_WII
-  NAV_INIT_BE(dvd);
-#endif
-#ifdef CONFIG_CDDA
-  NAV_INIT_BE(cdda);
-#endif
-#ifdef CONFIG_SPOTIFY
-  NAV_INIT_BE(spotify);
-#endif
+  LIST_FOREACH(be, &backends, be_global_link)
+    if(be->be_init != NULL)
+      be->be_init();
 }
 
 
@@ -187,12 +172,12 @@ be_page_open(struct navigator *nav,
 /**
  *
  */
-backend_t be_page = {
+static backend_t be_page = {
   .be_canhandle = be_page_canhandle,
   .be_open = be_page_open,
 };
 
-
+BE_REGISTER(page);
 
 
 /**

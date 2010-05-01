@@ -534,9 +534,9 @@ be_settings_open(struct navigator *nav,
 /**
  *
  */
-backend_t be_settings = {
+static backend_t be_settings = {
   .be_canhandle = be_settings_canhandle,
   .be_open = be_settings_open,
 };
 
-
+BE_REGISTER(settings);

@@ -2747,7 +2747,7 @@ spotify_shutdown(void *opaque)
 /**
  *
  */
-backend_t be_spotify = {
+static backend_t be_spotify = {
   .be_init = be_spotify_init,
   .be_canhandle = be_spotify_canhandle,
   .be_open = be_spotify_open,
@@ -2756,3 +2756,5 @@ backend_t be_spotify = {
   .be_imageloader = be_spotify_imageloader,
   .be_get_parent = be_spotify_get_parent,
 };
+
+BE_REGISTER(spotify);

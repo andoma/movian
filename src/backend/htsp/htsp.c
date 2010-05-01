@@ -1343,9 +1343,11 @@ htsp_init(void)
 /**
  *
  */
-backend_t be_htsp = {
+static backend_t be_htsp = {
   .be_init       = htsp_init,
   .be_canhandle  = be_htsp_canhandle,
   .be_open       = be_htsp_open,
   .be_play_video = be_htsp_playvideo,
 };
+
+BE_REGISTER(htsp);
