@@ -61,6 +61,7 @@ typedef struct gu_window {
   GtkWidget *gw_window;
 
   int gw_fullwindow;
+  int gw_fullscreen;
 
   GtkWidget *gw_vbox;
   GtkWidget *gw_menubar;

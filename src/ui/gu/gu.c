@@ -20,6 +20,7 @@
 #include "gu.h"
 #include "showtime.h"
 
+#include <gdk/gdkkeysyms.h>
 #include <X11/Xlib.h>
 
 hts_mutex_t gu_mutex;
@@ -43,6 +44,42 @@ gu_leave(void)
 {
   hts_mutex_unlock(&gu_mutex);
 }
+
+
+/**
+ *
+ */
+static gboolean
+window_key_pressed(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+{
+  gu_window_t *gw = user_data;
+
+  if(event->keyval == GDK_F11) {
+
+    if(gw->gw_fullwindow) {
+      if(gw->gw_fullscreen) {
+	gtk_window_unfullscreen(GTK_WINDOW(gw->gw_window));
+      } else {
+	gtk_window_fullscreen(GTK_WINDOW(gw->gw_window));
+      }
+    }
+  }
+  return FALSE;
+}
+
+
+/**
+ *
+ */
+static gboolean
+window_state_event(GtkWidget *w, GdkEventWindowState *event, gpointer user_data)
+{
+  gu_window_t *gw = user_data;
+  gboolean v = !!(event->new_window_state & GDK_WINDOW_STATE_FULLSCREEN);
+  gw->gw_fullscreen = v;
+  return FALSE;
+}
+
 
 
 /**
@@ -148,7 +185,14 @@ gu_win_create(gtk_ui_t *gu, prop_t *nav, int all)
   if(gw->gw_view_statusbar)
     gtk_widget_show(gw->gw_statusbar);
 
+  g_signal_connect(G_OBJECT(gw->gw_window), "key-press-event",
+		   G_CALLBACK(window_key_pressed), gw);
+
+  g_signal_connect(G_OBJECT(gw->gw_window), "window-state-event",
+		   G_CALLBACK(window_state_event), gw);
+
   gtk_widget_show(gw->gw_window);
+
   return gw;
 }
 
@@ -201,7 +245,7 @@ gu_fullwindow_update(gu_window_t *gw)
 
   gw->gw_fullwindow = req;
   if(gw->gw_menubar != NULL)
-    g_object_set(G_OBJECT(gw->gw_menubar), "visible", 
+    g_object_set(G_OBJECT(gw->gw_menubar), "visible",
 		 req ? 0 : 1, NULL);
 
   if(gw->gw_toolbar != NULL)

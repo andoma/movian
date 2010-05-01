@@ -23,22 +23,6 @@
 
 #include <gdk/gdkkeysyms.h>
 
-#if 0
-
-static void
-fullscreen_toggle(gpointer callback_data, guint callback_action,
-		  GtkWidget *menu_item)
-{
-  gtk_ui_t *gu = callback_data;
-  int v = GTK_CHECK_MENU_ITEM(menu_item)->active;
-  
-  if(v) 
-    gtk_window_fullscreen(GTK_WINDOW(gu->gu_window));
-  else
-    gtk_window_unfullscreen(GTK_WINDOW(gu->gu_window));
-}
-#endif
-
 
 /**
  *
@@ -251,6 +235,32 @@ m_toggle_statusbar(GtkCheckMenuItem *w, gpointer data)
 }
 
 
+/**
+ *
+ */
+static gboolean
+state_event(GtkWidget *w, GdkEventWindowState *event, gpointer user_data)
+{
+  gboolean v = !!(event->new_window_state & GDK_WINDOW_STATE_FULLSCREEN);
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(user_data), v);
+  return FALSE;
+}
+
+
+/**
+ *
+ */
+static void
+m_toggle_fullscreen(GtkCheckMenuItem *w, gpointer data)
+{
+  gu_window_t *gw = data;
+  if(gtk_check_menu_item_get_active(w)) {
+    gtk_window_fullscreen(GTK_WINDOW(gw->gw_window));
+  } else {
+    gtk_window_unfullscreen(GTK_WINDOW(gw->gw_window));
+  }
+}
+
 
 /**
  * Go menu
@@ -260,6 +270,7 @@ gu_menubar_View(gu_window_t *gw, GtkAccelGroup *accel_group)
 {
   GtkWidget *M = gtk_menu_item_new_with_mnemonic("_View");
   GtkWidget *m = gtk_menu_new();
+  GtkWidget *w;
 
   gtk_menu_set_accel_group(GTK_MENU(m), accel_group);
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(M), m);
@@ -275,6 +286,18 @@ gu_menubar_View(gu_window_t *gw, GtkAccelGroup *accel_group)
   gu_menu_add_toggle(m, "_Statusbar", 
 		     m_toggle_statusbar, gw, gw->gw_view_statusbar,
 		     NULL, TRUE);
+
+  gu_menu_add_sep(m);
+
+  w = 
+    gu_menu_add_toggle(m, "_Fullscreen", 
+		       m_toggle_fullscreen, gw, gw->gw_view_statusbar,
+		       gu_menu_accel_path("<Showtime-Main>/_View/_Fullscreen", 
+					  GDK_F11, 0),
+		       TRUE);
+  
+  g_signal_connect(G_OBJECT(gw->gw_window), "window-state-event",
+		   G_CALLBACK(state_event), w);
 
   return M;
 }
@@ -345,7 +368,6 @@ gu_menubar_add(gu_window_t *gw, GtkWidget *parent)
 
   gtk_menu_shell_append(GTK_MENU_SHELL(menubar),
 			gu_menubar_Help(gw, accel_group));
-
 
   gtk_window_add_accel_group(GTK_WINDOW(gw->gw_window), accel_group);
   return menubar;
