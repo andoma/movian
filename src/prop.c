@@ -2467,30 +2467,12 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
       if(c->hp_name == NULL || c == no_descend)
 	continue;
 
-      /* Search for a matching source */
-      TAILQ_FOREACH(z, &src->hp_childs, hp_parent_link) {
-	if(z->hp_name != NULL && !strcmp(c->hp_name, z->hp_name))
-	  break;
-      }
-      
-      if(z != NULL) {
-	/* Found! Recurse */
+      z = prop_create0(src, c->hp_name, NULL, 0);
 
-	relink_subscriptions(z, c, skipme, origin, pnq, NULL);
+      if(c->hp_type == PROP_DIR)
+	prop_make_dir(z, skipme, origin);
 
-      } else {
-	/* Nothing, blast the value */
-
-	LIST_FOREACH(s, &c->hp_canonical_subscriptions,
-		     hps_canonical_prop_link) {
-
-	  if(s != skipme)
-	    prop_notify_void(s);
-
-	  LIST_REMOVE(s, hps_value_prop_link);
-	  s->hps_value_prop = NULL;
-	}
-      }
+      relink_subscriptions(z, c, skipme, origin, pnq, NULL);
     }
   }
 }
