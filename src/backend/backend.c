@@ -22,6 +22,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #include "showtime.h"
 #include "backend.h"
@@ -163,7 +164,13 @@ be_page_open(struct navigator *nav,
 {
   nav_page_t *n = nav_page_create(nav, url0, sizeof(nav_page_t), 0);
   prop_t *src = prop_create(n->np_prop_root, "source");
-  prop_set_string(prop_create(src, "type"), url0 + strlen("page:"));
+  prop_t *metadata = prop_create(src, "metadata");
+  char *cap = mystrdupa(url0 + strlen("page:"));
+
+  prop_set_string(prop_create(src, "type"), cap);
+  cap[0] = toupper(cap[0]);
+  prop_set_string(prop_create(metadata, "title"), cap);
+
   *npp = n;
   return 0;
 }
