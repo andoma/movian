@@ -533,7 +533,7 @@ fa_probe_fill_cache(metadata_t *md, const char *url, char *errbuf,
 
   pd.buf_size = fa_read(fh, pd.buf, PROBE1_SIZE);
   
-  if(pd.buf_size < PROBE1_SIZE) {
+  if(pd.buf_size < 256) {
     snprintf(errbuf, errsize, "Short file");
     free(pd.buf);
     return -1;
