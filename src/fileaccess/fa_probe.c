@@ -539,6 +539,16 @@ fa_probe_fill_cache(metadata_t *md, const char *url, char *errbuf,
     return -1;
   }
 
+  if(pd.buf[0] == 'I' &&
+     pd.buf[1] == 'D' &&
+     pd.buf[2] == '3' && 
+     (pd.buf[3] & 0xf8) == 0 &&
+     (pd.buf[5] & 0x0f) == 0) {
+    f = av_find_input_format("mp3");
+    if(f != NULL)
+      goto found;
+  }
+
   if(fa_probe_header(md, url0, pd.buf)) {
     fa_close(fh);
     free(pd.buf);
@@ -572,7 +582,7 @@ fa_probe_fill_cache(metadata_t *md, const char *url, char *errbuf,
     fa_close(fh);
     return -1;
   }
-
+ found:
   if(fa_lavf_reopen(&s, fh)) {
     snprintf(errbuf, errsize, "Unable to reopen file (FFmpeg)");
     return -1;
