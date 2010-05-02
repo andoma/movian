@@ -229,3 +229,32 @@ gu_cloner_subscription(void *opaque, prop_event_t event, ...)
 
 
 
+
+/**
+ * Based on a content type string, return a GdkPixbuf
+ * Returns a reference to be free'd by caller
+ */
+GdkPixbuf *
+gu_contentstr_to_icon(const char *str, int height)
+{
+  char buf[100];
+
+  if(str == NULL)
+    return NULL;
+
+  snprintf(buf, sizeof(buf), 
+	   SHOWTIME_GU_RESOURCES_URL"/content-%s.png", str);
+  return gu_pixbuf_get_sync(buf, -1, height);
+}
+
+/**
+ *
+ */
+void
+gu_set_icon_by_type(void *opaque, const char *str)
+{
+  GdkPixbuf *pb = gu_contentstr_to_icon(str, 16);
+  g_object_set(G_OBJECT(opaque), "pixbuf", pb, NULL);
+  if(pb != NULL)
+    g_object_unref(G_OBJECT(pb));
+}

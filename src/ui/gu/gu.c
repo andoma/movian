@@ -15,6 +15,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <assert.h>
 
 #include "navigator.h"
 #include "gu.h"
@@ -92,7 +93,6 @@ gu_win_destroy(gu_window_t *gw)
 
   gtk_widget_destroy(gw->gw_window);
 
-  prop_destroy(gw->gw_nav);
 
   LIST_REMOVE(gw, gw_link);
   free(gw);
@@ -115,17 +115,43 @@ gw_close(GtkWidget *widget,GdkEvent *event, gpointer data)
 /**
  *
  */
+static gu_tab_t *
+resolvetab(gu_window_t *gw, int page_num)
+{
+  GtkWidget *c;
+  gu_tab_t *gt;
+  c = gtk_notebook_get_nth_page(GTK_NOTEBOOK(gw->gw_notebook), page_num);
+  LIST_FOREACH(gt, &gw->gw_tabs, gt_link)
+    if(c == gt->gt_page_container)
+      return gt;
+  return NULL;
+
+}
+
+
+/**
+ *
+ */
+static void
+tab_changed(GtkWidget *w, GtkNotebookPage *page,
+	    guint page_num, gpointer user_data)
+{
+  gu_window_t *gw = user_data;
+  gu_tab_t *gt = resolvetab(gw, page_num);
+  assert(gt != NULL);
+
+  gu_toolbar_select_tab(gt);
+  gw->gw_current_tab = gt;
+}
+
+
+/**
+ *
+ */
 gu_window_t *
 gu_win_create(gtk_ui_t *gu, prop_t *nav, int all)
 {
   gu_window_t *gw = calloc(1, sizeof(gu_window_t));
-
-  if(nav == NULL) {
-    // No navigator supplied, spawn one
-    gw->gw_nav = nav_spawn();
-  } else {
-    gw->gw_nav = prop_xref_addref(nav);
-  }
 
   LIST_INSERT_HEAD(&gu->gu_windows, gw, gw_link);
 
@@ -158,22 +184,18 @@ gu_win_create(gtk_ui_t *gu, prop_t *nav, int all)
   if(gw->gw_view_toolbar)
     gtk_widget_show(gw->gw_toolbar);
 
-  /* Page container */
-  gw->gw_page_container = gtk_vbox_new(FALSE, 0);
-  gtk_widget_show_all(gw->gw_page_container);
-  gtk_container_set_border_width(GTK_CONTAINER(gw->gw_page_container), 0);
+  /* Notebook (that which contains tabs) */
+  gw->gw_notebook = gtk_notebook_new();
   gtk_box_pack_start(GTK_BOX(gw->gw_vbox),
-		     gw->gw_page_container, TRUE, TRUE, 0);
+		     gw->gw_notebook, TRUE, TRUE, 0);
+  gtk_notebook_set_show_border(GTK_NOTEBOOK(gw->gw_notebook), 0);
+  gtk_notebook_set_show_tabs(GTK_NOTEBOOK(gw->gw_notebook), 0);
+  gtk_notebook_set_scrollable(GTK_NOTEBOOK(gw->gw_notebook), 1);
 
-  prop_sub_t *s = 
-    prop_subscribe(0,
-		   PROP_TAG_NAME("nav", "pages"),
-		   PROP_TAG_CALLBACK, gu_nav_pages, gw, 
-		   PROP_TAG_COURIER, gu->gu_pc,
-		   PROP_TAG_NAMED_ROOT, gw->gw_nav, "nav",
-		   NULL);
+  gtk_widget_show(gw->gw_notebook);
 
-  gu_unsubscribe_on_destroy(GTK_OBJECT(gw->gw_vbox), s);
+  g_signal_connect(G_OBJECT(gw->gw_notebook), "switch-page",
+		   G_CALLBACK(tab_changed), gw);
 
   /* Playback controls */
   gw->gw_playdeck = gu_playdeck_add(gw, gw->gw_vbox);
@@ -191,10 +213,143 @@ gu_win_create(gtk_ui_t *gu, prop_t *nav, int all)
   g_signal_connect(G_OBJECT(gw->gw_window), "window-state-event",
 		   G_CALLBACK(window_state_event), gw);
 
+  gu_tab_create(gw, nav, 1);
+
   gtk_widget_show(gw->gw_window);
 
   return gw;
 }
+
+/**
+ *
+ */
+void
+gu_tab_destroy(gu_tab_t *gt)
+{
+  gu_window_t *gw = gt->gt_gw;
+
+  gtk_widget_destroy(gt->gt_page_container);
+
+  prop_destroy(gt->gt_nav);
+
+  LIST_REMOVE(gt, gt_link);
+  free(gt);
+
+  gw->gw_ntabs--;
+
+  if(gw->gw_ntabs == 0) {
+    gu_win_destroy(gw);
+  } else if(gw->gw_ntabs < 2) {
+    gtk_notebook_set_show_tabs(GTK_NOTEBOOK(gw->gw_notebook), 0);
+  }
+}
+
+/**
+ *
+ */
+static void
+build_tab_header(gu_tab_t *gt)
+{
+  prop_courier_t *pc = gt->gt_gw->gw_gu->gu_pc;
+  GtkWidget *l, *img;
+  prop_sub_t *s;
+
+  // Tab header
+  gt->gt_label = gtk_hbox_new(FALSE, 0);
+  gtk_widget_set_size_request(gt->gt_label, 150, -1);
+
+  img = gtk_image_new();
+  gtk_box_pack_start(GTK_BOX(gt->gt_label), img, FALSE, TRUE, 0);
+
+  s = prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+		     PROP_TAG_NAME("nav", "currentpage", 
+				   "source", "type"),
+		     PROP_TAG_CALLBACK_STRING, gu_set_icon_by_type, img,
+		     PROP_TAG_COURIER, pc, 
+		     PROP_TAG_NAMED_ROOT, gt->gt_nav, "nav",
+		     NULL);
+
+  gu_unsubscribe_on_destroy(GTK_OBJECT(img), s);
+
+  l = gtk_label_new("");
+  gtk_box_pack_start(GTK_BOX(gt->gt_label), l, TRUE, TRUE, 0);
+
+  gtk_label_set_ellipsize(GTK_LABEL(l), PANGO_ELLIPSIZE_END);
+  gtk_misc_set_alignment(GTK_MISC(l), 0, 0.5);
+  gtk_misc_set_padding(GTK_MISC(l), 5, 0);
+
+  s = prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+		     PROP_TAG_NAME("nav", "currentpage", 
+				   "source", "metadata", "title"),
+		     PROP_TAG_CALLBACK_STRING, gu_subscription_set_label, l,
+		     PROP_TAG_COURIER, pc,
+		     PROP_TAG_NAMED_ROOT, gt->gt_nav, "nav",
+		     NULL);
+  gu_unsubscribe_on_destroy(GTK_OBJECT(l), s);
+
+  gtk_widget_show_all(gt->gt_label);
+}
+
+
+/**
+ *
+ */
+gu_tab_t *
+gu_tab_create(gu_window_t *gw, prop_t *nav, int select)
+{
+  gu_tab_t *gt = calloc(1, sizeof(gu_tab_t));
+  prop_sub_t *s;
+  int idx;
+
+  gt->gt_gw = gw;
+
+  LIST_INSERT_HEAD(&gw->gw_tabs, gt, gt_link);
+  gw->gw_current_tab = gt;
+  gw->gw_ntabs++;
+
+  if(nav == NULL) {
+    gt->gt_nav = nav_spawn(); // No navigator supplied, spawn one
+  } else {
+    gt->gt_nav = prop_xref_addref(nav);
+  }
+
+
+  gt->gt_page_container = gtk_vbox_new(FALSE, 0);
+  gtk_widget_show_all(gt->gt_page_container);
+  gtk_container_set_border_width(GTK_CONTAINER(gt->gt_page_container), 0);
+
+  build_tab_header(gt);
+
+
+  s = prop_subscribe(0,
+		     PROP_TAG_NAME("nav", "pages"),
+		     PROP_TAG_CALLBACK, gu_nav_pages, gt,
+		     PROP_TAG_COURIER, gw->gw_gu->gu_pc,
+		     PROP_TAG_NAMED_ROOT, gt->gt_nav, "nav",
+		     NULL);
+
+  gu_unsubscribe_on_destroy(GTK_OBJECT(gt->gt_page_container), s);
+
+
+  // Add to notebook
+
+  idx = gtk_notebook_append_page(GTK_NOTEBOOK(gw->gw_notebook),
+				 gt->gt_page_container, gt->gt_label);
+
+  gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(gw->gw_notebook), 
+				   gt->gt_page_container, 1);
+
+
+  if(select)
+    gtk_notebook_set_current_page(GTK_NOTEBOOK(gw->gw_notebook), idx);
+
+  if(gw->gw_ntabs > 1)
+    gtk_notebook_set_show_tabs(GTK_NOTEBOOK(gw->gw_notebook), 1);
+  
+
+  return gt;
+}
+
 
 
 /**
@@ -238,7 +393,9 @@ gu_start(ui_t *ui, int argc, char **argv, int primary)
 void
 gu_fullwindow_update(gu_window_t *gw)
 {
-  int req = gw->gw_page_current ? gw->gw_page_current->gnp_fullwindow : 0;
+  gu_tab_t *gt = gw->gw_current_tab;
+
+  int req = gt->gt_page_current ? gt->gt_page_current->gnp_fullwindow : 0;
   
   if(req == gw->gw_fullwindow)
     return;
@@ -266,10 +423,10 @@ gu_fullwindow_update(gu_window_t *gw)
  *
  */
 void
-gu_nav_send_event(gu_window_t *gw, event_t *e)
+gu_tab_send_event(gu_tab_t *gt, event_t *e)
 {
   prop_t *p = prop_get_by_name(PNVEC("nav", "eventsink"), 1,
-			       PROP_TAG_NAMED_ROOT, gw->gw_nav, "nav",
+			       PROP_TAG_NAMED_ROOT, gt->gt_nav, "nav",
 			       NULL);
 
   prop_send_ext_event(p, e);
@@ -282,9 +439,9 @@ gu_nav_send_event(gu_window_t *gw, event_t *e)
  *
  */
 void
-gu_nav_open(gu_window_t *gw, const char *url, const char *type, prop_t *psource)
+gu_tab_open(gu_tab_t *gt, const char *url, const char *type, prop_t *psource)
 {
-  gu_nav_send_event(gw, event_create_openurl(url, type, psource));
+  gu_tab_send_event(gt, event_create_openurl(url, type, psource));
 }
 
 
@@ -296,7 +453,20 @@ gu_nav_open_newwin(gtk_ui_t *gu, const char *url, const char *type,
 		   prop_t *psource)
 {
   gu_window_t *gw = gu_win_create(gu, NULL, 0);
-  gu_nav_send_event(gw, event_create_openurl(url, type, psource));
+  gu_tab_send_event(gw->gw_current_tab,
+		    event_create_openurl(url, type, psource));
+}
+
+
+/**
+ *
+ */
+void
+gu_nav_open_newtab(gu_window_t *gw, const char *url, const char *type,
+		   prop_t *psource)
+{
+  gu_tab_t *gt = gu_tab_create(gw, NULL, 0);
+  gu_tab_send_event(gt, event_create_openurl(url, type, psource));
 }
 
 

@@ -76,7 +76,7 @@ add_header(prop_courier_t *pc, GtkWidget *parent, prop_t *root)
 typedef struct albumbrowse {
   GtkWidget *vbox;
   prop_sub_t *sub;
-  gu_window_t *gw;
+  gu_tab_t *gt;
 
   int albums;
 
@@ -156,7 +156,7 @@ collection_albums(void *opaque, prop_event_t event, ...)
     s = prop_subscribe(0,
 		       PROP_TAG_NAME("self", "metadata", "album_name"),
 		       PROP_TAG_CALLBACK_STRING, set_title, w,
-		       PROP_TAG_COURIER, ab->gw->gw_gu->gu_pc, 
+		       PROP_TAG_COURIER, ab->gt->gt_gw->gw_gu->gu_pc, 
 		       PROP_TAG_NAMED_ROOT, p, "self",
 		       NULL);
 
@@ -177,7 +177,7 @@ collection_albums(void *opaque, prop_event_t event, ...)
     s = prop_subscribe(0,
 		       PROP_TAG_NAME("self", "metadata", "album_art"),
 		       PROP_TAG_CALLBACK_STRING, album_set_art, w,
-		       PROP_TAG_COURIER, ab->gw->gw_gu->gu_pc, 
+		       PROP_TAG_COURIER, ab->gt->gt_gw->gw_gu->gu_pc, 
 		       PROP_TAG_NAMED_ROOT, p, "self",
 		       NULL);
 
@@ -185,7 +185,7 @@ collection_albums(void *opaque, prop_event_t event, ...)
     gtk_widget_show(w);
 
     /* Tracklist */
-    w = gu_directory_list_create(ab->gw, p,
+    w = gu_directory_list_create(ab->gt, p,
 				 GU_DIR_COL_ARTIST |
 				 GU_DIR_COL_DURATION |
 				 GU_DIR_COL_TRACKINDEX);
@@ -209,12 +209,12 @@ collection_albums(void *opaque, prop_event_t event, ...)
  *
  */
 static void
-add_albums(gu_window_t *gw, GtkWidget *parent, prop_t *root)
+add_albums(gu_tab_t *gt, GtkWidget *parent, prop_t *root)
 {
   GtkWidget *sbox;
   albumbrowse_t *ab = calloc(1, sizeof(albumbrowse_t));
 
-  ab->gw = gw;
+  ab->gt = gt;
 
   /* Scrolled window */
   sbox = gtk_scrolled_window_new(NULL, NULL);
@@ -232,7 +232,7 @@ add_albums(gu_window_t *gw, GtkWidget *parent, prop_t *root)
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "source", "nodes"),
 		   PROP_TAG_CALLBACK, collection_albums, ab,
-		   PROP_TAG_COURIER, gw->gw_gu->gu_pc, 
+		   PROP_TAG_COURIER, gt->gt_gw->gw_gu->gu_pc, 
 		   PROP_TAG_NAMED_ROOT, root, "self",
 		   NULL);
 
@@ -243,12 +243,12 @@ add_albums(gu_window_t *gw, GtkWidget *parent, prop_t *root)
  *
  */
 GtkWidget *
-gu_directory_albumcollection_create(gu_window_t *gw, prop_t *root)
+gu_directory_albumcollection_create(gu_tab_t *gt, prop_t *root)
 {
   GtkWidget *view = gtk_vbox_new(FALSE, 1);
   
-  add_header(gw->gw_gu->gu_pc, view, root);
-  add_albums(gw, view, root);
+  add_header(gt->gt_gw->gw_gu->gu_pc, view, root);
+  add_albums(gt, view, root);
 
   gtk_widget_show_all(view);
   return view;

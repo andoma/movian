@@ -49,7 +49,7 @@ typedef struct directory_list {
 
   GuDirStore *model;
 
-  gu_window_t *gw;
+  gu_tab_t *gt;
 
   column_t columns[GDS_COL_num];
 
@@ -91,7 +91,7 @@ popup_open(GtkWidget *menu_item, gpointer data)
   selinfo_t *si = data;
   directory_list_t *d = si->d;
   
-  gu_nav_open(d->gw, si->url, NULL, d->psource);
+  gu_tab_open(d->gt, si->url, NULL, d->psource);
   gtk_widget_destroy(si->menu);
   
 }
@@ -106,9 +106,22 @@ popup_open_newwin(GtkWidget *menu_item, gpointer data)
   selinfo_t *si = data;
   directory_list_t *d = si->d;
   
-  gu_nav_open_newwin(d->gw->gw_gu, si->url, NULL, d->psource);
+  gu_nav_open_newwin(d->gt->gt_gw->gw_gu, si->url, NULL, d->psource);
   gtk_widget_destroy(si->menu);
+}
+
+
+/**
+ *
+ */
+static void
+popup_open_newtab(GtkWidget *menu_item, gpointer data)
+{
+  selinfo_t *si = data;
+  directory_list_t *d = si->d;
   
+  gu_nav_open_newtab(d->gt->gt_gw, si->url, NULL, d->psource);
+  gtk_widget_destroy(si->menu);
 }
 
 
@@ -191,6 +204,9 @@ do_popup_menu(directory_list_t *d, GdkEventButton *event, const char *url)
     gu_menu_add_item(si->menu, "Open In New _Window", 
 		     popup_open_newwin, si, NULL, NULL, TRUE);
 
+    gu_menu_add_item(si->menu, "Open In New _Tab", 
+		     popup_open_newtab, si, NULL, NULL, TRUE);
+
     //    gu_menu_add_sep(si->menu);
     //    gu_menu_add_item(si->menu, "_Copy", popup_copy, si, NULL, NULL);
 
@@ -202,6 +218,10 @@ do_popup_menu(directory_list_t *d, GdkEventButton *event, const char *url)
     if(si->primary_action == SELINFO_PA_OPEN) {
       gu_menu_add_item(si->menu, "Open In New _Window", 
 		       popup_open_newwin, si, NULL, NULL, TRUE);
+
+      gu_menu_add_item(si->menu, "Open In New _Tab", 
+		       popup_open_newtab, si, NULL, NULL, TRUE);
+
     } else if(si->primary_action == SELINFO_PA_PLAY) {
       gu_menu_add_item(si->menu, "_Play", popup_open, si, NULL, NULL, TRUE);
     }
@@ -295,7 +315,7 @@ row_activated(GtkTreeView *tree_view, GtkTreePath *path,
   if(G_VALUE_HOLDS_STRING(&gv)) {
     str = g_value_get_string(&gv);
     if(str != NULL)
-      gu_nav_open(d->gw, str, NULL, d->psource);
+      gu_tab_open(d->gt, str, NULL, d->psource);
   }
 
   g_value_unset(&gv);
@@ -383,7 +403,7 @@ mouse_do(directory_list_t *d, GtkTreeView *tree_view, int action, int x, int y,
 	gu_dir_store_toggle_star(GU_DIR_STORE(d->model), &iter);
 	r = 1;
       } else if((url = gu_dir_store_url_from_cell(c)) != NULL) {
-	gu_nav_open(d->gw, url, NULL, NULL);
+	gu_tab_open(d->gt, url, NULL, NULL);
 	r = 1;
       }
     }
@@ -725,19 +745,6 @@ view_list_header_set_title(void *opaque, const char *str)
  *
  */
 static void
-view_list_header_set_icon(void *opaque, const char *str)
-{
-  GdkPixbuf *pb = contentstr_to_icon(str, 16);
-  g_object_set(G_OBJECT(opaque), "pixbuf", pb, NULL);
-  if(pb != NULL)
-    g_object_unref(G_OBJECT(pb));
-}
-
-
-/**
- *
- */
-static void
 add_headers(prop_courier_t *pc, GtkWidget *parent, prop_t *root)
 {
   GtkWidget *hbox, *w;
@@ -753,7 +760,7 @@ add_headers(prop_courier_t *pc, GtkWidget *parent, prop_t *root)
 
   s = prop_subscribe(0,
 		     PROP_TAG_NAME("self", "type"),
-		     PROP_TAG_CALLBACK_STRING, view_list_header_set_icon, w,
+		     PROP_TAG_CALLBACK_STRING, gu_set_icon_by_type, w,
 		     PROP_TAG_COURIER, pc, 
 		     PROP_TAG_NAMED_ROOT, root, "self",
 		     NULL);
@@ -799,7 +806,7 @@ directory_list_destroy(GtkObject *object, gpointer opaque)
  *
  */
 GtkWidget *
-gu_directory_list_create(gu_window_t *gw, prop_t *root, int flags)
+gu_directory_list_create(gu_tab_t *gt, prop_t *root, int flags)
 {
   directory_list_t *d = calloc(1, sizeof(directory_list_t));
   GtkWidget *view;
@@ -807,9 +814,9 @@ gu_directory_list_create(gu_window_t *gw, prop_t *root, int flags)
   d->psource = prop_create(root, "source");
   prop_ref_inc(d->psource);
 
-  d->gw = gw;
+  d->gt = gt;
 
-  d->model = gu_dir_store_new(gw->gw_gu, d->psource);
+  d->model = gu_dir_store_new(gt->gt_gw->gw_gu, d->psource);
   d->tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(d->model));
   d->sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(d->tree));
   gtk_tree_selection_set_mode(d->sel, GTK_SELECTION_MULTIPLE);
@@ -872,7 +879,7 @@ gu_directory_list_create(gu_window_t *gw, prop_t *root, int flags)
   view = gtk_vbox_new(FALSE, 1);
 
   if(flags & GU_DIR_HEADERS)
-    add_headers(d->gw->gw_gu->gu_pc, view, root);
+    add_headers(d->gt->gt_gw->gw_gu->gu_pc, view, root);
 
   if(flags & GU_DIR_SCROLLBOX) {
 

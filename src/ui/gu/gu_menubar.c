@@ -41,7 +41,7 @@ static void
 m_openplayqueue(GtkWidget *menu_item, gpointer data)
 {
   gu_window_t *gw = data;
-  gu_nav_open(gw, "playqueue:", NULL, NULL);
+  gu_tab_open(gw->gw_current_tab, "playqueue:", NULL, NULL);
 }
 
 
@@ -75,7 +75,7 @@ m_open_response(GtkDialog *dialog, gint response_id, gpointer data)
     l0 = l = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
 
     for(; l != NULL; l = l->next) {
-      gu_nav_open(gw, (const char *)l->data, NULL, NULL);
+      gu_tab_open(gw->gw_current_tab, (const char *)l->data, NULL, NULL);
     }
     g_slist_free(l0);
 
@@ -121,10 +121,32 @@ m_openwindow(GtkWidget *menu_item, gpointer callback_data)
  *
  */
 static void
+m_opentab(GtkWidget *menu_item, gpointer callback_data)
+{
+  gu_window_t *gw = callback_data;
+  gu_tab_create(gw, NULL, 1);
+}
+
+
+/**
+ *
+ */
+static void
 m_closewindow(GtkWidget *menu_item, gpointer callback_data)
 {
   gu_window_t *gw = callback_data;
   gu_win_destroy(gw);
+}
+
+
+/**
+ *
+ */
+static void
+m_closetab(GtkWidget *menu_item, gpointer callback_data)
+{
+  gu_window_t *gw = callback_data;
+  gu_tab_destroy(gw->gw_current_tab);
 }
 
 
@@ -170,6 +192,12 @@ gu_menubar_File(gu_window_t *gw, GtkAccelGroup *accel_group)
 		   m_openwindow, gw, GTK_STOCK_NEW,
 		   gu_menu_accel_path("<Showtime-Main>/_File/NewWindow", 
 				      GDK_N, GDK_CONTROL_MASK), TRUE);
+
+  gu_menu_add_item(m, "New _Tab", 
+		   m_opentab, gw, GTK_STOCK_NEW,
+		   gu_menu_accel_path("<Showtime-Main>/_File/NewTab", 
+				      GDK_T, GDK_CONTROL_MASK), TRUE);
+
   gu_menu_add_item(m, "_Open File...", 
 		   m_openfile, gw, GTK_STOCK_OPEN,
 		   gu_menu_accel_path("<Showtime-Main>/_File/OpenFile", 
@@ -180,11 +208,16 @@ gu_menubar_File(gu_window_t *gw, GtkAccelGroup *accel_group)
 		   gu_menu_accel_path("<Showtime-Main>/_File/OpenDir", 
 				      GDK_D, GDK_CONTROL_MASK), TRUE);
 
-  gu_menu_add_item(m, "_Close Window", 
+  gu_menu_add_item(m, "Close Win_dow", 
 		   m_closewindow, gw, GTK_STOCK_CLOSE,
 		   gu_menu_accel_path("<Showtime-Main>/_File/CloseWindow", 
 				      GDK_W, GDK_SHIFT_MASK | 
 				      GDK_CONTROL_MASK), TRUE);
+
+  gu_menu_add_item(m, "_Close Tab", 
+		   m_closetab, gw, GTK_STOCK_CLOSE,
+		   gu_menu_accel_path("<Showtime-Main>/_File/CloseTab", 
+				      GDK_W, GDK_CONTROL_MASK), TRUE);
   
   gu_menu_add_sep(m);
 

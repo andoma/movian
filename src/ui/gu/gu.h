@@ -26,7 +26,11 @@
 
 LIST_HEAD(gu_nav_page_list, gu_nav_page);
 LIST_HEAD(gu_window_list, gu_window);
+LIST_HEAD(gu_tab_list, gu_tab);
 
+/**
+ *
+ */
 typedef struct gtk_ui {
   uii_t gu_uii;
   
@@ -50,14 +54,6 @@ typedef struct gu_window {
 
   LIST_ENTRY(gu_window) gw_link;
 
-  GtkWidget *gw_page_container;
-
-  struct gu_nav_page_list gw_pages;
-
-  struct gu_nav_page *gw_page_current;
-  
-  GtkWidget *gw_url;
-
   GtkWidget *gw_window;
 
   int gw_fullwindow;
@@ -66,15 +62,19 @@ typedef struct gu_window {
   GtkWidget *gw_vbox;
   GtkWidget *gw_menubar;
   GtkWidget *gw_toolbar;
+  struct toolbar *gw_toolbarinfo;
   GtkWidget *gw_playdeck;
   GtkWidget *gw_statusbar;
-
-  prop_t *gw_nav;
 
   int gw_view_toolbar;
   int gw_view_playdeck;
   int gw_view_statusbar;
 
+  GtkWidget *gw_notebook;
+
+  struct gu_tab_list gw_tabs;
+  struct gu_tab *gw_current_tab;
+  int gw_ntabs;
 
 } gu_window_t;
 
@@ -82,23 +82,53 @@ typedef struct gu_window {
 
 void gu_fullwindow_update(gu_window_t *gw);
 
-void gu_nav_open(gu_window_t *gw, 
-		 const char *url, const char *type, prop_t *psource);
-
 void gu_nav_open_newwin(gtk_ui_t *gu, 
 			const char *url, const char *type, prop_t *psource);
-
-void gu_nav_send_event(gu_window_t *gw, event_t *e);
 
 gu_window_t *gu_win_create(gtk_ui_t *gu, prop_t *nav, int all);
 
 void gu_win_destroy(gu_window_t *gw);
 
+
+/**
+ *
+ */
+typedef struct gu_tab {
+
+  LIST_ENTRY(gu_tab) gt_link;
+
+  GtkWidget *gt_label;
+
+  GtkWidget *gt_page_container;
+
+  struct gu_nav_page_list gt_pages;
+  struct gu_nav_page *gt_page_current;
+  
+  gu_window_t *gt_gw;
+
+  prop_t *gt_nav;
+
+} gu_tab_t;
+
+gu_tab_t *gu_tab_create(gu_window_t *gw, prop_t *nav, int select);
+
+void gu_tab_destroy(gu_tab_t *gu);
+
+void gu_tab_send_event(gu_tab_t *gw, event_t *e);
+
+void gu_tab_open(gu_tab_t *gt, 
+		 const char *url, const char *type, prop_t *psource);
+
+void gu_toolbar_select_tab(gu_tab_t *gt);
+
+void gu_nav_open_newtab(gu_window_t *gt,
+			const char *url, const char *type, prop_t *psource);
+
 /**
  *
  */
 typedef struct gu_nav_page {
-  gu_window_t *gnp_gw;
+  gu_tab_t *gnp_gt;
 
   LIST_ENTRY(gu_nav_page) gnp_link;
 
@@ -189,6 +219,9 @@ void gu_cloner_subscription(void *opaque, prop_event_t event, ...);
 
 void gu_cloner_destroy(gu_cloner_t *gc);
 
+void gu_set_icon_by_type(void *opaque, const char *str);
+
+GdkPixbuf *gu_contentstr_to_icon(const char *str, int height);
 
 /**
  * gu_pixbuf.c

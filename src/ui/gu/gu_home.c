@@ -29,7 +29,7 @@ TAILQ_HEAD(link_queue,   links);
  */
 typedef struct home {
 
-  gu_window_t *h_gw;
+  gu_tab_t *h_gt;
 
   prop_sub_t *h_src_sub;
   GtkWidget *h_sourcebox;
@@ -69,7 +69,7 @@ source_clicked(GtkObject *object, gpointer opaque)
   source_t *s = opaque;
 
   if(s->s_url != NULL)
-    gu_nav_open(s->s_home->h_gw, s->s_url, NULL, NULL);
+    gu_tab_open(s->s_home->h_gt, s->s_url, NULL, NULL);
 }
 
 
@@ -249,11 +249,11 @@ void
 gu_home_create(gu_nav_page_t *gnp)
 {
   GtkWidget *vbox;
-  gu_window_t *gw = gnp->gnp_gw;
-  gtk_ui_t *gu = gw->gw_gu;
+  gu_tab_t *gt = gnp->gnp_gt;
+  gtk_ui_t *gu = gt->gt_gw->gw_gu;
 
   home_t *h = calloc(1, sizeof(home_t));
-  h->h_gw = gnp->gnp_gw;
+  h->h_gt = gnp->gnp_gt;
 
   /* Scrolled window */
   gnp->gnp_pageroot = gtk_scrolled_window_new(NULL, NULL);

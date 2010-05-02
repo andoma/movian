@@ -109,7 +109,7 @@ mouse_press(GtkWidget *w, GdkEventButton *event, gpointer user_data)
 void
 gu_video_create(gu_nav_page_t *gnp)
 {
-  prop_courier_t *pc = gnp->gnp_gw->gw_gu->gu_pc;
+  prop_courier_t *pc = gnp->gnp_gt->gt_gw->gw_gu->gu_pc;
   struct video_output *vo;
   char errbuf[256];
   char buf[512];

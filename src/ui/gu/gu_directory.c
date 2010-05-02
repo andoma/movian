@@ -30,7 +30,7 @@ typedef struct gu_directory {
 				  Must always be the only child of
 				  gnp->gnp_pageroot (which is a vbox) */
 
-  gu_window_t *gd_gw;
+  gu_tab_t *gd_gt;
   gu_nav_page_t *gd_gnp;
   prop_sub_t *gd_view_sub;
 } gu_directory_t;
@@ -57,7 +57,7 @@ set_view(void *opaque, const char *str)
     return;
 
   if(!strcmp(str, "list")) {
-    w = gu_directory_list_create(gd->gd_gw, gnp->gnp_prop,
+    w = gu_directory_list_create(gd->gd_gt, gnp->gnp_prop,
 				 GU_DIR_VISIBLE_HEADERS |
 				 GU_DIR_HEADERS |
 				 GU_DIR_SCROLLBOX |
@@ -68,9 +68,9 @@ set_view(void *opaque, const char *str)
 				 GU_DIR_COL_ALBUM |
 				 GU_DIR_COL_POPULARITY);
   } else if(!strcmp(str, "album")) {
-    w = gu_directory_album_create(gd->gd_gw, gnp->gnp_prop);
+    w = gu_directory_album_create(gd->gd_gt, gnp->gnp_prop);
   } else if(!strcmp(str, "albumcollection")) {
-    w = gu_directory_albumcollection_create(gd->gd_gw, gnp->gnp_prop);
+    w = gu_directory_albumcollection_create(gd->gd_gt, gnp->gnp_prop);
   } else {
     TRACE(TRACE_ERROR, "GU", "Can not display directory view: %s", str);
     return;
@@ -102,14 +102,14 @@ gu_directory_create(gu_nav_page_t *gnp)
 {
   gu_directory_t *gd = calloc(1, sizeof(gu_directory_t));
 
-  gd->gd_gw = gnp->gnp_gw;
+  gd->gd_gt = gnp->gnp_gt;
   gd->gd_gnp = gnp;
 
   gd->gd_view_sub =
     prop_subscribe(0,
 		   PROP_TAG_NAME("page", "view"),
 		   PROP_TAG_CALLBACK_STRING, set_view, gd,
-		   PROP_TAG_COURIER, gd->gd_gw->gw_gu->gu_pc, 
+		   PROP_TAG_COURIER, gd->gd_gt->gt_gw->gw_gu->gu_pc, 
 		   PROP_TAG_ROOT, gnp->gnp_prop, 
 		   NULL);
 
