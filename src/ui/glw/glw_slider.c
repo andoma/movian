@@ -246,7 +246,7 @@ pointer_event(glw_t *w, glw_pointer_event_t *gpe)
     hitpos = 1;
 
   switch(gpe->type) {
-  case GLW_POINTER_CLICK:
+  case GLW_POINTER_LEFT_PRESS:
     if(hitpos == 0) {
       s->grab_delta = s->knob_pos - v0;
       gr->gr_pointer_grab = w;

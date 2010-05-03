@@ -970,14 +970,23 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	break;
 	  
       case ButtonRelease:
-	if(event.xbutton.button == 1) {
-	  gpe.x =  (2.0 * event.xmotion.x / gx11->gr.gr_width ) - 1;
-	  gpe.y = -(2.0 * event.xmotion.y / gx11->gr.gr_height) + 1;
-	  gpe.type = GLW_POINTER_RELEASE;
-	  glw_lock(&gx11->gr);
-	  glw_pointer_event(&gx11->gr, &gpe);
-	  glw_unlock(&gx11->gr);
+	gpe.x =  (2.0 * event.xmotion.x / gx11->gr.gr_width ) - 1;
+	gpe.y = -(2.0 * event.xmotion.y / gx11->gr.gr_height) + 1;
+
+	switch(event.xbutton.button) {
+	case 1:
+	  gpe.type = GLW_POINTER_LEFT_RELEASE;
+	  break;
+	case 3:
+	  gpe.type = GLW_POINTER_LEFT_RELEASE;
+	  break;
+	default:
+	  continue;
 	}
+
+	glw_lock(&gx11->gr);
+	glw_pointer_event(&gx11->gr, &gpe);
+	glw_unlock(&gx11->gr);
 	break;
 
       case ButtonPress:
@@ -988,14 +997,18 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	switch(event.xbutton.button) {
 	case 1:
 	  /* Left click */
-	  gpe.type = GLW_POINTER_CLICK;
+	  gpe.type = GLW_POINTER_LEFT_PRESS;
+	  break;
+	case 3:
+	  /* Right click */
+	  gpe.type = GLW_POINTER_RIGHT_PRESS;
 	  break;
 	case 4:
 	  /* Scroll up */
 	  if(gx11->map_mouse_wheel_to_keys) {
 	    glw_x11_dispatch_event(&gx11->gr.gr_uii,
 				   event_create_action(ACTION_UP));
-	    goto noevent;
+	    continue;
 	  } else {
 	    gpe.type = GLW_POINTER_SCROLL;
 	    gpe.delta_y = -0.2;
@@ -1006,7 +1019,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	  if(gx11->map_mouse_wheel_to_keys) {
 	    glw_x11_dispatch_event(&gx11->gr.gr_uii,
 				   event_create_action(ACTION_DOWN));
-	    goto noevent;
+	    continue;
 	    
 	  } else {
 	    gpe.type = GLW_POINTER_SCROLL;
@@ -1015,18 +1028,18 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	  break;
 
 	default:
-	  goto noevent;
+	  continue;
 	}
 	glw_lock(&gx11->gr);
 	glw_pointer_event(&gx11->gr, &gpe);
 	glw_unlock(&gx11->gr);
-      noevent:
 	break;
 
       default:
 	break;
       }
     }
+
     glw_lock(&gx11->gr);
     glw_prepare_frame(&gx11->gr);
     layout_draw(gx11);

@@ -1293,12 +1293,16 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
       if(glw_is_focusable(w)) {
 	switch(gpe->type) {
 
-	case GLW_POINTER_CLICK:
+	case GLW_POINTER_RIGHT_PRESS:
+	  glw_focus_set(gr, w, 1);
+	  return 1;
+
+	case GLW_POINTER_LEFT_PRESS:
 	  gr->gr_pointer_press = w;
 	  glw_path_modify(w, GLW_IN_PRESSED_PATH, 0);
 	  return 1;
 
-	case GLW_POINTER_RELEASE:
+	case GLW_POINTER_LEFT_RELEASE:
 	  if(gr->gr_pointer_press == w) {
 	    if(w->glw_flags & GLW_FOCUS_ON_CLICK)
 	      glw_focus_set(gr, w, 1); 
@@ -1388,7 +1392,7 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
     }
   }
 
-  if(gpe->type == GLW_POINTER_RELEASE && gr->gr_pointer_grab != NULL) {
+  if(gpe->type == GLW_POINTER_LEFT_RELEASE && gr->gr_pointer_grab != NULL) {
     gr->gr_pointer_grab = NULL;
     return;
   }

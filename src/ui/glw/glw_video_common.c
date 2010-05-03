@@ -70,7 +70,7 @@ glw_video_pointer_event(video_decoder_t *vd, int width, int height,
     return 1;
 
   switch(gpe->type) {
-  case GLW_POINTER_CLICK:
+  case GLW_POINTER_LEFT_PRESS:
     e = event_create(EVENT_DVD_ACTIVATE_BUTTON, sizeof(event_t) + 1);
     break;
 

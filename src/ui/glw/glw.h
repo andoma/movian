@@ -169,11 +169,13 @@ typedef enum {
 
 
 typedef enum {
-  GLW_POINTER_CLICK,
+  GLW_POINTER_LEFT_PRESS,
+  GLW_POINTER_LEFT_RELEASE,
+  GLW_POINTER_RIGHT_PRESS,
+  GLW_POINTER_RIGHT_RELEASE,
   GLW_POINTER_MOTION_UPDATE,  // Updated (mouse did really move)
   GLW_POINTER_MOTION_REFRESH, // GLW Internal refresh (every frame)
   GLW_POINTER_FOCUS_MOTION,
-  GLW_POINTER_RELEASE,
   GLW_POINTER_SCROLL,
   GLW_POINTER_GONE,
 } glw_pointer_event_type_t;
