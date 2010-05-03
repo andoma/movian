@@ -272,13 +272,13 @@ wpad_every_frame(glw_wii_t *gwii)
 
   if(btn & WPAD_BUTTON_A && a_held == 0) {
     
-    gpe.type = GLW_POINTER_CLICK;
+    gpe.type = GLW_POINTER_LEFT_PRESS;
 
     glw_pointer_event(&gwii->gr, &gpe);
     a_held = 1;
   } else if(!(btn & WPAD_BUTTON_A) && a_held == 1) {
     
-    gpe.type = GLW_POINTER_RELEASE;
+    gpe.type = GLW_POINTER_LEFT_RELEASE;
 
     glw_pointer_event(&gwii->gr, &gpe);
     a_held = 0;

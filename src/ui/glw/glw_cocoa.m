@@ -535,12 +535,12 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 
 - (void)mouseDown:(NSEvent *)event {
   mouse_down++;
-  [self glwMouseEvent:GLW_POINTER_CLICK event:event];
+  [self glwMouseEvent:GLW_POINTER_LEFT_PRESS event:event];
 }
 
 - (void)mouseUp:(NSEvent *)event {
   mouse_down--;
-  [self glwMouseEvent:GLW_POINTER_RELEASE event:event];
+  [self glwMouseEvent:GLW_POINTER_LEFT_RELEASE event:event];
 }
 
 - (void)compositeClear {
