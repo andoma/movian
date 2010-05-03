@@ -432,7 +432,7 @@ spu_repaint(glw_video_overlay_t *gvo, video_decoder_t *vd, dvdspu_t *d,
   glw_render_vtx_st (r, 3, 0, 0);
 
   glw_tex_upload(gr, &gvo->gvo_textures[0], t0, GLW_TEXTURE_FORMAT_RGBA,
-		 width, height);
+		 width, height, 0);
   free(t0);
 }
 
@@ -521,7 +521,7 @@ glw_video_sub_layout_bitmaps(video_decoder_t *vd, glw_video_overlay_t *gvo,
     glw_render_vtx_st (r, 3, 0, 0);
 
     glw_tex_upload(gr, &gvo->gvo_textures[i], sr->bitmap,
-		   GLW_TEXTURE_FORMAT_RGBA, sr->w, sr->h);
+		   GLW_TEXTURE_FORMAT_RGBA, sr->w, sr->h, 0);
   }
 }
 

@@ -119,6 +119,8 @@ typedef enum {
   GLW_ATTRIB_ROTATION,
   GLW_ATTRIB_TRANSLATION,
   GLW_ATTRIB_SCALING,
+  GLW_ATTRIB_COLOR1,
+  GLW_ATTRIB_COLOR2,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -765,8 +767,9 @@ do {						\
     (void)va_arg(ap, void *);			\
     (void)va_arg(ap, int);			\
     break;                                      \
-  case GLW_ATTRIB_PARENT_BEFORE:		\
   case GLW_ATTRIB_BIND_TO_PROPERTY:		\
+    (void)va_arg(ap, void *);			\
+  case GLW_ATTRIB_PARENT_BEFORE:		\
   case GLW_ATTRIB_PROPROOTS:         		\
     (void)va_arg(ap, void *);			\
   case GLW_ATTRIB_PARENT:			\
@@ -801,6 +804,8 @@ do {						\
   case GLW_ATTRIB_PADDING:                      \
   case GLW_ATTRIB_ROTATION:			\
     (void)va_arg(ap, double);			\
+  case GLW_ATTRIB_COLOR1:                       \
+  case GLW_ATTRIB_COLOR2:                       \
   case GLW_ATTRIB_RGB:                          \
   case GLW_ATTRIB_SCALING:                      \
   case GLW_ATTRIB_TRANSLATION:			\

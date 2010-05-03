@@ -513,6 +513,8 @@ eval_array(glw_view_eval_context_t *pec, token_t *t0)
       goto err;
     }
 
+    ec.stack = token_resolve(&ec, ec.stack);
+
     switch(ec.stack->type) {
     case TOKEN_FLOAT:
       vt = TOKEN_VECTOR_FLOAT;
@@ -2668,13 +2670,14 @@ glwf_bind(glw_view_eval_context_t *ec, struct token *self,
       propname[i++]  = rstr_get(t->t_rstring);
     propname[i] = NULL;
 
-    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY, ec->prop, propname, NULL);
+    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY, 
+	      ec->prop, propname, ec->prop_view, NULL);
 
   } else if(a != NULL && a->type == TOKEN_STRING) {
     glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_ID, rstr_get(a->t_rstring), NULL);
 
   } else {
-    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY, NULL, NULL, NULL);
+    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY, NULL, NULL, NULL, NULL);
   }
   return 0;
 }

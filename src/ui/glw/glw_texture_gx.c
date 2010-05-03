@@ -350,7 +350,7 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
  */
 void
 glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex, 
-	       const void *src, int fmt, int width, int height)
+	       const void *src, int fmt, int width, int height, int flags)
 {
   int format;
   uint8_t *texels;
@@ -380,8 +380,11 @@ glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex,
   }
 
   tex->mem = texels;
+
+  int wrapmode = flags & GLW_TEX_REPEAT ? GX_REPEAT : GX_CLAMP;
+
   GX_InitTexObj(&tex->obj, texels, width, height,
-		format, GX_CLAMP, GX_CLAMP, GX_FALSE);
+		format, wrapmode, wrapmode, GX_FALSE);
 }
 
 

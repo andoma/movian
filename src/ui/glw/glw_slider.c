@@ -454,7 +454,7 @@ glw_slider_set(glw_t *w, int init, va_list ap)
 {
   glw_slider_t *s = (glw_slider_t *)w;
   glw_attribute_t attrib;
-  prop_t *p;
+  prop_t *p, *view;
   const char **pname;
   const char *n;
 
@@ -481,6 +481,7 @@ glw_slider_set(glw_t *w, int init, va_list ap)
     case GLW_ATTRIB_BIND_TO_PROPERTY:
       p = va_arg(ap, prop_t *);
       pname = va_arg(ap, void *);
+      view = va_arg(ap, void *);
 
       slider_unbind(s);
 
@@ -489,6 +490,7 @@ glw_slider_set(glw_t *w, int init, va_list ap)
 			      PROP_TAG_CALLBACK, prop_callback, s,
 			      PROP_TAG_COURIER, w->glw_root->gr_courier, 
 			      PROP_TAG_NAMED_ROOT, p, "self",
+			      PROP_TAG_NAMED_ROOT, view, "view",
 			      PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
 			      NULL);
       break;

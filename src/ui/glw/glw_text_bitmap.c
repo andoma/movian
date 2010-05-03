@@ -486,7 +486,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
     glw_tex_upload(gr, &gtb->gtb_texture, gtbd->gtbd_data, 
 		   gtbd->gtbd_pixel_format,
-		   gtbd->gtbd_texture_width, gtbd->gtbd_texture_height);
+		   gtbd->gtbd_texture_width, gtbd->gtbd_texture_height ,0);
 
     free(gtbd->gtbd_data);
     gtbd->gtbd_data = NULL;
@@ -1007,7 +1007,7 @@ glw_text_bitmap_set(glw_t *w, int init, va_list ap)
   glw_root_t *gr = w->glw_root;
   glw_attribute_t attrib;
   int update = 0;
-  prop_t *p;
+  prop_t *p, *view;
   const char **pname, *caption;
 
   if(init) {
@@ -1098,6 +1098,8 @@ glw_text_bitmap_set(glw_t *w, int init, va_list ap)
    case GLW_ATTRIB_BIND_TO_PROPERTY:
       p = va_arg(ap, prop_t *);
       pname = va_arg(ap, void *);
+      view = va_arg(ap, prop_t *);
+      
 
       gtb_unbind(gtb);
 
@@ -1107,6 +1109,7 @@ glw_text_bitmap_set(glw_t *w, int init, va_list ap)
 		       PROP_TAG_CALLBACK, prop_callback, gtb, 
 		       PROP_TAG_COURIER, w->glw_root->gr_courier,
 		       PROP_TAG_NAMED_ROOT, p, "self",
+		       PROP_TAG_NAMED_ROOT, view, "view",
 		       PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
 		       NULL);
 

@@ -385,7 +385,8 @@ static const token_attrib_t attribtab[] = {
   {"color",           set_float3, GLW_ATTRIB_RGB},
   {"translation",     set_float3, GLW_ATTRIB_TRANSLATION},
   {"scaling",         set_float3, GLW_ATTRIB_SCALING},
-  {"color",           set_float3, GLW_ATTRIB_RGB},
+  {"color1",          set_float3, GLW_ATTRIB_COLOR1},
+  {"color2",          set_float3, GLW_ATTRIB_COLOR2},
 
   {"border",          set_float4, GLW_ATTRIB_BORDER},
   {"padding",         set_float4, GLW_ATTRIB_PADDING},

@@ -325,7 +325,7 @@ texture_load_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
  */
 void
 glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex, 
-	       const void *src, int fmt, int width, int height)
+	       const void *src, int fmt, int width, int height, int flags)
 {
   int format;
   int ext_format;
@@ -337,8 +337,10 @@ glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex,
     glBindTexture(m, *tex);
     glTexParameteri(m, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(m, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(m, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(m, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    int m = flags & GLW_TEX_REPEAT ? GL_REPEAT : GL_CLAMP_TO_EDGE;
+    glTexParameteri(m, GL_TEXTURE_WRAP_S, m);
+    glTexParameteri(m, GL_TEXTURE_WRAP_T, m);
     
   } else {
     glBindTexture(m, *tex);
