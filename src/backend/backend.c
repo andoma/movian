@@ -168,7 +168,7 @@ be_page_open(struct navigator *nav,
   char *cap = mystrdupa(url0 + strlen("page:"));
 
   prop_set_string(prop_create(src, "type"), cap);
-  cap[0] = toupper(cap[0]);
+  cap[0] = toupper((int)cap[0]);
   prop_set_string(prop_create(metadata, "title"), cap);
 
   *npp = n;
