@@ -21,6 +21,10 @@
  *
  * Interface is built from MainMenu.xib
  *
+ * TOOD:
+ * Cursor not hidden if visible when going from fullscreen to window
+ * Video slow down when moving to other screen?
+ *
  */
 
 #import <Cocoa/Cocoa.h>
@@ -510,7 +514,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   if(gcocoa.is_cursor_hidden) 
     [self glwUnHideCursor];
   
-  gpe.x = (2.0 * loc.x / gcocoa.gr.gr_width ) - 1;
+  gpe.x = (2.0 * loc.x / gcocoa.gr.gr_width) - 1;
   gpe.y = (2.0 * loc.y / gcocoa.gr.gr_height) - 1;
   gpe.type = type;
   if(type == GLW_POINTER_SCROLL)
@@ -525,22 +529,54 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   [self glwMouseEvent:GLW_POINTER_SCROLL event:event];
 }
 
--(void)mouseMoved:(NSEvent *)event {
+- (void)mouseMoved:(NSEvent *)event {
   [self glwMouseEvent:GLW_POINTER_MOTION_UPDATE event:event];
 }
 
--(void)mouseDragged:(NSEvent *)event {
+- (void)mouseDragged:(NSEvent *)event {
   [self glwMouseEvent:GLW_POINTER_MOTION_UPDATE event:event];
+}
+
+- (void)glwEventFromMouseEvent:(NSEvent *)event {
+  struct {
+    int nsevent;
+    int glw_event;
+  } events[] = {
+    {NSLeftMouseDown, GLW_POINTER_LEFT_PRESS},
+    {NSLeftMouseUp, GLW_POINTER_LEFT_RELEASE},
+    {NSRightMouseDown, GLW_POINTER_RIGHT_PRESS},
+    {NSRightMouseUp, GLW_POINTER_RIGHT_RELEASE}
+  };
+  
+  int i;
+  for(i = 0; i < sizeof(events)/sizeof(events[0]); i++) {
+    if(events[i].nsevent != [event type])
+      continue;
+    
+    if([event type] == NSLeftMouseDown ||
+       [event type] == NSRightMouseDown)
+      mouse_down++;
+    else
+      mouse_down--;
+    
+    [self glwMouseEvent:events[i].glw_event event:event];
+  }
 }
 
 - (void)mouseDown:(NSEvent *)event {
-  mouse_down++;
-  [self glwMouseEvent:GLW_POINTER_LEFT_PRESS event:event];
+  [self glwEventFromMouseEvent:event];
 }
 
 - (void)mouseUp:(NSEvent *)event {
-  mouse_down--;
-  [self glwMouseEvent:GLW_POINTER_LEFT_RELEASE event:event];
+  [self glwEventFromMouseEvent:event];
+}
+
+- (void)rightMouseDown:(NSEvent *)event {
+  [self glwEventFromMouseEvent:event];
+}
+
+- (void)rightMouseUp:(NSEvent *)event {
+  [self glwEventFromMouseEvent:event];
 }
 
 - (void)compositeClear {
