@@ -313,7 +313,7 @@ settings_create_multiopt(prop_t *parent, const char *id, const char *title,
 {
   prop_t *r = settings_add(parent, id, title, "multiopt");
   prop_t *o = prop_create(r, "options");
-  setting_t *s = malloc(sizeof(setting_t));
+  setting_t *s = calloc(1, sizeof(setting_t));
   prop_sub_t *sub;
 
   s->s_id = strdup(id);
