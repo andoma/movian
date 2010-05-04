@@ -22,7 +22,7 @@ BUILDDIR = build.${PLATFORM}
 
 include ${BUILDDIR}/config.mak
 
-CFLAGS  = -std=gnu99 -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations 
+CFLAGS  = -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations 
 CFLAGS += -Wmissing-prototypes -Isrc/dvd
 
 
