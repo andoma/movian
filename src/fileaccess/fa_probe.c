@@ -614,6 +614,7 @@ fa_probe_set_from_cache(const metadata_t *md, prop_t *proproot,
 			char *newurl, size_t newurlsize)
 {
   metadata_stream_t *ms;
+  prop_t *p;
 
   if(md->md_redirect != NULL && newurl != NULL)
     av_strlcpy(newurl, md->md_redirect, newurlsize);
@@ -623,8 +624,9 @@ fa_probe_set_from_cache(const metadata_t *md, prop_t *proproot,
 
   if(md->md_artist) {
     prop_set_rstring(prop_create(proproot, "artist"), md->md_artist);
-    scrapper_artist_init(prop_create(proproot, "artist_images"), 
-			 rstr_get(md->md_artist)); 
+    p = prop_create(proproot, "artist_images");
+    if(p != NULL)
+      scrapper_artist_init(p, rstr_get(md->md_artist)); 
   }
 
   if(md->md_album)
