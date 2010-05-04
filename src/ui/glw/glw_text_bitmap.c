@@ -721,16 +721,14 @@ gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb)
   int xs = gtb->gtb_padding_left + gtb->gtb_padding_right +
     gtb->gtb_data.gtbd_siz_x;
 
-  glw_set_constraints(&gtb->w,
-		      xs,
-		      ys,
-		      0, 0, 
-		      (gtb->w.glw_alignment == GLW_ALIGN_NONE ||
-		       gtb->w.glw_alignment == GLW_ALIGN_TOP ||
-		       gtb->w.glw_alignment == GLW_ALIGN_BOTTOM
-		       ? 
-		       GLW_CONSTRAINT_X : 0) | GLW_CONSTRAINT_Y, 0);
+  int flags = GLW_CONSTRAINT_Y;
 
+  if(gtb->w.glw_alignment == GLW_ALIGN_NONE ||
+     gtb->w.glw_alignment == GLW_ALIGN_TOP ||
+     gtb->w.glw_alignment == GLW_ALIGN_BOTTOM)
+    flags |= GLW_CONSTRAINT_X;
+    
+  glw_set_constraints(&gtb->w, xs, ys, 0, 0, flags, 0);
 }
 
 
