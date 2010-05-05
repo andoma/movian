@@ -123,8 +123,8 @@ typedef struct token {
 
     char *string_vec[0];
 
-    double value;
-    double value_vec[0];
+    float value;
+    float value_vec[0];
 
     const struct token_func   *func;
     const struct token_attrib *attrib;
