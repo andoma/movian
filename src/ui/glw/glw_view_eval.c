@@ -580,7 +580,7 @@ resolve_property_name(glw_view_eval_context_t *ec, token_t *a)
   pname[i] = NULL;
   
   ui = ec->w ? ec->w->glw_root->gr_uii.uii_prop : NULL;
-  p = prop_get_by_name(pname, 0, 
+  p = prop_get_by_name(pname, 1,
 		       PROP_TAG_NAMED_ROOT, ec->prop, "self",
 		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
 		       PROP_TAG_NAMED_ROOT, ec->prop_view, "view",
