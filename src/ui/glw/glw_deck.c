@@ -31,6 +31,7 @@ typedef struct {
   float delta;
   
   float v;
+  char rev;
 
 } glw_deck_t;
 
@@ -73,9 +74,21 @@ glw_deck_update_constraints(glw_t *w)
  *
  */
 static void
-setprev(glw_deck_t *gd)
+setprev(glw_deck_t *gd, glw_t *c)
 {
-  gd->prev = gd->w.glw_selected;
+  glw_t *l = gd->w.glw_selected;
+  glw_t *p;
+  int rev = 0;
+
+  for(p = TAILQ_NEXT(c, glw_parent_link); p != NULL;
+      p = TAILQ_NEXT(p, glw_parent_link)) {
+    if(p == l) {
+      rev = 1;
+      break;
+    }
+  }
+  gd->rev = rev;
+  gd->prev = l;
 }
 
 
@@ -85,7 +98,7 @@ setprev(glw_deck_t *gd)
 static void
 deck_select(glw_deck_t *gd, glw_t *c)
 {
-  setprev(gd);
+  setprev(gd, c);
   gd->w.glw_selected = c;
   if(gd->w.glw_selected != NULL) {
     glw_focus_open_path_close_all_other(gd->w.glw_selected);
@@ -94,7 +107,8 @@ deck_select(glw_deck_t *gd, glw_t *c)
     clear_constraints(&gd->w);
   }
 
-  if(gd->efx_conf != GLW_TRANS_NONE)
+  if(gd->efx_conf != GLW_TRANS_NONE &&
+     (gd->prev != NULL || !(gd->w.glw_flags & GLW_NO_INITIAL_TRANS)))
     gd->v = 0;
 }
 
@@ -151,10 +165,9 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       break;
     }
 
-    if(n != c && n != NULL) {
-      setprev(gd);
+    if(n != c && n != NULL)
       glw_select(w, n);
-    }
+
     return 1;
 
   case GLW_SIGNAL_SELECT:
@@ -188,6 +201,8 @@ deck_render(glw_rctx_t *rc, glw_deck_t *gd, glw_t *w, float v)
 {
   if(gd->efx_conf != GLW_TRANS_NONE) {
     glw_rctx_t rc0 = *rc;
+    if(gd->rev)
+      v = 1 - (v + 1);
     glw_PushMatrix(&rc0, rc);
     glw_transition_render(gd->efx_conf, v, 
 			  rc->rc_alpha * gd->w.glw_alpha, &rc0);
