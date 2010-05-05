@@ -260,7 +260,6 @@ window_open(glw_x11_t *gx11, int fullscreen)
   XSetWindowAttributes winAttr;
   unsigned long mask;
   XTextProperty text;
-  extern char *htsversion;
   char buf[60];
   int fevent, x, y, w, h;
 
@@ -322,7 +321,7 @@ window_open(glw_x11_t *gx11, int fullscreen)
   XMapWindow(gx11->display, gx11->win);
 
   /* Set window title */
-  snprintf(buf, sizeof(buf), "HTS Showtime %s", htsversion);
+  snprintf(buf, sizeof(buf), "Showtime");
 
   text.value = (unsigned char *)buf;
   text.encoding = XA_STRING;
