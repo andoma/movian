@@ -24,9 +24,13 @@
  */
 typedef struct {
   glw_t w;
+  glw_t *prev; // Widget we are transitioning from
 
-  float prev, tgt, k, inc;
   glw_transition_type_t efx_conf;
+  float time;
+  float delta;
+  
+  float v;
 
 } glw_deck_t;
 
@@ -64,12 +68,44 @@ glw_deck_update_constraints(glw_t *w)
   glw_signal0(w, GLW_SIGNAL_FULLSCREEN_CONSTRAINT_CHANGED, NULL);
 }
 
+
+/**
+ *
+ */
+static void
+setprev(glw_deck_t *gd)
+{
+  gd->prev = gd->w.glw_selected;
+}
+
+
+/**
+ *
+ */
+static void
+deck_select(glw_deck_t *gd, glw_t *c)
+{
+  setprev(gd);
+  gd->w.glw_selected = c;
+  if(gd->w.glw_selected != NULL) {
+    glw_focus_open_path_close_all_other(gd->w.glw_selected);
+    glw_deck_update_constraints(&gd->w);
+  } else {
+    clear_constraints(&gd->w);
+  }
+
+  if(gd->efx_conf != GLW_TRANS_NONE)
+    gd->v = 0;
+}
+
+
 /**
  *
  */
 static int
 glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
+  glw_deck_t *gd = (glw_deck_t *)w;
   glw_rctx_t *rc = extra;
   glw_t *c, *n;
   event_t *e;
@@ -79,9 +115,20 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_LAYOUT:
-    if(w->glw_alpha < 0.01 || w->glw_selected == NULL)
+    gd->delta = 1 / (gd->time * (1000000 / w->glw_root->gr_frameduration));
+
+
+    if(w->glw_alpha < 0.01)
       break;
-    glw_layout0(w->glw_selected, rc);
+
+    gd->v = GLW_MIN(gd->v + gd->delta, 1.0);
+    if(gd->v == 1)
+      gd->prev = NULL;
+
+    if(w->glw_selected != NULL)
+      glw_layout0(w->glw_selected, rc);
+    if(gd->prev != NULL)
+      glw_layout0(gd->prev, rc);
     break;
 
   case GLW_SIGNAL_EVENT:
@@ -97,31 +144,21 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     e = extra;
 
     if(event_is_action(e, ACTION_INCR)) {
-
       n = glw_get_next_n(c, 1);
-
     } else if(event_is_action(e, ACTION_DECR)) {
-
       n = glw_get_prev_n(c, 1);
-      
     } else {
-
       break;
-
     }
 
-    if(n != c && n != NULL)
+    if(n != c && n != NULL) {
+      setprev(gd);
       glw_select(w, n);
+    }
     return 1;
 
   case GLW_SIGNAL_SELECT:
-    w->glw_selected = extra;
-    if(w->glw_selected != NULL) {
-      glw_focus_open_path_close_all_other(w->glw_selected);
-      glw_deck_update_constraints(w);
-    } else {
-      clear_constraints(w);
-    }
+    deck_select(gd, extra);
     break;
 
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
@@ -133,23 +170,67 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     c = extra;
     if(w->glw_selected == extra)
       clear_constraints(w);
+
+    if(gd->prev == extra)
+      gd->prev = NULL;
+
     return 0;
   }
 
   return 0;
 }
 
-    
+/**
+ *
+ */
+static void
+deck_render(glw_rctx_t *rc, glw_deck_t *gd, glw_t *w, float v)
+{
+  if(gd->efx_conf != GLW_TRANS_NONE) {
+    glw_rctx_t rc0 = *rc;
+    glw_PushMatrix(&rc0, rc);
+    glw_transition_render(gd->efx_conf, v, gd->w.glw_alpha, &rc0);
+    w->glw_class->gc_render(w, &rc0);
+    glw_PopMatrix();
+  } else {
+    w->glw_class->gc_render(w, rc);
+  }
+}
+
+
 /**
  *
  */
 static void 
 glw_deck_render(glw_t *w, glw_rctx_t *rc)
 {
-  if(w->glw_alpha < 0.01 || w->glw_selected == NULL)
+  glw_deck_t *gd = (glw_deck_t *)w;
+
+  if(w->glw_alpha < 0.01)
     return;
-  w->glw_selected->glw_class->gc_render(w->glw_selected, rc);
+
+  if(gd->prev != NULL)
+    deck_render(rc, gd, gd->prev, gd->v);
+
+  if(w->glw_selected != NULL)
+    deck_render(rc, gd, w->glw_selected, -1 + gd->v);
 }
+
+
+/**
+ *
+ */
+static void
+set_page(glw_deck_t *gd, int n)
+{
+  glw_t *c;
+  TAILQ_FOREACH(c, &gd->w.glw_childs, glw_parent_link) {
+    if(!n--)
+      break;
+  }
+  deck_select(gd, c);
+}
+
 
 
 
@@ -162,14 +243,22 @@ glw_deck_set(glw_t *w, int init, va_list ap)
   glw_deck_t *gd = (glw_deck_t *)w;
   glw_attribute_t attrib;
 
-  if(init)
+  if(init) {
+    gd->v = 1.0;
     clear_constraints(w);
+  }
 
   do {
     attrib = va_arg(ap, int);
     switch(attrib) {
     case GLW_ATTRIB_TRANSITION_EFFECT:
       gd->efx_conf = va_arg(ap, int);
+      break;
+    case GLW_ATTRIB_TIME:
+      gd->time = va_arg(ap, double);
+      break;
+    case GLW_ATTRIB_PAGE:
+      set_page(gd, va_arg(ap, int));
       break;
     default:
       GLW_ATTRIB_CHEW(attrib, ap);

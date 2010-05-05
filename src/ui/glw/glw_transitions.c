@@ -102,9 +102,19 @@ trans_slide_vertical(float b, float alpha, glw_rctx_t *rc)
 /**
  *
  */
+static void
+trans_none(float b, float alpha, glw_rctx_t *rc)
+{
+
+}
+
+/**
+ *
+ */
 const static struct {
   void (*r)(float b, float alpha, glw_rctx_t *rc);
 } glw_transition_effects[] = {
+  [GLW_TRANS_NONE]             = { .r = trans_none             },
   [GLW_TRANS_BLEND]            = { .r = trans_blend            },
   [GLW_TRANS_FLIP_HORIZONTAL]  = { .r = trans_flip_horizontal  },
   [GLW_TRANS_FLIP_VERTICAL]    = { .r = trans_flip_vertical    },

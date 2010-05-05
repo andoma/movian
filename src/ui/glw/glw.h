@@ -121,6 +121,7 @@ typedef enum {
   GLW_ATTRIB_SCALING,
   GLW_ATTRIB_COLOR1,
   GLW_ATTRIB_COLOR2,
+  GLW_ATTRIB_PAGE,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -725,6 +726,7 @@ glw_t *glw_view_create(glw_root_t *gr, const char *src,
  * Transitions
  */
 typedef enum {
+  GLW_TRANS_NONE,
   GLW_TRANS_BLEND,
   GLW_TRANS_FLIP_HORIZONTAL,
   GLW_TRANS_FLIP_VERTICAL,
@@ -800,6 +802,7 @@ do {						\
   case GLW_ATTRIB_CHILD_TILES_Y:                \
   case GLW_ATTRIB_CHILD_HEIGHT:                 \
   case GLW_ATTRIB_CHILD_WIDTH:                  \
+  case GLW_ATTRIB_PAGE:                         \
     (void)va_arg(ap, int);			\
     break;					\
   case GLW_ATTRIB_BORDER:                       \

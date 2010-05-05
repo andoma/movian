@@ -382,6 +382,8 @@ static const token_attrib_t attribtab[] = {
   {"childTilesX",     set_int,    GLW_ATTRIB_CHILD_TILES_X},
   {"childTilesY",     set_int ,   GLW_ATTRIB_CHILD_TILES_Y},
 
+  {"page",            set_int ,   GLW_ATTRIB_PAGE},
+
   {"color",           set_float3, GLW_ATTRIB_RGB},
   {"translation",     set_float3, GLW_ATTRIB_TRANSLATION},
   {"scaling",         set_float3, GLW_ATTRIB_SCALING},
