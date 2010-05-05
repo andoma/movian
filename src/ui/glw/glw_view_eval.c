@@ -3079,6 +3079,46 @@ glwf_isLink(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
+ * sin(x)
+ */
+static int 
+glwf_sin(glw_view_eval_context_t *ec, struct token *self,
+	 token_t **argv, unsigned int argc)
+{
+  token_t *a = argv[0];
+  token_t *r;
+
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+
+  r = eval_alloc(self, ec, TOKEN_FLOAT);
+  r->t_float = a->type == TOKEN_FLOAT ?  sin(a->t_float) : 0;
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
+ * 
+ */
+static int 
+glwf_monotime(glw_view_eval_context_t *ec, struct token *self,
+	      token_t **argv, unsigned int argc)
+{
+  token_t *r;
+  glw_root_t *gr = ec->w->glw_root;
+  double d = gr->gr_frames * (double)gr->gr_frameduration / 1000000.0;
+
+  r = eval_alloc(self, ec, TOKEN_FLOAT);
+  r->t_float = d;
+  eval_push(ec, r);
+  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME;
+  return 0;
+}
+
+
+
+/**
  *
  */
 static const token_func_t funcvec[] = {
@@ -3119,6 +3159,8 @@ static const token_func_t funcvec[] = {
   {"settingInt", 8, glw_settingInt, glwf_setting_ctor, glwf_setting_dtor},
   {"settingBool", 4, glw_settingBool, glwf_setting_ctor, glwf_setting_dtor},
   {"isLink", 1, glwf_isLink},
+  {"sin", 1, glwf_sin},
+  {"monotime", 0, glwf_monotime},
 };
 
 

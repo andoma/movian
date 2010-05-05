@@ -473,6 +473,8 @@ glw_prepare_frame(glw_root_t *gr)
 {
   glw_t *w;
 
+  gr->gr_frames++;
+
   prop_courier_poll(gr->gr_courier);
 
   //  glw_cursor_layout_frame(gr);

@@ -387,6 +387,8 @@ const glw_class_t *glw_class_find_by_name(const char *name);
 typedef struct glw_root {
   uii_t gr_uii;
 
+  int gr_frames;
+
   struct glw *gr_universe;
 
   LIST_HEAD(, glw_cached_view) gr_views;
