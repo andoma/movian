@@ -376,8 +376,8 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec, media_pipe_t *mp
 
 
       } else if(!strcmp(id, "audio:off")) {
-	prop_set_string(mp->mp_prop_subtitle_track_current, id);
-	mp->mp_video.mq_stream2 = -1;
+	prop_set_string(mp->mp_prop_audio_track_current, id);
+	mp->mp_audio.mq_stream = -1;
 
       } else if(id[0] >= '0' && id[0] <= '9') {
 	unsigned int idx = atoi(est->id);
