@@ -568,7 +568,7 @@ eval_array(glw_view_eval_context_t *pec, token_t *t0)
  *
  */
 static int
-resolve_property_name(glw_view_eval_context_t *ec, token_t *a)
+resolve_property_name(glw_view_eval_context_t *ec, token_t *a, int follow_links)
 {
   token_t *t;
   const char *pname[16];
@@ -580,7 +580,7 @@ resolve_property_name(glw_view_eval_context_t *ec, token_t *a)
   pname[i] = NULL;
   
   ui = ec->w ? ec->w->glw_root->gr_uii.uii_prop : NULL;
-  p = prop_get_by_name(pname, 1,
+  p = prop_get_by_name(pname, follow_links,
 		       PROP_TAG_NAMED_ROOT, ec->prop, "self",
 		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
 		       PROP_TAG_NAMED_ROOT, ec->prop_view, "view",
@@ -633,7 +633,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self)
     break;
 
   case TOKEN_PROPERTY_NAME:
-    if(resolve_property_name(ec, a))
+    if(resolve_property_name(ec, a, 1))
       return -1;
 
   case TOKEN_PROPERTY:
@@ -1747,7 +1747,7 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
   if(c != NULL) {
     switch(c->type) {
     case TOKEN_PROPERTY_NAME:
-      if(resolve_property_name(ec, c))
+      if(resolve_property_name(ec, c, 1))
 	return -1;
       /* FALLTHRU */
     case TOKEN_PROPERTY:
@@ -2493,7 +2493,7 @@ glwf_delete(glw_view_eval_context_t *ec, struct token *self,
 {
   token_t *a = argv[0];
 
-  if(a->type == TOKEN_PROPERTY_NAME && resolve_property_name(ec, a))
+  if(a->type == TOKEN_PROPERTY_NAME && resolve_property_name(ec, a, 1))
     return -1;
 
   if(a->type != TOKEN_PROPERTY)
@@ -2979,7 +2979,7 @@ glw_settingInt(glw_view_eval_context_t *ec, struct token *self,
   if(self->t_extra != NULL)
     return 0;
 
-  if(resolve_property_name(ec, prop))
+  if(resolve_property_name(ec, prop, 0))
     return -1;
 
   if((def  = token_resolve(ec, def)) == NULL)
@@ -3036,7 +3036,7 @@ glw_settingBool(glw_view_eval_context_t *ec, struct token *self,
   if((def  = token_resolve(ec, def)) == NULL)
     return -1;
 
-  if(resolve_property_name(ec, prop))
+  if(resolve_property_name(ec, prop, 0))
     return -1;
 
   if(title->type != TOKEN_STRING)
