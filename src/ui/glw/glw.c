@@ -358,7 +358,7 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
       if(f == w->glw_focus_weight)
 	break;
 
-      if(w->glw_focus_weight > 0)
+      if(w->glw_focus_weight > 0 && w->glw_root->gr_current_focus == w)
 	glw_focus_leave(w);
 
       if(f > 0)
