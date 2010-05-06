@@ -437,6 +437,8 @@ glw_container_x_callback(glw_t *w, void *opaque, glw_signal_t signal,
     return glw_container_x_layout((glw_container_t *)w, extra);
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
   case GLW_SIGNAL_CHILD_CREATED:
+  case GLW_SIGNAL_CHILD_HIDDEN:
+  case GLW_SIGNAL_CHILD_UNHIDDEN:
     return glw_container_x_constraints((glw_container_t *)w, NULL);
   case GLW_SIGNAL_CHILD_DESTROYED:
     return glw_container_x_constraints((glw_container_t *)w, extra);
@@ -454,6 +456,8 @@ glw_container_y_callback(glw_t *w, void *opaque, glw_signal_t signal,
     return glw_container_y_layout((glw_container_t *)w, extra);
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
   case GLW_SIGNAL_CHILD_CREATED:
+  case GLW_SIGNAL_CHILD_HIDDEN:
+  case GLW_SIGNAL_CHILD_UNHIDDEN:
     return glw_container_y_constraints((glw_container_t *)w, NULL);
   case GLW_SIGNAL_CHILD_DESTROYED:
     return glw_container_y_constraints((glw_container_t *)w, extra);
