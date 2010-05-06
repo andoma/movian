@@ -23,7 +23,7 @@ BUILDDIR = build.${PLATFORM}
 include ${BUILDDIR}/config.mak
 
 CFLAGS  = -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations 
-CFLAGS += -Wmissing-prototypes -Isrc/dvd
+CFLAGS += -Wmissing-prototypes -Iext/dvd
 
 
 #
@@ -157,61 +157,7 @@ SRCS                      += src/audio/dummy/dummy_audio.c
 #
 # DVD
 #
-SRCS-$(CONFIG_DVD)  += src/dvd/dvd.c \
-
-#
-# dvdcss
-#
-SRCS-$(CONFIG_DVD) += 	src/dvd/dvdcss/css.c \
-			src/dvd/dvdcss/device.c \
-			src/dvd/dvdcss/error.c \
-			src/dvd/dvdcss/ioctl.c \
-			src/dvd/dvdcss/libdvdcss.c
-
-ifeq ($(PLATFORM), osx)
-DVDCSS_CFLAGS = -DDARWIN_DVD_IOCTL -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
-else
-ifeq ($(PLATFORM), linux)
-DVDCSS_CFLAGS = -DHAVE_LINUX_DVD_STRUCT -DDVD_STRUCT_IN_LINUX_CDROM_H -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
-endif
-endif
-
-
-${BUILDDIR}/src/dvd/dvdcss/%.o : CFLAGS = \
- -DHAVE_LIMITS_H -DHAVE_UNISTD_H -DHAVE_ERRNO_H -DVERSION="0" $(DVDCSS_CFLAGS)
-
-#
-# libdvdread
-#
-SRCS-$(CONFIG_DVD) += 	src/dvd/libdvdread/dvd_input.c \
-			src/dvd/libdvdread/dvd_reader.c \
-			src/dvd/libdvdread/dvd_udf.c \
-			src/dvd/libdvdread/ifo_read.c \
-			src/dvd/libdvdread/md5.c \
-			src/dvd/libdvdread/nav_read.c \
-			src/dvd/libdvdread/bitreader.c
-
-${BUILDDIR}/src/dvd/libdvdread/%.o : CFLAGS = \
- -DHAVE_DVDCSS_DVDCSS_H -DDVDNAV_COMPILE -Wno-strict-aliasing  -Isrc/dvd 
-
-#
-# libdvdread
-#
-SRCS-$(CONFIG_DVD) += 	src/dvd/dvdnav/dvdnav.c \
-			src/dvd/dvdnav/highlight.c \
-			src/dvd/dvdnav/navigation.c \
-			src/dvd/dvdnav/read_cache.c \
-			src/dvd/dvdnav/remap.c \
-			src/dvd/dvdnav/settings.c \
-			src/dvd/dvdnav/vm/vm.c \
-			src/dvd/dvdnav/vm/decoder.c \
-			src/dvd/dvdnav/vm/vmcmd.c \
-			src/dvd/dvdnav/searching.c
-
-${BUILDDIR}/src/dvd/dvdnav/%.o : CFLAGS = \
- -DVERSION=\"showtime\" -DDVDNAV_COMPILE -Wno-strict-aliasing -Isrc/dvd \
- -Isrc/dvd/dvdnav
-
+SRCS-$(CONFIG_DVD)       += src/dvd/dvd.c
 SRCS-$(CONFIG_DVD_LINUX) += src/dvd/linux_dvd.c
 SRCS-$(CONFIG_DVD_WII)   += src/dvd/wii_dvd.c
 
@@ -352,10 +298,62 @@ SRCS-$(CONFIG_LIBRTMP) +=	ext/rtmpdump/librtmp/amf.c \
 				ext/rtmpdump/librtmp/parseurl.c \
 
 ${BUILDDIR}/ext/rtmpdump/%.o : CFLAGS = -O2
-
 SRCS-$(CONFIG_LIBRTMP)  +=      src/backend/rtmp/rtmp.c
-
 ${BUILDDIR}/src/backend/rtmp/rtmp.o : CFLAGS = -Wall -Werror -Iext/rtmpdump
+
+
+#
+# dvdcss
+#
+SRCS-$(CONFIG_DVD) += 	ext/dvd/dvdcss/css.c \
+			ext/dvd/dvdcss/device.c \
+			ext/dvd/dvdcss/error.c \
+			ext/dvd/dvdcss/ioctl.c \
+			ext/dvd/dvdcss/libdvdcss.c
+
+ifeq ($(PLATFORM), osx)
+DVDCSS_CFLAGS = -DDARWIN_DVD_IOCTL -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
+else
+ifeq ($(PLATFORM), linux)
+DVDCSS_CFLAGS = -DHAVE_LINUX_DVD_STRUCT -DDVD_STRUCT_IN_LINUX_CDROM_H -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
+endif
+endif
+
+
+${BUILDDIR}/ext/dvd/dvdcss/%.o : CFLAGS = \
+ -DHAVE_LIMITS_H -DHAVE_UNISTD_H -DHAVE_ERRNO_H -DVERSION="0" $(DVDCSS_CFLAGS)
+
+#
+# libdvdread
+#
+SRCS-$(CONFIG_DVD) += 	ext/dvd/libdvdread/dvd_input.c \
+			ext/dvd/libdvdread/dvd_reader.c \
+			ext/dvd/libdvdread/dvd_udf.c \
+			ext/dvd/libdvdread/ifo_read.c \
+			ext/dvd/libdvdread/md5.c \
+			ext/dvd/libdvdread/nav_read.c \
+			ext/dvd/libdvdread/bitreader.c
+
+${BUILDDIR}/ext/dvd/libdvdread/%.o : CFLAGS = \
+ -DHAVE_DVDCSS_DVDCSS_H -DDVDNAV_COMPILE -Wno-strict-aliasing  -Iext/dvd 
+
+#
+# libdvdread
+#
+SRCS-$(CONFIG_DVD) += 	ext/dvd/dvdnav/dvdnav.c \
+			ext/dvd/dvdnav/highlight.c \
+			ext/dvd/dvdnav/navigation.c \
+			ext/dvd/dvdnav/read_cache.c \
+			ext/dvd/dvdnav/remap.c \
+			ext/dvd/dvdnav/settings.c \
+			ext/dvd/dvdnav/vm/vm.c \
+			ext/dvd/dvdnav/vm/decoder.c \
+			ext/dvd/dvdnav/vm/vmcmd.c \
+			ext/dvd/dvdnav/searching.c
+
+${BUILDDIR}/ext/dvd/dvdnav/%.o : CFLAGS = \
+ -DVERSION=\"showtime\" -DDVDNAV_COMPILE -Wno-strict-aliasing -Iext/dvd \
+ -Iext/dvd/dvdnav
 
 
 # Various transformations
