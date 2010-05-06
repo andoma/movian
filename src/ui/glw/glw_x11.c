@@ -265,7 +265,7 @@ window_open(glw_x11_t *gx11, int fullscreen)
 
   winAttr.event_mask = KeyPressMask | StructureNotifyMask |
     ButtonPressMask | ButtonReleaseMask |
-    PointerMotionMask | ButtonMotionMask | EnterWindowMask;
+    PointerMotionMask | ButtonMotionMask | EnterWindowMask | LeaveWindowMask;
 
   winAttr.background_pixmap = None;
   winAttr.background_pixel  = 0;
@@ -925,6 +925,13 @@ glw_x11_mainloop(glw_x11_t *gx11)
 #ifdef CONFIG_DBUS
 	mpkeys_grab();
 #endif
+	break;
+
+      case LeaveNotify:
+	gpe.type = GLW_POINTER_GONE;
+	glw_lock(&gx11->gr);
+	glw_pointer_event(&gx11->gr, &gpe);
+	glw_unlock(&gx11->gr);
 	break;
 
       case FocusIn:
