@@ -227,7 +227,6 @@ EOF
 	    --disable-stripping \
 	    --disable-static \
 	    --disable-shared \
-	    --disable-vdpau \
 	    --enable-static \
 	    --prefix=${BUILDDIR}/ffmpeg/install \
 	    --disable-ffserver \
