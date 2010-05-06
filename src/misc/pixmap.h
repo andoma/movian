@@ -38,7 +38,7 @@
 
 
 /**
- * Internal struct for passing immages
+ * Internal struct for passing images
  */
 typedef struct pixmap {
   int pm_refcount;
