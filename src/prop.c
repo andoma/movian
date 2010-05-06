@@ -2502,6 +2502,8 @@ prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme)
   prop_sub_t *s;
   struct prop_notify_queue pnq;
 
+  assert(src != dst);
+
   hts_mutex_lock(&prop_mutex);
 
   if(src->hp_type == PROP_ZOMBIE || dst->hp_type == PROP_ZOMBIE) {
