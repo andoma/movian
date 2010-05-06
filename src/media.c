@@ -197,6 +197,7 @@ mp_create(const char *name, const char *type, int flags)
   mp->mp_prop_canRepeat = 
     prop_create(mp->mp_prop_root, "canRepeat");
 
+  prop_set_int(prop_create(mp->mp_prop_root, "canStop"), 1);
 
   mp->mp_pc = prop_courier_create_thread(&mp->mp_mutex, "mp");
 
