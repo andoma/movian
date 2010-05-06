@@ -130,6 +130,9 @@ glw_init_settings(glw_root_t *gr, const char *instance,
 
   prop_link(settings_get_value(gr->gr_setting_fontsize),
 	    prop_create(gr->gr_uii.uii_prop, "fontsize"));
+
+  gr->gr_pointer_visible = 
+    prop_create(gr->gr_uii.uii_prop, "pointerVisible");
 }
 
 /**
@@ -1374,6 +1377,9 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
 
   if(gpe->type == GLW_POINTER_MOTION_UPDATE ||
      gpe->type == GLW_POINTER_MOTION_REFRESH) {
+    
+    prop_set_int(gr->gr_pointer_visible, 1);
+
     if((w = gr->gr_pointer_grab) != NULL && w->glw_matrix != NULL) {
       glw_widget_unproject(w->glw_matrix, &x, &y, p, dir);
       gpe0.type = GLW_POINTER_FOCUS_MOTION;
@@ -1404,6 +1410,7 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
     glw_root_set_hover(gr, NULL);
     gr->gr_pointer_grab = NULL;
     gr->gr_mouse_valid = 0;
+    prop_set_int(gr->gr_pointer_visible, 0);
     return;
   }
 
