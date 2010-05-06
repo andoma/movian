@@ -28,8 +28,6 @@
 #include <stdio.h>
 #include <math.h>
 
-#include <libavutil/common.h>
-
 #include "glw.h"
 #include "glw_texture.h"
 #include "glw_text_bitmap.h"

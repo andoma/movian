@@ -21,7 +21,6 @@
 
 #include <stdlib.h>
 
-#include <libavutil/pixfmt.h>
 #include "event.h"
 #include "arch/threads.h"
 #include "misc/queue.h"
