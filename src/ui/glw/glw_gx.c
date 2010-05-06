@@ -226,6 +226,15 @@ glw_blendmode(int mode)
 }
 
 
+/**
+ * XXX TODO
+ */
+void
+glw_wirebox(glw_rctx_t *rc)
+{
+}
+
+
 #define float_to_byte(f) GLW_MAX(0, GLW_MIN(255, (int)(f * 255.0)))
 
 /**
