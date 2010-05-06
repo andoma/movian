@@ -80,6 +80,10 @@ setprev(glw_deck_t *gd, glw_t *c)
   glw_t *p;
   int rev = 0;
 
+  gd->prev = l;
+  if(c == NULL)
+    return;
+
   for(p = TAILQ_NEXT(c, glw_parent_link); p != NULL;
       p = TAILQ_NEXT(p, glw_parent_link)) {
     if(p == l) {
@@ -88,7 +92,6 @@ setprev(glw_deck_t *gd, glw_t *c)
     }
   }
   gd->rev = rev;
-  gd->prev = l;
 }
 
 
