@@ -33,7 +33,7 @@
 #include "media.h"
 #include "fa_probe.h"
 #include "fileaccess.h"
-#include "dvd/dvd.h"
+#include "backend/dvd/dvd.h"
 #include "notifications.h"
 #include "video/subtitles.h"
 #include "api/opensubtitles.h"

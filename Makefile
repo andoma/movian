@@ -157,14 +157,10 @@ SRCS                      += src/audio/dummy/dummy_audio.c
 #
 # DVD
 #
-SRCS-$(CONFIG_DVD)       += src/dvd/dvd.c
-SRCS-$(CONFIG_DVD_LINUX) += src/dvd/linux_dvd.c
-SRCS-$(CONFIG_DVD_WII)   += src/dvd/wii_dvd.c
-
-#
-# CD Audio playback
-#
-SRCS-$(CONFIG_CDDA)      += src/dvd/cdda.c
+SRCS-$(CONFIG_DVD)       += src/backend/dvd/dvd.c
+SRCS-$(CONFIG_DVD_LINUX) += src/backend/dvd/linux_dvd.c
+SRCS-$(CONFIG_DVD_WII)   += src/backend/dvd/wii_dvd.c
+SRCS-$(CONFIG_CDDA)      += src/backend/dvd/cdda.c
 
 #
 # TV
