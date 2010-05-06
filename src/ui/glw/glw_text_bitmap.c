@@ -560,17 +560,9 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
   if(alpha < 0.01)
     return;
- #if 0
-  glDisable(GL_TEXTURE_2D);
-  glBegin(GL_LINE_LOOP);
-  glColor4f(1,1,1,1);
-  glVertex3f(-1.0, -1.0, 0.0);
-  glVertex3f( 1.0, -1.0, 0.0);
-  glVertex3f( 1.0,  1.0, 0.0);
-  glVertex3f(-1.0,  1.0, 0.0);
-  glEnd();
-  glEnable(GL_TEXTURE_2D);
-#endif
+
+  if(w->glw_flags & GLW_DEBUG)
+    glw_wirebox(rc);
 
   rc0 = *rc;
   glw_PushMatrix(&rc0, rc);
