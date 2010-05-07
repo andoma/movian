@@ -30,6 +30,8 @@
 #include "playqueue.h"
 #include "misc/strtab.h"
 
+static int do_album_view = 0;
+
 typedef struct scanner {
   int s_refcount;
 
@@ -221,8 +223,7 @@ deep_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
 
   /* Empty */
   if(fd->fd_count == 0) {
-    if(viewprop != NULL)
-      prop_set_string(viewprop, "empty");
+    prop_set_string(viewprop, "empty");
     return;
   }
 
@@ -320,12 +321,11 @@ deep_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
     }
   }
 
-  if(album_score > 0 && 
+  if(do_album_view && album_score > 0 && 
      (different_artists < 2 || different_artists < album_score / 2)) {
       
     /* It is an album */
-    if(viewprop != NULL)
-      prop_set_string(viewprop, "album");
+    prop_set_string(viewprop, "album");
 
     if(root != NULL) {
       prop_set_string(prop_create(root, "album_name"), album_name);
@@ -359,14 +359,11 @@ deep_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
       }
     }
   } else if(fd->fd_count == unknown) {
-    if(viewprop != NULL)
-      prop_set_string(viewprop, "empty");
+    prop_set_string(viewprop, "empty");
   } else if(images * 4 > fd->fd_count * 3) {
-    if(viewprop != NULL)
-      prop_set_string(viewprop, "images");
+    prop_set_string(viewprop, "images");
   } else {
-    if(viewprop != NULL)
-      prop_set_string(viewprop, "list");
+    prop_set_string(viewprop, "list");
   }
 }
 
