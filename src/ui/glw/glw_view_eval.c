@@ -346,6 +346,25 @@ token2int(token_t *t)
     return 0;
   }
 }
+
+
+/**
+ *
+ */
+static float
+token2float(token_t *t)
+{
+  switch(t->type) {
+  case TOKEN_INT:
+    return t->t_int;
+  case TOKEN_FLOAT:
+    return t->t_float;
+  default:
+    return 0;
+  }
+}
+
+
 /**
  *
  */
@@ -1536,18 +1555,13 @@ glwf_space(glw_view_eval_context_t *ec, struct token *self,
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
 
-  if(a->type != TOKEN_FLOAT)
-    return glw_view_seterr(ec->ei, self, 
-			    "widget: Invalid first argument, "
-			    "expected float");
-
   if(dummy == NULL)
     dummy = glw_class_find_by_name("dummy");
 
   glw_create_i(ec->gr, 
 	       dummy,
 	       GLW_ATTRIB_PARENT, ec->w,
-	       GLW_ATTRIB_WEIGHT, a->t_float,
+	       GLW_ATTRIB_WEIGHT, token2float(a),
 	       NULL);
   return 0;
 }
@@ -2094,7 +2108,7 @@ glwf_scurve(glw_view_eval_context_t *ec, struct token *self,
   token_t *a = argv[0];
   token_t *b = argv[1];
   token_t *r;
-  float f, v;
+  float f, v, t;
   glw_scurve_extra_t *s = self->t_extra;
 
   if((a = token_resolve(ec, a)) == NULL)
@@ -2102,23 +2116,13 @@ glwf_scurve(glw_view_eval_context_t *ec, struct token *self,
   if((b = token_resolve(ec, b)) == NULL)
     return -1;
 
-  if(a->type == TOKEN_FLOAT)
-    f = a->t_float;
-  else if(a->type == TOKEN_INT) {
-    f = a->t_int;
-  } else if(a->type == TOKEN_VOID) {
-    f = 0;
-  } else {
-    return glw_view_seterr(ec->ei, self, "Invalid first operand to scurve()");
-  }
+  f = token2float(a);
+  t = token2float(b);
 
-  if(b->type != TOKEN_FLOAT)
-    return glw_view_seterr(ec->ei, self, "Invalid second operand to scurve()");
-
-  if(s->target != f || s->time != b->t_float) {
+  if(s->target != f || s->time != t) {
     s->start = s->target;
     s->target = f;
-    s->time = b->t_float;
+    s->time = t;
     s->x = 0;
     s->xd = 1.0 / (1000000 * s->time / ec->w->glw_root->gr_frameduration);
   }
@@ -2329,15 +2333,11 @@ glwf_strftime(glw_view_eval_context_t *ec, struct token *self,
   if((b = token_resolve(ec, b)) == NULL)
     return -1;
 
-  if(a->type != TOKEN_INT)
-    return glw_view_seterr(ec->ei, self, 
-			    "Invalid first operand to strftime()");
-
   if(b->type != TOKEN_STRING)
     return glw_view_seterr(ec->ei, self, 
 			    "Invalid second operand to strftime()");
 
-  t = a->t_int;
+  t = token2int(a);
   if(t != 0) {
     localtime_r(&t, &tm);
     strftime(buf, sizeof(buf), rstr_get(b->t_rstring), &tm);
