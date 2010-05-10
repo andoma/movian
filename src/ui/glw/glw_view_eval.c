@@ -64,12 +64,16 @@ typedef struct glw_prop_sub {
 
 #ifdef GLW_VIEW_ERRORINFO
   rstr_t *gps_file;
-  int gps_line;
+  uint16_t gps_line;
 #endif
+  uint16_t gps_entries;
+  uint16_t gps_offset;
+  uint16_t gps_limit;
 
   prop_t *gps_originating_prop;
 
   glw_t *gps_anchor;
+
 
 } glw_prop_sub_t;
 
@@ -825,13 +829,27 @@ static void
 cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before, 
 		  glw_t *parent, errorinfo_t *ei, int flags)
 {
-  token_t *body;
   glw_view_eval_context_t n;
   glw_t *b;
+  int pos;
+  int f = 0;
 
-  body = glw_view_clone_chain(gps->gps_cloner_body);
+  if(before != NULL) {
+    pos = 0;
 
-  b = before ? cloner_find_child(before, parent) : gps->gps_anchor;
+    TAILQ_FOREACH(b, &parent->glw_childs, glw_parent_link) {
+      if(b->glw_originating_prop == p)
+	break;
+      pos++;
+    }
+    assert(b != NULL);
+  } else {
+    b = gps->gps_anchor;
+    pos = gps->gps_entries;
+  }
+
+  if(pos >= gps->gps_limit + gps->gps_offset || pos < gps->gps_offset)
+    f = GLW_HIDDEN;
 
   memset(&n, 0, sizeof(n));
   n.prop = p;
@@ -843,6 +861,7 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
 		     gps->gps_cloner_class,
 		     GLW_ATTRIB_FREEZE, 1,
 		     GLW_ATTRIB_PARENT_BEFORE, parent, b,
+		     GLW_ATTRIB_SET_FLAGS, f,
 		     GLW_ATTRIB_PROPROOTS, p, gps->gps_originating_prop,
 		     GLW_ATTRIB_ORIGINATING_PROP, p,
 		     NULL);
@@ -850,15 +869,20 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
   if(flags & PROP_ADD_SELECTED)
     glw_signal0(parent, GLW_SIGNAL_SELECT, n.w);
 
-  n.sublist = &n.w->glw_prop_subscriptions;
 
-  glw_view_eval_block(body, &n);
-  glw_view_free_chain(body);
+  if(f != GLW_HIDDEN) {
+    n.sublist = &n.w->glw_prop_subscriptions;
+    token_t *body = glw_view_clone_chain(gps->gps_cloner_body);
+    glw_view_eval_block(body, &n);
+    glw_view_free_chain(body);
+  }
 
   glw_set_i(n.w, GLW_ATTRIB_FREEZE, 0, NULL);
 
   if(n.gr->gr_last_focused_interactive == p)
     glw_focus_set(n.w->glw_root, n.w, 0);
+
+  gps->gps_entries++;
 }
 
 
@@ -950,6 +974,7 @@ cloner_del_child(glw_prop_sub_t *gps, prop_t *p, glw_t *parent)
   glw_prop_sub_pending_t *gpsp;
 
   if((w = cloner_find_child(p, parent)) != NULL) {
+    gps->gps_entries--;
     glw_detach0(w);
     return;
   }
@@ -1454,14 +1479,19 @@ static int
 glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
 	    token_t **argv, unsigned int argc)
 {
-  token_t *a = argv[0];
-  token_t *b = argv[1];
-  token_t *c = argv[2];
+  token_t *a = argc > 0 ? argv[0] : NULL;
+  token_t *b = argc > 1 ? argv[1] : NULL;
+  token_t *c = argc > 2 ? argv[2] : NULL;
+  token_t *d = argc > 3 ? argv[3] : NULL;
+  token_t *e = argc > 4 ? argv[4] : NULL;
   glw_prop_sub_t *gps;
   glw_prop_sub_pending_t *gpsp;
   int f;
   const glw_class_t *cl;
   glw_t *parent = ec->w, *w;
+
+  if(argc < 3)
+    return glw_view_seterr(ec->ei, self, "Cloner not enough arguments");
 
   if(parent == NULL) 
     return glw_view_seterr(ec->ei, self, 
@@ -1513,6 +1543,9 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
   if(a->type == TOKEN_DIRECTORY) {
     gps = a->propsubr;
     gps->gps_anchor = self->t_extra;
+
+    gps->gps_offset = d ? token2int(d) : 0;
+    gps->gps_limit  = e ? token2int(e) : UINT16_MAX;
 
     if(gps->gps_cloner_body != NULL)
       glw_view_free_chain(gps->gps_cloner_body);
@@ -3123,7 +3156,7 @@ glwf_monotime(glw_view_eval_context_t *ec, struct token *self,
  */
 static const token_func_t funcvec[] = {
   {"widget", 2, glwf_widget},
-  {"cloner", 3, glwf_cloner},
+  {"cloner", -1, glwf_cloner},
   {"space", 1, glwf_space},
   {"onEvent", -1, glwf_onEvent},
   {"navOpen", -1, glwf_navOpen},
