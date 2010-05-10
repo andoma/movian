@@ -502,7 +502,8 @@ glw_prepare_frame(glw_root_t *gr)
   while((w = TAILQ_FIRST(&gr->gr_destroyer_queue)) != NULL) {
     TAILQ_REMOVE(&gr->gr_destroyer_queue, w, glw_parent_link);
 
-    w->glw_class->gc_dtor(w);
+    if(w->glw_class->gc_dtor != NULL)
+      w->glw_class->gc_dtor(w);
 
     w->glw_flags |= GLW_DESTROYED;
     glw_signal_handler_clean(w);
