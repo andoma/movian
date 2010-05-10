@@ -872,13 +872,13 @@ glw_path_flood(glw_t *w, int or, int and)
  *
  */
 static void
-glw_path_modify(glw_t *w, int set, int clr)
+glw_path_modify(glw_t *w, int set, int clr, glw_t *stop)
 {
   clr = ~clr; // Invert so we can just AND it
 
   glw_path_flood(w, set, clr);
 
-  for(; w != NULL; w = w->glw_parent) {
+  for(; w != NULL && w != stop; w = w->glw_parent) {
     w->glw_flags = (w->glw_flags | set) & clr;
     if(!(w->glw_flags & GLW_DESTROYING))
       glw_signal0(w, GLW_SIGNAL_FHP_PATH_CHANGED, NULL);
@@ -889,18 +889,41 @@ glw_path_modify(glw_t *w, int set, int clr)
 /**
  *
  */
+static glw_t *
+find_common_ancestor(glw_t *a, glw_t *b)
+{
+  glw_t *c;
+
+  if(a == NULL)
+    return NULL;
+
+  for(; b != NULL; b = b->glw_parent)
+    for(c = a; c != NULL; c = c->glw_parent)
+      if(c == b)
+	return b;
+  return NULL;
+}
+
+
+/**
+ *
+ */
 static void
 glw_root_set_hover(glw_root_t *gr, glw_t *w)
 {
+  glw_t *com;
+
   if(gr->gr_pointer_hover == w)
     return;
 
+  com = find_common_ancestor(gr->gr_pointer_hover, w);
+
   if(gr->gr_pointer_hover != NULL)
-    glw_path_modify(gr->gr_pointer_hover, 0, GLW_IN_HOVER_PATH);
+    glw_path_modify(gr->gr_pointer_hover, 0, GLW_IN_HOVER_PATH, com);
 
   gr->gr_pointer_hover = w;
   if(w != NULL)
-    glw_path_modify(w, GLW_IN_HOVER_PATH, 0);
+    glw_path_modify(w, GLW_IN_HOVER_PATH, 0, com);
 }
 
 
@@ -935,7 +958,7 @@ glw_focus_by_path(glw_t *w)
 void
 glw_focus_set(glw_root_t *gr, glw_t *w, int interactive)
 {
-  glw_t *x, *y;
+  glw_t *x, *y, *com;
   glw_signal_t sig;
   float weight = w ? w->glw_focus_weight : 0;
 
@@ -971,14 +994,16 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int interactive)
   if(gr->gr_current_focus == w)
     return;
 
+  com = find_common_ancestor(gr->gr_current_focus, w);
+
   if(gr->gr_current_focus != NULL)
-    glw_path_modify(gr->gr_current_focus, 0, GLW_IN_FOCUS_PATH);
+    glw_path_modify(gr->gr_current_focus, 0, GLW_IN_FOCUS_PATH, com);
 
   gr->gr_current_focus = w;
   if(w == NULL)
     return;
 
-  glw_path_modify(w, GLW_IN_FOCUS_PATH, 0);
+  glw_path_modify(w, GLW_IN_FOCUS_PATH, 0, com);
 
   if(interactive && w->glw_originating_prop != NULL) {
     
@@ -1297,7 +1322,7 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
 
 	case GLW_POINTER_LEFT_PRESS:
 	  gr->gr_pointer_press = w;
-	  glw_path_modify(w, GLW_IN_PRESSED_PATH, 0);
+	  glw_path_modify(w, GLW_IN_PRESSED_PATH, 0, NULL);
 	  return 1;
 
 	case GLW_POINTER_LEFT_RELEASE:
@@ -1305,7 +1330,7 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
 	    if(w->glw_flags & GLW_FOCUS_ON_CLICK)
 	      glw_focus_set(gr, w, 1); 
 
-	    glw_path_modify(w, 0, GLW_IN_PRESSED_PATH);
+	    glw_path_modify(w, 0, GLW_IN_PRESSED_PATH, NULL);
 	    e = event_create_action(ACTION_ENTER);
 	    glw_event_to_widget(w, e, 0);
 	    event_unref(e);
@@ -1387,7 +1412,7 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
 	 x < -1 || y < -1 || x > 1 || y > 1) {
 	// Moved outside button, release 
 
-	glw_path_modify(w, 0, GLW_IN_PRESSED_PATH);
+	glw_path_modify(w, 0, GLW_IN_PRESSED_PATH, NULL);
 	gr->gr_pointer_press = NULL;
       }
     }
