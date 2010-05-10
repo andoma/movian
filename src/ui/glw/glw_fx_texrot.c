@@ -242,9 +242,6 @@ glw_fx_texrot_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_LAYOUT:
     glw_fx_texrot_layout(w, extra);
     break;
-  case GLW_SIGNAL_DTOR:
-    glw_fx_texrot_dtor(w);
-    break;
   }
   return 0;
 }
@@ -315,6 +312,7 @@ static glw_class_t glw_fx_texrot = {
   .gc_instance_size = sizeof(glw_fx_texrot_t),
   .gc_set = glw_fx_texrot_set,
   .gc_render = glw_fx_texrot_render,
+  .gc_dtor = glw_fx_texrot_dtor,
   .gc_signal_handler = glw_fx_texrot_callback,
 };
 

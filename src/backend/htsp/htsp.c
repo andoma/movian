@@ -356,14 +356,55 @@ htsp_login(htsp_connection_t *hc)
  *
  */
 static void
+update_events(htsp_connection_t *hc, prop_t *metadata, uint32_t id)
+{
+  int i;
+  htsmsg_t *m;
+  prop_t *events = prop_create(metadata, "events");
+  prop_t *e;
+  char buf[10];
+  uint32_t u32;
+
+  for(i = 0; i < 3; i++) {
+    snprintf(buf, sizeof(buf), "id%d", i);
+    e = prop_create(events, buf);
+
+    if(id != 0) {
+      usleep(1000);
+      m = htsmsg_create_map();
+      htsmsg_add_str(m, "method", "getEvent");
+      htsmsg_add_u32(m, "eventId", id);
+    
+      if((m = htsp_reqreply(hc, m)) != NULL) {
+	prop_set_string(prop_create(e, "title"), htsmsg_get_str(m, "title"));
+	if(!htsmsg_get_u32(m, "start", &u32))
+	  prop_set_int(prop_create(e, "start"), u32);
+	
+	if(!htsmsg_get_u32(m, "stop", &u32))
+	  prop_set_int(prop_create(e, "stop"), u32);
+	
+	id = htsmsg_get_u32_or_default(m, "nextEventId", 0);
+	continue;
+      } else {
+	id = 0;
+      }
+    }
+    prop_destroy(e);
+  }
+}
+
+
+
+/**
+ *
+ */
+static void
 htsp_channelAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
 {
   uint32_t id;
   prop_t *p, *metadata;
   char txt[200];
   const char *s;
-
-  const char *title = NULL;
 
   if(htsmsg_get_u32(m, "channelId", &id))
     return;
@@ -387,19 +428,7 @@ htsp_channelAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
 
   if(htsmsg_get_u32(m, "eventId", &id))
     id = 0;
-  
-
-  if(id != 0) {
-    m = htsmsg_create_map();
-    htsmsg_add_str(m, "method", "getEvent");
-    htsmsg_add_u32(m, "eventId", id);
-
-    if((m = htsp_reqreply(hc, m)) != NULL) {
-      title = htsmsg_get_str(m, "title");
-    }
-  }
-
-  prop_set_string(prop_create(metadata, "programme"), title);
+  update_events(hc, metadata, id);
 }
 
 

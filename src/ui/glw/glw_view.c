@@ -41,7 +41,6 @@ static int
 glw_view_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_t *c = TAILQ_FIRST(&w->glw_childs);
-  glw_view_t *v = (glw_view_t *)w;
 
   switch(signal) {
   case GLW_SIGNAL_LAYOUT:
@@ -54,15 +53,23 @@ glw_view_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     glw_copy_constraints(w, extra);
     return 1;
 
-  case GLW_SIGNAL_DTOR:
-    prop_destroy(v->viewprop);
-    break;
-
   default:
     break;
   }
   return 0;
 }
+
+
+/**
+ *
+ */
+static void
+glw_view_dtor(glw_t *w)
+{
+  glw_view_t *v = (glw_view_t *)w;
+  prop_destroy(v->viewprop);
+}
+
 
 /**
  *
@@ -83,6 +90,7 @@ static glw_class_t glw_view = {
   .gc_name = "view",
   .gc_instance_size = sizeof(glw_view_t),
   .gc_render = glw_view_render,
+  .gc_dtor = glw_view_dtor,
   .gc_signal_handler = glw_view_callback,
 };
 

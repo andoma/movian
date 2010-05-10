@@ -817,6 +817,25 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
 
 
 /**
+ * We are going away, flush out all frames (PBOs and textures)
+ * and destroy zombie video decoder 
+ */
+static void
+glw_video_dtor(glw_t *w)
+{
+  glw_video_t *gv = (glw_video_t *)w;
+  video_decoder_t *vd = gv->gv_vd;
+
+  gvo_deinit(&gv->gv_spu);
+  gvo_deinit(&gv->gv_sub);
+  
+  LIST_REMOVE(gv, gv_global_link);
+  glw_video_purge_queues(vd, framepurge);
+  video_decoder_destroy(vd);
+}
+
+
+/**
  *
  */
 static int 
@@ -831,18 +850,6 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_LAYOUT:
     if(gv->gv_sub.gvo_child != NULL)
       glw_layout0(gv->gv_sub.gvo_child, extra);
-    return 0;
-
-  case GLW_SIGNAL_DTOR:
-    /* We are going away, flush out all frames (PBOs and textures)
-       and destroy zombie video decoder */
-
-    gvo_deinit(&gv->gv_spu);
-    gvo_deinit(&gv->gv_sub);
-
-    LIST_REMOVE(gv, gv_global_link);
-    glw_video_purge_queues(vd, framepurge);
-    video_decoder_destroy(vd);
     return 0;
 
   case GLW_SIGNAL_NEW_FRAME:
@@ -939,6 +946,7 @@ static glw_class_t glw_video = {
   .gc_flags = GLW_EVERY_FRAME,
   .gc_instance_size = sizeof(glw_video_t),
   .gc_set = glw_video_set,
+  .gc_dtor = glw_video_dtor,
   .gc_render = glw_video_render,
   .gc_signal_handler = glw_video_widget_callback,
 };

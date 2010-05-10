@@ -260,9 +260,6 @@ glw_bloom_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_LAYOUT:
     glw_bloom_layout(w, extra);
     break;
-  case GLW_SIGNAL_DTOR:
-    glw_bloom_dtor(w);
-    break;
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
     glw_copy_constraints(w, extra);
     return 1;
@@ -325,6 +322,7 @@ static glw_class_t glw_bloom = {
   .gc_instance_size = sizeof(glw_bloom_t),
   .gc_set = glw_bloom_set,
   .gc_render = glw_bloom_render,
+  .gc_dtor = glw_bloom_dtor,
   .gc_signal_handler = glw_bloom_callback,
 };
 

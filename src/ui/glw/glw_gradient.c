@@ -172,9 +172,6 @@ glw_gradient_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_LAYOUT:
     glw_gradient_layout(w, extra);
     break;
-  case GLW_SIGNAL_DTOR:
-    glw_gradient_dtor(w);
-    break;
   }
   return 0;
 }
@@ -228,6 +225,7 @@ static glw_class_t glw_gradient = {
   .gc_instance_size = sizeof(glw_gradient_t),
   .gc_render = glw_gradient_render,
   .gc_set = glw_gradient_set,
+  .gc_dtor = glw_gradient_dtor,
   .gc_signal_handler = glw_gradient_callback,
 };
 

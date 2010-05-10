@@ -196,7 +196,6 @@ typedef struct glw_pointer_event {
 typedef enum {
   GLW_SIGNAL_NONE,
   GLW_SIGNAL_DESTROY,
-  GLW_SIGNAL_DTOR,
   GLW_SIGNAL_ACTIVE,
   GLW_SIGNAL_INACTIVE,
   GLW_SIGNAL_LAYOUT,
@@ -352,6 +351,11 @@ typedef struct glw_class {
    * Ask widget to detach the given child
    */
   void (*gc_detach)(struct glw *w, struct glw *c);
+
+  /**
+   * Finalize a widget
+   */
+  void (*gc_dtor)(struct glw *w);
 
   /**
    * Send a GLW_SIGNAL_... to all listeners

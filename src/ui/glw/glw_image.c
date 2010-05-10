@@ -597,9 +597,6 @@ glw_image_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_LAYOUT:
     glw_image_layout(w, extra);
     break;
-  case GLW_SIGNAL_DTOR:
-    glw_image_dtor(w);
-    break;
   case GLW_SIGNAL_EVENT:
     TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
       if(glw_signal0(c, GLW_SIGNAL_EVENT, extra))
@@ -769,6 +766,7 @@ static glw_class_t glw_image = {
   .gc_name = "image",
   .gc_instance_size = sizeof(glw_image_t),
   .gc_render = glw_image_render,
+  .gc_dtor = glw_image_dtor,
   .gc_set = glw_image_set,
   .gc_signal_handler = glw_image_callback,
 };
@@ -783,6 +781,7 @@ static glw_class_t glw_icon = {
   .gc_name = "icon",
   .gc_instance_size = sizeof(glw_image_t),
   .gc_render = glw_image_render,
+  .gc_dtor = glw_image_dtor,
   .gc_set = glw_image_set,
   .gc_signal_handler = glw_image_callback,
 };
@@ -797,6 +796,7 @@ static glw_class_t glw_backdrop = {
   .gc_name = "backdrop",
   .gc_instance_size = sizeof(glw_image_t),
   .gc_render = glw_image_render,
+  .gc_dtor = glw_image_dtor,
   .gc_set = glw_image_set,
   .gc_signal_handler = glw_image_callback,
 };
@@ -812,6 +812,7 @@ static glw_class_t glw_repeatedimage = {
   .gc_name = "repeatedimage",
   .gc_instance_size = sizeof(glw_image_t),
   .gc_render = glw_image_render,
+  .gc_dtor = glw_image_dtor,
   .gc_set = glw_image_set,
   .gc_signal_handler = glw_image_callback,
 };

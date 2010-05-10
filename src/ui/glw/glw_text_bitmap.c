@@ -825,9 +825,6 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_LAYOUT:
     glw_text_bitmap_layout(w, extra);
     break;
-  case GLW_SIGNAL_DTOR:
-    glw_text_bitmap_dtor(w);
-    break;
   case GLW_SIGNAL_INACTIVE:
     gtb_flush(gtb);
     break;
@@ -1417,6 +1414,7 @@ static glw_class_t glw_label = {
   .gc_instance_size = sizeof(glw_text_bitmap_t),
   .gc_render = glw_text_bitmap_render,
   .gc_set = glw_text_bitmap_set,
+  .gc_dtor = glw_text_bitmap_dtor,
   .gc_signal_handler = glw_text_bitmap_callback,
 };
 
@@ -1431,6 +1429,7 @@ static glw_class_t glw_text = {
   .gc_instance_size = sizeof(glw_text_bitmap_t),
   .gc_render = glw_text_bitmap_render,
   .gc_set = glw_text_bitmap_set,
+  .gc_dtor = glw_text_bitmap_dtor,
   .gc_signal_handler = glw_text_bitmap_callback,
 };
 
