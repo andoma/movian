@@ -92,7 +92,6 @@ file_open_dir(struct navigator *nav,
 			NAV_PAGE_DONT_CLOSE_ON_BACK);
 
   view = prop_create(bfp->h.np_prop_root, "view");
-  prop_set_string(view, "list");
 
   src = prop_create(bfp->h.np_prop_root, "source");
   prop_set_string(prop_create(src, "type"), "directory");

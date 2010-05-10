@@ -192,11 +192,10 @@ quick_analyzer(fa_dir_t *fd, prop_t *viewprop)
       images++;
   }
 
-  if(viewprop == NULL)
-    return;
-  
   if(images * 4 > fd->fd_count * 3)
     prop_set_string(viewprop, "images");
+  else
+    prop_set_string(viewprop, "list");
 }
 
 
