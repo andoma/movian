@@ -336,6 +336,12 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_SCROLL:
     glw_list_scroll(l, extra);
     break;
+
+  case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
+    if(w->glw_focused == extra) {
+      l->scroll_to_me = extra;
+    }
+    break;
   }
   return 0;
 }
