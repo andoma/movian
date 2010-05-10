@@ -3150,6 +3150,78 @@ glwf_monotime(glw_view_eval_context_t *ec, struct token *self,
 }
 
 
+typedef struct glwf_delay_extra {
+
+  float oldval;
+  float curval;
+  int counter;
+
+} glwf_delay_extra_t;
+
+
+/**
+ *
+ */
+static int 
+glwf_delay(glw_view_eval_context_t *ec, struct token *self,
+	   token_t **argv, unsigned int argc)
+
+{
+  token_t *a, *b, *c, *r;
+  float f;
+  glwf_delay_extra_t *e = self->t_extra;
+
+  if((a = token_resolve(ec, argv[0])) == NULL)
+    return -1;
+  if((b = token_resolve(ec, argv[1])) == NULL)
+    return -1;
+  if((c = token_resolve(ec, argv[2])) == NULL)
+    return -1;
+
+  f = token2float(a);
+  if(f != e->curval) {
+    // trig
+    e->oldval = e->curval;
+    e->counter = token2float(f >= e->curval ? b : c) * 1000000.0 / 
+      ec->w->glw_root->gr_frameduration;
+    e->curval = f;
+  }
+  
+  if(e->counter > 0) {
+    f = e->oldval;
+    e->counter--;
+    ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME;
+  } else {
+    eval_push(ec, a);
+    return 0;
+  }
+
+  r = eval_alloc(self, ec, TOKEN_FLOAT);
+  r->t_float = f;
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+glwf_delay_ctor(struct token *self)
+{
+  self->t_extra = calloc(1, sizeof(glwf_changed_extra_t));
+}
+
+
+/**
+ *
+ */
+static void
+glwf_delay_dtor(struct token *self)
+{
+  free(self->t_extra);
+}
+
 
 /**
  *
@@ -3194,6 +3266,7 @@ static const token_func_t funcvec[] = {
   {"isLink", 1, glwf_isLink},
   {"sin", 1, glwf_sin},
   {"monotime", 0, glwf_monotime},
+  {"delay", 3, glwf_delay, glwf_delay_ctor, glwf_delay_dtor},
 };
 
 
