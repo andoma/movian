@@ -203,13 +203,9 @@ typedef enum {
   GLW_SIGNAL_CHILD_CREATED,
   GLW_SIGNAL_CHILD_DESTROYED,
 
-  GLW_SIGNAL_NEW_FRAME,
-
   GLW_SIGNAL_EVENT_BUBBLE,
 
   GLW_SIGNAL_EVENT,
-
-  GLW_SIGNAL_CHANGED,
 
 
   /**
@@ -305,8 +301,7 @@ typedef struct glw_class {
   size_t gc_instance_size;
   int gc_flags;
 #define GLW_NAVIGATION_SEARCH_BOUNDARY 0x1
-#define GLW_EVERY_FRAME                0x2
-#define GLW_CAN_HIDE_CHILDS            0x4
+#define GLW_CAN_HIDE_CHILDS            0x2
 
   /**
    * If the widget arranges its childer in horizontal or vertical order
@@ -356,6 +351,11 @@ typedef struct glw_class {
    * Finalize a widget
    */
   void (*gc_dtor)(struct glw *w);
+
+  /**
+   * Invoked every new frame
+   */
+  void (*gc_newframe)(struct glw *w);
 
   /**
    * Send a GLW_SIGNAL_... to all listeners

@@ -406,7 +406,7 @@ glw_create0(glw_root_t *gr, const glw_class_t *class, va_list ap)
 
   LIST_INSERT_HEAD(&gr->gr_active_dummy_list, w, glw_active_link);
 
-  if(class->gc_flags & GLW_EVERY_FRAME)
+  if(class->gc_newframe != NULL)
     LIST_INSERT_HEAD(&gr->gr_every_frame_list, w, glw_every_frame_link);
 
   TAILQ_INIT(&w->glw_childs);
@@ -483,7 +483,7 @@ glw_prepare_frame(glw_root_t *gr)
   //  glw_cursor_layout_frame(gr);
 
   LIST_FOREACH(w, &gr->gr_every_frame_list, glw_every_frame_link)
-    glw_signal0(w, GLW_SIGNAL_NEW_FRAME, NULL);
+    w->glw_class->gc_newframe(w);
 
   while((w = LIST_FIRST(&gr->gr_active_flush_list)) != NULL) {
     LIST_REMOVE(w, glw_active_link);
@@ -590,7 +590,7 @@ glw_destroy0(glw_t *w)
   free(w->glw_matrix);
   w->glw_matrix = NULL;
   
-  if(w->glw_class->gc_flags & GLW_EVERY_FRAME)
+  if(w->glw_class->gc_newframe != NULL)
     LIST_REMOVE(w, glw_every_frame_link);
 
   if(w->glw_flags & GLW_RENDER_LINKED)

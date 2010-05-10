@@ -519,11 +519,25 @@ glw_video_dtor(glw_t *w)
 /**
  *
  */
+static void
+glw_video_newframe(glw_t *w)
+{
+  glw_video_t *gv = (glw_video_t *)w;
+  video_decoder_t *vd = gv->gv_vd;
+
+  gv_buffer_allocator(vd);
+  gv_new_frame(vd, gv, w->glw_root);
+  glw_video_update_focusable(vd, w);
+}
+
+
+/**
+ *
+ */
 static int 
 glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, 
 			  void *extra)
 {
-  glw_root_t *gr = w->glw_root;
   glw_video_t *gv = (glw_video_t *)w;
   video_decoder_t *vd = gv->gv_vd;
 
@@ -531,12 +545,6 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_LAYOUT:
     if(gv->gv_sub.gvo_child != NULL)
       glw_layout0(gv->gv_sub.gvo_child, extra);
-    return 0;
-
-  case GLW_SIGNAL_NEW_FRAME:
-    gv_buffer_allocator(vd);
-    gv_new_frame(vd, gv, gr);
-    glw_video_update_focusable(vd, w);
     return 0;
 
   case GLW_SIGNAL_EVENT:
@@ -621,11 +629,11 @@ glw_video_set(glw_t *w, int init, va_list ap)
  */ 
 static glw_class_t glw_video = { 
   .gc_name = "video", 
-  .gc_flags = GLW_EVERY_FRAME,
   .gc_instance_size = sizeof(glw_video_t), 
   .gc_set = glw_video_set, 
   .gc_render = glw_video_render, 
   .gc_dtor = glw_video_dtor,
+  .gc_newframe = glw_video_newframe,
   .gc_signal_handler = glw_video_widget_callback, 
 }; 
 GLW_REGISTER_CLASS(glw_video); 
