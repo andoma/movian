@@ -158,6 +158,26 @@ glw_freefloat_layout(glw_freefloat_t *ff, glw_rctx_t *rc)
 /**
  *
  */
+static void
+glw_freefloat_detach(glw_t *w, glw_t *c)
+{
+  glw_freefloat_t *ff = (glw_freefloat_t *)w;
+  if(is_visible(ff, c)) {
+    // This one is visible, keep it for a while
+    
+    if(c == ff->pick)
+      ff->pick = TAILQ_NEXT(ff->pick, glw_parent_link);
+    
+    glw_remove_from_parent(c, w);
+    return;
+  }
+  // Destroy at once
+  glw_destroy0(c);
+}
+
+/**
+ *
+ */
 static int
 glw_freefloat_callback(glw_t *w, void *opaque, glw_signal_t signal,
 		       void *extra)
@@ -174,19 +194,6 @@ glw_freefloat_callback(glw_t *w, void *opaque, glw_signal_t signal,
     assert(!is_visible(ff, c));
     if(c == ff->pick)
       ff->pick = TAILQ_NEXT(ff->pick, glw_parent_link);
-    break;
-
-  case GLW_SIGNAL_DETACH_CHILD:
-    if(is_visible(ff, c)) {
-      // This one is visible, keep it for a while
-
-      if(c == ff->pick)
-	ff->pick = TAILQ_NEXT(ff->pick, glw_parent_link);
-
-      glw_remove_from_parent(c, w);
-      return 1;
-    }
-    // Destroy at once
     break;
 
   default:
@@ -218,6 +225,7 @@ static glw_class_t glw_freefloat = {
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_set = glw_freefloat_set,
   .gc_render = glw_freefloat_render,
+  .gc_detach = glw_freefloat_detach,
   .gc_signal_handler = glw_freefloat_callback,
 };
 

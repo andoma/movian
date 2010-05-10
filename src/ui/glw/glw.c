@@ -825,20 +825,12 @@ glw_flush0(glw_root_t *gr)
 void
 glw_detach0(glw_t *w)
 {
-  glw_t *p;
-  glw_signal_handler_t *gsh;
-
-  p = w->glw_parent;
-  if(p != NULL) {
-
-    LIST_FOREACH(gsh, &p->glw_signal_handlers, gsh_link)
-      if(gsh->gsh_func(p, gsh->gsh_opaque, GLW_SIGNAL_DETACH_CHILD, w))
-	break;
-
-    if(gsh == NULL)
-      /* Parent does not support detach, destroy child instead */
-      glw_destroy0(w);
+  glw_t *p = w->glw_parent;
+  if(p != NULL && p->glw_class->gc_detach != NULL) {
+    p->glw_class->gc_detach(p, w);
+    return;
   }
+  glw_destroy0(w);
 }
 
 

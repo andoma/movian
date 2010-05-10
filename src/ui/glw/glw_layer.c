@@ -98,17 +98,23 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     glw_layer_select_child(w);
     break;
 
-  case GLW_SIGNAL_DETACH_CHILD:
-    c->glw_flags |= GLW_DETACHED;
-    glw_layer_select_child(w);
-    return 1;
-
   case GLW_SIGNAL_CHILD_HIDDEN:
   case GLW_SIGNAL_CHILD_UNHIDDEN:
     glw_layer_select_child(w);
     break;
   }
   return 0;
+}
+
+
+/**
+ *
+ */
+static void
+glw_layer_detach(glw_t *w, glw_t *c)
+{
+  c->glw_flags |= GLW_DETACHED;
+  glw_layer_select_child(w);
 }
 
 
@@ -137,6 +143,7 @@ static glw_class_t glw_layer = {
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_instance_size = sizeof(glw_t),
   .gc_render = glw_layer_render,
+  .gc_detach = glw_layer_detach,
   .gc_signal_handler = glw_layer_callback,
 };
 

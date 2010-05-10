@@ -72,11 +72,6 @@ glw_view_loader_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extr
     }
     return 0;
 
-  case GLW_SIGNAL_DETACH_CHILD:
-    c = extra;
-    c->glw_parent_vl_tgt = 1;
-    return 1;
-
   case GLW_SIGNAL_CHILD_CREATED:
     c = extra;
 
@@ -145,6 +140,16 @@ glw_view_loader_render(glw_t *w, glw_rctx_t *rc)
 /**
  *
  */
+static void
+glw_view_loader_detach(glw_t *w, glw_t *c)
+{
+  c->glw_parent_vl_tgt = 1;
+}
+
+
+/**
+ *
+ */
 static void 
 glw_view_loader_set(glw_t *w, int init, va_list ap)
 {
@@ -206,6 +211,7 @@ static glw_class_t glw_view_loader = {
   .gc_instance_size = sizeof(glw_view_loader_t),
   .gc_set = glw_view_loader_set,
   .gc_render = glw_view_loader_render,
+  .gc_detach = glw_view_loader_detach,
   .gc_signal_handler = glw_view_loader_callback,
 };
 

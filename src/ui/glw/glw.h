@@ -204,8 +204,6 @@ typedef enum {
   GLW_SIGNAL_CHILD_CREATED,
   GLW_SIGNAL_CHILD_DESTROYED,
 
-  GLW_SIGNAL_DETACH_CHILD,
-
   GLW_SIGNAL_NEW_FRAME,
 
   GLW_SIGNAL_EVENT_BUBBLE,
@@ -349,6 +347,11 @@ typedef struct glw_class {
    * Ask widget to render itself in the current render context
    */
   void (*gc_render)(struct glw *w, struct glw_rctx *rc);
+
+  /**
+   * Ask widget to detach the given child
+   */
+  void (*gc_detach)(struct glw *w, struct glw *c);
 
   /**
    * Send a GLW_SIGNAL_... to all listeners
