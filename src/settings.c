@@ -59,6 +59,17 @@ struct setting {
  *
  */
 static void
+set_title(prop_t *src, const char *title)
+{
+  prop_set_string(prop_create(src, "title"), title);
+  prop_set_string(prop_create(prop_create(src, "metadata"), "title"), title);
+}
+
+
+/**
+ *
+ */
+static void
 settings_set_url(prop_t *p)
 {
   char url[URL_MAX];
@@ -104,7 +115,7 @@ settings_add(prop_t *parent,
   src = prop_create(p, "source");
 
   prop_set_string(prop_create(src, "id"), id);
-  prop_set_string(prop_create(src, "title"), title);
+  set_title(src, title);
   prop_set_string(prop_create(src, "type"), type);
   return src;
 }
@@ -471,7 +482,7 @@ settings_init(void)
 {
   settings_root = prop_create(prop_get_global(), "settings");
   prop_set_string(prop_create(settings_root, "type"), "settings");
-  prop_set_string(prop_create(settings_root, "title"), "Global settings");
+  set_title(settings_root, "Global settings");
 }
 
 
