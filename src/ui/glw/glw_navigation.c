@@ -134,7 +134,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
   int pagemode = 0;
   int pagecnt;
   query_t query;
-
+  int loop = 1;
 
   x = compute_position(w, GLW_ORIENTATION_HORIZONTAL);
   y = compute_position(w, GLW_ORIENTATION_VERTICAL);
@@ -294,20 +294,24 @@ glw_navigate(glw_t *w, event_t *e, int local)
 	break;
     container:
       c = w;
-      while(1) {
+      loop = 1;
+      while(loop) {
 	if(query.direction == 1) {
 	  /* Down / Right */
 	  if(pagemode == 1) {
 
 	    d = glw_next_widget(c);
 	    if(d != NULL) {
-
 	      while(pagecnt--) {
 		c = d;
 		d = glw_next_widget(c);
-		if(d == NULL)
+		if(d == NULL) {
+		  loop = 0;
 		  break;
+		}
 	      }
+	    } else {
+	      loop = 0;
 	    }
 
 	  } else if(pagemode == 2) {
@@ -328,9 +332,13 @@ glw_navigate(glw_t *w, event_t *e, int local)
 	      while(pagecnt--) {
 		c = d;
 		d = glw_prev_widget(c);
-		if(d == NULL)
+		if(d == NULL) {
+		  loop = 0;
 		  break;
+		}
 	      }
+	    } else {
+	      loop = 0;
 	    }
 
 	  } else if(pagemode == 2) {
