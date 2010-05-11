@@ -30,7 +30,6 @@
 #include "showtime.h"
 #include "glw_video_common.h"
 #include "glw_video_opengl.h"
-#include "video/yadif.h"
 
 static const char *yuv2rbg_code =
 #include "cg/yuv2rgb.h"
@@ -972,6 +971,8 @@ typedef enum {
   DEINTERLACE_YADIF_FRAME_NO_SPATIAL_ILACE,
   DEINTERLACE_YADIF_FIELD_NO_SPATIAL_ILACE,
 } deinterlacertype_t;
+
+extern void yadif_filter_line(int mode, uint8_t *dst, uint8_t *prev, uint8_t *cur, uint8_t *next, int w, int refs, int parity);
 
 /**
  * Frame delivery from video decoder

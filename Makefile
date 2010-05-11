@@ -128,15 +128,16 @@ SRCS-$(CONFIG_LIBOGC) += src/networking/net_libogc.c
 SRCS += src/video/video_playback.c \
 	src/video/video_decoder.c \
 	src/video/video_subtitles.c \
-	src/video/yadif.c \
 	src/video/subtitles.c \
 
 SRCS-$(CONFIG_DVD) += src/video/video_dvdspu.c
 
+SRCS += ext/video/yadif.c
+
 # Temporary fix for http://gcc.gnu.org/bugzilla/show_bug.cgi?id=11203
 # -OO will result in compiler error
 ifeq ($(PLATFORM), osx)
-${BUILDDIR}/src/video/yadif.o : CFLAGS = -O2
+${BUILDDIR}/ext/video/yadif.o : CFLAGS = -O2
 endif
 
 

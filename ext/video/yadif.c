@@ -21,7 +21,8 @@
 #include <string.h>
 #include <inttypes.h>
 #include <math.h>
-#include "yadif.h"
+
+void yadif_filter_line(int mode, uint8_t *dst, uint8_t *prev, uint8_t *cur, uint8_t *next, int w, int refs, int parity);
 
 #define MIN(a,b) ((a) > (b) ? (b) : (a))
 #define MAX(a,b) ((a) < (b) ? (b) : (a))
@@ -89,6 +90,7 @@
             "pandn     %%mm1, %%mm3 \n\t"\
             "por       %%mm5, %%mm3 \n\t"\
             "movq      %%mm3, %%mm1 \n\t"
+
 
 void yadif_filter_line(int mode, uint8_t *dst, uint8_t *prev, uint8_t *cur, uint8_t *next, int w, int refs, int parity){
     static const uint64_t pw_1 = 0x0001000100010001ULL;

@@ -29,7 +29,6 @@
 
 #include "showtime.h"
 #include "video_decoder.h"
-#include "yadif.h"
 #include "event.h"
 #include "media.h"
 
