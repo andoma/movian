@@ -60,7 +60,7 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       if(c->glw_flags & GLW_DETACHED) {
 
 	if(c->glw_parent_pos.z > 0.99) {
-	  glw_destroy0(c);
+	  glw_destroy(c);
 	  continue;
 	}
 	

@@ -291,7 +291,7 @@ gvo_deinit(glw_video_overlay_t *gvo)
   gvo->gvo_entries = 0;
 
   if(gvo->gvo_child != NULL) {
-    glw_destroy0(gvo->gvo_child);
+    glw_destroy(gvo->gvo_child);
     gvo->gvo_child = NULL;
   }
 }
@@ -534,7 +534,7 @@ glw_video_sub_layout_text(video_decoder_t *vd, glw_video_overlay_t *gvo,
 			  glw_root_t *gr, subtitle_t *s, glw_t *parent)
 {
   if(gvo->gvo_child != NULL)
-    glw_destroy0(gvo->gvo_child);
+    glw_destroy(gvo->gvo_child);
 
   gvo->gvo_child = glw_create_i(gr, 
 				glw_class_find_by_name("label"),

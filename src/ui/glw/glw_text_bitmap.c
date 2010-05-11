@@ -1235,7 +1235,7 @@ glw_text_flush(glw_root_t *gr)
  *
  */
 int
-glw_get_text0(glw_t *w, char *buf, size_t buflen)
+glw_get_text(glw_t *w, char *buf, size_t buflen)
 {
   glw_text_bitmap_t *gtb = (void *)w;
   char *q;
@@ -1264,7 +1264,7 @@ glw_get_text0(glw_t *w, char *buf, size_t buflen)
  *
  */
 int
-glw_get_int0(glw_t *w, int *result)
+glw_get_int(glw_t *w, int *result)
 {
   glw_text_bitmap_t *gtb = (void *)w;
 
@@ -1342,7 +1342,7 @@ gtb_notify(glw_text_bitmap_t *gtb)
     gtb->gtb_status = GTB_NEED_RERENDER;
 
   if(gtb->gtb_p != NULL) {
-    glw_get_text0(&gtb->w, buf, sizeof(buf));
+    glw_get_text(&gtb->w, buf, sizeof(buf));
     prop_set_string_ex(gtb->gtb_p, gtb->gtb_sub, buf);
   }
 }

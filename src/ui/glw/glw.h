@@ -661,7 +661,7 @@ int glw_init(glw_root_t *gr, const char *theme, ui_t *ui, int primary,
 
 void glw_load_universe(glw_root_t *gr);
 
-void glw_flush0(glw_root_t *gr);
+void glw_flush(glw_root_t *gr);
 
 void *glw_get_opaque(glw_t *w, glw_callback_t *func);
 
@@ -669,7 +669,7 @@ void glw_prepare_frame(glw_root_t *gr);
 
 void glw_cond_wait(glw_root_t *gr, hts_cond_t *c);
 
-void glw_detach0(glw_t *w);
+void glw_detach(glw_t *w);
 
 void glw_move(glw_t *w, glw_t *b);
 
@@ -848,12 +848,12 @@ do {						\
   }						\
 } while(0)
 
-int glw_signal0(glw_t *w, glw_signal_t sig, void *extra);
+int glw_signal(glw_t *w, glw_signal_t sig, void *extra);
 
 int glw_widget_unproject(const float *m, float *x, float *y, 
 			 const float *p, const float *dir);
 
-glw_t *glw_create0(glw_root_t *gr, const glw_class_t *class, va_list ap);
+glw_t *glw_create(glw_root_t *gr, const glw_class_t *class, va_list ap);
 
 glw_t *glw_create_i(glw_root_t *gr, 
 		    const glw_class_t *class, ...)
@@ -863,19 +863,19 @@ glw_t *glw_create_i(glw_root_t *gr,
 
 void glw_lock_check(const char *file, const int line);
 
-int glw_attrib_set0(glw_t *w, int init, va_list ap);
+int glw_attrib_set(glw_t *w, int init, va_list ap);
 
 void glw_set_i(glw_t *w, ...) __attribute__((__sentinel__(0)));
 
-void glw_destroy0(glw_t *w);
+void glw_destroy(glw_t *w);
 
 void glw_unref(glw_t *w);
 
 #define glw_ref(w) ((w)->glw_refcnt++)
 
-int glw_get_text0(glw_t *w, char *buf, size_t buflen);
+int glw_get_text(glw_t *w, char *buf, size_t buflen);
 
-int glw_get_int0(glw_t *w, int *result);
+int glw_get_int(glw_t *w, int *result);
 
 glw_t *glw_get_prev_n(glw_t *c, int count);
 

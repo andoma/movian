@@ -201,7 +201,7 @@ glw_view_create(glw_root_t *gr, const char *src,
   ec.sublist = &ec.w->glw_prop_subscriptions;
 
   if(glw_view_eval_block(t, &ec)) {
-    glw_destroy0(ec.w);
+    glw_destroy(ec.w);
     glw_view_free_chain(t);
     return glw_view_error(gr, &ei, parent);
   }

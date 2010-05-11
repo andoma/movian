@@ -975,7 +975,7 @@ cloner_del_child(glw_prop_sub_t *gps, prop_t *p, glw_t *parent)
 
   if((w = cloner_find_child(p, parent)) != NULL) {
     gps->gps_entries--;
-    glw_detach0(w);
+    glw_detach(w);
     return;
   }
 
@@ -1538,7 +1538,7 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
   while((w = TAILQ_PREV((glw_t *)self->t_extra, 
 			glw_queue, glw_parent_link)) != NULL &&
 	w->glw_originating_prop != NULL)
-    glw_detach0(w);
+    glw_detach(w);
 
   if(a->type == TOKEN_DIRECTORY) {
     gps = a->propsubr;
@@ -2670,7 +2670,7 @@ glwf_getCaption(glw_view_eval_context_t *ec, struct token *self,
   if(a != NULL && a->type == TOKEN_STRING) {
     w = glw_find_neighbour(ec->w, rstr_get(a->t_rstring));
 
-    if(w != NULL && !glw_get_text0(w, buf, sizeof(buf))) {
+    if(w != NULL && !glw_get_text(w, buf, sizeof(buf))) {
       r = eval_alloc(self, ec, TOKEN_STRING);
       r->t_rstring = rstr_alloc(buf);
       eval_push(ec, r);

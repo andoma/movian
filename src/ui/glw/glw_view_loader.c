@@ -61,7 +61,7 @@ glw_view_loader_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extr
 	GLW_MIN(c->glw_parent_vl_cur + a->delta, c->glw_parent_vl_tgt);
       
       if(c->glw_parent_vl_cur == 1) {
-	glw_destroy0(c);
+	glw_destroy(c);
 
 	if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
 	  glw_copy_constraints(w, c);

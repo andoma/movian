@@ -172,7 +172,7 @@ glw_freefloat_detach(glw_t *w, glw_t *c)
     return;
   }
   // Destroy at once
-  glw_destroy0(c);
+  glw_destroy(c);
 }
 
 /**

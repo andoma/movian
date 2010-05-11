@@ -174,9 +174,9 @@ glw_load_universe(glw_root_t *gr)
   glw_view_cache_flush(gr);
 
   if(gr->gr_universe != NULL)
-    glw_destroy0(gr->gr_universe);
+    glw_destroy(gr->gr_universe);
 
-  glw_flush0(gr);
+  glw_flush(gr);
 
   gr->gr_universe = glw_view_create(gr,
 				    "theme://universe.view", NULL, NULL,
@@ -210,7 +210,7 @@ update_in_path(glw_t *w)
  *
  */
 int
-glw_attrib_set0(glw_t *w, int init, va_list ap)
+glw_attrib_set(glw_t *w, int init, va_list ap)
 {
   glw_attribute_t attrib;
   glw_t *p, *b;
@@ -393,7 +393,7 @@ glw_attrib_set0(glw_t *w, int init, va_list ap)
  *
  */
 glw_t *
-glw_create0(glw_root_t *gr, const glw_class_t *class, va_list ap)
+glw_create(glw_root_t *gr, const glw_class_t *class, va_list ap)
 {
   glw_t *w; 
 
@@ -414,8 +414,8 @@ glw_create0(glw_root_t *gr, const glw_class_t *class, va_list ap)
 
   /* Parse arguments */
   
-  if(glw_attrib_set0(w, 1, ap) < 0) {
-    glw_destroy0(w);
+  if(glw_attrib_set(w, 1, ap) < 0) {
+    glw_destroy(w);
     return NULL;
   }
 
@@ -433,7 +433,7 @@ glw_create_i(glw_root_t *gr, const glw_class_t *class, ...)
   va_list ap;
 
   va_start(ap, class);
-  w = glw_create0(gr, class, ap);
+  w = glw_create(gr, class, ap);
   va_end(ap);
   return w;
 }
@@ -448,7 +448,7 @@ glw_set_i(glw_t *w, ...)
   va_list ap;
 
   va_start(ap, w);
-  glw_attrib_set0(w, 0, ap);
+  glw_attrib_set(w, 0, ap);
   va_end(ap);
 }
 
@@ -561,7 +561,7 @@ glw_remove_from_parent(glw_t *w, glw_t *p)
  *
  */
 void
-glw_destroy0(glw_t *w)
+glw_destroy(glw_t *w)
 {
   glw_t *c, *p;
   glw_root_t *gr = w->glw_root;
@@ -600,7 +600,7 @@ glw_destroy0(glw_t *w)
   LIST_REMOVE(w, glw_active_link);
 
   while((c = TAILQ_FIRST(&w->glw_childs)) != NULL)
-    glw_destroy0(c);
+    glw_destroy(c);
 
   glw_signal0(w, GLW_SIGNAL_DESTROY, NULL);
 
@@ -812,7 +812,7 @@ glw_gf_do(void)
  *
  */
 void
-glw_flush0(glw_root_t *gr)
+glw_flush(glw_root_t *gr)
 {
   glw_gf_do();
   glw_tex_flush_all(gr);
@@ -824,14 +824,14 @@ glw_flush0(glw_root_t *gr)
  *
  */
 void
-glw_detach0(glw_t *w)
+glw_detach(glw_t *w)
 {
   glw_t *p = w->glw_parent;
   if(p != NULL && p->glw_class->gc_detach != NULL) {
     p->glw_class->gc_detach(p, w);
     return;
   }
-  glw_destroy0(w);
+  glw_destroy(w);
 }
 
 

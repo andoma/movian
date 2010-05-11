@@ -409,7 +409,7 @@ window_shutdown(glw_x11_t *gx11)
     XUngrabPointer(gx11->display, CurrentTime);
     XUngrabKeyboard(gx11->display, CurrentTime);
   }
-  glw_flush0(&gx11->gr);
+  glw_flush(&gx11->gr);
   window_close(gx11);
 }
 
