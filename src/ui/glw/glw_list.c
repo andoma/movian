@@ -99,6 +99,7 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
   sa = rc->rc_size_x / rc->rc_size_y;
 
   t = GLW_MIN(GLW_MAX(0, l->center_y_target), l->center_y_max);
+  t = 2 * floorf(t / 2 * l->size_y) / l->size_y;
   l->center_y = GLW_LP(6, l->center_y, t);
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
@@ -182,6 +183,7 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
   isa = rc->rc_size_y / rc->rc_size_x;
 
   t = GLW_MIN(GLW_MAX(0, l->center_x_target), l->center_x_max);
+  t = 2 * floorf(t / 2 * l->size_x) / l->size_x;
   l->center_x = GLW_LP(6, l->center_x, t);
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
