@@ -1066,10 +1066,12 @@ glw_focus_leave(glw_t *w)
 {
   glw_t *r = NULL;
 
+  if(w->glw_root->gr_current_focus != w)
+    return;
+
   while(w->glw_parent != NULL) {
 
-    if(w->glw_parent->glw_focused != w)
-      return;
+    assert(w->glw_parent->glw_focused == w);
 
     if(!(w->glw_parent->glw_flags & GLW_DESTROYING)) {
       r = glw_focus_leave0(w->glw_parent, w);
