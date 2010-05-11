@@ -358,7 +358,15 @@ void
 event_dispatch(event_t *e)
 {
   prop_t *p;
+  event_unicode_t *eu = (event_unicode_t *)e;
 
+  
+  if(event_is_type(e, EVENT_UNICODE) && eu->sym == 32) {
+    // Convert [space] into playpause
+    event_unref(e);
+    e = event_create_action(ACTION_PLAYPAUSE);
+  }
+  
   if(event_is_action(e, ACTION_QUIT)) {
     showtime_shutdown(0);
 
