@@ -42,7 +42,6 @@ rstr_allocl(const char *in, size_t len)
     memcpy(rs->str, in, len);
   rs->str[len] = 0;
   return rs;
-
-  
 }
+
 #endif
