@@ -24,6 +24,7 @@ typedef struct query {
   float y, ymin, ymax;
 
   int direction;
+  glw_orientation_t orientation;
 
   glw_t *best;
   float score;
@@ -79,8 +80,13 @@ find_candidate(glw_t *w, query_t *query)
 
     dx = query->x - x;
     dy = query->y - y;
-    distance = sqrt(dx * dx + dy * dy);
 
+    if(query->orientation == GLW_ORIENTATION_VERTICAL)
+      dx *= 10;
+    else
+      dy *= 10;
+
+    distance = sqrt(dx * dx + dy * dy);
     if(distance < query->score) {
       query->score = distance;
       query->best = w;
@@ -125,8 +131,6 @@ glw_navigate(glw_t *w, event_t *e, int local)
 {
   glw_t  *p, *c, *t = NULL, *d;
   float x, y;
-  int direction;
-  glw_orientation_t orientation;
   int pagemode = 0;
   int pagecnt;
   query_t query;
@@ -154,8 +158,8 @@ glw_navigate(glw_t *w, event_t *e, int local)
     return 1;
 
   } else if(event_is_action(e, ACTION_UP)) {
-    orientation = GLW_ORIENTATION_VERTICAL;
-    direction   = 0;
+    query.orientation = GLW_ORIENTATION_VERTICAL;
+    query.direction   = 0;
 
     query.xmin = -1;
     query.xmax = 1;
@@ -164,8 +168,8 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
   } else if(event_is_action(e, ACTION_PAGE_UP)) {
 
-    orientation = GLW_ORIENTATION_VERTICAL;
-    direction   = 0;
+    query.orientation = GLW_ORIENTATION_VERTICAL;
+    query.direction   = 0;
     pagemode    = 1;
 
     query.xmin = -1;
@@ -174,9 +178,9 @@ glw_navigate(glw_t *w, event_t *e, int local)
     query.ymax = y - 0.0001;
 
   } else if(event_is_action(e, ACTION_TOP)) {
-
-    orientation = GLW_ORIENTATION_VERTICAL;
-    direction   = 0;
+    
+    query.orientation = GLW_ORIENTATION_VERTICAL;
+    query.direction   = 0;
     pagemode    = 2;
 
     query.xmin = -1;
@@ -186,9 +190,9 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
 
   } else if(event_is_action(e, ACTION_DOWN)) {
-
-    orientation = GLW_ORIENTATION_VERTICAL;
-    direction   = 1;
+    
+    query.orientation = GLW_ORIENTATION_VERTICAL;
+    query.direction   = 1;
 
     query.xmin = -1;
     query.xmax = 1;
@@ -197,8 +201,8 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
   } else if(event_is_action(e, ACTION_PAGE_DOWN)) {
 
-    orientation = GLW_ORIENTATION_VERTICAL;
-    direction   = 1;
+    query.orientation = GLW_ORIENTATION_VERTICAL;
+    query.direction   = 1;
     pagemode    = 1;
 
     query.xmin = -1;
@@ -208,8 +212,8 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
   } else if(event_is_action(e, ACTION_BOTTOM)) {
 
-    orientation = GLW_ORIENTATION_VERTICAL;
-    direction   = 1;
+    query.orientation = GLW_ORIENTATION_VERTICAL;
+    query.direction   = 1;
     pagemode    = 2;
 
     query.xmin = -1;
@@ -219,8 +223,8 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
   } else if(event_is_action(e, ACTION_LEFT)) {
 
-    orientation = GLW_ORIENTATION_HORIZONTAL;
-    direction   = 0;
+    query.orientation = GLW_ORIENTATION_HORIZONTAL;
+    query.direction   = 0;
 
     query.xmin = -1;
     query.xmax = x - 0.0001;
@@ -229,8 +233,8 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
   } else if(event_is_action(e, ACTION_RIGHT)) {
 
-    orientation = GLW_ORIENTATION_HORIZONTAL;
-    direction   = 1;
+    query.orientation = GLW_ORIENTATION_HORIZONTAL;
+    query.direction   = 1;
 
     query.xmin = x + 0.0001;
     query.xmax = 1;
@@ -238,14 +242,10 @@ glw_navigate(glw_t *w, event_t *e, int local)
     query.ymax = 1;
 
   } else {
-
     return 0;
-
   }
 
-  query.direction   = direction;
   pagecnt = 10;
-
   c = NULL;
   for(; (p = w->glw_parent) != NULL; w = p) {
 
@@ -258,20 +258,20 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
     case GLW_NAV_SEARCH_ARRAY:
 
-      if(orientation == GLW_ORIENTATION_VERTICAL
-	 && direction == 0 && w->glw_flags & GLW_TOP_EDGE)
+      if(query.orientation == GLW_ORIENTATION_VERTICAL
+	 && query.direction == 0 && w->glw_flags & GLW_TOP_EDGE)
 	break;
-      if(orientation == GLW_ORIENTATION_VERTICAL
-	 && direction == 1 && w->glw_flags & GLW_BOTTOM_EDGE)
+      if(query.orientation == GLW_ORIENTATION_VERTICAL
+	 && query.direction == 1 && w->glw_flags & GLW_BOTTOM_EDGE)
 	break;
-      if(orientation == GLW_ORIENTATION_HORIZONTAL &&
-	 direction == 0 && w->glw_flags & GLW_LEFT_EDGE)
+      if(query.orientation == GLW_ORIENTATION_HORIZONTAL &&
+	 query.direction == 0 && w->glw_flags & GLW_LEFT_EDGE)
 	break;
-      if(orientation == GLW_ORIENTATION_HORIZONTAL &&
-	 direction == 1 && w->glw_flags & GLW_RIGHT_EDGE)
+      if(query.orientation == GLW_ORIENTATION_HORIZONTAL &&
+	 query.direction == 1 && w->glw_flags & GLW_RIGHT_EDGE)
 	break;
 
-      if(orientation == GLW_ORIENTATION_VERTICAL) {
+      if(query.orientation == GLW_ORIENTATION_VERTICAL) {
 
 	int xentries = glw_array_get_xentries(p);
 
@@ -290,12 +290,12 @@ glw_navigate(glw_t *w, event_t *e, int local)
 	break;
       /* FALLTHROUGH */
     case GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING:
-      if(p->glw_class->gc_child_orientation != orientation)
+      if(p->glw_class->gc_child_orientation != query.orientation)
 	break;
     container:
       c = w;
       while(1) {
-	if(direction == 1) {
+	if(query.direction == 1) {
 	  /* Down / Right */
 	  if(pagemode == 1) {
 
@@ -346,16 +346,13 @@ glw_navigate(glw_t *w, event_t *e, int local)
 	if(c == NULL)
 	  break;
 	find_candidate(c, &query);
-	t = query.best;
-	if(t != NULL)
-	  break;
       }
       break;
-
     }
-    if(t != NULL)
-      break;
   }
+
+  t = query.best;
+
 
   if(t != NULL) {
     glw_focus_set(t->glw_root, t, 1);
