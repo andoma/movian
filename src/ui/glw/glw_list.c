@@ -30,6 +30,9 @@ typedef struct glw_list {
 
   glw_slider_metrics_t metrics;
 
+  int size_y;
+  int size_x;
+
 } glw_list_t;
 
 #define glw_parent_size_x glw_parent_misc[0]
@@ -85,6 +88,13 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
   float y = 0;
   float sa, size_y, t, vy;
   glw_rctx_t rc0 = *rc;
+
+  if(l->size_y != rc->rc_size_y) {
+    l->size_y = rc->rc_size_y;
+
+    if(w->glw_focused != NULL)
+      l->scroll_to_me = w->glw_focused;
+  }
 
   sa = rc->rc_size_x / rc->rc_size_y;
 
@@ -161,6 +171,13 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
   float x = 0;
   float isa, size_x, t, vx;
   glw_rctx_t rc0 = *rc;
+
+  if(l->size_x != rc->rc_size_x) {
+    l->size_x = rc->rc_size_x;
+
+    if(w->glw_focused != NULL)
+      l->scroll_to_me = w->glw_focused;
+  }
 
   isa = rc->rc_size_y / rc->rc_size_x;
 
