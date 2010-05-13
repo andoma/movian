@@ -61,6 +61,11 @@ widget(container_z, {
 	int2str($self.media.avdiff * 1000) + " ms";
     });
 
-
+    widget(label, {
+      .hidden = !$self.media.stats;
+      .caption = "GPU Core temperature: " +
+	int2str($ui.gpu.temperature.current) + " / " + 
+	    int2str($ui.gpu.temperature.max) + "°";
+    });
   });
 });
