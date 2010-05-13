@@ -68,7 +68,6 @@ typedef struct glw_x11 {
 
   PFNGLXSWAPINTERVALSGIPROC glXSwapIntervalSGI;
 
-  prop_t *prop_display;
   prop_t *prop_gpu;
 
   int fullwindow;
@@ -89,6 +88,7 @@ typedef struct glw_x11 {
 #define GX11_WM_DETECTED       0x1 // A window manager is present
 #define GX11_WM_CAN_FULLSCREEN 0x2 // WM can fullscreen us
 
+  void *nvidia;
 
 } glw_x11_t;
 
@@ -544,8 +544,6 @@ glw_x11_init(glw_x11_t *gx11)
     return 1;
   }
 
-  gx11->prop_display = prop_create(gx11->gr.gr_uii.uii_prop, "display");
-  gx11->prop_gpu     = prop_create(gx11->gr.gr_uii.uii_prop, "gpu");
 
   if((gx11->display = XOpenDisplay(gx11->displayname_real)) == NULL) {
     TRACE(TRACE_ERROR, "GLW", "Unable to open X display \"%s\"\n",
@@ -594,9 +592,6 @@ glw_x11_init(glw_x11_t *gx11)
 
   gx11->im = XOpenIM(gx11->display, NULL, NULL, NULL);
 
-#ifdef CONFIG_NVCTRL
-  nvidia_init(gx11->display, gx11->screen);
-#endif
 
   gx11->atom_deletewindow = 
     XInternAtom(gx11->display, "WM_DELETE_WINDOW", 0);
@@ -1062,6 +1057,12 @@ glw_x11_mainloop(glw_x11_t *gx11)
       clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &req, NULL);
     }
     glXSwapBuffers(gx11->display, gx11->win);
+
+#ifdef CONFIG_NVCTRL
+    if(gx11->nvidia != NULL)
+      nvidia_frame(gx11->nvidia);
+#endif
+
   }
   if(gx11->sss != NULL)
     x11_screensaver_resume(gx11->sss);
@@ -1123,6 +1124,11 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
 
   if(glw_init(gr, theme_path, ui, primary, confname, displayname_title))
     return 1;
+
+  gx11->prop_gpu = prop_create(gx11->gr.gr_uii.uii_prop, "gpu");
+#ifdef CONFIG_NVCTRL
+  gx11->nvidia = nvidia_init(gx11->display, gx11->screen, gx11->prop_gpu);
+#endif
 
   settings_create_bool(gr->gr_settings, "map_mouse_wheel_to_keys",
 		       "Map mouse wheel to up/down", 0, gr->gr_settings_store,

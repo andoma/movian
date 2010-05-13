@@ -24,26 +24,28 @@
 #include <NVCtrl/NVCtrl.h>
 #include <NVCtrl/NVCtrlLib.h>
 
-#include "nvidia.h"
 #include "showtime.h"
-
-
+#include "prop.h"
+#include "nvidia.h"
 
 typedef struct nvctrl_data {
   Display *dpy;
   int scr;
   int dev;
   
+  prop_t *temp_cur;
+  prop_t *temp_thres;
+  prop_t *temp_max;
+
   char *modelines;
   char *metamodes;
 
   int meta_720p50;
   int meta_720p60;
 
+  int temp_update_cnt;
+
 } nvctrl_data_t;
-
-
-
 
 
 static const char *
@@ -274,18 +276,19 @@ add_modes(nvctrl_data_t *nvd)
 
 
 
-void
-nvidia_init(Display *dpy, int screen)
+void *
+nvidia_init(Display *dpy, int screen, prop_t *gpu)
 {
   nvctrl_data_t *nvd;
   int event_base, error_base, major, minor, mask;
   char *str;
-  int i;
+  int v, i;
+  prop_t *p;
 
   if(!XNVCTRLQueryExtension(dpy, &event_base, &error_base) ||
      !XNVCTRLQueryVersion(dpy, &major, &minor) ||
      !XNVCTRLIsNvScreen(dpy, screen))
-    return;
+    return NULL;
   
   if(XNVCTRLQueryStringAttribute(dpy, screen, 0, 
 				 NV_CTRL_STRING_PRODUCT_NAME, &str)) {
@@ -296,7 +299,7 @@ nvidia_init(Display *dpy, int screen)
   if(!XNVCTRLQueryAttribute(dpy, screen, 0,
 			    NV_CTRL_ASSOCIATED_DISPLAY_DEVICES,
 			    &mask))
-    return;
+    return NULL;
 
   i = __builtin_popcount(mask);
 
@@ -304,7 +307,7 @@ nvidia_init(Display *dpy, int screen)
     TRACE(TRACE_ERROR, "nVidia", 
 	  "%s associated displays with screen. GPU control disabled",
 	  i ? "Multiple" : "No");
-    return;
+    return NULL;
   }
 
   if(XNVCTRLQueryStringAttribute(dpy, screen, mask,
@@ -314,8 +317,6 @@ nvidia_init(Display *dpy, int screen)
     XFree(str);
   }
   
-  if(XNVCTRLQueryAttribute(dpy, screen, 0, NV_CTRL_GPU_CORE_TEMPERATURE, &i))
-    TRACE(TRACE_DEBUG, "nVidia", "GPU Core Temp: %d°", i);
 
   if(XNVCTRLQueryAttribute(dpy, screen, mask, NV_CTRL_REFRESH_RATE, &i))
     TRACE(TRACE_DEBUG, "nVidia", 
@@ -327,9 +328,53 @@ nvidia_init(Display *dpy, int screen)
   nvd->scr = screen;
   nvd->dev = mask;
 
-  add_modes(nvd);
+  /**
+   * GPU core temperature
+   */
+  p = prop_create(gpu, "temperature");
+
+  nvd->temp_cur = prop_create(p, "current");
+  nvd->temp_thres = prop_create(p, "thres");
+  nvd->temp_max = prop_create(p, "max");
 
 
-  XNVCTRLSetAttribute(dpy, screen, mask,
-		      NV_CTRL_GPU_SCALING, 0x20003);
+  if(XNVCTRLQueryAttribute(dpy, screen, 0, 
+			   NV_CTRL_GPU_MAX_CORE_THRESHOLD, &v))
+    prop_set_int(nvd->temp_max, v);
+
+  if(XNVCTRLQueryAttribute(dpy, screen, 0, 
+			   NV_CTRL_GPU_CORE_THRESHOLD, &v))
+    prop_set_int(nvd->temp_thres, v);
+
+
+
+  if(0) {
+    add_modes(nvd);
+    XNVCTRLSetAttribute(dpy, screen, mask,
+			NV_CTRL_GPU_SCALING, 0x20003);
+  }
+  return nvd;
+}
+
+
+/**
+ *
+ */
+void
+nvidia_frame(void *aux)
+{
+  nvctrl_data_t *nvd = aux;
+  int i;
+
+  if(nvd->temp_update_cnt == 0) {
+    nvd->temp_update_cnt = 100;
+
+    if(XNVCTRLQueryAttribute(nvd->dpy, nvd->scr, 0, 
+			     NV_CTRL_GPU_CORE_TEMPERATURE, &i))
+      prop_set_int(nvd->temp_cur, i);
+    
+  } else {
+    nvd->temp_update_cnt--;
+  }
+  
 }
