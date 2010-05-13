@@ -337,6 +337,7 @@ nvidia_init(Display *dpy, int screen, prop_t *gpu)
   nvd->temp_thres = prop_create(p, "thres");
   nvd->temp_max = prop_create(p, "max");
 
+  prop_set_int(prop_create(p, "available"), 1);
 
   if(XNVCTRLQueryAttribute(dpy, screen, 0, 
 			   NV_CTRL_GPU_MAX_CORE_THRESHOLD, &v))

@@ -62,7 +62,7 @@ widget(container_z, {
     });
 
     widget(label, {
-      .hidden = !$self.media.stats;
+      .hidden = !$self.media.stats || !$ui.gpu.temperature.available;
       .caption = "GPU Core temperature: " +
 	int2str($ui.gpu.temperature.current) + " / " + 
 	    int2str($ui.gpu.temperature.max) + "°";
