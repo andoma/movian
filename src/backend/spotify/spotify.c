@@ -193,7 +193,6 @@ typedef struct spotify_page {
  */
 typedef struct spotify_open_track {
   char *sot_url;
-  prop_t *sot_psource;
 } spotify_open_track_t;
 
 
@@ -1291,11 +1290,10 @@ spotify_open_track(spotify_open_track_t *sot)
     if(f_sp_link_type(l) == SP_LINKTYPE_TRACK) {
       prop_t *m = prop_create(NULL, "metadata");
       metadata_create(m, METADATA_TRACK, f_sp_link_as_track(l));
-      playqueue_play(sot->sot_url, sot->sot_psource, m, 0);
+      playqueue_play(sot->sot_url, m);
     }
     f_sp_link_release(l);
   }
-  prop_ref_dec(sot->sot_psource);
   free(sot->sot_url);
   free(sot);
 }
@@ -2303,10 +2301,6 @@ be_spotify_open(struct navigator *nav,
     spotify_open_track_t *sot = malloc(sizeof(spotify_open_track_t));
 
     sot->sot_url = url;
-
-    prop_ref_inc(psource);
-    sot->sot_psource = psource;
-
     spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_OPEN_TRACK, sot));
 
   } else {
@@ -2593,7 +2587,7 @@ be_spotify_get_parent(const char *url,
 
   sp.sp_errcode = -1;
   sp.sp_uri = url;
-
+  printf("get parent for %s\n", url);
   spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_GET_PARENT, &sp));
 
   while(sp.sp_errcode == -1)
@@ -2602,6 +2596,7 @@ be_spotify_get_parent(const char *url,
   hts_mutex_unlock(&spotify_mutex);
 
   if(sp.sp_errcode == 0) {
+    printf("parent = %s\n", sp.sp_parent);
     snprintf(parent, parentlen, "%s", sp.sp_parent);
     free(sp.sp_parent);
     return 0;

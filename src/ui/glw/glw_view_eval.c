@@ -623,6 +623,28 @@ resolve_property_name(glw_view_eval_context_t *ec, token_t *a, int follow_links)
   return 0;
 }
 
+
+/**
+ *
+ */
+static token_t *
+resolve_property_name2(glw_view_eval_context_t *ec, token_t *t)
+{
+  switch(t->type) {
+  case TOKEN_PROPERTY_NAME:
+    if(resolve_property_name(ec, t, 1))
+      return NULL;
+    /* FALLTHRU */
+  case TOKEN_PROPERTY:
+    break;
+  default:
+    glw_view_seterr(ec->ei, t, "Argument is not a property");
+    return NULL;
+  }
+  return t;
+}
+
+
 /**
  *
  */
@@ -1791,19 +1813,8 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
     return glw_view_seterr(ec->ei, b, "navOpen(): "
 			    "Second argument is not a string or (void)");
 
-  if(c != NULL) {
-    switch(c->type) {
-    case TOKEN_PROPERTY_NAME:
-      if(resolve_property_name(ec, c, 1))
-	return -1;
-      /* FALLTHRU */
-    case TOKEN_PROPERTY:
-      break;
-    default:
-      return glw_view_seterr(ec->ei, b, "navOpen(): "
-			     "Third argument is not a property");
-    }
-  }
+  if(c != NULL && (c = resolve_property_name2(ec, c)) == NULL)
+    return -1;
 
   if(a == NULL || a->type == TOKEN_VOID)
     url = NULL;
@@ -1817,6 +1828,27 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
 					  b && b->type == TOKEN_STRING ?
 					  rstr_get(b->t_rstring) : NULL,
 					  c ? c->t_prop : NULL);
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int 
+glwf_playTrackFromSource(glw_view_eval_context_t *ec, struct token *self,
+			 token_t **argv, unsigned int argc)
+{
+  token_t *a, *b, *r;
+
+  if((a = resolve_property_name2(ec, argv[0])) == NULL)
+    return -1;
+  if((b = resolve_property_name2(ec, argv[1])) == NULL)
+    return -1;
+
+  r = eval_alloc(self, ec, TOKEN_EVENT);
+  r->t_gem = glw_event_map_playTrack_create(a->t_prop, b->t_prop, 0);
   eval_push(ec, r);
   return 0;
 }
@@ -3232,6 +3264,7 @@ static const token_func_t funcvec[] = {
   {"space", 1, glwf_space},
   {"onEvent", -1, glwf_onEvent},
   {"navOpen", -1, glwf_navOpen},
+  {"playTrackFromSource", 2, glwf_playTrackFromSource},
   {"selectTrack", 1, glwf_selectTrack},
   {"targetedEvent", 2, glwf_targetedEvent},
   {"fireEvent", 1, glwf_fireEvent},

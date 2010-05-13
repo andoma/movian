@@ -51,6 +51,11 @@ typedef struct playqueue_entry {
   uint8_t pqe_playable;
 
   /**
+   * Set if this entry should be played ASAP
+   */
+  uint8_t pqe_startme;
+
+  /**
    * Global link. Protected by playqueue_mutex
    */
   TAILQ_ENTRY(playqueue_entry) pqe_linear_link;
@@ -61,7 +66,7 @@ typedef struct playqueue_entry {
    * Points back into node prop from source siblings
    * A ref is held on this prop when it's not NULL.
    */
-  prop_t *pqe_source;
+  prop_t *pqe_originator;
 
   /**
    * Subscribes to source.url
@@ -93,7 +98,7 @@ typedef struct playqueue_event {
 } playqueue_event_t;
 
 
-void playqueue_play(const char *url, prop_t *psource, prop_t *p, int enq);
+void playqueue_play(const char *url, prop_t *meta);
 
 void playqueue_event_handler(event_t *e);
 

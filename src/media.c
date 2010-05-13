@@ -1066,9 +1066,10 @@ media_eventsink(void *opaque, prop_event_t event, ...)
 
   e = va_arg(ap, event_t *);
 
-  if(media_primary != NULL) {
+  if(event_is_type(e, EVENT_PLAYTRACK)) {
+    playqueue_event_handler(e);
 
-
+  } else if(media_primary != NULL) {
     if(event_is_action(e, ACTION_SHOW_MEDIA_STATS)) {
       prop_toggle_int(media_primary->mp_prop_stats);
     } else if(event_is_action(e, ACTION_SHUFFLE)) {

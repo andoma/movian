@@ -73,6 +73,13 @@ glw_event_map_t *glw_event_map_selectTrack_create(const char *id);
 /**
  *
  */
+glw_event_map_t *glw_event_map_playTrack_create(prop_t *track,
+						prop_t *source, int mode);
+
+
+/**
+ *
+ */
 glw_event_map_t *glw_event_map_internal_create(const char *target,
 					       event_type_t event);
 

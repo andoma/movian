@@ -344,7 +344,7 @@ openpage(struct navigator *nav,
     prop_t *meta = prop_create(NULL, "metadata");
     prop_link(ct->ct_metadata, meta);
 
-    playqueue_play(url, psource, meta, 0);
+    playqueue_play(url, meta);
     *npp = NULL;
     return 0;
   }

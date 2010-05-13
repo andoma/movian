@@ -184,7 +184,7 @@ file_open_file(struct navigator *nav,
     }
 #endif
 
-    playqueue_play(url, psource, meta, 0);
+    playqueue_play(url, meta);
     //    free(parent);
     *npp = NULL;
     return 0;

@@ -40,6 +40,7 @@ static int playqueue_repeat_mode = 0;
 #define PLAYQUEUE_URL "playqueue:"
 
 static prop_t *playqueue_root;
+static prop_t *playqueue_nodes;
 
 static void *player_thread(void *aux);
 
@@ -73,10 +74,7 @@ static struct playqueue_request_queue playqueue_requests;
 typedef struct playqueue_request {
   TAILQ_ENTRY(playqueue_request) pqr_link;
   char *pqr_url;
-  prop_t *pqr_psource;
   prop_t *pqr_meta;
-  int pqr_enq;
-
 } playqueue_request_t;
 
 /**
@@ -86,6 +84,7 @@ static prop_t *playqueue_source;
 static prop_sub_t *playqueue_source_sub;
 static playqueue_entry_t *playqueue_source_justadded;
 static struct playqueue_entry_queue playqueue_source_entries;
+static prop_t *playqueue_startme;
 
 static void update_prev_next(void);
 
@@ -99,13 +98,13 @@ pqe_unref(playqueue_entry_t *pqe)
     return;
 
   assert(pqe->pqe_linked == 0);
-  assert(pqe->pqe_source == NULL);
+  assert(pqe->pqe_originator == NULL);
   assert(pqe->pqe_urlsub == NULL);
   assert(pqe->pqe_typesub == NULL);
 
   free(pqe->pqe_url);
-  if(pqe->pqe_psource != NULL)
-    prop_ref_dec(pqe->pqe_psource);
+  if(pqe->pqe_originator != NULL)
+    prop_ref_dec(pqe->pqe_originator);
 
   prop_destroy(pqe->pqe_node);
 
@@ -156,6 +155,17 @@ pqe_event_create(playqueue_entry_t *pqe, int jump)
  *
  */
 static void
+pqe_play(playqueue_entry_t *pqe, int jump)
+{
+  event_t *e = pqe_event_create(pqe, jump);
+  mp_enqueue_event(playqueue_mp, e);
+  event_unref(e);
+}
+
+/**
+ *
+ */
+static void
 pqe_unsubscribe(playqueue_entry_t *pqe)
 {
   if(pqe->pqe_urlsub != NULL) {
@@ -180,8 +190,8 @@ pqe_remove_from_sourcequeue(playqueue_entry_t *pqe)
 
   pqe_unsubscribe(pqe);
 
-  prop_ref_dec(pqe->pqe_source);
-  pqe->pqe_source = NULL;
+  prop_ref_dec(pqe->pqe_originator);
+  pqe->pqe_originator = NULL;
 
   pqe_unref(pqe);
 }
@@ -233,6 +243,11 @@ playqueue_clear(void)
 
   while((pqe = TAILQ_FIRST(&playqueue_entries)) != NULL)
     pqe_remove_from_globalqueue(pqe);
+
+  if(playqueue_startme != NULL) {
+    prop_ref_dec(playqueue_startme);
+    playqueue_startme = NULL;
+  }
 }
 
 
@@ -285,7 +300,7 @@ pq_fill_from_source_backwards(playqueue_entry_t *pqe)
     pqe_insert_shuffled(pqe);
     update_prev_next();
 
-    if(prop_set_parent_ex(pqe->pqe_node, playqueue_root, b->pqe_node, NULL))
+    if(prop_set_parent_ex(pqe->pqe_node, playqueue_nodes, b->pqe_node, NULL))
       abort();
     
     b = pqe;
@@ -312,7 +327,7 @@ pq_fill_from_source_forwards(playqueue_entry_t *pqe)
     pqe_insert_shuffled(pqe);
     update_prev_next();
 
-    if(prop_set_parent_ex(pqe->pqe_node, playqueue_root, NULL, NULL))
+    if(prop_set_parent_ex(pqe->pqe_node, playqueue_nodes, NULL, NULL))
       abort();
   }
 }
@@ -334,6 +349,11 @@ source_set_url(void *opaque, const char *str)
   free(pqe->pqe_url);
   pqe->pqe_url = strdup(str);
 
+  if(pqe->pqe_startme) {
+    pqe_play(pqe, 1);
+    pqe->pqe_startme = 0;
+  }
+
   if(ja == NULL || strcmp(ja->pqe_url, str))
     return;
 
@@ -342,8 +362,8 @@ source_set_url(void *opaque, const char *str)
    * and destroy pqe
    */
 
-  ja->pqe_source = pqe->pqe_source; // refcount transfered
-  pqe->pqe_source = NULL;
+  ja->pqe_originator = pqe->pqe_originator; // refcount transfered
+  pqe->pqe_originator = NULL;
 
   n = TAILQ_NEXT(pqe, pqe_source_link);
 
@@ -391,7 +411,7 @@ find_source_entry_by_prop(prop_t *p)
   playqueue_entry_t *pqe;
 
   TAILQ_FOREACH(pqe, &playqueue_source_entries, pqe_source_link)
-    if(pqe->pqe_source == p)
+    if(pqe->pqe_originator == p)
       return pqe;
   return NULL;
 }
@@ -407,9 +427,15 @@ add_from_source(prop_t *p, playqueue_entry_t *before)
 
   pqe = calloc(1, sizeof(playqueue_entry_t));
   prop_ref_inc(playqueue_source);
-  pqe->pqe_psource = playqueue_source;
   pqe->pqe_refcount = 1;
-  pqe->pqe_source = p;
+  pqe->pqe_originator = p;
+
+  if(p == playqueue_startme) {
+    pqe->pqe_startme = 1;
+    prop_ref_dec(playqueue_startme);
+    playqueue_startme = NULL;
+  }
+
   /**
    * We assume it's playable until we know better (see source_set_type)
    */
@@ -458,7 +484,7 @@ add_from_source(prop_t *p, playqueue_entry_t *before)
   pqe_insert_shuffled(pqe);
   update_prev_next();
 
-  if(prop_set_parent_ex(pqe->pqe_node, playqueue_root, 
+  if(prop_set_parent_ex(pqe->pqe_node, playqueue_nodes, 
 			before ? before->pqe_node : NULL, NULL))
     abort();
 }
@@ -558,6 +584,43 @@ siblings_populate(void *opaque, prop_event_t event, ...)
 
 
 /**
+ *
+ */
+static void
+playqueue_load_with_source(prop_t *track, prop_t *source, int mode)
+{
+  playqueue_entry_t *pqe;
+
+  hts_mutex_lock(&playqueue_mutex);
+
+  TAILQ_FOREACH(pqe, &playqueue_entries, pqe_linear_link) {
+    if(pqe->pqe_originator == track) {
+      pqe_play(pqe, 1);
+      hts_mutex_unlock(&playqueue_mutex);
+      return;
+    }
+  }
+
+  playqueue_clear();
+
+  playqueue_startme = track;
+  prop_ref_inc(playqueue_startme);
+
+  playqueue_source_sub = 
+    prop_subscribe(0,
+		   PROP_TAG_NAME("self", "nodes"),
+		   PROP_TAG_CALLBACK, siblings_populate, NULL,
+		   PROP_TAG_MUTEX, &playqueue_mutex,
+		   PROP_TAG_NAMED_ROOT, source, "self", 
+		   NULL);
+
+  playqueue_source = prop_xref_addref(source);
+
+  hts_mutex_unlock(&playqueue_mutex);
+}
+
+
+/**
  * Load siblings to the 'justadded' track.
  */
 static void
@@ -578,7 +641,7 @@ playqueue_load_siblings(prop_t *psource, playqueue_entry_t *justadded)
 		   PROP_TAG_NAMED_ROOT, psource, "self", 
 		   NULL);
 
-  playqueue_source = prop_xref_addref(psource);;
+  playqueue_source = prop_xref_addref(psource);
 }
 
 
@@ -594,47 +657,25 @@ playqueue_load_siblings(prop_t *psource, playqueue_entry_t *justadded)
  * That way users may 'stick in' track in the current playqueue
  */
 static void
-playqueue_load(const char *url, prop_t *psource, prop_t *metadata, int enq)
+playqueue_load(const char *url, prop_t *metadata, int enq)
 {
   playqueue_entry_t *pqe, *prev;
   event_t *e;
+  prop_t *psource = NULL;
 
-
-  if(psource == NULL) {
-    char pbuf[URL_MAX];
-    if(!backend_get_parent(url, pbuf, sizeof(pbuf), NULL, 0)) {
-
-      char errbuf[256];
-      if((psource = backend_list(url, errbuf, sizeof(errbuf))) == NULL) {
-	TRACE(TRACE_ERROR, "playqueue", "Unable to scan %s: %s", url, errbuf);
-      }
+  char pbuf[URL_MAX];
+  if(!backend_get_parent(url, pbuf, sizeof(pbuf), NULL, 0)) {
+    
+    char errbuf[256];
+    if((psource = backend_list(pbuf, errbuf, sizeof(errbuf))) == NULL) {
+      TRACE(TRACE_ERROR, "playqueue", "Unable to scan %s: %s", url, errbuf);
     }
   }
 
   hts_mutex_lock(&playqueue_mutex);
 
-  TAILQ_FOREACH(pqe, &playqueue_entries, pqe_linear_link) {
-    if(pqe->pqe_url != NULL && !strcmp(pqe->pqe_url, url) && 
-       playqueue_source == pqe->pqe_psource) {
-      /* Already in, go to it */
-      e = pqe_event_create(pqe, 1);
-      mp_enqueue_event(playqueue_mp, e);
-      event_unref(e);
-
-      hts_mutex_unlock(&playqueue_mutex);
-
-      if(metadata != NULL)
-	prop_destroy(metadata);
-
-      if(psource != NULL)
-	prop_destroy(psource);
-      return;
-    }
-  }
-
-
   pqe = calloc(1, sizeof(playqueue_entry_t));
-  pqe->pqe_url    = strdup(url);
+  pqe->pqe_url = strdup(url);
   if(psource != NULL) {
     pqe->pqe_psource = psource;
     prop_ref_inc(psource);
@@ -642,8 +683,8 @@ playqueue_load(const char *url, prop_t *psource, prop_t *metadata, int enq)
     pqe->pqe_psource = NULL;
   }
 
-  pqe->pqe_node   = prop_create(NULL, NULL);
-  pqe->pqe_enq    = enq;
+  pqe->pqe_node = prop_create(NULL, NULL);
+  pqe->pqe_enq = enq;
   pqe->pqe_refcount = 1;
   pqe->pqe_linked = 1;
   pqe->pqe_playable = 1;
@@ -681,7 +722,7 @@ playqueue_load(const char *url, prop_t *psource, prop_t *metadata, int enq)
   TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_linear_link);
   pqe_insert_shuffled(pqe);
   update_prev_next();
-  if(prop_set_parent(pqe->pqe_node, playqueue_root))
+  if(prop_set_parent(pqe->pqe_node, playqueue_nodes))
     abort();
 
   /* Tick player to play it */
@@ -718,9 +759,7 @@ playqueue_thread(void *aux)
     
     hts_mutex_unlock(&playqueue_request_mutex);
 
-    playqueue_load(pqr->pqr_url, pqr->pqr_psource, pqr->pqr_meta,
-		   pqr->pqr_enq);
-
+    playqueue_load(pqr->pqr_url, pqr->pqr_meta, 0);
     free(pqr->pqr_url);
     free(pqr);
 
@@ -736,15 +775,12 @@ playqueue_thread(void *aux)
  * We don't want to hog caller, so we dispatch the request to a worker thread.
  */
 void
-playqueue_play(const char *url, prop_t *psource, prop_t *meta,
-	       int enq)
+playqueue_play(const char *url, prop_t *meta)
 {
-  playqueue_request_t *pqr = malloc(sizeof(playqueue_request_t));
+  playqueue_request_t *pqr = calloc(1, sizeof(playqueue_request_t));
 
   pqr->pqr_url     = strdup(url);
-  pqr->pqr_psource = prop_xref_addref(psource);
   pqr->pqr_meta    = meta;
-  pqr->pqr_enq     = enq;
 
   hts_mutex_lock(&playqueue_request_mutex);
   TAILQ_INSERT_TAIL(&playqueue_requests, pqr, pqr_link);
@@ -774,6 +810,30 @@ playqueue_set_repeat(void *opaque, int v)
   playqueue_repeat_mode = v;
   TRACE(TRACE_DEBUG, "playqueue", "Repeat set to %s", v ? "on" : "off");
   update_prev_next();
+}
+
+
+/**
+ *
+ */
+static void
+pq_eventsink(void *opaque, prop_event_t event, ...)
+{
+  event_t *e;
+  event_playtrack_t *ep;
+
+  va_list ap;
+  va_start(ap, event);
+
+  if(event != PROP_EXT_EVENT)
+    return;
+
+  e = va_arg(ap, event_t *);
+  if(!event_is_type(e, EVENT_PLAYTRACK))
+    return;
+
+  ep = (event_playtrack_t *)e;
+  playqueue_load_with_source(ep->track, ep->source, 0);
 }
 
 
@@ -812,13 +872,18 @@ playqueue_init(void)
 		 NULL);
 
   playqueue_root = prop_create(prop_get_global(), "playqueue");
+  playqueue_nodes = prop_create(playqueue_root, "nodes");
 
   hts_thread_create_detached("playqueue", playqueue_thread, NULL);
   hts_thread_create_detached("audioplayer", player_thread, NULL);
+
+  prop_subscribe(0,
+		 PROP_TAG_NAME("playqueue", "eventsink"),
+		 PROP_TAG_CALLBACK, pq_eventsink, NULL,
+		 PROP_TAG_ROOT, playqueue_root,
+		 NULL);
   return 0;
 }
-
-
 
 
 /**
@@ -839,7 +904,7 @@ be_playqueue_open(struct navigator *nav,
 
   src = prop_create(n->np_prop_root, "source");
   prop_set_string(prop_create(src, "type"), "playqueue");
-  prop_link(playqueue_root, prop_create(src, "nodes"));
+  prop_link(playqueue_nodes, prop_create(src, "nodes"));
   return 0;
 }
 
@@ -1039,7 +1104,16 @@ player_thread(void *aux)
     update_prev_next();
     hts_mutex_unlock(&playqueue_mutex);
 
+    p = prop_get_by_name(PNVEC("self", "playing"), 1,
+			 PROP_TAG_NAMED_ROOT, pqe->pqe_node, "self",
+			 NULL);
+
+    prop_set_int(p, 1);
+
     e = backend_play_audio(pqe->pqe_url, mp, errbuf, sizeof(errbuf));
+
+    prop_set_int(p, 0);
+    prop_ref_dec(p);
 
     if(e == NULL) {
       notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nPlayqueue error: %s",
@@ -1084,7 +1158,6 @@ void
 playqueue_event_handler(event_t *e)
 {
   if(event_is_action(e, ACTION_PLAY) ||
-     event_is_action(e, ACTION_PLAYPAUSE)) {
+     event_is_action(e, ACTION_PLAYPAUSE))
     mp_enqueue_event(playqueue_mp, e);
-  }
 }

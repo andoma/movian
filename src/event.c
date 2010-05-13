@@ -252,6 +252,36 @@ event_create_openurl(const char *url, const char *type, struct prop *psource)
  *
  */
 static void
+playtrack_dtor(event_t *e)
+{
+  event_playtrack_t *ep = (event_playtrack_t *)e;
+  prop_destroy(ep->track);
+  prop_destroy(ep->source);
+  free(ep);
+}
+
+
+/**
+ *
+ */
+event_t *
+event_create_playtrack(struct prop *track, struct prop *psource, int mode)
+{
+  event_playtrack_t *ep = event_create(EVENT_PLAYTRACK, 
+				       sizeof(event_playtrack_t));
+
+  ep->track    = prop_xref_addref(track);
+  ep->source   = prop_xref_addref(psource);
+  ep->mode     = mode;
+  ep->h.e_dtor = playtrack_dtor;
+  return &ep->h;
+}
+
+
+/**
+ *
+ */
+static void
 event_select_track_dtor(event_t *e)
 {
   event_select_track_t *est = (void *)e;
@@ -416,8 +446,11 @@ event_dispatch(event_t *e)
 
     event_to_prop(prop_get_by_name(PNVEC("global", "media", "eventsink"),
 				   1, NULL), e);
-  }
+  } else if(event_is_type(e, EVENT_PLAYTRACK)) {
+    event_to_prop(prop_get_by_name(PNVEC("global", "playqueue", "eventsink"),
+				   1, NULL), e);
 
+  }
 
   event_unref(e);
 }

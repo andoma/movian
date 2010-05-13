@@ -33,7 +33,7 @@ widget(container_x, {
 
     widget(icon, {
       .source = 
-	select($self.url == $global.media.current.url,
+	select($self.playing,
 	       "theme://icons/32x32/play.png",
 	       "theme://icons/32x32/audio.png");
     });
@@ -43,7 +43,7 @@ widget(container_x, {
     .weight = 2.0;
     SUB_PLATE(true);
 
-    onEvent(enter, navOpen($self.url, $self.type, $parent.source));
+    onEvent(enter, playTrackFromSource($self, $parent.source));
     widget(label, {
       .align = left; 
       .caption = $self.metadata.title;

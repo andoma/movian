@@ -110,6 +110,68 @@ glw_event_map_navOpen_create(const char *url,
 }
 
 
+
+/**
+ *
+ */
+typedef struct glw_event_playTrack {
+  glw_event_map_t map;
+
+  prop_t *track;
+  prop_t *source;
+  int mode;
+
+} glw_event_playTrack_t;
+
+
+/**
+ *
+ */
+static void
+glw_event_map_playTrack_dtor(glw_event_map_t *gem)
+{
+  glw_event_playTrack_t *g = (glw_event_playTrack_t *)gem;
+
+  prop_ref_dec(g->track);
+  prop_ref_dec(g->source);
+  free(g);
+}
+
+/**
+ *
+ */
+static void
+glw_event_map_playTrack_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
+{
+  glw_event_playTrack_t *g = (glw_event_playTrack_t *)gem;
+  event_t *e = event_create_playtrack(g->track, g->source, g->mode);
+  
+  e->e_mapped = 1;
+  event_bubble(w, e);
+}
+
+
+/**
+ *
+ */
+glw_event_map_t *
+glw_event_map_playTrack_create(prop_t *track, prop_t *source, int mode)
+{
+  glw_event_playTrack_t *g = malloc(sizeof(glw_event_playTrack_t));
+
+  g->track  = track;
+  g->source = source;
+  g->mode   = mode;
+  
+  prop_ref_inc(track);
+  prop_ref_inc(source);
+  g->map.gem_dtor = glw_event_map_playTrack_dtor;
+  g->map.gem_fire = glw_event_map_playTrack_fire;
+  return &g->map;
+}
+
+
+
 /**
  *
  */
@@ -163,7 +225,6 @@ glw_event_map_selectTrack_create(const char *id)
   st->map.gem_fire = glw_event_map_selectTrack_fire;
   return &st->map;
 }
-
 
 
 /**
