@@ -236,6 +236,7 @@ backend_t be_file = {
   .be_play_audio = be_file_playaudio,
   .be_list = be_list,
   .be_imageloader = fa_imageloader,
+  .be_normalize = fa_normalize,
 };
 
 BE_REGISTER(file);

@@ -203,6 +203,17 @@ nav_open0(navigator_t *nav, const char *url)
   nav_page_t *np, *np2;
   backend_t *be;
   char errbuf[128];
+  char urlbuf[URL_MAX];
+
+  be = backend_canhandle(url);
+
+  if(be == NULL) {
+    notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nNo handler for URL", url);
+    return;
+  }
+  
+  if(be->be_normalize != NULL && !be->be_normalize(url, urlbuf, sizeof(urlbuf)))
+    url = urlbuf;
 
   TRACE(TRACE_DEBUG, "navigator", "Opening %s", url);
 
@@ -217,13 +228,6 @@ nav_open0(navigator_t *nav, const char *url)
   }
 
   if(np == NULL) {
-
-    be = backend_canhandle(url);
-
-    if(be == NULL) {
-      notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nNo handler for URL", url);
-      return;
-    }
 
     if(be->be_open(nav, url, &np, errbuf, sizeof(errbuf))) {
       notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nError: %s", url, errbuf);

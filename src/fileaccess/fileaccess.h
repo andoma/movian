@@ -144,6 +144,8 @@ void *fa_quickload(const char *filename, size_t *sizeptr, const char *theme,
 
 int fa_parent(char *dst, size_t dstlen, const char *url);
 
+int fa_normalize(const char *url, char *dst, size_t dstlen);
+
 struct htsbuf_queue;
 int http_request(const char *url, const char **arguments, 
 		 char **result, size_t *result_sizep,

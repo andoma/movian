@@ -116,6 +116,13 @@ typedef struct fa_protocol {
   void *(*fap_quickload)(struct fa_protocol *fap, const char *url,
 			 size_t *sizeptr, char *errbuf, size_t errlen);
 
+  /**
+   * Normalize the given URL.
+   *
+   * Remove any relative components and symlinks, etc
+   */
+  int (*fap_normalize)(struct fa_protocol *fap, const char *url,
+		       char *dst, size_t dstlen);
   
 } fa_protocol_t;
 

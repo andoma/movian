@@ -298,6 +298,22 @@ fs_notify(struct fa_protocol *fap, const char *url,
 
 #endif
 
+#ifndef WII
+/**
+ *
+ */
+static int
+fs_normalize(struct fa_protocol *fap, const char *url, char *dst, size_t dstlen)
+{
+  char res[PATH_MAX];
+  
+  if(realpath(url, res) == NULL)
+    return -1;
+  snprintf(dst, dstlen, "file://%s", res);
+  return 0;
+}
+#endif
+
 
 fa_protocol_t fa_protocol_fs = {
   .fap_name = "file",
@@ -310,6 +326,9 @@ fa_protocol_t fa_protocol_fs = {
   .fap_stat  = fs_stat,
 #ifdef linux
   .fap_notify = fs_notify,
+#endif
+#ifndef WII
+  .fap_normalize = fs_normalize,
 #endif
 };
 

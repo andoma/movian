@@ -59,6 +59,8 @@ typedef struct backend {
 				   const char *theme,
 				   char *errbuf, size_t errlen);
 
+  int (*be_normalize)(const char *url, char *dst, size_t dstlen);
+
 } backend_t;
 
 

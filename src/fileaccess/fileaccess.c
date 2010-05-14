@@ -112,6 +112,26 @@ fa_can_handle(const char *url, char *errbuf, size_t errsize)
   return 1;
 }
 
+
+/**
+ *
+ */
+int
+fa_normalize(const char *url, char *dst, size_t dstlen)
+{
+  fa_protocol_t *fap;
+  char *filename;
+  int r;
+
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, NULL, 0)) == NULL)
+    return -1;
+  
+  r = fap->fap_normalize ? fap->fap_normalize(fap, url, dst, dstlen) : -1;
+  free(filename);
+  return r;
+}
+
+
 /**
  *
  */
