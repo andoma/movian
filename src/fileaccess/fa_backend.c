@@ -73,8 +73,7 @@ file_open_dir(struct navigator *nav,
   prop_t *src, *view, *metadata;
   int type, l;
   char *dirname;
-  char *parent, *x;
-  const char *proto;
+  char parent[URL_MAX];
   type = fa_probe_dir(NULL, url0);
 
   if(type == CONTENT_DVD) {
@@ -89,50 +88,23 @@ file_open_dir(struct navigator *nav,
 
   src = prop_create(np->np_prop_root, "source");
   prop_set_string(prop_create(src, "type"), "directory");
-
-  l = strlen(url0);
-  dirname = alloca(l + 1);
-  parent  = alloca(l + 1);
-
-  memcpy(dirname, url0, l + 1);
-  memcpy(parent,  url0, l + 1);
+  metadata = prop_create(src, "metadata");
 
   /* Find a meaningfull page title (last component of URL) */
+  l = strlen(url0);
+  dirname = alloca(l + 1);
   memcpy(dirname, url0, l + 1);
   if(l > 0 && dirname[l - 1] == '/')
     dirname[l - 1] = 0;
 
   dirname = strrchr(dirname, '/') ? strrchr(dirname, '/') + 1 : dirname;
-
-  metadata = prop_create(src, "metadata");
-
   prop_set_string(prop_create(metadata, "title"), dirname);
 
-  x = strstr(parent, "://");
-  if(x != NULL) {
-    proto = parent;
-    *x = 0;
-    parent = x + 3;
-  } else {
-    proto = "file";
-  }
-
-  if(strcmp(parent, "/")) {
-    /* Set parent */
-    if((x = strrchr(parent, '/')) != NULL) {
-      *x = 0;
-      if(x[1] == 0) {
-	/* Trailing slash */
-	if((x = strrchr(parent, '/')) != NULL) {
-	  *x = 0;
-	}
-      }
-      prop_set_stringf(prop_create(src, "parent"), "%s://%s/", proto, parent);
-    }
-  }
+  // Set parent
+  if(!fa_parent(parent, sizeof(parent), url0))
+    prop_set_string(prop_create(np->np_prop_root, "parent"), parent);
 
   fa_scanner(url0, src, view);
-
   *npp = np;
   return 0;
 }
