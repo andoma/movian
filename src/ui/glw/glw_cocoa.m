@@ -184,7 +184,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 }
 
 - (IBAction)clickAbout:(id)sender {
-  nav_open("page:about", NULL, NULL);
+  nav_open("page:about");
 }
 
 /* delegated from NSApplication */
@@ -206,8 +206,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   }
   
   /* stringWithFormat uses autorelease */
-  nav_open([[NSString stringWithFormat:@"file://%@", filename] UTF8String],
-           NULL, NULL);
+  nav_open([[NSString stringWithFormat:@"file://%@", filename] UTF8String]);
   
   return YES;
 }
@@ -215,8 +214,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 /* registered in initWithFrame */
 - (void)handleGetURLEvent:(NSAppleEventDescriptor *)event
 	   withReplyEvent:(NSAppleEventDescriptor *)replyEvent {
-  nav_open([[[event descriptorAtIndex:1] stringValue] UTF8String],
-	   NULL, NULL);
+  nav_open([[[event descriptorAtIndex:1] stringValue] UTF8String]);
 }
 
 - (BOOL)acceptsFirstResponder {
