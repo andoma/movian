@@ -35,12 +35,6 @@
 #include "fileaccess.h"
 
 
-typedef struct be_file_page {
-  nav_page_t h;
-
-} be_file_page_t;
-
-
 /**
  *
  */
@@ -75,7 +69,7 @@ static int
 file_open_dir(struct navigator *nav, 
 	      const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
 {
-  be_file_page_t *bfp;
+  nav_page_t *np;
   prop_t *src, *view, *metadata;
   int type, l;
   char *dirname;
@@ -88,12 +82,12 @@ file_open_dir(struct navigator *nav,
     return 0;
   }
 
-  bfp = nav_page_create(nav, url0, sizeof(be_file_page_t),
+  np = nav_page_create(nav, url0, sizeof(nav_page_t),
 			NAV_PAGE_DONT_CLOSE_ON_BACK);
 
-  view = prop_create(bfp->h.np_prop_root, "view");
+  view = prop_create(np->np_prop_root, "view");
 
-  src = prop_create(bfp->h.np_prop_root, "source");
+  src = prop_create(np->np_prop_root, "source");
   prop_set_string(prop_create(src, "type"), "directory");
 
   l = strlen(url0);
@@ -139,7 +133,7 @@ file_open_dir(struct navigator *nav,
 
   fa_scanner(url0, src, view);
 
-  *npp = &bfp->h;
+  *npp = np;
   return 0;
 }
 
