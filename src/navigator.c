@@ -344,7 +344,7 @@ nav_page_create(navigator_t *nav, const char *url, size_t allocsize, int flags)
 
   np->np_nav = nav;
   np->np_flags = flags;
-  np->np_url = strdup(url);
+  np->np_url = url ? strdup(url) : NULL;
 
   TAILQ_INSERT_TAIL(&nav->nav_pages, np, np_global_link);
 
@@ -357,7 +357,8 @@ nav_page_create(navigator_t *nav, const char *url, size_t allocsize, int flags)
 		   PROP_TAG_COURIER, nav->nav_pc,
 		   NULL);
 
-  prop_set_string(prop_create(np->np_prop_root, "url"), url);
+  if(url != NULL)
+    prop_set_string(prop_create(np->np_prop_root, "url"), url);
   return np;
 }
 
