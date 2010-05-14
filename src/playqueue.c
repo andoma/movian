@@ -82,7 +82,6 @@ typedef struct playqueue_request {
  */
 static prop_t *playqueue_source; 
 static prop_sub_t *playqueue_source_sub;
-static playqueue_entry_t *playqueue_source_justadded;
 static struct playqueue_entry_queue playqueue_source_entries;
 static prop_t *playqueue_startme;
 
@@ -162,6 +161,7 @@ pqe_play(playqueue_entry_t *pqe, int jump)
   event_unref(e);
 }
 
+
 /**
  *
  */
@@ -233,11 +233,6 @@ playqueue_clear(void)
     playqueue_source_sub = NULL;
   }
 
-  if(playqueue_source_justadded != NULL) {
-    pqe_unref(playqueue_source_justadded);
-    playqueue_source_justadded = NULL;
-  }
-
   while((pqe = TAILQ_FIRST(&playqueue_source_entries)) != NULL)
     pqe_remove_from_sourcequeue(pqe);
 
@@ -283,65 +278,9 @@ pqe_insert_shuffled(playqueue_entry_t *pqe)
  *
  */
 static void
-pq_fill_from_source_backwards(playqueue_entry_t *pqe)
-{
-  playqueue_entry_t *b = pqe;
-
-  while(1) {
-    pqe = TAILQ_PREV(pqe, playqueue_entry_queue, pqe_source_link);
-    if(pqe == NULL)
-      break;
-
-    assert(pqe->pqe_linked == 0);
-    pqe->pqe_linked = 1;
-    pqe_ref(pqe);
-
-    TAILQ_INSERT_BEFORE(b, pqe, pqe_linear_link);
-    pqe_insert_shuffled(pqe);
-    update_prev_next();
-
-    if(prop_set_parent_ex(pqe->pqe_node, playqueue_nodes, b->pqe_node, NULL))
-      abort();
-    
-    b = pqe;
-  }
-}
-
-
-/**
- *
- */
-static void
-pq_fill_from_source_forwards(playqueue_entry_t *pqe)
-{
-  while(1) {
-    pqe = TAILQ_NEXT(pqe, pqe_source_link);
-    if(pqe == NULL)
-      break;
-
-    assert(pqe->pqe_linked == 0);
-    pqe->pqe_linked = 1;
-    pqe_ref(pqe);
-
-    TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_linear_link);
-    pqe_insert_shuffled(pqe);
-    update_prev_next();
-
-    if(prop_set_parent_ex(pqe->pqe_node, playqueue_nodes, NULL, NULL))
-      abort();
-  }
-}
-
-
-/**
- *
- */
-static void
 source_set_url(void *opaque, const char *str)
 {
   playqueue_entry_t *pqe = opaque;
-  playqueue_entry_t *ja = playqueue_source_justadded;
-  playqueue_entry_t *n;
 
   if(str == NULL)
     return;
@@ -353,39 +292,6 @@ source_set_url(void *opaque, const char *str)
     pqe_play(pqe, 1);
     pqe->pqe_startme = 0;
   }
-
-  if(ja == NULL || strcmp(ja->pqe_url, str))
-    return;
-
-  /* 'pqe' from the source list matches 'ja'.
-   * Transfer the location / binding of pqe in the source list to ja
-   * and destroy pqe
-   */
-
-  ja->pqe_originator = pqe->pqe_originator; // refcount transfered
-  pqe->pqe_originator = NULL;
-
-  n = TAILQ_NEXT(pqe, pqe_source_link);
-
-  TAILQ_REMOVE(&playqueue_source_entries, pqe, pqe_source_link);
-
-  pqe_unsubscribe(pqe);
-
-  if(n == NULL) {
-    TAILQ_INSERT_TAIL(&playqueue_source_entries, ja, pqe_source_link);
-  } else {
-    TAILQ_INSERT_BEFORE(n, ja, pqe_source_link);
-  }
-
-  pqe_ref(ja); // Needs two refs now (for both queues)
-
-  pqe_unref(pqe); // Should go away
-
-  pqe_unref(playqueue_source_justadded);
-  playqueue_source_justadded = NULL;
-
-  pq_fill_from_source_backwards(ja);
-  pq_fill_from_source_forwards(ja);
 }
 
 
@@ -468,9 +374,6 @@ add_from_source(prop_t *p, playqueue_entry_t *before)
 		   PROP_TAG_NAMED_ROOT, p, "self",
 		   NULL);
 
-
-  if(playqueue_source_justadded != NULL)
-    return;  // Still not jacked into global queue
 
   pqe_ref(pqe); // Ref for global queue
 
@@ -635,7 +538,6 @@ static void
 playqueue_load(const char *url, prop_t *metadata, int enq)
 {
   playqueue_entry_t *pqe, *prev;
-  event_t *e;
 
   hts_mutex_lock(&playqueue_mutex);
 
@@ -685,10 +587,7 @@ playqueue_load(const char *url, prop_t *metadata, int enq)
     abort();
 
   /* Tick player to play it */
-  e = pqe_event_create(pqe, 1);
-  mp_enqueue_event(playqueue_mp, e);
-  event_unref(e);
-
+  pqe_play(pqe, 1);
   hts_mutex_unlock(&playqueue_mutex);
 }
 
