@@ -86,14 +86,13 @@ typedef struct selinfo {
  *
  */
 static void
-popup_open(GtkWidget *menu_item, gpointer data)
+popup_play(GtkWidget *menu_item, gpointer data)
 {
   selinfo_t *si = data;
   directory_list_t *d = si->d;
-  
-  gu_tab_open(d->gt, si->url, NULL, d->psource);
+
+  gu_tab_play_track(d->gt, gu_dir_store_get_prop(d->model, si->iterv), d->psource);
   gtk_widget_destroy(si->menu);
-  
 }
 
 
@@ -106,7 +105,7 @@ popup_open_newwin(GtkWidget *menu_item, gpointer data)
   selinfo_t *si = data;
   directory_list_t *d = si->d;
   
-  gu_nav_open_newwin(d->gt->gt_gw->gw_gu, si->url, NULL, d->psource);
+  gu_nav_open_newwin(d->gt->gt_gw->gw_gu, si->url);
   gtk_widget_destroy(si->menu);
 }
 
@@ -120,7 +119,7 @@ popup_open_newtab(GtkWidget *menu_item, gpointer data)
   selinfo_t *si = data;
   directory_list_t *d = si->d;
   
-  gu_nav_open_newtab(d->gt->gt_gw, si->url, NULL, d->psource);
+  gu_nav_open_newtab(d->gt->gt_gw, si->url);
   gtk_widget_destroy(si->menu);
 }
 
@@ -223,7 +222,7 @@ do_popup_menu(directory_list_t *d, GdkEventButton *event, const char *url)
 		       popup_open_newtab, si, NULL, NULL, TRUE);
 
     } else if(si->primary_action == SELINFO_PA_PLAY) {
-      gu_menu_add_item(si->menu, "_Play", popup_open, si, NULL, NULL, TRUE);
+      gu_menu_add_item(si->menu, "_Play", popup_play, si, NULL, NULL, TRUE);
     }
 
     // gu_menu_add_sep(si->menu);
@@ -308,17 +307,35 @@ row_activated(GtkTreeView *tree_view, GtkTreePath *path,
   const char *str;
   GtkTreeIter iter;
   GValue gv = { 0 };
+  int how = 0;
 
   gtk_tree_model_get_iter(GTK_TREE_MODEL(d->model), &iter, path);
 
-  gtk_tree_model_get_value(GTK_TREE_MODEL(d->model), &iter, GDS_COL_URL, &gv);
+  gtk_tree_model_get_value(GTK_TREE_MODEL(d->model), &iter, GDS_COL_TYPE, &gv);
   if(G_VALUE_HOLDS_STRING(&gv)) {
+
     str = g_value_get_string(&gv);
-    if(str != NULL)
-      gu_tab_open(d->gt, str, NULL, d->psource);
+    if(!strcmp(str, "audio")) {
+      how = 2;
+    } else {
+      how = 1;
+    }
+  }
+  
+  g_value_unset(&gv);
+  if(how == 1) {
+    // Open by URL
+
+    gtk_tree_model_get_value(GTK_TREE_MODEL(d->model), &iter, GDS_COL_URL, &gv);
+    if(G_VALUE_HOLDS_STRING(&gv))
+      gu_tab_open(d->gt, g_value_get_string(&gv));
+    g_value_unset(&gv);
   }
 
-  g_value_unset(&gv);
+  if(how == 2) {
+    // Open by properties
+    gu_tab_play_track(d->gt, gu_dir_store_get_prop(d->model, &iter), d->psource);
+  }
 }
 
 
@@ -403,7 +420,7 @@ mouse_do(directory_list_t *d, GtkTreeView *tree_view, int action, int x, int y,
 	gu_dir_store_toggle_star(GU_DIR_STORE(d->model), &iter);
 	r = 1;
       } else if((url = gu_dir_store_url_from_cell(c)) != NULL) {
-	gu_tab_open(d->gt, url, NULL, NULL);
+	gu_tab_open(d->gt, url);
 	r = 1;
       }
     }

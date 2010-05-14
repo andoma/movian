@@ -874,3 +874,11 @@ gu_dir_store_toggle_star(GuDirStore *gds, GtkTreeIter *iter)
 
   prop_toggle_int(starred);
 }
+
+
+prop_t *
+gu_dir_store_get_prop(GuDirStore *gds, GtkTreeIter *iter)
+{
+  gds_row_t *gr = iter->user_data;
+  return gr->gr_root;
+}

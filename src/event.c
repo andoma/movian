@@ -225,9 +225,6 @@ event_openurl2_dtor(event_t *e)
 {
   event_openurl_t *ou = (void *)e;
   free(ou->url);
-  free(ou->type);
-  if(ou->psource)
-    prop_destroy(ou->psource);
   free(ou);
 }
 
@@ -236,13 +233,11 @@ event_openurl2_dtor(event_t *e)
  *
  */
 event_t *
-event_create_openurl(const char *url, const char *type, struct prop *psource)
+event_create_openurl(const char *url)
 {
   event_openurl_t *e = event_create(EVENT_OPENURL, sizeof(event_openurl_t));
 
   e->url      = url     ? strdup(url)               : NULL;
-  e->type     = type    ? strdup(type)              : NULL;
-  e->psource  = prop_xref_addref(psource);
   e->h.e_dtor = event_openurl2_dtor;
   return &e->h;
 }

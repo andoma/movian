@@ -93,7 +93,7 @@ static void
 gu_nav_url_set(GtkEntry *e, gpointer user_data)
 {
   gu_window_t *gw = user_data;
-  gu_tab_open(gw->gw_current_tab, gtk_entry_get_text(e), NULL, NULL);
+  gu_tab_open(gw->gw_current_tab, gtk_entry_get_text(e));
 }
 
 
@@ -119,7 +119,7 @@ up_clicked(GtkToolButton *toolbutton, gpointer user_data)
 {
   toolbar_t *t = user_data;
   if(t->parent_url != NULL)
-    gu_tab_open(t->gw->gw_current_tab, t->parent_url, NULL, NULL);
+    gu_tab_open(t->gw->gw_current_tab, t->parent_url);
 }
 
 

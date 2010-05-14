@@ -426,7 +426,7 @@ add_from_source(prop_t *p, playqueue_entry_t *before)
   playqueue_entry_t *pqe;
 
   pqe = calloc(1, sizeof(playqueue_entry_t));
-  prop_ref_inc(playqueue_source);
+  prop_ref_inc(p);
   pqe->pqe_refcount = 1;
   pqe->pqe_originator = p;
 
@@ -890,8 +890,7 @@ playqueue_init(void)
  *
  */
 static int
-be_playqueue_open(struct navigator *nav,
-		  const char *url0, const char *type0, prop_t *psource,
+be_playqueue_open(struct navigator *nav, const char *url0,
 		  nav_page_t **npp, char *errbuf, size_t errlen)
 {
   nav_page_t *n;

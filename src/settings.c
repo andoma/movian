@@ -503,8 +503,7 @@ be_settings_canhandle(const char *url)
  *
  */
 static int
-be_settings_open(struct navigator *nav,
-		 const char *url0, const char *type0, prop_t *psource,
+be_settings_open(struct navigator *nav, const char *url0,
 		 nav_page_t **npp, char *errbuf, size_t errlen)
 {
   nav_page_t *n;

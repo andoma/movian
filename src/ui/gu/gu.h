@@ -82,8 +82,7 @@ typedef struct gu_window {
 
 void gu_fullwindow_update(gu_window_t *gw);
 
-void gu_nav_open_newwin(gtk_ui_t *gu, 
-			const char *url, const char *type, prop_t *psource);
+void gu_nav_open_newwin(gtk_ui_t *gu, const char *url);
 
 gu_window_t *gu_win_create(gtk_ui_t *gu, prop_t *nav, int all);
 
@@ -116,13 +115,13 @@ void gu_tab_destroy(gu_tab_t *gu);
 
 void gu_tab_send_event(gu_tab_t *gw, event_t *e);
 
-void gu_tab_open(gu_tab_t *gt, 
-		 const char *url, const char *type, prop_t *psource);
+void gu_tab_open(gu_tab_t *gt, const char *url);
 
 void gu_toolbar_select_tab(gu_tab_t *gt);
 
-void gu_nav_open_newtab(gu_window_t *gt,
-			const char *url, const char *type, prop_t *psource);
+void gu_nav_open_newtab(gu_window_t *gt, const char *url);
+
+void gu_tab_play_track(gu_tab_t *gt, prop_t *track, prop_t *source);
 
 /**
  *

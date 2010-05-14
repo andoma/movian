@@ -41,7 +41,6 @@ typedef struct backend {
   int (*be_canhandle)(const char *ur);
 
   int (*be_open)(struct navigator *nav, const char *url, 
-		 const char *type, prop_t *psource,
 		 struct nav_page **npp, char *errbuf, size_t errlen);
 
   event_t *(*be_play_video)(const char *url, struct media_pipe *mp,

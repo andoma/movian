@@ -313,8 +313,7 @@ canhandle(const char *url)
  *
  */
 static int
-openpage(struct navigator *nav,
-	 const char *url, const char *type0, prop_t *psource,
+openpage(struct navigator *nav, const char *url,
 	 nav_page_t **npp, char *errstr, size_t errlen)
 {
   nav_page_t *np;

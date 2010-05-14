@@ -41,7 +41,7 @@ static void
 m_openplayqueue(GtkWidget *menu_item, gpointer data)
 {
   gu_window_t *gw = data;
-  gu_tab_open(gw->gw_current_tab, "playqueue:", NULL, NULL);
+  gu_tab_open(gw->gw_current_tab, "playqueue:");
 }
 
 
@@ -75,7 +75,7 @@ m_open_response(GtkDialog *dialog, gint response_id, gpointer data)
     l0 = l = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
 
     for(; l != NULL; l = l->next) {
-      gu_tab_open(gw->gw_current_tab, (const char *)l->data, NULL, NULL);
+      gu_tab_open(gw->gw_current_tab, (const char *)l->data);
     }
     g_slist_free(l0);
 

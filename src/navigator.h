@@ -54,7 +54,7 @@ void nav_init(void);
 
 prop_t *nav_spawn(void);
 
-void nav_open(const char *url, const char *type, prop_t *psource);
+void nav_open(const char *url);
 
 void *nav_page_create(struct navigator *nav, const char *url, size_t allocsize,
 		      int flags);

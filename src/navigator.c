@@ -198,7 +198,7 @@ nav_close_all(navigator_t *nav, int with_prop)
  *
  */
 static void
-nav_open0(navigator_t *nav, const char *url, const char *type, prop_t *psource)
+nav_open0(navigator_t *nav, const char *url)
 {
   nav_page_t *np, *np2;
   backend_t *be;
@@ -225,7 +225,7 @@ nav_open0(navigator_t *nav, const char *url, const char *type, prop_t *psource)
       return;
     }
 
-    if(be->be_open(nav, url, type, psource, &np, errbuf, sizeof(errbuf))) {
+    if(be->be_open(nav, url, &np, errbuf, sizeof(errbuf))) {
       notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nError: %s", url, errbuf);
       return;
     }
@@ -267,9 +267,9 @@ nav_open0(navigator_t *nav, const char *url, const char *type, prop_t *psource)
  *
  */
 void
-nav_open(const char *url, const char *type, prop_t *psource)
+nav_open(const char *url)
 {
-  event_dispatch(event_create_openurl(url, type, psource));
+  event_dispatch(event_create_openurl(url));
 }
 
 
@@ -284,7 +284,7 @@ nav_back(navigator_t *nav)
   if(np != NULL &&
      (prev = TAILQ_PREV(np, nav_page_queue, np_history_link)) != NULL) {
 
-    nav_open0(nav, prev->np_url, NULL, NULL);
+    nav_open0(nav, prev->np_url);
     if(!(np->np_flags & NAV_PAGE_DONT_CLOSE_ON_BACK))
       nav_close(np, 1);
   }
@@ -302,7 +302,7 @@ nav_fwd(navigator_t *nav)
   np = nav->nav_page_current;
 
   if(np != NULL && (next = TAILQ_NEXT(np, np_history_link)) != NULL)
-    nav_open0(nav, next->np_url, NULL, NULL);
+    nav_open0(nav, next->np_url);
 }
 
 /**
@@ -325,7 +325,7 @@ nav_page_close_set(void *opaque, int value)
     next = TAILQ_LAST(&nav->nav_pages, nav_page_queue);
 
   if(next != NULL)
-    nav_open0(nav, next->np_url, NULL, NULL);
+    nav_open0(nav, next->np_url);
 }
 
 
@@ -383,11 +383,11 @@ nav_eventsink(void *opaque, prop_event_t event, ...)
     nav_fwd(nav);
 
   } else if(event_is_action(e, ACTION_HOME)) {
-    nav_open0(nav, NAV_HOME, NULL, NULL);
+    nav_open0(nav, NAV_HOME);
 
   } else if(event_is_type(e, EVENT_OPENURL)) {
     ou = (event_openurl_t *)e;
-    nav_open0(nav, ou->url, ou->type, ou->psource);
+    nav_open0(nav, ou->url);
   }
 }
 

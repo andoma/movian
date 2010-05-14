@@ -745,8 +745,7 @@ htsp_open_channel(struct navigator *nav, const char *url, nav_page_t **npp)
  *
  */
 static int
-be_htsp_open(struct navigator *nav, 
-	     const char *url, const char *type, prop_t *psource,
+be_htsp_open(struct navigator *nav, const char *url,
 	     nav_page_t **npp, char *errbuf, size_t errlen)
 {
   htsp_connection_t *hc;

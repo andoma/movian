@@ -69,7 +69,7 @@ source_clicked(GtkObject *object, gpointer opaque)
   source_t *s = opaque;
 
   if(s->s_url != NULL)
-    gu_tab_open(s->s_home->h_gt, s->s_url, NULL, NULL);
+    gu_tab_open(s->s_home->h_gt, s->s_url);
 }
 
 

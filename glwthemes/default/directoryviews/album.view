@@ -43,7 +43,8 @@ widget(container_x, {
 
       cloner($page.source.nodes, backdrop, {
 	BUTTON_PROPS(1.0);
-	onEvent(enter, navOpen($self.url, $self.type, $parent.source));
+	onEvent(enter, navOpen($self.url
+));
     
 	widget(loader, {
 	  .time = 0.3;

@@ -19,7 +19,7 @@ widget(container_y, {
  
       cloner($page.source.nodes, backdrop, {
 	BUTTON_PROPS(1.0);
-	onEvent(enter, navOpen($self.url, $self.type, $parent.source));
+	onEvent(enter, navOpen($self.url));
  
 	widget(container_y, {
 	  widget(image, {

@@ -151,7 +151,7 @@ file_open_dir(struct navigator *nav,
 static int
 file_open_file(struct navigator *nav,
 	       const char *url, nav_page_t **npp, char *errbuf, size_t errlen,
-	       struct stat *st, prop_t *psource)
+	       struct stat *st)
 {
   char redir[URL_MAX];
   int r;
@@ -205,8 +205,7 @@ file_open_file(struct navigator *nav,
  *
  */
 static int
-be_file_open(struct navigator *nav,
-	     const char *url0, const char *type0, prop_t *psource,
+be_file_open(struct navigator *nav, const char *url0,
 	     nav_page_t **npp, char *errbuf, size_t errlen)
 {
   struct stat buf;
@@ -215,7 +214,7 @@ be_file_open(struct navigator *nav,
     return -1;
 
   return S_ISDIR(buf.st_mode) ? file_open_dir(nav, url0, npp, errbuf, errlen) :
-    file_open_file(nav, url0, npp, errbuf, errlen, &buf, psource);
+    file_open_file(nav, url0, npp, errbuf, errlen, &buf);
 }
 
 

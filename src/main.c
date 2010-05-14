@@ -225,7 +225,7 @@ main(int argc, char **argv)
   bookmarks_init();
 
   /* Open initial page */
-  nav_open(startpage, NULL, NULL);
+  nav_open(startpage);
 
   /* Various interprocess communication stuff (D-Bus on Linux, etc) */
   ipc_init();

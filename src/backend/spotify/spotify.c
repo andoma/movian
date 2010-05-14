@@ -2288,8 +2288,7 @@ spotify_start(void)
  *
  */
 static int
-be_spotify_open(struct navigator *nav,
-		const char *url0, const char *type, prop_t *psource,
+be_spotify_open(struct navigator *nav, const char *url0,
 		nav_page_t **npp, char *errbuf, size_t errlen)
 {
   nav_page_t *np = NULL;

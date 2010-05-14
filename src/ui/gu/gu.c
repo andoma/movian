@@ -422,6 +422,31 @@ gu_fullwindow_update(gu_window_t *gw)
 /**
  *
  */
+static void
+gu_playqueue_send_event(gu_tab_t *gt, event_t *e)
+{
+  prop_t *p = prop_get_by_name(PNVEC("global", "playqueue", "eventsink"), 1,
+			       NULL);
+
+  prop_send_ext_event(p, e);
+  prop_ref_dec(p);
+  event_unref(e);
+}
+
+
+/**
+ *
+ */
+void
+gu_tab_play_track(gu_tab_t *gt, prop_t *track, prop_t *source)
+{
+  gu_playqueue_send_event(gt, event_create_playtrack(track, source, 0));
+}
+
+
+/**
+ *
+ */
 void
 gu_tab_send_event(gu_tab_t *gt, event_t *e)
 {
@@ -439,9 +464,9 @@ gu_tab_send_event(gu_tab_t *gt, event_t *e)
  *
  */
 void
-gu_tab_open(gu_tab_t *gt, const char *url, const char *type, prop_t *psource)
+gu_tab_open(gu_tab_t *gt, const char *url)
 {
-  gu_tab_send_event(gt, event_create_openurl(url, type, psource));
+  gu_tab_send_event(gt, event_create_openurl(url));
 }
 
 
@@ -449,12 +474,10 @@ gu_tab_open(gu_tab_t *gt, const char *url, const char *type, prop_t *psource)
  *
  */
 void
-gu_nav_open_newwin(gtk_ui_t *gu, const char *url, const char *type,
-		   prop_t *psource)
+gu_nav_open_newwin(gtk_ui_t *gu, const char *url)
 {
   gu_window_t *gw = gu_win_create(gu, NULL, 0);
-  gu_tab_send_event(gw->gw_current_tab,
-		    event_create_openurl(url, type, psource));
+  gu_tab_send_event(gw->gw_current_tab, event_create_openurl(url));
 }
 
 
@@ -462,11 +485,10 @@ gu_nav_open_newwin(gtk_ui_t *gu, const char *url, const char *type,
  *
  */
 void
-gu_nav_open_newtab(gu_window_t *gw, const char *url, const char *type,
-		   prop_t *psource)
+gu_nav_open_newtab(gu_window_t *gw, const char *url)
 {
   gu_tab_t *gt = gu_tab_create(gw, NULL, 0);
-  gu_tab_send_event(gt, event_create_openurl(url, type, psource));
+  gu_tab_send_event(gt, event_create_openurl(url));
 }
 
 

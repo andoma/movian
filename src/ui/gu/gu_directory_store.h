@@ -96,4 +96,6 @@ void gu_dir_store_delete_multi(GuDirStore *gds, GtkTreeIter *iter, int niter);
 
 void gu_dir_store_toggle_star(GuDirStore *gds, GtkTreeIter *iter);
 
+prop_t *gu_dir_store_get_prop(GuDirStore *gds, GtkTreeIter *iter);
+
 #endif // GU_DIRECTORY_STORE_H__
