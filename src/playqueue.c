@@ -621,31 +621,6 @@ playqueue_load_with_source(prop_t *track, prop_t *source, int mode)
 
 
 /**
- * Load siblings to the 'justadded' track.
- */
-static void
-playqueue_load_siblings(prop_t *psource, playqueue_entry_t *justadded)
-{
-  assert(playqueue_source == NULL);
-
-  assert(TAILQ_FIRST(&playqueue_source_entries) == NULL);
-  
-  pqe_ref(justadded);
-  playqueue_source_justadded = justadded;
-
-  playqueue_source_sub = 
-    prop_subscribe(0,
-		   PROP_TAG_NAME("self", "nodes"),
-		   PROP_TAG_CALLBACK, siblings_populate, NULL,
-		   PROP_TAG_MUTEX, &playqueue_mutex,
-		   PROP_TAG_NAMED_ROOT, psource, "self", 
-		   NULL);
-
-  playqueue_source = prop_xref_addref(psource);
-}
-
-
-/**
  * Load playqueue based on the given url.
  *
  * This function is responsible for freeing (or using) the
@@ -661,27 +636,11 @@ playqueue_load(const char *url, prop_t *metadata, int enq)
 {
   playqueue_entry_t *pqe, *prev;
   event_t *e;
-  prop_t *psource = NULL;
-
-  char pbuf[URL_MAX];
-  if(!backend_get_parent(url, pbuf, sizeof(pbuf), NULL, 0)) {
-    
-    char errbuf[256];
-    if((psource = backend_list(pbuf, errbuf, sizeof(errbuf))) == NULL) {
-      TRACE(TRACE_ERROR, "playqueue", "Unable to scan %s: %s", url, errbuf);
-    }
-  }
 
   hts_mutex_lock(&playqueue_mutex);
 
   pqe = calloc(1, sizeof(playqueue_entry_t));
   pqe->pqe_url = strdup(url);
-  if(psource != NULL) {
-    pqe->pqe_psource = psource;
-    prop_ref_inc(psource);
-  } else {
-    pqe->pqe_psource = NULL;
-  }
 
   pqe->pqe_node = prop_create(NULL, NULL);
   pqe->pqe_enq = enq;
@@ -730,14 +689,7 @@ playqueue_load(const char *url, prop_t *metadata, int enq)
   mp_enqueue_event(playqueue_mp, e);
   event_unref(e);
 
-  /* Scan dir (if provided) for additional tracks (siblings) */
-  if(psource != NULL)
-    playqueue_load_siblings(psource, pqe);
-
   hts_mutex_unlock(&playqueue_mutex);
-
-  if(psource != NULL)
-    prop_destroy(psource);
 }
 
 /**

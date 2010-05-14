@@ -125,26 +125,6 @@ backend_list(const char *url, char *errbuf, size_t errlen)
 
 
 /**
- *
- */
-int
-backend_get_parent(const char *url, char *parent, size_t parentlen,
-		   char *errbuf, size_t errlen)
-{
-  backend_t *nb;
-
-  LIST_FOREACH(nb, &backends, be_global_link)
-    if(nb->be_canhandle(url))
-      break;
-  
-  if(nb == NULL || nb->be_get_parent == NULL) {
-    snprintf(errbuf, errlen, "No backend for URL");
-    return -1;
-  }
-  return nb->be_get_parent(url, parent, parentlen, errbuf, errlen);
-}
-
-/**
  * Static content
  */
 static int

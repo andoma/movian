@@ -51,10 +51,6 @@ typedef struct backend {
 
   prop_t *(*be_list)(const char *url, char *errbuf, size_t errsize);
 
-  int (*be_get_parent)(const char *url, 
-		       char *parent, size_t parentlen,
-		       char *errbuf, size_t errlen);
-
   struct pixmap *(*be_imageloader)(const char *url, int want_thumb,
 				   const char *theme,
 				   char *errbuf, size_t errlen);
@@ -76,9 +72,6 @@ event_t *backend_play_audio(const char *url, struct media_pipe *mp,
 			    char *errbuf, size_t errlen);
 
 prop_t *backend_list(const char *url, char *errbuf, size_t errlen);
-
-int backend_get_parent(const char *url, char *parent, size_t parentlen,
-		       char *errbuf, size_t errlen);
 
 struct pixmap *backend_imageloader(const char *url, int want_thumb,
 				   const char *theme,
