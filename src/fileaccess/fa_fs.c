@@ -42,9 +42,12 @@ static void
 fs_urlsnprintf(char *buf, size_t bufsize, const char *prefix, const char *base,
 	       const char *fname)
 {
+  int blen = strlen(base);
   if(!strcmp(base, "/"))
     base = "";
-  snprintf(buf, bufsize, "%s%s/%s", prefix, base, fname);
+
+  snprintf(buf, bufsize, "%s%s%s%s", prefix, base,
+	   blen > 0 && base[blen - 1] == '/' ? "" : "/", fname);
 }
 	       
 
