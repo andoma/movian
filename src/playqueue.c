@@ -586,7 +586,7 @@ siblings_populate(void *opaque, prop_event_t event, ...)
 /**
  *
  */
-static void
+void
 playqueue_load_with_source(prop_t *track, prop_t *source, int mode)
 {
   playqueue_entry_t *pqe;

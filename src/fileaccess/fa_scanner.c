@@ -36,6 +36,7 @@ typedef struct scanner {
   int s_refcount;
 
   char *s_url;
+  char *s_playme;
 
   prop_t *s_nodes;
   prop_t *s_viewprop;
@@ -549,6 +550,13 @@ doscan(scanner_t *s)
     if(s->s_stop)
       return;
     add_prop(fde, s->s_nodes, NULL);
+    
+    if(s->s_playme != NULL &&
+       !strcmp(s->s_playme, fde->fde_url)) {
+      playqueue_load_with_source(fde->fde_prop, s->s_root, 0);
+      free(s->s_playme);
+      s->s_playme = NULL;
+    }
   }
 
   deep_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
@@ -585,6 +593,8 @@ scanner(void *aux)
   }
 
   free(s->s_url);
+  free(s->s_playme);
+
   prop_ref_dec(s->s_root);
   prop_ref_dec(s->s_nodes);
 
@@ -623,11 +633,12 @@ scanner_stop(void *opaque, prop_event_t event, ...)
  *
  */
 void
-fa_scanner(const char *url, prop_t *source, prop_t *view)
+fa_scanner(const char *url, prop_t *source, prop_t *view, const char *playme)
 {
   scanner_t *s = calloc(1, sizeof(scanner_t));
 
   s->s_url = strdup(url);
+  s->s_playme = playme != NULL ? strdup(playme) : NULL;
 
   s->s_root = source;
   prop_ref_inc(s->s_root);

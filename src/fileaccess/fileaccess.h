@@ -135,7 +135,7 @@ int fa_notify(const char *url, void *opaque,
 
 const char *fa_ffmpeg_error_to_txt(int err);
 
-void fa_scanner(const char *url, prop_t *source, prop_t *view);
+void fa_scanner(const char *url, prop_t *source, prop_t *view, const char *playme);
 
 void fa_scanner_find_albumart(const char *url, prop_t *album_art);
 

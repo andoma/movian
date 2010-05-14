@@ -102,4 +102,6 @@ void playqueue_play(const char *url, prop_t *meta);
 
 void playqueue_event_handler(event_t *e);
 
+void playqueue_load_with_source(prop_t *track, prop_t *source, int mode);
+
 #endif /* PLAYQUEUE_H__ */

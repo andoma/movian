@@ -65,15 +65,33 @@ file_open_video(struct navigator *nav, const char *url0, nav_page_t **npp)
 /**
  *
  */
+static void
+set_title_from_url(prop_t *metadata, const char *url)
+{
+  int l = strlen(url);
+  char *dirname = alloca(l + 1);
+
+  memcpy(dirname, url, l + 1);
+  if(l > 0 && dirname[l - 1] == '/')
+    dirname[l - 1] = 0;
+
+  dirname = strrchr(dirname, '/') ? strrchr(dirname, '/') + 1 : dirname;
+  prop_set_string(prop_create(metadata, "title"), dirname);
+}
+
+
+/**
+ *
+ */
 static int
 file_open_dir(struct navigator *nav, 
 	      const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
 {
   nav_page_t *np;
-  prop_t *src, *view, *metadata;
-  int type, l;
-  char *dirname;
+  prop_t *src, *view;
+  int type;
   char parent[URL_MAX];
+
   type = fa_probe_dir(NULL, url0);
 
   if(type == CONTENT_DVD) {
@@ -81,48 +99,72 @@ file_open_dir(struct navigator *nav,
     return 0;
   }
 
-  np = nav_page_create(nav, url0, sizeof(nav_page_t),
-			NAV_PAGE_DONT_CLOSE_ON_BACK);
-
+  np = nav_page_create(nav, url0, sizeof(nav_page_t), NAV_PAGE_DONT_CLOSE_ON_BACK);
   view = prop_create(np->np_prop_root, "view");
 
   src = prop_create(np->np_prop_root, "source");
   prop_set_string(prop_create(src, "type"), "directory");
-  metadata = prop_create(src, "metadata");
 
-  /* Find a meaningfull page title (last component of URL) */
-  l = strlen(url0);
-  dirname = alloca(l + 1);
-  memcpy(dirname, url0, l + 1);
-  if(l > 0 && dirname[l - 1] == '/')
-    dirname[l - 1] = 0;
-
-  dirname = strrchr(dirname, '/') ? strrchr(dirname, '/') + 1 : dirname;
-  prop_set_string(prop_create(metadata, "title"), dirname);
+  /* Find a meaningful page title (last component of URL) */
+  set_title_from_url(prop_create(src, "metadata"), url0);
 
   // Set parent
   if(!fa_parent(parent, sizeof(parent), url0))
     prop_set_string(prop_create(np->np_prop_root, "parent"), parent);
 
-  fa_scanner(url0, src, view);
+  fa_scanner(url0, src, view, NULL);
   *npp = np;
   return 0;
 }
 
+
+/**
+ * Try to open the given URL with a playqueue context
+ */
+static int
+file_open_audio(struct navigator *nav, const char *url, nav_page_t **npp)
+{
+  char parent[URL_MAX];
+  char parent2[URL_MAX];
+  struct stat st;
+  nav_page_t *np;
+  prop_t *src, *view;
+
+  if(fa_parent(parent, sizeof(parent), url))
+    return -1;
+
+  if(fa_stat(parent, &st, NULL, 0))
+    return -1;
+  
+  np = nav_page_create(nav, parent, sizeof(nav_page_t), NAV_PAGE_DONT_CLOSE_ON_BACK);
+  view = prop_create(np->np_prop_root, "view");
+
+  src = prop_create(np->np_prop_root, "source");
+  prop_set_string(prop_create(src, "type"), "directory");
+
+  /* Find a meaningful page title (last component of URL) */
+  set_title_from_url(prop_create(src, "metadata"), parent);
+
+  // Set parent
+  if(!fa_parent(parent2, sizeof(parent2), parent))
+    prop_set_string(prop_create(np->np_prop_root, "parent"), parent2);
+
+  fa_scanner(parent, src, view, url);
+  *npp = np;
+  return 0;
+}
 
 
 /**
  *
  */
 static int
-file_open_file(struct navigator *nav,
-	       const char *url, nav_page_t **npp, char *errbuf, size_t errlen,
-	       struct stat *st)
+file_open_file(struct navigator *nav, const char *url, nav_page_t **npp,
+	       char *errbuf, size_t errlen, struct stat *st)
 {
   char redir[URL_MAX];
   int r;
-  //  char *parent;//, *x;
-  prop_t *meta;//, *album_art;
+  prop_t *meta;
 
   meta = prop_create(NULL, "metadata");
 
@@ -132,26 +174,12 @@ file_open_file(struct navigator *nav,
   case CONTENT_ARCHIVE:
     prop_destroy(meta);
     return file_open_dir(nav, redir, npp, errbuf, errlen);
+
   case CONTENT_AUDIO:
-#if 0 
-    parent = strdup(url);
-    if((x = strrchr(parent, '/')) != NULL)
-      *x = 0;
-    else {
-      free(parent);
-      parent = NULL;
-      
-    }
-    
-    if(parent != NULL) {
-      album_art = prop_create(meta, "album_art");
-      prop_ref_inc(album_art);
-      fa_scanner_find_albumart(parent, album_art);
-    }
-#endif
+    if(!file_open_audio(nav, url, npp))
+      return 0;
 
     playqueue_play(url, meta);
-    //    free(parent);
     *npp = NULL;
     return 0;
 
@@ -191,7 +219,7 @@ static prop_t *
 be_list(const char *url, char *errbuf, size_t errsize)
 {
   prop_t *p = prop_create(NULL, NULL);
-  fa_scanner(url, p, NULL);
+  fa_scanner(url, p, NULL, NULL);
   return p;
 }
 
