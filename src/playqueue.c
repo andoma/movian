@@ -745,7 +745,7 @@ be_playqueue_open(struct navigator *nav, const char *url0,
 		  nav_page_t **npp, char *errbuf, size_t errlen)
 {
   nav_page_t *n;
-  prop_t *src;
+  prop_t *src, *metadata;
 
   *npp = n = nav_page_create(nav, url0, sizeof(nav_page_t),
 			     NAV_PAGE_DONT_CLOSE_ON_BACK);
@@ -754,6 +754,10 @@ be_playqueue_open(struct navigator *nav, const char *url0,
 
   src = prop_create(n->np_prop_root, "source");
   prop_set_string(prop_create(src, "type"), "playqueue");
+
+  metadata = prop_create(src, "metadata");
+  prop_set_string(prop_create(metadata, "title"), "Playqueue");
+
   prop_link(playqueue_nodes, prop_create(src, "nodes"));
   return 0;
 }
