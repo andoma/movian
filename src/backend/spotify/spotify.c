@@ -180,6 +180,7 @@ typedef struct spotify_page {
   char *sp_url;
   sp_track *sp_track;
   int sp_done;
+  int sp_free_on_done;
 
 } spotify_page_t;
 
@@ -1153,10 +1154,18 @@ spotify_page_done(spotify_page_t *sp)
   if(sp->sp_track != NULL)
     f_sp_track_release(sp->sp_track);
 
-  hts_mutex_lock(&spotify_mutex);
-  sp->sp_done = 1;
-  hts_cond_signal(&spotify_cond_main);
-  hts_mutex_unlock(&spotify_mutex);
+  if(sp->sp_free_on_done) {
+
+    prop_ref_dec(sp->sp_root);
+    free(sp->sp_url);
+    free(sp);
+
+  } else {
+    hts_mutex_lock(&spotify_mutex);
+    sp->sp_done = 1;
+    hts_cond_signal(&spotify_cond_main);
+    hts_mutex_unlock(&spotify_mutex);
+  }
 }
 
 /**
@@ -2232,30 +2241,50 @@ be_spotify_open(struct navigator *nav, const char *url,
 		nav_page_t **npp, char *errbuf, size_t errlen)
 {
   nav_page_t *np;
-  spotify_page_t sp;
-
-  memset(&sp, 0, sizeof(spotify_page_t));
 
   spotify_start(); // Returns with spotify_mutex locked
 
-  np = nav_page_create(nav, NULL, sizeof(nav_page_t), NAV_PAGE_DONT_CLOSE_ON_BACK);
-  
-  sp.sp_url = strdup(url);
-  sp.sp_root = np->np_prop_root;
-  prop_ref_inc(sp.sp_root);
-  
-  prop_set_int(prop_create(prop_create(np->np_prop_root, "source"), "loading"), 1);
-  spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_OPEN_PAGE, &sp));
+  if(!strncmp(url, "spotify:track:", strlen("spotify:track:"))) {
+    spotify_page_t sp;
 
-  while(sp.sp_done == 0)
-    hts_cond_wait(&spotify_cond_main, &spotify_mutex);
+    memset(&sp, 0, sizeof(spotify_page_t));
+
+    np = nav_page_create(nav, NULL, sizeof(nav_page_t), 
+			 NAV_PAGE_DONT_CLOSE_ON_BACK);
+  
+    sp.sp_url = strdup(url);
+    sp.sp_root = np->np_prop_root;
+    prop_ref_inc(sp.sp_root);
+  
+    spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_OPEN_PAGE, &sp));
+
+    while(sp.sp_done == 0)
+      hts_cond_wait(&spotify_cond_main, &spotify_mutex);
+
+    prop_ref_dec(sp.sp_root);
+
+    np->np_url = sp.sp_url;
+    prop_set_string(prop_create(np->np_prop_root, "url"), np->np_url);
+
+  } else {
+
+    spotify_page_t *sp = calloc(1, sizeof(spotify_page_t));
+
+    np = nav_page_create(nav, url, sizeof(nav_page_t), 
+			 NAV_PAGE_DONT_CLOSE_ON_BACK);
+  
+    sp->sp_url = strdup(url);
+    sp->sp_root = np->np_prop_root;
+    prop_ref_inc(sp->sp_root);
+    sp->sp_free_on_done = 1;
+
+    prop_set_int(prop_create(prop_create(np->np_prop_root, "source"),
+			     "loading"), 1);
+
+    spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_OPEN_PAGE, sp));
+  }
 
   hts_mutex_unlock(&spotify_mutex);
-
-  prop_ref_dec(sp.sp_root);
-
-  np->np_url = strdup(sp.sp_url);
-  prop_set_string(prop_create(np->np_prop_root, "url"), np->np_url);
 
   *npp = np;
   return 0;
