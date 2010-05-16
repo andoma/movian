@@ -180,8 +180,7 @@ file_open_file(struct navigator *nav, const char *url, nav_page_t **npp,
       return 0;
 
     playqueue_play(url, meta);
-    *npp = NULL;
-    return 0;
+    return playqueue_open(nav, NULL, npp, NULL, 0);
 
   case CONTENT_VIDEO:
   case CONTENT_DVD:

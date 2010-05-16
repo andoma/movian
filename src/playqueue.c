@@ -674,14 +674,14 @@ playqueue_init(void)
 /**
  *
  */
-static int
-be_playqueue_open(struct navigator *nav, const char *url0,
+int
+playqueue_open(struct navigator *nav, const char *url0,
 		  nav_page_t **npp, char *errbuf, size_t errlen)
 {
   nav_page_t *n;
   prop_t *src, *metadata;
 
-  *npp = n = nav_page_create(nav, url0, sizeof(nav_page_t),
+  *npp = n = nav_page_create(nav, "playqueue:", sizeof(nav_page_t),
 			     NAV_PAGE_DONT_CLOSE_ON_BACK);
 
   prop_set_string(prop_create(n->np_prop_root, "view"), "list");
@@ -714,7 +714,7 @@ be_playqueue_canhandle(const char *url)
 static backend_t be_playqueue = {
   .be_init = playqueue_init,
   .be_canhandle = be_playqueue_canhandle,
-  .be_open = be_playqueue_open,
+  .be_open = playqueue_open,
 };
 
 BE_REGISTER(playqueue);
