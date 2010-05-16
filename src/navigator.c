@@ -229,7 +229,7 @@ nav_open0(navigator_t *nav, const char *url)
 
   if(np == NULL) {
 
-    if(be->be_open(nav, url, &np, errbuf, sizeof(errbuf))) {
+    if((np = be->be_open(nav, url, errbuf, sizeof(errbuf))) == NULL) {
       notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nError: %s", url, errbuf);
       return;
     }

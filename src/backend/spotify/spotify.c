@@ -2236,9 +2236,9 @@ spotify_start(void)
 /**
  *
  */
-static int
+static nav_page_t *
 be_spotify_open(struct navigator *nav, const char *url,
-		nav_page_t **npp, char *errbuf, size_t errlen)
+		char *errbuf, size_t errlen)
 {
   nav_page_t *np;
 
@@ -2285,9 +2285,7 @@ be_spotify_open(struct navigator *nav, const char *url,
   }
 
   hts_mutex_unlock(&spotify_mutex);
-
-  *npp = np;
-  return 0;
+  return np;
 }
 
 /**

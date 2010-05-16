@@ -40,8 +40,8 @@ typedef struct backend {
 
   int (*be_canhandle)(const char *ur);
 
-  int (*be_open)(struct navigator *nav, const char *url, 
-		 struct nav_page **npp, char *errbuf, size_t errlen);
+  struct nav_page *(*be_open)(struct navigator *nav, const char *url, 
+			      char *errbuf, size_t errlen);
 
   event_t *(*be_play_video)(const char *url, struct media_pipe *mp,
 			    char *errbuf, size_t errlen);
@@ -81,6 +81,8 @@ backend_t *backend_canhandle(const char *url);
 
 void backend_register(backend_t *be);
 
+struct nav_page *backend_open_video(struct navigator *nav, const char *url,
+				    char *errbuf, size_t errlen);
 
 #define BE_REGISTER(name) \
   static void  __attribute__((constructor)) backend_init_ ## name(void) {\

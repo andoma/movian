@@ -106,7 +106,6 @@ void playqueue_event_handler(event_t *e);
 
 void playqueue_load_with_source(prop_t *track, prop_t *source, int mode);
 
-int playqueue_open(struct navigator *nav, const char *url0,
-		   nav_page_t **npp, char *errbuf, size_t errlen);
+nav_page_t *playqueue_open(struct navigator *nav);
 
 #endif /* PLAYQUEUE_H__ */

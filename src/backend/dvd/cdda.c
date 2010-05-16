@@ -312,9 +312,9 @@ canhandle(const char *url)
 /**
  *
  */
-static int
+static nav_page_t *
 openpage(struct navigator *nav, const char *url,
-	 nav_page_t **npp, char *errstr, size_t errlen)
+	 char *errstr, size_t errlen)
 {
   nav_page_t *np;
   prop_t *p;
@@ -323,29 +323,28 @@ openpage(struct navigator *nav, const char *url,
 
   if((track = parse_audiocd_url(url, device, sizeof(device))) < 0) {
     snprintf(errstr, errlen, "Invalid URL");
-    return -1;
+    return NULL;
   }
 
   cd_meta_t *cm = get_cd_meta(device);
 
   if(cm == NULL) {
     snprintf(errstr, errlen, "Unable to open CD");
-    return -1;
+    return NULL;
   }
 
   if(track) {
     cd_track_t *ct = get_track(cm, track);
     if(ct == NULL) {
       snprintf(errstr, errlen, "Invalid track");
-      return -1;
+      return NULL;
     }
 
     prop_t *meta = prop_create(NULL, "metadata");
     prop_link(ct->ct_metadata, meta);
 
     playqueue_play(url, meta);
-    *npp = NULL;
-    return 0;
+    return playqueue_open(nav);
   }
 
   np = nav_page_create(nav, url, sizeof(nav_page_t), 0);
@@ -353,9 +352,7 @@ openpage(struct navigator *nav, const char *url,
   p = np->np_prop_root;
 
   prop_link(cm->cm_root, p);
-  *npp = np;
-	    
-  return 0;
+  return np;
 }
 
 /**

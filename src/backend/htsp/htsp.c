@@ -724,29 +724,11 @@ htsp_connection_deref(htsp_connection_t *hc)
 
 
 /**
- * XXX: Same as file_open_video()
- */
-static int
-htsp_open_channel(struct navigator *nav, const char *url, nav_page_t **npp)
-{
-  nav_page_t *np;
-  prop_t *src;
-
-  np = nav_page_create(nav, url, sizeof(nav_page_t), 0);
-
-  src = prop_create(np->np_prop_root, "source");
-  prop_set_string(prop_create(src, "type"), "video");
-  *npp = np;
-  return 0;
-}
-
-
-/**
  *
  */
-static int
+static nav_page_t *
 be_htsp_open(struct navigator *nav, const char *url,
-	     nav_page_t **npp, char *errbuf, size_t errlen)
+	     char *errbuf, size_t errlen)
 {
   htsp_connection_t *hc;
   htsp_page_t *hp;
@@ -755,7 +737,7 @@ be_htsp_open(struct navigator *nav, const char *url,
 
   if((hc = htsp_connection_find(url, path, sizeof(path), 
 				errbuf, errlen)) == NULL) {
-    return -1;
+    return NULL;
   }
 
   TRACE(TRACE_DEBUG, "HTSP", "Open %s", url);
@@ -785,12 +767,12 @@ be_htsp_open(struct navigator *nav, const char *url,
   } else {
 
     snprintf(errbuf, errlen, "Invalid URL");
-    return -1;
+    return NULL;
   }
 #endif
 
   if(!strncmp(path, "/channel/", strlen("/channel/")))
-    return htsp_open_channel(nav, url, npp);
+    return backend_open_video(nav, url, errbuf, errlen);
 
   hp = nav_page_create(nav, url, sizeof(htsp_page_t),
 		       NAV_PAGE_DONT_CLOSE_ON_BACK);
@@ -802,9 +784,7 @@ be_htsp_open(struct navigator *nav, const char *url,
 
   prop_set_string(prop_create(src, "type"), "directory");
   prop_link(hc->hc_prop_channels, prop_create(src, "nodes"));
-
-  *npp = &hp->h;
-  return 0;
+  return &hp->h;
 }
 
 

@@ -51,25 +51,6 @@ rtmp_canhandle(const char *url)
 /**
  *
  */
-static int
-rtmp_open(struct navigator *nav, const char *url0,
-	  nav_page_t **npp, char *errbuf, size_t errlen)
-{
-  nav_page_t *np;
-  prop_t *src;
-
-  np = nav_page_create(nav, url0, sizeof(nav_page_t), 0);
-
-  src = prop_create(np->np_prop_root, "source");
-  prop_set_string(prop_create(src, "type"), "video");
-  *npp = np;
-  return 0;
-}
-
-
-/**
- *
- */
 static int 
 set_vcodec(rtmp_t *r, const char *str)
 {
@@ -439,7 +420,7 @@ rtmp_playvideo(const char *url, media_pipe_t *mp, char *errbuf, size_t errlen)
  */
 static backend_t be_rtmp = {
   .be_canhandle = rtmp_canhandle,
-  .be_open = rtmp_open,
+  .be_open = backend_open_video,
   .be_play_video = rtmp_playvideo,
 };
 

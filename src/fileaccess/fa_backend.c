@@ -49,23 +49,6 @@ be_file_canhandle(const char *url)
  *
  */
 static void
-file_open_video(struct navigator *nav, const char *url0, nav_page_t **npp)
-{
-  nav_page_t *np;
-  prop_t *src;
-
-  np = nav_page_create(nav, url0, sizeof(nav_page_t), 0);
-
-  src = prop_create(np->np_prop_root, "source");
-  prop_set_string(prop_create(src, "type"), "video");
-  *npp = np;
-}
-
-
-/**
- *
- */
-static void
 set_title_from_url(prop_t *metadata, const char *url)
 {
   int l = strlen(url);
@@ -83,46 +66,44 @@ set_title_from_url(prop_t *metadata, const char *url)
 /**
  *
  */
-static int
-file_open_dir(struct navigator *nav, 
-	      const char *url0, nav_page_t **npp, char *errbuf, size_t errlen)
+static nav_page_t *
+file_open_dir(struct navigator *nav, const char *url,
+	      char *errbuf, size_t errlen)
 {
   nav_page_t *np;
   prop_t *src, *view;
   int type;
   char parent[URL_MAX];
 
-  type = fa_probe_dir(NULL, url0);
+  type = fa_probe_dir(NULL, url);
 
-  if(type == CONTENT_DVD) {
-    file_open_video(nav, url0, npp);
-    return 0;
-  }
+  if(type == CONTENT_DVD)
+    return backend_open_video(nav, url, errbuf, errlen);
 
-  np = nav_page_create(nav, url0, sizeof(nav_page_t), NAV_PAGE_DONT_CLOSE_ON_BACK);
+  np = nav_page_create(nav, url, sizeof(nav_page_t), 
+		       NAV_PAGE_DONT_CLOSE_ON_BACK);
   view = prop_create(np->np_prop_root, "view");
 
   src = prop_create(np->np_prop_root, "source");
   prop_set_string(prop_create(src, "type"), "directory");
 
   /* Find a meaningful page title (last component of URL) */
-  set_title_from_url(prop_create(src, "metadata"), url0);
+  set_title_from_url(prop_create(src, "metadata"), url);
 
   // Set parent
-  if(!fa_parent(parent, sizeof(parent), url0))
+  if(!fa_parent(parent, sizeof(parent), url))
     prop_set_string(prop_create(np->np_prop_root, "parent"), parent);
 
-  fa_scanner(url0, src, view, NULL);
-  *npp = np;
-  return 0;
+  fa_scanner(url, src, view, NULL);
+  return np;
 }
 
 
 /**
  * Try to open the given URL with a playqueue context
  */
-static int
-file_open_audio(struct navigator *nav, const char *url, nav_page_t **npp)
+static nav_page_t *
+file_open_audio(struct navigator *nav, const char *url)
 {
   char parent[URL_MAX];
   char parent2[URL_MAX];
@@ -131,12 +112,13 @@ file_open_audio(struct navigator *nav, const char *url, nav_page_t **npp)
   prop_t *src, *view;
 
   if(fa_parent(parent, sizeof(parent), url))
-    return -1;
+    return NULL;
 
   if(fa_stat(parent, &st, NULL, 0))
-    return -1;
+    return NULL;
   
-  np = nav_page_create(nav, parent, sizeof(nav_page_t), NAV_PAGE_DONT_CLOSE_ON_BACK);
+  np = nav_page_create(nav, parent, sizeof(nav_page_t), 
+		       NAV_PAGE_DONT_CLOSE_ON_BACK);
   view = prop_create(np->np_prop_root, "view");
 
   src = prop_create(np->np_prop_root, "source");
@@ -150,21 +132,21 @@ file_open_audio(struct navigator *nav, const char *url, nav_page_t **npp)
     prop_set_string(prop_create(np->np_prop_root, "parent"), parent2);
 
   fa_scanner(parent, src, view, url);
-  *npp = np;
-  return 0;
+  return np;
 }
 
 
 /**
  *
  */
-static int
-file_open_file(struct navigator *nav, const char *url, nav_page_t **npp,
+static nav_page_t *
+file_open_file(struct navigator *nav, const char *url,
 	       char *errbuf, size_t errlen, struct stat *st)
 {
   char redir[URL_MAX];
   int r;
   prop_t *meta;
+  nav_page_t *np;
 
   meta = prop_create(NULL, "metadata");
 
@@ -173,41 +155,40 @@ file_open_file(struct navigator *nav, const char *url, nav_page_t **npp,
   switch(r) {
   case CONTENT_ARCHIVE:
     prop_destroy(meta);
-    return file_open_dir(nav, redir, npp, errbuf, errlen);
+    return file_open_dir(nav, redir, errbuf, errlen);
 
   case CONTENT_AUDIO:
-    if(!file_open_audio(nav, url, npp))
-      return 0;
+    if((np = file_open_audio(nav, url)) != NULL)
+      return np;
 
     playqueue_play(url, meta);
-    return playqueue_open(nav, NULL, npp, NULL, 0);
+    return playqueue_open(nav);
 
   case CONTENT_VIDEO:
   case CONTENT_DVD:
     prop_destroy(meta);
-    file_open_video(nav, url, npp);
-    return 0;
+    return backend_open_video(nav, url, errbuf, errlen);
 
   default:
     snprintf(errbuf, errlen, "Can not handle file contents");
-    return -1;
+    return NULL;
   }
 }
 
 /**
  *
  */
-static int
-be_file_open(struct navigator *nav, const char *url0,
-	     nav_page_t **npp, char *errbuf, size_t errlen)
+static nav_page_t *
+be_file_open(struct navigator *nav, const char *url,
+	     char *errbuf, size_t errlen)
 {
   struct stat buf;
 
-  if(fa_stat(url0, &buf, errbuf, errlen))
-    return -1;
+  if(fa_stat(url, &buf, errbuf, errlen))
+    return NULL;
 
-  return S_ISDIR(buf.st_mode) ? file_open_dir(nav, url0, npp, errbuf, errlen) :
-    file_open_file(nav, url0, npp, errbuf, errlen, &buf);
+  return S_ISDIR(buf.st_mode) ? file_open_dir(nav, url, errbuf, errlen) :
+    file_open_file(nav, url, errbuf, errlen, &buf);
 }
 
 

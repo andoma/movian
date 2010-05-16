@@ -69,11 +69,7 @@ event_t *
 backend_play_video(const char *url, struct media_pipe *mp,
 		   char *errbuf, size_t errlen)
 {
-  backend_t *nb;
-
-  LIST_FOREACH(nb, &backends, be_global_link)
-    if(nb->be_canhandle(url))
-      break;
+  backend_t *nb = backend_canhandle(url);
   
   if(nb == NULL || nb->be_play_video == NULL) {
     snprintf(errbuf, errlen, "No backend for URL");
@@ -90,11 +86,7 @@ event_t *
 backend_play_audio(const char *url, struct media_pipe *mp,
 	       char *errbuf, size_t errlen)
 {
-  backend_t *nb;
-
-  LIST_FOREACH(nb, &backends, be_global_link)
-    if(nb->be_canhandle(url))
-      break;
+  backend_t *nb = backend_canhandle(url);
   
   if(nb == NULL || nb->be_play_audio == NULL) {
     snprintf(errbuf, errlen, "No backend for URL");
@@ -110,11 +102,7 @@ backend_play_audio(const char *url, struct media_pipe *mp,
 prop_t *
 backend_list(const char *url, char *errbuf, size_t errlen)
 {
-  backend_t *nb;
-
-  LIST_FOREACH(nb, &backends, be_global_link)
-    if(nb->be_canhandle(url))
-      break;
+  backend_t *nb = backend_canhandle(url);
   
   if(nb == NULL || nb->be_list == NULL) {
     snprintf(errbuf, errlen, "No backend for URL");
@@ -137,9 +125,9 @@ be_page_canhandle(const char *url)
 /**
  *
  */
-static int
+static nav_page_t *
 be_page_open(struct navigator *nav,  const char *url0,
-	     nav_page_t **npp, char *errbuf, size_t errlen)
+	     char *errbuf, size_t errlen)
 {
   nav_page_t *n = nav_page_create(nav, url0, sizeof(nav_page_t), 0);
   prop_t *src = prop_create(n->np_prop_root, "source");
@@ -150,8 +138,7 @@ be_page_open(struct navigator *nav,  const char *url0,
   cap[0] = toupper((int)cap[0]);
   prop_set_string(prop_create(metadata, "title"), cap);
 
-  *npp = n;
-  return 0;
+  return n;
 }
 
 
@@ -173,12 +160,7 @@ struct pixmap *
 backend_imageloader(const char *url, int want_thumb, const char *theme,
 		    char *errbuf, size_t errlen)
 {
-  backend_t *nb;
-
-  LIST_FOREACH(nb, &backends, be_global_link)
-    if(nb->be_canhandle(url))
-      break;
-  
+  backend_t *nb = backend_canhandle(url);
   if(nb == NULL || nb->be_imageloader == NULL) {
     snprintf(errbuf, errlen, "No backend for URL");
     return NULL;
@@ -201,3 +183,18 @@ backend_canhandle(const char *url)
   return NULL;
 }
 
+
+
+/**
+ *
+ */
+nav_page_t *
+backend_open_video(struct navigator *nav, const char *url,
+		   char *errbuf, size_t errlen)
+{
+  nav_page_t *np = nav_page_create(nav, url, sizeof(nav_page_t), 0);
+  prop_t *src = prop_create(np->np_prop_root, "source");
+
+  prop_set_string(prop_create(src, "type"), "video");
+  return np;
+}
