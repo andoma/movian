@@ -46,6 +46,10 @@ typedef struct playdeck {
   prop_sub_t *sub_artist;
   prop_sub_t *sub_playstatus;
 
+  prop_sub_t *sub_canSkipBackward;
+  prop_sub_t *sub_canSkipForward;
+  prop_sub_t *sub_canPause;
+
   int pos_grabbed;
 
   char *cur_artist;
@@ -94,9 +98,6 @@ playpause_clicked(GtkToolButton *toolbutton, gpointer user_data)
 static void
 bar_sensitivity(playdeck_t *pd, gboolean v)
 {
-  gtk_widget_set_sensitive(GTK_WIDGET(pd->prev),       v);
-  gtk_widget_set_sensitive(GTK_WIDGET(pd->next),       v);
-  gtk_widget_set_sensitive(GTK_WIDGET(pd->playpause),  v);
   gtk_widget_set_sensitive(GTK_WIDGET(pd->pos_slider), v);
 }
 
@@ -329,6 +330,9 @@ playdeck_dtor(GtkObject *object, gpointer user_data)
   prop_unsubscribe(pd->sub_album);
   prop_unsubscribe(pd->sub_artist);
   prop_unsubscribe(pd->sub_playstatus);
+  prop_unsubscribe(pd->sub_canSkipForward);
+  prop_unsubscribe(pd->sub_canSkipBackward);
+  prop_unsubscribe(pd->sub_canPause);
 
   free(pd->cur_artist);
   free(pd->cur_album);
@@ -432,15 +436,42 @@ gu_playdeck_add(gu_window_t *gw, GtkWidget *parent)
   gtk_toolbar_insert(GTK_TOOLBAR(pd->tbar), ti, -1);
   g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(prev_clicked), pd);
 
+  pd->sub_canSkipBackward =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("global", "media", "current", 
+				 "canSkipBackward"),
+		   PROP_TAG_CALLBACK_INT, gu_subscription_set_sensitivity,
+		   pd->prev,
+		   PROP_TAG_COURIER, pc,
+		   NULL);
+
   /* Play / Pause */
   pd->playpause = ti = gtk_tool_button_new_from_stock(GTK_STOCK_MEDIA_PLAY);
   gtk_toolbar_insert(GTK_TOOLBAR(pd->tbar), ti, -1);
   g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(playpause_clicked), pd);
 
+  pd->sub_canPause =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("global", "media", "current", 
+				 "canPause"),
+		   PROP_TAG_CALLBACK_INT, gu_subscription_set_sensitivity,
+		   pd->playpause,
+		   PROP_TAG_COURIER, pc,
+		   NULL);
+
   /* Next button */
   pd->next = ti = gtk_tool_button_new_from_stock(GTK_STOCK_MEDIA_NEXT);
   gtk_toolbar_insert(GTK_TOOLBAR(pd->tbar), ti, -1);
   g_signal_connect(G_OBJECT(ti), "clicked", G_CALLBACK(next_clicked), pd);
+
+  pd->sub_canSkipForward =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("global", "media", "current", 
+				 "canSkipForward"),
+		   PROP_TAG_CALLBACK_INT, gu_subscription_set_sensitivity,
+		   pd->next,
+		   PROP_TAG_COURIER, pc,
+		   NULL);
 
   /* Separator */
   ti = gtk_separator_tool_item_new();
