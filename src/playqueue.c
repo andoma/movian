@@ -61,21 +61,6 @@ static int playqueue_length;
 
 playqueue_entry_t *pqe_current;
 
-/**
- *
- */
-static hts_mutex_t playqueue_request_mutex;
-static hts_cond_t  playqueue_request_cond;
-
-TAILQ_HEAD(playqueue_request_queue, playqueue_request);
-
-static struct playqueue_request_queue playqueue_requests;
-
-typedef struct playqueue_request {
-  TAILQ_ENTRY(playqueue_request) pqr_link;
-  char *pqr_url;
-  prop_t *pqr_meta;
-} playqueue_request_t;
 
 /**
  *
@@ -534,10 +519,11 @@ playqueue_load_with_source(prop_t *track, prop_t *source, int mode)
  *
  * That way users may 'stick in' track in the current playqueue
  */
-static void
-playqueue_load(const char *url, prop_t *metadata, int enq)
+void
+playqueue_play(const char *url, prop_t *metadata)
 {
   playqueue_entry_t *pqe, *prev;
+  int enq = 0;
 
   hts_mutex_lock(&playqueue_mutex);
 
@@ -589,54 +575,6 @@ playqueue_load(const char *url, prop_t *metadata, int enq)
   /* Tick player to play it */
   pqe_play(pqe, 1);
   hts_mutex_unlock(&playqueue_mutex);
-}
-
-/**
- * Dequeue requests
- */
-static void *
-playqueue_thread(void *aux)
-{
-  playqueue_request_t *pqr;
-
-  hts_mutex_lock(&playqueue_request_mutex);
-
-  while(1) {
-    
-    while((pqr = TAILQ_FIRST(&playqueue_requests)) == NULL)
-      hts_cond_wait(&playqueue_request_cond, &playqueue_request_mutex);
-
-    TAILQ_REMOVE(&playqueue_requests, pqr, pqr_link);
-    
-    hts_mutex_unlock(&playqueue_request_mutex);
-
-    playqueue_load(pqr->pqr_url, pqr->pqr_meta, 0);
-    free(pqr->pqr_url);
-    free(pqr);
-
-    hts_mutex_lock(&playqueue_request_mutex);
-  }
-
-  return NULL;
-}
-
-
-
-/**
- * We don't want to hog caller, so we dispatch the request to a worker thread.
- */
-void
-playqueue_play(const char *url, prop_t *meta)
-{
-  playqueue_request_t *pqr = calloc(1, sizeof(playqueue_request_t));
-
-  pqr->pqr_url     = strdup(url);
-  pqr->pqr_meta    = meta;
-
-  hts_mutex_lock(&playqueue_request_mutex);
-  TAILQ_INSERT_TAIL(&playqueue_requests, pqr, pqr_link);
-  hts_cond_signal(&playqueue_request_cond);
-  hts_mutex_unlock(&playqueue_request_mutex);
 }
 
 
@@ -700,10 +638,7 @@ playqueue_init(void)
 
   playqueue_mp = mp_create("playqueue", "tracks", 0);
 
-  hts_mutex_init(&playqueue_request_mutex);
-  hts_cond_init(&playqueue_request_cond);
   TAILQ_INIT(&playqueue_entries);
-  TAILQ_INIT(&playqueue_requests);
   TAILQ_INIT(&playqueue_source_entries);
   TAILQ_INIT(&playqueue_shuffled_entries);
 
@@ -725,7 +660,6 @@ playqueue_init(void)
   playqueue_root = prop_create(prop_get_global(), "playqueue");
   playqueue_nodes = prop_create(playqueue_root, "nodes");
 
-  hts_thread_create_detached("playqueue", playqueue_thread, NULL);
   hts_thread_create_detached("audioplayer", player_thread, NULL);
 
   prop_subscribe(0,
