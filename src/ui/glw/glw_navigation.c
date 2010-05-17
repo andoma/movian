@@ -67,7 +67,7 @@ compute_position(glw_t *w, glw_orientation_t o)
  *
  */
 static void
-find_candidate(glw_t *w, query_t *query)
+find_candidate(glw_t *w, query_t *query, float d_mul)
 {
   glw_t *c;
   float x, y, distance, dx, dy;
@@ -85,7 +85,7 @@ find_candidate(glw_t *w, query_t *query)
     else
       dy *= 10;
 
-    distance = sqrt(dx * dx + dy * dy);
+    distance = d_mul * sqrt(dx * dx + dy * dy);
     if(distance < query->score) {
       query->score = distance;
       query->best = w;
@@ -98,13 +98,13 @@ find_candidate(glw_t *w, query_t *query)
     TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
       if(c->glw_flags & GLW_HIDDEN)
 	continue;
-      find_candidate(c, query);
+      find_candidate(c, query, d_mul);
     }
     break;
     
   case GLW_NAV_DESCEND_SELECTED:
     if((c = w->glw_selected) != NULL)
-      find_candidate(c, query);
+      find_candidate(c, query, d_mul);
     break;
 
   case GLW_NAV_DESCEND_FOCUSED:
@@ -117,7 +117,7 @@ find_candidate(glw_t *w, query_t *query)
     }
 
     if(c != NULL)
-      find_candidate(c, query);
+      find_candidate(c, query, d_mul);
     break;
   }
 }
@@ -134,6 +134,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
   int pagecnt;
   query_t query;
   int loop = 1;
+  float escape_score = 1;
 
   x = compute_position(w, GLW_ORIENTATION_HORIZONTAL);
   y = compute_position(w, GLW_ORIENTATION_VERTICAL);
@@ -251,6 +252,9 @@ glw_navigate(glw_t *w, event_t *e, int local)
     if(local && w->glw_class->gc_flags & GLW_NAVIGATION_SEARCH_BOUNDARY)
       return 0;
 
+    if(w->glw_class->gc_escape_score)
+      escape_score *= w->glw_class->gc_escape_score;
+
     switch(p->glw_class->gc_nav_search_mode) {
     case GLW_NAV_SEARCH_NONE:
       break;
@@ -352,7 +356,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
 	if(c == NULL)
 	  break;
-	find_candidate(c, &query);
+	find_candidate(c, &query, escape_score);
       }
       break;
     }

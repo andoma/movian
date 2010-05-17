@@ -376,6 +376,8 @@ typedef struct glw_class {
    */
   const char *(*gc_get_text)(struct glw *w);
 
+  float gc_escape_score;
+
   /**
    * Registration link
    */

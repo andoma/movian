@@ -120,6 +120,7 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
     vy = y + size_y;
 
     c->glw_parent_pos.y = 1.0 - vy + l->center_y;
+    c->glw_norm_weight = size_y;
 
     if(c->glw_parent_pos.y - c->glw_parent_size_y <= 1.5f &&
        c->glw_parent_pos.y + c->glw_parent_size_y >= -1.5f) {
@@ -208,6 +209,8 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
     c->glw_parent_scale.z = size_x;
 
     rc0.rc_size_x = rc->rc_size_x * size_x;
+
+    c->glw_norm_weight = size_x;
 
     glw_layout0(c, &rc0);
 
@@ -335,7 +338,6 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     c->glw_parent_scale.x = 1.0;
     c->glw_parent_scale.y = 1.0;
     c->glw_parent_scale.z = 1.0;
-    c->glw_norm_weight = 1.0;
     break;
 
   case GLW_SIGNAL_CHILD_DESTROYED:
@@ -451,6 +453,7 @@ static glw_class_t glw_list_x = {
   .gc_render = glw_list_render_x,
   .gc_set = glw_list_set_x,
   .gc_signal_handler = glw_list_callback_x,
+  .gc_escape_score = 100,
 };
 
 static glw_class_t glw_list_y = {
@@ -464,6 +467,7 @@ static glw_class_t glw_list_y = {
   .gc_render = glw_list_render_y,
   .gc_set = glw_list_set_y,
   .gc_signal_handler = glw_list_callback_y,
+  .gc_escape_score = 100,
 };
 
 GLW_REGISTER_CLASS(glw_list_x);
