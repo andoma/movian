@@ -26,6 +26,7 @@ typedef struct glw_image {
 
   float gi_angle;
 
+  char *gi_pending_filename;
   glw_loadable_texture_t *gi_current;
   glw_loadable_texture_t *gi_pending;
 
@@ -507,6 +508,40 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   glw_rctx_t rc0;
   glw_t *c;
 
+  if(gi->gi_pending_filename != NULL) {
+    // Request to load
+    int xs, ys;
+    int flags = 0;
+    
+    if(gi->gi_pending != NULL)
+      glw_tex_deref(w->glw_root, gi->gi_pending);
+    
+    
+    if(w->glw_class == &glw_repeatedimage)
+      flags |= GLW_TEX_REPEAT;
+
+
+    if(gi->gi_bitmap_flags & GLW_IMAGE_HQ_SCALING) {
+      xs = rc->rc_size_x;
+      ys = rc->rc_size_y;
+    } else {
+      xs = -1;
+      ys = -1;
+    }
+
+    if(gi->gi_pending_filename != NULL) {
+
+      gi->gi_pending = glw_tex_create(w->glw_root, gi->gi_pending_filename,
+				      flags, xs, ys);
+
+      free(gi->gi_pending_filename);
+      gi->gi_pending_filename = NULL;
+    } else {
+      gi->gi_pending = NULL;
+    }
+  }
+
+
   if((glt = gi->gi_pending) != NULL) {
     glw_tex_layout(gr, glt);
 
@@ -690,7 +725,9 @@ glw_image_set(glw_t *w, int init, va_list ap)
 
       char *curname;
 
-      if(gi->gi_pending != NULL) 
+      if(gi->gi_pending_filename != NULL)
+	curname = gi->gi_pending_filename;
+      else if(gi->gi_pending != NULL) 
 	curname = gi->gi_pending->glt_filename;
       else if(gi->gi_current != NULL) 
 	curname = gi->gi_current->glt_filename;
@@ -700,21 +737,18 @@ glw_image_set(glw_t *w, int init, va_list ap)
       if(curname != NULL && filename != NULL && !strcmp(filename, curname))
 	break;
 
-      if(gi->gi_pending != NULL)
-	glw_tex_deref(w->glw_root, gi->gi_pending);
+      if(gi->gi_pending_filename != NULL)
+	free(gi->gi_pending_filename);
 
-      int flags = 0;
-
-      if(w->glw_class == &glw_repeatedimage)
-	flags |= GLW_TEX_REPEAT;
-
-      gi->gi_pending = filename ? glw_tex_create(w->glw_root, filename,
-						 flags) : NULL;
+      gi->gi_pending_filename = filename ? strdup(filename) : NULL;
       break;
 
     case GLW_ATTRIB_PIXMAP:
       if(gi->gi_pending != NULL)
 	glw_tex_deref(w->glw_root, gi->gi_pending);
+
+      free(gi->gi_pending_filename);
+      gi->gi_pending_filename = NULL;
 
       gi->gi_pending = glw_tex_create_from_pixmap(w->glw_root, 
 						  va_arg(ap, pixmap_t *));

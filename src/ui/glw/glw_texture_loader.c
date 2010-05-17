@@ -237,7 +237,11 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
     h = ctx->height;
   }
 
-  if(w > 64 && h > 64) {
+  if(glt->glt_req_xs != -1 && glt->glt_req_ys != -1) {
+    w = glt->glt_req_xs;
+    h = glt->glt_req_ys;
+
+  } else if(w > 64 && h > 64) {
     if(w > gr->gr_width) {
       h = h * gr->gr_width / w;
       w = gr->gr_width;
@@ -333,14 +337,18 @@ glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *glt)
  *
  */
 glw_loadable_texture_t *
-glw_tex_create(glw_root_t *gr, const char *filename, int flags)
+glw_tex_create(glw_root_t *gr, const char *filename, int flags, int xs,
+	       int ys)
 {
   glw_loadable_texture_t *glt;
 
   hts_mutex_lock(&gr->gr_tex_mutex);
 
   LIST_FOREACH(glt, &gr->gr_tex_list, glt_global_link)
-    if(glt->glt_filename != NULL && !strcmp(glt->glt_filename, filename))
+    if(glt->glt_filename != NULL && !strcmp(glt->glt_filename, filename) &&
+       glt->glt_flags == flags &&
+       glt->glt_req_xs == xs &&
+       glt->glt_req_ys == ys)
       break;
 
   if(glt == NULL) {
@@ -349,6 +357,8 @@ glw_tex_create(glw_root_t *gr, const char *filename, int flags)
     LIST_INSERT_HEAD(&gr->gr_tex_list, glt, glt_global_link);
     glt->glt_state = GLT_STATE_INACTIVE;
     glt->glt_flags = flags;
+    glt->glt_req_xs = xs;
+    glt->glt_req_ys = ys;
   }
 
   glt->glt_refcnt++;
