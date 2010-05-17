@@ -585,7 +585,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
   }
 
 
-  glw_align_1(&rc0, w->glw_alignment, GLW_ALIGN_LEFT);
+  glw_align_1(&rc0, w->glw_alignment);
 
   if(!glw_is_tex_inited(&gtb->gtb_texture) || gtb->gtb_data.gtbd_siz_x == 0) {
     // No text available
@@ -627,7 +627,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
   glw_Scalef(&rc0, xs, ys, 1.0);
 
-  glw_align_2(&rc0, w->glw_alignment, GLW_ALIGN_LEFT);
+  glw_align_2(&rc0, w->glw_alignment);
 
 #if 0
   glDisable(GL_TEXTURE_2D);
@@ -711,8 +711,7 @@ gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb)
 
   int flags = GLW_CONSTRAINT_Y;
 
-  if(gtb->w.glw_alignment == GLW_ALIGN_NONE ||
-     gtb->w.glw_alignment == GLW_ALIGN_TOP ||
+  if(gtb->w.glw_alignment == GLW_ALIGN_TOP ||
      gtb->w.glw_alignment == GLW_ALIGN_BOTTOM)
     flags |= GLW_CONSTRAINT_X;
     
@@ -1427,6 +1426,7 @@ static glw_class_t glw_label = {
   .gc_dtor = glw_text_bitmap_dtor,
   .gc_signal_handler = glw_text_bitmap_callback,
   .gc_get_text = glw_text_bitmap_get_text,
+  .gc_default_alignment = GLW_ALIGN_LEFT,
 };
 
 GLW_REGISTER_CLASS(glw_label);
@@ -1443,7 +1443,7 @@ static glw_class_t glw_text = {
   .gc_dtor = glw_text_bitmap_dtor,
   .gc_signal_handler = glw_text_bitmap_callback,
   .gc_get_text = glw_text_bitmap_get_text,
-
+  .gc_default_alignment = GLW_ALIGN_LEFT,
 };
 
 GLW_REGISTER_CLASS(glw_text);

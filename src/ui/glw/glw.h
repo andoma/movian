@@ -144,7 +144,6 @@ typedef struct glw_rgb {
 } glw_rgb_t;
 
 typedef enum {
-  GLW_ALIGN_NONE = 0,
   GLW_ALIGN_CENTER,
   GLW_ALIGN_LEFT,
   GLW_ALIGN_RIGHT,
@@ -377,6 +376,11 @@ typedef struct glw_class {
   const char *(*gc_get_text)(struct glw *w);
 
   float gc_escape_score;
+
+  /**
+   * How to initialize glw_alignment when creating an instance
+   */
+  glw_alignment_t gc_default_alignment;
 
   /**
    * Registration link
@@ -949,11 +953,8 @@ void glw_scale_to_aspect(glw_rctx_t *rc, float t_aspect);
 extern const glw_vertex_t align_vertices[GLW_ALIGN_num];
 
 static inline void
-glw_align_1(glw_rctx_t *rc, glw_alignment_t a, glw_alignment_t def)
+glw_align_1(glw_rctx_t *rc, glw_alignment_t a)
 {
-  if(a == GLW_ALIGN_NONE)
-    a = def;
-
   if(a != GLW_ALIGN_CENTER)
     glw_Translatef(rc, 
 		   align_vertices[a].x, 
@@ -962,11 +963,8 @@ glw_align_1(glw_rctx_t *rc, glw_alignment_t a, glw_alignment_t def)
 }
 
 static inline void
-glw_align_2(glw_rctx_t *rc, glw_alignment_t a, glw_alignment_t def)
+glw_align_2(glw_rctx_t *rc, glw_alignment_t a)
 {
-  if(a == GLW_ALIGN_NONE)
-    a = def;
-
   if(a != GLW_ALIGN_CENTER)
     glw_Translatef(rc, 
 		   -align_vertices[a].x, 

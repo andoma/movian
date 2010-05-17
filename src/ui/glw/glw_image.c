@@ -176,7 +176,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 
     glw_PushMatrix(&rc0, rc);
 
-    glw_align_1(&rc0, w->glw_alignment, GLW_ALIGN_CENTER);
+    glw_align_1(&rc0, w->glw_alignment);
       
     if(w->glw_class == &glw_image || w->glw_class == &glw_icon)
       glw_scale_to_aspect(&rc0, glt->glt_aspect);
@@ -184,7 +184,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     if(gi->gi_angle != 0)
       glw_Rotatef(&rc0, -gi->gi_angle, 0, 0, 1);
 
-    glw_align_2(&rc0, w->glw_alignment, GLW_ALIGN_CENTER);
+    glw_align_2(&rc0, w->glw_alignment);
 
     if(glw_is_focusable(w))
       glw_store_matrix(w, &rc0);
@@ -803,6 +803,7 @@ static glw_class_t glw_image = {
   .gc_dtor = glw_image_dtor,
   .gc_set = glw_image_set,
   .gc_signal_handler = glw_image_callback,
+  .gc_default_alignment = GLW_ALIGN_CENTER,
 };
 
 GLW_REGISTER_CLASS(glw_image);
@@ -818,6 +819,7 @@ static glw_class_t glw_icon = {
   .gc_dtor = glw_image_dtor,
   .gc_set = glw_image_set,
   .gc_signal_handler = glw_image_callback,
+  .gc_default_alignment = GLW_ALIGN_CENTER,
 };
 
 GLW_REGISTER_CLASS(glw_icon);
@@ -833,6 +835,7 @@ static glw_class_t glw_backdrop = {
   .gc_dtor = glw_image_dtor,
   .gc_set = glw_image_set,
   .gc_signal_handler = glw_image_callback,
+  .gc_default_alignment = GLW_ALIGN_CENTER,
 };
 
 GLW_REGISTER_CLASS(glw_backdrop);
@@ -849,6 +852,7 @@ static glw_class_t glw_repeatedimage = {
   .gc_dtor = glw_image_dtor,
   .gc_set = glw_image_set,
   .gc_signal_handler = glw_image_callback,
+  .gc_default_alignment = GLW_ALIGN_CENTER,
 };
 
 GLW_REGISTER_CLASS(glw_repeatedimage);
