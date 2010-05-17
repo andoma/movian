@@ -170,6 +170,7 @@ typedef struct prop {
 #define PROP_SORTED_CHILDS 0x2
 #define PROP_SORT_CASE_INSENSITIVE 0x4
 #define PROP_NAME_NOT_ALLOCATED    0x8
+#define PROP_XREFED_ORIGINATOR 0x10
 
   /**
    * Number of monitoring subscriptions (linked via hp_value_subscriptions)
@@ -427,9 +428,9 @@ void prop_rename_ex(prop_t *p, const char *name, prop_sub_t *skipme);
 
 #define prop_rename(p, name) prop_rename_ex(p, name, NULL)
 
-void prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme);
+void prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard);
 
-#define prop_link(src, dst) prop_link_ex(src, dst, NULL)
+#define prop_link(src, dst) prop_link_ex(src, dst, NULL, 0)
 
 void prop_unlink_ex(prop_t *p, prop_sub_t *skipme);
 

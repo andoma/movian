@@ -232,6 +232,20 @@ prop_pvec_clone(prop_t **src)
  *
  */
 static void
+prop_remove_from_originator(prop_t *p)
+{
+  if(p->hp_flags & PROP_XREFED_ORIGINATOR)
+    prop_destroy(p->hp_originator);
+
+  LIST_REMOVE(p, hp_originator_link);
+  p->hp_originator = NULL;
+}
+
+
+/**
+ *
+ */
+static void
 prop_notify_free(prop_notify_t *n)
 {
   switch(n->hpn_event) {
@@ -1308,10 +1322,8 @@ prop_destroy0(prop_t *p)
   while((c = LIST_FIRST(&p->hp_targets)) != NULL)
     prop_unlink0(c, NULL, "prop_destroy0", NULL);
 
-  if(p->hp_originator != NULL) {
-    p->hp_originator = NULL;
-    LIST_REMOVE(p, hp_originator_link);
-  }
+  if(p->hp_originator != NULL)
+    prop_remove_from_originator(p);
 
   if(p->hp_parent != NULL) {
     prop_notify_child(p, p->hp_parent, PROP_DEL_CHILD, NULL, 0);
@@ -2484,9 +2496,7 @@ static void
 prop_unlink0(prop_t *p, prop_sub_t *skipme, const char *origin,
 	     struct prop_notify_queue *pnq)
 {
-  LIST_REMOVE(p, hp_originator_link);
-  p->hp_originator = NULL;
-
+  prop_remove_from_originator(p);
   relink_subscriptions(p, p, skipme, origin, pnq, NULL);
 }
 
@@ -2495,7 +2505,7 @@ prop_unlink0(prop_t *p, prop_sub_t *skipme, const char *origin,
  *
  */
 void
-prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme)
+prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard)
 {
   prop_t *t, *no_descend = NULL;
   prop_notify_t *n;
@@ -2515,6 +2525,12 @@ prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme)
 
   if(dst->hp_originator != NULL)
     prop_unlink0(dst, skipme, "prop_link()/unlink", &pnq);
+
+  if(hard) {
+    dst->hp_flags |= PROP_XREFED_ORIGINATOR;
+    assert(src->hp_xref < 255);
+    src->hp_xref++;
+  }
 
   dst->hp_originator = src;
   LIST_INSERT_HEAD(&src->hp_targets, dst, hp_originator_link);
