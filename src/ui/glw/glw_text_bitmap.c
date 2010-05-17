@@ -181,7 +181,7 @@ draw_glyph(glw_text_bitmap_data_t *gtbd, FT_Bitmap *bmp, uint8_t *dst,
 static int
 gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face, 
 	     int *uc, int len, int flags, int docur, float scale,
-	     float bias, int x_size_max)
+	     float bias, int x_size_max, int debug)
 {
   FT_GlyphSlot slot = face->glyph;
   FT_Bool use_kerning = FT_HAS_KERNING( face );
@@ -339,11 +339,9 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   gtbd->gtbd_siz_x = target_width;
   gtbd->gtbd_siz_y = target_height;
 
-#if 0
-  for(i = 0; i < target_height; i+=2) {
-    memset(data + i * target_width, 0xcc, target_width);
-  }
-#endif
+  if(debug)
+    for(i = 0; i < target_height; i+=2)
+      memset(data + i * target_width, 0xcc, target_width);
 
   if(docur) {
     gtbd->gtbd_cursor_pos = malloc(2 * (1 + len) * sizeof(int));
@@ -1145,6 +1143,7 @@ font_render_thread(void *aux)
   glw_text_bitmap_data_t d;
   float scale, bias;
   int xsize_max;
+  int debug;
 
   glw_lock(gr);
 
@@ -1178,6 +1177,7 @@ font_render_thread(void *aux)
     scale = gtb->gtb_size_scale;
     bias  = gtb->gtb_size_bias;
     xsize_max = gtb->gtb_xsize_max;
+    debug = gtb->w.glw_flags & GLW_DEBUG;
 
     /* gtb (i.e the widget) may be destroyed directly after we unlock,
        so we can't access it after this point. We can hold a reference
@@ -1188,7 +1188,7 @@ font_render_thread(void *aux)
 
     if(uc == NULL || uc[0] == 0 || 
        gtb_make_tex(gr, &d, gr->gr_gtb_face, uc, len, 0, docur, scale, bias,
-		    xsize_max)) {
+		    xsize_max, debug)) {
       d.gtbd_data = NULL;
       d.gtbd_siz_x = 0;
       d.gtbd_siz_y = 0;
