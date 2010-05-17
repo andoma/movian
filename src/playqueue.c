@@ -934,7 +934,7 @@ player_thread(void *aux)
     p = prop_get_by_name(PNVEC("self", "metadata"), 1,
 			 PROP_TAG_NAMED_ROOT, pqe->pqe_node, "self",
 			 NULL);
-    prop_link(p, mp->mp_prop_metadata);
+    prop_link_ex(p, mp->mp_prop_metadata, NULL, 1);
     prop_ref_dec(p);
 
     hts_mutex_lock(&playqueue_mutex);
