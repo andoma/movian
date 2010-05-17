@@ -276,7 +276,7 @@ convert_with_swscale(glw_loadable_texture_t *glt, AVPicture *pict, int pix_fmt,
 
   sws = sws_getContext(w, h, pix_fmt, 
 		       w, h, PIX_FMT_RGB24,
-		       SWS_BICUBIC, NULL, NULL, NULL);
+		       SWS_LANCZOS, NULL, NULL, NULL);
   if(sws == NULL)
     return 1;
 

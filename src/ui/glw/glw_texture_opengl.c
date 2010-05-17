@@ -302,7 +302,7 @@ texture_load_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
 
   sws = sws_getContext(src_w, src_h, src_pix_fmt, 
 		       w, h, dst_pix_fmt,
-		       SWS_BICUBIC, NULL, NULL, NULL);
+		       SWS_LANCZOS, NULL, NULL, NULL);
   if(sws == NULL)
     return;
 
