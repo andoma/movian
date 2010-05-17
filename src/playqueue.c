@@ -872,7 +872,7 @@ player_thread(void *aux)
   playqueue_entry_t *pqe = NULL;
   playqueue_event_t *pe;
   event_t *e;
-  prop_t *p;
+  prop_t *p, *m;
   char errbuf[100];
 
   while(1) {
@@ -937,6 +937,12 @@ player_thread(void *aux)
     prop_link_ex(p, mp->mp_prop_metadata, NULL, 1);
     prop_ref_dec(p);
 
+
+    m = prop_get_by_name(PNVEC("self", "media"), 1,
+			 PROP_TAG_NAMED_ROOT, pqe->pqe_node, "self",
+			 NULL);
+    prop_link(mp->mp_prop_root, m);
+
     hts_mutex_lock(&playqueue_mutex);
 
     mp_set_url(mp, pqe->pqe_url);
@@ -954,6 +960,10 @@ player_thread(void *aux)
 
     prop_set_int(p, 0);
     prop_ref_dec(p);
+
+    // Unlink $self.media
+    prop_unlink(m);
+    prop_ref_dec(m);
 
     if(e == NULL) {
       notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nPlayqueue error: %s",
