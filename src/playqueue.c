@@ -564,6 +564,7 @@ playqueue_enqueue(prop_t *track)
 			  before->pqe_node, NULL))
       abort();
   }
+  pqe_insert_shuffled(pqe);
 
   update_prev_next();
 
