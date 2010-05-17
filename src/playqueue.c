@@ -539,8 +539,9 @@ playqueue_enqueue(prop_t *track)
   pqe->pqe_linked = 1;
   pqe->pqe_playable = 1;
 
-  prop_link(prop_create(track, "metadata"),
-	    prop_create(pqe->pqe_node, "metadata"));
+  prop_link_ex(prop_create(track, "metadata"),
+	       prop_create(pqe->pqe_node, "metadata"),
+	       NULL, 1);
 
   prop_set_string(prop_create(pqe->pqe_node, "url"), url);
   prop_set_string(prop_create(pqe->pqe_node, "type"), "audio");
