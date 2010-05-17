@@ -39,15 +39,14 @@ static float
 compute_position(glw_t *w, glw_orientation_t o)
 {
   glw_t *p, *c;
-  float a, x;
-
-  x = 0;
+  float a, x = 0, n = 0;
 
   for(; (p = w->glw_parent) != NULL; w = p) {
     if(p->glw_class->gc_child_orientation != o)
       continue;
 
-    a = w->glw_norm_weight / 2;
+    a = n * w->glw_norm_weight;
+    n = 0.5;
 
     TAILQ_FOREACH(c, &p->glw_childs, glw_parent_link) {
       if(c->glw_flags & GLW_HIDDEN)
