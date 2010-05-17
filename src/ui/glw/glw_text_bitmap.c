@@ -1409,6 +1409,16 @@ glw_font_change_size(void *opaque, int fontsize)
 /**
  *
  */
+static const char *
+glw_text_bitmap_get_text(glw_t *w)
+{
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
+  return gtb->gtb_caption;
+}
+
+/**
+ *
+ */
 static glw_class_t glw_label = {
   .gc_name = "label",
   .gc_instance_size = sizeof(glw_text_bitmap_t),
@@ -1416,6 +1426,7 @@ static glw_class_t glw_label = {
   .gc_set = glw_text_bitmap_set,
   .gc_dtor = glw_text_bitmap_dtor,
   .gc_signal_handler = glw_text_bitmap_callback,
+  .gc_get_text = glw_text_bitmap_get_text,
 };
 
 GLW_REGISTER_CLASS(glw_label);
@@ -1431,6 +1442,8 @@ static glw_class_t glw_text = {
   .gc_set = glw_text_bitmap_set,
   .gc_dtor = glw_text_bitmap_dtor,
   .gc_signal_handler = glw_text_bitmap_callback,
+  .gc_get_text = glw_text_bitmap_get_text,
+
 };
 
 GLW_REGISTER_CLASS(glw_text);

@@ -371,6 +371,10 @@ typedef struct glw_class {
 			 glw_pointer_event_t *gpe, struct glw **hp,
 			 float *p, float *dir);
 
+  /**
+   * Get a text representing the widget
+   */
+  const char *(*gc_get_text)(struct glw *w);
 
   /**
    * Registration link
@@ -847,6 +851,8 @@ do {						\
     break;					\
   }						\
 } while(0)
+
+const char *glw_get_a_name(glw_t *w);
 
 int glw_signal(glw_t *w, glw_signal_t sig, void *extra);
 
