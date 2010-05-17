@@ -43,6 +43,7 @@ widget(container_z, {
 	    
 	    widget(container_x, {
 	      widget(container_x, {
+		.filterConstraintX = true;
 		.weight = 0.5;
 		ACTION_ICON2("theme://icons/32x32/back.png", 
 			     event(Back),
@@ -58,12 +59,14 @@ widget(container_z, {
 	      });
 	      
 	      widget(label, {
+		.filterConstraintX = true;
 		.align = center;
 		.sizeBias = 12;
 		.caption = $global.nav.currentpage.source.metadata.title;
 	      });
 	      
 	      widget(container_x, {
+		.filterConstraintX = true;
 		.weight = 0.5;
 		widget(container_y, {
 		  

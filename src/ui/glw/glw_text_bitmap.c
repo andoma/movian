@@ -711,8 +711,7 @@ gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb)
 
   int flags = GLW_CONSTRAINT_Y;
 
-  if(gtb->w.glw_alignment == GLW_ALIGN_TOP ||
-     gtb->w.glw_alignment == GLW_ALIGN_BOTTOM)
+  if(!(gtb->gtb_flags & GTB_ELLIPSIZE))
     flags |= GLW_CONSTRAINT_X;
     
   glw_set_constraints(&gtb->w, xs, ys, 0, 0, flags, 0);

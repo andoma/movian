@@ -5,6 +5,7 @@ widget(container_x, {
   space(0.25);
 	
   widget(backdrop, {
+    .filterConstraintX = true;
     .source = "theme://images/whitebox.png";
     .border = [3, 3, 6, 6];
     .color = [0.1, 0.5, 0.7];
