@@ -31,7 +31,6 @@ typedef struct query {
 
 } query_t;
 
-
 /**
  *
  */
@@ -39,7 +38,7 @@ static float
 compute_position(glw_t *w, glw_orientation_t o)
 {
   glw_t *p, *c;
-  float a, x = 0, n = 0;
+  float a, x = 0, n = 0, m, t, d;
 
   for(; (p = w->glw_parent) != NULL; w = p) {
     if(p->glw_class->gc_child_orientation != o)
@@ -47,14 +46,45 @@ compute_position(glw_t *w, glw_orientation_t o)
 
     a = n * w->glw_norm_weight;
     n = 0.5;
+    m = 1;
+    t = 0;
 
     TAILQ_FOREACH(c, &p->glw_childs, glw_parent_link) {
       if(c->glw_flags & GLW_HIDDEN)
 	continue;
 
       if(c == w)
-	break;
-      a += c->glw_norm_weight;
+	m = 0;
+      a += c->glw_norm_weight * m;
+      t += c->glw_norm_weight;
+    }
+
+    d = 1 - t;
+
+    if(d < 1.0) {
+      if(o == GLW_ORIENTATION_HORIZONTAL) {
+	switch(p->glw_alignment) {
+	default:
+	  break;
+	case GLW_ALIGN_CENTER:
+	  a += d / 2;
+	  break;
+	case GLW_ALIGN_RIGHT:
+	  a += d;
+	  break;
+	}
+      } else {
+	switch(p->glw_alignment) {
+	default:
+	  break;
+	case GLW_ALIGN_CENTER:
+	  a += d / 2;
+	  break;
+	case GLW_ALIGN_TOP:
+	  a += d;
+	  break;
+	}
+      }
     }
 
     x = (2 * a) - 1 + (x * w->glw_norm_weight);
