@@ -88,6 +88,11 @@ typedef struct playqueue_entry {
    */
   TAILQ_ENTRY(playqueue_entry) pqe_source_link;
 
+  /**
+   * Index in queue
+   */
+  int pqe_index;
+
 } playqueue_entry_t;
 
 

@@ -70,7 +70,7 @@ static prop_sub_t *playqueue_source_sub;
 static struct playqueue_entry_queue playqueue_source_entries;
 static prop_t *playqueue_startme;
 
-static void update_prev_next(void);
+static void update_pq_meta(void);
 
 /**
  *
@@ -186,8 +186,35 @@ pqe_remove_from_sourcequeue(playqueue_entry_t *pqe)
  *
  */
 static void
+pq_renumber(playqueue_entry_t *pqe)
+{
+  int num;
+
+  pqe = pqe ? TAILQ_PREV(pqe, playqueue_entry_queue, pqe_linear_link) : NULL;
+
+  if(pqe == NULL) {
+    pqe = TAILQ_FIRST(&playqueue_entries);
+    num = 1;
+  } else {
+    num = pqe->pqe_index + 1;
+    pqe = TAILQ_NEXT(pqe, pqe_linear_link);
+  }
+
+  for(; pqe != NULL; pqe = TAILQ_NEXT(pqe, pqe_linear_link)) {
+    pqe->pqe_index = num++;
+  }
+}
+
+
+
+/**
+ *
+ */
+static void
 pqe_remove_from_globalqueue(playqueue_entry_t *pqe)
 {
+  playqueue_entry_t *next = TAILQ_NEXT(pqe, pqe_linear_link);
+
   assert(pqe->pqe_linked == 1);
   prop_unparent(pqe->pqe_node);
   playqueue_length--;
@@ -195,7 +222,9 @@ pqe_remove_from_globalqueue(playqueue_entry_t *pqe)
   TAILQ_REMOVE(&playqueue_shuffled_entries, pqe, pqe_shuffled_link);
   pqe->pqe_linked = 0;
   pqe_unref(pqe);
-  update_prev_next();
+  if(next != NULL)
+    pq_renumber(next);
+  update_pq_meta();
 }
 
 
@@ -369,8 +398,10 @@ add_from_source(prop_t *p, playqueue_entry_t *before)
   } else {
     TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_linear_link);
   }
+  pq_renumber(pqe);
+
   pqe_insert_shuffled(pqe);
-  update_prev_next();
+  update_pq_meta();
 
   if(prop_set_parent_ex(pqe->pqe_node, playqueue_nodes, 
 			before ? before->pqe_node : NULL, NULL))
@@ -396,6 +427,8 @@ del_from_source(playqueue_entry_t *pqe)
 static void
 move_track(playqueue_entry_t *pqe, playqueue_entry_t *before)
 {
+  playqueue_length--; // pqe_insert_shuffled() will increase it
+
   TAILQ_REMOVE(&playqueue_source_entries, pqe, pqe_source_link);
   TAILQ_REMOVE(&playqueue_entries, pqe, pqe_linear_link);
   TAILQ_REMOVE(&playqueue_shuffled_entries, pqe, pqe_shuffled_link);
@@ -411,11 +444,14 @@ move_track(playqueue_entry_t *pqe, playqueue_entry_t *before)
   } else {
     TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_linear_link);
   }
+
+  pq_renumber(NULL);
+
   pqe_insert_shuffled(pqe);
 
   prop_move(pqe->pqe_node, before ? before->pqe_node : NULL);
 
-  update_prev_next();
+  update_pq_meta();
 }
 
 
@@ -565,9 +601,10 @@ playqueue_enqueue(prop_t *track)
 			  before->pqe_node, NULL))
       abort();
   }
+  pq_renumber(pqe);
   pqe_insert_shuffled(pqe);
 
-  update_prev_next();
+  update_pq_meta();
 
   hts_mutex_unlock(&playqueue_mutex);
 }
@@ -609,8 +646,9 @@ playqueue_play(const char *url, prop_t *metadata)
 
   /* Enqueue our new entry */
   TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_linear_link);
+  pq_renumber(pqe);
   pqe_insert_shuffled(pqe);
-  update_prev_next();
+  update_pq_meta();
   if(prop_set_parent(pqe->pqe_node, playqueue_nodes))
     abort();
 
@@ -628,7 +666,7 @@ playqueue_set_shuffle(void *opaque, int v)
 {
   playqueue_shuffle_mode = v;
   TRACE(TRACE_DEBUG, "playqueue", "Shuffle set to %s", v ? "on" : "off");
-  update_prev_next();
+  update_pq_meta();
 }
 
 
@@ -640,7 +678,7 @@ playqueue_set_repeat(void *opaque, int v)
 {
   playqueue_repeat_mode = v;
   TRACE(TRACE_DEBUG, "playqueue", "Repeat set to %s", v ? "on" : "off");
-  update_prev_next();
+  update_pq_meta();
 }
 
 
@@ -825,7 +863,7 @@ playqueue_advance0(playqueue_entry_t *pqe, int reverse)
  *
  */
 static void
-update_prev_next(void)
+update_pq_meta(void)
 {
   media_pipe_t *mp = playqueue_mp;
   playqueue_entry_t *pqe = pqe_current;
@@ -835,6 +873,13 @@ update_prev_next(void)
 
   prop_set_int(mp->mp_prop_canSkipForward,  can_skip_next);
   prop_set_int(mp->mp_prop_canSkipBackward, can_skip_prev);
+
+  prop_set_int(prop_create(mp->mp_prop_root, "totalTracks"), playqueue_length);
+  prop_t *p = prop_create(mp->mp_prop_root, "currentTrack");
+  if(pqe != NULL)
+    prop_set_int(p, pqe->pqe_index);
+  else
+    prop_set_void(p);
 }
 
 
@@ -853,7 +898,7 @@ playqueue_advance(playqueue_entry_t *pqe, int reverse)
   if(nxt != NULL)
     pqe_ref(nxt);
 
-  update_prev_next();
+  update_pq_meta();
 
   pqe_unref(pqe);
 
@@ -882,7 +927,7 @@ player_thread(void *aux)
 
       hts_mutex_lock(&playqueue_mutex);
       pqe_current = NULL;
-      update_prev_next();
+      update_pq_meta();
       hts_mutex_unlock(&playqueue_mutex);
 
       prop_unlink(mp->mp_prop_metadata);
@@ -947,7 +992,7 @@ player_thread(void *aux)
 
     mp_set_url(mp, pqe->pqe_url);
     pqe_current = pqe;
-    update_prev_next();
+    update_pq_meta();
     hts_mutex_unlock(&playqueue_mutex);
 
     p = prop_get_by_name(PNVEC("self", "playing"), 1,
