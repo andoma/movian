@@ -663,6 +663,7 @@ spotify_metadata_update_track(metadata_t *m)
     spotify_make_link(f_sp_link_create_from_album(album), url, sizeof(url));
     prop_set_link(prop_create(meta, "album"), f_sp_album_name(album), url);
     set_image_uri(prop_create(meta, "album_art"), f_sp_album_cover(album));
+    prop_set_int(prop_create(meta, "album_year"), f_sp_album_year(album));
   }
 
   // Artists
