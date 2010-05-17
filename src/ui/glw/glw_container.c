@@ -531,6 +531,7 @@ static glw_class_t glw_container_x = {
   .gc_signal_handler = glw_container_x_callback,
   .gc_child_orientation = GLW_ORIENTATION_HORIZONTAL,
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION,
+  .gc_default_alignment = GLW_ALIGN_LEFT,
 };
 
 static glw_class_t glw_container_y = {
@@ -542,6 +543,7 @@ static glw_class_t glw_container_y = {
   .gc_signal_handler = glw_container_y_callback,
   .gc_child_orientation = GLW_ORIENTATION_VERTICAL,
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION,
+  .gc_default_alignment = GLW_ALIGN_TOP,
 };
 
 static glw_class_t glw_container_z = {
