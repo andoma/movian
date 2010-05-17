@@ -251,7 +251,8 @@ playtrack_dtor(event_t *e)
 {
   event_playtrack_t *ep = (event_playtrack_t *)e;
   prop_destroy(ep->track);
-  prop_destroy(ep->source);
+  if(ep->source != NULL)
+    prop_destroy(ep->source);
   free(ep);
 }
 
@@ -266,7 +267,7 @@ event_create_playtrack(struct prop *track, struct prop *psource, int mode)
 				       sizeof(event_playtrack_t));
 
   ep->track    = prop_xref_addref(track);
-  ep->source   = prop_xref_addref(psource);
+  ep->source   = psource ? prop_xref_addref(psource) : NULL;
   ep->mode     = mode;
   ep->h.e_dtor = playtrack_dtor;
   return &ep->h;

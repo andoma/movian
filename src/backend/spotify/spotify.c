@@ -995,7 +995,7 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
       prop_destroy(p);
 
     if(bh->playme != NULL && !strcmp(url, bh->playme))
-      playqueue_load_with_source(p, bh->root, 0);
+      playqueue_load_with_source(p, bh->root);
   }
 
   f_sp_albumbrowse_release(result);

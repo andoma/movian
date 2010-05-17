@@ -115,7 +115,8 @@ glw_event_map_playTrack_dtor(glw_event_map_t *gem)
   glw_event_playTrack_t *g = (glw_event_playTrack_t *)gem;
 
   prop_ref_dec(g->track);
-  prop_ref_dec(g->source);
+  if(g->source != NULL)
+    prop_ref_dec(g->source);
   free(g);
 }
 
@@ -146,7 +147,8 @@ glw_event_map_playTrack_create(prop_t *track, prop_t *source, int mode)
   g->mode   = mode;
   
   prop_ref_inc(track);
-  prop_ref_inc(source);
+  if(source != NULL)
+    prop_ref_inc(source);
   g->map.gem_dtor = glw_event_map_playTrack_dtor;
   g->map.gem_fire = glw_event_map_playTrack_fire;
   return &g->map;

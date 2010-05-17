@@ -91,7 +91,22 @@ popup_play(GtkWidget *menu_item, gpointer data)
   selinfo_t *si = data;
   directory_list_t *d = si->d;
 
-  gu_tab_play_track(d->gt, gu_dir_store_get_prop(d->model, si->iterv), d->psource);
+  gu_tab_play_track(d->gt, gu_dir_store_get_prop(d->model, si->iterv),
+		    d->psource);
+  gtk_widget_destroy(si->menu);
+}
+
+
+/**
+ *
+ */
+static void
+popup_enqueue(GtkWidget *menu_item, gpointer data)
+{
+  selinfo_t *si = data;
+  directory_list_t *d = si->d;
+
+  gu_tab_play_track(d->gt, gu_dir_store_get_prop(d->model, si->iterv), NULL);
   gtk_widget_destroy(si->menu);
 }
 
@@ -223,6 +238,8 @@ do_popup_menu(directory_list_t *d, GdkEventButton *event, const char *url)
 
     } else if(si->primary_action == SELINFO_PA_PLAY) {
       gu_menu_add_item(si->menu, "_Play", popup_play, si, NULL, NULL, TRUE);
+      gu_menu_add_item(si->menu, "_Enqueue", popup_enqueue, si, NULL, NULL,
+		       TRUE);
     }
 
     // gu_menu_add_sep(si->menu);

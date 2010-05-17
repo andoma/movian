@@ -475,7 +475,7 @@ siblings_populate(void *opaque, prop_event_t event, ...)
  *
  */
 void
-playqueue_load_with_source(prop_t *track, prop_t *source, int mode)
+playqueue_load_with_source(prop_t *track, prop_t *source)
 {
   playqueue_entry_t *pqe;
 
@@ -509,6 +509,69 @@ playqueue_load_with_source(prop_t *track, prop_t *source, int mode)
 
 
 /**
+ *
+ */
+static void
+playqueue_enqueue(prop_t *track)
+{
+  playqueue_entry_t *pqe, *before;
+  prop_t *p;
+  char url[URL_MAX];
+
+  p = prop_get_by_name(PNVEC("self", "url"), 1,
+		       PROP_TAG_NAMED_ROOT, track, "self",
+		       NULL);
+  
+  if(prop_get_string(p, url, sizeof(url))) {
+    prop_ref_dec(p);
+    return;
+  }
+  prop_ref_dec(p);
+
+  hts_mutex_lock(&playqueue_mutex);
+
+  pqe = calloc(1, sizeof(playqueue_entry_t));
+  pqe->pqe_url = strdup(url);
+
+  pqe->pqe_node = prop_create(NULL, NULL);
+  pqe->pqe_enq = 1;
+  pqe->pqe_refcount = 1;
+  pqe->pqe_linked = 1;
+  pqe->pqe_playable = 1;
+
+  prop_link(prop_create(track, "metadata"),
+	    prop_create(pqe->pqe_node, "metadata"));
+
+  prop_set_string(prop_create(pqe->pqe_node, "url"), url);
+  prop_set_string(prop_create(pqe->pqe_node, "type"), "audio");
+
+  before = TAILQ_NEXT(pqe_current, pqe_linear_link);
+
+  /* Skip past any previously enqueued entries */
+  while(before != NULL && before->pqe_enq)
+    before = TAILQ_NEXT(before, pqe_linear_link);
+
+  if(before == NULL) {
+    TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_linear_link);
+
+    if(prop_set_parent(pqe->pqe_node, playqueue_nodes))
+      abort();
+
+  } else {
+    TAILQ_INSERT_BEFORE(before, pqe, pqe_linear_link);
+
+    if(prop_set_parent_ex(pqe->pqe_node, playqueue_nodes,
+			  before->pqe_node, NULL))
+      abort();
+  }
+
+  update_prev_next();
+
+  hts_mutex_unlock(&playqueue_mutex);
+}
+
+
+/**
  * Load playqueue based on the given url.
  *
  * This function is responsible for freeing (or using) the
@@ -522,8 +585,7 @@ playqueue_load_with_source(prop_t *track, prop_t *source, int mode)
 void
 playqueue_play(const char *url, prop_t *metadata)
 {
-  playqueue_entry_t *pqe, *prev;
-  int enq = 0;
+  playqueue_entry_t *pqe;
 
   hts_mutex_lock(&playqueue_mutex);
 
@@ -531,7 +593,6 @@ playqueue_play(const char *url, prop_t *metadata)
   pqe->pqe_url = strdup(url);
 
   pqe->pqe_node = prop_create(NULL, NULL);
-  pqe->pqe_enq = enq;
   pqe->pqe_refcount = 1;
   pqe->pqe_linked = 1;
   pqe->pqe_playable = 1;
@@ -541,27 +602,6 @@ playqueue_play(const char *url, prop_t *metadata)
   prop_set_string(prop_create(pqe->pqe_node, "url"), url);
   prop_set_string(prop_create(pqe->pqe_node, "type"), "audio");
 
-  if(enq) {
-
-    prev = pqe_current;
-
-    /* Skip past any previously enqueued entries */
-    while(prev != NULL && prev->pqe_enq)
-      prev = TAILQ_NEXT(prev, pqe_linear_link);
-
-    if(prev == NULL) {
-      TAILQ_INSERT_TAIL(&playqueue_entries, pqe, pqe_linear_link);
-    } else {
-      TAILQ_INSERT_AFTER(&playqueue_entries, prev, pqe, pqe_linear_link);
-    }
-    //pqe_insert_shuffled(pqe); // probably not???? 
-    update_prev_next();
-
-    abort(); /* Not fully implemented */
-
-  }
-
-  
   /* Clear out the current playqueue */
   playqueue_clear();
 
@@ -622,7 +662,10 @@ pq_eventsink(void *opaque, prop_event_t event, ...)
     return;
 
   ep = (event_playtrack_t *)e;
-  playqueue_load_with_source(ep->track, ep->source, 0);
+  if(ep->source == NULL)
+    playqueue_enqueue(ep->track);
+  else
+    playqueue_load_with_source(ep->track, ep->source);
 }
 
 

@@ -553,7 +553,7 @@ doscan(scanner_t *s)
     
     if(s->s_playme != NULL &&
        !strcmp(s->s_playme, fde->fde_url)) {
-      playqueue_load_with_source(fde->fde_prop, s->s_root, 0);
+      playqueue_load_with_source(fde->fde_prop, s->s_root);
       free(s->s_playme);
       s->s_playme = NULL;
     }

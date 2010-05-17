@@ -1839,6 +1839,25 @@ glwf_playTrackFromSource(glw_view_eval_context_t *ec, struct token *self,
  *
  */
 static int 
+glwf_enqueueTrack(glw_view_eval_context_t *ec, struct token *self,
+		  token_t **argv, unsigned int argc)
+{
+  token_t *a, *r;
+
+  if((a = resolve_property_name2(ec, argv[0])) == NULL)
+    return -1;
+
+  r = eval_alloc(self, ec, TOKEN_EVENT);
+  r->t_gem = glw_event_map_playTrack_create(a->t_prop, NULL, 0);
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int 
 glwf_selectTrack(glw_view_eval_context_t *ec, struct token *self,
 		 token_t **argv, unsigned int argc)
 {
@@ -3246,6 +3265,7 @@ static const token_func_t funcvec[] = {
   {"onEvent", -1, glwf_onEvent},
   {"navOpen", 1, glwf_navOpen},
   {"playTrackFromSource", 2, glwf_playTrackFromSource},
+  {"enqueuetrack", 1, glwf_enqueueTrack},
   {"selectTrack", 1, glwf_selectTrack},
   {"targetedEvent", 2, glwf_targetedEvent},
   {"fireEvent", 1, glwf_fireEvent},
