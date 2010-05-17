@@ -40,6 +40,8 @@ static void prop_unsubscribe0(prop_sub_t *s);
 static void prop_unlink0(prop_t *p, prop_sub_t *skipme, const char *origin,
 			 struct prop_notify_queue *pnq);
 
+static int prop_destroy0(prop_t *p);
+
 /**
  *
  */
@@ -235,7 +237,7 @@ static void
 prop_remove_from_originator(prop_t *p)
 {
   if(p->hp_flags & PROP_XREFED_ORIGINATOR)
-    prop_destroy(p->hp_originator);
+    prop_destroy0(p->hp_originator);
 
   LIST_REMOVE(p, hp_originator_link);
   p->hp_originator = NULL;
