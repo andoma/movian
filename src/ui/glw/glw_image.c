@@ -47,11 +47,14 @@ typedef struct glw_image {
 #define GI_MODE_NORMAL           0
 #define GI_MODE_BORDER_SCALING   1
 #define GI_MODE_REPEATED_TEXTURE 2
+#define GI_MODE_ALPHA_EDGES      3
 
   uint8_t gi_render_initialized;
   uint8_t gi_update;
 
   uint8_t gi_frozen;
+
+  uint8_t gi_alpha_edge;
 
   glw_renderer_t gi_gr;
 
@@ -170,7 +173,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
   else
     alpha_self = rc->rc_alpha * w->glw_alpha * gi->gi_alpha_self;
 
-  if(gi->gi_mode == GI_MODE_NORMAL) {
+  if(gi->gi_mode == GI_MODE_NORMAL || gi->gi_mode == GI_MODE_ALPHA_EDGES) {
 
     rc0 = *rc;
 
@@ -210,7 +213,9 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
       }
 
       glw_render(&gi->gi_gr, w->glw_root, &rc0, 
-		 GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
+		 GLW_RENDER_MODE_QUADS,
+		 gi->gi_mode == GI_MODE_ALPHA_EDGES ? 
+		 GLW_RENDER_ATTRIBS_TEX_COLOR : GLW_RENDER_ATTRIBS_TEX,
 		 &glt->glt_texture,
 		 gi->gi_color.r, gi->gi_color.g, gi->gi_color.b, alpha_self);
 
@@ -364,6 +369,138 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
       glw_render_vtx_pos(&gi->gi_gr, i, vex[x + 0][0], vex[y + 0][1], 0.0f);
       glw_render_vtx_st (&gi->gi_gr, i, tex[x + 0][0], tex[y + 0][1]);
       i++;
+    }
+  }
+
+  glw_render_set_vertices(&gi->gi_gr, i);
+  glw_render_set_post(&gi->gi_gr);
+}
+
+static const float alphaborder[4][4] = {
+  {0,0,0,0},
+  {0,1,1,0},
+  {0,1,1,0},
+  {0,0,0,0},
+};
+
+/**
+ *
+ */
+static void
+glw_image_layout_alpha_edges(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi, 
+			       glw_loadable_texture_t *glt)
+{
+  float tex[4][2];
+  float vex[4][2];
+  float cvex[2][2];
+
+  int x, y, i = 0;
+
+  gi->gi_saved_size_x = rc->rc_size_x;
+  gi->gi_saved_size_y = rc->rc_size_y;
+
+  if(gr->gr_normalized_texture_coords) {
+    tex[0][0] = 0.0;
+    tex[1][0] = 0.0 + (float)gi->gi_alpha_edge / glt->glt_xs;
+    tex[2][0] = 1.0 - (float)gi->gi_alpha_edge / glt->glt_xs;
+    tex[3][0] = 1.0;
+
+    tex[0][1] = 0.0;
+    tex[1][1] = 0.0 + (float)gi->gi_alpha_edge / glt->glt_ys;
+    tex[2][1] = 1.0 - (float)gi->gi_alpha_edge / glt->glt_ys;
+    tex[3][1] = 1.0;
+  } else {
+    tex[0][0] = 0.0;
+    tex[1][0] = gi->gi_alpha_edge;
+    tex[2][0] = glt->glt_xs - gi->gi_alpha_edge;
+    tex[3][0] = glt->glt_xs;
+
+    tex[0][1] = 0.0;
+    tex[1][1] = gi->gi_alpha_edge;
+    tex[2][1] = glt->glt_ys - gi->gi_alpha_edge;
+    tex[3][1] = glt->glt_ys;
+  }
+
+
+  float bl = gi->gi_alpha_edge;
+  float bt = gi->gi_alpha_edge;
+  float br = gi->gi_alpha_edge;
+  float bb = gi->gi_alpha_edge;
+
+
+  vex[0][0] = -1.0;
+  vex[1][0] = GLW_MIN(-1.0 + 2.0 * bl / rc->rc_size_x, 0.0);
+  vex[2][0] = GLW_MAX( 1.0 - 2.0 * br / rc->rc_size_x, 0.0);
+  vex[3][0] = 1.0;
+    
+  vex[0][1] = 1.0;
+  vex[1][1] = GLW_MAX( 1.0 - 2.0 * bt / rc->rc_size_y, 0.0);
+  vex[2][1] = GLW_MIN(-1.0 + 2.0 * bb / rc->rc_size_y, 0.0);
+  vex[3][1] = -1.0;
+
+
+  cvex[0][0] = GLW_MIN(-1.0 + 2.0 * bl / rc->rc_size_x, 0.0);
+  cvex[1][0] = GLW_MAX( 1.0 - 2.0 * br / rc->rc_size_x, 0.0);
+  cvex[0][1] = GLW_MAX( 1.0 - 2.0 * bt / rc->rc_size_y, 0.0);
+  cvex[1][1] = GLW_MIN(-1.0 + 2.0 * bb / rc->rc_size_y, 0.0);
+
+  gi->gi_child_xt = (cvex[1][0] + cvex[0][0]) * 0.5f;
+  gi->gi_child_yt = (cvex[0][1] + cvex[1][1]) * 0.5f;
+  gi->gi_child_xs = (cvex[1][0] - cvex[0][0]) * 0.5f;
+  gi->gi_child_ys = (cvex[0][1] - cvex[1][1]) * 0.5f;
+
+  if(gi->gi_bitmap_flags & GLW_IMAGE_MIRROR_X) {
+    GLW_SWAP(vex[0][1], vex[3][1]);
+    GLW_SWAP(vex[1][1], vex[2][1]);
+    gi->gi_child_xt = -gi->gi_child_xt;
+  }
+
+  if(gi->gi_bitmap_flags & GLW_IMAGE_MIRROR_Y) {
+    GLW_SWAP(vex[0][0], vex[3][0]);
+    GLW_SWAP(vex[1][0], vex[2][0]);
+    gi->gi_child_yt = -gi->gi_child_yt;
+  }
+
+
+  glw_render_set_pre(&gi->gi_gr);
+
+  for(y = 0; y < 3; y++) {
+
+    for(x = 0; x < 3; x++) {
+      int p1,p2,p3,p4;
+
+
+      if((x == 0 && y == 0) || (x == 2 && y == 2)) {
+	p1 = i+3;
+	p2 = i+0;
+	p3 = i+1;
+	p4 = i+2;
+
+      } else {
+	p1 = i;
+	p2 = i+1;
+	p3 = i+2;
+	p4 = i+3;
+      }
+
+      glw_render_vtx_pos(&gi->gi_gr, p1, vex[x + 0][0], vex[y + 1][1], 0.0f);
+      glw_render_vtx_st (&gi->gi_gr, p1, tex[x + 0][0], tex[y + 1][1]);
+      glw_render_vts_col(&gi->gi_gr, p1, 1, 1, 1, alphaborder[x+0][y+1]);
+
+
+      glw_render_vtx_pos(&gi->gi_gr, p2, vex[x + 1][0], vex[y + 1][1], 0.0f);
+      glw_render_vtx_st (&gi->gi_gr, p2, tex[x + 1][0], tex[y + 1][1]);
+      glw_render_vts_col(&gi->gi_gr, p2, 1, 1, 1, alphaborder[x+1][y+1]);
+
+      glw_render_vtx_pos(&gi->gi_gr, p3, vex[x + 1][0], vex[y + 0][1], 0.0f);
+      glw_render_vtx_st (&gi->gi_gr, p3, tex[x + 1][0], tex[y + 0][1]);
+      glw_render_vts_col(&gi->gi_gr, p3, 1, 1, 1, alphaborder[x+1][y+0]);
+
+      glw_render_vtx_pos(&gi->gi_gr, p4, vex[x + 0][0], vex[y + 0][1], 0.0f);
+      glw_render_vtx_st (&gi->gi_gr, p4, tex[x + 0][0], tex[y + 0][1]);
+      glw_render_vts_col(&gi->gi_gr, p4, 1, 1, 1, alphaborder[x+0][y+0]);
+
+      i+=4;
     }
   }
 
@@ -570,22 +707,28 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
       if(gi->gi_render_initialized)
 	glw_render_free(&gi->gi_gr);
 
-      glw_render_init(&gi->gi_gr, 
-		      4 * (gi->gi_mode == GI_MODE_BORDER_SCALING ? 9 : 1),
-		      GLW_RENDER_ATTRIBS_TEX);
       gi->gi_render_initialized = 1;
 
       switch(gi->gi_mode) {
 	
       case GI_MODE_NORMAL:
+	glw_render_init(&gi->gi_gr, 4, GLW_RENDER_ATTRIBS_TEX);
 	glw_image_layout_normal(gr, rc, gi, glt);
 	break;
       case GI_MODE_BORDER_SCALING:
+	glw_render_init(&gi->gi_gr, 4 * 9, GLW_RENDER_ATTRIBS_TEX);
 	glw_image_layout_tesselated(gr, rc, gi, glt);
 	break;
       case GI_MODE_REPEATED_TEXTURE:
+	glw_render_init(&gi->gi_gr, 4, GLW_RENDER_ATTRIBS_TEX);
 	glw_image_layout_repeated(gr, rc, gi, glt);
 	break;
+      case GI_MODE_ALPHA_EDGES:
+	glw_render_init(&gi->gi_gr, 4 * 9, GLW_RENDER_ATTRIBS_TEX_COLOR);
+	glw_image_layout_alpha_edges(gr, rc, gi, glt);
+	break;
+      default:
+	abort();
       }
 
 
@@ -601,6 +744,9 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	break;
       case GI_MODE_REPEATED_TEXTURE:
 	glw_image_layout_repeated(gr, rc, gi, glt);
+	break;
+      case GI_MODE_ALPHA_EDGES:
+	glw_image_layout_alpha_edges(gr, rc, gi, glt);
 	break;
       }
 
@@ -777,7 +923,12 @@ glw_image_set(glw_t *w, int init, va_list ap)
     case GLW_ATTRIB_SIZE_BIAS:
       gi->gi_size_bias = va_arg(ap, double);
       break;
-  
+
+    case GLW_ATTRIB_ALPHA_EDGES:
+      gi->gi_alpha_edge = va_arg(ap, int);
+      gi->gi_mode = GI_MODE_ALPHA_EDGES;
+      break;
+
     default:
       GLW_ATTRIB_CHEW(attrib, ap);
       break;

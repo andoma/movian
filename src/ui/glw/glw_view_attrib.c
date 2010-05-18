@@ -386,6 +386,8 @@ static const token_attrib_t attribtab[] = {
 
   {"page",            set_int ,   GLW_ATTRIB_PAGE},
 
+  {"alphaEdges",      set_int,    GLW_ATTRIB_ALPHA_EDGES},
+
   {"color",           set_float3, GLW_ATTRIB_RGB},
   {"translation",     set_float3, GLW_ATTRIB_TRANSLATION},
   {"scaling",         set_float3, GLW_ATTRIB_SCALING},
