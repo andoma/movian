@@ -102,9 +102,10 @@ make_powerof2(int v)
 
 static void texture_load_direct(AVPicture *pict, glw_loadable_texture_t *glt);
 
-static void texture_load_rescale_swscale(const AVPicture *pict, int pix_fmt, 
-					 int src_w, int src_h,
-					 glw_loadable_texture_t *glt);
+static int texture_load_rescale_swscale(const AVPicture *pict, int pix_fmt, 
+					int src_w, int src_h,
+					int dst_w, int dst_h,
+					glw_loadable_texture_t *glt);
 
 int
 glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
@@ -209,14 +210,15 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 
   need_rescale = req_w != src_w || req_h != src_h;
 
-  glt->glt_xs = req_w;
-  glt->glt_ys = req_h;
+  if(need_rescale || need_format_conv)
+    if(!texture_load_rescale_swscale(pict, pix_fmt, src_w, src_h,
+				     req_w, req_h, glt))
+      return 0;
+  
+  glt->glt_xs = src_w;
+  glt->glt_ys = src_h;
 
-  if(need_rescale || need_format_conv) {
-    texture_load_rescale_swscale(pict, pix_fmt, src_w, src_h, glt);
-  } else {
-    texture_load_direct(pict, glt);
-  }
+  texture_load_direct(pict, glt);
   return 0;
 }
 
@@ -257,9 +259,10 @@ texture_load_direct(AVPicture *pict, glw_loadable_texture_t *glt)
 /**
  * Rescaling with FFmpeg's swscaler
  */
-static void
+static int
 texture_load_rescale_swscale(const AVPicture *pict, int src_pix_fmt, 
 			     int src_w, int src_h,
+			     int dst_w, int dst_h,
 			     glw_loadable_texture_t *glt)
 {
   AVPicture pic;
@@ -267,8 +270,22 @@ texture_load_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
   struct SwsContext *sws;
   const uint8_t *ptr[4];
   int strides[4];
-  int w = glt->glt_xs;
-  int h = glt->glt_ys;
+
+  if(src_pix_fmt == PIX_FMT_BGRA) {
+    dst_pix_fmt = PIX_FMT_RGBA;
+  } else {
+    dst_pix_fmt = PIX_FMT_RGB24;
+  }
+
+
+  sws = sws_getContext(src_w, src_h, src_pix_fmt, 
+		       dst_w, dst_h, dst_pix_fmt,
+		       SWS_LANCZOS, NULL, NULL, NULL);
+  if(sws == NULL)
+    return -1;
+
+  glt->glt_xs = dst_w;
+  glt->glt_ys = dst_h;
 
   ptr[0] = pict->data[0];
   ptr[1] = pict->data[1];
@@ -282,15 +299,11 @@ texture_load_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
 
   if(src_pix_fmt == PIX_FMT_BGRA) {
 
-    dst_pix_fmt = PIX_FMT_RGBA;
-
     glt->glt_bpp = 4;
     glt->glt_format = GL_RGBA;
     glt->glt_ext_format = GL_RGBA;
 
   } else {
-
-    dst_pix_fmt = PIX_FMT_RGB24;
 
     glt->glt_bpp = 3;
     glt->glt_format = GL_RGB;
@@ -300,11 +313,6 @@ texture_load_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
 
   glt->glt_ext_type = GL_UNSIGNED_BYTE;
 
-  sws = sws_getContext(src_w, src_h, src_pix_fmt, 
-		       w, h, dst_pix_fmt,
-		       SWS_LANCZOS, NULL, NULL, NULL);
-  if(sws == NULL)
-    return;
 
   glt->glt_bitmap_size = glt->glt_bpp * glt->glt_xs * glt->glt_ys;
   
@@ -312,12 +320,13 @@ texture_load_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
 			 MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     
   pic.data[0] = glt->glt_bitmap;
-  pic.linesize[0] = w * glt->glt_bpp;
+  pic.linesize[0] = dst_w * glt->glt_bpp;
   
   sws_scale(sws, ptr, strides, 0, src_h,
 	    pic.data, pic.linesize);
   
   sws_freeContext(sws);
+  return 0;
 }
 
 /**
