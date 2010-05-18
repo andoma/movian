@@ -385,15 +385,13 @@ glw_render(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
     break;
 
   case GLW_RENDER_ATTRIBS_TEX_COLOR:
-    a8 = float_to_byte(a);
-
     GX_LoadTexObj(&be_tex->obj, GX_TEXMAP0);
     
     GX_Begin(mode, GX_VTXFMT0, gr->gr_vertices);
  
     for(i = 0; i < gr->gr_vertices; i++) {
       GX_Position3f32(buf[0], buf[1], buf[2]);
-      GX_Color4u8(buf[5], buf[6], buf[7], a8);
+      GX_Color4u8(buf[5], buf[6], buf[7], float_to_byte(buf[8] * a));
       GX_TexCoord2f32(buf[3], buf[4]);
       buf += gr->gr_stride;
     }

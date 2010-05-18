@@ -542,7 +542,7 @@ glw_render(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
     glBegin(mode);
     
     for(i = 0; i < gr->gr_vertices; i++) {
-      glColor4f(buf[5], buf[6], buf[7], buf[8]);
+      glColor4f(buf[5], buf[6], buf[7], buf[8] * a);
       glTexCoord2f(buf[3], buf[4]);
       glVertex3f(buf[0], buf[1], buf[2]);
       buf += gr->gr_stride;
