@@ -1136,8 +1136,9 @@ spotify_open_artist(sp_link *l, prop_t *p)
 {
   sp_artist *artist = f_sp_link_as_artist(l);
   prop_t *src = prop_create(p, "source");
+  prop_t *meta = prop_create(src, "metadata");
 
-  metadata_create(prop_create(src, "title"), METADATA_ARTIST_NAME, artist);
+  metadata_create(prop_create(meta, "title"), METADATA_ARTIST_NAME, artist);
 
   prop_set_string(prop_create(p, "view"), "list");
   f_sp_artistbrowse_create(spotify_session, artist,
@@ -1217,14 +1218,16 @@ static void
 spotify_open_album(sp_album *alb, prop_t *p, const char *playme)
 {
   prop_t *src = prop_create(p, "source");
+  prop_t *meta = prop_create(src, "metadata");
+
   f_sp_albumbrowse_create(spotify_session, alb, spotify_browse_album_callback,
 			  bh_create(src, playme));
 
-  metadata_create(prop_create(src, "album_name"),  METADATA_ALBUM_NAME, alb);
-  metadata_create(prop_create(src, "title"),       METADATA_ALBUM_NAME, alb);
-  metadata_create(prop_create(src, "album_year"),  METADATA_ALBUM_YEAR, alb);
-  metadata_create(prop_create(src, "album_art"),   METADATA_ALBUM_IMAGE, alb);
-  metadata_create(prop_create(src, "artist_name"), METADATA_ALBUM_ARTIST_NAME,
+  metadata_create(prop_create(meta, "title"),       METADATA_ALBUM_NAME, alb);
+  metadata_create(prop_create(meta, "album_name"),  METADATA_ALBUM_NAME, alb);
+  metadata_create(prop_create(meta, "album_year"),  METADATA_ALBUM_YEAR, alb);
+  metadata_create(prop_create(meta, "album_art"),   METADATA_ALBUM_IMAGE, alb);
+  metadata_create(prop_create(meta, "artist_name"), METADATA_ALBUM_ARTIST_NAME,
 		  alb);
 
   prop_set_string(prop_create(p, "view"), "album");
