@@ -51,6 +51,7 @@ extern int64_t showtime_get_ts(void);
 #define CONTENT_PLAYLIST 6
 #define CONTENT_DVD      7
 #define CONTENT_IMAGE    8
+#define CONTENT_ALBUM    9
 
 /**
  *

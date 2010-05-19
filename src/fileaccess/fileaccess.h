@@ -43,7 +43,8 @@ typedef struct fa_dir_entry {
   char *fde_filename;
   char *fde_url;
   int   fde_type; /* CONTENT_ .. types from showtime.h */
-  void *fde_prop;
+  struct prop *fde_prop;
+  struct prop *fde_metadata;
 
   enum {
     FDE_PROBE_NONE,

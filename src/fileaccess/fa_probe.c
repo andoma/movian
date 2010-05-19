@@ -288,6 +288,22 @@ fa_probe_spc(metadata_t *md, uint8_t *pb)
 
 
 /**
+ *
+ */
+static void 
+fa_probe_psid(metadata_t *md, uint8_t *pb)
+{
+  char buf[33];
+
+  memcpy(buf, pb + 0x16, 32);
+  md->md_title = rstr_alloc(buf);
+
+  memcpy(buf, pb + 0x36, 32);
+  md->md_artist = rstr_alloc(buf);
+}
+
+
+/**
  * 
  */
 static void
@@ -316,6 +332,13 @@ fa_probe_header(metadata_t *md, const char *url, uint8_t *pb)
   if(!memcmp(pb, "SNES-SPC700 Sound File Data", 27)) {
     fa_probe_spc(md, pb); 
     md->md_type = CONTENT_AUDIO;
+    return 1;
+  }
+
+  if(!memcmp(pb, "PSID", 4)) {
+    fa_probe_psid(md, pb); 
+    md->md_type = CONTENT_ALBUM;
+    metdata_set_redirect(md, "sidfile://%s|", url);
     return 1;
   }
 

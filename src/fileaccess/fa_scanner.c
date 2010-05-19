@@ -67,6 +67,7 @@ const char *type2str[] = {
   [CONTENT_PLAYLIST] = "playlist",
   [CONTENT_DVD]      = "dvd",
   [CONTENT_IMAGE]    = "image",
+  [CONTENT_ALBUM]    = "album",
 };
 
 
@@ -104,6 +105,7 @@ static void
 add_prop(fa_dir_entry_t *fde, prop_t *root, fa_dir_entry_t *before)
 {
   prop_t *p = prop_create(NULL, "node");
+  prop_t *metadata;
   rstr_t *fname;
 
   if(fde->fde_type == CONTENT_DIR) {
@@ -117,7 +119,18 @@ add_prop(fa_dir_entry_t *fde, prop_t *root, fa_dir_entry_t *before)
 
   prop_set_rstring(prop_create(p, "filename"), fname);
 
-  prop_set_rstring(prop_create(prop_create(p, "metadata"), "title"), fname);
+  if(fde->fde_metadata != NULL) {
+
+    metadata = fde->fde_metadata;
+
+    if(prop_set_parent(metadata, p))
+      abort();
+
+    fde->fde_metadata = NULL;
+  } else {
+    metadata = prop_create(p, "metadata");
+    prop_set_rstring(prop_create(metadata, "title"), fname);
+  }
 
   rstr_release(fname);
 
@@ -155,6 +168,8 @@ static struct strtab postfixtab[] = {
   { "ts",              CONTENT_VIDEO },
   { "mpg",             CONTENT_VIDEO },
   { "wmv",             CONTENT_VIDEO },
+
+  { "sid",             CONTENT_ALBUM },
 
   { "pdf",             CONTENT_UNKNOWN },
 };

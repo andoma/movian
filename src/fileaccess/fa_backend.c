@@ -154,6 +154,7 @@ file_open_file(struct navigator *nav, const char *url,
   
   switch(r) {
   case CONTENT_ARCHIVE:
+  case CONTENT_ALBUM:
     prop_destroy(meta);
     return file_open_dir(nav, redir, errbuf, errlen);
 

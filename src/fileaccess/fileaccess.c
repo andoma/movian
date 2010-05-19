@@ -452,6 +452,9 @@ fa_dir_entry_free(fa_dir_t *fd, fa_dir_entry_t *fde)
   if(fde->fde_prop != NULL)
     prop_ref_dec(fde->fde_prop);
 
+  if(fde->fde_metadata != NULL)
+    prop_destroy(fde->fde_metadata);
+
   fd->fd_count--;
   TAILQ_REMOVE(&fd->fd_entries, fde, fde_link);
   free(fde->fde_filename);
