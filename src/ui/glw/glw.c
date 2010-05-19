@@ -1103,7 +1103,7 @@ glw_focus_crawl0(glw_t *w, glw_t *cur, int forward)
   for(; c != NULL; c = forward ? TAILQ_NEXT(c, glw_parent_link) : 
 	TAILQ_PREV(c, glw_queue, glw_parent_link)) {
 
-    if(c->glw_flags & GLW_FOCUS_BLOCKED)
+    if(c->glw_flags & (GLW_FOCUS_BLOCKED | GLW_HIDDEN))
       continue;
     if(glw_is_focusable(c))
       return c;
