@@ -140,20 +140,20 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
 	xs = rc0.rc_size_x = c->glw_req_size_x;
       } else {
 	xs = s_ax * c->glw_req_size_x;
-	xs = 2 * round(xs * 0.5);
+	xs = 2 * rintf(xs * 0.5);
 	rc0.rc_size_x = xs;
       }
     } else if(f & GLW_CONSTRAINT_A) {
       xs = s_ax * c->glw_req_aspect * rc->rc_size_y;
-      xs = 2 * round(xs * 0.5);
+      xs = 2 * rintf(xs * 0.5);
       rc0.rc_size_x = xs;
     } else if(f & GLW_CONSTRAINT_W) {
       xs = c->glw_req_weight * s_w;
-      xs = 2 * round(xs * 0.5);
+      xs = 2 * rintf(xs * 0.5);
       rc0.rc_size_x = xs;
     } else {
       xs = s_w;
-      xs = 2 * round(xs * 0.5);
+      xs = 2 * rintf(xs * 0.5);
       rc0.rc_size_x = xs;
     }
 
@@ -280,16 +280,16 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
 	ys = rc0.rc_size_y = c->glw_req_size_y;
       } else {
 	ys = s_fy * c->glw_req_size_y;
-	ys = 2 * round(ys * 0.5);
+	ys = 2 * rintf(ys * 0.5);
 	rc0.rc_size_y = ys; 
       }
     } else if(f & GLW_CONSTRAINT_W) {
       ys = c->glw_req_weight * s_w;
-      ys = 2 * round(ys * 0.5);
+      ys = 2 * rintf(ys * 0.5);
       rc0.rc_size_y = ys;
     } else {
       ys = s_w;
-      ys = 2 * round(ys * 0.5);
+      ys = 2 * rintf(ys * 0.5);
       rc0.rc_size_y = ys;
     }
 
