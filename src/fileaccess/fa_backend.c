@@ -67,22 +67,21 @@ set_title_from_url(prop_t *metadata, const char *url)
  *
  */
 static nav_page_t *
-file_open_dir(struct navigator *nav, const char *url,
+file_open_dir(struct navigator *nav, const char *url, const char *view,
 	      char *errbuf, size_t errlen)
 {
   nav_page_t *np;
-  prop_t *src, *view;
+  prop_t *src;
   int type;
   char parent[URL_MAX];
 
   type = fa_probe_dir(NULL, url);
 
   if(type == CONTENT_DVD)
-    return backend_open_video(nav, url, errbuf, errlen);
+    return backend_open_video(nav, url, view, errbuf, errlen);
 
-  np = nav_page_create(nav, url, sizeof(nav_page_t), 
+  np = nav_page_create(nav, url, view, sizeof(nav_page_t), 
 		       NAV_PAGE_DONT_CLOSE_ON_BACK);
-  view = prop_create(np->np_prop_root, "view");
 
   src = prop_create(np->np_prop_root, "source");
   prop_set_string(prop_create(src, "type"), "directory");
@@ -94,7 +93,8 @@ file_open_dir(struct navigator *nav, const char *url,
   if(!fa_parent(parent, sizeof(parent), url))
     prop_set_string(prop_create(np->np_prop_root, "parent"), parent);
 
-  fa_scanner(url, src, view, NULL);
+  fa_scanner(url, src, 
+	     view ? NULL : prop_create(np->np_prop_root, "view"), NULL);
   return np;
 }
 
@@ -103,13 +103,13 @@ file_open_dir(struct navigator *nav, const char *url,
  * Try to open the given URL with a playqueue context
  */
 static nav_page_t *
-file_open_audio(struct navigator *nav, const char *url)
+file_open_audio(struct navigator *nav, const char *url, const char *view)
 {
   char parent[URL_MAX];
   char parent2[URL_MAX];
   struct stat st;
   nav_page_t *np;
-  prop_t *src, *view;
+  prop_t *src;
 
   if(fa_parent(parent, sizeof(parent), url))
     return NULL;
@@ -117,9 +117,8 @@ file_open_audio(struct navigator *nav, const char *url)
   if(fa_stat(parent, &st, NULL, 0))
     return NULL;
   
-  np = nav_page_create(nav, parent, sizeof(nav_page_t), 
+  np = nav_page_create(nav, parent, view, sizeof(nav_page_t), 
 		       NAV_PAGE_DONT_CLOSE_ON_BACK);
-  view = prop_create(np->np_prop_root, "view");
 
   src = prop_create(np->np_prop_root, "source");
   prop_set_string(prop_create(src, "type"), "directory");
@@ -131,7 +130,8 @@ file_open_audio(struct navigator *nav, const char *url)
   if(!fa_parent(parent2, sizeof(parent2), parent))
     prop_set_string(prop_create(np->np_prop_root, "parent"), parent2);
 
-  fa_scanner(parent, src, view, url);
+  fa_scanner(parent, src, 
+	     view ? NULL : prop_create(np->np_prop_root, "view"), url);
   return np;
 }
 
@@ -140,7 +140,7 @@ file_open_audio(struct navigator *nav, const char *url)
  *
  */
 static nav_page_t *
-file_open_file(struct navigator *nav, const char *url,
+file_open_file(struct navigator *nav, const char *url, const char *view,
 	       char *errbuf, size_t errlen, struct stat *st)
 {
   char redir[URL_MAX];
@@ -156,19 +156,19 @@ file_open_file(struct navigator *nav, const char *url,
   case CONTENT_ARCHIVE:
   case CONTENT_ALBUM:
     prop_destroy(meta);
-    return file_open_dir(nav, redir, errbuf, errlen);
+    return file_open_dir(nav, redir, view, errbuf, errlen);
 
   case CONTENT_AUDIO:
-    if((np = file_open_audio(nav, url)) != NULL)
+    if((np = file_open_audio(nav, url, view)) != NULL)
       return np;
 
     playqueue_play(url, meta);
-    return playqueue_open(nav);
+    return playqueue_open(nav, view);
 
   case CONTENT_VIDEO:
   case CONTENT_DVD:
     prop_destroy(meta);
-    return backend_open_video(nav, url, errbuf, errlen);
+    return backend_open_video(nav, url, view, errbuf, errlen);
 
   default:
     snprintf(errbuf, errlen, "Can not handle file contents");
@@ -180,7 +180,7 @@ file_open_file(struct navigator *nav, const char *url,
  *
  */
 static nav_page_t *
-be_file_open(struct navigator *nav, const char *url,
+be_file_open(struct navigator *nav, const char *url, const char *view,
 	     char *errbuf, size_t errlen)
 {
   struct stat buf;
@@ -188,8 +188,8 @@ be_file_open(struct navigator *nav, const char *url,
   if(fa_stat(url, &buf, errbuf, errlen))
     return NULL;
 
-  return S_ISDIR(buf.st_mode) ? file_open_dir(nav, url, errbuf, errlen) :
-    file_open_file(nav, url, errbuf, errlen, &buf);
+  return S_ISDIR(buf.st_mode) ? file_open_dir(nav, url, view, errbuf, errlen) :
+    file_open_file(nav, url, view, errbuf, errlen, &buf);
 }
 
 

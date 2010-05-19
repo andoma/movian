@@ -126,10 +126,10 @@ be_page_canhandle(const char *url)
  *
  */
 static nav_page_t *
-be_page_open(struct navigator *nav,  const char *url0,
+be_page_open(struct navigator *nav,  const char *url0, const char *view,
 	     char *errbuf, size_t errlen)
 {
-  nav_page_t *n = nav_page_create(nav, url0, sizeof(nav_page_t), 0);
+  nav_page_t *n = nav_page_create(nav, url0, view, sizeof(nav_page_t), 0);
   prop_t *src = prop_create(n->np_prop_root, "source");
   prop_t *metadata = prop_create(src, "metadata");
   char *cap = mystrdupa(url0 + strlen("page:"));
@@ -189,10 +189,10 @@ backend_canhandle(const char *url)
  *
  */
 nav_page_t *
-backend_open_video(struct navigator *nav, const char *url,
+backend_open_video(struct navigator *nav, const char *url, const char *view,
 		   char *errbuf, size_t errlen)
 {
-  nav_page_t *np = nav_page_create(nav, url, sizeof(nav_page_t), 0);
+  nav_page_t *np = nav_page_create(nav, url, view, sizeof(nav_page_t), 0);
   prop_t *src = prop_create(np->np_prop_root, "source");
 
   prop_set_string(prop_create(src, "type"), "video");

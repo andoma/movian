@@ -503,7 +503,7 @@ be_settings_canhandle(const char *url)
  *
  */
 static nav_page_t  *
-be_settings_open(struct navigator *nav, const char *url0,
+be_settings_open(struct navigator *nav, const char *url0, const char *view,
 		 char *errbuf, size_t errlen)
 {
   nav_page_t *n;
@@ -513,7 +513,7 @@ be_settings_open(struct navigator *nav, const char *url0,
   int l;
 
   if(!*url) {
-    n = nav_page_create(nav, url0, sizeof(nav_page_t), 0);
+    n = nav_page_create(nav, url0, view, sizeof(nav_page_t), 0);
     prop_link(settings_root, prop_create(n->np_prop_root, "source"));
     return n;
    }
@@ -533,7 +533,7 @@ be_settings_open(struct navigator *nav, const char *url0,
     p = prop_create(p, buf);
   }
   
-  n = nav_page_create(nav, url0, sizeof(nav_page_t), 0);
+  n = nav_page_create(nav, url0, view, sizeof(nav_page_t), 0);
   prop_link(prop_create(p, "source"), prop_create(n->np_prop_root, "source"));
   return n;
 }

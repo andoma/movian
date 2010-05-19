@@ -170,6 +170,7 @@ typedef struct event_unicode {
 typedef struct event_openurl {
   event_t h;
   char *url;
+  char *view;
 } event_openurl_t;
 
 
@@ -227,7 +228,7 @@ void event_flushqueue(event_queue_t *eq);
 
 event_t *event_create_url(event_type_t et, const char *url);
 
-event_t *event_create_openurl(const char *url);
+event_t *event_create_openurl(const char *url, const char *view);
 
 event_t *event_create_playtrack(struct prop *track,
 				struct prop *psource,

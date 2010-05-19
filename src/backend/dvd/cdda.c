@@ -313,7 +313,7 @@ canhandle(const char *url)
  *
  */
 static nav_page_t *
-openpage(struct navigator *nav, const char *url,
+openpage(struct navigator *nav, const char *url, const char *view,
 	 char *errstr, size_t errlen)
 {
   nav_page_t *np;
@@ -344,10 +344,10 @@ openpage(struct navigator *nav, const char *url,
     prop_link(ct->ct_metadata, meta);
 
     playqueue_play(url, meta);
-    return playqueue_open(nav);
+    return playqueue_open(nav, view);
   }
 
-  np = nav_page_create(nav, url, sizeof(nav_page_t), 0);
+  np = nav_page_create(nav, url, view, sizeof(nav_page_t), 0);
 
   p = np->np_prop_root;
 

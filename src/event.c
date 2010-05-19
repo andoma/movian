@@ -225,6 +225,7 @@ event_openurl2_dtor(event_t *e)
 {
   event_openurl_t *ou = (void *)e;
   free(ou->url);
+  free(ou->view);
   free(ou);
 }
 
@@ -233,11 +234,12 @@ event_openurl2_dtor(event_t *e)
  *
  */
 event_t *
-event_create_openurl(const char *url)
+event_create_openurl(const char *url, const char *view)
 {
   event_openurl_t *e = event_create(EVENT_OPENURL, sizeof(event_openurl_t));
 
-  e->url      = url     ? strdup(url)               : NULL;
+  e->url      = url  ? strdup(url)  : NULL;
+  e->view     = view ? strdup(view) : NULL;
   e->h.e_dtor = event_openurl2_dtor;
   return &e->h;
 }

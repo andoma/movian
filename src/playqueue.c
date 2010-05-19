@@ -756,12 +756,12 @@ playqueue_init(void)
 
 
 nav_page_t *
-playqueue_open(struct navigator *nav)
+playqueue_open(struct navigator *nav, const char *view)
 {
   nav_page_t *n;
   prop_t *src, *metadata;
 
-  n = nav_page_create(nav, "playqueue:", sizeof(nav_page_t),
+  n = nav_page_create(nav, "playqueue:", view, sizeof(nav_page_t),
 		      NAV_PAGE_DONT_CLOSE_ON_BACK);
 
   prop_set_string(prop_create(n->np_prop_root, "view"), "list");
@@ -780,10 +780,10 @@ playqueue_open(struct navigator *nav)
  *
  */
 static nav_page_t *
-be_playqueue_open(struct navigator *nav, const char *url0,
+be_playqueue_open(struct navigator *nav, const char *url0, const char *view,
 		  char *errbuf, size_t errlen)
 {
-  return playqueue_open(nav);
+  return playqueue_open(nav, view);
 }
 
 

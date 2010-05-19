@@ -2241,7 +2241,7 @@ spotify_start(void)
  *
  */
 static nav_page_t *
-be_spotify_open(struct navigator *nav, const char *url,
+be_spotify_open(struct navigator *nav, const char *url, const char *view,
 		char *errbuf, size_t errlen)
 {
   nav_page_t *np;
@@ -2253,7 +2253,7 @@ be_spotify_open(struct navigator *nav, const char *url,
 
     memset(&sp, 0, sizeof(spotify_page_t));
 
-    np = nav_page_create(nav, NULL, sizeof(nav_page_t), 
+    np = nav_page_create(nav, NULL, view, sizeof(nav_page_t), 
 			 NAV_PAGE_DONT_CLOSE_ON_BACK);
   
     sp.sp_url = strdup(url);
@@ -2274,7 +2274,7 @@ be_spotify_open(struct navigator *nav, const char *url,
 
     spotify_page_t *sp = calloc(1, sizeof(spotify_page_t));
 
-    np = nav_page_create(nav, url, sizeof(nav_page_t), 
+    np = nav_page_create(nav, url, view, sizeof(nav_page_t),
 			 NAV_PAGE_DONT_CLOSE_ON_BACK);
   
     sp->sp_url = strdup(url);

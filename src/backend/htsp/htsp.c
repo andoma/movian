@@ -727,7 +727,7 @@ htsp_connection_deref(htsp_connection_t *hc)
  *
  */
 static nav_page_t *
-be_htsp_open(struct navigator *nav, const char *url,
+be_htsp_open(struct navigator *nav, const char *url, const char *view,
 	     char *errbuf, size_t errlen)
 {
   htsp_connection_t *hc;
@@ -772,9 +772,9 @@ be_htsp_open(struct navigator *nav, const char *url,
 #endif
 
   if(!strncmp(path, "/channel/", strlen("/channel/")))
-    return backend_open_video(nav, url, errbuf, errlen);
+    return backend_open_video(nav, url, view, errbuf, errlen);
 
-  hp = nav_page_create(nav, url, sizeof(htsp_page_t),
+  hp = nav_page_create(nav, url, view, sizeof(htsp_page_t),
 		       NAV_PAGE_DONT_CLOSE_ON_BACK);
   p = hp->h.np_prop_root;
   

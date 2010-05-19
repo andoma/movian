@@ -1799,25 +1799,41 @@ static int
 glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
 	     token_t **argv, unsigned int argc)
 {
-  token_t *a, *r;
+  token_t *a, *b, *r;
   const char *url;
+  const char *view = NULL;
+
+  if(argc < 1 || argc > 2)
+    return glw_view_seterr(ec->ei, self, "navOpen(): Invalid number of args");
 
   if((a = token_resolve(ec, argv[0])) == NULL)
     return -1;
 
-  if(a->type != TOKEN_STRING && a->type != TOKEN_VOID && a->type != TOKEN_LINK)
-    return glw_view_seterr(ec->ei, a, "navOpen(): "
-			    "First argument is not a string, link or (void)");
-
-  if(a == NULL || a->type == TOKEN_VOID)
+  if(a->type == TOKEN_VOID)
     url = NULL;
   else if(a->type == TOKEN_STRING)
     url = rstr_get(a->t_rstring);
-  else
+  else if(a->type == TOKEN_LINK)
     url = rstr_get(a->t_link_rurl);
+  else
+    return glw_view_seterr(ec->ei, a, "navOpen(): "
+			    "First argument is not a string, link or (void)");
+
+  if(argc == 2) {
+    if((b = token_resolve(ec, argv[1])) == NULL)
+      return -1;
+
+    if(b->type == TOKEN_VOID)
+      view = NULL;
+    else if(b->type == TOKEN_STRING)
+      view = rstr_get(b->t_rstring);
+    else
+      return glw_view_seterr(ec->ei, b, "navOpen(): "
+			     "Second argument is not a string or (void)");
+  }
 
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  r->t_gem = glw_event_map_navOpen_create(url);
+  r->t_gem = glw_event_map_navOpen_create(url, view);
   eval_push(ec, r);
   return 0;
 }
@@ -3272,7 +3288,7 @@ static const token_func_t funcvec[] = {
   {"cloner", -1, glwf_cloner},
   {"space", 1, glwf_space},
   {"onEvent", -1, glwf_onEvent},
-  {"navOpen", 1, glwf_navOpen},
+  {"navOpen", -1, glwf_navOpen},
   {"playTrackFromSource", 2, glwf_playTrackFromSource},
   {"enqueuetrack", 1, glwf_enqueueTrack},
   {"selectTrack", 1, glwf_selectTrack},
