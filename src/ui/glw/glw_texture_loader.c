@@ -241,6 +241,14 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
     w = glt->glt_req_xs;
     h = glt->glt_req_ys;
 
+  } else if(glt->glt_req_xs != -1) {
+    w = glt->glt_req_xs;
+    h = glt->glt_req_xs * ctx->height / ctx->width;
+
+  } else if(glt->glt_req_ys != -1) {
+    w = glt->glt_req_ys * ctx->width / ctx->height;
+    h = glt->glt_req_ys;
+
   } else if(w > 64 && h > 64) {
     if(w > gr->gr_width) {
       h = h * gr->gr_width / w;

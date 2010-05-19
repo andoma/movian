@@ -647,7 +647,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 
   if(gi->gi_pending_filename != NULL) {
     // Request to load
-    int xs, ys;
+    int xs = -1, ys = -1;
     int flags = 0;
     
     if(gi->gi_pending != NULL)
@@ -659,11 +659,12 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 
 
     if(gi->gi_bitmap_flags & GLW_IMAGE_HQ_SCALING) {
-      xs = rc->rc_size_x;
-      ys = rc->rc_size_y;
-    } else {
-      xs = -1;
-      ys = -1;
+
+      if(rc->rc_size_x < rc->rc_size_y) {
+	xs = rc->rc_size_x;
+      } else {
+	ys = rc->rc_size_y;
+      }
     }
 
     if(gi->gi_pending_filename != NULL) {
