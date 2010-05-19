@@ -685,7 +685,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self)
     
     switch(b->type) {
     case TOKEN_STRING:
-      prop_set_string(a->t_prop, rstr_get(b->t_rstring));
+      prop_set_rstring(a->t_prop, b->t_rstring);
       break;
     case TOKEN_LINK:
       prop_set_link(a->t_prop, rstr_get(b->t_link_rtitle),
