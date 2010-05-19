@@ -184,7 +184,7 @@ token_resolve(glw_view_eval_context_t *ec, token_t *t)
     return NULL;
   }
 
-  if(t->type == TOKEN_PROPERTY_NAME && subscribe_prop(ec, t))
+  if(t->type == TOKEN_PROPERTY_VALUE_NAME && subscribe_prop(ec, t))
     return NULL;
   
   if(t->type == TOKEN_PROPERTY_SUBSCRIPTION) {
@@ -631,7 +631,7 @@ static token_t *
 resolve_property_name2(glw_view_eval_context_t *ec, token_t *t)
 {
   switch(t->type) {
-  case TOKEN_PROPERTY_NAME:
+  case TOKEN_PROPERTY_VALUE_NAME:
     if(resolve_property_name(ec, t, 1))
       return NULL;
     /* FALLTHRU */
@@ -657,7 +657,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self)
 
   /* Catch some special rvalues here */
 
-  if(b->type == TOKEN_PROPERTY_NAME && 
+  if(b->type == TOKEN_PROPERTY_VALUE_NAME && 
      !strcmp(rstr_get(b->t_rstring), "event")) {
     /* Assignment from $event, if our eval context has an event use it */
     if(ec->event == NULL || ec->event->e_type_x != EVENT_KEYDESC)
@@ -677,8 +677,12 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self)
     r = a->t_attrib->set(ec, a->t_attrib, b);
     break;
 
-  case TOKEN_PROPERTY_NAME:
+  case TOKEN_PROPERTY_VALUE_NAME:
     if(resolve_property_name(ec, a, 1))
+      return -1;
+    if(0)
+  case TOKEN_PROPERTY_CANONICAL_NAME:
+    if(resolve_property_name(ec, a, 0))
       return -1;
 
   case TOKEN_PROPERTY:
@@ -698,7 +702,8 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self)
       prop_set_float(a->t_prop, b->t_float);
       break;
     case TOKEN_PROPERTY:
-      prop_link(b->t_prop, a->t_prop);
+      if(b->t_prop != a->t_prop)
+	prop_link(b->t_prop, a->t_prop);
       break;
     default:
       prop_set_void(a->t_prop);
@@ -1300,7 +1305,8 @@ glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec)
     case TOKEN_OBJECT_ATTRIBUTE:
     case TOKEN_VOID:
     case TOKEN_PROPERTY:
-    case TOKEN_PROPERTY_NAME:
+    case TOKEN_PROPERTY_VALUE_NAME:
+    case TOKEN_PROPERTY_CANONICAL_NAME:
     case TOKEN_PROPERTY_SUBSCRIPTION:
       eval_push(ec, t);
       break;
@@ -2550,7 +2556,7 @@ glwf_createchild(glw_view_eval_context_t *ec, struct token *self,
   prop_t *p, *r;
   int i;
 
-  if(a->type != TOKEN_PROPERTY_NAME)
+  if(a->type != TOKEN_PROPERTY_VALUE_NAME)
     return 0;
   
   for(i = 0, t = a; t != NULL && i < 15; t = t->child)
@@ -2583,7 +2589,8 @@ glwf_delete(glw_view_eval_context_t *ec, struct token *self,
 {
   token_t *a = argv[0];
 
-  if(a->type == TOKEN_PROPERTY_NAME && resolve_property_name(ec, a, 1))
+  if(a->type == TOKEN_PROPERTY_VALUE_NAME &&
+     resolve_property_name(ec, a, 1))
     return -1;
 
   if(a->type != TOKEN_PROPERTY)
@@ -2754,7 +2761,7 @@ glwf_bind(glw_view_eval_context_t *ec, struct token *self,
   const char *propname[16];
   int i;
 
-  if(a != NULL && a->type == TOKEN_PROPERTY_NAME) {
+  if(a != NULL && a->type == TOKEN_PROPERTY_VALUE_NAME) {
 
     for(i = 0, t = a; t != NULL && i < 15; t = t->child)
       propname[i++]  = rstr_get(t->t_rstring);
@@ -2796,7 +2803,7 @@ glwf_delta(glw_view_eval_context_t *ec, struct token *self,
   float f;
   prop_t *p;
 
-  if(a->type != TOKEN_PROPERTY_NAME)
+  if(a->type != TOKEN_PROPERTY_VALUE_NAME)
     return glw_view_seterr(ec->ei, a, "delta() first arg is not a property");
   
   if(b->type != TOKEN_FLOAT && b->type != TOKEN_INT)

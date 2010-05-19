@@ -88,6 +88,7 @@ glw_view_token_free(token_t *t)
   case TOKEN_DIVIDE:
   case TOKEN_MODULO:
   case TOKEN_DOLLAR:
+  case TOKEN_AMPERSAND:
   case TOKEN_BOOLEAN_AND:
   case TOKEN_BOOLEAN_OR:
   case TOKEN_BOOLEAN_XOR:
@@ -103,7 +104,8 @@ glw_view_token_free(token_t *t)
 
   case TOKEN_STRING:
   case TOKEN_IDENTIFIER:
-  case TOKEN_PROPERTY_NAME:
+  case TOKEN_PROPERTY_VALUE_NAME:
+  case TOKEN_PROPERTY_CANONICAL_NAME:
     rstr_release(t->t_rstring);
     break;
 
@@ -176,7 +178,8 @@ glw_view_token_copy(token_t *src)
 
   case TOKEN_STRING:
   case TOKEN_IDENTIFIER:
-  case TOKEN_PROPERTY_NAME:
+  case TOKEN_PROPERTY_VALUE_NAME:
+  case TOKEN_PROPERTY_CANONICAL_NAME:
     dst->t_rstring = rstr_dup(src->t_rstring);
     break;
 
@@ -199,6 +202,7 @@ glw_view_token_copy(token_t *src)
   case TOKEN_DIVIDE:
   case TOKEN_MODULO:
   case TOKEN_DOLLAR:
+  case TOKEN_AMPERSAND:
   case TOKEN_BOOLEAN_AND:
   case TOKEN_BOOLEAN_OR:
   case TOKEN_BOOLEAN_XOR:
@@ -332,7 +336,8 @@ token2name(token_t *t)
   case TOKEN_PROPERTY_SUBSCRIPTION:
     return "property subscription";
 
-  case TOKEN_PROPERTY_NAME:
+  case TOKEN_PROPERTY_VALUE_NAME:
+  case TOKEN_PROPERTY_CANONICAL_NAME:
     snprintf(buf, sizeof(buf), "<property> %s", rstr_get(t->t_rstring));
     return buf;
 
