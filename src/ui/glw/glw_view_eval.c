@@ -1632,6 +1632,7 @@ typedef struct glw_event_map_eval_block {
   token_t *block;
   prop_t *prop;
   prop_t *prop_parent;
+  prop_t *prop_view;
 } glw_event_map_eval_block_t;
 
 
@@ -1651,6 +1652,7 @@ glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   memset(&n, 0, sizeof(n));
   n.prop = b->prop;
   n.prop_parent = b->prop_parent;
+  n.prop_view = b->prop_view;
   n.gr = w->glw_root;
   n.w = w;
   n.passive_subscriptions = 1;
@@ -1679,6 +1681,9 @@ glw_event_map_eval_block_dtor(glw_event_map_t *gem)
   if(b->prop_parent)
     prop_ref_dec(b->prop_parent);
 
+  if(b->prop_view)
+    prop_ref_dec(b->prop_view);
+
   free(b);
 }
 
@@ -1702,6 +1707,10 @@ glw_event_map_eval_block_create(glw_view_eval_context_t *ec,
   b->prop_parent = ec->prop_parent;
   if(b->prop_parent)
     prop_ref_inc(b->prop_parent);
+
+  b->prop_view = ec->prop_view;
+  if(b->prop_view)
+    prop_ref_inc(b->prop_view);
 
   b->map.gem_dtor = glw_event_map_eval_block_dtor;
   b->map.gem_fire = glw_event_map_eval_block_fire;
