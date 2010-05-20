@@ -508,7 +508,7 @@ typedef struct glw_rctx {
 				 costly (such as letting the video widget switch
 				 to a new URL) */
 
-  int rc_inhibit_matrix_store; // Avoid storing matrix in mirrored view, etc
+  uint8_t rc_inhibit_matrix_store; // Avoid storing matrix in mirrored view, etc
   
 
   /**
