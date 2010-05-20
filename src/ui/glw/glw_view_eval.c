@@ -907,9 +907,6 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
 
   glw_set_i(n.w, GLW_ATTRIB_FREEZE, 0, NULL);
 
-  if(n.gr->gr_last_focused_interactive == p)
-    glw_focus_set(n.w->glw_root, n.w, 0);
-
   gps->gps_entries++;
 }
 
@@ -1489,6 +1486,7 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
 		     GLW_ATTRIB_FREEZE, 1,
 		     GLW_ATTRIB_PARENT, ec->w,
 		     GLW_ATTRIB_PROPROOTS, ec->prop, ec->prop_parent,
+		     GLW_ATTRIB_ORIGINATING_PROP, ec->prop,
 		     NULL);
   
   n.sublist = &n.w->glw_prop_subscriptions;

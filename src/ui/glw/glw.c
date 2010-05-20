@@ -370,7 +370,8 @@ glw_attrib_set(glw_t *w, int init, va_list ap)
     case GLW_ATTRIB_ORIGINATING_PROP:
       assert(w->glw_originating_prop == NULL);
       w->glw_originating_prop = va_arg(ap, void *);
-      prop_ref_inc(w->glw_originating_prop);
+      if(w->glw_originating_prop != NULL)
+	prop_ref_inc(w->glw_originating_prop);
       break;
 
     default:
@@ -1012,7 +1013,7 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int interactive)
       prop_ref_dec(gr->gr_last_focused_interactive);
 
     gr->gr_last_focused_interactive = w->glw_originating_prop;
-    prop_ref_inc(gr->gr_last_focused_interactive);
+    prop_ref_inc(w->glw_originating_prop);
   }
 }
 
@@ -1024,7 +1025,11 @@ static void
 glw_focus_init_widget(glw_t *w, float weight)
 {
   w->glw_focus_weight = weight;
-  glw_focus_set(w->glw_root, w, 0);
+  if(w->glw_originating_prop == w->glw_root->gr_last_focused_interactive) {
+    glw_focus_set(w->glw_root, w, 1);
+  } else {
+    glw_focus_set(w->glw_root, w, 0);
+  }
 }
 
 
