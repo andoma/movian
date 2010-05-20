@@ -354,6 +354,8 @@ prop_t *prop_create_ex(prop_t *parent, const char *name,
 
 void prop_destroy(prop_t *p);
 
+void prop_destroy_by_name(prop_t *parent, const char *name);
+
 void prop_move(prop_t *p, prop_t *before);
 
 void prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str);

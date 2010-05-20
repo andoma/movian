@@ -1379,6 +1379,28 @@ prop_destroy_childs(prop_t *p)
   hts_mutex_unlock(&prop_mutex);
 }
 
+/**
+ *
+ */
+void
+prop_destroy_by_name(prop_t *parent, const char *name)
+{
+  hts_mutex_lock(&prop_mutex);
+  if(parent->hp_type == PROP_DIR) {
+    prop_t *p;
+    TAILQ_FOREACH(p, &parent->hp_childs, hp_parent_link) {
+      if(p->hp_name != NULL && !strcmp(p->hp_name, name)) {
+	if(!prop_destroy0(p)) {
+	  TAILQ_REMOVE(&p->hp_childs, p, hp_parent_link);
+	  p->hp_parent = NULL;
+	}
+	break;
+      }
+    }
+  }
+  hts_mutex_unlock(&prop_mutex);
+}
+
 
 /**
  *
