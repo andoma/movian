@@ -21,6 +21,7 @@
 
 #include <inttypes.h>
 #include <stdarg.h>
+#include <string.h>
 #include <sys/time.h>
 #include <htsmsg/htsmsg_store.h>
 #include <arch/threads.h>
@@ -80,6 +81,12 @@ static inline unsigned int mystrhash(const char *s)
   while(*s)
     v += (v << 5) + v + *s++;
   return v;
+}
+
+static inline void mystrset(char **p, const char *s)
+{
+  free(*p);
+  *p = s ? strdup(s) : NULL;
 }
 
 void runcontrol_activity(void);
