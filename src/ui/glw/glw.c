@@ -1429,7 +1429,6 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
   if(gpe->type == GLW_POINTER_GONE) {
     // Mouse pointer left our screen
     glw_root_set_hover(gr, NULL);
-    gr->gr_pointer_grab = NULL;
     gr->gr_mouse_valid = 0;
     prop_set_int(gr->gr_pointer_visible, 0);
     return;
