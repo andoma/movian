@@ -35,6 +35,8 @@
 #include "media.h"
 #include "misc/string.h"
 
+#define EPG_TAIL 20          // How many EPG entries to keep per channel
+
 #define HTSP_PROTO_VERSION 1 // Protocol version we implement
 
 
@@ -365,17 +367,17 @@ update_events(htsp_connection_t *hc, prop_t *metadata, uint32_t id)
   char buf[10];
   uint32_t u32;
 
-  for(i = 0; i < 3; i++) {
+  for(i = 0; i < EPG_TAIL; i++) {
     snprintf(buf, sizeof(buf), "id%d", i);
-    e = prop_create(events, buf);
 
     if(id != 0) {
-      usleep(1000);
       m = htsmsg_create_map();
       htsmsg_add_str(m, "method", "getEvent");
       htsmsg_add_u32(m, "eventId", id);
     
       if((m = htsp_reqreply(hc, m)) != NULL) {
+
+	e = prop_create(events, buf);
 	prop_set_string(prop_create(e, "title"), htsmsg_get_str(m, "title"));
 	if(!htsmsg_get_u32(m, "start", &u32))
 	  prop_set_int(prop_create(e, "start"), u32);
@@ -389,7 +391,7 @@ update_events(htsp_connection_t *hc, prop_t *metadata, uint32_t id)
 	id = 0;
       }
     }
-    prop_destroy(e);
+    prop_destroy_by_name(events, buf);
   }
 }
 
