@@ -1730,3 +1730,16 @@ glw_get_a_name(glw_t *w)
   }
   return NULL;
 }
+
+
+/**
+ *
+ */
+void
+glw_rctx_init(glw_rctx_t *rc, int width, int height)
+{
+  memset(rc, 0, sizeof(glw_rctx_t));
+  rc->rc_size_x = width;
+  rc->rc_size_y = height;
+  rc->rc_alpha = 1.0f;
+}

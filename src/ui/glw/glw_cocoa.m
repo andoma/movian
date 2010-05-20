@@ -409,9 +409,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
   
-  memset(&rc, 0, sizeof(rc));
-  rc.rc_size_x = gcocoa.gr.gr_width;
-  rc.rc_size_y = gcocoa.gr.gr_height;
+  glw_rctx_init(&rc, gcocoa.gr.gr_width, gcocoa.gr.gr_height);
   glw_layout0(gcocoa.gr.gr_universe, &rc);
   
   glMatrixMode(GL_PROJECTION);
@@ -425,7 +423,6 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
             0, 0, 1,
             0, 1, 0);
   
-  rc.rc_alpha = 1.0f;
   glw_render0(gcocoa.gr.gr_universe, &rc);
   
   glw_unlock(&gcocoa.gr);

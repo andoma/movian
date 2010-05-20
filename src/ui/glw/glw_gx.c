@@ -152,11 +152,7 @@ glw_rtt_init(struct glw_root *gr, glw_rtt_t *grtt, int width, int height,
 void
 glw_rtt_enter(struct glw_root *gr, glw_rtt_t *grtt, struct glw_rctx *rc)
 {
-
-  memset(rc, 0, sizeof(glw_rctx_t));
-  rc->rc_alpha = 1;
-  rc->rc_size_x = grtt->grtt_width;
-  rc->rc_size_y = grtt->grtt_height;
+  glw_rctx_init(rc, grtt->grtt_width, grtt->grtt_height);
 
   guMtxIdentity(rc->rc_be.gbr_model_matrix);
   guMtxTransApply(rc->rc_be.gbr_model_matrix,

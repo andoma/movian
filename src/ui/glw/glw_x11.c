@@ -830,9 +830,7 @@ layout_draw(glw_x11_t *gx11)
 
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
   
-  memset(&rc, 0, sizeof(rc));
-  rc.rc_size_x = gx11->gr.gr_width;
-  rc.rc_size_y = gx11->gr.gr_height;
+  glw_rctx_init(&rc, gx11->gr.gr_width, gx11->gr.gr_height);
   glw_layout0(gx11->gr.gr_universe, &rc);
 
   glMatrixMode(GL_PROJECTION);
@@ -846,7 +844,6 @@ layout_draw(glw_x11_t *gx11)
 	    0, 0, 1,
 	    0, 1, 0);
 
-  rc.rc_alpha = 1.0f;
   glw_render0(gx11->gr.gr_universe, &rc);
 }
 

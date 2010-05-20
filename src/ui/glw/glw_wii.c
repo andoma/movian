@@ -503,19 +503,16 @@ glw_wii_loop(glw_wii_t *gwii)
 
     glw_prepare_frame(&gwii->gr);
 
-    memset(&rc, 0, sizeof(rc));
-    
+    glw_rctx_init(&rc, 
+		  gwii->gr.gr_width * (gwii->wide ? 1.3333 : 1),
+		  gwii->gr.gr_height);
+		  
     guMtxIdentity(rc.rc_be.gbr_model_matrix);
     guMtxTransApply(rc.rc_be.gbr_model_matrix,
 		    rc.rc_be.gbr_model_matrix,
 		    0, 0, -1 / tan(45 * M_PI / 360));
     
-    rc.rc_size_x = gwii->gr.gr_width * (gwii->wide ? 1.3333 : 1);
-    rc.rc_size_y = gwii->gr.gr_height;
-
     glw_layout0(gwii->gr.gr_universe, &rc);
-
-    rc.rc_alpha = 1.0f;
     glw_render0(gwii->gr.gr_universe, &rc);
 
 

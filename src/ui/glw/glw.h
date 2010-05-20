@@ -958,6 +958,7 @@ glw_layout0(glw_t *w, glw_rctx_t *rc)
   glw_signal0(w, GLW_SIGNAL_LAYOUT, rc);
 }
 
+void glw_rctx_init(glw_rctx_t *rc, int width, int height);
 
 void glw_select(glw_t *p, glw_t *c);
 
