@@ -24,6 +24,9 @@
 #include "video/video_playback.h"
 #include "video/video_decoder.h"
 
+/**
+ *
+ */
 typedef struct glw_video_overlay {
   
   glw_backend_texture_t *gvo_textures;
@@ -34,6 +37,37 @@ typedef struct glw_video_overlay {
   glw_t *gvo_child; // Used to render text
 
 } glw_video_overlay_t;
+
+
+/**
+ *
+ */
+typedef struct glw_video {
+
+  glw_t w;
+
+  video_decoder_t *gv_vd;
+  video_playback_t *gv_vp;
+  media_pipe_t *gv_mp;
+
+  struct video_decoder_frame *gv_fra, *gv_frb;
+  float gv_blend;
+
+
+
+  LIST_ENTRY(glw_video) gv_global_link;
+
+  // Used to map mouse pointer coords to video frame pixels
+  int gv_width;
+  int gv_height;
+
+  glw_video_overlay_t gv_spu; // DVD SPU 
+  glw_video_overlay_t gv_sub; // Subtitles
+
+  float gv_cmatrix[9];
+  
+} glw_video_t;
+
 
 
 
@@ -53,6 +87,25 @@ void glw_video_compute_avdiff(video_decoder_t *vd, media_pipe_t *mp,
 void glw_video_purge_queues(video_decoder_t *vd,
 			    void (*purge)(video_decoder_t *vd,
 					  video_decoder_frame_t *vdf));
+
+void glw_video_frame_deliver(struct video_decoder *vd,
+			     uint8_t * const data[],
+			     const int pitch[],
+			     int width,
+			     int height,
+			     int pix_fmt,
+			     int64_t pts,
+			     int epoch,
+			     int duration,
+			     int flags);
+
+void glw_video_framepurge(video_decoder_t *vd, video_decoder_frame_t *vdf);
+
+void glw_video_buffer_allocator(video_decoder_t *vd);
+
+void glw_video_new_frame(video_decoder_t *vd, glw_video_t *gv, glw_root_t *gr);
+
+void glw_video_render(glw_t *w, glw_rctx_t *rc);
 
 
 /**

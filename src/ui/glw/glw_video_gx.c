@@ -54,44 +54,10 @@ typedef struct gx_video_frame {
 
 
 /**
- *
- */
-typedef struct glw_video {
-  glw_t w;
-
-  video_decoder_t *gv_vd;
-  video_playback_t *gv_vp;
-
-  video_decoder_frame_t *gv_fra, *gv_frb;
-  float gv_blend;
-
-  media_pipe_t *gv_mp;
-
-  // Used to map mouse pointer coords to video frame pixels
-  int gv_width;
-  int gv_height;
-
-  glw_video_overlay_t gv_spu; // DVD SPU 
-  glw_video_overlay_t gv_sub; // Subtitles
-
-} glw_video_t;
-
-static void glw_video_frame_deliver(struct video_decoder *vd,
-				    uint8_t * const data[],
-				    const int pitch[],
-				    int width,
-				    int height,
-				    int pix_fmt,
-				    int64_t pts,
-				    int epoch,
-				    int duration,
-				    int flags);
-
-/**
  *  Buffer allocator
  */
-static void
-gv_buffer_allocator(video_decoder_t *vd)
+void
+glw_video_buffer_allocator(video_decoder_t *vd)
 {
   gx_video_frame_t *gvf;
   video_decoder_frame_t *vdf;
@@ -203,8 +169,8 @@ gv_compute_blend(glw_video_t *gv, video_decoder_frame_t *fra,
 
 
 
-static void 
-gv_new_frame(video_decoder_t *vd, glw_video_t *gv, glw_root_t *gr)
+void 
+glw_video_new_frame(video_decoder_t *vd, glw_video_t *gv, glw_root_t *gr)
 {
   video_decoder_frame_t *fra, *frb;
   media_pipe_t *mp = gv->gv_mp;
@@ -444,7 +410,7 @@ render_video_1f(glw_video_t *gv, video_decoder_t *vd,
 /**
  *
  */
-static void 
+void 
 glw_video_render(glw_t *w, glw_rctx_t *rc) 
 { 
   glw_video_t *gv = (glw_video_t *)w; 
@@ -483,8 +449,8 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
 /**
  * 
  */
-static void
-framepurge(video_decoder_t *vd, video_decoder_frame_t *vdf)
+void
+glw_video_framepurge(video_decoder_t *vd, video_decoder_frame_t *vdf)
 {
   gx_video_frame_t *gvf = (gx_video_frame_t *)vdf;
   int i;
@@ -498,145 +464,6 @@ framepurge(video_decoder_t *vd, video_decoder_frame_t *vdf)
 }
 
 
-/**
- * We are going away, flush out all frames (PBOs and textures)
- * and destroy zombie video decoder 
- */
-static void
-glw_video_dtor(glw_t *w)
-{
-  glw_video_t *gv = (glw_video_t *)w;
-  video_decoder_t *vd = gv->gv_vd;
-
-  gvo_deinit(&gv->gv_spu);
-  gvo_deinit(&gv->gv_sub);
-  
-  glw_video_purge_queues(vd, framepurge);
-  video_decoder_destroy(vd);
-}
-
-
-/**
- *
- */
-static void
-glw_video_newframe(glw_t *w)
-{
-  glw_video_t *gv = (glw_video_t *)w;
-  video_decoder_t *vd = gv->gv_vd;
-
-  gv_buffer_allocator(vd);
-  gv_new_frame(vd, gv, w->glw_root);
-  glw_video_update_focusable(vd, w);
-}
-
-
-/**
- *
- */
-static int 
-glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, 
-			  void *extra)
-{
-  glw_video_t *gv = (glw_video_t *)w;
-  video_decoder_t *vd = gv->gv_vd;
-
-  switch(signal) {
-  case GLW_SIGNAL_LAYOUT:
-    if(gv->gv_sub.gvo_child != NULL)
-      glw_layout0(gv->gv_sub.gvo_child, extra);
-    return 0;
-
-  case GLW_SIGNAL_EVENT:
-    return glw_video_widget_event(extra, gv->gv_mp, vd->vd_spu_in_menu);
-
-  case GLW_SIGNAL_DESTROY:
-    video_playback_destroy(gv->gv_vp);
-    video_decoder_stop(vd);
-    mp_ref_dec(gv->gv_mp);
-    gv->gv_mp = NULL;
-    return 0;
-
-#if ENABLE_DVD
-  case GLW_SIGNAL_POINTER_EVENT:
-    return glw_video_pointer_event(vd, gv->gv_width, gv->gv_height, 
-				   extra, gv->gv_mp);
-#endif
-
-  default:
-    return 0;
-  }
-}
-
-
-/**
- *
- */
-static void
-glw_video_set(glw_t *w, int init, va_list ap)
-{
-  glw_video_t *gv = (glw_video_t *)w;
-  glw_attribute_t attrib;
-  const char *filename = NULL;
-  prop_t *p, *p2;
-  event_t *e;
-
-  if(init) {
-
-    gv->gv_mp = mp_create("Video decoder", "video", MP_VIDEO);
-
-    gv->gv_vd = video_decoder_create(gv->gv_mp, glw_video_frame_deliver, NULL);
-    gv->gv_vp = video_playback_create(gv->gv_mp);
-
-    // We like fullwindow mode if possible (should be confiurable perhaps)
-    glw_set_constraints(w, 0, 0, 0, 0, GLW_CONSTRAINT_F, 0);
-  }
-
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
-
-    case GLW_ATTRIB_SOURCE:
-      filename = va_arg(ap, char *);
-      break;
-
-    case GLW_ATTRIB_PROPROOTS:
-      p = va_arg(ap, void *);
-
-      p2 = prop_create(p, "media");
-      
-      prop_link(gv->gv_mp->mp_prop_root, p2);
-      
-      p = va_arg(ap, void *); // Parent, just throw it away
-      break;
-
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
-
-  if(filename != NULL && filename[0] != 0) {
-    e = event_create_url(EVENT_PLAY_URL, filename);
-    mp_enqueue_event(gv->gv_mp, e);
-    event_unref(e);
-  }
-}
-
-
-/** 
- * 
- */ 
-static glw_class_t glw_video = { 
-  .gc_name = "video", 
-  .gc_instance_size = sizeof(glw_video_t), 
-  .gc_set = glw_video_set, 
-  .gc_render = glw_video_render, 
-  .gc_dtor = glw_video_dtor,
-  .gc_newframe = glw_video_newframe,
-  .gc_signal_handler = glw_video_widget_callback, 
-}; 
-GLW_REGISTER_CLASS(glw_video); 
 
 extern void videotiler_asm(void *dst, 
 			   const void *src0,
@@ -650,16 +477,17 @@ extern void videotiler_asm(void *dst,
 /**
  * Frame delivery from video decoder
  */
-static void glw_video_frame_deliver(struct video_decoder *vd,
-				    uint8_t * const data[],
-				    const int linesize[],
-				    int width,
-				    int height,
-				    int pix_fmt,
-				    int64_t pts,
-				    int epoch,
-				    int duration,
-				    int flags)
+void
+glw_video_frame_deliver(struct video_decoder *vd,
+			uint8_t * const data[],
+			const int linesize[],
+			int width,
+			int height,
+			int pix_fmt,
+			int64_t pts,
+			int epoch,
+			int duration,
+			int flags)
 {
   video_decoder_frame_t *vdf;
   int hvec[3], wvec[3];

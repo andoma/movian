@@ -55,7 +55,6 @@ typedef struct glw_backend_root {
    */
   GLuint gbr_yuv2rbg_prog;
   GLuint gbr_yuv2rbg_2mix_prog;
-  struct glw_video_list gbr_video_decoders;
 
 } glw_backend_root_t;
 

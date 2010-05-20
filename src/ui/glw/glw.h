@@ -433,6 +433,8 @@ typedef struct glw_root {
   float gr_mouse_y;
   int gr_mouse_valid;
 
+  struct glw_video_list gr_video_decoders;
+
   /**
    * Font renderer
    */

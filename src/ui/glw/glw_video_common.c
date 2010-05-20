@@ -579,3 +579,150 @@ glw_video_sub_layout(video_decoder_t *vd, glw_video_overlay_t *gvo,
   }
   hts_mutex_unlock(&vd->vd_sub_mutex);
 }
+
+
+
+/**
+ * We are going away, flush out all frames (PBOs and textures)
+ * and destroy zombie video decoder 
+ */
+static void
+glw_video_dtor(glw_t *w)
+{
+  glw_video_t *gv = (glw_video_t *)w;
+  video_decoder_t *vd = gv->gv_vd;
+
+  gvo_deinit(&gv->gv_spu);
+  gvo_deinit(&gv->gv_sub);
+  
+  LIST_REMOVE(gv, gv_global_link);
+  glw_video_purge_queues(vd, glw_video_framepurge);
+  video_decoder_destroy(vd);
+}
+
+
+/**
+ *
+ */
+static void
+glw_video_newframe(glw_t *w)
+{
+  glw_video_t *gv = (glw_video_t *)w;
+  video_decoder_t *vd = gv->gv_vd;
+
+  glw_video_buffer_allocator(vd);
+  glw_video_new_frame(vd, gv, w->glw_root);
+  glw_video_update_focusable(vd, w);
+}
+
+
+/**
+ *
+ */
+static int 
+glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, 
+			  void *extra)
+{
+  glw_video_t *gv = (glw_video_t *)w;
+  video_decoder_t *vd = gv->gv_vd;
+
+  switch(signal) {
+  case GLW_SIGNAL_LAYOUT:
+    if(gv->gv_sub.gvo_child != NULL)
+      glw_layout0(gv->gv_sub.gvo_child, extra);
+    return 0;
+
+  case GLW_SIGNAL_EVENT:
+    return glw_video_widget_event(extra, gv->gv_mp, vd->vd_spu_in_menu);
+
+  case GLW_SIGNAL_DESTROY:
+    video_playback_destroy(gv->gv_vp);
+    video_decoder_stop(vd);
+    mp_ref_dec(gv->gv_mp);
+    gv->gv_mp = NULL;
+    return 0;
+
+#if ENABLE_DVD
+  case GLW_SIGNAL_POINTER_EVENT:
+    return glw_video_pointer_event(vd, gv->gv_width, gv->gv_height,
+				   extra, gv->gv_mp);
+#endif
+
+  default:
+    return 0;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+glw_video_set(glw_t *w, int init, va_list ap)
+{
+  glw_video_t *gv = (glw_video_t *)w;
+  glw_root_t *gr = w->glw_root;
+  glw_attribute_t attrib;
+  const char *filename = NULL;
+  prop_t *p, *p2;
+  event_t *e;
+
+  if(init) {
+
+    gv->gv_mp = mp_create("Video decoder", "video", MP_VIDEO);
+
+    LIST_INSERT_HEAD(&gr->gr_video_decoders, gv, gv_global_link);
+
+    gv->gv_vd = video_decoder_create(gv->gv_mp, glw_video_frame_deliver, NULL);
+    gv->gv_vp = video_playback_create(gv->gv_mp);
+
+    // We like fullwindow mode if possible (should be confiurable perhaps)
+    glw_set_constraints(w, 0, 0, 0, 0, GLW_CONSTRAINT_F, 0);
+  }
+
+  do {
+    attrib = va_arg(ap, int);
+    switch(attrib) {
+
+    case GLW_ATTRIB_SOURCE:
+      filename = va_arg(ap, char *);
+      break;
+
+    case GLW_ATTRIB_PROPROOTS:
+      p = va_arg(ap, void *);
+
+      p2 = prop_create(p, "media");
+      
+      prop_link(gv->gv_mp->mp_prop_root, p2);
+      
+      p = va_arg(ap, void *); // Parent, just throw it away
+      break;
+
+    default:
+      GLW_ATTRIB_CHEW(attrib, ap);
+      break;
+    }
+  } while(attrib);
+
+  if(filename != NULL && filename[0] != 0) {
+    e = event_create_url(EVENT_PLAY_URL, filename);
+    mp_enqueue_event(gv->gv_mp, e);
+    event_unref(e);
+  }
+}
+
+
+/**
+ *
+ */
+static glw_class_t glw_video = {
+  .gc_name = "video",
+  .gc_instance_size = sizeof(glw_video_t),
+  .gc_set = glw_video_set,
+  .gc_dtor = glw_video_dtor,
+  .gc_render = glw_video_render,
+  .gc_newframe = glw_video_newframe,
+  .gc_signal_handler = glw_video_widget_callback,
+};
+
+GLW_REGISTER_CLASS(glw_video);
