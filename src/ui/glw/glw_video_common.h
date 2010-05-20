@@ -46,6 +46,10 @@ typedef struct glw_video {
 
   glw_t w;
 
+  char *gv_current_url;
+  char *gv_pending_url;
+  int gv_pending_set_source_cnt;
+
   video_decoder_t *gv_vd;
   video_playback_t *gv_vp;
   media_pipe_t *gv_mp;

@@ -581,6 +581,21 @@ glw_video_sub_layout(video_decoder_t *vd, glw_video_overlay_t *gvo,
 }
 
 
+/**
+ *
+ */
+static void
+glw_video_set_source(glw_video_t *gv, const char *url)
+{
+  event_t *e;
+  
+  mystrset(&gv->gv_current_url, url);
+
+  e = event_create_url(EVENT_PLAY_URL, url);
+  mp_enqueue_event(gv->gv_mp, e);
+  event_unref(e);
+}
+
 
 /**
  * We are going away, flush out all frames (PBOs and textures)
@@ -591,6 +606,9 @@ glw_video_dtor(glw_t *w)
 {
   glw_video_t *gv = (glw_video_t *)w;
   video_decoder_t *vd = gv->gv_vd;
+
+  free(gv->gv_current_url);
+  free(gv->gv_pending_url);
 
   gvo_deinit(&gv->gv_spu);
   gvo_deinit(&gv->gv_sub);
@@ -625,11 +643,26 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 {
   glw_video_t *gv = (glw_video_t *)w;
   video_decoder_t *vd = gv->gv_vd;
+  glw_rctx_t *rc;
 
   switch(signal) {
   case GLW_SIGNAL_LAYOUT:
     if(gv->gv_sub.gvo_child != NULL)
       glw_layout0(gv->gv_sub.gvo_child, extra);
+
+    if(gv->gv_pending_url != NULL) {
+      if(gv->gv_pending_set_source_cnt == 0) {
+	rc = extra;
+
+	if(!rc->rc_final) {
+	  glw_video_set_source(gv, gv->gv_pending_url);
+	  mystrset(&gv->gv_pending_url, NULL);
+	}
+
+      } else {
+	gv->gv_pending_set_source_cnt--;
+      }
+    }
     return 0;
 
   case GLW_SIGNAL_EVENT:
@@ -665,7 +698,6 @@ glw_video_set(glw_t *w, int init, va_list ap)
   glw_attribute_t attrib;
   const char *filename = NULL;
   prop_t *p, *p2;
-  event_t *e;
 
   if(init) {
 
@@ -705,9 +737,13 @@ glw_video_set(glw_t *w, int init, va_list ap)
   } while(attrib);
 
   if(filename != NULL && filename[0] != 0) {
-    e = event_create_url(EVENT_PLAY_URL, filename);
-    mp_enqueue_event(gv->gv_mp, e);
-    event_unref(e);
+
+    if(gv->gv_current_url == NULL) {
+      glw_video_set_source(gv, filename);
+    } else {
+      gv->gv_pending_set_source_cnt = 5;
+      mystrset(&gv->gv_pending_url, filename);
+    }
   }
 }
 
