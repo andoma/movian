@@ -815,8 +815,8 @@ audio_deliver(audio_decoder_t *ad, audio_mode_t *am, int16_t *src,
       pts -= 1000000LL * ab->ab_frames / rate;
       ab->ab_pts = pts; 
       ab->ab_epoch = epoch;
-      pts = AV_NOPTS_VALUE;
     }
+    pts = AV_NOPTS_VALUE;
 
 
     r = ab->ab_alloced - ab->ab_frames;
