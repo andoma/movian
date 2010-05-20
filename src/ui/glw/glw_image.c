@@ -56,6 +56,8 @@ typedef struct glw_image {
 
   uint8_t gi_alpha_edge;
 
+  uint8_t gi_was_valid;
+
   glw_renderer_t gi_gr;
 
   float gi_saved_size_x;
@@ -702,6 +704,11 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 
   if(glt->glt_state == GLT_STATE_VALID) {
 
+    if(!gi->gi_was_valid) {
+      glw_signal0(w, GLW_SIGNAL_READY, NULL);
+      gi->gi_was_valid = 1;
+    }
+
     if(gi->gi_update && !gi->gi_frozen) {
       gi->gi_update = 0;
 
@@ -944,6 +951,18 @@ glw_image_set(glw_t *w, int init, va_list ap)
 }
 
 
+/**
+ *
+ */
+static int
+glw_image_ready(glw_t *w)
+{
+  glw_image_t *gi = (glw_image_t *)w;
+  glw_loadable_texture_t *glt = gi->gi_current;
+ 
+  return glt != NULL && glt->glt_state == GLT_STATE_VALID;
+}
+
 
 /**
  *
@@ -956,6 +975,7 @@ static glw_class_t glw_image = {
   .gc_set = glw_image_set,
   .gc_signal_handler = glw_image_callback,
   .gc_default_alignment = GLW_ALIGN_CENTER,
+  .gc_ready = glw_image_ready,
 };
 
 GLW_REGISTER_CLASS(glw_image);

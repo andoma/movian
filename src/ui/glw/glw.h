@@ -261,10 +261,16 @@ typedef enum {
    */ 
   GLW_SIGNAL_CAN_SCROLL_CHANGED,
 
- /**
+  /**
    * Emitted by a widget when it needs scrolling
    */ 
   GLW_SIGNAL_FULLSCREEN_CONSTRAINT_CHANGED,
+
+  /**
+   * Emitted when gc_ready will start returning 1.
+   * Only done by widget classes that actually implements gc_ready
+   */
+  GLW_SIGNAL_READY,
 
 } glw_signal_t;
 
@@ -356,6 +362,12 @@ typedef struct glw_class {
    * Invoked every new frame
    */
   void (*gc_newframe)(struct glw *w);
+
+  /**
+   * Return true if the widget is ready to be displayed
+   * (ie, texture is loaded, etc)
+   */
+  int (*gc_ready)(struct glw *w);
 
   /**
    * Send a GLW_SIGNAL_... to all listeners
