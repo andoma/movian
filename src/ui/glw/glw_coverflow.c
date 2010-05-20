@@ -43,7 +43,7 @@ typedef struct {
 static void
 glw_coverflow_layout(glw_coverflow_t *gc, glw_rctx_t *rc)
 {
-  float n = 0;
+  float n = 0, nv;
   glw_t *c, *rstart = NULL;
   glw_rctx_t rc0;
   float aspect = rc->rc_size_x / rc->rc_size_y;
@@ -72,7 +72,9 @@ glw_coverflow_layout(glw_coverflow_t *gc, glw_rctx_t *rc)
        fabs(rstart->glw_parent_misc[0]) > fabs(c->glw_parent_misc[0]))
       rstart = c;
 
-    glw_signal0(c, GLW_SIGNAL_LAYOUT, &rc0);
+    nv = c->glw_parent_misc[0] * gc->xs;
+    if(nv > -2 && nv < 2)
+      glw_signal0(c, GLW_SIGNAL_LAYOUT, &rc0);
 
     if(gc->scroll_to_me == c) {
       gc->pos_target = n;
@@ -122,7 +124,7 @@ renderone(glw_rctx_t *rc, glw_t *c, glw_coverflow_t *gc)
   glw_Translatef(&rc0, v, 0.0, 0.0);
   glw_Rotatef(&rc0, -r, 0, 1.0, 0.0);
 
-  rc0.rc_alpha *= GLW_CLAMP(1 - fabs(nv), 0, 1);
+  //  rc0.rc_alpha *= GLW_CLAMP(1 - fabs(nv), 0, 1);
 
   glw_render0(c, &rc0);
   glw_PopMatrix();
