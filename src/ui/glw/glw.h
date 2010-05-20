@@ -503,7 +503,10 @@ typedef struct glw_rctx {
 
   struct glw_cursor_painter *rc_cursor_painter;
 
-  int rc_inhibit_shadows; // Used when rendering low res passes in bloom filter
+  uint8_t rc_inhibit_shadows; // Used when rendering low res passes in bloom filter
+  uint8_t rc_final;           /* The widget will soon go away, so don't do anything
+				 costly (such as letting the video widget switch
+				 to a new URL) */
 
   int rc_inhibit_matrix_store; // Avoid storing matrix in mirrored view, etc
   
