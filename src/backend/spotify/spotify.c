@@ -125,6 +125,8 @@ typedef struct playlist {
   prop_sub_t *pl_node_sub;
   prop_sub_t *pl_destroy_sub;
 
+  int pl_withtracks;
+
 } playlist_t;
 
 
@@ -1628,7 +1630,8 @@ playlist_name_update(sp_playlist *plist, playlist_t *pl)
   if(name != NULL && !strcmp(name, "-")) {
     prop_set_string(pl->pl_prop_type, "separator");
   } else {
-    prop_set_string(pl->pl_prop_type, "playlist");
+    prop_set_string(pl->pl_prop_type, 
+		    pl->pl_withtracks ? "directory" : "playlist");
   }
   return name;
 }
@@ -1826,6 +1829,7 @@ pl_create(sp_playlist *plist, prop_t *root, int withtracks, int autodestroy)
 
   pl->pl_playlist = plist;
   pl->pl_prop_root = root;
+  pl->pl_withtracks = withtracks;
 
   prop_link(prop_syncing_playlists, prop_create(pl->pl_prop_root, "loading"));
 
