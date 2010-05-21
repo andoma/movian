@@ -446,6 +446,7 @@ typedef struct glw_root {
   int gr_mouse_valid;
 
   struct glw_video_list gr_video_decoders;
+  int64_t gr_frame_start;     // Timestamp when we started rendering frame
 
   /**
    * Font renderer

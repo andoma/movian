@@ -169,10 +169,9 @@ glw_video_compute_output_duration(video_decoder_t *vd, int frame_duration)
  *
  */
 void
-glw_video_compute_avdiff(video_decoder_t *vd, media_pipe_t *mp, 
+glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp, 
 			 int64_t pts, int epoch)
 {
-  int64_t rt;
   int64_t aclock;
 
   if(mp->mp_audio_clock_epoch != epoch) {
@@ -192,9 +191,8 @@ glw_video_compute_avdiff(video_decoder_t *vd, media_pipe_t *mp,
 
   hts_mutex_lock(&mp->mp_clock_mutex);
 
-  rt = showtime_get_ts();
-
-  aclock = mp->mp_audio_clock + rt - mp->mp_audio_clock_realtime;
+  aclock = mp->mp_audio_clock + gr->gr_frame_start
+    - mp->mp_audio_clock_realtime;
 
   hts_mutex_unlock(&mp->mp_clock_mutex);
 

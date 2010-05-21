@@ -517,7 +517,7 @@ glw_video_new_frame(video_decoder_t *vd, glw_video_t *gv, glw_root_t *gr)
 
   if(pts != AV_NOPTS_VALUE) {
     pts -= frame_duration * 2;
-    glw_video_compute_avdiff(vd, mp, pts, epoch);
+    glw_video_compute_avdiff(gr, vd, mp, pts, epoch);
 
 #if ENABLE_DVD
     glw_video_spu_layout(vd, &gv->gv_spu, gr, pts);

@@ -85,7 +85,8 @@ int glw_video_widget_event(event_t *e, media_pipe_t *mp, int in_menu);
 
 int glw_video_compute_output_duration(video_decoder_t *vd, int frame_duration);
 
-void glw_video_compute_avdiff(video_decoder_t *vd, media_pipe_t *mp, 
+void glw_video_compute_avdiff(glw_root_t *gr,
+			      video_decoder_t *vd, media_pipe_t *mp, 
 			      int64_t pts, int epoch);
 
 void glw_video_purge_queues(video_decoder_t *vd,
