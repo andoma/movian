@@ -160,7 +160,15 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
   memset(&cv, 0, sizeof(cv));
   pa_cvolume_set(&cv, pam->ss.channels, pam->mastervol);
 
-  n = pa_stream_connect_playback(s, NULL, NULL, flags, &cv, NULL);
+  pa_buffer_attr pba = {0};
+
+  pba.fragsize = (uint32_t)-1;
+  pba.maxlength = 16 * 1024;
+  pba.minreq    = 3  * 1024;
+  pba.prebuf    = 8  * 1024;
+  pba.tlength   = 12 * 1024;
+
+  n = pa_stream_connect_playback(s, NULL, &pba, flags, &cv, NULL);
 
   pam->stream = s;
   pam->cur_rate   = ab->ab_rate;
@@ -579,7 +587,7 @@ audio_pa_init(void)
     AM_SR_32000 | AM_SR_24000;
   am->am_title = strdup("Pulseaudio");
   am->am_id = strdup("pulseaudio");
-  am->am_preferred_size = 4096;
+  am->am_preferred_size = 1024;
   am->am_entry = pa_audio_start;
 
   audio_mode_register(am);
