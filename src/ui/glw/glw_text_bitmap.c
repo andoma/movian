@@ -1196,7 +1196,7 @@ font_render_thread(void *aux)
     free(uc);
     glw_lock(gr);
 
-    if(gtb->w.glw_flags & GLW_DESTROYED) {
+    if(gtb->w.glw_flags & GLW_DESTROYING) {
       /* widget got destroyed while we were away, throw away the results */
       glw_unref(&gtb->w);
       free(d.gtbd_data);

@@ -1486,7 +1486,6 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
 		     GLW_ATTRIB_FREEZE, 1,
 		     GLW_ATTRIB_PARENT, ec->w,
 		     GLW_ATTRIB_PROPROOTS, ec->prop, ec->prop_parent,
-		     GLW_ATTRIB_ORIGINATING_PROP, ec->prop,
 		     NULL);
   
   n.sublist = &n.w->glw_prop_subscriptions;

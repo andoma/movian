@@ -508,7 +508,6 @@ glw_prepare_frame(glw_root_t *gr)
     if(w->glw_class->gc_dtor != NULL)
       w->glw_class->gc_dtor(w);
 
-    w->glw_flags |= GLW_DESTROYED;
     glw_signal_handler_clean(w);
 
     glw_unref(w);
@@ -958,6 +957,19 @@ glw_focus_by_path(glw_t *w)
 /**
  *
  */
+static prop_t *
+get_originating_prop(glw_t *w)
+{
+  for(; w != NULL; w = w->glw_parent)
+    if(w->glw_originating_prop != NULL)
+      return w->glw_originating_prop;
+  return NULL;
+}
+
+
+/**
+ *
+ */
 void
 glw_focus_set(glw_root_t *gr, glw_t *w, int interactive)
 {
@@ -1008,14 +1020,42 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int interactive)
 
   glw_path_modify(w, GLW_IN_FOCUS_PATH, 0, com);
 
-  if(interactive && w->glw_originating_prop != NULL) {
-    
-    if(gr->gr_last_focused_interactive != NULL)
-      prop_ref_dec(gr->gr_last_focused_interactive);
+  
+  if(interactive) {
+    prop_t *p = get_originating_prop(w);
 
-    gr->gr_last_focused_interactive = w->glw_originating_prop;
-    prop_ref_inc(w->glw_originating_prop);
+    if(p != NULL) {
+    
+      if(gr->gr_last_focused_interactive != NULL)
+	prop_ref_dec(gr->gr_last_focused_interactive);
+
+      gr->gr_last_focused_interactive = p;
+      prop_ref_inc(p);
+    }
   }
+}
+
+/**
+ *
+ */
+static int
+was_interactive(glw_t *w)
+{
+  prop_t *last = w->glw_root->gr_last_focused_interactive;
+
+  if(last == NULL)
+    return 0;
+
+  if(w->glw_originating_prop == last)
+    return 1;
+
+  while((w = w->glw_parent) != NULL) {
+    if(w->glw_focus_weight)
+      return 0;
+    if(w->glw_originating_prop == last)
+      return 1;
+  }
+  return 0;
 }
 
 
@@ -1026,11 +1066,8 @@ static void
 glw_focus_init_widget(glw_t *w, float weight)
 {
   w->glw_focus_weight = weight;
-  if(w->glw_originating_prop == w->glw_root->gr_last_focused_interactive) {
-    glw_focus_set(w->glw_root, w, 1);
-  } else {
-    glw_focus_set(w->glw_root, w, 0);
-  }
+  int v = w->glw_flags & GLW_AUTOREFOCUSABLE && was_interactive(w);
+  glw_focus_set(w->glw_root, w, v);
 }
 
 

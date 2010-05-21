@@ -595,8 +595,7 @@ typedef struct glw {
   int glw_flags;
 
 #define GLW_ACTIVE               0x1
-#define GLW_DESTROYED            0x2     /* was destroyed but someone
-					    is holding references */
+#define GLW_AUTOREFOCUSABLE      0x2
 #define GLW_RENDER_LINKED        0x4     /* glw_render_link is linked */
 
 #define GLW_DEBUG                0x8     /* Debug this object */
