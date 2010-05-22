@@ -20,8 +20,8 @@
 #include "glw_event.h"
 
 typedef struct query {
-  float x, xmin, xmax;
-  float y, ymin, ymax;
+  float x;
+  float y;
 
   int direction;
   glw_orientation_t orientation;
@@ -191,21 +191,11 @@ glw_navigate(glw_t *w, event_t *e, int local)
     query.orientation = GLW_ORIENTATION_VERTICAL;
     query.direction   = 0;
 
-    query.xmin = -1;
-    query.xmax = 1;
-    query.ymin = -1;
-    query.ymax = y - 0.0001;
-
   } else if(event_is_action(e, ACTION_PAGE_UP)) {
 
     query.orientation = GLW_ORIENTATION_VERTICAL;
     query.direction   = 0;
     pagemode    = 1;
-
-    query.xmin = -1;
-    query.xmax = 1;
-    query.ymin = -1;
-    query.ymax = y - 0.0001;
 
   } else if(event_is_action(e, ACTION_TOP)) {
     
@@ -213,21 +203,10 @@ glw_navigate(glw_t *w, event_t *e, int local)
     query.direction   = 0;
     pagemode    = 2;
 
-    query.xmin = -1;
-    query.xmax = 1;
-    query.ymin = -1;
-    query.ymax = y - 0.0001;
-
-
   } else if(event_is_action(e, ACTION_DOWN)) {
     
     query.orientation = GLW_ORIENTATION_VERTICAL;
     query.direction   = 1;
-
-    query.xmin = -1;
-    query.xmax = 1;
-    query.ymin = y + 0.0001;
-    query.ymax = 1;
 
   } else if(event_is_action(e, ACTION_PAGE_DOWN)) {
 
@@ -235,41 +214,21 @@ glw_navigate(glw_t *w, event_t *e, int local)
     query.direction   = 1;
     pagemode    = 1;
 
-    query.xmin = -1;
-    query.xmax = 1;
-    query.ymin = y + 0.0001;
-    query.ymax = 1;
-
   } else if(event_is_action(e, ACTION_BOTTOM)) {
 
     query.orientation = GLW_ORIENTATION_VERTICAL;
     query.direction   = 1;
     pagemode    = 2;
 
-    query.xmin = -1;
-    query.xmax = 1;
-    query.ymin = y + 0.0001;
-    query.ymax = 1;
-
   } else if(event_is_action(e, ACTION_LEFT)) {
 
     query.orientation = GLW_ORIENTATION_HORIZONTAL;
     query.direction   = 0;
 
-    query.xmin = -1;
-    query.xmax = x - 0.0001;
-    query.ymin = -1;
-    query.ymax = 1;
-
   } else if(event_is_action(e, ACTION_RIGHT)) {
 
     query.orientation = GLW_ORIENTATION_HORIZONTAL;
     query.direction   = 1;
-
-    query.xmin = x + 0.0001;
-    query.xmax = 1;
-    query.ymin = -1;
-    query.ymax = 1;
 
   } else {
     return 0;
