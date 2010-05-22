@@ -1,3 +1,0 @@
-#include "theme://include/separators.view"
-
-HORIZONTAL_SEPARATOR();

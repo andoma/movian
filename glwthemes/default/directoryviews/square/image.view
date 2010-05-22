@@ -1,9 +1,0 @@
-widget(image, {
-  .focusable = true;
-
-  onEvent(enter, {
-    $parent.view = "slideshow";
-  });
-
-  .source = "thumb://" + $self.url;
-});
