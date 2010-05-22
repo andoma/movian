@@ -340,6 +340,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
 	  } else if(pagemode == 2) {
 
 	    c = glw_last_widget(p);
+	    loop = 0;
 
 	  } else {
 	    c = glw_next_widget(c);
@@ -367,6 +368,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
 	  } else if(pagemode == 2) {
 	    
 	    c = glw_first_widget(p);
+	    loop = 0;
 
 	  } else {
 	    c = glw_prev_widget(c);
