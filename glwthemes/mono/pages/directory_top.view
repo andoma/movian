@@ -1,0 +1,77 @@
+#import "theme://include/defs.view"
+#import "theme://include/separators.view"
+
+$view.canSlideShow = $page.view == "images";
+
+
+$page.glw.curView = devoidify($page.glw.userView, 
+			      translate($page.view, "list",
+					"slideshow", "slideshow",
+					"images", "coverflow"));
+
+#define TOOLBARCOL() {[0.5, 0.5, 0.5]}
+
+
+#define ICON(ICON, TYPE, EVENT, COLOR, ENABLED=true) {
+  widget(displacement, {
+    .hidden = !ENABLED;
+    .scaling = [1, 1, 1] * iir(select(isPressed(), 0.75, 1.0), 4);
+    
+    widget(backdrop, {
+      .focusable = 0.1;
+	onEvent(enter, EVENT);
+
+      .alphaSelf = iir(isFocused() * 1, 8) * 0.8;
+      .color = COLOR;
+
+      PLATE_GFX();
+      widget(container_z, {
+	widget(icon, {
+	  .color = select(isHovered() || isFocused(), [1.0, 1.0, 1.0], COLOR);
+	  .shadow = true;
+	  .source = ICON;
+	  .sizeScale = 1.5; // should be a def
+	});
+
+	widget(icon, {
+	  .alpha = iir($page.glw.curView == TYPE, 4);
+	  .color = select(isHovered() || isFocused(), [1.0, 1.0, 1.0], COLOR);
+	  .shadow = true;
+	  .source = "theme://icons/48x48/Selected.png";
+	  .sizeScale = 1.5; // should be a def
+	});
+      });
+
+    });
+  });
+}
+
+
+
+widget(container_x, {
+  .align = right;
+  ICON("theme://icons/48x48/List.png", 
+       "list", 
+       {
+	 $page.glw.userView = "list";
+       },
+       TOOLBARCOL(),
+      $view.canSlideShow);
+
+  ICON("theme://icons/48x48/Coverflow.png",
+       "coverflow",
+       {
+	 $page.glw.userView = "coverflow";
+       },
+       TOOLBARCOL(),
+       $view.canSlideShow);
+
+  ICON("theme://icons/48x48/Picture.png",
+       "slideshow",
+       {
+	 fireEvent(navOpen($self.url, "slideshow"));
+       },
+       
+       TOOLBARCOL(),
+       $view.canSlideShow);
+});

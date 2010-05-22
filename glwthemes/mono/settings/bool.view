@@ -1,0 +1,25 @@
+#import "theme://include/defs.view"
+#import "theme://include/buttons.view"
+
+widget(container_x, {
+
+  widget(label, {
+    .filterConstraintX = true;
+    .weight = 1.0;
+    .align = left;
+    .caption = $self.source.title;
+  });
+  
+  widget(dummy, {
+    .width = 4;
+  });
+
+  widget(container_x, {
+    .weight = 1.0;
+    .filterConstraintX = true;
+
+    ONOFF($self.source.value);
+    space(1);
+  });
+});
+

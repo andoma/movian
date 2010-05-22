@@ -1,0 +1,191 @@
+#import "theme://include/defs.view"
+#import "theme://include/separators.view"
+#import "theme://include/buttons.view"
+
+settingInt("Vertical underscan", "underscan_v", 
+	   $ui.defaults.underscan_v, "px", 0, 100, 1, $ui.underscan_v);
+settingInt("Horizontal underscan", "underscan_h", 
+	   $ui.defaults.underscan_h, "px", 0, 100, 1, $ui.underscan_h);
+
+settingBool("Top bar navigation buttons", "navtools", true, $ui.topBarTools);
+
+
+onEvent(menu, {
+  $ui.menu = !$ui.menu;
+});
+
+onEvent(back, {
+  $ui.menu = false;
+}, $ui.menu);
+
+
+#define TOOLBARCOL() {[0.5, 0.5, 0.5]}
+
+$ui.fullwindow = 0;
+
+$view.showplaydeck = !$ui.fullwindow && $global.media.current.type == "tracks";
+
+widget(container_z, {
+  
+  widget(gradient, {
+    .alpha = iir(1 - $ui.fullwindow, 16);
+    .color1 = [0,0,0];
+    .color2 = [0.1 ,0.1, 0.14];
+  });
+  
+  widget(container_y, {
+    space(1);
+    widget(throbber3d, {
+      .alpha = iir($global.nav.currentpage.source.loading, 4);
+    });
+    space(1);
+  });
+
+  widget(displacement, {
+    .border = [$ui.underscan_h * 1,
+	       $ui.underscan_v * 1,
+	       $ui.underscan_h * 1,
+	       $ui.underscan_v * 1];
+
+    widget(layer, {
+
+      // Main container 
+      widget(container_y, {
+
+	widget(expander_y, {
+
+	  .expansion = scurve(!$ui.fullwindow, 0.25);
+	  .alpha     = scurve(!$ui.fullwindow, 0.25);
+
+	  widget(container_y, {
+	  
+	    widget(container_x, {
+	      widget(container_x, {
+		.filterConstraintX = true;
+		.weight = 0.3;
+
+		ICON("theme://icons/48x48/NavLeft.png",
+		     event(Back),
+		     TOOLBARCOL(),
+		     0.01 * $global.nav.canGoBack,
+		     1.5,
+		     !$ui.topBarTools, true);
+		
+		ICON("theme://icons/48x48/NavRight.png",
+		     event(Forward),
+		     TOOLBARCOL(),
+		     0.01 * $global.nav.canGoForward,
+		     1.5,
+		     !$ui.topBarTools, true);
+	    
+		ICON("theme://icons/48x48/Home.png",
+		     event(Home),
+		     TOOLBARCOL(),
+		     0.01 * $global.nav.canGoHome,
+		     1.5,
+		     !$ui.topBarTools);
+	      });
+
+	      widget(label, {
+		.filterConstraintX = true;
+		.caption = $global.nav.currentpage.source.metadata.title;
+		.align = center;
+		.sizeBias = 4;
+		.sizeScale = 1.5;
+	      });
+
+	      // helpers
+	      widget(deck, {
+		.weight = 0.3;
+		.filterConstraintX = true;
+		.time = 0.1;
+		.effect = blend;
+		.noInitialTransform = true;
+		
+		cloner($global.nav.pages, loader, {
+		  .time = 0.2;
+		  .noInitialTransform = true;
+		  .source = "theme://pages/" +
+		    $page.source.type + "_top.view";
+		});
+	      });
+	    });
+	    HORIZONTAL_SEPARATOR();
+	  });
+	});
+
+	// Main page deck
+	widget(deck, {
+	  .filterConstraintX = true;
+	  .time = 0.1;
+	  .effect = blend;
+	  .noInitialTransform = true;
+
+	  delta($ui.fullwindow, wantFullWindow());
+	  
+	  cloner($global.nav.pages, loader, {
+	    .time = 0.2;
+	    .noInitialTransform = true;
+	    .source = "theme://pages/" + $page.source.type + ".view";
+	  });
+	});
+
+	// Now playing info
+	widget(expander_y, {
+	  .expansion = scurve($view.showplaydeck, 0.25);
+	  .alpha     = scurve($view.showplaydeck, 0.25);
+	  
+	  widget(deck, {
+	    cloner($global.media.sources, loader, {
+	      .time = 0.3;
+	      .noInitialTransform = true;
+	      .source = "theme://playdecks/" + $self.type + ".view";
+	    });
+	  });
+	});
+      });
+
+      // Command menu
+
+      #include "theme://commandmenu.view"
+
+      // Popup cloner
+
+      cloner($global.popups, loader, {
+	.source = "theme://popups/" + $self.type + ".view";
+      });
+    });
+  });
+
+  widget(container_x, {
+    space(1);
+    widget(container_y, {
+      .align = center;
+      .filterConstraintX = true;
+
+      widget(backdrop, {
+	PLATE_GFX();
+	.alpha = iir(changed($global.audio.mastervolume, 2, true), 7);
+	.color = PLATE_COLOR_AUDIO();
+	
+	widget(label, {
+	  .caption = "Master volume: " +
+	    int2str($global.audio.mastervolume) + " dB";
+	  .align = center;
+	});
+      });
+      
+      widget(backdrop, {
+	PLATE_GFX();
+	.alpha = iir($global.audio.mastermute, 7);
+	.color = PLATE_COLOR_OFF();
+	
+        widget(label, {
+	  .caption = "Audio muted";
+	  .align = center;
+	});
+      });
+    });
+    space(1);
+  });
+});

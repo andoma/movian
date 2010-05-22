@@ -1,0 +1,31 @@
+#import "theme://include/defs.view"
+
+#define COVERFLOW_ITEM_SIMPLE(TITLE, ICON, EVENT, COLOR) {
+
+widget(backdrop, {
+  .autoRefocusable = true;
+  .focusable = 1.0;
+  .focusOnClick = true;
+  onEvent(enter, EVENT);
+
+//  .alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1 + 0.1;
+  .color = select(isFocused(), COLOR, COLOR * 0.5);
+
+  PLATE_GFX2();
+
+  widget(container_y, {
+    widget(image, {
+      .color = select(isFocused(), [1.0, 1.0, 1.0], COLOR);
+      .source =  ICON;
+      .shadow = true;
+    });
+  
+    widget(label, {
+      .color = select(isFocused(), [1.0, 1.0, 1.0], COLOR);
+      .caption = TITLE;
+      .align = center;
+      .ellipsize = true;
+    });
+  });
+});
+}

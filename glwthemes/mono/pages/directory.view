@@ -1,0 +1,9 @@
+
+
+widget(container_y, {
+  widget(loader, {
+    .noInitialTransform = true;
+    .time = 0.1;
+    .source = "theme://directoryviews/" + $page.glw.curView + ".view";
+  });
+});

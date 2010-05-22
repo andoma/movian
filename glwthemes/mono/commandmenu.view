@@ -1,0 +1,343 @@
+#import "theme://include/separators.view"
+#import "theme://include/slider.view"
+#import "theme://include/buttons.view"
+
+#define CMDSLIDER(HIDDEN, FOCUSABLE, MIN, MAX, STEP, BIND, CAPTION) {
+    widget(backdrop, {
+      .hidden = HIDDEN;
+      PLATE_GFX();
+      .color = PLATE_COLOR_CMDMENU() * 0.33;
+      widget(slider_x, {
+	.focusable = FOCUSABLE;
+	.min = MIN;
+	.max = MAX;
+	.step = STEP;
+	bind(BIND);
+	widget(backdrop, {
+	  PLATE_GFX();
+	  .color = PLATE_COLOR_CMDMENU();
+	  .alphaSelf = iir(select(isFocused() || isPressed(), 1, 0.4), 8);
+	  widget(label, {
+	    .padding = [3,0,3,0];
+ 	    .align = center;
+	    .caption = CAPTION;
+	  });
+	});
+      });
+    });
+}
+
+#define SECTIONHEADER(CAPTION, HIDDEN = false) {
+  widget(label, {
+    .hidden = HIDDEN;
+    .caption = CAPTION;
+    .sizeScale = 0.75;
+    .padding = [0, 0, 0, 1];
+  });
+}
+
+#define STREAMSELECTION(STREAMS, CURRENT) {
+  cloner(STREAMS, backdrop, {
+
+    .hidden = $global.media.current.type != "video";
+
+    PLATE_GFX();
+    .focusable = 0.5;
+    .color = PLATE_COLOR_CMDMENU() *
+      iir(select(isFocused() || isPressed(), 1.0, 0.33), 4);
+
+    onEvent(enter, selectTrack($self.id));
+
+    widget(container_x, {
+	      
+      widget(icon, {
+	.source = "theme://icons/48x48/Check.png";
+	.shadow = true;
+	.alpha = iir($self.id == CURRENT, 8);
+      });
+
+      widget(label, {
+	.filterConstraintX = true;
+	.caption = $self.title;
+	.color = select(isHovered() || isFocused() ||
+			isPressed() || $self.id == CURRENT,
+			[1,1,1], PLATE_COLOR_CMDMENU());
+      });
+      widget(label, {
+	.align = right;
+	.caption = $self.format;
+	.color = select(isHovered() || isFocused() ||
+			isPressed() || $self.id == CURRENT,
+			[1,1,1], PLATE_COLOR_CMDMENU());
+      });
+    });
+  });
+}
+
+
+#define BOOLENTRY(TITLE, PROP, HIDDEN)
+{
+  widget(backdrop, {
+    .hidden = HIDDEN;
+    PLATE_GFX();
+    .color = PLATE_COLOR_CMDMENU() * 0.33;
+    
+    widget(container_x, {
+      widget(label, {
+	.weight = 1.0;
+	.filterConstraintX = true;
+
+	.align = right;
+	.caption = TITLE + ":";
+      });
+      
+      widget(dummy, {
+	.width = 4;
+      });
+
+      widget(container_x, {
+	.weight = 1.0;
+	.filterConstraintX = true;
+
+	ONOFF(PROP);
+	space(1);
+      });
+    });
+  });
+}
+
+
+
+
+widget(container_x, {
+  .hidden = !$ui.menu;
+
+  space(0.5);
+	
+  widget(container_y, {
+  space(0.25);
+
+  widget(backdrop, {
+    .filterConstraintX = true;
+
+    .source = "theme://graphics/shadedplate.png";
+    .border =  [4, 4, 4, 4];
+    .padding = [-2, -2, -2, -2];
+    .color =  PLATE_COLOR_CMDMENU();
+    .alphaSelf = 0.8;
+    
+    widget(container_y, {
+      /*
+      widget(label, {
+	.align = center;
+	.caption = "Showtime";
+	.sizeScale = 2;
+      });
+
+      HORIZONTAL_SEPARATOR();
+*/
+      widget(container_x, {
+	.filterConstraintX = true;
+
+	widget(dummy, {
+	  .width = 24;
+	});
+
+	widget(list_y, {
+	  .id = "list";
+	  
+	  SECTIONHEADER("Navigation");
+		
+	  widget(backdrop, {
+	    PLATE_GFX();
+	    .color = PLATE_COLOR_CMDMENU() * 0.33;
+	    widget(container_x, {
+	      .align = center;
+
+	      ICON2("theme://icons/48x48/NavLeft.png",
+		    "Back",
+		    {
+		      $ui.menu = false;
+		      fireEvent(event(Back));
+		    },
+		    PLATE_COLOR_CMDMENU(),
+		    $global.nav.canGoBack);
+	      
+
+	      ICON2("theme://icons/48x48/NavRight.png",
+		    "Forward",
+		    {
+		      $ui.menu = false;
+		      fireEvent(event(Forward));
+		    },
+		    PLATE_COLOR_CMDMENU(),
+		    $global.nav.canGoForward);
+
+	      ICON2("theme://icons/48x48/Home.png",
+		    "Home",
+		    {
+		      $ui.menu = false;
+		      fireEvent(event(Home));
+		    },
+		    PLATE_COLOR_CMDMENU(),
+		    $global.nav.canGoHome);
+
+	      ICON2("theme://icons/48x48/Settings.png",
+		    "Settings",
+		   {
+		     $ui.menu = false;
+		     fireEvent(navOpen("settings:"));
+		   },
+		   PLATE_COLOR_CMDMENU(),
+		   1);
+
+
+	      ICON2("theme://icons/48x48/Queue.png",
+		    "Playqueue",
+		   {
+		     $ui.menu = false;
+		     fireEvent(navOpen("playqueue:"));
+		   },
+		   PLATE_COLOR_CMDMENU(),
+		   1);
+	    });
+	  });
+	  
+	  HORIZONTAL_SEPARATOR();
+
+	  SECTIONHEADER("Play control");
+
+	  widget(backdrop, {
+	    PLATE_GFX();
+	    .color = PLATE_COLOR_CMDMENU() * 0.33;
+	    widget(container_x, {
+	      .align = center;
+
+	      ICON2("theme://icons/48x48/SkipBack.png",
+		    "Prev track",
+		    event(PreviousTrack),
+		    PLATE_COLOR_CMDMENU(),
+		    $global.media.current.canSkipBackward);
+
+	      ICON2("theme://icons/48x48/SeekBack.png",
+		    "Rewind",
+		    event(SeekReverse),
+		    PLATE_COLOR_CMDMENU(),
+		    $global.media.current.canSeek);
+
+
+	      widget(deck, {
+		.effect = flipVertical;
+		.noInitialTransform = true;
+		.time = 0.2;
+
+		ICON2("theme://icons/48x48/Pause.png",
+		      "Pause",
+		      event(Pause),
+		      PLATE_COLOR_CMDMENU(),
+		      $global.media.current.canPause);
+
+		ICON2("theme://icons/48x48/Play.png",
+		      "Play",
+		      event(Play),
+		      PLATE_COLOR_CMDMENU(),
+		      $global.media.current.canPause);
+
+		.page = translate($global.media.current.playstatus, 
+				  0,
+				  "play",  0,
+				  "pause", 1);
+	      });
+
+	      ICON2("theme://icons/48x48/SeekFwd.png",
+		    "Fast Forward",
+		    event(SeekForward),
+		    PLATE_COLOR_CMDMENU(),
+		    $global.media.current.canSeek);
+
+	      ICON2("theme://icons/48x48/SkipNext.png",
+		    "Next Track",
+		    event(NextTrack),
+		    PLATE_COLOR_CMDMENU(),
+		    $global.media.current.canSkipForward);
+
+	      ICON2("theme://icons/48x48/Stop.png",
+		    "Stop",
+		    event(Stop),
+		    PLATE_COLOR_CMDMENU(),
+		    $global.media.current.canStop);
+
+	      ICON2("theme://icons/48x48/Eject.png",
+		    "Eject",
+		    event(Eject),
+		    PLATE_COLOR_CMDMENU(),
+		    $global.media.current.canEject);
+	    });
+	  });
+
+
+	  // ------- Seek bar
+
+	  CMDSLIDER(!$global.media.current.canSeek,
+		    0.2 * $global.media.current.canSeek,
+		    0, $global.media.current.metadata.duration, 15,
+		    $global.media.current.currenttime,
+		    value2duration($global.media.current.currenttime));
+
+	  HORIZONTAL_SEPARATOR();
+
+	  // ------- A/V sync
+
+	  SECTIONHEADER("Audio / Video synchronization",
+			$global.media.current.type != "video");
+	  
+	  CMDSLIDER($global.media.current.type != "video",
+		    0.2, -1000, 1000, 10,
+		    $global.media.current.avdelta,
+		    int2str($global.media.current.avdelta) + "ms");
+
+	  HORIZONTAL_SEPARATOR($global.media.current.type != "video");
+
+	  // ------- Audio tracks
+	  SECTIONHEADER("Audio tracks:",
+			$global.media.current.type != "video");
+
+
+	  STREAMSELECTION($global.media.current.metadata.audiostreams,
+			  $global.media.current.audio.current);
+	  HORIZONTAL_SEPARATOR($global.media.current.type != "video");
+
+	  // ------- Subtitles
+	  SECTIONHEADER("Subtitles:",
+			$global.media.current.type != "video");
+
+
+	  STREAMSELECTION($global.media.current.metadata.subtitlestreams,
+			  $global.media.current.subtitle.current);
+	  HORIZONTAL_SEPARATOR($global.media.current.type != "video");
+	  
+	  BOOLENTRY("Shuffle",
+		    $global.media.current.shuffle,
+		    !$global.media.current.canShuffle);
+	  
+	  BOOLENTRY("Repeat",
+		    $global.media.current.repeat,
+		    !$global.media.current.canRepeat);
+
+	  BOOLENTRY("Stats",
+		    $global.media.current.stats,
+		    $global.media.current.type != "video");
+
+	});
+
+
+	// ------- Slider (to the right)
+	      
+	LIST_Y_SLIDER("list");
+      });
+    });
+  });
+  space(0.25);
+  });
+  space(0.5);
+});

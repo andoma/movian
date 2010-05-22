@@ -1,0 +1,119 @@
+#include "theme://include/buttons.view"
+
+#define AUTOCOL() {
+  .color = select($view.isFocused, [1.0, 1.0, 1.0], [0.45, 0.45, 0.5]);
+}
+
+#define AUTOALPHA() {
+  .alpha = select($view.isFocused, 1, 0.2);
+}
+
+widget(backdrop, {
+
+  .alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
+  .color = [0.45, 0.45, 0.5];
+  .source = "theme://graphics/shadedplate.png";
+  .border =  [4, 4, 4, 4];
+  .padding = [-4, -4, -4, -4];
+
+  $view.isFocused = isFocused();
+
+  widget(container_x, {
+    widget(icon, {
+      AUTOCOL();
+      .align = top;
+      .source = "theme://icons/48x48/Bookmark.png";
+    });
+
+    widget(dummy, { .width = 4; });
+
+
+    // Title column
+    widget(container_y, {
+      .weight = 1;
+      .filterConstraintX = true;
+
+      widget(label, {
+	.padding = [4, 0, 4, 0];
+	.caption = "Bookmark title";
+	.sizeScale = 0.75;
+	AUTOCOL();
+	AUTOALPHA();
+      });
+      
+      widget(backdrop, {
+
+	.source = "theme://graphics/shadedplate.png";
+	.border =  [4, 4, 4, 4];
+	.padding = [0, -3, 0, -3];
+	
+	.color = [0, 0, 0];
+	.alphaSelf = 0.5 * $view.isFocused;
+	
+	widget(text, {
+	  .focusable = 1.0;
+	  bind($self.source.title);
+	  AUTOCOL();
+	});
+      });
+
+      widget(dummy, { .height = 4; });
+
+      widget(backdrop, {
+
+	.source = "theme://graphics/shadedplate.png";
+	.border =  [4, 4, 4, 4];
+	.padding = [-3, -3, 0, -3];
+	
+	.color = [0, 0, 0];
+	.alphaSelf = 0.5 * $view.isFocused;
+
+	widget(container_x, {
+	  AUTOALPHA();
+
+	  BUTTON_TOOLBAR("Delete", "theme://icons/48x48/Delete.png",
+			 {
+			   delete($self);
+			 }, 
+			 [0.5, 0.45, 0.45]
+			);
+	});
+      });
+
+      widget(dummy, { .height = 4; });
+    });
+    
+    widget(dummy, { .width = 4; });
+
+    widget(container_y, {
+      .weight = 1;
+      .filterConstraintX = true;
+
+      widget(label, {
+	.padding = [4, 0, 4, 0];
+	.caption = "Bookmark URL";
+	.sizeScale = 0.75;
+	AUTOCOL();
+	AUTOALPHA();
+      });
+
+      widget(backdrop, {
+	.source = "theme://graphics/shadedplate.png";
+	.border =  [4, 4, 4, 4];
+	.padding = [0, -3, 0, -3];
+	
+	.color = [0, 0, 0];
+	.alphaSelf = 0.5 * $view.isFocused;
+      
+	widget(text, {
+	  .focusable = 1.0;
+	  bind($self.source.url);
+	  AUTOCOL();
+	});
+      });
+          });
+
+    widget(dummy, { .width = 4; });
+
+  });
+});

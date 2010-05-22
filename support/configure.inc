@@ -14,7 +14,7 @@
 TOPDIR=`pwd`
 TMPDIR=${TOPDIR}/tmp
 BUILDDIR=build.${PLATFORM}
-GLW_DEFAULT_THEME="default"
+GLW_DEFAULT_THEME="mono"
 
 RELEASENAME=`head -n1 ${TOPDIR}/ChangeLog | awk '{print $2}' | sed s/\(// | sed s/\)//`
 

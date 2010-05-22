@@ -1,0 +1,53 @@
+#import "theme://include/defs.view"
+
+widget(backdrop, {
+  PLATE_GFX();
+  .color = PLATE_COLOR_OTHER();
+  .alphaSelf = 0.5;
+  
+  widget(container_x, {
+
+    widget(image, {
+      .hqScaling = true;
+      .source = devoidify($self.metadata.album_art,
+			  "theme://icons/48x48/Music.png");
+    });
+
+    widget(dummy, {
+      .width = 4;
+    });
+
+    widget(container_y, {
+      widget(label, {
+	.caption = $self.metadata.title;
+	.ellipsize = true;
+      });
+    
+      widget(label, {
+	.ellipsize = true;
+	.sizeScale = 0.75;
+	.caption =
+	  select($self.metadata.artist && $self.metadata.album, 
+		 $self.metadata.artist + " • " +  $self.metadata.album,
+		 select($self.metadata.artist, $self.metadata.artist,
+			select($self.metadata.album, $self.metadata.album,
+			       "")));
+      });
+    });
+
+    widget(container_y, {
+      widget(label, {
+	.align = right;
+	.caption = value2duration($self.currenttime) + 
+	  select($self.metadata.duration,
+		 " / " + value2duration($self.metadata.duration), "");
+      });
+
+      widget(label, {
+	.align = right;
+	.sizeScale = 0.75;
+	.caption = "Track " + int2str($self.currentTrack) + " / " + int2str($self.totalTracks);
+      });
+    });
+  });
+});

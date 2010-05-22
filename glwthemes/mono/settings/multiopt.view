@@ -1,0 +1,39 @@
+#import "theme://include/buttons.view"
+
+widget(container_x, {
+
+  widget(label, {
+    .filterConstraintX = true;
+    .weight = 1.0;
+    .align = left;
+    .caption = $self.source.title;
+  });
+  
+  widget(dummy, {
+    .width = 4;
+  });
+
+  ICON("theme://icons/48x48/Left.png",
+       targetedEvent("choiceDeck", Decrease),
+       PLATE_COLOR_OTHER());
+
+  widget(deck, {
+    .id = "choiceDeck";
+
+    .time = 0.15;
+    .effect = slideHorizontal;
+    .noInitialTransform = true;
+
+    cloner($self.source.options, container_y, {
+      widget(label, {
+	.filterConstraintX = true;
+	.align = center;
+	.caption = $self.title;
+      });
+    });
+  });
+  
+  ICON("theme://icons/48x48/Right.png",
+       targetedEvent("choiceDeck", Increase),
+       PLATE_COLOR_OTHER());
+});

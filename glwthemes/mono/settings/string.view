@@ -1,0 +1,26 @@
+widget(container_x, {
+
+  widget(label, {
+    .filterConstraintX = true;
+    .weight = 1.0;
+    .align = left;
+    .caption = $self.source.title;
+  });
+  
+  widget(backdrop, {
+
+    .alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
+    .color = [0.45, 0.45, 0.5];
+    .source = "theme://graphics/shadedplate.png";
+    .border =  [4, 4, 4, 4];
+    .padding = [0, -4, 0, -4];
+
+    widget(text, {
+      .align = left;
+      .focusable = true;
+      .password = $self.source.password;
+      bind($self.source.value);
+    });
+  });
+});
+

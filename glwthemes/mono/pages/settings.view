@@ -1,0 +1,36 @@
+#include "theme://include/separators.view"
+#include "theme://include/slider.view"
+#include "theme://include/listitems.view"
+
+widget(container_y, {
+  
+  widget(container_x, {
+
+    widget(dummy, { .width = 2; });
+    
+    widget(list_y, {
+      .id = "list";
+      cloner($page.source.nodes, loader, {
+	.source = "theme://settings/" + $self.source.type + ".view";
+	.time = 0.3;
+	.noInitialTransform = true;
+      });
+
+      // Add option
+
+      LIST_ITEM_SIMPLE("Add new entry", 
+		       "theme://icons/48x48/Add.png",
+		       {
+			 createChild($page.source.nodes); 
+		       },
+		       [0.3, 0.5, 0.3],
+		       0.8,
+		       !$page.source.mayadd);
+
+    });
+    
+    widget(dummy, { .width = 2; });
+    LIST_Y_SLIDER("list");
+    widget(dummy, { .width = 2; });
+  });
+});

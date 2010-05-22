@@ -1,0 +1,37 @@
+#import "theme://include/defs.view"
+
+widget(container_x, {
+
+  widget(label, {
+    .filterConstraintX = true;
+    .weight = 1.0;
+    .align = left;
+    .caption = $self.source.title;
+  });
+
+  widget(dummy, {
+    .width = 4;
+  });
+
+  widget(slider_x, {
+    .focusable = true;
+    .min = $self.source.min;
+    .max = $self.source.max;
+    .step = $self.source.step;
+    bind($self.source.value);
+
+    widget(backdrop, {
+      .width = KNOB_SIZE();
+
+      .alphaSelf = 0.2 + iir(isFocused() * 1, 8) + isHovered() * 0.1;
+
+      .color = PLATE_COLOR_OTHER();
+      PLATE_GFX();
+
+      widget(label, {
+	.align = center;
+	.caption = int2str($self.source.value) + $self.source.unit;
+      });
+    });
+  });
+});

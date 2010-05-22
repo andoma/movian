@@ -1,0 +1,193 @@
+#import "theme://include/defs.view"
+
+#define BUTTON(CAPTION, ICON, EVENT, COLOR, SIZE, FONTSCALE, HIDDEN, FOCUSABLE)
+{
+  widget(backdrop, {
+    onEvent(enter, EVENT);
+    .focusOnClick = true;
+
+    .alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
+    .color = COLOR;
+    .hidden = HIDDEN;
+    PLATE_GFX();
+
+    .width = SIZE;
+    .height = SIZE;
+    
+    .focusable = FOCUSABLE;
+    
+    widget(container_y, {
+      widget(image, {
+	.color = select(isFocused(), [1.0, 1.0, 1.0], COLOR);
+	.source = ICON;
+	.shadow = true;
+      });
+      widget(label, {
+	.color = select(isFocused(), [1.0, 1.0, 1.0], COLOR);
+	.align = center;
+	.caption = CAPTION;
+	.sizeScale = FONTSCALE;
+      });
+    });
+  });
+}
+
+
+#define BUTTON_SMALL(CAPTION, ICON, EVENT, COLOR, HIDDEN=false, FOCUSABLE=1.0) {
+  BUTTON(CAPTION, ICON, EVENT, COLOR, 80, 0.75, HIDDEN, FOCUSABLE);
+}
+
+#define BUTTON_BIG(CAPTION, ICON, EVENT, COLOR, HIDDEN=false, FOCUSABLE=1.0) {
+  BUTTON(CAPTION, ICON, EVENT, COLOR, 160, 1, HIDDEN, FOCUSABLE);
+}
+
+
+
+#define BUTTON_TOOLBAR(CAPTION, ICON, EVENT, COLOR) {
+  widget(backdrop, {
+
+    onEvent(enter, EVENT);
+
+    .alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
+    .color = COLOR;
+      
+    .source = "theme://graphics/shadedplate.png";
+    .border =  [4, 4, 4, 4];
+    .padding = [-4, -4, 0, -4];
+   
+    .focusable = 1.0;
+    
+    widget(container_x, {
+      widget(icon, {
+	.color = select(isFocused(), [1.0, 1.0, 1.0], COLOR);
+	.source = ICON;
+	.sizeScale = 0.75;
+	.shadow = true;
+      });
+      widget(label, {
+	.color = select(isFocused(), [1.0, 1.0, 1.0], COLOR);
+	.caption = CAPTION;
+	.sizeScale = 0.75;
+      });
+    });
+  });
+
+}
+
+
+#define ICON(ICON, EVENT, COLOR, ENABLED=true, SCALE=1.0, HIDDEN=false, DEBUG=false) {
+  widget(backdrop, {
+   .hidden = HIDDEN;
+     .alpha = select(ENABLED != 0, 1, 0.2);
+    .focusable = ENABLED;
+    onEvent(enter, EVENT);
+
+    .alphaSelf = iir(isFocused() * 1, 8) * 0.8;
+    .color = COLOR;
+
+    PLATE_GFX();
+
+    widget(displacement, {
+
+      .scaling = [1, 1, 1] * iir(select(isPressed(), 0.75, 1.0), 4);
+
+      widget(icon, {
+	.color = select(isHovered() || isFocused(), [1.0, 1.0, 1.0], COLOR);
+	.shadow = true;
+	.source = ICON;
+	.sizeScale = SCALE;
+      });
+    });
+  });
+}
+
+#define ICON2(ICON, CAPTION, EVENT, COLOR, ENABLED=true, HIDDEN=false) {
+  widget(backdrop, {
+
+    .hidden = HIDDEN;
+    .alpha = select(ENABLED, 1, 0.2);
+    .focusable = ENABLED;
+    onEvent(enter, EVENT);
+
+    .alphaSelf = iir(isFocused() * 1 + 0.2, 8) * 0.8;
+    .color = COLOR;
+
+    PLATE_GFX();
+
+    widget(displacement, {
+      
+      .scaling = [1, 1, 1] * iir(select(isPressed(), 0.9, 1.0), 4);
+      
+    widget(container_x, {
+      widget(icon, {
+	.color = select(isHovered() || isFocused(), [1.0, 1.0, 1.0], COLOR);
+	.shadow = true;
+	.source = ICON;
+      });
+
+      widget(expander_x, {
+	.expansion = scurve(isFocused(), 0.15);
+	.alpha     = scurve(isFocused(), 0.15);
+
+	widget(label, {
+	  .color = select(isHovered() || isFocused(), [1.0, 1.0, 1.0], COLOR);
+	  .padding = [3,0,3,0];
+	  .caption = CAPTION;
+	});
+      });
+    });
+    });
+  });
+}
+
+
+#define ONOFF(PROP)
+{
+  widget(deck, {
+    .effect = flipVertical;
+    .noInitialTransform = true;
+    .time = 0.2;
+
+    widget(backdrop, {
+      .width = KNOB_SIZE();
+      .focusable = 1.0;
+      
+      .alphaSelf = 0.2 + iir(isFocused() * 1, 8) + isHovered() * 0.1;
+      
+      .color = PLATE_COLOR_OFF();
+      PLATE_GFX();
+      
+      onEvent(enter, {
+	PROP = !PROP;
+      });
+      
+      widget(label, {
+	.align = center;
+	.caption = "Off";
+      });
+    });
+
+
+    widget(backdrop, {
+      .width = KNOB_SIZE();
+      .focusable = 1.0;
+      
+      .alphaSelf = 0.2 + iir(isFocused() * 1, 8) + isHovered() * 0.1;
+      .color = PLATE_COLOR_ON();
+      
+      PLATE_GFX();
+      
+      onEvent(enter, {
+	PROP = !PROP;
+      });
+      
+      widget(label, {
+	.align = center;
+	.caption = "On";
+      });
+    });      
+
+    // Must be after the widgets
+    .page = PROP;
+  });
+}

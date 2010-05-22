@@ -1,0 +1,7 @@
+#import "theme://include/defs.view"
+#import "theme://include/coverflowitems.view"
+
+COVERFLOW_ITEM_SIMPLE($self.metadata.title,
+		      "theme://icons/256x256/List.png",
+		      navOpen($self.url),
+		      PLATE_COLOR_DIR());

@@ -1,0 +1,43 @@
+#include "theme://include/buttons.view"
+
+$page.glw.title = "Home";
+
+#define COL() {[0.45, 0.45, 0.5]}
+
+widget(container_y, {
+
+  space(1);
+
+  widget(container_x, {
+    .align = center;
+
+    cloner($global.sources, container_z, {
+      BUTTON_BIG($self.title, 
+		 select($self.icon, $self.icon, 
+			"theme://icons/mediasources/" + 
+			translate($self.contents, "generic.png",
+				  "music",    "music.png",
+				  "video",    "movies.png",
+				  "dvd",      "cd.png",
+				  "pictures", "pictures.png")),
+		 navOpen($self.url),
+		 COL());
+    });
+  });
+
+  space(1);
+
+  widget(container_x, {
+    .padding = [3, 3, 3, 3];
+    .align = right;
+
+    BUTTON_SMALL("Settings", "theme://icons/48x48/Settings.png", 
+		 navOpen("settings:"), COL(), false, 0.3);
+
+    BUTTON_SMALL("Stand by", "theme://icons/48x48/Power.png", 
+		 event(Standby), COL(), 
+		 !$global.runcontrol.canStandby, 0.3);
+  });
+
+  widget(dummy, { .height = 16; });
+});

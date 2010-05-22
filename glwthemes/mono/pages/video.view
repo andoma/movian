@@ -1,0 +1,66 @@
+
+// If playstatus is set to stop, close the page
+$self.close = $self.media.playstatus == "stop";
+
+$view.statsAlpha = iir($self.media.stats, 8);
+
+widget(container_z, {
+  widget(video, {
+    .source = $self.url;
+  });
+
+
+  /**
+   * 
+   */
+  widget(container_y, {
+
+    widget(container_x, {
+      .align = left;
+      
+      widget(backdrop, {
+
+	.alpha = iir(changed($self.media.seektime, 2, true), 7);
+	.color = [0.3, 0.7, 0.45];
+
+	widget(label, {
+	  .caption = "Seeking to " + value2duration($self.media.seektime);
+	});
+      });
+    });
+
+    widget(label, {
+      .alpha = $view.statsAlpha;
+      .caption = "Video format: " + $self.media.video.codec;
+    });
+
+    widget(label, {
+      .alpha = $view.statsAlpha;
+      .caption = "Audio format: " + $self.media.audio.codec;
+    });
+
+    widget(label, {
+      .alpha = $view.statsAlpha;
+      .caption = "Video queue len: " + int2str($self.media.video.dqlen);
+    });
+
+    widget(label, {
+      .alpha = $view.statsAlpha;
+      .caption = "Audio queue len: " + int2str($self.media.audio.dqlen);
+    });
+
+    widget(label, {
+      .alpha = $view.statsAlpha;
+      .caption = "Video decode time: " +
+	int2str($self.media.video.decodetime_avg) + " ms";
+    });
+
+    widget(label, {
+      .alpha = $view.statsAlpha;
+      .caption = "A/V diff: " +
+	int2str($self.media.avdiff * 1000) + " ms";
+    });
+
+
+  });
+});
