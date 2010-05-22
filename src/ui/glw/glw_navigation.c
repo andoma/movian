@@ -20,8 +20,7 @@
 #include "glw_event.h"
 
 typedef struct query {
-  float x;
-  float y;
+  float x1, y1, x2, y2, xc, yc;
 
   int direction;
   glw_orientation_t orientation;
@@ -34,11 +33,35 @@ typedef struct query {
 /**
  *
  */
+static float 
+distance_to_line_segment(float cx, float cy,
+			 float ax, float ay,
+			 float bx, float by)
+{
+  float r_num = (cx - ax) * (bx - ax) + (cy - ay) * (by - ay);
+  float r_den = (bx - ax) * (bx - ax) + (by - ay) * (by - ay);
+  float r = r_num / r_den;
+
+  if(r >= 0 && r <= 1) {
+    float s = ((ay - cy) * (bx - ax) - (ax - cx) * (by - ay)) / r_den;
+    return fabsf(s) * sqrtf(r_den);
+  }
+
+  float d1 = (cx - ax) * (cx - ax) + (cy - ay) * (cy - ay);
+  float d2 = (cx - bx) * (cx - bx) + (cy - by) * (cy - by);
+
+  return sqrtf(GLW_MIN(d1, d2));
+}
+
+
+/**
+ *
+ */
 static float
-compute_position(glw_t *w, glw_orientation_t o)
+compute_position(glw_t *w, glw_orientation_t o, float n)
 {
   glw_t *p, *c;
-  float a, x = 0, n = 0, m, t, d;
+  float a, x = 0, m, t, d;
 
   for(; (p = w->glw_parent) != NULL; w = p) {
     if(p->glw_class->gc_child_orientation != o)
@@ -100,24 +123,31 @@ static void
 find_candidate(glw_t *w, query_t *query, float d_mul)
 {
   glw_t *c;
-  float x, y, distance, dx, dy;
+  float x1, y1, x2, y2, d, d0, d1, dc;
 
   if(glw_is_focusable(w)) {
     
-    x = compute_position(w, GLW_ORIENTATION_HORIZONTAL);
-    y = compute_position(w, GLW_ORIENTATION_VERTICAL);
+    x1 = compute_position(w, GLW_ORIENTATION_HORIZONTAL, 0);
+    y1 = compute_position(w, GLW_ORIENTATION_VERTICAL, 0);
 
-    dx = query->x - x;
-    dy = query->y - y;
+    x2 = compute_position(w, GLW_ORIENTATION_HORIZONTAL, 1);
+    y2 = compute_position(w, GLW_ORIENTATION_VERTICAL, 1);
+
 
     if(query->orientation == GLW_ORIENTATION_VERTICAL)
-      dx *= 10;
+      y1 = y2 = (y1 + y2) / 2;
     else
-      dy *= 10;
+      x1 = x2 = (x1 + x2) / 2;
 
-    distance = d_mul * sqrt(dx * dx + dy * dy);
-    if(distance < query->score) {
-      query->score = distance;
+    d0 = distance_to_line_segment(query->x1, query->y1, x1, y1, x2, y2);
+    dc = 100 * distance_to_line_segment(query->xc, query->yc, x1, y1, x2, y2);
+    d1 = 100 * distance_to_line_segment(query->x2, query->y2, x1, y1, x2, y2);
+
+    d = GLW_MIN(d0, GLW_MIN(dc, d1));
+    d *= d_mul;
+
+    if(d < query->score) {
+      query->score = d;
       query->best = w;
     }
   }
@@ -159,22 +189,23 @@ int
 glw_navigate(glw_t *w, event_t *e, int local)
 {
   glw_t  *p, *c, *t = NULL, *d;
-  float x, y;
   int pagemode = 0;
   int pagecnt;
-  query_t query;
+  query_t query = {0};
   int loop = 1;
   float escape_score = 1;
 
-  x = compute_position(w, GLW_ORIENTATION_HORIZONTAL);
-  y = compute_position(w, GLW_ORIENTATION_VERTICAL);
+  query.x1 = compute_position(w, GLW_ORIENTATION_HORIZONTAL, 0);
+  query.y1 = compute_position(w, GLW_ORIENTATION_VERTICAL,   0);
 
-  memset(&query, 0, sizeof(query));
+  query.x2 = compute_position(w, GLW_ORIENTATION_HORIZONTAL, 1);
+  query.y2 = compute_position(w, GLW_ORIENTATION_VERTICAL,   1);
 
-  query.x = x;
-  query.y = y;
+  query.xc = (query.x1 + query.x2) / 2;
+  query.yc = (query.y1 + query.y2) / 2;
+ 
   query.score = 100000000;
-
+  
   if(event_is_action(e, ACTION_FOCUS_PREV)) {
 
     glw_focus_crawl(w, 0);
