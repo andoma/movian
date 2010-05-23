@@ -1190,15 +1190,13 @@ static void
 spotify_open_search_done(sp_search *result, void *userdata)
 {
   spotify_page_t *sp = userdata;
-  prop_t *nodes = prop_create(NULL, "nodes");
+  prop_t *src = prop_create(sp->sp_root, "source");
+  prop_t *nodes = prop_create(src, "nodes");
 
   parse_search_reply(result, nodes, prop_create(sp->sp_root, "view"));
 
-  if(prop_set_parent(nodes, sp->sp_root))
-    prop_destroy(nodes);
-
-  prop_set_string(prop_create(sp->sp_root, "type"), "directory");
-  prop_set_int(prop_create(sp->sp_root, "loading"), 0);
+  prop_set_string(prop_create(src, "type"), "directory");
+  prop_set_int(prop_create(src, "loading"), 0);
   spotify_page_done(sp);
 }
 
@@ -1208,6 +1206,14 @@ spotify_open_search_done(sp_search *result, void *userdata)
 static int
 spotify_open_search(spotify_page_t *sp, const char *query)
 {
+  prop_t *meta = prop_create(prop_create(sp->sp_root, "source"), "metadata");
+
+  if(!strcmp(query, "tag:new")) {
+    prop_set_string(prop_create(meta, "title"), "New albums on Spotify");
+  } else {
+    prop_set_string(prop_create(meta, "title"), "Search result");
+  }
+
   return f_sp_search_create(spotify_session, query,
 			    0, 250, 0, 250, 0, 250, 
 			    spotify_open_search_done, sp) == NULL;
@@ -1391,7 +1397,7 @@ static void
 parse_search_reply(sp_search *result, prop_t *nodes, prop_t *view)
 {
   int i, nalbums, ntracks, nartists;
-  sp_album *album;
+  sp_album *album, *album_prev = NULL;
   sp_artist *artist;
   char link[URL_MAX];
   prop_t *p, *metadata;
@@ -1407,7 +1413,15 @@ parse_search_reply(sp_search *result, prop_t *nodes, prop_t *view)
     album = f_sp_search_album(result, i);
     artist = f_sp_album_artist(album);
 
-    p = prop_create(NULL, "node");
+    
+    if(album_prev != NULL) {
+      // Skip dupes
+      if(f_sp_album_artist(album_prev) == artist &&
+	 !strcmp(f_sp_album_name(album), f_sp_album_name(album_prev)))
+	continue; 
+    }
+
+    p = prop_create(NULL, NULL);
 
     spotify_make_link(f_sp_link_create_from_album(album), link, sizeof(link));
     prop_set_string(prop_create(p, "url"), link);
@@ -1415,11 +1429,17 @@ parse_search_reply(sp_search *result, prop_t *nodes, prop_t *view)
 
     metadata = prop_create(p, "metadata");
     prop_set_string(prop_create(metadata, "title"), f_sp_album_name(album));
-    prop_set_string(prop_create(metadata, "artist"), f_sp_artist_name(artist));
+
+    spotify_make_link(f_sp_link_create_from_artist(artist), link, sizeof(link));
+    prop_set_link(prop_create(metadata, "artist"),
+		  f_sp_artist_name(artist), link);
+
     set_image_uri(prop_create(metadata, "album_art"), f_sp_album_cover(album));
 
     if(prop_set_parent(p, nodes))
       prop_destroy(p);
+
+    album_prev = album;
   }
 
   if(view != NULL) {
@@ -2637,6 +2657,10 @@ be_spotify_init(void)
 
   service_create("spotify playlists", "Spotify playlists",
 		 "spotify:playlists",
+		 SVC_TYPE_MUSIC, NULL, 0);
+
+  service_create("spotify tag:new", "Spotify new albums",
+		 "spotify:search:tag:new",
 		 SVC_TYPE_MUSIC, NULL, 0);
   return 0;
 }
