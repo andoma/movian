@@ -200,6 +200,12 @@ widget(container_x, {
 		   },
 		   PLATE_COLOR_CMDMENU(),
 		   1);
+
+	      ICON2("theme://icons/48x48/Exit.png",
+		    "Exit",
+		    event(Quit),
+		   PLATE_COLOR_CMDMENU(),
+		   1);
 	    });
 	  });
 	  
