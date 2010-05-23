@@ -946,7 +946,7 @@ bh_free(browse_helper_t *bh)
 static browse_helper_t *
 bh_create(prop_t *root, const char *playme)
 {
-  browse_helper_t *bh = malloc(sizeof(browse_helper_t));
+  browse_helper_t *bh = calloc(1, sizeof(browse_helper_t));
 
   prop_set_string(prop_create(root, "type"), "directory");
 
@@ -1159,7 +1159,7 @@ spotify_page_done(spotify_page_t *sp)
 
   if(sp->sp_free_on_done) {
 
-    prop_ref_dec(sp->sp_root);
+    prop_destroy(sp->sp_root);
     free(sp->sp_url);
     free(sp);
 
@@ -2253,8 +2253,7 @@ be_spotify_open(struct navigator *nav, const char *url, const char *view,
 			 NAV_PAGE_DONT_CLOSE_ON_BACK);
   
     sp->sp_url = strdup(url);
-    sp->sp_root = np->np_prop_root;
-    prop_ref_inc(sp->sp_root);
+    sp->sp_root = prop_xref_addref(np->np_prop_root);
     sp->sp_free_on_done = 1;
 
     prop_set_int(prop_create(prop_create(np->np_prop_root, "source"),
@@ -2409,16 +2408,15 @@ static prop_t *
 be_spotify_list(const char *url, char *errbuf, size_t errlen)
 {
   spotify_page_t *sp = calloc(1, sizeof(spotify_page_t));
-  
+  prop_t *p = prop_create(NULL, NULL);
+
   sp->sp_url = strdup(url);
-  sp->sp_root = prop_create(NULL, NULL);
-  
-  prop_ref_inc(sp->sp_root);
+  sp->sp_root = prop_xref_addref(p);
   sp->sp_free_on_done = 1;
   
   spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_OPEN_PAGE, sp));
   
-  return sp->sp_root;
+  return p;
 }
 
 
