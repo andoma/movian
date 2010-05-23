@@ -302,8 +302,6 @@ showtime_shutdown0(void *aux)
 
   ui_shutdown();
 
-  prop_print_tree(prop_create(prop_get_global(), "services"), 1);
-
   arch_exit(showtime_retcode);
   
   return NULL;
