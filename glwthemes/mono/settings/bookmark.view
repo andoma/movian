@@ -87,7 +87,7 @@ widget(container_x, {
 	widget(label, {
 	  .filterConstraintX = true;
 	  .weight = 0.2;
-	  .caption = "Url:";
+	  .caption = "URL:";
 	  .align = right;
 	});
 
