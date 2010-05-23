@@ -72,6 +72,8 @@ typedef struct glw_prop_sub {
 
   prop_t *gps_originating_prop;
 
+  prop_t *gps_view_prop;
+
   glw_t *gps_anchor;
 
 
@@ -104,6 +106,9 @@ glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l)
 
     if(gps->gps_originating_prop)
       prop_ref_dec(gps->gps_originating_prop);
+
+    if(gps->gps_view_prop)
+      prop_ref_dec(gps->gps_view_prop);
 
     free(gps);
   }
@@ -882,6 +887,8 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
   memset(&n, 0, sizeof(n));
   n.prop = p;
   n.prop_parent = gps->gps_originating_prop;
+  n.prop_view = gps->gps_view_prop;
+
   n.ei = ei;
   n.gr = parent->glw_root;
 
@@ -1202,6 +1209,10 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self)
   gps->gps_originating_prop = ec->prop;
   if(ec->prop != NULL)
     prop_ref_inc(ec->prop);
+
+  gps->gps_view_prop = ec->prop_view;
+  if(ec->prop_view != NULL)
+    prop_ref_inc(ec->prop_view);
 
   TAILQ_INIT(&gps->gps_pending);
 
@@ -3003,53 +3014,87 @@ glwf_trace(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
+ *
+ */
+typedef struct glwf_browse_extra {
+  prop_t *p;
+  rstr_t *url;
+} glwf_browse_extra_t;
+
+/**
+ *
+ */
+static void
+glwf_browse_ctor(struct token *self)
+{
+  self->t_extra = calloc(1, sizeof(glwf_browse_extra_t));
+}
+
+
+/**
+ *
+ */
+static void
+glwf_browse_dtor(struct token *self)
+{
+  glwf_browse_extra_t *be = self->t_extra;
+
+  if(be->p)
+    prop_destroy(be->p);
+
+  rstr_release(be->url);
+  free(be);
+}
+
+
+/**
  * 
  */
 static int 
 glwf_browse(glw_view_eval_context_t *ec, struct token *self,
 	   token_t **argv, unsigned int argc)
 {
-  token_t *a = argv[0];
-  prop_t *p;
+  token_t *a = argv[0], *r;
   char errbuf[100];
-  const char *url;
+  rstr_t *url;
+  glwf_browse_extra_t *be = self->t_extra;
 
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
 
   switch(a->type) {
-  case TOKEN_PROPERTY:
-    eval_push(ec, a);
-    return 0;
-
-
   case TOKEN_STRING:
-    url = rstr_get(a->t_rstring);
-    rstr_release(a->t_rstring);
+    url = a->t_rstring;
     break;
 
   case TOKEN_LINK:
-    url = rstr_get(a->t_link_rurl);
-    rstr_release(a->t_link_rtitle);
-    rstr_release(a->t_link_rurl);
+    url = a->t_link_rurl;
     break;
 
   default:
-    return glw_view_seterr(ec->ei, a, 
-			   "browse(): Invalid first arg (%s)",
+    return glw_view_seterr(ec->ei, a, "browse(): Invalid first arg (%s)",
 			   token2name(a));
   }
 
-  printf("Browsing %s\n", url);
-  p = backend_list(url, errbuf, sizeof(errbuf));
-  if(p == NULL) 
-    return glw_view_seterr(ec->ei, a, "browse(%s): %s", 
-			   rstr_get(a->t_rstring), errbuf);
+  if(be->url == NULL || strcmp(rstr_get(be->url), rstr_get(url))) {
+    rstr_release(be->url);
+    be->url = NULL;
 
-  /* Transform into TOKEN_PROPERTY */
-  a->t_prop = p;
-  a->type = TOKEN_PROPERTY;
-  eval_push(ec, a);
+    if(be->p)
+      prop_destroy(be->p);
+
+    be->p = backend_list(rstr_get(url), errbuf, sizeof(errbuf));
+    if(be->p == NULL) 
+      return glw_view_seterr(ec->ei, a, "browse(%s): %s", 
+			     rstr_get(url), errbuf);
+    
+    be->url = rstr_dup(url);
+  }
+
+  r = eval_alloc(self, ec, TOKEN_PROPERTY);
+  r->t_prop = be->p;
+  prop_ref_inc(be->p);
+  eval_push(ec, r);
   return 0;
 }
 
@@ -3366,7 +3411,7 @@ static const token_func_t funcvec[] = {
   {"wantFullWindow", 0, glwf_wantFullWindow},
   {"select", 3, glwf_select},
   {"trace", 2, glwf_trace},
-  {"browse", 1, glwf_browse},
+  {"browse", 1, glwf_browse, glwf_browse_ctor, glwf_browse_dtor},
   {"settingInt", 8, glw_settingInt, glwf_setting_ctor, glwf_setting_dtor},
   {"settingBool", 4, glw_settingBool, glwf_setting_ctor, glwf_setting_dtor},
   {"isLink", 1, glwf_isLink},
