@@ -16,6 +16,7 @@ widget(container_x, {
     .padding = [0, -4, 0, -4];
 
     widget(text, {
+      .filterConstraintX = true;
       .align = left;
       .focusable = true;
       .password = $self.source.password;
