@@ -3012,23 +3012,43 @@ glwf_browse(glw_view_eval_context_t *ec, struct token *self,
   token_t *a = argv[0];
   prop_t *p;
   char errbuf[100];
-  
-  if(a->type != TOKEN_PROPERTY) {
+  const char *url;
 
-    if(a->type != TOKEN_STRING)
-      return glw_view_seterr(ec->ei, a, "browse() first arg is not a string");
-  
-    p = backend_list(rstr_get(a->t_rstring), errbuf, sizeof(errbuf));
-    if(p == NULL) 
-      return glw_view_seterr(ec->ei, a, "browse(%s): %s", 
-			      rstr_get(a->t_rstring), errbuf);
-    /* Transform TOKEN_STRING -> TOKEN_PROPERTY */
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
 
+  switch(a->type) {
+  case TOKEN_PROPERTY:
+    eval_push(ec, a);
+    return 0;
+
+
+  case TOKEN_STRING:
+    url = rstr_get(a->t_rstring);
     rstr_release(a->t_rstring);
-    a->t_prop = p;
-    a->type = TOKEN_PROPERTY;
+    break;
+
+  case TOKEN_LINK:
+    url = rstr_get(a->t_link_rurl);
+    rstr_release(a->t_link_rtitle);
+    rstr_release(a->t_link_rurl);
+    break;
+
+  default:
+    return glw_view_seterr(ec->ei, a, 
+			   "browse(): Invalid first arg (%s)",
+			   token2name(a));
   }
 
+  printf("Browsing %s\n", url);
+  p = backend_list(url, errbuf, sizeof(errbuf));
+  if(p == NULL) 
+    return glw_view_seterr(ec->ei, a, "browse(%s): %s", 
+			   rstr_get(a->t_rstring), errbuf);
+
+  /* Transform into TOKEN_PROPERTY */
+  a->t_prop = p;
+  a->type = TOKEN_PROPERTY;
   eval_push(ec, a);
   return 0;
 }
