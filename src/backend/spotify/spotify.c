@@ -147,7 +147,6 @@ static int spotify_pending_events;
 typedef enum {
   SPOTIFY_LOGOUT,
   SPOTIFY_PLAY_TRACK,
-  SPOTIFY_LIST,
   SPOTIFY_STOP_PLAYBACK,
   SPOTIFY_SEEK,
   SPOTIFY_PAUSE,
@@ -1349,51 +1348,6 @@ spotify_open_page(spotify_page_t *sp)
  *
  */
 static void
-spotify_list(spotify_uri_t *su)
-{
-  sp_link *l;
-  sp_linktype type;
-  prop_t *root = NULL;
-  
-  if((l = f_sp_link_create_from_string(su->su_uri)) == NULL) {
-    snprintf(su->su_errbuf, su->su_errlen, "Invalid spotify URI");
-    spotify_uri_return(su, 1);
-    return;
-  }
-
-  type = f_sp_link_type(l);
-
-  switch(type) {
-  case SP_LINKTYPE_ALBUM:
-    root = prop_create(NULL, NULL);
-    f_sp_albumbrowse_create(spotify_session, f_sp_link_as_album(l),
-			    spotify_browse_album_callback, 
-			    bh_create(root, NULL));
-    break;
-
-  case SP_LINKTYPE_ARTIST:
-    root = prop_create(NULL, NULL);
-    f_sp_artistbrowse_create(spotify_session, f_sp_link_as_artist(l),
-			     spotify_browse_artist_callback,
-			     bh_create(root, NULL));
-    break;
-
-  default:
-    snprintf(su->su_errbuf, su->su_errlen, "Can not handle linktype %d",
-	     type);
-    break;
-  }
-
-  f_sp_link_release(l);
-  su->su_list = root;
-  spotify_uri_return(su, root == NULL ? 1 : 0);
-}
-
-
-/**
- *
- */
-static void
 parse_search_reply(sp_search *result, prop_t *nodes, prop_t *view)
 {
   int i, nalbums, ntracks, nartists;
@@ -2204,9 +2158,6 @@ spotify_thread(void *aux)
       case SPOTIFY_OPEN_PAGE:
 	spotify_open_page(sm->sm_ptr);
 	break;
-      case SPOTIFY_LIST:
-	spotify_list(sm->sm_ptr);
-	break;
       case SPOTIFY_PLAY_TRACK:
 	spotify_play_track(sm->sm_ptr);
 	break;
@@ -2455,27 +2406,19 @@ be_spotify_play(const char *url, media_pipe_t *mp,
  *
  */
 static prop_t *
-be_spotify_list(const char *url0, char *errbuf, size_t errlen)
+be_spotify_list(const char *url, char *errbuf, size_t errlen)
 {
-  spotify_uri_t su;
-  char *url = mystrdupa(url0);
-
-  memset(&su, 0, sizeof(su));
-
-  spotify_start();
-
-  su.su_uri = url;
-  su.su_errbuf = errbuf;
-  su.su_errlen = errlen;
-  su.su_errcode = -1;
-
-  spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_LIST, &su));
-
-  while(su.su_errcode == -1)
-    hts_cond_wait(&spotify_cond_uri, &spotify_mutex);
+  spotify_page_t *sp = calloc(1, sizeof(spotify_page_t));
   
-  hts_mutex_unlock(&spotify_mutex);
-  return su.su_list;
+  sp->sp_url = strdup(url);
+  sp->sp_root = prop_create(NULL, NULL);
+  
+  prop_ref_inc(sp->sp_root);
+  sp->sp_free_on_done = 1;
+  
+  spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_OPEN_PAGE, sp));
+  
+  return sp->sp_root;
 }
 
 
