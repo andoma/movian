@@ -169,7 +169,7 @@ static struct strtab actionnames[] = {
   { "Forward",               ACTION_NAV_FWD },
   { "Select",                ACTION_SELECT },
   { "Eject",                 ACTION_EJECT },
-    { "PreviousTrack",         ACTION_PREV_TRACK },
+  { "PreviousTrack",         ACTION_PREV_TRACK },
   { "NextTrack",             ACTION_NEXT_TRACK },
   { "SeekForward",           ACTION_SEEK_FORWARD },
   { "SeekReverse",           ACTION_SEEK_BACKWARD },
