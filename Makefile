@@ -40,6 +40,7 @@ SRCS += src/main.c \
 	src/settings.c \
 	src/prop.c \
 	src/bookmarks.c \
+	src/service.c \
 	src/notifications.c \
 	src/playqueue.c \
 	src/arch/arch_${OSENV}.c \

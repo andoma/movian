@@ -1,31 +1,93 @@
 #include "theme://include/buttons.view"
+#import "theme://include/separators.view"
 
 $page.glw.title = "Home";
 
 #define COL() {[0.45, 0.45, 0.5]}
 
-widget(container_y, {
+#define SERVICE_TYPE_LISTER(TITLE, NODES, HIDDEN, ICON, COLOR, P1) {
+  widget(container_y, {
+    .align = center;
+    P1 = isFocused();
+    .width = $ui.fontsize * 10;
+    .hidden = HIDDEN;
+    widget(image, {
+      .color = select(P1, [1.0, 1.0, 1.0], COLOR);
+      .shadow = true;
+      .source = ICON;
+      .height = $ui.fontsize * 4;
+      .align = left;
+    });
 
-  space(1);
+   
+    widget(list_y, {
+      .height = 128;
+      cloner(NODES, backdrop, {
+
+	PLATE_GFX();
+
+	onEvent(enter, navOpen($self.url));
+
+	.focusable = true;
+	.color = COLOR;
+	.alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
+	
+	widget(container_x, {
+
+	  widget(label, {
+	    .align = left;
+	    .ellipsize = true;
+	    .caption = $self.title;
+	    .color = select(isFocused(), [1.0, 1.0, 1.0], COLOR);
+	  });
+
+	  widget(icon, {
+	    .align = right;
+	    .shadow = true;
+	    .source = $self.icon;
+	    .sizeBias = -4;
+	    .hqScaling = true;
+	    .alpha = select(isFocused(), 1.0, 0.2);
+	  });
+
+	});
+      });
+    });
+  });
+}
+
+
+widget(container_y, {
 
   widget(container_x, {
     .align = center;
+    
+    SERVICE_TYPE_LISTER("Music", $global.services.music.nodes,
+			!$global.services.music.entries,
+			"theme://icons/mediasources/music.png",
+			PLATE_COLOR_AUDIO(), $view.musicFocused);
+			
 
-    cloner($global.sources, container_z, {
-      BUTTON_BIG($self.title, 
-		 select($self.icon, $self.icon, 
-			"theme://icons/mediasources/" + 
-			translate($self.contents, "generic.png",
-				  "music",    "music.png",
-				  "video",    "movies.png",
-				  "dvd",      "cd.png",
-				  "pictures", "pictures.png")),
-		 navOpen($self.url),
-		 COL());
-    });
-  });
+    SERVICE_TYPE_LISTER("Video", $global.services.video.nodes,
+			!$global.services.video.entries,
+			"theme://icons/mediasources/movies.png",
+			PLATE_COLOR_VIDEO(), $view.videoFocused);
 
-  space(1);
+    SERVICE_TYPE_LISTER("TV", $global.services.tv.nodes,
+			!$global.services.tv.entries,
+			"theme://icons/mediasources/tv.png",
+			PLATE_COLOR_TV(), $view.tvFocused);
+
+    SERVICE_TYPE_LISTER("Photos", $global.services.image.nodes,
+			!$global.services.image.entries,
+			"theme://icons/mediasources/pictures.png",
+			PLATE_COLOR_IMAGE(), $view.photosFocused);
+
+    SERVICE_TYPE_LISTER("Other", $global.services.other.nodes,
+			!$global.services.other.entries,
+			"theme://icons/mediasources/other.png",
+			PLATE_COLOR_OTHER(), $view.otherFocused);
+   });
 
   widget(container_x, {
     .padding = [3, 3, 3, 3];

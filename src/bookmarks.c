@@ -24,11 +24,10 @@
 
 #include <htsmsg/htsmsg_store.h>
 
-#include "sd/sd.h"
+#include "service.h"
 #include "settings.h"
 #include "bookmarks.h"
-
-extern prop_t *global_sources;
+#include "misc/strtab.h"
 
 static hts_mutex_t bookmark_mutex;
 static prop_t *bookmarks;
@@ -36,8 +35,9 @@ static prop_t *bookmarks;
 typedef struct bookmark {
   prop_sub_t *bm_title_sub;
   prop_sub_t *bm_url_sub;
+  prop_sub_t *bm_type_sub;
 
-  prop_t *bm_service_root;
+  service_t *bm_service;
 
 } bookmark_t;
 
@@ -74,8 +74,9 @@ bookmark_destroyed(void *opaque, prop_event_t event, ...)
 
   prop_unsubscribe(bm->bm_title_sub);
   prop_unsubscribe(bm->bm_url_sub);
+  prop_unsubscribe(bm->bm_type_sub);
 
-  prop_destroy(bm->bm_service_root);
+  service_destroy(bm->bm_service);
 
   free(bm);
 
@@ -93,9 +94,8 @@ set_title(void *opaque, const char *str)
   bookmark_t *bm = opaque;
 
   if(str != NULL)
-    prop_rename(bm->bm_service_root, str);
-  prop_set_string(prop_create(bm->bm_service_root, "title"), str);
-
+    service_set_id(bm->bm_service, str);
+  service_set_title(bm->bm_service, str);
   bookmark_save();
 }
 
@@ -108,8 +108,34 @@ set_url(void *opaque, const char *str)
 {
   bookmark_t *bm = opaque;
 
-  prop_set_string(prop_create(bm->bm_service_root, "url"), str);
+  service_set_url(bm->bm_service, str);
+  bookmark_save();
+}
 
+
+/**
+ *
+ */
+static struct strtab str2type_tab[] = {
+  { "music",    SVC_TYPE_MUSIC },
+  { "video",    SVC_TYPE_VIDEO },
+  { "tv",       SVC_TYPE_TV },
+  { "image",    SVC_TYPE_IMAGE },
+  { "other",    SVC_TYPE_OTHER },
+};
+
+
+/**
+ *
+ */
+static void
+set_type(void *opaque, const char *str)
+{
+  bookmark_t *bm = opaque;
+  service_type_t type = str2val(str ?: "other", str2type_tab);
+  if(type == -1)
+    type = SVC_TYPE_OTHER;
+  service_set_type(bm->bm_service, type);
   bookmark_save();
 }
 
@@ -136,18 +162,22 @@ bookmark_add_prop(prop_t *parent, const char *name, const char *value,
  *
  */
 static void
-bookmark_add(const char *title, const char *url, const char *icon)
+bookmark_add(const char *title, const char *url, const char *svctype)
 {
   bookmark_t *bm = calloc(1, sizeof(bookmark_t));
   prop_t *p = prop_create(NULL, NULL);
   prop_t *src = prop_create(p, "source");
-
+  service_type_t type = str2val(svctype ?: "other", str2type_tab);
+  if(type == -1)
+    type = SVC_TYPE_OTHER;
+ 
   prop_set_string(prop_create(src, "type"), "bookmark");
 
-  bm->bm_title_sub = bookmark_add_prop(src, "title", title, bm, set_title);
-  bm->bm_url_sub   = bookmark_add_prop(src, "url",   url,   bm, set_url);
+  bm->bm_title_sub = bookmark_add_prop(src, "title",    title,   bm, set_title);
+  bm->bm_url_sub   = bookmark_add_prop(src, "url",      url,     bm, set_url);
+  bm->bm_type_sub  = bookmark_add_prop(src, "svctype",  svctype, bm, set_type);
 
-  bm->bm_service_root = sd_add_service(title, title, NULL, NULL, NULL, url);
+  bm->bm_service = service_create(title, title, url, type, NULL);
 
   prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE,
 		 PROP_TAG_CALLBACK, bookmark_destroyed, bm,
@@ -171,7 +201,7 @@ bookmark_load(htsmsg_t *m)
 
   bookmark_add(htsmsg_get_str(m, "title"),
 	       htsmsg_get_str(m, "url"),
-	       htsmsg_get_str(m, "icon"));
+	       htsmsg_get_str(m, "svctype"));
 }
 
 
@@ -192,7 +222,7 @@ bookmarks_callback(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_REQ_NEW_CHILD:
-    bookmark_add("New bookmark", "none:", NULL);
+    bookmark_add("New bookmark", "none:", "other");
     break;
 
   case PROP_REQ_DELETE_MULTI:

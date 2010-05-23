@@ -38,7 +38,7 @@
 #include "api.h"
 #include "keyring.h"
 #include "misc/ptrvec.h"
-#include "sd/sd.h"
+#include "service.h"
 #include "scrappers/scrappers.h"
 #include "misc/pixmap.h"
 
@@ -2608,7 +2608,7 @@ courier_notify(void *opaque)
 static int
 be_spotify_init(void)
 {
-  prop_t *spotify, *p;
+  prop_t *spotify;
 
 #ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
   if(be_spotify_dlopen())
@@ -2635,11 +2635,9 @@ be_spotify_init(void)
 
   /* Register as a global source */
 
-  p = sd_add_service("spotify", "Spotify", 
-		     "bundle://resources/spotify/spotify-core-logo-96x96.png",
-		     &prop_status, NULL, "spotify:playlists");
-
-  prop_set_string(prop_status, "Not logged in");
+  service_create("spotify playlists", "Spotify playlists",
+		 "spotify:playlists",
+		 SVC_TYPE_MUSIC, NULL);
   return 0;
 }
 

@@ -23,6 +23,8 @@
 #include "sd.h"
 #include "arch/arch.h"
 #include "showtime.h"
+#include "service.h"
+#include "misc/strtab.h"
 
 #ifdef CONFIG_AVAHI
 #include "avahi.h"
@@ -55,8 +57,9 @@ si_find(struct service_instance_list *services,
 void
 si_destroy(service_instance_t *si)
 {
-  if(si->si_root != NULL)
-    prop_destroy(si->si_root);
+  if(si->si_service != NULL)
+    service_destroy(si->si_service);
+
   free(si->si_id);
   LIST_REMOVE(si, si_link);
   free(si);
@@ -72,14 +75,28 @@ sd_add_service_htsp(service_instance_t *si, const char *name,
 {
   char url[URL_MAX];
  
-  if(si->si_root != NULL)
+  if(si->si_service != NULL)
     return;
 
   snprintf(url, sizeof(url), "htsp://%s:%d", host, port);
-  si->si_root = sd_add_service(si->si_id, name, 
-			       "bundle://resources/tvheadend/logo.png",
-			       NULL, NULL, url);
+  si->si_service = service_create(si->si_id, name, url, SVC_TYPE_TV, NULL);
 }
+
+
+static struct strtab contents2type_tab[] = {
+  { "music",    SVC_TYPE_MUSIC },
+  { "audio",    SVC_TYPE_MUSIC },
+  { "video",    SVC_TYPE_VIDEO },
+  { "videos",   SVC_TYPE_VIDEO },
+  { "movie",    SVC_TYPE_VIDEO },
+  { "movies",   SVC_TYPE_VIDEO },
+  { "image",    SVC_TYPE_IMAGE },
+  { "images",   SVC_TYPE_IMAGE },
+  { "photo",    SVC_TYPE_IMAGE },
+  { "photos",   SVC_TYPE_IMAGE },
+  { "pictures", SVC_TYPE_IMAGE },
+  { "picture",  SVC_TYPE_IMAGE },
+};
 
 
 /**
@@ -91,47 +108,28 @@ sd_add_service_webdav(service_instance_t *si, const char *name,
 		      const char *contents)
 {
   char url[URL_MAX];
-  
-  if(si->si_root != NULL)
+  service_type_t type;
+
+  if(si->si_service != NULL)
     return;
 
   snprintf(url, sizeof(url), "webdav://%s:%d%s%s",
 	   host, port, path == NULL || path[0] != '/' ? "/" : "",
 	   path ? path : "");
 
-  si->si_root = sd_add_service(si->si_id, name, NULL, NULL, contents, url);
+  type = contents ? str2val(contents, contents2type_tab) : -1;
+  
+  if(type == -1)
+    type = SVC_TYPE_OTHER;
+
+  si->si_service = service_create(si->si_id, name, url, type, NULL);
 }
-
-
 
 /**
  *
  */
-prop_t *
-sd_add_service(const char *id, const char *title,
-	       const char *icon, prop_t **status, const char *contents,
-	       const char *url)
-{
-  prop_t *p = prop_create(NULL, id);
-  
-  prop_set_string(prop_create(p, "title"), title);
-
-  if(status != NULL)
-    *status = prop_create(p, "status");
-
-  prop_set_string(prop_create(p, "icon"), icon);
-  prop_set_string(prop_create(p, "contents"), contents);
-  prop_set_string(prop_create(p, "url"), url);
-
-  if(prop_set_parent(p, global_sources))
-    abort();
-
-  return p;
-}
-
-
-
-void sd_init(void)
+void
+sd_init(void)
 {
   arch_sd_init();
 

@@ -1,119 +1,192 @@
-#include "theme://include/buttons.view"
+#import "theme://include/defs.view"
+#import "theme://include/buttons.view"
 
-#define AUTOCOL() {
-  .color = select($view.isFocused, [1.0, 1.0, 1.0], [0.45, 0.45, 0.5]);
-}
-
-#define AUTOALPHA() {
-  .alpha = select($view.isFocused, 1, 0.2);
-}
-
-widget(backdrop, {
-
-  .alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
-  .color = [0.45, 0.45, 0.5];
-  .source = "theme://graphics/shadedplate.png";
-  .border =  [4, 4, 4, 4];
-  .padding = [-4, -4, -4, -4];
-
-  $view.isFocused = isFocused();
-
-  widget(container_x, {
-    widget(icon, {
-      AUTOCOL();
-      .align = top;
-      .source = "theme://icons/48x48/Bookmark.png";
+#define TYPE_ENTRY(LABEL, TITLE, ICON, COLOR) {
+  widget(backdrop, {
+    .focusable = 0.1;
+    onEvent(enter, {
+      $self.source.svctype = LABEL;
     });
 
-    widget(dummy, { .width = 4; });
+    .alphaSelf = iir(isFocused() * 1, 8) * 0.8;
+    .color = COLOR;
 
-
-    // Title column
-    widget(container_y, {
-      .weight = 1;
-      .filterConstraintX = true;
-
-      widget(label, {
-	.padding = [4, 0, 4, 0];
-	.caption = "Bookmark title";
-	.sizeScale = 0.75;
-	AUTOCOL();
-	AUTOALPHA();
-      });
-      
-      widget(backdrop, {
-
-	.source = "theme://graphics/shadedplate.png";
-	.border =  [4, 4, 4, 4];
-	.padding = [0, -3, 0, -3];
-	
-	.color = [0, 0, 0];
-	.alphaSelf = 0.5 * $view.isFocused;
-	
-	widget(text, {
-	  .focusable = 1.0;
-	  bind($self.source.title);
-	  AUTOCOL();
-	});
+    PLATE_GFX();
+    widget(container_z, {
+      widget(icon, {
+	.color = select(isHovered() || isFocused(), [1.0, 1.0, 1.0], COLOR);
+	.shadow = true;
+	.source = ICON;
+	.sizeScale = 2;
       });
 
-      widget(dummy, { .height = 4; });
-
-      widget(backdrop, {
-
-	.source = "theme://graphics/shadedplate.png";
-	.border =  [4, 4, 4, 4];
-	.padding = [-3, -3, 0, -3];
-	
-	.color = [0, 0, 0];
-	.alphaSelf = 0.5 * $view.isFocused;
-
-	widget(container_x, {
-	  AUTOALPHA();
-
-	  BUTTON_TOOLBAR("Delete", "theme://icons/48x48/Delete.png",
-			 {
-			   delete($self);
-			 }, 
-			 [0.5, 0.45, 0.45]
-			);
-	});
+      widget(icon, {
+	.alpha = iir($self.source.svctype == LABEL, 4);
+	.color = select(isHovered() || isFocused(), [1.0, 1.0, 1.0], COLOR);
+	.shadow = true;
+	.source = "theme://icons/48x48/Selected.png";
+	.sizeScale = 2;
       });
-
-      widget(dummy, { .height = 4; });
     });
-    
-    widget(dummy, { .width = 4; });
+  });
+}
+
+
+widget(container_x, {
+
+  widget(icon, {
+    .align = top;
+    .color = select(isFocused(), [1.0, 1.0, 1.0], PLATE_COLOR_OTHER());
+    .source = "theme://icons/48x48/Bookmark.png";
+    .shadow = true;
+  });
+  
+  widget(backdrop, {
+    .weight = 1.5;
+    .focusOnClick = true;
+    .filterConstraintX = true;
+
+    .alphaSelf = 0.5;
+
+    .color = PLATE_COLOR_OTHER();
+    PLATE_GFX();
 
     widget(container_y, {
-      .weight = 1;
-      .filterConstraintX = true;
 
-      widget(label, {
-	.padding = [4, 0, 4, 0];
-	.caption = "Bookmark URL";
-	.sizeScale = 0.75;
-	AUTOCOL();
-	AUTOALPHA();
-      });
+      widget(container_x, {
+	widget(label, {
+	  .filterConstraintX = true;
+	  .weight = 0.2;
+	  .caption = "Title:";
+	  .align = right;
+	});
 
-      widget(backdrop, {
-	.source = "theme://graphics/shadedplate.png";
-	.border =  [4, 4, 4, 4];
-	.padding = [0, -3, 0, -3];
-	
-	.color = [0, 0, 0];
-	.alphaSelf = 0.5 * $view.isFocused;
+	widget(dummy, {
+	  .width = 10;
+	});
+
+	widget(backdrop, {
+	  .filterConstraintX = true;
+	  .weight = 1.0;
+	  .source = "theme://graphics/shadedplate.png";
+	  .border =  [4, 4, 4, 4];
+	  .padding = [0, -3, 0, -3];
+	  
+	  .color = [0, 0, 0];
+	  .alphaSelf = 0.66;
       
-	widget(text, {
-	  .focusable = 1.0;
-	  bind($self.source.url);
-	  AUTOCOL();
+	  widget(text, {
+	    .focusable = 1.0;
+	    bind($self.source.title);
+	  });
 	});
       });
-          });
 
-    widget(dummy, { .width = 4; });
 
+      widget(container_x, {
+	widget(label, {
+	  .filterConstraintX = true;
+	  .weight = 0.2;
+	  .caption = "Url:";
+	  .align = right;
+	});
+
+	widget(dummy, {
+	  .width = 10;
+	});
+
+	widget(backdrop, {
+	  .filterConstraintX = true;
+	  .weight = 1.0;
+	  .source = "theme://graphics/shadedplate.png";
+	  .border =  [4, 4, 4, 4];
+	  .padding = [0, -3, 0, -3];
+	  
+	  .color = [0, 0, 0];
+	  .alphaSelf = 0.66;
+      
+	  widget(text, {
+	    .focusable = 1.0;
+	    bind($self.source.url);
+	  });
+	});
+      });
+
+
+
+      widget(container_x, {
+	widget(container_y, {
+	  .weight = 0.2;
+	  .filterConstraintX = true;
+	  widget(label, {
+	    .caption = "Type:";
+	    .align = right;
+	  });
+	  
+	  widget(label, {
+	    .caption = "";
+	    .align = right;
+	  });
+	});
+
+	widget(dummy, {
+	  .width = 10;
+	});
+
+	widget(backdrop, {
+	  .filterConstraintX = true;
+	  .weight = 1.0;
+	  .source = "theme://graphics/shadedplate.png";
+	  .border =  [4, 4, 4, 4];
+	  .padding = [0, -3, 0, -3];
+	  
+	  .color = [0, 0, 0];
+	  .alphaSelf = 0.66;
+      
+	  widget(container_x, {
+
+	    TYPE_ENTRY("music", "Music", "theme://icons/48x48/Music.png",
+		       PLATE_COLOR_AUDIO());
+	    TYPE_ENTRY("video", "Video", "theme://icons/48x48/Movie.png",
+		       PLATE_COLOR_VIDEO());
+	    TYPE_ENTRY("tv", "Tv", "theme://icons/48x48/Display.png",
+		       PLATE_COLOR_VIDEO());
+	    TYPE_ENTRY("image", "Image", "theme://icons/48x48/Image.png",
+		       PLATE_COLOR_VIDEO());
+	    TYPE_ENTRY("other", "Other", "theme://icons/48x48/Folder.png",
+		       PLATE_COLOR_VIDEO());
+	  });
+	});
+      });
+
+      widget(container_x, {
+	space(0.2);
+
+	widget(dummy, {
+	  .width = 10;
+	});
+
+	widget(backdrop, {
+	  .filterConstraintX = true;
+	  .weight = 1.0;
+	  .source = "theme://graphics/shadedplate.png";
+	  .border =  [4, 4, 4, 4];
+	  .padding = [-3, -3, -3, -3];
+	  
+	  .color = [0, 0, 0];
+	  .alphaSelf = 0.66;
+
+	  widget(container_x, {
+	    ICON2("theme://icons/48x48/Delete.png",
+		  "Delete",
+		  {
+		    delete($self);
+		  },
+		  PLATE_COLOR_DELETE(),
+		  1, false, true);
+	  });
+	});
+      });
+    });
   });
 });

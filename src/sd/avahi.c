@@ -38,7 +38,7 @@ static struct service_instance_list services;
 
 typedef struct service_aux {
   AvahiClient *sa_c;
-  service_type_t sa_type;
+  service_class_t sa_class;
 } service_aux_t;
 
 
@@ -95,7 +95,7 @@ resolve_callback(AvahiServiceResolver *r,
 	  "Found service '%s' of type '%s' at %s:%d (%s)",
 	  name, type, a, port, host_name);
 
-    switch(sa->sa_type) {
+    switch(sa->sa_class) {
     case SERVICE_HTSP:
       sd_add_service_htsp(si, name, a, port);
       break;
@@ -173,12 +173,12 @@ browser(AvahiServiceBrowser *b, AvahiIfIndex interface,
  *
  */
 static void
-service_type_add(const char *name, int type, AvahiClient *c)
+service_type_add(const char *name, service_class_t class, AvahiClient *c)
 {
   service_aux_t *sa = malloc(sizeof(service_aux_t));
 
   sa->sa_c = c;
-  sa->sa_type = type;
+  sa->sa_class = class;
 
   avahi_service_browser_new(c, AVAHI_IF_UNSPEC, AVAHI_PROTO_INET,
 			    name, NULL, 0, browser, sa);

@@ -5,20 +5,21 @@
 #include "misc/queue.h"
 #include "prop.h"
 
-
 LIST_HEAD(service_instance_list, service_instance);
 
 typedef enum {
   SERVICE_HTSP,
   SERVICE_WEBDAV,
-} service_type_t;
+} service_class_t;
 
 typedef struct service_instance {
   LIST_ENTRY(service_instance) si_link;
   
   char *si_id;
-  prop_t *si_root;
   void *si_opaque;
+
+  struct service *si_service;
+
 } service_instance_t;
 
 
@@ -33,10 +34,6 @@ void sd_add_service_htsp(service_instance_t *si, const char *name,
 void sd_add_service_webdav(service_instance_t *si, const char *name, 
                            const char *host, int port, const char *path,
 			   const char *contents);
-
-prop_t *sd_add_service(const char *id, const char *title,
-		       const char *icon, prop_t **status,
-		       const char *contents, const char *url);
 
 void sd_init(void);
 

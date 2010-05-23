@@ -44,6 +44,7 @@
 #include "misc/callout.h"
 #include "api/opensubtitles.h"
 #include "runcontrol.h"
+#include "service.h"
 
 /**
  *
@@ -212,6 +213,9 @@ main(int argc, char **argv)
   /* Initialize scrapping subsystem */
   scrappers_init();
 
+  /* Service handling */
+  service_init();
+
   /* Initialize backend content handlers */
   backend_init();
 
@@ -297,6 +301,8 @@ showtime_shutdown0(void *aux)
     sh->fn(sh->opaque);
 
   ui_shutdown();
+
+  prop_print_tree(prop_create(prop_get_global(), "services"), 1);
 
   arch_exit(showtime_retcode);
   

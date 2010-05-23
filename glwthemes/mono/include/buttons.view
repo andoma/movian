@@ -101,7 +101,7 @@
   });
 }
 
-#define ICON2(ICON, CAPTION, EVENT, COLOR, ENABLED=true, HIDDEN=false) {
+#define ICON2(ICON, CAPTION, EVENT, COLOR, ENABLED=true, HIDDEN=false, ALWAYSEXPANDED=false) {
   widget(backdrop, {
 
     .hidden = HIDDEN;
@@ -126,8 +126,8 @@
       });
 
       widget(expander_x, {
-	.expansion = scurve(isFocused(), 0.15);
-	.alpha     = scurve(isFocused(), 0.15);
+	.expansion = scurve(isFocused() || ALWAYSEXPANDED, 0.15);
+	.alpha     = scurve(isFocused() || ALWAYSEXPANDED, 0.15);
 
 	widget(label, {
 	  .color = select(isHovered() || isFocused(), [1.0, 1.0, 1.0], COLOR);

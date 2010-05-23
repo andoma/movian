@@ -33,7 +33,7 @@
 #include "backend/backend.h"
 #include "media.h"
 #include "dvd.h"
-#include "sd/sd.h"
+#include "service.h"
 
 typedef enum {
   DISC_NO_DRIVE,
@@ -51,7 +51,7 @@ typedef struct disc_scanner {
 
   char *ds_dev;
 
-  prop_t *ds_prop;
+  service_t *ds_svc;
 
 } disc_scanner_t;
 
@@ -69,9 +69,9 @@ set_status(disc_scanner_t *ds, disc_status_t status, const char *title)
 
   ds->ds_status = status;
 
-  if(ds->ds_prop != NULL) {
-    prop_destroy(ds->ds_prop);
-    ds->ds_prop = NULL;
+  if(ds->ds_svc != NULL) {
+    service_destroy(ds->ds_svc);
+    ds->ds_svc = NULL;
   }
 
   switch(status) {
@@ -82,19 +82,19 @@ set_status(disc_scanner_t *ds, disc_status_t status, const char *title)
   case DISC_AUDIO:
     snprintf(buf, sizeof(buf), "Audio CD");
     snprintf(url, sizeof(url), "audiocd:%s", ds->ds_dev);
-    ds->ds_prop = sd_add_service(ds->ds_dev, buf,  NULL, NULL, "dvd", url);
+    ds->ds_svc = service_create(ds->ds_dev, buf, url, SVC_TYPE_MUSIC, NULL);
     break;
 
   case DISC_ISOFS:
     snprintf(buf, sizeof(buf), "DVD: %s", title);
     snprintf(url, sizeof(url), "dvd:%s", ds->ds_dev);
 
-    ds->ds_prop = sd_add_service(ds->ds_dev, buf,  NULL, NULL, "dvd", url);
+    ds->ds_svc = service_create(ds->ds_dev, buf, url, SVC_TYPE_VIDEO, NULL);
     break;
 
   case DISC_UNKNOWN_TYPE:
     snprintf(buf, sizeof(buf), "Unknown disc");
-    ds->ds_prop = sd_add_service(ds->ds_dev, buf,  NULL, NULL, "dvd", NULL);
+    ds->ds_svc = service_create(ds->ds_dev, buf, NULL, SVC_TYPE_VIDEO, NULL);
     break;
   }
 }
@@ -152,7 +152,7 @@ dvdprobe(callout_t *co, void *aux)
     set_status(ds, DISC_NO_DRIVE, NULL);
   } else {
     if(ioctl(fd, CDROM_DRIVE_STATUS, NULL) == CDS_DISC_OK) {
-      if(ds->ds_prop == NULL)
+      if(ds->ds_svc == NULL)
 	check_disc_type(ds, fd);
     } else {
       set_status(ds, DISC_NO_DISC, NULL);

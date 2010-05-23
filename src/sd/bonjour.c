@@ -30,7 +30,7 @@ static struct service_instance_list services;
 
 typedef struct service_aux {
   CFNetServiceRef sa_service;
-  service_type_t sa_type;
+  service_class_t sa_class;
 } service_aux_t;
 
 
@@ -93,7 +93,7 @@ bonjour_resolve_callback(CFNetServiceRef theService,
       port = ntohs(addr_in6->sin6_port);
     }
     
-    switch(sa->sa_type) {
+    switch(sa->sa_class) {
     case SERVICE_HTSP:
       TRACE(TRACE_DEBUG, "Bonjour", "Adding service htsp://%s:%d", host, port);
       sd_add_service_htsp(si, name, host, port);
@@ -235,7 +235,7 @@ bonjour_type_add(const char *typename, int type)
   TRACE(TRACE_DEBUG, "Bonjour", "Starting search for type %s", typename);
   
   sa = calloc(1, sizeof(*sa));
-  sa->sa_type = type;
+  sa->sa_class = type;
   
   context.info = sa;
   browser = CFNetServiceBrowserCreate(kCFAllocatorDefault,

@@ -52,10 +52,6 @@ backend_init(void)
 {
   backend_t *be;
 
-  global_sources =
-    prop_create_ex(prop_get_global(), "sources", NULL, 
-		   PROP_SORTED_CHILDS | PROP_SORT_CASE_INSENSITIVE);
-
   LIST_FOREACH(be, &backends, be_global_link)
     if(be->be_init != NULL)
       be->be_init();
