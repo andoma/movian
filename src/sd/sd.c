@@ -79,7 +79,7 @@ sd_add_service_htsp(service_instance_t *si, const char *name,
     return;
 
   snprintf(url, sizeof(url), "htsp://%s:%d", host, port);
-  si->si_service = service_create(si->si_id, name, url, SVC_TYPE_TV, NULL);
+  si->si_service = service_create(si->si_id, name, url, SVC_TYPE_TV, NULL, 0);
 }
 
 
@@ -122,7 +122,7 @@ sd_add_service_webdav(service_instance_t *si, const char *name,
   if(type == -1)
     type = SVC_TYPE_OTHER;
 
-  si->si_service = service_create(si->si_id, name, url, type, NULL);
+  si->si_service = service_create(si->si_id, name, url, type, NULL, 1);
 }
 
 /**

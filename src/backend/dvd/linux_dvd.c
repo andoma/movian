@@ -82,19 +82,19 @@ set_status(disc_scanner_t *ds, disc_status_t status, const char *title)
   case DISC_AUDIO:
     snprintf(buf, sizeof(buf), "Audio CD");
     snprintf(url, sizeof(url), "audiocd:%s", ds->ds_dev);
-    ds->ds_svc = service_create(ds->ds_dev, buf, url, SVC_TYPE_MUSIC, NULL);
+    ds->ds_svc = service_create(ds->ds_dev, buf, url, SVC_TYPE_MUSIC, NULL, 0);
     break;
 
   case DISC_ISOFS:
     snprintf(buf, sizeof(buf), "DVD: %s", title);
     snprintf(url, sizeof(url), "dvd:%s", ds->ds_dev);
 
-    ds->ds_svc = service_create(ds->ds_dev, buf, url, SVC_TYPE_VIDEO, NULL);
+    ds->ds_svc = service_create(ds->ds_dev, buf, url, SVC_TYPE_VIDEO, NULL, 0);
     break;
 
   case DISC_UNKNOWN_TYPE:
     snprintf(buf, sizeof(buf), "Unknown disc");
-    ds->ds_svc = service_create(ds->ds_dev, buf, NULL, SVC_TYPE_VIDEO, NULL);
+    ds->ds_svc = service_create(ds->ds_dev, buf, NULL, SVC_TYPE_VIDEO, NULL, 0);
     break;
   }
 }

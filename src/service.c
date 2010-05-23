@@ -17,7 +17,12 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+
+#include "showtime.h"
 #include "service.h"
+#include "misc/strtab.h"
+#include "backend/backend.h"
 
 static prop_t *global_sources;
 
@@ -35,18 +40,47 @@ struct svc_type_meta {
 
 static struct svc_type_meta svc_types[SVC_num];
 
+LIST_HEAD(service_list, service);
+
+static struct service_list services;
+static hts_mutex_t service_mutex;
+static hts_cond_t service_cond;
 
 /**
  *
  */
 struct service {
-  char *s_id;
+  int s_ref;
+  int s_zombie;
+
+  LIST_ENTRY(service) s_link;
   prop_t *s_global_root;
   prop_t *s_type_root;
+  prop_t *s_prop_status;
+  prop_t *s_prop_status_txt;
+
+  char *s_url;
 
   service_type_t s_type;
+
+  int s_do_probe;
+  int s_need_probe;
 };
 
+
+/**
+ *
+ */
+static struct strtab status_tab[] = {
+  {"ok",        SVC_STATUS_OK},
+  {"auth",      SVC_STATUS_AUTH_NEEDED},
+  {"nohandler", SVC_STATUS_NO_HANDLER},
+  {"fail",      SVC_STATUS_FAIL},
+  {"scanning",  SVC_STATUS_SCANNING},
+};
+
+
+static void *service_probe_loop(void *aux);
 
 /**
  *
@@ -83,6 +117,11 @@ svc_type_mod_num(service_type_t type, int delta)
 void
 service_init(void)
 {
+  hts_mutex_init(&service_mutex);
+  hts_cond_init(&service_cond);
+
+  hts_thread_create_detached("service probe", service_probe_loop, NULL);
+
   global_sources =
     prop_create_ex(prop_get_global(), "sources", NULL, 
 		   PROP_SORTED_CHILDS | PROP_SORT_CASE_INSENSITIVE);
@@ -105,9 +144,28 @@ service_destroy(service_t *s)
   svc_type_mod_num(s->s_type, -1);
   prop_destroy(s->s_type_root);
   prop_destroy(s->s_global_root);
-  free(s);
+  free(s->s_url);
+  
+  hts_mutex_lock(&service_mutex);
+  LIST_REMOVE(s, s_link);
+  s->s_zombie = 1;
+  if(--s->s_ref == 0)
+    free(s);
+  hts_mutex_unlock(&service_mutex);
 }
 
+
+/**
+ *
+ */
+static void
+service_reprobe(service_t *s)
+{
+  if(!s->s_do_probe)
+    return;
+  s->s_need_probe = 1;
+  hts_cond_signal(&service_cond);
+}
 
 /**
  *
@@ -117,18 +175,25 @@ service_create(const char *id,
 	       const char *title,
 	       const char *url,
 	       service_type_t type,
-	       const char *icon)
+	       const char *icon,
+	       int probe)
 {
   service_t *s = calloc(1, sizeof(service_t));
   prop_t *p;
+  s->s_ref = 1;
   s->s_type = type;
   p = s->s_global_root = prop_create(NULL, id);
   s->s_type_root       = prop_create(NULL, id);
+  mystrset(&s->s_url, url);
 
   prop_set_string(prop_create(p, "title"), title);
   prop_set_string(prop_create(p, "icon"), icon);
   prop_set_string(prop_create(p, "url"), url);
   prop_set_string(prop_create(p, "type"), svc_types[type].name);
+  s->s_prop_status = prop_create(p, "status");
+  prop_set_string(s->s_prop_status, "ok");
+
+  s->s_prop_status_txt = prop_create(p, "statustxt");
 
   prop_link(s->s_global_root, s->s_type_root);
 
@@ -139,7 +204,33 @@ service_create(const char *id,
     abort();
   
   svc_type_mod_num(type, 1);
+
+  hts_mutex_lock(&service_mutex);
+  LIST_INSERT_HEAD(&services, s, s_link);
+  s->s_need_probe = s->s_do_probe = probe;
+  hts_cond_signal(&service_cond);
+  hts_mutex_unlock(&service_mutex);
   return s;
+}
+
+
+/**
+ *
+ */
+prop_t *
+service_get_status_prop(service_t *s)
+{
+  return s->s_prop_status;
+}
+
+
+/**
+ *
+ */
+prop_t *
+service_get_statustxt_prop(service_t *s)
+{
+  return s->s_prop_status_txt;
 }
 
 
@@ -201,6 +292,11 @@ void
 service_set_url(service_t *s, const char *url)
 {
   prop_set_string(prop_create(s->s_global_root, "url"), url);
+
+  hts_mutex_lock(&service_mutex);
+  mystrset(&s->s_url, url);
+  service_reprobe(s);
+  hts_mutex_unlock(&service_mutex);
 }
 
 
@@ -211,4 +307,61 @@ void
 service_set_status(service_t *s, service_status_t status)
 {
 
+}
+
+
+/**
+ *
+ */
+static void *
+service_probe_loop(void *aux)
+{
+  service_t *s;
+  char *url;
+  service_status_t st;
+  char txt[256];
+
+  hts_mutex_lock(&service_mutex);
+
+  while(1) {
+    
+    LIST_FOREACH(s, &services, s_link) {
+      if(s->s_need_probe)
+	break;
+    }
+
+    if(s == NULL) {
+      hts_cond_wait(&service_cond, &service_mutex);
+      continue;
+    }
+    s->s_need_probe = 0;
+    // Will release lock, so reference and copy URL
+    s->s_ref++;
+
+    prop_set_string(s->s_prop_status, val2str(SVC_STATUS_SCANNING, status_tab));
+
+    if(s->s_url == NULL) {
+      st = SVC_STATUS_FAIL;
+    } else {
+      url = strdup(s->s_url);
+
+      hts_mutex_unlock(&service_mutex);
+      st = backend_probe(url, txt, sizeof(txt)); // Can take a lot of time
+      free(url);
+      hts_mutex_lock(&service_mutex);
+    }
+
+    if(!s->s_zombie) {
+      prop_set_string(s->s_prop_status, val2str(st, status_tab));
+      if(st != SVC_STATUS_OK)
+	prop_set_string(s->s_prop_status_txt, txt);
+      else
+	prop_set_void(s->s_prop_status_txt);
+    }
+    if(--s->s_ref == 0) {
+      printf("free %p\n", s);
+      free(s);
+    }
+  }
+  return NULL;
 }

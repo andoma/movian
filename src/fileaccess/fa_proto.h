@@ -22,6 +22,12 @@
 #include "fileaccess.h"
 
 
+typedef enum {
+  FAP_STAT_OK = 0,
+  FAP_STAT_ERR = -1,
+  FAP_STAT_NEED_AUTH = -2,
+} fap_stat_code_t;
+
 
 /**
  * File access protocol
@@ -71,9 +77,12 @@ typedef struct fa_protocol {
 
   /**
    * stat(2) file
+   *
+   * If non_interactive is set, this is probe request and it must not
+   * ask for any user input (access credentials, etc)
    */
   int (*fap_stat)(struct fa_protocol *fap, const char *url, struct stat *buf,
-		  char *errbuf, size_t errsize);
+		  char *errbuf, size_t errsize, int non_interactive);
 
   /**
    * Add a reference to the url.

@@ -205,7 +205,6 @@ be_list(const char *url, char *errbuf, size_t errsize)
 }
 
 
-
 /**
  *
  */
@@ -218,6 +217,7 @@ backend_t be_file = {
   .be_list = be_list,
   .be_imageloader = fa_imageloader,
   .be_normalize = fa_normalize,
+  .be_probe = fa_check_url,
 };
 
 BE_REGISTER(file);

@@ -97,7 +97,7 @@ sidfile_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
  */
 static int
 sidfile_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
-	     char *errbuf, size_t errlen)
+	     char *errbuf, size_t errlen, int non_interactive)
 {
   char *p = strrchr(url, '|');
   

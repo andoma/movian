@@ -2637,7 +2637,7 @@ be_spotify_init(void)
 
   service_create("spotify playlists", "Spotify playlists",
 		 "spotify:playlists",
-		 SVC_TYPE_MUSIC, NULL);
+		 SVC_TYPE_MUSIC, NULL, 0);
   return 0;
 }
 

@@ -180,6 +180,24 @@ backend_canhandle(const char *url)
 }
 
 
+/**
+ *
+ */
+backend_probe_result_t 
+backend_probe(const char *url, char *errbuf, size_t errlen)
+{
+  backend_t *be = backend_canhandle(url);
+  if(be == NULL) {
+    snprintf(errbuf, errlen, "No handler for URL");
+    return BACKEND_PROBE_NO_HANDLER;
+  }
+
+  if(be->be_probe == NULL)
+    return BACKEND_PROBE_OK;
+
+  return be->be_probe(url, errbuf, errlen);
+}
+
 
 /**
  *
@@ -194,3 +212,4 @@ backend_open_video(struct navigator *nav, const char *url, const char *view,
   prop_set_string(prop_create(src, "type"), "video");
   return np;
 }
+

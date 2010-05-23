@@ -533,13 +533,18 @@ redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen,
  *
  */
 static int 
-authenticate(http_file_t *hf, char *errbuf, size_t errlen)
+authenticate(http_file_t *hf, char *errbuf, size_t errlen, int *non_interactive)
 {
   char *username;
   char *password;
   char buf1[128];
   char buf2[128];
   int r;
+
+  if(hf->hf_auth_failed > 0 && non_interactive) {
+    *non_interactive = FAP_STAT_NEED_AUTH;
+    return -1;
+  }
 
   if(http_drain_content(hf)) {
     snprintf(errbuf, errlen, "Connection lost");
@@ -631,7 +636,7 @@ http_connect(http_file_t *hf, char *errbuf, int errlen)
  */
 static int
 http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
-	   int ignore_size)
+	   int ignore_size, int *non_interactive)
 {
   int code;
   htsbuf_queue_t q;
@@ -694,7 +699,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
 
   case 401:
-    if(authenticate(hf, errbuf, errlen))
+    if(authenticate(hf, errbuf, errlen, non_interactive))
       return -1;
     goto again;
 
@@ -861,7 +866,7 @@ again:
       goto reconnect;
       
     case 401:
-      if(authenticate(hf, errbuf, errlen))
+      if(authenticate(hf, errbuf, errlen, NULL))
         return -1;
       goto again;
       
@@ -892,13 +897,13 @@ http_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
  */
 static fa_handle_t *
 http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
-             int ignore_size)
+             int ignore_size, int *non_interactive)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   
   hf->hf_url = strdup(url);
 
-  if(!http_open0(hf, 1, errbuf, errlen, ignore_size)) {
+  if(!http_open0(hf, 1, errbuf, errlen, ignore_size, non_interactive)) {
     hf->h.fh_proto = fap;
     return &hf->h;
   }
@@ -910,7 +915,7 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
 static fa_handle_t *
 http_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
 {
-  return http_open_ex(fap, url, errbuf, errlen, 0);
+  return http_open_ex(fap, url, errbuf, errlen, 0, 0);
 }
 
 
@@ -942,7 +947,7 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
   for(i = 0; i < 5; i++) {
 
     /* If not connected, try to (re-)connect */
-    if(hf->hf_connection == NULL && http_open0(hf, 0, NULL, 0, 0))
+    if(hf->hf_connection == NULL && http_open0(hf, 0, NULL, 0, 0, 0))
       return -1;
 
     http_connection_t *hc = hf->hf_connection;
@@ -1071,13 +1076,15 @@ http_fsize(fa_handle_t *handle)
  */
 static int
 http_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
-	  char *errbuf, size_t errlen)
+	  char *errbuf, size_t errlen, int non_interactive)
 {
   fa_handle_t *handle;
   http_file_t *hf;
+  int statcode = -1;
 
-  if((handle = http_open_ex(fap, url, errbuf, errlen, 1)) == NULL)
-    return -1;
+  if((handle = http_open_ex(fap, url, errbuf, errlen, 1, 
+			    non_interactive ? &statcode : NULL)) == NULL)
+    return statcode;
  
   memset(buf, 0, sizeof(struct stat));
   hf = (http_file_t *)handle;
@@ -1338,7 +1345,8 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
  * Execute a webdav PROPFIND
  */
 static int
-dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen)
+dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
+	     int *non_interactive)
 {
   int code, retval;
   htsbuf_queue_t q;
@@ -1409,9 +1417,14 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen)
       continue;
 
     case 401:
-      if(authenticate(hf, errbuf, errlen))
+      if(authenticate(hf, errbuf, errlen, non_interactive))
 	return -1;
       goto again;
+
+    case 405:
+    case 501:
+      snprintf(errbuf, errlen, "Not a WEBDAV share");
+      return -1;
 
     default:
       http_drain_content(hf);
@@ -1430,15 +1443,17 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen)
  */
 static int
 dav_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
-	 char *errbuf, size_t errlen)
+	 char *errbuf, size_t errlen, int non_interactive)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
+  int statcode = -1;
 
   hf->hf_url = strdup(url);
   
-  if(dav_propfind(hf, NULL, errbuf, errlen)) {
+  if(dav_propfind(hf, NULL, errbuf, errlen, 
+		  non_interactive ? &statcode : NULL)) {
     http_destroy(hf);
-    return -1;
+    return statcode;
   }
 
   memset(buf, 0, sizeof(struct stat));
@@ -1463,7 +1478,7 @@ dav_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 
   hf->hf_url = strdup(url);
   
-  retval = dav_propfind(hf, fd, errbuf, errlen);
+  retval = dav_propfind(hf, fd, errbuf, errlen, NULL);
   http_destroy(hf);
   return retval;
 }
@@ -1589,7 +1604,7 @@ http_request(const char *url, const char **arguments,
     goto retry;
 
   case 401:
-    if(authenticate(hf, errbuf, errlen)) {
+    if(authenticate(hf, errbuf, errlen, NULL)) {
       http_destroy(hf);
       return -1;
     }

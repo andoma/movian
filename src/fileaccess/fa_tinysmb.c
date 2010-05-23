@@ -97,7 +97,7 @@ makesmbname(char *s)
  */
 static smb_connection_t *
 get_connection(const char *url, const char **fname,
-	       char *errbuf, size_t errlen)
+	       char *errbuf, size_t errlen, int *non_interactive)
 {
   char host[HOSTNAME_MAX];
   char share[SMB_MAXPATH];
@@ -149,6 +149,11 @@ get_connection(const char *url, const char **fname,
   snprintf(buf1, sizeof(buf1), "Samba share: %s on %s", share, host);
 
   while(1) {
+
+    if(retry && non_interactive) {
+      *non_interactive = FAP_STAT_NEED_AUTH;
+      return NULL;
+    }
 
     kr_ret = keyring_lookup(buf1, &username, &password, NULL, 
 			    retry,
@@ -255,7 +260,7 @@ smb_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
   SMBDIRENTRY entry = {0};
   char eurl[URL_MAX];
 
-  if((sc = get_connection(url, &fname, errbuf, errlen)) == NULL)
+  if((sc = get_connection(url, &fname, errbuf, errlen, NULL)) == NULL)
     return -1;
 
   snprintf(path, sizeof(path), "%s/*", fname);
@@ -311,7 +316,7 @@ smb_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
   SMBFILE file;
   SMBDIRENTRY sde;
 
-  if((sc = get_connection(url, &fname, errbuf, errlen)) == NULL)
+  if((sc = get_connection(url, &fname, errbuf, errlen, NULL)) == NULL)
     return NULL;
   
   smbname = mystrdupa(fname);
@@ -417,16 +422,18 @@ smb_fsize(fa_handle_t *fh0)
  */
 static int
 smb_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
-	 char *errbuf, size_t errlen)
+	 char *errbuf, size_t errlen, int non_interactive)
 {
   const char *fname;
   char *smbname;
   smb_connection_t *sc;
   int r;
   SMBDIRENTRY sde;
+  int statcode = -1;
 
-  if((sc = get_connection(url, &fname, errbuf, errlen)) == NULL)
-    return -1;
+  if((sc = get_connection(url, &fname, errbuf, errlen, 
+			  non_interactive ? &statcode : NULL)) == NULL)
+    return statcode;
 
   smbname = mystrdupa(fname);
   makesmbname(smbname);

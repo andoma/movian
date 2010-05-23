@@ -55,8 +55,7 @@ widget(container_x, {
 
       widget(container_x, {
 	widget(label, {
-	  .filterConstraintX = true;
-	  .weight = 0.2;
+	  .width = $ui.fontsize * 8;
 	  .caption = "Title:";
 	  .align = right;
 	});
@@ -85,8 +84,7 @@ widget(container_x, {
 
       widget(container_x, {
 	widget(label, {
-	  .filterConstraintX = true;
-	  .weight = 0.2;
+	  .width = $ui.fontsize * 8;
 	  .caption = "URL:";
 	  .align = right;
 	});
@@ -110,14 +108,52 @@ widget(container_x, {
 	    bind($self.source.url);
 	  });
 	});
+
+	widget(dummy, {
+	  .width = 2;
+	});
+
+	widget(icon, {
+	  .color = translate($self.source.status,
+			     [1.0, 1.0, 1.0],
+			     "ok",   [0.2, 1.0, 0.2],
+			     "auth", [1.0, 0.2, 0.2],
+			     "nohandler", [1.0, 0.2, 0.2],
+			     "fail", [1.0, 0.2, 0.2],
+			     "scanning", [0.7, 0.7, 0.2]);
+
+	  .source = translate($self.source.status,
+			      void,
+			      "ok",   "theme://icons/48x48/Check.png",
+			      "auth", "theme://icons/48x48/Lock.png",
+			      "nohandler", "theme://icons/48x48/Alert.png",
+			      "fail", "theme://icons/48x48/Alert.png",
+			      "scanning", "theme://icons/48x48/Scan.png");
+	  .shadow = true;
+	});
       });
 
+      widget(expander_y, {
 
+	.expansion = scurve(select($self.source.statustxt, 1, 0), 0.15);
+	.alpha     = scurve(select($self.source.statustxt, 1, 0), 0.15);
+
+	widget(container_x, {
+	
+	  widget(dummy, {
+	    .width = $ui.fontsize * 8 + 10;
+	  });
+
+	  widget(label, {
+	    .color = [1.0, 0.2, 0.2];
+	    .caption = $self.source.statustxt;
+	  });
+	});
+      });
 
       widget(container_x, {
 	widget(container_y, {
-	  .weight = 0.2;
-	  .filterConstraintX = true;
+	  .width = $ui.fontsize * 8;
 	  widget(label, {
 	    .caption = "Type:";
 	    .align = right;
@@ -160,10 +196,8 @@ widget(container_x, {
       });
 
       widget(container_x, {
-	space(0.2);
-
 	widget(dummy, {
-	  .width = 10;
+	  .width = $ui.fontsize * 8 + 10;
 	});
 
 	widget(backdrop, {

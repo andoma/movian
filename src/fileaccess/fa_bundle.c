@@ -164,13 +164,13 @@ b_fsize(fa_handle_t *handle)
  */
 static int
 b_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
-	 char *errbuf, size_t errlen)
+       char *errbuf, size_t errlen, int non_interactive)
 {
   fa_handle_t *handle;
   fa_bundle_fh_t *fh;
 
   if((handle = b_open(fap, url, errbuf, errlen)) == NULL)
-    return -1;
+    return FAP_STAT_ERR;
  
   fh = (fa_bundle_fh_t *)handle;
 
@@ -178,7 +178,7 @@ b_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
   buf->st_size = fh->size;
   
   free(fh);
-  return 0;
+  return FAP_STAT_OK;
 }
 
 

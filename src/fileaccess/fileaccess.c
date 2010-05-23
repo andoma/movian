@@ -30,6 +30,7 @@
 
 #include "showtime.h"
 #include "fileaccess.h"
+#include "backend/backend.h"
 
 #include <libavutil/avstring.h>
 #include <libavformat/avformat.h>
@@ -67,7 +68,7 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
   if(url[0] != ':' || url[1] != '/' || url[2] != '/') {
     /* No protocol specified, assume a plain file */
     fap = &fa_protocol_fs;
-    if(fap->fap_stat(fap, url0, &st, NULL, 0)) {
+    if(url0[0] != '/' && fap->fap_stat(fap, url0, &st, NULL, 0, 0)) {
       snprintf(errbuf, errsize, "File not found");
       return NULL;
     }
@@ -227,7 +228,7 @@ fa_stat(const char *url, struct stat *buf, char *errbuf, size_t errsize)
 				  errbuf, errsize)) == NULL)
     return AVERROR_NOENT;
   
-  r = fap->fap_stat(fap, filename, buf, errbuf, errsize);
+  r = fap->fap_stat(fap, filename, buf, errbuf, errsize, 0);
   free(filename);
 
   return r;
@@ -846,4 +847,30 @@ fa_parent(char *dst, size_t dstlen, const char *url)
     }
   }
   return -1;
+}
+
+
+int
+fa_check_url(const char *url, char *errbuf, size_t errlen)
+{
+  fa_protocol_t *fap;
+  char *filename;
+  int r;
+  struct stat buf;
+
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL,
+				  errbuf, errlen)) == NULL)
+    return BACKEND_PROBE_NO_HANDLER;
+
+  
+  r = fap->fap_stat(fap, filename, &buf, errbuf, errlen, 1);
+  free(filename);
+
+  if(r == 0)
+    return BACKEND_PROBE_OK;
+  if(r == FAP_STAT_NEED_AUTH) {
+    snprintf(errbuf, errlen, "Authentication required");
+    return BACKEND_PROBE_AUTH;
+  }
+  return BACKEND_PROBE_FAIL;
 }

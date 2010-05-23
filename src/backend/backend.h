@@ -30,6 +30,17 @@ struct nav_page;
 struct navigator;
 
 /**
+ * Kept in sync with service_status_t
+ */
+typedef enum {
+  BACKEND_PROBE_OK,
+  BACKEND_PROBE_AUTH,
+  BACKEND_PROBE_NO_HANDLER,
+  BACKEND_PROBE_FAIL,
+} backend_probe_result_t;
+
+
+/**
  *
  */
 typedef struct backend {
@@ -58,7 +69,10 @@ typedef struct backend {
 
   int (*be_normalize)(const char *url, char *dst, size_t dstlen);
 
+  int (*be_probe)(const char *url, char *errbuf, size_t errlen);
+
 } backend_t;
+
 
 
 /**
@@ -79,6 +93,9 @@ struct pixmap *backend_imageloader(const char *url, int want_thumb,
 				   char *errbuf, size_t errlen);
 
 backend_t *backend_canhandle(const char *url);
+
+backend_probe_result_t backend_probe(const char *url,
+				     char *errbuf, size_t errlen);
 
 void backend_register(backend_t *be);
 

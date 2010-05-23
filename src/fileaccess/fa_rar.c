@@ -743,7 +743,7 @@ rar_fsize(fa_handle_t *handle)
  */
 static int
 rar_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
-	 char *errbuf, size_t errlen)
+	 char *errbuf, size_t errlen, int non_interactive)
 {
   rar_file_t *rf;
 

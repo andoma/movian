@@ -40,6 +40,8 @@
 
 static pthread_mutex_t smb_mutex;
 static SMBCCTX *smb_ctx;
+static int smb_statcode;
+static int smb_non_interactive;
 
 static void smb_auth(const char *server, const char *share,
 		     char *wrkgrp, int wrkgrplen,
@@ -231,10 +233,17 @@ smb_fsize(fa_handle_t *fh_)
  */
 static int
 smb_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
-	 char *errbuf, size_t errlen)
+	 char *errbuf, size_t errlen, int non_interactive)
 {
   pthread_mutex_lock(&smb_mutex);
+
+  smb_statcode = -1;
+  smb_non_interactive = non_interactive;
+
   int r = smb_ctx->stat(smb_ctx, url, buf);
+  if(r)
+    r = smb_statcode;
+
   pthread_mutex_unlock(&smb_mutex);
   return r;
 }
@@ -273,6 +282,12 @@ smb_auth(const char *server, const char *share,
 
   snprintf(buf, sizeof(buf), "\\\\%s\\%s", server, share);
   for(query = 0; query < 2; query++) {
+
+    if(query == 1 && smb_non_interactive) {
+      smb_statcode = FAP_STAT_NEED_AUTH;
+      return;
+    }
+
     int r = keyring_lookup(buf, &username, &password, &domain, 
 			   query,
 			   "SMB Client", "Access denied");
