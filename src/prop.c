@@ -143,7 +143,7 @@ prop_ref_dec(prop_t *p)
 {
   if(atomic_add(&p->hp_refcount, -1) > 1)
     return;
-
+  assert(p->hp_type == PROP_ZOMBIE);
   free(p);
 }
 
