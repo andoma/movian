@@ -349,7 +349,7 @@ token2name(token_t *t)
   case TOKEN_ASSIGNMENT:    return "=";
 
   case TOKEN_FLOAT:
-    snprintf(buf, sizeof(buf), "%f", t->t_float);
+    snprintf(buf, sizeof(buf), "%ff", t->t_float);
     return buf;
 
   case TOKEN_INT:
