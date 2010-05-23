@@ -62,8 +62,11 @@ typedef struct cd_meta {
 
   uint8_t cm_id[20];
 
-  prop_t *cm_nodes;
   prop_t *cm_root;
+
+  prop_t *cm_nodes;
+  prop_t *cm_source;
+  prop_t *cm_meta;
 
   int cm_length; // in frames
 
@@ -123,17 +126,17 @@ cddb_thread(void *aux)
     if(r == 1) {
       rstr_t *title = rstr_alloc(cddb_disc_get_title(disc));
       
-      prop_set_rstring(prop_create(cm->cm_root, "title"), title);
-      prop_set_rstring(prop_create(cm->cm_root, "album_name"), title);
+      prop_set_rstring(prop_create(cm->cm_meta, "title"), title);
+      prop_set_rstring(prop_create(cm->cm_meta, "album_name"), title);
 
-      prop_set_string(prop_create(cm->cm_root, "artist_name"),
+      prop_set_string(prop_create(cm->cm_meta, "artist_name"),
 		      cddb_disc_get_artist(disc));
 
       int year = cddb_disc_get_year(disc);
       if(year)
-	prop_set_int(prop_create(cm->cm_root, "album_year"), year);
+	prop_set_int(prop_create(cm->cm_meta, "album_year"), year);
 
-      prop_set_string(prop_create(cm->cm_root, "genre"),
+      prop_set_string(prop_create(cm->cm_meta, "genre"),
 		      cddb_disc_get_genre(disc));
 
       for(i = 0; i < cm->cm_ntracks; i++) {
@@ -199,12 +202,15 @@ get_cd_meta(const char *device)
     cm->cm_length = cdio_get_track_lba(cdio, CDIO_CDROM_LEADOUT_TRACK);
   
     cm->cm_ntracks = tracks;
-    cm->cm_root  = prop_create(NULL, NULL);
+
+    cm->cm_root   = prop_create(NULL, NULL);
+    cm->cm_source = prop_create(cm->cm_root, "source");
+    cm->cm_nodes  = prop_create(cm->cm_source, "nodes");
+    cm->cm_meta   = prop_create(cm->cm_source, "metadata");
+
     prop_set_string(prop_create(cm->cm_root, "type"), "directory");
     prop_set_string(prop_create(cm->cm_root, "view"), "album");
 
-    cm->cm_nodes = prop_create(cm->cm_root, "nodes");
-    
     rstr_t *audio = rstr_alloc("audio");
   
     for(i = 0; i < tracks; i++) {
@@ -243,7 +249,6 @@ get_cd_meta(const char *device)
     hts_thread_create_detached("CDDB query", cddb_thread, cm);
 #endif
   }
-
   hts_mutex_unlock(&cd_meta_mutex);
   cdio_destroy(cdio);
   return cm;
