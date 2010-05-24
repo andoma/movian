@@ -1220,11 +1220,16 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self)
   gps->gps_file = rstr_dup(self->file);
   gps->gps_line = self->line;
 #endif
-  
-  s = prop_subscribe(PROP_SUB_DIRECT_UPDATE |
-		     (ec->debug ? PROP_SUB_DEBUG : 0) |
-		     (ec->w->glw_class->gc_flags & GLW_EXPEDITE_SUBSCRIPTIONS ?
-		      PROP_SUB_EXPEDITE : 0),
+
+  int f = PROP_SUB_DIRECT_UPDATE;
+
+  if(ec->w->glw_class->gc_flags & GLW_EXPEDITE_SUBSCRIPTIONS)
+    f |= PROP_SUB_EXPEDITE;
+
+  if(ec->debug || ec->w->glw_flags & GLW_DEBUG)
+    f |= PROP_SUB_DEBUG;
+
+  s = prop_subscribe(f,
 		     PROP_TAG_CALLBACK, prop_callback, gps,
 		     PROP_TAG_NAME_VECTOR, propname,
 		     PROP_TAG_COURIER, w->glw_root->gr_courier,
