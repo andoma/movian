@@ -555,7 +555,7 @@ static void *
 prop_courier(void *aux)
 {
   prop_courier_t *pc = aux;
-  struct prop_notify_queue q;
+  struct prop_notify_queue q_exp, q_nor;
   prop_notify_t *n;
 
 
@@ -563,20 +563,31 @@ prop_courier(void *aux)
 
   while(pc->pc_run) {
 
-    if((n = TAILQ_FIRST(&pc->pc_queue)) == NULL) {
+    if(TAILQ_FIRST(&pc->pc_queue_exp) == NULL &&
+       TAILQ_FIRST(&pc->pc_queue_nor) == NULL) {
       hts_cond_wait(&pc->pc_cond, &prop_mutex);
       continue;
     }
 
-    TAILQ_MOVE(&q, &pc->pc_queue, hpn_link);
-    TAILQ_INIT(&pc->pc_queue);
+    TAILQ_MOVE(&q_exp, &pc->pc_queue_exp, hpn_link);
+    TAILQ_INIT(&pc->pc_queue_exp);
+
+    TAILQ_MOVE(&q_nor, &pc->pc_queue_nor, hpn_link);
+    TAILQ_INIT(&pc->pc_queue_nor);
+
     hts_mutex_unlock(&prop_mutex);
-    prop_notify_dispatch(&q);
+    prop_notify_dispatch(&q_exp);
+    prop_notify_dispatch(&q_nor);
     hts_mutex_lock(&prop_mutex);
   }
 
-  while((n = TAILQ_FIRST(&pc->pc_queue)) != NULL) {
-    TAILQ_REMOVE(&pc->pc_queue, n, hpn_link);
+  while((n = TAILQ_FIRST(&pc->pc_queue_exp)) != NULL) {
+    TAILQ_REMOVE(&pc->pc_queue_exp, n, hpn_link);
+    prop_notify_free(n);
+  }
+
+  while((n = TAILQ_FIRST(&pc->pc_queue_nor)) != NULL) {
+    TAILQ_REMOVE(&pc->pc_queue_nor, n, hpn_link);
     prop_notify_free(n);
   }
 
@@ -591,9 +602,14 @@ prop_courier(void *aux)
  *
  */
 static void
-courier_enqueue(prop_courier_t *pc, prop_notify_t *n)
+courier_enqueue(prop_sub_t *s, prop_notify_t *n)
 {
-  TAILQ_INSERT_TAIL(&pc->pc_queue, n, hpn_link);
+  prop_courier_t *pc = s->hps_courier;
+  
+  if(s->hps_flags & PROP_SUB_EXPEDITE)
+    TAILQ_INSERT_TAIL(&pc->pc_queue_exp, n, hpn_link);
+  else
+    TAILQ_INSERT_TAIL(&pc->pc_queue_exp, n, hpn_link);
   if(pc->pc_run)
     hts_cond_signal(&pc->pc_cond);
   else if(pc->pc_notify != NULL)
@@ -770,7 +786,7 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
   if(pnq) {
     TAILQ_INSERT_TAIL(pnq, n, hpn_link);
   } else {
-    courier_enqueue(s->hps_courier, n);
+    courier_enqueue(s, n);
   }
 }
 
@@ -786,7 +802,7 @@ prop_notify_void(prop_sub_t *s)
 
   n->hpn_event = PROP_SET_VOID;
   n->hpn_prop2 = NULL;
-  courier_enqueue(s->hps_courier, n);
+  courier_enqueue(s, n);
 }
 
 
@@ -801,7 +817,7 @@ prop_notify_destroyed(prop_sub_t *s, prop_t *p)
   n->hpn_event = PROP_DESTROYED;
   n->hpn_prop = p;
   atomic_add(&p->hp_refcount, 1);
-  courier_enqueue(s->hps_courier, n);
+  courier_enqueue(s, n);
 }
 
 
@@ -846,7 +862,7 @@ prop_build_notify_child(prop_sub_t *s, prop_t *p, prop_event_t event,
   n->hpn_flags = flags;
   n->hpn_prop = p;
   n->hpn_event = event;
-  courier_enqueue(s->hps_courier, n);
+  courier_enqueue(s, n);
 }
 
 
@@ -886,7 +902,7 @@ prop_build_notify_child2(prop_sub_t *s, prop_t *p, prop_t *sibling,
   n->hpn_prop2 = sibling;
   n->hpn_event = event;
   n->hpn_flags = flags;
-  courier_enqueue(s->hps_courier, n);
+  courier_enqueue(s, n);
 }
 
 
@@ -927,7 +943,7 @@ prop_build_notify_childv(prop_sub_t *s, prop_t **childv, prop_event_t event)
   memcpy(n->hpn_propv, childv, sizeof(prop_t *) * (len + 1));
   n->hpn_flags = 0;
   n->hpn_event = event;
-  courier_enqueue(s->hps_courier, n);
+  courier_enqueue(s, n);
 }
 
 
@@ -961,7 +977,7 @@ prop_send_ext_event0(prop_t *p, event_t *e)
     n->hpn_event = PROP_EXT_EVENT;
     atomic_add(&e->e_refcount, 1);
     n->hpn_ext_event = e;
-    courier_enqueue(s->hps_courier, n);
+    courier_enqueue(s, n);
   }
 }
 
@@ -979,7 +995,7 @@ prop_send_subscription_monitor_active(prop_t *p)
     if(s->hps_flags & PROP_SUB_SUBSCRIPTION_MONITOR) {
       n = get_notify(s);
       n->hpn_event = PROP_SUBSCRIPTION_MONITOR_ACTIVE;
-      courier_enqueue(s->hps_courier, n);
+      courier_enqueue(s, n);
     }
   }
 }
@@ -2579,7 +2595,7 @@ prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard)
 
     if(s->hps_pending_unlink) {
       s->hps_pending_unlink = 0;
-      courier_enqueue(s->hps_courier, n);
+      courier_enqueue(s, n);
     } else {
       // Already updated by the new linkage
       prop_notify_free(n);
@@ -2805,7 +2821,8 @@ static prop_courier_t *
 prop_courier_create(void)
 {
   prop_courier_t *pc = calloc(1, sizeof(prop_courier_t));
-  TAILQ_INIT(&pc->pc_queue);
+  TAILQ_INIT(&pc->pc_queue_nor);
+  TAILQ_INIT(&pc->pc_queue_exp);
   return pc;
 }
 
@@ -2890,12 +2907,15 @@ prop_courier_stop(prop_courier_t *pc)
 void
 prop_courier_poll(prop_courier_t *pc)
 {
-  struct prop_notify_queue q;
+  struct prop_notify_queue q_exp, q_nor;
   hts_mutex_lock(&prop_mutex);
-  TAILQ_MOVE(&q, &pc->pc_queue, hpn_link);
-  TAILQ_INIT(&pc->pc_queue);
+  TAILQ_MOVE(&q_exp, &pc->pc_queue_exp, hpn_link);
+  TAILQ_INIT(&pc->pc_queue_exp);
+  TAILQ_MOVE(&q_nor, &pc->pc_queue_nor, hpn_link);
+  TAILQ_INIT(&pc->pc_queue_nor);
   hts_mutex_unlock(&prop_mutex);
-  prop_notify_dispatch(&q);
+  prop_notify_dispatch(&q_exp);
+  prop_notify_dispatch(&q_nor);
 }
 
 

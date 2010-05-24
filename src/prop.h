@@ -77,7 +77,8 @@ TAILQ_HEAD(prop_notify_queue, prop_notify);
 
 typedef struct prop_courier {
 
-  struct prop_notify_queue pc_queue;
+  struct prop_notify_queue pc_queue_nor;
+  struct prop_notify_queue pc_queue_exp;
 
   hts_mutex_t *pc_entry_mutex;
   hts_cond_t pc_cond;
@@ -322,6 +323,7 @@ void prop_init(void);
 #define PROP_SUB_TRACK_DESTROY 0x4
 #define PROP_SUB_DEBUG         0x8 // TRACE(TRACE_DEBUG, ...) changes
 #define PROP_SUB_SUBSCRIPTION_MONITOR 0x10
+#define PROP_SUB_EXPEDITE             0x20
 
 enum {
   PROP_TAG_END = 0,
