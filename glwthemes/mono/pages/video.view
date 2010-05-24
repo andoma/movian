@@ -1,3 +1,4 @@
+#import "theme://include/defs.view"
 
 // If playstatus is set to stop, close the page
 $self.close = $self.media.playstatus == "stop";
@@ -16,12 +17,13 @@ widget(container_z, {
   widget(container_y, {
 
     widget(container_x, {
-      .align = left;
-      
+      .align = center;
       widget(backdrop, {
 
+	PLATE_GFX();
+
 	.alpha = iir(changed($self.media.seektime, 2, true), 7);
-	.color = [0.3, 0.7, 0.45];
+	.color = PLATE_COLOR_VIDEO();
 
 	widget(label, {
 	  .caption = "Seeking to " + value2duration($self.media.seektime);
@@ -31,12 +33,17 @@ widget(container_z, {
 
     widget(label, {
       .alpha = $view.statsAlpha;
-      .caption = "Video format: " + $self.media.video.codec;
+      .caption = "Source: " + $self.media.metadata.format;
     });
 
     widget(label, {
       .alpha = $view.statsAlpha;
-      .caption = "Audio format: " + $self.media.audio.codec;
+      .caption = "Video codec: " + $self.media.video.codec;
+    });
+
+    widget(label, {
+      .alpha = $view.statsAlpha;
+      .caption = "Audio codec: " + $self.media.audio.codec;
     });
 
     widget(label, {
