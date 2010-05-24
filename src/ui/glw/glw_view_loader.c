@@ -146,6 +146,7 @@ glw_view_loader_render(glw_t *w, glw_rctx_t *rc)
 static void
 glw_view_loader_detach(glw_t *w, glw_t *c)
 {
+  glw_destroy_subscriptions(c);
   c->glw_parent_vl_tgt = 1;
 }
 
@@ -195,6 +196,9 @@ glw_view_loader_set(glw_t *w, int init, va_list ap)
   if(filename != NULL) {
 
     if(*filename) {
+      TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
+	glw_destroy_subscriptions(c);
+
       glw_view_create(w->glw_root, filename, w,
 		      a->prop, a->prop_parent, 1);
     } else {
@@ -211,6 +215,7 @@ glw_view_loader_set(glw_t *w, int init, va_list ap)
  */
 static glw_class_t glw_view_loader = {
   .gc_name = "loader",
+  .gc_flags = GLW_EXPEDITE_SUBSCRIPTIONS,
   .gc_instance_size = sizeof(glw_view_loader_t),
   .gc_set = glw_view_loader_set,
   .gc_render = glw_view_loader_render,

@@ -308,6 +308,7 @@ typedef struct glw_class {
   int gc_flags;
 #define GLW_NAVIGATION_SEARCH_BOUNDARY 0x1
 #define GLW_CAN_HIDE_CHILDS            0x2
+#define GLW_EXPEDITE_SUBSCRIPTIONS     0x4
 
   /**
    * If the widget arranges its childer in horizontal or vertical order
@@ -899,6 +900,8 @@ int glw_attrib_set(glw_t *w, int init, va_list ap);
 void glw_set_i(glw_t *w, ...) __attribute__((__sentinel__(0)));
 
 void glw_destroy(glw_t *w);
+
+void glw_destroy_subscriptions(glw_t *w);
 
 void glw_unref(glw_t *w);
 
