@@ -1437,16 +1437,18 @@ prop_move(prop_t *p, prop_t *before)
   
   assert(p != before);
 
-  parent = p->hp_parent;
- 
-  TAILQ_REMOVE(&parent->hp_childs, p, hp_parent_link);
+  if(TAILQ_NEXT(p, hp_parent_link) != before) {
+
+    parent = p->hp_parent;
+    TAILQ_REMOVE(&parent->hp_childs, p, hp_parent_link);
   
-  if(before != NULL) {
-    TAILQ_INSERT_BEFORE(before, p, hp_parent_link);
-  } else {
-    TAILQ_INSERT_TAIL(&parent->hp_childs, p, hp_parent_link);
-  }  
-  prop_notify_child2(p, parent, before, PROP_MOVE_CHILD, NULL, 0);
+    if(before != NULL) {
+      TAILQ_INSERT_BEFORE(before, p, hp_parent_link);
+    } else {
+      TAILQ_INSERT_TAIL(&parent->hp_childs, p, hp_parent_link);
+    }  
+    prop_notify_child2(p, parent, before, PROP_MOVE_CHILD, NULL, 0);
+  }
 
   hts_mutex_unlock(&prop_mutex);
 }
