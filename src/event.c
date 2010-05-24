@@ -178,8 +178,8 @@ static struct strtab actionnames[] = {
   { "PowerOff",              ACTION_POWER_OFF },
   { "Home",                  ACTION_HOME },
   { "ChangeView",            ACTION_SWITCH_VIEW },
-  { "Channel+",              ACTION_CHANNEL_NEXT },
-  { "Channel-",              ACTION_CHANNEL_PREV },
+  { "Channel+",              ACTION_NEXT_CHANNEL },
+  { "Channel-",              ACTION_PREV_CHANNEL },
   { "FullscreenToggle",      ACTION_FULLSCREEN_TOGGLE },
   { "Increase",              ACTION_INCR },
   { "Decrease",              ACTION_DECR },
@@ -439,6 +439,8 @@ event_dispatch(event_t *e)
 	    event_is_action(e, ACTION_SHOW_MEDIA_STATS) ||
 	    event_is_action(e, ACTION_SHUFFLE) ||
 	    event_is_action(e, ACTION_REPEAT) ||
+	    event_is_action(e, ACTION_NEXT_CHANNEL) ||
+	    event_is_action(e, ACTION_PREV_CHANNEL) ||
 	    event_is_type(e, EVENT_SELECT_TRACK)
 	    ) {
 

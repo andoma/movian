@@ -657,8 +657,8 @@ static const struct {
   { XK_Right,        0,           ACTION_RIGHT },
   { XK_Up,           0,           ACTION_UP },
   { XK_Down,         0,           ACTION_DOWN },
-  { XK_Page_Up,      0,           ACTION_PAGE_UP,     ACTION_CHANNEL_PREV },
-  { XK_Page_Down,    0,           ACTION_PAGE_DOWN,   ACTION_CHANNEL_NEXT },
+  { XK_Page_Up,      0,           ACTION_PAGE_UP,     ACTION_PREV_CHANNEL },
+  { XK_Page_Down,    0,           ACTION_PAGE_DOWN,   ACTION_NEXT_CHANNEL },
   { XK_Home,         0,           ACTION_TOP },
   { XK_End,          0,           ACTION_BOTTOM },
 

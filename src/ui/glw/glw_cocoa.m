@@ -88,8 +88,8 @@ static const struct {
   { NSRightArrowFunctionKey,  0,                ACTION_RIGHT },
   { NSUpArrowFunctionKey,     0,                ACTION_UP },
   { NSDownArrowFunctionKey,   0,                ACTION_DOWN },
-  { NSPageUpFunctionKey,      0,                ACTION_PAGE_UP, ACTION_CHANNEL_PREV },
-  { NSPageDownFunctionKey,    0,                ACTION_PAGE_DOWN, ACTION_CHANNEL_NEXT },
+  { NSPageUpFunctionKey,      0,                ACTION_PAGE_UP, ACTION_PREV_CHANNEL },
+  { NSPageDownFunctionKey,    0,                ACTION_PAGE_DOWN, ACTION_NEXT_CHANNEL },
   { NSHomeFunctionKey,        0,                ACTION_TOP },
   { NSEndFunctionKey,         0,                ACTION_BOTTOM },
   
