@@ -194,11 +194,9 @@ glw_view_loader_set(glw_t *w, int init, va_list ap)
   } while(attrib);
 
   if(filename != NULL) {
-
+    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
+      glw_destroy_subscriptions(c);
     if(*filename) {
-      TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-	glw_destroy_subscriptions(c);
-
       glw_view_create(w->glw_root, filename, w,
 		      a->prop, a->prop_parent, 1);
     } else {
