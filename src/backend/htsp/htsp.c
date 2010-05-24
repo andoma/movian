@@ -862,7 +862,6 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
   htsmsg_destroy(m);
 
   prop_set_string(mp->mp_prop_playstatus, "play");
-  prop_destroy_childs(mp->mp_prop_metadata);
 
   while(1) {
     e = mp_dequeue_event(mp);
@@ -890,7 +889,6 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
   }
 
   prop_set_string(mp->mp_prop_playstatus, "stop");
-  prop_destroy_childs(mp->mp_prop_metadata);
   
   m = htsmsg_create_map();
 
@@ -1045,7 +1043,6 @@ htsp_mux_input(htsp_connection_t *hc, htsmsg_t *m)
 
       if(mb_enqueue_no_block(mp, hss->hss_mq, mb))
 	media_buf_free(mb);
-
     }
   }
   hts_mutex_unlock(&hc->hc_subscription_mutex);
@@ -1062,7 +1059,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
   htsp_subscription_t *hs;
   htsmsg_field_t *f;
   htsmsg_t *sub, *streams;
-  const char *type, *txt;
+  const char *type;
   uint32_t idx, s;
   enum CodecID   codec_id;
   enum CodecType codec_type;
@@ -1082,6 +1079,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
   prop_t *metaparent = NULL;
   htsp_subscription_stream_t *hss;
   char titlebuf[64];
+  htsmsg_t *sourceinfo;
 
   prop_t *audio_tracks, *subtitle_tracks, *p;
 
@@ -1089,12 +1087,14 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
     return;
 
   mp = hs->hs_mp;
-  prop_destroy_childs(mp->mp_prop_metadata);
 
   TRACE(TRACE_DEBUG, "HTSP", "Got start notitification");
 
   audio_tracks = prop_create(mp->mp_prop_metadata, "audiostreams");
+  prop_destroy_childs(audio_tracks);
+
   subtitle_tracks = prop_create(mp->mp_prop_metadata, "subtitlestreams");
+  prop_destroy_childs(subtitle_tracks);
 
   p = prop_create(audio_tracks, NULL);
   prop_set_string(prop_create(p, "title"), "Off");
@@ -1104,12 +1104,16 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
   prop_set_string(prop_create(p, "title"), "Off");
   prop_set_string(prop_create(p, "id"), "sub:off");
 
+  if((sourceinfo = htsmsg_get_map(m, "sourceinfo")) != NULL) {
 
-  if((txt = htsmsg_get_str(m, "source")) != NULL)
-    TRACE(TRACE_DEBUG, "HTSP", "Source: %s", txt);
+    char format[256];
 
-  if((txt = htsmsg_get_str(m, "network")) != NULL)
-    TRACE(TRACE_DEBUG, "HTSP", "Network: %s", txt);
+    snprintf(format, sizeof(format), "HTSP TV \"%s\" from \"%s\"",
+	     htsmsg_get_str(sourceinfo, "service") ?: "<?>",
+	     htsmsg_get_str(sourceinfo, "mux") ?: "<?>");
+
+    prop_set_string(prop_create(mp->mp_prop_metadata, "format"), format);
+  }
 
   /**
    * Parse each stream component and add it as a stream at our end
@@ -1320,9 +1324,13 @@ htsp_queueStatus(htsp_connection_t *hc, htsmsg_t *m)
   htsp_subscription_t *hs;
   uint32_t u32;
   uint32_t drops;
+  prop_t *r;
+  media_pipe_t *mp;
 
   if((hs = htsp_find_subscription_by_msg(hc, m)) == NULL)
     return;
+
+  mp = hs->hs_mp;
 
   drops = 0;
   if(!htsmsg_get_u32(m, "Bdrops", &u32))
@@ -1331,6 +1339,17 @@ htsp_queueStatus(htsp_connection_t *hc, htsmsg_t *m)
     drops += u32;
   if(!htsmsg_get_u32(m, "Idrops", &u32))
     drops += u32;
+
+  prop_set_int(prop_create(mp->mp_prop_root, "isRemote"), 1);
+
+  r = prop_create(mp->mp_prop_root, "remote");
+  prop_set_int(prop_create(r, "drops"), drops);
+
+  prop_set_int(prop_create(r, "qlen"),
+	       htsmsg_get_u32_or_default(m, "packets", 0));
+
+  prop_set_int(prop_create(r, "qbytes"),
+	       htsmsg_get_u32_or_default(m, "bytes", 0));
 
   hts_mutex_unlock(&hc->hc_subscription_mutex);
 }
