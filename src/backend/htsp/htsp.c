@@ -67,9 +67,11 @@ typedef struct htsp_connection {
   int hc_seq_generator;
   int hc_sid_generator; /* Subscription ID */
 
-  prop_t *hc_prop_root;
-  prop_t *hc_prop_channels;
-  prop_t *hc_prop_tags;
+  prop_t *hc_channels_source;
+  prop_t *hc_channels_nodes;
+
+  prop_t *hc_tags_source;
+  prop_t *hc_tags_nodes;
 
   hts_mutex_t hc_rpc_mutex;
   hts_cond_t hc_rpc_cond;
@@ -95,18 +97,6 @@ typedef struct htsp_msg {
   uint32_t hm_seq;
   TAILQ_ENTRY(htsp_msg) hm_link;
 } htsp_msg_t;
-
-
-/**
- *
- */
-typedef struct htsp_page {
-  nav_page_t h;
-  
-  htsp_connection_t *hp_hc;
-  
-
-} htsp_page_t;
 
 
 /**
@@ -412,7 +402,7 @@ htsp_channelAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
     return;
 
   snprintf(txt, sizeof(txt), "%d", id);
-  p = prop_create(hc->hc_prop_channels, txt);
+  p = prop_create(hc->hc_channels_nodes, txt);
 
   snprintf(txt, sizeof(txt), "htsp://%s:%d/channel/%d",
 	   hc->hc_hostname, hc->hc_port, id);
@@ -426,7 +416,6 @@ htsp_channelAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
     prop_set_string(prop_create(metadata, "icon"), s);
   if((s = htsmsg_get_str(m, "channelName")) != NULL)
     prop_set_string(prop_create(metadata, "title"), s);
-
 
   if(htsmsg_get_u32(m, "eventId", &id))
     id = 0;
@@ -442,15 +431,12 @@ htsp_channelDelete(htsp_connection_t *hc, htsmsg_t *m)
 {
   char txt[200];
   uint32_t id;
-  prop_t *p;
 
   if(htsmsg_get_u32(m, "channelId", &id))
     return;
 
   snprintf(txt, sizeof(txt), "%d", id);
-  p = prop_create(hc->hc_prop_channels, txt);
-
-  prop_destroy(p);
+  prop_destroy_by_name(hc->hc_channels_nodes, txt);
 }
 
 
@@ -461,26 +447,47 @@ static void
 htsp_tagAddUpdate(htsp_connection_t *hc, htsmsg_t *m)
 {
   const char *id;
-  //  htsmsg_t *members;
-  prop_t *p, *channels;
+  htsmsg_t *members;
+  htsmsg_field_t *f;
+  prop_t *p, *metadata, *l, *before, *nodes;
+  char txt[200];
 
   if((id = htsmsg_get_str(m, "tagId")) == NULL)
     return;
   
-  p = prop_create(hc->hc_prop_tags, id);
+  p = prop_create(hc->hc_tags_nodes, id);
 
-  prop_set_string(prop_create(p, "title"), htsmsg_get_str(m, "tagName"));
-  prop_set_string(prop_create(p, "icon"), htsmsg_get_str(m, "tagIcon"));
-  prop_set_int(prop_create(p, "titledIcon"),
+  snprintf(txt, sizeof(txt), "htsp://%s:%d/tag/%s",
+	   hc->hc_hostname, hc->hc_port, id);
+  
+  prop_set_string(prop_create(p, "url"), txt);
+  prop_set_string(prop_create(p, "type"), "directory");
+
+  metadata = prop_create(p, "metadata");
+
+  prop_set_string(prop_create(metadata, "title"), htsmsg_get_str(m, "tagName"));
+  prop_set_string(prop_create(metadata, "icon"), htsmsg_get_str(m, "tagIcon"));
+  prop_set_int(prop_create(metadata, "titledIcon"),
 	       htsmsg_get_u32_or_default(m, "tagTitledIcon", 0));
 
-  channels = prop_create(p, "channels");
-#if 0
-  if((members = htsmsg_get_array(m, "members")) != NULL)
-    htsp_tag_update_membership(tv, tt, members);
-#endif
-}
+  // Create ordered list of channels in this tag
+  nodes = prop_create(p, "nodes");
+  if((members = htsmsg_get_list(m, "members")) == NULL)
+    return;
 
+  before = NULL;
+
+  TAILQ_FOREACH_REVERSE(f, &members->hm_fields, htsmsg_field_queue, hmf_link) {
+    if(f->hmf_type != HMF_S64)
+      continue;
+
+    snprintf(txt, sizeof(txt), "%lld", f->hmf_s64);
+    l = prop_create(nodes, txt);
+    prop_move(l, before);
+    prop_link(prop_create(hc->hc_channels_nodes, txt), l);
+    before = l;
+  }
+}
 
 
 /**
@@ -527,6 +534,8 @@ htsp_worker_thread(void *aux)
       else if(!strcmp(method, "channelDelete"))
 	htsp_channelDelete(hc, m);
       else if(!strcmp(method, "tagAdd"))
+	htsp_tagAddUpdate(hc, m);
+      else if(!strcmp(method, "tagUpdate"))
 	htsp_tagAddUpdate(hc, m);
       else if(!strcmp(method, "subscriptionStart"))
 	htsp_subscriptionStart(hc, m);
@@ -653,6 +662,7 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
   htsp_connection_t *hc;
   int fd, port;
   char hostname[HOSTNAME_MAX];
+  prop_t *meta, *nodes;
 
   url_split(NULL, 0, NULL, 0, hostname, sizeof(hostname), &port,
 	    path, pathlen, url);
@@ -684,10 +694,27 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
 
   hc = calloc(1, sizeof(htsp_connection_t));
 
-  hc->hc_prop_root = prop_create(NULL, NULL);
-  hc->hc_prop_channels = prop_create(hc->hc_prop_root, "channels");
-  hc->hc_prop_tags = prop_create(hc->hc_prop_root, "tags");
+  hc->hc_tags_source = prop_create(NULL, NULL);
+  hc->hc_tags_nodes  = prop_create(hc->hc_tags_source, "nodes");
+  prop_set_string(prop_create(hc->hc_tags_source, "type"), "directory");
+  meta = prop_create(hc->hc_tags_source, "metadata");
+  prop_set_string(prop_create(meta, "title"), "Channel groups");
+
   
+  nodes = prop_create(hc->hc_tags_source, "nodes");
+
+
+  hc->hc_channels_source = prop_create(nodes, NULL);
+  hc->hc_channels_nodes  = prop_create(hc->hc_channels_source, "nodes");
+  prop_set_string(prop_create(hc->hc_channels_source, "type"), "directory");
+  meta = prop_create(hc->hc_channels_source, "metadata");
+  prop_set_string(prop_create(meta, "title"), "All channels");
+  prop_set_stringf(prop_create(hc->hc_channels_source, "url"),
+		   "htsp://%s:%d/channels", hostname, port);
+  prop_set_string(prop_create(hc->hc_channels_source, "type"),
+		  "directory");
+
+    
   hts_mutex_init(&hc->hc_rpc_mutex);
   hts_cond_init(&hc->hc_rpc_cond);
   TAILQ_INIT(&hc->hc_rpc_queue);
@@ -733,8 +760,8 @@ be_htsp_open(struct navigator *nav, const char *url, const char *view,
 	     char *errbuf, size_t errlen)
 {
   htsp_connection_t *hc;
-  htsp_page_t *hp;
-  prop_t *p, *src;
+  nav_page_t *np;
+  prop_t *p;
   char path[URL_MAX];
 
   if((hc = htsp_connection_find(url, path, sizeof(path), 
@@ -744,49 +771,24 @@ be_htsp_open(struct navigator *nav, const char *url, const char *view,
 
   TRACE(TRACE_DEBUG, "HTSP", "Open %s", url);
 
-#if 0
-  if(path[0] == 0) {
-    hp = nav_page_create(url, sizeof(htsp_page_t), NULL,
-			 NAV_PAGE_DONT_CLOSE_ON_BACK);
-    p = hp->h.np_prop_root;
-  
-    prop_set_string(prop_create(p, "type"), "directory");
-    prop_link(hc->hc_prop_tags, prop_create(p, "nodes"));
-
-  } else if(!strncmp(path, "/tag/", 5)) {
-
-    src = prop_get_by_name(hc->hc_prop_tags, 
-			   (const char *[]){"self", path+5, "nodes", NULL});
-
-    hp = nav_page_create(url, sizeof(htsp_page_t), NULL,
-			 NAV_PAGE_DONT_CLOSE_ON_BACK);
-    p = hp->h.np_prop_root;
-  
-    prop_set_string(prop_create(p, "type"), "directory");
-    if(src != NULL)
-      prop_link(src, prop_create(p, "nodes"));
-
-  } else {
-
-    snprintf(errbuf, errlen, "Invalid URL");
-    return NULL;
-  }
-#endif
-
   if(!strncmp(path, "/channel/", strlen("/channel/")))
     return backend_open_video(nav, url, view, errbuf, errlen);
 
-  hp = nav_page_create(nav, url, view, sizeof(htsp_page_t),
+  np = nav_page_create(nav, url, view, sizeof(nav_page_t),
 		       NAV_PAGE_DONT_CLOSE_ON_BACK);
-  p = hp->h.np_prop_root;
-  
+
+  p = np->np_prop_root;
   prop_set_string(prop_create(p, "view"), "list");
 
-  src = prop_create(p, "source");
-
-  prop_set_string(prop_create(src, "type"), "directory");
-  prop_link(hc->hc_prop_channels, prop_create(src, "nodes"));
-  return &hp->h;
+  if(!strcmp(path, "/channels")) {
+    prop_link(hc->hc_channels_source, prop_create(p, "source"));
+  } else if(!strncmp(path, "/tag/", strlen("/tag/"))) {
+    prop_link(prop_create(hc->hc_tags_nodes, path + strlen("/tag/")),
+	      prop_create(p, "source"));
+  } else {
+    prop_link(hc->hc_tags_source, prop_create(p, "source"));
+  }
+  return np;
 }
 
 
@@ -873,8 +875,15 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
       else if(!strncmp(est->id, "audio:", strlen("audio:")))
 	htsp_set_audio(mp, est->id + strlen("audio:"));
 
+    } else if(event_is_action(e, ACTION_PREV_CHANNEL) ||
+	      event_is_action(e, ACTION_PREV_TRACK)) {
+      //      printf("Prev channel\n");
+    } else if(event_is_action(e, ACTION_NEXT_CHANNEL) ||
+	      event_is_action(e, ACTION_NEXT_TRACK)) {
+      //      printf("Next channel\n");
+
     } else if(event_is_type(e, EVENT_EXIT) ||
-       event_is_type(e, EVENT_PLAY_URL))
+	      event_is_type(e, EVENT_PLAY_URL))
       break;
 
     event_unref(e);
