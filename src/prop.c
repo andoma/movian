@@ -609,7 +609,7 @@ courier_enqueue(prop_sub_t *s, prop_notify_t *n)
   if(s->hps_flags & PROP_SUB_EXPEDITE)
     TAILQ_INSERT_TAIL(&pc->pc_queue_exp, n, hpn_link);
   else
-    TAILQ_INSERT_TAIL(&pc->pc_queue_exp, n, hpn_link);
+    TAILQ_INSERT_TAIL(&pc->pc_queue_nor, n, hpn_link);
   if(pc->pc_run)
     hts_cond_signal(&pc->pc_cond);
   else if(pc->pc_notify != NULL)
@@ -643,27 +643,34 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
   if(s->hps_flags & PROP_SUB_DEBUG) {
     switch(p->hp_type) {
     case PROP_STRING:
-      TRACE(TRACE_DEBUG, "prop", "str(%s) by %s", 
-	    rstr_get(p->hp_rstring), origin);
+      TRACE(TRACE_DEBUG, "prop", "str(%s) by %s%s", 
+	    rstr_get(p->hp_rstring), origin,
+	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
       break;
     case PROP_LINK:
-      TRACE(TRACE_DEBUG, "prop", "link(%s,%s) by %s", 
-	    rstr_get(p->hp_link_rtitle), rstr_get(p->hp_link_rurl), origin);
+      TRACE(TRACE_DEBUG, "prop", "link(%s,%s) by %s%s", 
+	    rstr_get(p->hp_link_rtitle), rstr_get(p->hp_link_rurl), origin,
+	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
       break;
     case PROP_FLOAT:
-      TRACE(TRACE_DEBUG, "prop", "float(%f) by %s", p->hp_float, origin);
+      TRACE(TRACE_DEBUG, "prop", "float(%f) by %s %s%s", p->hp_float, origin,
+	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
       break;
     case PROP_INT:
-      TRACE(TRACE_DEBUG, "prop", "int(%d) by %s", p->hp_int, origin);
+      TRACE(TRACE_DEBUG, "prop", "int(%d) by %s%s", p->hp_int, origin,
+	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
       break;
     case PROP_DIR:
-      TRACE(TRACE_DEBUG, "prop", "dir by %s", origin);
+      TRACE(TRACE_DEBUG, "prop", "dir by %s%s", origin,
+	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
       break;
     case PROP_VOID:
-      TRACE(TRACE_DEBUG, "prop", "void by %s", origin);
+      TRACE(TRACE_DEBUG, "prop", "void by %s%s", origin,
+	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
       break;
     case PROP_PIXMAP:
-      TRACE(TRACE_DEBUG, "prop", "pixmap by %s", origin);
+      TRACE(TRACE_DEBUG, "prop", "pixmap by %s%s", origin,
+	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
       break;
     case PROP_ZOMBIE:
       break;
