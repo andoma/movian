@@ -2,11 +2,15 @@
 #import "theme://include/separators.view"
 
 $view.canSlideShow = $page.view == "images";
+$view.canCoverFlow = ($page.view == "images" ||
+		      $page.view == "albumcollection");
 
+trace("view", $page.view);
 
 $page.glw.curView = devoidify($page.glw.userView, 
 			      translate($page.view, "list",
 					"slideshow", "slideshow",
+					"albumcollection", "coverflow",
 					"images", "coverflow"));
 
 #define TOOLBARCOL() {[0.5, 0.5, 0.5]}
@@ -56,7 +60,7 @@ widget(container_x, {
 	 $page.glw.userView = "list";
        },
        TOOLBARCOL(),
-      $view.canSlideShow);
+      $view.canCoverFlow);
 
   ICON("theme://icons/48x48/Coverflow.png",
        "coverflow",
@@ -64,7 +68,7 @@ widget(container_x, {
 	 $page.glw.userView = "coverflow";
        },
        TOOLBARCOL(),
-       $view.canSlideShow);
+       $view.canCoverFlow);
 
   ICON("theme://icons/48x48/Picture.png",
        "slideshow",

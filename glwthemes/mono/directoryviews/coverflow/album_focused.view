@@ -1,0 +1,22 @@
+#import "theme://include/listitems.view"
+
+widget(container_y, {
+  widget(label, {
+    .sizeScale = 1.5;
+    .align = center;
+    .caption = $self.focused.metadata.artist + " • " +
+      $self.focused.metadata.title;
+  });
+  
+  &view.browse = browse($self.focused.url);
+
+  widget(list_y, {
+    cloner($view.browse.source.nodes, container_z, {
+
+      LIST_ITEM_SIMPLE($self.metadata.title,
+		       "theme://icons/48x48/Music.png",
+		       playTrackFromSource($self, $view.browse.source),
+		       PLATE_COLOR_AUDIO());
+    });
+  });
+});
