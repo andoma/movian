@@ -57,8 +57,10 @@ si_find(struct service_instance_list *services,
 void
 si_destroy(service_instance_t *si)
 {
-  if(si->si_service != NULL)
-    service_destroy(si->si_service);
+  int i;
+  for(i = 0; i < SI_MAX_SERVICES; i++)
+    if(si->si_services[i] != NULL)
+      service_destroy(si->si_services[i]);
 
   free(si->si_id);
   LIST_REMOVE(si, si_link);
@@ -74,12 +76,14 @@ sd_add_service_htsp(service_instance_t *si, const char *name,
 		    const char *host, int port)
 {
   char url[URL_MAX];
- 
-  if(si->si_service != NULL)
+
+
+  if(si->si_services[0] != NULL)
     return;
 
   snprintf(url, sizeof(url), "htsp://%s:%d", host, port);
-  si->si_service = service_create(si->si_id, name, url, SVC_TYPE_TV, NULL, 0);
+  si->si_services[0] =
+    service_create(si->si_id, name, url, SVC_TYPE_TV, NULL, 0);
 }
 
 
@@ -110,7 +114,7 @@ sd_add_service_webdav(service_instance_t *si, const char *name,
   char url[URL_MAX];
   service_type_t type;
 
-  if(si->si_service != NULL)
+  if(si->si_services[0] != NULL)
     return;
 
   snprintf(url, sizeof(url), "webdav://%s:%d%s%s",
@@ -122,7 +126,7 @@ sd_add_service_webdav(service_instance_t *si, const char *name,
   if(type == -1)
     type = SVC_TYPE_OTHER;
 
-  si->si_service = service_create(si->si_id, name, url, type, NULL, 1);
+  si->si_services[0] = service_create(si->si_id, name, url, type, NULL, 1);
 }
 
 /**
