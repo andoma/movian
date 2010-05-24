@@ -135,15 +135,13 @@ widget(container_z, {
 
 	// Now playing info
 	widget(expander_y, {
-	  .expansion = scurve($view.showplaydeck, 0.25);
-	  .alpha     = scurve($view.showplaydeck, 0.25);
+	  .expansion = scurve($view.showplaydeck, 0.3);
 	  
-	  widget(deck, {
-	    cloner($global.media.sources, loader, {
-	      .time = 0.3;
-	      .noInitialTransform = true;
-	      .source = "theme://playdecks/" + $self.type + ".view";
-	    });
+	  widget(loader, {
+	    .time = 0.3;
+	    .effect = blend;
+	    .source = devoidify("theme://playdecks/" +
+				$global.media.current.type + ".view", "");
 	  });
 	});
       });

@@ -9,7 +9,7 @@ widget(backdrop, {
 
     widget(image, {
       .hqScaling = true;
-      .source = devoidify($self.metadata.album_art,
+      .source = devoidify($global.media.current.metadata.album_art,
 			  "theme://icons/48x48/Music.png");
     });
 
@@ -19,18 +19,18 @@ widget(backdrop, {
 
     widget(container_y, {
       widget(label, {
-	.caption = $self.metadata.title;
+	.caption = $global.media.current.metadata.title;
 	.ellipsize = true;
       });
-    
+
       widget(label, {
 	.ellipsize = true;
 	.sizeScale = 0.75;
 	.caption =
-	  select($self.metadata.artist && $self.metadata.album, 
-		 $self.metadata.artist + " • " +  $self.metadata.album,
-		 select($self.metadata.artist, $self.metadata.artist,
-			select($self.metadata.album, $self.metadata.album,
+	  select($global.media.current.metadata.artist && $global.media.current.metadata.album, 
+		 $global.media.current.metadata.artist + " • " +  $global.media.current.metadata.album,
+		 select($global.media.current.metadata.artist, $global.media.current.metadata.artist,
+			select($global.media.current.metadata.album, $global.media.current.metadata.album,
 			       "")));
       });
     });
@@ -38,15 +38,15 @@ widget(backdrop, {
     widget(container_y, {
       widget(label, {
 	.align = right;
-	.caption = value2duration($self.currenttime) + 
-	  select($self.metadata.duration,
-		 " / " + value2duration($self.metadata.duration), "");
+	.caption = value2duration($global.media.current.currenttime) + 
+	  select($global.media.current.metadata.duration,
+		 " / " + value2duration($global.media.current.metadata.duration), "");
       });
 
       widget(label, {
 	.align = right;
 	.sizeScale = 0.75;
-	.caption = "Track " + int2str($self.currentTrack) + " / " + int2str($self.totalTracks);
+	.caption = "Track " + int2str($global.media.current.currentTrack) + " / " + int2str($global.media.current.totalTracks);
       });
     });
   });
