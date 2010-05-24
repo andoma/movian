@@ -930,8 +930,6 @@ player_thread(void *aux)
       update_pq_meta();
       hts_mutex_unlock(&playqueue_mutex);
 
-      prop_unlink(mp->mp_prop_metadata);
-
       /* Drain queues */
       e = mp_wait_for_empty_queues(mp, 0);
       if(e != NULL) {
@@ -945,6 +943,8 @@ player_thread(void *aux)
 	mp_set_url(mp, NULL);
 	mp_shutdown(playqueue_mp);
     
+	prop_unlink(mp->mp_prop_metadata);
+
 	/* ... and wait for an event */
 	e = mp_dequeue_event(playqueue_mp);
       }
