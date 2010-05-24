@@ -1,3 +1,4 @@
+#import "theme://include/separators.view"
 #import "theme://include/defs.view"
 
 // If playstatus is set to stop, close the page
@@ -31,43 +32,122 @@ widget(container_z, {
       });
     });
 
-    widget(label, {
-      .alpha = $view.statsAlpha;
-      .caption = "Source: " + $self.media.metadata.format;
+    widget(container_x, {
+      widget(backdrop, {
+	
+	PLATE_GFX();
+	
+	.alphaSelf = $view.statsAlpha * 0.75;
+	.color = PLATE_COLOR_VIDEO();
+
+	widget(container_y, {
+	  .alpha = $view.statsAlpha;
+
+	  widget(label, {
+	    .caption = "Playback status";
+	    .align = center;
+	  });
+
+	    HORIZONTAL_SEPARATOR();
+  
+	  widget(container_x, {
+
+	    widget(container_y, {
+	      widget(label, {
+		.align = right;
+		.caption = "Source:";
+	      });
+	  
+	      widget(label, {
+		.align = right;
+		.caption = "Video codec:";
+	      });
+	  
+	      widget(label, {
+		.align = right;
+		.caption = "Audio codec:";
+	      });
+	      
+	      widget(label, {
+		.align = right;
+		.caption = "Video queue len:";
+	      });
+
+	      widget(label, {
+		.align = right;
+		.caption = "Audio queue len:";
+	      });
+	  
+	      widget(label, {
+		.align = right;
+		.caption = "Video decode time:";
+	      });
+	  
+	      widget(label, {
+		.align = right;
+		.caption = "A/V diff:";
+	      });
+
+	      widget(label, {
+		.hidden = !$self.media.isRemote;
+		.align = right;
+		.caption = "Remote queue len:";
+	      });
+
+	      widget(label, {
+		.hidden = !$self.media.isRemote;
+		.align = right;
+		.caption = "Remote queue drops:";
+	      });
+	    });
+
+	    widget(dummy, {
+	      .width = 10;
+	    });
+
+	    widget(container_y, {
+	      widget(label, {
+		.caption = $self.media.metadata.format;
+	      });
+	  
+	      widget(label, {
+		.caption = $self.media.video.codec;
+	      });
+	  
+	      widget(label, {
+		.caption = $self.media.audio.codec;
+	      });
+	      
+	      widget(label, {
+		.caption = $self.media.video.dqlen;
+	      });
+
+	      widget(label, {
+		.caption = $self.media.audio.dqlen;
+	      });
+	  
+	      widget(label, {
+		.caption = int2str($self.media.video.decodetime_avg) + " ms";
+	      });
+	  
+	      widget(label, {
+		.caption = int2str($self.media.avdiff * 1000) + " ms";
+	      });
+
+	      widget(label, {
+		.hidden = !$self.media.isRemote;
+		.caption = int2str($self.media.remote.qlen);
+	      });
+
+	      widget(label, {
+		.hidden = !$self.media.isRemote;
+		.caption = int2str($self.media.remote.drops);
+	      });
+
+	    });
+	  });
+	});
+      });
     });
-
-    widget(label, {
-      .alpha = $view.statsAlpha;
-      .caption = "Video codec: " + $self.media.video.codec;
-    });
-
-    widget(label, {
-      .alpha = $view.statsAlpha;
-      .caption = "Audio codec: " + $self.media.audio.codec;
-    });
-
-    widget(label, {
-      .alpha = $view.statsAlpha;
-      .caption = "Video queue len: " + int2str($self.media.video.dqlen);
-    });
-
-    widget(label, {
-      .alpha = $view.statsAlpha;
-      .caption = "Audio queue len: " + int2str($self.media.audio.dqlen);
-    });
-
-    widget(label, {
-      .alpha = $view.statsAlpha;
-      .caption = "Video decode time: " +
-	int2str($self.media.video.decodetime_avg) + " ms";
-    });
-
-    widget(label, {
-      .alpha = $view.statsAlpha;
-      .caption = "A/V diff: " +
-	int2str($self.media.avdiff * 1000) + " ms";
-    });
-
-
   });
 });
