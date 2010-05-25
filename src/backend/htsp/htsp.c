@@ -46,6 +46,7 @@ TAILQ_HEAD(htsp_msg_queue, htsp_msg);
 LIST_HEAD(htsp_subscription_list, htsp_subscription);
 LIST_HEAD(htsp_subscription_stream_list, htsp_subscription_stream);
 LIST_HEAD(htsp_tag_list, htsp_tag);
+TAILQ_HEAD(htsp_channel_queue, htsp_channel);
 
 static struct htsp_connection_list htsp_connections;
 
@@ -58,6 +59,18 @@ typedef struct htsp_tag {
   unsigned int ht_num_channels;
   int32_t *ht_channels;
 } htsp_tag_t;
+
+
+/**
+ *
+ */
+typedef struct htsp_channel {
+  TAILQ_ENTRY(htsp_channel) ch_link;
+  int ch_id;
+  char *ch_title;
+  int ch_channel_num;
+  prop_t *ch_root;
+} htsp_channel_t;
 
 
 /**
@@ -97,8 +110,9 @@ typedef struct htsp_connection {
   hts_mutex_t hc_subscription_mutex;
   struct htsp_subscription_list hc_subscriptions;
 
-  hts_mutex_t hc_tags_mutex;
+  hts_mutex_t hc_meta_mutex;
   struct htsp_tag_list hc_tags;
+  struct htsp_channel_queue hc_channels;
 
 } htsp_connection_t;
 
@@ -401,6 +415,36 @@ update_events(htsp_connection_t *hc, prop_t *metadata, uint32_t id)
 }
 
 
+/**
+ *
+ */
+static htsp_channel_t *
+htsp_channel_get(htsp_connection_t *hc, int id)
+{
+  htsp_channel_t *ch;
+
+  TAILQ_FOREACH(ch, &hc->hc_channels, ch_link)
+    if(ch->ch_id == id)
+      break;
+  return ch;
+}
+
+
+/**
+ *
+ */
+static int 
+channel_compar(htsp_channel_t *a, htsp_channel_t *b)
+{
+  if(a->ch_channel_num == b->ch_channel_num)
+    return strcmp(a->ch_title ?: "", b->ch_title ?: "");
+  if(a->ch_channel_num < b->ch_channel_num)
+    return -1;
+  if(a->ch_channel_num > b->ch_channel_num)
+    return 1;
+  return 0;
+}
+
 
 /**
  *
@@ -409,28 +453,89 @@ static void
 htsp_channelAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
 {
   uint32_t id;
+  int chnum;
   prop_t *p, *metadata;
   char txt[200];
-  const char *s;
+  const char *title, *icon;
+  htsp_channel_t *ch, *n;
 
   if(htsmsg_get_u32(m, "channelId", &id))
     return;
 
-  snprintf(txt, sizeof(txt), "%d", id);
-  p = prop_create(hc->hc_channels_nodes, txt);
+  title = htsmsg_get_str(m, "channelName");
+  icon  = htsmsg_get_str(m, "channelIcon");
+  chnum = htsmsg_get_s32_or_default(m, "channelNumber", -1);
 
-  snprintf(txt, sizeof(txt), "htsp://%s:%d/channel/%d",
-	   hc->hc_hostname, hc->hc_port, id);
-  
-  prop_set_string(prop_create(p, "url"), txt);
-  prop_set_string(prop_create(p, "type"), "tvchannel");
+  if(chnum == 0)
+    chnum = INT32_MAX;
+
+  snprintf(txt, sizeof(txt), "%d", id);
+
+  hts_mutex_lock(&hc->hc_meta_mutex);
+
+  if(create) {
+
+    ch = calloc(1, sizeof(htsp_channel_t));
+    p = ch->ch_root = prop_create(NULL, txt);
+    ch->ch_id = id;
+
+    snprintf(txt, sizeof(txt), "htsp://%s:%d/channel/%d",
+	     hc->hc_hostname, hc->hc_port, id);
+    
+    prop_set_string(prop_create(p, "url"), txt);
+    prop_set_string(prop_create(p, "type"), "tvchannel");
+
+    ch->ch_channel_num = chnum;
+    mystrset(&ch->ch_title, title);
+
+    TAILQ_INSERT_SORTED(&hc->hc_channels, ch, ch_link, channel_compar);
+    n = TAILQ_NEXT(ch, ch_link);
+
+    if(prop_set_parent_ex(p, hc->hc_channels_nodes,
+			  n ? n->ch_root : NULL, NULL))
+      abort();
+
+  } else {
+
+    int move = 0;
+
+    ch = htsp_channel_get(hc, id);
+    if(ch == NULL) {
+      TRACE(TRACE_ERROR, "HTSP", "Got update for unknown channel %d", id);
+      hts_mutex_unlock(&hc->hc_meta_mutex);
+      return;
+    }
+
+    p = ch->ch_root;
+
+    if(title != NULL) {
+      move = 1;
+      mystrset(&ch->ch_title, title);
+    }
+
+    if(chnum != -1) {
+      move = 1;
+      ch->ch_channel_num = chnum;
+    }
+
+    if(move) {
+      TAILQ_REMOVE(&hc->hc_channels, ch, ch_link);
+      TAILQ_INSERT_SORTED(&hc->hc_channels, ch, ch_link, channel_compar);
+      n = TAILQ_NEXT(ch, ch_link);
+      prop_move(p, n ? n->ch_root : NULL);
+    }
+  }
+
+  hts_mutex_unlock(&hc->hc_meta_mutex);
 
   metadata = prop_create(p, "metadata");
+  if(icon != NULL)
+    prop_set_string(prop_create(metadata, "icon"), icon);
+  if(title != NULL)
+    prop_set_string(prop_create(metadata, "title"), title);
+  if(chnum != -1)
+    prop_set_int(prop_create(metadata, "channelNumber"), chnum);
 
-  if((s = htsmsg_get_str(m, "channelIcon")) != NULL)
-    prop_set_string(prop_create(metadata, "icon"), s);
-  if((s = htsmsg_get_str(m, "channelName")) != NULL)
-    prop_set_string(prop_create(metadata, "title"), s);
 
   if(htsmsg_get_u32(m, "eventId", &id))
     id = 0;
@@ -444,14 +549,23 @@ htsp_channelAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
 static void
 htsp_channelDelete(htsp_connection_t *hc, htsmsg_t *m)
 {
-  char txt[200];
   uint32_t id;
+  htsp_channel_t *ch;
 
   if(htsmsg_get_u32(m, "channelId", &id))
     return;
 
-  snprintf(txt, sizeof(txt), "%d", id);
-  prop_destroy_by_name(hc->hc_channels_nodes, txt);
+  hts_mutex_lock(&hc->hc_meta_mutex);
+
+  if((ch = htsp_channel_get(hc, id)) != NULL) {
+    prop_destroy(ch->ch_root);
+    TAILQ_REMOVE(&hc->hc_channels, ch, ch_link);
+    free(ch->ch_title);
+    free(ch);
+  }
+  
+  hts_mutex_unlock(&hc->hc_meta_mutex);
+
 }
 
 
@@ -513,7 +627,7 @@ htsp_tagAddUpdate(htsp_connection_t *hc, htsmsg_t *m)
     num++;
   }
 
-  hts_mutex_lock(&hc->hc_tags_mutex);
+  hts_mutex_lock(&hc->hc_meta_mutex);
 
   LIST_FOREACH(ht, &hc->hc_tags, ht_link) {
     if(!strcmp(ht->ht_id, id))
@@ -530,13 +644,13 @@ htsp_tagAddUpdate(htsp_connection_t *hc, htsmsg_t *m)
   ht->ht_channels = realloc(ht->ht_channels, num * sizeof(int));
 
   i = 0;
-  TAILQ_FOREACH_REVERSE(f, &members->hm_fields, htsmsg_field_queue, hmf_link) {
+  TAILQ_FOREACH(f, &members->hm_fields, hmf_link) {
     if(f->hmf_type != HMF_S64)
       continue;
     ht->ht_channels[i++] = f->hmf_s64;
   }
 
-  hts_mutex_unlock(&hc->hc_tags_mutex);
+  hts_mutex_unlock(&hc->hc_meta_mutex);
 }
 
 
@@ -580,7 +694,7 @@ htsp_worker_thread(void *aux)
       if(!strcmp(method, "channelAdd"))
 	htsp_channelAddUpdate(hc, m, 1);
       else if(!strcmp(method, "channelUpdate"))
-	htsp_channelAddUpdate(hc, m, 1);
+	htsp_channelAddUpdate(hc, m, 0);
       else if(!strcmp(method, "channelDelete"))
 	htsp_channelDelete(hc, m);
       else if(!strcmp(method, "tagAdd"))
@@ -774,7 +888,9 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
   TAILQ_INIT(&hc->hc_worker_queue);
 
   hts_mutex_init(&hc->hc_subscription_mutex);
-  hts_mutex_init(&hc->hc_tags_mutex);
+
+  hts_mutex_init(&hc->hc_meta_mutex);
+  TAILQ_INIT(&hc->hc_channels);
 
   hc->hc_fd = fd;
   hc->hc_seq_generator = 1;
@@ -892,46 +1008,90 @@ htsp_set_audio(media_pipe_t *mp, const char *id)
 /**
  *
  */
+static void
+set_channel(htsp_connection_t *hc, htsp_subscription_t *hs, int chid)
+{
+  htsp_channel_t *ch;
+  hts_mutex_lock(&hc->hc_meta_mutex);
+
+  if((ch = htsp_channel_get(hc, chid)) != NULL) {
+    TRACE(TRACE_DEBUG, "HTSP", "Subscribing to channel %s", ch->ch_title);
+    prop_set_string(prop_create(hs->hs_mp->mp_prop_metadata, "title"),
+		    ch->ch_title);
+  }
+  
+  hts_mutex_unlock(&hc->hc_meta_mutex);
+}
+
+/**
+ *
+ */
 static int
 zap_channel(htsp_connection_t *hc, htsp_subscription_t *hs,
 	    int chid, char *errbuf, size_t errlen, const char *tag, int delta)
 {
   htsp_tag_t *ht;
+  htsp_channel_t *ch;
   int p, newch;
   htsmsg_t *m;
   const char *err;
 
-  if(tag == NULL)
-    return chid;
+  hts_mutex_lock(&hc->hc_meta_mutex);
 
-  hts_mutex_lock(&hc->hc_tags_mutex);
+  if(tag != NULL) {
 
-  LIST_FOREACH(ht, &hc->hc_tags, ht_link)
-    if(!strcmp(ht->ht_id, tag))
-      break;
+    LIST_FOREACH(ht, &hc->hc_tags, ht_link)
+      if(!strcmp(ht->ht_id, tag))
+	break;
   
-  if(ht == NULL) {
-    hts_mutex_unlock(&hc->hc_tags_mutex);
-    return chid;
+    if(ht == NULL) {
+      hts_mutex_unlock(&hc->hc_meta_mutex);
+      return chid;
+    }
+
+    for(p = 0; p < ht->ht_num_channels; p++)
+      if(ht->ht_channels[p] == chid)
+	break;
+
+    if(p == ht->ht_num_channels) {
+      hts_mutex_unlock(&hc->hc_meta_mutex);
+      return chid;
+    }
+
+    p += delta;
+    if(p == -1)
+      p = ht->ht_num_channels - 1;
+    else if(p == ht->ht_num_channels)
+      p = 0;
+
+    newch = ht->ht_channels[p];
+
+  } else {
+
+    if((ch = htsp_channel_get(hc, chid)) == NULL) {
+      hts_mutex_unlock(&hc->hc_meta_mutex);
+      return chid;
+    }
+    
+    if(delta == 1) {
+      if((ch = TAILQ_NEXT(ch, ch_link)) == NULL)
+	ch = TAILQ_FIRST(&hc->hc_channels);
+    } else {
+      if((ch = TAILQ_PREV(ch, htsp_channel_queue, ch_link)) == NULL)
+	ch = TAILQ_LAST(&hc->hc_channels, htsp_channel_queue);
+    }
+
+    if(ch == NULL) {
+      hts_mutex_unlock(&hc->hc_meta_mutex);
+      return chid;
+    }
+
+    newch = ch->ch_id;
   }
 
-  for(p = 0; p < ht->ht_num_channels; p++)
-    if(ht->ht_channels[p] == chid)
-      break;
 
-  if(p == ht->ht_num_channels) {
-    hts_mutex_unlock(&hc->hc_tags_mutex);
-    return chid;
-  }
 
-  p += delta;
-  if(p == -1)
-    p = ht->ht_num_channels - 1;
-  else if(p == ht->ht_num_channels)
-    p = 0;
-
-  newch = ht->ht_channels[p];
-  hts_mutex_unlock(&hc->hc_tags_mutex);
+  hts_mutex_unlock(&hc->hc_meta_mutex);
 
   // Stop current
 
@@ -970,6 +1130,7 @@ zap_channel(htsp_connection_t *hc, htsp_subscription_t *hs,
   }
 
   htsmsg_destroy(m);
+  set_channel(hc, hs, newch);
   return newch;
 }
 
@@ -1006,6 +1167,8 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
   htsmsg_destroy(m);
 
   prop_set_string(mp->mp_prop_playstatus, "play");
+
+  set_channel(hc, hs, chid);
 
   while(1) {
     e = mp_dequeue_event(mp);
@@ -1476,6 +1639,8 @@ htsp_subscriptionStatus(htsp_connection_t *hc, htsmsg_t *m)
     
   if((hs = htsp_find_subscription_by_msg(hc, m)) == NULL)
     return;
+
+  prop_set_string(prop_create(hs->hs_mp->mp_prop_root, "error"), status);
 
   if(status != NULL)
     TRACE(TRACE_ERROR, "HTSP", "%s", status);

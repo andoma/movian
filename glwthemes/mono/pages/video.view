@@ -17,6 +17,15 @@ widget(container_z, {
    */
   widget(container_y, {
 
+    widget(label, {
+      .sizeScale = 2;
+      .alpha = iir(select($self.media.error, 1, 0) ||
+		   changed($self.media.metadata.title, 2, true), 7);
+      .caption = $self.media.metadata.title;
+      .align = center;
+      .ellipsize = true;
+    });
+ 
     widget(container_x, {
       .align = center;
       widget(backdrop, {
@@ -28,6 +37,22 @@ widget(container_z, {
 
 	widget(label, {
 	  .caption = "Seeking to " + value2duration($self.media.seektime);
+	});
+      });
+    });
+
+    widget(container_x, {
+
+      .align = center;
+      widget(backdrop, {
+
+	PLATE_GFX();
+
+	.alpha = iir(select($self.media.error, 1, 0), 8);
+	.color = PLATE_COLOR_ERROR();
+
+	widget(label, {
+	  .caption = $self.media.error;
 	});
       });
     });
