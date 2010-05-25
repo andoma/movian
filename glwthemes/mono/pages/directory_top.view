@@ -5,8 +5,6 @@ $view.canSlideShow = $page.view == "images";
 $view.canCoverFlow = ($page.view == "images" ||
 		      $page.view == "albumcollection");
 
-trace("view", $page.view);
-
 $page.glw.curView = devoidify($page.glw.userView, 
 			      translate($page.view, "list",
 					"slideshow", "slideshow",
