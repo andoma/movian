@@ -101,7 +101,7 @@ video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
   mp->mp_video.mq_seektarget = pos;
   mp->mp_audio.mq_seektarget = pos;
 
-  mp_flush(mp);
+  mp_flush(mp, 0);
   
   if(*mbp != NULL) {
     media_buf_free(*mbp);
@@ -573,7 +573,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   TRACE(TRACE_DEBUG, "Video", "Stopped playback of %s", url);
 
-  mp_flush(mp);
+  mp_flush(mp, 0);
   mp_shutdown(mp);
 
   for(i = 0; i < fctx->nb_streams; i++)

@@ -876,12 +876,12 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
   } else if(event_is_action(e, ACTION_PREV_TRACK)) {
 
     dvdnav_prev_pg_search(dp->dp_dvdnav);
-    mp_flush(mp);
+    mp_flush(mp, 1);
 
   } else if(event_is_action(e, ACTION_NEXT_TRACK)) {
 
     dvdnav_next_pg_search(dp->dp_dvdnav);
-    mp_flush(mp);
+    mp_flush(mp, 1);
 
   } else if(event_is_action(e, ACTION_STOP)) {
     mp_set_playstatus_stop(mp);

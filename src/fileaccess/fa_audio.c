@@ -91,7 +91,7 @@ openspc_play(media_pipe_t *mp, void *fh, char *errbuf, size_t errlen)
 	     event_is_action(e, ACTION_PREV_TRACK) ||
 	     event_is_action(e, ACTION_NEXT_TRACK) ||
 	     event_is_action(e, ACTION_STOP)) {
-	    mp_flush(mp);
+	    mp_flush(mp, 0);
 	    break;
 	  }
 	  event_unref(e);
@@ -120,7 +120,7 @@ openspc_play(media_pipe_t *mp, void *fh, char *errbuf, size_t errlen)
     }
 
     if(event_is_type(e, EVENT_PLAYQUEUE_JUMP)) {
-      mp_flush(mp);
+      mp_flush(mp, 0);
       break;
     } else if(event_is_action(e, ACTION_PLAYPAUSE) ||
 	      event_is_action(e, ACTION_PLAY) ||
@@ -157,7 +157,7 @@ openspc_play(media_pipe_t *mp, void *fh, char *errbuf, size_t errlen)
     } else if(event_is_action(e, ACTION_PREV_TRACK) ||
 	      event_is_action(e, ACTION_NEXT_TRACK) ||
 	      event_is_action(e, ACTION_STOP)) {
-      mp_flush(mp);
+      mp_flush(mp, 0);
       break;
     }
     event_unref(e);
@@ -189,7 +189,7 @@ rescale(AVFormatContext *fctx, int64_t ts, int si)
 static void
 seekflush(media_pipe_t *mp, media_buf_t **mbp)
 {
-  mp_flush(mp);
+  mp_flush(mp, 0);
   
   if(*mbp != NULL) {
     media_buf_free(*mbp);
@@ -300,7 +300,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 	     event_is_action(e, ACTION_PREV_TRACK) ||
 	     event_is_action(e, ACTION_NEXT_TRACK) ||
 	     event_is_action(e, ACTION_STOP)) {
-	    mp_flush(mp);
+	    mp_flush(mp, 0);
 	    break;
 	  }
 	  event_unref(e);
@@ -365,7 +365,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
     if(event_is_type(e, EVENT_PLAYQUEUE_JUMP)) {
 
-      mp_flush(mp);
+      mp_flush(mp, 0);
       break;
 
     } else if(event_is_type(e, EVENT_SEEK)) {
@@ -437,7 +437,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     } else if(event_is_action(e, ACTION_PREV_TRACK) ||
 	      event_is_action(e, ACTION_NEXT_TRACK) ||
 	      event_is_action(e, ACTION_STOP)) {
-      mp_flush(mp);
+      mp_flush(mp, 0);
       break;
     }
     event_unref(e);

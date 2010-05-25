@@ -934,7 +934,7 @@ player_thread(void *aux)
       e = mp_wait_for_empty_queues(mp, 0);
       if(e != NULL) {
 	/* Got event while waiting for drain */
-	mp_flush(mp);
+	mp_flush(mp, 0);
       } else {
 	/* Nothing and media queues empty. */
 

@@ -398,6 +398,10 @@ vd_thread(void *aux)
     case MB_END:
       break;
 
+    case MB_BLACKOUT:
+      vd->vd_frame_deliver(vd, NULL, NULL, 0, 0, 0, 0, 0, 0, 0);
+      break;
+
     default:
       abort();
     }
@@ -422,7 +426,7 @@ vd_thread(void *aux)
 
 
 video_decoder_t *
-video_decoder_create(media_pipe_t *mp,vd_frame_deliver_t *frame_delivery,
+video_decoder_create(media_pipe_t *mp, vd_frame_deliver_t *frame_delivery,
 		     void *opaque)
 {
   video_decoder_t *vd = calloc(1, sizeof(video_decoder_t));

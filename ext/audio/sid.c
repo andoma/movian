@@ -1326,7 +1326,7 @@ be_sidplayer_play(const char *url0, media_pipe_t *mp,
     }
 
     if(event_is_type(e, EVENT_PLAYQUEUE_JUMP)) {
-      mp_flush(mp);
+      mp_flush(mp, 0);
       break;
     } else if(event_is_action(e, ACTION_PLAYPAUSE) ||
 	      event_is_action(e, ACTION_PLAY) ||
@@ -1363,7 +1363,7 @@ be_sidplayer_play(const char *url0, media_pipe_t *mp,
     } else if(event_is_action(e, ACTION_PREV_TRACK) ||
 	      event_is_action(e, ACTION_NEXT_TRACK) ||
 	      event_is_action(e, ACTION_STOP)) {
-      mp_flush(mp);
+      mp_flush(mp, 0);
       break;
     }
     event_unref(e);

@@ -244,6 +244,10 @@ render_video_1f(glw_video_t *gv, video_decoder_t *vd,
 {
   gx_video_frame_t *gvf = (gx_video_frame_t *)vdf;
 
+
+  if(vdf->vdf_width[0] == 0)
+    return;
+  
   GX_LoadPosMtxImm(rc->rc_be.gbr_model_matrix, GX_PNMTX0);
     
  // setup the vertex descriptor
@@ -493,6 +497,23 @@ glw_video_frame_deliver(struct video_decoder *vd,
   int hvec[3], wvec[3];
   int hshift, vshift;
   int i;
+
+  if(data == NULL) {
+    // Blackout
+    hvec[0] = wvec[0] = 0;
+    hvec[1] = wvec[1] = 0;
+    hvec[2] = wvec[2] = 0;
+
+    if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
+      return;
+
+    vdf->vdf_pts = AV_NOPTS_VALUE;
+    vdf->vdf_epoch = epoch;
+    vdf->vdf_duration = 1;
+    vdf->vdf_cutborder = 0;
+    TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
+    return;
+  }
 
   vd->vd_active_frames_needed = 2;
 

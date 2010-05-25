@@ -480,7 +480,7 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
 		 "PulseAudio server -- %s. Playback paused",
 		 pa_strerror(pam->stream_error));
       
-      mp_flush(ab->ab_mp);
+      mp_flush(ab->ab_mp, 0);
       mp_enqueue_event(ab->ab_mp, event_create_type(EVENT_INTERNAL_PAUSE));
 
       audio_fifo_purge(af, NULL, NULL);

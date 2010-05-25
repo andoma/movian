@@ -393,7 +393,7 @@ listdisc(const char *url, char *errstr, size_t errlen)
 static int
 cdseek(media_pipe_t *mp, media_buf_t **mbp, int first, int last, int lsn)
 {
-  mp_flush(mp);
+  mp_flush(mp, 0);
   
   if(*mbp != NULL) {
     media_buf_free(*mbp);
@@ -478,7 +478,7 @@ playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
     }      
 
     if(event_is_type(e, EVENT_PLAYQUEUE_JUMP)) {
-      mp_flush(mp);
+      mp_flush(mp, 0);
       break;
 
     } else if(event_is_type(e, EVENT_SEEK)) {
@@ -542,10 +542,10 @@ playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
     } else if(event_is_action(e, ACTION_PREV_TRACK) ||
 	      event_is_action(e, ACTION_NEXT_TRACK) ||
 	      event_is_action(e, ACTION_STOP)) {
-      mp_flush(mp);
+      mp_flush(mp, 0);
       break;
     } else if(event_is_action(e, ACTION_EJECT)) {
-      mp_flush(mp);
+      mp_flush(mp, 0);
       eject = 1;
       break;
     }

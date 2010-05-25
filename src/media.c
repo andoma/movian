@@ -482,12 +482,11 @@ mq_flush(media_pipe_t *mp, media_queue_t *mq)
 }
 
 
-/*
+/**
  *
  */
-
 void
-mp_flush(media_pipe_t *mp)
+mp_flush(media_pipe_t *mp, int blank)
 {
   media_queue_t *v = &mp->mp_video;
   media_queue_t *a = &mp->mp_audio;
@@ -501,6 +500,10 @@ mp_flush(media_pipe_t *mp)
   if(v->mq_stream >= 0) {
     mb = media_buf_alloc();
     mb->mb_data_type = MB_FLUSH;
+    mb_enq_tail(mp, v, mb);
+
+    mb = media_buf_alloc();
+    mb->mb_data_type = MB_BLACKOUT;
     mb_enq_tail(mp, v, mb);
   }
 
