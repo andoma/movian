@@ -390,6 +390,8 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   if(gcocoa.want_fullscreen != gcocoa.is_fullscreen) {
     gcocoa.is_fullscreen = gcocoa.want_fullscreen;
     
+    glw_set_fullscreen(&gcocoa.gr, gcocoa.is_fullscreen);
+
     if(gcocoa.want_fullscreen) {
       [self fullscreenLoop];
       return;
