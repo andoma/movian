@@ -133,6 +133,9 @@ glw_init_settings(glw_root_t *gr, const char *instance,
 
   gr->gr_pointer_visible = 
     prop_create(gr->gr_uii.uii_prop, "pointerVisible");
+
+  gr->gr_is_fullscreen = 
+    prop_create(gr->gr_uii.uii_prop, "fullscreen");
 }
 
 /**
@@ -1814,4 +1817,14 @@ glw_rctx_init(glw_rctx_t *rc, int width, int height)
   rc->rc_size_x = width;
   rc->rc_size_y = height;
   rc->rc_alpha = 1.0f;
+}
+
+
+/**
+ *
+ */
+void
+glw_set_fullscreen(glw_root_t *gr, int fullscreen)
+{
+  prop_set_int(gr->gr_is_fullscreen, !!fullscreen);
 }

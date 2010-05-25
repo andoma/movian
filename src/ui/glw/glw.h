@@ -454,6 +454,8 @@ typedef struct glw_root {
   struct glw_video_list gr_video_decoders;
   int64_t gr_frame_start;     // Timestamp when we started rendering frame
 
+  prop_t *gr_is_fullscreen;
+
   /**
    * Font renderer
    */
@@ -1124,5 +1126,6 @@ glw_last_widget(glw_t *w)
   return w;
 }
 
+void glw_set_fullscreen(glw_root_t *gr, int fullscreen);
 
 #endif /* GLW_H */

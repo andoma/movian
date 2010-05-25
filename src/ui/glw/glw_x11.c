@@ -639,6 +639,7 @@ window_change_fullscreen(glw_x11_t *gx11)
     if(window_open(gx11, gx11->want_fullscreen))
       exit(1);
   }
+  glw_set_fullscreen(&gx11->gr, gx11->is_fullscreen);
 }
 
 
@@ -885,6 +886,8 @@ glw_x11_mainloop(glw_x11_t *gx11)
   if(!gx11->wm_flags)
     // No window manager, disable screensaver right away
     gx11->sss = x11_screensaver_suspend(gx11->display);
+
+  glw_set_fullscreen(&gx11->gr, gx11->is_fullscreen);
 
   while(1) {
 
