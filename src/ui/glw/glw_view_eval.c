@@ -3383,6 +3383,25 @@ glwf_isReady(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
+static int 
+glwf_suggestFocus(glw_view_eval_context_t *ec, struct token *self,
+		  token_t **argv, unsigned int argc)
+{
+  token_t *a;
+
+  if((a = token_resolve(ec, argv[0])) == NULL)
+    return -1;
+  
+  if(token2bool(a))
+    glw_focus_suggest(ec->w);
+  return 0;
+}
+
+
+
+/**
+ *
+ */
 static const token_func_t funcvec[] = {
   {"widget", 2, glwf_widget},
   {"cloner", -1, glwf_cloner},
@@ -3427,6 +3446,7 @@ static const token_func_t funcvec[] = {
   {"monotime", 0, glwf_monotime},
   {"delay", 3, glwf_delay, glwf_delay_ctor, glwf_delay_dtor},
   {"isReady", 0, glwf_isReady},
+  {"suggestFocus", 1, glwf_suggestFocus},
 };
 
 

@@ -956,7 +956,7 @@ glw_path_in_focus(glw_t *w)
 /**
  *
  */
-static glw_t *
+glw_t *
 glw_focus_by_path(glw_t *w)
 {
   while(w->glw_focused != NULL) {
@@ -1305,6 +1305,21 @@ glw_focus_step(glw_t *w, int forward)
 
   event_unref(e);
   return 1;
+}
+
+
+/**
+ *
+ */
+void
+glw_focus_suggest(glw_t *w)
+{
+  for(; w->glw_parent != NULL; w = w->glw_parent) {
+    if(w->glw_parent->glw_class->gc_suggest_focus != NULL) {
+      w->glw_parent->glw_class->gc_suggest_focus(w->glw_parent, w);
+      break;
+    }
+  }
 }
 
 

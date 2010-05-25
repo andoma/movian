@@ -371,6 +371,11 @@ typedef struct glw_class {
   int (*gc_ready)(struct glw *w);
 
   /**
+   *
+   */
+  void (*gc_suggest_focus)(struct glw *w, struct glw *c);
+
+  /**
    * Send a GLW_SIGNAL_... to all listeners
    */
   glw_callback_t *gc_signal_handler;
@@ -737,6 +742,10 @@ void glw_focus_crawl(glw_t *w, int forward);
 int glw_focus_step(glw_t *w, int forward);
 
 void glw_focus_set_current_by_path(glw_t *w, int interactive);
+
+void glw_focus_suggest(glw_t *w);
+
+glw_t *glw_focus_by_path(glw_t *w);
 
 
 /**

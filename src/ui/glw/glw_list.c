@@ -28,6 +28,8 @@ typedef struct glw_list {
 
   glw_t *scroll_to_me;
 
+  int may_suggest;
+
   glw_slider_metrics_t metrics;
 
   int size_y;
@@ -327,6 +329,7 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
   case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
     l->scroll_to_me = extra;
+    l->may_suggest = 0;
     return 0;
 
   case GLW_SIGNAL_CHILD_CREATED:
@@ -441,6 +444,25 @@ glw_list_set_y(glw_t *w, int init, va_list ap)
   glw_list_set(w, ap);
 }
 
+/**
+ *
+ */
+static void
+glw_list_suggest_focus(glw_t *w, glw_t *c)
+{
+  glw_list_t *l = (glw_list_t *)w;
+
+  if(w->glw_focused == c) {
+    l->may_suggest = 1;
+  } else if(l->may_suggest) {
+    c = glw_focus_by_path(c);
+    if(c != NULL)
+      glw_focus_set(c->glw_root, c, 1);
+    l->may_suggest = 1;
+  }
+}
+
+
 
 static glw_class_t glw_list_x = {
   .gc_name = "list_x",
@@ -454,6 +476,7 @@ static glw_class_t glw_list_x = {
   .gc_set = glw_list_set_x,
   .gc_signal_handler = glw_list_callback_x,
   .gc_escape_score = 100,
+  .gc_suggest_focus = glw_list_suggest_focus,
 };
 
 static glw_class_t glw_list_y = {
@@ -468,6 +491,7 @@ static glw_class_t glw_list_y = {
   .gc_set = glw_list_set_y,
   .gc_signal_handler = glw_list_callback_y,
   .gc_escape_score = 100,
+  .gc_suggest_focus = glw_list_suggest_focus,
 };
 
 GLW_REGISTER_CLASS(glw_list_x);
