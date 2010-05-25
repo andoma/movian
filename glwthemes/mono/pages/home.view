@@ -99,6 +99,10 @@ widget(container_y, {
     BUTTON_SMALL("Stand by", "theme://icons/48x48/Power.png", 
 		 event(Standby), COL(), 
 		 !$global.runcontrol.canStandby, 0.3);
+
+    BUTTON_SMALL("Exit", "theme://icons/48x48/Exit.png", 
+		 event(Quit), COL(), 
+		 $global.runcontrol.canStandby || !$ui.fullscreen, 0.3);
   });
 
   widget(dummy, { .height = 16; });
