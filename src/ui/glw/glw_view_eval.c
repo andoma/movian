@@ -871,7 +871,7 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
     pos = 0;
 
     TAILQ_FOREACH(b, &parent->glw_childs, glw_parent_link) {
-      if(b->glw_originating_prop == p)
+      if(b->glw_originating_prop == before)
 	break;
       pos++;
     }
