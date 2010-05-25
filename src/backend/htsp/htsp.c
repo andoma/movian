@@ -45,8 +45,20 @@ LIST_HEAD(htsp_connection_list, htsp_connection);
 TAILQ_HEAD(htsp_msg_queue, htsp_msg);
 LIST_HEAD(htsp_subscription_list, htsp_subscription);
 LIST_HEAD(htsp_subscription_stream_list, htsp_subscription_stream);
+LIST_HEAD(htsp_tag_list, htsp_tag);
 
 static struct htsp_connection_list htsp_connections;
+
+/**
+ *
+ */
+typedef struct htsp_tag {
+  LIST_ENTRY(htsp_tag) ht_link;
+  char *ht_id;
+  unsigned int ht_num_channels;
+  int32_t *ht_channels;
+} htsp_tag_t;
+
 
 /**
  *
@@ -84,6 +96,9 @@ typedef struct htsp_connection {
 
   hts_mutex_t hc_subscription_mutex;
   struct htsp_subscription_list hc_subscriptions;
+
+  hts_mutex_t hc_tags_mutex;
+  struct htsp_tag_list hc_tags;
 
 } htsp_connection_t;
 
@@ -449,8 +464,10 @@ htsp_tagAddUpdate(htsp_connection_t *hc, htsmsg_t *m)
   const char *id;
   htsmsg_t *members;
   htsmsg_field_t *f;
-  prop_t *p, *metadata, *l, *before, *nodes;
+  prop_t *p, *metadata, *before, *nodes;
   char txt[200];
+  int num = 0, i;
+  htsp_tag_t *ht;
 
   if((id = htsmsg_get_str(m, "tagId")) == NULL)
     return;
@@ -480,13 +497,46 @@ htsp_tagAddUpdate(htsp_connection_t *hc, htsmsg_t *m)
   TAILQ_FOREACH_REVERSE(f, &members->hm_fields, htsmsg_field_queue, hmf_link) {
     if(f->hmf_type != HMF_S64)
       continue;
-
+    
     snprintf(txt, sizeof(txt), "%lld", f->hmf_s64);
-    l = prop_create(nodes, txt);
-    prop_move(l, before);
-    prop_link(prop_create(hc->hc_channels_nodes, txt), l);
-    before = l;
+    prop_t *ch = prop_create(nodes, txt);
+    prop_move(ch, before);
+
+    prop_set_string(prop_create(ch, "type"), "tvchannel");
+    prop_set_stringf(prop_create(ch, "url"), 
+		     "htsp://%s:%d/tagchannel/%s/%lld",
+		     hc->hc_hostname, hc->hc_port, id, f->hmf_s64);
+    prop_t *orig = prop_create(hc->hc_channels_nodes, txt);
+
+    prop_link(prop_create(orig, "metadata"), prop_create(ch, "metadata"));
+    before = ch;
+    num++;
   }
+
+  hts_mutex_lock(&hc->hc_tags_mutex);
+
+  LIST_FOREACH(ht, &hc->hc_tags, ht_link) {
+    if(!strcmp(ht->ht_id, id))
+      break;
+  }
+
+  if(ht == NULL) {
+    ht = calloc(1, sizeof(htsp_tag_t));
+    LIST_INSERT_HEAD(&hc->hc_tags, ht, ht_link);
+    ht->ht_id = strdup(id);
+  }
+
+  ht->ht_num_channels = num;
+  ht->ht_channels = realloc(ht->ht_channels, num * sizeof(int));
+
+  i = 0;
+  TAILQ_FOREACH_REVERSE(f, &members->hm_fields, htsmsg_field_queue, hmf_link) {
+    if(f->hmf_type != HMF_S64)
+      continue;
+    ht->ht_channels[i++] = f->hmf_s64;
+  }
+
+  hts_mutex_unlock(&hc->hc_tags_mutex);
 }
 
 
@@ -723,6 +773,9 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
   hts_cond_init(&hc->hc_worker_cond);
   TAILQ_INIT(&hc->hc_worker_queue);
 
+  hts_mutex_init(&hc->hc_subscription_mutex);
+  hts_mutex_init(&hc->hc_tags_mutex);
+
   hc->hc_fd = fd;
   hc->hc_seq_generator = 1;
   hc->hc_sid_generator = 1;
@@ -761,7 +814,7 @@ be_htsp_open(struct navigator *nav, const char *url, const char *view,
 {
   htsp_connection_t *hc;
   nav_page_t *np;
-  prop_t *p;
+  prop_t *p, *src;
   char path[URL_MAX];
 
   if((hc = htsp_connection_find(url, path, sizeof(path), 
@@ -771,23 +824,29 @@ be_htsp_open(struct navigator *nav, const char *url, const char *view,
 
   TRACE(TRACE_DEBUG, "HTSP", "Open %s", url);
 
-  if(!strncmp(path, "/channel/", strlen("/channel/")))
+  if(!strncmp(path, "/channel/", strlen("/channel/")) ||
+     !strncmp(path, "/tagchannel/", strlen("/tagchannel/")))
     return backend_open_video(nav, url, view, errbuf, errlen);
+
+  if(!strcmp(path, "/channels")) {
+    src = hc->hc_channels_source;
+  } else if(!strncmp(path, "/tag/", strlen("/tag/"))) {
+    src = prop_create(hc->hc_tags_nodes, path + strlen("/tag/"));
+  } else if(!strcmp(path, "")) {
+    src = hc->hc_tags_source;
+  } else {
+    snprintf(errbuf, errlen, "Invalid URL");
+    htsp_connection_deref(hc);
+    return NULL;
+  }
 
   np = nav_page_create(nav, url, view, sizeof(nav_page_t),
 		       NAV_PAGE_DONT_CLOSE_ON_BACK);
 
   p = np->np_prop_root;
   prop_set_string(prop_create(p, "view"), "list");
+  prop_link(src, prop_create(p, "source"));
 
-  if(!strcmp(path, "/channels")) {
-    prop_link(hc->hc_channels_source, prop_create(p, "source"));
-  } else if(!strncmp(path, "/tag/", strlen("/tag/"))) {
-    prop_link(prop_create(hc->hc_tags_nodes, path + strlen("/tag/")),
-	      prop_create(p, "source"));
-  } else {
-    prop_link(hc->hc_tags_source, prop_create(p, "source"));
-  }
   return np;
 }
 
@@ -833,9 +892,94 @@ htsp_set_audio(media_pipe_t *mp, const char *id)
 /**
  *
  */
+static int
+zap_channel(htsp_connection_t *hc, htsp_subscription_t *hs,
+	    int chid, char *errbuf, size_t errlen, const char *tag, int delta)
+{
+  htsp_tag_t *ht;
+  int p, newch;
+  htsmsg_t *m;
+  const char *err;
+
+  if(tag == NULL)
+    return chid;
+
+  hts_mutex_lock(&hc->hc_tags_mutex);
+
+  LIST_FOREACH(ht, &hc->hc_tags, ht_link)
+    if(!strcmp(ht->ht_id, tag))
+      break;
+  
+  if(ht == NULL) {
+    hts_mutex_unlock(&hc->hc_tags_mutex);
+    return chid;
+  }
+
+  for(p = 0; p < ht->ht_num_channels; p++)
+    if(ht->ht_channels[p] == chid)
+      break;
+
+  if(p == ht->ht_num_channels) {
+    hts_mutex_unlock(&hc->hc_tags_mutex);
+    return chid;
+  }
+
+  p += delta;
+  if(p == -1)
+    p = ht->ht_num_channels - 1;
+  else if(p == ht->ht_num_channels)
+    p = 0;
+
+  newch = ht->ht_channels[p];
+  hts_mutex_unlock(&hc->hc_tags_mutex);
+
+  // Stop current
+
+  m = htsmsg_create_map();
+
+  htsmsg_add_str(m, "method", "unsubscribe");
+  htsmsg_add_u32(m, "subscriptionId", hs->hs_sid);
+
+  if((m = htsp_reqreply(hc, m)) == NULL) {
+    snprintf(errbuf, errlen, "Connection with server lost");
+    return -1;
+  }
+  htsmsg_destroy(m);
+
+  hts_mutex_lock(&hc->hc_subscription_mutex);
+  hs->hs_sid = atomic_add(&hc->hc_sid_generator, 1);
+
+  mp_flush(hs->hs_mp, 1);
+  hts_mutex_unlock(&hc->hc_subscription_mutex);
+
+  m = htsmsg_create_map();
+
+  htsmsg_add_str(m, "method", "subscribe");
+  htsmsg_add_u32(m, "channelId", newch);
+  htsmsg_add_u32(m, "subscriptionId", hs->hs_sid);
+
+  if((m = htsp_reqreply(hc, m)) == NULL) {
+    snprintf(errbuf, errlen, "Connection with server lost");
+    return -1;
+  }
+
+  if((err = htsmsg_get_str(m, "error")) != NULL) {
+    snprintf(errbuf, errlen, "From server: %s", err);
+    htsmsg_destroy(m);
+    return -1;
+  }
+
+  htsmsg_destroy(m);
+  return newch;
+}
+
+
+/**
+ *
+ */
 static event_t *
 htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs, 
-		int chid, char *errbuf, size_t errlen)
+		int chid, char *errbuf, size_t errlen, const char *tag)
 {
   event_t *e;
   htsmsg_t *m;
@@ -876,16 +1020,23 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
 
     } else if(event_is_action(e, ACTION_PREV_CHANNEL) ||
 	      event_is_action(e, ACTION_PREV_TRACK)) {
-      //      printf("Prev channel\n");
+
+      chid = zap_channel(hc, hs, chid, errbuf, errlen, tag, -1);
+
     } else if(event_is_action(e, ACTION_NEXT_CHANNEL) ||
 	      event_is_action(e, ACTION_NEXT_TRACK)) {
-      //      printf("Next channel\n");
+
+      chid = zap_channel(hc, hs, chid, errbuf, errlen, tag, 1);
 
     } else if(event_is_type(e, EVENT_EXIT) ||
 	      event_is_type(e, EVENT_PLAY_URL))
       break;
 
     event_unref(e);
+
+    if(chid == -1)
+      return NULL;
+
   }
 
   prop_set_string(mp->mp_prop_playstatus, "stop");
@@ -929,17 +1080,33 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
   char path[URL_MAX];
   htsp_subscription_t *hs;
   event_t *e;
+  char *tag = NULL;
+  int chid;
 
   if((hc = htsp_connection_find(url, path, sizeof(path), 
 				errbuf, errlen)) == NULL) {
     return NULL;
   }
 
-  if(strncmp(path, "/channel/", strlen("/channel/"))) {
-    htsp_connection_deref(hc);
+  if(!strncmp(path, "/channel/", strlen("/channel/"))) {
+    chid = atoi(path + strlen("/channel/"));
+    tag = NULL;
+  } else if(!strncmp(path, "/tagchannel/", strlen("/tagchannel/"))) {
+    tag = mystrdupa(path + strlen("/tagchannel/"));
+    char *x = strrchr(tag, '/');
+    if(x == NULL) {
+      snprintf(errbuf, errlen, "Invalid URL");
+      htsp_connection_deref(hc);
+      return NULL;
+    }
+    *x++ = 0;
+    chid = atoi(x);
+  } else {
     snprintf(errbuf, errlen, "Invalid URL");
+    htsp_connection_deref(hc);
     return NULL;
   }
+
 
   hs = calloc(1, sizeof(htsp_subscription_t));
 
@@ -950,8 +1117,7 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
   LIST_INSERT_HEAD(&hc->hc_subscriptions, hs, hs_link);
   hts_mutex_unlock(&hc->hc_subscription_mutex);
 
-  e = htsp_subscriber(hc, hs, atoi(path + strlen("/channel/")), 
-		      errbuf, errlen);
+  e = htsp_subscriber(hc, hs, chid, errbuf, errlen, tag);
 
   mp_shutdown(mp);
 
@@ -1290,6 +1456,9 @@ htsp_subscriptionStop(htsp_connection_t *hc, htsmsg_t *m)
 
   if((hs = htsp_find_subscription_by_msg(hc, m)) == NULL)
     return;
+  TRACE(TRACE_DEBUG, "HTSP", "Subscription stopped");
+
+  mp_flush(hs->hs_mp, 1);
 
   htsp_free_streams(hs);
   hts_mutex_unlock(&hc->hc_subscription_mutex);
