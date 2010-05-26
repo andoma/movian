@@ -19,7 +19,7 @@
 #include <assert.h>
 #include "glw.h"
 
-#define GLW_FREEFLOAT_MAX_VISIBLE 3
+#define GLW_FREEFLOAT_MAX_VISIBLE 5
 
 typedef struct glw_freefloat {
   glw_t w;
@@ -30,8 +30,10 @@ typedef struct glw_freefloat {
 } glw_freefloat_t;
 
 
-#define glw_parent_v glw_parent_misc[0]
-
+#define glw_parent_v  glw_parent_misc[0]
+#define glw_parent_s  glw_parent_misc[1]
+#define glw_parent_s2 glw_parent_misc[2]
+#define glw_parent_a  glw_parent_misc[3]
 
 /**
  *
@@ -74,6 +76,12 @@ glw_freefloat_render(glw_t *w, glw_rctx_t *rc)
 		   c->glw_parent_pos.y,
 		   -5 + c->glw_parent_v * 5);
 
+    glw_Rotatef(rc, 
+		-30 + c->glw_parent_v * 60,
+		sin(c->glw_parent_a),
+		cos(c->glw_parent_a),
+		0.0);
+
     glw_render0(c, &rc0);
     glw_PopMatrix();
   }
@@ -88,7 +96,10 @@ setup_floater(glw_freefloat_t *ff, glw_t *c)
 {
   ff->xpos++;
   c->glw_parent_v = 0;
+  c->glw_parent_s = 0.001;
+  c->glw_parent_s2 = 0;
 
+  c->glw_parent_a = showtime_get_ts();
   c->glw_parent_pos.x = -1.0 + (ff->xpos % ff->num_visible) * 2 /
     ((float)ff->num_visible - 1);
 
@@ -135,13 +146,15 @@ glw_freefloat_layout(glw_freefloat_t *ff, glw_rctx_t *rc)
     if((c = ff->visible[i]) == NULL)
       continue;
 
-    c->glw_parent_v += 0.001;
-
     if(c->glw_parent_v >= 1) {
       ff->visible[i] = NULL;
     } else {
       glw_layout0(c, rc);
     }
+
+    if(c->glw_class->gc_ready ? c->glw_class->gc_ready(c) : 1)
+      c->glw_parent_v += c->glw_parent_s;
+    c->glw_parent_s += c->glw_parent_s2;
   }
 
   c = ff->pick;
@@ -165,6 +178,8 @@ glw_freefloat_detach(glw_t *w, glw_t *c)
   if(is_visible(ff, c)) {
     // This one is visible, keep it for a while
     
+    c->glw_parent_s2 = 0.001;
+
     if(c == ff->pick)
       ff->pick = TAILQ_NEXT(ff->pick, glw_parent_link);
     
