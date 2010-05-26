@@ -78,8 +78,8 @@ glw_freefloat_render(glw_t *w, glw_rctx_t *rc)
 
     glw_Rotatef(rc, 
 		-30 + c->glw_parent_v * 60,
-		sin(c->glw_parent_a),
-		cos(c->glw_parent_a),
+		fabsf(sin(c->glw_parent_a)),
+		fabsf(cos(c->glw_parent_a)),
 		0.0);
 
     glw_render0(c, &rc0);
