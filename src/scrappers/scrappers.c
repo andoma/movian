@@ -167,6 +167,7 @@ scrapper_artist_init(prop_t *prop, const char *artist)
 
   spa = calloc(1, sizeof(scrap_prop_artist_t));
   spa->spa_artistname = strdup(artist);
+  spa->spa_artistname[strcspn(spa->spa_artistname, ";:,-[]")] = 0;
 
   spa->spa_prop = prop;
   prop_ref_inc(prop);
