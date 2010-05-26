@@ -574,6 +574,8 @@ doscan(scanner_t *s)
     }
   }
 
+  prop_set_int(prop_create(s->s_root, "loading"), 0);
+
   deep_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
 
   if(!fa_notify(s->s_url, s, scanner_notification, scanner_checkstop))
@@ -606,6 +608,8 @@ scanner(void *aux)
     doscan(s);
     fa_dir_free(s->s_fd);
   }
+
+  prop_set_int(prop_create(s->s_root, "loading"), 0);
 
   free(s->s_url);
   free(s->s_playme);
@@ -654,6 +658,8 @@ fa_scanner(const char *url, prop_t *source, prop_t *view, const char *playme)
 
   s->s_url = strdup(url);
   s->s_playme = playme != NULL ? strdup(playme) : NULL;
+
+  prop_set_int(prop_create(source, "loading"), 1);
 
   s->s_root = source;
   prop_ref_inc(s->s_root);
