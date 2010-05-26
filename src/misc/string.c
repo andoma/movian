@@ -534,3 +534,35 @@ strtod_ex(const char *s, char decimal_point_char, char **ep)
   return d;
 }
 
+
+/**
+ *
+ */
+int
+dictcmp(const char *a, const char *b)
+{
+  long int da, db;
+
+  while(1) {
+    switch((*a >= '0' && *a <= '9' ? 1 : 0)|(*b >= '0' && *b <= '9' ? 2 : 0)) {
+    case 0:  /* 0: a is not a digit, nor is b */
+      if(*a != *b)
+	return tolower((int)*(const unsigned char *)a) -
+	  tolower((int)*(const unsigned char *)b);
+      if(*a == 0)
+	return 0;
+      a++;
+      b++;
+      break;
+    case 1:  /* 1: a is a digit,  b is not */
+    case 2:  /* 2: a is not a digit,  b is */
+	return *(const unsigned char *)a - *(const unsigned char *)b;
+    case 3:  /* both are digits, switch to integer compare */
+      da = strtol(a, (char **)&a, 10);
+      db = strtol(b, (char **)&b, 10);
+      if(da != db)
+	return da - db;
+      break;
+    }
+  }
+}

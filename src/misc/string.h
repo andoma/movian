@@ -19,5 +19,6 @@ url_split(char *proto, int proto_size,
 
 double strtod_ex(const char *s, char decimal_point_char, char **ep);
 
+int dictcmp(const char *a, const char *b);
 
 #endif
