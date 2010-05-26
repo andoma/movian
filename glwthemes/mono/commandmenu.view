@@ -182,6 +182,15 @@ widget(container_x, {
 		    PLATE_COLOR_CMDMENU(),
 		    $global.nav.canGoHome);
 
+	      ICON2("theme://icons/48x48/Blank.png",
+		    "Blank",
+		    {
+		      $ui.menu = false;
+		      fireEvent(navOpen("page:idle"));
+		    },
+		    PLATE_COLOR_CMDMENU(),
+		    true);
+
 	      ICON2("theme://icons/48x48/Settings.png",
 		    "Settings",
 		   {

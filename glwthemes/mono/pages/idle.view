@@ -1,0 +1,39 @@
+delta($ui.fullwindow, 0.6 * isVisible());
+
+widget(container_z, {
+
+  widget(freefloat, {
+    cloner($global.media.current.metadata.artist_images, image, {
+      .source = $self.url;
+      .alphaEdges = 3;
+    });
+  });
+
+  widget(container_y, {
+
+    space(1);
+
+    widget(label, {
+      .caption = devoidify($global.media.current.metadata.title, 
+			   "No media loaded");
+      .align = center;
+      .sizeScale = 1;
+    });
+
+    widget(label, {
+      .ellipsize = true;
+      .align = center;
+      .sizeScale = 0.75;
+      .caption =
+	select($global.media.current.metadata.artist && $global.media.current.metadata.album, 
+	       $global.media.current.metadata.artist + " • " +  $global.media.current.metadata.album,
+	       select($global.media.current.metadata.artist, $global.media.current.metadata.artist,
+		      select($global.media.current.metadata.album, $global.media.current.metadata.album,
+			     "")));
+    });
+
+    widget(dummy, {
+      .height = 4;
+    });
+  });
+});

@@ -95,6 +95,13 @@ widget(container_z, {
 		     0.01 * $global.nav.canGoHome,
 		     1.5,
 		     !$ui.topBarTools);
+
+		ICON("theme://icons/48x48/Blank.png",
+		     navOpen("page:idle"),
+		     TOOLBARCOL(),
+		     0.01,
+		     1.5,
+		     !$ui.topBarTools);
 	      });
 
 	      widget(label, {
