@@ -56,8 +56,10 @@ static struct htsp_connection_list htsp_connections;
 typedef struct htsp_tag {
   LIST_ENTRY(htsp_tag) ht_link;
   char *ht_id;
+  char *ht_title;
   unsigned int ht_num_channels;
   int32_t *ht_channels;
+  prop_t *ht_root;
 } htsp_tag_t;
 
 
@@ -437,7 +439,7 @@ static int
 channel_compar(htsp_channel_t *a, htsp_channel_t *b)
 {
   if(a->ch_channel_num == b->ch_channel_num)
-    return strcmp(a->ch_title ?: "", b->ch_title ?: "");
+    return dictcmp(a->ch_title ?: "", b->ch_title ?: "");
   if(a->ch_channel_num < b->ch_channel_num)
     return -1;
   if(a->ch_channel_num > b->ch_channel_num)
@@ -572,29 +574,82 @@ htsp_channelDelete(htsp_connection_t *hc, htsmsg_t *m)
 /**
  *
  */
+static int 
+tag_compar(htsp_tag_t *a, htsp_tag_t *b)
+{
+  return dictcmp(a->ht_title, b->ht_title);
+}
+
+
+/**
+ *
+ */
 static void
-htsp_tagAddUpdate(htsp_connection_t *hc, htsmsg_t *m)
+htsp_tagAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
 {
   const char *id;
   htsmsg_t *members;
   htsmsg_field_t *f;
-  prop_t *p, *metadata, *before, *nodes;
+  prop_t *metadata, *before, *nodes;
   char txt[200];
   int num = 0, i;
-  htsp_tag_t *ht;
-
+  htsp_tag_t *ht, *n;
+  const char *title;
   if((id = htsmsg_get_str(m, "tagId")) == NULL)
     return;
   
-  p = prop_create(hc->hc_tags_nodes, id);
+  title =  htsmsg_get_str(m, "tagName");
 
-  snprintf(txt, sizeof(txt), "htsp://%s:%d/tag/%s",
-	   hc->hc_hostname, hc->hc_port, id);
+  hts_mutex_lock(&hc->hc_meta_mutex);
+
+  if(create) {
+
+    ht = calloc(1, sizeof(htsp_tag_t));
+    ht->ht_id = strdup(id);
+    ht->ht_title = strdup(title ?: "");
+
+    LIST_INSERT_SORTED(&hc->hc_tags, ht, ht_link, tag_compar);
+    n = LIST_NEXT(ht, ht_link);
+
+    ht->ht_root = prop_create(NULL, id);
+
+    snprintf(txt, sizeof(txt), "htsp://%s:%d/tag/%s",
+	     hc->hc_hostname, hc->hc_port, id);
+    
+    prop_set_string(prop_create(ht->ht_root, "url"), txt);
+    prop_set_string(prop_create(ht->ht_root, "type"), "directory");
+
+    if(prop_set_parent_ex(ht->ht_root, hc->hc_tags_nodes,
+			  n ? n->ht_root : NULL, NULL))
+      abort();
+    
+  } else {
+    
+    LIST_FOREACH(ht, &hc->hc_tags, ht_link) {
+      if(!strcmp(ht->ht_id, id))
+	break;
+    }
+    
+    if(ht == NULL) {
+      TRACE(TRACE_ERROR, "HTSP", "Got update for unknown tag %s", id);
+      hts_mutex_unlock(&hc->hc_meta_mutex);
+      return;
+    }
+
+    if(title) {
+      mystrset(&ht->ht_title, title);
+      LIST_REMOVE(ht, ht_link);
+
+      LIST_INSERT_SORTED(&hc->hc_tags, ht, ht_link, tag_compar);
+      n = LIST_NEXT(ht, ht_link);
+      prop_move(ht->ht_root, n ? n->ht_root : NULL);
+
+    }
+  }
+
   
-  prop_set_string(prop_create(p, "url"), txt);
-  prop_set_string(prop_create(p, "type"), "directory");
 
-  metadata = prop_create(p, "metadata");
+  metadata = prop_create(ht->ht_root, "metadata");
 
   prop_set_string(prop_create(metadata, "title"), htsmsg_get_str(m, "tagName"));
   prop_set_string(prop_create(metadata, "icon"), htsmsg_get_str(m, "tagIcon"));
@@ -602,9 +657,11 @@ htsp_tagAddUpdate(htsp_connection_t *hc, htsmsg_t *m)
 	       htsmsg_get_u32_or_default(m, "tagTitledIcon", 0));
 
   // Create ordered list of channels in this tag
-  nodes = prop_create(p, "nodes");
-  if((members = htsmsg_get_list(m, "members")) == NULL)
+  nodes = prop_create(ht->ht_root, "nodes");
+  if((members = htsmsg_get_list(m, "members")) == NULL) {
+    hts_mutex_unlock(&hc->hc_meta_mutex);
     return;
+  }
 
   before = NULL;
 
@@ -627,8 +684,6 @@ htsp_tagAddUpdate(htsp_connection_t *hc, htsmsg_t *m)
     num++;
   }
 
-  hts_mutex_lock(&hc->hc_meta_mutex);
-
   LIST_FOREACH(ht, &hc->hc_tags, ht_link) {
     if(!strcmp(ht->ht_id, id))
       break;
@@ -650,6 +705,36 @@ htsp_tagAddUpdate(htsp_connection_t *hc, htsmsg_t *m)
     ht->ht_channels[i++] = f->hmf_s64;
   }
 
+  hts_mutex_unlock(&hc->hc_meta_mutex);
+}
+
+/**
+ *
+ */
+static void
+htsp_tagDelete(htsp_connection_t *hc, htsmsg_t *m)
+{
+  htsp_tag_t *ht;
+  const char *id;
+
+  if((id = htsmsg_get_str(m, "tagId")) == NULL)
+    return;
+
+  hts_mutex_lock(&hc->hc_meta_mutex);
+
+  LIST_FOREACH(ht, &hc->hc_tags, ht_link)
+    if(!strcmp(ht->ht_id, id))
+      break;
+
+  if(ht != NULL) {
+    LIST_REMOVE(ht, ht_link);
+    free(ht->ht_id);
+    free(ht->ht_title);
+    free(ht->ht_channels);
+    prop_destroy(ht->ht_root);
+    free(ht);
+  }
+  
   hts_mutex_unlock(&hc->hc_meta_mutex);
 }
 
@@ -698,9 +783,11 @@ htsp_worker_thread(void *aux)
       else if(!strcmp(method, "channelDelete"))
 	htsp_channelDelete(hc, m);
       else if(!strcmp(method, "tagAdd"))
-	htsp_tagAddUpdate(hc, m);
+	htsp_tagAddUpdate(hc, m, 1);
       else if(!strcmp(method, "tagUpdate"))
-	htsp_tagAddUpdate(hc, m);
+	htsp_tagAddUpdate(hc, m, 0);
+      else if(!strcmp(method, "tagDelete"))
+	htsp_tagDelete(hc, m);
       else if(!strcmp(method, "subscriptionStart"))
 	htsp_subscriptionStart(hc, m);
       else if(!strcmp(method, "subscriptionStop"))
