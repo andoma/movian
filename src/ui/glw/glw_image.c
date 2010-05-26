@@ -685,8 +685,9 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   if((glt = gi->gi_pending) != NULL) {
     glw_tex_layout(gr, glt);
 
-    if(glt->glt_state == GLT_STATE_VALID) {
-      // Pending texture ready, transfer to current
+    if(glt->glt_state == GLT_STATE_VALID || 
+       glt->glt_state == GLT_STATE_ERROR) {
+      // Pending texture completed, ok or error: transfer to current
 
       if(gi->gi_current != NULL)
 	glw_tex_deref(w->glw_root, gi->gi_current);
@@ -702,7 +703,12 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 
   glw_tex_layout(gr, glt);
 
-  if(glt->glt_state == GLT_STATE_VALID) {
+  if(glt->glt_state == GLT_STATE_ERROR) {
+    if(!gi->gi_was_valid) {
+      glw_signal0(w, GLW_SIGNAL_READY, NULL);
+      gi->gi_was_valid = 1;
+    }
+  } else if(glt->glt_state == GLT_STATE_VALID) {
 
     if(!gi->gi_was_valid) {
       glw_signal0(w, GLW_SIGNAL_READY, NULL);
@@ -960,7 +966,8 @@ glw_image_ready(glw_t *w)
   glw_image_t *gi = (glw_image_t *)w;
   glw_loadable_texture_t *glt = gi->gi_current;
  
-  return glt != NULL && glt->glt_state == GLT_STATE_VALID;
+  return glt != NULL && (glt->glt_state == GLT_STATE_VALID || 
+			 glt->glt_state == GLT_STATE_ERROR);
 }
 
 
