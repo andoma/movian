@@ -1015,6 +1015,7 @@ typedef struct album {
   int duration;
   int tracks;
   int firsttrack;
+  sp_albumtype type;
 } album_t;
 
 
@@ -1026,6 +1027,11 @@ album_cmp(const void *A, const void *B)
 {
   const album_t *a = A;
   const album_t *b = B;
+
+  if(a->type < b->type)
+    return -1;
+  if(a->type > b->type)
+    return 1;
   
   if(f_sp_album_year(a->album) > f_sp_album_year(b->album))
     return -1;
@@ -1067,6 +1073,17 @@ artist_add_album_tracks(sp_artistbrowse *result, int first, int num,
 /**
  *
  */
+static sp_albumtype
+my_album_type(sp_album *alb, sp_artist *a0)
+{
+  return f_sp_album_artist(alb) != a0 ?
+    SP_ALBUMTYPE_COMPILATION : f_sp_album_type(alb);
+}
+
+
+/**
+ *
+ */
 static void
 spotify_browse_artist_callback(sp_artistbrowse *result, void *userdata)
 {
@@ -1102,6 +1119,7 @@ spotify_browse_artist_callback(sp_artistbrowse *result, void *userdata)
       continue;
 
     if(album != prev) {
+      av[j].type = my_album_type(album, artist);
       av[j].duration = 0;
       av[j].tracks = 0;
       av[j].firsttrack = i;
