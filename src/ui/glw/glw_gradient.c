@@ -62,6 +62,14 @@ glw_gradient_render(glw_t *w, glw_rctx_t *rc)
   glw_gradient_t *gg = (void *)w;
   float a = rc->rc_alpha * w->glw_alpha;
 
+  if(gg->gg_col1[0] < 0.001 &&
+     gg->gg_col1[1] < 0.001 &&
+     gg->gg_col1[2] < 0.001 &&
+     gg->gg_col2[0] < 0.001 &&
+     gg->gg_col2[1] < 0.001 &&
+     gg->gg_col2[2] < 0.001) {
+    return;
+  }
   if(a > 0.01) {
     glw_render(&gg->gg_gr, w->glw_root, rc, 
 	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
@@ -198,6 +206,9 @@ glw_gradient_set(glw_t *w, int init, va_list ap)
       gg->gg_col1[0] = va_arg(ap, double);
       gg->gg_col1[1] = va_arg(ap, double);
       gg->gg_col1[2] = va_arg(ap, double);
+      gg->gg_col1[0] = GLW_CLAMP(gg->gg_col1[0], 0, 1);
+      gg->gg_col1[1] = GLW_CLAMP(gg->gg_col1[1], 0, 1);
+      gg->gg_col1[2] = GLW_CLAMP(gg->gg_col1[2], 0, 1);
       gg->gg_repaint = 1;
       break;
 
@@ -205,6 +216,9 @@ glw_gradient_set(glw_t *w, int init, va_list ap)
       gg->gg_col2[0] = va_arg(ap, double);
       gg->gg_col2[1] = va_arg(ap, double);
       gg->gg_col2[2] = va_arg(ap, double);
+      gg->gg_col2[0] = GLW_CLAMP(gg->gg_col2[0], 0, 1);
+      gg->gg_col2[1] = GLW_CLAMP(gg->gg_col2[1], 0, 1);
+      gg->gg_col2[2] = GLW_CLAMP(gg->gg_col2[2], 0, 1);
       gg->gg_repaint = 1;
       break;
 
