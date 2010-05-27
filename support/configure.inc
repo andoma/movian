@@ -57,6 +57,8 @@ CONFIG_LIST="
  serdev
  ssl
  librtmp
+ libx11
+ libxext
 "
 
 die() {
