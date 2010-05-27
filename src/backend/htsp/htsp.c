@@ -669,13 +669,13 @@ htsp_tagAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
     if(f->hmf_type != HMF_S64)
       continue;
     
-    snprintf(txt, sizeof(txt), "%lld", f->hmf_s64);
+    snprintf(txt, sizeof(txt), "%" PRId64, f->hmf_s64);
     prop_t *ch = prop_create(nodes, txt);
     prop_move(ch, before);
 
     prop_set_string(prop_create(ch, "type"), "tvchannel");
     prop_set_stringf(prop_create(ch, "url"), 
-		     "htsp://%s:%d/tagchannel/%s/%lld",
+		     "htsp://%s:%d/tagchannel/%s/%" PRId64,
 		     hc->hc_hostname, hc->hc_port, id, f->hmf_s64);
     prop_t *orig = prop_create(hc->hc_channels_nodes, txt);
 

@@ -259,7 +259,7 @@ xmlrpc_write_field(htsbuf_queue_t *q, htsmsg_field_t *f,
 {
   switch(f->hmf_type) {
   case HMF_S64:
-    htsbuf_qprintf(q, "%s<value><int>%lld</int></value>%s\n",
+    htsbuf_qprintf(q, "%s<value><int>%"PRId64"</int></value>%s\n",
 		   pre, f->hmf_s64, post);
     break;
 
