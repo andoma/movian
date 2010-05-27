@@ -816,12 +816,11 @@ glw_link_render_list(glw_t *w, glw_t *c)
 
 #define GLW_ATTRIB_CHEW(attrib, ap)		\
 do {						\
-  switch(attrib) {				\
+  switch((unsigned int)attrib) {		\
   case GLW_ATTRIB_END:				\
     break;					\
-  case GLW_ATTRIB_num:                          \
+  case GLW_ATTRIB_num ... UINT32_MAX:           \
     abort();                                    \
-    break;                                      \
   case GLW_ATTRIB_SIGNAL_HANDLER:               \
     (void)va_arg(ap, void *);			\
     (void)va_arg(ap, void *);			\
