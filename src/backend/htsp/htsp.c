@@ -187,7 +187,7 @@ htsp_recv(htsp_connection_t *hc)
 
   buf = malloc(l);
 
-  if(tcp_read(fd, buf, l, 1) < 0) {
+  if(buf == NULL || tcp_read(fd, buf, l, 1) < 0) {
     free(buf);
     return NULL;
   }
@@ -893,10 +893,13 @@ htsp_thread(void *aux)
 
     while(1) {
 
-      if((m = htsp_recv(hc)) == NULL)
+      if((m = htsp_recv(hc)) == NULL) {
+	TRACE(TRACE_ERROR, "HTSP", "Read failed");
 	break;
+      }
       htsp_msg_dispatch(hc, m);
     }
+    abort(); // We cant handle this now
   }
   return NULL;
 }
@@ -1716,8 +1719,6 @@ htsp_subscriptionStop(htsp_connection_t *hc, htsmsg_t *m)
   if((hs = htsp_find_subscription_by_msg(hc, m)) == NULL)
     return;
   TRACE(TRACE_DEBUG, "HTSP", "Subscription stopped");
-
-  mp_flush(hs->hs_mp, 1);
 
   htsp_free_streams(hs);
   hts_mutex_unlock(&hc->hc_subscription_mutex);
