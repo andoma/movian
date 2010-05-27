@@ -869,6 +869,7 @@ glw_image_set(glw_t *w, int init, va_list ap)
       
 
     case GLW_ATTRIB_SET_FLAGS:
+      (void)va_arg(ap, int);
       glw_image_update_constraints((glw_image_t *)w);
       break;
 
