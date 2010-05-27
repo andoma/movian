@@ -18,6 +18,8 @@
 
 include ${CURDIR}/config.default
 
+OPTFLAGS ?= -O2
+
 BUILDDIR = build.${PLATFORM}
 
 include ${BUILDDIR}/config.mak
@@ -141,7 +143,7 @@ SRCS += ext/video/yadif.c
 # Temporary fix for http://gcc.gnu.org/bugzilla/show_bug.cgi?id=11203
 # -OO will result in compiler error
 ifeq ($(PLATFORM), osx)
-${BUILDDIR}/ext/video/yadif.o : CFLAGS = -O2
+${BUILDDIR}/ext/video/yadif.o : CFLAGS = ${OPTFLAGS}
 endif
 
 
@@ -298,7 +300,7 @@ SRCS-$(CONFIG_LIBRTMP) +=	ext/rtmpdump/librtmp/amf.c \
 				ext/rtmpdump/librtmp/rtmp.c \
 				ext/rtmpdump/librtmp/parseurl.c \
 
-${BUILDDIR}/ext/rtmpdump/%.o : CFLAGS = -O2
+${BUILDDIR}/ext/rtmpdump/%.o : CFLAGS = ${OPTFLAGS}
 SRCS-$(CONFIG_LIBRTMP)  +=      src/backend/rtmp/rtmp.c
 ${BUILDDIR}/src/backend/rtmp/rtmp.o : CFLAGS = -Wall -Werror -Iext/rtmpdump
 
@@ -377,7 +379,7 @@ OBJDIRS+= $(sort $(dir $(BUNDLE_OBJS)))
 .PRECIOUS: ${BUNDLE_SRCS}
 
 # Common CFLAGS for all files
-CFLAGS_com  = -g -funsigned-char -O2
+CFLAGS_com  = -g -funsigned-char ${OPTFLAGS}
 CFLAGS_com += -D_FILE_OFFSET_BITS=64
 CFLAGS_com += -I${BUILDDIR} -I${CURDIR}/src -I${CURDIR}
 
