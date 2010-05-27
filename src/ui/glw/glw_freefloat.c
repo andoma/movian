@@ -27,6 +27,7 @@ typedef struct glw_freefloat {
   int num_visible;
   glw_t *pick;
   glw_t *visible[GLW_FREEFLOAT_MAX_VISIBLE];
+  int rand;
 } glw_freefloat_t;
 
 
@@ -103,7 +104,9 @@ setup_floater(glw_freefloat_t *ff, glw_t *c)
   c->glw_parent_pos.x = -1.0 + (ff->xpos % ff->num_visible) * 2 /
     ((float)ff->num_visible - 1);
 
-  c->glw_parent_pos.y = drand48() * 2.0 - 1.0;
+  ff->rand = ff->rand * 1664525 + 1013904223;
+
+  c->glw_parent_pos.y = (ff->rand & 0xffff) / 32768.0 - 1.0;
 }
 
 
@@ -226,8 +229,10 @@ glw_freefloat_set(glw_t *w, int init, va_list ap)
 {
   glw_freefloat_t *ff = (glw_freefloat_t *)w;
 
-  if(init)
+  if(init) {
+    ff->rand = showtime_get_ts();
     ff->num_visible = GLW_FREEFLOAT_MAX_VISIBLE;
+  }
 }
 
 
