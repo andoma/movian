@@ -46,12 +46,14 @@ video_player_idle(void *aux)
     
 
     if(event_is_type(e, EVENT_PLAY_URL)) {
+      event_playurl_t *ep = (event_playurl_t *)e;
 
-      next = backend_play_video(e->e_payload, mp, errbuf, sizeof(errbuf));
+      next = backend_play_video(ep->url, mp, ep->primary, 
+				errbuf, sizeof(errbuf));
 
       if(next == NULL)
 	notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nError: %s", 
-		   e->e_payload, errbuf);
+		   ep->url, errbuf);
 
       event_unref(e);
       e = next;

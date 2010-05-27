@@ -154,7 +154,7 @@ vo_set_url(void *opaque, const char *url)
   if(url == NULL)
     return;
 
-  e = event_create_url(EVENT_PLAY_URL, url);
+  e = event_create_playurl(url, 1);
   mp_enqueue_event(vo->vo_mp, e);
   event_unref(e);
 }

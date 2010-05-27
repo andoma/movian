@@ -1227,7 +1227,8 @@ zap_channel(htsp_connection_t *hc, htsp_subscription_t *hs,
  */
 static event_t *
 htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs, 
-		int chid, char *errbuf, size_t errlen, const char *tag)
+		int chid, char *errbuf, size_t errlen, const char *tag,
+		int primary)
 {
   event_t *e;
   htsmsg_t *m;
@@ -1254,6 +1255,11 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
   htsmsg_destroy(m);
 
   prop_set_string(mp->mp_prop_playstatus, "play");
+
+  if(primary)
+    mp_become_primary(mp);
+  else
+    mp_init_audio(mp);
 
   set_channel(hc, hs, chid);
 
@@ -1323,7 +1329,7 @@ htsp_free_streams(htsp_subscription_t *hs)
  *
  */
 static event_t *
-be_htsp_playvideo(const char *url, media_pipe_t *mp,
+be_htsp_playvideo(const char *url, media_pipe_t *mp, int primary,
 		  char *errbuf, size_t errlen)
 {
   htsp_connection_t *hc;
@@ -1332,6 +1338,11 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
   event_t *e;
   char *tag = NULL;
   int chid;
+
+
+  TRACE(TRACE_DEBUG, "HTSP",
+	"Starting video playback %s, primary=%s",
+	url, primary ? "yes" : "no");
 
   if((hc = htsp_connection_find(url, path, sizeof(path), 
 				errbuf, errlen)) == NULL) {
@@ -1367,7 +1378,7 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
   LIST_INSERT_HEAD(&hc->hc_subscriptions, hs, hs_link);
   hts_mutex_unlock(&hc->hc_subscription_mutex);
 
-  e = htsp_subscriber(hc, hs, chid, errbuf, errlen, tag);
+  e = htsp_subscriber(hc, hs, chid, errbuf, errlen, tag, primary);
 
   mp_shutdown(mp);
 
@@ -1689,8 +1700,6 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
   TRACE(TRACE_DEBUG, "HTSP", "Selecting Video-stream:%d, Audio-stream: %d, "
 	"Subtitle-stream: %d",
 	vstream, astream, sstream);
-
-  mp_become_primary(mp);
 
   hts_mutex_unlock(&hc->hc_subscription_mutex);
 }

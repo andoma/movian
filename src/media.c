@@ -791,13 +791,22 @@ mp_set_primary(media_pipe_t *mp)
 
 
 /**
+ *
+ */
+void 
+mp_init_audio(struct media_pipe *mp)
+{
+  if(mp->mp_audio_decoder == NULL)
+    mp->mp_audio_decoder = audio_decoder_create(mp);
+}
+
+/**
  * 
  */
 void
 mp_become_primary(struct media_pipe *mp)
 {
-  if(mp->mp_audio_decoder == NULL)
-    mp->mp_audio_decoder = audio_decoder_create(mp);
+  mp_init_audio(mp);
     
   if(media_primary == mp)
     return;

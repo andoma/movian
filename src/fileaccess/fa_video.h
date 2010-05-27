@@ -21,7 +21,7 @@
 
 #include "media.h"
 
-event_t *be_file_playvideo(const char *url, media_pipe_t *mp,
+event_t *be_file_playvideo(const char *url, media_pipe_t *mp, int primary,
 			   char *errbuf, size_t errlen);
 
 #endif /* FA_VIDEO_H */

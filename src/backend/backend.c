@@ -63,7 +63,7 @@ backend_init(void)
  */
 event_t *
 backend_play_video(const char *url, struct media_pipe *mp,
-		   char *errbuf, size_t errlen)
+		   int primary, char *errbuf, size_t errlen)
 {
   backend_t *nb = backend_canhandle(url);
   
@@ -71,7 +71,7 @@ backend_play_video(const char *url, struct media_pipe *mp,
     snprintf(errbuf, errlen, "No backend for URL");
     return NULL;
   }
-  return nb->be_play_video(url, mp, errbuf, errlen);
+  return nb->be_play_video(url, mp, primary, errbuf, errlen);
 }
 
 

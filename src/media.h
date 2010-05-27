@@ -286,6 +286,8 @@ void mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u);
 
 void mp_become_primary(struct media_pipe *mp);
 
+void mp_init_audio(struct media_pipe *mp);
+
 void mp_shutdown(struct media_pipe *mp);
 
 void nice_codec_name(char *buf, int len, AVCodecContext *ctx);

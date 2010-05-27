@@ -440,7 +440,7 @@ add_off_stream(prop_t *prop, const char *id)
  *
  */
 event_t *
-be_file_playvideo(const char *url, media_pipe_t *mp,
+be_file_playvideo(const char *url, media_pipe_t *mp, int primary,
 		  char *errbuf, size_t errlen)
 {
   AVFormatContext *fctx;

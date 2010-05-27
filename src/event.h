@@ -174,6 +174,17 @@ typedef struct event_openurl {
 } event_openurl_t;
 
 
+
+/**
+ *
+ */
+typedef struct event_playurl {
+  event_t h;
+  char *url;
+  int primary;
+} event_playurl_t;
+
+
 /**
  *
  */
@@ -227,6 +238,8 @@ void event_initqueue(event_queue_t *eq);
 void event_flushqueue(event_queue_t *eq);
 
 event_t *event_create_url(event_type_t et, const char *url);
+
+event_t *event_create_playurl(const char *url, int primary);
 
 event_t *event_create_openurl(const char *url, const char *view);
 

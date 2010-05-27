@@ -92,6 +92,8 @@ typedef enum {
   GLW_ATTRIB_CLR_IMAGE_FLAGS,
   GLW_ATTRIB_SET_TEXT_FLAGS,
   GLW_ATTRIB_CLR_TEXT_FLAGS,
+  GLW_ATTRIB_SET_VIDEO_FLAGS,
+  GLW_ATTRIB_CLR_VIDEO_FLAGS,
   GLW_ATTRIB_ID,
   GLW_ATTRIB_RGB,
   GLW_ATTRIB_TIME,
@@ -168,6 +170,10 @@ typedef enum {
 #define GLW_IMAGE_STRETCH_Y     0x100
 #define GLW_IMAGE_HQ_SCALING    0x200
 
+/**
+ * Video flags
+ */
+#define GLW_VIDEO_PRIMARY       0x1
 
 typedef enum {
   GLW_POINTER_LEFT_PRESS,
@@ -847,6 +853,8 @@ do {						\
   case GLW_ATTRIB_CLR_IMAGE_FLAGS:              \
   case GLW_ATTRIB_SET_TEXT_FLAGS:               \
   case GLW_ATTRIB_CLR_TEXT_FLAGS:               \
+  case GLW_ATTRIB_SET_VIDEO_FLAGS:              \
+  case GLW_ATTRIB_CLR_VIDEO_FLAGS:              \
   case GLW_ATTRIB_TRANSITION_EFFECT:            \
   case GLW_ATTRIB_CHILD_TILES_X:                \
   case GLW_ATTRIB_CHILD_TILES_Y:                \

@@ -296,6 +296,18 @@ set_text_flag(glw_view_eval_context_t *ec, const token_attrib_t *a,
  *
  */
 static int
+set_video_flag(glw_view_eval_context_t *ec, const token_attrib_t *a, 
+	       struct token *t)
+{
+  return set_flag(ec, a, t, GLW_ATTRIB_SET_VIDEO_FLAGS,
+		  GLW_ATTRIB_CLR_VIDEO_FLAGS);
+}
+
+
+/**
+ *
+ */
+static int
 set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
 	   struct token *t)
 {
@@ -359,6 +371,7 @@ static const token_attrib_t attribtab[] = {
   {"password",        set_text_flag,  GTB_PASSWORD},
   {"ellipsize",       set_text_flag,  GTB_ELLIPSIZE},
 
+  {"primary",         set_video_flag, GLW_VIDEO_PRIMARY},
 
   {"alpha",           set_float,  GLW_ATTRIB_ALPHA},
   {"alphaSelf",       set_float,  GLW_ATTRIB_ALPHA_SELF},

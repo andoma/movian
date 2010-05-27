@@ -583,13 +583,13 @@ glw_video_sub_layout(video_decoder_t *vd, glw_video_overlay_t *gvo,
  *
  */
 static void
-glw_video_set_source(glw_video_t *gv, const char *url)
+glw_video_set_source(glw_video_t *gv, const char *url, int primary)
 {
   event_t *e;
   
   mystrset(&gv->gv_current_url, url);
 
-  e = event_create_url(EVENT_PLAY_URL, url);
+  e = event_create_playurl(url, primary);
   mp_enqueue_event(gv->gv_mp, e);
   event_unref(e);
 }
@@ -653,7 +653,8 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 	rc = extra;
 
 	if(!rc->rc_final) {
-	  glw_video_set_source(gv, gv->gv_pending_url);
+	  glw_video_set_source(gv, gv->gv_pending_url,
+			       !!(gv->gv_flags & GLW_VIDEO_PRIMARY));
 	  mystrset(&gv->gv_pending_url, NULL);
 	}
 
@@ -696,9 +697,10 @@ glw_video_set(glw_t *w, int init, va_list ap)
   glw_attribute_t attrib;
   const char *filename = NULL;
   prop_t *p, *p2;
+  int f;
+
 
   if(init) {
-
     gv->gv_mp = mp_create("Video decoder", "video", MP_VIDEO);
 
     LIST_INSERT_HEAD(&gr->gr_video_decoders, gv, gv_global_link);
@@ -718,6 +720,28 @@ glw_video_set(glw_t *w, int init, va_list ap)
       filename = va_arg(ap, char *);
       break;
 
+    case GLW_ATTRIB_SET_VIDEO_FLAGS:
+      f = va_arg(ap, int) & ~gv->gv_flags;
+      gv->gv_flags |= f;
+      break;
+
+    case GLW_ATTRIB_CLR_VIDEO_FLAGS:
+      f = va_arg(ap, int) & gv->gv_flags;
+      gv->gv_flags &= ~f;
+      break;
+
+    case GLW_ATTRIB_FREEZE:
+      gv->gv_freezed = va_arg(ap, int);
+
+      if(gv->gv_pending_url && gv->gv_pending_url) {
+	glw_video_set_source(gv, gv->gv_pending_url, 
+			     !!(gv->gv_flags & GLW_VIDEO_PRIMARY));
+	mystrset(&gv->gv_pending_url, NULL);
+	gv->gv_pending_set_source_cnt = 0;
+      }
+
+      break;
+
     case GLW_ATTRIB_PROPROOTS:
       p = va_arg(ap, void *);
 
@@ -735,12 +759,11 @@ glw_video_set(glw_t *w, int init, va_list ap)
   } while(attrib);
 
   if(filename != NULL && filename[0] != 0) {
-
-    if(gv->gv_current_url == NULL) {
-      glw_video_set_source(gv, filename);
-    } else {
+    if(gv->gv_freezed) {
       gv->gv_pending_set_source_cnt = 5;
       mystrset(&gv->gv_pending_url, filename);
+    } else {
+      glw_video_set_source(gv, filename, !!(gv->gv_flags & GLW_VIDEO_PRIMARY));
     }
   }
 }

@@ -221,6 +221,31 @@ event_create_url(event_type_t et, const char *url)
  *
  */
 static void
+event_playurl_dtor(event_t *e)
+{
+  event_playurl_t *ep = (void *)e;
+  free(ep->url);
+  free(ep);
+}
+
+/**
+ *
+ */
+event_t *
+event_create_playurl(const char *url, int primary)
+{
+  event_playurl_t *ep =  event_create(EVENT_PLAY_URL, sizeof(event_playurl_t));
+  ep->url = strdup(url);
+  ep->primary = primary;
+  ep->h.e_dtor = event_playurl_dtor;
+  return &ep->h;
+}
+
+
+/**
+ *
+ */
+static void
 event_openurl2_dtor(event_t *e)
 {
   event_openurl_t *ou = (void *)e;
