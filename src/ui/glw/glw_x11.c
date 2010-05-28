@@ -748,7 +748,7 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
     while((n = mbrtowc(&wc, s, len, &ps)) > 0) {
       strncpy(buf, s, n);
       buf[n] = '\0';
-      e = event_create_unicode(wc);
+      e = event_create_int(EVENT_UNICODE, wc);
 
       glw_x11_dispatch_event(&gx11->gr.gr_uii, e);
       s += n;
@@ -771,7 +771,7 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
       if(c < 32 || c == 127)
 	break;
 
-      e = event_create_unicode(c);
+      e = event_create_int(EVENT_UNICODE, c);
       break;
     }
   }

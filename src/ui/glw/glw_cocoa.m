@@ -665,7 +665,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
     NSString *su = [[NSString alloc] initWithCharacters:&uc length:1];
     event_t *e = NULL;
     
-    e = event_create_unicode(uc);
+    e = event_create_int(EVENT_UNICODE, uc);
     glw_cocoa_dispatch_event(&gcocoa.gr.gr_uii, e);
     [su release];
   }
@@ -699,7 +699,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   int i;
   
   if((mod & ~NSShiftKeyMask) == 0 && (c == _NSSpaceKey || isgraph(c))) {
-    e = event_create_unicode(c);
+    e = event_create_int(EVENT_UNICODE, c);
   } else {
     for(i = 0; i < sizeof(keysym2action) / sizeof(keysym2action[0]); i++) {
       if(keysym2action[i].key == cim &&

@@ -810,7 +810,7 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
 {
   glw_text_bitmap_t *gtb = (void *)w;
   event_t *e;
-  event_unicode_t *eu;
+  event_int_t *eu;
 
   switch(signal) {
   default:
@@ -840,7 +840,7 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
       eu = extra;
 
-      if(insert_char(gtb, eu->sym))
+      if(insert_char(gtb, eu->val))
 	gtb_notify(gtb);
       return 1;
 

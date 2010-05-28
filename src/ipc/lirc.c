@@ -123,7 +123,7 @@ lirc_thread(void *aux)
       
       if(keyname[0] && keyname[1] == 0) {
 	/* ASCII input */
-	e = event_create_unicode(keyname[0]);
+	e = event_create_int(EVENT_UNICODE, keyname[0]);
       } else {
 	e = NULL;
 	for(i = 0; i < sizeof(lircmap) / sizeof(lircmap[0]); i++) {

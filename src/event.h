@@ -157,10 +157,10 @@ typedef struct event {
 /**
  *
  */
-typedef struct event_unicode {
+typedef struct event_int {
   event_t h;
-  int sym;
-} event_unicode_t;
+  int val;
+} event_int_t;
 
 
 
@@ -225,7 +225,7 @@ event_t *event_create_action_multi(const action_type_t *actions, size_t numactio
 
 #define event_create_type(type) event_create(type, sizeof(event_t))
 
-void *event_create_unicode(int sym);
+void *event_create_int(event_type_t type, int val);
 
 void event_enqueue(event_queue_t *eq, event_t *e);
 

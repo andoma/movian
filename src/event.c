@@ -57,14 +57,10 @@ event_create(event_type_t type, size_t size)
  *
  */
 void *
-event_create_unicode(int sym)
+event_create_int(event_type_t type, int sym)
 {
-  event_unicode_t *e = malloc(sizeof(event_unicode_t));
-  e->h.e_dtor = event_default_dtor;
-  e->h.e_refcount = 1;
-  e->h.e_mapped = 0;
-  e->h.e_type_x = EVENT_UNICODE;
-  e->sym = sym;
+  event_int_t *e = event_create(type, sizeof(event_int_t));
+  e->val = sym;
   return e;
 }
 
@@ -411,10 +407,10 @@ void
 event_dispatch(event_t *e)
 {
   prop_t *p;
-  event_unicode_t *eu = (event_unicode_t *)e;
+  event_int_t *eu = (event_int_t *)e;
 
   
-  if(event_is_type(e, EVENT_UNICODE) && eu->sym == 32) {
+  if(event_is_type(e, EVENT_UNICODE) && eu->val == 32) {
     // Convert [space] into playpause
     event_unref(e);
     e = event_create_action(ACTION_PLAYPAUSE);

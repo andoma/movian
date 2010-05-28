@@ -145,7 +145,7 @@ process_keyboard_event(glw_wii_t *gwii, keyboard_event *ke)
     if(ke->symbol < 32 || ke->symbol > 127)
       break;
     
-    e = event_create_unicode(ke->symbol);
+    e = event_create_int(EVENT_UNICODE, ke->symbol);
     break;
   }
 
