@@ -543,7 +543,7 @@ typedef struct glw_rctx {
 				 to a new URL) */
 
   uint8_t rc_inhibit_matrix_store; // Avoid storing matrix in mirrored view, etc
-  
+
 
   /**
    * Backend specifics
@@ -906,6 +906,8 @@ do {						\
 } while(0)
 
 const char *glw_get_a_name(glw_t *w);
+
+void glw_print_tree(glw_t *w);
 
 int glw_widget_unproject(const float *m, float *x, float *y, 
 			 const float *p, const float *dir);

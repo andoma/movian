@@ -1828,3 +1828,36 @@ glw_set_fullscreen(glw_root_t *gr, int fullscreen)
 {
   prop_set_int(gr->gr_is_fullscreen, !!fullscreen);
 }
+
+
+/**
+ *
+ */
+static void
+glw_print_tree0(glw_t *w, int indent)
+{
+  glw_t *c;
+
+  fprintf(stderr, "%*.s%p %s: %s [%08x] %s\n", 
+	  indent, "",
+	  w,
+	  w->glw_class->gc_name,
+	  w->glw_class->gc_get_text ? w->glw_class->gc_get_text(w) : "",
+	  w->glw_flags,
+	  w->glw_flags & GLW_HIDDEN ? " <hidden>" : "");
+  
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    glw_print_tree0(c, indent + 2);
+  }
+}
+
+
+/**
+ *
+ */
+void
+glw_print_tree(glw_t *w)
+{
+  glw_print_tree0(w, 0);
+
+}
