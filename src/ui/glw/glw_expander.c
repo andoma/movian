@@ -26,6 +26,7 @@ static glw_class_t glw_expander_x;
 typedef struct glw_expander {
   glw_t w;
   float expansion;
+  float last;
 } glw_expander_t;
 
 
@@ -79,11 +80,22 @@ glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       break;
     rc0 = *rc;
 
-    if(exp->w.glw_class == &glw_expander_x)
+    if(exp->w.glw_class == &glw_expander_x) {
       rc0.rc_size_x = c->glw_req_size_x;
-    else
+
+      if(rc0.rc_size_x == 0)
+	rc0.rc_size_x = exp->last;
+      else
+	exp->last = rc0.rc_size_x;
+
+    } else {
       rc0.rc_size_y = c->glw_req_size_y;
-    
+
+      if(rc0.rc_size_y == 0)
+	rc0.rc_size_y = exp->last;
+      else
+	exp->last = rc0.rc_size_y;
+    }
     glw_layout0(c, &rc0);
     break;
   }
