@@ -14,17 +14,12 @@
     PLATE_GFX();
     widget(container_z, {
       widget(icon, {
-	.color = select(isHovered() || isFocused(), [1.0, 1.0, 1.0], COLOR);
+	.color = select($self.source.svctype == LABEL ||
+			isHovered() || isFocused(),
+			[1.0, 1.0, 1.0],
+			COLOR);
 	.shadow = true;
 	.source = ICON;
-	.sizeScale = 2;
-      });
-
-      widget(icon, {
-	.alpha = iir($self.source.svctype == LABEL, 4);
-	.color = select(isHovered() || isFocused(), [1.0, 1.0, 1.0], COLOR);
-	.shadow = true;
-	.source = "theme://icons/48x48/Selected.png";
 	.sizeScale = 2;
       });
     });
