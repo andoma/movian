@@ -170,6 +170,61 @@ glw_coverflow_render(glw_t *w, glw_rctx_t *rc)
 /**
  *
  */
+static void
+glw_flood_focus_distance(glw_t *w, int v)
+{
+  glw_t *c;
+
+  if(w->glw_focus_distance != v) {
+    w->glw_focus_distance = v;
+    glw_signal0(w, GLW_SIGNAL_FOCUS_DISTANCE_CHANGED, NULL);
+  }
+
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
+    glw_flood_focus_distance(c, v);
+}
+
+/**
+ *
+ */
+static void
+update_focus_distance(glw_coverflow_t *gc, glw_t *ign)
+{
+  glw_t *c, *p, *n;
+  int d = 0;
+
+  if((c = gc->w.glw_focused) == NULL)
+    return;
+
+  p = n = c;
+
+  glw_flood_focus_distance(c, 0);
+
+  while(1) {
+    p = p ? glw_prev_widget(p) : NULL;
+    n = n ? glw_next_widget(n) : NULL;
+
+    if(p == ign)
+      p = p ? glw_prev_widget(p) : NULL;
+    
+    if(n == ign)
+      n = n ? glw_next_widget(n) : NULL;
+
+    if(p == NULL && n == NULL)
+      break;
+
+    d++;
+    if(p != NULL)
+      glw_flood_focus_distance(p, d);
+    if(n != NULL)
+      glw_flood_focus_distance(n, d);
+  }
+}
+
+
+/**
+ *
+ */
 static int
 glw_coverflow_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
@@ -186,14 +241,17 @@ glw_coverflow_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
   case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
     gc->scroll_to_me = extra;
+    update_focus_distance(gc, NULL);
     return 0;
 
   case GLW_SIGNAL_CHILD_CREATED:
+    update_focus_distance(gc, NULL);
     break;
 
   case GLW_SIGNAL_CHILD_DESTROYED:
     if(gc->scroll_to_me == extra)
       gc->scroll_to_me = NULL;
+    update_focus_distance(gc, extra);
     break;
   }
   return 0;

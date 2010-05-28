@@ -278,6 +278,12 @@ typedef enum {
    */
   GLW_SIGNAL_READY,
 
+  /**
+   * Emitted by certain widget to tell its children how far
+   * away from current focus they are
+   */
+  GLW_SIGNAL_FOCUS_DISTANCE_CHANGED,
+
 } glw_signal_t;
 
 
@@ -669,6 +675,7 @@ typedef struct glw {
   float glw_focus_weight;
 
   glw_alignment_t glw_alignment;
+  int16_t glw_focus_distance;
 
   char *glw_id;
 
@@ -897,8 +904,6 @@ do {						\
 } while(0)
 
 const char *glw_get_a_name(glw_t *w);
-
-int glw_signal(glw_t *w, glw_signal_t sig, void *extra);
 
 int glw_widget_unproject(const float *m, float *x, float *y, 
 			 const float *p, const float *dir);
