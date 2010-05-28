@@ -28,7 +28,8 @@ typedef struct glw_list {
 
   glw_t *scroll_to_me;
 
-  int may_suggest;
+  glw_t *suggested;
+  int suggest_cnt;
 
   glw_slider_metrics_t metrics;
 
@@ -329,7 +330,7 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
   case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
     l->scroll_to_me = extra;
-    l->may_suggest = 0;
+    l->suggest_cnt = 0;
     return 0;
 
   case GLW_SIGNAL_CHILD_CREATED:
@@ -346,6 +347,8 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_CHILD_DESTROYED:
     if(l->scroll_to_me == extra)
       l->scroll_to_me = NULL;
+    if(l->suggested == extra)
+      l->suggested = NULL;
     break;
 
   case GLW_SIGNAL_POINTER_EVENT:
@@ -452,14 +455,14 @@ glw_list_suggest_focus(glw_t *w, glw_t *c)
 {
   glw_list_t *l = (glw_list_t *)w;
 
-  if(w->glw_focused == c) {
-    l->may_suggest = 1;
-  } else if(l->may_suggest) {
+  if(l->suggested == w->glw_focused || l->suggest_cnt > 0) {
     c = glw_focus_by_path(c);
     if(c != NULL)
       glw_focus_set(c->glw_root, c, 1);
-    l->may_suggest = 1;
+    l->suggest_cnt = 1;
   }
+  l->suggested = c;
+  l->suggest_cnt++;
 }
 
 
