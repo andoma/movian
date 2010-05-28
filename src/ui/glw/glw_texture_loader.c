@@ -351,6 +351,8 @@ glw_tex_create(glw_root_t *gr, const char *filename, int flags, int xs,
   glw_loadable_texture_t *glt;
 
   hts_mutex_lock(&gr->gr_tex_mutex);
+  assert(xs != 0);
+  assert(ys != 0);
 
   LIST_FOREACH(glt, &gr->gr_tex_list, glt_global_link)
     if(glt->glt_filename != NULL && !strcmp(glt->glt_filename, filename) &&
