@@ -51,6 +51,7 @@ typedef struct glw_video {
   int gv_pending_set_source_cnt;
 
   int gv_flags;
+  int gv_priority;
   char gv_freezed;
 
   video_decoder_t *gv_vd;

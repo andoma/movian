@@ -175,7 +175,7 @@ be_dvd_canhandle(const char *url)
  *
  */
 static event_t *
-be_dvd_play(const char *url, media_pipe_t *mp, int primary, 
+be_dvd_play(const char *url, media_pipe_t *mp, int primary, int priority,
 	    char *errstr, size_t errlen)
 {
   event_t *e;

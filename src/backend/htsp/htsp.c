@@ -1099,7 +1099,8 @@ htsp_set_audio(media_pipe_t *mp, const char *id)
  *
  */
 static void
-set_channel(htsp_connection_t *hc, htsp_subscription_t *hs, int chid)
+set_channel(htsp_connection_t *hc, htsp_subscription_t *hs, int chid,
+	    char **name)
 {
   htsp_channel_t *ch;
   hts_mutex_lock(&hc->hc_meta_mutex);
@@ -1108,6 +1109,9 @@ set_channel(htsp_connection_t *hc, htsp_subscription_t *hs, int chid)
     TRACE(TRACE_DEBUG, "HTSP", "Subscribing to channel %s", ch->ch_title);
     prop_set_string(prop_create(hs->hs_mp->mp_prop_metadata, "title"),
 		    ch->ch_title);
+    mystrset(name, ch->ch_title);
+  } else {
+    mystrset(name, NULL);
   }
   
   hts_mutex_unlock(&hc->hc_meta_mutex);
@@ -1118,7 +1122,8 @@ set_channel(htsp_connection_t *hc, htsp_subscription_t *hs, int chid)
  */
 static int
 zap_channel(htsp_connection_t *hc, htsp_subscription_t *hs,
-	    int chid, char *errbuf, size_t errlen, const char *tag, int delta)
+	    int chid, char *errbuf, size_t errlen, const char *tag, int delta,
+	    char **name)
 {
   htsp_tag_t *ht;
   htsp_channel_t *ch;
@@ -1220,8 +1225,26 @@ zap_channel(htsp_connection_t *hc, htsp_subscription_t *hs,
   }
 
   htsmsg_destroy(m);
-  set_channel(hc, hs, newch);
+  set_channel(hc, hs, newch, name);
   return newch;
+}
+
+
+/**
+ *
+ */
+static int
+prio_to_weight(int p)
+{
+  int w;
+
+  if(p == 0)
+    return 150;
+
+  w = 140 - p;
+  if(w < 110)
+    w = 110;
+  return w;
 }
 
 
@@ -1231,18 +1254,20 @@ zap_channel(htsp_connection_t *hc, htsp_subscription_t *hs,
 static event_t *
 htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs, 
 		int chid, char *errbuf, size_t errlen, const char *tag,
-		int primary)
+		int primary, int priority)
 {
   event_t *e;
   htsmsg_t *m;
   media_pipe_t *mp = hs->hs_mp;
   const char *err;
+  char *name;
 
   m = htsmsg_create_map();
 
   htsmsg_add_str(m, "method", "subscribe");
   htsmsg_add_u32(m, "channelId", chid);
   htsmsg_add_u32(m, "subscriptionId", hs->hs_sid);
+  htsmsg_add_u32(m, "weight", prio_to_weight(priority));
 
   if((m = htsp_reqreply(hc, m)) == NULL) {
     snprintf(errbuf, errlen, "Connection with server lost");
@@ -1264,7 +1289,7 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
   else
     mp_init_audio(mp);
 
-  set_channel(hc, hs, chid);
+  set_channel(hc, hs, chid, &name);
 
   while(1) {
     e = mp_dequeue_event(mp);
@@ -1277,15 +1302,40 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
       else if(!strncmp(est->id, "audio:", strlen("audio:")))
 	htsp_set_audio(mp, est->id + strlen("audio:"));
 
+    } else if(event_is_type(e, EVENT_PLAYBACK_PRIORITY)) {
+      event_int_t *ei = (event_int_t *)e;
+
+      TRACE(TRACE_DEBUG, "HTSP", "%s: Changed priority to %d",
+	    name, ei->val);
+
+      m = htsmsg_create_map();
+      
+      htsmsg_add_str(m, "method", "subscriptionChangeWeight");
+      htsmsg_add_u32(m, "subscriptionId", hs->hs_sid);
+      htsmsg_add_u32(m, "weight", prio_to_weight(ei->val));
+
+      if((m = htsp_reqreply(hc, m)) == NULL) {
+	snprintf(errbuf, errlen, "Connection with server lost");
+	return NULL;
+      }
+      
+      if((err = htsmsg_get_str(m, "error")) != NULL) {
+	snprintf(errbuf, errlen, "From server: %s", err);
+	htsmsg_destroy(m);
+	return NULL;
+      }
+      
+      htsmsg_destroy(m);
+
     } else if(event_is_action(e, ACTION_PREV_CHANNEL) ||
 	      event_is_action(e, ACTION_PREV_TRACK)) {
 
-      chid = zap_channel(hc, hs, chid, errbuf, errlen, tag, -1);
+      chid = zap_channel(hc, hs, chid, errbuf, errlen, tag, -1, &name);
 
     } else if(event_is_action(e, ACTION_NEXT_CHANNEL) ||
 	      event_is_action(e, ACTION_NEXT_TRACK)) {
 
-      chid = zap_channel(hc, hs, chid, errbuf, errlen, tag, 1);
+      chid = zap_channel(hc, hs, chid, errbuf, errlen, tag, 1, &name);
 
     } else if(event_is_type(e, EVENT_EXIT) ||
 	      event_is_type(e, EVENT_PLAY_URL))
@@ -1332,7 +1382,8 @@ htsp_free_streams(htsp_subscription_t *hs)
  *
  */
 static event_t *
-be_htsp_playvideo(const char *url, media_pipe_t *mp, int primary,
+be_htsp_playvideo(const char *url, media_pipe_t *mp, 
+		  int primary, int priority,
 		  char *errbuf, size_t errlen)
 {
   htsp_connection_t *hc;
@@ -1344,8 +1395,8 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp, int primary,
 
 
   TRACE(TRACE_DEBUG, "HTSP",
-	"Starting video playback %s, primary=%s",
-	url, primary ? "yes" : "no");
+	"Starting video playback %s, primary=%s, priority=%d",
+	url, primary ? "yes" : "no", priority);
 
   if((hc = htsp_connection_find(url, path, sizeof(path), 
 				errbuf, errlen)) == NULL) {
@@ -1381,7 +1432,7 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp, int primary,
   LIST_INSERT_HEAD(&hc->hc_subscriptions, hs, hs_link);
   hts_mutex_unlock(&hc->hc_subscription_mutex);
 
-  e = htsp_subscriber(hc, hs, chid, errbuf, errlen, tag, primary);
+  e = htsp_subscriber(hc, hs, chid, errbuf, errlen, tag, primary, priority);
 
   mp_shutdown(mp);
 

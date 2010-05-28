@@ -589,7 +589,7 @@ glw_video_set_source(glw_video_t *gv, const char *url, int primary)
   
   mystrset(&gv->gv_current_url, url);
 
-  e = event_create_playurl(url, primary);
+  e = event_create_playurl(url, primary, gv->gv_priority);
   mp_enqueue_event(gv->gv_mp, e);
   event_unref(e);
 }
@@ -697,8 +697,8 @@ glw_video_set(glw_t *w, int init, va_list ap)
   glw_attribute_t attrib;
   const char *filename = NULL;
   prop_t *p, *p2;
+  event_t *e;
   int f;
-
 
   if(init) {
     gv->gv_mp = mp_create("Video decoder", "video", MP_VIDEO);
@@ -750,6 +750,14 @@ glw_video_set(glw_t *w, int init, va_list ap)
       prop_link(gv->gv_mp->mp_prop_root, p2);
       
       p = va_arg(ap, void *); // Parent, just throw it away
+      break;
+
+    case GLW_ATTRIB_PRIORITY:
+      gv->gv_priority = va_arg(ap, int);
+
+      e = event_create_int(EVENT_PLAYBACK_PRIORITY, gv->gv_priority);
+      mp_enqueue_event(gv->gv_mp, e);
+      event_unref(e);
       break;
 
     default:

@@ -48,7 +48,7 @@ video_player_idle(void *aux)
     if(event_is_type(e, EVENT_PLAY_URL)) {
       event_playurl_t *ep = (event_playurl_t *)e;
 
-      next = backend_play_video(ep->url, mp, ep->primary, 
+      next = backend_play_video(ep->url, mp, ep->primary, ep->priority,
 				errbuf, sizeof(errbuf));
 
       if(next == NULL)

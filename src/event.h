@@ -125,6 +125,8 @@ typedef enum {
 
   EVENT_SELECT_TRACK,
 
+  EVENT_PLAYBACK_PRIORITY,   // 0 = best, higher value == less important 
+
 } event_type_t;
 
 
@@ -182,6 +184,7 @@ typedef struct event_playurl {
   event_t h;
   char *url;
   int primary;
+  int priority;
 } event_playurl_t;
 
 
@@ -239,7 +242,7 @@ void event_flushqueue(event_queue_t *eq);
 
 event_t *event_create_url(event_type_t et, const char *url);
 
-event_t *event_create_playurl(const char *url, int primary);
+event_t *event_create_playurl(const char *url, int primary, int priority);
 
 event_t *event_create_openurl(const char *url, const char *view);
 

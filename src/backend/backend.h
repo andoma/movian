@@ -56,7 +56,8 @@ typedef struct backend {
 			      char *errbuf, size_t errlen);
 
   event_t *(*be_play_video)(const char *url, struct media_pipe *mp,
-			    int primary, char *errbuf, size_t errlen);
+			    int primary, int priority, 
+			    char *errbuf, size_t errlen);
 
   event_t *(*be_play_audio)(const char *url, struct media_pipe *mp,
 			    char *errbuf, size_t errlen);
@@ -81,7 +82,8 @@ typedef struct backend {
 void backend_init(void);
 
 event_t *backend_play_video(const char *url, struct media_pipe *mp,
-			    int primary, char *errbuf, size_t errlen);
+			    int primary, int priority,
+			    char *errbuf, size_t errlen);
 
 event_t *backend_play_audio(const char *url, struct media_pipe *mp,
 			    char *errbuf, size_t errlen);

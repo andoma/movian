@@ -125,6 +125,7 @@ typedef enum {
   GLW_ATTRIB_COLOR2,
   GLW_ATTRIB_PAGE,
   GLW_ATTRIB_ALPHA_EDGES,
+  GLW_ATTRIB_PRIORITY,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -868,6 +869,7 @@ do {						\
   case GLW_ATTRIB_CHILD_WIDTH:                  \
   case GLW_ATTRIB_PAGE:                         \
   case GLW_ATTRIB_ALPHA_EDGES:                  \
+  case GLW_ATTRIB_PRIORITY:                     \
     (void)va_arg(ap, int);			\
     break;					\
   case GLW_ATTRIB_BORDER:                       \
