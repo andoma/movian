@@ -590,7 +590,6 @@ typedef struct glw {
   TAILQ_ENTRY(glw) glw_parent_link;
   struct glw_queue glw_childs;
 
-  struct glw_queue glw_render_list;
   TAILQ_ENTRY(glw) glw_render_link;
 		   
   struct glw *glw_selected;
@@ -800,19 +799,26 @@ typedef enum {
 
 
 static inline void
-glw_flush_render_list(glw_t *w)
+glw_flush_render_queue(struct glw_queue *q)
 {
   glw_t *c;
-  TAILQ_FOREACH(c, &w->glw_render_list, glw_render_link)
+  TAILQ_FOREACH(c, q, glw_render_link)
     c->glw_flags &= ~GLW_RENDER_LINKED;
-  TAILQ_INIT(&w->glw_render_list);
+  TAILQ_INIT(q);
 }
 
 
 static inline void
-glw_link_render_list(glw_t *w, glw_t *c)
+glw_link_render_queue(struct glw_queue *q, glw_t *c)
 {
-  TAILQ_INSERT_TAIL(&w->glw_render_list, c, glw_render_link);
+  TAILQ_INSERT_TAIL(q, c, glw_render_link);
+  c->glw_flags |= GLW_RENDER_LINKED;
+}
+
+static inline void
+glw_unlink_render_queue(struct glw_queue *q, glw_t *c)
+{
+  TAILQ_INSERT_TAIL(q, c, glw_render_link);
   c->glw_flags |= GLW_RENDER_LINKED;
 }
 

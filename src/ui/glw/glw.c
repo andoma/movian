@@ -250,13 +250,10 @@ glw_attrib_set(glw_t *w, int init, va_list ap)
 
 	glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_DESTROYED, w);
 
+	assert(!(w->glw_flags & GLW_RENDER_LINKED));
+
 	if(w->glw_parent->glw_selected == w)
 	  w->glw_parent->glw_selected = TAILQ_NEXT(w, glw_parent_link);
-
-	if(w->glw_flags & GLW_RENDER_LINKED) {
-	  w->glw_flags &= ~GLW_RENDER_LINKED;
-	  TAILQ_REMOVE(&w->glw_parent->glw_render_list, w, glw_render_link);
-	}
 
 	TAILQ_REMOVE(&w->glw_parent->glw_childs, w, glw_parent_link);
 
@@ -415,7 +412,6 @@ glw_create(glw_root_t *gr, const glw_class_t *class, va_list ap)
     LIST_INSERT_HEAD(&gr->gr_every_frame_list, w, glw_every_frame_link);
 
   TAILQ_INIT(&w->glw_childs);
-  TAILQ_INIT(&w->glw_render_list);
 
   /* Parse arguments */
   
