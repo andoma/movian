@@ -674,7 +674,7 @@ typedef struct glw {
 
   float glw_focus_weight;
 
-  glw_alignment_t glw_alignment;
+  uint8_t glw_alignment;
   int16_t glw_focus_distance;
 
   char *glw_id;
