@@ -188,8 +188,8 @@ find_candidate(glw_t *w, query_t *query, float d_mul)
 int
 glw_navigate(glw_t *w, event_t *e, int local)
 {
-  glw_t  *p, *c, *t = NULL, *d;
-  int pagemode = 0;
+  glw_t  *p, *c, *t = NULL, *d, *r = NULL;
+  int pagemode = 0, retried = 0;
   int pagecnt;
   query_t query = {0};
   int loop = 1;
@@ -203,9 +203,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
   query.xc = (query.x1 + query.x2) / 2;
   query.yc = (query.y1 + query.y2) / 2;
- 
-  query.score = 100000000;
-  
+
   if(event_is_action(e, ACTION_FOCUS_PREV)) {
 
     glw_focus_crawl(w, 0);
@@ -265,8 +263,12 @@ glw_navigate(glw_t *w, event_t *e, int local)
     return 0;
   }
 
+ retry:
+
+  query.score = 100000000;
   pagecnt = 10;
   c = NULL;
+
   for(; (p = w->glw_parent) != NULL; w = p) {
 
     if(local && w->glw_class->gc_flags & GLW_NAVIGATION_SEARCH_BOUNDARY)
@@ -274,6 +276,9 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
     if(w->glw_class->gc_escape_score)
       escape_score *= w->glw_class->gc_escape_score;
+
+    if(w->glw_class->gc_flags & GLW_TRANSFORM_LR_TO_UD && r == NULL)
+      r = w;
 
     switch(p->glw_class->gc_nav_search_mode) {
     case GLW_NAV_SEARCH_NONE:
@@ -391,6 +396,12 @@ glw_navigate(glw_t *w, event_t *e, int local)
     glw_focus_set(t->glw_root, t, 1);
     event_unref(e);
     return 1;
+  } else if(retried == 0 && 
+	    r != NULL && query.orientation == GLW_ORIENTATION_HORIZONTAL) {
+    retried = 1;
+    w = r;
+    query.orientation = GLW_ORIENTATION_VERTICAL;
+    goto retry;
   }
 
   return 0;
