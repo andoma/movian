@@ -67,45 +67,52 @@ compute_position(glw_t *w, glw_orientation_t o, float n)
     if(p->glw_class->gc_child_orientation != o)
       continue;
 
-    a = n * w->glw_norm_weight;
-    n = 0.5;
-    m = 1;
-    t = 0;
+    if(p->glw_class->gc_get_child_pos != NULL) {
 
-    TAILQ_FOREACH(c, &p->glw_childs, glw_parent_link) {
-      if(c->glw_flags & GLW_HIDDEN)
-	continue;
+      a = p->glw_class->gc_get_child_pos(p, w);
 
-      if(c == w)
-	m = 0;
-      a += c->glw_norm_weight * m;
-      t += c->glw_norm_weight;
-    }
+    } else {
 
-    d = 1 - t;
+      a = n * w->glw_norm_weight;
+      n = 0.5;
+      m = 1;
+      t = 0;
 
-    if(d < 1.0) {
-      if(o == GLW_ORIENTATION_HORIZONTAL) {
-	switch(p->glw_alignment) {
-	default:
-	  break;
-	case GLW_ALIGN_CENTER:
-	  a += d / 2;
-	  break;
-	case GLW_ALIGN_RIGHT:
-	  a += d;
-	  break;
-	}
-      } else {
-	switch(p->glw_alignment) {
-	default:
-	  break;
-	case GLW_ALIGN_CENTER:
-	  a += d / 2;
-	  break;
-	case GLW_ALIGN_TOP:
-	  a += d;
-	  break;
+      TAILQ_FOREACH(c, &p->glw_childs, glw_parent_link) {
+	if(c->glw_flags & GLW_HIDDEN)
+	  continue;
+
+	if(c == w)
+	  m = 0;
+	a += c->glw_norm_weight * m;
+	t += c->glw_norm_weight;
+      }
+
+      d = 1 - t;
+ 
+      if(d < 1.0) {
+	if(o == GLW_ORIENTATION_HORIZONTAL) {
+	  switch(p->glw_alignment) {
+	  default:
+	    break;
+	  case GLW_ALIGN_CENTER:
+	    a += d / 2;
+	    break;
+	  case GLW_ALIGN_RIGHT:
+	    a += d;
+	    break;
+	  }
+	} else {
+	  switch(p->glw_alignment) {
+	  default:
+	    break;
+	  case GLW_ALIGN_CENTER:
+	    a += d / 2;
+	    break;
+	  case GLW_ALIGN_TOP:
+	    a += d;
+	    break;
+	  }
 	}
       }
     }

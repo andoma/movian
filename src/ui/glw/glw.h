@@ -408,6 +408,11 @@ typedef struct glw_class {
    */
   const char *(*gc_get_text)(struct glw *w);
 
+  /**
+   *
+   */
+  float (*gc_get_child_pos)(struct glw *w, struct glw *c);
+
   float gc_escape_score;
 
   /**

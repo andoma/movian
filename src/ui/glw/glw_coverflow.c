@@ -292,6 +292,19 @@ glw_coverflow_gpe_iterator(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
 }
 
 
+/**
+ *
+ */
+static float
+glw_coverflow_get_child_pos(glw_t *p, glw_t *c)
+{
+  glw_coverflow_t *gc = (glw_coverflow_t *)p;
+ 
+  float nv = c->glw_parent_misc[0] * gc->xs;
+  nv = GLW_CLAMP(nv, -1, 1);
+  return nv * 0.5 + 0.5;
+}
+
 
 /**
  *
@@ -306,6 +319,8 @@ static glw_class_t glw_coverflow = {
   .gc_render = glw_coverflow_render,
   .gc_signal_handler = glw_coverflow_callback,
   .gc_gpe_iterator = glw_coverflow_gpe_iterator,
+  .gc_default_alignment = GLW_ALIGN_CENTER,
+  .gc_get_child_pos = glw_coverflow_get_child_pos,
 };
 
 GLW_REGISTER_CLASS(glw_coverflow);
