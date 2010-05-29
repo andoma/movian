@@ -49,24 +49,24 @@ glw_slideshow_render(glw_t *w, glw_rctx_t *rc)
   if(p == NULL)
     p = glw_last_widget(w);
   if(p != NULL && p != c) {
-    if(p->glw_parent_alpha > 0.01) {
+    if(p->glw_parent_misc[0] > 0.01) {
       rc0 = *rc;
-      rc0.rc_alpha *= p->glw_parent_alpha;
+      rc0.rc_alpha *= p->glw_parent_misc[0];
       glw_render0(p, &rc0);
     }
   }
 
   rc0 = *rc;
-  rc0.rc_alpha *= c->glw_parent_alpha;
+  rc0.rc_alpha *= c->glw_parent_misc[0];
   glw_render0(c, &rc0);
 
   n = glw_next_widget(c);
   if(n == NULL)
     n = glw_first_widget(w);
   if(n != NULL && n != c) {
-    if(n->glw_parent_alpha > 0.01) {
+    if(n->glw_parent_misc[0] > 0.01) {
       rc0 = *rc;
-      rc0.rc_alpha *= n->glw_parent_alpha;
+      rc0.rc_alpha *= n->glw_parent_misc[0];
       glw_render0(n, &rc0);
     }
   }
@@ -107,7 +107,7 @@ glw_slideshow_layout(glw_slideshow_t *s, glw_rctx_t *rc)
     s->timer++;
 
   glw_layout0(c, rc);
-  c->glw_parent_alpha = GLW_MIN(c->glw_parent_alpha + delta, 1.0f);
+  c->glw_parent_misc[0] = GLW_MIN(c->glw_parent_misc[0] + delta, 1.0f);
 
   /**
    * Keep previous and next images 'hot' (ie, loaded into texture memroy)
@@ -116,7 +116,7 @@ glw_slideshow_layout(glw_slideshow_t *s, glw_rctx_t *rc)
   if(p == NULL)
     p = glw_last_widget(&s->w);
   if(p != NULL && p != c) {
-    p->glw_parent_alpha = GLW_MAX(p->glw_parent_alpha - delta, 0.0f);
+    p->glw_parent_misc[0] = GLW_MAX(p->glw_parent_misc[0] - delta, 0.0f);
     glw_layout0(p, rc);
   }
 
@@ -124,7 +124,7 @@ glw_slideshow_layout(glw_slideshow_t *s, glw_rctx_t *rc)
   if(n == NULL)
     n = glw_first_widget(&s->w);
   if(n != NULL && n != c) {
-    n->glw_parent_alpha = GLW_MAX(n->glw_parent_alpha - delta, 0.0f);
+    n->glw_parent_misc[0] = GLW_MAX(n->glw_parent_misc[0] - delta, 0.0f);
     glw_layout0(n, rc);
   }
 }

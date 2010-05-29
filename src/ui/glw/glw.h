@@ -600,7 +600,6 @@ typedef struct glw {
    * All the glw_parent stuff is operated by this widgets
    * parents. That is, a widget may never touch these themselfs
    */		  
-  float glw_parent_alpha;
   glw_vertex_t glw_parent_pos;
   glw_vertex_t glw_parent_scale;
   float glw_parent_misc[4];
