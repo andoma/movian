@@ -4,6 +4,7 @@
 #define TYPE_ENTRY(LABEL, TITLE, ICON, COLOR) {
   widget(backdrop, {
     .focusable = 0.1;
+    .focusOnClick = true;
     onEvent(enter, {
       $self.source.svctype = LABEL;
     });
@@ -21,6 +22,17 @@
 	.shadow = true;
 	.source = ICON;
 	.sizeScale = 2;
+      });
+
+      widget(icon, { 
+	.alpha = iir($self.source.svctype == LABEL, 4); 
+	.color = select($self.source.svctype == LABEL ||
+			isHovered() || isFocused(),
+			[1.0, 1.0, 1.0],
+			COLOR);
+	.shadow = true; 
+	.source = "theme://icons/48x48/Selected.png"; 
+	.sizeScale = 2; 
       });
     });
   });
