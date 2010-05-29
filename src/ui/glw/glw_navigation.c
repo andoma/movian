@@ -195,7 +195,7 @@ find_candidate(glw_t *w, query_t *query, float d_mul)
 int
 glw_navigate(glw_t *w, event_t *e, int local)
 {
-  glw_t  *p, *c, *t = NULL, *d, *r = NULL;
+  glw_t *w0 = w, *p, *c, *t = NULL, *d, *r = NULL;
   int pagemode = 0, retried = 0;
   int pagecnt;
   query_t query = {0};
@@ -408,6 +408,10 @@ glw_navigate(glw_t *w, event_t *e, int local)
     retried = 1;
     w = r;
     query.orientation = GLW_ORIENTATION_VERTICAL;
+    goto retry;
+  } else if(query.orientation == GLW_ORIENTATION_HORIZONTAL) {
+    query.orientation = GLW_ORIENTATION_VERTICAL;
+    w = w0;
     goto retry;
   }
 
