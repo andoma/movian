@@ -615,7 +615,7 @@ typedef struct glw {
 
 #define GLW_ACTIVE               0x1
 #define GLW_AUTOREFOCUSABLE      0x2
-#define GLW_RENDER_LINKED        0x4     /* glw_render_link is linked */
+
 
 #define GLW_DEBUG                0x8     /* Debug this object */
 #define GLW_FOCUS_BLOCKED        0x10
@@ -798,35 +798,9 @@ typedef enum {
 } glw_transition_type_t;
 
 
-static inline void
-glw_flush_render_queue(struct glw_queue *q)
-{
-  glw_t *c;
-  TAILQ_FOREACH(c, q, glw_render_link)
-    c->glw_flags &= ~GLW_RENDER_LINKED;
-  TAILQ_INIT(q);
-}
-
-
-static inline void
-glw_link_render_queue(struct glw_queue *q, glw_t *c)
-{
-  TAILQ_INSERT_TAIL(q, c, glw_render_link);
-  c->glw_flags |= GLW_RENDER_LINKED;
-}
-
-static inline void
-glw_unlink_render_queue(struct glw_queue *q, glw_t *c)
-{
-  TAILQ_INSERT_TAIL(q, c, glw_render_link);
-  c->glw_flags |= GLW_RENDER_LINKED;
-}
-
-
-/*
+/**
  *
  */
-
 #define GLW_ATTRIB_CHEW(attrib, ap)		\
 do {						\
   switch((unsigned int)attrib) {		\

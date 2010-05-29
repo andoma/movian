@@ -250,8 +250,6 @@ glw_attrib_set(glw_t *w, int init, va_list ap)
 
 	glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_DESTROYED, w);
 
-	assert(!(w->glw_flags & GLW_RENDER_LINKED));
-
 	if(w->glw_parent->glw_selected == w)
 	  w->glw_parent->glw_selected = TAILQ_NEXT(w, glw_parent_link);
 
@@ -608,9 +606,6 @@ glw_destroy(glw_t *w)
   
   if(w->glw_class->gc_newframe != NULL)
     LIST_REMOVE(w, glw_every_frame_link);
-
-  if(w->glw_flags & GLW_RENDER_LINKED)
-    TAILQ_REMOVE(&w->glw_parent->glw_childs, w, glw_render_link);
 
   LIST_REMOVE(w, glw_active_link);
 
