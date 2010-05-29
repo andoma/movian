@@ -29,6 +29,7 @@ $page.glw.title = "Home";
 	onEvent(enter, navOpen($self.url));
 
 	.focusable = true;
+	.focusOnClick = true;
 	.color = COLOR;
 	.alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
 	
