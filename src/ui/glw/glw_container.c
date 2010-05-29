@@ -32,8 +32,6 @@ typedef struct glw_container {
   int16_t co_padding_top;
   int16_t co_padding_bottom;
 
-  struct glw_queue co_render_queue;
-
 } glw_container_t;
 
 
@@ -96,8 +94,6 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
   float s_w, s_ax, ax;
 
   float size_x = rc->rc_size_x - co->co_padding_left - co->co_padding_right;
-
-  glw_flush_render_queue(&co->co_render_queue);
 
   if(co->w.glw_alpha < 0.01)
     return 0;
@@ -174,9 +170,6 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
     c->glw_parent_misc[1] = rc0.rc_size_y;
     
     glw_layout0(c, &rc0);
- 
-    if(xs > 1)
-      glw_link_render_queue(&co->co_render_queue, c);
   }
   return 0;
 }
@@ -243,8 +236,6 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
 
   float size_y = rc->rc_size_y - co->co_padding_top - co->co_padding_bottom;
 
-  glw_flush_render_queue(&co->co_render_queue);
-
   if(co->w.glw_alpha < 0.01)
     return 0;
 
@@ -309,9 +300,6 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
     c->glw_parent_misc[1] = rc0.rc_size_y;
       
     glw_layout0(c, &rc0);
- 
-    if(ys > 1)
-      glw_link_render_queue(&co->co_render_queue, c);
   }
   return 0;
 }
@@ -346,13 +334,11 @@ glw_container_z_layout(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c;
   glw_rctx_t rc0;
-  glw_container_t *co = (glw_container_t *)w;
+
   if(w->glw_alpha < 0.01)
     return 0;
 
   rc0 = *rc;
-
-  glw_flush_render_queue(&co->co_render_queue);
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
@@ -370,8 +356,6 @@ glw_container_z_layout(glw_t *w, glw_rctx_t *rc)
     c->glw_parent_misc[1] = rc->rc_size_y;
 
     glw_layout0(c, &rc0);
-
-    glw_link_render_queue(&co->co_render_queue, c);
   }
   return 0;
 }
@@ -384,7 +368,6 @@ glw_container_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c;
   float alpha = rc->rc_alpha * w->glw_alpha;
-  glw_container_t *co = (glw_container_t *)w;
 
   glw_rctx_t rc0 = *rc;
 
@@ -394,7 +377,10 @@ glw_container_render(glw_t *w, glw_rctx_t *rc)
   if(glw_is_focusable(w))
     glw_store_matrix(w, rc);
 
-  TAILQ_FOREACH(c, &co->co_render_queue, glw_render_link) {
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    if(c->glw_flags & GLW_HIDDEN)
+      continue;
+
     rc0.rc_alpha = alpha;
 
     rc0.rc_size_x = c->glw_parent_misc[0];
@@ -438,18 +424,6 @@ glw_container_callback(glw_t *w, void *opaque, glw_signal_t signal,
 }
 
 
-/**
- *
- */
-static void
-child_destroyed(glw_container_t *co, glw_t *c)
-{
-  if(c->glw_flags & GLW_RENDER_LINKED)
-    glw_unlink_render_queue(&co->co_render_queue, c);
-}
-
-
-
 static int
 glw_container_x_callback(glw_t *w, void *opaque, glw_signal_t signal,
 			  void *extra)
@@ -463,7 +437,6 @@ glw_container_x_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_CHILD_UNHIDDEN:
     return glw_container_x_constraints((glw_container_t *)w, NULL);
   case GLW_SIGNAL_CHILD_DESTROYED:
-    child_destroyed((glw_container_t *)w, extra);
     return glw_container_x_constraints((glw_container_t *)w, extra);
   default:
     return glw_container_callback(w, opaque, signal, extra);
@@ -483,7 +456,6 @@ glw_container_y_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_CHILD_UNHIDDEN:
     return glw_container_y_constraints((glw_container_t *)w, NULL);
   case GLW_SIGNAL_CHILD_DESTROYED:
-    child_destroyed((glw_container_t *)w, extra);
     return glw_container_y_constraints((glw_container_t *)w, extra);
   default:
     return glw_container_callback(w, opaque, signal, extra);
@@ -501,7 +473,6 @@ glw_container_z_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_CHILD_CREATED:
     return glw_container_z_constraints(w, NULL);
   case GLW_SIGNAL_CHILD_DESTROYED:
-    child_destroyed((glw_container_t *)w, extra);
     return glw_container_z_constraints(w, extra);
   default:
     return glw_container_callback(w, opaque, signal, extra);
@@ -517,10 +488,6 @@ glw_container_set(glw_t *w, int init, va_list ap)
 {
   glw_attribute_t attrib;
   glw_container_t *co = (glw_container_t *)w;
-
-  if(init) {
-    TAILQ_INIT(&co->co_render_queue);
-  }
 
   do {
     attrib = va_arg(ap, int);
