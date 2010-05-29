@@ -29,7 +29,7 @@
 #include "backend/backend.h"
 #include "media.h"
 #include "dvd.h"
-#include "sd/sd.h"
+#include "service.h"
 #include "notifications.h"
 
 typedef struct disc_scanner {
@@ -39,8 +39,7 @@ typedef struct disc_scanner {
   int ds_disc_inserted;
   int ds_disc_ready;
 
-
-  prop_t *ds_prop;
+  service_t *ds_service;
 
 } disc_scanner_t;
 
@@ -66,8 +65,8 @@ check_disc_type(disc_scanner_t *ds)
     *p = 0;
     
     snprintf(title, sizeof(title), "DVD: %s", buf + 40);
-    ds->ds_prop = sd_add_service("/dev/di", title, NULL, NULL, "dvd", 
-				 "dvd:/dev/di");
+    ds->ds_service = service_create("/dev/di", title, "dvd:/dev/di",
+				    SVC_TYPE_VIDEO, NULL, 0);
     ds->ds_disc_ready = 1;
   }
   free(buf);
@@ -119,9 +118,9 @@ dvdprobe(callout_t *co, void *aux)
       ds->ds_disc_inserted = 0;
       TRACE(TRACE_INFO, "DVD", "DVD no longer present");
       
-      if(ds->ds_prop != NULL) {
-	prop_destroy(ds->ds_prop);
-	ds->ds_prop = NULL;
+      if(ds->ds_service != NULL) {
+	service_destroy(ds->ds_service);
+	ds->ds_service = NULL;
       }
     }
   }
@@ -141,7 +140,9 @@ be_dvd_canhandle(const char *url)
  *
  */
 static event_t *
-be_dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
+be_dvd_play(const char *url, media_pipe_t *mp,
+	    int primary, int priority,
+	    char *errstr, size_t errlen)
 {
   event_t *e;
   int i;

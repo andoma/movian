@@ -79,8 +79,8 @@ static const struct {
   { KS_Right,        0,           ACTION_RIGHT,       ACTION_SEEK_FORWARD },
   { KS_Up,           0,           ACTION_UP },
   { KS_Down,         0,           ACTION_DOWN },
-  { KS_Prior,        0,           ACTION_PAGE_UP,     ACTION_CHANNEL_PREV },
-  { KS_Next,         0,           ACTION_PAGE_DOWN,   ACTION_CHANNEL_NEXT },
+  { KS_Prior,        0,           ACTION_PAGE_UP,     ACTION_NEXT_CHANNEL },
+  { KS_Next,         0,           ACTION_PAGE_DOWN,   ACTION_PREV_CHANNEL },
   { KS_Home,         0,           ACTION_TOP },
   { KS_End,          0,           ACTION_BOTTOM },
 

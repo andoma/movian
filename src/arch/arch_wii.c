@@ -43,7 +43,7 @@
 #include <stdarg.h>
 #include "prop.h"
 
-#include "sd/sd.h"
+#include "service.h"
 #include "misc/callout.h"
 #include "notifications.h"
 
@@ -363,8 +363,8 @@ void
 arch_sd_init(void)
 {
   if(wii_sd_mounted)
-    sd_add_service("Front", "Front SD card", NULL, NULL, NULL, 
-		   "file://sd:/");
+    service_create("Front SD card", "Front SD card", "file://sd:/",
+		   SVC_TYPE_OTHER, NULL, 0);
 }
 /**
  *
