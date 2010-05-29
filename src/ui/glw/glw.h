@@ -615,7 +615,8 @@ typedef struct glw {
 
 #define GLW_ACTIVE               0x1
 #define GLW_AUTOREFOCUSABLE      0x2
-
+#define GLW_NAV_FOCUSABLE        0x4     /* Widget is focusable when navigating
+					    with keyboard input */
 
 #define GLW_DEBUG                0x8     /* Debug this object */
 #define GLW_FOCUS_BLOCKED        0x10

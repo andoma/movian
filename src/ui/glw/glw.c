@@ -403,6 +403,7 @@ glw_create(glw_root_t *gr, const glw_class_t *class, va_list ap)
   w->glw_alpha = 1.0f;
   w->glw_refcnt = 1;
   w->glw_alignment = class->gc_default_alignment;
+  w->glw_flags = GLW_NAV_FOCUSABLE;
 
   LIST_INSERT_HEAD(&gr->gr_active_dummy_list, w, glw_active_link);
 

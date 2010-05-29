@@ -7,6 +7,8 @@
 
     .width = 24;
     .focusable = 0.2 * canScroll();
+    .navFocusable = false;
+
     .alpha = iir(canScroll(), 16);
 
     widget(backdrop, {
