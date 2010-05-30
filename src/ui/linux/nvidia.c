@@ -342,10 +342,14 @@ nvidia_init(Display *dpy, int screen, prop_t *gpu)
   if(XNVCTRLQueryAttribute(dpy, screen, 0, 
 			   NV_CTRL_GPU_MAX_CORE_THRESHOLD, &v))
     prop_set_int(nvd->temp_max, v);
+  else
+    prop_set_int(nvd->temp_max, 105);
 
   if(XNVCTRLQueryAttribute(dpy, screen, 0, 
 			   NV_CTRL_GPU_CORE_THRESHOLD, &v))
-    prop_set_int(nvd->temp_thres, v);
+    prop_set_int(nvd->temp_thres, v); 
+  else
+    prop_set_int(nvd->temp_max, 105);
 
 
 
