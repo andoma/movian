@@ -96,7 +96,12 @@ timercb(callout_t *c, void *aux)
 void
 linux_init_cpu_monitor(void)
 {
-  p_cpuroot = prop_create(prop_get_global(), "cpus");
+  prop_t *p;
+
+  p = prop_create(prop_get_global(), "cpuinfo");
+  prop_set_int(prop_create(p, "available"), 1);
+
+  p_cpuroot = prop_create(p, "cpus");
 
   cpu_monitor_do();
   callout_arm(&timer, timercb, NULL, 1);
