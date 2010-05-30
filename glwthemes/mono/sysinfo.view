@@ -24,6 +24,14 @@ widget(container_x, {
 	
 	HORIZONTAL_SEPARATOR();
 
+	widget(label, {
+	  .caption = devoidify($global.media.current.metadata.title, 
+			       "No media loaded");
+	  .align = center;
+	  .sizeScale = 0.5;
+	  .ellipsize = true;
+	});
+
       
 	cloner($global.media.current.audio.channels, container_y, {
 	  widget(label, {
