@@ -48,6 +48,10 @@ SRCS += src/main.c \
 	src/arch/arch_${OSENV}.c \
 	src/ui/ui.c \
 
+ifeq ($(PLATFORM), linux)
+SRCS += src/arch/linux.c
+endif
+
 
 #
 # Misc support

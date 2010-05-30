@@ -28,12 +28,12 @@
  */
 #ifdef linux
 
-
 #define _GNU_SOURCE
 #include <sched.h>
 #include <pthread.h>
 #include <string.h>
 #include <sys/prctl.h>
+#include "linux.h"
 
 static int
 get_system_concurrency(void)
@@ -219,7 +219,9 @@ tracev(int level, const char *subsys, const char *fmt, va_list ap)
 void
 arch_sd_init(void)
 {
-
+#ifdef linux
+  linux_init_cpu_monitor();
+#endif
 }
 
 
