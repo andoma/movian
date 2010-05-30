@@ -980,7 +980,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	  gpe.type = GLW_POINTER_LEFT_RELEASE;
 	  break;
 	case 3:
-	  gpe.type = GLW_POINTER_LEFT_RELEASE;
+	  gpe.type = GLW_POINTER_RIGHT_RELEASE;
 	  break;
 	default:
 	  continue;
