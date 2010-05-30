@@ -126,6 +126,7 @@ typedef enum {
   GLW_ATTRIB_PAGE,
   GLW_ATTRIB_ALPHA_EDGES,
   GLW_ATTRIB_PRIORITY,
+  GLW_ATTRIB_FILL,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -886,6 +887,7 @@ do {						\
   case GLW_ATTRIB_CHILD_ASPECT:                 \
   case GLW_ATTRIB_HEIGHT:                       \
   case GLW_ATTRIB_WIDTH:                        \
+  case GLW_ATTRIB_FILL:                         \
     (void)va_arg(ap, double);			\
     break;					\
   }						\
