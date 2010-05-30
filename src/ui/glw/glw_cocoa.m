@@ -527,14 +527,6 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   [self glwMouseEvent:GLW_POINTER_SCROLL event:event];
 }
 
-- (void)mouseMoved:(NSEvent *)event {
-  [self glwMouseEvent:GLW_POINTER_MOTION_UPDATE event:event];
-}
-
-- (void)mouseDragged:(NSEvent *)event {
-  [self glwMouseEvent:GLW_POINTER_MOTION_UPDATE event:event];
-}
-
 - (void)glwEventFromMouseEvent:(NSEvent *)event {
   struct {
     int nsevent;
@@ -558,6 +550,12 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
       mouse_down--;
     
     [self glwMouseEvent:events[i].glw_event event:event];
+    return;
+  }
+
+  if([event type] == NSOtherMouseUp) {
+    event_t *e = event_create_action(ACTION_MENU);
+    glw_cocoa_dispatch_event(&gcocoa.gr.gr_uii, e);
   }
 }
 
@@ -565,6 +563,13 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   [self glwEventFromMouseEvent:event];
 }
 
+- (void)mouseMoved:(NSEvent *)event {
+  [self glwMouseEvent:GLW_POINTER_MOTION_UPDATE event:event];
+}
+
+- (void)mouseDragged:(NSEvent *)event {
+  [self glwMouseEvent:GLW_POINTER_MOTION_UPDATE event:event];
+}
 - (void)mouseUp:(NSEvent *)event {
   [self glwEventFromMouseEvent:event];
 }
@@ -573,7 +578,22 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   [self glwEventFromMouseEvent:event];
 }
 
+- (void)rightMouseDragged:(NSEvent *)event {
+  [self glwMouseEvent:GLW_POINTER_MOTION_UPDATE event:event];
+}
 - (void)rightMouseUp:(NSEvent *)event {
+  [self glwEventFromMouseEvent:event];
+}
+
+- (void)otherMouseDown:(NSEvent *)event {
+  [self glwEventFromMouseEvent:event];
+}
+
+- (void)otherMouseDragged:(NSEvent *)event {
+  [self glwMouseEvent:GLW_POINTER_MOTION_UPDATE event:event];
+}
+
+- (void)otherMouseUp:(NSEvent *)event {
   [self glwEventFromMouseEvent:event];
 }
 
