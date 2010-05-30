@@ -161,6 +161,7 @@ static struct strtab actionnames[] = {
   { "VolumeDown",            ACTION_VOLUME_DOWN },
   { "VolumeMuteToggle",      ACTION_VOLUME_MUTE_TOGGLE },
   { "Menu",                  ACTION_MENU },
+  { "Sysinfo",               ACTION_SYSINFO },
   { "Back",                  ACTION_NAV_BACK },
   { "Forward",               ACTION_NAV_FWD },
   { "Select",                ACTION_SELECT },

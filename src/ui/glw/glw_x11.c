@@ -691,6 +691,7 @@ static const struct {
   { XK_Menu,                 0,   ACTION_MENU },
   { XK_F1,                   0,   ACTION_MENU },
   { XK_F2,                   0,   ACTION_SHOW_MEDIA_STATS },
+  { XK_F3,                   0,   ACTION_SYSINFO },
   
   { XK_F1,                   ShiftMask,   ACTION_PREV_TRACK },
   { XK_F2,                   ShiftMask,   ACTION_PLAYPAUSE },
