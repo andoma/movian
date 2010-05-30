@@ -32,17 +32,17 @@
 
 
 
-static int isvalid;
+static int isvalid, isavail;
 static int64_t last_time[8][8];
 static callout_t timer;
 static prop_t *p_cpuroot;
 static prop_t *p_cpu[8];
 static prop_t *p_load[8];
 
-static void
+static int
 cpu_monitor_do(void)
 {
-  int i, j, fd, r;
+  int i, j, fd, r, ret = 0;
   char buf[PATH_MAX];
   char data[100];
   uint64_t v, d;
@@ -71,6 +71,12 @@ cpu_monitor_do(void)
     }
     if(j == 0)
       break;
+    ret = 1;
+    if(!isavail && isvalid) {
+      isavail = 1;
+      prop_set_int(prop_create(prop_create(prop_get_global(), "cpuinfo"),
+			       "available"), 1);
+    }
 
     if(p_cpu[i] == NULL) {
       p_cpu[i] = prop_create(p_cpuroot, NULL);
@@ -82,7 +88,8 @@ cpu_monitor_do(void)
 
     prop_set_float(p_load[i], 1 - (sum / 1000000.0));
   }
-  isvalid=1;
+  isvalid = 1;
+  return ret;
 }
 
 
@@ -96,12 +103,7 @@ timercb(callout_t *c, void *aux)
 void
 linux_init_cpu_monitor(void)
 {
-  prop_t *p;
-
-  p = prop_create(prop_get_global(), "cpuinfo");
-  prop_set_int(prop_create(p, "available"), 1);
-
-  p_cpuroot = prop_create(p, "cpus");
+  p_cpuroot = prop_create(prop_create(prop_get_global(), "cpuinfo"), "cpus");
 
   cpu_monitor_do();
   callout_arm(&timer, timercb, NULL, 1);
