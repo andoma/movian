@@ -408,10 +408,12 @@ glw_navigate(glw_t *w, event_t *e, int local)
     retried = 1;
     w = r;
     query.orientation = GLW_ORIENTATION_VERTICAL;
+    query.x1 = query.x2 = query.xc = 1 - query.direction * 2;
     goto retry;
   } else if(query.orientation == GLW_ORIENTATION_HORIZONTAL) {
     query.orientation = GLW_ORIENTATION_VERTICAL;
     w = w0;
+    query.x1 = query.x2 = query.xc = 1 - query.direction * 2;
     goto retry;
   }
 
