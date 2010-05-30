@@ -176,6 +176,8 @@ mp_create(const char *name, const char *type, int flags)
 
   mp->mp_prop_avdiff      = prop_create(mp->mp_prop_root, "avdiff");
 
+  mp->mp_prop_audio_channels_root = prop_create(mp->mp_prop_audio, "channels");
+
   mp->mp_prop_canSkipBackward = 
     prop_create(mp->mp_prop_root, "canSkipBackward");
 

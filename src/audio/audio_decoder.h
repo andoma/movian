@@ -58,6 +58,15 @@ typedef struct audio_decoder {
 
   struct audio_buf_queue ad_hold_queue;
 
+  // Delay from decoding to output. Used to sync peak meters
+  int ad_odelay;
+
+#define PEAK_DELAY_SIZE 64
+#define PEAK_DELAY_MASK (PEAK_DELAY_SIZE - 1)
+
+  float ad_peak_delay[PEAK_DELAY_SIZE][8];
+  int ad_peak_ptr;
+
 } audio_decoder_t;
 
 audio_decoder_t *audio_decoder_create(media_pipe_t *mp);

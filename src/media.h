@@ -220,6 +220,15 @@ typedef struct media_pipe {
   prop_sub_t *mp_sub_avdelta;
   prop_sub_t *mp_sub_stats;
 
+  /* Audio info props */
+
+  prop_t *mp_prop_audio_channels_root;
+  prop_t *mp_prop_audio_channel[8];
+  prop_t *mp_prop_audio_channel_level[8];
+
+  int mp_cur_channels;
+  int64_t mp_cur_chlayout;
+
 } media_pipe_t;
 
 

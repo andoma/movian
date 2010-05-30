@@ -27,6 +27,7 @@
 #include "audio_decoder.h"
 #include "audio.h"
 #include "event.h"
+#include "misc/strtab.h"
 
 extern audio_fifo_t *thefifo;
 
@@ -410,6 +411,129 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
 }
 
 
+static struct strtab chnames[] = {
+  { "Left",        CH_FRONT_LEFT },
+  { "Right",       CH_FRONT_RIGHT },
+  { "Center",      CH_FRONT_CENTER },
+  { "LFE",         CH_LOW_FREQUENCY },
+  { "Back Left",   CH_BACK_LEFT },
+  { "Back Right",  CH_BACK_RIGHT },
+  { "Side Left",   CH_SIDE_LEFT },
+  { "Side Right",  CH_SIDE_RIGHT }
+};
+
+
+/**
+ *
+ */
+void
+astats(audio_decoder_t *ad, media_pipe_t *mp, int64_t pts, int epoch,
+       int16_t *data, int frames, int channels, int64_t chlayout, int rate);
+
+void
+astats(audio_decoder_t *ad, media_pipe_t *mp, int64_t pts, int epoch,
+       int16_t *data, int frames, int channels, int64_t chlayout, int rate)
+{
+  int v[8];
+  float v0;
+  int i, j, x, b;
+  int64_t delay;
+  int steps;
+  const char *n;
+
+  if(channels > 8)
+    return;
+
+  if(chlayout == 0 && channels == 1)
+    chlayout = CH_LAYOUT_MONO;
+
+  if(chlayout == 0 && channels == 2)
+    chlayout = CH_LAYOUT_STEREO;
+
+  if(mp->mp_cur_channels != channels || mp->mp_cur_chlayout != chlayout) {
+    mp->mp_cur_chlayout = chlayout;
+    mp->mp_cur_channels = channels;
+
+    for(i = 0; i < 8; i++)
+      if(mp->mp_prop_audio_channel[i] != NULL) {
+	prop_destroy(mp->mp_prop_audio_channel[i]);
+	mp->mp_prop_audio_channel[i] = NULL;
+      }
+
+    b = 0;
+    for(i = 0; i < channels; i++) {
+      mp->mp_prop_audio_channel[i] = 
+	prop_create(mp->mp_prop_audio_channels_root, NULL);
+
+      mp->mp_prop_audio_channel_level[i] = 
+	prop_create(mp->mp_prop_audio_channel[i], "level");
+      
+      prop_set_float(mp->mp_prop_audio_channel_level[i], -100);
+
+      n = NULL;
+      while(b < 64) {
+	if(chlayout & (1ULL << b)) {
+	  n = val2str(1 << b, chnames);
+	  b++;
+	  break;
+	}
+	b++;
+      }
+      if(n == NULL)
+	n = "Other";
+      prop_set_string(prop_create(mp->mp_prop_audio_channel[i], "name"), n);
+    }
+  }
+
+  hts_mutex_lock(&mp->mp_clock_mutex);
+
+  if(epoch == mp->mp_audio_clock_epoch &&
+     mp->mp_audio_clock != AV_NOPTS_VALUE &&
+     mp->mp_audio_clock_realtime != 0 && 
+     pts != AV_NOPTS_VALUE) {
+    
+    delay = pts - mp->mp_audio_clock + showtime_get_ts()
+      - mp->mp_audio_clock_realtime;
+    
+    if(delay >= 0 && delay < 3000000) {
+      if(ad->ad_odelay == 0)
+	ad->ad_odelay = delay;
+      else
+	ad->ad_odelay = (ad->ad_odelay * 15 + (int)delay) / 16;
+    }
+  }
+  hts_mutex_unlock(&mp->mp_clock_mutex);
+
+  steps = ad->ad_odelay / (frames * 1000000 / rate);
+	 
+  
+  for(j = 0; j < channels; j++)
+    v[j] = 0;
+
+  for(i = 0; i < frames; i++) {
+    for(j = 0; j < channels; j++) {
+      x = abs(*data++);
+      if(v[j] < x)
+	v[j] = x;
+    }
+  }
+
+  i = ad->ad_peak_ptr;
+  for(j = 0; j < channels; j++) {
+    v0 = 20 * log10f(v[j] / 32768.0);
+    if(v0 < -100)
+      v0 = -100;
+    ad->ad_peak_delay[i][j] = v0;
+  }
+
+  int k = (ad->ad_peak_ptr - steps) & PEAK_DELAY_MASK;
+
+  for(j = 0; j < channels; j++)
+    prop_set_float(mp->mp_prop_audio_channel_level[j], 
+		   ad->ad_peak_delay[k][j]);
+  ad->ad_peak_ptr = (ad->ad_peak_ptr + 1) & PEAK_DELAY_MASK;
+}
+
 
 /**
  * Audio mixing stage 1
@@ -427,6 +551,8 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
   int x, y, z, i, c;
   int16_t *data, *src, *dst;
   int rf = audio_rateflag_from_rate(rate);
+
+  astats(ad, mp, pts, epoch, data0, frames, channels, chlayout, rate);
 
   /**
    * Channel swizzling
