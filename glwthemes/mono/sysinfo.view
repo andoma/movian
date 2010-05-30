@@ -1,0 +1,132 @@
+#import "theme://include/defs.view"
+#import "theme://include/separators.view"
+
+#define BAR_COLOR_LEFT()  {[0.0, 1.0, 0.0]}
+#define BAR_COLOR_RIGHT() {[1.0, 1.0, 0.0]}
+
+widget(container_x, {
+  .align = right;
+  
+  widget(container_y, {
+    .width = 200;
+
+    widget(backdrop, {
+      PLATE_GFX();
+      .color = PLATE_COLOR_VIDEO();
+      .alphaSelf = 0.75;
+      
+      widget(container_y, {
+	
+	widget(label, {
+	  .align = center;
+	  .caption = "Audio output";
+	});
+	
+	HORIZONTAL_SEPARATOR();
+
+      
+	cloner($global.media.current.audio.channels, container_y, {
+	  widget(label, {
+	    .sizeScale = 0.5;
+	    .caption = $self.name;
+	  });
+	
+	  widget(dummy, {
+	    .height = 2;
+	  });
+	
+	  widget(bar, {
+	    .height = 5;
+	    .color1 = BAR_COLOR_LEFT();
+	    .color2 = BAR_COLOR_RIGHT();
+	    .fill = 1 + $self.level / 100;
+	  });
+	
+	  widget(dummy, {
+	    .height = 4;
+	  });
+	});
+      });
+    });
+
+    widget(backdrop, {
+      .hidden = !$ui.gpu.temperature.available;
+      PLATE_GFX();
+      .color = PLATE_COLOR_VIDEO();
+      .alphaSelf = 0.75;
+      
+      widget(container_y, {
+	
+	widget(label, {
+	  .align = center;
+	  .caption = "GPU & Display";
+	});
+	
+	HORIZONTAL_SEPARATOR();
+	
+	widget(label, {
+	  .sizeScale = 0.5;
+	  .caption = "GPU Core temperature: " +
+	    int2str($ui.gpu.temperature.current) + " / " +
+	    int2str($ui.gpu.temperature.thres) + "°" ;
+	});
+	
+	widget(bar, {
+	  .height = 5;
+	  .color1 = BAR_COLOR_LEFT();
+	  .color2 = BAR_COLOR_RIGHT();
+	  .fill = $ui.gpu.temperature.current / $ui.gpu.temperature.thres;
+	});
+
+	widget(dummy, {
+	  .height = 4;
+	});
+      });
+    });
+
+
+
+    widget(backdrop, {
+      .hidden = !$global.cpuinfo.available;
+
+      PLATE_GFX();
+      .color = PLATE_COLOR_VIDEO();
+      .alphaSelf = 0.75;
+      
+      widget(container_y, {
+	
+	widget(label, {
+	  .align = center;
+	  .caption = "CPUs";
+	});
+	
+	HORIZONTAL_SEPARATOR();
+      
+	cloner($global.cpuinfo.cpus, container_y, {
+	  widget(label, {
+	    .sizeScale = 0.5;
+	    .caption = $self.name + ": " + int2str($self.load * 100) + "%";
+	  });
+	
+	  widget(dummy, {
+	    .height = 2;
+	  });
+	
+	  widget(bar, {
+	    .height = 5;
+	    .color1 = BAR_COLOR_LEFT();
+	    .color2 = BAR_COLOR_RIGHT();
+	    .fill = $self.load;
+	  });
+	
+	  widget(dummy, {
+	    .height = 4;
+	  });
+	});
+      });
+    });
+
+
+    space(1);
+  });
+});

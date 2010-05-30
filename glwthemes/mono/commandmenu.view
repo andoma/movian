@@ -343,6 +343,9 @@ widget(container_x, {
 		    $global.media.current.stats,
 		    $global.media.current.type != "video");
 
+	  BOOLENTRY("System info",
+		    $ui.showSysteminfo,
+		    false);
 	});
 
 

@@ -19,6 +19,10 @@ onEvent(menu, {
   $ui.menu = !$ui.menu;
 });
 
+onEvent(sysinfo, {
+  $ui.showSysteminfo = !$ui.showSysteminfo;
+});
+
 onEvent(back, {
   $ui.menu = false;
 }, $ui.menu);
@@ -132,18 +136,26 @@ widget(container_z, {
 	});
 
 	// Main page deck
-	widget(deck, {
-	  .filterConstraintX = true;
-	  .time = 0.1;
-	  .effect = blend;
-	  .noInitialTransform = true;
-
-	  delta($ui.fullwindow, wantFullWindow());
-	  
-	  cloner($global.nav.pages, loader, {
-	    .time = 0.2;
+	widget(container_z, {
+	  widget(deck, {
+	    .filterConstraintX = true;
+	    .time = 0.1;
+	    .effect = blend;
 	    .noInitialTransform = true;
-	    .source = "theme://pages/" + $page.source.type + ".view";
+	    
+	    delta($ui.fullwindow, wantFullWindow());
+	    
+	    cloner($global.nav.pages, loader, {
+	      .time = 0.2;
+	      .noInitialTransform = true;
+	      .source = "theme://pages/" + $page.source.type + ".view";
+	    });
+	  });
+
+	  widget(loader, {
+	    .time = 0.3;
+	    .effect = blend;
+	    .source = select($ui.showSysteminfo, "theme://sysinfo.view", "");
 	  });
 	});
 
