@@ -123,13 +123,31 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
 
   case AM_FORMAT_PCM_5DOT1:
     pam->ss.channels = 6;
-    pa_channel_map_init_auto(&map, 6, PA_CHANNEL_MAP_WAVEEX);
+    pa_channel_map_init(&map); //, 6, PA_CHANNEL_MAP_WAVEEX);
+
+    map.channels = 6;
+    map.map[0] = PA_CHANNEL_POSITION_LEFT;
+    map.map[1] = PA_CHANNEL_POSITION_RIGHT;
+    map.map[2] = PA_CHANNEL_POSITION_SIDE_LEFT;
+    map.map[3] = PA_CHANNEL_POSITION_SIDE_RIGHT;
+    map.map[4] = PA_CHANNEL_POSITION_CENTER;
+    map.map[5] = PA_CHANNEL_POSITION_LFE;
     break;
 
   case AM_FORMAT_PCM_7DOT1:
     pam->ss.channels = 8;
-    pa_channel_map_init_auto(&map, 8, PA_CHANNEL_MAP_WAVEEX);
+    pa_channel_map_init(&map);
+    map.channels = 8;
+    map.map[0] = PA_CHANNEL_POSITION_LEFT;
+    map.map[1] = PA_CHANNEL_POSITION_RIGHT;
+    map.map[2] = PA_CHANNEL_POSITION_SIDE_LEFT;
+    map.map[3] = PA_CHANNEL_POSITION_SIDE_RIGHT;
+    map.map[4] = PA_CHANNEL_POSITION_CENTER;
+    map.map[5] = PA_CHANNEL_POSITION_LFE;
+    map.map[6] = PA_CHANNEL_POSITION_REAR_LEFT;
+    map.map[7] = PA_CHANNEL_POSITION_REAR_RIGHT;
     break;
+
   default:
     abort();
   }
