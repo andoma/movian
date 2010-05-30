@@ -870,7 +870,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
   XEvent event;
   int w, h;
   glw_pointer_event_t gpe;
-
+  event_t *e;
   struct timespec tp;
   int64_t start;
   int frame = 0;
@@ -1001,6 +1001,10 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	  /* Left click */
 	  gpe.type = GLW_POINTER_LEFT_PRESS;
 	  break;
+	case 2:
+	  e = event_create_action(ACTION_MENU);
+	  glw_x11_dispatch_event(&gx11->gr.gr_uii, e);
+	  continue;
 	case 3:
 	  /* Right click */
 	  gpe.type = GLW_POINTER_RIGHT_PRESS;
