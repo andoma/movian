@@ -102,6 +102,9 @@ path_escape(char *dest, int size, const char *src)
        (s >= 'a' && s <= 'z') ||
        (s >= 'A' && s <= 'Z') ||
        s == '/' ||
+       s == '(' ||
+       s == ')' ||
+       s == ',' ||
        s == '_' ||
        s == '.' ||
        s == '-') {
