@@ -22,8 +22,8 @@
 #include <htsmsg/htsmsg.h>
 #include <htsmsg/htsmsg_xml.h>
 
-#include "scrappers.h"
 #include "showtime.h"
+#include "lastfm.h"
 #include "fileaccess/fileaccess.h"
 
 static prop_courier_t *scrapper_courier;
@@ -95,7 +95,7 @@ lastfm_parse(htsmsg_t *xml, prop_t *parent)
 
 
 static void
-scrap_test(const char *artistname, prop_t *p)
+lastfm_artistpics_query(const char *artistname, prop_t *p)
 {
   char *result;
   size_t resultsize;
@@ -140,7 +140,7 @@ scrap_prop_artist_cb(void *opaque, prop_event_t event, ...)
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
     TRACE(TRACE_DEBUG, "scrapper", "Scrapping images for artist %s",
 	  spa->spa_artistname);
-    scrap_test(spa->spa_artistname, spa->spa_prop);
+    lastfm_artistpics_query(spa->spa_artistname, spa->spa_prop);
     break;
 
   case PROP_DESTROYED:
@@ -161,7 +161,7 @@ scrap_prop_artist_cb(void *opaque, prop_event_t event, ...)
  *
  */
 void
-scrapper_artist_init(prop_t *prop, const char *artist)
+lastfm_artistpics_init(prop_t *prop, const char *artist)
 {
   scrap_prop_artist_t *spa;
 
@@ -184,7 +184,7 @@ scrapper_artist_init(prop_t *prop, const char *artist)
  *
  */
 void
-scrappers_init(void)
+lastfm_init(void)
 {
   hts_mutex_init(&scrapper_mutex);
   scrapper_courier = prop_courier_create_thread(&scrapper_mutex, "scrapper");

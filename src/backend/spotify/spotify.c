@@ -39,8 +39,9 @@
 #include "keyring.h"
 #include "misc/ptrvec.h"
 #include "service.h"
-#include "scrappers/scrappers.h"
 #include "misc/pixmap.h"
+
+#include "api/lastfm.h"
 
 #ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
 #include <dlfcn.h>
@@ -692,7 +693,7 @@ spotify_metadata_update_track(metadata_t *m)
     p = prop_create(meta, "artist_images");
 
     if(p != NULL)
-      scrapper_artist_init(p, f_sp_artist_name(artist));
+      lastfm_artistpics_init(p, f_sp_artist_name(artist));
   }
 
   

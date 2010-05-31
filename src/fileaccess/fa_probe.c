@@ -32,7 +32,7 @@
 #include "fileaccess.h"
 #include "fa_probe.h"
 #include "navigator.h"
-#include "scrappers/scrappers.h"
+#include "api/lastfm.h"
 #include "media.h"
 
 #define METADATA_HASH_SIZE 101
@@ -649,7 +649,7 @@ fa_probe_set_from_cache(const metadata_t *md, prop_t *proproot,
     prop_set_rstring(prop_create(proproot, "artist"), md->md_artist);
     p = prop_create(proproot, "artist_images");
     if(p != NULL)
-      scrapper_artist_init(p, rstr_get(md->md_artist)); 
+      lastfm_artistpics_init(p, rstr_get(md->md_artist)); 
   }
 
   if(md->md_album)

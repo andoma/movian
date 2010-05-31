@@ -40,9 +40,8 @@
 #include "notifications.h"
 #include "sd/sd.h"
 #include "ipc/ipc.h"
-#include "scrappers/scrappers.h"
 #include "misc/callout.h"
-#include "api/opensubtitles.h"
+#include "api/api.h"
 #include "runcontrol.h"
 #include "service.h"
 
@@ -210,9 +209,6 @@ main(int argc, char **argv)
   /* Initialize media subsystem */
   media_init();
 
-  /* Initialize scrapping subsystem */
-  scrappers_init();
-
   /* Service handling */
   service_init();
 
@@ -237,8 +233,8 @@ main(int argc, char **argv)
   /* Service discovery. Must be after ipc_init() (d-bus and threads, etc) */
   sd_init();
 
-  /* opensubtitles.org */
-  opensub_init();
+  /* Initialize various external APIs */
+  api_init();
 
   /* */
   runcontrol_init(can_standby, can_poweroff);

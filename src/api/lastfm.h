@@ -1,5 +1,5 @@
 /*
- *  Scrapping core
+ *  LastFM API
  *  Copyright (C) 2009 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,13 +16,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRAPPERS_H__
-#define SCRAPPERS_H__
+#ifndef LASTFM_H__
+#define LASTFM_H__
 
-#include "prop.h"
+struct prop;
 
-void scrapper_artist_init(prop_t *prop, const char *artistname);
+void lastfm_artistpics_init(struct prop *prop, const char *artistname);
 
-void scrappers_init(void);
+void lastfm_init(void);
 
-#endif /* SCRAPPERS_H__ */
+#endif /* LASTFM_H__ */

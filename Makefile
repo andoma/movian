@@ -113,16 +113,12 @@ BUNDLES += resources/tvheadend
 SRCS-$(CONFIG_BONJOUR) 	+= src/sd/bonjour.c
 
 #
-# Scrapping
-#
-
-SRCS                   += src/scrappers/scrappers.c
-
-#
 # APIs
 #
-SRCS += 		src/api/xmlrpc.c \
+SRCS += 		src/api/api.c \
+			src/api/xmlrpc.c \
 			src/api/opensubtitles.c \
+			src/api/lastfm.c \
 
 #
 # Networking
