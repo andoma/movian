@@ -28,6 +28,8 @@
 #include "xmlrpc.h"
 #include "fileaccess/fileaccess.h"
 
+#define OPENSUB_URL "http://api.opensubtitles.org/xml-rpc"
+
 static hts_mutex_t opensub_mutex;
 static int opensub_enable;
 static char *opensub_username;
@@ -167,8 +169,7 @@ opensub_login(int force, char *errbuf, size_t errlen)
     TRACE(TRACE_DEBUG, "opensubtitles", "Logging in as user '%s'", 
 	  opensub_username);
 
-    out = xmlrpc_request("http://api.opensubtitles.org/xml-rpc/",
-			 "LogIn", in, errbuf, errlen);
+    out = xmlrpc_request(OPENSUB_URL, "LogIn", in, errbuf, errlen);
 
     if(out == NULL) {
       hts_mutex_unlock(&opensub_mutex);
@@ -233,7 +234,7 @@ async_query_do(prop_t *node, htsmsg_t *query)
   htsmsg_add_str(in, NULL, opensub_token);
   htsmsg_add_msg(in, NULL, queries);
 
-  out = xmlrpc_request("http://api.opensubtitles.org/xml-rpc/",
+  out = xmlrpc_request(OPENSUB_URL,
 		       "SearchSubtitles", in, errbuf, sizeof(errbuf));
   if(out == NULL) {
     TRACE(TRACE_ERROR, "opensubtitles", "Unable to query: %s", errbuf);
