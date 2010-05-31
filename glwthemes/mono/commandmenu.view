@@ -127,15 +127,14 @@ widget(container_x, {
     .alphaSelf = 0.8;
     
     widget(container_y, {
-      /*
       widget(label, {
 	.align = center;
-	.caption = "Showtime";
+	.caption = $global.media.current.metadata.title;
 	.sizeScale = 2;
       });
 
       HORIZONTAL_SEPARATOR();
-*/
+
       widget(container_x, {
 	.filterConstraintX = true;
 
@@ -293,11 +292,23 @@ widget(container_x, {
 
 	  // ------- Seek bar
 
-	  CMDSLIDER(!$global.media.current.canSeek,
-		    0.2 * $global.media.current.canSeek,
-		    0, $global.media.current.metadata.duration, 15,
-		    $global.media.current.currenttime,
-		    value2duration($global.media.current.currenttime));
+          widget(container_x, {
+
+	      CMDSLIDER(!$global.media.current.canSeek,
+			0.2 * $global.media.current.canSeek,
+			0, $global.media.current.metadata.duration, 15,
+			$global.media.current.currenttime,
+			value2duration($global.media.current.currenttime));
+
+	      space(0.02);
+
+	      widget(label, {
+		  .align = right;
+		  .caption = value2duration($global.media.current.metadata.duration);
+		  //.sizeScale = 0.75;
+		});
+	    });
+		    
 
 	  HORIZONTAL_SEPARATOR();
 
