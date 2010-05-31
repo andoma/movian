@@ -689,7 +689,7 @@ htsmsg_xml_parse_cd(xmlparser_t *xp, htsmsg_t *parent, char *src)
     }
   }
 
-  if(y == 1 && c > 1) {
+  if(y == 1 && c > 0) {
     /* One segment UTF-8 (or 7bit ASCII),
        use data directly from source */
 
