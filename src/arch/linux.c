@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "linux.h"
 #include "misc/callout.h"
@@ -32,63 +33,69 @@
 
 
 
-static int isvalid, isavail;
-static int64_t last_time[8][8];
+static int isvalid;
+static int64_t last_idle[17];
+static int64_t last_tot[17];
 static callout_t timer;
 static prop_t *p_cpuroot;
-static prop_t *p_cpu[8];
-static prop_t *p_load[8];
+static prop_t *p_cpu[17];
+static prop_t *p_load[16];
 
 static int
 cpu_monitor_do(void)
 {
-  int i, j, fd, r, ret = 0;
-  char buf[PATH_MAX];
-  char data[100];
-  uint64_t v, d;
-  uint64_t sum;
+  int ret = 0, id;
+  char data[1000];
+  uint64_t v1, v2, v3, v4, v5, v6, v7, di, tot, dt;
+  char buf[100];
+  char s1[22];
+  FILE *f;
 
-  for(i = 0; i < 8; i++) {
-    sum = 0;
-    for(j = 0; j < 8; j++) {
-      snprintf(buf, sizeof(buf),
-	       "/sys/devices/system/cpu/cpu%d/cpuidle/state%d/time", i, j);
-      fd = open(buf, O_RDONLY);
-      if(fd == -1)
-	break;
-      r = read(fd, data, sizeof(data));
-      close(fd);
-      if(r < 1)
-	break;
-      data[r] = 0;
-      v = strtoll(data, NULL, 10);
+  f = fopen("/proc/stat", "r");
+  if(f == NULL)
+    return 0;
 
-      if(isvalid) {
-	d = v - last_time[i][j];
-	sum += d;
+  while(fgets(data, sizeof(data), f) != NULL) {
+    if(sscanf(data, "%20s %lld %lld %lld %lld %lld %lld %lld", 
+	      s1, &v1, &v2, &v3, &v4, &v5, &v6, &v7) != 8)
+      continue;
+    if(strncmp(s1, "cpu", 3))
+      continue;
+
+    tot = v1+v2+v3+v4+v5+v6+v7;
+
+
+    if(!strcmp(s1, "cpu")) {
+      id = 16;
+    } else {
+      id = atoi(s1 + 3);
+      if(id < 0 || id > 16)
+	continue;
+    }
+    
+    if(isvalid) {
+      di = v4  - last_idle[id];
+      dt = tot - last_tot[id];
+
+      if(id < 16) {
+
+	if(p_cpu[id] == NULL) {
+	  p_cpu[id] = prop_create(p_cpuroot, NULL);
+
+	  snprintf(buf, sizeof(buf), "CPU%d", id);
+	  prop_set_string(prop_create(p_cpu[id], "name"), buf);
+	  p_load[id] = prop_create(p_cpu[id], "load");
+	}
+
+	prop_set_float(p_load[id], 1.0 - ((float)di / (float)dt));
       }
-      last_time[i][j] = v;
     }
-    if(j == 0)
-      break;
-    ret = 1;
-    if(!isavail && isvalid) {
-      isavail = 1;
-      prop_set_int(prop_create(prop_create(prop_get_global(), "cpuinfo"),
-			       "available"), 1);
-    }
-
-    if(p_cpu[i] == NULL) {
-      p_cpu[i] = prop_create(p_cpuroot, NULL);
-
-      snprintf(buf, sizeof(buf), "CPU%d", i);
-      prop_set_string(prop_create(p_cpu[i], "name"), buf);
-      p_load[i] = prop_create(p_cpu[i], "load");
-    }
-
-    prop_set_float(p_load[i], 1 - (sum / 1000000.0));
+    last_idle[id] = v4;
+    last_tot[id] = tot;
   }
   isvalid = 1;
+  prop_set_int(prop_create(prop_create(prop_get_global(), "cpuinfo"),
+			   "available"), 1);
   return ret;
 }
 
