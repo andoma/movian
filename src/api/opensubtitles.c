@@ -220,6 +220,7 @@ async_query_do(prop_t *node, htsmsg_t *query)
   char errbuf[256];
   htsmsg_t *queries, *in, *out, *m, *data, *entry;
   htsmsg_field_t *f;
+  uint32_t v;
 
   if(opensub_login(0, errbuf, sizeof(errbuf))) {
     TRACE(TRACE_ERROR, "opensubtitles", "Unable to login: %s", errbuf);
@@ -247,6 +248,12 @@ async_query_do(prop_t *node, htsmsg_t *query)
     return;
   }
   
+  if(!htsmsg_get_u32(m, "data", &v)) {
+    TRACE(TRACE_DEBUG, "opensubtitles", "No subtitles available");
+    htsmsg_destroy(out);
+    return;
+  }
+
   if((data = htsmsg_get_list(m, "data")) == NULL) {
     TRACE(TRACE_ERROR, "opensubtitles", "No 'data' field in response");
     htsmsg_destroy(out);
