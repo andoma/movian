@@ -52,6 +52,9 @@ ifeq ($(PLATFORM), linux)
 SRCS += src/arch/linux.c
 endif
 
+ifeq ($(PLATFORM), osx)
+SRCS += src/arch/darwin.c
+endif
 
 #
 # Misc support

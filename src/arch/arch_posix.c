@@ -53,6 +53,7 @@ get_system_concurrency(void)
 
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#include "darwin.h"
 
 static int
 get_system_concurrency(void)
@@ -70,7 +71,7 @@ get_system_concurrency(void)
 
 }
 
-#else /* linux */
+#else
 
 static int
 get_system_concurrency(void)
@@ -78,7 +79,7 @@ get_system_concurrency(void)
   return 1;
 }
 
-#endif /* linux */
+#endif
 
 
 #include <stdio.h>
@@ -221,6 +222,8 @@ arch_sd_init(void)
 {
 #ifdef linux
   linux_init_cpu_monitor();
+#elif defined(__APPLE__)
+  darwin_init_cpu_monitor();
 #endif
 }
 
