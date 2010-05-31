@@ -482,6 +482,32 @@ htsmsg_get_map_multi(htsmsg_t *msg, ...)
   return msg;
 }
 
+/**
+ *
+ */
+const char *
+htsmsg_get_str_multi(htsmsg_t *msg, ...)
+{
+  va_list ap;
+  const char *n;
+  htsmsg_field_t *f;
+  va_start(ap, msg);
+
+  while((n = va_arg(ap, char *)) != NULL) {
+    if((f = htsmsg_field_find(msg, n)) == NULL)
+      return NULL;
+    else if(f->hmf_type == HMF_STR)
+      return f->hmf_str;
+    else if(f->hmf_type == HMF_MAP)
+      msg = &f->hmf_msg;
+    else
+      return NULL;
+  }
+  return NULL;
+}
+
+
+
 /*
  *
  */

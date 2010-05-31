@@ -225,6 +225,12 @@ htsmsg_t *htsmsg_get_map_multi(htsmsg_t *msg, ...)
   __attribute__((__sentinel__(0)));
 
 /**
+ * Traverse a hierarchy of htsmsg's to find a specific child.
+ */
+const char *htsmsg_get_str_multi(htsmsg_t *msg, ...)
+  __attribute__((__sentinel__(0)));
+
+/**
  * Get a field of type 'double'.
  *
  * @return HTSMSG_ERR_FIELD_NOT_FOUND - Field does not exist
