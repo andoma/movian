@@ -96,6 +96,7 @@ cpu_monitor_do(void)
   isvalid = 1;
   prop_set_int(prop_create(prop_create(prop_get_global(), "cpuinfo"),
 			   "available"), 1);
+  fclose(f);
   return ret;
 }
 
