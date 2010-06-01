@@ -95,8 +95,14 @@ static const struct {
   
   { _NSShiftTabKey,           NSShiftKeyMask,   ACTION_FOCUS_PREV },
   
-  { NSLeftArrowFunctionKey,   NSAlternateKeyMask,    ACTION_NAV_BACK },
-  { NSRightArrowFunctionKey,  NSAlternateKeyMask,    ACTION_NAV_FWD },
+  { NSLeftArrowFunctionKey,   NSAlternateKeyMask, ACTION_NAV_BACK },
+  { NSRightArrowFunctionKey,  NSAlternateKeyMask, ACTION_NAV_FWD },
+  
+  { NSLeftArrowFunctionKey,   NSCommandKeyMask, ACTION_SEEK_BACKWARD }, 
+  { NSRightArrowFunctionKey,  NSCommandKeyMask, ACTION_SEEK_FORWARD }, 
+  
+  { NSLeftArrowFunctionKey,   NSShiftKeyMask|NSCommandKeyMask, ACTION_PREV_TRACK }, 
+  { NSRightArrowFunctionKey,  NSShiftKeyMask|NSCommandKeyMask, ACTION_NEXT_TRACK }, 
   
   /* only used for fullscreen, in windowed mode we dont get events with
    * NSCommandKeyMask set */
