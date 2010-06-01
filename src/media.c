@@ -1056,6 +1056,7 @@ update_stats(void *opaque, int v)
 void
 mp_set_current_time(media_pipe_t *mp, int64_t pts)
 {
+  mp->mp_current_time = pts;
   if(pts != AV_NOPTS_VALUE)
     prop_set_float_ex(mp->mp_prop_currenttime, mp->mp_sub_currenttime,
 		      pts / 1000000.0);

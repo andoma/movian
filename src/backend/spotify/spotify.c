@@ -2143,6 +2143,8 @@ spotify_thread(void *aux)
 
   /* Wakeup any sleepers that are waiting for us to start */
 
+  //  f_sp_session_preferred_bitrate(s, SP_BITRATE_320k);
+
   while(1) {
 
     sm = NULL;
@@ -2285,6 +2287,21 @@ be_spotify_open(struct navigator *nav, const char *url, const char *view,
   return np;
 }
 
+
+/**
+ *
+ */
+static void
+delta_seek(media_pipe_t *mp, int64_t d)
+{
+  int64_t n = mp->mp_current_time + d;
+  if(n < 0)
+    n = 0;
+
+  spotify_msg_enq(spotify_msg_build_int(SPOTIFY_SEEK, n / 1000));
+}
+
+
 /**
  * Play given track.
  *
@@ -2400,6 +2417,21 @@ be_spotify_play(const char *url, media_pipe_t *mp,
       mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
       mp_set_playstatus_by_hold(mp, hold);
 
+    } else if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
+
+      delta_seek(mp, -60000000);
+
+    } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
+
+      delta_seek(mp, -15000000);
+
+    } else if(event_is_action(e, ACTION_SEEK_FAST_FORWARD)) {
+
+      delta_seek(mp,  60000000);
+
+    } else if(event_is_action(e, ACTION_SEEK_FORWARD)) {
+
+      delta_seek(mp,  15000000);
     }
     event_unref(e);
   }

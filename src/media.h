@@ -229,6 +229,8 @@ typedef struct media_pipe {
   int mp_cur_channels;
   int64_t mp_cur_chlayout;
 
+  int64_t mp_current_time;
+
 } media_pipe_t;
 
 
