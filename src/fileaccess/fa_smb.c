@@ -278,8 +278,6 @@ smb_auth(const char *server, const char *share,
   char *domain;
   int query;
 
-  printf("libsmbclient: Auth required for %s %s\n", server, share);
-
   snprintf(buf, sizeof(buf), "\\\\%s\\%s", server, share);
   for(query = 0; query < 2; query++) {
 
