@@ -33,6 +33,91 @@ static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
 static const uint8_t gif89sig[6] = {'G', 'I', 'F', '8', '9', 'a'};
 static const uint8_t gif87sig[6] = {'G', 'I', 'F', '8', '7', 'a'};
 
+
+
+typedef struct meminfo {
+  const uint8_t *data;
+  size_t size;
+} meminfo_t;
+
+/**
+ *
+ */
+static int
+jpeginfo_mem_reader(void *handle, void *buf, off_t offset, size_t size)
+{
+  meminfo_t *mi = handle;
+
+  if(size + offset > mi->size)
+    return -1;
+
+  memcpy(buf, mi->data + offset, size);
+  return size;
+}
+
+/**
+ * Load entire image into memory using fileaccess quickload method.
+ * Faster than open+read+close.
+ */
+static pixmap_t *
+fa_imageloader2(const char *url, const char *theme,
+		char *errbuf, size_t errlen)
+{
+  uint8_t *p;
+  size_t size;
+  meminfo_t mi;
+  enum CodecID codec;
+  int width = -1, height = -1, orientation = 0;
+
+  if((p = fa_quickload(url, &size, theme, errbuf, errlen)) == NULL) 
+    return NULL;
+
+  mi.data = p;
+  mi.size = size;
+
+  /* Probe format */
+
+  if((p[6] == 'J' && p[7] == 'F' && p[8] == 'I' && p[9] == 'F') ||
+     (p[6] == 'E' && p[7] == 'x' && p[8] == 'i' && p[9] == 'f')) {
+      
+    jpeginfo_t ji;
+    
+    if(jpeg_info(&ji, jpeginfo_mem_reader, &mi, 
+		 JPEG_INFO_DIMENSIONS | JPEG_INFO_ORIENTATION,
+		 p, size, errbuf, errlen)) {
+      free(p);
+      return NULL;
+    }
+
+    codec = CODEC_ID_MJPEG;
+
+    width = ji.ji_width;
+    height = ji.ji_height;
+    orientation = ji.ji_orientation;
+
+    jpeg_info_clear(&ji);
+
+  } else if(!memcmp(pngsig, p, 8)) {
+    codec = CODEC_ID_PNG;
+  } else if(!memcmp(gif87sig, p, sizeof(gif87sig)) ||
+	    !memcmp(gif89sig, p, sizeof(gif89sig))) {
+    codec = CODEC_ID_GIF;
+  } else {
+    snprintf(errbuf, errlen, "%s: unknown format", url);
+    free(p);
+    return NULL;
+  }
+
+  pixmap_t *pm = pixmap_alloc_coded(p, size, codec);
+  pm->pm_width = width;
+  pm->pm_height = height;
+  pm->pm_orientation = orientation;
+
+  free(p);
+  return pm;
+}
+
+
 /**
  *
  */
@@ -43,6 +128,7 @@ jpeginfo_reader(void *handle, void *buf, off_t offset, size_t size)
     return -1;
   return fa_read(handle, buf, size);
 }
+
 
 /**
  *
@@ -56,6 +142,9 @@ fa_imageloader(const char *url, int want_thumb, const char *theme,
   int r;
   enum CodecID codec;
   int width = -1, height = -1, orientation = 0;
+
+  if(!want_thumb)
+    return fa_imageloader2(url, theme, errbuf, errlen);
 
   if((fh = fa_open_theme(url, theme)) == NULL) {
     snprintf(errbuf, errlen, "%s: Unable to open file", url);
