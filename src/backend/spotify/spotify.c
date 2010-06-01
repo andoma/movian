@@ -241,7 +241,7 @@ static void parse_search_reply(sp_search *result, prop_t *nodes, prop_t *view);
 static playlist_t *pl_create(sp_playlist *plist, prop_t *root,
 			     int withtracks, int autodestroy);
 
-static void spotify_shutdown(void *opaque);
+static void spotify_shutdown(void *opaque, int retcode);
 
 static void spotify_try_pending_albums(void);
 
@@ -2640,7 +2640,7 @@ be_spotify_canhandle(const char *url)
  *
  */
 static void
-spotify_shutdown(void *opaque)
+spotify_shutdown(void *opaque, int exitcode)
 {
   int done;
 

@@ -191,11 +191,16 @@ get_confed_input(lgtv_t *lg)
  *
  */
 static void
-lgtv_shutdown(void *opaque)
+lgtv_shutdown(void *opaque, int exitcode)
 {
   lgtv_t *lg = opaque;
   int current_input;
-  int confed_input = get_confed_input(lg);
+  int confed_input;
+
+  if(exitcode == SHOWTIME_EXIT_OK)
+    return;
+
+  confed_input = get_confed_input(lg);
 
   if(!htsmsg_get_u32_or_default(lg->store, "autopower", 0))
     return;

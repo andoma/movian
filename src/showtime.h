@@ -91,6 +91,11 @@ static inline void mystrset(char **p, const char *s)
 
 void runcontrol_activity(void);
 
-void *shutdown_hook_add(void (*fn)(void *opaque), void *opaque);
+void *shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque);
+
+#define SHOWTIME_EXIT_OK       0
+#define SHOWTIME_EXIT_STANDBY  10
+#define SHOWTIME_EXIT_POWEROFF 11
+
 
 #endif /* SHOWTIME_H */

@@ -267,7 +267,7 @@ static LIST_HEAD(, shutdown_hook) shutdown_hooks;
 
 typedef struct shutdown_hook {
   LIST_ENTRY(shutdown_hook) link;
-  void (*fn)(void *opaque);
+  void (*fn)(void *opaque, int exitcode);
   void *opaque;
 } shutdown_hook_t;
 
@@ -275,7 +275,7 @@ typedef struct shutdown_hook {
  *
  */
 void *
-shutdown_hook_add(void (*fn)(void *opaque), void *opaque)
+shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque)
 {
   shutdown_hook_t *sh = malloc(sizeof(shutdown_hook_t));
   sh->fn = fn;
@@ -294,7 +294,7 @@ showtime_shutdown0(void *aux)
   shutdown_hook_t *sh;
 
   LIST_FOREACH(sh, &shutdown_hooks, link)
-    sh->fn(sh->opaque);
+    sh->fn(sh->opaque, showtime_retcode);
 
   ui_shutdown();
 
