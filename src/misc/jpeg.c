@@ -196,7 +196,7 @@ parse_app1(jpeginfo_t *ji, const uint8_t *buf, size_t len)
  * Buffered reader
  */
 static int
-jpeg_read(jpegpriv_t *jp, void *buf, off_t offset, size_t size)
+jpeg_read(jpegpriv_t *jp, void *buf, off_t offset, int size)
 {
   int r;
 
