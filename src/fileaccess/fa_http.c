@@ -945,7 +945,6 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
 
   /* Max 5 retries */
   for(i = 0; i < 5; i++) {
-
     /* If not connected, try to (re-)connect */
     if(hf->hf_connection == NULL && http_open0(hf, 0, NULL, 0, 0, 0))
       return -1;
@@ -989,9 +988,26 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
 
       tcp_write_queue(hc->hc_fd, &q);
       code = http_read_response(hf);
-      if(code != 206) {
+      switch(code) {
+      case 206:
+	// Range transfer OK
+	break;
+
+      case 200:
+	if(hf->hf_pos != 0) {
+	  TRACE(TRACE_DEBUG, "HTTP", 
+		"Server responds with 200 for request starting at %lld.",
+		hf->hf_pos);
+	  http_detach(hf, 0);
+	  return -1;
+	}
+	break;
+
+      default:
+	TRACE(TRACE_DEBUG, "HTTP", 
+	      "Read error. HTTP code %d", code);
 	http_detach(hf, 0);
-	continue; // Try again
+	continue;
       }
 
       if(hf->hf_chunked_transfer) {
@@ -1009,7 +1025,6 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
       hf->hf_rsize -= size;
 
       hf->hf_consecutive_read += size;
-
       return size;
     } else {
       http_detach(hf, 0);
@@ -1027,6 +1042,7 @@ static int64_t
 http_seek(fa_handle_t *handle, int64_t pos, int whence)
 {
   http_file_t *hf = (http_file_t *)handle;
+  http_connection_t *hc = hf->hf_connection;
   off_t np;
 
   switch(whence) {
@@ -1048,12 +1064,27 @@ http_seek(fa_handle_t *handle, int64_t pos, int whence)
   if(np < 0)
     return -1;
 
-
   if(hf->hf_pos != np) {
-    if(hf->hf_rsize != 0)  // We've data pending on socket, disconnect
-      http_detach(hf, 0);
-    hf->hf_pos = np;
     hf->hf_consecutive_read = 0;
+
+    if(hf->hf_rsize != 0) {
+      // We've data pending on socket
+      int64_t d = np - hf->hf_pos;
+
+      // We allow seek by reading if delta offset is <8k
+
+      if(hc != NULL && d > 0 && d < 8192 && d < hf->hf_rsize) {
+	void *j = malloc(d);
+	int n = tcp_read_data(hc->hc_fd, j, d, &hc->hc_spill);
+	free(j);
+	if(!n) {
+	  hf->hf_pos = np;
+	  return np;
+	}
+      }
+    }
+    http_detach(hf, 0);
+    hf->hf_pos = np;
   }
 
   return np;
