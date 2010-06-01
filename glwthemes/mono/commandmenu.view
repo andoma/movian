@@ -130,7 +130,7 @@ widget(container_x, {
       widget(label, {
 	.align = center;
 	.caption = $global.media.current.metadata.title;
-	.sizeScale = 2;
+	.sizeScale = 1.5;
       });
 
       HORIZONTAL_SEPARATOR();
