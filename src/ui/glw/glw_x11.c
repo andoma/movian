@@ -668,6 +668,12 @@ static const struct {
   { XK_Left,         Mod1Mask,    ACTION_NAV_BACK },
   { XK_Right,        Mod1Mask,    ACTION_NAV_FWD },
 
+  { XK_Left,         ControlMask, ACTION_SEEK_BACKWARD },
+  { XK_Right,        ControlMask, ACTION_SEEK_FORWARD },
+
+  { XK_Left,         ShiftMask|ControlMask, ACTION_PREV_TRACK },
+  { XK_Right,        ShiftMask|ControlMask, ACTION_NEXT_TRACK },
+
   { '+',             ControlMask, ACTION_ZOOM_UI_INCR },
   { XK_KP_Add,       ControlMask, ACTION_ZOOM_UI_INCR },
   { '-',             ControlMask, ACTION_ZOOM_UI_DECR },
