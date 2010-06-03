@@ -148,6 +148,9 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec, media_pipe_t *mp
 
       if((r = av_read_frame(fctx, &pkt)) < 0) {
 
+	if(r == AVERROR(EAGAIN))
+	  continue;
+
 	if(r == AVERROR_EOF) {
 
 	  /* Wait for queues to drain */
