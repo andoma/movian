@@ -39,18 +39,20 @@ typedef struct glw_text_bitmap_data {
   int gtbd_pixel_format;
   
   uint8_t *gtbd_data;
-  int gtbd_siz_x;
-  int gtbd_siz_y;
+  int16_t gtbd_siz_x;
+  int16_t gtbd_siz_y;
 
-  int gtbd_texture_width;
-  int gtbd_texture_height;
+  int16_t gtbd_texture_width;
+  int16_t gtbd_texture_height;
 
   float gtbd_u;
   float gtbd_v;
 
   int *gtbd_cursor_pos;
-  int gtbd_cursor_scale;
-  int gtbd_cursor_pos_size;
+  int16_t gtbd_cursor_scale;
+  int16_t gtbd_cursor_pos_size;
+  int16_t gtbd_lines;
+
 } glw_text_bitmap_data_t;
 
 
@@ -98,6 +100,7 @@ typedef struct glw_text_bitmap {
 
   int16_t gtb_uc_len;
   int16_t gtb_uc_size;
+  int16_t gtb_maxlines;
 
   int cursor_flash;
 
@@ -181,7 +184,8 @@ draw_glyph(glw_text_bitmap_data_t *gtbd, FT_Bitmap *bmp, uint8_t *dst,
 static int
 gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face, 
 	     int *uc, int len, int flags, int docur, float scale,
-	     float bias, int x_size_max, int debug)
+	     float bias, int x_size_max, int debug, int maxlines,
+	     int doellipsize)
 {
   FT_GlyphSlot slot = face->glyph;
   FT_Bool use_kerning = FT_HAS_KERNING( face );
@@ -191,7 +195,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   int err;
   int pen_x, pen_y;
 
-  int c, i, d, e, h;
+  int c, i, j, d, e, h;
   glyph_t *g0, *g;
   int siz_x, siz_y, start_x, start_y;
   int target_width, target_height;
@@ -200,6 +204,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   int pixelheight = gr->gr_fontsize * scale + bias;
   FT_Glyph glyph;
   int ellipsize_x;
+  int line, needrestart;
 
   if(pixelheight < 3)
     return -1;
@@ -221,14 +226,17 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   h = 64 * face->height * pixelheight / 2048;
 
  restart:
+  needrestart = 0;
   pen_x = 0;
   pen_y = 0;
   for(i = 0; i < len; i++) {
+    g = g0 + i;
 
     if(uc[i] == '\n') {
       prev = 0;
       pen_x = 0;
       pen_y -= h;
+      g->glyph = NULL;
       continue;
     }
     gi = FT_Get_Char_Index(face, uc[i]);
@@ -238,7 +246,6 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
       pen_x += delta.x;
     }
     
-    g = g0 + i;
 
     g->pos.x = pen_x;
     g->pos.y = pen_y;
@@ -262,10 +269,12 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   bbox.yMin = 64 * face->descender * pixelheight / 2048;
   bbox.yMax = 64 * face->ascender  * pixelheight / 2048;
 
-
-  for(i = 0; i < len; i++) {
-    if(uc[i] == '\n')
+  line = 0;
+  for(i = 0; i < len && !needrestart; i++) {
+    if(uc[i] == '\n') {
+      line++;
       continue;
+    }
 
     g = g0 + i;
 
@@ -283,22 +292,35 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 
     siz_x = bbox.xMax - bbox.xMin;
 
-    if((siz_x / 64) > x_size_max - ellipsize_x) {
-      int j;
-
-      x_size_max = INT_MAX;
-      
-      for(j = 0; j < len; j++) {
-	g = g0 + j;
-	FT_Done_Glyph(g->glyph); 
+    if(line < maxlines - 1) {
+      if((siz_x / 64) > x_size_max) {
+	for(j = i; j >= 0; j--) {
+	  if(uc[j] == ' ') {
+	    uc[j] = '\n';
+	    needrestart = 1;
+	    break;
+	  }
+	}
       }
-
+    } else if(doellipsize && (siz_x / 64) > x_size_max - ellipsize_x) {
+      doellipsize = 0;
+      needrestart = 1;
+     
       while(i > 0 && uc[i - 1] == ' ')
 	i--;
       uc[i] = HORIZONTAL_ELLIPSIS_UNICODE;
       len = i + 1;
       goto restart;
     }
+  }
+
+  if(needrestart) {
+      
+    for(j = 0; j < len; j++) {
+      g = g0 + j;
+      FT_Done_Glyph(g->glyph); 
+    }
+    goto restart;
   }
 
   /* compute string dimensions in 62.2 cartesian pixels */
@@ -310,7 +332,8 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
     return -1;
 
   target_width  = (siz_x / 64) + 3;
-  target_height =  gr->gr_fontsize_px * scale + bias;
+  target_height =  (line + 1) * (gr->gr_fontsize_px * scale + bias);
+  gtbd->gtbd_lines = line + 1;
 
   origin_y = -bbox.yMin / 64;
 
@@ -445,11 +468,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
     TAILQ_INSERT_TAIL(&gr->gr_gtb_render_queue, gtb, gtb_workq_link);
     gtb->gtb_status = GTB_ON_QUEUE;
 
-    if(gtb->gtb_flags & GTB_ELLIPSIZE)
-      gtb->gtb_xsize_max = rc->rc_size_x;
-    else
-      gtb->gtb_xsize_max = INT16_MAX;
-
+    gtb->gtb_xsize_max = rc->rc_size_x;
     hts_cond_signal(&gr->gr_gtb_render_cond);
     return;
   }
@@ -1002,6 +1021,7 @@ glw_text_bitmap_set(glw_t *w, int init, va_list ap)
     gtb->gtb_color.g = 1.0;
     gtb->gtb_color.b = 1.0;
     gtb->gtb_siz_y = gr->gr_fontsize;
+    gtb->gtb_maxlines = 1;
 
     update = 1;
     LIST_INSERT_HEAD(&gr->gr_gtbs, gtb, gtb_global_link);
@@ -1109,6 +1129,11 @@ glw_text_bitmap_set(glw_t *w, int init, va_list ap)
 
       break;
 
+   case GLW_ATTRIB_MAXLINES:
+     gtb->gtb_maxlines = va_arg(ap, int);
+     update = 1;
+     break;
+
     default:
       GLW_ATTRIB_CHEW(attrib, ap);
       break;
@@ -1140,8 +1165,7 @@ font_render_thread(void *aux)
   int *uc, len, docur, i;
   glw_text_bitmap_data_t d;
   float scale, bias;
-  int xsize_max;
-  int debug;
+  int xsize_max, debug, doellipsize, maxlines;
 
   glw_lock(gr);
 
@@ -1176,6 +1200,8 @@ font_render_thread(void *aux)
     bias  = gtb->gtb_size_bias;
     xsize_max = gtb->gtb_xsize_max;
     debug = gtb->w.glw_flags & GLW_DEBUG;
+    doellipsize = gtb->gtb_flags & GTB_ELLIPSIZE;
+    maxlines = gtb->gtb_maxlines;
 
     /* gtb (i.e the widget) may be destroyed directly after we unlock,
        so we can't access it after this point. We can hold a reference
@@ -1186,7 +1212,7 @@ font_render_thread(void *aux)
 
     if(uc == NULL || uc[0] == 0 || 
        gtb_make_tex(gr, &d, gr->gr_gtb_face, uc, len, 0, docur, scale, bias,
-		    xsize_max, debug)) {
+		    xsize_max, debug, maxlines, doellipsize)) {
       d.gtbd_data = NULL;
       d.gtbd_siz_x = 0;
       d.gtbd_siz_y = 0;
@@ -1211,6 +1237,8 @@ font_render_thread(void *aux)
 
     if(gtb->gtb_status == GTB_RENDERING)
       gtb->gtb_status = GTB_VALID;
+
+    gtb->gtb_lines = gtb->gtb_data.gtbd_lines;
 
     gtb_set_constraints(gr, gtb);
   }
