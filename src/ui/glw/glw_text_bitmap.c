@@ -290,6 +290,8 @@ typedef struct line {
   TAILQ_ENTRY(line) link;
   int start;
   int count;
+  int width;
+  int xspace;
 
 } line_t;
 
@@ -458,6 +460,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 	w += d;
     }
     
+    li->width = w;
     siz_x = GLW_MAX(w, siz_x);
     lines++;
   }
@@ -468,6 +471,20 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   }
 
   target_width  = siz_x / 64 + 3;
+
+  if(maxlines > 1) {
+    TAILQ_FOREACH(li, &lq, link) {
+      int spaces = 0;
+      int spill = siz_x - li->width;
+      for(i = li->start; i < li->start + li->count; i++) {
+	if(uc[i] == ' ')
+	  spaces++;
+      }
+      if((float)spill / li->width < 0.2)
+	li->xspace = spaces ? spill / spaces : 0;
+    }
+  }
+
   target_height =  lines * pxheight;
   gtbd->gtbd_lines = lines;
 
@@ -535,6 +552,10 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 	FT_Done_Glyph((FT_Glyph)bmp);
       }
       pen_x += pos[i].kerning + pos[i].adv_x;
+
+      if(uc[i] == ' ')
+	pen_x += li->xspace;
+
     }
     pen_y -= height;
     pen_x = 0;
