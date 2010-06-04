@@ -125,7 +125,8 @@ static nav_page_t *
 be_page_open(struct navigator *nav,  const char *url0, const char *view,
 	     char *errbuf, size_t errlen)
 {
-  nav_page_t *n = nav_page_create(nav, url0, view, sizeof(nav_page_t), 0);
+  nav_page_t *n = nav_page_create(nav, url0, view, sizeof(nav_page_t),
+				  NAV_PAGE_DONT_CLOSE_ON_BACK);
   prop_t *src = prop_create(n->np_prop_root, "source");
   prop_t *metadata = prop_create(src, "metadata");
   char *cap = mystrdupa(url0 + strlen("page:"));
