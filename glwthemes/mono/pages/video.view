@@ -91,14 +91,19 @@ widget(container_z, {
 	  
 	      widget(label, {
 		.align = right;
-		.caption = "Audio codec:";
+		.caption = "Video bitrate:";
 	      });
-	      
+
 	      widget(label, {
 		.align = right;
 		.caption = "Video queue len:";
 	      });
 
+	      widget(label, {
+		.align = right;
+		.caption = "Audio codec:";
+	      });
+	      
 	      widget(label, {
 		.align = right;
 		.caption = "Audio queue len:";
@@ -141,13 +146,17 @@ widget(container_z, {
 	      });
 	  
 	      widget(label, {
-		.caption = $self.media.audio.codec;
+		.caption = int2str($self.media.video.bitrate) + "kb/s";
 	      });
-	      
+
 	      widget(label, {
 		.caption = $self.media.video.dqlen;
 	      });
 
+	      widget(label, {
+		.caption = $self.media.audio.codec;
+	      });
+	      
 	      widget(label, {
 		.caption = $self.media.audio.dqlen;
 	      });

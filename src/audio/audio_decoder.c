@@ -149,8 +149,8 @@ ad_thread(void *aux)
 
     TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
     mq->mq_len--;
-    if(mp->mp_stats)
-      prop_set_int(mq->mq_prop_qlen_cur, mq->mq_len);
+    mq->mq_bytes -= mb->mb_size;
+    mq_update_stats(mp, mq);
     hts_cond_signal(&mp->mp_backpressure);
     hts_mutex_unlock(&mp->mp_mutex);
 

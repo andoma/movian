@@ -138,14 +138,20 @@ typedef struct media_buf {
 typedef struct media_queue {
   struct media_buf_queue mq_q;
   unsigned int mq_len;
+  unsigned int mq_bytes;
+
   int mq_stream;             /* Stream id, or -1 if queue is inactive */
   int mq_stream2;            /* Complementary stream */
   hts_cond_t mq_avail;
 
   int64_t mq_seektarget;
 
-  prop_t *mq_prop_qlen_cur;
+  prop_t *mq_prop_qlen_curx;
   prop_t *mq_prop_qlen_max;
+
+  prop_t *mq_prop_qlen_bytes;
+
+  prop_t *mq_prop_bitrate;   // In kbps
 
   prop_t *mq_prop_decode_avg;
   prop_t *mq_prop_decode_peak;
@@ -334,5 +340,7 @@ void metadata_from_ffmpeg(char *dst, size_t dstlen,
 			  AVCodec *codec, AVCodecContext *avctx);
 
 void mp_set_mq_meta(media_queue_t *mq, AVCodec *codec, AVCodecContext *avctx);
+
+void mq_update_stats(media_pipe_t *mp, media_queue_t *mq);
 
 #endif /* MEDIA_H */

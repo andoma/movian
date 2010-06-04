@@ -252,6 +252,15 @@ typedef struct video_decoder {
   struct subtitle_queue vd_sub_queue;
   hts_mutex_t vd_sub_mutex;
 
+  /**
+   *
+   */
+#define VD_FRAME_SIZE_LEN 16
+#define VD_FRAME_SIZE_MASK (VD_FRAME_SIZE_LEN - 1)
+
+  int vd_frame_size[VD_FRAME_SIZE_LEN];
+  int vd_frame_size_ptr;
+
 } video_decoder_t;
 
 

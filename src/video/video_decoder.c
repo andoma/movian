@@ -200,12 +200,11 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
 
   avcodec_decode_video(ctx, frame, &got_pic, mb->mb_data, mb->mb_size);
 
-  if(mp->mp_stats)
+  if(mp->mp_stats) {
     avgtime_stop(&vd->vd_decode_time, mq->mq_prop_decode_avg,
 		 mq->mq_prop_decode_peak);
-
-  if(mp->mp_stats)
     mp_set_mq_meta(mq, cw->codec, cw->codec_ctx);
+  }
 
   if(got_pic == 0 || mb->mb_skip == 1) 
     return;
@@ -311,6 +310,25 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
 
 
 /**
+ *
+ */
+static void
+update_vbitrate(media_pipe_t *mp, media_queue_t *mq, video_decoder_t *vd)
+{
+  int i;
+  int64_t sum;
+
+  if(vd->vd_estimated_duration == 0 || !mp->mp_stats)
+    return;
+
+  for(i = 0; i < VD_FRAME_SIZE_LEN; i++)
+    sum += vd->vd_frame_size[i];
+
+  sum = 8000000LL * sum / VD_FRAME_SIZE_LEN / vd->vd_estimated_duration;
+  prop_set_int(mq->mq_prop_bitrate, sum / 1000);
+}
+
+/**
  * Video decoder thread
  */
 static void *
@@ -343,8 +361,8 @@ vd_thread(void *aux)
 
     TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
     mq->mq_len--;
-    if(mp->mp_stats)
-      prop_set_int(mq->mq_prop_qlen_cur, mq->mq_len);
+    mq->mq_bytes -= mb->mb_size;
+    mq_update_stats(mp, mq);
 
     hts_cond_signal(&mp->mp_backpressure);
     hts_mutex_unlock(&mp->mp_mutex);
@@ -370,10 +388,15 @@ vd_thread(void *aux)
       break;
 
     case MB_VIDEO:
+      vd->vd_frame_size[vd->vd_frame_size_ptr] = mb->mb_size;
+      vd->vd_frame_size_ptr = (vd->vd_frame_size_ptr + 1) & VD_FRAME_SIZE_MASK;
+
       if(mc->data)
 	mc->data(mc, vd, mq, mb, reqsize);
       else
 	vd_decode_video(vd, mq, mb);
+
+      update_vbitrate(mp, mq, vd);
       reqsize = -1;
       break;
 

@@ -95,10 +95,13 @@ mq_init(media_queue_t *mq, prop_t *p)
 {
   TAILQ_INIT(&mq->mq_q);
   mq->mq_len = 0;
+  mq->mq_bytes = 0;
   mq->mq_stream = -1;
   hts_cond_init(&mq->mq_avail);
-  mq->mq_prop_qlen_cur = prop_create(p, "dqlen");
+  mq->mq_prop_qlen_curx = prop_create(p, "dqlen");
+  mq->mq_prop_qlen_bytes = prop_create(p, "bytes");
   mq->mq_prop_qlen_max = prop_create(p, "dqmax");
+  mq->mq_prop_bitrate = prop_create(p, "bitrate");
 
   mq->mq_prop_decode_avg  = prop_create(p, "decodetime_avg");
   mq->mq_prop_decode_peak = prop_create(p, "decodetime_peak");
@@ -358,6 +361,17 @@ mp_wait_for_empty_queues(media_pipe_t *mp, int limit)
 }
 
 
+/**
+ *
+ */
+void
+mq_update_stats(media_pipe_t *mp, media_queue_t *mq)
+{
+  if(!mp->mp_stats)
+    return;
+  prop_set_int(mq->mq_prop_qlen_curx, mq->mq_len);
+  prop_set_int(mq->mq_prop_qlen_bytes, mq->mq_bytes);
+}
 
 /**
  *
@@ -367,8 +381,8 @@ mb_enq_tail(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 {
   TAILQ_INSERT_TAIL(&mq->mq_q, mb, mb_link);
   mq->mq_len++;
-  if(mp->mp_stats)
-    prop_set_int(mq->mq_prop_qlen_cur, mq->mq_len);
+  mq->mq_bytes += mb->mb_size;
+  mq_update_stats(mp, mq);
   hts_cond_signal(&mq->mq_avail);
 }
 
@@ -380,8 +394,8 @@ mb_enq_head(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 {
   TAILQ_INSERT_HEAD(&mq->mq_q, mb, mb_link);
   mq->mq_len++;
-  if(mp->mp_stats)
-    prop_set_int(mq->mq_prop_qlen_cur, mq->mq_len);
+  mq->mq_bytes += mb->mb_size;
+  mq_update_stats(mp, mq);
   hts_cond_signal(&mq->mq_avail);
 }
 
@@ -479,8 +493,8 @@ mq_flush(media_pipe_t *mp, media_queue_t *mq)
     media_buf_free(mb);
   }
   mq->mq_len = 0;
-  if(mp->mp_stats)
-    prop_set_int(mq->mq_prop_qlen_cur, mq->mq_len);
+  mq->mq_bytes = 0;
+  mq_update_stats(mp, mq);
 }
 
 
@@ -1185,7 +1199,7 @@ metadata_from_ffmpeg(char *dst, size_t dstlen, AVCodec *codec,
     off += snprintf(dst + off, dstlen - off,
 		    ", %dx%d", avctx->width, avctx->height);
   
-  if(avctx->bit_rate)
+  if(avctx->codec_type == CODEC_TYPE_AUDIO && avctx->bit_rate)
     off += snprintf(dst + off, dstlen - off,
 		    ", %d kb/s", avctx->bit_rate / 1000);
 
