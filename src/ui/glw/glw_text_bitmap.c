@@ -363,6 +363,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
       li = alloca(sizeof(line_t));
       li->start = i;
       li->count = 0;
+      li->xspace = 0;
       TAILQ_INSERT_TAIL(&lq, li, link);
       prev = 0;
       pen_x = 0;
@@ -427,6 +428,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 	  lix = alloca(sizeof(line_t));
 	  lix->start = li->start + k;
 	  lix->count = li->count - k;
+	  lix->xspace = 0;
 
 	  TAILQ_INSERT_AFTER(&lq, li, lix, link);
 
