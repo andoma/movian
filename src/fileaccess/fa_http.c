@@ -996,7 +996,7 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
       case 200:
 	if(hf->hf_pos != 0) {
 	  TRACE(TRACE_DEBUG, "HTTP", 
-		"Server responds with 200 for request starting at %lld.",
+		"Server responds with 200 for request starting at %"PRId64,
 		hf->hf_pos);
 	  http_detach(hf, 0);
 	  return -1;

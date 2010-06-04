@@ -56,7 +56,8 @@ cpu_monitor_do(void)
     return 0;
 
   while(fgets(data, sizeof(data), f) != NULL) {
-    if(sscanf(data, "%20s %lld %lld %lld %lld %lld %lld %lld", 
+    if(sscanf(data, "%20s %"PRId64" %"PRId64" %"PRId64" "
+	      "%"PRId64" %"PRId64" %"PRId64" %"PRId64, 
 	      s1, &v1, &v2, &v3, &v4, &v5, &v6, &v7) != 8)
       continue;
     if(strncmp(s1, "cpu", 3))
