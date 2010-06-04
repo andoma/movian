@@ -1260,7 +1260,7 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
   htsmsg_t *m;
   media_pipe_t *mp = hs->hs_mp;
   const char *err;
-  char *name;
+  char *name = NULL;
 
   m = htsmsg_create_map();
 
