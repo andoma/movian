@@ -199,6 +199,19 @@ nav_close_all(navigator_t *nav, int with_prop)
  *
  */
 static void
+nav_select(navigator_t *nav, nav_page_t *np)
+{
+  prop_link(np->np_prop_root, nav->nav_prop_curpage);
+  prop_select(np->np_prop_root, 0);
+  nav->nav_page_current = np;
+  nav_update_cango(nav);
+}
+
+
+/**
+ *
+ */
+static void
 nav_open0(navigator_t *nav, const char *url, const char *view)
 {
   nav_page_t *np, *np2;
@@ -218,34 +231,13 @@ nav_open0(navigator_t *nav, const char *url, const char *view)
 
   TRACE(TRACE_DEBUG, "navigator", "Opening %s", url);
 
-  /* First, if a page is already open, go directly to it */
-
-  TAILQ_FOREACH(np, &nav->nav_pages, np_global_link) {
-    if(!strcmp(np->np_url, url) && !strcmp(np->np_view ?:"" , view ?:"")) {
-      prop_select(np->np_prop_root, 0);
-      prop_link(np->np_prop_root, nav->nav_prop_curpage);
-      break;
-    }
+  if((np = be->be_open(nav, url, view, errbuf, sizeof(errbuf))) == NULL) {
+    notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nError: %s", url, errbuf);
+    return;
   }
-
-  if(np == NULL) {
-
-    if((np = be->be_open(nav, url, view, errbuf, sizeof(errbuf))) == NULL) {
-      notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nError: %s", url, errbuf);
-      return;
-    }
-  
-    if(np == NULL)
-      return;
-
-    if(prop_set_parent(np->np_prop_root, nav->nav_prop_pages)) {
-      /* nav->nav_prop_pages is a zombie, this is an error */
-      abort();
-    }
-
-    prop_link(np->np_prop_root, nav->nav_prop_curpage);
-
-    prop_select(np->np_prop_root, 0);
+  if(prop_set_parent(np->np_prop_root, nav->nav_prop_pages)) {
+    /* nav->nav_prop_pages is a zombie, this is an error */
+    abort();
   }
 
   if(np->np_inhistory == 0) {
@@ -263,9 +255,7 @@ nav_open0(navigator_t *nav, const char *url, const char *view)
     TAILQ_INSERT_TAIL(&nav->nav_history, np, np_history_link);
     np->np_inhistory = 1;
   }
-
-  nav->nav_page_current = np;
-  nav_update_cango(nav);
+  nav_select(nav, np);
 }
 
 /**
@@ -289,7 +279,8 @@ nav_back(navigator_t *nav)
   if(np != NULL &&
      (prev = TAILQ_PREV(np, nav_page_queue, np_history_link)) != NULL) {
 
-    nav_open0(nav, prev->np_url, prev->np_view);
+    nav_select(nav, prev);
+
     if(!(np->np_flags & NAV_PAGE_DONT_CLOSE_ON_BACK))
       nav_close(np, 1);
   }
@@ -307,7 +298,7 @@ nav_fwd(navigator_t *nav)
   np = nav->nav_page_current;
 
   if(np != NULL && (next = TAILQ_NEXT(np, np_history_link)) != NULL)
-    nav_open0(nav, next->np_url, next->np_view);
+    nav_select(nav, next);
 }
 
 /**
