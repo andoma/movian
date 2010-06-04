@@ -1640,6 +1640,11 @@ const glw_vertex_t align_vertices[GLW_ALIGN_num] =
     [GLW_ALIGN_RIGHT]  = {  1.0,  0.0, 0.0 },
     [GLW_ALIGN_BOTTOM] = {  0.0, -1.0, 0.0 },
     [GLW_ALIGN_TOP]    = {  0.0,  1.0, 0.0 },
+
+    [GLW_ALIGN_TOP_LEFT] = { -1.0,  1.0, 0.0 },
+    [GLW_ALIGN_TOP_RIGHT] = { 1.0,  1.0, 0.0 },
+    [GLW_ALIGN_BOTTOM_LEFT] = { -1.0, -1.0, 0.0 },
+    [GLW_ALIGN_BOTTOM_RIGHT] = { 1.0, -1.0, 0.0 },
   };
 
 

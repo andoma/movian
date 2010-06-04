@@ -183,7 +183,12 @@ static struct strtab aligntab[] = {
   { "left",          GLW_ALIGN_LEFT},
   { "right",         GLW_ALIGN_RIGHT},
   { "top",           GLW_ALIGN_TOP},
-  { "bottom",        GLW_ALIGN_BOTTOM}
+  { "bottom",        GLW_ALIGN_BOTTOM},
+  { "topLeft",       GLW_ALIGN_TOP_LEFT},
+  { "topRight",      GLW_ALIGN_TOP_RIGHT},
+  { "bottomLeft",    GLW_ALIGN_BOTTOM_LEFT},
+  { "bottomRight",   GLW_ALIGN_BOTTOM_RIGHT},
+
 };
 
 
