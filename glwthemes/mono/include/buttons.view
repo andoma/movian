@@ -3,7 +3,7 @@
 #define BUTTON(CAPTION, ICON, EVENT, COLOR, SIZE, FONTSCALE, HIDDEN, FOCUSABLE)
 {
   widget(backdrop, {
-    onEvent(enter, EVENT);
+    onEvent(activate, EVENT);
     .focusOnClick = true;
 
     .alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
@@ -46,7 +46,7 @@
 #define BUTTON_TOOLBAR(CAPTION, ICON, EVENT, COLOR) {
   widget(backdrop, {
 
-    onEvent(enter, EVENT);
+    onEvent(activate, EVENT);
 
     .alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
     .color = COLOR;
@@ -80,7 +80,7 @@
    .hidden = HIDDEN;
      .alpha = select(ENABLED != 0, 1, 0.2);
     .focusable = ENABLED;
-    onEvent(enter, EVENT);
+    onEvent(activate, EVENT);
 
     .alphaSelf = iir(isFocused() * 1, 8) * 0.8;
     .color = COLOR;
@@ -107,7 +107,7 @@
     .hidden = HIDDEN;
     .alpha = select(ENABLED, 1, 0.2);
     .focusable = ENABLED;
-    onEvent(enter, EVENT);
+    onEvent(activate, EVENT);
 
     .alphaSelf = iir(isFocused() * 1 + 0.2, 8) * 0.8;
     .color = COLOR;
@@ -157,7 +157,7 @@
       .color = PLATE_COLOR_OFF();
       PLATE_GFX();
       
-      onEvent(enter, {
+      onEvent(activate, {
 	PROP = !PROP;
       });
       
@@ -177,7 +177,7 @@
       
       PLATE_GFX();
       
-      onEvent(enter, {
+      onEvent(activate, {
 	PROP = !PROP;
       });
       

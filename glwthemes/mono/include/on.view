@@ -9,7 +9,7 @@ widget(backdrop, {
 
   PLATE_GFX();
 
-  onEvent(enter, {
+  onEvent(activate, {
     $self.source.value = !$self.source.value;
   });
 

@@ -6,7 +6,7 @@ widget(backdrop, {
   .autoRefocusable = true;
   .focusable = 1.0;
   .focusOnClick = true;
-  onEvent(enter, EVENT);
+  onEvent(activate, EVENT);
 
 //  .alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1 + 0.1;
   .color = select(isFocused(), COLOR, COLOR * 0.5);

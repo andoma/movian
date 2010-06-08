@@ -115,7 +115,7 @@ widget(container_x, {
       .focusable = 1.0;
       .focusOnClick = true;
       .filterConstraintX = true;
-      onEvent(enter, navOpen($self.artist));
+      onEvent(activate, navOpen($self.artist));
 	
       .alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
 	

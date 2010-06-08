@@ -153,6 +153,7 @@ typedef enum {
   SPOTIFY_PAUSE,
   SPOTIFY_GET_IMAGE,
   SPOTIFY_OPEN_PAGE,
+  SPOTIFY_SEARCH,
 } spotify_msg_type_t;
 
 /**
@@ -214,6 +215,15 @@ typedef struct spotify_image {
 } spotify_image_t;
 
 static hts_cond_t spotify_cond_image;
+
+
+/**
+ * Search query
+ */
+typedef struct spotify_search {
+  char *ss_query;
+  prop_t *ss_nodes;
+} spotify_search_t;
 
 
 /**
@@ -339,6 +349,7 @@ spotify_logged_in(sp_session *sess, sp_error error)
   sp_user *user;
 
   if(error == 0) {
+    
     hts_mutex_lock(&spotify_mutex);
     is_logged_in = 1;
     hts_cond_broadcast(&spotify_cond_login);
@@ -2045,6 +2056,49 @@ spotify_get_image(spotify_image_t *si)
 			       spotify_got_image, si);
 }
 
+
+/**
+ *
+ */
+static void
+spotify_search_done(sp_search *result, void *userdata)
+{
+  spotify_search_t *ss = userdata;
+  int ntracks = f_sp_search_num_tracks(result);
+  int i;
+  prop_t *p;
+  sp_track *track;
+  char url[URL_MAX];
+
+  for(i = 0; i < ntracks; i++) {
+    track = f_sp_search_track(result, i);
+    p = prop_create(NULL, NULL);
+
+    spotify_make_link(f_sp_link_create_from_track(track, 0), 
+		      url, sizeof(url));
+
+    prop_set_string(prop_create(p, "url"), url);
+    prop_set_string(prop_create(p, "type"), "audio");
+    metadata_create(prop_create(p, "metadata"), METADATA_TRACK, track);
+
+    if(prop_set_parent(p, ss->ss_nodes))
+      prop_destroy(p);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+spotify_search(spotify_search_t *ss)
+{
+  f_sp_search_create(spotify_session, ss->ss_query,
+		     0, 250, 0, 250, 0, 250, 
+		     spotify_search_done, ss);
+}
+
+
 /**
  *
  */
@@ -2201,6 +2255,10 @@ spotify_thread(void *aux)
 
       case SPOTIFY_GET_IMAGE:
 	spotify_get_image(sm->sm_ptr);
+	break;
+
+      case SPOTIFY_SEARCH:
+	spotify_search(sm->sm_ptr);
 	break;
       }
       free(sm);
@@ -2696,6 +2754,26 @@ spotify_shutdown(void *opaque, int exitcode)
 /**
  *
  */
+static void
+be_spotify_search(prop_t *source, const char *query)
+{
+  spotify_search_t *ss = malloc(sizeof(spotify_search_t));
+
+  spotify_start();
+
+  ss->ss_nodes = prop_create(source, "nodes");
+  prop_ref_inc(ss->ss_nodes);
+
+  ss->ss_query = strdup(query);
+
+  spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_SEARCH, ss));
+  hts_mutex_unlock(&spotify_mutex);
+}
+
+
+/**
+ *
+ */
 static backend_t be_spotify = {
   .be_init = be_spotify_init,
   .be_canhandle = be_spotify_canhandle,
@@ -2703,6 +2781,7 @@ static backend_t be_spotify = {
   .be_play_audio = be_spotify_play,
   .be_list = be_spotify_list,
   .be_imageloader = be_spotify_imageloader,
+  .be_search = be_spotify_search,
 };
 
 BE_REGISTER(spotify);

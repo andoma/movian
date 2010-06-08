@@ -8,6 +8,6 @@ widget(image, {
   .alphaEdges = 2;
   .source = devoidify($self.metadata.album_art, "theme://icons/256x256/CD.png");
   .hqScaling = true;
-  onEvent(enter, navOpen($self.url));
+  onEvent(activate, navOpen($self.url));
 
 });

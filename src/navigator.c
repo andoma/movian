@@ -258,6 +258,7 @@ nav_open0(navigator_t *nav, const char *url, const char *view)
   nav_select(nav, np);
 }
 
+
 /**
  *
  */

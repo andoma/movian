@@ -1401,7 +1401,7 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
 	      glw_focus_set(gr, w, 1); 
 
 	    glw_path_modify(w, 0, GLW_IN_PRESSED_PATH, NULL);
-	    e = event_create_action(ACTION_ENTER);
+	    e = event_create_action(ACTION_ACTIVATE);
 	    glw_event_to_widget(w, e, 0);
 	    event_unref(e);
 

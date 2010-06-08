@@ -5,7 +5,7 @@
   widget(backdrop, {
     .focusable = 0.1;
     .focusOnClick = true;
-    onEvent(enter, {
+    onEvent(activate, {
       $self.source.svctype = LABEL;
     });
 

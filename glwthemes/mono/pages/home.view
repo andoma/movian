@@ -26,7 +26,7 @@ $page.glw.title = "Home";
 
 	PLATE_GFX();
 
-	onEvent(enter, navOpen($self.url));
+	onEvent(activate, navOpen($self.url));
 
 	.focusable = true;
 	.focusOnClick = true;
@@ -60,6 +60,50 @@ $page.glw.title = "Home";
 
 widget(container_y, {
 
+  space(0.25);
+
+  
+  widget(container_x, {
+    space(1);
+    widget(backdrop, {
+      .weight = 2;
+      .filterConstraintX = true;
+      .alphaSelf = $view.searchAlpha;
+      .color = [0.45, 0.45, 0.5];
+      .source = "theme://graphics/shadedplate.png";
+      .border =  [4, 4, 4, 4];
+      .padding = [0, -2, -2, -2];
+
+      widget(container_x, {
+       .filterConstraintX = true;
+        widget(icon, {
+          .source = "theme://icons/48x48/Search.png";
+          .alpha = $view.searchAlpha;
+        });
+
+        widget(backdrop, {
+         .weight = 2;
+         .filterConstraintX = true;
+         .color = [0.0, 0.0, 0.0];
+         .source = "theme://graphics/shadedplate.png";
+         .border =  [4, 4, 4, 4];
+         .padding = [0, -2, 0, -2];
+
+         widget(text, {
+           bind($view.searchQuery);
+           .focusable = 0.01;
+           $view.searchAlpha = 0.3 + iir(isFocused() * 0.7, 8) + isHovered() * 0.1;
+
+	   onEvent(enter, navOpen("search:" + $view.searchQuery));
+         });
+       });
+    });
+  });
+    space(1);
+  });
+
+    space(0.10);
+
   widget(container_x, {
     .align = center;
     
@@ -89,6 +133,8 @@ widget(container_y, {
 			"theme://icons/mediasources/other.png",
 			PLATE_COLOR_OTHER(), $view.otherFocused);
    });
+
+    space(0.40);
 
   widget(container_x, {
     .padding = [3, 3, 3, 3];

@@ -47,7 +47,7 @@ static const struct {
   { "Down",         ACTION_DOWN  },
   { "Left",         ACTION_LEFT  },
   { "Right",        ACTION_RIGHT },
-  { "Enter",        ACTION_ENTER },
+  { "Enter",        ACTION_ACTIVATE, ACTION_ENTER },
   { "Back",         ACTION_BS, ACTION_NAV_BACK },
   { "Backspace",    ACTION_BS, ACTION_NAV_BACK },
 

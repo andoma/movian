@@ -771,8 +771,14 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
 				    (const action_type_t[]){
 				      ACTION_BS, ACTION_NAV_BACK}, 2);
       break;
-    case 13:         e = event_create_action(ACTION_ENTER);     break;
-    case 9:          e = event_create_action(ACTION_FOCUS_NEXT);break;
+    case 13:          
+      e = event_create_action_multi(
+				    (const action_type_t[]){
+				      ACTION_ACTIVATE, ACTION_ENTER}, 2);
+      break;
+    case 9:          e = event_create_action(ACTION_FOCUS_NEXT);
+      break;
+
       /* Always send 1 char ASCII */
     default:
       if(c < 32 || c == 127)

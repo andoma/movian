@@ -841,7 +841,7 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
       mp_set_playstatus_by_hold(mp, dp->dp_hold);
     }
 
-  } else if(event_is_action(e, ACTION_ENTER)) {
+  } else if(event_is_action(e, ACTION_ACTIVATE)) {
 
     dvdnav_button_activate(dp->dp_dvdnav, pci);
 

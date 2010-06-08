@@ -32,7 +32,7 @@
 
 prop_t *global_sources;
 
-static struct backend_list backends;
+struct backend_list backends;
 
 /**
  *

@@ -24,6 +24,8 @@
 
 LIST_HEAD(backend_list, backend);
 
+extern struct backend_list backends;
+
 struct pixmap;
 struct media_pipe;
 struct nav_page;
@@ -72,6 +74,8 @@ typedef struct backend {
 
   int (*be_probe)(const char *url, char *errbuf, size_t errlen);
 
+  void (*be_search)(struct prop *src, const char *query);
+
 } backend_t;
 
 
@@ -108,6 +112,5 @@ struct nav_page *backend_open_video(struct navigator *nav, const char *url,
 #define BE_REGISTER(name) \
   static void  __attribute__((constructor)) backend_init_ ## name(void) {\
     backend_register(&be_ ## name); }
-
 
 #endif /* BACKEND_H__ */

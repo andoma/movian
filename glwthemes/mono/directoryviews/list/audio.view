@@ -25,7 +25,7 @@ widget(container_x, {
 	.focusOnClick = true;
 	.filterConstraintX = true;
 	
-	onEvent(enter, playTrackFromSource($self, $parent.source));
+	onEvent(activate, playTrackFromSource($self, $parent.source));
 	
 	.alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
 	
@@ -48,7 +48,7 @@ widget(container_x, {
       
       widget(backdrop, {
 	.focusable = isLink($self.metadata.album);
-	onEvent(enter, navOpen($self.metadata.album));
+	onEvent(activate, navOpen($self.metadata.album));
 	
 	.alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
 	
@@ -71,7 +71,7 @@ widget(container_x, {
       
       widget(backdrop, {
 	.focusable = isLink($self.metadata.artist);
-	onEvent(enter, navOpen($self.metadata.artist));
+	onEvent(activate, navOpen($self.metadata.artist));
 	
 	.alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
 	

@@ -46,7 +46,7 @@
     .color = PLATE_COLOR_CMDMENU() *
       iir(select(isFocused() || isPressed(), 1.0, 0.33), 4);
 
-    onEvent(enter, selectTrack($self.id));
+    onEvent(activate, selectTrack($self.id));
 
     widget(container_x, {
 	      

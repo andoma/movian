@@ -24,7 +24,7 @@ widget(container_x, {
 	.focusOnClick = true;
 	.filterConstraintX = true;
 	
-	onEvent(enter, navOpen($self.url));
+	onEvent(activate, navOpen($self.url));
 	
 	.alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
 	
@@ -47,7 +47,7 @@ widget(container_x, {
       
       widget(backdrop, {
 	.focusable = isLink($self.metadata.artist);
-	onEvent(enter, navOpen($self.metadata.artist));
+	onEvent(activate, navOpen($self.metadata.artist));
 	
 	.alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
 	

@@ -120,7 +120,7 @@ glw_video_widget_event(event_t *e, media_pipe_t *mp, int in_menu)
   if(event_is_action(e, ACTION_PLAYPAUSE) ||
      event_is_action(e, ACTION_PLAY) ||
      event_is_action(e, ACTION_PAUSE) ||
-     event_is_action(e, ACTION_ENTER)) {
+     event_is_action(e, ACTION_ACTIVATE)) {
     mp_enqueue_event(mp, e);
     return 1;
   }

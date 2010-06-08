@@ -21,7 +21,7 @@ $page.glw.curView = devoidify($page.glw.userView,
     
     widget(backdrop, {
       .focusable = 0.1;
-	onEvent(enter, EVENT);
+	onEvent(activate, EVENT);
 
       .alphaSelf = iir(isFocused() * 1, 8) * 0.8;
       .color = COLOR;
