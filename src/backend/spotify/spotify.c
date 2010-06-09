@@ -2933,7 +2933,7 @@ be_spotify_init(void)
 static int
 be_spotify_canhandle(const char *url)
 {
-  return !strncmp(url, "spotify", strlen("spotify"));
+  return !strncmp(url, "spotify:", strlen("spotify:"));
 }
 
 
