@@ -57,7 +57,10 @@ widget(container_x, {
  	  widget(text, {
 	    .id = "username";
 	    .focusable = true;
-	    .caption = $self.username;
+	    bind($self.username);
+
+	    onEvent(enter, { $self.result = "ok"; });
+
 	  });
 	});
 
@@ -74,7 +77,8 @@ widget(container_x, {
 	    .id = "password";
 	    .focusable = true;
 	    .password = true;
-	    .caption = $self.password;
+	    bind($self.password);
+	    onEvent(enter, { $self.result = "ok"; });
 	  });
 	});
 
@@ -87,8 +91,6 @@ widget(container_x, {
 	  ICON2("theme://icons/48x48/Check.png", 
 		"OK",
 		{
-		  $self.username = getCaption("username");
-		  $self.password = getCaption("password");
 		  $self.result = "ok";
 		},
 		PLATE_COLOR_ON());
