@@ -3414,6 +3414,22 @@ glwf_suggestFocus(glw_view_eval_context_t *ec, struct token *self,
 }
 
 
+/**
+ *
+ */
+static int
+glwf_appendEventSink(glw_view_eval_context_t *ec, struct token *self,
+		     token_t **argv, unsigned int argc)
+{
+  token_t *a;
+
+  if((a = resolve_property_name2(ec, argv[0])) == NULL)
+    return -1;
+
+  glw_set_i(ec->w, GLW_ATTRIB_APPEND_EVENT_SINK, a->t_prop, NULL);
+  return 0;
+}
+
 
 /**
  *
@@ -3464,6 +3480,7 @@ static const token_func_t funcvec[] = {
   {"isReady", 0, glwf_isReady},
   {"suggestFocus", 1, glwf_suggestFocus},
   {"focusDistance", 0, glwf_focusDistance},
+  {"appendEventSink", 1, glwf_appendEventSink},
 };
 
 
