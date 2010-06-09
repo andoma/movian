@@ -548,3 +548,23 @@ static backend_t be_settings = {
 };
 
 BE_REGISTER(settings);
+
+/**
+ *
+ */
+void
+settings_generic_save_settings(void *opaque, htsmsg_t *msg)
+{
+  htsmsg_store_save(msg, opaque);
+}
+
+
+/**
+ *
+ */
+void
+settings_generic_set_bool(void *opaque, int value)
+{
+  int *p = opaque;
+  *p = value;
+}

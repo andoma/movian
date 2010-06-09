@@ -89,4 +89,8 @@ void setting_destroy(setting_t *s);
 
 void settings_init(void);
 
+void settings_generic_save_settings(void *opaque, htsmsg_t *msg);
+
+void settings_generic_set_bool(void *opaque, int value);
+
 #endif /* SETTINGS_H__ */

@@ -75,18 +75,6 @@ set_password(void *opaque, const char *v)
 /**
  *
  */
-static void
-opensub_save_settings(void *opaque, htsmsg_t *msg)
-{
-  htsmsg_store_save(msg, "opensubtitles");
-}
-
-
-
-
-/**
- *
- */
 void
 opensub_init(void)
 {
@@ -102,17 +90,20 @@ opensub_init(void)
   settings_create_bool(s, "enable", "Use opensubtitles.org", 0, 
 		       store, set_enable, NULL,
 		       SETTINGS_INITIAL_UPDATE, NULL,
-		       opensub_save_settings, NULL);
+		       settings_generic_save_settings,
+		       (void *)"opensubtitles");
 
   settings_create_string(s, "username", "Username", NULL, 
 			 store, set_username, NULL,
 			 SETTINGS_INITIAL_UPDATE,  NULL,
-			 opensub_save_settings, NULL);
+			 settings_generic_save_settings, 
+			 (void *)"opensubtitles");
 
   settings_create_string(s, "password", "Password", NULL, 
 			 store, set_password, NULL, 
 			 SETTINGS_INITIAL_UPDATE | SETTINGS_PASSWORD, NULL,
-			 opensub_save_settings, NULL);
+			 settings_generic_save_settings,
+			 (void *)"opensubtitles");
 }
 
 
