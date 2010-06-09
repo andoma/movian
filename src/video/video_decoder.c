@@ -321,6 +321,7 @@ update_vbitrate(media_pipe_t *mp, media_queue_t *mq, video_decoder_t *vd)
   if(vd->vd_estimated_duration == 0 || !mp->mp_stats)
     return;
 
+  sum = 0;
   for(i = 0; i < VD_FRAME_SIZE_LEN; i++)
     sum += vd->vd_frame_size[i];
 
