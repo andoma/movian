@@ -215,6 +215,7 @@ typedef struct spotify_msg {
     void *sm_ptr;
     int sm_int;
   };
+  prop_t *sm_close;
 } spotify_msg_t;
 
 
@@ -289,6 +290,22 @@ spotify_msg_build(spotify_msg_type_t op, void *ptr)
   spotify_msg_t *sm = malloc(sizeof(spotify_msg_t));
   sm->sm_op = op;
   sm->sm_ptr = ptr;
+  sm->sm_close = NULL;
+  return sm;
+}
+
+
+/**
+ *
+ */
+static spotify_msg_t *
+spotify_msg_buildc(spotify_msg_type_t op, void *ptr, prop_t *c)
+{
+  spotify_msg_t *sm = malloc(sizeof(spotify_msg_t));
+  sm->sm_op = op;
+  sm->sm_ptr = ptr;
+  sm->sm_close = c;
+  prop_ref_inc(c);
   return sm;
 }
 
@@ -302,6 +319,7 @@ spotify_msg_build_int(spotify_msg_type_t op, int v)
   spotify_msg_t *sm = malloc(sizeof(spotify_msg_t));
   sm->sm_op = op;
   sm->sm_int = v;
+  sm->sm_close = NULL;
   return sm;
 }
 
@@ -333,6 +351,26 @@ spotify_msg_enq(spotify_msg_t *sm)
  *
  */
 static void
+close_pending_messages(void)
+{
+  spotify_msg_t *sm, *next;
+
+  for(sm = TAILQ_FIRST(&spotify_msgs); sm != NULL; sm = next) {
+    next = TAILQ_NEXT(sm, sm_link);
+    if(sm->sm_close != NULL) {
+      prop_set_int(sm->sm_close, 1);
+      prop_ref_dec(sm->sm_close);
+      TAILQ_REMOVE(&spotify_msgs, sm, sm_link);
+      free(sm);
+    }
+  }
+}
+
+
+/**
+ *
+ */
+static void
 spotify_try_login(sp_session *s, int retry, const char *reason, int silent) 
 {
   char *username;
@@ -347,6 +385,7 @@ spotify_try_login(sp_session *s, int retry, const char *reason, int silent)
     assert(silent == 0);
     // Login canceled by user
     lib_status = SPOTIFY_LS_USER_CANCELED;
+    close_pending_messages();
     hts_cond_broadcast(&spotify_cond_login);
     return;
   }
@@ -354,6 +393,7 @@ spotify_try_login(sp_session *s, int retry, const char *reason, int silent)
   if(r == 1) {
     if(silent) {
       lib_status = SPOTIFY_LS_USER_CANCELED;
+      close_pending_messages();
       hts_cond_broadcast(&spotify_cond_login);
       return;
     }
@@ -426,6 +466,7 @@ spotify_logged_in(sp_session *sess, sp_error error)
     if(is_permanent_error(error)) {
       login_permanent_error = error;
       lib_status = SPOTIFY_LS_PERMANENT_ERROR;
+      close_pending_messages();
       hts_cond_broadcast(&spotify_cond_login);
       
     } else {
@@ -2339,7 +2380,7 @@ spotify_thread(void *aux)
   if(error) {
     login_permanent_error = error;
     lib_status = SPOTIFY_LS_PERMANENT_ERROR;
-
+    close_pending_messages();
     hts_cond_broadcast(&spotify_cond_login);
     hts_mutex_unlock(&spotify_mutex);
     return NULL;
@@ -2427,6 +2468,10 @@ spotify_thread(void *aux)
 	spotify_search(sm->sm_ptr);
 	break;
       }
+
+      if(sm->sm_close)
+	prop_ref_dec(sm->sm_close);
+
       free(sm);
     }
 
@@ -2464,46 +2509,23 @@ spotify_start(char *errbuf, size_t errlen, int silent)
     lib_status = SPOTIFY_LS_STARTING;
     hts_thread_create_detached("spotify", spotify_thread, NULL);
     shutdown_hook_add(spotify_shutdown, NULL);
-
-    if(silent) {
-      hts_mutex_unlock(&spotify_mutex);
-      return 0;
-    }
-    // FALLTHRU 
+    // FALLTHRU
   case SPOTIFY_LS_STARTING:
-    while(lib_status == SPOTIFY_LS_STARTING)
-      hts_cond_wait(&spotify_cond_login, &spotify_mutex);
-    break;
-
-  case SPOTIFY_LS_PERMANENT_ERROR:
-    break;
-
-  case SPOTIFY_LS_USER_CANCELED:
-    lib_status = SPOTIFY_LS_RETRY_LOGIN;
-
-    spotify_pending_events = 1;
-    hts_cond_signal(&spotify_cond_main);
-    // FALLTHRU 
-  case SPOTIFY_LS_RETRY_LOGIN:
-    while(lib_status == SPOTIFY_LS_RETRY_LOGIN)
-      hts_cond_wait(&spotify_cond_login, &spotify_mutex);
-    break;
-  }
-
-
-
-  switch(lib_status) {
-  case SPOTIFY_LS_USER_CANCELED:
-    snprintf(errbuf, errlen, "Login canceled by user");
-    break;
+    return 0;
 
   case SPOTIFY_LS_PERMANENT_ERROR:
     snprintf(errbuf, errlen, "%s", f_sp_error_message(login_permanent_error));
     break;
 
-  default:
+  case SPOTIFY_LS_USER_CANCELED:
+    lib_status = SPOTIFY_LS_RETRY_LOGIN;
+    spotify_pending_events = 1;
+    hts_cond_signal(&spotify_cond_main);
+    // FALLTHRU 
+  case SPOTIFY_LS_RETRY_LOGIN:
     return 0;
   }
+
   hts_mutex_unlock(&spotify_mutex);
   return -1;
 }
@@ -2557,7 +2579,9 @@ be_spotify_open(struct navigator *nav, const char *url, const char *view,
     prop_set_int(prop_create(prop_create(np->np_prop_root, "source"),
 			     "loading"), 1);
 
-    spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_OPEN_PAGE, sp));
+    spotify_msg_enq_locked(spotify_msg_buildc(SPOTIFY_OPEN_PAGE, sp,
+					      prop_create(np->np_prop_root,
+							  "close")));
   }
 
   hts_mutex_unlock(&spotify_mutex);
