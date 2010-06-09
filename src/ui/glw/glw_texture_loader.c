@@ -28,6 +28,10 @@
 
 #include "backend/backend.h"
 
+#define LQ_ALL_OTHER 0
+#define LQ_THEME     1
+#define LQ_THUMBS    2
+
 static void glw_tex_deref_locked(glw_root_t *gr, glw_loadable_texture_t *glt);
 
 static int glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt);
@@ -64,12 +68,25 @@ glw_tex_autoflush(glw_root_t *gr)
 }
 
 
+/**
+ *
+ */
+typedef struct loaderaux {
+  glw_root_t *gr;
+  struct glw_loadable_texture_queue *q;
+  hts_cond_t *cond;
+} loaderaux_t;
 
 
+
+/**
+ *
+ */
 static void *
 loader_thread(void *aux)
 {
-  glw_root_t *gr = aux;
+  loaderaux_t *la = aux;
+  glw_root_t *gr = la->gr;
   glw_loadable_texture_t *glt;
   int r;
 
@@ -77,18 +94,12 @@ loader_thread(void *aux)
 
   while(1) {
     
-    while(1) {
-
-      if((glt = TAILQ_FIRST(&gr->gr_tex_load_queue[0])) != NULL) {
-	TAILQ_REMOVE(&gr->gr_tex_load_queue[0], glt, glt_work_link);
-	break;
-      }
-      if((glt = TAILQ_FIRST(&gr->gr_tex_load_queue[1])) != NULL) {
-	TAILQ_REMOVE(&gr->gr_tex_load_queue[1], glt, glt_work_link);
-	break;
-      }
-      hts_cond_wait(&gr->gr_tex_load_cond, &gr->gr_tex_mutex);
+    if((glt = TAILQ_FIRST(la->q)) == NULL) {
+      hts_cond_wait(la->cond, &gr->gr_tex_mutex);
+      continue;
     }
+
+    TAILQ_REMOVE(la->q, glt, glt_work_link);
 
     if(glt->glt_refcnt > 1) {
       hts_mutex_unlock(&gr->gr_tex_mutex);
@@ -108,23 +119,44 @@ loader_thread(void *aux)
   return NULL;
 }
 
+static loaderaux_t *
+lacreate(glw_root_t *gr, int i)
+{
+  loaderaux_t *la = malloc(sizeof(loaderaux_t));
+  la->gr = gr;
 
+  la->q = &gr->gr_tex_load_queue[i];
+  TAILQ_INIT(la->q);
+
+  la->cond = &gr->gr_tex_load_cond[i];
+  hts_cond_init(la->cond);
+  return la;
+}
+
+/**
+ *
+ */
 void
 glw_tex_init(glw_root_t *gr)
 {
   int i;
   extern int concurrency;
+  loaderaux_t *la;
 
   hts_mutex_init(&gr->gr_tex_mutex);
-  hts_cond_init(&gr->gr_tex_load_cond);
-
   TAILQ_INIT(&gr->gr_tex_rel_queue);
-  TAILQ_INIT(&gr->gr_tex_load_queue[0]);
-  TAILQ_INIT(&gr->gr_tex_load_queue[1]);
 
-  /* Start multiple workers for decoding images */
-  for(i = 0; i < concurrency; i++)
-    hts_thread_create_detached("GLW texture loader", loader_thread, gr);
+  la = lacreate(gr, LQ_ALL_OTHER);
+
+  for(i = 0; i < GLW_MAX(concurrency / 2, 2); i++)
+    hts_thread_create_detached("GLW texture loader", loader_thread, la);
+
+  la = lacreate(gr, LQ_THEME);
+  hts_thread_create_detached("texture theme loader", loader_thread, la);
+
+  la = lacreate(gr, LQ_THUMBS);
+  for(i = 0; i < 2; i++)
+    hts_thread_create_detached("texture thumbs", loader_thread, la);
 }
 
 /**
@@ -411,16 +443,19 @@ gl_tex_req_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   hts_mutex_lock(&gr->gr_tex_mutex);
   glt->glt_refcnt++;
 
-  if(glt->glt_filename == NULL ||
-     !strncmp(glt->glt_filename, "thumb://", 8)) {
-    TAILQ_INSERT_TAIL(&gr->gr_tex_load_queue[1], glt, glt_work_link);
-  } else {
-    TAILQ_INSERT_TAIL(&gr->gr_tex_load_queue[0], glt, glt_work_link);
+  int q = LQ_ALL_OTHER;
+
+  if(glt->glt_filename != NULL) {
+    if(!strncmp(glt->glt_filename, "thumb://", 8))
+      q = LQ_THUMBS;
+    else if(!strncmp(glt->glt_filename, "theme://", 8))
+      q  = LQ_THEME;
   }
 
+  TAILQ_INSERT_TAIL(&gr->gr_tex_load_queue[q], glt, glt_work_link);
   glt->glt_state = GLT_STATE_LOADING;
 
-  hts_cond_signal(&gr->gr_tex_load_cond);
+  hts_cond_signal(&gr->gr_tex_load_cond[q]);
   hts_mutex_unlock(&gr->gr_tex_mutex);
 }
 

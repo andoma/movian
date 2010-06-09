@@ -497,12 +497,16 @@ typedef struct glw_root {
    * Image/Texture loader
    */
   hts_mutex_t gr_tex_mutex;
-  hts_cond_t gr_tex_load_cond;
+
+  hts_cond_t gr_tex_load_cond[3];
+  struct glw_loadable_texture_queue gr_tex_load_queue[3];
+
 
   struct glw_loadable_texture_list gr_tex_active_list;
   struct glw_loadable_texture_list gr_tex_flush_list;
   struct glw_loadable_texture_queue gr_tex_rel_queue;
-  struct glw_loadable_texture_queue gr_tex_load_queue[2];
+
+
   struct glw_loadable_texture_list gr_tex_list;
 
   int gr_normalized_texture_coords;
