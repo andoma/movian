@@ -57,11 +57,23 @@ static media_pipe_t *spotify_mp;
 static hts_mutex_t spotify_mutex;
 static hts_cond_t spotify_cond_main;
 static hts_cond_t spotify_cond_login;
-static int spotify_started;
 
 static int play_position;
 static int seek_pos;
-static int is_logged_in;
+
+static enum {
+  SPOTIFY_LS_IDLE,
+  SPOTIFY_LS_STARTING,
+  SPOTIFY_LS_USER_CANCELED,
+  SPOTIFY_LS_PERMANENT_ERROR,
+  SPOTIFY_LS_LOGGED_IN,
+  SPOTIFY_LS_LOGGED_OUT,
+  SPOTIFY_LS_RETRY_LOGIN,
+
+} lib_status;
+
+static int login_permanent_error;
+
 static int is_rootlist_loaded;
 
 static prop_t *prop_status;
@@ -307,7 +319,7 @@ spotify_msg_enq(spotify_msg_t *sm)
 /**
  *
  */
-static int
+static void
 spotify_try_login(sp_session *s, int retry, const char *reason) 
 {
   char *username;
@@ -318,13 +330,11 @@ spotify_try_login(sp_session *s, int retry, const char *reason)
 
   r = keyring_lookup("Login to Spotify", &username, &password, NULL, retry,
 		     "spotify:", reason);
-
   if(r == -1) {
     // Login canceled by user
-    hts_mutex_lock(&spotify_mutex);
+    lib_status = SPOTIFY_LS_USER_CANCELED;
     hts_cond_broadcast(&spotify_cond_login);
-    hts_mutex_unlock(&spotify_mutex);
-    return -1;
+    return;
   }
 
   if(r == 1) {
@@ -336,9 +346,30 @@ spotify_try_login(sp_session *s, int retry, const char *reason)
 
   free(username);
   free(password);
-  return 0;
 }
 
+
+/**
+ *
+ */
+static int
+is_permanent_error(sp_error e)
+{
+  switch(e) {
+  case SP_ERROR_BAD_API_VERSION:
+  case SP_ERROR_API_INITIALIZATION_FAILED:
+  case SP_ERROR_BAD_APPLICATION_KEY:
+  case SP_ERROR_CLIENT_TOO_OLD:
+  case SP_ERROR_OTHER_PERMANENT:
+  case SP_ERROR_BAD_USER_AGENT:
+  case SP_ERROR_MISSING_CALLBACK:
+  case SP_ERROR_INVALID_INDATA:
+  case SP_ERROR_USER_NEEDS_PREMIUM:
+    return 1;
+  default:
+    return 0;
+  }
+}
 
 /**
  *
@@ -351,7 +382,7 @@ spotify_logged_in(sp_session *sess, sp_error error)
   if(error == 0) {
     
     hts_mutex_lock(&spotify_mutex);
-    is_logged_in = 1;
+    lib_status = SPOTIFY_LS_LOGGED_IN;
     hts_cond_broadcast(&spotify_cond_login);
     hts_mutex_unlock(&spotify_mutex);
 
@@ -363,15 +394,28 @@ spotify_logged_in(sp_session *sess, sp_error error)
     load_initial_playlists(sess);
 
   } else {
+
     notify_add(NOTIFY_ERROR, NULL, 5, "Spotify: Login failed -- %s",
 	       f_sp_error_message(error));
-    spotify_try_login(sess, 1, f_sp_error_message(error));
-
+    
     prop_set_stringf(prop_status, "Login failed: %s ",
 		     f_sp_error_message(error));
+
+    hts_mutex_lock(&spotify_mutex);
+
+    if(is_permanent_error(error)) {
+      login_permanent_error = error;
+      lib_status = SPOTIFY_LS_PERMANENT_ERROR;
+      hts_cond_broadcast(&spotify_cond_login);
+      
+    } else {
+      
+      spotify_try_login(sess, 1, f_sp_error_message(error));
+
+    }
+    hts_mutex_unlock(&spotify_mutex);
   }
 }
-
 
 /**
  *
@@ -382,7 +426,7 @@ spotify_logged_out(sp_session *sess)
   notify_add(NOTIFY_INFO, NULL, 5, "Spotify: Logged out");
 
   hts_mutex_lock(&spotify_mutex);
-  is_logged_in = 0;
+  lib_status = SPOTIFY_LS_LOGGED_OUT;
   is_rootlist_loaded = 0;
   hts_cond_broadcast(&spotify_cond_login);
   hts_mutex_unlock(&spotify_mutex);
@@ -2184,7 +2228,9 @@ spotify_thread(void *aux)
   error = f_sp_session_init(&sesconf, &s);
   hts_mutex_lock(&spotify_mutex);
   if(error) {
-    exit(4);
+    login_permanent_error = error;
+    lib_status = SPOTIFY_LS_PERMANENT_ERROR;
+
     hts_cond_broadcast(&spotify_cond_login);
     hts_mutex_unlock(&spotify_mutex);
     return NULL;
@@ -2205,7 +2251,7 @@ spotify_thread(void *aux)
 
     while(!spotify_pending_events) {
 
-      if(is_logged_in) {
+      if(lib_status == SPOTIFY_LS_LOGGED_IN) {
 	if((sm = TAILQ_FIRST(&spotify_msgs)) != NULL)
 	  break;
       }
@@ -2221,6 +2267,9 @@ spotify_thread(void *aux)
       TAILQ_REMOVE(&spotify_msgs, sm, sm_link);
 
     spotify_pending_events = 0;
+
+    if(lib_status == SPOTIFY_LS_RETRY_LOGIN)
+      spotify_try_login(s, 0, NULL);
 
     hts_mutex_unlock(&spotify_mutex);
 
@@ -2278,16 +2327,57 @@ spotify_thread(void *aux)
 /**
  *
  */
-static void
-spotify_start(void)
+static int
+spotify_start(char *errbuf, size_t errlen)
 {
   hts_mutex_lock(&spotify_mutex);
-  
-  if(spotify_started == 0) {
+
+  switch(lib_status) {
+  case SPOTIFY_LS_LOGGED_IN:
+  case SPOTIFY_LS_LOGGED_OUT:
+    return 0;
+
+  case SPOTIFY_LS_IDLE:
+    lib_status = SPOTIFY_LS_STARTING;
     hts_thread_create_detached("spotify", spotify_thread, NULL);
-    spotify_started = 1;
     shutdown_hook_add(spotify_shutdown, NULL);
+    
+  case SPOTIFY_LS_STARTING:
+    while(lib_status == SPOTIFY_LS_STARTING)
+      hts_cond_wait(&spotify_cond_login, &spotify_mutex);
+    break;
+
+  case SPOTIFY_LS_PERMANENT_ERROR:
+    break;
+
+  case SPOTIFY_LS_USER_CANCELED:
+    lib_status = SPOTIFY_LS_RETRY_LOGIN;
+
+    spotify_pending_events = 1;
+    hts_cond_signal(&spotify_cond_main);
+
+  case SPOTIFY_LS_RETRY_LOGIN:
+    while(lib_status == SPOTIFY_LS_RETRY_LOGIN)
+      hts_cond_wait(&spotify_cond_login, &spotify_mutex);
+    break;
   }
+
+
+
+  switch(lib_status) {
+  case SPOTIFY_LS_USER_CANCELED:
+    snprintf(errbuf, errlen, "Login canceled by user");
+    break;
+
+  case SPOTIFY_LS_PERMANENT_ERROR:
+    snprintf(errbuf, errlen, "%s", f_sp_error_message(login_permanent_error));
+    break;
+
+  default:
+    return 0;
+  }
+  hts_mutex_unlock(&spotify_mutex);
+  return -1;
 }
 
 
@@ -2300,7 +2390,8 @@ be_spotify_open(struct navigator *nav, const char *url, const char *view,
 {
   nav_page_t *np;
 
-  spotify_start(); // Returns with spotify_mutex locked
+  if(spotify_start(errbuf, errlen))
+    return NULL;
 
   if(!strncmp(url, "spotify:track:", strlen("spotify:track:"))) {
     spotify_page_t sp;
@@ -2377,7 +2468,8 @@ be_spotify_play(const char *url, media_pipe_t *mp,
   
   memset(&su, 0, sizeof(su));
 
-  spotify_start();
+  if(spotify_start(errbuf, errlen))
+    return NULL;
 
   assert(spotify_mp == NULL);
   spotify_mp = mp;
@@ -2590,6 +2682,9 @@ be_spotify_imageloader(const char *url, int want_thumb, const char *theme,
   spotify_image_t si;
   uint8_t id[20];
 
+  if(spotify_start(errbuf, errlen))
+    return NULL;
+  
   memset(&si, 0, sizeof(si));
 
   if(parse_image_url(id, url)) {
@@ -2597,7 +2692,6 @@ be_spotify_imageloader(const char *url, int want_thumb, const char *theme,
     return NULL;
   }
 
-  spotify_start();
 
   si.si_id = id;
   si.si_errcode = -1;
@@ -2736,13 +2830,13 @@ spotify_shutdown(void *opaque, int exitcode)
 
   hts_mutex_lock(&spotify_mutex);
 
-  if(is_logged_in) {
+  if(lib_status == SPOTIFY_LS_LOGGED_IN) {
 
     done = 0;
 
     spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_LOGOUT, &done));
 
-    while(is_logged_in)
+    while(lib_status == SPOTIFY_LS_LOGGED_IN)
       if(hts_cond_wait_timeout(&spotify_cond_login, &spotify_mutex, 5000))
 	break;
   }
@@ -2758,9 +2852,10 @@ static void
 be_spotify_search(prop_t *source, const char *query)
 {
   spotify_search_t *ss = malloc(sizeof(spotify_search_t));
-
-  spotify_start();
-
+ 
+  if(spotify_start(NULL, 0))
+    return;
+  
   ss->ss_nodes = prop_create(source, "nodes");
   prop_ref_inc(ss->ss_nodes);
 
