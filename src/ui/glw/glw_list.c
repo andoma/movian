@@ -453,10 +453,8 @@ glw_list_set(glw_t *w, va_list ap)
 	prop_ref_dec(l->append_prop );
 
       l->append_prop = p;
-      if(p != NULL) {
+      if(p != NULL)
 	prop_ref_inc(p);
-	prop_print_tree(p, 1);
-      }
       break;
 
     default:
