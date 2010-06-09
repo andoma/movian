@@ -40,6 +40,7 @@
 #include "misc/ptrvec.h"
 #include "service.h"
 #include "misc/pixmap.h"
+#include "settings.h"
 
 #include "api/lastfm.h"
 
@@ -52,11 +53,14 @@
 /**
  *
  */
+static int silent_start;
+static int spotify_is_enabled;
 static prop_courier_t *spotify_courier;
 static media_pipe_t *spotify_mp;
 static hts_mutex_t spotify_mutex;
 static hts_cond_t spotify_cond_main;
 static hts_cond_t spotify_cond_login;
+static int spotify_high_bitrate;
 
 static int play_position;
 static int seek_pos;
@@ -320,7 +324,7 @@ spotify_msg_enq(spotify_msg_t *sm)
  *
  */
 static void
-spotify_try_login(sp_session *s, int retry, const char *reason) 
+spotify_try_login(sp_session *s, int retry, const char *reason, int silent) 
 {
   char *username;
   char *password;
@@ -328,9 +332,10 @@ spotify_try_login(sp_session *s, int retry, const char *reason)
 
   prop_set_string(prop_status, "Attempting login");
 
-  r = keyring_lookup("Login to Spotify", &username, &password, NULL, retry,
-		     "spotify:", reason);
+  r = keyring_lookup("Login to Spotify", &username, &password, NULL,
+		     retry && !silent, "spotify:", reason);
   if(r == -1) {
+    assert(silent == 0);
     // Login canceled by user
     lib_status = SPOTIFY_LS_USER_CANCELED;
     hts_cond_broadcast(&spotify_cond_login);
@@ -338,8 +343,14 @@ spotify_try_login(sp_session *s, int retry, const char *reason)
   }
 
   if(r == 1) {
+    if(silent) {
+      lib_status = SPOTIFY_LS_USER_CANCELED;
+      hts_cond_broadcast(&spotify_cond_login);
+      return;
+    }
+
     /* Nothing found, but we must have a username / password */
-    return spotify_try_login(s, 1, NULL);
+    return spotify_try_login(s, 1, NULL, 0);
   }
 
   f_sp_session_login(s, username, password);
@@ -410,7 +421,7 @@ spotify_logged_in(sp_session *sess, sp_error error)
       
     } else {
       
-      spotify_try_login(sess, 1, f_sp_error_message(error));
+      spotify_try_login(sess, 1, f_sp_error_message(error), 0);
 
     }
     hts_mutex_unlock(&spotify_mutex);
@@ -2207,6 +2218,7 @@ spotify_thread(void *aux)
   spotify_msg_t *sm;
   int next_timeout = 0;
   char cache[PATH_MAX];
+  int high_bitrate = 0;
 
   sesconf.api_version = SPOTIFY_API_VERSION;
 
@@ -2239,11 +2251,9 @@ spotify_thread(void *aux)
   spotify_session = s;
 
 
-  spotify_try_login(s, 0, NULL);
+  spotify_try_login(s, 0, NULL, silent_start);
 
   /* Wakeup any sleepers that are waiting for us to start */
-
-  //  f_sp_session_preferred_bitrate(s, SP_BITRATE_320k);
 
   while(1) {
 
@@ -2269,7 +2279,17 @@ spotify_thread(void *aux)
     spotify_pending_events = 0;
 
     if(lib_status == SPOTIFY_LS_RETRY_LOGIN)
-      spotify_try_login(s, 0, NULL);
+      spotify_try_login(s, 0, NULL, 0);
+
+    if(high_bitrate != spotify_high_bitrate) {
+      f_sp_session_preferred_bitrate(s, 
+				     high_bitrate ? SP_BITRATE_320k : 
+				     SP_BITRATE_160k);
+      high_bitrate = spotify_high_bitrate;
+
+      TRACE(TRACE_DEBUG, "spotify", "Bitrate set to %dk",
+	    high_bitrate ? 320 : 160);
+    }
 
     hts_mutex_unlock(&spotify_mutex);
 
@@ -2328,8 +2348,13 @@ spotify_thread(void *aux)
  *
  */
 static int
-spotify_start(char *errbuf, size_t errlen)
+spotify_start(char *errbuf, size_t errlen, int silent)
 {
+  if(!spotify_is_enabled) {
+    snprintf(errbuf, errlen, "Spotify is not enabled");
+    return -1;
+  }
+
   hts_mutex_lock(&spotify_mutex);
 
   switch(lib_status) {
@@ -2338,10 +2363,16 @@ spotify_start(char *errbuf, size_t errlen)
     return 0;
 
   case SPOTIFY_LS_IDLE:
+    silent_start = silent;
     lib_status = SPOTIFY_LS_STARTING;
     hts_thread_create_detached("spotify", spotify_thread, NULL);
     shutdown_hook_add(spotify_shutdown, NULL);
-    
+
+    if(silent) {
+      hts_mutex_unlock(&spotify_mutex);
+      return 0;
+    }
+    // FALLTHRU 
   case SPOTIFY_LS_STARTING:
     while(lib_status == SPOTIFY_LS_STARTING)
       hts_cond_wait(&spotify_cond_login, &spotify_mutex);
@@ -2355,7 +2386,7 @@ spotify_start(char *errbuf, size_t errlen)
 
     spotify_pending_events = 1;
     hts_cond_signal(&spotify_cond_main);
-
+    // FALLTHRU 
   case SPOTIFY_LS_RETRY_LOGIN:
     while(lib_status == SPOTIFY_LS_RETRY_LOGIN)
       hts_cond_wait(&spotify_cond_login, &spotify_mutex);
@@ -2390,7 +2421,7 @@ be_spotify_open(struct navigator *nav, const char *url, const char *view,
 {
   nav_page_t *np;
 
-  if(spotify_start(errbuf, errlen))
+  if(spotify_start(errbuf, errlen, 0))
     return NULL;
 
   if(!strncmp(url, "spotify:track:", strlen("spotify:track:"))) {
@@ -2468,7 +2499,7 @@ be_spotify_play(const char *url, media_pipe_t *mp,
   
   memset(&su, 0, sizeof(su));
 
-  if(spotify_start(errbuf, errlen))
+  if(spotify_start(errbuf, errlen, 0))
     return NULL;
 
   assert(spotify_mp == NULL);
@@ -2682,7 +2713,7 @@ be_spotify_imageloader(const char *url, int want_thumb, const char *theme,
   spotify_image_t si;
   uint8_t id[20];
 
-  if(spotify_start(errbuf, errlen))
+  if(spotify_start(errbuf, errlen, 0))
     return NULL;
   
   memset(&si, 0, sizeof(si));
@@ -2766,6 +2797,76 @@ courier_notify(void *opaque)
   hts_mutex_unlock(&spotify_mutex);
 }
 
+static service_t *svc_pl;
+static service_t *svc_newalb;
+static int spotify_autologin;
+
+
+/**
+ *
+ */
+static void
+spotify_enable(void)
+{
+  if(svc_pl == NULL)
+    svc_pl = service_create("spotify playlists", "Spotify playlists",
+			    "spotify:playlists",
+			    SVC_TYPE_MUSIC, NULL, 0);
+  
+  if(svc_newalb == NULL)
+    svc_newalb = service_create("spotify tag:new", "Spotify new albums",
+				"spotify:search:tag:new",
+				SVC_TYPE_MUSIC, NULL, 0);
+}
+
+
+/**
+ *
+ */
+static void
+spotify_disable(void)
+{
+  if(svc_pl != NULL) {
+    service_destroy(svc_pl);
+    svc_pl = NULL;
+  }
+
+  if(svc_newalb != NULL) {
+    service_destroy(svc_newalb);
+    svc_newalb = NULL;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+spotify_set_enable(void *opaque, int value)
+{
+  spotify_is_enabled = value;
+
+  if(value) 
+    spotify_enable();
+  else
+    spotify_disable();
+}
+
+
+/**
+ *
+ */
+static void
+spotify_set_bitrate(void *opaque, int value)
+{
+  hts_mutex_lock(&spotify_mutex);
+  spotify_high_bitrate = value;
+  spotify_pending_events = 1;
+  hts_cond_signal(&spotify_cond_main);
+  hts_mutex_unlock(&spotify_mutex);
+}
+
+
 /**
  *
  */
@@ -2773,11 +2874,14 @@ static int
 be_spotify_init(void)
 {
   prop_t *spotify;
+  prop_t *s;
 
 #ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
   if(be_spotify_dlopen())
     return 1;
 #endif
+
+  s = settings_add_dir(NULL, "spotify", "Spotify", NULL);
 
   spotify_courier = prop_courier_create_notify(courier_notify, NULL);
 
@@ -2797,15 +2901,28 @@ be_spotify_init(void)
   hts_cond_init(&spotify_cond_image);
   hts_cond_init(&spotify_cond_parent);
 
-  /* Register as a global source */
+  // Configuration
 
-  service_create("spotify playlists", "Spotify playlists",
-		 "spotify:playlists",
-		 SVC_TYPE_MUSIC, NULL, 0);
+  htsmsg_t *store = htsmsg_store_load("spotify") ?: htsmsg_create_map();
 
-  service_create("spotify tag:new", "Spotify new albums",
-		 "spotify:search:tag:new",
-		 SVC_TYPE_MUSIC, NULL, 0);
+  settings_create_bool(s, "enable", "Enable Spotify", 0, 
+		       store, spotify_set_enable, NULL,
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings, (void *)"spotify");
+
+  settings_create_bool(s, "autologin", "Login on Showtime startup", 1, 
+		       store, settings_generic_set_bool, &spotify_autologin,
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings, (void *)"spotify");
+
+  settings_create_bool(s, "highbitrate", "High bitrate", 0,
+		       store, spotify_set_bitrate, NULL,
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings, (void *)"spotify");
+
+  if(spotify_is_enabled && spotify_autologin)
+    spotify_start(NULL, 0, 1);
+
   return 0;
 }
 
@@ -2853,7 +2970,7 @@ be_spotify_search(prop_t *source, const char *query)
 {
   spotify_search_t *ss = malloc(sizeof(spotify_search_t));
  
-  if(spotify_start(NULL, 0))
+  if(spotify_start(NULL, 0, 0))
     return;
   
   ss->ss_nodes = prop_create(source, "nodes");
