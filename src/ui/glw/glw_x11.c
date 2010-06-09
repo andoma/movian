@@ -778,6 +778,8 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
       break;
     case 9:          e = event_create_action(ACTION_FOCUS_NEXT);
       break;
+    case 27:         e = event_create_action(ACTION_CANCEL);
+      break;
 
       /* Always send 1 char ASCII */
     default:

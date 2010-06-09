@@ -60,6 +60,7 @@ widget(container_x, {
 	    bind($self.username);
 
 	    onEvent(enter, { $self.result = "ok"; });
+	    onEvent(cancel, { $self.result = "cancel"; });
 
 	  });
 	});
@@ -79,6 +80,7 @@ widget(container_x, {
 	    .password = true;
 	    bind($self.password);
 	    onEvent(enter, { $self.result = "ok"; });
+	    onEvent(cancel, { $self.result = "cancel"; });
 	  });
 	});
 
