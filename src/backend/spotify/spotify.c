@@ -237,8 +237,17 @@ static hts_cond_t spotify_cond_image;
  * Search query
  */
 typedef struct spotify_search {
+  int ss_ref;
+  int ss_total;
+  int ss_offset;
+  int ss_last_search;
   char *ss_query;
   prop_t *ss_nodes;
+  prop_sub_t *ss_destroy_sub;
+
+  prop_t *ss_append_prop;
+  prop_sub_t *ss_append_sub;
+
 } spotify_search_t;
 
 
@@ -2111,6 +2120,36 @@ spotify_get_image(spotify_image_t *si)
 			       spotify_got_image, si);
 }
 
+/**
+ *
+ */
+static void
+search_unref(spotify_search_t *ss)
+{
+  ss->ss_ref--;
+  if(ss->ss_ref > 0)
+    return;
+
+  prop_unsubscribe(ss->ss_append_sub);
+  prop_ref_dec(ss->ss_append_prop);
+
+  prop_unsubscribe(ss->ss_destroy_sub);
+  prop_ref_dec(ss->ss_nodes);
+  free(ss->ss_query);
+  free(ss);
+}
+
+
+/**
+ *
+ */
+static void
+search_autodestroy(void *opaque, prop_event_t event, ...)
+{
+  if(event == PROP_DESTROYED)
+    search_unref(opaque);
+}
+
 
 /**
  *
@@ -2124,6 +2163,8 @@ spotify_search_done(sp_search *result, void *userdata)
   prop_t *p;
   sp_track *track;
   char url[URL_MAX];
+
+  ss->ss_total = f_sp_search_total_tracks(result);
 
   for(i = 0; i < ntracks; i++) {
     track = f_sp_search_track(result, i);
@@ -2139,6 +2180,46 @@ spotify_search_done(sp_search *result, void *userdata)
     if(prop_set_parent(p, ss->ss_nodes))
       prop_destroy(p);
   }
+
+
+  ss->ss_offset += ntracks;
+
+  if(ss->ss_offset >= ss->ss_total)
+    search_unref(ss);
+
+  search_unref(ss);
+}
+
+#define SEARCH_LIMIT 100
+
+
+/**
+ *
+ */
+static void
+search_append(void *opaque, prop_event_t event, ...)
+{
+  va_list ap;
+  spotify_search_t *ss = opaque;
+
+  if(event != PROP_EXT_EVENT)
+    return;
+
+  va_start(ap, event);
+  event_t *e = va_arg(ap, event_t *);
+  
+  if(e->e_type_x != EVENT_APPEND_REQUEST)
+    return;
+
+  if(ss->ss_last_search == ss->ss_offset)
+    return;
+
+  ss->ss_last_search = ss->ss_offset;
+  ss->ss_ref++;
+
+  f_sp_search_create(spotify_session, ss->ss_query,
+		     ss->ss_offset, SEARCH_LIMIT, 0, 0, 0, 0, 
+		     spotify_search_done, ss);
 }
 
 
@@ -2148,8 +2229,24 @@ spotify_search_done(sp_search *result, void *userdata)
 static void
 spotify_search(spotify_search_t *ss)
 {
+  ss->ss_ref = 2;
+
+  ss->ss_destroy_sub = 
+    prop_subscribe(PROP_SUB_TRACK_DESTROY,
+		   PROP_TAG_CALLBACK, search_autodestroy, ss,
+		   PROP_TAG_ROOT, ss->ss_nodes,
+		   PROP_TAG_COURIER, spotify_courier,
+		   NULL);
+
+  ss->ss_append_sub = 
+    prop_subscribe(0,
+		   PROP_TAG_CALLBACK, search_append, ss,
+		   PROP_TAG_ROOT, ss->ss_append_prop,
+		   PROP_TAG_COURIER, spotify_courier,
+		   NULL);
+
   f_sp_search_create(spotify_session, ss->ss_query,
-		     0, 250, 0, 250, 0, 250, 
+		     ss->ss_offset, SEARCH_LIMIT, 0, 0, 0, 0, 
 		     spotify_search_done, ss);
 }
 
@@ -2968,13 +3065,16 @@ spotify_shutdown(void *opaque, int exitcode)
 static void
 be_spotify_search(prop_t *source, const char *query)
 {
-  spotify_search_t *ss = malloc(sizeof(spotify_search_t));
+  spotify_search_t *ss = calloc(1, sizeof(spotify_search_t));
  
   if(spotify_start(NULL, 0, 0))
     return;
   
   ss->ss_nodes = prop_create(source, "nodes");
   prop_ref_inc(ss->ss_nodes);
+
+  ss->ss_append_prop = prop_create(source, "appendSink");
+  prop_ref_inc(ss->ss_append_prop);
 
   ss->ss_query = strdup(query);
 
