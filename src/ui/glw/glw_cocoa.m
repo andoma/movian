@@ -153,7 +153,7 @@ static const struct {
   
   { _NSBackspaceKey,          0,                ACTION_BS, ACTION_NAV_BACK },
   { _NSEnterKey,              0,                ACTION_ENTER, ACTION_ACTIVATE},
-  { _NSEscapeKey,             0,                ACTION_QUIT },
+  { _NSEscapeKey,             0,                ACTION_CANCEL },
   { _NSTabKey,                0,                ACTION_FOCUS_NEXT },
   
   { NSF5FunctionKey,	    0,	ACTION_RELOAD_UI },
