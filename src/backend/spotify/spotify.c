@@ -245,8 +245,6 @@ typedef struct spotify_search {
   char *ss_query;
   prop_t *ss_nodes;
   prop_sub_t *ss_destroy_sub;
-
-  prop_t *ss_append_prop;
   prop_sub_t *ss_append_sub;
 
 } spotify_search_t;
@@ -2172,7 +2170,6 @@ search_unref(spotify_search_t *ss)
     return;
 
   prop_unsubscribe(ss->ss_append_sub);
-  prop_ref_dec(ss->ss_append_prop);
 
   prop_unsubscribe(ss->ss_destroy_sub);
   prop_ref_dec(ss->ss_nodes);
@@ -2282,7 +2279,7 @@ spotify_search(spotify_search_t *ss)
   ss->ss_append_sub = 
     prop_subscribe(0,
 		   PROP_TAG_CALLBACK, search_append, ss,
-		   PROP_TAG_ROOT, ss->ss_append_prop,
+		   PROP_TAG_ROOT, ss->ss_nodes,
 		   PROP_TAG_COURIER, spotify_courier,
 		   NULL);
 
@@ -3096,9 +3093,6 @@ be_spotify_search(prop_t *source, const char *query)
   
   ss->ss_nodes = prop_create(source, "nodes");
   prop_ref_inc(ss->ss_nodes);
-
-  ss->ss_append_prop = prop_create(source, "appendSink");
-  prop_ref_inc(ss->ss_append_prop);
 
   ss->ss_query = strdup(query);
 

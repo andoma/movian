@@ -7,7 +7,7 @@ widget(container_x, {
   
   widget(list_y, {
     .id = "list";
-    appendEventSink($page.source.appendSink);
+    appendEventSink($page.source.nodes);
 
     cloner($page.source.nodes, loader, {
       .time = 0.3;
