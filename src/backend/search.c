@@ -34,7 +34,11 @@
 static int
 search_canhandle(const char *url)
 {
-  return !strncmp(url, "search:", strlen("search:"));
+  return
+    !strncmp(url, "search:", strlen("search:")) ||
+    !strncmp(url, "audiosearch:", strlen("audiosearch:")) ||
+    !strncmp(url, "videosearch:", strlen("videosearch:"));
+    
 }
 
 
@@ -45,10 +49,24 @@ static nav_page_t *
 search_open(struct navigator *nav, const char *url0, const char *view,
 	    char *errbuf, size_t errlen)
 {
-  const char *url = url0 + strlen("search:");
+  const char *url;
   nav_page_t *np;
   backend_t *be;
   prop_t *src, *meta;
+  backend_search_type_t type;
+
+  if((url = strchr(url0, ':')) == NULL)
+    abort();
+  url++;
+
+  if(url0[0] == 'v')
+    type = BACKEND_SEARCH_VIDEO;
+  else if(url0[0] == 'a')
+    type = BACKEND_SEARCH_AUDIO;
+  else
+    type = BACKEND_SEARCH_ALL;
+
+
 
   if((be = backend_canhandle(url)) != NULL) 
     return be->be_open(nav, url, view, errbuf, errlen);
@@ -66,7 +84,7 @@ search_open(struct navigator *nav, const char *url0, const char *view,
 
   LIST_FOREACH(be, &backends, be_global_link)
     if(be->be_search != NULL)
-      be->be_search(src, url);
+      be->be_search(src, url, type);
   return np;
 }
 

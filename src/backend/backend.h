@@ -43,6 +43,16 @@ typedef enum {
 
 
 /**
+ * Kept in sync with service_status_t
+ */
+typedef enum {
+  BACKEND_SEARCH_ALL,
+  BACKEND_SEARCH_AUDIO,
+  BACKEND_SEARCH_VIDEO,
+} backend_search_type_t;
+
+
+/**
  *
  */
 typedef struct backend {
@@ -74,7 +84,8 @@ typedef struct backend {
 
   int (*be_probe)(const char *url, char *errbuf, size_t errlen);
 
-  void (*be_search)(struct prop *src, const char *query);
+  void (*be_search)(struct prop *src, const char *query, 
+		    backend_search_type_t type);
 
 } backend_t;
 
@@ -112,5 +123,12 @@ struct nav_page *backend_open_video(struct navigator *nav, const char *url,
 #define BE_REGISTER(name) \
   static void  __attribute__((constructor)) backend_init_ ## name(void) {\
     backend_register(&be_ ## name); }
+
+static inline int
+backend_search_audio(backend_search_type_t type)
+{
+  return type == BACKEND_SEARCH_ALL || type == BACKEND_SEARCH_AUDIO;
+}
+
 
 #endif /* BACKEND_H__ */

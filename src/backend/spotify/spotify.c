@@ -3084,13 +3084,15 @@ spotify_shutdown(void *opaque, int exitcode)
  *
  */
 static void
-be_spotify_search(prop_t *source, const char *query)
+be_spotify_search(prop_t *source, const char *query, backend_search_type_t type)
 {
-  spotify_search_t *ss = calloc(1, sizeof(spotify_search_t));
- 
+  if(!backend_search_audio(type))
+    return;
+
   if(spotify_start(NULL, 0, 0))
     return;
   
+  spotify_search_t *ss = calloc(1, sizeof(spotify_search_t));
   ss->ss_nodes = prop_create(source, "nodes");
   prop_ref_inc(ss->ss_nodes);
 

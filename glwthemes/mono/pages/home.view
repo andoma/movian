@@ -91,7 +91,7 @@ widget(container_y, {
 
          widget(text, {
            bind($view.searchQuery);
-           .focusable = 0.01;
+           .focusable = 0.7;
            $view.searchAlpha = 0.3 + iir(isFocused() * 0.7, 8) + isHovered() * 0.1;
 
 	   onEvent(enter, navOpen("search:" + $view.searchQuery));
@@ -99,7 +99,23 @@ widget(container_y, {
        });
     });
   });
-    space(1);
+  widget(container_x, {
+   .weight = 1.0;
+   .filterConstraintX = true;
+ 
+	      ICON2("theme://icons/48x48/Music.png",
+		    "Music search",
+		    navOpen("audiosearch:" + $view.searchQuery),
+                    [0.45, 0.45, 0.5],
+		    select($view.searchQuery, 0.6, 0.0))
+
+	      ICON2("theme://icons/48x48/Movie.png",
+		    "Video search",
+		    navOpen("videosearch:" + $view.searchQuery),
+                    [0.45, 0.45, 0.5],
+		    select($view.searchQuery, 0.6, 0.0))
+ 
+    });
   });
 
     space(0.10);
