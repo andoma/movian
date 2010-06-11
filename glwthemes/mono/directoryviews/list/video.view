@@ -9,22 +9,22 @@ widget(container_x, {
     .shadow = true;
   });
   
-  widget(backdrop, {
-    .weight = 1.5;
-    .autoRefocusable = true;
-    .focusable = 1.0;
-    .focusOnClick = true;
-    .filterConstraintX = true;
-    onEvent(activate, navOpen($self.url));
-
-    .alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
-
-    .color = PLATE_COLOR_VIDEO();
-    PLATE_GFX();
-
-    $view.focused     = delay(isFocused(), 0.5, 0.0);
-    
-    widget(container_y, {
+  widget(container_y, {
+    widget(backdrop, {
+      .weight = 1.5;
+      .autoRefocusable = true;
+      .focusable = 1.0;
+      .focusOnClick = true;
+      .filterConstraintX = true;
+      onEvent(enter, navOpen($self.url));
+      
+      .alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
+      
+      .color = PLATE_COLOR_VIDEO();
+      PLATE_GFX();
+      
+      $view.focused     = delay(isFocused(), 0.5, 0.0);
+      
       widget(container_x, {
 	widget(label, {
 	  .color = select(isFocused(), [1.0, 1.0, 1.0], PLATE_COLOR_VIDEO());
@@ -38,45 +38,67 @@ widget(container_x, {
 	  .caption = value2duration($self.metadata.duration);
 	});
       });
+    });
 
-      widget(expander_y, {
+    widget(expander_y, {
 
-	.expansion = scurve($view.focused, 0.15);
-	.alpha     = scurve($view.focused, 0.15);
-	
-	widget(container_y, {
-	  widget(container_x, {
-	    widget(icon, {
-	      .source = "theme://icons/48x48/Container.png";
-	      .sizeScale = 0.75;
-	    });
-	    widget(label, {
-	      .caption = $self.metadata.format;
-	      .sizeScale = 0.75;
-	    });
-	  });
-	
-	  cloner($self.metadata.videostreams, container_x, {
-	    widget(icon, {
-	      .source = "theme://icons/48x48/Cam.png";
-	      .sizeScale = 0.75;
-	    });
-	    widget(label, {
-	      .caption = $self.longformat;
-	      .sizeScale = 0.75;
-	    });
+      .expansion = scurve($view.focused, 0.15);
+      .alpha     = scurve($view.focused, 0.15);
+      
+      widget(container_y, {
+
+	widget(container_x, {
+	  widget(image, {
+	    .height = select($self.metadata.icon, $ui.fontsize * 6, 0);
+	    .hqScaling = true;
+	    .source = $self.metadata.icon;
 	  });
 
+	  widget(dummy, {
+	    .width = 4;
+	  });
 
-	  cloner($self.metadata.audiostreams, container_x, {
-	    widget(icon, {
-	      .source = "theme://icons/48x48/Sound.png";
-	      .sizeScale = 0.75;
-	    });
-	    widget(label, {
-	      .caption = $self.longformat;
-	      .sizeScale = 0.75;
-	    });
+	  widget(label, {
+	    .caption = $self.metadata.description;
+	    .maxlines = 10;
+	    .ellipsize = true;
+	    .align = topLeft;
+	    .sizeScale = 0.8;
+	  });
+	});
+
+	widget(container_x, {
+	  .hidden = select($self.metadata.format, 0, 1);
+	  widget(icon, {
+	    .source = "theme://icons/48x48/Container.png";
+	    .sizeScale = 0.75;
+	  });
+	  widget(label, {
+	    .caption = $self.metadata.format;
+	    .sizeScale = 0.75;
+	  });
+	});
+	
+	cloner($self.metadata.videostreams, container_x, {
+	  widget(icon, {
+	    .source = "theme://icons/48x48/Cam.png";
+	    .sizeScale = 0.75;
+	  });
+	  widget(label, {
+	    .caption = $self.longformat;
+	    .sizeScale = 0.75;
+	  });
+	});
+
+
+	cloner($self.metadata.audiostreams, container_x, {
+	  widget(icon, {
+	    .source = "theme://icons/48x48/Sound.png";
+	    .sizeScale = 0.75;
+	  });
+	  widget(label, {
+	    .caption = $self.longformat;
+	    .sizeScale = 0.75;
 	  });
 	});
       });
