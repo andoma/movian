@@ -59,6 +59,7 @@ CONFIG_LIST="
  librtmp
  libx11
  libxext
+ locatedb
 "
 
 die() {

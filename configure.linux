@@ -75,6 +75,7 @@ enable libxss
 enable libxv
 enable serdev
 enable ssl
+enable locatedb
 
 for opt do
   optval="${opt#*=}"
