@@ -136,5 +136,7 @@ backend_search_video(backend_search_type_t type)
   return type == BACKEND_SEARCH_ALL || type == BACKEND_SEARCH_VIDEO;
 }
 
+prop_t *search_get_settings(void);
+
 
 #endif /* BACKEND_H__ */

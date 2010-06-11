@@ -175,7 +175,7 @@ backend_canhandle(const char *url)
   backend_t *be;
 
   LIST_FOREACH(be, &backends, be_global_link)
-    if(be->be_canhandle(url))
+    if(be->be_canhandle != NULL && be->be_canhandle(url))
       return be;
   return NULL;
 }

@@ -28,6 +28,22 @@
 #include "navigator.h"
 #include "backend/backend.h"
 
+
+
+/**
+ *
+ */
+prop_t *
+search_get_settings(void)
+{
+  static prop_t *p;
+
+  if(p == NULL)
+    p = settings_add_dir(NULL, "search", "Search", "search");
+  return p;
+}
+
+
 /**
  *
  */

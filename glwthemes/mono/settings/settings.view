@@ -8,7 +8,8 @@ LIST_ITEM_SIMPLE($self.source.title,
 			   "theme://icons/48x48/Settings.png",
 			   "audio", "theme://icons/48x48/Sound.png",
 			   "bookmark", "theme://icons/48x48/Bookmark.png",
-			   "display", "theme://icons/48x48/Display.png"
+			   "display", "theme://icons/48x48/Display.png",
+			   "search", "theme://icons/48x48/Search.png"
 			  ),
 		 navOpen($self.url),
 		 PLATE_COLOR_OTHER());
