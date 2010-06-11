@@ -244,8 +244,7 @@ typedef struct spotify_search {
   int ss_last_search;
   char *ss_query;
   prop_t *ss_nodes;
-  prop_sub_t *ss_destroy_sub;
-  prop_sub_t *ss_append_sub;
+  prop_sub_t *ss_sub;
 
 } spotify_search_t;
 
@@ -2169,23 +2168,10 @@ search_unref(spotify_search_t *ss)
   if(ss->ss_ref > 0)
     return;
 
-  prop_unsubscribe(ss->ss_append_sub);
-
-  prop_unsubscribe(ss->ss_destroy_sub);
+  prop_unsubscribe(ss->ss_sub);
   prop_ref_dec(ss->ss_nodes);
   free(ss->ss_query);
   free(ss);
-}
-
-
-/**
- *
- */
-static void
-search_autodestroy(void *opaque, prop_event_t event, ...)
-{
-  if(event == PROP_DESTROYED)
-    search_unref(opaque);
 }
 
 
@@ -2235,29 +2221,40 @@ spotify_search_done(sp_search *result, void *userdata)
  *
  */
 static void
-search_append(void *opaque, prop_event_t event, ...)
+search_nodesub(void *opaque, prop_event_t event, ...)
 {
-  va_list ap;
   spotify_search_t *ss = opaque;
-
-  if(event != PROP_EXT_EVENT)
-    return;
+  va_list ap;
+  event_t *e;
 
   va_start(ap, event);
-  event_t *e = va_arg(ap, event_t *);
-  
-  if(e->e_type_x != EVENT_APPEND_REQUEST)
-    return;
 
-  if(ss->ss_last_search == ss->ss_offset)
-    return;
+  switch(event) {
+  default:
+    break;
 
-  ss->ss_last_search = ss->ss_offset;
-  ss->ss_ref++;
+  case PROP_DESTROYED:
+    search_unref(opaque);
+    break;
 
-  f_sp_search_create(spotify_session, ss->ss_query,
-		     ss->ss_offset, SEARCH_LIMIT, 0, 0, 0, 0, 
-		     spotify_search_done, ss);
+  case PROP_EXT_EVENT:
+    e = va_arg(ap, event_t *);
+   
+    if(e->e_type_x != EVENT_APPEND_REQUEST)
+      break;
+
+    if(ss->ss_last_search == ss->ss_offset)
+      break; // Avoid query for same range again
+
+    ss->ss_last_search = ss->ss_offset;
+    ss->ss_ref++;
+
+    f_sp_search_create(spotify_session, ss->ss_query,
+		       ss->ss_offset, SEARCH_LIMIT, 0, 0, 0, 0, 
+		       spotify_search_done, ss);
+    break;
+  }
+  va_end(ap);
 }
 
 
@@ -2269,16 +2266,9 @@ spotify_search(spotify_search_t *ss)
 {
   ss->ss_ref = 2;
 
-  ss->ss_destroy_sub = 
+  ss->ss_sub = 
     prop_subscribe(PROP_SUB_TRACK_DESTROY,
-		   PROP_TAG_CALLBACK, search_autodestroy, ss,
-		   PROP_TAG_ROOT, ss->ss_nodes,
-		   PROP_TAG_COURIER, spotify_courier,
-		   NULL);
-
-  ss->ss_append_sub = 
-    prop_subscribe(0,
-		   PROP_TAG_CALLBACK, search_append, ss,
+		   PROP_TAG_CALLBACK, search_nodesub, ss,
 		   PROP_TAG_ROOT, ss->ss_nodes,
 		   PROP_TAG_COURIER, spotify_courier,
 		   NULL);
