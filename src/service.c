@@ -167,6 +167,25 @@ service_reprobe(service_t *s)
   hts_cond_signal(&service_cond);
 }
 
+
+/**
+ *
+ */
+static void
+seturl(service_t *s, const char *url)
+{
+  char urlbuf[URL_MAX];
+  backend_t *be;
+
+  be = backend_canhandle(url);
+  if(be != NULL && be->be_normalize != NULL &&
+     !be->be_normalize(url, urlbuf, sizeof(urlbuf)))
+    mystrset(&s->s_url, urlbuf);
+  else
+    mystrset(&s->s_url, url);
+}
+
+
 /**
  *
  */
@@ -184,7 +203,7 @@ service_create(const char *id,
   s->s_type = type;
   p = s->s_global_root = prop_create(NULL, id);
   s->s_type_root       = prop_create(NULL, id);
-  mystrset(&s->s_url, url);
+  seturl(s, url);
 
   prop_set_string(prop_create(p, "title"), title);
   prop_set_string(prop_create(p, "icon"), icon);
@@ -294,7 +313,7 @@ service_set_url(service_t *s, const char *url)
   prop_set_string(prop_create(s->s_global_root, "url"), url);
 
   hts_mutex_lock(&service_mutex);
-  mystrset(&s->s_url, url);
+  seturl(s, url);
   service_reprobe(s);
   hts_mutex_unlock(&service_mutex);
 }
