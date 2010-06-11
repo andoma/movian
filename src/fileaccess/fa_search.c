@@ -376,7 +376,7 @@ fa_search_start (prop_t *source, const char *query, backend_search_type_t type)
   /* Convery query to lower-case to provide case-insensitive search. */
   fas->fas_query = s = strdup(query);
   do {
-    *s = tolower(*s);
+    *s = tolower((int)*s);
   } while (*++s);
 
   fas->fas_run = 1;
