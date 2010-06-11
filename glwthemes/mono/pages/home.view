@@ -150,7 +150,9 @@ widget(container_y, {
 			PLATE_COLOR_OTHER(), $view.otherFocused);
    });
 
-    space(0.40);
+    HORIZONTAL_SEPARATOR();
+
+  widget(dummy, { .height = 8; });
 
   widget(container_x, {
     .padding = [3, 3, 3, 3];
@@ -168,5 +170,5 @@ widget(container_y, {
 		 $global.runcontrol.canStandby || !$ui.fullscreen, 0.3);
   });
 
-  widget(dummy, { .height = 16; });
+  widget(dummy, { .height = 8; });
 });
