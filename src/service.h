@@ -5,7 +5,6 @@
 #include "misc/queue.h"
 #include "prop.h"
 
-typedef struct service service_t;
 
 /**
  *
@@ -18,6 +17,31 @@ typedef enum {
   SVC_TYPE_OTHER,
   SVC_num,
 } service_type_t;
+
+
+typedef struct service {
+  int s_ref;
+  int s_zombie;
+
+  LIST_ENTRY(service) s_link;
+  prop_t *s_global_root;
+  prop_t *s_type_root;
+  prop_t *s_prop_status;
+  prop_t *s_prop_status_txt;
+
+  char *s_url;
+
+  service_type_t s_type;
+
+  int s_do_probe;
+  int s_need_probe;
+} service_t;
+
+LIST_HEAD(service_list, service);
+extern struct service_list services;
+
+extern hts_mutex_t service_mutex;
+
 
 
 /**

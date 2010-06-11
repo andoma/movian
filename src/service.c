@@ -40,32 +40,10 @@ struct svc_type_meta {
 
 static struct svc_type_meta svc_types[SVC_num];
 
-LIST_HEAD(service_list, service);
-
-static struct service_list services;
-static hts_mutex_t service_mutex;
+struct service_list services;
+hts_mutex_t service_mutex;
 static hts_cond_t service_cond;
 
-/**
- *
- */
-struct service {
-  int s_ref;
-  int s_zombie;
-
-  LIST_ENTRY(service) s_link;
-  prop_t *s_global_root;
-  prop_t *s_type_root;
-  prop_t *s_prop_status;
-  prop_t *s_prop_status_txt;
-
-  char *s_url;
-
-  service_type_t s_type;
-
-  int s_do_probe;
-  int s_need_probe;
-};
 
 
 /**
