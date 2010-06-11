@@ -1,5 +1,5 @@
 /*
- *  Scrapping core
+ *  LastFM API
  *  Copyright (C) 2009 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -26,25 +26,22 @@
 #include "lastfm.h"
 #include "fileaccess/fileaccess.h"
 
-static prop_courier_t *scrapper_courier;
-static hts_mutex_t scrapper_mutex;
+static prop_courier_t *lastfm_courier;
+static hts_mutex_t lastfm_mutex;
+#define LASTFM_APIKEY "e8fb67200bce49da092a9de1eb1c649c"
 
 
-typedef struct scrap_prop_artist {
-  prop_t *spa_prop;
+typedef struct lastfm_prop_artist {
+  prop_t *lpa_prop;
   
-  char *spa_artistname;
-} scrap_prop_artist_t;
+  char *lpa_artistname;
+} lastfm_prop_artist_t;
 
 
 
 /**
- * The LastFM stuff should reside in a file of its own...
- * later.. someday
+ *
  */
-#define LASTFM_APIKEY "e8fb67200bce49da092a9de1eb1c649c"
-
-
 static void
 lastfm_parse(htsmsg_t *xml, prop_t *parent)
 {
@@ -56,7 +53,6 @@ lastfm_parse(htsmsg_t *xml, prop_t *parent)
   if((images = htsmsg_get_map_multi(xml, "tags", "lfm", 
 				    "tags", "images", 
 				    "tags", NULL)) == NULL) {
-    printf("SCRAPPER: no images\n");
     return;
   }
 
@@ -112,13 +108,13 @@ lastfm_artistpics_query(const char *artistname, prop_t *p)
 		   NULL, NULL, HTTP_REQUEST_ESCAPE_PATH);
 
   if(n) {
-    TRACE(TRACE_DEBUG, "scrapper", "HTTP query to lastfm failed: %s",  errbuf);
+    TRACE(TRACE_DEBUG, "lastfm", "HTTP query to lastfm failed: %s",  errbuf);
     return;
   }
 
   /* XML parser consumes 'buf' */
   if((xml = htsmsg_xml_deserialize(result, errbuf, sizeof(errbuf))) == NULL) {
-    TRACE(TRACE_DEBUG, "scrapper", "lastfm xml parse failed: %s",  errbuf);
+    TRACE(TRACE_DEBUG, "lastfm", "lastfm xml parse failed: %s",  errbuf);
     return;
   }
 
@@ -132,20 +128,20 @@ lastfm_artistpics_query(const char *artistname, prop_t *p)
  *
  */
 static void
-scrap_prop_artist_cb(void *opaque, prop_event_t event, ...)
+lastfm_prop_artist_cb(void *opaque, prop_event_t event, ...)
 {
-  scrap_prop_artist_t *spa = opaque;
+  lastfm_prop_artist_t *spa = opaque;
 
   switch(event) {
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
-    TRACE(TRACE_DEBUG, "scrapper", "Scrapping images for artist %s",
-	  spa->spa_artistname);
-    lastfm_artistpics_query(spa->spa_artistname, spa->spa_prop);
+    TRACE(TRACE_DEBUG, "lastfm", "Loading images for artist %s",
+	  spa->lpa_artistname);
+    lastfm_artistpics_query(spa->lpa_artistname, spa->lpa_prop);
     break;
 
   case PROP_DESTROYED:
-    prop_ref_dec(spa->spa_prop);
-    free(spa->spa_artistname);
+    prop_ref_dec(spa->lpa_prop);
+    free(spa->lpa_artistname);
     free(spa);
     break;
 
@@ -163,18 +159,18 @@ scrap_prop_artist_cb(void *opaque, prop_event_t event, ...)
 void
 lastfm_artistpics_init(prop_t *prop, const char *artist)
 {
-  scrap_prop_artist_t *spa;
+  lastfm_prop_artist_t *spa;
 
-  spa = calloc(1, sizeof(scrap_prop_artist_t));
-  spa->spa_artistname = strdup(artist);
-  spa->spa_artistname[strcspn(spa->spa_artistname, ";:,-[]")] = 0;
+  spa = calloc(1, sizeof(lastfm_prop_artist_t));
+  spa->lpa_artistname = strdup(artist);
+  spa->lpa_artistname[strcspn(spa->lpa_artistname, ";:,-[]")] = 0;
 
-  spa->spa_prop = prop;
+  spa->lpa_prop = prop;
   prop_ref_inc(prop);
 
   prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_SUBSCRIPTION_MONITOR,
-		 PROP_TAG_CALLBACK, scrap_prop_artist_cb, spa,
-		 PROP_TAG_COURIER, scrapper_courier,
+		 PROP_TAG_CALLBACK, lastfm_prop_artist_cb, spa,
+		 PROP_TAG_COURIER, lastfm_courier,
 		 PROP_TAG_ROOT, prop,
 		 NULL);
 }
@@ -186,6 +182,6 @@ lastfm_artistpics_init(prop_t *prop, const char *artist)
 void
 lastfm_init(void)
 {
-  hts_mutex_init(&scrapper_mutex);
-  scrapper_courier = prop_courier_create_thread(&scrapper_mutex, "scrapper");
+  hts_mutex_init(&lastfm_mutex);
+  lastfm_courier = prop_courier_create_thread(&lastfm_mutex, "lastfm");
 }
