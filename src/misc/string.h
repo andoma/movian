@@ -15,7 +15,7 @@ url_split(char *proto, int proto_size,
 	  char *hostname, int hostname_size,
 	  int *port_ptr,
 	  char *path, int path_size,
-	  const char *url);
+	  const char *url, int escape_path);
 
 double strtod_ex(const char *s, char decimal_point_char, char **ep);
 

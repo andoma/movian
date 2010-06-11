@@ -109,7 +109,7 @@ lastfm_artistpics_query(const char *artistname, prop_t *p)
 				    "api_key", LASTFM_APIKEY,
 				    NULL, NULL},
 		   &result, &resultsize, errbuf, sizeof(errbuf),
-		   NULL, NULL);
+		   NULL, NULL, HTTP_REQUEST_ESCAPE_PATH);
 
   if(n) {
     TRACE(TRACE_DEBUG, "scrapper", "HTTP query to lastfm failed: %s",  errbuf);

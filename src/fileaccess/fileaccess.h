@@ -150,10 +150,14 @@ int fa_normalize(const char *url, char *dst, size_t dstlen);
 int fa_check_url(const char *url, char *errbuf, size_t errlen);
 
 struct htsbuf_queue;
+
+#define HTTP_REQUEST_ESCAPE_PATH 0x1
+
 int http_request(const char *url, const char **arguments, 
 		 char **result, size_t *result_sizep,
 		 char *errbuf, size_t errlen,
-		 struct htsbuf_queue *postdata, const char *postcontenttype);
+		 struct htsbuf_queue *postdata, const char *postcontenttype,
+		 int flags);
 
 #include <libavformat/avio.h>
 

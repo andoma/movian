@@ -436,7 +436,7 @@ url_split(char *proto, int proto_size,
 	  char *hostname, int hostname_size,
 	  int *port_ptr,
 	  char *path, int path_size,
-	  const char *url)
+	  const char *url, int escape_path)
 {
   const char *p, *ls, *at, *col, *brk;
 
@@ -454,7 +454,10 @@ url_split(char *proto, int proto_size,
     if (*p == '/') p++;
   } else {
     /* no protocol means plain filename */
-    path_escape(path, path_size, url);
+    if(escape_path)
+      path_escape(path, path_size, url);
+    else
+      snprintf(path, path_size, "%s", url);
     return;
   }
 
@@ -462,9 +465,13 @@ url_split(char *proto, int proto_size,
   ls = strchr(p, '/');
   if(!ls)
     ls = strchr(p, '?');
-  if(ls)
-    path_escape(path, path_size, ls);
-  else
+  if(ls) {
+    if(escape_path) {
+      path_escape(path, path_size, ls);      
+    } else {
+      snprintf(path, path_size, "%s", ls);
+    }
+  } else
     ls = &p[strlen(p)]; // XXX
 
   /* the rest is hostname, use that to parse auth/port */

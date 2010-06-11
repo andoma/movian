@@ -598,7 +598,7 @@ authenticate(http_file_t *hf, char *errbuf, size_t errlen, int *non_interactive)
  *
  */
 static int
-http_connect(http_file_t *hf, char *errbuf, int errlen)
+http_connect(http_file_t *hf, char *errbuf, int errlen, int escape_path)
 {
   char hostname[HOSTNAME_MAX];
   int port;
@@ -614,7 +614,7 @@ http_connect(http_file_t *hf, char *errbuf, int errlen)
   url_split(NULL, 0, hf->hf_authurl, sizeof(hf->hf_authurl), 
 	    hostname, sizeof(hostname), &port,
 	    hf->hf_path, sizeof(hf->hf_path), 
-	    get_url_with_redirect(hf->hf_url));
+	    get_url_with_redirect(hf->hf_url), escape_path);
 
   hts_mutex_unlock(&http_redirects_mutex);
 
@@ -644,7 +644,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   reconnect:
 
-  if(http_connect(hf, errbuf, errlen))
+  if(http_connect(hf, errbuf, errlen, 1))
     return -1;
 
   if(!probe && hf->hf_filesize != -1)
@@ -817,7 +817,7 @@ http_index_fetch(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen)
   int redircount = 0;
 
 reconnect:
-  if(http_connect(hf, errbuf, errlen))
+  if(http_connect(hf, errbuf, errlen, 1))
     return -1;
 
   htsbuf_queue_init(&q, 0);
@@ -1142,7 +1142,8 @@ http_quickload(struct fa_protocol *fap, const char *url,
 {
   char *res;
 
-  if(http_request(url, NULL, &res, sizeptr, errbuf, errlen, NULL, 0))
+  if(http_request(url, NULL, &res, sizeptr, errbuf, errlen, NULL, 0,
+		  HTTP_REQUEST_ESCAPE_PATH))
     return NULL;
   return res;
 }
@@ -1388,7 +1389,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
   int i;
 
   for(i = 0; i < 5; i++) {
-    if(http_connect(hf, errbuf, errlen))
+    if(http_connect(hf, errbuf, errlen, 1))
       return -1;
 
 
@@ -1541,7 +1542,8 @@ int
 http_request(const char *url, const char **arguments, 
 	     char **result, size_t *result_sizep,
 	     char *errbuf, size_t errlen,
-	     htsbuf_queue_t *postdata, const char *postcontenttype)
+	     htsbuf_queue_t *postdata, const char *postcontenttype,
+	     int flags)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   htsbuf_queue_t q;
@@ -1558,7 +1560,8 @@ http_request(const char *url, const char **arguments,
   url_split(NULL, 0, hf->hf_authurl, sizeof(hf->hf_authurl), 
 	    hostname, sizeof(hostname), &port,
 	    hf->hf_path, sizeof(hf->hf_path),
-	    get_url_with_redirect(hf->hf_url));
+	    get_url_with_redirect(hf->hf_url),
+	    !!(flags & HTTP_REQUEST_ESCAPE_PATH));
 
   hts_mutex_unlock(&http_redirects_mutex);
 
