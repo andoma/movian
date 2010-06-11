@@ -102,6 +102,8 @@ SRCS-$(CONFIG_LIBSMBCLIENT) += src/fileaccess/fa_smb.c
 
 SRCS-$(CONFIG_LOCATEDB) += src/fileaccess/fa_locatedb.c
 
+SRCS-$(CONFIG_SPOTLIGHT) += src/fileaccess/fa_spotlight.c
+
 SRCS += ext/audio/sid.c
 
 #

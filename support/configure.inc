@@ -60,6 +60,7 @@ CONFIG_LIST="
  libx11
  libxext
  locatedb
+ spotlight
 "
 
 die() {
