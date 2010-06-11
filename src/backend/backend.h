@@ -130,5 +130,11 @@ backend_search_audio(backend_search_type_t type)
   return type == BACKEND_SEARCH_ALL || type == BACKEND_SEARCH_AUDIO;
 }
 
+static inline int
+backend_search_video(backend_search_type_t type)
+{
+  return type == BACKEND_SEARCH_ALL || type == BACKEND_SEARCH_VIDEO;
+}
+
 
 #endif /* BACKEND_H__ */
