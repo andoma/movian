@@ -47,7 +47,6 @@
 #include "misc/callout.h"
 #include "notifications.h"
 
-extern char *htsversion;
 extern int concurrency;
 
 void *wii_xfb[2];

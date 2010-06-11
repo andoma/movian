@@ -135,7 +135,32 @@ main(int argc, char **argv)
   argc--;
 
   while(argc > 0) {
-    if(!strcmp(argv[0], "-d")) {
+    if(!strcmp(argv[0], "-h") || !strcmp(argv[0], "--help")) {
+      printf("HTS Showtime %s\n"
+	     "Copyright (C) 2007-2010 Andreas Öman\n"
+	     "\n"
+	     "Usage: %s [options] [<url>]\n"
+	     "\n"
+	     "  Options:\n"
+	     "   -h, --help        - This help text.\n"
+	     "   -d, -dd           - Increase debug level.\n"
+	     "   --ffmpeglog       - Print ffmpeg log messages.\n"
+	     "   --with-standby    - Enable system standby.\n"
+	     "   --with-poweroff   - Enable system power-off.\n"
+	     "   -s <path>         - Non-default Showtime settings path.\n"
+	     "   --ui <ui>         - Use specified user interface.\n"
+	     "   -L <ip>           - Send log messages to remote <ip>.\n"
+	     "\n"
+	     "  URL is any URL-type supported by Showtime, "
+	     "e.g., \"file:///...\"\n"
+	     "\n",
+	     htsversion_full,
+	     argv0);
+      exit(0);
+      argc--;
+      argv++;
+
+    } else if(!strcmp(argv[0], "-d")) {
       trace_level++;
       argc -= 1; argv += 1;
       continue;

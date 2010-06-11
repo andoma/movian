@@ -58,27 +58,13 @@ typedef struct scanner {
 /**
  *
  */
-const char *type2str[] = {
-  [CONTENT_DIR]      = "directory",
-  [CONTENT_FILE]     = "file",
-  [CONTENT_AUDIO]    = "audio",
-  [CONTENT_ARCHIVE]  = "archive",
-  [CONTENT_VIDEO]    = "video",
-  [CONTENT_PLAYLIST] = "playlist",
-  [CONTENT_DVD]      = "dvd",
-  [CONTENT_IMAGE]    = "image",
-  [CONTENT_ALBUM]    = "album",
-};
-
-
-/**
- *
- */
 static void
 set_type(prop_t *proproot, unsigned int type)
 {
-  if(type < sizeof(type2str) / sizeof(type2str[0]) && type2str[type] != NULL)
-    prop_set_string(prop_create(proproot, "type"), type2str[type]);
+  const char *typestr;
+
+  if ((typestr = content2type(type)))
+    prop_set_string(prop_create(proproot, "type"), typestr);
 }
 
 

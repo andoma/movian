@@ -79,7 +79,6 @@ Identity(DBusConnection *c, DBusMessage *in,
 {
   char buf[100];
   char *str = buf;
-  extern const char *htsversion;
 
   snprintf(buf, sizeof(buf), "HTS Showtime %s", htsversion);
 

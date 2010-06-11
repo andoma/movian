@@ -45,8 +45,6 @@
 #define STREAMING_LIMIT 1000000
 
 
-extern char *htsversion;
-
 TAILQ_HEAD(http_connection_queue , http_connection);
 
 static struct http_connection_queue http_connections;

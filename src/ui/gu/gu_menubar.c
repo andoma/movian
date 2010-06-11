@@ -52,7 +52,6 @@ static void
 m_about(GtkWidget *menu_item, gpointer callback_data)
 {
   gu_window_t *gw = callback_data;
-  extern const char *htsversion;
 
   gtk_show_about_dialog(GTK_WINDOW(gw->gw_window),
 			"program-name", "HTS Showtime",

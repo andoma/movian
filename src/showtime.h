@@ -53,6 +53,32 @@ extern int64_t showtime_get_ts(void);
 #define CONTENT_DVD      7
 #define CONTENT_IMAGE    8
 #define CONTENT_ALBUM    9
+#define CONTENT_MAX      9 /* Update me! */
+
+/**
+ * Returns a "type" property name for the given CONTENT_..
+ * or NULL on non-match/non-applicability.
+ */
+static inline const char *content2type (int ctype) __attribute__((unused));
+static inline const char *content2type (int ctype) {
+  static const char *types[CONTENT_MAX+1] = {
+    [CONTENT_DIR]      = "directory",
+    [CONTENT_FILE]     = "file",
+    [CONTENT_AUDIO]    = "audio",
+    [CONTENT_ARCHIVE]  = "archive",
+    [CONTENT_VIDEO]    = "video",
+    [CONTENT_PLAYLIST] = "playlist",
+    [CONTENT_DVD]      = "dvd",
+    [CONTENT_IMAGE]    = "image",
+    [CONTENT_ALBUM]    = "album",
+  };
+
+  if (ctype < 0 || ctype > CONTENT_MAX)
+    return NULL;
+
+  return types[ctype];
+}
+
 
 /**
  *
@@ -96,6 +122,11 @@ void *shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque);
 #define SHOWTIME_EXIT_OK       0
 #define SHOWTIME_EXIT_STANDBY  10
 #define SHOWTIME_EXIT_POWEROFF 11
+
+
+/* From version.c */
+extern const char *htsversion;
+extern const char *htsversion_full;
 
 
 #endif /* SHOWTIME_H */
