@@ -33,9 +33,11 @@
 #include "fa_probe.h"
 #include "fa_search.h"
 #include "service.h"
+#include "settings.h"
 
 /* FIXME: utf-8 support? */
 
+static int locatedb_enabled;
 
 typedef struct fa_search_s {
   char                 *fas_query;
@@ -366,12 +368,14 @@ fa_searcher (void *aux)
 }
 
 
-void
-fa_search_start (prop_t *source, const char *query, backend_search_type_t type)
+static void
+locatedb_search (prop_t *source, const char *query, backend_search_type_t type)
 {
+  if (!locatedb_enabled)
+    return;
+
   fa_search_t *fas = calloc(1, sizeof(*fas));
   char *s;
-
 
   /* Convery query to lower-case to provide case-insensitive search. */
   fas->fas_query = s = strdup(query);
@@ -386,3 +390,31 @@ fa_search_start (prop_t *source, const char *query, backend_search_type_t type)
 
   hts_thread_create_detached("fa search", fa_searcher, fas);
 }
+
+
+/**
+ *
+ */
+static int
+locatedb_init(void)
+{
+  htsmsg_t *store = htsmsg_store_load("locatedb") ?: htsmsg_create_map();
+  prop_t *s = search_get_settings();
+
+  settings_create_bool(s, "enable", "Search using Unix locatedb", 1, 
+		       store, settings_generic_set_bool, &locatedb_enabled,
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings, (void *)"locatedb");
+  return 0;
+}
+
+
+/**
+ *
+ */
+backend_t be_locatedb = {
+  .be_init = locatedb_init,
+  .be_search = locatedb_search
+};
+
+BE_REGISTER(locatedb);

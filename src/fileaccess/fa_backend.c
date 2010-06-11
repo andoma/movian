@@ -209,16 +209,6 @@ be_list(const char *url, char *errbuf, size_t errsize)
 /**
  *
  */
-static void
-fa_search(struct prop *src, const char *query, backend_search_type_t type)
-{
-  fa_search_start(src, query, type);
-}
-
-
-/**
- *
- */
 backend_t be_file = {
   .be_init = fileaccess_init,
   .be_canhandle = be_file_canhandle,
@@ -229,7 +219,6 @@ backend_t be_file = {
   .be_imageloader = fa_imageloader,
   .be_normalize = fa_normalize,
   .be_probe = fa_check_url,
-  .be_search = fa_search
 };
 
 BE_REGISTER(file);
