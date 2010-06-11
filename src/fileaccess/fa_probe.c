@@ -655,6 +655,13 @@ fa_probe_set_from_cache(const metadata_t *md, prop_t *proproot,
   if(md->md_album)
     prop_set_rstring(prop_create(proproot, "album"),  md->md_album);
 
+  if(md->md_artist != NULL && md->md_album != NULL) {
+    p = prop_create(proproot, "album_art");
+    if(p != NULL)
+      lastfm_albumart_init(p, rstr_get(md->md_artist), rstr_get(md->md_album));
+  }
+
+
   TAILQ_FOREACH(ms, &md->md_streams, ms_link) {
 
     prop_t *parent;

@@ -21,7 +21,10 @@
 
 struct prop;
 
-void lastfm_artistpics_init(struct prop *prop, const char *artistname);
+void lastfm_artistpics_init(struct prop *prop, const char *artist);
+
+void lastfm_albumart_init(struct prop *prop, const char *artist,
+			  const char *album);
 
 void lastfm_init(void);
 

@@ -31,11 +31,13 @@ static hts_mutex_t lastfm_mutex;
 #define LASTFM_APIKEY "e8fb67200bce49da092a9de1eb1c649c"
 
 
-typedef struct lastfm_prop_artist {
-  prop_t *lpa_prop;
-  
-  char *lpa_artistname;
-} lastfm_prop_artist_t;
+typedef struct lastfm_prop {
+  prop_t *lp_prop;
+  prop_sub_t *lp_sub;
+
+  char *lp_album;
+  char *lp_artist;
+} lastfm_prop_t;
 
 
 
@@ -43,7 +45,7 @@ typedef struct lastfm_prop_artist {
  *
  */
 static void
-lastfm_parse(htsmsg_t *xml, prop_t *parent)
+lastfm_parse_artist_images(htsmsg_t *xml, prop_t *parent)
 {
   htsmsg_t *images, *image, *sizes, *size, *attr;
   htsmsg_field_t *f, *s;
@@ -90,6 +92,9 @@ lastfm_parse(htsmsg_t *xml, prop_t *parent)
 }
 
 
+/**
+ *
+ */
 static void
 lastfm_artistpics_query(const char *artistname, prop_t *p)
 {
@@ -118,7 +123,7 @@ lastfm_artistpics_query(const char *artistname, prop_t *p)
     return;
   }
 
-  lastfm_parse(xml, p);
+  lastfm_parse_artist_images(xml, p);
 
   htsmsg_destroy(xml);
 }
@@ -128,21 +133,140 @@ lastfm_artistpics_query(const char *artistname, prop_t *p)
  *
  */
 static void
+lastfm_parse_coverart(htsmsg_t *xml, prop_t *p)
+{
+  htsmsg_t *tags, *image;
+  htsmsg_field_t *f;
+  int curscore = -1, s;
+  const char *size, *url, *best = NULL;
+
+  if((tags = htsmsg_get_map_multi(xml, "tags", "lfm", 
+				    "tags", "album", 
+				    "tags", NULL)) == NULL) {
+    return;
+  }
+
+  HTSMSG_FOREACH(f, tags) {
+    if(strcmp(f->hmf_name, "image") ||
+       ((image = htsmsg_get_map_by_field(f)) == NULL))
+      continue;
+
+    if((url = htsmsg_get_str(image, "cdata")) == NULL)
+      continue;
+
+    s = 0;
+    if((size = htsmsg_get_str_multi(image, "attrib", "size", NULL)) != NULL) {
+
+      if(!strcmp(size, "small"))
+	s = 1;
+      else if(!strcmp(size, "medium"))
+	s = 2;
+      else if(!strcmp(size, "large"))
+	s = 3;
+      else if(!strcmp(size, "extralarge"))
+	s = 4;
+    }
+
+    if(s <= curscore)
+      continue;
+
+    curscore = s;
+    best = url;
+  }
+  prop_set_string(p, best);
+}
+
+
+/**
+ *
+ */
+static void
+lastfm_albumart_query(const char *artist, const char *album, prop_t *p)
+{
+  char *result;
+  size_t resultsize;
+  char errbuf[100];
+  int n;
+  htsmsg_t *xml;
+
+  n = http_request("http://ws.audioscrobbler.com/2.0/",
+		   (const char *[]){"method", "album.getinfo",
+				    "artist", artist,
+				    "album", album,
+				    "api_key", LASTFM_APIKEY,
+				    NULL, NULL},
+		   &result, &resultsize, errbuf, sizeof(errbuf),
+		   NULL, NULL, HTTP_REQUEST_ESCAPE_PATH);
+
+  if(n) {
+    TRACE(TRACE_DEBUG, "lastfm", "HTTP query to lastfm failed: %s",  errbuf);
+    return;
+  }
+
+  /* XML parser consumes 'buf' */
+  if((xml = htsmsg_xml_deserialize(result, errbuf, sizeof(errbuf))) == NULL) {
+    TRACE(TRACE_DEBUG, "lastfm", "lastfm xml parse failed: %s",  errbuf);
+    return;
+  }
+
+  lastfm_parse_coverart(xml, p);
+  htsmsg_destroy(xml);
+}
+
+
+/**
+ *
+ */
+static void
+lp_destroy(lastfm_prop_t *lp)
+{
+  prop_unsubscribe(lp->lp_sub);
+  prop_ref_dec(lp->lp_prop);
+  free(lp->lp_artist);
+  free(lp->lp_album);
+  free(lp);
+}
+
+/**
+ *
+ */
+static void
 lastfm_prop_artist_cb(void *opaque, prop_event_t event, ...)
 {
-  lastfm_prop_artist_t *spa = opaque;
+  lastfm_prop_t *lp = opaque;
 
   switch(event) {
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
     TRACE(TRACE_DEBUG, "lastfm", "Loading images for artist %s",
-	  spa->lpa_artistname);
-    lastfm_artistpics_query(spa->lpa_artistname, spa->lpa_prop);
+	  lp->lp_artist);
+    lastfm_artistpics_query(lp->lp_artist, lp->lp_prop);
+    // FALLTHRU
+  case PROP_DESTROYED:
+    lp_destroy(lp);
     break;
 
+  default:
+    break;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+lastfm_prop_album_cb(void *opaque, prop_event_t event, ...)
+{
+  lastfm_prop_t *lp = opaque;
+
+  switch(event) {
+  case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
+    TRACE(TRACE_DEBUG, "lastfm", "Loading coverart for album %s",
+	  lp->lp_album);
+    lastfm_albumart_query(lp->lp_artist, lp->lp_album, lp->lp_prop);
+    // FALLTHRU
   case PROP_DESTROYED:
-    prop_ref_dec(spa->lpa_prop);
-    free(spa->lpa_artistname);
-    free(spa);
+    lp_destroy(lp);
     break;
 
   default:
@@ -159,20 +283,46 @@ lastfm_prop_artist_cb(void *opaque, prop_event_t event, ...)
 void
 lastfm_artistpics_init(prop_t *prop, const char *artist)
 {
-  lastfm_prop_artist_t *spa;
+  lastfm_prop_t *lp;
 
-  spa = calloc(1, sizeof(lastfm_prop_artist_t));
-  spa->lpa_artistname = strdup(artist);
-  spa->lpa_artistname[strcspn(spa->lpa_artistname, ";:,-[]")] = 0;
+  lp = calloc(1, sizeof(lastfm_prop_t));
+  lp->lp_artist = strdup(artist);
+  lp->lp_artist[strcspn(lp->lp_artist, ";:,-[]")] = 0;
 
-  spa->lpa_prop = prop;
+  lp->lp_prop = prop;
   prop_ref_inc(prop);
 
-  prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_SUBSCRIPTION_MONITOR,
-		 PROP_TAG_CALLBACK, lastfm_prop_artist_cb, spa,
-		 PROP_TAG_COURIER, lastfm_courier,
-		 PROP_TAG_ROOT, prop,
-		 NULL);
+  lp->lp_sub = 
+    prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_SUBSCRIPTION_MONITOR,
+		   PROP_TAG_CALLBACK, lastfm_prop_artist_cb, lp,
+		   PROP_TAG_COURIER, lastfm_courier,
+		   PROP_TAG_ROOT, prop,
+		   NULL);
+}
+
+
+/**
+ *
+ */
+void
+lastfm_albumart_init(prop_t *prop, const char *artist, const char *album)
+{
+  lastfm_prop_t *lp;
+
+  lp = calloc(1, sizeof(lastfm_prop_t));
+  lp->lp_artist = strdup(artist);
+  lp->lp_artist[strcspn(lp->lp_artist, ";:,-[]")] = 0;
+  lp->lp_album = strdup(album);
+
+  lp->lp_prop = prop;
+  prop_ref_inc(prop);
+
+  lp->lp_sub = 
+    prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_SUBSCRIPTION_MONITOR,
+		   PROP_TAG_CALLBACK, lastfm_prop_album_cb, lp,
+		   PROP_TAG_COURIER, lastfm_courier,
+		   PROP_TAG_ROOT, prop,
+		   NULL);
 }
 
 
