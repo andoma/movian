@@ -35,8 +35,8 @@ typedef struct lastfm_prop {
   prop_t *lp_prop;
   prop_sub_t *lp_sub;
 
-  char *lp_album;
-  char *lp_artist;
+  rstr_t *lp_album;
+  rstr_t *lp_artist;
 } lastfm_prop_t;
 
 
@@ -96,7 +96,7 @@ lastfm_parse_artist_images(htsmsg_t *xml, prop_t *parent)
  *
  */
 static void
-lastfm_artistpics_query(const char *artistname, prop_t *p)
+lastfm_artistpics_query(lastfm_prop_t *lp)
 {
   char *result;
   size_t resultsize;
@@ -104,9 +104,13 @@ lastfm_artistpics_query(const char *artistname, prop_t *p)
   int n;
   htsmsg_t *xml;
 
+  char *artist = mystrdupa(rstr_get(lp->lp_artist));
+
+  artist[strcspn(artist, ";:,-[]")] = 0;
+
   n = http_request("http://ws.audioscrobbler.com/2.0/",
 		   (const char *[]){"method", "artist.getimages",
-				    "artist", artistname,
+				    "artist", artist,
 				    "api_key", LASTFM_APIKEY,
 				    NULL, NULL},
 		   &result, &resultsize, errbuf, sizeof(errbuf),
@@ -123,7 +127,7 @@ lastfm_artistpics_query(const char *artistname, prop_t *p)
     return;
   }
 
-  lastfm_parse_artist_images(xml, p);
+  lastfm_parse_artist_images(xml, lp->lp_prop);
 
   htsmsg_destroy(xml);
 }
@@ -181,20 +185,27 @@ lastfm_parse_coverart(htsmsg_t *xml, prop_t *p)
  *
  */
 static void
-lastfm_albumart_query(const char *artist, const char *album, prop_t *p)
+lastfm_albumart_query(lastfm_prop_t *lp)
 {
   char *result;
   size_t resultsize;
   char errbuf[100];
   int n;
   htsmsg_t *xml;
+  char *artist = mystrdupa(rstr_get(lp->lp_artist));
+  char *album  = mystrdupa(rstr_get(lp->lp_album));
+
+  artist[strcspn(artist, ";:,-[]")] = 0;
+  album[strcspn(album, "[]()")] = 0;
+
+  TRACE(TRACE_DEBUG, "lastfm", "Loading coverart for album %s", album);
 
   n = http_request("http://ws.audioscrobbler.com/2.0/",
 		   (const char *[]){"method", "album.getinfo",
-				    "artist", artist,
-				    "album", album,
-				    "api_key", LASTFM_APIKEY,
-				    NULL, NULL},
+		       "artist", artist,
+		       "album", album,
+		       "api_key", LASTFM_APIKEY,
+		       NULL, NULL},
 		   &result, &resultsize, errbuf, sizeof(errbuf),
 		   NULL, NULL, HTTP_REQUEST_ESCAPE_PATH);
 
@@ -209,10 +220,9 @@ lastfm_albumart_query(const char *artist, const char *album, prop_t *p)
     return;
   }
 
-  lastfm_parse_coverart(xml, p);
+  lastfm_parse_coverart(xml, lp->lp_prop);
   htsmsg_destroy(xml);
 }
-
 
 /**
  *
@@ -222,10 +232,11 @@ lp_destroy(lastfm_prop_t *lp)
 {
   prop_unsubscribe(lp->lp_sub);
   prop_ref_dec(lp->lp_prop);
-  free(lp->lp_artist);
-  free(lp->lp_album);
+  rstr_release(lp->lp_artist);
+  rstr_release(lp->lp_album);
   free(lp);
 }
+
 
 /**
  *
@@ -238,8 +249,8 @@ lastfm_prop_artist_cb(void *opaque, prop_event_t event, ...)
   switch(event) {
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
     TRACE(TRACE_DEBUG, "lastfm", "Loading images for artist %s",
-	  lp->lp_artist);
-    lastfm_artistpics_query(lp->lp_artist, lp->lp_prop);
+	  rstr_get(lp->lp_artist));
+    lastfm_artistpics_query(lp);
     // FALLTHRU
   case PROP_DESTROYED:
     lp_destroy(lp);
@@ -261,9 +272,7 @@ lastfm_prop_album_cb(void *opaque, prop_event_t event, ...)
 
   switch(event) {
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
-    TRACE(TRACE_DEBUG, "lastfm", "Loading coverart for album %s",
-	  lp->lp_album);
-    lastfm_albumart_query(lp->lp_artist, lp->lp_album, lp->lp_prop);
+    lastfm_albumart_query(lp);
     // FALLTHRU
   case PROP_DESTROYED:
     lp_destroy(lp);
@@ -281,13 +290,12 @@ lastfm_prop_album_cb(void *opaque, prop_event_t event, ...)
  *
  */
 void
-lastfm_artistpics_init(prop_t *prop, const char *artist)
+lastfm_artistpics_init(prop_t *prop, rstr_t *artist)
 {
   lastfm_prop_t *lp;
 
   lp = calloc(1, sizeof(lastfm_prop_t));
-  lp->lp_artist = strdup(artist);
-  lp->lp_artist[strcspn(lp->lp_artist, ";:,-[]")] = 0;
+  lp->lp_artist = rstr_dup(artist);
 
   lp->lp_prop = prop;
   prop_ref_inc(prop);
@@ -305,14 +313,14 @@ lastfm_artistpics_init(prop_t *prop, const char *artist)
  *
  */
 void
-lastfm_albumart_init(prop_t *prop, const char *artist, const char *album)
+lastfm_albumart_init(prop_t *prop, rstr_t *artist, rstr_t *album)
 {
   lastfm_prop_t *lp;
 
   lp = calloc(1, sizeof(lastfm_prop_t));
-  lp->lp_artist = strdup(artist);
-  lp->lp_artist[strcspn(lp->lp_artist, ";:,-[]")] = 0;
-  lp->lp_album = strdup(album);
+  lp->lp_artist = rstr_dup(artist);
+  lp->lp_album  = rstr_dup(album);
+
 
   lp->lp_prop = prop;
   prop_ref_inc(prop);

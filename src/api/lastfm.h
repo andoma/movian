@@ -20,11 +20,12 @@
 #define LASTFM_H__
 
 struct prop;
+struct rstr;
 
-void lastfm_artistpics_init(struct prop *prop, const char *artist);
+void lastfm_artistpics_init(struct prop *prop, struct rstr *artist);
 
-void lastfm_albumart_init(struct prop *prop, const char *artist,
-			  const char *album);
+void lastfm_albumart_init(struct prop *prop, struct rstr *artist,
+			  struct rstr *album);
 
 void lastfm_init(void);
 

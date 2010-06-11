@@ -649,7 +649,7 @@ fa_probe_set_from_cache(const metadata_t *md, prop_t *proproot,
     prop_set_rstring(prop_create(proproot, "artist"), md->md_artist);
     p = prop_create(proproot, "artist_images");
     if(p != NULL)
-      lastfm_artistpics_init(p, rstr_get(md->md_artist)); 
+      lastfm_artistpics_init(p, md->md_artist);
   }
 
   if(md->md_album)
@@ -658,7 +658,7 @@ fa_probe_set_from_cache(const metadata_t *md, prop_t *proproot,
   if(md->md_artist != NULL && md->md_album != NULL) {
     p = prop_create(proproot, "album_art");
     if(p != NULL)
-      lastfm_albumart_init(p, rstr_get(md->md_artist), rstr_get(md->md_album));
+      lastfm_albumart_init(p, md->md_artist, md->md_album);
   }
 
 
