@@ -450,7 +450,7 @@ setup_ffmpeg --cpu=${CPU} --enable-pthreads
 #
 if disabled release; then
     echo  Development build. 
-    echo  The generated binary will contained compild-in paths to
+    echo  The generated binary will contain compiled-in paths to
     echo  the current build tree. If you plan to install the binary,
     echo  please reconfigure with '--release'.
 fi
