@@ -82,8 +82,9 @@ typedef struct prop_courier {
 
   hts_mutex_t *pc_entry_mutex;
   hts_cond_t pc_cond;
-  hts_thread_t pc_thread;
+  int pc_has_cond;
 
+  hts_thread_t pc_thread;
   int pc_run;
   int pc_detached;
 
@@ -470,6 +471,10 @@ prop_courier_t *prop_courier_create_passive(void);
 
 prop_courier_t *prop_courier_create_notify(void (*notify)(void *opaque),
 					   void *opaque);
+
+prop_courier_t *prop_courier_create_waitable(void);
+
+void prop_courier_wait(prop_courier_t *pc);
 
 void prop_courier_poll(prop_courier_t *pc);
 

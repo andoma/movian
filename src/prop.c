@@ -610,7 +610,7 @@ courier_enqueue(prop_sub_t *s, prop_notify_t *n)
     TAILQ_INSERT_TAIL(&pc->pc_queue_exp, n, hpn_link);
   else
     TAILQ_INSERT_TAIL(&pc->pc_queue_nor, n, hpn_link);
-  if(pc->pc_run)
+  if(pc->pc_has_cond)
     hts_cond_signal(&pc->pc_cond);
   else if(pc->pc_notify != NULL)
     pc->pc_notify(pc->pc_opaque);
@@ -2846,7 +2846,10 @@ prop_courier_create_thread(hts_mutex_t *entrymutex, const char *name)
   char buf[URL_MAX];
   pc->pc_entry_mutex = entrymutex;
   snprintf(buf, sizeof(buf), "PC:%s", name);
+
+  pc->pc_has_cond = 1;
   hts_cond_init(&pc->pc_cond);
+
   pc->pc_run = 1;
   hts_thread_create_joinable(buf, &pc->pc_thread, prop_courier, pc);
   return pc;
@@ -2882,6 +2885,44 @@ prop_courier_create_notify(void (*notify)(void *opaque),
 /**
  *
  */
+prop_courier_t *
+prop_courier_create_waitable(void)
+{
+  prop_courier_t *pc = prop_courier_create();
+  
+  pc->pc_has_cond = 1;
+  hts_cond_init(&pc->pc_cond);
+
+  return pc;
+}
+
+
+/**
+ *
+ */
+void
+prop_courier_wait(prop_courier_t *pc)
+{
+  struct prop_notify_queue q_exp, q_nor;
+  hts_mutex_lock(&prop_mutex);
+
+  if(TAILQ_FIRST(&pc->pc_queue_exp) == NULL &&
+     TAILQ_FIRST(&pc->pc_queue_nor) == NULL)
+    hts_cond_wait(&pc->pc_cond, &prop_mutex);
+
+  TAILQ_MOVE(&q_exp, &pc->pc_queue_exp, hpn_link);
+  TAILQ_INIT(&pc->pc_queue_exp);
+  TAILQ_MOVE(&q_nor, &pc->pc_queue_nor, hpn_link);
+  TAILQ_INIT(&pc->pc_queue_nor);
+  hts_mutex_unlock(&prop_mutex);
+  prop_notify_dispatch(&q_exp);
+  prop_notify_dispatch(&q_nor);
+}
+
+
+/**
+ *
+ */
 void
 prop_courier_destroy(prop_courier_t *pc)
 {
@@ -2892,8 +2933,11 @@ prop_courier_destroy(prop_courier_t *pc)
     hts_mutex_unlock(&prop_mutex);
 
     hts_thread_join(&pc->pc_thread);
-    hts_cond_destroy(&pc->pc_cond);
   }
+
+  if(pc->pc_has_cond)
+    hts_cond_destroy(&pc->pc_cond);
+
   free(pc);
 }
 
