@@ -183,6 +183,12 @@ SRCS  += src/backend/htsp/htsp.c \
 #
 SRCS-${CONFIG_SPOTIFY} += src/backend/spotify/spotify.c
 BUNDLES-$(CONFIG_SPOTIFY) += resources/spotify
+
+#
+# Headweb
+#
+SRCS-$(CONFIG_LIBRTMP)    += src/backend/headweb/headweb.c
+
 #
 # GLW user interface
 #
