@@ -108,6 +108,8 @@ lastfm_artistpics_query(lastfm_prop_t *lp)
 
   artist[strcspn(artist, ";:,-[]")] = 0;
 
+  TRACE(TRACE_DEBUG, "lastfm", "Loading images for artist %s", artist);
+
   n = http_request("http://ws.audioscrobbler.com/2.0/",
 		   (const char *[]){"method", "artist.getimages",
 				    "artist", artist,
@@ -248,8 +250,6 @@ lastfm_prop_artist_cb(void *opaque, prop_event_t event, ...)
 
   switch(event) {
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
-    TRACE(TRACE_DEBUG, "lastfm", "Loading images for artist %s",
-	  rstr_get(lp->lp_artist));
     lastfm_artistpics_query(lp);
     // FALLTHRU
   case PROP_DESTROYED:
@@ -320,7 +320,6 @@ lastfm_albumart_init(prop_t *prop, rstr_t *artist, rstr_t *album)
   lp = calloc(1, sizeof(lastfm_prop_t));
   lp->lp_artist = rstr_dup(artist);
   lp->lp_album  = rstr_dup(album);
-
 
   lp->lp_prop = prop;
   prop_ref_inc(prop);
