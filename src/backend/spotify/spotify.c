@@ -3013,12 +3013,27 @@ be_spotify_init(void)
 
   htsmsg_t *store = htsmsg_store_load("spotify") ?: htsmsg_create_map();
 
+  settings_create_info(s, 
+		       "bundle://resources/spotify/spotify-core-logo-96x96.png",
+		       "Spotify offers you legal and free access to a "
+		       "huge library of music. "
+		       "To use Spotify in Showtime you need a "
+		       "Spotify Preemium account.\n"
+		       "For more information about Spotify, visit "
+		       "http://www.spotify.com/\n\n"
+		       "You will be prompted for your Spotify username and "
+		       "password "
+		       "when first accessing any of the Spotify features "
+		       "in Showtime.");
+
+
   settings_create_bool(s, "enable", "Enable Spotify", 0, 
 		       store, spotify_set_enable, NULL,
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, (void *)"spotify");
 
-  settings_create_bool(s, "autologin", "Login on Showtime startup", 1, 
+  settings_create_bool(s, "autologin", 
+		       "Automatic login when Showtime starts", 1, 
 		       store, settings_generic_set_bool, &spotify_autologin,
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, (void *)"spotify");

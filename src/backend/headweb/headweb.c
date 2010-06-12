@@ -572,6 +572,12 @@ be_headweb_init(void)
 
   s = settings_add_dir(NULL, "headweb", "Headweb", "video");
   
+  settings_create_info(s, 
+		       "bundle://resources/headweb/headweb_logo.png",
+		       "Headweb is a Swedish online video store.\n"
+		       "For more information, visit http://www.headweb.se\n\n"
+		       "The Showtime implemetation is still very much beta.\n");
+
   settings_create_bool(s, "enable", "Enable Headweb", 0, 
 		       store, headweb_set_enable, NULL,
 		       SETTINGS_INITIAL_UPDATE, NULL,
