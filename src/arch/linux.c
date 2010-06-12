@@ -87,8 +87,11 @@ cpu_monitor_do(void)
 	  prop_set_string(prop_create(p_cpu[id], "name"), buf);
 	  p_load[id] = prop_create(p_cpu[id], "load");
 	}
+	float v = 1.0 - ((float)di / (float)dt);
+	if(v < 0) v = 0;
+	else if(v > 1) v = 1;
 
-	prop_set_float(p_load[id], 1.0 - ((float)di / (float)dt));
+	prop_set_float(p_load[id], v);
       }
     }
     last_idle[id] = v4;
