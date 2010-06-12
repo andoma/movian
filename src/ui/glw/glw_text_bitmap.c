@@ -544,7 +544,8 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
       pen.y = start_y + pen_y;
 
       FT_BitmapGlyph bmp = (FT_BitmapGlyph)g->glyph;
-      
+      pen.x &= ~63;
+      pen.y &= ~63;
       err = FT_Glyph_To_Bitmap((FT_Glyph*)&bmp, FT_RENDER_MODE_NORMAL, &pen, 0);
       if(err == 0) {
 	draw_glyph(gtbd, &bmp->bitmap, data, 
