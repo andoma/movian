@@ -7,6 +7,15 @@ widget(container_x, {
     .color = select(isFocused(), [1.0, 1.0, 1.0], PLATE_COLOR_VIDEO());
     .source = "theme://icons/48x48/Movie.png";
     .shadow = true;
+    .debug = true;
+
+    widget(icon, {
+      .source = $self.metadata.badge;
+      .sizeScale = 0.5;
+      .resize = true;
+      .hqScaling = true;
+      .align = bottomRight;
+    });
   });
   
   widget(container_y, {

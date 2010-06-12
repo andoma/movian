@@ -44,6 +44,8 @@
 
 #include "api/lastfm.h"
 
+#define SPOTIFY_ICON_URL "bundle://resources/spotify/spotify_icon.png"
+
 #ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
 #include <dlfcn.h>
 #endif
@@ -2184,7 +2186,7 @@ spotify_search_done(sp_search *result, void *userdata)
   spotify_search_t *ss = userdata;
   int ntracks = f_sp_search_num_tracks(result);
   int i;
-  prop_t *p;
+  prop_t *p, *metadata;
   sp_track *track;
   char url[URL_MAX];
 
@@ -2199,7 +2201,10 @@ spotify_search_done(sp_search *result, void *userdata)
 
     prop_set_string(prop_create(p, "url"), url);
     prop_set_string(prop_create(p, "type"), "audio");
-    metadata_create(prop_create(p, "metadata"), METADATA_TRACK, track);
+    metadata = prop_create(p, "metadata");
+    metadata_create(metadata, METADATA_TRACK, track);
+
+    prop_set_string(prop_create(metadata, "badge"), SPOTIFY_ICON_URL);
 
     if(prop_set_parent(p, ss->ss_nodes))
       prop_destroy(p);

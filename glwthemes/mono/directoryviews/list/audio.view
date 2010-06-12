@@ -11,6 +11,14 @@ widget(container_x, {
     .source = "theme://icons/48x48/Music.png";
     .shadow = true;
     .align = top;
+    
+    widget(icon, {
+      .source = $self.metadata.badge;
+      .sizeScale = 0.5;
+      .resize = true;
+      .hqScaling = true;
+      .align = bottomRight;
+    });
   });
   
   widget(container_y, {

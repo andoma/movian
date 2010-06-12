@@ -28,6 +28,7 @@
 #include "service.h"
 #include "settings.h"
 
+#define HEADWEB_ICON_URL "bundle://resources/headweb/headweb_icon.png"
 
 #define HEADWEB_URL_ROOT "http://api.headweb.com/v4"
 #define HEADWEB_QUERY_LIMIT 100
@@ -61,6 +62,8 @@ typedef struct headweb_browse {
   int hb_loaded_items;
 
   int hb_req_flags;
+
+  int hb_set_badge;
 
 } headweb_browse_t;
 
@@ -145,6 +148,10 @@ headweb_browse_fill_content(headweb_browse_t *hb, htsmsg_t *c)
     float r = strtod_ex(str, '.', NULL);
     prop_set_float(prop_create(m, "rating"), r / 5.0);
   }
+
+  if(hb->hb_set_badge)
+    prop_set_string(prop_create(m, "badge"), HEADWEB_ICON_URL);
+    
   
   if(prop_set_parent(p, hb->hb_nodes))
     prop_destroy(p);
@@ -316,7 +323,7 @@ headweb_browse_thread(void *aux)
  *
  */
 static void
-headweb_browse_create(prop_t *source, int req_flags,
+headweb_browse_create(prop_t *source, int req_flags, int set_badge,
 		      const char *title,
 		      const char *fmt, ...)
 {
@@ -330,6 +337,7 @@ headweb_browse_create(prop_t *source, int req_flags,
   va_end(ap);
 
   hb->hb_req_flags = req_flags;
+  hb->hb_set_badge = set_badge;
   hb->hb_nodes = prop_create(source, "nodes");
   prop_ref_inc(hb->hb_nodes);
 
@@ -365,7 +373,7 @@ headweb_browse_create(prop_t *source, int req_flags,
 static void
 browse_genres(prop_t *src, const char *url)
 {
-  headweb_browse_create(src, HTTP_REQUEST_ESCAPE_PATH, "Headweb genres",
+  headweb_browse_create(src, HTTP_REQUEST_ESCAPE_PATH, 0, "Headweb genres",
 			HEADWEB_URL_ROOT"/genre/filter(-adult,stream)");
 }
 
@@ -384,7 +392,8 @@ browse_genre(prop_t *src, const char *url)
   if(title)
     *title++ = 0;
 
-  headweb_browse_create(src, HTTP_REQUEST_ESCAPE_PATH, title ?: "Unnamed genre",
+  headweb_browse_create(src, HTTP_REQUEST_ESCAPE_PATH, 0,
+			title ?: "Unnamed genre",
 			HEADWEB_URL_ROOT"/genre/%s", id);
 
 }
@@ -396,7 +405,8 @@ browse_genre(prop_t *src, const char *url)
 static void
 browse_contents(prop_t *src, const char *url)
 {
-  headweb_browse_create(src, HTTP_REQUEST_ESCAPE_PATH, "All contents",
+  headweb_browse_create(src, HTTP_REQUEST_ESCAPE_PATH, 0,
+			"All contents",
 			HEADWEB_URL_ROOT"/content/filter(-adult,stream)");
 }
 
@@ -608,7 +618,7 @@ be_headweb_search(prop_t *source, const char *query, backend_search_type_t type)
     return;
 
   path_escape(q, sizeof(q), query);
-  headweb_browse_create(source, 0, NULL, 
+  headweb_browse_create(source, 0, 1, NULL,
 			HEADWEB_URL_ROOT"/search/%s/filter(-adult,stream)", q);
 }
 
