@@ -178,9 +178,11 @@ settings_create_bool(prop_t *parent, const char *id, const char *title,
   prop_set_int(v, !!initial);
 
   s->s_prop = r;
+
+  if(flags & SETTINGS_INITIAL_UPDATE)
+    settings_int_callback(s, !!initial);
   
-  sub = prop_subscribe(flags & SETTINGS_INITIAL_UPDATE ?
-		       0 : PROP_SUB_NO_INITIAL_UPDATE,
+  sub = prop_subscribe(0,
 		       PROP_TAG_CALLBACK_INT, settings_int_callback, s,
 		       PROP_TAG_ROOT, v,
 		       PROP_TAG_COURIER, pc,
@@ -251,8 +253,11 @@ settings_create_int(prop_t *parent, const char *id, const char *title,
   s->s_val = v;
   s->s_min = min;
   s->s_max = max;
-  sub = prop_subscribe(flags & SETTINGS_INITIAL_UPDATE ?
-		       0 : PROP_SUB_NO_INITIAL_UPDATE,
+
+  if(flags & SETTINGS_INITIAL_UPDATE)
+    settings_int_callback(s, initial);
+
+  sub = prop_subscribe(0,
 		       PROP_TAG_CALLBACK_INT, settings_int_callback, s,
 		       PROP_TAG_ROOT, v,
 		       PROP_TAG_COURIER, pc,
@@ -438,8 +443,10 @@ settings_create_string(prop_t *parent, const char *id, const char *title,
   if(flags & SETTINGS_PASSWORD)
     prop_set_int(prop_create(r, "password"), 1);
 
-  sub = prop_subscribe(flags & SETTINGS_INITIAL_UPDATE ?
-		       0 : PROP_SUB_NO_INITIAL_UPDATE,
+  if(flags & SETTINGS_INITIAL_UPDATE)
+    settings_string_callback(s, initial);
+
+  sub = prop_subscribe(0,
 		       PROP_TAG_CALLBACK_STRING, settings_string_callback, s,
 		       PROP_TAG_ROOT, v,
 		       PROP_TAG_COURIER, pc,
