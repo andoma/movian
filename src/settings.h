@@ -93,4 +93,7 @@ void settings_generic_save_settings(void *opaque, htsmsg_t *msg);
 
 void settings_generic_set_bool(void *opaque, int value);
 
+void settings_create_info(prop_t *parent, const char *image,
+			  const char *description);
+
 #endif /* SETTINGS_H__ */

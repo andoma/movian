@@ -114,7 +114,8 @@ settings_add(prop_t *parent,
 
   src = prop_create(p, "source");
 
-  prop_set_string(prop_create(src, "id"), id);
+  if(id != NULL)
+    prop_set_string(prop_create(src, "id"), id);
   set_title(src, title);
   prop_set_string(prop_create(src, "type"), type);
   return src;
@@ -449,6 +450,19 @@ settings_create_string(prop_t *parent, const char *id, const char *title,
   s->s_saver = saver;
   s->s_saver_opaque = saver_opaque;
   return s;
+}
+
+
+/**
+ *
+ */
+void
+settings_create_info(prop_t *parent, const char *image,
+		     const char *description)
+{
+  prop_t *r = settings_add(parent, NULL, "Info", "info");
+  prop_set_string(prop_create(r, "description"), description);
+  prop_set_string(prop_create(r, "image"), image);
 }
 
 
