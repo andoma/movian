@@ -95,7 +95,7 @@ settings_set_url(prop_t *p)
     i-=3;
   }
 
-  prop_ancestors_unref(a);
+  prop_pvec_free(a);
   prop_set_string(prop_create(p, "url"), url);
 }
 

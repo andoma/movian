@@ -2730,16 +2730,6 @@ prop_get_ancestors(prop_t *p)
 
 
 /**
- * XXX: Remove this
- */
-void
-prop_ancestors_unref(prop_t **r)
-{
-  prop_pvec_free(r);
-}
-
-
-/**
  *
  */
 prop_t *
