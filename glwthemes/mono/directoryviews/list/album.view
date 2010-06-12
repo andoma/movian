@@ -46,6 +46,9 @@ widget(container_x, {
       // Artist
       
       widget(backdrop, {
+        .weight = 2;
+	.filterConstraintX = true;
+
 	.focusable = isLink($self.metadata.artist);
 	onEvent(activate, navOpen($self.metadata.artist));
 	

@@ -77,36 +77,6 @@ widget(container_x, {
   widget(dummy, {
     .width = $ui.fontsize / 2;
   });
-  
-  widget(container_x, {
-    .filterConstraintX = true;
-    .weight = 1.0;
-
-    widget(dummy, {
-      .width = 4;
-    });
-
-    widget(container_y, {
-      // Album
-      widget(icon, {
-	.align = left;
-	.source = $self.metadata.album_art;
-	.hqScaling = true;
-	.sizeScale = select($self.metadata.album_art, 4, 0);
-      });
-      
-      widget(label, {
-	.color = PLATE_COLOR_AUDIO();
-	.sizeScale = select($self.metadata.album_year, 0.6, 0);
-	.align = left;
-	.caption = $self.metadata.album_year;
-      });
-    });
-  });
-
-  widget(dummy, {
-    .width = $ui.fontsize / 2;
-  });
 
   // Artist
   widget(container_y, {
@@ -128,4 +98,35 @@ widget(container_x, {
       });
     });
   });
+
+  widget(dummy, {
+    .width = $ui.fontsize / 2;
+  });
+  
+  // Album
+  widget(container_x, {
+    .filterConstraintX = true;
+    .weight = 1.0;
+
+    widget(dummy, {
+      .width = 4;
+    });
+
+    widget(container_y, {
+      widget(icon, {
+	.align = left;
+	.source = $self.metadata.album_art;
+	.hqScaling = true;
+	.sizeScale = select($self.metadata.album_art, 4, 0);
+      });
+      
+      widget(label, {
+	.color = PLATE_COLOR_AUDIO();
+	.sizeScale = select($self.metadata.album_year, 0.6, 0);
+	.align = left;
+	.caption = $self.metadata.album_year;
+      });
+    });
+  });
+
 });
