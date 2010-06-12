@@ -192,6 +192,7 @@ BUNDLES-$(CONFIG_SPOTIFY) += resources/spotify
 # Headweb
 #
 SRCS-$(CONFIG_LIBRTMP)    += src/backend/headweb/headweb.c
+BUNDLES-$(CONFIG_LIBRTMP) += resources/headweb
 
 #
 # GLW user interface
