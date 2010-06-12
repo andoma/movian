@@ -374,6 +374,7 @@ static const token_attrib_t attribtab[] = {
 
   {"hqScaling",       set_image_flag, GLW_IMAGE_HQ_SCALING},
   {"fixedSize",       set_image_flag, GLW_IMAGE_FIXED_SIZE},
+  {"resize",          set_image_flag, GLW_IMAGE_RESIZE},
 
   {"password",        set_text_flag,  GTB_PASSWORD},
   {"ellipsize",       set_text_flag,  GTB_ELLIPSIZE},

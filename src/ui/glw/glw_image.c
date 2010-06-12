@@ -200,7 +200,11 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 
     glw_align_1(&rc0, w->glw_alignment);
       
-    if(gi->gi_bitmap_flags & GLW_IMAGE_FIXED_SIZE)
+    if(gi->gi_bitmap_flags & GLW_IMAGE_RESIZE) {
+      glw_root_t *gr = w->glw_root;
+      float siz = gi->gi_size_scale * gr->gr_fontsize_px + gi->gi_size_bias;
+      glw_scale_to_pixels(&rc0, siz, siz);
+    } else if(gi->gi_bitmap_flags & GLW_IMAGE_FIXED_SIZE)
       glw_scale_to_pixels(&rc0, glt->glt_xs, glt->glt_ys);
     else if(w->glw_class == &glw_image || w->glw_class == &glw_icon)
       glw_scale_to_aspect(&rc0, glt->glt_aspect);
@@ -569,6 +573,9 @@ glw_image_layout_normal(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
   glw_render_vtx_pos(&gi->gi_gr, 3, -1.0,  1.0, 0.0);
   glw_render_vtx_st (&gi->gi_gr, 3,
 		     tex[6] * xs , tex[7] * ys);
+
+  gi->gi_child_xs = 1;
+  gi->gi_child_ys = 1;
 }
 
 
@@ -615,7 +622,15 @@ glw_image_update_constraints(glw_image_t *gi)
   glw_t *c;
   glw_root_t *gr = gi->w.glw_root;
 
-   if(gi->w.glw_class == &glw_backdrop) {
+  if(gi->gi_bitmap_flags & GLW_IMAGE_FIXED_SIZE) {
+
+    glw_set_constraints(&gi->w, 
+			glt->glt_xs,
+			glt->glt_ys,
+			0, 0, 
+			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
+
+  } else if(gi->w.glw_class == &glw_backdrop) {
 
     c = TAILQ_FIRST(&gi->w.glw_childs);
 
