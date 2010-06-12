@@ -1,0 +1,23 @@
+widget(container_x, {
+  widget(dummy, {
+    .width = 4;
+  });
+
+  widget(image, {
+    .fixedSize = true;
+    .source = $self.source.image;
+    .align = top;
+  });
+  
+  widget(dummy, {
+    .width = 4;
+  });
+  
+  widget(label, {
+    .caption = $self.source.description;
+    .maxlines = 10;
+    .ellipsize = true;
+    .align = topLeft;
+    .sizeScale = 0.8;
+  });
+});
