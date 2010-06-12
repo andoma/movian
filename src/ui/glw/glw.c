@@ -113,10 +113,10 @@ glw_init_settings(glw_root_t *gr, const char *instance,
     gr->gr_settings_store = htsmsg_create_map();
 
   if(instance_title) {
-    snprintf(title, sizeof(title), "Display settings on screen %s",
+    snprintf(title, sizeof(title), "Display and user interface on screen %s",
 	     instance_title);
   } else {
-    snprintf(title, sizeof(title), "Display settings");
+    snprintf(title, sizeof(title), "Display and user interface");
   }
 
   gr->gr_settings = settings_add_dir(NULL, "display", title, "display");

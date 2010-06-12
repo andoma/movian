@@ -481,6 +481,7 @@ void
 settings_init(void)
 {
   settings_root = prop_create(prop_get_global(), "settings");
+  prop_create_ex(settings_root, "nodes", NULL, PROP_SORTED_CHILDS);
   prop_set_string(prop_create(settings_root, "type"), "settings");
   set_title(settings_root, "Global settings");
 }

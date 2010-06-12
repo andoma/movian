@@ -6,7 +6,9 @@ LIST_ITEM_SIMPLE($self.source.title,
 
 		 translate($self.source.subtype,
 			   "theme://icons/48x48/Settings.png",
-			   "audio", "theme://icons/48x48/Sound.png",
+			   "sound", "theme://icons/48x48/Sound.png",
+			   "audio", "theme://icons/48x48/Music.png",
+			   "video", "theme://icons/48x48/Movie.png",
 			   "bookmark", "theme://icons/48x48/Bookmark.png",
 			   "display", "theme://icons/48x48/Display.png",
 			   "search", "theme://icons/48x48/Search.png"

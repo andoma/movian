@@ -570,7 +570,7 @@ be_headweb_init(void)
   htsmsg_t *store = htsmsg_store_load("headweb") ?: htsmsg_create_map();
   prop_t *s;
 
-  s = settings_add_dir(NULL, "headweb", "Headweb", NULL);
+  s = settings_add_dir(NULL, "headweb", "Headweb", "video");
   
   settings_create_bool(s, "enable", "Enable Headweb", 0, 
 		       store, headweb_set_enable, NULL,
