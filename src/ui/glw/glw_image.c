@@ -156,6 +156,23 @@ render_child_autocentered(glw_image_t *gi, glw_rctx_t *rc)
 
   glw_PopMatrix();
 }
+
+
+/**
+ *
+ */
+static void
+glw_scale_to_pixels(glw_rctx_t *rc, int w, int h)
+{
+  float xs = w / rc->rc_size_x;
+  float ys = h / rc->rc_size_y;
+
+  glw_Scalef(rc, xs, ys, 1.0);
+  rc->rc_size_x = w;
+  rc->rc_size_y = h;
+}
+
+
 /**
  *
  */
@@ -183,7 +200,9 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 
     glw_align_1(&rc0, w->glw_alignment);
       
-    if(w->glw_class == &glw_image || w->glw_class == &glw_icon)
+    if(gi->gi_bitmap_flags & GLW_IMAGE_FIXED_SIZE)
+      glw_scale_to_pixels(&rc0, glt->glt_xs, glt->glt_ys);
+    else if(w->glw_class == &glw_image || w->glw_class == &glw_icon)
       glw_scale_to_aspect(&rc0, glt->glt_aspect);
 
     if(gi->gi_angle != 0)
