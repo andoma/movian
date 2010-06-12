@@ -3048,9 +3048,11 @@ be_spotify_init(void)
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, (void *)"spotify");
 
-  if(spotify_is_enabled && spotify_autologin)
-    spotify_start(NULL, 0, 1);
-
+  if(spotify_is_enabled && spotify_autologin) {
+    TRACE(TRACE_DEBUG, "spotify", "Autologin");
+    if(!spotify_start(NULL, 0, 1))
+      hts_mutex_unlock(&spotify_mutex);
+  }
   return 0;
 }
 
