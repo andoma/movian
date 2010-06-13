@@ -117,6 +117,8 @@ SRCS-$(CONFIG_AVAHI) 	+= src/sd/avahi.c \
 ${BUILDDIR}/src/sd/avahi.o : CFLAGS = $(CFLAGS_AVAHI) -Wall -Werror
 
 BUNDLES += resources/tvheadend
+BUNDLES += resources/fileaccess
+
 
 SRCS-$(CONFIG_BONJOUR) 	+= src/sd/bonjour.c
 
