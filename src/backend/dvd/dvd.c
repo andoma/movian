@@ -28,7 +28,7 @@
 #include <fileaccess/svfs.h>
 #include <dvdnav/dvdnav.h>
 
-//static char *make_nice_title(const char *t);
+static char *make_nice_title(const char *t);
 
 static const char *dvd_langcode_to_string(uint16_t langcode);
 
@@ -635,9 +635,11 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
   void *data;
   pci_t *pci;
   event_t *e = NULL;
+  const char *title;
 
   TRACE(TRACE_DEBUG, "DVD", "Starting playback of %s", url);
 
+  prop_set_stringf(prop_create(mp->mp_prop_metadata, "format"), "DVD");
 
  restart:
   dp = calloc(1, sizeof(dvd_player_t));
@@ -675,6 +677,26 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
   prop_set_int(mp->mp_prop_canSkipBackward, 1);
 
   dvd_init_streams(dp, mp);
+
+  if(dvdnav_get_title_string(dp->dp_dvdnav, &title) == DVDNAV_STATUS_OK) {
+    char *s = NULL;
+
+    if(title && *title) {
+      s = make_nice_title(title);
+    } else {
+      char *x, *s0 = mystrdupa(url);
+      x = strrchr(s0, '/');
+      if(x != NULL && x[1] == 0)
+	*x = 0;
+
+      x = strrchr(s0, '/');
+      if(x != NULL) {
+	s = make_nice_title(x + 1);
+      }
+    }
+    prop_set_string(prop_create(mp->mp_prop_metadata, "title"), s);
+    free(s);
+  }
 
   /**
    * DVD main loop
@@ -895,7 +917,7 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
   return NULL;
 }
 
-#if 0
+
 /**
  *
  */
@@ -924,7 +946,6 @@ make_nice_title(const char *t)
   }
   return ret;
 }
-#endif
 
 
 /**
