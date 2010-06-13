@@ -19,6 +19,14 @@ widget(backdrop, {
       .color = select(isFocused(), [1.0, 1.0, 1.0], COLOR);
       .source =  ICON;
       .shadow = true;
+
+      widget(icon, {
+	.source = $self.metadata.badge;
+	.sizeScale = 0.5;
+	.resize = true;
+	.hqScaling = true;
+	.align = bottomRight;
+      });
     });
   
     widget(dummy, { .width = 4; });
