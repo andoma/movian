@@ -163,5 +163,6 @@ int http_request(const char *url, const char **arguments,
 
 int fa_lavf_reopen(ByteIOContext **p, fa_handle_t *fa);
 
+void fa_pathjoin(char *dst, size_t dstlen, const char *p1, const char *p2);
 
 #endif /* FILEACCESS_H */

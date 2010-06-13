@@ -227,7 +227,7 @@ fa_stat(const char *url, struct stat *buf, char *errbuf, size_t errsize)
   if((filename = fa_resolve_proto(url, &fap, NULL, NULL,
 				  errbuf, errsize)) == NULL)
     return AVERROR_NOENT;
-  
+
   r = fap->fap_stat(fap, filename, buf, errbuf, errsize, 0);
   free(filename);
 
@@ -873,4 +873,16 @@ fa_check_url(const char *url, char *errbuf, size_t errlen)
     return BACKEND_PROBE_AUTH;
   }
   return BACKEND_PROBE_FAIL;
+}
+
+
+/**
+ *
+ */
+void
+fa_pathjoin(char *dst, size_t dstlen, const char *p1, const char *p2)
+{
+  int l1 = strlen(p1);
+  int sep = l1 > 0 && p1[l1 - 1] == '/';
+  snprintf(dst, dstlen, "%s%s%s", p1, sep ? "" : "/", p2);
 }

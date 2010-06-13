@@ -779,11 +779,11 @@ fa_probe_dir(prop_t *proproot, const char *url)
 
   type = CONTENT_DIR;
 
-  snprintf(path, sizeof(path), "%s/VIDEO_TS", url);
+  fa_pathjoin(path, sizeof(path), url, "VIDEO_TS");
   if(fa_stat(path, &buf, NULL, 0) == 0 && S_ISDIR(buf.st_mode)) {
     type = CONTENT_DVD;
   } else {
-    snprintf(path, sizeof(path), "%s/video_ts", url);
+    fa_pathjoin(path, sizeof(path), url, "video_ts");
     if(fa_stat(path, &buf, NULL, 0) == 0 && S_ISDIR(buf.st_mode))
       type = CONTENT_DVD;
   }
