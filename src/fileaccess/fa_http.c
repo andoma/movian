@@ -188,22 +188,6 @@ add_premanent_redirect(const char *from, const char *to)
 
 
 /**
- *  http_redirects_mutex must be locked
- */
-static const char *
-get_url_with_redirect(const char *url)
-{
-  http_redirect_t *hr;
-
-  LIST_FOREACH(hr, &http_redirects, hr_link)
-    if(!strcmp(url, hr->hr_from))
-      return hr->hr_to;
-  return url;
-}
-
-
-
-/**
  *
  */
 static void
@@ -600,6 +584,8 @@ http_connect(http_file_t *hf, char *errbuf, int errlen, int escape_path)
 {
   char hostname[HOSTNAME_MAX];
   int port;
+  http_redirect_t *hr;
+  const char *url;
 
   hf->hf_filesize = -1;
   hf->hf_rsize = 0;
@@ -607,12 +593,21 @@ http_connect(http_file_t *hf, char *errbuf, int errlen, int escape_path)
   if(hf->hf_connection != NULL)
     http_detach(hf, 0);
 
+  url = hf->hf_url;
+
   hts_mutex_lock(&http_redirects_mutex);
 
+  LIST_FOREACH(hr, &http_redirects, hr_link)
+    if(!strcmp(url, hr->hr_from)) {
+      escape_path = 0;
+      url = hr->hr_to;
+      break;
+    }
+  
   url_split(NULL, 0, hf->hf_authurl, sizeof(hf->hf_authurl), 
 	    hostname, sizeof(hostname), &port,
 	    hf->hf_path, sizeof(hf->hf_path), 
-	    get_url_with_redirect(hf->hf_url), escape_path);
+	    url, escape_path);
 
   hts_mutex_unlock(&http_redirects_mutex);
 
@@ -1548,18 +1543,30 @@ http_request(const char *url, const char **arguments,
   int code, r, port;
   char buf[URL_MAX], hostname[HOSTNAME_MAX];
   http_connection_t *hc;
-  int redircount = 0;
+  int redircount = 0, escape_path;
+  http_redirect_t *hr;
+  const char *url0;
   hf->hf_url = strdup(url);
 
  retry:
 
+  url0 = hf->hf_url;
+
+  escape_path = !!(flags & HTTP_REQUEST_ESCAPE_PATH);
+
   hts_mutex_lock(&http_redirects_mutex);
+
+  LIST_FOREACH(hr, &http_redirects, hr_link)
+    if(!strcmp(url, hr->hr_from)) {
+      escape_path = 0;
+      url0 = hr->hr_to;
+      break;
+    }
 
   url_split(NULL, 0, hf->hf_authurl, sizeof(hf->hf_authurl), 
 	    hostname, sizeof(hostname), &port,
 	    hf->hf_path, sizeof(hf->hf_path),
-	    get_url_with_redirect(hf->hf_url),
-	    !!(flags & HTTP_REQUEST_ESCAPE_PATH));
+	    url0, escape_path);
 
   hts_mutex_unlock(&http_redirects_mutex);
 
