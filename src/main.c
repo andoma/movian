@@ -119,6 +119,7 @@ main(int argc, char **argv)
   const char *uiargs[16];
   const char *argv0 = argc > 0 ? argv[0] : "showtime";
   const char *startpage;
+  const char *forceview = NULL;
   int nuiargs = 0;
   int can_standby = 0;
   int can_poweroff = 0;
@@ -150,6 +151,7 @@ main(int argc, char **argv)
 	     "   -s <path>         - Non-default Showtime settings path.\n"
 	     "   --ui <ui>         - Use specified user interface.\n"
 	     "   -L <ip>           - Send log messages to remote <ip>.\n"
+	     "   -v <view>         - Use specific view for <url>.\n"
 	     "\n"
 	     "  URL is any URL-type supported by Showtime, "
 	     "e.g., \"file:///...\"\n"
@@ -193,6 +195,9 @@ main(int argc, char **argv)
       remote_logtarget = argv[1];
       argc -= 2; argv += 2;
       continue;
+    } else if (!strcmp(argv[0], "-v") && argc > 1) {
+      forceview = argv[1];
+      argc -= 2; argv += 2;
 #ifdef __APPLE__
     /* ignore -psn argument, process serial number */
     } else if(!strncmp(argv[0], "-psn", 4)) {
@@ -250,7 +255,7 @@ main(int argc, char **argv)
   bookmarks_init();
 
   /* Open initial page */
-  nav_open(startpage);
+  nav_open(startpage, forceview);
 
   /* Various interprocess communication stuff (D-Bus on Linux, etc) */
   ipc_init();

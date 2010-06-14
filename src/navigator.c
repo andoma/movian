@@ -263,9 +263,9 @@ nav_open0(navigator_t *nav, const char *url, const char *view)
  *
  */
 void
-nav_open(const char *url)
+nav_open(const char *url, const char *view)
 {
-  event_dispatch(event_create_openurl(url, NULL));
+  event_dispatch(event_create_openurl(url, view));
 }
 
 
