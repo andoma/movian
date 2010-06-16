@@ -327,7 +327,12 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
     fmt = GX_TF_RGBA8;
     break;
 
-  default:
+    case PIX_FMT_Y400A:
+    texels = convert_i8a8(pict->data[0], pict->linesize[0], req_w, req_h);
+    fmt = GX_TF_IA4;
+    break;
+
+default:
     return convert_with_swscale(glt, pict, pix_fmt, src_w, src_h);
   }
 
