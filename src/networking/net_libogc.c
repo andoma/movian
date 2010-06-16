@@ -168,10 +168,10 @@ tcp_read(int fd, void *buf, size_t bufsize, int all)
     if(rlen > maxsize)
       rlen = maxsize;
 
-    while((r = net_recv(fd, buf + tot, rlen, 0)) == IPC_ENOMEM) {
-      maxsize = maxsize >> 1;
-      if(maxsize == 2048)
-	return -1;
+    if((r = net_recv(fd, buf + tot, rlen, 0)) == IPC_ENOMEM) {
+      if(maxsize > 2048)
+	maxsize /= 2;
+      continue;
     }
 
     if(r < 1)
