@@ -122,7 +122,11 @@ struct nav_page *backend_open_video(struct navigator *nav, const char *url,
 
 #define BE_REGISTER(name) \
   static void  __attribute__((constructor)) backend_init_ ## name(void) {\
-    backend_register(&be_ ## name); }
+  static int cnt;							\
+  if(cnt == 0)								\
+    backend_register(&be_ ## name);					\
+  cnt++;								\
+  }
 
 static inline int
 backend_search_audio(backend_search_type_t type)

@@ -441,7 +441,7 @@ void glw_register_class(glw_class_t *gc);
 
 #define GLW_REGISTER_CLASS(n) \
 static void  __attribute__((constructor)) widgetclassinit ## n(void) \
-{ glw_register_class(&n); }
+{ static int cnt; if(!cnt) glw_register_class(&n); cnt++; }
 
 const glw_class_t *glw_class_find_by_name(const char *name);
 

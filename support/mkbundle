@@ -122,12 +122,16 @@ static struct filebundle fb = {
   .prefix = "${PREFIX}"
 };
 
-static void  __attribute__((constructor)) filebundle_init(void)
+static void  __attribute__((constructor)) filebundle_init (void)
 {
   extern struct filebundle *filebundles;
+  static int cnt;
 
-  fb.next = filebundles;
-  filebundles = &fb;
+  if(!cnt) {
+    fb.next = filebundles;
+    filebundles = &fb;
+  }
+  cnt++;
 }
 
 EOF
