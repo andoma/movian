@@ -251,15 +251,26 @@ convert_i8_to_i4(const uint8_t *src, int linesize,
  *
  */
 static int
-convert_with_swscale(glw_loadable_texture_t *glt, AVPicture *pict, int pix_fmt, 
-		     int w, int h)
+convert_with_swscale(glw_loadable_texture_t *glt, AVPicture *pict, 
+		     int src_pix_fmt, 
+		     int src_w, int src_h, int dst_w, int dst_h)
 {
+  int dst_pix_fmt;
   struct SwsContext *sws;
   AVPicture dst;
   uint8_t *texels;
 
   const uint8_t *ptr[4];
   int strides[4];
+  int bpp;
+
+  if(src_pix_fmt == PIX_FMT_BGRA) {
+    dst_pix_fmt = PIX_FMT_RGBA;
+    bpp = 4;
+  } else {
+    dst_pix_fmt = PIX_FMT_RGB24;
+    bpp = 3;
+  }
 
   ptr[0] = pict->data[0];
   ptr[1] = pict->data[1];
@@ -271,29 +282,26 @@ convert_with_swscale(glw_loadable_texture_t *glt, AVPicture *pict, int pix_fmt,
   strides[2] = pict->linesize[2];
   strides[3] = pict->linesize[3];
 
-
-  TRACE(TRACE_DEBUG, "GLW", "Loading texture %d x %d", w, h);
-
-  sws = sws_getContext(w, h, pix_fmt, 
-		       w, h, PIX_FMT_RGB24,
+  sws = sws_getContext(src_w, src_h, src_pix_fmt, 
+		       dst_w, dst_h, dst_pix_fmt,
 		       SWS_LANCZOS, NULL, NULL, NULL);
   if(sws == NULL)
     return 1;
 
   memset(&dst, 0, sizeof(dst));
-  dst.data[0] = malloc(w * h * 3);
-  dst.linesize[0] = 3 * w;
+  dst.data[0] = malloc(dst_w * dst_h * bpp);
+  dst.linesize[0] = bpp * dst_w;
 
-  sws_scale(sws, ptr, strides, 0, h, dst.data, dst.linesize);  
+  sws_scale(sws, ptr, strides, 0, dst_h, dst.data, dst.linesize);  
 
-  texels = convert_rgb(dst.data[0], dst.linesize[0], w, h);
+  texels = convert_rgb(dst.data[0], dst.linesize[0], dst_w, dst_h);
 
-  glt->glt_xs = w;
-  glt->glt_ys = h;
+  glt->glt_xs = dst_w;
+  glt->glt_ys = dst_h;
 
   glt->glt_texture.mem = texels;
   
-  GX_InitTexObj(&glt->glt_texture.obj, texels, w, h,
+  GX_InitTexObj(&glt->glt_texture.obj, texels, dst_w, dst_h,
 		GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
 
   free(dst.data[0]);
@@ -312,38 +320,43 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 		     int src_w, int src_h,
 		     int req_w, int req_h)
 {
-  uint8_t *texels;
-  int fmt;
+  uint8_t *texels = NULL;
+  int fmt = 0;
+  int need_rescale = req_w != src_w || req_h != src_h;
 
   switch(pix_fmt) {
 
   case PIX_FMT_ARGB:
-    texels = gx_convert_argb(pict->data[0], pict->linesize[0], req_w, req_h);
+    if(need_rescale)
+      break;
+    texels = gx_convert_argb(pict->data[0], pict->linesize[0], src_w, src_h);
     fmt = GX_TF_RGBA8;
     break;
 
   case PIX_FMT_RGB24:
-    texels = convert_rgb(pict->data[0], pict->linesize[0], req_w, req_h);
+    if(need_rescale)
+      break;
+    texels = convert_rgb(pict->data[0], pict->linesize[0], src_w, src_h);
     fmt = GX_TF_RGBA8;
     break;
 
-    case PIX_FMT_Y400A:
-    texels = convert_i8a8(pict->data[0], pict->linesize[0], req_w, req_h);
+  case PIX_FMT_Y400A:
+    texels = convert_i8a8(pict->data[0], pict->linesize[0], src_w, src_h);
     fmt = GX_TF_IA4;
     break;
-
-default:
-    return convert_with_swscale(glt, pict, pix_fmt, src_w, src_h);
   }
 
-  glt->glt_xs = req_w;
-  glt->glt_ys = req_h;
+  if(texels == NULL)
+    return convert_with_swscale(glt, pict, pix_fmt, src_w, src_h, req_w, req_h);
+
+  glt->glt_xs = src_w;
+  glt->glt_ys = src_h;
 
   glt->glt_texture.mem = texels;
   
   int wrapmode = glt->glt_flags & GLW_TEX_REPEAT ? GX_REPEAT : GX_CLAMP;
 
-  GX_InitTexObj(&glt->glt_texture.obj, texels, req_w, req_h, 
+  GX_InitTexObj(&glt->glt_texture.obj, texels, src_w, src_h, 
 		fmt, wrapmode, wrapmode, GX_FALSE);
   return 0;
 }
