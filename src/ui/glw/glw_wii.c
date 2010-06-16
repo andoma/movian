@@ -300,7 +300,7 @@ wpad_every_frame(glw_wii_t *gwii)
 	   ACTION_NAV_BACK);
 
   wpad_btn(gwii, &k_2,     btn & WPAD_BUTTON_2,
-	   ir ? ACTION_NONE    : ACTION_ENTER);
+	   ir ? ACTION_NONE    : ACTION_ACTIVATE);
 
   wpad_btn(gwii, &k_home,  btn & WPAD_BUTTON_HOME,
 	   ACTION_MENU);
