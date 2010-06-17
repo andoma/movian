@@ -291,10 +291,12 @@ convert_with_swscale(glw_loadable_texture_t *glt, AVPicture *pict,
   memset(&dst, 0, sizeof(dst));
   dst.data[0] = malloc(dst_w * dst_h * bpp);
   dst.linesize[0] = bpp * dst_w;
+  sws_scale(sws, ptr, strides, 0, src_h, dst.data, dst.linesize);  
 
-  sws_scale(sws, ptr, strides, 0, dst_h, dst.data, dst.linesize);  
-
-  texels = convert_rgb(dst.data[0], dst.linesize[0], dst_w, dst_h);
+  if(bpp == 4)
+    texels = convert_rgba(dst.data[0], dst.linesize[0], dst_w, dst_h);
+  else
+    texels = convert_rgb(dst.data[0], dst.linesize[0], dst_w, dst_h);
 
   glt->glt_xs = dst_w;
   glt->glt_ys = dst_h;
