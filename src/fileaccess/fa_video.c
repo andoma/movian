@@ -82,6 +82,53 @@ rescale(AVFormatContext *fctx, int64_t ts, int si)
 }
 
 
+
+/**
+ *
+ */
+static media_buf_t *
+subtitle_decode(AVFormatContext *fctx, AVCodecContext *ctx,
+		AVPacket *pkt, int si)
+{
+  media_buf_t *mb;
+
+  switch(ctx->codec_id) {
+  case CODEC_ID_TEXT:
+    mb = media_buf_alloc();
+    mb->mb_data_type = MB_SUBTITLE;
+    
+    mb->mb_pts = rescale(fctx, pkt->pts,      si);
+    mb->mb_duration = rescale(fctx, pkt->duration, si);
+    
+    char *s = malloc(pkt->size + 1);
+    mb->mb_data = memcpy(s, pkt->data, pkt->size);
+    s[pkt->size] = 0;
+    break;
+
+  case CODEC_ID_SSA:
+    mb = subtitles_ssa_decode_line(pkt->data, pkt->size);
+    break;
+
+  default:
+#if 0
+    printf("Codec type %x not supported\n", ctx->codec_id);
+
+    /* Subtitles */
+    printf("%d bytes\n", pkt->size);
+    
+    int k;
+    char *sub = (char *)pkt->data;
+    for(k = 0; k < pkt->size; k++)
+      printf("%c", sub[k] >= 32 ? sub[k] : '.');
+    printf("\n");
+#endif
+   
+    return NULL;
+  }
+  return mb;
+}
+
+
 /**
  *
  */
@@ -192,18 +239,14 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec, media_pipe_t *mp
 	mq = &mp->mp_audio;
 
       } else if(si == mp->mp_video.mq_stream2) {
-#if 0
-	/* Subtitles */
-	printf("%d bytes\n", pkt.size);
 
-	int k;
-	char *sub = (char *)pkt.data;
-	for(k = 0; k < pkt.size; k++)
-	  printf("%c", sub[k] >= 32 ? sub[k] : '.');
-	printf("\n");
-#endif
+	ctx = fctx->streams[si]->codec;
+	mb = ctx != NULL ? subtitle_decode(fctx, ctx, &pkt, si) : mb;
+	mq = &mp->mp_video;
 
 	av_free_packet(&pkt);
+	if(mb != NULL)
+	  goto deliver;
 	continue;
 
       } else {
@@ -264,7 +307,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec, media_pipe_t *mp
      * catched an event instead of enqueueing the buffer. In this case
      * 'mb' will be left untouched.
      */
-
+  deliver:
     if((e = mb_enqueue_with_events(mp, mq, mb)) == NULL) {
       mb = NULL; /* Enqueue succeeded */
 
@@ -423,6 +466,8 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec, media_pipe_t *mp
 
   if(mb != NULL)
     media_buf_free(mb);
+  if(sub != NULL)
+    subtitles_destroy(sub);
   return e;
 }
 

@@ -25,6 +25,9 @@
 #include "fileaccess/fileaccess.h"
 #include "misc/gz.h"
 
+#include "libavcodec/avcodec.h"
+#include "media.h"
+
 #if 0
 
 /*
@@ -644,3 +647,87 @@ subtitles_load(const char *url)
 	  url);
   return sub;
 }
+
+
+/**
+ *
+ */
+static int64_t
+get_ssa_ts(const char *buf)
+{
+  if(strlen(buf) != 10)
+    return AV_NOPTS_VALUE;
+
+  return 1000LL * (
+    (buf[ 0] - '0') *  3600000LL +
+    (buf[ 2] - '0') *   600000LL +
+    (buf[ 3] - '0') *    60000LL + 
+    (buf[ 5] - '0') *    10000LL + 
+    (buf[ 6] - '0') *     1000LL +
+    (buf[ 8] - '0') *      100LL +
+    (buf[ 9] - '0') *       10LL);
+
+}
+
+
+/**
+ *
+ */
+media_buf_t *
+subtitles_ssa_decode_line(uint8_t *src, size_t len)
+{
+  char *t[10], *s, *d;
+  char *buf = alloca(len + 1);
+  int i;
+  int64_t start, end, duration;
+  media_buf_t *mb;
+
+  memcpy(buf, src, len);
+  buf[len] = 0;
+
+  if(strncmp(buf, "Dialogue:", strlen("Dialogue:")))
+    return NULL;
+  buf += strlen("Dialogue:");
+
+  s = strchr(buf, '\n');
+  if(s != NULL)
+    *s = 0;
+  
+  t[0] = buf;
+  for(i = 1; i < 10; i++) {
+    s = strchr(t[i-1], ',');
+    if(s == NULL)
+      return NULL;
+    *s++ = 0;
+    t[i] = s;
+  }
+
+  start = get_ssa_ts(t[1]);
+    end = get_ssa_ts(t[2]);
+  
+  if(start == AV_NOPTS_VALUE || end == AV_NOPTS_VALUE)
+    return NULL;
+
+  duration = end - start;
+
+  d = s = t[9];
+  while(*s) {
+    if(s[0] == '\\' && (s[1] == 'N' || s[1] == 'n')) {
+      *d++ = '\n';
+      s += 2;
+    } else {
+      *d++ = *s++;
+    }
+  }
+
+  mb = media_buf_alloc();
+  mb->mb_data_type = MB_SUBTITLE;
+    
+  mb->mb_pts = start;
+  mb->mb_duration = duration;
+  mb->mb_data = strdup(t[9]);
+  mb->mb_size = 0;
+  return mb;
+}
+
+

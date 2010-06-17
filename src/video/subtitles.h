@@ -22,6 +22,8 @@
 #include "arch/atomic.h"
 #include "misc/redblack.h"
 
+struct media_buf;
+
 RB_HEAD(subtitle_entry_tree, subtitle_entry);
 
 typedef struct subtitle_entry {
@@ -46,5 +48,7 @@ subtitles_t *subtitles_test(const char *fname);
 subtitle_entry_t *subtitles_pick(subtitles_t *sub, int64_t pts);
 
 subtitles_t *subtitles_load(const char *url);
+
+struct media_buf *subtitles_ssa_decode_line(uint8_t *src, size_t len);
 
 #endif /* SUBTITLES_H_ */
