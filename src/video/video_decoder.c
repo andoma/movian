@@ -300,10 +300,12 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
   int deinterlace = 
     frame->interlaced_frame && !mb->mb_disable_deinterlacer;
 
+  vd->vd_deinterlace |= deinterlace;
+
   vd->vd_frame_deliver(vd, frame->data, frame->linesize,
 		       ctx->width, ctx->height, ctx->pix_fmt,
 		       pts, epoch, duration, 
-		       (deinterlace ? VD_INTERLACED : 0) |
+		       (vd->vd_deinterlace ? VD_INTERLACED : 0) |
 		       (frame->top_field_first ? VD_TFF : 0)
 		       );
 }
@@ -386,6 +388,7 @@ vd_thread(void *aux)
     case MB_FLUSH:
       vd_init_timings(vd);
       vd->vd_do_flush = 1;
+      vd->vd_deinterlace = 0;
       break;
 
     case MB_VIDEO:

@@ -218,6 +218,8 @@ typedef struct video_decoder {
 
   /* Deinterlacing & YADIF */
 
+  int vd_deinterlace; // Used to keep deinterlacing on
+
   AVPicture vd_yadif_pic[3];
   int vd_yadif_width;
   int vd_yadif_height;
