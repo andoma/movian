@@ -191,7 +191,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 }
 
 - (IBAction)clickAbout:(id)sender {
-  nav_open("page:about");
+  nav_open("page:about", NULL);
 }
 
 /* delegated from NSApplication */
@@ -203,8 +203,8 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   int _argc = *_NSGetArgc();
   const char *cfilename = [filename UTF8String];
   
-  /* passing a command line argument will case a call to openFile: so ignore
-   * if first call and its the same file as last argv argument */
+  /* passing a command line argument will cause a call to openFile: so ignore
+   * the first call and it is the same file as last argv argument */
   if(!gcocoa.skip_first_openfile_check) {
     gcocoa.skip_first_openfile_check = 1;
     
@@ -213,7 +213,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   }
   
   /* stringWithFormat uses autorelease */
-  nav_open([[NSString stringWithFormat:@"file://%@", filename] UTF8String]);
+  nav_open([[NSString stringWithFormat:@"file://%@", filename] UTF8String], NULL);
   
   return YES;
 }
@@ -221,7 +221,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 /* registered in initWithFrame */
 - (void)handleGetURLEvent:(NSAppleEventDescriptor *)event
 	   withReplyEvent:(NSAppleEventDescriptor *)replyEvent {
-  nav_open([[[event descriptorAtIndex:1] stringValue] UTF8String]);
+  nav_open([[[event descriptorAtIndex:1] stringValue] UTF8String], NULL);
 }
 
 - (BOOL)acceptsFirstResponder {
