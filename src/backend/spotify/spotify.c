@@ -583,6 +583,7 @@ spotify_music_delivery(sp_session *sess, const sp_audioformat *format,
   spotify_uri_t *su = su_playing;
   media_queue_t *mq;
   media_buf_t *mb;
+  static int hang;
 
   if(su == NULL || mp == NULL)
     return num_frames;
@@ -591,8 +592,17 @@ spotify_music_delivery(sp_session *sess, const sp_audioformat *format,
 
   if(num_frames == 0) {
     play_position = (int64_t)seek_pos * format->sample_rate / 1000;
+    hang++;
+    if(hang == 20) {
+      TRACE(TRACE_DEBUG, "spotify", 
+	    "Not receiving any samples for a while, assuming track end");
+      mp_enqueue_event(mp, event_create_type(EVENT_EOF));
+      return 0;
+    }
+
     return 0;
   }
+  hang = 0;
 
   if(mq->mq_len > 100)
     return 0;
