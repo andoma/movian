@@ -57,10 +57,11 @@ static const keymap_defmap_t default_keymap[] = {
   { ACTION_PAUSE,                  "Pause"},
   { ACTION_STOP,                   "Stop"},
   { ACTION_EJECT,                  "Eject"},
+  { ACTION_RECORD,                 "Record"},
 
-  { ACTION_VOLUME_DOWN,            "AudioLowerVolume"},
-  { ACTION_VOLUME_UP,              "AudioRaiseVolume"},
-  { ACTION_VOLUME_MUTE_TOGGLE,     "AudioMute"},
+  { ACTION_VOLUME_DOWN,            "LowerVolume"},
+  { ACTION_VOLUME_UP,              "RaiseVolume"},
+  { ACTION_VOLUME_MUTE_TOGGLE,     "Mute"},
 
   { ACTION_MENU,                   "Menu"},
 
