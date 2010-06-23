@@ -140,11 +140,11 @@ lirc_thread(void *aux)
 	  }
 	}
       }
-      if(e != NULL)
-	ui_primary_event(e);
-      else
-	TRACE(TRACE_DEBUG, "lircd", "Unhandled LIRC key: \"%s\"", keyname);
-
+      if(e == NULL) {
+	snprintf(buf, sizeof(buf), "IR+%s", keyname);
+	e = event_create_str(EVENT_KEYDESC, buf);
+      }
+      ui_primary_event(e);
     }
   }
  out:

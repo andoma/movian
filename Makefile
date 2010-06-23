@@ -48,6 +48,7 @@ SRCS += src/main.c \
 	src/playqueue.c \
 	src/arch/arch_${OSENV}.c \
 	src/ui/ui.c \
+	src/keymapper.c \
 
 ifeq ($(PLATFORM), linux)
 SRCS += src/arch/linux.c

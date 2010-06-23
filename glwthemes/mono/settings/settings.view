@@ -11,7 +11,8 @@ LIST_ITEM_SIMPLE($self.source.title,
 			   "video", "theme://icons/48x48/Movie.png",
 			   "bookmark", "theme://icons/48x48/Bookmark.png",
 			   "display", "theme://icons/48x48/Display.png",
-			   "search", "theme://icons/48x48/Search.png"
+			   "search", "theme://icons/48x48/Search.png",
+			   "keymap", "theme://icons/48x48/Keyboard.png"
 			  ),
 		 navOpen($self.url),
 		 PLATE_COLOR_OTHER());

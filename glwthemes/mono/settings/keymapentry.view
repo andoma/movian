@@ -1,0 +1,52 @@
+#import "theme://include/buttons.view"
+#import "theme://include/defs.view"
+
+widget(container_x, {
+
+  widget(label, {
+    .filterConstraintX = true;
+    .weight = 1.0;
+    .align = left;
+    .caption = $self.source.title;
+  });
+
+  widget(backdrop, {
+    .align = left;
+    .filterConstraintX = true;
+    .weight = 1.0;
+
+
+    .alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
+    .color = [0.45, 0.45, 0.5];
+    .source = "theme://graphics/shadedplate.png";
+    .border =  [4, 4, 4, 4];
+    .padding = [0, -4, 0, -4];
+
+    .focusable = true;
+    .focusOnClick = true;
+    onEvent(KeyCode, {
+      $self.source.keycode = $event;
+    });
+
+    widget(label, {
+      .align = center;
+      .alpha = select($self.source.keycode, 1.0, 0.5);
+      .caption = devoidify($self.source.keycode, "<not set>");
+    });
+  });
+
+  widget(container_x, {
+    .align = left;
+    .filterConstraintX = true;
+    .weight = 0.5;
+
+    ICON2("theme://icons/48x48/Delete.png",
+	  "Clear",
+	  {
+	    $self.source.keycode = void;
+	  },
+	  PLATE_COLOR_DELETE(),
+	  1, 0.1);
+  });
+  
+});

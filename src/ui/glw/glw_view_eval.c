@@ -660,7 +660,6 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self)
 {
   token_t *b = eval_pop(ec), *a = eval_pop(ec);
   int r;
-  event_keydesc_t *ek;
 
   /* Catch some special rvalues here */
 
@@ -669,11 +668,8 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self)
     /* Assignment from $event, if our eval context has an event use it */
     if(ec->event == NULL || ec->event->e_type_x != EVENT_KEYDESC)
       return 0;
-    
-    ek = (event_keydesc_t *)ec->event;
-
     b = eval_alloc(self, ec, TOKEN_STRING);
-    b->t_rstring = rstr_alloc(ek->desc);
+    b->t_rstring = rstr_alloc(ec->event->e_payload);
   } else if((b = token_resolve(ec, b)) == NULL) {
     return -1;
   }

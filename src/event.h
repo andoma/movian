@@ -29,6 +29,9 @@ struct prop;
 typedef enum {
 
   ACTION_NONE = 0,
+
+  ACTION_mappable_begin,
+
   ACTION_UP,
   ACTION_DOWN,
   ACTION_LEFT,
@@ -38,11 +41,12 @@ typedef enum {
   ACTION_CANCEL,
   ACTION_BS,
 
-  ACTION_NAV_FWD,
-  ACTION_NAV_BACK,
-
   ACTION_FOCUS_NEXT,  /* TAB */
   ACTION_FOCUS_PREV,  /* Shift + TAB */
+
+
+  ACTION_NAV_FWD,
+  ACTION_NAV_BACK,
 
   ACTION_PAGE_UP,
   ACTION_PAGE_DOWN,
@@ -57,43 +61,45 @@ typedef enum {
   ACTION_PLAYPAUSE,
   ACTION_PLAY,
   ACTION_PAUSE,
-  ACTION_VOLUME_UP,
-  ACTION_VOLUME_DOWN,
-  ACTION_VOLUME_MUTE_TOGGLE,
-  ACTION_MENU,
-  ACTION_SYSINFO,
-  ACTION_SELECT,
   ACTION_EJECT,
-  ACTION_RESTART_TRACK,
+  ACTION_RECORD,
+
   ACTION_PREV_TRACK,
   ACTION_NEXT_TRACK,
   ACTION_SEEK_FORWARD,
   ACTION_SEEK_BACKWARD,
   ACTION_SEEK_FAST_FORWARD,
   ACTION_SEEK_FAST_BACKWARD,
+
+  ACTION_VOLUME_UP,
+  ACTION_VOLUME_DOWN,
+  ACTION_VOLUME_MUTE_TOGGLE,
+
+  ACTION_MENU,
+  ACTION_SYSINFO,
+  ACTION_SELECT,
+  ACTION_SHOW_MEDIA_STATS,
   ACTION_HOME,
+
   ACTION_SWITCH_VIEW,
+  ACTION_FULLSCREEN_TOGGLE,
+
   ACTION_NEXT_CHANNEL,
   ACTION_PREV_CHANNEL,
-  ACTION_FULLSCREEN_TOGGLE,
 
   ACTION_ZOOM_UI_INCR,
   ACTION_ZOOM_UI_DECR,
-
   ACTION_RELOAD_UI,
-
-  ACTION_SHOW_MEDIA_STATS,
-
-  ACTION_SHUFFLE,
-  ACTION_REPEAT,
-
-  ACTION_RECORD,
 
   ACTION_QUIT,
   ACTION_STANDBY,
   ACTION_POWER_OFF,
 
-  ACTION_last_mappable
+
+  ACTION_SHUFFLE,
+  ACTION_REPEAT,
+
+  ACTION_mappable_end,
 } action_type_t;
 
 
@@ -245,7 +251,7 @@ void event_initqueue(event_queue_t *eq);
 
 void event_flushqueue(event_queue_t *eq);
 
-event_t *event_create_url(event_type_t et, const char *url);
+event_t *event_create_str(event_type_t et, const char *url);
 
 event_t *event_create_playurl(const char *url, int primary, int priority);
 
@@ -256,11 +262,6 @@ event_t *event_create_playtrack(struct prop *track,
 				int mode);
 
 event_t *event_create_select_track(const char *id);
-
-typedef struct event_keydesc {
-  event_t h;
-  char desc[0];
-} event_keydesc_t;
 
 const char *action_code2str(action_type_t code);
 

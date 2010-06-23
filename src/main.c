@@ -44,6 +44,7 @@
 #include "api/api.h"
 #include "runcontrol.h"
 #include "service.h"
+#include "keymapper.h"
 
 /**
  *
@@ -235,6 +236,9 @@ main(int argc, char **argv)
   av_lockmgr_register(fflockmgr);
   av_log_set_callback(fflog);
   av_register_all();
+
+  /* Global keymapper */
+  keymapper_init();
 
   /* Initialize media subsystem */
   media_init();

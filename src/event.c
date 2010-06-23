@@ -151,41 +151,64 @@ static struct strtab actionnames[] = {
   { "Activate",              ACTION_ACTIVATE },
   { "Enter",                 ACTION_ENTER },
   { "Cancel",                ACTION_CANCEL },
+  { "Backspace",             ACTION_BS },
+
+  { "Forward",               ACTION_NAV_FWD },
+  { "Back",                  ACTION_NAV_BACK },
+
+  { "FocusNext",             ACTION_FOCUS_NEXT },
+  { "FocusPrev",             ACTION_FOCUS_PREV },
+
   { "PageUp",                ACTION_PAGE_UP },
   { "PageDown",              ACTION_PAGE_DOWN },
+
   { "Top",                   ACTION_TOP },
   { "Bottom",                ACTION_BOTTOM },
+
+  { "Increase",              ACTION_INCR },
+  { "Decrease",              ACTION_DECR },
+
   { "Stop",                  ACTION_STOP },
   { "PlayPause",             ACTION_PLAYPAUSE },
   { "Play",                  ACTION_PLAY },
   { "Pause",                 ACTION_PAUSE },
-  { "VolumeUp",              ACTION_VOLUME_UP },
-  { "VolumeDown",            ACTION_VOLUME_DOWN },
-  { "VolumeMuteToggle",      ACTION_VOLUME_MUTE_TOGGLE },
-  { "Menu",                  ACTION_MENU },
-  { "Sysinfo",               ACTION_SYSINFO },
-  { "Back",                  ACTION_NAV_BACK },
-  { "Forward",               ACTION_NAV_FWD },
-  { "Select",                ACTION_SELECT },
   { "Eject",                 ACTION_EJECT },
+  { "Record",                ACTION_RECORD },
+
   { "PreviousTrack",         ACTION_PREV_TRACK },
   { "NextTrack",             ACTION_NEXT_TRACK },
   { "SeekForward",           ACTION_SEEK_FORWARD },
   { "SeekReverse",           ACTION_SEEK_BACKWARD },
+  { "SeekFastForward",       ACTION_SEEK_FAST_FORWARD },
+  { "SeekFastReverse",       ACTION_SEEK_FAST_BACKWARD },
+
+  { "VolumeUp",              ACTION_VOLUME_UP },
+  { "VolumeDown",            ACTION_VOLUME_DOWN },
+  { "VolumeMuteToggle",      ACTION_VOLUME_MUTE_TOGGLE },
+
+  { "Menu",                  ACTION_MENU },
+  { "Sysinfo",               ACTION_SYSINFO },
+  { "Select",                ACTION_SELECT },
+  { "MediaStats",            ACTION_SHOW_MEDIA_STATS },
+  { "Home",                  ACTION_HOME },
+
+  { "ChangeView",            ACTION_SWITCH_VIEW },
+  { "FullscreenToggle",      ACTION_FULLSCREEN_TOGGLE },
+
+  { "Channel+",              ACTION_NEXT_CHANNEL },
+  { "Channel-",              ACTION_PREV_CHANNEL },
+
+  { "ZoomUI+",               ACTION_ZOOM_UI_INCR },
+  { "ZoomUI-",               ACTION_ZOOM_UI_DECR },
+  { "ReloadUI",              ACTION_RELOAD_UI },
+
   { "Quit",                  ACTION_QUIT },
   { "Standby",               ACTION_STANDBY },
   { "PowerOff",              ACTION_POWER_OFF },
-  { "Home",                  ACTION_HOME },
-  { "ChangeView",            ACTION_SWITCH_VIEW },
-  { "Channel+",              ACTION_NEXT_CHANNEL },
-  { "Channel-",              ACTION_PREV_CHANNEL },
-  { "FullscreenToggle",      ACTION_FULLSCREEN_TOGGLE },
-  { "Increase",              ACTION_INCR },
-  { "Decrease",              ACTION_DECR },
-  { "MediaStats",            ACTION_SHOW_MEDIA_STATS },
+
   { "Shuffle",               ACTION_SHUFFLE },
   { "Repeat",                ACTION_REPEAT },
-  { "Record",                ACTION_RECORD },
+
 
 };
 
@@ -207,11 +230,11 @@ action_str2code(const char *str)
  *
  */
 event_t *
-event_create_url(event_type_t et, const char *url)
+event_create_str(event_type_t et, const char *str)
 {
-  int l = strlen(url) + 1;
+  int l = strlen(str) + 1;
   event_t *e = event_create(et, sizeof(event_t) + l);
-  memcpy(e->e_payload, url, l);
+  memcpy(e->e_payload, str, l);
   return e;
 }
 
@@ -460,7 +483,6 @@ event_dispatch(event_t *e)
 	    event_is_action(e, ACTION_EJECT) ||
 	    event_is_action(e, ACTION_PREV_TRACK) ||
 	    event_is_action(e, ACTION_NEXT_TRACK) ||
-	    event_is_action(e, ACTION_RESTART_TRACK) ||
 	    event_is_action(e, ACTION_SHOW_MEDIA_STATS) ||
 	    event_is_action(e, ACTION_SHUFFLE) ||
 	    event_is_action(e, ACTION_REPEAT) ||

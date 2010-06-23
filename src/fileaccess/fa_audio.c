@@ -396,12 +396,12 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
       av_seek_frame(fctx, -1, pts4seek + 15000000, 0);
       seekflush(mp, &mb);
-
+#if 0
     } else if(event_is_action(e, ACTION_RESTART_TRACK)) {
 
       av_seek_frame(fctx, -1, 0, AVSEEK_FLAG_BACKWARD);
       seekflush(mp, &mb);
-
+#endif
     } else if(event_is_action(e, ACTION_PLAYPAUSE) ||
 	      event_is_action(e, ACTION_PLAY) ||
 	      event_is_action(e, ACTION_PAUSE)) {

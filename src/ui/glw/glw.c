@@ -22,6 +22,8 @@
 #include <errno.h>
 #include <assert.h>
 
+#include "keymapper.h"
+
 #include <arch/threads.h>
 
 #include "glw.h"
@@ -1601,6 +1603,15 @@ glw_dispatch_event(uii_t *uii, event_t *e)
   int r;
 
   runcontrol_activity();
+
+  if(e->e_type_x == EVENT_KEYDESC) {
+    event_t *e2;
+    
+    e2 = keymapper_resolve(e->e_payload);
+    if(e2 != NULL)
+      uii->uii_ui->ui_dispatch_event(uii, e2);
+  }
+
 
   glw_lock(gr);
 

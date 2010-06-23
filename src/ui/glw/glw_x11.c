@@ -658,63 +658,8 @@ static const struct {
   { XK_Right,        0,           ACTION_RIGHT },
   { XK_Up,           0,           ACTION_UP },
   { XK_Down,         0,           ACTION_DOWN },
-  { XK_Page_Up,      0,           ACTION_PAGE_UP,     ACTION_NEXT_CHANNEL },
-  { XK_Page_Down,    0,           ACTION_PAGE_DOWN,   ACTION_PREV_CHANNEL },
-  { XK_Home,         0,           ACTION_TOP },
-  { XK_End,          0,           ACTION_BOTTOM },
 
   { XK_ISO_Left_Tab, ShiftMask,   ACTION_FOCUS_PREV },
-  
-  { XK_Left,         Mod1Mask,    ACTION_NAV_BACK },
-  { XK_Right,        Mod1Mask,    ACTION_NAV_FWD },
-
-  { XK_Left,         ControlMask, ACTION_SEEK_BACKWARD },
-  { XK_Right,        ControlMask, ACTION_SEEK_FORWARD },
-
-  { XK_Left,         ShiftMask|ControlMask, ACTION_PREV_TRACK },
-  { XK_Right,        ShiftMask|ControlMask, ACTION_NEXT_TRACK },
-
-  { '+',             ControlMask, ACTION_ZOOM_UI_INCR },
-  { XK_KP_Add,       ControlMask, ACTION_ZOOM_UI_INCR },
-  { '-',             ControlMask, ACTION_ZOOM_UI_DECR },
-  { XK_KP_Subtract,  ControlMask, ACTION_ZOOM_UI_DECR },
-  
-  { XK_F5,           0,           ACTION_RELOAD_UI },
-  { XK_F11,          0,           ACTION_FULLSCREEN_TOGGLE },
-  
-  { XF86XK_AudioLowerVolume, 0,   ACTION_VOLUME_DOWN },
-  { XF86XK_AudioRaiseVolume, 0,   ACTION_VOLUME_UP },
-  { XF86XK_AudioMute,        0,   ACTION_VOLUME_MUTE_TOGGLE },
-
-  { XF86XK_Back,             0,   ACTION_NAV_BACK },
-  { XF86XK_Forward,          0,   ACTION_NAV_FWD },
-  { XF86XK_AudioPlay,        0,   ACTION_PLAYPAUSE },
-  { XF86XK_AudioStop,        0,   ACTION_STOP },
-  { XF86XK_AudioPrev,        0,   ACTION_PREV_TRACK },
-  { XF86XK_AudioNext,        0,   ACTION_NEXT_TRACK },
-  { XF86XK_Eject,            0,   ACTION_EJECT },
-  { XF86XK_AudioMedia,       0,   ACTION_MENU },
-  { XK_Menu,                 0,   ACTION_MENU },
-  { XK_F1,                   0,   ACTION_MENU },
-  { XK_F2,                   0,   ACTION_SHOW_MEDIA_STATS },
-  { XK_F3,                   0,   ACTION_SYSINFO },
-  
-  { XK_F1,                   ShiftMask,   ACTION_PREV_TRACK },
-  { XK_F2,                   ShiftMask,   ACTION_PLAYPAUSE },
-  { XK_F3,                   ShiftMask,   ACTION_NEXT_TRACK },
-  { XK_F4,                   ShiftMask,   ACTION_STOP },
-
-  { XK_F5,                   ShiftMask,   ACTION_VOLUME_DOWN },
-  { XK_F6,                   ShiftMask,   ACTION_VOLUME_MUTE_TOGGLE },
-  { XK_F7,                   ShiftMask,   ACTION_VOLUME_UP },
-
-  { XK_F1,                   ControlMask,   ACTION_SEEK_BACKWARD },
-  { XK_F3,                   ControlMask,   ACTION_SEEK_FORWARD },
-  
-  { XK_F4,                   Mod1Mask,    ACTION_QUIT },
-
-  { XF86XK_Sleep,            0,           ACTION_STANDBY },
-
 };
 
 
@@ -813,9 +758,36 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
     }
   }
 
+  if(e == NULL
+     && keysym != XK_Shift_L   && keysym != XK_Shift_R
+     && keysym != XK_Control_L && keysym != XK_Control_R 
+     && keysym != XK_Caps_Lock && keysym != XK_Shift_Lock 
+     && keysym != XK_Meta_L    && keysym != XK_Meta_R 
+     && keysym != XK_Alt_L     && keysym != XK_Alt_R 
+     && keysym != XK_Super_L   && keysym != XK_Super_R 
+     && keysym != XK_Hyper_L   && keysym != XK_Hyper_R ) {
+
+    /* Construct a string representing the key */
+    if(keysym != NoSymbol) {
+      const char *sym = XKeysymToString(keysym);
+      if(!strncmp(sym, "XF86", 4))
+	sym += 4;
+
+      snprintf(buf, sizeof(buf),
+	       "%s%s%s%s",
+	       event->xkey.state & ShiftMask   ? "Shift+" : "",
+	       event->xkey.state & Mod1Mask    ? "Alt+"   : "",
+	       event->xkey.state & ControlMask ? "Ctrl+"  : "",
+	       sym);
+
+    } else {
+      snprintf(buf, sizeof(buf),
+	       "X11+0x%x", event->xkey.keycode);
+    }
+    e = event_create_str(EVENT_KEYDESC, buf);
+  }
   if(e != NULL)
     glw_x11_dispatch_event(&gx11->gr.gr_uii, e);
-
 }
 
 /**
@@ -1188,7 +1160,6 @@ glw_x11_dispatch_event(uii_t *uii, event_t *e)
     /* Pass it on to GLW */
     glw_dispatch_event(uii, e);
     return;
-
   }
   event_unref(e);
 }
