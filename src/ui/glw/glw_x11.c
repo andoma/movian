@@ -763,14 +763,14 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
      && keysym != XK_Control_L && keysym != XK_Control_R 
      && keysym != XK_Caps_Lock && keysym != XK_Shift_Lock 
      && keysym != XK_Meta_L    && keysym != XK_Meta_R 
-     && keysym != XK_Alt_L     && keysym != XK_Alt_R 
-     && keysym != XK_Super_L   && keysym != XK_Super_R 
-     && keysym != XK_Hyper_L   && keysym != XK_Hyper_R ) {
+     && keysym != XK_Alt_L     && keysym != XK_Alt_R) {
 
     /* Construct a string representing the key */
     if(keysym != NoSymbol) {
       const char *sym = XKeysymToString(keysym);
-      if(!strncmp(sym, "XF86", 4))
+      if(!strncmp(sym, "XF86Audio", 9))
+	sym += 9;
+      else if(!strncmp(sym, "XF86", 4))
 	sym += 4;
 
       snprintf(buf, sizeof(buf),
