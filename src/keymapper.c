@@ -63,8 +63,7 @@ static const keymap_defmap_t default_keymap[] = {
   { ACTION_VOLUME_UP,              "MediaRaiseVolume"},
   { ACTION_VOLUME_MUTE_TOGGLE,     "MediaMute"},
 
-  { ACTION_MENU,                   "Menu"},
-
+  { ACTION_MENU,                   "F1"},
   { ACTION_SHOW_MEDIA_STATS,       "F2"},
   { ACTION_SYSINFO,                "F3"},
 
