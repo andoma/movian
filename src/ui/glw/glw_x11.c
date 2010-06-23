@@ -768,13 +768,16 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
     /* Construct a string representing the key */
     if(keysym != NoSymbol) {
       const char *sym = XKeysymToString(keysym);
-      if(!strncmp(sym, "XF86Audio", 9))
+      const char *prefix = "";
+      if(!strncmp(sym, "XF86Audio", 9)) {
 	sym += 9;
-      else if(!strncmp(sym, "XF86", 4))
+	prefix = "Media";
+      } else if(!strncmp(sym, "XF86", 4))
 	sym += 4;
 
       snprintf(buf, sizeof(buf),
-	       "%s%s%s%s",
+	       "%s%s%s%s%s",
+	       prefix,
 	       event->xkey.state & ShiftMask   ? "Shift+" : "",
 	       event->xkey.state & Mod1Mask    ? "Alt+"   : "",
 	       event->xkey.state & ControlMask ? "Ctrl+"  : "",

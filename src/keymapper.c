@@ -52,16 +52,16 @@ static const keymap_defmap_t default_keymap[] = {
   { ACTION_RELOAD_UI,              "F5"},
   { ACTION_FULLSCREEN_TOGGLE,      "F11"},
 
-  { ACTION_PLAYPAUSE,              "PlayPause"},
-  { ACTION_PLAY,                   "Play"},
-  { ACTION_PAUSE,                  "Pause"},
-  { ACTION_STOP,                   "Stop"},
-  { ACTION_EJECT,                  "Eject"},
-  { ACTION_RECORD,                 "Record"},
+  { ACTION_PLAYPAUSE,              "MediaPlayPause"},
+  { ACTION_PLAY,                   "MediaPlay"},
+  { ACTION_PAUSE,                  "MediaPause"},
+  { ACTION_STOP,                   "MediaStop"},
+  { ACTION_EJECT,                  "MediaEject"},
+  { ACTION_RECORD,                 "MediaRecord"},
 
-  { ACTION_VOLUME_DOWN,            "LowerVolume"},
-  { ACTION_VOLUME_UP,              "RaiseVolume"},
-  { ACTION_VOLUME_MUTE_TOGGLE,     "Mute"},
+  { ACTION_VOLUME_DOWN,            "MediaLowerVolume"},
+  { ACTION_VOLUME_UP,              "MediaRaiseVolume"},
+  { ACTION_VOLUME_MUTE_TOGGLE,     "MediaMute"},
 
   { ACTION_MENU,                   "Menu"},
 
