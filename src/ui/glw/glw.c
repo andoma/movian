@@ -1604,16 +1604,24 @@ glw_dispatch_event(uii_t *uii, event_t *e)
 
   runcontrol_activity();
 
+  glw_lock(gr);
+
   if(e->e_type_x == EVENT_KEYDESC) {
     event_t *e2;
     
+    if(glw_event(gr, e)) {
+      glw_unlock(gr);
+      return; // Was consumed
+    }
+
     e2 = keymapper_resolve(e->e_payload);
-    if(e2 != NULL)
-      uii->uii_ui->ui_dispatch_event(uii, e2);
+    event_unref(e);
+    if(e2 == NULL) {
+      glw_unlock(gr);
+      return;
+    }
+    e = e2;
   }
-
-
-  glw_lock(gr);
 
   if(event_is_action(e, ACTION_RELOAD_UI)) {
     glw_load_universe(gr);
