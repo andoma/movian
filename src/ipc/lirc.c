@@ -50,26 +50,8 @@ static const struct {
   { "Enter",        ACTION_ACTIVATE, ACTION_ENTER },
   { "Back",         ACTION_BS, ACTION_NAV_BACK },
   { "Backspace",    ACTION_BS, ACTION_NAV_BACK },
-
-  { "Record",       ACTION_RECORD },
-  { "Play",         ACTION_PLAY },
-  { "Eject",        ACTION_EJECT },
-
-  { "Rewind",       ACTION_SEEK_BACKWARD },
-  { "FastForward",  ACTION_SEEK_FORWARD },
-  { "Pause",        ACTION_PAUSE },
-
-  { "PrevChapter",  ACTION_PREV_TRACK },
-  { "Stop",         ACTION_STOP },
-  { "NextChapter",  ACTION_NEXT_TRACK },
-
-  { "Mute",         ACTION_VOLUME_MUTE_TOGGLE },
-  { "Vol+",         ACTION_VOLUME_UP },
-  { "Vol-",         ACTION_VOLUME_DOWN },
-
   { "Tab",          ACTION_FOCUS_NEXT },
   { "ShiftTab",     ACTION_FOCUS_PREV },
-
 };
 
 static void *
