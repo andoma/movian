@@ -171,7 +171,7 @@ handle_metadata(rtmp_t *r, char *body, unsigned int len,
 
 static media_buf_t *
 get_packet(rtmp_t *r, int v, uint8_t *data, size_t size, int32_t dts,
-	   int epoch)
+	   int epoch, media_pipe_t *mp)
 {
   media_buf_t *mb;
   uint8_t flags;
@@ -218,7 +218,8 @@ get_packet(rtmp_t *r, int v, uint8_t *data, size_t size, int32_t dts,
       } else {
 	ctx = NULL;
       }
-      r->vcodec = media_codec_create(id, CODEC_TYPE_VIDEO, 0, NULL, ctx, 0, 0);
+      r->vcodec = media_codec_create(id, CODEC_TYPE_VIDEO, 0, NULL, ctx, 
+				     0, 0, mp);
       return NULL;
     }
 
@@ -262,7 +263,8 @@ get_packet(rtmp_t *r, int v, uint8_t *data, size_t size, int32_t dts,
       } else {
 	ctx = NULL;
       }
-      r->acodec = media_codec_create(id, CODEC_TYPE_AUDIO, 0, NULL, ctx, 0, 0);
+      r->acodec = media_codec_create(id, CODEC_TYPE_AUDIO, 0, NULL, ctx,
+				     0, 0, mp);
       return NULL;
     }
 
@@ -398,12 +400,14 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 	  break;
 
 	case RTMP_PACKET_TYPE_VIDEO:
-	  mb = get_packet(r, 1, (void *)p.m_body, p.m_nBodySize, dts, epoch);
+	  mb = get_packet(r, 1, (void *)p.m_body, p.m_nBodySize, dts, epoch, 
+			  mp);
 	  mq = &mp->mp_video;
 	  break;
 
 	case RTMP_PACKET_TYPE_AUDIO:
-	  mb = get_packet(r, 0, (void *)p.m_body, p.m_nBodySize, dts, epoch);
+	  mb = get_packet(r, 0, (void *)p.m_body, p.m_nBodySize, dts, epoch,
+			  mp);
 	  mq = &mp->mp_audio;
 	  break;
 	
@@ -433,10 +437,12 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 	    if(handle_metadata(r, p.m_body, p.m_nBodySize, mp, errbuf, errlen))
 	      return NULL;
 	  } else if(p.m_body[pos] == RTMP_PACKET_TYPE_VIDEO) {
-	    mb = get_packet(r, 1, (void *)p.m_body + pos + 11, ds, dts, epoch);
+	    mb = get_packet(r, 1, (void *)p.m_body + pos + 11, ds, dts, epoch,
+			    mp);
 	    mq = &mp->mp_video;
 	  } else if(p.m_body[pos] == RTMP_PACKET_TYPE_AUDIO) {
-	    mb = get_packet(r, 0, (void *)p.m_body + pos + 11, ds, dts, epoch);
+	    mb = get_packet(r, 0, (void *)p.m_body + pos + 11, ds, dts, epoch,
+			    mp);
 	    mq = &mp->mp_audio;
 	  } else {
 	    TRACE(TRACE_DEBUG, "RTMP", 

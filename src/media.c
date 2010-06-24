@@ -721,13 +721,16 @@ media_codec_deref(media_codec_t *cw)
  */
 media_codec_t *
 media_codec_create(enum CodecID id, enum CodecType type, int parser,
-		  media_format_t *fw, AVCodecContext *ctx,
-		  int cheat_for_speed, int sub_id)
+		   media_format_t *fw, AVCodecContext *ctx,
+		   int cheat_for_speed, int sub_id,
+		   media_pipe_t *mp)
 {
   extern int concurrency;
   media_codec_t *cw = calloc(1, sizeof(media_codec_t));
 
-  cw->codec = avcodec_find_decoder(id);
+  if(cw->codec == NULL)
+    cw->codec = avcodec_find_decoder(id);
+
   if(cw->codec == NULL) {
     free(cw);
     return NULL;

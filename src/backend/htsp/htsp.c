@@ -1669,7 +1669,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
        */
 
       cw = media_codec_create(codec_id, codec_type, 0, NULL, NULL,
-			     codec_id == CODEC_ID_H264, subid);
+			      codec_id == CODEC_ID_H264, subid, mp);
       if(cw == NULL) {
 	TRACE(TRACE_ERROR, "HTSP", "Unable to create codec for %s (#%d)",
 	      nicename, idx);

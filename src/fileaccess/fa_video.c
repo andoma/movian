@@ -607,7 +607,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
       ctx->channels = 0;
 
     cwvec[i] = media_codec_create(ctx->codec_id,
-				 ctx->codec_type, 0, fw, ctx, 0, 0);
+				  ctx->codec_type, 0, fw, ctx, 0, 0, mp);
   }
 
   prop_set_int(mp->mp_prop_audio_track_current, mp->mp_audio.mq_stream);
