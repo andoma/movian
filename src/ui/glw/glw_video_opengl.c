@@ -47,29 +47,8 @@ static const char *yuv2rbg_2mix_rect_code =
 #include "cg/yuv2rgb_2mix_rect.h"
 ;
 
-
-
-
 #include "video/video_decoder.h"
 #include "video/video_playback.h"
-
-/**
- *
- */
-typedef struct gl_video_frame {
-
-  video_decoder_frame_t gvf_vdf;
-
-  GLuint gvf_pbo[3];
-  void *gvf_pbo_ptr[3];
-
-  int gvf_uploaded;
-
-  GLuint gvf_textures[3];
-
-  unsigned int gvf_frame_buffer;
-
-} gl_video_frame_t;
 
 /**
  *  GL Video Init
@@ -137,129 +116,61 @@ glw_video_opengl_init(glw_root_t *gr, int rectmode)
 
 
 /**
- * 
+ * gv_surface_mutex must be held
  */
-void
-glw_video_framepurge(video_decoder_t *vd, video_decoder_frame_t *vdf)
+static void
+surface_reset(glw_video_t *gv, glw_video_surface_t *gvs)
 {
-  gl_video_frame_t *gvf = (gl_video_frame_t *)vdf;
   int i;
 
   for(i = 0; i < 3; i++) {
-    if(gvf->gvf_pbo[i] != 0) {
-      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo[i]);
+    if(gvs->gvs_pbo[i] != 0) {
+      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvs->gvs_pbo[i]);
       glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
-      gvf->gvf_pbo_ptr[i] = NULL;
+      gvs->gvs_pbo_ptr[i] = NULL;
       glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
     }
   }
-  if(gvf->gvf_pbo[0] != 0)
-    glDeleteBuffersARB(3, gvf->gvf_pbo);
+  if(gvs->gvs_pbo[0] != 0)
+    glDeleteBuffersARB(3, gvs->gvs_pbo);
+  gvs->gvs_pbo[0] = 0;
 
-  for(i = 0; i < 3; i++)
-    gvf->gvf_pbo[i] = 0;
-
-  if(gvf->gvf_textures[0] != 0)
-    glDeleteTextures(3, gvf->gvf_textures);
-
-  gvf->gvf_textures[0] = 0;
-
-  free(vdf);
-  assert(vd->vd_active_frames > 0);
-  vd->vd_active_frames--;
+  if(gvs->gvs_textures[0] != 0)
+    glDeleteTextures(3, gvs->gvs_textures);
+  gvs->gvs_textures[0] = 0;
 }
 
 
 /**
  *
  */
-void
-glw_video_opengl_flush(glw_root_t *gr)
+static void
+surface_init(glw_video_t *gv, glw_video_surface_t *gvs,
+	     const glw_video_config_t *gvc)
 {
-  glw_video_t *gv;
-  video_decoder_t *vd;
-
-  LIST_FOREACH(gv, &gr->gr_video_decoders, gv_global_link) {
-    vd = gv->gv_vd;
-
-    hts_mutex_lock(&vd->vd_queue_mutex);
-    glw_video_purge_queues(vd, glw_video_framepurge);
-    hts_cond_signal(&vd->vd_avail_queue_cond);
-    hts_cond_signal(&vd->vd_bufalloced_queue_cond);
-    hts_mutex_unlock(&vd->vd_queue_mutex);
-  }
-}
-
-
-/**
- *  Buffer allocator
- */
-void
-glw_video_buffer_allocator(video_decoder_t *vd)
-{
-  gl_video_frame_t *gvf;
-  video_decoder_frame_t *vdf;
   int i;
 
-  hts_mutex_lock(&vd->vd_queue_mutex);
-  
-  while(vd->vd_active_frames < vd->vd_active_frames_needed) {
-    vdf = calloc(1, sizeof(gl_video_frame_t));
-    TAILQ_INSERT_TAIL(&vd->vd_avail_queue, vdf, vdf_link);
-    hts_cond_signal(&vd->vd_avail_queue_cond);
-    vd->vd_active_frames++;
+  glGenBuffersARB(3, gvs->gvs_pbo);
+  glGenTextures(3, gvs->gvs_textures);
+
+  for(i = 0; i < 3; i++) {
+
+    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvs->gvs_pbo[i]);
+	
+    glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB,
+		    gvc->gvc_width[i] * gvc->gvc_height[i],
+		    NULL, GL_STREAM_DRAW_ARB);
+	
+    gvs->gvs_pbo_ptr[i] = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 
+					 GL_WRITE_ONLY);
+	
+    gvs->gvs_data[i] = gvs->gvs_pbo_ptr[i];
   }
-
-  while((vdf = TAILQ_FIRST(&vd->vd_bufalloc_queue)) != NULL) {
-    TAILQ_REMOVE(&vd->vd_bufalloc_queue, vdf, vdf_link);
-
-    gvf = (gl_video_frame_t *)vdf;
-
-    if(gvf->gvf_pbo[0] != 0)
-      glDeleteBuffersARB(3, gvf->gvf_pbo);
-
-
-    /* XXX: Do we really need to delete textures if they are already here ? */
-       
-    if(gvf->gvf_textures[0] != 0)
-      glDeleteTextures(3, gvf->gvf_textures);
-
-    if(vdf->vdf_width[0] == 0) {
-      // Blank frame 
-      gvf->gvf_textures[0] = 0;
-      gvf->gvf_textures[1] = 0;
-      gvf->gvf_textures[2] = 0;
-      gvf->gvf_pbo[0] = 0;
-      gvf->gvf_pbo[1] = 0;
-      gvf->gvf_pbo[2] = 0;
-    } else {
-
-      glGenBuffersARB(3, gvf->gvf_pbo);
-      glGenTextures(3, gvf->gvf_textures);
-
-      for(i = 0; i < 3; i++) {
-
-	glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo[i]);
-	
-	glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB,
-			vdf->vdf_width[i] * vdf->vdf_height[i],
-			NULL, GL_STREAM_DRAW_ARB);
-	
-	gvf->gvf_pbo_ptr[i] = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 
-					     GL_WRITE_ONLY);
-	
-	vdf->vdf_data[i] = gvf->gvf_pbo_ptr[i];
-      }
-      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
-    }
-
-    TAILQ_INSERT_TAIL(&vd->vd_bufalloced_queue, vdf, vdf_link);
-    hts_cond_signal(&vd->vd_bufalloced_queue_cond);
-  }
-
-  hts_mutex_unlock(&vd->vd_queue_mutex);
-
+  glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+  TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvs, gvs_link);
 }
+
+
 
 /**
  *  Texture loader
@@ -278,9 +189,9 @@ gv_set_tex_meta(int textype)
  *
  */
 static GLuint 
-gv_tex_get(gl_video_frame_t *gvf, int plane)
+gv_tex_get(glw_video_surface_t *gvs, int plane)
 {
-  return gvf->gvf_textures[plane];
+  return gvs->gvs_textures[plane];
 }
 
 
@@ -288,97 +199,79 @@ gv_tex_get(gl_video_frame_t *gvf, int plane)
  *
  */
 static void
-video_frame_upload(glw_video_t *gv, gl_video_frame_t *gvf, int textype)
+gv_surface_pixmap_upload(glw_video_surface_t *gvs,
+			 const glw_video_config_t *gvc, int textype)
 {
-  if(gvf->gvf_uploaded)
-    return;
-  if(gvf->gvf_pbo[0] == 0)
+  if(gvs->gvs_uploaded || gvs->gvs_pbo[0] == 0)
     return;
 
-  gvf->gvf_uploaded = 1;
+  gvs->gvs_uploaded = 1;
 
-  glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo[0]);
+  glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvs->gvs_pbo[0]);
   glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
-  gvf->gvf_pbo_ptr[0] = NULL;
-
-  glBindTexture(textype, gv_tex_get(gvf, GVF_TEX_L));
+  glBindTexture(textype, gv_tex_get(gvs, GVF_TEX_L));
   gv_set_tex_meta(textype);
-  
-  glTexImage2D(textype, 0, 1, 
-	       gvf->gvf_vdf.vdf_width[0], gvf->gvf_vdf.vdf_height[0],
+  glTexImage2D(textype, 0, 1, gvc->gvc_width[0], gvc->gvc_height[0],
 	       0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 
-
-  /* Cr */
-
-  glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo[2]);
+  glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvs->gvs_pbo[2]);
   glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
-  gvf->gvf_pbo_ptr[1] = NULL;
-
-  glBindTexture(textype, gv_tex_get(gvf, GVF_TEX_Cr));
+  glBindTexture(textype, gv_tex_get(gvs, GVF_TEX_Cr));
   gv_set_tex_meta(textype);
-
-
-  glTexImage2D(textype, 0, 1,
-	       gvf->gvf_vdf.vdf_width[1], gvf->gvf_vdf.vdf_height[1],
+  glTexImage2D(textype, 0, 1, gvc->gvc_width[2], gvc->gvc_height[2],
 	       0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 
-  /* Cb */
-  
-  
-  glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo[1]);
+  glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvs->gvs_pbo[1]);
   glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
-  gvf->gvf_pbo_ptr[2] = NULL;
-
-  glBindTexture(textype, gv_tex_get(gvf, GVF_TEX_Cb));
-
+  glBindTexture(textype, gv_tex_get(gvs, GVF_TEX_Cb));
   gv_set_tex_meta(textype);
-  
-  glTexImage2D(textype, 0, 1,
-	       gvf->gvf_vdf.vdf_width[2], gvf->gvf_vdf.vdf_height[2],
+  glTexImage2D(textype, 0, 1, gvc->gvc_width[1], gvc->gvc_height[1],
 	       0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
-  
+
   glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+
+  gvs->gvs_pbo_ptr[0] = NULL;
+  gvs->gvs_pbo_ptr[1] = NULL;
+  gvs->gvs_pbo_ptr[2] = NULL;
 }
 
 
 /**
- *  Video widget layout
+ *
  */
 static void
-gv_enqueue_for_decode(video_decoder_t *vd, video_decoder_frame_t *vdf,
-		      struct video_decoder_frame_queue *fromqueue)
+gv_surface_pixmap_release(glw_video_t *gv, glw_video_surface_t *gvs,
+			  const glw_video_config_t *gvc,
+			  struct glw_video_surface_queue *fromqueue)
 {
-  gl_video_frame_t *gvf = (gl_video_frame_t *)vdf;
   int i;
 
-  hts_mutex_lock(&vd->vd_queue_mutex);
+  hts_mutex_lock(&gv->gv_surface_mutex);
+  TAILQ_REMOVE(fromqueue, gvs, gvs_link);
 
-  TAILQ_REMOVE(fromqueue, vdf, vdf_link);
-
-  if(gvf->gvf_uploaded) {
-    gvf->gvf_uploaded = 0;
+  if(gvs->gvs_uploaded) {
+    gvs->gvs_uploaded = 0;
 
     for(i = 0; i < 3; i++) {
-      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvf->gvf_pbo[i]);
+      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvs->gvs_pbo[i]);
 
       // Setting the buffer to NULL tells the GPU it can assign
       // us another piece of memory as backing store.
       
       glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB,
-		      vdf->vdf_width[i] * vdf->vdf_height[i],
+		      gvc->gvc_width[i] * gvc->gvc_height[i],
 		      NULL, GL_STREAM_DRAW_ARB);
 
-      gvf->gvf_pbo_ptr[i] = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 
+      gvs->gvs_pbo_ptr[i] = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 
 					   GL_WRITE_ONLY);
-      vdf->vdf_data[i] = gvf->gvf_pbo_ptr[i];
+      gvs->gvs_data[i] = gvs->gvs_pbo_ptr[i];
     }
     glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
   }
 
-  TAILQ_INSERT_TAIL(&vd->vd_avail_queue, vdf, vdf_link);
-  hts_cond_signal(&vd->vd_avail_queue_cond);
-  hts_mutex_unlock(&vd->vd_queue_mutex);
+  TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvs, gvs_link);
+  hts_cond_signal(&gv->gv_avail_queue_cond);
+  hts_mutex_unlock(&gv->gv_surface_mutex);
 }
 
 
@@ -423,48 +316,48 @@ gv_color_matrix_update(glw_video_t *gv, media_pipe_t *mp)
  *
  */
 static int64_t
-gv_compute_blend(glw_video_t *gv, video_decoder_frame_t *fra,
-		 video_decoder_frame_t *frb, int output_duration)
+gv_compute_blend(glw_video_t *gv, glw_video_surface_t *sa,
+		 glw_video_surface_t *sb, int output_duration)
 {
   int64_t pts;
   int x;
 
-  if(fra->vdf_duration >= output_duration) {
+  if(sa->gvs_duration >= output_duration) {
   
-    gv->gv_fra = fra;
-    gv->gv_frb = NULL;
+    gv->gv_sa = sa;
+    gv->gv_sb = NULL;
 
-    pts = fra->vdf_pts;
+    pts = sa->gvs_pts;
 
-    fra->vdf_duration -= output_duration;
-    fra->vdf_pts      += output_duration;
+    sa->gvs_duration -= output_duration;
+    sa->gvs_pts      += output_duration;
 
-  } else if(frb != NULL) {
+  } else if(sb != NULL) {
 
-    gv->gv_fra = fra;
-    gv->gv_frb = frb;
-    gv->gv_blend = (float) fra->vdf_duration / (float)output_duration;
+    gv->gv_sa = sa;
+    gv->gv_sb = sb;
+    gv->gv_blend = (float) sa->gvs_duration / (float)output_duration;
 
-    if(fra->vdf_duration + 
-       frb->vdf_duration < output_duration) {
+    if(sa->gvs_duration + 
+       sb->gvs_duration < output_duration) {
 
-      fra->vdf_duration = 0;
-      pts = frb->vdf_pts;
+      sa->gvs_duration = 0;
+      pts = sb->gvs_pts;
 
     } else {
-      pts = fra->vdf_pts;
-      x = output_duration - fra->vdf_duration;
-      frb->vdf_duration -= x;
-      frb->vdf_pts      += x;
+      pts = sa->gvs_pts;
+      x = output_duration - sa->gvs_duration;
+      sb->gvs_duration -= x;
+      sb->gvs_pts      += x;
     }
-    fra->vdf_duration = 0;
+    sa->gvs_duration = 0;
 
   } else {
-    gv->gv_fra = fra;
-    gv->gv_frb = NULL;
-    fra->vdf_pts      += output_duration;
+    gv->gv_sa = sa;
+    gv->gv_sb = NULL;
+    sa->gvs_pts      += output_duration;
 
-    pts = fra->vdf_pts;
+    pts = sa->gvs_pts;
   }
 
   return pts;
@@ -474,36 +367,33 @@ gv_compute_blend(glw_video_t *gv, video_decoder_frame_t *fra,
 /**
  *
  */
-void 
-glw_video_new_frame(video_decoder_t *vd, glw_video_t *gv, glw_root_t *gr)
+static int64_t
+newframe(glw_video_t *gv, video_decoder_t *vd)
 {
-  video_decoder_frame_t *fra, *frb;
+  glw_root_t *gr = gv->w.glw_root;
+  glw_video_surface_t *sa, *sb, *s;
   media_pipe_t *mp = gv->gv_mp;
   int output_duration;
   int64_t pts = 0;
-  struct video_decoder_frame_queue *dq;
   int frame_duration = gv->w.glw_root->gr_frameduration;
   int epoch = 0;
 
   gv_color_matrix_update(gv, mp);
   output_duration = glw_video_compute_output_duration(vd, frame_duration);
 
-
-  dq = &vd->vd_display_queue;
-
-  /* Find frame to display */
-
-  fra = TAILQ_FIRST(dq);
-  if(fra == NULL) {
+  
+  /* Find new surface to display */
+  sa = TAILQ_FIRST(&gv->gv_decoded_queue);
+  if(sa == NULL) {
     /* No frame available */
-    fra = TAILQ_FIRST(&vd->vd_displaying_queue);
-    if(fra != NULL) {
+    sa = TAILQ_FIRST(&gv->gv_displaying_queue);
+    if(sa != NULL) {
       /* Continue to display last frame */
-      gv->gv_fra = fra;
-      gv->gv_frb = NULL;
+      gv->gv_sa = sa;
+      gv->gv_sa = NULL;
     } else {
-      gv->gv_fra = NULL;
-      gv->gv_frb = NULL;
+      gv->gv_sa = NULL;
+      gv->gv_sa = NULL;
     }
 
     pts = AV_NOPTS_VALUE;
@@ -512,33 +402,28 @@ glw_video_new_frame(video_decoder_t *vd, glw_video_t *gv, glw_root_t *gr)
       
     /* There are frames available that we are going to display,
        push back old frames to decoder */
-      
-    while((frb = TAILQ_FIRST(&vd->vd_displaying_queue)) != NULL)
-      gv_enqueue_for_decode(vd, frb, &vd->vd_displaying_queue);
-    
-    frb = TAILQ_NEXT(fra, vdf_link);
+    while((s = TAILQ_FIRST(&gv->gv_displaying_queue)) != NULL)
+      gv_surface_pixmap_release(gv, s, &gv->gv_cfg_cur, 
+				&gv->gv_displaying_queue);
 
-    pts = gv_compute_blend(gv, fra, frb, output_duration);
-    epoch = fra->vdf_epoch;
+    /* */
+    sb = TAILQ_NEXT(sa, gvs_link);
+    pts = gv_compute_blend(gv, sa, sb, output_duration);
+    epoch = sa->gvs_epoch;
 
-    if(!vd->vd_hold || frb != NULL) {
-      if(fra != NULL && fra->vdf_duration == 0)
-	glw_video_enqueue_for_display(vd, fra, dq);
+    if(!vd->vd_hold || sb != NULL) {
+      if(sa != NULL && sa->gvs_duration == 0)
+	glw_video_enqueue_for_display(gv, sa, &gv->gv_decoded_queue);
     }
-    if(frb != NULL && frb->vdf_duration == 0)
-      glw_video_enqueue_for_display(vd, frb, dq);
+    if(sb != NULL && sb->gvs_duration == 0)
+      glw_video_enqueue_for_display(gv, sb, &gv->gv_decoded_queue);
   }
 
   if(pts != AV_NOPTS_VALUE) {
     pts -= frame_duration * 2;
     glw_video_compute_avdiff(gr, vd, mp, pts, epoch);
-
-#if ENABLE_DVD
-    glw_video_spu_layout(vd, &gv->gv_spu, gr, pts);
-#endif
-
-    glw_video_sub_layout(vd, &gv->gv_sub, gr, pts, (glw_t *)gv);
   }
+  return pts;
 }
 
 
@@ -609,18 +494,14 @@ render_video_quad(int interlace, int rectmode, int width, int height)
  *
  */
 static void
-render_video_1f(glw_video_t *gv, video_decoder_t *vd,
-		video_decoder_frame_t *vdf, float alpha, int textype,
-		int rectmode)
+render_video_1f(const glw_video_t *gv, glw_video_surface_t *s,
+		float alpha, int textype, int rectmode)
 {
-  gl_video_frame_t *gvf = (gl_video_frame_t *)vdf;
+  const glw_video_config_t *gvc = &gv->gv_cfg_cur;
   int i;
   GLuint tex;
 
-  video_frame_upload(gv, gvf, textype);
-
-  if(vdf->vdf_width[0] == 0)
-    return;
+  gv_surface_pixmap_upload(s, &gv->gv_cfg_cur, textype);
 
   glEnable(GL_FRAGMENT_PROGRAM_ARB);
   glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, 
@@ -632,8 +513,8 @@ render_video_1f(glw_video_t *gv, video_decoder_t *vd,
 			       /* ctrl.x == alpha */
 			       alpha,
 			       /* ctrl.y == ishift */
-			       (-0.5f * vdf->vdf_debob) / 
-			       (float)vdf->vdf_height[0],
+			       (-0.5f * s->gvs_yshift ) / 
+			       (float)gvc->gvc_height[0],
 			       0.0,
 			       0.0);
 
@@ -646,19 +527,19 @@ render_video_1f(glw_video_t *gv, video_decoder_t *vd,
 				 gv->gv_cmatrix[i * 3 + 2], 0.0f);
 
   glActiveTextureARB(GL_TEXTURE2_ARB);
-  tex = gv_tex_get(gvf, GVF_TEX_Cb);
+  tex = gv_tex_get(s, GVF_TEX_Cb);
   glBindTexture(textype, tex);
 
   glActiveTextureARB(GL_TEXTURE1_ARB);
-  tex = gv_tex_get(gvf, GVF_TEX_Cr);
+  tex = gv_tex_get(s, GVF_TEX_Cr);
   glBindTexture(textype, tex);
 
   glActiveTextureARB(GL_TEXTURE0_ARB);
-  tex = gv_tex_get(gvf, GVF_TEX_L);
+  tex = gv_tex_get(s, GVF_TEX_L);
   glBindTexture(textype, tex);
   
-  render_video_quad(vdf->vdf_cutborder, rectmode, 
-		    vdf->vdf_width[0], vdf->vdf_height[0]);
+  render_video_quad(!!(gvc->gvc_flags & GVC_CUTBORDER), rectmode, 
+		    gvc->gvc_width[0], gvc->gvc_height[0]);
   
   glDisable(GL_FRAGMENT_PROGRAM_ARB);
 }
@@ -668,23 +549,16 @@ render_video_1f(glw_video_t *gv, video_decoder_t *vd,
  *
  */
 static void
-gv_blend_frames(glw_video_t *gv, video_decoder_t *vd, 
-		video_decoder_frame_t *fra, video_decoder_frame_t *frb,
+gv_blend_frames(const glw_video_t *gv, 
+		glw_video_surface_t *sa, glw_video_surface_t *sb,
 		float alpha, int textype, int rectmode)
 {
-  float blend = gv->gv_blend;
-  gl_video_frame_t *gvf_a = (gl_video_frame_t *)fra;
-  gl_video_frame_t *gvf_b = (gl_video_frame_t *)frb;
+  const glw_video_config_t *gvc = &gv->gv_cfg_cur;
+  const float blend = gv->gv_blend;
   int i;
   
-  video_frame_upload(gv, gvf_a, textype);
-  video_frame_upload(gv, gvf_b, textype);
-    
-  if(fra->vdf_width[0] == 0)
-    return;
-
-  if(frb->vdf_width[0] == 0)
-    return;
+  gv_surface_pixmap_upload(sa, &gv->gv_cfg_cur, textype);
+  gv_surface_pixmap_upload(sb, &gv->gv_cfg_cur, textype);
   
   glEnable(GL_FRAGMENT_PROGRAM_ARB);
   glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,
@@ -697,11 +571,11 @@ gv_blend_frames(glw_video_t *gv, video_decoder_t *vd,
 			       /* ctrl.y == blend */
 			       blend,
 			       /* ctrl.z == image a, y displace */
-			       (-0.5f * fra->vdf_debob) / 
-			       (float)fra->vdf_height[0],
+			       (-0.5f * sa->gvs_yshift) / 
+			       (float)gvc->gvc_height[0],
 			       /* ctrl.w == image b, y displace */
-			       (-0.5f * frb->vdf_debob) / 
-			       (float)frb->vdf_height[0]);
+			       (-0.5f * sb->gvs_yshift) / 
+			       (float)gvc->gvc_height[0]);
 				
   /* color matrix */
   for(i = 0; i < 3; i++)
@@ -711,25 +585,25 @@ gv_blend_frames(glw_video_t *gv, video_decoder_t *vd,
 				 gv->gv_cmatrix[i * 3 + 2], 0.0f);
 
   glActiveTextureARB(GL_TEXTURE5_ARB);
-  glBindTexture(textype, gv_tex_get(gvf_b, GVF_TEX_Cb));
+  glBindTexture(textype, gv_tex_get(sb, GVF_TEX_Cb));
 
   glActiveTextureARB(GL_TEXTURE4_ARB);
-  glBindTexture(textype, gv_tex_get(gvf_b, GVF_TEX_Cr));
+  glBindTexture(textype, gv_tex_get(sb, GVF_TEX_Cr));
 
   glActiveTextureARB(GL_TEXTURE3_ARB);
-  glBindTexture(textype, gv_tex_get(gvf_b, GVF_TEX_L));
+  glBindTexture(textype, gv_tex_get(sb, GVF_TEX_L));
 
   glActiveTextureARB(GL_TEXTURE2_ARB);
-  glBindTexture(textype, gv_tex_get(gvf_a, GVF_TEX_Cb));
+  glBindTexture(textype, gv_tex_get(sa, GVF_TEX_Cb));
 
   glActiveTextureARB(GL_TEXTURE1_ARB);
-  glBindTexture(textype, gv_tex_get(gvf_a, GVF_TEX_Cr));
+  glBindTexture(textype, gv_tex_get(sa, GVF_TEX_Cr));
 
   glActiveTextureARB(GL_TEXTURE0_ARB);
-  glBindTexture(textype, gv_tex_get(gvf_a, GVF_TEX_L));
+  glBindTexture(textype, gv_tex_get(sa, GVF_TEX_L));
 
-  render_video_quad(fra->vdf_cutborder, rectmode, 
-		    fra->vdf_width[0], fra->vdf_height[0]);
+  render_video_quad(!!(gvc->gvc_flags & GVC_CUTBORDER), rectmode, 
+		    gvc->gvc_width[0], gvc->gvc_height[0]);
 
   glDisable(GL_FRAGMENT_PROGRAM_ARB);
 }
@@ -738,146 +612,87 @@ gv_blend_frames(glw_video_t *gv, video_decoder_t *vd,
 /**
  *
  */
-void 
-glw_video_render(glw_t *w, glw_rctx_t *rc)
+static void
+render(glw_video_t *gv, glw_rctx_t *rc)
 {
-  glw_video_t *gv = (glw_video_t *)w;
-  video_decoder_t *vd = gv->gv_vd;
-  glw_rctx_t rc0 = *rc;
-  glw_root_t *gr = w->glw_root;
-  video_decoder_frame_t *fra = gv->gv_fra, *frb = gv->gv_frb;
-  int width = 0, height = 0;
+  glw_root_t *gr = gv->w.glw_root;
   int textype = gr->gr_be.gbr_primary_texture_mode;
   int rectmode = !gr->gr_normalized_texture_coords;
+  glw_video_surface_t *sa = gv->gv_sa, *sb = gv->gv_sb;
 
-  glPushMatrix();
+  if(sa == NULL)
+    return;
 
-  glw_scale_to_aspect(&rc0, vd->vd_aspect);
-
-  if(fra != NULL && glw_is_focusable(w))
-    glw_store_matrix(w, &rc0);
-
-  if(rc0.rc_alpha > 0.98f) 
+  if(rc->rc_alpha > 0.98f) 
     glDisable(GL_BLEND); 
   else
     glEnable(GL_BLEND); 
   
-
-  if(fra != NULL) {
-
-    width = fra->vdf_width[0];
-    height = fra->vdf_height[0];
-
-    if(frb != NULL) {
-      gv_blend_frames(gv, vd, fra, frb, rc0.rc_alpha, textype, rectmode);
-    } else {
-      render_video_1f(gv, vd, fra, rc0.rc_alpha, textype, rectmode);
-    }
+  if(sb != NULL) {
+    gv_blend_frames(gv, sa, sb, rc->rc_alpha, textype, rectmode);
+  } else {
+    render_video_1f(gv, sa, rc->rc_alpha, textype, rectmode);
   }
 
-  gv->gv_width  = width;
-  gv->gv_height = height;
-
   glEnable(GL_BLEND); 
-
-  glScalef(2.0f / width, -2.0f / height, 0.0f);
-  glTranslatef(-width / 2, -height / 2, 0.0f);
-
-  if(width > 0 && (glw_is_focused(w) || !vd->vd_pci.hli.hl_gi.hli_ss))
-    gvo_render(&gv->gv_spu, w->glw_root, &rc0);
-
-  gvo_render(&gv->gv_sub, w->glw_root, &rc0);
-
-  glPopMatrix();
-
-  if(gv->gv_sub.gvo_child != NULL)
-    glw_render0(gv->gv_sub.gvo_child, rc);
 }
 
 
 
+/**
+ *
+ */
+static glw_video_engine_t glw_video_opengl = {
+  .gve_name = "OpenGL fragment shader",
+  .gve_newframe = newframe,
+  .gve_render = render,
+  .gve_surface_reset = surface_reset,
+  .gve_surface_init = surface_init,
+};
 
-
-typedef enum {
-  DEINTERLACE_NONE,
-  DEINTERLACE_OPENGL,
-  DEINTERLACE_YADIF_FRAME,
-  DEINTERLACE_YADIF_FIELD, // Best YADIF version
-  DEINTERLACE_YADIF_FRAME_NO_SPATIAL_ILACE,
-  DEINTERLACE_YADIF_FIELD_NO_SPATIAL_ILACE,
-} deinterlacertype_t;
-
-extern void yadif_filter_line(int mode, uint8_t *dst, uint8_t *prev, uint8_t *cur, uint8_t *next, int w, int refs, int parity);
 
 /**
- * Frame delivery from video decoder
+ *
  */
-void 
-glw_video_frame_deliver(struct video_decoder *vd,
-			uint8_t * const data[],
-			const int pitch[],
-			int width,
-			int height,
-			int pix_fmt,
-			int64_t pts,
-			int epoch,
-			int duration,
-			int flags)
+void
+glw_video_input_yuvp(glw_video_t *gv,
+		     uint8_t * const data[], const int pitch[],
+		     int width, int height, int pix_fmt,
+		     int64_t pts, int epoch, int duration, int flags)
 {
   int hvec[3], wvec[3];
-  int tff, w2, mode, i, j, h, w;
-  uint8_t *prev, *cur, *next, *src, *dst;
+  int i, h, w;
+  uint8_t *src;
+  uint8_t *dst;
+  int tff;
   int hshift, vshift;
-  deinterlacertype_t dt;
-  video_decoder_frame_t *vdf;
-
+  glw_video_surface_t *s;
   const int parity = 0;
-
-  if(data == NULL) {
-    // Blackout
-    hvec[0] = wvec[0] = 0;
-    hvec[1] = wvec[1] = 0;
-    hvec[2] = wvec[2] = 0;
-
-    if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
-      return;
-
-    vdf->vdf_pts = AV_NOPTS_VALUE;
-    vdf->vdf_epoch = epoch;
-    vdf->vdf_duration = 1;
-    vdf->vdf_cutborder = 0;
-    TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
-    return;
-  }
-
-  if(flags & VD_INTERLACED) {
-    dt = DEINTERLACE_OPENGL;
-  } else {
-    dt = DEINTERLACE_NONE;
-  }
+  const int ilace = !!(flags & VD_INTERLACED);
 
   avcodec_get_chroma_sub_sample(pix_fmt, &hshift, &vshift);
 
   wvec[0] = width;
   wvec[1] = width >> hshift;
   wvec[2] = width >> hshift;
-  hvec[0] = height;
-  hvec[1] = height >> vshift;
-  hvec[2] = height >> vshift;
+  hvec[0] = height >> ilace;
+  hvec[1] = height >> (vshift + ilace);
+  hvec[2] = height >> (vshift + ilace);
 
-  switch(dt) {
+  if(glw_video_configure(gv, &glw_video_opengl, wvec, hvec, 3,
+			 ilace ? GVC_CUTBORDER : 0))
+    return;
+  
+  if((s = glw_video_get_surface(gv)) == NULL)
+    return;
 
-  case DEINTERLACE_NONE:
-    vd->vd_active_frames_needed = 3;
-    if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
-      return;
+  if(!ilace) {
 
     for(i = 0; i < 3; i++) {
-      h = vdf->vdf_height[i];
-      w = vdf->vdf_width[i];
-      
+      w = wvec[i];
+      h = hvec[i];
       src = data[i];
-      dst = vdf->vdf_data[i];
+      dst = s->gvs_data[i];
  
       while(h--) {
 	memcpy(dst, src, w);
@@ -886,38 +701,20 @@ glw_video_frame_deliver(struct video_decoder *vd,
       }
     }
 
-    vdf->vdf_pts = pts;
-    vdf->vdf_epoch = epoch;
-    vdf->vdf_duration = duration;
-    vdf->vdf_cutborder = 0;
-    TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
-    return;
+    glw_video_put_surface(gv, s, pts, epoch, duration, 0);
 
-  case DEINTERLACE_OPENGL:
+  } else {
+
     duration /= 2;
 
     tff = !!(flags & VD_TFF) ^ parity;
 
-    vd->vd_active_frames_needed = 3;
-
-    /*
-     *  Deinterlace by 2 x framerate and 0.5 * y-res,
-     *  OpenGL does bledning for us
-     */
-
-    hvec[0] = hvec[0] / 2;
-    hvec[1] = hvec[1] / 2;
-    hvec[2] = hvec[2] / 2;
-
-    if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
-      return;
-
     for(i = 0; i < 3; i++) {
+      w = wvec[i];
+      h = hvec[i];
       
       src = data[i]; 
-      dst = vdf->vdf_data[i];
-      h = vdf->vdf_height[i];
-      w = vdf->vdf_width[i];
+      dst = s->gvs_data[i];
       
       while(h -= 2 > 0) {
 	memcpy(dst, src, w);
@@ -926,23 +723,17 @@ glw_video_frame_deliver(struct video_decoder *vd,
       }
     }
     
-    vdf->vdf_debob = !tff;
-    
-    vdf->vdf_pts = pts;
-    vdf->vdf_epoch = epoch;
-    vdf->vdf_duration = duration;
-    TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
+    glw_video_put_surface(gv, s, pts, epoch, duration, !tff);
 
-
-    if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
+    if((s = glw_video_get_surface(gv)) == NULL)
       return;
 
     for(i = 0; i < 3; i++) {
+      w = wvec[i];
+      h = hvec[i];
       
       src = data[i] + pitch[i];
-      dst = vdf->vdf_data[i];
-      h = vdf->vdf_height[i];
-      w = vdf->vdf_width[i];
+      dst = s->gvs_data[i];
       
       while(h -= 2 > 0) {
 	memcpy(dst, src, w);
@@ -951,115 +742,6 @@ glw_video_frame_deliver(struct video_decoder *vd,
       }
     }
     
-    vdf->vdf_debob = tff;
-    vdf->vdf_cutborder = 1;
-
-    vdf->vdf_pts = pts + duration;
-    vdf->vdf_epoch = epoch;
-    vdf->vdf_duration = duration;
-    TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
-    return;
-    
-  case DEINTERLACE_YADIF_FRAME:
-    mode = 0; goto yadif;
-  case DEINTERLACE_YADIF_FIELD:
-    mode = 1; goto yadif;
-  case DEINTERLACE_YADIF_FRAME_NO_SPATIAL_ILACE:
-    mode = 2; goto yadif;
-  case DEINTERLACE_YADIF_FIELD_NO_SPATIAL_ILACE:
-    mode = 3;
-  yadif:
-    if(vd->vd_yadif_width   != width  ||
-       vd->vd_yadif_height  != height ||
-       vd->vd_yadif_pix_fmt != pix_fmt) {
-      
-      vd->vd_yadif_width   = width;
-      vd->vd_yadif_height  = height;
-      vd->vd_yadif_pix_fmt = pix_fmt;
-
-      for(i = 0; i < 3; i++) {
-	avpicture_free(&vd->vd_yadif_pic[i]);
-	avpicture_alloc(&vd->vd_yadif_pic[i], pix_fmt, width, height);
-      }
-    }
-
-    vd->vd_active_frames_needed = 3;
-    for(i = 0; i < 3; i++) {
-      w = vd->vd_yadif_width  >> (i ? hshift : 0);
-      h = vd->vd_yadif_height >> (i ? vshift : 0);
-      src = data[i];
-      dst = vd->vd_yadif_pic[vd->vd_yadif_phase].data[i];
-      while(h--) {
-	memcpy(dst, src, w);
-	dst += w;
-	src += pitch[i];
-      }
-    }
-
-    tff = !!(flags & VD_TFF) ^ parity;
-
-    pts -= duration;
-
-    if(mode & 1) 
-      duration /= 2;
-
-    for(j = 0; j <= (mode & 1); j++) {
-
-      if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
-	return;
-
-      for(i = 0; i < 3; i++) {
-	int y;
-	int parity = j ^ tff ^ 1;
-
-	h = vd->vd_yadif_phase;
-	next = vd->vd_yadif_pic[h].data[i];
-	if(--h < 0) h = 2;
-	cur = vd->vd_yadif_pic[h].data[i];
-	if(--h < 0) h = 2;
-	prev = vd->vd_yadif_pic[h].data[i];
-
-	dst = vdf->vdf_data[i];
-	h = vdf->vdf_height[i];
-	w = vdf->vdf_width[i];
-	w2 = vd->vd_yadif_width >> (i ? hshift : 0);
-
-	for(y = 0; y < 2; y++) {
-	  memcpy(dst, cur, w);
-	  dst  += w; prev += w2; cur += w2; next += w2;
-	}
-
-	for(; y < h - 2; y++) {
-
-	  if((y ^ parity) & 1) {
-	    yadif_filter_line(mode, dst, prev, cur, next, w, w2, parity ^ tff);
-	  } else {
-	    memcpy(dst, cur, w);
-	  }
-	  dst  += w; prev += w2; cur += w2; next += w2;
-	}
-
-	for(; y < h; y++) {
-	  memcpy(dst, cur, w);
-	  dst  += w; prev += w2; cur += w2; next += w2;
-	}
-      }
-
-      /* XXXX: Ugly */
-#if defined(__i386__) || defined(__x86_64__)
-      asm volatile("emms \n\t" : : : "memory");
-#endif
-
-      vdf->vdf_pts = pts + j * duration;
-      vdf->vdf_epoch = epoch;
-      vdf->vdf_duration = duration;
-      vdf->vdf_cutborder = 0;
-      TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
-    }
-
-    vd->vd_yadif_phase++;
-    if(vd->vd_yadif_phase > 2)
-      vd->vd_yadif_phase = 0;
-    return;
+    glw_video_put_surface(gv, s, pts + duration, epoch, duration, tff);
   }
 }

@@ -77,36 +77,10 @@ kalman(kalman_t *k, float z)
   return k->x_next = x;
 }
 
-TAILQ_HEAD(video_decoder_frame_queue, video_decoder_frame);
-
-
 /**
  *
  */
-typedef struct video_decoder_frame {
- 
-  TAILQ_ENTRY(video_decoder_frame) vdf_link;
-
-  int vdf_duration;
-  uint64_t vdf_pts;
-  int vdf_epoch;
-
-  uint8_t vdf_debob;
-  uint8_t vdf_cutborder;
-
-  void *vdf_data[3];
-
-  int vdf_width[3];
-  int vdf_height[3];
-
-} video_decoder_frame_t;
-
-
-/**
- *
- */
-typedef void (vd_frame_deliver_t)(struct video_decoder *vd,
-				  uint8_t * const data[],
+typedef void (vd_frame_deliver_t)(uint8_t * const data[],
 				  const int pitch[],
 				  int width,
 				  int height,
@@ -114,7 +88,8 @@ typedef void (vd_frame_deliver_t)(struct video_decoder *vd,
 				  int64_t pts,
 				  int epoch,
 				  int duration,
-				  int flags);
+				  int flags,
+				  void *opaque);
 
 #define VD_INTERLACED 0x1  // Frame delivered is interlaced
 #define VD_TFF        0x2  // For interlaced frame, top-field-first
@@ -140,51 +115,7 @@ typedef struct video_decoder {
 
   media_pipe_t *vd_mp;
 
-  /* Mutex for protecting access to the frame queues */
-
-  hts_mutex_t vd_queue_mutex;
-
   int vd_decoder_running;
-
-  /* gv_buffer_allocator() is responsible for allocating
-     frames based on vd_active_frames and vd_active_framed_needed */
-
-  int vd_active_frames; /* number of active frames (ie, not on
-			    inactive queue */
-  int vd_active_frames_needed; /* number of active frames we want */
-				   
-
-  /* Display queue contains frames that have been writted into
-     and should get displayed. gvf->gvf_uploaded is set once the
-     PBO has been texturified */
-
-  struct video_decoder_frame_queue vd_display_queue;
-
-  /* Frames on 'avail_queue' are available to decoder for writing into */
-
-  struct video_decoder_frame_queue vd_avail_queue;
-  hts_cond_t vd_avail_queue_cond;
-
-  /* Frames on 'displaying_queue' are currently displayed, we cannot
-     do anything with these until next frame */
-
-  struct video_decoder_frame_queue vd_displaying_queue;
-
-  /* Frames on 'bufalloc' queue needs to have their PBO buffer (re-)alloced
-     we cannot do this in the decoder thread (opengl is single threaded)
-     so frames are sent to opengl rendered for allocation */
-
-  struct video_decoder_frame_queue vd_bufalloc_queue;
-
-  /* Once frames has been (re-)alloced, they are returned on the
-     'bufalloced' queue */
-
-  struct video_decoder_frame_queue vd_bufalloced_queue;
-  hts_cond_t vd_bufalloced_queue_cond;
-
-  /* Since we may render the same video output multiple times, we keep
-     track of the two frames to be displayed separately for the
-     render function */
 
   int vd_do_flush;
 
@@ -273,10 +204,6 @@ video_decoder_t *video_decoder_create(media_pipe_t *mp,
 void video_decoder_stop(video_decoder_t *gv);
 
 void video_decoder_destroy(video_decoder_t *gv);
-
-video_decoder_frame_t *vd_dequeue_for_decode(video_decoder_t *vd, 
-					     int w[3], int h[3]);
-
 
 /**
  * DVD SPU (SubPicture Units)

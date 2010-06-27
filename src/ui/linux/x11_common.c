@@ -163,11 +163,10 @@ vo_set_url(void *opaque, const char *url)
 /**
  *
  */
-static void xv_video_frame_deliver(struct video_decoder *vd,
-				   uint8_t * const data[], const int pitch[],
+static void xv_video_frame_deliver(uint8_t * const data[], const int pitch[],
 				   int width, int height, int pix_fmt,
 				   int64_t pts, int epoch, int duration,
-				   int flags);
+				   int flags, void *opaque);
 
 /**
  *
@@ -207,11 +206,10 @@ init_with_xv(video_output_t *vo)
 /**
  *
  */
-static void xi_video_frame_deliver(struct video_decoder *vd,
-				   uint8_t * const data[], const int pitch[],
+static void xi_video_frame_deliver(uint8_t * const data[], const int pitch[],
 				   int width, int height, int pix_fmt,
 				   int64_t pts, int epoch, int duration,
-				   int flags);
+				   int flags, void *opaque);
 
 /**
  *
@@ -428,12 +426,12 @@ compute_output_dimensions(struct video_decoder *vd, video_output_t *vo,
  *
  */
 static void 
-xv_video_frame_deliver(struct video_decoder *vd,
-		       uint8_t * const data[], const int linesize[],
+xv_video_frame_deliver(uint8_t * const data[], const int linesize[],
 		       int width, int height, int pix_fmt,
-		       int64_t pts, int epoch, int duration, int flags)
+		       int64_t pts, int epoch, int duration, int flags,
+		       void *opaque)
 {
-  video_output_t *vo = vd->vd_opaque;
+  video_output_t *vo = opaque;
   int syncok;
   int outw, outh;
 
@@ -491,9 +489,9 @@ xv_video_frame_deliver(struct video_decoder *vd,
     }
   }
 
-  compute_output_dimensions(vd, vo, &outw, &outh);
+  compute_output_dimensions(vo->vo_vd, vo, &outw, &outh);
 
-  syncok = wait_for_aclock(vd->vd_mp, pts, epoch);
+  syncok = wait_for_aclock(vo->vo_mp, pts, epoch);
 
   XvShmPutImage(vo->vo_dpy, vo->vo_xv_port, vo->vo_win, vo->vo_gc,
 		vo->vo_xv_image, 0, 0, width, height,
@@ -544,12 +542,12 @@ get_pix_fmt(video_output_t *vo)
  *
  */
 static void
-xi_video_frame_deliver(struct video_decoder *vd,
-		       uint8_t * const data[], const int pitch[],
+xi_video_frame_deliver(uint8_t * const data[], const int pitch[],
 		       int width, int height,  int pix_fmt,
-		       int64_t pts, int epoch, int duration, int flags)
+		       int64_t pts, int epoch, int duration, int flags,
+		       void *opaque)
 {
-  video_output_t *vo = vd->vd_opaque;
+  video_output_t *vo = opaque;
   uint8_t *dst[4] = {0,0,0,0};
   int dstpitch[4] = {0,0,0,0};
   int syncok;
@@ -561,7 +559,7 @@ xi_video_frame_deliver(struct video_decoder *vd,
   if(flags & VD_PRESCALED) {
     outw = width; outh = height;
   } else {
-    compute_output_dimensions(vd, vo, &outw, &outh);
+    compute_output_dimensions(vo->vo_vd, vo, &outw, &outh);
   }
 
   if(vo->vo_ximage != NULL && 
@@ -645,7 +643,7 @@ xi_video_frame_deliver(struct video_decoder *vd,
   }
 
 
-  syncok = wait_for_aclock(vd->vd_mp, pts, epoch);
+  syncok = wait_for_aclock(vo->vo_mp, pts, epoch);
 
   XShmPutImage(vo->vo_dpy, vo->vo_win, vo->vo_gc, vo->vo_ximage,
 	       0, 0,

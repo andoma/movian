@@ -24,6 +24,30 @@
 #include "video/video_playback.h"
 #include "video/video_decoder.h"
 
+TAILQ_HEAD(glw_video_surface_queue, glw_video_surface);
+
+
+
+
+
+/**
+ *
+ */
+typedef struct {
+
+  const struct glw_video_engine *gvc_engine;
+
+  int gvc_width[3];
+  int gvc_height[3];
+
+  int gvc_nsurfaces;
+
+  int gvc_flags;
+#define GVC_CUTBORDER 0x2
+
+} glw_video_config_t;
+
+
 /**
  *
  */
@@ -38,6 +62,45 @@ typedef struct glw_video_overlay {
 
 } glw_video_overlay_t;
 
+
+/**
+ *
+ */
+typedef struct glw_video_surface {
+
+  TAILQ_ENTRY(glw_video_surface) gvs_link;
+
+  int gvs_duration;
+  uint64_t gvs_pts;
+  int gvs_epoch;
+
+  void *gvs_data[3];
+
+
+#if CONFIG_GLW_BACKEND_OPENGL
+  GLuint gvs_pbo[3];
+  void *gvs_pbo_ptr[3];
+
+  int gvs_uploaded;
+
+  GLuint gvs_textures[3];
+
+  unsigned int gvs_frame_buffer;
+
+  int gvs_yshift;
+#endif
+
+
+#if CONFIG_GLW_BACKEND_GX
+  GXTexObj gvs_obj[3];
+  void *gvs_mem[3];
+  int gvs_size[3];
+#endif
+
+} glw_video_surface_t;
+
+
+#define GLW_VIDEO_MAX_SURFACES 6
 
 /**
  *
@@ -58,90 +121,110 @@ typedef struct glw_video {
   video_playback_t *gv_vp;
   media_pipe_t *gv_mp;
 
-  struct video_decoder_frame *gv_fra, *gv_frb;
+  glw_video_surface_t *gv_sa, *gv_sb;
   float gv_blend;
 
-
-
   LIST_ENTRY(glw_video) gv_global_link;
-
-  // Used to map mouse pointer coords to video frame pixels
-  int gv_width;
-  int gv_height;
 
   glw_video_overlay_t gv_spu; // DVD SPU 
   glw_video_overlay_t gv_sub; // Subtitles
 
   float gv_cmatrix[9];
   
+  glw_video_config_t gv_cfg_cur;
+  glw_video_config_t gv_cfg_req;
+  hts_cond_t gv_reconf_cond;
+
+  glw_video_surface_t gv_surfaces[GLW_VIDEO_MAX_SURFACES];
+  
+  hts_mutex_t gv_surface_mutex;
+
+  /**
+   * Frames available for decoder
+   * Once we push frames here we also notify via gv_avail_queue_cond
+   */
+  struct glw_video_surface_queue gv_avail_queue;
+  hts_cond_t gv_avail_queue_cond;
+
+  /**
+   * Frames currently being displayed sits here
+   */
+  struct glw_video_surface_queue gv_displaying_queue;
+
+  /**
+   * Freshly decoded surfaces are enqueued here
+   */
+  struct glw_video_surface_queue gv_decoded_queue;
+
+
 } glw_video_t;
 
 
+/**
+ *
+ */
+typedef struct glw_video_engine {
+  const char *gve_name;
+  void (*gve_render)(glw_video_t *gv, glw_rctx_t *rc);
+
+  int64_t (*gve_newframe)(glw_video_t *gv, video_decoder_t *vd);
+
+  void (*gve_surface_reset)(glw_video_t *gv, glw_video_surface_t *gvs);
+
+  void (*gve_surface_init)(glw_video_t *gv, glw_video_surface_t *gvs,
+			   const glw_video_config_t *gvc);
+
+} glw_video_engine_t;
 
 
-
-int glw_video_pointer_event(video_decoder_t *vd, int width, int height,
-			    glw_pointer_event_t *gpe, media_pipe_t *mp);
-
-void glw_video_update_focusable(video_decoder_t *vd, glw_t *w);
-
-int glw_video_widget_event(event_t *e, media_pipe_t *mp, int in_menu);
 
 int glw_video_compute_output_duration(video_decoder_t *vd, int frame_duration);
 
 void glw_video_compute_avdiff(glw_root_t *gr,
 			      video_decoder_t *vd, media_pipe_t *mp, 
 			      int64_t pts, int epoch);
-
-void glw_video_purge_queues(video_decoder_t *vd,
-			    void (*purge)(video_decoder_t *vd,
-					  video_decoder_frame_t *vdf));
-
-void glw_video_frame_deliver(struct video_decoder *vd,
-			     uint8_t * const data[],
-			     const int pitch[],
-			     int width,
-			     int height,
-			     int pix_fmt,
-			     int64_t pts,
-			     int epoch,
-			     int duration,
-			     int flags);
-
-void glw_video_framepurge(video_decoder_t *vd, video_decoder_frame_t *vdf);
-
-void glw_video_buffer_allocator(video_decoder_t *vd);
-
-void glw_video_new_frame(video_decoder_t *vd, glw_video_t *gv, glw_root_t *gr);
-
 void glw_video_render(glw_t *w, glw_rctx_t *rc);
 
+void glw_video_reset(glw_root_t *gr);
 
 /**
  *
  */
 static inline void
-glw_video_enqueue_for_display(video_decoder_t *vd, video_decoder_frame_t *vdf,
-			      struct video_decoder_frame_queue *fromqueue)
+glw_video_enqueue_for_display(glw_video_t *gv, glw_video_surface_t *gvs,
+			      struct glw_video_surface_queue *fromqueue)
 {
-  TAILQ_REMOVE(fromqueue, vdf, vdf_link);
-  TAILQ_INSERT_TAIL(&vd->vd_displaying_queue, vdf, vdf_link);
+  TAILQ_REMOVE(fromqueue, gvs, gvs_link);
+  TAILQ_INSERT_TAIL(&gv->gv_displaying_queue, gvs, gvs_link);
 }
 
 
 /**
  *
  */
-void gvo_deinit(glw_video_overlay_t *gvo);
 
-void gvo_render(glw_video_overlay_t *gvo, glw_root_t *gr, glw_rctx_t *rc);
+void glw_video_surface_reconfigure(glw_video_t *gv);
 
-void glw_video_spu_layout(video_decoder_t *vd, glw_video_overlay_t *gvo, 
-			  const glw_root_t *gr, int64_t pts);
+void glw_video_surfaces_cleanup(glw_video_t *gv);
 
-void glw_video_sub_layout(video_decoder_t *vd, glw_video_overlay_t *gvo, 
-			  glw_root_t *gr, int64_t pts,
-			  glw_t *parent);
+glw_video_surface_t *glw_video_get_surface(glw_video_t *gv);
+
+void glw_video_put_surface(glw_video_t *gv, glw_video_surface_t *s,
+			   int64_t pts, int epoch, int duration, int yshift);
+
+int glw_video_configure(glw_video_t *gv,
+			const glw_video_engine_t *engine,
+			const int *wvec, const int *hvec,
+			int surfaces, int flags);
+
+
+/**
+ *
+ */
+void glw_video_input_yuvp(glw_video_t *gv,
+			  uint8_t * const data[], const int pitch[],
+			  int width, int height, int pix_fmt,
+			  int64_t pts, int epoch, int duration, int flags);
 
 #endif /* GLW_VIDEO_COMMON_H */
 

@@ -39,71 +39,6 @@ vd_init_timings(video_decoder_t *vd)
   vd->vd_lastpts = AV_NOPTS_VALUE;
   vd->vd_nextpts = AV_NOPTS_VALUE;
   vd->vd_estimated_duration = 0;
-  //  vd->vd_last_subtitle_index = -1;
-}
-
-/**
- * vd_dequeue_for_decode
- *
- * This function will return a frame with a mapped PBO that have w x h
- * according to the w[] and h[] arrays. If no widget is attached to
- * the decoder it wil return NULL.
- *
- */
-video_decoder_frame_t *
-vd_dequeue_for_decode(video_decoder_t *vd, int w[3], int h[3])
-{
-  video_decoder_frame_t *vdf;
-
-  hts_mutex_lock(&vd->vd_queue_mutex);
-  
-  while((vdf = TAILQ_FIRST(&vd->vd_avail_queue)) == NULL &&
-	vd->vd_decoder_running) {
-    hts_cond_wait(&vd->vd_avail_queue_cond, &vd->vd_queue_mutex);
-  }
-
-  if(!vd->vd_decoder_running) {
-    hts_mutex_unlock(&vd->vd_queue_mutex);
-    return NULL;
-  }
-
-  TAILQ_REMOVE(&vd->vd_avail_queue, vdf, vdf_link);
-
-  if(vdf->vdf_width[0] == w[0] && vdf->vdf_height[0] == h[0] && 
-     vdf->vdf_width[1] == w[1] && vdf->vdf_height[1] == h[1] && 
-     vdf->vdf_width[2] == w[2] && vdf->vdf_height[2] == h[2] && 
-     vdf->vdf_data[0] != NULL) {
-    hts_mutex_unlock(&vd->vd_queue_mutex);
-    return vdf;
-  }
-
-  /* Frame has not correct width / height, enqueue it for
-     buffer (re-)allocation */
-
-  vdf->vdf_width[0]  = w[0];
-  vdf->vdf_height[0] = h[0];
-  vdf->vdf_width[1]  = w[1];
-  vdf->vdf_height[1] = h[1];
-  vdf->vdf_width[2]  = w[2];
-  vdf->vdf_height[2] = h[2];
-
-  TAILQ_INSERT_TAIL(&vd->vd_bufalloc_queue, vdf, vdf_link);
-
-  while((vdf = TAILQ_FIRST(&vd->vd_bufalloced_queue)) == NULL &&
-	vd->vd_decoder_running)
-    hts_cond_wait(&vd->vd_bufalloced_queue_cond, &vd->vd_queue_mutex);
-
-  if(!vd->vd_decoder_running) {
-    hts_mutex_unlock(&vd->vd_queue_mutex);
-    return NULL;
-  }
-
-  TAILQ_REMOVE(&vd->vd_bufalloced_queue, vdf, vdf_link);
-
-  hts_mutex_unlock(&vd->vd_queue_mutex);
-
-  assert(vdf->vdf_data[0] != NULL);
-  return vdf;
 }
 
 
@@ -111,12 +46,10 @@ vd_dequeue_for_decode(video_decoder_t *vd, int w[3], int h[3])
  *
  */
 typedef struct {
-  int refcount;
   int64_t pts;
   int64_t dts;
   int epoch;
   int duration;
-  int stream;
   int64_t time;
 } frame_meta_t;
 
@@ -135,7 +68,6 @@ vd_get_buffer(struct AVCodecContext *c, AVFrame *pic)
   fm->dts = mb->mb_dts;
   fm->time = mb->mb_time;
   fm->duration = mb->mb_duration;
-  fm->stream = mb->mb_stream;
   fm->epoch = mb->mb_epoch;
   pic->opaque = fm;
 
@@ -302,12 +234,12 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
 
   vd->vd_deinterlace |= deinterlace;
 
-  vd->vd_frame_deliver(vd, frame->data, frame->linesize,
+  vd->vd_frame_deliver(frame->data, frame->linesize,
 		       ctx->width, ctx->height, ctx->pix_fmt,
 		       pts, epoch, duration, 
 		       (vd->vd_deinterlace ? VD_INTERLACED : 0) |
-		       (frame->top_field_first ? VD_TFF : 0)
-		       );
+		       (frame->top_field_first ? VD_TFF : 0),
+		       vd->vd_opaque);
 }
 
 
@@ -426,7 +358,7 @@ vd_thread(void *aux)
       break;
 
     case MB_BLACKOUT:
-      vd->vd_frame_deliver(vd, NULL, NULL, 0, 0, 0, 0, 0, 0, 0);
+      vd->vd_frame_deliver(NULL, NULL, 0, 0, 0, 0, 0, 0, 0, vd->vd_opaque);
       break;
 
     default:
@@ -467,19 +399,6 @@ video_decoder_create(media_pipe_t *mp, vd_frame_deliver_t *frame_delivery,
 
   vd_init_timings(vd);
 
-  /* For the exact meaning of these, see glw_video_xxx.h */
-    
-  TAILQ_INIT(&vd->vd_avail_queue);
-  TAILQ_INIT(&vd->vd_displaying_queue);
-  TAILQ_INIT(&vd->vd_display_queue);
-  TAILQ_INIT(&vd->vd_bufalloc_queue);
-  TAILQ_INIT(&vd->vd_bufalloced_queue);
-
-  hts_cond_init(&vd->vd_avail_queue_cond);
-  hts_cond_init(&vd->vd_bufalloced_queue_cond);
-  hts_mutex_init(&vd->vd_queue_mutex);
-
-
 #ifdef CONFIG_DVD
   dvdspu_decoder_init(vd);
 #endif
@@ -503,12 +422,7 @@ video_decoder_stop(video_decoder_t *vd)
 
   mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_EXIT);
 
-  hts_mutex_lock(&vd->vd_queue_mutex);
   vd->vd_decoder_running = 0;
-  hts_cond_signal(&vd->vd_avail_queue_cond);
-  hts_cond_signal(&vd->vd_bufalloced_queue_cond);
-  hts_mutex_unlock(&vd->vd_queue_mutex);
-
   hts_thread_join(&vd->vd_decoder_thread);
   mp_ref_dec(vd->vd_mp);
   vd->vd_mp = NULL;
@@ -526,15 +440,5 @@ video_decoder_destroy(video_decoder_t *vd)
 #endif
 
   video_subtitles_deinit(vd);
-
-  assert(TAILQ_FIRST(&vd->vd_avail_queue) == NULL);
-  assert(TAILQ_FIRST(&vd->vd_displaying_queue) == NULL);
-  assert(TAILQ_FIRST(&vd->vd_display_queue) == NULL);
-  assert(TAILQ_FIRST(&vd->vd_bufalloc_queue) == NULL);
-  assert(TAILQ_FIRST(&vd->vd_bufalloced_queue) == NULL);
-
-  hts_cond_destroy(&vd->vd_avail_queue_cond);
-  hts_cond_destroy(&vd->vd_bufalloced_queue_cond);
-  hts_mutex_destroy(&vd->vd_queue_mutex);
   free(vd);
 }

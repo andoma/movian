@@ -27,7 +27,7 @@
 #include <wchar.h>
 
 #include "glw.h"
-#include "glw_video_opengl.h"
+#include "glw_video_common.h"
 
 #include <GL/glx.h>
 #include <GL/glu.h>
@@ -400,7 +400,7 @@ window_close(glw_x11_t *gx11)
 static void
 window_shutdown(glw_x11_t *gx11)
 {
-  glw_video_opengl_flush(&gx11->gr);
+  glw_video_reset(&gx11->gr);
 
   glFlush();
   XSync(gx11->display, False);
