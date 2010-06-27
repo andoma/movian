@@ -247,10 +247,14 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
  *
  */
 static void
-update_vbitrate(media_pipe_t *mp, media_queue_t *mq, video_decoder_t *vd)
+update_vbitrate(media_pipe_t *mp, media_queue_t *mq, 
+		media_buf_t *mb, video_decoder_t *vd)
 {
   int i;
   int64_t sum;
+
+  vd->vd_frame_size[vd->vd_frame_size_ptr] = mb->mb_size;
+  vd->vd_frame_size_ptr = (vd->vd_frame_size_ptr + 1) & VD_FRAME_SIZE_MASK;
 
   if(vd->vd_estimated_duration == 0 || !mp->mp_stats)
     return;
@@ -324,15 +328,12 @@ vd_thread(void *aux)
       break;
 
     case MB_VIDEO:
-      vd->vd_frame_size[vd->vd_frame_size_ptr] = mb->mb_size;
-      vd->vd_frame_size_ptr = (vd->vd_frame_size_ptr + 1) & VD_FRAME_SIZE_MASK;
-
       if(mc->data)
 	mc->data(mc, vd, mq, mb, reqsize);
       else
 	vd_decode_video(vd, mq, mb);
 
-      update_vbitrate(mp, mq, vd);
+      update_vbitrate(mp, mq, mb, vd);
       reqsize = -1;
       break;
 
