@@ -145,6 +145,19 @@ surface_reset(glw_video_t *gv, glw_video_surface_t *gvs)
  *
  */
 static void
+yuvp_reset(glw_video_t *gv)
+{
+  int i;
+
+  for(i = 0; i < GLW_VIDEO_MAX_SURFACES; i++)
+    surface_reset(gv, &gv->gv_surfaces[i]);
+}
+
+
+/**
+ *
+ */
+static void
 surface_init(glw_video_t *gv, glw_video_surface_t *gvs,
 	     const glw_video_config_t *gvc)
 {
@@ -168,6 +181,20 @@ surface_init(glw_video_t *gv, glw_video_surface_t *gvs,
   }
   glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
   TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvs, gvs_link);
+}
+
+
+/**
+ *
+ */
+static void
+yuvp_init(glw_video_t *gv)
+{
+  const glw_video_config_t *gvc = &gv->gv_cfg_cur;
+  int i;
+
+  for(i = 0; i < gvc->gvc_nsurfaces; i++)
+    surface_init(gv, &gv->gv_surfaces[i], gvc);
 }
 
 
@@ -368,7 +395,7 @@ gv_compute_blend(glw_video_t *gv, glw_video_surface_t *sa,
  *
  */
 static int64_t
-newframe(glw_video_t *gv, video_decoder_t *vd)
+yuvp_newframe(glw_video_t *gv, video_decoder_t *vd)
 {
   glw_root_t *gr = gv->w.glw_root;
   glw_video_surface_t *sa, *sb, *s;
@@ -613,7 +640,7 @@ gv_blend_frames(const glw_video_t *gv,
  *
  */
 static void
-render(glw_video_t *gv, glw_rctx_t *rc)
+yuvp_render(glw_video_t *gv, glw_rctx_t *rc)
 {
   glw_root_t *gr = gv->w.glw_root;
   int textype = gr->gr_be.gbr_primary_texture_mode;
@@ -643,11 +670,11 @@ render(glw_video_t *gv, glw_rctx_t *rc)
  *
  */
 static glw_video_engine_t glw_video_opengl = {
-  .gve_name = "OpenGL fragment shader",
-  .gve_newframe = newframe,
-  .gve_render = render,
-  .gve_surface_reset = surface_reset,
-  .gve_surface_init = surface_init,
+  .gve_name = "OpenGL YUVP fragment shader",
+  .gve_newframe = yuvp_newframe,
+  .gve_render = yuvp_render,
+  .gve_reset = yuvp_reset,
+  .gve_init = yuvp_init,
 };
 
 

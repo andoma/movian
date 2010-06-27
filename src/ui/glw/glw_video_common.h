@@ -169,10 +169,9 @@ typedef struct glw_video_engine {
 
   int64_t (*gve_newframe)(glw_video_t *gv, video_decoder_t *vd);
 
-  void (*gve_surface_reset)(glw_video_t *gv, glw_video_surface_t *gvs);
+  void (*gve_reset)(glw_video_t *gv);
 
-  void (*gve_surface_init)(glw_video_t *gv, glw_video_surface_t *gvs,
-			   const glw_video_config_t *gvc);
+  void (*gve_init)(glw_video_t *gv);
 
 } glw_video_engine_t;
 

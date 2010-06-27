@@ -573,9 +573,7 @@ glw_video_input(uint8_t * const data[], const int pitch[],
 void
 glw_video_surfaces_cleanup(glw_video_t *gv)
 {
-  int i;
-  for(i = 0; i < GLW_VIDEO_MAX_SURFACES; i++)
-    gv->gv_cfg_cur.gvc_engine->gve_surface_reset(gv, &gv->gv_surfaces[i]);
+  gv->gv_cfg_cur.gvc_engine->gve_reset(gv);
   TAILQ_INIT(&gv->gv_avail_queue);
   TAILQ_INIT(&gv->gv_displaying_queue);
   TAILQ_INIT(&gv->gv_decoded_queue);
@@ -612,16 +610,10 @@ glw_video_reset(glw_root_t *gr)
 void
 glw_video_surface_reconfigure(glw_video_t *gv)
 {
-  int i;
-  const glw_video_config_t *gvc;
-
   glw_video_surfaces_cleanup(gv);
 
   gv->gv_cfg_cur = gv->gv_cfg_req;
-  gvc = &gv->gv_cfg_cur;
-
-  for(i = 0; i < gvc->gvc_nsurfaces; i++)
-    gvc->gvc_engine->gve_surface_init(gv, &gv->gv_surfaces[i], gvc);
+  gv->gv_cfg_cur.gvc_engine->gve_init(gv);
 
   hts_cond_signal(&gv->gv_reconf_cond);
 }
@@ -649,7 +641,7 @@ blank_render(glw_video_t *gv, glw_rctx_t *rc)
  *
  */
 static void
-blank_surface_reset(glw_video_t *gv, glw_video_surface_t *gvs)
+blank_reset(glw_video_t *gv)
 {
 }
 
@@ -657,8 +649,7 @@ blank_surface_reset(glw_video_t *gv, glw_video_surface_t *gvs)
  *
  */
 static void
-blank_surface_init(glw_video_t *gv, glw_video_surface_t *gvs,
-		   const glw_video_config_t *gvc)
+blank_init(glw_video_t *gv)
 {
 }
 
@@ -669,6 +660,6 @@ static glw_video_engine_t glw_video_blank = {
   .gve_name = "No output",
   .gve_newframe = blank_newframe,
   .gve_render = blank_render,
-  .gve_surface_reset = blank_surface_reset,
-  .gve_surface_init = blank_surface_init,
+  .gve_reset = blank_reset,
+  .gve_init = blank_init,
 };
