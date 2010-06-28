@@ -31,7 +31,7 @@ static glw_video_engine_t glw_video_blank;
 static void  glw_video_input(uint8_t * const data[], const int pitch[],
 			     int width, int height, int pix_fmt,
 			     int64_t pts, int epoch, int duration,
-			     int flags, void *opaque);
+			     int flags, float dar, void *opaque);
 
 
 /**
@@ -396,7 +396,7 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
 
   glw_PushMatrix(&rc0, rc);
 
-  glw_scale_to_aspect(&rc0, vd->vd_aspect);
+  glw_scale_to_aspect(&rc0, gv->gv_dar);
 
   if(glw_is_focusable(w))
     glw_store_matrix(w, &rc0);
@@ -526,9 +526,11 @@ static void
 glw_video_input(uint8_t * const data[], const int pitch[],
 		int width, int height, int pix_fmt,
 		int64_t pts, int epoch, int duration,
-		int flags, void *opaque)
+		int flags, float dar, void *opaque)
 {
   glw_video_t *gv = opaque;
+
+  gv->gv_dar = dar;
 
   hts_mutex_lock(&gv->gv_surface_mutex);
 

@@ -89,6 +89,7 @@ typedef void (vd_frame_deliver_t)(uint8_t * const data[],
 				  int epoch,
 				  int duration,
 				  int flags,
+				  float dar,
 				  void *opaque);
 
 #define VD_INTERLACED 0x1  // Frame delivered is interlaced
@@ -125,8 +126,6 @@ typedef struct video_decoder {
   int64_t vd_lastpts;
   int vd_frames_since_last;
   int vd_estimated_duration;
-
-  float vd_aspect;
 
   AVFrame *vd_frame;
 

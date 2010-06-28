@@ -100,6 +100,7 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
   AVFrame *frame = vd->vd_frame;
   frame_meta_t *fm;
   event_ts_t *ets;
+  float dar;
 
   got_pic = 0;
 
@@ -153,13 +154,13 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
     else
       f = (float)ctx->width / (float)ctx->height;
     
-    vd->vd_aspect = (av_q2d(ctx->sample_aspect_ratio) ?: 1) * f;
+    dar = (av_q2d(ctx->sample_aspect_ratio) ?: 1) * f;
     break;
   case 1:
-    vd->vd_aspect = (4.0f / 3.0f);
+    dar = (4.0f / 3.0f);
     break;
   case 2:
-    vd->vd_aspect = (16.0f / 9.0f);
+    dar = (16.0f / 9.0f);
     break;
   }
 
@@ -239,6 +240,7 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
 		       pts, epoch, duration, 
 		       (vd->vd_deinterlace ? VD_INTERLACED : 0) |
 		       (frame->top_field_first ? VD_TFF : 0),
+		       dar,
 		       vd->vd_opaque);
 }
 
@@ -359,7 +361,7 @@ vd_thread(void *aux)
       break;
 
     case MB_BLACKOUT:
-      vd->vd_frame_deliver(NULL, NULL, 0, 0, 0, 0, 0, 0, 0, vd->vd_opaque);
+      vd->vd_frame_deliver(NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 1, vd->vd_opaque);
       break;
 
     default:

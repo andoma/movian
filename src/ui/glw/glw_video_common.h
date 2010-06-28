@@ -109,6 +109,8 @@ typedef struct glw_video {
 
   glw_t w;
 
+  float gv_dar;
+
   char *gv_current_url;
   char *gv_pending_url;
   int gv_pending_set_source_cnt;

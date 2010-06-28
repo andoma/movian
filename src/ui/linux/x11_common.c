@@ -166,7 +166,7 @@ vo_set_url(void *opaque, const char *url)
 static void xv_video_frame_deliver(uint8_t * const data[], const int pitch[],
 				   int width, int height, int pix_fmt,
 				   int64_t pts, int epoch, int duration,
-				   int flags, void *opaque);
+				   int flags, float dar, void *opaque);
 
 /**
  *
@@ -209,7 +209,7 @@ init_with_xv(video_output_t *vo)
 static void xi_video_frame_deliver(uint8_t * const data[], const int pitch[],
 				   int width, int height, int pix_fmt,
 				   int64_t pts, int epoch, int duration,
-				   int flags, void *opaque);
+				   int flags, float dar, void *opaque);
 
 /**
  *
@@ -406,10 +406,9 @@ wait_for_aclock(media_pipe_t *mp, int64_t pts, int epoch)
  *
  */
 static void
-compute_output_dimensions(struct video_decoder *vd, video_output_t *vo,
-			  int *w, int *h)
+compute_output_dimensions(video_output_t *vo, float dar, int *w, int *h)
 {
-  float a = vo->vo_w / (vo->vo_h * vd->vd_aspect);
+  float a = vo->vo_w / (vo->vo_h * dar);
 
   if(a > 1) {
     *w = vo->vo_w / a;
@@ -429,7 +428,7 @@ static void
 xv_video_frame_deliver(uint8_t * const data[], const int linesize[],
 		       int width, int height, int pix_fmt,
 		       int64_t pts, int epoch, int duration, int flags,
-		       void *opaque)
+		       float dar, void *opaque)
 {
   video_output_t *vo = opaque;
   int syncok;
@@ -489,7 +488,7 @@ xv_video_frame_deliver(uint8_t * const data[], const int linesize[],
     }
   }
 
-  compute_output_dimensions(vo->vo_vd, vo, &outw, &outh);
+  compute_output_dimensions(vo, dar, &outw, &outh);
 
   syncok = wait_for_aclock(vo->vo_mp, pts, epoch);
 
@@ -545,7 +544,7 @@ static void
 xi_video_frame_deliver(uint8_t * const data[], const int pitch[],
 		       int width, int height,  int pix_fmt,
 		       int64_t pts, int epoch, int duration, int flags,
-		       void *opaque)
+		       float dar, void *opaque)
 {
   video_output_t *vo = opaque;
   uint8_t *dst[4] = {0,0,0,0};
@@ -559,7 +558,7 @@ xi_video_frame_deliver(uint8_t * const data[], const int pitch[],
   if(flags & VD_PRESCALED) {
     outw = width; outh = height;
   } else {
-    compute_output_dimensions(vo->vo_vd, vo, &outw, &outh);
+    compute_output_dimensions(vo, dar, &outw, &outh);
   }
 
   if(vo->vo_ximage != NULL && 
