@@ -40,6 +40,9 @@
 #include "settings.h"
 #include "ipc/ipc.h"
 
+#include "video/vdpau.h"
+
+
 typedef struct glw_x11 {
 
   glw_root_t gr;
@@ -102,6 +105,8 @@ static void glw_x11_dispatch_event(uii_t *uii, event_t *e);
 static void update_gpu_info(glw_x11_t *gx11);
 
 
+
+
 /**
  * Switch displaymode, we just set a variable and let mainloop switch
  * later on
@@ -111,6 +116,18 @@ gx11_set_fullscreen(void *opaque, int value)
 {
   glw_x11_t *gx11 = opaque;
   gx11->want_fullscreen = value;
+}
+
+
+/**
+ * Switch displaymode, we just set a variable and let mainloop switch
+ * later on
+ */
+static void
+gx11_set_vdpau(void *opaque, int value)
+{
+  glw_x11_t *gx11 = opaque;
+  gx11->gr.gr_be.gbr_enable_vdpau = value;
 }
 
 
@@ -595,6 +612,23 @@ glw_x11_init(glw_x11_t *gx11)
 
   gx11->atom_deletewindow = 
     XInternAtom(gx11->display, "WM_DELETE_WINDOW", 0);
+
+#if ENABLE_VDPAU
+  if(GLXExtensionSupported(gx11->display, "GLX_EXT_texture_from_pixmap")) {
+
+    gx11->gr.gr_be.gbr_bind_tex_image = (PFNGLXBINDTEXIMAGEEXTPROC)
+      glXGetProcAddress((const GLubyte*)"glXBindTexImageEXT");
+
+    gx11->gr.gr_be.gbr_release_tex_image = (PFNGLXRELEASETEXIMAGEEXTPROC)
+      glXGetProcAddress((const GLubyte*)"glXReleaseTexImageEXT");
+
+    gx11->gr.gr_be.gbr_vdpau_dev = vdpau_init_x11(gx11->display, gx11->screen);
+
+  } else {
+    TRACE(TRACE_DEBUG, "VDPAU", 
+	  "GLX_EXT_texture_from_pixmap extension not present, disabling VDPAU");
+  }
+#endif
 
   probe_wm(gx11);
 
@@ -1137,6 +1171,14 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
 			   gx11_set_fullscreen, gx11, 
 			   SETTINGS_INITIAL_UPDATE, gr->gr_courier,
 			   glw_settings_save, gr);
+  }
+
+  if(gx11->gr.gr_be.gbr_vdpau_dev) {
+    settings_create_bool(gr->gr_settings, "vdpau",
+			 "Enable VDPAU", 1, gr->gr_settings_store,
+			 gx11_set_vdpau, gx11, 
+			 SETTINGS_INITIAL_UPDATE, gr->gr_courier,
+			 glw_settings_save, gr);
   }
 
   glw_load_universe(gr);

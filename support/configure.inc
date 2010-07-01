@@ -61,6 +61,7 @@ CONFIG_LIST="
  libxext
  locatedb
  spotlight
+ vdpau
 "
 
 die() {

@@ -597,8 +597,16 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   for(i = 0; i < fctx->nb_streams; i++) {
     ctx = fctx->streams[i]->codec;
 
-    if(mp->mp_video.mq_stream == -1 && ctx->codec_type == CODEC_TYPE_VIDEO)
-      mp->mp_video.mq_stream = i;
+    media_codec_params_t mcp = {0};
+
+    if(ctx->codec_type == CODEC_TYPE_VIDEO) {
+      
+      mcp.width = ctx->width;
+      mcp.height = ctx->height;
+
+      if(mp->mp_video.mq_stream == -1)
+	mp->mp_video.mq_stream = i;
+    }
 
     if(mp->mp_audio.mq_stream == -1 && ctx->codec_type == CODEC_TYPE_AUDIO)
       mp->mp_audio.mq_stream = i;
@@ -607,7 +615,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
       ctx->channels = 0;
 
     cwvec[i] = media_codec_create(ctx->codec_id,
-				  ctx->codec_type, 0, fw, ctx, 0, 0, mp);
+				  ctx->codec_type, 0, fw, ctx, &mcp, mp);
   }
 
   prop_set_int(mp->mp_prop_audio_track_current, mp->mp_audio.mq_stream);

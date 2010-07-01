@@ -29,6 +29,7 @@
 void media_init(void);
 struct media_buf;
 struct media_queue;
+struct video_decoder;
 
 typedef struct event_ts {
   event_t h;
@@ -64,9 +65,8 @@ typedef struct media_codec {
   AVCodecParserContext *parser_ctx;
 
   void *opaque;
-  void (*data)(struct media_codec *mc, void *decoder, 
-	       struct media_queue *mq, struct media_buf *mb,
-	       int reqsize);
+  void (*data)(struct media_codec *mc, void *decoder,
+	       struct media_queue *mq, struct media_buf *mb, int reqsize);
 
   void (*close)(struct media_codec *mc);
 
@@ -237,6 +237,8 @@ typedef struct media_pipe {
 
   int64_t mp_current_time;
 
+  struct vdpau_dev *mp_vdpau_dev;
+
 } media_pipe_t;
 
 
@@ -254,11 +256,19 @@ void media_codec_deref(media_codec_t *cw);
 
 media_codec_t *media_codec_ref(media_codec_t *cw);
 
+
+typedef struct media_codec_params {
+  unsigned int width;
+  unsigned int height;
+  int sub_id;
+  int cheat_for_speed;
+} media_codec_params_t;
+
+
 media_codec_t *media_codec_create(enum CodecID id, enum CodecType type, 
 				  int parser, media_format_t *fw,
 				  AVCodecContext *ctx,
-				  int cheat_for_speed, int sub_id,
-				  media_pipe_t *mp);
+				  media_codec_params_t *mcp, media_pipe_t *mp);
 
 void media_buf_free(media_buf_t *mb);
 

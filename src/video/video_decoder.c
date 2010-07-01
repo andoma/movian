@@ -36,7 +36,7 @@ static void
 vd_init_timings(video_decoder_t *vd)
 {
   kalman_init(&vd->vd_avfilter);
-  vd->vd_lastpts = AV_NOPTS_VALUE;
+  vd->vd_prevpts = AV_NOPTS_VALUE;
   vd->vd_nextpts = AV_NOPTS_VALUE;
   vd->vd_estimated_duration = 0;
 }
@@ -91,18 +91,13 @@ vd_release_buffer(struct AVCodecContext *c, AVFrame *pic)
 static void 
 vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
 {
-  int64_t pts, dts, t;
-  int got_pic, duration, epoch;
+  int got_pic = 0;
   media_pipe_t *mp = vd->vd_mp;
-  float f;
   media_codec_t *cw = mb->mb_cw;
   AVCodecContext *ctx = cw->codec_ctx;
   AVFrame *frame = vd->vd_frame;
   frame_meta_t *fm;
-  event_ts_t *ets;
-  float dar;
 
-  got_pic = 0;
 
   if(vd->vd_do_flush) {
     do {
@@ -110,7 +105,8 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
     } while(got_pic);
 
     vd->vd_do_flush = 0;
-    vd->vd_lastpts = AV_NOPTS_VALUE;
+    vd->vd_prevpts = AV_NOPTS_VALUE;
+    vd->vd_nextpts = AV_NOPTS_VALUE;
     vd->vd_estimated_duration = 0;
     avcodec_flush_buffers(ctx);
     vd->vd_compensate_thres = 5;
@@ -144,8 +140,30 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
 
   vd->vd_skip = 0;
 
-  /* Update aspect ratio */
+  fm = frame->opaque;
+  assert(fm != NULL);
 
+  video_deliver_frame(vd, mp, mb, ctx, frame, fm->time, fm->pts, fm->dts,
+		   fm->duration, fm->epoch);
+}
+
+
+/**
+ *
+ */
+void
+video_deliver_frame(video_decoder_t *vd, media_pipe_t *mp, media_buf_t *mb,
+		    AVCodecContext *ctx, AVFrame *frame,
+		    int64_t tim, int64_t pts, int64_t dts, int duration,
+		    int epoch)
+{
+  float f, dar = 1;
+  event_ts_t *ets;
+
+  if(tim != AV_NOPTS_VALUE)
+    mp_set_current_time(mp, tim);
+
+  /* Compute aspect ratio */
   switch(mb->mb_aspect_override) {
   case 0:
 
@@ -164,20 +182,7 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
     break;
   }
 
-  
   /* Compute duration and PTS of frame */
-
-  fm = frame->opaque;
-  assert(fm != NULL);
-
-  if(fm->time != AV_NOPTS_VALUE)
-    mp_set_current_time(mp, fm->time);
-
-  pts = fm->pts;
-  dts = fm->dts;
-  duration = fm->duration;
-  epoch = fm->epoch;
-
   if(pts == AV_NOPTS_VALUE && dts != AV_NOPTS_VALUE &&
      (ctx->has_b_frames == 0 || frame->pict_type == FF_B_TYPE)) {
     pts = dts;
@@ -191,9 +196,9 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
   if(pts == AV_NOPTS_VALUE && vd->vd_nextpts != AV_NOPTS_VALUE)
     pts = vd->vd_nextpts; /* no pts set, use estimated pts */
 
-  if(pts != AV_NOPTS_VALUE && vd->vd_lastpts != AV_NOPTS_VALUE) {
-    /* we know pts of last frame */
-    t = (pts - vd->vd_lastpts) / vd->vd_frames_since_last;
+  if(pts != AV_NOPTS_VALUE && vd->vd_prevpts != AV_NOPTS_VALUE) {
+    /* we know PTS of a prior frame */
+    int64_t t = (pts - vd->vd_prevpts) / vd->vd_prevpts_cnt;
 
     if(vd_valid_duration(t)) {
       /* inter frame duration seems valid, store it */
@@ -202,46 +207,39 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
 	duration = t;
 
     } else if(t < 0 || t > 10000000LL) {
-      /* crazy pts jump, use estimated pts from last output instead */
+      /* PTS discontinuity, use estimated PTS from last output instead */
       pts = vd->vd_nextpts;
     }
   }
   
-  /* compensate for frame repeat */
-  
-  duration += frame->repeat_pict * (duration * 0.5);
+  duration += frame->repeat_pict * duration / 2;
  
   if(pts != AV_NOPTS_VALUE) {
-    vd->vd_lastpts = pts;
-    if(duration != 0)
-      vd->vd_nextpts = pts + duration;
-    vd->vd_frames_since_last = 0;
+    vd->vd_prevpts = pts;
+    vd->vd_prevpts_cnt = 0;
   }
-  vd->vd_frames_since_last++;
+  vd->vd_prevpts_cnt++;
 
   if(duration == 0 || pts == AV_NOPTS_VALUE)
     return;
 
+  vd->vd_nextpts = pts + duration;
+      
   ets = event_create(EVENT_CURRENT_PTS, sizeof(event_ts_t));
   ets->pts = pts;
   ets->dts = dts;
   mp_enqueue_event(mp, &ets->h);
   event_unref(&ets->h);
 
-  //  TRACE(TRACE_DEBUG, "frame", "%16lld %d %d\n", pts, epoch, duration);
-
-  int deinterlace = 
+  vd->vd_interlaced |=
     frame->interlaced_frame && !mb->mb_disable_deinterlacer;
-
-  vd->vd_deinterlace |= deinterlace;
 
   vd->vd_frame_deliver(frame->data, frame->linesize,
 		       ctx->width, ctx->height, ctx->pix_fmt,
 		       pts, epoch, duration, 
-		       (vd->vd_deinterlace ? VD_INTERLACED : 0) |
+		       (vd->vd_interlaced ? VD_INTERLACED : 0) |
 		       (frame->top_field_first ? VD_TFF : 0),
-		       dar,
-		       vd->vd_opaque);
+		       dar, vd->vd_opaque);
 }
 
 
@@ -326,7 +324,7 @@ vd_thread(void *aux)
     case MB_FLUSH:
       vd_init_timings(vd);
       vd->vd_do_flush = 1;
-      vd->vd_deinterlace = 0;
+      vd->vd_interlaced = 0;
       break;
 
     case MB_VIDEO:

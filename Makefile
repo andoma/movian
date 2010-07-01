@@ -157,6 +157,7 @@ ifeq ($(PLATFORM), osx)
 ${BUILDDIR}/ext/video/yadif.o : CFLAGS = ${OPTFLAGS}
 endif
 
+SRCS-$(CONFIG_VDPAU) += src/video/vdpau.c
 
 #
 # Audio subsys
@@ -241,10 +242,12 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 
 SRCS-$(CONFIG_GLW_FRONTEND_X11)	  += src/ui/glw/glw_x11.c \
 				     src/ui/linux/x11_common.c
+
 SRCS-$(CONFIG_GLW_FRONTEND_COCOA) += src/ui/glw/glw_cocoa.m
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_opengl.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_texture_opengl.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_video_opengl.c
+SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_video_vdpau.c
 SRCS-$(CONFIG_GLW_FRONTEND_WII)	  += src/ui/glw/glw_wii.c
 SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_texture_gx.c
 SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_gx.c

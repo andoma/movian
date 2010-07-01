@@ -1434,6 +1434,7 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
 
   e = htsp_subscriber(hc, hs, chid, errbuf, errlen, tag, primary, priority);
   mp_flush(mp, 0);
+  mp_flush(mp, 0);
   mp_shutdown(mp);
 
   hts_mutex_lock(&hc->hc_subscription_mutex);
@@ -1563,6 +1564,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
   htsmsg_t *sourceinfo;
 
   prop_t *audio_tracks, *subtitle_tracks, *p;
+  media_codec_params_t mcp;
 
   if((hs = htsp_find_subscription_by_msg(hc, m)) == NULL)
     return;
@@ -1612,6 +1614,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 	continue;
 
       subid = 0;
+      memset(&mcp, 0, sizeof(mcp));
 
       if(!strcmp(type, "AC3")) {
 	codec_id = CODEC_ID_AC3;
@@ -1637,6 +1640,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 	codec_id = CODEC_ID_H264;
 	codec_type = CODEC_TYPE_VIDEO;
 	nicename = "H264";
+	mcp.cheat_for_speed = 1;
 	s = 2;
       } else if(!strcmp(type, "DVBSUB")) {
 	codec_id = CODEC_ID_DVB_SUBTITLE;
@@ -1657,19 +1661,22 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 		"Subtitle stream #%d missing ancillary id", idx);
 	}
 
-	subid = (composition_id & 0xffff) | ((ancillary_id & 0xffff) << 16);
+	mcp.sub_id =
+	  (composition_id & 0xffff) | ((ancillary_id & 0xffff) << 16);
 	s = 1;
 
       } else {
 	continue;
       }
 
+      htsmsg_get_u32(sub, "width", &mcp.width);
+      htsmsg_get_u32(sub, "height", &mcp.height);
+
       /**
        * Try to create the codec
        */
 
-      cw = media_codec_create(codec_id, codec_type, 0, NULL, NULL,
-			      codec_id == CODEC_ID_H264, subid, mp);
+      cw = media_codec_create(codec_id, codec_type, 0, NULL, NULL, &mcp, mp);
       if(cw == NULL) {
 	TRACE(TRACE_ERROR, "HTSP", "Unable to create codec for %s (#%d)",
 	      nicename, idx);

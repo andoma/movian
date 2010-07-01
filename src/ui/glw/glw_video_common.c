@@ -125,7 +125,8 @@ glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp,
 
   if(abs(vd->vd_avdiff) < 10000000) {
 
-    vd->vd_avdiff_x = kalman(&vd->vd_avfilter, (float)vd->vd_avdiff / 1000000);
+    vd->vd_avdiff_x = kalman_update(&vd->vd_avfilter, 
+				    (double)vd->vd_avdiff / 1000000);
     if(vd->vd_avdiff_x > 10.0f)
       vd->vd_avdiff_x = 10.0f;
     
@@ -308,6 +309,8 @@ glw_video_set(glw_t *w, int init, va_list ap)
     hts_cond_init(&gv->gv_reconf_cond);
 
     gv->gv_mp = mp_create("Video decoder", "video", MP_VIDEO);
+    if(gr->gr_be.gbr_enable_vdpau)
+      gv->gv_mp->mp_vdpau_dev = gr->gr_be.gbr_vdpau_dev;
 
     LIST_INSERT_HEAD(&gr->gr_video_decoders, gv, gv_global_link);
 
@@ -397,6 +400,9 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
   glw_PushMatrix(&rc0, rc);
 
   glw_scale_to_aspect(&rc0, gv->gv_dar);
+
+  gv->gv_rwidth  = rc0.rc_size_x;
+  gv->gv_rheight = rc0.rc_size_y;
 
   if(glw_is_focusable(w))
     glw_store_matrix(w, &rc0);
@@ -514,7 +520,6 @@ glw_video_put_surface(glw_video_t *gv, glw_video_surface_t *s,
   s->gvs_pts = pts;
   s->gvs_epoch = epoch;
   s->gvs_duration = duration;
-
   TAILQ_INSERT_TAIL(&gv->gv_decoded_queue, s, gvs_link);
 }
 
@@ -556,6 +561,18 @@ glw_video_input(uint8_t * const data[], const int pitch[],
     glw_video_input_yuvp(gv, data, pitch, width, height, pix_fmt,
 			 pts, epoch, duration, flags);
     break;
+
+#if ENABLE_VDPAU
+  case PIX_FMT_VDPAU_H264:
+  case PIX_FMT_VDPAU_MPEG1:
+  case PIX_FMT_VDPAU_MPEG2:
+  case PIX_FMT_VDPAU_WMV3:
+  case PIX_FMT_VDPAU_VC1:
+  case PIX_FMT_VDPAU_MPEG4:
+    glw_video_input_vdpau(gv, data, pitch, width, height, pix_fmt,
+			  pts, epoch, duration, flags);
+    break;
+#endif
 
   default:
     TRACE(TRACE_ERROR, "GLW", 

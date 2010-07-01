@@ -219,7 +219,7 @@ get_packet(rtmp_t *r, int v, uint8_t *data, size_t size, int32_t dts,
 	ctx = NULL;
       }
       r->vcodec = media_codec_create(id, CODEC_TYPE_VIDEO, 0, NULL, ctx, 
-				     0, 0, mp);
+				     NULL, mp);
       return NULL;
     }
 
@@ -264,7 +264,7 @@ get_packet(rtmp_t *r, int v, uint8_t *data, size_t size, int32_t dts,
 	ctx = NULL;
       }
       r->acodec = media_codec_create(id, CODEC_TYPE_AUDIO, 0, NULL, ctx,
-				     0, 0, mp);
+				     NULL, mp);
       return NULL;
     }
 

@@ -29,6 +29,8 @@
 #include "playqueue.h"
 #include "fileaccess/fileaccess.h"
 
+#include "video/vdpau.h"
+
 static hts_mutex_t media_mutex;
 
 static prop_t *media_prop_root;
@@ -697,11 +699,11 @@ media_codec_deref(media_codec_t *cw)
   if(atomic_add(&cw->refcount, -1) > 1)
     return;
 
-  if(cw->close != NULL)
-    cw->close(cw);
-
   if(cw->codec_ctx->codec != NULL)
     avcodec_close(cw->codec_ctx);
+
+  if(cw->close != NULL)
+    cw->close(cw);
 
   if(fw == NULL)
     free(cw->codec_ctx);
@@ -715,6 +717,42 @@ media_codec_deref(media_codec_t *cw)
   free(cw);
 }
 
+/**
+ *
+ */
+static int
+media_codec_create_lavc(media_codec_t *cw, enum CodecID id,
+			AVCodecContext *ctx, media_codec_params_t *mcp)
+{
+  extern int concurrency;
+
+  cw->codec = avcodec_find_decoder(id);
+
+  if(cw->codec == NULL)
+    return -1;
+  
+  cw->codec_ctx = ctx ?: avcodec_alloc_context();
+
+  cw->codec_ctx->codec_id   = cw->codec->id;
+  cw->codec_ctx->codec_type = cw->codec->type;
+  cw->codec_ctx->sub_id = mcp ? mcp->sub_id : 0;
+
+  if(avcodec_open(cw->codec_ctx, cw->codec) < 0) {
+    if(ctx == NULL)
+      free(cw->codec_ctx);
+    cw->codec = NULL;
+    return -1;
+  }
+
+  if(id == CODEC_ID_H264 && concurrency > 1) {
+    avcodec_thread_init(cw->codec_ctx, concurrency);
+    
+    if(mcp && mcp->cheat_for_speed)
+      cw->codec_ctx->flags2 |= CODEC_FLAG2_FAST;
+  }
+  return 0;
+}
+
 
 /**
  *
@@ -722,50 +760,30 @@ media_codec_deref(media_codec_t *cw)
 media_codec_t *
 media_codec_create(enum CodecID id, enum CodecType type, int parser,
 		   media_format_t *fw, AVCodecContext *ctx,
-		   int cheat_for_speed, int sub_id,
-		   media_pipe_t *mp)
+		   media_codec_params_t *mcp, media_pipe_t *mp)
 {
-  extern int concurrency;
-  media_codec_t *cw = calloc(1, sizeof(media_codec_t));
+  media_codec_t *mc = calloc(1, sizeof(media_codec_t));
 
-  if(cw->codec == NULL)
-    cw->codec = avcodec_find_decoder(id);
-
-  if(cw->codec == NULL) {
-    free(cw);
-    return NULL;
-  }
-  
-  cw->codec_ctx = ctx ?: avcodec_alloc_context();
-
-  cw->codec_ctx->codec_id   = cw->codec->id;
-  cw->codec_ctx->codec_type = cw->codec->type;
-  cw->codec_ctx->sub_id = sub_id;
-
-  if(avcodec_open(cw->codec_ctx, cw->codec) < 0) {
-    if(ctx == NULL)
-      free(cw->codec_ctx);
-    free(cw);
+#if ENABLE_VDPAU
+  if(mcp && !vdpau_codec_create(mc, id, ctx, mcp, mp)) {
+    
+  } else
+#endif
+  if(media_codec_create_lavc(mc, id, ctx, mcp)) {
+    free(mc);
     return NULL;
   }
 
-  cw->parser_ctx = parser ? av_parser_init(id) : NULL;
-
-  cw->refcount = 1;
-  cw->fw = fw;
+  mc->parser_ctx = parser ? av_parser_init(id) : NULL;
+  mc->refcount = 1;
+  mc->fw = fw;
   
   if(fw != NULL)
     atomic_add(&fw->refcount, 1);
 
-  if(type == CODEC_TYPE_VIDEO && concurrency > 1) {
-    avcodec_thread_init(cw->codec_ctx, concurrency);
-    
-    if(cheat_for_speed)
-      cw->codec_ctx->flags2 |= CODEC_FLAG2_FAST;
-  }
-
-  return cw;
+  return mc;
 }
+
 
 /**
  *

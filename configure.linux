@@ -76,6 +76,7 @@ enable libxv
 enable serdev
 enable ssl
 enable locatedb
+enable vdpau
 
 for opt do
   optval="${opt#*=}"
@@ -405,6 +406,21 @@ if enabled ssl; then
     fi
 
     enable librtmp
+fi
+
+
+#
+# VDPAU
+#
+if enabled vdpau; then
+    if pkg-config vdpau; then
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs vdpau`
+	echo "Using libvdpau:        `pkg-config --modversion vdpau`"
+    else
+	echo "VDPAU not found"
+	echo "To compile without it, configure with: --disable-vdpau"
+	die
+    fi
 fi
 
 

@@ -23,12 +23,13 @@
 #include "media.h"
 #include "video/video_playback.h"
 #include "video/video_decoder.h"
+#include "misc/kalman.h"
+
+#if ENABLE_VDPAU
+#include "video/vdpau.h"
+#endif
 
 TAILQ_HEAD(glw_video_surface_queue, glw_video_surface);
-
-
-
-
 
 /**
  *
@@ -76,6 +77,8 @@ typedef struct glw_video_surface {
 
   void *gvs_data[3];
 
+  int gvs_width;
+  int gvs_height;
 
 #if CONFIG_GLW_BACKEND_OPENGL
   GLuint gvs_pbo[3];
@@ -97,6 +100,10 @@ typedef struct glw_video_surface {
   int gvs_size[3];
 #endif
 
+#if ENABLE_VDPAU
+  VdpVideoSurface gvs_vdpau_surface;
+#endif
+
 } glw_video_surface_t;
 
 
@@ -110,6 +117,9 @@ typedef struct glw_video {
   glw_t w;
 
   float gv_dar;
+
+  int gv_rwidth;
+  int gv_rheight;
 
   char *gv_current_url;
   char *gv_pending_url;
@@ -158,6 +168,24 @@ typedef struct glw_video {
    */
   struct glw_video_surface_queue gv_decoded_queue;
 
+
+
+  /**
+   * VDPAU specifics
+   */
+#if ENABLE_VDPAU
+  int gv_vdpau_initialized;
+  int gv_vdpau_running;
+  Pixmap gv_xpixmap;
+  GLXPixmap gv_glx_pixmap;
+  VdpPresentationQueue gv_vdpau_pq;
+  VdpPresentationQueueTarget gv_vdpau_pqt;
+  GLuint gv_vdpau_texture;
+  int64_t gv_vdpau_clockdiff;
+
+  int64_t gv_nextpts;
+  vdpau_mixer_t gv_vm;
+#endif
 
 } glw_video_t;
 
@@ -226,6 +254,12 @@ void glw_video_input_yuvp(glw_video_t *gv,
 			  uint8_t * const data[], const int pitch[],
 			  int width, int height, int pix_fmt,
 			  int64_t pts, int epoch, int duration, int flags);
+
+void glw_video_input_vdpau(glw_video_t *gv,
+			   uint8_t * const data[], const int pitch[],
+			   int width, int height, int pix_fmt,
+			   int64_t pts, int epoch, int duration, int flags);
+
 
 #endif /* GLW_VIDEO_COMMON_H */
 

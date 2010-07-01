@@ -21,6 +21,8 @@
 
 #include "media.h"
 #include "misc/avgtime.h"
+#include "misc/kalman.h"
+
 #if ENABLE_DVD
 TAILQ_HEAD(dvdspu_queue, dvdspu);
 #include <dvdnav/dvdnav.h>
@@ -37,45 +39,6 @@ struct video_decoder;
 #define GVF_TEX_Cr  1
 #define GVF_TEX_Cb  2
 
-
-
-/**
- *
- */
-typedef struct {
-  float x_next;
-  float P_next, P;
-  float K, Q, R;
-} kalman_t;
-
-
-/**
- *
- */
-static inline void
-kalman_init(kalman_t *k)
-{
-  k->P = 1.0;
-  k->Q = 1.0/ 100000.0;
-  k->R = 0.01;
-  k->x_next = 0.0;
-}
-
-
-/**
- *
- */
-static inline float
-kalman(kalman_t *k, float z)
-{
-  float x;
-
-  k->P_next = k->P + k->Q;
-  k->K = k->P_next / (k->P_next + k->R);
-  x = k->x_next + k->K * (z - k->x_next);
-  k->P = (1 - k->K) * k->P_next;
-  return k->x_next = x;
-}
 
 /**
  *
@@ -117,14 +80,12 @@ typedef struct video_decoder {
   media_pipe_t *vd_mp;
 
   int vd_decoder_running;
-
   int vd_do_flush;
-
   int vd_skip;
 
   int64_t vd_nextpts;
-  int64_t vd_lastpts;
-  int vd_frames_since_last;
+  int64_t vd_prevpts;
+  int vd_prevpts_cnt;
   int vd_estimated_duration;
 
   AVFrame *vd_frame;
@@ -148,7 +109,7 @@ typedef struct video_decoder {
 
   /* Deinterlacing & YADIF */
 
-  int vd_deinterlace; // Used to keep deinterlacing on
+  int vd_interlaced; // Used to keep deinterlacing on
 
   AVPicture vd_yadif_pic[3];
   int vd_yadif_width;
@@ -203,6 +164,12 @@ video_decoder_t *video_decoder_create(media_pipe_t *mp,
 void video_decoder_stop(video_decoder_t *gv);
 
 void video_decoder_destroy(video_decoder_t *gv);
+
+void video_deliver_frame(video_decoder_t *vd, media_pipe_t *mp, media_buf_t *mb,
+			 AVCodecContext *ctx, AVFrame *frame,
+			 int64_t tim, int64_t pts, int64_t dts,
+			 int duration, int epoch);
+
 
 /**
  * DVD SPU (SubPicture Units)

@@ -261,6 +261,7 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
   enum CodecID codec_id;
   AVRational mpeg_tc = {1, 90000};
   event_t *e;
+  media_codec_params_t mcp = {0};
 
   x     = getu8(buf, len);
   flags = getu8(buf, len);
@@ -316,6 +317,10 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
     rate = dp->dp_aspect_override;
     cwp = &dp->dp_video;
     mq = &mp->mp_video;
+
+    // Figure out these
+    //    mcp.width = 720;
+    //    mcp.height = 576;
 
   } else if((sc >= 0x80 && sc <= 0x9f) || (sc >= 0x1c0 && sc <= 0x1df)) {
 
@@ -380,7 +385,7 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
     if(cw != NULL)
       media_codec_deref(cw);
 
-    *cwp = cw = media_codec_create(codec_id, type, 1, NULL, NULL, 0, 0, mp);
+    *cwp = cw = media_codec_create(codec_id, type, 1, NULL, NULL, &mcp, mp);
     if(cw == NULL)
       return NULL;
   }

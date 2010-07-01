@@ -31,6 +31,11 @@
 #include <GL/glu.h>
 #endif
 
+#ifdef linux
+#include <GL/glx.h>
+#include <GL/glxext.h>
+#endif
+
 
 struct glw_root;
 struct glw_rctx;
@@ -55,6 +60,14 @@ typedef struct glw_backend_root {
    */
   GLuint gbr_yuv2rbg_prog;
   GLuint gbr_yuv2rbg_2mix_prog;
+
+  /**
+   *
+   */
+  struct vdpau_dev *gbr_vdpau_dev;
+  PFNGLXBINDTEXIMAGEEXTPROC gbr_bind_tex_image;
+  PFNGLXRELEASETEXIMAGEEXTPROC gbr_release_tex_image;
+  int gbr_enable_vdpau;
 
 } glw_backend_root_t;
 
