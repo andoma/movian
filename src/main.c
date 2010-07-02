@@ -41,6 +41,7 @@
 #include "sd/sd.h"
 #include "ipc/ipc.h"
 #include "misc/callout.h"
+#include "js.h"
 #include "api/api.h"
 #include "runcontrol.h"
 #include "service.h"
@@ -266,6 +267,11 @@ main(int argc, char **argv)
 
   /* Service discovery. Must be after ipc_init() (d-bus and threads, etc) */
   sd_init();
+
+#if ENABLE_SPIDERMONKEY
+  /* Spidermonkey javascript engine */
+  js_init();
+#endif
 
   /* Initialize various external APIs */
   api_init();

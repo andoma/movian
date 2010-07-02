@@ -62,6 +62,7 @@ CONFIG_LIST="
  locatedb
  spotlight
  vdpau
+ spidermonkey
 "
 
 die() {

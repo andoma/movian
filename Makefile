@@ -381,6 +381,53 @@ ${BUILDDIR}/ext/dvd/dvdnav/%.o : CFLAGS = \
  -DVERSION=\"showtime\" -DDVDNAV_COMPILE -Wno-strict-aliasing -Iext/dvd \
  -Iext/dvd/dvdnav
 
+#
+# Spidermonkey
+#
+SRCS-$(CONFIG_SPIDERMONKEY) += ext/spidermonkey/jsapi.c	\
+			ext/spidermonkey/jsarena.c	\
+			ext/spidermonkey/jsarray.c	\
+			ext/spidermonkey/jsatom.c	\
+			ext/spidermonkey/jsbool.c	\
+			ext/spidermonkey/jscntxt.c	\
+			ext/spidermonkey/jsdate.c	\
+			ext/spidermonkey/jsdbgapi.c	\
+			ext/spidermonkey/jsdhash.c	\
+			ext/spidermonkey/jsdtoa.c	\
+			ext/spidermonkey/jsemit.c	\
+			ext/spidermonkey/jsexn.c	\
+			ext/spidermonkey/jsfun.c	\
+			ext/spidermonkey/jsgc.c		\
+			ext/spidermonkey/jshash.c	\
+			ext/spidermonkey/jsinterp.c	\
+			ext/spidermonkey/jsinvoke.c	\
+			ext/spidermonkey/jsiter.c	\
+			ext/spidermonkey/jslock.c	\
+			ext/spidermonkey/jslog2.c	\
+			ext/spidermonkey/jslong.c	\
+			ext/spidermonkey/jsmath.c	\
+			ext/spidermonkey/jsnum.c	\
+			ext/spidermonkey/jsobj.c	\
+			ext/spidermonkey/jsopcode.c     \
+			ext/spidermonkey/jsparse.c	\
+			ext/spidermonkey/jsprf.c	\
+			ext/spidermonkey/jsregexp.c	\
+			ext/spidermonkey/jsscan.c	\
+			ext/spidermonkey/jsscope.c	\
+			ext/spidermonkey/jsscript.c	\
+			ext/spidermonkey/jsstr.c	\
+			ext/spidermonkey/jsutil.c       \
+			ext/spidermonkey/jsxdrapi.c	\
+			ext/spidermonkey/jsxml.c	\
+			ext/spidermonkey/prmjtime.c	\
+                        src/arch/nspr/nspr.c            \
+                        src/js.c                        \
+
+${BUILDDIR}/ext/spidermonkey/%.o : CFLAGS = \
+	-Iext/spidermonkey -Isrc/arch/nspr
+
+CFLAGS_com += -DXP_UNIX -DJS_HAS_XML_SUPPORT -DJS_THREADSAFE
+
 
 # Various transformations
 SRCS  += $(SRCS-yes)
@@ -402,7 +449,7 @@ OBJDIRS+= $(sort $(dir $(BUNDLE_OBJS)))
 .PRECIOUS: ${BUNDLE_SRCS}
 
 # Common CFLAGS for all files
-CFLAGS_com  = -g -funsigned-char ${OPTFLAGS}
+CFLAGS_com += -g -funsigned-char ${OPTFLAGS}
 CFLAGS_com += -D_FILE_OFFSET_BITS=64
 CFLAGS_com += -I${BUILDDIR} -I${CURDIR}/src -I${CURDIR}
 
