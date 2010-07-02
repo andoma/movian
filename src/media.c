@@ -29,7 +29,9 @@
 #include "playqueue.h"
 #include "fileaccess/fileaccess.h"
 
+#if ENABLE_VDPAU
 #include "video/vdpau.h"
+#endif
 
 static hts_mutex_t media_mutex;
 
