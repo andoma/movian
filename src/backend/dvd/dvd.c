@@ -146,6 +146,9 @@ typedef struct dvd_player {
   prop_t *dp_subtitle_tracks;
   prop_t *dp_audio_tracks;
 
+  int dp_vwidth;
+  int dp_vheight;
+
 } dvd_player_t;
 
 #define dvd_in_menu(dp) ((dp)->dp_pci.hli.hl_gi.hli_ss)
@@ -318,9 +321,8 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
     cwp = &dp->dp_video;
     mq = &mp->mp_video;
 
-    // Figure out these
-    //    mcp.width = 720;
-    //    mcp.height = 576;
+    mcp.width = dp->dp_vwidth;
+    mcp.height = dp->dp_vheight;
 
   } else if((sc >= 0x80 && sc <= 0x9f) || (sc >= 0x1c0 && sc <= 0x1df)) {
 
@@ -743,6 +745,7 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
       dvd_set_audio_stream(dp, "auto");
       dvd_set_spu_stream(dp, "auto");
       dp->dp_aspect_override = dvdnav_get_video_aspect(dp->dp_dvdnav) ? 2 : 1;
+      dvdnav_get_video_res(dp->dp_dvdnav, &dp->dp_vwidth, &dp->dp_vheight);
       dp->dp_epoch++;
       dvd_update_streams(dp);
       break;
