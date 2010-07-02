@@ -77,7 +77,7 @@ vdpau_newframe(glw_video_t *gv, video_decoder_t *vd0)
 
   while((s = TAILQ_FIRST(&gv->gv_decoded_queue)) != NULL) {
     int64_t delta = gr->gr_frameduration * 2;
-    int64_t aclock;
+    int64_t aclock, d;
     pts = s->gvs_pts;
 
     hts_mutex_lock(&mp->mp_clock_mutex);
@@ -85,7 +85,9 @@ vdpau_newframe(glw_video_t *gv, video_decoder_t *vd0)
       mp->mp_audio_clock_realtime + mp->mp_avdelta;
     hts_mutex_unlock(&mp->mp_clock_mutex);
 
-    if(s->gvs_pts == AV_NOPTS_VALUE || llabs(s->gvs_pts - aclock) > 5000000)
+    d = s->gvs_pts - aclock;
+
+    if(s->gvs_pts == AV_NOPTS_VALUE || d < -5000000LL || d > 5000000LL)
       pts = gv->gv_nextpts;
 
     if(pts != AV_NOPTS_VALUE && (pts - delta) >= aclock)
