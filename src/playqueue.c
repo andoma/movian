@@ -499,6 +499,9 @@ siblings_populate(void *opaque, prop_event_t event, ...)
   case PROP_REQ_DELETE_MULTI:
     break;
 
+  case PROP_EXT_EVENT:
+    break;
+
   default:
     fprintf(stderr, "siblings_populate(): Can't handle event %d, aborting\n",
 	    event);
