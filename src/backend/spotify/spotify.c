@@ -2622,6 +2622,12 @@ be_spotify_play(const char *url, media_pipe_t *mp,
   
   memset(&su, 0, sizeof(su));
 
+  if(!strcmp(url, "spotify:track:0000000000000000000000")) {
+    /* Invalid track - happens for localtracks */
+    snprintf(errbuf, errlen, "Invalid track");
+    return NULL;
+  }
+
   if(spotify_start(errbuf, errlen, 0))
     return NULL;
 
