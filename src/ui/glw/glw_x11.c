@@ -551,6 +551,8 @@ glw_x11_init(glw_x11_t *gx11)
   int attribs[10];
   int na = 0;
   
+  XInitThreads();
+
   if(!XSupportsLocale()) {
     TRACE(TRACE_ERROR, "GLW", "XSupportsLocale returned false");
     return 1;
