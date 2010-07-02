@@ -550,6 +550,9 @@ dvdnav_status_t dvdnav_get_title_string(dvdnav_t *self, const char **title_str);
  */
 uint8_t dvdnav_get_video_aspect(dvdnav_t *self);
 
+
+uint8_t dvdnav_get_video_res(dvdnav_t *this, int *width, int *height);
+
 /*
  * Get video scaling permissions.
  * The scaling permission does only change on VTS boundaries.

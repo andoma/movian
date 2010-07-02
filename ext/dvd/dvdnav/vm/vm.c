@@ -788,7 +788,7 @@ void vm_get_angle_info(vm_t *vm, int *current, int *num_avail) {
   }
 }
 
-#if 0
+
 /* currently unused */
 void vm_get_audio_info(vm_t *vm, int *current, int *num_avail) {
   switch ((vm->state).domain) {
@@ -851,7 +851,7 @@ void vm_get_video_res(vm_t *vm, int *width, int *height) {
     break;
   }
 }
-#endif
+
 
 int vm_get_video_aspect(vm_t *vm) {
   int aspect = vm_get_video_attr(vm).display_aspect_ratio;
