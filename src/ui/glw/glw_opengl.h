@@ -65,8 +65,10 @@ typedef struct glw_backend_root {
    *
    */
   struct vdpau_dev *gbr_vdpau_dev;
+#ifdef linux
   PFNGLXBINDTEXIMAGEEXTPROC gbr_bind_tex_image;
   PFNGLXRELEASETEXIMAGEEXTPROC gbr_release_tex_image;
+#endif
   int gbr_enable_vdpau;
 
 } glw_backend_root_t;
