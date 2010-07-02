@@ -39,6 +39,9 @@ typedef struct {
 
   int in_seek_skip;
 
+  int width;
+  int height;
+
 } rtmp_t;
 
 
@@ -100,7 +103,9 @@ SAVC(onMetaData);
 SAVC(duration);
 SAVC(videocodecid);
 SAVC(audiocodecid);
-SAVC(videoframerate);
+SAVC(videoframerate)
+SAVC(width);
+SAVC(height);
 
 static int
 handle_metadata(rtmp_t *r, char *body, unsigned int len,
@@ -128,7 +133,6 @@ handle_metadata(rtmp_t *r, char *body, unsigned int len,
     snprintf(errstr, errlen, "Unable to parse total duration");
     return -1;
   }
-
   prop_set_float(prop_create(m, "duration"), prop.p_vu.p_number);
   r->duration = prop.p_vu.p_number;
 
@@ -137,10 +141,8 @@ handle_metadata(rtmp_t *r, char *body, unsigned int len,
     snprintf(errstr, errlen, "Unable to parse video codec");
     return -1;
   }
-
   snprintf(str, sizeof(str), "%.*s", prop.p_vu.p_aval.av_len,
 	   prop.p_vu.p_aval.av_val);
-
   if(set_vcodec(r, str)) {
     snprintf(errstr, errlen, "Unsupported video codec: %s", str);
     return -1;
@@ -151,8 +153,6 @@ handle_metadata(rtmp_t *r, char *body, unsigned int len,
     return -1;
   snprintf(str, sizeof(str), "%.*s", prop.p_vu.p_aval.av_len,
 	   prop.p_vu.p_aval.av_val);
-
-
   if(set_acodec(r, str)) {
     snprintf(errstr, errlen, "Unsupported audio codec: %s", str);
     return -1;
@@ -165,6 +165,25 @@ handle_metadata(rtmp_t *r, char *body, unsigned int len,
   }
   r->vframeduration = 1000000.0 / prop.p_vu.p_number;
 
+
+  if(!RTMP_FindFirstMatchingProperty(&obj, &av_videoframerate, &prop) ||
+     prop.p_type != AMF_NUMBER) {
+    snprintf(errstr, errlen, "Unable to parse video framerate");
+    return -1;
+  }
+  r->vframeduration = 1000000.0 / prop.p_vu.p_number;
+
+  r->width = r->height = 0;
+  if(RTMP_FindFirstMatchingProperty(&obj, &av_width, &prop) &&
+     prop.p_type == AMF_NUMBER)
+    r->width = prop.p_vu.p_number;
+
+  if(RTMP_FindFirstMatchingProperty(&obj, &av_height, &prop) &&
+     prop.p_type == AMF_NUMBER)
+    r->height = prop.p_vu.p_number;
+
+  if(r->width && r->height)
+    TRACE(TRACE_DEBUG, "RTMP", "Video size %d x %d", r->width, r->height);
   return 0;
 }
 
@@ -206,7 +225,7 @@ get_packet(rtmp_t *r, int v, uint8_t *data, size_t size, int32_t dts,
 
     if(r->vcodec == NULL) {
       AVCodecContext *ctx;
-
+      media_codec_params_t mcp = {0};
       if(id == CODEC_ID_H264) {
 	if(type != 0 || size < 0)
 	  return NULL;
@@ -218,8 +237,10 @@ get_packet(rtmp_t *r, int v, uint8_t *data, size_t size, int32_t dts,
       } else {
 	ctx = NULL;
       }
+      mcp.width = r->width;
+      mcp.height = r->height;
       r->vcodec = media_codec_create(id, CODEC_TYPE_VIDEO, 0, NULL, ctx, 
-				     NULL, mp);
+				     &mcp, mp);
       return NULL;
     }
 
