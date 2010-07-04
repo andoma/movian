@@ -71,8 +71,6 @@ typedef struct glw_x11 {
 
   PFNGLXSWAPINTERVALSGIPROC glXSwapIntervalSGI;
 
-  prop_t *prop_gpu;
-
   int fullwindow;
   int autohide_counter;
   
@@ -835,7 +833,7 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
 static void
 update_gpu_info(glw_x11_t *gx11)
 {
-  prop_t *gpu = gx11->prop_gpu;
+  prop_t *gpu = prop_create(gx11->gr.gr_uii.uii_prop, "gpu");
   prop_set_string(prop_create(gpu, "vendor"),
 		      (const char *)glGetString(GL_VENDOR));
 
@@ -1155,9 +1153,9 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
   if(glw_init(gr, theme_path, ui, primary, confname, displayname_title))
     return 1;
 
-  gx11->prop_gpu = prop_create(gx11->gr.gr_uii.uii_prop, "gpu");
 #ifdef CONFIG_NVCTRL
-  gx11->nvidia = nvidia_init(gx11->display, gx11->screen, gx11->prop_gpu);
+  gx11->nvidia = nvidia_init(gx11->display, gx11->screen,
+			     gx11->gr.gr_uii.uii_prop);
 #endif
 
   settings_create_bool(gr->gr_settings, "map_mouse_wheel_to_keys",

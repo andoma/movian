@@ -32,7 +32,8 @@ typedef struct nvctrl_data {
   Display *dpy;
   int scr;
   int dev;
-  
+
+  prop_t *p_dpy;
   prop_t *temp_cur;
   prop_t *temp_thres;
   prop_t *temp_max;
@@ -42,6 +43,8 @@ typedef struct nvctrl_data {
 
   int meta_720p50;
   int meta_720p60;
+  int meta_1080p50;
+  int meta_1080p60;
 
   int temp_update_cnt;
 
@@ -139,7 +142,15 @@ add_mode(nvctrl_data_t *nvd, int width, int height, int rr)
   char *result = NULL;
   int metaid;
   const char *s;
+
   snprintf(name, sizeof(name), "showtime_%dx%d_%d_0", width, height, rr);
+
+  if(nvd->modelines == NULL || nvd->metamodes == NULL) {
+    TRACE(TRACE_ERROR, "nVidia",
+	  "Unable to add mode %s as no mode info is available", name);
+    return 0;
+  }
+
 
   if(!have_modeline(nvd->modelines, name)) {
 
@@ -194,91 +205,134 @@ add_mode(nvctrl_data_t *nvd, int width, int height, int rr)
 
   XFree(result);
 
+  TRACE(TRACE_DEBUG, "nVidia", "%s maps to meta id %d", name, metaid);
+
   return metaid;
 }
 
 
-
-
+/**
+ *
+ */
 static void
-add_modes(nvctrl_data_t *nvd)
+setres(prop_t *p, int w, int h)
 {
+  prop_set_int(prop_create(p, "width"), w);
+  prop_set_int(prop_create(p, "height"), h);
+}
+
+
+/**
+ *
+ */
+static void
+getdpyinfo(nvctrl_data_t *nvd)
+{
+  prop_t *p_dpy = nvd->p_dpy;
   int i;
   int width, height;
+  char *str;
 
-  if(!XNVCTRLQueryAttribute(nvd->dpy, nvd->scr, nvd->dev,
-			    NV_CTRL_FRONTEND_RESOLUTION, &i))
-    return;
+  if(XNVCTRLQueryStringAttribute(nvd->dpy, nvd->scr, nvd->dev,
+				 NV_CTRL_STRING_DISPLAY_DEVICE_NAME,
+				 &str)) {
+    TRACE(TRACE_DEBUG, "nVidia", "Display device: %s", str);
+    prop_set_string(prop_create(p_dpy, "device"), str);
+    XFree(str);
+  }
+  
 
-  width  = i >> 16;
-  height = i & 0xffff;
+  if(XNVCTRLQueryAttribute(nvd->dpy, nvd->scr, nvd->dev,
+			   NV_CTRL_REFRESH_RATE, &i)) {
+    TRACE(TRACE_DEBUG, "nVidia", 
+	  "Current Refreshrate: %.2f Hz", (float)i / 100.0);
+    prop_set_int(prop_create(p_dpy, "refreshrate"), i * 10);
+  }
 
-  TRACE(TRACE_DEBUG, "nVidia", "Frontend resolution: %d x %d",
-	width, height);
+  if(XNVCTRLQueryAttribute(nvd->dpy, nvd->scr, nvd->dev,
+			   NV_CTRL_FRONTEND_RESOLUTION, &i)) {
+    width  = i >> 16;
+    height = i & 0xffff;
 
-  if(!XNVCTRLQueryAttribute(nvd->dpy, nvd->scr, nvd->dev,
-			    NV_CTRL_BACKEND_RESOLUTION, &i))
-    return;
+    TRACE(TRACE_DEBUG, "nVidia", "Frontend resolution: %d x %d",
+	  width, height);
+    
+    setres(prop_create(p_dpy, "frontendResolution"), width, height);
+  }
 
-  width  = i >> 16;
-  height = i & 0xffff;
 
-  TRACE(TRACE_DEBUG, "nVidia", "Backend resolution: %d x %d",
-	width, height);
+  
+  if(XNVCTRLQueryAttribute(nvd->dpy, nvd->scr, nvd->dev,
+			   NV_CTRL_BACKEND_RESOLUTION, &i)) {
+    width  = i >> 16;
+    height = i & 0xffff;
 
-  if(!XNVCTRLQueryAttribute(nvd->dpy, nvd->scr, nvd->dev,
-			    NV_CTRL_FLATPANEL_NATIVE_RESOLUTION, &i))
-    return;
+    TRACE(TRACE_DEBUG, "nVidia", "Backend resolution: %d x %d",
+	  width, height);
+    setres(prop_create(p_dpy, "backendResolution"), width, height);
+  }
 
-  width  = i >> 16;
-  height = i & 0xffff;
+  if(XNVCTRLQueryAttribute(nvd->dpy, nvd->scr, nvd->dev,
+			   NV_CTRL_FLATPANEL_NATIVE_RESOLUTION, &i)) {
+    width  = i >> 16;
+    height = i & 0xffff;
 
-  TRACE(TRACE_DEBUG, "nVidia", "DFP native resolution: %d x %d",
-	width, height);
+    TRACE(TRACE_DEBUG, "nVidia", "DFP native resolution: %d x %d",
+	  width, height);
+    setres(prop_create(p_dpy, "DFPResolution"), width, height);
+   }
 
-  if(!XNVCTRLQueryAttribute(nvd->dpy, nvd->scr, nvd->dev,
-			    NV_CTRL_GPU_SCALING_ACTIVE, &i))
-    return;
-  TRACE(TRACE_DEBUG, "nVidia", "GPU scaling: %d", i);
 
-  if(!XNVCTRLQueryAttribute(nvd->dpy, nvd->scr, nvd->dev,
-			    NV_CTRL_GPU_SCALING_ACTIVE, &i))
-    return;
-  TRACE(TRACE_DEBUG, "nVidia", "DFP scaling: %d", i);
+  if(XNVCTRLQueryAttribute(nvd->dpy, nvd->scr, nvd->dev,
+			   NV_CTRL_GPU_SCALING_ACTIVE, &i))  {
+    TRACE(TRACE_DEBUG, "nVidia", "GPU scaling: %s", i ? "Yes" : "No");
 
+    prop_set_int(prop_create(p_dpy, "GPUScaling"), !!i);
+  }
+
+  if(XNVCTRLQueryAttribute(nvd->dpy, nvd->scr, nvd->dev,
+			   NV_CTRL_DFP_SCALING_ACTIVE, &i)) {
+    prop_set_int(prop_create(p_dpy, "DFPScaling"), !!i);
+  }
 
   // Get list of modelines
-
+  free(nvd->modelines);
   if(!XNVCTRLQueryBinaryData(nvd->dpy, nvd->scr, nvd->dev,
 			     NV_CTRL_BINARY_DATA_MODELINES,
 			     (void *) &nvd->modelines, &i)) {
     TRACE(TRACE_INFO, "nVidia", "Unable to query modelines");
-    return;
   }
 
-
-
   // Get list of metamodes
-
+  free(nvd->metamodes);
   if(!XNVCTRLQueryBinaryData(nvd->dpy, nvd->scr, nvd->dev,
 			     NV_CTRL_BINARY_DATA_METAMODES,
 			     (void *) &nvd->metamodes, &i)) {
     TRACE(TRACE_INFO, "nVidia", "Unable to query metamodes");
-    return;
   }
-
-  nvd->meta_720p50 = add_mode(nvd, 1280, 720, 50);
-  nvd->meta_720p60 = add_mode(nvd, 1280, 720, 60);
 }
 
 
-
-
-
-
-void *
-nvidia_init(Display *dpy, int screen, prop_t *gpu)
+/**
+ *
+ */
+static void
+add_modes(nvctrl_data_t *nvd)
 {
+  nvd->meta_720p50  = add_mode(nvd, 1280, 720,  50);
+  nvd->meta_720p60  = add_mode(nvd, 1280, 720,  60);
+  nvd->meta_1080p50 = add_mode(nvd, 1920, 1080, 50);
+  nvd->meta_1080p60 = add_mode(nvd, 1920, 1080, 60);
+}
+
+
+/**
+ *
+ */
+void *
+nvidia_init(Display *dpy, int screen, prop_t *uiroot)
+{
+  prop_t *gpu = prop_create(uiroot, "gpu");
   nvctrl_data_t *nvd;
   int event_base, error_base, major, minor, mask;
   char *str;
@@ -310,20 +364,9 @@ nvidia_init(Display *dpy, int screen, prop_t *gpu)
     return NULL;
   }
 
-  if(XNVCTRLQueryStringAttribute(dpy, screen, mask,
-				 NV_CTRL_STRING_DISPLAY_DEVICE_NAME,
-				 &str)) {
-    TRACE(TRACE_DEBUG, "nVidia", "Display device: %s", str);
-    XFree(str);
-  }
-  
-
-  if(XNVCTRLQueryAttribute(dpy, screen, mask, NV_CTRL_REFRESH_RATE, &i))
-    TRACE(TRACE_DEBUG, "nVidia", 
-	  "Current Refreshrate: %.2f Hz", (float)i / 100.0);
-
   nvd = calloc(1, sizeof(nvctrl_data_t));
-
+  nvd->p_dpy = prop_create(uiroot, "display");
+  prop_set_int(prop_create(nvd->p_dpy, "available"), 1);
   nvd->dpy = dpy;
   nvd->scr = screen;
   nvd->dev = mask;
@@ -351,13 +394,10 @@ nvidia_init(Display *dpy, int screen, prop_t *gpu)
   else
     prop_set_int(nvd->temp_max, 105);
 
+  
+  getdpyinfo(nvd);
 
-
-  if(0) {
-    add_modes(nvd);
-    XNVCTRLSetAttribute(dpy, screen, mask,
-			NV_CTRL_GPU_SCALING, 0x20003);
-  }
+  if(0)add_modes(nvd);
   return nvd;
 }
 
