@@ -309,8 +309,10 @@ glw_video_set(glw_t *w, int init, va_list ap)
     hts_cond_init(&gv->gv_reconf_cond);
 
     gv->gv_mp = mp_create("Video decoder", "video", MP_VIDEO);
+#if CONFIG_GLW_BACKEND_OPENGL
     if(gr->gr_be.gbr_enable_vdpau)
       gv->gv_mp->mp_vdpau_dev = gr->gr_be.gbr_vdpau_dev;
+#endif
 
     LIST_INSERT_HEAD(&gr->gr_video_decoders, gv, gv_global_link);
 
