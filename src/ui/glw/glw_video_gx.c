@@ -40,84 +40,145 @@
 
 #include "glw_video_common.h"
 
-/**
- *
- */
-typedef struct gx_video_frame {
-  video_decoder_frame_t gvf_vdf;
-
-  GXTexObj gvf_obj[3];
-  void *gvf_mem[3];
-  int gvf_size[3];
-
-} gx_video_frame_t;
-
 
 /**
- *  Buffer allocator
+ * gv_surface_mutex must be held
  */
-void
-glw_video_buffer_allocator(video_decoder_t *vd)
+static void
+surface_reset(glw_video_t *gv, glw_video_surface_t *gvs)
 {
-  gx_video_frame_t *gvf;
-  video_decoder_frame_t *vdf;
   int i;
 
-  hts_mutex_lock(&vd->vd_queue_mutex);
-  
-  while(vd->vd_active_frames < vd->vd_active_frames_needed) {
-    vdf = calloc(1, sizeof(gx_video_frame_t));
-    TAILQ_INSERT_TAIL(&vd->vd_avail_queue, vdf, vdf_link);
-    hts_cond_signal(&vd->vd_avail_queue_cond);
-    vd->vd_active_frames++;
-  }
-
-  while((vdf = TAILQ_FIRST(&vd->vd_bufalloc_queue)) != NULL) {
-    TAILQ_REMOVE(&vd->vd_bufalloc_queue, vdf, vdf_link);
-
-
-    gvf = (gx_video_frame_t *)vdf;
-
-    for(i = 0; i < 3; i++) {
-      gvf->gvf_size[i] = vdf->vdf_width[i] * vdf->vdf_height[i];
-      gvf->gvf_mem[i]  = memalign(32, gvf->gvf_size[i]);
-
-      TRACE(TRACE_DEBUG, "Wii", "%p[%d]: Alloc %d bytes = %p", 
-	    gvf, i, gvf->gvf_size[i], gvf->gvf_mem[i]);
-
-      if(gvf->gvf_mem[i] == NULL)
-	abort();
-      
-      vdf->vdf_data[i] = gvf->gvf_mem[i];
-
-      GX_InitTexObj(&gvf->gvf_obj[i], gvf->gvf_mem[i], 
-		    vdf->vdf_width[i], vdf->vdf_height[i],
-		    GX_TF_I8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-    }
-
-    TAILQ_INSERT_TAIL(&vd->vd_bufalloced_queue, vdf, vdf_link);
-    hts_cond_signal(&vd->vd_bufalloced_queue_cond);
-  }
-
-  hts_mutex_unlock(&vd->vd_queue_mutex);
-
+  for(i = 0; i < 3; i++)
+    free(gvs->gvs_mem[i]);
 }
 
 
 /**
- *  Video widget layout
+ *
  */
 static void
-gv_enqueue_for_decode(video_decoder_t *vd, video_decoder_frame_t *vdf,
-		      struct video_decoder_frame_queue *fromqueue)
+yuvp_reset(glw_video_t *gv)
 {
-  hts_mutex_lock(&vd->vd_queue_mutex);
+  int i;
 
-  TAILQ_REMOVE(fromqueue, vdf, vdf_link);
+  for(i = 0; i < GLW_VIDEO_MAX_SURFACES; i++)
+    surface_reset(gv, &gv->gv_surfaces[i]);
+}
 
-  TAILQ_INSERT_TAIL(&vd->vd_avail_queue, vdf, vdf_link);
-  hts_cond_signal(&vd->vd_avail_queue_cond);
-  hts_mutex_unlock(&vd->vd_queue_mutex);
+
+
+/**
+ *
+ */
+static void
+surface_init(glw_video_t *gv, glw_video_surface_t *gvs,
+	     const glw_video_config_t *gvc)
+{
+  int i;
+
+  for(i = 0; i < 3; i++) {
+
+    gvs->gvs_size[i] = gvc->gvc_width[i] * gvc->gvc_height[i];
+    gvs->gvs_mem[i]  = memalign(32, gvs->gvs_size[i]);
+
+    TRACE(TRACE_DEBUG, "Wii", "%p[%d]: Alloc %d bytes = %p", 
+	  gvs, i, gvs->gvs_size[i], gvs->gvs_mem[i]);
+
+    if(gvs->gvs_mem[i] == NULL)
+      abort();
+      
+    gvs->gvs_data[i] = gvs->gvs_mem[i];
+
+    GX_InitTexObj(&gvs->gvs_obj[i], gvs->gvs_mem[i], 
+		  gvc->gvc_width[i], gvc->gvc_height[i],
+		  GX_TF_I8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+  }
+  TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvs, gvs_link);
+}
+
+
+/**
+ *
+ */
+static void
+yuvp_init(glw_video_t *gv)
+{
+  const glw_video_config_t *gvc = &gv->gv_cfg_cur;
+  int i;
+
+  for(i = 0; i < gvc->gvc_nsurfaces; i++)
+    surface_init(gv, &gv->gv_surfaces[i], gvc);
+}
+
+
+
+/**
+ *
+ */
+static void
+gv_surface_pixmap_release(glw_video_t *gv, glw_video_surface_t *gvs,
+			  const glw_video_config_t *gvc,
+			  struct glw_video_surface_queue *fromqueue)
+{
+  hts_mutex_lock(&gv->gv_surface_mutex);
+  TAILQ_REMOVE(fromqueue, gvs, gvs_link);
+  TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvs, gvs_link);
+  hts_cond_signal(&gv->gv_avail_queue_cond);
+  hts_mutex_unlock(&gv->gv_surface_mutex);
+}
+
+
+
+/**
+ *
+ */
+static int64_t
+gv_compute_blend(glw_video_t *gv, glw_video_surface_t *sa,
+		 glw_video_surface_t *sb, int output_duration)
+{
+  int64_t pts;
+  int x;
+
+  if(sa->gvs_duration >= output_duration) {
+  
+    gv->gv_sa = sa;
+    gv->gv_sb = NULL;
+
+    pts = sa->gvs_pts;
+
+    sa->gvs_duration -= output_duration;
+    sa->gvs_pts      += output_duration;
+
+  } else if(sb != NULL) {
+
+    gv->gv_sa = sa;
+    gv->gv_sb = sb;
+    gv->gv_blend = (float) sa->gvs_duration / (float)output_duration;
+
+    if(sa->gvs_duration + 
+       sb->gvs_duration < output_duration) {
+
+      sa->gvs_duration = 0;
+      pts = sb->gvs_pts;
+
+    } else {
+      pts = sa->gvs_pts;
+      x = output_duration - sa->gvs_duration;
+      sb->gvs_duration -= x;
+      sb->gvs_pts      += x;
+    }
+    sa->gvs_duration = 0;
+
+  } else {
+    gv->gv_sa = sa;
+    gv->gv_sb = NULL;
+    sa->gvs_pts      += output_duration;
+
+    pts = sa->gvs_pts;
+  }
+
+  return pts;
 }
 
 
@@ -125,113 +186,63 @@ gv_enqueue_for_decode(video_decoder_t *vd, video_decoder_frame_t *vdf,
  *
  */
 static int64_t
-gv_compute_blend(glw_video_t *gv, video_decoder_frame_t *fra,
-		 video_decoder_frame_t *frb, int output_duration)
+yuvp_newframe(glw_video_t *gv, video_decoder_t *vd)
 {
-  int64_t pts;
-  int x;
-
-  gv->gv_fra = fra;
-
-  //  TRACE(TRACE_DEBUG, "glw", "duration=%d, od=%d", fra->vdf_duration, output_duration);
-
-  if(fra->vdf_duration >= output_duration) {
-  
-    pts = fra->vdf_pts;
-
-    fra->vdf_duration -= output_duration;
-    fra->vdf_pts      += output_duration;
-
-  } else if(frb != NULL) {
-
-    if(fra->vdf_duration + frb->vdf_duration < output_duration) {
-
-      pts = frb->vdf_pts;
-
-    } else {
-      pts = fra->vdf_pts;
-      x = output_duration - fra->vdf_duration;
-      frb->vdf_duration -= x;
-      frb->vdf_pts      += x;
-    }
-    fra->vdf_duration = 0;
-
-  } else {
-    gv->gv_fra = fra;
-    gv->gv_frb = NULL;
-    fra->vdf_pts      += output_duration;
-
-    pts = fra->vdf_pts;
-  }
-
-  return pts;
-}
-
-
-
-void 
-glw_video_new_frame(video_decoder_t *vd, glw_video_t *gv, glw_root_t *gr)
-{
-  video_decoder_frame_t *fra, *frb;
+  glw_root_t *gr = gv->w.glw_root;
+  glw_video_surface_t *sa, *sb, *s;
   media_pipe_t *mp = gv->gv_mp;
   int output_duration;
   int64_t pts = 0;
-  struct video_decoder_frame_queue *dq;
   int frame_duration = gv->w.glw_root->gr_frameduration;
   int epoch = 0;
 
   output_duration = glw_video_compute_output_duration(vd, frame_duration);
 
-  dq = &vd->vd_display_queue;
-
-  /* Find frame to display */
-
-  fra = TAILQ_FIRST(dq);
-  if(fra == NULL) {
+  
+  /* Find new surface to display */
+  sa = TAILQ_FIRST(&gv->gv_decoded_queue);
+  if(sa == NULL) {
     /* No frame available */
-    fra = TAILQ_FIRST(&vd->vd_displaying_queue);
-    if(fra != NULL) {
+    sa = TAILQ_FIRST(&gv->gv_displaying_queue);
+    if(sa != NULL) {
       /* Continue to display last frame */
-      gv->gv_fra = fra;
-      gv->gv_frb = NULL;
+      gv->gv_sa = sa;
+      gv->gv_sa = NULL;
     } else {
-      gv->gv_fra = NULL;
-      gv->gv_frb = NULL;
+      gv->gv_sa = NULL;
+      gv->gv_sa = NULL;
     }
 
     pts = AV_NOPTS_VALUE;
-
+      
   } else {
       
     /* There are frames available that we are going to display,
        push back old frames to decoder */
-      
-    while((frb = TAILQ_FIRST(&vd->vd_displaying_queue)) != NULL)
-      gv_enqueue_for_decode(vd, frb, &vd->vd_displaying_queue);
-    
-    frb = TAILQ_NEXT(fra, vdf_link);
+    while((s = TAILQ_FIRST(&gv->gv_displaying_queue)) != NULL)
+      gv_surface_pixmap_release(gv, s, &gv->gv_cfg_cur, 
+				&gv->gv_displaying_queue);
 
-    pts = gv_compute_blend(gv, fra, frb, output_duration);
-    epoch = fra->vdf_epoch;
+    /* */
+    sb = TAILQ_NEXT(sa, gvs_link);
+    pts = gv_compute_blend(gv, sa, sb, output_duration);
+    epoch = sa->gvs_epoch;
 
-    if(!vd->vd_hold || frb != NULL) {
-      if(fra != NULL && fra->vdf_duration == 0)
-	glw_video_enqueue_for_display(vd, fra, dq);
+    if(!vd->vd_hold || sb != NULL) {
+      if(sa != NULL && sa->gvs_duration == 0)
+	glw_video_enqueue_for_display(gv, sa, &gv->gv_decoded_queue);
     }
-    if(frb != NULL && frb->vdf_duration == 0)
-      glw_video_enqueue_for_display(vd, frb, dq);
+    if(sb != NULL && sb->gvs_duration == 0)
+      glw_video_enqueue_for_display(gv, sb, &gv->gv_decoded_queue);
   }
 
   if(pts != AV_NOPTS_VALUE) {
     pts -= frame_duration * 2;
     glw_video_compute_avdiff(gr, vd, mp, pts, epoch);
-
-#if ENABLE_DVD
-    glw_video_spu_layout(vd, &gv->gv_spu, gr, pts);
-#endif
-    glw_video_sub_layout(vd, &gv->gv_sub, gr, pts, (glw_t *)gv);
   }
+  return pts; 
 }
+
 
 
 
@@ -239,15 +250,8 @@ glw_video_new_frame(video_decoder_t *vd, glw_video_t *gv, glw_root_t *gr)
  * Render
  */
 static void
-render_video_1f(glw_video_t *gv, video_decoder_t *vd,
-		video_decoder_frame_t *vdf, glw_rctx_t *rc)
+render_video_1f(glw_video_t *gv, glw_video_surface_t *sa, glw_rctx_t *rc)
 {
-  gx_video_frame_t *gvf = (gx_video_frame_t *)vdf;
-
-
-  if(vdf->vdf_width[0] == 0)
-    return;
-  
   GX_LoadPosMtxImm(rc->rc_be.gbr_model_matrix, GX_PNMTX0);
     
  // setup the vertex descriptor
@@ -361,9 +365,9 @@ render_video_1f(glw_video_t *gv, video_decoder_t *vd,
   GX_SetTevAlphaOp (GX_TEVSTAGE11, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
 
 
-  GX_LoadTexObj(&gvf->gvf_obj[0], GX_TEXMAP0);
-  GX_LoadTexObj(&gvf->gvf_obj[1], GX_TEXMAP1);
-  GX_LoadTexObj(&gvf->gvf_obj[2], GX_TEXMAP2);
+  GX_LoadTexObj(&sa->gvs_obj[0], GX_TEXMAP0);
+  GX_LoadTexObj(&sa->gvs_obj[1], GX_TEXMAP1);
+  GX_LoadTexObj(&sa->gvs_obj[2], GX_TEXMAP2);
 
 
   GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
@@ -414,42 +418,16 @@ render_video_1f(glw_video_t *gv, video_decoder_t *vd,
 /**
  *
  */
-void 
-glw_video_render(glw_t *w, glw_rctx_t *rc) 
+static void 
+yuvp_render(glw_video_t *gv, glw_rctx_t *rc) 
 { 
-  glw_video_t *gv = (glw_video_t *)w; 
-  video_decoder_t *vd = gv->gv_vd; 
-  video_decoder_frame_t *fra = gv->gv_fra;
+  glw_video_surface_t *sa = gv->gv_sa;
 
-  glw_scale_to_aspect(rc, vd->vd_aspect);
-
-  if(fra != NULL && glw_is_focusable(w))
-    glw_store_matrix(w, rc);
-
-  if(fra != NULL) {
-    gv->gv_width  = fra->vdf_width[0];
-    gv->gv_height = fra->vdf_height[0];
-    render_video_1f(gv, vd, fra, rc);
-  } else {
-    gv->gv_width = gv->gv_height = 0;
-  }
-
-  glw_rctx_t rc0 = *rc;
-  glw_PushMatrix(&rc0, rc);
-  glw_Scalef(&rc0, 2.0f / gv->gv_width, -2.0f / gv->gv_height, 1.0f);
-  glw_Translatef(&rc0, -gv->gv_width / 2.0, -gv->gv_height / 2.0, 0.0f);
-
-  if(gv->gv_width > 0 && (glw_is_focused(w) || !vd->vd_pci.hli.hl_gi.hli_ss))
-    gvo_render(&gv->gv_spu, w->glw_root, &rc0);
-
-  gvo_render(&gv->gv_sub, w->glw_root, &rc0);
-
-  glw_PopMatrix();
-
-  if(gv->gv_sub.gvo_child != NULL)
-    glw_render0(gv->gv_sub.gvo_child, rc);
+  if(sa != NULL)
+    render_video_1f(gv, sa, rc);
 }
 
+#if 0
 /**
  * 
  */
@@ -466,6 +444,21 @@ glw_video_framepurge(video_decoder_t *vd, video_decoder_frame_t *vdf)
   assert(vd->vd_active_frames > 0);
   vd->vd_active_frames--;
 }
+#endif
+
+
+
+/**
+ *
+ */
+static glw_video_engine_t glw_video_gx = {
+  .gve_name = "GX YUVP renderer",
+  .gve_newframe = yuvp_newframe,
+  .gve_render = yuvp_render,
+  .gve_reset = yuvp_reset,
+  .gve_init = yuvp_init,
+};
+
 
 
 
@@ -482,69 +475,47 @@ extern void videotiler_asm(void *dst,
  * Frame delivery from video decoder
  */
 void
-glw_video_frame_deliver(struct video_decoder *vd,
-			uint8_t * const data[],
-			const int linesize[],
-			int width,
-			int height,
-			int pix_fmt,
-			int64_t pts,
-			int epoch,
-			int duration,
-			int flags)
+glw_video_input_yuvp(glw_video_t *gv,
+		     uint8_t * const data[], const int pitch[],
+		     int width, int height, int pix_fmt,
+		     int64_t pts, int epoch, int duration, int flags)
 {
-  video_decoder_frame_t *vdf;
   int hvec[3], wvec[3];
-  int hshift, vshift;
   int i;
-
-  if(data == NULL) {
-    // Blackout
-    hvec[0] = wvec[0] = 0;
-    hvec[1] = wvec[1] = 0;
-    hvec[2] = wvec[2] = 0;
-
-    if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
-      return;
-
-    vdf->vdf_pts = AV_NOPTS_VALUE;
-    vdf->vdf_epoch = epoch;
-    vdf->vdf_duration = 1;
-    vdf->vdf_cutborder = 0;
-    TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
-    return;
-  }
-
-  vd->vd_active_frames_needed = 2;
+  int hshift, vshift;
+  glw_video_surface_t *s;
+  const int ilace = 0; // !!(flags & VD_INTERLACED);
 
   avcodec_get_chroma_sub_sample(pix_fmt, &hshift, &vshift);
 
   wvec[0] = width;
   wvec[1] = width >> hshift;
   wvec[2] = width >> hshift;
-  hvec[0] = height;
-  hvec[1] = height >> vshift;
-  hvec[2] = height >> vshift;
+  hvec[0] = height >> ilace;
+  hvec[1] = height >> (vshift + ilace);
+  hvec[2] = height >> (vshift + ilace);
 
-  if((vdf = vd_dequeue_for_decode(vd, wvec, hvec)) == NULL)
+  if(glw_video_configure(gv, &glw_video_gx, wvec, hvec, 3,
+			 ilace ? GVC_CUTBORDER : 0))
     return;
+  
+  if((s = glw_video_get_surface(gv)) == NULL)
+    return;
+
 
   static perftimer_t pt;
   perftimer_start(&pt);
 
   for(i = 0; i < 3; i++)
-    videotiler_asm(vdf->vdf_data[i],
-		   data[i] + linesize[i] * 0,
-		   data[i] + linesize[i] * 1,
-		   data[i] + linesize[i] * 2,
-		   data[i] + linesize[i] * 3,
-		   vdf->vdf_height[i] / 4,
-		   vdf->vdf_width[i]  / 8,
-		   4 * linesize[i] - vdf->vdf_width[i]);
+    videotiler_asm(s->gvs_data[i],
+		   data[i] + pitch[i] * 0,
+		   data[i] + pitch[i] * 1,
+		   data[i] + pitch[i] * 2,
+		   data[i] + pitch[i] * 3,
+		   wvec[i] / 4,
+		   hvec[i]  / 8,
+		   4 * pitch[i] - hvec[i]);
 
-  vdf->vdf_pts = pts;
-  vdf->vdf_epoch = epoch;
-  vdf->vdf_duration = duration;
-  TAILQ_INSERT_TAIL(&vd->vd_display_queue, vdf, vdf_link);
+  glw_video_put_surface(gv, s, pts, epoch, duration, 0);
   perftimer_stop(&pt, "framexfer");
 }
