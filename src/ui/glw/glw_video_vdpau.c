@@ -34,6 +34,12 @@
 
 #include "GL/glx.h"
 
+/*
+ * Replace the pixbuf magic with:
+ * ftp://download.nvidia.com/XFree86/vdpau/GL_NV_vdpau_interop.txt
+ *
+ */
+
 #define VDPAU_PIXMAP_WIDTH  1920
 #define VDPAU_PIXMAP_HEIGHT 1080
 
