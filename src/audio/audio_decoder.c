@@ -750,6 +750,8 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
       audio_mix2(ad, am, channels, rate, ad->ad_resbuf, written, 
 		 pts, epoch, mp);
       pts = AV_NOPTS_VALUE;
+      if(consumed == 0)
+	break;
     }
   } else {
     close_resampler(ad);
