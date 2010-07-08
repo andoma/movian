@@ -173,14 +173,8 @@ typedef struct prop {
 #define PROP_SORT_CASE_INSENSITIVE 0x4
 #define PROP_NAME_NOT_ALLOCATED    0x8
 #define PROP_XREFED_ORIGINATOR 0x10
+#define PROP_MONITORED      0x20
 
-  /**
-   * Number of monitoring subscriptions (linked via hp_value_subscriptions)
-   * We limit this to 255, should never be a problem. And it's checked
-   * in the code as well
-   * Protected by mutex
-   */
-  uint8_t hp_monitors;
 
   /**
    * Extended refcount. Used to keep contents of the property alive
@@ -212,7 +206,6 @@ typedef struct prop {
       rstr_t *rtitle;
       rstr_t *rurl;
     } link;
-    void *ptr;
   } u;
 
 #define hp_rstring   u.rstr
@@ -223,7 +216,6 @@ typedef struct prop {
 #define hp_pixmap   u.pixmap
 #define hp_link_rtitle u.link.rtitle
 #define hp_link_rurl   u.link.rurl
-#define hp_ptr         u.ptr
 
 } prop_t;
 

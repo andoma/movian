@@ -1152,7 +1152,6 @@ prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, int flags)
   hp->hp_flags = flags;
   hp->hp_originator = NULL;
   hp->hp_refcount = 1;
-  hp->hp_monitors = 0;
   hp->hp_xref = 1;
   hp->hp_type = PROP_VOID;
   if(flags & PROP_NAME_NOT_ALLOCATED)
@@ -1749,11 +1748,8 @@ prop_subscribe(int flags, ...)
 		   hps_canonical_prop_link);
   s->hps_canonical_prop = canonical;
 
-  if(s->hps_flags & PROP_SUB_SUBSCRIPTION_MONITOR) {
-    assert(canonical->hp_monitors < 255); // avoid wrap
-    canonical->hp_monitors++;
-  }
-
+  if(s->hps_flags & PROP_SUB_SUBSCRIPTION_MONITOR)
+    canonical->hp_flags |= PROP_MONITORED;
 
   LIST_INSERT_HEAD(&value->hp_value_subscriptions, s, 
 		   hps_value_prop_link);
@@ -1776,7 +1772,8 @@ prop_subscribe(int flags, ...)
   }
 
   /* If we have any subscribers monitoring for subscriptions, notify them */
-  if(!(s->hps_flags & PROP_SUB_SUBSCRIPTION_MONITOR) && value->hp_monitors > 0)
+  if(!(s->hps_flags & PROP_SUB_SUBSCRIPTION_MONITOR) && 
+     value->hp_flags & PROP_MONITORED)
     prop_send_subscription_monitor_active(value);
 
   hts_mutex_unlock(&prop_mutex);
@@ -1792,24 +1789,29 @@ static void
 prop_unsubscribe0(prop_sub_t *s)
 {
   s->hps_zombie = 1;
-
+  
   if(s->hps_value_prop != NULL) {
     LIST_REMOVE(s, hps_value_prop_link);
     s->hps_value_prop = NULL;
   }
 
   if(s->hps_canonical_prop != NULL) {
+    LIST_REMOVE(s, hps_canonical_prop_link);
 
     if(s->hps_flags & PROP_SUB_SUBSCRIPTION_MONITOR) {
-      assert(s->hps_canonical_prop->hp_monitors > 0);
-      s->hps_canonical_prop->hp_monitors--;
+      prop_sub_t *t;
+
+      assert(s->hps_canonical_prop->hp_flags & PROP_MONITORED);
+      
+      LIST_FOREACH(t, &s->hps_canonical_prop->hp_canonical_subscriptions,
+		   hps_canonical_prop_link)
+	if(t->hps_flags & PROP_SUB_SUBSCRIPTION_MONITOR)
+	  break;
+      
+      if(t == NULL)
+	s->hps_canonical_prop->hp_flags &= ~PROP_MONITORED;
     }
-
-
-    LIST_REMOVE(s, hps_canonical_prop_link);
     s->hps_canonical_prop = NULL;
-
-
   }
   prop_sub_ref_dec(s);
 }
@@ -2502,7 +2504,7 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
     s->hps_value_prop = src;
 
     /* Monitors, activate ! */
-    if(src->hp_monitors > 0)
+    if(src->hp_flags & PROP_MONITORED)
       prop_send_subscription_monitor_active(src);
     
     /* Update with new value */
