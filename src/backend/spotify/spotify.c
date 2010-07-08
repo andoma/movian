@@ -2537,7 +2537,8 @@ spotify_start(char *errbuf, size_t errlen, int silent)
  *
  */
 static nav_page_t *
-be_spotify_open(struct navigator *nav, const char *url, const char *view,
+be_spotify_open(backend_t *be, struct navigator *nav,
+		const char *url, const char *view,
 		char *errbuf, size_t errlen)
 {
   nav_page_t *np;
@@ -2611,7 +2612,7 @@ delta_seek(media_pipe_t *mp, int64_t d)
  * We only expect this to be called from the playqueue system.
  */
 static event_t *
-be_spotify_play(const char *url, media_pipe_t *mp, 
+be_spotify_play(backend_t *be, const char *url, media_pipe_t *mp, 
 		char *errbuf, size_t errlen)
 {
   spotify_uri_t su;
@@ -2766,7 +2767,7 @@ be_spotify_play(const char *url, media_pipe_t *mp,
  *
  */
 static prop_t *
-be_spotify_list(const char *url, char *errbuf, size_t errlen)
+be_spotify_list(backend_t *be, const char *url, char *errbuf, size_t errlen)
 {
   spotify_page_t *sp = calloc(1, sizeof(spotify_page_t));
   prop_t *p = prop_create(NULL, NULL);
@@ -2836,7 +2837,8 @@ parse_image_url(uint8_t *out, const char *url)
  *
  */
 static pixmap_t *
-be_spotify_imageloader(const char *url, int want_thumb, const char *theme,
+be_spotify_imageloader(backend_t *be, const char *url,
+		       int want_thumb, const char *theme,
 		       char *errbuf, size_t errlen)
 {
   spotify_image_t si;
@@ -3077,7 +3079,7 @@ be_spotify_init(void)
  *
  */
 static int
-be_spotify_canhandle(const char *url)
+be_spotify_canhandle(backend_t *be, const char *url)
 {
   return !strncmp(url, "spotify:", strlen("spotify:"));
 }
@@ -3112,7 +3114,8 @@ spotify_shutdown(void *opaque, int exitcode)
  *
  */
 static void
-be_spotify_search(prop_t *source, const char *query, backend_search_type_t type)
+be_spotify_search(backend_t *be, prop_t *source,
+		  const char *query, backend_search_type_t type)
 {
   if(!backend_search_audio(type))
     return;

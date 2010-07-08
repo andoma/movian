@@ -1015,7 +1015,8 @@ htsp_connection_deref(htsp_connection_t *hc)
  *
  */
 static nav_page_t *
-be_htsp_open(struct navigator *nav, const char *url, const char *view,
+be_htsp_open(backend_t *be, struct navigator *nav,
+	     const char *url, const char *view,
 	     char *errbuf, size_t errlen)
 {
   htsp_connection_t *hc;
@@ -1032,7 +1033,7 @@ be_htsp_open(struct navigator *nav, const char *url, const char *view,
 
   if(!strncmp(path, "/channel/", strlen("/channel/")) ||
      !strncmp(path, "/tagchannel/", strlen("/tagchannel/")))
-    return backend_open_video(nav, url, view, errbuf, errlen);
+    return backend_open_video(be, nav, url, view, errbuf, errlen);
 
   if(!strcmp(path, "/channels")) {
     src = hc->hc_channels_source;
@@ -1382,7 +1383,8 @@ htsp_free_streams(htsp_subscription_t *hs)
  *
  */
 static event_t *
-be_htsp_playvideo(const char *url, media_pipe_t *mp, 
+be_htsp_playvideo(backend_t *be, 
+		  const char *url, media_pipe_t *mp, 
 		  int primary, int priority,
 		  char *errbuf, size_t errlen)
 {
@@ -1849,7 +1851,7 @@ htsp_queueStatus(htsp_connection_t *hc, htsmsg_t *m)
  *
  */
 static int
-be_htsp_canhandle(const char *url)
+be_htsp_canhandle(backend_t *be, const char *url)
 {
   return !strncmp(url, "htsp://", strlen("htsp://"));
 }

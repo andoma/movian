@@ -226,12 +226,13 @@ nav_open0(navigator_t *nav, const char *url, const char *view)
     return;
   }
   
-  if(be->be_normalize != NULL && !be->be_normalize(url, urlbuf, sizeof(urlbuf)))
+  if(be->be_normalize != NULL && !be->be_normalize(be, url,
+						   urlbuf, sizeof(urlbuf)))
     url = urlbuf;
 
   TRACE(TRACE_DEBUG, "navigator", "Opening %s", url);
 
-  if((np = be->be_open(nav, url, view, errbuf, sizeof(errbuf))) == NULL) {
+  if((np = be->be_open(be, nav, url, view, errbuf, sizeof(errbuf))) == NULL) {
     notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nError: %s", url, errbuf);
     return;
   }

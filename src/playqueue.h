@@ -111,6 +111,9 @@ void playqueue_event_handler(event_t *e);
 
 void playqueue_load_with_source(prop_t *track, prop_t *source);
 
-nav_page_t *playqueue_open(struct navigator *nav, const char *view);
+struct backend;
+
+nav_page_t *playqueue_open(struct backend *be, 
+			   struct navigator *nav, const char *view);
 
 #endif /* PLAYQUEUE_H__ */

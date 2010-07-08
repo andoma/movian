@@ -512,7 +512,7 @@ settings_init(void)
  *
  */
 static int
-be_settings_canhandle(const char *url)
+be_settings_canhandle(struct backend *be, const char *url)
 {
   return !strncmp(url, SETTINGS_URL, strlen(SETTINGS_URL));
 }
@@ -525,7 +525,8 @@ be_settings_canhandle(const char *url)
  *
  */
 static nav_page_t  *
-be_settings_open(struct navigator *nav, const char *url0, const char *view,
+be_settings_open(struct backend *be, struct navigator *nav,
+		 const char *url0, const char *view,
 		 char *errbuf, size_t errlen)
 {
   nav_page_t *n;

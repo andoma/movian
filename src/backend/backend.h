@@ -61,30 +61,36 @@ typedef struct backend {
 
   int (*be_init)(void);
 
-  int (*be_canhandle)(const char *ur);
+  int (*be_canhandle)(struct backend *be, const char *ur);
 
-  struct nav_page *(*be_open)(struct navigator *nav, const char *url, 
-			      const char *view,
+  struct nav_page *(*be_open)(struct backend *be, struct navigator *nav, 
+			      const char *url, const char *view,
 			      char *errbuf, size_t errlen);
 
-  event_t *(*be_play_video)(const char *url, struct media_pipe *mp,
+  event_t *(*be_play_video)(struct backend *be, const char *url,
+			    struct media_pipe *mp,
 			    int primary, int priority, 
 			    char *errbuf, size_t errlen);
 
-  event_t *(*be_play_audio)(const char *url, struct media_pipe *mp,
+  event_t *(*be_play_audio)(struct backend *be, const char *url,
+			    struct media_pipe *mp,
 			    char *errbuf, size_t errlen);
 
-  prop_t *(*be_list)(const char *url, char *errbuf, size_t errsize);
+  prop_t *(*be_list)(struct backend *be, const char *url, 
+		     char *errbuf, size_t errsize);
 
-  struct pixmap *(*be_imageloader)(const char *url, int want_thumb,
+  struct pixmap *(*be_imageloader)(struct backend *be, 
+				   const char *url, int want_thumb,
 				   const char *theme,
 				   char *errbuf, size_t errlen);
 
-  int (*be_normalize)(const char *url, char *dst, size_t dstlen);
+  int (*be_normalize)(struct backend *be, const char *url,
+		      char *dst, size_t dstlen);
 
-  int (*be_probe)(const char *url, char *errbuf, size_t errlen);
+  int (*be_probe)(struct backend *be, const char *url,
+		  char *errbuf, size_t errlen);
 
-  void (*be_search)(struct prop *src, const char *query, 
+  void (*be_search)(struct backend *be, struct prop *src, const char *query, 
 		    backend_search_type_t type);
 
 } backend_t;
@@ -116,7 +122,8 @@ backend_probe_result_t backend_probe(const char *url,
 
 void backend_register(backend_t *be);
 
-struct nav_page *backend_open_video(struct navigator *nav, const char *url,
+struct nav_page *backend_open_video(backend_t *be, 
+				    struct navigator *nav, const char *url,
 				    const char *view,
 				    char *errbuf, size_t errlen);
 

@@ -49,7 +49,7 @@ typedef struct {
  *
  */
 static int
-rtmp_canhandle(const char *url)
+rtmp_canhandle(backend_t *be, const char *url)
 {
   return 
     !strncmp(url, "rtmp://", strlen("rtmp://")) ||
@@ -597,7 +597,8 @@ rtmp_free(rtmp_t *r)
  *
  */
 static event_t *
-rtmp_playvideo(const char *url, media_pipe_t *mp, int primary, int priority,
+rtmp_playvideo(backend_t *be, const char *url,
+	       media_pipe_t *mp, int primary, int priority,
 	       char *errbuf, size_t errlen)
 {
   rtmp_t r = {0};

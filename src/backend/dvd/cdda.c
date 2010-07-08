@@ -308,7 +308,7 @@ parse_audiocd_url(const char *url, char *device, size_t devlen)
  *
  */
 static int
-canhandle(const char *url)
+canhandle(struct backend *be, const char *url)
 {
   return parse_audiocd_url(url, NULL, 0) >= 0;
 }
@@ -318,7 +318,8 @@ canhandle(const char *url)
  *
  */
 static nav_page_t *
-openpage(struct navigator *nav, const char *url, const char *view,
+openpage(struct backend *be, struct navigator *nav, 
+	 const char *url, const char *view,
 	 char *errstr, size_t errlen)
 {
   nav_page_t *np;
@@ -349,7 +350,7 @@ openpage(struct navigator *nav, const char *url, const char *view,
     prop_link(ct->ct_metadata, meta);
 
     playqueue_play(url, meta);
-    return playqueue_open(nav, view);
+    return playqueue_open(be, nav, view);
   }
 
   np = nav_page_create(nav, url, view, sizeof(nav_page_t), 0);
@@ -364,7 +365,7 @@ openpage(struct navigator *nav, const char *url, const char *view,
  *
  */
 static prop_t *
-listdisc(const char *url, char *errstr, size_t errlen)
+listdisc(struct backend *be, const char *url, char *errstr, size_t errlen)
 {
   prop_t *p;
   char device[32];
@@ -412,7 +413,8 @@ cdseek(media_pipe_t *mp, media_buf_t **mbp, int first, int last, int lsn)
  *
  */
 static event_t *
-playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen)
+playaudio(struct backend *be, const char *url,
+	  media_pipe_t *mp, char *errstr, size_t errlen)
 {
   int track;
   char device[32];

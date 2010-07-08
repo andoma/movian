@@ -40,7 +40,7 @@
  *
  */
 static int
-be_file_canhandle(const char *url)
+be_file_canhandle(backend_t *be, const char *url)
 {
   return fa_can_handle(url, NULL, 0);
 }
@@ -68,7 +68,8 @@ set_title_from_url(prop_t *metadata, const char *url)
  *
  */
 static nav_page_t *
-file_open_dir(struct navigator *nav, const char *url, const char *view,
+file_open_dir(backend_t *be, struct navigator *nav,
+	      const char *url, const char *view,
 	      char *errbuf, size_t errlen)
 {
   nav_page_t *np;
@@ -79,7 +80,7 @@ file_open_dir(struct navigator *nav, const char *url, const char *view,
   type = fa_probe_dir(NULL, url);
 
   if(type == CONTENT_DVD)
-    return backend_open_video(nav, url, view, errbuf, errlen);
+    return backend_open_video(be, nav, url, view, errbuf, errlen);
 
   np = nav_page_create(nav, url, view, sizeof(nav_page_t), 
 		       NAV_PAGE_DONT_CLOSE_ON_BACK);
@@ -141,7 +142,8 @@ file_open_audio(struct navigator *nav, const char *url, const char *view)
  *
  */
 static nav_page_t *
-file_open_file(struct navigator *nav, const char *url, const char *view,
+file_open_file(backend_t *be, struct navigator *nav,
+	       const char *url, const char *view,
 	       char *errbuf, size_t errlen, struct stat *st)
 {
   char redir[URL_MAX];
@@ -157,19 +159,19 @@ file_open_file(struct navigator *nav, const char *url, const char *view,
   case CONTENT_ARCHIVE:
   case CONTENT_ALBUM:
     prop_destroy(meta);
-    return file_open_dir(nav, redir, view, errbuf, errlen);
+    return file_open_dir(be, nav, redir, view, errbuf, errlen);
 
   case CONTENT_AUDIO:
     if((np = file_open_audio(nav, url, view)) != NULL)
       return np;
 
     playqueue_play(url, meta);
-    return playqueue_open(nav, view);
+    return playqueue_open(be, nav, view);
 
   case CONTENT_VIDEO:
   case CONTENT_DVD:
     prop_destroy(meta);
-    return backend_open_video(nav, url, view, errbuf, errlen);
+    return backend_open_video(be, nav, url, view, errbuf, errlen);
 
   default:
     snprintf(errbuf, errlen, "Can not handle file contents");
@@ -181,7 +183,8 @@ file_open_file(struct navigator *nav, const char *url, const char *view,
  *
  */
 static nav_page_t *
-be_file_open(struct navigator *nav, const char *url, const char *view,
+be_file_open(backend_t *be, struct navigator *nav,
+	     const char *url, const char *view,
 	     char *errbuf, size_t errlen)
 {
   struct stat buf;
@@ -189,8 +192,9 @@ be_file_open(struct navigator *nav, const char *url, const char *view,
   if(fa_stat(url, &buf, errbuf, errlen))
     return NULL;
 
-  return S_ISDIR(buf.st_mode) ? file_open_dir(nav, url, view, errbuf, errlen) :
-    file_open_file(nav, url, view, errbuf, errlen, &buf);
+  return S_ISDIR(buf.st_mode) ? 
+    file_open_dir (be, nav, url, view, errbuf, errlen) :
+    file_open_file(be, nav, url, view, errbuf, errlen, &buf);
 }
 
 
@@ -198,7 +202,7 @@ be_file_open(struct navigator *nav, const char *url, const char *view,
  *
  */
 static prop_t *
-be_list(const char *url, char *errbuf, size_t errsize)
+be_list(backend_t *be, const char *url, char *errbuf, size_t errsize)
 {
   prop_t *p = prop_create(NULL, NULL);
   fa_scanner(url, p, NULL, NULL);

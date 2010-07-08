@@ -145,9 +145,12 @@ void *fa_quickload(const char *filename, size_t *sizeptr, const char *theme,
 
 int fa_parent(char *dst, size_t dstlen, const char *url);
 
-int fa_normalize(const char *url, char *dst, size_t dstlen);
+struct backend;
 
-int fa_check_url(const char *url, char *errbuf, size_t errlen);
+int fa_normalize(struct backend *be, const char *url, char *dst, size_t dstlen);
+
+int fa_check_url(struct backend *be, const char *url,
+		 char *errbuf, size_t errlen);
 
 struct htsbuf_queue;
 

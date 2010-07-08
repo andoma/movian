@@ -48,7 +48,7 @@ search_get_settings(void)
  *
  */
 static int
-search_canhandle(const char *url)
+search_canhandle(backend_t *be, const char *url)
 {
   return
     !strncmp(url, "search:", strlen("search:")) ||
@@ -62,7 +62,8 @@ search_canhandle(const char *url)
  *
  */
 static nav_page_t *
-search_open(struct navigator *nav, const char *url0, const char *view,
+search_open(backend_t *beself, struct navigator *nav,
+	    const char *url0, const char *view,
 	    char *errbuf, size_t errlen)
 {
   const char *url;
@@ -85,7 +86,7 @@ search_open(struct navigator *nav, const char *url0, const char *view,
 
 
   if((be = backend_canhandle(url)) != NULL) 
-    return be->be_open(nav, url, view, errbuf, errlen);
+    return be->be_open(be, nav, url, view, errbuf, errlen);
   
   np = nav_page_create(nav, url0, view, sizeof(nav_page_t),
 		      NAV_PAGE_DONT_CLOSE_ON_BACK);
@@ -100,7 +101,7 @@ search_open(struct navigator *nav, const char *url0, const char *view,
 
   LIST_FOREACH(be, &backends, be_global_link)
     if(be->be_search != NULL)
-      be->be_search(src, url, type);
+      be->be_search(be, src, url, type);
   return np;
 }
 

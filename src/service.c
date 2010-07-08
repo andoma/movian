@@ -157,7 +157,7 @@ seturl(service_t *s, const char *url)
 
   be = backend_canhandle(url);
   if(be != NULL && be->be_normalize != NULL &&
-     !be->be_normalize(url, urlbuf, sizeof(urlbuf)))
+     !be->be_normalize(be, url, urlbuf, sizeof(urlbuf)))
     mystrset(&s->s_url, urlbuf);
   else
     mystrset(&s->s_url, url);

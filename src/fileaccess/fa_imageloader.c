@@ -134,7 +134,8 @@ jpeginfo_reader(void *handle, void *buf, off_t offset, size_t size)
  *
  */
 pixmap_t *
-fa_imageloader(const char *url, int want_thumb, const char *theme,
+fa_imageloader(struct backend *be, const char *url,
+	       int want_thumb, const char *theme,
 	       char *errbuf, size_t errlen)
 {
   fa_handle_t *fh;

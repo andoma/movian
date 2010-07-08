@@ -759,7 +759,7 @@ playqueue_init(void)
 
 
 nav_page_t *
-playqueue_open(struct navigator *nav, const char *view)
+playqueue_open(backend_t *be, struct navigator *nav, const char *view)
 {
   nav_page_t *n;
   prop_t *src, *metadata;
@@ -783,10 +783,11 @@ playqueue_open(struct navigator *nav, const char *view)
  *
  */
 static nav_page_t *
-be_playqueue_open(struct navigator *nav, const char *url0, const char *view,
+be_playqueue_open(struct backend *be, struct navigator *nav,
+		  const char *url0, const char *view,
 		  char *errbuf, size_t errlen)
 {
-  return playqueue_open(nav, view);
+  return playqueue_open(be, nav, view);
 }
 
 
@@ -794,7 +795,7 @@ be_playqueue_open(struct navigator *nav, const char *url0, const char *view,
  *
  */
 static int
-be_playqueue_canhandle(const char *url)
+be_playqueue_canhandle(struct backend *be, const char *url)
 {
   return !strncmp(url, PLAYQUEUE_URL, strlen(PLAYQUEUE_URL));
 }

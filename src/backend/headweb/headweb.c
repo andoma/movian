@@ -414,8 +414,8 @@ browse_contents(prop_t *src, const char *url)
  *
  */
 static nav_page_t *
-open_stream_decode_xml(struct navigator *nav, htsmsg_t *xml,
-		        char *errbuf, size_t errlen)
+open_stream_decode_xml(backend_t *be, struct navigator *nav, htsmsg_t *xml,
+		       char *errbuf, size_t errlen)
 {
   char newurl[URL_MAX];
 
@@ -449,7 +449,7 @@ open_stream_decode_xml(struct navigator *nav, htsmsg_t *xml,
 
   snprintf(newurl, sizeof(newurl), "%s/%s", url, streamid);
   TRACE(TRACE_DEBUG, "Headweb", "Redirecting to %s", newurl);
-  return backend_open_video(nav, newurl, NULL, errbuf, errlen);
+  return backend_open_video(be, nav, newurl, NULL, errbuf, errlen);
 }
 
 
@@ -457,7 +457,8 @@ open_stream_decode_xml(struct navigator *nav, htsmsg_t *xml,
  *
  */
 static nav_page_t *
-open_stream(struct navigator *nav, const char *u, char *errbuf, size_t errlen)
+open_stream(backend_t *be, struct navigator *nav,
+	    const char *u, char *errbuf, size_t errlen)
 {
   char *result;
   size_t resultsize;
@@ -483,7 +484,7 @@ open_stream(struct navigator *nav, const char *u, char *errbuf, size_t errlen)
   if((xml = htsmsg_xml_deserialize(result, errbuf, errlen)) == NULL)
     return NULL;
 
-  np = open_stream_decode_xml(nav, xml, errbuf, errlen);
+  np = open_stream_decode_xml(be, nav, xml, errbuf, errlen);
   htsmsg_destroy(xml);
   return np;
 }
@@ -495,7 +496,8 @@ open_stream(struct navigator *nav, const char *u, char *errbuf, size_t errlen)
  *
  */
 static nav_page_t *
-be_headweb_open(struct navigator *nav, const char *url, const char *view,
+be_headweb_open(backend_t *be, 
+		struct navigator *nav, const char *url, const char *view,
 		char *errbuf, size_t errlen)
 {
   nav_page_t *np;
@@ -509,7 +511,7 @@ be_headweb_open(struct navigator *nav, const char *url, const char *view,
   } else if(!strstart(url, "headweb:genre:")) {
     f = browse_genre;
   } else if(!strstart(url, "headweb:stream:")) {
-    return open_stream(nav, url, errbuf, errlen);
+    return open_stream(be, nav, url, errbuf, errlen);
   } else {
     snprintf(errbuf, errlen, "Invalid URL");
     return NULL;
@@ -600,7 +602,7 @@ be_headweb_init(void)
  *
  */
 static int
-be_headweb_canhandle(const char *url)
+be_headweb_canhandle(backend_t *be, const char *url)
 {
   return !strncmp(url, "headweb:", strlen("headweb:"));
 }
@@ -610,7 +612,8 @@ be_headweb_canhandle(const char *url)
  *
  */
 static void
-be_headweb_search(prop_t *source, const char *query, backend_search_type_t type)
+be_headweb_search(backend_t *be, prop_t *source,
+		  const char *query, backend_search_type_t type)
 {
   char q[500];
 

@@ -20,8 +20,10 @@
 #define FA_IMAGELOADER_H
 
 #include "misc/pixmap.h"
+struct backend;
 
-pixmap_t *fa_imageloader(const char *url, int want_thumb, const char *theme,
+pixmap_t *fa_imageloader(struct backend *be, const char *url,
+			 int want_thumb, const char *theme,
 			 char *errbuf, size_t errlen);
 
 #endif /* FA_IMAGELOADER_H */

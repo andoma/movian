@@ -1206,7 +1206,7 @@ static unsigned short LoadSIDFromMemory(void *pSidData, unsigned short *load_add
  *
  */
 static int
-be_sidplayer_canhandle(const char *url)
+be_sidplayer_canhandle(struct backend *be, const char *url)
 {
   return !strncmp(url, "sidplayer:", strlen("sidplayer:"));
 }
@@ -1218,7 +1218,7 @@ be_sidplayer_canhandle(const char *url)
  * We only expect this to be called from the playqueue system.
  */
 static event_t *
-be_sidplayer_play(const char *url0, media_pipe_t *mp, 
+be_sidplayer_play(struct backend *be, const char *url0, media_pipe_t *mp, 
 		  char *errbuf, size_t errlen)
 {
   media_queue_t *mq = &mp->mp_audio;

@@ -118,7 +118,7 @@ fa_can_handle(const char *url, char *errbuf, size_t errsize)
  *
  */
 int
-fa_normalize(const char *url, char *dst, size_t dstlen)
+fa_normalize(struct backend *be, const char *url, char *dst, size_t dstlen)
 {
   fa_protocol_t *fap;
   char *filename;
@@ -851,7 +851,7 @@ fa_parent(char *dst, size_t dstlen, const char *url)
 
 
 int
-fa_check_url(const char *url, char *errbuf, size_t errlen)
+fa_check_url(struct backend *be, const char *url, char *errbuf, size_t errlen)
 {
   fa_protocol_t *fap;
   char *filename;
