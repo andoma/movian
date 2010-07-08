@@ -168,12 +168,39 @@ typedef struct prop {
    * Protected by mutex
    */
   uint8_t hp_flags;
-#define PROP_CLIPPED_VALUE 0x1
-#define PROP_SORTED_CHILDS 0x2
+
+
+  /**
+   * The float/int prop should be clipped according to min/max
+   */
+#define PROP_CLIPPED_VALUE         0x1
+
+  /**
+   * Automatically sort childs
+   */
+#define PROP_SORTED_CHILDS         0x2
+
+  /**
+   * Make child sorting case insensitive
+   */
 #define PROP_SORT_CASE_INSENSITIVE 0x4
+
+  /**
+   * hp_name is not malloc()ed but rather points to a compile const string
+   * that should not be free()d upon prop finalization
+   */
 #define PROP_NAME_NOT_ALLOCATED    0x8
-#define PROP_XREFED_ORIGINATOR 0x10
-#define PROP_MONITORED      0x20
+
+  /**
+   * We hold an xref to prop pointed to by hp_originator.
+   * So do a prop_destroy0() when we unlink/destroy this prop
+   */
+#define PROP_XREFED_ORIGINATOR     0x10
+
+  /**
+   * This property is monitored by one or more of its subscribers
+   */
+#define PROP_MONITORED             0x20
 
 
   /**
