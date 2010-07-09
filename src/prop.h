@@ -27,6 +27,8 @@
 #include "htsmsg/htsmsg.h"
 #include "misc/rstr.h"
 
+extern hts_mutex_t prop_mutex;
+
 struct prop;
 struct prop_sub;
 struct pixmap;

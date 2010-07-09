@@ -30,7 +30,7 @@
 #include "showtime.h"
 #include "misc/pixmap.h"
 
-static hts_mutex_t prop_mutex;
+hts_mutex_t prop_mutex;
 static prop_t *prop_global;
 
 static prop_courier_t *global_courier;
