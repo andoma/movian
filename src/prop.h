@@ -474,6 +474,8 @@ void prop_destroy_childs(prop_t *parent);
 
 prop_t **prop_get_ancestors(prop_t *p);
 
+prop_t **prop_get_childs(prop_t *p, int *num);
+
 prop_t *prop_get_by_name(const char **name, int follow_symlinks, ...)
      __attribute__((__sentinel__(0)));
 

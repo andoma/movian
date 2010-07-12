@@ -2734,6 +2734,42 @@ prop_get_ancestors(prop_t *p)
 /**
  *
  */
+prop_t **
+prop_get_childs(prop_t *p, int *num)
+{
+  prop_t *c, **r;
+  int i = 0;
+
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type != PROP_DIR) {
+    hts_mutex_unlock(&prop_mutex);
+    return NULL;
+  }
+
+  TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
+    i++;
+
+  r = malloc((i + 1) * sizeof(prop_t *));
+
+  i = 0;
+  TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link) {
+    prop_ref_inc(c);
+    r[i++] = c;
+  }
+  r[i] = NULL;
+
+  if(num != NULL)
+    *num = i;
+
+  hts_mutex_unlock(&prop_mutex);
+  return r;
+}
+
+
+/**
+ *
+ */
 prop_t *
 prop_get_by_names(prop_t *p, ...)
 {
