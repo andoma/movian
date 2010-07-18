@@ -1449,6 +1449,9 @@ spotify_open_page(spotify_page_t *sp)
       return;
   } else {
     if((l = f_sp_link_create_from_string(sp->sp_url)) == NULL) {
+      prop_set_int(prop_create(prop_create(sp->sp_root, "model"),
+			       "loading"), 0);
+      nav_open_errorf(sp->sp_root, "Invalid Spotify URI");
       spotify_page_done(sp);
       return;
     }

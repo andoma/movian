@@ -61,4 +61,6 @@ void nav_open(const char *url, const char *view);
 void *nav_page_create(struct navigator *nav, const char *url, const char *view,
 		      size_t allocsize, int flags);
 
+void nav_open_errorf(prop_t *root, const char *fmt, ...);
+
 #endif /* NAVIGATOR_H__ */

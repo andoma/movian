@@ -1,0 +1,24 @@
+widget(container_y, {
+
+  space(1);
+
+  widget(label, {
+    .align = center;
+    .caption = "Unable to open resource";
+  });
+
+  widget(label, {
+    .align = center;
+    .sizeScale = 1.5;
+    .caption = $self.url;
+  });
+
+  space(0.1);
+
+  widget(label, {
+    .align = center;
+    .caption = $self.model.error;
+  });
+
+  space(1);
+});

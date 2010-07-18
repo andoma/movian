@@ -27,7 +27,6 @@
 #include "navigator.h"
 #include "backend/backend.h"
 #include "event.h"
-#include "notifications.h"
 
 TAILQ_HEAD(nav_page_queue, nav_page);
 
@@ -58,6 +57,9 @@ typedef struct navigator {
 static void nav_eventsink(void *opaque, prop_event_t event, ...);
 
 static void nav_dtor_tracker(void *opaque, prop_event_t event, ...);
+
+static void nav_open_error_raw(navigator_t *nav, const char *url, 
+			       const char *msg);
 
 /**
  *
@@ -212,30 +214,10 @@ nav_select(navigator_t *nav, nav_page_t *np)
  *
  */
 static void
-nav_open0(navigator_t *nav, const char *url, const char *view)
+nav_insert_page(navigator_t *nav, nav_page_t *np)
 {
-  nav_page_t *np, *np2;
-  backend_t *be;
-  char errbuf[128];
-  char urlbuf[URL_MAX];
+  nav_page_t *np2;
 
-  be = backend_canhandle(url);
-
-  if(be == NULL) {
-    notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nNo handler for URL", url);
-    return;
-  }
-  
-  if(be->be_normalize != NULL && !be->be_normalize(be, url,
-						   urlbuf, sizeof(urlbuf)))
-    url = urlbuf;
-
-  TRACE(TRACE_DEBUG, "navigator", "Opening %s", url);
-
-  if((np = be->be_open(be, nav, url, view, errbuf, sizeof(errbuf))) == NULL) {
-    notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nError: %s", url, errbuf);
-    return;
-  }
   if(prop_set_parent(np->np_prop_root, nav->nav_prop_pages)) {
     /* nav->nav_prop_pages is a zombie, this is an error */
     abort();
@@ -257,6 +239,38 @@ nav_open0(navigator_t *nav, const char *url, const char *view)
     np->np_inhistory = 1;
   }
   nav_select(nav, np);
+}
+
+/**
+ *
+ */
+static void
+nav_open0(navigator_t *nav, const char *url, const char *view)
+{
+  nav_page_t *np;
+  backend_t *be;
+  char errbuf[128];
+  char urlbuf[URL_MAX];
+
+  be = backend_canhandle(url);
+
+  if(be == NULL) {
+    nav_open_error_raw(nav, url, "No handler for URL");
+    return;
+  }
+  
+  if(be->be_normalize != NULL && !be->be_normalize(be, url,
+						   urlbuf, sizeof(urlbuf)))
+    url = urlbuf;
+
+  TRACE(TRACE_DEBUG, "navigator", "Opening %s", url);
+
+  if((np = be->be_open(be, nav, url, view, errbuf, sizeof(errbuf))) == NULL) {
+    nav_open_error_raw(nav, url, errbuf);
+    return;
+  }
+
+  nav_insert_page(nav, np);
 }
 
 
@@ -416,4 +430,35 @@ nav_dtor_tracker(void *opaque, prop_event_t event, ...)
 
   prop_courier_stop(nav->nav_pc);
   free(nav);
+}
+
+
+/**
+ *
+ */
+void
+nav_open_errorf(prop_t *root, const char *fmt, ...)
+{
+  va_list ap;
+  char buf[200];
+
+  va_start(ap, fmt);
+  vsnprintf(buf, sizeof(buf), fmt, ap);
+  va_end(ap);
+  
+  prop_t *src = prop_create(root, "model");
+  prop_set_string(prop_create(src, "type"), "openerror");
+  prop_set_string(prop_create(src, "error"), buf);
+}
+
+
+/**
+ *
+ */
+static void
+nav_open_error_raw(navigator_t *nav, const char *url, const char *msg)
+{
+  nav_page_t *np = nav_page_create(nav, url, NULL, sizeof(nav_page_t), 0);
+  nav_open_errorf(np->np_prop_root, "%s", msg);
+  nav_insert_page(nav, np);
 }
