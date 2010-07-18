@@ -422,12 +422,13 @@ SRCS-$(CONFIG_SPIDERMONKEY) += ext/spidermonkey/jsapi.c	\
 			ext/spidermonkey/jsxml.c	\
 			ext/spidermonkey/prmjtime.c	\
                         src/arch/nspr/nspr.c            \
-                        src/js.c                        \
+                        src/js/js.c                     \
+                        src/js/js_prop.c                \
 
 ${BUILDDIR}/ext/spidermonkey/%.o : CFLAGS = \
-	-Iext/spidermonkey -Isrc/arch/nspr
+	-Iext/spidermonkey -Isrc/arch/nspr -DDEBUG=1
 
-CFLAGS_com += -DXP_UNIX -DJS_HAS_XML_SUPPORT -DJS_THREADSAFE
+CFLAGS_com += -DXP_UNIX -DJS_HAS_XML_SUPPORT -DJS_THREADSAFE -DJS_GC_ZEAL
 
 
 # Various transformations
@@ -484,7 +485,7 @@ ffmpeg ${FFBUILDDEP}:
 	cd ${BUILDDIR}/ffmpeg/build && ${MAKE} install
 
 clean:
-	rm -rf ${BUILDDIR}/src ${BUILDDIR}/bundles
+	rm -rf ${BUILDDIR}/src ${BUILDDIR}/ext ${BUILDDIR}/bundles
 	find . -name "*~" | xargs rm -f
 
 distclean: clean
