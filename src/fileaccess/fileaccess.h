@@ -138,8 +138,6 @@ const char *fa_ffmpeg_error_to_txt(int err);
 
 void fa_scanner(const char *url, prop_t *source, prop_t *view, const char *playme);
 
-void fa_scanner_find_albumart(const char *url, prop_t *album_art);
-
 void *fa_quickload(const char *filename, size_t *sizeptr, const char *theme,
 		   char *errbuf, size_t errlen);
 
