@@ -112,7 +112,7 @@ settings_add(prop_t *parent,
   p = prop_create(prop_create(parent ?: settings_root, "nodes"), id);
   settings_set_url(p);
 
-  src = prop_create(p, "source");
+  src = prop_create(p, "model");
 
   if(id != NULL)
     prop_set_string(prop_create(src, "id"), id);
@@ -537,7 +537,7 @@ be_settings_open(struct backend *be, struct navigator *nav,
 
   if(!*url) {
     n = nav_page_create(nav, url0, view, sizeof(nav_page_t), 0);
-    prop_link(settings_root, prop_create(n->np_prop_root, "source"));
+    prop_link(settings_root, prop_create(n->np_prop_root, "model"));
     return n;
    }
 
@@ -551,13 +551,13 @@ be_settings_open(struct backend *be, struct navigator *nav,
       url++;
     
 
-    p = p ? prop_create(p, "source") : settings_root;
+    p = p ? prop_create(p, "model") : settings_root;
     p = prop_create(p, "nodes");
     p = prop_create(p, buf);
   }
   
   n = nav_page_create(nav, url0, view, sizeof(nav_page_t), 0);
-  prop_link(prop_create(p, "source"), prop_create(n->np_prop_root, "source"));
+  prop_link(prop_create(p, "model"), prop_create(n->np_prop_root, "model"));
   return n;
 }
 

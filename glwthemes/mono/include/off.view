@@ -10,7 +10,7 @@ widget(backdrop, {
   PLATE_GFX();
 
   onEvent(activate, {
-    $self.source.value = !$self.source.value;
+    $self.model.value = !$self.model.value;
   });
 
   widget(label, {

@@ -520,7 +520,7 @@ be_headweb_open(backend_t *be,
   np = nav_page_create(nav, url, view, sizeof(nav_page_t),
 		       NAV_PAGE_DONT_CLOSE_ON_BACK);
 
-  src = prop_create(np->np_prop_root, "source");
+  src = prop_create(np->np_prop_root, "model");
   prop_set_string(prop_create(np->np_prop_root, "view"), "list");
   prop_set_int(prop_create(src, "loading"), 1);
 

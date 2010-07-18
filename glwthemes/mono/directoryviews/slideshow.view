@@ -9,7 +9,7 @@ widget(container_z, {
 
     .focusable = true;
 
-    cloner($self.source.nodes, image, {
+    cloner($self.model.nodes, image, {
       .source = $self.url;
     });
   });

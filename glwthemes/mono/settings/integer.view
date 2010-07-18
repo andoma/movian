@@ -6,7 +6,7 @@ widget(container_x, {
     .filterConstraintX = true;
     .weight = 1.0;
     .align = left;
-    .caption = $self.source.title;
+    .caption = $self.model.title;
   });
 
   widget(dummy, {
@@ -15,10 +15,10 @@ widget(container_x, {
 
   widget(slider_x, {
     .focusable = true;
-    .min = $self.source.min;
-    .max = $self.source.max;
-    .step = $self.source.step;
-    bind($self.source.value);
+    .min = $self.model.min;
+    .max = $self.model.max;
+    .step = $self.model.step;
+    bind($self.model.value);
 
     widget(backdrop, {
       .width = KNOB_SIZE();
@@ -30,7 +30,7 @@ widget(container_x, {
 
       widget(label, {
 	.align = center;
-	.caption = int2str($self.source.value) + $self.source.unit;
+	.caption = int2str($self.model.value) + $self.model.unit;
       });
     });
   });

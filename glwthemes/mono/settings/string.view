@@ -4,7 +4,7 @@ widget(container_x, {
     .filterConstraintX = true;
     .weight = 1.0;
     .align = left;
-    .caption = $self.source.title;
+    .caption = $self.model.title;
   });
   
   widget(backdrop, {
@@ -19,8 +19,8 @@ widget(container_x, {
       .filterConstraintX = true;
       .align = left;
       .focusable = true;
-      .password = $self.source.password;
-      bind($self.source.value);
+      .password = $self.model.password;
+      bind($self.model.value);
     });
   });
 });

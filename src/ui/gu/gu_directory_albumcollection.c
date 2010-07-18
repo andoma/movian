@@ -61,7 +61,7 @@ add_header(prop_courier_t *pc, GtkWidget *parent, prop_t *root)
   gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
 
   s = prop_subscribe(0,
-		     PROP_TAG_NAME("self", "source", "artist_name"),
+		     PROP_TAG_NAME("self", "model", "artist_name"),
 		     PROP_TAG_CALLBACK_STRING, gu_subscription_set_label_xl, w,
 		     PROP_TAG_COURIER, pc, 
 		     PROP_TAG_NAMED_ROOT, root, "self",
@@ -230,7 +230,7 @@ add_albums(gu_tab_t *gt, GtkWidget *parent, prop_t *root)
 
   ab->sub =
     prop_subscribe(0,
-		   PROP_TAG_NAME("self", "source", "nodes"),
+		   PROP_TAG_NAME("self", "model", "nodes"),
 		   PROP_TAG_CALLBACK, collection_albums, ab,
 		   PROP_TAG_COURIER, gt->gt_gw->gw_gu->gu_pc, 
 		   PROP_TAG_NAMED_ROOT, root, "self",

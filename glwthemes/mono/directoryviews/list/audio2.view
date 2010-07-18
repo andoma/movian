@@ -57,7 +57,7 @@ widget(container_x, {
 		delete($self);
 	      },
 	      PLATE_COLOR_AUDIO(),
-	      1, !$parent.source.canDelete);
+	      1, !$parent.model.canDelete);
       });
 
       widget(container_x, {

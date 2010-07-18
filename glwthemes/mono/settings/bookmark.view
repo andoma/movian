@@ -6,7 +6,7 @@
     .focusable = 0.1;
     .focusOnClick = true;
     onEvent(activate, {
-      $self.source.svctype = LABEL;
+      $self.model.svctype = LABEL;
     });
 
     .alphaSelf = iir(isFocused() * 1, 8) * 0.8;
@@ -15,7 +15,7 @@
     PLATE_GFX();
     widget(container_z, {
       widget(icon, {
-	.color = select($self.source.svctype == LABEL ||
+	.color = select($self.model.svctype == LABEL ||
 			isHovered() || isFocused(),
 			[1.0, 1.0, 1.0],
 			COLOR);
@@ -25,8 +25,8 @@
       });
 
       widget(icon, { 
-	.alpha = iir($self.source.svctype == LABEL, 4); 
-	.color = select($self.source.svctype == LABEL ||
+	.alpha = iir($self.model.svctype == LABEL, 4); 
+	.color = select($self.model.svctype == LABEL ||
 			isHovered() || isFocused(),
 			[1.0, 1.0, 1.0],
 			COLOR);
@@ -83,7 +83,7 @@ widget(container_x, {
       
 	  widget(text, {
 	    .focusable = 1.0;
-	    bind($self.source.title);
+	    bind($self.model.title);
 	  });
 	});
       });
@@ -112,7 +112,7 @@ widget(container_x, {
       
 	  widget(text, {
 	    .focusable = 1.0;
-	    bind($self.source.url);
+	    bind($self.model.url);
 	  });
 	});
 
@@ -121,7 +121,7 @@ widget(container_x, {
 	});
 
 	widget(icon, {
-	  .color = translate($self.source.status,
+	  .color = translate($self.model.status,
 			     [1.0, 1.0, 1.0],
 			     "ok",   [0.2, 1.0, 0.2],
 			     "auth", [1.0, 0.2, 0.2],
@@ -129,7 +129,7 @@ widget(container_x, {
 			     "fail", [1.0, 0.2, 0.2],
 			     "scanning", [0.7, 0.7, 0.2]);
 
-	  .source = translate($self.source.status,
+	  .source = translate($self.model.status,
 			      void,
 			      "ok",   "theme://icons/48x48/Check.png",
 			      "auth", "theme://icons/48x48/Lock.png",
@@ -142,8 +142,8 @@ widget(container_x, {
 
       widget(expander_y, {
 
-	.expansion = scurve(select($self.source.statustxt, 1, 0), 0.15);
-	.alpha     = scurve(select($self.source.statustxt, 1, 0), 0.15);
+	.expansion = scurve(select($self.model.statustxt, 1, 0), 0.15);
+	.alpha     = scurve(select($self.model.statustxt, 1, 0), 0.15);
 
 	widget(container_x, {
 	
@@ -153,7 +153,7 @@ widget(container_x, {
 
 	  widget(label, {
 	    .color = [1.0, 0.2, 0.2];
-	    .caption = $self.source.statustxt;
+	    .caption = $self.model.statustxt;
 	  });
 	});
       });

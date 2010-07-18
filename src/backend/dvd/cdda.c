@@ -204,7 +204,7 @@ get_cd_meta(const char *device)
     cm->cm_ntracks = tracks;
 
     cm->cm_root   = prop_create(NULL, NULL);
-    cm->cm_source = prop_create(cm->cm_root, "source");
+    cm->cm_source = prop_create(cm->cm_root, "model");
     cm->cm_nodes  = prop_create(cm->cm_source, "nodes");
     cm->cm_meta   = prop_create(cm->cm_source, "metadata");
 

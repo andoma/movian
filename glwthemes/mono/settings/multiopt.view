@@ -6,7 +6,7 @@ widget(container_x, {
     .filterConstraintX = true;
     .weight = 1.0;
     .align = left;
-    .caption = $self.source.title;
+    .caption = $self.model.title;
   });
   
   widget(dummy, {
@@ -24,7 +24,7 @@ widget(container_x, {
     .effect = slideHorizontal;
     .noInitialTransform = true;
 
-    cloner($self.source.options, container_y, {
+    cloner($self.model.options, container_y, {
       widget(label, {
 	.filterConstraintX = true;
 	.align = center;

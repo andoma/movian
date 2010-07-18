@@ -263,7 +263,7 @@ build_tab_header(gu_tab_t *gt)
 
   s = prop_subscribe(PROP_SUB_DIRECT_UPDATE,
 		     PROP_TAG_NAME("nav", "currentpage", 
-				   "source", "type"),
+				   "model", "type"),
 		     PROP_TAG_CALLBACK_STRING, gu_set_icon_by_type, img,
 		     PROP_TAG_COURIER, pc, 
 		     PROP_TAG_NAMED_ROOT, gt->gt_nav, "nav",
@@ -280,7 +280,7 @@ build_tab_header(gu_tab_t *gt)
 
   s = prop_subscribe(PROP_SUB_DIRECT_UPDATE,
 		     PROP_TAG_NAME("nav", "currentpage", 
-				   "source", "metadata", "title"),
+				   "model", "metadata", "title"),
 		     PROP_TAG_CALLBACK_STRING, gu_subscription_set_label, l,
 		     PROP_TAG_COURIER, pc,
 		     PROP_TAG_NAMED_ROOT, gt->gt_nav, "nav",

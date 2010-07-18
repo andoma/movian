@@ -7,7 +7,7 @@ widget(container_x, {
     .filterConstraintX = true;
     .weight = 1.0;
     .align = left;
-    .caption = $self.source.title;
+    .caption = $self.model.title;
   });
 
   widget(backdrop, {
@@ -25,13 +25,13 @@ widget(container_x, {
     .focusable = true;
     .focusOnClick = true;
     onEvent(KeyCode, {
-      $self.source.keycode = $event;
+      $self.model.keycode = $event;
     });
 
     widget(label, {
       .align = center;
-      .alpha = select($self.source.keycode, 1.0, 0.5);
-      .caption = devoidify($self.source.keycode, "<not set>");
+      .alpha = select($self.model.keycode, 1.0, 0.5);
+      .caption = devoidify($self.model.keycode, "<not set>");
     });
   });
 
@@ -43,7 +43,7 @@ widget(container_x, {
     ICON2("theme://icons/48x48/Delete.png",
 	  "Clear",
 	  {
-	    $self.source.keycode = void;
+	    $self.model.keycode = void;
 	  },
 	  PLATE_COLOR_DELETE(),
 	  1, 0.1);

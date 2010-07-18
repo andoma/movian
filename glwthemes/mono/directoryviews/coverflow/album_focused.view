@@ -11,7 +11,7 @@ widget(container_y, {
   &view.browse = browse($self.focused.url);
 
   widget(list_y, {
-    cloner($view.browse.source.nodes, container_z, {
+    cloner($view.browse.model.nodes, container_z, {
 
       LIST_ITEM_SIMPLE($self.metadata.title,
 		       "theme://icons/48x48/Music.png",

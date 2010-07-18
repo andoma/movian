@@ -769,7 +769,7 @@ playqueue_open(backend_t *be, struct navigator *nav, const char *view)
 
   prop_set_string(prop_create(n->np_prop_root, "view"), "list");
 
-  src = prop_create(n->np_prop_root, "source");
+  src = prop_create(n->np_prop_root, "model");
   prop_set_string(prop_create(src, "type"), "playqueue");
 
   metadata = prop_create(src, "metadata");

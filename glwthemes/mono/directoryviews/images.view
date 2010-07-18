@@ -3,7 +3,7 @@ widget(mirror, {
   widget(displacement, {
     .translation = [0,0,-1];
     widget(coverflow, {
-      cloner($page.source.nodes, image, {
+      cloner($page.model.nodes, image, {
 	.align = bottom;
 	.focusable = true;
 	.alphaEdges = 2;

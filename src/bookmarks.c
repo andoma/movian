@@ -166,7 +166,7 @@ bookmark_add(const char *title, const char *url, const char *svctype)
 {
   bookmark_t *bm = calloc(1, sizeof(bookmark_t));
   prop_t *p = prop_create(NULL, NULL);
-  prop_t *src = prop_create(p, "source");
+  prop_t *src = prop_create(p, "model");
   service_type_t type = str2val(svctype ?: "other", str2type_tab);
   if(type == -1)
     type = SVC_TYPE_OTHER;
@@ -203,7 +203,7 @@ bookmark_add(const char *title, const char *url, const char *svctype)
 static void
 bookmark_load(htsmsg_t *m)
 {
-  if((m = htsmsg_get_map(m, "source")) == NULL)
+  if((m = htsmsg_get_map(m, "model")) == NULL)
     return;
 
   bookmark_add(htsmsg_get_str(m, "title"),

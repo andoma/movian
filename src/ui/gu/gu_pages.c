@@ -107,7 +107,7 @@ gu_nav_page_create(gu_tab_t *gt, prop_t *p)
 
   gnp->gnp_sub_type = 
     prop_subscribe(0,
-		   PROP_TAG_NAME("self", "source", "type"),
+		   PROP_TAG_NAME("self", "model", "type"),
 		   PROP_TAG_CALLBACK_STRING, gu_nav_page_set_type, gnp,
 		   PROP_TAG_COURIER, gu->gu_pc, 
 		   PROP_TAG_NAMED_ROOT, p, "self",

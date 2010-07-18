@@ -7,9 +7,9 @@ widget(container_x, {
   
   widget(list_y, {
     .id = "list";
-    appendEventSink($page.source.nodes);
+    appendEventSink($page.model.nodes);
 
-    cloner($page.source.nodes, loader, {
+    cloner($page.model.nodes, loader, {
       .time = 0.3;
       .noInitialTransform = true;
       .source = "theme://directoryviews/list/" + $self.type + ".view";

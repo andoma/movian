@@ -19,7 +19,7 @@ widget(container_y, {
 
 	&self.focused = focusedChild();
 
-	cloner($page.source.nodes, loader, {
+	cloner($page.model.nodes, loader, {
 	  .time = 0.3;
 	  .noInitialTransform = true;
 	  .source = "theme://directoryviews/coverflow/" + $self.type + ".view";

@@ -1280,7 +1280,7 @@ static void
 spotify_open_artist(sp_link *l, prop_t *p)
 {
   sp_artist *artist = f_sp_link_as_artist(l);
-  prop_t *src = prop_create(p, "source");
+  prop_t *src = prop_create(p, "model");
   prop_t *meta = prop_create(src, "metadata");
 
   metadata_create(prop_create(meta, "title"), METADATA_ARTIST_NAME, artist);
@@ -1322,7 +1322,7 @@ static void
 spotify_open_rootlist(prop_t *p)
 {
   prop_set_string(prop_create(p, "view"), "list");
-  prop_link(prop_rootlist_source, prop_create(p, "source"));
+  prop_link(prop_rootlist_source, prop_create(p, "model"));
 }
 
 
@@ -1333,7 +1333,7 @@ static void
 spotify_open_search_done(sp_search *result, void *userdata)
 {
   spotify_page_t *sp = userdata;
-  prop_t *src = prop_create(sp->sp_root, "source");
+  prop_t *src = prop_create(sp->sp_root, "model");
   prop_t *nodes = prop_create(src, "nodes");
 
   parse_search_reply(result, nodes, prop_create(sp->sp_root, "view"));
@@ -1349,7 +1349,7 @@ spotify_open_search_done(sp_search *result, void *userdata)
 static int
 spotify_open_search(spotify_page_t *sp, const char *query)
 {
-  prop_t *meta = prop_create(prop_create(sp->sp_root, "source"), "metadata");
+  prop_t *meta = prop_create(prop_create(sp->sp_root, "model"), "metadata");
 
   if(!strcmp(query, "tag:new")) {
     prop_set_string(prop_create(meta, "title"), "New albums on Spotify");
@@ -1368,7 +1368,7 @@ spotify_open_search(spotify_page_t *sp, const char *query)
 static void
 spotify_open_album(sp_album *alb, prop_t *p, const char *playme)
 {
-  prop_t *src = prop_create(p, "source");
+  prop_t *src = prop_create(p, "model");
   prop_t *meta = prop_create(src, "metadata");
 
   f_sp_albumbrowse_create(spotify_session, alb, spotify_browse_album_callback,
@@ -1392,7 +1392,7 @@ static void
 spotify_open_playlist(spotify_page_t *sp, sp_playlist *plist)
 {
   prop_set_string(prop_create(sp->sp_root, "view"), "list");
-  pl_create(plist, prop_create(sp->sp_root, "source"), 1, 1);
+  pl_create(plist, prop_create(sp->sp_root, "model"), 1, 1);
 }
 
 
@@ -2579,7 +2579,7 @@ be_spotify_open(backend_t *be, struct navigator *nav,
     sp->sp_root = prop_xref_addref(np->np_prop_root);
     sp->sp_free_on_done = 1;
 
-    prop_set_int(prop_create(prop_create(np->np_prop_root, "source"),
+    prop_set_int(prop_create(prop_create(np->np_prop_root, "model"),
 			     "loading"), 1);
 
     spotify_msg_enq_locked(spotify_msg_buildc(SPOTIFY_OPEN_PAGE, sp,

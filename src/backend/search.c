@@ -93,7 +93,7 @@ search_open(backend_t *beself, struct navigator *nav,
 
   prop_set_string(prop_create(np->np_prop_root, "view"), "list");
 
-  src = prop_create(np->np_prop_root, "source");
+  src = prop_create(np->np_prop_root, "model");
   prop_set_string(prop_create(src, "type"), "directory");
   
   meta = prop_create(src, "metadata");

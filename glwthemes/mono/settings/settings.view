@@ -2,9 +2,9 @@
 #import "theme://include/listitems.view"
 
 
-LIST_ITEM_SIMPLE($self.source.title,
+LIST_ITEM_SIMPLE($self.model.title,
 
-		 translate($self.source.subtype,
+		 translate($self.model.subtype,
 			   "theme://icons/48x48/Settings.png",
 			   "sound", "theme://icons/48x48/Sound.png",
 			   "audio", "theme://icons/48x48/Music.png",

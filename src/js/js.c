@@ -194,7 +194,7 @@ js_open(backend_t *be, struct navigator *nav,
 
   hts_thread_create_detached("jsapi", js_open_trampoline, joa);
 			     
-  prop_set_int(prop_create(prop_create(np->np_prop_root, "source"),
+  prop_set_int(prop_create(prop_create(np->np_prop_root, "model"),
 			   "loading"), 1);
   return np;
 }

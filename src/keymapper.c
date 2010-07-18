@@ -142,7 +142,7 @@ keymapper_entry_add(keymap_t *km, const char *str, const char *eventname,
   LIST_INSERT_HEAD(&km->km_entries, ke, ke_link);
 
   ke->ke_prop =  prop_create(NULL, NULL);
-  src = prop_create(ke->ke_prop, "source");
+  src = prop_create(ke->ke_prop, "model");
 
   prop_set_string(prop_create(src, "type"), "keymapentry");
 

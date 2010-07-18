@@ -14,15 +14,15 @@ widget(container_y, {
       LIST_ITEM_SIMPLE("Add new entry", 
 		       "theme://icons/48x48/Add.png",
 		       {
-			 createChild($page.source.nodes); 
+			 createChild($page.model.nodes); 
 		       },
 		       [0.3, 0.5, 0.3],
 		       0.8,
-		       !$page.source.mayadd);
+		       !$page.model.mayadd);
 
 
-      cloner($page.source.nodes, loader, {
-	.source = "theme://settings/" + $self.source.type + ".view";
+      cloner($page.model.nodes, loader, {
+	.source = "theme://settings/" + $self.model.type + ".view";
 	.time = 0.3;
 	.noInitialTransform = true;
       });

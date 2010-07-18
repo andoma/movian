@@ -1052,7 +1052,7 @@ be_htsp_open(backend_t *be, struct navigator *nav,
 
   p = np->np_prop_root;
   prop_set_string(prop_create(p, "view"), "list");
-  prop_link(src, prop_create(p, "source"));
+  prop_link(src, prop_create(p, "model"));
 
   return np;
 }

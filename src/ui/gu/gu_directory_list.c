@@ -845,7 +845,7 @@ gu_directory_list_create(gu_tab_t *gt, prop_t *root, int flags)
   directory_list_t *d = calloc(1, sizeof(directory_list_t));
   GtkWidget *view;
 
-  d->psource = prop_create(root, "source");
+  d->psource = prop_create(root, "model");
   prop_ref_inc(d->psource);
 
   d->gt = gt;
