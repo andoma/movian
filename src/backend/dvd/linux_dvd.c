@@ -93,8 +93,10 @@ set_status(disc_scanner_t *ds, disc_status_t status, const char *title)
     break;
 
   case DISC_UNKNOWN_TYPE:
+#if 0 /* FIXME: Must not pass url as NULL */
     snprintf(buf, sizeof(buf), "Unknown disc");
     ds->ds_svc = service_create(ds->ds_dev, buf, NULL, SVC_TYPE_VIDEO, NULL, 0);
+#endif
     break;
   }
 }
