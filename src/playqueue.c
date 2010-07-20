@@ -764,8 +764,7 @@ playqueue_open(backend_t *be, struct navigator *nav, const char *view)
   nav_page_t *n;
   prop_t *src, *metadata;
 
-  n = nav_page_create(nav, "playqueue:", view, sizeof(nav_page_t),
-		      NAV_PAGE_DONT_CLOSE_ON_BACK);
+  n = nav_page_create(nav, "playqueue:", view, NAV_PAGE_DONT_CLOSE_ON_BACK);
 
   prop_set_string(prop_create(n->np_prop_root, "view"), "list");
 

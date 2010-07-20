@@ -126,7 +126,7 @@ be_page_open(struct backend *be,
 	     struct navigator *nav,  const char *url0, const char *view,
 	     char *errbuf, size_t errlen)
 {
-  nav_page_t *n = nav_page_create(nav, url0, view, sizeof(nav_page_t),
+  nav_page_t *n = nav_page_create(nav, url0, view,
 				  NAV_PAGE_DONT_CLOSE_ON_BACK);
   prop_t *src = prop_create(n->np_prop_root, "model");
   prop_t *metadata = prop_create(src, "metadata");
@@ -216,7 +216,7 @@ backend_open_video(backend_t *be, struct navigator *nav,
 		   const char *url, const char *view,
 		   char *errbuf, size_t errlen)
 {
-  nav_page_t *np = nav_page_create(nav, url, view, sizeof(nav_page_t), 0);
+  nav_page_t *np = nav_page_create(nav, url, view, 0);
   prop_t *src = prop_create(np->np_prop_root, "model");
 
   prop_set_string(prop_create(src, "type"), "video");

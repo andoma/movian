@@ -536,7 +536,7 @@ be_settings_open(struct backend *be, struct navigator *nav,
   int l;
 
   if(!*url) {
-    n = nav_page_create(nav, url0, view, sizeof(nav_page_t), 0);
+    n = nav_page_create(nav, url0, view, 0);
     prop_link(settings_root, prop_create(n->np_prop_root, "model"));
     return n;
    }
@@ -556,7 +556,7 @@ be_settings_open(struct backend *be, struct navigator *nav,
     p = prop_create(p, buf);
   }
   
-  n = nav_page_create(nav, url0, view, sizeof(nav_page_t), 0);
+  n = nav_page_create(nav, url0, view, 0);
   prop_link(prop_create(p, "model"), prop_create(n->np_prop_root, "model"));
   return n;
 }

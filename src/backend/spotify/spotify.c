@@ -2554,8 +2554,7 @@ be_spotify_open(backend_t *be, struct navigator *nav,
 
     memset(&sp, 0, sizeof(spotify_page_t));
 
-    np = nav_page_create(nav, NULL, view, sizeof(nav_page_t), 
-			 NAV_PAGE_DONT_CLOSE_ON_BACK);
+    np = nav_page_create(nav, NULL, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
   
     sp.sp_url = strdup(url);
     sp.sp_root = np->np_prop_root;
@@ -2575,8 +2574,7 @@ be_spotify_open(backend_t *be, struct navigator *nav,
 
     spotify_page_t *sp = calloc(1, sizeof(spotify_page_t));
 
-    np = nav_page_create(nav, url, view, sizeof(nav_page_t),
-			 NAV_PAGE_DONT_CLOSE_ON_BACK);
+    np = nav_page_create(nav, url, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
   
     sp->sp_url = strdup(url);
     sp->sp_root = prop_xref_addref(np->np_prop_root);

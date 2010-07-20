@@ -88,8 +88,7 @@ search_open(backend_t *beself, struct navigator *nav,
   if((be = backend_canhandle(url)) != NULL) 
     return be->be_open(be, nav, url, view, errbuf, errlen);
   
-  np = nav_page_create(nav, url0, view, sizeof(nav_page_t),
-		      NAV_PAGE_DONT_CLOSE_ON_BACK);
+  np = nav_page_create(nav, url0, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
 
   prop_set_string(prop_create(np->np_prop_root, "view"), "list");
 

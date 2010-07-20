@@ -353,7 +353,7 @@ openpage(struct backend *be, struct navigator *nav,
     return playqueue_open(be, nav, view);
   }
 
-  np = nav_page_create(nav, url, view, sizeof(nav_page_t), 0);
+  np = nav_page_create(nav, url, view, 0);
 
   p = np->np_prop_root;
 

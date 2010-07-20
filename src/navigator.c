@@ -345,11 +345,10 @@ nav_page_close_set(void *opaque, int value)
 /**
  *
  */
-void *
-nav_page_create(navigator_t *nav, const char *url, const char *view,
-		size_t allocsize, int flags)
+nav_page_t *
+nav_page_create(navigator_t *nav, const char *url, const char *view, int flags)
 {
-  nav_page_t *np = calloc(1, allocsize);
+  nav_page_t *np = calloc(1, sizeof(nav_page_t));
 
   np->np_nav = nav;
   np->np_url = url ? strdup(url) : NULL;
@@ -458,7 +457,7 @@ nav_open_errorf(prop_t *root, const char *fmt, ...)
 static void
 nav_open_error_raw(navigator_t *nav, const char *url, const char *msg)
 {
-  nav_page_t *np = nav_page_create(nav, url, NULL, sizeof(nav_page_t), 0);
+  nav_page_t *np = nav_page_create(nav, url, NULL, 0);
   nav_open_errorf(np->np_prop_root, "%s", msg);
   nav_insert_page(nav, np);
 }

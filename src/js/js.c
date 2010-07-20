@@ -184,8 +184,7 @@ js_open(backend_t *be, struct navigator *nav,
   struct js_open_args *joa = malloc(sizeof(struct js_open_args));
   nav_page_t *np;
 
-  np = nav_page_create(nav, url, view, sizeof(nav_page_t), 
-		       NAV_PAGE_DONT_CLOSE_ON_BACK);
+  np = nav_page_create(nav, url, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
 
   joa->url = strdup(url);
   joa->root = np->np_prop_root;
