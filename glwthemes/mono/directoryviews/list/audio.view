@@ -33,7 +33,7 @@ widget(container_x, {
 	.focusOnClick = true;
 	.filterConstraintX = true;
 	
-	onEvent(activate, playTrackFromSource($self, $parent.source));
+	onEvent(activate, playTrackFromSource($self, $parent.model));
 	
 	.alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
 	
