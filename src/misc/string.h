@@ -21,4 +21,6 @@ double strtod_ex(const char *s, char decimal_point_char, char **ep);
 
 int dictcmp(const char *a, const char *b);
 
+int utf8_get(const char **s);
+
 #endif

@@ -33,7 +33,7 @@
 #include "glw_text_bitmap.h"
 #include "glw_unicode.h"
 #include "fileaccess/fileaccess.h"
-
+#include "misc/string.h"
 
 /**
  *
@@ -137,8 +137,6 @@ static glw_class_t glw_text, glw_label, glw_integer;
 
 
 #define HORIZONTAL_ELLIPSIS_UNICODE 0x2026
-
-static int glw_text_getutf8(const char **s);
 
 static void gtb_notify(glw_text_bitmap_t *gtb);
 
@@ -1091,7 +1089,7 @@ gtb_caption_has_changed(glw_text_bitmap_t *gtb)
   x = 0;
   
   if(str != NULL) {
-    while((c = glw_text_getutf8(&str)) != 0) {
+    while((c = utf8_get(&str)) != 0) {
       if(c == '\r')
 	continue;
       if(c == '\n') 
@@ -1474,61 +1472,6 @@ glw_get_int(glw_t *w, int *result)
   return 0;
 }
 
-
-/**
- *
- */
-static int
-glw_text_getutf8(const char **s)
-{
-  uint8_t c;
-  int r;
-  int l;
-
-  c = **s;
-  *s = *s + 1;
-
-  switch(c) {
-  case 0 ... 127:
-    return c;
-
-  case 192 ... 223:
-    r = c & 0x1f;
-    l = 1;
-    break;
-
-  case 224 ... 239:
-    r = c & 0xf;
-    l = 2;
-    break;
-
-  case 240 ... 247:
-    r = c & 0x7;
-    l = 3;
-    break;
-
-  case 248 ... 251:
-    r = c & 0x3;
-    l = 4;
-    break;
-
-  case 252 ... 253:
-    r = c & 0x1;
-    l = 5;
-    break;
-  default:
-    return 0;
-  }
-
-  while(l-- > 0) {
-    c = **s;
-    *s = *s + 1;
-    if(c == 0)
-      return 0;
-    r = r << 6 | (c & 0x3f);
-  }
-  return r;
-}
 
 /**
  *
