@@ -23,4 +23,6 @@ int dictcmp(const char *a, const char *b);
 
 int utf8_get(const char **s);
 
+const char *mystrstr(const char *haystack, const char *needle);
+
 #endif

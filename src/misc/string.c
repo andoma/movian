@@ -665,3 +665,37 @@ dictcmp(const char *a, const char *b)
     }
   }
 }
+
+
+/**
+ *
+ */
+const char *
+mystrstr(const char *haystack, const char *needle)
+{
+  int h, n;
+  const char *h1, *n1, *r;
+
+  n = unicode_casefold(utf8_get(&needle));
+    
+  while(1) {
+    r = haystack;
+    h = unicode_casefold(utf8_get(&haystack));
+    if(h == 0)
+      return NULL;
+
+    if(n == h) {
+      h1 = haystack;
+      n1 = needle;
+
+      while(1) {
+	n = unicode_casefold(utf8_get(&n1));
+	if(n == 0)
+	  return r;
+	h = unicode_casefold(utf8_get(&h1));
+	if(n != h)
+	  break;
+      }
+    }
+  }
+}
