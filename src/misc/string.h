@@ -25,4 +25,8 @@ int utf8_get(const char **s);
 
 const char *mystrstr(const char *haystack, const char *needle);
 
+char **strvec_split(const char *str, char ch);
+
+void strvec_free(char **s);
+
 #endif

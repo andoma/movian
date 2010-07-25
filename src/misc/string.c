@@ -699,3 +699,48 @@ mystrstr(const char *haystack, const char *needle)
     }
   }
 }
+
+
+/**
+ *
+ */
+char **
+strvec_split(const char *str, char ch)
+{
+  const char *s;
+  int c = 1, i;
+  char **r;
+
+  for(s = str; *s != 0; s++)
+    if(*s == ch)
+      c++;
+
+  r = malloc(sizeof(char *) * (c + 1));
+  for(i = 0; i < c; i++) {
+    s = strchr(str, ch);
+    if(s == NULL) {
+      assert(i == c - 1);
+      r[i] = strdup(str);
+    } else {
+      r[i] = malloc(s - str + 1);
+      memcpy(r[i], str, s - str);
+      r[i][s - str] = 0;
+      str = s + 1;
+    }
+  }
+  r[i] = NULL;
+  return r;
+}
+
+
+/**
+ *
+ */
+void
+strvec_free(char **s)
+{
+  void *m = s;
+  for(;*s != NULL; s++)
+    free(*s);
+  free(m);
+}
