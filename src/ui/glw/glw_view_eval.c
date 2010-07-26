@@ -92,8 +92,6 @@ glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l)
 
   while((gps = LIST_FIRST(l)) != NULL) {
 
-    gps->gps_sub->hps_opaque = NULL;
-
     prop_unsubscribe(gps->gps_sub);
 
     if(gps->gps_token != NULL)

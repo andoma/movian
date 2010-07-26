@@ -27,150 +27,6 @@
 #include "htsmsg/htsmsg.h"
 #include "misc/rstr.h"
 
-extern hts_mutex_t prop_mutex;
-
-struct prop;
-struct prop_sub;
-struct pixmap;
-
-#define PROP_ADD_SELECTED 0x1
-
-typedef enum {
-  PROP_SET_VOID,
-  PROP_SET_RSTRING,
-  PROP_SET_INT,
-  PROP_SET_FLOAT,
-  PROP_SET_DIR,
-  PROP_SET_PIXMAP,
-  PROP_SET_RLINK,
-
-  PROP_ADD_CHILD,
-  PROP_ADD_CHILD_BEFORE,
-  PROP_DEL_CHILD,
-  PROP_MOVE_CHILD,
-  PROP_SELECT_CHILD,
-  PROP_REQ_NEW_CHILD,
-  PROP_REQ_DELETE_MULTI,
-  PROP_DESTROYED,
-  PROP_EXT_EVENT,
-  PROP_SUBSCRIPTION_MONITOR_ACTIVE,
-} prop_event_t;
-
-typedef void (prop_callback_t)(void *opaque, prop_event_t event, ...);
-typedef void (prop_callback_string_t)(void *opaque, const char *str);
-typedef void (prop_callback_int_t)(void *opaque, int value);
-typedef void (prop_callback_float_t)(void *opaque, float value);
-
-struct prop_sub;
-typedef void (prop_trampoline_t)(struct prop_sub *s, prop_event_t event, ...);
-
-typedef void (prop_lockmgr_t)(void *ptr, int lock);
-
-TAILQ_HEAD(prop_queue, prop);
-LIST_HEAD(prop_list, prop);
-LIST_HEAD(prop_sub_list, prop_sub);
-
-
-
-/**
- *
- */
-TAILQ_HEAD(prop_notify_queue, prop_notify);
-
-typedef struct prop_courier {
-
-  struct prop_notify_queue pc_queue_nor;
-  struct prop_notify_queue pc_queue_exp;
-
-  hts_mutex_t *pc_entry_mutex;
-  hts_cond_t pc_cond;
-  int pc_has_cond;
-
-  hts_thread_t pc_thread;
-  int pc_run;
-  int pc_detached;
-
-  void (*pc_notify)(void *opaque);
-  void *pc_opaque;
-  
-} prop_courier_t;
-
-
-
-/**
- * Property types
- */
-typedef enum {
-  PROP_VOID,
-  PROP_DIR,
-  PROP_STRING,
-  PROP_FLOAT,
-  PROP_INT,
-  PROP_PIXMAP,
-  PROP_LINK,
-  PROP_ZOMBIE, /* Destroyed can never be changed again */
-} prop_type_t;
-
-
-/**
- *
- */
-typedef struct prop {
-
-  /**
-   * Refcount. Not protected by mutex. Modification needs to be issued
-   * using atomic ops. This refcount only protects the memory allocated
-   * for this property, or in other words you can assume that a pointer
-   * to a prop_t is valid as long as you own a reference to it.
-   *
-   * Note: hp_xref which is another refcount protecting contents of the
-   * entire property
-   */
-  int hp_refcount;
-
-  /**
-   * Property name. Protected by mutex
-   */
-  const char *hp_name;
-
-  /**
-   * Parent linkage. Protected by mutex
-   */
-  struct prop *hp_parent;
-  TAILQ_ENTRY(prop) hp_parent_link;
-
-
-  /**
-   * Originating property. Used when reflecting properties
-   * in the tree (aka symlinks). Protected by mutex
-   */
-  struct prop *hp_originator;
-  LIST_ENTRY(prop) hp_originator_link;
-
-  /**
-   * Properties receiving our values. Protected by mutex
-   */
-  struct prop_list hp_targets;
-
-
-  /**
-   * Subscriptions. Protected by mutex
-   */
-  struct prop_sub_list hp_value_subscriptions;
-  struct prop_sub_list hp_canonical_subscriptions;
-
-  /**
-   * Payload type
-   * Protected by mutex
-   */
-  uint8_t hp_type;
-
-  /**
-   * Various flags
-   * Protected by mutex
-   */
-  uint8_t hp_flags;
-
 
   /**
    * The float/int prop should be clipped according to min/max
@@ -215,126 +71,45 @@ typedef struct prop {
 #define PROP_MULTI_NOTIFY          0x80
 
 
-  /**
-   * Extended refcount. Used to keep contents of the property alive
-   * We limit this to 255, should never be a problem. And it's checked
-   * in the code as well
-   * Protected by mutex
-   */
-  uint8_t hp_xref;
 
 
-  /**
-   * Actual payload
-   * Protected by mutex
-   */
-  union {
-    struct {
-      float val, min, max;
-    } f;
-    struct {
-      int val, min, max;
-    } i;
-    rstr_t *rstr;
-    struct {
-      struct prop_queue childs;
-      struct prop *selected;
-    } c;
-    struct pixmap *pixmap;
-    struct {
-      rstr_t *rtitle;
-      rstr_t *rurl;
-    } link;
-  } u;
+typedef struct prop_courier prop_courier_t;
+typedef struct prop prop_t;
+typedef struct prop_sub prop_sub_t;
+struct pixmap;
 
-#define hp_rstring   u.rstr
-#define hp_float    u.f.val
-#define hp_int      u.i.val
-#define hp_childs   u.c.childs
-#define hp_selected u.c.selected
-#define hp_pixmap   u.pixmap
-#define hp_link_rtitle u.link.rtitle
-#define hp_link_rurl   u.link.rurl
+#define PROP_ADD_SELECTED 0x1
 
-} prop_t;
+typedef enum {
+  PROP_SET_VOID,
+  PROP_SET_RSTRING,
+  PROP_SET_INT,
+  PROP_SET_FLOAT,
+  PROP_SET_DIR,
+  PROP_SET_PIXMAP,
+  PROP_SET_RLINK,
 
+  PROP_ADD_CHILD,
+  PROP_ADD_CHILD_BEFORE,
+  PROP_DEL_CHILD,
+  PROP_MOVE_CHILD,
+  PROP_SELECT_CHILD,
+  PROP_REQ_NEW_CHILD,
+  PROP_REQ_DELETE_MULTI,
+  PROP_DESTROYED,
+  PROP_EXT_EVENT,
+  PROP_SUBSCRIPTION_MONITOR_ACTIVE,
+} prop_event_t;
 
+typedef void (prop_callback_t)(void *opaque, prop_event_t event, ...);
+typedef void (prop_callback_string_t)(void *opaque, const char *str);
+typedef void (prop_callback_int_t)(void *opaque, int value);
+typedef void (prop_callback_float_t)(void *opaque, float value);
 
-/**
- *
- */
-typedef struct prop_sub {
+struct prop_sub;
+typedef void (prop_trampoline_t)(struct prop_sub *s, prop_event_t event, ...);
 
-  /**
-   * Refcount. Not protected by mutex. Modification needs to be issued
-   * using atomic ops.
-   */
-  int hps_refcount;
-
-  /**
-   * Callback. May never be changed. Not protected by mutex
-   */
-  void *hps_callback;
-
-  /**
-   * Opaque value for callback
-   */
-  void *hps_opaque;
-
-  /**
-   * Trampoline. A tranform function that invokes the actual user
-   * supplied callback.
-   * May never be changed. Not protected by mutex.
-   */
-  prop_trampoline_t *hps_trampoline;
-
-  /**
-   * Pointer to courier, May never be changed. Not protected by mutex
-   */
-  prop_courier_t *hps_courier;
-
-  /**
-   * Lock to be held when invoking callback. It must also be held
-   * when destroying the subscription.
-   */
-  void *hps_lock;
-
-  /**
-   * Function to call to obtain / release the lock.
-   */
-  prop_lockmgr_t *hps_lockmgr;
-
-  /**
-   * Set when a subscription is destroyed. Protected by hps_lock.
-   * In other words. It's impossible to destroy a subscription
-   * if no lock is specified.
-   */
-  uint8_t hps_zombie;
-
-  /**
-   * Used to avoid sending two notification when relinking
-   * to another tree. Protected by global mutex
-   */
-  uint8_t hps_pending_unlink;
-
-  /**
-   * Flags as passed to prop_subscribe(). May never be changed
-   */
-  uint8_t hps_flags;
-
-  /**
-   * Linkage to property. Protected by global mutex
-   */
-  LIST_ENTRY(prop_sub) hps_value_prop_link;
-  prop_t *hps_value_prop;
-
-  /**
-   * Linkage to property. Protected by global mutex
-   */
-  LIST_ENTRY(prop_sub) hps_canonical_prop_link;
-  prop_t *hps_canonical_prop;
-
-} prop_sub_t;
+typedef void (prop_lockmgr_t)(void *ptr, int lock);
 
 
 /**
@@ -530,6 +305,8 @@ void prop_pvec_free(prop_t **a);
 int prop_pvec_len(prop_t **src);
 
 prop_t **prop_pvec_clone(prop_t **src);
+
+const char *prop_get_name(prop_t *p);
 
 void prop_make_nodefilter(prop_t *dst, prop_t *src,
 			  prop_t *filter, const char *defsortpath,

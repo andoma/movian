@@ -19,6 +19,7 @@
 #include <string.h>
 #include "js.h"
 
+#include "prop/prop_i.h"
 
 /**
  *

@@ -26,8 +26,8 @@
 
 #include <arch/atomic.h>
 
-#include "prop/prop.h"
 #include "showtime.h"
+#include "prop_i.h"
 #include "misc/pixmap.h"
 #include "misc/string.h"
 
@@ -79,6 +79,14 @@ propname(prop_t *p)
 }
 
 
+/**
+ *
+ */
+const char *
+prop_get_name(prop_t *p)
+{
+  return p->hp_name;
+}
 
 
 

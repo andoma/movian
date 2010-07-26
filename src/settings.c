@@ -90,7 +90,7 @@ settings_set_url(prop_t *p)
   while(i >= 0) {
     
     snprintf(url + strlen(url), sizeof(url) - strlen(url), 
-	     "%s%s", slash, a[i]->hp_name);
+	     "%s%s", slash, prop_get_name(a[i]));
     slash="/";
     i-=3;
   }
@@ -310,12 +310,12 @@ callback_opt(void *opaque, prop_event_t event, ...)
 
   c = va_arg(ap, prop_t *);
 
-  if(cb) cb(s->s_opaque, c ? c->hp_name : NULL);
+  if(cb) cb(s->s_opaque, c ? prop_get_name(c) : NULL);
 
   if(s->s_store && s->s_saver) {
     htsmsg_delete_field(s->s_store, s->s_id);
     if(c != NULL)
-      htsmsg_add_str(s->s_store, s->s_id, c->hp_name);
+      htsmsg_add_str(s->s_store, s->s_id, prop_get_name(c));
     s->s_saver(s->s_saver_opaque, s->s_store);
   }
 }
