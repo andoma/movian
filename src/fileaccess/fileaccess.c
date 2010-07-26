@@ -481,19 +481,8 @@ fa_dir_free(fa_dir_t *fd)
 /**
  *
  */
-static int 
-fa_dir_insert_compar(fa_dir_entry_t *a, fa_dir_entry_t *b)
-{
-  return strcasecmp(a->fde_filename, b->fde_filename);
-}
-
-
-/**
- *
- */
 static fa_dir_entry_t *
-fde_create(fa_dir_t *fd, const char *url, const char *filename, int type,
-	   int sorted)
+fde_create(fa_dir_t *fd, const char *url, const char *filename, int type)
 {
   fa_dir_entry_t *fde;
  
@@ -506,11 +495,8 @@ fde_create(fa_dir_t *fd, const char *url, const char *filename, int type,
   fde->fde_filename = strdup(filename);
   fde->fde_type     = type;
 
-  if(sorted) {
-    TAILQ_INSERT_SORTED(&fd->fd_entries, fde, fde_link, fa_dir_insert_compar);
-  } else {
-    TAILQ_INSERT_TAIL(&fd->fd_entries, fde, fde_link);
-  }
+  TAILQ_INSERT_TAIL(&fd->fd_entries, fde, fde_link);
+
   fd->fd_count++;
   return fde;
 }
@@ -521,59 +507,7 @@ fde_create(fa_dir_t *fd, const char *url, const char *filename, int type,
 fa_dir_entry_t *
 fa_dir_add(fa_dir_t *fd, const char *url, const char *filename, int type)
 {
-  return fde_create(fd, url, filename, type, 0);
-}
-
-
-
-/**
- *
- */
-fa_dir_entry_t *
-fa_dir_insert(fa_dir_t *fd, const char *url, const char *filename, int type)
-{
-  return fde_create(fd, url, filename, type, 1);
-}
-
-
-/**
- *
- */
-static int 
-fa_dir_sort_compar(const void *A, const void *B)
-{
-  const fa_dir_entry_t *a = *(fa_dir_entry_t * const *)A;
-  const fa_dir_entry_t *b = *(fa_dir_entry_t * const *)B;
-
-  return strcasecmp(a->fde_filename, b->fde_filename);
-}
-
-
-/**
- *
- */
-void
-fa_dir_sort(fa_dir_t *fd)
-{
-  fa_dir_entry_t **v;
-  fa_dir_entry_t *fde;
-  int i = 0;
-
-  if(fd->fd_count == 0)
-    return;
-
-  v = malloc(fd->fd_count * sizeof(fa_dir_entry_t *));
-
-  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link)
-    v[i++] = fde;
-
-  qsort(v, fd->fd_count, sizeof(fa_dir_entry_t *), fa_dir_sort_compar);
-
-  TAILQ_INIT(&fd->fd_entries);
-  for(i = 0; i < fd->fd_count; i++)
-    TAILQ_INSERT_TAIL(&fd->fd_entries, v[i], fde_link);
-  
-  free(v);
+  return fde_create(fd, url, filename, type);
 }
 
 

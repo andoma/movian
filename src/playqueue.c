@@ -332,8 +332,8 @@ find_source_entry_by_prop(prop_t *p)
 
   TAILQ_FOREACH(pqe, &playqueue_source_entries, pqe_source_link)
     if(pqe->pqe_originator == p)
-      return pqe;
-  return NULL;
+      break;
+  return pqe;
 }
 
 
@@ -350,10 +350,15 @@ add_from_source(prop_t *p, playqueue_entry_t *before)
   pqe->pqe_refcount = 1;
   pqe->pqe_originator = p;
 
-  if(p == playqueue_startme) {
-    pqe->pqe_startme = 1;
-    prop_ref_dec(playqueue_startme);
-    playqueue_startme = NULL;
+  if(playqueue_startme != NULL) {
+    prop_t *q = prop_follow(p);
+
+    if(q == playqueue_startme) {
+      pqe->pqe_startme = 1;
+      prop_ref_dec(playqueue_startme);
+      playqueue_startme = NULL;
+    }
+    prop_ref_dec(q);
   }
 
   /**

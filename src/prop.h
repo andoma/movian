@@ -204,6 +204,16 @@ typedef struct prop {
    */
 #define PROP_MONITORED             0x20
 
+  /**
+   * This property have a PROB_SUB_MULTI subscription attached to it
+   */
+#define PROP_MULTI_SUB             0x40
+
+  /**
+   * This property have a PROB_MULTI_SUB property above it in the hierarchy
+   */
+#define PROP_MULTI_NOTIFY          0x80
+
 
   /**
    * Extended refcount. Used to keep contents of the property alive
@@ -346,6 +356,9 @@ void prop_init(void);
 #define PROP_SUB_DEBUG         0x8 // TRACE(TRACE_DEBUG, ...) changes
 #define PROP_SUB_SUBSCRIPTION_MONITOR 0x10
 #define PROP_SUB_EXPEDITE             0x20
+#define PROP_SUB_MULTI                0x40
+#define PROP_SUB_INTERNAL             0x80
+#define PROP_SUB_NOLOCK               0x100
 
 enum {
   PROP_TAG_END = 0,
@@ -379,6 +392,8 @@ prop_t *prop_create_ex(prop_t *parent, const char *name,
 void prop_destroy(prop_t *p);
 
 void prop_destroy_by_name(prop_t *parent, const char *name);
+
+prop_t *prop_follow(prop_t *p);
 
 void prop_move(prop_t *p, prop_t *before);
 
@@ -515,6 +530,11 @@ void prop_pvec_free(prop_t **a);
 int prop_pvec_len(prop_t **src);
 
 prop_t **prop_pvec_clone(prop_t **src);
+
+void prop_make_nodefilter(prop_t *dst, prop_t *src,
+			  prop_t *filter, const char *defsortpath,
+			  const char *enablepath);
+
 
 /* DEBUGish */
 const char *propname(prop_t *p);

@@ -763,17 +763,7 @@ spotify_metadata_update_track(metadata_t *m)
   if(!f_sp_track_is_loaded(track))
     return;
 
-#if 0
-  if(!f_sp_track_is_available(track) && m->m_plt != NULL) {
-    playlist_track_t *plt = m->m_plt;
-
-    if(plt->plt_prop_root != NULL) {
-      prop_destroy(plt->plt_prop_root);
-      plt->plt_prop_root = NULL;
-    }
-    return;
-  }
-#endif
+  prop_set_int(prop_create(meta, "available"), f_sp_track_is_available(track));
 
   album = f_sp_track_album(track);
 
@@ -1969,7 +1959,12 @@ pl_create(sp_playlist *plist, prop_t *root, int withtracks, int autodestroy)
 
   if(withtracks) {
 
-    pl->pl_prop_tracks = prop_create(pl->pl_prop_root, "nodes");
+    pl->pl_prop_tracks = prop_create(root, "src");
+
+    prop_make_nodefilter(prop_create(root, "nodes"),
+			 pl->pl_prop_tracks,
+			 prop_create(root, "filter"),
+			 NULL, "node.metadata.available");
 
     pl->pl_node_sub = 
       prop_subscribe(0,

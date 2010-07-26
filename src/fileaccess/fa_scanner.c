@@ -453,7 +453,7 @@ scanner_notification(void *opaque, fa_notify_op_t op, const char *filename,
     break;
 
   case FA_NOTIFY_ADD:
-    scanner_entry_setup(s, fa_dir_insert(s->s_fd, url, filename, type));
+    scanner_entry_setup(s, fa_dir_add(s->s_fd, url, filename, type));
     break;
   }
   deep_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
@@ -466,6 +466,7 @@ scanner_notification(void *opaque, fa_notify_op_t op, const char *filename,
 static void
 rescan(scanner_t *s)
 {
+#if 0
   fa_dir_t *fd2;
   fa_dir_entry_t *a, *b, *x, *y;
   int change = 0;
@@ -531,6 +532,7 @@ rescan(scanner_t *s)
 
   if(change)
     deep_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
+#endif
 }
 
 
@@ -542,8 +544,6 @@ doscan(scanner_t *s)
 {
   fa_dir_entry_t *fde;
   fa_dir_t *fd = s->s_fd;
-
-  fa_dir_sort(s->s_fd);
 
   quick_analyzer(s->s_fd, s->s_viewprop);
 
@@ -638,19 +638,26 @@ scanner_stop(void *opaque, prop_event_t event, ...)
  *
  */
 void
-fa_scanner(const char *url, prop_t *source, prop_t *view, const char *playme)
+fa_scanner(const char *url, prop_t *model,
+	   prop_t *view, const char *playme)
 {
   scanner_t *s = calloc(1, sizeof(scanner_t));
+
+  prop_t *source = prop_create(model, "source");
+  prop_make_nodefilter(prop_create(model, "nodes"),
+		       source,
+		       prop_create(model, "filter"),
+		       "node.filename", NULL);
 
   s->s_url = strdup(url);
   s->s_playme = playme != NULL ? strdup(playme) : NULL;
 
   prop_set_int(prop_create(source, "loading"), 1);
 
-  s->s_root = source;
+  s->s_root = model;
   prop_ref_inc(s->s_root);
 
-  s->s_nodes = prop_create(source, "nodes");
+  s->s_nodes = source;
   prop_ref_inc(s->s_nodes);
 
   if(view != NULL) {

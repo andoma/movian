@@ -73,11 +73,6 @@ fa_dir_entry_t *fa_dir_add(fa_dir_t *nd, const char *path, const char *name, int
 
 void fa_dir_entry_free(fa_dir_t *fd, fa_dir_entry_t *fde);
 
-void fa_dir_sort(fa_dir_t *nd);
-
-fa_dir_entry_t *fa_dir_insert(fa_dir_t *fd, const char *url,
-			      const char *filename, int type);
-
 int fa_dir_entry_stat(fa_dir_entry_t *fde);
 
 /**
@@ -136,7 +131,8 @@ int fa_notify(const char *url, void *opaque,
 
 const char *fa_ffmpeg_error_to_txt(int err);
 
-void fa_scanner(const char *url, prop_t *source, prop_t *view, const char *playme);
+void fa_scanner(const char *url, prop_t *model,
+		prop_t *view, const char *playme);
 
 void *fa_quickload(const char *filename, size_t *sizeptr, const char *theme,
 		   char *errbuf, size_t errlen);
