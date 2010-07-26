@@ -2604,14 +2604,22 @@ glwf_delete(glw_view_eval_context_t *ec, struct token *self,
 {
   token_t *a = argv[0];
 
-  if(a->type == TOKEN_PROPERTY_VALUE_NAME &&
-     resolve_property_name(ec, a, 1))
-    return -1;
+  switch(a->type) {
+  case TOKEN_PROPERTY_VALUE_NAME:
+    if(resolve_property_name(ec, a, 1))
+      return -1;
+    if(0)
+  case TOKEN_PROPERTY_CANONICAL_NAME:
+    if(resolve_property_name(ec, a, 0))
+      return -1;
 
-  if(a->type != TOKEN_PROPERTY)
+  case TOKEN_PROPERTY:
+    break;
+
+  default:
     return glw_view_seterr(ec->ei, a, 
 			   "Invalid operand to delete()");
-
+  }
   prop_request_delete(a->t_prop);
   return 0;
 }
