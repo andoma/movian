@@ -699,11 +699,6 @@ prop_make_nodefilter(prop_t *dst, prop_t *src, prop_t *filter,
 			      PROP_TAG_CALLBACK, nodefilter_src_cb, nf,
 			      PROP_TAG_ROOT, src,
 			      NULL);
-
-
-  prop_ref_inc(dst);
-  prop_ref_inc(src);
-
 }
 
 
