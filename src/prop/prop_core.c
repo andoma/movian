@@ -1117,17 +1117,7 @@ prop_make_dir(prop_t *p, prop_sub_t *skipme, const char *origin)
 static int 
 prop_compar(prop_t *a, prop_t *b)
 {
-  return strcmp(a->hp_name ?: "", b->hp_name ?: "");
-}
-
-
-/**
- *
- */
-static int 
-prop_compar2(prop_t *a, prop_t *b)
-{
-  return strcasecmp(a->hp_name ?: "", b->hp_name ?: "");
+  return dictcmp(a->hp_name ?: "", b->hp_name ?: "");
 }
 
 
@@ -1140,10 +1130,7 @@ prop_insert(prop_t *p, prop_t *parent, prop_t *before, prop_sub_t *skipme)
   prop_t *n;
 
   if(parent->hp_flags & PROP_SORTED_CHILDS) {
-    if(parent->hp_flags & PROP_SORT_CASE_INSENSITIVE)
-      TAILQ_INSERT_SORTED(&parent->hp_childs, p, hp_parent_link, prop_compar2);
-    else
-      TAILQ_INSERT_SORTED(&parent->hp_childs, p, hp_parent_link, prop_compar);
+    TAILQ_INSERT_SORTED(&parent->hp_childs, p, hp_parent_link, prop_compar);
 
     n = TAILQ_NEXT(p, hp_parent_link);
 
@@ -1253,11 +1240,7 @@ prop_rename_ex(prop_t *p, const char *name, prop_sub_t *skipme)
     prop_t *parent = p->hp_parent;
     
     TAILQ_REMOVE(&parent->hp_childs, p, hp_parent_link);
-
-    if(parent->hp_flags & PROP_SORT_CASE_INSENSITIVE)
-      TAILQ_INSERT_SORTED(&parent->hp_childs, p, hp_parent_link, prop_compar2);
-    else
-      TAILQ_INSERT_SORTED(&parent->hp_childs, p, hp_parent_link, prop_compar);
+    TAILQ_INSERT_SORTED(&parent->hp_childs, p, hp_parent_link, prop_compar);
 
     prop_notify_child2(p, parent, TAILQ_NEXT(p, hp_parent_link),
 		       PROP_MOVE_CHILD, NULL, 0);

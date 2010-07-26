@@ -71,7 +71,7 @@ add_service_type(prop_t *root, service_type_t type, const char *name)
   
   svc_types[type].prop_nodes = 
     prop_create_ex(svc_types[type].prop_root, "nodes", NULL, 
-		   PROP_SORTED_CHILDS | PROP_SORT_CASE_INSENSITIVE);
+		   PROP_SORTED_CHILDS);
 
   svc_types[type].prop_num = prop_create(svc_types[type].prop_root, "entries");
   prop_set_int(svc_types[type].prop_num, 0);
@@ -101,8 +101,7 @@ service_init(void)
   hts_thread_create_detached("service probe", service_probe_loop, NULL);
 
   global_sources =
-    prop_create_ex(prop_get_global(), "sources", NULL, 
-		   PROP_SORTED_CHILDS | PROP_SORT_CASE_INSENSITIVE);
+    prop_create_ex(prop_get_global(), "sources", NULL, PROP_SORTED_CHILDS);
   prop_t *p = prop_create(prop_get_global(), "services");
 
   add_service_type(p, SVC_TYPE_MUSIC, "music");

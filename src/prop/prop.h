@@ -39,11 +39,6 @@
 #define PROP_SORTED_CHILDS         0x2
 
   /**
-   * Make child sorting case insensitive
-   */
-#define PROP_SORT_CASE_INSENSITIVE 0x4
-
-  /**
    * hp_name is not malloc()ed but rather points to a compile const string
    * that should not be free()d upon prop finalization
    */
