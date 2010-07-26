@@ -73,7 +73,7 @@ file_open_dir(backend_t *be, struct navigator *nav,
 	      char *errbuf, size_t errlen)
 {
   nav_page_t *np;
-  prop_t *src;
+  prop_t *model;
   int type;
   char parent[URL_MAX];
 
@@ -84,17 +84,17 @@ file_open_dir(backend_t *be, struct navigator *nav,
 
   np = nav_page_create(nav, url, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
 
-  src = prop_create(np->np_prop_root, "model");
-  prop_set_string(prop_create(src, "type"), "directory");
+  model = prop_create(np->np_prop_root, "model");
+  prop_set_string(prop_create(model, "type"), "directory");
 
   /* Find a meaningful page title (last component of URL) */
-  set_title_from_url(prop_create(src, "metadata"), url);
+  set_title_from_url(prop_create(model, "metadata"), url);
 
   // Set parent
   if(!fa_parent(parent, sizeof(parent), url))
     prop_set_string(prop_create(np->np_prop_root, "parent"), parent);
 
-  fa_scanner(url, src, 
+  fa_scanner(url, model,
 	     view ? NULL : prop_create(np->np_prop_root, "view"), NULL);
   return np;
 }
@@ -110,7 +110,7 @@ file_open_audio(struct navigator *nav, const char *url, const char *view)
   char parent2[URL_MAX];
   struct stat st;
   nav_page_t *np;
-  prop_t *src;
+  prop_t *model;
 
   if(fa_parent(parent, sizeof(parent), url))
     return NULL;
@@ -120,17 +120,17 @@ file_open_audio(struct navigator *nav, const char *url, const char *view)
   
   np = nav_page_create(nav, parent, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
 
-  src = prop_create(np->np_prop_root, "model");
-  prop_set_string(prop_create(src, "type"), "directory");
+  model = prop_create(np->np_prop_root, "model");
+  prop_set_string(prop_create(model, "type"), "directory");
 
   /* Find a meaningful page title (last component of URL) */
-  set_title_from_url(prop_create(src, "metadata"), parent);
+  set_title_from_url(prop_create(model, "metadata"), parent);
 
   // Set parent
   if(!fa_parent(parent2, sizeof(parent2), parent))
     prop_set_string(prop_create(np->np_prop_root, "parent"), parent2);
 
-  fa_scanner(parent, src, 
+  fa_scanner(parent, model,
 	     view ? NULL : prop_create(np->np_prop_root, "view"), url);
   return np;
 }
@@ -152,7 +152,7 @@ file_open_file(backend_t *be, struct navigator *nav,
   meta = prop_create(NULL, "metadata");
 
   r = fa_probe(meta, url, redir, sizeof(redir), errbuf, errlen, st);
-  
+
   switch(r) {
   case CONTENT_ARCHIVE:
   case CONTENT_ALBUM:
