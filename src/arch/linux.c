@@ -29,7 +29,7 @@
 
 #include "linux.h"
 #include "misc/callout.h"
-#include "prop.h"
+#include "prop/prop.h"
 
 
 

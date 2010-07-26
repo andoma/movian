@@ -25,7 +25,7 @@
 #include "showtime.h"
 #include "event.h"
 #include "keyring.h"
-#include "prop.h"
+#include "prop/prop.h"
 
 static htsmsg_t *keyring;
 static hts_mutex_t keyring_mutex;

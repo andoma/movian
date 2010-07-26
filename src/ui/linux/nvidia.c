@@ -25,7 +25,7 @@
 #include <NVCtrl/NVCtrlLib.h>
 
 #include "showtime.h"
-#include "prop.h"
+#include "prop/prop.h"
 #include "nvidia.h"
 
 typedef struct nvctrl_data {

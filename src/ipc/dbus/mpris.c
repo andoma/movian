@@ -25,7 +25,7 @@
 
 #include "mpris.h"
 #include "dbus.h"
-#include "prop.h"
+#include "prop/prop.h"
 
 static dbus_int32_t mpris_playstatus = 2; // stop
 

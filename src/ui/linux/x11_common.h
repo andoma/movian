@@ -21,7 +21,7 @@
 #define X11_COMMON_H__
 
 #include <X11/Xlib.h>
-#include "prop.h"
+#include "prop/prop.h"
 
 struct x11_screensaver_state;
 

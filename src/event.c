@@ -27,7 +27,7 @@
 #include "showtime.h"
 #include "event.h"
 #include "misc/strtab.h"
-#include "prop.h"
+#include "prop/prop.h"
 
 /**
  *

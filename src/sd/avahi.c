@@ -28,7 +28,7 @@
 #include "showtime.h"
 #include "misc/queue.h"
 #include "arch/threads.h"
-#include "prop.h"
+#include "prop/prop.h"
 #include "avahi.h"
 #include "sd.h"
 

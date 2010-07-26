@@ -19,7 +19,7 @@
 #ifndef FA_SEARCH_H
 #define FA_SEARCH_H
 
-#include "prop.h"
+#include "prop/prop.h"
 
 void fa_search_start (prop_t *source, const char *query,
 		      backend_search_type_t type);

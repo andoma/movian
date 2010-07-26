@@ -24,7 +24,6 @@
 
 #include "glw.h"
 #include "glw_texture.h"
-#include "prop.h"
 
 #include "backend/backend.h"
 

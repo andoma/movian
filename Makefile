@@ -41,7 +41,6 @@ SRCS += src/main.c \
 	src/event.c \
 	src/keyring.c \
 	src/settings.c \
-	src/prop.c \
 	src/bookmarks.c \
 	src/service.c \
 	src/notifications.c \
@@ -49,6 +48,7 @@ SRCS += src/main.c \
 	src/arch/arch_${OSENV}.c \
 	src/ui/ui.c \
 	src/keymapper.c \
+	src/prop/prop_core.c \
 
 ifeq ($(PLATFORM), linux)
 SRCS += src/arch/linux.c

@@ -20,7 +20,7 @@
 #define NAVIGATOR_H__
 
 #include "event.h"
-#include "prop.h"
+#include "prop/prop.h"
 
 #define NAV_HOME "page:home"
 

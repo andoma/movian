@@ -3,7 +3,7 @@
 #define SD_H__
 
 #include "misc/queue.h"
-#include "prop.h"
+#include "prop/prop.h"
 
 LIST_HEAD(service_instance_list, service_instance);
 

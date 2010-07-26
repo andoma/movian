@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "prop.h"
+#include "prop/prop.h"
 #include "sd.h"
 #include "arch/arch.h"
 #include "showtime.h"

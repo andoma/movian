@@ -19,7 +19,7 @@
 #include <string.h>
 #include <assert.h>
 #include "gu_directory_store.h"
-#include "prop.h"
+#include "prop/prop.h"
 
 
 

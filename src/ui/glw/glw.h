@@ -28,7 +28,7 @@
 #include <math.h>
 
 #include "misc/queue.h"
-#include "prop.h"
+#include "prop/prop.h"
 #include "event.h"
 #include "ui/ui.h"
 #include "showtime.h"

@@ -3,7 +3,7 @@
 #define SERVICE_H__
 
 #include "misc/queue.h"
-#include "prop.h"
+#include "prop/prop.h"
 
 
 /**

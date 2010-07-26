@@ -26,7 +26,7 @@
 
 #include <arch/atomic.h>
 
-#include "prop.h"
+#include "prop/prop.h"
 #include "showtime.h"
 #include "misc/pixmap.h"
 #include "misc/string.h"

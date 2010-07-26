@@ -24,7 +24,7 @@
 #include <arch/atomic.h>
 
 #include "event.h"
-#include "prop.h"
+#include "prop/prop.h"
 
 void media_init(void);
 struct media_buf;

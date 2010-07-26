@@ -2,7 +2,7 @@
 #define AVGTIME_H__
 
 #include "showtime.h"
-#include "prop.h"
+#include "prop/prop.h"
 
 typedef struct avgtime {
   int samples[10];

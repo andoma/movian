@@ -41,7 +41,7 @@
 #include "arch.h"
 
 #include <stdarg.h>
-#include "prop.h"
+#include "prop/prop.h"
 
 #include "service.h"
 #include "misc/callout.h"

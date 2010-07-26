@@ -28,7 +28,7 @@
 #include "darwin.h"
 #include "showtime.h"
 #include "misc/callout.h"
-#include "prop.h"
+#include "prop/prop.h"
 
 static unsigned int *last_total;
 static unsigned int *last_idle;

@@ -19,7 +19,7 @@
 #ifndef SETTINGS_H__
 #define SETTINGS_H__
 
-#include "prop.h"
+#include "prop/prop.h"
 #include <htsmsg/htsmsg.h>
 
 #define SETTINGS_INITIAL_UPDATE 0x1

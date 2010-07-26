@@ -17,7 +17,7 @@
  */
 
 #include <stdio.h>
-#include "prop.h"
+#include "prop/prop.h"
 #include "settings.h"
 #include "showtime.h"
 #include "serdev.h"

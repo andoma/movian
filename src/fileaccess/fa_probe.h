@@ -19,7 +19,7 @@
 #ifndef FA_PROBE_H
 #define FA_PROBE_H
 
-#include "prop.h"
+#include "prop/prop.h"
 #include "fileaccess.h"
 #include <libavformat/avformat.h>
 

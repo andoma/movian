@@ -20,7 +20,7 @@
 #define BACKEND_H__
 
 #include "event.h"
-#include "prop.h"
+#include "prop/prop.h"
 
 LIST_HEAD(backend_list, backend);
 

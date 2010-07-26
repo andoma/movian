@@ -20,7 +20,7 @@
 #include <stdio.h>
 
 #include "showtime.h"
-#include "prop.h"
+#include "prop/prop.h"
 #include "notifications.h"
 #include "misc/callout.h"
 

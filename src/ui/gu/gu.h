@@ -21,7 +21,7 @@
 
 #include <gtk/gtk.h>
 
-#include <prop.h>
+#include <prop/prop.h>
 #include <ui/ui.h>
 
 LIST_HEAD(gu_nav_page_list, gu_nav_page);

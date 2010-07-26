@@ -27,7 +27,7 @@
 
 #include "showtime.h"
 #include "event.h"
-#include "prop.h"
+#include "prop/prop.h"
 #include "arch/arch.h"
 
 #include "audio/audio.h"
