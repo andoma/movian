@@ -254,4 +254,21 @@ struct prop_sub {
 
 };
 
+prop_t *prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, 
+		     int flags);
+
+void prop_move0(prop_t *p, prop_t *before, prop_sub_t *skipme);
+
+void prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard);
+
+int prop_set_parent0(prop_t *p, prop_t *parent, prop_t *before, 
+		     prop_sub_t *skipme);
+
+int prop_destroy0(prop_t *p);
+
+void prop_unsubscribe0(prop_sub_t *s);
+
+void prop_notify_childv(prop_t **childv, prop_t *parent, prop_event_t event,
+			prop_sub_t *skipme);
+
 #endif // PROP_I_H__

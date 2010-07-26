@@ -49,6 +49,7 @@ SRCS += src/main.c \
 	src/ui/ui.c \
 	src/keymapper.c \
 	src/prop/prop_core.c \
+	src/prop/prop_nodefilter.c \
 
 ifeq ($(PLATFORM), linux)
 SRCS += src/arch/linux.c
