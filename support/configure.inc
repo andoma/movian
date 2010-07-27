@@ -212,7 +212,7 @@ setup_ffmpeg() {
 	cat >> ${CONFIG_MAK} << EOF 
 CFLAGS_cfg  += -I${FFMPEG_PATH}/include
 LDFLAGS_cfg += -L${FFMPEG_PATH}/lib -Wl,-rpath=${FFMPEG_PATH}/lib
-LDFLAGS_cfg += -lswscale -lavformat -lavcodec -lavutil
+LDFLAGS_cfg += -lswscale -lavformat -lavcodec -lavcore -lavutil
 EOF
 
     else
@@ -246,7 +246,7 @@ EOF
 	cat >> ${CONFIG_MAK} << EOF 
 CFLAGS_cfg  += -I${BUILDDIR}/ffmpeg/install/include
 LDFLAGS_cfg += -L${BUILDDIR}/ffmpeg/install/lib
-LDFLAGS_cfg += -lswscale -lavformat -lavcodec -lavutil
+LDFLAGS_cfg += -lswscale -lavformat -lavcodec -lavcore -lavutil
 FFBUILDDEP   = ${BUILDDIR}/ffmpeg/install
 EOF
     fi
