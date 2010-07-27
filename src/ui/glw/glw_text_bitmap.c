@@ -1384,6 +1384,7 @@ font_render_thread(void *aux)
       d.gtbd_siz_x = 0;
       d.gtbd_siz_y = 0;
       d.gtbd_cursor_pos = NULL;
+      d.gtbd_lines = 0;
     }
 
     free(uc);
