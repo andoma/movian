@@ -119,7 +119,6 @@ js_open_invoke(JSContext *cx, const char *url, prop_t *root, jsbackend_t *jsb)
   JSObject *this = JSVAL_TO_OBJECT(jsb->jsb_object);
   jsval open, *argv, result;
   void *mark;
-  uint32_t score;
 
   if(!JS_GetProperty(cx, this, "open",  &open))
     return;
@@ -129,12 +128,7 @@ js_open_invoke(JSContext *cx, const char *url, prop_t *root, jsbackend_t *jsb)
   if((argv = JS_PushArguments(cx, &mark, "so", url, p)) == NULL)
     return;
 
-  if(!JS_CallFunctionValue(cx, this, open, 2, argv, &result) ||
-     !JS_ValueToECMAUint32(cx, result, &score))
-    score = 0;
-  
-  prop_print_tree(root, 0);
-
+  JS_CallFunctionValue(cx, this, open, 2, argv, &result);
   JS_PopArguments(cx, mark);
 }
 
