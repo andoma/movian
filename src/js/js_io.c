@@ -70,9 +70,11 @@ js_httpRequest(JSContext *cx, JSObject *obj, uintN argc,
     JS_DestroyIdArray(cx, ida);
   }
 
+  jsrefcount s = JS_SuspendRequest(cx);
   int n = http_request(url, (const char **)httpargs, 
 		       &result, &resultsize, errbuf, sizeof(errbuf),
 		       NULL, NULL, 0);
+  JS_ResumeRequest(cx, s);
 
   if(httpargs != NULL)
     strvec_free(httpargs);
@@ -102,7 +104,9 @@ js_readFile(JSContext *cx, JSObject *obj, uintN argc,
   if(!JS_ConvertArguments(cx, argc, argv, "s", &url))
     return JS_FALSE;
 
+  jsrefcount s = JS_SuspendRequest(cx);
   result = fa_quickload(url, &resultsize, NULL, errbuf, sizeof(errbuf));
+  JS_ResumeRequest(cx, s);
 
   if(result == NULL) {
     JS_ReportError(cx, errbuf);
