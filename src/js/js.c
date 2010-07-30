@@ -24,6 +24,7 @@
 
 static JSRuntime *runtime;
 static  JSObject *global;
+static  JSObject *showtimeobj;
 
 static JSClass global_class = {
   "global", JSCLASS_GLOBAL_FLAGS,
@@ -61,7 +62,7 @@ newctx(void)
   JS_SetOptions(cx, JSOPTION_STRICT | JSOPTION_WERROR);
   JS_SetErrorReporter(cx, err_reporter);
 #ifdef JS_GC_ZEAL
-  JS_SetGCZeal(cx, 2);
+  //  JS_SetGCZeal(cx, 2);
 #endif
   return cx;
 }
@@ -123,7 +124,7 @@ js_open_invoke(JSContext *cx, const char *url, prop_t *root, jsbackend_t *jsb)
   if(!JS_GetProperty(cx, this, "open",  &open))
     return;
 
-  JSObject *p = js_object_from_prop(cx, root);
+  JSObject *p = js_page_object(cx, root);
 
   if((argv = JS_PushArguments(cx, &mark, "so", url, p)) == NULL)
     return;
@@ -248,13 +249,22 @@ js_registerBackend(JSContext *cx, JSObject *obj, uintN argc,
 /**
  *
  */
-static JSFunctionSpec myjs_global_functions[] = {
+static JSFunctionSpec showtime_functions[] = {
     JS_FS("trace",           js_trace,    1, 0, 0),
     JS_FS("registerBackend", js_registerBackend, 1, 0, 0),
+    JS_FS("httpRequest",     js_httpRequest, 4, 0, 0),
+    JS_FS("readFile",        js_readFile, 1, 0, 0),
     JS_FS_END
 };
 
 
+
+static JSClass showtime_class = {
+  "showtime", 0,
+  JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,
+  JS_EnumerateStub,JS_ResolveStub,JS_ConvertStub,JS_FinalizeStub,
+  JSCLASS_NO_OPTIONAL_MEMBERS
+};
 
 
 /**
@@ -277,7 +287,11 @@ js_init(void)
   
   global = JS_NewObject(cx, &global_class, NULL, NULL);
   JS_InitStandardClasses(cx, global);
-  JS_DefineFunctions(cx, global, myjs_global_functions);
+
+  showtimeobj = JS_DefineObject(cx, global, "showtime",
+				&showtime_class, NULL, 0);
+
+  JS_DefineFunctions(cx, showtimeobj, showtime_functions);
 
 
 

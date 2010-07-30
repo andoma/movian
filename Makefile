@@ -424,7 +424,8 @@ SRCS-$(CONFIG_SPIDERMONKEY) += ext/spidermonkey/jsapi.c	\
 			ext/spidermonkey/prmjtime.c	\
                         src/arch/nspr/nspr.c            \
                         src/js/js.c                     \
-                        src/js/js_prop.c                \
+                        src/js/js_page.c                \
+                        src/js/js_io.c                  \
 
 ${BUILDDIR}/ext/spidermonkey/%.o : CFLAGS = \
 	-Iext/spidermonkey -Isrc/arch/nspr -DDEBUG=1
