@@ -71,6 +71,29 @@ js_setType(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
  *
  */
 static JSBool 
+js_setLoading(JSContext *cx, JSObject *obj, uintN argc,
+	      jsval *argv, jsval *rval)
+{
+  JSBool on;
+  prop_t *p;
+
+  if (!JS_ConvertArguments(cx, argc, argv, "b", &on))
+    return JS_FALSE;
+
+  p = JS_GetPrivate(cx, obj);
+
+  prop_set_int(prop_create(prop_create(p, "model"),
+			      "loading"), on);
+  
+  *rval = JSVAL_VOID;  /* return undefined */
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSBool 
 js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
 	      jsval *argv, jsval *rval)
 {
@@ -147,6 +170,7 @@ js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
 static JSFunctionSpec page_functions[] = {
     JS_FS("setTitle",           js_setTitle,    1, 0, 0),
     JS_FS("setType",            js_setType,     1, 0, 0),
+    JS_FS("setLoading",         js_setLoading,  1, 0, 0),
     JS_FS("appendItem",         js_appendItem,  3, 0, 0),
     JS_FS_END
 };
