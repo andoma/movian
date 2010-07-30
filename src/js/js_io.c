@@ -22,6 +22,9 @@
 #include "fileaccess/fileaccess.h"
 #include "misc/string.h"
 
+/**
+ *
+ */
 JSBool 
 js_httpRequest(JSContext *cx, JSObject *obj, uintN argc,
 	       jsval *argv, jsval *rval)
@@ -84,6 +87,9 @@ js_httpRequest(JSContext *cx, JSObject *obj, uintN argc,
 }
 
 
+/**
+ *
+ */
 JSBool 
 js_readFile(JSContext *cx, JSObject *obj, uintN argc,
 	       jsval *argv, jsval *rval)
