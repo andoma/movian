@@ -24,22 +24,15 @@
  *
  */
 static JSBool 
-js_setTitle(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+js_setTitle(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
-  const char *str;
-  prop_t *p;
-
-  if (!JS_ConvertArguments(cx, argc, argv, "s", &str))
-    return JS_FALSE;
-
-  p = JS_GetPrivate(cx, obj);
+  prop_t *p = JS_GetPrivate(cx, obj);
+  const char *str = JS_GetStringBytes(JS_ValueToString(cx, *vp));
 
   prop_set_string(prop_create(prop_create(prop_create(p, "model"),
 					  "metadata"),
 			      "title"),
 		  str);
-
-  *rval = JSVAL_VOID;  /* return undefined */
   return JS_TRUE;
 }
 
@@ -48,21 +41,15 @@ js_setTitle(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
  *
  */
 static JSBool 
-js_setType(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+js_setType(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
-  const char *str;
-  prop_t *p;
-
-  if (!JS_ConvertArguments(cx, argc, argv, "s", &str))
-    return JS_FALSE;
-
-  p = JS_GetPrivate(cx, obj);
+  prop_t *p = JS_GetPrivate(cx, obj);
+  const char *str = JS_GetStringBytes(JS_ValueToString(cx, *vp));
 
   prop_set_string(prop_create(prop_create(p, "model"),
 			      "type"),
 		  str);
-  
-  *rval = JSVAL_VOID;  /* return undefined */
+
   return JS_TRUE;
 }
 
@@ -71,21 +58,17 @@ js_setType(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
  *
  */
 static JSBool 
-js_setLoading(JSContext *cx, JSObject *obj, uintN argc,
-	      jsval *argv, jsval *rval)
+js_setLoading(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
+  prop_t *p = JS_GetPrivate(cx, obj);
   JSBool on;
-  prop_t *p;
 
-  if (!JS_ConvertArguments(cx, argc, argv, "b", &on))
+
+  if(!JS_ValueToBoolean(cx, *vp, &on))
     return JS_FALSE;
-
-  p = JS_GetPrivate(cx, obj);
 
   prop_set_int(prop_create(prop_create(p, "model"),
 			      "loading"), on);
-  
-  *rval = JSVAL_VOID;  /* return undefined */
   return JS_TRUE;
 }
 
@@ -168,11 +151,19 @@ js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
  *
  */
 static JSFunctionSpec page_functions[] = {
-    JS_FS("setTitle",           js_setTitle,    1, 0, 0),
-    JS_FS("setType",            js_setType,     1, 0, 0),
-    JS_FS("setLoading",         js_setLoading,  1, 0, 0),
     JS_FS("appendItem",         js_appendItem,  3, 0, 0),
     JS_FS_END
+};
+
+
+/**
+ *
+ */
+static JSPropertySpec page_properties[] = {
+  { "title",      0, 0,         NULL, js_setTitle },
+  { "type",       0, 0,         NULL, js_setType },
+  { "loading",    0, 0,         NULL, js_setLoading },
+  { NULL },
 };
 
 /**
@@ -207,6 +198,7 @@ js_page_object(JSContext *cx, prop_t *p)
   JS_SetPrivate(cx, obj, p);
 
   JS_DefineFunctions(cx, obj, page_functions);
+  JS_DefineProperties(cx, obj, page_properties);
 
   return obj;
 }
