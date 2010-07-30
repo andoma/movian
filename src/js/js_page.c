@@ -70,9 +70,84 @@ js_setType(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 /**
  *
  */
+static JSBool 
+js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
+	      jsval *argv, jsval *rval)
+{
+  const char *url;
+  const char *type;
+  JSObject *metaobj = NULL;
+
+  prop_t *parent;
+  prop_t *item;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "ss/o", &url, &type, &metaobj))
+    return JS_FALSE;
+
+  item = prop_create(NULL, NULL);
+
+  if(metaobj != NULL) {
+    JSIdArray *ida;
+    prop_t *metadata;
+    int i;
+    if((ida = JS_Enumerate(cx, metaobj)) == NULL) {
+      prop_destroy(item);
+      return JS_FALSE;
+    }
+
+    metadata = prop_create(item, "metadata");
+
+    for(i = 0; i < ida->length; i++) {
+      jsval name, value;
+      prop_t *val;
+      if(!JS_IdToValue(cx, ida->vector[i], &name))
+	continue;
+
+      if(!JSVAL_IS_STRING(name))
+	continue;
+
+      if(!JS_GetProperty(cx, metaobj, JS_GetStringBytes(JSVAL_TO_STRING(name)),
+			 &value))
+	continue;
+
+      val = prop_create(metadata, JS_GetStringBytes(JSVAL_TO_STRING(name)));
+      if(JSVAL_IS_INT(value)) {
+	prop_set_int(val, JSVAL_TO_INT(value));
+      } else if(JSVAL_IS_DOUBLE(value)) {
+	double d;
+	if(JS_ValueToNumber(cx, value, &d))
+	  prop_set_float(val, d);
+      } else {
+	prop_set_string(val, JS_GetStringBytes(JS_ValueToString(cx, value)));
+      }
+    }
+    JS_DestroyIdArray(cx, ida);
+  }
+
+  prop_set_string(prop_create(item, "url"), url);
+  prop_set_string(prop_create(item, "type"), type);
+  parent = JS_GetPrivate(cx, obj);
+
+  parent = prop_create(parent, "model");
+  parent = prop_create(parent, "nodes");
+
+  if(prop_set_parent(item, parent))
+    prop_destroy(item);
+
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+  
+
+}
+
+
+/**
+ *
+ */
 static JSFunctionSpec page_functions[] = {
     JS_FS("setTitle",           js_setTitle,    1, 0, 0),
     JS_FS("setType",            js_setType,     1, 0, 0),
+    JS_FS("appendItem",         js_appendItem,  3, 0, 0),
     JS_FS_END
 };
 
