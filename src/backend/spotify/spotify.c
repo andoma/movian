@@ -3036,7 +3036,13 @@ be_spotify_init(void)
 static int
 be_spotify_canhandle(backend_t *be, const char *url)
 {
-  return !strncmp(url, "spotify:", strlen("spotify:"));
+  if(!strncmp(url, "spotify:", strlen("spotify:")))
+    return 1;
+
+  if(!strncmp(url, "http://open.spotify.com/", 
+	      strlen("http://open.spotify.com/")))
+    return 2;
+  return 0;
 }
 
 
