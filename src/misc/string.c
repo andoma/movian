@@ -744,3 +744,35 @@ strvec_free(char **s)
     free(*s);
   free(m);
 }
+
+
+/**
+ *
+ */
+void 
+strvec_addpn(char ***strvp, const char *v, size_t len)
+{
+  char **strv = *strvp;
+  int i = 0;
+  if(strv == NULL) {
+    strv = malloc(sizeof(char *) * 2);
+  } else {
+    while(strv[i] != NULL)
+      i++;
+    strv = realloc(strv, sizeof(char *) * (i + 2));
+  }
+  strv[i] = memcpy(malloc(len + 1), v, len);
+  strv[i][len] = 0;
+  strv[i+1] = NULL;
+  *strvp = strv;
+}
+
+/**
+ *
+ */
+void 
+strvec_addp(char ***strvp, const char *v)
+{
+  strvec_addpn(strvp, v, strlen(v));
+}
+
