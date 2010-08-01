@@ -86,6 +86,23 @@ js_trace(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 }
 
 
+/**
+ *
+ */
+static JSBool 
+js_print(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+  const char *str;
+
+  if (!JS_ConvertArguments(cx, argc, argv, "s", &str))
+    return JS_FALSE;
+
+  fprintf(stderr, "%s\n", str);
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+
 
 
 /**
@@ -93,6 +110,7 @@ js_trace(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
  */
 static JSFunctionSpec showtime_functions[] = {
     JS_FS("trace",           js_trace,    1, 0, 0),
+    JS_FS("print",           js_print,    1, 0, 0),
     JS_FS("httpRequest",     js_httpRequest, 4, 0, 0),
     JS_FS("readFile",        js_readFile, 1, 0, 0),
     JS_FS("addURI",          js_addURI, 2, 0, 0),
