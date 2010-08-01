@@ -156,7 +156,7 @@ js_queryStringSplit(JSContext *cx, JSObject *obj,
 static JSFunctionSpec showtime_functions[] = {
     JS_FS("trace",            js_trace,    1, 0, 0),
     JS_FS("print",            js_print,    1, 0, 0),
-    JS_FS("httpRequest",      js_httpRequest, 4, 0, 0),
+    JS_FS("httpGet",          js_httpRequest, 4, 0, 0),
     JS_FS("readFile",         js_readFile, 1, 0, 0),
     JS_FS("addURI",           js_addURI, 2, 0, 0),
     JS_FS("queryStringSplit", js_queryStringSplit, 1, 0, 0),
