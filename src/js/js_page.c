@@ -70,7 +70,8 @@ typedef struct js_page {
 static void
 js_page_destroy(js_page_t *jp)
 {
-  strvec_free(jp->jp_args);
+  if(jp->jp_args)
+    strvec_free(jp->jp_args);
 
   prop_ref_dec(jp->jp_loading);
   prop_ref_dec(jp->jp_nodes);
