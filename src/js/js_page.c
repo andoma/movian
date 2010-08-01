@@ -62,6 +62,15 @@ typedef struct js_page {
   prop_t *jp_title;
   prop_t *jp_url;
 
+  prop_courier_t *jp_pc;
+  prop_sub_t *jp_nodesub;
+
+  int jp_run;
+
+  jsval jp_paginator;
+  
+  JSContext *jp_cx;
+
 } js_page_t;
 
 
@@ -74,12 +83,16 @@ js_page_destroy(js_page_t *jp)
   if(jp->jp_args)
     strvec_free(jp->jp_args);
 
+  prop_unsubscribe(jp->jp_nodesub);
+
   prop_ref_dec(jp->jp_loading);
   prop_ref_dec(jp->jp_nodes);
   prop_ref_dec(jp->jp_type);
   prop_ref_dec(jp->jp_title);
   prop_ref_dec(jp->jp_url);
-  
+
+  prop_courier_destroy(jp->jp_pc);
+
   free(jp);
 }
 
@@ -212,8 +225,27 @@ js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
 
   *rval = JSVAL_VOID;
   return JS_TRUE;
-  
+}
 
+
+
+/**
+ *
+ */
+static JSBool 
+js_setPaginator(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
+{
+  js_page_t *jp = JS_GetPrivate(cx, obj);
+
+  if(!JSVAL_IS_OBJECT(*vp) || 
+     !JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(*vp))) {
+    JS_ReportError(cx, "Argument is not a function");
+    return JS_FALSE;
+  }
+
+  jp->jp_paginator = *vp;
+  JS_AddNamedRoot(cx, &jp->jp_paginator, "paginator");
+  return JS_TRUE;
 }
 
 
@@ -221,7 +253,7 @@ js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
  *
  */
 static JSFunctionSpec page_functions[] = {
-    JS_FS("appendItem",         js_appendItem,  3, 0, 0),
+    JS_FS("appendItem",         js_appendItem,   3, 0, 0),
     JS_FS_END
 };
 
@@ -234,6 +266,7 @@ static JSPropertySpec page_properties[] = {
   { "type",       0, 0,         NULL, js_setType },
   { "loading",    0, 0,         NULL, js_setLoading },
   { "url",        0, 0,         NULL, js_setURL },
+  { "paginator",  0, 0,         NULL, js_setPaginator },
   { NULL },
 };
 
@@ -321,12 +354,67 @@ js_open_trampoline(void *arg)
   js_open_invoke(cx, jp);
 
   JS_EndRequest(cx);
-  JS_DestroyContext(cx);
+
+  jp->jp_cx = cx;
+
+  while(jp->jp_run)
+    prop_courier_wait(jp->jp_pc);
+
+  if(jp->jp_paginator) {
+    JS_BeginRequest(cx);
+    JS_RemoveRoot(cx, &jp->jp_paginator);
+    JS_EndRequest(cx);
+  }
 
   js_page_release(jp);
+
+  JS_DestroyContext(cx);
   return NULL;
 }
 
+
+/**
+ *
+ */
+static void
+js_page_fill(JSContext *cx, js_page_t *jp)
+{
+  jsval result;
+
+  JS_BeginRequest(cx);
+  JS_CallFunctionValue(cx, NULL, jp->jp_paginator, 0, NULL, &result);
+  JS_EndRequest(cx);
+}
+
+/**
+ *
+ */
+static void
+js_page_nodesub(void *opaque, prop_event_t event, ...)
+{
+  js_page_t *jp = opaque;
+  va_list ap;
+  event_t *e;
+
+  va_start(ap, event);
+
+  switch(event) {
+  default:
+    break;
+
+  case PROP_DESTROYED:
+    jp->jp_run = 0;
+    break;
+
+  case PROP_EXT_EVENT:
+    e = va_arg(ap, event_t *);
+    if(e->e_type_x == EVENT_APPEND_REQUEST)
+      js_page_fill(jp->jp_cx, jp);
+
+    break;
+  }
+  va_end(ap);
+}
 
 
 /**
@@ -370,7 +458,19 @@ js_page_open(struct backend *be, struct navigator *nav,
   prop_ref_inc(jp->jp_url     = prop_create(np->np_prop_root, "url"));
   jp->jp_openfunc = jsr->jsr_openfunc;
 
-  hts_thread_create_detached("jsOpen", js_open_trampoline, jp);
+
+  jp->jp_pc = prop_courier_create_waitable();
+
+  jp->jp_nodesub = 
+    prop_subscribe(PROP_SUB_TRACK_DESTROY,
+		   PROP_TAG_CALLBACK, js_page_nodesub, jp,
+		   PROP_TAG_ROOT, jp->jp_nodes,
+		   PROP_TAG_COURIER, jp->jp_pc,
+		   NULL);
+
+  jp->jp_run = 1;
+
+  hts_thread_create_detached("jspage", js_open_trampoline, jp);
 			     
   prop_set_int(jp->jp_loading, 1);
   return np;
