@@ -84,9 +84,9 @@ search_open(backend_t *beself, struct navigator *nav,
     type = BACKEND_SEARCH_ALL;
 
 
-
-  if((be = backend_canhandle(url)) != NULL) 
-    return be->be_open(be, nav, url, view, errbuf, errlen);
+  np = backend_open(nav, url, view, errbuf, errlen);
+  if(np != BACKEND_NOURI)
+    return np;
   
   np = nav_page_create(nav, url0, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
 

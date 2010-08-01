@@ -248,29 +248,19 @@ static void
 nav_open0(navigator_t *nav, const char *url, const char *view)
 {
   nav_page_t *np;
-  backend_t *be;
   char errbuf[128];
-  char urlbuf[URL_MAX];
-
-  be = backend_canhandle(url);
-
-  if(be == NULL) {
-    nav_open_error_raw(nav, url, "No handler for URL");
-    return;
-  }
-  
-  if(be->be_normalize != NULL && !be->be_normalize(be, url,
-						   urlbuf, sizeof(urlbuf)))
-    url = urlbuf;
 
   TRACE(TRACE_DEBUG, "navigator", "Opening %s", url);
 
-  if((np = be->be_open(be, nav, url, view, errbuf, sizeof(errbuf))) == NULL) {
-    nav_open_error_raw(nav, url, errbuf);
-    return;
-  }
+  np = backend_open(nav, url, view, errbuf, sizeof(errbuf));
 
-  nav_insert_page(nav, np);
+  if(np == BACKEND_NOURI) {
+    nav_open_error_raw(nav, url, "No handler for URL");
+  } else if(np == NULL) {
+    nav_open_error_raw(nav, url, errbuf);
+  } else {
+    nav_insert_page(nav, np);
+  }
 }
 
 

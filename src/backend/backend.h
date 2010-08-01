@@ -59,6 +59,9 @@ typedef struct backend {
 
   LIST_ENTRY(backend) be_global_link;
 
+  int be_flags;
+#define BACKEND_OPEN_CHECKS_URI 0x1
+
   int (*be_init)(void);
 
   int (*be_canhandle)(struct backend *be, const char *ur);
@@ -66,6 +69,8 @@ typedef struct backend {
   struct nav_page *(*be_open)(struct backend *be, struct navigator *nav, 
 			      const char *url, const char *view,
 			      char *errbuf, size_t errlen);
+
+#define BACKEND_NOURI ((struct nav_page *)-1)
 
   event_t *(*be_play_video)(struct backend *be, const char *url,
 			    struct media_pipe *mp,
@@ -101,6 +106,10 @@ typedef struct backend {
  *
  */
 void backend_init(void);
+
+struct nav_page *backend_open(struct navigator *nav, const char *url,
+			      const char *view, char *errbuf, size_t errlen);
+
 
 event_t *backend_play_video(const char *url, struct media_pipe *mp,
 			    int primary, int priority,

@@ -223,3 +223,38 @@ backend_open_video(backend_t *be, struct navigator *nav,
   return np;
 }
 
+
+/**
+ *
+ */
+nav_page_t *
+backend_open(struct navigator *nav, const char *url, const char *view,
+	     char *errbuf, size_t errlen)
+{
+  backend_t *be;
+  struct nav_page *np;
+  char urlbuf[URL_MAX];
+
+  LIST_FOREACH(be, &backends, be_global_link) {
+    if(be->be_flags & BACKEND_OPEN_CHECKS_URI) {
+      np = be->be_open(be, nav, url, view, errbuf, errlen);
+      if(np == NULL)
+	return NULL;
+
+      if(np == BACKEND_NOURI)
+	continue;
+      return np;
+    }
+  }
+
+  be = backend_canhandle(url);
+
+  if(be == NULL)
+    return BACKEND_NOURI;
+
+  if(be->be_normalize != NULL && 
+     !be->be_normalize(be, url, urlbuf, sizeof(urlbuf)))
+    url = urlbuf;
+
+  return be->be_open(be, nav, url, view, errbuf, errlen);
+}
