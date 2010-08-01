@@ -21,6 +21,7 @@
 #include "js.h"
 
 #include "backend/backend.h"
+#include "misc/string.h"
 
 static JSRuntime *runtime;
 static  JSObject *global;
@@ -103,17 +104,62 @@ js_print(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 }
 
 
+/**
+ *
+ */
+static JSBool 
+js_queryStringSplit(JSContext *cx, JSObject *obj,
+		    uintN argc, jsval *argv, jsval *rval)
+{
+  const char *str;
+  char *s, *s0;
+  JSObject *robj = JS_NewObject(cx, NULL, NULL, NULL);
+
+  if (!JS_ConvertArguments(cx, argc, argv, "s", &str))
+    return JS_FALSE;
+
+  s0 = s = strdup(str);
+
+  while(s) {
+    
+    char *k = s;
+    char *v = strchr(s, '=');
+    if(v == NULL)
+      break;
+
+    *v++ = 0;
+
+    if((s = strchr(v, '&')) != NULL)
+      *s++ = 0;
+
+    k = strdup(k);
+    v = strdup(v);
+
+    http_deescape(k);
+    http_deescape(v);
+
+    jsval val = STRING_TO_JSVAL(JS_NewString(cx, v, strlen(v)));
+    JS_SetProperty(cx, robj, k, &val);
+    free(k);
+  }
+  free(s0);
+  *rval = OBJECT_TO_JSVAL(robj);
+  return JS_TRUE;
+}
+
+
 
 
 /**
  *
  */
 static JSFunctionSpec showtime_functions[] = {
-    JS_FS("trace",           js_trace,    1, 0, 0),
-    JS_FS("print",           js_print,    1, 0, 0),
-    JS_FS("httpRequest",     js_httpRequest, 4, 0, 0),
-    JS_FS("readFile",        js_readFile, 1, 0, 0),
-    JS_FS("addURI",          js_addURI, 2, 0, 0),
+    JS_FS("trace",            js_trace,    1, 0, 0),
+    JS_FS("print",            js_print,    1, 0, 0),
+    JS_FS("httpRequest",      js_httpRequest, 4, 0, 0),
+    JS_FS("readFile",         js_readFile, 1, 0, 0),
+    JS_FS("addURI",           js_addURI, 2, 0, 0),
+    JS_FS("queryStringSplit", js_queryStringSplit, 1, 0, 0),
     JS_FS_END
 };
 
