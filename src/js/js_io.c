@@ -61,6 +61,9 @@ js_httpRequest(JSContext *cx, JSObject *obj, uintN argc,
 			 &value))
 	continue;
 
+      if(JSVAL_IS_VOID(value))
+	continue;
+
       httpargs[j++] = strdup(JS_GetStringBytes(JSVAL_TO_STRING(name)));
       httpargs[j++] = strdup(JS_GetStringBytes(JS_ValueToString(cx, value)));
     }
