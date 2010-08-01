@@ -1136,7 +1136,7 @@ http_quickload(struct fa_protocol *fap, const char *url,
   char *res;
 
   if(http_request(url, NULL, &res, sizeptr, errbuf, errlen, NULL, 0,
-		  HTTP_REQUEST_ESCAPE_PATH))
+		  HTTP_REQUEST_ESCAPE_PATH, NULL, 0))
     return NULL;
   return res;
 }
@@ -1536,7 +1536,8 @@ http_request(const char *url, const char **arguments,
 	     char **result, size_t *result_sizep,
 	     char *errbuf, size_t errlen,
 	     htsbuf_queue_t *postdata, const char *postcontenttype,
-	     int flags)
+	     int flags,
+	     char *contenttypebuf, size_t contenttypebuflen)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   htsbuf_queue_t q;
@@ -1547,6 +1548,9 @@ http_request(const char *url, const char **arguments,
   http_redirect_t *hr;
   const char *url0;
   hf->hf_url = strdup(url);
+
+  if(contenttypebuf && contenttypebuflen > 0)
+    *contenttypebuf = 0;
 
  retry:
 
@@ -1630,6 +1634,8 @@ http_request(const char *url, const char **arguments,
 
   switch(code) {
   case 200:
+    if(hf->hf_content_type)
+      snprintf(contenttypebuf, contenttypebuflen, "%s", hf->hf_content_type);
     break;
 
   case 301:

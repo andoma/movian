@@ -250,7 +250,7 @@ headweb_browse_query(headweb_browse_t *hb)
 		       "limit", limit,
 		       NULL, NULL},
 		   &result, &resultsize, errbuf, sizeof(errbuf),
-		   NULL, NULL, hb->hb_req_flags);
+		   NULL, NULL, hb->hb_req_flags, NULL, 0);
 
   if(n) {
     TRACE(TRACE_DEBUG, "HEADWEB", "HTTP query failed: %s",  errbuf);
@@ -476,7 +476,7 @@ open_stream(backend_t *be, struct navigator *nav,
 		   (const char *[]){"apikey", HEADWEB_APIKEY,
 		       NULL, NULL},
 		   &result, &resultsize, errbuf, errlen,
-		   NULL, NULL, HTTP_REQUEST_ESCAPE_PATH);
+		   NULL, NULL, HTTP_REQUEST_ESCAPE_PATH, NULL, 0);
 
   if(n)
     return NULL;

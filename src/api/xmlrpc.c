@@ -336,7 +336,7 @@ xmlrpc_request(const char *url, const char *method, htsmsg_t *params,
 
   int n = http_request(url, NULL,
 		       &result, &resultsize, errbuf, errlen,
-		       &q, "text/xml", HTTP_REQUEST_ESCAPE_PATH);
+		       &q, "text/xml", HTTP_REQUEST_ESCAPE_PATH, NULL, 0);
 
   htsbuf_queue_flush(&q);
 

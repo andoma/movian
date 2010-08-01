@@ -154,7 +154,8 @@ int http_request(const char *url, const char **arguments,
 		 char **result, size_t *result_sizep,
 		 char *errbuf, size_t errlen,
 		 struct htsbuf_queue *postdata, const char *postcontenttype,
-		 int flags);
+		 int flags,
+		 char *contenttypebuf, size_t contenttypebuflen);
 
 #include <libavformat/avio.h>
 
