@@ -165,6 +165,7 @@ nav_close(nav_page_t *np, int with_prop)
   navigator_t *nav = np->np_nav;
 
   prop_unsubscribe(np->np_close_sub);
+  prop_unsubscribe(np->np_url_sub);
 
   if(nav->nav_page_current == np)
     nav->nav_page_current = NULL;
@@ -331,6 +332,17 @@ nav_page_close_set(void *opaque, int value)
 }
 
 
+/**
+ *
+ */
+static void
+nav_page_url_set(void *opaque, const char *str)
+{
+  nav_page_t *np = opaque;
+  free(np->np_url);
+  np->np_url = strdup(str ?: "");
+}
+
 
 /**
  *
@@ -363,6 +375,14 @@ nav_page_create(navigator_t *nav, const char *url, const char *view, int flags)
 
   if(url != NULL)
     prop_set_string(prop_create(np->np_prop_root, "url"), url);
+
+  np->np_url_sub = 
+    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+		   PROP_TAG_ROOT, prop_create(np->np_prop_root, "url"),
+		   PROP_TAG_CALLBACK_STRING, nav_page_url_set, np,
+		   PROP_TAG_COURIER, nav->nav_pc,
+		   NULL);
+
   return np;
 }
 

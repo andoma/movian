@@ -45,6 +45,8 @@ typedef struct nav_page {
 
   prop_sub_t *np_close_sub;
 
+  prop_sub_t *np_url_sub;
+
 } nav_page_t;
 
 
