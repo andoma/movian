@@ -60,6 +60,7 @@ typedef struct js_page {
   prop_t *jp_nodes;
   prop_t *jp_type;
   prop_t *jp_title;
+  prop_t *jp_url;
 
 } js_page_t;
 
@@ -77,6 +78,7 @@ js_page_destroy(js_page_t *jp)
   prop_ref_dec(jp->jp_nodes);
   prop_ref_dec(jp->jp_type);
   prop_ref_dec(jp->jp_title);
+  prop_ref_dec(jp->jp_url);
   
   free(jp);
 }
@@ -100,8 +102,7 @@ static JSBool
 js_setTitle(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
   js_page_t *jp = JS_GetPrivate(cx, obj);
-  prop_set_string(jp->jp_title,
-		  JS_GetStringBytes(JS_ValueToString(cx, *vp)));
+  prop_set_string(jp->jp_title, JS_GetStringBytes(JS_ValueToString(cx, *vp)));
   return JS_TRUE;
 }
 
@@ -113,8 +114,19 @@ static JSBool
 js_setType(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
   js_page_t *jp = JS_GetPrivate(cx, obj);
-
   prop_set_string(jp->jp_type, JS_GetStringBytes(JS_ValueToString(cx, *vp)));
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSBool 
+js_setURL(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
+{
+  js_page_t *jp = JS_GetPrivate(cx, obj);
+  prop_set_string(jp->jp_url, JS_GetStringBytes(JS_ValueToString(cx, *vp)));
   return JS_TRUE;
 }
 
@@ -221,6 +233,7 @@ static JSPropertySpec page_properties[] = {
   { "title",      0, 0,         NULL, js_setTitle },
   { "type",       0, 0,         NULL, js_setType },
   { "loading",    0, 0,         NULL, js_setLoading },
+  { "url",        0, 0,         NULL, js_setURL },
   { NULL },
 };
 
@@ -354,6 +367,7 @@ js_page_open(struct backend *be, struct navigator *nav,
   prop_ref_inc(jp->jp_nodes   = prop_create(model, "nodes"));
   prop_ref_inc(jp->jp_type    = prop_create(model, "type"));
   prop_ref_inc(jp->jp_title   = prop_create(meta,  "title"));
+  prop_ref_inc(jp->jp_url     = prop_create(np->np_prop_root, "url"));
   jp->jp_openfunc = jsr->jsr_openfunc;
 
   hts_thread_create_detached("jsOpen", js_open_trampoline, jp);
