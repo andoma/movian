@@ -200,8 +200,6 @@ typedef struct spotify_page {
   prop_t *sp_root;
   char *sp_url;
   sp_track *sp_track;
-  int sp_done;
-  int sp_free_on_done;
 
 } spotify_page_t;
 
@@ -1291,18 +1289,9 @@ spotify_page_done(spotify_page_t *sp)
   if(sp->sp_track != NULL)
     f_sp_track_release(sp->sp_track);
 
-  if(sp->sp_free_on_done) {
-
-    prop_destroy(sp->sp_root);
-    free(sp->sp_url);
-    free(sp);
-
-  } else {
-    hts_mutex_lock(&spotify_mutex);
-    sp->sp_done = 1;
-    hts_cond_signal(&spotify_cond_main);
-    hts_mutex_unlock(&spotify_mutex);
-  }
+  prop_destroy(sp->sp_root);
+  free(sp->sp_url);
+  free(sp);
 }
 
 /**
@@ -1404,16 +1393,13 @@ try_get_album(spotify_page_t *sp)
 
   if(err == SP_ERROR_OK) {
     sp_album *alb;
-    char turl[URL_MAX];
-    char *aurl = sp->sp_url;
+    char aurl[URL_MAX];
 
     alb = f_sp_track_album(sp->sp_track);
-    spotify_make_link(f_sp_link_create_from_album(alb), turl, sizeof(turl));
-    sp->sp_url = strdup(turl);
+    spotify_make_link(f_sp_link_create_from_album(alb), aurl, sizeof(aurl));
+    prop_set_string(prop_create(sp->sp_root, "url"), aurl);
 
-    spotify_open_album(alb, sp->sp_root, aurl);
-
-    free(aurl);
+    spotify_open_album(alb, sp->sp_root, sp->sp_url);
   }
 
   spotify_page_done(sp);
@@ -2544,44 +2530,18 @@ be_spotify_open(backend_t *be, struct navigator *nav,
   if(spotify_start(errbuf, errlen, 0))
     return NULL;
 
-  if(!strncmp(url, "spotify:track:", strlen("spotify:track:"))) {
-    spotify_page_t sp;
+  spotify_page_t *sp = calloc(1, sizeof(spotify_page_t));
 
-    memset(&sp, 0, sizeof(spotify_page_t));
-
-    np = nav_page_create(nav, url, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
+  np = nav_page_create(nav, url, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
   
-    sp.sp_url = strdup(url);
-    sp.sp_root = np->np_prop_root;
-    prop_ref_inc(sp.sp_root);
-  
-    spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_OPEN_PAGE, &sp));
+  sp->sp_url = strdup(url);
+  sp->sp_root = prop_xref_addref(np->np_prop_root);
+  prop_set_int(prop_create(prop_create(np->np_prop_root, "model"),
+			   "loading"), 1);
 
-    while(sp.sp_done == 0)
-      hts_cond_wait(&spotify_cond_main, &spotify_mutex);
-
-    prop_ref_dec(sp.sp_root);
-
-    prop_set_string(prop_create(np->np_prop_root, "url"), sp.sp_url);
-    free(sp.sp_url);
-
-  } else {
-
-    spotify_page_t *sp = calloc(1, sizeof(spotify_page_t));
-
-    np = nav_page_create(nav, url, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
-  
-    sp->sp_url = strdup(url);
-    sp->sp_root = prop_xref_addref(np->np_prop_root);
-    sp->sp_free_on_done = 1;
-
-    prop_set_int(prop_create(prop_create(np->np_prop_root, "model"),
-			     "loading"), 1);
-
-    spotify_msg_enq_locked(spotify_msg_buildc(SPOTIFY_OPEN_PAGE, sp,
-					      prop_create(np->np_prop_root,
-							  "close")));
-  }
+  spotify_msg_enq_locked(spotify_msg_buildc(SPOTIFY_OPEN_PAGE, sp,
+					    prop_create(np->np_prop_root,
+							"close")));
 
   hts_mutex_unlock(&spotify_mutex);
   return np;
@@ -2770,7 +2730,6 @@ be_spotify_list(backend_t *be, const char *url, char *errbuf, size_t errlen)
 
   sp->sp_url = strdup(url);
   sp->sp_root = prop_xref_addref(p);
-  sp->sp_free_on_done = 1;
   
   spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_OPEN_PAGE, sp));
   
