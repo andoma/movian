@@ -41,8 +41,10 @@ static struct jsroute_list jslist;
  */
 typedef struct jsroute {
   LIST_ENTRY(jsroute) jsr_link;
+  char *jsr_pattern;
   regex_t jsr_regex;
   jsval jsr_openfunc;
+  int jsr_prio;
 } jsroute_t;
 
 
@@ -480,12 +482,22 @@ js_page_open(struct backend *be, struct navigator *nav,
 /**
  *
  */
+static int
+jsr_cmp(const jsroute_t *a, const jsroute_t *b)
+{
+  return b->jsr_prio - a->jsr_prio;
+}
+
+/**
+ *
+ */
 JSBool 
 js_addURI(JSContext *cx, JSObject *obj, uintN argc, 
 	  jsval *argv, jsval *rval)
 {
   const char *str;
-  
+  jsroute_t *jsr;
+
   str = JS_GetStringBytes(JS_ValueToString(cx, argv[0]));
 
   if(!JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[1]))) {
@@ -500,19 +512,31 @@ js_addURI(JSContext *cx, JSObject *obj, uintN argc,
     memcpy(s+1, str, l+1);
     str = s;
   }
-    
-  jsroute_t *jsr = calloc(1, sizeof(jsroute_t));
-  TRACE(TRACE_DEBUG, "JS", "Add route for %s", str);
 
-  if(regcomp(&jsr->jsr_regex, str, REG_EXTENDED | REG_ICASE)) {
-    free(jsr);
-    JS_ReportError(cx, "Invalid regular expression");
-    return JS_FALSE;
+  LIST_FOREACH(jsr, &jslist, jsr_link)
+    if(!strcmp(str, jsr->jsr_pattern))
+      break;
+  
+  if(jsr == NULL) {
+    jsr = calloc(1, sizeof(jsroute_t));
+
+    if(regcomp(&jsr->jsr_regex, str, REG_EXTENDED | REG_ICASE)) {
+      free(jsr);
+      JS_ReportError(cx, "Invalid regular expression");
+      return JS_FALSE;
+    }
+
+    jsr->jsr_pattern = strdup(str);
+    jsr->jsr_prio = strcspn(str, "()[].*?+$") ?: INT32_MAX;
+    JS_AddNamedRoot(cx, &jsr->jsr_openfunc, "routeduri");
+
+    LIST_INSERT_SORTED(&jslist, jsr, jsr_link, jsr_cmp);
   }
 
+  TRACE(TRACE_DEBUG, "JS", "Add route for %s", str);
+
   jsr->jsr_openfunc = argv[1];
-  JS_AddNamedRoot(cx, &jsr->jsr_openfunc, "routeduri");
-  LIST_INSERT_HEAD(&jslist, jsr, jsr_link);
+
   *rval = JSVAL_VOID;
   return JS_TRUE;
 }
