@@ -58,8 +58,6 @@ pp_cb(void *opaque, prop_event_t event, ...)
   if(event != PROP_DESTROYED) 
     return;
 
-  printf("Metapage %s destroyed\n", pp->pp_url);
-
   LIST_REMOVE(pp, pp_link);
   prop_ref_dec(pp->pp_model);
   prop_unsubscribe(pp->pp_model_sub);
