@@ -1356,6 +1356,9 @@ prop_destroy0(prop_t *p)
   prop_t *c, *next, *parent;
   prop_sub_t *s;
 
+  if(p->hp_type == PROP_ZOMBIE)
+    return 0;
+
   p->hp_xref--;
   if(p->hp_xref)
     return 0;
