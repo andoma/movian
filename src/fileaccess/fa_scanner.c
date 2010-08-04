@@ -18,6 +18,7 @@
 
 
 #include <inttypes.h>
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -88,9 +89,9 @@ make_filename(const char *filename)
  *
  */
 static void
-add_prop(fa_dir_entry_t *fde, prop_t *root, fa_dir_entry_t *before)
+make_prop(fa_dir_entry_t *fde)
 {
-  prop_t *p = prop_create(NULL, "node");
+  prop_t *p = prop_create(NULL, NULL);
   prop_t *metadata;
   rstr_t *fname;
 
@@ -119,13 +120,9 @@ add_prop(fa_dir_entry_t *fde, prop_t *root, fa_dir_entry_t *before)
   }
 
   rstr_release(fname);
-
-  if(prop_set_parent_ex(p, root, before ? before->fde_prop : NULL, NULL)) {
-    prop_destroy(p);
-  } else {
-    fde->fde_prop = p;
-    prop_ref_inc(p);
-  }
+  assert(fde->fde_prop == NULL);
+  fde->fde_prop = p;
+  prop_ref_inc(p);
 }
 
 /**
@@ -277,9 +274,8 @@ deep_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
 
     case CONTENT_UNKNOWN:
       unknown++;
-      prop_destroy(fde->fde_prop);
-      prop_ref_dec(fde->fde_prop);
-      fde->fde_prop = NULL;
+      if(fde->fde_prop != NULL)
+	prop_destroy(fde->fde_prop);
       break;
       
     case CONTENT_AUDIO:
@@ -343,11 +339,8 @@ deep_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
     /* Remove everything that is not audio */
     TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
       if(fde->fde_type != CONTENT_AUDIO) {
-	if(fde->fde_prop != NULL) {
+	if(fde->fde_prop != NULL)
 	  prop_destroy(fde->fde_prop);
-	  prop_ref_dec(fde->fde_prop);
-	  fde->fde_prop = NULL;
-	}
 
       } else {
 	metadata = prop_create(fde->fde_prop, "metadata");
@@ -403,8 +396,8 @@ scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde)
   prop_t *metadata;
   int r;
 
-  add_prop(fde, s->s_nodes, TAILQ_NEXT(fde, fde_link));
-    
+  make_prop(fde);
+
   metadata = prop_create(fde->fde_prop, "metadata");
 
   if(fde->fde_type == CONTENT_DIR) {
@@ -416,6 +409,9 @@ scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde)
 
   set_type(fde->fde_prop, r);
   fde->fde_type = r;
+
+  if(prop_set_parent(fde->fde_prop, s->s_nodes))
+    prop_destroy(fde->fde_prop);
 }
 
 /**
@@ -544,14 +540,26 @@ doscan(scanner_t *s)
 {
   fa_dir_entry_t *fde;
   fa_dir_t *fd = s->s_fd;
+  prop_t **pvec;
+  int i;
 
   quick_analyzer(s->s_fd, s->s_viewprop);
 
+  pvec = malloc(sizeof(prop_t *) * (fd->fd_count + 1));
+  i = 0;
+
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
-    if(s->s_stop)
-      return;
-    add_prop(fde, s->s_nodes, NULL);
-    
+    make_prop(fde);
+    prop_ref_inc(fde->fde_prop);
+    pvec[i++] = fde->fde_prop;
+  }
+  assert(i == fd->fd_count);
+  pvec[i] = NULL;
+
+  prop_set_parent_multi(pvec, s->s_nodes);
+  prop_pvec_free(pvec);
+
+  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
     if(s->s_playme != NULL &&
        !strcmp(s->s_playme, fde->fde_url)) {
       playqueue_load_with_source(fde->fde_prop, s->s_root);
