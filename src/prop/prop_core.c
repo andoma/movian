@@ -315,6 +315,7 @@ prop_notify_free(prop_notify_t *n)
     break;
 
   case PROP_REQ_DELETE_MULTI:
+  case PROP_ADD_CHILD_MULTI:
     prop_pvec_free(n->hpn_propv);
     break;
   }
@@ -536,6 +537,7 @@ prop_notify_dispatch(struct prop_notify_queue *q)
       break;
 
     case PROP_REQ_DELETE_MULTI:
+    case PROP_ADD_CHILD_MULTI:
       if(pt != NULL)
 	pt(s, n->hpn_event, n->hpn_propv);
       else
@@ -1285,6 +1287,35 @@ prop_set_parent_ex(prop_t *p, prop_t *parent, prop_t *before,
   r = prop_set_parent0(p, parent, before, skipme);
   hts_mutex_unlock(&prop_mutex);
   return r;
+}
+
+
+/**
+ *
+ */
+void
+prop_set_parent_multi(prop_t **pv, prop_t *parent)
+{
+  hts_mutex_lock(&prop_mutex);
+
+  if(parent->hp_type == PROP_ZOMBIE) {
+    for(;*pv; pv++)
+      prop_destroy0(*pv);
+  } else {
+    prop_t **pv0 = pv, *p;
+
+    prop_make_dir(parent, NULL, "prop_set_parent_multi()");
+    
+    for(;(p = *pv); pv++) {
+      p->hp_parent = parent;
+      if(parent->hp_flags & (PROP_MULTI_SUB | PROP_MULTI_NOTIFY))
+	prop_flood_flag(p, PROP_MULTI_NOTIFY, 0);
+    
+      TAILQ_INSERT_TAIL(&parent->hp_childs, p, hp_parent_link);
+    }
+    prop_notify_childv(pv0, parent, PROP_ADD_CHILD_MULTI, NULL);
+  }
+  hts_mutex_unlock(&prop_mutex);
 }
 
 

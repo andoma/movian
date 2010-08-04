@@ -86,6 +86,7 @@ typedef enum {
 
   PROP_ADD_CHILD,
   PROP_ADD_CHILD_BEFORE,
+  PROP_ADD_CHILD_MULTI,
   PROP_DEL_CHILD,
   PROP_MOVE_CHILD,
   PROP_SELECT_CHILD,
@@ -230,6 +231,8 @@ int prop_set_parent_ex(prop_t *p, prop_t *parent, prop_t *before,
      __attribute__ ((warn_unused_result));
      
 #define prop_set_parent(p, parent) prop_set_parent_ex(p, parent, NULL, NULL)
+
+void prop_set_parent_multi(prop_t **pv, prop_t *parent);
 
 void prop_unparent_ex(prop_t *p, prop_sub_t *skipme);
 
