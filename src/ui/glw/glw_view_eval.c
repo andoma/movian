@@ -1068,7 +1068,7 @@ static void
 prop_callback(void *opaque, prop_event_t event, ...)
 {
   glw_prop_sub_t *gps;
-  prop_t *p, *p2;
+  prop_t *p, *p2, **pv;
   token_t *rpn = NULL, *t = NULL;
   int flags;
   va_list ap;
@@ -1121,6 +1121,12 @@ prop_callback(void *opaque, prop_event_t event, ...)
     p = va_arg(ap, prop_t *);
     flags = va_arg(ap, int);
     cloner_add_child(gps, p, NULL, gps->gps_widget, NULL, flags);
+    break;
+
+  case PROP_ADD_CHILD_MULTI:
+    pv = va_arg(ap, prop_t **);
+    while((p = *pv++) != NULL)
+      cloner_add_child(gps, p, NULL, gps->gps_widget, NULL, 0);
     break;
 
   case PROP_ADD_CHILD_BEFORE:
