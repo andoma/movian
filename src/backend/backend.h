@@ -136,5 +136,7 @@ struct nav_page *backend_open_video(backend_t *be,
 
 prop_t *search_get_settings(void);
 
+int search_class_create(prop_t *parent, prop_t **nodesp, prop_t **entriesp,
+			const char *title);
 
 #endif /* BACKEND_H__ */

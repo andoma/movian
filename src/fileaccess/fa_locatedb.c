@@ -29,7 +29,6 @@
 
 #include "showtime.h"
 #include "backend/backend.h"
-#include "backend/backend_prop.h"
 #include "fileaccess.h"
 #include "fa_probe.h"
 #include "fa_search.h"
@@ -287,10 +286,9 @@ fa_locate_searcher (fa_search_t *fas)
     if (ctype == CONTENT_UNKNOWN)
       continue;
 
-    t = 0;
-
     switch(ctype) {
     case CONTENT_AUDIO:
+      t = 0;
       break;
 
     case CONTENT_VIDEO:
@@ -303,32 +301,10 @@ fa_locate_searcher (fa_search_t *fas)
     }
 
 
-    if(nodes[t] == NULL) {
-      prop_t *p = prop_create(NULL, NULL);
-      prop_t *m = prop_create(p, "metadata");
-      char url[URL_MAX];
-
-      backend_prop_make(p, url, sizeof(url));
-      prop_set_string(prop_create(p, "url"), url);
-
-      prop_set_string(prop_create(m, "title"), 
-		      type ? "Local video files" : "Local audio files");
-      prop_set_string(prop_create(p, "type"), "directory");
-      
-      nodes[t] = prop_create(p, "nodes");
-
-      entries[t] = prop_create(m, "entries");
-      prop_set_int(entries[t], 0);
-
-      prop_ref_inc(nodes[t]);
-      prop_ref_inc(entries[t]);
-
-      if(prop_set_parent(p, fas->fas_nodes)) {
-	prop_destroy(p);
+    if(nodes[t] == NULL)
+      if(search_class_create(fas->fas_nodes, &nodes[t], &entries[t],
+			     t ? "Local video files" : "Local audio files"))
 	break;
-      }
-
-    }
 
     prop_add_int(entries[t], 1);
 

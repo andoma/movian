@@ -32,7 +32,6 @@
 #include "showtime.h"
 #include "navigator.h"
 #include "backend/backend.h"
-#include "backend/backend_prop.h"
 #include "playqueue.h"
 #include "media.h"
 #include "notifications.h"
@@ -3219,9 +3218,6 @@ be_spotify_search(backend_t *be, prop_t *source, const char *query)
   prop_t *n = prop_create(source, "nodes");
   for(i = 0; i < 3; i++) {
     spotify_search_request_t *ssr = &ss->ss_reqs[i];
-    prop_t *p = prop_create(n, NULL);
-    char url[URL_MAX];
-    prop_t *m = prop_create(p, "metadata");
     const char *title;
 
     switch(i) {
@@ -3236,17 +3232,7 @@ be_spotify_search(backend_t *be, prop_t *source, const char *query)
       break;
     }
 
-    backend_prop_make(p, url, sizeof(url));
-    prop_set_string(prop_create(p, "url"), url);
-
-    prop_set_string(prop_create(m, "title"), title);
-    prop_set_string(prop_create(p, "type"), "directory");
-
-    ssr->ssr_nodes = prop_create(p, "nodes");
-    prop_ref_inc(ssr->ssr_nodes);
-
-    ssr->ssr_entries = prop_create(m, "entries");
-    prop_ref_inc(ssr->ssr_entries);
+    search_class_create(n, &ssr->ssr_nodes, &ssr->ssr_entries, title);
   }
 
   ss->ss_query = strdup(query);

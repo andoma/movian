@@ -27,7 +27,43 @@
 #include "event.h"
 #include "navigator.h"
 #include "backend/backend.h"
+#include "backend/backend_prop.h"
 
+
+/**
+ *
+ */
+int
+search_class_create(prop_t *parent, prop_t **nodesp, prop_t **entriesp,
+		    const char *title)
+{
+  prop_t *p = prop_create(NULL, NULL);
+  prop_t *m = prop_create(p, "metadata");
+  prop_t *n, *e;
+  
+  char url[URL_MAX];
+
+  backend_prop_make(p, url, sizeof(url));
+  prop_set_string(prop_create(p, "url"), url);
+
+  prop_set_string(prop_create(m, "title"), title);
+  prop_set_string(prop_create(p, "type"), "directory");
+      
+  n = prop_create(p, "nodes");
+  e = prop_create(m, "entries");
+  prop_set_int(e, 0);
+
+  prop_ref_inc(n);
+  prop_ref_inc(e);
+  *nodesp = n;
+  *entriesp = e;
+
+  if(prop_set_parent(p, parent)) {
+    prop_destroy(p);
+    return 1;
+  }
+  return 0;
+}
 
 
 /**
