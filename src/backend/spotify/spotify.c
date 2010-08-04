@@ -32,6 +32,7 @@
 #include "showtime.h"
 #include "navigator.h"
 #include "backend/backend.h"
+#include "backend/backend_prop.h"
 #include "playqueue.h"
 #include "media.h"
 #include "notifications.h"
@@ -234,17 +235,28 @@ typedef struct spotify_image {
 static hts_cond_t spotify_cond_image;
 
 
+typedef struct {
+  int ssr_offset;
+  int ssr_last_search;
+  prop_t *ssr_nodes;
+  prop_t *ssr_entries;
+  prop_sub_t *ssr_sub;
+  struct spotify_search *ssr_ss;
+} spotify_search_request_t;
+
 /**
  * Search query
  */
 typedef struct spotify_search {
   int ss_ref;
-  int ss_total;
-  int ss_offset;
-  int ss_last_search;
   char *ss_query;
-  prop_t *ss_nodes;
-  prop_sub_t *ss_sub;
+
+  spotify_search_request_t ss_reqs[3];
+
+
+#define SS_TRACKS 0
+#define SS_ALBUMS 1
+#define SS_ARTISTS 2
 
 } spotify_search_t;
 
@@ -1097,7 +1109,7 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
   for(i = 0; i < ntracks; i++) {
     track = f_sp_albumbrowse_track(result, i);
 
-    p = prop_create(NULL, "node");
+    p = prop_create(NULL, NULL);
 
     spotify_make_link(f_sp_link_create_from_track(track, 0), 
 		      url, sizeof(url));
@@ -1172,7 +1184,7 @@ artist_add_album_tracks(sp_artistbrowse *result, int first, int num,
 
     t = f_sp_artistbrowse_track(result, i);
 
-    n = prop_create(NULL, "node");
+    n = prop_create(NULL, NULL);
     spotify_make_link(f_sp_link_create_from_track(t, 0), url, sizeof(url));
     prop_set_string(prop_create(n, "url"), url);
     prop_set_string(prop_create(n, "type"), "audio");
@@ -2160,12 +2172,17 @@ spotify_get_image(spotify_image_t *si)
 static void
 search_unref(spotify_search_t *ss)
 {
+  int i;
   ss->ss_ref--;
   if(ss->ss_ref > 0)
     return;
 
-  prop_unsubscribe(ss->ss_sub);
-  prop_ref_dec(ss->ss_nodes);
+  for(i = 0; i < 3; i++) {
+    prop_unsubscribe(ss->ss_reqs[i].ssr_sub);
+    prop_ref_dec(ss->ss_reqs[i].ssr_nodes);
+    prop_ref_dec(ss->ss_reqs[i].ssr_entries);
+  }
+
   free(ss->ss_query);
   free(ss);
 }
@@ -2175,45 +2192,145 @@ search_unref(spotify_search_t *ss)
  *
  */
 static void
-spotify_search_done(sp_search *result, void *userdata)
+ss_fill_tracks(sp_search *result, spotify_search_request_t *ssr)
 {
-  spotify_search_t *ss = userdata;
   int ntracks = f_sp_search_num_tracks(result);
   int i;
   prop_t *p, *metadata;
   sp_track *track;
   char url[URL_MAX];
 
-  ss->ss_total = f_sp_search_total_tracks(result);
+  prop_set_int(ssr->ssr_entries, f_sp_search_total_tracks(result));
+
 
   for(i = 0; i < ntracks; i++) {
     track = f_sp_search_track(result, i);
     p = prop_create(NULL, NULL);
 
-    spotify_make_link(f_sp_link_create_from_track(track, 0), 
-		      url, sizeof(url));
+    spotify_make_link(f_sp_link_create_from_track(track, 0), url, sizeof(url));
 
     prop_set_string(prop_create(p, "url"), url);
     prop_set_string(prop_create(p, "type"), "audio");
     metadata = prop_create(p, "metadata");
     metadata_create(metadata, METADATA_TRACK, track);
 
-    prop_set_string(prop_create(metadata, "badge"), SPOTIFY_ICON_URL);
-
-    if(prop_set_parent(p, ss->ss_nodes))
+    if(prop_set_parent(p, ssr->ssr_nodes)) {
       prop_destroy(p);
+      break;
+    }
   }
 
+  ssr->ssr_offset += ntracks;
+}
 
-  ss->ss_offset += ntracks;
 
-  if(ss->ss_offset >= ss->ss_total)
-    search_unref(ss);
+/**
+ *
+ */
+static void
+ss_fill_albums(sp_search *result, spotify_search_request_t *ssr)
+{
+  int nalbums = f_sp_search_num_albums(result);
+  int i;
+  prop_t *p, *metadata;
+  sp_album *album, *album_prev = NULL;
+  sp_artist *artist;
+  char link[URL_MAX];
+
+  /**
+   *
+   */
+  for(i = 0; i < nalbums; i++) {
+    album = f_sp_search_album(result, i);
+    artist = f_sp_album_artist(album);
+
+    
+    if(album_prev != NULL) {
+      // Skip dupes
+      if(f_sp_album_artist(album_prev) == artist &&
+	 !strcmp(f_sp_album_name(album), f_sp_album_name(album_prev)))
+	continue; 
+    }
+
+    p = prop_create(NULL, NULL);
+
+    spotify_make_link(f_sp_link_create_from_album(album), link, sizeof(link));
+    prop_set_string(prop_create(p, "url"), link);
+    prop_set_string(prop_create(p, "type"), "album");
+
+    metadata = prop_create(p, "metadata");
+    prop_set_string(prop_create(metadata, "title"), f_sp_album_name(album));
+
+    spotify_make_link(f_sp_link_create_from_artist(artist), link, sizeof(link));
+    prop_set_link(prop_create(metadata, "artist"),
+		  f_sp_artist_name(artist), link);
+
+    set_image_uri(prop_create(metadata, "album_art"), f_sp_album_cover(album));
+
+    if(prop_set_parent(p, ssr->ssr_nodes))
+      prop_destroy(p);
+
+    album_prev = album;
+    prop_add_int(ssr->ssr_entries, 1);
+  }
+
+  ssr->ssr_offset += nalbums;
+}
+
+
+
+/**
+ *
+ */
+static void
+ss_fill_artists(sp_search *result, spotify_search_request_t *ssr)
+{
+  int nartists = f_sp_search_num_artists(result);
+  int i;
+  prop_t *p, *metadata;
+  sp_artist *artist;
+  char link[URL_MAX];
+
+  /**
+   *
+   */
+  for(i = 0; i < nartists; i++) {
+    artist = f_sp_search_artist(result, i);
+    
+    p = prop_create(NULL, NULL);
+
+    spotify_make_link(f_sp_link_create_from_artist(artist), link, sizeof(link));
+    prop_set_string(prop_create(p, "url"), link);
+    prop_set_string(prop_create(p, "type"), "artist");
+
+    metadata = prop_create(p, "metadata");
+    prop_set_string(prop_create(metadata, "title"), f_sp_artist_name(artist));
+
+    if(prop_set_parent(p, ssr->ssr_nodes))
+      prop_destroy(p);
+
+    prop_add_int(ssr->ssr_entries, 1);
+  }
+
+  ssr->ssr_offset += nartists;
+}
+
+/**
+ *
+ */
+static void
+spotify_search_done(sp_search *result, void *userdata)
+{
+  spotify_search_t *ss = userdata;
+
+  ss_fill_tracks(result,  &ss->ss_reqs[SS_TRACKS]);
+  ss_fill_albums(result,  &ss->ss_reqs[SS_ALBUMS]);
+  ss_fill_artists(result, &ss->ss_reqs[SS_ARTISTS]);
 
   search_unref(ss);
 }
 
-#define SEARCH_LIMIT 100
+#define SEARCH_LIMIT 250
 
 
 /**
@@ -2222,7 +2339,8 @@ spotify_search_done(sp_search *result, void *userdata)
 static void
 search_nodesub(void *opaque, prop_event_t event, ...)
 {
-  spotify_search_t *ss = opaque;
+  spotify_search_request_t *ssr = opaque;
+  spotify_search_t *ss = ssr->ssr_ss;
   va_list ap;
   event_t *e;
 
@@ -2233,7 +2351,7 @@ search_nodesub(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_DESTROYED:
-    search_unref(opaque);
+    search_unref(ss);
     break;
 
   case PROP_EXT_EVENT:
@@ -2242,15 +2360,25 @@ search_nodesub(void *opaque, prop_event_t event, ...)
     if(e->e_type_x != EVENT_APPEND_REQUEST)
       break;
 
-    if(ss->ss_last_search == ss->ss_offset)
+    if(ssr->ssr_last_search == ssr->ssr_offset)
       break; // Avoid query for same range again
 
-    ss->ss_last_search = ss->ss_offset;
+    ssr->ssr_last_search = ssr->ssr_offset;
     ss->ss_ref++;
 
-    f_sp_search_create(spotify_session, ss->ss_query,
-		       ss->ss_offset, SEARCH_LIMIT, 0, 0, 0, 0, 
-		       spotify_search_done, ss);
+    if(ssr == &ss->ss_reqs[SS_TRACKS]) {
+      f_sp_search_create(spotify_session, ss->ss_query,
+			 ssr->ssr_offset, SEARCH_LIMIT, 0, 0, 0, 0, 
+			 spotify_search_done, ss);
+    } else if(ssr == &ss->ss_reqs[SS_ALBUMS]) {
+      f_sp_search_create(spotify_session, ss->ss_query,
+			 0, 0, ssr->ssr_offset, SEARCH_LIMIT, 0, 0,
+			 spotify_search_done, ss);
+    } else {
+      f_sp_search_create(spotify_session, ss->ss_query,
+			 0, 0,  0, 0, ssr->ssr_offset, SEARCH_LIMIT,
+			 spotify_search_done, ss);
+    }
     break;
   }
   va_end(ap);
@@ -2263,17 +2391,22 @@ search_nodesub(void *opaque, prop_event_t event, ...)
 static void
 spotify_search(spotify_search_t *ss)
 {
-  ss->ss_ref = 2;
+  int i;
+  ss->ss_ref = 4;
 
-  ss->ss_sub = 
-    prop_subscribe(PROP_SUB_TRACK_DESTROY,
-		   PROP_TAG_CALLBACK, search_nodesub, ss,
-		   PROP_TAG_ROOT, ss->ss_nodes,
-		   PROP_TAG_COURIER, spotify_courier,
-		   NULL);
+  for(i = 0; i < 3; i++) {
+    spotify_search_request_t *ssr = &ss->ss_reqs[i];
+    ssr->ssr_ss = ss;
+    ssr->ssr_sub = 
+      prop_subscribe(PROP_SUB_TRACK_DESTROY,
+		     PROP_TAG_CALLBACK, search_nodesub, ssr,
+		     PROP_TAG_ROOT, ssr->ssr_nodes,
+		     PROP_TAG_COURIER, spotify_courier,
+		     NULL);
+  }
 
   f_sp_search_create(spotify_session, ss->ss_query,
-		     ss->ss_offset, SEARCH_LIMIT, 0, 0, 0, 0, 
+		     0, SEARCH_LIMIT, 0, SEARCH_LIMIT, 0, SEARCH_LIMIT,
 		     spotify_search_done, ss);
 }
 
@@ -3075,18 +3208,46 @@ spotify_shutdown(void *opaque, int exitcode)
  *
  */
 static void
-be_spotify_search(backend_t *be, prop_t *source,
-		  const char *query, backend_search_type_t type)
+be_spotify_search(backend_t *be, prop_t *source, const char *query)
 {
-  if(!backend_search_audio(type))
-    return;
-
   if(spotify_start(NULL, 0, 0))
     return;
   
   spotify_search_t *ss = calloc(1, sizeof(spotify_search_t));
-  ss->ss_nodes = prop_create(source, "nodes");
-  prop_ref_inc(ss->ss_nodes);
+  int i;
+
+  prop_t *n = prop_create(source, "nodes");
+  for(i = 0; i < 3; i++) {
+    spotify_search_request_t *ssr = &ss->ss_reqs[i];
+    prop_t *p = prop_create(n, NULL);
+    char url[URL_MAX];
+    prop_t *m = prop_create(p, "metadata");
+    const char *title;
+
+    switch(i) {
+    case SS_TRACKS:
+      title = "Spotify tracks";
+      break;
+    case SS_ALBUMS:
+      title = "Spotify albums";
+      break;
+    case SS_ARTISTS:
+      title = "Spotify artists";
+      break;
+    }
+
+    backend_prop_make(p, url, sizeof(url));
+    prop_set_string(prop_create(p, "url"), url);
+
+    prop_set_string(prop_create(m, "title"), title);
+    prop_set_string(prop_create(p, "type"), "directory");
+
+    ssr->ssr_nodes = prop_create(p, "nodes");
+    prop_ref_inc(ssr->ssr_nodes);
+
+    ssr->ssr_entries = prop_create(m, "entries");
+    prop_ref_inc(ssr->ssr_entries);
+  }
 
   ss->ss_query = strdup(query);
 

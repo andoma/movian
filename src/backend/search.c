@@ -50,11 +50,7 @@ search_get_settings(void)
 static int
 search_canhandle(backend_t *be, const char *url)
 {
-  return
-    !strncmp(url, "search:", strlen("search:")) ||
-    !strncmp(url, "audiosearch:", strlen("audiosearch:")) ||
-    !strncmp(url, "videosearch:", strlen("videosearch:"));
-    
+  return !strncmp(url, "search:", strlen("search:"));
 }
 
 
@@ -69,41 +65,30 @@ search_open(backend_t *beself, struct navigator *nav,
   const char *url;
   nav_page_t *np;
   backend_t *be;
-  prop_t *src, *meta;
-  backend_search_type_t type;
+  prop_t *model, *meta;
 
   if((url = strchr(url0, ':')) == NULL)
     abort();
   url++;
 
-  if(url0[0] == 'v')
-    type = BACKEND_SEARCH_VIDEO;
-  else if(url0[0] == 'a')
-    type = BACKEND_SEARCH_AUDIO;
-  else
-    type = BACKEND_SEARCH_ALL;
-
-
-  np = backend_open(nav, url, view, errbuf, errlen);
-  if(np != BACKEND_NOURI)
+  if((np = backend_open(nav, url, view, errbuf, errlen)) != BACKEND_NOURI)
     return np;
   
   np = nav_page_create(nav, url0, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
 
   prop_set_string(prop_create(np->np_prop_root, "view"), "list");
 
-  src = prop_create(np->np_prop_root, "model");
-  prop_set_string(prop_create(src, "type"), "directory");
+  model = prop_create(np->np_prop_root, "model");
+  prop_set_string(prop_create(model, "type"), "directory");
   
-  meta = prop_create(src, "metadata");
+  meta = prop_create(model, "metadata");
   prop_set_string(prop_create(meta, "title"), url);
 
   LIST_FOREACH(be, &backends, be_global_link)
     if(be->be_search != NULL)
-      be->be_search(be, src, url, type);
+      be->be_search(be, model, url);
   return np;
 }
-
 
 /**
  *

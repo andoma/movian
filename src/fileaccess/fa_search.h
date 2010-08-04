@@ -21,7 +21,6 @@
 
 #include "prop/prop.h"
 
-void fa_search_start (prop_t *source, const char *query,
-		      backend_search_type_t type);
+void fa_search_start(prop_t *source, const char *query);
 
 #endif /* FA_SEARCH_H */

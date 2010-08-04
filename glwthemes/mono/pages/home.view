@@ -101,20 +101,6 @@ widget(container_y, {
   });
   widget(container_x, {
    .weight = 1.0;
-   .filterConstraintX = true;
- 
-	      ICON2("theme://icons/48x48/Music.png",
-		    "Music search",
-		    navOpen("audiosearch:" + $view.searchQuery),
-                    [0.45, 0.45, 0.5],
-		    select($view.searchQuery, 0.6, 0.0))
-
-	      ICON2("theme://icons/48x48/Movie.png",
-		    "Video search",
-		    navOpen("videosearch:" + $view.searchQuery),
-                    [0.45, 0.45, 0.5],
-		    select($view.searchQuery, 0.6, 0.0))
- 
     });
   });
 

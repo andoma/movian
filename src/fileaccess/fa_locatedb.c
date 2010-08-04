@@ -29,6 +29,7 @@
 
 #include "showtime.h"
 #include "backend/backend.h"
+#include "backend/backend_prop.h"
 #include "fileaccess.h"
 #include "fa_probe.h"
 #include "fa_search.h"
@@ -43,7 +44,6 @@ static int locatedb_enabled;
 
 typedef struct fa_search_s {
   char                 *fas_query;
-  backend_search_type_t fas_type;
   prop_t               *fas_nodes;
   prop_sub_t           *fas_sub;
   FILE                 *fas_fp;
@@ -210,6 +210,10 @@ fa_locate_searcher (fa_search_t *fas)
   char buf[PATH_MAX];
   regex_t preg;
 
+  prop_t *entries[2] = {NULL, NULL};
+  prop_t *nodes[2] = {NULL, NULL};
+  int t, i;
+
   if (fa_create_paths_regex(&preg) == -1)
     return fa_search_destroy(fas);
 
@@ -285,27 +289,50 @@ fa_locate_searcher (fa_search_t *fas)
     if (ctype == CONTENT_UNKNOWN)
       continue;
 
-    /* Filter out based on search type. */
-    switch (fas->fas_type)
-      {
-	/* FIXME: We dont want to include matching dirs whose content
-	 *        doesn't match the fas_type. */
-      case BACKEND_SEARCH_AUDIO:
-	if (ctype != CONTENT_AUDIO &&
-	    ctype != CONTENT_DIR)
-	  continue; /* Skip */
-	break;
-	
-      case BACKEND_SEARCH_VIDEO:
-	if (ctype != CONTENT_VIDEO &&
-	    ctype != CONTENT_DVD &&
-	    ctype != CONTENT_DIR)
-	  continue; /* Skip */
-	break;
+    t = 0;
 
-      case BACKEND_SEARCH_ALL:
+    switch(ctype) {
+    case CONTENT_AUDIO:
+      break;
+
+    case CONTENT_VIDEO:
+    case CONTENT_DVD:
+      t = 1;
+      break;
+
+    default:
+      continue;
+    }
+
+
+    if(nodes[t] == NULL) {
+      prop_t *p = prop_create(NULL, NULL);
+      prop_t *m = prop_create(p, "metadata");
+      char url[URL_MAX];
+
+      backend_prop_make(p, url, sizeof(url));
+      prop_set_string(prop_create(p, "url"), url);
+
+      prop_set_string(prop_create(m, "title"), 
+		      type ? "Local video files" : "Local audio files");
+      prop_set_string(prop_create(p, "type"), "directory");
+      
+      nodes[t] = prop_create(p, "nodes");
+
+      entries[t] = prop_create(m, "entries");
+      prop_set_int(entries[t], 0);
+
+      prop_ref_inc(nodes[t]);
+      prop_ref_inc(entries[t]);
+
+      if(prop_set_parent(p, fas->fas_nodes)) {
+	prop_destroy(p);
 	break;
       }
+
+    }
+
+    prop_add_int(entries[t], 1);
 
     if ((type = content2type(ctype)) == NULL)
       continue; /* Unlikely.. */
@@ -321,10 +348,18 @@ fa_locate_searcher (fa_search_t *fas)
     prop_set_string(prop_create(p, "url"), url);
     prop_set_string(prop_create(p, "type"), type);
 
-    if (prop_set_parent(p, fas->fas_nodes))
+    if(prop_set_parent(p, nodes[t])) {
       prop_destroy(p);
+      break;
+    }
   }
-
+  
+  for(i = 0; i < 2; i++) {
+    if(nodes[i])
+      prop_ref_inc(nodes[i]);
+    if(entries[i])
+      prop_ref_inc(entries[i]);
+  }
 
   TRACE(TRACE_DEBUG, "FA", "Searcher: %s: Done", fas->fas_query);
   fa_search_destroy(fas);
@@ -373,8 +408,7 @@ fa_searcher (void *aux)
 
 
 static void
-locatedb_search(struct backend *be, prop_t *source,
-		const char *query, backend_search_type_t type)
+locatedb_search(struct backend *be, prop_t *model, const char *query)
 {
   if (!locatedb_enabled)
     return;
@@ -389,8 +423,7 @@ locatedb_search(struct backend *be, prop_t *source,
   } while (*++s);
 
   fas->fas_run = 1;
-  fas->fas_type = type;
-  fas->fas_nodes = prop_create(source, "nodes");
+  fas->fas_nodes = prop_create(model, "nodes");
   prop_ref_inc(fas->fas_nodes);
 
   hts_thread_create_detached("fa search", fa_searcher, fas);

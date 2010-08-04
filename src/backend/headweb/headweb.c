@@ -606,24 +606,23 @@ be_headweb_canhandle(backend_t *be, const char *url)
   return !strncmp(url, "headweb:", strlen("headweb:"));
 }
 
-
+#if 0
 /**
  *
  */
 static void
-be_headweb_search(backend_t *be, prop_t *source,
-		  const char *query, backend_search_type_t type)
+be_headweb_search(backend_t *be, prop_t *model, const char *query)
 {
   char q[500];
 
-  if(!backend_search_video(type) || !headweb_is_enabled)
+  if(!headweb_is_enabled)
     return;
 
   path_escape(q, sizeof(q), query);
-  headweb_browse_create(source, 0, 1, NULL,
+  headweb_browse_create(model, 0, 1, NULL,
 			HEADWEB_URL_ROOT"/search/%s/filter(-adult,stream)", q);
 }
-
+#endif
 
 
 /**
@@ -633,7 +632,6 @@ static backend_t be_headweb = {
   .be_init = be_headweb_init,
   .be_canhandle = be_headweb_canhandle,
   .be_open = be_headweb_open,
-  .be_search = be_headweb_search,
 };
 
 BE_REGISTER(headweb);
