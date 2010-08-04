@@ -36,8 +36,6 @@
 #include "service.h"
 #include "settings.h"
 
-#define FA_LOCATEDB_BADGE "bundle://resources/fileaccess/fs_icon.png"
-
 /* FIXME: utf-8 support? */
 
 static int locatedb_enabled;
@@ -339,8 +337,6 @@ fa_locate_searcher (fa_search_t *fas)
 
 
     p = prop_create(NULL, NULL);
-
-    prop_set_string(prop_create(metadata, "badge"), FA_LOCATEDB_BADGE);
 
     if (prop_set_parent(metadata, p))
       prop_destroy(metadata);

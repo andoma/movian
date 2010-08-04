@@ -63,8 +63,6 @@ typedef struct headweb_browse {
 
   int hb_req_flags;
 
-  int hb_set_badge;
-
 } headweb_browse_t;
 
 
@@ -149,10 +147,6 @@ headweb_browse_fill_content(headweb_browse_t *hb, htsmsg_t *c)
     prop_set_float(prop_create(m, "rating"), r / 5.0);
   }
 
-  if(hb->hb_set_badge)
-    prop_set_string(prop_create(m, "badge"), HEADWEB_ICON_URL);
-    
-  
   if(prop_set_parent(p, hb->hb_nodes))
     prop_destroy(p);
 
@@ -323,8 +317,7 @@ headweb_browse_thread(void *aux)
  *
  */
 static void
-headweb_browse_create(prop_t *source, int req_flags, int set_badge,
-		      const char *title,
+headweb_browse_create(prop_t *source, int req_flags, const char *title,
 		      const char *fmt, ...)
 {
   headweb_browse_t *hb = calloc(1, sizeof(headweb_browse_t));
@@ -337,7 +330,6 @@ headweb_browse_create(prop_t *source, int req_flags, int set_badge,
   va_end(ap);
 
   hb->hb_req_flags = req_flags;
-  hb->hb_set_badge = set_badge;
   hb->hb_nodes = prop_create(source, "nodes");
   prop_ref_inc(hb->hb_nodes);
 
@@ -373,7 +365,7 @@ headweb_browse_create(prop_t *source, int req_flags, int set_badge,
 static void
 browse_genres(prop_t *src, const char *url)
 {
-  headweb_browse_create(src, HTTP_REQUEST_ESCAPE_PATH, 0, "Headweb genres",
+  headweb_browse_create(src, HTTP_REQUEST_ESCAPE_PATH, "Headweb genres",
 			HEADWEB_URL_ROOT"/genre/filter(-adult,stream)");
 }
 
@@ -392,7 +384,7 @@ browse_genre(prop_t *src, const char *url)
   if(title)
     *title++ = 0;
 
-  headweb_browse_create(src, HTTP_REQUEST_ESCAPE_PATH, 0,
+  headweb_browse_create(src, HTTP_REQUEST_ESCAPE_PATH,
 			title ?: "Unnamed genre",
 			HEADWEB_URL_ROOT"/genre/%s", id);
 
@@ -405,7 +397,7 @@ browse_genre(prop_t *src, const char *url)
 static void
 browse_contents(prop_t *src, const char *url)
 {
-  headweb_browse_create(src, HTTP_REQUEST_ESCAPE_PATH, 0,
+  headweb_browse_create(src, HTTP_REQUEST_ESCAPE_PATH,
 			"All contents",
 			HEADWEB_URL_ROOT"/content/filter(-adult,stream)");
 }
@@ -619,7 +611,7 @@ be_headweb_search(backend_t *be, prop_t *model, const char *query)
     return;
 
   path_escape(q, sizeof(q), query);
-  headweb_browse_create(model, 0, 1, NULL,
+  headweb_browse_create(model, 0, NULL,
 			HEADWEB_URL_ROOT"/search/%s/filter(-adult,stream)", q);
 }
 #endif
