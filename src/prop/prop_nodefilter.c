@@ -446,6 +446,38 @@ nf_add_node(nodefilter_t *nf, prop_t *node, nfnode_t *b)
  *
  */
 static void
+nf_add_nodes(nodefilter_t *nf, prop_t **pv)
+{
+  nfnode_t *nfn;
+  prop_t *p;
+
+  while((p = *pv++) != NULL) {
+    nfn = calloc(1, sizeof(nfnode_t));
+
+    if(nf->pos_valid) {
+      nfnode_t *l = TAILQ_LAST(&nf->in, nfnode_queue);
+      nfn->pos = l ? l->pos + 1 : 0;
+    }
+    TAILQ_INSERT_TAIL(&nf->in, nfn, in_link);
+
+    nfn->nf = nf;
+    nfn->in = p;
+
+    nf_update_multisub(nf, nfn);
+    nf_update_enablesub(nf, nfn);
+
+    nf_update_order(nf, nfn);
+  }
+
+  TAILQ_FOREACH(nfn, &nf->out, out_link)
+    nf_update_egress(nf, nfn);
+}
+
+
+/**
+ *
+ */
+static void
 nf_del_node(nodefilter_t *nf, nfnode_t *nfn)
 {
   nf->pos_valid = 0;
@@ -555,7 +587,11 @@ nodefilter_src_cb(void *opaque, prop_event_t event, ...)
   case PROP_ADD_CHILD:
     nf_add_node(nf, va_arg(ap, prop_t *), NULL);
     break;
-  
+
+  case PROP_ADD_CHILD_MULTI:
+    nf_add_nodes(nf, va_arg(ap, prop_t **));
+    break;
+
   case PROP_ADD_CHILD_BEFORE:
     P = va_arg(ap, prop_t *);
     nf_add_node(nf, P, nf_find_node(nf, va_arg(ap, prop_t *)));
