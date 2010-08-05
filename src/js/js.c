@@ -239,6 +239,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("readFile",         js_readFile, 1, 0, 0),
     JS_FS("queryStringSplit", js_queryStringSplit, 1, 0, 0),
     JS_FS("httpEscape",       js_httpEscape, 1, 0, 0),
+    JS_FS("createService",    js_createService, 3, 0, 0),
     JS_FS_END
 };
 
