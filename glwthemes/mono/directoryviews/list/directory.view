@@ -13,8 +13,10 @@ widget(backdrop, {
 
   widget(container_x, {
     widget(icon, {
-      .color = select(isFocused(), [1.0, 1.0, 1.0], PLATE_COLOR_DIR());
-      .source =  "theme://icons/48x48/Folder.png";
+      .color = select(isFocused() || $self.metadata.icon,
+		      [1.0, 1.0, 1.0], PLATE_COLOR_DIR());
+      .source =  devoidify($self.metadata.icon, 
+			   "theme://icons/48x48/Folder.png");
       .shadow = true;
     });
   
