@@ -54,4 +54,6 @@ int js_prop_from_object(JSContext *cx, JSObject *obj, prop_t *p);
 
 void js_prop_set_from_jsval(JSContext *cx, prop_t *p, jsval value);
 
+void js_page_flush_from_plugin(JSContext *cx, js_plugin_t *jp);
+
 #endif // JS_H__ 

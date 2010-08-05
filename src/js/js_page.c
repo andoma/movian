@@ -661,3 +661,52 @@ js_addSearcher(JSContext *cx, JSObject *obj, uintN argc,
   *rval = JSVAL_VOID;
   return JS_TRUE;
 }
+
+
+/**
+ *
+ */
+static void
+js_route_delete(JSContext *cx, js_route_t *jsr)
+{
+  JS_RemoveRoot(cx, &jsr->jsr_openfunc);
+
+  LIST_REMOVE(jsr, jsr_global_link);
+  LIST_REMOVE(jsr, jsr_plugin_link);
+
+  regfree(&jsr->jsr_regex);
+
+  free(jsr->jsr_pattern);
+  free(jsr);
+}
+
+
+/**
+ *
+ */
+static void
+js_searcher_delete(JSContext *cx, js_searcher_t *jss)
+{
+  JS_RemoveRoot(cx, &jss->jss_openfunc);
+
+  LIST_REMOVE(jss, jss_global_link);
+  LIST_REMOVE(jss, jss_plugin_link);
+  free(jss);
+}
+
+
+/**
+ *
+ */
+void
+js_page_flush_from_plugin(JSContext *cx, js_plugin_t *jsp)
+{
+  js_route_t *jsr;
+  js_searcher_t *jss;
+
+  while((jsr = LIST_FIRST(&jsp->jsp_routes)) != NULL)
+    js_route_delete(cx, jsr);
+
+  while((jss = LIST_FIRST(&jsp->jsp_searchers)) != NULL)
+    js_searcher_delete(cx, jss);
+}

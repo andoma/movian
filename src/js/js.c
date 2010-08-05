@@ -17,6 +17,7 @@
  */
 #include <sys/types.h>
 #include <string.h>
+#include <assert.h>
 
 #include "js.h"
 
@@ -290,6 +291,9 @@ plugin_finalize(JSContext *cx, JSObject *obj)
 {
   js_plugin_t *jsp = JS_GetPrivate(cx, obj);
 
+  assert(LIST_FIRST(&jsp->jsp_routes) == NULL);
+  assert(LIST_FIRST(&jsp->jsp_searchers) == NULL);
+
   TRACE(TRACE_INFO, "JS", "Plugin %s unloaded", jsp->jsp_url);
   
   LIST_REMOVE(jsp, jsp_link);
@@ -302,6 +306,21 @@ plugin_finalize(JSContext *cx, JSObject *obj)
 /**
  *
  */
+static JSBool
+js_forceUnload(JSContext *cx, JSObject *obj,
+	      uintN argc, jsval *argv, jsval *rval)
+{
+  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
+  
+  js_page_flush_from_plugin(cx, jsp);
+
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+/**
+ *
+ */
 static JSClass plugin_class = {
   "plugin", JSCLASS_HAS_PRIVATE,
   JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,
@@ -310,14 +329,13 @@ static JSClass plugin_class = {
 };
 
 
-
-
-
-
+/**
+ *
+ */
 static JSFunctionSpec plugin_functions[] = {
     JS_FS("addURI",           js_addURI,      2, 0, 0),
     JS_FS("addSearcher",      js_addSearcher, 1, 0, 0),
-    //    JS_FS("forceUnload",      js_forceUnload, 0, 0, 0),
+    JS_FS("forceUnload",      js_forceUnload, 0, 0, 0),
     JS_FS_END
 };
 
