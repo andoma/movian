@@ -113,16 +113,6 @@ set_url(void *opaque, const char *str)
 }
 
 
-/**
- *
- */
-static struct strtab str2type_tab[] = {
-  { "music",    SVC_TYPE_MUSIC },
-  { "video",    SVC_TYPE_VIDEO },
-  { "tv",       SVC_TYPE_TV },
-  { "image",    SVC_TYPE_IMAGE },
-  { "other",    SVC_TYPE_OTHER },
-};
 
 
 /**
@@ -132,7 +122,7 @@ static void
 set_type(void *opaque, const char *str)
 {
   bookmark_t *bm = opaque;
-  service_type_t type = str2val(str ?: "other", str2type_tab);
+  service_type_t type = service_str2type(str);
   if(type == -1)
     type = SVC_TYPE_OTHER;
   service_set_type(bm->bm_service, type);
@@ -167,7 +157,7 @@ bookmark_add(const char *title, const char *url, const char *svctype)
   bookmark_t *bm = calloc(1, sizeof(bookmark_t));
   prop_t *p = prop_create(NULL, NULL);
   prop_t *src = prop_create(p, "model");
-  service_type_t type = str2val(svctype ?: "other", str2type_tab);
+  service_type_t type = service_str2type(svctype);
   if(type == -1)
     type = SVC_TYPE_OTHER;
  

@@ -86,4 +86,8 @@ prop_t *service_get_statustxt_prop(service_t *s);
 
 void service_init(void);
 
+service_type_t service_str2type(const char *str);
+
+const char *service_type2str(service_type_t type);
+
 #endif // SERVICE_H__

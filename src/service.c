@@ -361,3 +361,34 @@ service_probe_loop(void *aux)
   }
   return NULL;
 }
+
+
+/**
+ *
+ */
+static struct strtab strtype_tab[] = {
+  { "music",    SVC_TYPE_MUSIC },
+  { "video",    SVC_TYPE_VIDEO },
+  { "tv",       SVC_TYPE_TV },
+  { "image",    SVC_TYPE_IMAGE },
+  { "other",    SVC_TYPE_OTHER },
+};
+
+/**
+ *
+ */
+service_type_t
+service_str2type(const char *str)
+{
+  return str ? str2val(str, strtype_tab) : SVC_TYPE_OTHER;
+}
+
+
+/**
+ *
+ */
+const char *
+service_type2str(service_type_t type)
+{
+  return val2str(type, strtype_tab);
+}
