@@ -1864,7 +1864,6 @@ prop_subscribe(int flags, ...)
     value     = prop_subfind(p, name, 1);
 
     if(canonical == NULL || value == NULL) {
-      printf("canonical=%p\tvalue=%p\n", canonical, value);
       hts_mutex_unlock(&prop_mutex);
       return NULL;
     }
