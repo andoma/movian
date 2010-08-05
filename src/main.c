@@ -45,6 +45,7 @@
 #include "runcontrol.h"
 #include "service.h"
 #include "keymapper.h"
+#include "plugins.h"
 
 /**
  *
@@ -257,6 +258,9 @@ main(int argc, char **argv)
 
   /* Initialize bookmarks */
   bookmarks_init();
+
+  /* Initialize plugin manager and load plugins */
+  plugins_init();
 
   /* Open initial page */
   nav_open(startpage, forceview);
