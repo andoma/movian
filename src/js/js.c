@@ -27,7 +27,7 @@
 
 static JSRuntime *runtime;
 static JSObject *showtimeobj;
-static struct jsplugin_list js_plugins;
+static struct js_plugin_list js_plugins;
 
 static JSClass global_class = {
   "global", JSCLASS_GLOBAL_FLAGS,
@@ -153,6 +153,79 @@ js_queryStringSplit(JSContext *cx, JSObject *obj,
 }
 
 
+/**
+ *
+ */
+static JSBool 
+js_httpEscape(JSContext *cx, JSObject *obj,
+	      uintN argc, jsval *argv, jsval *rval)
+{
+  const char *str;
+  char *r;
+
+  if (!JS_ConvertArguments(cx, argc, argv, "s", &str))
+    return JS_FALSE;
+
+  size_t l = strlen(str);
+  
+  r = malloc((l * 3) + 1);
+  
+  path_escape(r, l * 3, str);
+
+  *rval = STRING_TO_JSVAL(JS_NewString(cx, r, strlen(r)));
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+void
+js_prop_set_from_jsval(JSContext *cx, prop_t *p, jsval value)
+{
+  if(JSVAL_IS_INT(value)) {
+    prop_set_int(p, JSVAL_TO_INT(value));
+  } else if(JSVAL_IS_DOUBLE(value)) {
+    double d;
+    if(JS_ValueToNumber(cx, value, &d))
+      prop_set_float(p, d);
+  } else {
+    prop_set_string(p, JS_GetStringBytes(JS_ValueToString(cx, value)));
+  }
+}
+
+
+/**
+ *
+ */
+int
+js_prop_from_object(JSContext *cx, JSObject *obj, prop_t *p)
+{
+  JSIdArray *ida;
+  int i;
+
+  if((ida = JS_Enumerate(cx, obj)) == NULL)
+    return -1;
+  
+  for(i = 0; i < ida->length; i++) {
+    jsval name, value;
+    prop_t *val;
+    if(!JS_IdToValue(cx, ida->vector[i], &name))
+      continue;
+    
+    if(!JSVAL_IS_STRING(name))
+      continue;
+    
+    if(!JS_GetProperty(cx, obj, JS_GetStringBytes(JSVAL_TO_STRING(name)),
+		       &value))
+      continue;
+    
+    val = prop_create(p, JS_GetStringBytes(JSVAL_TO_STRING(name)));
+    js_prop_set_from_jsval(cx, val, value);
+  }
+  JS_DestroyIdArray(cx, ida);
+  return 0;
+}
 
 
 /**
@@ -164,6 +237,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("httpGet",          js_httpRequest, 4, 0, 0),
     JS_FS("readFile",         js_readFile, 1, 0, 0),
     JS_FS("queryStringSplit", js_queryStringSplit, 1, 0, 0),
+    JS_FS("httpEscape",       js_httpEscape, 1, 0, 0),
     JS_FS_END
 };
 
@@ -200,9 +274,6 @@ js_init(void)
 
   JS_EndRequest(cx);
   JS_DestroyContext(cx);
-
-  js_plugin_load("/home/andoma/showtime/test.js", NULL, 0);
-  js_plugin_load("/home/andoma/showtime/test2.js", NULL, 0);
 
   return 0;
 }
@@ -244,7 +315,8 @@ static JSClass plugin_class = {
 
 
 static JSFunctionSpec plugin_functions[] = {
-    JS_FS("addURI",           js_addURI, 2, 0, 0),
+    JS_FS("addURI",           js_addURI,      2, 0, 0),
+    JS_FS("addSearcher",      js_addSearcher, 1, 0, 0),
     //    JS_FS("forceUnload",      js_forceUnload, 0, 0, 0),
     JS_FS_END
 };
@@ -336,7 +408,8 @@ js_plugin_load(const char *url, char *errbuf, size_t errlen)
 static backend_t be_js = {
   .be_init = js_init,
   .be_flags = BACKEND_OPEN_CHECKS_URI,
-  .be_open = js_page_open,
+  .be_open = js_backend_open,
+  .be_search = js_backend_search,
 };
 
 BE_REGISTER(js);

@@ -22,72 +22,79 @@
 
 
 #include "backend/backend.h"
+#include "backend/backend_prop.h"
 #include "navigator.h"
 #include "misc/string.h"
 
-static struct jsroute_list js_routes;
+static struct js_route_list js_routes;
+static struct js_searcher_list js_searchers;
 
 /**
  *
  */
-typedef struct jsroute {
-  LIST_ENTRY(jsroute) jsr_global_link;
-  LIST_ENTRY(jsroute) jsr_plugin_link;
+typedef struct js_route {
+  LIST_ENTRY(js_route) jsr_global_link;
+  LIST_ENTRY(js_route) jsr_plugin_link;
   char *jsr_pattern;
   regex_t jsr_regex;
   jsval jsr_openfunc;
   int jsr_prio;
-} jsroute_t;
+} js_route_t;
 
 
 /**
  *
  */
-typedef struct js_page {
-  int jp_refcount;
+typedef struct js_searcher {
+  LIST_ENTRY(js_searcher) jss_global_link;
+  LIST_ENTRY(js_searcher) jss_plugin_link;
+  jsval jss_openfunc;
+} js_searcher_t;
 
-  char **jp_args;
 
-  jsval jp_openfunc;
+/**
+ *
+ */
+typedef struct js_model {
+  int jm_refcount;
 
-  prop_t *jp_loading;
-  prop_t *jp_nodes;
-  prop_t *jp_type;
-  prop_t *jp_title;
-  prop_t *jp_url;
+  char **jm_args;
 
-  prop_courier_t *jp_pc;
-  prop_sub_t *jp_nodesub;
+  jsval jm_openfunc;
 
-  int jp_run;
+  prop_t *jm_nodes;
 
-  jsval jp_paginator;
+  prop_t *jm_loading;
+  prop_t *jm_type;
+  prop_t *jm_title;
+  prop_t *jm_entries;
+  prop_t *jm_url;
+
+  prop_courier_t *jm_pc;
+  prop_sub_t *jm_nodesub;
+
+  int jm_run;
+
+  jsval jm_paginator;
   
-  JSContext *jp_cx;
+  JSContext *jm_cx;
 
-} js_page_t;
+} js_model_t;
 
+
+static JSObject *make_model_object(JSContext *cx, js_model_t *jm);
 
 /**
  *
  */
-static void
-js_page_destroy(js_page_t *jp)
+static js_model_t *
+js_model_create(jsval openfunc)
 {
-  if(jp->jp_args)
-    strvec_free(jp->jp_args);
-
-  prop_unsubscribe(jp->jp_nodesub);
-
-  prop_ref_dec(jp->jp_loading);
-  prop_ref_dec(jp->jp_nodes);
-  prop_ref_dec(jp->jp_type);
-  prop_ref_dec(jp->jp_title);
-  prop_ref_dec(jp->jp_url);
-
-  prop_courier_destroy(jp->jp_pc);
-
-  free(jp);
+  js_model_t *jm = calloc(1, sizeof(js_model_t));
+  jm->jm_refcount = 1;
+  jm->jm_run = 1;
+  jm->jm_openfunc = openfunc;
+  return jm;
 }
 
 
@@ -95,10 +102,36 @@ js_page_destroy(js_page_t *jp)
  *
  */
 static void
-js_page_release(js_page_t *jp)
+js_model_destroy(js_model_t *jm)
 {
-  if(atomic_add(&jp->jp_refcount, -1) == 1)
-    js_page_destroy(jp);
+  if(jm->jm_args)
+    strvec_free(jm->jm_args);
+
+  if(jm->jm_nodesub != NULL)
+    prop_unsubscribe(jm->jm_nodesub);
+
+  if(jm->jm_loading)   prop_ref_dec(jm->jm_loading);
+  if(jm->jm_nodes)     prop_ref_dec(jm->jm_nodes);
+  if(jm->jm_type)      prop_ref_dec(jm->jm_type);
+  if(jm->jm_title)     prop_ref_dec(jm->jm_title);
+  if(jm->jm_entries)   prop_ref_dec(jm->jm_entries);
+  if(jm->jm_url)       prop_ref_dec(jm->jm_url);
+
+  if(jm->jm_pc != NULL)
+    prop_courier_destroy(jm->jm_pc);
+
+  free(jm);
+}
+
+
+/**
+ *
+ */
+static void
+js_model_release(js_model_t *jm)
+{
+  if(atomic_add(&jm->jm_refcount, -1) == 1)
+    js_model_destroy(jm);
 }
 
 
@@ -108,8 +141,20 @@ js_page_release(js_page_t *jp)
 static JSBool 
 js_setTitle(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
-  js_page_t *jp = JS_GetPrivate(cx, obj);
-  prop_set_string(jp->jp_title, JS_GetStringBytes(JS_ValueToString(cx, *vp)));
+  js_model_t *jm = JS_GetPrivate(cx, obj);
+  js_prop_set_from_jsval(cx, jm->jm_title, *vp);
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSBool 
+js_setEntries(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
+{
+  js_model_t *jm = JS_GetPrivate(cx, obj);
+  js_prop_set_from_jsval(cx, jm->jm_entries, *vp);
   return JS_TRUE;
 }
 
@@ -120,8 +165,8 @@ js_setTitle(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 static JSBool 
 js_setType(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
-  js_page_t *jp = JS_GetPrivate(cx, obj);
-  prop_set_string(jp->jp_type, JS_GetStringBytes(JS_ValueToString(cx, *vp)));
+  js_model_t *jm = JS_GetPrivate(cx, obj);
+  js_prop_set_from_jsval(cx, jm->jm_type, *vp);
   return JS_TRUE;
 }
 
@@ -132,8 +177,8 @@ js_setType(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 static JSBool 
 js_setURL(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
-  js_page_t *jp = JS_GetPrivate(cx, obj);
-  prop_set_string(jp->jp_url, JS_GetStringBytes(JS_ValueToString(cx, *vp)));
+  js_model_t *jm = JS_GetPrivate(cx, obj);
+  js_prop_set_from_jsval(cx, jm->jm_url, *vp);
   return JS_TRUE;
 }
 
@@ -144,15 +189,16 @@ js_setURL(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 static JSBool 
 js_setLoading(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 { 
-  js_page_t *jp = JS_GetPrivate(cx, obj);
+  js_model_t *jm = JS_GetPrivate(cx, obj);
   JSBool on;
 
   if(!JS_ValueToBoolean(cx, *vp, &on))
     return JS_FALSE;
 
-  prop_set_int(jp->jp_loading, on);
+  prop_set_int(jm->jm_loading, on);
   return JS_TRUE;
 }
+
 
 
 /**
@@ -166,60 +212,74 @@ js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
   const char *type;
   JSObject *metaobj = NULL;
   prop_t *item;
+  js_model_t *parent = JS_GetPrivate(cx, obj);
 
   if(!JS_ConvertArguments(cx, argc, argv, "ss/o", &url, &type, &metaobj))
     return JS_FALSE;
 
   item = prop_create(NULL, NULL);
 
-  if(metaobj != NULL) {
-    JSIdArray *ida;
-    prop_t *metadata;
-    int i;
-    if((ida = JS_Enumerate(cx, metaobj)) == NULL) {
-      prop_destroy(item);
-      return JS_FALSE;
-    }
-
-    metadata = prop_create(item, "metadata");
-
-    for(i = 0; i < ida->length; i++) {
-      jsval name, value;
-      prop_t *val;
-      if(!JS_IdToValue(cx, ida->vector[i], &name))
-	continue;
-
-      if(!JSVAL_IS_STRING(name))
-	continue;
-
-      if(!JS_GetProperty(cx, metaobj, JS_GetStringBytes(JSVAL_TO_STRING(name)),
-			 &value))
-	continue;
-
-      val = prop_create(metadata, JS_GetStringBytes(JSVAL_TO_STRING(name)));
-      if(JSVAL_IS_INT(value)) {
-	prop_set_int(val, JSVAL_TO_INT(value));
-      } else if(JSVAL_IS_DOUBLE(value)) {
-	double d;
-	if(JS_ValueToNumber(cx, value, &d))
-	  prop_set_float(val, d);
-      } else {
-	prop_set_string(val, JS_GetStringBytes(JS_ValueToString(cx, value)));
-      }
-    }
-    JS_DestroyIdArray(cx, ida);
-  }
+  if(metaobj)
+    js_prop_from_object(cx, metaobj, prop_create(item, "metadata"));
 
   prop_set_string(prop_create(item, "url"), url);
   prop_set_string(prop_create(item, "type"), type);
-  js_page_t *jp = JS_GetPrivate(cx, obj);
 
-  if(prop_set_parent(item, jp->jp_nodes))
+  if(prop_set_parent(item, parent->jm_nodes))
     prop_destroy(item);
 
   *rval = JSVAL_VOID;
   return JS_TRUE;
 }
+
+
+/**
+ *
+ */
+static JSBool 
+js_appendModel(JSContext *cx, JSObject *obj, uintN argc,
+	       jsval *argv, jsval *rval)
+{
+  js_model_t *parent = JS_GetPrivate(cx, obj);
+  const char *type;
+  JSObject *metaobj = NULL;
+  char url[URL_MAX];
+  prop_t *item, *metadata;
+  js_model_t *jm;
+  JSObject *robj;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "s/o", &type, &metaobj))
+    return JS_FALSE;
+
+  item = prop_create(NULL, NULL);
+
+  backend_prop_make(item, url, sizeof(url));
+ 
+  metadata = prop_create(item, "metadata");
+
+  if(metaobj)
+    js_prop_from_object(cx, metaobj, metadata);
+
+  prop_set_string(prop_create(item, "url"), url);
+
+  jm = js_model_create(JSVAL_VOID);
+
+  prop_ref_inc(jm->jm_nodes   = prop_create(item,     "nodes"));
+  prop_ref_inc(jm->jm_type    = prop_create(item,     "type"));
+  prop_ref_inc(jm->jm_entries = prop_create(metadata, "entries"));
+
+  prop_set_string(jm->jm_type, type);
+
+  if(prop_set_parent(item, parent->jm_nodes))
+    prop_destroy(item);
+
+  robj = make_model_object(cx, jm);
+
+  *rval = OBJECT_TO_JSVAL(robj);
+  return JS_TRUE;
+}
+
+
 
 
 
@@ -229,7 +289,7 @@ js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
 static JSBool 
 js_setPaginator(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
-  js_page_t *jp = JS_GetPrivate(cx, obj);
+  js_model_t *jm = JS_GetPrivate(cx, obj);
 
   if(!JSVAL_IS_OBJECT(*vp) || 
      !JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(*vp))) {
@@ -237,8 +297,8 @@ js_setPaginator(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
     return JS_FALSE;
   }
 
-  jp->jp_paginator = *vp;
-  JS_AddNamedRoot(cx, &jp->jp_paginator, "paginator");
+  jm->jm_paginator = *vp;
+  JS_AddNamedRoot(cx, &jm->jm_paginator, "paginator");
   return JS_TRUE;
 }
 
@@ -248,6 +308,7 @@ js_setPaginator(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
  */
 static JSFunctionSpec page_functions[] = {
     JS_FS("appendItem",         js_appendItem,   3, 0, 0),
+    JS_FS("appendModel",        js_appendModel,  2, 0, 0),
     JS_FS_END
 };
 
@@ -255,73 +316,90 @@ static JSFunctionSpec page_functions[] = {
 /**
  *
  */
-static JSPropertySpec page_properties[] = {
-  { "title",      0, 0,         NULL, js_setTitle },
-  { "type",       0, 0,         NULL, js_setType },
-  { "loading",    0, 0,         NULL, js_setLoading },
-  { "url",        0, 0,         NULL, js_setURL },
-  { "paginator",  0, 0,         NULL, js_setPaginator },
-  { NULL },
-};
-
-/**
- *
- */
 static void
-finalize(JSContext *cx, JSObject *obj)
+model_finalize(JSContext *cx, JSObject *obj)
 {
-  js_page_t *jp = JS_GetPrivate(cx, obj);
-  js_page_release(jp);
+  js_model_t *jm = JS_GetPrivate(cx, obj);
+  js_model_release(jm);
 }
 
 
-static JSClass page_class = {
-  "page", JSCLASS_HAS_PRIVATE,
+static JSClass model_class = {
+  "model", JSCLASS_HAS_PRIVATE,
   JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,
-  JS_EnumerateStub,JS_ResolveStub,JS_ConvertStub, finalize,
+  JS_EnumerateStub,JS_ResolveStub,JS_ConvertStub, model_finalize,
   JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 
+/**
+ *
+ */
+static JSObject *
+make_model_object(JSContext *cx, js_model_t *jm)
+{
+  JSObject *obj = JS_NewObjectWithGivenProto(cx, &model_class, NULL, NULL);
 
+  JS_SetPrivate(cx, obj, jm);
+  atomic_add(&jm->jm_refcount, 1);
 
+  JS_DefineFunctions(cx, obj, page_functions);
+
+  if(jm->jm_title != NULL)
+    JS_DefineProperty(cx, obj, "title", JSVAL_VOID,
+		      NULL, js_setTitle, JSPROP_PERMANENT);
+
+  if(jm->jm_entries != NULL)
+    JS_DefineProperty(cx, obj, "entries", JSVAL_VOID,
+		      NULL, js_setEntries, JSPROP_PERMANENT);
+
+  if(jm->jm_type != NULL)
+    JS_DefineProperty(cx, obj, "type", JSVAL_VOID,
+		      NULL, js_setType, JSPROP_PERMANENT);
+   
+  if(jm->jm_loading != NULL)
+    JS_DefineProperty(cx, obj, "loading", BOOLEAN_TO_JSVAL(1),
+		      NULL, js_setLoading, JSPROP_PERMANENT);
+
+  if(jm->jm_url != NULL)
+    JS_DefineProperty(cx, obj, "url", JSVAL_VOID,
+		      NULL, js_setURL, JSPROP_PERMANENT);
+
+  JS_DefineProperty(cx, obj, "paginator", JSVAL_VOID,
+		    NULL, js_setPaginator, JSPROP_PERMANENT);
+  return obj;
+}
 
 
 /**
  *
  */
 static void
-js_open_invoke(JSContext *cx, js_page_t *jp)
+js_open_invoke(JSContext *cx, js_model_t *jm)
 {
   jsval *argv, result;
   void *mark;
   char argfmt[10];
   int i = 0, argc;
-  JSObject *obj = JS_NewObjectWithGivenProto(cx, &page_class, NULL, NULL);
+  JSObject *obj = make_model_object(cx, jm);
 
-  JS_SetPrivate(cx, obj, jp);
-  atomic_add(&jp->jp_refcount, 1);
-
-  JS_DefineFunctions(cx, obj, page_functions);
-  JS_DefineProperties(cx, obj, page_properties);
- 
-  if(jp->jp_args != NULL) {
+  if(jm->jm_args != NULL) {
     argfmt[0] = 'o';
-    while(i < 8 && jp->jp_args[i]) {
+    while(i < 8 && jm->jm_args[i]) {
       argfmt[i+1] = 's';
       i++;
     }
     argfmt[i+1] = 0;
     argc = i+1;
     argv = JS_PushArguments(cx, &mark, argfmt, obj,
-			    i > 0 ? jp->jp_args[0] : "",
-			    i > 1 ? jp->jp_args[1] : "",
-			    i > 2 ? jp->jp_args[2] : "",
-			    i > 3 ? jp->jp_args[3] : "",
-			    i > 4 ? jp->jp_args[4] : "",
-			    i > 5 ? jp->jp_args[5] : "",
-			    i > 6 ? jp->jp_args[6] : "",
-			    i > 7 ? jp->jp_args[7] : "");
+			    i > 0 ? jm->jm_args[0] : "",
+			    i > 1 ? jm->jm_args[1] : "",
+			    i > 2 ? jm->jm_args[2] : "",
+			    i > 3 ? jm->jm_args[3] : "",
+			    i > 4 ? jm->jm_args[4] : "",
+			    i > 5 ? jm->jm_args[5] : "",
+			    i > 6 ? jm->jm_args[6] : "",
+			    i > 7 ? jm->jm_args[7] : "");
 
   } else {
     argv = JS_PushArguments(cx, &mark, "o", obj);
@@ -329,8 +407,25 @@ js_open_invoke(JSContext *cx, js_page_t *jp)
   }
   if(argv == NULL)
     return;
-  JS_CallFunctionValue(cx, NULL, jp->jp_openfunc, argc, argv, &result);
+  JS_CallFunctionValue(cx, NULL, jm->jm_openfunc, argc, argv, &result);
   JS_PopArguments(cx, mark);
+}
+
+
+/**
+ *
+ */
+static void
+js_model_fill(JSContext *cx, js_model_t *jm)
+{
+  jsval result;
+
+  if(!jm->jm_paginator)
+    return;
+
+  JS_BeginRequest(cx);
+  JS_CallFunctionValue(cx, NULL, jm->jm_paginator, 0, NULL, &result);
+  JS_EndRequest(cx);
 }
 
 
@@ -340,25 +435,25 @@ js_open_invoke(JSContext *cx, js_page_t *jp)
 static void *
 js_open_trampoline(void *arg)
 {
-  struct js_page *jp = arg;
+  js_model_t *jm = arg;
   
   JSContext *cx = js_newctx();
   JS_BeginRequest(cx);
 
-  js_open_invoke(cx, jp);
+  js_open_invoke(cx, jm);
 
-  if(jp->jp_paginator) {
-    jp->jp_cx = cx;
+  if(jm->jm_paginator) {
+    jm->jm_cx = cx;
 
-    while(jp->jp_run) {
+    while(jm->jm_run) {
       jsrefcount s = JS_SuspendRequest(cx);
-      prop_courier_wait(jp->jp_pc);
+      prop_courier_wait(jm->jm_pc);
       JS_ResumeRequest(cx, s);
     }
-    JS_RemoveRoot(cx, &jp->jp_paginator);
+    JS_RemoveRoot(cx, &jm->jm_paginator);
   }
 
-  js_page_release(jp);
+  js_model_release(jm);
 
   JS_DestroyContext(cx);
   return NULL;
@@ -369,25 +464,9 @@ js_open_trampoline(void *arg)
  *
  */
 static void
-js_page_fill(JSContext *cx, js_page_t *jp)
+js_model_nodesub(void *opaque, prop_event_t event, ...)
 {
-  jsval result;
-
-  if(!jp->jp_paginator)
-    return;
-
-  JS_BeginRequest(cx);
-  JS_CallFunctionValue(cx, NULL, jp->jp_paginator, 0, NULL, &result);
-  JS_EndRequest(cx);
-}
-
-/**
- *
- */
-static void
-js_page_nodesub(void *opaque, prop_event_t event, ...)
-{
-  js_page_t *jp = opaque;
+  js_model_t *jm = opaque;
   va_list ap;
   event_t *e;
 
@@ -398,13 +477,13 @@ js_page_nodesub(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_DESTROYED:
-    jp->jp_run = 0;
+    jm->jm_run = 0;
     break;
 
   case PROP_EXT_EVENT:
     e = va_arg(ap, event_t *);
     if(e->e_type_x == EVENT_APPEND_REQUEST)
-      js_page_fill(jp->jp_cx, jp);
+      js_model_fill(jm->jm_cx, jm);
 
     break;
   }
@@ -416,15 +495,15 @@ js_page_nodesub(void *opaque, prop_event_t event, ...)
  *
  */
 struct nav_page *
-js_page_open(struct backend *be, struct navigator *nav, 
-	     const char *url, const char *view,
-	     char *errbuf, size_t errlen)
+js_backend_open(struct backend *be, struct navigator *nav, 
+		const char *url, const char *view,
+		char *errbuf, size_t errlen)
 {
-  jsroute_t *jsr;
+  js_route_t *jsr;
   regmatch_t matches[8];
   int i;
   nav_page_t *np;
-  js_page_t *jp;
+  js_model_t *jm;
   prop_t *model, *meta;
 
   LIST_FOREACH(jsr, &js_routes, jsr_global_link)
@@ -434,40 +513,37 @@ js_page_open(struct backend *be, struct navigator *nav,
   if(jsr == NULL)
     return BACKEND_NOURI;
 
-  jp = calloc(1, sizeof(js_page_t));
-  jp->jp_refcount = 1;
-  for(i = 1; i < 8; i++)
-    if(matches[i].rm_so != -1)
-      strvec_addpn(&jp->jp_args, url + matches[i].rm_so, 
-		   matches[i].rm_eo - matches[i].rm_so);
-  
   np = nav_page_create(nav, url, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
 
+  jm = js_model_create(jsr->jsr_openfunc);
+
+  for(i = 1; i < 8; i++)
+    if(matches[i].rm_so != -1)
+      strvec_addpn(&jm->jm_args, url + matches[i].rm_so, 
+		   matches[i].rm_eo - matches[i].rm_so);
+  
   model = prop_create(np->np_prop_root, "model");
   meta  = prop_create(model, "metadata");
 
-  prop_ref_inc(jp->jp_loading = prop_create(model, "loading"));
-  prop_ref_inc(jp->jp_nodes   = prop_create(model, "nodes"));
-  prop_ref_inc(jp->jp_type    = prop_create(model, "type"));
-  prop_ref_inc(jp->jp_title   = prop_create(meta,  "title"));
-  prop_ref_inc(jp->jp_url     = prop_create(np->np_prop_root, "url"));
-  jp->jp_openfunc = jsr->jsr_openfunc;
+  prop_ref_inc(jm->jm_loading = prop_create(model, "loading"));
+  prop_ref_inc(jm->jm_nodes   = prop_create(model, "nodes"));
+  prop_ref_inc(jm->jm_type    = prop_create(model, "type"));
+  prop_ref_inc(jm->jm_title   = prop_create(meta,  "title"));
+  prop_ref_inc(jm->jm_entries = prop_create(meta,  "entries"));
+  prop_ref_inc(jm->jm_url     = prop_create(np->np_prop_root, "url"));
 
 
-  jp->jp_pc = prop_courier_create_waitable();
+  jm->jm_pc = prop_courier_create_waitable();
 
-  jp->jp_nodesub = 
+  jm->jm_nodesub = 
     prop_subscribe(PROP_SUB_TRACK_DESTROY,
-		   PROP_TAG_CALLBACK, js_page_nodesub, jp,
-		   PROP_TAG_ROOT, jp->jp_nodes,
-		   PROP_TAG_COURIER, jp->jp_pc,
+		   PROP_TAG_CALLBACK, js_model_nodesub, jm,
+		   PROP_TAG_ROOT, jm->jm_nodes,
+		   PROP_TAG_COURIER, jm->jm_pc,
 		   NULL);
 
-  jp->jp_run = 1;
-
-  hts_thread_create_detached("jspage", js_open_trampoline, jp);
-			     
-  prop_set_int(jp->jp_loading, 1);
+  hts_thread_create_detached("jsmodel", js_open_trampoline, jm);
+  prop_set_int(jm->jm_loading, 1);
   return np;
 }
 
@@ -475,8 +551,29 @@ js_page_open(struct backend *be, struct navigator *nav,
 /**
  *
  */
+void
+js_backend_search(struct backend *be, struct prop *model, const char *query)
+{
+  js_searcher_t *jss;
+  prop_t *nodes = prop_create(model, "nodes");
+  js_model_t *jm;
+
+  LIST_FOREACH(jss, &js_searchers, jss_global_link) {
+    jm = js_model_create(jss->jss_openfunc);
+
+    strvec_addp(&jm->jm_args, query);
+    prop_ref_inc(jm->jm_nodes = nodes);
+
+    hts_thread_create_detached("jsmodel", js_open_trampoline, jm);
+  }
+}
+
+
+/**
+ *
+ */
 static int
-jsr_cmp(const jsroute_t *a, const jsroute_t *b)
+jsr_cmp(const js_route_t *a, const js_route_t *b)
 {
   return b->jsr_prio - a->jsr_prio;
 }
@@ -490,7 +587,7 @@ js_addURI(JSContext *cx, JSObject *obj, uintN argc,
 	  jsval *argv, jsval *rval)
 {
   const char *str;
-  jsroute_t *jsr;
+  js_route_t *jsr;
   js_plugin_t *jsp = JS_GetPrivate(cx, obj);
 
   str = JS_GetStringBytes(JS_ValueToString(cx, argv[0]));
@@ -514,7 +611,7 @@ js_addURI(JSContext *cx, JSObject *obj, uintN argc,
       return JS_FALSE;
     }
   
-  jsr = calloc(1, sizeof(jsroute_t));
+  jsr = calloc(1, sizeof(js_route_t));
 
   if(regcomp(&jsr->jsr_regex, str, REG_EXTENDED | REG_ICASE)) {
     free(jsr);
@@ -532,6 +629,34 @@ js_addURI(JSContext *cx, JSObject *obj, uintN argc,
 
   jsr->jsr_openfunc = argv[1];
   JS_AddNamedRoot(cx, &jsr->jsr_openfunc, "routeduri");
+
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+JSBool 
+js_addSearcher(JSContext *cx, JSObject *obj, uintN argc, 
+	       jsval *argv, jsval *rval)
+{
+  js_searcher_t *jss;
+  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
+
+  if(!JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[0]))) {
+    JS_ReportError(cx, "Argument is not a function");
+    return JS_FALSE;
+  }
+  
+  jss = calloc(1, sizeof(js_searcher_t));
+
+  LIST_INSERT_HEAD(&js_searchers, jss, jss_global_link);
+  LIST_INSERT_HEAD(&jsp->jsp_searchers, jss, jss_plugin_link);
+
+  jss->jss_openfunc = argv[0];
+  JS_AddNamedRoot(cx, &jss->jss_openfunc, "searcher");
 
   *rval = JSVAL_VOID;
   return JS_TRUE;
