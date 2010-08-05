@@ -25,22 +25,14 @@
 #include "navigator.h"
 #include "misc/string.h"
 
-
-
-
-/**
- *
- */
-LIST_HEAD(jsroute_list, jsroute);
-
-static struct jsroute_list jslist;
-
+static struct jsroute_list js_routes;
 
 /**
  *
  */
 typedef struct jsroute {
-  LIST_ENTRY(jsroute) jsr_link;
+  LIST_ENTRY(jsroute) jsr_global_link;
+  LIST_ENTRY(jsroute) jsr_plugin_link;
   char *jsr_pattern;
   regex_t jsr_regex;
   jsval jsr_openfunc;
@@ -355,17 +347,15 @@ js_open_trampoline(void *arg)
 
   js_open_invoke(cx, jp);
 
-  JS_EndRequest(cx);
-
-  jp->jp_cx = cx;
-
-  while(jp->jp_run)
-    prop_courier_wait(jp->jp_pc);
-
   if(jp->jp_paginator) {
-    JS_BeginRequest(cx);
+    jp->jp_cx = cx;
+
+    while(jp->jp_run) {
+      jsrefcount s = JS_SuspendRequest(cx);
+      prop_courier_wait(jp->jp_pc);
+      JS_ResumeRequest(cx, s);
+    }
     JS_RemoveRoot(cx, &jp->jp_paginator);
-    JS_EndRequest(cx);
   }
 
   js_page_release(jp);
@@ -382,6 +372,9 @@ static void
 js_page_fill(JSContext *cx, js_page_t *jp)
 {
   jsval result;
+
+  if(!jp->jp_paginator)
+    return;
 
   JS_BeginRequest(cx);
   JS_CallFunctionValue(cx, NULL, jp->jp_paginator, 0, NULL, &result);
@@ -434,7 +427,7 @@ js_page_open(struct backend *be, struct navigator *nav,
   js_page_t *jp;
   prop_t *model, *meta;
 
-  LIST_FOREACH(jsr, &jslist, jsr_link)
+  LIST_FOREACH(jsr, &js_routes, jsr_global_link)
     if(!regexec(&jsr->jsr_regex, url, 8, matches, 0))
       break;
 
@@ -488,6 +481,7 @@ jsr_cmp(const jsroute_t *a, const jsroute_t *b)
   return b->jsr_prio - a->jsr_prio;
 }
 
+
 /**
  *
  */
@@ -497,6 +491,7 @@ js_addURI(JSContext *cx, JSObject *obj, uintN argc,
 {
   const char *str;
   jsroute_t *jsr;
+  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
 
   str = JS_GetStringBytes(JS_ValueToString(cx, argv[0]));
 
@@ -513,29 +508,30 @@ js_addURI(JSContext *cx, JSObject *obj, uintN argc,
     str = s;
   }
 
-  LIST_FOREACH(jsr, &jslist, jsr_link)
-    if(!strcmp(str, jsr->jsr_pattern))
-      break;
-  
-  if(jsr == NULL) {
-    jsr = calloc(1, sizeof(jsroute_t));
-
-    if(regcomp(&jsr->jsr_regex, str, REG_EXTENDED | REG_ICASE)) {
-      free(jsr);
-      JS_ReportError(cx, "Invalid regular expression");
+  LIST_FOREACH(jsr, &js_routes, jsr_global_link)
+    if(!strcmp(str, jsr->jsr_pattern)) {
+      JS_ReportError(cx, "URL already routed");
       return JS_FALSE;
     }
+  
+  jsr = calloc(1, sizeof(jsroute_t));
 
-    jsr->jsr_pattern = strdup(str);
-    jsr->jsr_prio = strcspn(str, "()[].*?+$") ?: INT32_MAX;
-    JS_AddNamedRoot(cx, &jsr->jsr_openfunc, "routeduri");
-
-    LIST_INSERT_SORTED(&jslist, jsr, jsr_link, jsr_cmp);
+  if(regcomp(&jsr->jsr_regex, str, REG_EXTENDED | REG_ICASE)) {
+    free(jsr);
+    JS_ReportError(cx, "Invalid regular expression");
+    return JS_FALSE;
   }
+  
+  jsr->jsr_pattern = strdup(str);
+  jsr->jsr_prio = strcspn(str, "()[].*?+$") ?: INT32_MAX;
+  
+  LIST_INSERT_SORTED(&js_routes, jsr, jsr_global_link, jsr_cmp);
+  LIST_INSERT_HEAD(&jsp->jsp_routes, jsr, jsr_plugin_link);
 
   TRACE(TRACE_DEBUG, "JS", "Add route for %s", str);
 
   jsr->jsr_openfunc = argv[1];
+  JS_AddNamedRoot(cx, &jsr->jsr_openfunc, "routeduri");
 
   *rval = JSVAL_VOID;
   return JS_TRUE;

@@ -22,10 +22,12 @@
 
 #include "backend/backend.h"
 #include "misc/string.h"
+#include "fileaccess/fileaccess.h"
+
 
 static JSRuntime *runtime;
-static  JSObject *global;
-static  JSObject *showtimeobj;
+static JSObject *showtimeobj;
+static struct jsplugin_list js_plugins;
 
 static JSClass global_class = {
   "global", JSCLASS_GLOBAL_FLAGS,
@@ -60,10 +62,13 @@ js_newctx(void)
 {
   JSContext *cx = JS_NewContext(runtime, 8192);
 
-  JS_SetOptions(cx, JSOPTION_STRICT | JSOPTION_WERROR);
+  JS_SetOptions(cx, 
+		JSOPTION_STRICT |
+		JSOPTION_WERROR | 
+		JSOPTION_VAROBJFIX);
   JS_SetErrorReporter(cx, err_reporter);
 #ifdef JS_GC_ZEAL
-  //  JS_SetGCZeal(cx, 2);
+  JS_SetGCZeal(cx, 1);
 #endif
   return cx;
 }
@@ -158,7 +163,6 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("print",            js_print,    1, 0, 0),
     JS_FS("httpGet",          js_httpRequest, 4, 0, 0),
     JS_FS("readFile",         js_readFile, 1, 0, 0),
-    JS_FS("addURI",           js_addURI, 2, 0, 0),
     JS_FS("queryStringSplit", js_queryStringSplit, 1, 0, 0),
     JS_FS_END
 };
@@ -180,42 +184,148 @@ static int
 js_init(void)
 {
   JSContext *cx;
-  jsval result;
-  JSScript *s;
-  JSObject *srcobj;
 
   JS_SetCStringsAreUTF8();
 
   runtime = JS_NewRuntime(0x100000); 
+
   cx = js_newctx();
 
   JS_BeginRequest(cx);
-  
-  global = JS_NewObject(cx, &global_class, NULL, NULL);
-  JS_InitStandardClasses(cx, global);
 
-  showtimeobj = JS_DefineObject(cx, global, "showtime",
-				&showtime_class, NULL, 0);
-
+  showtimeobj = JS_NewObject(cx, &showtime_class, NULL, NULL);
   JS_DefineFunctions(cx, showtimeobj, showtime_functions);
 
-
-
-  s = JS_CompileFile(cx, global, "/home/andoma/showtime/test.js");
-  if(s != NULL) {
-    srcobj = JS_NewScriptObject(cx, s);
-
-    JS_AddNamedRoot(cx, &srcobj, "script");
-    JS_ExecuteScript(cx, global, s, &result);
-    JS_RemoveRoot(cx, &srcobj);
-  }
+  JS_AddNamedRoot(cx, &showtimeobj, "showtime");
 
   JS_EndRequest(cx);
+  JS_DestroyContext(cx);
+
+  js_plugin_load("/home/andoma/showtime/test.js", NULL, 0);
+  js_plugin_load("/home/andoma/showtime/test2.js", NULL, 0);
+
+  return 0;
+}
+
+
+
+
+
+/**
+ *
+ */
+static void
+plugin_finalize(JSContext *cx, JSObject *obj)
+{
+  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
+
+  TRACE(TRACE_INFO, "JS", "Plugin %s unloaded", jsp->jsp_url);
+  
+  LIST_REMOVE(jsp, jsp_link);
+  
+  free(jsp->jsp_url);
+  free(jsp);
+}
+
+
+/**
+ *
+ */
+static JSClass plugin_class = {
+  "plugin", JSCLASS_HAS_PRIVATE,
+  JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,
+  JS_EnumerateStub,JS_ResolveStub,JS_ConvertStub, plugin_finalize,
+  JSCLASS_NO_OPTIONAL_MEMBERS
+};
+
+
+
+
+
+
+static JSFunctionSpec plugin_functions[] = {
+    JS_FS("addURI",           js_addURI, 2, 0, 0),
+    //    JS_FS("forceUnload",      js_forceUnload, 0, 0, 0),
+    JS_FS_END
+};
+
+
+/**
+ *
+ */
+int
+js_plugin_load(const char *url, char *errbuf, size_t errlen)
+{
+  char *sbuf;
+  size_t ssize;
+  JSContext *cx;
+  js_plugin_t *jsp;
+  JSObject *pobj, *gobj;
+  JSScript *s;
+  char path[PATH_MAX];
+  jsval val;
+
+  if((sbuf = fa_quickload(url, &ssize, NULL, errbuf, errlen)) == NULL)
+    return -1;
+
+  cx = js_newctx();
+  JS_BeginRequest(cx);
+
+  jsp = calloc(1, sizeof(js_plugin_t));
+  jsp->jsp_url = strdup(url);
+  LIST_INSERT_HEAD(&js_plugins, jsp, jsp_link);
+
+  gobj = JS_NewObject(cx, &global_class, NULL, NULL);
+  JS_InitStandardClasses(cx, gobj);
+
+  JS_DefineProperty(cx, gobj, "showtime", OBJECT_TO_JSVAL(showtimeobj),
+		    NULL, NULL, JSPROP_READONLY | JSPROP_PERMANENT);
+
+  /* Plugin object */
+
+  ///  pobj = JS_DefineObject(cx, gobj, "plugin", &plugin_class, NULL, 0); 
+  pobj = JS_NewObject(cx, &plugin_class, NULL, gobj);
+  JS_AddNamedRoot(cx, &pobj, "plugin");
+
+  JS_SetPrivate(cx, pobj, jsp);
+
+  JS_DefineFunctions(cx, pobj, plugin_functions);
+
+  val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, url));
+  JS_SetProperty(cx, pobj, "url", &val);
+
+  if(!fa_parent(path, sizeof(path), url)) {
+    val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, path));
+    JS_SetProperty(cx, pobj, "path", &val);
+  }
+
+
+
+  s = JS_CompileScript(cx, pobj, sbuf, ssize, url, 0);
+  free(sbuf);
+
+  if(s != NULL) {
+    JSObject *sobj = JS_NewScriptObject(cx, s);
+    jsval result;
+
+    JS_AddNamedRoot(cx, &sobj, "script");
+    JS_ExecuteScript(cx, pobj, s, &result);
+    JS_RemoveRoot(cx, &sobj);
+  }
+
+  JS_RemoveRoot(cx, &pobj);
+ 
+  JS_EndRequest(cx);
+
+  JS_GC(cx);
 
   JS_DestroyContext(cx);
 
   return 0;
 }
+
+
+
 
 
 
