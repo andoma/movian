@@ -22,10 +22,6 @@
 #include "event.h"
 #include "prop/prop.h"
 
-LIST_HEAD(backend_list, backend);
-
-extern struct backend_list backends;
-
 struct pixmap;
 struct media_pipe;
 struct nav_page;
@@ -124,6 +120,8 @@ struct nav_page *backend_open_video(backend_t *be,
 				    struct navigator *nav, const char *url,
 				    const char *view,
 				    char *errbuf, size_t errlen);
+
+void backend_search(prop_t *model, const char *url);
 
 #define BE_REGISTER(name) \
   static void  __attribute__((constructor)) backend_init_ ## name(void) {\

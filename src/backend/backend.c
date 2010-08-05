@@ -30,9 +30,12 @@
 #include "event.h"
 #include "notifications.h"
 
-prop_t *global_sources;
+prop_t *global_sources; // Move someplace else
 
-struct backend_list backends;
+
+LIST_HEAD(backend_list, backend);
+
+static struct backend_list backends;
 
 /**
  *
@@ -257,4 +260,18 @@ backend_open(struct navigator *nav, const char *url, const char *view,
     url = urlbuf;
 
   return be->be_open(be, nav, url, view, errbuf, errlen);
+}
+
+
+/**
+ *
+ */
+void
+backend_search(prop_t *model, const char *url)
+{
+  backend_t *be;
+
+  LIST_FOREACH(be, &backends, be_global_link)
+    if(be->be_search != NULL)
+      be->be_search(be, model, url);
 }

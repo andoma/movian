@@ -100,7 +100,6 @@ search_open(backend_t *beself, struct navigator *nav,
 {
   const char *url;
   nav_page_t *np;
-  backend_t *be;
   prop_t *model, *meta;
 
   if((url = strchr(url0, ':')) == NULL)
@@ -120,9 +119,7 @@ search_open(backend_t *beself, struct navigator *nav,
   meta = prop_create(model, "metadata");
   prop_set_string(prop_create(meta, "title"), url);
 
-  LIST_FOREACH(be, &backends, be_global_link)
-    if(be->be_search != NULL)
-      be->be_search(be, model, url);
+  backend_search(model, url);
   return np;
 }
 
