@@ -294,6 +294,14 @@ finalize() {
     fi
 
 
+    if enabled embedded_resources; then
+	PLUGINS_URL="bundle://plugins"
+	echo >>${CONFIG_MAK} "BUNDLES+=plugins"
+    else
+	PLUGINS_URL="file://`cd plugins && pwd`"
+    fi
+    echo >>${CONFIG_H} "#define SHOWTIME_PLUGINS_URL \""${PLUGINS_URL}"\""
+
     # Release tag
     if enabled release; then
 	echo Release build: ${RELEASENAME}
