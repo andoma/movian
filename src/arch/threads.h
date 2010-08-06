@@ -61,7 +61,7 @@ extern void hts_thread_create_joinable(const char *, hts_thread_t *,
 #define hts_thread_join(t)                  pthread_join(*(t), NULL)
 #define hts_thread_current()                pthread_self()
 
-#define hts_thread_key_create(k, f) pthread_key_create(k, f)
+#define hts_thread_key_create(k, f) pthread_key_create((pthread_key_t *)k, f)
 #define hts_thread_key_delete(k)    pthread_key_delete(k)
 
 #define hts_thread_set_specific(k, p) pthread_setspecific(k, p)
