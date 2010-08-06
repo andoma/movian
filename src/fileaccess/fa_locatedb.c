@@ -304,7 +304,8 @@ fa_locate_searcher (fa_search_t *fas)
 
     if(nodes[t] == NULL)
       if(search_class_create(fas->fas_nodes, &nodes[t], &entries[t],
-			     t ? "Local video files" : "Local audio files"))
+			     t ? "Local video files" : "Local audio files",
+			     FA_LOCALFILES_ICON))
 	break;
 
     prop_add_int(entries[t], 1);

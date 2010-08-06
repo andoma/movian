@@ -577,7 +577,7 @@ js_backend_search(struct backend *be, struct prop *model, const char *query)
     strvec_addp(&jm->jm_args, query);
 
     search_class_create(parent, &jm->jm_nodes, &jm->jm_entries, 
-			jss->jss_title);
+			jss->jss_title, jss->jss_icon);
 
     model_launch(jm);
   }
@@ -671,7 +671,7 @@ js_addSearcher(JSContext *cx, JSObject *obj, uintN argc,
   LIST_INSERT_HEAD(&jsp->jsp_searchers, jss, jss_plugin_link);
 
   jss->jss_title = strdup(JS_GetStringBytes(JS_ValueToString(cx, argv[0])));
-  if(JSVAL_IS_OBJECT(argv[1]))
+  if(JSVAL_IS_STRING(argv[1]))
     jss->jss_icon  = strdup(JS_GetStringBytes(JS_ValueToString(cx, argv[1])));
 
   jss->jss_openfunc = argv[2];

@@ -36,7 +36,7 @@
  */
 int
 search_class_create(prop_t *parent, prop_t **nodesp, prop_t **entriesp,
-		    const char *title)
+		    const char *title, const char *icon)
 {
   prop_t *p = prop_create(NULL, NULL);
   prop_t *m = prop_create(p, "metadata");
@@ -48,6 +48,8 @@ search_class_create(prop_t *parent, prop_t **nodesp, prop_t **entriesp,
   prop_set_string(prop_create(p, "url"), url);
 
   prop_set_string(prop_create(m, "title"), title);
+  if(icon != NULL)
+    prop_set_string(prop_create(m, "icon"), icon);
   prop_set_string(prop_create(p, "type"), "directory");
       
   n = prop_create(p, "nodes");

@@ -27,6 +27,8 @@
 
 #include "navigator.h"
 
+#define FA_LOCALFILES_ICON "bundle://resources/fileaccess/fs_icon.png"
+
 int fileaccess_init(void);
 
 

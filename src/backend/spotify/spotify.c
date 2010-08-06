@@ -3233,7 +3233,8 @@ be_spotify_search(backend_t *be, prop_t *source, const char *query)
       break;
     }
 
-    search_class_create(n, &ssr->ssr_nodes, &ssr->ssr_entries, title);
+    search_class_create(n, &ssr->ssr_nodes, &ssr->ssr_entries, title,
+			SPOTIFY_ICON_URL);
   }
 
   ss->ss_query = strdup(query);

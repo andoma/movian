@@ -22,6 +22,6 @@
 prop_t *search_get_settings(void);
 
 int search_class_create(prop_t *parent, prop_t **nodesp, prop_t **entriesp,
-			const char *title);
+			const char *title, const char *icon);
 
 #endif // SEARCH_H__
