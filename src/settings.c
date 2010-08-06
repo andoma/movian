@@ -104,8 +104,8 @@ settings_set_url(prop_t *p)
  *
  */
 static prop_t *
-settings_add(prop_t *parent, 
-	     const char *id, const char *title, const char *type)
+setting_add(prop_t *parent, const char *id, 
+	    const char *title, const char *type)
 {
   prop_t *p, *src;
 
@@ -118,7 +118,7 @@ settings_add(prop_t *parent,
     prop_set_string(prop_create(src, "id"), id);
   set_title(src, title);
   prop_set_string(prop_create(src, "type"), type);
-  return src;
+  return p;
 }
 
 
@@ -129,8 +129,10 @@ prop_t *
 settings_add_dir(prop_t *parent, const char *id, const char *title,
 		 const char *subtype)
 {
-  prop_t *r = settings_add(parent, id, title, "settings");
-  prop_set_string(prop_create(r, "subtype"), subtype);
+  parent = parent ? prop_create(parent, "model") : NULL;
+  prop_t *r = setting_add(parent, id, title, "settings");
+  prop_t *m = prop_create(r, "model");
+  prop_set_string(prop_create(m, "subtype"), subtype);
   return r;
 }
 
@@ -163,7 +165,8 @@ settings_create_bool(prop_t *parent, const char *id, const char *title,
 		     int flags, prop_courier_t *pc,
 		     settings_saver_t *saver, void *saver_opaque)
 {
-  prop_t *r = settings_add(parent, id, title, "bool");
+  prop_t *r = prop_create(setting_add(prop_create(parent, "model"),
+				      id, title, "bool"), "model");
   prop_t *v = prop_create(r, "value");
   setting_t *s = calloc(1, sizeof(setting_t));
   prop_sub_t *sub;
@@ -177,12 +180,12 @@ settings_create_bool(prop_t *parent, const char *id, const char *title,
 
   prop_set_int(v, !!initial);
 
-  s->s_prop = r;
+  prop_ref_inc(s->s_prop = r);
 
   if(flags & SETTINGS_INITIAL_UPDATE)
     settings_int_callback(s, !!initial);
   
-  sub = prop_subscribe(0,
+  sub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 		       PROP_TAG_CALLBACK_INT, settings_int_callback, s,
 		       PROP_TAG_ROOT, v,
 		       PROP_TAG_COURIER, pc,
@@ -227,7 +230,8 @@ settings_create_int(prop_t *parent, const char *id, const char *title,
 		    prop_courier_t *pc,
 		    settings_saver_t *saver, void *saver_opaque)
 {
-  prop_t *r = settings_add(parent, id, title, "integer");
+  prop_t *r = prop_create(setting_add(prop_create(parent, "model"),
+				      id, title, "integer"), "model");
   prop_t *v = prop_create(r, "value");
   setting_t *s = calloc(1, sizeof(setting_t));
   prop_sub_t *sub;
@@ -249,7 +253,7 @@ settings_create_int(prop_t *parent, const char *id, const char *title,
 
   prop_set_int(v, initial);
 
-  s->s_prop = r;
+  prop_ref_inc(s->s_prop = r);
   s->s_val = v;
   s->s_min = min;
   s->s_max = max;
@@ -328,7 +332,8 @@ setting_t *
 settings_create_multiopt(prop_t *parent, const char *id, const char *title,
 			 prop_callback_string_t *cb, void *opaque)
 {
-  prop_t *r = settings_add(parent, id, title, "multiopt");
+  prop_t *r = prop_create(setting_add(prop_create(parent, "model"),
+				      id, title, "multiopt"), "model");
   prop_t *o = prop_create(r, "options");
   setting_t *s = calloc(1, sizeof(setting_t));
   prop_sub_t *sub;
@@ -423,7 +428,8 @@ settings_create_string(prop_t *parent, const char *id, const char *title,
 		       int flags, prop_courier_t *pc,
 		       settings_saver_t *saver, void *saver_opaque)
 {
-  prop_t *r = settings_add(parent, id, title, "string");
+  prop_t *r = prop_create(setting_add(prop_create(parent, "model"),
+				      id, title, "string"), "model");
   prop_t *v = prop_create(r, "value");
   setting_t *s = calloc(1, sizeof(setting_t));
   prop_sub_t *sub;
@@ -438,7 +444,7 @@ settings_create_string(prop_t *parent, const char *id, const char *title,
   if(initial != NULL)
     prop_set_string(v, initial);
 
-  s->s_prop = r;
+  prop_ref_inc(s->s_prop = r);
   
   if(flags & SETTINGS_PASSWORD)
     prop_set_int(prop_create(r, "password"), 1);
@@ -467,7 +473,8 @@ void
 settings_create_info(prop_t *parent, const char *image,
 		     const char *description)
 {
-  prop_t *r = settings_add(parent, NULL, "Info", "info");
+  prop_t *r = prop_create(setting_add(prop_create(parent, "model"),
+				      NULL, "Info", "info"), "model");
   prop_set_string(prop_create(r, "description"), description);
   prop_set_string(prop_create(r, "image"), image);
 }
@@ -482,6 +489,7 @@ setting_destroy(setting_t *s)
   free(s->s_id);
   prop_unsubscribe(s->s_sub);
   prop_destroy(s->s_prop);
+  prop_ref_dec(s->s_prop);
   free(s);
 }
 
