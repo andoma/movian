@@ -2,7 +2,7 @@
 #
 # HTS configure script for Mac OS X
 #
-# Copyright (c) 2005-2009 Mattias Wadman
+# Copyright (c) 2009-2010 Mattias Wadman
 #
 # Based on FFmpeg's configure script:
 #
@@ -219,7 +219,7 @@ fi
 #
 # configure ffmpeg
 #
-if [ "$ARCH" == "powerpc" ]; then
+if [ "$ARCH" = "powerpc" ]; then
     setup_ffmpeg \
         --enable-pthreads \
         --enable-cross-compile \
@@ -262,6 +262,15 @@ else
     echo "FreeType 2 not found"
     die
 fi
+
+#
+# SSL
+#
+if enabled ssl; then
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lssl -lcrypto -lz"
+    enable librtmp
+fi
+
 
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg_config_static $PKGS`
 echo >>${CONFIG_MAK} "CFLAGS_cfg +=" `$PKGCONFIG --cflags $PKGS`
