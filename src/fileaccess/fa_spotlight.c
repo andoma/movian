@@ -20,12 +20,12 @@
 
 #include "showtime.h"
 #include "backend/backend.h"
+#include "backend/search.h"
 #include "fileaccess.h"
 #include "fa_probe.h"
 #include "fa_search.h"
 #include "service.h"
 #include "settings.h"
-
 
 static int spotlight_enabled;
 
@@ -201,22 +201,23 @@ spotlight_searcher(void *aux)
     CFStringGetCString(pathRef, path, len, kCFStringEncodingUTF8);
     CFRelease(pathRef);
     ctype = fa_probe(metadata, path, NULL, 0, NULL, 0, NULL);
-   
-    t = 0; 
-    switch(ctype) { 
-    case CONTENT_AUDIO: 
-      break; 
-    case CONTENT_VIDEO: 
-    case CONTENT_DVD: 
-      t = 1; 
-      break; 
-    default: 
-      continue; 
-    } 
-
+    
+    t = 0;
+    switch(ctype) {
+    case CONTENT_AUDIO:
+      break;
+    case CONTENT_VIDEO:
+    case CONTENT_DVD:
+      t = 1;
+      break;
+    default:
+      continue;
+    }
+    
     if(nodes[t] == NULL)
       if(search_class_create(fas->fas_nodes, &nodes[t], &entries[t],
-			     t ? "Local video files" : "Local audio files")) {
+			     t ? "Local video files" : "Local audio files",
+                             FA_LOCALFILES_ICON)) {
 	free(path);
 	break;
       }
