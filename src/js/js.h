@@ -23,7 +23,6 @@ typedef struct js_plugin {
 
 } js_plugin_t;
 
-
 JSContext *js_newctx(void);
 
 JSBool js_httpRequest(JSContext *cx, JSObject *obj, uintN argc,
@@ -40,6 +39,9 @@ JSBool js_addSearcher(JSContext *cx, JSObject *obj, uintN argc,
 
 JSBool js_createService(JSContext *cx, JSObject *obj, uintN argc, 
 			jsval *argv, jsval *rval);
+
+JSBool js_createSettings(JSContext *cx, JSObject *obj, uintN argc, 
+			 jsval *argv, jsval *rval);
 
 struct navigator;
 struct backend;
