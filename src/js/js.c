@@ -307,14 +307,21 @@ plugin_finalize(JSContext *cx, JSObject *obj)
 /**
  *
  */
+static void
+js_plugin_unload(JSContext *cx, js_plugin_t *jsp)
+{
+  js_page_flush_from_plugin(cx, jsp);
+
+}
+
+/**
+ *
+ */
 static JSBool
 js_forceUnload(JSContext *cx, JSObject *obj,
 	      uintN argc, jsval *argv, jsval *rval)
 {
-  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
-  
-  js_page_flush_from_plugin(cx, jsp);
-
+  js_plugin_unload(cx, JS_GetPrivate(cx, obj));
   *rval = JSVAL_VOID;
   return JS_TRUE;
 }
@@ -362,6 +369,13 @@ js_plugin_load(const char *url, char *errbuf, size_t errlen)
   cx = js_newctx();
   JS_BeginRequest(cx);
 
+  /* Remove any plugin with same URL */
+  LIST_FOREACH(jsp, &js_plugins, jsp_link)
+    if(!strcmp(jsp->jsp_url, url))
+      break;
+  if(jsp != NULL)
+    js_plugin_unload(cx, jsp);
+
   jsp = calloc(1, sizeof(js_plugin_t));
   jsp->jsp_url = strdup(url);
   LIST_INSERT_HEAD(&js_plugins, jsp, jsp_link);
@@ -373,8 +387,6 @@ js_plugin_load(const char *url, char *errbuf, size_t errlen)
 		    NULL, NULL, JSPROP_READONLY | JSPROP_PERMANENT);
 
   /* Plugin object */
-
-  ///  pobj = JS_DefineObject(cx, gobj, "plugin", &plugin_class, NULL, 0); 
   pobj = JS_NewObject(cx, &plugin_class, NULL, gobj);
   JS_AddNamedRoot(cx, &pobj, "plugin");
 
