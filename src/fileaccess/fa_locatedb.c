@@ -328,9 +328,9 @@ fa_locate_searcher (fa_search_t *fas)
   
   for(i = 0; i < 2; i++) {
     if(nodes[i])
-      prop_ref_inc(nodes[i]);
+      prop_ref_dec(nodes[i]);
     if(entries[i])
-      prop_ref_inc(entries[i]);
+      prop_ref_dec(entries[i]);
   }
 
   TRACE(TRACE_DEBUG, "FA", "Searcher: %s: Done", fas->fas_query);
