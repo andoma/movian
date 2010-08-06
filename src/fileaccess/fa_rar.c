@@ -469,21 +469,52 @@ rar_archive_unref(rar_archive_t *ra)
  *
  */
 static rar_archive_t *
-rar_archive_find(const char *url)
+rar_archive_find(const char *url, const char **rp)
 {
-  rar_archive_t *ra;
+  rar_archive_t *ra = NULL;
+  char *u, *s;
+
+  if(*url == 0)
+    return NULL;
 
   hts_mutex_lock(&rar_global_mutex);
 
-  LIST_FOREACH(ra, &rar_archives, ra_link)
-    if(!strcasecmp(ra->ra_url, url))
+  u = mystrdupa(url);
+  while((s = strrchr(u, '/')) != NULL) {
+    *s = 0;
+    LIST_FOREACH(ra, &rar_archives, ra_link)
+      if(!strcasecmp(ra->ra_url, u))
+	break;
+    if(ra != NULL)
       break;
+  }
+
+  if(ra == NULL) {
+    u = mystrdupa(url);
+
+    while(1) {
+      struct stat st;
+
+      if(!fa_stat(u, &st, NULL, 0) && (st.st_mode & S_IFMT) == S_IFREG)
+	break;
+
+      if((s = strrchr(u, '/')) == NULL) {
+	hts_mutex_unlock(&rar_global_mutex);
+	return NULL;
+      }
+      *s = 0;
+    }
+  }
+  const char *r = url + strlen(u);
+  if(*r == '/')
+    r++;
+  *rp = r;
 
   if(ra == NULL) {
     ra = calloc(1, sizeof(rar_archive_t));
     hts_mutex_init(&ra->ra_mutex);
     
-    ra->ra_url = strdup(url);
+    ra->ra_url = strdup(u);
     LIST_INSERT_HEAD(&rar_archives, ra, ra_link);
   }
 
@@ -507,29 +538,13 @@ rar_archive_find(const char *url)
 static rar_file_t *
 rar_file_find(const char *url)
 {
-  int l = strlen(url);
-  char *r, *u = alloca(l + 1);
-  rar_archive_t *ra;
+  const char *r;
+  rar_archive_t *ra = rar_archive_find(url, &r);
   rar_file_t *rf;
-
-  memcpy(u, url, l);
-  u[l] = 0;
-
-  if((r = strrchr(u, '|')) == NULL)
+  if(ra == NULL)
     return NULL;
 
-  *r++ = 0;
-  if(*r == '/')
-    r++;
-  if(*r == 0)
-    r = NULL;
-
-  ra = rar_archive_find(u);
-
-  if(r == NULL)
-    rf = ra->ra_root;
-  else
-    rf = rar_archive_find_file(ra, ra->ra_root, r, 0);
+  rf = *r ? rar_archive_find_file(ra, ra->ra_root, r, 0) : ra->ra_root;
 
   if(rf == NULL)
     rar_archive_unref(ra);
@@ -575,6 +590,42 @@ rar_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
   return 0;
 }
 
+
+typedef struct rar_ref {
+  fa_handle_t h;
+  rar_file_t *file;
+} rar_ref_t;
+
+/**
+ *
+ */
+static fa_handle_t *
+rar_reference(fa_protocol_t *fap, const char *url)
+{
+  rar_file_t *rf;
+  rar_ref_t *zr;
+
+  if((rf = rar_file_find(url)) == NULL)
+    return NULL;
+
+  zr = malloc(sizeof(rar_ref_t));
+  zr->h.fh_proto = fap;
+  zr->file = rf;
+  return &zr->h;
+}
+
+
+/**
+ *
+ */
+static void
+rar_unreference(fa_handle_t *fh)
+{
+  rar_ref_t *zr = (rar_ref_t *)fh;
+  
+  rar_file_unref(zr->file);
+  free(fh);
+}
 
 
 /**
@@ -783,5 +834,7 @@ static fa_protocol_t fa_protocol_rar = {
   .fap_seek  = rar_seek,
   .fap_fsize = rar_fsize,
   .fap_stat  = rar_stat,
+  .fap_reference = rar_reference,
+  .fap_unreference = rar_unreference,
 };
 FAP_REGISTER(rar);

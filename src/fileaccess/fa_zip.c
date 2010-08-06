@@ -387,21 +387,51 @@ zip_archive_unref(zip_archive_t *za)
  *
  */
 static zip_archive_t *
-zip_archive_find(const char *url)
+zip_archive_find(const char *url, const char **rp)
 {
-  zip_archive_t *za;
+  zip_archive_t *za = NULL;
+  char *u, *s;
+
+  if(*url == 0)
+    return NULL;
 
   hts_mutex_lock(&zip_global_mutex);
-
-  LIST_FOREACH(za, &zip_archives, za_link)
-    if(!strcasecmp(za->za_url, url))
+  u = mystrdupa(url);
+  while((s = strrchr(u, '/')) != NULL) {
+    *s = 0;
+    LIST_FOREACH(za, &zip_archives, za_link)
+      if(!strcasecmp(za->za_url, u))
+	break;
+    if(za != NULL)
       break;
+  }
+
+  if(za == NULL) {
+    u = mystrdupa(url);
+
+    while(1) {
+      struct stat st;
+
+      if(!fa_stat(u, &st, NULL, 0) && (st.st_mode & S_IFMT) == S_IFREG)
+	break;
+
+      if((s = strrchr(u, '/')) == NULL) {
+	hts_mutex_unlock(&zip_global_mutex);
+	return NULL;
+      }
+      *s = 0;
+    }
+  }
+  const char *r = url + strlen(u);
+  if(*r == '/')
+    r++;
+  *rp = r;
 
   if(za == NULL) {
     za = calloc(1, sizeof(zip_archive_t));
     hts_mutex_init(&za->za_mutex);
     
-    za->za_url = strdup(url);
+    za->za_url = strdup(u);
     LIST_INSERT_HEAD(&zip_archives, za, za_link);
   }
 
@@ -425,29 +455,13 @@ zip_archive_find(const char *url)
 static zip_file_t *
 zip_file_find(const char *url)
 {
-  int l = strlen(url);
-  char *r, *u = alloca(l + 1);
-  zip_archive_t *za;
+  const char *r;
   zip_file_t *rf;
-
-  memcpy(u, url, l);
-  u[l] = 0;
-
-  if((r = strrchr(u, '|')) == NULL)
+  zip_archive_t *za = zip_archive_find(url, &r);
+  if(za == NULL)
     return NULL;
 
-  *r++ = 0;
-  if(*r == '/')
-    r++;
-  if(*r == 0)
-    r = NULL;
-
-  za = zip_archive_find(u);
-
-  if(r == NULL)
-    rf = za->za_root;
-  else
-    rf = zip_archive_find_file(za, za->za_root, r, 0);
+  rf = *r ? zip_archive_find_file(za, za->za_root, r, 0) : za->za_root;
 
   if(rf == NULL)
     zip_archive_unref(za);

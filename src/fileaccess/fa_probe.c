@@ -352,13 +352,13 @@ fa_probe_header(metadata_t *md, const char *url, uint8_t *pb)
       return 1;
     }
 
-    metdata_set_redirect(md, "rar://%s|", url);
+    metdata_set_redirect(md, "rar://%s", url);
     md->md_type = CONTENT_ARCHIVE;
     return 1;
   }
 
   if(pb[0] == 0x50 && pb[1] == 0x4b && pb[2] == 0x03 && pb[3] == 0x04) {
-    metdata_set_redirect(md, "zip://%s|", url);
+    metdata_set_redirect(md, "zip://%s", url);
     md->md_type = CONTENT_ARCHIVE;
     return 1;
   }
