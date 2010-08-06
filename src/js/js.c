@@ -329,6 +329,27 @@ js_forceUnload(JSContext *cx, JSObject *obj,
 /**
  *
  */
+static JSBool 
+jsp_setEnabled(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
+{ 
+  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
+  JSBool on;
+
+  if(!JS_ValueToBoolean(cx, *vp, &on))
+    return JS_FALSE;
+
+  jsp->jsp_enabled = on;
+
+  TRACE(TRACE_DEBUG, "plugins", 
+	"Plugin %s %sabled", jsp->jsp_id, jsp->jsp_enabled ? "en" : "dis");
+
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
 static JSClass plugin_class = {
   "plugin", JSCLASS_HAS_PRIVATE,
   JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,
@@ -405,7 +426,8 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
     JS_SetProperty(cx, pobj, "path", &val);
   }
 
-
+  JS_DefineProperty(cx, pobj, "enabled", BOOLEAN_TO_JSVAL(1),
+		    NULL, jsp_setEnabled, JSPROP_PERMANENT);
 
   s = JS_CompileScript(cx, pobj, sbuf, ssize, url, 0);
   free(sbuf);

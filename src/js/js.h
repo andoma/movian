@@ -19,6 +19,8 @@ typedef struct js_plugin {
   char *jsp_url;
   char *jsp_id;
 
+  char jsp_enabled;
+
   struct js_route_list jsp_routes;
   struct js_searcher_list jsp_searchers;
 

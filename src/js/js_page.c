@@ -34,6 +34,7 @@ static struct js_searcher_list js_searchers;
  *
  */
 typedef struct js_route {
+  js_plugin_t *jsr_jsp;
   LIST_ENTRY(js_route) jsr_global_link;
   LIST_ENTRY(js_route) jsr_plugin_link;
   char *jsr_pattern;
@@ -47,12 +48,13 @@ typedef struct js_route {
  *
  */
 typedef struct js_searcher {
+  js_plugin_t *jss_jsp;
   LIST_ENTRY(js_searcher) jss_global_link;
   LIST_ENTRY(js_searcher) jss_plugin_link;
   jsval jss_openfunc;
   char *jss_title;
   char *jss_icon;
-  
+
 } js_searcher_t;
 
 
@@ -531,7 +533,8 @@ js_backend_open(struct backend *be, struct navigator *nav,
   prop_t *model, *meta;
 
   LIST_FOREACH(jsr, &js_routes, jsr_global_link)
-    if(!regexec(&jsr->jsr_regex, url, 8, matches, 0))
+    if(jsr->jsr_jsp->jsp_enabled &&
+       !regexec(&jsr->jsr_regex, url, 8, matches, 0))
       break;
 
   if(jsr == NULL)
@@ -572,6 +575,8 @@ js_backend_search(struct backend *be, struct prop *model, const char *query)
   js_model_t *jm;
 
   LIST_FOREACH(jss, &js_searchers, jss_global_link) {
+    if(!jss->jss_jsp->jsp_enabled)
+      continue;
 
     jm = js_model_create(jss->jss_openfunc);
     strvec_addp(&jm->jm_args, query);
@@ -627,7 +632,7 @@ js_addURI(JSContext *cx, JSObject *obj, uintN argc,
     }
   
   jsr = calloc(1, sizeof(js_route_t));
-
+  jsr->jsr_jsp = jsp;
   if(regcomp(&jsr->jsr_regex, str, REG_EXTENDED | REG_ICASE)) {
     free(jsr);
     JS_ReportError(cx, "Invalid regular expression");
@@ -666,6 +671,7 @@ js_addSearcher(JSContext *cx, JSObject *obj, uintN argc,
   }
   
   jss = calloc(1, sizeof(js_searcher_t));
+  jss->jss_jsp = jsp;
 
   LIST_INSERT_HEAD(&js_searchers, jss, jss_global_link);
   LIST_INSERT_HEAD(&jsp->jsp_searchers, jss, jss_plugin_link);
