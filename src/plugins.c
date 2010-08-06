@@ -30,13 +30,13 @@
  *
  */
 static void
-plugin_load_js(const char *url)
+plugin_load_js(const char *id, const char *url)
 {
 #if ENABLE_SPIDERMONKEY
   char errbuf[256];
-  if(js_plugin_load(url, errbuf, sizeof(errbuf))) 
-    TRACE(TRACE_ERROR, "plugins", "Unable to load %s -- %s",
-	  url, errbuf);
+  if(js_plugin_load(id, url, errbuf, sizeof(errbuf))) 
+    TRACE(TRACE_ERROR, "plugins", "Unable to load %s [%s] -- %s",
+	  url, id, errbuf);
 
 #else
   TRACE(TRACE_ERROR, "plugins", 
@@ -73,7 +73,8 @@ plugin_load(const char *url)
 
     const char *type = htsmsg_get_str(ctrl, "type");
     const char *file = htsmsg_get_str(ctrl, "file");
-    
+    const char *id   = htsmsg_get_str(ctrl, "id");
+
     if(type == NULL)
       TRACE(TRACE_ERROR, "plugins", 
 	    "Missing \"type\" element in control file %s",
@@ -84,14 +85,19 @@ plugin_load(const char *url)
 	    "Missing \"file\" element in control file %s",
 	    ctrlfile);
 
-    if(type && file) {
+    if(id == NULL)
+      TRACE(TRACE_ERROR, "plugins", 
+	    "Missing \"id\" element in control file %s",
+	    ctrlfile);
+
+    if(type && file && id) {
       char fullpath[URL_MAX];
 
       snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
 
       if(!strcmp(type, "javascript")) {
 
-	plugin_load_js(fullpath);
+	plugin_load_js(id, fullpath);
 
       } else {
 	TRACE(TRACE_ERROR, "plugins", "Unknown type \"%s\" in control file %s",

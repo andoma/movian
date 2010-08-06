@@ -353,7 +353,7 @@ static JSFunctionSpec plugin_functions[] = {
  *
  */
 int
-js_plugin_load(const char *url, char *errbuf, size_t errlen)
+js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
 {
   char *sbuf;
   size_t ssize;
@@ -372,13 +372,15 @@ js_plugin_load(const char *url, char *errbuf, size_t errlen)
 
   /* Remove any plugin with same URL */
   LIST_FOREACH(jsp, &js_plugins, jsp_link)
-    if(!strcmp(jsp->jsp_url, url))
+    if(!strcmp(jsp->jsp_id, id))
       break;
   if(jsp != NULL)
     js_plugin_unload(cx, jsp);
 
   jsp = calloc(1, sizeof(js_plugin_t));
   jsp->jsp_url = strdup(url);
+  jsp->jsp_id  = strdup(id);
+
   LIST_INSERT_HEAD(&js_plugins, jsp, jsp_link);
 
   gobj = JS_NewObject(cx, &global_class, NULL, NULL);

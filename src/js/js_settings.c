@@ -204,26 +204,16 @@ JSBool
 js_createSettings(JSContext *cx, JSObject *obj, uintN argc, 
 		  jsval *argv, jsval *rval)
 {
-  const char *id;
   const char *title;
   const char *type;
-  prop_t *parent;
-  
   char spath[URL_MAX];
 
-   if(!JS_ConvertArguments(cx, argc, argv, "sss", &id, &title, &type))
+   if(!JS_ConvertArguments(cx, argc, argv, "ss", &title, &type))
     return JS_FALSE;
 
   
-  if(JS_GET_CLASS(cx, obj) == &setting_class) {
-    js_setting_t *jss = JS_GetPrivate(cx, obj);
-    parent = jss->jss_p;
-    snprintf(spath, sizeof(spath), "%s/%s", jss->jss_spath, id);
-  } else {
-    parent = NULL;
-    //    js_plugin_t *jp = JS_GetPrivate(cx, obj);
-    snprintf(spath, sizeof(spath), "plugins/%s", id);
-  }
+   js_plugin_t *jsp = JS_GetPrivate(cx, obj);
+   snprintf(spath, sizeof(spath), "plugins/%s", jsp->jsp_id);
 
   js_setting_t *jss = calloc(1, sizeof(js_setting_t));
   JSObject *robj;
@@ -231,7 +221,7 @@ js_createSettings(JSContext *cx, JSObject *obj, uintN argc,
   jss->jss_spath = strdup(spath);
   jss->jss_store = htsmsg_store_load(spath) ?: htsmsg_create_map();
 
-  jss->jss_p = settings_add_dir(parent, title, title, type);
+  jss->jss_p = settings_add_dir(NULL, title, title, type);
 
   robj = JS_NewObjectWithGivenProto(cx, &setting_class, NULL, obj);
   *rval = OBJECT_TO_JSVAL(robj);

@@ -17,6 +17,7 @@ typedef struct js_plugin {
   LIST_ENTRY(js_plugin) jsp_link;
 
   char *jsp_url;
+  char *jsp_id;
 
   struct js_route_list jsp_routes;
   struct js_searcher_list jsp_searchers;
@@ -53,7 +54,8 @@ struct nav_page *js_backend_open(struct backend *be, struct navigator *nav,
 void js_backend_search(struct backend *be, struct prop *model, 
 		       const char *query);
 
-int js_plugin_load(const char *url, char *errbuf, size_t errlen);
+int js_plugin_load(const char *id, const char *url,
+		   char *errbuf, size_t errlen);
 
 int js_prop_from_object(JSContext *cx, JSObject *obj, prop_t *p);
 
