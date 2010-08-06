@@ -29,6 +29,7 @@
 
 #include "showtime.h"
 #include "backend/backend.h"
+#include "backend/search.h"
 #include "fileaccess.h"
 #include "fa_probe.h"
 #include "fa_search.h"

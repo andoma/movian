@@ -23,6 +23,7 @@
 
 #include "backend/backend.h"
 #include "backend/backend_prop.h"
+#include "backend/search.h"
 #include "navigator.h"
 #include "misc/string.h"
 

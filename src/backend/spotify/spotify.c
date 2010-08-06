@@ -32,6 +32,7 @@
 #include "showtime.h"
 #include "navigator.h"
 #include "backend/backend.h"
+#include "backend/search.h"
 #include "playqueue.h"
 #include "media.h"
 #include "notifications.h"
