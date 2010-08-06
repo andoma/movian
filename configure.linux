@@ -77,6 +77,7 @@ enable serdev
 enable ssl
 enable locatedb
 enable vdpau
+enable spidermonkey
 
 for opt do
   optval="${opt#*=}"
