@@ -3219,7 +3219,7 @@ be_spotify_search(backend_t *be, prop_t *source, const char *query)
   prop_t *n = prop_create(source, "nodes");
   for(i = 0; i < 3; i++) {
     spotify_search_request_t *ssr = &ss->ss_reqs[i];
-    const char *title;
+    const char *title = NULL;
 
     switch(i) {
     case SS_TRACKS:
