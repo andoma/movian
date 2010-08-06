@@ -73,6 +73,7 @@ enable coreaudio
 enable appleremote
 enable bonjour
 enable spotlight
+enable spidermonkey
 
 for opt do
   optval="${opt#*=}"
