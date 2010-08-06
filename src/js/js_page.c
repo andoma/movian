@@ -49,6 +49,9 @@ typedef struct js_searcher {
   LIST_ENTRY(js_searcher) jss_global_link;
   LIST_ENTRY(js_searcher) jss_plugin_link;
   jsval jss_openfunc;
+  char *jss_title;
+  char *jss_icon;
+  
 } js_searcher_t;
 
 
@@ -494,6 +497,26 @@ js_model_nodesub(void *opaque, prop_event_t event, ...)
 /**
  *
  */
+static void
+model_launch(js_model_t *jm)
+{
+  jm->jm_pc = prop_courier_create_waitable();
+
+  jm->jm_nodesub = 
+    prop_subscribe(PROP_SUB_TRACK_DESTROY,
+		   PROP_TAG_CALLBACK, js_model_nodesub, jm,
+		   PROP_TAG_ROOT, jm->jm_nodes,
+		   PROP_TAG_COURIER, jm->jm_pc,
+		   NULL);
+
+  hts_thread_create_detached("jsmodel", js_open_trampoline, jm);
+  prop_set_int(jm->jm_loading, 1);
+
+}
+
+/**
+ *
+ */
 struct nav_page *
 js_backend_open(struct backend *be, struct navigator *nav, 
 		const char *url, const char *view,
@@ -525,25 +548,14 @@ js_backend_open(struct backend *be, struct navigator *nav,
   model = prop_create(np->np_prop_root, "model");
   meta  = prop_create(model, "metadata");
 
-  prop_ref_inc(jm->jm_loading = prop_create(model, "loading"));
   prop_ref_inc(jm->jm_nodes   = prop_create(model, "nodes"));
   prop_ref_inc(jm->jm_type    = prop_create(model, "type"));
   prop_ref_inc(jm->jm_title   = prop_create(meta,  "title"));
   prop_ref_inc(jm->jm_entries = prop_create(meta,  "entries"));
   prop_ref_inc(jm->jm_url     = prop_create(np->np_prop_root, "url"));
+  prop_ref_inc(jm->jm_loading = prop_create(model, "loading"));
 
-
-  jm->jm_pc = prop_courier_create_waitable();
-
-  jm->jm_nodesub = 
-    prop_subscribe(PROP_SUB_TRACK_DESTROY,
-		   PROP_TAG_CALLBACK, js_model_nodesub, jm,
-		   PROP_TAG_ROOT, jm->jm_nodes,
-		   PROP_TAG_COURIER, jm->jm_pc,
-		   NULL);
-
-  hts_thread_create_detached("jsmodel", js_open_trampoline, jm);
-  prop_set_int(jm->jm_loading, 1);
+  model_launch(jm);
   return np;
 }
 
@@ -555,16 +567,18 @@ void
 js_backend_search(struct backend *be, struct prop *model, const char *query)
 {
   js_searcher_t *jss;
-  prop_t *nodes = prop_create(model, "nodes");
+  prop_t *parent = prop_create(model, "nodes");
   js_model_t *jm;
 
   LIST_FOREACH(jss, &js_searchers, jss_global_link) {
+
     jm = js_model_create(jss->jss_openfunc);
-
     strvec_addp(&jm->jm_args, query);
-    prop_ref_inc(jm->jm_nodes = nodes);
 
-    hts_thread_create_detached("jsmodel", js_open_trampoline, jm);
+    search_class_create(parent, &jm->jm_nodes, &jm->jm_entries, 
+			jss->jss_title);
+
+    model_launch(jm);
   }
 }
 
@@ -645,7 +659,7 @@ js_addSearcher(JSContext *cx, JSObject *obj, uintN argc,
   js_searcher_t *jss;
   js_plugin_t *jsp = JS_GetPrivate(cx, obj);
 
-  if(!JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[0]))) {
+  if(!JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[2]))) {
     JS_ReportError(cx, "Argument is not a function");
     return JS_FALSE;
   }
@@ -655,7 +669,11 @@ js_addSearcher(JSContext *cx, JSObject *obj, uintN argc,
   LIST_INSERT_HEAD(&js_searchers, jss, jss_global_link);
   LIST_INSERT_HEAD(&jsp->jsp_searchers, jss, jss_plugin_link);
 
-  jss->jss_openfunc = argv[0];
+  jss->jss_title = strdup(JS_GetStringBytes(JS_ValueToString(cx, argv[0])));
+  if(JSVAL_IS_OBJECT(argv[1]))
+    jss->jss_icon  = strdup(JS_GetStringBytes(JS_ValueToString(cx, argv[1])));
+
+  jss->jss_openfunc = argv[2];
   JS_AddNamedRoot(cx, &jss->jss_openfunc, "searcher");
 
   *rval = JSVAL_VOID;
@@ -691,6 +709,8 @@ js_searcher_delete(JSContext *cx, js_searcher_t *jss)
 
   LIST_REMOVE(jss, jss_global_link);
   LIST_REMOVE(jss, jss_plugin_link);
+  free(jss->jss_title);
+  free(jss->jss_icon);
   free(jss);
 }
 
