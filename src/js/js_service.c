@@ -17,7 +17,6 @@
  */
 
 #include <string.h>
-#include <regex.h>
 #include "js.h"
 
 #include "service.h"
