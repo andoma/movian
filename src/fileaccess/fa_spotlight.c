@@ -31,7 +31,6 @@ static int spotlight_enabled;
 
 typedef struct fa_search_s {
   char                 *fas_query;
-  backend_search_type_t fas_type;
   prop_t               *fas_nodes;
   prop_sub_t           *fas_sub;
   prop_courier_t       *fas_pc;
@@ -122,7 +121,10 @@ spotlight_searcher(void *aux)
   CFMutableStringRef query_string;
   CFIndex query_count;
   CFIndex query_index;
-  
+  prop_t *entries[2] = {NULL, NULL};
+  prop_t *nodes[2] = {NULL, NULL};
+  int i, t;
+
   fas->fas_pc = prop_courier_create_passive();
   fas->fas_sub = 
   prop_subscribe(PROP_SUB_TRACK_DESTROY,
@@ -177,7 +179,6 @@ spotlight_searcher(void *aux)
     CFStringRef pathRef;
     int len;
     char *path;
-    int match = 1;
 
     prop_courier_poll(fas->fas_pc);
     
@@ -200,47 +201,52 @@ spotlight_searcher(void *aux)
     CFStringGetCString(pathRef, path, len, kCFStringEncodingUTF8);
     CFRelease(pathRef);
     ctype = fa_probe(metadata, path, NULL, 0, NULL, 0, NULL);
-    
-    /* Filter out based on search type. */
-    switch (fas->fas_type)
-    {
-	/* FIXME: We dont want to include matching dirs whose content
-	 *        doesn't match the fas_type. */
-      case BACKEND_SEARCH_AUDIO:
-	if(ctype != CONTENT_AUDIO)
-          match = 0;
+   
+    t = 0; 
+    switch(ctype) { 
+    case CONTENT_AUDIO: 
+      break; 
+    case CONTENT_VIDEO: 
+    case CONTENT_DVD: 
+      t = 1; 
+      break; 
+    default: 
+      continue; 
+    } 
+
+    if(nodes[t] == NULL)
+      if(search_class_create(fas->fas_nodes, &nodes[t], &entries[t],
+			     t ? "Local video files" : "Local audio files")) {
+	free(path);
 	break;
-	
-      case BACKEND_SEARCH_VIDEO:
-	if(ctype != CONTENT_VIDEO &&
-           ctype != CONTENT_DVD)
-          match = 0;
-	break;
-        
-      case BACKEND_SEARCH_ALL:
-	break;
-    }
-    
-    if(ctype == CONTENT_UNKNOWN)
-      match = 0;
-    
-    if(match) {
-      p = prop_create(NULL, NULL);
-      
-      if (prop_set_parent(metadata, p))
-        prop_destroy(metadata);
-      
-      prop_set_string(prop_create(p, "url"), path);
-      type = content2type(ctype);
-      if(type != NULL)
-        prop_set_string(prop_create(p, "type"), type);
-      
-      if (prop_set_parent(p, fas->fas_nodes))
-        prop_destroy(p);
-    }
-    
+      }
+
+    prop_add_int(entries[t], 1);
+
+    if((type = content2type(ctype)) == NULL)
+      continue; /* Unlikely.. */
+
+    p = prop_create(NULL, NULL);
+
+    if(prop_set_parent(metadata, p))
+      prop_destroy(metadata);
+
+    prop_set_string(prop_create(p, "url"), path);
     free(path);
+    prop_set_string(prop_create(p, "type"), type);
+
+    if(prop_set_parent(p, nodes[t])) {
+      prop_destroy(p);
+      break;
+    }
   }
+
+  for(i = 0; i < 2; i++) { 
+    if(nodes[i]) 
+      prop_ref_dec(nodes[i]); 
+    if(entries[i]) 
+      prop_ref_dec(entries[i]); 
+  } 
   
   CFRelease(query);
   
@@ -251,8 +257,7 @@ spotlight_searcher(void *aux)
 }
 
 static void
-spotlight_search(struct backend *be, prop_t *source,
-		 const char *query, backend_search_type_t type)
+spotlight_search(struct backend *be, prop_t *model, const char *query)
 {
   if(!spotlight_enabled)
     return;
@@ -262,8 +267,7 @@ spotlight_search(struct backend *be, prop_t *source,
   
   fas->fas_query = s = strdup(query);
   fas->fas_run = 1;
-  fas->fas_type = type;
-  fas->fas_nodes = prop_create(source, "nodes");
+  fas->fas_nodes = prop_create(model, "nodes");
   prop_ref_inc(fas->fas_nodes);
   
   hts_thread_create_detached("spotlight search", spotlight_searcher, fas);
