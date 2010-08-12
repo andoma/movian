@@ -322,7 +322,7 @@ se_cmp(const subtitle_entry_t *a, const subtitle_entry_t *b)
 typedef struct {
   const char *buf;
   size_t len;       // Remaining bytes in buf
-  size_t ll;        // Length of current line
+  ssize_t ll;        // Length of current line
 } linereader_t;
 
 
@@ -339,10 +339,10 @@ linereader_init(linereader_t *lr, const char *buf, size_t len)
 /**
  * Find end of line
  */
-static size_t
+static ssize_t
 linereader_next(linereader_t *lr)
 {
-  size_t i;
+  ssize_t i;
 
   if(lr->ll != -1) {
     // Skip over previous line
@@ -362,8 +362,11 @@ linereader_next(linereader_t *lr)
 
   }
 
-  if(lr->len == 0)
+  if(lr->len == 0) {
+    /* At EOF */
+    lr->ll = -1;
     return -1;
+  }
 
   for(i = 0; i < lr->len; i++)
     if(lr->buf[i] == 10 || lr->buf[i] == 13)
