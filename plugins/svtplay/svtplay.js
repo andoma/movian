@@ -37,20 +37,29 @@
 
     function loader() {
 
+      var num = 0;
 
-      var doc = new XML(request(url, offset));
-      page.entries = doc.channel.opensearch::totalResults;
+      while(1) {
+	var doc = new XML(request(url, offset + num));
+	page.entries = doc.channel.opensearch::totalResults;
+	var c = 0;
 
-      for each (var item in doc.channel.item) {
-	offset++;
+	for each (var item in doc.channel.item) {
+	  c++;
 
-	var metadata = {
-	  title: item.title
-	};
+	  var metadata = {
+	    title: item.title
+	  };
 
-	page.appendItem("svtplay:video:" + item.svtplay::titleId,
-			"directory", metadata);
+	  page.appendItem("svtplay:video:" + item.svtplay::titleId,
+			  "directory", metadata);
+	}
+	num += c;
+	if(c == 0 || num > 50)
+	  break;
       }
+      offset += num;
+
     }
 
     page.type = "directory";
