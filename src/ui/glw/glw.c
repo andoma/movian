@@ -1616,11 +1616,11 @@ glw_dispatch_event(uii_t *uii, event_t *e)
 
     e2 = keymapper_resolve(e->e_payload);
     event_unref(e);
-    if(e2 == NULL) {
-      glw_unlock(gr);
-      return;
-    }
-    e = e2;
+
+    glw_unlock(gr);
+
+    uii->uii_ui->ui_dispatch_event(uii, e2);
+    return;
   }
 
   if(event_is_action(e, ACTION_RELOAD_UI)) {
