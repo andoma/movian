@@ -101,7 +101,7 @@ tcp_read(tcpcon_t *tc, void *buf, size_t len, int all)
   while(1) {
 
     x = recv(tc->fd, buf + off, len - off, all ? MSG_WAITALL : 0);
-    if(x < 0)
+    if(x <= 0)
       return -1;
     
     if(all) {
