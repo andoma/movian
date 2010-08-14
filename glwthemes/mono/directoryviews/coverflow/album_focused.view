@@ -15,7 +15,7 @@ widget(container_y, {
 
       LIST_ITEM_SIMPLE($self.metadata.title,
 		       "theme://icons/48x48/Music.png",
-		       playTrackFromSource($self, $view.browse.source),
+		       playTrackFromSource($self, $view.browse.model),
 		       PLATE_COLOR_AUDIO());
     });
   });
