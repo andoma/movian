@@ -54,8 +54,7 @@ static hts_mutex_t http_connections_mutex;
 typedef struct http_connection {
   char hc_hostname[HOSTNAME_MAX];
   int hc_port;
-
-  int hc_fd;
+  tcpcon_t *hc_tc;
 
   htsbuf_queue_t hc_spill;
 
@@ -69,64 +68,11 @@ typedef struct http_connection {
 /**
  *
  */
-static int
-http_write_queue(http_connection_t *hc, htsbuf_queue_t *q)
-{
-  return tcp_write_queue_dontfree(hc->hc_fd, q);
-}
-
-/**
- *
- */
-static int
-http_write_queue_dontfree(http_connection_t *hc, htsbuf_queue_t *q)
-{
-  return tcp_write_queue_dontfree(hc->hc_fd, q);
-}
-
-
-/**
- *
- */
-static int
-http_read_line(http_connection_t *hc, char *buf, const size_t bufsize,
-	       htsbuf_queue_t *spill)
-{
-  return tcp_read_line(hc->hc_fd, buf, bufsize, spill);
-
-}
-
-
-/**
- *
- */
-static int
-http_read_data(http_connection_t *hc, char *buf, const size_t bufsize,
-	       htsbuf_queue_t *spill)
-{
-  return tcp_read_data(hc->hc_fd, buf, bufsize, spill);
-}
-
-
-/**
- *
- */
-static int
-http_read_data_nowait(http_connection_t *hc, char *buf, const size_t bufsize, 
-		      htsbuf_queue_t *spill)
-{
-  return tcp_read_data_nowait(hc->hc_fd, buf, bufsize, spill);
-}
-
-
-/**
- *
- */
 static http_connection_t *
 http_connection_get(const char *hostname, int port, char *errbuf, int errlen)
 {
   http_connection_t *hc;
-  int fd;
+  tcpcon_t *tc;
 
   hts_mutex_lock(&http_connections_mutex);
 
@@ -144,7 +90,7 @@ http_connection_get(const char *hostname, int port, char *errbuf, int errlen)
   hts_mutex_unlock(&http_connections_mutex);
 
   
-  if((fd = tcp_connect(hostname, port, errbuf, errlen, 5000)) < 0) {
+  if((tc = tcp_connect(hostname, port, errbuf, errlen, 5000)) < 0) {
     HTTP_TRACE("Connection to %s:%d failed", hostname, port);
     return NULL;
   }
@@ -153,7 +99,7 @@ http_connection_get(const char *hostname, int port, char *errbuf, int errlen)
   hc = malloc(sizeof(http_connection_t));
   snprintf(hc->hc_hostname, sizeof(hc->hc_hostname), "%s", hostname);
   hc->hc_port = port;
-  hc->hc_fd = fd;
+  hc->hc_tc = tc;
   htsbuf_queue_init(&hc->hc_spill, 0);
   hc->hc_reused = 0;
   return hc;
@@ -167,7 +113,7 @@ static void
 http_connection_destroy(http_connection_t *hc)
 {
   HTTP_TRACE("Disconnected from %s:%d", hc->hc_hostname, hc->hc_port);
-  tcp_close(hc->hc_fd);
+  tcp_close(hc->hc_tc);
   htsbuf_queue_flush(&hc->hc_spill);
   free(hc);
 }
@@ -317,7 +263,7 @@ http_read_content(http_file_t *hf)
     s = 0;
 
     while(1) {
-      if(http_read_line(hc, chunkheader, sizeof(chunkheader),
+      if(tcp_read_line(hc->hc_tc, chunkheader, sizeof(chunkheader),
 		       &hc->hc_spill) < 0)
 	break;
  
@@ -325,13 +271,13 @@ http_read_content(http_file_t *hf)
 	return buf;
 
       buf = realloc(buf, s + csize + 1);
-      if(http_read_data(hc, buf + s, csize, &hc->hc_spill))
+      if(tcp_read_data(hc->hc_tc, buf + s, csize, &hc->hc_spill))
 	break;
 
       s += csize;
       buf[s] = 0;
 
-      if(http_read_data(hc, chunkheader, 2, &hc->hc_spill))
+      if(tcp_read_data(hc->hc_tc, chunkheader, 2, &hc->hc_spill))
 	break;
     }
     free(buf);
@@ -343,7 +289,7 @@ http_read_content(http_file_t *hf)
   buf = malloc(s + 1);
   buf[s] = 0;
   
-  if(http_read_data(hc, buf, s, &hc->hc_spill)) {
+  if(tcp_read_data(hc->hc_tc, buf, s, &hc->hc_spill)) {
     free(buf);
     return NULL;
   }
@@ -418,7 +364,7 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
   HTTP_TRACE("%s: Reponse:", hf->hf_url);
 
   for(li = 0; ;li++) {
-    if(http_read_line(hc, hf->hf_line, sizeof(hf->hf_line),
+    if(tcp_read_line(hc->hc_tc, hf->hf_line, sizeof(hf->hf_line),
 		     &hc->hc_spill) < 0)
       return -1;
 
@@ -716,7 +662,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 		 hf->hf_connection->hc_hostname,
 		 hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
 
-  http_write_queue(hf->hf_connection, &q);
+  tcp_write_queue(hf->hf_connection->hc_tc, &q);
 
   code = http_read_response(hf, NULL);
   if(code == -1 && hf->hf_connection->hc_reused) {
@@ -886,7 +832,7 @@ again:
 		 hf->hf_connection->hc_hostname,
 		 hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
   
-  http_write_queue(hf->hf_connection, &q);
+  tcp_write_queue(hf->hf_connection->hc_tc, &q);
   code = http_read_response(hf, NULL);
   if(code == -1 && hf->hf_connection->hc_reused) {
     http_detach(hf, 0);
@@ -1037,7 +983,7 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
 		       hf->hf_pos, hf->hf_pos + size - 1);
       }
 
-      http_write_queue(hc, &q);
+      tcp_write_queue(hc->hc_tc, &q);
       code = http_read_response(hf, NULL);
       switch(code) {
       case 206:
@@ -1071,7 +1017,7 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
 	return size;
     }
 
-    if(!http_read_data(hc, buf, size, &hc->hc_spill)) {
+    if(!tcp_read_data(hc->hc_tc, buf, size, &hc->hc_spill)) {
       hf->hf_pos   += size;
       hf->hf_rsize -= size;
 
@@ -1126,7 +1072,7 @@ http_seek(fa_handle_t *handle, int64_t pos, int whence)
 
       if(hc != NULL && d > 0 && d < 8192 && d < hf->hf_rsize) {
 	void *j = malloc(d);
-	int n = http_read_data(hc, j, d, &hc->hc_spill);
+	int n = tcp_read_data(hc->hc_tc, j, d, &hc->hc_spill);
 	free(j);
 	if(!n) {
 	  hf->hf_pos = np;
@@ -1460,7 +1406,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
 		   hf->hf_connection->hc_hostname,
 		   hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
 
-    http_write_queue(hf->hf_connection, &q);
+    tcp_write_queue(hf->hf_connection->hc_tc, &q);
     code = http_read_response(hf, NULL);
 
     HTTP_TRACE("%s: PROPFIND %d", hf->hf_url, code);
@@ -1680,10 +1626,10 @@ http_request(const char *url, const char **arguments,
 
   htsbuf_qprintf(&q, "\r\n");
 
-  http_write_queue(hf->hf_connection, &q);
+  tcp_write_queue(hf->hf_connection->hc_tc, &q);
 
   if(postdata != NULL)
-    http_write_queue_dontfree(hf->hf_connection, postdata);
+    tcp_write_queue_dontfree(hf->hf_connection->hc_tc, postdata);
 
   code = http_read_response(hf, headers_out);
   if(code == -1 && hf->hf_connection->hc_reused) {
@@ -1734,7 +1680,8 @@ http_request(const char *url, const char **arguments,
 	mem = realloc(mem, capacity + 1);
       }
 
-      r = http_read_data_nowait(hc, mem + size, capacity - size, &hc->hc_spill);
+      r = tcp_read_data_nowait(hc->hc_tc, mem + size,
+			       capacity - size, &hc->hc_spill);
       if(r < 0)
 	break;
 
@@ -1756,7 +1703,7 @@ http_request(const char *url, const char **arguments,
 
       while(1) {
 	int csize;
-	if(http_read_line(hc, chunkheader, sizeof(chunkheader),
+	if(tcp_read_line(hc->hc_tc, chunkheader, sizeof(chunkheader),
 			 &hc->hc_spill) < 0)
 	  break;
  
@@ -1764,12 +1711,12 @@ http_request(const char *url, const char **arguments,
 	  goto done;
 
 	buf = realloc(buf, size + csize + 1);
-	if(http_read_data(hc, buf + size, csize, &hc->hc_spill))
+	if(tcp_read_data(hc->hc_tc, buf + size, csize, &hc->hc_spill))
 	  break;
 
 	size += csize;
 	
-	if(http_read_data(hc, chunkheader, 2, &hc->hc_spill))
+	if(tcp_read_data(hc->hc_tc, chunkheader, 2, &hc->hc_spill))
 	  break;
       }
       free(buf);
@@ -1783,7 +1730,7 @@ http_request(const char *url, const char **arguments,
       size = hf->hf_filesize;
       buf = malloc(hf->hf_filesize + 1);
 
-      r = http_read_data(hc, buf, hf->hf_filesize, &hc->hc_spill);
+      r = tcp_read_data(hc->hc_tc, buf, hf->hf_filesize, &hc->hc_spill);
       
       if(r == -1) {
 	snprintf(errbuf, errlen, "HTTP read error");

@@ -23,29 +23,36 @@
 #include <stdint.h>
 #include <htsmsg/htsbuf.h>
 
+typedef struct tcpcon {
+  int fd;
+
+} tcpcon_t;
+
+
+
 void net_setup(void);
 
-int tcp_connect(const char *hostname, int port, char *errbuf,
-		size_t errbufsize, int timeout);
+tcpcon_t *tcp_connect(const char *hostname, int port, char *errbuf,
+		      size_t errbufsize, int timeout);
 
-int tcp_write_queue(int fd, htsbuf_queue_t *q);
+int tcp_write_queue(tcpcon_t *nc, htsbuf_queue_t *q);
 
-int tcp_write_queue_dontfree(int fd, htsbuf_queue_t *q);
+int tcp_write_queue_dontfree(tcpcon_t *nc, htsbuf_queue_t *q);
 
-int tcp_read_line(int fd, char *buf, const size_t bufsize,
+int tcp_read_line(tcpcon_t *nc, char *buf, const size_t bufsize,
 		  htsbuf_queue_t *spill);
 
-int tcp_read_data(int fd, char *buf, const size_t bufsize,
+int tcp_read_data(tcpcon_t *nc, char *buf, const size_t bufsize,
 		  htsbuf_queue_t *spill);
 
-int tcp_read_data_nowait(int fd, char *buf, const size_t bufsize, 
+int tcp_read_data_nowait(tcpcon_t *nc, char *buf, const size_t bufsize, 
 			 htsbuf_queue_t *spill);
 
-int tcp_read(int fd, void *buf, size_t len, int all);
+int tcp_read(tcpcon_t *nc, void *buf, size_t len, int all);
 
-int tcp_write(int fd, const void *data, size_t len);
+int tcp_write(tcpcon_t *nc, const void *data, size_t len);
 
-void tcp_close(int fd);
+void tcp_close(tcpcon_t *nc);
 
 
 #endif /* NET_H__ */

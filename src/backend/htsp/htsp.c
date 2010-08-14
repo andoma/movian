@@ -80,7 +80,7 @@ typedef struct htsp_channel {
  */
 typedef struct htsp_connection {
   LIST_ENTRY(htsp_connection) hc_global_link;
-  int hc_fd;
+  tcpcon_t *hc_tc;
 
   uint8_t hc_challenge[32];
 
@@ -174,11 +174,11 @@ static htsmsg_t *
 htsp_recv(htsp_connection_t *hc)
 {
   void *buf;
-  int fd = hc->hc_fd;
+  tcpcon_t *tc = hc->hc_tc;
   uint8_t len[4];
   uint32_t l;
 
-  if(tcp_read(fd, len, 4, 1) < 0)
+  if(tcp_read(tc, len, 4, 1) < 0)
     return NULL;
   
   l = (len[0] << 24) | (len[1] << 16) | (len[2] << 8) | len[3];
@@ -187,7 +187,7 @@ htsp_recv(htsp_connection_t *hc)
 
   buf = malloc(l);
 
-  if(buf == NULL || tcp_read(fd, buf, l, 1) < 0) {
+  if(buf == NULL || tcp_read(tc, buf, l, 1) < 0) {
     free(buf);
     return NULL;
   }
@@ -205,7 +205,8 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
   void *buf;
   size_t len;
   uint32_t seq;
-  int r, fd = hc->hc_fd;
+  int r;
+  tcpcon_t *tc = hc->hc_tc;
   uint32_t noaccess;
   htsmsg_t *reply;
   htsp_msg_t *hm = NULL;
@@ -273,7 +274,7 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
     hts_mutex_unlock(&hc->hc_rpc_mutex);
   }
 
-  if(tcp_write(fd, buf, len)) {
+  if(tcp_write(tc, buf, len)) {
     free(buf);
     htsmsg_destroy(m);
     
@@ -914,9 +915,10 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
 		     char *errbuf, size_t errlen)
 {
   htsp_connection_t *hc;
-  int fd, port;
+  int port;
   char hostname[HOSTNAME_MAX];
   prop_t *meta, *nodes;
+  tcpcon_t *tc;
 
   url_split(NULL, 0, NULL, 0, hostname, sizeof(hostname), &port,
 	    path, pathlen, url, 0);
@@ -936,8 +938,8 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
 
   trace(TRACE_DEBUG, "HTSP", "Connecting to %s:%d", hostname, port);
 
-  fd = tcp_connect(hostname, port, errbuf, errlen, 3000);
-  if(fd == -1) {
+  tc = tcp_connect(hostname, port, errbuf, errlen, 3000);
+  if(tc == NULL) {
     hts_mutex_unlock(&htsp_global_mutex);
     trace(TRACE_ERROR, "HTSP", "Connection to %s:%d failed: %s", 
 	  hostname, port, errbuf);
@@ -982,7 +984,7 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
   hts_mutex_init(&hc->hc_meta_mutex);
   TAILQ_INIT(&hc->hc_channels);
 
-  hc->hc_fd = fd;
+  hc->hc_tc = tc;
   hc->hc_seq_generator = 1;
   hc->hc_sid_generator = 1;
   hc->hc_hostname = strdup(hostname);

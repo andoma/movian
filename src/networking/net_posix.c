@@ -67,7 +67,7 @@ getstreamsocket(int family, char *errbuf, size_t errbufsize)
 /**
  *
  */
-int
+tcpcon_t *
 tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 	    int timeout)
 {
@@ -87,7 +87,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 
   if(!strcmp(hostname, "localhost")) {
     if((fd = getstreamsocket(AF_INET, errbuf, errbufsize)) == -1)
-      return -1;  
+      return NULL;
 
     memset(&in, 0, sizeof(in));
     in.sin_family = AF_INET;
@@ -138,16 +138,16 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 
       snprintf(errbuf, errbufsize, "%s", errtxt);
       free(tmphstbuf);
-      return -1;
+      return NULL;
     } else if(hp == NULL) {
       snprintf(errbuf, errbufsize, "Resolver internal error");
       free(tmphstbuf);
-      return -1;
+      return NULL;
     }
 
     if((fd = getstreamsocket(hp->h_addrtype, errbuf, errbufsize)) == -1) {
       free(tmphstbuf);
-      return -1;  
+      return NULL;
     }
 
     switch(hp->h_addrtype) {
@@ -170,7 +170,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
     default:
       snprintf(errbuf, errbufsize, "Invalid protocol family");
       free(tmphstbuf);
-      return -1;
+      return NULL;
     }
 
     free(tmphstbuf);
@@ -188,13 +188,13 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 	/* Timeout */
 	snprintf(errbuf, errbufsize, "Connection attempt timed out");
 	close(fd);
-	return -1;
+	return NULL;
       }
       
       if(r == -1) {
 	snprintf(errbuf, errbufsize, "poll() error: %s", strerror(errno));
 	close(fd);
-	return -1;
+	return NULL;
       }
 
       getsockopt(fd, SOL_SOCKET, SO_ERROR, (void *)&err, &errlen);
@@ -208,7 +208,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
   if(err != 0) {
     snprintf(errbuf, errbufsize, "%s", strerror(err));
     close(fd);
-    return -1;
+    return NULL;
   }
   
   fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~O_NONBLOCK);
@@ -220,19 +220,22 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
   setsockopt(fd, SOL_TCP, TCP_NODELAY, &val, sizeof(val));
 #endif
 
-  return fd;
+  tcpcon_t *tc = calloc(1, sizeof(tcpcon_t));
+  tc->fd = fd;
+
+  return tc;
 }
 
 /**
  *
  */
 int
-tcp_write(int fd, const void *data, size_t len)
+tcp_write(tcpcon_t *tc, const void *data, size_t len)
 {
 #ifdef MSG_NOSIGNAL
-  return send(fd, data, len, MSG_NOSIGNAL) != len ? ECONNRESET : 0;
+  return send(tc->fd, data, len, MSG_NOSIGNAL) != len ? ECONNRESET : 0;
 #else
-  return send(fd, data, len, 0           ) != len ? ECONNRESET : 0;
+  return send(tc->fd, data, len, 0           ) != len ? ECONNRESET : 0;
 #endif
 }
 
@@ -241,13 +244,13 @@ tcp_write(int fd, const void *data, size_t len)
  *
  */
 int
-tcp_read(int fd, void *buf, size_t len, int all)
+tcp_read(tcpcon_t *tc, void *buf, size_t len, int all)
 {
   int x;
   size_t off = 0;
   while(1) {
 
-    x = recv(fd, buf + off, len - off, all ? MSG_WAITALL : 0);
+    x = recv(tc->fd, buf + off, len - off, all ? MSG_WAITALL : 0);
     if(x < 0)
       return -1;
     
@@ -268,7 +271,8 @@ tcp_read(int fd, void *buf, size_t len, int all)
  *
  */
 void
-tcp_close(int fd)
+tcp_close(tcpcon_t *tc)
 {
-  close(fd);
+  close(tc->fd);
+  free(tc);
 }
