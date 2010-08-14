@@ -217,6 +217,9 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
   struct AVSHA1 *shactx = alloca(av_sha1_size);
   uint8_t d[20];
 
+  if(tc == NULL)
+    return NULL;
+
   /* Generate a sequence number for our message */
   seq = atomic_add(&hc->hc_seq_generator, 1);
   htsmsg_add_u32(m, "seq", seq);
@@ -347,11 +350,9 @@ htsp_login(htsp_connection_t *hc)
   htsmsg_add_u32(m, "htspversion", 1);
   htsmsg_add_str(m, "method", "hello");
   
-
   if((m = htsp_reqreply(hc, m)) == NULL) {
     return -1;
   }
-
 
   if(htsmsg_get_bin(m, "challenge", &ch, &chlen) || chlen != 32) {
     htsmsg_destroy(m);
@@ -550,6 +551,19 @@ htsp_channelAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
  *
  */
 static void
+channel_destroy(htsp_connection_t *hc, htsp_channel_t *ch)
+{
+  prop_destroy(ch->ch_root);
+  TAILQ_REMOVE(&hc->hc_channels, ch, ch_link);
+  free(ch->ch_title);
+  free(ch);
+ }
+
+
+/**
+ *
+ */
+static void
 htsp_channelDelete(htsp_connection_t *hc, htsmsg_t *m)
 {
   uint32_t id;
@@ -560,15 +574,22 @@ htsp_channelDelete(htsp_connection_t *hc, htsmsg_t *m)
 
   hts_mutex_lock(&hc->hc_meta_mutex);
 
-  if((ch = htsp_channel_get(hc, id)) != NULL) {
-    prop_destroy(ch->ch_root);
-    TAILQ_REMOVE(&hc->hc_channels, ch, ch_link);
-    free(ch->ch_title);
-    free(ch);
-  }
+  if((ch = htsp_channel_get(hc, id)) != NULL)
+    channel_destroy(hc, ch);
   
   hts_mutex_unlock(&hc->hc_meta_mutex);
+}
 
+
+/**
+ *
+ */
+static void
+channel_delete_all(htsp_connection_t *hc)
+{
+  htsp_channel_t *ch;
+  while((ch = TAILQ_FIRST(&hc->hc_channels)) != NULL)
+    channel_destroy(hc, ch);
 }
 
 
@@ -709,6 +730,21 @@ htsp_tagAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
   hts_mutex_unlock(&hc->hc_meta_mutex);
 }
 
+
+/**
+ *
+ */
+static void
+tag_destroy(htsp_tag_t *ht)
+{
+  LIST_REMOVE(ht, ht_link);
+  free(ht->ht_id);
+  free(ht->ht_title);
+  free(ht->ht_channels);
+  prop_destroy(ht->ht_root);
+  free(ht);
+}
+
 /**
  *
  */
@@ -727,16 +763,23 @@ htsp_tagDelete(htsp_connection_t *hc, htsmsg_t *m)
     if(!strcmp(ht->ht_id, id))
       break;
 
-  if(ht != NULL) {
-    LIST_REMOVE(ht, ht_link);
-    free(ht->ht_id);
-    free(ht->ht_title);
-    free(ht->ht_channels);
-    prop_destroy(ht->ht_root);
-    free(ht);
-  }
+  if(ht != NULL)
+    tag_destroy(ht);
   
   hts_mutex_unlock(&hc->hc_meta_mutex);
+}
+
+
+/**
+ *
+ */
+static void
+tag_delete_all(htsp_connection_t *hc)
+{
+  htsp_tag_t *ht;
+
+  while((ht = LIST_FIRST(&hc->hc_tags)) != NULL)
+    tag_destroy(ht);
 }
 
 
@@ -810,12 +853,36 @@ htsp_worker_thread(void *aux)
 }
 
 
+/**
+ *
+ */
+static void
+htsp_dispatch_disconnect(htsp_connection_t *hc)
+{
+  htsp_msg_t *hm;
+  htsp_subscription_t *hs;
+
+  hts_mutex_lock(&hc->hc_rpc_mutex);
+
+  TAILQ_FOREACH(hm, &hc->hc_rpc_queue, hm_link) {
+    hm->hm_error = 1;
+    hts_cond_broadcast(&hc->hc_rpc_cond);
+  }
+  hts_mutex_unlock(&hc->hc_rpc_mutex);
+
+  hts_mutex_lock(&hc->hc_subscription_mutex);
+
+  LIST_FOREACH(hs, &hc->hc_subscriptions, hs_link)
+    mp_enqueue_event(hs->hs_mp, event_create(EVENT_EXIT, sizeof(event_t)));
+
+  hts_mutex_unlock(&hc->hc_subscription_mutex);
+}
 
 
 /**
  *
  */
-static void
+static int
 htsp_msg_dispatch(htsp_connection_t *hc, htsmsg_t *m)
 {
   uint32_t seq;
@@ -829,7 +896,7 @@ htsp_msg_dispatch(htsp_connection_t *hc, htsmsg_t *m)
      !strcmp(method, "muxpkt")) {
     htsp_mux_input(hc, m);
     htsmsg_destroy(m);
-    return;
+    return 0;
   }
 
   if(!htsmsg_get_u32(m, "seq", &seq) && seq != 0) {
@@ -845,15 +912,16 @@ htsp_msg_dispatch(htsp_connection_t *hc, htsmsg_t *m)
       hts_cond_broadcast(&hc->hc_rpc_cond);
       m = NULL;
     } else {
-      printf("Warning, unmatched sequence\n");
-      abort();
+      hts_mutex_unlock(&hc->hc_rpc_mutex);
+      htsmsg_destroy(m);
+      return -1;
     }
-    hts_mutex_unlock(&hc->hc_rpc_mutex);
 
     if(m != NULL)
       htsmsg_destroy(m);
+    hts_mutex_unlock(&hc->hc_rpc_mutex);
 
-    return;
+    return 0;
   }
 
   /* Unsolicited meta message */
@@ -867,6 +935,7 @@ htsp_msg_dispatch(htsp_connection_t *hc, htsmsg_t *m)
   TAILQ_INSERT_TAIL(&hc->hc_worker_queue, hm, hm_link);
   hts_cond_signal(&hc->hc_worker_cond);
   hts_mutex_unlock(&hc->hc_worker_mutex);
+  return 0;
 }
 
 
@@ -894,13 +963,41 @@ htsp_thread(void *aux)
 
     while(1) {
 
-      if((m = htsp_recv(hc)) == NULL) {
-	TRACE(TRACE_ERROR, "HTSP", "Read failed");
+      if((m = htsp_recv(hc)) == NULL)
 	break;
-      }
-      htsp_msg_dispatch(hc, m);
+
+      if(htsp_msg_dispatch(hc, m))
+	break;
     }
-    abort(); // We cant handle this now
+
+    trace(TRACE_ERROR, "HTSP", "Disconnected from %s:%d", 
+	  hc->hc_hostname, hc->hc_port);
+
+    tcp_close(hc->hc_tc);
+    hc->hc_tc = NULL;
+    hc->hc_is_async = 0;
+
+    htsp_dispatch_disconnect(hc);
+
+    while(1) {
+      char errbuf[256];
+      hc->hc_tc = tcp_connect(hc->hc_hostname, hc->hc_port,
+			      errbuf, sizeof(errbuf), 3000, 0);
+      if(hc->hc_tc != NULL)
+	break;
+
+      trace(TRACE_ERROR, "HTSP", "Connection to %s:%d failed: %s", 
+	    hc->hc_hostname, hc->hc_port, errbuf);
+      sleep(1);
+      continue;
+    }
+    
+    trace(TRACE_INFO, "HTSP", "Reconnected to %s:%d", 
+	  hc->hc_hostname, hc->hc_port);
+
+    tag_delete_all(hc);
+    channel_delete_all(hc);
+    htsp_login(hc);
   }
   return NULL;
 }
@@ -1003,15 +1100,6 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
   return hc;
 }
 
-/**
- *
- */
-static void
-htsp_connection_deref(htsp_connection_t *hc)
-{
-  abort();
-}
-
 
 /**
  *
@@ -1045,7 +1133,6 @@ be_htsp_open(backend_t *be, struct navigator *nav,
     src = hc->hc_tags_source;
   } else {
     snprintf(errbuf, errlen, "Invalid URL");
-    htsp_connection_deref(hc);
     return NULL;
   }
 
@@ -1414,14 +1501,12 @@ be_htsp_playvideo(backend_t *be,
     char *x = strrchr(tag, '/');
     if(x == NULL) {
       snprintf(errbuf, errlen, "Invalid URL");
-      htsp_connection_deref(hc);
       return NULL;
     }
     *x++ = 0;
     chid = atoi(x);
   } else {
     snprintf(errbuf, errlen, "Invalid URL");
-    htsp_connection_deref(hc);
     return NULL;
   }
 
