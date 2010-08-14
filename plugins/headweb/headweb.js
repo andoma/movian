@@ -1,23 +1,22 @@
 (function(plugin) {
   var PREFIX = "headweb:"
 
-  var settings = plugin.createSettings("Headweb", "video");
-  var service;
+  plugin.settings = plugin.createSettings("Headweb", "video");
 
-  settings.createInfo("info",
-		      plugin.path + "headweb_logo.png",
+  plugin.settings.createInfo("info",
+		      plugin.config.path + "headweb_logo.png",
 		      "Headweb is a Swedish online video store.\n"+
 		      "For more information, visit http://www.headweb.se\n\n"+
 		      "The Showtime implemetation is still very much beta.\n");
 
-  settings.createBool("enabled", "Enable headweb", false, function(v) {
+  plugin.settings.createBool("enabled", "Enable headweb", false, function(v) {
 
-    plugin.enabled = v;
+    plugin.config.enabled = v;
     if(v) {
-      service = showtime.createService("Headweb genres",
-				       PREFIX + "genres", "video");
+      plugin.service = showtime.createService("Headweb genres",
+					      PREFIX + "genres", "video");
     } else {
-      service = null;
+      delete plugin.service;
     }
   });
 
@@ -127,7 +126,7 @@
 
   // Search hook
   plugin.addSearcher(
-    "Headweb movies", plugin.path + "headweb_icon.png",
+    "Headweb movies", plugin.config.path + "headweb_icon.png",
     function(page, query) {
       requestContents(page, "/search/" + 
 		      showtime.httpEscape(query));

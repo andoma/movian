@@ -357,6 +357,16 @@ static JSClass plugin_class = {
   JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
+/**
+ *
+ */
+static JSClass plugin_conf_class = {
+  "pluginconf", JSCLASS_HAS_PRIVATE,
+  JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,
+  JS_EnumerateStub,JS_ResolveStub,JS_ConvertStub, JS_FinalizeStub,
+  JSCLASS_NO_OPTIONAL_MEMBERS
+};
+
 
 /**
  *
@@ -380,7 +390,7 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
   size_t ssize;
   JSContext *cx;
   js_plugin_t *jsp;
-  JSObject *pobj, *gobj;
+  JSObject *pobj, *gobj, *confobj;
   JSScript *s;
   char path[PATH_MAX];
   jsval val;
@@ -418,15 +428,20 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
 
   JS_DefineFunctions(cx, pobj, plugin_functions);
 
+  /* Plugin config object */
+  confobj = JS_DefineObject(cx, pobj, "config", &plugin_conf_class, NULL, 0);
+
+  JS_SetPrivate(cx, confobj, jsp);
+
   val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, url));
-  JS_SetProperty(cx, pobj, "url", &val);
+  JS_SetProperty(cx, confobj, "url", &val);
 
   if(!fa_parent(path, sizeof(path), url)) {
     val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, path));
-    JS_SetProperty(cx, pobj, "path", &val);
+    JS_SetProperty(cx, confobj, "path", &val);
   }
 
-  JS_DefineProperty(cx, pobj, "enabled", BOOLEAN_TO_JSVAL(1),
+  JS_DefineProperty(cx, confobj, "enabled", BOOLEAN_TO_JSVAL(1),
 		    NULL, jsp_setEnabled, JSPROP_PERMANENT);
 
   s = JS_CompileScript(cx, pobj, sbuf, ssize, url, 0);
