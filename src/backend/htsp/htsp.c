@@ -938,7 +938,7 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
 
   trace(TRACE_DEBUG, "HTSP", "Connecting to %s:%d", hostname, port);
 
-  tc = tcp_connect(hostname, port, errbuf, errlen, 3000);
+  tc = tcp_connect(hostname, port, errbuf, errlen, 3000, 0);
   if(tc == NULL) {
     hts_mutex_unlock(&htsp_global_mutex);
     trace(TRACE_ERROR, "HTSP", "Connection to %s:%d failed: %s", 

@@ -19,6 +19,13 @@
 #ifndef NET_H__
 #define NET_H__
 
+#include "config.h"
+
+#if ENABLE_SSL
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#endif
+
 #include <sys/types.h>
 #include <stdint.h>
 #include <htsmsg/htsbuf.h>
@@ -29,6 +36,10 @@ typedef struct tcpcon {
   int (*write)(struct tcpcon *, const void *, size_t);
   int (*read)(struct tcpcon *, void *, size_t, int);
 
+#if ENABLE_SSL
+  SSL *ssl;
+#endif
+
 } tcpcon_t;
 
 
@@ -36,7 +47,7 @@ typedef struct tcpcon {
 void net_setup(void);
 
 tcpcon_t *tcp_connect(const char *hostname, int port, char *errbuf,
-		      size_t errbufsize, int timeout);
+		      size_t errbufsize, int timeout, int ssl);
 
 int tcp_write_queue(tcpcon_t *nc, htsbuf_queue_t *q);
 
@@ -52,6 +63,5 @@ int tcp_read_data_nowait(tcpcon_t *nc, char *buf, const size_t bufsize,
 			 htsbuf_queue_t *spill);
 
 void tcp_close(tcpcon_t *nc);
-
 
 #endif /* NET_H__ */

@@ -60,7 +60,8 @@ typedef struct http_connection {
 
   TAILQ_ENTRY(http_connection) hc_link;
 
-  int hc_reused;
+  char hc_ssl;
+  char hc_reused;
 
 } http_connection_t;
 
@@ -69,7 +70,8 @@ typedef struct http_connection {
  *
  */
 static http_connection_t *
-http_connection_get(const char *hostname, int port, char *errbuf, int errlen)
+http_connection_get(const char *hostname, int port, int ssl,
+		    char *errbuf, int errlen)
 {
   http_connection_t *hc;
   tcpcon_t *tc;
@@ -77,7 +79,8 @@ http_connection_get(const char *hostname, int port, char *errbuf, int errlen)
   hts_mutex_lock(&http_connections_mutex);
 
   TAILQ_FOREACH(hc, &http_connections, hc_link) {
-    if(!strcmp(hc->hc_hostname, hostname) && hc->hc_port == port) {
+    if(!strcmp(hc->hc_hostname, hostname) && hc->hc_port == port &&
+       hc->hc_ssl == ssl) {
       TAILQ_REMOVE(&http_connections, hc, hc_link);
       http_parked_connections--;
       hts_mutex_unlock(&http_connections_mutex);
@@ -90,7 +93,7 @@ http_connection_get(const char *hostname, int port, char *errbuf, int errlen)
   hts_mutex_unlock(&http_connections_mutex);
 
   
-  if((tc = tcp_connect(hostname, port, errbuf, errlen, 5000)) < 0) {
+  if((tc = tcp_connect(hostname, port, errbuf, errlen, 5000, ssl)) < 0) {
     HTTP_TRACE("Connection to %s:%d failed", hostname, port);
     return NULL;
   }
@@ -99,6 +102,7 @@ http_connection_get(const char *hostname, int port, char *errbuf, int errlen)
   hc = malloc(sizeof(http_connection_t));
   snprintf(hc->hc_hostname, sizeof(hc->hc_hostname), "%s", hostname);
   hc->hc_port = port;
+  hc->hc_ssl = ssl;
   hc->hc_tc = tc;
   htsbuf_queue_init(&hc->hc_spill, 0);
   hc->hc_reused = 0;
@@ -587,7 +591,8 @@ static int
 http_connect(http_file_t *hf, char *errbuf, int errlen, int escape_path)
 {
   char hostname[HOSTNAME_MAX];
-  int port;
+  char proto[16];
+  int port, ssl;
   http_redirect_t *hr;
   const char *url;
 
@@ -608,21 +613,22 @@ http_connect(http_file_t *hf, char *errbuf, int errlen, int escape_path)
       break;
     }
   
-  url_split(NULL, 0, hf->hf_authurl, sizeof(hf->hf_authurl), 
+  url_split(proto, sizeof(proto), hf->hf_authurl, sizeof(hf->hf_authurl), 
 	    hostname, sizeof(hostname), &port,
 	    hf->hf_path, sizeof(hf->hf_path), 
 	    url, escape_path);
 
   hts_mutex_unlock(&http_redirects_mutex);
 
+  ssl = !strcmp(proto, "https");
   if(port < 0)
-    port = 80;
+    port = ssl ? 443 : 80;
 
   /* empty path, default to "/" */ 
   if(!hf->hf_path[0])
     strcpy(hf->hf_path, "/");
 
-  hf->hf_connection = http_connection_get(hostname, port, errbuf, errlen);
+  hf->hf_connection = http_connection_get(hostname, port, ssl, errbuf, errlen);
 
   return hf->hf_connection ? 0 : -1;
 }
@@ -1167,6 +1173,26 @@ static fa_protocol_t fa_protocol_http = {
 FAP_REGISTER(http);
 
 
+/**
+ *
+ */
+static fa_protocol_t fa_protocol_https = {
+  .fap_init  = http_init,
+  .fap_flags = FAP_INCLUDE_PROTO_IN_URL,
+  .fap_name  = "https",
+  .fap_scan  = http_scandir,
+  .fap_open  = http_open,
+  .fap_close = http_close,
+  .fap_read  = http_read,
+  .fap_seek  = http_seek,
+  .fap_fsize = http_fsize,
+  .fap_stat  = http_stat,
+  .fap_quickload = http_quickload,
+};
+
+FAP_REGISTER(https);
+
+
 
 /**
  * XXX: Move to libhts?
@@ -1544,8 +1570,8 @@ http_request(const char *url, const char **arguments,
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   htsbuf_queue_t q;
-  int code, r, port;
-  char buf[URL_MAX], hostname[HOSTNAME_MAX];
+  int code, r, port, ssl;
+  char buf[URL_MAX], hostname[HOSTNAME_MAX], proto[16];
   http_connection_t *hc;
   int redircount = 0, escape_path;
   http_redirect_t *hr;
@@ -1571,17 +1597,20 @@ http_request(const char *url, const char **arguments,
       break;
     }
 
-  url_split(NULL, 0, hf->hf_authurl, sizeof(hf->hf_authurl), 
+  url_split(proto, 16, hf->hf_authurl, sizeof(hf->hf_authurl), 
 	    hostname, sizeof(hostname), &port,
 	    hf->hf_path, sizeof(hf->hf_path),
 	    url0, escape_path);
 
   hts_mutex_unlock(&http_redirects_mutex);
 
+  ssl = !strcmp(proto, "https");
   if(port < 0)
-    port = 80;
+    port = ssl ? 443 : 80;
 
-  hc = hf->hf_connection = http_connection_get(hostname, port, errbuf, errlen);
+
+  hc = hf->hf_connection = http_connection_get(hostname, port, ssl, 
+					       errbuf, errlen);
   if(hf->hf_connection == NULL) {
     http_destroy(hf);
     http_headers_free(headers_out);

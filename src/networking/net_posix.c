@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config.h"
 #include <netdb.h>
 #include <poll.h>
 #include <assert.h>
@@ -32,6 +33,47 @@
 
 #include "net.h"
 
+
+
+
+#if ENABLE_SSL
+
+static SSL_CTX *showtime_ssl_ctx;
+
+
+
+/**
+ *
+ */
+static int
+ssl_read(tcpcon_t *tc, void *buf, size_t len, int all)
+{
+  int c, tot = 0;
+  if(!all)
+    return SSL_read(tc->ssl, buf, len);
+
+  while(tot != len) {
+    c = SSL_read(tc->ssl, buf + tot, len - tot);
+
+    if(c < 1)
+      return -1;
+
+    tot += c;
+  }
+  return tot;
+}
+
+
+/**
+ *
+ */
+static int
+ssl_write(tcpcon_t *tc, const void *data, size_t len)
+{
+  return SSL_write(tc->ssl, data, len) != len ? ECONNRESET : 0;
+}
+
+#endif
 
 
 /**
@@ -112,7 +154,7 @@ getstreamsocket(int family, char *errbuf, size_t errbufsize)
  */
 tcpcon_t *
 tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
-	    int timeout)
+	    int timeout, int ssl)
 {
   struct hostent *hp;
   char *tmphstbuf;
@@ -265,8 +307,54 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 
   tcpcon_t *tc = calloc(1, sizeof(tcpcon_t));
   tc->fd = fd;
-  tc->read = tcp_read;
-  tc->write = tcp_write;
+
+
+  if(ssl) {
+
+#if ENABLE_SSL
+    char errmsg[120];
+
+    if(showtime_ssl_ctx == NULL) {
+      SSL_library_init();
+      SSL_load_error_strings();
+      showtime_ssl_ctx = SSL_CTX_new(SSLv23_client_method());
+    }
+
+    if((tc->ssl = SSL_new(showtime_ssl_ctx)) == NULL) {
+      ERR_error_string(ERR_get_error(), errmsg);
+      snprintf(errbuf, errlen, "SSL: %s", errmsg);
+      tcp_close(tc);
+      return NULL;
+    }
+    if(SSL_set_fd(tc->ssl, tc->fd) == 0) {
+      ERR_error_string(ERR_get_error(), errmsg);
+      snprintf(errbuf, errlen, "SSL fd: %s", errmsg);
+      tcp_close(tc);
+      return NULL;
+  }
+
+    if(SSL_connect(tc->ssl) <= 0) {
+      ERR_error_string(ERR_get_error(), errmsg);
+      snprintf(errbuf, errlen, "SSL connect: %s", errmsg);
+      tcp_close(tc);
+      return NULL;
+    }
+
+    SSL_set_mode(tc->ssl, SSL_MODE_AUTO_RETRY);
+    tc->read = ssl_read;
+    tc->write = ssl_write;
+
+#else
+    snprintf(errbuf, errlen, "SSL not supported");
+    tcp_close(tc);
+    return NULL;
+#endif    
+
+  } else {
+    tc->read = tcp_read;
+    tc->write = tcp_write;
+  }
+
   return tc;
 }
 
@@ -277,6 +365,12 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 void
 tcp_close(tcpcon_t *tc)
 {
+#if ENABLE_SSL
+  if(tc->ssl != NULL) {
+    SSL_shutdown(tc->ssl);
+    SSL_free(tc->ssl);
+  }
+#endif
   close(tc->fd);
   free(tc);
 }
