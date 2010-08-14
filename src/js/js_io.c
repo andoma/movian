@@ -36,7 +36,6 @@ js_httpRequest(JSContext *cx, JSObject *obj, uintN argc,
   char errbuf[256];
   char *result;
   size_t resultsize;
-  char contenttype[64];
 
   if(!JS_ConvertArguments(cx, argc, argv, "s/o", &url, &argobj))
     return JS_FALSE;
@@ -72,11 +71,12 @@ js_httpRequest(JSContext *cx, JSObject *obj, uintN argc,
     JS_DestroyIdArray(cx, ida);
   }
 
+  struct http_header_list headers;
 
   jsrefcount s = JS_SuspendRequest(cx);
   int n = http_request(url, (const char **)httpargs, 
 		       &result, &resultsize, errbuf, sizeof(errbuf),
-		       NULL, NULL, 0, contenttype, sizeof(contenttype));
+		       NULL, NULL, 0, &headers);
   JS_ResumeRequest(cx, s);
 
   if(httpargs != NULL)
@@ -87,21 +87,25 @@ js_httpRequest(JSContext *cx, JSObject *obj, uintN argc,
     return JS_FALSE;
   }
 
-  if(!strncasecmp(contenttype, "application/xml", strlen("application/xml")) ||
-     !strncasecmp(contenttype, "text/xml", strlen("text/xml"))) {
+  const char *contenttype = http_headers_find(&headers, "content-type");
+
+  if(contenttype != NULL &&
+     (!strncasecmp(contenttype, "application/xml", strlen("application/xml")) ||
+      !strncasecmp(contenttype, "text/xml", strlen("text/xml")))) {
     char *r = strstr(result, "<?xml ");
     if(r != NULL) {
-
+      
       char *r2 = strstr(r, "?>");
       if(r2 != NULL) {
 	r2 += 2;
 	*rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, r2));
+	http_headers_free(&headers);
 	return JS_TRUE;
       }
     }
   }
-
   *rval = STRING_TO_JSVAL(JS_NewString(cx, result, resultsize));
+  http_headers_free(&headers);
   return JS_TRUE;
 }
 

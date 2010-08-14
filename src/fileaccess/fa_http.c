@@ -346,13 +346,15 @@ http_tokenize(char *buf, char **vec, int vecsize, int delimiter)
  *
  */
 static int
-http_read_response(http_file_t *hf)
+http_read_response(http_file_t *hf, struct http_header_list *headers)
 {
   int li;
   char *c, *q, *argv[2];
   int code = -1;
   int64_t i64;
   http_connection_t *hc = hf->hf_connection;
+
+  http_headers_free(headers);
   
   hf->hf_connection_mode = CONNECTION_MODE_PERSISTENT;
   hf->hf_rsize = -1;
@@ -388,6 +390,9 @@ http_read_response(http_file_t *hf)
     if((c = strrchr(argv[0], ':')) == NULL)
       continue;
     *c = 0;
+
+    if(headers != NULL)
+      http_headers_add(headers, argv[0], argv[1]);
 
     if(!strcasecmp(argv[0], "Transfer-Encoding")) {
 
@@ -660,7 +665,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   tcp_write_queue(hf->hf_connection->hc_fd, &q);
 
-  code = http_read_response(hf);
+  code = http_read_response(hf, NULL);
   if(code == -1 && hf->hf_connection->hc_reused) {
     http_detach(hf, 0);
     goto reconnect;
@@ -829,7 +834,7 @@ again:
 		 hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
   
   tcp_write_queue(hf->hf_connection->hc_fd, &q);
-  code = http_read_response(hf);
+  code = http_read_response(hf, NULL);
   if(code == -1 && hf->hf_connection->hc_reused) {
     http_detach(hf, 0);
     goto reconnect;
@@ -980,7 +985,7 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
       }
 
       tcp_write_queue(hc->hc_fd, &q);
-      code = http_read_response(hf);
+      code = http_read_response(hf, NULL);
       switch(code) {
       case 206:
 	// Range transfer OK
@@ -1136,7 +1141,7 @@ http_quickload(struct fa_protocol *fap, const char *url,
   char *res;
 
   if(http_request(url, NULL, &res, sizeptr, errbuf, errlen, NULL, 0,
-		  HTTP_REQUEST_ESCAPE_PATH, NULL, 0))
+		  HTTP_REQUEST_ESCAPE_PATH, NULL))
     return NULL;
   return res;
 }
@@ -1403,7 +1408,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
 		   hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
 
     tcp_write_queue(hf->hf_connection->hc_fd, &q);
-    code = http_read_response(hf);
+    code = http_read_response(hf, NULL);
 
     HTTP_TRACE("%s: PROPFIND %d", hf->hf_url, code);
 
@@ -1536,8 +1541,7 @@ http_request(const char *url, const char **arguments,
 	     char **result, size_t *result_sizep,
 	     char *errbuf, size_t errlen,
 	     htsbuf_queue_t *postdata, const char *postcontenttype,
-	     int flags,
-	     char *contenttypebuf, size_t contenttypebuflen)
+	     int flags, struct http_header_list *headers_out)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   htsbuf_queue_t q;
@@ -1547,10 +1551,11 @@ http_request(const char *url, const char **arguments,
   int redircount = 0, escape_path;
   http_redirect_t *hr;
   const char *url0;
-  hf->hf_url = strdup(url);
 
-  if(contenttypebuf && contenttypebuflen > 0)
-    *contenttypebuf = 0;
+  if(headers_out != NULL)
+    LIST_INIT(headers_out);
+
+  hf->hf_url = strdup(url);
 
  retry:
 
@@ -1580,6 +1585,7 @@ http_request(const char *url, const char **arguments,
   hc = hf->hf_connection = http_connection_get(hostname, port, errbuf, errlen);
   if(hf->hf_connection == NULL) {
     http_destroy(hf);
+    http_headers_free(headers_out);
     return -1;
   }
 
@@ -1626,7 +1632,7 @@ http_request(const char *url, const char **arguments,
   if(postdata != NULL)
     tcp_write_queue_dontfree(hf->hf_connection->hc_fd, postdata);
 
-  code = http_read_response(hf);
+  code = http_read_response(hf, headers_out);
   if(code == -1 && hf->hf_connection->hc_reused) {
     http_detach(hf, 0);
     goto retry;
@@ -1634,8 +1640,6 @@ http_request(const char *url, const char **arguments,
 
   switch(code) {
   case 200:
-    if(hf->hf_content_type)
-      snprintf(contenttypebuf, contenttypebuflen, "%s", hf->hf_content_type);
     break;
 
   case 301:
@@ -1644,6 +1648,7 @@ http_request(const char *url, const char **arguments,
   case 307:
     if(redirect(hf, &redircount, errbuf, errlen, code)) {
       http_destroy(hf);
+      http_headers_free(headers_out);
       return -1;
     }
     goto retry;
@@ -1651,6 +1656,7 @@ http_request(const char *url, const char **arguments,
   case 401:
     if(authenticate(hf, errbuf, errlen, NULL)) {
       http_destroy(hf);
+      http_headers_free(headers_out);
       return -1;
     }
     goto retry;
@@ -1658,6 +1664,7 @@ http_request(const char *url, const char **arguments,
   default:
     snprintf(errbuf, errlen, "HTTP error: %d", code);
     http_destroy(hf);
+    http_headers_free(headers_out);
     return -1;
   }
   
@@ -1715,6 +1722,7 @@ http_request(const char *url, const char **arguments,
       free(buf);
       snprintf(errbuf, errlen, "Chunked transfer error");
       http_destroy(hf);
+      http_headers_free(headers_out);
       return -1;
 
     } else {
@@ -1728,6 +1736,7 @@ http_request(const char *url, const char **arguments,
 	snprintf(errbuf, errlen, "HTTP read error");
 	free(buf);
 	http_destroy(hf);
+	http_headers_free(headers_out);
 	return -1;    
       }
     }
@@ -1739,4 +1748,54 @@ http_request(const char *url, const char **arguments,
 
   http_destroy(hf);
   return 0;
+}
+
+
+/**
+ *
+ */
+void
+http_headers_free(struct http_header_list *headers)
+{
+  http_header_t *hh;
+
+  if(headers == NULL)
+    return;
+
+  while((hh = LIST_FIRST(headers)) != NULL) {
+    LIST_REMOVE(hh, hh_link);
+    free(hh->hh_key);
+    free(hh->hh_value);
+    free(hh);
+  }
+}
+
+
+/**
+ *
+ */
+void
+http_headers_add(struct http_header_list *headers, const char *key,
+		 const char *value)
+{
+  http_header_t *hh = malloc(sizeof(http_header_t));
+
+  hh->hh_key   = strdup(key);
+  hh->hh_value = strdup(value);
+  LIST_INSERT_HEAD(headers, hh, hh_link);
+}
+
+
+/**
+ *
+ */
+const char *
+http_headers_find(struct http_header_list *headers, const char *key)
+{
+  http_header_t *hh;
+
+  LIST_FOREACH(hh, headers, hh_link)
+    if(!strcasecmp(hh->hh_key, key))
+      return hh->hh_value;
+  return NULL;
 }
