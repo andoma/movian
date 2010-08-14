@@ -32,7 +32,7 @@ tcp_write_queue(tcpcon_t *tc, htsbuf_queue_t *q)
     TAILQ_REMOVE(&q->hq_q, hd, hd_link);
 
     l = hd->hd_data_len - hd->hd_data_off;
-    r |= tcp_write(tc, hd->hd_data + hd->hd_data_off, l);
+    r |= tc->write(tc, hd->hd_data + hd->hd_data_off, l);
     free(hd->hd_data);
     free(hd);
   }
@@ -52,7 +52,7 @@ tcp_write_queue_dontfree(tcpcon_t *tc, htsbuf_queue_t *q)
 
   TAILQ_FOREACH(hd, &q->hq_q, hd_link) {
     l = hd->hd_data_len - hd->hd_data_off;
-    r |= tcp_write(tc, hd->hd_data + hd->hd_data_off, l);
+    r |= tc->write(tc, hd->hd_data + hd->hd_data_off, l);
   }
   return 0;
 }
@@ -73,7 +73,7 @@ tcp_fill_htsbuf_from_fd(tcpcon_t *tc, htsbuf_queue_t *hq)
 
     if(c > 0) {
 
-      if((c = tcp_read(tc, hd->hd_data + hd->hd_data_len, c, 0)) < 0)
+      if((c = tc->read(tc, hd->hd_data + hd->hd_data_len, c, 0)) < 0)
 	return -1;
 
       hd->hd_data_len += c;
@@ -87,7 +87,7 @@ tcp_fill_htsbuf_from_fd(tcpcon_t *tc, htsbuf_queue_t *hq)
   hd->hd_data_size = 1000;
   hd->hd_data = malloc(hd->hd_data_size);
 
-  if((c = tcp_read(tc, hd->hd_data, hd->hd_data_size, 0)) < 0) {
+  if((c = tc->read(tc, hd->hd_data, hd->hd_data_size, 0)) < 0) {
     free(hd->hd_data);
     free(hd);
     return -1;
@@ -143,7 +143,7 @@ tcp_read_data(tcpcon_t *tc, char *buf, const size_t bufsize,
   if(tot == bufsize)
     return 0;
 
-  return tcp_read(tc, buf + tot, bufsize - tot, 1) < 0 ? -1 : 0;
+  return tc->read(tc, buf + tot, bufsize - tot, 1) < 0 ? -1 : 0;
 }
 
 /**
@@ -158,5 +158,5 @@ tcp_read_data_nowait(tcpcon_t *tc, char *buf, const size_t bufsize,
   if(tot > 0)
     return tot;
 
-  return tcp_read(tc, buf + tot, bufsize - tot, 0);
+  return tc->read(tc, buf + tot, bufsize - tot, 0);
 }

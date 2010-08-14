@@ -26,6 +26,9 @@
 typedef struct tcpcon {
   int fd;
 
+  int (*write)(struct tcpcon *, const void *, size_t);
+  int (*read)(struct tcpcon *, void *, size_t, int);
+
 } tcpcon_t;
 
 
@@ -47,10 +50,6 @@ int tcp_read_data(tcpcon_t *nc, char *buf, const size_t bufsize,
 
 int tcp_read_data_nowait(tcpcon_t *nc, char *buf, const size_t bufsize, 
 			 htsbuf_queue_t *spill);
-
-int tcp_read(tcpcon_t *nc, void *buf, size_t len, int all);
-
-int tcp_write(tcpcon_t *nc, const void *data, size_t len);
 
 void tcp_close(tcpcon_t *nc);
 

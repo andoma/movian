@@ -34,7 +34,50 @@
 
 
 
+/**
+ *
+ */
+static int
+tcp_write(tcpcon_t *tc, const void *data, size_t len)
+{
+#ifdef MSG_NOSIGNAL
+  return send(tc->fd, data, len, MSG_NOSIGNAL) != len ? ECONNRESET : 0;
+#else
+  return send(tc->fd, data, len, 0           ) != len ? ECONNRESET : 0;
+#endif
+}
 
+
+/**
+ *
+ */
+static int
+tcp_read(tcpcon_t *tc, void *buf, size_t len, int all)
+{
+  int x;
+  size_t off = 0;
+  while(1) {
+
+    x = recv(tc->fd, buf + off, len - off, all ? MSG_WAITALL : 0);
+    if(x < 0)
+      return -1;
+    
+    if(all) {
+
+      off += x;
+      if(off == len)
+	return len;
+
+    } else {
+      return x < 1 ? -1 : x;
+    }
+  }
+}
+
+
+/**
+ *
+ */
 static int
 getstreamsocket(int family, char *errbuf, size_t errbufsize)
 {
@@ -222,48 +265,9 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 
   tcpcon_t *tc = calloc(1, sizeof(tcpcon_t));
   tc->fd = fd;
-
+  tc->read = tcp_read;
+  tc->write = tcp_write;
   return tc;
-}
-
-/**
- *
- */
-int
-tcp_write(tcpcon_t *tc, const void *data, size_t len)
-{
-#ifdef MSG_NOSIGNAL
-  return send(tc->fd, data, len, MSG_NOSIGNAL) != len ? ECONNRESET : 0;
-#else
-  return send(tc->fd, data, len, 0           ) != len ? ECONNRESET : 0;
-#endif
-}
-
-
-/**
- *
- */
-int
-tcp_read(tcpcon_t *tc, void *buf, size_t len, int all)
-{
-  int x;
-  size_t off = 0;
-  while(1) {
-
-    x = recv(tc->fd, buf + off, len - off, all ? MSG_WAITALL : 0);
-    if(x < 0)
-      return -1;
-    
-    if(all) {
-
-      off += x;
-      if(off == len)
-	return len;
-
-    } else {
-      return x < 1 ? -1 : x;
-    }
-  }
 }
 
 
