@@ -38,8 +38,8 @@ int tcp_read_line(int fd, char *buf, const size_t bufsize,
 int tcp_read_data(int fd, char *buf, const size_t bufsize,
 		  htsbuf_queue_t *spill);
 
-int tcp_read_data2(int fd, char *buf, const size_t bufsize, 
-		   htsbuf_queue_t *spill);
+int tcp_read_data_nowait(int fd, char *buf, const size_t bufsize, 
+			 htsbuf_queue_t *spill);
 
 int tcp_read(int fd, void *buf, size_t len, int all);
 

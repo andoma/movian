@@ -112,10 +112,10 @@ http_read_data(http_connection_t *hc, char *buf, const size_t bufsize,
  *
  */
 static int
-http_read_data2(http_connection_t *hc, char *buf, const size_t bufsize, 
-		htsbuf_queue_t *spill)
+http_read_data_nowait(http_connection_t *hc, char *buf, const size_t bufsize, 
+		      htsbuf_queue_t *spill)
 {
-  return tcp_read_data2(hc->hc_fd, buf, bufsize, spill);
+  return tcp_read_data_nowait(hc->hc_fd, buf, bufsize, spill);
 }
 
 
@@ -1734,7 +1734,7 @@ http_request(const char *url, const char **arguments,
 	mem = realloc(mem, capacity + 1);
       }
 
-      r = http_read_data2(hc, mem + size, capacity - size, &hc->hc_spill);
+      r = http_read_data_nowait(hc, mem + size, capacity - size, &hc->hc_spill);
       if(r < 0)
 	break;
 

@@ -148,7 +148,8 @@ tcp_read_data(int fd, char *buf, const size_t bufsize, htsbuf_queue_t *spill)
  *
  */
 int
-tcp_read_data2(int fd, char *buf, const size_t bufsize, htsbuf_queue_t *spill)
+tcp_read_data_nowait(int fd, char *buf, const size_t bufsize,
+		     htsbuf_queue_t *spill)
 {
   int tot = htsbuf_read(spill, buf, bufsize);
 
