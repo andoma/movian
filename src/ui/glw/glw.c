@@ -1619,7 +1619,8 @@ glw_dispatch_event(uii_t *uii, event_t *e)
 
     glw_unlock(gr);
 
-    uii->uii_ui->ui_dispatch_event(uii, e2);
+    if(e2 != NULL)
+      uii->uii_ui->ui_dispatch_event(uii, e2);
     return;
   }
 
