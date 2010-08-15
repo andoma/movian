@@ -360,8 +360,7 @@ nav_page_create(navigator_t *nav, const char *url, const char *view, int flags)
 
   if(view != NULL) {
     np->np_view = strdup(view);
-    prop_set_string(prop_create(np->np_prop_root, "view"), view);
-    flags |= NAV_PAGE_PRESET_VIEW;
+    prop_set_string(prop_create(np->np_prop_root, "requestedView"), view);
   }
 
   np->np_flags = flags;

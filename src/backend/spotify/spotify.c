@@ -281,7 +281,8 @@ typedef struct spotify_parent {
 
 static hts_cond_t spotify_cond_parent;
 
-static void parse_search_reply(sp_search *result, prop_t *nodes, prop_t *view);
+static void parse_search_reply(sp_search *result, prop_t *nodes, 
+			       prop_t *contents);
 
 static playlist_t *pl_create(sp_playlist *plist, prop_t *root,
 			     int withtracks, int autodestroy);
@@ -1285,7 +1286,6 @@ spotify_open_artist(sp_link *l, prop_t *p)
 
   metadata_create(prop_create(meta, "title"), METADATA_ARTIST_NAME, artist);
 
-  prop_set_string(prop_create(p, "view"), "list");
   f_sp_artistbrowse_create(spotify_session, artist,
 			   spotify_browse_artist_callback,
 			   bh_create(src, NULL));
@@ -1312,7 +1312,6 @@ spotify_page_done(spotify_page_t *sp)
 static void
 spotify_open_rootlist(prop_t *p)
 {
-  prop_set_string(prop_create(p, "view"), "list");
   prop_link(prop_rootlist_source, prop_create(p, "model"));
 }
 
@@ -1327,7 +1326,7 @@ spotify_open_search_done(sp_search *result, void *userdata)
   prop_t *src = prop_create(sp->sp_root, "model");
   prop_t *nodes = prop_create(src, "nodes");
 
-  parse_search_reply(result, nodes, prop_create(sp->sp_root, "view"));
+  parse_search_reply(result, nodes, prop_create(src, "contents"));
 
   prop_set_string(prop_create(src, "type"), "directory");
   prop_set_int(prop_create(src, "loading"), 0);
@@ -1372,7 +1371,7 @@ spotify_open_album(sp_album *alb, prop_t *p, const char *playme)
   metadata_create(prop_create(meta, "artist_name"), METADATA_ALBUM_ARTIST_NAME,
 		  alb);
 
-  prop_set_string(prop_create(p, "view"), "album");
+  prop_set_string(prop_create(src, "contents"), "albumTracks");
 }
 
 
@@ -1382,7 +1381,6 @@ spotify_open_album(sp_album *alb, prop_t *p, const char *playme)
 static void
 spotify_open_playlist(spotify_page_t *sp, sp_playlist *plist)
 {
-  prop_set_string(prop_create(sp->sp_root, "view"), "list");
   pl_create(plist, prop_create(sp->sp_root, "model"), 1, 1);
 }
 
@@ -1483,7 +1481,7 @@ spotify_open_page(spotify_page_t *sp)
  *
  */
 static void
-parse_search_reply(sp_search *result, prop_t *nodes, prop_t *view)
+parse_search_reply(sp_search *result, prop_t *nodes, prop_t *contents)
 {
   int i, nalbums, ntracks, nartists;
   sp_album *album, *album_prev = NULL;
@@ -1531,11 +1529,9 @@ parse_search_reply(sp_search *result, prop_t *nodes, prop_t *view)
     album_prev = album;
   }
 
-  if(view != NULL) {
+  if(contents != NULL) {
     if(nalbums && nartists == 0 && ntracks == 0)
-      prop_set_string(view, "albumcollection");
-    else
-      prop_set_string(view, "list");
+      prop_set_string(contents, "albums");
   }
 
   f_sp_search_release(result);

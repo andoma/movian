@@ -1,15 +1,15 @@
 #import "theme://include/defs.view"
 #import "theme://include/separators.view"
 
-$view.canSlideShow = $page.view == "images";
-$view.canCoverFlow = ($page.view == "images" ||
-		      $page.view == "albumcollection");
+$view.canSlideShow = $page.model.contents == "images";
+$view.canCoverFlow = ($page.model.contents == "images" ||
+		      $page.model.contents == "albums");
 
 $page.glw.curView = devoidify($page.glw.userView, 
-			      translate($page.view, "list",
-					"slideshow", "slideshow",
-					"albumcollection", "coverflow",
-					"images", "coverflow"));
+			      devoidify($page.requestedView,
+					translate($page.model.contents, "list",
+						  "albums", "coverflow",
+						  "images", "coverflow")));
 
 #define TOOLBARCOL() {[0.5, 0.5, 0.5]}
 

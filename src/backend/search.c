@@ -114,8 +114,6 @@ search_open(backend_t *beself, struct navigator *nav,
   
   np = nav_page_create(nav, url0, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
 
-  prop_set_string(prop_create(np->np_prop_root, "view"), "list");
-
   model = prop_create(np->np_prop_root, "model");
   prop_set_string(prop_create(model, "type"), "directory");
   

@@ -1139,7 +1139,6 @@ be_htsp_open(backend_t *be, struct navigator *nav,
   np = nav_page_create(nav, url, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
 
   p = np->np_prop_root;
-  prop_set_string(prop_create(p, "view"), "list");
   prop_link(src, prop_create(p, "model"));
 
   return np;

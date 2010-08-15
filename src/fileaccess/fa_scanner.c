@@ -40,7 +40,7 @@ typedef struct scanner {
   char *s_playme;
 
   prop_t *s_nodes;
-  prop_t *s_viewprop;
+  prop_t *s_contents;
   prop_t *s_root;
 
   int s_stop;
@@ -162,7 +162,7 @@ static struct strtab postfixtab[] = {
  *
  */
 static void
-quick_analyzer(fa_dir_t *fd, prop_t *viewprop)
+quick_analyzer(fa_dir_t *fd, prop_t *contents)
 {
   fa_dir_entry_t *fde;
   int type;
@@ -192,9 +192,7 @@ quick_analyzer(fa_dir_t *fd, prop_t *viewprop)
   }
 
   if(images * 4 > fd->fd_count * 3)
-    prop_set_string(viewprop, "images");
-  else
-    prop_set_string(viewprop, "list");
+    prop_set_string(contents, "images");
 }
 
 
@@ -202,7 +200,7 @@ quick_analyzer(fa_dir_t *fd, prop_t *viewprop)
  *
  */
 static void
-deep_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
+deep_analyzer(fa_dir_t *fd, prop_t *contents, prop_t *root, int *stop)
 {
   int type;
   prop_t *metadata, *p;
@@ -221,7 +219,7 @@ deep_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
 
   /* Empty */
   if(fd->fd_count == 0) {
-    prop_set_string(viewprop, "empty");
+    prop_set_string(contents, "empty");
     return;
   }
 
@@ -322,7 +320,7 @@ deep_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
      (different_artists < 2 || different_artists < album_score / 2)) {
       
     /* It is an album */
-    prop_set_string(viewprop, "album");
+    prop_set_string(contents, "albumTracks");
 
     if(root != NULL) {
       prop_set_string(prop_create(root, "album_name"), album_name);
@@ -353,11 +351,9 @@ deep_analyzer(fa_dir_t *fd, prop_t *viewprop, prop_t *root, int *stop)
       }
     }
   } else if(fd->fd_count == unknown) {
-    prop_set_string(viewprop, "empty");
+    prop_set_string(contents, "empty");
   } else if(images * 4 > fd->fd_count * 3) {
-    prop_set_string(viewprop, "images");
-  } else {
-    prop_set_string(viewprop, "list");
+    prop_set_string(contents, "images");
   }
 }
 
@@ -452,7 +448,7 @@ scanner_notification(void *opaque, fa_notify_op_t op, const char *filename,
     scanner_entry_setup(s, fa_dir_add(s->s_fd, url, filename, type));
     break;
   }
-  deep_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
+  deep_analyzer(s->s_fd, s->s_contents, s->s_root, &s->s_stop);
 }
 
 
@@ -543,7 +539,7 @@ doscan(scanner_t *s)
   prop_t **pvec;
   int i;
 
-  quick_analyzer(s->s_fd, s->s_viewprop);
+  quick_analyzer(s->s_fd, s->s_contents);
 
   pvec = malloc(sizeof(prop_t *) * (fd->fd_count + 1));
   i = 0;
@@ -570,7 +566,7 @@ doscan(scanner_t *s)
 
   prop_set_int(prop_create(s->s_root, "loading"), 0);
 
-  deep_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
+  deep_analyzer(s->s_fd, s->s_contents, s->s_root, &s->s_stop);
 
   if(!fa_notify(s->s_url, s, scanner_notification, scanner_checkstop))
     return;
@@ -610,9 +606,7 @@ scanner(void *aux)
 
   prop_ref_dec(s->s_root);
   prop_ref_dec(s->s_nodes);
-
-  if(s->s_viewprop != NULL)
-    prop_ref_dec(s->s_viewprop);
+  prop_ref_dec(s->s_contents);
 
   scanner_unref(s);
   return NULL;
@@ -646,8 +640,7 @@ scanner_stop(void *opaque, prop_event_t event, ...)
  *
  */
 void
-fa_scanner(const char *url, prop_t *model,
-	   prop_t *view, const char *playme)
+fa_scanner(const char *url, prop_t *model, const char *playme)
 {
   scanner_t *s = calloc(1, sizeof(scanner_t));
 
@@ -668,10 +661,8 @@ fa_scanner(const char *url, prop_t *model,
   s->s_nodes = source;
   prop_ref_inc(s->s_nodes);
 
-  if(view != NULL) {
-    s->s_viewprop = view;
-    prop_ref_inc(s->s_viewprop);
-  }
+  s->s_contents = prop_create(model, "contents");
+  prop_ref_inc(s->s_contents);
 
   s->s_refcount = 2; // One held by scanner thread, one by the subscription
 

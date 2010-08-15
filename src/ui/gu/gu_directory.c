@@ -32,7 +32,7 @@ typedef struct gu_directory {
 
   gu_tab_t *gd_gt;
   gu_nav_page_t *gd_gnp;
-  prop_sub_t *gd_view_sub;
+  prop_sub_t *gd_contents_sub;
 } gu_directory_t;
 
 
@@ -42,7 +42,7 @@ typedef struct gu_directory {
  *
  */
 static void
-set_view(void *opaque, const char *str)
+set_contents(void *opaque, const char *str)
 {
   gu_directory_t *gd = opaque;
   gu_nav_page_t *gnp = gd->gd_gnp;
@@ -54,9 +54,13 @@ set_view(void *opaque, const char *str)
   }
 
   if(str == NULL)
-    return;
+    str = "";
 
-  if(!strcmp(str, "list")) {
+  if(!strcmp(str, "albumTracks")) {
+    w = gu_directory_album_create(gd->gd_gt, gnp->gnp_prop);
+  } else if(!strcmp(str, "albums")) {
+    w = gu_directory_albumcollection_create(gd->gd_gt, gnp->gnp_prop);
+  } else {
     w = gu_directory_list_create(gd->gd_gt, gnp->gnp_prop,
 				 GU_DIR_VISIBLE_HEADERS |
 				 GU_DIR_HEADERS |
@@ -67,13 +71,6 @@ set_view(void *opaque, const char *str)
 				 GU_DIR_COL_NUM_TRACKS |
 				 GU_DIR_COL_ALBUM |
 				 GU_DIR_COL_POPULARITY);
-  } else if(!strcmp(str, "album")) {
-    w = gu_directory_album_create(gd->gd_gt, gnp->gnp_prop);
-  } else if(!strcmp(str, "albumcollection")) {
-    w = gu_directory_albumcollection_create(gd->gd_gt, gnp->gnp_prop);
-  } else {
-    TRACE(TRACE_ERROR, "GU", "Can not display directory view: %s", str);
-    return;
   }
 
   gd->gd_curview = w;
@@ -89,7 +86,7 @@ gu_directory_destroy(GtkObject *object, gpointer opaque)
 {
   gu_directory_t *gd = opaque;
 
-  prop_unsubscribe(gd->gd_view_sub);
+  prop_unsubscribe(gd->gd_contents_sub);
   free(gd);
 }
 
@@ -105,10 +102,10 @@ gu_directory_create(gu_nav_page_t *gnp)
   gd->gd_gt = gnp->gnp_gt;
   gd->gd_gnp = gnp;
 
-  gd->gd_view_sub =
+  gd->gd_contents_sub =
     prop_subscribe(0,
-		   PROP_TAG_NAME("page", "view"),
-		   PROP_TAG_CALLBACK_STRING, set_view, gd,
+		   PROP_TAG_NAME("page", "model", "contents"),
+		   PROP_TAG_CALLBACK_STRING, set_contents, gd,
 		   PROP_TAG_COURIER, gd->gd_gt->gt_gw->gw_gu->gu_pc, 
 		   PROP_TAG_ROOT, gnp->gnp_prop, 
 		   NULL);

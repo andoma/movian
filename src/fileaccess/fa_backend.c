@@ -94,8 +94,7 @@ file_open_dir(backend_t *be, struct navigator *nav,
   if(!fa_parent(parent, sizeof(parent), url))
     prop_set_string(prop_create(np->np_prop_root, "parent"), parent);
 
-  fa_scanner(url, model,
-	     view ? NULL : prop_create(np->np_prop_root, "view"), NULL);
+  fa_scanner(url, model, NULL);
   return np;
 }
 
@@ -130,8 +129,7 @@ file_open_audio(struct navigator *nav, const char *url, const char *view)
   if(!fa_parent(parent2, sizeof(parent2), parent))
     prop_set_string(prop_create(np->np_prop_root, "parent"), parent2);
 
-  fa_scanner(parent, model,
-	     view ? NULL : prop_create(np->np_prop_root, "view"), url);
+  fa_scanner(parent, model, url);
   return np;
 }
 
@@ -203,7 +201,7 @@ static prop_t *
 be_list(backend_t *be, const char *url, char *errbuf, size_t errsize)
 {
   prop_t *p = prop_create(NULL, NULL);
-  fa_scanner(url, p, NULL, NULL);
+  fa_scanner(url, p, NULL);
   return p;
 }
 

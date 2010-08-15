@@ -209,7 +209,7 @@ get_cd_meta(const char *device)
     cm->cm_meta   = prop_create(cm->cm_source, "metadata");
 
     prop_set_string(prop_create(cm->cm_root, "type"), "directory");
-    prop_set_string(prop_create(cm->cm_root, "view"), "album");
+    prop_set_string(prop_create(cm->cm_root, "contents"), "albumTracks");
 
     rstr_t *audio = rstr_alloc("audio");
   

@@ -41,7 +41,6 @@ typedef struct nav_page {
   int np_flags;
 
 #define NAV_PAGE_DONT_CLOSE_ON_BACK 0x1
-#define NAV_PAGE_PRESET_VIEW        0x2
 
   prop_sub_t *np_close_sub;
 
