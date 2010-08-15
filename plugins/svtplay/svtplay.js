@@ -29,6 +29,9 @@
   function bestMedia(item) {
     var bestItem;
     for each (var m in item.media::group.media::content) {
+
+      if(m.@type == 'application/vnd.apple.mpegurl')
+	continue;
       if(showtime.canHandle(m.@url)) {
 	if(!bestItem || m.@bitrate > bestItem.@bitrate) {
 	  bestItem = m;
