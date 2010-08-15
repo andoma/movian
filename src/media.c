@@ -208,6 +208,8 @@ mp_create(const char *name, const char *type, int flags)
 
   prop_set_int(prop_create(mp->mp_prop_root, "canStop"), 1);
 
+  mp->mp_prop_model = prop_create(mp->mp_prop_root, "model");
+
   mp->mp_pc = prop_courier_create_thread(&mp->mp_mutex, "mp");
 
   mp->mp_sub_currenttime = 

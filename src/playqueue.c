@@ -65,7 +65,7 @@ playqueue_entry_t *pqe_current;
 /**
  *
  */
-static prop_t *playqueue_source; 
+static prop_t *playqueue_model; 
 static prop_sub_t *playqueue_source_sub;
 static struct playqueue_entry_queue playqueue_source_entries;
 static prop_t *playqueue_startme;
@@ -237,9 +237,10 @@ playqueue_clear(void)
 {
   playqueue_entry_t *pqe;
 
-  if(playqueue_source != NULL) {
-    prop_destroy(playqueue_source);
-    playqueue_source = NULL;
+  if(playqueue_model != NULL) {
+    prop_unlink(prop_create(playqueue_mp->mp_prop_model, "metadata"));
+    prop_destroy(playqueue_model);
+    playqueue_model = NULL;
   }
 
   if(playqueue_source_sub != NULL) {
@@ -546,7 +547,10 @@ playqueue_load_with_source(prop_t *track, prop_t *source)
 		   PROP_TAG_NAMED_ROOT, source, "self", 
 		   NULL);
 
-  playqueue_source = prop_xref_addref(source);
+  playqueue_model = prop_xref_addref(source);
+
+  prop_link(prop_create(source, "metadata"), 
+	    prop_create(playqueue_mp->mp_prop_model, "metadata"));
 
   hts_mutex_unlock(&playqueue_mutex);
 }
