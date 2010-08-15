@@ -9,8 +9,8 @@ widget(backdrop, {
 
     widget(image, {
       .hqScaling = true;
-      .source = devoidify($global.media.current.metadata.album_art,
-			  "theme://icons/48x48/Music.png");
+      .source = $global.media.current.metadata.album_art ??
+	"theme://icons/48x48/Music.png";
     });
 
     widget(dummy, {

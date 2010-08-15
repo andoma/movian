@@ -31,7 +31,7 @@ widget(container_x, {
     widget(label, {
       .align = center;
       .alpha = select($self.model.keycode, 1.0, 0.5);
-      .caption = devoidify($self.model.keycode, "<not set>");
+      .caption = $self.model.keycode ?? "<not set>";
     });
   });
 

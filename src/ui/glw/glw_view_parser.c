@@ -81,17 +81,18 @@ tokenstack_pop(token_t **s)
  *
  */
 static const int tokenprecedence[TOKEN_num] = {
-  [TOKEN_ASSIGNMENT] = 1,
-  [TOKEN_BOOLEAN_OR] = 2,
-  [TOKEN_BOOLEAN_AND]= 3,
-  [TOKEN_BOOLEAN_XOR]= 4,
-  [TOKEN_EQ]         = 5,
-  [TOKEN_NEQ]        = 5,
-  [TOKEN_ADD]        = 6,
-  [TOKEN_SUB]        = 6,
-  [TOKEN_MULTIPLY]   = 7,
-  [TOKEN_DIVIDE]     = 7,
-  [TOKEN_MODULO]     = 7,
+  [TOKEN_ASSIGNMENT]    = 1,
+  [TOKEN_NULL_COALESCE] = 2,
+  [TOKEN_BOOLEAN_OR]    = 3,
+  [TOKEN_BOOLEAN_AND]= 4,
+  [TOKEN_BOOLEAN_XOR]= 5,
+  [TOKEN_EQ]         = 6,
+  [TOKEN_NEQ]        = 6,
+  [TOKEN_ADD]        = 7,
+  [TOKEN_SUB]        = 7,
+  [TOKEN_MULTIPLY]   = 8,
+  [TOKEN_DIVIDE]     = 8,
+  [TOKEN_MODULO]     = 9,
   [TOKEN_BLOCK]      = 10,
   [TOKEN_BOOLEAN_NOT]= 11,
 };
@@ -160,6 +161,7 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
     case TOKEN_BOOLEAN_XOR:
     case TOKEN_ASSIGNMENT:
     case TOKEN_EQ:
+    case TOKEN_NULL_COALESCE:
     case TOKEN_NEQ:
     case TOKEN_BOOLEAN_NOT:
       while(stack && tokenprecedence[t->type] <= tokenprecedence[stack->type])

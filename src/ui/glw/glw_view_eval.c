@@ -497,6 +497,29 @@ eval_eq(glw_view_eval_context_t *ec, struct token *self, int neq)
 
 
 /**
+ * Returns the second argument if the first is void, otherwise returns
+ * the first arg
+ */
+static int 
+eval_null_coalesce(glw_view_eval_context_t *ec, struct token *self)
+{
+  token_t *b = eval_pop(ec), *a = eval_pop(ec);
+ 
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+  if((b = token_resolve(ec, b)) == NULL)
+    return -1;
+
+  if(a->type == TOKEN_VOID) {
+    eval_push(ec, b);
+  } else {
+    eval_push(ec, a);
+  }
+  return 0;
+}
+
+
+/**
  *
  */
 static int
@@ -1351,6 +1374,11 @@ glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec)
 	return -1;
       break;
 	
+    case TOKEN_NULL_COALESCE:
+      if(eval_null_coalesce(ec, t))
+	return -1;
+      break;
+
     case TOKEN_EQ:
     case TOKEN_NEQ:
       if(eval_eq(ec, t, t->type == TOKEN_NEQ))
@@ -2683,34 +2711,6 @@ glwf_isPressed(glw_view_eval_context_t *ec, struct token *self,
 }
 
 
-
-/**
- * Returns the second argument if the first is void, otherwise returns
- * the first arg
- */
-static int 
-glwf_devoidify(glw_view_eval_context_t *ec, struct token *self,
-	       token_t **argv, unsigned int argc)
-{
-  token_t *a = argv[0];
-  token_t *b = argv[1];
-
-  if((a = token_resolve(ec, a)) == NULL)
-    return -1;
-  if((b = token_resolve(ec, b)) == NULL)
-    return -1;
-
-  if(a->type == TOKEN_VOID) {
-    eval_push(ec, b);
-  } else {
-    eval_push(ec, a);
-  }
-  return 0;
-}
-
-
-
-
 /**
  * Returns the focused child (or void if nothing is focused)
  */
@@ -3470,7 +3470,6 @@ static const token_func_t funcvec[] = {
   {"isFocused", 0, glwf_isFocused},
   {"isHovered", 0, glwf_isHovered},
   {"isPressed", 0, glwf_isPressed},
-  {"devoidify", 2, glwf_devoidify},
   {"focusedChild", 0, glwf_focusedChild},
   {"getCaption", 1, glwf_getCaption},
   {"bind", 1, glwf_bind},

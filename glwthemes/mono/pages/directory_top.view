@@ -5,11 +5,10 @@ $view.canSlideShow = $page.model.contents == "images";
 $view.canCoverFlow = ($page.model.contents == "images" ||
 		      $page.model.contents == "albums");
 
-$page.glw.curView = devoidify($page.glw.userView, 
-			      devoidify($page.requestedView,
-					translate($page.model.contents, "list",
-						  "albums", "coverflow",
-						  "images", "coverflow")));
+$page.glw.curView = $page.glw.userView ?? $page.requestedView ??
+  translate($page.model.contents, "list",
+	    "albums", "coverflow",
+	    "images", "coverflow");
 
 #define TOOLBARCOL() {[0.5, 0.5, 0.5]}
 

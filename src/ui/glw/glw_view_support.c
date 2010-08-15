@@ -95,6 +95,7 @@ glw_view_token_free(token_t *t)
   case TOKEN_BOOLEAN_NOT:
   case TOKEN_EQ:
   case TOKEN_NEQ:
+  case TOKEN_NULL_COALESCE:
   case TOKEN_EXPR:
   case TOKEN_RPN:
   case TOKEN_BLOCK:
@@ -209,6 +210,7 @@ glw_view_token_copy(token_t *src)
   case TOKEN_BOOLEAN_NOT:
   case TOKEN_EQ:
   case TOKEN_NEQ:
+  case TOKEN_NULL_COALESCE:
   case TOKEN_EXPR:
   case TOKEN_RPN:
   case TOKEN_BLOCK:

@@ -14,8 +14,7 @@ widget(container_z, {
     space(1);
 
     widget(label, {
-      .caption = devoidify($global.media.current.metadata.title, 
-			   "No media loaded");
+      .caption = $global.media.current.metadata.title ?? "No media loaded";
       .align = center;
       .sizeScale = 1;
     });

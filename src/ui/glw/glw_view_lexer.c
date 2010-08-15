@@ -264,6 +264,12 @@ lexer(const char *src, errorinfo_t *ei, rstr_t *f, token_t *prev)
       continue;
     }
 
+    if(src[0] == '?' && src[1] == '?') {
+      prev = lexer_add_token_simple(prev, f, line, TOKEN_NULL_COALESCE);
+      src+=2;
+      continue;
+    }
+
 
     if(!(src[0] == '-' && lex_isdigit(src[1]))) {
       if((t = lexer_single_char(prev, f, line, *src)) != NULL) {
