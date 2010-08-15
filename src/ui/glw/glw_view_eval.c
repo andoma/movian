@@ -3440,6 +3440,35 @@ glwf_appendEventSink(glw_view_eval_context_t *ec, struct token *self,
   return 0;
 }
 
+/**
+ *
+ */
+static int
+glwf_vector(glw_view_eval_context_t *ec, struct token *self,
+	    token_t **argv, unsigned int argc)
+{
+  int i;
+  token_t *r;
+
+  if(argc == 0)
+    return glw_view_seterr(ec->ei, self, "Zero length vector");
+
+  for(i = 0; i < argc; i++)
+    if((argv[i] = token_resolve(ec, argv[i])) == NULL)
+      return -1;
+  
+  r = eval_alloc_sized(self, ec, TOKEN_VECTOR_FLOAT, sizeof(token_t) + 
+		       sizeof(self->u) * (i - 1));
+  r->t_elements = i;
+  
+  for(i = 0; i < argc; i++)
+    r->t_float_vector[i] = token2float(argv[i]);
+
+  eval_push(ec, r);
+  return 0;
+}
+
+
 
 /**
  *
@@ -3490,6 +3519,7 @@ static const token_func_t funcvec[] = {
   {"suggestFocus", 1, glwf_suggestFocus},
   {"focusDistance", 0, glwf_focusDistance},
   {"appendEventSink", 1, glwf_appendEventSink},
+  {"vector", -1, glwf_vector},
 };
 
 
