@@ -33,6 +33,18 @@ widget(backdrop, {
 			select($global.media.current.metadata.album, $global.media.current.metadata.album,
 			       "")));
       });
+
+
+      widget(label, {
+	.hidden = !$global.media.current.model.metadata.title ||
+	  $global.media.current.model.metadata.title == $global.media.current.metadata.album ||
+	  $global.media.current.model.metadata.title == $global.media.current.metadata.artist;
+
+	.ellipsize = true;
+	.sizeScale = 0.75;
+	.caption = $global.media.current.model.metadata.title;
+      });
+
     });
 
     widget(container_y, {
@@ -42,6 +54,8 @@ widget(backdrop, {
 	  select($global.media.current.metadata.duration,
 		 " / " + value2duration($global.media.current.metadata.duration), "");
       });
+
+      space(1);
 
       widget(label, {
 	.align = right;
