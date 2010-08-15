@@ -69,7 +69,7 @@ js_newctx(void)
 		JSOPTION_VAROBJFIX);
   JS_SetErrorReporter(cx, err_reporter);
 #ifdef JS_GC_ZEAL
-  JS_SetGCZeal(cx, 1);
+  //  JS_SetGCZeal(cx, 1);
 #endif
   return cx;
 }
