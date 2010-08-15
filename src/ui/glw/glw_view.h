@@ -76,7 +76,6 @@ typedef enum {
   TOKEN_EXPR,                  // infix expression
   TOKEN_RPN,                   // RPN expression
   TOKEN_BLOCK,
-  TOKEN_ARRAY,
   TOKEN_NOP,
   TOKEN_VECTOR_FLOAT,
   TOKEN_VECTOR_STRING,

@@ -21,7 +21,6 @@
 #include <stdio.h>
 
 static int parse_block(token_t *first, errorinfo_t *ei, token_type_t term);
-static int parse_array(token_t *first, errorinfo_t *ei);
 
 
 typedef struct tokenqueue {
@@ -131,7 +130,6 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
     case TOKEN_INT:
     case TOKEN_IDENTIFIER:
     case TOKEN_OBJECT_ATTRIBUTE:
-    case TOKEN_ARRAY:
     case TOKEN_BLOCK:
     case TOKEN_PROPERTY_VALUE_NAME:
     case TOKEN_PROPERTY_CANONICAL_NAME:
@@ -140,7 +138,8 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
       continue;
 
     case TOKEN_SEPARATOR:
-      while(stack && stack->type != TOKEN_LEFT_PARENTHESIS)
+      while(stack && (stack->type != TOKEN_LEFT_PARENTHESIS &&
+		      stack->type != TOKEN_LEFT_BRACKET))
 	tokenqueue_enqueue(&outq, tokenstack_pop(&stack), curfunc);
       if(curfunc != NULL) {
 	if(!(curfunc->t_num_args & 1)) {
@@ -171,6 +170,7 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
       t = tokenstack_push(&stack, t);
       continue;
 
+    case TOKEN_LEFT_BRACKET:
     case TOKEN_FUNCTION:
       t->tmp = curfunc;
       curfunc = t;
@@ -202,6 +202,27 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
       }
       break;
       
+    case TOKEN_RIGHT_BRACKET:
+      while(stack && stack->type != TOKEN_LEFT_BRACKET)
+	tokenqueue_enqueue(&outq, tokenstack_pop(&stack), curfunc);
+
+      if(stack == NULL) {
+	glw_view_seterr(ei, t, "Unbalanced brackets");
+	goto err;
+      }
+      assert(stack == curfunc);
+
+      if(stack->t_num_args && !(stack->t_num_args & 1)) {
+	glw_view_seterr(ei, t, "Unexpected separator '',''");
+	goto err;
+      }
+
+      stack->t_num_args = (1 + stack->t_num_args) / 2;
+      curfunc = stack->tmp;
+      tokenqueue_enqueue(&outq, tokenstack_pop(&stack), curfunc);
+      break;
+
+
     default:
       glw_view_seterr(ei, t, "Unexpected symbol");
       goto err;
@@ -340,8 +361,7 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei)
  *
  */
 static int
-parse_one_expression(token_t *prev, token_t *first, errorinfo_t *ei,
-		     int *arraysep)
+parse_one_expression(token_t *prev, token_t *first, errorinfo_t *ei)
 {
   token_t *t = first, *l = NULL;
   int balance = 0;
@@ -359,11 +379,6 @@ parse_one_expression(token_t *prev, token_t *first, errorinfo_t *ei,
       break;
 
     case TOKEN_END_OF_EXPR:
-      if(arraysep) {
-	glw_view_seterr(ei, t, "Unexpected ';'");
-	return -1;
-      }
-    end:
       t->type = TOKEN_EXPR;
       if(l == NULL) {
 	t->type = TOKEN_NOP;
@@ -380,19 +395,6 @@ parse_one_expression(token_t *prev, token_t *first, errorinfo_t *ei,
       glw_view_seterr(ei, t, "Unexpected '}'");
       return -1;
 
-    case TOKEN_LEFT_BRACKET:
-      if(parse_array(t, ei))
-	return -1;
-      break;
-      
-    case TOKEN_RIGHT_BRACKET:
-      if(!arraysep) {
-	glw_view_seterr(ei, t, "Unexpected ']'");
-	return -1;
-      }
-      *arraysep = t->type;
-      goto end;
-
     case TOKEN_LEFT_PARENTHESIS:
       balance++;
       break;
@@ -400,16 +402,6 @@ parse_one_expression(token_t *prev, token_t *first, errorinfo_t *ei,
     case TOKEN_RIGHT_PARENTHESIS:
       balance--;
       break;
-
-    case TOKEN_SEPARATOR:
-      if(balance)
-	break;
-      if(arraysep == NULL) {
-	glw_view_seterr(ei, t, "Unexpected ','");
-	return -1;
-      }
-      *arraysep = t->type;
-      goto end;
 
     default:
       break;
@@ -453,50 +445,9 @@ parse_block(token_t *first, errorinfo_t *ei, token_type_t term)
       return 0;
     }
 
-    if(parse_one_expression(p, p->next, ei, NULL))
+    if(parse_one_expression(p, p->next, ei))
       return -1;
 
-    p = p->next;
-  }
-
-  glw_view_seterr(ei, first, "Unbalanced block");
-  return -1;
-}
-
-
-
-/**
- * Parse an array, [ ... ]
- * Each element is comma separated
- */
-static int
-parse_array(token_t *first, errorinfo_t *ei)
-{
-  token_t *p;
-  int expend = -1;
-
-  first->type = TOKEN_ARRAY;
-  if(first->next->type == TOKEN_RIGHT_BRACKET) {
-    p = first->next;
-    first->next = p->next;
-    glw_view_token_free(p);
-    return 0;
-  }
-
-  p = first;
-
-  while(p != NULL && p->next != NULL) {
-
-    if(expend == TOKEN_RIGHT_BRACKET) {
-
-      first->child = first->next;
-      first->next = p->next;
-      p->next = NULL;
-      return 0;
-    }
-
-    if(parse_one_expression(p, p->next, ei, &expend))
-       return -1;
     p = p->next;
   }
 

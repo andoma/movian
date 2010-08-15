@@ -99,7 +99,6 @@ glw_view_token_free(token_t *t)
   case TOKEN_EXPR:
   case TOKEN_RPN:
   case TOKEN_BLOCK:
-  case TOKEN_ARRAY:
   case TOKEN_NOP:
     break;
 
@@ -170,6 +169,7 @@ glw_view_token_copy(token_t *src)
     dst->t_func = src->t_func;
     if(dst->t_func->ctor != NULL)
       dst->t_func->ctor(dst);
+  case TOKEN_LEFT_BRACKET:
     dst->t_num_args = src->t_num_args;
     break;
 
@@ -194,7 +194,6 @@ glw_view_token_copy(token_t *src)
   case TOKEN_BLOCK_CLOSE:
   case TOKEN_LEFT_PARENTHESIS:
   case TOKEN_RIGHT_PARENTHESIS:
-  case TOKEN_LEFT_BRACKET:
   case TOKEN_RIGHT_BRACKET:
   case TOKEN_DOT:
   case TOKEN_ADD:
@@ -214,7 +213,6 @@ glw_view_token_copy(token_t *src)
   case TOKEN_EXPR:
   case TOKEN_RPN:
   case TOKEN_BLOCK:
-  case TOKEN_ARRAY:
   case TOKEN_NOP:
   case TOKEN_VOID:
     break;
@@ -389,7 +387,6 @@ token2name(token_t *t)
 
   case TOKEN_LEFT_BRACKET:  return "[";
   case TOKEN_RIGHT_BRACKET:  return "]";
-  case TOKEN_ARRAY:  return "<array>";
 
   default:
     abort();

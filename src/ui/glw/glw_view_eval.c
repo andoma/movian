@@ -523,102 +523,6 @@ eval_null_coalesce(glw_view_eval_context_t *ec, struct token *self)
  *
  */
 static int
-eval_array(glw_view_eval_context_t *pec, token_t *t0)
-{
-  token_t *t, *out = NULL;
-  int nelem = 0, n = 0;
-  token_type_t vt;
-
-  glw_view_eval_context_t ec;
-
-  for(t = t0->child; t != NULL; t = t->next)
-    nelem++;
-  
-
-  memset(&ec, 0, sizeof(ec));
-  ec.debug = pec->debug;
-  ec.ei = pec->ei;
-  ec.prop = pec->prop;
-  ec.prop_parent = pec->prop_parent;
-  ec.prop_view = pec->prop_view;
-  ec.rpn = pec->rpn;
-  ec.gr = pec->gr;
-  ec.passive_subscriptions = pec->passive_subscriptions;
-  ec.sublist = pec->sublist;
-  ec.event = pec->event;
-  ec.w = pec->w;
-
-  for(t = t0->child; t != NULL; t = t->next) {
-    ec.alloc = NULL;
-
-    if(glw_view_eval_rpn0(t, &ec))
-      goto err;
-
-    if(ec.stack == NULL) {
-      glw_view_seterr(pec->ei, t, "Missing vector component");
-      goto err;
-    }
-
-    if(ec.stack->next != NULL) {
-      glw_view_seterr(pec->ei, t, "Vector component not singular");
-      goto err;
-    }
-
-    ec.stack = token_resolve(&ec, ec.stack);
-
-    switch(ec.stack->type) {
-    case TOKEN_FLOAT:
-      vt = TOKEN_VECTOR_FLOAT;
-      break;
-      
-    case TOKEN_STRING:
-      vt = TOKEN_VECTOR_STRING;
-      break;
-
-    case TOKEN_INT:
-      vt = TOKEN_VECTOR_INT;
-      break;
-      
-    default:
-      glw_view_seterr(pec->ei, t, "Invalid vector component (%d)", 
-		       ec.stack->type);
-      goto err;
-    }
-
-    if(out == NULL) {
-      out = eval_alloc_sized(t0, pec, vt, sizeof(token_t) + 
-			     sizeof(t->u) * (nelem - 1));
-      out->t_elements = nelem;
-    } else if(vt != out->type) {
-      glw_view_seterr(pec->ei, t, "Hetrogenous vectors are invalid");
-      goto err;
-    }
-
-    if(out->type == TOKEN_VECTOR_STRING) {
-      out->t_string_vector[n] = strdup(rstr_get(ec.stack->t_rstring));
-    } else if(out->type == TOKEN_VECTOR_INT) {
-      out->t_int_vector[n] = ec.stack->t_int;
-    } else {
-      out->t_float_vector[n] = ec.stack->t_float;
-    }
-    n++;
-    glw_view_free_chain(ec.alloc);
-
-    pec->dynamic_eval |= ec.dynamic_eval;
-  }
-
-  eval_push(pec, out);
-  return 0;
-  
- err:  
-  glw_view_free_chain(ec.alloc);
-  return -1;
-}
-
-/**
- *
- */
-static int
 resolve_property_name(glw_view_eval_context_t *ec, token_t *a, int follow_links)
 {
   token_t *t;
@@ -1327,17 +1231,40 @@ invoke_func(glw_view_eval_context_t *ec, token_t *t)
  *
  */
 static int
+make_vector(glw_view_eval_context_t *ec, token_t *t)
+{
+  token_t *a, *r;
+  int i;
+
+  if(t->t_num_args < 1)
+    return glw_view_seterr(ec->ei, t, "Invalid vector length (%d)",
+			   t->t_num_args);
+
+  r = eval_alloc_sized(t, ec, TOKEN_VECTOR_FLOAT, sizeof(token_t) + 
+		       sizeof(t->u) * (t->t_num_args - 1));
+  r->t_elements = t->t_num_args;
+ 
+  for(i = t->t_num_args - 1; i >= 0; i--) {
+    if((a = token_resolve(ec, eval_pop(ec))) == NULL)
+      return -1;
+    r->t_float_vector[i] = token2float(a);
+  }
+  eval_push(ec, r);
+  return 0;
+}
+
+
+
+/**
+ *
+ */
+static int
 glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec)
 {
   token_t *t;
 
   for(t = t0->child; t != NULL; t = t->next) {
     switch(t->type) {
-    case TOKEN_ARRAY:
-      if(eval_array(ec, t))
-	return -1;
-      break;
-
     case TOKEN_BLOCK:
     case TOKEN_STRING:
     case TOKEN_LINK:
@@ -1391,6 +1318,11 @@ glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec)
 	     t->t_func->name, t->t_num_args);
 #endif
       if(invoke_func(ec, t))
+	return -1;
+      break;
+
+    case TOKEN_LEFT_BRACKET:
+      if(make_vector(ec, t))
 	return -1;
       break;
 
@@ -3440,35 +3372,6 @@ glwf_appendEventSink(glw_view_eval_context_t *ec, struct token *self,
   return 0;
 }
 
-/**
- *
- */
-static int
-glwf_vector(glw_view_eval_context_t *ec, struct token *self,
-	    token_t **argv, unsigned int argc)
-{
-  int i;
-  token_t *r;
-
-  if(argc == 0)
-    return glw_view_seterr(ec->ei, self, "Zero length vector");
-
-  for(i = 0; i < argc; i++)
-    if((argv[i] = token_resolve(ec, argv[i])) == NULL)
-      return -1;
-  
-  r = eval_alloc_sized(self, ec, TOKEN_VECTOR_FLOAT, sizeof(token_t) + 
-		       sizeof(self->u) * (i - 1));
-  r->t_elements = i;
-  
-  for(i = 0; i < argc; i++)
-    r->t_float_vector[i] = token2float(argv[i]);
-
-  eval_push(ec, r);
-  return 0;
-}
-
-
 
 /**
  *
@@ -3519,7 +3422,6 @@ static const token_func_t funcvec[] = {
   {"suggestFocus", 1, glwf_suggestFocus},
   {"focusDistance", 0, glwf_focusDistance},
   {"appendEventSink", 1, glwf_appendEventSink},
-  {"vector", -1, glwf_vector},
 };
 
 
