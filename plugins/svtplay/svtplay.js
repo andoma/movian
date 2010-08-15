@@ -77,10 +77,8 @@
       var bestItem;
 
       for each (var m in item.media::group.media::content) {
-	var proto = m.@url.split(':')[0];
-
-	if(proto == 'rtmp' || proto == 'rtmpe' || proto == 'http') {
-	  if(m.@bitrate > 1 && (!bestItem || m.@bitrate > bestItem.@bitrate)) {
+	if(showtime.canHandle(m.@url)) {
+	  if(!bestItem || m.@bitrate > bestItem.@bitrate) {
 	    bestItem = m;
 	  }
 	}

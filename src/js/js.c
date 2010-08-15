@@ -232,6 +232,23 @@ js_prop_from_object(JSContext *cx, JSObject *obj, prop_t *p)
 /**
  *
  */
+static JSBool 
+js_canHandle(JSContext *cx, JSObject *obj,
+	     uintN argc, jsval *argv, jsval *rval)
+{
+  const char *str;
+
+  if (!JS_ConvertArguments(cx, argc, argv, "s", &str))
+    return JS_FALSE;
+
+  *rval = BOOLEAN_TO_JSVAL(!!backend_canhandle(str));
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
 static JSFunctionSpec showtime_functions[] = {
     JS_FS("trace",            js_trace,    1, 0, 0),
     JS_FS("print",            js_print,    1, 0, 0),
@@ -240,6 +257,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("queryStringSplit", js_queryStringSplit, 1, 0, 0),
     JS_FS("httpEscape",       js_httpEscape, 1, 0, 0),
     JS_FS("createService",    js_createService, 3, 0, 0),
+    JS_FS("canHandle",        js_canHandle, 1, 0, 0),
     JS_FS_END
 };
 
