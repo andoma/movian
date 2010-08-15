@@ -19,7 +19,7 @@
     plugin.config.enabled = v;
     if(v) {
       plugin.service = showtime.createService("SVT Play",
-					      "svtplay:title:96238", "video");
+					      "svtplay:start", "tv");
     } else {
       delete plugin.service;
     }
@@ -67,6 +67,7 @@
 	  c++;
 	  populator(page, item);
 	}
+	page.loading = false;
 	num += c;
 	if(c == 0 || num > 50)
 	  break;
@@ -77,7 +78,6 @@
 
     page.type = "directory";
     paginator();
-    page.loading = false;
     page.paginator = paginator;
   }
 
@@ -89,7 +89,7 @@
 
 
 
-  plugin.addURI("svtplay:title:([0-9]*)", function(page, id) {
+  plugin.addURI("svtplay:title:([0-9,]*)", function(page, id) {
     pageController(page, function(offset) {
       return showtime.httpGet("http://xml.svtplay.se/v1/title/list/" + id, {
 	start: offset
@@ -99,7 +99,7 @@
 
 
 
-  plugin.addURI("svtplay:video:([0-9]*)", function(page, id) {
+  plugin.addURI("svtplay:video:([0-9,]*)", function(page, id) {
     pageController(page, function(offset) {
       return showtime.httpGet("http://xml.svtplay.se/v1/video/list/" + id, {
 	start: offset
@@ -119,6 +119,33 @@
       page.appendItem(best.@url,
 		      "video", metadata);
     });
+  });
+
+  plugin.addURI("svtplay:start", function(page) {
+
+    var svtplay = new Namespace("http://xml.svtplay.se/ns/playopml");
+
+    var doc = new XML(showtime.httpGet("http://svtplay.se/mobil/deviceconfiguration.xml"));
+
+    for each (var o in doc.body.outline) {
+
+      if(o.@text == "Kategorier") {
+	for each (var k in o.outline) {
+
+	  var id = k.@svtplay::contentNodeIds;
+
+	  page.appendItem("svtplay:title:" + id,
+			  "directory", {
+			    title: k.@text,
+			    icon: k.@svtplay::thumbnail
+			  });
+	}
+      }
+    }
+    page.title = "SVT Play";
+    page.type = "directory";
+    page.loading = false;
+
   });
   
 
