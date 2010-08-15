@@ -1,3 +1,11 @@
+/**
+ * SVT play plugin using xml.svtplay.se API
+ *
+ * The hardcoded URLs has been extracted from 
+ *     http://svtplay.se/mobil/deviceconfiguration.xml
+ *
+ */
+
 (function(plugin) {
 
   plugin.settings = plugin.createSettings("SVT Play", "video");
