@@ -1203,18 +1203,23 @@ http_quickload(struct fa_protocol *fap, const char *url,
     if((s = http_headers_find(&headers, "last-modified")) != NULL)
       http_ctime(&fs->fs_mtime, s);
 
-    if((s = http_headers_find(&headers, "cache-control")) != NULL) {
-      if((s = strstr(s, "max-age=")) != NULL) {
-	fs->fs_cache_age = atoi(s + strlen("max-age="));
-      }
-    }
+    fs->fs_cache_age = 3600;
 
-    if(fs->fs_cache_age > 0 && 
-       (s  = http_headers_find(&headers, "date")) != NULL && 
+    if((s  = http_headers_find(&headers, "date")) != NULL && 
        (s2 = http_headers_find(&headers, "expires")) != NULL) {
       time_t expires, sdate;
       if(!http_ctime(&sdate, s) && !http_ctime(&expires, s2))
 	fs->fs_cache_age = expires - sdate;
+    }
+
+    if((s = http_headers_find(&headers, "cache-control")) != NULL) {
+      if((s2 = strstr(s, "max-age=")) != NULL) {
+	fs->fs_cache_age = atoi(s2 + strlen("max-age="));
+      }
+
+      if(strstr(s, "no-cache") || strstr(s, "no-store")) {
+	fs->fs_cache_age = 0;
+      }
     }
   }
   http_headers_free(&headers);
