@@ -1003,10 +1003,24 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int interactive)
 
       if(x->glw_parent->glw_focused != x) {
 	/* Path switches */
+	glw_t *p = x->glw_parent;
+	y = glw_focus_by_path(p);
       
-	y = glw_focus_by_path(x->glw_parent);
-      
-	if(y == NULL || interactive || weight > y->glw_focus_weight) {
+	/* Handle floating focus
+	 *
+	 * Floating focus is when the first widget of a child currently
+	 * has focus and we insert an entry with equal focus weight before
+	 * it. 
+	 *
+	 * This allows the focus to "stay" at the first entry even if we
+	 * insert entries in random order
+	 */
+	int ff = p->glw_class->gc_flags & GLW_FLOATING_FOCUS && 
+	  x == TAILQ_FIRST(&p->glw_childs) && 
+	  TAILQ_NEXT(x, glw_parent_link) == p->glw_focused;
+
+	if(y == NULL || interactive || weight > y->glw_focus_weight || 
+	   (ff && weight == y->glw_focus_weight)) {
 	  x->glw_parent->glw_focused = x;
 	  glw_signal0(x->glw_parent, sig, x);
 	} else {
