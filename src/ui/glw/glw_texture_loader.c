@@ -258,8 +258,6 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
 
   r = avcodec_decode_video(ctx, frame, &got_pic, pm->pm_data,  pm->pm_size);
 
-  pixmap_release(pm);
-
   if(want_thumb && pm->pm_flags & PIXMAP_THUMBNAIL) {
     w = 160;
     h = 160 * ctx->height / ctx->width;
@@ -267,6 +265,8 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
     w = ctx->width;
     h = ctx->height;
   }
+
+  pixmap_release(pm);
 
   if(glt->glt_req_xs != -1 && glt->glt_req_ys != -1) {
     w = glt->glt_req_xs;
