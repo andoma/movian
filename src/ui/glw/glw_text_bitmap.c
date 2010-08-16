@@ -552,10 +552,17 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 		   i, gtbd->gtbd_texture_width);
 	FT_Done_Glyph((FT_Glyph)bmp);
       }
-      pen_x += pos[i].kerning + pos[i].adv_x;
+
+      if(gtbd->gtbd_cursor_pos != NULL && uc[i] == ' ')
+	gtbd->gtbd_cursor_pos[2 * i + 0] = pen_x / 64;
+
+      pen_x += pos[i].adv_x + pos[i].kerning;
 
       if(uc[i] == ' ')
 	pen_x += li->xspace;
+
+      if(gtbd->gtbd_cursor_pos != NULL && uc[i] == ' ')
+	gtbd->gtbd_cursor_pos[2 * i + 1] = pen_x / 64;
 
     }
     pen_y -= height;
@@ -563,18 +570,9 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   }
 
   if(docur) {
-    gtbd->gtbd_cursor_pos[2 * len] = gtbd->gtbd_cursor_pos[2 * (len - 1) + 1];
-
-    if(gtbd->gtbd_cursor_pos[2 * len] == 0) {
-      gtbd->gtbd_cursor_pos[2 * len] = target_width - 5;
-      gtbd->gtbd_cursor_pos[2 * len + 1] = target_width;
-    } else {
-      i = target_width - gtbd->gtbd_cursor_pos[2 * len];
-      
-      if(i > 5)
-	i = 5;
-      gtbd->gtbd_cursor_pos[2 * len + 1] = gtbd->gtbd_cursor_pos[2 * len] + i;
-    }
+    gtbd->gtbd_cursor_pos[2 * len] = gtbd->gtbd_cursor_pos[2 * len - 1];
+    i = pxheight / 4;
+    gtbd->gtbd_cursor_pos[2 * len + 1] = gtbd->gtbd_cursor_pos[2 * len] + i;
     gtbd->gtbd_cursor_scale = target_width;
 
     for(i = 0; i < len; i++) {
