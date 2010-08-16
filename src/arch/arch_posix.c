@@ -87,6 +87,7 @@ get_system_concurrency(void)
 #include <string.h>
 #include <locale.h>
 #include "arch.h"
+#include <limits.h>
 #ifdef XBMC_PLUGIN
 #include "xbmc-plugin.h"
 #else
@@ -314,4 +315,18 @@ hts_thread_create_joinable(const char *title, hts_thread_t *p,
 		make_trampoline(title, func, aux));
 
   TRACE(TRACE_DEBUG, "thread", "Created thread: %s", title);
+}
+
+
+/**
+ *
+ */
+void
+arch_set_cachepath(void)
+{
+  const char *homedir = getenv("HOME");
+  char buf[PATH_MAX];
+
+  snprintf(buf, sizeof(buf), "%s/.hts/showtimecache", homedir);
+  showtime_cache_path = strdup(buf);
 }

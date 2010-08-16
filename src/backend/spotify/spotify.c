@@ -2432,16 +2432,15 @@ find_cachedir(char *path, size_t pathlen)
   int i, fd;
   char buf[PATH_MAX];
 
-  mkdir("/tmp/hts", 0770);
-  mkdir("/tmp/hts/showtime/", 0770);
-  if(mkdir("/tmp/hts/showtime/libspotify", 0770)) {
+  snprintf(buf, sizeof(buf), "%s/libspotify", showtime_cache_path);
+  if(mkdir(buf, 0770)) {
     if(errno != EEXIST)
       return -1;
   }
 
   i = 0;
   for(i = 0; i < 64; i++) {
-    snprintf(buf, sizeof(buf), "/tmp/hts/showtime/libspotify/%d.lock", i);
+    snprintf(buf, sizeof(buf), "%s/libspotify/%d.lock", showtime_cache_path, i);
     
     fd = open(buf, O_CREAT | O_RDWR, 0770);
     if(fd == -1)
@@ -2452,7 +2451,7 @@ find_cachedir(char *path, size_t pathlen)
       continue;
     }
 
-    snprintf(path, pathlen, "/tmp/hts/showtime/libspotify/%d.cache", i);
+    snprintf(path, pathlen, "%s/libspotify/%d.cache", showtime_cache_path, i);
     return 0;
   }
 #endif

@@ -123,6 +123,8 @@ void *shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque);
 #define SHOWTIME_EXIT_STANDBY  10
 #define SHOWTIME_EXIT_POWEROFF 11
 
+extern char *showtime_cache_path;
+
 
 /* From version.c */
 extern const char *htsversion;

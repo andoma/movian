@@ -47,6 +47,8 @@
 #include "keymapper.h"
 #include "plugins.h"
 
+#include "misc/fs.h"
+
 /**
  *
  */
@@ -55,6 +57,7 @@ int trace_level;
 static int ffmpeglog;
 static int showtime_retcode;
 char *remote_logtarget; // Used on Wii
+char *showtime_cache_path;
 
 static int
 fflockmgr(void **_mtx, enum AVLockOp op)
@@ -110,6 +113,7 @@ fflog(void *ptr, int level, const char *fmt, va_list vl)
 
 
 
+
 /**
  * Showtime main
  */
@@ -125,11 +129,14 @@ main(int argc, char **argv)
   int nuiargs = 0;
   int can_standby = 0;
   int can_poweroff = 0;
+  int r;
 
   trace_level = TRACE_ERROR;
 
   gettimeofday(&tv, NULL);
   srand(tv.tv_usec);
+
+  arch_set_cachepath();
 
   /* We read options ourselfs since getopt() is broken on some (nintento wii)
      targets */
@@ -154,12 +161,14 @@ main(int argc, char **argv)
 	     "   --ui <ui>         - Use specified user interface.\n"
 	     "   -L <ip>           - Send log messages to remote <ip>.\n"
 	     "   -v <view>         - Use specific view for <url>.\n"
+	     "   --cache <path>    - Set path for cache [%s].\n"
 	     "\n"
 	     "  URL is any URL-type supported by Showtime, "
 	     "e.g., \"file:///...\"\n"
 	     "\n",
 	     htsversion_full,
-	     argv0);
+	     argv0,
+	     showtime_cache_path);
       exit(0);
       argc--;
       argv++;
@@ -200,6 +209,9 @@ main(int argc, char **argv)
     } else if (!strcmp(argv[0], "-v") && argc > 1) {
       forceview = argv[1];
       argc -= 2; argv += 2;
+    } else if (!strcmp(argv[0], "--cache") && argc > 1) {
+      mystrset(&showtime_cache_path, argv[1]);
+      argc -= 2; argv += 2;
 #ifdef __APPLE__
     /* ignore -psn argument, process serial number */
     } else if(!strncmp(argv[0], "-psn", 4)) {
@@ -209,6 +221,7 @@ main(int argc, char **argv)
     } else
       break;
   }
+
 
   startpage = argc > 0 ? argv[0] : NAV_HOME;
 
@@ -223,6 +236,11 @@ main(int argc, char **argv)
 
   /* Architecture specific init */
   arch_init();
+
+  /* Try to create cache path */
+  if((r = makedirs(showtime_cache_path)) != 0)
+    TRACE(TRACE_INFO, "Cache", "Unable to create cache path %s -- %s",
+	  showtime_cache_path, strerror(r));
 
   /* Initialize (and optionally load) settings */
   htsmsg_store_init("showtime", settingspath);

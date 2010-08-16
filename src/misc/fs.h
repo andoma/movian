@@ -1,7 +1,6 @@
 /*
- *  System specific stuff
- *
- *  Copyright (C) 2008 Andreas Öman
+ *  Various FS helpers
+ *  Copyright (C) 2010 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,14 +16,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ARCH_H__
+#ifndef FS_H__
+#define FS_H__
 
-void arch_init(void);
+int makedirs(const char *path);
 
-void arch_sd_init(void); // Arch specific service discovery
-
-void arch_exit(int code) __attribute__((noreturn));
-
-void arch_set_cachepath(void);
-
-#endif /* ARCH_H__ */
+#endif

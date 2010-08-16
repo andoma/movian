@@ -71,6 +71,7 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/jpeg.c \
 	src/misc/gz.c \
 	src/misc/string.c \
+	src/misc/fs.c \
 
 #
 # HTSMSG
