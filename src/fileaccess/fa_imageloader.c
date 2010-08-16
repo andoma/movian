@@ -64,16 +64,16 @@ fa_imageloader2(const char *url, const char *theme,
 		char *errbuf, size_t errlen)
 {
   uint8_t *p;
-  size_t size;
+  struct fa_stat fs;
   meminfo_t mi;
   enum CodecID codec;
   int width = -1, height = -1, orientation = 0;
 
-  if((p = fa_quickload(url, &size, theme, errbuf, errlen)) == NULL) 
+  if((p = fa_quickload(url, &fs, theme, errbuf, errlen)) == NULL) 
     return NULL;
 
   mi.data = p;
-  mi.size = size;
+  mi.size = fs.fs_size;
 
   /* Probe format */
 
@@ -84,7 +84,7 @@ fa_imageloader2(const char *url, const char *theme,
     
     if(jpeg_info(&ji, jpeginfo_mem_reader, &mi, 
 		 JPEG_INFO_DIMENSIONS | JPEG_INFO_ORIENTATION,
-		 p, size, errbuf, errlen)) {
+		 p, fs.fs_size, errbuf, errlen)) {
       free(p);
       return NULL;
     }
@@ -108,7 +108,7 @@ fa_imageloader2(const char *url, const char *theme,
     return NULL;
   }
 
-  pixmap_t *pm = pixmap_alloc_coded(p, size, codec);
+  pixmap_t *pm = pixmap_alloc_coded(p, fs.fs_size, codec);
   pm->pm_width = width;
   pm->pm_height = height;
   pm->pm_orientation = orientation;

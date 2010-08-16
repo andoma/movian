@@ -123,7 +123,7 @@ typedef struct fa_protocol {
    * Return size in *sizeptr and actual data is returned by the function
    */
   void *(*fap_quickload)(struct fa_protocol *fap, const char *url,
-			 size_t *sizeptr, char *errbuf, size_t errlen);
+			 struct fa_stat *fs, char *errbuf, size_t errlen);
 
   /**
    * Normalize the given URL.

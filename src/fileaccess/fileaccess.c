@@ -701,7 +701,7 @@ fa_ffmpeg_error_to_txt(int err)
  *
  */
 void *
-fa_quickload(const char *url, size_t *sizeptr, const char *theme,
+fa_quickload(const char *url, struct fa_stat *fs, const char *theme,
 	     char *errbuf, size_t errlen)
 {
   fa_protocol_t *fap;
@@ -715,7 +715,7 @@ fa_quickload(const char *url, size_t *sizeptr, const char *theme,
     return NULL;
 
   if(fap->fap_quickload != NULL) {
-    data = fap->fap_quickload(fap, filename, sizeptr, errbuf, errlen);
+    data = fap->fap_quickload(fap, filename, fs, errbuf, errlen);
     free(filename);
     return data;
   }
@@ -739,8 +739,8 @@ fa_quickload(const char *url, size_t *sizeptr, const char *theme,
     return NULL;
   }
   data[size] = 0;
-  if(sizeptr)
-    *sizeptr = size;
+  if(fs != NULL)
+    fs->fs_size = size;
   return data;
 }
 

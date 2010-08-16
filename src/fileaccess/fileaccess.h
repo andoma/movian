@@ -152,7 +152,7 @@ const char *fa_ffmpeg_error_to_txt(int err);
 
 void fa_scanner(const char *url, prop_t *model, const char *playme);
 
-void *fa_quickload(const char *filename, size_t *sizeptr, const char *theme,
+void *fa_quickload(const char *url, struct fa_stat *fs, const char *theme,
 		   char *errbuf, size_t errlen);
 
 int fa_parent(char *dst, size_t dstlen, const char *url);

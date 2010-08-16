@@ -1496,7 +1496,7 @@ glw_text_bitmap_init(glw_root_t *gr)
 {
   int error;
   const void *r;
-  size_t size;
+  struct fa_stat fs;
   const char *font_variable = "theme://font.ttf";
   char errbuf[256];
 
@@ -1506,7 +1506,7 @@ glw_text_bitmap_init(glw_root_t *gr)
     return -1;
   }
 
-  if((r = fa_quickload(font_variable, &size, gr->gr_theme, 
+  if((r = fa_quickload(font_variable, &fs, gr->gr_theme, 
 		       errbuf, sizeof(errbuf))) == NULL) {
     TRACE(TRACE_ERROR, "glw", "Unable to load font: %s (theme: %s) -- %s\n",
 	  font_variable, gr->gr_theme, errbuf);
@@ -1516,7 +1516,7 @@ glw_text_bitmap_init(glw_root_t *gr)
   TAILQ_INIT(&gr->gr_gtb_render_queue);
   TAILQ_INIT(&allglyphs);
 
-  if(FT_New_Memory_Face(glw_text_library, r, size, 0, &gr->gr_gtb_face)) {
+  if(FT_New_Memory_Face(glw_text_library, r, fs.fs_size, 0, &gr->gr_gtb_face)) {
     TRACE(TRACE_ERROR, "glw", 
 	  "Unable to create font face: %s\n", font_variable);
     return -1;

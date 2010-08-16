@@ -53,13 +53,13 @@ plugin_load(const char *url)
 {
   char ctrlfile[URL_MAX];
   char *json;
-  size_t jsonsize;
+  struct fa_stat fs;
   char errbuf[256];
   htsmsg_t *ctrl;
 
   snprintf(ctrlfile, sizeof(ctrlfile), "%s/plugin.json", url);
 
-  json = fa_quickload(ctrlfile, &jsonsize, NULL, errbuf, sizeof(errbuf));
+  json = fa_quickload(ctrlfile, &fs, NULL, errbuf, sizeof(errbuf));
 
   if(json == NULL) {
     TRACE(TRACE_ERROR, "plugins", "Unable to load plugin control file %s -- %s",

@@ -405,7 +405,7 @@ int
 js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
 {
   char *sbuf;
-  size_t ssize;
+  struct fa_stat fs;
   JSContext *cx;
   js_plugin_t *jsp;
   JSObject *pobj, *gobj, *confobj;
@@ -413,7 +413,7 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
   char path[PATH_MAX];
   jsval val;
 
-  if((sbuf = fa_quickload(url, &ssize, NULL, errbuf, errlen)) == NULL)
+  if((sbuf = fa_quickload(url, &fs, NULL, errbuf, errlen)) == NULL)
     return -1;
 
   cx = js_newctx();
@@ -462,7 +462,7 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
   JS_DefineProperty(cx, confobj, "enabled", BOOLEAN_TO_JSVAL(1),
 		    NULL, jsp_setEnabled, JSPROP_PERMANENT);
 
-  s = JS_CompileScript(cx, pobj, sbuf, ssize, url, 0);
+  s = JS_CompileScript(cx, pobj, sbuf, fs.fs_size, url, 0);
   free(sbuf);
 
   if(s != NULL) {

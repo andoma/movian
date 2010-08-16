@@ -612,9 +612,9 @@ subtitles_load(const char *url)
 {
   subtitles_t *sub;
   char errbuf[256];
-  size_t datalen;
-
-  char *data = fa_quickload(url, &datalen, NULL, errbuf, sizeof(errbuf));
+  struct fa_stat fs;
+  int datalen;
+  char *data = fa_quickload(url, &fs, NULL, errbuf, sizeof(errbuf));
 
   if(data == NULL) {
     TRACE(TRACE_ERROR, "Subtitles", "Unable to load %s -- %s", 
@@ -622,23 +622,25 @@ subtitles_load(const char *url)
     return NULL;
   }
 
-  if(gz_check(data, datalen)) {
+  if(gz_check(data, fs.fs_size)) {
     // is .gz compressed, inflate it
 
     char *inflated;
     size_t inflatedlen;
 
-    inflated = gz_inflate(data, datalen, &inflatedlen, errbuf, sizeof(errbuf));
+    inflated = gz_inflate(data, fs.fs_size,
+			  &inflatedlen, errbuf, sizeof(errbuf));
 
     free(data);
     if(inflated == NULL) {
       TRACE(TRACE_ERROR, "Subtitles", "Unable to decompress %s -- %s", 
 	    url, errbuf);
       return NULL;
-    } else {
-      data = inflated;
-      datalen = inflatedlen;
     }
+    data = inflated;
+    datalen = inflatedlen;
+  } else {
+    datalen = fs.fs_size;
   }
 
   sub = subtitles_create(data, datalen);

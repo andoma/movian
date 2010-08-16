@@ -1141,13 +1141,22 @@ http_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
  */
 static void *
 http_quickload(struct fa_protocol *fap, const char *url,
-	       size_t *sizeptr, char *errbuf, size_t errlen)
+	       struct fa_stat *fs, char *errbuf, size_t errlen)
 {
   char *res;
+  size_t siz;
 
-  if(http_request(url, NULL, &res, sizeptr, errbuf, errlen, NULL, 0,
+  if(http_request(url, NULL, &res, &siz, errbuf, errlen, NULL, 0,
 		  HTTP_REQUEST_ESCAPE_PATH, NULL))
     return NULL;
+
+  if(fs == NULL)
+    return res;
+
+  memset(fs, 0, sizeof(struct fa_stat));
+  fs->fs_type = CONTENT_FILE;
+  fs->fs_size = siz;
+
   return res;
 }
 
