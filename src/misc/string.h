@@ -33,4 +33,6 @@ char **strvec_split(const char *str, char ch);
 
 void strvec_free(char **s);
 
+int hex2bin(uint8_t *buf, size_t buflen, const char *str);
+
 #endif

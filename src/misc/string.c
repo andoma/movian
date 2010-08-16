@@ -776,3 +776,39 @@ strvec_addp(char ***strvp, const char *v)
   strvec_addpn(strvp, v, strlen(v));
 }
 
+
+/**
+ *
+ */
+static int
+char2nibble(char c)
+{
+  switch(c) {
+  case '0' ... '9': return c - '0';
+  case 'A' ... 'F': return c - 'A' + 10;
+  case 'a' ... 'f': return c - 'a' + 10;
+  default:          return -1;
+  }
+}
+
+/**
+ *
+ */
+int
+hex2bin(uint8_t *buf, size_t buflen, const char *str)
+{
+  int hi, lo;
+
+  while(*str) {
+    if(buflen == 0)
+      return -1;
+    if((hi = char2nibble(*str++)) == -1)
+      return -1;
+    if((lo = char2nibble(*str++)) == -1)
+      return -1;
+
+    *buf++ = hi << 4 | lo;
+    buflen--;
+  }
+  return 0;
+}
