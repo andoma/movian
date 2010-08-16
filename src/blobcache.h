@@ -20,10 +20,10 @@
 #ifndef BLOBCACHE_H__
 #define BLOBCACHE_H__
 
-void *blobcache_get(const char *url, int qualifier, size_t *sizep);
+void *blobcache_get(const char *url, const char *stash, size_t *sizep, int pad);
 
-void blobcache_put(const char *url, int qualifier, const void *data,
-		   size_t sizep, time_t expire);
+void blobcache_put(const char *url, const char *stash, const void *data,
+		   size_t size, int maxage);
 
 void blobcache_init(void);
 

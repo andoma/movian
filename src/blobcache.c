@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <assert.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
@@ -25,23 +26,35 @@
 #include <unistd.h>
 #include <dirent.h>
 
+#include <sys/statvfs.h>
+
 #include <libavutil/sha1.h>
 
 #include "showtime.h"
 #include "blobcache.h"
 #include "misc/fs.h"
+#include "misc/string.h"
+#include "misc/callout.h"
+
+static hts_mutex_t blobcache_mutex;
+static callout_t blobcache_callout;
+
+static uint64_t blobcache_size_current;
+static uint64_t blobcache_size_max;
+
+static void blobcache_do_prune(struct callout *c, void *opaque);
 
 /**
  *
  */
 static void
-digest_url(const char *url, int qualifier, uint8_t *d)
+digest_url(const char *url, const char *stash, uint8_t *d)
 {
   struct AVSHA1 *shactx = alloca(av_sha1_size);
 
   av_sha1_init(shactx);
   av_sha1_update(shactx, (const uint8_t *)url, strlen(url));
-  av_sha1_update(shactx, (const uint8_t *)&qualifier, sizeof(qualifier));
+  av_sha1_update(shactx, (const uint8_t *)stash, strlen(stash));
   av_sha1_final(shactx, d);
 }
 
@@ -71,7 +84,7 @@ digest_to_path(uint8_t *d, char *path, size_t pathlen)
  *
  */
 static void *
-blobcache_load(const char *path, int fd, size_t *sizep)
+blobcache_load(const char *path, int fd, size_t *sizep, int pad)
 {
   struct stat st;
   uint8_t buf[4];
@@ -97,10 +110,12 @@ blobcache_load(const char *path, int fd, size_t *sizep)
 
   l = st.st_size - 4;
 
-  r = malloc(l);
+  r = malloc(l + pad);
 
   if(read(fd, r, l) != l)
     return NULL;
+
+  memset(r + l, 0, pad);
 
   *sizep = l;
   return r;
@@ -111,21 +126,21 @@ blobcache_load(const char *path, int fd, size_t *sizep)
  *
  */
 void *
-blobcache_get(const char *url, int qualifier, size_t *sizep)
+blobcache_get(const char *url, const char *stash, size_t *sizep, int pad)
 {
   char path[PATH_MAX];
   int fd;
   void *r;
   uint8_t d[20];
 
-  digest_url(url, qualifier, d);
+  digest_url(url, stash, d);
 
   digest_to_path(d, path, sizeof(path));
 
   if((fd = open(path, O_RDONLY)) == -1)
     return NULL;
 
-  r = blobcache_load(path, fd, sizep);
+  r = blobcache_load(path, fd, sizep, pad);
   close(fd);
   return r;
 }
@@ -155,6 +170,18 @@ blobcache_save(int fd, const void *data, size_t size, time_t expire)
 
   if(ftruncate(fd, size + 4))
     return -1;
+
+  hts_mutex_lock(&blobcache_mutex);
+  blobcache_size_current += size + 4;
+
+  if(blobcache_size_current > blobcache_size_max) {
+
+    if(!callout_isarmed(&blobcache_callout))
+      callout_arm(&blobcache_callout, blobcache_do_prune, NULL, 5);
+  }
+
+  hts_mutex_unlock(&blobcache_mutex);
+
   return 0;
 }
 
@@ -163,14 +190,14 @@ blobcache_save(int fd, const void *data, size_t size, time_t expire)
  *
  */
 void
-blobcache_put(const char *url, int qualifier, 
-	      const void *data, size_t size, time_t expire)
+blobcache_put(const char *url, const char *stash,
+	      const void *data, size_t size, int maxage)
 {
   char path[PATH_MAX];
   int fd;
   uint8_t d[20];
 
-  digest_url(url, qualifier, d);
+  digest_url(url, stash, d);
   snprintf(path, sizeof(path), "%s/blobcache/%02x", showtime_cache_path, d[0]);
 
   if(makedirs(path))
@@ -181,10 +208,81 @@ blobcache_put(const char *url, int qualifier,
   if((fd = open(path, O_CREAT | O_WRONLY, 0666)) == -1)
     return;
 
-  if(blobcache_save(fd, data, size, expire))
+  // max 30 days of cache
+  if(maxage > 86400 * 30) 
+    maxage = 86400 * 30;
+
+  if(blobcache_save(fd, data, size, time(NULL) + maxage))
     unlink(path);
 
   close(fd);
+}
+
+LIST_HEAD(cachfile_list, cachefile);
+
+/**
+ *
+ */
+typedef struct cachefile {
+  LIST_ENTRY(cachefile) link;
+  uint8_t d[20];
+  time_t time;
+  uint64_t size;
+} cachefile_t;
+
+
+/**
+ *
+ */
+static void
+addfile(struct cachfile_list *l,
+	const char *prefix, const char *name, struct stat *st)
+{
+  cachefile_t *c = calloc(1, sizeof(cachefile_t));
+  hex2bin(&c->d[0], 1,  prefix);
+  hex2bin(&c->d[1], 19, name);
+
+  c->time = st->st_mtime > st->st_atime ? st->st_mtime : st->st_atime;
+  c->size = st->st_size;
+
+  LIST_INSERT_HEAD(l, c, link);
+}
+
+
+/**
+ *
+ */
+static int
+cfcmp(const void *p1, const void *p2)
+{
+  struct cachefile *a = *(struct cachefile **)p1;
+  struct cachefile *b = *(struct cachefile **)p2;
+ 
+  return a->time - b->time;
+}
+
+
+/**
+ *
+ */
+static uint64_t 
+blobcache_compute_size(const char *path, uint64_t csize)
+{
+  struct statvfs buf;
+  uint64_t avail, maxsize;
+
+  if(statvfs(path, &buf))
+    return 0;
+
+  avail = buf.f_bfree * buf.f_bsize + csize;
+  maxsize = avail / 10;
+
+  if(maxsize < 10 * 1000 * 1000)
+    maxsize  = 10 * 1000 * 1000;
+
+  if(maxsize > 1000 * 1000 * 1000)
+    maxsize  = 1000 * 1000 * 1000;
+  return maxsize;
 }
 
 
@@ -192,7 +290,7 @@ blobcache_put(const char *url, int qualifier,
  *
  */
 static void
-blobcache_check_size(void)
+blobcache_prune(void)
 {
   struct dirent **namelist;
   struct dirent **namelist2;
@@ -203,12 +301,16 @@ blobcache_check_size(void)
   struct stat st;
   
   uint64_t tsize = 0;
+  int files = 0;
+  struct cachfile_list list;
 
   snprintf(path, sizeof(path), "%s/blobcache", showtime_cache_path);
   
   n = scandir(path, &namelist, NULL, NULL);
   if(n < 0)
     return;
+
+  LIST_INIT(&list);
 
   while(n--) {
     if(namelist[n]->d_name[0] != '.') {
@@ -224,8 +326,11 @@ blobcache_check_size(void)
 		     showtime_cache_path, namelist[n]->d_name,
 		     namelist2[m]->d_name);
 	    
-	    if(!stat(path3, &st))
+	    if(!stat(path3, &st)) {
+	      addfile(&list, namelist[n]->d_name, namelist2[m]->d_name, &st);
+	      files++;
 	      tsize += st.st_size;
+	    }
 	  }
 	  free(namelist2[m]);
 	}
@@ -234,10 +339,45 @@ blobcache_check_size(void)
     }
     free(namelist[n]);
   }
-
   free(namelist);
-  printf("Total cache size: %lld\n", tsize);
+  
+  hts_mutex_lock(&blobcache_mutex);
+  
+  blobcache_size_current = tsize;
+  blobcache_size_max = blobcache_compute_size(path, tsize);
 
+  if(files > 0) {
+    struct cachefile **v, *c;
+    int i;
+
+    v = malloc(sizeof(struct cachfile_list *) * files);
+    i = 0;
+    LIST_FOREACH(c, &list, link)
+      v[i++] = c;
+
+    assert(i == files);
+
+    qsort(v, files, sizeof(struct cachfile_list *), cfcmp);
+
+    for(i = 0; i < files; i++) {
+      c = v[i];
+    
+      if(blobcache_size_current > blobcache_size_max) {
+	digest_to_path(c->d, path, sizeof(path));
+	if(!unlink(path))
+	  blobcache_size_current -= c->size;
+      }
+      free(c);
+    }
+    free(v);
+  }
+
+  TRACE(TRACE_DEBUG, "blobcache", "Using %lld MB out of %lld MB",
+	blobcache_size_current / 1000000LL, 
+	blobcache_size_max     / 1000000LL);
+
+
+  hts_mutex_unlock(&blobcache_mutex);
 }
 
 
@@ -247,5 +387,12 @@ blobcache_check_size(void)
 void
 blobcache_init(void)
 {
-  blobcache_check_size();
+  hts_mutex_init(&blobcache_mutex);
+  blobcache_prune();
+}
+
+static void
+blobcache_do_prune(struct callout *c, void *opaque)
+{
+  blobcache_prune();
 }
