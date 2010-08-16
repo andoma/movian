@@ -42,4 +42,6 @@ void callout_disarm(callout_t *c);
 
 void callout_init(void);
 
+#define callout_isarmed(c) ((c)->c_callback != NULL)
+
 #endif /* CALLOUT_H__ */
