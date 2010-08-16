@@ -1205,7 +1205,7 @@ http_quickload(struct fa_protocol *fap, const char *url,
 
     if((s = http_headers_find(&headers, "cache-control")) != NULL) {
       if((s = strstr(s, "max-age=")) != NULL) {
-	fs->fs_cache_age = atoi(s);
+	fs->fs_cache_age = atoi(s + strlen("max-age="));
       }
     }
 
