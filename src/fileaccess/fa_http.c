@@ -38,6 +38,46 @@
 #define HTTP_TRACE(x...)
 #endif
 
+
+/**
+ *
+ */
+static int 
+http_ctime(time_t *tp, const char *d)
+{
+  struct tm tm = {0};
+  char wday[4];
+  char month[4];
+  int i;
+  static const char *months[12] = {
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+  if(sscanf(d, "%3s, %d %s %d %d:%d:%d",
+	    wday, &tm.tm_mday, month, &tm.tm_year,
+	    &tm.tm_hour, &tm.tm_min, &tm.tm_sec) != 7)
+    return -1;
+
+  tm.tm_year -= 1900;
+  tm.tm_isdst = -1;
+	      
+  for(i = 0; i < 12; i++)
+    if(!strcasecmp(months[i], month)) {
+      tm.tm_mon = i;
+      break;
+    }
+  
+#ifdef WII
+  *tp = mktime(&tm);
+#else
+  *tp = timegm(&tm);
+#endif
+  return 0;
+}
+
+
+
+
 /**
  * If we read more than this in a sequence, we switch to a continous
  * HTTP stream (instead of ranges)
@@ -1146,17 +1186,38 @@ http_quickload(struct fa_protocol *fap, const char *url,
   char *res;
   size_t siz;
 
+  struct http_header_list headers;
+  LIST_INIT(&headers);
+
   if(http_request(url, NULL, &res, &siz, errbuf, errlen, NULL, 0,
-		  HTTP_REQUEST_ESCAPE_PATH, NULL))
+		  HTTP_REQUEST_ESCAPE_PATH, &headers))
     return NULL;
 
-  if(fs == NULL)
-    return res;
+  if(fs != NULL) {
+    const char *s, *s2;
 
-  memset(fs, 0, sizeof(struct fa_stat));
-  fs->fs_type = CONTENT_FILE;
-  fs->fs_size = siz;
+    memset(fs, 0, sizeof(struct fa_stat));
+    fs->fs_type = CONTENT_FILE;
+    fs->fs_size = siz;
 
+    if((s = http_headers_find(&headers, "last-modified")) != NULL)
+      http_ctime(&fs->fs_mtime, s);
+
+    if((s = http_headers_find(&headers, "cache-control")) != NULL) {
+      if((s = strstr(s, "max-age=")) != NULL) {
+	fs->fs_cache_age = atoi(s);
+      }
+    }
+
+    if(fs->fs_cache_age > 0 && 
+       (s  = http_headers_find(&headers, "date")) != NULL && 
+       (s2 = http_headers_find(&headers, "expires")) != NULL) {
+      time_t expires, sdate;
+      if(!http_ctime(&sdate, s) && !http_ctime(&expires, s2))
+	fs->fs_cache_age = expires - sdate;
+    }
+  }
+  http_headers_free(&headers);
   return res;
 }
 
@@ -1213,43 +1274,6 @@ get_cdata_by_tag(htsmsg_t *tags, const char *name)
   if((sub = htsmsg_get_map(tags, name)) == NULL)
     return NULL;
   return htsmsg_get_str(sub, "cdata");
-}
-
-
-/**
- *
- */
-static int 
-dav_ctime(time_t *tp, const char *d)
-{
-  struct tm tm = {0};
-  char wday[4];
-  char month[4];
-  int i;
-  static const char *months[12] = {
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-
-  if(sscanf(d, "%3s, %d %s %d %d:%d:%d",
-	    wday, &tm.tm_mday, month, &tm.tm_year,
-	    &tm.tm_hour, &tm.tm_min, &tm.tm_sec) != 7)
-    return -1;
-
-  tm.tm_year -= 1900;;
-  tm.tm_isdst = -1;
-	      
-  for(i = 0; i < 12; i++)
-    if(!strcasecmp(months[i], month)) {
-      tm.tm_mon = i;
-      break;
-    }
-  
-#ifdef WII
-  *tp = mktime(&tm);
-#else
-  *tp = timegm(&tm);
-#endif
-  return 0;
 }
 
 
@@ -1356,7 +1380,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
 	      fde->fde_statdone = 0;
 	  
 	    if((d = get_cdata_by_tag(c, "DAV:getlastmodified")) == NULL ||
-	       dav_ctime(&fde->fde_stat.fs_mtime, d))
+	       http_ctime(&fde->fde_stat.fs_mtime, d))
 	      fde->fde_statdone = 1;
 
 	  }
@@ -1379,7 +1403,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
 
 	  hf->hf_mtime = 0;
 	  if((d = get_cdata_by_tag(c, "DAV:getlastmodified")) != NULL)
-	    dav_ctime(&hf->hf_mtime, d);
+	    http_ctime(&hf->hf_mtime, d);
 	}
 	goto ok;
       } 
