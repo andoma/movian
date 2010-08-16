@@ -702,16 +702,16 @@ fa_probe_set_from_cache(const metadata_t *md, prop_t *proproot,
  */
 unsigned int
 fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize,
-	 char *errbuf, size_t errsize, struct stat *st)
+	 char *errbuf, size_t errsize, struct fa_stat *fs)
 {
-  struct stat st0;
+  struct fa_stat fs0;
   unsigned int hash, r;
   metadata_t *md;
 
-  if(st  == NULL) {
-    if(fa_stat(url, &st0, errbuf, errsize))
+  if(fs == NULL) {
+    if(fa_stat(url, &fs0, errbuf, errsize))
       return CONTENT_UNKNOWN;
-    st = &st0;
+    fs = &fs0;
   }
 
   hash = mystrhash(url) % METADATA_HASH_SIZE;
@@ -719,7 +719,7 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize,
   hts_mutex_lock(&metadata_mutex);
   
   LIST_FOREACH(md, &metadata_hash[hash], md_hash_link)
-    if(md->md_mtime == st->st_mtime && !strcmp(md->md_url, url))
+    if(md->md_mtime == fs->fs_mtime && !strcmp(md->md_url, url))
       break;
 
   if(md != NULL) {
@@ -736,7 +736,7 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize,
     TAILQ_INIT(&md->md_streams);
     LIST_INSERT_HEAD(&metadata_hash[hash], md, md_hash_link);
     TAILQ_INSERT_TAIL(&metadata_entries, md, md_queue_link);
-    md->md_mtime = st->st_mtime;
+    md->md_mtime = fs->fs_mtime;
     md->md_url = strdup(url);
 
     if(fa_probe_fill_cache(md, url, errbuf, errsize)) {
@@ -774,17 +774,17 @@ unsigned int
 fa_probe_dir(prop_t *proproot, const char *url)
 {
   char path[URL_MAX];
-  struct stat buf;
+  struct fa_stat fs;
   int type;
 
   type = CONTENT_DIR;
 
   fa_pathjoin(path, sizeof(path), url, "VIDEO_TS");
-  if(fa_stat(path, &buf, NULL, 0) == 0 && S_ISDIR(buf.st_mode)) {
+  if(fa_stat(path, &fs, NULL, 0) == 0 && fs.fs_type == CONTENT_DIR) {
     type = CONTENT_DVD;
   } else {
     fa_pathjoin(path, sizeof(path), url, "video_ts");
-    if(fa_stat(path, &buf, NULL, 0) == 0 && S_ISDIR(buf.st_mode))
+    if(fa_stat(path, &fs, NULL, 0) == 0 && fs.fs_type == CONTENT_DIR)
       type = CONTENT_DVD;
   }
 

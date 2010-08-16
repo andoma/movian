@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include "showtime.h"
 #include "fileaccess.h"
 #include "filebundle.h"
 
@@ -163,7 +164,7 @@ b_fsize(fa_handle_t *handle)
  * Standard unix stat
  */
 static int
-b_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
+b_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
        char *errbuf, size_t errlen, int non_interactive)
 {
   fa_handle_t *handle;
@@ -174,8 +175,9 @@ b_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
  
   fh = (fa_bundle_fh_t *)handle;
 
-  buf->st_mode = S_IFREG;
-  buf->st_size = fh->size;
+  memset(fs, 0, sizeof(struct fa_stat));
+  fs->fs_type = CONTENT_FILE;
+  fs->fs_size = fh->size;
   
   free(fh);
   return FAP_STAT_OK;

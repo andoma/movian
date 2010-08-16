@@ -1109,7 +1109,7 @@ http_fsize(fa_handle_t *handle)
  * Standard unix stat
  */
 static int
-http_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
+http_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 	  char *errbuf, size_t errlen, int non_interactive)
 {
   fa_handle_t *handle;
@@ -1120,16 +1120,16 @@ http_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
 			    non_interactive ? &statcode : NULL)) == NULL)
     return statcode;
  
-  memset(buf, 0, sizeof(struct stat));
+  memset(fs, 0, sizeof(struct fa_stat));
   hf = (http_file_t *)handle;
   
   /* no content length and text/html, assume "index of" page */
   if(hf->hf_filesize < 0 &&
      hf->hf_content_type && strstr(hf->hf_content_type, "text/html"))
-    buf->st_mode = S_IFDIR;
+    fs->fs_type = CONTENT_DIR;
   else
-    buf->st_mode = S_IFREG;
-  buf->st_size = hf->hf_filesize;
+    fs->fs_type = CONTENT_FILE;
+  fs->fs_size = hf->hf_filesize;
   
   http_destroy(hf);
   return 0;
@@ -1342,12 +1342,12 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
 	    fde->fde_statdone = 1;
 
 	    if((d = get_cdata_by_tag(c, "DAV:getcontentlength")) != NULL)
-	      fde->fde_stat.st_size = strtoll(d, NULL, 10);
+	      fde->fde_stat.fs_size = strtoll(d, NULL, 10);
 	    else
 	      fde->fde_statdone = 0;
 	  
 	    if((d = get_cdata_by_tag(c, "DAV:getlastmodified")) == NULL ||
-	       dav_ctime(&fde->fde_stat.st_mtime, d))
+	       dav_ctime(&fde->fde_stat.fs_mtime, d))
 	      fde->fde_statdone = 1;
 
 	  }
@@ -1497,7 +1497,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
  * Standard unix stat
  */
 static int
-dav_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
+dav_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 	 char *errbuf, size_t errlen, int non_interactive)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
@@ -1511,11 +1511,11 @@ dav_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
     return statcode;
   }
 
-  memset(buf, 0, sizeof(struct stat));
+  memset(fs, 0, sizeof(struct fa_stat));
 
-  buf->st_mode = hf->hf_isdir ? S_IFDIR : S_IFREG;
-  buf->st_size = hf->hf_filesize;
-  buf->st_mtime = hf->hf_mtime;
+  fs->fs_type = hf->hf_isdir ? CONTENT_DIR : CONTENT_FILE;
+  fs->fs_size = hf->hf_filesize;
+  fs->fs_mtime = hf->hf_mtime;
 
   http_destroy(hf);
   return 0;

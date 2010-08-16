@@ -37,6 +37,23 @@ int fileaccess_init(void);
  */
 TAILQ_HEAD(fa_dir_entry_queue, fa_dir_entry);
 
+
+/**
+ *
+ */
+struct fa_stat {
+  uint64_t fs_size;
+
+  int fs_type; /* CONTENT_ .. types from showtime.h */
+
+  time_t fs_mtime;
+
+  int fs_cache_age;
+
+  uint8_t fs_tag[20];
+  
+} fa_stat_t;
+
 /**
  *
  */
@@ -56,7 +73,7 @@ typedef struct fa_dir_entry {
   } fde_probestatus;
 
   int fde_statdone;
-  struct stat fde_stat;
+  struct fa_stat fde_stat;
 } fa_dir_entry_t;
 
 /**
@@ -114,7 +131,7 @@ void fa_close(void *fh);
 int fa_read(void *fh, void *buf, size_t size);
 int64_t fa_seek(void *fh, int64_t pos, int whence);
 int64_t fa_fsize(void *fh);
-int fa_stat(const char *url, struct stat *buf, char *errbuf, size_t errsize);
+int fa_stat(const char *url, struct fa_stat *buf, char *errbuf, size_t errsize);
 int fa_findfile(const char *path, const char *file, 
 		char *fullpath, size_t fullpathlen);
 

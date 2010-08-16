@@ -54,7 +54,7 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
 		 char *errbuf, size_t errsize)
 {
   extern fa_protocol_t fa_protocol_fs;
-  struct stat st;
+  struct fa_stat fs;
   fa_protocol_t *fap;
   const char *url0 = url;
   char buf[URL_MAX];
@@ -68,7 +68,7 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
   if(url[0] != ':' || url[1] != '/' || url[2] != '/') {
     /* No protocol specified, assume a plain file */
     fap = &fa_protocol_fs;
-    if(url0[0] != '/' && fap->fap_stat(fap, url0, &st, NULL, 0, 0)) {
+    if(url0[0] != '/' && fap->fap_stat(fap, url0, &fs, NULL, 0, 0)) {
       snprintf(errbuf, errsize, "File not found");
       return NULL;
     }
@@ -218,7 +218,7 @@ fa_fsize(void *fh_)
  *
  */
 int
-fa_stat(const char *url, struct stat *buf, char *errbuf, size_t errsize)
+fa_stat(const char *url, struct fa_stat *buf, char *errbuf, size_t errsize)
 {
   fa_protocol_t *fap;
   char *filename;
@@ -790,14 +790,14 @@ fa_check_url(struct backend *be, const char *url, char *errbuf, size_t errlen)
   fa_protocol_t *fap;
   char *filename;
   int r;
-  struct stat buf;
+  struct fa_stat fs;
 
   if((filename = fa_resolve_proto(url, &fap, NULL, NULL,
 				  errbuf, errlen)) == NULL)
     return BACKEND_PROBE_NO_HANDLER;
 
   
-  r = fap->fap_stat(fap, filename, &buf, errbuf, errlen, 1);
+  r = fap->fap_stat(fap, filename, &fs, errbuf, errlen, 1);
   free(filename);
 
   if(r == 0)

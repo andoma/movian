@@ -499,21 +499,21 @@ be_file_playvideo(struct backend *be, const char *url, media_pipe_t *mp,
   char faurl[URL_MAX];
   media_codec_t **cwvec;
   event_t *e;
-  struct stat buf;
+  struct fa_stat fs;
   fa_handle_t *fh;
 
   uint64_t hash;
   uint64_t fsize;
   int valid_hash = 0;
 
-  if(fa_stat(url, &buf, errbuf, errlen))
+  if(fa_stat(url, &fs, errbuf, errlen))
     return NULL;
   
   /**
    * Is it a DVD ?
    */
 
-  if(S_ISDIR(buf.st_mode)) {
+  if(fs.fs_type == CONTENT_DIR) {
     
     if(fa_probe_dir(NULL, url) == CONTENT_DVD)
       goto isdvd;

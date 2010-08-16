@@ -107,14 +107,14 @@ file_open_audio(struct navigator *nav, const char *url, const char *view)
 {
   char parent[URL_MAX];
   char parent2[URL_MAX];
-  struct stat st;
+  struct fa_stat fs;
   nav_page_t *np;
   prop_t *model;
 
   if(fa_parent(parent, sizeof(parent), url))
     return NULL;
 
-  if(fa_stat(parent, &st, NULL, 0))
+  if(fa_stat(parent, &fs, NULL, 0))
     return NULL;
   
   np = nav_page_create(nav, parent, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
@@ -140,7 +140,7 @@ file_open_audio(struct navigator *nav, const char *url, const char *view)
 static nav_page_t *
 file_open_file(backend_t *be, struct navigator *nav,
 	       const char *url, const char *view,
-	       char *errbuf, size_t errlen, struct stat *st)
+	       char *errbuf, size_t errlen, struct fa_stat *fs)
 {
   char redir[URL_MAX];
   int r;
@@ -149,7 +149,7 @@ file_open_file(backend_t *be, struct navigator *nav,
 
   meta = prop_create(NULL, "metadata");
 
-  r = fa_probe(meta, url, redir, sizeof(redir), errbuf, errlen, st);
+  r = fa_probe(meta, url, redir, sizeof(redir), errbuf, errlen, fs);
 
   switch(r) {
   case CONTENT_ARCHIVE:
@@ -183,14 +183,14 @@ be_file_open(backend_t *be, struct navigator *nav,
 	     const char *url, const char *view,
 	     char *errbuf, size_t errlen)
 {
-  struct stat buf;
+  struct fa_stat fs;
 
-  if(fa_stat(url, &buf, errbuf, errlen))
+  if(fa_stat(url, &fs, errbuf, errlen))
     return NULL;
 
-  return S_ISDIR(buf.st_mode) ? 
+  return fs.fs_type == CONTENT_DIR ? 
     file_open_dir (be, nav, url, view, errbuf, errlen) :
-    file_open_file(be, nav, url, view, errbuf, errlen, &buf);
+    file_open_file(be, nav, url, view, errbuf, errlen, &fs);
 }
 
 

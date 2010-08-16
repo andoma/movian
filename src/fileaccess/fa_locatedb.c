@@ -220,7 +220,7 @@ fa_locate_searcher (fa_search_t *fas)
     char url[PATH_MAX+strlen("file://")];
     prop_t *p, *metadata;
     const char *type;
-    struct stat st;
+    struct fa_stat fs;
     int ctype;
 
     prop_courier_poll(fas->fas_pc);
@@ -273,12 +273,12 @@ fa_locate_searcher (fa_search_t *fas)
 
     snprintf(url, sizeof(url), "file://%s", buf);
 
-    if (fa_stat(url, &st, NULL, 0))
+    if (fa_stat(url, &fs, NULL, 0))
       continue;
 
     metadata = prop_create(NULL, "metadata");
 
-    if (S_ISDIR(st.st_mode)) {
+    if(fs.fs_type == CONTENT_DIR) {
       ctype = CONTENT_DIR;
       prop_set_string(prop_create(metadata, "title"), basename(buf));
     } else

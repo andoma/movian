@@ -164,13 +164,19 @@ fs_fsize(fa_handle_t *fh0)
  * Standard unix stat
  */
 static int
-fs_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
+fs_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 	char *errbuf, size_t errlen, int non_interactive)
 {
-  if(stat(url, buf)) {
+  struct stat st;
+  if(stat(url, &st)) {
     snprintf(errbuf, errlen, "%s", strerror(errno));
     return FAP_STAT_ERR;
   }
+
+  memset(fs, 0, sizeof(struct fa_stat));
+  fs->fs_size = st.st_size;
+  fs->fs_mtime = st.st_mtime;
+  fs->fs_type = S_ISDIR(st.st_mode) ? CONTENT_DIR : CONTENT_FILE;
   return FAP_STAT_OK;
 }
 

@@ -247,13 +247,13 @@ zip_archive_load(zip_archive_t *za)
   off_t cds_off;
   size_t cds_size;
   char *fname;
-  struct stat st;
+  struct fa_stat fs;
 
-  if(fa_stat(za->za_url, &st, NULL, 0))
+  if(fa_stat(za->za_url, &fs, NULL, 0))
     return -1;
 
-  asize = st.st_size;
-  za->za_mtime = st.st_mtime;
+  asize = fs.fs_size;
+  za->za_mtime = fs.fs_mtime;
 
   if((fh = fa_open(za->za_url, NULL, 0)) == NULL)
     return -1;
@@ -410,9 +410,9 @@ zip_archive_find(const char *url, const char **rp)
     u = mystrdupa(url);
 
     while(1) {
-      struct stat st;
+      struct fa_stat fs;
 
-      if(!fa_stat(u, &st, NULL, 0) && (st.st_mode & S_IFMT) == S_IFREG)
+      if(!fa_stat(u, &fs, NULL, 0) && fs.fs_type == CONTENT_DIR)
 	break;
 
       if((s = strrchr(u, '/')) == NULL) {
@@ -818,7 +818,7 @@ zip_fsize(fa_handle_t *handle)
  * Standard unix stat
  */
 static int
-zip_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
+zip_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 	 char *errbuf, size_t errlen, int non_interactive)
 {
   zip_file_t *zf;
@@ -828,11 +828,11 @@ zip_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
     return -1;
   }
 
-  memset(buf, 0, sizeof(struct stat));
+  memset(fs, 0, sizeof(struct fa_stat));
 
-  buf->st_mode = zf->zf_type == CONTENT_DIR ? S_IFDIR : S_IFREG;
-  buf->st_size = zf->zf_uncompressed_size;
-  buf->st_mtime = zf->zf_archive->za_mtime;
+  fs->fs_type = zf->zf_type;
+  fs->fs_size = zf->zf_uncompressed_size;
+  fs->fs_mtime = zf->zf_archive->za_mtime;
 
   zip_file_unref(zf);
   return 0;

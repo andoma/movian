@@ -232,17 +232,24 @@ smb_fsize(fa_handle_t *fh_)
  * Standard unix stat
  */
 static int
-smb_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
+smb_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 	 char *errbuf, size_t errlen, int non_interactive)
 {
+  struct stat st;
   pthread_mutex_lock(&smb_mutex);
 
   smb_statcode = -1;
   smb_non_interactive = non_interactive;
 
-  int r = smb_ctx->stat(smb_ctx, url, buf);
+  int r = smb_ctx->stat(smb_ctx, url, &st);
   if(r)
     r = smb_statcode;
+  else {
+    memset(fs, 0, sizeof(struct fa_stat));
+    fs->fs_size = st.st_size;
+    fs->fs_mtime = st.st_mtime;
+    fs->fs_type = S_ISDIR(st.st_mode) ? CONTENT_DIR : CONTENT_FILE;
+  }
 
   pthread_mutex_unlock(&smb_mutex);
   return r;

@@ -264,7 +264,7 @@ deep_analyzer(fa_dir_t *fd, prop_t *contents, prop_t *root, int *stop)
 
 	if(fde->fde_statdone || 
 	   (metadata != NULL && !fa_dir_entry_stat(fde))) {
-	  album_art_score = fde->fde_stat.st_size;
+	  album_art_score = fde->fde_stat.fs_size;
 	  snprintf(album_art, sizeof(album_art), "%s", fde->fde_url);
 	}
       }

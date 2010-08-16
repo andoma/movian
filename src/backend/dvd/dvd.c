@@ -90,7 +90,15 @@ dvd_fa_open(const char *url)
 static int
 dvd_fa_stat(const char *url, struct stat *st)
 {
-  return fa_stat(url, st, NULL, 0);
+  struct fa_stat fs;
+
+  if(fa_stat(url, &fs, NULL, 0))
+    return -1;
+
+  st->st_size  = fs.fs_size;
+  st->st_mode  = fs.fs_type == CONTENT_DIR ? S_IFDIR : S_IFREG;
+  st->st_mtime = fs.fs_mtime;
+  return 0;
 }
 
 

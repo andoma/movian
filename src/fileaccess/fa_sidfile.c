@@ -96,7 +96,7 @@ sidfile_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
  * Standard unix stat
  */
 static int
-sidfile_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
+sidfile_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 	     char *errbuf, size_t errlen, int non_interactive)
 {
   char *p = strrchr(url, '|');
@@ -106,17 +106,15 @@ sidfile_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
     return -1;
   }
 
-  memset(buf, 0, sizeof(struct stat));
+  memset(fs, 0, sizeof(struct fa_stat));
 
   p++;
   if(*p == 0) {
-    buf->st_mode = S_IFDIR;
-    buf->st_size = 0;
+    fs->fs_type = CONTENT_DIR;
   } else {
     return -1;
   }
 
-  buf->st_mtime = 0; // XXX
   return -1;
 }
 

@@ -267,7 +267,7 @@ rar_archive_load(rar_archive_t *ra)
   rar_volume_t *rv;
   rar_file_t *rf;
   rar_segment_t *rs;
-  struct stat st;
+  struct fa_stat fs;
 
   ra->ra_root = calloc(1, sizeof(rar_file_t));
   ra->ra_root->rf_type = CONTENT_DIR;
@@ -320,8 +320,8 @@ rar_archive_load(rar_archive_t *ra)
   if(fa_read(fh, buf, 13) != 13)
     goto err;
 
-  if(ra->ra_mtime == 0 && !fa_stat(fh, &st, NULL, 0))
-    ra->ra_mtime = st.st_mtime;
+  if(ra->ra_mtime == 0 && !fa_stat(fh, &fs, NULL, 0))
+    ra->ra_mtime = fs.fs_mtime;
 
   /* 2 bytes CRC */
   
@@ -493,9 +493,9 @@ rar_archive_find(const char *url, const char **rp)
     u = mystrdupa(url);
 
     while(1) {
-      struct stat st;
+      struct fa_stat fs;
 
-      if(!fa_stat(u, &st, NULL, 0) && (st.st_mode & S_IFMT) == S_IFREG)
+      if(!fa_stat(u, &fs, NULL, 0) && fs.fs_type == CONTENT_FILE)
 	break;
 
       if((s = strrchr(u, '/')) == NULL) {
@@ -793,7 +793,7 @@ rar_fsize(fa_handle_t *handle)
  * Standard unix stat
  */
 static int
-rar_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
+rar_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 	 char *errbuf, size_t errlen, int non_interactive)
 {
   rar_file_t *rf;
@@ -803,11 +803,11 @@ rar_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
     return -1;
   }
 
-  memset(buf, 0, sizeof(struct stat));
+  memset(fs, 0, sizeof(struct fa_stat));
 
-  buf->st_mode = rf->rf_type == CONTENT_DIR ? S_IFDIR : S_IFREG;
-  buf->st_size = rf->rf_size;
-  buf->st_mtime = rf->rf_archive->ra_mtime;
+  fs->fs_type = rf->rf_type;
+  fs->fs_size = rf->rf_size;
+  fs->fs_mtime = rf->rf_archive->ra_mtime;
 
   rar_file_unref(rf);
   return 0;
