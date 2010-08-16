@@ -285,9 +285,6 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
   int x, y, i = 0;
   int bf = gi->gi_bitmap_flags;
 
-  gi->gi_saved_size_x = rc->rc_size_x;
-  gi->gi_saved_size_y = rc->rc_size_y;
-
   if(gr->gr_normalized_texture_coords) {
     tex[0][0] = 0.0;
     tex[1][0] = 0.0 + (float)gi->gi_border_left  / glt->glt_xs;
@@ -420,9 +417,6 @@ glw_image_layout_alpha_edges(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
   float cvex[2][2];
 
   int x, y, i = 0;
-
-  gi->gi_saved_size_x = rc->rc_size_x;
-  gi->gi_saved_size_y = rc->rc_size_y;
 
   if(gr->gr_normalized_texture_coords) {
     tex[0][0] = 0.0;
@@ -606,9 +600,6 @@ glw_image_layout_repeated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
 
   glw_render_vtx_pos(&gi->gi_gr, 3, -1.0,  1.0, 0.0);
   glw_render_vtx_st (&gi->gi_gr, 3, 0, 0);
-
-  gi->gi_saved_size_x = rc->rc_size_x;
-  gi->gi_saved_size_y = rc->rc_size_y;
 }
 
 
@@ -783,6 +774,9 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
     } else if(gi->gi_saved_size_x != rc->rc_size_x ||
 	      gi->gi_saved_size_y != rc->rc_size_y) {
 
+      gi->gi_saved_size_x = rc->rc_size_x;
+      gi->gi_saved_size_y = rc->rc_size_y;
+
       switch(gi->gi_mode) {
 	
       case GI_MODE_NORMAL:
@@ -798,6 +792,28 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	break;
       }
 
+      if(gi->gi_bitmap_flags & GLW_IMAGE_HQ_SCALING && gi->gi_pending == NULL &&
+	 gi->gi_pending_filename == NULL) {
+
+	int xs = -1, ys = -1, rescale;
+	
+	if(rc->rc_size_x < rc->rc_size_y) {
+	  rescale = abs(rc->rc_size_x - glt->glt_xs) > glt->glt_xs / 10;
+	  xs = rc->rc_size_x;
+	} else {
+	  rescale = abs(rc->rc_size_y - glt->glt_ys) > glt->glt_ys / 10;
+	  ys = rc->rc_size_y;
+	}
+	
+	if(rescale) {
+	  int flags = 0;
+	  if(w->glw_class == &glw_repeatedimage)
+	    flags |= GLW_TEX_REPEAT;
+
+	  gi->gi_pending = glw_tex_create(w->glw_root, glt->glt_filename,
+					  flags, xs, ys);
+	}
+      }
     }
   }
 
