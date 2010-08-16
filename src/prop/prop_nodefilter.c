@@ -28,13 +28,27 @@
 
 #include "showtime.h"
 #include "prop_i.h"
+#include "prop_nodefilter.h"
 #include "misc/pixmap.h"
 #include "misc/string.h"
 
 
 TAILQ_HEAD(nfnode_queue, nfnode);
+LIST_HEAD(nfn_pred_list, nfn_pred);
+
+typedef struct nfn_pred {
+  LIST_ENTRY(nfn_pred) nfnp_link;
+  prop_sub_t *nfnp_sub;
+  struct prop_nf_pred *nfnp_conf;
+  struct nfnode *nfnp_nfn;
+  char nfnp_set;
+
+} nfn_pred_t;
 
 
+/**
+ *
+ */
 typedef struct nfnode {
   TAILQ_ENTRY(nfnode) in_link;
   TAILQ_ENTRY(nfnode) out_link;
@@ -44,16 +58,36 @@ typedef struct nfnode {
 
   prop_sub_t *multisub;
   prop_sub_t *sortsub;
-  prop_sub_t *enablesub;
+
+  struct nfn_pred_list preds;
 
   struct nodefilter *nf;
   int pos;
   char inserted;
-  char disabled;
 
   rstr_t *sortkey;
 
 } nfnode_t;
+
+
+/**
+ *
+ */
+typedef struct prop_nf_pred {
+  struct prop_nf_pred *pnp_next;
+
+  char **pnp_path;
+  prop_nf_cmp_t pnp_cf;
+  prop_nf_mode_t pnp_mode;
+  prop_sub_t *pnp_enable_sub;
+
+  char pnp_enabled;
+
+  char *pnp_str;
+  int pnp_int;
+
+  struct nodefilter *pnp_nf;
+} prop_nf_pred_t;
 
 
 /**
@@ -72,16 +106,51 @@ typedef struct nodefilter {
 
   char *filter;
 
-
   int pos_valid;
 
   char **defsortpath;
-  char **enablepath;
 
-  int nativeorder;
+  struct prop_nf_pred *preds;
 
 } nodefilter_t;
 
+/**
+ *
+ */
+static void
+nfnp_destroy(nfn_pred_t *nfnp)
+{
+  LIST_REMOVE(nfnp, nfnp_link);
+  prop_unsubscribe0(nfnp->nfnp_sub);
+  free(nfnp);
+}
+
+
+/**
+ * Evalue all predicates for a node. return 1 if the node should be filtered out
+ */
+static int
+eval_preds(nfnode_t *nfn)
+{
+  nfn_pred_t *nfnp;
+  prop_nf_pred_t *pnp;
+
+  LIST_FOREACH(nfnp, &nfn->preds, nfnp_link) {
+    if(!nfnp->nfnp_set)
+      continue;
+
+    pnp = nfnp->nfnp_conf;
+
+    if(pnp->pnp_mode == PROP_NF_MODE_INCLUDE) {
+      if(!pnp->pnp_enabled)
+	return 1;
+    } else {
+      if(pnp->pnp_enabled)
+	return 1;
+    }
+  }
+  return 0;
+}
 
 /**
  *
@@ -213,9 +282,8 @@ nf_update_egress(nodefilter_t *nf, nfnode_t *nfn)
   if(en && nf->filter != NULL && !nf_filtercheck(nfn->in, nf->filter))
     en = 0;
 
-  if(nfn->disabled)
+  if(eval_preds(nfn))
     en = 0;
-
 
   if(en != !nfn->out)
     return;
@@ -282,29 +350,18 @@ nf_update_multisub(nodefilter_t *nf, nfnode_t *nfn)
  *
  */
 static void
-nf_enable_filter(void *opaque, prop_event_t event, ...)
+nfnp_update_str(void *opaque, const char *str)
 {
-  nfnode_t *nfn = opaque;
-  va_list ap;
+  nfn_pred_t *nfnp = opaque;
+  prop_nf_pred_t *pnp = nfnp->nfnp_conf;
+  nfnode_t *nfn = nfnp->nfnp_nfn;
 
-  va_start(ap, event);
-
-  switch(event) {
-  case PROP_SET_RSTRING:
-  case PROP_SET_RLINK:
-    nfn->disabled = !atoi(rstr_get(va_arg(ap, rstr_t *)));
+  switch(pnp->pnp_cf) {
+  case PROP_NF_CMP_EQ:
+    nfnp->nfnp_set = !strcmp(str?:"", pnp->pnp_str);
     break;
-
-  case PROP_SET_INT:
-    nfn->disabled = !va_arg(ap, int);
-    break;
-
-  case PROP_SET_FLOAT:
-    nfn->disabled = !va_arg(ap, double);
-    break;
-
-  default:
-    nfn->disabled = 1;
+  case PROP_NF_CMP_NEQ:
+    nfnp->nfnp_set = !!strcmp(str?:"", pnp->pnp_str);
     break;
   }
   nf_update_egress(nfn->nf, nfn);
@@ -315,24 +372,57 @@ nf_enable_filter(void *opaque, prop_event_t event, ...)
  *
  */
 static void
-nf_update_enablesub(nodefilter_t *nf, nfnode_t *nfn)
+nfnp_update_int(void *opaque, int val)
 {
-  if(!nf->enablepath == !nfn->enablesub)
-    return;
+  nfn_pred_t *nfnp = opaque;
+  prop_nf_pred_t *pnp = nfnp->nfnp_conf;
+  nfnode_t *nfn = nfnp->nfnp_nfn;
 
-  if(nf->enablepath) {
+  switch(pnp->pnp_cf) {
+  case PROP_NF_CMP_EQ:
+    nfnp->nfnp_set = val == pnp->pnp_int;
+    break;
+  case PROP_NF_CMP_NEQ:
+    nfnp->nfnp_set = val != pnp->pnp_int;
+    break;
+  }
+  nf_update_egress(nfn->nf, nfn);
+}
 
-    nfn->enablesub =
-      prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_NOLOCK,
-		     PROP_TAG_CALLBACK, nf_enable_filter, nfn,
-		     PROP_TAG_NAMED_ROOT, nfn->in, "node",
-		     PROP_TAG_NAME_VECTOR, nf->enablepath,
-		     NULL);
 
-  } else {
 
-    prop_unsubscribe0(nfn->enablesub);
-    nfn->enablesub = NULL;
+/**
+ *
+ */
+static void
+nfn_insert_preds(nodefilter_t *nf, nfnode_t *nfn)
+{
+  prop_nf_pred_t *pnp;
+
+  for(pnp = nf->preds; pnp != NULL; pnp = pnp->pnp_next) {
+
+    nfn_pred_t *nfnp = calloc(1, sizeof(nfn_pred_t));
+
+    nfnp->nfnp_conf = pnp;
+    nfnp->nfnp_nfn = nfn;
+
+    LIST_INSERT_HEAD(&nfn->preds, nfnp, nfnp_link);
+
+    if(pnp->pnp_str != NULL) {
+      nfnp->nfnp_sub = 
+	prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_NOLOCK,
+		       PROP_TAG_CALLBACK_STRING, nfnp_update_str, nfnp,
+		       PROP_TAG_NAMED_ROOT, nfn->in, "node",
+		       PROP_TAG_NAME_VECTOR, pnp->pnp_path,
+		       NULL);
+    } else {
+      nfnp->nfnp_sub = 
+	prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_NOLOCK,
+		       PROP_TAG_CALLBACK_INT, nfnp_update_int, nfnp,
+		       PROP_TAG_NAMED_ROOT, nfn->in, "node",
+		       PROP_TAG_NAME_VECTOR, pnp->pnp_path,
+		       NULL);
+    }
   }
 }
 
@@ -434,7 +524,7 @@ nf_add_node(nodefilter_t *nf, prop_t *node, nfnode_t *b)
   nfn->in = node;
 
   nf_update_multisub(nf, nfn);
-  nf_update_enablesub(nf, nfn);
+  nfn_insert_preds(nf, nfn);
 
   nf_update_order(nf, nfn);
 
@@ -464,7 +554,7 @@ nf_add_nodes(nodefilter_t *nf, prop_t **pv)
     nfn->in = p;
 
     nf_update_multisub(nf, nfn);
-    nf_update_enablesub(nf, nfn);
+    nfn_insert_preds(nf, nfn);
 
     nf_update_order(nf, nfn);
   }
@@ -480,6 +570,8 @@ nf_add_nodes(nodefilter_t *nf, prop_t **pv)
 static void
 nf_del_node(nodefilter_t *nf, nfnode_t *nfn)
 {
+  nfn_pred_t *nfnp;
+
   nf->pos_valid = 0;
   TAILQ_REMOVE(&nf->in, nfn, in_link);
   TAILQ_REMOVE(&nf->out, nfn, out_link);
@@ -493,8 +585,8 @@ nf_del_node(nodefilter_t *nf, nfnode_t *nfn)
   if(nfn->sortsub != NULL)
     prop_unsubscribe0(nfn->sortsub);
 
-  if(nfn->enablesub != NULL)
-    prop_unsubscribe0(nfn->enablesub);
+  while((nfnp = LIST_FIRST(&nfn->preds)) != NULL)
+    nfnp_destroy(nfnp);
   
   free(nfn);
 }
@@ -538,6 +630,26 @@ nf_find_node(nodefilter_t *nf, prop_t *node)
  *
  */
 static void
+nf_destroy_preds(nodefilter_t *nf)
+{
+  struct prop_nf_pred *pnp, *next;
+
+  for(pnp = nf->preds; pnp != NULL; pnp = next) {
+    next = pnp->pnp_next;
+
+    strvec_free(pnp->pnp_path);
+    if(pnp->pnp_enable_sub != NULL)
+      prop_unsubscribe0(pnp->pnp_enable_sub);
+    free(pnp->pnp_str);
+    free(pnp);
+  }
+}
+
+
+/**
+ *
+ */
+static void
 nf_maydestroy(nodefilter_t *nf)
 {
   if(nf->srcsub != NULL || nf->dstsub != NULL)
@@ -548,10 +660,9 @@ nf_maydestroy(nodefilter_t *nf)
   if(nf->defsortpath)
     strvec_free(nf->defsortpath);
 
-  if(nf->enablepath)
-    strvec_free(nf->enablepath);
-
   free(nf->filter);
+
+  nf_destroy_preds(nf);
 
   free(nf);
 }
@@ -707,10 +818,16 @@ nf_set_filter(void *opaque, const char *str)
  *
  */
 void
-prop_make_nodefilter(prop_t *dst, prop_t *src, prop_t *filter, 
-		     const char *defsortpath, const char *enablepath)
+prop_nf_create(prop_t *dst, prop_t *src, prop_t *filter, 
+	       const char *defsortpath, struct prop_nf_pred *pl)
 {
   nodefilter_t *nf = calloc(1, sizeof(nodefilter_t));
+  prop_nf_pred_t *pnp;
+
+  nf->preds = pl;
+
+  for(pnp = nf->preds; pnp != NULL; pnp = pnp->pnp_next)
+    pnp->pnp_nf = nf;
 
   TAILQ_INIT(&nf->in);
   TAILQ_INIT(&nf->out);
@@ -719,7 +836,6 @@ prop_make_nodefilter(prop_t *dst, prop_t *src, prop_t *filter,
   nf->src = src;
 
   nf->defsortpath = defsortpath ? strvec_split(defsortpath, '.') : NULL;
-  nf->enablepath  = enablepath  ? strvec_split(enablepath , '.') : NULL;
 
   nf->filtersub = prop_subscribe(PROP_SUB_INTERNAL,
 				 PROP_TAG_CALLBACK_STRING, nf_set_filter, nf,
@@ -738,6 +854,90 @@ prop_make_nodefilter(prop_t *dst, prop_t *src, prop_t *filter,
 }
 
 
+/**
+ *
+ */
+static void
+pnp_set_enable(void *opaque, int v)
+{
+  struct prop_nf_pred *pnp = opaque;
+  nodefilter_t *nf = pnp->pnp_nf;
+  nfnode_t *nfn;
+
+  if(pnp->pnp_enabled == !!v)
+    return;
+
+  pnp->pnp_enabled = !!v;
+
+  if(nf == NULL)
+    return;
+
+  TAILQ_FOREACH(nfn, &nf->in, in_link)
+    nf_update_egress(nf, nfn);
+}
+
+
+/**
+ *
+ */
+static void
+prop_nf_pred_create(struct prop_nf_pred **pp,
+		    const char *path, prop_nf_cmp_t cf,
+		    prop_t *enable,
+		    prop_nf_mode_t mode,
+		    struct prop_nf_pred *pnp)
+{
+  pnp->pnp_path = strvec_split(path, '.');
+  pnp->pnp_cf = cf;
+  pnp->pnp_mode = mode;
+
+  if(enable != NULL) {
+    pnp->pnp_enable_sub = 
+      prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_NOLOCK,
+		     PROP_TAG_CALLBACK_INT, pnp_set_enable, pnp,
+		     PROP_TAG_ROOT, enable,
+		     NULL);
+  } else {
+    pnp->pnp_enabled = 1;
+  }
+
+  pnp->pnp_next = *pp;
+  *pp = pnp;
+}
+
+
+/**
+ *
+ */
+void
+prop_nf_pred_create_str(struct prop_nf_pred **pp,
+			const char *path, prop_nf_cmp_t cf,
+			const char *str, prop_t *enable,
+			prop_nf_mode_t mode)
+{
+  struct prop_nf_pred *pnp = calloc(1, sizeof(struct prop_nf_pred));
+  pnp->pnp_str = strdup(str);
+  prop_nf_pred_create(pp, path, cf, enable, mode, pnp);
+}
+
+
+
+
+
+
+/**
+ *
+ */
+void
+prop_nf_pred_create_int(struct prop_nf_pred **pp,
+			const char *path, prop_nf_cmp_t cf,
+			int value, prop_t *enable,
+			prop_nf_mode_t mode)
+{
+  struct prop_nf_pred *pnp = calloc(1, sizeof(struct prop_nf_pred));
+  pnp->pnp_int = value;
+  prop_nf_pred_create(pp, path, cf, enable, mode, pnp);
+}
 
 
 

@@ -30,6 +30,7 @@
 #include <sys/file.h>
 
 #include "showtime.h"
+#include "prop/prop_nodefilter.h"
 #include "navigator.h"
 #include "backend/backend.h"
 #include "backend/search.h"
@@ -1955,10 +1956,17 @@ pl_create(sp_playlist *plist, prop_t *root, int withtracks, int autodestroy)
 
     pl->pl_prop_tracks = prop_create(root, "src");
 
-    prop_make_nodefilter(prop_create(root, "nodes"),
-			 pl->pl_prop_tracks,
-			 prop_create(root, "filter"),
-			 NULL, "node.metadata.available");
+    struct prop_nf_pred *preds = NULL;
+
+    prop_nf_pred_create_int(&preds, "node.metadata.available",
+			    PROP_NF_CMP_EQ, 0, NULL, 
+			    PROP_NF_MODE_EXCLUDE);
+
+    prop_nf_create(prop_create(root, "nodes"),
+		   pl->pl_prop_tracks,
+		   prop_create(root, "filter"),
+		   NULL, 
+		   preds);
 
     pl->pl_node_sub = 
       prop_subscribe(0,

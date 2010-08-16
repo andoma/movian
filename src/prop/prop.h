@@ -306,11 +306,6 @@ prop_t **prop_pvec_clone(prop_t **src);
 
 const char *prop_get_name(prop_t *p);
 
-void prop_make_nodefilter(prop_t *dst, prop_t *src,
-			  prop_t *filter, const char *defsortpath,
-			  const char *enablepath);
-
-
 /* DEBUGish */
 const char *propname(prop_t *p);
 
