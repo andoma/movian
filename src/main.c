@@ -46,6 +46,7 @@
 #include "service.h"
 #include "keymapper.h"
 #include "plugins.h"
+#include "blobcache.h"
 
 #include "misc/fs.h"
 
@@ -241,6 +242,9 @@ main(int argc, char **argv)
   if((r = makedirs(showtime_cache_path)) != 0)
     TRACE(TRACE_INFO, "Cache", "Unable to create cache path %s -- %s",
 	  showtime_cache_path, strerror(r));
+
+  /* Initializte blob cache */
+  blobcache_init();
 
   /* Initialize (and optionally load) settings */
   htsmsg_store_init("showtime", settingspath);

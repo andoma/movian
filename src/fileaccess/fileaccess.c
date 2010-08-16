@@ -40,6 +40,7 @@
 
 #include "fa_proto.h"
 #include "fa_probe.h"
+#include "blobcache.h"
 
 struct fa_protocol_list fileaccess_all_protocols;
 static URLProtocol fa_lavf_proto;
@@ -710,12 +711,23 @@ fa_quickload(const char *url, struct fa_stat *fs, const char *theme,
   char *data, *filename;
   int r;
 
+  data = blobcache_get(url, "fa_quickload", &size, 1);
+  if(data != NULL) {
+    if(fs != NULL)
+      fs->fs_size = size;
+    return data;
+  }
+
   if((filename = fa_resolve_proto(url, &fap, theme ? "theme" : NULL, theme,
 				  errbuf, errlen)) == NULL)
     return NULL;
 
   if(fap->fap_quickload != NULL) {
     data = fap->fap_quickload(fap, filename, fs, errbuf, errlen);
+
+    if(fs->fs_cache_age > 0)
+      blobcache_put(url, "fa_quickload", data, fs->fs_size, fs->fs_cache_age);
+
     free(filename);
     return data;
   }
