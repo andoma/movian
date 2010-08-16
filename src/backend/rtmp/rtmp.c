@@ -597,19 +597,20 @@ rtmp_free(rtmp_t *r)
  *
  */
 static event_t *
-rtmp_playvideo(backend_t *be, const char *url,
+rtmp_playvideo(backend_t *be, const char *url0,
 	       media_pipe_t *mp, int primary, int priority,
 	       char *errbuf, size_t errlen)
 {
   rtmp_t r = {0};
   event_t *e;
+  char *url = mystrdupa(url0);
 
   RTMP_LogSetLevel(RTMP_LOGINFO);
 
   r.r = RTMP_Alloc();
   RTMP_Init(r.r);
 
-  if(!RTMP_SetupURL(r.r, (char *)url)) {
+  if(!RTMP_SetupURL(r.r, url)) {
     snprintf(errbuf, errlen, "Unable to setup RTMP session");
     rtmp_free(&r);
     return NULL;
