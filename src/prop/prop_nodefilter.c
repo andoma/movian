@@ -355,15 +355,19 @@ nfnp_update_str(void *opaque, const char *str)
   nfn_pred_t *nfnp = opaque;
   prop_nf_pred_t *pnp = nfnp->nfnp_conf;
   nfnode_t *nfn = nfnp->nfnp_nfn;
+  int s = 0;
 
   switch(pnp->pnp_cf) {
   case PROP_NF_CMP_EQ:
-    nfnp->nfnp_set = !strcmp(str?:"", pnp->pnp_str);
+    s = !strcmp(str?:"", pnp->pnp_str);
     break;
   case PROP_NF_CMP_NEQ:
-    nfnp->nfnp_set = !!strcmp(str?:"", pnp->pnp_str);
+    s = !!strcmp(str?:"", pnp->pnp_str);
     break;
   }
+  if(nfnp->nfnp_set == s)
+    return;
+  nfnp->nfnp_set = s;
   nf_update_egress(nfn->nf, nfn);
 }
 
@@ -378,14 +382,20 @@ nfnp_update_int(void *opaque, int val)
   prop_nf_pred_t *pnp = nfnp->nfnp_conf;
   nfnode_t *nfn = nfnp->nfnp_nfn;
 
+  int s = 0;
+
   switch(pnp->pnp_cf) {
   case PROP_NF_CMP_EQ:
-    nfnp->nfnp_set = val == pnp->pnp_int;
+    s = val == pnp->pnp_int;
     break;
   case PROP_NF_CMP_NEQ:
-    nfnp->nfnp_set = val != pnp->pnp_int;
+    s = val != pnp->pnp_int;
     break;
   }
+
+  if(nfnp->nfnp_set == s)
+    return;
+  nfnp->nfnp_set = s;
   nf_update_egress(nfn->nf, nfn);
 }
 
