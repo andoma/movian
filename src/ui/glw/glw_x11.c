@@ -40,8 +40,9 @@
 #include "settings.h"
 #include "ipc/ipc.h"
 
+#if ENABLE_VDPAU
 #include "video/vdpau.h"
-
+#endif
 
 typedef struct glw_x11 {
 
