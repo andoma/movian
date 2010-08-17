@@ -3203,7 +3203,7 @@ prop_get_string(prop_t *p, char *buf, size_t bufsize)
 /**
  *
  */
-static void
+void
 prop_print_tree0(prop_t *p, int indent, int followlinks)
 {
   prop_t *c;
