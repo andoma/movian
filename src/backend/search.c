@@ -26,6 +26,7 @@
 #include "settings.h"
 #include "event.h"
 #include "navigator.h"
+#include "prop/prop_nodefilter.h"
 #include "backend/backend.h"
 #include "backend/backend_prop.h"
 #include "backend/search.h"
@@ -103,7 +104,7 @@ search_open(backend_t *beself, struct navigator *nav,
 {
   const char *url;
   nav_page_t *np;
-  prop_t *model, *meta;
+  prop_t *model, *meta, *source;
 
   if((url = strchr(url0, ':')) == NULL)
     abort();
@@ -120,7 +121,20 @@ search_open(backend_t *beself, struct navigator *nav,
   meta = prop_create(model, "metadata");
   prop_set_string(prop_create(meta, "title"), url);
 
-  backend_search(model, url);
+
+  source = prop_create(np->np_prop_root, "source");
+
+  struct prop_nf_pred *preds = NULL;
+
+  prop_nf_pred_create_int(&preds, "node.metadata.entries",
+			  PROP_NF_CMP_EQ, 0, NULL, 
+			  PROP_NF_MODE_EXCLUDE);
+
+  prop_nf_create(prop_create(model, "nodes"),
+		 prop_create(source, "nodes"),
+		 NULL, "node.metadata.title",  preds);
+
+  backend_search(source, url);
   return np;
 }
 
