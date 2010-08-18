@@ -22,6 +22,7 @@
 #include "prop.h"
 
 struct prop_nf_pred;
+struct prop_nf;
 
 typedef enum {
   PROP_NF_CMP_EQ,
@@ -33,18 +34,19 @@ typedef enum {
   PROP_NF_MODE_EXCLUDE,
 } prop_nf_mode_t;
 
-void prop_nf_pred_create_str(struct prop_nf_pred **p,
-			     const char *path, prop_nf_cmp_t cf,
-			     const char *str, prop_t *enable,
-			     prop_nf_mode_t mode);
+void prop_nf_pred_str_add(struct prop_nf *nf,
+			  const char *path, prop_nf_cmp_t cf,
+			  const char *str, prop_t *enable,
+			  prop_nf_mode_t mode);
 
-void prop_nf_pred_create_int(struct prop_nf_pred **p,
-			     const char *path, prop_nf_cmp_t cf,
-			     int value, prop_t *enable,
-			     prop_nf_mode_t mode);
+void prop_nf_pred_int_add(struct prop_nf *nf,
+			  const char *path, prop_nf_cmp_t cf,
+			  int value, prop_t *enable,
+			  prop_nf_mode_t mode);
 
-void prop_nf_create(prop_t *dst, prop_t *src,
-		    prop_t *filter, const char *defsortpath,
-		    struct prop_nf_pred *p);
+struct prop_nf *prop_nf_create(prop_t *dst, prop_t *src,
+			       prop_t *filter, const char *defsortpath);
+
+void prop_nf_release(struct prop_nf *nf);
 
 #endif // PROP_NODEFILTER_H__

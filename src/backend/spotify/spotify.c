@@ -1956,17 +1956,19 @@ pl_create(sp_playlist *plist, prop_t *root, int withtracks, int autodestroy)
 
     pl->pl_prop_tracks = prop_create(root, "src");
 
-    struct prop_nf_pred *preds = NULL;
+    struct prop_nf *pnf;
 
-    prop_nf_pred_create_int(&preds, "node.metadata.available",
-			    PROP_NF_CMP_EQ, 0, NULL, 
-			    PROP_NF_MODE_EXCLUDE);
+    pnf = prop_nf_create(prop_create(root, "nodes"),
+			 pl->pl_prop_tracks,
+			 prop_create(root, "filter"),
+			 NULL);
 
-    prop_nf_create(prop_create(root, "nodes"),
-		   pl->pl_prop_tracks,
-		   prop_create(root, "filter"),
-		   NULL, 
-		   preds);
+
+    prop_nf_pred_int_add(pnf, "node.metadata.available",
+			 PROP_NF_CMP_EQ, 0, NULL, 
+			 PROP_NF_MODE_EXCLUDE);
+
+    prop_nf_release(pnf);
 
     pl->pl_node_sub = 
       prop_subscribe(0,

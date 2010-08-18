@@ -124,15 +124,17 @@ search_open(backend_t *beself, struct navigator *nav,
 
   source = prop_create(np->np_prop_root, "source");
 
-  struct prop_nf_pred *preds = NULL;
+  struct prop_nf *pnf;
 
-  prop_nf_pred_create_int(&preds, "node.metadata.entries",
-			  PROP_NF_CMP_EQ, 0, NULL, 
-			  PROP_NF_MODE_EXCLUDE);
+  pnf = prop_nf_create(prop_create(model, "nodes"),
+		       prop_create(source, "nodes"),
+		       NULL, "node.metadata.title");
 
-  prop_nf_create(prop_create(model, "nodes"),
-		 prop_create(source, "nodes"),
-		 NULL, "node.metadata.title",  preds);
+  prop_nf_pred_int_add(pnf, "node.metadata.entries",
+		       PROP_NF_CMP_EQ, 0, NULL, 
+		       PROP_NF_MODE_EXCLUDE);
+
+  prop_nf_release(pnf);
 
   backend_search(source, url);
   return np;

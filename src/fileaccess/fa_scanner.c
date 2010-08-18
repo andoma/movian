@@ -646,10 +646,12 @@ fa_scanner(const char *url, prop_t *model, const char *playme)
   scanner_t *s = calloc(1, sizeof(scanner_t));
 
   prop_t *source = prop_create(model, "source");
-  prop_nf_create(prop_create(model, "nodes"),
-		 source,
-		 prop_create(model, "filter"),
-		 "node.filename", NULL);
+
+
+  prop_nf_release(prop_nf_create(prop_create(model, "nodes"),
+				 source,
+				 prop_create(model, "filter"),
+				 "node.filename"));
 
   s->s_url = strdup(url);
   s->s_playme = playme != NULL ? strdup(playme) : NULL;
