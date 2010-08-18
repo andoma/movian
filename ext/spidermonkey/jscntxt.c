@@ -247,23 +247,6 @@ js_NewContext(JSRuntime *rt, size_t stackChunkSize)
     js_SetContextThread(cx);
 #endif
 
-    JS_LOCK_GC(rt);
-    for (;;) {
-        first = (rt->contextList.next == &rt->contextList);
-        if (rt->state == JSRTS_UP) {
-            JS_ASSERT(!first);
-            break;
-        }
-        if (rt->state == JSRTS_DOWN) {
-            JS_ASSERT(first);
-            rt->state = JSRTS_LAUNCHING;
-            break;
-        }
-        JS_WAIT_CONDVAR(rt->stateChange, JS_NO_TIMEOUT);
-    }
-    JS_APPEND_LINK(&cx->links, &rt->contextList);
-    JS_UNLOCK_GC(rt);
-
     /*
      * First we do the infallible, every-time per-context initializations.
      * Should a later, fallible initialization (js_InitRegExpStatics, e.g.,
@@ -281,6 +264,24 @@ js_NewContext(JSRuntime *rt, size_t stackChunkSize)
         js_DestroyContext(cx, JSDCM_NEW_FAILED);
         return NULL;
     }
+
+    JS_LOCK_GC(rt);
+    for (;;) {
+        first = (rt->contextList.next == &rt->contextList);
+        if (rt->state == JSRTS_UP) {
+            JS_ASSERT(!first);
+            break;
+        }
+        if (rt->state == JSRTS_DOWN) {
+            JS_ASSERT(first);
+            rt->state = JSRTS_LAUNCHING;
+            break;
+        }
+        JS_WAIT_CONDVAR(rt->stateChange, JS_NO_TIMEOUT);
+    }
+    JS_APPEND_LINK(&cx->links, &rt->contextList);
+    JS_UNLOCK_GC(rt);
+
 
     /*
      * If cx is the first context on this runtime, initialize well-known atoms,
