@@ -449,7 +449,7 @@ playaudio(struct backend *be, const char *url,
   mp_become_primary(mp);
   mq = &mp->mp_audio;
 
-  mp_set_playstatus_by_hold(mp, hold);
+  mp_set_playstatus_by_hold(mp, hold, NULL);
 
   while(1) {
 
@@ -516,14 +516,14 @@ playaudio(struct backend *be, const char *url,
       hold = action_update_hold_by_event(hold, e);
       mp_send_cmd_head(mp, mq, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
       lost_focus = 0;
-      mp_set_playstatus_by_hold(mp, hold);
+      mp_set_playstatus_by_hold(mp, hold, NULL);
 
     } else if(event_is_type(e, EVENT_MP_NO_LONGER_PRIMARY)) {
 
       hold = 1;
       lost_focus = 1;
       mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
-      mp_set_playstatus_by_hold(mp, hold);
+      mp_set_playstatus_by_hold(mp, hold, e->e_payload);
 
     } else if(event_is_type(e, EVENT_MP_IS_PRIMARY)) {
 
@@ -531,7 +531,7 @@ playaudio(struct backend *be, const char *url,
 	hold = 0;
 	lost_focus = 0;
 	mp_send_cmd_head(mp, mq, MB_CTRL_PLAY);
-	mp_set_playstatus_by_hold(mp, hold);
+	mp_set_playstatus_by_hold(mp, hold, NULL);
       }
 
     } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
@@ -539,7 +539,7 @@ playaudio(struct backend *be, const char *url,
       hold = 1;
       lost_focus = 0;
       mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
-      mp_set_playstatus_by_hold(mp, hold);
+      mp_set_playstatus_by_hold(mp, hold, e->e_payload);
 
     } else if(event_is_action(e, ACTION_PREV_TRACK) ||
 	      event_is_action(e, ACTION_NEXT_TRACK) ||

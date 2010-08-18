@@ -168,6 +168,7 @@ mp_create(const char *name, const char *type, int flags)
 
   mp->mp_prop_metadata    = prop_create(mp->mp_prop_root, "metadata");
   mp->mp_prop_playstatus  = prop_create(mp->mp_prop_root, "playstatus");
+  mp->mp_prop_pausereason = prop_create(mp->mp_prop_root, "pausereason");
   mp->mp_prop_currenttime = prop_create(mp->mp_prop_root, "currenttime");
   mp->mp_prop_avdelta     = prop_create(mp->mp_prop_root, "avdelta");
   prop_set_float(mp->mp_prop_avdelta, 0);
@@ -862,7 +863,8 @@ mp_become_primary(struct media_pipe *mp)
     media_primary->mp_flags |= MP_ON_STACK;
 
     mp_enqueue_event(media_primary, 
-		     event_create_type(EVENT_MP_NO_LONGER_PRIMARY));
+		     event_create_str(EVENT_MP_NO_LONGER_PRIMARY,
+				      "Paused by other playback"));
   }
 
   mp_ref_inc(mp);
@@ -1142,9 +1144,11 @@ media_eventsink(void *opaque, prop_event_t event, ...)
  *
  */
 void
-mp_set_playstatus_by_hold(media_pipe_t *mp, int hold)
+mp_set_playstatus_by_hold(media_pipe_t *mp, int hold, const char *msg)
 {
   prop_set_string(mp->mp_prop_playstatus, hold ? "pause" : "play");
+  prop_set_string(mp->mp_prop_pausereason, 
+		  hold ? (msg ?: "Paused by user") : NULL);
 }
 
 

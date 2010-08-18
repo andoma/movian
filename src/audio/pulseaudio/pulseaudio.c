@@ -493,13 +493,15 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
       pa_stream_unref(pam->stream);
       pam->stream = NULL;
 
-      notify_add(NOTIFY_ERROR, NULL, 5, 
-		 "Audio stream disconnected from "
-		 "PulseAudio server -- %s. Playback paused",
-		 pa_strerror(pam->stream_error));
+      char msg[100];
+
+      snprintf(msg, sizeof(msg),
+	       "Audio stream disconnected from "
+	       "PulseAudio server -- %s.",
+	       pa_strerror(pam->stream_error));
       
       mp_flush(ab->ab_mp, 0);
-      mp_enqueue_event(ab->ab_mp, event_create_type(EVENT_INTERNAL_PAUSE));
+      mp_enqueue_event(ab->ab_mp, event_create_str(EVENT_INTERNAL_PAUSE, msg));
 
       audio_fifo_purge(af, NULL, NULL);
 

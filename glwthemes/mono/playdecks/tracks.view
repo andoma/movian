@@ -5,62 +5,71 @@ widget(backdrop, {
   .color = PLATE_COLOR_OTHER();
   .alphaSelf = 0.5;
   
-  widget(container_x, {
 
-    widget(image, {
-      .hqScaling = true;
-      .source = $global.media.current.metadata.album_art ??
-	"theme://icons/48x48/Music.png";
+  widget(container_y, {
+    
+    widget(label, {
+      .align = center;
+      .sizeScale = 0.75;
+      .caption = $global.media.current.pausereason;
     });
 
-    widget(dummy, {
-      .width = 4;
-    });
+    widget(container_x, {
 
-    widget(container_y, {
-      widget(label, {
-	.caption = $global.media.current.metadata.title;
-	.ellipsize = true;
+      widget(image, {
+	.hqScaling = true;
+	.source = $global.media.current.metadata.album_art ??
+	  "theme://icons/48x48/Music.png";
       });
 
-      widget(label, {
-	.ellipsize = true;
-	.sizeScale = 0.75;
-	.caption =
-	  select($global.media.current.metadata.artist && $global.media.current.metadata.album, 
-		 $global.media.current.metadata.artist + " • " +  $global.media.current.metadata.album,
-		 select($global.media.current.metadata.artist, $global.media.current.metadata.artist,
-			select($global.media.current.metadata.album, $global.media.current.metadata.album,
-			       "")));
+      widget(dummy, {
+	.width = 4;
       });
 
+      widget(container_y, {
+	widget(label, {
+	  .caption = $global.media.current.metadata.title;
+	  .ellipsize = true;
+	});
 
-      widget(label, {
-	.hidden = !$global.media.current.model.metadata.title ||
-	  $global.media.current.model.metadata.title == $global.media.current.metadata.album ||
-	  $global.media.current.model.metadata.title == $global.media.current.metadata.artist;
+	widget(label, {
+	  .ellipsize = true;
+	  .sizeScale = 0.75;
+	  .caption =
+	    select($global.media.current.metadata.artist && $global.media.current.metadata.album, 
+		   $global.media.current.metadata.artist + " • " +  $global.media.current.metadata.album,
+		   select($global.media.current.metadata.artist, $global.media.current.metadata.artist,
+			  select($global.media.current.metadata.album, $global.media.current.metadata.album,
+				 "")));
+	});
 
-	.ellipsize = true;
-	.sizeScale = 0.75;
-	.caption = $global.media.current.model.metadata.title;
+
+	widget(label, {
+	  .hidden = !$global.media.current.model.metadata.title ||
+	    $global.media.current.model.metadata.title == $global.media.current.metadata.album ||
+	    $global.media.current.model.metadata.title == $global.media.current.metadata.artist;
+
+	  .ellipsize = true;
+	  .sizeScale = 0.75;
+	  .caption = $global.media.current.model.metadata.title;
+	});
       });
 
-    });
+      widget(container_y, {
+	widget(label, {
+	  .align = right;
+	  .caption = value2duration($global.media.current.currenttime) + 
+	    select($global.media.current.metadata.duration,
+		   " / " + value2duration($global.media.current.metadata.duration), "");
+	});
 
-    widget(container_y, {
-      widget(label, {
-	.align = right;
-	.caption = value2duration($global.media.current.currenttime) + 
-	  select($global.media.current.metadata.duration,
-		 " / " + value2duration($global.media.current.metadata.duration), "");
-      });
+	space(1);
 
-      space(1);
-
-      widget(label, {
-	.align = right;
-	.sizeScale = 0.75;
-	.caption = "Track " + int2str($global.media.current.currentTrack) + " / " + int2str($global.media.current.totalTracks);
+	widget(label, {
+	  .align = right;
+	  .sizeScale = 0.75;
+	  .caption = "Track " + int2str($global.media.current.currentTrack) + " / " + int2str($global.media.current.totalTracks);
+	});
       });
     });
   });

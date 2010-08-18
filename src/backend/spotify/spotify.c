@@ -535,10 +535,11 @@ spotify_events_pending(sp_session *sess)
 static void
 spotify_play_token_lost(sp_session *sess)
 {
-  notify_add(NOTIFY_ERROR, NULL, 5, 
-	     "Spotify: Playback paused, another client is using this account");
+
+#define PMSG "Spotify: Playback paused, another client is using this account"
+
   if(spotify_mp != NULL)
-    mp_enqueue_event(spotify_mp, event_create_type(EVENT_INTERNAL_PAUSE));
+    mp_enqueue_event(spotify_mp, event_create_str(EVENT_INTERNAL_PAUSE, PMSG));
 
 }
 
@@ -2750,7 +2751,7 @@ be_spotify_play(backend_t *be, const char *url, media_pipe_t *mp,
 
   mp_set_play_caps(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE);
 
-  mp_set_playstatus_by_hold(mp, hold);
+  mp_set_playstatus_by_hold(mp, hold, NULL);
 
   /* Playback successfully started, wait for events */
   while(1) {
@@ -2794,7 +2795,7 @@ be_spotify_play(backend_t *be, const char *url, media_pipe_t *mp,
       hold = action_update_hold_by_event(hold, e);
       spotify_msg_enq(spotify_msg_build_int(SPOTIFY_PAUSE, hold));
       mp_send_cmd_head(mp, mq, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
-      mp_set_playstatus_by_hold(mp, hold);
+      mp_set_playstatus_by_hold(mp, hold, NULL);
       lost_focus = 0;
 
     } else if(event_is_type(e, EVENT_MP_NO_LONGER_PRIMARY)) {
@@ -2803,7 +2804,7 @@ be_spotify_play(backend_t *be, const char *url, media_pipe_t *mp,
       lost_focus = 1;
       spotify_msg_enq(spotify_msg_build_int(SPOTIFY_PAUSE, 1));
       mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
-      mp_set_playstatus_by_hold(mp, hold);
+      mp_set_playstatus_by_hold(mp, hold, e->e_payload);
 
     } else if(event_is_type(e, EVENT_MP_IS_PRIMARY)) {
 
@@ -2812,7 +2813,7 @@ be_spotify_play(backend_t *be, const char *url, media_pipe_t *mp,
 	lost_focus = 0;
 	spotify_msg_enq(spotify_msg_build_int(SPOTIFY_PAUSE, 0));
 	mp_send_cmd_head(mp, mq, MB_CTRL_PLAY);
-	mp_set_playstatus_by_hold(mp, hold);
+	mp_set_playstatus_by_hold(mp, hold, NULL);
       }
 
     } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
@@ -2820,7 +2821,7 @@ be_spotify_play(backend_t *be, const char *url, media_pipe_t *mp,
       hold = 1;
       lost_focus = 0;
       mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
-      mp_set_playstatus_by_hold(mp, hold);
+      mp_set_playstatus_by_hold(mp, hold, e->e_payload);
 
     } else if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
 
@@ -2847,7 +2848,7 @@ be_spotify_play(backend_t *be, const char *url, media_pipe_t *mp,
   if(hold) {
     // If we were paused, release playback again.
     mp_send_cmd(mp, mq, MB_CTRL_PLAY);
-    mp_set_playstatus_by_hold(mp, 0);
+    mp_set_playstatus_by_hold(mp, 0, NULL);
   }
 
   spotify_mp = NULL;

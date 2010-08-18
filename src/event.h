@@ -125,10 +125,9 @@ typedef enum {
   EVENT_OPENURL,
   EVENT_PLAYTRACK,            /* For playqueue */
 
-  EVENT_MP_NO_LONGER_PRIMARY,
+  EVENT_MP_NO_LONGER_PRIMARY, // Carries a string as a reason
   EVENT_MP_IS_PRIMARY,
-
-  EVENT_INTERNAL_PAUSE,      /* Internal pause with a playback module */
+  EVENT_INTERNAL_PAUSE,       // Carries a string as a reason
 
   EVENT_CURRENT_PTS,
 

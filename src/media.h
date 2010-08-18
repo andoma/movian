@@ -200,6 +200,7 @@ typedef struct media_pipe {
   prop_t *mp_prop_metadata;
   prop_t *mp_prop_model;
   prop_t *mp_prop_playstatus;
+  prop_t *mp_prop_pausereason;
   prop_t *mp_prop_currenttime;
   prop_t *mp_prop_avdelta;
   prop_t *mp_prop_stats;
@@ -336,7 +337,7 @@ extern media_pipe_t *media_primary;
 
 #define mp_is_primary(mp) ((mp) == media_primary)
 
-void mp_set_playstatus_by_hold(media_pipe_t *mp, int hold);
+void mp_set_playstatus_by_hold(media_pipe_t *mp, int hold, const char *msg);
 
 void mp_set_playstatus_stop(media_pipe_t *mp);
 

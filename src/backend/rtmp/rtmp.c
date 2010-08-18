@@ -359,7 +359,7 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 
   mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
   mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
-  mp_set_playstatus_by_hold(mp, 0);
+  mp_set_playstatus_by_hold(mp, 0, NULL);
 
   while(1) {
 
@@ -501,7 +501,7 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
       hold = action_update_hold_by_event(hold, e);
       mp_send_cmd_head(mp, &mp->mp_video, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
       mp_send_cmd_head(mp, &mp->mp_audio, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
-      mp_set_playstatus_by_hold(mp, hold);
+      mp_set_playstatus_by_hold(mp, hold, NULL);
       lost_focus = 0;
       if(!hold)
 	forcerestart = 1;
@@ -512,7 +512,7 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
       lost_focus = 1;
       mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PAUSE);
       mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PAUSE);
-      mp_set_playstatus_by_hold(mp, hold);
+      mp_set_playstatus_by_hold(mp, hold, e->e_payload);
 
     } else if(event_is_type(e, EVENT_MP_IS_PRIMARY)) {
 
@@ -521,7 +521,7 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 	lost_focus = 0;
 	mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PLAY);
 	mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PLAY);
-	mp_set_playstatus_by_hold(mp, hold);
+	mp_set_playstatus_by_hold(mp, hold, NULL);
 
       }
 
@@ -530,7 +530,7 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
       hold = 1;
       lost_focus = 0;
       mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
-      mp_set_playstatus_by_hold(mp, hold);
+      mp_set_playstatus_by_hold(mp, hold, e->e_payload);
 
     } else if(event_is_type(e, EVENT_CURRENT_PTS)) {
       event_ts_t *ets = (event_ts_t *)e;
