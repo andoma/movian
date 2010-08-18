@@ -39,7 +39,8 @@ typedef struct keymap_defmap {
  */
 typedef struct keymap_entry {
   LIST_ENTRY(keymap_entry) ke_link;
-  char *ke_keycode;
+  char *ke_keycode1;
+  char *ke_keycode2;
   action_type_t ke_action;
   prop_t *ke_prop;
 

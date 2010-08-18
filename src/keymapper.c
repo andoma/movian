@@ -85,12 +85,24 @@ km_save(keymap_t *km)
 {
   keymap_entry_t *ke;
   htsmsg_t *m = htsmsg_create_map();
+  htsmsg_t *l;
   const char *e;
 
-  LIST_FOREACH(ke, &km->km_entries, ke_link)
-    if((e = action_code2str(ke->ke_action)) != NULL && ke->ke_keycode != NULL)
-      htsmsg_add_str(m, e, ke->ke_keycode);
-  
+  LIST_FOREACH(ke, &km->km_entries, ke_link) {
+    if((e = action_code2str(ke->ke_action)) == NULL)
+      continue;
+    
+    l = htsmsg_create_list();
+
+    if(ke->ke_keycode1)
+      htsmsg_add_str(l, NULL, ke->ke_keycode1);
+
+    if(ke->ke_keycode2)
+      htsmsg_add_str(l, NULL, ke->ke_keycode2);
+
+    htsmsg_add_msg(m, e, l);
+  }
+
   htsmsg_store_save(m, "keymaps/%s", km->km_name);
   htsmsg_destroy(m);
 }
@@ -100,7 +112,7 @@ km_save(keymap_t *km)
  *
  */
 static void 
-km_set_code(void *opaque, prop_event_t event, ...)
+km_set_code1(void *opaque, prop_event_t event, ...)
 {
   keymap_entry_t *ke = opaque;
   const char *str;
@@ -109,16 +121,16 @@ km_set_code(void *opaque, prop_event_t event, ...)
   va_start(ap, event);
 
   if(event != PROP_SET_RSTRING) {
-    free(ke->ke_keycode);
-    ke->ke_keycode = NULL;
+    free(ke->ke_keycode1);
+    ke->ke_keycode1 = NULL;
   } else {
     str = rstr_get(va_arg(ap, rstr_t *));
 
-    if(ke->ke_keycode != NULL && !strcmp(ke->ke_keycode, str))
+    if(ke->ke_keycode1 != NULL && !strcmp(ke->ke_keycode1, str))
       return;
 
-    free(ke->ke_keycode);
-    ke->ke_keycode = strdup(str);
+    free(ke->ke_keycode1);
+    ke->ke_keycode1 = strdup(str);
   }
   km_save(ke->ke_km);
 }
@@ -127,17 +139,46 @@ km_set_code(void *opaque, prop_event_t event, ...)
 /**
  *
  */
+static void 
+km_set_code2(void *opaque, prop_event_t event, ...)
+{
+  keymap_entry_t *ke = opaque;
+  const char *str;
+
+  va_list ap;
+  va_start(ap, event);
+
+  if(event != PROP_SET_RSTRING) {
+    free(ke->ke_keycode2);
+    ke->ke_keycode2 = NULL;
+  } else {
+    str = rstr_get(va_arg(ap, rstr_t *));
+
+    if(ke->ke_keycode2 != NULL && !strcmp(ke->ke_keycode2, str))
+      return;
+
+    free(ke->ke_keycode2);
+    ke->ke_keycode2 = strdup(str);
+  }
+  km_save(ke->ke_km);
+}
+
+
+
+/**
+ *
+ */
 static void
-keymapper_entry_add(keymap_t *km, const char *str, const char *eventname,
-		    action_type_t a)
+keymapper_entry_add(keymap_t *km, const char *kc1, const char *kc2,
+		    const char *eventname, action_type_t a)
 {
   keymap_entry_t *ke;
   prop_t *p, *src;
   
-
   ke = malloc(sizeof(keymap_entry_t));
   ke->ke_km = km;
-  ke->ke_keycode = str ? strdup(str) : NULL;
+  ke->ke_keycode1 = kc1 ? strdup(kc1) : NULL;
+  ke->ke_keycode2 = kc2 ? strdup(kc2) : NULL;
   ke->ke_action = a;
   LIST_INSERT_HEAD(&km->km_entries, ke, ke_link);
 
@@ -146,17 +187,25 @@ keymapper_entry_add(keymap_t *km, const char *str, const char *eventname,
 
   prop_set_string(prop_create(src, "type"), "keymapentry");
 
-  p = prop_create(src, "keycode");
-  if(str != NULL)
-    prop_set_string(p, str);
-  else
-    prop_set_void(p);
+  p = prop_create(src, "keycode1");
+  prop_set_string(prop_create(src, "keycode1"), kc1);
 
   ke->ke_sub_keycode = 
-    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_DEBUG,
-		   PROP_TAG_CALLBACK, km_set_code, ke,
+    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+		   PROP_TAG_CALLBACK, km_set_code1, ke,
 		   PROP_TAG_ROOT, p,
 		   NULL);
+
+
+  p = prop_create(src, "keycode2");
+  prop_set_string(prop_create(src, "keycode2"), kc2);
+
+  ke->ke_sub_keycode = 
+    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+		   PROP_TAG_CALLBACK, km_set_code2, ke,
+		   PROP_TAG_ROOT, p,
+		   NULL);
+
 
   p = prop_create(src, "title");
   prop_set_string(p, eventname);
@@ -175,7 +224,7 @@ keymapper_create_entries(keymap_t *km, const keymap_defmap_t *def)
   event_type_t e;
   htsmsg_t *m;
   const char *eventname;
-  const char *keycode;
+  const char *kc1, *kc2;
   int i;
 
   m = htsmsg_store_load("keymaps/%s", km->km_name);
@@ -185,18 +234,31 @@ keymapper_create_entries(keymap_t *km, const keymap_defmap_t *def)
 	      e, e);
       continue;
     }
-    keycode = NULL;
+    kc1 = kc2 = NULL;
 
     if(m != NULL) {
-      keycode = htsmsg_get_str(m, eventname);
+
+      htsmsg_t *l = htsmsg_get_list(m, eventname);
+
+      if(l == NULL) {
+	kc1 = htsmsg_get_str(m, eventname);
+      } else {
+	htsmsg_field_t *f = TAILQ_FIRST(&l->hm_fields);
+	if(f && f->hmf_type == HMF_STR) {
+	  kc1 = f->hmf_str;
+	  f = TAILQ_NEXT(f, hmf_link);
+	}
+	if(f && f->hmf_type == HMF_STR)
+	  kc2 = f->hmf_str;
+      }
     } else if(def != NULL) {
       for(i = 0; def[i].kd_keycode != NULL; i++)
 	if(def[i].kd_action == e) {
-	  keycode = def[i].kd_keycode;
+	  kc1 = def[i].kd_keycode;
 	  break;
 	}
     }
-    keymapper_entry_add(km, keycode, eventname, e);
+    keymapper_entry_add(km, kc1, kc2, eventname, e);
   }
   htsmsg_destroy(m);
 }
@@ -215,11 +277,15 @@ keymapper_resolve0(keymap_t *km, const char *str)
   action_type_t vec[MAX_ACTIONS];
   int vecptr = 0;
 
-  LIST_FOREACH(ke, &km->km_entries, ke_link)
-    if(ke->ke_keycode != NULL && !strcasecmp(str, ke->ke_keycode) &&
+  LIST_FOREACH(ke, &km->km_entries, ke_link) {
+    if(ke->ke_keycode1 != NULL && !strcasecmp(str, ke->ke_keycode1) &&
        vecptr < MAX_ACTIONS)
       vec[vecptr++] = ke->ke_action;
-  
+    else if(ke->ke_keycode2 != NULL && !strcasecmp(str, ke->ke_keycode2) &&
+	    vecptr < MAX_ACTIONS)
+      vec[vecptr++] = ke->ke_action;
+  }
+
   if(vecptr == 0)
     return NULL;
 
