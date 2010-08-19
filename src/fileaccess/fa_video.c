@@ -88,7 +88,7 @@ rescale(AVFormatContext *fctx, int64_t ts, int si)
  */
 static media_buf_t *
 subtitle_decode(AVFormatContext *fctx, AVCodecContext *ctx,
-		AVPacket *pkt, int si)
+		AVPacket *pkt, int si, media_codec_t *mc)
 {
   media_buf_t *mb;
 
@@ -110,6 +110,20 @@ subtitle_decode(AVFormatContext *fctx, AVCodecContext *ctx,
     break;
 
   default:
+    mb = media_buf_alloc();
+    mb->mb_data_type = MB_SUBTITLE;
+
+    mb->mb_pts = rescale(fctx, pkt->pts,      si);
+    mb->mb_duration = rescale(fctx, pkt->duration, si);
+ 
+    mb->mb_data = malloc(pkt->size +   FF_INPUT_BUFFER_PADDING_SIZE);
+    memset(mb->mb_data + pkt->size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+    memcpy(mb->mb_data, pkt->data, pkt->size);
+    mb->mb_size = pkt->size;
+    mb->mb_cw = media_codec_ref(mc);
+    break;
+
+
 #if 0
     printf("Codec type %x not supported\n", ctx->codec_id);
 
@@ -241,7 +255,8 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec, media_pipe_t *mp
       } else if(si == mp->mp_video.mq_stream2) {
 
 	ctx = fctx->streams[si]->codec;
-	mb = ctx != NULL ? subtitle_decode(fctx, ctx, &pkt, si) : mb;
+
+	mb = ctx != NULL ? subtitle_decode(fctx, ctx, &pkt, si, cwvec[si]) : mb;
 	mq = &mp->mp_video;
 
 	av_free_packet(&pkt);
