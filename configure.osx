@@ -268,7 +268,8 @@ fi
 # SSL
 #
 if enabled ssl; then
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lssl -lcrypto -lz"
+    PKGS+="openssl "
+    echo "Using OpenSSL:         `$PKGCONFIG --modversion openssl`"
     enable librtmp
 fi
 
