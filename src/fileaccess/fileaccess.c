@@ -259,6 +259,7 @@ fa_scandir(const char *url, char *errbuf, size_t errsize)
       fd = NULL;
     }
   } else {
+    snprintf(errbuf, errsize, "Protocol does not implement directory scanning");
     fd = NULL;
   }
   free(filename);
