@@ -40,7 +40,7 @@ struct filebundle *filebundles;
 
 
 static const struct filebundle_entry *
-resolve_entry(const char *url)
+resolve_file(const char *url)
 {
   struct filebundle *fb;
   const struct filebundle_entry *fbe;
@@ -73,7 +73,7 @@ b_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
   const struct filebundle_entry *fbe;
   fa_bundle_fh_t *fh;
 
-  if((fbe = resolve_entry(url)) == NULL) {
+  if((fbe = resolve_file(url)) == NULL) {
     snprintf(errbuf, errlen, "File not found");
     return NULL;
   }
