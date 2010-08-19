@@ -740,7 +740,15 @@ media_codec_create_lavc(media_codec_t *cw, enum CodecID id,
 
   cw->codec_ctx->codec_id   = cw->codec->id;
   cw->codec_ctx->codec_type = cw->codec->type;
-  cw->codec_ctx->sub_id = mcp ? mcp->sub_id : 0;
+
+
+
+  if(mcp->extradata != NULL) {
+    cw->codec_ctx->extradata = calloc(1, mcp->extradata_size +
+				      FF_INPUT_BUFFER_PADDING_SIZE);
+    memcpy(cw->codec_ctx->extradata, mcp->extradata, mcp->extradata_size);
+    cw->codec_ctx->extradata_size = mcp->extradata_size;
+  }
 
   if(avcodec_open(cw->codec_ctx, cw->codec) < 0) {
     if(ctx == NULL)

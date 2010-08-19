@@ -1652,6 +1652,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 
   prop_t *audio_tracks, *subtitle_tracks, *p;
   media_codec_params_t mcp;
+  char buf4[4];
 
   if((hs = htsp_find_subscription_by_msg(hc, m)) == NULL)
     return;
@@ -1748,8 +1749,13 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 		"Subtitle stream #%d missing ancillary id", idx);
 	}
 
-	mcp.sub_id =
-	  (composition_id & 0xffff) | ((ancillary_id & 0xffff) << 16);
+	buf4[0] = composition_id >> 8;
+	buf4[1] = composition_id;
+	buf4[2] = ancillary_id >> 8;
+	buf4[3] = ancillary_id;
+
+	mcp.extradata = &buf4;
+	mcp.extradata_size = 4;
 	s = 1;
 
       } else {

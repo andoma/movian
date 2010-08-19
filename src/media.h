@@ -262,8 +262,9 @@ media_codec_t *media_codec_ref(media_codec_t *cw);
 typedef struct media_codec_params {
   unsigned int width;
   unsigned int height;
-  int sub_id;
   int cheat_for_speed;
+  const void *extradata;
+  size_t extradata_size;
 } media_codec_params_t;
 
 
