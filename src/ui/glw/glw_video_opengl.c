@@ -707,7 +707,7 @@ glw_video_input_yuvp(glw_video_t *gv,
   hvec[2] = height >> (vshift + ilace);
 
   if(glw_video_configure(gv, &glw_video_opengl, wvec, hvec, 3,
-			 ilace ? GVC_CUTBORDER : 0))
+			 ilace ? (GVC_YHALF | GVC_CUTBORDER) : 0))
     return;
   
   if((s = glw_video_get_surface(gv)) == NULL)

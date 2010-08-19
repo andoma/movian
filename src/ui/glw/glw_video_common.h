@@ -44,6 +44,7 @@ typedef struct {
   int gvc_nsurfaces;
 
   int gvc_flags;
+#define GVC_YHALF     0x1
 #define GVC_CUTBORDER 0x2
 
 } glw_video_config_t;

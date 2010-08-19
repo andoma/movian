@@ -398,6 +398,7 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
   glw_video_t *gv = (glw_video_t *)w;
   video_decoder_t *vd = gv->gv_vd;
   glw_rctx_t rc0 = *rc;
+  float ys = gv->gv_cfg_cur.gvc_flags & GVC_YHALF ? 2 : 1;
 
   glw_PushMatrix(&rc0, rc);
 
@@ -413,12 +414,12 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
 
   glw_Scalef(&rc0, 
 	     2.0f / gv->gv_cfg_cur.gvc_width[0], 
-	     -2.0f / gv->gv_cfg_cur.gvc_height[0], 
+	     -2.0f / (ys * gv->gv_cfg_cur.gvc_height[0]), 
 	     0.0f);
   
   glw_Translatef(&rc0, 
 		-gv->gv_cfg_cur.gvc_width[0]  / 2,
-		-gv->gv_cfg_cur.gvc_height[0] / 2, 
+		 (ys * -gv->gv_cfg_cur.gvc_height[0]) / 2, 
 		0.0f);
 
   if(gv->gv_cfg_cur.gvc_width[0] > 0 &&
