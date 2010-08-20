@@ -78,7 +78,7 @@ fi
 #
 # configure ffmpeg
 #
-setup_ffmpeg --extra-cflags="-I${LIBOGC}/include -I${PORTLIBS}/include -D__LARGE64_FILES" \
+setup_ffmpeg --extra-cflags="-I${LIBOGC}/include -I${PORTLIBS}/include -D__LARGE64_FILES -include ${TOPDIR}/support/nostrictansi.h" \
     --extra-ldflags="-L${DEVKITPRO}/libogc/lib/wii -L${PORTLIBS}/lib" \
     --cross-prefix=${DEVKITPPC}/bin/powerpc-eabi- \
     --enable-cross-compile \
