@@ -119,6 +119,8 @@ extern void hts_thread_create_joinable(const char *, hts_thread_t *p,
 
 #define hts_thread_detach(t)
 
+#define hts_thread_current()     LWP_GetSelf()
+
 #else
 
 #error No threading support
