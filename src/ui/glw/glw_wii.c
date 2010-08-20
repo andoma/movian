@@ -32,7 +32,7 @@
 #include "ui/ui.h"
 #include "settings.h"
 #include "ui/glw/glw.h"
-#include "prop.h"
+#include "prop/prop.h"
 #include "glw_texture.h"
 #include "notifications.h"
 

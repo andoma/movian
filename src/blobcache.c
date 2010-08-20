@@ -36,6 +36,17 @@
 #include "misc/string.h"
 #include "misc/callout.h"
 
+#ifdef LOCK_SH
+#define BC_USE_FILE_LOCKS
+#endif
+
+
+
+#ifndef BC_USE_FILE_LOCKS
+static hts_mutex_t blobcache_lock;
+#endif
+
+
 static hts_mutex_t blobcache_mutex;
 static callout_t blobcache_callout;
 
@@ -92,8 +103,12 @@ blobcache_load(const char *path, int fd, size_t *sizep, int pad)
   time_t exp;
   size_t l;
 
+#ifndef BC_USE_FILE_LOCKS
+  hts_mutex_lock(&blobcache_lock);
+#else
   if(flock(fd, LOCK_SH))
     return NULL;
+#endif
 
   if(fstat(fd, &st))
     return NULL;
@@ -154,8 +169,12 @@ blobcache_save(int fd, const void *data, size_t size, time_t expire)
 {
   uint8_t buf[4];
 
+#ifndef BC_USE_FILE_LOCKS
+  hts_mutex_lock(&blobcache_lock);
+#else
   if(flock(fd, LOCK_EX))
     return -1;
+#endif
   
   buf[0] = expire >> 24;
   buf[1] = expire >> 16;
@@ -292,9 +311,8 @@ blobcache_compute_size(const char *path, uint64_t csize)
 static void
 blobcache_prune(void)
 {
-  struct dirent **namelist;
-  struct dirent **namelist2;
-  int n;
+  DIR *d1, *d2;
+  struct dirent *de1, *de2;
   char path[PATH_MAX];
   char path2[PATH_MAX];
   char path3[PATH_MAX];
@@ -305,41 +323,37 @@ blobcache_prune(void)
   struct cachfile_list list;
 
   snprintf(path, sizeof(path), "%s/blobcache", showtime_cache_path);
-  
-  n = scandir(path, &namelist, NULL, NULL);
-  if(n < 0)
+
+  if((d1 = opendir(path)) == NULL)
     return;
 
   LIST_INIT(&list);
 
-  while(n--) {
-    if(namelist[n]->d_name[0] != '.') {
+  while((de1 = readdir(d1)) != NULL) {
+    if(de1->d_name[0] != '.') {
       snprintf(path2, sizeof(path2), "%s/blobcache/%s",
-	       showtime_cache_path, namelist[n]->d_name);
+	       showtime_cache_path, de1->d_name);
 
-      int m = scandir(path2, &namelist2, NULL, NULL);
-      if(m >= 0) {
-	while(m--) {
-          if(namelist2[m]->d_name[0] != '.') {
+      if((d2 = opendir(path2)) != NULL) {
+	while((de2 = readdir(d2)) != NULL) {
+          if(de2->d_name[0] != '.') {
 
 	    snprintf(path3, sizeof(path3), "%s/blobcache/%s/%s",
-		     showtime_cache_path, namelist[n]->d_name,
-		     namelist2[m]->d_name);
+		     showtime_cache_path, de1->d_name,
+		     de2->d_name);
 	    
 	    if(!stat(path3, &st)) {
-	      addfile(&list, namelist[n]->d_name, namelist2[m]->d_name, &st);
+	      addfile(&list, de1->d_name, de2->d_name, &st);
 	      files++;
 	      tsize += st.st_size;
 	    }
 	  }
-	  free(namelist2[m]);
 	}
-	free(namelist2);
+	closedir(d2);
       }
     }
-    free(namelist[n]);
   }
-  free(namelist);
+  closedir(d1);
   
   hts_mutex_lock(&blobcache_mutex);
   
@@ -387,6 +401,9 @@ blobcache_prune(void)
 void
 blobcache_init(void)
 {
+#ifndef BC_USE_FILE_LOCKS
+  hts_mutex_init(&blobcache_lock);
+#endif
   hts_mutex_init(&blobcache_mutex);
   blobcache_prune();
 }

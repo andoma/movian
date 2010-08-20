@@ -375,3 +375,16 @@ showtime_get_ts(void)
   long long t = gettime();
   return (t * 1000LL) / 60750LL;
 }
+
+
+/**
+ *
+ */
+void
+arch_set_cachepath(void)
+{
+  char buf[PATH_MAX];
+
+  snprintf(buf, sizeof(buf), "sd:/showtimecache");
+  showtime_cache_path = strdup(buf);
+}

@@ -37,6 +37,49 @@ static int net_running;
 /**
  *
  */
+static int
+tcp_write(tcpcon_t *tc, const void *data, size_t len)
+{
+  return net_send(tc->fd, data, len, 0) != len ? ECONNRESET : 0;
+}
+
+
+
+/**
+ *
+ */
+static int
+tcp_read(tcpcon_t *tc, void *buf, size_t bufsize, int all)
+{
+  int tot = 0, r;
+  int rlen;
+  int maxsize = 32768;
+
+  while(tot < bufsize) {
+
+    rlen = bufsize - tot;
+    if(rlen > maxsize)
+      rlen = maxsize;
+
+    if((r = net_recv(tc->fd, buf + tot, rlen, 0)) == IPC_ENOMEM) {
+      if(maxsize > 2048)
+	maxsize /= 2;
+      continue;
+    }
+
+    if(r < 1)
+      return -1;
+    tot += r;
+    if(!all)
+      break;
+  }
+  return tot;
+}
+
+
+/**
+ *
+ */
 static void *
 net_setup_thread(void *aux)
 {
@@ -89,17 +132,22 @@ net_setup(void)
 /**
  *
  */
-int
+tcpcon_t *
 tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
-	    int timeout)
+	    int timeout, int ssl)
 {
   struct hostent *h;
   int fd, r, retry = 0;
   struct sockaddr_in in;
 
+  if(ssl) {
+    snprintf(errbuf, errbufsize, "No SSL support");
+    return NULL;
+  }
+
   if(net_try_setup()) {
     snprintf(errbuf, errbufsize, "Unable initialize networking");
-    return -1;
+    return NULL;
   }
 
   memset(&in, 0, sizeof(in));
@@ -117,7 +165,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 	  snprintf(errbuf, errbufsize, "Unable to resolve %s -- %d", hostname,
 		   errno);
 	  hts_mutex_unlock(&net_resolve_mutex);
-	  return -1;
+	  return NULL;
 	}
     	usleep(250000);
       }
@@ -130,65 +178,30 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
   }
   if((fd = net_socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     snprintf(errbuf, errbufsize, "Can not create socket, error %d", fd);
-    return -1;
+    return NULL;
   }
   if((r = net_connect(fd, (struct sockaddr *)&in, sizeof(in))) < 0) {
     snprintf(errbuf, errbufsize, "Unable to connect to %s, error %d",
 	     hostname, r);
     net_close(fd);
-    return -1;
+    return NULL;
   }
-  return fd;
+
+  tcpcon_t *tc = calloc(1, sizeof(tcpcon_t));
+  tc->fd = fd;
+  tc->read = tcp_read;
+  tc->write = tcp_write;
+  return tc;
 }
 
-/**
- *
- */
-int
-tcp_write(int fd, const void *data, size_t len)
-{
-  return net_send(fd, data, len, 0) != len ? ECONNRESET : 0;
-}
-
-
-
-/**
- *
- */
-int
-tcp_read(int fd, void *buf, size_t bufsize, int all)
-{
-  int tot = 0, r;
-  int rlen;
-  int maxsize = 32768;
-
-  while(tot < bufsize) {
-
-    rlen = bufsize - tot;
-    if(rlen > maxsize)
-      rlen = maxsize;
-
-    if((r = net_recv(fd, buf + tot, rlen, 0)) == IPC_ENOMEM) {
-      if(maxsize > 2048)
-	maxsize /= 2;
-      continue;
-    }
-
-    if(r < 1)
-      return -1;
-    tot += r;
-    if(!all)
-      break;
-  }
-  return tot;
-}
 
 
 /**
  *
  */
 void
-tcp_close(int fd)
+tcp_close(tcpcon_t *tc)
 {
-  net_close(fd);
+  net_close(tc->fd);
+  free(tc);
 }

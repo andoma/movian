@@ -298,7 +298,6 @@ smb_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
     }
   } while(SMB_FindNext(&entry, sc->sc_conn) == SMB_SUCCESS);
   
-  fa_dir_sort(fd);
   release_connection(sc);
   return 0;
 }
@@ -421,7 +420,7 @@ smb_fsize(fa_handle_t *fh0)
  * Standard unix stat
  */
 static int
-smb_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
+smb_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 	 char *errbuf, size_t errlen, int non_interactive)
 {
   const char *fname;
@@ -444,9 +443,9 @@ smb_stat(fa_protocol_t *fap, const char *url, struct stat *buf,
     return -1;
   }
   
-  memset(buf, 0, sizeof(struct stat));
-  buf->st_size = sde.size;
-  buf->st_mode = sde.attributes & 0x10 ? S_IFDIR : S_IFREG;
+  memset(fs, 0, sizeof(struct fa_stat));
+  fs->fs_size = sde.size;
+  fs->fs_type = sde.attributes & 0x10 ? CONTENT_DIR : CONTENT_FILE;
   release_connection(sc);
   return 0;
 }
