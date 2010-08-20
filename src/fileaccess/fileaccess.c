@@ -551,7 +551,7 @@ fileaccess_init(void)
     if(fap->fap_init != NULL)
       fap->fap_init();
 
-  av_register_protocol(&fa_lavf_proto);
+  av_register_protocol2(&fa_lavf_proto, sizeof(fa_lavf_proto));
   return 0;
 }
 
