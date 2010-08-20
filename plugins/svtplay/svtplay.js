@@ -114,8 +114,15 @@
       
       if(best === undefined)
 	return;
-      
-      metadata.duration = parseInt(best.@duration);
+
+      metadata.icon = item.media::thumbnail.@url;
+      metadata.description = item.description;
+
+      var duration =  parseInt(best.@duration);
+
+      if(duration > 0)
+	metadata.duration = duration;
+
       page.appendItem(best.@url,
 		      "video", metadata);
     });
