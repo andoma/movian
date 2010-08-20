@@ -27,6 +27,8 @@
 
 typedef struct {
 
+  media_pipe_t *mp;
+
   int vframeduration;
   
   media_codec_t *vcodec;
@@ -41,6 +43,12 @@ typedef struct {
 
   int width;
   int height;
+
+  int hold;
+  int lost_focus;
+  int forcerestart;
+  int64_t seekbase;
+  int epoch;
 
 } rtmp_t;
 
@@ -57,53 +65,13 @@ rtmp_canhandle(backend_t *be, const char *url)
 }
 
 
-/**
- *
- */
-static int 
-set_vcodec(rtmp_t *r, const char *str)
-{
-  enum CodecID id;
-  if(!strcmp(str, "avc1")) {
-    id = CODEC_ID_H264;
-  } else {
-    return -1;
-  }
-
-  //  r->vcodec_id = id;
-  return 0;
-}
-
-
-/**
- *
- */
-static int 
-set_acodec(rtmp_t *r, const char *str)
-{
-  enum CodecID id;
-  if(!strcmp(str, "mp4a")) {
-    id = CODEC_ID_AAC;
-  } else {
-    return -1;
-  }
-
-  //  r->acodec_id = id;
-  return 0;
-}
-
-
-
-
-
 
 #define SAVC(x)	static AVal av_##x = { (char *)#x, sizeof(#x)-1};
 
 SAVC(onMetaData);
 SAVC(duration);
-SAVC(videocodecid);
-SAVC(audiocodecid);
 SAVC(videoframerate)
+SAVC(framerate)
 SAVC(width);
 SAVC(height);
 
@@ -114,7 +82,6 @@ handle_metadata(rtmp_t *r, char *body, unsigned int len,
   AMFObject obj;
   AVal metastring;
   AMFObjectProperty prop;
-  char str[256];
   prop_t *m = mp->mp_prop_metadata;
 
   if(AMF_Decode(&obj, body, len, 0) < 0) {
@@ -136,40 +103,16 @@ handle_metadata(rtmp_t *r, char *body, unsigned int len,
   prop_set_float(prop_create(m, "duration"), prop.p_vu.p_number);
   r->duration = prop.p_vu.p_number;
 
-  if(!RTMP_FindFirstMatchingProperty(&obj, &av_videocodecid, &prop) ||
-     prop.p_type != AMF_STRING) {
-    snprintf(errstr, errlen, "Unable to parse video codec");
-    return -1;
-  }
-  snprintf(str, sizeof(str), "%.*s", prop.p_vu.p_aval.av_len,
-	   prop.p_vu.p_aval.av_val);
-  if(set_vcodec(r, str)) {
-    snprintf(errstr, errlen, "Unsupported video codec: %s", str);
-    return -1;
-  }
-
-  if(!RTMP_FindFirstMatchingProperty(&obj, &av_audiocodecid, &prop) ||
-     prop.p_type != AMF_STRING)
-    return -1;
-  snprintf(str, sizeof(str), "%.*s", prop.p_vu.p_aval.av_len,
-	   prop.p_vu.p_aval.av_val);
-  if(set_acodec(r, str)) {
-    snprintf(errstr, errlen, "Unsupported audio codec: %s", str);
-    return -1;
-  }
-
-  if(!RTMP_FindFirstMatchingProperty(&obj, &av_videoframerate, &prop) ||
-     prop.p_type != AMF_NUMBER) {
-    snprintf(errstr, errlen, "Unable to parse video framerate");
-    return -1;
-  }
-  r->vframeduration = 1000000.0 / prop.p_vu.p_number;
 
 
   if(!RTMP_FindFirstMatchingProperty(&obj, &av_videoframerate, &prop) ||
      prop.p_type != AMF_NUMBER) {
-    snprintf(errstr, errlen, "Unable to parse video framerate");
-    return -1;
+
+    if(!RTMP_FindFirstMatchingProperty(&obj, &av_framerate, &prop) ||
+       prop.p_type != AMF_NUMBER) {
+      snprintf(errstr, errlen, "Unable to parse video framerate");
+      return -1;
+    }
   }
   r->vframeduration = 1000000.0 / prop.p_vu.p_number;
 
@@ -188,128 +131,6 @@ handle_metadata(rtmp_t *r, char *body, unsigned int len,
 }
 
 
-static media_buf_t *
-get_packet(rtmp_t *r, int v, uint8_t *data, size_t size, int32_t dts,
-	   int epoch, media_pipe_t *mp)
-{
-  media_buf_t *mb;
-  uint8_t flags;
-  uint8_t type;
-  enum CodecID id;
-  int d = 0;
-
-  if(size < 2)
-    return NULL;
-
-  flags = data[0];
-  type  = data[1];
-
-  data += 2;
-  size -= 2;
-
-  if(v) {
-    // Video
-    switch(flags & 0xf) {
-    case 7:   id = CODEC_ID_H264; break;
-    default:  return NULL;
-    }
-
-    if(id == CODEC_ID_H264) {
-      if(size < 3)
-	return NULL;
-    
-      d = (AMF_DecodeInt24((char *)data) + 0xff800000) ^ 0xff800000;
-      data += 3;
-      size -= 3;
-    }
-
-    if(r->vcodec == NULL) {
-      AVCodecContext *ctx;
-      media_codec_params_t mcp = {0};
-      if(id == CODEC_ID_H264) {
-	if(type != 0 || size < 0)
-	  return NULL;
-
-	ctx = avcodec_alloc_context();
-	ctx->extradata = av_mallocz(size + FF_INPUT_BUFFER_PADDING_SIZE);
-	memcpy(ctx->extradata, data, size);
-	ctx->extradata_size =  size;
-      } else {
-	ctx = NULL;
-      }
-      mcp.width = r->width;
-      mcp.height = r->height;
-      r->vcodec = media_codec_create(id, CODEC_TYPE_VIDEO, 0, NULL, ctx, 
-				     &mcp, mp);
-      return NULL;
-    }
-
-    mb = media_buf_alloc();
-    mb->mb_data_type = MB_VIDEO;
-    mb->mb_duration = r->vframeduration;
-    mb->mb_cw = media_codec_ref(r->vcodec);
-    mb->mb_time = AV_NOPTS_VALUE;
-
-    if(d < 0) {
-      mb->mb_skip = 1;
-      r->in_seek_skip = 1;
-      //      printf("VIDEO: %20d %d SKIP\n", dts, d);
-    } else if(r->in_seek_skip) {
-      mb->mb_skip = 2;
-      r->in_seek_skip = 0;
-      //      printf("VIDEO: %20d %d SKIP LAST\n", dts, d);
-    } else {
-      //      printf("VIDEO: %20d %d\n", dts, d);
-    }
-  } else {
-    // Audio
-
-
-    switch(flags & 0xf0) {
-    case 0xa0:   id = CODEC_ID_AAC; break;
-    default:  return NULL;
-    }
-    
-    if(r->acodec == NULL) {
-      AVCodecContext *ctx;
-
-      if(id == CODEC_ID_AAC) {
-	if(type != 0 || size < 0)
-	  return NULL;
-
-	ctx = avcodec_alloc_context();
-	ctx->extradata = av_mallocz(size + FF_INPUT_BUFFER_PADDING_SIZE);
-	memcpy(ctx->extradata, data, size);
-	ctx->extradata_size =  size;
-      } else {
-	ctx = NULL;
-      }
-      r->acodec = media_codec_create(id, CODEC_TYPE_AUDIO, 0, NULL, ctx,
-				     NULL, mp);
-      return NULL;
-    }
-
-    mb = media_buf_alloc();
-    mb->mb_data_type = MB_AUDIO;
-    mb->mb_duration = 0;
-    mb->mb_cw = media_codec_ref(r->acodec);
-    mb->mb_time = 1000LL * dts;
-    //    printf("AUDIO: %20d\n", dts);
-  }
-
-  r->lastdts = dts;
-
-  mb->mb_dts = 1000LL * dts;
-  mb->mb_pts = 1000LL * (dts + d);
-
-  mb->mb_data = malloc(size +   FF_INPUT_BUFFER_PADDING_SIZE);
-  memset(mb->mb_data + size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
-  memcpy(mb->mb_data, data, size);
-  mb->mb_size = size;
-  mb->mb_epoch = epoch;
-  return mb;
-}
-
 
 /**
  *
@@ -327,7 +148,7 @@ video_seek(rtmp_t *r, media_pipe_t *mp, media_buf_t **mbp,
 
   mp_flush(mp, 0);
   
-  if(*mbp != NULL) {
+  if(mbp != NULL && *mbp != NULL) {
     media_buf_free(*mbp);
     *mbp = NULL;
   }
@@ -336,6 +157,324 @@ video_seek(rtmp_t *r, media_pipe_t *mp, media_buf_t **mbp,
 
   return pos;
 }
+
+/**
+ *
+ */
+static event_t *
+rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
+{
+  media_pipe_t *mp = r->mp;
+
+  if(event_is_type(e, EVENT_EXIT) ||
+     event_is_type(e, EVENT_PLAY_URL))
+    return e;
+
+  if(event_is_action(e, ACTION_PLAYPAUSE) ||
+     event_is_action(e, ACTION_PLAY) ||
+     event_is_action(e, ACTION_PAUSE)) {
+    
+    r->hold = action_update_hold_by_event(r->hold, e);
+    mp_send_cmd_head(mp, &mp->mp_video, r->hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
+    mp_send_cmd_head(mp, &mp->mp_audio, r->hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
+    mp_set_playstatus_by_hold(mp, r->hold, NULL);
+    r->lost_focus = 0;
+    if(!r->hold)
+      r->forcerestart = 1;
+    
+  } else if(event_is_type(e, EVENT_MP_NO_LONGER_PRIMARY)) {
+
+    r->hold = 1;
+    r->lost_focus = 1;
+    mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PAUSE);
+    mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PAUSE);
+    mp_set_playstatus_by_hold(mp, r->hold, e->e_payload);
+    
+  } else if(event_is_type(e, EVENT_MP_IS_PRIMARY)) {
+    
+    if(r->lost_focus) {
+      r->hold = 0;
+      r->lost_focus = 0;
+      mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PLAY);
+      mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PLAY);
+      mp_set_playstatus_by_hold(mp, r->hold, NULL);
+      
+    }
+    
+  } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
+    
+    r->hold = 1;
+    r->lost_focus = 0;
+    mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PAUSE);
+    mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PAUSE);
+    mp_set_playstatus_by_hold(mp, r->hold, e->e_payload);
+    
+  } else if(event_is_type(e, EVENT_CURRENT_PTS)) {
+    event_ts_t *ets = (event_ts_t *)e;
+    
+    r->seekbase = ets->pts;
+    
+  } else if(event_is_type(e, EVENT_SEEK)) {
+    event_ts_t *ets = (event_ts_t *)e;
+
+    r->epoch++;
+      
+    r->seekbase = video_seek(r, mp, mbp, ets->pts, 1, "direct");
+
+  } else if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
+
+    r->seekbase = video_seek(r, mp, mbp, r->seekbase - 60000000, 1, "-60s");
+
+  } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
+
+    r->seekbase = video_seek(r, mp, mbp, r->seekbase - 15000000, 1, "-15s");
+
+  } else if(event_is_action(e, ACTION_SEEK_FORWARD)) {
+
+    r->seekbase = video_seek(r, mp, mbp, r->seekbase + 15000000, 1, "+15s");
+
+  } else if(event_is_action(e, ACTION_SEEK_FAST_FORWARD)) {
+
+    r->seekbase = video_seek(r, mp, mbp, r->seekbase + 60000000, 1, "+60s");
+
+  } else if(event_is_action(e, ACTION_STOP)) {
+    mp_set_playstatus_stop(mp);
+  }
+  event_unref(e);
+  return NULL;
+}
+
+
+/**
+ *
+ */
+static event_t *
+sendpkt(rtmp_t *r, media_queue_t *mq, media_codec_t *mc,
+	int64_t dts, int64_t pts, int64_t time, const void *data, 
+	size_t size, int skip, int dt)
+{
+  event_t *e = NULL;
+  media_buf_t *mb = media_buf_alloc();
+
+  mb->mb_data_type = dt;
+  mb->mb_duration = 0;
+  mb->mb_cw = media_codec_ref(mc);
+  mb->mb_time = time;
+  mb->mb_dts = dts;
+  mb->mb_pts = pts;
+
+  mb->mb_data = malloc(size +   FF_INPUT_BUFFER_PADDING_SIZE);
+  memset(mb->mb_data + size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+  memcpy(mb->mb_data, data, size);
+  mb->mb_size = size;
+  mb->mb_epoch = r->epoch;
+
+  do {
+
+    if(mb == NULL || (e = mb_enqueue_with_events(r->mp, mq, mb)) == NULL)
+      break;
+    
+    e = rtmp_process_event(r, e, &mb);
+
+  } while(e == NULL);
+
+  return e;
+}
+
+
+/**
+ *
+ */
+static event_t *
+get_packet_v(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
+	     media_pipe_t *mp)
+{
+  uint8_t flags;
+  uint8_t type = 0;
+  enum CodecID id;
+  int d = 0;
+
+  if(size < 2)
+    return NULL;
+
+  flags = *data++;
+  size--;
+
+
+  switch(flags & 0xf) {
+  case 7:
+    type = *data++;
+    size--;
+    id = CODEC_ID_H264;
+
+    if(size < 3)
+      return NULL;
+    
+    d = (AMF_DecodeInt24((char *)data) + 0xff800000) ^ 0xff800000;
+    data += 3;
+    size -= 3;
+    break;
+
+  case 4:
+    type = *data++;
+    size--;
+    id = CODEC_ID_VP6F;
+    break;
+  default:
+    return NULL;
+  }
+
+  if(r->vcodec == NULL) {
+    AVCodecContext *ctx;
+    media_codec_params_t mcp = {0};
+
+    switch(id) {
+    case CODEC_ID_H264:
+      if(type != 0 || size < 0)
+	return NULL;
+	
+      ctx = avcodec_alloc_context();
+      ctx->extradata = av_mallocz(size + FF_INPUT_BUFFER_PADDING_SIZE);
+      memcpy(ctx->extradata, data, size);
+      ctx->extradata_size =  size;
+      break;
+
+    case CODEC_ID_VP6F:
+      if(size < 1)
+	return NULL;
+
+      ctx = avcodec_alloc_context();
+      ctx->extradata = av_mallocz(1 + FF_INPUT_BUFFER_PADDING_SIZE);
+      memcpy(ctx->extradata, &type, 1);
+      ctx->extradata_size =  1;
+      break;
+
+    default:
+      abort();
+    }
+    mcp.width = r->width;
+    mcp.height = r->height;
+    r->vcodec = media_codec_create(id, CODEC_TYPE_VIDEO, 0, NULL, ctx, 
+				   &mcp, mp);
+    return NULL;
+  }
+
+  int skip = 0;
+
+  int64_t pts = 1000LL * (dts + d);
+  dts = 1000LL * dts;
+
+
+  if(d < 0) {
+    skip = 1;
+    r->in_seek_skip = 1;
+    //      printf("VIDEO: %20d %d SKIP\n", dts, d);
+  } else if(r->in_seek_skip) {
+    skip = 2;
+    r->in_seek_skip = 0;
+    //      printf("VIDEO: %20d %d SKIP LAST\n", dts, d);
+  } else {
+    //      printf("VIDEO: %20d %d\n", dts, d);
+  }
+
+  r->lastdts = dts;
+
+  return sendpkt(r, &r->mp->mp_video, r->vcodec, dts, pts, AV_NOPTS_VALUE,
+		 data, size, skip, MB_VIDEO);
+}
+
+
+/**
+ *
+ */
+static event_t *
+get_packet_a(rtmp_t *r, uint8_t *data, size_t size, int64_t dts, 
+	     media_pipe_t *mp)
+{
+  uint8_t flags;
+  uint8_t type = 0;
+  enum CodecID id;
+
+  if(size < 2)
+    return NULL;
+
+  flags = *data++;
+  size--;
+
+  switch(flags & 0xf0) {
+  case 0xa0:   id = CODEC_ID_AAC;
+    type = *data++;
+    size--;
+    break;
+
+  case 0x20:
+    id = CODEC_ID_MP3;
+    break;
+
+  default: 
+    return NULL;
+  }
+    
+  if(r->acodec == NULL) {
+    AVCodecContext *ctx;
+    int parse = 0;
+    
+    switch(id) {
+      
+    case CODEC_ID_AAC:
+      if(type != 0 || size < 0)
+	return NULL;
+	
+      ctx = avcodec_alloc_context();
+      ctx->extradata = av_mallocz(size + FF_INPUT_BUFFER_PADDING_SIZE);
+      memcpy(ctx->extradata, data, size);
+      ctx->extradata_size =  size;
+      break;
+
+    case CODEC_ID_MP3:
+      ctx = avcodec_alloc_context();
+      parse = 1;
+      break;
+
+    default:
+      abort();
+    }
+
+    r->acodec = media_codec_create(id, CODEC_TYPE_AUDIO, parse, NULL, ctx,
+				   NULL, mp);
+    return NULL;
+  }
+
+  media_codec_t *mc = r->acodec;
+
+  dts *= 1000;
+
+  if(mc->parser_ctx == NULL)
+    return sendpkt(r, &mp->mp_audio, mc, 
+		   dts, dts, dts, data, size, 0, MB_AUDIO);
+
+  while(size > 0) {
+    int outlen;
+    uint8_t *outbuf;
+    int rlen = av_parser_parse2(mc->parser_ctx,
+				mc->codec_ctx, &outbuf, &outlen, 
+				data, size, dts, dts, AV_NOPTS_VALUE);
+    if(outlen) {
+      event_t *e = sendpkt(r, &mp->mp_audio, mc,
+			   mc->parser_ctx->dts,
+			   mc->parser_ctx->pts, mc->parser_ctx->dts,
+			   outbuf, outlen, 0,
+			   MB_AUDIO);
+      if(e != NULL)
+	return e;
+    }
+    dts = AV_NOPTS_VALUE;
+    data += rlen;
+    size -= rlen;
+  }
+  return NULL;
+}
+
 
 
 
@@ -346,16 +485,16 @@ static event_t *
 rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 {
   RTMPPacket p = {0};
-  media_buf_t *mb = NULL;
-  media_queue_t *mq = NULL;
   int pos = -1, ret;
   uint32_t dts;
   event_t *e;
-  int hold = 0, lost_focus = 0, epoch = 1;
-  int64_t seekbase;
-  int forcerestart = 0;
 
-  seekbase = AV_NOPTS_VALUE;
+  r->mp = mp;
+  r->hold = 0;
+  r->lost_focus = 0;
+  r->forcerestart = 0;
+  r->epoch = 1;
+  r->seekbase = AV_NOPTS_VALUE;
 
   mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
   mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
@@ -363,215 +502,112 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 
   while(1) {
 
-    if(mb == NULL) {
 
-      if(pos == -1) {
-	ret = RTMP_GetNextMediaPacket(r->r, &p);
-	if(ret == 2) {
-	  /* Wait for queues to drain */
-	  e = mp_wait_for_empty_queues(mp, 0);
-	  mp_set_playstatus_stop(mp);
+    if(pos == -1) {
+      ret = RTMP_GetNextMediaPacket(r->r, &p);
 
-	  if(e == NULL)
-	    e = event_create_type(EVENT_EOF);
-	  break;
-	}
+      if(ret == 2) {
+	/* Wait for queues to drain */
+	e = mp_wait_for_empty_queues(mp, 0);
+	mp_set_playstatus_stop(mp);
 
-	if(forcerestart || ret == 0) {
-	  forcerestart = 0,
+	if(e == NULL)
+	  e = event_create_type(EVENT_EOF);
+	break;
+      }
 
-	  RTMP_Close(r->r);
+      if(r->forcerestart || ret == 0) {
+	r->forcerestart = 0;
+	RTMP_Close(r->r);
 	  
-	  RTMP_Init(r->r);
+	RTMP_Init(r->r);
 
-	  memset(&p, 0, sizeof(p));
+	memset(&p, 0, sizeof(p));
 
-	  TRACE(TRACE_DEBUG, "RTMP", "Reconnecting stream at pos %d", 
-		r->lastdts);
+	TRACE(TRACE_DEBUG, "RTMP", "Reconnecting stream at pos %d", 
+	      r->lastdts);
 
-	  if(!RTMP_SetupURL(r->r, url)) {
-	    snprintf(errbuf, errlen, "Unable to setup RTMP session");
-	    return NULL;
-	  }
-
-	  if(!RTMP_Connect(r->r, NULL)) {
-	    snprintf(errbuf, errlen, "Unable to connect RTMP session");
-	    return NULL;
-	  }
-
-	  if(!RTMP_ConnectStream(r->r, seekbase / 1000)) {
-	    snprintf(errbuf, errlen, "Unable to stream RTMP session");
-	    return NULL;
-	  }
-	  epoch++;
-
-
-	  r->lastdts = 0;
-	  seekbase = AV_NOPTS_VALUE;
-	  mp_flush(mp, 0);
-	  continue;
+	if(!RTMP_SetupURL(r->r, url)) {
+	  snprintf(errbuf, errlen, "Unable to setup RTMP session");
+	  return NULL;
 	}
 
-	dts = p.m_nTimeStamp;
+	if(!RTMP_Connect(r->r, NULL)) {
+	  snprintf(errbuf, errlen, "Unable to connect RTMP session");
+	  return NULL;
+	}
 
-	switch(p.m_packetType) {
-	case RTMP_PACKET_TYPE_INFO:
+	if(!RTMP_ConnectStream(r->r, r->seekbase / 1000)) {
+	  snprintf(errbuf, errlen, "Unable to stream RTMP session");
+	  return NULL;
+	}
+	r->epoch++;
+
+
+	r->lastdts = 0;
+	r->seekbase = AV_NOPTS_VALUE;
+	mp_flush(mp, 0);
+	continue;
+      }
+
+      dts = p.m_nTimeStamp;
+
+      switch(p.m_packetType) {
+      case RTMP_PACKET_TYPE_INFO:
+	if(handle_metadata(r, p.m_body, p.m_nBodySize, mp, errbuf, errlen))
+	  return NULL;
+	break;
+
+      case RTMP_PACKET_TYPE_VIDEO:
+	e = get_packet_v(r, (void *)p.m_body, p.m_nBodySize, dts, mp);
+	break;
+
+      case RTMP_PACKET_TYPE_AUDIO:
+	e = get_packet_a(r, (void *)p.m_body, p.m_nBodySize, dts, mp);
+	break;
+	
+      case 0x16:
+	pos = 0;
+	break;
+      default:
+	TRACE(TRACE_DEBUG, "RTMP", 
+	      "Got unknown packet type %d\n", p.m_packetType);
+	break;
+      }
+    }
+
+    if(pos != -1) {
+      if(pos + 11 < p.m_nBodySize) {
+	uint32_t ds = AMF_DecodeInt24(p.m_body + pos + 1);
+	  
+	if(pos + 11 + ds + 4 > p.m_nBodySize) {
+	  snprintf(errbuf, errlen, "Corrupt stream");
+	  return NULL;
+	}
+
+	dts = AMF_DecodeInt24(p.m_body + pos + 4);
+	dts |= (p.m_body[pos + 7] << 24);
+
+	if(p.m_body[pos] == RTMP_PACKET_TYPE_INFO) {
 	  if(handle_metadata(r, p.m_body, p.m_nBodySize, mp, errbuf, errlen))
 	    return NULL;
-	  break;
-
-	case RTMP_PACKET_TYPE_VIDEO:
-	  mb = get_packet(r, 1, (void *)p.m_body, p.m_nBodySize, dts, epoch, 
-			  mp);
-	  mq = &mp->mp_video;
-	  break;
-
-	case RTMP_PACKET_TYPE_AUDIO:
-	  mb = get_packet(r, 0, (void *)p.m_body, p.m_nBodySize, dts, epoch,
-			  mp);
-	  mq = &mp->mp_audio;
-	  break;
-	
-	case 0x16:
-	  pos = 0;
-	  break;
-	default:
-	  TRACE(TRACE_DEBUG, "RTMP", 
-		"Got unknown packet type %d\n", p.m_packetType);
-	  break;
-	}
-      }
-
-      if(pos != -1) {
-	if(pos + 11 < p.m_nBodySize) {
-	  uint32_t ds = AMF_DecodeInt24(p.m_body + pos + 1);
-	  
-	  if(pos + 11 + ds + 4 > p.m_nBodySize) {
-	    snprintf(errbuf, errlen, "Corrupt stream");
-	    return NULL;
-	  }
-
-	  dts = AMF_DecodeInt24(p.m_body + pos + 4);
-	  dts |= (p.m_body[pos + 7] << 24);
-
-	  if(p.m_body[pos] == RTMP_PACKET_TYPE_INFO) {
-	    if(handle_metadata(r, p.m_body, p.m_nBodySize, mp, errbuf, errlen))
-	      return NULL;
-	  } else if(p.m_body[pos] == RTMP_PACKET_TYPE_VIDEO) {
-	    mb = get_packet(r, 1, (void *)p.m_body + pos + 11, ds, dts, epoch,
-			    mp);
-	    mq = &mp->mp_video;
-	  } else if(p.m_body[pos] == RTMP_PACKET_TYPE_AUDIO) {
-	    mb = get_packet(r, 0, (void *)p.m_body + pos + 11, ds, dts, epoch,
-			    mp);
-	    mq = &mp->mp_audio;
-	  } else {
-	    TRACE(TRACE_DEBUG, "RTMP", 
-		  "Got unknown packet type %d\n", p.m_body[pos]);
-	  }
-	  pos += 11 + ds + 4;
+	} else if(p.m_body[pos] == RTMP_PACKET_TYPE_VIDEO) {
+	  e = get_packet_v(r, (void *)p.m_body + pos + 11, ds, dts, mp);
+	} else if(p.m_body[pos] == RTMP_PACKET_TYPE_AUDIO) {
+	  e = get_packet_a(r, (void *)p.m_body + pos + 11, ds, dts, mp);
 	} else {
-	  pos = -1;
+	  TRACE(TRACE_DEBUG, "RTMP", 
+		"Got unknown packet type %d\n", p.m_body[pos]);
 	}
-      }
-    }
-
-    if(mb == NULL)
-      continue;
-
-    if(mq->mq_seektarget != AV_NOPTS_VALUE) {
-      int64_t ts = mb->mb_pts != AV_NOPTS_VALUE ? mb->mb_pts : mb->mb_dts;
-      if(ts < mq->mq_seektarget) {
-	mb->mb_skip = 1;
+	pos += 11 + ds + 4;
       } else {
-	mb->mb_skip = 2;
-	mq->mq_seektarget = AV_NOPTS_VALUE;
+	pos = -1;
       }
     }
-
-    if((e = mb_enqueue_with_events(mp, mq, mb)) == NULL) {
-      mb = NULL; /* Enqueue succeeded */
-      continue;
-    }
-
-    if(event_is_action(e, ACTION_PLAYPAUSE) ||
-       event_is_action(e, ACTION_PLAY) ||
-       event_is_action(e, ACTION_PAUSE)) {
-
-      hold = action_update_hold_by_event(hold, e);
-      mp_send_cmd_head(mp, &mp->mp_video, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
-      mp_send_cmd_head(mp, &mp->mp_audio, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
-      mp_set_playstatus_by_hold(mp, hold, NULL);
-      lost_focus = 0;
-      if(!hold)
-	forcerestart = 1;
-
-    } else if(event_is_type(e, EVENT_MP_NO_LONGER_PRIMARY)) {
-
-      hold = 1;
-      lost_focus = 1;
-      mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PAUSE);
-      mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PAUSE);
-      mp_set_playstatus_by_hold(mp, hold, e->e_payload);
-
-    } else if(event_is_type(e, EVENT_MP_IS_PRIMARY)) {
-
-      if(lost_focus) {
-	hold = 0;
-	lost_focus = 0;
-	mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PLAY);
-	mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PLAY);
-	mp_set_playstatus_by_hold(mp, hold, NULL);
-
-      }
-
-    } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
-
-      hold = 1;
-      lost_focus = 0;
-      mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
-      mp_set_playstatus_by_hold(mp, hold, e->e_payload);
-
-    } else if(event_is_type(e, EVENT_CURRENT_PTS)) {
-      event_ts_t *ets = (event_ts_t *)e;
-
-      seekbase = ets->pts;
-
-    } else if(event_is_type(e, EVENT_SEEK)) {
-      event_ts_t *ets = (event_ts_t *)e;
-
-      epoch++;
-      
-      seekbase = video_seek(r, mp, &mb, ets->pts, 1, "direct");
-
-    } else if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
-
-      seekbase = video_seek(r, mp, &mb, seekbase - 60000000, 1, "-60s");
-
-    } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
-
-      seekbase = video_seek(r, mp, &mb, seekbase - 15000000, 1, "-15s");
-
-    } else if(event_is_action(e, ACTION_SEEK_FORWARD)) {
-
-      seekbase = video_seek(r, mp, &mb, seekbase + 15000000, 1, "+15s");
-
-    } else if(event_is_action(e, ACTION_SEEK_FAST_FORWARD)) {
-
-      seekbase = video_seek(r, mp, &mb, seekbase + 60000000, 1, "+60s");
-
-    } else if(event_is_action(e, ACTION_STOP)) {
-      mp_set_playstatus_stop(mp);
-
-    } else if(event_is_type(e, EVENT_EXIT) ||
-       event_is_type(e, EVENT_PLAY_URL)) {
+    if(e != NULL)
       break;
-    }
-    event_unref(e);
   }
 
-  if(mb != NULL)
-    media_buf_free(mb);
   return e;
 }
 
