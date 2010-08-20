@@ -743,7 +743,7 @@ media_codec_create_lavc(media_codec_t *cw, enum CodecID id,
 
 
 
-  if(mcp->extradata != NULL) {
+  if(mcp != NULL && mcp->extradata != NULL) {
     cw->codec_ctx->extradata = calloc(1, mcp->extradata_size +
 				      FF_INPUT_BUFFER_PADDING_SIZE);
     memcpy(cw->codec_ctx->extradata, mcp->extradata, mcp->extradata_size);
