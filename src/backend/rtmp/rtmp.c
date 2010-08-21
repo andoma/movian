@@ -487,7 +487,7 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
   RTMPPacket p = {0};
   int pos = -1, ret;
   uint32_t dts;
-  event_t *e;
+  event_t *e = NULL;
 
   r->mp = mp;
   r->hold = 0;
