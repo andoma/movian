@@ -462,7 +462,7 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
   JS_DefineProperty(cx, confobj, "enabled", BOOLEAN_TO_JSVAL(1),
 		    NULL, jsp_setEnabled, JSPROP_PERMANENT);
 
-  s = JS_CompileScript(cx, pobj, sbuf, fs.fs_size, url, 0);
+  s = JS_CompileScript(cx, pobj, sbuf, fs.fs_size, url, 1);
   free(sbuf);
 
   if(s != NULL) {
