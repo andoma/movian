@@ -421,7 +421,7 @@ html_entity_lookup(const char *name)
   struct html_entity *e;
 
   for(e = &html_entities[0]; e->name != NULL; e++)
-    if(strcasecmp(e->name, name) == 0)
+    if(strcmp(e->name, name) == 0)
       return e->code;
 
   return -1;
