@@ -153,7 +153,11 @@ struct prop {
     struct {
       int val, min, max;
     } i;
-    rstr_t *rstr;
+    struct {
+      rstr_t *rstr;
+      prop_str_type_t type;
+    } rstr;
+
     struct {
       struct prop_queue childs;
       struct prop *selected;
@@ -165,7 +169,8 @@ struct prop {
     } link;
   } u;
 
-#define hp_rstring   u.rstr
+#define hp_rstring   u.rstr.rstr
+#define hp_rstrtype  u.rstr.type
 #define hp_float    u.f.val
 #define hp_int      u.i.val
 #define hp_childs   u.c.childs

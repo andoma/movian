@@ -92,6 +92,14 @@ typedef enum {
   PROP_SUBSCRIPTION_MONITOR_ACTIVE,
 } prop_event_t;
 
+
+typedef enum {
+  PROP_STR_UTF8,
+  PROP_STR_RICH,
+} prop_str_type_t;
+
+
+
 typedef void (prop_callback_t)(void *opaque, prop_event_t event, ...);
 typedef void (prop_callback_string_t)(void *opaque, const char *str);
 typedef void (prop_callback_int_t)(void *opaque, int value);
@@ -163,7 +171,8 @@ prop_t *prop_follow(prop_t *p);
 
 void prop_move(prop_t *p, prop_t *before);
 
-void prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str);
+void prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str,
+			prop_str_type_t type);
 
 void prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr);
 
@@ -190,7 +199,7 @@ void prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, struct pixmap *pm);
 void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 		      const char *url);
 
-#define prop_set_string(p, str) prop_set_string_ex(p, NULL, str)
+#define prop_set_string(p, str) prop_set_string_ex(p, NULL, str, 0)
 
 #define prop_set_stringf(p, fmt...) prop_set_stringf_ex(p, NULL, fmt)
 

@@ -832,6 +832,7 @@ do {						\
     abort();                                    \
   case GLW_ATTRIB_SIGNAL_HANDLER:               \
     (void)va_arg(ap, void *);			\
+  case GLW_ATTRIB_CAPTION:			\
     (void)va_arg(ap, void *);			\
     (void)va_arg(ap, int);			\
     break;                                      \
@@ -843,7 +844,6 @@ do {						\
   case GLW_ATTRIB_PARENT:			\
   case GLW_ATTRIB_PARENT_HEAD:			\
   case GLW_ATTRIB_SOURCE:			\
-  case GLW_ATTRIB_CAPTION:			\
   case GLW_ATTRIB_PREVIEW:			\
   case GLW_ATTRIB_CONTENT:			\
   case GLW_ATTRIB_ID:         			\

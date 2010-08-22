@@ -1021,6 +1021,8 @@ prop_callback(void *opaque, prop_event_t event, ...)
     t = prop_callback_alloc_token(gps, TOKEN_STRING);
     t->propsubr = gps;
     t->t_rstring =rstr_dup(va_arg(ap, rstr_t *));
+    (void)va_arg(ap, prop_t *);
+    t->t_rstrtype = va_arg(ap, prop_str_type_t);
     rpn = gps->gps_rpn;
     break;
 

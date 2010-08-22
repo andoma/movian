@@ -35,6 +35,12 @@
 #include "fileaccess/fileaccess.h"
 #include "misc/string.h"
 
+
+
+
+#define RS_P_START   0x7f000001
+#define RS_P_NEWLINE 0x7f000002
+
 /**
  *
  */
@@ -67,6 +73,7 @@ typedef struct glw_text_bitmap {
   struct glw w;
 
   char *gtb_caption;
+  prop_str_type_t gtb_type;
 
   glw_backend_texture_t gtb_texture;
 
@@ -355,11 +362,13 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 
   pos = malloc(sizeof(pos_t) * len);
 
+  int out = 0;
+
   for(i = 0; i < len; i++) {
 
     if(li == NULL) {
       li = alloca(sizeof(line_t));
-      li->start = i;
+      li->start = -1;
       li->count = 0;
       li->xspace = 0;
       TAILQ_INSERT_TAIL(&lq, li, link);
@@ -367,23 +376,33 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
       pen_x = 0;
     }
 
-    if(uc[i] == '\n') {
+    if(uc[i] == '\n' || uc[i] == RS_P_NEWLINE ||
+       (i != 0 && uc[i] == RS_P_START)) {
       li = NULL;
       continue;
     }
+    if(uc[i] >= 0x7f000000)
+      continue;
+
+    uc[out] = uc[i];
+
+
+    if(li->start == -1)
+      li->start = out;
 
     if((g = get_glyph(face, uc[i], pixelheight)) == NULL)
       continue;
 
     if(use_kerning && g->gi && prev) {
       FT_Get_Kerning(face, prev, g->gi, FT_KERNING_DEFAULT, &delta); 
-      pos[i].kerning = delta.x;
+      pos[out].kerning = delta.x;
     } else {
-      pos[i].kerning = 0;
+      pos[out].kerning = 0;
     }
-    pos[i].adv_x = g->adv_x;
+    pos[out].adv_x = g->adv_x;
     prev = g->gi;
     li->count++;
+    out++;
   }
   
   bbox.xMin = 0;
@@ -1050,6 +1069,136 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
   return 0;
 }
 
+
+/**
+ *
+ */
+static int
+tag_to_code(char *s)
+{
+  const char *tag;
+  int endtag = 0;
+
+  while(*s == ' ')
+    s++;
+  if(*s == 0)
+    return 0;
+
+  tag = s;
+
+  if(*tag == '/') {
+    endtag = 1;
+    tag++;
+  }
+    
+  while(*s != ' ' && *s != '/' && *s != 0)
+    s++;
+  *s = 0;
+
+  if(!endtag && !strcmp(tag, "p")) 
+    return RS_P_START;
+
+  if(!endtag && !strcmp(tag, "br")) 
+    return RS_P_NEWLINE;
+
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+parse_rich_str(glw_text_bitmap_t *gtb, const char *str)
+{
+  int x = 0, c, lines = 1, p = -1, d;
+  int l = strlen(str);
+
+  char *tmp = malloc(l);
+  int lp;
+
+  while((c = utf8_get(&str)) != 0) {
+    if(c == '\r' || c == '\r')
+      continue;
+
+    if(c == '<') {
+      lp = 0;
+      while((d = utf8_get(&str)) != 0) {
+	if(d == '>')
+	  break;
+	tmp[lp++] = d;
+      }
+      if(d == 0)
+	break;
+      tmp[lp] = 0;
+
+      int c = tag_to_code(tmp);
+
+      if(c)
+	gtb->gtb_uc_buffer[x++] = c;
+      continue;
+    }
+
+
+    if(c == '&') {
+      lp = 0;
+      while((d = utf8_get(&str)) != 0) {
+	if(d == ';')
+	  break;
+	tmp[lp++] = d;
+      }
+      if(d == 0)
+	break;
+      tmp[lp] = 0;
+
+      int c = html_entity_lookup(tmp);
+
+      if(c != -1)
+	gtb->gtb_uc_buffer[x++] = c;
+      continue;
+    }
+
+
+
+    if(p != -1 && (d = glw_unicode_compose(p, c)) != -1) {
+      gtb->gtb_uc_buffer[x-1] = d;
+      p = -1;
+    } else {
+      gtb->gtb_uc_buffer[x++] = p = c;
+    }
+  }
+  gtb->gtb_lines = lines;
+  gtb->gtb_uc_len = x;
+  free(tmp);
+}
+
+
+/**
+ *
+ */
+static void
+parse_str(glw_text_bitmap_t *gtb, const char *str)
+{
+  int x = 0, c, lines = 1, p = -1, d;
+
+  while((c = utf8_get(&str)) != 0) {
+    if(c == '\r')
+      continue;
+    if(c == '\n') 
+      lines++;
+
+    if(p != -1 && (d = glw_unicode_compose(p, c)) != -1) {
+      gtb->gtb_uc_buffer[x-1] = d;
+      p = -1;
+    } else {
+      gtb->gtb_uc_buffer[x++] = p = c;
+    }
+  }
+  gtb->gtb_lines = lines;
+  gtb->gtb_uc_len = x;
+}
+
+
 /**
  *
  */
@@ -1057,7 +1206,7 @@ static void
 gtb_caption_has_changed(glw_text_bitmap_t *gtb)
 {
   char buf[30];
-  int l, x, c, lines = 1, p = -1, d;
+  int l;
   const char *str;
 
   /* Convert UTF8 string to unicode int[] */
@@ -1084,28 +1233,25 @@ gtb_caption_has_changed(glw_text_bitmap_t *gtb)
   
   gtb->gtb_uc_buffer = realloc(gtb->gtb_uc_buffer, l * sizeof(int));
   gtb->gtb_uc_size = l;
-  x = 0;
   
   if(str != NULL) {
-    while((c = utf8_get(&str)) != 0) {
-      if(c == '\r')
-	continue;
-      if(c == '\n') 
-	lines++;
 
-      if(p != -1 && (d = glw_unicode_compose(p, c)) != -1) {
-	gtb->gtb_uc_buffer[x-1] = d;
-	p = -1;
-      } else {
-	gtb->gtb_uc_buffer[x++] = p = c;
-      }
+    switch(gtb->gtb_type) {
+    case PROP_STR_UTF8:
+      parse_str(gtb, str);
+      break;
+
+    case PROP_STR_RICH:
+      parse_rich_str(gtb, str);
+      break;
+
+    default:
+      abort();
     }
   }
-  gtb->gtb_lines = lines;
 
-  gtb->gtb_uc_len = x;
   if(gtb->w.glw_class == &glw_text) {
-    gtb->gtb_edit_ptr = x;
+    gtb->gtb_edit_ptr = gtb->gtb_uc_len;
     gtb->gtb_update_cursor = 1;
   }
   
@@ -1220,6 +1366,7 @@ glw_text_bitmap_set(glw_t *w, int init, va_list ap)
 
       free(gtb->gtb_caption);
       gtb->gtb_caption = caption != NULL ? strdup(caption) : NULL;
+      gtb->gtb_type = va_arg(ap, int);
       break;
 
     case GLW_ATTRIB_INT_STEP:
@@ -1484,7 +1631,7 @@ gtb_notify(glw_text_bitmap_t *gtb)
 
   if(gtb->gtb_p != NULL) {
     glw_get_text(&gtb->w, buf, sizeof(buf));
-    prop_set_string_ex(gtb->gtb_p, gtb->gtb_sub, buf);
+    prop_set_string_ex(gtb->gtb_p, gtb->gtb_sub, buf, 0);
   }
 }
 

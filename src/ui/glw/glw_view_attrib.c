@@ -70,6 +70,47 @@ set_string(glw_view_eval_context_t *ec, const token_attrib_t *a,
  *
  */
 static int
+set_typed_string(glw_view_eval_context_t *ec, const token_attrib_t *a,
+		 struct token *t)
+{
+  char buf[30];
+  const char *str;
+
+  switch(t->type) {
+  case TOKEN_VOID:
+    str = "";
+    break;
+
+  case TOKEN_STRING:
+  case TOKEN_LINK:
+    str = rstr_get(t->t_rstring);
+    break;
+
+  case TOKEN_INT:
+    snprintf(buf, sizeof(buf), "%d", t->t_int);
+    str = buf;
+    break;
+
+  case TOKEN_FLOAT:
+    snprintf(buf, sizeof(buf), "%f", t->t_float);
+    str = buf;
+    break;
+
+  default:
+    return glw_view_seterr(ec->ei, t, 
+			    "Attribute '%s' expects a string or scalar",
+			    a->name);
+  }
+
+  glw_set_i(ec->w, a->attrib, str, t->t_rstrtype, NULL);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
 set_float(glw_view_eval_context_t *ec, const token_attrib_t *a, 
 	  struct token *t)
 {
@@ -345,7 +386,7 @@ set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
  */
 static const token_attrib_t attribtab[] = {
   {"id",              set_string, GLW_ATTRIB_ID},
-  {"caption",         set_string, GLW_ATTRIB_CAPTION},
+  {"caption",         set_typed_string, GLW_ATTRIB_CAPTION},
   {"source",          set_source, 0},
 
   {"debug",                   set_generic_flag, GLW_DEBUG},

@@ -142,10 +142,17 @@ typedef struct token {
       rstr_t *rurl;
     } link;
 
+    struct {
+      rstr_t *rstr;
+      prop_str_type_t type;
+
+    } rstr;
+
   } u;
 
 
-#define t_rstring         u.link.rtitle  // STRING is a "superclass" to LINK
+#define t_rstring         u.rstr.rstr
+#define t_rstrtype        u.rstr.type
 #define t_string_vector   u.string_vec
 #define t_float           u.value
 #define t_float_vector    u.value_vec

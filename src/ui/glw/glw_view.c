@@ -113,7 +113,7 @@ glw_view_error(glw_root_t *gr, errorinfo_t *ei, glw_t *parent)
   return glw_create_i(gr,
 		      glw_class_find_by_name("label"),
 		      GLW_ATTRIB_PARENT, parent,
-		      GLW_ATTRIB_CAPTION, buf,
+		      GLW_ATTRIB_CAPTION, buf, 0,
 		      NULL);
 }
 
@@ -188,7 +188,7 @@ glw_view_create(glw_root_t *gr, const char *src,
 
   r = glw_create_i(gr,
 		   &glw_view,
-		   GLW_ATTRIB_CAPTION, src,
+		   GLW_ATTRIB_CAPTION, src, 0,
 		   GLW_ATTRIB_PARENT, parent,
 		   NULL);
   v = (glw_view_t *)r;
