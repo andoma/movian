@@ -134,20 +134,12 @@
 
     var doc = new XML(showtime.httpGet("http://svtplay.se/mobil/deviceconfiguration.xml"));
 
-    for each (var o in doc.body.outline) {
-
-      if(o.@text == "Kategorier") {
-	for each (var k in o.outline) {
-
-	  var id = k.@svtplay::contentNodeIds;
-
-	  page.appendItem("svtplay:title:" + id,
-			  "directory", {
-			    title: k.@text,
-			    icon: k.@svtplay::thumbnail
-			  });
-	}
-      }
+    for each (var k in doc.body.outline.(@text == "Kategorier").outline) {
+      page.appendItem("svtplay:title:" + k.@svtplay::contentNodeIds,
+		      "directory", {
+			title: k.@text,
+			icon: k.@svtplay::thumbnail
+		      });
     }
     page.title = "SVT Play";
     page.type = "directory";
