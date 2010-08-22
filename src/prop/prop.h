@@ -34,11 +34,6 @@
 #define PROP_CLIPPED_VALUE         0x1
 
   /**
-   * Automatically sort childs
-   */
-#define PROP_SORTED_CHILDS         0x2
-
-  /**
    * hp_name is not malloc()ed but rather points to a compile const string
    * that should not be free()d upon prop finalization
    */
@@ -237,10 +232,6 @@ void prop_set_parent_multi(prop_t **pv, prop_t *parent);
 void prop_unparent_ex(prop_t *p, prop_sub_t *skipme);
 
 #define prop_unparent(p) prop_unparent_ex(p, NULL)
-
-void prop_rename_ex(prop_t *p, const char *name, prop_sub_t *skipme);
-
-#define prop_rename(p, name) prop_rename_ex(p, name, NULL)
 
 void prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard);
 
