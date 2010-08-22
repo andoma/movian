@@ -69,7 +69,7 @@
 	var metadata = {
 	  title: c.name,
 	  icon: bestCover(c),
-	  description: c.plot,
+	  description: new showtime.RichText(c.plot),
 	  rating: parseFloat(c.rating) / 5.0
 	};
 
