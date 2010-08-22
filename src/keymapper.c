@@ -221,7 +221,7 @@ keymapper_entry_add(keymap_t *km, const char *kc1, const char *kc2,
 static void
 keymapper_create_entries(keymap_t *km, const keymap_defmap_t *def)
 {
-  event_type_t e;
+  action_type_t e;
   htsmsg_t *m;
   const char *eventname;
   const char *kc1, *kc2;
