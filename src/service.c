@@ -22,15 +22,13 @@
 #include "showtime.h"
 #include "service.h"
 #include "misc/strtab.h"
+#include "prop/prop_nodefilter.h"
 #include "backend/backend.h"
 
-static prop_t *global_sources;
+static prop_t *all_services;
 
 
 struct svc_type_meta {
-  prop_t *prop_root;
-  prop_t *prop_nodes;
-
   const char *name;
 };
 
@@ -64,12 +62,16 @@ static void *service_probe_loop(void *aux);
 static void
 add_service_type(prop_t *root, service_type_t type, const char *name)
 {
+  struct prop_nf *pnf;
+
   svc_types[type].name = name;
-  svc_types[type].prop_root = prop_create(root, name);
-  
-  svc_types[type].prop_nodes = 
-    prop_create_ex(svc_types[type].prop_root, "nodes", NULL, 
-		   PROP_SORTED_CHILDS);
+
+  pnf = prop_nf_create(prop_create(prop_create(root, name), "nodes"),
+		       all_services, NULL, "node.title");
+
+  prop_nf_pred_str_add(pnf, "node.type",
+		       PROP_NF_CMP_NEQ, name, NULL, 
+		       PROP_NF_MODE_EXCLUDE);
 }
 
 
@@ -84,8 +86,11 @@ service_init(void)
 
   hts_thread_create_detached("service probe", service_probe_loop, NULL);
 
-  global_sources =
-    prop_create_ex(prop_get_global(), "sources", NULL, PROP_SORTED_CHILDS);
+  all_services = prop_create(NULL, NULL);
+
+  prop_nf_create(prop_create(prop_get_global(), "sources"),
+		 all_services, NULL, "node.title");
+
   prop_t *p = prop_create(prop_get_global(), "services");
 
   add_service_type(p, SVC_TYPE_MUSIC, "music");
@@ -102,8 +107,7 @@ service_init(void)
 void 
 service_destroy(service_t *s)
 {
-  prop_destroy(s->s_type_root);
-  prop_destroy(s->s_global_root);
+  prop_destroy(s->s_root);
   free(s->s_url);
   
   hts_mutex_lock(&service_mutex);
@@ -150,8 +154,7 @@ seturl(service_t *s, const char *url)
  *
  */
 service_t *
-service_create(const char *id,
-	       const char *title,
+service_create(const char *title,
 	       const char *url,
 	       service_type_t type,
 	       const char *icon,
@@ -161,25 +164,23 @@ service_create(const char *id,
   prop_t *p;
   s->s_ref = 1;
   s->s_type = type;
-  p = s->s_global_root = prop_create(NULL, id);
-  s->s_type_root       = prop_create(NULL, id);
+
+  p = s->s_root = prop_create(NULL, NULL);
   seturl(s, url);
 
   prop_set_string(prop_create(p, "title"), title);
   prop_set_string(prop_create(p, "icon"), icon);
   prop_set_string(prop_create(p, "url"), url);
-  prop_set_string(prop_create(p, "type"), svc_types[type].name);
+
+  s->s_prop_type = prop_create(p, "type");
+  prop_set_string(s->s_prop_type, svc_types[type].name);
+
   s->s_prop_status = prop_create(p, "status");
   prop_set_string(s->s_prop_status, "ok");
 
   s->s_prop_status_txt = prop_create(p, "statustxt");
 
-  prop_link(s->s_global_root, s->s_type_root);
-
-  if(prop_set_parent(s->s_global_root, global_sources))
-    abort();
-
-  if(prop_set_parent(s->s_type_root, svc_types[type].prop_nodes))
+  if(prop_set_parent(s->s_root, all_services))
     abort();
   
   hts_mutex_lock(&service_mutex);
@@ -217,25 +218,7 @@ service_get_statustxt_prop(service_t *s)
 void 
 service_set_type(service_t *s, service_type_t type)
 {
-  if(s->s_type == type)
-    return;
-  
-  prop_unparent(s->s_type_root);
-
-  s->s_type = type;
-  if(prop_set_parent(s->s_type_root, svc_types[s->s_type].prop_nodes))
-    abort();
-}
-
-
-/**
- *
- */
-void
-service_set_id(service_t *s, const char *id)
-{
-  prop_rename(s->s_global_root, id);
-  prop_rename(s->s_type_root, id);
+  prop_set_string(s->s_prop_type, svc_types[type].name);
 }
 
 
@@ -245,7 +228,7 @@ service_set_id(service_t *s, const char *id)
 void
 service_set_title(service_t *s, const char *title)
 {
-  prop_set_string(prop_create(s->s_global_root, "title"), title);
+  prop_set_string(prop_create(s->s_root, "title"), title);
 }
 
 
@@ -265,7 +248,7 @@ service_set_icon(service_t *s, const char *icon)
 void
 service_set_url(service_t *s, const char *url)
 {
-  prop_set_string(prop_create(s->s_global_root, "url"), url);
+  prop_set_string(prop_create(s->s_root, "url"), url);
 
   hts_mutex_lock(&service_mutex);
   seturl(s, url);

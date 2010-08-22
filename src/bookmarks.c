@@ -93,8 +93,6 @@ set_title(void *opaque, const char *str)
 {
   bookmark_t *bm = opaque;
 
-  if(str != NULL)
-    service_set_id(bm->bm_service, str);
   service_set_title(bm->bm_service, str);
   bookmark_save();
 }
@@ -167,7 +165,7 @@ bookmark_add(const char *title, const char *url, const char *svctype)
   bm->bm_url_sub   = bookmark_add_prop(src, "url",      url,     bm, set_url);
   bm->bm_type_sub  = bookmark_add_prop(src, "svctype",  svctype, bm, set_type);
 
-  bm->bm_service = service_create(title, title, url, type, NULL, 1);
+  bm->bm_service = service_create(title, url, type, NULL, 1);
 
   prop_link(service_get_status_prop(bm->bm_service),
 	    prop_create(src, "status"));

@@ -3034,12 +3034,12 @@ static void
 spotify_enable(void)
 {
   if(svc_pl == NULL)
-    svc_pl = service_create("spotify playlists", "Spotify playlists",
+    svc_pl = service_create("Spotify playlists",
 			    "spotify:playlists",
 			    SVC_TYPE_MUSIC, NULL, 0);
   
   if(svc_newalb == NULL)
-    svc_newalb = service_create("spotify tag:new", "Spotify new albums",
+    svc_newalb = service_create("Spotify new albums",
 				"spotify:search:tag:new",
 				SVC_TYPE_MUSIC, NULL, 0);
 }
