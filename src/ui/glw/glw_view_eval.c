@@ -80,7 +80,8 @@ typedef struct glw_prop_sub {
 } glw_prop_sub_t;
 
 
-static int subscribe_prop(glw_view_eval_context_t *ec, struct token *self);
+static int subscribe_prop(glw_view_eval_context_t *ec, struct token *self,
+			  int counting);
 
 /**
  *
@@ -178,7 +179,7 @@ eval_alloc(token_t *src, glw_view_eval_context_t *ec, token_type_t type)
  *
  */
 static token_t *
-token_resolve(glw_view_eval_context_t *ec, token_t *t)
+token_resolve_ex(glw_view_eval_context_t *ec, token_t *t, int counting)
 {
   glw_prop_sub_t *gps;
 
@@ -187,7 +188,7 @@ token_resolve(glw_view_eval_context_t *ec, token_t *t)
     return NULL;
   }
 
-  if(t->type == TOKEN_PROPERTY_VALUE_NAME && subscribe_prop(ec, t))
+  if(t->type == TOKEN_PROPERTY_VALUE_NAME && subscribe_prop(ec, t, counting))
     return NULL;
   
   if(t->type == TOKEN_PROPERTY_SUBSCRIPTION) {
@@ -201,6 +202,12 @@ token_resolve(glw_view_eval_context_t *ec, token_t *t)
   return t;
 }
 
+
+static token_t *
+token_resolve(glw_view_eval_context_t *ec, token_t *t)
+{
+  return token_resolve_ex(ec, t, 0);
+}
 
 /**
  *
@@ -1109,13 +1116,84 @@ prop_callback(void *opaque, prop_event_t event, ...)
 }
 
 
+/**
+ * Special prop callback that counts number of entries in a node
+ */
+static void
+prop_callback_counting(void *opaque, prop_event_t event, ...)
+{
+  glw_prop_sub_t *gps;
+  prop_t *p, **pv;
+  token_t *rpn = NULL, *t = NULL;
+  va_list ap;
+  va_start(ap, event);
+
+  gps = opaque;
+
+
+
+  switch(event) {
+  case PROP_SET_VOID:
+  case PROP_SET_RSTRING:
+  case PROP_SET_INT:
+  case PROP_SET_FLOAT:
+  case PROP_SET_DIR:
+  case PROP_SET_PIXMAP:
+  case PROP_SET_RLINK:
+    gps->gps_entries = 0;
+    break;
+
+  case PROP_ADD_CHILD:
+  case PROP_ADD_CHILD_BEFORE:
+    gps->gps_entries++;
+    break;
+
+  case PROP_ADD_CHILD_MULTI:
+    pv = va_arg(ap, prop_t **);
+    while((p = *pv++) != NULL)
+      gps->gps_entries++;
+    break;
+    
+  case PROP_DEL_CHILD:
+    gps->gps_entries--;
+    break;
+
+  case PROP_MOVE_CHILD:
+  case PROP_SELECT_CHILD:
+  case PROP_REQ_NEW_CHILD:
+  case PROP_REQ_DELETE_MULTI:
+  case PROP_DESTROYED:
+  case PROP_EXT_EVENT:
+  case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
+    break;
+  }
+
+  t = prop_callback_alloc_token(gps, TOKEN_INT);
+  t->propsubr = gps;
+  t->t_int = gps->gps_entries;
+  rpn = gps->gps_rpn;
+
+  if(t != NULL) {
+      
+    if(gps->gps_token != NULL) {
+      glw_view_token_free(gps->gps_token);
+      gps->gps_token = NULL;
+    }
+    gps->gps_token = t;
+  }
+
+  if(rpn != NULL) 
+    eval_dynamic(gps->gps_widget, rpn);
+}
+
+
 
 /**
  * Transform a property reference (a chain of names) into
  * a resolved subscription.
  */
 static int
-subscribe_prop(glw_view_eval_context_t *ec, struct token *self)
+subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int counting)
 {
   glw_prop_sub_t *gps;
   prop_sub_t *s;
@@ -1159,7 +1237,8 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self)
     f |= PROP_SUB_DEBUG;
 
   s = prop_subscribe(f,
-		     PROP_TAG_CALLBACK, prop_callback, gps,
+		     PROP_TAG_CALLBACK,
+		     counting ? prop_callback_counting : prop_callback, gps,
 		     PROP_TAG_NAME_VECTOR, propname,
 		     PROP_TAG_COURIER, w->glw_root->gr_courier,
 		     PROP_TAG_NAMED_ROOT, ec->prop, "self",
@@ -3376,6 +3455,22 @@ glwf_appendEventSink(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
+static int
+glwf_count(glw_view_eval_context_t *ec, struct token *self,
+		     token_t **argv, unsigned int argc)
+{
+  token_t *a = argv[0];
+
+  if((a = token_resolve_ex(ec, a, 1)) == NULL)
+    return -1;
+  eval_push(ec, a);
+  return 0;
+}
+
+
+/**
+ *
+ */
 static const token_func_t funcvec[] = {
   {"widget", 2, glwf_widget},
   {"cloner", -1, glwf_cloner},
@@ -3422,6 +3517,7 @@ static const token_func_t funcvec[] = {
   {"suggestFocus", 1, glwf_suggestFocus},
   {"focusDistance", 0, glwf_focusDistance},
   {"appendEventSink", 1, glwf_appendEventSink},
+  {"count", 1, glwf_count},
 };
 
 

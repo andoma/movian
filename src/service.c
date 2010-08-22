@@ -30,9 +30,7 @@ static prop_t *global_sources;
 struct svc_type_meta {
   prop_t *prop_root;
   prop_t *prop_nodes;
-  prop_t *prop_num;
 
-  int num;
   const char *name;
 };
 
@@ -72,20 +70,6 @@ add_service_type(prop_t *root, service_type_t type, const char *name)
   svc_types[type].prop_nodes = 
     prop_create_ex(svc_types[type].prop_root, "nodes", NULL, 
 		   PROP_SORTED_CHILDS);
-
-  svc_types[type].prop_num = prop_create(svc_types[type].prop_root, "entries");
-  prop_set_int(svc_types[type].prop_num, 0);
-}
-
-
-/**
- *
- */
-static void
-svc_type_mod_num(service_type_t type, int delta)
-{
-  svc_types[type].num += delta;
-  prop_set_int(svc_types[type].prop_num, svc_types[type].num);
 }
 
 
@@ -118,7 +102,6 @@ service_init(void)
 void 
 service_destroy(service_t *s)
 {
-  svc_type_mod_num(s->s_type, -1);
   prop_destroy(s->s_type_root);
   prop_destroy(s->s_global_root);
   free(s->s_url);
@@ -199,8 +182,6 @@ service_create(const char *id,
   if(prop_set_parent(s->s_type_root, svc_types[type].prop_nodes))
     abort();
   
-  svc_type_mod_num(type, 1);
-
   hts_mutex_lock(&service_mutex);
   LIST_INSERT_HEAD(&services, s, s_link);
   s->s_need_probe = s->s_do_probe = probe;
@@ -239,14 +220,11 @@ service_set_type(service_t *s, service_type_t type)
   if(s->s_type == type)
     return;
   
-  svc_type_mod_num(s->s_type, -1);
   prop_unparent(s->s_type_root);
 
   s->s_type = type;
   if(prop_set_parent(s->s_type_root, svc_types[s->s_type].prop_nodes))
     abort();
-
-  svc_type_mod_num(s->s_type, 1);
 }
 
 
