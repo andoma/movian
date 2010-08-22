@@ -28,6 +28,7 @@
 
 static JSRuntime *runtime;
 static JSObject *showtimeobj;
+static JSObject *RichText;
 static struct js_plugin_list js_plugins;
 
 static JSClass global_class = {
@@ -184,12 +185,29 @@ js_httpEscape(JSContext *cx, JSObject *obj,
 void
 js_prop_set_from_jsval(JSContext *cx, prop_t *p, jsval value)
 {
+  JSBool b;
   if(JSVAL_IS_INT(value)) {
     prop_set_int(p, JSVAL_TO_INT(value));
   } else if(JSVAL_IS_DOUBLE(value)) {
     double d;
     if(JS_ValueToNumber(cx, value, &d))
       prop_set_float(p, d);
+  } else if(JS_HasInstance(cx, RichText, value, &b) && b) {
+    JSObject *o = JSVAL_TO_OBJECT(value);
+    jsval v2;
+
+    if(!JS_EnterLocalRootScope(cx))
+      return;
+
+    if(!JS_GetProperty(cx, o, "text", &v2)) {
+      JS_LeaveLocalRootScope(cx);
+      return;
+    }
+
+    prop_set_string_ex(p, NULL, JS_GetStringBytes(JS_ValueToString(cx, v2)),
+		       PROP_STR_RICH);
+    JS_LeaveLocalRootScope(cx);
+
   } else {
     prop_set_string(p, JS_GetStringBytes(JS_ValueToString(cx, value)));
   }
@@ -249,6 +267,26 @@ js_canHandle(JSContext *cx, JSObject *obj,
 /**
  *
  */
+static JSBool 
+js_RichText(JSContext *cx, JSObject *obj,
+	    uintN argc, jsval *argv, jsval *rval)
+{
+  const char *str;
+
+  if (!JS_ConvertArguments(cx, argc, argv, "s", &str))
+    return JS_FALSE;
+  jsval v = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, str));
+
+  JS_SetProperty(cx, obj, "text", &v);
+
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
 static JSFunctionSpec showtime_functions[] = {
     JS_FS("trace",            js_trace,    1, 0, 0),
     JS_FS("print",            js_print,    1, 0, 0),
@@ -290,6 +328,10 @@ js_init(void)
   showtimeobj = JS_NewObject(cx, &showtime_class, NULL, NULL);
   JS_DefineFunctions(cx, showtimeobj, showtime_functions);
 
+  JSFunction *fn = JS_DefineFunction(cx, showtimeobj, "RichText",
+				     js_RichText, 1, 0);
+  RichText = JS_GetFunctionObject(fn);
+	     
   JS_AddNamedRoot(cx, &showtimeobj, "showtime");
 
   JS_EndRequest(cx);
