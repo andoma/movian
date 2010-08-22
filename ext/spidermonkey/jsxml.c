@@ -3747,7 +3747,11 @@ Equals(JSContext *cx, JSXML *xml, jsval v, JSBool *bp)
                 vxml = XMLARRAY_MEMBER(&xml->xml_kids, 0, JSXML);
                 if (!vxml)
                     return JS_TRUE;
+                if(xml->object)
+                    JS_LOCK_OBJ(cx, xml->object);
                 vobj = js_GetXMLObject(cx, vxml);
+                if(xml->object)
+                    JS_UNLOCK_OBJ(cx, xml->object);
                 if (!vobj)
                     return JS_FALSE;
                 return js_XMLObjectOps.equality(cx, vobj, v, bp);
