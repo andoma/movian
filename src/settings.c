@@ -21,17 +21,19 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "showtime.h"
 #include "settings.h"
 #include "event.h"
 #include "navigator.h"
 #include "backend/backend.h"
-#include "assert.h"
+#include "prop/prop_nodefilter.h"
 
 #define SETTINGS_URL "settings:"
 
 static prop_t *settings_root;
+static prop_t *settings_nodes;
 
 
 /**
@@ -109,7 +111,13 @@ setting_add(prop_t *parent, const char *id,
 {
   prop_t *p, *src;
 
-  p = prop_create(prop_create(parent ?: settings_root, "nodes"), id);
+  if(parent != NULL) {
+    p = prop_create(parent, "nodes");
+  } else {
+    p = settings_nodes;
+  }
+  p = prop_create(p, id);
+
   settings_set_url(p);
 
   src = prop_create(p, "model");
@@ -510,7 +518,12 @@ void
 settings_init(void)
 {
   settings_root = prop_create(prop_get_global(), "settings");
-  prop_create_ex(settings_root, "nodes", NULL, PROP_SORTED_CHILDS);
+
+  settings_nodes = prop_create(settings_root, "sources");
+
+  prop_nf_create(prop_create(settings_root, "nodes"),
+		 settings_nodes, NULL, "node.model.title");
+
   prop_set_string(prop_create(settings_root, "type"), "settings");
   set_title(settings_root, "Global settings");
 }
@@ -559,8 +572,13 @@ be_settings_open(struct backend *be, struct navigator *nav,
       url++;
     
 
-    p = p ? prop_create(p, "model") : settings_root;
-    p = prop_create(p, "nodes");
+    if(p == NULL) {
+      p = settings_root;
+      p = prop_create(settings_root, "sources");
+    } else {
+      p = prop_create(p, "model");
+      p = prop_create(p, "nodes");
+    }
     p = prop_create(p, buf);
   }
   
