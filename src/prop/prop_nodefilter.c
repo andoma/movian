@@ -475,6 +475,7 @@ nf_set_sortkey(void *opaque, prop_event_t event, ...)
     break;
   }
   nf_insert_node(nfn->nf, nfn);
+  nf_update_egress(nfn->nf, nfn);
 }
 
 
