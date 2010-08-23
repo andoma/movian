@@ -100,6 +100,25 @@ file_open_dir(backend_t *be, struct navigator *nav,
 
 
 /**
+ *
+ */
+static nav_page_t *
+file_open_image(backend_t *be, struct navigator *nav,
+		const char *url, const char *view,
+		char *errbuf, size_t errlen, prop_t *meta)
+{
+  nav_page_t *np = nav_page_create(nav, url, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
+  prop_t *model = prop_create(np->np_prop_root, "model");
+
+  prop_set_string(prop_create(model, "type"), "image");
+
+  if(prop_set_parent(meta, model))
+    abort();
+  return np;
+}
+
+
+/**
  * Try to open the given URL with a playqueue context
  */
 static nav_page_t *
@@ -158,8 +177,10 @@ file_open_file(backend_t *be, struct navigator *nav,
     return file_open_dir(be, nav, redir, view, errbuf, errlen);
 
   case CONTENT_AUDIO:
-    if((np = file_open_audio(nav, url, view)) != NULL)
+    if((np = file_open_audio(nav, url, view)) != NULL) {
+      prop_destroy(meta);
       return np;
+    }
 
     playqueue_play(url, meta);
     return playqueue_open(be, nav, view);
@@ -169,7 +190,11 @@ file_open_file(backend_t *be, struct navigator *nav,
     prop_destroy(meta);
     return backend_open_video(be, nav, url, view, errbuf, errlen);
 
+  case CONTENT_IMAGE:
+    return file_open_image(be, nav, url, view, errbuf, errlen, meta);
+
   default:
+    prop_destroy(meta);
     snprintf(errbuf, errlen, "Can not handle file contents");
     return NULL;
   }
