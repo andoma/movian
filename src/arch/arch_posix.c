@@ -170,28 +170,21 @@ hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delta)
 
 
 
-extern int trace_level;
 
 /**
  *
  */
 void
-tracev(int level, const char *subsys, const char *fmt, va_list ap)
+trace_arch(int level, const char *prefix, const char *str)
 {
-  char buf[1024];
-  char buf2[64];
-  char *s, *p;
-  const char *leveltxt, *sgr, *sgroff;
-  int l;
+  const char *sgr, *sgroff;
 
-  if(level > trace_level)
-    return;
 
   switch(level) {
-  case TRACE_ERROR: leveltxt = "ERROR"; sgr = "\033[31m"; break;
-  case TRACE_INFO:  leveltxt = "INFO";  sgr = "\033[33m"; break;
-  case TRACE_DEBUG: leveltxt = "DEBUG"; sgr = "\033[32m"; break;
-  default:          leveltxt = "?????"; sgr = "\033[35m"; break;
+  case TRACE_ERROR: sgr = "\033[31m"; break;
+  case TRACE_INFO:  sgr = "\033[33m"; break;
+  case TRACE_DEBUG: sgr = "\033[32m"; break;
+  default:          sgr = "\033[35m"; break;
   }
 
   if(!decorate_trace) {
@@ -201,17 +194,7 @@ tracev(int level, const char *subsys, const char *fmt, va_list ap)
     sgroff = "\033[0m";
   }
 
-  vsnprintf(buf, sizeof(buf), fmt, ap);
-
-  p = buf;
-
-  snprintf(buf2, sizeof(buf2), "%s [%s]:", subsys, leveltxt);
-  l = strlen(buf2);
-
-  while((s = strsep(&p, "\n")) != NULL) {
-    fprintf(stderr, "%s%s %s%s\n", sgr, buf2, s, sgroff);
-    memset(buf2, ' ', l);
-  }
+  fprintf(stderr, "%s%s %s%s\n", sgr, prefix, str, sgroff);
 }
 
 

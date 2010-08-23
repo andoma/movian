@@ -32,6 +32,7 @@ CFLAGS += -Wmissing-prototypes -Iext/dvd
 # Core
 #
 SRCS += src/main.c \
+	src/trace.c \
 	src/runcontrol.c \
 	src/version.c \
 	src/navigator.c \

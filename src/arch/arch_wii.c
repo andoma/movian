@@ -286,59 +286,14 @@ rlog(const char *buf, const char *subsys, int level)
 
 extern int trace_level;
 
-static int decorate_trace = 0;
-
 /**
  *
  */
 void
-tracev(int level, const char *subsys, const char *fmt, va_list ap)
+trace_arch(int level, const char *prefix, const char *buf)
 {
-  static char buf[1024];
-
-  char buf2[64];
-
-  char *s, *p;
-  const char *leveltxt, *sgr, *sgroff;
-  int l;
-
-  if(level > trace_level)
-    return;
-
-  hts_mutex_lock(&log_mutex);
-
-  vsnprintf(buf, sizeof(buf), fmt, ap);
-
-  if(rlog_socket >= 0) {
-    rlog(buf, subsys, level);
-  } else if(0 /* No logging to console, will just mess up video output */) {
-
-    switch(level) {
-    case TRACE_ERROR: leveltxt = "ERROR"; sgr = "\033[31m"; break;
-    case TRACE_INFO:  leveltxt = "INFO";  sgr = "\033[33m"; break;
-    case TRACE_DEBUG: leveltxt = "DEBUG"; sgr = "\033[32m"; break;
-    default:          leveltxt = "?????"; sgr = "\033[35m"; break;
-    }
-
-    if(!decorate_trace) {
-      sgr = "";
-      sgroff = "";
-    } else {
-      sgroff = "\033[0m";
-    }
-
-    p = buf;
-
-    snprintf(buf2, sizeof(buf2), "%s [%s]:", subsys, leveltxt);
-    l = strlen(buf2);
-
-    while((s = strsep(&p, "\n")) != NULL) {
-      printf("%s%s %s%s\n", sgr, buf2, s, sgroff);
-      memset(buf2, ' ', l);
-    }
-  }
-
-  hts_mutex_unlock(&log_mutex);
+  if(rlog_socket >= 0)
+    rlog(buf, prefix, level);
 }
 
 /**

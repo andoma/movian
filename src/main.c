@@ -229,6 +229,9 @@ main(int argc, char **argv)
   /* Initialize property tree */
   prop_init();
 
+  /* Initiailize logging */
+  trace_init();
+
   /* Callout framework */
   callout_init();
 
@@ -305,18 +308,6 @@ main(int argc, char **argv)
   ui_start(nuiargs, uiargs, argv0);
 
   exit(0);
-}
-
-/**
- *
- */
-void
-trace(int level, const char *subsys, const char *fmt, ...)
-{
-  va_list ap;
-  va_start(ap, fmt);
-  tracev(level, subsys, fmt, ap); // defined in arch/
-  va_end(ap);
 }
 
 
