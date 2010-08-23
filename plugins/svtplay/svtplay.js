@@ -144,6 +144,7 @@
     page.title = "SVT Play";
     page.type = "directory";
     page.contents = "items";
+    page.logo = plugin.config.path + "svtplay.png";
     page.loading = false;
 
   });
