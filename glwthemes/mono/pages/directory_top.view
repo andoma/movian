@@ -7,6 +7,7 @@ $view.canCoverFlow = ($page.model.contents == "images" ||
 
 $page.glw.curView = $page.glw.userView ?? $page.requestedView ??
   translate($page.model.contents, "list",
+	    "items", "array",
 	    "albums", "coverflow",
 	    "images", "coverflow");
 
@@ -57,7 +58,15 @@ widget(container_x, {
 	 $page.glw.userView = "list";
        },
        TOOLBARCOL(),
-      $view.canCoverFlow);
+       true);
+
+  ICON("theme://icons/48x48/Array.png", 
+       "array", 
+       {
+	 $page.glw.userView = "array";
+       },
+       TOOLBARCOL(),
+       true);
 
   ICON("theme://icons/48x48/Coverflow.png",
        "coverflow",

@@ -1,0 +1,62 @@
+#import "theme://include/defs.view"
+#import "theme://include/separators.view"
+
+
+#define SIMPLE_ITEM(TITLE, EVENT, COLOR, TOP) {
+
+widget(backdrop, {
+  .autoRefocusable = true;
+  .focusable = 1.0;
+  .focusOnClick = true;
+  onEvent(activate, EVENT);
+
+  .color = select(isFocused(), COLOR, COLOR * 0.25);
+
+  PLATE_GFX3();
+
+  widget(container_y, {
+
+    TOP;
+    
+  
+    HORIZONTAL_SEPARATOR();
+
+    widget(label, {
+      .color = select(isFocused(), [1.0, 1.0, 1.0], COLOR);
+      .caption = TITLE;
+      .ellipsize = true;
+      .padding = [2, 0, 0, 0];
+   });
+  });
+});
+}
+
+
+#define SIMPLE_ITEM_ICON(TITLE, ICON, EVENT, COLOR) {
+
+  SIMPLE_ITEM(TITLE, EVENT, COLOR, widget(image, {
+    .color = select(isFocused(), [1.0, 1.0, 1.0], COLOR);
+    .source =  ICON;
+    .shadow = true;
+  }));
+}
+
+#define SIMPLE_ITEM_IMAGE(TITLE, IMAGE, EVENT, COLOR) {
+
+  SIMPLE_ITEM(TITLE, EVENT, COLOR, widget(image, {
+    .color = select(isFocused(), [1.0, 1.0, 1.0], [0.5, 0.5, 0.5]);
+    .source = IMAGE;
+    .hqScaling = true;
+  }));
+}
+
+#define SIMPLE_ITEM_ICON_IMAGE(TITLE, ICON, IMAGE, EVENT, COLOR) {
+
+  SIMPLE_ITEM(TITLE, EVENT, COLOR, widget(image, {
+    .source = IMAGE ?? ICON;
+    .hqScaling = select(IMAGE, true, false);
+    .shadow    = select(IMAGE, false, true);
+    .color = select(isFocused(),  [1.0, 1.0, 1.0],
+		    select(IMAGE, [0.5, 0.5, 0.5], COLOR));
+  }));
+}

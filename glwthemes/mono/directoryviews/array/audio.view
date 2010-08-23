@@ -1,0 +1,9 @@
+#import "theme://include/defs.view"
+#import "theme://directoryviews/array/simple.view"
+
+SIMPLE_ITEM_ICON_IMAGE($self.metadata.title,
+		       "theme://icons/256x256/Music.png",
+		       $self.metadata.album_art,
+		       playTrackFromSource($self, $parent.model),
+		       PLATE_COLOR_AUDIO());
+

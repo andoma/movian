@@ -36,4 +36,10 @@
   .padding = [0, 0, 0, 0];
 }
 
+#define PLATE_GFX3() {
+  .source = "theme://graphics/shadedplate4.png";
+  .border =  [6, 6, 6, 6];
+  .padding = [0, 0, 0, 0];
+}
+
 #define KNOB_SIZE() { $ui.fontsize * 3 }

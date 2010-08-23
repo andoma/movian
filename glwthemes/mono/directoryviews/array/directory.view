@@ -1,0 +1,8 @@
+#import "theme://include/defs.view"
+#import "theme://directoryviews/array/simple.view"
+
+SIMPLE_ITEM_ICON_IMAGE($self.metadata.title,
+		       "theme://icons/256x256/Folder.png",
+		       $self.metadata.icon,
+		       navOpen($self.url),
+		       PLATE_COLOR_DIR());

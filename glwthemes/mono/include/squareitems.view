@@ -1,6 +1,7 @@
 #import "theme://include/defs.view"
+#import "theme://include/separators.view"
 
-#define COVERFLOW_ITEM_SIMPLE(TITLE, ICON, EVENT, COLOR) {
+#define SQUARE_ITEM_SIMPLE(TITLE, ICON, EVENT, COLOR) {
 
 widget(backdrop, {
   .autoRefocusable = true;
@@ -20,6 +21,8 @@ widget(backdrop, {
       .shadow = true;
     });
   
+    HORIZONTAL_SEPARATOR();
+
     widget(label, {
       .color = select(isFocused(), [1.0, 1.0, 1.0], COLOR);
       .caption = TITLE;

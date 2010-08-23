@@ -1,0 +1,7 @@
+#import "theme://include/defs.view"
+#import "theme://directoryviews/array/simple.view"
+
+SIMPLE_ITEM_IMAGE($self.metadata.title,
+		  $self.url,
+		  navOpen($self.url),
+		  PLATE_COLOR_IMAGE());

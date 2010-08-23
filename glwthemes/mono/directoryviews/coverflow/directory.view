@@ -1,7 +1,7 @@
 #import "theme://include/defs.view"
-#import "theme://include/coverflowitems.view"
+#import "theme://include/squareitems.view"
 
-COVERFLOW_ITEM_SIMPLE($self.metadata.title,
-		      "theme://icons/256x256/Folder.png",
-		      navOpen($self.url),
-		      PLATE_COLOR_DIR());
+SQUARE_ITEM_SIMPLE($self.metadata.title,
+		   "theme://icons/256x256/Folder.png",
+		   navOpen($self.url),
+		   PLATE_COLOR_DIR());
