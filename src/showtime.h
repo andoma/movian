@@ -90,11 +90,13 @@ enum {
   TRACE_DEBUG
 };
 
+#define TRACE_NO_PROP 0x1
+
 void trace_init(void);
 
 void trace(int level, const char *subsys, const char *fmt, ...);
 
-void tracev(int level, const char *subsys, const char *fmt, va_list ap);
+void tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap);
 
 void trace_arch(int level, const char *prefix, const char *buf);
 

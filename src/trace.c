@@ -66,6 +66,7 @@ trace_prop(int l, const char *pfx, const char *msg, const char *sev)
     TAILQ_REMOVE(&traces, te, link);
     prop_destroy(te->p);
     free(te);
+    entries--;
   }
 }
 
@@ -74,7 +75,7 @@ trace_prop(int l, const char *pfx, const char *msg, const char *sev)
  *
  */
 void
-tracev(int level, const char *subsys, const char *fmt, va_list ap)
+tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
 {
   static char buf[1024];
   char buf2[64];
@@ -104,7 +105,8 @@ tracev(int level, const char *subsys, const char *fmt, va_list ap)
   while((s = strsep(&p, "\n")) != NULL) {
     if(level <= trace_level)
       trace_arch(level, buf2, s);
-    trace_prop(level, buf2, s, leveltxt);
+    if(!(flags & TRACE_NO_PROP))
+      trace_prop(level, buf2, s, leveltxt);
     memset(buf2, ' ', l);
   }
 
@@ -123,7 +125,7 @@ trace(int level, const char *subsys, const char *fmt, ...)
 {
   va_list ap;
   va_start(ap, fmt);
-  tracev(level, subsys, fmt, ap);
+  tracev(0, level, subsys, fmt, ap);
   va_end(ap);
 }
 

@@ -431,7 +431,7 @@ glw_view_seterr(errorinfo_t *ei, token_t *b, const char *fmt, ...)
 #else
     snprintf(buf, sizeof(buf), "GLW: file?:##");
 #endif
-    tracev(TRACE_ERROR, buf, fmt, ap);
+    tracev(TRACE_NO_PROP, TRACE_ERROR, buf, fmt, ap);
     return -1;
   }
 

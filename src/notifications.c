@@ -72,7 +72,7 @@ notify_add(notify_type_t type, const char *icon, int delay,
   va_start(ap, fmt);
   va_copy(apx, ap);
 
-  tracev(tl, "notify", fmt, ap);
+  tracev(0, tl, "notify", fmt, ap);
 
   vsnprintf(msg, sizeof(msg), fmt, apx);
 
