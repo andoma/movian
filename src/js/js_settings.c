@@ -79,27 +79,26 @@ js_settings_save(void *opaque, htsmsg_t *msg)
   htsmsg_store_save(msg, jss->jss_spath);
 }
 
-
-/**
- *
- */
-static void
-js_store_update_bool(void *opaque, int value)
+static JSContext *
+settings_get_cx(js_setting_t *jss)
 {
-  js_setting_t *jss = opaque;
-  jsval v;
   JSContext *cx;
-  jsval cb, *argv, result;
-  void *mark;
- 
   if(jss->jss_cx == NULL) {
     cx = js_newctx();
     JS_BeginRequest(cx);
   } else {
     cx = jss->jss_cx;
   }
+  return cx;
+}
 
-  v = BOOLEAN_TO_JSVAL(!!value);
+
+static void
+settings_update(JSContext *cx, js_setting_t *jss, jsval v)
+{
+  jsval cb, *argv, result;
+  void *mark;
+
   JS_SetProperty(cx, jss->jss_obj, "value", &v);
   
   JS_GetProperty(cx, jss->jss_obj, "callback", &cb);
@@ -112,6 +111,32 @@ js_store_update_bool(void *opaque, int value)
     JS_DestroyContext(cx);
   }
 }
+
+
+/**
+ *
+ */
+static void
+js_store_update_bool(void *opaque, int value)
+{
+  js_setting_t *jss = opaque;
+  settings_update(settings_get_cx(jss), jss, BOOLEAN_TO_JSVAL(!!value));
+}
+
+/**
+ *
+ */
+static void
+js_store_update_string(void *opaque, const char *str)
+{
+  js_setting_t *jss = opaque;
+  JSContext *cx = settings_get_cx(jss);
+
+  settings_update(cx, jss,
+		  str ? STRING_TO_JSVAL(JS_NewStringCopyZ(cx, str))
+		  : JSVAL_NULL);
+}
+
 
 
 /**
@@ -163,6 +188,51 @@ js_createBool(JSContext *cx, JSObject *obj, uintN argc,
  *
  */
 static JSBool 
+js_createString(JSContext *cx, JSObject *obj, uintN argc, 
+		jsval *argv, jsval *rval)
+{
+  js_setting_t *parent = JS_GetPrivate(cx, obj);
+  const char *id;
+  const char *title;
+  const char *def;
+  JSObject *func, *robj;
+  jsval v;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "ssso",
+			  &id, &title, &def, &func))
+    return JS_FALSE;
+
+  if(!JS_ObjectIsFunction(cx, func)) {
+    JS_ReportError(cx, "Argument is not a function");
+    return JS_FALSE;
+  }
+
+  js_setting_t *jss = calloc(1, sizeof(js_setting_t));
+
+  robj = JS_DefineObject(cx, obj, id, &setting_class, NULL, 0);
+  *rval = OBJECT_TO_JSVAL(robj);
+  JS_SetPrivate(cx, robj, jss);
+
+  v = OBJECT_TO_JSVAL(func);
+  JS_SetProperty(cx, robj, "callback", &v);
+  
+  jss->jss_cx = cx;
+  jss->jss_obj = robj;
+  jss->jss_s = settings_create_string(parent->jss_p, id, title,
+				      def, parent->jss_store,
+				      js_store_update_string, jss,
+				      SETTINGS_INITIAL_UPDATE, NULL,
+				      js_settings_save, parent);
+  jss->jss_cx = NULL;
+
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSBool 
 js_createInfo(JSContext *cx, JSObject *obj, uintN argc, 
 	      jsval *argv, jsval *rval)
 {
@@ -192,6 +262,7 @@ js_createInfo(JSContext *cx, JSObject *obj, uintN argc,
  */
 static JSFunctionSpec setting_functions[] = {
     JS_FS("createBool", js_createBool, 4, 0, 0),
+    JS_FS("createString", js_createString, 4, 0, 0),
     JS_FS("createInfo", js_createInfo, 3, 0, 0),
     JS_FS_END
 };
