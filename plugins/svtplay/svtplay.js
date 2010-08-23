@@ -69,7 +69,7 @@
 	}
 	page.loading = false;
 	num += c;
-	if(c == 0 || num > 50)
+	if(c == 0 || num > 150)
 	  break;
       }
       offset += num;
@@ -84,27 +84,13 @@
   function titlePopulator(page, item) {
     page.appendItem("svtplay:video:" + item.svtplay::titleId,
 		    "directory", {
-		      title: item.title});
+		      title: item.title,
+		      icon: item.media::thumbnail.@url
+		    });
   };
 
 
-
-  plugin.addURI("svtplay:title:([0-9,]*)", function(page, id) {
-    pageController(page, function(offset) {
-      return showtime.httpGet("http://xml.svtplay.se/v1/title/list/" + id, {
-	start: offset
-      });
-    }, titlePopulator);
-  });
-
-
-
-  plugin.addURI("svtplay:video:([0-9,]*)", function(page, id) {
-    pageController(page, function(offset) {
-      return showtime.httpGet("http://xml.svtplay.se/v1/video/list/" + id, {
-	start: offset
-      });
-    }, function(page, item) {
+  function videoPopulator(page, item) {
 
       var metadata = {
 	title: item.svtplay::titleName.toString() + " - " + item.title
@@ -125,8 +111,43 @@
 
       page.appendItem(best.@url,
 		      "video", metadata);
-    });
+  };
+
+
+
+  plugin.addURI("svtplay:title:([0-9,]*)", function(page, id) {
+    page.contents = "items";
+    pageController(page, function(offset) {
+      return showtime.httpGet("http://xml.svtplay.se/v1/title/list/" + id, {
+	start: offset
+      });
+    }, titlePopulator);
   });
+
+
+
+  plugin.addURI("svtplay:video:([0-9,]*)", function(page, id) {
+    pageController(page, function(offset) {
+      return showtime.httpGet("http://xml.svtplay.se/v1/video/list/" + id, {
+	start: offset,
+	image: "poster"
+      });
+    }, videoPopulator);
+  });
+
+  plugin.addURI("svtplay:senaste", function(page) {
+    pageController(page, function(offset) {
+      page.title = "Senaste program från SVT Play";
+      return showtime.httpGet("http://xml.svtplay.se/v1/video/list/96241,96242,96243,96245,96246,96247,96248", {
+	start: offset,
+	expression: "full",
+	image: "poster"
+      });
+    }, videoPopulator);
+  });
+
+    
+
 
   plugin.addURI("svtplay:start", function(page) {
 
@@ -134,12 +155,23 @@
 
     var doc = new XML(showtime.httpGet("http://svtplay.se/mobil/deviceconfiguration.xml"));
 
-    for each (var k in doc.body.outline.(@text == "Kategorier").outline) {
-      page.appendItem("svtplay:title:" + k.@svtplay::contentNodeIds,
-		      "directory", {
-			title: k.@text,
-			icon: k.@svtplay::thumbnail
-		      });
+    page.appendItem("svtplay:senaste",
+		    "directory", {
+		      title: "Senaste program"
+		    });
+
+    for each (var o in doc.body.outline) {
+
+
+      if(o.@text == "Kategorier") {
+	for each (var k in o.outline) {
+	  page.appendItem("svtplay:title:" + k.@svtplay::contentNodeIds,
+			  "directory", {
+			    title: k.@text,
+			    icon: k.@svtplay::thumbnail
+			  });
+	}
+      }
     }
     page.title = "SVT Play";
     page.type = "directory";
