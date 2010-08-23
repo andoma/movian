@@ -188,6 +188,7 @@ static struct strtab actionnames[] = {
 
   { "Menu",                  ACTION_MENU },
   { "Sysinfo",               ACTION_SYSINFO },
+  { "LogWindow",             ACTION_LOGWINDOW },
   { "Select",                ACTION_SELECT },
   { "MediaStats",            ACTION_SHOW_MEDIA_STATS },
   { "Home",                  ACTION_HOME },
@@ -208,7 +209,6 @@ static struct strtab actionnames[] = {
 
   { "Shuffle",               ACTION_SHUFFLE },
   { "Repeat",                ACTION_REPEAT },
-
 
 };
 
