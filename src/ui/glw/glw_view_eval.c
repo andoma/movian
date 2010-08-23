@@ -181,8 +181,6 @@ eval_alloc(token_t *src, glw_view_eval_context_t *ec, token_type_t type)
 static token_t *
 token_resolve_ex(glw_view_eval_context_t *ec, token_t *t, int counting)
 {
-  glw_prop_sub_t *gps;
-
   if(t == NULL) {
     glw_view_seterr(ec->ei, t, "Missing operand");
     return NULL;
@@ -193,11 +191,7 @@ token_resolve_ex(glw_view_eval_context_t *ec, token_t *t, int counting)
   
   if(t->type == TOKEN_PROPERTY_SUBSCRIPTION) {
     ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_PROP;
-
-    gps = t->propsubr;
-
-    if((t = gps->gps_token) == NULL)
-      t = eval_alloc(t, ec, TOKEN_VOID);
+    t = t->propsubr->gps_token ?: eval_alloc(t, ec, TOKEN_VOID);
   }
   return t;
 }
