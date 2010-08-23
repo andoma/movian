@@ -563,13 +563,13 @@ glw_remove_from_parent(glw_t *w, glw_t *p)
  *
  */
 void
-glw_destroy_subscriptions(glw_t *w)
+glw_suspend_subscriptions(glw_t *w)
 {
   glw_t *c;
-  glw_prop_subscription_destroy_list(&w->glw_prop_subscriptions);
+  glw_prop_subscription_suspend_list(&w->glw_prop_subscriptions);
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-    glw_destroy_subscriptions(c);
+    glw_suspend_subscriptions(c);
 }
 
 

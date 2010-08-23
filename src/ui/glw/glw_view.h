@@ -276,5 +276,7 @@ void glw_view_cache_flush(glw_root_t *gr);
 struct glw_prop_sub_list;
 void glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l);
 
+void glw_prop_subscription_suspend_list(struct glw_prop_sub_list *l);
+
 
 #endif /* GLW_VIEW_H */

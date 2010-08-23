@@ -932,7 +932,7 @@ void glw_set_i(glw_t *w, ...) __attribute__((__sentinel__(0)));
 
 void glw_destroy(glw_t *w);
 
-void glw_destroy_subscriptions(glw_t *w);
+void glw_suspend_subscriptions(glw_t *w);
 
 void glw_unref(glw_t *w);
 
