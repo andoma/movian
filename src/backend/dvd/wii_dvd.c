@@ -65,7 +65,7 @@ check_disc_type(disc_scanner_t *ds)
     *p = 0;
     
     snprintf(title, sizeof(title), "DVD: %s", buf + 40);
-    ds->ds_service = service_create("/dev/di", title, "dvd:/dev/di",
+    ds->ds_service = service_create(title, "dvd:/dev/di",
 				    SVC_TYPE_VIDEO, NULL, 0);
     ds->ds_disc_ready = 1;
   }
