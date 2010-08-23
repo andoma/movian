@@ -1367,6 +1367,7 @@ glw_text_bitmap_set(glw_t *w, int init, va_list ap)
       free(gtb->gtb_caption);
       gtb->gtb_caption = caption != NULL ? strdup(caption) : NULL;
       gtb->gtb_type = va_arg(ap, int);
+      assert(gtb->gtb_type == 0 || gtb->gtb_type == 1);
       break;
 
     case GLW_ATTRIB_INT_STEP:

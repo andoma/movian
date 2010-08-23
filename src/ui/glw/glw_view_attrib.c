@@ -75,6 +75,7 @@ set_typed_string(glw_view_eval_context_t *ec, const token_attrib_t *a,
 {
   char buf[30];
   const char *str;
+  prop_str_type_t type = 0;
 
   switch(t->type) {
   case TOKEN_VOID:
@@ -82,6 +83,8 @@ set_typed_string(glw_view_eval_context_t *ec, const token_attrib_t *a,
     break;
 
   case TOKEN_STRING:
+    type = t->t_rstrtype;
+    /* FALLTHRU */
   case TOKEN_LINK:
     str = rstr_get(t->t_rstring);
     break;
@@ -102,7 +105,7 @@ set_typed_string(glw_view_eval_context_t *ec, const token_attrib_t *a,
 			    a->name);
   }
 
-  glw_set_i(ec->w, a->attrib, str, t->t_rstrtype, NULL);
+  glw_set_i(ec->w, a->attrib, str, type, NULL);
   return 0;
 }
 
