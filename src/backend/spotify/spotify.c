@@ -47,6 +47,7 @@
 #include "api/lastfm.h"
 
 #define SPOTIFY_ICON_URL "bundle://resources/spotify/spotify_icon.png"
+#define SPOTIFY_LOGO_URL "bundle://resources/spotify/spotify-core-logo-96x96.png"
 
 #ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
 #include <dlfcn.h>
@@ -286,7 +287,7 @@ static void parse_search_reply(sp_search *result, prop_t *nodes,
 			       prop_t *contents);
 
 static playlist_t *pl_create(sp_playlist *plist, prop_t *root,
-			     int withtracks, int autodestroy);
+			     int withtracks, int autodestroy, const char *name);
 
 static void spotify_shutdown(void *opaque, int retcode);
 
@@ -1381,9 +1382,9 @@ spotify_open_album(sp_album *alb, prop_t *p, const char *playme)
  *
  */
 static void
-spotify_open_playlist(spotify_page_t *sp, sp_playlist *plist)
+spotify_open_playlist(spotify_page_t *sp, sp_playlist *plist, const char *name)
 {
-  pl_create(plist, prop_create(sp->sp_root, "model"), 1, 1);
+  pl_create(plist, prop_create(sp->sp_root, "model"), 1, 1, name);
 }
 
 
@@ -1431,6 +1432,12 @@ spotify_open_page(spotify_page_t *sp)
 
   if(!strcmp(sp->sp_url, "spotify:playlists")) {
     spotify_open_rootlist(sp->sp_root);
+  } else if(!strcmp(sp->sp_url, "spotify:starred")) {
+    
+    plist = f_sp_session_starred_create(spotify_session);
+    if(plist != NULL) 
+      spotify_open_playlist(sp, plist, "Starred tracks");
+
   } else if(!strncmp(sp->sp_url, "spotify:search:",
 		     strlen("spotify:search:"))) {
     if(!spotify_open_search(sp, sp->sp_url + strlen("spotify:search:")))
@@ -1458,7 +1465,7 @@ spotify_open_page(spotify_page_t *sp)
     case SP_LINKTYPE_PLAYLIST:
       plist = f_sp_playlist_create(spotify_session, l);
       if(plist != NULL) 
-	spotify_open_playlist(sp, plist);
+	spotify_open_playlist(sp, plist, NULL);
       break;
 
     case SP_LINKTYPE_TRACK:
@@ -1732,6 +1739,9 @@ playlist_name_update(sp_playlist *plist, playlist_t *pl)
 {
   const char *name = f_sp_playlist_name(plist);
 
+  if(pl->pl_prop_title == NULL)
+    return NULL;
+
   prop_set_string(pl->pl_prop_title, name);
 
   if(name != NULL && !strcmp(name, "-")) {
@@ -1750,7 +1760,8 @@ static void
 playlist_renamed(sp_playlist *plist, void *userdata)
 {
   const char *name = playlist_name_update(plist, userdata);
-  TRACE(TRACE_DEBUG, "spotify", "Playlist renamed to %s", name);
+  if(name)
+    TRACE(TRACE_DEBUG, "spotify", "Playlist renamed to %s", name);
 }
 
 
@@ -1926,7 +1937,8 @@ playlist_autodestroy(void *opaque, prop_event_t event, ...)
  *
  */
 static playlist_t *
-pl_create(sp_playlist *plist, prop_t *root, int withtracks, int autodestroy)
+pl_create(sp_playlist *plist, prop_t *root, int withtracks, int autodestroy,
+	  const char *name)
 {
   playlist_t *pl = calloc(1, sizeof(playlist_t));
   prop_t *metadata;
@@ -1945,8 +1957,14 @@ pl_create(sp_playlist *plist, prop_t *root, int withtracks, int autodestroy)
 
   metadata = prop_create(pl->pl_prop_root, "metadata");
 
-  pl->pl_prop_title = prop_create(metadata, "title");
-  playlist_name_update(plist, pl);
+  if(name != NULL) {
+    prop_set_string(prop_create(metadata, "title"), name);
+    prop_set_string(pl->pl_prop_type, 
+		    pl->pl_withtracks ? "directory" : "playlist");
+  } else {
+    pl->pl_prop_title = prop_create(metadata, "title");
+    playlist_name_update(plist, pl);
+  }
 
   playlist_update_editable(pl);
 
@@ -2008,7 +2026,7 @@ static void
 playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
 	       int position, void *userdata)
 {
-  playlist_t *pl = pl_create(plist, prop_create(NULL, NULL), 0, 0);
+  playlist_t *pl = pl_create(plist, prop_create(NULL, NULL), 0, 0, NULL);
   prop_t *parent = prop_create(prop_rootlist_source, "nodes");
   playlist_t *before;
 
@@ -2655,6 +2673,40 @@ spotify_start(char *errbuf, size_t errlen, int silent)
   return -1;
 }
 
+static void
+add_dir(prop_t *parent, const char *url, const char *title)
+{
+  prop_t *p = prop_create(NULL, NULL);
+  prop_t *metadata = prop_create(p, "metadata");
+
+  prop_set_string(prop_create(p, "type"), "directory");
+  prop_set_string(prop_create(p, "url"), url);
+
+  prop_set_string(prop_create(metadata, "title"), title);
+  if(prop_set_parent(p, parent))
+    abort();
+
+}
+
+/**
+ *
+ */
+static void
+startpage(nav_page_t *np)
+{
+  prop_t *model = prop_create(np->np_prop_root, "model");
+
+  prop_set_string(prop_create(model, "type"), "directory");
+  prop_set_string(prop_create(model, "contents"), "items");
+  prop_set_string(prop_create(model, "logo"), SPOTIFY_LOGO_URL);
+
+  prop_t *nodes = prop_create(model, "nodes");
+
+  add_dir(nodes, "spotify:playlists", "Playlists");
+  add_dir(nodes, "spotify:search:tag:new", "New releases");
+  add_dir(nodes, "spotify:starred", "Starred tracks");
+}
+
 
 /**
  *
@@ -2669,10 +2721,16 @@ be_spotify_open(backend_t *be, struct navigator *nav,
   if(spotify_start(errbuf, errlen, 0))
     return NULL;
 
-  spotify_page_t *sp = calloc(1, sizeof(spotify_page_t));
-
   np = nav_page_create(nav, url, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
   
+  if(!strcmp(url, "spotify:start")) {
+    startpage(np);
+    hts_mutex_unlock(&spotify_mutex);
+    return np;
+  }
+
+  spotify_page_t *sp = calloc(1, sizeof(spotify_page_t));
+
   sp->sp_url = strdup(url);
   sp->sp_root = prop_xref_addref(np->np_prop_root);
   prop_set_int(prop_create(prop_create(np->np_prop_root, "model"),
@@ -3022,8 +3080,7 @@ courier_notify(void *opaque)
   hts_mutex_unlock(&spotify_mutex);
 }
 
-static service_t *svc_pl;
-static service_t *svc_newalb;
+static service_t *spotify_service;
 static int spotify_autologin;
 
 
@@ -3033,15 +3090,16 @@ static int spotify_autologin;
 static void
 spotify_enable(void)
 {
-  if(svc_pl == NULL)
-    svc_pl = service_create("Spotify playlists",
-			    "spotify:playlists",
-			    SVC_TYPE_MUSIC, NULL, 0);
-  
+  if(spotify_service == NULL)
+    spotify_service = service_create("Spotify",
+				     "spotify:start",
+				     SVC_TYPE_MUSIC, NULL, 0);
+#if 0  
   if(svc_newalb == NULL)
     svc_newalb = service_create("Spotify new albums",
 				"spotify:search:tag:new",
 				SVC_TYPE_MUSIC, NULL, 0);
+#endif
 }
 
 
@@ -3051,14 +3109,9 @@ spotify_enable(void)
 static void
 spotify_disable(void)
 {
-  if(svc_pl != NULL) {
-    service_destroy(svc_pl);
-    svc_pl = NULL;
-  }
-
-  if(svc_newalb != NULL) {
-    service_destroy(svc_newalb);
-    svc_newalb = NULL;
+  if(spotify_service != NULL) {
+    service_destroy(spotify_service);
+    spotify_service = NULL;
   }
 }
 
