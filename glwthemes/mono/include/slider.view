@@ -1,5 +1,5 @@
 
-#define LIST_Y_SLIDER(ID) {
+#define LIST_Y_SLIDER(ID, FOCUSABLE=false) {
 
   widget(slider_y, {
 
@@ -7,7 +7,7 @@
 
     .width = 24;
     .focusable = 0.2 * canScroll();
-    .navFocusable = false;
+    .navFocusable = FOCUSABLE;
 
     .alpha = iir(canScroll(), 16);
 

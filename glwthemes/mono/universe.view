@@ -19,6 +19,10 @@ onEvent(menu, {
   $ui.menu = !$ui.menu;
 });
 
+onEvent(logwindow, {
+  $ui.logwindow = !$ui.logwindow;
+});
+
 onEvent(sysinfo, {
   $ui.showSysteminfo = !$ui.showSysteminfo;
 });
@@ -26,6 +30,10 @@ onEvent(sysinfo, {
 onEvent(back, {
   $ui.menu = false;
 }, $ui.menu);
+
+onEvent(back, {
+  $ui.logwindow = false;
+}, $ui.logwindow);
 
 
 #define TOOLBARCOL() {[0.5, 0.5, 0.5]}
@@ -179,6 +187,44 @@ widget(container_z, {
 
       cloner($global.popups, loader, {
 	.source = "theme://popups/" + $self.type + ".view";
+      });
+
+      // Log window
+
+      widget(backdrop, {
+	.hidden = !$ui.logwindow;
+
+	PLATE_GFX();
+	.color = [0.1, 0.1, 0.1];
+	.alphaSelf = 0.8;
+	
+	widget(container_y, {
+
+	  widget(label, {
+	    .caption = "Log";
+	    .sizeScale = 1.5;
+	    .align = center;
+	  });
+	    HORIZONTAL_SEPARATOR();
+
+	  widget(container_x, {
+	    widget(list_y, {
+	      .id = "list";
+	      cloner($global.logbuffer, label, {
+		.sizeScale = 0.75;
+		.caption = $self.prefix + $self.message;
+		.ellipsize = true;
+		.color = translate($self.severity, [1,1,1],
+				   "DEBUG", [0.5, 1, 0.5],
+				   "INFO",  [1, 1, 0.5],
+				   "ERROR", [1, 0.5, 0.5]);
+
+				   
+	      });
+	    });
+	    LIST_Y_SLIDER("list", true);
+	  });
+	});
       });
     });
   });
