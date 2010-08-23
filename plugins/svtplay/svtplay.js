@@ -143,6 +143,7 @@
     }
     page.title = "SVT Play";
     page.type = "directory";
+    page.contents = "items";
     page.loading = false;
 
   });
