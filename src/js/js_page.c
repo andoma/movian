@@ -73,6 +73,7 @@ typedef struct js_model {
   prop_t *jm_loading;
   prop_t *jm_type;
   prop_t *jm_contents;
+  prop_t *jm_logo;
   prop_t *jm_title;
   prop_t *jm_entries;
   prop_t *jm_url;
@@ -121,6 +122,7 @@ js_model_destroy(js_model_t *jm)
   if(jm->jm_nodes)     prop_ref_dec(jm->jm_nodes);
   if(jm->jm_type)      prop_ref_dec(jm->jm_type);
   if(jm->jm_contents)  prop_ref_dec(jm->jm_contents);
+  if(jm->jm_logo)      prop_ref_dec(jm->jm_logo);
   if(jm->jm_title)     prop_ref_dec(jm->jm_title);
   if(jm->jm_entries)   prop_ref_dec(jm->jm_entries);
   if(jm->jm_url)       prop_ref_dec(jm->jm_url);
@@ -187,6 +189,18 @@ js_setContents(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
   js_model_t *jm = JS_GetPrivate(cx, obj);
   js_prop_set_from_jsval(cx, jm->jm_contents, *vp);
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSBool 
+js_setLogo(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
+{
+  js_model_t *jm = JS_GetPrivate(cx, obj);
+  js_prop_set_from_jsval(cx, jm->jm_logo, *vp);
   return JS_TRUE;
 }
 
@@ -287,6 +301,7 @@ js_appendModel(JSContext *cx, JSObject *obj, uintN argc,
   prop_ref_inc(jm->jm_nodes   = prop_create(item,     "nodes"));
   prop_ref_inc(jm->jm_type    = prop_create(item,     "type"));
   prop_ref_inc(jm->jm_contents= prop_create(item,     "contents"));
+  prop_ref_inc(jm->jm_logo    = prop_create(item,     "logo"));
   prop_ref_inc(jm->jm_entries = prop_create(metadata, "entries"));
 
   prop_set_string(jm->jm_type, type);
@@ -381,6 +396,10 @@ make_model_object(JSContext *cx, js_model_t *jm)
   if(jm->jm_contents != NULL)
     JS_DefineProperty(cx, obj, "contents", JSVAL_VOID,
 		      NULL, js_setContents, JSPROP_PERMANENT);
+
+  if(jm->jm_logo != NULL)
+    JS_DefineProperty(cx, obj, "logo", JSVAL_VOID,
+		      NULL, js_setLogo, JSPROP_PERMANENT);
    
   if(jm->jm_loading != NULL)
     JS_DefineProperty(cx, obj, "loading", BOOLEAN_TO_JSVAL(1),
@@ -574,6 +593,7 @@ js_backend_open(struct backend *be, struct navigator *nav,
   prop_ref_inc(jm->jm_nodes   = prop_create(model, "nodes"));
   prop_ref_inc(jm->jm_type    = prop_create(model, "type"));
   prop_ref_inc(jm->jm_contents= prop_create(model, "contents"));
+  prop_ref_inc(jm->jm_logo    = prop_create(model, "logo"));
   prop_ref_inc(jm->jm_title   = prop_create(meta,  "title"));
   prop_ref_inc(jm->jm_entries = prop_create(meta,  "entries"));
   prop_ref_inc(jm->jm_url     = prop_create(np->np_prop_root, "url"));
