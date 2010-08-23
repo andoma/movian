@@ -132,8 +132,7 @@ http_connection_get(const char *hostname, int port, int ssl,
 
   hts_mutex_unlock(&http_connections_mutex);
 
-  
-  if((tc = tcp_connect(hostname, port, errbuf, errlen, 5000, ssl)) < 0) {
+  if((tc = tcp_connect(hostname, port, errbuf, errlen, 5000, ssl)) == NULL) {
     HTTP_TRACE("Connection to %s:%d failed", hostname, port);
     return NULL;
   }
