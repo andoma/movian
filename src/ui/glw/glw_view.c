@@ -105,7 +105,7 @@ glw_view_error(glw_root_t *gr, errorinfo_t *ei, glw_t *parent)
 
   snprintf(buf, sizeof(buf), "GLW %s:%d", ei->file, ei->line);
 
-  trace(TRACE_ERROR, buf, "%s", ei->error);
+  TRACE(TRACE_ERROR, buf, "%s", ei->error);
 
   snprintf(buf, sizeof(buf), "GLW %s:%d: Error: %s",
 	   ei->file, ei->line, ei->error);
