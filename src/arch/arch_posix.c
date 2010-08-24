@@ -88,6 +88,8 @@ get_system_concurrency(void)
 #include <locale.h>
 #include "arch.h"
 #include <limits.h>
+#include <syslog.h>
+
 #ifdef XBMC_PLUGIN
 #include "xbmc-plugin.h"
 #else
@@ -95,7 +97,7 @@ get_system_concurrency(void)
 #endif
 
 extern int concurrency;
-
+extern int trace_to_syslog;
 static int decorate_trace;
 
 /**
@@ -127,6 +129,9 @@ arch_init(void)
     setrlimit(RLIMIT_DATA, &rlim);
   } while(0);
 #endif
+
+  if(trace_to_syslog)
+    openlog("showtime", 0, LOG_USER);
 }
 
 /**
@@ -178,12 +183,12 @@ void
 trace_arch(int level, const char *prefix, const char *str)
 {
   const char *sgr, *sgroff;
-
+  int prio = LOG_ERR;
 
   switch(level) {
-  case TRACE_ERROR: sgr = "\033[31m"; break;
-  case TRACE_INFO:  sgr = "\033[33m"; break;
-  case TRACE_DEBUG: sgr = "\033[32m"; break;
+  case TRACE_ERROR: sgr = "\033[31m"; prio = LOG_ERR;   break;
+  case TRACE_INFO:  sgr = "\033[33m"; prio = LOG_INFO;  break;
+  case TRACE_DEBUG: sgr = "\033[32m"; prio = LOG_DEBUG; break;
   default:          sgr = "\033[35m"; break;
   }
 
@@ -195,6 +200,9 @@ trace_arch(int level, const char *prefix, const char *str)
   }
 
   fprintf(stderr, "%s%s %s%s\n", sgr, prefix, str, sgroff);
+
+  if(trace_to_syslog)
+    syslog(prio, "%s %s", prefix, str);
 }
 
 
