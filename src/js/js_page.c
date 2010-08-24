@@ -459,17 +459,19 @@ js_open_invoke(JSContext *cx, js_model_t *jm)
 /**
  *
  */
-static void
+static int
 js_model_fill(JSContext *cx, js_model_t *jm)
 {
   jsval result;
 
   if(!jm->jm_paginator)
-    return;
+    return 0;
 
   JS_BeginRequest(cx);
   JS_CallFunctionValue(cx, NULL, jm->jm_paginator, 0, NULL, &result);
   JS_EndRequest(cx);
+
+  return JSVAL_IS_BOOLEAN(result) && JSVAL_TO_BOOLEAN(result);
 }
 
 
@@ -524,8 +526,8 @@ js_model_nodesub(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_WANT_MORE_CHILDS:
-    js_model_fill(jm->jm_cx, jm);
-    prop_have_more_childs(jm->jm_nodes);
+    if(js_model_fill(jm->jm_cx, jm))
+      prop_have_more_childs(jm->jm_nodes);
     break;
   }
   va_end(ap);

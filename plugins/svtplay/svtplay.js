@@ -69,11 +69,11 @@
 	}
 	page.loading = false;
 	num += c;
-	if(c == 0 || num > 150)
+	if(c == 0 || num > 20)
 	  break;
       }
       offset += num;
-
+      return offset < page.entries;
     }
 
     page.type = "directory";

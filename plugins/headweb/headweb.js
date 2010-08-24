@@ -61,7 +61,6 @@
     function loader() {
       var doc = new XML(request(url, offset, 50));
       page.entries = doc.list.@items;
-
       for each (var c in doc.list.content) {
 	offset++;
 	var stream = findStream(c);
@@ -80,6 +79,7 @@
 	page.appendItem(PREFIX + "stream:" + stream.@id,
 			"video", metadata);
       }
+      return offset < page.entries;
     }
 
     page.type = "directory";
