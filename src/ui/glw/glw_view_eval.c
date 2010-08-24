@@ -771,9 +771,6 @@ cloner_find_child(prop_t *p, glw_t *parent)
   TAILQ_FOREACH(w, &parent->glw_childs, glw_parent_link)
     if(w->glw_originating_prop == p)
       return w;
-
-  fprintf(stderr, "glw: Cloner searches for unknown child in widget list\n");
-  fprintf(stderr, "glw: This is a programming error, bailing out\n");
   abort();
 }
 
@@ -789,9 +786,6 @@ find_in_pendinglist(prop_t *p, glw_prop_sub_t *gps)
   TAILQ_FOREACH(gpsp, &gps->gps_pending, gpsp_link)
     if(gpsp->gpsp_prop == p)
       return gpsp;
-
-  fprintf(stderr, "glw: Cloner searches for unknown child in pending list\n");
-  fprintf(stderr, "glw: This is a programming error, bailing out\n");
   abort();
 }
 
