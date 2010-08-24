@@ -83,15 +83,22 @@ typedef struct sub_cloner {
   struct glw_prop_sub_pending_queue sc_pending;
   prop_t *sc_pending_select;
 
-  uint16_t sc_entries;
-  uint16_t sc_offset;
-  uint16_t sc_limit;
+  int sc_entries;
+  int sc_offset;
+  int sc_limit;
 
   prop_t *sc_originating_prop;
 
   prop_t *sc_view_prop;
 
   glw_t *sc_anchor;
+
+  char sc_positions_valid;
+
+  int sc_lowest_active;
+  int sc_highest_active;
+
+  char sc_have_more;
 
 } sub_cloner_t;
 
@@ -827,6 +834,184 @@ find_in_pendinglist(prop_t *p, sub_cloner_t *sc)
 }
 
 
+
+
+/**
+ *
+ */
+typedef struct clone {
+  sub_cloner_t *c_sc;
+  glw_t *c_w;
+  int c_pos;
+  prop_t *c_prop;
+
+  char c_visible;      // Set if clone should visible to parent
+  char c_evaluated;
+  char c_active;       // Set if widget is visible on screen
+
+} clone_t;
+
+
+static void cloner_resequence(sub_cloner_t *sc);
+
+/**
+ *
+ */
+static int
+clone_is_hidden(sub_cloner_t *sc, clone_t *c)
+{
+  return c->c_pos >= sc->sc_limit + sc->sc_offset || c->c_pos < sc->sc_offset;
+}
+
+
+/**
+ *
+ */
+static void
+clone_eval(clone_t *c)
+{
+  sub_cloner_t *sc = c->c_sc;
+  glw_view_eval_context_t n;
+  token_t *body = glw_view_clone_chain(sc->sc_cloner_body);
+
+  c->c_evaluated = 1;
+
+  glw_set_i(c->c_w, GLW_ATTRIB_FREEZE, 1, NULL);
+
+  memset(&n, 0, sizeof(n));
+  n.prop = c->c_prop;
+  n.prop_parent = sc->sc_originating_prop;
+  n.prop_view = sc->sc_view_prop;
+
+  n.gr = c->c_w->glw_root;
+
+  n.w = c->c_w;
+
+  n.sublist = &n.w->glw_prop_subscriptions;
+  glw_view_eval_block(body, &n);
+  glw_view_free_chain(body);
+
+  glw_set_i(c->c_w, GLW_ATTRIB_FREEZE, 0, NULL);
+}
+
+
+/**
+ *
+ */
+static void
+clone_update(clone_t *c)
+{
+  sub_cloner_t *sc = c->c_sc;
+  int visible;
+
+  if(!sc->sc_positions_valid)
+    cloner_resequence(sc);
+  
+  visible = !clone_is_hidden(sc, c);
+
+  if(visible == c->c_visible)
+    return;
+  
+  c->c_visible = visible;
+
+  if(visible) {
+
+    if(!c->c_evaluated)
+      clone_eval(c);
+
+    glw_set_i(c->c_w, GLW_ATTRIB_CLR_FLAGS, GLW_HIDDEN, NULL);
+  } else {
+    glw_set_i(c->c_w, GLW_ATTRIB_SET_FLAGS, GLW_HIDDEN, NULL);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+cloner_pagination_check(sub_cloner_t *sc)
+{
+  if(!sc->sc_have_more)
+    return;
+
+  if(sc->sc_highest_active <= sc->sc_entries * 0.95)
+    return;
+
+  sc->sc_have_more = 0;
+  prop_want_more_childs(sc->sc_sub.gps_sub);
+}
+
+
+
+/**
+ *
+ */
+static int
+cloner_sig_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
+{
+  clone_t *c = opaque;
+  sub_cloner_t *sc = c->c_sc;
+
+  switch(signal) {
+  case GLW_SIGNAL_ACTIVE:
+    if(!sc->sc_positions_valid)
+      cloner_resequence(sc);
+    
+    if(c->c_pos < sc->sc_lowest_active)
+      sc->sc_lowest_active = c->c_pos;
+
+    if(c->c_pos > sc->sc_highest_active)
+      sc->sc_highest_active = c->c_pos;
+
+    cloner_pagination_check(sc);
+    break;
+
+  case GLW_SIGNAL_INACTIVE:
+    if(!sc->sc_positions_valid)
+      cloner_resequence(sc);
+
+    if(c->c_pos >= sc->sc_lowest_active && c->c_pos < sc->sc_highest_active)
+      sc->sc_lowest_active = c->c_pos + 1;
+
+    if(c->c_pos <= sc->sc_highest_active && c->c_pos > sc->sc_lowest_active)
+      sc->sc_highest_active = c->c_pos - 1;
+
+    cloner_pagination_check(sc);
+    break;
+  default:
+    break;
+  }
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+cloner_resequence(sub_cloner_t *sc)
+{
+  glw_t *w;
+  glw_signal_handler_t *gsh;
+  int pos = 0;
+  TAILQ_FOREACH(w, &sc->sc_sub.gps_widget->glw_childs, glw_parent_link) {
+    LIST_FOREACH(gsh, &w->glw_signal_handlers, gsh_link) {
+      if(gsh->gsh_func == cloner_sig_handler) {
+	clone_t *c = gsh->gsh_opaque;
+	c->c_pos = pos;
+	break;
+      }
+    }
+    pos++;
+  }
+  sc->sc_positions_valid = 1;
+}
+
+
+
+
+
 /**
  *
  */
@@ -834,13 +1019,11 @@ static void
 cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before, 
 		  glw_t *parent, errorinfo_t *ei, int flags)
 {
-  glw_view_eval_context_t n;
   glw_t *b;
-  int pos;
-  int f = 0;
+  clone_t *c = calloc(1, sizeof(clone_t));
 
   if(before != NULL) {
-    pos = 0;
+    int pos = 0;
 
     TAILQ_FOREACH(b, &parent->glw_childs, glw_parent_link) {
       if(b->glw_originating_prop == before)
@@ -848,45 +1031,30 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
       pos++;
     }
     assert(b != NULL);
+    c->c_pos = pos;
+    sc->sc_positions_valid = 0;
   } else {
     b = sc->sc_anchor;
-    pos = sc->sc_entries;
+    c->c_pos = sc->sc_entries;
   }
+  c->c_sc = sc;
 
-  if(pos >= sc->sc_limit + sc->sc_offset || pos < sc->sc_offset)
-    f = GLW_HIDDEN;
-
-  memset(&n, 0, sizeof(n));
-  n.prop = p;
-  n.prop_parent = sc->sc_originating_prop;
-  n.prop_view = sc->sc_view_prop;
-
-  n.ei = ei;
-  n.gr = parent->glw_root;
-
-  n.w = glw_create_i(parent->glw_root,
-		     sc->sc_cloner_class,
-		     GLW_ATTRIB_FREEZE, 1,
-		     GLW_ATTRIB_PARENT_BEFORE, parent, b,
-		     GLW_ATTRIB_SET_FLAGS, f,
-		     GLW_ATTRIB_PROPROOTS, p, sc->sc_originating_prop,
-		     GLW_ATTRIB_ORIGINATING_PROP, p,
-		     NULL);
-
-  if(flags & PROP_ADD_SELECTED)
-    glw_signal0(parent, GLW_SIGNAL_SELECT, n.w);
-
-
-  if(f != GLW_HIDDEN) {
-    n.sublist = &n.w->glw_prop_subscriptions;
-    token_t *body = glw_view_clone_chain(sc->sc_cloner_body);
-    glw_view_eval_block(body, &n);
-    glw_view_free_chain(body);
-  }
-
-  glw_set_i(n.w, GLW_ATTRIB_FREEZE, 0, NULL);
+  prop_ref_inc(c->c_prop = p);
 
   sc->sc_entries++;
+
+  c->c_w = glw_create_i(parent->glw_root, sc->sc_cloner_class,
+			GLW_ATTRIB_PARENT_BEFORE, parent, b,
+			GLW_ATTRIB_PROPROOTS, p, sc->sc_originating_prop,
+			GLW_ATTRIB_ORIGINATING_PROP, p,
+			NULL);
+
+  glw_signal_handler_register(c->c_w, cloner_sig_handler, c, 1000);
+
+  if(flags & PROP_ADD_SELECTED)
+    glw_signal0(parent, GLW_SIGNAL_SELECT, c->c_w);
+
+  clone_update(c);
 }
 
 
@@ -931,11 +1099,13 @@ cloner_add_child(sub_cloner_t *sc, prop_t *p, prop_t *before,
  *
  */
 static void
-cloner_move_child0(prop_t *p, prop_t *before,
+cloner_move_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
 		   glw_t *parent, errorinfo_t *ei)
 {
   glw_t *w =          cloner_find_child(p,      parent);
   glw_t *b = before ? cloner_find_child(before, parent) : NULL;
+
+  sc->sc_positions_valid = 0;
 
   glw_move(w, b);
 }
@@ -951,7 +1121,7 @@ cloner_move_child(sub_cloner_t *sc, prop_t *p, prop_t *before,
   glw_prop_sub_pending_t *t, *b;
 
   if(sc->sc_cloner_body != NULL) {
-    cloner_move_child0(p, before, parent, ei);
+    cloner_move_child0(sc, p, before, parent, ei);
     return;
   }
 
@@ -979,6 +1149,8 @@ cloner_del_child(sub_cloner_t *sc, prop_t *p, glw_t *parent)
 
   if((w = cloner_find_child(p, parent)) != NULL) {
     sc->sc_entries--;
+    if(TAILQ_NEXT(w, glw_parent_link) != NULL)
+      sc->sc_positions_valid = 0;
     glw_detach(w);
     return;
   }
@@ -1108,12 +1280,19 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
     rpn = gps->gps_rpn;
     break;
 
+  case PROP_HAVE_MORE_CHILDS:
+    sc->sc_have_more = 1;
+    cloner_pagination_check(sc);
+    break;
+
   case PROP_REQ_NEW_CHILD:
   case PROP_REQ_DELETE_MULTI:
   case PROP_DESTROYED:
   case PROP_EXT_EVENT:
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
+  case PROP_WANT_MORE_CHILDS:
     break;
+
   }
 
   if(t != NULL) {
@@ -1199,6 +1378,8 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
   case PROP_DESTROYED:
   case PROP_EXT_EVENT:
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
+  case PROP_HAVE_MORE_CHILDS:
+  case PROP_WANT_MORE_CHILDS:
     break;
   }
 
@@ -1265,6 +1446,8 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
   case PROP_DESTROYED:
   case PROP_EXT_EVENT:
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
+  case PROP_HAVE_MORE_CHILDS:
+  case PROP_WANT_MORE_CHILDS:
     break;
   }
 
@@ -1322,6 +1505,8 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
   case GPS_CLONER: do {
       sub_cloner_t *sc = calloc(1, sizeof(sub_cloner_t));
       gps = &sc->sc_sub;
+
+      sc->sc_have_more = 1;
 
       sc->sc_originating_prop = ec->prop;
       if(ec->prop != NULL)
@@ -1755,7 +1940,7 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
     sc->sc_anchor = self->t_extra;
 
     sc->sc_offset = d ? token2int(d) : 0;
-    sc->sc_limit  = e ? token2int(e) : UINT16_MAX;
+    sc->sc_limit  = e ? token2int(e) : INT_MAX;
 
     if(sc->sc_cloner_body != NULL)
       glw_view_free_chain(sc->sc_cloner_body);
@@ -3558,24 +3743,6 @@ glwf_suggestFocus(glw_view_eval_context_t *ec, struct token *self,
   return 0;
 }
 
-
-/**
- *
- */
-static int
-glwf_appendEventSink(glw_view_eval_context_t *ec, struct token *self,
-		     token_t **argv, unsigned int argc)
-{
-  token_t *a;
-
-  if((a = resolve_property_name2(ec, argv[0])) == NULL)
-    return -1;
-
-  glw_set_i(ec->w, GLW_ATTRIB_APPEND_EVENT_SINK, a->t_prop, NULL);
-  return 0;
-}
-
-
 /**
  *
  */
@@ -3640,7 +3807,6 @@ static const token_func_t funcvec[] = {
   {"isReady", 0, glwf_isReady},
   {"suggestFocus", 1, glwf_suggestFocus},
   {"focusDistance", 0, glwf_focusDistance},
-  {"appendEventSink", 1, glwf_appendEventSink},
   {"count", 1, glwf_count},
 };
 

@@ -90,6 +90,8 @@ typedef enum {
   PROP_DESTROYED,
   PROP_EXT_EVENT,
   PROP_SUBSCRIPTION_MONITOR_ACTIVE,
+  PROP_HAVE_MORE_CHILDS,
+  PROP_WANT_MORE_CHILDS,
 } prop_event_t;
 
 
@@ -305,6 +307,11 @@ int prop_pvec_len(prop_t **src);
 prop_t **prop_pvec_clone(prop_t **src);
 
 const char *prop_get_name(prop_t *p);
+
+void prop_want_more_childs(prop_sub_t *s);
+
+void prop_have_more_childs(prop_t *p);
+
 
 /* DEBUGish */
 const char *propname(prop_t *p);

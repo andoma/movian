@@ -36,12 +36,6 @@ typedef struct glw_list {
   int size_y;
   int size_x;
 
-  prop_t *append_prop;
-
-  int child_num;
-  int child_num_append_req;
-  int append_thres;
-
 } glw_list_t;
 
 #define glw_parent_size_x glw_parent_misc[0]
@@ -168,19 +162,6 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
   if(l->w.glw_flags & GLW_UPDATE_METRICS)
     glw_list_update_metrics(l, y, t);
 
-  if(y > 0 && t > 0.75 * y && l->append_prop != NULL &&
-     l->child_num != l->child_num_append_req) {
-
-    if(l->append_thres == 5) {
-      l->child_num_append_req = l->child_num;
-
-      event_t  *e = event_create_type(EVENT_APPEND_REQUEST);
-      prop_send_ext_event(l->append_prop, e);
-      event_unref(e);
-    } else {
-      l->append_thres++;
-    }
-  }
   return 0;
 }
 
@@ -362,9 +343,6 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     c->glw_parent_scale.x = 1.0;
     c->glw_parent_scale.y = 1.0;
     c->glw_parent_scale.z = 1.0;
-
-    l->child_num++;
-    l->append_thres = 0;
     break;
 
   case GLW_SIGNAL_CHILD_DESTROYED:
@@ -373,8 +351,6 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     if(l->suggested == extra)
       l->suggested = NULL;
 
-    l->child_num--;
-    l->append_thres = 0;
     break;
 
   case GLW_SIGNAL_POINTER_EVENT:
@@ -396,10 +372,6 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     }
     break;
 
-  case GLW_SIGNAL_DESTROY:
-    if(l->append_prop != NULL)
-      prop_ref_dec(l->append_prop);
-    break;
   }
   return 0;
 }
@@ -436,7 +408,6 @@ glw_list_set(glw_t *w, va_list ap)
 {
   glw_attribute_t attrib;
   glw_list_t *l = (void *)w;
-  prop_t *p;
 
   do {
     attrib = va_arg(ap, int);
@@ -444,17 +415,6 @@ glw_list_set(glw_t *w, va_list ap)
 
     case GLW_ATTRIB_CHILD_ASPECT:
       l->child_aspect = va_arg(ap, double);
-      break;
-
-    case GLW_ATTRIB_APPEND_EVENT_SINK:
-      p = va_arg(ap, prop_t *);
-
-      if(l->append_prop != NULL)
-	prop_ref_dec(l->append_prop );
-
-      l->append_prop = p;
-      if(p != NULL)
-	prop_ref_inc(p);
       break;
 
     default:

@@ -316,6 +316,8 @@ prop_notify_free(prop_notify_t *n)
     break;
 
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
+  case PROP_WANT_MORE_CHILDS:
+  case PROP_HAVE_MORE_CHILDS:
     break;
 
   case PROP_REQ_DELETE_MULTI:
@@ -534,6 +536,8 @@ prop_notify_dispatch(struct prop_notify_queue *q)
       break;
 
     case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
+    case PROP_WANT_MORE_CHILDS:
+    case PROP_HAVE_MORE_CHILDS:
       if(pt != NULL)
 	pt(s, n->hpn_event);
       else
@@ -1026,6 +1030,23 @@ prop_send_ext_event0(prop_t *p, event_t *e)
     n->hpn_event = PROP_EXT_EVENT;
     atomic_add(&e->e_refcount, 1);
     n->hpn_ext_event = e;
+    courier_enqueue(s, n);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+prop_send_event(prop_t *p, prop_event_t e)
+{
+  prop_sub_t *s;
+  prop_notify_t *n;
+
+  LIST_FOREACH(s, &p->hp_value_subscriptions, hps_value_prop_link) {
+    n = get_notify(s);
+    n->hpn_event = e;
     courier_enqueue(s, n);
   }
 }
@@ -3158,6 +3179,29 @@ prop_get_string(prop_t *p, char *buf, size_t bufsize)
   return r;
 }
 
+
+/**
+ *
+ */
+void
+prop_want_more_childs(prop_sub_t *s)
+{
+  hts_mutex_lock(&prop_mutex);
+  prop_send_event(s->hps_value_prop, PROP_WANT_MORE_CHILDS);
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
+ *
+ */
+void
+prop_have_more_childs(prop_t *p)
+{
+  hts_mutex_lock(&prop_mutex);
+  prop_send_event(p, PROP_HAVE_MORE_CHILDS);
+  hts_mutex_unlock(&prop_mutex);
+}
 
 
 /**

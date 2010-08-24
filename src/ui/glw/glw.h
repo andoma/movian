@@ -128,7 +128,6 @@ typedef enum {
   GLW_ATTRIB_PRIORITY,
   GLW_ATTRIB_FILL,
   GLW_ATTRIB_MAXLINES,
-  GLW_ATTRIB_APPEND_EVENT_SINK,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -850,7 +849,6 @@ do {						\
   case GLW_ATTRIB_BIND_TO_ID: 			\
   case GLW_ATTRIB_PIXMAP: 			\
   case GLW_ATTRIB_ORIGINATING_PROP: 		\
-  case GLW_ATTRIB_APPEND_EVENT_SINK:            \
     (void)va_arg(ap, void *);			\
     break;					\
   case GLW_ATTRIB_ALIGNMENT:			\

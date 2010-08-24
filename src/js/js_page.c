@@ -512,7 +512,6 @@ js_model_nodesub(void *opaque, prop_event_t event, ...)
 {
   js_model_t *jm = opaque;
   va_list ap;
-  event_t *e;
 
   va_start(ap, event);
 
@@ -524,11 +523,9 @@ js_model_nodesub(void *opaque, prop_event_t event, ...)
     jm->jm_run = 0;
     break;
 
-  case PROP_EXT_EVENT:
-    e = va_arg(ap, event_t *);
-    if(e->e_type_x == EVENT_APPEND_REQUEST)
-      js_model_fill(jm->jm_cx, jm);
-
+  case PROP_WANT_MORE_CHILDS:
+    js_model_fill(jm->jm_cx, jm);
+    prop_have_more_childs(jm->jm_nodes);
     break;
   }
   va_end(ap);

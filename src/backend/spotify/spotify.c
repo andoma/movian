@@ -2224,8 +2224,9 @@ ss_fill_tracks(sp_search *result, spotify_search_request_t *ssr)
   prop_t *p, *metadata;
   sp_track *track;
   char url[URL_MAX];
+  int total = f_sp_search_total_tracks(result);
 
-  prop_set_int(ssr->ssr_entries, f_sp_search_total_tracks(result));
+  prop_set_int(ssr->ssr_entries, total);
 
 
   for(i = 0; i < ntracks; i++) {
@@ -2246,6 +2247,9 @@ ss_fill_tracks(sp_search *result, spotify_search_request_t *ssr)
   }
 
   ssr->ssr_offset += ntracks;
+
+  if(ssr->ssr_offset != total)
+    prop_have_more_childs(ssr->ssr_nodes);
 }
 
 
@@ -2261,6 +2265,8 @@ ss_fill_albums(sp_search *result, spotify_search_request_t *ssr)
   sp_album *album, *album_prev = NULL;
   sp_artist *artist;
   char link[URL_MAX];
+
+  prop_have_more_childs(ssr->ssr_nodes);
 
   /**
    *
@@ -2316,6 +2322,8 @@ ss_fill_artists(sp_search *result, spotify_search_request_t *ssr)
   sp_artist *artist;
   char link[URL_MAX];
 
+  prop_have_more_childs(ssr->ssr_nodes);
+
   /**
    *
    */
@@ -2367,7 +2375,6 @@ search_nodesub(void *opaque, prop_event_t event, ...)
   spotify_search_request_t *ssr = opaque;
   spotify_search_t *ss = ssr->ssr_ss;
   va_list ap;
-  event_t *e;
 
   va_start(ap, event);
 
@@ -2379,14 +2386,11 @@ search_nodesub(void *opaque, prop_event_t event, ...)
     search_unref(ss);
     break;
 
-  case PROP_EXT_EVENT:
-    e = va_arg(ap, event_t *);
-   
-    if(e->e_type_x != EVENT_APPEND_REQUEST)
+  case PROP_WANT_MORE_CHILDS:
+    if(ssr->ssr_last_search == ssr->ssr_offset) {
+      prop_have_more_childs(ssr->ssr_nodes);
       break;
-
-    if(ssr->ssr_last_search == ssr->ssr_offset)
-      break; // Avoid query for same range again
+    }
 
     ssr->ssr_last_search = ssr->ssr_offset;
     ss->ss_ref++;
