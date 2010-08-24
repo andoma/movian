@@ -360,8 +360,6 @@ blobcache_prune(void)
   }
   closedir(d1);
   
-  hts_mutex_lock(&blobcache_mutex);
-  
   msize = blobcache_compute_size(path, tsize);
   
   if(files > 0) {
