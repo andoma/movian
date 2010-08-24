@@ -120,6 +120,11 @@ blobcache_load(const char *path, int fd, size_t *sizep, int pad)
 
   if(exp < time(NULL)) {
     unlink(path);
+    hts_mutex_lock(&blobcache_mutex);
+    blobcache_size_current -= st.st_size;
+    if(blobcache_size_current < 0)
+      blobcache_size_current = 0; // Just to be sure
+    hts_mutex_unlock(&blobcache_mutex);
     return NULL;
   }
 
