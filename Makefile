@@ -57,6 +57,7 @@ SRCS += src/main.c \
 
 ifeq ($(PLATFORM), linux)
 SRCS += src/arch/linux.c
+SRCS += src/arch/trap_linux.c
 endif
 
 ifeq ($(PLATFORM), osx)

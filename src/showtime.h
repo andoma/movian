@@ -94,13 +94,13 @@ enum {
 
 void trace_init(void);
 
-void trace(int level, const char *subsys, const char *fmt, ...);
+void trace(int flags, int level, const char *subsys, const char *fmt, ...);
 
 void tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap);
 
 void trace_arch(int level, const char *prefix, const char *buf);
 
-#define TRACE(level, subsys, fmt...) trace(level, subsys, fmt)
+#define TRACE(level, subsys, fmt...) trace(0, level, subsys, fmt)
 
 #define mystrdupa(n) ({ int my_l = strlen(n); \
  char *my_b = alloca(my_l + 1); \

@@ -121,11 +121,11 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
  *
  */
 void
-trace(int level, const char *subsys, const char *fmt, ...)
+trace(int flags, int level, const char *subsys, const char *fmt, ...)
 {
   va_list ap;
   va_start(ap, fmt);
-  tracev(0, level, subsys, fmt, ap);
+  tracev(flags, level, subsys, fmt, ap);
   va_end(ap);
 }
 

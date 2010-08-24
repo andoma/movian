@@ -206,6 +206,7 @@ arch_sd_init(void)
 {
 #ifdef linux
   linux_init_cpu_monitor();
+  trap_init();
 #elif defined(__APPLE__)
   darwin_init_cpu_monitor();
 #endif

@@ -27,4 +27,6 @@ void arch_exit(int code) __attribute__((noreturn));
 
 void arch_set_cachepath(void);
 
+void trap_init(void);
+
 #endif /* ARCH_H__ */
