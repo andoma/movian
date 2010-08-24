@@ -970,7 +970,7 @@ htsp_thread(void *aux)
 	break;
     }
 
-    trace(TRACE_ERROR, "HTSP", "Disconnected from %s:%d", 
+    TRACE(TRACE_ERROR, "HTSP", "Disconnected from %s:%d", 
 	  hc->hc_hostname, hc->hc_port);
 
     tcp_close(hc->hc_tc);
@@ -986,13 +986,13 @@ htsp_thread(void *aux)
       if(hc->hc_tc != NULL)
 	break;
 
-      trace(TRACE_ERROR, "HTSP", "Connection to %s:%d failed: %s", 
+      TRACE(TRACE_ERROR, "HTSP", "Connection to %s:%d failed: %s", 
 	    hc->hc_hostname, hc->hc_port, errbuf);
       sleep(1);
       continue;
     }
     
-    trace(TRACE_INFO, "HTSP", "Reconnected to %s:%d", 
+    TRACE(TRACE_INFO, "HTSP", "Reconnected to %s:%d", 
 	  hc->hc_hostname, hc->hc_port);
 
     tag_delete_all(hc);
@@ -1033,17 +1033,17 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
     }
   }
 
-  trace(TRACE_DEBUG, "HTSP", "Connecting to %s:%d", hostname, port);
+  TRACE(TRACE_DEBUG, "HTSP", "Connecting to %s:%d", hostname, port);
 
   tc = tcp_connect(hostname, port, errbuf, errlen, 3000, 0);
   if(tc == NULL) {
     hts_mutex_unlock(&htsp_global_mutex);
-    trace(TRACE_ERROR, "HTSP", "Connection to %s:%d failed: %s", 
+    TRACE(TRACE_ERROR, "HTSP", "Connection to %s:%d failed: %s", 
 	  hostname, port, errbuf);
     return NULL;
   }
 
-  trace(TRACE_INFO, "HTSP", "Connected to %s:%d", hostname, port);
+  TRACE(TRACE_INFO, "HTSP", "Connected to %s:%d", hostname, port);
 
   hc = calloc(1, sizeof(htsp_connection_t));
 
