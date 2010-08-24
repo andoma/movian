@@ -323,7 +323,7 @@ blobcache_prune(void)
   char path3[PATH_MAX];
   struct stat st;
   
-  uint64_t tsize = 0;
+  uint64_t tsize = 0, msize;
   int files = 0;
   struct cachfile_list list;
 
@@ -362,12 +362,36 @@ blobcache_prune(void)
   
   hts_mutex_lock(&blobcache_mutex);
   
-  blobcache_size_current = tsize;
-  blobcache_size_max = blobcache_compute_size(path, tsize);
-
+  msize = blobcache_compute_size(path, tsize);
+  
   if(files > 0) {
-    struct cachefile **v, *c;
+    struct cachefile **v, *c, *next;
     int i;
+
+    time_t now;
+    time(&now);
+
+    for(c = LIST_FIRST(&list); c != NULL; c = next) {
+      next = LIST_NEXT(c, link);
+
+      digest_to_path(c->d, path, sizeof(path));
+      int fd = open(path, O_RDONLY);
+      if(fd != -1) {
+	uint8_t buf[4];
+	
+	if(read(fd, buf, 4) == 4) {
+	  time_t exp = buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
+
+	  if(exp < now) {
+	    tsize -= c->size;
+	    files--;
+	    unlink(path);
+	    LIST_REMOVE(c, link);
+	    free(c);
+	  }
+	}
+      }
+    }
 
     v = malloc(sizeof(struct cachfile_list *) * files);
     i = 0;
@@ -381,20 +405,25 @@ blobcache_prune(void)
     for(i = 0; i < files; i++) {
       c = v[i];
     
-      if(blobcache_size_current > blobcache_size_max) {
+      if(tsize > msize) {
 	digest_to_path(c->d, path, sizeof(path));
 	if(!unlink(path))
-	  blobcache_size_current -= c->size;
+	  tsize -= c->size;
       }
       free(c);
     }
     free(v);
   }
 
+
+  hts_mutex_lock(&blobcache_mutex);
+
+  blobcache_size_max = msize;
+  blobcache_size_current = tsize;
+
   TRACE(TRACE_DEBUG, "blobcache", "Using %lld MB out of %lld MB",
 	blobcache_size_current / 1000000LL, 
 	blobcache_size_max     / 1000000LL);
-
 
   hts_mutex_unlock(&blobcache_mutex);
 }
@@ -410,7 +439,7 @@ blobcache_init(void)
   hts_mutex_init(&blobcache_lock);
 #endif
   hts_mutex_init(&blobcache_mutex);
-  blobcache_prune();
+  callout_arm(&blobcache_callout, blobcache_do_prune, NULL, 1);
 }
 
 static void
