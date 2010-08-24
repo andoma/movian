@@ -43,6 +43,11 @@ typedef struct glw_prop_sub_pending {
 
 TAILQ_HEAD(glw_prop_sub_pending_queue, glw_prop_sub_pending);
 
+
+#define GPS_VALUE   2
+#define GPS_CLONER  3
+#define GPS_COUNTER 4
+
 /**
  *
  */
@@ -56,32 +61,54 @@ typedef struct glw_prop_sub {
 
   token_t *gps_token;
 
-  token_t *gps_cloner_body;
-  const glw_class_t *gps_cloner_class;
-  
-  struct glw_prop_sub_pending_queue gps_pending;
-  prop_t *gps_pending_select;
 
 #ifdef GLW_VIEW_ERRORINFO
   rstr_t *gps_file;
   uint16_t gps_line;
 #endif
-  uint16_t gps_entries;
-  uint16_t gps_offset;
-  uint16_t gps_limit;
-
-  prop_t *gps_originating_prop;
-
-  prop_t *gps_view_prop;
-
-  glw_t *gps_anchor;
-
+  uint16_t gps_type;
 
 } glw_prop_sub_t;
 
 
+/**
+ *
+ */
+typedef struct sub_cloner {
+  glw_prop_sub_t sc_sub;
+
+  token_t *sc_cloner_body;
+  const glw_class_t *sc_cloner_class;
+  
+  struct glw_prop_sub_pending_queue sc_pending;
+  prop_t *sc_pending_select;
+
+  uint16_t sc_entries;
+  uint16_t sc_offset;
+  uint16_t sc_limit;
+
+  prop_t *sc_originating_prop;
+
+  prop_t *sc_view_prop;
+
+  glw_t *sc_anchor;
+
+} sub_cloner_t;
+
+
+/**
+ *
+ */
+typedef struct sub_counter {
+  glw_prop_sub_t sc_sub;
+  int sc_entries;
+
+} sub_counter_t;
+
+
+
 static int subscribe_prop(glw_view_eval_context_t *ec, struct token *self,
-			  int counting);
+			  int type);
 
 /**
  *
@@ -90,6 +117,7 @@ void
 glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l)
 {
   glw_prop_sub_t *gps;
+  sub_cloner_t *sc;
 
   while((gps = LIST_FIRST(l)) != NULL) {
 
@@ -99,17 +127,26 @@ glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l)
     if(gps->gps_token != NULL)
       glw_view_token_free(gps->gps_token);
 
-    if(gps->gps_cloner_body != NULL)
-      glw_view_token_free(gps->gps_cloner_body);
-    
     LIST_REMOVE(gps, gps_link);
 
-    if(gps->gps_originating_prop)
-      prop_ref_dec(gps->gps_originating_prop);
+    switch(gps->gps_type) {
+    case GPS_VALUE:
+    case GPS_COUNTER:
+      break;
 
-    if(gps->gps_view_prop)
-      prop_ref_dec(gps->gps_view_prop);
+    case GPS_CLONER:
+      sc = (sub_cloner_t *)gps;
+ 
+      if(sc->sc_cloner_body != NULL)
+	glw_view_token_free(sc->sc_cloner_body);
+    
+      if(sc->sc_originating_prop)
+	prop_ref_dec(sc->sc_originating_prop);
 
+      if(sc->sc_view_prop)
+	prop_ref_dec(sc->sc_view_prop);
+      break;
+    }
     free(gps);
   }
 }
@@ -196,14 +233,14 @@ eval_alloc(token_t *src, glw_view_eval_context_t *ec, token_type_t type)
  *
  */
 static token_t *
-token_resolve_ex(glw_view_eval_context_t *ec, token_t *t, int counting)
+token_resolve_ex(glw_view_eval_context_t *ec, token_t *t, int type)
 {
   if(t == NULL) {
     glw_view_seterr(ec->ei, t, "Missing operand");
     return NULL;
   }
 
-  if(t->type == TOKEN_PROPERTY_VALUE_NAME && subscribe_prop(ec, t, counting))
+  if(t->type == TOKEN_PROPERTY_VALUE_NAME && subscribe_prop(ec, t, type))
     return NULL;
   
   if(t->type == TOKEN_PROPERTY_SUBSCRIPTION) {
@@ -217,7 +254,7 @@ token_resolve_ex(glw_view_eval_context_t *ec, token_t *t, int counting)
 static token_t *
 token_resolve(glw_view_eval_context_t *ec, token_t *t)
 {
-  return token_resolve_ex(ec, t, 0);
+  return token_resolve_ex(ec, t, GPS_VALUE);
 }
 
 /**
@@ -779,11 +816,11 @@ cloner_find_child(prop_t *p, glw_t *parent)
  *
  */
 static glw_prop_sub_pending_t *
-find_in_pendinglist(prop_t *p, glw_prop_sub_t *gps)
+find_in_pendinglist(prop_t *p, sub_cloner_t *sc)
 {
   glw_prop_sub_pending_t *gpsp;
 
-  TAILQ_FOREACH(gpsp, &gps->gps_pending, gpsp_link)
+  TAILQ_FOREACH(gpsp, &sc->sc_pending, gpsp_link)
     if(gpsp->gpsp_prop == p)
       return gpsp;
   abort();
@@ -794,7 +831,7 @@ find_in_pendinglist(prop_t *p, glw_prop_sub_t *gps)
  *
  */
 static void
-cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before, 
+cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before, 
 		  glw_t *parent, errorinfo_t *ei, int flags)
 {
   glw_view_eval_context_t n;
@@ -812,27 +849,27 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
     }
     assert(b != NULL);
   } else {
-    b = gps->gps_anchor;
-    pos = gps->gps_entries;
+    b = sc->sc_anchor;
+    pos = sc->sc_entries;
   }
 
-  if(pos >= gps->gps_limit + gps->gps_offset || pos < gps->gps_offset)
+  if(pos >= sc->sc_limit + sc->sc_offset || pos < sc->sc_offset)
     f = GLW_HIDDEN;
 
   memset(&n, 0, sizeof(n));
   n.prop = p;
-  n.prop_parent = gps->gps_originating_prop;
-  n.prop_view = gps->gps_view_prop;
+  n.prop_parent = sc->sc_originating_prop;
+  n.prop_view = sc->sc_view_prop;
 
   n.ei = ei;
   n.gr = parent->glw_root;
 
   n.w = glw_create_i(parent->glw_root,
-		     gps->gps_cloner_class,
+		     sc->sc_cloner_class,
 		     GLW_ATTRIB_FREEZE, 1,
 		     GLW_ATTRIB_PARENT_BEFORE, parent, b,
 		     GLW_ATTRIB_SET_FLAGS, f,
-		     GLW_ATTRIB_PROPROOTS, p, gps->gps_originating_prop,
+		     GLW_ATTRIB_PROPROOTS, p, sc->sc_originating_prop,
 		     GLW_ATTRIB_ORIGINATING_PROP, p,
 		     NULL);
 
@@ -842,14 +879,14 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
 
   if(f != GLW_HIDDEN) {
     n.sublist = &n.w->glw_prop_subscriptions;
-    token_t *body = glw_view_clone_chain(gps->gps_cloner_body);
+    token_t *body = glw_view_clone_chain(sc->sc_cloner_body);
     glw_view_eval_block(body, &n);
     glw_view_free_chain(body);
   }
 
   glw_set_i(n.w, GLW_ATTRIB_FREEZE, 0, NULL);
 
-  gps->gps_entries++;
+  sc->sc_entries++;
 }
 
 
@@ -857,13 +894,13 @@ cloner_add_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
  *
  */
 static void
-cloner_add_child(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
+cloner_add_child(sub_cloner_t *sc, prop_t *p, prop_t *before,
 		 glw_t *parent, errorinfo_t *ei, int flags)
 {
   glw_prop_sub_pending_t *gpsp, *b;
 
-  if(gps->gps_cloner_body != NULL) {
-    cloner_add_child0(gps, p, before, parent, ei, flags);
+  if(sc->sc_cloner_body != NULL) {
+    cloner_add_child0(sc, p, before, parent, ei, flags);
     return;
   }
 
@@ -874,7 +911,7 @@ cloner_add_child(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
    * setup.
    */
   
-  b = before ? find_in_pendinglist(before, gps) : NULL;
+  b = before ? find_in_pendinglist(before, sc) : NULL;
 
   gpsp = malloc(sizeof(glw_prop_sub_pending_t));
   gpsp->gpsp_prop = p;
@@ -883,10 +920,10 @@ cloner_add_child(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
   if(before) {
     TAILQ_INSERT_BEFORE(b, gpsp, gpsp_link);
   } else {
-    TAILQ_INSERT_TAIL(&gps->gps_pending, gpsp, gpsp_link);
+    TAILQ_INSERT_TAIL(&sc->sc_pending, gpsp, gpsp_link);
   }
   if(flags & PROP_ADD_SELECTED)
-    gps->gps_pending_select = p;
+    sc->sc_pending_select = p;
 }
 
 
@@ -894,8 +931,8 @@ cloner_add_child(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
  *
  */
 static void
-cloner_move_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
-		  glw_t *parent, errorinfo_t *ei)
+cloner_move_child0(prop_t *p, prop_t *before,
+		   glw_t *parent, errorinfo_t *ei)
 {
   glw_t *w =          cloner_find_child(p,      parent);
   glw_t *b = before ? cloner_find_child(before, parent) : NULL;
@@ -908,25 +945,25 @@ cloner_move_child0(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
  *
  */
 static void
-cloner_move_child(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
+cloner_move_child(sub_cloner_t *sc, prop_t *p, prop_t *before,
 		  glw_t *parent, errorinfo_t *ei)
 {
   glw_prop_sub_pending_t *t, *b;
 
-  if(gps->gps_cloner_body != NULL) {
-    cloner_move_child0(gps, p, before, parent, ei);
+  if(sc->sc_cloner_body != NULL) {
+    cloner_move_child0(p, before, parent, ei);
     return;
   }
 
-  t =          find_in_pendinglist(p,      gps);
-  b = before ? find_in_pendinglist(before, gps) : NULL;
+  t =          find_in_pendinglist(p,      sc);
+  b = before ? find_in_pendinglist(before, sc) : NULL;
 
-  TAILQ_REMOVE(&gps->gps_pending, t, gpsp_link);
+  TAILQ_REMOVE(&sc->sc_pending, t, gpsp_link);
 
   if(b != NULL) {
     TAILQ_INSERT_BEFORE(b, t, gpsp_link);
   } else {
-    TAILQ_INSERT_TAIL(&gps->gps_pending, t, gpsp_link);
+    TAILQ_INSERT_TAIL(&sc->sc_pending, t, gpsp_link);
   }
 }
 
@@ -935,24 +972,24 @@ cloner_move_child(glw_prop_sub_t *gps, prop_t *p, prop_t *before,
  *
  */
 static void
-cloner_del_child(glw_prop_sub_t *gps, prop_t *p, glw_t *parent)
+cloner_del_child(sub_cloner_t *sc, prop_t *p, glw_t *parent)
 {
   glw_t *w;
   glw_prop_sub_pending_t *gpsp;
 
   if((w = cloner_find_child(p, parent)) != NULL) {
-    gps->gps_entries--;
+    sc->sc_entries--;
     glw_detach(w);
     return;
   }
 
   // It must be in the pending list
-  gpsp = find_in_pendinglist(p, gps);
-  if(gps->gps_pending_select == p)
-    gps->gps_pending_select = NULL;
+  gpsp = find_in_pendinglist(p, sc);
+  if(sc->sc_pending_select == p)
+    sc->sc_pending_select = NULL;
   
   prop_ref_dec(p);
-  TAILQ_REMOVE(&gps->gps_pending, gpsp, gpsp_link);
+  TAILQ_REMOVE(&sc->sc_pending, gpsp, gpsp_link);
   free(gpsp);
 }
 
@@ -960,7 +997,7 @@ cloner_del_child(glw_prop_sub_t *gps, prop_t *p, glw_t *parent)
  *
  */
 static void
-cloner_select_child(glw_prop_sub_t *gps, prop_t *p, glw_t *parent)
+cloner_select_child(sub_cloner_t *sc, prop_t *p, glw_t *parent)
 {
   glw_t *w;
 
@@ -971,11 +1008,11 @@ cloner_select_child(glw_prop_sub_t *gps, prop_t *p, glw_t *parent)
 
   if((w = cloner_find_child(p, parent)) != NULL) {
     glw_signal0(parent, GLW_SIGNAL_SELECT, w);
-    gps->gps_pending_select = NULL;
+    sc->sc_pending_select = NULL;
     return;
   }
 
-  gps->gps_pending_select = p;
+  sc->sc_pending_select = p;
 }
 
 
@@ -998,50 +1035,27 @@ prop_callback_alloc_token(glw_prop_sub_t *gps, token_type_t type)
 
 
 /**
- * Entry point from htsprop.
- *
- * The prop mutex is not held upon entry.
  *
  */
 static void
-prop_callback(void *opaque, prop_event_t event, ...)
+prop_callback_cloner(void *opaque, prop_event_t event, ...)
 {
-  glw_prop_sub_t *gps;
+  sub_cloner_t *sc = opaque;
+  glw_prop_sub_t *gps = &sc->sc_sub;
   prop_t *p, *p2, **pv;
   token_t *rpn = NULL, *t = NULL;
   int flags;
   va_list ap;
   va_start(ap, event);
 
-  gps = opaque;
-
   switch(event) {
   case PROP_SET_VOID:
+  case PROP_SET_RSTRING:
+  case PROP_SET_INT:
+  case PROP_SET_FLOAT:
+  case PROP_SET_PIXMAP:
     t = prop_callback_alloc_token(gps, TOKEN_VOID);
     t->propsubr = gps;
-    rpn = gps->gps_rpn;
-    break;
-
-  case PROP_SET_RSTRING:
-    t = prop_callback_alloc_token(gps, TOKEN_STRING);
-    t->propsubr = gps;
-    t->t_rstring =rstr_dup(va_arg(ap, rstr_t *));
-    (void)va_arg(ap, prop_t *);
-    t->t_rstrtype = va_arg(ap, prop_str_type_t);
-    rpn = gps->gps_rpn;
-    break;
-
-  case PROP_SET_INT:
-    t = prop_callback_alloc_token(gps, TOKEN_INT);
-    t->propsubr = gps;
-    t->t_int = va_arg(ap, int);
-    rpn = gps->gps_rpn;
-    break;
-
-  case PROP_SET_FLOAT:
-    t = prop_callback_alloc_token(gps, TOKEN_FLOAT);
-    t->propsubr = gps;
-    t->t_float = va_arg(ap, double);
     rpn = gps->gps_rpn;
     break;
 
@@ -1051,46 +1065,39 @@ prop_callback(void *opaque, prop_event_t event, ...)
     rpn = gps->gps_rpn;
     break;
 
-  case PROP_SET_PIXMAP:
-    t = prop_callback_alloc_token(gps, TOKEN_PIXMAP);
-    t->propsubr = gps;
-    t->t_pixmap = pixmap_dup(va_arg(ap, pixmap_t *));
-    rpn = gps->gps_rpn;
-    break;
-
   case PROP_ADD_CHILD:
     p = va_arg(ap, prop_t *);
     flags = va_arg(ap, int);
-    cloner_add_child(gps, p, NULL, gps->gps_widget, NULL, flags);
+    cloner_add_child(sc, p, NULL, gps->gps_widget, NULL, flags);
     break;
 
   case PROP_ADD_CHILD_MULTI:
     pv = va_arg(ap, prop_t **);
     while((p = *pv++) != NULL)
-      cloner_add_child(gps, p, NULL, gps->gps_widget, NULL, 0);
+      cloner_add_child(sc, p, NULL, gps->gps_widget, NULL, 0);
     break;
 
   case PROP_ADD_CHILD_BEFORE:
     p = va_arg(ap, prop_t *);
     p2 = va_arg(ap, prop_t *);
     flags = va_arg(ap, int);
-    cloner_add_child(gps, p, p2, gps->gps_widget, NULL, flags);
+    cloner_add_child(sc, p, p2, gps->gps_widget, NULL, flags);
     break;
 
   case PROP_MOVE_CHILD:
     p = va_arg(ap, prop_t *);
     p2 = va_arg(ap, prop_t *);
-    cloner_move_child(gps, p, p2, gps->gps_widget, NULL);
+    cloner_move_child(sc, p, p2, gps->gps_widget, NULL);
     break;
 
   case PROP_DEL_CHILD:
     p = va_arg(ap, prop_t *);
-    cloner_del_child(gps, p, gps->gps_widget);
+    cloner_del_child(sc, p, gps->gps_widget);
     break;
 
   case PROP_SELECT_CHILD:
     p = va_arg(ap, prop_t *);
-    cloner_select_child(gps, p, gps->gps_widget);
+    cloner_select_child(sc, p, gps->gps_widget);
     break;
 
   case PROP_SET_RLINK:
@@ -1124,20 +1131,106 @@ prop_callback(void *opaque, prop_event_t event, ...)
 
 
 /**
+ *
+ */
+static void
+prop_callback_value(void *opaque, prop_event_t event, ...)
+{
+  glw_prop_sub_t *gps = opaque;
+  token_t *rpn = NULL, *t = NULL;
+  va_list ap;
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_SET_VOID:
+  case PROP_SET_DIR:
+    t = prop_callback_alloc_token(gps, TOKEN_VOID);
+    t->propsubr = gps;
+    rpn = gps->gps_rpn;
+    break;
+
+  case PROP_SET_RSTRING:
+    t = prop_callback_alloc_token(gps, TOKEN_STRING);
+    t->propsubr = gps;
+    t->t_rstring =rstr_dup(va_arg(ap, rstr_t *));
+    (void)va_arg(ap, prop_t *);
+    t->t_rstrtype = va_arg(ap, prop_str_type_t);
+    rpn = gps->gps_rpn;
+    break;
+
+  case PROP_SET_INT:
+    t = prop_callback_alloc_token(gps, TOKEN_INT);
+    t->propsubr = gps;
+    t->t_int = va_arg(ap, int);
+    rpn = gps->gps_rpn;
+    break;
+
+  case PROP_SET_FLOAT:
+    t = prop_callback_alloc_token(gps, TOKEN_FLOAT);
+    t->propsubr = gps;
+    t->t_float = va_arg(ap, double);
+    rpn = gps->gps_rpn;
+    break;
+
+  case PROP_SET_PIXMAP:
+    t = prop_callback_alloc_token(gps, TOKEN_PIXMAP);
+    t->propsubr = gps;
+    t->t_pixmap = pixmap_dup(va_arg(ap, pixmap_t *));
+    rpn = gps->gps_rpn;
+    break;
+
+  case PROP_SET_RLINK:
+    t = prop_callback_alloc_token(gps, TOKEN_LINK);
+    t->propsubr = gps;
+    t->t_link_rtitle = rstr_dup(va_arg(ap, rstr_t *));
+    t->t_link_rurl   = rstr_dup(va_arg(ap, rstr_t *));
+    rpn = gps->gps_rpn;
+    break;
+
+
+  case PROP_ADD_CHILD:
+  case PROP_ADD_CHILD_MULTI:
+  case PROP_ADD_CHILD_BEFORE:
+  case PROP_MOVE_CHILD:
+  case PROP_DEL_CHILD:
+  case PROP_SELECT_CHILD:
+  case PROP_REQ_NEW_CHILD:
+  case PROP_REQ_DELETE_MULTI:
+  case PROP_DESTROYED:
+  case PROP_EXT_EVENT:
+  case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
+    break;
+  }
+
+  if(t != NULL) {
+      
+    if(gps->gps_token != NULL) {
+      glw_view_token_free(gps->gps_token);
+      gps->gps_token = NULL;
+    }
+    gps->gps_token = t;
+  }
+
+  if(rpn != NULL) 
+    eval_dynamic(gps->gps_widget, rpn);
+}
+
+
+
+/**
  * Special prop callback that counts number of entries in a node
  */
 static void
-prop_callback_counting(void *opaque, prop_event_t event, ...)
+prop_callback_counter(void *opaque, prop_event_t event, ...)
 {
-  glw_prop_sub_t *gps;
+  sub_counter_t *sc = opaque;
+  glw_prop_sub_t *gps = &sc->sc_sub;
   prop_t *p, **pv;
   token_t *rpn = NULL, *t = NULL;
   va_list ap;
   va_start(ap, event);
 
   gps = opaque;
-
-
 
   switch(event) {
   case PROP_SET_VOID:
@@ -1147,22 +1240,22 @@ prop_callback_counting(void *opaque, prop_event_t event, ...)
   case PROP_SET_DIR:
   case PROP_SET_PIXMAP:
   case PROP_SET_RLINK:
-    gps->gps_entries = 0;
+    sc->sc_entries = 0;
     break;
 
   case PROP_ADD_CHILD:
   case PROP_ADD_CHILD_BEFORE:
-    gps->gps_entries++;
+    sc->sc_entries++;
     break;
 
   case PROP_ADD_CHILD_MULTI:
     pv = va_arg(ap, prop_t **);
     while((p = *pv++) != NULL)
-      gps->gps_entries++;
+      sc->sc_entries++;
     break;
     
   case PROP_DEL_CHILD:
-    gps->gps_entries--;
+    sc->sc_entries--;
     break;
 
   case PROP_MOVE_CHILD:
@@ -1177,7 +1270,7 @@ prop_callback_counting(void *opaque, prop_event_t event, ...)
 
   t = prop_callback_alloc_token(gps, TOKEN_INT);
   t->propsubr = gps;
-  t->t_int = gps->gps_entries;
+  t->t_int = sc->sc_entries;
   rpn = gps->gps_rpn;
 
   if(t != NULL) {
@@ -1200,7 +1293,7 @@ prop_callback_counting(void *opaque, prop_event_t event, ...)
  * a resolved subscription.
  */
 static int
-subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int counting)
+subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
 {
   glw_prop_sub_t *gps;
   prop_sub_t *s;
@@ -1208,6 +1301,7 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int counting)
   int i = 0;
   token_t *t;
   const char *propname[16];
+  prop_callback_t *cb;
 
   if(w == NULL) 
     return glw_view_seterr(ec->ei, self, 
@@ -1218,17 +1312,42 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int counting)
 
   propname[i] = NULL;
 
-  gps = calloc(1, sizeof(glw_prop_sub_t));
 
-  gps->gps_originating_prop = ec->prop;
-  if(ec->prop != NULL)
-    prop_ref_inc(ec->prop);
+  switch(type) {
+  case GPS_VALUE:
+    gps = calloc(1, sizeof(glw_prop_sub_t));
+    cb = prop_callback_value;
+    break;
 
-  gps->gps_view_prop = ec->prop_view;
-  if(ec->prop_view != NULL)
-    prop_ref_inc(ec->prop_view);
+  case GPS_CLONER: do {
+      sub_cloner_t *sc = calloc(1, sizeof(sub_cloner_t));
+      gps = &sc->sc_sub;
 
-  TAILQ_INIT(&gps->gps_pending);
+      sc->sc_originating_prop = ec->prop;
+      if(ec->prop != NULL)
+	prop_ref_inc(ec->prop);
+      
+      sc->sc_view_prop = ec->prop_view;
+      if(ec->prop_view != NULL)
+	prop_ref_inc(ec->prop_view);
+      
+      TAILQ_INIT(&sc->sc_pending);
+    } while(0);
+    cb = prop_callback_cloner;
+    break;
+
+  case GPS_COUNTER:
+    gps = calloc(1, sizeof(sub_counter_t));
+    cb = prop_callback_counter;
+    break;
+
+  default:
+    abort();
+  }
+
+
+
+
 
 #ifdef GLW_VIEW_ERRORINFO
   gps->gps_file = rstr_dup(self->file);
@@ -1244,8 +1363,7 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int counting)
     f |= PROP_SUB_DEBUG;
 
   s = prop_subscribe(f,
-		     PROP_TAG_CALLBACK,
-		     counting ? prop_callback_counting : prop_callback, gps,
+		     PROP_TAG_CALLBACK, cb, gps,
 		     PROP_TAG_NAME_VECTOR, propname,
 		     PROP_TAG_COURIER, w->glw_root->gr_courier,
 		     PROP_TAG_NAMED_ROOT, ec->prop, "self",
@@ -1577,7 +1695,6 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
   token_t *c = argc > 2 ? argv[2] : NULL;
   token_t *d = argc > 3 ? argv[3] : NULL;
   token_t *e = argc > 4 ? argv[4] : NULL;
-  glw_prop_sub_t *gps;
   glw_prop_sub_pending_t *gpsp;
   int f;
   const glw_class_t *cl;
@@ -1590,7 +1707,7 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
     return glw_view_seterr(ec->ei, self, 
 			    "Cloner can not be created in this scope");
 
-  if((a = token_resolve(ec, a)) == NULL)
+  if((a = token_resolve_ex(ec, a, GPS_CLONER)) == NULL)
     return -1;
 
   if(b->type != TOKEN_IDENTIFIER)
@@ -1634,29 +1751,29 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
     glw_detach(w);
 
   if(a->type == TOKEN_DIRECTORY) {
-    gps = a->propsubr;
-    gps->gps_anchor = self->t_extra;
+    sub_cloner_t *sc = (sub_cloner_t *)a->propsubr;
+    sc->sc_anchor = self->t_extra;
 
-    gps->gps_offset = d ? token2int(d) : 0;
-    gps->gps_limit  = e ? token2int(e) : UINT16_MAX;
+    sc->sc_offset = d ? token2int(d) : 0;
+    sc->sc_limit  = e ? token2int(e) : UINT16_MAX;
 
-    if(gps->gps_cloner_body != NULL)
-      glw_view_free_chain(gps->gps_cloner_body);
+    if(sc->sc_cloner_body != NULL)
+      glw_view_free_chain(sc->sc_cloner_body);
 
-    gps->gps_cloner_body = glw_view_clone_chain(c);
-    gps->gps_cloner_class = cl;
+    sc->sc_cloner_body = glw_view_clone_chain(c);
+    sc->sc_cloner_class = cl;
 
     /* Create pending childs */
-    while((gpsp = TAILQ_FIRST(&gps->gps_pending)) != NULL) {
-      TAILQ_REMOVE(&gps->gps_pending, gpsp, gpsp_link);
+    while((gpsp = TAILQ_FIRST(&sc->sc_pending)) != NULL) {
+      TAILQ_REMOVE(&sc->sc_pending, gpsp, gpsp_link);
 
-      f = gpsp->gpsp_prop == gps->gps_pending_select ? PROP_ADD_SELECTED : 0;
+      f = gpsp->gpsp_prop == sc->sc_pending_select ? PROP_ADD_SELECTED : 0;
 	
-      cloner_add_child0(gps, gpsp->gpsp_prop, NULL, parent, ec->ei, f);
+      cloner_add_child0(sc, gpsp->gpsp_prop, NULL, parent, ec->ei, f);
       prop_ref_dec(gpsp->gpsp_prop);
       free(gpsp);
     }
-    gps->gps_pending_select = NULL;
+    sc->sc_pending_select = NULL;
   }
 
   return 0;
@@ -3468,7 +3585,7 @@ glwf_count(glw_view_eval_context_t *ec, struct token *self,
 {
   token_t *a = argv[0];
 
-  if((a = token_resolve_ex(ec, a, 1)) == NULL)
+  if((a = token_resolve_ex(ec, a, GPS_COUNTER)) == NULL)
     return -1;
   eval_push(ec, a);
   return 0;
