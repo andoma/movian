@@ -601,31 +601,22 @@ utf8_get(const char **s)
   return r;
 }
 
+static uint16_t *casefoldtable;
+static int casefoldtablelen;
 
 /**
  *
  */
 static int
-casefoldcmp(const void *m1, const void *m2)
+unicode_casefold(unsigned int i)
 {
-  int a = *(uint16_t *)m1;
-  int b = *(uint16_t *)m2;
-
-  return a - b;
-}
-
-/**
- *
- */
-static int
-unicode_casefold(int i)
-{
-  uint16_t key = i;
-  uint16_t *r ;
-  r = bsearch(&key, unicode_casefolding, 
-	      sizeof(unicode_casefolding) / 4, 4, casefoldcmp);
-
-  return r ? r[1] : i;
+  int r;
+  if(i < casefoldtablelen) {
+    r = casefoldtable[i];
+    if(r)
+      return r;
+  }
+  return i;
 }
 
 
@@ -699,6 +690,31 @@ mystrstr(const char *haystack, const char *needle)
     }
   }
 }
+
+
+
+/**
+ *
+ */
+void
+unicode_init(void)
+{
+  int i;
+  int n = sizeof(unicode_casefolding) / 4;
+  int x = unicode_casefolding[(n * 2) - 1];
+  casefoldtablelen = x;
+  casefoldtable = calloc(1, sizeof(uint16_t) * casefoldtablelen);
+
+  for(i = 0 ; i < n; i++) {
+    uint16_t from, to;
+    from = unicode_casefolding[i * 2 + 0];
+    to   = unicode_casefolding[i * 2 + 1];
+    casefoldtable[from] = to;
+  }
+}
+
+
+
 
 
 /**

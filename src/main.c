@@ -47,6 +47,7 @@
 #include "keymapper.h"
 #include "plugins.h"
 #include "blobcache.h"
+#include "misc/string.h"
 
 #include "misc/fs.h"
 
@@ -228,6 +229,8 @@ main(int argc, char **argv)
       break;
   }
 
+
+  unicode_init();
 
   /* Initialize property tree */
   prop_init();
