@@ -272,7 +272,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
  retry:
 
-  query.score = 100000000;
+  query.score = INT_MAX;
   pagecnt = 10;
   c = NULL;
 
