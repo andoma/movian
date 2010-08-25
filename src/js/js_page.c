@@ -26,6 +26,7 @@
 #include "backend/search.h"
 #include "navigator.h"
 #include "misc/string.h"
+#include "prop/prop_nodefilter.h"
 
 static struct js_route_list js_routes;
 static struct js_searcher_list js_searchers;
@@ -266,6 +267,32 @@ js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
   return JS_TRUE;
 }
 
+/**
+ *
+ */
+static void
+init_model_props(js_model_t *jm, prop_t *model)
+{
+  prop_t *meta  = prop_create(model, "metadata");
+  struct prop_nf *pnf;
+
+  prop_ref_inc(jm->jm_nodes   = prop_create(model, "items"));
+  prop_ref_inc(jm->jm_type    = prop_create(model, "type"));
+  prop_ref_inc(jm->jm_contents= prop_create(model, "contents"));
+  prop_ref_inc(jm->jm_logo    = prop_create(model, "logo"));
+  prop_ref_inc(jm->jm_entries = prop_create(meta,  "entries"));
+  prop_ref_inc(jm->jm_title   = prop_create(meta,  "title"));
+
+  pnf = prop_nf_create(prop_create(model, "nodes"),
+		       jm->jm_nodes,
+		       prop_create(model, "filter"),
+		       NULL);
+
+  prop_set_int(prop_create(model, "canFilter"), 1);
+
+  prop_nf_release(pnf);
+}
+
 
 /**
  *
@@ -298,12 +325,7 @@ js_appendModel(JSContext *cx, JSObject *obj, uintN argc,
 
   jm = js_model_create(JSVAL_VOID);
 
-  prop_ref_inc(jm->jm_nodes   = prop_create(item,     "nodes"));
-  prop_ref_inc(jm->jm_type    = prop_create(item,     "type"));
-  prop_ref_inc(jm->jm_contents= prop_create(item,     "contents"));
-  prop_ref_inc(jm->jm_logo    = prop_create(item,     "logo"));
-  prop_ref_inc(jm->jm_entries = prop_create(metadata, "entries"));
-
+  init_model_props(jm, item);
   prop_set_string(jm->jm_type, type);
 
   if(prop_set_parent(item, parent->jm_nodes))
@@ -567,7 +589,7 @@ js_backend_open(struct backend *be, struct navigator *nav,
   int i;
   nav_page_t *np;
   js_model_t *jm;
-  prop_t *model, *meta;
+  prop_t *model;
 
   LIST_FOREACH(jsr, &js_routes, jsr_global_link)
     if(jsr->jsr_jsp->jsp_enabled &&
@@ -587,14 +609,9 @@ js_backend_open(struct backend *be, struct navigator *nav,
 		   matches[i].rm_eo - matches[i].rm_so);
   
   model = prop_create(np->np_prop_root, "model");
-  meta  = prop_create(model, "metadata");
 
-  prop_ref_inc(jm->jm_nodes   = prop_create(model, "nodes"));
-  prop_ref_inc(jm->jm_type    = prop_create(model, "type"));
-  prop_ref_inc(jm->jm_contents= prop_create(model, "contents"));
-  prop_ref_inc(jm->jm_logo    = prop_create(model, "logo"));
-  prop_ref_inc(jm->jm_title   = prop_create(meta,  "title"));
-  prop_ref_inc(jm->jm_entries = prop_create(meta,  "entries"));
+  init_model_props(jm, model);
+
   prop_ref_inc(jm->jm_url     = prop_create(np->np_prop_root, "url"));
   prop_ref_inc(jm->jm_loading = prop_create(model, "loading"));
 
