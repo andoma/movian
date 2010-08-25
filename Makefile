@@ -156,7 +156,7 @@ SRCS += src/video/video_playback.c \
 
 SRCS-$(CONFIG_DVD) += src/video/video_dvdspu.c
 
-SRCS += ext/video/yadif.c
+#SRCS += ext/video/yadif.c
 
 # Temporary fix for http://gcc.gnu.org/bugzilla/show_bug.cgi?id=11203
 # -OO will result in compiler error
