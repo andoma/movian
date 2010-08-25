@@ -25,6 +25,7 @@
 #include "showtime.h"
 #include "lastfm.h"
 #include "fileaccess/fileaccess.h"
+#include "blobcache.h"
 
 static prop_courier_t *lastfm_courier;
 static hts_mutex_t lastfm_mutex;
@@ -40,23 +41,44 @@ typedef struct lastfm_prop {
 } lastfm_prop_t;
 
 
+TAILQ_HEAD(artist_image_queue, artist_image);
+
+/**
+ *
+ */
+typedef struct artist_image {
+  TAILQ_ENTRY(artist_image) link;
+  char *url;
+} artist_image_t;
+
 
 /**
  *
  */
 static void
-lastfm_parse_artist_images(htsmsg_t *xml, prop_t *parent)
+lastfm_parse_artist_images(htsmsg_t *xml, prop_t *parent, int *totalpages,
+			   struct artist_image_queue *q)
 {
   htsmsg_t *images, *image, *sizes, *size, *attr;
   htsmsg_field_t *f, *s;
-  const char *url;
+  const char *url, *str;
   prop_t *p;
+  artist_image_t *ai;
+
+  *totalpages = 1;
 
   if((images = htsmsg_get_map_multi(xml, "tags", "lfm", 
-				    "tags", "images", 
-				    "tags", NULL)) == NULL) {
+				    "tags", "images", NULL)) == NULL)
     return;
+
+  if((attr = htsmsg_get_map(images, "attrib")) != NULL &&
+     (str = htsmsg_get_str(attr, "totalpages")) != NULL) {
+    *totalpages = atoi(str);
+    printf("TOTAL PAGES=%d\n", *totalpages);
   }
+
+  if((images = htsmsg_get_map(images, "tags")) == NULL)
+    return;
 
   HTSMSG_FOREACH(f, images) {
     if(strcmp(f->hmf_name, "image") ||
@@ -87,8 +109,71 @@ lastfm_parse_artist_images(htsmsg_t *xml, prop_t *parent)
 
       if(prop_set_parent(p, parent))
 	prop_destroy(p);
+
+      ai = malloc(sizeof(artist_image_t));
+      ai->url = strdup(url);
+      TAILQ_INSERT_TAIL(q, ai, link);
     }
   }
+}
+
+
+/**
+ *
+ */
+static void
+write_to_blobcache(const char *artist, struct artist_image_queue *q)
+{
+  artist_image_t *ai;
+  int blobsize = 0;
+  char *blob, *ptr;
+
+  TAILQ_FOREACH(ai, q, link)
+    blobsize += strlen(ai->url) + 1;
+
+  ptr = blob = malloc(blobsize);
+
+
+  while((ai = TAILQ_FIRST(q)) != NULL) {
+    TAILQ_REMOVE(q, ai, link);
+    int l = strlen(ai->url);
+    memcpy(ptr, ai->url, l);
+    ptr += l;
+
+    *ptr++ = TAILQ_NEXT(ai, link) ? '\n' : 0;
+    free(ai->url);
+    free(ai);
+  }
+  
+  blobcache_put(artist, "lastfm.artist.images", blob, blobsize, 86400);
+  free(blob);
+}
+
+
+/**
+ *
+ */
+static int
+load_from_blobcache(const char *artist, prop_t *parent)
+{
+  char *data, *s0, *s;
+  size_t size;
+  prop_t *p;
+
+  s0 = data = blobcache_get(artist, "lastfm.artist.images", &size, 1);
+  if(data == NULL)
+    return 0;
+
+  while((s = strsep(&s0, "\n")) != NULL) {
+      p = prop_create(NULL, NULL);
+
+      prop_set_string(prop_create(p, "url"), s);
+
+      if(prop_set_parent(p, parent))
+	prop_destroy(p);
+  }
+  free(data);
+  return 1;
 }
 
 
@@ -101,37 +186,58 @@ lastfm_artistpics_query(lastfm_prop_t *lp)
   char *result;
   size_t resultsize;
   char errbuf[100];
-  int n;
+  int n, page = 1;
   htsmsg_t *xml;
-
+  char str[20];
   char *artist = mystrdupa(rstr_get(lp->lp_artist));
+  int totalpages;
+  struct artist_image_queue q;
 
   artist[strcspn(artist, ";:,-[]")] = 0;
 
+  if(load_from_blobcache(artist, lp->lp_prop))
+    return;
+
+  TAILQ_INIT(&q);
   TRACE(TRACE_DEBUG, "lastfm", "Loading images for artist %s", artist);
 
-  n = http_request("http://ws.audioscrobbler.com/2.0/",
-		   (const char *[]){"method", "artist.getimages",
-				    "artist", artist,
-				    "api_key", LASTFM_APIKEY,
-				    NULL, NULL},
-		   &result, &resultsize, errbuf, sizeof(errbuf),
-		   NULL, NULL, HTTP_REQUEST_ESCAPE_PATH, NULL);
+  while(1) {
 
-  if(n) {
-    TRACE(TRACE_DEBUG, "lastfm", "HTTP query to lastfm failed: %s",  errbuf);
-    return;
+    snprintf(str, sizeof(str), "%d", page);
+    printf("Loading page %d\n", page);
+    n = http_request("http://ws.audioscrobbler.com/2.0/",
+		     (const char *[]){"method", "artist.getimages",
+			 "artist", artist,
+			 "api_key", LASTFM_APIKEY,
+			 "order", "popularity",
+			 "page", str,
+			 NULL, NULL},
+		     &result, &resultsize, errbuf, sizeof(errbuf),
+		     NULL, NULL, HTTP_REQUEST_ESCAPE_PATH, NULL);
+
+    if(n) {
+      TRACE(TRACE_DEBUG, "lastfm", "HTTP query to lastfm failed: %s",  errbuf);
+      return;
+    }
+
+
+    /* XML parser consumes 'buf' */
+    if((xml = htsmsg_xml_deserialize(result, errbuf, sizeof(errbuf))) == NULL) {
+      TRACE(TRACE_DEBUG, "lastfm", "lastfm xml parse failed: %s",  errbuf);
+      return;
+    }
+
+    lastfm_parse_artist_images(xml, lp->lp_prop, &totalpages, &q);
+
+    htsmsg_destroy(xml);
+    
+    if(page == 5 || page == totalpages)
+      break;
+
+    page++;
   }
 
-  /* XML parser consumes 'buf' */
-  if((xml = htsmsg_xml_deserialize(result, errbuf, sizeof(errbuf))) == NULL) {
-    TRACE(TRACE_DEBUG, "lastfm", "lastfm xml parse failed: %s",  errbuf);
-    return;
-  }
-
-  lastfm_parse_artist_images(xml, lp->lp_prop);
-
-  htsmsg_destroy(xml);
+  write_to_blobcache(artist, &q);
 }
 
 
@@ -147,8 +253,8 @@ lastfm_parse_coverart(htsmsg_t *xml, prop_t *p)
   const char *size, *url, *best = NULL;
 
   if((tags = htsmsg_get_map_multi(xml, "tags", "lfm", 
-				    "tags", "album", 
-				    "tags", NULL)) == NULL) {
+				  "tags", "album", 
+				  "tags", NULL)) == NULL) {
     return;
   }
 
