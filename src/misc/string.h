@@ -1,6 +1,9 @@
 #ifndef STRING_H__
 #define STRING_H__
 
+#include <stdlib.h>
+#include <stdint.h>
+
 void http_deescape(char *s);
 
 void path_escape(char *dest, int size, const char *src);
