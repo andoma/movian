@@ -904,9 +904,6 @@ clone_update(clone_t *c)
   sub_cloner_t *sc = c->c_sc;
   int visible;
 
-  if(!sc->sc_positions_valid)
-    cloner_resequence(sc);
-  
   visible = !clone_is_hidden(sc, c);
 
   if(visible == c->c_visible)
