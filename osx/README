@@ -1,6 +1,6 @@
 
 These instructions will guide you how to get a complete build environment
-for showtime
+for showtime. The envionment will not depend on MacPorts, except for pkg-config.
 
 Create a new directory with the name of your choice, then donwload and
 extract packages for these projects into it:
@@ -10,28 +10,23 @@ OpenSSL, http://www.openssl.org
 
 Now copy the buildenv* scripts to the new directory:
 
-There are several script for building build envionments, the support 
-buildenv.10.4-i386.sh:
-gcc 4.0, 10.4 SDK, compiles for i386 
-Recommended
-
-buildenv.10.6-i386-x86_64.sh:
-Latest gcc (4.2 on 10.6), 10.6 SDK, compiles for i386 and x86 64
-Have not been tested for a while
-
-buildenv.10.4-i386-ppc.sh:
-gcc 4.0, 10.4 SDK, compiles for PPC and i386 
-Have not been tested for a while
+There are several script for building diffrent envionments 
+buildenv.10.4-i386.sh, 10.4 SDK, gcc 4.0, i386
+buildenv.10.5-i386.sh, 10.5 SDK, gcc 4.0, i386
+buildenv.10.6-i386.sh, 10.6 SDK, gcc 4.2, i386
+buildenv.10.6-x86_64.sh, 10.6 SDK, gcc 4.2, x86_64
 
 buildenv.common.sh is a common help script used by all build scripts
 
-After you have copied the files you may want to change the
-INSTALLDIR variable in the build scripts
+After you have copied the files you may want to change the INSTALLDIR
+variable in buildenv.common.sh before running.
 
 When done run:
-$ sh buildenv.10.4-i386.sh
+$ sh buildenv.10.4.sh
 
 Now you can compile showtime using
 
 ./configure --cc="gcc-4.0 -arch i386" --macosx-sdk=/Developer/SDKs/MacOSX10.4u.sdk --pkg-config-dir=$HOME/install-10.4-i386/lib/pkgconfig --enable-ssl
+
+Make sure to use same gcc version and SDK when building showtime.
 
