@@ -31,6 +31,8 @@
 #include "glw_video_common.h"
 #include "glw_video_opengl.h"
 
+#define PBO_RELEASE_BEFORE_MAP
+
 static const char *yuv2rbg_code =
 #include "cg/yuv2rgb.h"
 ;
@@ -284,10 +286,11 @@ gv_surface_pixmap_release(glw_video_t *gv, glw_video_surface_t *gvs,
 
       // Setting the buffer to NULL tells the GPU it can assign
       // us another piece of memory as backing store.
-      
+#ifdef PBO_RELEASE_BEFORE_MAP
       glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB,
 		      gvc->gvc_width[i] * gvc->gvc_height[i],
 		      NULL, GL_STREAM_DRAW_ARB);
+#endif
 
       gvs->gvs_pbo_ptr[i] = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 
 					   GL_WRITE_ONLY);
