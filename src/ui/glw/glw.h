@@ -334,7 +334,6 @@ typedef struct glw_class {
 #define GLW_CAN_HIDE_CHILDS            0x2
 #define GLW_EXPEDITE_SUBSCRIPTIONS     0x4
 #define GLW_TRANSFORM_LR_TO_UD         0x8
-#define GLW_FLOATING_FOCUS             0x10
 
   /**
    * If the widget arranges its childer in horizontal or vertical order
@@ -693,8 +692,8 @@ typedef struct glw {
 
 
   int glw_flags2;
-#define GLW2_ENABLED 0x1
-
+#define GLW2_ENABLED        0x1
+#define GLW2_FLOATING_FOCUS 0x2
 
   float glw_norm_weight;             /* Relative weight (normalized) */
   float glw_alpha;                   /* Alpha set by user */

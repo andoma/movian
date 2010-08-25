@@ -1031,7 +1031,7 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int interactive)
 	 * This allows the focus to "stay" at the first entry even if we
 	 * insert entries in random order
 	 */
-	int ff = p->glw_class->gc_flags & GLW_FLOATING_FOCUS && 
+	int ff = p->glw_flags2 & GLW2_FLOATING_FOCUS && 
 	  x == TAILQ_FIRST(&p->glw_childs) && 
 	  TAILQ_NEXT(x, glw_parent_link) == p->glw_focused;
 

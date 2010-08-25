@@ -274,6 +274,11 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_SCROLL:
     glw_array_scroll(a, extra);
     break;
+
+  case GLW_SIGNAL_EVENT_BUBBLE:
+    w->glw_flags2 &= ~GLW2_FLOATING_FOCUS;
+    break;
+
   }
   return 0;
 }
@@ -293,6 +298,7 @@ glw_array_set(glw_t *w, int init, va_list ap)
     // Just something
     a->child_width  = 100;
     a->child_height = 100;
+    w->glw_flags2 |= GLW2_FLOATING_FOCUS;
   }
 
   do {

@@ -372,6 +372,10 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     }
     break;
 
+  case GLW_SIGNAL_EVENT_BUBBLE:
+    w->glw_flags2 &= ~GLW2_FLOATING_FOCUS;
+    break;
+
   }
   return 0;
 }
@@ -445,8 +449,11 @@ glw_list_set_y(glw_t *w, int init, va_list ap)
 {
   glw_list_t *l = (void *)w;
 
-  if(init)
+  if(init) {
     l->child_aspect = 20;
+    w->glw_flags2 |= GLW2_FLOATING_FOCUS;
+  }
+
   glw_list_set(w, ap);
 }
 
@@ -473,8 +480,7 @@ glw_list_suggest_focus(glw_t *w, glw_t *c)
 static glw_class_t glw_list_x = {
   .gc_name = "list_x",
   .gc_instance_size = sizeof(glw_list_t),
-  .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS |
-  GLW_FLOATING_FOCUS, 
+  .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS,
   .gc_child_orientation = GLW_ORIENTATION_HORIZONTAL,
   .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING,
@@ -490,7 +496,7 @@ static glw_class_t glw_list_y = {
   .gc_name = "list_y",
   .gc_instance_size = sizeof(glw_list_t),
   .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS | 
-  GLW_TRANSFORM_LR_TO_UD | GLW_FLOATING_FOCUS,
+  GLW_TRANSFORM_LR_TO_UD,
   .gc_child_orientation = GLW_ORIENTATION_VERTICAL,
   .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING,
