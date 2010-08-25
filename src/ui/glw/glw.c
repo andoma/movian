@@ -355,6 +355,18 @@ glw_attrib_set(glw_t *w, int init, va_list ap)
 	glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_UNHIDDEN, w);
       break;
 
+    case GLW_ATTRIB_SET_FLAGS2:
+      a = va_arg(ap, int);
+      a &= ~w->glw_flags2; // Mask out already set flags
+      w->glw_flags2 |= a;
+      break;
+
+    case GLW_ATTRIB_CLR_FLAGS2:
+      a = va_arg(ap, int);
+      a &= w->glw_flags2; // Mask out already cleared flags
+      w->glw_flags2 &= ~a;
+      break;
+
     case GLW_ATTRIB_FOCUS_WEIGHT:
       f = va_arg(ap, double);
 
@@ -409,6 +421,7 @@ glw_create(glw_root_t *gr, const glw_class_t *class, va_list ap)
   w->glw_refcnt = 1;
   w->glw_alignment = class->gc_default_alignment;
   w->glw_flags = GLW_NAV_FOCUSABLE;
+  w->glw_flags2 = GLW2_ENABLED;
 
   LIST_INSERT_HEAD(&gr->gr_active_dummy_list, w, glw_active_link);
 

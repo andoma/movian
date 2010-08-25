@@ -130,8 +130,10 @@ glw_keyintercept_callback(glw_t *w, void *opaque,
     return 1;
 
   case GLW_SIGNAL_EVENT_BUBBLE:
-    return ki_handle_event((glw_keyintercept_t *)w, extra);
-
+    if(w->glw_flags2 & GLW2_ENABLED)
+      return ki_handle_event((glw_keyintercept_t *)w, extra);
+    else
+      return 0;
   }
   return 0;
 }

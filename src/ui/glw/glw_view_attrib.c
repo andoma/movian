@@ -322,6 +322,18 @@ set_generic_flag(glw_view_eval_context_t *ec, const token_attrib_t *a,
  *
  */
 static int
+set_generic_flag2(glw_view_eval_context_t *ec, const token_attrib_t *a, 
+	       struct token *t)
+{
+  return set_flag(ec, a, t, GLW_ATTRIB_SET_FLAGS2,
+		  GLW_ATTRIB_CLR_FLAGS2);
+}
+
+
+/**
+ *
+ */
+static int
 set_image_flag(glw_view_eval_context_t *ec, const token_attrib_t *a, 
 	       struct token *t)
 {
@@ -403,6 +415,8 @@ static const token_attrib_t attribtab[] = {
   {"focusOnClick",            set_generic_flag, GLW_FOCUS_ON_CLICK},
   {"autoRefocusable",         set_generic_flag, GLW_AUTOREFOCUSABLE},
   {"navFocusable",            set_generic_flag, GLW_NAV_FOCUSABLE},
+
+  {"enabled",                 set_generic_flag2, GLW2_ENABLED},
 
   {"mirrorx",         set_image_flag, GLW_IMAGE_MIRROR_X},
   {"mirrory",         set_image_flag, GLW_IMAGE_MIRROR_Y},

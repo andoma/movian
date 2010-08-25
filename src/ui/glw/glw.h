@@ -83,6 +83,8 @@ typedef enum {
   GLW_ATTRIB_ALIGNMENT,
   GLW_ATTRIB_SET_FLAGS,
   GLW_ATTRIB_CLR_FLAGS,
+  GLW_ATTRIB_SET_FLAGS2,
+  GLW_ATTRIB_CLR_FLAGS2,
   GLW_ATTRIB_PREVIEW,
   GLW_ATTRIB_CONTENT,
   GLW_ATTRIB_MODE,
@@ -689,6 +691,11 @@ typedef struct glw {
 #define GLW_RIGHT_EDGE           0x40000000
 #define GLW_BOTTOM_EDGE          0x80000000
 
+
+  int glw_flags2;
+#define GLW2_ENABLED 0x1
+
+
   float glw_norm_weight;             /* Relative weight (normalized) */
   float glw_alpha;                   /* Alpha set by user */
 
@@ -855,6 +862,8 @@ do {						\
   case GLW_ATTRIB_FREEZE:			\
   case GLW_ATTRIB_SET_FLAGS:			\
   case GLW_ATTRIB_CLR_FLAGS:			\
+  case GLW_ATTRIB_SET_FLAGS2:			\
+  case GLW_ATTRIB_CLR_FLAGS2:			\
   case GLW_ATTRIB_MODE:                         \
   case GLW_ATTRIB_SET_IMAGE_FLAGS:              \
   case GLW_ATTRIB_CLR_IMAGE_FLAGS:              \
