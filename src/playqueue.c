@@ -503,8 +503,8 @@ siblings_populate(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_REQ_DELETE_MULTI:
-    break;
-
+  case PROP_WANT_MORE_CHILDS:
+  case PROP_HAVE_MORE_CHILDS:
   case PROP_EXT_EVENT:
     break;
 
