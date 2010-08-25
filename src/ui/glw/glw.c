@@ -80,6 +80,9 @@ top_event_handler(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
   if(sig != GLW_SIGNAL_EVENT_BUBBLE)
     return 0;
 
+  if(e->e_type_x == EVENT_KEYDESC)
+    return 0;
+
   event_dispatch(e);
   return 1;
 }
@@ -1365,7 +1368,14 @@ glw_event(glw_root_t *gr, event_t *e)
   if((w = gr->gr_current_focus) == NULL)
     return 0;
 
-  return glw_event_to_widget(w, e, 0);
+  if(glw_event_to_widget(w, e, 0))
+    return 1;
+
+  while((w = w->glw_parent) != NULL) {
+    if(glw_signal0(w, GLW_SIGNAL_EVENT_BUBBLE, e))
+      return 1;
+  }
+  return 0;
 }
 
 
