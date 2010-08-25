@@ -1049,8 +1049,8 @@ metadata_create(prop_t *p, metadata_type_t type, void *source)
  *
  */
 typedef struct browse_helper {
-  prop_t *nodes;
-  prop_t *root;
+  prop_t *tracks;
+  prop_t *model;
   prop_t *loading;
   char *playme;
 } browse_helper_t;
@@ -1063,8 +1063,8 @@ static void
 bh_free(browse_helper_t *bh)
 {
   prop_ref_dec(bh->loading);
-  prop_ref_dec(bh->nodes);
-  prop_ref_dec(bh->root);
+  prop_ref_dec(bh->tracks);
+  prop_ref_dec(bh->model);
   free(bh->playme);
   free(bh);
 }
@@ -1074,20 +1074,28 @@ bh_free(browse_helper_t *bh)
  *
  */
 static browse_helper_t *
-bh_create(prop_t *root, const char *playme)
+bh_create(prop_t *model, const char *playme)
 {
+  struct prop_nf *pnf;
   browse_helper_t *bh = calloc(1, sizeof(browse_helper_t));
 
-  prop_set_string(prop_create(root, "type"), "directory");
+  prop_set_string(prop_create(model, "type"), "directory");
 
-  bh->nodes = prop_create(root, "nodes");
-  prop_ref_inc(bh->nodes);
+  bh->tracks = prop_create(model, "tracks");
+  prop_ref_inc(bh->tracks);
 
-  bh->loading = prop_create(root, "loading");
+  bh->loading = prop_create(model, "loading");
   prop_ref_inc(bh->loading);
+  
+  pnf = prop_nf_create(prop_create(model, "nodes"),
+		       bh->tracks,
+		       prop_create(model, "filter"),
+		       NULL);
 
-  bh->root = root;
-  prop_ref_inc(bh->root);
+  prop_nf_release(pnf);
+
+  bh->model = model;
+  prop_ref_inc(bh->model);
 
   bh->playme = playme != NULL ? strdup(playme) : NULL;
 
@@ -1122,11 +1130,11 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
     prop_set_string(prop_create(p, "type"), "audio");
     metadata_create(prop_create(p, "metadata"), METADATA_TRACK, track);
 
-    if(prop_set_parent(p, bh->nodes))
+    if(prop_set_parent(p, bh->tracks))
       prop_destroy(p);
 
     if(bh->playme != NULL && !strcmp(url, bh->playme))
-      playqueue_load_with_source(p, bh->root);
+      playqueue_load_with_source(p, bh->model);
   }
 
   f_sp_albumbrowse_release(result);
@@ -1266,7 +1274,7 @@ spotify_browse_artist_callback(sp_artistbrowse *result, void *userdata)
 
   for(i = 0; i < nalbums; i++) {
     album_t *a = av + i;
-    artist_add_album_tracks(result, a->firsttrack, a->tracks, bh->nodes);
+    artist_add_album_tracks(result, a->firsttrack, a->tracks, bh->tracks);
   }
 
   f_sp_artistbrowse_release(result);
