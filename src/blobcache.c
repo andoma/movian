@@ -59,12 +59,12 @@ static void blobcache_do_prune(struct callout *c, void *opaque);
  *
  */
 static void
-digest_url(const char *url, const char *stash, uint8_t *d)
+digest_key(const char *key, const char *stash, uint8_t *d)
 {
   struct AVSHA1 *shactx = alloca(av_sha1_size);
 
   av_sha1_init(shactx);
-  av_sha1_update(shactx, (const uint8_t *)url, strlen(url));
+  av_sha1_update(shactx, (const uint8_t *)key, strlen(key));
   av_sha1_update(shactx, (const uint8_t *)stash, strlen(stash));
   av_sha1_final(shactx, d);
 }
@@ -146,14 +146,14 @@ blobcache_load(const char *path, int fd, size_t *sizep, int pad)
  *
  */
 void *
-blobcache_get(const char *url, const char *stash, size_t *sizep, int pad)
+blobcache_get(const char *key, const char *stash, size_t *sizep, int pad)
 {
   char path[PATH_MAX];
   int fd;
   void *r;
   uint8_t d[20];
 
-  digest_url(url, stash, d);
+  digest_key(key, stash, d);
 
   digest_to_path(d, path, sizeof(path));
 
@@ -214,14 +214,14 @@ blobcache_save(int fd, const void *data, size_t size, time_t expire)
  *
  */
 void
-blobcache_put(const char *url, const char *stash,
+blobcache_put(const char *key, const char *stash,
 	      const void *data, size_t size, int maxage)
 {
   char path[PATH_MAX];
   int fd;
   uint8_t d[20];
 
-  digest_url(url, stash, d);
+  digest_key(key, stash, d);
   snprintf(path, sizeof(path), "%s/blobcache/%02x", showtime_cache_path, d[0]);
 
   if(makedirs(path))
