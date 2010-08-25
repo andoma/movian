@@ -1092,6 +1092,8 @@ bh_create(prop_t *model, const char *playme)
 		       prop_create(model, "filter"),
 		       NULL);
 
+  prop_set_int(prop_create(model, "canFilter"), 1);
+
   prop_nf_release(pnf);
 
   bh->model = model;
@@ -1991,11 +1993,14 @@ pl_create(sp_playlist *plist, prop_t *root, int withtracks, int autodestroy,
 			 NULL);
 
 
+
     prop_nf_pred_int_add(pnf, "node.metadata.available",
 			 PROP_NF_CMP_EQ, 0, NULL, 
 			 PROP_NF_MODE_EXCLUDE);
 
     prop_nf_release(pnf);
+
+    prop_set_int(prop_create(root, "canFilter"), 1);
 
     pl->pl_node_sub = 
       prop_subscribe(0,

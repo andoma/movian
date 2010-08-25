@@ -653,6 +653,8 @@ fa_scanner(const char *url, prop_t *model, const char *playme)
 				 prop_create(model, "filter"),
 				 "node.filename"));
 
+  prop_set_int(prop_create(model, "canFilter"), 1);
+
   s->s_url = strdup(url);
   s->s_playme = playme != NULL ? strdup(playme) : NULL;
 
