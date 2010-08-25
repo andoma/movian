@@ -86,7 +86,6 @@ spotlight_search_nodesub(void *opaque, prop_event_t event, ...)
 {
   fa_search_t *fas = opaque;
   va_list ap;
-  event_t *e;
   
   va_start(ap, event);
   
@@ -94,15 +93,6 @@ spotlight_search_nodesub(void *opaque, prop_event_t event, ...)
   {
     case PROP_DESTROYED:
       fas->fas_run = 0;
-      break;
-      
-    case PROP_EXT_EVENT:
-      e = va_arg(ap, event_t *);
-      
-      if(e->e_type_x != EVENT_APPEND_REQUEST)
-	break;
-      
-      /* FIXME: Support offsets. */
       break;
       
     default:
