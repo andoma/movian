@@ -116,6 +116,8 @@ typedef struct prop_nf {
 
   struct prop_nf_pred_list preds;
 
+  char pending_have_more;
+  
 } prop_nf_t;
 
 /**
@@ -757,7 +759,18 @@ prop_nf_src_cb(void *opaque, prop_event_t event, ...)
     nf->srcsub = NULL;
     prop_nf_release0(nf);
     break;
-    
+
+  case PROP_HAVE_MORE_CHILDS:
+    if(nf->filter == NULL)
+      prop_have_more_childs0(nf->dst);
+    else
+      nf->pending_have_more = 1;
+      
+    break;
+
+  case PROP_WANT_MORE_CHILDS:
+    break;
+
   default:
     abort();
   }
@@ -808,6 +821,11 @@ prop_nf_dst_cb(void *opaque, prop_event_t event, ...)
     prop_nf_release0(nf);
     break;
 
+  case PROP_WANT_MORE_CHILDS:
+    if(nf->srcsub != NULL)
+      prop_want_more_childs0(nf->srcsub);
+    break;
+
   default:
     break;
   }
@@ -828,6 +846,12 @@ nf_set_filter(void *opaque, const char *str)
 
   mystrset(&nf->filter, str);
 
+  if(nf->filter == NULL && nf->pending_have_more) {
+    prop_have_more_childs0(nf->dst);
+    nf->pending_have_more = 0;
+  }
+
+
   TAILQ_FOREACH(nfn, &nf->in, in_link) {
     nf_update_multisub(nf, nfn);
     nf_update_egress(nf, nfn);
@@ -844,7 +868,7 @@ prop_nf_create(prop_t *dst, prop_t *src, prop_t *filter,
 	       const char *defsortpath)
 {
   prop_nf_t *nf = calloc(1, sizeof(prop_nf_t));
-  //  prop_nf_pred_t *pnp;
+
   TAILQ_INIT(&nf->in);
   TAILQ_INIT(&nf->out);
 
