@@ -1557,19 +1557,6 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
 		     PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
 		     NULL);
 
-  if(s == NULL) {
-
-    if(ec->prop != NULL)
-      prop_ref_dec(ec->prop);
-
-#ifdef GLW_VIEW_ERRORINFO
-    rstr_release(gps->gps_file);
-#endif
-    free(gps);
-    return glw_view_seterr(ec->ei, self, "Property does not exist %p",
-			    ec->prop_parent);
-  }
-
   gps->gps_sub = s;
 
   gps->gps_widget = w;
