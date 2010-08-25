@@ -126,7 +126,6 @@ main(int argc, char **argv)
   const char *settingspath = NULL;
   const char *uiargs[16];
   const char *argv0 = argc > 0 ? argv[0] : "showtime";
-  const char *startpage;
   const char *forceview = NULL;
   int nuiargs = 0;
   int can_standby = 0;
@@ -230,8 +229,6 @@ main(int argc, char **argv)
   }
 
 
-  startpage = argc > 0 ? argv[0] : NAV_HOME;
-
   /* Initialize property tree */
   prop_init();
 
@@ -293,8 +290,12 @@ main(int argc, char **argv)
   /* Initialize plugin manager and load plugins */
   plugins_init();
 
+
+  nav_open(NAV_HOME, NULL);
+
   /* Open initial page */
-  nav_open(startpage, forceview);
+  if(argc > 0)
+    nav_open(argv[0], forceview);
 
   /* Various interprocess communication stuff (D-Bus on Linux, etc) */
   ipc_init();
