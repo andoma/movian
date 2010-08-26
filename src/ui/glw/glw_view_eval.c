@@ -1393,7 +1393,6 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
 
   switch(event) {
   case PROP_SET_VOID:
-  case PROP_SET_DIR:
     t = prop_callback_alloc_token(gps, TOKEN_VOID);
     t->propsubr = gps;
     rpn = gps->gps_rpn;
@@ -1437,6 +1436,13 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
     rpn = gps->gps_rpn;
     break;
 
+  case PROP_SET_DIR:
+    t = prop_callback_alloc_token(gps, TOKEN_PROPERTY_REF);
+    t->propsubr = gps;
+    rpn = gps->gps_rpn;
+    t->t_prop = va_arg(ap, prop_t *);
+    prop_ref_inc(t->t_prop);
+    break;
 
   case PROP_ADD_CHILD:
   case PROP_ADD_CHILD_MULTI:

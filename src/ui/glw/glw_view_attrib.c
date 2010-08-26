@@ -411,6 +411,22 @@ set_args(glw_view_eval_context_t *ec, const token_attrib_t *a,
 }
 
 
+/**
+ *
+ */
+static int
+set_parent(glw_view_eval_context_t *ec, const token_attrib_t *a,
+	   struct token *t)
+{
+  if(t->type != TOKEN_PROPERTY_REF)
+    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a property ref",
+			   a->name);
+
+  glw_set_i(ec->w, GLW_ATTRIB_PROP_PARENT, t->t_prop, NULL);
+  return 0;
+}
+
+
 
 /**
  *
@@ -502,6 +518,7 @@ static const token_attrib_t attribtab[] = {
   {"effect",          set_transition_effect,  0},
 
   {"args",            set_args,  0},
+  {"parent",          set_parent, 0},
 };
 
 

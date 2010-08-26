@@ -25,6 +25,7 @@ typedef struct glw_view_loader {
   
   struct prop *prop;
   struct prop *prop_parent;
+  struct prop *prop_parent_override;
   struct prop *args;
 
   float delta;
@@ -112,6 +113,8 @@ glw_view_loader_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extr
 
   case GLW_SIGNAL_DESTROY:
     prop_destroy(a->args);
+    if(a->prop_parent_override)
+      prop_ref_dec(a->prop_parent_override);
     break;
 
   }
@@ -200,6 +203,14 @@ glw_view_loader_set(glw_t *w, int init, va_list ap)
       prop_link_ex(va_arg(ap, prop_t *), a->args, NULL, 1);
       break;
 
+    case GLW_ATTRIB_PROP_PARENT:
+      if(a->prop_parent_override)
+	prop_ref_dec(a->prop_parent_override);
+
+      a->prop_parent_override = va_arg(ap, prop_t *);
+      prop_ref_inc(a->prop_parent_override);
+      break;
+
     default:
       GLW_ATTRIB_CHEW(attrib, ap);
       break;
@@ -210,8 +221,8 @@ glw_view_loader_set(glw_t *w, int init, va_list ap)
     TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
       glw_suspend_subscriptions(c);
     if(*filename) {
-      glw_view_create(w->glw_root, filename, w,
-		      a->prop, a->prop_parent, a->args, 1);
+      glw_view_create(w->glw_root, filename, w,a->prop, 
+		      a->prop_parent_override ?: a->prop_parent, a->args, 1);
     } else {
       /* Fade out all */
       TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
