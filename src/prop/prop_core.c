@@ -41,6 +41,9 @@ static void prop_unlink0(prop_t *p, prop_sub_t *skipme, const char *origin,
 
 static void prop_flood_flag(prop_t *p, int set, int clr);
 
+#define PROPTRACE(fmt...) trace(TRACE_NO_PROP, TRACE_DEBUG, "prop", fmt)
+
+
 /**
  *
  */
@@ -660,33 +663,33 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
   if(s->hps_flags & PROP_SUB_DEBUG) {
     switch(p->hp_type) {
     case PROP_STRING:
-      TRACE(TRACE_DEBUG, "prop", "str(%s) by %s%s", 
+      PROPTRACE("str(%s) by %s%s", 
 	    rstr_get(p->hp_rstring), origin,
 	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
       break;
     case PROP_LINK:
-      TRACE(TRACE_DEBUG, "prop", "link(%s,%s) by %s%s", 
+      PROPTRACE("link(%s,%s) by %s%s", 
 	    rstr_get(p->hp_link_rtitle), rstr_get(p->hp_link_rurl), origin,
 	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
       break;
     case PROP_FLOAT:
-      TRACE(TRACE_DEBUG, "prop", "float(%f) by %s %s%s", p->hp_float, origin,
+      PROPTRACE("float(%f) by %s %s%s", p->hp_float, origin,
 	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
       break;
     case PROP_INT:
-      TRACE(TRACE_DEBUG, "prop", "int(%d) by %s%s", p->hp_int, origin,
+      PROPTRACE("int(%d) by %s%s", p->hp_int, origin,
 	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
       break;
     case PROP_DIR:
-      TRACE(TRACE_DEBUG, "prop", "dir by %s%s", origin,
+      PROPTRACE("dir by %s%s", origin,
 	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
       break;
     case PROP_VOID:
-      TRACE(TRACE_DEBUG, "prop", "void by %s%s", origin,
+      PROPTRACE("void by %s%s", origin,
 	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
       break;
     case PROP_PIXMAP:
-      TRACE(TRACE_DEBUG, "prop", "pixmap by %s%s", origin,
+      PROPTRACE("pixmap by %s%s", origin,
 	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
       break;
     case PROP_ZOMBIE:
