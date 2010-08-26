@@ -336,6 +336,7 @@ typedef struct glw_class {
 #define GLW_CAN_HIDE_CHILDS            0x2
 #define GLW_EXPEDITE_SUBSCRIPTIONS     0x4
 #define GLW_TRANSFORM_LR_TO_UD         0x8
+#define GLW_UNCONSTRAINED              0x10
 
   /**
    * If the widget arranges its childer in horizontal or vertical order

@@ -314,9 +314,17 @@ glw_container_z_constraints(glw_t *w, glw_t *skip)
   glw_t *c;
 
   c = TAILQ_FIRST(&w->glw_childs);
-  if(c == skip)
+  while(c != NULL) {
+    if(c == skip)
+      c = TAILQ_NEXT(c, glw_parent_link);
+    
+    if(c == NULL || !(c->glw_class->gc_flags & GLW_UNCONSTRAINED))
+      break;
     c = TAILQ_NEXT(c, glw_parent_link);
-  
+  }
+
+       
+
   if(c != NULL)
     glw_copy_constraints(w, c);
   else

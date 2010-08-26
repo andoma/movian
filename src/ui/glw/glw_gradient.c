@@ -236,6 +236,7 @@ glw_gradient_set(glw_t *w, int init, va_list ap)
  */
 static glw_class_t glw_gradient = {
   .gc_name = "gradient",
+  .gc_flags = GLW_UNCONSTRAINED,
   .gc_instance_size = sizeof(glw_gradient_t),
   .gc_render = glw_gradient_render,
   .gc_set = glw_gradient_set,
