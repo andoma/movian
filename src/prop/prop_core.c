@@ -247,10 +247,11 @@ prop_pvec_clone(prop_t **src)
 static void
 prop_remove_from_originator(prop_t *p)
 {
+  LIST_REMOVE(p, hp_originator_link);
+
   if(p->hp_flags & PROP_XREFED_ORIGINATOR)
     prop_destroy0(p->hp_originator);
 
-  LIST_REMOVE(p, hp_originator_link);
   p->hp_originator = NULL;
 }
 
