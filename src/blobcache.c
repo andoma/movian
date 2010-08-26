@@ -388,6 +388,7 @@ blobcache_prune(void)
 	    free(c);
 	  }
 	}
+	close(fd);
       }
     }
 
