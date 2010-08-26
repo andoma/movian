@@ -344,8 +344,11 @@ be_file_playaudio(struct backend *be, const char *url, media_pipe_t *mp,
       pkt.size = 0;
 
       if(mb->mb_pts != AV_NOPTS_VALUE) {
-	mb->mb_time = mb->mb_pts - fctx->start_time;
-	pts4seek = mb->mb_pts;
+	if(fctx->start_time == AV_NOPTS_VALUE)
+	  mb->mb_time = mb->mb_pts;
+	else
+	  mb->mb_time = mb->mb_pts - fctx->start_time;
+	pts4seek = mb->mb_time;
       } else
 	mb->mb_time = AV_NOPTS_VALUE;
 
