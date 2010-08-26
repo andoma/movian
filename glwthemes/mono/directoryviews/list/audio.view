@@ -70,6 +70,7 @@ widget(container_x, {
       // Album
       
       widget(backdrop, {
+	.hidden = $args.hide_album;
 	.focusable = isLink($self.metadata.album);
 	onEvent(activate, navOpen($self.metadata.album));
 	
@@ -95,6 +96,9 @@ widget(container_x, {
       widget(loader, {
 	.time = 0.15;
 	.effect = blend;
+	.args = {
+	  hide_album = $args.hide_album;
+	};
 	.source = select($view.expanded_pre, 
 			 "theme://directoryviews/list/audio2.view", "");
       });

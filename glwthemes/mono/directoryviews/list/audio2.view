@@ -105,6 +105,7 @@ widget(container_x, {
   
   // Album
   widget(container_x, {
+    .hidden = $args.hide_album;
     .filterConstraintX = true;
     .weight = 1.0;
 

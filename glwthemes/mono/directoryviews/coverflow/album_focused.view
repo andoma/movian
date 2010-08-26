@@ -1,4 +1,6 @@
-#import "theme://include/listitems.view"
+#import "theme://include/buttons.view"
+#import "theme://include/separators.view"
+#import "theme://include/slider.view"
 
 widget(container_y, {
   widget(label, {
@@ -6,17 +8,73 @@ widget(container_y, {
     .align = center;
     .caption = $self.focused.metadata.artist + " • " +
       $self.focused.metadata.title;
-  });
-  
-  &view.browse = browse($self.focused.url);
-
-  widget(list_y, {
-    cloner($view.browse.model.nodes, container_z, {
-
-      LIST_ITEM_SIMPLE($self.metadata.title,
-		       "theme://icons/48x48/Music.png",
-		       playTrackFromSource($self, $view.browse.model),
-		       PLATE_COLOR_AUDIO());
     });
+  
+    &view.browse = browse($self.focused.url);
+  
+  $view.showFilter = $view.browse.model.filter && 1;
+
+  widget(container_x, {
+    
+    widget(dummy, { .width = 2; });
+    
+    widget(keyintercept, {
+      bind($view.browse.model.filter);
+      .enabled = $view.browse.model.canFilter;
+      
+      widget(container_y, {
+	.filterConstraintX = true;
+	
+	widget(expander_y, {
+	  .expansion = scurve($view.showFilter, 0.25);
+	  .alpha     = scurve($view.showFilter, 0.25);
+	  
+	  widget(container_x, {
+	    widget(backdrop, {
+	      .filterConstraintX = true;
+	      .color = [0.3, 0.3, 0.3];
+	      PLATE_GFX();
+	      widget(container_x, {
+		
+		widget(label, {
+		  .caption = "Filter: ";
+		});
+		
+		widget(label, {
+		  .caption = $view.browse.model.filter;
+		});
+		
+	      });
+	    });
+	    ICON2("theme://icons/48x48/Delete.png",
+		  "Clear",
+		  {
+		    $view.browse.model.filter = void;
+		  },
+		  PLATE_COLOR_DELETE(),
+		  1, 0.1);
+	  });
+	});
+
+	widget(list_y, {
+	  .id = "list";
+	  
+	  cloner($view.browse.model.nodes, loader, {
+	    .time = 0.3;
+	    .noInitialTransform = true;
+	    .parent = $view.browse;
+	    .args = {
+	      hide_album = true;
+	    };
+	    .source = "theme://directoryviews/list/" + $self.type + ".view";
+
+	  });
+	});
+      });
+    });
+    widget(dummy, { .width = 2; });
+    LIST_Y_SLIDER("list");
+    widget(dummy, { .width = 2; });
   });
+  HORIZONTAL_SEPARATOR();
 });
