@@ -2,6 +2,6 @@
 #import "theme://directoryviews/array/simple.view"
 
 SIMPLE_ITEM_IMAGE($self.metadata.title,
-		  $self.url,
+		  "thumb://" + $self.url,
 		  navOpen($self.url),
 		  PLATE_COLOR_IMAGE());
