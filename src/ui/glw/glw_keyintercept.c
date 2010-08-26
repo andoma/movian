@@ -73,7 +73,7 @@ ki_handle_event(glw_keyintercept_t *ki, event_t *e)
   if(event_is_type(e, EVENT_UNICODE)) {
     event_int_t *ei = (event_int_t *)e;
     int c = ei->val;
-    if(c == 20 && ki->buflen == 0)
+    if(c == 32 && ki->buflen == 0)
       return 0; // space as first char is not something we trig on
 
     if(ki->buflen == KI_BUF_LEN - 1)
