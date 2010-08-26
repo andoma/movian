@@ -1319,7 +1319,7 @@ glw_text_bitmap_set(glw_t *w, int init, va_list ap)
   glw_root_t *gr = w->glw_root;
   glw_attribute_t attrib;
   int update = 0;
-  prop_t *p, *view;
+  prop_t *p, *view, *args;
   const char **pname, *caption;
 
   if(init) {
@@ -1414,7 +1414,7 @@ glw_text_bitmap_set(glw_t *w, int init, va_list ap)
       p = va_arg(ap, prop_t *);
       pname = va_arg(ap, void *);
       view = va_arg(ap, prop_t *);
-      
+      args = va_arg(ap, prop_t *);
 
       gtb_unbind(gtb);
 
@@ -1425,6 +1425,7 @@ glw_text_bitmap_set(glw_t *w, int init, va_list ap)
 		       PROP_TAG_COURIER, w->glw_root->gr_courier,
 		       PROP_TAG_NAMED_ROOT, p, "self",
 		       PROP_TAG_NAMED_ROOT, view, "view",
+		       PROP_TAG_NAMED_ROOT, args, "args",
 		       PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
 		       NULL);
 

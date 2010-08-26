@@ -25,11 +25,13 @@ typedef struct glw_view_loader {
   
   struct prop *prop;
   struct prop *prop_parent;
+  struct prop *args;
 
   float delta;
   float time;
 
   glw_transition_type_t efx_conf;
+
 
 } glw_view_loader_t;
 
@@ -107,6 +109,11 @@ glw_view_loader_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extr
     if(c == TAILQ_FIRST(&w->glw_childs))
       glw_copy_constraints(w, c);
     return 1;
+
+  case GLW_SIGNAL_DESTROY:
+    prop_destroy(a->args);
+    break;
+
   }
   return 0;
 }
@@ -163,8 +170,10 @@ glw_view_loader_set(glw_t *w, int init, va_list ap)
   const char *filename = NULL;
   glw_t *c;
 
-  if(init)
+  if(init) {
     a->time = 1.0;
+    a->args = prop_create(NULL, "args");
+  }
 
   do {
     attrib = va_arg(ap, int);
@@ -187,6 +196,10 @@ glw_view_loader_set(glw_t *w, int init, va_list ap)
       /* REFcount ?? */
       break;
 
+    case GLW_ATTRIB_ARGS:
+      prop_link_ex(va_arg(ap, prop_t *), a->args, NULL, 1);
+      break;
+
     default:
       GLW_ATTRIB_CHEW(attrib, ap);
       break;
@@ -198,7 +211,7 @@ glw_view_loader_set(glw_t *w, int init, va_list ap)
       glw_suspend_subscriptions(c);
     if(*filename) {
       glw_view_create(w->glw_root, filename, w,
-		      a->prop, a->prop_parent, 1);
+		      a->prop, a->prop_parent, a->args, 1);
     } else {
       /* Fade out all */
       TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)

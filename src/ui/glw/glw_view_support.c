@@ -50,8 +50,12 @@ glw_view_token_free(token_t *t)
       t->t_func->dtor(t);
     break;
 
-  case TOKEN_PROPERTY:
+  case TOKEN_PROPERTY_REF:
     prop_ref_dec(t->t_prop);
+    break;
+
+  case TOKEN_PROPERTY_OWNER:
+    prop_destroy(t->t_prop);
     break;
 
   case TOKEN_FLOAT:
@@ -155,9 +159,13 @@ glw_view_token_copy(token_t *src)
     dst->t_int = src->t_int;
     break;
 
-  case TOKEN_PROPERTY:
+  case TOKEN_PROPERTY_REF:
     dst->t_prop = src->t_prop;
     prop_ref_inc(dst->t_prop);
+    break;
+
+  case TOKEN_PROPERTY_OWNER:
+    dst->t_prop = prop_xref_addref(src->t_prop);
     break;
 
   case TOKEN_PROPERTY_SUBSCRIPTION:

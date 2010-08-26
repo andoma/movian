@@ -90,6 +90,7 @@ typedef struct sub_cloner {
   prop_t *sc_originating_prop;
 
   prop_t *sc_view_prop;
+  prop_t *sc_view_args;
 
   glw_t *sc_anchor;
 
@@ -152,6 +153,9 @@ glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l)
 
       if(sc->sc_view_prop)
 	prop_ref_dec(sc->sc_view_prop);
+
+      if(sc->sc_view_args)
+	prop_ref_dec(sc->sc_view_args);
       break;
     }
     free(gps);
@@ -601,6 +605,7 @@ resolve_property_name(glw_view_eval_context_t *ec, token_t *a, int follow_links)
 		       PROP_TAG_NAMED_ROOT, ec->prop, "self",
 		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
 		       PROP_TAG_NAMED_ROOT, ec->prop_view, "view",
+		       PROP_TAG_NAMED_ROOT, ec->prop_args, "args",
 		       PROP_TAG_ROOT, ui,
 		       NULL);
 
@@ -612,7 +617,7 @@ resolve_property_name(glw_view_eval_context_t *ec, token_t *a, int follow_links)
   glw_view_free_chain(a->child);
   a->child = NULL;
   
-  a->type = TOKEN_PROPERTY;
+  a->type = TOKEN_PROPERTY_REF;
   a->t_prop = p;
   return 0;
 }
@@ -629,13 +634,46 @@ resolve_property_name2(glw_view_eval_context_t *ec, token_t *t)
     if(resolve_property_name(ec, t, 1))
       return NULL;
     /* FALLTHRU */
-  case TOKEN_PROPERTY:
+  case TOKEN_PROPERTY_REF:
     break;
   default:
     glw_view_seterr(ec->ei, t, "Argument is not a property");
     return NULL;
   }
   return t;
+}
+
+/**
+ *
+ */
+static int
+set_prop_from_token(prop_t *p, token_t *t)
+{
+  switch(t->type) {
+  case TOKEN_VOID:
+    prop_set_void(p);
+    break;
+
+  case TOKEN_STRING:
+    prop_set_rstring(p, t->t_rstring);
+    break;
+
+  case TOKEN_LINK:
+    prop_set_link(p, rstr_get(t->t_link_rtitle), rstr_get(t->t_link_rurl));
+    break;
+
+  case TOKEN_INT:
+    prop_set_int(p, t->t_int);
+    break;
+
+  case TOKEN_FLOAT:
+    prop_set_float(p, t->t_float);
+    break;
+
+  default:
+    return -1;
+  }
+  return 0;
 }
 
 
@@ -657,12 +695,46 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self)
       return 0;
     b = eval_alloc(self, ec, TOKEN_STRING);
     b->t_rstring = rstr_alloc(ec->event->e_payload);
+  } else if(b->type == TOKEN_BLOCK) {
+    glw_view_eval_context_t n;
+
+    memset(&n, 0, sizeof(n));
+    n.w = ec->w;
+    n.prop = ec->prop;
+    n.prop_parent = ec->prop_parent;
+    n.prop_view = ec->prop_view;
+    n.prop_args = ec->prop_args;
+    n.ei = ec->ei;
+    n.gr = ec->gr;
+    n.sublist = ec->sublist;
+
+    n.tgtprop = prop_create(NULL, NULL);
+
+    if(glw_view_eval_block(b, &n))
+      return -1;
+
+    b = eval_alloc(b, ec, TOKEN_PROPERTY_OWNER);
+    b->t_prop = n.tgtprop;
+
   } else if((b = token_resolve(ec, b)) == NULL) {
     return -1;
   }
 
 
+
+
   switch(a->type) {
+  case TOKEN_IDENTIFIER:
+    if(ec->tgtprop == NULL)
+      return glw_view_seterr(ec->ei, self, "Invalid assignment outside block");
+
+    if(set_prop_from_token(prop_create(ec->tgtprop, 
+				       rstr_get(a->t_rstring)), b))
+      return glw_view_seterr(ec->ei, self, 
+			     "Unable to assign %s to block property",
+			     token2name(b));
+    break;
+
   case TOKEN_OBJECT_ATTRIBUTE:
     r = a->t_attrib->set(ec, a->t_attrib, b);
     break;
@@ -675,7 +747,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self)
     if(resolve_property_name(ec, a, 0))
       return -1;
 
-  case TOKEN_PROPERTY:
+  case TOKEN_PROPERTY_REF:
     
     switch(b->type) {
     case TOKEN_STRING:
@@ -691,7 +763,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self)
     case TOKEN_FLOAT:
       prop_set_float(a->t_prop, b->t_float);
       break;
-    case TOKEN_PROPERTY:
+    case TOKEN_PROPERTY_REF:
       if(b->t_prop != a->t_prop)
 	prop_link(b->t_prop, a->t_prop);
       break;
@@ -703,7 +775,8 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self)
     break;
 
   default:
-    return glw_view_seterr(ec->ei, self, "Invalid assignment");
+    return glw_view_seterr(ec->ei, self, "Invalid assignment %s = %s",
+			   token2name(a), token2name(b));
   }
 
   eval_push(ec, b);
@@ -882,6 +955,7 @@ clone_eval(clone_t *c)
   n.prop = c->c_prop;
   n.prop_parent = sc->sc_originating_prop;
   n.prop_view = sc->sc_view_prop;
+  n.prop_args = sc->sc_view_args;
 
   n.gr = c->c_w->glw_root;
 
@@ -1512,6 +1586,10 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
       sc->sc_view_prop = ec->prop_view;
       if(ec->prop_view != NULL)
 	prop_ref_inc(ec->prop_view);
+
+      sc->sc_view_args = ec->prop_args;
+      if(ec->prop_args != NULL)
+	prop_ref_inc(ec->prop_args);
       
       TAILQ_INIT(&sc->sc_pending);
     } while(0);
@@ -1551,6 +1629,7 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
 		     PROP_TAG_NAMED_ROOT, ec->prop, "self",
 		     PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
 		     PROP_TAG_NAMED_ROOT, ec->prop_view, "view",
+		     PROP_TAG_NAMED_ROOT, ec->prop_args, "args",
 		     PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
 		     NULL);
 
@@ -1646,7 +1725,8 @@ glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec)
     case TOKEN_IDENTIFIER:
     case TOKEN_OBJECT_ATTRIBUTE:
     case TOKEN_VOID:
-    case TOKEN_PROPERTY:
+    case TOKEN_PROPERTY_REF:
+    case TOKEN_PROPERTY_OWNER:
     case TOKEN_PROPERTY_VALUE_NAME:
     case TOKEN_PROPERTY_CANONICAL_NAME:
     case TOKEN_PROPERTY_SUBSCRIPTION:
@@ -1728,12 +1808,14 @@ glw_view_eval_rpn(token_t *t, glw_view_eval_context_t *pec, int *copyp)
   ec.prop = pec->prop;
   ec.prop_parent = pec->prop_parent;
   ec.prop_view = pec->prop_view;
+  ec.prop_args = pec->prop_args;
   ec.w = pec->w;
   ec.rpn = t;
   ec.gr = pec->gr;
   ec.passive_subscriptions = pec->passive_subscriptions;
   ec.sublist = pec->sublist;
   ec.event = pec->event;
+  ec.tgtprop = pec->tgtprop;
 
   r = glw_view_eval_rpn0(t, &ec);
 
@@ -1833,6 +1915,7 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
   n.prop = ec->prop;
   n.prop_parent = ec->prop_parent;
   n.prop_view = ec->prop_view;
+  n.prop_args = ec->prop_args;
   n.ei = ec->ei;
   n.gr = ec->gr;
   n.w = glw_create_i(ec->gr,
@@ -1990,6 +2073,7 @@ typedef struct glw_event_map_eval_block {
   prop_t *prop;
   prop_t *prop_parent;
   prop_t *prop_view;
+  prop_t *prop_args;
 } glw_event_map_eval_block_t;
 
 
@@ -2010,6 +2094,7 @@ glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   n.prop = b->prop;
   n.prop_parent = b->prop_parent;
   n.prop_view = b->prop_view;
+  n.prop_args = b->prop_args;
   n.gr = w->glw_root;
   n.w = w;
   n.passive_subscriptions = 1;
@@ -2041,6 +2126,9 @@ glw_event_map_eval_block_dtor(glw_event_map_t *gem)
   if(b->prop_view)
     prop_ref_dec(b->prop_view);
 
+  if(b->prop_args)
+    prop_ref_dec(b->prop_args);
+
   free(b);
 }
 
@@ -2068,6 +2156,10 @@ glw_event_map_eval_block_create(glw_view_eval_context_t *ec,
   b->prop_view = ec->prop_view;
   if(b->prop_view)
     prop_ref_inc(b->prop_view);
+
+  b->prop_args = ec->prop_args;
+  if(b->prop_args)
+    prop_ref_inc(b->prop_args);
 
   b->map.gem_dtor = glw_event_map_eval_block_dtor;
   b->map.gem_fire = glw_event_map_eval_block_fire;
@@ -2949,7 +3041,7 @@ glwf_delete(glw_view_eval_context_t *ec, struct token *self,
     if(resolve_property_name(ec, a, 0))
       return -1;
 
-  case TOKEN_PROPERTY:
+  case TOKEN_PROPERTY_REF:
     break;
 
   default:
@@ -3032,7 +3124,7 @@ glwf_focusedChild(glw_view_eval_context_t *ec, struct token *self,
 
   c = w->glw_focused;
   if(c != NULL && c->glw_originating_prop != NULL) {
-    r = eval_alloc(self, ec, TOKEN_PROPERTY);
+    r = eval_alloc(self, ec, TOKEN_PROPERTY_REF);
     r->t_prop = c->glw_originating_prop;
     prop_ref_inc(r->t_prop);
     eval_push(ec, r);
@@ -3098,14 +3190,15 @@ glwf_bind(glw_view_eval_context_t *ec, struct token *self,
       propname[i++]  = rstr_get(t->t_rstring);
     propname[i] = NULL;
 
-    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY, 
-	      ec->prop, propname, ec->prop_view, NULL);
+    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY,
+	      ec->prop, propname, ec->prop_view, ec->prop_args, NULL);
 
   } else if(a != NULL && a->type == TOKEN_STRING) {
     glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_ID, rstr_get(a->t_rstring), NULL);
 
   } else {
-    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY, NULL, NULL, NULL, NULL);
+    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY, 
+	      NULL, NULL, NULL, NULL, NULL);
   }
   return 0;
 }
@@ -3151,6 +3244,7 @@ glwf_delta(glw_view_eval_context_t *ec, struct token *self,
 		       PROP_TAG_NAMED_ROOT, ec->prop, "self",
 		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
 		       PROP_TAG_NAMED_ROOT, ec->prop_view, "view",
+		       PROP_TAG_NAMED_ROOT, ec->prop_args, "args",
 		       PROP_TAG_ROOT, ec->w->glw_root->gr_uii.uii_prop,
 		       NULL);
 
@@ -3413,7 +3507,7 @@ glwf_browse(glw_view_eval_context_t *ec, struct token *self,
     be->url = rstr_dup(url);
   }
 
-  r = eval_alloc(self, ec, TOKEN_PROPERTY);
+  r = eval_alloc(self, ec, TOKEN_PROPERTY_REF);
   r->t_prop = be->p;
   prop_ref_inc(be->p);
   eval_push(ec, r);

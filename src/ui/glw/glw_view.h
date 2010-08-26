@@ -65,7 +65,9 @@ typedef enum {
   TOKEN_INT,
   TOKEN_IDENTIFIER,
   TOKEN_FUNCTION,              //
-  TOKEN_PROPERTY,
+  TOKEN_PROPERTY_REF,          // We just keep a reference
+  TOKEN_PROPERTY_OWNER,        // We own the property and must destroy it
+                               // when token is free'd
   TOKEN_PROPERTY_VALUE_NAME,
   TOKEN_PROPERTY_CANONICAL_NAME,
   TOKEN_PROPERTY_SUBSCRIPTION,
@@ -191,7 +193,7 @@ typedef struct glw_view_eval_context {
   errorinfo_t *ei;
   token_t *alloc;
   struct glw *w;
-  struct prop *prop, *prop_parent, *prop_view;
+  struct prop *prop, *prop_parent, *prop_view, *prop_args;
   struct glw_root *gr;
   
   int dynamic_eval;
@@ -209,6 +211,8 @@ typedef struct glw_view_eval_context {
   struct glw_prop_sub_list *sublist;
 
   struct event *event;
+
+  prop_t *tgtprop;
 
   int debug;
 

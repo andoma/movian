@@ -201,7 +201,7 @@ glw_keyintercept_set(glw_t *w, int init, va_list ap)
 {
   glw_keyintercept_t *ki = (glw_keyintercept_t *)w;
   glw_attribute_t attrib;
-  prop_t *p, *pname, *view;
+  prop_t *p, *pname, *view, *args;
 
   do {
     attrib = va_arg(ap, int);
@@ -211,6 +211,7 @@ glw_keyintercept_set(glw_t *w, int init, va_list ap)
       p = va_arg(ap, prop_t *);
       pname = va_arg(ap, void *);
       view = va_arg(ap, prop_t *);
+      args = va_arg(ap, prop_t *);
       
       ki_unbind(ki);
 
@@ -220,7 +221,8 @@ glw_keyintercept_set(glw_t *w, int init, va_list ap)
 		       PROP_TAG_CALLBACK, prop_callback, ki, 
 		       PROP_TAG_COURIER, w->glw_root->gr_courier,
 		       PROP_TAG_NAMED_ROOT, p, "self",
-		       PROP_TAG_NAMED_ROOT, view, "view",
+ 		       PROP_TAG_NAMED_ROOT, view, "view",
+ 		       PROP_TAG_NAMED_ROOT, args, "args",
 		       PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
 		       NULL);
 

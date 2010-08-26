@@ -188,7 +188,7 @@ glw_load_universe(glw_root_t *gr)
 
   gr->gr_universe = glw_view_create(gr,
 				    "theme://universe.view", NULL, NULL,
-				    NULL, 0);
+				    NULL, NULL, 0);
 
   glw_set_i(gr->gr_universe,
 	    GLW_ATTRIB_SIGNAL_HANDLER, top_event_handler, gr, 1000,

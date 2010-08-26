@@ -76,6 +76,7 @@ typedef enum {
   GLW_ATTRIB_CAPTION,
   GLW_ATTRIB_VALUE,
   GLW_ATTRIB_SOURCE,
+  GLW_ATTRIB_ARGS,
   GLW_ATTRIB_ASPECT,
   GLW_ATTRIB_ALPHA,
   GLW_ATTRIB_ALPHA_SELF,
@@ -809,7 +810,7 @@ void glw_clip_disable(glw_rctx_t *rc, int which);
  */
 glw_t *glw_view_create(glw_root_t *gr, const char *src, 
 		       glw_t *parent, struct prop *prop,
-		       struct prop *prop_parent, int cache);
+		       struct prop *prop_parent, prop_t *args, int cache);
 
 /**
  * Transitions
@@ -843,12 +844,14 @@ do {						\
     break;                                      \
   case GLW_ATTRIB_BIND_TO_PROPERTY:		\
     (void)va_arg(ap, void *);			\
+    (void)va_arg(ap, void *);			\
   case GLW_ATTRIB_PARENT_BEFORE:		\
   case GLW_ATTRIB_PROPROOTS:         		\
     (void)va_arg(ap, void *);			\
   case GLW_ATTRIB_PARENT:			\
   case GLW_ATTRIB_PARENT_HEAD:			\
   case GLW_ATTRIB_SOURCE:			\
+  case GLW_ATTRIB_ARGS:				\
   case GLW_ATTRIB_PREVIEW:			\
   case GLW_ATTRIB_CONTENT:			\
   case GLW_ATTRIB_ID:         			\
