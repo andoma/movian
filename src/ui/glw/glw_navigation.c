@@ -132,8 +132,11 @@ find_candidate(glw_t *w, query_t *query, float d_mul)
   glw_t *c;
   float x1, y1, x2, y2, d, d0, d1, dc;
 
+  if(w->glw_flags & (GLW_HIDDEN | GLW_FOCUS_BLOCKED))
+    return;
+  
   if(glw_is_focusable(w) && w->glw_flags & GLW_NAV_FOCUSABLE) {
-    
+
     x1 = compute_position(w, GLW_ORIENTATION_HORIZONTAL, 0);
     y1 = compute_position(w, GLW_ORIENTATION_VERTICAL, 0);
 
@@ -162,11 +165,8 @@ find_candidate(glw_t *w, query_t *query, float d_mul)
   switch(w->glw_class->gc_nav_descend_mode) {
 
   case GLW_NAV_DESCEND_ALL:
-    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-      if(c->glw_flags & GLW_HIDDEN)
-	continue;
+    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
       find_candidate(c, query, d_mul);
-    }
     break;
     
   case GLW_NAV_DESCEND_SELECTED:
