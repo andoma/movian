@@ -91,6 +91,7 @@ widget(container_x, {
     });
 
     widget(expander_y, {
+      .filterConstraintX = true;
       .expansion = scurve($view.expanded, 0.15);
       
       widget(loader, {
