@@ -5,7 +5,6 @@
 $view.showFilter = $page.model.filter && 1;
 
 widget(container_x, {
-
   widget(dummy, { .width = 2; });
 
   widget(keyintercept, {
@@ -16,6 +15,7 @@ widget(container_x, {
       .filterConstraintX = true;
 
       widget(expander_y, {
+	.filterConstraintX = true;
 	.expansion = scurve($view.showFilter, 0.25);
 	.alpha     = scurve($view.showFilter, 0.25);
 
