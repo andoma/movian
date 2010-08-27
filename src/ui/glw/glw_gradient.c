@@ -25,16 +25,17 @@ typedef struct glw_gradient {
   float gg_col1[3];
   float gg_col2[3];
 
-  int gg_repaint;
+  char gg_repaint;
 
-  int gg_gr_initialized;
-  glw_renderer_t gg_gr;
+  char gg_gr_initialized;
+  char gg_tex_uploaded;
 
-  int gg_tex_uploaded;
-  glw_backend_texture_t gg_tex;
+  glw_renderer_t gg_gr[3];
+  glw_backend_texture_t gg_tex[3];
 
   int gg_width;
   int gg_height;
+  int gg_tiles;
 
 } glw_gradient_t;
 
@@ -44,12 +45,13 @@ static void
 glw_gradient_dtor(glw_t *w)
 {
   glw_gradient_t *gg = (void *)w;
+  int i;
 
-  if(gg->gg_tex_uploaded)
-    glw_tex_destroy(&gg->gg_tex);
+  for(i = 0; i < gg->gg_tex_uploaded; i++)
+    glw_tex_destroy(&gg->gg_tex[i]);
 
-  if(gg->gg_gr_initialized)
-    glw_render_free(&gg->gg_gr);
+  for(i = 0; i < gg->gg_gr_initialized; i++)
+    glw_render_free(&gg->gg_gr[i]);
 }
 
 
@@ -70,10 +72,14 @@ glw_gradient_render(glw_t *w, glw_rctx_t *rc)
      gg->gg_col2[2] < 0.001) {
     return;
   }
+
   if(a > 0.01) {
-    glw_render(&gg->gg_gr, w->glw_root, rc, 
-	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
-	       &gg->gg_tex, 1, 1, 1, a);
+    int i;
+    for(i = 0; i < gg->gg_gr_initialized ; i++) {
+      glw_render(&gg->gg_gr[i], w->glw_root, rc, 
+		 GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
+		 &gg->gg_tex[i], 1, 1, 1, a);
+    }
   }
 }
 
@@ -82,14 +88,80 @@ glw_gradient_render(glw_t *w, glw_rctx_t *rc)
  *
  */
 static void
-repaint(glw_gradient_t *gg, glw_root_t *gr)
+bevel_horizontal(uint8_t *p0, int w, int h)
 {
-  int h = gg->gg_height;
-  int w = gg->gg_width;
-  int x, y, n = showtime_get_ts(), m = 0;
-  uint8_t  *p, *pixmap = malloc(h * w * 4 * sizeof(uint8_t));
+  int x;
+  uint8_t *p = p0;
 
-  p = pixmap;
+  for(x = 0; x < w; x++) {
+    *p = GLW_MIN((int)*p + 64, 255);  p++;
+    *p = GLW_MIN((int)*p + 64, 255);  p++;
+    *p = GLW_MIN((int)*p + 64, 255);  p++;
+    p++;
+  }
+
+  p = p0 + w * 4 * (h - 1);
+
+  for(x = 0; x < w; x++) {
+    *p = GLW_MAX((int)*p - 64, 0);  p++;
+    *p = GLW_MAX((int)*p - 64, 0);  p++;
+    *p = GLW_MAX((int)*p - 64, 0);  p++;
+    p++;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+bevel_left(uint8_t *p0, int w, int h)
+{
+  uint8_t *p = p0;
+  int y;
+  for(y = 0; y < h; y++) {
+    *p = GLW_MIN((int)*p + 64, 255);  p++;
+    *p = GLW_MIN((int)*p + 64, 255);  p++;
+    *p = GLW_MIN((int)*p + 64, 255);  p++;
+    p++;
+
+    p+= (w - 1) * 4;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+bevel_right(uint8_t *p0, int w, int h)
+{
+  uint8_t *p = p0;
+  int y;
+  for(y = 0; y < h; y++) {
+    p+= (w - 1) * 4;
+    *p = GLW_MAX((int)*p - 64, 0);  p++;
+    *p = GLW_MAX((int)*p - 64, 0);  p++;
+    *p = GLW_MAX((int)*p - 64, 0);  p++;
+    p++;
+  }
+}
+
+
+/**
+ *
+ */
+static int
+repaint(glw_gradient_t *gg, glw_root_t *gr, int tile, int w, int h, int tiles)
+{
+  int x, y, n = showtime_get_ts(), m = 0;
+  uint8_t  *p, *pixmap;
+  size_t s = h * w * 4;
+
+  if(w < 1 || h < 1)
+    return 0;
+
+  p = pixmap = malloc(s);
   for(y = 0; y < h; y++) {
     float a = (float)y / (float)h;
     int r = 65280 * GLW_LERP(a, gg->gg_col1[0], gg->gg_col2[0]);
@@ -111,12 +183,30 @@ repaint(glw_gradient_t *gg, glw_root_t *gr)
     m = m * 1664525 + 1013904223;
   }
 
-  glw_tex_upload(gr, &gg->gg_tex, pixmap, GLW_TEXTURE_FORMAT_RGBA, w, h, 
+  if(0) bevel_horizontal(pixmap, w, h);
+  glw_tex_upload(gr, &gg->gg_tex[0], pixmap, GLW_TEXTURE_FORMAT_RGBA, w, h, 
 		 GLW_TEX_REPEAT);
-  gg->gg_tex_uploaded = 1;
+
+  if(tiles == 3) {
+    p = malloc(s);
+
+    memcpy(p, pixmap, s);
+    bevel_left(p, w, h);
+    glw_tex_upload(gr, &gg->gg_tex[1], p, GLW_TEXTURE_FORMAT_RGBA, w, h, 
+		   GLW_TEX_REPEAT);
+
+    memcpy(p, pixmap, s);
+    bevel_right(p, w, h);
+    glw_tex_upload(gr, &gg->gg_tex[2], p, GLW_TEXTURE_FORMAT_RGBA, w, h, 
+		   GLW_TEX_REPEAT);
+
+    free(p);
+  }
   free(pixmap);
+  return 1;
 }
 
+#define TILEWIDTH 16
 
 /**
  *
@@ -126,43 +216,103 @@ glw_gradient_layout(glw_t *W, glw_rctx_t *rc)
 {
   glw_gradient_t *gg = (void *)W;
   glw_root_t *gr = W->glw_root;
-  int w, h;
+  int w, h, i, tiles;
 
-  if(!gg->gg_gr_initialized) {
-    glw_render_init(&gg->gg_gr, 4, GLW_RENDER_ATTRIBS_TEX);
-    gg->gg_gr_initialized = 1;
-  }
-  w = 16;
+  w = rc->rc_size_x;
   h = rc->rc_size_y;
+  tiles = 1;
 
-  if(gg->gg_width != w || gg->gg_height != h) {
+  for(i = gg->gg_tiles; i < tiles; i++) {
+    glw_render_init(&gg->gg_gr[i], 4, GLW_RENDER_ATTRIBS_TEX);
+    gg->gg_gr_initialized = tiles;
+  }
+
+  if(gg->gg_width != w || gg->gg_height != h || gg->gg_tiles != tiles) {
     gg->gg_width = w;
     gg->gg_height = h;
+    gg->gg_tiles = tiles;
 
-    float xs = gr->gr_normalized_texture_coords ? 1.0 : gg->gg_width;
+    float xs = gr->gr_normalized_texture_coords ? 1.0 : TILEWIDTH;
     float ys = gr->gr_normalized_texture_coords ? 1.0 : gg->gg_height;
+    glw_renderer_t *r;
+
+
+    if(tiles == 1) {
+
+      r = &gg->gg_gr[0];
   
-    xs *= rc->rc_size_x / gg->gg_width;
+      float u = xs * rc->rc_size_x / TILEWIDTH;
 
-    glw_render_vtx_pos(&gg->gg_gr, 0, -1.0, -1.0, 0.0);
-    glw_render_vtx_st (&gg->gg_gr, 0,  0.0,  ys);
+      glw_render_vtx_pos(r, 0, -1.0, -1.0, 0.0);
+      glw_render_vtx_st (r, 0,  0.0,  ys);
 
-    glw_render_vtx_pos(&gg->gg_gr, 1,  1.0, -1.0, 0.0);
-    glw_render_vtx_st (&gg->gg_gr, 1,  xs,   ys);
+      glw_render_vtx_pos(r, 1,  1.0, -1.0, 0.0);
+      glw_render_vtx_st (r, 1,  u,    ys);
 
-    glw_render_vtx_pos(&gg->gg_gr, 2,  1.0,  1.0, 0.0);
-    glw_render_vtx_st (&gg->gg_gr, 2,  xs,   0.0);
+      glw_render_vtx_pos(r, 2,  1.0,  1.0, 0.0);
+      glw_render_vtx_st (r, 2,  u,    0.0);
 
-    glw_render_vtx_pos(&gg->gg_gr, 3, -1.0,  1.0, 0.0);
-    glw_render_vtx_st (&gg->gg_gr, 3,  0.0,  0.0);
+      glw_render_vtx_pos(r, 3, -1.0,  1.0, 0.0);
+      glw_render_vtx_st (r, 3,  0.0,  0.0);
+
+    } else {
+
+      r = &gg->gg_gr[0];
+
+      float u = xs * (rc->rc_size_x - TILEWIDTH * 2) / TILEWIDTH;
+
+      float x1 = -1.0 + 2.0 * TILEWIDTH / gg->gg_width;
+      float x2 = -1.0 + 2.0 * (gg->gg_width - TILEWIDTH) / gg->gg_width;
+      
+
+      glw_render_vtx_pos(r, 0,  x1, -1.0, 0.0);
+      glw_render_vtx_st (r, 0,  0.0,  ys);
+
+      glw_render_vtx_pos(r, 1,  x2, -1.0, 0.0);
+      glw_render_vtx_st (r, 1,  u,    ys);
+
+      glw_render_vtx_pos(r, 2,  x2,  1.0, 0.0);
+      glw_render_vtx_st (r, 2,  u,    0.0);
+
+      glw_render_vtx_pos(r, 3,  x1, 1.0, 0.0);
+      glw_render_vtx_st (r, 3,  0.0,  0.0);
+
+
+      r = &gg->gg_gr[1];
+      glw_render_vtx_pos(r, 0, -1.0, -1.0, 0.0);
+      glw_render_vtx_st (r, 0,  0.0,  ys);
+
+      glw_render_vtx_pos(r, 1,  x1, -1.0, 0.0);
+      glw_render_vtx_st (r, 1,  xs,    ys);
+
+      glw_render_vtx_pos(r, 2,  x1,  1.0, 0.0);
+      glw_render_vtx_st (r, 2,  xs,    0.0);
+
+      glw_render_vtx_pos(r, 3, -1.0,  1.0, 0.0);
+      glw_render_vtx_st (r, 3,  0.0,  0.0);
+
+      r = &gg->gg_gr[2];
+      glw_render_vtx_pos(r, 0, x2, -1.0, 0.0);
+      glw_render_vtx_st (r, 0,  0.0,  ys);
+
+      glw_render_vtx_pos(r, 1,  1.0, -1.0, 0.0);
+      glw_render_vtx_st (r, 1,  xs,    ys);
+
+      glw_render_vtx_pos(r, 2,  1.0,  1.0, 0.0);
+      glw_render_vtx_st (r, 2,  xs,    0.0);
+
+      glw_render_vtx_pos(r, 3, x2,  1.0, 0.0);
+      glw_render_vtx_st (r, 3,  0.0,  0.0);
+    }
+
     gg->gg_repaint = 1;
   }
 
   if(gg->gg_repaint) {
     gg->gg_repaint = 0;
-    repaint(gg, gr);
-  }
 
+    repaint(gg, gr, i, TILEWIDTH, gg->gg_height, gg->gg_tiles);
+  }
 
 }
 
