@@ -94,22 +94,22 @@ glw_bar_layout(glw_t *W, glw_rctx_t *rc)
     x = GLW_LERP(gb->gb_fill, -1, 1);
 
     glw_render_vtx_pos(&gb->gb_gr, 0, -1.0, -1.0, 0.0);
-    glw_render_vts_col(&gb->gb_gr, 0,
+    glw_render_vtx_col(&gb->gb_gr, 0,
 		       gb->gb_col1[0],
 		       gb->gb_col1[1],
 		       gb->gb_col1[2],
 		       1.0);
 
     glw_render_vtx_pos(&gb->gb_gr, 1,  x, -1.0, 0.0);
-    glw_render_vts_col(&gb->gb_gr, 1, r, g, b, 1.0);
+    glw_render_vtx_col(&gb->gb_gr, 1, r, g, b, 1.0);
 
 
     glw_render_vtx_pos(&gb->gb_gr, 2,  x,  1.0, 0.0);
-    glw_render_vts_col(&gb->gb_gr, 2, r, g, b, 1.0);
+    glw_render_vtx_col(&gb->gb_gr, 2, r, g, b, 1.0);
 
 
     glw_render_vtx_pos(&gb->gb_gr, 3, -1.0,  1.0, 0.0);
-    glw_render_vts_col(&gb->gb_gr, 3,
+    glw_render_vtx_col(&gb->gb_gr, 3,
 		       gb->gb_col1[0],
 		       gb->gb_col1[1],
 		       gb->gb_col1[2],

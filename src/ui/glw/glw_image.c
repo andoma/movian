@@ -504,20 +504,20 @@ glw_image_layout_alpha_edges(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
 
       glw_render_vtx_pos(&gi->gi_gr, p1, vex[x + 0][0], vex[y + 1][1], 0.0f);
       glw_render_vtx_st (&gi->gi_gr, p1, tex[x + 0][0], tex[y + 1][1]);
-      glw_render_vts_col(&gi->gi_gr, p1, 1, 1, 1, alphaborder[x+0][y+1]);
+      glw_render_vtx_col(&gi->gi_gr, p1, 1, 1, 1, alphaborder[x+0][y+1]);
 
 
       glw_render_vtx_pos(&gi->gi_gr, p2, vex[x + 1][0], vex[y + 1][1], 0.0f);
       glw_render_vtx_st (&gi->gi_gr, p2, tex[x + 1][0], tex[y + 1][1]);
-      glw_render_vts_col(&gi->gi_gr, p2, 1, 1, 1, alphaborder[x+1][y+1]);
+      glw_render_vtx_col(&gi->gi_gr, p2, 1, 1, 1, alphaborder[x+1][y+1]);
 
       glw_render_vtx_pos(&gi->gi_gr, p3, vex[x + 1][0], vex[y + 0][1], 0.0f);
       glw_render_vtx_st (&gi->gi_gr, p3, tex[x + 1][0], tex[y + 0][1]);
-      glw_render_vts_col(&gi->gi_gr, p3, 1, 1, 1, alphaborder[x+1][y+0]);
+      glw_render_vtx_col(&gi->gi_gr, p3, 1, 1, 1, alphaborder[x+1][y+0]);
 
       glw_render_vtx_pos(&gi->gi_gr, p4, vex[x + 0][0], vex[y + 0][1], 0.0f);
       glw_render_vtx_st (&gi->gi_gr, p4, tex[x + 0][0], tex[y + 0][1]);
-      glw_render_vts_col(&gi->gi_gr, p4, 1, 1, 1, alphaborder[x+0][y+0]);
+      glw_render_vtx_col(&gi->gi_gr, p4, 1, 1, 1, alphaborder[x+0][y+0]);
 
       i+=4;
     }

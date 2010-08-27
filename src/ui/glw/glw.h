@@ -1060,7 +1060,7 @@ void glw_render_vtx_pos(glw_renderer_t *gr, int vertex,
 void glw_render_vtx_st(glw_renderer_t *gr, int vertex,
 		       float s, float t);
 
-void glw_render_vts_col(glw_renderer_t *gr, int vertex,
+void glw_render_vtx_col(glw_renderer_t *gr, int vertex,
 			float r, float g, float b, float a);
 
 void glw_render(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc, 

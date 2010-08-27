@@ -92,9 +92,9 @@ glw_throbber_render(glw_t *w, glw_rctx_t *rc)
     for(i = 0; i < 24; i++) {
       glw_render_vtx_pos(&gt->renderer, i, pinvtx((int)surfaces[i]));
       if(i < 8)
-	glw_render_vts_col(&gt->renderer, i, 1,1,1,1);
+	glw_render_vtx_col(&gt->renderer, i, 1,1,1,1);
       else
-	glw_render_vts_col(&gt->renderer, i, 0.25, 0.25, 0.25, 1);
+	glw_render_vtx_col(&gt->renderer, i, 0.25, 0.25, 0.25, 1);
     }
     gt->renderer_initialized = 1;
   }
