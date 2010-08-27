@@ -37,12 +37,19 @@ static void
 update_constraints(glw_expander_t *exp)
 {
   glw_t *c = TAILQ_FIRST(&exp->w.glw_childs);
-  float e;
+  int e, o;
+  
+  int f = c ? glw_filter_constraints(c->glw_flags) : 0;
 
-  if(exp->w.glw_class == &glw_expander_x)
+  if(exp->w.glw_class == &glw_expander_x) {
     e = exp->expansion * (c != NULL ? c->glw_req_size_x : 0);
-  else
+    o =                  (c != NULL ? c->glw_req_size_y : 0);
+    f &= GLW_CONSTRAINT_Y;
+  } else {
     e = exp->expansion * (c != NULL ? c->glw_req_size_y : 0);
+    o =                  (c != NULL ? c->glw_req_size_x : 0);
+    f &= GLW_CONSTRAINT_X;
+  }
 
   if(e == 0)
     glw_focus_close_path(&exp->w);
@@ -50,9 +57,9 @@ update_constraints(glw_expander_t *exp)
     glw_focus_open_path(&exp->w);
 
   if(exp->w.glw_class == &glw_expander_x)
-    glw_set_constraints(&exp->w, e, 0, 0, 0, GLW_CONSTRAINT_X, 0);
+    glw_set_constraints(&exp->w, e, o, 0, 0, GLW_CONSTRAINT_X | f, 0);
   else
-    glw_set_constraints(&exp->w, 0, e, 0, 0, GLW_CONSTRAINT_Y, 0);
+    glw_set_constraints(&exp->w, o, e, 0, 0, GLW_CONSTRAINT_Y | f, 0);
 }
 
 
