@@ -32,6 +32,7 @@
 #include "misc/string.h"
 
 hts_mutex_t prop_mutex;
+hts_mutex_t prop_tag_mutex;
 static prop_t *prop_global;
 
 static prop_courier_t *global_courier;
@@ -158,6 +159,7 @@ prop_ref_dec(prop_t *p)
   if(atomic_add(&p->hp_refcount, -1) > 1)
     return;
   assert(p->hp_type == PROP_ZOMBIE);
+  assert(p->hp_tags == NULL);
   free(p);
 }
 
@@ -1201,6 +1203,7 @@ prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, int flags)
   else
     hp->hp_name = name ? strdup(name) : NULL;
 
+  hp->hp_tags = NULL;
   LIST_INIT(&hp->hp_targets);
   LIST_INIT(&hp->hp_value_subscriptions);
   LIST_INIT(&hp->hp_canonical_subscriptions);
@@ -1985,6 +1988,7 @@ void
 prop_init(void)
 {
   hts_mutex_init(&prop_mutex);
+  hts_mutex_init(&prop_tag_mutex);
   prop_global = prop_create0(NULL, "global", NULL, 0);
 
   global_courier = prop_courier_create_thread(NULL, "global");

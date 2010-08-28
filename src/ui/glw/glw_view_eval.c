@@ -880,38 +880,6 @@ eval_dynamic(glw_t *w, token_t *rpn)
 /**
  *
  */
-static glw_t *
-cloner_find_child(prop_t *p, glw_t *parent)
-{
-  glw_t *w;
-
-  TAILQ_FOREACH(w, &parent->glw_childs, glw_parent_link)
-    if(w->glw_originating_prop == p)
-      return w;
-  abort();
-}
-
-
-/**
- *
- */
-static glw_prop_sub_pending_t *
-find_in_pendinglist(prop_t *p, sub_cloner_t *sc)
-{
-  glw_prop_sub_pending_t *gpsp;
-
-  TAILQ_FOREACH(gpsp, &sc->sc_pending, gpsp_link)
-    if(gpsp->gpsp_prop == p)
-      return gpsp;
-  abort();
-}
-
-
-
-
-/**
- *
- */
 typedef struct clone {
   sub_cloner_t *c_sc;
   glw_t *c_w;
@@ -1094,15 +1062,8 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
   clone_t *c = calloc(1, sizeof(clone_t));
 
   if(before != NULL) {
-    int pos = 0;
-
-    TAILQ_FOREACH(b, &parent->glw_childs, glw_parent_link) {
-      if(b->glw_originating_prop == before)
-	break;
-      pos++;
-    }
+    b = prop_tag_get(before, sc);
     assert(b != NULL);
-    c->c_pos = pos;
     sc->sc_positions_valid = 0;
   } else {
     b = sc->sc_anchor;
@@ -1119,6 +1080,8 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
 			GLW_ATTRIB_PROPROOTS, p, sc->sc_originating_prop,
 			GLW_ATTRIB_ORIGINATING_PROP, p,
 			NULL);
+
+  prop_tag_set(p, sc, c->c_w);
 
   glw_signal_handler_register(c->c_w, cloner_sig_handler, c, 1000);
 
@@ -1150,11 +1113,13 @@ cloner_add_child(sub_cloner_t *sc, prop_t *p, prop_t *before,
    * setup.
    */
   
-  b = before ? find_in_pendinglist(before, sc) : NULL;
+  b = before ? prop_tag_get(before, &sc->sc_pending) : NULL;
 
   gpsp = malloc(sizeof(glw_prop_sub_pending_t));
   gpsp->gpsp_prop = p;
   prop_ref_inc(p);
+
+  prop_tag_set(p, &sc->sc_pending, gpsp);
 
   if(before) {
     TAILQ_INSERT_BEFORE(b, gpsp, gpsp_link);
@@ -1173,11 +1138,10 @@ static void
 cloner_move_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
 		   glw_t *parent, errorinfo_t *ei)
 {
-  glw_t *w =          cloner_find_child(p,      parent);
-  glw_t *b = before ? cloner_find_child(before, parent) : NULL;
+  glw_t *w =          prop_tag_get(p, sc);
+  glw_t *b = before ? prop_tag_get(before, sc) : NULL;
 
   sc->sc_positions_valid = 0;
-
   glw_move(w, b);
 }
 
@@ -1196,8 +1160,8 @@ cloner_move_child(sub_cloner_t *sc, prop_t *p, prop_t *before,
     return;
   }
 
-  t =          find_in_pendinglist(p,      sc);
-  b = before ? find_in_pendinglist(before, sc) : NULL;
+  t =          prop_tag_get(p, &sc->sc_pending);
+  b = before ? prop_tag_get(before, &sc->sc_pending) : NULL;
 
   TAILQ_REMOVE(&sc->sc_pending, t, gpsp_link);
 
@@ -1218,7 +1182,7 @@ cloner_del_child(sub_cloner_t *sc, prop_t *p, glw_t *parent)
   glw_t *w;
   glw_prop_sub_pending_t *gpsp;
 
-  if((w = cloner_find_child(p, parent)) != NULL) {
+  if((w = prop_tag_clear(p, sc)) != NULL) {
     sc->sc_entries--;
     if(TAILQ_NEXT(w, glw_parent_link) != NULL)
       sc->sc_positions_valid = 0;
@@ -1227,10 +1191,10 @@ cloner_del_child(sub_cloner_t *sc, prop_t *p, glw_t *parent)
   }
 
   // It must be in the pending list
-  gpsp = find_in_pendinglist(p, sc);
+  gpsp = prop_tag_clear(p, &sc->sc_pending);
   if(sc->sc_pending_select == p)
     sc->sc_pending_select = NULL;
-  
+
   prop_ref_dec(p);
   TAILQ_REMOVE(&sc->sc_pending, gpsp, gpsp_link);
   free(gpsp);
@@ -1249,7 +1213,7 @@ cloner_select_child(sub_cloner_t *sc, prop_t *p, glw_t *parent)
     return;
   }
 
-  if((w = cloner_find_child(p, parent)) != NULL) {
+  if((w = prop_tag_get(p, sc)) != NULL) {
     glw_signal0(parent, GLW_SIGNAL_SELECT, w);
     sc->sc_pending_select = NULL;
     return;
@@ -2028,6 +1992,7 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
       f = gpsp->gpsp_prop == sc->sc_pending_select ? PROP_ADD_SELECTED : 0;
 	
       cloner_add_child0(sc, gpsp->gpsp_prop, NULL, parent, ec->ei, f);
+      prop_tag_clear(gpsp->gpsp_prop, &sc->sc_pending);
       prop_ref_dec(gpsp->gpsp_prop);
       free(gpsp);
     }

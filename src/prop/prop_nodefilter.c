@@ -523,6 +523,8 @@ nf_add_node(prop_nf_t *nf, prop_t *node, nfnode_t *b)
 {
   nfnode_t *nfn = calloc(1, sizeof(nfnode_t));
 
+  prop_tag_set(node, nf, nfn);
+
   if(b != NULL) {
     TAILQ_INSERT_BEFORE(b, nfn, in_link);
     nf->pos_valid = 0;
@@ -560,6 +562,8 @@ nf_add_nodes(prop_nf_t *nf, prop_t **pv)
 
   while((p = *pv++) != NULL) {
     nfn = calloc(1, sizeof(nfnode_t));
+
+    prop_tag_set(p, nf, nfn);
 
     if(nf->pos_valid) {
       nfnode_t *l = TAILQ_LAST(&nf->in, nfnode_queue);
@@ -634,12 +638,12 @@ nf_move_node(prop_nf_t *nf, nfnode_t *nfn, nfnode_t *b)
 static nfnode_t *
 nf_find_node(prop_nf_t *nf, prop_t *node)
 {
-  nfnode_t *nfn;
+  if(node == NULL)
+    return NULL;
 
-  TAILQ_FOREACH(nfn, &nf->in, in_link)
-    if(nfn->in == node)
-      return nfn;
-  return NULL;
+  nfnode_t *nfn = prop_tag_get(node, nf);
+  assert(nfn != NULL);
+  return nfn;
 }
 
 
@@ -735,7 +739,7 @@ prop_nf_src_cb(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_DEL_CHILD:
-    nf_del_node(nf, nf_find_node(nf, va_arg(ap, prop_t *)));
+    nf_del_node(nf, prop_tag_clear(va_arg(ap, prop_t *), nf));
     break;
 
   case PROP_MOVE_CHILD:

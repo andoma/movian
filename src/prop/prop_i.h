@@ -23,6 +23,7 @@
 #include "prop.h"
 
 extern hts_mutex_t prop_mutex;
+extern hts_mutex_t prop_tag_mutex;
 
 
 
@@ -141,6 +142,11 @@ struct prop {
    */
   uint8_t hp_xref;
 
+  /**
+   * Tags. Protected by prop_tag_mutex
+   */
+  struct prop_tag *hp_tags;
+
 
   /**
    * Actual payload
@@ -180,8 +186,6 @@ struct prop {
 #define hp_link_rurl   u.link.rurl
 
 };
-
-
 
 /**
  *

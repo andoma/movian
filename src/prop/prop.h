@@ -313,6 +313,12 @@ void prop_want_more_childs(prop_sub_t *s);
 void prop_have_more_childs(prop_t *p);
 
 
+void *prop_tag_get(prop_t *p, void *key);
+
+void prop_tag_set(prop_t *p, void *key, void *value);
+
+void *prop_tag_clear(prop_t *p, void *key);
+
 /* DEBUGish */
 const char *propname(prop_t *p);
 
