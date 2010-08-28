@@ -168,7 +168,7 @@ widget(container_z, {
 
 	// Main page deck
 	widget(container_z, {
-	  widget(deck, {
+	  widget(playfield, {
 	    .filterConstraintX = true;
 	    .time = 0.1;
 	    .effect = blend;
