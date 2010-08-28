@@ -51,8 +51,7 @@ widget(container_x, {
       
 	widget(backdrop, {
 	  PLATE_GFX();
-	  .color = PLATE_COLOR_AUTH() * 0.3;
-	  .alphaSelf = 0.8;
+	  .color = PLATE_COLOR_AUTH() * 0.2;
 
  	  widget(text, {
 	    .id = "username";
@@ -72,8 +71,8 @@ widget(container_x, {
       
 	widget(backdrop, {
 	  PLATE_GFX();
-	  .color = PLATE_COLOR_AUTH() * 0.3;
-	  .alphaSelf = 0.8;
+	  .color = PLATE_COLOR_AUTH() * 0.2;
+
 	  widget(text, {
 	    .id = "password";
 	    .focusable = true;
@@ -95,14 +94,14 @@ widget(container_x, {
 		{
 		  $self.result = "ok";
 		},
-		PLATE_COLOR_ON());
+		PLATE_COLOR_ON(), true, false, true);
 
-	  ICON2("theme://icons/32x32/remove.png",
+	  ICON2("theme://icons/48x48/Delete.png",
 		"Cancel", 
 		{
 		  $self.result = "cancel";
 		},
-		PLATE_COLOR_OFF());
+		PLATE_COLOR_OFF(), true, false, true);
 
 	});
       });
