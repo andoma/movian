@@ -658,7 +658,7 @@ fa_scanner(const char *url, prop_t *model, const char *playme)
   s->s_url = strdup(url);
   s->s_playme = playme != NULL ? strdup(playme) : NULL;
 
-  prop_set_int(prop_create(source, "loading"), 1);
+  prop_set_int(prop_create(model, "loading"), 1);
 
   s->s_root = model;
   prop_ref_inc(s->s_root);
