@@ -85,6 +85,14 @@ widget(container_x, {
 	  .fill = $ui.gpu.temperature.current / $ui.gpu.temperature.thres;
 	});
 
+
+	HORIZONTAL_SEPARATOR();
+	
+	widget(label, {
+	  .sizeScale = 0.5;
+	  .caption = "Refreshrate: " + float2str($ui.framerate, 4) + " Hz";
+	});
+
 	widget(dummy, {
 	  .height = 4;
 	});
