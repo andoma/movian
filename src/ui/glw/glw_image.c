@@ -694,7 +694,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
       }
     }
 
-    if(gi->gi_pending_filename != NULL) {
+    if(gi->gi_pending_filename != NULL && xs && ys) {
 
       gi->gi_pending = glw_tex_create(w->glw_root, gi->gi_pending_filename,
 				      flags, xs, ys);
