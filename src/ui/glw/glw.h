@@ -486,7 +486,7 @@ typedef struct glw_root {
 
   struct glw_video_list gr_video_decoders;
   int64_t gr_frame_start;     // Timestamp when we started rendering frame
-
+  int64_t gr_hz_sample;
   prop_t *gr_is_fullscreen;
 
   /**

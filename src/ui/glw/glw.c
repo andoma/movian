@@ -495,6 +495,19 @@ glw_prepare_frame(glw_root_t *gr)
   glw_t *w;
 
   gr->gr_frame_start = showtime_get_ts();
+
+  if((gr->gr_frames & 0x7f) == 0) {
+
+    if(gr->gr_hz_sample) {
+      int64_t d = gr->gr_frame_start - gr->gr_hz_sample;
+
+      double hz = 128000000.0 / d;
+
+      prop_set_float(prop_create(gr->gr_uii.uii_prop, "framerate"), hz);
+    }
+    gr->gr_hz_sample = gr->gr_frame_start;
+  }
+
   gr->gr_frames++;
 
   prop_courier_poll(gr->gr_courier);
