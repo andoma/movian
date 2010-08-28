@@ -684,7 +684,7 @@ static int
 eval_assign(glw_view_eval_context_t *ec, struct token *self)
 {
   token_t *b = eval_pop(ec), *a = eval_pop(ec);
-  int r;
+  int r = 0;
 
   /* Catch some special rvalues here */
 
