@@ -42,7 +42,7 @@ widget(container_x, {
     });
 
     widget(expander_y, {
-
+      .filterConstraintX = true;
       .expansion = scurve($view.focused, 0.15);
       .alpha     = scurve($view.focused, 0.15);
       
