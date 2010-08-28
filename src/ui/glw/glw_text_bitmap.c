@@ -907,9 +907,10 @@ glw_text_bitmap_dtor(glw_t *w)
 static void
 gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb)
 {
+  int lines = gtb->gtb_lines ?: 1;
   int ys = gtb->gtb_padding_top + gtb->gtb_padding_bottom + 
     (gtb->gtb_size_bias + gr->gr_fontsize_px * gtb->gtb_size_scale)
-    * gtb->gtb_lines;
+    * lines;
   int xs = gtb->gtb_padding_left + gtb->gtb_padding_right +
     gtb->gtb_data.gtbd_siz_x;
 
@@ -1257,6 +1258,9 @@ gtb_caption_has_changed(glw_text_bitmap_t *gtb)
   
   if(gtb->gtb_status != GTB_ON_QUEUE)
     gtb->gtb_status = GTB_NEED_RERENDER;
+
+  if(gtb->w.glw_flags & GLW_DEBUG)
+    printf("%08x\n", gtb->w.glw_flags);
 
   if(!(gtb->w.glw_flags & GLW_CONSTRAINT_Y)) // Only update if yet unset
     gtb_set_constraints(gtb->w.glw_root, gtb);
