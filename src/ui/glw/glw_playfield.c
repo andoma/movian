@@ -138,9 +138,6 @@ glw_playfield_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_LAYOUT:
     p->delta = 1 / (p->time * (1000000 / w->glw_root->gr_frameduration));
 
-    if(p->fsmode) 
-      printf("playfield in fullscreen mode\n");
-
     if(w->glw_alpha < 0.01)
       break;
 
