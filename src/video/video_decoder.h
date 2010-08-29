@@ -48,6 +48,10 @@ typedef struct frame_info {
   char interlaced;     // Frame delivered is interlaced 
   char tff;            // For interlaced frame, top-field-first
   char prescaled;      // Output frame is prescaled to requested size
+  
+  enum AVColorSpace color_space;
+  enum AVColorRange color_range;
+
 
 } frame_info_t;
 

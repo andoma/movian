@@ -247,6 +247,8 @@ video_deliver_frame(video_decoder_t *vd, media_pipe_t *mp, media_buf_t *mb,
   fi.tff = !!frame->top_field_first;
   fi.prescaled = 0;
 
+  fi.color_space = ctx->colorspace;
+  fi.color_range = ctx->color_range;
 
   vd->vd_frame_deliver(frame->data, frame->linesize, &fi, vd->vd_opaque);
 }

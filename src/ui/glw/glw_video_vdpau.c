@@ -360,6 +360,8 @@ glw_video_input_vdpau(glw_video_t *gv,
      (s = glw_video_get_surface(gv)) == NULL)
     return;
 
+  vdpau_mixer_set_color_matrix(vm, fi);
+
   if(fi->interlaced) {
     int duration = fi->duration >> 1;
     vdpau_mixer_set_deinterlacer(vm, 1);

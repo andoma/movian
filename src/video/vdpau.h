@@ -32,6 +32,8 @@
 TAILQ_HEAD(vdpau_video_surface_queue, vdpau_video_surface);
 TAILQ_HEAD(vdpau_output_surface_queue, vdpau_output_surface);
 
+struct frame_info;
+
 typedef struct vdpau_dev {
   VdpDevice vd_dev;
 
@@ -66,6 +68,7 @@ typedef struct vdpau_dev {
   VdpVideoMixerSetFeatureEnables *vdp_video_mixer_set_feature_enables;
   VdpVideoMixerGetFeatureEnables *vdp_video_mixer_get_feature_enables;
   VdpVideoMixerGetFeatureSupport *vdp_video_mixer_get_feature_support;
+  VdpVideoMixerSetAttributeValues *vdp_video_mixer_set_attribute_values;
   VdpVideoMixerQueryFeatureSupport *vdp_video_mixer_query_feature_support;
   VdpGenerateCSCMatrix *vdp_generate_csc_matrix;
 
@@ -122,6 +125,9 @@ typedef struct vdpau_mixer {
 
 #define VDPAU_MIXER_DEINTERLACE_T   0x1
 #define VDPAU_MIXER_DEINTERLACE_TS  0x2
+
+  int vm_color_space;
+
 } vdpau_mixer_t;
 
 vdpau_dev_t *vdpau_init_x11(Display *dpy, int screen);
@@ -149,5 +155,8 @@ int vdpau_mixer_create(vdpau_dev_t *vd, vdpau_mixer_t *vm,
 void vdpau_mixer_deinit(vdpau_mixer_t *vm);
 
 void vdpau_mixer_set_deinterlacer(vdpau_mixer_t *vm, int on);
+
+void vdpau_mixer_set_color_matrix(vdpau_mixer_t *vm, 
+				  const struct frame_info *fi);
 
 #endif // VDPAU_H__

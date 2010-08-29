@@ -88,10 +88,11 @@ resolve_funcs(vdpau_dev_t *vd, VdpGetProcAddress *gp)
 	vdp_video_mixer_get_feature_support);
   vproc(VDP_FUNC_ID_VIDEO_MIXER_QUERY_FEATURE_SUPPORT,
 	vdp_video_mixer_query_feature_support);
+  vproc(VDP_FUNC_ID_VIDEO_MIXER_SET_ATTRIBUTE_VALUES,
+	vdp_video_mixer_set_attribute_values);
 
   vproc(VDP_FUNC_ID_GENERATE_CSC_MATRIX,
 	vdp_generate_csc_matrix);
-
 
   return 0;
 }
@@ -563,6 +564,7 @@ vdpau_mixer_create(vdpau_dev_t *vd, vdpau_mixer_t *vm, int width, int height)
   VdpBool supported[MIXER_FEATURES];
   int i;
 
+  vm->vm_color_space = -1;
   vm->vm_vd = vd;
 
   for(i = 0; i < 4; i++)
@@ -673,4 +675,48 @@ vdpau_mixer_set_deinterlacer(vdpau_mixer_t *vm, int on)
 	  
 	  
   }
+}
+
+
+/**
+ *
+ */
+void
+vdpau_mixer_set_color_matrix(vdpau_mixer_t *vm, const struct frame_info *fi)
+{
+  int cs;
+  VdpCSCMatrix matrix;
+  VdpVideoMixerAttribute attributes[] = {VDP_VIDEO_MIXER_ATTRIBUTE_CSC_MATRIX};
+
+  switch(fi->color_space) {
+  case AVCOL_SPC_BT709:
+    cs = VDP_COLOR_STANDARD_ITUR_BT_709;
+    break;
+
+  case AVCOL_SPC_BT470BG:
+  case AVCOL_SPC_SMPTE170M:
+    cs = VDP_COLOR_STANDARD_ITUR_BT_601;
+    break;
+
+  case AVCOL_SPC_SMPTE240M:
+    cs = VDP_COLOR_STANDARD_SMPTE_240M;
+    break;
+
+  default:
+    cs = fi->height < 720 ? VDP_COLOR_STANDARD_ITUR_BT_601 : VDP_COLOR_STANDARD_ITUR_BT_709;
+    break;
+  }
+
+  if(vm->vm_color_space == cs)
+    return;
+
+  vm->vm_color_space = cs;
+
+  if(vm->vm_vd->vdp_generate_csc_matrix(NULL, cs, &matrix) != VDP_STATUS_OK)
+    return;
+
+  void const *values[] = { &matrix };
+
+  vm->vm_vd->vdp_video_mixer_set_attribute_values(vm->vm_mixer, 1, 
+						  attributes, values);
 }
