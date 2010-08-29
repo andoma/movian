@@ -31,6 +31,11 @@
 #include "glw_video_common.h"
 #include "glw_video_opengl.h"
 
+#define GVF_TEX_L   0
+#define GVF_TEX_Cr  1
+#define GVF_TEX_Cb  2
+
+
 #define PBO_RELEASE_BEFORE_MAP
 
 static const char *yuv2rbg_code =

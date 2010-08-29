@@ -35,10 +35,6 @@ struct AVCodecContext;
 struct AVFrame;
 struct video_decoder;
 
-#define GVF_TEX_L   0
-#define GVF_TEX_Cr  1
-#define GVF_TEX_Cb  2
-
 typedef struct frame_info {
   int width;
   int height;
