@@ -63,6 +63,7 @@ CONFIG_LIST="
  spotlight
  vdpau
  spidermonkey
+ libxxf86vm
 "
 
 die() {

@@ -41,6 +41,11 @@
 #include <X11/extensions/scrnsaver.h>
 #endif
 
+
+#if ENABLE_LIBXXF86VM
+#include <X11/extensions/xf86vmode.h>
+#endif
+
 #include "misc/callout.h"
 #include "showtime.h"
 
@@ -98,6 +103,32 @@ x11_screensaver_resume(struct x11_screensaver_state *s)
 
   callout_disarm(&s->callout);
   free(s);
+}
+
+
+/**
+ *
+ */
+int
+x11_set_contrast(Display *dpy, int screen, int low, int high)
+{
+#if ENABLE_LIBXXF86VM
+
+  unsigned short *ramp = malloc(sizeof(short) * 256);
+  int i;
+
+  for(i = 0; i < 256; i++)
+    ramp[i] = low * 256 + ((i * (high - low) * 256) >> 8);
+
+  XF86VidModeSetGammaRamp(dpy, screen, 256,
+			  ramp, ramp, ramp);
+
+  free(ramp);
+  return 0;
+
+#else
+  return -1;
+#endif
 }
 
 

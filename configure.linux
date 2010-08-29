@@ -78,6 +78,7 @@ enable ssl
 enable locatedb
 enable vdpau
 enable spidermonkey
+enable libxxf86vm
 
 for opt do
   optval="${opt#*=}"
@@ -283,6 +284,21 @@ if enabled libxss; then
 	echo "Using libxscrnsaver:   `pkg-config --modversion xscrnsaver`"
     else
 	echo "libXss not found. Unable to build with screensaver disable support."
+	die
+    fi
+fi
+
+
+#
+# libxxf86vm
+#
+if enabled libxxf86vm; then
+    if pkg-config xxf86vm; then
+	echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags xxf86vm`
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs xxf86vm`
+	echo "Using libxxf86vm:      `pkg-config --modversion xxf86vm`"
+    else
+	echo "libxxf86vm not found. Unable to build with X11 video mode control."
 	die
     fi
 fi

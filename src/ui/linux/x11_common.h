@@ -42,5 +42,7 @@ void x11_vo_exposed(struct video_output *vo);
 
 void x11_vo_destroy(struct video_output *vo);
 
+int x11_set_contrast(Display *dpy, int screen, int low, int high);
+
 
 #endif
