@@ -67,6 +67,7 @@ typedef struct vdpau_dev {
   VdpVideoMixerGetFeatureEnables *vdp_video_mixer_get_feature_enables;
   VdpVideoMixerGetFeatureSupport *vdp_video_mixer_get_feature_support;
   VdpVideoMixerQueryFeatureSupport *vdp_video_mixer_query_feature_support;
+  VdpGenerateCSCMatrix *vdp_generate_csc_matrix;
 
 } vdpau_dev_t;
 

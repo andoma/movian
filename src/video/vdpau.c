@@ -89,6 +89,10 @@ resolve_funcs(vdpau_dev_t *vd, VdpGetProcAddress *gp)
   vproc(VDP_FUNC_ID_VIDEO_MIXER_QUERY_FEATURE_SUPPORT,
 	vdp_video_mixer_query_feature_support);
 
+  vproc(VDP_FUNC_ID_GENERATE_CSC_MATRIX,
+	vdp_generate_csc_matrix);
+
+
   return 0;
 }
 
