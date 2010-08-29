@@ -33,6 +33,8 @@ typedef struct {
   float v;
   char rev;
 
+  char fsmode;
+
 } glw_playfield_t;
 
 
@@ -55,18 +57,20 @@ clear_constraints(glw_t *w)
  *
  */
 static void
-glw_playfield_update_constraints(glw_t *w)
+glw_playfield_update_constraints(glw_playfield_t *p)
 {
-  glw_t *c = w->glw_selected;
+  glw_t *c = p->w.glw_selected;
 
-  int was_fullscreen = w->glw_flags & GLW_CONSTRAINT_F;
+  int was_fullscreen = !!(p->w.glw_flags & GLW_CONSTRAINT_F);
 
-  glw_copy_constraints(w, c);
+  glw_copy_constraints(&p->w, c);
 
-  if((w->glw_flags & GLW_CONSTRAINT_F) == was_fullscreen)
+  p->fsmode = !!(p->w.glw_flags & GLW_CONSTRAINT_F);
+    
+  if(p->fsmode == was_fullscreen)
     return;
 
-  glw_signal0(w, GLW_SIGNAL_FULLSCREEN_CONSTRAINT_CHANGED, NULL);
+  glw_signal0(&p->w, GLW_SIGNAL_FULLSCREEN_CONSTRAINT_CHANGED, NULL);
 }
 
 
@@ -105,7 +109,7 @@ playfield_select(glw_playfield_t *gd, glw_t *c)
   gd->w.glw_selected = c;
   if(gd->w.glw_selected != NULL) {
     glw_focus_open_path_close_all_other(gd->w.glw_selected);
-    glw_playfield_update_constraints(&gd->w);
+    glw_playfield_update_constraints(gd);
   } else {
     clear_constraints(&gd->w);
   }
@@ -122,7 +126,7 @@ playfield_select(glw_playfield_t *gd, glw_t *c)
 static int
 glw_playfield_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
-  glw_playfield_t *gd = (glw_playfield_t *)w;
+  glw_playfield_t *p = (glw_playfield_t *)w;
   glw_rctx_t *rc = extra;
   glw_t *c, *n;
   event_t *e;
@@ -132,20 +136,22 @@ glw_playfield_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_LAYOUT:
-    gd->delta = 1 / (gd->time * (1000000 / w->glw_root->gr_frameduration));
+    p->delta = 1 / (p->time * (1000000 / w->glw_root->gr_frameduration));
 
+    if(p->fsmode) 
+      printf("playfield in fullscreen mode\n");
 
     if(w->glw_alpha < 0.01)
       break;
 
-    gd->v = GLW_MIN(gd->v + gd->delta, 1.0);
-    if(gd->v == 1)
-      gd->prev = NULL;
+    p->v = GLW_MIN(p->v + p->delta, 1.0);
+    if(p->v == 1)
+      p->prev = NULL;
 
     if(w->glw_selected != NULL)
       glw_layout0(w->glw_selected, rc);
-    if(gd->prev != NULL)
-      glw_layout0(gd->prev, rc);
+    if(p->prev != NULL)
+      glw_layout0(p->prev, rc);
     break;
 
   case GLW_SIGNAL_EVENT:
@@ -174,12 +180,12 @@ glw_playfield_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     return 1;
 
   case GLW_SIGNAL_SELECT:
-    playfield_select(gd, extra);
+    playfield_select(p, extra);
     break;
 
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
     if(w->glw_selected == extra)
-      glw_playfield_update_constraints(w);
+      glw_playfield_update_constraints(p);
     return 1;
 
   case GLW_SIGNAL_CHILD_DESTROYED:
@@ -187,8 +193,8 @@ glw_playfield_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     if(w->glw_selected == extra)
       clear_constraints(w);
 
-    if(gd->prev == extra)
-      gd->prev = NULL;
+    if(p->prev == extra)
+      p->prev = NULL;
 
     return 0;
   }
