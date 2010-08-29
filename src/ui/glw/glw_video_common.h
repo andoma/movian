@@ -253,14 +253,12 @@ int glw_video_configure(glw_video_t *gv,
  */
 void glw_video_input_yuvp(glw_video_t *gv,
 			  uint8_t * const data[], const int pitch[],
-			  int width, int height, int pix_fmt,
-			  int64_t pts, int epoch, int duration, int flags);
+			  const frame_info_t *fi);
+
 
 void glw_video_input_vdpau(glw_video_t *gv,
 			   uint8_t * const data[], const int pitch[],
-			   int width, int height, int pix_fmt,
-			   int64_t pts, int epoch, int duration, int flags);
-
+			   const frame_info_t *fi);
 
 #endif /* GLW_VIDEO_COMMON_H */
 

@@ -29,9 +29,7 @@ static glw_video_engine_t glw_video_blank;
 
 
 static void  glw_video_input(uint8_t * const data[], const int pitch[],
-			     int width, int height, int pix_fmt,
-			     int64_t pts, int epoch, int duration,
-			     int flags, float dar, void *opaque);
+			     const frame_info_t *info, void *opaque);
 
 
 /**
@@ -532,13 +530,11 @@ glw_video_put_surface(glw_video_t *gv, glw_video_surface_t *s,
  */
 static void 
 glw_video_input(uint8_t * const data[], const int pitch[],
-		int width, int height, int pix_fmt,
-		int64_t pts, int epoch, int duration,
-		int flags, float dar, void *opaque)
+		const frame_info_t *fi, void *opaque)
 {
   glw_video_t *gv = opaque;
 
-  gv->gv_dar = dar;
+  gv->gv_dar = fi->dar;
 
   hts_mutex_lock(&gv->gv_surface_mutex);
 
@@ -549,7 +545,7 @@ glw_video_input(uint8_t * const data[], const int pitch[],
     return;
   }
   
-  switch(pix_fmt) {
+  switch(fi->pix_fmt) {
   case PIX_FMT_YUV420P:
   case PIX_FMT_YUV422P:
   case PIX_FMT_YUV444P:
@@ -561,8 +557,7 @@ glw_video_input(uint8_t * const data[], const int pitch[],
   case PIX_FMT_YUVJ422P:
   case PIX_FMT_YUVJ444P:
   case PIX_FMT_YUVJ440P:
-    glw_video_input_yuvp(gv, data, pitch, width, height, pix_fmt,
-			 pts, epoch, duration, flags);
+    glw_video_input_yuvp(gv, data, pitch, fi);
     break;
 
 #if ENABLE_VDPAU
@@ -572,15 +567,14 @@ glw_video_input(uint8_t * const data[], const int pitch[],
   case PIX_FMT_VDPAU_WMV3:
   case PIX_FMT_VDPAU_VC1:
   case PIX_FMT_VDPAU_MPEG4:
-    glw_video_input_vdpau(gv, data, pitch, width, height, pix_fmt,
-			  pts, epoch, duration, flags);
+    glw_video_input_vdpau(gv, data, pitch, fi);
     break;
 #endif
 
   default:
     TRACE(TRACE_ERROR, "GLW", 
 	  "PIX_FMT %s (0x%x) does not have a video engine",
-	   av_pix_fmt_descriptors[pix_fmt].name, pix_fmt);
+	   av_pix_fmt_descriptors[fi->pix_fmt].name, fi->pix_fmt);
     break;
   }
 

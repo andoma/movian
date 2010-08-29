@@ -687,8 +687,7 @@ static glw_video_engine_t glw_video_opengl = {
 void
 glw_video_input_yuvp(glw_video_t *gv,
 		     uint8_t * const data[], const int pitch[],
-		     int width, int height, int pix_fmt,
-		     int64_t pts, int epoch, int duration, int flags)
+		     const frame_info_t *fi)
 {
   int hvec[3], wvec[3];
   int i, h, w;
@@ -698,25 +697,24 @@ glw_video_input_yuvp(glw_video_t *gv,
   int hshift, vshift;
   glw_video_surface_t *s;
   const int parity = 0;
-  const int ilace = !!(flags & VD_INTERLACED);
 
-  avcodec_get_chroma_sub_sample(pix_fmt, &hshift, &vshift);
+  avcodec_get_chroma_sub_sample(fi->pix_fmt, &hshift, &vshift);
 
-  wvec[0] = width;
-  wvec[1] = width >> hshift;
-  wvec[2] = width >> hshift;
-  hvec[0] = height >> ilace;
-  hvec[1] = height >> (vshift + ilace);
-  hvec[2] = height >> (vshift + ilace);
+  wvec[0] = fi->width;
+  wvec[1] = fi->width >> hshift;
+  wvec[2] = fi->width >> hshift;
+  hvec[0] = fi->height >> fi->interlaced;
+  hvec[1] = fi->height >> (vshift + fi->interlaced);
+  hvec[2] = fi->height >> (vshift + fi->interlaced);
 
   if(glw_video_configure(gv, &glw_video_opengl, wvec, hvec, 3,
-			 ilace ? (GVC_YHALF | GVC_CUTBORDER) : 0))
+			 fi->interlaced ? (GVC_YHALF | GVC_CUTBORDER) : 0))
     return;
   
   if((s = glw_video_get_surface(gv)) == NULL)
     return;
 
-  if(!ilace) {
+  if(!fi->interlaced) {
 
     for(i = 0; i < 3; i++) {
       w = wvec[i];
@@ -731,13 +729,13 @@ glw_video_input_yuvp(glw_video_t *gv,
       }
     }
 
-    glw_video_put_surface(gv, s, pts, epoch, duration, 0);
+    glw_video_put_surface(gv, s, fi->pts, fi->epoch, fi->duration, 0);
 
   } else {
 
-    duration /= 2;
+    int duration = fi->duration >> 1;
 
-    tff = !!(flags & VD_TFF) ^ parity;
+    tff = fi->tff ^ parity;
 
     for(i = 0; i < 3; i++) {
       w = wvec[i];
@@ -753,7 +751,7 @@ glw_video_input_yuvp(glw_video_t *gv,
       }
     }
     
-    glw_video_put_surface(gv, s, pts, epoch, duration, !tff);
+    glw_video_put_surface(gv, s, fi->pts, fi->epoch, duration, !tff);
 
     if((s = glw_video_get_surface(gv)) == NULL)
       return;
@@ -772,6 +770,6 @@ glw_video_input_yuvp(glw_video_t *gv,
       }
     }
     
-    glw_video_put_surface(gv, s, pts + duration, epoch, duration, tff);
+    glw_video_put_surface(gv, s, fi->pts + duration, fi->epoch, duration, tff);
   }
 }

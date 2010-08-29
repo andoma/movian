@@ -164,9 +164,7 @@ vo_set_url(void *opaque, const char *url)
  *
  */
 static void xv_video_frame_deliver(uint8_t * const data[], const int pitch[],
-				   int width, int height, int pix_fmt,
-				   int64_t pts, int epoch, int duration,
-				   int flags, float dar, void *opaque);
+				   const frame_info_t *fi, void *opaque);
 
 /**
  *
@@ -207,9 +205,7 @@ init_with_xv(video_output_t *vo)
  *
  */
 static void xi_video_frame_deliver(uint8_t * const data[], const int pitch[],
-				   int width, int height, int pix_fmt,
-				   int64_t pts, int epoch, int duration,
-				   int flags, float dar, void *opaque);
+				   const frame_info_t *fi, void *opaque);
 
 /**
  *
@@ -426,9 +422,7 @@ compute_output_dimensions(video_output_t *vo, float dar, int *w, int *h)
  */
 static void 
 xv_video_frame_deliver(uint8_t * const data[], const int linesize[],
-		       int width, int height, int pix_fmt,
-		       int64_t pts, int epoch, int duration, int flags,
-		       float dar, void *opaque)
+		       const frame_info_t *fi, void *opaque)
 {
   video_output_t *vo = opaque;
   int syncok;
@@ -444,7 +438,7 @@ xv_video_frame_deliver(uint8_t * const data[], const int linesize[],
 
     vo->vo_xv_image = XvShmCreateImage(vo->vo_dpy, vo->vo_xv_port,
 				       xv_format, NULL,
-				       width, height,
+				       fi->width, fi->height,
 				       &vo->vo_shm);
 
     vo->vo_shm.shmid = shmget(IPC_PRIVATE, vo->vo_xv_image->data_size, 
@@ -469,8 +463,8 @@ xv_video_frame_deliver(uint8_t * const data[], const int linesize[],
 
   int i;
   for(i = 0; i < 3; i++) {
-    int w = width;
-    int h = height;
+    int w = fi->width;
+    int h = fi->height;
 
     if(i) {
       w = w / 2;
@@ -488,12 +482,12 @@ xv_video_frame_deliver(uint8_t * const data[], const int linesize[],
     }
   }
 
-  compute_output_dimensions(vo, dar, &outw, &outh);
+  compute_output_dimensions(vo, fi->dar, &outw, &outh);
 
-  syncok = wait_for_aclock(vo->vo_mp, pts, epoch);
+  syncok = wait_for_aclock(vo->vo_mp, fi->pts, fi->epoch);
 
   XvShmPutImage(vo->vo_dpy, vo->vo_xv_port, vo->vo_win, vo->vo_gc,
-		vo->vo_xv_image, 0, 0, width, height,
+		vo->vo_xv_image, 0, 0, fi->width, fi->height,
 		vo->vo_x + (vo->vo_w - outw) / 2,
 		vo->vo_y + (vo->vo_h - outh) / 2,
 		outw, outh,
@@ -503,7 +497,7 @@ xv_video_frame_deliver(uint8_t * const data[], const int linesize[],
   XSync(vo->vo_dpy, False);
 
   if(!syncok)
-    usleep(duration);
+    usleep(fi->duration);
 }
 #endif
 
@@ -542,9 +536,7 @@ get_pix_fmt(video_output_t *vo)
  */
 static void
 xi_video_frame_deliver(uint8_t * const data[], const int pitch[],
-		       int width, int height,  int pix_fmt,
-		       int64_t pts, int epoch, int duration, int flags,
-		       float dar, void *opaque)
+		       const frame_info_t *fi, void *opaque)
 {
   video_output_t *vo = opaque;
   uint8_t *dst[4] = {0,0,0,0};
@@ -555,10 +547,10 @@ xi_video_frame_deliver(uint8_t * const data[], const int pitch[],
   if(vo->vo_w < 1 || vo->vo_h < 1)
     return;
 
-  if(flags & VD_PRESCALED) {
-    outw = width; outh = height;
+  if(fi->prescaled) {
+    outw = fi->width; outh = fi->height;
   } else {
-    compute_output_dimensions(vo, dar, &outw, &outh);
+    compute_output_dimensions(vo, fi->dar, &outw, &outh);
   }
 
   if(vo->vo_ximage != NULL && 
@@ -616,9 +608,9 @@ xi_video_frame_deliver(uint8_t * const data[], const int pitch[],
   if(vo->vo_pix_fmt == -1)
     return;
 
-  if(vo->vo_ximage->width          == width &&
-     vo->vo_ximage->height         == height &&
-     vo->vo_pix_fmt                == pix_fmt &&
+  if(vo->vo_ximage->width          == fi->width &&
+     vo->vo_ximage->height         == fi->height &&
+     vo->vo_pix_fmt                == fi->pix_fmt &&
      vo->vo_ximage->bytes_per_line == pitch[0]) {
 
     memcpy(vo->vo_ximage->data, data[0], 
@@ -629,7 +621,7 @@ xi_video_frame_deliver(uint8_t * const data[], const int pitch[],
     // Must do scaling and/or format conversion
 
     vo->vo_scaler = sws_getCachedContext(vo->vo_scaler,
-					 width, height, pix_fmt,
+					 fi->width, fi->height, fi->pix_fmt,
 					 vo->vo_ximage->width,
 					 vo->vo_ximage->height,
 					 vo->vo_pix_fmt,
@@ -638,11 +630,11 @@ xi_video_frame_deliver(uint8_t * const data[], const int pitch[],
     dst[0] = (uint8_t *)vo->vo_ximage->data;
     dstpitch[0] = vo->vo_ximage->bytes_per_line;
     
-    sws_scale(vo->vo_scaler, (void *)data, pitch, 0, height, dst, dstpitch);
+    sws_scale(vo->vo_scaler, (void *)data, pitch, 0, fi->height, dst, dstpitch);
   }
 
 
-  syncok = wait_for_aclock(vo->vo_mp, pts, epoch);
+  syncok = wait_for_aclock(vo->vo_mp, fi->pts, fi->epoch);
 
   XShmPutImage(vo->vo_dpy, vo->vo_win, vo->vo_gc, vo->vo_ximage,
 	       0, 0,
@@ -655,5 +647,5 @@ xi_video_frame_deliver(uint8_t * const data[], const int pitch[],
   XSync(vo->vo_dpy, False);
 
   if(!syncok)
-    usleep(duration);
+    usleep(fi->duration);
 }

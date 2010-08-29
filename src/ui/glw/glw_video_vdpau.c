@@ -264,7 +264,6 @@ vdpau_init(glw_video_t *gv)
   vdpau_dev_t *vd = gv->w.glw_root->gr_be.gbr_vdpau_dev;
   int i, nconfs;
   VdpStatus st;
-
   GLXFBConfig *fbconfig;
 
   for(i = 0; i < GLW_VIDEO_MAX_SURFACES; i++)
@@ -314,6 +313,7 @@ vdpau_init(glw_video_t *gv)
     TRACE(TRACE_ERROR, "VDPAU", "Unable to create video mixer");
     return;
   }
+  
 
   /* Surfaces */
   for(i = 0; i < gvc->gvc_nsurfaces; i++)
@@ -343,26 +343,26 @@ static glw_video_engine_t glw_video_vdpau = {
 void
 glw_video_input_vdpau(glw_video_t *gv,
 		      uint8_t * const data[], const int pitch[],
-		      int width, int height, int pix_fmt,
-		      int64_t pts, int epoch, int duration, int flags)
+		      const frame_info_t *fi)
 {
   struct vdpau_render_state *rs = (struct vdpau_render_state *)data[0];
   vdpau_dev_t *vd = gv->w.glw_root->gr_be.gbr_vdpau_dev;
   vdpau_mixer_t *vm = &gv->gv_vm;
   glw_video_surface_t *s;
-  int wvec[3] = {width};
-  int hvec[3] = {height};
-  VdpRect src_rect = { 0, 0, width, height };
-  VdpRect dst_rect = { 0, 0, gv->gv_rwidth ?: width, gv->gv_rheight ?: height };
+  int wvec[3] = {fi->width};
+  int hvec[3] = {fi->height};
+  VdpRect src_rect = { 0, 0, fi->width, fi->height };
+  VdpRect dst_rect = { 0, 0, 
+		       gv->gv_rwidth ?: fi->width,
+		       gv->gv_rheight ?: fi->height };
 
   if(glw_video_configure(gv, &glw_video_vdpau, wvec, hvec, 4, 0) ||
      (s = glw_video_get_surface(gv)) == NULL)
     return;
 
-  if(flags & VD_INTERLACED) {
-
+  if(fi->interlaced) {
+    int duration = fi->duration >> 1;
     vdpau_mixer_set_deinterlacer(vm, 1);
-    duration /= 2;
 
     vm->vm_surface_win[3] = vm->vm_surface_win[2];
     vm->vm_surface_win[2] = vm->vm_surface_win[1];
@@ -370,7 +370,7 @@ glw_video_input_vdpau(glw_video_t *gv,
     vm->vm_surface_win[0] = rs->surface;
 
     vd->vdp_video_mixer_render(vm->vm_mixer, VDP_INVALID_HANDLE, NULL,
-			       !(flags & VD_TFF),
+			       !fi->tff,
 			       2, &vm->vm_surface_win[2],
 			       vm->vm_surface_win[1],
 			       1, &vm->vm_surface_win[0],
@@ -379,13 +379,13 @@ glw_video_input_vdpau(glw_video_t *gv,
 			       &dst_rect, &dst_rect,
 			       0, NULL);
 
-    glw_video_put_surface(gv, s, pts - duration, epoch, duration, 0);
+    glw_video_put_surface(gv, s, fi->pts - duration, fi->epoch, duration, 0);
 
     if((s = glw_video_get_surface(gv)) == NULL)
       return;
 
     vd->vdp_video_mixer_render(vm->vm_mixer, VDP_INVALID_HANDLE, NULL,
-			       !!(flags & VD_TFF),
+			       fi->tff,
 			       2, &vm->vm_surface_win[2],
 			       vm->vm_surface_win[1],
 			       1, &vm->vm_surface_win[0],
@@ -402,6 +402,6 @@ glw_video_input_vdpau(glw_video_t *gv,
 			       &dst_rect, &dst_rect, 0, NULL);
   }
 
-  glw_video_put_surface(gv, s, pts, epoch, duration, 0);
+  glw_video_put_surface(gv, s, fi->pts, fi->epoch, fi->duration, 0);
 }
 #endif

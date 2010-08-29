@@ -234,12 +234,21 @@ video_deliver_frame(video_decoder_t *vd, media_pipe_t *mp, media_buf_t *mb,
   vd->vd_interlaced |=
     frame->interlaced_frame && !mb->mb_disable_deinterlacer;
 
-  vd->vd_frame_deliver(frame->data, frame->linesize,
-		       ctx->width, ctx->height, ctx->pix_fmt,
-		       pts, epoch, duration, 
-		       (vd->vd_interlaced ? VD_INTERLACED : 0) |
-		       (frame->top_field_first ? VD_TFF : 0),
-		       dar, vd->vd_opaque);
+  frame_info_t fi;
+  fi.width = ctx->width;
+  fi.height = ctx->height;
+  fi.pix_fmt = ctx->pix_fmt;
+  fi.pts = pts;
+  fi.epoch = epoch;
+  fi.duration = duration;
+  fi.dar = dar;
+
+  fi.interlaced = !!vd->vd_interlaced;
+  fi.tff = !!frame->top_field_first;
+  fi.prescaled = 0;
+
+
+  vd->vd_frame_deliver(frame->data, frame->linesize, &fi, vd->vd_opaque);
 }
 
 
@@ -359,7 +368,7 @@ vd_thread(void *aux)
       break;
 
     case MB_BLACKOUT:
-      vd->vd_frame_deliver(NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 1, vd->vd_opaque);
+      vd->vd_frame_deliver(NULL, NULL, NULL, vd->vd_opaque);
       break;
 
     default:

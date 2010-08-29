@@ -39,25 +39,28 @@ struct video_decoder;
 #define GVF_TEX_Cr  1
 #define GVF_TEX_Cb  2
 
+typedef struct frame_info {
+  int width;
+  int height;
+  int pix_fmt;
+  int64_t pts;
+  int epoch;
+  int duration;
+
+  float dar;
+
+  char interlaced;     // Frame delivered is interlaced 
+  char tff;            // For interlaced frame, top-field-first
+  char prescaled;      // Output frame is prescaled to requested size
+
+} frame_info_t;
+
 
 /**
  *
  */
-typedef void (vd_frame_deliver_t)(uint8_t * const data[],
-				  const int pitch[],
-				  int width,
-				  int height,
-				  int pix_fmt,
-				  int64_t pts,
-				  int epoch,
-				  int duration,
-				  int flags,
-				  float dar,
-				  void *opaque);
-
-#define VD_INTERLACED 0x1  // Frame delivered is interlaced
-#define VD_TFF        0x2  // For interlaced frame, top-field-first
-#define VD_PRESCALED  0x4  // Output frame is prescaled to requested size
+typedef void (vd_frame_deliver_t)(uint8_t * const data[], const int pitch[],
+				  const frame_info_t *info, void *opaque);
 
 /**
  *
