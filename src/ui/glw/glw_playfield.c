@@ -48,7 +48,7 @@ clear_constraints(glw_t *w)
 {
   glw_set_constraints(w, 0, 0, 0, 0, GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
 
-  glw_signal0(w, GLW_SIGNAL_FULLSCREEN_CONSTRAINT_CHANGED, NULL);
+  glw_signal0(w, GLW_SIGNAL_FULLWINDOW_CONSTRAINT_CHANGED, NULL);
 }
 
 
@@ -70,7 +70,7 @@ glw_playfield_update_constraints(glw_playfield_t *p)
   if(p->fsmode == was_fullscreen)
     return;
 
-  glw_signal0(&p->w, GLW_SIGNAL_FULLSCREEN_CONSTRAINT_CHANGED, NULL);
+  glw_signal0(&p->w, GLW_SIGNAL_FULLWINDOW_CONSTRAINT_CHANGED, NULL);
 }
 
 

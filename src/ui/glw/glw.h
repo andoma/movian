@@ -282,9 +282,9 @@ typedef enum {
   GLW_SIGNAL_CAN_SCROLL_CHANGED,
 
   /**
-   * Emitted by a widget when it needs scrolling
+   *
    */ 
-  GLW_SIGNAL_FULLSCREEN_CONSTRAINT_CHANGED,
+  GLW_SIGNAL_FULLWINDOW_CONSTRAINT_CHANGED,
 
   /**
    * Emitted when gc_ready will start returning 1.

@@ -831,7 +831,7 @@ eval_dynamic_widget_meta_sig(glw_t *w, void *opaque,
 {
   if(signal == GLW_SIGNAL_ACTIVE || signal == GLW_SIGNAL_INACTIVE ||
      signal == GLW_SIGNAL_CAN_SCROLL_CHANGED ||
-     signal == GLW_SIGNAL_FULLSCREEN_CONSTRAINT_CHANGED ||
+     signal == GLW_SIGNAL_FULLWINDOW_CONSTRAINT_CHANGED ||
      signal == GLW_SIGNAL_READY || signal == GLW_SIGNAL_FOCUS_DISTANCE_CHANGED)
     eval_dynamic(w, opaque);
   return 0;
