@@ -74,7 +74,6 @@ lastfm_parse_artist_images(htsmsg_t *xml, prop_t *parent, int *totalpages,
   if((attr = htsmsg_get_map(images, "attrib")) != NULL &&
      (str = htsmsg_get_str(attr, "totalpages")) != NULL) {
     *totalpages = atoi(str);
-    printf("TOTAL PAGES=%d\n", *totalpages);
   }
 
   if((images = htsmsg_get_map(images, "tags")) == NULL)
@@ -204,7 +203,6 @@ lastfm_artistpics_query(lastfm_prop_t *lp)
   while(1) {
 
     snprintf(str, sizeof(str), "%d", page);
-    printf("Loading page %d\n", page);
     n = http_request("http://ws.audioscrobbler.com/2.0/",
 		     (const char *[]){"method", "artist.getimages",
 			 "artist", artist,
