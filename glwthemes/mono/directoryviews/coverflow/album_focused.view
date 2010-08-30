@@ -26,6 +26,7 @@ widget(container_y, {
 	.filterConstraintX = true;
 	
 	widget(expander_y, {
+	.filterConstraintX = true;
 	  .expansion = scurve($view.showFilter, 0.25);
 	  .alpha     = scurve($view.showFilter, 0.25);
 	  
