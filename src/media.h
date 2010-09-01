@@ -69,6 +69,7 @@ typedef struct media_codec {
 	       struct media_queue *mq, struct media_buf *mb, int reqsize);
 
   void (*close)(struct media_codec *mc);
+  void (*reinit)(struct media_codec *mc);
 
 } media_codec_t;
 
@@ -101,6 +102,8 @@ typedef struct media_buf {
     MB_REQ_OUTPUT_SIZE,
 
     MB_BLACKOUT,
+
+    MB_REINITIALIZE,
 
   } mb_data_type;
 

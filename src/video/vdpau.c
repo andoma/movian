@@ -23,20 +23,25 @@
 #include "vdpau.h"
 #include "video/video_decoder.h"
 
+static VdpStatus mixer_setup(vdpau_dev_t *vd, vdpau_mixer_t *vm);
+
 #define vproc(id, ptr) do { \
-    if(gp(vd->vd_dev, id, (void *)&vd->ptr) != VDP_STATUS_OK)	\
-    return -1;						\
+    VdpStatus r;						\
+    if((r = gp(vd->vd_dev, id, (void *)&vd->ptr)) != VDP_STATUS_OK)	\
+      return r;							\
   }while(0)
 
 
 /**
  *
  */
-static int
+static VdpStatus
 resolve_funcs(vdpau_dev_t *vd, VdpGetProcAddress *gp)
 {
   vproc(VDP_FUNC_ID_GET_ERROR_STRING,
 	vdp_get_error_string);
+  vproc(VDP_FUNC_ID_PREEMPTION_CALLBACK_REGISTER,
+       vdp_preemption_callback_register);
 
   vproc(VDP_FUNC_ID_VIDEO_SURFACE_CREATE,
 	vdp_video_surface_create);
@@ -94,7 +99,7 @@ resolve_funcs(vdpau_dev_t *vd, VdpGetProcAddress *gp)
   vproc(VDP_FUNC_ID_GENERATE_CSC_MATRIX,
 	vdp_generate_csc_matrix);
 
-  return 0;
+  return VDP_STATUS_OK;
 }
 
 
@@ -146,25 +151,11 @@ static const struct {
 /**
  *
  */
-vdpau_dev_t *
-vdpau_init_x11(Display *dpy, int screen)
+static void
+vdpau_info(vdpau_dev_t *vd)
 {
-  VdpStatus r;
-  VdpGetProcAddress *getproc;
   int i;
-
-  vdpau_dev_t *vd = calloc(1, sizeof(vdpau_dev_t));
-  vd->vd_dpy = dpy;
-
-  r = vdp_device_create_x11(dpy, screen, &vd->vd_dev, &getproc);
-  if(r != VDP_STATUS_OK) {
-    TRACE(TRACE_DEBUG, "VDPAU", "Unable to create VDPAU device");
-    free(vd);
-    return NULL;
-  }
-
-  if(resolve_funcs(vd, getproc))
-    return NULL;
+  VdpStatus r;
 
   TRACE(TRACE_DEBUG, "VDPAU", "VDPAU decoder supported profiles");
   TRACE(TRACE_DEBUG, "VDPAU", "%-20s  %-20s %-10s %-10s %-10s",
@@ -197,8 +188,79 @@ vdpau_init_x11(Display *dpy, int screen)
 			max_width,
 			max_height);
   }
+}
 
+
+/**
+ *
+ */
+static void
+preempt(VdpDevice device, void *context)
+{
+  vdpau_dev_t *vd = context;
+  TRACE(TRACE_DEBUG, "VDPAU", "VDPAU preempted");
+  vd->vd_preempted(vd->vd_opaque);
+}
+
+
+
+/**
+ *
+ */
+static VdpStatus
+vdpau_setup_x11(vdpau_dev_t *vd)
+{
+  VdpStatus r;
+  VdpGetProcAddress *getproc;
+
+  r = vdp_device_create_x11(vd->vd_dpy, vd->vd_screen, &vd->vd_dev, &getproc);
+  if(r != VDP_STATUS_OK) {
+    TRACE(TRACE_DEBUG, "VDPAU", "Unable to create VDPAU device");
+    return r;
+  }
+
+  if((r = resolve_funcs(vd, getproc)) != VDP_STATUS_OK)
+    return r;
+
+  vd->vdp_preemption_callback_register(vd->vd_dev, preempt, vd);
+  return VDP_STATUS_OK;
+}
+
+
+
+/**
+ *
+ */
+vdpau_dev_t *
+vdpau_init_x11(Display *dpy, int screen,
+	       void (*preempted)(void *opaque), void *opaque)
+{
+  vdpau_dev_t *vd = calloc(1, sizeof(vdpau_dev_t));
+
+  vd->vd_dpy = dpy;
+  vd->vd_screen = screen;
+  vd->vd_preempted = preempted;
+  vd->vd_opaque = opaque;
+
+  hts_mutex_init(&vd->vd_mutex);
+
+  if(vdpau_setup_x11(vd)) {
+    TRACE(TRACE_DEBUG, "VDPAU", "Unable to create VDPAU device");
+    free(vd);
+    return NULL;
+  }
+  vdpau_info(vd);
   return vd;
+}
+
+
+/**
+ *
+ */
+VdpStatus
+vdpau_reinit_x11(vdpau_dev_t *vd)
+{
+  return vdpau_setup_x11(vd) != VDP_STATUS_OK;
 }
 
 
@@ -238,7 +300,7 @@ vdpau_get_buffer(struct AVCodecContext *ctx, AVFrame *pic)
 /**
  *
  */
-static int
+static VdpStatus
 vdpau_create_buffers(vdpau_codec_t *vc, int width, int height, int buffers)
 {
   int i;
@@ -252,27 +314,14 @@ vdpau_create_buffers(vdpau_codec_t *vc, int width, int height, int buffers)
 				     width, height, &vvs->vvs_surface);
     if(r != VDP_STATUS_OK) {
       free(vvs);
-      return -1;
+      return r;
     }
     vvs->vvs_idx = i;
     vvs->vvs_rs.surface = vvs->vvs_surface;
     TAILQ_INSERT_TAIL(&vc->vc_vvs_free, vvs, vvs_link);
   }
-  return 0;
+  return VDP_STATUS_OK;
 }
-
-
-/**
- *
- */
-static void
-vdpau_destroy_buffer(vdpau_codec_t *vc, vdpau_video_surface_t *vvs)
-{
-  vdpau_dev_t *vd = vc->vc_vd;
-  vd->vdp_video_surface_destroy(vvs->vvs_surface);
-  free(vvs);
-}
-
 
 
 /**
@@ -363,24 +412,36 @@ vdpau_decode(struct media_codec *mc, void *decoder,
 }
 
 
+
+/**
+ *
+ */
+static void
+vc_cleanup(vdpau_codec_t *vc)
+{
+  vdpau_dev_t *vd = vc->vc_vd;
+  vdpau_video_surface_t *vvs;
+
+  if(vc->vc_decoder != VDP_INVALID_HANDLE) {
+    vd->vdp_decoder_destroy(vc->vc_decoder);
+    vc->vc_decoder = VDP_INVALID_HANDLE;
+  }
+
+  while((vvs = TAILQ_FIRST(&vc->vc_vvs_free)) != NULL) {
+    TAILQ_REMOVE(&vc->vc_vvs_free, vvs, vvs_link);
+    vd->vdp_video_surface_destroy(vvs->vvs_surface);
+    free(vvs);
+  }
+}
+
+
 /**
  *
  */
 static void
 vc_destroy(vdpau_codec_t *vc)
 {
-  vdpau_dev_t *vd = vc->vc_vd;
-  vdpau_video_surface_t *vvs;
-
-  if(vc->vc_decoder)
-    vd->vdp_decoder_destroy(vc->vc_decoder);
-
-
-  while((vvs = TAILQ_FIRST(&vc->vc_vvs_free)) != NULL) {
-    TAILQ_REMOVE(&vc->vc_vvs_free, vvs, vvs_link);
-    vdpau_destroy_buffer(vc, vvs);
-  }
-
+  vc_cleanup(vc);
   assert(TAILQ_FIRST(&vc->vc_vvs_alloc) == NULL);
   free(vc);
 }
@@ -411,11 +472,33 @@ vdpau_get_pixfmt(struct AVCodecContext *s, const enum PixelFormat *fmt)
  *
  */
 static void
-vc_init(vdpau_codec_t *vc, vdpau_dev_t *vd)
+vdpau_codec_reinit(media_codec_t *mc)
 {
-  TAILQ_INIT(&vc->vc_vvs_alloc);
-  TAILQ_INIT(&vc->vc_vvs_free);
-  vc->vc_vd = vd;
+  vdpau_codec_t *vc = mc->opaque;
+  vdpau_dev_t *vd = vc->vc_vd;
+  vdpau_video_surface_t *vvs;
+  VdpStatus r;
+
+  r = vd->vdp_decoder_create(vd->vd_dev, vc->vc_profile, 
+			     vc->vc_width, vc->vc_height,
+			     vc->vc_refframes, &vc->vc_decoder);
+
+  if(r != VDP_STATUS_OK) {
+    TRACE(TRACE_INFO, "VDPAU", "Unable to reinit decoder: %s",
+	  vdpau_errstr(vd, r));
+    return;
+  }
+
+  TAILQ_FOREACH(vvs, &vc->vc_vvs_free, vvs_link)
+    vd->vdp_video_surface_create(vd->vd_dev, VDP_CHROMA_TYPE_420,
+				 vc->vc_width, vc->vc_height,
+				 &vvs->vvs_surface);
+  
+  TAILQ_FOREACH(vvs, &vc->vc_vvs_alloc, vvs_link)
+    vd->vdp_video_surface_create(vd->vd_dev, VDP_CHROMA_TYPE_420,
+				 vc->vc_width, vc->vc_height,
+				 &vvs->vvs_surface);
+  
 }
 
 
@@ -474,15 +557,21 @@ vdpau_codec_create(media_codec_t *mc, enum CodecID id,
     return 1;
   }
 
-  if(mc->codec == NULL) {
+  if(mc->codec == NULL)
     return -1;
-  }
 
   vdpau_codec_t *vc = calloc(1, sizeof(vdpau_codec_t));
-  vc_init(vc, vd);
+  TAILQ_INIT(&vc->vc_vvs_alloc);
+  TAILQ_INIT(&vc->vc_vvs_free);
+  vc->vc_vd = vd;
+  vc->vc_width = mcp->width;
+  vc->vc_height = mcp->height;
+  vc->vc_profile = profile;
+  vc->vc_refframes = refframes;
 
-  r = vd->vdp_decoder_create(vd->vd_dev, profile, mcp->width, mcp->height,
-			     refframes, &vc->vc_decoder);
+  r = vd->vdp_decoder_create(vd->vd_dev, vc->vc_profile, 
+			     vc->vc_width, vc->vc_height,
+			     vc->vc_refframes, &vc->vc_decoder);
 
   if(r != VDP_STATUS_OK) {
     TRACE(TRACE_INFO, "VDPAU", "Unable to create decoder: %s",
@@ -491,7 +580,11 @@ vdpau_codec_create(media_codec_t *mc, enum CodecID id,
     return -1;
   }
 
-  if(vdpau_create_buffers(vc, mcp->width, mcp->height, refframes + 5)) {
+  
+  r = vdpau_create_buffers(vc, vc->vc_width, vc->vc_height,
+			   vc->vc_refframes + 5);
+
+  if(r != VDP_STATUS_OK) {
     TRACE(TRACE_INFO, "VDPAU", "Unable to allocate decoding buffers");
     vc_destroy(vc);
     return -1;
@@ -522,7 +615,7 @@ vdpau_codec_create(media_codec_t *mc, enum CodecID id,
   mc->opaque = vc;
   mc->data   = vdpau_decode;
   mc->close  = vdpau_codec_close;
-
+  mc->reinit = vdpau_codec_reinit;
   return 0;
 }
 
@@ -554,6 +647,27 @@ const static VdpVideoMixerParameter mixer_params[] = {
 
 #define MIXER_FEATURES (sizeof(mixer_features) / sizeof(VdpVideoMixerFeature))
 
+
+static VdpStatus
+mixer_setup(vdpau_dev_t *vd, vdpau_mixer_t *vm)
+{
+  VdpStatus st;
+  int i;
+
+  for(i = 0; i < 4; i++)
+    vm->vm_surface_win[i] = VDP_INVALID_HANDLE;
+
+  void const *mixer_values[] = {&vm->vm_width, &vm->vm_height};
+
+  st = vd->vdp_video_mixer_create(vd->vd_dev,
+				  MIXER_FEATURES, mixer_features,
+				  2, mixer_params, mixer_values,
+				  &vm->vm_mixer);
+
+  return st;
+}
+
+
 /**
  *
  */
@@ -562,20 +676,14 @@ vdpau_mixer_create(vdpau_dev_t *vd, vdpau_mixer_t *vm, int width, int height)
 {
   VdpStatus st;
   VdpBool supported[MIXER_FEATURES];
-  int i;
 
   vm->vm_color_space = -1;
   vm->vm_vd = vd;
+  vm->vm_width = width;
+  vm->vm_height = height;
 
-  for(i = 0; i < 4; i++)
-    vm->vm_surface_win[i] = VDP_INVALID_HANDLE;
+  st = mixer_setup(vd, vm);
 
-  void const *mixer_values[] = {&width, &height};
-
-  st = vd->vdp_video_mixer_create(vd->vd_dev,
-				  MIXER_FEATURES, mixer_features,
-				  2, mixer_params, mixer_values,
-				  &vm->vm_mixer);
   if(st != VDP_STATUS_OK) {
     TRACE(TRACE_ERROR, "VDPAU", "Unable to create video mixer");
     return st;
@@ -598,19 +706,6 @@ vdpau_mixer_create(vdpau_dev_t *vd, vdpau_mixer_t *vm, int width, int height)
 
   vm->vm_enabled = 0;
 
-  
-#if 0
-  static const VdpVideoMixerFeature features[] = {
-    VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL};
-  static const VdpBool values[] = {1};
-
-  st = vd->vdp_video_mixer_set_feature_enables(gv->gv_vdpau_mixer,
-					       1, features, values);
-  if(st != VDP_STATUS_OK) {
-    TRACE(TRACE_ERROR, "VDPAU", "Unable to enable deinterlacer");
-  }
-#endif
-
   return VDP_STATUS_OK;
 }
 
@@ -621,7 +716,8 @@ vdpau_mixer_create(vdpau_dev_t *vd, vdpau_mixer_t *vm, int width, int height)
 void
 vdpau_mixer_deinit(vdpau_mixer_t *vm)
 {
-  vm->vm_vd->vdp_video_mixer_destroy(vm->vm_mixer);
+  if(vm->vm_mixer != VDP_INVALID_HANDLE)
+    vm->vm_vd->vdp_video_mixer_destroy(vm->vm_mixer);
 }
 
 

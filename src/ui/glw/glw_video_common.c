@@ -205,7 +205,7 @@ glw_video_dtor(glw_t *w)
  *
  */
 static void
-glw_video_newframe(glw_t *w)
+glw_video_newframe(glw_t *w, int flags)
 {
   glw_video_t *gv = (glw_video_t *)w;
   video_decoder_t *vd = gv->gv_vd;
@@ -213,12 +213,12 @@ glw_video_newframe(glw_t *w)
 
   hts_mutex_lock(&gv->gv_surface_mutex);
 
-  if(memcmp(&gv->gv_cfg_cur, &gv->gv_cfg_req, sizeof(glw_video_config_t))) {
+  if(memcmp(&gv->gv_cfg_cur, &gv->gv_cfg_req, sizeof(glw_video_config_t)))
     glw_video_surface_reconfigure(gv);
-  }
+
   hts_mutex_unlock(&gv->gv_surface_mutex);
 
-  pts = gv->gv_cfg_cur.gvc_engine->gve_newframe(gv, vd);
+  pts = gv->gv_cfg_cur.gvc_engine->gve_newframe(gv, vd, flags);
 
   glw_video_overlay_layout(gv, pts, vd);
 }
@@ -460,6 +460,8 @@ glw_video_configure(glw_video_t *gv,
 {
   glw_video_config_t gvc = {0};
 
+  gvc.gvc_valid = 1;
+
   gvc.gvc_engine = engine;
 
   if(wvec != NULL) {
@@ -500,13 +502,15 @@ glw_video_surface_t *
 glw_video_get_surface(glw_video_t *gv)
 {
   glw_video_surface_t *s;
-  
-  while((s = TAILQ_FIRST(&gv->gv_avail_queue)) == NULL &&
-	!(gv->w.glw_flags & GLW_DESTROYING))
-    hts_cond_wait(&gv->gv_avail_queue_cond, &gv->gv_surface_mutex);
 
-  if(s != NULL)
-    TAILQ_REMOVE(&gv->gv_avail_queue, s, gvs_link);
+  while((s = TAILQ_FIRST(&gv->gv_avail_queue)) == NULL) {
+    if(gv->w.glw_flags & GLW_DESTROYING)
+      return NULL;
+
+    hts_cond_wait(&gv->gv_avail_queue_cond, &gv->gv_surface_mutex);
+  }
+
+  TAILQ_REMOVE(&gv->gv_avail_queue, s, gvs_link);
   return s;
 }
 
@@ -534,7 +538,7 @@ glw_video_input(uint8_t * const data[], const int pitch[],
 {
   glw_video_t *gv = opaque;
 
-  gv->gv_dar = fi->dar;
+  gv->gv_dar = fi ? fi->dar : 0;
 
   hts_mutex_lock(&gv->gv_surface_mutex);
 
@@ -639,7 +643,7 @@ glw_video_surface_reconfigure(glw_video_t *gv)
  *
  */
 static int64_t
-blank_newframe(glw_video_t *gv, video_decoder_t *vd)
+blank_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
 {
   return AV_NOPTS_VALUE;
 }
@@ -664,9 +668,10 @@ blank_reset(glw_video_t *gv)
 /**
  *
  */
-static void
+static int
 blank_init(glw_video_t *gv)
 {
+  return 0;
 }
 
 /**

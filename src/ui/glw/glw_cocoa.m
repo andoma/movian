@@ -414,7 +414,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   glw_rctx_t rc;
   
   glw_lock(&gcocoa.gr);
-  glw_prepare_frame(&gcocoa.gr);
+  glw_prepare_frame(&gcocoa.gr, 0);
   
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
   

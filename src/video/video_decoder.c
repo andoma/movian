@@ -292,6 +292,7 @@ vd_thread(void *aux)
   int i;
   int run = 1;
   int reqsize = -1;
+  int reinit = 0;
   vd->vd_frame = avcodec_alloc_frame();
 
   hts_mutex_lock(&mp->mp_mutex);
@@ -339,6 +340,12 @@ vd_thread(void *aux)
       break;
 
     case MB_VIDEO:
+      if(reinit) {
+	reinit = 0;
+	if(mc->reinit != NULL)
+	  mc->reinit(mc);
+      }
+
       if(mc->data)
 	mc->data(mc, vd, mq, mb, reqsize);
       else
@@ -350,6 +357,10 @@ vd_thread(void *aux)
 
     case MB_REQ_OUTPUT_SIZE:
       reqsize = mb->mb_data32;
+      break;
+
+    case MB_REINITIALIZE:
+      reinit = 1;
       break;
 
 #ifdef CONFIG_DVD

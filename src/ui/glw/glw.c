@@ -490,7 +490,7 @@ glw_signal_handler_clean(glw_t *w)
  *
  */
 void
-glw_prepare_frame(glw_root_t *gr)
+glw_prepare_frame(glw_root_t *gr, int flags)
 {
   glw_t *w;
 
@@ -515,7 +515,7 @@ glw_prepare_frame(glw_root_t *gr)
   //  glw_cursor_layout_frame(gr);
 
   LIST_FOREACH(w, &gr->gr_every_frame_list, glw_every_frame_link)
-    w->glw_class->gc_newframe(w);
+    w->glw_class->gc_newframe(w, flags);
 
   while((w = LIST_FIRST(&gr->gr_active_flush_list)) != NULL) {
     LIST_REMOVE(w, glw_active_link);

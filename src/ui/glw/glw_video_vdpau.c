@@ -43,11 +43,23 @@
 #define VDPAU_PIXMAP_WIDTH  1920
 #define VDPAU_PIXMAP_HEIGHT 1080
 
+
+static void
+drain(glw_video_t *gv, struct glw_video_surface_queue *q)
+{
+  glw_video_surface_t *s;
+  while((s = TAILQ_FIRST(q)) != NULL) {
+    TAILQ_REMOVE(q, s, gvs_link);
+    TAILQ_INSERT_TAIL(&gv->gv_avail_queue, s, gvs_link);
+  }
+}
+
+
 /**
  *
  */
 static int64_t
-vdpau_newframe(glw_video_t *gv, video_decoder_t *vd0)
+vdpau_newframe(glw_video_t *gv, video_decoder_t *vd0, int flags)
 {
   glw_root_t *gr = gv->w.glw_root;
   vdpau_dev_t *vd = gr->gr_be.gbr_vdpau_dev;
@@ -55,7 +67,30 @@ vdpau_newframe(glw_video_t *gv, video_decoder_t *vd0)
   VdpStatus st;
   glw_video_surface_t *s;
   int64_t pts = AV_NOPTS_VALUE;
-  
+
+  if(flags & GLW_REINITIALIZE_VDPAU) {
+
+    int i;
+    for(i = 0; i < GLW_VIDEO_MAX_SURFACES; i++)
+      gv->gv_surfaces[i].gvs_vdpau_surface = VDP_INVALID_HANDLE;
+
+    gv->gv_vdpau_pq = VDP_INVALID_HANDLE;
+    gv->gv_vdpau_pqt = VDP_INVALID_HANDLE;
+    
+    gv->gv_cfg_cur.gvc_valid = 0;
+    
+    mp_send_cmd_head(mp, &mp->mp_video, MB_REINITIALIZE);
+
+    hts_mutex_lock(&gv->gv_surface_mutex);
+    
+    drain(gv, &gv->gv_displaying_queue);
+    drain(gv, &gv->gv_decoded_queue);
+    hts_cond_signal(&gv->gv_avail_queue_cond);
+    hts_mutex_unlock(&gv->gv_surface_mutex);
+    
+    return AV_NOPTS_VALUE;
+  }
+
   hts_mutex_lock(&gv->gv_surface_mutex);
 
   /* Remove frames from displaying queue if they are idle and push
@@ -67,11 +102,10 @@ vdpau_newframe(glw_video_t *gv, video_decoder_t *vd0)
 
     gv->gv_vdpau_running = 1;
 
-    vd->vdp_presentation_queue_query_surface_status(gv->gv_vdpau_pq,
-						    s->gvs_vdpau_surface,
-						    &qs, &t);
-    
-    if(qs == VDP_PRESENTATION_QUEUE_STATUS_IDLE) {
+    st = vd->vdp_presentation_queue_query_surface_status(gv->gv_vdpau_pq,
+							 s->gvs_vdpau_surface,
+							 &qs, &t);
+    if(st != VDP_STATUS_OK || qs == VDP_PRESENTATION_QUEUE_STATUS_IDLE) {
       TAILQ_REMOVE(&gv->gv_displaying_queue, s, gvs_link);
       TAILQ_INSERT_TAIL(&gv->gv_avail_queue, s, gvs_link);
       hts_cond_signal(&gv->gv_avail_queue_cond);
@@ -102,7 +136,6 @@ vdpau_newframe(glw_video_t *gv, video_decoder_t *vd0)
     st = vd->vdp_presentation_queue_display(gv->gv_vdpau_pq,
 					    s->gvs_vdpau_surface, 
 					    0, 0, 0);
-
     if(pts != AV_NOPTS_VALUE)
       gv->gv_nextpts = pts + s->gvs_duration;
 
@@ -199,8 +232,11 @@ vdpau_reset(glw_video_t *gv)
     surface_reset(vd, gv, &gv->gv_surfaces[i]);
 
   vdpau_mixer_deinit(&gv->gv_vm);
-  vd->vdp_presentation_queue_destroy(gv->gv_vdpau_pq);
-  vd->vdp_presentation_queue_target_destroy(gv->gv_vdpau_pqt);
+  if(gv->gv_vdpau_pq != VDP_INVALID_HANDLE)
+    vd->vdp_presentation_queue_destroy(gv->gv_vdpau_pq);
+  if(gv->gv_vdpau_pqt != VDP_INVALID_HANDLE)
+    vd->vdp_presentation_queue_target_destroy(gv->gv_vdpau_pqt);
+
   glXDestroyPixmap(vd->vd_dpy, gv->gv_glx_pixmap);
   XFreePixmap(vd->vd_dpy, gv->gv_xpixmap);
 
@@ -212,7 +248,7 @@ vdpau_reset(glw_video_t *gv)
 /**
  *
  */
-static void
+static int
 surface_init(vdpau_dev_t *vd, 
 	     glw_video_t *gv,
 	     glw_video_surface_t *gvs,
@@ -226,9 +262,10 @@ surface_init(vdpau_dev_t *vd,
 				    &gvs->gvs_vdpau_surface);
 
   if(r != VDP_STATUS_OK)
-    gvs->gvs_vdpau_surface = VDP_INVALID_HANDLE;
+    return -1;
 
   TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvs, gvs_link);
+  return 0;
 }
 
 
@@ -257,7 +294,7 @@ int glx_pixmap_attribs[] = {
 /**
  *
  */
-static void
+static int
 vdpau_init(glw_video_t *gv)
 {
   const glw_video_config_t *gvc = &gv->gv_cfg_cur;
@@ -269,13 +306,16 @@ vdpau_init(glw_video_t *gv)
   for(i = 0; i < GLW_VIDEO_MAX_SURFACES; i++)
     gv->gv_surfaces[i].gvs_vdpau_surface = VDP_INVALID_HANDLE;
 
+  gv->gv_vdpau_pq = VDP_INVALID_HANDLE;
+  gv->gv_vdpau_pqt = VDP_INVALID_HANDLE;
+
   gv->gv_vdpau_initialized = 0;
 
   /* Pixmap */
   fbconfig = glXChooseFBConfig(vd->vd_dpy, 0, pixmap_attribs, &nconfs);
   if(nconfs < 1) {
     TRACE(TRACE_ERROR, "VDPAU", "Unable to find fbconfig for pixmap");
-    return;
+    return -1;
   }
 
   XWindowAttributes wndattribs;
@@ -294,7 +334,7 @@ vdpau_init(glw_video_t *gv)
 
   if(st != VDP_STATUS_OK) {
     TRACE(TRACE_ERROR, "VDPAU", "Unable to create pixmap target");
-    return;
+    return -1;
   }
 
   st = vd->vdp_presentation_queue_create(vd->vd_dev, gv->gv_vdpau_pqt,
@@ -302,26 +342,28 @@ vdpau_init(glw_video_t *gv)
 
   if(st != VDP_STATUS_OK) {
     TRACE(TRACE_ERROR, "VDPAU", "Unable to create presentation queue");
-    return;
+    return -1;
   }
 
   /* Video mixer */
   st = vdpau_mixer_create(vd, &gv->gv_vm, 
 			  gvc->gvc_width[0], gvc->gvc_height[0]);
+			  
 
   if(st != VDP_STATUS_OK) {
     TRACE(TRACE_ERROR, "VDPAU", "Unable to create video mixer");
-    return;
+    return -1;
   }
   
 
   /* Surfaces */
-  for(i = 0; i < gvc->gvc_nsurfaces; i++)
-    surface_init(vd, gv, &gv->gv_surfaces[i], gvc);
-
+  for(i = 0; i < gvc->gvc_nsurfaces; i++) {
+    if(surface_init(vd, gv, &gv->gv_surfaces[i], gvc)) {
+      return -1;
+    }
+  }
   gv->gv_nextpts = AV_NOPTS_VALUE;
-
-
+  return 0;
 }
 
 
@@ -356,8 +398,10 @@ glw_video_input_vdpau(glw_video_t *gv,
 		       gv->gv_rwidth ?: fi->width,
 		       gv->gv_rheight ?: fi->height };
 
-  if(glw_video_configure(gv, &glw_video_vdpau, wvec, hvec, 4, 0) ||
-     (s = glw_video_get_surface(gv)) == NULL)
+  if(glw_video_configure(gv, &glw_video_vdpau, wvec, hvec, 4, 0))
+    return;
+
+  if((s = glw_video_get_surface(gv)) == NULL)
     return;
 
   vdpau_mixer_set_color_matrix(vm, fi);

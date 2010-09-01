@@ -92,6 +92,8 @@ typedef struct glw_x11 {
 
   void *nvidia;
 
+  int vdpau_preempted;
+
 } glw_x11_t;
 
 #define AUTOHIDE_TIMEOUT 100 // XXX: in frames.. bad
@@ -544,6 +546,19 @@ wm_set_fullscreen(glw_x11_t *gx11, int on)
 /**
  *
  */
+static void
+vdpau_preempted(void *aux)
+{
+  glw_x11_t *gx11 = aux;
+  gx11->vdpau_preempted = 1;
+
+  
+}
+
+
+/**
+ *
+ */
 static int
 glw_x11_init(glw_x11_t *gx11)
 {
@@ -623,7 +638,8 @@ glw_x11_init(glw_x11_t *gx11)
     gx11->gr.gr_be.gbr_release_tex_image = (PFNGLXRELEASETEXIMAGEEXTPROC)
       glXGetProcAddress((const GLubyte*)"glXReleaseTexImageEXT");
 
-    gx11->gr.gr_be.gbr_vdpau_dev = vdpau_init_x11(gx11->display, gx11->screen);
+    gx11->gr.gr_be.gbr_vdpau_dev = vdpau_init_x11(gx11->display, gx11->screen,
+						  vdpau_preempted, gx11);
 
   } else {
     TRACE(TRACE_DEBUG, "VDPAU", 
@@ -1071,7 +1087,18 @@ glw_x11_mainloop(glw_x11_t *gx11)
     }
 
     glw_lock(&gx11->gr);
-    glw_prepare_frame(&gx11->gr);
+
+    int flags = 0;
+
+    if(gx11->vdpau_preempted) {
+      if(!vdpau_reinit_x11(gx11->gr.gr_be.gbr_vdpau_dev)) {
+	TRACE(TRACE_DEBUG, "VDPAU", "X11: VDPAU Reinitialized");
+	gx11->vdpau_preempted = 0;
+	flags |= GLW_REINITIALIZE_VDPAU;
+      }
+    }
+
+    glw_prepare_frame(&gx11->gr, flags);
     layout_draw(gx11);
     glw_unlock(&gx11->gr);
 

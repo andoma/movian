@@ -38,9 +38,17 @@ typedef struct vdpau_dev {
   VdpDevice vd_dev;
 
   Display *vd_dpy;
+  int vd_screen;
+
+  void (*vd_preempted)(void *opaque);
+  void *vd_opaque;
+
+  hts_mutex_t vd_mutex;
 
   PFNGLXBINDTEXIMAGEEXTPROC vd_glXBindTexImage;
   
+  VdpPreemptionCallbackRegister *vdp_preemption_callback_register;
+
   VdpGetErrorString *vdp_get_error_string;
   VdpVideoSurfaceCreate *vdp_video_surface_create;
   VdpVideoSurfaceDestroy *vdp_video_surface_destroy;
@@ -71,6 +79,8 @@ typedef struct vdpau_dev {
   VdpVideoMixerSetAttributeValues *vdp_video_mixer_set_attribute_values;
   VdpVideoMixerQueryFeatureSupport *vdp_video_mixer_query_feature_support;
   VdpGenerateCSCMatrix *vdp_generate_csc_matrix;
+
+
 
 } vdpau_dev_t;
 
@@ -109,6 +119,12 @@ typedef struct vdpau_codec {
   int vc_b_age;
   int vc_age[2];
 
+  int vc_width;
+  int vc_height;
+  int vc_refframes;
+
+  VdpDecoderProfile vc_profile;
+
 } vdpau_codec_t;
 
 /**
@@ -120,6 +136,9 @@ typedef struct vdpau_mixer {
   VdpVideoMixer vm_mixer;
   VdpVideoSurface vm_surface_win[4];
 
+  int vm_width;
+  int vm_height;
+
   int vm_caps;
   int vm_enabled;
 
@@ -130,7 +149,10 @@ typedef struct vdpau_mixer {
 
 } vdpau_mixer_t;
 
-vdpau_dev_t *vdpau_init_x11(Display *dpy, int screen);
+vdpau_dev_t *vdpau_init_x11(Display *dpy, int screen,
+			    void (*preempted)(void *opaque), void *opaque);
+
+VdpStatus vdpau_reinit_x11(vdpau_dev_t *vd);
 
 int vdpau_get_buffer(struct AVCodecContext *c, AVFrame *pic);
 

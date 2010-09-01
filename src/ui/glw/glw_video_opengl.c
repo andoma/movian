@@ -194,7 +194,7 @@ surface_init(glw_video_t *gv, glw_video_surface_t *gvs,
 /**
  *
  */
-static void
+static int
 yuvp_init(glw_video_t *gv)
 {
   const glw_video_config_t *gvc = &gv->gv_cfg_cur;
@@ -202,6 +202,7 @@ yuvp_init(glw_video_t *gv)
 
   for(i = 0; i < gvc->gvc_nsurfaces; i++)
     surface_init(gv, &gv->gv_surfaces[i], gvc);
+  return 0;
 }
 
 
@@ -403,7 +404,7 @@ gv_compute_blend(glw_video_t *gv, glw_video_surface_t *sa,
  *
  */
 static int64_t
-yuvp_newframe(glw_video_t *gv, video_decoder_t *vd)
+yuvp_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
 {
   glw_root_t *gr = gv->w.glw_root;
   glw_video_surface_t *sa, *sb, *s;

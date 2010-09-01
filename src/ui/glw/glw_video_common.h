@@ -47,6 +47,8 @@ typedef struct {
 #define GVC_YHALF     0x1
 #define GVC_CUTBORDER 0x2
 
+  int gvc_valid;
+
 } glw_video_config_t;
 
 
@@ -198,11 +200,11 @@ typedef struct glw_video_engine {
   const char *gve_name;
   void (*gve_render)(glw_video_t *gv, glw_rctx_t *rc);
 
-  int64_t (*gve_newframe)(glw_video_t *gv, video_decoder_t *vd);
+  int64_t (*gve_newframe)(glw_video_t *gv, video_decoder_t *vd, int flags);
 
   void (*gve_reset)(glw_video_t *gv);
 
-  void (*gve_init)(glw_video_t *gv);
+  int (*gve_init)(glw_video_t *gv);
 
 } glw_video_engine_t;
 

@@ -390,7 +390,7 @@ typedef struct glw_class {
   /**
    * Invoked every new frame
    */
-  void (*gc_newframe)(struct glw *w);
+  void (*gc_newframe)(struct glw *w, int flags);
 
   /**
    * Return true if the widget is ready to be displayed
@@ -743,7 +743,9 @@ void glw_flush(glw_root_t *gr);
 
 void *glw_get_opaque(glw_t *w, glw_callback_t *func);
 
-void glw_prepare_frame(glw_root_t *gr);
+#define GLW_REINITIALIZE_VDPAU 0x1
+
+void glw_prepare_frame(glw_root_t *gr, int flags);
 
 void glw_cond_wait(glw_root_t *gr, hts_cond_t *c);
 
