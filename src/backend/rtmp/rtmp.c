@@ -46,9 +46,10 @@ typedef struct {
 
   int hold;
   int lost_focus;
-  int forcerestart;
+
   int64_t seekbase;
   int epoch;
+  int64_t seekpos;
 
 } rtmp_t;
 
@@ -139,9 +140,14 @@ static int64_t
 video_seek(rtmp_t *r, media_pipe_t *mp, media_buf_t **mbp,
 	   int64_t pos, int backward, const char *txt)
 {
+  if(pos < 0)
+    pos = 0;
+
   TRACE(TRACE_DEBUG, "Video", "seek %s to %.2f", txt, pos / 1000000.0);
  
   RTMP_SendSeek(r->r, pos / 1000);
+
+  r->seekpos = pos;
 
   mp->mp_video.mq_seektarget = pos;
   mp->mp_audio.mq_seektarget = pos;
@@ -179,9 +185,8 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
     mp_send_cmd_head(mp, &mp->mp_audio, r->hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
     mp_set_playstatus_by_hold(mp, r->hold, NULL);
     r->lost_focus = 0;
-    if(!r->hold)
-      r->forcerestart = 1;
     
+
   } else if(event_is_type(e, EVENT_MP_NO_LONGER_PRIMARY)) {
 
     r->hold = 1;
@@ -198,7 +203,6 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
       mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PLAY);
       mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PLAY);
       mp_set_playstatus_by_hold(mp, r->hold, NULL);
-      
     }
     
   } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
@@ -208,7 +212,7 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
     mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PAUSE);
     mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PAUSE);
     mp_set_playstatus_by_hold(mp, r->hold, e->e_payload);
-    
+
   } else if(event_is_type(e, EVENT_CURRENT_PTS)) {
     event_ts_t *ets = (event_ts_t *)e;
     
@@ -251,17 +255,18 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
 static event_t *
 sendpkt(rtmp_t *r, media_queue_t *mq, media_codec_t *mc,
 	int64_t dts, int64_t pts, int64_t time, const void *data, 
-	size_t size, int skip, int dt)
+	size_t size, int skip, int dt, int duration)
 {
   event_t *e = NULL;
   media_buf_t *mb = media_buf_alloc();
 
   mb->mb_data_type = dt;
-  mb->mb_duration = 0;
+  mb->mb_duration = duration;
   mb->mb_cw = media_codec_ref(mc);
   mb->mb_time = time;
   mb->mb_dts = dts;
   mb->mb_pts = pts;
+  mb->mb_skip = skip;
 
   mb->mb_data = malloc(size +   FF_INPUT_BUFFER_PADDING_SIZE);
   memset(mb->mb_data + size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
@@ -364,23 +369,18 @@ get_packet_v(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
   int64_t pts = 1000LL * (dts + d);
   dts = 1000LL * dts;
 
-
-  if(d < 0) {
+  if(d < 0 || dts < r->seekpos) {
     skip = 1;
     r->in_seek_skip = 1;
-    //      printf("VIDEO: %20d %d SKIP\n", dts, d);
   } else if(r->in_seek_skip) {
     skip = 2;
     r->in_seek_skip = 0;
-    //      printf("VIDEO: %20d %d SKIP LAST\n", dts, d);
-  } else {
-    //      printf("VIDEO: %20d %d\n", dts, d);
   }
 
   r->lastdts = dts;
 
   return sendpkt(r, &r->mp->mp_video, r->vcodec, dts, pts, AV_NOPTS_VALUE,
-		 data, size, skip, MB_VIDEO);
+		 data, size, skip, MB_VIDEO, r->vframeduration);
 }
 
 
@@ -449,9 +449,13 @@ get_packet_a(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
 
   dts *= 1000;
 
+  if(dts < r->seekpos) {
+    return NULL;
+  }
+
   if(mc->parser_ctx == NULL)
     return sendpkt(r, &mp->mp_audio, mc, 
-		   dts, dts, dts, data, size, 0, MB_AUDIO);
+		   dts, dts, dts, data, size, 0, MB_AUDIO, 0);
 
   while(size > 0) {
     int outlen;
@@ -464,7 +468,7 @@ get_packet_a(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
 			   mc->parser_ctx->dts,
 			   mc->parser_ctx->pts, mc->parser_ctx->dts,
 			   outbuf, outlen, 0,
-			   MB_AUDIO);
+			   MB_AUDIO, 0);
       if(e != NULL)
 	return e;
     }
@@ -492,9 +496,9 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
   r->mp = mp;
   r->hold = 0;
   r->lost_focus = 0;
-  r->forcerestart = 0;
   r->epoch = 1;
   r->seekbase = AV_NOPTS_VALUE;
+  r->seekpos = AV_NOPTS_VALUE;
 
   mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
   mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
@@ -516,8 +520,7 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 	break;
       }
 
-      if(r->forcerestart || ret == 0) {
-	r->forcerestart = 0;
+      if(ret == 0) {
 	RTMP_Close(r->r);
 	  
 	RTMP_Init(r->r);
@@ -525,7 +528,7 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 	memset(&p, 0, sizeof(p));
 
 	TRACE(TRACE_DEBUG, "RTMP", "Reconnecting stream at pos %d", 
-	      r->lastdts);
+	      r->seekbase);
 
 	if(!RTMP_SetupURL(r->r, url)) {
 	  snprintf(errbuf, errlen, "Unable to setup RTMP session");
