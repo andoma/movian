@@ -456,6 +456,7 @@ nav_open_errorf(prop_t *root, const char *fmt, ...)
   
   prop_t *src = prop_create(root, "model");
   prop_set_string(prop_create(src, "type"), "openerror");
+  prop_set_int(prop_create(src, "loading"), 0);
   prop_set_string(prop_create(src, "error"), buf);
 }
 
