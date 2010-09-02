@@ -1052,6 +1052,8 @@ typedef struct browse_helper {
   prop_t *tracks;
   prop_t *model;
   prop_t *loading;
+  prop_t *type;
+  prop_t *error;
   char *playme;
 } browse_helper_t;
 
@@ -1065,8 +1067,18 @@ bh_free(browse_helper_t *bh)
   prop_ref_dec(bh->loading);
   prop_ref_dec(bh->tracks);
   prop_ref_dec(bh->model);
+  prop_ref_dec(bh->type);
+  prop_ref_dec(bh->error);
   free(bh->playme);
   free(bh);
+}
+
+
+static void
+bh_error(browse_helper_t *bh, const char *err)
+{
+  prop_set_string(bh->type, "openerror");
+  prop_set_string(bh->error, err);
 }
 
 
@@ -1086,6 +1098,12 @@ bh_create(prop_t *model, const char *playme)
 
   bh->loading = prop_create(model, "loading");
   prop_ref_inc(bh->loading);
+
+  bh->type = prop_create(model, "type");
+  prop_ref_inc(bh->type);
+
+  bh->error = prop_create(model, "error");
+  prop_ref_inc(bh->error);
   
   pnf = prop_nf_create(prop_create(model, "nodes"),
 		       bh->tracks,
@@ -1118,30 +1136,34 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
   int i, ntracks;
   char url[URL_MAX];
 
-  ntracks = f_sp_albumbrowse_num_tracks(result);
 
-  for(i = 0; i < ntracks; i++) {
-    track = f_sp_albumbrowse_track(result, i);
+  if(f_sp_albumbrowse_error(result)) {
+    bh_error(bh, "Album not found");
+  } else {
 
-    p = prop_create(NULL, NULL);
+    ntracks = f_sp_albumbrowse_num_tracks(result);
 
-    spotify_make_link(f_sp_link_create_from_track(track, 0), 
-		      url, sizeof(url));
+    for(i = 0; i < ntracks; i++) {
+      track = f_sp_albumbrowse_track(result, i);
 
-    prop_set_string(prop_create(p, "url"), url);
-    prop_set_string(prop_create(p, "type"), "audio");
-    metadata_create(prop_create(p, "metadata"), METADATA_TRACK, track);
+      p = prop_create(NULL, NULL);
 
-    if(prop_set_parent(p, bh->tracks))
-      prop_destroy(p);
+      spotify_make_link(f_sp_link_create_from_track(track, 0), 
+			url, sizeof(url));
 
-    if(bh->playme != NULL && !strcmp(url, bh->playme))
-      playqueue_load_with_source(p, bh->model);
+      prop_set_string(prop_create(p, "url"), url);
+      prop_set_string(prop_create(p, "type"), "audio");
+      metadata_create(prop_create(p, "metadata"), METADATA_TRACK, track);
+
+      if(prop_set_parent(p, bh->tracks))
+	prop_destroy(p);
+
+      if(bh->playme != NULL && !strcmp(url, bh->playme))
+	playqueue_load_with_source(p, bh->model);
+    }
+    spotify_metadata_updated(spotify_session);
   }
-
   f_sp_albumbrowse_release(result);
-  spotify_metadata_updated(spotify_session);
-
   prop_set_int(bh->loading, 0);
   bh_free(bh);
 }
@@ -1234,54 +1256,59 @@ spotify_browse_artist_callback(sp_artistbrowse *result, void *userdata)
   sp_track *t;
   album_t *av;
 
-  // libspotify does not return the albums in any particular order.
-  // thus, we need to do some sorting and filtering
+  if(f_sp_artistbrowse_error(result)) {
+    bh_error(bh, "Artist not found");
+  } else {
 
-  ntracks = f_sp_artistbrowse_num_tracks(result);
-  artist = f_sp_artistbrowse_artist(result);
+    // libspotify does not return the albums in any particular order.
+    // thus, we need to do some sorting and filtering
 
-  for(i = 0; i < ntracks; i++) {
-    album = f_sp_track_album(f_sp_artistbrowse_track(result, i));
-    if(album == prev || !f_sp_album_is_available(album))
-      continue;
-    nalbums++;
-    prev = album;
-  }
+    ntracks = f_sp_artistbrowse_num_tracks(result);
+    artist = f_sp_artistbrowse_artist(result);
 
-  av = alloca(nalbums * sizeof(album_t));
-  j = 0;
-  prev = NULL;
-  for(i = 0; i < ntracks; i++) {
-    t = f_sp_artistbrowse_track(result, i);
-    album = f_sp_track_album(t);
-
-    if(!f_sp_album_is_available(album))
-      continue;
-
-    if(album != prev) {
-      av[j].type = my_album_type(album, artist);
-      av[j].duration = 0;
-      av[j].tracks = 0;
-      av[j].firsttrack = i;
-      av[j++].album = album;
+    for(i = 0; i < ntracks; i++) {
+      album = f_sp_track_album(f_sp_artistbrowse_track(result, i));
+      if(album == prev || !f_sp_album_is_available(album))
+	continue;
+      nalbums++;
       prev = album;
     }
-    av[j-1].duration += f_sp_track_duration(t);
-    av[j-1].tracks++;
-  }
 
-  assert(j == nalbums);
+    av = alloca(nalbums * sizeof(album_t));
+    j = 0;
+    prev = NULL;
+    for(i = 0; i < ntracks; i++) {
+      t = f_sp_artistbrowse_track(result, i);
+      album = f_sp_track_album(t);
 
-  qsort(av, nalbums, sizeof(album_t), album_cmp);
+      if(!f_sp_album_is_available(album))
+	continue;
 
-  for(i = 0; i < nalbums; i++) {
-    album_t *a = av + i;
-    artist_add_album_tracks(result, a->firsttrack, a->tracks, bh->tracks);
+      if(album != prev) {
+	av[j].type = my_album_type(album, artist);
+	av[j].duration = 0;
+	av[j].tracks = 0;
+	av[j].firsttrack = i;
+	av[j++].album = album;
+	prev = album;
+      }
+      av[j-1].duration += f_sp_track_duration(t);
+      av[j-1].tracks++;
+    }
+
+    assert(j == nalbums);
+
+    qsort(av, nalbums, sizeof(album_t), album_cmp);
+
+    for(i = 0; i < nalbums; i++) {
+      album_t *a = av + i;
+      artist_add_album_tracks(result, a->firsttrack, a->tracks, bh->tracks);
+    }
+
+    spotify_metadata_updated(spotify_session);
   }
 
   f_sp_artistbrowse_release(result);
-  spotify_metadata_updated(spotify_session);
-
   prop_set_int(bh->loading, 0);
   bh_free(bh);
 }
