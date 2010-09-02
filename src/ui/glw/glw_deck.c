@@ -45,8 +45,6 @@ static void
 clear_constraints(glw_t *w)
 {
   glw_set_constraints(w, 0, 0, 0, 0, GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
-
-  glw_signal0(w, GLW_SIGNAL_FULLWINDOW_CONSTRAINT_CHANGED, NULL);
 }
 
 
@@ -57,16 +55,7 @@ clear_constraints(glw_t *w)
 static void
 glw_deck_update_constraints(glw_t *w)
 {
-  glw_t *c = w->glw_selected;
-
-  int was_fullscreen = w->glw_flags & GLW_CONSTRAINT_F;
-
-  glw_copy_constraints(w, c);
-
-  if((w->glw_flags & GLW_CONSTRAINT_F) == was_fullscreen)
-    return;
-
-  glw_signal0(w, GLW_SIGNAL_FULLWINDOW_CONSTRAINT_CHANGED, NULL);
+  glw_copy_constraints(w, w->glw_selected);
 }
 
 
