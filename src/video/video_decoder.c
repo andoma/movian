@@ -289,7 +289,6 @@ vd_thread(void *aux)
   media_queue_t *mq = &mp->mp_video;
   media_buf_t *mb;
   media_codec_t *mc;
-  int i;
   int run = 1;
   int reqsize = -1;
   int reinit = 0;
@@ -393,11 +392,6 @@ vd_thread(void *aux)
   }
 
   hts_mutex_unlock(&mp->mp_mutex);
-
-  /* Free YADIF frames */
-  if(vd->vd_yadif_width)
-    for(i = 0; i < 3; i++)
-      avpicture_free(&vd->vd_yadif_pic[i]);
 
   /* Free ffmpeg frame */
   av_free(vd->vd_frame);

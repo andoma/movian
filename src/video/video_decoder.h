@@ -110,17 +110,9 @@ typedef struct video_decoder {
   kalman_t vd_avfilter;
   float vd_avdiff_x;
 
-  /* Deinterlacing & YADIF */
+  /* Deinterlacing */
 
   int vd_interlaced; // Used to keep deinterlacing on
-
-  AVPicture vd_yadif_pic[3];
-  int vd_yadif_width;
-  int vd_yadif_height;
-  int vd_yadif_pix_fmt;
-  int vd_yadif_phase;
-  
-
 
   int vd_may_update_avdiff;
 
