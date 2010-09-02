@@ -749,7 +749,7 @@ gds_node_sub(void *opaque, prop_event_t event, ...)
     clear_model(gds, 1);
     break;
 
-  case PROP_REQ_DELETE_MULTI:
+  case PROP_REQ_DELETE_VECTOR:
   case PROP_WANT_MORE_CHILDS:
   case PROP_HAVE_MORE_CHILDS:
     break;
@@ -856,16 +856,16 @@ gu_dir_store_delete_multi(GuDirStore *gds, GtkTreeIter *iter, int len)
 {
   int i;
   gds_row_t *gr;
-  prop_t **vec = malloc((1 + len) * sizeof(prop_t *));
+
+  prop_vec_t *pv = prop_vec_create(len);
 
   for(i = 0; i < len; i++) {
     gr = iter[i].user_data;
-    vec[i] = gr->gr_root;
+    pv = prop_vec_append(pv, gr->gr_root);
   }
-  vec[i] = NULL;
 
-  prop_request_delete_multi(vec);
-  free(vec);
+  prop_request_delete_multi(pv);
+  prop_vec_release(pv);
 }
 
 void

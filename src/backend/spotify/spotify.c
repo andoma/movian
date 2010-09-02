@@ -1875,11 +1875,11 @@ static sp_playlist_callbacks pl_callbacks_withtracks = {
  *
  */
 static void
-spotify_delete_tracks(playlist_t *pl, prop_t **pv)
+spotify_delete_tracks(playlist_t *pl, prop_vec_t *pv)
 {
   playlist_track_t *plt;
   int *targets;
-  int k = 0, i, j = 0, m = 0, ntracks = prop_pvec_len(pv);
+  int k = 0, i, j = 0, m = 0, ntracks = prop_vec_len(pv);
   if(ntracks == 0)
     return;
 
@@ -1888,7 +1888,7 @@ spotify_delete_tracks(playlist_t *pl, prop_t **pv)
   for(i = 0; i < pl->pl_tracks.size; i++) {
     plt = pl->pl_tracks.vec[i];
     for(j = k; j < ntracks; j++) {
-      if(pv[j] == plt->plt_prop_root) {
+      if(prop_vec_get(pv, j) == plt->plt_prop_root) {
 	if(j == k)
 	  k++;
 	targets[m++] = i;
@@ -1917,8 +1917,8 @@ playlist_node_callback(void *opaque, prop_event_t event, ...)
   default:
     break;
 
-  case PROP_REQ_DELETE_MULTI:
-    spotify_delete_tracks(pl, va_arg(ap, prop_t **));
+  case PROP_REQ_DELETE_VECTOR:
+    spotify_delete_tracks(pl, va_arg(ap, prop_vec_t *));
     break;
   }
 }

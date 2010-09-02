@@ -75,14 +75,12 @@ static void
 settings_set_url(prop_t *p)
 {
   char url[URL_MAX];
-  prop_t **a;
+  prop_vec_t *a;
   int i;
   const char *slash = "";
 
   a = prop_get_ancestors(p);
-  i = 0;
-  while(a[i] != NULL)
-    i++;
+  i = prop_vec_len(a);
 
   assert(i > 3);
   i-=4;
@@ -92,12 +90,12 @@ settings_set_url(prop_t *p)
   while(i >= 0) {
     
     snprintf(url + strlen(url), sizeof(url) - strlen(url), 
-	     "%s%s", slash, prop_get_name(a[i]));
+	     "%s%s", slash, prop_get_name(prop_vec_get(a, i)));
     slash="/";
     i-=3;
   }
 
-  prop_pvec_free(a);
+  prop_vec_release(a);
   prop_set_string(prop_create(p, "url"), url);
 }
 

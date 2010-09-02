@@ -555,12 +555,13 @@ nf_add_node(prop_nf_t *nf, prop_t *node, nfnode_t *b)
  *
  */
 static void
-nf_add_nodes(prop_nf_t *nf, prop_t **pv)
+nf_add_nodes(prop_nf_t *nf, prop_vec_t *pv)
 {
+  int i;
   nfnode_t *nfn;
-  prop_t *p;
 
-  while((p = *pv++) != NULL) {
+  for(i = 0; i < prop_vec_len(pv); i++) {
+    prop_t *p = prop_vec_get(pv, i);
     nfn = calloc(1, sizeof(nfnode_t));
 
     prop_tag_set(p, nf, nfn);
@@ -729,8 +730,8 @@ prop_nf_src_cb(void *opaque, prop_event_t event, ...)
     nf_add_node(nf, va_arg(ap, prop_t *), NULL);
     break;
 
-  case PROP_ADD_CHILD_MULTI:
-    nf_add_nodes(nf, va_arg(ap, prop_t **));
+  case PROP_ADD_CHILD_VECTOR:
+    nf_add_nodes(nf, va_arg(ap, prop_vec_t *));
     break;
 
   case PROP_ADD_CHILD_BEFORE:
@@ -755,7 +756,7 @@ prop_nf_src_cb(void *opaque, prop_event_t event, ...)
     nf_clear(nf);
     break;
 
-  case PROP_REQ_DELETE_MULTI:
+  case PROP_REQ_DELETE_VECTOR:
     break;
 
   case PROP_DESTROYED:
@@ -785,22 +786,22 @@ prop_nf_src_cb(void *opaque, prop_event_t event, ...)
  *
  */
 static void
-nf_translate_del_multi(prop_nf_t *nf, prop_t **pv)
+nf_translate_del_multi(prop_nf_t *nf, prop_vec_t *in)
 {
   prop_t *p;
-  int i, len = prop_pvec_len(pv);
+  int i, len = prop_vec_len(in);
+
+  prop_vec_t *out = prop_vec_create(len);
 
   for(i = 0; i < len; i++) {
-    p = pv[i];
+    p = prop_vec_get(in, i);
     while(p->hp_originator != NULL)
       p = p->hp_originator;
-    prop_ref_inc(p);
-    prop_ref_dec(pv[i]);
-    pv[i] = p;
+    out = prop_vec_append(out, p);
   }
 
-  prop_notify_childv(pv, nf->src, PROP_REQ_DELETE_MULTI, nf->srcsub);
-
+  prop_notify_childv(out, nf->src, PROP_REQ_DELETE_VECTOR, nf->srcsub);
+  prop_vec_release(out);
 }
 
 /**
@@ -815,8 +816,8 @@ prop_nf_dst_cb(void *opaque, prop_event_t event, ...)
   va_start(ap, event);
 
   switch(event) {
-  case PROP_REQ_DELETE_MULTI:
-    nf_translate_del_multi(nf, va_arg(ap, prop_t **));
+  case PROP_REQ_DELETE_VECTOR:
+    nf_translate_del_multi(nf, va_arg(ap, prop_vec_t *));
     break;
 
   case PROP_DESTROYED:

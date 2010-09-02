@@ -32,6 +32,20 @@ typedef struct prop prop_t;
 typedef struct prop_sub prop_sub_t;
 struct pixmap;
 
+
+/**
+ *
+ */
+typedef struct prop_vec {
+  int pv_refcount;
+  int pv_capacity;
+  int pv_length;
+  struct prop *pv_vec[0];
+} prop_vec_t;
+
+
+
+
 #define PROP_ADD_SELECTED 0x1
 
 typedef enum {
@@ -45,12 +59,12 @@ typedef enum {
 
   PROP_ADD_CHILD,
   PROP_ADD_CHILD_BEFORE,
-  PROP_ADD_CHILD_MULTI,
+  PROP_ADD_CHILD_VECTOR,
   PROP_DEL_CHILD,
   PROP_MOVE_CHILD,
   PROP_SELECT_CHILD,
   PROP_REQ_NEW_CHILD,
-  PROP_REQ_DELETE_MULTI,
+  PROP_REQ_DELETE_VECTOR,
   PROP_DESTROYED,
   PROP_EXT_EVENT,
   PROP_SUBSCRIPTION_MONITOR_ACTIVE,
@@ -201,7 +215,7 @@ int prop_set_parent_ex(prop_t *p, prop_t *parent, prop_t *before,
      
 #define prop_set_parent(p, parent) prop_set_parent_ex(p, parent, NULL, NULL)
 
-void prop_set_parent_multi(prop_t **pv, prop_t *parent);
+void prop_set_parent_vector(prop_vec_t *pv, prop_t *parent);
 
 void prop_unparent_ex(prop_t *p, prop_sub_t *skipme);
 
@@ -225,7 +239,7 @@ void prop_unselect_ex(prop_t *parent, prop_sub_t *skipme);
 
 void prop_destroy_childs(prop_t *parent);
 
-prop_t **prop_get_ancestors(prop_t *p);
+prop_vec_t *prop_get_ancestors(prop_t *p);
 
 prop_t **prop_get_childs(prop_t *p, int *num);
 
@@ -236,7 +250,7 @@ void prop_request_new_child(prop_t *p);
 
 void prop_request_delete(prop_t *p);
 
-void prop_request_delete_multi(prop_t **vec);
+void prop_request_delete_multi(prop_vec_t *pv);
 
 prop_courier_t *prop_courier_create_thread(hts_mutex_t *entrymutex,
 					   const char *name);
@@ -263,11 +277,28 @@ htsmsg_t *prop_tree_to_htsmsg(prop_t *p);
 
 void prop_send_ext_event(prop_t *p, event_t *e);
 
-void prop_pvec_free(prop_t **a);
 
-int prop_pvec_len(prop_t **src);
+/**
+ * Property vectors
+ */
+prop_vec_t *prop_vec_create(int capacity) 
+  __attribute__ ((malloc));
 
-prop_t **prop_pvec_clone(prop_t **src);
+prop_vec_t *prop_vec_append(prop_vec_t *pv, prop_t *p)
+  __attribute__ ((warn_unused_result));
+
+prop_vec_t *prop_vec_addref(prop_vec_t *pv);
+
+void prop_vec_release(prop_vec_t *pv);
+
+void prop_vec_destroy_entries(prop_vec_t *pv);
+
+
+#define prop_vec_get(pv, idx) ((pv)->pv_vec[idx])
+
+#define prop_vec_len(pv) ((pv)->pv_length)
+
+
 
 const char *prop_get_name(prop_t *p);
 
@@ -276,6 +307,9 @@ void prop_want_more_childs(prop_sub_t *s);
 void prop_have_more_childs(prop_t *p);
 
 
+/**
+ * Property tags
+ */
 void *prop_tag_get(prop_t *p, void *key);
 
 void prop_tag_set(prop_t *p, void *key, void *value);

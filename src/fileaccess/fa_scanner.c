@@ -537,24 +537,20 @@ doscan(scanner_t *s)
 {
   fa_dir_entry_t *fde;
   fa_dir_t *fd = s->s_fd;
-  prop_t **pvec;
-  int i;
+  prop_vec_t *pv;
 
   quick_analyzer(s->s_fd, s->s_contents);
 
-  pvec = malloc(sizeof(prop_t *) * (fd->fd_count + 1));
-  i = 0;
+  pv = prop_vec_create(fd->fd_count);
 
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
     make_prop(fde);
     prop_ref_inc(fde->fde_prop);
-    pvec[i++] = fde->fde_prop;
+    pv = prop_vec_append(pv, fde->fde_prop);
   }
-  assert(i == fd->fd_count);
-  pvec[i] = NULL;
 
-  prop_set_parent_multi(pvec, s->s_nodes);
-  prop_pvec_free(pvec);
+  prop_set_parent_vector(pv, s->s_nodes);
+  prop_vec_release(pv);
 
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
     if(s->s_playme != NULL &&

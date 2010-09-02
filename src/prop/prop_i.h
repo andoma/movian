@@ -310,7 +310,7 @@ int prop_destroy0(prop_t *p);
 
 void prop_unsubscribe0(prop_sub_t *s);
 
-void prop_notify_childv(prop_t **childv, prop_t *parent, prop_event_t event,
+void prop_notify_childv(prop_vec_t *childv, prop_t *parent, prop_event_t event,
 			prop_sub_t *skipme);
 
 void prop_print_tree0(prop_t *p, int indent, int followlinks);
