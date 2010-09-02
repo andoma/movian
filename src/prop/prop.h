@@ -27,42 +27,6 @@
 #include "htsmsg/htsmsg.h"
 #include "misc/rstr.h"
 
-
-  /**
-   * The float/int prop should be clipped according to min/max
-   */
-#define PROP_CLIPPED_VALUE         0x1
-
-  /**
-   * hp_name is not malloc()ed but rather points to a compile const string
-   * that should not be free()d upon prop finalization
-   */
-#define PROP_NAME_NOT_ALLOCATED    0x8
-
-  /**
-   * We hold an xref to prop pointed to by hp_originator.
-   * So do a prop_destroy0() when we unlink/destroy this prop
-   */
-#define PROP_XREFED_ORIGINATOR     0x10
-
-  /**
-   * This property is monitored by one or more of its subscribers
-   */
-#define PROP_MONITORED             0x20
-
-  /**
-   * This property have a PROB_SUB_MULTI subscription attached to it
-   */
-#define PROP_MULTI_SUB             0x40
-
-  /**
-   * This property have a PROB_MULTI_SUB property above it in the hierarchy
-   */
-#define PROP_MULTI_NOTIFY          0x80
-
-
-
-
 typedef struct prop_courier prop_courier_t;
 typedef struct prop prop_t;
 typedef struct prop_sub prop_sub_t;
@@ -162,8 +126,7 @@ prop_t *prop_create_ex(prop_t *parent, const char *name,
      __attribute__ ((malloc));
 
 #define prop_create(parent, name) \
- prop_create_ex(parent, name, NULL, __builtin_constant_p(name) ? \
- PROP_NAME_NOT_ALLOCATED : 0)
+  prop_create_ex(parent, name, NULL, __builtin_constant_p(name))
 
 void prop_destroy(prop_t *p);
 

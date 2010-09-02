@@ -1175,7 +1175,7 @@ prop_insert(prop_t *p, prop_t *parent, prop_t *before, prop_sub_t *skipme)
  *
  */
 prop_t *
-prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, int flags)
+prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, int noalloc)
 {
   prop_t *hp;
 
@@ -1193,12 +1193,12 @@ prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, int flags)
   }
 
   hp = malloc(sizeof(prop_t));
-  hp->hp_flags = flags;
+  hp->hp_flags = noalloc ? PROP_NAME_NOT_ALLOCATED : 0;
   hp->hp_originator = NULL;
   hp->hp_refcount = 1;
   hp->hp_xref = 1;
   hp->hp_type = PROP_VOID;
-  if(flags & PROP_NAME_NOT_ALLOCATED)
+  if(noalloc)
     hp->hp_name = name;
   else
     hp->hp_name = name ? strdup(name) : NULL;

@@ -133,6 +133,39 @@ struct prop {
   uint8_t hp_flags;
 
 
+  /**
+   * The float/int prop should be clipped according to min/max
+   */
+#define PROP_CLIPPED_VALUE         0x1
+
+  /**
+   * hp_name is not malloc()ed but rather points to a compile const string
+   * that should not be free()d upon prop finalization
+   */
+#define PROP_NAME_NOT_ALLOCATED    0x2
+
+  /**
+   * We hold an xref to prop pointed to by hp_originator.
+   * So do a prop_destroy0() when we unlink/destroy this prop
+   */
+#define PROP_XREFED_ORIGINATOR     0x4
+
+  /**
+   * This property is monitored by one or more of its subscribers
+   */
+#define PROP_MONITORED             0x8
+
+  /**
+   * This property have a PROB_SUB_MULTI subscription attached to it
+   */
+#define PROP_MULTI_SUB             0x10
+
+  /**
+   * This property have a PROB_MULTI_SUB property above it in the hierarchy
+   */
+#define PROP_MULTI_NOTIFY          0x20
+
+
 
   /**
    * Extended refcount. Used to keep contents of the property alive
