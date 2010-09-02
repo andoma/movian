@@ -102,10 +102,10 @@ callout_loop(void *aux)
   callout_t *c;
   callout_callback_t *cc;
 
-  hts_mutex_init(&callout_mutex);
-  hts_cond_init(&callout_cond);
   ts.tv_sec = 0;
   ts.tv_nsec = 0;
+
+  hts_mutex_lock(&callout_mutex);
 
   while(1) {
 
