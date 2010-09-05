@@ -1484,7 +1484,7 @@ be_htsp_playvideo(backend_t *be,
 
 
   TRACE(TRACE_DEBUG, "HTSP",
-	"Starting video playback %s, primary=%s, priority=%d",
+	"Starting video playback %s primary=%s, priority=%d",
 	url, primary ? "yes" : "no", priority);
 
   if((hc = htsp_connection_find(url, path, sizeof(path), 
