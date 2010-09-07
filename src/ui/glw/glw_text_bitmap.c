@@ -823,17 +823,6 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
   glw_align_2(&rc0, w->glw_alignment);
 
-#if 0
-  glDisable(GL_TEXTURE_2D);
-  glBegin(GL_LINE_LOOP);
-  glColor4f(1,1,1,1);
-  glVertex3f(-1.0, -1.0, 0.0);
-  glVertex3f( 1.0, -1.0, 0.0);
-  glVertex3f( 1.0,  1.0, 0.0);
-  glVertex3f(-1.0,  1.0, 0.0);
-  glEnd();
-  glEnable(GL_TEXTURE_2D);
-#endif
 
   if(w->glw_flags & GLW_SHADOW && !rc0.rc_inhibit_shadows) {
     float xd, yd;

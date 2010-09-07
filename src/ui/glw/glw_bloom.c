@@ -73,22 +73,6 @@ glw_bloom_dtor(glw_t *w)
   glw_renderer_free(&b->b_render);
 }
 
-#if 0
-static void
-ll(void)
-{
-  glDisable(GL_TEXTURE_2D);
-  glBegin(GL_LINE_LOOP);
-  glColor4f(1,1,1,1);
-  glVertex3f(-1.0, -1.0, 0.0);
-  glVertex3f( 1.0, -1.0, 0.0);
-  glVertex3f( 1.0,  1.0, 0.0);
-  glVertex3f(-1.0,  1.0, 0.0);
-  glEnd();
-  glEnable(GL_TEXTURE_2D);
-}
-#endif
-
 
 /**
  *
