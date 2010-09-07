@@ -1043,32 +1043,26 @@ glw_align_2(glw_rctx_t *rc, glw_alignment_t a)
 /**
  * Render interface abstraction
  */
+void glw_renderer_init(glw_renderer_t *gr, int vertices);
 
-#define GLW_RENDER_ATTRIBS_NONE       0
-#define GLW_RENDER_ATTRIBS_COLOR      1
-#define GLW_RENDER_ATTRIBS_TEX        2
-#define GLW_RENDER_ATTRIBS_TEX_COLOR  3
+void glw_renderer_set_vertices(glw_renderer_t *gr, int vertices);
 
+int glw_renderer_initialized(glw_renderer_t *gr);
 
-void glw_render_init(glw_renderer_t *gr, int vertices, int attribs);
+void glw_renderer_free(glw_renderer_t *gr);
 
-void glw_render_set_vertices(glw_renderer_t *gr, int vertices);
+void glw_renderer_vtx_pos(glw_renderer_t *gr, int vertex,
+			  float x, float y, float z);
 
-void glw_render_free(glw_renderer_t *gr);
+void glw_renderer_vtx_st(glw_renderer_t *gr, int vertex,
+			 float s, float t);
 
-void glw_render_vtx_pos(glw_renderer_t *gr, int vertex,
-			float x, float y, float z);
+void glw_renderer_vtx_col(glw_renderer_t *gr, int vertex,
+			  float r, float g, float b, float a);
 
-void glw_render_vtx_st(glw_renderer_t *gr, int vertex,
-		       float s, float t);
-
-void glw_render_vtx_col(glw_renderer_t *gr, int vertex,
-			float r, float g, float b, float a);
-
-void glw_render(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc, 
-		int mode, int attribs,
-		glw_backend_texture_t *be_tex,
-		float r, float g, float b, float a);
+void glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc, 
+		       glw_backend_texture_t *be_tex,
+		       float r, float g, float b, float a);
 
 void glw_wirebox(glw_rctx_t *rc);
 

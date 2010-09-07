@@ -70,8 +70,7 @@ glw_bloom_dtor(glw_t *w)
   if(b->b_width || b->b_height)
     bloom_destroy_rtt(w->glw_root, b);
 
-  if(b->b_render_initialized)
-    glw_render_free(&b->b_render);
+  glw_renderer_free(&b->b_render);
 }
 
 #if 0
@@ -136,19 +135,16 @@ glw_bloom_render(glw_t *w, glw_rctx_t *rc)
   a *= b->b_glow;
 
   glw_blendmode(GLW_BLEND_ADDITIVE);
-  glw_render(&b->b_render, w->glw_root, &rc0, 
-	     GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
-	     &glw_rtt_texture(&b->b_rtt[0]), 1, 1, 1, a * 0.50);
+  glw_renderer_draw(&b->b_render, w->glw_root, &rc0, 
+		    &glw_rtt_texture(&b->b_rtt[0]), 1, 1, 1, a * 0.50);
 
 
-  glw_render(&b->b_render, w->glw_root, &rc0, 
-	     GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
-	     &glw_rtt_texture(&b->b_rtt[1]), 1, 1, 1, a * 0.44);
+  glw_renderer_draw(&b->b_render, w->glw_root, &rc0, 
+		    &glw_rtt_texture(&b->b_rtt[1]), 1, 1, 1, a * 0.44);
 
 
-  glw_render(&b->b_render, w->glw_root, &rc0, 
-	     GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
-	     &glw_rtt_texture(&b->b_rtt[2]), 1, 1, 1, a * 0.33);
+  glw_renderer_draw(&b->b_render, w->glw_root, &rc0, 
+		    &glw_rtt_texture(&b->b_rtt[2]), 1, 1, 1, a * 0.33);
  
   glw_blendmode(GLW_BLEND_NORMAL);
 
@@ -205,20 +201,19 @@ glw_bloom_layout(glw_t *w, glw_rctx_t *rc)
     float xs = gr->gr_normalized_texture_coords ? 1.0 : b->b_width;
     float ys = gr->gr_normalized_texture_coords ? 1.0 : b->b_height;
 
-    glw_render_init(&b->b_render, 4, GLW_RENDER_ATTRIBS_TEX);
-    b->b_render_initialized = 1;
+    glw_renderer_init(&b->b_render, 4);
 
-    glw_render_vtx_pos(&b->b_render, 0, -1.0, -1.0, 0.0);
-    glw_render_vtx_st (&b->b_render, 0,  0.0,  0);
+    glw_renderer_vtx_pos(&b->b_render, 0, -1.0, -1.0, 0.0);
+    glw_renderer_vtx_st (&b->b_render, 0,  0.0,  0);
 
-    glw_render_vtx_pos(&b->b_render, 1,  1.0, -1.0, 0.0);
-    glw_render_vtx_st (&b->b_render, 1,  xs,   0);
+    glw_renderer_vtx_pos(&b->b_render, 1,  1.0, -1.0, 0.0);
+    glw_renderer_vtx_st (&b->b_render, 1,  xs,   0);
 
-    glw_render_vtx_pos(&b->b_render, 2,  1.0,  1.0, 0.0);
-    glw_render_vtx_st (&b->b_render, 2,  xs,   ys);
+    glw_renderer_vtx_pos(&b->b_render, 2,  1.0,  1.0, 0.0);
+    glw_renderer_vtx_st (&b->b_render, 2,  xs,   ys);
 
-    glw_render_vtx_pos(&b->b_render, 3, -1.0,  1.0, 0.0);
-    glw_render_vtx_st (&b->b_render, 3,  0.0,  ys);
+    glw_renderer_vtx_pos(&b->b_render, 3, -1.0,  1.0, 0.0);
+    glw_renderer_vtx_st (&b->b_render, 3,  0.0,  ys);
   }
 
   memset(&rc0, 0, sizeof(glw_rctx_t));

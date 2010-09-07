@@ -100,16 +100,9 @@ typedef GLuint glw_backend_texture_t;
 typedef struct glw_renderer {
   int gr_vertices;
   float *gr_buffer;
-  int gr_stride;
 } glw_renderer_t;
 
 #define GLW_RENDER_MODE_QUADS      GL_QUADS
-#define GLW_RENDER_MODE_LINE_STRIP GL_LINE_STRIP
-#define GLW_RENDER_MODE_LINE_LOOP  GL_LINE_LOOP
-
-#define glw_render_set_pre(gr)
-
-#define glw_render_set_post(gr)
 
 #define glw_can_tnpo2(gr) (gr->gr_be.gbr_texmode != GLW_OPENGL_TEXTURE_SIMPLE)
 

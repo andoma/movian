@@ -265,6 +265,7 @@ void
 glw_render_free(glw_renderer_t *gr)
 {
   free(gr->gr_buffer);
+  gr->gr_buffer = NULL;
 }
 
 

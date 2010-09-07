@@ -401,17 +401,33 @@ glw_wirebox(glw_rctx_t *rc)
 }
 
 
+#define DRAWSTRIDE 9
+
 /**
  * 
  */
 void
-glw_render_init(glw_renderer_t *gr, int vertices, int attribs)
+glw_renderer_init(glw_renderer_t *gr, int vertices)
 {
-  gr->gr_stride = 3 + 
-    (attribs >= GLW_RENDER_ATTRIBS_TEX       ? 2 : 0) +
-    (attribs >= GLW_RENDER_ATTRIBS_TEX_COLOR ? 4 : 0);
-    
-  gr->gr_buffer = malloc(sizeof(float) * gr->gr_stride * vertices);
+  int i;
+  gr->gr_buffer = malloc(sizeof(float) * DRAWSTRIDE * vertices);
+  gr->gr_vertices = vertices;
+
+  for(i = 0; i < vertices; i++) {
+    gr->gr_buffer[i * DRAWSTRIDE + 5] = 1;
+    gr->gr_buffer[i * DRAWSTRIDE + 6] = 1;
+    gr->gr_buffer[i * DRAWSTRIDE + 7] = 1;
+    gr->gr_buffer[i * DRAWSTRIDE + 8] = 1;
+  }
+}
+
+
+/**
+ * 
+ */
+void
+glw_renderer_set_vertices(glw_renderer_t *gr, int vertices)
+{
   gr->gr_vertices = vertices;
 }
 
@@ -420,56 +436,56 @@ glw_render_init(glw_renderer_t *gr, int vertices, int attribs)
  * 
  */
 void
-glw_render_set_vertices(glw_renderer_t *gr, int vertices)
-{
-  gr->gr_vertices = vertices;
-}
-
-
-/**
- * 
- */
-void
-glw_render_free(glw_renderer_t *gr)
+glw_renderer_free(glw_renderer_t *gr)
 {
   free(gr->gr_buffer);
+  gr->gr_buffer = NULL;
 }
 
 
 /**
- * 
+ *
  */
-void
-glw_render_vtx_pos(glw_renderer_t *gr, int vertex,
-		   float x, float y, float z)
+int
+glw_renderer_initialized(glw_renderer_t *gr)
 {
-  gr->gr_buffer[vertex * gr->gr_stride + 0] = x;
-  gr->gr_buffer[vertex * gr->gr_stride + 1] = y;
-  gr->gr_buffer[vertex * gr->gr_stride + 2] = z;
+  return !!gr->gr_buffer;
 }
 
 /**
  * 
  */
 void
-glw_render_vtx_st(glw_renderer_t *gr, int vertex,
-		  float s, float t)
+glw_renderer_vtx_pos(glw_renderer_t *gr, int vertex,
+		     float x, float y, float z)
 {
-  gr->gr_buffer[vertex * gr->gr_stride + 3] = s;
-  gr->gr_buffer[vertex * gr->gr_stride + 4] = t;
+  gr->gr_buffer[vertex * DRAWSTRIDE + 0] = x;
+  gr->gr_buffer[vertex * DRAWSTRIDE + 1] = y;
+  gr->gr_buffer[vertex * DRAWSTRIDE + 2] = z;
 }
 
 /**
  * 
  */
 void
-glw_render_vtx_col(glw_renderer_t *gr, int vertex,
-		   float r, float g, float b, float a)
+glw_renderer_vtx_st(glw_renderer_t *gr, int vertex,
+		    float s, float t)
 {
-  gr->gr_buffer[vertex * gr->gr_stride + 5] = r;
-  gr->gr_buffer[vertex * gr->gr_stride + 6] = g;
-  gr->gr_buffer[vertex * gr->gr_stride + 7] = b;
-  gr->gr_buffer[vertex * gr->gr_stride + 8] = a;
+  gr->gr_buffer[vertex * DRAWSTRIDE + 3] = s;
+  gr->gr_buffer[vertex * DRAWSTRIDE + 4] = t;
+}
+
+/**
+ * 
+ */
+void
+glw_renderer_vtx_col(glw_renderer_t *gr, int vertex,
+		     float r, float g, float b, float a)
+{
+  gr->gr_buffer[vertex * DRAWSTRIDE + 5] = r;
+  gr->gr_buffer[vertex * DRAWSTRIDE + 6] = g;
+  gr->gr_buffer[vertex * DRAWSTRIDE + 7] = b;
+  gr->gr_buffer[vertex * DRAWSTRIDE + 8] = a;
 }
 
 
@@ -478,72 +494,40 @@ glw_render_vtx_col(glw_renderer_t *gr, int vertex,
  * 
  */
 void
-glw_render(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc, 
-	   int mode, int attribs,
-	   glw_backend_texture_t *be_tex,
-	   float r, float g, float b, float a)
+glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc, 
+		  glw_backend_texture_t *be_tex,
+		  float r, float g, float b, float a)
 {
   int i;
   float *buf = gr->gr_buffer;
   
-  switch(attribs) {
-  case GLW_RENDER_ATTRIBS_NONE:
+  if(be_tex != NULL) {
 
-    glDisable(root->gr_be.gbr_primary_texture_mode);
-
-    glColor4f(r, g, b, a);
-    glBegin(mode);
-    
-    for(i = 0; i < gr->gr_vertices; i++) {
-      glVertex3f(buf[0], buf[1], buf[2]);
-      buf += gr->gr_stride;
-    }
-    glEnd();
-
-    glEnable(root->gr_be.gbr_primary_texture_mode);
-    break;
-    
-  case GLW_RENDER_ATTRIBS_COLOR:
-    glDisable(root->gr_be.gbr_primary_texture_mode);
-   
-    glBegin(mode);
-    
-    for(i = 0; i < gr->gr_vertices; i++) {
-      glColor4f(buf[5], buf[6], buf[7], buf[8] * a);
-      glVertex3f(buf[0], buf[1], buf[2]);
-      buf += gr->gr_stride;
-    }
-    glEnd();
-
-    glEnable(root->gr_be.gbr_primary_texture_mode);
-    break;
-
-  case GLW_RENDER_ATTRIBS_TEX:
     glBindTexture(root->gr_be.gbr_primary_texture_mode, *be_tex);
-  
-    glColor4f(r, g, b, a);
-    glBegin(mode);
-    
-    for(i = 0; i < gr->gr_vertices; i++) {
-      glTexCoord2f(buf[3], buf[4]);
-      glVertex3f(buf[0], buf[1], buf[2]);
-      buf += gr->gr_stride;
-    }
-    glEnd();
-    break;
 
-  case GLW_RENDER_ATTRIBS_TEX_COLOR:
-    glBindTexture(root->gr_be.gbr_primary_texture_mode, *be_tex);
-  
-    glBegin(mode);
-    
+    glBegin(GL_QUADS);
+
     for(i = 0; i < gr->gr_vertices; i++) {
       glColor4f(buf[5] * r, buf[6] * g, buf[7] * b, buf[8] * a);
       glTexCoord2f(buf[3], buf[4]);
       glVertex3f(buf[0], buf[1], buf[2]);
-      buf += gr->gr_stride;
+      buf += DRAWSTRIDE;
     }
     glEnd();
-    break;
+
+  } else {
+
+    glDisable(root->gr_be.gbr_primary_texture_mode);
+
+    glBegin(GL_QUADS);
+
+    for(i = 0; i < gr->gr_vertices; i++) {
+      glColor4f(buf[5] * r, buf[6] * g, buf[7] * b, buf[8] * a);
+      glVertex3f(buf[0], buf[1], buf[2]);
+      buf += DRAWSTRIDE;
+    }
+    glEnd();
+    glEnable(root->gr_be.gbr_primary_texture_mode);
+    
   }
 }

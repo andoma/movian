@@ -100,7 +100,6 @@ typedef struct glw_text_bitmap {
   uint8_t gtb_pending_update;
   uint8_t gtb_paint_cursor;
   uint8_t gtb_update_cursor;
-  uint8_t gtb_renderer_inited;
   uint8_t gtb_padding;
 
   int16_t gtb_edit_ptr;
@@ -658,31 +657,26 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
     return;
   }
 
-  if(!gtb->gtb_renderer_inited) {
-    gtb->gtb_renderer_inited = 1;
-    glw_render_init(&gtb->gtb_text_renderer,   4, GLW_RENDER_ATTRIBS_TEX);
+  if(!glw_renderer_initialized(&gtb->gtb_text_renderer)) {
+    glw_renderer_init(&gtb->gtb_text_renderer, 4);
 
     if(w->glw_class == &glw_text)
-      glw_render_init(&gtb->gtb_cursor_renderer, 4, GLW_RENDER_ATTRIBS_NONE);
+      glw_renderer_init(&gtb->gtb_cursor_renderer, 4);
   }
 
   if(gtbd->gtbd_data != NULL) {
     
-    glw_render_set_pre(&gtb->gtb_text_renderer);
+    glw_renderer_vtx_pos(&gtb->gtb_text_renderer, 0, -1.0, -1.0, 0.0);
+    glw_renderer_vtx_st (&gtb->gtb_text_renderer, 0,  0.0,         gtbd->gtbd_v);
 
-    glw_render_vtx_pos(&gtb->gtb_text_renderer, 0, -1.0, -1.0, 0.0);
-    glw_render_vtx_st (&gtb->gtb_text_renderer, 0,  0.0,         gtbd->gtbd_v);
+    glw_renderer_vtx_pos(&gtb->gtb_text_renderer, 1,  1.0, -1.0, 0.0);
+    glw_renderer_vtx_st (&gtb->gtb_text_renderer, 1, gtbd->gtbd_u, gtbd->gtbd_v);
 
-    glw_render_vtx_pos(&gtb->gtb_text_renderer, 1,  1.0, -1.0, 0.0);
-    glw_render_vtx_st (&gtb->gtb_text_renderer, 1, gtbd->gtbd_u, gtbd->gtbd_v);
+    glw_renderer_vtx_pos(&gtb->gtb_text_renderer, 2,  1.0,  1.0, 0.0);
+    glw_renderer_vtx_st (&gtb->gtb_text_renderer, 2, gtbd->gtbd_u, 0.0);
 
-    glw_render_vtx_pos(&gtb->gtb_text_renderer, 2,  1.0,  1.0, 0.0);
-    glw_render_vtx_st (&gtb->gtb_text_renderer, 2, gtbd->gtbd_u, 0.0);
-
-    glw_render_vtx_pos(&gtb->gtb_text_renderer, 3, -1.0,  1.0, 0.0);
-    glw_render_vtx_st (&gtb->gtb_text_renderer, 3,  0.0,  0.0);
-
-    glw_render_set_post(&gtb->gtb_text_renderer);
+    glw_renderer_vtx_pos(&gtb->gtb_text_renderer, 3, -1.0,  1.0, 0.0);
+    glw_renderer_vtx_st (&gtb->gtb_text_renderer, 3,  0.0,  0.0);
 
     glw_tex_upload(gr, &gtb->gtb_texture, gtbd->gtbd_data, 
 		   gtbd->gtbd_pixel_format,
@@ -732,13 +726,10 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
       x2 = 0.5;
     }
     
-    glw_render_set_pre(&gtb->gtb_cursor_renderer);
-    glw_render_vtx_pos(&gtb->gtb_cursor_renderer, 0, x1, -0.9, 0.0);
-    glw_render_vtx_pos(&gtb->gtb_cursor_renderer, 1, x2, -0.9, 0.0);
-    glw_render_vtx_pos(&gtb->gtb_cursor_renderer, 2, x2,  0.9, 0.0);
-    glw_render_vtx_pos(&gtb->gtb_cursor_renderer, 3, x1,  0.9, 0.0);
-    
-    glw_render_set_post(&gtb->gtb_cursor_renderer);
+    glw_renderer_vtx_pos(&gtb->gtb_cursor_renderer, 0, x1, -0.9, 0.0);
+    glw_renderer_vtx_pos(&gtb->gtb_cursor_renderer, 1, x2, -0.9, 0.0);
+    glw_renderer_vtx_pos(&gtb->gtb_cursor_renderer, 2, x2,  0.9, 0.0);
+    glw_renderer_vtx_pos(&gtb->gtb_cursor_renderer, 3, x1,  0.9, 0.0);
   }
 }
 
@@ -803,9 +794,8 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
     glw_Translatef(&rc0, 1.0, 0, 0);
 
     if(gtb->gtb_paint_cursor)
-      glw_render(&gtb->gtb_cursor_renderer, w->glw_root, &rc0,
-		 GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_NONE,
-		 NULL, 1, 1, 1, alpha * gtb->gtb_cursor_alpha);
+      glw_renderer_draw(&gtb->gtb_cursor_renderer, w->glw_root, &rc0,
+			NULL, 1, 1, 1, alpha * gtb->gtb_cursor_alpha);
 
     glw_PopMatrix();
     return;
@@ -853,23 +843,21 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
     glw_Translatef(&rc0, xd, yd, 0.0);
 
-    glw_render(&gtb->gtb_text_renderer, w->glw_root, &rc0, 
-	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
-	       &gtb->gtb_texture,
-	       0,0,0, alpha * 0.75);
-
+    glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, &rc0, 
+		      &gtb->gtb_texture,
+		      0,0,0, alpha * 0.75);
+    
     glw_Translatef(&rc0, -xd, -yd, 0.0);
   }
-  glw_render(&gtb->gtb_text_renderer, w->glw_root, &rc0, 
-	     GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
-	     &gtb->gtb_texture,
-	     gtb->gtb_color.r, gtb->gtb_color.g, gtb->gtb_color.b, alpha);
+  glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, &rc0, 
+		    &gtb->gtb_texture,
+		    gtb->gtb_color.r, gtb->gtb_color.g, gtb->gtb_color.b,
+		    alpha);
 
 
   if(gtb->gtb_paint_cursor)
-    glw_render(&gtb->gtb_cursor_renderer, w->glw_root, &rc0,
-	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_NONE,
-	       NULL, 1, 1, 1, alpha * gtb->gtb_cursor_alpha);
+    glw_renderer_draw(&gtb->gtb_cursor_renderer, w->glw_root, &rc0,
+		      NULL, 1, 1, 1, alpha * gtb->gtb_cursor_alpha);
 
   glw_PopMatrix();
 }
@@ -892,10 +880,9 @@ glw_text_bitmap_dtor(glw_t *w)
 
   glw_tex_destroy(&gtb->gtb_texture);
 
-  if(gtb->gtb_renderer_inited) {
-    glw_render_free(&gtb->gtb_text_renderer);
-    glw_render_free(&gtb->gtb_cursor_renderer);
-  }
+  glw_renderer_free(&gtb->gtb_text_renderer);
+  glw_renderer_free(&gtb->gtb_cursor_renderer);
+
   if(gtb->gtb_status == GTB_ON_QUEUE)
     TAILQ_REMOVE(&gr->gr_gtb_render_queue, gtb, gtb_workq_link);
 }

@@ -38,7 +38,6 @@ typedef struct glw_fx_texrot {
 
   glw_loadable_texture_t *fx_tex;
 
-  int fx_source_render_initialized;
   glw_renderer_t fx_source_render;
 
 
@@ -88,9 +87,8 @@ glw_fx_texrot_render(glw_t *w, glw_rctx_t *rc)
   fx->fx_need_render = a > 0.01;
 
   if(glt != NULL && glt->glt_state == GLT_STATE_VALID && a > 0.01) {
-    glw_render(&fx->fx_render, w->glw_root, rc, 
-	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
-	       &glw_rtt_texture(&fx->fx_rtt), 1, 1, 1, a);
+    glw_renderer_draw(&fx->fx_render, w->glw_root, rc, 
+		      &glw_rtt_texture(&fx->fx_rtt), 1, 1, 1, a);
   }
 }
 
@@ -136,9 +134,8 @@ glw_fx_texrot_render_internal(glw_root_t *gr, glw_rctx_t *rc,
     glw_Translatef(&rc0, fx->fx_plates[i].x, fx->fx_plates[i].y, 0.0);
     glw_Rotatef(&rc0, fx->fx_plates[i].angle, 0.0, 0.0, 1.0);
 
-    glw_render(&fx->fx_source_render, gr, &rc0,
-	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
-	       &glt->glt_texture, 1, 1, 1, 0.15);
+    glw_renderer_draw(&fx->fx_source_render, gr, &rc0,
+		      &glt->glt_texture, 1, 1, 1, 0.15);
     glw_PopMatrix();
   }
   glw_blendmode(GLW_BLEND_NORMAL);
@@ -169,24 +166,23 @@ glw_fx_texrot_layout(glw_t *w, glw_rctx_t *rc)
   glw_tex_layout(w->glw_root, glt);
 
 
-  if(!fx->fx_source_render_initialized) {
+  if(!glw_renderer_initialized(&fx->fx_render)) {
     float xs = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_xs;
     float ys = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_ys;
 
-    glw_render_init(&fx->fx_source_render, 4, GLW_RENDER_ATTRIBS_TEX);
-    fx->fx_source_render_initialized = 1;
+    glw_renderer_init(&fx->fx_source_render, 4);
     
-    glw_render_vtx_pos(&fx->fx_source_render, 0, -1.0, -1.0, 0.0);
-    glw_render_vtx_st (&fx->fx_source_render, 0,  0.0,  ys);
+    glw_renderer_vtx_pos(&fx->fx_source_render, 0, -1.0, -1.0, 0.0);
+    glw_renderer_vtx_st (&fx->fx_source_render, 0,  0.0,  ys);
 
-    glw_render_vtx_pos(&fx->fx_source_render, 1,  1.0, -1.0, 0.0);
-    glw_render_vtx_st (&fx->fx_source_render, 1,  xs,   ys);
+    glw_renderer_vtx_pos(&fx->fx_source_render, 1,  1.0, -1.0, 0.0);
+    glw_renderer_vtx_st (&fx->fx_source_render, 1,  xs,   ys);
 
-    glw_render_vtx_pos(&fx->fx_source_render, 2,  1.0,  1.0, 0.0);
-    glw_render_vtx_st (&fx->fx_source_render, 2,  xs,   0.0);
+    glw_renderer_vtx_pos(&fx->fx_source_render, 2,  1.0,  1.0, 0.0);
+    glw_renderer_vtx_st (&fx->fx_source_render, 2,  xs,   0.0);
 
-    glw_render_vtx_pos(&fx->fx_source_render, 3, -1.0,  1.0, 0.0);
-    glw_render_vtx_st (&fx->fx_source_render, 3,  0.0,  0.0);
+    glw_renderer_vtx_pos(&fx->fx_source_render, 3, -1.0,  1.0, 0.0);
+    glw_renderer_vtx_st (&fx->fx_source_render, 3,  0.0,  0.0);
   }
 
   // Init render to texture object
@@ -200,20 +196,19 @@ glw_fx_texrot_layout(glw_t *w, glw_rctx_t *rc)
     float xs = gr->gr_normalized_texture_coords ? 1.0 : width;
     float ys = gr->gr_normalized_texture_coords ? 1.0 : height;
 
-    glw_render_init(&fx->fx_render, 4, GLW_RENDER_ATTRIBS_TEX);
-    fx->fx_render_initialized = 1;
+    glw_renderer_init(&fx->fx_render, 4);
 
-    glw_render_vtx_pos(&fx->fx_render, 0, -1.0, -1.0, 0.0);
-    glw_render_vtx_st (&fx->fx_render, 0,  0.0,  ys);
+    glw_renderer_vtx_pos(&fx->fx_render, 0, -1.0, -1.0, 0.0);
+    glw_renderer_vtx_st (&fx->fx_render, 0,  0.0,  ys);
 
-    glw_render_vtx_pos(&fx->fx_render, 1,  1.0, -1.0, 0.0);
-    glw_render_vtx_st (&fx->fx_render, 1,  xs,   ys);
+    glw_renderer_vtx_pos(&fx->fx_render, 1,  1.0, -1.0, 0.0);
+    glw_renderer_vtx_st (&fx->fx_render, 1,  xs,   ys);
 
-    glw_render_vtx_pos(&fx->fx_render, 2,  1.0,  1.0, 0.0);
-    glw_render_vtx_st (&fx->fx_render, 2,  xs,   0.0);
+    glw_renderer_vtx_pos(&fx->fx_render, 2,  1.0,  1.0, 0.0);
+    glw_renderer_vtx_st (&fx->fx_render, 2,  xs,   0.0);
 
-    glw_render_vtx_pos(&fx->fx_render, 3, -1.0,  1.0, 0.0);
-    glw_render_vtx_st (&fx->fx_render, 3,  0.0,  0.0);
+    glw_renderer_vtx_pos(&fx->fx_render, 3, -1.0,  1.0, 0.0);
+    glw_renderer_vtx_st (&fx->fx_render, 3,  0.0,  0.0);
   }
 
   if(!fx->fx_need_render)

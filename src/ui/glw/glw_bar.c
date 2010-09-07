@@ -24,7 +24,6 @@ typedef struct glw_bar {
   float gb_col1[3];
   float gb_col2[3];
 
-  int gb_gr_initialized;
   glw_renderer_t gb_gr;
 
   float gb_fill;
@@ -40,8 +39,7 @@ glw_bar_dtor(glw_t *w)
 {
   glw_bar_t *gb = (void *)w;
 
-  if(gb->gb_gr_initialized)
-    glw_render_free(&gb->gb_gr);
+  glw_renderer_free(&gb->gb_gr);
 }
 
 
@@ -63,9 +61,7 @@ glw_bar_render(glw_t *w, glw_rctx_t *rc)
     return;
   }
   if(a > 0.01) {
-    glw_render(&gb->gb_gr, w->glw_root, rc, 
-	       GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_COLOR,
-	       NULL, 1, 1, 1, a);
+    glw_renderer_draw(&gb->gb_gr, w->glw_root, rc, NULL, 1, 1, 1, a);
   }
 }
 
@@ -79,9 +75,8 @@ glw_bar_layout(glw_t *W, glw_rctx_t *rc)
   glw_bar_t *gb = (void *)W;
   float r, g, b, x;
 
-  if(!gb->gb_gr_initialized) {
-    glw_render_init(&gb->gb_gr, 4, GLW_RENDER_ATTRIBS_TEX_COLOR);
-    gb->gb_gr_initialized = 1;
+  if(!glw_renderer_initialized(&gb->gb_gr)) {
+    glw_renderer_init(&gb->gb_gr, 4);
     gb->gb_update = 1;
   }
 
@@ -93,27 +88,27 @@ glw_bar_layout(glw_t *W, glw_rctx_t *rc)
     b = GLW_LERP(gb->gb_fill, gb->gb_col1[2], gb->gb_col2[2]);
     x = GLW_LERP(gb->gb_fill, -1, 1);
 
-    glw_render_vtx_pos(&gb->gb_gr, 0, -1.0, -1.0, 0.0);
-    glw_render_vtx_col(&gb->gb_gr, 0,
-		       gb->gb_col1[0],
-		       gb->gb_col1[1],
-		       gb->gb_col1[2],
-		       1.0);
+    glw_renderer_vtx_pos(&gb->gb_gr, 0, -1.0, -1.0, 0.0);
+    glw_renderer_vtx_col(&gb->gb_gr, 0,
+			 gb->gb_col1[0],
+			 gb->gb_col1[1],
+			 gb->gb_col1[2],
+			 1.0);
 
-    glw_render_vtx_pos(&gb->gb_gr, 1,  x, -1.0, 0.0);
-    glw_render_vtx_col(&gb->gb_gr, 1, r, g, b, 1.0);
-
-
-    glw_render_vtx_pos(&gb->gb_gr, 2,  x,  1.0, 0.0);
-    glw_render_vtx_col(&gb->gb_gr, 2, r, g, b, 1.0);
+    glw_renderer_vtx_pos(&gb->gb_gr, 1,  x, -1.0, 0.0);
+    glw_renderer_vtx_col(&gb->gb_gr, 1, r, g, b, 1.0);
 
 
-    glw_render_vtx_pos(&gb->gb_gr, 3, -1.0,  1.0, 0.0);
-    glw_render_vtx_col(&gb->gb_gr, 3,
-		       gb->gb_col1[0],
-		       gb->gb_col1[1],
-		       gb->gb_col1[2],
-		       1.0);
+    glw_renderer_vtx_pos(&gb->gb_gr, 2,  x,  1.0, 0.0);
+    glw_renderer_vtx_col(&gb->gb_gr, 2, r, g, b, 1.0);
+
+
+    glw_renderer_vtx_pos(&gb->gb_gr, 3, -1.0,  1.0, 0.0);
+    glw_renderer_vtx_col(&gb->gb_gr, 3,
+			 gb->gb_col1[0],
+			 gb->gb_col1[1],
+			 gb->gb_col1[2],
+			 1.0);
 
   }
 }

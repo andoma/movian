@@ -87,14 +87,14 @@ glw_throbber_render(glw_t *w, glw_rctx_t *rc)
     return;
 
   if(!gt->renderer_initialized) {
-    glw_render_init(&gt->renderer, 24, GLW_RENDER_ATTRIBS_TEX_COLOR);
+    glw_renderer_init(&gt->renderer, 24);
 
     for(i = 0; i < 24; i++) {
-      glw_render_vtx_pos(&gt->renderer, i, pinvtx((int)surfaces[i]));
+      glw_renderer_vtx_pos(&gt->renderer, i, pinvtx((int)surfaces[i]));
       if(i < 8)
-	glw_render_vtx_col(&gt->renderer, i, 1,1,1,1);
+	glw_renderer_vtx_col(&gt->renderer, i, 1,1,1,1);
       else
-	glw_render_vtx_col(&gt->renderer, i, 0.25, 0.25, 0.25, 1);
+	glw_renderer_vtx_col(&gt->renderer, i, 0.25, 0.25, 0.25, 1);
     }
     gt->renderer_initialized = 1;
   }
@@ -117,10 +117,7 @@ glw_throbber_render(glw_t *w, glw_rctx_t *rc)
     glw_Rotatef(&rc1, 0.1 * gt->angle - i * ((360 / NUMPINS) / 3), 0, 1, 0);
     glw_Rotatef(&rc1,       gt->angle - i *  (360 / NUMPINS),      0, 0, 1);
 
-    glw_render(&gt->renderer, gr, &rc1, 
-	       GLW_RENDER_MODE_QUADS,
-	       GLW_RENDER_ATTRIBS_COLOR,
-	       NULL, 0, 0, 0, alpha);
+    glw_renderer_draw(&gt->renderer, gr, &rc1, NULL, 1, 1, 1, alpha);
     glw_PopMatrix();
   }
 

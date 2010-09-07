@@ -50,8 +50,7 @@ glw_gradient_dtor(glw_t *w)
   for(i = 0; i < gg->gg_tex_uploaded; i++)
     glw_tex_destroy(&gg->gg_tex[i]);
 
-  for(i = 0; i < gg->gg_gr_initialized; i++)
-    glw_render_free(&gg->gg_gr[i]);
+  glw_renderer_free(&gg->gg_gr[i]);
 }
 
 
@@ -76,9 +75,8 @@ glw_gradient_render(glw_t *w, glw_rctx_t *rc)
   if(a > 0.01) {
     int i;
     for(i = 0; i < gg->gg_gr_initialized ; i++) {
-      glw_render(&gg->gg_gr[i], w->glw_root, rc, 
-		 GLW_RENDER_MODE_QUADS, GLW_RENDER_ATTRIBS_TEX,
-		 &gg->gg_tex[i], 1, 1, 1, a);
+      glw_renderer_draw(&gg->gg_gr[i], w->glw_root, rc, 
+			&gg->gg_tex[i], 1, 1, 1, a);
     }
   }
 }
@@ -223,7 +221,7 @@ glw_gradient_layout(glw_t *W, glw_rctx_t *rc)
   tiles = 1;
 
   for(i = gg->gg_tiles; i < tiles; i++) {
-    glw_render_init(&gg->gg_gr[i], 4, GLW_RENDER_ATTRIBS_TEX);
+    glw_renderer_init(&gg->gg_gr[i], 4);
     gg->gg_gr_initialized = tiles;
   }
 
@@ -243,17 +241,17 @@ glw_gradient_layout(glw_t *W, glw_rctx_t *rc)
   
       float u = xs * rc->rc_size_x / TILEWIDTH;
 
-      glw_render_vtx_pos(r, 0, -1.0, -1.0, 0.0);
-      glw_render_vtx_st (r, 0,  0.0,  ys);
+      glw_renderer_vtx_pos(r, 0, -1.0, -1.0, 0.0);
+      glw_renderer_vtx_st (r, 0,  0.0,  ys);
 
-      glw_render_vtx_pos(r, 1,  1.0, -1.0, 0.0);
-      glw_render_vtx_st (r, 1,  u,    ys);
+      glw_renderer_vtx_pos(r, 1,  1.0, -1.0, 0.0);
+      glw_renderer_vtx_st (r, 1,  u,    ys);
 
-      glw_render_vtx_pos(r, 2,  1.0,  1.0, 0.0);
-      glw_render_vtx_st (r, 2,  u,    0.0);
+      glw_renderer_vtx_pos(r, 2,  1.0,  1.0, 0.0);
+      glw_renderer_vtx_st (r, 2,  u,    0.0);
 
-      glw_render_vtx_pos(r, 3, -1.0,  1.0, 0.0);
-      glw_render_vtx_st (r, 3,  0.0,  0.0);
+      glw_renderer_vtx_pos(r, 3, -1.0,  1.0, 0.0);
+      glw_renderer_vtx_st (r, 3,  0.0,  0.0);
 
     } else {
 
@@ -265,44 +263,44 @@ glw_gradient_layout(glw_t *W, glw_rctx_t *rc)
       float x2 = -1.0 + 2.0 * (gg->gg_width - TILEWIDTH) / gg->gg_width;
       
 
-      glw_render_vtx_pos(r, 0,  x1, -1.0, 0.0);
-      glw_render_vtx_st (r, 0,  0.0,  ys);
+      glw_renderer_vtx_pos(r, 0,  x1, -1.0, 0.0);
+      glw_renderer_vtx_st (r, 0,  0.0,  ys);
 
-      glw_render_vtx_pos(r, 1,  x2, -1.0, 0.0);
-      glw_render_vtx_st (r, 1,  u,    ys);
+      glw_renderer_vtx_pos(r, 1,  x2, -1.0, 0.0);
+      glw_renderer_vtx_st (r, 1,  u,    ys);
 
-      glw_render_vtx_pos(r, 2,  x2,  1.0, 0.0);
-      glw_render_vtx_st (r, 2,  u,    0.0);
+      glw_renderer_vtx_pos(r, 2,  x2,  1.0, 0.0);
+      glw_renderer_vtx_st (r, 2,  u,    0.0);
 
-      glw_render_vtx_pos(r, 3,  x1, 1.0, 0.0);
-      glw_render_vtx_st (r, 3,  0.0,  0.0);
+      glw_renderer_vtx_pos(r, 3,  x1, 1.0, 0.0);
+      glw_renderer_vtx_st (r, 3,  0.0,  0.0);
 
 
       r = &gg->gg_gr[1];
-      glw_render_vtx_pos(r, 0, -1.0, -1.0, 0.0);
-      glw_render_vtx_st (r, 0,  0.0,  ys);
+      glw_renderer_vtx_pos(r, 0, -1.0, -1.0, 0.0);
+      glw_renderer_vtx_st (r, 0,  0.0,  ys);
 
-      glw_render_vtx_pos(r, 1,  x1, -1.0, 0.0);
-      glw_render_vtx_st (r, 1,  xs,    ys);
+      glw_renderer_vtx_pos(r, 1,  x1, -1.0, 0.0);
+      glw_renderer_vtx_st (r, 1,  xs,    ys);
 
-      glw_render_vtx_pos(r, 2,  x1,  1.0, 0.0);
-      glw_render_vtx_st (r, 2,  xs,    0.0);
+      glw_renderer_vtx_pos(r, 2,  x1,  1.0, 0.0);
+      glw_renderer_vtx_st (r, 2,  xs,    0.0);
 
-      glw_render_vtx_pos(r, 3, -1.0,  1.0, 0.0);
-      glw_render_vtx_st (r, 3,  0.0,  0.0);
+      glw_renderer_vtx_pos(r, 3, -1.0,  1.0, 0.0);
+      glw_renderer_vtx_st (r, 3,  0.0,  0.0);
 
       r = &gg->gg_gr[2];
-      glw_render_vtx_pos(r, 0, x2, -1.0, 0.0);
-      glw_render_vtx_st (r, 0,  0.0,  ys);
+      glw_renderer_vtx_pos(r, 0, x2, -1.0, 0.0);
+      glw_renderer_vtx_st (r, 0,  0.0,  ys);
 
-      glw_render_vtx_pos(r, 1,  1.0, -1.0, 0.0);
-      glw_render_vtx_st (r, 1,  xs,    ys);
+      glw_renderer_vtx_pos(r, 1,  1.0, -1.0, 0.0);
+      glw_renderer_vtx_st (r, 1,  xs,    ys);
 
-      glw_render_vtx_pos(r, 2,  1.0,  1.0, 0.0);
-      glw_render_vtx_st (r, 2,  xs,    0.0);
+      glw_renderer_vtx_pos(r, 2,  1.0,  1.0, 0.0);
+      glw_renderer_vtx_st (r, 2,  xs,    0.0);
 
-      glw_render_vtx_pos(r, 3, x2,  1.0, 0.0);
-      glw_render_vtx_st (r, 3,  0.0,  0.0);
+      glw_renderer_vtx_pos(r, 3, x2,  1.0, 0.0);
+      glw_renderer_vtx_st (r, 3,  0.0,  0.0);
     }
 
     gg->gg_repaint = 1;
