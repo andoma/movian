@@ -89,6 +89,10 @@ glw_opengl_init_context(glw_root_t *gr)
   glEnable(gr->gr_be.gbr_primary_texture_mode);
   glw_video_opengl_init(gr, rectmode);
 
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glEnableClientState(GL_COLOR_ARRAY);
+  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
   return 0;
 }
 
@@ -401,7 +405,6 @@ glw_wirebox(glw_rctx_t *rc)
 }
 
 
-#define DRAWSTRIDE 9
 
 /**
  * 
@@ -410,15 +413,15 @@ void
 glw_renderer_init(glw_renderer_t *gr, int vertices)
 {
   int i;
-  gr->gr_buffer = malloc(sizeof(float) * DRAWSTRIDE * vertices);
+  float *v;
+
+  gr->gr_buffer = malloc(sizeof(float) * (3 + 2 + 4 + 4) * vertices);
+  v = gr->gr_colors = gr->gr_buffer + (3 + 2 + 4) * vertices;
   gr->gr_vertices = vertices;
 
-  for(i = 0; i < vertices; i++) {
-    gr->gr_buffer[i * DRAWSTRIDE + 5] = 1;
-    gr->gr_buffer[i * DRAWSTRIDE + 6] = 1;
-    gr->gr_buffer[i * DRAWSTRIDE + 7] = 1;
-    gr->gr_buffer[i * DRAWSTRIDE + 8] = 1;
-  }
+  for(i = 0; i < vertices * 4; i++)
+    *v++ = 1;
+  gr->gr_alpha = -1000;
 }
 
 
@@ -459,9 +462,9 @@ void
 glw_renderer_vtx_pos(glw_renderer_t *gr, int vertex,
 		     float x, float y, float z)
 {
-  gr->gr_buffer[vertex * DRAWSTRIDE + 0] = x;
-  gr->gr_buffer[vertex * DRAWSTRIDE + 1] = y;
-  gr->gr_buffer[vertex * DRAWSTRIDE + 2] = z;
+  gr->gr_buffer[vertex * 9 + 0] = x;
+  gr->gr_buffer[vertex * 9 + 1] = y;
+  gr->gr_buffer[vertex * 9 + 2] = z;
 }
 
 /**
@@ -471,8 +474,8 @@ void
 glw_renderer_vtx_st(glw_renderer_t *gr, int vertex,
 		    float s, float t)
 {
-  gr->gr_buffer[vertex * DRAWSTRIDE + 3] = s;
-  gr->gr_buffer[vertex * DRAWSTRIDE + 4] = t;
+  gr->gr_buffer[vertex * 9 + 3] = s;
+  gr->gr_buffer[vertex * 9 + 4] = t;
 }
 
 /**
@@ -482,10 +485,11 @@ void
 glw_renderer_vtx_col(glw_renderer_t *gr, int vertex,
 		     float r, float g, float b, float a)
 {
-  gr->gr_buffer[vertex * DRAWSTRIDE + 5] = r;
-  gr->gr_buffer[vertex * DRAWSTRIDE + 6] = g;
-  gr->gr_buffer[vertex * DRAWSTRIDE + 7] = b;
-  gr->gr_buffer[vertex * DRAWSTRIDE + 8] = a;
+  gr->gr_colors[vertex * 4 + 0] = r;
+  gr->gr_colors[vertex * 4 + 1] = g;
+  gr->gr_colors[vertex * 4 + 2] = b;
+  gr->gr_colors[vertex * 4 + 3] = a;
+  gr->gr_alpha = -1000;
 }
 
 
@@ -498,36 +502,46 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
 		  glw_backend_texture_t *be_tex,
 		  float r, float g, float b, float a)
 {
-  int i;
-  float *buf = gr->gr_buffer;
+  if(r != gr->gr_red || g != gr->gr_green || b != gr->gr_blue ||
+     a != gr->gr_alpha) {
+
+    const float *src = gr->gr_colors;
+    int i;
   
+    for(i = 0; i < gr->gr_vertices; i++) {
+      gr->gr_buffer[i * 9 + 5] = *src++ * r;
+      gr->gr_buffer[i * 9 + 6] = *src++ * g;
+      gr->gr_buffer[i * 9 + 7] = *src++ * b;
+      gr->gr_buffer[i * 9 + 8] = *src++ * a;
+    }
+
+    gr->gr_red   = r;
+    gr->gr_green = g;
+    gr->gr_blue  = b;
+    gr->gr_alpha = a;
+  }
+
   if(be_tex != NULL) {
 
     glBindTexture(root->gr_be.gbr_primary_texture_mode, *be_tex);
 
-    glBegin(GL_QUADS);
+    glVertexPointer(  3, GL_FLOAT, sizeof(float) * 9, gr->gr_buffer);
+    glTexCoordPointer(2, GL_FLOAT, sizeof(float) * 9, gr->gr_buffer + 3);
+    glColorPointer(   4, GL_FLOAT, sizeof(float) * 9, gr->gr_buffer + 5);
 
-    for(i = 0; i < gr->gr_vertices; i++) {
-      glColor4f(buf[5] * r, buf[6] * g, buf[7] * b, buf[8] * a);
-      glTexCoord2f(buf[3], buf[4]);
-      glVertex3f(buf[0], buf[1], buf[2]);
-      buf += DRAWSTRIDE;
-    }
-    glEnd();
+    glDrawArrays(GL_QUADS, 0, gr->gr_vertices);
 
   } else {
 
     glDisable(root->gr_be.gbr_primary_texture_mode);
 
-    glBegin(GL_QUADS);
+    glVertexPointer(3, GL_FLOAT, sizeof(float) * 9, gr->gr_buffer);
+    glColorPointer( 4, GL_FLOAT, sizeof(float) * 9, gr->gr_buffer + 5);
 
-    for(i = 0; i < gr->gr_vertices; i++) {
-      glColor4f(buf[5] * r, buf[6] * g, buf[7] * b, buf[8] * a);
-      glVertex3f(buf[0], buf[1], buf[2]);
-      buf += DRAWSTRIDE;
-    }
-    glEnd();
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDrawArrays(GL_QUADS, 0, gr->gr_vertices);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
     glEnable(root->gr_be.gbr_primary_texture_mode);
-    
   }
 }

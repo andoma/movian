@@ -100,6 +100,11 @@ typedef GLuint glw_backend_texture_t;
 typedef struct glw_renderer {
   int gr_vertices;
   float *gr_buffer;
+  float *gr_colors;
+  float gr_red;
+  float gr_green;
+  float gr_blue;
+  float gr_alpha;
 } glw_renderer_t;
 
 #define GLW_RENDER_MODE_QUADS      GL_QUADS
