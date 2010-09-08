@@ -394,7 +394,6 @@ void
 glw_video_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_video_t *gv = (glw_video_t *)w;
-  video_decoder_t *vd = gv->gv_vd;
   glw_rctx_t rc0 = *rc;
   float ys = gv->gv_cfg_cur.gvc_flags & GVC_YHALF ? 2 : 1;
 
@@ -420,9 +419,12 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
 		 (ys * -gv->gv_cfg_cur.gvc_height[0]) / 2, 
 		0.0f);
 
+#ifdef CONFIG_DVD
+  video_decoder_t *vd = gv->gv_vd;
   if(gv->gv_cfg_cur.gvc_width[0] > 0 &&
      (glw_is_focused(w) || !vd->vd_pci.hli.hl_gi.hli_ss))
     glw_video_overlay_render(&gv->gv_spu, w->glw_root, &rc0);
+#endif
   
   glw_video_overlay_render(&gv->gv_sub, w->glw_root, &rc0);
 
