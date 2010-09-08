@@ -24,7 +24,6 @@ typedef struct glw_throbber3d {
   float angle;
   
   glw_renderer_t renderer;
-  int renderer_initialized;
 
 } glw_throbber3d_t;
 
@@ -50,13 +49,15 @@ static const struct {
 
 #define pinvtx(n) pin[n].x, pin[n].y, pin[n].z
 
-static const char surfaces[24] = {
-  0,1,5,4,
-  2,3,7,6,
-  3,0,4,7,
-  1,2,6,5,
-  3,2,1,0,
-  4,5,6,7};
+static uint16_t surfaces[] = {
+  0,1,5,  0,5,4,
+  2,3,7,  2,7,6,
+
+  8+3,8+0,8+4,8+3,8+4,8+7,
+  8+1,8+2,8+6,8+1,8+6,8+5,
+  8+3,8+2,8+1,8+3,8+1,8+0,
+  8+4,8+5,8+6,8+4,8+6,8+7,
+};
 
 /**
  *
@@ -86,17 +87,16 @@ glw_throbber_render(glw_t *w, glw_rctx_t *rc)
   if(a0 < 0.01)
     return;
 
-  if(!gt->renderer_initialized) {
-    glw_renderer_init(&gt->renderer, 24);
+  if(!glw_renderer_initialized(&gt->renderer)) {
+    glw_renderer_init(&gt->renderer, 16, 12, surfaces);
 
-    for(i = 0; i < 24; i++) {
-      glw_renderer_vtx_pos(&gt->renderer, i, pinvtx((int)surfaces[i]));
+    for(i = 0; i < 16; i++) {
+      glw_renderer_vtx_pos(&gt->renderer, i, pinvtx(i & 7));
       if(i < 8)
 	glw_renderer_vtx_col(&gt->renderer, i, 1,1,1,1);
       else
 	glw_renderer_vtx_col(&gt->renderer, i, 0.25, 0.25, 0.25, 1);
     }
-    gt->renderer_initialized = 1;
   }
 
   rc0 = *rc;

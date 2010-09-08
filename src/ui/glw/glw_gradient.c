@@ -221,7 +221,7 @@ glw_gradient_layout(glw_t *W, glw_rctx_t *rc)
   tiles = 1;
 
   for(i = gg->gg_tiles; i < tiles; i++) {
-    glw_renderer_init(&gg->gg_gr[i], 4);
+    glw_renderer_init_quad(&gg->gg_gr[i]);
     gg->gg_gr_initialized = tiles;
   }
 

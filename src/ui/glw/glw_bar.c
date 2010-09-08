@@ -76,7 +76,7 @@ glw_bar_layout(glw_t *W, glw_rctx_t *rc)
   float r, g, b, x;
 
   if(!glw_renderer_initialized(&gb->gb_gr)) {
-    glw_renderer_init(&gb->gb_gr, 4);
+    glw_renderer_init_quad(&gb->gb_gr);
     gb->gb_update = 1;
   }
 

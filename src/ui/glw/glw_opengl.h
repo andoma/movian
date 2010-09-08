@@ -98,9 +98,13 @@ typedef GLuint glw_backend_texture_t;
  * Renderer
  */
 typedef struct glw_renderer {
-  int gr_vertices;
-  float *gr_buffer;
+  uint16_t gr_vertices;
+  uint16_t gr_triangles;
+  char gr_static_indices;
+
+  float *gr_array;
   float *gr_colors;
+  uint16_t *gr_indices;
   float gr_red;
   float gr_green;
   float gr_blue;

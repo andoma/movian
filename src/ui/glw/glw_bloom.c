@@ -185,7 +185,7 @@ glw_bloom_layout(glw_t *w, glw_rctx_t *rc)
     float xs = gr->gr_normalized_texture_coords ? 1.0 : b->b_width;
     float ys = gr->gr_normalized_texture_coords ? 1.0 : b->b_height;
 
-    glw_renderer_init(&b->b_render, 4);
+    glw_renderer_init_quad(&b->b_render);
 
     glw_renderer_vtx_pos(&b->b_render, 0, -1.0, -1.0, 0.0);
     glw_renderer_vtx_st (&b->b_render, 0,  0.0,  0);

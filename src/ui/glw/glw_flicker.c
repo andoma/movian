@@ -73,8 +73,8 @@ glw_flicker_layout(glw_t *W, glw_rctx_t *rc)
   int i;
 
   if(!gf->gf_gr_initialized) {
-    glw_renderer_init(&gf->gf_gr[0], 4);
-    glw_renderer_init(&gf->gf_gr[1], 4);
+    glw_renderer_init_quad(&gf->gf_gr[0]);
+    glw_renderer_init_quad(&gf->gf_gr[1]);
 
     for(i = 0; i < 2; i++) {
       glw_renderer_vtx_pos(&gf->gf_gr[i], 0, i+-1.0, -1.0, 0.0);

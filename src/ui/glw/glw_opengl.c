@@ -410,14 +410,23 @@ glw_wirebox(glw_rctx_t *rc)
  * 
  */
 void
-glw_renderer_init(glw_renderer_t *gr, int vertices)
+glw_renderer_init(glw_renderer_t *gr, int vertices, int triangles,
+		  uint16_t *indices)
 {
   int i;
   float *v;
 
-  gr->gr_buffer = malloc(sizeof(float) * (3 + 2 + 4 + 4) * vertices);
-  v = gr->gr_colors = gr->gr_buffer + (3 + 2 + 4) * vertices;
+  gr->gr_array = malloc(sizeof(float) * (3 + 2 + 4 + 4) * vertices);
+  v = gr->gr_colors = gr->gr_array + (3 + 2 + 4) * vertices;
   gr->gr_vertices = vertices;
+
+  if((gr->gr_static_indices = (indices != NULL))) {
+    gr->gr_indices = indices;
+  } else {
+    gr->gr_indices = malloc(sizeof(uint16_t) * triangles * 3);
+  }
+
+  gr->gr_triangles = triangles;
 
   for(i = 0; i < vertices * 4; i++)
     *v++ = 1;
@@ -426,12 +435,30 @@ glw_renderer_init(glw_renderer_t *gr, int vertices)
 
 
 /**
- * 
+ *
  */
 void
-glw_renderer_set_vertices(glw_renderer_t *gr, int vertices)
+glw_renderer_triangle(glw_renderer_t *gr, int element, 
+		      uint16_t a, uint16_t b, uint16_t c)
 {
-  gr->gr_vertices = vertices;
+  gr->gr_indices[element * 3 + 0] = a;
+  gr->gr_indices[element * 3 + 1] = b;
+  gr->gr_indices[element * 3 + 2] = c;
+}
+
+
+/**
+ *
+ */
+void
+glw_renderer_init_quad(glw_renderer_t *gr)
+{
+  static uint16_t quad[6] = {
+    0, 1, 2,
+    0, 2, 3,
+  };
+
+  glw_renderer_init(gr, 4, 2, quad);
 }
 
 
@@ -441,8 +468,13 @@ glw_renderer_set_vertices(glw_renderer_t *gr, int vertices)
 void
 glw_renderer_free(glw_renderer_t *gr)
 {
-  free(gr->gr_buffer);
-  gr->gr_buffer = NULL;
+  free(gr->gr_array);
+  gr->gr_array = NULL;
+
+  if(!gr->gr_static_indices) {
+    free(gr->gr_indices);
+    gr->gr_indices = NULL;
+  }
 }
 
 
@@ -452,7 +484,7 @@ glw_renderer_free(glw_renderer_t *gr)
 int
 glw_renderer_initialized(glw_renderer_t *gr)
 {
-  return !!gr->gr_buffer;
+  return !!gr->gr_array;
 }
 
 /**
@@ -462,9 +494,9 @@ void
 glw_renderer_vtx_pos(glw_renderer_t *gr, int vertex,
 		     float x, float y, float z)
 {
-  gr->gr_buffer[vertex * 9 + 0] = x;
-  gr->gr_buffer[vertex * 9 + 1] = y;
-  gr->gr_buffer[vertex * 9 + 2] = z;
+  gr->gr_array[vertex * 9 + 0] = x;
+  gr->gr_array[vertex * 9 + 1] = y;
+  gr->gr_array[vertex * 9 + 2] = z;
 }
 
 /**
@@ -474,8 +506,8 @@ void
 glw_renderer_vtx_st(glw_renderer_t *gr, int vertex,
 		    float s, float t)
 {
-  gr->gr_buffer[vertex * 9 + 3] = s;
-  gr->gr_buffer[vertex * 9 + 4] = t;
+  gr->gr_array[vertex * 9 + 3] = s;
+  gr->gr_array[vertex * 9 + 4] = t;
 }
 
 /**
@@ -509,10 +541,10 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
     int i;
   
     for(i = 0; i < gr->gr_vertices; i++) {
-      gr->gr_buffer[i * 9 + 5] = *src++ * r;
-      gr->gr_buffer[i * 9 + 6] = *src++ * g;
-      gr->gr_buffer[i * 9 + 7] = *src++ * b;
-      gr->gr_buffer[i * 9 + 8] = *src++ * a;
+      gr->gr_array[i * 9 + 5] = *src++ * r;
+      gr->gr_array[i * 9 + 6] = *src++ * g;
+      gr->gr_array[i * 9 + 7] = *src++ * b;
+      gr->gr_array[i * 9 + 8] = *src++ * a;
     }
 
     gr->gr_red   = r;
@@ -525,21 +557,24 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
 
     glBindTexture(root->gr_be.gbr_primary_texture_mode, *be_tex);
 
-    glVertexPointer(  3, GL_FLOAT, sizeof(float) * 9, gr->gr_buffer);
-    glTexCoordPointer(2, GL_FLOAT, sizeof(float) * 9, gr->gr_buffer + 3);
-    glColorPointer(   4, GL_FLOAT, sizeof(float) * 9, gr->gr_buffer + 5);
+    glVertexPointer(  3, GL_FLOAT, sizeof(float) * 9, gr->gr_array);
+    glTexCoordPointer(2, GL_FLOAT, sizeof(float) * 9, gr->gr_array + 3);
+    glColorPointer(   4, GL_FLOAT, sizeof(float) * 9, gr->gr_array + 5);
 
-    glDrawArrays(GL_QUADS, 0, gr->gr_vertices);
+    glDrawElements(GL_TRIANGLES, 3 * gr->gr_triangles, GL_UNSIGNED_SHORT,
+		   gr->gr_indices);
 
   } else {
 
     glDisable(root->gr_be.gbr_primary_texture_mode);
 
-    glVertexPointer(3, GL_FLOAT, sizeof(float) * 9, gr->gr_buffer);
-    glColorPointer( 4, GL_FLOAT, sizeof(float) * 9, gr->gr_buffer + 5);
+    glVertexPointer(3, GL_FLOAT, sizeof(float) * 9, gr->gr_array);
+    glColorPointer( 4, GL_FLOAT, sizeof(float) * 9, gr->gr_array + 5);
 
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glDrawArrays(GL_QUADS, 0, gr->gr_vertices);
+
+    glDrawElements(GL_TRIANGLES, 3 * gr->gr_triangles, GL_UNSIGNED_SHORT,
+		   gr->gr_indices);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
     glEnable(root->gr_be.gbr_primary_texture_mode);

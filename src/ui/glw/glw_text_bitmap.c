@@ -658,10 +658,10 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
   }
 
   if(!glw_renderer_initialized(&gtb->gtb_text_renderer)) {
-    glw_renderer_init(&gtb->gtb_text_renderer, 4);
+    glw_renderer_init_quad(&gtb->gtb_text_renderer);
 
     if(w->glw_class == &glw_text)
-      glw_renderer_init(&gtb->gtb_cursor_renderer, 4);
+      glw_renderer_init_quad(&gtb->gtb_cursor_renderer);
   }
 
   if(gtbd->gtbd_data != NULL) {

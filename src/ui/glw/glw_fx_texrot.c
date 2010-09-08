@@ -170,7 +170,7 @@ glw_fx_texrot_layout(glw_t *w, glw_rctx_t *rc)
     float xs = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_xs;
     float ys = gr->gr_normalized_texture_coords ? 1.0 : glt->glt_ys;
 
-    glw_renderer_init(&fx->fx_source_render, 4);
+    glw_renderer_init_quad(&fx->fx_source_render);
     
     glw_renderer_vtx_pos(&fx->fx_source_render, 0, -1.0, -1.0, 0.0);
     glw_renderer_vtx_st (&fx->fx_source_render, 0,  0.0,  ys);
@@ -196,7 +196,7 @@ glw_fx_texrot_layout(glw_t *w, glw_rctx_t *rc)
     float xs = gr->gr_normalized_texture_coords ? 1.0 : width;
     float ys = gr->gr_normalized_texture_coords ? 1.0 : height;
 
-    glw_renderer_init(&fx->fx_render, 4);
+    glw_renderer_init_quad(&fx->fx_render);
 
     glw_renderer_vtx_pos(&fx->fx_render, 0, -1.0, -1.0, 0.0);
     glw_renderer_vtx_st (&fx->fx_render, 0,  0.0,  ys);

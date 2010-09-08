@@ -236,7 +236,7 @@ spu_repaint(glw_video_overlay_t *gvo, video_decoder_t *vd, dvdspu_t *d,
   }
 
   if(gvo_setup_bitmap(gvo, 1))
-    glw_renderer_init(&gvo->gvo_renderers[0], 4);
+    glw_renderer_init_quad(&gvo->gvo_renderers[0]);
 
   float w = gr->gr_normalized_texture_coords ? 1.0 : width;
   float h = gr->gr_normalized_texture_coords ? 1.0 : height;
@@ -320,7 +320,7 @@ glw_video_sub_layout_bitmaps(video_decoder_t *vd, glw_video_overlay_t *gvo,
   int i;
   if(gvo_setup_bitmap(gvo, s->s_num_rects))
     for(i = 0; i < s->s_num_rects; i++)
-      glw_renderer_init(&gvo->gvo_renderers[i], 4);
+      glw_renderer_init_quad(&gvo->gvo_renderers[i]);
   
   for(i = 0; i < s->s_num_rects; i++) {
     subtitle_rect_t *sr = &s->s_rects[i];

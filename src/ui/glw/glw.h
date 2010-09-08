@@ -170,18 +170,8 @@ typedef enum {
 /**
  * Image flags
  */
-#define GLW_IMAGE_MIRROR_X      0x1
-#define GLW_IMAGE_MIRROR_Y      0x2
-#define GLW_IMAGE_BORDER_LEFT   0x4
-#define GLW_IMAGE_BORDER_RIGHT  0x8
-#define GLW_IMAGE_BORDER_TOP    0x10
-#define GLW_IMAGE_BORDER_BOTTOM 0x20
-#define GLW_IMAGE_INFRONT       0x40
-#define GLW_IMAGE_STRETCH_X     0x80
-#define GLW_IMAGE_STRETCH_Y     0x100
-#define GLW_IMAGE_HQ_SCALING    0x200
-#define GLW_IMAGE_FIXED_SIZE    0x400
-#define GLW_IMAGE_RESIZE        0x800
+#define GLW_IMAGE_HQ_SCALING    0x1
+#define GLW_IMAGE_FIXED_SIZE    0x2
 
 
 /**
@@ -1043,9 +1033,14 @@ glw_align_2(glw_rctx_t *rc, glw_alignment_t a)
 /**
  * Render interface abstraction
  */
-void glw_renderer_init(glw_renderer_t *gr, int vertices);
 
-void glw_renderer_set_vertices(glw_renderer_t *gr, int vertices);
+void glw_renderer_init(glw_renderer_t *gr, int vertices, int triangles,
+		       uint16_t *indices);
+
+void glw_renderer_init_quad(glw_renderer_t *gr);
+
+void glw_renderer_triangle(glw_renderer_t *gr, int element, 
+			   uint16_t a, uint16_t b, uint16_t c);
 
 int glw_renderer_initialized(glw_renderer_t *gr);
 

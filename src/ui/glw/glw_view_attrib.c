@@ -450,21 +450,8 @@ static const token_attrib_t attribtab[] = {
 
   {"enabled",                 set_generic_flag2, GLW2_ENABLED},
 
-  {"mirrorx",         set_image_flag, GLW_IMAGE_MIRROR_X},
-  {"mirrory",         set_image_flag, GLW_IMAGE_MIRROR_Y},
-
-  {"borderLeft",      set_image_flag, GLW_IMAGE_BORDER_LEFT},
-  {"borderRight",     set_image_flag, GLW_IMAGE_BORDER_RIGHT},
-  {"borderTop",       set_image_flag, GLW_IMAGE_BORDER_TOP},
-  {"borderBottom",    set_image_flag, GLW_IMAGE_BORDER_BOTTOM},
-  {"infront",         set_image_flag, GLW_IMAGE_INFRONT},
-
-  {"stretchx",        set_image_flag, GLW_IMAGE_STRETCH_X},
-  {"stretchy",        set_image_flag, GLW_IMAGE_STRETCH_Y},
-
   {"hqScaling",       set_image_flag, GLW_IMAGE_HQ_SCALING},
   {"fixedSize",       set_image_flag, GLW_IMAGE_FIXED_SIZE},
-  {"resize",          set_image_flag, GLW_IMAGE_RESIZE},
 
   {"password",        set_text_flag,  GTB_PASSWORD},
   {"ellipsize",       set_text_flag,  GTB_ELLIPSIZE},
