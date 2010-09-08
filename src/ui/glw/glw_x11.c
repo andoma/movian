@@ -546,15 +546,14 @@ wm_set_fullscreen(glw_x11_t *gx11, int on)
 /**
  *
  */
+#if ENABLE_VDPAU
 static void
 vdpau_preempted(void *aux)
 {
   glw_x11_t *gx11 = aux;
   gx11->vdpau_preempted = 1;
-
-  
 }
-
+#endif
 
 /**
  *
@@ -1091,11 +1090,13 @@ glw_x11_mainloop(glw_x11_t *gx11)
     int flags = 0;
 
     if(gx11->vdpau_preempted) {
+#if ENABLE_VDPAU
       if(!vdpau_reinit_x11(gx11->gr.gr_be.gbr_vdpau_dev)) {
 	TRACE(TRACE_DEBUG, "VDPAU", "X11: VDPAU Reinitialized");
 	gx11->vdpau_preempted = 0;
 	flags |= GLW_REINITIALIZE_VDPAU;
       }
+#endif
     }
 
     glw_prepare_frame(&gx11->gr, flags);
