@@ -204,7 +204,7 @@ trap_init(void)
 #else
 
 void
-trap_init(const char *ver)
+trap_init(void)
 {
 
 }
