@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <assert.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <string.h>
@@ -74,11 +75,30 @@ glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
   glTexParameteri(m, GL_TEXTURE_WRAP_S, wrapmode);
   glTexParameteri(m, GL_TEXTURE_WRAP_T, wrapmode);
 
-  glTexImage2D(m, 0, glt->glt_format, 
-	       glt->glt_xs, glt->glt_ys,
-	       0, glt->glt_ext_format,
-	       glt->glt_ext_type, p);
-    
+  if(glt->glt_tex_width && glt->glt_tex_height) {
+
+    glTexImage2D(m, 0, glt->glt_format, glt->glt_tex_width, glt->glt_tex_height,
+		 0, glt->glt_ext_format, glt->glt_ext_type, NULL);
+
+    glTexSubImage2D(m, 0, 0, 0, 
+		    glt->glt_xs, glt->glt_ys, 
+		    glt->glt_ext_format, glt->glt_ext_type,
+		    p);
+
+    glt->glt_s = (float)glt->glt_xs / (float)glt->glt_tex_width;
+    glt->glt_t = (float)glt->glt_ys / (float)glt->glt_tex_height;
+
+  } else {
+    glt->glt_s = 1;
+    glt->glt_t = 1;
+
+    glTexImage2D(m, 0, glt->glt_format, 
+		 glt->glt_xs, glt->glt_ys,
+		 0, glt->glt_ext_format,
+		 glt->glt_ext_type, p);
+  }
+
+
   glBindTexture(m, 0);
     
   if(glt->glt_bitmap != NULL) {
@@ -100,7 +120,8 @@ make_powerof2(int v)
   return 1 << (av_log2(v) + (v > m));
 }
 
-static void texture_load_direct(AVPicture *pict, glw_loadable_texture_t *glt);
+static void texture_load_direct(AVPicture *pict, glw_loadable_texture_t *glt,
+				int bpp);
 
 static int texture_load_rescale_swscale(const AVPicture *pict, int pix_fmt, 
 					int src_w, int src_h,
@@ -111,42 +132,50 @@ int
 glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 		     AVPicture *pict, int pix_fmt, 
 		     int src_w, int src_h,
-		     int req_w, int req_h)
+		     int req_w0, int req_h0)
 {
   int r, x, y, i;
   int need_format_conv = 0;
   int need_rescale;
   uint32_t *palette, *u32p;
   uint8_t *map;
-  
+  int bpp = 0;
+
   switch(pix_fmt) {
   default:
     need_format_conv = 1;
     break;
 
   case PIX_FMT_RGB24:    
-    glt->glt_bpp = 3;
+    bpp = 3;
     glt->glt_format = GL_RGB;
     glt->glt_ext_format = GL_RGB;
     glt->glt_ext_type = GL_UNSIGNED_BYTE;
     break;
 
   case PIX_FMT_BGRA:
-    glt->glt_bpp = 4;
-    glt->glt_format = GL_RGBA;
+    bpp = 4;
+    glt->glt_format = GL_BGRA;
     glt->glt_ext_format = GL_BGRA;
+    glt->glt_ext_type = GL_UNSIGNED_BYTE;
+    break;
+
+  case PIX_FMT_RGBA:
+    bpp = 4;
+    glt->glt_format = GL_RGBA;
+    glt->glt_ext_format = GL_RGBA;
     glt->glt_ext_type = GL_UNSIGNED_BYTE;
     break;
     
   case PIX_FMT_Y400A:
-    glt->glt_bpp = 2;
+    bpp = 2;
     glt->glt_format = GL_LUMINANCE_ALPHA;
     glt->glt_ext_format = GL_LUMINANCE_ALPHA;
     glt->glt_ext_type = GL_UNSIGNED_BYTE;
     break;
 
   case PIX_FMT_GRAY8:
-    glt->glt_bpp = 1;
+    bpp = 1;
     glt->glt_format = GL_LUMINANCE;
     glt->glt_ext_format = GL_LUMINANCE;
     glt->glt_ext_type = GL_UNSIGNED_BYTE;
@@ -189,11 +218,13 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
     }
 
     r = glw_tex_backend_load(gr, glt, &pict2, PIX_FMT_BGRA, 
-			     src_w, src_h, req_w, req_h);
+			     src_w, src_h, req_w0, req_h0);
 
     av_free(pict2.data[0]);
     return r;
   }
+
+  int req_w = req_w0, req_h = req_h0;
 
   if(!glw_can_tnpo2(gr)) {
     /* We lack non-power-of-two texture support, check if we must rescale.
@@ -201,24 +232,33 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
      * compensate the rescaling when we render the texture.
      */
     
-    if(1 << av_log2(req_w) != req_w)
-      req_w = make_powerof2(req_w);
+    if(1 << av_log2(req_w0) != req_w0)
+      req_w = make_powerof2(req_w0);
 
-    if(1 << av_log2(req_h) != req_h)
-      req_h = make_powerof2(req_h);
+    if(1 << av_log2(req_h0) != req_h0)
+      req_h = make_powerof2(req_h0);
   }
 
   need_rescale = req_w != src_w || req_h != src_h;
 
-  if(need_rescale || need_format_conv)
+  if(need_rescale || need_format_conv) {
     if(!texture_load_rescale_swscale(pict, pix_fmt, src_w, src_h,
 				     req_w, req_h, glt))
       return 0;
+    
+    if(need_format_conv)
+      return 0;
+
+    // Scale up to next power of two
+
+    glt->glt_tex_width  = 1 << (av_log2(req_w0) + 1);
+    glt->glt_tex_height = 1 << (av_log2(req_h0) + 1);
+  }
   
   glt->glt_xs = src_w;
   glt->glt_ys = src_h;
 
-  texture_load_direct(pict, glt);
+  texture_load_direct(pict, glt, bpp);
   return 0;
 }
 
@@ -227,20 +267,22 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
  * format matches one the OpenGL supports by itself)
  */
 static void
-texture_load_direct(AVPicture *pict, glw_loadable_texture_t *glt)
+texture_load_direct(AVPicture *pict, glw_loadable_texture_t *glt, int bpp)
 {
   uint8_t *src, *dst;
   int w = glt->glt_xs;
   int h = glt->glt_ys;
 
-  glt->glt_bitmap_size = glt->glt_bpp * glt->glt_xs * glt->glt_ys;
+  assert(bpp > 0);
+
+  glt->glt_bitmap_size = bpp * glt->glt_xs * glt->glt_ys;
 
   glt->glt_bitmap = mmap(NULL, glt->glt_bitmap_size, PROT_READ | PROT_WRITE,
 			 MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
   src = pict->data[0];
   dst = glt->glt_bitmap;
-  w *= glt->glt_bpp;
+  w *= bpp;
 
   if(pict->linesize[0] != w) {
     while(h--) {
@@ -270,6 +312,7 @@ texture_load_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
   struct SwsContext *sws;
   const uint8_t *ptr[4];
   int strides[4];
+  int bpp;
 
   if(src_pix_fmt == PIX_FMT_BGRA) {
     dst_pix_fmt = PIX_FMT_RGBA;
@@ -299,13 +342,13 @@ texture_load_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
 
   if(src_pix_fmt == PIX_FMT_BGRA) {
 
-    glt->glt_bpp = 4;
+    bpp = 4;
     glt->glt_format = GL_RGBA;
     glt->glt_ext_format = GL_RGBA;
 
   } else {
 
-    glt->glt_bpp = 3;
+    bpp = 3;
     glt->glt_format = GL_RGB;
     glt->glt_ext_format = GL_RGB;
 
@@ -314,13 +357,13 @@ texture_load_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
   glt->glt_ext_type = GL_UNSIGNED_BYTE;
 
 
-  glt->glt_bitmap_size = glt->glt_bpp * glt->glt_xs * glt->glt_ys;
+  glt->glt_bitmap_size = bpp * glt->glt_xs * glt->glt_ys;
   
   glt->glt_bitmap = mmap(NULL, glt->glt_bitmap_size, PROT_READ | PROT_WRITE,
 			 MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     
   pic.data[0] = glt->glt_bitmap;
-  pic.linesize[0] = dst_w * glt->glt_bpp;
+  pic.linesize[0] = dst_w * bpp;
   
   sws_scale(sws, ptr, strides, 0, src_h,
 	    pic.data, pic.linesize);
@@ -350,21 +393,20 @@ glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex,
     int m = flags & GLW_TEX_REPEAT ? GL_REPEAT : GL_CLAMP_TO_EDGE;
     glTexParameteri(m, GL_TEXTURE_WRAP_S, m);
     glTexParameteri(m, GL_TEXTURE_WRAP_T, m);
-    
   } else {
     glBindTexture(m, *tex);
   }
   
   switch(fmt) {
   case GLW_TEXTURE_FORMAT_I8:
-    format     = GL_ALPHA8;
+    format     = GL_ALPHA;
     ext_format = GL_ALPHA;
     ext_type   = GL_UNSIGNED_BYTE;
     break;
 
   case GLW_TEXTURE_FORMAT_RGBA:
     format     = GL_RGBA;
-    ext_format = GL_BGRA;
+    ext_format = GL_RGBA;
     ext_type   = GL_UNSIGNED_BYTE;
     break;
 

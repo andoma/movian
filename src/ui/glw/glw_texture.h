@@ -52,7 +52,6 @@ typedef struct glw_loadable_texture {
 
   int16_t glt_xs;
   int16_t glt_ys;
-  int16_t glt_bpp;
 
   int glt_format;
   int glt_ext_format;
@@ -61,6 +60,10 @@ typedef struct glw_loadable_texture {
   struct pixmap *glt_pixmap;
 
   unsigned int glt_orientation;
+
+  float glt_s, glt_t;
+  int16_t glt_tex_width;
+  int16_t glt_tex_height;
 
 } glw_loadable_texture_t;
 
