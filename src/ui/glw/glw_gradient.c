@@ -33,9 +33,10 @@ typedef struct glw_gradient {
   glw_renderer_t gg_gr[3];
   glw_backend_texture_t gg_tex[3];
 
-  int gg_width;
-  int gg_height;
-  int gg_tiles;
+  int16_t gg_width;
+  int16_t gg_height;
+  int16_t gg_height2;
+  int16_t gg_tiles;
 
 } glw_gradient_t;
 
@@ -230,8 +231,10 @@ glw_gradient_layout(glw_t *W, glw_rctx_t *rc)
     gg->gg_height = h;
     gg->gg_tiles = tiles;
 
+    gg->gg_height2 = glw_can_tnpo2(gr) ? h : 1 << (av_log2(h));
+
     float xs = gr->gr_normalized_texture_coords ? 1.0 : TILEWIDTH;
-    float ys = gr->gr_normalized_texture_coords ? 1.0 : gg->gg_height;
+    float ys = gr->gr_normalized_texture_coords ? 1.0 : gg->gg_height2;
     glw_renderer_t *r;
 
 
@@ -309,7 +312,7 @@ glw_gradient_layout(glw_t *W, glw_rctx_t *rc)
   if(gg->gg_repaint) {
     gg->gg_repaint = 0;
 
-    repaint(gg, gr, i, TILEWIDTH, gg->gg_height, gg->gg_tiles);
+    repaint(gg, gr, i, TILEWIDTH, gg->gg_height2, gg->gg_tiles);
   }
 
 }
@@ -342,8 +345,8 @@ glw_gradient_set(glw_t *w, int init, va_list ap)
   glw_attribute_t attrib;
 
   if(init) {
-    gg->gg_height = 1024;
-    gg->gg_width = 8;
+    gg->gg_height = -1;
+    gg->gg_width = -1;
   }
 
 
