@@ -22,7 +22,18 @@
 /**
  * Atomically add 'incr' to *ptr and return the previous value
  */
-#if defined(__i386__) || defined(__x86_64__)
+
+
+
+#if defined(linux) && __GNUC__ >= 4 && __GNUC_MINOR__ >=3 
+
+static inline int
+atomic_add(volatile int *ptr, int incr)
+{
+  return __sync_fetch_and_add(ptr, incr);
+}
+
+#elif defined(__i386__) || defined(__x86_64__)
 static inline int
 atomic_add(volatile int *ptr, int incr)
 {
