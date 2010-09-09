@@ -14,6 +14,7 @@
 PLATFORM="linux"
 OSENV="posix"
 DEFAULT_UI="glw"
+GLWFRONTEND="x11"
 
 source support/configure.inc
 
@@ -24,12 +25,15 @@ PREFIX=/usr/local
 show_help(){
   common_help
 
-  echo "  --prefix=PREFIX          install in PREFIX [$PREFIX]"
-  echo "  --arch=arch              Build for this architecture [$ARCH]"
-  echo "  --cpu=cpu                Build and optimize for specific CPU"
-  echo "  --cc=CC                  Build using the given compiler"
+  echo "  --prefix=PREFIX          Install in PREFIX [$PREFIX]"
+  echo "  --arch=ARCH              Build for this architecture [$ARCH]"
+  echo "  --cpu=CPU                Build and optimize for specific CPU"
+  echo "  --cc=CC                  Build using compiler CC [cc]"
   echo "  --release                Stage for release"
-  echo "  --enable-spotify=keyfile Compile support for Spotify (R) Core"
+  echo "  --enable-spotify=KEYFILE Compile support for Spotify (R) Core"
+  echo "  --glw-frontend=FRONTEND  Build GLW for FRONTEND [$GLWFRONTEND]"
+  echo "                            x11      X11 Windows"
+  echo "                            none     Disable GLW"
   exit 1
 }
 
@@ -61,7 +65,6 @@ fatal() {
 
 
 enable libfreetype
-enable glw
 enable libasound
 enable libpulse
 enable lirc
@@ -97,6 +100,8 @@ for opt do
   ;;
   --enable-spotify=*) SPOTIFY_KEYFILE="$optval"
   ;;
+  --glw-frontend=*) GLWFRONTEND="$optval"
+  ;;
   *)
   common_opt $opt $optval
   esac
@@ -106,13 +111,10 @@ done
 setup_env "$@"
 
 enable libpthread
-enable libx11
-enable libxext
 enable zlib
 enable posix_networking
 enable dvd
 enable dvd_linux
-
 
 #
 # pkgconfig
@@ -171,23 +173,64 @@ if enabled libfreetype; then
 fi
 
 
+
 #
-# opengl for GLW (depends on freetype)
+# libx11
 #
-if enabled glw; then
+if pkg-config x11; then
+    echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags x11`
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs x11`
+    echo "Using libX11:          `pkg-config --modversion x11`"
+    enable libx11
+fi
+
+
+#
+# libxext
+#
+if pkg-config xext; then
+    echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags xext`
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs xext`
+    echo "Using libXext:         `pkg-config --modversion xext`"
+    enable libxext
+fi
+
+
+#
+# GLW frontend
+#
+case "$GLWFRONTEND" in
+    x11)
+	enable glw_frontend_x11
+	;;
+    none)
+	;;
+    *)
+	echo "Invalid GLW frontend: $GLWFRONTEND"
+	die
+esac
+
+echo "Using GLW Frontend:    $GLWFRONTEND"
+
+
+
+#
+# GLW on X11
+#
+if enabled glw_frontend_x11; then
 
     if disabled libfreetype; then
-	echo "GLW depends on libfreetype"
+	echo "glw-x11 depends on libfreetype"
 	die
     fi
 
     if disabled libx11; then
-	echo "GLW depends on libx11"
+	echo "glw-x11 depends on libx11"
 	die
     fi
 
     if disabled libxext; then
-	echo "GLW depends on libxext"
+	echo "glw-x11 depends on libxext"
 	die
     fi
 
@@ -198,15 +241,20 @@ if enabled glw; then
 	echo "Using GL:              `pkg-config --modversion gl`"
 	echo "Using GLU:             `pkg-config --modversion glu`"
     else
-	check_header "GL/gl.h"    || fatal "glw" "Missing OpenGL include file GL/gl.h"
-	check_header "GL/glx.h"   || fatal "glw" "Missing OpenGL include file GL/glx.h"
-	check_header "GL/glu.h"   || fatal "glw" "Missing OpenGL include file GL/glu.h"
-	check_lib    "GL"         || fatal "glw" "Unable to link with libGL"
-	check_lib    "GLU"        || fatal "glw" "Unable to link with libGLU"
+	check_header "GL/gl.h"    || fatal "glw-x11" "Missing OpenGL include file GL/gl.h"
+	check_header "GL/glx.h"   || fatal "glw-x11" "Missing OpenGL include file GL/glx.h"
+	check_header "GL/glu.h"   || fatal "glw-x11" "Missing OpenGL include file GL/glu.h"
+	check_lib    "GL"         || fatal "glw-x11" "Unable to link with libGL"
+	check_lib    "GLU"        || fatal "glw-x11" "Unable to link with libGLU"
 	echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lGLU -lGL"
     fi
-    enable glw_frontend_x11
+
     enable glw_backend_opengl
+    enable glw
+else
+    disable vdpau
+    disable libxss
+    disable libxxf86vm
 fi
 
 
@@ -271,6 +319,8 @@ if enabled gu; then
 	echo "To compile without it, configure with: --disable-gu"
 	die
     fi
+else
+    disable libxv
 fi
 
 
@@ -318,35 +368,6 @@ if enabled libxv; then
     fi
 fi
 
-
-#
-# libx11
-#
-if enabled libx11; then
-    if pkg-config x11; then
-	echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags x11`
-	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs x11`
-	echo "Using libX11:          `pkg-config --modversion x11`"
-    else
-	echo "libX11 not found."
-	die
-    fi
-fi
-
-
-#
-# libxext
-#
-if enabled libxext; then
-    if pkg-config xext; then
-	echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags xext`
-	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs xext`
-	echo "Using libXext:         `pkg-config --modversion xext`"
-    else
-	echo "libXext not found."
-	die
-    fi
-fi
 
 
 #
