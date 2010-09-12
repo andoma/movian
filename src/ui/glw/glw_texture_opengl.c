@@ -155,7 +155,7 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 
   case PIX_FMT_BGRA:
     bpp = 4;
-    glt->glt_format = GL_BGRA;
+    glt->glt_format = GL_RGBA;
     glt->glt_ext_format = GL_BGRA;
     glt->glt_ext_type = GL_UNSIGNED_BYTE;
     break;
