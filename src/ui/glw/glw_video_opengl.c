@@ -39,19 +39,19 @@
 #define PBO_RELEASE_BEFORE_MAP
 
 static const char *yuv2rbg_code =
-#include "cg/yuv2rgb.h"
+#include "cg/yuv2rgb.arbfp1"
 ;
 
 static const char *yuv2rbg_2mix_code =
-#include "cg/yuv2rgb_2mix.h"
+#include "cg/yuv2rgb_2mix.arbfp1"
 ;
 
 static const char *yuv2rbg_rect_code =
-#include "cg/yuv2rgb_rect.h"
+#include "cg/yuv2rgb_rect.arbfp1"
 ;
 
 static const char *yuv2rbg_2mix_rect_code =
-#include "cg/yuv2rgb_2mix_rect.h"
+#include "cg/yuv2rgb_2mix_rect.arbfp1"
 ;
 
 #include "video/video_decoder.h"

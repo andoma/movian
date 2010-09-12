@@ -8,7 +8,10 @@
 .SUFFIXES: .arbfp1
 
 
-TARGETS= yuv2rgb.h yuv2rgb_2mix.h yuv2rgb_rect.h yuv2rgb_2mix_rect.h
+TARGETS =	yuv2rgb.arbfp1 \
+		yuv2rgb_2mix.arbfp1 \
+		yuv2rgb_rect.arbfp1 \
+		yuv2rgb_2mix_rect.arbfp1
 
 all:	$(TARGETS) Makefile
 
@@ -16,8 +19,7 @@ clean:
 	rm -f $(TARGETS)
 
 .cg.arbfp1:
-	cgc -quiet -profile arbfp1 -o $@ $<
-
-.arbfp1.h:
-	awk '{print "\t\"" $$0 "\\n\""}' <$< >$@
+	cgc -quiet -profile arbfp1 -o $@.tmp $<
+	awk '{print "\t\"" $$0 "\\n\""}' <$@.tmp >$@
+	rm -f $@.tmp
 
