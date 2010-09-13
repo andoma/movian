@@ -186,8 +186,9 @@ glw_array_render(glw_t *w, glw_rctx_t *rc)
   glw_array_t *a = (glw_array_t *)w;
   glw_t *c;
   glw_rctx_t rc0;
-  int clip1, clip2;
   float size_y;
+  int t, b;
+
   if(rc->rc_alpha < 0.01)
     return;
 
@@ -195,20 +196,31 @@ glw_array_render(glw_t *w, glw_rctx_t *rc)
 
   glw_store_matrix(w, rc);
   
-  clip1 = glw_clip_enable(rc, GLW_CLIP_TOP);
-  clip2 = glw_clip_enable(rc, GLW_CLIP_BOTTOM);
-
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
 
-    if(c->glw_parent_pos.y - size_y <= 1.0f &&
-       c->glw_parent_pos.y + size_y >= -1.0f) {
-      rc0 = *rc;
-      glw_render_TS(c, &rc0, rc);
-    }
-  }
+    if(c->glw_parent_pos.y - size_y > 1.0f ||
+       c->glw_parent_pos.y + size_y < -1.0f)
+      continue;
+    
+    if(c->glw_parent_pos.y + size_y > 1.0f)
+      t = glw_clip_enable(rc, GLW_CLIP_TOP);
+    else
+      t = -1;
 
-  glw_clip_disable(rc, clip1);
-  glw_clip_disable(rc, clip2);
+    if(c->glw_parent_pos.y - size_y < -1.0f)
+      b = glw_clip_enable(rc, GLW_CLIP_BOTTOM);
+    else
+      b = -1;
+
+    rc0 = *rc;
+    glw_render_TS(c, &rc0, rc);
+
+    if(t != -1)
+      glw_clip_disable(rc, t);
+    if(b != -1)
+      glw_clip_disable(rc, b);
+
+  }
 }
 
 
