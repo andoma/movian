@@ -56,10 +56,16 @@ typedef struct glw_backend_root {
 
   
   /**
-   * Video decoder and renderer
+   * Video renderer
    */
-  GLuint gbr_yuv2rbg_prog;
-  GLuint gbr_yuv2rbg_2mix_prog;
+  GLuint gbr_yuv2rbg_1f_prog;
+  GLint  gbr_yuv2rbg_1f_colormtx;
+  GLint  gbr_yuv2rbg_1f_alpha;
+
+  GLuint gbr_yuv2rbg_2f_prog;
+  GLint  gbr_yuv2rbg_2f_colormtx;
+  GLint  gbr_yuv2rbg_2f_alpha;
+  GLint  gbr_yuv2rbg_2f_blend;
 
   /**
    *

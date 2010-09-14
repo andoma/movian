@@ -38,46 +38,62 @@
 
 #define PBO_RELEASE_BEFORE_MAP
 
-static const char *yuv2rbg_code =
-#include "cg/yuv2rgb.arbfp1"
-;
-
-static const char *yuv2rbg_2mix_code =
-#include "cg/yuv2rgb_2mix.arbfp1"
-;
-
-static const char *yuv2rbg_rect_code =
-#include "cg/yuv2rgb_rect.arbfp1"
-;
-
-static const char *yuv2rbg_2mix_rect_code =
-#include "cg/yuv2rgb_2mix_rect.arbfp1"
-;
 
 #include "video/video_decoder.h"
 #include "video/video_playback.h"
 
+#include "fileaccess/fileaccess.h"
+
+
 /**
- *  GL Video Init
+ *
  */
 static int
-glp_check_error(const char *name)
+compile_fragmentprogram(const char *url, GLuint *p)
 {
-  GLint errpos;
-  const GLubyte *errstr;
+  char log[4096];
+  int len;
+  GLint v;
+  GLuint fs;
 
-  glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errpos);
+  const char *src;
+  struct fa_stat st;
 
-  if(errpos == -1)
-    return 0;
+  if((src = fa_quickload(url, &st, NULL, log, sizeof(log))) == NULL) {
+    TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s\n",
+	  url, log);
+    return -1;
+  }
 
-  errstr = glGetString(GL_PROGRAM_ERROR_STRING_ARB);
 
-  TRACE(TRACE_ERROR, "OpenGL Video", 
-	"%s: error \"%s\" on line %d", name, errstr, errpos);
+  fs = glCreateShader(GL_FRAGMENT_SHADER);
+  glShaderSource(fs, 1, &src, NULL);
+
+  glCompileShader(fs);
+  glGetShaderInfoLog(fs, sizeof(log), &len, log); 
+
+  glGetShaderiv(fs, GL_COMPILE_STATUS, &v);
+
+  if(!v) {
+    TRACE(TRACE_ERROR, "GLW", "Unable to compile shader %s", url);
+    TRACE(TRACE_ERROR, "GLW", "%s", log);
+    return -1;
+  }
+
+  *p = glCreateProgram();
+  glAttachShader(*p, fs);
+  glLinkProgram(*p);
+
+  glGetProgramInfoLog(*p, sizeof(log), &len, log); 
+
+  glGetProgramiv(*p, GL_LINK_STATUS, &v);
+  if(!v) {
+    TRACE(TRACE_ERROR, "GLW", "Unable to link shader %s", url);
+    TRACE(TRACE_ERROR, "GLW", "%s", log);
+    return -1;
+  }
   return 0;
 }
-
 
 /**
  *
@@ -86,7 +102,6 @@ void
 glw_video_opengl_init(glw_root_t *gr, int rectmode)
 {
   glw_backend_root_t *gbr = &gr->gr_be;
-  const char *c;
   GLint tu = 0;
 
   glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &tu);
@@ -99,26 +114,41 @@ glw_video_opengl_init(glw_root_t *gr, int rectmode)
     TRACE(TRACE_DEBUG, "OpenGL", "%d texture image units available", tu);
   }
 
-  glGenProgramsARB(1, &gbr->gbr_yuv2rbg_prog);
-  glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, gbr->gbr_yuv2rbg_prog);
+  if(!compile_fragmentprogram("bundle://src/ui/glw/glsl/yuv2rgb_1f_norm.glsl",
+			      &gbr->gbr_yuv2rbg_1f_prog)) {
+
+    GLuint p = gbr->gbr_yuv2rbg_1f_prog;
+    glUseProgram(p);
   
-  c = rectmode ? yuv2rbg_rect_code : yuv2rbg_code;
-  glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, 
-		     strlen(c), c);
+    gbr->gbr_yuv2rbg_1f_colormtx = glGetUniformLocation(p, "colormtx");
+    gbr->gbr_yuv2rbg_1f_alpha    = glGetUniformLocation(p, "alpha");
+   
+    glUniform1i(glGetUniformLocation(p, "y"), 0);
+    glUniform1i(glGetUniformLocation(p, "u"), 1);
+    glUniform1i(glGetUniformLocation(p, "v"), 2);
 
-  glp_check_error("yuv2rgb");
+    glUseProgram(0);
+  }
 
+  if(!compile_fragmentprogram("bundle://src/ui/glw/glsl/yuv2rgb_2f_norm.glsl",
+			      &gbr->gbr_yuv2rbg_2f_prog)) {
 
-  glGenProgramsARB(1, &gbr->gbr_yuv2rbg_2mix_prog);
-  glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, gbr->gbr_yuv2rbg_2mix_prog);
+    GLuint p = gbr->gbr_yuv2rbg_2f_prog;
+    glUseProgram(p);
+  
+    gbr->gbr_yuv2rbg_2f_colormtx = glGetUniformLocation(p, "colormtx");
+    gbr->gbr_yuv2rbg_2f_alpha    = glGetUniformLocation(p, "alpha");
+    gbr->gbr_yuv2rbg_2f_blend    = glGetUniformLocation(p, "blend");
+   
+    glUniform1i(glGetUniformLocation(p, "yA"), 0);
+    glUniform1i(glGetUniformLocation(p, "uA"), 1);
+    glUniform1i(glGetUniformLocation(p, "vA"), 2);
+    glUniform1i(glGetUniformLocation(p, "yB"), 3);
+    glUniform1i(glGetUniformLocation(p, "uB"), 4);
+    glUniform1i(glGetUniformLocation(p, "vB"), 5);
 
-  c = rectmode ? yuv2rbg_2mix_rect_code : yuv2rbg_2mix_code;
-  glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, 
-		     strlen(c), c);
-
-  glp_check_error("yuv2rgb_2mix");
-
-  glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, 0);
+    glUseProgram(0);
+  }
 }
 
 
@@ -467,9 +497,11 @@ yuvp_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
  *  Video widget render
  */
 static void
-render_video_quad(int interlace, int rectmode, int width, int height)
+render_video_quad(int interlace, int rectmode, int width, int height,
+		  int bob1, int bob2)
 {
   float x1, x2, y1, y2;
+  float b1 = 0, b2 = 0;
 
   const int bordersize = 3;
 
@@ -499,6 +531,9 @@ render_video_quad(int interlace, int rectmode, int width, int height)
       x2 = 1 - (bordersize / (float)width);
       y2 = 1 - (bordersize / (float)height);
 
+      b1 = (0.5 * bob1) / (float)height;
+      b2 = (0.5 * bob2) / (float)height;
+
     } else {
 
       x1 = 0;
@@ -507,19 +542,24 @@ render_video_quad(int interlace, int rectmode, int width, int height)
       y2 = 1;
     }
   }
- 
-  glBegin(GL_QUADS);
+  //  b1 = b2 = 0;
 
-  glTexCoord2f(x1, y2);
+  glBegin(GL_QUADS);
+  
+  glMultiTexCoord2f(0, x1, y2 - b1);
+  glMultiTexCoord2f(1, x1, y2 - b2);
   glVertex3f( -1.0f, -1.0f, 0.0f);
   
-  glTexCoord2f(x2, y2);
+  glMultiTexCoord2f(0, x2, y2 - b1);
+  glMultiTexCoord2f(1, x2, y2 - b2);
   glVertex3f( 1.0f, -1.0f, 0.0f);
   
-  glTexCoord2f(x2, y1);
+  glMultiTexCoord2f(0, x2, y1 - b1);
+  glMultiTexCoord2f(1, x2, y1 - b2);
   glVertex3f( 1.0f, 1.0f, 0.0f);
 
-  glTexCoord2f(x1, y1);
+  glMultiTexCoord2f(0, x1, y1 - b1);
+  glMultiTexCoord2f(1, x1, y1 - b2);
   glVertex3f( -1.0f, 1.0f, 0.0f);
 
   glEnd();
@@ -534,50 +574,30 @@ render_video_1f(const glw_video_t *gv, glw_video_surface_t *s,
 		float alpha, int textype, int rectmode)
 {
   const glw_video_config_t *gvc = &gv->gv_cfg_cur;
-  int i;
-  GLuint tex;
+  const glw_backend_root_t *gbr = &gv->w.glw_root->gr_be;
 
   gv_surface_pixmap_upload(s, &gv->gv_cfg_cur, textype);
 
-  glEnable(GL_FRAGMENT_PROGRAM_ARB);
-  glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, 
-		   gv->w.glw_root->gr_be.gbr_yuv2rbg_prog);
+  glUseProgram(gbr->gbr_yuv2rbg_1f_prog);
 
-
-  /* ctrl constants */
-  glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0,
-			       /* ctrl.x == alpha */
-			       alpha,
-			       /* ctrl.y == ishift */
-			       (-0.5f * s->gvs_yshift ) / 
-			       (float)gvc->gvc_height[0],
-			       0.0,
-			       0.0);
-
-  /* color matrix */
-
-  for(i = 0; i < 3; i++)
-    glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1 + i,
-				 gv->gv_cmatrix[i * 3 + 0],
-				 gv->gv_cmatrix[i * 3 + 1],
-				 gv->gv_cmatrix[i * 3 + 2], 0.0f);
+  glUniform1f(gbr->gbr_yuv2rbg_1f_alpha, alpha);
+  glUniformMatrix3fv(gbr->gbr_yuv2rbg_1f_colormtx, 1, GL_TRUE, gv->gv_cmatrix);
 
   glActiveTextureARB(GL_TEXTURE2_ARB);
-  tex = gv_tex_get(s, GVF_TEX_Cb);
-  glBindTexture(textype, tex);
+  glBindTexture(textype, gv_tex_get(s, GVF_TEX_Cb));
 
   glActiveTextureARB(GL_TEXTURE1_ARB);
-  tex = gv_tex_get(s, GVF_TEX_Cr);
-  glBindTexture(textype, tex);
+  glBindTexture(textype, gv_tex_get(s, GVF_TEX_Cr));
 
   glActiveTextureARB(GL_TEXTURE0_ARB);
-  tex = gv_tex_get(s, GVF_TEX_L);
-  glBindTexture(textype, tex);
+  glBindTexture(textype, gv_tex_get(s, GVF_TEX_L));
   
   render_video_quad(!!(gvc->gvc_flags & GVC_CUTBORDER), rectmode, 
-		    gvc->gvc_width[0], gvc->gvc_height[0]);
-  
-  glDisable(GL_FRAGMENT_PROGRAM_ARB);
+		    gvc->gvc_width[0], gvc->gvc_height[0],
+		    s->gvs_yshift, 0);
+
+  glUseProgram(0);
+
 }
 
 
@@ -585,40 +605,20 @@ render_video_1f(const glw_video_t *gv, glw_video_surface_t *s,
  *
  */
 static void
-gv_blend_frames(const glw_video_t *gv, 
+render_video_2f(const glw_video_t *gv, 
 		glw_video_surface_t *sa, glw_video_surface_t *sb,
 		float alpha, int textype, int rectmode)
 {
   const glw_video_config_t *gvc = &gv->gv_cfg_cur;
-  const float blend = gv->gv_blend;
-  int i;
+  const glw_backend_root_t *gbr = &gv->w.glw_root->gr_be;
   
   gv_surface_pixmap_upload(sa, &gv->gv_cfg_cur, textype);
   gv_surface_pixmap_upload(sb, &gv->gv_cfg_cur, textype);
-  
-  glEnable(GL_FRAGMENT_PROGRAM_ARB);
-  glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,
-		   gv->w.glw_root->gr_be.gbr_yuv2rbg_2mix_prog);
 
-  /* ctrl */
-  glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0,
-			       /* ctrl.x == alpha */
-			       alpha, 
-			       /* ctrl.y == blend */
-			       blend,
-			       /* ctrl.z == image a, y displace */
-			       (-0.5f * sa->gvs_yshift) / 
-			       (float)gvc->gvc_height[0],
-			       /* ctrl.w == image b, y displace */
-			       (-0.5f * sb->gvs_yshift) / 
-			       (float)gvc->gvc_height[0]);
-				
-  /* color matrix */
-  for(i = 0; i < 3; i++)
-    glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1 + i,
-				 gv->gv_cmatrix[i * 3 + 0],
-				 gv->gv_cmatrix[i * 3 + 1],
-				 gv->gv_cmatrix[i * 3 + 2], 0.0f);
+  glUseProgram(gbr->gbr_yuv2rbg_2f_prog);
+  glUniform1f(gbr->gbr_yuv2rbg_2f_alpha, alpha);
+  glUniform1f(gbr->gbr_yuv2rbg_2f_blend, gv->gv_blend);
+  glUniformMatrix3fv(gbr->gbr_yuv2rbg_2f_colormtx, 1, GL_TRUE, gv->gv_cmatrix);
 
   glActiveTextureARB(GL_TEXTURE5_ARB);
   glBindTexture(textype, gv_tex_get(sb, GVF_TEX_Cb));
@@ -639,9 +639,9 @@ gv_blend_frames(const glw_video_t *gv,
   glBindTexture(textype, gv_tex_get(sa, GVF_TEX_L));
 
   render_video_quad(!!(gvc->gvc_flags & GVC_CUTBORDER), rectmode, 
-		    gvc->gvc_width[0], gvc->gvc_height[0]);
-
-  glDisable(GL_FRAGMENT_PROGRAM_ARB);
+		    gvc->gvc_width[0], gvc->gvc_height[0],
+		    sa->gvs_yshift, sb->gvs_yshift);
+  glUseProgram(0);
 }
 
 
@@ -667,7 +667,7 @@ yuvp_render(glw_video_t *gv, glw_rctx_t *rc)
   glLoadMatrixf(rc->rc_be.gbr_mtx);
   
   if(sb != NULL) {
-    gv_blend_frames(gv, sa, sb, rc->rc_alpha, textype, rectmode);
+    render_video_2f(gv, sa, sb, rc->rc_alpha, textype, rectmode);
   } else {
     render_video_1f(gv, sa, rc->rc_alpha, textype, rectmode);
   }
