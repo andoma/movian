@@ -51,12 +51,11 @@ glw_mirror_render(glw_t *w, glw_rctx_t *rc)
   if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)
     return;
 
-  b = glw_clip_enable(rc, GLW_CLIP_BOTTOM);
+  b = glw_clip_enable(w->glw_root, rc, GLW_CLIP_BOTTOM);
   glw_render0(c, rc);
-  glw_clip_disable(rc, b);
+  glw_clip_disable(w->glw_root, rc, b);
 
   rc0 = *rc;
-  glw_PushMatrix(&rc0, rc);
 
   glw_Translatef(&rc0, 0, -1, 0);
   glw_Scalef(&rc0, 1.0, -1.0, 1.0);
@@ -67,13 +66,11 @@ glw_mirror_render(glw_t *w, glw_rctx_t *rc)
   rc0.rc_alpha *= w->glw_alpha;
   rc0.rc_inhibit_matrix_store = 1;
 
-  b = glw_clip_enable(&rc0, GLW_CLIP_BOTTOM);
+  b = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_BOTTOM);
   glw_render0(c, &rc0);
-  glw_clip_disable(&rc0, b);
+  glw_clip_disable(w->glw_root, &rc0, b);
 
   glw_frontface(GLW_CCW);
-
-  glw_PopMatrix();
 }
 
 

@@ -137,8 +137,6 @@ render_child_autocentered(glw_image_t *gi, glw_rctx_t *rc)
 
   rc0 = *rc;
       
-  glw_PushMatrix(&rc0, rc);
-      
   glw_Translatef(&rc0, gi->gi_child_xt, gi->gi_child_yt, 0.0f);
 
   xs = gi->gi_child_xs;
@@ -151,8 +149,6 @@ render_child_autocentered(glw_image_t *gi, glw_rctx_t *rc)
 
   rc0.rc_alpha = rc->rc_alpha * gi->w.glw_alpha;
   glw_render0(c, &rc0);
-
-  glw_PopMatrix();
 }
 
 
@@ -194,8 +190,6 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 
     rc0 = *rc;
 
-    glw_PushMatrix(&rc0, rc);
-
     glw_align_1(&rc0, w->glw_alignment);
       
     if(gi->gi_bitmap_flags & GLW_IMAGE_FIXED_SIZE)
@@ -233,8 +227,6 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     }
 
     render_child_simple(w, &rc0);
-
-    glw_PopMatrix();
 
   } else {
 

@@ -93,7 +93,36 @@ glw_opengl_init_context(glw_root_t *gr)
   glEnableClientState(GL_COLOR_ARRAY);
   glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective(45, 1.0, 1.0, 60.0);
+
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+
   return 0;
+}
+
+
+/**
+ *
+ */
+void
+glw_rctx_init(glw_rctx_t *rc, int width, int height)
+{
+  memset(rc, 0, sizeof(glw_rctx_t));
+  rc->rc_size_x = width;
+  rc->rc_size_y = height;
+  rc->rc_alpha = 1.0f;
+
+  memset(&rc->rc_be.gbr_mtx, 0, sizeof(float) * 16);
+  
+  rc->rc_be.gbr_mtx[0]  = 1;
+  rc->rc_be.gbr_mtx[5]  = 1;
+  rc->rc_be.gbr_mtx[10] = 1;
+  rc->rc_be.gbr_mtx[15] = 1;
+
+  glw_Translatef(rc, 0, 0, -1 / tan(45 * M_PI / 360));
 }
 
 
@@ -110,60 +139,13 @@ glw_store_matrix(glw_t *w, glw_rctx_t *rc)
   if(w->glw_matrix == NULL)
     w->glw_matrix = malloc(sizeof(float) * 16);
   
-  glGetFloatv(GL_MODELVIEW_MATRIX, w->glw_matrix);
-  
+  memcpy(w->glw_matrix, rc->rc_be.gbr_mtx, sizeof(float) * 16);
+
   if(glw_is_focused(w) && gcp != NULL) {
     gcp->gcp_alpha  = rc->rc_alpha;
     memcpy(gcp->gcp_m, w->glw_matrix, 16 * sizeof(float));
   }
 }
-
-/**
- *
- */
-static const GLdouble clip_planes[4][4] = {
-  [GLW_CLIP_TOP]    = { 0.0, -1.0, 0.0, 1.0},
-  [GLW_CLIP_BOTTOM] = { 0.0,  1.0, 0.0, 1.0},
-  [GLW_CLIP_LEFT]   = {-1.0,  0.0, 0.0, 1.0},
-  [GLW_CLIP_RIGHT]  = { 1.0,  0.0, 0.0, 1.0},
-};
-
-
-/**
- *
- */
-int
-glw_clip_enable(glw_rctx_t *rc, glw_clip_boundary_t how)
-{
-  int i;
-  for(i = 0; i < 6; i++)
-    if(!(rc->rc_be.gbr_active_clippers & (1 << i)))
-      break;
-
-  if(i == 6)
-    return -1;
-
-  rc->rc_be.gbr_active_clippers |= (1 << i);
-
-  glClipPlane(GL_CLIP_PLANE0 + i, clip_planes[how]);
-  glEnable(GL_CLIP_PLANE0 + i);
-  return i;
-}
-
-
-/**
- *
- */
-void
-glw_clip_disable(glw_rctx_t *rc, int which)
-{
-  if(which == -1)
-    return;
-
-  rc->rc_be.gbr_active_clippers &= ~(1 << which);
-  glDisable(GL_CLIP_PLANE0 + which);
-}
-
 
 
 static void
@@ -336,19 +318,6 @@ glw_rtt_enter(glw_root_t *gr, glw_rtt_t *grtt, glw_rctx_t *rc)
   
   glViewport(0, 0, grtt->grtt_width, grtt->grtt_height);
 
-  glMatrixMode(GL_PROJECTION);
-  glPushMatrix();
-  glLoadIdentity();
-  gluPerspective(45, 1.0, 1.0, 60.0);
-
-  glMatrixMode(GL_MODELVIEW);
-  glPushMatrix();
-  glLoadIdentity();
-
-  gluLookAt(0, 0, 1 / tan(45 * M_PI / 360),
-	    0, 0, 1,
-	    0, 1, 0);
-
   glClear(GL_COLOR_BUFFER_BIT);
 
   glw_rctx_init(rc, grtt->grtt_width, grtt->grtt_height);
@@ -362,11 +331,6 @@ void
 glw_rtt_restore(glw_root_t *gr, glw_rtt_t *grtt)
 {
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-
-  glPopMatrix();
-  glMatrixMode(GL_PROJECTION);
-  glPopMatrix();
-  glMatrixMode(GL_MODELVIEW);
 
   /* Restore viewport */
   glViewport(grtt->grtt_viewport[0],
@@ -525,7 +489,6 @@ glw_renderer_vtx_col(glw_renderer_t *gr, int vertex,
 }
 
 
-
 /**
  * 
  */
@@ -553,7 +516,11 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
     gr->gr_alpha = a;
   }
 
+
+
   if(be_tex != NULL) {
+
+    glLoadMatrixf(rc->rc_be.gbr_mtx);
 
     glBindTexture(root->gr_be.gbr_primary_texture_mode, *be_tex);
 
@@ -565,6 +532,8 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
 		   gr->gr_indices);
 
   } else {
+
+    glLoadMatrixf(rc->rc_be.gbr_mtx);
 
     glDisable(root->gr_be.gbr_primary_texture_mode);
 
@@ -580,3 +549,112 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
     glEnable(root->gr_be.gbr_primary_texture_mode);
   }
 }
+
+
+/**
+ *
+ */
+void
+glw_Rotatef(glw_rctx_t *rc, float a, float x, float y, float z)
+{
+  float s = sinf(GLW_DEG2RAD(a));
+  float c = cosf(GLW_DEG2RAD(a));
+  float t = 1.0 - c;
+  float n = 1 / sqrtf(x*x + y*y + z*z);
+  float m[16];
+  float *o = rc->rc_be.gbr_mtx;
+  float p[16];
+
+  x *= n;
+  y *= n;
+  z *= n;
+  
+  m[ 0] = t * x * x + c;
+  m[ 4] = t * x * y - s * z;
+  m[ 8] = t * x * z + s * y;
+  m[12] = 0;
+
+  m[ 1] = t * y * x + s * z;
+  m[ 5] = t * y * y + c;
+  m[ 9] = t * y * z - s * x;
+  m[13] = 0;
+
+  m[ 2] = t * z * x - s * y;
+  m[ 6] = t * z * y + s * x;
+  m[10] = t * z * z + c;
+  m[14] = 0;
+
+  p[0]  = o[0]*m[0]  + o[4]*m[1]  + o[8]*m[2];
+  p[4]  = o[0]*m[4]  + o[4]*m[5]  + o[8]*m[6];
+  p[8]  = o[0]*m[8]  + o[4]*m[9]  + o[8]*m[10];
+  p[12] = o[0]*m[12] + o[4]*m[13] + o[8]*m[14] + o[12];
+ 
+  p[1]  = o[1]*m[0]  + o[5]*m[1]  + o[9]*m[2];
+  p[5]  = o[1]*m[4]  + o[5]*m[5]  + o[9]*m[6];
+  p[9]  = o[1]*m[8]  + o[5]*m[9]  + o[9]*m[10];
+  p[13] = o[1]*m[12] + o[5]*m[13] + o[9]*m[14] + o[13];
+  
+  p[2]  = o[2]*m[0]  + o[6]*m[1]  + o[10]*m[2];
+  p[6]  = o[2]*m[4]  + o[6]*m[5]  + o[10]*m[6];
+  p[10] = o[2]*m[8]  + o[6]*m[9]  + o[10]*m[10];
+  p[14] = o[2]*m[12] + o[6]*m[13] + o[10]*m[14] + o[14];
+
+  p[ 3] = 0;
+  p[ 7] = 0;
+  p[11] = 0;
+  p[15] = 1;
+
+  memcpy(o, p, sizeof(float) * 16);
+}
+
+
+
+
+/**
+ *
+ */
+static const GLdouble clip_planes[4][4] = {
+  [GLW_CLIP_TOP]    = { 0.0, -1.0, 0.0, 1.0},
+  [GLW_CLIP_BOTTOM] = { 0.0,  1.0, 0.0, 1.0},
+  [GLW_CLIP_LEFT]   = {-1.0,  0.0, 0.0, 1.0},
+  [GLW_CLIP_RIGHT]  = { 1.0,  0.0, 0.0, 1.0},
+};
+
+
+/**
+ *
+ */
+int
+glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t how)
+{
+  int i;
+  for(i = 0; i < 6; i++)
+    if(!(rc->rc_be.gbr_active_clippers & (1 << i)))
+      break;
+
+  if(i == 6)
+    return -1;
+
+  rc->rc_be.gbr_active_clippers |= (1 << i);
+
+  glLoadMatrixf(rc->rc_be.gbr_mtx);
+
+  glClipPlane(GL_CLIP_PLANE0 + i, clip_planes[how]);
+  glEnable(GL_CLIP_PLANE0 + i);
+  return i;
+}
+
+
+/**
+ *
+ */
+void
+glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which)
+{
+  if(which == -1)
+    return;
+
+  rc->rc_be.gbr_active_clippers &= ~(1 << which);
+  glDisable(GL_CLIP_PLANE0 + which);
+}
+

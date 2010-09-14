@@ -571,6 +571,10 @@ typedef struct glw_rctx {
 #include "glw_gx_ops.h"
 #endif
 
+#ifdef CONFIG_GLW_BACKEND_OPENGL
+#include "glw_opengl_ops.h"
+#endif
+
 
 /**
  * Signal handler
@@ -794,9 +798,9 @@ typedef enum {
   GLW_CLIP_RIGHT,
 } glw_clip_boundary_t;
 
-int glw_clip_enable(glw_rctx_t *rc, glw_clip_boundary_t gcb);
+int glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t gcb);
 
-void glw_clip_disable(glw_rctx_t *rc, int which);
+void glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which);
 
 
 /**

@@ -178,6 +178,8 @@ vdpau_render(glw_video_t *gv, glw_rctx_t *rc)
   int w = gv->gv_rwidth  - 1;
   int h = gv->gv_rheight - 1;
 
+  glLoadMatrixf(rc->rc_be.gbr_mtx);
+
   glColor4f(1,1,1,1);
 
   glBegin(GL_QUADS);

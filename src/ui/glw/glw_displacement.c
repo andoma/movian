@@ -119,8 +119,6 @@ glw_displacement_render(glw_t *w, glw_rctx_t *rc)
   if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)
     return;
    
-  glw_PushMatrix(&rc0, rc);
-
   glw_Translatef(&rc0,
 		 gd->gd_translate_x,
 		 gd->gd_translate_y,
@@ -148,7 +146,6 @@ glw_displacement_render(glw_t *w, glw_rctx_t *rc)
 
   rc0.rc_alpha = rc->rc_alpha * w->glw_alpha;
   glw_render0(c, &rc0);
-  glw_PopMatrix();
 }
 
 /**

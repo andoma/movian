@@ -62,8 +62,6 @@ glw_cube_render(glw_t *w, glw_rctx_t *rc)
 
   rc0 = *rc;
 
-  glw_PushMatrix(&rc0, rc);
-
   glw_scale_to_aspect(&rc0, 1.0f);
 
   glw_Translatef(&rc0, 0, 0, -2.0);
@@ -72,48 +70,34 @@ glw_cube_render(glw_t *w, glw_rctx_t *rc)
 
   rc1 = rc0;
 
-  glw_PushMatrix(&rc1, &rc0);
   glw_Rotatef(&rc1, 0, 0, 1, 0);
   glw_Translatef(&rc1, 0, 0, 1.0);
   glw_render0(c, &rc1);
-  glw_PopMatrix();
 
   rc1 = rc0;
-  glw_PushMatrix(&rc1, &rc0);
   glw_Rotatef(&rc1, 90, 0, 1, 0);
   glw_Translatef(&rc1, 0, 0, 1.0);
   glw_render0(c, &rc1);
-  glw_PopMatrix();
 
   rc1 = rc0;
-  glw_PushMatrix(&rc1, &rc0);
   glw_Rotatef(&rc1, 180, 0, 1, 0);
   glw_Translatef(&rc1, 0, 0, 1.0);
   glw_render0(c, &rc1);
-  glw_PopMatrix();
 
   rc1 = rc0;
-  glw_PushMatrix(&rc1, &rc0);
   glw_Rotatef(&rc1, 270, 0, 1, 0);
   glw_Translatef(&rc1, 0, 0, 1.0);
   glw_render0(c, &rc1);
-  glw_PopMatrix();
 
   rc1 = rc0;
-  glw_PushMatrix(&rc1, &rc0);
   glw_Rotatef(&rc1, 90, 1, 0, 0);
   glw_Translatef(&rc1, 0, 0, 1.0);
   glw_render0(c, &rc1);
-  glw_PopMatrix();
 
   rc1 = rc0;
-  glw_PushMatrix(&rc1, &rc0);
   glw_Rotatef(&rc1, 270, 1, 0, 0);
   glw_Translatef(&rc1, 0, 0, 1.0);
   glw_render0(c, &rc1);
-  glw_PopMatrix();
-
-  glw_PopMatrix();
 }
 
 

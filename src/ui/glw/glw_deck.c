@@ -195,11 +195,9 @@ deck_render(glw_rctx_t *rc, glw_deck_t *gd, glw_t *w, float v)
     glw_rctx_t rc0 = *rc;
     if(gd->rev)
       v = 1 - (v + 1);
-    glw_PushMatrix(&rc0, rc);
     glw_transition_render(gd->efx_conf, v, 
 			  rc->rc_alpha * gd->w.glw_alpha, &rc0);
     w->glw_class->gc_render(w, &rc0);
-    glw_PopMatrix();
   } else {
     w->glw_class->gc_render(w, rc);
   }

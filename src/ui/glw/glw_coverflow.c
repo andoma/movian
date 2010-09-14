@@ -104,7 +104,6 @@ renderone(glw_rctx_t *rc, glw_t *c, glw_coverflow_t *gc)
     return;
 
   rc0 = *rc;
-  glw_PushMatrix(&rc0, rc);
 
   rc0.rc_size_x *= gc->xs;
   rc0.rc_size_y *= gc->ys;
@@ -127,8 +126,6 @@ renderone(glw_rctx_t *rc, glw_t *c, glw_coverflow_t *gc)
   //  rc0.rc_alpha *= GLW_CLAMP(1 - fabs(nv), 0, 1);
 
   glw_render0(c, &rc0);
-  glw_PopMatrix();
-
 }
 
 

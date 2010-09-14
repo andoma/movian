@@ -103,9 +103,6 @@ glw_bloom_render(glw_t *w, glw_rctx_t *rc)
   
   rc0 = *rc;
 
-  glw_PushMatrix(&rc0, rc);
-  
-
   glw_Scalef(&rc0, 
 	     1.0 + EDGE_SIZE / rc->rc_size_x, 
 	     1.0 + EDGE_SIZE / rc->rc_size_y, 
@@ -131,9 +128,6 @@ glw_bloom_render(glw_t *w, glw_rctx_t *rc)
 		    &glw_rtt_texture(&b->b_rtt[2]), 1, 1, 1, a * 0.33);
  
   glw_blendmode(GLW_BLEND_NORMAL);
-
-  glw_PopMatrix();
-
 }
 
 

@@ -119,7 +119,7 @@ glw_fx_texrot_render_internal(glw_root_t *gr, glw_rctx_t *rc,
 			      glw_fx_texrot_t *fx, glw_loadable_texture_t *glt)
 {
   int i;
-  glw_rctx_t rc0 = *rc;
+  glw_rctx_t rc0;
 
   glw_blendmode(GLW_BLEND_ADDITIVE);
 
@@ -127,8 +127,7 @@ glw_fx_texrot_render_internal(glw_root_t *gr, glw_rctx_t *rc,
 
   for(i = 0; i < FX_NPLATES; i++) {
 
-    glw_PushMatrix(&rc0, rc);
-
+    rc0 = *rc;
     fx->fx_plates[i].angle += fx->fx_plates[i].inc;
 
     glw_Translatef(&rc0, fx->fx_plates[i].x, fx->fx_plates[i].y, 0.0);
@@ -136,7 +135,6 @@ glw_fx_texrot_render_internal(glw_root_t *gr, glw_rctx_t *rc,
 
     glw_renderer_draw(&fx->fx_source_render, gr, &rc0,
 		      &glt->glt_texture, 1, 1, 1, 0.15);
-    glw_PopMatrix();
   }
   glw_blendmode(GLW_BLEND_NORMAL);
 }

@@ -756,8 +756,6 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
     glw_wirebox(rc);
 
   rc0 = *rc;
-  glw_PushMatrix(&rc0, rc);
-
 
   if(gtb->gtb_padding) {
 
@@ -797,7 +795,6 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
       glw_renderer_draw(&gtb->gtb_cursor_renderer, w->glw_root, &rc0,
 			NULL, 1, 1, 1, alpha * gtb->gtb_cursor_alpha);
 
-    glw_PopMatrix();
     return;
   }
   
@@ -848,7 +845,6 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
     glw_renderer_draw(&gtb->gtb_cursor_renderer, w->glw_root, &rc0,
 		      NULL, 1, 1, 1, alpha * gtb->gtb_cursor_alpha);
 
-  glw_PopMatrix();
 }
 
 

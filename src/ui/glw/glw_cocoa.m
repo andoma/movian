@@ -420,18 +420,6 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   
   glw_rctx_init(&rc, gcocoa.gr.gr_width, gcocoa.gr.gr_height);
   glw_layout0(gcocoa.gr.gr_universe, &rc);
-  
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  gluPerspective(45, 1.0, 1.0, 60.0);
-  
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  
-  gluLookAt(0, 0, 1 / tan(45 * M_PI / 360),
-            0, 0, 1,
-            0, 1, 0);
-  
   glw_render0(gcocoa.gr.gr_universe, &rc);
   
   glw_unlock(&gcocoa.gr);

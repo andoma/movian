@@ -664,6 +664,8 @@ yuvp_render(glw_video_t *gv, glw_rctx_t *rc)
   else
     glEnable(GL_BLEND); 
   
+  glLoadMatrixf(rc->rc_be.gbr_mtx);
+  
   if(sb != NULL) {
     gv_blend_frames(gv, sa, sb, rc->rc_alpha, textype, rectmode);
   } else {

@@ -397,8 +397,6 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
   glw_rctx_t rc0 = *rc;
   float ys = gv->gv_cfg_cur.gvc_flags & GVC_YHALF ? 2 : 1;
 
-  glw_PushMatrix(&rc0, rc);
-
   glw_scale_to_aspect(&rc0, gv->gv_dar);
 
   gv->gv_rwidth  = rc0.rc_size_x;
@@ -427,8 +425,6 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
 #endif
   
   glw_video_overlay_render(&gv->gv_sub, w->glw_root, &rc0);
-
-  glw_PopMatrix();
 
   if(gv->gv_sub.gvo_child != NULL)
     glw_render0(gv->gv_sub.gvo_child, rc);

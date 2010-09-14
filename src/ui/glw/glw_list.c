@@ -273,12 +273,12 @@ glw_list_render_x(glw_t *w, glw_rctx_t *rc)
 
 
     if(c->glw_parent_pos.x + c->glw_parent_size_x > 1.0f)
-      r = glw_clip_enable(rc, GLW_CLIP_RIGHT);
+      r = glw_clip_enable(w->glw_root, rc, GLW_CLIP_RIGHT);
     else
       r = -1;
 
     if(c->glw_parent_pos.x - c->glw_parent_size_x < -1.0f)
-      l = glw_clip_enable(rc, GLW_CLIP_LEFT);
+      l = glw_clip_enable(w->glw_root, rc, GLW_CLIP_LEFT);
     else
       l = -1;
 
@@ -286,9 +286,9 @@ glw_list_render_x(glw_t *w, glw_rctx_t *rc)
     glw_render_TS(c, &rc0, rc);
     
     if(l != -1)
-      glw_clip_disable(rc, l);
+      glw_clip_disable(w->glw_root, rc, l);
     if(r != -1)
-      glw_clip_disable(rc, r);
+      glw_clip_disable(w->glw_root, rc, r);
   }
 }
 
@@ -317,12 +317,12 @@ glw_list_render_y(glw_t *w, glw_rctx_t *rc)
 
 
     if(c->glw_parent_pos.y + c->glw_parent_size_y > 1.0f)
-      t = glw_clip_enable(rc, GLW_CLIP_TOP);
+      t = glw_clip_enable(w->glw_root, rc, GLW_CLIP_TOP);
     else
       t = -1;
 
     if(c->glw_parent_pos.y - c->glw_parent_size_y < -1.0f)
-      b = glw_clip_enable(rc, GLW_CLIP_BOTTOM);
+      b = glw_clip_enable(w->glw_root, rc, GLW_CLIP_BOTTOM);
     else
       b = -1;
 
@@ -330,9 +330,9 @@ glw_list_render_y(glw_t *w, glw_rctx_t *rc)
     glw_render_TS(c, &rc0, rc);
 
     if(t != -1)
-      glw_clip_disable(rc, t);
+      glw_clip_disable(w->glw_root, rc, t);
     if(b != -1)
-      glw_clip_disable(rc, b);
+      glw_clip_disable(w->glw_root, rc, b);
   }
 }
 

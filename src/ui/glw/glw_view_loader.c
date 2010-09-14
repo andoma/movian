@@ -142,10 +142,8 @@ glw_view_loader_render(glw_t *w, glw_rctx_t *rc)
       continue;
     }
     
-    glw_PushMatrix(&rc0, rc);
     glw_transition_render(a->efx_conf, c->glw_parent_vl_cur, alpha, &rc0);
     glw_render0(c, &rc0);
-    glw_PopMatrix();
   }
 }
 

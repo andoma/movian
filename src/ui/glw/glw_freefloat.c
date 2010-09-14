@@ -66,8 +66,6 @@ glw_freefloat_render(glw_t *w, glw_rctx_t *rc)
       continue;
 
     rc0 = *rc;
-    glw_PushMatrix(rc, &rc0);
-
     a = (1 - fabs(-1 + (GLW_MAX(0, -0.1 + c->glw_parent_v * 2.1))));
 
     rc0.rc_alpha = rc->rc_alpha * a;
@@ -84,7 +82,6 @@ glw_freefloat_render(glw_t *w, glw_rctx_t *rc)
 		0.0);
 
     glw_render0(c, &rc0);
-    glw_PopMatrix();
   }
 }
 

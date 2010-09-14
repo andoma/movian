@@ -129,15 +129,11 @@ glw_slider_render_x(glw_t *w, glw_rctx_t *rc)
   rc0 = *rc;
   rc0.rc_alpha *= w->glw_alpha;
 
-  glw_PushMatrix(&rc0, rc);
-
   glw_Translatef(&rc0, s->knob_pos, 0, 0);
   rc0.rc_size_x *= s->knob_size;
   glw_Scalef(&rc0, s->knob_size, 1.0, 1.0);
 
   c->glw_class->gc_render(c, &rc0);
-
-  glw_PopMatrix();
 }
 
 
@@ -160,15 +156,11 @@ glw_slider_render_y(glw_t *w, glw_rctx_t *rc)
   rc0 = *rc;
   rc0.rc_alpha *= w->glw_alpha;
 
-  glw_PushMatrix(&rc0, rc);
-
   glw_Translatef(&rc0, 0, -s->knob_pos, 0);
   rc0.rc_size_y *= s->knob_size;
   glw_Scalef(&rc0, 1.0, s->knob_size, 1.0);
 
   c->glw_class->gc_render(c, &rc0);
-
-  glw_PopMatrix();
 }
 
 

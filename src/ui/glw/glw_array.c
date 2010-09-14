@@ -203,12 +203,12 @@ glw_array_render(glw_t *w, glw_rctx_t *rc)
       continue;
     
     if(c->glw_parent_pos.y + size_y > 1.0f)
-      t = glw_clip_enable(rc, GLW_CLIP_TOP);
+      t = glw_clip_enable(w->glw_root, rc, GLW_CLIP_TOP);
     else
       t = -1;
 
     if(c->glw_parent_pos.y - size_y < -1.0f)
-      b = glw_clip_enable(rc, GLW_CLIP_BOTTOM);
+      b = glw_clip_enable(w->glw_root, rc, GLW_CLIP_BOTTOM);
     else
       b = -1;
 
@@ -216,9 +216,9 @@ glw_array_render(glw_t *w, glw_rctx_t *rc)
     glw_render_TS(c, &rc0, rc);
 
     if(t != -1)
-      glw_clip_disable(rc, t);
+      glw_clip_disable(w->glw_root, rc, t);
     if(b != -1)
-      glw_clip_disable(rc, b);
+      glw_clip_disable(w->glw_root, rc, b);
 
   }
 }

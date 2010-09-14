@@ -100,7 +100,6 @@ glw_throbber_render(glw_t *w, glw_rctx_t *rc)
   }
 
   rc0 = *rc;
-  glw_PushMatrix(&rc0, rc);
   glw_scale_to_aspect(&rc0, 1.0);
 
   glw_blendmode(GLW_BLEND_ADDITIVE);
@@ -112,16 +111,11 @@ glw_throbber_render(glw_t *w, glw_rctx_t *rc)
     float alpha = (1 - ((float)i / NUMPINS)) * rc->rc_alpha * w->glw_alpha;
 
     rc1 = rc0;
-    glw_PushMatrix(&rc1, &rc0);
-
     glw_Rotatef(&rc1, 0.1 * gt->angle - i * ((360 / NUMPINS) / 3), 0, 1, 0);
     glw_Rotatef(&rc1,       gt->angle - i *  (360 / NUMPINS),      0, 0, 1);
 
     glw_renderer_draw(&gt->renderer, gr, &rc1, NULL, 1, 1, 1, alpha);
-    glw_PopMatrix();
   }
-
-  glw_PopMatrix();
   glw_blendmode(GLW_BLEND_NORMAL);
 }
 

@@ -71,28 +71,21 @@ typedef struct glw_backend_root {
 #endif
   int gbr_enable_vdpau;
 
+  float gbr_clip[6][4];
+  
+
 } glw_backend_root_t;
 
-
 typedef struct {
+
+  float gbr_mtx[16];
+
   int gbr_active_clippers; // Used by glw_clip()
 
 } glw_backend_rctx_t;
 
 
 typedef GLuint glw_backend_texture_t;
-
-#define glw_PushMatrix(newrc, oldrc) glPushMatrix()
-
-#define glw_PopMatrix() glPopMatrix()
-
-#define glw_Translatef(rc, x, y, z) glTranslatef(x, y, z)
-
-#define glw_Scalef(rc, x, y, z) glScalef(x, y, z)
-
-#define glw_Rotatef(rc, a, x, y, z) glRotatef(a, x, y, z)
-
-#define glw_LoadMatrixf(rc, src) glLoadMatrixf(src)
 
 /**
  * Renderer

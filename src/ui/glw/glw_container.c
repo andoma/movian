@@ -377,7 +377,7 @@ glw_container_render(glw_t *w, glw_rctx_t *rc)
   glw_t *c;
   float alpha = rc->rc_alpha * w->glw_alpha;
 
-  glw_rctx_t rc0 = *rc;
+  glw_rctx_t rc0;
 
   if(alpha < 0.01)
     return;
@@ -389,13 +389,12 @@ glw_container_render(glw_t *w, glw_rctx_t *rc)
     if(c->glw_flags & GLW_HIDDEN)
       continue;
 
+    rc0 = *rc;
     rc0.rc_alpha = alpha;
 
     rc0.rc_size_x = c->glw_parent_misc[0];
     rc0.rc_size_y = c->glw_parent_misc[1];
     
-    glw_PushMatrix(&rc0, rc);
-
     glw_Translatef(&rc0,
 		   c->glw_parent_pos.x,
 		   c->glw_parent_pos.y,
@@ -407,7 +406,6 @@ glw_container_render(glw_t *w, glw_rctx_t *rc)
 	       c->glw_parent_scale.z);
     
     c->glw_class->gc_render(c, &rc0);
-    glw_PopMatrix();
   }
 }
 

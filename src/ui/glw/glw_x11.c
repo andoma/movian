@@ -873,18 +873,6 @@ layout_draw(glw_x11_t *gx11)
   
   glw_rctx_init(&rc, gx11->gr.gr_width, gx11->gr.gr_height);
   glw_layout0(gx11->gr.gr_universe, &rc);
-
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  gluPerspective(45, 1.0, 1.0, 60.0);
-
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-
-  gluLookAt(0, 0, 1 / tan(45 * M_PI / 360),
-	    0, 0, 1,
-	    0, 1, 0);
-
   glw_render0(gx11->gr.gr_universe, &rc);
 }
 

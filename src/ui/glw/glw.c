@@ -1586,8 +1586,6 @@ glw_render_TS(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc)
   rc->rc_size_x = prevrc->rc_size_x * c->glw_parent_scale.x;
   rc->rc_size_y = prevrc->rc_size_y * c->glw_parent_scale.y;
 
-  glw_PushMatrix(rc, prevrc);
-
   glw_Translatef(rc, 
 		 c->glw_parent_pos.x,
 		 c->glw_parent_pos.y,
@@ -1599,7 +1597,6 @@ glw_render_TS(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc)
 	     c->glw_parent_scale.z);
 
   c->glw_class->gc_render(c, rc);
-  glw_PopMatrix();
 }
 
 
@@ -1609,15 +1606,12 @@ glw_render_TS(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc)
 void
 glw_render_T(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc)
 {
-  glw_PushMatrix(rc, prevrc);
-
   glw_Translatef(rc, 
 		 c->glw_parent_pos.x,
 		 c->glw_parent_pos.y,
 		 c->glw_parent_pos.z);
 
   c->glw_class->gc_render(c, rc);
-  glw_PopMatrix();
 }
 
 
@@ -1871,19 +1865,6 @@ glw_get_a_name(glw_t *w)
       return r;
   }
   return NULL;
-}
-
-
-/**
- *
- */
-void
-glw_rctx_init(glw_rctx_t *rc, int width, int height)
-{
-  memset(rc, 0, sizeof(glw_rctx_t));
-  rc->rc_size_x = width;
-  rc->rc_size_y = height;
-  rc->rc_alpha = 1.0f;
 }
 
 
