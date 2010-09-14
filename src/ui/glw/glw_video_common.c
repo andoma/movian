@@ -523,6 +523,7 @@ glw_video_put_surface(glw_video_t *gv, glw_video_surface_t *s,
   s->gvs_pts = pts;
   s->gvs_epoch = epoch;
   s->gvs_duration = duration;
+  s->gvs_yshift = yshift;
   TAILQ_INSERT_TAIL(&gv->gv_decoded_queue, s, gvs_link);
 }
 
