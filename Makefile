@@ -304,6 +304,7 @@ ${BUILDDIR}/src/ipc/dbus/%.o : CFLAGS = $(CFLAGS_DBUS) \
 -Wall -Werror -Wmissing-prototypes -Wno-cast-qual
 
 SRCS-$(CONFIG_LIRC) +=  src/ipc/lirc.c
+SRCS-$(CONFIG_STDIN)+=  src/ipc/stdin.c
 
 SRCS-$(CONFIG_SERDEV) +=	src/ipc/serdev/serdev.c \
 				src/ipc/serdev/lgtv.c \

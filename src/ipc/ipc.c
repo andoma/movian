@@ -15,4 +15,10 @@ ipc_init(void)
 #ifdef CONFIG_SERDEV
   serdev_start();
 #endif
+
+#ifdef CONFIG_STDIN
+  extern int listen_on_stdin;
+  if(listen_on_stdin)
+    stdin_start();
+#endif
 }

@@ -68,6 +68,7 @@ enable libfreetype
 enable libasound
 enable libpulse
 enable lirc
+enable stdin
 enable gu
 enable avahi
 enable libspotify_load_runtime

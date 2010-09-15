@@ -41,6 +41,7 @@ CONFIG_LIST="
  spotify
  libspotify_load_runtime
  lirc
+ stdin
  release
  embedded_resources
  coreaudio

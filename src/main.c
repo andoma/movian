@@ -57,6 +57,7 @@
 int concurrency;
 int trace_level;
 int trace_to_syslog;
+int listen_on_stdin;
 static int ffmpeglog;
 static int showtime_retcode;
 char *remote_logtarget; // Used on Wii
@@ -163,6 +164,9 @@ main(int argc, char **argv)
 	     "   --ui <ui>         - Use specified user interface.\n"
 	     "   -L <ip>           - Send log messages to remote <ip>.\n"
 	     "   --syslog          - Send log messages to syslog.\n"
+#if CONFIG_STDIN
+	     "   --stdin           - Listen on stdin for events.\n"
+#endif
 	     "   -v <view>         - Use specific view for <url>.\n"
 	     "   --cache <path>    - Set path for cache [%s].\n"
 	     "\n"
@@ -190,6 +194,10 @@ main(int argc, char **argv)
       continue;
     } else if(!strcmp(argv[0], "--syslog")) {
       trace_to_syslog = 1;
+      argc -= 1; argv += 1;
+      continue;
+    } else if(!strcmp(argv[0], "--stdin")) {
+      listen_on_stdin = 1;
       argc -= 1; argv += 1;
       continue;
     } else if(!strcmp(argv[0], "--with-standby")) {
