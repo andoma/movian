@@ -41,6 +41,20 @@ check_gl_ext(const uint8_t *s, const char *func)
 }
 
 
+static void
+perspective( GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar )
+{
+   GLfloat xmin, xmax, ymin, ymax;
+
+   ymax = zNear * tan(fovy * M_PI / 360.0);
+   ymin = -ymax;
+   xmin = ymin * aspect;
+   xmax = ymax * aspect;
+
+   glFrustumf( xmin, xmax, ymin, ymax, zNear, zFar );
+}
+
+
 /**
  *
  */
@@ -53,7 +67,7 @@ glw_opengl_init_context(glw_root_t *gr)
   /* Check OpenGL extensions we would like to have */
 
   s = glGetString(GL_EXTENSIONS);
-  
+
   x |= check_gl_ext(s, "GL_ARB_pixel_buffer_object") ?
     GLW_OPENGL_PBO : 0;
 
@@ -73,10 +87,12 @@ glw_opengl_init_context(glw_root_t *gr)
     gr->gr_normalized_texture_coords = 1;
     rectmode = 0;
 
+#ifdef GL_TEXTURE_RECTANGLE_ARB
   } else if(check_gl_ext(s, "GL_ARB_texture_rectangle")) {
     gr->gr_be.gbr_texmode = GLW_OPENGL_TEXTURE_RECTANGLE;
     gr->gr_be.gbr_primary_texture_mode = GL_TEXTURE_RECTANGLE_ARB;
     rectmode = 1;
+#endif
 
   } else {
     gr->gr_be.gbr_texmode = GLW_OPENGL_TEXTURE_SIMPLE;
@@ -87,15 +103,17 @@ glw_opengl_init_context(glw_root_t *gr)
   }
 
   glEnable(gr->gr_be.gbr_primary_texture_mode);
+#if CONFIG_GLW_BACKEND_OPENGL
   glw_video_opengl_init(gr, rectmode);
-
+#endif
   glEnableClientState(GL_VERTEX_ARRAY);
   glEnableClientState(GL_COLOR_ARRAY);
   glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(45, 1.0, 1.0, 60.0);
+
+  perspective(45, 1.0, 1.0, 60.0);
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -275,6 +293,7 @@ glw_widget_unproject(const float *m, float *xp, float *yp,
 void
 glw_wirebox(glw_rctx_t *rc)
 {
+#if CONFIG_GLW_BACKEND_OPENGL
   glDisable(GL_TEXTURE_2D);
   glBegin(GL_LINE_LOOP);
   glColor4f(1,1,1,1);
@@ -284,6 +303,7 @@ glw_wirebox(glw_rctx_t *rc)
   glVertex3f(-1.0,  1.0, 0.0);
   glEnd();
   glEnable(GL_TEXTURE_2D);
+#endif
 }
 
 
