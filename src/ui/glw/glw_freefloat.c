@@ -68,14 +68,14 @@ glw_freefloat_render(glw_t *w, glw_rctx_t *rc)
     rc0 = *rc;
     a = (1 - fabs(-1 + (GLW_MAX(0, -0.1 + c->glw_parent_v * 2.1))));
 
-    rc0.rc_alpha = rc->rc_alpha * a;
+    rc0.rc_alpha *= a;
 
-    glw_Translatef(rc, 
+    glw_Translatef(&rc0, 
 		   c->glw_parent_pos.x,
 		   c->glw_parent_pos.y,
 		   -5 + c->glw_parent_v * 5);
 
-    glw_Rotatef(rc, 
+    glw_Rotatef(&rc0, 
 		-30 + c->glw_parent_v * 60,
 		fabsf(sin(c->glw_parent_a)),
 		fabsf(cos(c->glw_parent_a)),
