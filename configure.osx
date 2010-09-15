@@ -205,7 +205,7 @@ echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreFoundation"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Cocoa"
 # IOKit for dvd
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework IOKit"
-echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework OpenGL -framework GLUT"
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework OpenGL"
 
 # CoreAudio
 if enabled coreaudio; then
