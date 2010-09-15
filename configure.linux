@@ -235,18 +235,15 @@ if enabled glw_frontend_x11; then
     fi
 
     check_header "X11/Xlib.h" || fatal "glw" "Missing X11 include file X11/Xlib.h"
-    if pkg-config gl glu ; then
-	echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags gl glu`
-	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs gl glu`
+    if pkg-config gl ; then
+	echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags gl`
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs gl`
 	echo "Using GL:              `pkg-config --modversion gl`"
-	echo "Using GLU:             `pkg-config --modversion glu`"
     else
 	check_header "GL/gl.h"    || fatal "glw-x11" "Missing OpenGL include file GL/gl.h"
 	check_header "GL/glx.h"   || fatal "glw-x11" "Missing OpenGL include file GL/glx.h"
-	check_header "GL/glu.h"   || fatal "glw-x11" "Missing OpenGL include file GL/glu.h"
 	check_lib    "GL"         || fatal "glw-x11" "Unable to link with libGL"
-	check_lib    "GLU"        || fatal "glw-x11" "Unable to link with libGLU"
-	echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lGLU -lGL"
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lGL"
     fi
 
     enable glw_backend_opengl
