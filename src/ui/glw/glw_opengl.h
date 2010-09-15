@@ -22,10 +22,16 @@
 #define GL_GLEXT_PROTOTYPES
 #define GLX_GLXEXT_PROTOTYPES
 
-
 #ifdef __APPLE__
-#include <OpenGL/OpenGL.h>
-#include <OpenGL/glu.h>
+#include <OpenGL/gl.h>
+
+#ifndef GL_PIXEL_UNPACK_BUFFER
+#define GL_PIXEL_UNPACK_BUFFER GL_PIXEL_UNPACK_BUFFER_ARB
+#endif
+#ifndef GL_PIXEL_PACK_BUFFER
+#define GL_PIXEL_PACK_BUFFER GL_PIXEL_PACK_BUFFER_ARB
+#endif
+
 #else
 #include <GL/gl.h>
 #endif
