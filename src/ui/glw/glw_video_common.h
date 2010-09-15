@@ -82,6 +82,7 @@ typedef struct glw_video_surface {
 
   int gvs_width;
   int gvs_height;
+  int gvs_yshift;
 
 #if CONFIG_GLW_BACKEND_OPENGL
   GLuint gvs_pbo[3];
@@ -93,7 +94,6 @@ typedef struct glw_video_surface {
 
   unsigned int gvs_frame_buffer;
 
-  int gvs_yshift;
 #endif
 
 
