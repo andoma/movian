@@ -162,14 +162,14 @@ surface_reset(glw_video_t *gv, glw_video_surface_t *gvs)
 
   for(i = 0; i < 3; i++) {
     if(gvs->gvs_pbo[i] != 0) {
-      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvs->gvs_pbo[i]);
-      glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
+      glBindBuffer(GL_PIXEL_UNPACK_BUFFER, gvs->gvs_pbo[i]);
+      glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
       gvs->gvs_pbo_ptr[i] = NULL;
-      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+      glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     }
   }
   if(gvs->gvs_pbo[0] != 0)
-    glDeleteBuffersARB(3, gvs->gvs_pbo);
+    glDeleteBuffers(3, gvs->gvs_pbo);
   gvs->gvs_pbo[0] = 0;
 
   if(gvs->gvs_textures[0] != 0)
@@ -200,23 +200,22 @@ surface_init(glw_video_t *gv, glw_video_surface_t *gvs,
 {
   int i;
 
-  glGenBuffersARB(3, gvs->gvs_pbo);
+  glGenBuffers(3, gvs->gvs_pbo);
   glGenTextures(3, gvs->gvs_textures);
 
   for(i = 0; i < 3; i++) {
 
-    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvs->gvs_pbo[i]);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, gvs->gvs_pbo[i]);
 	
-    glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB,
+    glBufferData(GL_PIXEL_UNPACK_BUFFER,
 		    gvc->gvc_width[i] * gvc->gvc_height[i],
-		    NULL, GL_STREAM_DRAW_ARB);
+		    NULL, GL_STREAM_DRAW);
 	
-    gvs->gvs_pbo_ptr[i] = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 
-					 GL_WRITE_ONLY);
+    gvs->gvs_pbo_ptr[i] = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
 	
     gvs->gvs_data[i] = gvs->gvs_pbo_ptr[i];
   }
-  glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
   TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvs, gvs_link);
 }
 
@@ -272,28 +271,28 @@ gv_surface_pixmap_upload(glw_video_surface_t *gvs,
 
   gvs->gvs_uploaded = 1;
 
-  glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvs->gvs_pbo[0]);
-  glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, gvs->gvs_pbo[0]);
+  glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
   glBindTexture(textype, gv_tex_get(gvs, GVF_TEX_L));
   gv_set_tex_meta(textype);
   glTexImage2D(textype, 0, 1, gvc->gvc_width[0], gvc->gvc_height[0],
 	       0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 
-  glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvs->gvs_pbo[2]);
-  glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, gvs->gvs_pbo[2]);
+  glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
   glBindTexture(textype, gv_tex_get(gvs, GVF_TEX_Cr));
   gv_set_tex_meta(textype);
   glTexImage2D(textype, 0, 1, gvc->gvc_width[2], gvc->gvc_height[2],
 	       0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 
-  glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvs->gvs_pbo[1]);
-  glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, gvs->gvs_pbo[1]);
+  glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
   glBindTexture(textype, gv_tex_get(gvs, GVF_TEX_Cb));
   gv_set_tex_meta(textype);
   glTexImage2D(textype, 0, 1, gvc->gvc_width[1], gvc->gvc_height[1],
 	       0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 
-  glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
   gvs->gvs_pbo_ptr[0] = NULL;
   gvs->gvs_pbo_ptr[1] = NULL;
@@ -318,21 +317,20 @@ gv_surface_pixmap_release(glw_video_t *gv, glw_video_surface_t *gvs,
     gvs->gvs_uploaded = 0;
 
     for(i = 0; i < 3; i++) {
-      glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, gvs->gvs_pbo[i]);
+      glBindBuffer(GL_PIXEL_UNPACK_BUFFER, gvs->gvs_pbo[i]);
 
       // Setting the buffer to NULL tells the GPU it can assign
       // us another piece of memory as backing store.
 #ifdef PBO_RELEASE_BEFORE_MAP
-      glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB,
-		      gvc->gvc_width[i] * gvc->gvc_height[i],
-		      NULL, GL_STREAM_DRAW_ARB);
+      glBufferData(GL_PIXEL_UNPACK_BUFFER,
+		   gvc->gvc_width[i] * gvc->gvc_height[i],
+		   NULL, GL_STREAM_DRAW);
 #endif
 
-      gvs->gvs_pbo_ptr[i] = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 
-					   GL_WRITE_ONLY);
+      gvs->gvs_pbo_ptr[i] = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
       gvs->gvs_data[i] = gvs->gvs_pbo_ptr[i];
     }
-    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
   }
 
   TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvs, gvs_link);
@@ -583,13 +581,13 @@ render_video_1f(const glw_video_t *gv, glw_video_surface_t *s,
   glUniform1f(gbr->gbr_yuv2rbg_1f_alpha, alpha);
   glUniformMatrix3fv(gbr->gbr_yuv2rbg_1f_colormtx, 1, GL_TRUE, gv->gv_cmatrix);
 
-  glActiveTextureARB(GL_TEXTURE2_ARB);
+  glActiveTexture(GL_TEXTURE2);
   glBindTexture(textype, gv_tex_get(s, GVF_TEX_Cb));
 
-  glActiveTextureARB(GL_TEXTURE1_ARB);
+  glActiveTexture(GL_TEXTURE1);
   glBindTexture(textype, gv_tex_get(s, GVF_TEX_Cr));
 
-  glActiveTextureARB(GL_TEXTURE0_ARB);
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(textype, gv_tex_get(s, GVF_TEX_L));
   
   render_video_quad(!!(gvc->gvc_flags & GVC_CUTBORDER), rectmode, 
@@ -620,22 +618,22 @@ render_video_2f(const glw_video_t *gv,
   glUniform1f(gbr->gbr_yuv2rbg_2f_blend, gv->gv_blend);
   glUniformMatrix3fv(gbr->gbr_yuv2rbg_2f_colormtx, 1, GL_TRUE, gv->gv_cmatrix);
 
-  glActiveTextureARB(GL_TEXTURE5_ARB);
+  glActiveTexture(GL_TEXTURE5);
   glBindTexture(textype, gv_tex_get(sb, GVF_TEX_Cb));
 
-  glActiveTextureARB(GL_TEXTURE4_ARB);
+  glActiveTexture(GL_TEXTURE4);
   glBindTexture(textype, gv_tex_get(sb, GVF_TEX_Cr));
 
-  glActiveTextureARB(GL_TEXTURE3_ARB);
+  glActiveTexture(GL_TEXTURE3);
   glBindTexture(textype, gv_tex_get(sb, GVF_TEX_L));
 
-  glActiveTextureARB(GL_TEXTURE2_ARB);
+  glActiveTexture(GL_TEXTURE2);
   glBindTexture(textype, gv_tex_get(sa, GVF_TEX_Cb));
 
-  glActiveTextureARB(GL_TEXTURE1_ARB);
+  glActiveTexture(GL_TEXTURE1);
   glBindTexture(textype, gv_tex_get(sa, GVF_TEX_Cr));
 
-  glActiveTextureARB(GL_TEXTURE0_ARB);
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(textype, gv_tex_get(sa, GVF_TEX_L));
 
   render_video_quad(!!(gvc->gvc_flags & GVC_CUTBORDER), rectmode, 
