@@ -74,6 +74,7 @@ enable appleremote
 enable bonjour
 enable spotlight
 enable spidermonkey
+enable stdin
 
 for opt do
   optval="${opt#*=}"
