@@ -506,6 +506,9 @@ distclean: clean
 reconfigure:
 	$(CURDIR)/configure.${PLATFORM} $(CONFIGURE_ARGS)
 
+showconfig:
+	@echo $(CONFIGURE_ARGS)
+
 # Create showtimeversion.h
 src/version.c: $(BUILDDIR)/showtimeversion.h
 
