@@ -64,6 +64,7 @@ perspective( GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar )
 int
 glw_opengl_init_context(glw_root_t *gr)
 {
+  glw_backend_root_t *gbr = &gr->gr_be;
   const	GLubyte	*s;
   int x = 0;
   int rectmode;
@@ -77,7 +78,7 @@ glw_opengl_init_context(glw_root_t *gr)
   x |= check_gl_ext(s, "GL_ARB_fragment_program") ?
     GLW_OPENGL_FRAG_PROG : 0;
 
-  gr->gr_be.gbr_sysfeatures = x;
+  gbr->gbr_sysfeatures = x;
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -85,30 +86,27 @@ glw_opengl_init_context(glw_root_t *gr)
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
   if(check_gl_ext(s, "GL_ARB_texture_non_power_of_two")) {
-    gr->gr_be.gbr_texmode = GLW_OPENGL_TEXTURE_NPOT;
-    gr->gr_be.gbr_primary_texture_mode = GL_TEXTURE_2D;
+    gbr->gbr_texmode = GLW_OPENGL_TEXTURE_NPOT;
+    gbr->gbr_primary_texture_mode = GL_TEXTURE_2D;
     gr->gr_normalized_texture_coords = 1;
     rectmode = 0;
 
 #ifdef GL_TEXTURE_RECTANGLE_ARB
   } else if(check_gl_ext(s, "GL_ARB_texture_rectangle")) {
-    gr->gr_be.gbr_texmode = GLW_OPENGL_TEXTURE_RECTANGLE;
-    gr->gr_be.gbr_primary_texture_mode = GL_TEXTURE_RECTANGLE_ARB;
+    gbr->gbr_texmode = GLW_OPENGL_TEXTURE_RECTANGLE;
+    gbr->gbr_primary_texture_mode = GL_TEXTURE_RECTANGLE_ARB;
     rectmode = 1;
 #endif
 
   } else {
-    gr->gr_be.gbr_texmode = GLW_OPENGL_TEXTURE_SIMPLE;
-    gr->gr_be.gbr_primary_texture_mode = GL_TEXTURE_2D;
+    gbr->gbr_texmode = GLW_OPENGL_TEXTURE_SIMPLE;
+    gbr->gbr_primary_texture_mode = GL_TEXTURE_2D;
     gr->gr_normalized_texture_coords = 1;
     rectmode = 0; // WRONG
     
   }
 
-  glEnable(gr->gr_be.gbr_primary_texture_mode);
-#if CONFIG_GLW_BACKEND_OPENGL
-  glw_video_opengl_init(gr, rectmode);
-#endif
+  glEnable(gbr->gbr_primary_texture_mode);
   glEnableClientState(GL_VERTEX_ARRAY);
   glEnableClientState(GL_COLOR_ARRAY);
   glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -121,6 +119,20 @@ glw_opengl_init_context(glw_root_t *gr)
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
+  
+  gbr->gbr_dp_shader =
+    glw_compile_shader("bundle://src/ui/glw/glsl/v1.glsl", GL_VERTEX_SHADER);
+
+  gbr->gbr_dp =
+    glw_link_program("Default", gbr->gbr_dp_shader, 0);
+
+  gbr->gbr_dp_ucolor = glGetUniformLocation(gbr->gbr_dp, "ucolor");
+
+#if CONFIG_GLW_BACKEND_OPENGL
+  glw_video_opengl_init(gr, rectmode);
+#endif
+
+  glUseProgram(gbr->gbr_dp);
   return 0;
 }
 
@@ -304,9 +316,10 @@ glw_widget_unproject(const float *m, float *xp, float *yp,
  *
  */
 void
-glw_wirebox(glw_rctx_t *rc)
+glw_wirebox(glw_root_t *gr, glw_rctx_t *rc)
 {
 #if CONFIG_GLW_BACKEND_OPENGL
+  glUseProgram(0);
   glLoadMatrixf(rc->rc_be.gbr_mtx);
   glDisable(GL_TEXTURE_2D);
   glBegin(GL_LINE_LOOP);
@@ -317,6 +330,7 @@ glw_wirebox(glw_rctx_t *rc)
   glVertex3f(-1.0,  1.0, 0.0);
   glEnd();
   glEnable(GL_TEXTURE_2D);
+  glUseProgram(gr->gr_be.gbr_dp);
 #endif
 }
 
@@ -330,10 +344,8 @@ glw_renderer_init(glw_renderer_t *gr, int vertices, int triangles,
 		  uint16_t *indices)
 {
   int i;
-  float *v;
 
-  gr->gr_array = malloc(sizeof(float) * (3 + 2 + 4 + 4) * vertices);
-  v = gr->gr_colors = gr->gr_array + (3 + 2 + 4) * vertices;
+  gr->gr_array = malloc(sizeof(float) * (3 + 2 + 4) * vertices);
   gr->gr_vertices = vertices;
 
   if((gr->gr_static_indices = (indices != NULL))) {
@@ -344,8 +356,12 @@ glw_renderer_init(glw_renderer_t *gr, int vertices, int triangles,
 
   gr->gr_triangles = triangles;
 
-  for(i = 0; i < vertices * 4; i++)
-    *v++ = 1;
+  for(i = 0; i < vertices; i++) {
+    gr->gr_array[i * 9 + 5] = 1;
+    gr->gr_array[i * 9 + 6] = 1;
+    gr->gr_array[i * 9 + 7] = 1;
+    gr->gr_array[i * 9 + 8] = 1;
+  }
   gr->gr_dirty = 1;
 }
 
@@ -444,10 +460,10 @@ void
 glw_renderer_vtx_col(glw_renderer_t *gr, int vertex,
 		     float r, float g, float b, float a)
 {
-  gr->gr_colors[vertex * 4 + 0] = r;
-  gr->gr_colors[vertex * 4 + 1] = g;
-  gr->gr_colors[vertex * 4 + 2] = b;
-  gr->gr_colors[vertex * 4 + 3] = a;
+  gr->gr_array[vertex * 9 + 5] = r;
+  gr->gr_array[vertex * 9 + 6] = g;
+  gr->gr_array[vertex * 9 + 7] = b;
+  gr->gr_array[vertex * 9 + 8] = a;
   gr->gr_dirty = 1;
 }
 
@@ -742,25 +758,7 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
 		  glw_backend_texture_t *be_tex,
 		  float r, float g, float b, float a)
 {
-  if(r != gr->gr_red || g != gr->gr_green || b != gr->gr_blue ||
-     a != gr->gr_alpha || gr->gr_dirty) {
-
-    const float *src = gr->gr_colors;
-    int i;
-  
-    for(i = 0; i < gr->gr_vertices; i++) {
-      gr->gr_array[i * 9 + 5] = *src++ * r;
-      gr->gr_array[i * 9 + 6] = *src++ * g;
-      gr->gr_array[i * 9 + 7] = *src++ * b;
-      gr->gr_array[i * 9 + 8] = *src++ * a;
-    }
-
-    gr->gr_red   = r;
-    gr->gr_green = g;
-    gr->gr_blue  = b;
-    gr->gr_alpha = a;
-  }
-
+  glUniform4f(root->gr_be.gbr_dp_ucolor, r, g, b, a);
 
   if(root->gr_be.gbr_active_clippers) {
     float *A;

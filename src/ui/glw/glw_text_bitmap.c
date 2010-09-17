@@ -753,7 +753,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
     return;
 
   if(w->glw_flags & GLW_DEBUG)
-    glw_wirebox(rc);
+    glw_wirebox(w->glw_root, rc);
 
   rc0 = *rc;
 

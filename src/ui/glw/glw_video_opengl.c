@@ -66,7 +66,8 @@ glw_video_opengl_init(glw_root_t *gr, int rectmode)
 			     GL_FRAGMENT_SHADER)))
     return -1;
 
-  if(!(gbr->gbr_yuv2rbg_1f_prog = glw_link_program("yuv2rgb_1f_norm", 0, s)))
+  if(!(gbr->gbr_yuv2rbg_1f_prog = glw_link_program("yuv2rgb_1f_norm", 
+						   gbr->gbr_dp_shader, s)))
     return -1;
 
   glDeleteShader(s); // Ref is kept by program
@@ -81,13 +82,12 @@ glw_video_opengl_init(glw_root_t *gr, int rectmode)
   glUniform1i(glGetUniformLocation(p, "u"), 1);
   glUniform1i(glGetUniformLocation(p, "v"), 2);
   
-  glUseProgram(0);
-
   if(!(s = glw_compile_shader("bundle://src/ui/glw/glsl/yuv2rgb_2f_norm.glsl",
 			     GL_FRAGMENT_SHADER)))
     return -1;
 
-  if(!(gbr->gbr_yuv2rbg_2f_prog = glw_link_program("yuv2rgb_2f_norm", 0, s)))
+  if(!(gbr->gbr_yuv2rbg_2f_prog = glw_link_program("yuv2rgb_2f_norm", 
+						   gbr->gbr_dp_shader, s)))
     return -1;
 
   glDeleteShader(s); // Ref is kept by program
@@ -106,7 +106,6 @@ glw_video_opengl_init(glw_root_t *gr, int rectmode)
   glUniform1i(glGetUniformLocation(p, "uB"), 4);
   glUniform1i(glGetUniformLocation(p, "vB"), 5);
   
-  glUseProgram(0);
   return 0;
 }
 
@@ -552,8 +551,7 @@ render_video_1f(const glw_video_t *gv, glw_video_surface_t *s,
   render_video_quad(!!(gvc->gvc_flags & GVC_CUTBORDER), rectmode, 
 		    gvc->gvc_width[0], gvc->gvc_height[0],
 		    s->gvs_yshift, 0);
-
-  glUseProgram(0);
+  glUseProgram(gbr->gbr_dp);
 
 }
 
@@ -598,7 +596,7 @@ render_video_2f(const glw_video_t *gv,
   render_video_quad(!!(gvc->gvc_flags & GVC_CUTBORDER), rectmode, 
 		    gvc->gvc_width[0], gvc->gvc_height[0],
 		    sa->gvs_yshift, sb->gvs_yshift);
-  glUseProgram(0);
+  glUseProgram(gbr->gbr_dp);
 }
 
 

@@ -86,6 +86,13 @@ typedef struct glw_backend_root {
   float gbr_clip[NUM_CLIPPLANES][4];
   int gbr_active_clippers;
 
+  /**
+   *
+   */
+  GLuint gbr_dp_shader;
+  GLuint gbr_dp;
+  GLuint gbr_dp_ucolor;
+
 } glw_backend_root_t;
 
 
@@ -124,12 +131,7 @@ typedef struct glw_renderer {
   unsigned char gr_cacheptr;
 
   float *gr_array;
-  float *gr_colors;
   uint16_t *gr_indices;
-  float gr_red;
-  float gr_green;
-  float gr_blue;
-  float gr_alpha;
 
 #define GLW_RENDERER_CACHES 4
 

@@ -1063,7 +1063,7 @@ void glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
 		       glw_backend_texture_t *be_tex,
 		       float r, float g, float b, float a);
 
-void glw_wirebox(glw_rctx_t *rc);
+void glw_wirebox(glw_root_t *gr, glw_rctx_t *rc);
 
 /**
  * Global flush interface 
