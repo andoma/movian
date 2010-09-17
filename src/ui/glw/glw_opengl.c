@@ -22,6 +22,9 @@
 #include "glw_video_opengl.h"
 #include "glw_cursor.h"
 
+#include "fileaccess/fileaccess.h"
+
+
 /**
  * return 1 if the extension is found, otherwise 0
  */
@@ -941,3 +944,69 @@ glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which)
   gr->gr_be.gbr_active_clippers &= ~(1 << which);
 }
 
+
+/**
+ *
+ */
+GLuint
+glw_compile_shader(const char *url, int type)
+{
+  char *src;
+  struct fa_stat st;
+  GLint v, len;
+  GLuint s;
+  char log[4096];
+  
+  if((src = fa_quickload(url, &st, NULL, log, sizeof(log))) == NULL) {
+    TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s\n",
+	  url, log);
+    return 0;
+  }
+  
+  s = glCreateShader(type);
+  glShaderSource(s, 1, (const char **)&src, NULL);
+  
+  glCompileShader(s);
+  glGetShaderInfoLog(s, sizeof(log), &len, log); 
+  glGetShaderiv(s, GL_COMPILE_STATUS, &v);
+    
+  free(src);
+
+  if(!v) {
+    TRACE(TRACE_ERROR, "GLW", "Unable to compile shader %s", url);
+    TRACE(TRACE_ERROR, "GLW", "%s", log);
+    return 0;
+  }
+  return s;
+}
+
+
+/**
+ *
+ */
+GLuint
+glw_link_program(const char *title, GLuint vs, GLuint fs)
+{
+  char log[4096];
+  int len;
+  GLint v;
+  GLuint p;
+
+  p = glCreateProgram();
+  if(vs)
+    glAttachShader(p, vs);
+  if(fs)
+    glAttachShader(p, fs);
+
+  glLinkProgram(p);
+
+  glGetProgramInfoLog(p, sizeof(log), &len, log); 
+
+  glGetProgramiv(p, GL_LINK_STATUS, &v);
+  if(!v) {
+    TRACE(TRACE_ERROR, "GLW", "Unable to link shader %s", title);
+    TRACE(TRACE_ERROR, "GLW", "%s", log);
+    return 0;
+  }
+  return p;
+}

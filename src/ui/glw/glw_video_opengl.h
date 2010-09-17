@@ -21,7 +21,7 @@
 
 #include "glw.h"
 
-void glw_video_opengl_init(glw_root_t *gr, int rectmode);
+int glw_video_opengl_init(glw_root_t *gr, int rectmode);
 
 void glw_video_opengl_flush(glw_root_t *gr);
 

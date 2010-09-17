@@ -42,113 +42,72 @@
 #include "video/video_decoder.h"
 #include "video/video_playback.h"
 
-#include "fileaccess/fileaccess.h"
-
-
 /**
  *
  */
-static int
-compile_fragmentprogram(const char *url, GLuint *p)
-{
-  char log[4096];
-  int len;
-  GLint v;
-  GLuint fs;
-
-  const char *src;
-  struct fa_stat st;
-
-  if((src = fa_quickload(url, &st, NULL, log, sizeof(log))) == NULL) {
-    TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s\n",
-	  url, log);
-    return -1;
-  }
-
-
-  fs = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fs, 1, &src, NULL);
-
-  glCompileShader(fs);
-  glGetShaderInfoLog(fs, sizeof(log), &len, log); 
-
-  glGetShaderiv(fs, GL_COMPILE_STATUS, &v);
-
-  if(!v) {
-    TRACE(TRACE_ERROR, "GLW", "Unable to compile shader %s", url);
-    TRACE(TRACE_ERROR, "GLW", "%s", log);
-    return -1;
-  }
-
-  *p = glCreateProgram();
-  glAttachShader(*p, fs);
-  glLinkProgram(*p);
-
-  glGetProgramInfoLog(*p, sizeof(log), &len, log); 
-
-  glGetProgramiv(*p, GL_LINK_STATUS, &v);
-  if(!v) {
-    TRACE(TRACE_ERROR, "GLW", "Unable to link shader %s", url);
-    TRACE(TRACE_ERROR, "GLW", "%s", log);
-    return -1;
-  }
-  return 0;
-}
-
-/**
- *
- */
-void
+int
 glw_video_opengl_init(glw_root_t *gr, int rectmode)
 {
   glw_backend_root_t *gbr = &gr->gr_be;
   GLint tu = 0;
+  GLuint s, p;
 
   glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &tu);
   if(tu < 6) {
-    TRACE(TRACE_ERROR, "OpenGL", 
-	  "Insufficient number of texture image units (%d) "
-	  "for GLW video rendering widget. Video output will be corrupted",
+    TRACE(TRACE_ERROR, "GLW", 
+	  "Insufficient number of texture image units %d < 6 "
+	  "for GLW video rendering widget.",
 	  tu);
-  } else {
-    TRACE(TRACE_DEBUG, "OpenGL", "%d texture image units available", tu);
+    return -1;
   }
+  TRACE(TRACE_DEBUG, "GLW", "%d texture image units available", tu);
 
-  if(!compile_fragmentprogram("bundle://src/ui/glw/glsl/yuv2rgb_1f_norm.glsl",
-			      &gbr->gbr_yuv2rbg_1f_prog)) {
+  if(!(s = glw_compile_shader("bundle://src/ui/glw/glsl/yuv2rgb_1f_norm.glsl",
+			     GL_FRAGMENT_SHADER)))
+    return -1;
 
-    GLuint p = gbr->gbr_yuv2rbg_1f_prog;
-    glUseProgram(p);
+  if(!(gbr->gbr_yuv2rbg_1f_prog = glw_link_program("yuv2rgb_1f_norm", 0, s)))
+    return -1;
+
+  glDeleteShader(s); // Ref is kept by program
+
+  p = gbr->gbr_yuv2rbg_1f_prog;
+  glUseProgram(p);
   
-    gbr->gbr_yuv2rbg_1f_colormtx = glGetUniformLocation(p, "colormtx");
-    gbr->gbr_yuv2rbg_1f_alpha    = glGetUniformLocation(p, "alpha");
-   
-    glUniform1i(glGetUniformLocation(p, "y"), 0);
-    glUniform1i(glGetUniformLocation(p, "u"), 1);
-    glUniform1i(glGetUniformLocation(p, "v"), 2);
-
-    glUseProgram(0);
-  }
-
-  if(!compile_fragmentprogram("bundle://src/ui/glw/glsl/yuv2rgb_2f_norm.glsl",
-			      &gbr->gbr_yuv2rbg_2f_prog)) {
-
-    GLuint p = gbr->gbr_yuv2rbg_2f_prog;
-    glUseProgram(p);
+  gbr->gbr_yuv2rbg_1f_colormtx = glGetUniformLocation(p, "colormtx");
+  gbr->gbr_yuv2rbg_1f_alpha    = glGetUniformLocation(p, "alpha");
   
-    gbr->gbr_yuv2rbg_2f_colormtx = glGetUniformLocation(p, "colormtx");
-    gbr->gbr_yuv2rbg_2f_alpha    = glGetUniformLocation(p, "alpha");
-    gbr->gbr_yuv2rbg_2f_blend    = glGetUniformLocation(p, "blend");
-   
-    glUniform1i(glGetUniformLocation(p, "yA"), 0);
-    glUniform1i(glGetUniformLocation(p, "uA"), 1);
-    glUniform1i(glGetUniformLocation(p, "vA"), 2);
-    glUniform1i(glGetUniformLocation(p, "yB"), 3);
-    glUniform1i(glGetUniformLocation(p, "uB"), 4);
-    glUniform1i(glGetUniformLocation(p, "vB"), 5);
+  glUniform1i(glGetUniformLocation(p, "y"), 0);
+  glUniform1i(glGetUniformLocation(p, "u"), 1);
+  glUniform1i(glGetUniformLocation(p, "v"), 2);
+  
+  glUseProgram(0);
 
-    glUseProgram(0);
-  }
+  if(!(s = glw_compile_shader("bundle://src/ui/glw/glsl/yuv2rgb_2f_norm.glsl",
+			     GL_FRAGMENT_SHADER)))
+    return -1;
+
+  if(!(gbr->gbr_yuv2rbg_2f_prog = glw_link_program("yuv2rgb_2f_norm", 0, s)))
+    return -1;
+
+  glDeleteShader(s); // Ref is kept by program
+
+  p = gbr->gbr_yuv2rbg_2f_prog;
+  glUseProgram(p);
+  
+  gbr->gbr_yuv2rbg_2f_colormtx = glGetUniformLocation(p, "colormtx");
+  gbr->gbr_yuv2rbg_2f_alpha    = glGetUniformLocation(p, "alpha");
+  gbr->gbr_yuv2rbg_2f_blend    = glGetUniformLocation(p, "blend");
+  
+  glUniform1i(glGetUniformLocation(p, "yA"), 0);
+  glUniform1i(glGetUniformLocation(p, "uA"), 1);
+  glUniform1i(glGetUniformLocation(p, "vA"), 2);
+  glUniform1i(glGetUniformLocation(p, "yB"), 3);
+  glUniform1i(glGetUniformLocation(p, "uB"), 4);
+  glUniform1i(glGetUniformLocation(p, "vB"), 5);
+  
+  glUseProgram(0);
+  return 0;
 }
 
 

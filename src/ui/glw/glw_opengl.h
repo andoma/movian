@@ -188,4 +188,13 @@ void glw_rtt_destroy(struct glw_root *gr, glw_rtt_t *grtt);
 
 #define glw_frontface(x) glFrontFace(x) 
 
+
+/**
+ *
+ */
+GLuint glw_compile_shader(const char *url, int type);
+
+GLuint glw_link_program(const char *title, GLuint vs, GLuint fs);
+
+
 #endif /* GLW_OPENGL_H__ */
