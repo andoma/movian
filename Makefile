@@ -245,6 +245,8 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_bar.c \
 			src/ui/glw/glw_flicker.c \
 			src/ui/glw/glw_keyintercept.c \
+			src/ui/glw/glw_clip.c \
+			src/ui/glw/glw_primitives.c \
 
 SRCS-$(CONFIG_GLW_FRONTEND_X11)	  += src/ui/glw/glw_x11.c \
 				     src/ui/linux/x11_common.c
