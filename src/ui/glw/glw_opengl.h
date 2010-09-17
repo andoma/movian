@@ -41,6 +41,7 @@
 #include <GL/glxext.h>
 #endif
 
+#define NUM_CLIPPLANES 6
 
 struct glw_root;
 struct glw_rctx;
@@ -82,29 +83,45 @@ typedef struct glw_backend_root {
 #endif
   int gbr_enable_vdpau;
 
-  float gbr_clip[6][4];
-  
+  float gbr_clip[NUM_CLIPPLANES][4];
+  int gbr_active_clippers;
 
 } glw_backend_root_t;
 
+
 typedef struct {
-
-  float gbr_mtx[16];
-
-  int gbr_active_clippers; // Used by glw_clip()
-
+  float gbr_mtx[16]; // ModelView matrix
 } glw_backend_rctx_t;
 
 
 typedef GLuint glw_backend_texture_t;
 
+
+/**
+ * Renderer tesselation cache
+ */
+typedef struct glw_renderer_tc {
+  float grt_mtx[16]; // ModelView matrix
+  int grt_active_clippers;
+  float grt_clip[NUM_CLIPPLANES][4];
+
+  float *grt_array; // Tesselated output [3+4+2] elements / vertex
+  int grt_size;     // In triangles
+  int grt_capacity; // In triangles
+} glw_renderer_tc_t;
+
 /**
  * Renderer
  */
+
+
 typedef struct glw_renderer {
   uint16_t gr_vertices;
   uint16_t gr_triangles;
   char gr_static_indices;
+  char gr_dirty;
+  unsigned char gr_framecmp;
+  unsigned char gr_cacheptr;
 
   float *gr_array;
   float *gr_colors;
@@ -113,9 +130,13 @@ typedef struct glw_renderer {
   float gr_green;
   float gr_blue;
   float gr_alpha;
+
+#define GLW_RENDERER_CACHES 4
+
+  glw_renderer_tc_t *gr_tc[GLW_RENDERER_CACHES];
+  
 } glw_renderer_t;
 
-#define GLW_RENDER_MODE_QUADS      GL_QUADS
 
 #define glw_can_tnpo2(gr) (gr->gr_be.gbr_texmode != GLW_OPENGL_TEXTURE_SIMPLE)
 
