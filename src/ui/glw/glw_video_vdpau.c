@@ -148,6 +148,13 @@ vdpau_newframe(glw_video_t *gv, video_decoder_t *vd0, int flags)
 }
 
 
+static const float projmtx[16] = {
+  2.414213,0.000000,0.000000,0.000000,
+  0.000000,2.414213,0.000000,0.000000,
+  0.000000,0.000000,1.033898,-1.000000,
+  0.000000,0.000000,2.033898,0.000000
+};
+
 /**
  *
  */
@@ -179,6 +186,9 @@ vdpau_render(glw_video_t *gv, glw_rctx_t *rc)
   int w = gv->gv_rwidth  - 1;
   int h = gv->gv_rheight - 1;
 
+  glMatrixMode(GL_PROJECTION);
+  glLoadMatrixf(projmtx);
+  glMatrixMode(GL_MODELVIEW);
   glLoadMatrixf(rc->rc_be.gbr_mtx);
 
   glUseProgram(0);

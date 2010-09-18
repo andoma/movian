@@ -24,6 +24,13 @@
 
 #include "fileaccess/fileaccess.h"
 
+static const float identitymtx[16] = {
+  1,0,0,0,
+  0,1,0,0,
+  0,0,1,0,
+  0,0,0,1};
+  
+
 
 /**
  * return 1 if the extension is found, otherwise 0
@@ -42,41 +49,6 @@ check_gl_ext(const uint8_t *s, const char *func)
 	func, x ? "" : "not ");
   return x;
 }
-
-
-static void
-perspective(float fovy, float aspect, float zNear, float zFar)
-{
-   float top = zNear * tan(fovy * M_PI / 360.0);
-   float bottom = -top;
-   float left = bottom * aspect;
-   float right = top * aspect;
-
-   float m[16];
-   m[0] = 2 * zNear / (right - left);
-   m[4] = 0;
-   m[8] = (right + left) / (right - left);
-   m[12] = 0;
-
-   m[1] = 0;
-   m[5] = 2 * zNear / (top - bottom);
-   m[9] = (top + bottom) / (top - bottom);
-   m[13] = 0;
-
-   m[2] = 0;
-   m[6] = 0;
-   m[10] = (zFar + zNear) / (zFar - zNear);
-   m[14] = 2 * zFar * zNear/ (zFar - zNear);
-
-   m[3] = 0;
-   m[7] = 0;
-   m[11] = -1;
-   m[15] = 0;
-
-  glMatrixMode(GL_PROJECTION);
-  glLoadMatrixf(m);
-}
-
 
 
 /**
@@ -129,17 +101,14 @@ glw_opengl_init_context(glw_root_t *gr)
 
   glEnable(gbr->gbr_primary_texture_mode);
 
-  perspective(45, 1.0, 1.0, 60.0);
 
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-
-  
   gbr->gbr_dp_shader =
     glw_compile_shader("bundle://src/ui/glw/glsl/v1.glsl", GL_VERTEX_SHADER);
 
   gbr->gbr_dp =
     glw_link_program("Default", gbr->gbr_dp_shader, 0);
+
+  gbr->gbr_dp_modelview = glGetUniformLocation(gbr->gbr_dp, "modelview");
 
   gbr->gbr_dp_ucolor = glGetUniformLocation(gbr->gbr_dp, "ucolor");
 
@@ -342,8 +311,9 @@ void
 glw_wirebox(glw_root_t *gr, glw_rctx_t *rc)
 {
 #if CONFIG_GLW_BACKEND_OPENGL
-  glUseProgram(0);
-  glLoadMatrixf(rc->rc_be.gbr_mtx);
+  glw_backend_root_t *gbr = &gr->gr_be;
+  glUniformMatrix4fv(gbr->gbr_dp_modelview, 1, 0, rc->rc_be.gbr_mtx);
+  glUniform4f(gbr->gbr_dp_ucolor, 1,1,1,1);
   glDisable(GL_TEXTURE_2D);
   glBegin(GL_LINE_LOOP);
   glColor4f(1,1,1,1);
@@ -353,7 +323,6 @@ glw_wirebox(glw_root_t *gr, glw_rctx_t *rc)
   glVertex3f(-1.0,  1.0, 0.0);
   glEnd();
   glEnable(GL_TEXTURE_2D);
-  glUseProgram(gr->gr_be.gbr_dp);
 #endif
 }
 
@@ -805,7 +774,7 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
       clip_tesselate(gr, root, rc, cacheid);
     }
     
-    glLoadIdentity();
+    glUniformMatrix4fv(gbr->gbr_dp_modelview, 1, 0, identitymtx);
 
     A = gr->gr_tc[cacheid]->grt_array;
 
@@ -834,8 +803,8 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
 
   } else {
 
-    glLoadMatrixf(rc->rc_be.gbr_mtx);
-    
+    glUniformMatrix4fv(gbr->gbr_dp_modelview, 1, 0, rc->rc_be.gbr_mtx);
+
     glVertexAttribPointer(gbr->gbr_dp_position, 3, GL_FLOAT, 0, 
 			  sizeof(float) * 9, gr->gr_array);
     glVertexAttribPointer(gbr->gbr_dp_color, 4, GL_FLOAT, 0, 

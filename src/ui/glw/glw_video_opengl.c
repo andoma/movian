@@ -79,15 +79,16 @@ glw_video_opengl_init(glw_root_t *gr, int rectmode)
   p = gbr->gbr_yuv2rbg_1f_prog;
   glUseProgram(p);
   
-  gbr->gbr_yuv2rbg_1f_colormtx = glGetUniformLocation(p, "colormtx");
-  gbr->gbr_yuv2rbg_1f_alpha    = glGetUniformLocation(p, "alpha");
+  gbr->gbr_yuv2rbg_1f_colormtx   = glGetUniformLocation(p, "colormtx");
+  gbr->gbr_yuv2rbg_1f_alpha      = glGetUniformLocation(p, "alpha");
+  gbr->gbr_yuv2rbg_1f_modelview  = glGetUniformLocation(p, "modelview");
   
   glUniform1i(glGetUniformLocation(p, "y"), 0);
   glUniform1i(glGetUniformLocation(p, "u"), 1);
   glUniform1i(glGetUniformLocation(p, "v"), 2);
   
-  gbr->gbr_yuv2rbg_1f_position = glGetAttribLocation(p, "position");
-  gbr->gbr_yuv2rbg_1f_texcoord = glGetAttribLocation(p, "texcoord");
+  gbr->gbr_yuv2rbg_1f_position   = glGetAttribLocation(p, "position");
+  gbr->gbr_yuv2rbg_1f_texcoord   = glGetAttribLocation(p, "texcoord");
 
   if(!(s = glw_compile_shader("bundle://src/ui/glw/glsl/yuv2rgb_2f_norm.glsl",
 			     GL_FRAGMENT_SHADER)))
@@ -101,9 +102,10 @@ glw_video_opengl_init(glw_root_t *gr, int rectmode)
   p = gbr->gbr_yuv2rbg_2f_prog;
   glUseProgram(p);
   
-  gbr->gbr_yuv2rbg_2f_colormtx = glGetUniformLocation(p, "colormtx");
-  gbr->gbr_yuv2rbg_2f_alpha    = glGetUniformLocation(p, "alpha");
-  gbr->gbr_yuv2rbg_2f_blend    = glGetUniformLocation(p, "blend");
+  gbr->gbr_yuv2rbg_2f_colormtx   = glGetUniformLocation(p, "colormtx");
+  gbr->gbr_yuv2rbg_2f_alpha      = glGetUniformLocation(p, "alpha");
+  gbr->gbr_yuv2rbg_2f_blend      = glGetUniformLocation(p, "blend");
+  gbr->gbr_yuv2rbg_2f_modelview  = glGetUniformLocation(p, "modelview");
   
   glUniform1i(glGetUniformLocation(p, "yA"), 0);
   glUniform1i(glGetUniformLocation(p, "uA"), 1);
@@ -112,9 +114,8 @@ glw_video_opengl_init(glw_root_t *gr, int rectmode)
   glUniform1i(glGetUniformLocation(p, "uB"), 4);
   glUniform1i(glGetUniformLocation(p, "vB"), 5);
   
-  gbr->gbr_yuv2rbg_2f_position = glGetAttribLocation(p, "position");
-  gbr->gbr_yuv2rbg_2f_texcoord = glGetAttribLocation(p, "texcoord");
-
+  gbr->gbr_yuv2rbg_2f_position   = glGetAttribLocation(p, "position");
+  gbr->gbr_yuv2rbg_2f_texcoord   = glGetAttribLocation(p, "texcoord");
   return 0;
 }
 
@@ -565,7 +566,7 @@ render_video_quad(int interlace, int rectmode, int width, int height,
  */
 static void
 render_video_1f(const glw_video_t *gv, glw_video_surface_t *s,
-		float alpha, int textype, int rectmode)
+		int textype, int rectmode, glw_rctx_t *rc)
 {
   const glw_video_config_t *gvc = &gv->gv_cfg_cur;
   const glw_backend_root_t *gbr = &gv->w.glw_root->gr_be;
@@ -574,8 +575,9 @@ render_video_1f(const glw_video_t *gv, glw_video_surface_t *s,
 
   glUseProgram(gbr->gbr_yuv2rbg_1f_prog);
 
-  glUniform1f(gbr->gbr_yuv2rbg_1f_alpha, alpha);
+  glUniform1f(gbr->gbr_yuv2rbg_1f_alpha, rc->rc_alpha);
   glUniformMatrix3fv(gbr->gbr_yuv2rbg_1f_colormtx, 1, GL_TRUE, gv->gv_cmatrix);
+  glUniformMatrix4fv(gbr->gbr_yuv2rbg_1f_modelview, 1, 0, rc->rc_be.gbr_mtx);
 
   glActiveTexture(GL_TEXTURE2);
   glBindTexture(textype, gv_tex_get(s, GVF_TEX_Cb));
@@ -600,7 +602,7 @@ render_video_1f(const glw_video_t *gv, glw_video_surface_t *s,
 static void
 render_video_2f(const glw_video_t *gv, 
 		glw_video_surface_t *sa, glw_video_surface_t *sb,
-		float alpha, int textype, int rectmode)
+		int textype, int rectmode, glw_rctx_t *rc)
 {
   const glw_video_config_t *gvc = &gv->gv_cfg_cur;
   const glw_backend_root_t *gbr = &gv->w.glw_root->gr_be;
@@ -609,9 +611,10 @@ render_video_2f(const glw_video_t *gv,
   gv_surface_pixmap_upload(sb, &gv->gv_cfg_cur, textype);
 
   glUseProgram(gbr->gbr_yuv2rbg_2f_prog);
-  glUniform1f(gbr->gbr_yuv2rbg_2f_alpha, alpha);
+  glUniform1f(gbr->gbr_yuv2rbg_2f_alpha, rc->rc_alpha);
   glUniform1f(gbr->gbr_yuv2rbg_2f_blend, gv->gv_blend);
   glUniformMatrix3fv(gbr->gbr_yuv2rbg_2f_colormtx, 1, GL_TRUE, gv->gv_cmatrix);
+  glUniformMatrix4fv(gbr->gbr_yuv2rbg_2f_modelview, 1, 0, rc->rc_be.gbr_mtx);
 
   glActiveTexture(GL_TEXTURE5);
   glBindTexture(textype, gv_tex_get(sb, GVF_TEX_Cb));
@@ -664,12 +667,10 @@ yuvp_render(glw_video_t *gv, glw_rctx_t *rc)
   glDisableVertexAttribArray(gbr->gbr_dp_texcoord);
   glDisableVertexAttribArray(gbr->gbr_dp_color);
 
-  glLoadMatrixf(rc->rc_be.gbr_mtx);
-
   if(sb != NULL) {
-    render_video_2f(gv, sa, sb, rc->rc_alpha, textype, rectmode);
+    render_video_2f(gv, sa, sb, textype, rectmode, rc);
   } else {
-    render_video_1f(gv, sa, rc->rc_alpha, textype, rectmode);
+    render_video_1f(gv, sa, textype, rectmode, rc);
   }
 
   glUseProgram(gbr->gbr_dp);

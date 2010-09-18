@@ -69,6 +69,7 @@ typedef struct glw_backend_root {
   GLint  gbr_yuv2rbg_1f_alpha;
   GLint  gbr_yuv2rbg_1f_position;
   GLint  gbr_yuv2rbg_1f_texcoord;
+  GLint  gbr_yuv2rbg_1f_modelview;
 
   GLuint gbr_yuv2rbg_2f_prog;
   GLint  gbr_yuv2rbg_2f_colormtx;
@@ -76,6 +77,7 @@ typedef struct glw_backend_root {
   GLint  gbr_yuv2rbg_2f_blend;
   GLint  gbr_yuv2rbg_2f_position;
   GLint  gbr_yuv2rbg_2f_texcoord;
+  GLint  gbr_yuv2rbg_2f_modelview;
 
   /**
    *
@@ -99,6 +101,7 @@ typedef struct glw_backend_root {
   GLint  gbr_dp_position;
   GLint  gbr_dp_texcoord;
   GLint  gbr_dp_color;
+  GLint  gbr_dp_modelview;
 
 } glw_backend_root_t;
 
@@ -204,6 +207,5 @@ void glw_rtt_destroy(struct glw_root *gr, glw_rtt_t *grtt);
 GLuint glw_compile_shader(const char *url, int type);
 
 GLuint glw_link_program(const char *title, GLuint vs, GLuint fs);
-
 
 #endif /* GLW_OPENGL_H__ */
