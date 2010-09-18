@@ -107,9 +107,6 @@ glw_opengl_init_context(glw_root_t *gr)
   }
 
   glEnable(gbr->gbr_primary_texture_mode);
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glEnableClientState(GL_COLOR_ARRAY);
-  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -127,6 +124,14 @@ glw_opengl_init_context(glw_root_t *gr)
     glw_link_program("Default", gbr->gbr_dp_shader, 0);
 
   gbr->gbr_dp_ucolor = glGetUniformLocation(gbr->gbr_dp, "ucolor");
+
+  gbr->gbr_dp_position  = glGetAttribLocation(gbr->gbr_dp, "position");
+  gbr->gbr_dp_texcoord  = glGetAttribLocation(gbr->gbr_dp, "texcoord");
+  gbr->gbr_dp_color     = glGetAttribLocation(gbr->gbr_dp, "color");
+
+  glEnableVertexAttribArray(gbr->gbr_dp_position);
+  glEnableVertexAttribArray(gbr->gbr_dp_texcoord);
+  glEnableVertexAttribArray(gbr->gbr_dp_color);
 
 #if CONFIG_GLW_BACKEND_OPENGL
   glw_video_opengl_init(gr, rectmode);
@@ -758,9 +763,11 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
 		  glw_backend_texture_t *be_tex,
 		  float r, float g, float b, float a)
 {
-  glUniform4f(root->gr_be.gbr_dp_ucolor, r, g, b, a);
+  glw_backend_root_t *gbr = &root->gr_be;
 
-  if(root->gr_be.gbr_active_clippers) {
+  glUniform4f(gbr->gbr_dp_ucolor, r, g, b, a);
+
+  if(gbr->gbr_active_clippers) {
     float *A;
 
     if((root->gr_frames & 0xff ) != gr->gr_framecmp) {
@@ -784,47 +791,54 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
 
     A = gr->gr_tc[cacheid]->grt_array;
 
-    glVertexPointer(3, GL_FLOAT, sizeof(float) * 9, A);
-    glColorPointer(4, GL_FLOAT, sizeof(float) * 9, A + 5);
-
+    glVertexAttribPointer(gbr->gbr_dp_position, 3, GL_FLOAT, 0, 
+			  sizeof(float) * 9, A);
+    glVertexAttribPointer(gbr->gbr_dp_color, 4, GL_FLOAT, 0, 
+			  sizeof(float) * 9, A + 5);
 
     if(be_tex != NULL) {
 
-      glBindTexture(root->gr_be.gbr_primary_texture_mode, *be_tex);
+      glBindTexture(gbr->gbr_primary_texture_mode, *be_tex);
+
+      glVertexAttribPointer(gbr->gbr_dp_texcoord, 2, GL_FLOAT, 0, 
+			    sizeof(float) * 9, A + 3);
+
       glTexCoordPointer(2, GL_FLOAT, sizeof(float) * 9, A + 3);
       glDrawArrays(GL_TRIANGLES, 0, 3 * gr->gr_tc[cacheid]->grt_size);
 
     } else {
 
-      glDisable(root->gr_be.gbr_primary_texture_mode);
-      glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+      glDisable(gbr->gbr_primary_texture_mode);
+      glDisableVertexAttribArray(gbr->gbr_dp_texcoord);
       glDrawArrays(GL_TRIANGLES, 0, 3 * gr->gr_tc[cacheid]->grt_size);
-      glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-      glEnable(root->gr_be.gbr_primary_texture_mode);
+      glEnableVertexAttribArray(gbr->gbr_dp_texcoord);
+      glEnable(gbr->gbr_primary_texture_mode);
     }
 
   } else {
 
     glLoadMatrixf(rc->rc_be.gbr_mtx);
     
-    glVertexPointer(3, GL_FLOAT, sizeof(float) * 9, gr->gr_array);
-    glColorPointer(4, GL_FLOAT, sizeof(float) * 9, gr->gr_array + 5);
-    
+    glVertexAttribPointer(gbr->gbr_dp_position, 3, GL_FLOAT, 0, 
+			  sizeof(float) * 9, gr->gr_array);
+    glVertexAttribPointer(gbr->gbr_dp_color, 4, GL_FLOAT, 0, 
+			  sizeof(float) * 9, gr->gr_array + 5);
     if(be_tex != NULL) {
 
-      glBindTexture(root->gr_be.gbr_primary_texture_mode, *be_tex);
-      glTexCoordPointer(2, GL_FLOAT, sizeof(float) * 9, gr->gr_array + 3);
+      glBindTexture(gbr->gbr_primary_texture_mode, *be_tex);
+      glVertexAttribPointer(gbr->gbr_dp_texcoord, 2, GL_FLOAT, 0, 
+			    sizeof(float) * 9, gr->gr_array + 3);
       glDrawElements(GL_TRIANGLES, 3 * gr->gr_triangles, GL_UNSIGNED_SHORT,
 		     gr->gr_indices);
 
     } else {
 
-      glDisable(root->gr_be.gbr_primary_texture_mode);
-      glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+      glDisable(gbr->gbr_primary_texture_mode);
+      glDisableVertexAttribArray(gbr->gbr_dp_texcoord);
       glDrawElements(GL_TRIANGLES, 3 * gr->gr_triangles, GL_UNSIGNED_SHORT,
 		     gr->gr_indices);
-      glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-      glEnable(root->gr_be.gbr_primary_texture_mode);
+      glEnableVertexAttribArray(gbr->gbr_dp_texcoord);
+      glEnable(gbr->gbr_primary_texture_mode);
     }
   }
   gr->gr_dirty = 0;

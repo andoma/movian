@@ -50,7 +50,7 @@ glw_video_opengl_init(glw_root_t *gr, int rectmode)
 {
   glw_backend_root_t *gbr = &gr->gr_be;
   GLint tu = 0;
-  GLuint s, p;
+  GLuint s, p, v;
 
   glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &tu);
   if(tu < 6) {
@@ -62,12 +62,16 @@ glw_video_opengl_init(glw_root_t *gr, int rectmode)
   }
   TRACE(TRACE_DEBUG, "GLW", "%d texture image units available", tu);
 
+
+  if(!(v = glw_compile_shader("bundle://src/ui/glw/glsl/yuv2rgb_v.glsl",
+			     GL_VERTEX_SHADER)))
+    return -1;
+
   if(!(s = glw_compile_shader("bundle://src/ui/glw/glsl/yuv2rgb_1f_norm.glsl",
 			     GL_FRAGMENT_SHADER)))
     return -1;
 
-  if(!(gbr->gbr_yuv2rbg_1f_prog = glw_link_program("yuv2rgb_1f_norm", 
-						   gbr->gbr_dp_shader, s)))
+  if(!(gbr->gbr_yuv2rbg_1f_prog = glw_link_program("yuv2rgb_1f_norm", v, s)))
     return -1;
 
   glDeleteShader(s); // Ref is kept by program
@@ -82,12 +86,14 @@ glw_video_opengl_init(glw_root_t *gr, int rectmode)
   glUniform1i(glGetUniformLocation(p, "u"), 1);
   glUniform1i(glGetUniformLocation(p, "v"), 2);
   
+  gbr->gbr_yuv2rbg_1f_position = glGetAttribLocation(p, "position");
+  gbr->gbr_yuv2rbg_1f_texcoord = glGetAttribLocation(p, "texcoord");
+
   if(!(s = glw_compile_shader("bundle://src/ui/glw/glsl/yuv2rgb_2f_norm.glsl",
 			     GL_FRAGMENT_SHADER)))
     return -1;
 
-  if(!(gbr->gbr_yuv2rbg_2f_prog = glw_link_program("yuv2rgb_2f_norm", 
-						   gbr->gbr_dp_shader, s)))
+  if(!(gbr->gbr_yuv2rbg_2f_prog = glw_link_program("yuv2rgb_2f_norm", v, s)))
     return -1;
 
   glDeleteShader(s); // Ref is kept by program
@@ -106,6 +112,9 @@ glw_video_opengl_init(glw_root_t *gr, int rectmode)
   glUniform1i(glGetUniformLocation(p, "uB"), 4);
   glUniform1i(glGetUniformLocation(p, "vB"), 5);
   
+  gbr->gbr_yuv2rbg_2f_position = glGetAttribLocation(p, "position");
+  gbr->gbr_yuv2rbg_2f_texcoord = glGetAttribLocation(p, "texcoord");
+
   return 0;
 }
 
@@ -454,13 +463,15 @@ yuvp_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
  */
 static void
 render_video_quad(int interlace, int rectmode, int width, int height,
-		  int bob1, int bob2)
+		  int bob1, int bob2, int pos, int texcoord)
 {
   float x1, x2, y1, y2;
   float b1 = 0, b2 = 0;
-
   const int bordersize = 3;
 
+  static const float vertices[12] = {-1, -1, 1, -1, 1, 1, -1, 1};
+  const uint8_t elements[6] = {0,1,2,0,2,3};
+  float tc[12];
   if(rectmode) {
 
     if(interlace) {
@@ -498,8 +509,34 @@ render_video_quad(int interlace, int rectmode, int width, int height,
       y2 = 1;
     }
   }
-  //  b1 = b2 = 0;
 
+  tc[0] = x1;
+  tc[1] = y2 - b1;
+  tc[2] = y2 - b2;
+
+  tc[3] = x2;
+  tc[4] = y2 - b1;
+  tc[5] = y2 - b2;
+
+  tc[6] = x2;
+  tc[7] = y1 - b1;
+  tc[8] = y1 - b2;
+
+  tc[9] = x1;
+  tc[10] = y1 - b1;
+  tc[11] = y1 - b2;
+
+  glEnableVertexAttribArray(texcoord);
+  glEnableVertexAttribArray(pos);
+      
+  glVertexAttribPointer(texcoord, 3, GL_FLOAT, 0, 0, tc);
+  glVertexAttribPointer(pos, 2, GL_FLOAT, 0, 0, vertices);
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, elements);
+
+  glDisableVertexAttribArray(texcoord);
+  glDisableVertexAttribArray(pos);
+
+#if 0
   glBegin(GL_QUADS);
   
   glMultiTexCoord2f(0, x1, y2 - b1);
@@ -519,6 +556,7 @@ render_video_quad(int interlace, int rectmode, int width, int height,
   glVertex3f( -1.0f, 1.0f, 0.0f);
 
   glEnd();
+#endif
 }
 
 
@@ -550,9 +588,9 @@ render_video_1f(const glw_video_t *gv, glw_video_surface_t *s,
   
   render_video_quad(!!(gvc->gvc_flags & GVC_CUTBORDER), rectmode, 
 		    gvc->gvc_width[0], gvc->gvc_height[0],
-		    s->gvs_yshift, 0);
-  glUseProgram(gbr->gbr_dp);
-
+		    s->gvs_yshift, 0, 
+		    gbr->gbr_yuv2rbg_1f_position,
+		    gbr->gbr_yuv2rbg_1f_texcoord);
 }
 
 
@@ -595,8 +633,10 @@ render_video_2f(const glw_video_t *gv,
 
   render_video_quad(!!(gvc->gvc_flags & GVC_CUTBORDER), rectmode, 
 		    gvc->gvc_width[0], gvc->gvc_height[0],
-		    sa->gvs_yshift, sb->gvs_yshift);
-  glUseProgram(gbr->gbr_dp);
+		    sa->gvs_yshift, sb->gvs_yshift,
+		    gbr->gbr_yuv2rbg_2f_position,
+		    gbr->gbr_yuv2rbg_2f_texcoord);
+
 }
 
 
@@ -606,6 +646,7 @@ render_video_2f(const glw_video_t *gv,
 static void
 yuvp_render(glw_video_t *gv, glw_rctx_t *rc)
 {
+  const glw_backend_root_t *gbr = &gv->w.glw_root->gr_be;
   glw_root_t *gr = gv->w.glw_root;
   int textype = gr->gr_be.gbr_primary_texture_mode;
   int rectmode = !gr->gr_normalized_texture_coords;
@@ -619,13 +660,23 @@ yuvp_render(glw_video_t *gv, glw_rctx_t *rc)
   else
     glEnable(GL_BLEND); 
   
+  glDisableVertexAttribArray(gbr->gbr_dp_position);
+  glDisableVertexAttribArray(gbr->gbr_dp_texcoord);
+  glDisableVertexAttribArray(gbr->gbr_dp_color);
+
   glLoadMatrixf(rc->rc_be.gbr_mtx);
-  
+
   if(sb != NULL) {
     render_video_2f(gv, sa, sb, rc->rc_alpha, textype, rectmode);
   } else {
     render_video_1f(gv, sa, rc->rc_alpha, textype, rectmode);
   }
+
+  glUseProgram(gbr->gbr_dp);
+
+  glEnableVertexAttribArray(gbr->gbr_dp_position);
+  glEnableVertexAttribArray(gbr->gbr_dp_texcoord);
+  glEnableVertexAttribArray(gbr->gbr_dp_color);
 
   glEnable(GL_BLEND); 
 }

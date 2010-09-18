@@ -67,11 +67,15 @@ typedef struct glw_backend_root {
   GLuint gbr_yuv2rbg_1f_prog;
   GLint  gbr_yuv2rbg_1f_colormtx;
   GLint  gbr_yuv2rbg_1f_alpha;
+  GLint  gbr_yuv2rbg_1f_position;
+  GLint  gbr_yuv2rbg_1f_texcoord;
 
   GLuint gbr_yuv2rbg_2f_prog;
   GLint  gbr_yuv2rbg_2f_colormtx;
   GLint  gbr_yuv2rbg_2f_alpha;
   GLint  gbr_yuv2rbg_2f_blend;
+  GLint  gbr_yuv2rbg_2f_position;
+  GLint  gbr_yuv2rbg_2f_texcoord;
 
   /**
    *
@@ -91,7 +95,10 @@ typedef struct glw_backend_root {
    */
   GLuint gbr_dp_shader;
   GLuint gbr_dp;
-  GLuint gbr_dp_ucolor;
+  GLint  gbr_dp_ucolor;
+  GLint  gbr_dp_position;
+  GLint  gbr_dp_texcoord;
+  GLint  gbr_dp_color;
 
 } glw_backend_root_t;
 
