@@ -803,7 +803,6 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
       glVertexAttribPointer(gbr->gbr_dp_texcoord, 2, GL_FLOAT, 0, 
 			    sizeof(float) * 9, A + 3);
 
-      glTexCoordPointer(2, GL_FLOAT, sizeof(float) * 9, A + 3);
       glDrawArrays(GL_TRIANGLES, 0, 3 * gr->gr_tc[cacheid]->grt_size);
 
     } else {
