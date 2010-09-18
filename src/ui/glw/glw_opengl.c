@@ -45,17 +45,38 @@ check_gl_ext(const uint8_t *s, const char *func)
 
 
 static void
-perspective( GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar )
+perspective(float fovy, float aspect, float zNear, float zFar)
 {
-   GLfloat xmin, xmax, ymin, ymax;
+   float top = zNear * tan(fovy * M_PI / 360.0);
+   float bottom = -top;
+   float left = bottom * aspect;
+   float right = top * aspect;
 
-   ymax = zNear * tan(fovy * M_PI / 360.0);
-   ymin = -ymax;
-   xmin = ymin * aspect;
-   xmax = ymax * aspect;
+   float m[16];
+   m[0] = 2 * zNear / (right - left);
+   m[4] = 0;
+   m[8] = (right + left) / (right - left);
+   m[12] = 0;
 
-   glFrustum(xmin, xmax, ymin, ymax, zNear, zFar);
+   m[1] = 0;
+   m[5] = 2 * zNear / (top - bottom);
+   m[9] = (top + bottom) / (top - bottom);
+   m[13] = 0;
+
+   m[2] = 0;
+   m[6] = 0;
+   m[10] = (zFar + zNear) / (zFar - zNear);
+   m[14] = 2 * zFar * zNear/ (zFar - zNear);
+
+   m[3] = 0;
+   m[7] = 0;
+   m[11] = -1;
+   m[15] = 0;
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadMatrixf(m);
 }
+
 
 
 /**
@@ -107,9 +128,6 @@ glw_opengl_init_context(glw_root_t *gr)
   }
 
   glEnable(gbr->gbr_primary_texture_mode);
-
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
 
   perspective(45, 1.0, 1.0, 60.0);
 
