@@ -986,7 +986,7 @@ GLuint
 glw_link_program(const char *title, GLuint vs, GLuint fs)
 {
   char log[4096];
-  int len;
+  GLsizei len;
   GLint v;
   GLuint p;
 
