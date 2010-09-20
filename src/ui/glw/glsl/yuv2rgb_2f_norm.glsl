@@ -12,24 +12,13 @@ varying vec2 f_tex0, f_tex1;
 
 void main()
 {
-  vec3 yuvA;
-  vec3 yuvB;
-
-  yuvA = vec3(texture2D(u_t0, f_tex0).r - 0.0625,
-	      texture2D(u_t2, f_tex0).r - 0.5,
-	      texture2D(u_t1, f_tex0).r - 0.5);
-
-  yuvB = vec3(texture2D(u_t3, f_tex1).r - 0.0625,
-	      texture2D(u_t5, f_tex1).r - 0.5,
-	      texture2D(u_t4, f_tex1).r - 0.5);
-
-  vec3 rgbA;
-  vec3 rgbB;
+  vec3 rgbA = u_colormtx * vec3(texture2D(u_t0, f_tex0).r - 0.0625,
+				texture2D(u_t2, f_tex0).r - 0.5,
+				texture2D(u_t1, f_tex0).r - 0.5);
   
-  rgbA = u_colormtx * yuvA;
-  rgbB = u_colormtx * yuvB;
-  
-  vec3 rgb = rgbA * u_blend + rgbB * (1.0 - u_blend);
+  vec3 rgbB = u_colormtx * vec3(texture2D(u_t3, f_tex1).r - 0.0625,
+				texture2D(u_t5, f_tex1).r - 0.5,
+				texture2D(u_t4, f_tex1).r - 0.5);
 
-  gl_FragColor = vec4(rgb, u_color.a);
+  gl_FragColor = vec4(mix(rgbB, rgbA, u_blend), u_color.a);
 }	
