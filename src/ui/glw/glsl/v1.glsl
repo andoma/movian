@@ -16,6 +16,6 @@ varying vec4 f_col;
 void main()
 {
   gl_Position = projection * u_modelview * vec4(a_position, 1);
-  f_tex = vec4(a_texcoord, 0, 1);
+  f_tex = a_texcoord;
   f_col = a_color * u_color;
 }
