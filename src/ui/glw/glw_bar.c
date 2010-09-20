@@ -61,7 +61,7 @@ glw_bar_render(glw_t *w, glw_rctx_t *rc)
     return;
   }
   if(a > 0.01) {
-    glw_renderer_draw(&gb->gb_gr, w->glw_root, rc, NULL, 1, 1, 1, a);
+    glw_renderer_draw(&gb->gb_gr, w->glw_root, rc, NULL, NULL, a);
   }
 }
 

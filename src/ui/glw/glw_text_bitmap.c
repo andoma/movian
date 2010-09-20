@@ -793,7 +793,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
     if(gtb->gtb_paint_cursor)
       glw_renderer_draw(&gtb->gtb_cursor_renderer, w->glw_root, &rc0,
-			NULL, 1, 1, 1, alpha * gtb->gtb_cursor_alpha);
+			NULL, NULL, alpha * gtb->gtb_cursor_alpha);
 
     return;
   }
@@ -829,21 +829,19 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
     glw_Translatef(&rc0, xd, yd, 0.0);
 
+    const static glw_rgb_t black = {0,0,0};
+
     glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, &rc0, 
-		      &gtb->gtb_texture,
-		      0,0,0, alpha * 0.75);
+		      &gtb->gtb_texture, &black, alpha * 0.75);
     
     glw_Translatef(&rc0, -xd, -yd, 0.0);
   }
   glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, &rc0, 
-		    &gtb->gtb_texture,
-		    gtb->gtb_color.r, gtb->gtb_color.g, gtb->gtb_color.b,
-		    alpha);
-
+		    &gtb->gtb_texture, &gtb->gtb_color, alpha);
 
   if(gtb->gtb_paint_cursor)
     glw_renderer_draw(&gtb->gtb_cursor_renderer, w->glw_root, &rc0,
-		      NULL, 1, 1, 1, alpha * gtb->gtb_cursor_alpha);
+		      NULL, NULL, alpha * gtb->gtb_cursor_alpha);
 
 }
 

@@ -41,8 +41,7 @@ glw_quad_render(glw_t *w, glw_rctx_t *rc)
     glw_renderer_vtx_pos(&q->r, 3, -1,  1, 0);
   }
 
-  glw_renderer_draw(&q->r, w->glw_root, rc, NULL,
-		    q->color.r, q->color.g, q->color.b, rc->rc_alpha);
+  glw_renderer_draw(&q->r, w->glw_root, rc, NULL, &q->color, rc->rc_alpha);
 }
 
 

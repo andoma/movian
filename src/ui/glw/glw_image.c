@@ -215,14 +215,15 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 
 	glw_Translatef(&rc0, xd, yd, 0.0);
 	
+	static const glw_rgb_t black = {0,0,0};
+
 	glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0, &glt->glt_texture,
-			  0, 0, 0, alpha_self * 0.75);
+			  &black, alpha_self * 0.75);
 	glw_Translatef(&rc0, -xd, -yd, 0.0);
       }
 
       glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0, &glt->glt_texture,
-			gi->gi_color.r, gi->gi_color.g, gi->gi_color.b,
-			alpha_self);
+			&gi->gi_color, alpha_self);
 
     }
 
@@ -235,8 +236,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 
     if(alpha_self > 0.01)
       glw_renderer_draw(&gi->gi_gr, w->glw_root, rc, &glt->glt_texture,
-			gi->gi_color.r, gi->gi_color.g, gi->gi_color.b,
-			alpha_self);
+			&gi->gi_color, alpha_self);
 
     render_child_autocentered(gi, rc);
 

@@ -748,7 +748,7 @@ grc_clippers_cmp(glw_renderer_tc_t *grt, glw_root_t *root)
 void
 glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc, 
 		  glw_backend_texture_t *be_tex,
-		  float r, float g, float b, float a)
+		  const glw_rgb_t *rgb, float alpha)
 {
   glw_backend_root_t *gbr = &root->gr_be;
   glw_program_t *gp;
@@ -768,7 +768,10 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
     return;
 
   glw_load_program(gbr, gp);
-  glw_program_set_uniform_color(gbr, r, g, b, a);
+  if(rgb != NULL)
+    glw_program_set_uniform_color(gbr, rgb->r, rgb->g, rgb->b, alpha);
+  else
+    glw_program_set_uniform_color(gbr, 1, 1, 1, alpha);
 
   if(gbr->gbr_active_clippers) {
     float *A;
