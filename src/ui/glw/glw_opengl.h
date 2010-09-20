@@ -41,6 +41,30 @@
 #include <GL/glxext.h>
 #endif
 
+
+/**
+ * OpenGL shader program
+ */
+typedef struct glw_program {
+  const char *gp_title;
+  GLuint gp_program;
+
+  // Attributes
+  GLint  gp_attribute_position;
+  GLint  gp_attribute_texcoord;
+  GLint  gp_attribute_color;
+ 
+  // Uniforms
+  GLint  gp_uniform_modelview;
+  GLint  gp_uniform_color;
+  GLint  gp_uniform_colormtx;
+  GLint  gp_uniform_blend;
+
+  GLint  gp_uniform_t[6];
+
+} glw_program_t;
+
+
 #define NUM_CLIPPLANES 6
 
 struct glw_root;
@@ -60,24 +84,14 @@ typedef struct glw_backend_root {
 
   int gbr_primary_texture_mode; // GL_TEXTURE_2D or GL_TEXTURE_RECTANGLE_EXT
 
+  struct glw_program *gbr_current;
+
   
   /**
    * Video renderer
    */
-  GLuint gbr_yuv2rbg_1f_prog;
-  GLint  gbr_yuv2rbg_1f_colormtx;
-  GLint  gbr_yuv2rbg_1f_alpha;
-  GLint  gbr_yuv2rbg_1f_position;
-  GLint  gbr_yuv2rbg_1f_texcoord;
-  GLint  gbr_yuv2rbg_1f_modelview;
-
-  GLuint gbr_yuv2rbg_2f_prog;
-  GLint  gbr_yuv2rbg_2f_colormtx;
-  GLint  gbr_yuv2rbg_2f_alpha;
-  GLint  gbr_yuv2rbg_2f_blend;
-  GLint  gbr_yuv2rbg_2f_position;
-  GLint  gbr_yuv2rbg_2f_texcoord;
-  GLint  gbr_yuv2rbg_2f_modelview;
+  struct glw_program *gbr_yuv2rgb_1f;
+  struct glw_program *gbr_yuv2rgb_2f;
 
   /**
    *
@@ -92,16 +106,9 @@ typedef struct glw_backend_root {
   float gbr_clip[NUM_CLIPPLANES][4];
   int gbr_active_clippers;
 
-  /**
-   *
-   */
-  GLuint gbr_dp_shader;
-  GLuint gbr_dp;
-  GLint  gbr_dp_ucolor;
-  GLint  gbr_dp_position;
-  GLint  gbr_dp_texcoord;
-  GLint  gbr_dp_color;
-  GLint  gbr_dp_modelview;
+  struct glw_program *gbr_renderer_tex;
+  struct glw_program *gbr_renderer_alpha_tex;
+  struct glw_program *gbr_renderer_flat;
 
 } glw_backend_root_t;
 
@@ -110,8 +117,6 @@ typedef struct {
   float gbr_mtx[16]; // ModelView matrix
 } glw_backend_rctx_t;
 
-
-typedef GLuint glw_backend_texture_t;
 
 
 /**
@@ -150,9 +155,21 @@ typedef struct glw_renderer {
 } glw_renderer_t;
 
 
+/**
+ *
+ */
+typedef struct {
+  GLuint tex;
+  char type;
+#define GLW_TEXTURE_TYPE_NORMAL 0
+#define GLW_TEXTURE_TYPE_ALPHA 1
+} glw_backend_texture_t;
+
+
+
 #define glw_can_tnpo2(gr) (gr->gr_be.gbr_texmode != GLW_OPENGL_TEXTURE_SIMPLE)
 
-#define glw_is_tex_inited(n) (*(n) != 0)
+#define glw_is_tex_inited(n) ((n)->tex != 0)
 
 int glw_opengl_init_context(struct glw_root *gr);
 
@@ -206,6 +223,14 @@ void glw_rtt_destroy(struct glw_root *gr, glw_rtt_t *grtt);
  */
 GLuint glw_compile_shader(const char *url, int type);
 
-GLuint glw_link_program(const char *title, GLuint vs, GLuint fs);
+glw_program_t *glw_make_program(glw_backend_root_t *gbr,
+				const char *title, GLuint vs, GLuint fs);
+
+void glw_load_program(glw_backend_root_t *gbr, glw_program_t *gp);
+
+void glw_program_set_modelview(glw_backend_root_t *gbr, struct glw_rctx *rc);
+
+void glw_program_set_uniform_color(glw_backend_root_t *gbr,
+				   float r, float g, float b, float a);
 
 #endif /* GLW_OPENGL_H__ */

@@ -24,14 +24,14 @@
 
 #include "fileaccess/fileaccess.h"
 
+// #define DEBUG_SHADERS
+
 static const float identitymtx[16] = {
   1,0,0,0,
   0,1,0,0,
   0,0,1,0,
   0,0,0,1};
   
-
-
 /**
  * return 1 if the extension is found, otherwise 0
  */
@@ -61,6 +61,7 @@ glw_opengl_init_context(glw_root_t *gr)
   const	GLubyte	*s;
   int x = 0;
   int rectmode;
+  GLuint vs, fs;
   /* Check OpenGL extensions we would like to have */
 
   s = glGetString(GL_EXTENSIONS);
@@ -101,30 +102,29 @@ glw_opengl_init_context(glw_root_t *gr)
 
   glEnable(gbr->gbr_primary_texture_mode);
 
+  vs = glw_compile_shader("bundle://src/ui/glw/glsl/v1.glsl",
+			  GL_VERTEX_SHADER);
 
-  gbr->gbr_dp_shader =
-    glw_compile_shader("bundle://src/ui/glw/glsl/v1.glsl", GL_VERTEX_SHADER);
+  fs = glw_compile_shader("bundle://src/ui/glw/glsl/f_tex.glsl",
+			  GL_FRAGMENT_SHADER);
+  gbr->gbr_renderer_tex = glw_make_program(gbr, "Texture", vs, fs);
+  glDeleteShader(fs);
 
-  gbr->gbr_dp =
-    glw_link_program("Default", gbr->gbr_dp_shader, 0);
+  fs = glw_compile_shader("bundle://src/ui/glw/glsl/f_alpha_tex.glsl",
+			  GL_FRAGMENT_SHADER);
+  gbr->gbr_renderer_alpha_tex = glw_make_program(gbr, "Alpha texture", vs, fs);
+  glDeleteShader(fs);
 
-  gbr->gbr_dp_modelview = glGetUniformLocation(gbr->gbr_dp, "modelview");
+  fs = glw_compile_shader("bundle://src/ui/glw/glsl/f_flat.glsl",
+			  GL_FRAGMENT_SHADER);
+  gbr->gbr_renderer_flat = glw_make_program(gbr, "Flat", vs, fs);
+  glDeleteShader(fs);
 
-  gbr->gbr_dp_ucolor = glGetUniformLocation(gbr->gbr_dp, "ucolor");
-
-  gbr->gbr_dp_position  = glGetAttribLocation(gbr->gbr_dp, "position");
-  gbr->gbr_dp_texcoord  = glGetAttribLocation(gbr->gbr_dp, "texcoord");
-  gbr->gbr_dp_color     = glGetAttribLocation(gbr->gbr_dp, "color");
-
-  glEnableVertexAttribArray(gbr->gbr_dp_position);
-  glEnableVertexAttribArray(gbr->gbr_dp_texcoord);
-  glEnableVertexAttribArray(gbr->gbr_dp_color);
+  glDeleteShader(vs);
 
 #if CONFIG_GLW_BACKEND_OPENGL
   glw_video_opengl_init(gr, rectmode);
 #endif
-
-  glUseProgram(gbr->gbr_dp);
   return 0;
 }
 
@@ -312,8 +312,8 @@ glw_wirebox(glw_root_t *gr, glw_rctx_t *rc)
 {
 #if CONFIG_GLW_BACKEND_OPENGL
   glw_backend_root_t *gbr = &gr->gr_be;
-  glUniformMatrix4fv(gbr->gbr_dp_modelview, 1, 0, rc->rc_be.gbr_mtx);
-  glUniform4f(gbr->gbr_dp_ucolor, 1,1,1,1);
+  glw_program_set_modelview(gbr, rc);
+  glw_program_set_uniform_color(gbr, 1,1,1,1);
   glDisable(GL_TEXTURE_2D);
   glBegin(GL_LINE_LOOP);
   glColor4f(1,1,1,1);
@@ -751,8 +751,24 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
 		  float r, float g, float b, float a)
 {
   glw_backend_root_t *gbr = &root->gr_be;
+  glw_program_t *gp;
 
-  glUniform4f(gbr->gbr_dp_ucolor, r, g, b, a);
+  if(be_tex == NULL) {
+    gp = gbr->gbr_renderer_flat;
+  } else {
+    if(be_tex->type == GLW_TEXTURE_TYPE_ALPHA)
+      gp = gbr->gbr_renderer_alpha_tex;
+    else
+      gp = gbr->gbr_renderer_tex;
+
+    glBindTexture(gbr->gbr_primary_texture_mode, be_tex->tex);
+  }
+
+  if(gp == NULL)
+    return;
+
+  glw_load_program(gbr, gp);
+  glw_program_set_uniform_color(gbr, r, g, b, a);
 
   if(gbr->gbr_active_clippers) {
     float *A;
@@ -774,58 +790,35 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
       clip_tesselate(gr, root, rc, cacheid);
     }
     
-    glUniformMatrix4fv(gbr->gbr_dp_modelview, 1, 0, identitymtx);
+    glw_program_set_modelview(gbr, NULL);
 
     A = gr->gr_tc[cacheid]->grt_array;
 
-    glVertexAttribPointer(gbr->gbr_dp_position, 3, GL_FLOAT, 0, 
-			  sizeof(float) * 9, A);
-    glVertexAttribPointer(gbr->gbr_dp_color, 4, GL_FLOAT, 0, 
-			  sizeof(float) * 9, A + 5);
+    glVertexAttribPointer(gp->gp_attribute_position,
+			  3, GL_FLOAT, 0, sizeof(float) * 9, A);
+    glVertexAttribPointer(gp->gp_attribute_color,
+			  4, GL_FLOAT, 0, sizeof(float) * 9, A + 5);
 
-    if(be_tex != NULL) {
+    if(gp->gp_attribute_texcoord != -1)
+      glVertexAttribPointer(gp->gp_attribute_texcoord,
+			    2, GL_FLOAT, 0, sizeof(float) * 9, A + 3);
 
-      glBindTexture(gbr->gbr_primary_texture_mode, *be_tex);
-
-      glVertexAttribPointer(gbr->gbr_dp_texcoord, 2, GL_FLOAT, 0, 
-			    sizeof(float) * 9, A + 3);
-
-      glDrawArrays(GL_TRIANGLES, 0, 3 * gr->gr_tc[cacheid]->grt_size);
-
-    } else {
-
-      glDisable(gbr->gbr_primary_texture_mode);
-      glDisableVertexAttribArray(gbr->gbr_dp_texcoord);
-      glDrawArrays(GL_TRIANGLES, 0, 3 * gr->gr_tc[cacheid]->grt_size);
-      glEnableVertexAttribArray(gbr->gbr_dp_texcoord);
-      glEnable(gbr->gbr_primary_texture_mode);
-    }
+    glDrawArrays(GL_TRIANGLES, 0, 3 * gr->gr_tc[cacheid]->grt_size);
 
   } else {
 
-    glUniformMatrix4fv(gbr->gbr_dp_modelview, 1, 0, rc->rc_be.gbr_mtx);
+    glw_program_set_modelview(gbr, rc);
 
-    glVertexAttribPointer(gbr->gbr_dp_position, 3, GL_FLOAT, 0, 
-			  sizeof(float) * 9, gr->gr_array);
-    glVertexAttribPointer(gbr->gbr_dp_color, 4, GL_FLOAT, 0, 
-			  sizeof(float) * 9, gr->gr_array + 5);
-    if(be_tex != NULL) {
+    glVertexAttribPointer(gp->gp_attribute_position,
+			  3, GL_FLOAT, 0, sizeof(float) * 9, gr->gr_array);
+    glVertexAttribPointer(gp->gp_attribute_color,
+			  4, GL_FLOAT, 0, sizeof(float) * 9, gr->gr_array + 5);
+    if(gp->gp_attribute_texcoord != -1)
+      glVertexAttribPointer(gp->gp_attribute_texcoord,
+			    2, GL_FLOAT, 0, sizeof(float) * 9, gr->gr_array+3);
 
-      glBindTexture(gbr->gbr_primary_texture_mode, *be_tex);
-      glVertexAttribPointer(gbr->gbr_dp_texcoord, 2, GL_FLOAT, 0, 
-			    sizeof(float) * 9, gr->gr_array + 3);
-      glDrawElements(GL_TRIANGLES, 3 * gr->gr_triangles, GL_UNSIGNED_SHORT,
-		     gr->gr_indices);
-
-    } else {
-
-      glDisable(gbr->gbr_primary_texture_mode);
-      glDisableVertexAttribArray(gbr->gbr_dp_texcoord);
-      glDrawElements(GL_TRIANGLES, 3 * gr->gr_triangles, GL_UNSIGNED_SHORT,
-		     gr->gr_indices);
-      glEnableVertexAttribArray(gbr->gbr_dp_texcoord);
-      glEnable(gbr->gbr_primary_texture_mode);
-    }
+    glDrawElements(GL_TRIANGLES, 3 * gr->gr_triangles, GL_UNSIGNED_SHORT,
+		   gr->gr_indices);
   }
   gr->gr_dirty = 0;
 }
@@ -982,20 +975,19 @@ glw_compile_shader(const char *url, int type)
 /**
  *
  */
-GLuint
-glw_link_program(const char *title, GLuint vs, GLuint fs)
+glw_program_t *
+glw_make_program(glw_backend_root_t *gbr, const char *title,
+		 GLuint vs, GLuint fs)
 {
   char log[4096];
   GLsizei len;
   GLint v;
   GLuint p;
+  int i;
 
   p = glCreateProgram();
-  if(vs)
-    glAttachShader(p, vs);
-  if(fs)
-    glAttachShader(p, fs);
-
+  glAttachShader(p, vs);
+  glAttachShader(p, fs);
   glLinkProgram(p);
 
   glGetProgramInfoLog(p, sizeof(log), &len, log); 
@@ -1004,7 +996,107 @@ glw_link_program(const char *title, GLuint vs, GLuint fs)
   if(!v) {
     TRACE(TRACE_ERROR, "GLW", "Unable to link shader %s", title);
     TRACE(TRACE_ERROR, "GLW", "%s", log);
-    return 0;
+    return NULL;
   }
-  return p;
+
+  glw_program_t *gp = calloc(1, sizeof(glw_program_t));
+
+  gp->gp_title = strdup(title);
+  gp->gp_program = p;
+
+  glUseProgram(p);
+  gbr->gbr_current = gp;
+
+  gp->gp_attribute_position = glGetAttribLocation(p, "a_position");
+  gp->gp_attribute_texcoord = glGetAttribLocation(p, "a_texcoord");
+  gp->gp_attribute_color    = glGetAttribLocation(p, "a_color");
+
+  gp->gp_uniform_modelview  = glGetUniformLocation(p, "u_modelview");
+  gp->gp_uniform_color      = glGetUniformLocation(p, "u_color");
+  gp->gp_uniform_colormtx   = glGetUniformLocation(p, "u_colormtx");
+  gp->gp_uniform_blend      = glGetUniformLocation(p, "u_blend");
+  
+#ifdef DEBUG_SHADERS
+  printf("Loaded %s\n", title);
+  printf("  a_position  = %d\n", gp->gp_attribute_position);
+  printf("  a_texcoord  = %d\n", gp->gp_attribute_texcoord);
+  printf("  a_color     = %d\n", gp->gp_attribute_color);
+
+  printf("  u_modelview = %d\n", gp->gp_uniform_modelview);
+  printf("  u_color     = %d\n", gp->gp_uniform_color);
+  printf("  u_colormtx  = %d\n", gp->gp_uniform_colormtx);
+  printf("  u_blend     = %d\n", gp->gp_uniform_blend);
+#endif
+
+  for(i = 0; i < 6; i++) {
+    char name[8];
+    snprintf(name, sizeof(name), "u_t%d", i);
+    gp->gp_uniform_t[i]         = glGetUniformLocation(p, name);
+    if(gp->gp_uniform_t[i] != -1)
+      glUniform1i(gp->gp_uniform_t[i], i);
+#ifdef DEBUG_SHADERS
+    printf("  u_t%d       = %d\n", i, gp->gp_uniform_t[i]);
+#endif
+  }
+  return gp;
 }
+
+/**
+ *
+ */
+void
+glw_load_program(glw_backend_root_t *gbr, glw_program_t *gp)
+{
+  if(gbr->gbr_current == gp)
+    return;
+
+  if(gbr->gbr_current != NULL) {
+    glw_program_t *old = gbr->gbr_current;
+    if(old->gp_attribute_position != -1)
+      glDisableVertexAttribArray(old->gp_attribute_position);
+    if(old->gp_attribute_texcoord != -1)
+      glDisableVertexAttribArray(old->gp_attribute_texcoord);
+    if(old->gp_attribute_color != -1)
+      glDisableVertexAttribArray(old->gp_attribute_color);
+  }
+
+  gbr->gbr_current = gp;
+
+  if(gp == NULL) {
+    glUseProgram(0);
+    return;
+  }
+
+  glUseProgram(gp->gp_program);
+
+  if(gp->gp_attribute_position != -1)
+      glEnableVertexAttribArray(gp->gp_attribute_position);
+  if(gp->gp_attribute_texcoord != -1)
+    glEnableVertexAttribArray(gp->gp_attribute_texcoord);
+  if(gp->gp_attribute_color != -1)
+    glEnableVertexAttribArray(gp->gp_attribute_color);
+}
+
+
+
+/**
+ *
+ */
+void
+glw_program_set_modelview(glw_backend_root_t *gbr, glw_rctx_t *rc)
+{
+  const float *m = rc ? rc->rc_be.gbr_mtx : identitymtx;
+  glUniformMatrix4fv(gbr->gbr_current->gp_uniform_modelview, 1, 0, m);
+}
+
+/**
+ *
+ */
+void
+glw_program_set_uniform_color(glw_backend_root_t *gbr,
+			      float r, float g, float b, float a)
+{
+  glUniform4f(gbr->gbr_current->gp_uniform_color, r, g, b, a);
+}
+
+

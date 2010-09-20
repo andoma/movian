@@ -163,7 +163,7 @@ vdpau_render(glw_video_t *gv, glw_rctx_t *rc)
 {
   glw_root_t *gr = gv->w.glw_root;
   vdpau_dev_t *vd = gr->gr_be.gbr_vdpau_dev;
-  const glw_backend_root_t *gbr = &gv->w.glw_root->gr_be;
+  glw_backend_root_t *gbr = &gv->w.glw_root->gr_be;
 
   if(!gv->gv_vdpau_running)
     return;
@@ -191,7 +191,7 @@ vdpau_render(glw_video_t *gv, glw_rctx_t *rc)
   glMatrixMode(GL_MODELVIEW);
   glLoadMatrixf(rc->rc_be.gbr_mtx);
 
-  glUseProgram(0);
+  glw_load_program(gbr, NULL);
 
   glColor4f(1,1,1,1);
 
@@ -214,8 +214,6 @@ vdpau_render(glw_video_t *gv, glw_rctx_t *rc)
 
   glDisable(GL_TEXTURE_RECTANGLE_ARB);
   glEnable(GL_TEXTURE_2D);
-
-  glUseProgram(gbr->gbr_dp);
 }
 
 

@@ -32,9 +32,9 @@
 void
 glw_tex_backend_free_render_resources(glw_loadable_texture_t *glt)
 {
-  if(glt->glt_texture != 0) {
-    glDeleteTextures(1, &glt->glt_texture);
-    glt->glt_texture = 0;
+  if(glt->glt_texture.tex != 0) {
+    glDeleteTextures(1, &glt->glt_texture.tex);
+    glt->glt_texture.tex = 0;
   }
 }
 
@@ -61,13 +61,15 @@ glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
   void *p;
   int m = gr->gr_be.gbr_primary_texture_mode;
 
-  if(glt->glt_texture != 0)
+  if(glt->glt_texture.tex != 0)
     return;
 
   p = glt->glt_bitmap;
 
-  glGenTextures(1, &glt->glt_texture);
-  glBindTexture(m, glt->glt_texture);
+  glGenTextures(1, &glt->glt_texture.tex);
+  glBindTexture(m, glt->glt_texture.tex);
+  glt->glt_texture.type = GLW_TEXTURE_TYPE_NORMAL;
+
   glTexParameteri(m, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(m, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
@@ -384,9 +386,9 @@ glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex,
   int ext_type;
   int m = gr->gr_be.gbr_primary_texture_mode;
 
-  if(*tex == 0) {
-    glGenTextures(1, tex);
-    glBindTexture(m, *tex);
+  if(tex->tex == 0) {
+    glGenTextures(1, &tex->tex);
+    glBindTexture(m, tex->tex);
     glTexParameteri(m, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(m, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
@@ -394,7 +396,7 @@ glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex,
     glTexParameteri(m, GL_TEXTURE_WRAP_S, m);
     glTexParameteri(m, GL_TEXTURE_WRAP_T, m);
   } else {
-    glBindTexture(m, *tex);
+    glBindTexture(m, tex->tex);
   }
   
   switch(fmt) {
@@ -402,12 +404,14 @@ glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex,
     format     = GL_ALPHA;
     ext_format = GL_ALPHA;
     ext_type   = GL_UNSIGNED_BYTE;
+    tex->type = GLW_TEXTURE_TYPE_ALPHA;
     break;
 
   case GLW_TEXTURE_FORMAT_RGBA:
     format     = GL_RGBA;
     ext_format = GL_RGBA;
     ext_type   = GL_UNSIGNED_BYTE;
+    tex->type = GLW_TEXTURE_TYPE_NORMAL;
     break;
 
   default:
@@ -424,8 +428,8 @@ glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex,
 void
 glw_tex_destroy(glw_backend_texture_t *tex)
 {
-  if(*tex != 0) {
-    glDeleteTextures(1, tex);
-    *tex = 0;
+  if(tex->tex != 0) {
+    glDeleteTextures(1, &tex->tex);
+    tex->tex = 0;
   }
 }

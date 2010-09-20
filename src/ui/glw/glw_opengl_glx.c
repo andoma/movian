@@ -34,9 +34,9 @@ glw_rtt_init(glw_root_t *gr, glw_rtt_t *grtt, int width, int height,
   grtt->grtt_width  = width;
   grtt->grtt_height = height;
 
-  glGenTextures(1, &grtt->grtt_texture);
+  glGenTextures(1, &grtt->grtt_texture.tex);
     
-  glBindTexture(m, grtt->grtt_texture);
+  glBindTexture(m, grtt->grtt_texture.tex);
   glTexParameteri(m, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(m, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(m, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -49,7 +49,7 @@ glw_rtt_init(glw_root_t *gr, glw_rtt_t *grtt, int width, int height,
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, grtt->grtt_framebuffer);
   glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
 			    GL_COLOR_ATTACHMENT0_EXT,
-			    m, grtt->grtt_texture, 0);
+			    m, grtt->grtt_texture.tex, 0);
 
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 }
@@ -99,7 +99,7 @@ glw_rtt_restore(glw_root_t *gr, glw_rtt_t *grtt)
 void
 glw_rtt_destroy(glw_root_t *gr, glw_rtt_t *grtt)
 {
-  glDeleteTextures(1, &grtt->grtt_texture);
+  glDeleteTextures(1, &grtt->grtt_texture.tex);
   glDeleteFramebuffersEXT(1, &grtt->grtt_framebuffer);
 }
 
