@@ -142,6 +142,7 @@ typedef struct glw_renderer {
   uint16_t gr_triangles;
   char gr_static_indices;
   char gr_dirty;
+  char gr_blended_attribute;
   unsigned char gr_framecmp;
   unsigned char gr_cacheptr;
 
@@ -161,8 +162,9 @@ typedef struct glw_renderer {
 typedef struct {
   GLuint tex;
   char type;
-#define GLW_TEXTURE_TYPE_NORMAL 0
-#define GLW_TEXTURE_TYPE_ALPHA 1
+#define GLW_TEXTURE_TYPE_NORMAL   0
+#define GLW_TEXTURE_TYPE_ALPHA    1
+#define GLW_TEXTURE_TYPE_NO_ALPHA 2
 } glw_backend_texture_t;
 
 

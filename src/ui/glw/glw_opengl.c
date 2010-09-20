@@ -355,6 +355,7 @@ glw_renderer_init(glw_renderer_t *gr, int vertices, int triangles,
     gr->gr_array[i * 9 + 8] = 1;
   }
   gr->gr_dirty = 1;
+  gr->gr_blended_attribute = 0;
 }
 
 
@@ -456,6 +457,8 @@ glw_renderer_vtx_col(glw_renderer_t *gr, int vertex,
   gr->gr_array[vertex * 9 + 6] = g;
   gr->gr_array[vertex * 9 + 7] = b;
   gr->gr_array[vertex * 9 + 8] = a;
+  if(a <= 0.99)
+    gr->gr_blended_attribute = 1;
   gr->gr_dirty = 1;
 }
 
@@ -752,15 +755,32 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
 {
   glw_backend_root_t *gbr = &root->gr_be;
   glw_program_t *gp;
+  int reenable_blend = 0;
 
   if(be_tex == NULL) {
     gp = gbr->gbr_renderer_flat;
   } else {
-    if(be_tex->type == GLW_TEXTURE_TYPE_ALPHA)
-      gp = gbr->gbr_renderer_alpha_tex;
-    else
-      gp = gbr->gbr_renderer_tex;
 
+    switch(be_tex->type) {
+    case GLW_TEXTURE_TYPE_ALPHA:
+      gp = gbr->gbr_renderer_alpha_tex;
+      break;
+
+    case GLW_TEXTURE_TYPE_NORMAL:
+      gp = gbr->gbr_renderer_tex;
+      break;
+
+    case GLW_TEXTURE_TYPE_NO_ALPHA:
+      gp = gbr->gbr_renderer_tex;
+      if(alpha > 0.99 && !gr->gr_blended_attribute) {
+	glDisable(GL_BLEND);
+	reenable_blend = 1;
+      }
+      break;
+
+    default:
+      return;
+    }
     glBindTexture(gbr->gbr_primary_texture_mode, be_tex->tex);
   }
 
@@ -824,6 +844,9 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
 		   gr->gr_indices);
   }
   gr->gr_dirty = 0;
+
+  if(reenable_blend)
+    glEnable(GL_BLEND);
 }
 
 

@@ -68,7 +68,17 @@ glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
 
   glGenTextures(1, &glt->glt_texture.tex);
   glBindTexture(m, glt->glt_texture.tex);
-  glt->glt_texture.type = GLW_TEXTURE_TYPE_NORMAL;
+
+
+  switch(glt->glt_format) {
+  case GL_RGB:
+    glt->glt_texture.type = GLW_TEXTURE_TYPE_NO_ALPHA;
+    break;
+
+  default:
+    glt->glt_texture.type = GLW_TEXTURE_TYPE_NORMAL;
+    break;
+  }
 
   glTexParameteri(m, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(m, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -404,14 +414,21 @@ glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex,
     format     = GL_ALPHA;
     ext_format = GL_ALPHA;
     ext_type   = GL_UNSIGNED_BYTE;
-    tex->type = GLW_TEXTURE_TYPE_ALPHA;
+    tex->type  = GLW_TEXTURE_TYPE_ALPHA;
     break;
 
   case GLW_TEXTURE_FORMAT_RGBA:
     format     = GL_RGBA;
     ext_format = GL_RGBA;
     ext_type   = GL_UNSIGNED_BYTE;
-    tex->type = GLW_TEXTURE_TYPE_NORMAL;
+    tex->type  = GLW_TEXTURE_TYPE_NORMAL;
+    break;
+
+  case GLW_TEXTURE_FORMAT_RGB:
+    format     = GL_RGB;
+    ext_format = GL_RGB;
+    ext_type   = GL_UNSIGNED_BYTE;
+    tex->type  = GLW_TEXTURE_TYPE_NO_ALPHA;
     break;
 
   default:
