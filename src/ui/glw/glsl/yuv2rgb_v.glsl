@@ -13,6 +13,6 @@ varying vec2 f_tex1;
 void main()
 {
   gl_Position = projection * u_modelview * vec4(a_position, 0, 1);
-  f_tex0 = vec4(a_texcoord[0], a_texcoord[1], 0, 1);
-  f_tex1 = vec4(a_texcoord[0], a_texcoord[2], 0, 1);
+  f_tex0 = vec2(a_texcoord[0], a_texcoord[1]);
+  f_tex1 = vec2(a_texcoord[0], a_texcoord[2]);
 }
