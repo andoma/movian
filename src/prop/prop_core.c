@@ -1287,6 +1287,19 @@ prop_unparent_ex(prop_t *p, prop_sub_t *skipme)
   hts_mutex_unlock(&prop_mutex);
 }
 
+/**
+ *
+ */
+static void
+prop_destroy_child(prop_t *p, prop_t *c)
+{
+  if(!prop_destroy0(c)) {
+    prop_notify_child(c, p, PROP_DEL_CHILD, NULL, 0);
+    TAILQ_REMOVE(&p->hp_childs, c, hp_parent_link);
+    c->hp_parent = NULL;
+  }
+}
+
 
 /**
  *
@@ -1311,10 +1324,7 @@ prop_destroy0(prop_t *p)
   case PROP_DIR:
     for(c = TAILQ_FIRST(&p->hp_childs); c != NULL; c = next) {
       next = TAILQ_NEXT(c, hp_parent_link);
-      if(!prop_destroy0(c)) {
-	TAILQ_REMOVE(&p->hp_childs, c, hp_parent_link);
-	c->hp_parent = NULL;
-      }
+      prop_destroy_child(c, p);
     }
     break;
 
@@ -1404,10 +1414,7 @@ prop_destroy_childs(prop_t *p)
     prop_t *c, *next;
     for(c = TAILQ_FIRST(&p->hp_childs); c != NULL; c = next) {
       next = TAILQ_NEXT(c, hp_parent_link);
-      if(!prop_destroy0(c)) {
-	TAILQ_REMOVE(&p->hp_childs, c, hp_parent_link);
-	c->hp_parent = NULL;
-      }
+      prop_destroy_child(c, p);
     }
   }
   hts_mutex_unlock(&prop_mutex);
@@ -1424,10 +1431,7 @@ prop_destroy_by_name(prop_t *parent, const char *name)
     prop_t *p;
     TAILQ_FOREACH(p, &parent->hp_childs, hp_parent_link) {
       if(p->hp_name != NULL && !strcmp(p->hp_name, name)) {
-	if(!prop_destroy0(p)) {
-	  TAILQ_REMOVE(&p->hp_childs, p, hp_parent_link);
-	  p->hp_parent = NULL;
-	}
+	prop_destroy_child(p, parent);
 	break;
       }
     }
