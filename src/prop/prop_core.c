@@ -1324,7 +1324,7 @@ prop_destroy0(prop_t *p)
   case PROP_DIR:
     for(c = TAILQ_FIRST(&p->hp_childs); c != NULL; c = next) {
       next = TAILQ_NEXT(c, hp_parent_link);
-      prop_destroy_child(c, p);
+      prop_destroy_child(p, c);
     }
     break;
 
@@ -1414,7 +1414,7 @@ prop_destroy_childs(prop_t *p)
     prop_t *c, *next;
     for(c = TAILQ_FIRST(&p->hp_childs); c != NULL; c = next) {
       next = TAILQ_NEXT(c, hp_parent_link);
-      prop_destroy_child(c, p);
+      prop_destroy_child(p, c);
     }
   }
   hts_mutex_unlock(&prop_mutex);
@@ -1424,14 +1424,14 @@ prop_destroy_childs(prop_t *p)
  *
  */
 void
-prop_destroy_by_name(prop_t *parent, const char *name)
+prop_destroy_by_name(prop_t *p, const char *name)
 {
   hts_mutex_lock(&prop_mutex);
-  if(parent->hp_type == PROP_DIR) {
-    prop_t *p;
-    TAILQ_FOREACH(p, &parent->hp_childs, hp_parent_link) {
-      if(p->hp_name != NULL && !strcmp(p->hp_name, name)) {
-	prop_destroy_child(p, parent);
+  if(p->hp_type == PROP_DIR) {
+    prop_t *c;
+    TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link) {
+      if(c->hp_name != NULL && !strcmp(c->hp_name, name)) {
+	prop_destroy_child(p, c);
 	break;
       }
     }
