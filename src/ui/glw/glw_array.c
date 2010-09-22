@@ -75,14 +75,18 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
     xentries = a->child_tiles_x;
     size_y = 1.0 / a->child_tiles_y;
 
+    a->xentries = xentries;
+    size_x = 1.0 / xentries;
+
   } else {
 
     xentries = GLW_MAX(1, rc->rc_size_x / a->child_width);
+    a->xentries = xentries;
+
+    size_x = a->child_width / rc->rc_size_x;
     size_y = a->child_height / rc->rc_size_y;
   }
 
-  a->xentries = xentries;
-  size_x = 1.0 / xentries;
 
   t = GLW_MIN(GLW_MAX(0, a->center_y_target), a->center_y_max);
   a->center_y = GLW_LP(6, a->center_y, t);
