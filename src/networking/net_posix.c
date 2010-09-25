@@ -31,6 +31,8 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 
+#include <pthread.h>
+
 #include "net.h"
 
 
@@ -39,6 +41,22 @@
 #if ENABLE_SSL
 
 static SSL_CTX *showtime_ssl_ctx;
+static pthread_mutex_t *ssl_locks;
+
+static unsigned long
+ssl_tid_fn(void)
+{
+  return pthread_self();
+}
+
+static void
+ssl_lock_fn(int mode, int n, const char *file, int line)
+{
+  if(mode & CRYPTO_LOCK)
+    pthread_mutex_lock(&ssl_locks[n]);
+  else
+    pthread_mutex_unlock(&ssl_locks[n]);
+}
 
 
 
@@ -318,6 +336,14 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
       SSL_library_init();
       SSL_load_error_strings();
       showtime_ssl_ctx = SSL_CTX_new(SSLv23_client_method());
+
+      int i, n = CRYPTO_num_locks();
+      ssl_locks = malloc(sizeof(pthread_mutex_t) * n);
+      for(i = 0; i < n; i++)
+	pthread_mutex_init(&ssl_locks[i], NULL);
+
+      CRYPTO_set_locking_callback(ssl_lock_fn);
+      CRYPTO_set_id_callback(ssl_tid_fn);
     }
 
     if((tc->ssl = SSL_new(showtime_ssl_ctx)) == NULL) {
