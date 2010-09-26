@@ -65,7 +65,7 @@ typedef struct cd_meta {
   prop_t *cm_root;
 
   prop_t *cm_nodes;
-  prop_t *cm_source;
+  prop_t *cm_model;
   prop_t *cm_meta;
 
   int cm_length; // in frames
@@ -204,12 +204,12 @@ get_cd_meta(const char *device)
     cm->cm_ntracks = tracks;
 
     cm->cm_root   = prop_create(NULL, NULL);
-    cm->cm_source = prop_create(cm->cm_root, "model");
-    cm->cm_nodes  = prop_create(cm->cm_source, "nodes");
-    cm->cm_meta   = prop_create(cm->cm_source, "metadata");
+    cm->cm_model = prop_create(cm->cm_root, "model");
+    cm->cm_nodes  = prop_create(cm->cm_model, "nodes");
+    cm->cm_meta   = prop_create(cm->cm_model, "metadata");
 
-    prop_set_string(prop_create(cm->cm_root, "type"), "directory");
-    prop_set_string(prop_create(cm->cm_root, "contents"), "albumTracks");
+    prop_set_string(prop_create(cm->cm_model, "type"), "directory");
+    prop_set_string(prop_create(cm->cm_model, "contents"), "albumTracks");
 
     rstr_t *audio = rstr_alloc("audio");
   
@@ -356,7 +356,6 @@ openpage(struct backend *be, struct navigator *nav,
   np = nav_page_create(nav, url, view, 0);
 
   p = np->np_prop_root;
-
   prop_link(cm->cm_root, p);
   return np;
 }
