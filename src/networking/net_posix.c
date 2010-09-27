@@ -317,11 +317,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
   fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~O_NONBLOCK);
 
   val = 1;
-#ifdef __APPLE__
   setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val));
-#else
-  setsockopt(fd, SOL_TCP, TCP_NODELAY, &val, sizeof(val));
-#endif
 
   tcpcon_t *tc = calloc(1, sizeof(tcpcon_t));
   tc->fd = fd;
