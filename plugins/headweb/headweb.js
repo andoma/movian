@@ -29,7 +29,7 @@
   var APIKEY = "2d6461dd322b4b84b5bac8c654ee6195";
 
   function request(path, offset, limit) {
-    var v = showtime.httpGet("http://api.headweb.com/v4" + path, {
+    var v = showtime.httpGet("https://api.headweb.com/v4" + path, {
       apikey: APIKEY,
       offset: offset,
       limit: limit
