@@ -326,12 +326,18 @@ texture_load_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
   int strides[4];
   int bpp;
 
-  if(src_pix_fmt == PIX_FMT_BGRA) {
-    dst_pix_fmt = PIX_FMT_RGBA;
-  } else {
-    dst_pix_fmt = PIX_FMT_RGB24;
-  }
 
+  switch(src_pix_fmt) {
+  case PIX_FMT_Y400A:
+    dst_pix_fmt = PIX_FMT_Y400A;
+    break;
+  case PIX_FMT_RGBA:
+    dst_pix_fmt = PIX_FMT_RGBA;
+    break;
+  default:
+    dst_pix_fmt = PIX_FMT_RGB24;
+    break;
+  }
 
   sws = sws_getContext(src_w, src_h, src_pix_fmt, 
 		       dst_w, dst_h, dst_pix_fmt,
@@ -352,18 +358,25 @@ texture_load_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
   strides[2] = pict->linesize[2];
   strides[3] = pict->linesize[3];
 
-  if(src_pix_fmt == PIX_FMT_BGRA) {
+  switch(src_pix_fmt) {
+  case PIX_FMT_Y400A:
+    bpp = 2;
+    glt->glt_format = GL_LUMINANCE_ALPHA;
+    glt->glt_ext_format = GL_LUMINANCE_ALPHA;
+    glt->glt_ext_type = GL_UNSIGNED_BYTE;
+    break;
 
+  case PIX_FMT_RGBA:
     bpp = 4;
     glt->glt_format = GL_RGBA;
     glt->glt_ext_format = GL_RGBA;
+    break;
 
-  } else {
-
+  default:
     bpp = 3;
     glt->glt_format = GL_RGB;
     glt->glt_ext_format = GL_RGB;
-
+    break;
   }
 
   glt->glt_ext_type = GL_UNSIGNED_BYTE;
