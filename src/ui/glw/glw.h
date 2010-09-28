@@ -424,6 +424,11 @@ typedef struct glw_class {
   glw_alignment_t gc_default_alignment;
 
   /**
+   * Return number of childern currently packed per row
+   */
+  int (*gc_get_num_children_x)(struct glw *w);
+
+  /**
    * Registration link
    */
   LIST_ENTRY(glw_class) gc_link;
@@ -1088,9 +1093,6 @@ void glw_set_constraints(glw_t *w, int x, int y, float weight,
 void glw_copy_constraints(glw_t *w, glw_t *src);
 
 void glw_clear_constraints(glw_t *w);
-
-int glw_array_get_xentries(glw_t *w);
-
 
 
 /**

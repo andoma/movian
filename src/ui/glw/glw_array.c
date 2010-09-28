@@ -364,6 +364,20 @@ glw_array_set(glw_t *w, int init, va_list ap)
   } while(attrib);
 }
 
+/**
+ *
+ */
+static int
+glw_array_get_num_children_x(glw_t *w)
+{
+  glw_array_t *a = (glw_array_t *)w;
+  return a->xentries;
+}
+
+
+/**
+ *
+ */
 static glw_class_t glw_array = {
   .gc_name = "array",
   .gc_instance_size = sizeof(glw_array_t),
@@ -373,13 +387,8 @@ static glw_class_t glw_array = {
   .gc_render = glw_array_render,
   .gc_set = glw_array_set,
   .gc_signal_handler = glw_array_callback,
+  .gc_get_num_children_x = glw_array_get_num_children_x,
 };
 
 GLW_REGISTER_CLASS(glw_array);
 
-int
-glw_array_get_xentries(glw_t *w)
-{
-  glw_array_t *a = (glw_array_t *)w;
-  return a->xentries;
-}

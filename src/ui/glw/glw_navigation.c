@@ -308,8 +308,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
       if(query.orientation == GLW_ORIENTATION_VERTICAL) {
 
-	int xentries = glw_array_get_xentries(p);
-
+	int xentries = p->glw_class->gc_get_num_children_x(p);
 	if(pagemode == 0) {
 	  pagemode = 1;
 	  pagecnt = xentries;
