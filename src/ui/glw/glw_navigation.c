@@ -299,12 +299,6 @@ glw_navigate(glw_t *w, event_t *e, int local)
       if(query.orientation == GLW_ORIENTATION_VERTICAL
 	 && query.direction == 1 && w->glw_flags & GLW_BOTTOM_EDGE)
 	break;
-      if(query.orientation == GLW_ORIENTATION_HORIZONTAL &&
-	 query.direction == 0 && w->glw_flags & GLW_LEFT_EDGE)
-	break;
-      if(query.orientation == GLW_ORIENTATION_HORIZONTAL &&
-	 query.direction == 1 && w->glw_flags & GLW_RIGHT_EDGE)
-	break;
 
       if(query.orientation == GLW_ORIENTATION_VERTICAL) {
 
