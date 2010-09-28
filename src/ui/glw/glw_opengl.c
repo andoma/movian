@@ -136,8 +136,8 @@ void
 glw_rctx_init(glw_rctx_t *rc, int width, int height)
 {
   memset(rc, 0, sizeof(glw_rctx_t));
-  rc->rc_size_x = width;
-  rc->rc_size_y = height;
+  rc->rc_width  = width;
+  rc->rc_height = height;
   rc->rc_alpha = 1.0f;
 
   memset(&rc->rc_be.gbr_mtx, 0, sizeof(float) * 16);

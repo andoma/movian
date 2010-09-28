@@ -78,7 +78,6 @@ typedef enum {
   GLW_ATTRIB_SOURCE,
   GLW_ATTRIB_ARGS,
   GLW_ATTRIB_PROP_PARENT,
-  GLW_ATTRIB_ASPECT,
   GLW_ATTRIB_ALPHA,
   GLW_ATTRIB_ALPHA_SELF,
   GLW_ATTRIB_ANGLE,
@@ -546,8 +545,8 @@ void glw_settings_save(void *opaque, htsmsg_t *msg);
 typedef struct glw_rctx {
   float rc_alpha;
 
-  float rc_size_x;
-  float rc_size_y;
+  int16_t rc_width;
+  int16_t rc_height;
 
   struct glw_cursor_painter *rc_cursor_painter;
 
@@ -615,18 +614,20 @@ typedef struct glw {
 
   /** 
    * All the glw_parent stuff is operated by this widgets
-   * parents. That is, a widget may never touch these themselfs
-   */		  
-  glw_vertex_t glw_parent_pos;
-  glw_vertex_t glw_parent_scale;
-  float glw_parent_misc[4];
+   * parents. That is, a widget should never touch these themselfs
+   * TODO: Allocate these dynamically based on parent class
+   */
+  union { 
+    int i32;
+    float f;
+  } glw_parent_val[6];
+
 
   /**
    * Layout contraints
    */
   int16_t glw_req_size_x;
   int16_t glw_req_size_y;
-  float glw_req_aspect;
   float glw_req_weight;
 
   int glw_flags;
@@ -653,29 +654,25 @@ typedef struct glw {
 #define GLW_NO_INITIAL_TRANS     0x1000
 #define GLW_CAN_SCROLL           0x2000
 #define GLW_CONSTRAINT_CONF_XY   0x4000
-#define GLW_CONSTRAINT_CONF_WAF  0x8000
+#define GLW_CONSTRAINT_CONF_WF   0x8000
 
 #define GLW_CONSTRAINT_X         0x10000
 #define GLW_CONSTRAINT_Y         0x20000
-#define GLW_CONSTRAINT_A         0x40000
-#define GLW_CONSTRAINT_W         0x80000
-#define GLW_CONSTRAINT_F         0x100000
+#define GLW_CONSTRAINT_W         0x40000
+#define GLW_CONSTRAINT_F         0x80000
 
   // We rely on shifts to filter these against each other so they
   // must be consecutive, see glw_filter_constraints()
-#define GLW_CONSTRAINT_IGNORE_X  0x200000
-#define GLW_CONSTRAINT_IGNORE_Y  0x400000
-#define GLW_CONSTRAINT_IGNORE_A  0x800000
-#define GLW_CONSTRAINT_IGNORE_W  0x1000000
-#define GLW_CONSTRAINT_IGNORE_F  0x2000000
+#define GLW_CONSTRAINT_IGNORE_X  0x100000
+#define GLW_CONSTRAINT_IGNORE_Y  0x200000
+#define GLW_CONSTRAINT_IGNORE_A  0x400000
+#define GLW_CONSTRAINT_IGNORE_W  0x800000
 
 #define GLW_CONSTRAINT_FLAGS (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y | \
-                              GLW_CONSTRAINT_A | GLW_CONSTRAINT_W | \
-			      GLW_CONSTRAINT_F )
+                              GLW_CONSTRAINT_W | GLW_CONSTRAINT_F )
 
 #define GLW_CONSTRAINT_FLAGS_XY  (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y)
-#define GLW_CONSTRAINT_FLAGS_WAF (GLW_CONSTRAINT_W | GLW_CONSTRAINT_A | \
-                                  GLW_CONSTRAINT_F)
+#define GLW_CONSTRAINT_FLAGS_WF  (GLW_CONSTRAINT_W | GLW_CONSTRAINT_F)
   
 
 #define GLW_FOCUS_ON_CLICK       0x4000000
@@ -717,15 +714,13 @@ typedef struct glw {
                        && !((w)->glw_flags & GLW_CONSTRAINT_IGNORE_X))
 #define glw_have_y_constraint(w) (((w)->glw_flags & GLW_CONSTRAINT_Y) \
                        && !((w)->glw_flags & GLW_CONSTRAINT_IGNORE_Y))
-#define glw_have_a_constraint(w) (((w)->glw_flags & GLW_CONSTRAINT_A) \
-                       && !((w)->glw_flags & GLW_CONSTRAINT_IGNORE_A))
 #define glw_have_w_constraint(w) (((w)->glw_flags & GLW_CONSTRAINT_W) \
                        && !((w)->glw_flags & GLW_CONSTRAINT_IGNORE_W))
 #define glw_have_f_constraint(w) (((w)->glw_flags & GLW_CONSTRAINT_F) \
                        && !((w)->glw_flags & GLW_CONSTRAINT_IGNORE_F))
 
 #define glw_filter_constraints(f) \
- (((f) & GLW_CONSTRAINT_FLAGS) & ~(((f) >> 5) & GLW_CONSTRAINT_FLAGS))
+ (((f) & GLW_CONSTRAINT_FLAGS) & ~(((f) >> 4) & GLW_CONSTRAINT_FLAGS))
 
 
 int glw_init(glw_root_t *gr, const char *theme, ui_t *ui, int primary,
@@ -895,7 +890,6 @@ do {						\
     (void)va_arg(ap, double);			\
     (void)va_arg(ap, double);			\
   case GLW_ATTRIB_WEIGHT:			\
-  case GLW_ATTRIB_ASPECT:			\
   case GLW_ATTRIB_ALPHA:			\
   case GLW_ATTRIB_ALPHA_SELF:			\
   case GLW_ATTRIB_ANGLE:			\
@@ -1012,6 +1006,8 @@ void glw_render_TS(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc);
 
 void glw_scale_to_aspect(glw_rctx_t *rc, float t_aspect);
 
+void glw_reposition(glw_rctx_t *rc, int left, int top, int right, int bottom);
+
 extern const glw_vertex_t align_vertices[GLW_ALIGN_num];
 
 static inline void
@@ -1086,7 +1082,7 @@ void glw_font_change_size(void *opaque, int fontsize);
  *
  */
 
-void glw_set_constraints(glw_t *w, int x, int y, float a, float weight,
+void glw_set_constraints(glw_t *w, int x, int y, float weight,
 			 int flags, int conf);
 
 void glw_copy_constraints(glw_t *w, glw_t *src);

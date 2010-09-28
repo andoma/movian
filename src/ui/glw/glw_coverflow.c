@@ -32,10 +32,11 @@ typedef struct {
 
   glw_t *rstart;
 
-  float xs, ys;
+  float xs;
 
 } glw_coverflow_t;
 
+#define glw_parent_pos glw_parent_val[0].f
 
 /**
  *
@@ -46,19 +47,10 @@ glw_coverflow_layout(glw_coverflow_t *gc, glw_rctx_t *rc)
   float n = 0, nv;
   glw_t *c, *rstart = NULL;
   glw_rctx_t rc0;
-  float aspect = rc->rc_size_x / rc->rc_size_y;
-
-  if(aspect > 1.0) {
-    gc->xs = 1.0 / aspect;
-    gc->ys = 1;
-  } else {
-    gc->xs = 1;
-    gc->ys = aspect;
-  }
+  gc->xs = (float)rc->rc_height / rc->rc_width;
 
   rc0 = *rc;
-  rc0.rc_size_x *= gc->xs;
-  rc0.rc_size_y *= gc->ys;
+  rc0.rc_width = rc->rc_height;
 
   gc->pos = GLW_LP(6, gc->pos, gc->pos_target);
 
@@ -66,13 +58,13 @@ glw_coverflow_layout(glw_coverflow_t *gc, glw_rctx_t *rc)
     if(c->glw_flags & GLW_HIDDEN)
       continue;
     
-    c->glw_parent_misc[0] = n - gc->pos;
+    c->glw_parent_pos = n - gc->pos;
 
     if(rstart == NULL ||
-       fabs(rstart->glw_parent_misc[0]) > fabs(c->glw_parent_misc[0]))
+       fabs(rstart->glw_parent_pos) > fabs(c->glw_parent_pos))
       rstart = c;
 
-    nv = c->glw_parent_misc[0] * gc->xs;
+    nv = c->glw_parent_pos * gc->xs;
     if(nv > -2 && nv < 2)
       glw_signal0(c, GLW_SIGNAL_LAYOUT, &rc0);
 
@@ -96,7 +88,7 @@ renderone(glw_rctx_t *rc, glw_t *c, glw_coverflow_t *gc)
   if(c->glw_flags & GLW_HIDDEN)
     return;
  
-  v = c->glw_parent_misc[0];
+  v = c->glw_parent_pos;
 
   nv = v * gc->xs;
 
@@ -105,10 +97,10 @@ renderone(glw_rctx_t *rc, glw_t *c, glw_coverflow_t *gc)
 
   rc0 = *rc;
 
-  rc0.rc_size_x *= gc->xs;
-  rc0.rc_size_y *= gc->ys;
+  int left  = rc->rc_width / 2 - rc->rc_height / 2;
+  int right = left + rc->rc_height;
 
-  glw_Scalef(&rc0, gc->xs, gc->ys, 1.0);
+  glw_reposition(&rc0, left, rc->rc_height, right, 0);
 
   r = GLW_MAX(GLW_MIN(v, 1.0), -1.0) * 60;
 
@@ -297,7 +289,7 @@ glw_coverflow_get_child_pos(glw_t *p, glw_t *c)
 {
   glw_coverflow_t *gc = (glw_coverflow_t *)p;
  
-  float nv = c->glw_parent_misc[0] * gc->xs;
+  float nv = c->glw_parent_pos * gc->xs;
   nv = GLW_CLAMP(nv, -1, 1);
   return nv * 0.5 + 0.5;
 }

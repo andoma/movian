@@ -104,8 +104,8 @@ glw_bloom_render(glw_t *w, glw_rctx_t *rc)
   rc0 = *rc;
 
   glw_Scalef(&rc0, 
-	     1.0 + EDGE_SIZE / rc->rc_size_x, 
-	     1.0 + EDGE_SIZE / rc->rc_size_y, 
+	     1.0 + EDGE_SIZE / rc->rc_width, 
+	     1.0 + EDGE_SIZE / rc->rc_height, 
 	     1.0);
 #if 0
   glw_render(&b->b_render, w->glw_root, &rc0, 
@@ -154,8 +154,8 @@ glw_bloom_layout(glw_t *w, glw_rctx_t *rc)
   }
 
 
-  sizx = rc->rc_size_x + EDGE_SIZE;
-  sizy = rc->rc_size_y + EDGE_SIZE;
+  sizx = rc->rc_width + EDGE_SIZE;
+  sizy = rc->rc_height + EDGE_SIZE;
 
   if(b->b_width != sizx || b->b_height != sizy) {
     if(b->b_width || b->b_height)
@@ -196,8 +196,8 @@ glw_bloom_layout(glw_t *w, glw_rctx_t *rc)
 
   memset(&rc0, 0, sizeof(glw_rctx_t));
   rc0.rc_alpha  = 1;
-  rc0.rc_size_x = b->b_width  - EDGE_SIZE;
-  rc0.rc_size_y = b->b_height - EDGE_SIZE;
+  rc0.rc_width = b->b_width  - EDGE_SIZE;
+  rc0.rc_height = b->b_height - EDGE_SIZE;
   rc0.rc_inhibit_shadows = 1;
 
   if(!b->b_need_render)
@@ -207,8 +207,8 @@ glw_bloom_layout(glw_t *w, glw_rctx_t *rc)
 
     glw_rtt_enter(gr, &b->b_rtt[i], &rc0);
     
-    rc0.rc_size_x = b->b_width  - EDGE_SIZE;
-    rc0.rc_size_y = b->b_height - EDGE_SIZE;
+    rc0.rc_width = b->b_width  - EDGE_SIZE;
+    rc0.rc_height = b->b_height - EDGE_SIZE;
 
     glw_Scalef(&rc0, 
 	       1.0 - EDGE_SIZE / b->b_width,

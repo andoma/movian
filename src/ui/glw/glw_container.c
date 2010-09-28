@@ -22,11 +22,10 @@ typedef struct glw_container {
   glw_t w;
   
   int cflags;
-  int x_sum;
-  int y_sum;
   float weight_sum;
-  float aspect_sum;
 
+  int16_t x_sum;
+  int16_t y_sum;
   int16_t co_padding_left;
   int16_t co_padding_right;
   int16_t co_padding_top;
@@ -34,6 +33,9 @@ typedef struct glw_container {
 
 } glw_container_t;
 
+#define glw_parent_size   glw_parent_val[0].i32
+#define glw_parent_pos    glw_parent_val[1].f
+#define glw_parent_scale  glw_parent_val[2].f
 
 /**
  *
@@ -44,7 +46,6 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
   glw_t *c;
   int ymax = 0, xsum = 0;
   float weight = 0;
-  float aspect = 0;
   int cflags = 0, f;
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
@@ -61,8 +62,6 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
 
     if(f & GLW_CONSTRAINT_X) {
       xsum += c->glw_req_size_x;
-    } else if(f & GLW_CONSTRAINT_A) {
-      aspect += c->glw_req_aspect;
     } else if(f & GLW_CONSTRAINT_W) {
       weight += c->glw_req_weight;
     } else {
@@ -71,12 +70,11 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
   }
 
   co->weight_sum = weight;
-  co->aspect_sum = aspect;
   co->x_sum = xsum;
   co->y_sum = ymax;
   co->cflags = cflags;
 
-  glw_set_constraints(&co->w, xsum, ymax, 0, 0, cflags, 0);
+  glw_set_constraints(&co->w, xsum, ymax, 0, cflags, 0);
   return 1;
 }
 
@@ -88,92 +86,83 @@ static int
 glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
 {
   glw_t *c;
-  float x, xs;
   glw_rctx_t rc0 = *rc;
-  int f;
-  float s_w, s_ax, ax;
-
-  float size_x = rc->rc_size_x - co->co_padding_left - co->co_padding_right;
-
+  int width;
+  float IW; 
+  int weightavail;  // Pixels available for weighted childs
+  float pos;        // Current position
+  float fixscale;   // Scaling to apply to fixed width requests
+                    // Used if the available width < sum of requested width
+  
   if(co->w.glw_alpha < 0.01)
     return 0;
 
-  /* Add sum of requested aspect to width in pixels */
-  ax = co->co_padding_left + co->co_padding_right + 
-    co->x_sum + co->aspect_sum * rc->rc_size_y; 
 
-  glw_set_constraints(&co->w, ax, co->y_sum, 0, 0, co->cflags, 0);
+  // Compute fixed width
+  width = co->co_padding_left + co->co_padding_right + co->x_sum;
 
-  x = -1.0f + 2.0 * co->co_padding_left / rc->rc_size_x;
+  // Propagate this width to parent
+  glw_set_constraints(&co->w, width, co->y_sum, 0, co->cflags, 0);
 
-  if(ax > size_x) {
+
+  if(width > rc->rc_width) {
     // Requested pixel size > available width, must scale
-    s_ax = size_x / ax;
-    s_w = 0;
+    weightavail = 0;
+    fixscale = (float)rc->rc_width / width;
+    pos = co->co_padding_left * fixscale;
   } else {
-    s_ax = 1.0f;
-    s_w = size_x - ax;
+    fixscale = 1;
+
+    weightavail = rc->rc_width - width;  // Pixels available for weighted childs
+
+    pos = co->co_padding_left;
 
     if(co->weight_sum == 0) {
 
       if(co->w.glw_alignment == GLW_ALIGN_CENTER) {
-	x = 0 - ax / size_x;
+	pos = rc->rc_width / 2 - width / 2;
       } else if(co->w.glw_alignment == GLW_ALIGN_RIGHT) {
-	x = 1.0 - 2 * ax / size_x;
+	pos = rc->rc_width - width;
       }
     }
   }
 
-  s_w /= co->weight_sum;
+  int right, left = rintf(pos);
+
+  IW = 1.0 / rc->rc_width;
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
+    float cw;
+
     if(c->glw_flags & GLW_HIDDEN)
       continue;
 
-    f = glw_filter_constraints(c->glw_flags);
+    int f = glw_filter_constraints(c->glw_flags);
 
     if(f & GLW_CONSTRAINT_X) {
-
-      if(s_ax == 1.0) {
-	xs = rc0.rc_size_x = c->glw_req_size_x;
-      } else {
-	xs = s_ax * c->glw_req_size_x;
-	xs = 2 * rintf(xs * 0.5);
-	rc0.rc_size_x = xs;
-      }
-    } else if(f & GLW_CONSTRAINT_A) {
-      xs = s_ax * c->glw_req_aspect * rc->rc_size_y;
-      xs = 2 * rintf(xs * 0.5);
-      rc0.rc_size_x = xs;
-    } else if(f & GLW_CONSTRAINT_W) {
-      xs = c->glw_req_weight * s_w;
-      xs = 2 * rintf(xs * 0.5);
-      rc0.rc_size_x = xs;
+      cw = c->glw_req_size_x * fixscale;
     } else {
-      xs = s_w;
-      xs = 2 * rintf(xs * 0.5);
-      rc0.rc_size_x = xs;
+      float w = (f & GLW_CONSTRAINT_W ? c->glw_req_weight : 1.0f);
+      cw = weightavail * w / co->weight_sum;
     }
 
-    c->glw_parent_scale.x = xs / size_x;
-    c->glw_parent_scale.y = 1.0;
-    c->glw_parent_scale.z = xs / size_x;
-      
-    c->glw_norm_weight = c->glw_parent_scale.x;
-
-    c->glw_parent_pos.x = x + c->glw_parent_scale.x;
-
-    x += 2 * c->glw_parent_scale.x;
-      
-
-    c->glw_parent_misc[0] = rc0.rc_size_x;
-    c->glw_parent_misc[1] = rc0.rc_size_y;
+    pos += cw;
+    right = rintf(pos);
     
+    rc0.rc_width = right - left;
+
+    c->glw_parent_pos = -1.0f + (right + left) * IW;
+    c->glw_parent_scale = rc0.rc_width * IW;
+      
+    c->glw_norm_weight = c->glw_parent_scale;
+
+    c->glw_parent_size = right - left;
     glw_layout0(c, &rc0);
+    left = right;
+
   }
   return 0;
 }
-
 
 /**
  *
@@ -217,92 +206,91 @@ glw_container_y_constraints(glw_container_t *co, glw_t *skip)
   if(weight)
     cflags &= ~GLW_CONSTRAINT_Y;
 
-  glw_set_constraints(&co->w, xmax, fix, 0, 0, cflags, 0);
+  glw_set_constraints(&co->w, xmax, fix, 0, cflags, 0);
   return 1;
 }
 
 
-/**
- *
- */
 static int
 glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
 {
   glw_t *c;
-  float y, ys;
   glw_rctx_t rc0 = *rc;
-  int f;
-  float s_w, s_fy;
-
-  float size_y = rc->rc_size_y - co->co_padding_top - co->co_padding_bottom;
-
+  int height;
+  float IH;
+  int weightavail;  // Pixels available for weighted childs
+  float pos;        // Current position
+  float fixscale;   // Scaling to apply to fixed height requests
+                    // Used if the available width < sum of requested height
+  
   if(co->w.glw_alpha < 0.01)
     return 0;
 
-  y = 1.0f - 2.0 * co->co_padding_top / rc->rc_size_y;
+  // Compute fixed height
+  height = co->co_padding_bottom + co->co_padding_top + co->y_sum;
 
-  if(co->y_sum > size_y) {
-    s_w = 0;
-    s_fy = size_y / co->y_sum;
+  //  Propagate this width to parent
+  //  glw_set_constraints(&co->w, co->x_sum, height, 0, 0, co->cflags, 0);
 
+  if(height > rc->rc_height) {
+    // Requested pixel size > available width, must scale
+    weightavail = 0;
+    fixscale = (float)rc->rc_height / height;
+    pos = co->co_padding_top * fixscale;
   } else {
-    s_w = size_y - co->y_sum;
-    s_fy = 1.0f;
+    fixscale = 1;
+
+    // Pixels available for weighted childs
+    weightavail = rc->rc_height - height;
+
+    pos = co->co_padding_top;
 
     if(co->weight_sum == 0) {
 
       if(co->w.glw_alignment == GLW_ALIGN_CENTER) {
-	y = co->y_sum / size_y;
+	pos = rc->rc_height / 2 - height / 2;
       } else if(co->w.glw_alignment == GLW_ALIGN_BOTTOM) {
-	y = -1.0 + 2 * co->y_sum / size_y;
+	pos = rc->rc_height - height;
       }
     }
   }
 
-  s_w /= co->weight_sum;
+  int bottom, top = rintf(pos);
+  IH = 1.0 / rc->rc_height;
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
+    float cw;
+
     if(c->glw_flags & GLW_HIDDEN)
       continue;
-    
-    f = glw_filter_constraints(c->glw_flags);
-    
-    if(f & GLW_CONSTRAINT_Y) {
 
-      if(s_fy == 1.0) {
-	ys = rc0.rc_size_y = c->glw_req_size_y;
-      } else {
-	ys = s_fy * c->glw_req_size_y;
-	ys = 2 * rintf(ys * 0.5);
-	rc0.rc_size_y = ys; 
-      }
-    } else if(f & GLW_CONSTRAINT_W) {
-      ys = c->glw_req_weight * s_w;
-      ys = 2 * rintf(ys * 0.5);
-      rc0.rc_size_y = ys;
+    int f = glw_filter_constraints(c->glw_flags);
+
+    if(f & GLW_CONSTRAINT_Y) {
+      cw = fixscale * c->glw_req_size_y;
     } else {
-      ys = s_w;
-      ys = 2 * rintf(ys * 0.5);
-      rc0.rc_size_y = ys;
+      float w = (f & GLW_CONSTRAINT_W ? c->glw_req_weight : 1.0f);
+      cw = weightavail * w / co->weight_sum;
     }
 
-    c->glw_parent_scale.x = 1.0;
-    c->glw_parent_scale.y = ys / size_y;
-    c->glw_parent_scale.z = ys / size_y;
+    pos += cw;
+    bottom = rintf(pos);
 
-    c->glw_norm_weight = c->glw_parent_scale.y;
+    rc0.rc_height = bottom - top;
 
-    c->glw_parent_pos.y = y - c->glw_parent_scale.y;
+    c->glw_parent_pos = 1.0f - (bottom + top) * IH;
+    c->glw_parent_scale = rc0.rc_height * IH;
+    c->glw_norm_weight = c->glw_parent_scale;
+    c->glw_parent_size = rc0.rc_height;
 
-    y -= 2 * c->glw_parent_scale.y;
-
-    c->glw_parent_misc[0] = rc0.rc_size_x;
-    c->glw_parent_misc[1] = rc0.rc_size_y;
-      
     glw_layout0(c, &rc0);
+    top = bottom;
+
   }
   return 0;
 }
+
+
 
 
 /**
@@ -341,38 +329,24 @@ static int
 glw_container_z_layout(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c;
-  glw_rctx_t rc0;
 
   if(w->glw_alpha < 0.01)
     return 0;
 
-  rc0 = *rc;
-
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
-    
-    c->glw_parent_pos.x = 0;
-    c->glw_parent_pos.y = 0;
-    c->glw_parent_pos.z = 0;
-
-    c->glw_parent_scale.x = 1.0f;
-    c->glw_parent_scale.y = 1.0f;
-    c->glw_parent_scale.z = 1.0f;
-
-    c->glw_parent_misc[0] = rc->rc_size_x;
-    c->glw_parent_misc[1] = rc->rc_size_y;
-
-    glw_layout0(c, &rc0);
+    glw_layout0(c, rc);
   }
   return 0;
 }
 
 
-
-
+/**
+ *
+ */
 static void
-glw_container_render(glw_t *w, glw_rctx_t *rc)
+glw_container_y_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c;
   float alpha = rc->rc_alpha * w->glw_alpha;
@@ -392,24 +366,81 @@ glw_container_render(glw_t *w, glw_rctx_t *rc)
     rc0 = *rc;
     rc0.rc_alpha = alpha;
 
-    rc0.rc_size_x = c->glw_parent_misc[0];
-    rc0.rc_size_y = c->glw_parent_misc[1];
+    rc0.rc_height = c->glw_parent_size;
     
-    glw_Translatef(&rc0,
-		   c->glw_parent_pos.x,
-		   c->glw_parent_pos.y,
-		   c->glw_parent_pos.z);
+    glw_Translatef(&rc0, 0, c->glw_parent_pos, 0);
+    glw_Scalef(&rc0, 1.0, c->glw_parent_scale, c->glw_parent_scale);
 
-    glw_Scalef(&rc0,
-	       c->glw_parent_scale.x,
-	       c->glw_parent_scale.y,
-	       c->glw_parent_scale.z);
-    
     c->glw_class->gc_render(c, &rc0);
   }
 }
 
 
+/**
+ *
+ */
+static void
+glw_container_x_render(glw_t *w, glw_rctx_t *rc)
+{
+  glw_t *c;
+  float alpha = rc->rc_alpha * w->glw_alpha;
+
+  glw_rctx_t rc0;
+
+  if(alpha < 0.01)
+    return;
+  
+  if(glw_is_focusable(w))
+    glw_store_matrix(w, rc);
+
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    if(c->glw_flags & GLW_HIDDEN)
+      continue;
+
+    rc0 = *rc;
+    rc0.rc_alpha = alpha;
+
+    rc0.rc_width = c->glw_parent_size;
+    
+    glw_Translatef(&rc0, c->glw_parent_pos, 0, 0);
+    glw_Scalef(&rc0, c->glw_parent_scale, 1.0, c->glw_parent_scale);
+
+    c->glw_class->gc_render(c, &rc0);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+glw_container_z_render(glw_t *w, glw_rctx_t *rc)
+{
+  glw_t *c;
+  float alpha = rc->rc_alpha * w->glw_alpha;
+
+  glw_rctx_t rc0;
+
+  if(alpha < 0.01)
+    return;
+  
+  if(glw_is_focusable(w))
+    glw_store_matrix(w, rc);
+
+  rc0 = *rc;
+  rc0.rc_alpha = alpha;
+
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    if(c->glw_flags & GLW_HIDDEN)
+      continue;
+    c->glw_class->gc_render(c, &rc0);
+  }
+}
+
+
+/**
+ *
+ */
 static int
 glw_container_callback(glw_t *w, void *opaque, glw_signal_t signal,
 		       void *extra)
@@ -522,7 +553,7 @@ static glw_class_t glw_container_x = {
   .gc_instance_size = sizeof(glw_container_t),
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_set = glw_container_set,
-  .gc_render = glw_container_render,
+  .gc_render = glw_container_x_render,
   .gc_signal_handler = glw_container_x_callback,
   .gc_child_orientation = GLW_ORIENTATION_HORIZONTAL,
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION,
@@ -534,7 +565,7 @@ static glw_class_t glw_container_y = {
   .gc_instance_size = sizeof(glw_container_t),
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_set = glw_container_set,
-  .gc_render = glw_container_render,
+  .gc_render = glw_container_y_render,
   .gc_signal_handler = glw_container_y_callback,
   .gc_child_orientation = GLW_ORIENTATION_VERTICAL,
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION,
@@ -546,7 +577,7 @@ static glw_class_t glw_container_z = {
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_instance_size = sizeof(glw_container_t),
   .gc_set = glw_container_set,
-  .gc_render = glw_container_render,
+  .gc_render = glw_container_z_render,
   .gc_signal_handler = glw_container_z_callback,
 };
 

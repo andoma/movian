@@ -59,13 +59,8 @@ typedef struct glw_image {
 
   glw_renderer_t gi_gr;
 
-  float gi_saved_size_x;
-  float gi_saved_size_y;
-
-  float gi_child_xs;
-  float gi_child_ys;
-  float gi_child_xt;
-  float gi_child_yt;
+  int16_t gi_last_width;
+  int16_t gi_last_height;
 
   glw_rgb_t gi_color;
 
@@ -130,24 +125,19 @@ render_child_autocentered(glw_image_t *gi, glw_rctx_t *rc)
 {
   glw_t *c;
   glw_rctx_t rc0;
-  float xs, ys;
 
   if((c = TAILQ_FIRST(&gi->w.glw_childs)) == NULL)
     return;
 
   rc0 = *rc;
-      
-  glw_Translatef(&rc0, gi->gi_child_xt, gi->gi_child_yt, 0.0f);
+  
+  glw_reposition(&rc0,
+		                 gi->gi_border_left   + gi->gi_padding_left,
+		 rc->rc_height - gi->gi_border_top    - gi->gi_padding_top,
+		 rc->rc_width  - gi->gi_border_right  - gi->gi_padding_right,
+		                 gi->gi_border_bottom + gi->gi_padding_bottom);
 
-  xs = gi->gi_child_xs;
-  ys = gi->gi_child_ys;
-
-  glw_Scalef(&rc0, xs, ys, 1.0f);
-
-  rc0.rc_size_x = rc->rc_size_x * xs;
-  rc0.rc_size_y = rc->rc_size_y * ys;
-
-  rc0.rc_alpha = rc->rc_alpha * gi->w.glw_alpha;
+  rc0.rc_alpha *= gi->w.glw_alpha;
   glw_render0(c, &rc0);
 }
 
@@ -158,12 +148,12 @@ render_child_autocentered(glw_image_t *gi, glw_rctx_t *rc)
 static void
 glw_scale_to_pixels(glw_rctx_t *rc, int w, int h)
 {
-  float xs = w / rc->rc_size_x;
-  float ys = h / rc->rc_size_y;
+  float xs = (float)w / rc->rc_width;
+  float ys = (float)h / rc->rc_height;
 
   glw_Scalef(rc, xs, ys, 1.0);
-  rc->rc_size_x = w;
-  rc->rc_size_y = h;
+  rc->rc_width  = w;
+  rc->rc_height = h;
 }
 
 
@@ -208,10 +198,8 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     if(alpha_self > 0.01) {
 
       if(w->glw_flags & GLW_SHADOW && !rc0.rc_inhibit_shadows) {
-	float xd, yd;
-
-	xd =  3.0 / rc0.rc_size_x;
-	yd = -3.0 / rc0.rc_size_y;
+	float xd =  3.0 / rc0.rc_width;
+	float yd = -3.0 / rc0.rc_height;
 
 	glw_Translatef(&rc0, xd, yd, 0.0);
 	
@@ -252,7 +240,6 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
 {
   float tex[4][2];
   float vex[4][2];
-  float cvex[2][2];
 
   int x, y, i = 0;
 
@@ -279,42 +266,15 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
   }
 
 
-  float bl = gi->gi_border_left;
-  float bt = gi->gi_border_top;
-  float br = gi->gi_border_right;
-  float bb = gi->gi_border_bottom;
-
-  float pl = gi->gi_padding_left;
-  float pt = gi->gi_padding_top;
-  float pr = gi->gi_padding_right;
-  float pb = gi->gi_padding_bottom;
-
-
   vex[0][0] = -1.0;
-  vex[1][0] = GLW_MIN(-1.0 + 2.0 * bl / rc->rc_size_x, 0.0);
-  vex[2][0] = GLW_MAX( 1.0 - 2.0 * br / rc->rc_size_x, 0.0);
+  vex[1][0] = GLW_MIN(-1.0 + 2.0 * gi->gi_border_left  / rc->rc_width, 0.0);
+  vex[2][0] = GLW_MAX( 1.0 - 2.0 * gi->gi_border_right / rc->rc_width, 0.0);
   vex[3][0] = 1.0;
     
   vex[0][1] = 1.0;
-  vex[1][1] = GLW_MAX( 1.0 - 2.0 * bt / rc->rc_size_y, 0.0);
-  vex[2][1] = GLW_MIN(-1.0 + 2.0 * bb / rc->rc_size_y, 0.0);
+  vex[1][1] = GLW_MAX( 1.0 - 2.0 * gi->gi_border_top    / rc->rc_height, 0.0);
+  vex[2][1] = GLW_MIN(-1.0 + 2.0 * gi->gi_border_bottom / rc->rc_height, 0.0);
   vex[3][1] = -1.0;
-
-
-  bl = gi->gi_border_left;
-  bt = gi->gi_border_top;
-  br = gi->gi_border_right;
-  bb = gi->gi_border_bottom;
-
-  cvex[0][0] = GLW_MIN(-1.0 + 2.0 * (bl + pl) / rc->rc_size_x, 0.0);
-  cvex[1][0] = GLW_MAX( 1.0 - 2.0 * (br + pr) / rc->rc_size_x, 0.0);
-  cvex[0][1] = GLW_MAX( 1.0 - 2.0 * (bt + pt) / rc->rc_size_y, 0.0);
-  cvex[1][1] = GLW_MIN(-1.0 + 2.0 * (bb + pb) / rc->rc_size_y, 0.0);
-
-  gi->gi_child_xt = (cvex[1][0] + cvex[0][0]) * 0.5f;
-  gi->gi_child_yt = (cvex[0][1] + cvex[1][1]) * 0.5f;
-  gi->gi_child_xs = (cvex[1][0] - cvex[0][0]) * 0.5f;
-  gi->gi_child_ys = (cvex[0][1] - cvex[1][1]) * 0.5f;
 
   for(y = 0; y < 4; y++) {
     for(x = 0; x < 4; x++) {
@@ -323,7 +283,6 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
       i++;
     }
   }
-
 }
 
 static const float alphaborder[4][4] = {
@@ -342,7 +301,6 @@ glw_image_layout_alpha_edges(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
 {
   float tex[4][2];
   float vex[4][2];
-  float cvex[2][2];
 
   int x, y, i = 0;
 
@@ -368,33 +326,15 @@ glw_image_layout_alpha_edges(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
     tex[3][1] = glt->glt_ys;
   }
 
-
-  float bl = gi->gi_alpha_edge;
-  float bt = gi->gi_alpha_edge;
-  float br = gi->gi_alpha_edge;
-  float bb = gi->gi_alpha_edge;
-
-
   vex[0][0] = -1.0;
-  vex[1][0] = GLW_MIN(-1.0 + 2.0 * bl / rc->rc_size_x, 0.0);
-  vex[2][0] = GLW_MAX( 1.0 - 2.0 * br / rc->rc_size_x, 0.0);
+  vex[1][0] = GLW_MIN(-1.0 + 2.0 * gi->gi_alpha_edge / rc->rc_width, 0.0);
+  vex[2][0] = GLW_MAX( 1.0 - 2.0 * gi->gi_alpha_edge / rc->rc_width, 0.0);
   vex[3][0] = 1.0;
     
   vex[0][1] = 1.0;
-  vex[1][1] = GLW_MAX( 1.0 - 2.0 * bt / rc->rc_size_y, 0.0);
-  vex[2][1] = GLW_MIN(-1.0 + 2.0 * bb / rc->rc_size_y, 0.0);
+  vex[1][1] = GLW_MAX( 1.0 - 2.0 * gi->gi_alpha_edge / rc->rc_height, 0.0);
+  vex[2][1] = GLW_MIN(-1.0 + 2.0 * gi->gi_alpha_edge / rc->rc_height, 0.0);
   vex[3][1] = -1.0;
-
-
-  cvex[0][0] = GLW_MIN(-1.0 + 2.0 * bl / rc->rc_size_x, 0.0);
-  cvex[1][0] = GLW_MAX( 1.0 - 2.0 * br / rc->rc_size_x, 0.0);
-  cvex[0][1] = GLW_MAX( 1.0 - 2.0 * bt / rc->rc_size_y, 0.0);
-  cvex[1][1] = GLW_MIN(-1.0 + 2.0 * bb / rc->rc_size_y, 0.0);
-
-  gi->gi_child_xt = (cvex[1][0] + cvex[0][0]) * 0.5f;
-  gi->gi_child_yt = (cvex[0][1] + cvex[1][1]) * 0.5f;
-  gi->gi_child_xs = (cvex[1][0] - cvex[0][0]) * 0.5f;
-  gi->gi_child_ys = (cvex[0][1] - cvex[1][1]) * 0.5f;
 
   for(y = 0; y < 4; y++) {
     for(x = 0; x < 4; x++) {
@@ -437,9 +377,6 @@ glw_image_layout_normal(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
   glw_renderer_vtx_pos(&gi->gi_gr, 3, -1.0,  1.0, 0.0);
   glw_renderer_vtx_st (&gi->gi_gr, 3,
 		       tex[6] * xs , tex[7] * ys);
-
-  gi->gi_child_xs = 1;
-  gi->gi_child_ys = 1;
 }
 
 
@@ -482,7 +419,7 @@ glw_image_update_constraints(glw_image_t *gi)
     glw_set_constraints(&gi->w, 
 			glt->glt_xs,
 			glt->glt_ys,
-			0, 0, 
+			0,
 			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
 
   } else if(gi->w.glw_class == &glw_backdrop) {
@@ -497,29 +434,23 @@ glw_image_update_constraints(glw_image_t *gi)
 			  c->glw_req_size_y + 
 			  gi->gi_border_top + gi->gi_border_bottom + 
 			  gi->gi_padding_top + gi->gi_padding_bottom,
-			  0, 0, 
-			  glw_filter_constraints(c->glw_flags),
-			  0);
+			  c->glw_req_weight,
+			  c->glw_flags & GLW_CONSTRAINT_FLAGS, 0);
+
     } else if(glt != NULL) {
       glw_set_constraints(&gi->w, 
 			  glt->glt_xs,
 			  glt->glt_ys,
-			  0, 0, 0, 0);
+			  0, 0, 0);
     }
 
   } else if(gi->w.glw_class == &glw_icon) {
 
     float siz = gi->gi_size_scale * gr->gr_fontsize_px + gi->gi_size_bias;
 
-    glw_set_constraints(&gi->w, siz, siz, 0, 0,
+    glw_set_constraints(&gi->w, siz, siz, 0,
 			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
 
-  } else {
-    
-    glw_set_constraints(&gi->w, 0, 0,
-			glt && glt->glt_state == GLT_STATE_VALID ? 
-			glt->glt_aspect : 1, 0,
-			GLW_CONSTRAINT_A, 0);
   }
 }
 
@@ -587,10 +518,10 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 
     if(gi->gi_bitmap_flags & GLW_IMAGE_HQ_SCALING) {
 
-      if(rc->rc_size_x < rc->rc_size_y) {
-	xs = rc->rc_size_x;
+      if(rc->rc_width < rc->rc_height) {
+	xs = rc->rc_width;
       } else {
-	ys = rc->rc_size_y;
+	ys = rc->rc_height;
       }
     }
 
@@ -668,11 +599,11 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
       }
 
 
-    } else if(gi->gi_saved_size_x != rc->rc_size_x ||
-	      gi->gi_saved_size_y != rc->rc_size_y) {
+    } else if(gi->gi_last_width  != rc->rc_width ||
+	      gi->gi_last_height != rc->rc_height) {
 
-      gi->gi_saved_size_x = rc->rc_size_x;
-      gi->gi_saved_size_y = rc->rc_size_y;
+      gi->gi_last_width  = rc->rc_width;
+      gi->gi_last_height = rc->rc_height;
 
       switch(gi->gi_mode) {
 	
@@ -694,12 +625,12 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 
 	int xs = -1, ys = -1, rescale;
 	
-	if(rc->rc_size_x < rc->rc_size_y) {
-	  rescale = abs(rc->rc_size_x - glt->glt_xs) > glt->glt_xs / 10;
-	  xs = rc->rc_size_x;
+	if(rc->rc_width < rc->rc_height) {
+	  rescale = abs(rc->rc_width - glt->glt_xs) > glt->glt_xs / 10;
+	  xs = rc->rc_width;
 	} else {
-	  rescale = abs(rc->rc_size_y - glt->glt_ys) > glt->glt_ys / 10;
-	  ys = rc->rc_size_y;
+	  rescale = abs(rc->rc_height - glt->glt_ys) > glt->glt_ys / 10;
+	  ys = rc->rc_height;
 	}
 	
 	if(rescale) {
@@ -718,9 +649,17 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 
   if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
     rc0 = *rc;
-    rc0.rc_size_x = rc->rc_size_x * gi->gi_child_xs;
-    rc0.rc_size_y = rc->rc_size_y * gi->gi_child_ys;
-    glw_layout0(c, &rc0);
+    
+    rc0.rc_width -=
+      gi->gi_border_left +  gi->gi_border_right + 
+      gi->gi_padding_left + gi->gi_padding_right;
+
+    rc0.rc_height -=
+      gi->gi_border_top +  gi->gi_border_bottom + 
+      gi->gi_padding_top + gi->gi_padding_bottom;
+
+    if(rc0.rc_height >= 0 && rc0.rc_width >= 0)
+      glw_layout0(c, &rc0);
   }
 }
 
@@ -750,7 +689,7 @@ glw_image_callback(glw_t *w, void *opaque, glw_signal_t signal,
     glw_image_update_constraints((glw_image_t *)w);
     return 1;
   case GLW_SIGNAL_CHILD_DESTROYED:
-    glw_set_constraints(w, 0, 0, 0, 0, 0, 0);
+    glw_set_constraints(w, 0, 0, 0, 0, 0);
     return 1;
 
   }
@@ -774,9 +713,6 @@ glw_image_set(glw_t *w, int init, va_list ap)
     gi->gi_color.g = 1.0;
     gi->gi_color.b = 1.0;
     gi->gi_size_scale = 1.0;
-
-    if(w->glw_class == &glw_image)
-      glw_set_constraints(&gi->w, 0, 0, 1, 0, GLW_CONSTRAINT_A, 0); 
 
     if(w->glw_class == &glw_repeatedimage)
       gi->gi_mode = GI_MODE_REPEATED_TEXTURE;
@@ -893,7 +829,7 @@ glw_image_set(glw_t *w, int init, va_list ap)
 
   if(w->glw_class == &glw_icon) {
     float siz = gi->gi_size_scale * gr->gr_fontsize_px + gi->gi_size_bias;
-    glw_set_constraints(&gi->w, siz, siz, 0, 0,
+    glw_set_constraints(&gi->w, siz, siz, 0,
 			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
   }
 }

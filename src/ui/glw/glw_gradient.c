@@ -213,8 +213,8 @@ glw_gradient_layout(glw_t *W, glw_rctx_t *rc)
   glw_root_t *gr = W->glw_root;
   int w, h, i, tiles;
 
-  w = rc->rc_size_x;
-  h = rc->rc_size_y;
+  w = rc->rc_width;
+  h = rc->rc_height;
   tiles = 1;
 
   for(i = gg->gg_tiles; i < tiles; i++) {
@@ -238,7 +238,7 @@ glw_gradient_layout(glw_t *W, glw_rctx_t *rc)
 
       r = &gg->gg_gr[0];
   
-      float u = xs * rc->rc_size_x / TILEWIDTH;
+      float u = xs * rc->rc_width / TILEWIDTH;
 
       glw_renderer_vtx_pos(r, 0, -1.0, -1.0, 0.0);
       glw_renderer_vtx_st (r, 0,  0.0,  ys);
@@ -256,7 +256,7 @@ glw_gradient_layout(glw_t *W, glw_rctx_t *rc)
 
       r = &gg->gg_gr[0];
 
-      float u = xs * (rc->rc_size_x - TILEWIDTH * 2) / TILEWIDTH;
+      float u = xs * (rc->rc_width - TILEWIDTH * 2) / TILEWIDTH;
 
       float x1 = -1.0 + 2.0 * TILEWIDTH / gg->gg_width;
       float x2 = -1.0 + 2.0 * (gg->gg_width - TILEWIDTH) / gg->gg_width;

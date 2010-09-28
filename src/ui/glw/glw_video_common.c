@@ -318,7 +318,7 @@ glw_video_set(glw_t *w, int init, va_list ap)
     gv->gv_vp = video_playback_create(gv->gv_mp);
 
     // We like fullwindow mode if possible (should be confiurable perhaps)
-    glw_set_constraints(w, 0, 0, 0, 0, GLW_CONSTRAINT_F, 0);
+    glw_set_constraints(w, 0, 0, 0, GLW_CONSTRAINT_F, 0);
     
   }
 
@@ -399,8 +399,8 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
 
   glw_scale_to_aspect(&rc0, gv->gv_dar);
 
-  gv->gv_rwidth  = rc0.rc_size_x;
-  gv->gv_rheight = rc0.rc_size_y;
+  gv->gv_rwidth  = rc0.rc_width;
+  gv->gv_rheight = rc0.rc_height;
 
   if(glw_is_focusable(w))
     glw_store_matrix(w, &rc0);

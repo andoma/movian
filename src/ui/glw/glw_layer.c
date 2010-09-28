@@ -19,6 +19,9 @@
 #include "glw.h"
 #include "glw_transitions.h"
 
+#define glw_parent_alpha glw_parent_val[0].f
+#define glw_parent_z     glw_parent_val[1].f
+
 static void
 glw_layer_select_child(glw_t *w)
 {
@@ -59,7 +62,7 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
       if(c->glw_flags & GLW_DETACHED) {
 
-	if(c->glw_parent_pos.z > 0.99) {
+	if(c->glw_parent_z > 0.99) {
 	  glw_destroy(c);
 	  continue;
 	}
@@ -70,10 +73,10 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 	a0 *= 0.25;
       }
 
-      c->glw_parent_pos.z   = GLW_LP(8, c->glw_parent_pos.z,   z);
-      c->glw_parent_misc[0] = GLW_LP(8, c->glw_parent_misc[0], a);
+      c->glw_parent_z     = GLW_LP(8, c->glw_parent_z,     z);
+      c->glw_parent_alpha = GLW_LP(8, c->glw_parent_alpha, a);
 
-      if(c->glw_parent_misc[0] > 0.01)
+      if(c->glw_parent_alpha > 0.01)
 	glw_layout0(c, rc);
     }
 
@@ -88,13 +91,8 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_CHILD_CREATED:
-    c->glw_parent_pos.x = 0.0f;
-    c->glw_parent_pos.y = 0.0f;
-    c->glw_parent_pos.z = 1.0f;
+    c->glw_parent_z = 1.0f;
 
-    c->glw_parent_scale.x = 1.0f;
-    c->glw_parent_scale.y = 1.0f;
-    c->glw_parent_scale.z = 1.0f;
     glw_layer_select_child(w);
     break;
 
@@ -124,13 +122,16 @@ glw_layer_detach(glw_t *w, glw_t *c)
 static void
 glw_layer_render(glw_t *w, glw_rctx_t *rc)
 {
-  glw_rctx_t rc0 = *rc;
+  glw_rctx_t rc0;
   glw_t *c;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-    rc0.rc_alpha = rc->rc_alpha * c->glw_parent_misc[0];
-    if(rc0.rc_alpha > 0.01)
-      glw_render_TS(c, &rc0, rc);
+    rc0 = *rc;
+    rc0.rc_alpha *= c->glw_parent_alpha;
+    if(rc0.rc_alpha < 0.01)
+      continue;
+    glw_Translatef(&rc0, 0, 0, c->glw_parent_z);
+    glw_render0(c, &rc0);
   }
 }
 

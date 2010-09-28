@@ -26,7 +26,7 @@ widget(container_x, {
       .alphaSelf = 0.2 + iir(isFocused() * 1, 8) + isHovered() * 0.1;
 
       .color = PLATE_COLOR_OTHER();
-      PLATE_GFX();
+      PLATE_GFX4();
 
       widget(label, {
 	.align = center;

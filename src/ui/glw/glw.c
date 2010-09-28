@@ -286,20 +286,15 @@ glw_attrib_set(glw_t *w, int init, va_list ap)
       break;
 
     case GLW_ATTRIB_WEIGHT:
-      glw_set_constraints(w, 0, 0, 0, va_arg(ap, double), GLW_CONSTRAINT_W,
-			  GLW_CONSTRAINT_CONF_WAF);
-      break;
-
-    case GLW_ATTRIB_ASPECT:
-      glw_set_constraints(w, 0, 0, va_arg(ap, double), 0, GLW_CONSTRAINT_A,
-			  GLW_CONSTRAINT_CONF_WAF);
+      glw_set_constraints(w, 0, 0, va_arg(ap, double), GLW_CONSTRAINT_W,
+			  GLW_CONSTRAINT_CONF_WF);
       break;
 
     case GLW_ATTRIB_WIDTH:
       glw_set_constraints(w, 
 			  va_arg(ap, double), 
 			  w->glw_req_size_y, 
-			  0, 0, 
+			  0,
 			  GLW_CONSTRAINT_X | 
 			  (w->glw_flags & GLW_CONSTRAINT_CONF_XY ?
 			   w->glw_flags & GLW_CONSTRAINT_Y : 0),
@@ -310,7 +305,7 @@ glw_attrib_set(glw_t *w, int init, va_list ap)
       glw_set_constraints(w, 
 			  w->glw_req_size_x, 
 			  va_arg(ap, double),
-			  0, 0, 
+			  0,
 			  GLW_CONSTRAINT_Y | 
 			  (w->glw_flags & GLW_CONSTRAINT_CONF_XY ?
 			   w->glw_flags & GLW_CONSTRAINT_X : 0),
@@ -1577,44 +1572,6 @@ glw_select(glw_t *p, glw_t *c)
 }
 
 
-/**
- * Render a widget with prior translation and scaling
- */
-void
-glw_render_TS(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc)
-{
-  rc->rc_size_x = prevrc->rc_size_x * c->glw_parent_scale.x;
-  rc->rc_size_y = prevrc->rc_size_y * c->glw_parent_scale.y;
-
-  glw_Translatef(rc, 
-		 c->glw_parent_pos.x,
-		 c->glw_parent_pos.y,
-		 c->glw_parent_pos.z);
-
-  glw_Scalef(rc, 
-	     c->glw_parent_scale.x,
-	     c->glw_parent_scale.y,
-	     c->glw_parent_scale.z);
-
-  c->glw_class->gc_render(c, rc);
-}
-
-
-/**
- * Render a widget with prior translation
- */
-void
-glw_render_T(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc)
-{
-  glw_Translatef(rc, 
-		 c->glw_parent_pos.x,
-		 c->glw_parent_pos.y,
-		 c->glw_parent_pos.z);
-
-  c->glw_class->gc_render(c, rc);
-}
-
-
 
 /**
  *
@@ -1622,17 +1579,51 @@ glw_render_T(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc)
 void
 glw_scale_to_aspect(glw_rctx_t *rc, float t_aspect)
 {
-  float s_aspect = rc->rc_size_x / rc->rc_size_y;
-  float a = s_aspect / t_aspect;
+  if(t_aspect * rc->rc_height < rc->rc_width) {
+    // Shrink X
+    int border = rc->rc_width - t_aspect * rc->rc_height;
+    int left  = (border + 1) / 2;
+    int right = rc->rc_width - (border / 2);
 
-  if(a > 1.0f) {
-    a = 1.0 / a;
-    glw_Scalef(rc, a, 1.0f, 1.0f);
-    rc->rc_size_x *= a;
+    float s = (right - left) / (float)rc->rc_width;
+    float t = -1.0f + (right + left) / (float)rc->rc_width;
+
+    glw_Translatef(rc, t, 0, 0);
+    glw_Scalef(rc, s, 1.0f, 1.0f);
+
+    rc->rc_width = right - left;
+
   } else {
-    glw_Scalef(rc, 1.0f, a, 1.0f);
-    rc->rc_size_y *= a;
+    // Shrink Y
+    int border = rc->rc_height - rc->rc_width / t_aspect;
+    int bottom  = (border + 1) / 2;
+    int top     = rc->rc_height - (border / 2);
+
+    float s = (top - bottom) / (float)rc->rc_height;
+    float t = -1.0f + (top + bottom) / (float)rc->rc_height;
+
+    glw_Translatef(rc, 0, t, 0);
+    glw_Scalef(rc, 1.0f, s, 1.0f);
+    rc->rc_height = top - bottom;
   }
+}
+
+/**
+ *
+ */
+void
+glw_reposition(glw_rctx_t *rc, int left, int top, int right, int bottom)
+{
+  float sx =         (right - left) / (float)rc->rc_width;
+  float tx = -1.0f + (right + left) / (float)rc->rc_width;
+  float sy =         (top - bottom) / (float)rc->rc_height;
+  float ty = -1.0f + (top + bottom) / (float)rc->rc_height;
+  
+  glw_Translatef(rc, tx, ty, 0);
+  glw_Scalef(rc, sx, sy, GLW_MIN(sx, sy));
+
+  rc->rc_width  = right - left;
+  rc->rc_height = top - bottom;
 }
 
 
@@ -1716,7 +1707,7 @@ const glw_vertex_t align_vertices[GLW_ALIGN_num] =
  *
  */
 void
-glw_set_constraints(glw_t *w, int x, int y, float a, float weight, 
+glw_set_constraints(glw_t *w, int x, int y, float weight, 
 		    int flags, int conf)
 {
   int ch = 0;
@@ -1743,23 +1734,21 @@ glw_set_constraints(glw_t *w, int x, int y, float a, float weight,
     }
   }
 
-  if((w->glw_flags | flags) & GLW_CONSTRAINT_FLAGS_WAF) {
+  if((w->glw_flags | flags) & GLW_CONSTRAINT_FLAGS_WF) {
 
-    int f = flags & GLW_CONSTRAINT_FLAGS_WAF;
+    int f = flags & GLW_CONSTRAINT_FLAGS_WF;
 
-   if(!(w->glw_flags & GLW_CONSTRAINT_CONF_WAF) ||
-       conf == GLW_CONSTRAINT_CONF_WAF) {
+   if(!(w->glw_flags & GLW_CONSTRAINT_CONF_WF) ||
+       conf == GLW_CONSTRAINT_CONF_WF) {
 
-      if(!(w->glw_req_aspect == a &&
-	   w->glw_req_weight == weight && 
-	   (w->glw_flags & GLW_CONSTRAINT_FLAGS_WAF) == f)) {
+      if(!(w->glw_req_weight == weight && 
+	   (w->glw_flags & GLW_CONSTRAINT_FLAGS_WF) == f)) {
 
 	ch = 1;
 
-	w->glw_req_aspect = a;
 	w->glw_req_weight = weight;
 	
-	w->glw_flags &= ~GLW_CONSTRAINT_FLAGS_WAF;
+	w->glw_flags &= ~GLW_CONSTRAINT_FLAGS_WF;
 	w->glw_flags |= f | conf;
       }
     }
@@ -1790,10 +1779,9 @@ glw_clear_constraints(glw_t *w)
     }
   }
 
-  if(!(w->glw_flags & GLW_CONSTRAINT_CONF_WAF)) {
-    if(w->glw_flags & GLW_CONSTRAINT_FLAGS_WAF) {
-      w->glw_flags &= ~GLW_CONSTRAINT_FLAGS_WAF;
-      w->glw_req_aspect = 0;
+  if(!(w->glw_flags & GLW_CONSTRAINT_CONF_WF)) {
+    if(w->glw_flags & GLW_CONSTRAINT_FLAGS_WF) {
+      w->glw_flags &= ~GLW_CONSTRAINT_FLAGS_WF;
       w->glw_req_weight = 0;
       ch = 1;
     }
@@ -1816,7 +1804,6 @@ glw_copy_constraints(glw_t *w, glw_t *src)
   glw_set_constraints(w, 
 		      src->glw_req_size_x,
 		      src->glw_req_size_y,
-		      src->glw_req_aspect,
 		      src->glw_req_weight,
 		      src->glw_flags & GLW_CONSTRAINT_FLAGS, 0);
 }

@@ -9,6 +9,7 @@ widget(backdrop, {
   widget(container_y, {
     
     widget(label, {
+      .hidden = select($global.media.current.pausereason, false, true);
       .align = center;
       .sizeScale = 0.75;
       .caption = $global.media.current.pausereason;
@@ -17,6 +18,7 @@ widget(backdrop, {
     widget(container_x, {
 
       widget(image, {
+	.width = $ui.fontsize * 2;
 	.hqScaling = true;
 	.source = $global.media.current.metadata.album_art ??
 	  "theme://icons/48x48/Music.png";

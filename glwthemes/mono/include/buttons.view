@@ -155,7 +155,7 @@
       .alphaSelf = 0.2 + iir(isFocused() * 1, 8) + isHovered() * 0.1;
       
       .color = PLATE_COLOR_OFF();
-      PLATE_GFX();
+      PLATE_GFX4();
       
       onEvent(activate, {
 	PROP = !PROP;
@@ -175,7 +175,7 @@
       .alphaSelf = 0.2 + iir(isFocused() * 1, 8) + isHovered() * 0.1;
       .color = PLATE_COLOR_ON();
       
-      PLATE_GFX();
+      PLATE_GFX4();
       
       onEvent(activate, {
 	PROP = !PROP;

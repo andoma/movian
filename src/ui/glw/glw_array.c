@@ -22,34 +22,72 @@
 typedef struct glw_array {
   glw_t w;
 
-  float center_y, center_y_target, center_y_max;
+  float filtered_pos;
+  int total_size;
+  int current_pos;
+  int page_size;
 
   glw_t *scroll_to_me;
 
   glw_slider_metrics_t metrics;
   
-  int child_width;
-  int child_height;
+  int child_width_fixed;
+  int child_height_fixed;
 
   int child_tiles_x;
   int child_tiles_y;
 
-  int xentries;  // items per row
+  int child_width_px;
+  int child_height_px;
+
+  int xentries;
+  int yentries;
+
+  int16_t saved_height;
+  int16_t saved_width;
 
 } glw_array_t;
+
+#define glw_parent_pos_x glw_parent_val[0].i32
+#define glw_parent_pos_y glw_parent_val[1].i32
 
 /**
  *
  */
 static void
-glw_list_update_metrics(glw_array_t *a, float max, float val)
+glw_array_update_metrics(glw_array_t *a)
 {
+  float v;
+  int do_update = 0;
+
   a->w.glw_flags &= ~GLW_UPDATE_METRICS;
-  a->metrics.knob_size = 2.0 / (max + 2.0);
-  if(max > 0)
-    a->metrics.position = val / max;
-  else
-    a->metrics.position = 0;
+
+  v = GLW_MIN(1.0, (float)a->page_size / a->total_size);
+
+  if(v != a->metrics.knob_size) {
+    do_update = 1;
+    a->metrics.knob_size = v;
+  }
+  
+  v = GLW_MAX(0, (float)a->current_pos / (a->total_size - a->page_size));
+
+  if(v != a->metrics.position) {
+    do_update = 1;
+    a->metrics.position = v;
+  }
+  
+  if(!do_update)
+    return;
+
+  if(a->total_size > a->page_size && !(a->w.glw_flags & GLW_CAN_SCROLL)) {
+    a->w.glw_flags |= GLW_CAN_SCROLL;
+    glw_signal0(&a->w, GLW_SIGNAL_CAN_SCROLL_CHANGED, NULL);
+    
+  } else if(a->total_size <= a->page_size &&
+	    a->w.glw_flags & GLW_CAN_SCROLL) {
+    a->w.glw_flags &= ~GLW_CAN_SCROLL;
+    glw_signal0(&a->w, GLW_SIGNAL_CAN_SCROLL_CHANGED, NULL);
+  }
 
   glw_signal0(&a->w, GLW_SIGNAL_SLIDER_METRICS, &a->metrics);
 }
@@ -62,66 +100,65 @@ static void
 glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
 {
   glw_t *c, *w = &a->w, *last;
-  float y = 0;
-  float size_y, t, vy;
   glw_rctx_t rc0 = *rc;
   int column = 0;
-  int xentries;
-  float size_x;
   int topedge = 1;
+  int ypos = 0;
 
   if(a->child_tiles_x && a->child_tiles_y) {
 
-    xentries = a->child_tiles_x;
-    size_y = 1.0 / a->child_tiles_y;
+    a->xentries = a->child_tiles_x;
+    a->yentries = a->child_tiles_y;
 
-    a->xentries = xentries;
-    size_x = 1.0 / xentries;
-
+    a->child_width_px  = rc->rc_width  / a->xentries;
+    a->child_height_px = rc->rc_height / a->yentries;
+    
   } else {
 
-    xentries = GLW_MAX(1, rc->rc_size_x / a->child_width);
-    a->xentries = xentries;
+    a->xentries = GLW_MAX(1, rc->rc_width  / a->child_width_fixed);
+    a->yentries = GLW_MAX(1, rc->rc_height / a->child_height_fixed);
 
-    size_x = a->child_width / rc->rc_size_x;
-    size_y = a->child_height / rc->rc_size_y;
+    a->child_width_px  = a->child_width_fixed;
+    a->child_height_px = a->child_height_fixed;
+  }
+
+  if(a->saved_height != rc->rc_height) {
+    a->saved_height = rc->rc_height;
+    a->page_size = rc->rc_height;
+    a->w.glw_flags |= GLW_UPDATE_METRICS;
+
+    if(w->glw_focused != NULL)
+      a->scroll_to_me = w->glw_focused;
   }
 
 
-  t = GLW_MIN(GLW_MAX(0, a->center_y_target), a->center_y_max);
-  a->center_y = GLW_LP(6, a->center_y, t);
+  a->current_pos = GLW_MAX(0, GLW_MIN(a->current_pos,
+				      a->total_size - a->page_size));
+  a->filtered_pos = GLW_LP(6, a->filtered_pos, a->current_pos);
 
+  rc0.rc_width  = a->child_width_px;
+  rc0.rc_height = a->child_height_px;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
 
-    vy = y + size_y;
+    c->glw_parent_pos_y = ypos - a->filtered_pos;
+    c->glw_parent_pos_x = column * a->child_width_px;
 
-    c->glw_parent_pos.y = 1.0 - vy + a->center_y;
-    c->glw_parent_pos.x = -1.0 + (2 * size_x * column) + size_x;
-
-    if(c->glw_parent_pos.y - size_y <= 1.5f &&
-       c->glw_parent_pos.y + size_y >= -1.5f) {
-
-      c->glw_parent_scale.x = size_x;
-      c->glw_parent_scale.y = size_y;
-      c->glw_parent_scale.z = size_y;
-
-      rc0.rc_size_x = rc->rc_size_x * c->glw_parent_scale.x;
-      rc0.rc_size_y = rc->rc_size_y * c->glw_parent_scale.y;
+    if(c->glw_parent_pos_y > -rc->rc_height &&
+       c->glw_parent_pos_y <  rc->rc_height * 2)
       glw_layout0(c, &rc0);
-    }
 
     if(c == a->scroll_to_me) {
       a->scroll_to_me = NULL;
      
-      if(vy + size_y - a->center_y_target > 2) {
-	t = vy + size_y - 2;
-	w->glw_flags |= GLW_UPDATE_METRICS;
-      } else if(vy - size_y - a->center_y_target < 0) {
-	t = vy - size_y;
-	w->glw_flags |= GLW_UPDATE_METRICS;
+      if(c->glw_parent_pos_y < 0) {
+	a->current_pos = ypos;
+	a->w.glw_flags |= GLW_UPDATE_METRICS;
+      } else if(c->glw_parent_pos_y + rc0.rc_height > rc->rc_height) {
+	a->current_pos = ypos + rc0.rc_height - rc->rc_height;
+	a->w.glw_flags |= GLW_UPDATE_METRICS;
       }
     }
 
@@ -131,7 +168,7 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
       c->glw_flags &= ~GLW_LEFT_EDGE;
     }
 
-    if(column == xentries - 1) {
+    if(column == a->xentries - 1) {
       c->glw_flags |= GLW_RIGHT_EDGE;
     } else {
       c->glw_flags &= ~GLW_RIGHT_EDGE;
@@ -146,8 +183,8 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
     c->glw_flags &= ~GLW_BOTTOM_EDGE; // Will be set later
 
     column++;
-    if(column == xentries) {
-      y += size_y * 2;
+    if(column == a->xentries) {
+      ypos += a->child_height_px;
       column = 0;
       topedge = 0;
     }
@@ -158,26 +195,20 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
     last->glw_flags |= GLW_BOTTOM_EDGE | GLW_RIGHT_EDGE;
     c = last;
     while((c = TAILQ_PREV(c, glw_queue, glw_parent_link)) != NULL) {
-      if(c->glw_parent_pos.y == last->glw_parent_pos.y)
+      if(c->glw_parent_pos_y == last->glw_parent_pos_y)
 	c->glw_flags |= GLW_BOTTOM_EDGE;
       else
 	break;
     }
   }
 
-  if(column != 0)
-    y += size_y * 2;
+ if(a->total_size != ypos) {
+    a->total_size = ypos;
+    a->w.glw_flags |= GLW_UPDATE_METRICS;
+  }
 
-  y = GLW_MAX(y - 2, 0);
-  
-  if(a->center_y_max != y)
-    w->glw_flags |= GLW_UPDATE_METRICS;
-
-  a->center_y_max = y;
-  a->center_y_target = t;
-
-  if(w->glw_flags & GLW_UPDATE_METRICS)
-    glw_list_update_metrics(a, y, t);
+  if(a->w.glw_flags & GLW_UPDATE_METRICS)
+    glw_array_update_metrics(a);
 }
 
 
@@ -190,34 +221,38 @@ glw_array_render(glw_t *w, glw_rctx_t *rc)
   glw_array_t *a = (glw_array_t *)w;
   glw_t *c;
   glw_rctx_t rc0;
-  float size_y;
   int t, b;
 
   if(rc->rc_alpha < 0.01)
     return;
 
-  size_y = a->child_height / rc->rc_size_y;
-
   glw_store_matrix(w, rc);
   
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
 
-    if(c->glw_parent_pos.y - size_y > 1.0f ||
-       c->glw_parent_pos.y + size_y < -1.0f)
+    if(c->glw_parent_pos_y + a->child_height_px < 0 ||
+       c->glw_parent_pos_y > rc->rc_height)
       continue;
-    
-    if(c->glw_parent_pos.y + size_y > 1.0f)
+
+
+    if(c->glw_parent_pos_y < 0)
       t = glw_clip_enable(w->glw_root, rc, GLW_CLIP_TOP);
     else
       t = -1;
 
-    if(c->glw_parent_pos.y - size_y < -1.0f)
+    if(c->glw_parent_pos_y + a->child_height_px > rc->rc_height)
       b = glw_clip_enable(w->glw_root, rc, GLW_CLIP_BOTTOM);
     else
       b = -1;
 
     rc0 = *rc;
-    glw_render_TS(c, &rc0, rc);
+    glw_reposition(&rc0, 
+		   c->glw_parent_pos_x,
+		   rc->rc_height - c->glw_parent_pos_y,
+		   c->glw_parent_pos_x + a->child_width_px,
+		   rc->rc_height - c->glw_parent_pos_y - a->child_height_px);
+
+    glw_render0(c, &rc0);
 
     if(t != -1)
       glw_clip_disable(w->glw_root, rc, t);
@@ -234,7 +269,7 @@ glw_array_render(glw_t *w, glw_rctx_t *rc)
 static void
 glw_array_scroll(glw_array_t *a, glw_scroll_t *gs)
 {
-  a->center_y_target = gs->value * a->center_y_max;
+  a->current_pos = GLW_MAX(gs->value * (a->total_size - a->page_size), 0);
 }
 
 
@@ -247,7 +282,6 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   glw_rctx_t *rc = extra;
   glw_array_t *a = (glw_array_t *)w;
   glw_pointer_event_t *gpe;
-  glw_t *c;
 
   switch(signal) {
   default:
@@ -261,13 +295,6 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     return 0;
 
   case GLW_SIGNAL_CHILD_CREATED:
-    c = extra;
-
-    c->glw_parent_pos.z = 0.0;
-
-    c->glw_parent_scale.x = 1.0;
-    c->glw_parent_scale.y = 1.0;
-    c->glw_parent_scale.z = 1.0;
     break;
 
   case GLW_SIGNAL_CHILD_DESTROYED:
@@ -279,7 +306,7 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     gpe = extra;
 
     if(gpe->type == GLW_POINTER_SCROLL) {
-      a->center_y_target += gpe->delta_y;
+      a->current_pos += a->page_size * gpe->delta_y;
       a->w.glw_flags |= GLW_UPDATE_METRICS;
     }
     break;
@@ -309,8 +336,8 @@ glw_array_set(glw_t *w, int init, va_list ap)
 
   if(init) {
     // Just something
-    a->child_width  = 100;
-    a->child_height = 100;
+    a->child_width_fixed  = 100;
+    a->child_height_fixed = 100;
     w->glw_flags2 |= GLW2_FLOATING_FOCUS;
   }
 
@@ -318,10 +345,10 @@ glw_array_set(glw_t *w, int init, va_list ap)
     attrib = va_arg(ap, int);
     switch(attrib) {
     case GLW_ATTRIB_CHILD_HEIGHT:
-      a->child_height = va_arg(ap, int);
+      a->child_height_fixed = va_arg(ap, int);
       break;
     case GLW_ATTRIB_CHILD_WIDTH:
-      a->child_width  = va_arg(ap, int);
+      a->child_width_fixed  = va_arg(ap, int);
       break;
     case GLW_ATTRIB_CHILD_TILES_X:
       a->child_tiles_x = va_arg(ap, int);

@@ -31,10 +31,12 @@ typedef struct glw_freefloat {
 } glw_freefloat_t;
 
 
-#define glw_parent_v  glw_parent_misc[0]
-#define glw_parent_s  glw_parent_misc[1]
-#define glw_parent_s2 glw_parent_misc[2]
-#define glw_parent_a  glw_parent_misc[3]
+#define glw_parent_v  glw_parent_val[0].f
+#define glw_parent_s  glw_parent_val[1].f
+#define glw_parent_s2 glw_parent_val[2].f
+#define glw_parent_a  glw_parent_val[3].f
+#define glw_parent_x  glw_parent_val[4].f
+#define glw_parent_y  glw_parent_val[5].f 
 
 /**
  *
@@ -71,8 +73,8 @@ glw_freefloat_render(glw_t *w, glw_rctx_t *rc)
     rc0.rc_alpha *= a;
 
     glw_Translatef(&rc0, 
-		   c->glw_parent_pos.x,
-		   c->glw_parent_pos.y,
+		   c->glw_parent_x,
+		   c->glw_parent_y,
 		   -5 + c->glw_parent_v * 5);
 
     glw_Rotatef(&rc0, 
@@ -98,12 +100,12 @@ setup_floater(glw_freefloat_t *ff, glw_t *c)
   c->glw_parent_s2 = 0;
 
   c->glw_parent_a = showtime_get_ts();
-  c->glw_parent_pos.x = -1.0 + (ff->xpos % ff->num_visible) * 2 /
+  c->glw_parent_x = -1.0 + (ff->xpos % ff->num_visible) * 2 /
     ((float)ff->num_visible - 1);
 
   ff->rand = ff->rand * 1664525 + 1013904223;
 
-  c->glw_parent_pos.y = (ff->rand & 0xffff) / 32768.0 - 1.0;
+  c->glw_parent_y = (ff->rand & 0xffff) / 32768.0 - 1.0;
 }
 
 

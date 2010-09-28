@@ -61,37 +61,22 @@ glw_displacement_callback(glw_t *w, void *opaque,
   glw_displacement_t *gd = (glw_displacement_t *)w;
   glw_t *c;
   glw_rctx_t *rc, rc0;
-  float bl, bt, br, bb;
-  float cvex[2][2];
 
   switch(signal) {
   default:
     break;
 
   case GLW_SIGNAL_LAYOUT:
-    rc = extra;
-
-    bl = gd->gd_border_left;
-    bt = gd->gd_border_top;
-    br = gd->gd_border_right;
-    bb = gd->gd_border_bottom;
-
-    cvex[0][0] = GLW_MIN(-1.0 + 2.0 * bl / rc->rc_size_x, 0.0);
-    cvex[1][0] = GLW_MAX( 1.0 - 2.0 * br / rc->rc_size_x, 0.0);
-    cvex[0][1] = GLW_MAX( 1.0 - 2.0 * bt / rc->rc_size_y, 0.0);
-    cvex[1][1] = GLW_MIN(-1.0 + 2.0 * bb / rc->rc_size_y, 0.0);
-    
-    gd->gd_border_xt = (cvex[1][0] + cvex[0][0]) * 0.5f;
-    gd->gd_border_yt = (cvex[0][1] + cvex[1][1]) * 0.5f;
-    gd->gd_border_xs = (cvex[1][0] - cvex[0][0]) * 0.5f;
-    gd->gd_border_ys = (cvex[0][1] - cvex[1][1]) * 0.5f;
-
     if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)
       break;
-    
+
+    rc = extra;
+    int width  = rc->rc_width - gd->gd_border_left - gd->gd_border_right;
+    int height = rc->rc_height - gd->gd_border_top - gd->gd_border_bottom;
+
     rc0 = *rc;
-    rc0.rc_size_x = rc->rc_size_x * gd->gd_border_xs * gd->gd_scale_x;
-    rc0.rc_size_y = rc->rc_size_y * gd->gd_border_ys * gd->gd_scale_y;
+    rc0.rc_width  = width;
+    rc0.rc_height = height;
     
     glw_layout0(c, &rc0);
     break;
@@ -114,7 +99,6 @@ glw_displacement_render(glw_t *w, glw_rctx_t *rc)
   glw_displacement_t *gd = (glw_displacement_t *)w;
   glw_t *c;
   glw_rctx_t rc0 = *rc;
-  float xs, ys;
 
   if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)
     return;
@@ -136,13 +120,11 @@ glw_displacement_render(glw_t *w, glw_rctx_t *rc)
 		gd->gd_rotate_y,
 		gd->gd_rotate_z);
 
-  glw_Translatef(&rc0, gd->gd_border_xt, gd->gd_border_yt, 0.0f);
-  xs = gd->gd_border_xs;
-  ys = gd->gd_border_ys;
-
-  glw_Scalef(&rc0, xs, ys, 1.0f);
-  rc0.rc_size_x = rc->rc_size_x * xs * gd->gd_scale_x;
-  rc0.rc_size_y = rc->rc_size_y * ys * gd->gd_scale_y;
+  glw_reposition(&rc0,
+		 gd->gd_border_left,
+		 rc->rc_height - gd->gd_border_top,
+		 rc->rc_width  - gd->gd_border_right,
+		 gd->gd_border_bottom);
 
   rc0.rc_alpha = rc->rc_alpha * w->glw_alpha;
   glw_render0(c, &rc0);

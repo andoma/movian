@@ -37,8 +37,8 @@ typedef struct glw_view_loader {
 } glw_view_loader_t;
 
 
-#define glw_parent_vl_cur glw_parent_misc[0]
-#define glw_parent_vl_tgt glw_parent_misc[1]
+#define glw_parent_vl_cur glw_parent_val[0].f
+#define glw_parent_vl_tgt glw_parent_val[1].f
 
 /**
  *

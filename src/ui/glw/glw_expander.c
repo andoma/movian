@@ -57,9 +57,9 @@ update_constraints(glw_expander_t *exp)
     glw_focus_open_path(&exp->w);
 
   if(exp->w.glw_class == &glw_expander_x)
-    glw_set_constraints(&exp->w, e, o, 0, 0, GLW_CONSTRAINT_X | f, 0);
+    glw_set_constraints(&exp->w, e, o, 0, GLW_CONSTRAINT_X | f, 0);
   else
-    glw_set_constraints(&exp->w, o, e, 0, 0, GLW_CONSTRAINT_Y | f, 0);
+    glw_set_constraints(&exp->w, o, e, 0, GLW_CONSTRAINT_Y | f, 0);
 }
 
 
@@ -88,20 +88,20 @@ glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     rc0 = *rc;
 
     if(exp->w.glw_class == &glw_expander_x) {
-      rc0.rc_size_x = c->glw_req_size_x;
+      rc0.rc_width = c->glw_req_size_x;
 
-      if(rc0.rc_size_x == 0)
-	rc0.rc_size_x = exp->last;
+      if(rc0.rc_width == 0)
+	rc0.rc_width = exp->last;
       else
-	exp->last = rc0.rc_size_x;
+	exp->last = rc0.rc_width;
 
     } else {
-      rc0.rc_size_y = c->glw_req_size_y;
+      rc0.rc_height = c->glw_req_size_y;
 
-      if(rc0.rc_size_y == 0)
-	rc0.rc_size_y = exp->last;
+      if(rc0.rc_height == 0)
+	rc0.rc_height = exp->last;
       else
-	exp->last = rc0.rc_size_y;
+	exp->last = rc0.rc_height;
     }
     glw_layout0(c, &rc0);
     break;
@@ -125,9 +125,9 @@ glw_expander_render(glw_t *w, glw_rctx_t *rc)
   rc0.rc_alpha *= w->glw_alpha;
 
   if(w->glw_class == &glw_expander_x)
-    rc0.rc_size_x = c->glw_req_size_x;
+    rc0.rc_width = c->glw_req_size_x;
   else
-    rc0.rc_size_y = c->glw_req_size_y;
+    rc0.rc_height = c->glw_req_size_y;
   c->glw_class->gc_render(c, &rc0);
 }
 
