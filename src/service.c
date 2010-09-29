@@ -238,7 +238,7 @@ service_set_title(service_t *s, const char *title)
 void
 service_set_icon(service_t *s, const char *icon)
 {
-
+  prop_set_string(prop_create(s->s_root, "icon"), icon);
 }
 
 
