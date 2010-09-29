@@ -19,7 +19,9 @@
     plugin.config.enabled = v;
     if(v) {
       plugin.service = showtime.createService("SVT Play",
-					      "svtplay:start", "tv");
+					      "svtplay:start", "tv",
+					      plugin.config.path + "svtplay_square.png");
+
     } else {
       delete plugin.service;
     }
