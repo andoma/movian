@@ -47,22 +47,17 @@ widget(container_x, {
 	});
       });
 
-      widget(container_x, {
-	space(0.1);
+      widget(array, {
+	.id = "array";
 	
-	widget(array, {
-	  .id = "array";
-	  
-	  .childWidth = 170;
-	  .childHeight = 128 + $ui.fontsize + 10;
-	  
-	  cloner($page.model.nodes, loader, {
-	    .time = 0.3;
-	    .noInitialTransform = true;
+	.childWidth = 200;
+	.childHeight = 140 + $ui.fontsize;
+	
+	cloner($page.model.nodes, loader, {
+	  .time = 0.3;
+	  .noInitialTransform = true;
 	  .source = "theme://directoryviews/array/" + $self.type + ".view";
-	  });
 	});
-	space(0.1);
       });
     });
   });

@@ -4,31 +4,30 @@
 
 #define SIMPLE_ITEM(TITLE, EVENT, COLOR, TOP) {
 
-widget(backdrop, {
-  .autoRefocusable = true;
-  .focusable = 1.0;
-  .focusOnClick = true;
-  onEvent(activate, EVENT);
-
-  .color = select(isFocused(), COLOR, COLOR * 0.25);
-
-  PLATE_GFX3();
-
   widget(container_y, {
+    .autoRefocusable = true;
+    .focusable = 1.0;
+    .focusOnClick = true;
+    onEvent(activate, EVENT);
 
     TOP;
     
-  
-    HORIZONTAL_SEPARATOR();
+    widget(backdrop, {
 
-    widget(label, {
-      .color = select(isFocused(), [1.0, 1.0, 1.0], COLOR);
-      .caption = TITLE;
-      .ellipsize = true;
-      .padding = [2, 0, 0, 0];
-   });
+      PLATE_GFX();
+
+      .color = COLOR;
+      .alphaSelf = 0.05 + iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
+    
+      widget(label, {
+	.sizeScale = 0.75;
+	.align = center;
+	.ellipsize = true;
+	.caption = TITLE;
+	.color = select(isFocused(), [1.0, 1.0, 1.0], COLOR);
+      });
+    });
   });
-});
 }
 
 
@@ -38,15 +37,17 @@ widget(backdrop, {
     .color = select(isFocused(), [1.0, 1.0, 1.0], COLOR);
     .source =  ICON;
     .shadow = true;
+    .align = bottom;
   }));
 }
 
 #define SIMPLE_ITEM_IMAGE(TITLE, IMAGE, EVENT, COLOR) {
 
   SIMPLE_ITEM(TITLE, EVENT, COLOR, widget(image, {
-    .color = select(isFocused(), [1.0, 1.0, 1.0], [0.5, 0.5, 0.5]);
+    .color = [1,1,1] * 0.5 * isFocused() + 0.2 * isHovered() + 0.0;
     .source = IMAGE;
     .hqScaling = true;
+    .align = bottom;
   }));
 }
 
@@ -57,6 +58,8 @@ widget(backdrop, {
     .hqScaling = select(IMAGE, true, false);
     .shadow    = select(IMAGE, false, true);
     .color = select(isFocused(),  [1.0, 1.0, 1.0],
-		    select(IMAGE, [0.5, 0.5, 0.5], COLOR));
+		    select(IMAGE, [0.5, 0.5, 0.5], COLOR) + 
+		    select(isHovered(), 1, 0) * [0.2, 0.2, 0.2]);
+
   }));
 }
