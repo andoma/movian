@@ -3137,13 +3137,7 @@ spotify_enable(void)
   if(spotify_service == NULL)
     spotify_service = service_create("Spotify",
 				     "spotify:start",
-				     SVC_TYPE_MUSIC, NULL, 0);
-#if 0  
-  if(svc_newalb == NULL)
-    svc_newalb = service_create("Spotify new albums",
-				"spotify:search:tag:new",
-				SVC_TYPE_MUSIC, NULL, 0);
-#endif
+				     SVC_TYPE_MUSIC, SPOTIFY_LOGO_URL, 0);
 }
 
 
