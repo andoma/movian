@@ -123,22 +123,22 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
       rc0.rc_height = rc->rc_width / 10;
     }
     
-    c->glw_parent_pos = ypos - l->filtered_pos;
+    c->glw_parent_pos = ypos;
     c->glw_parent_height = rc0.rc_height;
     c->glw_norm_weight = rc0.rc_height * IH;
     
 
-    if(c->glw_parent_pos > -rc->rc_height &&
-       c->glw_parent_pos <  rc->rc_height * 2)
+    if(ypos - l->filtered_pos > -rc->rc_height &&
+       ypos - l->filtered_pos <  rc->rc_height * 2)
       glw_layout0(c, &rc0);
 
     if(c == l->scroll_to_me) {
       l->scroll_to_me = NULL;
      
-      if(c->glw_parent_pos < 0) {
+      if(ypos - l->filtered_pos < 0) {
 	l->current_pos = ypos;
 	l->w.glw_flags |= GLW_UPDATE_METRICS;
-      } else if(c->glw_parent_pos + rc0.rc_height > rc->rc_height) {
+      } else if(ypos - l->filtered_pos + rc0.rc_height > rc->rc_height) {
 	l->current_pos = ypos + rc0.rc_height - rc->rc_height;
 	l->w.glw_flags |= GLW_UPDATE_METRICS;
       }
@@ -167,41 +167,46 @@ static void
 glw_list_render_y(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c;
-  glw_rctx_t rc0;
+  glw_list_t *l = (glw_list_t *)w;
+  glw_rctx_t rc0, rc1;
   int t, b;
+  float y;
 
   if(rc->rc_alpha < 0.01)
     return;
 
   glw_store_matrix(w, rc);
 
+  rc0 = *rc;
+  glw_Translatef(&rc0, 0, 2.0 * l->filtered_pos / rc->rc_height, 0);
+  
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
-  
-    if(c->glw_parent_pos + c->glw_parent_height < 0 ||
-       c->glw_parent_pos > rc->rc_height)
+
+    y = c->glw_parent_pos - l->filtered_pos;
+    if(y + c->glw_parent_height < 0 || y > rc->rc_height)
       continue;
 
 
-    if(c->glw_parent_pos < 0)
+    if(y < 0)
       t = glw_clip_enable(w->glw_root, rc, GLW_CLIP_TOP);
     else
       t = -1;
 
-    if(c->glw_parent_pos + c->glw_parent_height > rc->rc_height)
+    if(y + c->glw_parent_height > rc->rc_height)
       b = glw_clip_enable(w->glw_root, rc, GLW_CLIP_BOTTOM);
     else
       b = -1;
 
-    rc0 = *rc;
-    glw_reposition(&rc0, 
+    rc1 = rc0;
+    glw_reposition(&rc1, 
 		   0,
 		   rc->rc_height - c->glw_parent_pos,
 		   rc->rc_width,
 		   rc->rc_height - c->glw_parent_pos - c->glw_parent_height);
 
-    glw_render0(c, &rc0);
+    glw_render0(c, &rc1);
 
     if(t != -1)
       glw_clip_disable(w->glw_root, rc, t);
