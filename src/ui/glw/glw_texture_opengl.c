@@ -331,6 +331,7 @@ texture_load_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
   case PIX_FMT_Y400A:
     dst_pix_fmt = PIX_FMT_Y400A;
     break;
+  case PIX_FMT_BGRA:
   case PIX_FMT_RGBA:
     dst_pix_fmt = PIX_FMT_RGBA;
     break;
@@ -366,6 +367,7 @@ texture_load_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
     glt->glt_ext_type = GL_UNSIGNED_BYTE;
     break;
 
+  case PIX_FMT_BGRA:
   case PIX_FMT_RGBA:
     bpp = 4;
     glt->glt_format = GL_RGBA;
