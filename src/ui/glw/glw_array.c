@@ -103,7 +103,8 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
   glw_rctx_t rc0 = *rc;
   int column = 0;
   int topedge = 1;
-  int ypos = 0;
+  int ypos;
+  int xspacing = 0, yspacing = 0;
 
   if(a->child_tiles_x && a->child_tiles_y) {
 
@@ -120,6 +121,12 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
 
     a->child_width_px  = a->child_width_fixed;
     a->child_height_px = a->child_height_fixed;
+
+    int xspill = rc->rc_width  - (a->xentries * a->child_width_fixed);
+    int yspill = rc->rc_height - (a->yentries * a->child_height_fixed);
+
+    xspacing = xspill / (a->xentries + 1);
+    yspacing = yspill / (a->yentries + 1);
   }
 
   if(a->saved_height != rc->rc_height) {
@@ -138,13 +145,14 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
 
   rc0.rc_width  = a->child_width_px;
   rc0.rc_height = a->child_height_px;
+  ypos = yspacing;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
 
     c->glw_parent_pos_y = ypos - a->filtered_pos;
-    c->glw_parent_pos_x = column * a->child_width_px;
+    c->glw_parent_pos_x = column * (xspacing + a->child_width_px) + xspacing;
 
     if(c->glw_parent_pos_y > -rc->rc_height &&
        c->glw_parent_pos_y <  rc->rc_height * 2)
@@ -184,11 +192,15 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
 
     column++;
     if(column == a->xentries) {
-      ypos += a->child_height_px;
+      ypos += a->child_height_px + yspacing;
       column = 0;
       topedge = 0;
     }
   }
+
+  if(column != 0)
+    ypos += a->child_height_px;
+
 
   last = TAILQ_LAST(&w->glw_childs, glw_queue);
   if(last != NULL) {
