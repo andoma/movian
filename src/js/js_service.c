@@ -50,13 +50,15 @@ js_createService(JSContext *cx, JSObject *obj, uintN argc,
   const char *title;
   const char *url;
   const char *type;
+  const char *icon = NULL;
   JSObject *robj;
   service_t *s;
 
-  if (!JS_ConvertArguments(cx, argc, argv, "sss", &title, &url, &type))
+  if (!JS_ConvertArguments(cx, argc, argv, "sss/s",
+			   &title, &url, &type, &icon))
     return JS_FALSE;
 
-  s = service_create(title, url, service_str2type(type), NULL, 0);
+  s = service_create(title, url, service_str2type(type), icon, 0);
   robj = JS_NewObjectWithGivenProto(cx, &service_class, NULL, NULL);
   JS_SetPrivate(cx, robj, s);
   *rval = OBJECT_TO_JSVAL(robj);
