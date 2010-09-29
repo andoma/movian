@@ -13,8 +13,9 @@
 
     plugin.config.enabled = v;
     if(v) {
-      plugin.service = showtime.createService("Headweb genres",
-					      PREFIX + "genres", "video");
+      plugin.service = showtime.createService("Headweb",
+					      PREFIX + "genres", "video",
+					     plugin.config.path + "headweb_square.png");
     } else {
       delete plugin.service;
     }
