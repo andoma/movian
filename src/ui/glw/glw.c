@@ -1725,6 +1725,31 @@ glw_dispatch_event(uii_t *uii, event_t *e)
     return;
   }
 
+  if(!(event_is_action(e, ACTION_SEEK_FAST_BACKWARD) ||
+       event_is_action(e, ACTION_SEEK_BACKWARD) ||
+       event_is_action(e, ACTION_SEEK_FAST_FORWARD) ||
+       event_is_action(e, ACTION_SEEK_FORWARD) ||
+       event_is_action(e, ACTION_PLAYPAUSE) ||
+       event_is_action(e, ACTION_PLAY) ||
+       event_is_action(e, ACTION_PAUSE) ||
+       event_is_action(e, ACTION_STOP) ||
+       event_is_action(e, ACTION_EJECT) ||
+       event_is_action(e, ACTION_PREV_TRACK) ||
+       event_is_action(e, ACTION_NEXT_TRACK) ||
+       event_is_action(e, ACTION_SHOW_MEDIA_STATS) ||
+       event_is_action(e, ACTION_SHUFFLE) ||
+       event_is_action(e, ACTION_REPEAT) ||
+       event_is_action(e, ACTION_NEXT_CHANNEL) ||
+       event_is_action(e, ACTION_PREV_CHANNEL) ||
+       event_is_type(e, EVENT_SELECT_TRACK))) {
+    
+    if(glw_kill_screensaver(gr)) {
+      event_unref(e);
+      glw_unlock(gr);
+      return;
+    }
+  }
+
   if(event_is_action(e, ACTION_RELOAD_UI)) {
     glw_load_universe(gr);
     event_unref(e);

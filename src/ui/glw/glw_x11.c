@@ -281,7 +281,7 @@ window_open(glw_x11_t *gx11, int fullscreen)
   char buf[60];
   int fevent, x, y, w, h;
 
-  winAttr.event_mask = KeyPressMask | StructureNotifyMask |
+  winAttr.event_mask = KeyPressMask | KeyReleaseMask | StructureNotifyMask |
     ButtonPressMask | ButtonReleaseMask |
     PointerMotionMask | ButtonMotionMask | EnterWindowMask | LeaveWindowMask;
 
@@ -717,7 +717,7 @@ static const struct {
 /**
  *
  */
-static void
+static int
 gl_keypress(glw_x11_t *gx11, XEvent *event)
 {
   char str[16], c;
@@ -747,6 +747,7 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
   if(len > 1) {
     buf[0] = 0;
     s = str;
+    int something = 0;
     while((n = mbrtowc(&wc, s, len, &ps)) > 0) {
       strncpy(buf, s, n);
       buf[n] = '\0';
@@ -755,8 +756,9 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
       glw_x11_dispatch_event(&gx11->gr.gr_uii, e);
       s += n;
       len -= n;
+      something = 1;
     }
-    return;
+    return something;
   } else if((state & ~ShiftMask) == 0 && len == 1) {
     c = str[0];
     switch(c) {
@@ -839,8 +841,11 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
     }
     e = event_create_str(EVENT_KEYDESC, buf);
   }
-  if(e != NULL)
+  if(e != NULL) {
     glw_x11_dispatch_event(&gx11->gr.gr_uii, e);
+    return 1;
+  }
+  return 0;
 }
 
 /**
@@ -901,6 +906,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
   struct timespec tp;
   int64_t start;
   int frame = 0;
+  int pending_screensaver_kill = 0;
 
   clock_gettime(CLOCK_MONOTONIC, &tp);
   start = (int64_t)tp.tv_sec * 1000000LL + tp.tv_nsec / 1000;
@@ -967,8 +973,12 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	break;
       case KeyPress:
 	hide_cursor(gx11);
-	if(!glw_kill_screensaver(&gx11->gr))
-	  gl_keypress(gx11, &event);
+	pending_screensaver_kill = !gl_keypress(gx11, &event);
+	break;
+
+      case KeyRelease:
+	if(pending_screensaver_kill)
+	  glw_kill_screensaver(&gx11->gr);
 	break;
 
       case ConfigureNotify:

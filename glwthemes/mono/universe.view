@@ -295,5 +295,5 @@ widget(deck, {
 
   .page = $ui.screensaverActive;
   .effect = blend;
-  .time = 1;
+  .time = 0.5;
 });
