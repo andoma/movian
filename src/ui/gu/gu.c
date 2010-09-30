@@ -122,7 +122,7 @@ resolvetab(gu_window_t *gw, int page_num)
   gu_tab_t *gt;
   c = gtk_notebook_get_nth_page(GTK_NOTEBOOK(gw->gw_notebook), page_num);
   LIST_FOREACH(gt, &gw->gw_tabs, gt_link)
-    if(c == gt->gt_page_container)
+    if(c == gt->gt_notebook)
       return gt;
   return NULL;
 
@@ -228,7 +228,7 @@ gu_tab_destroy(gu_tab_t *gt)
 {
   gu_window_t *gw = gt->gt_gw;
 
-  gtk_widget_destroy(gt->gt_page_container);
+  gtk_widget_destroy(gt->gt_notebook);
 
   prop_destroy(gt->gt_nav);
 
@@ -314,12 +314,13 @@ gu_tab_create(gu_window_t *gw, prop_t *nav, int select)
   }
 
 
-  gt->gt_page_container = gtk_vbox_new(FALSE, 0);
-  gtk_widget_show_all(gt->gt_page_container);
-  gtk_container_set_border_width(GTK_CONTAINER(gt->gt_page_container), 0);
+  gt->gt_notebook = gtk_notebook_new();
+  gtk_widget_show(gt->gt_notebook);
+
+  gtk_notebook_set_show_border(GTK_NOTEBOOK(gt->gt_notebook), 0);
+  gtk_notebook_set_show_tabs(GTK_NOTEBOOK(gt->gt_notebook), 0);
 
   build_tab_header(gt);
-
 
   s = prop_subscribe(0,
 		     PROP_TAG_NAME("nav", "pages"),
@@ -328,16 +329,16 @@ gu_tab_create(gu_window_t *gw, prop_t *nav, int select)
 		     PROP_TAG_NAMED_ROOT, gt->gt_nav, "nav",
 		     NULL);
 
-  gu_unsubscribe_on_destroy(GTK_OBJECT(gt->gt_page_container), s);
+  gu_unsubscribe_on_destroy(GTK_OBJECT(gt->gt_notebook), s);
 
 
   // Add to notebook
 
   idx = gtk_notebook_append_page(GTK_NOTEBOOK(gw->gw_notebook),
-				 gt->gt_page_container, gt->gt_label);
+				 gt->gt_notebook, gt->gt_label);
 
   gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(gw->gw_notebook), 
-				   gt->gt_page_container, 1);
+				   gt->gt_notebook, 1);
 
 
   if(select)

@@ -99,9 +99,11 @@ gu_nav_page_create(gu_tab_t *gt, prop_t *p)
   prop_ref_inc(p);
 
   gnp->gnp_pagebin = gtk_vbox_new(FALSE, 0);
-  gtk_container_set_border_width(GTK_CONTAINER(gnp->gnp_pagebin), 0);
-  gtk_container_add(GTK_CONTAINER(gt->gt_page_container), gnp->gnp_pagebin);
   gtk_widget_show(gnp->gnp_pagebin);
+  gtk_container_set_border_width(GTK_CONTAINER(gnp->gnp_pagebin), 0);
+
+  gtk_notebook_append_page(GTK_NOTEBOOK(gt->gt_notebook), gnp->gnp_pagebin,
+			   NULL);
 
   LIST_INSERT_HEAD(&gt->gt_pages, gnp, gnp_link);
 
@@ -147,15 +149,26 @@ gu_nav_page_find(gu_tab_t *gt, prop_t *p)
 static void
 gu_nav_page_display(gu_tab_t *gt, gu_nav_page_t *gnp)
 {
+  int i, n;
+  GtkWidget *c;
+
   if(gt->gt_page_current == gnp)
     return;
 
-  if(gt->gt_page_current != NULL)
-    gtk_widget_hide(gt->gt_page_current->gnp_pagebin);
+  n = gtk_notebook_get_n_pages(GTK_NOTEBOOK(gt->gt_notebook));
+
+  for(i = 0; i < n; i++) {
+    c = gtk_notebook_get_nth_page(GTK_NOTEBOOK(gt->gt_notebook), i);
+    if(c == gnp->gnp_pagebin)
+      break;
+  }
+
+  if(i == n)
+    abort();
+
+  gtk_notebook_set_current_page(GTK_NOTEBOOK(gt->gt_notebook), i);
 
   gt->gt_page_current = gnp;
-  gtk_widget_show(gnp->gnp_pagebin);
-
   gu_fullwindow_update(gnp->gnp_gt->gt_gw);
 }
 

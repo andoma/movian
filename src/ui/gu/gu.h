@@ -98,7 +98,7 @@ typedef struct gu_tab {
 
   GtkWidget *gt_label;
 
-  GtkWidget *gt_page_container;
+  GtkWidget *gt_notebook;
 
   struct gu_nav_page_list gt_pages;
   struct gu_nav_page *gt_page_current;
