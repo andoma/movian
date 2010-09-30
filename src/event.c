@@ -210,6 +210,8 @@ static struct strtab actionnames[] = {
   { "Shuffle",               ACTION_SHUFFLE },
   { "Repeat",                ACTION_REPEAT },
 
+  { "EnableScreenSaver",     ACTION_ENABLE_SCREENSAVER },
+
 };
 
 

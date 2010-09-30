@@ -76,6 +76,7 @@ static int
 top_event_handler(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
 {
   event_t *e = extra;
+  glw_root_t *gr = opaque;
 
   if(sig != GLW_SIGNAL_EVENT_BUBBLE)
     return 0;
@@ -83,7 +84,13 @@ top_event_handler(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
   if(e->e_type_x == EVENT_KEYDESC)
     return 0;
 
-  event_dispatch(e);
+  if(event_is_action(e, ACTION_ENABLE_SCREENSAVER)) {
+    gr->gr_screensaver_force_enable = 1;
+    event_unref(e);
+  } else {
+    event_dispatch(e);
+  }
+
   return 1;
 }
 
@@ -100,6 +107,19 @@ glw_settings_save(void *opaque, htsmsg_t *msg)
   assert(msg == gr->gr_settings_store);
   htsmsg_store_save(msg, "displays/%s", gr->gr_settings_instance);
 }
+
+
+/**
+ *
+ */
+static void
+glw_set_screensaver_delay(void *opaque, int v)
+{
+  glw_root_t *gr = opaque;
+
+  gr->gr_screensaver_delay = v;
+}
+
 
 /**
  *
@@ -133,6 +153,15 @@ glw_init_settings(glw_root_t *gr, const char *instance,
 			SETTINGS_INITIAL_UPDATE, "px", gr->gr_courier,
 			glw_settings_save, gr);
 
+  gr->gr_setting_screensaver =
+    settings_create_int(gr->gr_settings, "screensaver",
+			"Screensaver delay",
+			10, gr->gr_settings_store, 1, 60, 1,
+			glw_set_screensaver_delay, gr,
+			SETTINGS_INITIAL_UPDATE, " min", gr->gr_courier,
+			glw_settings_save, gr);
+
+
   prop_link(settings_get_value(gr->gr_setting_fontsize),
 	    prop_create(gr->gr_uii.uii_prop, "fontsize"));
 
@@ -141,6 +170,11 @@ glw_init_settings(glw_root_t *gr, const char *instance,
 
   gr->gr_is_fullscreen = 
     prop_create(gr->gr_uii.uii_prop, "fullscreen");
+
+  gr->gr_screensaver_active =
+    prop_create(gr->gr_uii.uii_prop, "screensaverActive");
+
+  prop_set_int(gr->gr_screensaver_active, 0);
 }
 
 /**
@@ -479,6 +513,18 @@ glw_signal_handler_clean(glw_t *w)
   }
 }
 
+/**
+ *
+ */
+static int
+glw_screensaver_is_active(glw_root_t *gr)
+{
+  return gr->gr_screensaver_force_enable ||
+    (gr->gr_is_fullscreen && gr->gr_framerate && gr->gr_screensaver_delay &&
+     (gr->gr_screensaver_counter > 
+      gr->gr_screensaver_delay * gr->gr_framerate * 60));
+}
+
 
 
 /**
@@ -499,11 +545,16 @@ glw_prepare_frame(glw_root_t *gr, int flags)
       double hz = 128000000.0 / d;
 
       prop_set_float(prop_create(gr->gr_uii.uii_prop, "framerate"), hz);
+      gr->gr_framerate = hz;
     }
     gr->gr_hz_sample = gr->gr_frame_start;
   }
 
   gr->gr_frames++;
+
+  gr->gr_screensaver_counter++;
+
+  prop_set_int(gr->gr_screensaver_active, glw_screensaver_is_active(gr));
 
   prop_courier_poll(gr->gr_courier);
 
@@ -1487,10 +1538,9 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
   glw_pointer_event_t gpe0;
   float x, y;
   glw_t *hover = NULL;
-
-
   float p[3];
   float dir[3];
+
 
   p[0] = gpe->x;
   p[1] = gpe->y;
@@ -1500,8 +1550,11 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
   dir[1] = p[1] - gpe->y * 42.38; // this camera and projection matrix
   dir[2] = p[2] - -100;
  
-  if(gpe->type != GLW_POINTER_MOTION_REFRESH)
+  if(gpe->type != GLW_POINTER_MOTION_REFRESH) {
     runcontrol_activity();
+    gr->gr_screensaver_counter = 0;
+    gr->gr_screensaver_force_enable = 0;
+  }
 
   /* If a widget has grabbed to pointer (such as when holding the button
      on a slider), dispatch events there */
@@ -1627,6 +1680,19 @@ glw_reposition(glw_rctx_t *rc, int left, int top, int right, int bottom)
 }
 
 
+/**
+ *
+ */
+int
+glw_kill_screensaver(glw_root_t *gr)
+{
+  if(glw_screensaver_is_active(gr)) {
+    gr->gr_screensaver_counter = 0;
+    gr->gr_screensaver_force_enable = 0;
+    return 1;
+  }
+  return 0;
+}
 
 /**
  *
@@ -1640,7 +1706,7 @@ glw_dispatch_event(uii_t *uii, event_t *e)
   runcontrol_activity();
 
   glw_lock(gr);
-
+ 
   if(e->e_type_x == EVENT_KEYDESC) {
     event_t *e2;
     

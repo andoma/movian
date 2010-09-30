@@ -465,6 +465,7 @@ typedef struct glw_root {
   struct glw_queue gr_destroyer_queue;
 
   int gr_frameduration;
+  int gr_framerate;
 
   struct glw_head gr_active_list;
   struct glw_head gr_active_flush_list;
@@ -481,7 +482,16 @@ typedef struct glw_root {
   struct glw_video_list gr_video_decoders;
   int64_t gr_frame_start;     // Timestamp when we started rendering frame
   int64_t gr_hz_sample;
-  prop_t *gr_is_fullscreen;
+  prop_t *gr_is_fullscreen;   // Set if our window is in fullscreen
+
+  /**
+   * Screensaver
+   */
+
+  int gr_screensaver_counter; // In frames
+  int gr_screensaver_delay;   // In minutes
+  int gr_screensaver_force_enable;
+  prop_t *gr_screensaver_active;
 
   /**
    * Font renderer
@@ -537,6 +547,8 @@ typedef struct glw_root {
   htsmsg_t *gr_settings_store;  // Loaded settings
 
   setting_t *gr_setting_fontsize;
+
+  setting_t *gr_setting_screensaver;
 
 } glw_root_t;
 
@@ -1152,5 +1164,7 @@ glw_last_widget(glw_t *w)
 }
 
 void glw_set_fullscreen(glw_root_t *gr, int fullscreen);
+
+int glw_kill_screensaver(glw_root_t *gr);
 
 #endif /* GLW_H */

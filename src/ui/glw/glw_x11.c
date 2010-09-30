@@ -967,7 +967,8 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	break;
       case KeyPress:
 	hide_cursor(gx11);
-	gl_keypress(gx11, &event);
+	if(!glw_kill_screensaver(&gx11->gr))
+	  gl_keypress(gx11, &event);
 	break;
 
       case ConfigureNotify:

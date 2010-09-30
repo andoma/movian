@@ -100,6 +100,8 @@ typedef enum {
   ACTION_SHUFFLE,
   ACTION_REPEAT,
 
+  ACTION_ENABLE_SCREENSAVER,
+
   ACTION_mappable_end,
 } action_type_t;
 

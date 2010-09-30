@@ -237,6 +237,9 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
   switch(signal) {
   case GLW_SIGNAL_LAYOUT:
+    // Reset screensaver counter if we are displaying video
+    w->glw_root->gr_screensaver_counter = 0;
+
     if(gv->gv_sub.gvo_child != NULL)
       glw_layout0(gv->gv_sub.gvo_child, extra);
 
