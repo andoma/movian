@@ -1686,12 +1686,10 @@ glw_reposition(glw_rctx_t *rc, int left, int top, int right, int bottom)
 int
 glw_kill_screensaver(glw_root_t *gr)
 {
-  if(glw_screensaver_is_active(gr)) {
-    gr->gr_screensaver_counter = 0;
-    gr->gr_screensaver_force_enable = 0;
-    return 1;
-  }
-  return 0;
+  int r = glw_screensaver_is_active(gr);
+  gr->gr_screensaver_counter = 0;
+  gr->gr_screensaver_force_enable = 0;
+  return r;
 }
 
 /**
