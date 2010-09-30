@@ -76,6 +76,7 @@ glw_coverflow_layout(glw_coverflow_t *gc, glw_rctx_t *rc)
   gc->rstart = rstart;
 }
 
+
 /**
  *
  */
@@ -96,11 +97,6 @@ renderone(glw_rctx_t *rc, glw_t *c, glw_coverflow_t *gc)
     return;
 
   rc0 = *rc;
-
-  int left  = rc->rc_width / 2 - rc->rc_height / 2;
-  int right = left + rc->rc_height;
-
-  glw_reposition(&rc0, left, rc->rc_height, right, 0);
 
   r = GLW_MAX(GLW_MIN(v, 1.0), -1.0) * 60;
 
@@ -125,14 +121,40 @@ renderone(glw_rctx_t *rc, glw_t *c, glw_coverflow_t *gc)
  *
  */
 static void
+reposition(glw_rctx_t *rc, int left, int top, int right, int bottom)
+{
+  float sx =         (right - left) / (float)rc->rc_width;
+  float tx = -1.0f + (right + left) / (float)rc->rc_width;
+  float sy =         (top - bottom) / (float)rc->rc_height;
+  float ty = -1.0f + (top + bottom) / (float)rc->rc_height;
+  
+  glw_Translatef(rc, tx, ty, 0);
+  glw_Scalef(rc, sx, sy, 1.0);
+
+  rc->rc_width  = right - left;
+  rc->rc_height = top - bottom;
+}
+
+
+/**
+ *
+ */
+static void
 glw_coverflow_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c, *p, *n;
   struct glw_queue rqueue;
   glw_coverflow_t *gc = (glw_coverflow_t *)w;
+  glw_rctx_t rc0 = *rc;
 
   if((c = gc->rstart) == NULL)
     return;
+
+  int left  = rc->rc_width / 2 - rc->rc_height / 2;
+  int right = left + rc->rc_height;
+
+  reposition(&rc0, left, rc->rc_height, right, 0);
+
   TAILQ_INIT(&rqueue);
   TAILQ_INSERT_HEAD(&rqueue, c, glw_render_link);
 
@@ -152,7 +174,7 @@ glw_coverflow_render(glw_t *w, glw_rctx_t *rc)
   }
 
   TAILQ_FOREACH(c, &rqueue, glw_render_link)
-    renderone(rc, c, gc);
+    renderone(&rc0, c, gc);
 }
 
 
