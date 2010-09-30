@@ -312,6 +312,7 @@ glw_wirebox(glw_root_t *gr, glw_rctx_t *rc)
 {
 #if CONFIG_GLW_BACKEND_OPENGL
   glw_backend_root_t *gbr = &gr->gr_be;
+  glw_load_program(gbr, gbr->gbr_renderer_flat);
   glw_program_set_modelview(gbr, rc);
   glw_program_set_uniform_color(gbr, 1,1,1,1);
   glDisable(GL_TEXTURE_2D);
@@ -323,6 +324,64 @@ glw_wirebox(glw_root_t *gr, glw_rctx_t *rc)
   glVertex3f(-1.0,  1.0, 0.0);
   glEnd();
   glEnable(GL_TEXTURE_2D);
+#endif
+}
+
+
+/**
+ *
+ */
+void
+glw_wirecube(glw_root_t *gr, glw_rctx_t *rc)
+{
+#if CONFIG_GLW_BACKEND_OPENGL
+  glw_backend_root_t *gbr = &gr->gr_be;
+
+  glw_load_program(gbr, gbr->gbr_renderer_flat);
+  glw_program_set_modelview(gbr, rc);
+  glw_program_set_uniform_color(gbr, 1,1,1,1);
+
+  glBegin(GL_LINE_LOOP);
+  glVertex3f(-1.0, -1.0, -1.0);
+  glVertex3f( 1.0, -1.0, -1.0);
+  glVertex3f( 1.0,  1.0, -1.0);
+  glVertex3f(-1.0,  1.0, -1.0);
+  glEnd();
+
+  glBegin(GL_LINE_LOOP);
+  glVertex3f(-1.0, -1.0,  1.0);
+  glVertex3f( 1.0, -1.0,  1.0);
+  glVertex3f( 1.0,  1.0,  1.0);
+  glVertex3f(-1.0,  1.0,  1.0);
+  glEnd();
+
+  glBegin(GL_LINE_LOOP);
+  glVertex3f(-1.0, -1.0,  1.0);
+  glVertex3f(-1.0, -1.0, -1.0);
+  glVertex3f(-1.0,  1.0, -1.0);
+  glVertex3f(-1.0,  1.0,  1.0);
+  glEnd();
+
+  glBegin(GL_LINE_LOOP);
+  glVertex3f( 1.0, -1.0,  1.0);
+  glVertex3f( 1.0, -1.0, -1.0);
+  glVertex3f( 1.0,  1.0, -1.0);
+  glVertex3f( 1.0,  1.0,  1.0);
+  glEnd();
+
+  glBegin(GL_LINE_LOOP);
+  glVertex3f( 1.0, -1.0,  1.0);
+  glVertex3f( 1.0, -1.0, -1.0);
+  glVertex3f(-1.0, -1.0, -1.0);
+  glVertex3f(-1.0, -1.0,  1.0);
+  glEnd();
+
+  glBegin(GL_LINE_LOOP);
+  glVertex3f( 1.0,  1.0,  1.0);
+  glVertex3f( 1.0,  1.0, -1.0);
+  glVertex3f(-1.0,  1.0, -1.0);
+  glVertex3f(-1.0,  1.0,  1.0);
+  glEnd();
 #endif
 }
 

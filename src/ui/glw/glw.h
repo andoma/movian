@@ -1078,6 +1078,8 @@ void glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
 
 void glw_wirebox(glw_root_t *gr, glw_rctx_t *rc);
 
+void glw_wirecube(glw_root_t *gr, glw_rctx_t *rc);
+
 /**
  * Global flush interface 
  */
