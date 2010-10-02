@@ -48,6 +48,16 @@ EOF
     $CC 2>/dev/null $TMPDIR/1.c -o $TMPDIR/1.bin
 }
 
+check_header_cpp() {
+    cat >$TMPDIR/1.cpp <<EOF
+#include <$1>
+int main() {
+ return 0;
+}
+EOF
+    $CXX $TMPDIR/1.cpp -o $TMPDIR/1.bin
+}
+
 check_lib() {
     cat >$TMPDIR/1.c <<EOF
 int main() {
@@ -141,6 +151,17 @@ EOF
 }
     
 
+
+checkcxx() {
+    cat >$TMPDIR/1.cpp <<EOF
+int main() {
+ return 0;
+}
+EOF
+    $CXX 2>/dev/null $TMPDIR/1.cpp -o $TMPDIR/1.bin 
+}
+    
+
 if [ "x$CC" != "x" ]; then
     echo >${CONFIG_MAK} "CC=$CC"
     CC_FFMPEG="--cc=$CC"
@@ -154,6 +175,22 @@ else
     echo "C compiler ($CC) is not working"
     die
 fi
+
+
+
+if [ "x$CXX" != "x" ]; then
+    echo >${CONFIG_MAK} "CXX=$CXX"
+else
+    CXX=c++
+fi
+
+if checkcxx; then 
+    echo "Using C++ compiler:    $CXX"
+else
+    echo "C++ compiler ($CXX) is not working"
+    die
+fi
+
 
 echo >>${CONFIG_MAK} $CC_CONFIG_MAK 
 
@@ -490,6 +527,18 @@ if enabled libsmbclient; then
     check_header "libsmbclient.h" || fatal "libsmbclient" "Missing include file libsmbclient.h"
     check_lib    "smbclient"      || fatal "libsmbclient" "Unable to link with libsmbclient"
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lsmbclient"
+fi
+
+#
+# libsidplay2 and libresid-builder
+#
+if enabled libsidplay2; then
+    check_header_cpp "sidplay/sidplay2.h" || fatal "libsidplay2" "Missing include file sidplay/sidplay2.h"
+
+    check_header_cpp "sidplay/builders/resid.h" || fatal "libsidplay2" "Missing include file sidplay/builders/resid.h"
+
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lsidplay2 -lresid-builder"
+
 fi
 
 

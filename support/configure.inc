@@ -65,6 +65,7 @@ CONFIG_LIST="
  vdpau
  spidermonkey
  libxxf86vm
+ libsidplay2
 "
 
 die() {

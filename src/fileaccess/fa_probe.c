@@ -335,7 +335,7 @@ fa_probe_header(metadata_t *md, const char *url, uint8_t *pb)
     return 1;
   }
 
-  if(!memcmp(pb, "PSID", 4)) {
+  if(!memcmp(pb, "PSID", 4) || !memcmp(pb, "RSID", 4)) {
     fa_probe_psid(md, pb); 
     md->md_type = CONTENT_ALBUM;
     metdata_set_redirect(md, "sidfile://%s|", url);

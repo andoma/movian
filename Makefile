@@ -202,6 +202,14 @@ SRCS-${CONFIG_SPOTIFY} += src/backend/spotify/spotify.c
 BUNDLES-$(CONFIG_SPOTIFY) += resources/spotify
 
 #
+# libsidplay2
+#
+
+SRCS-${CONFIG_LIBSIDPLAY2} += \
+	src/backend/sid/sid_wrapper.cpp \
+	src/backend/sid/sid.c
+
+#
 # GLW user interface
 #
 SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
@@ -450,7 +458,8 @@ SRCS  += $(SRCS-yes)
 DLIBS += $(DLIBS-yes)
 SLIBS += $(SLIBS-yes)
 SSRCS  = $(sort $(SRCS))
-OBJS3=   $(SSRCS:%.S=$(BUILDDIR)/%.o)
+OBJS4=   $(SSRCS:%.cpp=$(BUILDDIR)/%.o)
+OBJS3=   $(OBJS4:%.S=$(BUILDDIR)/%.o)
 OBJS2=   $(OBJS3:%.c=$(BUILDDIR)/%.o)
 OBJS=    $(OBJS2:%.m=$(BUILDDIR)/%.o)
 DEPS=    ${OBJS:%.o=%.d}
@@ -475,7 +484,7 @@ MKBUNDLE = $(CURDIR)/support/mkbundle
 
 ifndef V
 ECHO   = printf "$(1)\t%s\n" $(2)
-BRIEF  = CC MKBUNDLE
+BRIEF  = CC MKBUNDLE CXX
 MSG    = $@
 $(foreach VAR,$(BRIEF), \
     $(eval $(VAR) = @$$(call ECHO,$(VAR),$$(MSG)); $($(VAR))))
@@ -493,6 +502,9 @@ $(OBJDIRS):
 
 ${BUILDDIR}/%.o: %.[cm] ${FFBUILDDEP}
 	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
+
+${BUILDDIR}/%.o: %.cpp ${FFBUILDDEP}
+	$(CXX) -MD -MP $(CFLAGS_com) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
 
 ffmpeg ${FFBUILDDEP}:
 	cd ${BUILDDIR}/ffmpeg/build && ${MAKE} all
