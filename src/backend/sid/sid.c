@@ -80,7 +80,7 @@ be_sid2player_play(struct backend *be, const char *url0, media_pipe_t *mp,
 
       mb = media_buf_alloc();
       mb->mb_data_type = MB_AUDIO;
-      mb->mb_channels = 1;
+      mb->mb_channels = 2;
       mb->mb_size = sizeof(int16_t) * CHUNK_SIZE * mb->mb_channels;
       mb->mb_data = malloc(mb->mb_size);
       mb->mb_rate = 44100;
@@ -92,6 +92,33 @@ be_sid2player_play(struct backend *be, const char *url0, media_pipe_t *mp,
 
       sidcxx_play(player, samples,
 		  CHUNK_SIZE * sizeof(int16_t) * mb->mb_channels);
+
+      // Crossmix 25% 
+
+      int i, l, r, L, R;
+      for(i = 0; i < CHUNK_SIZE; i++) {
+	l = samples[i * 2 + 0];
+	r = samples[i * 2 + 1];
+
+	L = 3 * l + r;
+	R = 3 * r + l;
+
+	L = L / 3;
+	R = R / 3;
+
+	if(L > 32767)
+	  L = 32767;
+	if(L < -32768)
+	  L = -32768;
+
+	if(R > 32767)
+	  R = 32767;
+	if(R < -32768)
+	  R = -32768;
+
+	samples[i * 2 + 0] = L;
+	samples[i * 2 + 1] = R;
+      }
     }
 
     if((e = mb_enqueue_with_events(mp, mq, mb)) == NULL) {

@@ -68,7 +68,7 @@ extern "C" {
     sw->conf = sw->p.config();
     sw->conf.frequency    = 44100;
     sw->conf.precision    = 16;
-    sw->conf.playback     = sid2_mono;
+    sw->conf.playback     = sid2_stereo;
     sw->conf.sampleFormat = SID2_LITTLE_SIGNED;
 
     /* These should be configurable ... */
