@@ -100,11 +100,11 @@ be_sid2player_play(struct backend *be, const char *url0, media_pipe_t *mp,
 	l = samples[i * 2 + 0];
 	r = samples[i * 2 + 1];
 
-	L = 3 * l + r;
-	R = 3 * r + l;
+	L = 3 * l + r * 2;
+	R = 3 * r + l * 2;
 
-	L = L / 3;
-	R = R / 3;
+	L = L / 4;
+	R = R / 4;
 
 	if(L > 32767)
 	  L = 32767;
