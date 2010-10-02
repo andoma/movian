@@ -94,6 +94,10 @@ typedef struct glw_x11 {
 
   int vdpau_preempted;
 
+
+  // Available video modes (see: ui/ui.h)
+  int vmodes;
+
 } glw_x11_t;
 
 #define AUTOHIDE_TIMEOUT 100 // XXX: in frames.. bad
@@ -1183,7 +1187,9 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
 
 #ifdef CONFIG_NVCTRL
   gx11->nvidia = nvidia_init(gx11->display, gx11->screen,
-			     gx11->gr.gr_uii.uii_prop);
+			     gx11->gr.gr_uii.uii_prop, &gx11->vmodes,
+			     gr->gr_settings, gr->gr_settings_instance,
+			     gr->gr_courier);
 #endif
 
   settings_create_bool(gr->gr_settings, "map_mouse_wheel_to_keys",

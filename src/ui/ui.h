@@ -74,4 +74,16 @@ void ui_shutdown(void);
 
 void ui_primary_event(event_t *e);
 
+
+/**
+ * Video modes
+ */
+#define UI_VIDEO_MODE_NATIVEp50  0x1
+#define UI_VIDEO_MODE_NATIVEp60  0x2
+#define UI_VIDEO_MODE_720p50     0x4
+#define UI_VIDEO_MODE_720p60     0x8
+#define UI_VIDEO_MODE_1080p50    0x10
+#define UI_VIDEO_MODE_1080p60    0x20
+
+
 #endif /* UI_H__ */

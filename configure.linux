@@ -93,6 +93,7 @@ enable locatedb
 enable vdpau
 enable spidermonkey
 enable libxxf86vm
+#enable libxrandr  -- code does not really work yet
 
 for opt do
   optval="${opt#*=}"
@@ -290,6 +291,7 @@ else
     disable vdpau
     disable libxss
     disable libxxf86vm
+    disable libxrandr
 fi
 
 
@@ -384,6 +386,21 @@ if enabled libxxf86vm; then
 	echo "Using libxxf86vm:      `pkg-config --modversion xxf86vm`"
     else
 	echo "libxxf86vm not found. Unable to build with X11 video mode control."
+	die
+    fi
+fi
+
+
+#
+# libxrandr
+#
+if enabled libxrandr; then
+    if pkg-config xrandr; then
+	echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags xrandr`
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs xrandr`
+	echo "Using libxrandr:       `pkg-config --modversion xrandr`"
+    else
+	echo "libxrandr not found. Unable to build with X11 video mode control."
 	die
     fi
 fi

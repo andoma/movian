@@ -27,11 +27,39 @@
 #include "showtime.h"
 #include "prop/prop.h"
 #include "nvidia.h"
+#include "ui/ui.h"
+#include "settings.h"
+#include "x11_common.h"
+
+#ifdef ENABLE_LIBXRANDR
+#include <X11/extensions/Xrandr.h>
+#endif
+
+
+TAILQ_HEAD(nvmode_queue, nvmode);
+
+typedef struct nvmode {
+  struct nvctrl_data *nvd;
+  TAILQ_ENTRY(nvmode) link;
+  char *name;
+
+  int modeflag;
+  int metamode;
+
+  int width;
+  int height;
+
+  int autoswitch;
+  int dvivideo;
+
+} nvmode_t;
+
 
 typedef struct nvctrl_data {
   Display *dpy;
   int scr;
   int dev;
+  prop_courier_t *pc;
 
   prop_t *p_dpy;
   prop_t *temp_cur;
@@ -41,12 +69,15 @@ typedef struct nvctrl_data {
   char *modelines;
   char *metamodes;
 
-  int meta_720p50;
-  int meta_720p60;
-  int meta_1080p50;
-  int meta_1080p60;
-
   int temp_update_cnt;
+  
+  struct nvmode_queue vmodes;
+
+  nvmode_t *current;
+  char *settings_instance;
+
+  int dfp_width;
+  int dfp_height;
 
 } nvctrl_data_t;
 
@@ -132,10 +163,165 @@ find_metamode(const char *in, const char *mode)
 }
 
 
+/**
+ *
+ */
+static void
+vmode_settings_save(void *opaque, htsmsg_t *msg)
+{
+  nvmode_t *nv = opaque;
+  nvctrl_data_t *nvd = nv->nvd;
+
+  htsmsg_store_save(msg, "displays/%s_vmodes/%s", nvd->settings_instance, 
+		    nv->name);
+}
 
 
-static int
-add_mode(nvctrl_data_t *nvd, int width, int height, int rr)
+/**
+ *
+ */
+static void
+vmode_update_meta(nvmode_t *nv)
+{
+  nvctrl_data_t *nvd = nv->nvd;
+
+  if(nv->dvivideo)
+    x11_set_contrast(nvd->dpy, nvd->scr, 16, 236);
+  else
+    x11_set_contrast(nvd->dpy, nvd->scr, 0, 256);
+}
+
+
+/**
+ *
+ */
+static void
+vmode_switch(nvmode_t *nv)
+{
+  nvctrl_data_t *nvd = nv->nvd;
+  XRRScreenConfiguration *sc;
+  Window root;
+  XRRScreenSize *sizes;
+  int i, nsize;
+  Rotation rot;
+
+  root = RootWindow(nvd->dpy, nvd->scr);
+  sc = XRRGetScreenInfo(nvd->dpy, root);
+
+  sizes = XRRConfigSizes(sc, &nsize);
+
+  for(i = 0; i < nsize; i++) {
+    if(sizes[i].width == nv->width && sizes[i].height == nv->height)
+      break;
+  }
+
+  if(i == nsize) {
+    TRACE(TRACE_ERROR, "nVidia", 
+	  "Unable to switch to %d x %d (%s) no xrandr mode available",
+	  nv->width, nv->height, nv->name);
+    return;
+  }
+
+  XRRConfigRotations(sc, &rot);
+
+  XRRSetScreenConfigAndRate(nvd->dpy, sc, root, (SizeID)i, 
+			    (Rotation)rot,
+			    nv->metamode, CurrentTime);
+
+  nvd->current = nv;
+
+  vmode_update_meta(nv);
+}
+
+
+
+
+/**
+ *
+ */
+static void
+vmode_switchnow(void *opaque, prop_event_t event, ...)
+{
+  nvmode_t *nv = opaque;
+
+  if(event != PROP_EXT_EVENT)
+    return;
+
+  TRACE(TRACE_DEBUG, "nVidia", "Switching to mode %s (user request)", 
+	nv->name);
+  vmode_switch(nv);
+}
+
+
+/**
+ *
+ */
+static void
+set_dvi_range(void *opaque, int value)
+{
+  nvmode_t *nv = opaque;
+
+  nv->dvivideo = value;
+
+  if(nv->nvd->current == nv)
+    vmode_update_meta(nv);
+  
+
+}
+
+
+/**
+ *
+ */
+static void
+link_vmode(nvctrl_data_t *nvd, const char *name, 
+	   int width, int height,
+	   int metamode, int modeflag, prop_t *settings,
+	   int dvivideo)
+{
+  nvmode_t *nv = calloc(1, sizeof(nvmode_t));
+  prop_t *r;
+  htsmsg_t *store;
+
+  nv->nvd = nvd;
+  nv->name = strdup(name);
+  nv->metamode = metamode;
+  nv->modeflag = modeflag;
+  nv->width = width;
+  nv->height = height;
+
+  TAILQ_INSERT_TAIL(&nvd->vmodes, nv, link);
+
+  r = settings_add_dir(settings, name, name, "display");
+
+  store = htsmsg_store_load("displays/%s_vmodes/%s", nvd->settings_instance, 
+			    nv->name) ?: htsmsg_create_map();
+
+  settings_create_bool(r, "auto", "Auto-switch to this mode", 1,
+		       store, 
+		       settings_generic_set_bool, &nv->autoswitch,
+		       SETTINGS_INITIAL_UPDATE, nvd->pc, 
+		       vmode_settings_save, nv);
+
+  settings_create_bool(r, "dvivideo", "DVI-Video color range", dvivideo,
+		       store, 
+		       set_dvi_range, nv,
+		       SETTINGS_INITIAL_UPDATE, nvd->pc, 
+		       vmode_settings_save, nv);
+
+  settings_create_action(r, "switch", "Switch to this mode now",
+			 vmode_switchnow, nv, nvd->pc);
+
+
+}
+
+
+/**
+ *
+ */
+static void
+add_mode(nvctrl_data_t *nvd, int width, int height, int rr, int modeflag,
+	 prop_t *settings, int native)
 {
   char name[64];
   char buf[256];
@@ -145,11 +331,6 @@ add_mode(nvctrl_data_t *nvd, int width, int height, int rr)
 
   snprintf(name, sizeof(name), "showtime_%dx%d_%d_0", width, height, rr);
 
-  if(nvd->modelines == NULL || nvd->metamodes == NULL) {
-    TRACE(TRACE_ERROR, "nVidia",
-	  "Unable to add mode %s as no mode info is available", name);
-    return 0;
-  }
 
 
   if(!have_modeline(nvd->modelines, name)) {
@@ -166,7 +347,7 @@ add_mode(nvctrl_data_t *nvd, int width, int height, int rr)
     if(result == NULL) {
       TRACE(TRACE_ERROR, "nVidia", "Unable to generate modeline for %s",
 	    buf);
-      return 0;
+      return;
     }
 
     snprintf(buf, sizeof(buf), "\"%s\" %s", name, result);
@@ -177,7 +358,7 @@ add_mode(nvctrl_data_t *nvd, int width, int height, int rr)
     if(!XNVCTRLSetStringAttribute(nvd->dpy, nvd->scr, nvd->dev,
 				  NV_CTRL_STRING_ADD_MODELINE, buf)) {
       TRACE(TRACE_ERROR, "nVidia", "Unable to add modeline: %s", buf);
-      return 0;
+      return;
     }
   }
 
@@ -186,29 +367,71 @@ add_mode(nvctrl_data_t *nvd, int width, int height, int rr)
   metaid = find_metamode(nvd->metamodes, name);
   if(metaid > 0) {
     TRACE(TRACE_DEBUG, "nVidia", "%s maps to meta id %d", name, metaid);
-    return metaid;
+
+  } else {
+
+    TRACE(TRACE_DEBUG, "nVidia", "Adding metamode: %s", buf);
+  
+    if(!XNVCTRLStringOperation(nvd->dpy, NV_CTRL_TARGET_TYPE_X_SCREEN, nvd->scr,
+			       0, NV_CTRL_STRING_OPERATION_ADD_METAMODE,
+			       buf, &result)) {
+      TRACE(TRACE_ERROR, "nVidia", "Unable to add metamode: %s", buf);
+      return;
+    }
+  
+    if((s = strstr(result, "id=")) != NULL)
+      metaid = atoi(s + 3);
+    else
+      metaid = 0;
+
+    XFree(result);
+
+    TRACE(TRACE_DEBUG, "nVidia", "%s maps to meta id %d", name, metaid);
   }
 
-  TRACE(TRACE_DEBUG, "nVidia", "Adding metamode: %s", buf);
-  
-  if(!XNVCTRLStringOperation(nvd->dpy, NV_CTRL_TARGET_TYPE_X_SCREEN, nvd->scr,
-			     0, NV_CTRL_STRING_OPERATION_ADD_METAMODE,
-			     buf, &result)) {
-    TRACE(TRACE_ERROR, "nVidia", "Unable to add metamode: %s", buf);
-    return 0;
-  }
-  
-  if((s = strstr(result, "id=")) != NULL)
-    metaid = atoi(s + 3);
-  else
-    metaid = 0;
+  if(metaid == 0)
+    return;
 
-  XFree(result);
 
-  TRACE(TRACE_DEBUG, "nVidia", "%s maps to meta id %d", name, metaid);
+  snprintf(name, sizeof(name), "%dp%d%s", height, rr,
+	   native ? " (DFP Native resolution)" : "");
 
-  return metaid;
+  int dvivideo = 0; // height == 720 || height == 1080;
+
+  link_vmode(nvd, name, width, height, metaid, modeflag, settings, dvivideo);
 }
+
+
+/**
+ *
+ */
+static void
+add_modes(nvctrl_data_t *nvd, prop_t *settings, prop_courier_t *pc)
+{
+  if(nvd->modelines == NULL || nvd->metamodes == NULL) {
+    TRACE(TRACE_ERROR, "nVidia",
+	  "Unable to add video modes as no mode info is available");
+    return;
+  }
+
+
+  if(nvd->dfp_width && nvd->dfp_height) {
+    add_mode(nvd, nvd->dfp_width, nvd->dfp_height,
+	     60, UI_VIDEO_MODE_NATIVEp60, settings, 1);
+  }
+
+  if(nvd->dfp_width != 1280 && nvd->dfp_height != 720) {
+    add_mode(nvd, 1280, 720,  50, UI_VIDEO_MODE_720p50, settings, 0);
+    add_mode(nvd, 1280, 720,  60, UI_VIDEO_MODE_720p60, settings, 0);
+  }
+
+  if(nvd->dfp_width != 1920 && nvd->dfp_height != 1080) {
+    add_mode(nvd, 1920, 1080, 50, UI_VIDEO_MODE_1080p50, settings, 0);
+    add_mode(nvd, 1920, 1080, 60, UI_VIDEO_MODE_1080p60, settings, 0);
+  }
+}
+
+
 
 
 /**
@@ -280,6 +503,10 @@ getdpyinfo(nvctrl_data_t *nvd)
     TRACE(TRACE_DEBUG, "nVidia", "DFP native resolution: %d x %d",
 	  width, height);
     setres(prop_create(p_dpy, "DFPResolution"), width, height);
+
+    nvd->dfp_width  = width;
+    nvd->dfp_height = height;
+
    }
 
 
@@ -316,27 +543,16 @@ getdpyinfo(nvctrl_data_t *nvd)
 /**
  *
  */
-static void
-add_modes(nvctrl_data_t *nvd)
-{
-  nvd->meta_720p50  = add_mode(nvd, 1280, 720,  50);
-  nvd->meta_720p60  = add_mode(nvd, 1280, 720,  60);
-  nvd->meta_1080p50 = add_mode(nvd, 1920, 1080, 50);
-  nvd->meta_1080p60 = add_mode(nvd, 1920, 1080, 60);
-}
-
-
-/**
- *
- */
 void *
-nvidia_init(Display *dpy, int screen, prop_t *uiroot)
+nvidia_init(Display *dpy, int screen, prop_t *uiroot, int *modesp,
+	    prop_t *settings, const char *settings_instance,
+	    prop_courier_t *pc)
 {
   prop_t *gpu = prop_create(uiroot, "gpu");
   nvctrl_data_t *nvd;
   int event_base, error_base, major, minor, mask;
   char *str;
-  int v, i;
+  int v, i, modes;
   prop_t *p;
 
   if(!XNVCTRLQueryExtension(dpy, &event_base, &error_base) ||
@@ -370,6 +586,9 @@ nvidia_init(Display *dpy, int screen, prop_t *uiroot)
   nvd->dpy = dpy;
   nvd->scr = screen;
   nvd->dev = mask;
+  nvd->settings_instance = strdup(settings_instance);
+  nvd->pc = pc;
+  TAILQ_INIT(&nvd->vmodes);
 
   /**
    * GPU core temperature
@@ -397,7 +616,21 @@ nvidia_init(Display *dpy, int screen, prop_t *uiroot)
   
   getdpyinfo(nvd);
 
-  if(0)add_modes(nvd);
+  modes = 0;
+
+  if(ENABLE_LIBXRANDR) {
+
+    prop_t *s = settings_add_dir(settings, "videomodes", "Video modes", 
+				 "display");
+    
+    add_modes(nvd, s, pc);
+    
+    nvmode_t *vm;
+    TAILQ_FOREACH(vm, &nvd->vmodes, link)
+      modes |= vm->modeflag;
+  }
+
+    *modesp = modes;
   return nvd;
 }
 
