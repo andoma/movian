@@ -85,6 +85,11 @@ void settings_add_int(setting_t *s, int delta);
 
 prop_t *settings_get_value(setting_t *s);
 
+setting_t *settings_create_action(prop_t *parent, const char *id,
+				  const char *title,
+				  prop_callback_t *cb, void *opaque,
+				  prop_courier_t *pc);
+
 void setting_destroy(setting_t *s);
 
 void settings_init(void);

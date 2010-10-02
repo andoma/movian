@@ -489,6 +489,34 @@ settings_create_info(prop_t *parent, const char *image,
 /**
  *
  */
+setting_t *
+settings_create_action(prop_t *parent, const char *id, const char *title,
+		       prop_callback_t *cb, void *opaque,
+		       prop_courier_t *pc)
+{
+  prop_t *r = prop_create(setting_add(prop_create(parent, "model"),
+				      id, title, "action"), "model");
+  prop_t *v = prop_create(r, "action");
+  setting_t *s = calloc(1, sizeof(setting_t));
+  prop_sub_t *sub;
+
+  prop_ref_inc(s->s_prop = r);
+
+  sub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+		       PROP_TAG_CALLBACK, cb, opaque,
+		       PROP_TAG_ROOT, v,
+		       PROP_TAG_COURIER, pc,
+		       NULL);
+  s->s_sub = sub;
+  return s;
+}
+
+
+
+
+/**
+ *
+ */
 void
 setting_destroy(setting_t *s)
 {

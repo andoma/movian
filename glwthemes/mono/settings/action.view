@@ -1,0 +1,9 @@
+#import "theme://include/defs.view"
+#import "theme://include/listitems.view"
+
+
+LIST_ITEM_SIMPLE($self.model.title,
+		"theme://icons/48x48/Check.png", // bad icon
+		 deliverEvent($self.model.action),
+		 PLATE_COLOR_OTHER());
+
