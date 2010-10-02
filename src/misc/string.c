@@ -601,6 +601,97 @@ utf8_get(const char **s)
   return r;
 }
 
+/**
+ *
+ */
+int
+utf8_put(char *out, int c)
+{
+  if(c == 0xfffe || c == 0xffff || (c >= 0xD800 && c < 0xE000))
+    return 0;
+  
+  if (c < 0x80) {
+    if(out)
+      *out = c;
+    return 1;
+  }
+
+  if(c < 0x800) {
+    if(out) {
+      *out++ = 0xc0 | (0x1f & (c >>  6));
+      *out   = 0x80 | (0x3f &  c);
+    }
+    return 2;
+  }
+
+  if(c < 0x10000) {
+    if(out) {
+      *out++ = 0xe0 | (0x0f & (c >> 12));
+      *out++ = 0x80 | (0x3f & (c >> 6));
+      *out   = 0x80 | (0x3f &  c);
+    }
+    return 3;
+  }
+
+  if(c < 0x200000) {
+    if(out) {
+      *out++ = 0xf0 | (0x07 & (c >> 18));
+      *out++ = 0x80 | (0x3f & (c >> 12));
+      *out++ = 0x80 | (0x3f & (c >> 6));
+      *out   = 0x80 | (0x3f &  c);
+    }
+    return 4;
+  }
+  
+  if(c < 0x4000000) {
+    if(out) {
+      *out++ = 0xf8 | (0x03 & (c >> 24));
+      *out++ = 0x80 | (0x3f & (c >> 18));
+      *out++ = 0x80 | (0x3f & (c >> 12));
+      *out++ = 0x80 | (0x3f & (c >>  6));
+      *out++ = 0x80 | (0x3f &  c);
+    }
+    return 5;
+  }
+
+  if(out) {
+    *out++ = 0xfc | (0x01 & (c >> 30));
+    *out++ = 0x80 | (0x3f & (c >> 24));
+    *out++ = 0x80 | (0x3f & (c >> 18));
+    *out++ = 0x80 | (0x3f & (c >> 12));
+    *out++ = 0x80 | (0x3f & (c >>  6));
+    *out++ = 0x80 | (0x3f &  c);
+  }
+  return 6;
+}
+
+
+/**
+ *
+ */
+char *
+utf8_from_ISO_8859_1(const char *str, int len)
+{
+  char *r, *d;
+  len = !len ? strlen(str) : len;
+
+  int i, olen = 0;
+  for(i = 0; i < len; i++) {
+    if(str[i] == 0)
+      break;
+    olen += utf8_put(NULL, str[i]);
+  }
+  d = r = malloc(olen + 1);
+  for(i = 0; i < len; i++) {
+    if(str[i] == 0)
+      break;
+    d += utf8_put(d, str[i]);
+  }
+  *d = 0;
+  return r;
+}
+
+
 static uint16_t *casefoldtable;
 static int casefoldtablelen;
 

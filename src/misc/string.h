@@ -26,6 +26,8 @@ int dictcmp(const char *a, const char *b);
 
 int utf8_get(const char **s);
 
+int utf8_put(char *out, int c);
+
 const char *mystrstr(const char *haystack, const char *needle);
 
 void strvec_addp(char ***str, const char *v);
@@ -39,5 +41,7 @@ void strvec_free(char **s);
 int hex2bin(uint8_t *buf, size_t buflen, const char *str);
 
 void unicode_init(void);
+
+char *utf8_from_ISO_8859_1(const char *str, int len);
 
 #endif
