@@ -1739,6 +1739,11 @@ glw_dispatch_event(uii_t *uii, event_t *e)
        event_is_action(e, ACTION_REPEAT) ||
        event_is_action(e, ACTION_NEXT_CHANNEL) ||
        event_is_action(e, ACTION_PREV_CHANNEL) ||
+       event_is_action(e, ACTION_VOLUME_UP) ||
+       event_is_action(e, ACTION_VOLUME_DOWN) ||
+       event_is_action(e, ACTION_VOLUME_MUTE_TOGGLE) ||
+       event_is_action(e, ACTION_POWER_OFF) ||
+       event_is_action(e, ACTION_STANDBY) ||
        event_is_type(e, EVENT_SELECT_TRACK))) {
     
     if(glw_kill_screensaver(gr)) {
