@@ -34,6 +34,7 @@
 #include "navigator.h"
 #include "api/lastfm.h"
 #include "media.h"
+#include "misc/string.h"
 
 #define METADATA_HASH_SIZE 101
 #define METADATA_CACHE_SIZE 1000
@@ -293,13 +294,8 @@ fa_probe_spc(metadata_t *md, uint8_t *pb)
 static void 
 fa_probe_psid(metadata_t *md, uint8_t *pb)
 {
-  char buf[33];
-
-  memcpy(buf, pb + 0x16, 32);
-  md->md_title = rstr_alloc(buf);
-
-  memcpy(buf, pb + 0x36, 32);
-  md->md_artist = rstr_alloc(buf);
+  md->md_title  = rstr_alloc(utf8_from_ISO_8859_1((char *)pb + 0x16, 32));
+  md->md_artist = rstr_alloc(utf8_from_ISO_8859_1((char *)pb + 0x36, 32));
 }
 
 

@@ -32,6 +32,7 @@
 #include "showtime.h"
 #include "fileaccess.h"
 #include "fa_proto.h"
+#include "misc/string.h"
 
 /**
  *
@@ -41,7 +42,7 @@ sidfile_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 {
   void *fh = NULL;
   char *p, *fpath = mystrdupa(url);
-  char buf[128], buf2[33];
+  char buf[128];
   char name[32];
   char turl[URL_MAX];
   int tracks, i;
@@ -64,11 +65,8 @@ sidfile_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
     return -1;
   }
 
-  memcpy(buf2, buf + 0x16, 32);
-  album = rstr_alloc(buf2);
-
-  memcpy(buf2, buf + 0x36, 32);
-  artist = rstr_alloc(buf2);
+  album = rstr_alloc(utf8_from_ISO_8859_1((char *)buf + 0x16, 32));
+  artist = rstr_alloc(utf8_from_ISO_8859_1((char *)buf + 0x36, 32));
 
   tracks = buf[0xf];
   for(i = 0; i < tracks; i++) {
