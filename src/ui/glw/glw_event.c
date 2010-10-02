@@ -214,6 +214,60 @@ glw_event_map_selectTrack_create(const char *id)
 }
 
 
+
+
+
+/**
+ *
+ */
+typedef struct glw_event_deliverEvent {
+  glw_event_map_t map;
+  prop_t *target;
+} glw_event_deliverEvent_t;
+
+
+/**
+ *
+ */
+static void
+glw_event_map_deliverEvent_dtor(glw_event_map_t *gem)
+{
+  glw_event_deliverEvent_t *g = (glw_event_deliverEvent_t *)gem;
+
+  prop_ref_dec(g->target);
+  free(g);
+}
+
+/**
+ *
+ */
+static void
+glw_event_map_deliverEvent_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
+{
+  glw_event_deliverEvent_t *de = (glw_event_deliverEvent_t *)gem;
+  prop_send_ext_event(de->target, src);
+   
+}
+
+
+/**
+ *
+ */
+glw_event_map_t *
+glw_event_map_deliverEvent_create(prop_t *target)
+{
+  glw_event_deliverEvent_t *de = malloc(sizeof(glw_event_deliverEvent_t));
+  
+  de->target = target;
+  prop_ref_inc(target);
+
+  de->map.gem_dtor = glw_event_map_deliverEvent_dtor;
+  de->map.gem_fire = glw_event_map_deliverEvent_fire;
+  return &de->map;
+}
+
+
+
 /**
  *
  */

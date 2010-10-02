@@ -2263,6 +2263,30 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
  *
  */
 static int 
+glwf_deliverEvent(glw_view_eval_context_t *ec, struct token *self,
+		  token_t **argv, unsigned int argc)
+{
+  token_t *a, *r;
+
+
+  if((a = resolve_property_name2(ec, argv[0])) == NULL)
+    return -1;
+
+  if(a->type != TOKEN_PROPERTY_REF)
+    return glw_view_seterr(ec->ei, a, "navOpen(): "
+			    "First argument is not a property");
+
+  r = eval_alloc(self, ec, TOKEN_EVENT);
+  r->t_gem = glw_event_map_deliverEvent_create(a->t_prop);
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int 
 glwf_playTrackFromSource(glw_view_eval_context_t *ec, struct token *self,
 			 token_t **argv, unsigned int argc)
 {
@@ -3857,6 +3881,7 @@ static const token_func_t funcvec[] = {
   {"suggestFocus", 1, glwf_suggestFocus},
   {"focusDistance", 0, glwf_focusDistance},
   {"count", 1, glwf_count},
+  {"deliverEvent", 1, glwf_deliverEvent},
 };
 
 
