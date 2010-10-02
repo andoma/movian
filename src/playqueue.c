@@ -526,6 +526,8 @@ playqueue_load_with_source(prop_t *track, prop_t *source)
 
   hts_mutex_lock(&playqueue_mutex);
 
+  track = prop_follow(track);
+
   TAILQ_FOREACH(pqe, &playqueue_entries, pqe_linear_link) {
     if(pqe->pqe_originator == track) {
       pqe_play(pqe, 1);
@@ -537,7 +539,6 @@ playqueue_load_with_source(prop_t *track, prop_t *source)
   playqueue_clear();
 
   playqueue_startme = track;
-  prop_ref_inc(playqueue_startme);
 
   playqueue_source_sub = 
     prop_subscribe(0,
