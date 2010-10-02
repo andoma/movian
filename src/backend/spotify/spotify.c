@@ -287,7 +287,7 @@ static void parse_search_reply(sp_search *result, prop_t *nodes,
 			       prop_t *contents);
 
 static playlist_t *pl_create(sp_playlist *plist, prop_t *root,
-			     int withtracks, int autodestroy, const char *name);
+			     int withtracks, const char *name);
 
 static void spotify_shutdown(void *opaque, int retcode);
 
@@ -1421,7 +1421,7 @@ spotify_open_album(sp_album *alb, prop_t *p, const char *playme)
 static void
 spotify_open_playlist(spotify_page_t *sp, sp_playlist *plist, const char *name)
 {
-  pl_create(plist, prop_create(sp->sp_root, "model"), 1, 1, name);
+  pl_create(plist, prop_create(sp->sp_root, "model"), 1, name);
 }
 
 
@@ -1923,50 +1923,31 @@ playlist_node_callback(void *opaque, prop_event_t event, ...)
   }
 }
 
-
 /**
  *
  */
 static void
-pl_destroy(playlist_t *pl)
+playlist_destroy_sub(void *opaque, prop_event_t event, ...)
 {
-  playlist_track_t *plt;
-  int i;
+  playlist_t *pl = opaque;
+
+ if(event != PROP_DESTROYED)
+   return;
 
   f_sp_playlist_release(pl->pl_playlist);
 
   if(pl->pl_node_sub) {
+    int i;
     prop_unsubscribe(pl->pl_node_sub);
-
-    for(i = 0; i < pl->pl_tracks.size; i++) {
-      plt = pl->pl_tracks.vec[i];
-      if(plt->plt_prop_root != NULL)
-	prop_destroy(plt->plt_prop_root);
-      free(plt);
-    }
+    for(i = 0; i < pl->pl_tracks.size; i++)
+      free(pl->pl_tracks.vec[i]);
   }
 
-  if(pl->pl_destroy_sub != NULL)
-    prop_unsubscribe(pl->pl_destroy_sub);
-
-  // Destroys all properties, all tracks, etc
-  prop_destroy(pl->pl_prop_root);
+  prop_unsubscribe(pl->pl_destroy_sub);
 
   free(pl->pl_tracks.vec);
   free(pl->pl_url);
   free(pl);
-}
-
-/**
- *
- */
-static void
-playlist_autodestroy(void *opaque, prop_event_t event, ...)
-{
-  playlist_t *pl = opaque;
-
- if(event == PROP_DESTROYED)
-   pl_destroy(pl);
 }
 
 
@@ -1974,8 +1955,7 @@ playlist_autodestroy(void *opaque, prop_event_t event, ...)
  *
  */
 static playlist_t *
-pl_create(sp_playlist *plist, prop_t *root, int withtracks, int autodestroy,
-	  const char *name)
+pl_create(sp_playlist *plist, prop_t *root, int withtracks, const char *name)
 {
   playlist_t *pl = calloc(1, sizeof(playlist_t));
   prop_t *metadata;
@@ -2046,13 +2026,12 @@ pl_create(sp_playlist *plist, prop_t *root, int withtracks, int autodestroy,
     f_sp_playlist_add_callbacks(plist, &pl_callbacks, pl);
   }
 
-  if(autodestroy)
-    pl->pl_destroy_sub = 
-      prop_subscribe(PROP_SUB_TRACK_DESTROY,
-		     PROP_TAG_CALLBACK, playlist_autodestroy, pl,
-		     PROP_TAG_ROOT, pl->pl_prop_root,
-		     PROP_TAG_COURIER, spotify_courier,
-		     NULL);
+  pl->pl_destroy_sub = 
+    prop_subscribe(PROP_SUB_TRACK_DESTROY,
+		   PROP_TAG_CALLBACK, playlist_destroy_sub, pl,
+		   PROP_TAG_ROOT, pl->pl_prop_root,
+		   PROP_TAG_COURIER, spotify_courier,
+		   NULL);
 
   playlist_set_url(plist, pl);
   return pl;
@@ -2066,7 +2045,7 @@ static void
 playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
 	       int position, void *userdata)
 {
-  playlist_t *pl = pl_create(plist, prop_create(NULL, NULL), 0, 0, NULL);
+  playlist_t *pl = pl_create(plist, prop_create(NULL, NULL), 0, NULL);
   prop_t *parent = prop_create(prop_rootlist_source, "nodes");
   playlist_t *before;
 
@@ -2092,8 +2071,9 @@ playlist_removed(sp_playlistcontainer *pc, sp_playlist *plist,
 {
   TRACE(TRACE_DEBUG, "spotify", "Playlist %d removed (%s)", 
 	position, f_sp_playlist_name(plist));
-
-  pl_destroy(ptrvec_remove_entry(&playlists, position));
+  
+  playlist_t *pl = ptrvec_remove_entry(&playlists, position);
+  prop_destroy(pl->pl_prop_root);
 }
 
 
