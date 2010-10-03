@@ -243,7 +243,7 @@ static void
 draw_glyph(glw_text_bitmap_data_t *gtbd, FT_Bitmap *bmp, uint8_t *dst, 
 	   int left, int top, int index, int stride)
 {
-  uint8_t *src = bmp->buffer;
+  const uint8_t *src = bmp->buffer;
   int x, y;
   int w, h;
   
@@ -268,9 +268,8 @@ draw_glyph(glw_text_bitmap_data_t *gtbd, FT_Bitmap *bmp, uint8_t *dst,
   dst += x1 + y1 * stride;
 
   for(y = 0; y < h; y++) {
-    for(x = 0; x < w; x++) {
+    for(x = 0; x < w; x++)
       dst[x] += src[x];
-    }
     src += bmp->pitch;
     dst += stride;
   }
