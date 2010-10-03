@@ -38,6 +38,9 @@ video_player_idle(void *aux)
   event_t *e = NULL, *next;
   media_pipe_t *mp = vp->vp_mp;
   char errbuf[256];
+  prop_t *errprop = prop_create(mp->mp_prop_root, "error");
+
+  prop_ref_inc(errprop);
 
   while(run) {
 
@@ -46,15 +49,17 @@ video_player_idle(void *aux)
     
 
     if(event_is_type(e, EVENT_PLAY_URL)) {
+      prop_set_void(errprop);
       event_playurl_t *ep = (event_playurl_t *)e;
 
       next = backend_play_video(ep->url, mp, ep->primary, ep->priority,
 				errbuf, sizeof(errbuf));
 
-      if(next == NULL)
+      if(next == NULL) {
 	notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nError: %s", 
 		   ep->url, errbuf);
-
+	prop_set_string(errprop, errbuf);
+      }
       event_unref(e);
       e = next;
       continue;
@@ -66,6 +71,7 @@ video_player_idle(void *aux)
     event_unref(e);
     e = NULL;
   }
+  prop_ref_dec(errprop);
   return NULL;
 }
 
