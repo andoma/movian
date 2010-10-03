@@ -650,19 +650,19 @@ rtmp_playvideo(backend_t *be, const char *url0,
   RTMP_Init(r.r);
 
   if(!RTMP_SetupURL(r.r, url)) {
-    snprintf(errbuf, errlen, "Unable to setup RTMP session");
+    snprintf(errbuf, errlen, "Unable to setup RTMP-session");
     rtmp_free(&r);
     return NULL;
   }
 
   if(!RTMP_Connect(r.r, NULL)) {
-    snprintf(errbuf, errlen, "Unable to connect RTMP session");
+    snprintf(errbuf, errlen, "Unable to connect RTMP-session");
     rtmp_free(&r);
     return NULL;
   }
 
   if(!RTMP_ConnectStream(r.r, 0)) {
-    snprintf(errbuf, errlen, "Unable to stream RTMP session");
+    snprintf(errbuf, errlen, "Unable to connect RTMP-stream");
     rtmp_free(&r);
     return NULL;
   }
