@@ -93,7 +93,7 @@ static int
 glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
 {
   glw_t *c, *w = &l->w;
-  int ypos;
+  int ypos = 0;
   glw_rctx_t rc0 = *rc;
   float IH = 1.0 / rc->rc_height;
 
