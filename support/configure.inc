@@ -244,6 +244,7 @@ EOF
 	    --disable-ffplay \
 	    --disable-ffprobe \
 	    --disable-bzlib \
+	    --disable-vaapi \
 	    "$@"
 	)
 
