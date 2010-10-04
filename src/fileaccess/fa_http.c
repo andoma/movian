@@ -1002,6 +1002,28 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
 
     } else {
 
+
+      char range[100];
+
+      if(hf->hf_pos >= hf->hf_filesize)
+	return 0;
+
+      if(hf->hf_consecutive_read > STREAMING_LIMIT) {
+	TRACE(TRACE_DEBUG, "HTTP", "%s: switching to streaming mode",
+	      hf->hf_url);
+
+	snprintf(range, sizeof(range), 
+		 "bytes=%"PRId64"-", hf->hf_pos);
+      } else {
+
+	int64_t end = hf->hf_pos + size;
+	if(end > hf->hf_filesize)
+	  end = hf->hf_filesize;
+
+	snprintf(range, sizeof(range), "bytes=%"PRId64"-%"PRId64, 
+		       hf->hf_pos, end - 1);
+      }
+
       /* Must send a new request */
 
       htsbuf_queue_init(&q, 0);
@@ -1010,23 +1032,15 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
 		     "GET %s HTTP/1.1\r\n"
 		     "Accept: */*\r\n"
 		     "User-Agent: Showtime %s\r\n"
+		     "Range: %s\r\n"
 		     "Host: %s\r\n"
-		     "%s%s",
+		     "%s%s\r\n\r\n",
 		     hf->hf_path,
 		     htsversion,
+		     range,
 		     hc->hc_hostname,
 		     hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
 
-      if(hf->hf_consecutive_read > STREAMING_LIMIT) {
-	TRACE(TRACE_DEBUG, "HTTP", "%s: switching to streaming mode",
-	      hf->hf_url);
-
-	htsbuf_qprintf(&q, "Range: bytes=%"PRId64"-\r\n\r\n", hf->hf_pos);
-      } else {
-	htsbuf_qprintf(&q, 
-		       "Range: bytes=%"PRId64"-%"PRId64"\r\n\r\n", 
-		       hf->hf_pos, hf->hf_pos + size - 1);
-      }
 
       tcp_write_queue(hc->hc_tc, &q);
       code = http_read_response(hf, NULL);
@@ -1046,8 +1060,9 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
 	break;
 
       default:
-	TRACE(TRACE_DEBUG, "HTTP", 
-	      "Read error. HTTP code %d", code);
+	TRACE(TRACE_INFO, "HTTP", 
+	      "Read error (%d) [%s] filesize %lld", code,
+	      range, hf->hf_filesize);
 	http_detach(hf, 0);
 	continue;
       }
