@@ -246,11 +246,17 @@ glw_array_render(glw_t *w, glw_rctx_t *rc)
   glw_Translatef(&rc0, 0, 2.0 * a->filtered_pos / rc->rc_height, 0);
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-    y = c->glw_parent_pos_y - a->filtered_pos;
-
-    if(y + a->child_height_px < 0 || y > rc->rc_height)
+    if(c->glw_flags & GLW_HIDDEN)
       continue;
 
+    y = c->glw_parent_pos_y - a->filtered_pos;
+
+    if(y + a->child_height_px < 0 || y > rc->rc_height) {
+      c->glw_flags |= GLW_CLIPPED;
+      continue;
+    } else {
+      c->glw_flags &= ~GLW_CLIPPED;
+    }
 
     if(y < 0)
       t = glw_clip_enable(w->glw_root, rc, GLW_CLIP_TOP);

@@ -185,9 +185,12 @@ glw_list_render_y(glw_t *w, glw_rctx_t *rc)
       continue;
 
     y = c->glw_parent_pos - l->filtered_pos;
-    if(y + c->glw_parent_height < 0 || y > rc->rc_height)
+    if(y + c->glw_parent_height < 0 || y > rc->rc_height) {
+      c->glw_flags |= GLW_CLIPPED;
       continue;
-
+    } else {
+      c->glw_flags &= ~GLW_CLIPPED;
+    }
 
     if(y < 0)
       t = glw_clip_enable(w->glw_root, rc, GLW_CLIP_TOP);
