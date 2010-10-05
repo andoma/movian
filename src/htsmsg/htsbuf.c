@@ -243,3 +243,16 @@ htsbuf_qprintf(htsbuf_queue_t *hq, const char *fmt, ...)
 }
 
 
+void
+htsbuf_appendq(htsbuf_queue_t *hq, htsbuf_queue_t *src)
+{
+  htsbuf_data_t *hd;
+
+  hq->hq_size += src->hq_size;
+  src->hq_size = 0;
+
+  while((hd = TAILQ_FIRST(&src->hq_q)) != NULL) {
+    TAILQ_REMOVE(&src->hq_q, hd, hd_link);
+    TAILQ_INSERT_TAIL(&hq->hq_q, hd, hd_link);
+  }
+}
