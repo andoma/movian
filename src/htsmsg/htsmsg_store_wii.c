@@ -129,7 +129,7 @@ htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
   TAILQ_FOREACH(hd, &hq.hq_q, hd_link)
     if(write(fd, hd->hd_data + hd->hd_data_off, hd->hd_data_len) !=
        hd->hd_data_len) {
-      trace(TRACE_ERROR, "settings", "Failed to write file \"%s\" - %s",
+      TRACE(TRACE_ERROR, "settings", "Failed to write file \"%s\" - %s",
 	      fullpath, strerror(errno));
       break;
     }
