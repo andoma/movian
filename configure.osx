@@ -75,6 +75,7 @@ enable bonjour
 enable spotlight
 enable spidermonkey
 enable stdin
+enable httpserver
 
 for opt do
   optval="${opt#*=}"

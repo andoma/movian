@@ -93,6 +93,7 @@ enable locatedb
 enable vdpau
 enable spidermonkey
 enable libxxf86vm
+enable httpserver
 #enable libxrandr  -- code does not really work yet
 
 for opt do

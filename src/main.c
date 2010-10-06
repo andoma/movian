@@ -48,6 +48,9 @@
 #include "plugins.h"
 #include "blobcache.h"
 #include "misc/string.h"
+#if ENABLE_HTTPSERVER
+#include "networking/http.h"
+#endif
 
 #include "misc/fs.h"
 
@@ -254,6 +257,11 @@ main(int argc, char **argv)
 
   /* Architecture specific init */
   arch_init();
+
+  /* Initialize HTTP server */
+#if ENABLE_HTTPSERVER
+  http_server_init();
+#endif
 
   /* Try to create cache path */
   if((r = makedirs(showtime_cache_path)) != 0)

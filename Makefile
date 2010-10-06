@@ -140,6 +140,8 @@ SRCS += 		src/api/api.c \
 			src/api/opensubtitles.c \
 			src/api/lastfm.c \
 
+SRCS-$(CONFIG_HTTPSERVER) += src/api/httpcontrol.c \
+
 #
 # Networking
 #
@@ -147,6 +149,8 @@ SRCS += src/networking/net_common.c \
 
 SRCS-$(CONFIG_POSIX_NETWORKING) += src/networking/net_posix.c
 SRCS-$(CONFIG_LIBOGC) += src/networking/net_libogc.c
+
+SRCS-$(CONFIG_HTTPSERVER) += src/networking/http.c
 
 #
 # Video support

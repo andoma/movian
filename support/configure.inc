@@ -67,6 +67,7 @@ CONFIG_LIST="
  libxxf86vm
  libxrandr
  libsidplay2
+ httpserver
 "
 
 die() {
