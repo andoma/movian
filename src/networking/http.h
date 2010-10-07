@@ -23,6 +23,15 @@
 #include "htsmsg/htsbuf.h"
 #include "misc/strtab.h"
 
+TAILQ_HEAD(http_arg_list, http_arg);
+
+char *http_arg_get(struct http_arg_list *list, const char *name);
+
+void http_arg_flush(struct http_arg_list *list);
+
+void http_arg_set(struct http_arg_list *list, char *key, char *val);
+
+
 #define HTTP_STATUS_OK           200
 #define HTTP_STATUS_FOUND        302
 #define HTTP_STATUS_BAD_REQUEST  400

@@ -32,7 +32,6 @@
 int http_server_port;
 static LIST_HEAD(, http_path) http_paths;
 LIST_HEAD(http_connection_list, http_connection); 
-TAILQ_HEAD(http_arg_list, http_arg);
 
 /**
  *
@@ -439,7 +438,7 @@ http_deescape(char *s)
 /**
  * Delete all arguments associated with a connection
  */
-static void
+void
 http_arg_flush(struct http_arg_list *list)
 {
   http_arg_t *ra;
@@ -455,7 +454,7 @@ http_arg_flush(struct http_arg_list *list)
 /**
  * Find an argument associated with a connection
  */
-static char *
+char *
 http_arg_get(struct http_arg_list *list, const char *name)
 {
   http_arg_t *ra;
@@ -479,7 +478,7 @@ http_arg_get_req(http_connection_t *hc, const char *name)
 /**
  * Set an argument associated with a connection
  */
-static void
+void
 http_arg_set(struct http_arg_list *list, char *key, char *val)
 {
   http_arg_t *ra;
