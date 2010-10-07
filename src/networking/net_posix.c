@@ -35,6 +35,10 @@
 
 #include "net.h"
 
+#if ENABLE_HTTPSERVER
+#include "networking/http.h"
+#endif
+
 
 
 
@@ -324,54 +328,38 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 
 
   if(ssl) {
+    if(showtime_ssl_ctx != NULL) {
+      char errmsg[120];
 
-#if ENABLE_SSL
-    char errmsg[120];
+      if((tc->ssl = SSL_new(showtime_ssl_ctx)) == NULL) {
+	ERR_error_string(ERR_get_error(), errmsg);
+	snprintf(errbuf, errlen, "SSL: %s", errmsg);
+	tcp_close(tc);
+	return NULL;
+      }
+      if(SSL_set_fd(tc->ssl, tc->fd) == 0) {
+	ERR_error_string(ERR_get_error(), errmsg);
+	snprintf(errbuf, errlen, "SSL fd: %s", errmsg);
+	tcp_close(tc);
+	return NULL;
+      }
 
-    if(showtime_ssl_ctx == NULL) {
-      SSL_library_init();
-      SSL_load_error_strings();
-      showtime_ssl_ctx = SSL_CTX_new(SSLv23_client_method());
+      if(SSL_connect(tc->ssl) <= 0) {
+	ERR_error_string(ERR_get_error(), errmsg);
+	snprintf(errbuf, errlen, "SSL connect: %s", errmsg);
+	tcp_close(tc);
+	return NULL;
+      }
 
-      int i, n = CRYPTO_num_locks();
-      ssl_locks = malloc(sizeof(pthread_mutex_t) * n);
-      for(i = 0; i < n; i++)
-	pthread_mutex_init(&ssl_locks[i], NULL);
+      SSL_set_mode(tc->ssl, SSL_MODE_AUTO_RETRY);
+      tc->read = ssl_read;
+      tc->write = ssl_write;
+    } else {
 
-      CRYPTO_set_locking_callback(ssl_lock_fn);
-      CRYPTO_set_id_callback(ssl_tid_fn);
-    }
-
-    if((tc->ssl = SSL_new(showtime_ssl_ctx)) == NULL) {
-      ERR_error_string(ERR_get_error(), errmsg);
-      snprintf(errbuf, errlen, "SSL: %s", errmsg);
+      snprintf(errbuf, errlen, "SSL not supported");
       tcp_close(tc);
       return NULL;
     }
-    if(SSL_set_fd(tc->ssl, tc->fd) == 0) {
-      ERR_error_string(ERR_get_error(), errmsg);
-      snprintf(errbuf, errlen, "SSL fd: %s", errmsg);
-      tcp_close(tc);
-      return NULL;
-  }
-
-    if(SSL_connect(tc->ssl) <= 0) {
-      ERR_error_string(ERR_get_error(), errmsg);
-      snprintf(errbuf, errlen, "SSL connect: %s", errmsg);
-      tcp_close(tc);
-      return NULL;
-    }
-
-    SSL_set_mode(tc->ssl, SSL_MODE_AUTO_RETRY);
-    tc->read = ssl_read;
-    tc->write = ssl_write;
-
-#else
-    snprintf(errbuf, errlen, "SSL not supported");
-    tcp_close(tc);
-    return NULL;
-#endif    
-
   } else {
     tc->read = tcp_read;
     tc->write = tcp_write;
@@ -395,4 +383,31 @@ tcp_close(tcpcon_t *tc)
 #endif
   close(tc->fd);
   free(tc);
+}
+
+
+/**
+ * Called from code in arch/
+ */
+void
+net_initialize(void)
+{
+#if ENABLE_SSL
+
+  SSL_library_init();
+  SSL_load_error_strings();
+  showtime_ssl_ctx = SSL_CTX_new(SSLv23_client_method());
+  
+  int i, n = CRYPTO_num_locks();
+  ssl_locks = malloc(sizeof(pthread_mutex_t) * n);
+  for(i = 0; i < n; i++)
+    pthread_mutex_init(&ssl_locks[i], NULL);
+  
+  CRYPTO_set_locking_callback(ssl_lock_fn);
+  CRYPTO_set_id_callback(ssl_tid_fn);
+#endif
+  
+#if ENABLE_HTTPSERVER
+  http_server_init();
+#endif
 }

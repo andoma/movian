@@ -43,8 +43,7 @@ typedef struct tcpcon {
 } tcpcon_t;
 
 
-
-void net_setup(void);
+void net_initialize(void);
 
 tcpcon_t *tcp_connect(const char *hostname, int port, char *errbuf,
 		      size_t errbufsize, int timeout, int ssl);
@@ -63,5 +62,6 @@ int tcp_read_data_nowait(tcpcon_t *nc, char *buf, const size_t bufsize,
 			 htsbuf_queue_t *spill);
 
 void tcp_close(tcpcon_t *nc);
+
 
 #endif /* NET_H__ */

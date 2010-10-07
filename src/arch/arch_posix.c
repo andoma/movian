@@ -96,6 +96,8 @@ get_system_concurrency(void)
 #include "showtime.h"
 #endif
 
+#include "networking/net.h"
+
 extern int concurrency;
 extern int trace_to_syslog;
 static int decorate_trace;
@@ -129,6 +131,8 @@ arch_init(void)
     setrlimit(RLIMIT_DATA, &rlim);
   } while(0);
 #endif
+
+  net_initialize();
 
   if(trace_to_syslog)
     openlog("showtime", 0, LOG_USER);
