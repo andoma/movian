@@ -256,3 +256,16 @@ htsbuf_appendq(htsbuf_queue_t *hq, htsbuf_queue_t *src)
     TAILQ_INSERT_TAIL(&hq->hq_q, hd, hd_link);
   }
 }
+
+
+void
+htsbuf_dump_raw_strerr(htsbuf_queue_t *hq)
+{
+  htsbuf_data_t *hd;
+
+  TAILQ_FOREACH(hd, &hq->hq_q, hd_link) {
+    if(write(2, hd->hd_data + hd->hd_data_off,
+	     hd->hd_data_len - hd->hd_data_off))
+      break;
+  }
+}
