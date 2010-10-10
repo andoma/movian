@@ -289,6 +289,8 @@ typedef struct http_file {
 #define hf_fd(hf) ((hf)->hf_hc->hc_fd)
 
 
+static void http_detach(http_file_t *hf, int reusable);
+
 
 /**
  *
@@ -355,6 +357,10 @@ http_drain_content(http_file_t *hf)
   if((buf = http_read_content(hf)) == NULL)
     return -1;
   free(buf);
+
+  if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE)
+    http_detach(hf, 0);
+
   return 0;
 }
 
@@ -404,7 +410,7 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
   free(hf->hf_content_type);
   hf->hf_content_type = NULL;
 
-  HTTP_TRACE("%s: Reponse:", hf->hf_url);
+  HTTP_TRACE("%s: Response:", hf->hf_url);
 
   for(li = 0; ;li++) {
     if(tcp_read_line(hc->hc_tc, hf->hf_line, sizeof(hf->hf_line),
@@ -635,7 +641,6 @@ http_connect(http_file_t *hf, char *errbuf, int errlen, int escape_path)
   http_redirect_t *hr;
   const char *url;
 
-  hf->hf_filesize = -1;
   hf->hf_rsize = 0;
 
   if(hf->hf_connection != NULL)
@@ -686,6 +691,8 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   reconnect:
 
+  hf->hf_filesize = -1;
+
   if(http_connect(hf, errbuf, errlen, 1))
     return -1;
 
@@ -715,8 +722,6 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
     goto reconnect;
   }
 
-  HTTP_TRACE("%s: HEAD %d", hf->hf_url, code);
-
   switch(code) {
   case 200:
     if(!ignore_size && hf->hf_filesize < 0) {
@@ -726,7 +731,9 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
     hf->hf_rsize = 0; /* This was just a HEAD request, we don't actually
 		       * get any data
 		       */
- 
+    if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE)
+      http_detach(hf, 0);
+
     hf->hf_auth_failed = 0;
     return 0;
     
@@ -896,6 +903,10 @@ again:
       
       retval = http_index_parse(hf, fd, buf);
       free(buf);
+
+      if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE)
+	http_detach(hf, 0);
+
       return retval;
       
     case 301:
@@ -981,6 +992,7 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
   http_file_t *hf = (http_file_t *)handle;
   htsbuf_queue_t q;
   int i, code;
+  http_connection_t *hc;
 
   if(size == 0)
     return 0;
@@ -988,10 +1000,11 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
   /* Max 5 retries */
   for(i = 0; i < 5; i++) {
     /* If not connected, try to (re-)connect */
-    if(hf->hf_connection == NULL && http_open0(hf, 0, NULL, 0, 0, 0))
-      return -1;
-
-    http_connection_t *hc = hf->hf_connection;
+    if((hc = hf->hf_connection) == NULL) {
+      if(http_connect(hf, NULL, 0, 1))
+	return -1;
+      hc = hf->hf_connection;
+    }
 
     if(hf->hf_rsize > 0) {
       /* We have pending data input on the socket */
@@ -1082,6 +1095,10 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
       hf->hf_rsize -= size;
 
       hf->hf_consecutive_read += size;
+
+      if(hf->hf_rsize == 0 && hf->hf_connection_mode == CONNECTION_MODE_CLOSE)
+	http_detach(hf, 0);
+
       return size;
     } else {
       http_detach(hf, 0);
