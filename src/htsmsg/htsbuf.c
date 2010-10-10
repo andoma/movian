@@ -212,7 +212,8 @@ htsbuf_drop(htsbuf_queue_t *hq, size_t len)
     c = MIN(hd->hd_data_len - hd->hd_data_off, len);
     len -= c;
     hd->hd_data_off += c;
-    
+    hq->hq_size -= c;
+
     if(hd->hd_data_off == hd->hd_data_len)
       htsbuf_data_free(hq, hd);
   }
