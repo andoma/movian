@@ -349,7 +349,7 @@ openpage(struct backend *be, struct navigator *nav,
     prop_t *meta = prop_create(NULL, "metadata");
     prop_link(ct->ct_metadata, meta);
 
-    playqueue_play(url, meta);
+    playqueue_play(url, meta, 0);
     return playqueue_open(be, nav, view);
   }
 
@@ -413,7 +413,7 @@ cdseek(media_pipe_t *mp, media_buf_t **mbp, int first, int last, int lsn)
  */
 static event_t *
 playaudio(struct backend *be, const char *url,
-	  media_pipe_t *mp, char *errstr, size_t errlen)
+	  media_pipe_t *mp, char *errstr, size_t errlen, int hold)
 {
   int track;
   char device[32];
@@ -422,7 +422,7 @@ playaudio(struct backend *be, const char *url,
   media_buf_t *mb = NULL;
   media_queue_t *mq;
   event_t *e;
-  int hold = 0, lost_focus = 0, eject = 0;
+  int lost_focus = 0, eject = 0;
 
   if((track = parse_audiocd_url(url, device, sizeof(device))) < 1) {
     snprintf(errstr, errlen, "Invalid URL");

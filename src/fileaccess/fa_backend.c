@@ -182,7 +182,7 @@ file_open_file(backend_t *be, struct navigator *nav,
       return np;
     }
 
-    playqueue_play(url, meta);
+    playqueue_play(url, meta, 0);
     return playqueue_open(be, nav, view);
 
   case CONTENT_VIDEO:

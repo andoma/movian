@@ -1159,7 +1159,7 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
 	prop_destroy(p);
 
       if(bh->playme != NULL && !strcmp(url, bh->playme))
-	playqueue_load_with_source(p, bh->model);
+	playqueue_load_with_source(p, bh->model, 0);
     }
     spotify_metadata_updated(spotify_session);
   }
@@ -2790,12 +2790,12 @@ delta_seek(media_pipe_t *mp, int64_t d)
  */
 static event_t *
 be_spotify_play(backend_t *be, const char *url, media_pipe_t *mp, 
-		char *errbuf, size_t errlen)
+		char *errbuf, size_t errlen, int hold)
 {
   spotify_uri_t su;
   event_t *e, *eof = NULL;
   event_ts_t *ets;
-  int hold = 0, lost_focus = 0;
+  int lost_focus = 0;
   media_queue_t *mq = &mp->mp_audio;
   
   memset(&su, 0, sizeof(su));

@@ -105,11 +105,11 @@ typedef struct playqueue_event {
 } playqueue_event_t;
 
 
-void playqueue_play(const char *url, prop_t *meta);
+void playqueue_play(const char *url, prop_t *meta, int paused);
 
 void playqueue_event_handler(event_t *e);
 
-void playqueue_load_with_source(prop_t *track, prop_t *source);
+void playqueue_load_with_source(prop_t *track, prop_t *source, int paused);
 
 struct backend;
 

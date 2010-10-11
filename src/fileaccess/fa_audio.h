@@ -24,6 +24,6 @@ struct backend;
 
 event_t *be_file_playaudio(struct backend *be, const char *url,
 			   media_pipe_t *mp,
-			   char *errbuf, size_t errlen);
+			   char *errbuf, size_t errlen, int hold);
 
 #endif /* FA_AUDIO_H */

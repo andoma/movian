@@ -555,7 +555,7 @@ doscan(scanner_t *s)
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
     if(s->s_playme != NULL &&
        !strcmp(s->s_playme, fde->fde_url)) {
-      playqueue_load_with_source(fde->fde_prop, s->s_root);
+      playqueue_load_with_source(fde->fde_prop, s->s_root, 0);
       free(s->s_playme);
       s->s_playme = NULL;
     }

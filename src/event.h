@@ -114,8 +114,8 @@ typedef enum {
   EVENT_KEYDESC,
   EVENT_AUDIO_CLOCK,
   EVENT_VIDEO_CLOCK,
-  EVENT_PLAYQUEUE_ENQ,
   EVENT_PLAYQUEUE_JUMP,
+  EVENT_PLAYQUEUE_JUMP_AND_PAUSE,
   EVENT_TV,            /* TV specific events, see tv.h */
   EVENT_SEEK,
   EVENT_EOF,           /* End of file */

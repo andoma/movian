@@ -202,7 +202,7 @@ seekflush(media_pipe_t *mp, media_buf_t **mbp)
  */
 event_t *
 be_file_playaudio(struct backend *be, const char *url, media_pipe_t *mp,
-		  char *errbuf, size_t errlen)
+		  char *errbuf, size_t errlen, int hold)
 {
   AVFormatContext *fctx;
   AVCodecContext *ctx;
@@ -216,7 +216,7 @@ be_file_playaudio(struct backend *be, const char *url, media_pipe_t *mp,
   media_codec_t *cw;
   char faurl[URL_MAX];
   event_t *e;
-  int hold = 0, lost_focus = 0;
+  int lost_focus = 0;
 
   mp_set_playstatus_by_hold(mp, hold, NULL);
 

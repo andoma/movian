@@ -69,6 +69,7 @@ static prop_t *playqueue_model;
 static prop_sub_t *playqueue_source_sub;
 static struct playqueue_entry_queue playqueue_source_entries;
 static prop_t *playqueue_startme;
+static int playqueue_start_paused;
 
 static void update_pq_meta(void);
 
@@ -120,12 +121,13 @@ pqe_event_dtor(event_t *e)
  *
  */
 static event_t *
-pqe_event_create(playqueue_entry_t *pqe, int jump)
+pqe_event_createx(playqueue_entry_t *pqe, event_type_t event)
 {
+  // jump ? EVENT_PLAYQUEUE_JUMP : EVENT_PLAYQUEUE_ENQ,
+
    playqueue_event_t *e;
 
-   e = event_create(jump ? EVENT_PLAYQUEUE_JUMP : EVENT_PLAYQUEUE_ENQ,
-		    sizeof(playqueue_event_t));
+   e = event_create(event, sizeof(playqueue_event_t));
    e->h.e_dtor = pqe_event_dtor;
 
    e->pe_pqe = pqe;
@@ -139,9 +141,9 @@ pqe_event_create(playqueue_entry_t *pqe, int jump)
  *
  */
 static void
-pqe_play(playqueue_entry_t *pqe, int jump)
+pqe_play(playqueue_entry_t *pqe, event_type_t how)
 {
-  event_t *e = pqe_event_create(pqe, jump);
+  event_t *e = pqe_event_createx(pqe, how);
   mp_enqueue_event(playqueue_mp, e);
   event_unref(e);
 }
@@ -304,7 +306,8 @@ source_set_url(void *opaque, const char *str)
   pqe->pqe_url = strdup(str);
 
   if(pqe->pqe_startme) {
-    pqe_play(pqe, 1);
+    pqe_play(pqe, pqe->pqe_startme == 2 ? 
+	     EVENT_PLAYQUEUE_JUMP_AND_PAUSE : EVENT_PLAYQUEUE_JUMP);
     pqe->pqe_startme = 0;
   }
 }
@@ -355,9 +358,10 @@ add_from_source(prop_t *p, playqueue_entry_t *before)
     prop_t *q = prop_follow(p);
 
     if(q == playqueue_startme) {
-      pqe->pqe_startme = 1;
+      pqe->pqe_startme = 1 + playqueue_start_paused;
       prop_ref_dec(playqueue_startme);
       playqueue_startme = NULL;
+      playqueue_start_paused = 0;
     }
     prop_ref_dec(q);
   }
@@ -520,7 +524,7 @@ siblings_populate(void *opaque, prop_event_t event, ...)
  *
  */
 void
-playqueue_load_with_source(prop_t *track, prop_t *source)
+playqueue_load_with_source(prop_t *track, prop_t *source, int paused)
 {
   playqueue_entry_t *pqe;
 
@@ -530,7 +534,7 @@ playqueue_load_with_source(prop_t *track, prop_t *source)
 
   TAILQ_FOREACH(pqe, &playqueue_entries, pqe_linear_link) {
     if(pqe->pqe_originator == track) {
-      pqe_play(pqe, 1);
+      pqe_play(pqe, EVENT_PLAYQUEUE_JUMP);
       hts_mutex_unlock(&playqueue_mutex);
       return;
     }
@@ -539,6 +543,7 @@ playqueue_load_with_source(prop_t *track, prop_t *source)
   playqueue_clear();
 
   playqueue_startme = track;
+  playqueue_start_paused = paused;
 
   playqueue_source_sub = 
     prop_subscribe(0,
@@ -635,7 +640,7 @@ playqueue_enqueue(prop_t *track)
  * That way users may 'stick in' track in the current playqueue
  */
 void
-playqueue_play(const char *url, prop_t *metadata)
+playqueue_play(const char *url, prop_t *metadata, int paused)
 {
   playqueue_entry_t *pqe;
 
@@ -666,7 +671,7 @@ playqueue_play(const char *url, prop_t *metadata)
     abort();
 
   /* Tick player to play it */
-  pqe_play(pqe, 1);
+  pqe_play(pqe, paused ? EVENT_PLAYQUEUE_JUMP_AND_PAUSE : EVENT_PLAYQUEUE_JUMP);
   hts_mutex_unlock(&playqueue_mutex);
 }
 
@@ -718,7 +723,7 @@ pq_eventsink(void *opaque, prop_event_t event, ...)
   if(ep->source == NULL)
     playqueue_enqueue(ep->track);
   else
-    playqueue_load_with_source(ep->track, ep->source);
+    playqueue_load_with_source(ep->track, ep->source, 0);
 }
 
 
@@ -930,7 +935,7 @@ player_thread(void *aux)
   event_t *e;
   prop_t *p, *m;
   char errbuf[100];
-
+  int startpaused = 0;
   while(1) {
     
     while(pqe == NULL) {
@@ -962,10 +967,11 @@ player_thread(void *aux)
 
 
       if(event_is_type(e, EVENT_PLAYQUEUE_JUMP) ||
-	 event_is_type(e, EVENT_PLAYQUEUE_ENQ)) {
+	 event_is_type(e, EVENT_PLAYQUEUE_JUMP_AND_PAUSE)) {
 	pe = (playqueue_event_t *)e;
 	pqe = pe->pe_pqe;
 	pe->pe_pqe = NULL;
+	startpaused = event_is_type(e, EVENT_PLAYQUEUE_JUMP_AND_PAUSE);
 
       } else if(event_is_action(e, ACTION_PLAY) ||
 		event_is_action(e, ACTION_PLAYPAUSE)) {
@@ -1012,7 +1018,8 @@ player_thread(void *aux)
 
     prop_set_int(p, 1);
 
-    e = backend_play_audio(pqe->pqe_url, mp, errbuf, sizeof(errbuf));
+    e = backend_play_audio(pqe->pqe_url, mp, errbuf, sizeof(errbuf),
+			   startpaused);
 
     prop_set_int(p, 0);
     prop_ref_dec(p);
@@ -1042,12 +1049,14 @@ player_thread(void *aux)
       pqe_unref(pqe);
       pqe = NULL;
 
-    } else if(event_is_type(e, EVENT_PLAYQUEUE_JUMP)) {
+    } else if(event_is_type(e, EVENT_PLAYQUEUE_JUMP) || 
+	      event_is_type(e, EVENT_PLAYQUEUE_JUMP_AND_PAUSE)) {
       pqe_unref(pqe);
 
       pe = (playqueue_event_t *)e;
       pqe = pe->pe_pqe;
       pe->pe_pqe = NULL; // Avoid deref upon event unref
+      startpaused = event_is_type(e, EVENT_PLAYQUEUE_JUMP_AND_PAUSE);
 
     } else {
       abort();

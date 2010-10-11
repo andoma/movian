@@ -1219,7 +1219,7 @@ be_sidplayer_canhandle(struct backend *be, const char *url)
  */
 static event_t *
 be_sidplayer_play(struct backend *be, const char *url0, media_pipe_t *mp, 
-		  char *errbuf, size_t errlen)
+		  char *errbuf, size_t errlen, int hold)
 {
   media_queue_t *mq = &mp->mp_audio;
   char *url, *p;
@@ -1227,8 +1227,7 @@ be_sidplayer_play(struct backend *be, const char *url0, media_pipe_t *mp,
   size_t fsize;
   unsigned short load_addr, init_addr, play_addr;
   unsigned char subSongsMax, subSong, song_speed;
-  int sample = 0;
-  int hold = 0, lost_focus = 0;
+  int sample = 0, lost_focus = 0;
   media_buf_t *mb = NULL;
   event_t *e;
   int nSamplesRendered = 0;

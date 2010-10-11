@@ -32,12 +32,11 @@ be_sid2player_canhandle(struct backend *be, const char *url)
  */
 static event_t *
 be_sid2player_play(struct backend *be, const char *url0, media_pipe_t *mp, 
-		   char *errbuf, size_t errlen)
+		   char *errbuf, size_t errlen, int hold)
 {
   media_queue_t *mq = &mp->mp_audio;
   char *url, *p;
-  int sample = 0;
-  int hold = 0, lost_focus = 0;
+  int sample = 0, lost_focus = 0;
   media_buf_t *mb = NULL;
   event_t *e;
   int subsong;
