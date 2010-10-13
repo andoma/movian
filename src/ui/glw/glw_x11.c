@@ -394,6 +394,8 @@ window_open(glw_x11_t *gx11, int fullscreen)
     XGetICValues(gx11->ic, XNFilterEvents, &fevent, NULL);
 
     XSelectInput(gx11->display, gx11->win, fevent | winAttr.event_mask);
+  } else {
+    TRACE(TRACE_INFO, "GLW", "Unable to enable keyboard input compositioning");
   }
   return 0;
 }
@@ -570,16 +572,7 @@ glw_x11_init(glw_x11_t *gx11)
   
   XInitThreads();
 
-  if(!XSupportsLocale()) {
-    TRACE(TRACE_ERROR, "GLW", "XSupportsLocale returned false");
-    return 1;
-  }
-
-  if(XSetLocaleModifiers("") == NULL) {
-    TRACE(TRACE_ERROR, "GLW", "XSetLocaleModifiers returned NULL");
-    return 1;
-  }
-
+  int use_locales = XSupportsLocale() && XSetLocaleModifiers("") != NULL;
 
   if((gx11->display = XOpenDisplay(gx11->displayname_real)) == NULL) {
     TRACE(TRACE_ERROR, "GLW", "Unable to open X display \"%s\"\n",
@@ -626,7 +619,8 @@ glw_x11_init(glw_x11_t *gx11)
 
   build_blank_cursor(gx11);
 
-  gx11->im = XOpenIM(gx11->display, NULL, NULL, NULL);
+  if(use_locales)
+    gx11->im = XOpenIM(gx11->display, NULL, NULL, NULL);
 
 
   gx11->atom_deletewindow = 
