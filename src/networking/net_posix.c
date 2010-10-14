@@ -50,7 +50,7 @@ static pthread_mutex_t *ssl_locks;
 static unsigned long
 ssl_tid_fn(void)
 {
-  return pthread_self();
+  return (unsigned long)pthread_self();
 }
 
 static void
