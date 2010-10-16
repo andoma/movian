@@ -306,3 +306,16 @@ htsbuf_append_and_escape_xml(htsbuf_queue_t *hq, const char *s)
     }
   }
 }
+
+
+/**
+ *
+ */
+char *
+htsbuf_to_string(htsbuf_queue_t *hq)
+{
+  char *r = malloc(hq->hq_size + 1);
+  r[hq->hq_size] = 0;
+  htsbuf_read(hq, r, hq->hq_size);
+  return r;
+}

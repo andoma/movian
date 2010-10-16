@@ -69,4 +69,6 @@ void htsbuf_append_and_escape_xml(htsbuf_queue_t *hq, const char *str);
 
 void htsbuf_dump_raw_stderr(htsbuf_queue_t *hq);
 
+char *htsbuf_to_string(htsbuf_queue_t *hq);
+
 #endif /* HTSBUF_H__ */
