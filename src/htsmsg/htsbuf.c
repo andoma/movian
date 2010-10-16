@@ -273,3 +273,36 @@ htsbuf_dump_raw_stderr(htsbuf_queue_t *hq)
   if(write(2, &n, 1) != 1)
     return;
 }
+
+
+/**
+ *
+ */
+void
+htsbuf_append_and_escape_xml(htsbuf_queue_t *hq, const char *s)
+{
+  const char *c = s;
+  const char *e = s + strlen(s);
+  while(1) {
+    const char *esc;
+    switch(*c++) {
+    case '<':  esc = "&lt;";   break;
+    case '>':  esc = "&gt;";   break;
+    case '&':  esc = "&amp;";  break;
+    case '\'': esc = "&apos;"; break;
+    case '"':  esc = "&quot;"; break;
+    default:   esc = NULL;     break;
+    }
+    
+    if(esc != NULL) {
+      htsbuf_append(hq, s, c - s - 1);
+      htsbuf_append(hq, esc, strlen(esc));
+      s = c;
+    }
+    
+    if(c == e) {
+      htsbuf_append(hq, s, c - s);
+      break;
+    }
+  }
+}

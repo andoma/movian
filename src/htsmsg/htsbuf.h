@@ -65,6 +65,8 @@ size_t htsbuf_find(htsbuf_queue_t *hq, uint8_t v);
 
 void htsbuf_appendq(htsbuf_queue_t *hq, htsbuf_queue_t *src);
 
+void htsbuf_append_and_escape_xml(htsbuf_queue_t *hq, const char *str);
+
 void htsbuf_dump_raw_stderr(htsbuf_queue_t *hq);
 
 #endif /* HTSBUF_H__ */
