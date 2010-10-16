@@ -246,7 +246,7 @@ be_file_playaudio(struct backend *be, const char *url, media_pipe_t *mp,
   snprintf(faurl, sizeof(faurl), "showtime:%s", url);
 
   if(av_open_input_file(&fctx, faurl, NULL, 0, NULL) != 0) {
-    snprintf(errbuf, errlen, "Unable to open input file");
+    snprintf(errbuf, errlen, "Unable to open input file (FFmpeg)");
     return NULL;
   }
 
