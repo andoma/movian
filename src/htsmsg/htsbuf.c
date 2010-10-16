@@ -267,7 +267,8 @@ htsbuf_dump_raw_stderr(htsbuf_queue_t *hq)
 
   TAILQ_FOREACH(hd, &hq->hq_q, hd_link) {
     if(write(2, hd->hd_data + hd->hd_data_off,
-	     hd->hd_data_len - hd->hd_data_off))
+	     hd->hd_data_len - hd->hd_data_off)
+       != hd->hd_data_len - hd->hd_data_off)
       break;
   }
   if(write(2, &n, 1) != 1)
@@ -283,6 +284,9 @@ htsbuf_append_and_escape_xml(htsbuf_queue_t *hq, const char *s)
 {
   const char *c = s;
   const char *e = s + strlen(s);
+  if(e == s)
+    return;
+
   while(1) {
     const char *esc;
     switch(*c++) {
