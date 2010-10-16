@@ -26,14 +26,14 @@ static hts_mutex_t callout_mutex;
 static hts_cond_t callout_cond;
 
 /**
- *
+ *htsmsg_t *props
  */
 static int
 calloutcmp(callout_t *a, callout_t *b)
 {
-  if(a->c_expire < b->c_expire)
+  if(a->c_deadline < b->c_deadline)
     return -1;
-  else if(a->c_expire > b->c_expire)
+  else if(a->c_deadline > b->c_deadline)
     return 1;
  return 0;
 }
@@ -42,9 +42,9 @@ calloutcmp(callout_t *a, callout_t *b)
 /**
  *
  */
-void
+static void
 callout_arm_abs(callout_t *d, callout_callback_t *callback, void *opaque,
-		 time_t when)
+		uint64_t deadline)
 {
   hts_mutex_lock(&callout_mutex);
 
@@ -55,10 +55,9 @@ callout_arm_abs(callout_t *d, callout_callback_t *callback, void *opaque,
     
   d->c_callback = callback;
   d->c_opaque = opaque;
-  d->c_expire = when;
+  d->c_deadline = deadline;
 
   LIST_INSERT_SORTED(&callouts, d, c_link, calloutcmp);
-
   hts_cond_signal(&callout_cond);
   hts_mutex_unlock(&callout_mutex);
 }
@@ -70,10 +69,19 @@ void
 callout_arm(callout_t *d, callout_callback_t *callback,
 	     void *opaque, int delta)
 {
-  time_t now;
-  time(&now);
-  
-  callout_arm_abs(d, callback, opaque, now + delta);
+  uint64_t deadline = showtime_get_ts() + delta * 1000000LL;
+  callout_arm_abs(d, callback, opaque, deadline);
+}
+
+/**
+ *
+ */
+void
+callout_arm_hires(callout_t *d, callout_callback_t *callback,
+		  void *opaque, uint64_t delta)
+{
+  uint64_t deadline = showtime_get_ts() + delta;
+  callout_arm_abs(d, callback, opaque, deadline);
 }
 
 /**
@@ -97,21 +105,17 @@ callout_disarm(callout_t *d)
 static void *
 callout_loop(void *aux)
 {
-  time_t now;
-  struct timespec ts;
+  uint64_t now;
   callout_t *c;
   callout_callback_t *cc;
-
-  ts.tv_sec = 0;
-  ts.tv_nsec = 0;
 
   hts_mutex_lock(&callout_mutex);
 
   while(1) {
 
-    time(&now);
+    now = showtime_get_ts();
   
-    while((c = LIST_FIRST(&callouts)) != NULL && c->c_expire <= now) {
+    while((c = LIST_FIRST(&callouts)) != NULL && c->c_deadline <= now) {
       cc = c->c_callback;
       LIST_REMOVE(c, c_link);
       c->c_callback = NULL;
@@ -122,7 +126,7 @@ callout_loop(void *aux)
 
     if((c = LIST_FIRST(&callouts)) != NULL) {
 
-      int timeout = (c->c_expire - now) * 1000;
+      int timeout = (c->c_deadline - now + 999) / 1000;
       hts_cond_wait_timeout(&callout_cond, &callout_mutex, timeout);
     } else {
       hts_cond_wait(&callout_cond, &callout_mutex);
@@ -163,7 +167,7 @@ set_global_clock(struct callout *c, void *aux)
   tm.tm_min++;
 
   next = mktime(&tm);
-  callout_arm_abs(&callout_clock, set_global_clock, NULL, next);
+  callout_arm(&callout_clock, set_global_clock, NULL, next - now);
 }
 
 

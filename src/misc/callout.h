@@ -19,7 +19,7 @@
 #ifndef CALLOUT_H__
 #define CALLOUT_H__
 
-#include <time.h>
+#include <stdint.h>
 #include "queue.h"
 
 struct callout;
@@ -29,14 +29,14 @@ typedef struct callout {
   LIST_ENTRY(callout) c_link;
   callout_callback_t *c_callback;
   void *c_opaque;
-  time_t c_expire;
+  uint64_t c_deadline;
 } callout_t;
 
 void callout_arm(callout_t *c, callout_callback_t *callback,
 		  void *opaque, int delta);
 
-void callout_arm_abs(callout_t *c, callout_callback_t *callback,
-		      void *opaque, time_t when);
+void callout_arm_hires(callout_t *d, callout_callback_t *callback,
+		       void *opaque, uint64_t delta);
 
 void callout_disarm(callout_t *c);
 
