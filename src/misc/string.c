@@ -920,3 +920,47 @@ hex2bin(uint8_t *buf, size_t buflen, const char *str)
   }
   return 0;
 }
+
+
+/**
+ * Create URL using ref referred from base
+ */
+char *
+url_resolve_relative(const char *proto, const char *hostname, int port,
+		     const char *path, const char *ref)
+{
+  char out[512];
+  int l;
+  
+  if(strstr(ref, "://"))
+    return strdup(ref);
+
+  if(port != -1)
+    l = snprintf(out, sizeof(out), "%s://%s:%d", proto, hostname, port);
+  else
+    l = snprintf(out, sizeof(out), "%s://%s", proto, hostname);
+  
+
+  if(*ref != '/') {
+
+    const char *r = strrchr(path, '/');
+    if(r != NULL) {
+      size_t l2 = r + 1 - path;
+
+      if(l2 + l > sizeof(out) - 1)
+	return NULL;
+
+      memcpy(out + l, path, l2);
+      l += l2;
+
+      size_t l3 = strlen(ref) + 1;
+      if(l3 + l > sizeof(out) - 1)
+	return NULL;
+      
+      memcpy(out + l, ref, l3);
+      return strdup(out);
+    }
+  }
+  snprintf(out + l, sizeof(out) - l, "%s", ref); 
+  return strdup(out);
+}

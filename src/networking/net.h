@@ -64,4 +64,15 @@ int tcp_read_data_nowait(tcpcon_t *nc, char *buf, const size_t bufsize,
 void tcp_close(tcpcon_t *nc);
 
 
+
+
+typedef struct netif {
+  uint32_t ipv4;
+  char ifname[16];
+} netif_t;
+
+
+netif_t *net_get_interfaces(void);
+
+
 #endif /* NET_H__ */

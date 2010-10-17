@@ -834,3 +834,52 @@ fa_pathjoin(char *dst, size_t dstlen, const char *p1, const char *p2)
   int sep = l1 > 0 && p1[l1 - 1] == '/';
   snprintf(dst, dstlen, "%s%s%s", p1, sep ? "" : "/", p2);
 }
+
+
+
+/**
+ *
+ */
+void
+fa_url_get_last_component(char *dst, size_t dstlen, const char *url)
+{
+  int e, b;
+  fa_protocol_t *fap;
+  char *filename;
+
+  if(dstlen == 0)
+    return;
+
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, NULL, 0)) != NULL) {
+    if(fap->fap_get_last_component != NULL) {
+      fap->fap_get_last_component(fap, filename, dst, dstlen);
+      free(filename);
+      return;
+    }
+    free(filename);
+  }
+
+  e = strlen(url);
+  if(e > 0 && url[e-1] == '/')
+    e--;
+
+  if(e == 0) {
+    *dst = 0;
+    return;
+  }
+
+  b = e;
+  while(b > 0) {
+    b--;
+    if(url[b] == '/') {
+      b++;
+      break;
+    }
+  }
+
+
+  if(dstlen > e - b + 1)
+    dstlen = e - b + 1;
+  memcpy(dst, url + b, dstlen);
+  dst[dstlen - 1] = 0;
+}

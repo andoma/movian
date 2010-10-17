@@ -133,6 +133,12 @@ typedef struct fa_protocol {
   int (*fap_normalize)(struct fa_protocol *fap, const char *url,
 		       char *dst, size_t dstlen);
   
+  /**
+   * Extract the last component of the URL (ie. the filename)
+   */
+  void (*fap_get_last_component)(struct fa_protocol *fap, const char *url,
+				 char *dst, size_t dstlen);
+
 } fa_protocol_t;
 
 

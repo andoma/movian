@@ -36,7 +36,8 @@ const char *openpage = STRINGIFY(
 );
 
 static int
-hc_open(http_connection_t *hc, const char *remain, void *opaque)
+hc_open(http_connection_t *hc, const char *remain, void *opaque,
+	http_cmd_t method)
 {
   htsbuf_queue_t out;
 

@@ -76,7 +76,7 @@ js_httpRequest(JSContext *cx, JSObject *obj, uintN argc,
   jsrefcount s = JS_SuspendRequest(cx);
   int n = http_request(url, (const char **)httpargs, 
 		       &result, &resultsize, errbuf, sizeof(errbuf),
-		       NULL, NULL, 0, &headers);
+		       NULL, NULL, 0, &headers, NULL, NULL);
   JS_ResumeRequest(cx, s);
 
   if(httpargs != NULL)

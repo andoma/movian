@@ -52,15 +52,9 @@ be_file_canhandle(backend_t *be, const char *url)
 static void
 set_title_from_url(prop_t *metadata, const char *url)
 {
-  int l = strlen(url);
-  char *dirname = alloca(l + 1);
-
-  memcpy(dirname, url, l + 1);
-  if(l > 0 && dirname[l - 1] == '/')
-    dirname[l - 1] = 0;
-
-  dirname = strrchr(dirname, '/') ? strrchr(dirname, '/') + 1 : dirname;
-  prop_set_string(prop_create(metadata, "title"), dirname);
+  char tmp[1024];
+  fa_url_get_last_component(tmp, sizeof(tmp), url);
+  prop_set_string(prop_create(metadata, "title"), tmp);
 }
 
 

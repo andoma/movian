@@ -167,6 +167,7 @@ int fa_check_url(struct backend *be, const char *url,
 struct htsbuf_queue;
 
 #define HTTP_REQUEST_ESCAPE_PATH 0x1
+#define HTTP_REQUEST_DEBUG 0x2
 
 LIST_HEAD(http_header_list, http_header);
 
@@ -180,7 +181,8 @@ int http_request(const char *url, const char **arguments,
 		 char **result, size_t *result_sizep,
 		 char *errbuf, size_t errlen,
 		 struct htsbuf_queue *postdata, const char *postcontenttype,
-		 int flags, struct http_header_list *headers_out);
+		 int flags, struct http_header_list *headers_out,
+		 struct http_header_list *headers_in, const char *method);
 
 void http_headers_free(struct http_header_list *headers);
 
@@ -195,5 +197,7 @@ void http_headers_add(struct http_header_list *headers, const char *key,
 int fa_lavf_reopen(ByteIOContext **p, fa_handle_t *fa);
 
 void fa_pathjoin(char *dst, size_t dstlen, const char *p1, const char *p2);
+
+void fa_url_get_last_component(char *dst, size_t dstlen, const char *url);
 
 #endif /* FILEACCESS_H */

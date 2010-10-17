@@ -137,6 +137,7 @@ SRCS-$(CONFIG_BONJOUR) 	+= src/sd/bonjour.c
 #
 SRCS += 		src/api/api.c \
 			src/api/xmlrpc.c \
+			src/api/soap.c \
 			src/api/opensubtitles.c \
 			src/api/lastfm.c \
 
@@ -151,6 +152,15 @@ SRCS-$(CONFIG_POSIX_NETWORKING) += src/networking/net_posix.c
 SRCS-$(CONFIG_LIBOGC) += src/networking/net_libogc.c
 
 SRCS-$(CONFIG_HTTPSERVER) += src/networking/http.c
+SRCS-$(CONFIG_HTTPSERVER) += src/networking/ssdp.c
+SRCS-$(CONFIG_HTTPSERVER) += \
+			src/upnp/upnp.c \
+			src/upnp/upnp_control.c \
+			src/upnp/upnp_event.c \
+			src/upnp/upnp_browse.c \
+			src/upnp/upnp_avtransport.c \
+			src/upnp/upnp_renderingcontrol.c \
+			src/upnp/upnp_connectionmanager.c \
 
 #
 # Video support

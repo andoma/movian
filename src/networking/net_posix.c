@@ -17,6 +17,7 @@
  */
 
 #include "config.h"
+#include <sys/ioctl.h>
 #include <netdb.h>
 #include <poll.h>
 #include <assert.h>
@@ -27,6 +28,7 @@
 #include <stdarg.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
@@ -35,8 +37,10 @@
 
 #include "net.h"
 
+
 #if ENABLE_HTTPSERVER
-#include "networking/http.h"
+#include "http.h"
+#include "ssdp.h"
 #endif
 
 
@@ -387,6 +391,54 @@ tcp_close(tcpcon_t *tc)
 
 
 /**
+ *
+ */
+netif_t *
+net_get_interfaces(void)
+{
+  struct ifconf ifc;
+  struct ifreq *ifr;
+  struct netif *ni, *n;
+  int size = 8, num;
+  int i;
+
+  int s = socket(AF_INET, SOCK_DGRAM, 0);
+  if(s == -1)
+    return NULL;
+  
+  while(1) {
+    ifr = alloca(sizeof(struct ifreq) * size);
+  
+    ifc.ifc_len = sizeof(struct ifreq) * size;
+    ifc.ifc_req = ifr;
+  
+    if(ioctl(s, SIOCGIFCONF, &ifc)) {
+      close(s);
+      return NULL;
+    }
+
+    num = ifc.ifc_len / sizeof(struct ifreq);
+    if(num < size)
+      break;
+    size *= 2;
+  }
+
+  n = ni = calloc(1, sizeof(struct netif) * (num + 1));
+  
+  for(i = 0; i < num; i++) {
+    n->ipv4 = ntohl(((struct sockaddr_in *)&ifr[i].ifr_addr)->sin_addr.s_addr);
+    if(n->ipv4 == 0)
+      continue;
+
+    snprintf(n->ifname, sizeof(n->ifname), "%s", ifr[i].ifr_name);
+    n++;
+  }
+  close(s);
+  return ni;
+}
+
+
+/**
  * Called from code in arch/
  */
 void
@@ -405,9 +457,5 @@ net_initialize(void)
   
   CRYPTO_set_locking_callback(ssl_lock_fn);
   CRYPTO_set_id_callback(ssl_tid_fn);
-#endif
-  
-#if ENABLE_HTTPSERVER
-  http_server_init();
 #endif
 }

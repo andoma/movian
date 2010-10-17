@@ -44,4 +44,7 @@ void unicode_init(void);
 
 char *utf8_from_ISO_8859_1(const char *str, int len);
 
+char *url_resolve_relative(const char *proto, const char *hostname, int port,
+			   const char *path, const char *ref);
+
 #endif

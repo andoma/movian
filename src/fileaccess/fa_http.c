@@ -553,7 +553,6 @@ redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen,
 
   free(hf->hf_url);
   hf->hf_url = hf->hf_location;
-  http_deescape(hf->hf_url);
 
   hf->hf_location = NULL;
   
@@ -580,6 +579,9 @@ authenticate(http_file_t *hf, char *errbuf, size_t errlen, int *non_interactive)
     *non_interactive = FAP_STAT_NEED_AUTH;
     return -1;
   }
+  
+  snprintf(buf1, sizeof(buf1), "%s @ %s", hf->hf_auth_realm, 
+	   hf->hf_connection->hc_hostname);
 
   if(http_drain_content(hf)) {
     snprintf(errbuf, errlen, "Connection lost");
@@ -589,8 +591,6 @@ authenticate(http_file_t *hf, char *errbuf, size_t errlen, int *non_interactive)
     snprintf(errbuf, errlen, "Authentication without realm");
     return -1;
   }
-  snprintf(buf1, sizeof(buf1), "%s @ %s", hf->hf_auth_realm, 
-	   hf->hf_connection->hc_hostname);
 
   r = keyring_lookup(buf1, &username, &password, NULL, 
 		     hf->hf_auth_failed > 0,
@@ -688,12 +688,12 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
   int code;
   htsbuf_queue_t q;
   int redircount = 0;
-
+  
   reconnect:
 
   hf->hf_filesize = -1;
 
-  if(http_connect(hf, errbuf, errlen, 1))
+  if(http_connect(hf, errbuf, errlen, 0))
     return -1;
 
   if(!probe && hf->hf_filesize != -1)
@@ -866,7 +866,7 @@ http_index_fetch(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen)
   int redircount = 0;
 
 reconnect:
-  if(http_connect(hf, errbuf, errlen, 1))
+  if(http_connect(hf, errbuf, errlen, 0))
     return -1;
 
   htsbuf_queue_init(&q, 0);
@@ -1001,7 +1001,7 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
   for(i = 0; i < 5; i++) {
     /* If not connected, try to (re-)connect */
     if((hc = hf->hf_connection) == NULL) {
-      if(http_connect(hf, NULL, 0, 1))
+      if(http_connect(hf, NULL, 0, 0))
 	return -1;
       hc = hf->hf_connection;
     }
@@ -1221,7 +1221,7 @@ http_quickload(struct fa_protocol *fap, const char *url,
   LIST_INIT(&headers);
 
   if(http_request(url, NULL, &res, &siz, errbuf, errlen, NULL, 0,
-		  HTTP_REQUEST_ESCAPE_PATH, &headers))
+		  0, &headers, NULL, NULL))
     return NULL;
 
   if(fs != NULL) {
@@ -1258,6 +1258,42 @@ http_quickload(struct fa_protocol *fap, const char *url,
 }
 
 
+/**
+ *
+ */
+static void
+http_get_last_component(struct fa_protocol *fap, const char *url,
+			char *dst, size_t dstlen)
+{
+  int e, b;
+
+  for(e = 0; url[e] != 0 && url[e] != '?'; e++);
+  if(e > 0 && url[e-1] == '/')
+    e--;
+
+  if(e == 0) {
+    *dst = 0;
+    return;
+  }
+
+  b = e;
+  while(b > 0) {
+    b--;
+    if(url[b] == '/') {
+      b++;
+      break;
+    }
+  }
+
+  if(dstlen > e - b + 1)
+    dstlen = e - b + 1;
+  memcpy(dst, url + b, dstlen);
+  dst[dstlen - 1] = 0;
+
+  http_deescape(dst);
+}
+
+
 
 /**
  *
@@ -1274,6 +1310,7 @@ static fa_protocol_t fa_protocol_http = {
   .fap_fsize = http_fsize,
   .fap_stat  = http_stat,
   .fap_quickload = http_quickload,
+  .fap_get_last_component = http_get_last_component,
 };
 
 FAP_REGISTER(http);
@@ -1294,6 +1331,7 @@ static fa_protocol_t fa_protocol_https = {
   .fap_fsize = http_fsize,
   .fap_stat  = http_stat,
   .fap_quickload = http_quickload,
+  .fap_get_last_component = http_get_last_component,
 };
 
 FAP_REGISTER(https);
@@ -1401,7 +1439,6 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
 	    snprintf(fname, URL_MAX, "%s", q);
 	  }
 	  http_deescape(fname);
-	  http_deescape(path);
 	  
 	  fde = fa_dir_add(fd, path, fname, 
 			   isdir ? CONTENT_DIR : CONTENT_FILE);
@@ -1481,11 +1518,11 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
   int i;
 
   for(i = 0; i < 5; i++) {
-    if(http_connect(hf, errbuf, errlen, 1))
-      return -1;
 
+    if(hf->hf_connection == NULL) 
+      if(http_connect(hf, errbuf, errlen, 0))
+	return -1;
 
-  again:
     htsbuf_queue_init(&q, 0);
     htsbuf_qprintf(&q, 
 		   "PROPFIND %s HTTP/1.1\r\n"
@@ -1503,8 +1540,6 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
 
     tcp_write_queue(hf->hf_connection->hc_tc, &q);
     code = http_read_response(hf, NULL);
-
-    HTTP_TRACE("%s: PROPFIND %d", hf->hf_url, code);
 
     if(code == -1) {
       http_detach(hf, 0);
@@ -1543,7 +1578,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
     case 401:
       if(authenticate(hf, errbuf, errlen, non_interactive))
 	return -1;
-      goto again;
+      continue;
 
     case 405:
     case 501:
@@ -1623,6 +1658,7 @@ static fa_protocol_t fa_protocol_webdav = {
   .fap_fsize = http_fsize,
   .fap_stat  = dav_stat,
   .fap_quickload = http_quickload,
+  .fap_get_last_component = http_get_last_component,
 };
 FAP_REGISTER(webdav);
 
@@ -1635,7 +1671,8 @@ http_request(const char *url, const char **arguments,
 	     char **result, size_t *result_sizep,
 	     char *errbuf, size_t errlen,
 	     htsbuf_queue_t *postdata, const char *postcontenttype,
-	     int flags, struct http_header_list *headers_out)
+	     int flags, struct http_header_list *headers_out,
+	     struct http_header_list *headers_in, const char *method)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   htsbuf_queue_t q;
@@ -1645,6 +1682,7 @@ http_request(const char *url, const char **arguments,
   int redircount = 0, escape_path;
   http_redirect_t *hr;
   const char *url0;
+  http_header_t *hh;
 
   if(headers_out != NULL)
     LIST_INIT(headers_out);
@@ -1688,7 +1726,7 @@ http_request(const char *url, const char **arguments,
 
   htsbuf_queue_init(&q, 0);
 
-  htsbuf_qprintf(&q, "%s %s", postdata ? "POST" : "GET", hf->hf_path);
+  htsbuf_qprintf(&q, "%s %s", method ?: postdata ? "POST": "GET", hf->hf_path);
 
   if(arguments != NULL) {
     char prefix = '?';
@@ -1721,13 +1759,24 @@ http_request(const char *url, const char **arguments,
   if(hf->hf_auth != NULL)
     htsbuf_qprintf(&q, "%s\r\n", hf->hf_auth);
 
+  if(headers_in) {
+    LIST_FOREACH(hh, headers_in, hh_link)
+      htsbuf_qprintf(&q, "%s: %s\r\n", hh->hh_key, hh->hh_value);
+  }
 
   htsbuf_qprintf(&q, "\r\n");
 
+  if(flags & HTTP_REQUEST_DEBUG)
+    htsbuf_dump_raw_stderr(&q);
+
   tcp_write_queue(hf->hf_connection->hc_tc, &q);
 
-  if(postdata != NULL)
+  if(postdata != NULL) {
+    if(flags & HTTP_REQUEST_DEBUG)
+      htsbuf_dump_raw_stderr(postdata);
+
     tcp_write_queue_dontfree(hf->hf_connection->hc_tc, postdata);
+  }
 
   code = http_read_response(hf, headers_out);
   if(code == -1 && hf->hf_connection->hc_reused) {
@@ -1788,9 +1837,13 @@ http_request(const char *url, const char **arguments,
 
     mem[size] = 0;
 
-    *result = mem;
-    *result_sizep = size;
-    
+    if(result == NULL) {
+      free(mem);
+    } else {
+      *result = mem;
+      *result_sizep = size;
+    }
+
   } else {
 
     char *buf = NULL;
@@ -1840,8 +1893,12 @@ http_request(const char *url, const char **arguments,
     }
   done:
     buf[size] = 0;
-    *result = buf;
-    *result_sizep = size;
+    if(result == NULL) {
+      free(buf);
+    } else {
+      *result = buf;
+      *result_sizep = size;
+    }
   }
 
   http_destroy(hf);

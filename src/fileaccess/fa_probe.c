@@ -452,9 +452,7 @@ static void
 fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
 {
   int i;
-  const char *t;
   char tmp1[1024];
-  char *p;
   int has_video = 0;
   int has_audio = 0;
 
@@ -463,16 +461,14 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
   /* Format meta info */
   
   if(fctx->title[0] == 0) {
-    t = strrchr(url, '/');
-    t = t ? t + 1 : url;
-    i = strlen(t);
-    p = alloca(i + 1);
-    memcpy(p, t, i + 1);
-    
-    if(i > 4 && p[i - 4] == '.')
-      p[i - 4] = 0;
+    fa_url_get_last_component(tmp1, sizeof(tmp1), url);
 
-    md->md_title = rstr_alloc(p);
+    // Strip .xxx ending in filenames
+    i = strlen(tmp1);
+    if(i > 4 && tmp1[i - 4] == '.')
+      tmp1[i - 4] = 0;
+
+    md->md_title = rstr_alloc(tmp1);
   } else {
     md->md_title = ffmpeg_metadata_get_str(fctx->metadata, "title");
   }

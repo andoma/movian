@@ -49,6 +49,12 @@
 #include "blobcache.h"
 #include "misc/string.h"
 
+#if ENABLE_HTTPSERVER
+#include "networking/http.h"
+#include "networking/ssdp.h"
+#include "upnp/upnp.h"
+#endif
+
 #include "misc/fs.h"
 
 /**
@@ -316,6 +322,13 @@ main(int argc, char **argv)
 
   /* Initialize various external APIs */
   api_init();
+
+  /* HTTP server and UPNP */
+#if ENABLE_HTTPSERVER
+  http_server_init();
+  upnp_init();
+#endif
+
 
   /* */
   runcontrol_init(can_standby, can_poweroff);
