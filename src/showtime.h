@@ -40,6 +40,8 @@ void showtime_shutdown(int retcode);
 
 extern int64_t showtime_get_ts(void);
 
+extern uint64_t arch_get_seed(void);
+
 /**
  * Content types
  */

@@ -326,3 +326,16 @@ arch_set_cachepath(void)
   snprintf(buf, sizeof(buf), "%s/.hts/showtimecache", homedir);
   showtime_cache_path = strdup(buf);
 }
+
+
+/**
+ *
+ */
+uint64_t
+arch_get_seed(void)
+{
+  uint64_t v = getpid();
+  v = (v << 16) ^ getppid();
+  v = (v << 32) ^ time(NULL);
+  return v;
+}

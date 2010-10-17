@@ -18,6 +18,8 @@
 
 #include <stdio.h>
 
+#include <libavutil/sha1.h>
+
 #include "networking/http.h"
 #include "networking/ssdp.h"
 #include "htsmsg/htsmsg_xml.h"
@@ -189,7 +191,42 @@ upnp_init(void)
   extern upnp_local_service_t upnp_RenderingControl_2;
   extern upnp_local_service_t upnp_ConnectionManager_2;
 
-  upnp_uuid = strdup("2190dd90-d7c7-11df-937b-0800200c9a66");
+  htsmsg_t *conf = htsmsg_store_load("upnp");
+
+  const char *s = conf ? htsmsg_get_str(conf, "uuid") : NULL;
+  if(s != NULL) {
+    upnp_uuid = strdup(s);
+  } else {
+    
+    struct AVSHA1 *shactx = alloca(av_sha1_size);
+    uint64_t v;
+    uint8_t d[20];
+    char uuid[40];
+
+    if(conf == NULL)
+      conf = htsmsg_create_map();
+
+    av_sha1_init(shactx);
+    v = showtime_get_ts();
+    av_sha1_update(shactx, (void *)&v, sizeof(uint64_t));
+
+    v = arch_get_seed();
+    av_sha1_update(shactx, (void *)&v, sizeof(uint64_t));
+
+    av_sha1_final(shactx, d);
+
+    snprintf(uuid, sizeof(uuid),
+	     "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-"
+	     "%02x%02x%02x%02x%02x%02x",
+	     d[0x0], d[0x1], d[0x2], d[0x3],
+	     d[0x4], d[0x5], d[0x6], d[0x7],
+	     d[0x8], d[0x9], d[0xa], d[0xb],
+	     d[0xc], d[0xd], d[0xe], d[0xf]);
+
+    upnp_uuid = strdup(uuid);
+    htsmsg_add_str(conf, "uuid", uuid);
+    htsmsg_store_save(conf, "upnp");
+  }
 
   hts_mutex_init(&upnp_lock);
 
