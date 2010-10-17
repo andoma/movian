@@ -144,7 +144,7 @@ arch_init(void)
 void
 arch_exit(int retcode)
 {
-  _exit(retcode);
+  exit(retcode);
 }
 
 

@@ -123,7 +123,8 @@ static inline void mystrset(char **p, const char *s)
 
 void runcontrol_activity(void);
 
-void *shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque);
+void *shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque,
+			int early);
 
 #define SHOWTIME_EXIT_OK       0
 #define SHOWTIME_EXIT_STANDBY  10

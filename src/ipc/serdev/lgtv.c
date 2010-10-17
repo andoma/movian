@@ -242,7 +242,7 @@ lgtv_init(serdev_t *sd, int curpower)
 		       lgtv_save_settings, lg);
 
 
-  shutdown_hook_add(lgtv_shutdown, lg);
+  shutdown_hook_add(lgtv_shutdown, lg, 0);
 
   // Currently not powered on
 

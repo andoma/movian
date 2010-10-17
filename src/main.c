@@ -57,6 +57,8 @@
 
 #include "misc/fs.h"
 
+static void finalize(void) __attribute__((noreturn));
+
 /**
  *
  */
@@ -338,9 +340,8 @@ main(int argc, char **argv)
   /* Initialize user interfaces */
   ui_start(nuiargs, uiargs, argv0);
 
-  exit(0);
+  finalize();
 }
-
 
 /**
  *
@@ -351,17 +352,20 @@ typedef struct shutdown_hook {
   LIST_ENTRY(shutdown_hook) link;
   void (*fn)(void *opaque, int exitcode);
   void *opaque;
+  int early;
 } shutdown_hook_t;
 
 /**
  *
  */
 void *
-shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque)
+shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque,
+		  int early)
 {
   shutdown_hook_t *sh = malloc(sizeof(shutdown_hook_t));
   sh->fn = fn;
   sh->opaque = opaque;
+  sh->early = early;
   LIST_INSERT_HEAD(&shutdown_hooks, sh, link);
   return sh;
 }
@@ -370,18 +374,22 @@ shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque)
 /**
  *
  */
+static void
+shutdown_hook_run(int early)
+{
+  shutdown_hook_t *sh;
+  LIST_FOREACH(sh, &shutdown_hooks, link)
+    if(sh->early == early)
+      sh->fn(sh->opaque, showtime_retcode);
+}
+
+/**
+ *
+ */
 static void *
 showtime_shutdown0(void *aux)
 {
-  shutdown_hook_t *sh;
-
-  LIST_FOREACH(sh, &shutdown_hooks, link)
-    sh->fn(sh->opaque, showtime_retcode);
-
-  ui_shutdown();
-
-  arch_exit(showtime_retcode);
-  
+  finalize();
   return NULL;
 }
 
@@ -395,5 +403,23 @@ showtime_shutdown(int retcode)
   TRACE(TRACE_DEBUG, "core", "Shutdown requested, returncode = %d", retcode);
 
   showtime_retcode = retcode;
-  hts_thread_create_detached("shutdown", showtime_shutdown0, NULL);
+
+  // run early shutdown hooks (those must be fast)
+  shutdown_hook_run(1);
+
+  if(ui_shutdown() == -1) {
+    // Primary UI has no shutdown method, launch a new thread to stop
+    hts_thread_create_detached("shutdown", showtime_shutdown0, NULL);
+  }
+}
+
+
+/**
+ * The end of all things
+ */
+static void
+finalize(void)
+{
+  shutdown_hook_run(0);
+  arch_exit(showtime_retcode);
 }

@@ -70,7 +70,7 @@ int ui_start(int argc, const char *argv[], const char *argv0);
 
 void uii_register(uii_t *uii, int primary);
 
-void ui_shutdown(void);
+int ui_shutdown(void);
 
 void ui_primary_event(event_t *e);
 

@@ -289,7 +289,8 @@ static void parse_search_reply(sp_search *result, prop_t *nodes,
 static playlist_t *pl_create(sp_playlist *plist, prop_t *root,
 			     int withtracks, const char *name);
 
-static void spotify_shutdown(void *opaque, int retcode);
+static void spotify_shutdown_early(void *opaque, int retcode);
+static void spotify_shutdown_late(void *opaque, int retcode);
 
 static void spotify_try_pending_albums(void);
 
@@ -2675,7 +2676,8 @@ spotify_start(char *errbuf, size_t errlen, int silent)
     silent_start = silent;
     lib_status = SPOTIFY_LS_STARTING;
     hts_thread_create_detached("spotify", spotify_thread, NULL);
-    shutdown_hook_add(spotify_shutdown, NULL);
+    shutdown_hook_add(spotify_shutdown_early, NULL, 1);
+    shutdown_hook_add(spotify_shutdown_late, NULL, 0);
     // FALLTHRU
   case SPOTIFY_LS_STARTING:
     return 0;
@@ -3260,22 +3262,28 @@ be_spotify_canhandle(backend_t *be, const char *url)
  *
  */
 static void
-spotify_shutdown(void *opaque, int exitcode)
+spotify_shutdown_early(void *opaque, int exitcode)
 {
-  int done;
-
   hts_mutex_lock(&spotify_mutex);
 
-  if(lib_status == SPOTIFY_LS_LOGGED_IN) {
+  if(lib_status == SPOTIFY_LS_LOGGED_IN)
+    spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_LOGOUT, NULL));
 
-    done = 0;
+  hts_mutex_unlock(&spotify_mutex);
+}
 
-    spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_LOGOUT, &done));
 
-    while(lib_status == SPOTIFY_LS_LOGGED_IN)
-      if(hts_cond_wait_timeout(&spotify_cond_login, &spotify_mutex, 5000))
-	break;
-  }
+/**
+ *
+ */
+static void
+spotify_shutdown_late(void *opaque, int exitcode)
+{
+  hts_mutex_lock(&spotify_mutex);
+
+  while(lib_status == SPOTIFY_LS_LOGGED_IN)
+    if(hts_cond_wait_timeout(&spotify_cond_login, &spotify_mutex, 5000))
+      break;
 
   hts_mutex_unlock(&spotify_mutex);
 }

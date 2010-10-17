@@ -98,6 +98,8 @@ typedef struct glw_x11 {
   // Available video modes (see: ui/ui.h)
   int vmodes;
 
+  int stop;
+
 } glw_x11_t;
 
 #define AUTOHIDE_TIMEOUT 100 // XXX: in frames.. bad
@@ -921,7 +923,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
 
   glw_set_fullscreen(&gx11->gr, gx11->is_fullscreen);
 
-  while(1) {
+  while(!gx11->stop) {
 
     if(gx11->fullwindow)
       autohide_cursor(gx11);
@@ -1122,7 +1124,8 @@ glw_x11_mainloop(glw_x11_t *gx11)
     x11_screensaver_resume(gx11->sss);
 
   window_shutdown(gx11);
- 
+  XFlush(gx11->display);
+  XSync(gx11->display, True);
 }
 
 
@@ -1216,6 +1219,7 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
   return 0;
 }
 
+
 /**
  *
  */
@@ -1245,9 +1249,7 @@ static void
 glw_x11_stop(uii_t *uii)
 {
   glw_x11_t *gx11 = (glw_x11_t *)uii;
-  // Prevent it from running any more, Perhaps a bit ugly, but we're gonna
-  // exit() very soon, so who cares.
-  glw_lock(&gx11->gr);
+  gx11->stop = 1;
 }
 
 

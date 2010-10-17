@@ -210,14 +210,14 @@ ui_start(int argc, const char *argv[], const char *argv00)
 /**
  *
  */
-void
+int
 ui_shutdown(void)
 {
-  uii_t *uii;
-
-  LIST_FOREACH(uii, &uiis, uii_link) 
-    if(uii->uii_ui->ui_stop != NULL)
-      uii->uii_ui->ui_stop(uii);
+  uii_t *uii = primary_uii;
+  if(uii == NULL)
+    return -1;
+  uii->uii_ui->ui_stop(uii);
+  return 0;
 }
 
 

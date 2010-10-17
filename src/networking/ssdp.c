@@ -40,7 +40,7 @@
 #define SSDP_RESPONSE 3
 
 static struct sockaddr_in ssdp_selfaddr;
-static int ssdp_fdm, ssdp_fdu;
+static int ssdp_fdm, ssdp_fdu, ssdp_run = 1;
 static char *ssdp_uuid;
 
 /**
@@ -168,7 +168,7 @@ ssdp_send(int fd, uint32_t myaddr, struct sockaddr_in *dst,
 	   "SERVER: Showtime,%s,UPnp/1.0,Showtime,%s\r\n"
 	   "%s"
 	   "LOCATION: http://%d.%d.%d.%d:%d%s\r\n"
-	   "CACHE-CONTROL: max-age=1800\r\n"
+	   "CACHE-CONTROL: max-age=90\r\n"
 	   "%s: %s\r\n"
 	   "%s%s%s"
 	   "\r\n",
@@ -326,7 +326,7 @@ static const char *SEARCHREQ =
  *
  */
 static void
-ssdp_send_notify(void)
+ssdp_send_notify(const char *nts)
 {
   int fd, i = 0;
   netif_t *ni;
@@ -342,7 +342,7 @@ ssdp_send_notify(void)
     if((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) != -1) {
       sin.sin_addr.s_addr = htonl(ni[i].ipv4);
       if(bind(fd, (struct sockaddr *)&sin, sizeof(sin)) != -1) {
-	ssdp_send_all(fd, ni[i].ipv4, NULL, "ssdp:alive");
+	ssdp_send_all(fd, ni[i].ipv4, NULL, nts);
       }
       close(fd);
     }
@@ -406,14 +406,13 @@ ssdp_thread(void *aux)
   fds[1].fd = fdu;
   fds[1].events = POLLIN;
 
-
-  while(1) {
+  while(ssdp_run) {
     
     int64_t delta = next_send - showtime_get_ts();
     if(delta <= 0) {
       delta = 15000000LL;
       next_send = showtime_get_ts() + delta;
-      ssdp_send_notify();
+      ssdp_send_notify("ssdp:alive");
     }
     r = poll(fds, 2, (delta / 1000) + 1);
     if(r > 0 && fds[0].revents & POLLIN)
@@ -421,8 +420,20 @@ ssdp_thread(void *aux)
     if(r > 0 && fds[1].revents & POLLIN)
       ssdp_input(fdu, 0);
   }
+  return NULL;
 }
 
+
+/**
+ *
+ */
+static void 
+ssdp_shutdown(void *opaque, int retcode)
+{
+  // Prevent SSDP from announcing any more, not waterproof but should work
+  ssdp_run = 0;
+  ssdp_send_notify("ssdp:byebye");
+}
 
 
 /**
@@ -431,6 +442,7 @@ ssdp_thread(void *aux)
 void
 ssdp_init(const char *uuid)
 {
+  shutdown_hook_add(ssdp_shutdown, NULL, 1);
   ssdp_uuid = strdup(uuid);
   hts_thread_create_detached("ssdp", ssdp_thread, NULL);
 }

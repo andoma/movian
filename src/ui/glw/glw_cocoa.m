@@ -62,6 +62,9 @@ typedef struct glw_cocoa {
   int skip_first_openfile_check;
   
   setting_t *fullscreen_setting;
+  
+  int stop;
+
 } glw_cocoa_t;
 
 
