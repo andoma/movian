@@ -106,6 +106,8 @@ SRCS += src/fileaccess/fileaccess.c \
 	src/fileaccess/fa_bundle.c \
 	src/fileaccess/fa_sidfile.c \
 
+SRCS-$(CONFIG_LIBGME)   += src/fileaccess/fa_gmefile.c
+
 SRCS-$(CONFIG_TINYSMB)  += src/fileaccess/fa_tinysmb.c
 
 SRCS-$(CONFIG_LIBSMBCLIENT) += src/fileaccess/fa_smb.c

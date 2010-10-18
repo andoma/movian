@@ -26,6 +26,10 @@
 #include <string.h>
 #include <ctype.h>
 
+#if ENABLE_LIBGME
+#include <gme/gme.h>
+#endif
+
 #include <libavutil/avstring.h>
 
 #include "showtime.h"
@@ -35,6 +39,7 @@
 #include "api/lastfm.h"
 #include "media.h"
 #include "misc/string.h"
+
 
 #define METADATA_HASH_SIZE 101
 #define METADATA_CACHE_SIZE 1000
@@ -445,6 +450,87 @@ fa_probe_iso(metadata_t *md, fa_handle_t *fh)
 }
 
 
+#if ENABLE_LIBGME
+/**
+ *
+ */
+static int
+gme_probe(metadata_t *md, AVProbeData *pd, fa_handle_t *fh, struct fa_stat *fs)
+{
+  const char *type = gme_identify_header(pd->buf);
+  struct fa_stat fs0;
+  char *buf;
+  gme_err_t err;
+  Music_Emu *emu;
+  gme_info_t *info;
+  int tracks;
+
+  if(*type == 0)
+    return 0;
+
+  if(fs == NULL) {
+    if(fa_stat(pd->filename, &fs0, NULL, 0))
+      return 0;
+    fs = &fs0;
+  }
+
+  buf = malloc(fs->fs_size);
+  memcpy(buf, pd->buf, pd->buf_size);
+  int r = fa_read(fh, buf + pd->buf_size, fs->fs_size - pd->buf_size);
+  if(r != fs->fs_size - pd->buf_size) {
+    free(buf);
+    return 0;
+  }
+
+  err = gme_open_data(buf, fs->fs_size, &emu, gme_info_only);
+  free(buf);
+  if(err != NULL)
+    return 0;
+
+  err = gme_track_info(emu, &info, 0);
+  if(err != NULL) {
+    gme_delete(emu);
+    return 0;
+  }
+
+  tracks = gme_track_count(emu);
+
+#if 0
+  printf("tracks   : %d\n", tracks);
+  printf("system   : %s\n", info->system);
+  printf("game     : %s\n", info->game);
+  printf("song     : %s\n", info->song);
+  printf("author   : %s\n", info->author);
+  printf("copyright: %s\n", info->copyright);
+  printf("comment  : %s\n", info->comment);
+  printf("dumper   : %s\n", info->dumper);
+#endif
+
+  if(tracks == 1) {
+
+    md->md_title  = info->song[0]   ? rstr_alloc(info->song)   : NULL;
+    md->md_album  = info->game[0]   ? rstr_alloc(info->game)   : NULL;
+    md->md_artist = info->author[0] ? rstr_alloc(info->author) : NULL;
+
+    md->md_duration = info->play_length / 1000.0;
+    md->md_type = CONTENT_AUDIO;
+
+  } else {
+
+    md->md_title  = info->game[0] ? rstr_alloc(info->game)   : NULL;
+    md->md_artist = info->author[0] ? rstr_alloc(info->author) : NULL;
+
+    md->md_type = CONTENT_ALBUM;
+    metdata_set_redirect(md, "gmefile://%s|", pd->filename);
+  }
+
+  gme_free_info(info);
+  gme_delete(emu);
+  return 1;
+}
+#endif
+
+
 /**
  * 
  */
@@ -530,7 +616,7 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
  */
 static int
 fa_probe_fill_cache(metadata_t *md, const char *url, char *errbuf, 
-		    size_t errsize)
+		    size_t errsize, struct fa_stat *fs)
 {
   const char *url0 = url;
   AVInputFormat *f;
@@ -563,6 +649,14 @@ fa_probe_fill_cache(metadata_t *md, const char *url, char *errbuf,
     if(f != NULL)
       goto found;
   }
+
+#if ENABLE_LIBGME
+  if(gme_probe(md, &pd, fh, fs)) {
+    fa_close(fh);
+    free(pd.buf);
+    return 0;
+  }
+#endif
 
   if(fa_probe_header(md, url0, pd.buf)) {
     fa_close(fh);
@@ -731,7 +825,7 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize,
     md->md_mtime = fs->fs_mtime;
     md->md_url = strdup(url);
 
-    if(fa_probe_fill_cache(md, url, errbuf, errsize)) {
+    if(fa_probe_fill_cache(md, url, errbuf, errsize, fs)) {
       metadata_destroy(md);
       hts_mutex_unlock(&metadata_mutex);
       return CONTENT_UNKNOWN;

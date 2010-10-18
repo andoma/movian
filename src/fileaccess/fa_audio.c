@@ -32,6 +32,10 @@
 #include "fileaccess.h"
 #include "notifications.h"
 
+#if ENABLE_LIBGME
+#include <gme/gme.h>
+#endif
+
 #if CONFIG_LIBOPENSPC
 #include <openspc.h>
 
@@ -221,7 +225,7 @@ be_file_playaudio(struct backend *be, const char *url, media_pipe_t *mp,
   mp_set_playstatus_by_hold(mp, hold, NULL);
 
   // First we need to check for a few other formats
-#if CONFIG_LIBOPENSPC
+#if ENABLE_LIBOPENSPC || ENABLE_LIBGME
 
   char pb[128];
   void *fh;
@@ -237,8 +241,19 @@ be_file_playaudio(struct backend *be, const char *url, media_pipe_t *mp,
     return NULL;
   }
 
+#if ENABLE_LIBGME
+  if(*gme_identify_header(pb)) {
+    fa_seek(fh, 0, SEEK_SET);
+    e = fa_gme_playfile(mp, fh, errbuf, errlen, hold);
+    fa_close(fh);
+    return e;
+  }
+#endif
+
+#if ENABLE_LIBOPENSPC
   if(!memcmp(pb, "SNES-SPC700 Sound File Data", 27))
     return openspc_play(mp, fh, errbuf, errlen);
+#endif
 
   fa_close(fh);
 #endif

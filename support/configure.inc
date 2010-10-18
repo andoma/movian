@@ -51,6 +51,7 @@ CONFIG_LIST="
  bonjour
  nvctrl
  libopenspc
+ libgme
  tinysmb
  libxss
  libsmbclient

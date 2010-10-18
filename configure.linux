@@ -538,6 +538,17 @@ fi
 
 
 #
+# libgme
+#
+if enabled libgme; then
+    
+    check_header "gme/gme.h" || fatal "libgme" "Missing include file gme/gme.h"
+    check_lib    "gme"       || fatal "libgme" "Unable to link with libgme"
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lgme"
+fi
+
+
+#
 # libsmbclient
 #
 if enabled libsmbclient; then

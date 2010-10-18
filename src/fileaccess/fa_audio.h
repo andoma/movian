@@ -26,4 +26,9 @@ event_t *be_file_playaudio(struct backend *be, const char *url,
 			   media_pipe_t *mp,
 			   char *errbuf, size_t errlen, int hold);
 
+#if ENABLE_LIBGME
+event_t *fa_gme_playfile(media_pipe_t *mp, void *fh,
+			 char *errbuf, size_t errlen, int hold);
+#endif
+
 #endif /* FA_AUDIO_H */
