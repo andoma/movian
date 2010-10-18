@@ -39,6 +39,10 @@
 #define SSDP_SEARCH   2
 #define SSDP_RESPONSE 3
 
+#if !defined(IP_PKTINFO) && !defined(IP_RECVDSTADDR)
+#error Both IP_PKTINFO and IP_RECVDSTADDR not defined
+#endif
+
 static struct sockaddr_in ssdp_selfaddr;
 static int ssdp_fdm, ssdp_fdu, ssdp_run = 1;
 static char *ssdp_uuid;
@@ -287,11 +291,19 @@ ssdp_input(int fd, int mc)
   myaddr = 0;
 
   for(cmsg = CMSG_FIRSTHDR(&msg); cmsg; cmsg = CMSG_NXTHDR(&msg,cmsg)) {
+#if defined(IP_PKTINFO)
     if (cmsg->cmsg_level == IPPROTO_IP && cmsg->cmsg_type == IP_PKTINFO) {
       struct in_pktinfo *ipi = (struct in_pktinfo *) CMSG_DATA(cmsg);
       myaddr = ntohl(ipi->ipi_spec_dst.s_addr);
       break;
     }
+#elif defined(IP_RECVDSTADDR)
+    if (cmsg->cmsg_level == IPPROTO_IP && cmsg->cmsg_type == IP_RECVDSTADDR) {
+      struct in_addr *ia = (struct in_addr *)CMSG_DATA(cmsg);
+      myaddr = ntohl(ia->s_addr);
+      break;
+    }
+#endif
   }
 
   if(!self && myaddr) {
@@ -368,8 +380,11 @@ ssdp_thread(void *aux)
   fdm = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
   setsockopt(fdm, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int));
+#if defined(IP_PKTINFO)
   setsockopt(fdm, IPPROTO_IP, IP_PKTINFO, &one, sizeof(int));
-
+#elif defined(IP_RECVDSTADDR)
+  setsockopt(fdm, IPPROTO_IP, IP_RECVDSTADDR, &one, sizeof(int));
+#endif
   si.sin_family = AF_INET;
   si.sin_port = htons(1900);
 
@@ -381,7 +396,11 @@ ssdp_thread(void *aux)
 
   fdu = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
+#if defined(IP_PKTINFO)
   setsockopt(fdu, IPPROTO_IP, IP_PKTINFO, &one, sizeof(int));
+#elif defined(IP_RECVDSTADDR)
+  setsockopt(fdu, IPPROTO_IP, IP_RECVDSTADDR, &one, sizeof(int));
+#endif
 
   si.sin_family = AF_INET;
   si.sin_port = 0;
