@@ -862,6 +862,8 @@ fa_url_get_last_component(char *dst, size_t dstlen, const char *url)
   e = strlen(url);
   if(e > 0 && url[e-1] == '/')
     e--;
+  if(e > 0 && url[e-1] == '|')
+    e--;
 
   if(e == 0) {
     *dst = 0;

@@ -1270,6 +1270,8 @@ http_get_last_component(struct fa_protocol *fap, const char *url,
   for(e = 0; url[e] != 0 && url[e] != '?'; e++);
   if(e > 0 && url[e-1] == '/')
     e--;
+  if(e > 0 && url[e-1] == '|')
+    e--;
 
   if(e == 0) {
     *dst = 0;
