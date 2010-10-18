@@ -332,6 +332,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 
 
   if(ssl) {
+#if ENABLE_SSL
     if(showtime_ssl_ctx != NULL) {
       char errmsg[120];
 
@@ -358,7 +359,9 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
       SSL_set_mode(tc->ssl, SSL_MODE_AUTO_RETRY);
       tc->read = ssl_read;
       tc->write = ssl_write;
-    } else {
+    } else 
+#endif
+    {
 
       snprintf(errbuf, errlen, "SSL not supported");
       tcp_close(tc);
