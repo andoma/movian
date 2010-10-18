@@ -270,9 +270,14 @@ fi
 # SSL
 #
 if enabled ssl; then
-    PKGS+="openssl "
-    echo "Using OpenSSL:         `$PKGCONFIG --modversion openssl`"
-    enable librtmp
+    if $PKGCONFIG openssl; then
+	PKGS+="openssl "
+	echo "Using OpenSSL:         `$PKGCONFIG --modversion openssl`"
+	enable librtmp
+    else
+	echo "OpenSSL not found"
+	die
+    fi
 fi
 
 
