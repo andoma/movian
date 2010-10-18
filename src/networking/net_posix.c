@@ -32,7 +32,7 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
-
+#include <ifaddrs.h>
 #include <pthread.h>
 
 #include "net.h"
@@ -399,44 +399,35 @@ tcp_close(tcpcon_t *tc)
 netif_t *
 net_get_interfaces(void)
 {
-  struct ifconf ifc;
-  struct ifreq *ifr;
+  struct ifaddrs *ifa_list, *ifa;
   struct netif *ni, *n;
-  int size = 8, num;
-  int i;
+  int num = 0;
 
-  int s = socket(AF_INET, SOCK_DGRAM, 0);
-  if(s == -1)
+  if(getifaddrs(&ifa_list) != 0) {
+    TRACE(TRACE_ERROR, "net", "getifaddrs failed: %s", strerror(errno));
     return NULL;
-  
-  while(1) {
-    ifr = alloca(sizeof(struct ifreq) * size);
-  
-    ifc.ifc_len = sizeof(struct ifreq) * size;
-    ifc.ifc_req = ifr;
-  
-    if(ioctl(s, SIOCGIFCONF, &ifc)) {
-      close(s);
-      return NULL;
-    }
-
-    num = ifc.ifc_len / sizeof(struct ifreq);
-    if(num < size)
-      break;
-    size *= 2;
   }
+  
+  for(ifa = ifa_list; ifa != NULL; ifa = ifa->ifa_next)
+    num++;
 
   n = ni = calloc(1, sizeof(struct netif) * (num + 1));
   
-  for(i = 0; i < num; i++) {
-    n->ipv4 = ntohl(((struct sockaddr_in *)&ifr[i].ifr_addr)->sin_addr.s_addr);
+  for(ifa = ifa_list; ifa != NULL; ifa = ifa->ifa_next) {
+    if((ifa->ifa_flags & (IFF_UP | IFF_LOOPBACK)) != IFF_UP ||
+       ifa->ifa_addr->sa_family != AF_INET)
+	 continue;
+
+    n->ipv4 = ntohl(((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr);
     if(n->ipv4 == 0)
       continue;
 
-    snprintf(n->ifname, sizeof(n->ifname), "%s", ifr[i].ifr_name);
+    snprintf(n->ifname, sizeof(n->ifname), "%s", ifa->ifa_name);
     n++;
   }
-  close(s);
+  
+  freeifaddrs (ifa_list);
+
   return ni;
 }
 
