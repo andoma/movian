@@ -42,129 +42,129 @@ $ui.fullwindow = 0;
 
 $view.showplaydeck = !$ui.fullwindow && $global.media.current.type == "tracks";
 
-widget(deck, {
+widget(container_z, {
 
-  .noInitialTransform = true;
-
-  widget(container_z, {
-    
-    widget(gradient, {
-      .color1 = [0,0,0];
-      .color2 = iir(1 - $ui.fullwindow, 16) * ([0.1, 0.1, 0.1] + 
-					       [1.0, 0.0, 0.0] *  0.03 * select($ui.dayTimeGradient, 1, 0) * sin(1.5 + $global.clock.dayminute / 229.18) + 
-					       [0.0, 1.0, 1.0] * -0.03 * select($ui.dayTimeGradient, 1, 0) * sin(1.5 + $global.clock.dayminute / 229.18));
+  widget(gradient, {
+    .color1 = [0,0,0];
+    .color2 = iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16)
+      * ([0.1, 0.1, 0.1] + 
+	 [1.0, 0.0, 0.0] *  0.03 * select($ui.dayTimeGradient, 1, 0) * sin(1.5 + $global.clock.dayminute / 229.18) + 
+	 [0.0, 1.0, 1.0] * -0.03 * select($ui.dayTimeGradient, 1, 0) * sin(1.5 + $global.clock.dayminute / 229.18));
+  });
+  
+  widget(container_y, {
+    space(1);
+    widget(throbber3d, {
+      .alpha = iir($global.nav.currentpage.model.loading, 4);
     });
-    
-    widget(container_y, {
-      space(1);
-      widget(throbber3d, {
-	.alpha = iir($global.nav.currentpage.model.loading, 4);
+    space(1);
+  });
+
+  widget(displacement, {
+
+    .alpha = iir(1 - $ui.screensaverActive, 8);
+
+    .border = [$ui.underscan_h * 1,
+	       $ui.underscan_v * 1,
+	       $ui.underscan_h * 1,
+	       $ui.underscan_v * 1];
+    .scaling = [1,1,1] - ($ui.tilt / 20) * [0.2, 0.2, 0.0];
+    .translation = [0, $ui.tilt / 200, 0];
+    .rotation = [$ui.tilt, -1, 0, 0];
+
+
+    widget(layer, {
+
+      #include "theme://maindeck.view"
+
+      // Command menu
+
+      #include "theme://commandmenu.view"
+
+      // Popup cloner
+
+      cloner($global.popups, loader, {
+	.source = "theme://popups/" + $self.type + ".view";
       });
-      space(1);
-    });
 
-    widget(displacement, {
-      .border = [$ui.underscan_h * 1,
-		 $ui.underscan_v * 1,
-		 $ui.underscan_h * 1,
-		 $ui.underscan_v * 1];
-      .scaling = [1,1,1] - ($ui.tilt / 20) * [0.2, 0.2, 0.0];
-      .translation = [0, $ui.tilt / 200, 0];
-      .rotation = [$ui.tilt, -1, 0, 0];
+      // Log window
 
+      widget(backdrop, {
+	.hidden = !$ui.logwindow;
 
-      widget(layer, {
-
-	#include "theme://maindeck.view"
-
-	// Command menu
-
-	#include "theme://commandmenu.view"
-
-	// Popup cloner
-
-	cloner($global.popups, loader, {
-	  .source = "theme://popups/" + $self.type + ".view";
-	});
-
-	// Log window
-
-	widget(backdrop, {
-	  .hidden = !$ui.logwindow;
-
-	  PLATE_GFX();
-	  .color = [0.1, 0.1, 0.1];
-	  .alphaSelf = 0.8;
-	  
-	  widget(container_y, {
-
-	    widget(label, {
-	      .caption = "Log";
-	      .sizeScale = 1.5;
-	      .align = center;
-	    });
-	    HORIZONTAL_SEPARATOR();
-
-	    widget(container_x, {
-	      widget(list_y, {
-		.id = "list";
-		cloner($global.logbuffer, label, {
-		  .sizeScale = 0.75;
-		  .caption = $self.prefix + $self.message;
-		  .ellipsize = true;
-		  .color = translate($self.severity, [1,1,1],
-				     "DEBUG", [0.5, 1, 0.5],
-				     "INFO",  [1, 1, 0.5],
-				     "ERROR", [1, 0.5, 0.5]);
-
-		  
-		});
-	      });
-	      LIST_Y_SLIDER("list", true);
-	    });
-	  });
-	});
-      });
-    });
-
-    widget(container_x, {
-      space(1);
-      widget(container_y, {
-	.align = center;
-	.filterConstraintX = true;
-
-	widget(backdrop, {
-	  PLATE_GFX();
-	  .alpha = iir(changed($global.audio.mastervolume, 2, true), 7);
-	  .color = PLATE_COLOR_AUDIO();
-	  
-	  widget(label, {
-	    .caption = "Master volume: " +
-	      int2str($global.audio.mastervolume) + " dB";
-	    .align = center;
-	  });
-	});
+	PLATE_GFX();
+	.color = [0.1, 0.1, 0.1];
+	.alphaSelf = 0.8;
 	
-	widget(backdrop, {
-	  PLATE_GFX();
-	  .alpha = iir($global.audio.mastermute, 7);
-	  .color = PLATE_COLOR_OFF();
-	  
-          widget(label, {
-	    .caption = "Audio muted";
+	widget(container_y, {
+
+	  widget(label, {
+	    .caption = "Log";
+	    .sizeScale = 1.5;
 	    .align = center;
+	  });
+	  HORIZONTAL_SEPARATOR();
+
+	  widget(container_x, {
+	    widget(list_y, {
+	      .id = "list";
+	      cloner($global.logbuffer, label, {
+		.sizeScale = 0.75;
+		.caption = $self.prefix + $self.message;
+		.ellipsize = true;
+		.color = translate($self.severity, [1,1,1],
+				   "DEBUG", [0.5, 1, 0.5],
+				   "INFO",  [1, 1, 0.5],
+				   "ERROR", [1, 0.5, 0.5]);
+
+		
+	      });
+	    });
+	    LIST_Y_SLIDER("list", true);
 	  });
 	});
       });
-      space(1);
     });
   });
 
-  widget(container_z, {
-    #include "theme://screensaver.view"
+  widget(loader, {
+    .time = 0.3;
+    .effect = blend;
+    .source = select($ui.screensaverActive, "theme://screensaver.view", "");
   });
 
-  .page = $ui.screensaverActive;
-  .effect = blend;
-  .time = 0.5;
+  // Overlay that always should be visible even if screen saver is active
+
+  widget(container_x, {
+    space(1);
+    widget(container_y, {
+      .align = center;
+      .filterConstraintX = true;
+
+      widget(backdrop, {
+	PLATE_GFX();
+	.alpha = iir(changed($global.audio.mastervolume, 2, true), 7);
+	.color = PLATE_COLOR_AUDIO();
+	
+	widget(label, {
+	  .caption = "Master volume: " +
+	    int2str($global.audio.mastervolume) + " dB";
+	  .align = center;
+	});
+      });
+      
+      widget(backdrop, {
+	PLATE_GFX();
+	.alpha = iir($global.audio.mastermute, 7);
+	.color = PLATE_COLOR_OFF();
+	
+        widget(label, {
+	  .caption = "Audio muted";
+	  .align = center;
+	});
+      });
+    });
+    space(1);
+  });
 });
+
