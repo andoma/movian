@@ -100,6 +100,10 @@ glw_displacement_render(glw_t *w, glw_rctx_t *rc)
   glw_t *c;
   glw_rctx_t rc0 = *rc;
 
+  rc0.rc_alpha = rc->rc_alpha * w->glw_alpha;
+  if(rc0.rc_alpha < 0.01)
+    return;
+
   if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)
     return;
    
@@ -126,7 +130,6 @@ glw_displacement_render(glw_t *w, glw_rctx_t *rc)
 		 rc->rc_width  - gd->gd_border_right,
 		 gd->gd_border_bottom);
 
-  rc0.rc_alpha = rc->rc_alpha * w->glw_alpha;
   glw_render0(c, &rc0);
 }
 
