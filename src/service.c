@@ -28,18 +28,18 @@
 static prop_t *all_services;
 
 
-struct svc_type_meta {
-  const char *name;
+
+static const char *type2str[] = {
+  [SVC_TYPE_MUSIC] = "music",
+  [SVC_TYPE_IMAGE] = "image",
+  [SVC_TYPE_VIDEO] = "video",
+  [SVC_TYPE_TV]    = "tv",
+  [SVC_TYPE_OTHER] = "other"
 };
-
-
-
-static struct svc_type_meta svc_types[SVC_num];
 
 struct service_list services;
 hts_mutex_t service_mutex;
 static hts_cond_t service_cond;
-
 
 
 /**
@@ -60,11 +60,10 @@ static void *service_probe_loop(void *aux);
  *
  */
 static void
-add_service_type(prop_t *root, service_type_t type, const char *name)
+add_service_type(prop_t *root, service_type_t type)
 {
   struct prop_nf *pnf;
-
-  svc_types[type].name = name;
+  const char *name = type2str[type];
 
   pnf = prop_nf_create(prop_create(prop_create(root, name), "nodes"),
 		       all_services, NULL, "node.title");
@@ -93,11 +92,11 @@ service_init(void)
 
   prop_t *p = prop_create(prop_get_global(), "services");
 
-  add_service_type(p, SVC_TYPE_MUSIC, "music");
-  add_service_type(p, SVC_TYPE_IMAGE, "image");
-  add_service_type(p, SVC_TYPE_VIDEO, "video");
-  add_service_type(p, SVC_TYPE_TV,    "tv");
-  add_service_type(p, SVC_TYPE_OTHER, "other");
+  add_service_type(p, SVC_TYPE_MUSIC);
+  add_service_type(p, SVC_TYPE_IMAGE);
+  add_service_type(p, SVC_TYPE_VIDEO);
+  add_service_type(p, SVC_TYPE_TV);
+  add_service_type(p, SVC_TYPE_OTHER);
 }
 
 
@@ -173,7 +172,7 @@ service_create(const char *title,
   prop_set_string(prop_create(p, "url"), url);
 
   s->s_prop_type = prop_create(p, "type");
-  prop_set_string(s->s_prop_type, svc_types[type].name);
+  prop_set_string(s->s_prop_type, type2str[type]);
 
   s->s_prop_status = prop_create(p, "status");
   prop_set_string(s->s_prop_status, "ok");
@@ -218,7 +217,7 @@ service_get_statustxt_prop(service_t *s)
 void 
 service_set_type(service_t *s, service_type_t type)
 {
-  prop_set_string(s->s_prop_type, svc_types[type].name);
+  prop_set_string(s->s_prop_type, type2str[type]);
 }
 
 
