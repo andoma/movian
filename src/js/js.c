@@ -24,6 +24,7 @@
 #include "backend/backend.h"
 #include "misc/string.h"
 #include "fileaccess/fileaccess.h"
+#include "keyring.h"
 
 
 static JSRuntime *runtime;
@@ -264,6 +265,79 @@ js_canHandle(JSContext *cx, JSObject *obj,
 }
 
 
+
+/**
+ *
+ */
+static JSBool
+js_getAuthCredentials(JSContext *cx, JSObject *obj,
+		      uintN argc, jsval *argv, jsval *rval)
+{
+  const char *id, *reason, *source;
+  char *username, *password;
+  JSBool query;
+  int r;
+  jsval val;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "sssb",
+			  &id, &source, &reason, &query))
+    return JS_FALSE;
+
+  r = keyring_lookup(id, &username, &password, NULL, query, source, reason);
+
+  if(r == 1) {
+    *rval = BOOLEAN_TO_JSVAL(0);
+    return JS_TRUE;
+  }
+  
+  JSObject *robj = JS_NewObject(cx, NULL, NULL, NULL);
+  *rval = OBJECT_TO_JSVAL(robj);
+
+  if(r == -1) {
+    val = BOOLEAN_TO_JSVAL(1);
+    JS_SetProperty(cx, robj, "rejected", &val);
+  } else {
+
+    val = STRING_TO_JSVAL(JS_NewString(cx, username, strlen(username)));
+    JS_SetProperty(cx, robj, "username", &val);
+
+    val = STRING_TO_JSVAL(JS_NewString(cx, password, strlen(password)));
+    JS_SetProperty(cx, robj, "password", &val);
+  }
+  return JS_TRUE;
+}
+
+
+
+
+/**
+ *
+ */
+static JSFunctionSpec showtime_functions[] = {
+    JS_FS("trace",            js_trace,    1, 0, 0),
+    JS_FS("print",            js_print,    1, 0, 0),
+    JS_FS("httpGet",          js_httpGet, 2, 0, 0),
+    JS_FS("httpPost",         js_httpPost, 2, 0, 0),
+    JS_FS("readFile",         js_readFile, 1, 0, 0),
+    JS_FS("queryStringSplit", js_queryStringSplit, 1, 0, 0),
+    JS_FS("httpEscape",       js_httpEscape, 1, 0, 0),
+    JS_FS("createService",    js_createService, 3, 0, 0),
+    JS_FS("canHandle",        js_canHandle, 1, 0, 0),
+    JS_FS("getAuthCredentials",  js_getAuthCredentials, 4, 0, 0),
+    JS_FS_END
+};
+
+
+
+static JSClass showtime_class = {
+  "showtime", 0,
+  JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,
+  JS_EnumerateStub,JS_ResolveStub,JS_ConvertStub,JS_FinalizeStub,
+  JSCLASS_NO_OPTIONAL_MEMBERS
+};
+
+
+
 /**
  *
  */
@@ -282,32 +356,6 @@ js_RichText(JSContext *cx, JSObject *obj,
   *rval = JSVAL_VOID;
   return JS_TRUE;
 }
-
-
-/**
- *
- */
-static JSFunctionSpec showtime_functions[] = {
-    JS_FS("trace",            js_trace,    1, 0, 0),
-    JS_FS("print",            js_print,    1, 0, 0),
-    JS_FS("httpGet",          js_httpGet, 2, 0, 0),
-    JS_FS("httpPost",         js_httpPost, 2, 0, 0),
-    JS_FS("readFile",         js_readFile, 1, 0, 0),
-    JS_FS("queryStringSplit", js_queryStringSplit, 1, 0, 0),
-    JS_FS("httpEscape",       js_httpEscape, 1, 0, 0),
-    JS_FS("createService",    js_createService, 3, 0, 0),
-    JS_FS("canHandle",        js_canHandle, 1, 0, 0),
-    JS_FS_END
-};
-
-
-
-static JSClass showtime_class = {
-  "showtime", 0,
-  JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,
-  JS_EnumerateStub,JS_ResolveStub,JS_ConvertStub,JS_FinalizeStub,
-  JSCLASS_NO_OPTIONAL_MEMBERS
-};
 
 
 /**
