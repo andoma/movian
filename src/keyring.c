@@ -144,6 +144,7 @@ keyring_lookup(const char *id, char **username, char **password,
 
     prop_set_string(prop_create(p, "type"), "auth");
     prop_set_string(prop_create(p, "id"), id);
+    prop_set_string(prop_create(p, "source"), source);
     prop_set_string(prop_create(p, "reason"), reason);
     
     user = prop_create(p, "username");

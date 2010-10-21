@@ -34,7 +34,7 @@ widget(container_x, {
 	  widget(container_y, {
 	    widget(label, {
 	      .align = left;
-	      .caption = $self.id;
+	      .caption = $self.source ?? $self.id;
 	    });
 	    widget(label, {
 	      .align = left;
