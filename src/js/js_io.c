@@ -20,24 +20,29 @@
 #include "js.h"
 
 #include "fileaccess/fileaccess.h"
+#include "htsmsg/htsbuf.h"
 #include "misc/string.h"
 
 /**
  *
  */
-JSBool 
-js_httpRequest(JSContext *cx, JSObject *obj, uintN argc,
-	       jsval *argv, jsval *rval)
+static JSBool 
+js_http_request(JSContext *cx, JSObject *obj, uintN argc,
+	     jsval *argv, jsval *rval, int post)
 {
   const char *url;
   JSObject *argobj = NULL;
+  JSObject *postobj = NULL;
   char **httpargs = NULL;
   int i;
   char errbuf[256];
   char *result;
   size_t resultsize;
+  htsbuf_queue_t *postdata = NULL;
+  const char *postcontenttype = NULL;
 
-  if(!JS_ConvertArguments(cx, argc, argv, "s/o", &url, &argobj))
+
+  if(!JS_ConvertArguments(cx, argc, argv, "s/oo", &url, &argobj, &postobj))
     return JS_FALSE;
 
   if(argobj != NULL) {
@@ -50,17 +55,11 @@ js_httpRequest(JSContext *cx, JSObject *obj, uintN argc,
 
     for(i = 0; i < ida->length; i++) {
       jsval name, value;
-      if(!JS_IdToValue(cx, ida->vector[i], &name))
-	continue;
-
-      if(!JSVAL_IS_STRING(name))
-	continue;
-
-      if(!JS_GetProperty(cx, argobj, JS_GetStringBytes(JSVAL_TO_STRING(name)),
-			 &value))
-	continue;
-
-      if(JSVAL_IS_VOID(value))
+      if(!JS_IdToValue(cx, ida->vector[i], &name) || 
+	 !JSVAL_IS_STRING(name) ||
+	 !JS_GetProperty(cx, argobj, JS_GetStringBytes(JSVAL_TO_STRING(name)),
+			 &value) || 
+	 JSVAL_IS_VOID(value))
 	continue;
 
       httpargs[j++] = strdup(JS_GetStringBytes(JSVAL_TO_STRING(name)));
@@ -71,23 +70,69 @@ js_httpRequest(JSContext *cx, JSObject *obj, uintN argc,
     JS_DestroyIdArray(cx, ida);
   }
 
-  struct http_header_list headers;
+
+
+  if(postobj != NULL) {
+    htsbuf_queue_t hq;
+    JSIdArray *ida;
+    const char *str;
+    const char *prefix = NULL;
+
+    if((ida = JS_Enumerate(cx, postobj)) == NULL)
+      return JS_FALSE;
+
+    htsbuf_queue_init(&hq, 0);
+
+    for(i = 0; i < ida->length; i++) {
+      jsval name, value;
+
+      if(!JS_IdToValue(cx, ida->vector[i], &name) ||
+	 !JSVAL_IS_STRING(name) ||
+	 !JS_GetProperty(cx, postobj, JS_GetStringBytes(JSVAL_TO_STRING(name)),
+			 &value) || JSVAL_IS_VOID(value))
+      continue;
+
+      str = JS_GetStringBytes(JSVAL_TO_STRING(name));
+      if(prefix)
+	htsbuf_append(&hq, prefix, strlen(prefix));
+      htsbuf_append_and_escape_url(&hq, str);
+
+      str = JS_GetStringBytes(JS_ValueToString(cx, value));
+      htsbuf_append(&hq, "=", 1);
+      htsbuf_append_and_escape_url(&hq, str);
+      
+      prefix = "&";
+    }
+    
+    JS_DestroyIdArray(cx, ida);
+    postdata = &hq;
+    postcontenttype =  "application/x-www-form-urlencoded";
+  }
+
+
+  struct http_header_list response_headers;
 
   jsrefcount s = JS_SuspendRequest(cx);
   int n = http_request(url, (const char **)httpargs, 
 		       &result, &resultsize, errbuf, sizeof(errbuf),
-		       NULL, NULL, 0, &headers, NULL, NULL);
+		       postdata, postcontenttype,
+		       0,
+		       &response_headers, NULL, NULL);
   JS_ResumeRequest(cx, s);
 
   if(httpargs != NULL)
     strvec_free(httpargs);
+
+  if(postdata != NULL)
+    htsbuf_queue_flush(postdata);
 
   if(n) {
     JS_ReportError(cx, errbuf);
     return JS_FALSE;
   }
 
-  const char *contenttype = http_headers_find(&headers, "content-type");
+  const char *contenttype =
+    http_headers_find(&response_headers, "content-type");
 
   if(contenttype != NULL &&
      (!strncasecmp(contenttype, "application/xml", strlen("application/xml")) ||
@@ -99,14 +144,35 @@ js_httpRequest(JSContext *cx, JSObject *obj, uintN argc,
       if(r2 != NULL) {
 	r2 += 2;
 	*rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, r2));
-	http_headers_free(&headers);
-	return JS_TRUE;
+	goto out;
       }
     }
   }
   *rval = STRING_TO_JSVAL(JS_NewString(cx, result, resultsize));
-  http_headers_free(&headers);
+ out:
+  http_headers_free(&response_headers);
   return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+JSBool 
+js_httpGet(JSContext *cx, JSObject *obj, uintN argc,
+	   jsval *argv, jsval *rval)
+{
+  return js_http_request(cx, obj, argc, argv, rval, 0);
+}
+
+/**
+ *
+ */
+JSBool 
+js_httpPost(JSContext *cx, JSObject *obj, uintN argc,
+	   jsval *argv, jsval *rval)
+{
+  return js_http_request(cx, obj, argc, argv, rval, 1);
 }
 
 

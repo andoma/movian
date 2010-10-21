@@ -28,8 +28,11 @@ typedef struct js_plugin {
 
 JSContext *js_newctx(void);
 
-JSBool js_httpRequest(JSContext *cx, JSObject *obj, uintN argc,
-		      jsval *argv, jsval *rval);
+JSBool js_httpGet(JSContext *cx, JSObject *obj, uintN argc,
+		  jsval *argv, jsval *rval);
+
+JSBool js_httpPost(JSContext *cx, JSObject *obj, uintN argc,
+		   jsval *argv, jsval *rval);
 
 JSBool js_readFile(JSContext *cx, JSObject *obj, uintN argc,
 		   jsval *argv, jsval *rval);
