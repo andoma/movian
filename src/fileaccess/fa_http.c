@@ -1679,7 +1679,7 @@ http_request(const char *url, const char **arguments,
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   htsbuf_queue_t q;
   int code, r, port, ssl;
-  char buf[URL_MAX], hostname[HOSTNAME_MAX], proto[16];
+  char hostname[HOSTNAME_MAX], proto[16];
   http_connection_t *hc;
   int redircount = 0, escape_path;
   http_redirect_t *hr;
@@ -1734,10 +1734,10 @@ http_request(const char *url, const char **arguments,
     char prefix = '?';
 
     while(arguments[0] != NULL) {
-      path_escape(buf, sizeof(buf), arguments[0]);
-      htsbuf_qprintf(&q, "%c%s", prefix, buf);
-      path_escape(buf, sizeof(buf), arguments[1]);
-      htsbuf_qprintf(&q, "=%s", buf);
+      htsbuf_append(&q, &prefix, 1);
+      htsbuf_append_and_escape_url(&q, arguments[0]);
+      htsbuf_append(&q, "=", 1);
+      htsbuf_append_and_escape_url(&q, arguments[1]);
       arguments += 2;
       prefix = '&';
     }
