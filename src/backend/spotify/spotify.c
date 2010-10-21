@@ -127,7 +127,7 @@ static LIST_HEAD(, metadata) metadatas;
 /**
  * Playlist support
  */
-prop_t *prop_rootlist_source;
+prop_t *prop_rootlist_nodes;
 
 static ptrvec_t playlists;
 
@@ -1353,7 +1353,23 @@ spotify_page_done(spotify_page_t *sp)
 static void
 spotify_open_rootlist(prop_t *p)
 {
-  prop_link(prop_rootlist_source, prop_create(p, "model"));
+  struct prop_nf *pnf;
+  prop_t *model = prop_create(p, "model");
+  prop_set_string(prop_create(model, "type"), "directory");
+
+
+  prop_link(prop_syncing_playlists, prop_create(model, "loading"));
+
+  pnf = prop_nf_create(prop_create(model, "nodes"),
+		       prop_rootlist_nodes,
+		       prop_create(model, "filter"),
+		       NULL);
+
+  prop_set_int(prop_create(model, "canFilter"), 1);
+  prop_nf_release(pnf);
+
+  prop_t *metadata = prop_create(model, "metadata");
+  prop_set_string(prop_create(metadata, "title"), "Spotify playlists");
 }
 
 
@@ -2047,11 +2063,10 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
 	       int position, void *userdata)
 {
   playlist_t *pl = pl_create(plist, prop_create(NULL, NULL), 0, NULL);
-  prop_t *parent = prop_create(prop_rootlist_source, "nodes");
   playlist_t *before;
 
   before = ptrvec_get_entry(&playlists, position);
-  if(prop_set_parent_ex(pl->pl_prop_root, parent,
+  if(prop_set_parent_ex(pl->pl_prop_root, prop_rootlist_nodes,
 			before ? before->pl_prop_root : NULL,
 			NULL))
     abort();
@@ -3083,21 +3098,6 @@ be_spotify_dlopen(void)
  *
  */
 static void
-create_prop_rootlist(prop_t *parent)
-{
-  prop_t *p = prop_rootlist_source = prop_create(parent, "playlists");
-  prop_t *metadata = prop_create(p, "metadata");
-  
-  prop_set_string(prop_create(metadata, "title"), "Spotify playlists");
-  prop_set_string(prop_create(p, "type"), "directory");
-  prop_link(prop_syncing_playlists, prop_create(p, "loading"));
-}
-
-
-/**
- *
- */
-static void
 courier_notify(void *opaque)
 {
   hts_mutex_lock(&spotify_mutex);
@@ -3188,7 +3188,7 @@ be_spotify_init(void)
   prop_syncing_playlists = prop_create(spotify, "syncing_playlists");
   prop_set_int(prop_syncing_playlists, 1);
 
-  create_prop_rootlist(spotify);
+  prop_rootlist_nodes = prop_create(prop_create(spotify, "playlists"), "nodes");
 
   TAILQ_INIT(&spotify_msgs);
 
