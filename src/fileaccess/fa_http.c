@@ -453,6 +453,90 @@ typedef struct http_file {
 static void http_detach(http_file_t *hf, int reusable);
 
 
+
+/**
+ *
+ */
+LIST_HEAD(http_auth_cache_list, http_auth_cache);
+static struct http_auth_cache_list http_auth_caches;
+static hts_mutex_t http_auth_caches_mutex;
+
+/**
+ *
+ */
+typedef struct http_auth_cache {
+
+  LIST_ENTRY(http_auth_cache) hac_link;
+
+  char *hac_hostname;
+  int hac_port;
+  char *hac_credentials;
+
+} http_auth_cache_t;
+
+
+static void
+http_auth_cache_set(http_file_t *hf)
+{
+  http_auth_cache_t *hac;
+  const char *hostname = hf->hf_connection->hc_hostname;
+  int port = hf->hf_connection->hc_port;
+  const char *credentials = hf->hf_auth;
+
+  hts_mutex_lock(&http_auth_caches_mutex);
+
+  LIST_FOREACH(hac, &http_auth_caches, hac_link) {
+    if(!strcmp(hostname, hac->hac_hostname) && port == hac->hac_port)
+      break;
+  }
+
+  if(credentials == NULL) {
+    if(hac != NULL) {
+
+      free(hac->hac_hostname);
+      free(hac->hac_credentials);
+      LIST_REMOVE(hac, hac_link);
+      free(hac);
+    }
+  } else {
+
+    if(hac == NULL) {
+      hac = calloc(1, sizeof(http_redirect_t));
+      hac->hac_hostname = strdup(hostname);
+      hac->hac_port = port;
+      
+      LIST_INSERT_HEAD(&http_auth_caches, hac, hac_link);
+    }
+    mystrset(&hac->hac_credentials, credentials);
+  }
+  hts_mutex_unlock(&http_auth_caches_mutex);
+}
+
+
+/**
+ *
+ */
+static void
+hf_set_auth(http_file_t *hf)
+{
+  http_auth_cache_t *hac;
+  const char *hostname = hf->hf_connection->hc_hostname;
+  int port = hf->hf_connection->hc_port;
+
+  if(hf->hf_auth)
+    return;
+
+  hts_mutex_lock(&http_auth_caches_mutex);
+  LIST_FOREACH(hac, &http_auth_caches, hac_link) {
+    if(!strcmp(hostname, hac->hac_hostname) && port == hac->hac_port) {
+      hf->hf_auth = strdup(hac->hac_credentials);
+      break;
+    }
+  }
+  hts_mutex_unlock(&http_auth_caches_mutex);
+}
+
+
 /**
  *
  */
@@ -669,6 +753,12 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
     if(!strcasecmp(argv[0], "Set-Cookie"))
       http_cookie_set(argv[1], hf->hf_connection->hc_hostname, hf->hf_path);
   }
+
+  if(code >= 200 && code < 400) {
+    hf->hf_auth_failed = 0;
+    http_auth_cache_set(hf);
+  }
+
   return code;
 }
 
@@ -859,7 +949,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
   int code;
   htsbuf_queue_t q;
   int redircount = 0;
-  
+
   reconnect:
 
   hf->hf_filesize = -1;
@@ -873,6 +963,10 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
   htsbuf_queue_init(&q, 0);
 
  again:
+
+  
+  hf_set_auth(hf);
+  
   htsbuf_qprintf(&q, 
 		 "HEAD %s HTTP/1.1\r\n"
 		 "Accept: */*\r\n"
@@ -905,14 +999,12 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
     if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE)
       http_detach(hf, 0);
 
-    hf->hf_auth_failed = 0;
     return 0;
     
   case 301:
   case 302:
   case 303:
   case 307:
-    hf->hf_auth_failed = 0;
     if(redirect(hf, &redircount, errbuf, errlen, code))
       return -1;
     goto reconnect;
@@ -1043,6 +1135,9 @@ reconnect:
   htsbuf_queue_init(&q, 0);
   
 again:
+
+  hf_set_auth(hf);
+
   htsbuf_qprintf(&q, 
 		 "GET %s HTTP/1.1\r\n"
 		 "Accept: */*\r\n"
@@ -1054,7 +1149,7 @@ again:
 		 htsversion,
 		 hf->hf_connection->hc_hostname,
 		 hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
-  
+
   tcp_write_queue(hf->hf_connection->hc_tc, &q);
   code = http_read_response(hf, NULL);
   if(code == -1 && hf->hf_connection->hc_reused) {
@@ -1065,8 +1160,6 @@ again:
   switch(code) {
       
     case 200: /* 200 OK */
-      hf->hf_auth_failed = 0;
-      
       if((buf = http_read_content(hf)) == NULL) {
         snprintf(errbuf, errlen, "Connection lost");
         return -1;
@@ -1084,7 +1177,6 @@ again:
     case 302:
     case 303:
     case 307:
-      hf->hf_auth_failed = 0;
       if(redirect(hf, &redircount, errbuf, errlen, code))
         return -1;
       goto reconnect;
@@ -1212,6 +1304,8 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
 
       htsbuf_queue_init(&q, 0);
 
+      hf_set_auth(hf);
+
       htsbuf_qprintf(&q, 
 		     "GET %s HTTP/1.1\r\n"
 		     "Accept: */*\r\n"
@@ -1224,7 +1318,6 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
 		     range,
 		     hc->hc_hostname,
 		     hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
-
 
       tcp_write_queue(hc->hc_tc, &q);
       code = http_read_response(hf, NULL);
@@ -1697,6 +1790,8 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
 	return -1;
 
     htsbuf_queue_init(&q, 0);
+
+    hf_set_auth(hf);
     htsbuf_qprintf(&q, 
 		   "PROPFIND %s HTTP/1.1\r\n"
 		   "Depth: %d\r\n"
@@ -1710,7 +1805,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
 		   htsversion,
 		   hf->hf_connection->hc_hostname,
 		   hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
-
+    
     tcp_write_queue(hf->hf_connection->hc_tc, &q);
     code = http_read_response(hf, NULL);
 
@@ -1722,8 +1817,6 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
     switch(code) {
       
     case 207: /* 207 Multi-part */
-      hf->hf_auth_failed = 0;
-      
       if((buf = http_read_content(hf)) == NULL) {
 	snprintf(errbuf, errlen, "Connection lost");
 	return -1;
@@ -1743,7 +1836,6 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
     case 302:
     case 303:
     case 307:
-      hf->hf_auth_failed = 0;
       if(redirect(hf, &redircount, errbuf, errlen, code))
 	return -1;
       continue;
@@ -1849,12 +1941,8 @@ http_request(const char *url, const char **arguments,
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   htsbuf_queue_t q;
-  int code, r, port, ssl;
-  char hostname[HOSTNAME_MAX], proto[16];
-  http_connection_t *hc;
-  int redircount = 0, escape_path;
-  http_redirect_t *hr;
-  const char *url0;
+  int code, r;
+  int redircount = 0, escape_path = !!(flags & HTTP_REQUEST_ESCAPE_PATH);
   http_header_t *hh;
 
   if(headers_out != NULL)
@@ -1864,38 +1952,15 @@ http_request(const char *url, const char **arguments,
 
  retry:
 
-  url0 = hf->hf_url;
+  http_connect(hf, errbuf, errlen, escape_path);
 
-  escape_path = !!(flags & HTTP_REQUEST_ESCAPE_PATH);
-
-  hts_mutex_lock(&http_redirects_mutex);
-
-  LIST_FOREACH(hr, &http_redirects, hr_link)
-    if(!strcmp(url, hr->hr_from)) {
-      escape_path = 0;
-      url0 = hr->hr_to;
-      break;
-    }
-
-  url_split(proto, 16, hf->hf_authurl, sizeof(hf->hf_authurl), 
-	    hostname, sizeof(hostname), &port,
-	    hf->hf_path, sizeof(hf->hf_path),
-	    url0, escape_path);
-
-  hts_mutex_unlock(&http_redirects_mutex);
-
-  ssl = !strcmp(proto, "https");
-  if(port < 0)
-    port = ssl ? 443 : 80;
-
-
-  hc = hf->hf_connection = http_connection_get(hostname, port, ssl, 
-					       errbuf, errlen);
   if(hf->hf_connection == NULL) {
     http_destroy(hf);
     http_headers_free(headers_out);
     return -1;
   }
+
+  http_connection_t *hc = hf->hf_connection;
 
   htsbuf_queue_init(&q, 0);
 
@@ -1914,14 +1979,13 @@ http_request(const char *url, const char **arguments,
     }
   }
 
-  htsbuf_qprintf(&q, 
+  htsbuf_qprintf(&q,
 		 " HTTP/1.1\r\n"
 		 "Accept: */*\r\n"
 		 "User-Agent: Showtime %s\r\n"
 		 "Host: %s\r\n",
 		 htsversion,
-		 hostname);
-
+		 hc->hc_hostname);
 
   if(postdata != NULL) 
     htsbuf_qprintf(&q, "Content-Length: %d\r\n", postdata->hq_size);
@@ -1929,6 +1993,7 @@ http_request(const char *url, const char **arguments,
   if(postcontenttype != NULL) 
     htsbuf_qprintf(&q, "Content-Type: %s\r\n", postcontenttype);
 
+  hf_set_auth(hf);
   if(hf->hf_auth != NULL)
     htsbuf_qprintf(&q, "%s\r\n", hf->hf_auth);
 
@@ -1937,7 +2002,7 @@ http_request(const char *url, const char **arguments,
       htsbuf_qprintf(&q, "%s: %s\r\n", hh->hh_key, hh->hh_value);
   }
   
-  http_cookie_send(hf->hf_connection->hc_hostname, hf->hf_path, &q);
+  http_cookie_send(hc->hc_hostname, hf->hf_path, &q);
 
   htsbuf_qprintf(&q, "\r\n");
 
