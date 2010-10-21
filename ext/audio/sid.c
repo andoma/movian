@@ -1238,7 +1238,7 @@ be_sidplayer_play(struct backend *be, const char *url0, media_pipe_t *mp,
   url0 += strlen("sidplayer:");
 
   url = mystrdupa(url0);
-  p = strrchr(url, '|');
+  p = strrchr(url, '/');
   if(p == NULL) {
     snprintf(errbuf, errlen, "Invalid filename");
     return NULL;

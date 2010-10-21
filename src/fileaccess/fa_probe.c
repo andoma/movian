@@ -339,7 +339,7 @@ fa_probe_header(metadata_t *md, const char *url, uint8_t *pb)
   if(!memcmp(pb, "PSID", 4) || !memcmp(pb, "RSID", 4)) {
     fa_probe_psid(md, pb); 
     md->md_type = CONTENT_ALBUM;
-    metdata_set_redirect(md, "sidfile://%s|", url);
+    metdata_set_redirect(md, "sidfile://%s/", url);
     return 1;
   }
 
@@ -521,7 +521,7 @@ gme_probe(metadata_t *md, AVProbeData *pd, fa_handle_t *fh, struct fa_stat *fs)
     md->md_artist = info->author[0] ? rstr_alloc(info->author) : NULL;
 
     md->md_type = CONTENT_ALBUM;
-    metdata_set_redirect(md, "gmefile://%s|", pd->filename);
+    metdata_set_redirect(md, "gmefile://%s/", pd->filename);
   }
 
   gme_free_info(info);

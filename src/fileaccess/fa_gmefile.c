@@ -57,7 +57,7 @@ gmefile_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
   gme_info_t *info;
   gme_err_t err;
   size_t r;
-  if((p = strrchr(fpath, '|')) == NULL) {
+  if((p = strrchr(fpath, '/')) == NULL) {
     snprintf(errbuf, errlen, "Invalid filename");
     return -1;
   }
@@ -86,7 +86,7 @@ gmefile_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
   
   for(i = 0; i < tracks; i++) {
 
-    snprintf(turl, sizeof(turl), "gmeplayer:%s|%d", fpath, i + 1);
+    snprintf(turl, sizeof(turl), "gmeplayer:%s/%d", fpath, i + 1);
 
     err = gme_track_info(emu, &info, i);
 
@@ -129,7 +129,7 @@ static int
 gmefile_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 	     char *errbuf, size_t errlen, int non_interactive)
 {
-  char *p = strrchr(url, '|');
+  char *p = strrchr(url, '/');
   
   if(p == NULL) {
     snprintf(errbuf, errlen, "Invalid filename");
@@ -361,7 +361,7 @@ be_gmeplayer_play(struct backend *be, const char *url0, media_pipe_t *mp,
   url0 += strlen("gmeplayer:");
 
   url = mystrdupa(url0);
-  p = strrchr(url, '|');
+  p = strrchr(url, '/');
   if(p == NULL) {
     snprintf(errbuf, errlen, "Invalid filename");
     return NULL;
