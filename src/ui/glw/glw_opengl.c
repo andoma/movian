@@ -19,10 +19,18 @@
 #include <string.h>
 
 #include "glw.h"
-#include "glw_video_opengl.h"
 #include "glw_cursor.h"
 
 #include "fileaccess/fileaccess.h"
+
+static void glw_renderer_shader(glw_renderer_t *gr, glw_root_t *root,
+				glw_rctx_t *rc, glw_backend_texture_t *be_tex,
+				const glw_rgb_t *rgb, float alpha);
+
+static void glw_renderer_ff    (glw_renderer_t *gr, glw_root_t *root,
+				glw_rctx_t *rc, glw_backend_texture_t *be_tex,
+				const glw_rgb_t *rgb, float alpha);
+
 
 // #define DEBUG_SHADERS
 
@@ -51,17 +59,25 @@ check_gl_ext(const uint8_t *s, const char *func)
 }
 
 
+
+const static float projection[16] = {
+  2.414213,0.000000,0.000000,0.000000,
+  0.000000,2.414213,0.000000,0.000000,
+  0.000000,0.000000,1.033898,-1.000000,
+  0.000000,0.000000,2.033898,0.000000
+};
+
 /**
  *
  */
 int
 glw_opengl_init_context(glw_root_t *gr)
 {
+  GLint tu = 0;
   glw_backend_root_t *gbr = &gr->gr_be;
   const	GLubyte	*s;
   int x = 0;
   int rectmode;
-  GLuint vs, fs;
   /* Check OpenGL extensions we would like to have */
 
   s = glGetString(GL_EXTENSIONS);
@@ -102,29 +118,79 @@ glw_opengl_init_context(glw_root_t *gr)
 
   glEnable(gbr->gbr_primary_texture_mode);
 
-  vs = glw_compile_shader("bundle://src/ui/glw/glsl/v1.glsl",
-			  GL_VERTEX_SHADER);
 
-  fs = glw_compile_shader("bundle://src/ui/glw/glsl/f_tex.glsl",
-			  GL_FRAGMENT_SHADER);
-  gbr->gbr_renderer_tex = glw_make_program(gbr, "Texture", vs, fs);
-  glDeleteShader(fs);
+  glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &tu);
+  if(tu < 6) {
+    TRACE(TRACE_ERROR, "GLW", 
+	  "Insufficient number of texture image units %d < 6 "
+	  "for GLW video rendering widget.",
+	  tu);
+    return -1;
+  }
+  TRACE(TRACE_DEBUG, "GLW", "%d texture image units available", tu);
 
-  fs = glw_compile_shader("bundle://src/ui/glw/glsl/f_alpha_tex.glsl",
-			  GL_FRAGMENT_SHADER);
-  gbr->gbr_renderer_alpha_tex = glw_make_program(gbr, "Alpha texture", vs, fs);
-  glDeleteShader(fs);
 
-  fs = glw_compile_shader("bundle://src/ui/glw/glsl/f_flat.glsl",
-			  GL_FRAGMENT_SHADER);
-  gbr->gbr_renderer_flat = glw_make_program(gbr, "Flat", vs, fs);
-  glDeleteShader(fs);
+  if(1) {
 
-  glDeleteShader(vs);
+    GLuint vs, fs;
 
-#if CONFIG_GLW_BACKEND_OPENGL
-  glw_video_opengl_init(gr, rectmode);
-#endif
+    vs = glw_compile_shader("bundle://src/ui/glw/glsl/v1.glsl",
+			    GL_VERTEX_SHADER);
+
+    fs = glw_compile_shader("bundle://src/ui/glw/glsl/f_tex.glsl",
+			    GL_FRAGMENT_SHADER);
+    gbr->gbr_renderer_tex = glw_make_program(gbr, "Texture", vs, fs);
+    glDeleteShader(fs);
+
+    fs = glw_compile_shader("bundle://src/ui/glw/glsl/f_alpha_tex.glsl",
+			    GL_FRAGMENT_SHADER);
+    gbr->gbr_renderer_alpha_tex = glw_make_program(gbr, "Alpha texture",
+						   vs, fs);
+    glDeleteShader(fs);
+
+    fs = glw_compile_shader("bundle://src/ui/glw/glsl/f_flat.glsl",
+			    GL_FRAGMENT_SHADER);
+    gbr->gbr_renderer_flat = glw_make_program(gbr, "Flat", vs, fs);
+    glDeleteShader(fs);
+
+    glDeleteShader(vs);
+
+    gbr->gbr_renderer_draw = glw_renderer_shader;
+    gbr->gbr_soft_clippers = 1;
+
+
+    // Video renderer
+
+    vs = glw_compile_shader("bundle://src/ui/glw/glsl/yuv2rgb_v.glsl",
+			    GL_VERTEX_SHADER);
+
+
+    fs = glw_compile_shader("bundle://src/ui/glw/glsl/yuv2rgb_1f_norm.glsl",
+			    GL_FRAGMENT_SHADER);
+    gbr->gbr_yuv2rgb_1f = glw_make_program(gbr, "yuv2rgb_1f_norm", vs, fs);
+    glDeleteShader(fs);
+
+    fs = glw_compile_shader("bundle://src/ui/glw/glsl/yuv2rgb_2f_norm.glsl",
+			    GL_FRAGMENT_SHADER);
+    gbr->gbr_yuv2rgb_2f = glw_make_program(gbr, "yuv2rgb_2f_norm", vs, fs);
+    glDeleteShader(fs);
+
+    glDeleteShader(vs);
+
+  } else {
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+    gbr->gbr_renderer_draw = glw_renderer_ff;
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadMatrixf(projection);
+    glMatrixMode(GL_MODELVIEW);
+
+  }
+ 
+
   return 0;
 }
 
@@ -414,7 +480,8 @@ glw_renderer_init(glw_renderer_t *gr, int vertices, int triangles,
     gr->gr_array[i * 9 + 8] = 1;
   }
   gr->gr_dirty = 1;
-  gr->gr_blended_attribute = 0;
+  gr->gr_blended_attributes = 0;
+  gr->gr_color_attributes = 0;
 }
 
 
@@ -462,10 +529,10 @@ glw_renderer_free(glw_renderer_t *gr)
     gr->gr_indices = NULL;
   }
   for(i = 0; i < GLW_RENDERER_CACHES; i++) {
-    if(gr->gr_tc[i] != NULL) {
-      free(gr->gr_tc[i]->grt_array);
-      free(gr->gr_tc[i]);
-      gr->gr_tc[i] = NULL;
+    if(gr->gr_cache[i] != NULL) {
+      free(gr->gr_cache[i]->grc_array);
+      free(gr->gr_cache[i]);
+      gr->gr_cache[i] = NULL;
     }
   }
 }
@@ -517,27 +584,29 @@ glw_renderer_vtx_col(glw_renderer_t *gr, int vertex,
   gr->gr_array[vertex * 9 + 7] = b;
   gr->gr_array[vertex * 9 + 8] = a;
   if(a <= 0.99)
-    gr->gr_blended_attribute = 1;
+    gr->gr_blended_attributes = 1;
   gr->gr_dirty = 1;
+  gr->gr_color_attributes = 1;
+
 }
 
 /**
  *
  */
 static void
-clip_draw(glw_renderer_tc_t *grt,
+clip_draw(glw_renderer_cache_t *grc,
 	  const float *V1, const float *V2, const float *V3,
 	  const float *C1, const float *C2, const float *C3,
 	  const float *T1, const float *T2, const float *T3)
 {
-  if(grt->grt_size == grt->grt_capacity) {
-    grt->grt_capacity++;
-    grt->grt_array = realloc(grt->grt_array, 
-			     sizeof(float) * 27 * grt->grt_capacity);
+  if(grc->grc_size == grc->grc_capacity) {
+    grc->grc_capacity++;
+    grc->grc_array = realloc(grc->grc_array, 
+			     sizeof(float) * 27 * grc->grc_capacity);
   }
 
-  float *f = grt->grt_array + grt->grt_size * 27;
-  grt->grt_size++;
+  float *f = grc->grc_array + grc->grc_size * 27;
+  grc->grc_size++;
 
   *f++ = V1[0];
   *f++ = V1[1];
@@ -598,7 +667,7 @@ clip_draw(glw_renderer_tc_t *grt,
  * Clip a triangle in eye space
  */
 static void
-clipper(glw_renderer_tc_t *grt,
+clipper(glw_renderer_cache_t *grc,
 	const float *V1, const float *V2, const float *V3,
 	const float *C1, const float *C2, const float *C3,
 	const float *T1, const float *T2, const float *T3,
@@ -606,15 +675,15 @@ clipper(glw_renderer_tc_t *grt,
 {
   while(1) {
     if(plane == NUM_CLIPPLANES) {
-      clip_draw(grt, V1, V2, V3, C1, C2, C3, T1, T2, T3);
+      clip_draw(grc, V1, V2, V3, C1, C2, C3, T1, T2, T3);
       return;
     }
-    if(grt->grt_active_clippers & (1 << plane))
+    if(grc->grc_active_clippers & (1 << plane))
       break;
     plane++;
   }
 
-  const float *P = grt->grt_clip[plane];
+  const float *P = grc->grc_clip[plane];
   plane++;
 
   float D1 = P[0] * V1[0] + P[1] * V1[1] + P[2] * V1[2] + P[3];
@@ -640,7 +709,7 @@ clipper(glw_renderer_tc_t *grt,
   if(D1 >= 0) {
     if(D2 >= 0) {
       if(D3 >= 0) {
-	clipper(grt, V1, V2, V3, C1, C2, C3, T1, T2, T3, plane);
+	clipper(grc, V1, V2, V3, C1, C2, C3, T1, T2, T3, plane);
       } else {
 	s13 = D1 / (D1 - D3);
 	s23 = D2 / (D2 - D3);
@@ -654,8 +723,8 @@ clipper(glw_renderer_tc_t *grt,
 	LERP2v(T13, s13, T1, T3);
 	LERP2v(T23, s23, T2, T3);
 	
-	clipper(grt, V1,  V2, V23, C1,  C2, C23, T1, T2, T23, plane);
-	clipper(grt, V1, V23, V13, C1, C23, C13, T1, T23, T13, plane);
+	clipper(grc, V1,  V2, V23, C1,  C2, C23, T1, T2, T23, plane);
+	clipper(grc, V1, V23, V13, C1, C23, C13, T1, T23, T13, plane);
       }
 
     } else {
@@ -670,8 +739,8 @@ clipper(glw_renderer_tc_t *grt,
 	LERP4v(C23, s23, C2, C3);
 	LERP2v(T23, s23, T2, T3);
 
-	clipper(grt, V1, V12, V23, C1, C12, C23, T1, T12, T23, plane);
-	clipper(grt, V1, V23, V3,  C1, C23, C3,  T1, T23, T3, plane);
+	clipper(grc, V1, V12, V23, C1, C12, C23, T1, T12, T23, plane);
+	clipper(grc, V1, V23, V3,  C1, C23, C3,  T1, T23, T3, plane);
 
       } else {
 	s13 = D1 / (D1 - D3);
@@ -679,7 +748,7 @@ clipper(glw_renderer_tc_t *grt,
 	LERP4v(C13, s13, C1, C3);
 	LERP2v(T13, s13, T1, T3);
 
-	clipper(grt, V1, V12, V13, C1, C12, C13, T1, T12, T13, plane);
+	clipper(grc, V1, V12, V13, C1, C12, C13, T1, T12, T13, plane);
       }
 
     }
@@ -696,8 +765,8 @@ clipper(glw_renderer_tc_t *grt,
 	LERP4v(C13, s13, C1, C3);
 	LERP2v(T13, s13, T1, T3);
 
-	clipper(grt, V12, V2, V3,  C12, C2, C3,  T12, T2, T3, plane);
-	clipper(grt, V12, V3, V13, C12, C3, C13, T12, T3, T13, plane);
+	clipper(grc, V12, V2, V3,  C12, C2, C3,  T12, T2, T3, plane);
+	clipper(grc, V12, V3, V13, C12, C3, C13, T12, T3, T13, plane);
 
       } else {
 	s23 = D2 / (D2 - D3);
@@ -705,7 +774,7 @@ clipper(glw_renderer_tc_t *grt,
 	LERP4v(C23, s23, C2, C3);
 	LERP2v(T23, s23, T2, T3);
 
-	clipper(grt, V12, V2, V23, C12, C2, C23, T12, T2, T23, plane);
+	clipper(grc, V12, V2, V23, C12, C2, C23, T12, T2, T23, plane);
 
       }
     } else {
@@ -722,7 +791,7 @@ clipper(glw_renderer_tc_t *grt,
 	LERP2v(T13, s13, T1, T3);
 	LERP2v(T23, s23, T2, T3);
 
-	clipper(grt, V13, V23, V3, C13, C23, C3, T13, T23, T3, plane);
+	clipper(grc, V13, V23, V3, C13, C23, C3, T13, T23, T3, plane);
       }
     }
   }
@@ -740,23 +809,23 @@ clip_tesselate(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
   uint16_t *ip = gr->gr_indices;
   const float *a = gr->gr_array;
 
-  if(gr->gr_tc[cache] == NULL) {
-    gr->gr_tc[cache] = calloc(1, sizeof(glw_renderer_tc_t));
-    gr->gr_tc[cache]->grt_capacity = gr->gr_triangles;
-    gr->gr_tc[cache]->grt_array = malloc(sizeof(float) * 27 *
-					 gr->gr_tc[cache]->grt_capacity);
+  if(gr->gr_cache[cache] == NULL) {
+    gr->gr_cache[cache] = calloc(1, sizeof(glw_renderer_cache_t));
+    gr->gr_cache[cache]->grc_capacity = gr->gr_triangles;
+    gr->gr_cache[cache]->grc_array = malloc(sizeof(float) * 27 *
+					 gr->gr_cache[cache]->grc_capacity);
   }
 
-  glw_renderer_tc_t *grt = gr->gr_tc[cache];
-  grt->grt_size = 0;
+  glw_renderer_cache_t *grc = gr->gr_cache[cache];
+  grc->grc_size = 0;
 
-  memcpy(grt->grt_mtx, rc->rc_be.gbr_mtx, sizeof(float) * 16);
+  memcpy(grc->grc_mtx, rc->rc_be.gbr_mtx, sizeof(float) * 16);
 
-  grt->grt_active_clippers = root->gr_be.gbr_active_clippers;
+  grc->grc_active_clippers = root->gr_be.gbr_active_clippers;
 
   for(i = 0; i < NUM_CLIPPLANES; i++)
     if((1 << i) & root->gr_be.gbr_active_clippers)
-      memcpy(grt->grt_clip[i], root->gr_be.gbr_clip[i], 
+      memcpy(grc->grc_clip[i], root->gr_be.gbr_clip[i], 
 	     sizeof(float) * 4);
 
   for(i = 0; i < gr->gr_triangles; i++) {
@@ -772,7 +841,7 @@ clip_tesselate(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
     mtx_mul_vec(V2, rc->rc_be.gbr_mtx, a[v2*9+0], a[v2*9+1], a[v2*9+2]);
     mtx_mul_vec(V3, rc->rc_be.gbr_mtx, a[v3*9+0], a[v3*9+1], a[v3*9+2]);
 
-    clipper(grt, V1, V2, V3,
+    clipper(grc, V1, V2, V3,
 	    &gr->gr_array[v1 * 9 + 5],
 	    &gr->gr_array[v2 * 9 + 5],
 	    &gr->gr_array[v3 * 9 + 5],
@@ -788,16 +857,16 @@ clip_tesselate(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
  *
  */
 static int
-grc_clippers_cmp(glw_renderer_tc_t *grt, glw_root_t *root)
+grc_clippers_cmp(glw_renderer_cache_t *grc, glw_root_t *root)
 {
   int i;
 
-  if(grt->grt_active_clippers != root->gr_be.gbr_active_clippers)
+  if(grc->grc_active_clippers != root->gr_be.gbr_active_clippers)
     return 1;
 
   for(i = 0; i < NUM_CLIPPLANES; i++)
     if((1 << i) & root->gr_be.gbr_active_clippers)
-      if(memcmp(grt->grt_clip[i], root->gr_be.gbr_clip[i], 
+      if(memcmp(grc->grc_clip[i], root->gr_be.gbr_clip[i], 
 		sizeof(float) * 4))
 	return 1;
   return 0;
@@ -805,12 +874,131 @@ grc_clippers_cmp(glw_renderer_tc_t *grt, glw_root_t *root)
 
 
 /**
+ *
+ */
+static int
+get_cache_id(glw_root_t *root, glw_renderer_t *gr)
+{
+  if((root->gr_frames & 0xff ) != gr->gr_framecmp) {
+    gr->gr_cacheptr = 0;
+    gr->gr_framecmp = root->gr_frames & 0xff;
+  } else {
+    gr->gr_cacheptr = (gr->gr_cacheptr + 1) & (GLW_RENDERER_CACHES - 1);
+  }
+  
+  return gr->gr_cacheptr;
+}
+
+
+
+/**
  * 
  */
-void
-glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc, 
-		  glw_backend_texture_t *be_tex,
-		  const glw_rgb_t *rgb, float alpha)
+static void
+glw_renderer_ff(glw_renderer_t *gr, glw_root_t *root,
+		glw_rctx_t *rc, glw_backend_texture_t *be_tex,
+		const glw_rgb_t *rgb, float alpha)
+{
+  glw_backend_root_t *gbr = &root->gr_be;
+
+  glLoadMatrixf(rc->rc_be.gbr_mtx);
+
+  glVertexPointer(3, GL_FLOAT, sizeof(float) * 9, gr->gr_array);
+
+  if(gr->gr_color_attributes) {
+
+    glEnableClientState(GL_COLOR_ARRAY);
+
+    if((rgb == NULL || 
+	(rgb->r > 0.99 && rgb->g > 0.99 && rgb->b > 0.99)) && alpha > 0.99) {
+      glColorPointer(4, GL_FLOAT, sizeof(float) * 9, gr->gr_array + 5);
+
+    } else {
+      float r = rgb ? rgb->r : 1;
+      float g = rgb ? rgb->g : 1;
+      float b = rgb ? rgb->b : 1;
+
+      int id = get_cache_id(root, gr);
+      glw_renderer_cache_t *grc;
+      
+      if(gr->gr_dirty || gr->gr_cache[id] == NULL ||
+	 gr->gr_cache[id]->grc_rgba[0] != r ||
+	 gr->gr_cache[id]->grc_rgba[1] != g ||
+	 gr->gr_cache[id]->grc_rgba[2] != b ||
+	 gr->gr_cache[id]->grc_rgba[3] != alpha) {
+
+	int i;
+
+	if(gr->gr_cache[id] == NULL)
+	  gr->gr_cache[id] = calloc(1, sizeof(glw_renderer_cache_t));
+	grc = gr->gr_cache[id];
+
+	if(grc->grc_capacity != gr->gr_vertices) {
+	  grc->grc_capacity = gr->gr_vertices;
+	  grc->grc_array = realloc(grc->grc_array,
+				   sizeof(float) * 4 * gr->gr_vertices);
+	}
+	  
+	float *A = grc->grc_array;
+	float *B = gr->gr_array;
+
+	for(i = 0; i < gr->gr_vertices; i++) {
+	  *A++ = r * B[5];
+	  *A++ = g * B[6];
+	  *A++ = b * B[7];
+	  *A++ = alpha * B[8];
+	  B += 9;
+	}
+
+	gr->gr_cache[id]->grc_rgba[0] = r;
+	gr->gr_cache[id]->grc_rgba[1] = g;
+	gr->gr_cache[id]->grc_rgba[2] = b;
+	gr->gr_cache[id]->grc_rgba[3] = alpha;
+
+      } else {
+	grc = gr->gr_cache[id];
+      }
+
+      glColorPointer(4, GL_FLOAT, 0, grc->grc_array);
+    }
+
+  } else if(rgb) {
+    glColor4f(rgb->r, rgb->g, rgb->b, alpha);
+  } else {
+    glColor4f(1, 1, 1, alpha);
+  }
+
+  if(be_tex == NULL) {
+    glBindTexture(gbr->gbr_primary_texture_mode, 0);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+  } else {
+    glBindTexture(gbr->gbr_primary_texture_mode, be_tex->tex);
+    glTexCoordPointer(2, GL_FLOAT, sizeof(float) * 9, gr->gr_array+3);
+  }
+
+
+  
+  glDrawElements(GL_TRIANGLES, 3 * gr->gr_triangles, GL_UNSIGNED_SHORT,
+		 gr->gr_indices);
+
+  if(be_tex == NULL)
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+  if(gr->gr_color_attributes)
+    glDisableClientState(GL_COLOR_ARRAY);
+
+  gr->gr_dirty = 0;
+}
+
+
+
+/**
+ * 
+ */
+static void
+glw_renderer_shader(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc, 
+		    glw_backend_texture_t *be_tex,
+		    const glw_rgb_t *rgb, float alpha)
 {
   glw_backend_root_t *gbr = &root->gr_be;
   glw_program_t *gp;
@@ -831,7 +1019,7 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
 
     case GLW_TEXTURE_TYPE_NO_ALPHA:
       gp = gbr->gbr_renderer_tex;
-      if(alpha > 0.99 && !gr->gr_blended_attribute) {
+      if(alpha > 0.99 && !gr->gr_blended_attributes) {
 	glDisable(GL_BLEND);
 	reenable_blend = 1;
       }
@@ -847,34 +1035,26 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
     return;
 
   glw_load_program(gbr, gp);
+
   if(rgb != NULL)
     glw_program_set_uniform_color(gbr, rgb->r, rgb->g, rgb->b, alpha);
   else
     glw_program_set_uniform_color(gbr, 1, 1, 1, alpha);
 
   if(gbr->gbr_active_clippers) {
-    float *A;
+    int cacheid = get_cache_id(root, gr);
 
-    if((root->gr_frames & 0xff ) != gr->gr_framecmp) {
-      gr->gr_cacheptr = 0;
-      gr->gr_framecmp = root->gr_frames & 0xff;
-    } else {
-      gr->gr_cacheptr = (gr->gr_cacheptr + 1) & (GLW_RENDERER_CACHES - 1);
-    }
-
-    int cacheid = gr->gr_cacheptr;
-
-    if(gr->gr_dirty || gr->gr_tc[cacheid] == NULL ||
-       memcmp(gr->gr_tc[cacheid]->grt_mtx,
+    if(gr->gr_dirty || gr->gr_cache[cacheid] == NULL ||
+       memcmp(gr->gr_cache[cacheid]->grc_mtx,
 	      rc->rc_be.gbr_mtx, sizeof(float) * 16) ||
-       grc_clippers_cmp(gr->gr_tc[cacheid], root)) {
+       grc_clippers_cmp(gr->gr_cache[cacheid], root)) {
 
       clip_tesselate(gr, root, rc, cacheid);
     }
     
     glw_program_set_modelview(gbr, NULL);
 
-    A = gr->gr_tc[cacheid]->grt_array;
+    float *A = gr->gr_cache[cacheid]->grc_array;
 
     glVertexAttribPointer(gp->gp_attribute_position,
 			  3, GL_FLOAT, 0, sizeof(float) * 9, A);
@@ -885,7 +1065,7 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
       glVertexAttribPointer(gp->gp_attribute_texcoord,
 			    2, GL_FLOAT, 0, sizeof(float) * 9, A + 3);
 
-    glDrawArrays(GL_TRIANGLES, 0, 3 * gr->gr_tc[cacheid]->grt_size);
+    glDrawArrays(GL_TRIANGLES, 0, 3 * gr->gr_cache[cacheid]->grc_size);
 
   } else {
 
@@ -902,6 +1082,7 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
     glDrawElements(GL_TRIANGLES, 3 * gr->gr_triangles, GL_UNSIGNED_SHORT,
 		   gr->gr_indices);
   }
+
   gr->gr_dirty = 0;
 
   if(reenable_blend)
@@ -986,7 +1167,6 @@ int
 glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t how)
 {
   int i;
-  float inv[16];
   for(i = 0; i < NUM_CLIPPLANES; i++)
     if(!(gr->gr_be.gbr_active_clippers & (1 << i)))
       break;
@@ -994,16 +1174,34 @@ glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t how)
   if(i == NUM_CLIPPLANES)
     return -1;
 
-  if(!mtx_invert(inv, rc->rc_be.gbr_mtx))
-    return -1;
+  if(gr->gr_be.gbr_soft_clippers) {
+
+    float inv[16];
+
+    if(!mtx_invert(inv, rc->rc_be.gbr_mtx))
+      return -1;
+
+    mtx_trans_mul_vec4(gr->gr_be.gbr_clip[i], inv, 
+		       clip_planes[how][0],
+		       clip_planes[how][1],
+		       clip_planes[how][2],
+		       clip_planes[how][3]);
+
+  } else {
+
+    double plane[4];
+    int j;
+    
+    for(j = 0; j < 4; j++)
+      plane[j] = clip_planes[how][j];
+
+    glLoadMatrixf(rc->rc_be.gbr_mtx);
+
+    glClipPlane(GL_CLIP_PLANE0 + i, plane);
+    glEnable(GL_CLIP_PLANE0 + i);
+  }
 
   gr->gr_be.gbr_active_clippers |= (1 << i);
-  
-  mtx_trans_mul_vec4(gr->gr_be.gbr_clip[i], inv, 
-		     clip_planes[how][0],
-		     clip_planes[how][1],
-		     clip_planes[how][2],
-		     clip_planes[how][3]);
   return i;
 }
 
@@ -1016,6 +1214,9 @@ glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which)
 {
   if(which == -1)
     return;
+
+  if(!gr->gr_be.gbr_soft_clippers)
+    glDisable(GL_CLIP_PLANE0 + which);
 
   gr->gr_be.gbr_active_clippers &= ~(1 << which);
 }
@@ -1123,8 +1324,10 @@ glw_make_program(glw_backend_root_t *gbr, const char *title,
     printf("  u_t%d       = %d\n", i, gp->gp_uniform_t[i]);
 #endif
   }
+
   return gp;
 }
+
 
 /**
  *

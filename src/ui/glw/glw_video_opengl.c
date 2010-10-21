@@ -29,7 +29,6 @@
 
 #include "showtime.h"
 #include "glw_video_common.h"
-#include "glw_video_opengl.h"
 
 #define GVF_TEX_L   0
 #define GVF_TEX_Cr  1
@@ -41,57 +40,6 @@
 
 #include "video/video_decoder.h"
 #include "video/video_playback.h"
-
-/**
- *
- */
-int
-glw_video_opengl_init(glw_root_t *gr, int rectmode)
-{
-  glw_backend_root_t *gbr = &gr->gr_be;
-  GLint tu = 0;
-  GLuint fs, vs;
-
-  glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &tu);
-  if(tu < 6) {
-    TRACE(TRACE_ERROR, "GLW", 
-	  "Insufficient number of texture image units %d < 6 "
-	  "for GLW video rendering widget.",
-	  tu);
-    return -1;
-  }
-  TRACE(TRACE_DEBUG, "GLW", "%d texture image units available", tu);
-
-
-  if(!(vs = glw_compile_shader("bundle://src/ui/glw/glsl/yuv2rgb_v.glsl",
-			       GL_VERTEX_SHADER)))
-    return -1;
-
-  // 1 frame
-
-  if(!(fs = glw_compile_shader("bundle://src/ui/glw/glsl/yuv2rgb_1f_norm.glsl",
-			       GL_FRAGMENT_SHADER)))
-    return -1;
-  
-  if(!(gbr->gbr_yuv2rgb_1f = glw_make_program(gbr, "yuv2rgb_1f_norm", vs, fs)))
-    return -1;
-
-  glDeleteShader(fs);
-
-  // 2 frame blending
-
-  if(!(fs = glw_compile_shader("bundle://src/ui/glw/glsl/yuv2rgb_2f_norm.glsl",
-			       GL_FRAGMENT_SHADER)))
-    return -1;
-  
-  if(!(gbr->gbr_yuv2rgb_2f = glw_make_program(gbr, "yuv2rgb_2f_norm", vs, fs)))
-    return -1;
-
-  glDeleteShader(fs);
-
-  glDeleteShader(vs);
-  return 0;
-}
 
 
 /**
@@ -450,14 +398,6 @@ render_video_quad(int interlace, int rectmode, int width, int height,
   const uint8_t elements[6] = {0,1,2,0,2,3};
   float tc[12];
 
-  glw_load_program(gbr, gp);
-  glw_program_set_uniform_color(gbr, 1, 1, 1, rc->rc_alpha);
-  glw_program_set_modelview(gbr, rc);
-  if(gp->gp_uniform_blend != -1)
-    glUniform1f(gp->gp_uniform_blend, gv->gv_blend);
-
-  glUniformMatrix3fv(gp->gp_uniform_colormtx, 1, GL_TRUE, gv->gv_cmatrix);
-
   if(rectmode) {
 
     if(interlace) {
@@ -512,33 +452,17 @@ render_video_quad(int interlace, int rectmode, int width, int height,
   tc[10] = y1 - b1;
   tc[11] = y1 - b2;
 
-      
+  glw_load_program(gbr, gp);
+  glw_program_set_uniform_color(gbr, 1, 1, 1, rc->rc_alpha);
+  glw_program_set_modelview(gbr, rc);
+  if(gp->gp_uniform_blend != -1)
+    glUniform1f(gp->gp_uniform_blend, gv->gv_blend);
+
+  glUniformMatrix3fv(gp->gp_uniform_colormtx, 1, GL_TRUE, gv->gv_cmatrix);
+     
   glVertexAttribPointer(gp->gp_attribute_texcoord, 3, GL_FLOAT, 0, 0, tc);
   glVertexAttribPointer(gp->gp_attribute_position, 2, GL_FLOAT, 0, 0, vertices);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, elements);
-
-
-#if 0
-  glBegin(GL_QUADS);
-  
-  glMultiTexCoord2f(0, x1, y2 - b1);
-  glMultiTexCoord2f(1, x1, y2 - b2);
-  glVertex3f( -1.0f, -1.0f, 0.0f);
-  
-  glMultiTexCoord2f(0, x2, y2 - b1);
-  glMultiTexCoord2f(1, x2, y2 - b2);
-  glVertex3f( 1.0f, -1.0f, 0.0f);
-  
-  glMultiTexCoord2f(0, x2, y1 - b1);
-  glMultiTexCoord2f(1, x2, y1 - b2);
-  glVertex3f( 1.0f, 1.0f, 0.0f);
-
-  glMultiTexCoord2f(0, x1, y1 - b1);
-  glMultiTexCoord2f(1, x1, y1 - b2);
-  glVertex3f( -1.0f, 1.0f, 0.0f);
-
-  glEnd();
-#endif
 }
 
 

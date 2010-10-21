@@ -42,6 +42,13 @@
 #endif
 
 
+struct glw_rgb;
+struct glw_rctx;
+struct glw_root;
+struct glw_backend_root;
+struct glw_renderer;
+struct glw_backend_texture;
+
 /**
  * OpenGL shader program
  */
@@ -67,8 +74,6 @@ typedef struct glw_program {
 
 #define NUM_CLIPPLANES 6
 
-struct glw_root;
-struct glw_rctx;
 
 typedef struct glw_backend_root {
 
@@ -105,12 +110,22 @@ typedef struct glw_backend_root {
 
   float gbr_clip[NUM_CLIPPLANES][4];
   int gbr_active_clippers;
+  int gbr_soft_clippers;
 
   struct glw_program *gbr_renderer_tex;
   struct glw_program *gbr_renderer_alpha_tex;
   struct glw_program *gbr_renderer_flat;
 
+
+  void (*gbr_renderer_draw)(struct glw_renderer *gr, struct glw_root *root,
+			    struct glw_rctx *rc,
+			    struct glw_backend_texture *be_tex,
+			    const struct glw_rgb *rgb, float alpha);
+
 } glw_backend_root_t;
+
+#define glw_renderer_draw(gr, root, rc, be_tex, rgb, alpha) \
+  (root)->gr_be.gbr_renderer_draw(gr, root, rc, be_tex, rgb, alpha)
 
 
 typedef struct {
@@ -120,17 +135,20 @@ typedef struct {
 
 
 /**
- * Renderer tesselation cache
+ * Renderer cache
  */
-typedef struct glw_renderer_tc {
-  float grt_mtx[16]; // ModelView matrix
-  int grt_active_clippers;
-  float grt_clip[NUM_CLIPPLANES][4];
+typedef struct glw_renderer_cache {
+  union {
+    float grc_mtx[16]; // ModelView matrix
+    float grc_rgba[4];
+  };
+  int grc_active_clippers;
+  float grc_clip[NUM_CLIPPLANES][4];
 
-  float *grt_array; // Tesselated output [3+4+2] elements / vertex
-  int grt_size;     // In triangles
-  int grt_capacity; // In triangles
-} glw_renderer_tc_t;
+  float *grc_array;
+  int grc_size;     // In triangles
+  int grc_capacity; // In triangles
+} glw_renderer_cache_t;
 
 /**
  * Renderer
@@ -142,7 +160,8 @@ typedef struct glw_renderer {
   uint16_t gr_triangles;
   char gr_static_indices;
   char gr_dirty;
-  char gr_blended_attribute;
+  char gr_blended_attributes;
+  char gr_color_attributes;
   unsigned char gr_framecmp;
   unsigned char gr_cacheptr;
 
@@ -151,7 +170,7 @@ typedef struct glw_renderer {
 
 #define GLW_RENDERER_CACHES 4
 
-  glw_renderer_tc_t *gr_tc[GLW_RENDERER_CACHES];
+  glw_renderer_cache_t *gr_cache[GLW_RENDERER_CACHES];
   
 } glw_renderer_t;
 
@@ -159,7 +178,7 @@ typedef struct glw_renderer {
 /**
  *
  */
-typedef struct {
+typedef struct glw_backend_texture {
   GLuint tex;
   char type;
 #define GLW_TEXTURE_TYPE_NORMAL   0
