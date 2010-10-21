@@ -32,6 +32,8 @@
 #include "htsmsg/htsmsg_xml.h"
 #include "misc/string.h"
 
+static int http_tokenize(char *buf, char **vec, int vecsize, int delimiter);
+
 #if 0
 #define HTTP_TRACE(x...) TRACE(TRACE_DEBUG, "HTTP", x)
 #else
@@ -49,13 +51,14 @@ http_ctime(time_t *tp, const char *d)
   char wday[4];
   char month[4];
   int i;
+  char dummy;
   static const char *months[12] = {
     "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
-  if(sscanf(d, "%3s, %d %s %d %d:%d:%d",
-	    wday, &tm.tm_mday, month, &tm.tm_year,
-	    &tm.tm_hour, &tm.tm_min, &tm.tm_sec) != 7)
+  if(sscanf(d, "%3s, %d%c%3s%c%d %d:%d:%d",
+	    wday, &tm.tm_mday, &dummy, month, &dummy, &tm.tm_year,
+	    &tm.tm_hour, &tm.tm_min, &tm.tm_sec) != 9)
     return -1;
 
   tm.tm_year -= 1900;
@@ -232,6 +235,161 @@ add_premanent_redirect(const char *from, const char *to)
 /**
  *
  */
+LIST_HEAD(http_cookie_list, http_cookie);
+static struct http_cookie_list http_cookies;
+static hts_mutex_t http_cookies_mutex;
+
+/**
+ *
+ */
+typedef struct http_cookie {
+
+  LIST_ENTRY(http_cookie) hc_link;
+
+  char *hc_name;
+  char *hc_path;
+  char *hc_domain;
+
+  char *hc_value;
+  time_t hc_expire;
+
+} http_cookie_t;
+
+/**
+ * RFC 2109 : 4.3.2 Rejecting Cookies
+ */
+static int
+validate_cookie(const char *req_host, const char *req_path,
+		const char *domain, const char *path)
+{
+  const char *x;
+  /*
+   * The value for the Path attribute is not a prefix of the request-
+   * URI.
+   */
+   if(strncmp(req_path, path, strlen(path)))
+    return 0;
+
+  /*
+   * The value for the Domain attribute contains no embedded dots or
+   * does not start with a dot.
+   */
+
+  if(*domain != '.' || strchr(domain + 1, '.') == NULL)
+    return 0;
+
+  /*
+   * The value for the request-host does not domain-match the Domain
+   * attribute.
+   */
+  const char *s = strstr(req_host, domain);
+  if(s == NULL || s[strlen(domain)] != 0)
+    return 0;
+
+  /*
+   * The request-host is a FQDN (not IP address) and has the form HD,
+   * where D is the value of the Domain attribute, and H is a string
+   * that contains one or more dots.
+   */ 
+
+  for(x = req_host; x != s; x++) {
+    if(*x == '.')
+      return 0;
+  }
+  return 1;
+}
+
+/**
+ *
+ */
+static void
+http_cookie_set(char *cookie, const char *req_host, const char *req_path)
+{
+  char *argv[20];
+  int argc, i;
+  const char *domain;
+  const char *path;
+  char *name;
+  char *value;
+  time_t expire = -1;
+  http_cookie_t *hc;
+
+  argc = http_tokenize(cookie, argv, 20, ';');
+  if(argc == 0)
+    return;
+
+  name = argv[0];
+  value = strchr(name, '=');
+  if(value == NULL)
+    return;
+  *value = 0;
+  value++;
+
+  for(i = 1; i < argc; i++) {
+    if(!strncasecmp(argv[i], "domain=", strlen("domain=")))
+      domain = argv[i] + strlen("domain=");
+    
+    if(!strncasecmp(argv[i], "path=", strlen("path=")))
+      path = argv[i] + strlen("path=");
+    
+    if(!strncasecmp(argv[i], "expires=", strlen("expires="))) {
+      http_ctime(&expire, argv[i] + strlen("expires="));
+    }
+  }
+
+  if(domain == NULL || path == NULL)
+    return;
+
+  if(!validate_cookie(req_host, req_path, domain, path))
+    return;
+
+  hts_mutex_lock(&http_cookies_mutex);
+
+  LIST_FOREACH(hc, &http_cookies, hc_link) {
+    if(!strcmp(hc->hc_name, name) &&
+       !strcmp(hc->hc_path, path) &&
+       !strcmp(hc->hc_domain, domain))
+      break;
+  }
+
+  if(hc == NULL) {
+    hc = calloc(1, sizeof(http_cookie_t));
+    LIST_INSERT_HEAD(&http_cookies, hc, hc_link);
+    hc->hc_name = strdup(name);
+    hc->hc_path = strdup(path);
+    hc->hc_domain = strdup(domain);
+  }
+  
+  mystrset(&hc->hc_value, value);
+  hc->hc_expire = expire;
+
+  hts_mutex_unlock(&http_cookies_mutex);
+}
+
+
+/**
+ *
+ */
+static void
+http_cookie_send(const char *req_host, const char *req_path, htsbuf_queue_t *q)
+{
+  http_cookie_t *hc;
+
+  hts_mutex_lock(&http_cookies_mutex);
+  LIST_FOREACH(hc, &http_cookies, hc_link) {
+    if(!validate_cookie(req_host, req_path, hc->hc_domain, hc->hc_path))
+      continue;
+
+    htsbuf_qprintf(q, "Cookie: %s=%s\r\n", hc->hc_name, hc->hc_value);
+  }
+
+  hts_mutex_unlock(&http_cookies_mutex);
+}
+
+
+/**
+ *
+ */
 static void
 http_init(void)
 {
@@ -240,6 +398,9 @@ http_init(void)
 
   LIST_INIT(&http_redirects);
   hts_mutex_init(&http_redirects_mutex);
+
+  LIST_INIT(&http_cookies);
+  hts_mutex_init(&http_cookies_mutex);
 }
 
 
@@ -368,19 +529,26 @@ http_drain_content(http_file_t *hf)
  * Split a string in components delimited by 'delimiter'
  */
 static int
+isdelimited(char c, int delimiter)
+{
+  return delimiter == -1 ? c < 33 : c == delimiter;
+}
+
+
+static int
 http_tokenize(char *buf, char **vec, int vecsize, int delimiter)
 {
   int n = 0;
 
   while(1) {
-    while((*buf > 0 && *buf < 33) || *buf == delimiter)
+    while(*buf && (isdelimited(*buf, delimiter) || *buf == 32))
       buf++;
     if(*buf == 0)
       break;
     vec[n++] = buf;
     if(n == vecsize)
       break;
-    while(*buf > 32 && *buf != delimiter)
+    while(*buf && !isdelimited(*buf, delimiter))
       buf++;
     if(*buf == 0)
       break;
@@ -497,6 +665,9 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
       if(!strcasecmp(argv[1], "close"))
 	hf->hf_connection_mode = CONNECTION_MODE_CLOSE;
     }
+
+    if(!strcasecmp(argv[0], "Set-Cookie"))
+      http_cookie_set(argv[1], hf->hf_connection->hc_hostname, hf->hf_path);
   }
   return code;
 }
@@ -1765,6 +1936,8 @@ http_request(const char *url, const char **arguments,
     LIST_FOREACH(hh, headers_in, hh_link)
       htsbuf_qprintf(&q, "%s: %s\r\n", hh->hh_key, hh->hh_value);
   }
+  
+  http_cookie_send(hf->hf_connection->hc_hostname, hf->hf_path, &q);
 
   htsbuf_qprintf(&q, "\r\n");
 
