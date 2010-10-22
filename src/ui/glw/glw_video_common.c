@@ -18,7 +18,6 @@
 
 #include "showtime.h"
 #include "media.h"
-#include "glw_video_opengl.h"
 #include "glw_video_common.h"
 #include "glw_video_overlay.h"
 #include "glw_texture.h"
