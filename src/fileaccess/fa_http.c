@@ -307,8 +307,8 @@ http_cookie_set(char *cookie, const char *req_host, const char *req_path)
 {
   char *argv[20];
   int argc, i;
-  const char *domain;
-  const char *path;
+  const char *domain = NULL;
+  const char *path = NULL;
   char *name;
   char *value;
   time_t expire = -1;
