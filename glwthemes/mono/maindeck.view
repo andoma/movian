@@ -61,12 +61,12 @@ widget(container_y, {
 	    widget(dummy, { .height = 2; });
 	    
 	    widget(image, {
-	      .source = $global.nav.currentpage.model.logo;
+	      .source = $global.nav.currentpage.model.metadata.logo;
 	      .hqScaling = true;
 	      .height = $ui.fontsize * 4;
 	    });
 	  });
-	  .page = select($global.nav.currentpage.model.logo, 1, 0);
+	  .page = select($global.nav.currentpage.model.metadata.logo, 1, 0);
 	});
 	
 

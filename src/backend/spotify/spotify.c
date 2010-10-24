@@ -2736,10 +2736,11 @@ static void
 startpage(nav_page_t *np)
 {
   prop_t *model = prop_create(np->np_prop_root, "model");
+  prop_t *metadata = prop_create(model, "metadata");
 
   prop_set_string(prop_create(model, "type"), "directory");
   prop_set_string(prop_create(model, "contents"), "items");
-  prop_set_string(prop_create(model, "logo"), SPOTIFY_LOGO_URL);
+  prop_set_string(prop_create(metadata, "logo"), SPOTIFY_LOGO_URL);
 
   prop_t *nodes = prop_create(model, "nodes");
 
