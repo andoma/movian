@@ -209,6 +209,8 @@ js_prop_set_from_jsval(JSContext *cx, prop_t *p, jsval value)
 		       PROP_STR_RICH);
     JS_LeaveLocalRootScope(cx);
 
+  } else if(JSVAL_IS_VOID(value) || JSVAL_IS_NULL(value)) {
+    prop_set_void(p);
   } else {
     prop_set_string(p, JS_GetStringBytes(JS_ValueToString(cx, value)));
   }
