@@ -73,6 +73,7 @@ typedef struct js_model {
 
   prop_t *jm_loading;
   prop_t *jm_type;
+  prop_t *jm_error;
   prop_t *jm_contents;
   prop_t *jm_entries;
   prop_t *jm_url;
@@ -121,6 +122,7 @@ js_model_destroy(js_model_t *jm)
   if(jm->jm_loading)   prop_ref_dec(jm->jm_loading);
   if(jm->jm_nodes)     prop_ref_dec(jm->jm_nodes);
   if(jm->jm_type)      prop_ref_dec(jm->jm_type);
+  if(jm->jm_error)     prop_ref_dec(jm->jm_error);
   if(jm->jm_contents)  prop_ref_dec(jm->jm_contents);
   if(jm->jm_entries)   prop_ref_dec(jm->jm_entries);
   if(jm->jm_url)       prop_ref_dec(jm->jm_url);
@@ -164,6 +166,18 @@ js_setType(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
   js_model_t *jm = JS_GetPrivate(cx, obj);
   js_prop_set_from_jsval(cx, jm->jm_type, *vp);
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSBool 
+js_setError(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
+{
+  js_model_t *jm = JS_GetPrivate(cx, obj);
+  js_prop_set_from_jsval(cx, jm->jm_error, *vp);
   return JS_TRUE;
 }
 
@@ -251,6 +265,7 @@ init_model_props(js_model_t *jm, prop_t *model)
 
   prop_ref_inc(jm->jm_nodes   = prop_create(model, "items"));
   prop_ref_inc(jm->jm_type    = prop_create(model, "type"));
+  prop_ref_inc(jm->jm_error   = prop_create(model, "error"));
   prop_ref_inc(jm->jm_contents= prop_create(model, "contents"));
   prop_ref_inc(jm->jm_entries = prop_create(model, "entries"));
   prop_ref_inc(jm->jm_metadata= prop_create(model, "metadata"));
@@ -382,6 +397,10 @@ make_model_object(JSContext *cx, js_model_t *jm)
   if(jm->jm_type != NULL)
     JS_DefineProperty(cx, obj, "type", JSVAL_VOID,
 		      NULL, js_setType, JSPROP_PERMANENT);
+
+  if(jm->jm_error != NULL)
+    JS_DefineProperty(cx, obj, "error", JSVAL_VOID,
+		      NULL, js_setError, JSPROP_PERMANENT);
 
   if(jm->jm_contents != NULL)
     JS_DefineProperty(cx, obj, "contents", JSVAL_VOID,
