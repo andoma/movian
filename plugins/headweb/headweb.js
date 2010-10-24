@@ -91,7 +91,7 @@
 
   // List all genres
   plugin.addURI(PREFIX + "genres", function(page) {
-    page.title = "Genres";
+    page.metadata.title = "Genres";
     page.type = "directory";
 
     var doc = new XML(request("/genre/filter(-adult,stream)"));
@@ -108,7 +108,7 @@
 
   // Browse a genre
   plugin.addURI(PREFIX + "genre:([0-9]*):(.*)", function(page, id, name) {
-    page.title = name;
+    page.metadata.title = name;
     requestContents(page, "/genre/" + id);
   });
 

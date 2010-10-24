@@ -139,7 +139,7 @@
 
   plugin.addURI("svtplay:senaste", function(page) {
     pageController(page, function(offset) {
-      page.title = "Senaste program från SVT Play";
+      page.metadata.title = "Senaste program från SVT Play";
       return showtime.httpGet("http://xml.svtplay.se/v1/video/list/96241,96242,96243,96245,96246,96247,96248", {
 	start: offset,
 	expression: "full",
@@ -175,11 +175,12 @@
 	}
       }
     }
-    page.title = "SVT Play";
     page.type = "directory";
     page.contents = "items";
-    page.logo = plugin.config.path + "svtplay.png";
     page.loading = false;
+
+    page.metadata.logo = plugin.config.path + "svtplay.png";
+    page.metadata.title = "SVT Play";
 
   });
   

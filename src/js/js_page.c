@@ -74,10 +74,9 @@ typedef struct js_model {
   prop_t *jm_loading;
   prop_t *jm_type;
   prop_t *jm_contents;
-  prop_t *jm_logo;
-  prop_t *jm_title;
   prop_t *jm_entries;
   prop_t *jm_url;
+  prop_t *jm_metadata;
 
   prop_courier_t *jm_pc;
   prop_sub_t *jm_nodesub;
@@ -123,10 +122,9 @@ js_model_destroy(js_model_t *jm)
   if(jm->jm_nodes)     prop_ref_dec(jm->jm_nodes);
   if(jm->jm_type)      prop_ref_dec(jm->jm_type);
   if(jm->jm_contents)  prop_ref_dec(jm->jm_contents);
-  if(jm->jm_logo)      prop_ref_dec(jm->jm_logo);
-  if(jm->jm_title)     prop_ref_dec(jm->jm_title);
   if(jm->jm_entries)   prop_ref_dec(jm->jm_entries);
   if(jm->jm_url)       prop_ref_dec(jm->jm_url);
+  if(jm->jm_metadata)  prop_ref_dec(jm->jm_metadata);
 
   if(jm->jm_pc != NULL)
     prop_courier_destroy(jm->jm_pc);
@@ -143,18 +141,6 @@ js_model_release(js_model_t *jm)
 {
   if(atomic_add(&jm->jm_refcount, -1) == 1)
     js_model_destroy(jm);
-}
-
-
-/**
- *
- */
-static JSBool 
-js_setTitle(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
-{
-  js_model_t *jm = JS_GetPrivate(cx, obj);
-  js_prop_set_from_jsval(cx, jm->jm_title, *vp);
-  return JS_TRUE;
 }
 
 
@@ -190,18 +176,6 @@ js_setContents(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
   js_model_t *jm = JS_GetPrivate(cx, obj);
   js_prop_set_from_jsval(cx, jm->jm_contents, *vp);
-  return JS_TRUE;
-}
-
-
-/**
- *
- */
-static JSBool 
-js_setLogo(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
-{
-  js_model_t *jm = JS_GetPrivate(cx, obj);
-  js_prop_set_from_jsval(cx, jm->jm_logo, *vp);
   return JS_TRUE;
 }
 
@@ -273,15 +247,13 @@ js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
 static void
 init_model_props(js_model_t *jm, prop_t *model)
 {
-  prop_t *meta  = prop_create(model, "metadata");
   struct prop_nf *pnf;
 
   prop_ref_inc(jm->jm_nodes   = prop_create(model, "items"));
   prop_ref_inc(jm->jm_type    = prop_create(model, "type"));
   prop_ref_inc(jm->jm_contents= prop_create(model, "contents"));
   prop_ref_inc(jm->jm_entries = prop_create(model, "entries"));
-  prop_ref_inc(jm->jm_logo    = prop_create(meta,  "logo"));
-  prop_ref_inc(jm->jm_title   = prop_create(meta,  "title"));
+  prop_ref_inc(jm->jm_metadata= prop_create(model, "metadata"));
 
   pnf = prop_nf_create(prop_create(model, "nodes"),
 		       jm->jm_nodes,
@@ -403,10 +375,6 @@ make_model_object(JSContext *cx, js_model_t *jm)
 
   JS_DefineFunctions(cx, obj, page_functions);
 
-  if(jm->jm_title != NULL)
-    JS_DefineProperty(cx, obj, "title", JSVAL_VOID,
-		      NULL, js_setTitle, JSPROP_PERMANENT);
-
   if(jm->jm_entries != NULL)
     JS_DefineProperty(cx, obj, "entries", JSVAL_VOID,
 		      NULL, js_setEntries, JSPROP_PERMANENT);
@@ -419,10 +387,6 @@ make_model_object(JSContext *cx, js_model_t *jm)
     JS_DefineProperty(cx, obj, "contents", JSVAL_VOID,
 		      NULL, js_setContents, JSPROP_PERMANENT);
 
-  if(jm->jm_logo != NULL)
-    JS_DefineProperty(cx, obj, "logo", JSVAL_VOID,
-		      NULL, js_setLogo, JSPROP_PERMANENT);
-   
   if(jm->jm_loading != NULL)
     JS_DefineProperty(cx, obj, "loading", BOOLEAN_TO_JSVAL(1),
 		      NULL, js_setLoading, JSPROP_PERMANENT);
@@ -430,6 +394,12 @@ make_model_object(JSContext *cx, js_model_t *jm)
   if(jm->jm_url != NULL)
     JS_DefineProperty(cx, obj, "url", JSVAL_VOID,
 		      NULL, js_setURL, JSPROP_PERMANENT);
+
+  if(jm->jm_metadata != NULL) {
+    JSObject *metaobj = js_object_from_prop(cx, jm->jm_metadata);
+    JS_DefineProperty(cx, obj, "metadata", OBJECT_TO_JSVAL(metaobj),
+		      NULL, NULL, JSPROP_PERMANENT);
+  }
 
   JS_DefineProperty(cx, obj, "paginator", JSVAL_VOID,
 		    NULL, js_setPaginator, JSPROP_PERMANENT);
