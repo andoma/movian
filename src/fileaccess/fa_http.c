@@ -501,7 +501,7 @@ http_auth_cache_set(http_file_t *hf)
   } else {
 
     if(hac == NULL) {
-      hac = calloc(1, sizeof(http_redirect_t));
+      hac = calloc(1, sizeof(http_auth_cache_t));
       hac->hac_hostname = strdup(hostname);
       hac->hac_port = port;
       
