@@ -60,6 +60,8 @@ typedef enum {
   TOKEN_NEQ,                   // !=
   TOKEN_BOOLEAN_NOT,           // !
   TOKEN_NULL_COALESCE,         // ??
+  TOKEN_LT,                    // <
+  TOKEN_GT,                    // >
   TOKEN_STRING,                // A quoted string: " ... "
   TOKEN_FLOAT,
   TOKEN_INT,

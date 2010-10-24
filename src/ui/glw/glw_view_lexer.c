@@ -142,6 +142,8 @@ lexer_single_char(token_t *next, rstr_t *f, int line, char s)
   case '$' : ty = TOKEN_DOLLAR;                   break;
   case '!' : ty = TOKEN_BOOLEAN_NOT;              break;
   case '&' : ty = TOKEN_AMPERSAND;                break;
+  case '>' : ty = TOKEN_GT;                       break;
+  case '<' : ty = TOKEN_LT;                       break;
   default:
     return NULL;
   }

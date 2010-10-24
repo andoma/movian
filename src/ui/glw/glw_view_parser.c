@@ -87,6 +87,8 @@ static const int tokenprecedence[TOKEN_num] = {
   [TOKEN_BOOLEAN_XOR]= 5,
   [TOKEN_EQ]         = 6,
   [TOKEN_NEQ]        = 6,
+  [TOKEN_LT]         = 6,
+  [TOKEN_GT]         = 6,
   [TOKEN_ADD]        = 7,
   [TOKEN_SUB]        = 7,
   [TOKEN_MULTIPLY]   = 8,
@@ -162,6 +164,8 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
     case TOKEN_EQ:
     case TOKEN_NULL_COALESCE:
     case TOKEN_NEQ:
+    case TOKEN_LT:
+    case TOKEN_GT:
     case TOKEN_BOOLEAN_NOT:
       while(stack && tokenprecedence[t->type] <= tokenprecedence[stack->type])
 	tokenqueue_enqueue(&outq, tokenstack_pop(&stack), NULL);

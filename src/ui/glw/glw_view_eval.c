@@ -563,6 +563,45 @@ eval_eq(glw_view_eval_context_t *ec, struct token *self, int neq)
 
 
 /**
+ *
+ */
+static int
+eval_lt(glw_view_eval_context_t *ec, struct token *self, int gt)
+{
+  token_t *b = eval_pop(ec), *a = eval_pop(ec), *r;
+  int rr;
+
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+  if((b = token_resolve(ec, b)) == NULL)
+    return -1;
+
+  if(token_is_string(a) && token_is_string(b)) {
+    rr = 0;
+  } else if(a->type != b->type) {
+    rr = 0;
+  } else {
+
+    switch(a->type) {
+    case TOKEN_INT:
+      rr = a->t_int < b->t_int;
+      break;
+    case TOKEN_FLOAT:
+      rr = a->t_float < b->t_float;
+      break;
+    default:
+      rr = 0;
+    }
+  }
+
+  r = eval_alloc(self, ec, TOKEN_INT);
+  r->t_int = rr ^ gt;
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
  * Returns the second argument if the first is void, otherwise returns
  * the first arg
  */
@@ -1732,6 +1771,12 @@ glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec)
     case TOKEN_EQ:
     case TOKEN_NEQ:
       if(eval_eq(ec, t, t->type == TOKEN_NEQ))
+	return -1;
+      break;
+
+    case TOKEN_LT:
+    case TOKEN_GT:
+      if(eval_lt(ec, t, t->type == TOKEN_GT))
 	return -1;
       break;
 
