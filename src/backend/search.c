@@ -54,7 +54,7 @@ search_class_create(prop_t *parent, prop_t **nodesp, prop_t **entriesp,
   prop_set_string(prop_create(p, "type"), "directory");
       
   n = prop_create(p, "nodes");
-  e = prop_create(m, "entries");
+  e = prop_create(p, "entries");
   prop_set_int(e, 0);
 
   prop_ref_inc(n);
@@ -130,7 +130,7 @@ search_open(backend_t *beself, struct navigator *nav,
 		       prop_create(source, "nodes"),
 		       NULL, "node.metadata.title");
 
-  prop_nf_pred_int_add(pnf, "node.metadata.entries",
+  prop_nf_pred_int_add(pnf, "node.entries",
 		       PROP_NF_CMP_EQ, 0, NULL, 
 		       PROP_NF_MODE_EXCLUDE);
 

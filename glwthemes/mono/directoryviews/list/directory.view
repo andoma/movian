@@ -32,7 +32,7 @@ widget(backdrop, {
     
     widget(label, {
       .color = select(isFocused(), [1.0, 1.0, 1.0], PLATE_COLOR_DIR());
-      .caption = $self.metadata.entries;
+      .caption = $self.entries;
     });
 
   });

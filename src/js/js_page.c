@@ -279,8 +279,8 @@ init_model_props(js_model_t *jm, prop_t *model)
   prop_ref_inc(jm->jm_nodes   = prop_create(model, "items"));
   prop_ref_inc(jm->jm_type    = prop_create(model, "type"));
   prop_ref_inc(jm->jm_contents= prop_create(model, "contents"));
+  prop_ref_inc(jm->jm_entries = prop_create(model, "entries"));
   prop_ref_inc(jm->jm_logo    = prop_create(meta,  "logo"));
-  prop_ref_inc(jm->jm_entries = prop_create(meta,  "entries"));
   prop_ref_inc(jm->jm_title   = prop_create(meta,  "title"));
 
   pnf = prop_nf_create(prop_create(model, "nodes"),
