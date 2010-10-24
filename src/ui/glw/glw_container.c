@@ -24,8 +24,8 @@ typedef struct glw_container {
   int cflags;
   float weight_sum;
 
-  int16_t x_sum;
-  int16_t y_sum;
+  int16_t width;
+  int16_t height;
   int16_t co_padding_left;
   int16_t co_padding_right;
   int16_t co_padding_top;
@@ -44,14 +44,13 @@ static int
 glw_container_x_constraints(glw_container_t *co, glw_t *skip)
 {
   glw_t *c;
-  int ymax = 0, xsum = 0;
+  int ymax = 0;
+  int width = co->co_padding_left + co->co_padding_right;
   float weight = 0;
   int cflags = 0, f;
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
-    if(c->glw_flags & GLW_HIDDEN)
-      continue;
-    if(c == skip)
+    if(c->glw_flags & GLW_HIDDEN || c == skip)
       continue;
 
     f = glw_filter_constraints(c->glw_flags);
@@ -61,7 +60,7 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
     ymax = GLW_MAX(ymax, c->glw_req_size_y);
 
     if(f & GLW_CONSTRAINT_X) {
-      xsum += c->glw_req_size_x;
+      width += c->glw_req_size_x;
     } else if(f & GLW_CONSTRAINT_W) {
       weight += c->glw_req_weight;
     } else {
@@ -70,11 +69,10 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
   }
 
   co->weight_sum = weight;
-  co->x_sum = xsum;
-  co->y_sum = ymax;
+  co->width = width;
   co->cflags = cflags;
 
-  glw_set_constraints(&co->w, xsum, ymax, 0, cflags, 0);
+  glw_set_constraints(&co->w, width, ymax, 0, cflags, 0);
   return 1;
 }
 
@@ -87,7 +85,7 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
 {
   glw_t *c;
   glw_rctx_t rc0 = *rc;
-  int width;
+  const int width = co->width;
   float IW; 
   int weightavail;  // Pixels available for weighted childs
   float pos;        // Current position
@@ -96,14 +94,6 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
   
   if(co->w.glw_alpha < 0.01)
     return 0;
-
-
-  // Compute fixed width
-  width = co->co_padding_left + co->co_padding_right + co->x_sum;
-
-  // Propagate this width to parent
-  glw_set_constraints(&co->w, width, co->y_sum, 0, co->cflags, 0);
-
 
   if(width > rc->rc_width) {
     // Requested pixel size > available width, must scale
@@ -172,15 +162,12 @@ glw_container_y_constraints(glw_container_t *co, glw_t *skip)
 {
   glw_t *c;
   int xmax = 0;
-  int fix = 0;
+  int height = co->co_padding_bottom + co->co_padding_top;
   float weight = 0;
   int cflags = 0, f;
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
-    if(c->glw_flags & GLW_HIDDEN)
-      continue;
-
-    if(c == skip)
+    if(c->glw_flags & GLW_HIDDEN || c == skip)
       continue;
 
     f = glw_filter_constraints(c->glw_flags);
@@ -190,7 +177,7 @@ glw_container_y_constraints(glw_container_t *co, glw_t *skip)
     xmax = GLW_MAX(xmax, c->glw_req_size_x);
 
     if(f & GLW_CONSTRAINT_Y) {
-      fix += c->glw_req_size_y;
+      height += c->glw_req_size_y;
     } else if(f & GLW_CONSTRAINT_W) {
       weight += c->glw_req_weight;
     } else {
@@ -198,15 +185,14 @@ glw_container_y_constraints(glw_container_t *co, glw_t *skip)
     }
   }
 
-  co->x_sum = xmax;
-  co->y_sum = fix;
+  co->height = height;
   co->weight_sum = weight;
   co->cflags = cflags;
 
   if(weight)
     cflags &= ~GLW_CONSTRAINT_Y;
 
-  glw_set_constraints(&co->w, xmax, fix, 0, cflags, 0);
+  glw_set_constraints(&co->w, xmax, height, 0, cflags, 0);
   return 1;
 }
 
@@ -216,24 +202,18 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
 {
   glw_t *c;
   glw_rctx_t rc0 = *rc;
-  int height;
+  const int height = co->height;
   float IH;
   int weightavail;  // Pixels available for weighted childs
   float pos;        // Current position
   float fixscale;   // Scaling to apply to fixed height requests
-                    // Used if the available width < sum of requested height
+                    // Used if the available height < sum of requested height
   
   if(co->w.glw_alpha < 0.01)
     return 0;
 
-  // Compute fixed height
-  height = co->co_padding_bottom + co->co_padding_top + co->y_sum;
-
-  //  Propagate this width to parent
-  //  glw_set_constraints(&co->w, co->x_sum, height, 0, 0, co->cflags, 0);
-
   if(height > rc->rc_height) {
-    // Requested pixel size > available width, must scale
+    // Requested pixel size > available height, must scale
     weightavail = 0;
     fixscale = (float)rc->rc_height / height;
     pos = co->co_padding_top * fixscale;
