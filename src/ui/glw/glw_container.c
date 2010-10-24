@@ -100,9 +100,11 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
   float pos;        // Current position
   float fixscale;   // Scaling to apply to fixed width requests
                     // Used if the available width < sum of requested width
-  
+
   if(co->w.glw_alpha < 0.01)
     return 0;
+
+  rc0.rc_height = rc->rc_height - co->co_padding_top - co->co_padding_bottom;
 
   if(width > rc->rc_width) {
     // Requested pixel size > available width, must scale
@@ -228,6 +230,8 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
   
   if(co->w.glw_alpha < 0.01)
     return 0;
+
+  rc0.rc_width = rc->rc_width - co->co_padding_left - co->co_padding_right;
 
   if(height > rc->rc_height) {
     // Requested pixel size > available height, must scale
@@ -410,7 +414,6 @@ glw_container_x_render(glw_t *w, glw_rctx_t *rc)
 		   co->co_padding_bottom);
     rc = &rc1;
   }
-
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
