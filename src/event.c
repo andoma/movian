@@ -271,7 +271,7 @@ event_create_playurl(const char *url, int primary, int priority)
  *
  */
 static void
-event_openurl2_dtor(event_t *e)
+event_openurl_dtor(event_t *e)
 {
   event_openurl_t *ou = (void *)e;
   free(ou->url);
@@ -290,7 +290,7 @@ event_create_openurl(const char *url, const char *view)
 
   e->url      = url  ? strdup(url)  : NULL;
   e->view     = view ? strdup(view) : NULL;
-  e->h.e_dtor = event_openurl2_dtor;
+  e->h.e_dtor = event_openurl_dtor;
   return &e->h;
 }
 
