@@ -489,6 +489,7 @@ static const token_attrib_t attribtab[] = {
   {"alphaEdges",      set_int,    GLW_ATTRIB_ALPHA_EDGES},
   {"priority",        set_int,    GLW_ATTRIB_PRIORITY},
   {"maxlines",        set_int,    GLW_ATTRIB_MAXLINES},
+  {"spacing",         set_int,    GLW_ATTRIB_SPACING},
 
   {"color",           set_float3, GLW_ATTRIB_RGB},
   {"translation",     set_float3, GLW_ATTRIB_TRANSLATION},

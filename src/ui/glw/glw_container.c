@@ -30,6 +30,7 @@ typedef struct glw_container {
   int16_t co_padding_right;
   int16_t co_padding_top;
   int16_t co_padding_bottom;
+  int16_t co_spacing;
 
 } glw_container_t;
 
@@ -48,6 +49,7 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
   int width = co->co_padding_left + co->co_padding_right;
   float weight = 0;
   int cflags = 0, f;
+  int elements = 0;
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN || c == skip)
@@ -67,7 +69,11 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
     } else {
       weight += 1.0f;
     }
+    elements++;
   }
+
+  if(elements > 0)
+    width += (elements - 1) * co->co_spacing;
 
   co->weight_sum = weight;
   co->width = width;
@@ -151,7 +157,8 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
 
     c->glw_parent_size = right - left;
     glw_layout0(c, &rc0);
-    left = right;
+    left = right + co->co_spacing;
+    pos += co->co_spacing;
 
   }
   return 0;
@@ -168,6 +175,7 @@ glw_container_y_constraints(glw_container_t *co, glw_t *skip)
   int height = co->co_padding_bottom + co->co_padding_top;
   float weight = 0;
   int cflags = 0, f;
+  int elements = 0;
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN || c == skip)
@@ -187,7 +195,11 @@ glw_container_y_constraints(glw_container_t *co, glw_t *skip)
     } else {
       weight += 1.0;
     }
+    elements++;
   }
+
+  if(elements > 0)
+    height += (elements - 1) * co->co_spacing;
 
   co->height = height;
   co->weight_sum = weight;
@@ -269,7 +281,8 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
     c->glw_parent_size = rc0.rc_height;
 
     glw_layout0(c, &rc0);
-    top = bottom;
+    top = bottom + co->co_spacing;
+    pos += co->co_spacing;
 
   }
   return 0;
@@ -541,6 +554,10 @@ glw_container_set(glw_t *w, int init, va_list ap)
       co->co_padding_top    = va_arg(ap, double);
       co->co_padding_right  = va_arg(ap, double);
       co->co_padding_bottom = va_arg(ap, double);
+      break;
+
+    case GLW_ATTRIB_SPACING:
+      co->co_spacing = va_arg(ap, int);
       break;
 
     default:
