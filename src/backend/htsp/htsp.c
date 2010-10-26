@@ -94,10 +94,10 @@ typedef struct htsp_connection {
   int hc_seq_generator;
   int hc_sid_generator; /* Subscription ID */
 
-  prop_t *hc_channels_source;
+  prop_t *hc_channels_model;
   prop_t *hc_channels_nodes;
 
-  prop_t *hc_tags_source;
+  prop_t *hc_tags_model;
   prop_t *hc_tags_nodes;
 
   hts_mutex_t hc_rpc_mutex;
@@ -1047,24 +1047,24 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
 
   hc = calloc(1, sizeof(htsp_connection_t));
 
-  hc->hc_tags_source = prop_create(NULL, NULL);
-  hc->hc_tags_nodes  = prop_create(hc->hc_tags_source, "nodes");
-  prop_set_string(prop_create(hc->hc_tags_source, "type"), "directory");
-  meta = prop_create(hc->hc_tags_source, "metadata");
+  hc->hc_tags_model = prop_create(NULL, NULL);
+  hc->hc_tags_nodes  = prop_create(hc->hc_tags_model, "nodes");
+  prop_set_string(prop_create(hc->hc_tags_model, "type"), "directory");
+  meta = prop_create(hc->hc_tags_model, "metadata");
   prop_set_string(prop_create(meta, "title"), "Channel groups");
 
   
-  nodes = prop_create(hc->hc_tags_source, "nodes");
+  nodes = prop_create(hc->hc_tags_model, "nodes");
 
 
-  hc->hc_channels_source = prop_create(nodes, NULL);
-  hc->hc_channels_nodes  = prop_create(hc->hc_channels_source, "nodes");
-  prop_set_string(prop_create(hc->hc_channels_source, "type"), "directory");
-  meta = prop_create(hc->hc_channels_source, "metadata");
+  hc->hc_channels_model = prop_create(nodes, NULL);
+  hc->hc_channels_nodes  = prop_create(hc->hc_channels_model, "nodes");
+  prop_set_string(prop_create(hc->hc_channels_model, "type"), "directory");
+  meta = prop_create(hc->hc_channels_model, "metadata");
   prop_set_string(prop_create(meta, "title"), "All channels");
-  prop_set_stringf(prop_create(hc->hc_channels_source, "url"),
+  prop_set_stringf(prop_create(hc->hc_channels_model, "url"),
 		   "htsp://%s:%d/channels", hostname, port);
-  prop_set_string(prop_create(hc->hc_channels_source, "type"),
+  prop_set_string(prop_create(hc->hc_channels_model, "type"),
 		  "directory");
 
     
@@ -1111,7 +1111,7 @@ be_htsp_open(backend_t *be, struct navigator *nav,
 {
   htsp_connection_t *hc;
   nav_page_t *np;
-  prop_t *p, *src;
+  prop_t *p, *model;
   char path[URL_MAX];
 
   if((hc = htsp_connection_find(url, path, sizeof(path), 
@@ -1126,11 +1126,11 @@ be_htsp_open(backend_t *be, struct navigator *nav,
     return backend_open_video(be, nav, url, view, errbuf, errlen);
 
   if(!strcmp(path, "/channels")) {
-    src = hc->hc_channels_source;
+    model = hc->hc_channels_model;
   } else if(!strncmp(path, "/tag/", strlen("/tag/"))) {
-    src = prop_create(hc->hc_tags_nodes, path + strlen("/tag/"));
+    model = prop_create(hc->hc_tags_nodes, path + strlen("/tag/"));
   } else if(!strcmp(path, "")) {
-    src = hc->hc_tags_source;
+    model = hc->hc_tags_model;
   } else {
     snprintf(errbuf, errlen, "Invalid URL");
     return NULL;
@@ -1139,7 +1139,7 @@ be_htsp_open(backend_t *be, struct navigator *nav,
   np = nav_page_create(nav, url, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
 
   p = np->np_prop_root;
-  prop_link(src, prop_create(p, "model"));
+  prop_link(model, prop_create(p, "model"));
 
   return np;
 }
