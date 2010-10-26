@@ -1612,7 +1612,9 @@ htsp_mux_input(htsp_connection_t *hc, htsmsg_t *m)
   
       mb->mb_size = binlen;
 
-      if(mb_enqueue_no_block(mp, hss->hss_mq, mb))
+      if(mb_enqueue_no_block(mp, hss->hss_mq, mb,
+			     mb->mb_data_type == MB_SUBTITLE ? 
+			     mb->mb_data_type : -1))
 	media_buf_free(mb);
     }
   }

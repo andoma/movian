@@ -292,7 +292,8 @@ media_pipe_t *mp_create(const char *name, const char *type, int flags);
 #define mp_ref_inc(mp) atomic_add(&(mp)->mp_refcount, 1)
 void mp_ref_dec(media_pipe_t *mp);
 
-int mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
+int mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
+			int auxtype);
 event_t *mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, 
 				media_buf_t *mb);
 void mb_enqueue_always(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);

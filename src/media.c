@@ -446,7 +446,8 @@ mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
  * Return -1 if queues are full. return 0 if enqueue succeeded.
  */
 int
-mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
+mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
+		    int auxtype)
 {
   media_queue_t *v = &mp->mp_video;
   media_queue_t *a = &mp->mp_audio;
@@ -469,7 +470,28 @@ mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
     }
   }
   
-  mb_enq_tail(mp, mq, mb);
+
+  if(auxtype != -1) {
+    media_buf_t *after;
+    TAILQ_FOREACH_REVERSE(after, &mq->mq_q, media_buf_queue, mb_link) {
+      if(after->mb_data_type == auxtype)
+	break;
+    }
+    
+    if(after == NULL)
+      TAILQ_INSERT_HEAD(&mq->mq_q, mb, mb_link);
+    else
+      TAILQ_INSERT_AFTER(&mq->mq_q, after, mb, mb_link);
+
+  } else {
+    TAILQ_INSERT_TAIL(&mq->mq_q, mb, mb_link);
+  }
+
+  mq->mq_len++;
+  mq->mq_bytes += mb->mb_size;
+  mq_update_stats(mp, mq);
+  hts_cond_signal(&mq->mq_avail);
+
   hts_mutex_unlock(&mp->mp_mutex);
   return 0;
 }
