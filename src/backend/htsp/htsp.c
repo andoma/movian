@@ -28,6 +28,7 @@
 #include <libavutil/sha1.h>
 
 #include "showtime.h"
+#include "prop/prop_nodefilter.h"
 #include "networking/net.h"
 #include "navigator.h"
 #include "backend/backend.h"
@@ -1104,6 +1105,57 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
 /**
  *
  */
+static void
+make_model(prop_t *parent, const char *title, prop_t *nodes)
+{
+  prop_t *model = prop_create(parent, "model");
+  prop_t *meta;
+  struct prop_nf *pnf;
+
+  prop_set_string(prop_create(model, "type"), "directory");
+
+  pnf = prop_nf_create(prop_create(model, "nodes"),
+		       nodes,
+		       prop_create(model, "filter"),
+		       NULL);
+  prop_set_int(prop_create(model, "canFilter"), 1);
+
+  prop_nf_release(pnf);
+
+  meta = prop_create(model, "metadata");
+  prop_set_string(prop_create(meta, "title"), title);
+}
+
+
+/**
+ *
+ */
+static void
+make_model2(prop_t *parent, prop_t *sourcemodel)
+{
+  prop_t *model = prop_create(parent, "model");
+  prop_t *meta;
+  struct prop_nf *pnf;
+
+  prop_set_string(prop_create(model, "type"), "directory");
+
+  pnf = prop_nf_create(prop_create(model, "nodes"),
+		       prop_create(sourcemodel, "nodes"),
+		       prop_create(model, "filter"),
+		       NULL);
+  prop_set_int(prop_create(model, "canFilter"), 1);
+
+  prop_nf_release(pnf);
+
+  meta = prop_create(model, "metadata");
+  prop_link(prop_create(prop_create(sourcemodel, "metadata"), "title"),
+	    prop_create(meta, "title"));
+}
+
+
+/**
+ *
+ */
 static nav_page_t *
 be_htsp_open(backend_t *be, struct navigator *nav,
 	     const char *url, const char *view,
@@ -1111,7 +1163,6 @@ be_htsp_open(backend_t *be, struct navigator *nav,
 {
   htsp_connection_t *hc;
   nav_page_t *np;
-  prop_t *p, *model;
   char path[URL_MAX];
 
   if((hc = htsp_connection_find(url, path, sizeof(path), 
@@ -1125,21 +1176,24 @@ be_htsp_open(backend_t *be, struct navigator *nav,
      !strncmp(path, "/tagchannel/", strlen("/tagchannel/")))
     return backend_open_video(be, nav, url, view, errbuf, errlen);
 
-  if(!strcmp(path, "/channels")) {
-    model = hc->hc_channels_model;
-  } else if(!strncmp(path, "/tag/", strlen("/tag/"))) {
-    model = prop_create(hc->hc_tags_nodes, path + strlen("/tag/"));
-  } else if(!strcmp(path, "")) {
-    model = hc->hc_tags_model;
-  } else {
-    snprintf(errbuf, errlen, "Invalid URL");
-    return NULL;
-  }
-
   np = nav_page_create(nav, url, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
 
-  p = np->np_prop_root;
-  prop_link(model, prop_create(p, "model"));
+  if(!strcmp(path, "/channels")) {
+    
+    make_model(np->np_prop_root, "Channels", hc->hc_channels_nodes);
+
+  } else if(!strncmp(path, "/tag/", strlen("/tag/"))) {
+    prop_t *model;
+    model = prop_create(hc->hc_tags_nodes, path + strlen("/tag/"));
+    make_model2(np->np_prop_root, model);
+
+  } else if(!strcmp(path, "")) {
+
+    make_model(np->np_prop_root, "Tags", hc->hc_tags_nodes);
+
+  } else {
+    nav_open_errorf(np->np_prop_root, "Invalid RTSP URL");
+  }
 
   return np;
 }
