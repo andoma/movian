@@ -97,7 +97,10 @@ video_subtitles_cleartext(video_decoder_t *vd, media_buf_t *mb)
   s->s_active = 0;
   s->s_text = strdup(mb->mb_data);
   s->s_start = mb->mb_pts;
-  s->s_stop  = mb->mb_pts + mb->mb_duration;
+  if(mb->mb_duration)
+    s->s_stop = mb->mb_pts + mb->mb_duration;
+  else
+    s->s_stop = AV_NOPTS_VALUE;
   s->s_num_rects = 0;
 
   hts_mutex_lock(&vd->vd_sub_mutex);

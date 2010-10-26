@@ -392,7 +392,8 @@ glw_video_overlay_sub_layout(video_decoder_t *vd, glw_video_overlay_t *gvo,
     } else {
       
       subtitle_t *n = TAILQ_NEXT(s, s_link);
-      if(s->s_stop <= pts || (n != NULL && n->s_start <= pts)) 
+      if((s->s_stop != AV_NOPTS_VALUE && s->s_stop <= pts) ||
+	 (n != NULL && n->s_start <= pts)) 
 	video_subtitle_destroy(vd, s);
     }
 
