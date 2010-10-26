@@ -49,6 +49,22 @@ glw_video_overlay_deinit(glw_video_overlay_t *gvo)
   }
 }
 
+
+/**
+ *
+ */
+static int
+child_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
+{
+  if(signal == GLW_SIGNAL_DESTROY) {
+    glw_video_overlay_t *gvo = opaque;
+    gvo->gvo_child = NULL;
+  }
+  return 0;
+}
+
+
+
 /**
  * 
  */
@@ -366,6 +382,8 @@ glw_video_sub_layout_text(video_decoder_t *vd, glw_video_overlay_t *gvo,
 				GLW_ATTRIB_SIZE_SCALE, 2.0,
 				GLW_ATTRIB_PADDING, 0.0, 0.0, 0.0, 20.0,
 				NULL);
+
+  glw_signal_handler_register(gvo->gvo_child, child_callback, gvo, 1000);
 }
 
 
