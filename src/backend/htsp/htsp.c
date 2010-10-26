@@ -1460,7 +1460,8 @@ htsp_free_streams(htsp_subscription_t *hs)
   
   while((hss = LIST_FIRST(&hs->hs_streams)) != NULL) {
     LIST_REMOVE(hss, hss_link);
-    media_codec_deref(hss->hss_cw);
+    if(hss->hss_cw != NULL)
+      media_codec_deref(hss->hss_cw);
     free(hss);
   }
 }
@@ -1602,7 +1603,8 @@ htsp_mux_input(htsp_connection_t *hc, htsmsg_t *m)
 
       mb->mb_epoch = 1;
 
-      mb->mb_cw = media_codec_ref(hss->hss_cw);
+      if(hss->hss_cw != NULL)
+	mb->mb_cw = media_codec_ref(hss->hss_cw);
 
       mb->mb_data = malloc(binlen + FF_INPUT_BUFFER_PADDING_SIZE);
       memcpy(mb->mb_data, bin, binlen);
@@ -1756,8 +1758,13 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 
 	mcp.extradata = &buf4;
 	mcp.extradata_size = 4;
-	s = 1;
+	s = 2;
 
+      } else if(!strcmp(type, "TEXTSUB")) {
+	codec_id = -1;
+	codec_type = CODEC_TYPE_SUBTITLE;
+	nicename = "Subtitles";
+	s = 1;
       } else {
 	continue;
       }
@@ -1768,14 +1775,16 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
       /**
        * Try to create the codec
        */
-
-      cw = media_codec_create(codec_id, codec_type, 0, NULL, NULL, &mcp, mp);
-      if(cw == NULL) {
-	TRACE(TRACE_ERROR, "HTSP", "Unable to create codec for %s (#%d)",
-	      nicename, idx);
-	continue; /* We should print something i guess .. */
+      if(codec_id != -1) {
+	cw = media_codec_create(codec_id, codec_type, 0, NULL, NULL, &mcp, mp);
+	if(cw == NULL) {
+	  TRACE(TRACE_ERROR, "HTSP", "Unable to create codec for %s (#%d)",
+		nicename, idx);
+	  continue; /* We should print something i guess .. */
+	}
+      } else {
+	cw = NULL;
       }
-
       hss = calloc(1, sizeof(htsp_subscription_stream_t));
       hss->hss_index = idx;
       hss->hss_cw = cw;
