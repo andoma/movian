@@ -195,6 +195,9 @@ nf_filtercheck(prop_t *p, const char *q)
 {
   prop_t *c;
 
+  while(p->hp_originator != NULL)
+    p = p->hp_originator;
+
   switch(p->hp_type) {
   case PROP_STRING:
     return filterstr(rstr_get(p->hp_rstring), q);
