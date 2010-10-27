@@ -448,7 +448,7 @@ js_onEvent(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
   
   if(jm->jm_eventsub == NULL) {
     jm->jm_eventsub = 
-      prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_DEBUG,
+      prop_subscribe(PROP_SUB_TRACK_DESTROY,
 		     PROP_TAG_CALLBACK, js_model_eventsub, jm,
 		     PROP_TAG_ROOT, jm->jm_eventsink,
 		     PROP_TAG_COURIER, jm->jm_pc,
