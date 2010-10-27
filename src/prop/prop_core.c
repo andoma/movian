@@ -361,7 +361,7 @@ trampoline_string(prop_sub_t *s, prop_event_t event, ...)
 /**
  *
  */
-static void
+void
 prop_notify_dispatch(struct prop_notify_queue *q)
 {
   prop_notify_t *n, *next;
@@ -3057,22 +3057,19 @@ prop_courier_create_waitable(void)
  *
  */
 void
-prop_courier_wait(prop_courier_t *pc)
+prop_courier_wait(prop_courier_t *pc,
+		  struct prop_notify_queue *exp,
+		  struct prop_notify_queue *nor)
 {
-  struct prop_notify_queue q_exp, q_nor;
   hts_mutex_lock(&prop_mutex);
-
   if(TAILQ_FIRST(&pc->pc_queue_exp) == NULL &&
      TAILQ_FIRST(&pc->pc_queue_nor) == NULL)
     hts_cond_wait(&pc->pc_cond, &prop_mutex);
-
-  TAILQ_MOVE(&q_exp, &pc->pc_queue_exp, hpn_link);
+  TAILQ_MOVE(exp, &pc->pc_queue_exp, hpn_link);
   TAILQ_INIT(&pc->pc_queue_exp);
-  TAILQ_MOVE(&q_nor, &pc->pc_queue_nor, hpn_link);
+  TAILQ_MOVE(nor, &pc->pc_queue_nor, hpn_link);
   TAILQ_INIT(&pc->pc_queue_nor);
   hts_mutex_unlock(&prop_mutex);
-  prop_notify_dispatch(&q_exp);
-  prop_notify_dispatch(&q_nor);
 }
 
 

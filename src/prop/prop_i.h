@@ -36,8 +36,6 @@ LIST_HEAD(prop_sub_list, prop_sub);
 /**
  *
  */
-TAILQ_HEAD(prop_notify_queue, prop_notify);
-
 struct prop_courier {
 
   struct prop_notify_queue pc_queue_nor;

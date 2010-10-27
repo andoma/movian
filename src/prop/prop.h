@@ -31,6 +31,7 @@ typedef struct prop_courier prop_courier_t;
 typedef struct prop prop_t;
 typedef struct prop_sub prop_sub_t;
 struct pixmap;
+TAILQ_HEAD(prop_notify_queue, prop_notify);
 
 
 /**
@@ -262,11 +263,15 @@ prop_courier_t *prop_courier_create_notify(void (*notify)(void *opaque),
 
 prop_courier_t *prop_courier_create_waitable(void);
 
-void prop_courier_wait(prop_courier_t *pc);
+void prop_courier_wait(prop_courier_t *pc,
+		       struct prop_notify_queue *exp,
+		       struct prop_notify_queue *nor);
 
 void prop_courier_poll(prop_courier_t *pc);
 
 void prop_courier_destroy(prop_courier_t *pc);
+
+void prop_notify_dispatch(struct prop_notify_queue *q);
 
 void prop_courier_stop(prop_courier_t *pc);
 
