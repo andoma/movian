@@ -48,15 +48,17 @@ popup_destroy(popup_t *pop)
  *
  */
 static void
-popup_set_result(popup_t *pop, const char *result)
+popup_send_result(popup_t *pop, action_type_t res)
 {
   prop_t *p;
 
-  p = prop_get_by_name(PNVEC("self", "result"), 1,
+  p = prop_get_by_name(PNVEC("self", "eventSink"), 1,
 		       PROP_TAG_NAMED_ROOT, pop->p, "self",
 		       NULL);
   if(p != NULL) {
-    prop_set_string(p, result);
+    event_t *e = event_create_action(res);
+    prop_send_ext_event(p, e);
+    event_unref(e);
     prop_ref_dec(p);
   }
 }
@@ -86,7 +88,7 @@ auth_ok(GtkButton *unused__, gpointer user_data)
     prop_set_string(p, gtk_entry_get_text(GTK_ENTRY(pop->password)));
     prop_ref_dec(p);
   }
-  popup_set_result(pop, "ok");
+  popup_send_result(pop, ACTION_OK);
 }
 
 
@@ -97,7 +99,7 @@ static void
 auth_cancel(GtkButton *unused__, gpointer user_data)
 {
   popup_t *pop = user_data;
-  popup_set_result(pop, "cancel");
+  popup_send_result(pop, ACTION_CANCEL);
 }
 
 

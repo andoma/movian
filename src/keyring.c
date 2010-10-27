@@ -90,22 +90,20 @@ typedef struct keyring_popup {
  *
  */
 static void 
-result_set(void *opaque, prop_event_t event, ...)
+eventsink(void *opaque, prop_event_t event, ...)
 {
-  const char *str;
   keyring_popup_t *kp = opaque;
 
   va_list ap;
   va_start(ap, event);
 
-  if(event != PROP_SET_RSTRING)
+  if(event != PROP_EXT_EVENT)
     return;
 
-  str = rstr_get(va_arg(ap, const rstr_t *));
-
-  if(!strcmp(str, "ok")) 
+  event_t *e = va_arg(ap, event_t *);
+  if(event_is_action(e, ACTION_OK))
     kp->result = 1;
-  else if(!strcmp(str, "cancel")) 
+  else if(event_is_action(e, ACTION_CANCEL))
     kp->result = -1;
   else
     return;
@@ -150,9 +148,9 @@ keyring_lookup(const char *id, char **username, char **password,
     user = prop_create(p, "username");
     pass = prop_create(p, "password");
  
-    r = prop_create(p, "result");
+    r = prop_create(p, "eventSink");
     s = prop_subscribe(0, 
-		       PROP_TAG_CALLBACK, result_set, &kp, 
+		       PROP_TAG_CALLBACK, eventsink, &kp, 
 		       PROP_TAG_ROOT, r,
 		       PROP_TAG_MUTEX, &kp.mutex,
 		       NULL);

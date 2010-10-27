@@ -58,9 +58,8 @@ widget(container_x, {
 	    .focusable = true;
 	    bind($self.username);
 
-	    onEvent(enter, { $self.result = "ok"; });
-	    onEvent(cancel, { $self.result = "cancel"; });
-
+	    onEvent(enter, deliverEvent($self.eventSink, "Ok"));
+	    onEvent(cancel, deliverEvent($self.eventSink));
 	  });
 	});
 
@@ -78,8 +77,8 @@ widget(container_x, {
 	    .focusable = true;
 	    .password = true;
 	    bind($self.password);
-	    onEvent(enter, { $self.result = "ok"; });
-	    onEvent(cancel, { $self.result = "cancel"; });
+	    onEvent(enter, deliverEvent($self.eventSink, "Ok"));
+	    onEvent(cancel, deliverEvent($self.eventSink));
 	  });
 	});
 
@@ -91,16 +90,12 @@ widget(container_x, {
 
 	  ICON2("theme://icons/48x48/Check.png", 
 		"OK",
-		{
-		  $self.result = "ok";
-		},
+		deliverEvent($self.eventSink, "Ok"),
 		PLATE_COLOR_ON(), true, false, true);
 
 	  ICON2("theme://icons/48x48/Delete.png",
 		"Cancel", 
-		{
-		  $self.result = "cancel";
-		},
+		deliverEvent($self.eventSink, "Cancel"),
 		PLATE_COLOR_OFF(), true, false, true);
 
 	});
