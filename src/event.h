@@ -138,6 +138,8 @@ typedef enum {
 
   EVENT_PLAYBACK_PRIORITY,   // 0 = best, higher value == less important 
 
+  EVENT_DYNAMIC_ACTION,
+
 } event_type_t;
 
 
