@@ -87,6 +87,7 @@ glw_event_map_t *glw_event_map_internal_create(const char *target,
 /**
  *
  */
-glw_event_map_t *glw_event_map_deliverEvent_create(prop_t *target);
+glw_event_map_t *glw_event_map_deliverEvent_create(prop_t *target,
+						   rstr_t *action);
 
 #endif /* GLW_EVENT_H__ */

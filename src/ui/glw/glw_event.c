@@ -223,6 +223,7 @@ glw_event_map_selectTrack_create(const char *id)
 typedef struct glw_event_deliverEvent {
   glw_event_map_t map;
   prop_t *target;
+  rstr_t *action;
 } glw_event_deliverEvent_t;
 
 
@@ -234,6 +235,7 @@ glw_event_map_deliverEvent_dtor(glw_event_map_t *gem)
 {
   glw_event_deliverEvent_t *g = (glw_event_deliverEvent_t *)gem;
 
+  rstr_release(g->action);
   prop_ref_dec(g->target);
   free(g);
 }
@@ -245,8 +247,16 @@ static void
 glw_event_map_deliverEvent_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
 {
   glw_event_deliverEvent_t *de = (glw_event_deliverEvent_t *)gem;
+
+  if(de->action != NULL) {
+    action_type_t a = action_str2code(rstr_get(de->action));
+
+    if(a == -1)
+      src = event_create_str(EVENT_DYNAMIC_ACTION, rstr_get(de->action));
+    else
+      src = event_create_action(a);
+  }
   prop_send_ext_event(de->target, src);
-   
 }
 
 
@@ -254,12 +264,13 @@ glw_event_map_deliverEvent_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
  *
  */
 glw_event_map_t *
-glw_event_map_deliverEvent_create(prop_t *target)
+glw_event_map_deliverEvent_create(prop_t *target, rstr_t *action)
 {
   glw_event_deliverEvent_t *de = malloc(sizeof(glw_event_deliverEvent_t));
   
   de->target = target;
   prop_ref_inc(target);
+  de->action = rstr_dup(action);
 
   de->map.gem_dtor = glw_event_map_deliverEvent_dtor;
   de->map.gem_fire = glw_event_map_deliverEvent_fire;

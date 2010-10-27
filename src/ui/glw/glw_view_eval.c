@@ -2311,8 +2311,12 @@ static int
 glwf_deliverEvent(glw_view_eval_context_t *ec, struct token *self,
 		  token_t **argv, unsigned int argc)
 {
-  token_t *a, *r;
+  token_t *a, *b, *r;
+  rstr_t *action = NULL;
 
+ if(argc < 1 || argc > 2)
+    return glw_view_seterr(ec->ei, self,
+			   "deliverEvent(): Invalid number of args");
 
   if((a = resolve_property_name2(ec, argv[0])) == NULL)
     return -1;
@@ -2321,8 +2325,15 @@ glwf_deliverEvent(glw_view_eval_context_t *ec, struct token *self,
     return glw_view_seterr(ec->ei, a, "navOpen(): "
 			    "First argument is not a property");
 
+  if(argc == 2) {
+    if((b = token_resolve(ec, argv[1])) == NULL)
+      return -1;
+
+    action = b->type == TOKEN_STRING ? b->t_rstring : NULL;
+  }
+
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  r->t_gem = glw_event_map_deliverEvent_create(a->t_prop);
+  r->t_gem = glw_event_map_deliverEvent_create(a->t_prop, action);
   eval_push(ec, r);
   return 0;
 }
@@ -3926,7 +3937,7 @@ static const token_func_t funcvec[] = {
   {"suggestFocus", 1, glwf_suggestFocus},
   {"focusDistance", 0, glwf_focusDistance},
   {"count", 1, glwf_count},
-  {"deliverEvent", 1, glwf_deliverEvent},
+  {"deliverEvent", -1, glwf_deliverEvent},
 };
 
 
