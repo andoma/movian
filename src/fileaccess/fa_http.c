@@ -2055,7 +2055,8 @@ http_request(const char *url, const char **arguments,
   }
   
 
-  if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE) {
+  if(hf->hf_chunked_transfer == 0 && 
+     hf->hf_connection_mode == CONNECTION_MODE_CLOSE) {
     int capacity = 16384;
     int size = 0;
     char *mem = malloc(capacity + 1);
