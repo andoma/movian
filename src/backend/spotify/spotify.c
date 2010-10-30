@@ -263,26 +263,6 @@ typedef struct spotify_search {
 } spotify_search_t;
 
 
-/**
- * Get parent request (typically track -> its albums)
- */
-typedef struct spotify_parent {
-  const char *sp_uri;
-  char *sp_errbuf;
-  size_t sp_errlen;
-
-  char *sp_parent;
-
-  int sp_errcode;
-
-  sp_track *sp_track;
-  
-  LIST_ENTRY(spotify_parent) sp_link;
-
-} spotify_parent_t;
-
-static hts_cond_t spotify_cond_parent;
-
 static void parse_search_reply(sp_search *result, prop_t *nodes, 
 			       prop_t *contents);
 
@@ -3198,7 +3178,6 @@ be_spotify_init(void)
   hts_cond_init(&spotify_cond_login);
   hts_cond_init(&spotify_cond_uri);
   hts_cond_init(&spotify_cond_image);
-  hts_cond_init(&spotify_cond_parent);
 
   // Configuration
 
