@@ -87,17 +87,15 @@ widget(container_x, {
 	widget(container_x, {
 
 	  .align = center;
+	  .spacing = 20;
 
-	  ICON2("theme://icons/48x48/Check.png", 
-		"OK",
-		deliverEvent($self.eventSink, "Ok"),
-		PLATE_COLOR_ON(), true, false, true);
+	  BAR_BUTTON("OK", 
+		     deliverEvent($self.eventSink, "Ok"),
+		     false, "theme://icons/48x48/Check.png");
 
-	  ICON2("theme://icons/48x48/Delete.png",
-		"Cancel", 
-		deliverEvent($self.eventSink, "Cancel"),
-		PLATE_COLOR_OFF(), true, false, true);
-
+	  BAR_BUTTON("Cancel", 
+		     deliverEvent($self.eventSink, "Cancel"),
+		     false, "theme://icons/48x48/Delete.png");
 	});
       });
     });

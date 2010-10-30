@@ -191,3 +191,33 @@
     .page = PROP;
   });
 }
+
+
+
+#define BAR_BUTTON(CAPTION, EVENT, DISABLED = false, ICON = "")
+{
+  widget(backdrop, {
+    onEvent(activate, EVENT);
+    .hidden = DISABLED;
+    .border = [10, 10, 10, 10];
+    .padding = [0, -5, 0, -5];
+    .focusOnClick = true;
+    .focusable = select(DISABLED, 0, 1);
+    .source = "theme://graphics/glossy.png";
+    .color = [0.5, 0.5, 0.5] + 0.35 * (isFocused() + isHovered()) - 0.5 * isPressed();
+
+    widget(container_x, {
+
+      widget(icon, {
+	.hidden = select(icon, 0, 1);
+	.source = ICON;
+      });
+
+
+      widget(label, {
+	.color = [0.8, 0.8, 0.8] + 1 * (isFocused() + isHovered());
+	.caption = CAPTION;
+      });
+    });
+  });
+}
