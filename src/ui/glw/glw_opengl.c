@@ -1036,8 +1036,14 @@ glw_renderer_shader(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
 
   glw_load_program(gbr, gp);
 
+  alpha = GLW_CLAMP(alpha, 0, 1);
+
   if(rgb != NULL)
-    glw_program_set_uniform_color(gbr, rgb->r, rgb->g, rgb->b, alpha);
+    glw_program_set_uniform_color(gbr, 
+				  GLW_CLAMP(rgb->r, 0, 1),
+				  GLW_CLAMP(rgb->g, 0, 1),
+				  GLW_CLAMP(rgb->b, 0, 1),
+				  alpha);
   else
     glw_program_set_uniform_color(gbr, 1, 1, 1, alpha);
 
