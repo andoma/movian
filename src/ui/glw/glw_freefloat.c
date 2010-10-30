@@ -108,6 +108,22 @@ setup_floater(glw_freefloat_t *ff, glw_t *c)
   c->glw_parent_y = (ff->rand & 0xffff) / 32768.0 - 1.0;
 }
 
+static int
+zsort(const void *A, const void *B)
+{
+  glw_t *a = *(glw_t **)A;
+  glw_t *b = *(glw_t **)B;
+
+  float az = a ? a->glw_parent_v : -100;
+  float bz = b ? b->glw_parent_v : -100;
+
+  if(az > bz)
+    return 1;
+  if(az < bz)
+    return -1;
+  return 0;
+}
+
 
 /**
  *
@@ -158,6 +174,8 @@ glw_freefloat_layout(glw_freefloat_t *ff, glw_rctx_t *rc)
       c->glw_parent_v += c->glw_parent_s;
     c->glw_parent_s += c->glw_parent_s2;
   }
+
+  qsort(ff->visible, ff->num_visible, sizeof(void *), zsort);
 
   c = ff->pick;
 
