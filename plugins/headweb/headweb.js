@@ -4,10 +4,9 @@
   plugin.settings = plugin.createSettings("Headweb", "video");
 
   plugin.settings.createInfo("info",
-		      plugin.config.path + "headweb_logo.png",
-		      "Headweb is a Swedish online video store.\n"+
-		      "For more information, visit http://www.headweb.se\n\n"+
-		      "The Showtime implemetation is still very much beta.\n");
+			     plugin.config.path + "headweb_logo.png",
+			     "Headweb is a Swedish online video store.\n"+
+			     "For more information, visit http://www.headweb.se\n\n");
 
   plugin.settings.createBool("enabled", "Enable headweb", false, function(v) {
 
@@ -29,6 +28,53 @@
      */
   var APIKEY = "2d6461dd322b4b84b5bac8c654ee6195";
 
+  /*
+   * Login user
+   * The headweb session is handled via standard HTTP cookies.
+   * This is taken care of by Showtime's HTTP client.
+   * If 'query' is set we will ask user for username/password
+   * otherwise we just try to login using the credentials stored in 
+   * Showtime's keyring.
+   *
+   */
+
+  function login(query) {
+
+    if(plugin.loggedIn)
+      return false;
+
+    var reason = "Login required";
+
+    while(1) {
+
+      var credentials = showtime.getAuthCredentials("headweb:",
+	"Headweb streaming service", reason, query);
+    
+      if(!credentials)
+	return "No credentials";
+
+      if(credentials.rejected)
+	return "Rejected by user";
+
+      var v = showtime.httpPost("https://api.headweb.com/v4/user/login", {
+	apikey: APIKEY
+      }, {
+	username: credentials.username,
+	password: credentials.password
+      });
+      
+      var doc = new XML(v);
+      
+      if(doc.error.length()) {
+	reason = doc.error;
+	continue;
+      }
+      plugin.loggedIn = true;
+      return false;
+    }
+  }
+
+
   function request(path, offset, limit) {
     var v = showtime.httpGet("https://api.headweb.com/v4" + path, {
       apikey: APIKEY,
@@ -38,33 +84,66 @@
     return v;
   }
 
+  function displayError(page, errmsg) {
+    page.loading = false;
+    page.type = "openerror";
+    page.error = errmsg;
+  }
+
+
+  function bestCover(content) {
+    var best = null;
+    var bestArea = 0;
+    for each (var c in content.cover) {
+      var a = c.@width * c.@height;
+      if(a > bestArea) {
+	best = c;
+	bestArea = a;
+      }
+    }
+    return best;
+  }
+
+
+  function bestTrailer(content) {
+    var best = null;
+    var bestRate = 0;
+    for each (var c in content.videoclip.bitrate) {
+      if(c.@rate > bestRate) {
+	best = c.url;
+	bestRate = c.@rate;
+      }
+    }
+    return best;
+  }
+
+  function bestStream(content) {
+    return content.stream;
+  }
+
+
+  function merge(list) {
+    var prefix = "";
+    var r = "";
+    for each (v in list) {
+      r += prefix + v;
+      prefix = ", ";
+    }
+    return r;
+  }
+
+
+
   function requestContents(page, url) {
     var offset = 0;
 
-    function findStream(content) {
-      return content.stream;
-    }
-
-    function bestCover(content) {
-      var best = null;
-      var bestArea = 0;
-      for each (var c in content.cover) {
-	var a = c.@width * c.@height;
-	if(a > bestArea) {
-	  best = c;
-	  bestArea = a;
-	}
-      }
-      return best;
-    }
-    
 
     function loader() {
       var doc = new XML(request(url, offset, 50));
       page.entries = doc.list.@items;
       for each (var c in doc.list.content) {
 	offset++;
-	var stream = findStream(c);
+	var stream = bestStream(c);
 
 	var metadata = {
 	  title: c.name,
@@ -77,7 +156,7 @@
 	if(runtime > 0) 
 	  metadata.runtime = runtime;
 	
-	page.appendItem(PREFIX + "stream:" + stream.@id,
+	page.appendItem(PREFIX + "video:" + stream.@id,
 			"video", metadata);
       }
       return offset < page.entries;
@@ -88,6 +167,55 @@
     page.loading = false;
     page.paginator = loader;
   }
+
+
+  function isRented(id) {
+    if(login(false))
+      return false;
+
+    var doc = new XML(request("/user/rentals", 0, 200));
+    var response = new XML(doc);
+
+    for each (var item in response.list.item) {
+      if (item.@id == id && item.state != 'expired')
+	return true;
+    }
+
+    return false;
+  }
+
+
+  function rent(item, rawprice, title, price) {
+    if(login(true))
+      return false;
+
+    if(!showtime.message('Are you sure want to rent\n' + title + '\nFor ' +
+			 price, true, true))
+      return false;
+
+    var v = showtime.httpGet("https://api.headweb.com/v4/purchase/0", {
+      apikey: APIKEY,
+      payment: 'account',
+      item: item,
+      total: rawprice})
+
+    var response = new XML(v);
+
+    if(response.purchase.failed.length()) {
+      showtime.message('Rentail failed:\n' + response.purchase.failed,
+		       true, false);
+      return false;
+    }
+
+    return true;
+  }
+
+
+
+
+
+
+
 
   // List all genres
   plugin.addURI(PREFIX + "genres", function(page) {
@@ -125,12 +253,66 @@
     page.type = "video";
   });
 
+
+  // Video launch
+  plugin.addURI(PREFIX + "video:([0-9]*)", function(page, id) {
+ 
+    var doc = new XML(request("/stream/" + id));
+    if(doc.error.length()) {
+      displayError(page, doc.error);
+      return;
+    }
+
+    var m = page.metadata;
+    m.title = doc.content.name;
+    m.plot = new showtime.RichText(doc.content.plot);
+    m.year = doc.content.year;
+    m.genre = merge(doc.content.genre);
+    m.actor = merge(doc.content.actor.person);
+    m.director = merge(doc.content.director.person);
+    m.rating = parseFloat(doc.content.rating) / 5.0;
+    m.icon = bestCover(doc.content);
+
+    var d = parseFloat(doc.content.stream.runtime);
+    if(d > 0)
+      m.duration = d;
+
+    m.trailerURL = bestTrailer(doc.content);
+
+    page.loading = false;
+    page.type = "videolaunch";
+
+    var stream = bestStream(doc.content);
+
+    page.onEvent('rent', function() {
+      setMoveStatus(rent(stream.@id, stream.price.@raw,
+			 doc.content.name, stream.price));
+    });
+    
+    setMoveStatus(isRented(stream.@id));
+
+   function setMoveStatus(available) {
+
+      if(available) {
+	// Available for playback
+	m.rentable = false;
+	m.playURL = PREFIX + "stream:" + id;
+      } else {
+	// Available for rental
+	m.rentable = true;
+	m.rentalPrice = stream.price;
+      }
+    }
+  });
+
+
+
+
   // Search hook
   plugin.addSearcher(
     "Headweb movies", plugin.config.path + "headweb_icon.png",
     function(page, query) {
-      requestContents(page, "/search/" + 
-		      showtime.httpEscape(query));
+      requestContents(page, "/search/" + showtime.httpEscape(query));
     });
 
 })(this);
