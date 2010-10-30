@@ -108,3 +108,97 @@ notify_destroy(void *p)
 {
   prop_destroy(p);
 }
+
+
+
+
+
+
+
+/**
+ *
+ */
+static void 
+eventsink(void *opaque, prop_event_t event, ...)
+{
+  event_t *e, **ep = opaque;
+  va_list ap;
+  va_start(ap, event);
+
+  if(event != PROP_EXT_EVENT)
+    return;
+
+  if(*ep)
+    event_unref(*ep);
+  e = va_arg(ap, event_t *);
+  atomic_add(&e->e_refcount, 1);
+  *ep = e;
+}
+
+
+/**
+ *
+ */
+event_t *
+popup_display(prop_t *p)
+{
+  prop_courier_t *pc = prop_courier_create_waitable();
+  event_t *e = NULL;
+
+  prop_t *r = prop_create(p, "eventSink");
+  prop_sub_t *s = prop_subscribe(0, 
+				 PROP_TAG_CALLBACK, eventsink, &e, 
+				 PROP_TAG_ROOT, r,
+				 PROP_TAG_COURIER, pc,
+				 NULL);
+
+  /* Will show the popup */
+  if(prop_set_parent(p, prop_create(prop_get_global(), "popups"))) {
+    /* popuproot is a zombie, this is an error */
+    abort();
+  }
+
+  while(e == NULL) {
+    struct prop_notify_queue exp, nor;
+    prop_courier_wait(pc, &nor, &exp);
+    prop_notify_dispatch(&exp);
+    prop_notify_dispatch(&nor);
+  }
+
+  prop_unsubscribe(s);
+  return e;
+}
+
+
+
+/**
+ *
+ */
+int
+message_popup(const char *message, int flags)
+{
+  prop_t *p;
+  int rval;
+
+  p = prop_create(NULL, NULL);
+
+  prop_set_string(prop_create(p, "type"), "message");
+  prop_set_string(prop_create(p, "message"), message);
+  if(flags & MESSAGE_POPUP_CANCEL)
+    prop_set_int(prop_create(p, "cancel"), 1);
+  if(flags & MESSAGE_POPUP_OK)
+    prop_set_int(prop_create(p, "ok"), 1);
+
+  event_t *e = popup_display(p);
+  prop_destroy(p);
+  
+  if(event_is_action(e, ACTION_OK))
+    rval = MESSAGE_POPUP_OK;
+  else if(event_is_action(e, ACTION_CANCEL))
+    rval = MESSAGE_POPUP_CANCEL;
+  else
+    rval = 0;
+
+  event_unref(e);
+  return rval;
+}

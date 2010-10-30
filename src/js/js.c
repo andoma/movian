@@ -25,7 +25,7 @@
 #include "misc/string.h"
 #include "fileaccess/fileaccess.h"
 #include "keyring.h"
-
+#include "notifications.h"
 
 static JSRuntime *runtime;
 static JSObject *showtimeobj;
@@ -312,6 +312,27 @@ js_getAuthCredentials(JSContext *cx, JSObject *obj,
 }
 
 
+/**
+ *
+ */
+static JSBool
+js_message(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+  const char *message;
+  JSBool ok, cancel;
+  int r;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "sbb", &message, &ok, &cancel))
+    return JS_FALSE;
+
+  r = message_popup(message, 
+		    (ok     ? MESSAGE_POPUP_OK : 0) |
+		    (cancel ? MESSAGE_POPUP_CANCEL : 0));
+
+
+  *rval = BOOLEAN_TO_JSVAL(r == MESSAGE_POPUP_OK);
+  return JS_TRUE;
+}
 
 
 /**
@@ -328,6 +349,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("createService",    js_createService, 3, 0, 0),
     JS_FS("canHandle",        js_canHandle, 1, 0, 0),
     JS_FS("getAuthCredentials",  js_getAuthCredentials, 4, 0, 0),
+    JS_FS("message",          js_message, 3, 0, 0),
     JS_FS_END
 };
 

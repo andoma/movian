@@ -31,5 +31,13 @@ void *notify_add(notify_type_t type, const char *icon, int delay,
 void notify_destroy(void *);
 
 void notifications_init(void);
+
+// Displays popup defined by proptree 'p' and return event
+event_t *popup_display(prop_t *p);
+
+#define MESSAGE_POPUP_OK     0x1
+#define MESSAGE_POPUP_CANCEL 0x2
+
+int message_popup(const char *message, int flags);
  
 #endif // NOTIFICATIONS_H__

@@ -26,6 +26,7 @@
 #include "event.h"
 #include "keyring.h"
 #include "prop/prop.h"
+#include "notifications.h"
 
 static htsmsg_t *keyring;
 static hts_mutex_t keyring_mutex;
@@ -71,45 +72,6 @@ setstr(char **p, htsmsg_t *m, const char *fname)
     *p = NULL;
 }
 
-/**
- *
- */
-typedef struct keyring_popup {
-  int result;
-  char *username;
-  char *password;
-
-  hts_cond_t cond;
-  hts_mutex_t mutex;
-
-} keyring_popup_t;
-
-
-
-/**
- *
- */
-static void 
-eventsink(void *opaque, prop_event_t event, ...)
-{
-  keyring_popup_t *kp = opaque;
-
-  va_list ap;
-  va_start(ap, event);
-
-  if(event != PROP_EXT_EVENT)
-    return;
-
-  event_t *e = va_arg(ap, event_t *);
-  if(event_is_action(e, ACTION_OK))
-    kp->result = 1;
-  else if(event_is_action(e, ACTION_CANCEL))
-    kp->result = -1;
-  else
-    return;
-  hts_cond_signal(&kp->cond);
-}
-
 
 /**
  *
@@ -120,55 +82,27 @@ keyring_lookup(const char *id, char **username, char **password,
 	       const char *reason)
 {
   htsmsg_t *m;
-  prop_t *p, *popuproot, *r, *user, *pass;
-  prop_sub_t *s;
-  keyring_popup_t kp;
-  char buf[128];
 
   hts_mutex_lock(&keyring_mutex);
 
   if(query) {
-    kp.result = 0;
-    kp.username = NULL;
-    kp.password = NULL;
-    hts_mutex_init(&kp.mutex);
-    hts_cond_init(&kp.cond);
+    char buf[128];
 
-    hts_mutex_lock(&kp.mutex);
-
-    popuproot = prop_create(prop_get_global(), "popups");
-
-    p = prop_create(NULL, NULL);
+    prop_t *p = prop_create(NULL, NULL);
 
     prop_set_string(prop_create(p, "type"), "auth");
     prop_set_string(prop_create(p, "id"), id);
     prop_set_string(prop_create(p, "source"), source);
     prop_set_string(prop_create(p, "reason"), reason);
     
-    user = prop_create(p, "username");
-    pass = prop_create(p, "password");
+    prop_t *user = prop_create(p, "username");
+    prop_t *pass = prop_create(p, "password");
  
-    r = prop_create(p, "eventSink");
-    s = prop_subscribe(0, 
-		       PROP_TAG_CALLBACK, eventsink, &kp, 
-		       PROP_TAG_ROOT, r,
-		       PROP_TAG_MUTEX, &kp.mutex,
-		       NULL);
-
-    /* Will show the popup */
-    if(prop_set_parent(p, popuproot)) {
-      /* popuproot is a zombie, this is an error */
-      abort();
-    }
-
-    while(kp.result == 0)
-      hts_cond_wait(&kp.cond, &kp.mutex);
-
-    prop_unsubscribe(s);
+    event_t *e = popup_display(p);
 
     htsmsg_delete_field(keyring, id);
 
-    if(kp.result == 1) {
+    if(event_is_action(e, ACTION_OK)) {
       /* OK */
 
       m = htsmsg_create_map();
@@ -193,16 +127,13 @@ keyring_lookup(const char *id, char **username, char **password,
 
     prop_destroy(p);
 
-    hts_mutex_unlock(&kp.mutex);
-
-    hts_cond_destroy(&kp.cond);
-    hts_mutex_destroy(&kp.mutex);
-
-    if(kp.result != 1) {
+    if(event_is_action(e, ACTION_CANCEL)) {
       /* return CANCEL to caller */
       hts_mutex_unlock(&keyring_mutex);
+      event_unref(e);
       return -1;
     }
+    event_unref(e);
   }
 
   if((m = htsmsg_get_map(keyring, id)) == NULL) {

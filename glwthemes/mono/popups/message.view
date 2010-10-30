@@ -1,0 +1,48 @@
+#import "theme://include/defs.view"
+#import "theme://include/buttons.view"
+#import "theme://include/separators.view"
+
+widget(container_x, {
+  space(0.2);
+
+  widget(container_y, {
+
+    .weight = 1.0;
+
+    .align = center;
+    
+    widget(backdrop, {
+      .filterConstraintX = true;
+      PLATE_GFX();
+      .alphaSelf = 0.8;
+      .color = PLATE_COLOR_OTHER();
+      
+      widget(container_y, {
+
+	widget(label, {
+	  .align = center;
+	  .caption = $self.message;
+	});
+
+	HORIZONTAL_SEPARATOR();
+
+	widget(container_x, {
+
+	  .align = center;
+	  .spacing = 20;
+
+	  BAR_BUTTON("OK", 
+		     deliverEvent($self.eventSink, "Ok"),
+		     select($self.ok, 0, 1),
+		     "theme://icons/48x48/Check.png");
+
+	  BAR_BUTTON("Cancel", 
+		     deliverEvent($self.eventSink, "Cancel"),
+		     select($self.cancel, 0, 1),
+		     "theme://icons/48x48/Delete.png");
+	});
+      });
+    });
+  });
+  space(0.2);
+});
