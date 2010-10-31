@@ -111,14 +111,26 @@ typedef enum {
  */
 typedef struct metadata {
   LIST_ENTRY(metadata) m_link;
-  prop_t *m_prop;
   struct playlist_track *m_plt;
   void *m_source;
   metadata_type_t m_type;
   int m_flags;
 #define METADATA_ARTIST_IMAGES_SCRAPPED 0x1
 
-  prop_sub_t *m_starred;
+  prop_sub_t *m_starred_sub;
+
+  prop_t *m_available;
+  prop_t *m_title;
+  prop_t *m_trackindex;
+  prop_t *m_duration;
+  prop_t *m_popularity;
+  prop_t *m_album;
+  prop_t *m_album_art;
+  prop_t *m_album_year;
+  prop_t *m_artist;
+  prop_t *m_additional_artists;
+  prop_t *m_artist_images;
+  prop_t *m_starred;
 
 } metadata_t;
 
@@ -747,8 +759,6 @@ metadata_prop_starred(void *opaque, prop_event_t event, ...)
 static void
 spotify_metadata_update_track(metadata_t *m)
 {
-  prop_t *meta = m->m_prop;
-  prop_t *p, *starred;
   sp_track *track = m->m_source;
   sp_album *album;
   sp_artist *artist;
@@ -758,33 +768,31 @@ spotify_metadata_update_track(metadata_t *m)
   if(!f_sp_track_is_loaded(track))
     return;
 
-  prop_set_int(prop_create(meta, "available"), f_sp_track_is_available(track));
+  prop_set_int(m->m_available, f_sp_track_is_available(track));
 
   album = f_sp_track_album(track);
 
-  prop_set_string(prop_create(meta, "title"), f_sp_track_name(track));
-  prop_set_int(prop_create(meta, "trackindex"), f_sp_track_index(track));
-  prop_set_float(prop_create(meta, "duration"), 
-		 (float)f_sp_track_duration(track) / 1000.0);
+  prop_set_string(m->m_title, f_sp_track_name(track));
+  prop_set_int(m->m_trackindex, f_sp_track_index(track));
+  prop_set_float(m->m_duration, f_sp_track_duration(track) / 1000.0);
 
-  prop_set_float(prop_create(meta, "popularity"), 
-		 (float)f_sp_track_popularity(track) / 100.0);
+  prop_set_float(m->m_popularity, f_sp_track_popularity(track) / 100.0);
 
   if(album != NULL) {
     spotify_make_link(f_sp_link_create_from_album(album), url, sizeof(url));
-    prop_set_link(prop_create(meta, "album"), f_sp_album_name(album), url);
-    set_image_uri(prop_create(meta, "album_art"), f_sp_album_cover(album));
-    prop_set_int(prop_create(meta, "album_year"), f_sp_album_year(album));
+    prop_set_link(m->m_album, f_sp_album_name(album), url);
+    set_image_uri(m->m_album_art, f_sp_album_cover(album));
+    prop_set_int(m->m_album_year, f_sp_album_year(album));
   }
 
   // Artists
   artist = f_sp_track_artist(track, 0);
   spotify_make_link(f_sp_link_create_from_artist(artist), url, sizeof(url));
-  prop_set_link(prop_create(meta, "artist"), f_sp_artist_name(artist), url);
+  prop_set_link(m->m_artist, f_sp_artist_name(artist), url);
   
   nartists = f_sp_track_num_artists(track);
   if(nartists > 1) {
-    prop_t *xa = prop_create(meta, "additional_artists");
+    prop_t *xa = m->m_additional_artists;
     for(i = 1; i < nartists; i++) {
       artist = f_sp_track_artist(track, i);
       spotify_make_link(f_sp_link_create_from_artist(artist), url, sizeof(url));
@@ -799,25 +807,20 @@ spotify_metadata_update_track(metadata_t *m)
      (artist = f_sp_track_artist(track, 0)) != NULL) {
     m->m_flags |= METADATA_ARTIST_IMAGES_SCRAPPED;
 
-    p = prop_create(meta, "artist_images");
-
-    if(p != NULL)
-      lastfm_artistpics_init(p, rstr_alloc(f_sp_artist_name(artist)));
+    lastfm_artistpics_init(m->m_artist_images,
+			   rstr_alloc(f_sp_artist_name(artist)));
   }
 
-  
-  starred = prop_create(meta, "starred");
-
-  if(m->m_starred == NULL) {
-    m->m_starred = 
+  if(m->m_starred_sub == NULL) {
+    m->m_starred_sub = 
       prop_subscribe(0,
 		     PROP_TAG_CALLBACK, metadata_prop_starred, m,
 		     PROP_TAG_COURIER, spotify_courier,
-		     PROP_TAG_ROOT, starred,
+		     PROP_TAG_ROOT, m->m_starred,
 		     NULL);
   }
 
-  prop_set_int_ex(starred, m->m_starred, f_sp_track_is_starred(track));
+  prop_set_int_ex(m->m_starred, m->m_starred_sub, f_sp_track_is_starred(track));
 }
 
 
@@ -888,23 +891,23 @@ metadata_update(metadata_t *m)
     break;
     
   case METADATA_ALBUM_NAME:
-    spotify_metadata_update_albumname(m->m_prop, m->m_source);
+    spotify_metadata_update_albumname(m->m_album, m->m_source);
     break;
 
   case METADATA_ALBUM_YEAR:
-    spotify_metadata_update_albumyear(m->m_prop, m->m_source);
+    spotify_metadata_update_albumyear(m->m_album_year, m->m_source);
     break;
 
   case METADATA_ALBUM_ARTIST_NAME:
-    spotify_metadata_update_albumartistname(m->m_prop, m->m_source);
+    spotify_metadata_update_albumartistname(m->m_artist, m->m_source);
     break;
 
   case METADATA_ALBUM_IMAGE:
-    spotify_metadata_update_albumimage(m->m_prop, m->m_source);
+    spotify_metadata_update_albumimage(m->m_album_art, m->m_source);
     break;
     
   case METADATA_ARTIST_NAME:
-    spotify_metadata_update_artistname(m->m_prop, m->m_source);
+    spotify_metadata_update_artistname(m->m_artist, m->m_source);
     break;
   }
 }
@@ -945,11 +948,22 @@ metadata_prop_cb(void *opaque, prop_event_t event, ...)
 
   prop_unsubscribe(s);
 
-  if(m->m_starred != NULL)
-    prop_unsubscribe(m->m_starred);
+  if(m->m_starred_sub != NULL)
+    prop_unsubscribe(m->m_starred_sub);
 
   LIST_REMOVE(m, m_link);
-  prop_ref_dec(m->m_prop);
+  prop_ref_dec_nullchk(m->m_available);
+  prop_ref_dec_nullchk(m->m_title);
+  prop_ref_dec_nullchk(m->m_trackindex);
+  prop_ref_dec_nullchk(m->m_duration);
+  prop_ref_dec_nullchk(m->m_popularity);
+  prop_ref_dec_nullchk(m->m_album);
+  prop_ref_dec_nullchk(m->m_album_art);
+  prop_ref_dec_nullchk(m->m_album_year);
+  prop_ref_dec_nullchk(m->m_artist);
+  prop_ref_dec_nullchk(m->m_additional_artists);
+  prop_ref_dec_nullchk(m->m_artist_images);
+  prop_ref_dec_nullchk(m->m_starred);
 
   switch(m->m_type) {
   case METADATA_TRACK:
@@ -982,23 +996,49 @@ metadata_create0(prop_t *p, metadata_type_t type, void *source,
 
   prop_ref_inc(p);
   m->m_plt = plt;
-  m->m_prop = p;
   m->m_type = type;
   m->m_source = source;
 
   switch(m->m_type) {
   case METADATA_TRACK:
+    prop_ref_inc(m->m_available         = prop_create(p, "available"));
+    prop_ref_inc(m->m_title             = prop_create(p, "title"));
+    prop_ref_inc(m->m_trackindex        = prop_create(p, "trackindex"));
+    prop_ref_inc(m->m_duration          = prop_create(p, "duration"));
+    prop_ref_inc(m->m_popularity        = prop_create(p, "popularity"));
+    prop_ref_inc(m->m_album             = prop_create(p, "album"));
+    prop_ref_inc(m->m_album_art         = prop_create(p, "album_art"));
+    prop_ref_inc(m->m_album_year        = prop_create(p, "album_year"));
+    prop_ref_inc(m->m_artist            = prop_create(p, "artist"));
+    prop_ref_inc(m->m_additional_artists= prop_create(p, "additional_artists"));
+    prop_ref_inc(m->m_artist_images     = prop_create(p, "artist_images"));
+    prop_ref_inc(m->m_starred           = prop_create(p, "starred"));
+
     f_sp_track_add_ref(source);
     break;
     
   case METADATA_ALBUM_NAME:
+    prop_ref_inc(m->m_album = p);
+    f_sp_album_add_ref(source);
+    break;
+
   case METADATA_ALBUM_YEAR:
+    prop_ref_inc(m->m_album_year = p);
+    f_sp_album_add_ref(source);
+    break;
+
   case METADATA_ALBUM_IMAGE:
+    prop_ref_inc(m->m_album_art = p);
+    f_sp_album_add_ref(source);
+    break;
+
   case METADATA_ALBUM_ARTIST_NAME:
+    prop_ref_inc(m->m_artist = p);
     f_sp_album_add_ref(source);
     break;
 
   case METADATA_ARTIST_NAME:
+    prop_ref_inc(m->m_artist = p);
     f_sp_artist_add_ref(source);
     break;
   }

@@ -163,6 +163,15 @@ prop_ref_dec(prop_t *p)
   free(p);
 }
 
+/**
+ *
+ */
+void
+prop_ref_dec_nullchk(prop_t *p)
+{
+  if(p)
+    prop_ref_dec(p);
+}
 
 /**
  *

@@ -206,6 +206,8 @@ int prop_get_string(prop_t *p, char *buf, size_t bufsize)
 
 void prop_ref_dec(prop_t *p);
 
+void prop_ref_dec_nullchk(prop_t *p);
+
 void prop_ref_inc(prop_t *p);
 
 prop_t *prop_xref_addref(prop_t *p) __attribute__ ((warn_unused_result));
