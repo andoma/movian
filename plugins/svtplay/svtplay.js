@@ -43,7 +43,7 @@
       if(m.@type == 'application/vnd.apple.mpegurl')
 	continue;
       if(showtime.canHandle(m.@url)) {
-	if(!bestItem || m.@bitrate > bestItem.@bitrate) {
+	if(!bestItem || parseFloat(m.@bitrate) > parseFloat(bestItem.@bitrate)) {
 	  bestItem = m;
 	}
       }
