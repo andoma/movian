@@ -517,7 +517,10 @@ ${PROG}: ${FFBUILDDEP} $(OBJDIRS) $(OBJS) $(BUNDLE_OBJS) Makefile src/version.c
 $(OBJDIRS):
 	@mkdir -p $@
 
-${BUILDDIR}/%.o: %.[cm] ${FFBUILDDEP}
+${BUILDDIR}/%.o: %.c ${FFBUILDDEP}
+	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
+
+${BUILDDIR}/%.o: %.m ${FFBUILDDEP}
 	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
 
 ${BUILDDIR}/%.o: %.cpp ${FFBUILDDEP}
