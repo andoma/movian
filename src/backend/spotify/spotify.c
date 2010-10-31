@@ -994,7 +994,6 @@ metadata_create0(prop_t *p, metadata_type_t type, void *source,
 {
   metadata_t *m = calloc(1, sizeof(metadata_t));
 
-  prop_ref_inc(p);
   m->m_plt = plt;
   m->m_type = type;
   m->m_source = source;
