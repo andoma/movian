@@ -762,7 +762,6 @@ spotify_metadata_update_track(metadata_t *m)
 
   album = f_sp_track_album(track);
 
-  prop_set_string(prop_create(meta, "mediaformat"), "spotify");
   prop_set_string(prop_create(meta, "title"), f_sp_track_name(track));
   prop_set_int(prop_create(meta, "trackindex"), f_sp_track_index(track));
   prop_set_float(prop_create(meta, "duration"), 
