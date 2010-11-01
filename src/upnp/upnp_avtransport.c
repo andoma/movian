@@ -17,7 +17,7 @@
  */
 #include <stdio.h>
 
-#include "networking/http.h"
+#include "networking/http_server.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "event.h"
 #include "playqueue.h"

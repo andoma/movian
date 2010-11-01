@@ -18,7 +18,8 @@
 
 #include <stdio.h>
 
-#include "networking/http.h"
+#include "showtime.h"
+#include "networking/http_server.h"
 #include "fileaccess/fileaccess.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "misc/string.h"
@@ -66,13 +67,13 @@ upnp_event_send_all(upnp_local_service_t *uls)
     struct http_header_list hdrs;
     LIST_INIT(&hdrs);
 
-    http_headers_add(&hdrs, "NT", "upnp:event");
-    http_headers_add(&hdrs, "NTS", "upnp:propchange");
+    http_header_add(&hdrs, "NT", "upnp:event");
+    http_header_add(&hdrs, "NTS", "upnp:propchange");
     snprintf(str, sizeof(str), "%d", s->us_sid);
-    http_headers_add(&hdrs, "SID", str);
+    http_header_add(&hdrs, "SID", str);
 
     snprintf(str, sizeof(str), "%d", s->us_seq);
-    http_headers_add(&hdrs, "SEQ", str);
+    http_header_add(&hdrs, "SEQ", str);
     s->us_seq++;
 
     r = http_request(s->us_callback, NULL, NULL, NULL, NULL, 0, &out,

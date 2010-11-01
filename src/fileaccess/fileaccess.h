@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 
 #include "misc/queue.h"
+#include "networking/http.h"
 
 #include "navigator.h"
 
@@ -168,28 +169,12 @@ struct htsbuf_queue;
 #define HTTP_REQUEST_ESCAPE_PATH 0x1
 #define HTTP_REQUEST_DEBUG 0x2
 
-LIST_HEAD(http_header_list, http_header);
-
-typedef struct http_header {
-  LIST_ENTRY(http_header) hh_link;
-  char *hh_key;
-  char *hh_value;
-} http_header_t;
-
 int http_request(const char *url, const char **arguments, 
 		 char **result, size_t *result_sizep,
 		 char *errbuf, size_t errlen,
 		 struct htsbuf_queue *postdata, const char *postcontenttype,
 		 int flags, struct http_header_list *headers_out,
 		 struct http_header_list *headers_in, const char *method);
-
-void http_headers_free(struct http_header_list *headers);
-
-const char *http_headers_find(struct http_header_list *headers, 
-			      const char *key);
-
-void http_headers_add(struct http_header_list *headers, const char *key,
-		      const char *value);
 
 #include <libavformat/avio.h>
 

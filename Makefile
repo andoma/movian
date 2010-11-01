@@ -149,6 +149,7 @@ SRCS-$(CONFIG_HTTPSERVER) += src/api/httpcontrol.c \
 # Networking
 #
 SRCS += src/networking/net_common.c \
+	src/networking/http.c \
 
 SRCS-$(CONFIG_POSIX_NETWORKING) += src/networking/net_posix.c
 SRCS-$(CONFIG_LIBOGC) += src/networking/net_libogc.c

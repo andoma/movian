@@ -90,7 +90,7 @@ soap_exec(const char *uri, const char *service, int version, const char *method,
   snprintf(tmp, sizeof(tmp),"\"urn:schemas-upnp-org:service:%s:%d#%s\"",
 	   service, version, method);
 
-  http_headers_add(&hdrs, "SOAPACTION", tmp);
+  http_header_add(&hdrs, "SOAPACTION", tmp);
 
   r = http_request(uri, NULL, &xmldata, &xmlsize, errbuf, errlen,
 		   &post, "text/xml; charset=\"utf-8\"",

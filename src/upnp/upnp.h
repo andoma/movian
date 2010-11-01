@@ -113,7 +113,9 @@ void upnp_del_device(const char *url);
 
 upnp_service_t *upnp_service_guess(const char *url);
 
-int upnp_control(http_connection_t *hc, const char *remain, void *opaque,
+struct http_connection;
+
+int upnp_control(struct http_connection *hc, const char *remain, void *opaque,
 		 http_cmd_t method);
 
 void upnp_avtransport_init(void);
@@ -131,7 +133,7 @@ void upnp_schedule_notify(upnp_local_service_t *uls);
 
 void upnp_event_init(void);
 
-int upnp_subscribe(http_connection_t *hc, const char *remain, void *opaque,
+int upnp_subscribe(struct http_connection *hc, const char *remain, void *opaque,
 		   http_cmd_t method);
 
 extern hts_mutex_t upnp_lock;

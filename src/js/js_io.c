@@ -132,7 +132,7 @@ js_http_request(JSContext *cx, JSObject *obj, uintN argc,
   }
 
   const char *contenttype =
-    http_headers_find(&response_headers, "content-type");
+    http_header_get(&response_headers, "content-type");
 
   if(contenttype != NULL &&
      (!strncasecmp(contenttype, "application/xml", strlen("application/xml")) ||

@@ -50,7 +50,7 @@
 #include "misc/string.h"
 
 #if ENABLE_HTTPSERVER
-#include "networking/http.h"
+#include "networking/http_server.h"
 #include "networking/ssdp.h"
 #include "upnp/upnp.h"
 #endif

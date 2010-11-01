@@ -31,6 +31,7 @@
 #include "showtime.h"
 #include "ssdp.h"
 #include "http.h"
+#include "http_server.h"
 #include "net.h"
 
 #include "upnp/upnp.h"
@@ -51,7 +52,7 @@ static char *ssdp_uuid;
  *
  */
 static int
-ssdp_parse(char *buf, struct http_arg_list *list)
+ssdp_parse(char *buf, struct http_header_list *list)
 {
   char *l = buf, *e, *s;
   int r = 0;
@@ -74,7 +75,7 @@ ssdp_parse(char *buf, struct http_arg_list *list)
       *s++ = 0;
       while(*s == 32)
 	s++;
-      http_arg_set(list, l, s);
+      http_header_add(list, l, s);
     }
     if(*e == '\n')
       e++;
@@ -106,10 +107,10 @@ ssdp_send_static(int fd, const char *str)
  *
  */
 static int
-ssdp_maxage(struct http_arg_list *args)
+ssdp_maxage(struct http_header_list *args)
 {
   int maxage = 1800;
-  const char *cc = http_arg_get(args, "cache-control");
+  const char *cc = http_header_get(args, "cache-control");
   if(cc != NULL && (cc = strstr(cc, "max-age")) != NULL &&
      (cc = strchr(cc , '=')) != NULL)
     maxage = atoi(cc+1);
@@ -124,11 +125,11 @@ ssdp_maxage(struct http_arg_list *args)
  *
  */
 static void
-ssdp_recv_notify(struct http_arg_list *args)
+ssdp_recv_notify(struct http_header_list *args)
 {
-  const char *nts  = http_arg_get(args, "nts");
-  const char *url  = http_arg_get(args, "location");
-  const char *type = http_arg_get(args, "nt");
+  const char *nts  = http_header_get(args, "nts");
+  const char *url  = http_header_get(args, "location");
+  const char *type = http_header_get(args, "nt");
 
   if(nts == NULL || url == NULL)
     return;
@@ -145,10 +146,10 @@ ssdp_recv_notify(struct http_arg_list *args)
  *
  */
 static void
-ssdp_response(struct http_arg_list *args)
+ssdp_response(struct http_header_list *args)
 {
-  const char *url  = http_arg_get(args, "location");
-  const char *type = http_arg_get(args, "st");
+  const char *url  = http_header_get(args, "location");
+  const char *type = http_header_get(args, "st");
   
   if(url != NULL && type != NULL)
     upnp_add_device(url, type, ssdp_maxage(args));
@@ -253,7 +254,7 @@ ssdp_input(int fd, int mc)
   char ctrl[500];
   int r, self = 0, i = 0, cmd;
   struct sockaddr_in si;
-  struct http_arg_list args;
+  struct http_header_list args;
   netif_t *ni;
   struct msghdr msg;
   struct cmsghdr *cmsg;
@@ -307,7 +308,7 @@ ssdp_input(int fd, int mc)
   }
 
   if(!self && myaddr) {
-    TAILQ_INIT(&args);
+    LIST_INIT(&args);
     cmd = ssdp_parse(buf, &args);
 
     if(cmd == SSDP_NOTIFY && mc)
@@ -317,7 +318,7 @@ ssdp_input(int fd, int mc)
     if(cmd == SSDP_SEARCH && mc)
       ssdp_send_all(ssdp_fdu, myaddr, &si, NULL);
 
-    http_arg_flush(&args);
+    http_headers_free(&args);
   }
   free(ni);
 }

@@ -35,11 +35,12 @@
 #include <ifaddrs.h>
 #include <pthread.h>
 
+#include "showtime.h"
 #include "net.h"
 
 
 #if ENABLE_HTTPSERVER
-#include "http.h"
+#include "http_server.h"
 #include "ssdp.h"
 #endif
 

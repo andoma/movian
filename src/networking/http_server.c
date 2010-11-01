@@ -28,21 +28,12 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 
+#include "http.h"
 #include "http_server.h"
 
 int http_server_port;
 static LIST_HEAD(, http_path) http_paths;
 LIST_HEAD(http_connection_list, http_connection); 
-
-/**
- *
- */
-typedef struct http_arg {
-  TAILQ_ENTRY(http_arg) link;
-  char *key;
-  char *val;
-} http_arg_t;
-
 
 /**
  *
@@ -58,9 +49,9 @@ struct http_connection {
 #define HCS_HEADERS 1
 #define HCS_POSTDATA 2
 
-  struct http_arg_list hc_request_headers;
-  struct http_arg_list hc_req_args;
-  struct http_arg_list hc_response_headers;
+  struct http_header_list hc_request_headers;
+  struct http_header_list hc_req_args;
+  struct http_header_list hc_response_headers;
 
   htsbuf_queue_t hc_input;
   htsbuf_queue_t hc_output;
@@ -252,7 +243,7 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
   struct tm tm0, *tm;
   htsbuf_queue_t hdrs;
   time_t t;
-  http_arg_t *ha;
+  http_header_t *hh;
 
   static const char *cachedays[7] = {
     "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
@@ -310,8 +301,8 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
 
   htsbuf_qprintf(&hdrs, "Content-Length: %d\r\n", contentlen);
 
-  TAILQ_FOREACH(ha, &hc->hc_response_headers, link)
-    htsbuf_qprintf(&hdrs, "%s: %s\r\n", ha->key, ha->val);
+  LIST_FOREACH(hh, &hc->hc_response_headers, hh_link)
+    htsbuf_qprintf(&hdrs, "%s: %s\r\n", hh->hh_key, hh->hh_value);
   
   htsbuf_qprintf(&hdrs, "\r\n");
   
@@ -479,42 +470,12 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
 
 
  /**
-  * Delete all arguments associated with a connection
-  */
- void
- http_arg_flush(struct http_arg_list *list)
- {
-   http_arg_t *ra;
-   while((ra = TAILQ_FIRST(list)) != NULL) {
-     TAILQ_REMOVE(list, ra, link);
-     free(ra->key);
-     free(ra->val);
-     free(ra);
-   }
- }
-
-
- /**
-  * Find an argument associated with a connection
-  */
- char *
- http_arg_get(struct http_arg_list *list, const char *name)
- {
-   http_arg_t *ra;
-   TAILQ_FOREACH(ra, list, link)
-     if(!strcasecmp(ra->key, name))
-       return ra->val;
-   return NULL;
- }
-
-
- /**
   *
   */
  const char *
  http_arg_get_req(http_connection_t *hc, const char *name)
  {
-   return http_arg_get(&hc->hc_req_args, name);
+   return http_header_get(&hc->hc_req_args, name);
  }
 
 
@@ -524,22 +485,7 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
  const char *
  http_arg_get_hdr(http_connection_t *hc, const char *name)
  {
-   return http_arg_get(&hc->hc_request_headers, name);
- }
-
-
- /**
-  * Set an argument associated with a connection
-  */
- void
- http_arg_set(struct http_arg_list *list, const char *key, const char *val)
- {
-   http_arg_t *ra;
-
-   ra = malloc(sizeof(http_arg_t));
-   TAILQ_INSERT_TAIL(list, ra, link);
-   ra->key = strdup(key);
-   ra->val = strdup(val);
+   return http_header_get(&hc->hc_request_headers, name);
  }
 
 
@@ -550,7 +496,7 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
  http_set_response_hdr(http_connection_t *hc, const char *name,
 		       const char *value)
  {
-   http_arg_set(&hc->hc_response_headers, name, value);
+   http_header_add(&hc->hc_response_headers, name, value);
  }
 
 
@@ -602,7 +548,7 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
 
      http_deescape(k);
      http_deescape(v);
-     http_arg_set(&hc->hc_req_args, k, v);
+     http_header_add(&hc->hc_req_args, k, v);
    }
  }
 
@@ -658,7 +604,7 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
    hc->hc_state = HCS_COMMAND;
 
   /* Parse content-type */
-   v = http_arg_get(&hc->hc_request_headers, "Content-Type");
+   v = mystrdupa(http_header_get(&hc->hc_request_headers, "Content-Type"));
    if(v == NULL) {
      http_error(hc, HTTP_STATUS_BAD_REQUEST, "Content-Type missing");
      return 0;
@@ -691,7 +637,7 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
    const char *v;
 
    /* Set keep-alive status */
-   v = http_arg_get(&hc->hc_request_headers, "Content-Length");
+   v = http_header_get(&hc->hc_request_headers, "Content-Length");
    if(v == NULL) {
      /* No content length in POST, make us disconnect */
      return 1;
@@ -723,7 +669,7 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
  {
    hc->hc_state = HCS_COMMAND;
    /* Set keep-alive status */
-   const char *v = http_arg_get(&hc->hc_request_headers, "connection");
+   const char *v = http_header_get(&hc->hc_request_headers, "connection");
 
    switch(hc->hc_version) {
    case HTTP_VERSION_1_0:
@@ -817,9 +763,9 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
        hc->hc_state = HCS_HEADERS;
        /* FALLTHRU */
 
-       http_arg_flush(&hc->hc_req_args);
-       http_arg_flush(&hc->hc_request_headers);
-       http_arg_flush(&hc->hc_response_headers);
+       http_headers_free(&hc->hc_req_args);
+       http_headers_free(&hc->hc_request_headers);
+       http_headers_free(&hc->hc_response_headers);
 
     case HCS_HEADERS:
       if((r = http_read_line(hc, buf, sizeof(buf))) == -1)
@@ -841,7 +787,7 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
 	  return 1;
 
 	*c = 0;
-	http_arg_set(&hc->hc_request_headers, argv[0], argv[1]);
+	http_header_add(&hc->hc_request_headers, argv[0], argv[1]);
       }
       break;
 
@@ -929,9 +875,9 @@ http_close(http_connection_t *hc)
 {
   htsbuf_queue_flush(&hc->hc_input);
   htsbuf_queue_flush(&hc->hc_output);
-  http_arg_flush(&hc->hc_req_args);
-  http_arg_flush(&hc->hc_request_headers);
-  http_arg_flush(&hc->hc_response_headers);
+  http_headers_free(&hc->hc_req_args);
+  http_headers_free(&hc->hc_request_headers);
+  http_headers_free(&hc->hc_response_headers);
   LIST_REMOVE(hc, hc_link);
   close(hc->hc_fd);
   free(hc->hc_url);
@@ -964,9 +910,6 @@ http_accept(http_server_t *hs)
   hc->hc_fd = fd;
   hc->hc_events = POLLIN | POLLHUP | POLLERR;
   LIST_INSERT_HEAD(&hs->hs_connections, hc, hc_link);
-  TAILQ_INIT(&hc->hc_req_args);
-  TAILQ_INIT(&hc->hc_request_headers);
-  TAILQ_INIT(&hc->hc_response_headers);
   htsbuf_queue_init(&hc->hc_input, 0);
   htsbuf_queue_init(&hc->hc_output, 0);
 

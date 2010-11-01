@@ -692,7 +692,7 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
     *c = 0;
 
     if(headers != NULL)
-      http_headers_add(headers, argv[0], argv[1]);
+      http_header_add(headers, argv[0], argv[1]);
 
     if(!strcasecmp(argv[0], "Transfer-Encoding")) {
 
@@ -1495,19 +1495,19 @@ http_quickload(struct fa_protocol *fap, const char *url,
     fs->fs_type = CONTENT_FILE;
     fs->fs_size = siz;
 
-    if((s = http_headers_find(&headers, "last-modified")) != NULL)
+    if((s = http_header_get(&headers, "last-modified")) != NULL)
       http_ctime(&fs->fs_mtime, s);
 
     fs->fs_cache_age = 3600;
 
-    if((s  = http_headers_find(&headers, "date")) != NULL && 
-       (s2 = http_headers_find(&headers, "expires")) != NULL) {
+    if((s  = http_header_get(&headers, "date")) != NULL && 
+       (s2 = http_header_get(&headers, "expires")) != NULL) {
       time_t expires, sdate;
       if(!http_ctime(&sdate, s) && !http_ctime(&expires, s2))
 	fs->fs_cache_age = expires - sdate;
     }
 
-    if((s = http_headers_find(&headers, "cache-control")) != NULL) {
+    if((s = http_header_get(&headers, "cache-control")) != NULL) {
       if((s2 = strstr(s, "max-age=")) != NULL) {
 	fs->fs_cache_age = atoi(s2 + strlen("max-age="));
       }
@@ -2144,54 +2144,4 @@ http_request(const char *url, const char **arguments,
 
   http_destroy(hf);
   return 0;
-}
-
-
-/**
- *
- */
-void
-http_headers_free(struct http_header_list *headers)
-{
-  http_header_t *hh;
-
-  if(headers == NULL)
-    return;
-
-  while((hh = LIST_FIRST(headers)) != NULL) {
-    LIST_REMOVE(hh, hh_link);
-    free(hh->hh_key);
-    free(hh->hh_value);
-    free(hh);
-  }
-}
-
-
-/**
- *
- */
-void
-http_headers_add(struct http_header_list *headers, const char *key,
-		 const char *value)
-{
-  http_header_t *hh = malloc(sizeof(http_header_t));
-
-  hh->hh_key   = strdup(key);
-  hh->hh_value = strdup(value);
-  LIST_INSERT_HEAD(headers, hh, hh_link);
-}
-
-
-/**
- *
- */
-const char *
-http_headers_find(struct http_header_list *headers, const char *key)
-{
-  http_header_t *hh;
-
-  LIST_FOREACH(hh, headers, hh_link)
-    if(!strcasecmp(hh->hh_key, key))
-      return hh->hh_value;
-  return NULL;
 }
