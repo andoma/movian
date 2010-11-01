@@ -28,7 +28,7 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 
-#include "http.h"
+#include "http_server.h"
 
 int http_server_port;
 static LIST_HEAD(, http_path) http_paths;

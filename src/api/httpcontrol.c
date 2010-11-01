@@ -18,7 +18,7 @@
 
 #include <stdio.h>
 
-#include "networking/http.h"
+#include "networking/http_server.h"
 #include "httpcontrol.h"
 #include "event.h"
 

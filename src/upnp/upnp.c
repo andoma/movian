@@ -20,7 +20,7 @@
 
 #include <libavutil/sha1.h>
 
-#include "networking/http.h"
+#include "networking/http_server.h"
 #include "networking/ssdp.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "event.h"

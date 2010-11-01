@@ -153,7 +153,7 @@ SRCS += src/networking/net_common.c \
 SRCS-$(CONFIG_POSIX_NETWORKING) += src/networking/net_posix.c
 SRCS-$(CONFIG_LIBOGC) += src/networking/net_libogc.c
 
-SRCS-$(CONFIG_HTTPSERVER) += src/networking/http.c
+SRCS-$(CONFIG_HTTPSERVER) += src/networking/http_server.c
 SRCS-$(CONFIG_HTTPSERVER) += src/networking/ssdp.c
 SRCS-$(CONFIG_HTTPSERVER) += \
 			src/upnp/upnp.c \
