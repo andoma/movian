@@ -183,10 +183,7 @@ widget(container_x, {
 
 	      ICON2("theme://icons/48x48/Blank.png",
 		    "Blank",
-		    {
-		      $ui.menu = false;
-		      fireEvent(navOpen("page:idle"));
-		    },
+		    event(EnableScreenSaver),
 		    PLATE_COLOR_CMDMENU(),
 		    true);
 
