@@ -123,7 +123,6 @@
 	    }
       				
     page.type = "directory";
-    page.contents = "items";
     page.loading = false;
 
     var logoPath = plugin.config.path + channelId + "large.png";
