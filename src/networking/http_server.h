@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HTTP_H__
-#define HTTP_H__
+#ifndef HTTP_SERVER_H__
+#define HTTP_SERVER_H__
 
 #include "showtime.h"
 #include "htsmsg/htsbuf.h"
@@ -77,4 +77,4 @@ void http_set_response_hdr(http_connection_t *hc, const char *name,
 
 extern int http_server_port;
 
-#endif // HTTP_H__
+#endif // HTTP_SERVER_H__
