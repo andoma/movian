@@ -1613,7 +1613,7 @@ void
 glw_select(glw_t *p, glw_t *c)
 {
   if(c->glw_originating_prop) {
-    prop_select(c->glw_originating_prop, 0);
+    prop_select(c->glw_originating_prop);
   } else {
     p->glw_selected = c;
     glw_signal0(c, GLW_SIGNAL_SELECTED_UPDATE, NULL);

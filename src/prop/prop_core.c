@@ -2787,7 +2787,7 @@ prop_follow(prop_t *p)
  *
  */
 void
-prop_select_ex(prop_t *p, int advisory, prop_sub_t *skipme)
+prop_select_ex(prop_t *p, prop_sub_t *skipme)
 {
   prop_t *parent;
 
@@ -2802,13 +2802,8 @@ prop_select_ex(prop_t *p, int advisory, prop_sub_t *skipme)
 
   if(parent != NULL) {
     assert(parent->hp_type == PROP_DIR);
-
-    /* If in advisory mode and something is already selected,
-       don't do anything */
-    if(!advisory || parent->hp_selected == NULL) {
-      prop_notify_child(p, parent, PROP_SELECT_CHILD, skipme, 0);
-      parent->hp_selected = p;
-    }
+    prop_notify_child(p, parent, PROP_SELECT_CHILD, skipme, 0);
+    parent->hp_selected = p;
   }
 
   hts_mutex_unlock(&prop_mutex);
