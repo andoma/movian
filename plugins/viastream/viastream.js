@@ -38,8 +38,7 @@
 	   * Sporting channels: 1se
 	   * TV3: 2se
 	   * TV6: 3se
-	   * TV8: 4se	   
-	   * Viasat Sport: sesport (TODO: add this channel too)
+	   * TV8: 4se
 	   */
 	  page.appendItem("viastream:sitemapdata:2se:0", "directory", {
 		  title: "TV3",
