@@ -248,7 +248,7 @@ spotlight_searcher(void *aux)
 }
 
 static void
-spotlight_search(struct backend *be, prop_t *model, const char *query)
+spotlight_search(prop_t *model, const char *query)
 {
   if(!spotlight_enabled)
     return;
