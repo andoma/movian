@@ -88,7 +88,7 @@ search_get_settings(void)
  *
  */
 static int
-search_canhandle(backend_t *be, const char *url)
+search_canhandle(const char *url)
 {
   return !strncmp(url, "search:", strlen("search:"));
 }
@@ -98,7 +98,7 @@ search_canhandle(backend_t *be, const char *url)
  *
  */
 static int
-search_open(backend_t *beself, prop_t *page, const char *url0)
+search_open(prop_t *page, const char *url0)
 {
   const char *url;
   prop_t *model, *meta, *source;

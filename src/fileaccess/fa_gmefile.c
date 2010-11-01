@@ -350,7 +350,7 @@ fa_gme_playfile(media_pipe_t *mp, void *fh,
  *
  */
 static event_t *
-be_gmeplayer_play(struct backend *be, const char *url0, media_pipe_t *mp, 
+be_gmeplayer_play(const char *url0, media_pipe_t *mp, 
 		  char *errbuf, size_t errlen, int hold)
 {
   event_t *e;
@@ -384,7 +384,7 @@ be_gmeplayer_play(struct backend *be, const char *url0, media_pipe_t *mp,
  *
  */
 static int
-be_gmeplayer_canhandle(struct backend *be, const char *url)
+be_gmeplayer_canhandle(const char *url)
 {
   return !strncmp(url, "gmeplayer:", strlen("gmeplayer:"));
 }

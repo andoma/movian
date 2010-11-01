@@ -74,7 +74,7 @@ backend_play_video(const char *url, struct media_pipe *mp,
     snprintf(errbuf, errlen, "No backend for URL");
     return NULL;
   }
-  return nb->be_play_video(nb, url, mp, primary, priority, errbuf, errlen);
+  return nb->be_play_video(url, mp, primary, priority, errbuf, errlen);
 }
 
 
@@ -91,7 +91,7 @@ backend_play_audio(const char *url, struct media_pipe *mp,
     snprintf(errbuf, errlen, "No backend for URL");
     return NULL;
   }
-  return nb->be_play_audio(nb, url, mp, errbuf, errlen, paused);
+  return nb->be_play_audio(url, mp, errbuf, errlen, paused);
 }
 
 
@@ -107,7 +107,7 @@ backend_list(const char *url, char *errbuf, size_t errlen)
     snprintf(errbuf, errlen, "No backend for URL");
     return NULL;
   }
-  return nb->be_list(nb, url, errbuf, errlen);
+  return nb->be_list(url, errbuf, errlen);
 }
 
 
@@ -115,7 +115,7 @@ backend_list(const char *url, char *errbuf, size_t errlen)
  * Static content
  */
 static int
-be_page_canhandle(struct backend *be, const char *url)
+be_page_canhandle(const char *url)
 {
   return !strncmp(url, "page:", strlen("page:"));
 }
@@ -125,7 +125,7 @@ be_page_canhandle(struct backend *be, const char *url)
  *
  */
 static int
-be_page_open(struct backend *be, prop_t *root, const char *url0)
+be_page_open(prop_t *root, const char *url0)
 {
   prop_t *src = prop_create(root, "model");
   prop_t *metadata = prop_create(src, "metadata");
@@ -161,7 +161,7 @@ backend_imageloader(const char *url, int want_thumb, const char *theme,
     snprintf(errbuf, errlen, "No backend for URL");
     return NULL;
   }
-  return nb->be_imageloader(nb, url, want_thumb, theme, errbuf, errlen);
+  return nb->be_imageloader(url, want_thumb, theme, errbuf, errlen);
 }
 
 
@@ -177,7 +177,7 @@ backend_canhandle(const char *url)
   LIST_FOREACH(be, &backends, be_global_link) {
     if(be->be_canhandle == NULL)
       continue; 
-    s = be->be_canhandle(be, url);
+    s = be->be_canhandle(url);
     if(s > score) {
       best = be;
       score = s;
@@ -202,7 +202,7 @@ backend_probe(const char *url, char *errbuf, size_t errlen)
   if(be->be_probe == NULL)
     return BACKEND_PROBE_OK;
 
-  return be->be_probe(be, url, errbuf, errlen);
+  return be->be_probe(url, errbuf, errlen);
 }
 
 
@@ -210,7 +210,7 @@ backend_probe(const char *url, char *errbuf, size_t errlen)
  *
  */
 int
-backend_open_video(struct backend *be, prop_t *page, const char *url)
+backend_open_video(prop_t *page, const char *url)
 {
   prop_set_int(prop_create(page, "directClose"), 1);
   prop_set_string(prop_create(prop_create(page, "model"), "type"), "video");
@@ -229,7 +229,7 @@ backend_open(prop_t *page, const char *url)
 
   LIST_FOREACH(be, &backends, be_global_link) {
     if(be->be_flags & BACKEND_OPEN_CHECKS_URI) {
-      if(be->be_open(be, page, url))
+      if(be->be_open(page, url))
 	continue;
       return 0;
     }
@@ -241,10 +241,10 @@ backend_open(prop_t *page, const char *url)
     return 1;
 
   if(be->be_normalize != NULL && 
-     !be->be_normalize(be, url, urlbuf, sizeof(urlbuf)))
+     !be->be_normalize(url, urlbuf, sizeof(urlbuf)))
     url = urlbuf;
 
-  be->be_open(be, page, url);
+  be->be_open(page, url);
   return 0;
 }
 
@@ -259,5 +259,5 @@ backend_search(prop_t *model, const char *url)
 
   LIST_FOREACH(be, &backends, be_global_link)
     if(be->be_search != NULL)
-      be->be_search(be, model, url);
+      be->be_search(model, url);
 }

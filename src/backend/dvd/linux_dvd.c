@@ -167,7 +167,7 @@ dvdprobe(callout_t *co, void *aux)
  *
  */
 static int
-be_dvd_canhandle(backend_t *be, const char *url)
+be_dvd_canhandle(const char *url)
 {
   return !strncmp(url, "dvd:", strlen("dvd:"));
 }
@@ -177,8 +177,7 @@ be_dvd_canhandle(backend_t *be, const char *url)
  *
  */
 static event_t *
-be_dvd_play(backend_t *be, const char *url,
-	    media_pipe_t *mp, int primary, int priority,
+be_dvd_play(const char *url, media_pipe_t *mp, int primary, int priority,
 	    char *errstr, size_t errlen)
 {
   event_t *e;

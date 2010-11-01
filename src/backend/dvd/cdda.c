@@ -308,7 +308,7 @@ parse_audiocd_url(const char *url, char *device, size_t devlen)
  *
  */
 static int
-canhandle(struct backend *be, const char *url)
+canhandle(const char *url)
 {
   return parse_audiocd_url(url, NULL, 0) >= 0;
 }
@@ -318,7 +318,7 @@ canhandle(struct backend *be, const char *url)
  *
  */
 static int
-openpage(struct backend *be, prop_t *page, const char *url)
+openpage(prop_t *page, const char *url)
 {
   int track;
   char device[32];
@@ -352,7 +352,7 @@ openpage(struct backend *be, prop_t *page, const char *url)
  *
  */
 static prop_t *
-listdisc(struct backend *be, const char *url, char *errstr, size_t errlen)
+listdisc(const char *url, char *errstr, size_t errlen)
 {
   prop_t *p;
   char device[32];
@@ -400,8 +400,8 @@ cdseek(media_pipe_t *mp, media_buf_t **mbp, int first, int last, int lsn)
  *
  */
 static event_t *
-playaudio(struct backend *be, const char *url,
-	  media_pipe_t *mp, char *errstr, size_t errlen, int hold)
+playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
+	  int hold)
 {
   int track;
   char device[32];

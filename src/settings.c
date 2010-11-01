@@ -559,7 +559,7 @@ settings_init(void)
  *
  */
 static int
-be_settings_canhandle(struct backend *be, const char *url)
+be_settings_canhandle(const char *url)
 {
   return !strncmp(url, SETTINGS_URL, strlen(SETTINGS_URL));
 }
@@ -572,7 +572,7 @@ be_settings_canhandle(struct backend *be, const char *url)
  *
  */
 static int
-be_settings_open(struct backend *be, prop_t *page, const char *url0)
+be_settings_open(prop_t *page, const char *url0)
 {
   prop_t *p = NULL;
   const char *url = url0 + strlen(SETTINGS_URL);

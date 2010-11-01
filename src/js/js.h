@@ -51,10 +51,9 @@ JSBool js_createSettings(JSContext *cx, JSObject *obj, uintN argc,
 
 struct backend;
 
-int js_backend_open(struct backend *be, prop_t *page, const char *url);
+int js_backend_open(prop_t *page, const char *url);
 
-void js_backend_search(struct backend *be, struct prop *model, 
-		       const char *query);
+void js_backend_search(struct prop *model, const char *query);
 
 int js_plugin_load(const char *id, const char *url,
 		   char *errbuf, size_t errlen);

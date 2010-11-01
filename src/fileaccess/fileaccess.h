@@ -159,10 +159,9 @@ int fa_parent(char *dst, size_t dstlen, const char *url);
 
 struct backend;
 
-int fa_normalize(struct backend *be, const char *url, char *dst, size_t dstlen);
+int fa_normalize(const char *url, char *dst, size_t dstlen);
 
-int fa_check_url(struct backend *be, const char *url,
-		 char *errbuf, size_t errlen);
+int fa_check_url(const char *url, char *errbuf, size_t errlen);
 
 struct htsbuf_queue;
 

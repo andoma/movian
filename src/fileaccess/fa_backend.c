@@ -40,7 +40,7 @@
  *
  */
 static int
-be_file_canhandle(backend_t *be, const char *url)
+be_file_canhandle(const char *url)
 {
   return fa_can_handle(url, NULL, 0);
 }
@@ -62,7 +62,7 @@ set_title_from_url(prop_t *metadata, const char *url)
  *
  */
 static int
-file_open_dir(backend_t *be, prop_t *page, const char *url)
+file_open_dir(prop_t *page, const char *url)
 {
   prop_t *model;
   int type;
@@ -71,7 +71,7 @@ file_open_dir(backend_t *be, prop_t *page, const char *url)
   type = fa_probe_dir(NULL, url);
 
   if(type == CONTENT_DVD)
-    return backend_open_video(be, page, url);
+    return backend_open_video(page, url);
 
   model = prop_create(page, "model");
   prop_set_string(prop_create(model, "type"), "directory");
@@ -140,7 +140,7 @@ file_open_audio(prop_t *page, const char *url)
  *
  */
 static int
-file_open_file(backend_t *be, prop_t *page, const char *url, struct fa_stat *fs)
+file_open_file(prop_t *page, const char *url, struct fa_stat *fs)
 {
   char redir[URL_MAX];
   char errbuf[200];
@@ -155,7 +155,7 @@ file_open_file(backend_t *be, prop_t *page, const char *url, struct fa_stat *fs)
   case CONTENT_ARCHIVE:
   case CONTENT_ALBUM:
     prop_destroy(meta);
-    return file_open_dir(be, page, url);
+    return file_open_dir(page, url);
 
   case CONTENT_AUDIO:
     if(!file_open_audio(page, url)) {
@@ -169,7 +169,7 @@ file_open_file(backend_t *be, prop_t *page, const char *url, struct fa_stat *fs)
   case CONTENT_VIDEO:
   case CONTENT_DVD:
     prop_destroy(meta);
-    return backend_open_video(be, page, url);
+    return backend_open_video(page, url);
 
   case CONTENT_IMAGE:
     return file_open_image(page, meta);
@@ -184,7 +184,7 @@ file_open_file(backend_t *be, prop_t *page, const char *url, struct fa_stat *fs)
  *
  */
 static int
-be_file_open(backend_t *be, prop_t *page, const char *url)
+be_file_open(prop_t *page, const char *url)
 {
   struct fa_stat fs;
   char errbuf[200];
@@ -193,7 +193,7 @@ be_file_open(backend_t *be, prop_t *page, const char *url)
     return nav_open_errorf(page, "%s", errbuf);
 
   return fs.fs_type == CONTENT_DIR ? 
-    file_open_dir (be, page, url) : file_open_file(be, page, url, &fs);
+    file_open_dir(page, url) : file_open_file(page, url, &fs);
 }
 
 
@@ -201,7 +201,7 @@ be_file_open(backend_t *be, prop_t *page, const char *url)
  *
  */
 static prop_t *
-be_list(backend_t *be, const char *url, char *errbuf, size_t errsize)
+be_list(const char *url, char *errbuf, size_t errsize)
 {
   prop_t *p = prop_create(NULL, NULL);
   fa_scanner(url, p, NULL);

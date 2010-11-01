@@ -22,8 +22,7 @@
 #include "media.h"
 struct backend;
 
-event_t *be_file_playvideo(struct backend *be, const char *url, 
-			   media_pipe_t *mp,
+event_t *be_file_playvideo(const char *url, media_pipe_t *mp,
 			   int primary, int priority,
 			   char *errbuf, size_t errlen);
 

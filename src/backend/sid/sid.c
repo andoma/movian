@@ -14,7 +14,7 @@ extern void sidcxx_stop(void *W);
  *
  */
 static int
-be_sid2player_canhandle(struct backend *be, const char *url)
+be_sid2player_canhandle(const char *url)
 {
   if(!strncmp(url, "sidplayer:", strlen("sidplayer:")))
     return 10; // We're really good at those
@@ -31,7 +31,7 @@ be_sid2player_canhandle(struct backend *be, const char *url)
  * We only expect this to be called from the playqueue system.
  */
 static event_t *
-be_sid2player_play(struct backend *be, const char *url0, media_pipe_t *mp, 
+be_sid2player_play(const char *url0, media_pipe_t *mp, 
 		   char *errbuf, size_t errlen, int hold)
 {
   media_queue_t *mq = &mp->mp_audio;

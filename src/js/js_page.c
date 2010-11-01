@@ -709,7 +709,7 @@ model_launch(js_model_t *jm)
  *
  */
 int
-js_backend_open(struct backend *be, prop_t *page, const char *url)
+js_backend_open(prop_t *page, const char *url)
 {
   js_route_t *jsr;
   regmatch_t matches[8];
@@ -749,7 +749,7 @@ js_backend_open(struct backend *be, prop_t *page, const char *url)
  *
  */
 void
-js_backend_search(struct backend *be, struct prop *model, const char *query)
+js_backend_search(struct prop *model, const char *query)
 {
   js_searcher_t *jss;
   prop_t *parent = prop_create(model, "nodes");

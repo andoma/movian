@@ -792,7 +792,7 @@ playqueue_open(prop_t *page)
  *
  */
 static int
-be_playqueue_open(struct backend *be, prop_t *page, const char *url)
+be_playqueue_open(prop_t *page, const char *url)
 {
   return playqueue_open(page);
 }
@@ -802,7 +802,7 @@ be_playqueue_open(struct backend *be, prop_t *page, const char *url)
  *
  */
 static int
-be_playqueue_canhandle(struct backend *be, const char *url)
+be_playqueue_canhandle(const char *url)
 {
   return !strncmp(url, PLAYQUEUE_URL, strlen(PLAYQUEUE_URL));
 }

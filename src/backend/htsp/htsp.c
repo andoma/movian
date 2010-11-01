@@ -1157,7 +1157,7 @@ make_model2(prop_t *parent, prop_t *sourcemodel)
  *
  */
 static int
-be_htsp_open(backend_t *be, prop_t *page, const char *url)
+be_htsp_open(prop_t *page, const char *url)
 {
   htsp_connection_t *hc;
   char path[URL_MAX];
@@ -1171,7 +1171,7 @@ be_htsp_open(backend_t *be, prop_t *page, const char *url)
 
   if(!strncmp(path, "/channel/", strlen("/channel/")) ||
      !strncmp(path, "/tagchannel/", strlen("/tagchannel/")))
-    return backend_open_video(be, page, url);
+    return backend_open_video(page, url);
 
   if(!strcmp(path, "/channels")) {
     
@@ -1519,9 +1519,7 @@ htsp_free_streams(htsp_subscription_t *hs)
  *
  */
 static event_t *
-be_htsp_playvideo(backend_t *be, 
-		  const char *url, media_pipe_t *mp, 
-		  int primary, int priority,
+be_htsp_playvideo(const char *url, media_pipe_t *mp, int primary, int priority,
 		  char *errbuf, size_t errlen)
 {
   htsp_connection_t *hc;
@@ -2006,7 +2004,7 @@ htsp_queueStatus(htsp_connection_t *hc, htsmsg_t *m)
  *
  */
 static int
-be_htsp_canhandle(backend_t *be, const char *url)
+be_htsp_canhandle(const char *url)
 {
   return !strncmp(url, "htsp://", strlen("htsp://"));
 }

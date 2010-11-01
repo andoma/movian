@@ -48,34 +48,28 @@ typedef struct backend {
 
   int (*be_init)(void);
 
-  int (*be_canhandle)(struct backend *be, const char *ur);
+  int (*be_canhandle)(const char *ur);
 
-  int (*be_open)(struct backend *be, prop_t *page, const char *url);
+  int (*be_open)(prop_t *page, const char *url);
 
-  event_t *(*be_play_video)(struct backend *be, const char *url,
-			    struct media_pipe *mp,
+  event_t *(*be_play_video)(const char *url, struct media_pipe *mp,
 			    int primary, int priority, 
 			    char *errbuf, size_t errlen);
 
-  event_t *(*be_play_audio)(struct backend *be, const char *url,
-			    struct media_pipe *mp,
+  event_t *(*be_play_audio)(const char *url, struct media_pipe *mp,
 			    char *errbuf, size_t errlen, int paused);
 
-  prop_t *(*be_list)(struct backend *be, const char *url, 
-		     char *errbuf, size_t errsize);
+  prop_t *(*be_list)(const char *url, char *errbuf, size_t errsize);
 
-  struct pixmap *(*be_imageloader)(struct backend *be, 
-				   const char *url, int want_thumb,
+  struct pixmap *(*be_imageloader)(const char *url, int want_thumb,
 				   const char *theme,
 				   char *errbuf, size_t errlen);
 
-  int (*be_normalize)(struct backend *be, const char *url,
-		      char *dst, size_t dstlen);
+  int (*be_normalize)(const char *url, char *dst, size_t dstlen);
 
-  int (*be_probe)(struct backend *be, const char *url,
-		  char *errbuf, size_t errlen);
+  int (*be_probe)(const char *url, char *errbuf, size_t errlen);
 
-  void (*be_search)(struct backend *be, struct prop *model, const char *query);
+  void (*be_search)(struct prop *model, const char *query);
 
 } backend_t;
 
@@ -119,7 +113,7 @@ backend_probe_result_t backend_probe(const char *url,
 
 void backend_register(backend_t *be);
 
-int backend_open_video(struct backend *be, prop_t *page, const char *url)
+int backend_open_video(prop_t *page, const char *url)
      __attribute__ ((warn_unused_result));
 
 void backend_search(prop_t *model, const char *url);

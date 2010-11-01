@@ -373,7 +373,7 @@ fa_searcher (void *aux)
 
 
 static void
-locatedb_search(struct backend *be, prop_t *model, const char *query)
+locatedb_search(prop_t *model, const char *query)
 {
   if (!locatedb_enabled)
     return;

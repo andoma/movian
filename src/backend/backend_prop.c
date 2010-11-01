@@ -104,7 +104,7 @@ backend_prop_make(prop_t *model, char *url, size_t urllen)
  *
  */
 static int
-be_prop_open(struct backend *be, prop_t *page, const char *url)
+be_prop_open(prop_t *page, const char *url)
 {
   proppage_t *pp;
 
