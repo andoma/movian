@@ -90,7 +90,7 @@ notify_add(notify_type_t type, const char *icon, int delay,
   if(prop_set_parent(p, notify_prop_entries))
     abort();
 
-  prop_select(p, 0);
+  prop_select(p);
   
   if(delay != 0) {
     callout_arm(NULL, notify_timeout, p, delay);

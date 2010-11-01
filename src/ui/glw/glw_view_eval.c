@@ -1243,7 +1243,7 @@ cloner_del_child(sub_cloner_t *sc, prop_t *p, glw_t *parent)
  *
  */
 static void
-cloner_select_child(sub_cloner_t *sc, prop_t *p, glw_t *parent)
+cloner_select_child(sub_cloner_t *sc, prop_t *p, glw_t *parent, prop_t *extra)
 {
   glw_t *w;
 
@@ -1344,7 +1344,8 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
 
   case PROP_SELECT_CHILD:
     p = va_arg(ap, prop_t *);
-    cloner_select_child(sc, p, gps->gps_widget);
+    p2 = va_arg(ap, prop_t *);
+    cloner_select_child(sc, p, gps->gps_widget, p2);
     break;
 
   case PROP_SET_RLINK:

@@ -375,7 +375,7 @@ settings_multiopt_add_opt(setting_t *parent, const char *id, const char *title,
 
 
   if(selected)
-    prop_select_ex(o, parent->s_sub);
+    prop_select_ex(o, NULL, parent->s_sub);
 }
 
 
@@ -394,7 +394,7 @@ settings_multiopt_initiate(setting_t *s, htsmsg_t *store,
     prop_t *o = prop_get_by_names(opts, str, NULL);
 
     if(o != NULL)
-      prop_select_ex(o, s->s_sub);
+      prop_select_ex(o, NULL, s->s_sub);
   }
 
   s->s_store = store;

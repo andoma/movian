@@ -232,9 +232,9 @@ void prop_unlink_ex(prop_t *p, prop_sub_t *skipme);
 
 #define prop_unlink(p) prop_unlink_ex(p, NULL)
 
-void prop_select_ex(prop_t *p, prop_sub_t *skipme);
+void prop_select_ex(prop_t *p, prop_t *extra, prop_sub_t *skipme);
 
-#define prop_select(p) prop_select_ex(p, NULL)
+#define prop_select(p) prop_select_ex(p, NULL, NULL)
 
 void prop_unselect_ex(prop_t *parent, prop_sub_t *skipme);
 

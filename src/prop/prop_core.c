@@ -266,7 +266,6 @@ prop_notify_free(prop_notify_t *n)
 
   case PROP_ADD_CHILD:
   case PROP_DEL_CHILD:
-  case PROP_SELECT_CHILD:
   case PROP_REQ_NEW_CHILD:
     if(n->hpn_prop != NULL)
       prop_ref_dec(n->hpn_prop);
@@ -274,6 +273,7 @@ prop_notify_free(prop_notify_t *n)
 
   case PROP_ADD_CHILD_BEFORE:
   case PROP_MOVE_CHILD:
+  case PROP_SELECT_CHILD:
     prop_ref_dec(n->hpn_prop);
     if(n->hpn_prop2 != NULL)
       prop_ref_dec(n->hpn_prop2);
@@ -470,18 +470,19 @@ prop_notify_dispatch(struct prop_notify_queue *q)
 
     case PROP_ADD_CHILD_BEFORE:
     case PROP_MOVE_CHILD:
+    case PROP_SELECT_CHILD:
       if(pt != NULL)
 	cb(s, n->hpn_event, n->hpn_prop, n->hpn_prop2, n->hpn_flags);
       else
 	cb(s->hps_opaque, n->hpn_event, n->hpn_prop, 
 	   n->hpn_prop2, n->hpn_flags);
-      prop_ref_dec(n->hpn_prop);
+      if(n->hpn_prop != NULL)
+	prop_ref_dec(n->hpn_prop);
       if(n->hpn_prop2 != NULL)
 	prop_ref_dec(n->hpn_prop2);
       break;
 
     case PROP_DEL_CHILD:
-    case PROP_SELECT_CHILD:
     case PROP_REQ_NEW_CHILD:
       if(pt != NULL)
 	pt(s, n->hpn_event, n->hpn_prop);
@@ -901,7 +902,7 @@ prop_notify_child(prop_t *child, prop_t *parent, prop_event_t event,
  *
  */
 static void
-prop_build_notify_child2(prop_sub_t *s, prop_t *p, prop_t *sibling, 
+prop_build_notify_child2(prop_sub_t *s, prop_t *p, prop_t *extra, 
 			 prop_event_t event, int direct, int flags)
 {
   prop_notify_t *n;
@@ -911,20 +912,20 @@ prop_build_notify_child2(prop_sub_t *s, prop_t *p, prop_t *sibling,
     prop_trampoline_t *pt = s->hps_trampoline;
 
     if(pt != NULL)
-      pt(s, event, p, sibling, flags);
+      pt(s, event, p, extra, flags);
     else
-      cb(s->hps_opaque, event, p, sibling, flags);
+      cb(s->hps_opaque, event, p, extra, flags);
     return;
   }
 
   n = get_notify(s);
 
   atomic_add(&p->hp_refcount, 1);
-  if(sibling != NULL)
-    atomic_add(&sibling->hp_refcount, 1);
+  if(extra != NULL)
+    atomic_add(&extra->hp_refcount, 1);
 
   n->hpn_prop = p;
-  n->hpn_prop2 = sibling;
+  n->hpn_prop2 = extra;
   n->hpn_event = event;
   n->hpn_flags = flags;
   courier_enqueue(s, n);
@@ -2787,7 +2788,7 @@ prop_follow(prop_t *p)
  *
  */
 void
-prop_select_ex(prop_t *p, prop_sub_t *skipme)
+prop_select_ex(prop_t *p, prop_t *extra, prop_sub_t *skipme)
 {
   prop_t *parent;
 
@@ -2802,7 +2803,7 @@ prop_select_ex(prop_t *p, prop_sub_t *skipme)
 
   if(parent != NULL) {
     assert(parent->hp_type == PROP_DIR);
-    prop_notify_child(p, parent, PROP_SELECT_CHILD, skipme, 0);
+    prop_notify_child2(p, parent, extra, PROP_SELECT_CHILD, skipme, 0);
     parent->hp_selected = p;
   }
 

@@ -231,7 +231,7 @@ static void
 nav_select(navigator_t *nav, nav_page_t *np)
 {
   prop_link(np->np_prop_root, nav->nav_prop_curpage);
-  prop_select(np->np_prop_root, 0);
+  prop_select(np->np_prop_root);
   nav->nav_page_current = np;
   nav_update_cango(nav);
 }

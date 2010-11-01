@@ -857,7 +857,7 @@ mp_set_primary(media_pipe_t *mp)
   mp_enqueue_event(mp, e);
   event_unref(e);
 
-  prop_select(mp->mp_prop_root, 0);
+  prop_select(mp->mp_prop_root);
   prop_link(mp->mp_prop_root, media_prop_current);
 }
 
