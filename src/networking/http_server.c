@@ -270,25 +270,25 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
 
     tm = gmtime_r(&t, &tm0);
     htsbuf_qprintf(&hdrs, 
-		"Last-Modified: %s, %02d %s %d %02d:%02d:%02d GMT\r\n",
-		cachedays[tm->tm_wday],	tm->tm_year + 1900,
-		cachemonths[tm->tm_mon], tm->tm_mday,
-		tm->tm_hour, tm->tm_min, tm->tm_sec);
+		   "Last-Modified: %s, %02d %s %d %02d:%02d:%02d GMT\r\n",
+		   cachedays[tm->tm_wday],	tm->tm_year + 1900,
+		   cachemonths[tm->tm_mon], tm->tm_mday,
+		   tm->tm_hour, tm->tm_min, tm->tm_sec);
 
     t += maxage;
 
     tm = gmtime_r(&t, &tm0);
     htsbuf_qprintf(&hdrs, 
-		"Expires: %s, %02d %s %d %02d:%02d:%02d GMT\r\n",
-		cachedays[tm->tm_wday],	tm->tm_year + 1900,
-		cachemonths[tm->tm_mon], tm->tm_mday,
-		tm->tm_hour, tm->tm_min, tm->tm_sec);
+		   "Expires: %s, %02d %s %d %02d:%02d:%02d GMT\r\n",
+		   cachedays[tm->tm_wday],	tm->tm_year + 1900,
+		   cachemonths[tm->tm_mon], tm->tm_mday,
+		   tm->tm_hour, tm->tm_min, tm->tm_sec);
       
     htsbuf_qprintf(&hdrs, "Cache-Control: max-age=%d\r\n", maxage);
   }
 
   htsbuf_qprintf(&hdrs, "Connection: %s\r\n", 
-	      hc->hc_keep_alive ? "Keep-Alive" : "Close");
+		 hc->hc_keep_alive ? "Keep-Alive" : "Close");
 
   if(encoding != NULL)
     htsbuf_qprintf(&hdrs, "Content-Encoding: %s\r\n", encoding);
@@ -307,465 +307,465 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
   htsbuf_qprintf(&hdrs, "\r\n");
   
   htsbuf_appendq(&hc->hc_output, &hdrs);
- }
+}
 
 
- /**
-  * Transmit a HTTP reply
-  */
- int
- http_send_reply(http_connection_t *hc, int rc, const char *content, 
-		 const char *encoding, const char *location, int maxage,
-		 htsbuf_queue_t *output)
- {
+/**
+ * Transmit a HTTP reply
+ */
+int
+http_send_reply(http_connection_t *hc, int rc, const char *content, 
+		const char *encoding, const char *location, int maxage,
+		htsbuf_queue_t *output)
+{
 
-   http_send_header(hc, rc ?: 200, content, output ? output->hq_size : 0,
-		    encoding, location, maxage, 0);
+  http_send_header(hc, rc ?: 200, content, output ? output->hq_size : 0,
+		   encoding, location, maxage, 0);
 
-   if(output != NULL) {
-     if(hc->hc_no_output)
-       htsbuf_queue_flush(output);
-     else
-       htsbuf_appendq(&hc->hc_output, output);
-   }
-   return 0;
- }
-
-
- /**
-  * Send HTTP error back
-  */
- int
- http_error(http_connection_t *hc, int error, const char *fmt, ...)
- {
-   const char *errtxt = http_rc2str(error);
-   htsbuf_queue_t hq;
-   va_list ap;
-   char extra[200];
-
-   htsbuf_queue_init(&hq, 0);
-
-   if(extra != NULL) {
-
-     va_start(ap, fmt);
-     vsnprintf(extra, sizeof(extra), fmt, ap);
-     va_end(ap);
-   } else {
-     extra[0] = 0;
-   }
+  if(output != NULL) {
+    if(hc->hc_no_output)
+      htsbuf_queue_flush(output);
+    else
+      htsbuf_appendq(&hc->hc_output, output);
+  }
+  return 0;
+}
 
 
-   TRACE(TRACE_ERROR, "HTTPSRV", "%d %s%s%s", error, hc->hc_url_orig,
-	 *extra ? " -- " : "", extra),
+/**
+ * Send HTTP error back
+ */
+int
+http_error(http_connection_t *hc, int error, const char *fmt, ...)
+{
+  const char *errtxt = http_rc2str(error);
+  htsbuf_queue_t hq;
+  va_list ap;
+  char extra[200];
+
+  htsbuf_queue_init(&hq, 0);
+
+  if(extra != NULL) {
+
+    va_start(ap, fmt);
+    vsnprintf(extra, sizeof(extra), fmt, ap);
+    va_end(ap);
+  } else {
+    extra[0] = 0;
+  }
 
 
-   htsbuf_qprintf(&hq, 
-		  "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n"
-		  "<HTML><HEAD>\r\n"
-		  "<TITLE>%d %s</TITLE>\r\n"
-		  "</HEAD><BODY>\r\n"
-		  "<H1>%d %s</H1>\r\n"
-		  "<p>%s</p>\r\n"
-		  "</BODY></HTML>\r\n",
-		  error, errtxt, error, errtxt, extra);
-
-   return http_send_reply(hc, error, "text/html", NULL, NULL, 0, &hq);
- }
+  TRACE(TRACE_ERROR, "HTTPSRV", "%d %s%s%s", error, hc->hc_url_orig,
+	*extra ? " -- " : "", extra),
 
 
- /**
-  * Send an HTTP REDIRECT
-  */
- int
- http_redirect(http_connection_t *hc, const char *location)
- {
-   htsbuf_queue_t hq;
+    htsbuf_qprintf(&hq, 
+		   "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n"
+		   "<HTML><HEAD>\r\n"
+		   "<TITLE>%d %s</TITLE>\r\n"
+		   "</HEAD><BODY>\r\n"
+		   "<H1>%d %s</H1>\r\n"
+		   "<p>%s</p>\r\n"
+		   "</BODY></HTML>\r\n",
+		   error, errtxt, error, errtxt, extra);
 
-   htsbuf_queue_init(&hq, 0);
-
-   htsbuf_qprintf(&hq,
-		  "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n"
-		  "<HTML><HEAD>\r\n"
-		  "<TITLE>Redirect</TITLE>\r\n"
-		  "</HEAD><BODY>\r\n"
-		  "Please follow <a href=\"%s\">%s</a>\r\n"
-		  "</BODY></HTML>\r\n",
-		  location, location);
-
-   return http_send_reply(hc, HTTP_STATUS_FOUND,
-			  "text/html", NULL, location, 0, &hq);
- }
+  return http_send_reply(hc, error, "text/html", NULL, NULL, 0, &hq);
+}
 
 
- /**
-  *
-  */
- static void
- http_exec(http_connection_t *hc, http_path_t *hp, char *remain,
-	   http_cmd_t method)
- {
-   int err = hp->hp_callback(hc, remain, hp->hp_opaque, method);
+/**
+ * Send an HTTP REDIRECT
+ */
+int
+http_redirect(http_connection_t *hc, const char *location)
+{
+  htsbuf_queue_t hq;
 
-   if(err > 0)
-     http_error(hc, err, NULL);
-   else if(err == 0)
-     return;
-   else
-     abort();
- }
+  htsbuf_queue_init(&hq, 0);
 
+  htsbuf_qprintf(&hq,
+		 "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n"
+		 "<HTML><HEAD>\r\n"
+		 "<TITLE>Redirect</TITLE>\r\n"
+		 "</HEAD><BODY>\r\n"
+		 "Please follow <a href=\"%s\">%s</a>\r\n"
+		 "</BODY></HTML>\r\n",
+		 location, location);
 
- /**
-  * De-escape HTTP URL
-  */
- static void
- http_deescape(char *s)
- {
-   char v, *d = s;
-
-   while(*s) {
-     if(*s == '+') {
-       *d++ = ' ';
-       s++;
-     } else if(*s == '%') {
-       s++;
-       switch(*s) {
-       case '0' ... '9':
-	 v = (*s - '0') << 4;
-	 break;
-       case 'a' ... 'f':
-	 v = (*s - 'a' + 10) << 4;
-	 break;
-       case 'A' ... 'F':
-	 v = (*s - 'A' + 10) << 4;
-	 break;
-       default:
-	 *d = 0;
-	 return;
-       }
-       s++;
-       switch(*s) {
-       case '0' ... '9':
-	 v |= (*s - '0');
-	 break;
-       case 'a' ... 'f':
-	 v |= (*s - 'a' + 10);
-	 break;
-       case 'A' ... 'F':
-	 v |= (*s - 'A' + 10);
-	 break;
-       default:
-	 *d = 0;
-	 return;
-       }
-       s++;
-
-       *d++ = v;
-     } else {
-       *d++ = *s++;
-     }
-   }
-   *d = 0;
- }
+  return http_send_reply(hc, HTTP_STATUS_FOUND,
+			 "text/html", NULL, location, 0, &hq);
+}
 
 
- /**
-  *
-  */
- const char *
- http_arg_get_req(http_connection_t *hc, const char *name)
- {
-   return http_header_get(&hc->hc_req_args, name);
- }
+/**
+ *
+ */
+static void
+http_exec(http_connection_t *hc, http_path_t *hp, char *remain,
+	  http_cmd_t method)
+{
+  int err = hp->hp_callback(hc, remain, hp->hp_opaque, method);
+
+  if(err > 0)
+    http_error(hc, err, NULL);
+  else if(err == 0)
+    return;
+  else
+    abort();
+}
 
 
- /**
-  *
-  */
- const char *
- http_arg_get_hdr(http_connection_t *hc, const char *name)
- {
-   return http_header_get(&hc->hc_request_headers, name);
- }
+/**
+ * De-escape HTTP URL
+ */
+static void
+http_deescape(char *s)
+{
+  char v, *d = s;
+
+  while(*s) {
+    if(*s == '+') {
+      *d++ = ' ';
+      s++;
+    } else if(*s == '%') {
+      s++;
+      switch(*s) {
+      case '0' ... '9':
+	v = (*s - '0') << 4;
+	break;
+      case 'a' ... 'f':
+	v = (*s - 'a' + 10) << 4;
+	break;
+      case 'A' ... 'F':
+	v = (*s - 'A' + 10) << 4;
+	break;
+      default:
+	*d = 0;
+	return;
+      }
+      s++;
+      switch(*s) {
+      case '0' ... '9':
+	v |= (*s - '0');
+	break;
+      case 'a' ... 'f':
+	v |= (*s - 'a' + 10);
+	break;
+      case 'A' ... 'F':
+	v |= (*s - 'A' + 10);
+	break;
+      default:
+	*d = 0;
+	return;
+      }
+      s++;
+
+      *d++ = v;
+    } else {
+      *d++ = *s++;
+    }
+  }
+  *d = 0;
+}
 
 
- /**
-  *
-  */
- void
- http_set_response_hdr(http_connection_t *hc, const char *name,
-		       const char *value)
- {
-   http_header_add(&hc->hc_response_headers, name, value);
- }
+/**
+ *
+ */
+const char *
+http_arg_get_req(http_connection_t *hc, const char *name)
+{
+  return http_header_get(&hc->hc_req_args, name);
+}
 
 
- /**
-  * Split a string in components delimited by 'delimiter'
-  */
- static int
- http_tokenize(char *buf, char **vec, int vecsize, int delimiter)
- {
-   int n = 0;
-
-   while(1) {
-     while((*buf > 0 && *buf < 33) || *buf == delimiter)
-       buf++;
-     if(*buf == 0)
-       break;
-     vec[n++] = buf;
-     if(n == vecsize)
-       break;
-     while(*buf > 32 && *buf != delimiter)
-       buf++;
-     if(*buf == 0)
-       break;
-     *buf = 0;
-     buf++;
-   }
-   return n;
- }
+/**
+ *
+ */
+const char *
+http_arg_get_hdr(http_connection_t *hc, const char *name)
+{
+  return http_header_get(&hc->hc_request_headers, name);
+}
 
 
- /**
-  * Parse arguments of a HTTP GET url, not perfect, but works for us
-  */
- static void
- http_parse_get_args(http_connection_t *hc, char *args)
- {
-   char *k, *v;
-
-   while(args) {
-     k = args;
-     if((args = strchr(args, '=')) == NULL)
-       break;
-     *args++ = 0;
-     v = args;
-     args = strchr(args, '&');
-
-     if(args != NULL)
-       *args++ = 0;
-
-     http_deescape(k);
-     http_deescape(v);
-     http_header_add(&hc->hc_req_args, k, v);
-   }
- }
+/**
+ *
+ */
+void
+http_set_response_hdr(http_connection_t *hc, const char *name,
+		      const char *value)
+{
+  http_header_add(&hc->hc_response_headers, name, value);
+}
 
 
- /**
-  *
-  */
- static int
- http_cmd_get(http_connection_t *hc, http_cmd_t method)
- {
-   http_path_t *hp;
-   char *remain;
-   char *args;
+/**
+ * Split a string in components delimited by 'delimiter'
+ */
+static int
+http_tokenize(char *buf, char **vec, int vecsize, int delimiter)
+{
+  int n = 0;
 
-   hp = http_resolve(hc, &remain, &args);
-   if(hp == NULL) {
-     http_error(hc, HTTP_STATUS_NOT_FOUND, NULL);
-     return 0;
-   }
+  while(1) {
+    while((*buf > 0 && *buf < 33) || *buf == delimiter)
+      buf++;
+    if(*buf == 0)
+      break;
+    vec[n++] = buf;
+    if(n == vecsize)
+      break;
+    while(*buf > 32 && *buf != delimiter)
+      buf++;
+    if(*buf == 0)
+      break;
+    *buf = 0;
+    buf++;
+  }
+  return n;
+}
 
-   if(args != NULL)
-     http_parse_get_args(hc, args);
 
-   http_exec(hc, hp, remain, method);
-   return 0;
- }
+/**
+ * Parse arguments of a HTTP GET url, not perfect, but works for us
+ */
+static void
+http_parse_get_args(http_connection_t *hc, char *args)
+{
+  char *k, *v;
+
+  while(args) {
+    k = args;
+    if((args = strchr(args, '=')) == NULL)
+      break;
+    *args++ = 0;
+    v = args;
+    args = strchr(args, '&');
+
+    if(args != NULL)
+      *args++ = 0;
+
+    http_deescape(k);
+    http_deescape(v);
+    http_header_add(&hc->hc_req_args, k, v);
+  }
+}
 
 
- /**
-  *
-  */
- static int
- http_read_post(http_connection_t *hc)
- {
-   http_path_t *hp;
-   char *v, *argv[2], *args, *remain;
-   int n;
-   size_t size = hc->hc_input.hq_size;
-   size_t rsize = hc->hc_post_len - hc->hc_post_offset;
+/**
+ *
+ */
+static int
+http_cmd_get(http_connection_t *hc, http_cmd_t method)
+{
+  http_path_t *hp;
+  char *remain;
+  char *args;
 
-   if(size > rsize)
-     size = rsize;
+  hp = http_resolve(hc, &remain, &args);
+  if(hp == NULL) {
+    http_error(hc, HTTP_STATUS_NOT_FOUND, NULL);
+    return 0;
+  }
 
-   n = htsbuf_read(&hc->hc_input, hc->hc_post_data + hc->hc_post_offset, size);
-   assert(n == size);
+  if(args != NULL)
+    http_parse_get_args(hc, args);
 
-   hc->hc_post_offset += size;
-   assert(hc->hc_post_offset <= hc->hc_post_len);
+  http_exec(hc, hp, remain, method);
+  return 0;
+}
 
-   if(hc->hc_post_offset < hc->hc_post_len)
-     return 0;
 
-   hc->hc_state = HCS_COMMAND;
+/**
+ *
+ */
+static int
+http_read_post(http_connection_t *hc)
+{
+  http_path_t *hp;
+  char *v, *argv[2], *args, *remain;
+  int n;
+  size_t size = hc->hc_input.hq_size;
+  size_t rsize = hc->hc_post_len - hc->hc_post_offset;
+
+  if(size > rsize)
+    size = rsize;
+
+  n = htsbuf_read(&hc->hc_input, hc->hc_post_data + hc->hc_post_offset, size);
+  assert(n == size);
+
+  hc->hc_post_offset += size;
+  assert(hc->hc_post_offset <= hc->hc_post_len);
+
+  if(hc->hc_post_offset < hc->hc_post_len)
+    return 0;
+
+  hc->hc_state = HCS_COMMAND;
 
   /* Parse content-type */
-   v = mystrdupa(http_header_get(&hc->hc_request_headers, "Content-Type"));
-   if(v == NULL) {
-     http_error(hc, HTTP_STATUS_BAD_REQUEST, "Content-Type missing");
-     return 0;
-   }
-   n = http_tokenize(v, argv, 2, ';');
-   if(n == 0) {
-     http_error(hc, HTTP_STATUS_BAD_REQUEST, "Content-Type malformed");
-     return 0;
-   }
+  v = mystrdupa(http_header_get(&hc->hc_request_headers, "Content-Type"));
+  if(v == NULL) {
+    http_error(hc, HTTP_STATUS_BAD_REQUEST, "Content-Type missing");
+    return 0;
+  }
+  n = http_tokenize(v, argv, 2, ';');
+  if(n == 0) {
+    http_error(hc, HTTP_STATUS_BAD_REQUEST, "Content-Type malformed");
+    return 0;
+  }
 
-   if(!strcmp(argv[0], "application/x-www-form-urlencoded"))
-     http_parse_get_args(hc, hc->hc_post_data);
+  if(!strcmp(argv[0], "application/x-www-form-urlencoded"))
+    http_parse_get_args(hc, hc->hc_post_data);
 
-   hp = http_resolve(hc, &remain, &args);
-   if(hp == NULL) {
-     http_error(hc, HTTP_STATUS_NOT_FOUND, NULL);
-     return 0;
-   }
-   http_exec(hc, hp, remain, HTTP_CMD_POST);
-   return 0;
- }
-
-
- /**
-  *
-  */
- static int
- http_cmd_post(http_connection_t *hc)
- {
-   const char *v;
-
-   /* Set keep-alive status */
-   v = http_header_get(&hc->hc_request_headers, "Content-Length");
-   if(v == NULL) {
-     /* No content length in POST, make us disconnect */
-     return 1;
-   }
-
-   hc->hc_post_len = atoi(v);
-   if(hc->hc_post_len > 16 * 1024 * 1024) {
-     /* Bail out if POST data > 16 Mb */
-     hc->hc_keep_alive = 0;
-     return 1;
-   }
-
-   /* Allocate space for data, we add a terminating null char to ease
-      string processing on the content */
-
-   hc->hc_post_data = calloc(1, hc->hc_post_len + 1);
-   hc->hc_post_data[hc->hc_post_len] = 0;
-   hc->hc_post_offset = 0;
-
-   hc->hc_state = HCS_POSTDATA;
-   return http_read_post(hc);
- }
-
- /**
-  *
-  */
- static int
- http_handle_request(http_connection_t *hc)
- {
-   hc->hc_state = HCS_COMMAND;
-   /* Set keep-alive status */
-   const char *v = http_header_get(&hc->hc_request_headers, "connection");
-
-   switch(hc->hc_version) {
-   case HTTP_VERSION_1_0:
-     /* Keep-alive is default off, but can be enabled */
-     hc->hc_keep_alive = v != NULL && !strcasecmp(v, "keep-alive");
-     break;
-
-   case HTTP_VERSION_1_1:
-     /* Keep-alive is default on, but can be disabled */
-     hc->hc_keep_alive = !(v != NULL && !strcasecmp(v, "close"));
-     break;
-   }
-
-   hc->hc_no_output = hc->hc_cmd == HTTP_CMD_HEAD;
-
-   switch(hc->hc_cmd) {
-   case HTTP_CMD_POST:
-     return http_cmd_post(hc);
-
-   case HTTP_CMD_HEAD:
-     hc->hc_no_output = 1;
-     // FALLTHRU
-   case HTTP_CMD_GET:
-   case HTTP_CMD_SUBSCRIBE:
-   case HTTP_CMD_UNSUBSCRIBE:
-     return http_cmd_get(hc, hc->hc_cmd);
-   }
-   return 1;
- }
+  hp = http_resolve(hc, &remain, &args);
+  if(hp == NULL) {
+    http_error(hc, HTTP_STATUS_NOT_FOUND, NULL);
+    return 0;
+  }
+  http_exec(hc, hp, remain, HTTP_CMD_POST);
+  return 0;
+}
 
 
- /**
-  *
-  */
- static int
- http_read_line(http_connection_t *hc, char *buf, size_t bufsize)
- {
-   int len;
+/**
+ *
+ */
+static int
+http_cmd_post(http_connection_t *hc)
+{
+  const char *v;
 
-   len = htsbuf_find(&hc->hc_input, 0xa);
-   if(len == -1)
-     return 0;
+  /* Set keep-alive status */
+  v = http_header_get(&hc->hc_request_headers, "Content-Length");
+  if(v == NULL) {
+    /* No content length in POST, make us disconnect */
+    return 1;
+  }
 
-   if(len >= bufsize - 1)
-     return -1;
+  hc->hc_post_len = atoi(v);
+  if(hc->hc_post_len > 16 * 1024 * 1024) {
+    /* Bail out if POST data > 16 Mb */
+    hc->hc_keep_alive = 0;
+    return 1;
+  }
 
-   htsbuf_read(&hc->hc_input, buf, len);
-   buf[len] = 0;
-   while(len > 0 && buf[len - 1] < 32)
-     buf[--len] = 0;
-   htsbuf_drop(&hc->hc_input, 1); /* Drop the \n */
-   return 1;
- }
+  /* Allocate space for data, we add a terminating null char to ease
+     string processing on the content */
+
+  hc->hc_post_data = calloc(1, hc->hc_post_len + 1);
+  hc->hc_post_data[hc->hc_post_len] = 0;
+  hc->hc_post_offset = 0;
+
+  hc->hc_state = HCS_POSTDATA;
+  return http_read_post(hc);
+}
+
+/**
+ *
+ */
+static int
+http_handle_request(http_connection_t *hc)
+{
+  hc->hc_state = HCS_COMMAND;
+  /* Set keep-alive status */
+  const char *v = http_header_get(&hc->hc_request_headers, "connection");
+
+  switch(hc->hc_version) {
+  case HTTP_VERSION_1_0:
+    /* Keep-alive is default off, but can be enabled */
+    hc->hc_keep_alive = v != NULL && !strcasecmp(v, "keep-alive");
+    break;
+
+  case HTTP_VERSION_1_1:
+    /* Keep-alive is default on, but can be disabled */
+    hc->hc_keep_alive = !(v != NULL && !strcasecmp(v, "close"));
+    break;
+  }
+
+  hc->hc_no_output = hc->hc_cmd == HTTP_CMD_HEAD;
+
+  switch(hc->hc_cmd) {
+  case HTTP_CMD_POST:
+    return http_cmd_post(hc);
+
+  case HTTP_CMD_HEAD:
+    hc->hc_no_output = 1;
+    // FALLTHRU
+  case HTTP_CMD_GET:
+  case HTTP_CMD_SUBSCRIBE:
+  case HTTP_CMD_UNSUBSCRIBE:
+    return http_cmd_get(hc, hc->hc_cmd);
+  }
+  return 1;
+}
 
 
- /**
-  *
-  */
- static int
- http_handle_input(http_connection_t *hc)
- {
-   char buf[1024];
-   char *argv[3], *c;
-   int r, n;
+/**
+ *
+ */
+static int
+http_read_line(http_connection_t *hc, char *buf, size_t bufsize)
+{
+  int len;
 
-   while(1) {
+  len = htsbuf_find(&hc->hc_input, 0xa);
+  if(len == -1)
+    return 0;
 
-     switch(hc->hc_state) {
-     case HCS_COMMAND:
-       free(hc->hc_post_data);
-       hc->hc_post_data = NULL;
+  if(len >= bufsize - 1)
+    return -1;
 
-       if((r = http_read_line(hc, buf, sizeof(buf))) == -1)
-	 return 1;
+  htsbuf_read(&hc->hc_input, buf, len);
+  buf[len] = 0;
+  while(len > 0 && buf[len - 1] < 32)
+    buf[--len] = 0;
+  htsbuf_drop(&hc->hc_input, 1); /* Drop the \n */
+  return 1;
+}
 
-       if(r == 0)
-	 return 0;
 
-       if((n = http_tokenize(buf, argv, 3, -1)) != 3)
-	 return 1;
+/**
+ *
+ */
+static int
+http_handle_input(http_connection_t *hc)
+{
+  char buf[1024];
+  char *argv[3], *c;
+  int r, n;
 
-       if((hc->hc_cmd = str2val(argv[0], HTTP_cmdtab)) == -1)
-	 return 1;
+  while(1) {
 
-       mystrset(&hc->hc_url, argv[1]);
-       mystrset(&hc->hc_url_orig, argv[1]);
+    switch(hc->hc_state) {
+    case HCS_COMMAND:
+      free(hc->hc_post_data);
+      hc->hc_post_data = NULL;
 
-       if((hc->hc_version = str2val(argv[2], HTTP_versiontab)) == -1)
-	 return 1;
+      if((r = http_read_line(hc, buf, sizeof(buf))) == -1)
+	return 1;
 
-       hc->hc_state = HCS_HEADERS;
-       /* FALLTHRU */
+      if(r == 0)
+	return 0;
 
-       http_headers_free(&hc->hc_req_args);
-       http_headers_free(&hc->hc_request_headers);
-       http_headers_free(&hc->hc_response_headers);
+      if((n = http_tokenize(buf, argv, 3, -1)) != 3)
+	return 1;
+
+      if((hc->hc_cmd = str2val(argv[0], HTTP_cmdtab)) == -1)
+	return 1;
+
+      mystrset(&hc->hc_url, argv[1]);
+      mystrset(&hc->hc_url_orig, argv[1]);
+
+      if((hc->hc_version = str2val(argv[2], HTTP_versiontab)) == -1)
+	return 1;
+
+      hc->hc_state = HCS_HEADERS;
+      /* FALLTHRU */
+
+      http_headers_free(&hc->hc_req_args);
+      http_headers_free(&hc->hc_request_headers);
+      http_headers_free(&hc->hc_response_headers);
 
     case HCS_HEADERS:
       if((r = http_read_line(hc, buf, sizeof(buf))) == -1)
