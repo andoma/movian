@@ -88,19 +88,20 @@ setprev(glw_deck_t *gd, glw_t *c)
  *
  */
 static void
-deck_select(glw_deck_t *gd, glw_t *c)
+deck_select_child(glw_t *w, glw_t *c)
 {
+  glw_deck_t *gd = (glw_deck_t *)w;
   setprev(gd, c);
-  gd->w.glw_selected = c;
-  if(gd->w.glw_selected != NULL) {
-    glw_focus_open_path_close_all_other(gd->w.glw_selected);
-    glw_deck_update_constraints(&gd->w);
+  w->glw_selected = c;
+  if(w->glw_selected != NULL) {
+    glw_focus_open_path_close_all_other(w->glw_selected);
+    glw_deck_update_constraints(w);
   } else {
-    clear_constraints(&gd->w);
+    clear_constraints(w);
   }
 
   if(gd->efx_conf != GLW_TRANS_NONE &&
-     (gd->prev != NULL || !(gd->w.glw_flags & GLW_NO_INITIAL_TRANS)))
+     (gd->prev != NULL || !(w->glw_flags & GLW_NO_INITIAL_TRANS)))
     gd->v = 0;
 }
 
@@ -161,10 +162,6 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       glw_select(w, n);
 
     return 1;
-
-  case GLW_SIGNAL_SELECT:
-    deck_select(gd, extra);
-    break;
 
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
     if(w->glw_selected == extra)
@@ -234,7 +231,7 @@ set_page(glw_deck_t *gd, int n)
     if(!n--)
       break;
   }
-  deck_select(gd, c);
+  deck_select_child(&gd->w, c);
 }
 
 
@@ -271,9 +268,7 @@ glw_deck_set(glw_t *w, int init, va_list ap)
       break;
     }
   } while(attrib);
-
  }
-
 
 /**
  *
@@ -286,6 +281,7 @@ static glw_class_t glw_deck = {
   .gc_render = glw_deck_render,
   .gc_set = glw_deck_set,
   .gc_signal_handler = glw_deck_callback,
+  .gc_select_child = deck_select_child,
 };
 
 GLW_REGISTER_CLASS(glw_deck);

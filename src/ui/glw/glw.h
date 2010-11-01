@@ -217,14 +217,6 @@ typedef enum {
 
   GLW_SIGNAL_EVENT,
 
-
-  /**
-   * Sent to parent to switch currently selected child.
-   * Parent should NOT send GLW_SIGNAL_SELECTED_UPDATE to the child
-   * in this case.
-   */
-  GLW_SIGNAL_SELECT,
-
   /**
    * Sent to widget when its focused child is changed.
    * Argument is newly focused child.
@@ -423,6 +415,11 @@ typedef struct glw_class {
    * Return number of childern currently packed per row
    */
   int (*gc_get_num_children_x)(struct glw *w);
+
+  /**
+   * Select a child
+   */
+  void (*gc_select_child)(struct glw *w, struct glw *c);
 
   /**
    * Registration link

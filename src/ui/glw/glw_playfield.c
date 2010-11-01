@@ -103,20 +103,22 @@ setprev(glw_playfield_t *gd, glw_t *c)
  *
  */
 static void
-playfield_select(glw_playfield_t *gd, glw_t *c)
+playfield_select_child(glw_t *w, glw_t *c)
 {
-  setprev(gd, c);
-  gd->w.glw_selected = c;
-  if(gd->w.glw_selected != NULL) {
-    glw_focus_open_path_close_all_other(gd->w.glw_selected);
-    glw_playfield_update_constraints(gd);
+  glw_playfield_t *p = (glw_playfield_t *)w;
+
+  setprev(p, c);
+  w->glw_selected = c;
+  if(w->glw_selected != NULL) {
+    glw_focus_open_path_close_all_other(w->glw_selected);
+    glw_playfield_update_constraints(p);
   } else {
-    clear_constraints(&gd->w);
+    clear_constraints(w);
   }
 
-  if(gd->efx_conf != GLW_TRANS_NONE &&
-     (gd->prev != NULL || !(gd->w.glw_flags & GLW_NO_INITIAL_TRANS)))
-    gd->v = 0;
+  if(p->efx_conf != GLW_TRANS_NONE &&
+     (p->prev != NULL || !(w->glw_flags & GLW_NO_INITIAL_TRANS)))
+    p->v = 0;
 }
 
 
@@ -175,10 +177,6 @@ glw_playfield_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       glw_select(w, n);
 
     return 1;
-
-  case GLW_SIGNAL_SELECT:
-    playfield_select(p, extra);
-    break;
 
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
     if(w->glw_selected == extra)
@@ -248,7 +246,7 @@ set_page(glw_playfield_t *gd, int n)
     if(!n--)
       break;
   }
-  playfield_select(gd, c);
+  playfield_select_child(&gd->w, c);
 }
 
 
@@ -300,6 +298,7 @@ static glw_class_t glw_playfield = {
   .gc_render = glw_playfield_render,
   .gc_set = glw_playfield_set,
   .gc_signal_handler = glw_playfield_callback,
+  .gc_select_child = playfield_select_child,
 };
 
 GLW_REGISTER_CLASS(glw_playfield);
