@@ -226,11 +226,6 @@ typedef enum {
   GLW_SIGNAL_SELECT,
 
   /**
-   * Emitted by parent to child when it has been selected.
-   */
-  GLW_SIGNAL_SELECTED_UPDATE,
-
-  /**
    * Sent to widget when its focused child is changed.
    * Argument is newly focused child.
    */
