@@ -58,7 +58,7 @@
 	  
 	  page.appendItem("viastream:sitemapdata:1se:0", "directory", {
 		  title: "Sport",
-		      icon: plugin.config.path + "sesportlarge.png"
+		      icon: plugin.config.path + "1selarge.png"
 		      });
 	  
 
