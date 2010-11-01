@@ -24,7 +24,6 @@
 
 struct pixmap;
 struct media_pipe;
-struct nav_page;
 struct navigator;
 
 /**
@@ -36,7 +35,6 @@ typedef enum {
   BACKEND_PROBE_NO_HANDLER,
   BACKEND_PROBE_FAIL,
 } backend_probe_result_t;
-
 
 /**
  *
@@ -52,11 +50,7 @@ typedef struct backend {
 
   int (*be_canhandle)(struct backend *be, const char *ur);
 
-  struct nav_page *(*be_open)(struct backend *be, struct navigator *nav, 
-			      const char *url, const char *view,
-			      char *errbuf, size_t errlen);
-
-#define BACKEND_NOURI ((struct nav_page *)-1)
+  int (*be_open)(struct backend *be, prop_t *page, const char *url);
 
   event_t *(*be_play_video)(struct backend *be, const char *url,
 			    struct media_pipe *mp,
@@ -92,34 +86,41 @@ typedef struct backend {
  */
 void backend_init(void);
 
-struct nav_page *backend_open(struct navigator *nav, const char *url,
-			      const char *view, char *errbuf, size_t errlen);
-
+int backend_open(struct prop *page, const char *url)
+     __attribute__ ((warn_unused_result));
 
 event_t *backend_play_video(const char *url, struct media_pipe *mp,
 			    int primary, int priority,
-			    char *errbuf, size_t errlen);
+			    char *errbuf, size_t errlen)
+     __attribute__ ((warn_unused_result));
+
 
 event_t *backend_play_audio(const char *url, struct media_pipe *mp,
-			    char *errbuf, size_t errlen, int paused);
+			    char *errbuf, size_t errlen, int paused)
+     __attribute__ ((warn_unused_result));
 
-prop_t *backend_list(const char *url, char *errbuf, size_t errlen);
+
+prop_t *backend_list(const char *url, char *errbuf, size_t errlen)
+     __attribute__ ((warn_unused_result));
+
 
 struct pixmap *backend_imageloader(const char *url, int want_thumb,
 				   const char *theme,
-				   char *errbuf, size_t errlen);
+				   char *errbuf, size_t errlen)
+     __attribute__ ((warn_unused_result));
 
-backend_t *backend_canhandle(const char *url);
+backend_t *backend_canhandle(const char *url)
+     __attribute__ ((warn_unused_result));
+
 
 backend_probe_result_t backend_probe(const char *url,
-				     char *errbuf, size_t errlen);
+				     char *errbuf, size_t errlen)
+     __attribute__ ((warn_unused_result));
 
 void backend_register(backend_t *be);
 
-struct nav_page *backend_open_video(backend_t *be, 
-				    struct navigator *nav, const char *url,
-				    const char *view,
-				    char *errbuf, size_t errlen);
+int backend_open_video(struct backend *be, prop_t *page, const char *url)
+     __attribute__ ((warn_unused_result));
 
 void backend_search(prop_t *model, const char *url);
 

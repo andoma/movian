@@ -103,12 +103,10 @@ backend_prop_make(prop_t *model, char *url, size_t urllen)
 /**
  *
  */
-static nav_page_t *
-be_prop_open(struct backend *be, struct navigator *nav,  const char *url,
-	     const char *view, char *errbuf, size_t errlen)
+static int
+be_prop_open(struct backend *be, prop_t *page, const char *url)
 {
   proppage_t *pp;
-  nav_page_t *n;
 
   hts_mutex_lock(&pp_mutex);
 
@@ -117,13 +115,13 @@ be_prop_open(struct backend *be, struct navigator *nav,  const char *url,
       break;
 
   if(pp == NULL) {
-    n = BACKEND_NOURI;
-  } else {
-    n = nav_page_create(nav, url, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
-    prop_link(pp->pp_model, prop_create(n->np_prop_root, "model"));
+    hts_mutex_unlock(&pp_mutex);
+    return 1;
   }
+
+  prop_link(pp->pp_model, prop_create(page, "model"));
   hts_mutex_unlock(&pp_mutex);
-  return n;
+  return 0;
 }
 
 

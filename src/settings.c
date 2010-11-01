@@ -571,21 +571,17 @@ be_settings_canhandle(struct backend *be, const char *url)
 /**
  *
  */
-static nav_page_t  *
-be_settings_open(struct backend *be, struct navigator *nav,
-		 const char *url0, const char *view,
-		 char *errbuf, size_t errlen)
+static int
+be_settings_open(struct backend *be, prop_t *page, const char *url0)
 {
-  nav_page_t *n;
   prop_t *p = NULL;
   const char *url = url0 + strlen(SETTINGS_URL);
   char buf[100];
   int l;
 
   if(!*url) {
-    n = nav_page_create(nav, url0, view, 0);
-    prop_link(settings_root, prop_create(n->np_prop_root, "model"));
-    return n;
+    prop_link(settings_root, prop_create(page, "model"));
+    return 0;
    }
 
   while(*url) {
@@ -608,9 +604,8 @@ be_settings_open(struct backend *be, struct navigator *nav,
     p = prop_create(p, buf);
   }
   
-  n = nav_page_create(nav, url0, view, 0);
-  prop_link(prop_create(p, "model"), prop_create(n->np_prop_root, "model"));
-  return n;
+  prop_link(prop_create(p, "model"), prop_create(page, "model"));
+  return 0;
 }
 
 

@@ -97,32 +97,27 @@ search_canhandle(backend_t *be, const char *url)
 /**
  *
  */
-static nav_page_t *
-search_open(backend_t *beself, struct navigator *nav,
-	    const char *url0, const char *view,
-	    char *errbuf, size_t errlen)
+static int
+search_open(backend_t *beself, prop_t *page, const char *url0)
 {
   const char *url;
-  nav_page_t *np;
   prop_t *model, *meta, *source;
 
   if((url = strchr(url0, ':')) == NULL)
     abort();
   url++;
 
-  if((np = backend_open(nav, url, view, errbuf, errlen)) != BACKEND_NOURI)
-    return np;
+  if(!backend_open(page, url))
+    return 0;
   
-  np = nav_page_create(nav, url0, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
-
-  model = prop_create(np->np_prop_root, "model");
+  model = prop_create(page, "model");
   prop_set_string(prop_create(model, "type"), "directory");
   
   meta = prop_create(model, "metadata");
   prop_set_string(prop_create(meta, "title"), url);
 
 
-  source = prop_create(np->np_prop_root, "source");
+  source = prop_create(page, "source");
 
   struct prop_nf *pnf;
 
@@ -137,7 +132,7 @@ search_open(backend_t *beself, struct navigator *nav,
   prop_nf_release(pnf);
 
   backend_search(source, url);
-  return np;
+  return 0;
 }
 
 /**

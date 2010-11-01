@@ -773,33 +773,28 @@ playqueue_init(void)
 
 
 
-nav_page_t *
-playqueue_open(backend_t *be, struct navigator *nav, const char *view)
+int
+playqueue_open(prop_t *page)
 {
-  nav_page_t *n;
   prop_t *src, *metadata;
 
-  n = nav_page_create(nav, "playqueue:", view, NAV_PAGE_DONT_CLOSE_ON_BACK);
-
-  src = prop_create(n->np_prop_root, "model");
+  src = prop_create(page, "model");
   prop_set_string(prop_create(src, "type"), "playqueue");
 
   metadata = prop_create(src, "metadata");
   prop_set_string(prop_create(metadata, "title"), "Playqueue");
 
   prop_link(playqueue_nodes, prop_create(src, "nodes"));
-  return n;
+  return 0;
 }
 
 /**
  *
  */
-static nav_page_t *
-be_playqueue_open(struct backend *be, struct navigator *nav,
-		  const char *url0, const char *view,
-		  char *errbuf, size_t errlen)
+static int
+be_playqueue_open(struct backend *be, prop_t *page, const char *url)
 {
-  return playqueue_open(be, nav, view);
+  return playqueue_open(page);
 }
 
 

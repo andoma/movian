@@ -124,22 +124,17 @@ be_page_canhandle(struct backend *be, const char *url)
 /**
  *
  */
-static nav_page_t *
-be_page_open(struct backend *be, 
-	     struct navigator *nav,  const char *url0, const char *view,
-	     char *errbuf, size_t errlen)
+static int
+be_page_open(struct backend *be, prop_t *root, const char *url0)
 {
-  nav_page_t *n = nav_page_create(nav, url0, view,
-				  NAV_PAGE_DONT_CLOSE_ON_BACK);
-  prop_t *src = prop_create(n->np_prop_root, "model");
+  prop_t *src = prop_create(root, "model");
   prop_t *metadata = prop_create(src, "metadata");
   char *cap = mystrdupa(url0 + strlen("page:"));
 
   prop_set_string(prop_create(src, "type"), cap);
   cap[0] = toupper((int)cap[0]);
   prop_set_string(prop_create(metadata, "title"), cap);
-
-  return n;
+  return 0;
 }
 
 
@@ -214,52 +209,43 @@ backend_probe(const char *url, char *errbuf, size_t errlen)
 /**
  *
  */
-nav_page_t *
-backend_open_video(backend_t *be, struct navigator *nav,
-		   const char *url, const char *view,
-		   char *errbuf, size_t errlen)
+int
+backend_open_video(struct backend *be, prop_t *page, const char *url)
 {
-  nav_page_t *np = nav_page_create(nav, url, view, 0);
-  prop_t *src = prop_create(np->np_prop_root, "model");
-
-  prop_set_string(prop_create(src, "type"), "video");
-  return np;
+  prop_set_int(prop_create(page, "directClose"), 1);
+  prop_set_string(prop_create(prop_create(page, "model"), "type"), "video");
+  return 0;
 }
 
 
 /**
  *
  */
-nav_page_t *
-backend_open(struct navigator *nav, const char *url, const char *view,
-	     char *errbuf, size_t errlen)
+int
+backend_open(prop_t *page, const char *url)
 {
   backend_t *be;
-  struct nav_page *np;
   char urlbuf[URL_MAX];
 
   LIST_FOREACH(be, &backends, be_global_link) {
     if(be->be_flags & BACKEND_OPEN_CHECKS_URI) {
-      np = be->be_open(be, nav, url, view, errbuf, errlen);
-      if(np == NULL)
-	return NULL;
-
-      if(np == BACKEND_NOURI)
+      if(be->be_open(be, page, url))
 	continue;
-      return np;
+      return 0;
     }
   }
 
   be = backend_canhandle(url);
 
   if(be == NULL)
-    return BACKEND_NOURI;
+    return 1;
 
   if(be->be_normalize != NULL && 
      !be->be_normalize(be, url, urlbuf, sizeof(urlbuf)))
     url = urlbuf;
 
-  return be->be_open(be, nav, url, view, errbuf, errlen);
+  be->be_open(be, page, url);
+  return 0;
 }
 
 

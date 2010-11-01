@@ -30,6 +30,32 @@
 
 TAILQ_HEAD(nav_page_queue, nav_page);
 
+
+/**
+ *
+ */
+typedef struct nav_page {
+  struct navigator *np_nav;
+
+  TAILQ_ENTRY(nav_page) np_global_link;
+  TAILQ_ENTRY(nav_page) np_history_link;
+  int np_inhistory;
+
+  prop_t *np_prop_root;
+  char *np_url;
+  char *np_view;
+
+  int np_direct_close;
+
+  prop_sub_t *np_close_sub;
+
+  prop_sub_t *np_url_sub;
+
+  prop_sub_t *np_direct_close_sub;
+
+} nav_page_t;
+
+
 /**
  *
  */
@@ -58,8 +84,7 @@ static void nav_eventsink(void *opaque, prop_event_t event, ...);
 
 static void nav_dtor_tracker(void *opaque, prop_event_t event, ...);
 
-static void nav_open_error_raw(navigator_t *nav, const char *url, 
-			       const char *msg);
+static void nav_open0(navigator_t *nav, const char *url, const char *view);
 
 /**
  *
@@ -166,6 +191,7 @@ nav_close(nav_page_t *np, int with_prop)
 
   prop_unsubscribe(np->np_close_sub);
   prop_unsubscribe(np->np_url_sub);
+  prop_unsubscribe(np->np_direct_close_sub);
 
   if(nav->nav_page_current == np)
     nav->nav_page_current = NULL;
@@ -242,71 +268,7 @@ nav_insert_page(navigator_t *nav, nav_page_t *np)
   nav_select(nav, np);
 }
 
-/**
- *
- */
-static void
-nav_open0(navigator_t *nav, const char *url, const char *view)
-{
-  nav_page_t *np;
-  char errbuf[128];
 
-  TRACE(TRACE_DEBUG, "navigator", "Opening %s", url);
-
-  np = backend_open(nav, url, view, errbuf, sizeof(errbuf));
-
-  if(np == BACKEND_NOURI) {
-    nav_open_error_raw(nav, url, "No handler for URL");
-  } else if(np == NULL) {
-    nav_open_error_raw(nav, url, errbuf);
-  } else {
-    nav_insert_page(nav, np);
-  }
-}
-
-
-/**
- *
- */
-void
-nav_open(const char *url, const char *view)
-{
-  event_dispatch(event_create_openurl(url, view));
-}
-
-
-/**
- *
- */
-static void
-nav_back(navigator_t *nav)
-{
-  nav_page_t *prev, *np = nav->nav_page_current;
-
-  if(np != NULL &&
-     (prev = TAILQ_PREV(np, nav_page_queue, np_history_link)) != NULL) {
-
-    nav_select(nav, prev);
-
-    if(!(np->np_flags & NAV_PAGE_DONT_CLOSE_ON_BACK))
-      nav_close(np, 1);
-  }
-}
-
-
-/**
- *
- */
-static void
-nav_fwd(navigator_t *nav)
-{
-  nav_page_t *next, *np;
-
-  np = nav->nav_page_current;
-
-  if(np != NULL && (next = TAILQ_NEXT(np, np_history_link)) != NULL)
-    nav_select(nav, next);
-}
 
 /**
  *
@@ -347,24 +309,33 @@ nav_page_url_set(void *opaque, const char *str)
 /**
  *
  */
-nav_page_t *
-nav_page_create(navigator_t *nav, const char *url, const char *view, int flags)
+static void
+nav_page_direct_close_set(void *opaque, int v)
+{
+  nav_page_t *np = opaque;
+  np->np_direct_close = v;
+}
+
+
+/**
+ *
+ */
+static void
+nav_open0(navigator_t *nav, const char *url, const char *view)
 {
   nav_page_t *np = calloc(1, sizeof(nav_page_t));
-
   np->np_nav = nav;
   np->np_url = url ? strdup(url) : NULL;
+  np->np_direct_close = 0;
   TAILQ_INSERT_TAIL(&nav->nav_pages, np, np_global_link);
 
   np->np_prop_root = prop_create(NULL, "page");
-
   if(view != NULL) {
     np->np_view = strdup(view);
     prop_set_string(prop_create(np->np_prop_root, "requestedView"), view);
   }
 
-  np->np_flags = flags;
-
+  // XXX Change this into event-style subscription
   np->np_close_sub = 
     prop_subscribe(0,
 		   PROP_TAG_ROOT, prop_create(np->np_prop_root, "close"),
@@ -382,7 +353,62 @@ nav_page_create(navigator_t *nav, const char *url, const char *view, int flags)
 		   PROP_TAG_COURIER, nav->nav_pc,
 		   NULL);
 
-  return np;
+  np->np_direct_close_sub = 
+    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+		   PROP_TAG_ROOT, prop_create(np->np_prop_root, "directClose"),
+		   PROP_TAG_CALLBACK_INT, nav_page_direct_close_set, np,
+		   PROP_TAG_COURIER, nav->nav_pc,
+		   NULL);
+  
+  TRACE(TRACE_DEBUG, "navigator", "Opening %s", url);
+  if(backend_open(np->np_prop_root, url))
+    nav_open_errorf(np->np_prop_root, url, "No handler for URL");
+
+  nav_insert_page(nav, np);
+}
+
+
+/**
+ *
+ */
+void
+nav_open(const char *url, const char *view)
+{
+  event_dispatch(event_create_openurl(url, view));
+}
+
+
+/**
+ *
+ */
+static void
+nav_back(navigator_t *nav)
+{
+  nav_page_t *prev, *np = nav->nav_page_current;
+
+  if(np != NULL &&
+     (prev = TAILQ_PREV(np, nav_page_queue, np_history_link)) != NULL) {
+
+    nav_select(nav, prev);
+
+    if(np->np_direct_close)
+      nav_close(np, 1);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+nav_fwd(navigator_t *nav)
+{
+  nav_page_t *next, *np;
+
+  np = nav->nav_page_current;
+
+  if(np != NULL && (next = TAILQ_NEXT(np, np_history_link)) != NULL)
+    nav_select(nav, next);
 }
 
 
@@ -444,7 +470,7 @@ nav_dtor_tracker(void *opaque, prop_event_t event, ...)
 /**
  *
  */
-void
+int
 nav_open_errorf(prop_t *root, const char *fmt, ...)
 {
   va_list ap;
@@ -458,16 +484,6 @@ nav_open_errorf(prop_t *root, const char *fmt, ...)
   prop_set_string(prop_create(src, "type"), "openerror");
   prop_set_int(prop_create(src, "loading"), 0);
   prop_set_string(prop_create(src, "error"), buf);
-}
-
-
-/**
- *
- */
-static void
-nav_open_error_raw(navigator_t *nav, const char *url, const char *msg)
-{
-  nav_page_t *np = nav_page_create(nav, url, NULL, 0);
-  nav_open_errorf(np->np_prop_root, "%s", msg);
-  nav_insert_page(nav, np);
+  prop_set_int(prop_create(root, "directClose"), 1);
+  return 0;
 }

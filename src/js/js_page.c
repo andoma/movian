@@ -708,15 +708,12 @@ model_launch(js_model_t *jm)
 /**
  *
  */
-struct nav_page *
-js_backend_open(struct backend *be, struct navigator *nav, 
-		const char *url, const char *view,
-		char *errbuf, size_t errlen)
+int
+js_backend_open(struct backend *be, prop_t *page, const char *url)
 {
   js_route_t *jsr;
   regmatch_t matches[8];
   int i;
-  nav_page_t *np;
   js_model_t *jm;
   prop_t *model;
 
@@ -726,10 +723,8 @@ js_backend_open(struct backend *be, struct navigator *nav,
       break;
 
   if(jsr == NULL)
-    return BACKEND_NOURI;
-
-  np = nav_page_create(nav, url, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
-
+    return 1;
+ 
   jm = js_model_create(jsr->jsr_openfunc);
 
   for(i = 1; i < 8; i++)
@@ -737,16 +732,16 @@ js_backend_open(struct backend *be, struct navigator *nav,
       strvec_addpn(&jm->jm_args, url + matches[i].rm_so, 
 		   matches[i].rm_eo - matches[i].rm_so);
   
-  model = prop_create(np->np_prop_root, "model");
+  model = prop_create(page, "model");
 
   init_model_props(jm, model);
 
-  prop_ref_inc(jm->jm_url     = prop_create(np->np_prop_root, "url"));
-  prop_ref_inc(jm->jm_eventsink = prop_create(np->np_prop_root, "eventSink"));
+  prop_ref_inc(jm->jm_url     = prop_create(page, "url"));
+  prop_ref_inc(jm->jm_eventsink = prop_create(page, "eventSink"));
   prop_ref_inc(jm->jm_loading = prop_create(model, "loading"));
 
   model_launch(jm);
-  return np;
+  return 0;
 }
 
 

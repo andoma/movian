@@ -49,12 +49,9 @@ JSBool js_createService(JSContext *cx, JSObject *obj, uintN argc,
 JSBool js_createSettings(JSContext *cx, JSObject *obj, uintN argc, 
 			 jsval *argv, jsval *rval);
 
-struct navigator;
 struct backend;
 
-struct nav_page *js_backend_open(struct backend *be, struct navigator *nav, 
-				 const char *url, const char *view,
-				 char *errbuf, size_t errlen);
+int js_backend_open(struct backend *be, prop_t *page, const char *url);
 
 void js_backend_search(struct backend *be, struct prop *model, 
 		       const char *query);

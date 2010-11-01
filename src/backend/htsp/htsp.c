@@ -1156,46 +1156,40 @@ make_model2(prop_t *parent, prop_t *sourcemodel)
 /**
  *
  */
-static nav_page_t *
-be_htsp_open(backend_t *be, struct navigator *nav,
-	     const char *url, const char *view,
-	     char *errbuf, size_t errlen)
+static int
+be_htsp_open(backend_t *be, prop_t *page, const char *url)
 {
   htsp_connection_t *hc;
-  nav_page_t *np;
   char path[URL_MAX];
+  char errbuf[256];
 
   if((hc = htsp_connection_find(url, path, sizeof(path), 
-				errbuf, errlen)) == NULL) {
-    return NULL;
-  }
+				errbuf, sizeof(errbuf))) == NULL)
+    return nav_open_errorf(page, "%s", errbuf);
 
   TRACE(TRACE_DEBUG, "HTSP", "Open %s", url);
 
   if(!strncmp(path, "/channel/", strlen("/channel/")) ||
      !strncmp(path, "/tagchannel/", strlen("/tagchannel/")))
-    return backend_open_video(be, nav, url, view, errbuf, errlen);
-
-  np = nav_page_create(nav, url, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
+    return backend_open_video(be, page, url);
 
   if(!strcmp(path, "/channels")) {
     
-    make_model(np->np_prop_root, "Channels", hc->hc_channels_nodes);
+    make_model(page, "Channels", hc->hc_channels_nodes);
 
   } else if(!strncmp(path, "/tag/", strlen("/tag/"))) {
     prop_t *model;
     model = prop_create(hc->hc_tags_nodes, path + strlen("/tag/"));
-    make_model2(np->np_prop_root, model);
+    make_model2(page, model);
 
   } else if(!strcmp(path, "")) {
 
-    make_model(np->np_prop_root, "Tags", hc->hc_tags_nodes);
+    make_model(page, "Tags", hc->hc_tags_nodes);
 
   } else {
-    nav_open_errorf(np->np_prop_root, "Invalid RTSP URL");
+    nav_open_errorf(page, "Invalid RTSP URL");
   }
-
-  return np;
+  return 0;
 }
 
 

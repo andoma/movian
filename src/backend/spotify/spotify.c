@@ -2751,9 +2751,9 @@ add_dir(prop_t *parent, const char *url, const char *title)
  *
  */
 static void
-startpage(nav_page_t *np)
+startpage(prop_t *page)
 {
-  prop_t *model = prop_create(np->np_prop_root, "model");
+  prop_t *model = prop_create(page, "model");
   prop_t *metadata = prop_create(model, "metadata");
 
   prop_set_string(prop_create(model, "type"), "directory");
@@ -2771,37 +2771,31 @@ startpage(nav_page_t *np)
 /**
  *
  */
-static nav_page_t *
-be_spotify_open(backend_t *be, struct navigator *nav,
-		const char *url, const char *view,
-		char *errbuf, size_t errlen)
+static int
+be_spotify_open(backend_t *be, prop_t *page, const char *url)
 {
-  nav_page_t *np;
+  char errbuf[200];
 
-  if(spotify_start(errbuf, errlen, 0))
-    return NULL;
+  if(spotify_start(errbuf, sizeof(errbuf), 0))
+    return nav_open_errorf(page, "%s", errbuf);
 
-  np = nav_page_create(nav, url, view, NAV_PAGE_DONT_CLOSE_ON_BACK);
-  
   if(!strcmp(url, "spotify:start")) {
-    startpage(np);
+    startpage(page);
     hts_mutex_unlock(&spotify_mutex);
-    return np;
+    return 0;
   }
 
   spotify_page_t *sp = calloc(1, sizeof(spotify_page_t));
 
   sp->sp_url = strdup(url);
-  sp->sp_root = prop_xref_addref(np->np_prop_root);
-  prop_set_int(prop_create(prop_create(np->np_prop_root, "model"),
-			   "loading"), 1);
+  sp->sp_root = prop_xref_addref(page);
+  prop_set_int(prop_create(prop_create(page, "model"), "loading"), 1);
 
   spotify_msg_enq_locked(spotify_msg_buildc(SPOTIFY_OPEN_PAGE, sp,
-					    prop_create(np->np_prop_root,
-							"close")));
+					    prop_create(page, "close")));
 
   hts_mutex_unlock(&spotify_mutex);
-  return np;
+  return 0;
 }
 
 

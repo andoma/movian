@@ -113,7 +113,6 @@ void playqueue_load_with_source(prop_t *track, prop_t *source, int paused);
 
 struct backend;
 
-nav_page_t *playqueue_open(struct backend *be, 
-			   struct navigator *nav, const char *view);
+int playqueue_open(prop_t *page);
 
 #endif /* PLAYQUEUE_H__ */

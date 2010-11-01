@@ -317,47 +317,35 @@ canhandle(struct backend *be, const char *url)
 /**
  *
  */
-static nav_page_t *
-openpage(struct backend *be, struct navigator *nav, 
-	 const char *url, const char *view,
-	 char *errstr, size_t errlen)
+static int
+openpage(struct backend *be, prop_t *page, const char *url)
 {
-  nav_page_t *np;
-  prop_t *p;
   int track;
   char device[32];
-
-  if((track = parse_audiocd_url(url, device, sizeof(device))) < 0) {
-    snprintf(errstr, errlen, "Invalid URL");
-    return NULL;
-  }
+  
+  if((track = parse_audiocd_url(url, device, sizeof(device))) < 0)
+    return nav_open_errorf(page, "Invalid CD URL");
 
   cd_meta_t *cm = get_cd_meta(device);
 
-  if(cm == NULL) {
-    snprintf(errstr, errlen, "Unable to open CD");
-    return NULL;
-  }
+  if(cm == NULL)
+    return nav_open_errorf(page, "Unable to open CD");
 
   if(track) {
     cd_track_t *ct = get_track(cm, track);
-    if(ct == NULL) {
-      snprintf(errstr, errlen, "Invalid track");
-      return NULL;
-    }
+    if(ct == NULL)
+      return nav_open_errorf(page, "Invalid track");
 
     prop_t *meta = prop_create(NULL, "metadata");
     prop_link(ct->ct_metadata, meta);
 
     playqueue_play(url, meta, 0);
-    return playqueue_open(be, nav, view);
+    return playqueue_open(page);
   }
 
-  np = nav_page_create(nav, url, view, 0);
-
-  p = np->np_prop_root;
-  prop_link(cm->cm_root, p);
-  return np;
+  prop_set_int(prop_create(page, "directClose"), 1);
+  prop_link(cm->cm_root, page);
+  return 0;
 }
 
 /**

@@ -24,31 +24,6 @@
 
 #define NAV_HOME "page:home"
 
-/**
- *
- */
-typedef struct nav_page {
-  struct navigator *np_nav;
-
-  TAILQ_ENTRY(nav_page) np_global_link;
-  TAILQ_ENTRY(nav_page) np_history_link;
-  int np_inhistory;
-
-  prop_t *np_prop_root;
-  char *np_url;
-  char *np_view;
-
-  int np_flags;
-
-#define NAV_PAGE_DONT_CLOSE_ON_BACK 0x1
-
-  prop_sub_t *np_close_sub;
-
-  prop_sub_t *np_url_sub;
-
-} nav_page_t;
-
-
 
 /**
  *
@@ -59,9 +34,6 @@ prop_t *nav_spawn(void);
 
 void nav_open(const char *url, const char *view);
 
-nav_page_t *nav_page_create(struct navigator *nav, const char *url, 
-			    const char *view, int flags);
-
-void nav_open_errorf(prop_t *root, const char *fmt, ...);
+int nav_open_errorf(prop_t *root, const char *fmt, ...);
 
 #endif /* NAVIGATOR_H__ */
