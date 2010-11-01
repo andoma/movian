@@ -76,7 +76,7 @@ glw_rotator_render(glw_t *w, glw_rctx_t *rc)
  */
 static glw_class_t glw_rotator = {
   .gc_name = "rotator",
-  .gc_instance_size = sizeof(glw_t),
+  .gc_instance_size = sizeof(glw_rotator_t),
   .gc_render = glw_rotator_render,
   .gc_signal_handler = glw_rotator_callback,
 };
