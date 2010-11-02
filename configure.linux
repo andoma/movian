@@ -574,7 +574,8 @@ fi
 #
 # configure ffmpeg
 #
-setup_ffmpeg --cpu=${CPU} --enable-pthreads
+setup_ffmpeg --cpu=${CPU} --enable-pthreads --enable-encoder=ffv1 --enable-muxer=avi --enable-protocol=file --enable-encoder=ffvhuff
+
 
 #
 # Configure paths, etc

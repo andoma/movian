@@ -44,6 +44,8 @@
 #include "video/vdpau.h"
 #endif
 
+#include "glw_rec.h"
+
 typedef struct glw_x11 {
 
   glw_root_t gr;
@@ -74,7 +76,10 @@ typedef struct glw_x11 {
 
   int fullwindow;
   int autohide_counter;
-  
+  int req_width;
+  int req_height;
+  int fixed_window_size;
+
   XIM im;
   XIC ic;
   Status status;
@@ -99,6 +104,10 @@ typedef struct glw_x11 {
   int vmodes;
 
   int stop;
+
+  // Recording support
+  const char *record_file;
+  glw_rec_t *recorder;
 
 } glw_x11_t;
 
@@ -315,8 +324,8 @@ window_open(glw_x11_t *gx11, int fullscreen)
 
     x = gx11->screen_width  / 4;
     y = gx11->screen_height / 4;
-    w = 853; //gx11->screen_width  * 3 / 4;
-    h = 480; //gx11->screen_height * 3 / 4;
+    w = gx11->req_width  ?: 853;
+    h = gx11->req_height ?: 480;
   }
 
   gx11->win = 
@@ -907,6 +916,8 @@ glw_x11_mainloop(glw_x11_t *gx11)
   int64_t start;
   int frame = 0;
   int pending_screensaver_kill = 0;
+  void *framecopy = NULL;
+  int rec_do_frame = 0;
 
   clock_gettime(CLOCK_MONOTONIC, &tp);
   start = (int64_t)tp.tv_sec * 1000000LL + tp.tv_nsec / 1000;
@@ -922,6 +933,19 @@ glw_x11_mainloop(glw_x11_t *gx11)
     gx11->sss = x11_screensaver_suspend(gx11->display);
 
   glw_set_fullscreen(&gx11->gr, gx11->is_fullscreen);
+
+
+
+  if(gx11->record_file) {
+    gx11->recorder = glw_rec_init(gx11->record_file, 
+				  gx11->gr.gr_width,
+				  gx11->gr.gr_height,
+				  30);
+    gx11->fixed_window_size = 1;
+
+    framecopy = malloc(gx11->gr.gr_width * gx11->gr.gr_height * 4);
+  }
+
 
   while(!gx11->stop) {
 
@@ -982,6 +1006,9 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	break;
 
       case ConfigureNotify:
+	if(gx11->fixed_window_size)
+	  break;
+
 	w = event.xconfigure.width;
 	h = event.xconfigure.height;
 	glViewport(0, 0, w, h);
@@ -1119,7 +1146,21 @@ glw_x11_mainloop(glw_x11_t *gx11)
       nvidia_frame(gx11->nvidia);
 #endif
 
+    if(rec_do_frame == 0) {
+      if(framecopy != NULL) {
+	glReadPixels(0, 0, gx11->gr.gr_width,  gx11->gr.gr_height,
+		     GL_BGRA, GL_UNSIGNED_BYTE, framecopy);
+	glw_rec_deliver_vframe(gx11->recorder, framecopy);
+      }
+    }
+    rec_do_frame = !rec_do_frame;
   }
+
+  if(gx11->recorder)
+    glw_rec_stop(gx11->recorder);
+
+  free(framecopy);
+
   if(gx11->sss != NULL)
     x11_screensaver_resume(gx11->sss);
 
@@ -1163,6 +1204,19 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
     } else if(!strcmp(argv[0], "--force-no-vsync")) {
       gx11->force_no_vsync = 1;
       argc -= 1; argv += 1;
+      continue;
+    } else if(!strcmp(argv[0], "--record") && argc > 1) {
+      gx11->record_file = argv[1];
+      gx11->fixed_window_size = 1;
+      argc -= 2; argv += 2;
+      continue;
+    } else if(!strcmp(argv[0], "--width") && argc > 1) {
+      gx11->req_width = atoi(argv[1]);
+      argc -= 2; argv += 2;
+      continue;
+    } else if(!strcmp(argv[0], "--height") && argc > 1) {
+      gx11->req_height = atoi(argv[1]);
+      argc -= 2; argv += 2;
       continue;
     } else {
       break;
