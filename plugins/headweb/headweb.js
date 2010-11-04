@@ -105,13 +105,6 @@
     return v;
   }
 
-  function displayError(page, errmsg) {
-    page.loading = false;
-    page.type = "openerror";
-    page.error = errmsg;
-  }
-
-
   function bestCover(content) {
     var best = null;
     var bestArea = 0;
@@ -280,7 +273,7 @@
  
     var doc = new XML(request("/stream/" + id));
     if(doc.error.length()) {
-      displayError(page, doc.error);
+      page.error(doc.error);
       return;
     }
 

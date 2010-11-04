@@ -190,18 +190,6 @@ js_setType(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
  *
  */
 static JSBool 
-js_setError(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
-{
-  js_model_t *jm = JS_GetPrivate(cx, obj);
-  js_prop_set_from_jsval(cx, jm->jm_error, *vp);
-  return JS_TRUE;
-}
-
-
-/**
- *
- */
-static JSBool 
 js_setContents(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
   js_model_t *jm = JS_GetPrivate(cx, obj);
@@ -466,6 +454,27 @@ js_onEvent(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 }
 
 
+/**
+ *
+ */
+static JSBool 
+js_page_error(JSContext *cx, JSObject *obj, uintN argc,
+	      jsval *argv, jsval *rval)
+{
+  js_model_t *jm = JS_GetPrivate(cx, obj);
+  const char *str;
+
+  if (!JS_ConvertArguments(cx, argc, argv, "s", &str))
+    return JS_FALSE;
+
+  prop_set_int(jm->jm_loading, 0);
+  prop_set_string(jm->jm_type, "openerror");
+  prop_set_string(jm->jm_error, str);
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+
 
 
 /**
@@ -475,6 +484,7 @@ static JSFunctionSpec page_functions[] = {
     JS_FS("appendItem",         js_appendItem,   3, 0, 0),
     JS_FS("appendModel",        js_appendModel,  2, 0, 0),
     JS_FS("onEvent",            js_onEvent,      2, 0, 0),
+    JS_FS("error",              js_page_error,   1, 0, 0),
     JS_FS_END
 };
 
@@ -591,10 +601,6 @@ make_model_object(JSContext *cx, js_model_t *jm)
   if(jm->jm_type != NULL)
     JS_DefineProperty(cx, obj, "type", JSVAL_VOID,
 		      NULL, js_setType, JSPROP_PERMANENT);
-
-  if(jm->jm_error != NULL)
-    JS_DefineProperty(cx, obj, "error", JSVAL_VOID,
-		      NULL, js_setError, JSPROP_PERMANENT);
 
   if(jm->jm_contents != NULL)
     JS_DefineProperty(cx, obj, "contents", JSVAL_VOID,
