@@ -853,13 +853,13 @@ http_io(http_connection_t *hc, int revents)
     char *mem = malloc(1000);
     
     r = read(hc->hc_fd, mem, 1000);
-    if(r == 0)
-      return 1;
-
     if(r > 0) {
       htsbuf_append_prealloc(&hc->hc_input, mem, r);
       if(http_handle_input(hc))
 	return 1;
+    } else {
+      free(mem);
+      return 1;
     }
   }
   r = http_write(hc);
