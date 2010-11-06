@@ -93,6 +93,8 @@ glw_image_dtor(glw_t *w)
 {
   glw_image_t *gi = (void *)w;
 
+  free(gi->gi_pending_filename);
+
   if(gi->gi_current != NULL)
     glw_tex_deref(w->glw_root, gi->gi_current);
 
