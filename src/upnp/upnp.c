@@ -228,6 +228,8 @@ upnp_init(void)
     htsmsg_store_save(conf, "upnp");
   }
 
+  htsmsg_destroy(conf);
+
   hts_mutex_init(&upnp_lock);
 
   upnp_avtransport_init();
