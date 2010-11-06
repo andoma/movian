@@ -19,9 +19,79 @@
 #include <string.h>
 #include "js.h"
 
+#include "ext/spidermonkey/jsprvtd.h"
+#include "ext/spidermonkey/jsxml.h"
+
 #include "fileaccess/fileaccess.h"
 #include "htsmsg/htsbuf.h"
 #include "misc/string.h"
+
+typedef struct js_http_response {
+  char *data;
+  size_t datalen;
+  char *contenttype;
+} js_http_response_t;
+
+
+
+/**
+ *
+ */
+static void
+http_response_finalize(JSContext *cx, JSObject *obj)
+{
+  js_http_response_t *jhr = JS_GetPrivate(cx, obj);
+
+  free(jhr->contenttype);
+  free(jhr->data);
+  free(jhr);
+}
+
+
+/**
+ *
+ */
+static JSBool
+http_request_toString(JSContext *cx, JSObject *obj, uintN argc,
+		      jsval *argv, jsval *rval)
+{
+  js_http_response_t *jhr = JS_GetPrivate(cx, obj);
+  const char *r, *r2;
+
+  int isxml = jhr->contenttype != NULL &&
+    (!strncasecmp(jhr->contenttype, "application/xml",
+		  strlen("application/xml")) ||
+     !strncasecmp(jhr->contenttype, "text/xml", strlen("text/xml")));
+
+  if(isxml && (r = strstr(jhr->data, "<?xml ")) != NULL &&
+     (r2 = strstr(r, "?>")) != NULL) {
+    *rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, r2+2));
+  } else {
+    *rval = STRING_TO_JSVAL(JS_NewStringCopyN(cx, jhr->data, jhr->datalen));
+  }
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSFunctionSpec http_request_functions[] = {
+    JS_FS("toString",           http_request_toString,  0, 0, 0),
+    JS_FS_END
+};
+
+
+/**
+ *
+ */
+static JSClass http_response_class = {
+  "httpresponse", JSCLASS_HAS_PRIVATE,
+  JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,
+  JS_EnumerateStub,JS_ResolveStub, JS_ConvertStub, http_response_finalize,
+  JSCLASS_NO_OPTIONAL_MEMBERS
+};
+
 
 /**
  *
@@ -131,25 +201,36 @@ js_http_request(JSContext *cx, JSObject *obj, uintN argc,
     return JS_FALSE;
   }
 
-  const char *contenttype =
-    http_header_get(&response_headers, "content-type");
+  js_http_response_t *jhr = calloc(1, sizeof(js_http_response_t));
 
-  if(contenttype != NULL &&
-     (!strncasecmp(contenttype, "application/xml", strlen("application/xml")) ||
-      !strncasecmp(contenttype, "text/xml", strlen("text/xml")))) {
-    char *r = strstr(result, "<?xml ");
-    if(r != NULL) {
-      
-      char *r2 = strstr(r, "?>");
-      if(r2 != NULL) {
-	r2 += 2;
-	*rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, r2));
-	goto out;
-      }
-    }
+  jhr->data = result;
+  jhr->datalen = resultsize;
+
+  mystrset(&jhr->contenttype,
+	   http_header_get(&response_headers, "content-type"));
+
+  JSObject *robj = JS_NewObjectWithGivenProto(cx, &http_response_class,
+					      NULL, NULL);
+  JS_SetPrivate(cx, robj, jhr);
+  *rval = OBJECT_TO_JSVAL(robj);
+
+  JS_DefineFunctions(cx, robj, http_request_functions);
+
+  if(!JS_EnterLocalRootScope(cx))
+    return JS_FALSE;
+    
+  JSObject *hdrs = JS_NewObject(cx, NULL, NULL, NULL);
+  http_header_t *hh;
+
+  LIST_FOREACH(hh, &response_headers, hh_link) {
+    jsval val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, hh->hh_value));
+    JS_SetProperty(cx, hdrs, hh->hh_key, &val);
   }
-  *rval = STRING_TO_JSVAL(JS_NewString(cx, result, resultsize));
- out:
+  
+  jsval val = OBJECT_TO_JSVAL(hdrs);
+  JS_SetProperty(cx, robj, "headers", &val);
+  JS_LeaveLocalRootScope(cx);
+
   http_headers_free(&response_headers);
   return JS_TRUE;
 }

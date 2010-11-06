@@ -84,7 +84,7 @@
 	password: credentials.password
       });
       
-      var doc = new XML(v);
+      var doc = new XML(v.toString());
       
       if(doc.error.length()) {
 	reason = doc.error;
@@ -102,7 +102,7 @@
       offset: offset,
       limit: limit
     });
-    return v;
+    return new XML(v.toString());
   }
 
   function bestCover(content) {
@@ -153,7 +153,7 @@
 
 
     function loader() {
-      var doc = new XML(request(url, offset, 50));
+      var doc = request(url, offset, 50);
       page.entries = doc.list.@items;
       for each (var c in doc.list.content) {
 	offset++;
@@ -187,8 +187,7 @@
     if(login(false))
       return false;
 
-    var doc = new XML(request("/user/rentals", 0, 200));
-    var response = new XML(doc);
+    var response = request("/user/rentals", 0, 200);
 
     for each (var item in response.list.item) {
       if (item.@id == id && item.state != 'expired')
@@ -213,7 +212,7 @@
       item: item,
       total: rawprice})
 
-    var response = new XML(v);
+    var response = new XML(v.toString());
 
     if(response.purchase.failed.length()) {
       showtime.message('Rentail failed:\n' + response.purchase.failed,
@@ -236,7 +235,7 @@
     page.metadata.title = "Genres";
     page.type = "directory";
 
-    var doc = new XML(request("/genre/filter(-adult,stream)"));
+    var doc = request("/genre/filter(-adult,stream)");
 
     for each (var genre in doc.list.genre) {
       page.appendItem(PREFIX + "genre:" + genre.@id + ":" + genre,
@@ -258,7 +257,7 @@
   // Play a stream
   plugin.addURI(PREFIX + "stream:([0-9]*)", function(page, id) {
 
-    var doc = new XML(request("/stream/" + id));
+    var doc = request("/stream/" + id);
     var params = showtime.queryStringSplit(doc.auth.playerparams);
 
     page.loading = false;
@@ -271,7 +270,7 @@
   // Video launch
   plugin.addURI(PREFIX + "video:([0-9]*)", function(page, id) {
  
-    var doc = new XML(request("/stream/" + id));
+    var doc = request("/stream/" + id);
     if(doc.error.length()) {
       page.error(doc.error);
       return;

@@ -75,7 +75,7 @@
       var num = 0;
 
       while(1) {
-	var doc = new XML(loader(offset + num));
+	var doc = new XML(loader(offset + num).toString());
 	page.entries = doc.channel.opensearch::totalResults;
 	var c = 0;
 
@@ -169,7 +169,7 @@
 
     var svtplay = new Namespace("http://xml.svtplay.se/ns/playopml");
 
-    var doc = new XML(showtime.httpGet("http://svtplay.se/mobil/deviceconfiguration.xml"));
+    var doc = new XML(showtime.httpGet("http://svtplay.se/mobil/deviceconfiguration.xml").toString());
 
     page.appendItem("svtplay:senaste",
 		    "directory", {

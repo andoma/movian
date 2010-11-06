@@ -25,7 +25,7 @@
   });
 
   function extractGeoblockUrl(url) {
-      var doc = new XML(showtime.httpGet(url));
+      var doc = new XML(showtime.httpGet(url).toString());
       return doc.Url;
   }
 
@@ -73,12 +73,12 @@
 	  page.contents = "video";
 	  page.type = "directory";
 
-	  var doc = new XML(showtime.httpGet("http://viastream.viasat.tv/Products/Category/" + productsId));
+          var doc = new XML(showtime.httpGet("http://viastream.viasat.tv/Products/Category/" + productsId).toString());
 
 	  for each (var productNode in doc.Product) {
 		  //fetch info for each episode - one request per episode!
 		  
-		  var productDoc = new XML(showtime.httpGet("http://viastream.viasat.tv/Products/" + productNode.ProductId));
+	          var productDoc = new XML(showtime.httpGet("http://viastream.viasat.tv/Products/" + productNode.ProductId).toString());
 
 		  var metadata = {
 		      title: productNode.Title,
@@ -91,7 +91,6 @@
 		  var geoBlock = productDoc.Product.Geoblock;
 
 		  if(geoBlock == "true") {
-		      showtime.print("Extracting geoblock");
 		      url = extractGeoblockUrl(url);
 		  }
 
@@ -104,7 +103,7 @@
     
   plugin.addURI("viastream:sitemapdata:([a-z0-9,]*):([0-9,]*)", function(page, channelId, id) {
 	  
-    var doc = new XML(showtime.httpGet("http://viastream.viasat.tv/siteMapData/se/" + channelId + "/" + id));
+    var doc = new XML(showtime.httpGet("http://viastream.viasat.tv/siteMapData/se/" + channelId + "/" + id).toString());
 
     for each (var siteMapNode in doc.siteMapNode) {
 	    if(siteMapNode.@children == "true") {
