@@ -77,26 +77,21 @@ SAVC(width);
 SAVC(height);
 
 static int
-handle_metadata(rtmp_t *r, char *body, unsigned int len,
-		media_pipe_t *mp, char *errstr, size_t errlen)
+handle_metadata0(rtmp_t *r, AMFObject *obj,
+		 media_pipe_t *mp, char *errstr, size_t errlen)
 {
-  AMFObject obj;
   AVal metastring;
   AMFObjectProperty prop;
   prop_t *m = mp->mp_prop_metadata;
 
-  if(AMF_Decode(&obj, body, len, 0) < 0) {
-    snprintf(errstr, errlen, "Unable to decode metadata AMF");
-    return -1;
-  }
 
-  AMFProp_GetString(AMF_GetProp(&obj, NULL, 0), &metastring);
+  AMFProp_GetString(AMF_GetProp(obj, NULL, 0), &metastring);
 
   if(!AVMATCH(&metastring, &av_onMetaData)) {
     snprintf(errstr, errlen, "No metadata in metadata packet");
     return -1;
   }
-  if(!RTMP_FindFirstMatchingProperty(&obj, &av_duration, &prop) ||
+  if(!RTMP_FindFirstMatchingProperty(obj, &av_duration, &prop) ||
      prop.p_type != AMF_NUMBER) {
     snprintf(errstr, errlen, "Unable to parse total duration");
     return -1;
@@ -106,10 +101,10 @@ handle_metadata(rtmp_t *r, char *body, unsigned int len,
 
 
 
-  if(!RTMP_FindFirstMatchingProperty(&obj, &av_videoframerate, &prop) ||
+  if(!RTMP_FindFirstMatchingProperty(obj, &av_videoframerate, &prop) ||
      prop.p_type != AMF_NUMBER) {
 
-    if(!RTMP_FindFirstMatchingProperty(&obj, &av_framerate, &prop) ||
+    if(!RTMP_FindFirstMatchingProperty(obj, &av_framerate, &prop) ||
        prop.p_type != AMF_NUMBER) {
       snprintf(errstr, errlen, "Unable to parse video framerate");
       return -1;
@@ -118,17 +113,34 @@ handle_metadata(rtmp_t *r, char *body, unsigned int len,
   r->vframeduration = 1000000.0 / prop.p_vu.p_number;
 
   r->width = r->height = 0;
-  if(RTMP_FindFirstMatchingProperty(&obj, &av_width, &prop) &&
+  if(RTMP_FindFirstMatchingProperty(obj, &av_width, &prop) &&
      prop.p_type == AMF_NUMBER)
     r->width = prop.p_vu.p_number;
 
-  if(RTMP_FindFirstMatchingProperty(&obj, &av_height, &prop) &&
+  if(RTMP_FindFirstMatchingProperty(obj, &av_height, &prop) &&
      prop.p_type == AMF_NUMBER)
     r->height = prop.p_vu.p_number;
 
   if(r->width && r->height)
     TRACE(TRACE_DEBUG, "RTMP", "Video size %d x %d", r->width, r->height);
   return 0;
+
+}
+
+static int
+handle_metadata(rtmp_t *r, char *body, unsigned int len,
+		media_pipe_t *mp, char *errstr, size_t errlen)
+{
+  AMFObject obj;
+  int rval;
+  if(AMF_Decode(&obj, body, len, 0) < 0) {
+    snprintf(errstr, errlen, "Unable to decode metadata AMF");
+    return -1;
+  }
+
+  rval = handle_metadata0(r, &obj, mp, errstr, errlen);
+  AMF_Reset(&obj);
+  return rval;
 }
 
 
