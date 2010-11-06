@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <assert.h>
 #include <sys/time.h>
 #include <math.h>
 #include <stdio.h>
@@ -114,13 +115,6 @@ typedef struct glw_x11 {
 #define AUTOHIDE_TIMEOUT 100 // XXX: in frames.. bad
 
 static void glw_x11_dispatch_event(uii_t *uii, event_t *e);
-
-
-
-
-static void update_gpu_info(glw_x11_t *gx11);
-
-
 
 
 /**
@@ -368,8 +362,6 @@ window_open(glw_x11_t *gx11, int fullscreen)
 
   if(fullscreen)
     fullscreen_grab(gx11);
-
-  update_gpu_info(gx11);
 
   glw_opengl_init_context(&gx11->gr);
 
@@ -1266,10 +1258,9 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
 			 glw_settings_save, gr);
   }
 
+  update_gpu_info(gx11);
   glw_load_universe(gr);
-
   glw_x11_mainloop(gx11);
-
   return 0;
 }
 
