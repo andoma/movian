@@ -1057,6 +1057,12 @@ cloner_sig_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
     cloner_pagination_check(sc);
     break;
+
+  case GLW_SIGNAL_DESTROY:
+    prop_ref_dec(c->c_prop);
+    free(c);
+    break;
+
   default:
     break;
   }
