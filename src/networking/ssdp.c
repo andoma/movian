@@ -361,6 +361,7 @@ ssdp_send_notify(const char *nts)
     }
     i++;
   }
+  free(ni);
 }
 
 
