@@ -852,6 +852,7 @@ glw_text_bitmap_dtor(glw_t *w)
   glw_root_t *gr = w->glw_root;
 
   free(gtb->gtb_caption);
+  free(gtb->gtb_uc_buffer);
 
   free(gtb->gtb_data.gtbd_data);
 
