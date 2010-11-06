@@ -143,6 +143,7 @@ js_model_destroy(js_model_t *jm)
   if(jm->jm_entries)   prop_ref_dec(jm->jm_entries);
   if(jm->jm_url)       prop_ref_dec(jm->jm_url);
   if(jm->jm_metadata)  prop_ref_dec(jm->jm_metadata);
+  if(jm->jm_eventsink) prop_ref_dec(jm->jm_eventsink);
 
   if(jm->jm_pc != NULL)
     prop_courier_destroy(jm->jm_pc);
