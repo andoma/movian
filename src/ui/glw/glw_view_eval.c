@@ -1102,9 +1102,10 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
   clone_t *c = calloc(1, sizeof(clone_t));
 
   if(before != NULL) {
-    b = prop_tag_get(before, sc);
-    assert(b != NULL);
+    clone_t *bb = prop_tag_get(before, sc);
+    assert(bb != NULL);
     sc->sc_positions_valid = 0;
+    b = bb->c_w;
   } else {
     b = sc->sc_anchor;
     c->c_pos = sc->sc_entries;
