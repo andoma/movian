@@ -1227,6 +1227,8 @@ cloner_del_child(sub_cloner_t *sc, prop_t *p, glw_t *parent)
     sc->sc_entries--;
     glw_t *w = c->c_w;
 
+    glw_signal_handler_unregister(w, cloner_sig_handler, c);
+
     if(TAILQ_NEXT(w, glw_parent_link) != NULL)
       sc->sc_positions_valid = 0;
     glw_detach(w);
