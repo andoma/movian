@@ -248,6 +248,8 @@ void prop_unparent_ex(prop_t *p, prop_sub_t *skipme);
 
 #define prop_unparent(p) prop_unparent_ex(p, NULL)
 
+void prop_unparent_childs(prop_t *p);
+
 void prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard);
 
 #define prop_link(src, dst) prop_link_ex(src, dst, NULL, 0)

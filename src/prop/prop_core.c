@@ -40,6 +40,8 @@ static prop_courier_t *global_courier;
 static void prop_unlink0(prop_t *p, prop_sub_t *skipme, const char *origin,
 			 struct prop_notify_queue *pnq);
 
+static void prop_unparent0(prop_t *p, prop_sub_t *skipme);
+
 static void prop_flood_flag(prop_t *p, int set, int clr);
 
 #define PROPTRACE(fmt...) trace(TRACE_NO_PROP, TRACE_DEBUG, "prop", fmt)
@@ -1218,6 +1220,7 @@ static void
 prop_insert(prop_t *p, prop_t *parent, prop_t *before, prop_sub_t *skipme)
 {
   if(before != NULL) {
+    assert(before->hp_parent == parent);
     TAILQ_INSERT_BEFORE(before, p, hp_parent_link);
     prop_notify_child2(p, parent, before, PROP_ADD_CHILD_BEFORE, skipme, 0);
   } else {
@@ -1311,18 +1314,21 @@ prop_create_ex(prop_t *parent, const char *name, prop_sub_t *skipme, int flags)
 int
 prop_set_parent0(prop_t *p, prop_t *parent, prop_t *before, prop_sub_t *skipme)
 {
-  assert(p->hp_parent == NULL);
-
   if(parent->hp_type == PROP_ZOMBIE)
     return -1;
 
   prop_make_dir(parent, skipme, "prop_set_parent()");
 
-  p->hp_parent = parent;
-  if(parent->hp_flags & (PROP_MULTI_SUB | PROP_MULTI_NOTIFY))
-    prop_flood_flag(p, PROP_MULTI_NOTIFY, 0);
+  if(p->hp_parent != parent) {
+    prop_unparent0(p, skipme);
 
-  prop_insert(p, parent, before, skipme);
+    p->hp_parent = parent;
+    if(parent->hp_flags & (PROP_MULTI_SUB | PROP_MULTI_NOTIFY))
+      prop_flood_flag(p, PROP_MULTI_NOTIFY, 0);
+    prop_insert(p, parent, before, skipme);
+  } else {
+    prop_move0(p, before, skipme);
+  }
   return 0;
 }
 
@@ -1376,29 +1382,52 @@ prop_set_parent_vector(prop_vec_t *pv, prop_t *parent)
 /**
  *
  */
+static void
+prop_unparent0(prop_t *p, prop_sub_t *skipme)
+{
+  prop_t *parent = p->hp_parent;
+  if(parent == NULL)
+    return;
+
+  assert((p->hp_flags & PROP_MULTI_NOTIFY) == 0); // fixme
+
+  prop_notify_child(p, parent, PROP_DEL_CHILD, NULL, 0);
+  
+  TAILQ_REMOVE(&parent->hp_childs, p, hp_parent_link);
+  p->hp_parent = NULL;
+  
+  if(parent->hp_selected == p)
+    parent->hp_selected = NULL;
+}
+
+/**
+ *
+ */
 void
 prop_unparent_ex(prop_t *p, prop_sub_t *skipme)
 {
-  prop_t *parent;
-
   hts_mutex_lock(&prop_mutex);
-
-  parent = p->hp_parent;
-  if(parent != NULL) {
-
-    assert((p->hp_flags & PROP_MULTI_NOTIFY) == 0); // fixme
-
-    prop_notify_child(p, parent, PROP_DEL_CHILD, NULL, 0);
-
-    TAILQ_REMOVE(&parent->hp_childs, p, hp_parent_link);
-    p->hp_parent = NULL;
-
-    if(parent->hp_selected == p)
-      parent->hp_selected = NULL;
-  }
-
+  prop_unparent0(p, skipme);
   hts_mutex_unlock(&prop_mutex);
 }
+
+/**
+ *
+ */
+void
+prop_unparent_childs(prop_t *p)
+{
+  hts_mutex_lock(&prop_mutex);
+  if(p->hp_type == PROP_DIR) {
+    prop_t *c, *next;
+    for(c = TAILQ_FIRST(&p->hp_childs); c != NULL; c = next) {
+      next = TAILQ_NEXT(c, hp_parent_link);
+      prop_unparent0(p, NULL);
+    }
+  }
+  hts_mutex_unlock(&prop_mutex);
+}
+
 
 /**
  *
