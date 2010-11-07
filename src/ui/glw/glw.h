@@ -686,6 +686,8 @@ typedef struct glw {
   
 #define GLW_CLIPPED              0x1000000 
 
+#define GLW_HOMOGENOUS           0x2000000
+
 #define GLW_FOCUS_ON_CLICK       0x4000000
 
 #define GLW_SHADOW               0x8000000

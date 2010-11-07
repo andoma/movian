@@ -447,6 +447,7 @@ static const token_attrib_t attribtab[] = {
   {"focusOnClick",            set_generic_flag, GLW_FOCUS_ON_CLICK},
   {"autoRefocusable",         set_generic_flag, GLW_AUTOREFOCUSABLE},
   {"navFocusable",            set_generic_flag, GLW_NAV_FOCUSABLE},
+  {"homogenous",              set_generic_flag, GLW_HOMOGENOUS},
 
   {"enabled",                 set_generic_flag2, GLW2_ENABLED},
 

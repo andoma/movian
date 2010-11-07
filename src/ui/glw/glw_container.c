@@ -31,6 +31,7 @@ typedef struct glw_container {
   int16_t co_padding_top;
   int16_t co_padding_bottom;
   int16_t co_spacing;
+  int16_t co_biggest;
 
 } glw_container_t;
 
@@ -50,6 +51,9 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
   float weight = 0;
   int cflags = 0, f;
   int elements = 0;
+  int numfix = 0;
+
+  co->co_biggest = 0;
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN || c == skip)
@@ -63,7 +67,13 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
       height = GLW_MAX(height, c->glw_req_size_y);
 
     if(f & GLW_CONSTRAINT_X) {
-      width += c->glw_req_size_x;
+
+      if(co->w.glw_flags & GLW_HOMOGENOUS) {
+	co->co_biggest = GLW_MAX(c->glw_req_size_x, co->co_biggest);
+	numfix++;
+      } else {
+	width += c->glw_req_size_x;
+      }
     } else if(f & GLW_CONSTRAINT_W) {
       weight += c->glw_req_weight;
     } else {
@@ -71,6 +81,9 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
     }
     elements++;
   }
+
+  if(co->w.glw_flags & GLW_HOMOGENOUS)
+    width += numfix * co->co_biggest;
 
   if(elements > 0)
     width += (elements - 1) * co->co_spacing;
@@ -141,7 +154,10 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
     int f = glw_filter_constraints(c->glw_flags);
 
     if(f & GLW_CONSTRAINT_X) {
-      cw = c->glw_req_size_x * fixscale;
+      if(co->w.glw_flags & GLW_HOMOGENOUS)
+	cw = co->co_biggest * fixscale;
+      else
+	cw = c->glw_req_size_x * fixscale;
     } else {
       float w = (f & GLW_CONSTRAINT_W ? c->glw_req_weight : 1.0f);
       cw = weightavail * w / co->weight_sum;
