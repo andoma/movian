@@ -150,7 +150,7 @@ proplockmgr(void *ptr, int lock)
     hts_mutex_unlock(mtx);
 }
 
-#ifdef PROP_REF_TRACE
+#ifdef PROP_DEBUG
 
 hts_mutex_t prop_ref_mutex;
 
@@ -185,6 +185,10 @@ prop_ref_dec_traced(prop_t *p, const char *file, int line)
   if(p->hp_flags & PROP_REF_TRACED) 
     printf("Prop %p was finalized by %s:%d\n", p, file, line);
   assert(p->hp_type == PROP_ZOMBIE);
+
+  extern void prop_tag_dump(prop_t *p);
+  prop_tag_dump(p);
+
   assert(p->hp_tags == NULL);
   free(p);
 }
@@ -258,6 +262,9 @@ prop_ref_dec(prop_t *p)
     return;
   assert(p->hp_type == PROP_ZOMBIE);
   assert(p->hp_tags == NULL);
+#ifdef PROP_DEBUG
+  memset(p, 0xdd, sizeof(prop_t));
+#endif
   free(p);
 }
 
@@ -1252,7 +1259,7 @@ prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, int noalloc)
   }
 
   hp = malloc(sizeof(prop_t));
-#ifdef PROP_REF_TRACE
+#ifdef PROP_DEBUG
   SIMPLEQ_INIT(&hp->hp_ref_trace);
 #endif
   hp->hp_flags = noalloc ? PROP_NAME_NOT_ALLOCATED : 0;

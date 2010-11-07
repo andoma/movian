@@ -219,7 +219,7 @@ struct prop {
 #define hp_link_rtitle u.link.rtitle
 #define hp_link_rurl   u.link.rurl
 
-#ifdef PROP_REF_TRACE
+#ifdef PROP_DEBUG
   SIMPLEQ_HEAD(, prop_ref_trace) hp_ref_trace;
 #endif
 

@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
 #include "showtime.h"
 #include "prop_i.h"
 
@@ -26,6 +27,10 @@ typedef struct prop_tag {
   struct prop_tag *next;
   void *key;
   void *value;
+#ifdef PROP_DEBUG
+  const char *file;
+  int line;
+#endif
 } prop_tag_t;
 
 
@@ -48,6 +53,29 @@ prop_tag_get(prop_t *p, void *key)
 }
 
 
+
+
+#ifdef PROP_DEBUG
+/**
+ *
+ */
+void
+prop_tag_set_debug(prop_t *p, void *key, void *value,
+		   const char *file, int line)
+{
+  prop_tag_t *pt = malloc(sizeof(prop_tag_t));
+  pt->key = key;
+  pt->value = value;
+  pt->file = file;
+  pt->line = line;
+  hts_mutex_lock(&prop_tag_mutex);
+  pt->next = p->hp_tags;
+  p->hp_tags = pt;
+  hts_mutex_unlock(&prop_tag_mutex);
+}
+
+#else
+
 /**
  *
  */
@@ -63,6 +91,8 @@ prop_tag_set(prop_t *p, void *key, void *value)
   p->hp_tags = pt;
   hts_mutex_unlock(&prop_tag_mutex);
 }
+
+#endif
 
 
 /**
@@ -89,3 +119,21 @@ prop_tag_clear(prop_t *p, void *key)
   hts_mutex_unlock(&prop_tag_mutex);
   return NULL;
 }
+
+
+#ifdef PROP_DEBUG
+void prop_tag_dump(prop_t *p);
+void
+prop_tag_dump(prop_t *p)
+{
+  prop_tag_t *pt;
+  if(p->hp_tags == NULL)
+    return;
+
+  printf("Stale tags on prop %p\n", p);
+  for(pt = p->hp_tags; pt != NULL; pt = pt->next) {
+    printf("pt %p  key=%p value=%p by %s:%d\n",
+	   pt, pt->key, pt->value, pt->file, pt->line);
+  }
+}
+#endif
