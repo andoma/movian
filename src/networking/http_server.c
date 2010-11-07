@@ -73,6 +73,8 @@ struct http_connection {
   char *hc_post_data;
   size_t hc_post_len;
   size_t hc_post_offset;
+
+  char hc_myaddr[32];
 };
 
 
@@ -890,6 +892,22 @@ http_close(http_connection_t *hc)
 /**
  *
  */
+const char *
+http_get_my_host(http_connection_t *hc)
+{
+  return hc->hc_myaddr;
+}
+
+int
+http_get_my_port(http_connection_t *hc)
+{
+  return http_server_port;
+}
+
+
+/**
+ *
+ */
 static void
 http_accept(http_server_t *hs)
 {
@@ -897,6 +915,8 @@ http_accept(http_server_t *hs)
   socklen_t sl = sizeof(struct sockaddr_in);
   int fd, val;
   http_connection_t *hc;
+  socklen_t slen;
+  struct sockaddr_in self;
 
   fd = accept(hs->hs_fd, (struct sockaddr *)&si, &sl);
 
@@ -935,6 +955,19 @@ http_accept(http_server_t *hs)
 
   val = 1;
   setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val));
+
+  slen = sizeof(struct sockaddr_in);
+  if(!getsockname(fd, (struct sockaddr *)&self, &slen)) {
+    uint32_t ip = ntohl(self.sin_addr.s_addr);
+    snprintf(hc->hc_myaddr, sizeof(hc->hc_myaddr),
+	     "%d.%d.%d.%d",
+	     (ip >> 24) & 0xff,
+	     (ip >> 16) & 0xff,
+	     (ip >> 8)  & 0xff,
+	     (ip)       & 0xff);
+  } else {
+    hc->hc_myaddr[0] = 0;
+  }
 }
 
 

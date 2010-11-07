@@ -46,6 +46,10 @@ const char *http_arg_get_req(http_connection_t *hc, const char *name);
 
 const char *http_arg_get_hdr(http_connection_t *hc, const char *name);
 
+const char *http_get_my_host(http_connection_t *hc);
+
+int http_get_my_port(http_connection_t *hc);
+
 void *http_get_post_data(http_connection_t *hc, size_t *sizep, int steal);
 
 void http_set_response_hdr(http_connection_t *hc, const char *name,
