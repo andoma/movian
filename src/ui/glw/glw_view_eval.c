@@ -1183,7 +1183,7 @@ cloner_move_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
   clone_t *b = before ? prop_tag_get(before, sc) : NULL;
 
   sc->sc_positions_valid = 0;
-  glw_move(c->c_w, b->c_w);
+  glw_move(c->c_w, b ? b->c_w : NULL);
 }
 
 
