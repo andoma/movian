@@ -27,6 +27,8 @@
 #include "htsmsg/htsmsg.h"
 #include "misc/rstr.h"
 
+// #define PROP_REF_TRACE
+
 typedef struct prop_courier prop_courier_t;
 typedef struct prop prop_t;
 typedef struct prop_sub prop_sub_t;
@@ -204,11 +206,33 @@ void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 int prop_get_string(prop_t *p, char *buf, size_t bufsize)
      __attribute__ ((warn_unused_result));
 
+#ifdef PROP_REF_TRACE
+
+void prop_ref_dec_traced(prop_t *p, const char *file, int line);
+
+#define prop_ref_dec(p) prop_ref_dec_traced(p, __FILE__, __LINE__)
+
+void prop_ref_dec_nullchk_traced(prop_t *p, const char *file, int line);
+
+#define prop_ref_dec_nullchk(p) prop_ref_dec_nullchk_traced(p, __FILE__, __LINE__)
+
+void prop_ref_inc_traced(prop_t *p, const char *file, int line);
+
+#define prop_ref_inc(p) prop_ref_inc_traced(p, __FILE__, __LINE__)
+
+void prop_enable_trace(prop_t *p);
+
+void prop_print_trace(prop_t *p);
+
+#else
+
 void prop_ref_dec(prop_t *p);
 
 void prop_ref_dec_nullchk(prop_t *p);
 
 void prop_ref_inc(prop_t *p);
+
+#endif
 
 prop_t *prop_xref_addref(prop_t *p) __attribute__ ((warn_unused_result));
 

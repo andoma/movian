@@ -148,7 +148,103 @@ proplockmgr(void *ptr, int lock)
     hts_mutex_unlock(mtx);
 }
 
+#ifdef PROP_REF_TRACE
 
+hts_mutex_t prop_ref_mutex;
+
+struct prop_ref_trace {
+  SIMPLEQ_ENTRY(prop_ref_trace) link;
+  const char *file;
+  int line;
+  int value;
+  int which;
+};
+
+
+/**
+ *
+ */
+void
+prop_ref_dec_traced(prop_t *p, const char *file, int line)
+{
+  if(p->hp_flags & PROP_REF_TRACED) {
+    struct prop_ref_trace *prt = malloc(sizeof(struct prop_ref_trace));
+    prt->file = file;
+    prt->line = line;
+    prt->value = p->hp_refcount - 1;
+    prt->which = 0;
+    hts_mutex_lock(&prop_ref_mutex);
+    SIMPLEQ_INSERT_TAIL(&p->hp_ref_trace, prt, link);
+    hts_mutex_unlock(&prop_ref_mutex);
+  }
+  
+  if(atomic_add(&p->hp_refcount, -1) > 1)
+    return;
+  if(p->hp_flags & PROP_REF_TRACED) 
+    printf("Prop %p was finalized by %s:%d\n", p, file, line);
+  assert(p->hp_type == PROP_ZOMBIE);
+  assert(p->hp_tags == NULL);
+  free(p);
+}
+
+
+/**
+ *
+ */
+void
+prop_ref_dec_nullchk_traced(prop_t *p, const char *file, int line)
+{
+  if(p)
+    prop_ref_dec_traced(p, file, line);
+}
+
+/**
+ *
+ */
+void
+prop_ref_inc_traced(prop_t *p, const char *file, int line)
+{
+  atomic_add(&p->hp_refcount, 1);
+  if(p->hp_flags & PROP_REF_TRACED) {
+    struct prop_ref_trace *prt = malloc(sizeof(struct prop_ref_trace));
+    prt->file = file;
+    prt->line = line;
+    prt->value = p->hp_refcount;
+    prt->which = 1;
+    hts_mutex_lock(&prop_ref_mutex);
+    SIMPLEQ_INSERT_TAIL(&p->hp_ref_trace, prt, link);
+    hts_mutex_unlock(&prop_ref_mutex);
+  }
+}
+
+
+/**
+ *
+ */
+void
+prop_enable_trace(prop_t *p)
+{
+  p->hp_flags |= PROP_REF_TRACED;
+}
+
+void
+prop_print_trace(prop_t *p)
+{
+  struct prop_ref_trace *prt;
+  
+  SIMPLEQ_FOREACH(prt, &p->hp_ref_trace, link) {
+    printf("Prop %p %s to %d by %s:%d\n",
+	   p,
+	   prt->which ? "inc" : "dec",
+	   prt->value,
+	   prt->file,
+	   prt->line);
+  }
+
+}
+
+
+#else
 
 /**
  *
@@ -181,6 +277,10 @@ prop_ref_inc(prop_t *p)
 {
   atomic_add(&p->hp_refcount, 1);
 }
+
+
+#endif
+
 
 
 /**
@@ -1149,6 +1249,9 @@ prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, int noalloc)
   }
 
   hp = malloc(sizeof(prop_t));
+#ifdef PROP_REF_TRACE
+  SIMPLEQ_INIT(&hp->hp_ref_trace);
+#endif
   hp->hp_flags = noalloc ? PROP_NAME_NOT_ALLOCATED : 0;
   hp->hp_originator = NULL;
   hp->hp_refcount = 1;

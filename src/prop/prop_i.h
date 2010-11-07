@@ -164,6 +164,9 @@ struct prop {
 #define PROP_MULTI_NOTIFY          0x20
 
 
+#define PROP_REF_TRACED            0x40
+
+
 
   /**
    * Extended refcount. Used to keep contents of the property alive
@@ -215,6 +218,10 @@ struct prop {
 #define hp_pixmap   u.pixmap
 #define hp_link_rtitle u.link.rtitle
 #define hp_link_rurl   u.link.rurl
+
+#ifdef PROP_REF_TRACE
+  SIMPLEQ_HEAD(, prop_ref_trace) hp_ref_trace;
+#endif
 
 };
 
