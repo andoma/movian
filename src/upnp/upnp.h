@@ -26,6 +26,8 @@ LIST_HEAD(upnp_device_list, upnp_device);
 LIST_HEAD(upnp_service_list, upnp_service);
 LIST_HEAD(upnp_subscription_list, upnp_subscription);
 
+struct http_connection;
+
 /**
  *
  */
@@ -73,7 +75,7 @@ typedef struct upnp_device {
  */
 typedef struct upnp_service_method {
   const char *usm_name;
-  htsmsg_t *(*usm_fn)(htsmsg_t *in);
+  htsmsg_t *(*usm_fn)(struct http_connection *hc, htsmsg_t *in);
 
 } upnp_service_method_t;
 
@@ -88,6 +90,10 @@ typedef struct upnp_subscription {
   int us_seq;
   time_t us_expire;
   struct upnp_local_service *us_service;
+
+  int us_myport;
+  char *us_myhost;
+
 } upnp_subscription_t;
 
 
@@ -98,7 +104,8 @@ typedef struct upnp_local_service {
   const char *uls_name;
   int uls_version;
   struct upnp_subscription_list uls_subscriptions;
-  htsmsg_t *(*uls_generate_props)(struct upnp_local_service *svc);
+  htsmsg_t *(*uls_generate_props)(struct upnp_local_service *svc,
+				  const char *myhost, int myport);
   struct callout uls_notifytimer;
   upnp_service_method_t uls_methods[];
 } upnp_local_service_t;

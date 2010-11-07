@@ -30,7 +30,7 @@
  *
  */
 static htsmsg_t *
-rc_set_mute(htsmsg_t *args)
+rc_set_mute(struct http_connection *hc, htsmsg_t *args)
 {
   
   return NULL;

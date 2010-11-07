@@ -40,47 +40,49 @@ upnp_event_send_all(upnp_local_service_t *uls)
 {
   htsbuf_queue_t out;
   htsmsg_field_t *f;
-  upnp_subscription_t *s;
+  upnp_subscription_t *us;
   int r;
 
   if(uls->uls_generate_props == NULL)
     return;
 
-  htsbuf_queue_init(&out, 0);
-  htsbuf_qprintf(&out,
-		 "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
-		 "<e:propertyset xmlns:e=\"urn:schemas-upnp-org:event-1-0\">");
-
-  htsmsg_t *props = uls->uls_generate_props(uls);
-
-  HTSMSG_FOREACH(f, props) {
-    htsbuf_qprintf(&out, "<e:property>");
-    soap_encode_arg(&out, f);
-    htsbuf_qprintf(&out, "</e:property>");
-  }
-  htsbuf_qprintf(&out, "</e:propertyset>");
-
-  htsmsg_destroy(props);
-
-  LIST_FOREACH(s, &uls->uls_subscriptions, us_link) {
+  LIST_FOREACH(us, &uls->uls_subscriptions, us_link) {
     char str[32];
     struct http_header_list hdrs;
+
+    htsbuf_queue_init(&out, 0);
+    htsbuf_qprintf(&out,
+		   "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+		   "<e:propertyset xmlns:e=\"urn:schemas-upnp-org:event-1-0\">");
+    
+    htsmsg_t *props = uls->uls_generate_props(uls, 
+					      us->us_myhost, us->us_myport);
+    
+    HTSMSG_FOREACH(f, props) {
+      htsbuf_qprintf(&out, "<e:property>");
+      soap_encode_arg(&out, f);
+      htsbuf_qprintf(&out, "</e:property>");
+    }
+    htsbuf_qprintf(&out, "</e:propertyset>");
+    
+    htsmsg_destroy(props);
+
     LIST_INIT(&hdrs);
 
     http_header_add(&hdrs, "NT", "upnp:event");
     http_header_add(&hdrs, "NTS", "upnp:propchange");
-    snprintf(str, sizeof(str), "%d", s->us_sid);
+    snprintf(str, sizeof(str), "%d", us->us_sid);
     http_header_add(&hdrs, "SID", str);
 
-    snprintf(str, sizeof(str), "%d", s->us_seq);
+    snprintf(str, sizeof(str), "%d", us->us_seq);
     http_header_add(&hdrs, "SEQ", str);
-    s->us_seq++;
+    us->us_seq++;
 
-    r = http_request(s->us_callback, NULL, NULL, NULL, NULL, 0, &out,
+    r = http_request(us->us_callback, NULL, NULL, NULL, NULL, 0, &out,
 		     "text/xml;charset=\"utf-8\"", 0, NULL, &hdrs, "NOTIFY");
     http_headers_free(&hdrs);
+    htsbuf_queue_flush(&out);
   }
-  htsbuf_queue_flush(&out);
 }
 
 
@@ -123,6 +125,7 @@ subscription_destroy(upnp_subscription_t *us, const char *reason)
 
   LIST_REMOVE(us, us_link);
   free(us->us_callback);
+  free(us->us_myhost);
   free(us);
 }
 
@@ -210,6 +213,8 @@ upnp_subscribe(http_connection_t *hc, const char *remain, void *opaque,
       us->us_sid = sid_tally;
       us->us_callback = strdup(c);
       us->us_expire = time(NULL) + timeout;
+      us->us_myhost = strdup(http_get_my_host(hc));
+      us->us_myport = http_get_my_port(hc);
 
       hts_mutex_lock(&upnp_lock);
       LIST_INSERT_HEAD(&uls->uls_subscriptions, us, us_link);

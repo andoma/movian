@@ -53,7 +53,7 @@ control_dispatch_method(upnp_local_service_t *uls, upnp_service_method_t *usm,
     in = NULL;
   }
 
-  htsmsg_t *out = usm->usm_fn(in);
+  htsmsg_t *out = usm->usm_fn(hc, in);
   htsmsg_destroy(in);
 
   htsbuf_queue_init(&xml, 0);

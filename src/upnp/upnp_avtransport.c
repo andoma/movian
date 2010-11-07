@@ -48,7 +48,7 @@ static int   upnp_current_canStop;
  *
  */
 static htsmsg_t *
-avt_Stop(htsmsg_t *args)
+avt_Stop(http_connection_t *hc, htsmsg_t *args)
 {
   event_dispatch(event_create_action(ACTION_STOP));
   return NULL;
@@ -59,7 +59,7 @@ avt_Stop(htsmsg_t *args)
  *
  */
 static htsmsg_t *
-avt_Pause(htsmsg_t *args)
+avt_Pause(http_connection_t *hc, htsmsg_t *args)
 {
   event_dispatch(event_create_action(ACTION_PAUSE));
   return NULL;
@@ -70,7 +70,7 @@ avt_Pause(htsmsg_t *args)
  *
  */
 static htsmsg_t *
-avt_Play(htsmsg_t *args)
+avt_Play(http_connection_t *hc, htsmsg_t *args)
 {
   event_dispatch(event_create_action(ACTION_PLAY));
   return NULL;
@@ -80,7 +80,7 @@ avt_Play(htsmsg_t *args)
  *
  */
 static htsmsg_t *
-avt_Next(htsmsg_t *args)
+avt_Next(http_connection_t *hc, htsmsg_t *args)
 {
   event_dispatch(event_create_action(ACTION_NEXT_TRACK));
   return NULL;
@@ -90,7 +90,7 @@ avt_Next(htsmsg_t *args)
  *
  */
 static htsmsg_t *
-avt_Previous(htsmsg_t *args)
+avt_Previous(http_connection_t *hc, htsmsg_t *args)
 {
   event_dispatch(event_create_action(ACTION_PREV_TRACK));
   return NULL;
@@ -167,7 +167,7 @@ play_with_context(const char *uri, htsmsg_t *meta)
  *
  */
 static htsmsg_t *
-avt_SetAVTransportURI(htsmsg_t *args)
+avt_SetAVTransportURI(http_connection_t *hc, htsmsg_t *args)
 {
   const char *uri = htsmsg_get_str(args, "CurrentURI");
   const char *metaxml = htsmsg_get_str(args, "CurrentURIMetaData");
@@ -203,7 +203,7 @@ avt_SetAVTransportURI(htsmsg_t *args)
  *
  */
 static char *
-build_didl(void)
+build_didl(const char *myhost, int myport)
 {
   htsbuf_queue_t hq;
 
@@ -243,9 +243,21 @@ build_didl(void)
   }
 
   if(upnp_current_album_art) {
+
+    char url[URL_MAX];
+    const char *arturl;
+
+    if(strncmp(upnp_current_album_art, "http://", strlen("http://"))) {
+      snprintf(url, sizeof(url), "http://%s:%d/image/%s",
+	       myhost, myport, upnp_current_album_art);
+      arturl = url;
+    } else {
+      arturl = upnp_current_album_art;
+    }
+
     htsbuf_qprintf(&hq,
 		   "<upnp:albumArtURI xmlns:upnp=\"urn:schemas-upnp-org:metadata-1-0/upnp/\">");
-    htsbuf_append_and_escape_xml(&hq, upnp_current_album_art);
+    htsbuf_append_and_escape_xml(&hq, arturl);
     htsbuf_qprintf(&hq, "</upnp:albumArtURI>");
   }
   
@@ -271,14 +283,14 @@ fmttime(char *out, size_t outlen, unsigned int t)
  *
  */
 static htsmsg_t *
-avt_GetPositionInfo(htsmsg_t *args)
+avt_GetPositionInfo(http_connection_t *hc, htsmsg_t *args)
 {
   htsmsg_t *out = htsmsg_create_map();
   char tbuf[16];
 
   hts_mutex_lock(&upnp_lock);
 
-  char *didl = build_didl();
+  char *didl = build_didl(http_get_my_host(hc), http_get_my_port(hc));
 
   htsmsg_add_u32(out, "Track", upnp_current_track);
 
@@ -328,7 +340,7 @@ lc_encode_val_int(htsbuf_queue_t *xml, const char *attrib, int v)
  *
  */
 static htsmsg_t *
-avt_generate_props(upnp_local_service_t *uls)
+avt_generate_props(upnp_local_service_t *uls, const char *myhost, int myport)
 {
   char *event;
   htsbuf_queue_t xml;
@@ -401,7 +413,7 @@ avt_generate_props(upnp_local_service_t *uls)
 
   // Metadata
 
-  char *meta = build_didl();
+  char *meta = build_didl(myhost, myport);
   lc_encode_val_str(&xml, "AVTransportURIMetaData", meta);
   lc_encode_val_str(&xml, "CurrentTrackMetaData", meta);
   free(meta);
