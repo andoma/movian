@@ -44,7 +44,7 @@
 #define SIMPLE_ITEM_IMAGE(TITLE, IMAGE, EVENT, COLOR) {
 
   SIMPLE_ITEM(TITLE, EVENT, COLOR, widget(image, {
-    .color = [1,1,1] * 0.5 * isFocused() + 0.2 * isHovered() + 0.0;
+    .color = [1.0,1.0,1.0] * (0.5 * isFocused() + 0.2 * isHovered() + 0.5);
     .source = IMAGE;
     .hqScaling = true;
     .align = bottom;
