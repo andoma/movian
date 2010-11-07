@@ -21,6 +21,8 @@
 #include "networking/http_server.h"
 #include "httpcontrol.h"
 #include "event.h"
+#include "misc/pixmap.h"
+#include "backend/backend.h"
 
 #define STRINGIFY(A)  #A
 
@@ -54,6 +56,50 @@ hc_open(http_connection_t *hc, const char *remain, void *opaque,
 }
 
 
+static int
+hc_image(http_connection_t *hc, const char *remain, void *opaque,
+	http_cmd_t method)
+{
+  htsbuf_queue_t out;
+  pixmap_t *pm;
+  char errbuf[200];
+  const char *content;
+  pm = backend_imageloader(remain, 0, NULL, errbuf, sizeof(errbuf));
+  if(pm == NULL)
+    return http_error(hc, 404, "Unable to load image %s : %s",
+		      remain, errbuf);
+
+  if(pm->pm_codec == CODEC_ID_NONE) {
+    pixmap_release(pm);
+    return http_error(hc, 404, 
+		      "Unable to load image %s : Original data not available",
+		      remain);
+  }
+
+  htsbuf_queue_init(&out, 0);
+  htsbuf_append(&out, pm->pm_data, pm->pm_size);
+
+  switch(pm->pm_codec) {
+  case CODEC_ID_MJPEG:
+    content = "image/jpeg";
+    break;
+  case CODEC_ID_PNG:
+    content = "image/png";
+    break;
+  case CODEC_ID_GIF:
+    content = "image/gif";
+    break;
+  default:
+    content = "image";
+    break;
+  }
+
+  pixmap_release(pm);
+
+  return http_send_reply(hc, 0, content, NULL, NULL, 0, &out);
+}
+
+
 /**
  *
  */
@@ -61,4 +107,5 @@ void
 httpcontrol_init(void)
 {
   http_path_add("/control/open", NULL, hc_open);
+  http_path_add("/image", NULL, hc_image);
 }
