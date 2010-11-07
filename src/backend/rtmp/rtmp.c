@@ -520,6 +520,7 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 
 
     if(pos == -1) {
+
       ret = RTMP_GetNextMediaPacket(r->r, &p);
 
       if(ret == 2) {
@@ -544,12 +545,14 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 
 	if(!RTMP_SetupURL(r->r, url)) {
 	  snprintf(errbuf, errlen, "Unable to setup RTMP session");
-	  return NULL;
+	  e = NULL;
+	  break;
 	}
 
 	if(!RTMP_Connect(r->r, NULL)) {
 	  snprintf(errbuf, errlen, "Unable to connect RTMP session");
-	  return NULL;
+	  e = NULL;
+	  break;
 	}
 
 	if(!RTMP_ConnectStream(r->r, r->seekbase / 1000)) {
@@ -569,8 +572,10 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 
       switch(p.m_packetType) {
       case RTMP_PACKET_TYPE_INFO:
-	if(handle_metadata(r, p.m_body, p.m_nBodySize, mp, errbuf, errlen))
+	if(handle_metadata(r, p.m_body, p.m_nBodySize, mp, errbuf, errlen)) {
+	  RTMPPacket_Free(&p);
 	  return NULL;
+	}
 	break;
 
       case RTMP_PACKET_TYPE_VIDEO:
@@ -589,6 +594,8 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 	      "Got unknown packet type %d\n", p.m_packetType);
 	break;
       }
+      if(pos == -1)
+	RTMPPacket_Free(&p);
     }
 
     if(pos != -1) {
@@ -597,6 +604,7 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 	  
 	if(pos + 11 + ds + 4 > p.m_nBodySize) {
 	  snprintf(errbuf, errlen, "Corrupt stream");
+	  RTMPPacket_Free(&p);
 	  return NULL;
 	}
 
@@ -604,8 +612,10 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 	dts |= (p.m_body[pos + 7] << 24);
 
 	if(p.m_body[pos] == RTMP_PACKET_TYPE_INFO) {
-	  if(handle_metadata(r, p.m_body, p.m_nBodySize, mp, errbuf, errlen))
+	  if(handle_metadata(r, p.m_body, p.m_nBodySize, mp, errbuf, errlen)) {
+	    RTMPPacket_Free(&p);
 	    return NULL;
+	  }
 	} else if(p.m_body[pos] == RTMP_PACKET_TYPE_VIDEO) {
 	  e = get_packet_v(r, (void *)p.m_body + pos + 11, ds, dts, mp);
 	} else if(p.m_body[pos] == RTMP_PACKET_TYPE_AUDIO) {
@@ -617,12 +627,12 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 	pos += 11 + ds + 4;
       } else {
 	pos = -1;
+	RTMPPacket_Free(&p);
       }
     }
     if(e != NULL)
       break;
   }
-
   return e;
 }
 
