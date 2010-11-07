@@ -1058,11 +1058,6 @@ cloner_sig_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     cloner_pagination_check(sc);
     break;
 
-  case GLW_SIGNAL_DESTROY:
-    prop_ref_dec(c->c_prop);
-    free(c);
-    break;
-
   default:
     break;
   }
@@ -1126,7 +1121,7 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
 			GLW_ATTRIB_ORIGINATING_PROP, p,
 			NULL);
 
-  prop_tag_set(p, sc, c->c_w);
+  prop_tag_set(p, sc, c);
 
   glw_signal_handler_register(c->c_w, cloner_sig_handler, c, 1000);
 
@@ -1183,11 +1178,11 @@ static void
 cloner_move_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
 		   glw_t *parent, errorinfo_t *ei)
 {
-  glw_t *w =          prop_tag_get(p, sc);
-  glw_t *b = before ? prop_tag_get(before, sc) : NULL;
+  clone_t *c =          prop_tag_get(p, sc);
+  clone_t *b = before ? prop_tag_get(before, sc) : NULL;
 
   sc->sc_positions_valid = 0;
-  glw_move(w, b);
+  glw_move(c->c_w, b->c_w);
 }
 
 
@@ -1224,14 +1219,19 @@ cloner_move_child(sub_cloner_t *sc, prop_t *p, prop_t *before,
 static void
 cloner_del_child(sub_cloner_t *sc, prop_t *p, glw_t *parent)
 {
-  glw_t *w;
+  clone_t *c;
   glw_prop_sub_pending_t *gpsp;
 
-  if((w = prop_tag_clear(p, sc)) != NULL) {
+  if((c = prop_tag_clear(p, sc)) != NULL) {
     sc->sc_entries--;
+    glw_t *w = c->c_w;
+
     if(TAILQ_NEXT(w, glw_parent_link) != NULL)
       sc->sc_positions_valid = 0;
     glw_detach(w);
+
+    prop_ref_dec(c->c_prop);
+    free(c);
     return;
   }
 
@@ -1240,6 +1240,7 @@ cloner_del_child(sub_cloner_t *sc, prop_t *p, glw_t *parent)
   if(sc->sc_pending_select == p)
     sc->sc_pending_select = NULL;
 
+  assert(gpsp->gpsp_prop == p);
   prop_ref_dec(p);
   TAILQ_REMOVE(&sc->sc_pending, gpsp, gpsp_link);
   free(gpsp);
@@ -1251,15 +1252,14 @@ cloner_del_child(sub_cloner_t *sc, prop_t *p, glw_t *parent)
 static void
 cloner_select_child(sub_cloner_t *sc, prop_t *p, glw_t *parent, prop_t *extra)
 {
-  glw_t *w;
-
+  clone_t *c;
   if(p == NULL) {
     parent->glw_class->gc_select_child(parent, NULL);
     return;
   }
 
-  if((w = prop_tag_get(p, sc)) != NULL) {
-    parent->glw_class->gc_select_child(parent, w);
+  if((c = prop_tag_get(p, sc)) != NULL) {
+    parent->glw_class->gc_select_child(parent, c->c_w);
     sc->sc_pending_select = NULL;
     return;
   }
