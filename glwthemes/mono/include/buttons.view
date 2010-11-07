@@ -207,12 +207,12 @@
     .color = [0.5, 0.5, 0.5] + 0.35 * (isFocused() + isHovered()) - 0.5 * isPressed();
 
     widget(container_x, {
+      .align = center;
 
       widget(icon, {
 	.hidden = select(icon, 0, 1);
 	.source = ICON;
       });
-
 
       widget(label, {
 	.color = [0.8, 0.8, 0.8] + 1 * (isFocused() + isHovered());

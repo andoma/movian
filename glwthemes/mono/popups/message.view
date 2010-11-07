@@ -28,9 +28,9 @@ widget(container_x, {
 	HORIZONTAL_SEPARATOR();
 
 	widget(container_x, {
-
 	  .align = center;
 	  .spacing = 20;
+	  .homogenous = true;
 
 	  BAR_BUTTON("OK", 
 		     deliverEvent($self.eventSink, "Ok"),
