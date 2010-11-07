@@ -207,7 +207,7 @@ glw_init(glw_root_t *gr, const char *theme, ui_t *ui, int primary,
  *
  */
 void
-glw_load_universe(glw_root_t *gr)
+glw_unload_universe(glw_root_t *gr)
 {
   glw_view_cache_flush(gr);
 
@@ -215,6 +215,15 @@ glw_load_universe(glw_root_t *gr)
     glw_destroy(gr->gr_universe);
 
   glw_flush(gr);
+}
+
+/**
+ *
+ */
+void
+glw_load_universe(glw_root_t *gr)
+{
+  glw_unload_universe(gr);
 
   gr->gr_universe = glw_view_create(gr,
 				    "theme://universe.view", NULL, NULL,

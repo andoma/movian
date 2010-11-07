@@ -739,6 +739,8 @@ int glw_init(glw_root_t *gr, const char *theme, ui_t *ui, int primary,
 
 void glw_load_universe(glw_root_t *gr);
 
+void glw_unload_universe(glw_root_t *gr);
+
 void glw_flush(glw_root_t *gr);
 
 void *glw_get_opaque(glw_t *w, glw_callback_t *func);

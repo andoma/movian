@@ -1261,6 +1261,7 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
   update_gpu_info(gx11);
   glw_load_universe(gr);
   glw_x11_mainloop(gx11);
+  glw_unload_universe(gr);
   return 0;
 }
 
