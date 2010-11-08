@@ -1884,7 +1884,7 @@ playlist_name_update(sp_playlist *plist, playlist_t *pl)
   char buf[200];
 
   snprintf(buf, sizeof(buf),
-	   "%s 0x%016llx", name, pl->pl_folder_id);
+	   "%s 0x%016"PRId64, name, pl->pl_folder_id);
   mystrset(&pl->pl_intname, buf);
 
   return name;
@@ -2331,7 +2331,7 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
   }
 
   snprintf(url, sizeof(url),
-	   "%s 0x%016llx", name, pl->pl_folder_id);
+	   "%s 0x%016"PRId64, name, pl->pl_folder_id);
   pl->pl_intname = strdup(url);
 
   pl->pl_type = type;
