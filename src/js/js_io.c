@@ -56,19 +56,45 @@ http_request_toString(JSContext *cx, JSObject *obj, uintN argc,
 		      jsval *argv, jsval *rval)
 {
   js_http_response_t *jhr = JS_GetPrivate(cx, obj);
-  const char *r, *r2;
+  const char *r = jhr->data, *r2;
+  char *tmpbuf = NULL;
+  int isxml;
 
-  int isxml = jhr->contenttype != NULL &&
-    (!strncasecmp(jhr->contenttype, "application/xml",
-		  strlen("application/xml")) ||
-     !strncasecmp(jhr->contenttype, "text/xml", strlen("text/xml")));
+  if(jhr->contenttype != NULL) {
+    const char *charset = strstr(jhr->contenttype, "charset=");
 
-  if(isxml && (r = strstr(jhr->data, "<?xml ")) != NULL &&
-     (r2 = strstr(r, "?>")) != NULL) {
+    if(charset != NULL) {
+      int conv;
+
+      charset += strlen("charset=");
+      if(!strcasecmp(charset, "utf-8")) {
+	conv = 0;
+      } else if(!strcasecmp(charset, "ISO-8859-1")) {
+	conv = 1;
+      } else {
+	TRACE(TRACE_INFO, "JS", "Unable to handle charset %s", charset);
+	conv = 1;
+      }
+
+      if(conv)
+	r = tmpbuf = utf8_from_ISO_8859_1(jhr->data, jhr->datalen);
+    }
+
+    isxml =
+      strstr(jhr->contenttype, "application/xml") ||
+      strstr(jhr->contenttype, "text/xml");
+  } else {
+    isxml = 0;
+  }
+
+  if(isxml && 
+     (r2 = strstr(r, "<?xml ")) != NULL &&
+     (r2 = strstr(r2, "?>")) != NULL) {
     *rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, r2+2));
   } else {
-    *rval = STRING_TO_JSVAL(JS_NewStringCopyN(cx, jhr->data, jhr->datalen));
+    *rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, r));
   }
+  free(tmpbuf);
   return JS_TRUE;
 }
 
