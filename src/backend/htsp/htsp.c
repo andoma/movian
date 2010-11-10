@@ -165,6 +165,7 @@ static void htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m);
 static void htsp_subscriptionStop(htsp_connection_t *hc, htsmsg_t *m);
 static void htsp_subscriptionStatus(htsp_connection_t *hc, htsmsg_t *m);
 static void htsp_queueStatus(htsp_connection_t *hc, htsmsg_t *m);
+static void htsp_signalStatus(htsp_connection_t *hc, htsmsg_t *m);
 static void htsp_mux_input(htsp_connection_t *hc, htsmsg_t *m);
 
 static htsmsg_t *htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m);
@@ -841,6 +842,8 @@ htsp_worker_thread(void *aux)
 	htsp_subscriptionStatus(hc, m);
       else if(!strcmp(method, "queueStatus"))
 	htsp_queueStatus(hc, m);
+      else if(!strcmp(method, "signalStatus"))
+	htsp_signalStatus(hc, m);
       else if(!strcmp(method, "initialSyncCompleted")) {
 	/* nop for us */
       } else
@@ -1998,6 +2001,13 @@ htsp_queueStatus(htsp_connection_t *hc, htsmsg_t *m)
   hts_mutex_unlock(&hc->hc_subscription_mutex);
 }
 
+/**
+ *
+ */
+static void
+htsp_signalStatus(htsp_connection_t *hc, htsmsg_t *m)
+{
+}
 
 
 /**
