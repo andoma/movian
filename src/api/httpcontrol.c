@@ -46,7 +46,7 @@ hc_open(http_connection_t *hc, const char *remain, void *opaque,
   const char *url = http_arg_get_req(hc, "url");
 
   if(url != NULL) {
-    event_dispatch(event_create_openurl(url, NULL));
+    event_dispatch(event_create_openurl(url, NULL, NULL));
     return http_redirect(hc, "/control/open");
   }
 

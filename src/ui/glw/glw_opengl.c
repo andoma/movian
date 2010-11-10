@@ -206,12 +206,12 @@ glw_rctx_init(glw_rctx_t *rc, int width, int height)
   rc->rc_height = height;
   rc->rc_alpha = 1.0f;
 
-  memset(&rc->rc_be.gbr_mtx, 0, sizeof(float) * 16);
+  memset(&rc->rc_mtx, 0, sizeof(Mtx));
   
-  rc->rc_be.gbr_mtx[0]  = 1;
-  rc->rc_be.gbr_mtx[5]  = 1;
-  rc->rc_be.gbr_mtx[10] = 1;
-  rc->rc_be.gbr_mtx[15] = 1;
+  rc->rc_mtx[0]  = 1;
+  rc->rc_mtx[5]  = 1;
+  rc->rc_mtx[10] = 1;
+  rc->rc_mtx[15] = 1;
 
   glw_Translatef(rc, 0, 0, -1 / tan(45 * M_PI / 360));
 }
@@ -230,11 +230,11 @@ glw_store_matrix(glw_t *w, glw_rctx_t *rc)
   if(w->glw_matrix == NULL)
     w->glw_matrix = malloc(sizeof(float) * 16);
   
-  memcpy(w->glw_matrix, rc->rc_be.gbr_mtx, sizeof(float) * 16);
+  memcpy(w->glw_matrix, rc->rc_mtx, sizeof(Mtx));
 
   if(glw_is_focused(w) && gcp != NULL) {
     gcp->gcp_alpha  = rc->rc_alpha;
-    memcpy(gcp->gcp_m, w->glw_matrix, 16 * sizeof(float));
+    memcpy(gcp->gcp_m, w->glw_matrix, sizeof(Mtx));
   }
 }
 
@@ -819,7 +819,7 @@ clip_tesselate(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
   glw_renderer_cache_t *grc = gr->gr_cache[cache];
   grc->grc_size = 0;
 
-  memcpy(grc->grc_mtx, rc->rc_be.gbr_mtx, sizeof(float) * 16);
+  memcpy(grc->grc_mtx, rc->rc_mtx, sizeof(Mtx));
 
   grc->grc_active_clippers = root->gr_be.gbr_active_clippers;
 
@@ -837,9 +837,9 @@ clip_tesselate(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
     float V2[3];
     float V3[3];
     
-    mtx_mul_vec(V1, rc->rc_be.gbr_mtx, a[v1*9+0], a[v1*9+1], a[v1*9+2]);
-    mtx_mul_vec(V2, rc->rc_be.gbr_mtx, a[v2*9+0], a[v2*9+1], a[v2*9+2]);
-    mtx_mul_vec(V3, rc->rc_be.gbr_mtx, a[v3*9+0], a[v3*9+1], a[v3*9+2]);
+    mtx_mul_vec(V1, rc->rc_mtx, a[v1*9+0], a[v1*9+1], a[v1*9+2]);
+    mtx_mul_vec(V2, rc->rc_mtx, a[v2*9+0], a[v2*9+1], a[v2*9+2]);
+    mtx_mul_vec(V3, rc->rc_mtx, a[v3*9+0], a[v3*9+1], a[v3*9+2]);
 
     clipper(grc, V1, V2, V3,
 	    &gr->gr_array[v1 * 9 + 5],
@@ -901,7 +901,7 @@ glw_renderer_ff(glw_renderer_t *gr, glw_root_t *root,
 {
   glw_backend_root_t *gbr = &root->gr_be;
 
-  glLoadMatrixf(rc->rc_be.gbr_mtx);
+  glLoadMatrixf(rc->rc_mtx);
 
   glVertexPointer(3, GL_FLOAT, sizeof(float) * 9, gr->gr_array);
 
@@ -1052,7 +1052,7 @@ glw_renderer_shader(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
 
     if(gr->gr_dirty || gr->gr_cache[cacheid] == NULL ||
        memcmp(gr->gr_cache[cacheid]->grc_mtx,
-	      rc->rc_be.gbr_mtx, sizeof(float) * 16) ||
+	      rc->rc_mtx, sizeof(float) * 16) ||
        grc_clippers_cmp(gr->gr_cache[cacheid], root)) {
 
       clip_tesselate(gr, root, rc, cacheid);
@@ -1107,7 +1107,7 @@ glw_Rotatef(glw_rctx_t *rc, float a, float x, float y, float z)
   float t = 1.0 - c;
   float n = 1 / sqrtf(x*x + y*y + z*z);
   float m[16];
-  float *o = rc->rc_be.gbr_mtx;
+  float *o = rc->rc_mtx;
   float p[16];
 
   x *= n;
@@ -1184,7 +1184,7 @@ glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t how)
 
     float inv[16];
 
-    if(!mtx_invert(inv, rc->rc_be.gbr_mtx))
+    if(!mtx_invert(inv, rc->rc_mtx))
       return -1;
 
     mtx_trans_mul_vec4(gr->gr_be.gbr_clip[i], inv, 
@@ -1201,7 +1201,7 @@ glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t how)
     for(j = 0; j < 4; j++)
       plane[j] = clip_planes[how][j];
 
-    glLoadMatrixf(rc->rc_be.gbr_mtx);
+    glLoadMatrixf(rc->rc_mtx);
 
     glClipPlane(GL_CLIP_PLANE0 + i, plane);
     glEnable(GL_CLIP_PLANE0 + i);
@@ -1379,7 +1379,7 @@ glw_load_program(glw_backend_root_t *gbr, glw_program_t *gp)
 void
 glw_program_set_modelview(glw_backend_root_t *gbr, glw_rctx_t *rc)
 {
-  const float *m = rc ? rc->rc_be.gbr_mtx : identitymtx;
+  const float *m = rc ? rc->rc_mtx : identitymtx;
   glUniformMatrix4fv(gbr->gbr_current->gp_uniform_modelview, 1, 0, m);
 }
 

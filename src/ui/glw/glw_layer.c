@@ -28,7 +28,7 @@ glw_layer_select_child(glw_t *w)
   glw_t *c;
 
   TAILQ_FOREACH_REVERSE(c, &w->glw_childs, glw_queue, glw_parent_link)
-    if(!(c->glw_flags & (GLW_HIDDEN | GLW_DETACHED)))
+    if(!(c->glw_flags & (GLW_HIDDEN | GLW_RETIRED)))
       break;
 
   w->glw_selected = c;
@@ -60,7 +60,7 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       z = 1.0;
       a = 0;
 
-      if(c->glw_flags & GLW_DETACHED) {
+      if(c->glw_flags & GLW_RETIRED) {
 
 	if(c->glw_parent_z > 0.99) {
 	  glw_destroy(c);
@@ -109,9 +109,9 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
  *
  */
 static void
-glw_layer_detach(glw_t *w, glw_t *c)
+glw_layer_retire_child(glw_t *w, glw_t *c)
 {
-  c->glw_flags |= GLW_DETACHED;
+  c->glw_flags |= GLW_RETIRED;
   glw_layer_select_child(w);
 }
 
@@ -144,7 +144,7 @@ static glw_class_t glw_layer = {
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_instance_size = sizeof(glw_t),
   .gc_render = glw_layer_render,
-  .gc_detach = glw_layer_detach,
+  .gc_retire_child = glw_layer_retire_child,
   .gc_signal_handler = glw_layer_callback,
 };
 

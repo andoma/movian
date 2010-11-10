@@ -84,7 +84,8 @@ static void nav_eventsink(void *opaque, prop_event_t event, ...);
 
 static void nav_dtor_tracker(void *opaque, prop_event_t event, ...);
 
-static void nav_open0(navigator_t *nav, const char *url, const char *view);
+static void nav_open0(navigator_t *nav, const char *url, const char *view,
+		      prop_t *origin);
 
 /**
  *
@@ -228,10 +229,10 @@ nav_close_all(navigator_t *nav, int with_prop)
  *
  */
 static void
-nav_select(navigator_t *nav, nav_page_t *np)
+nav_select(navigator_t *nav, nav_page_t *np, prop_t *origin)
 {
   prop_link(np->np_prop_root, nav->nav_prop_curpage);
-  prop_select(np->np_prop_root);
+  prop_select_ex(np->np_prop_root, origin, NULL);
   nav->nav_page_current = np;
   nav_update_cango(nav);
 }
@@ -241,7 +242,7 @@ nav_select(navigator_t *nav, nav_page_t *np)
  *
  */
 static void
-nav_insert_page(navigator_t *nav, nav_page_t *np)
+nav_insert_page(navigator_t *nav, nav_page_t *np, prop_t *origin)
 {
   nav_page_t *np2;
 
@@ -265,7 +266,7 @@ nav_insert_page(navigator_t *nav, nav_page_t *np)
     TAILQ_INSERT_TAIL(&nav->nav_history, np, np_history_link);
     np->np_inhistory = 1;
   }
-  nav_select(nav, np);
+  nav_select(nav, np, origin);
 }
 
 
@@ -290,7 +291,7 @@ nav_page_close_set(void *opaque, int value)
     next = TAILQ_LAST(&nav->nav_pages, nav_page_queue);
 
   if(next != NULL)
-    nav_open0(nav, next->np_url, next->np_view);
+    nav_open0(nav, next->np_url, next->np_view, NULL);
 }
 
 
@@ -321,7 +322,7 @@ nav_page_direct_close_set(void *opaque, int v)
  *
  */
 static void
-nav_open0(navigator_t *nav, const char *url, const char *view)
+nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin)
 {
   nav_page_t *np = calloc(1, sizeof(nav_page_t));
   np->np_nav = nav;
@@ -364,7 +365,7 @@ nav_open0(navigator_t *nav, const char *url, const char *view)
   if(backend_open(np->np_prop_root, url))
     nav_open_errorf(np->np_prop_root, url, "No handler for URL");
 
-  nav_insert_page(nav, np);
+  nav_insert_page(nav, np, origin);
 }
 
 
@@ -374,7 +375,7 @@ nav_open0(navigator_t *nav, const char *url, const char *view)
 void
 nav_open(const char *url, const char *view)
 {
-  event_dispatch(event_create_openurl(url, view));
+  event_dispatch(event_create_openurl(url, view, NULL));
 }
 
 
@@ -389,7 +390,7 @@ nav_back(navigator_t *nav)
   if(np != NULL &&
      (prev = TAILQ_PREV(np, nav_page_queue, np_history_link)) != NULL) {
 
-    nav_select(nav, prev);
+    nav_select(nav, prev, NULL);
 
     if(np->np_direct_close)
       nav_close(np, 1);
@@ -408,7 +409,7 @@ nav_fwd(navigator_t *nav)
   np = nav->nav_page_current;
 
   if(np != NULL && (next = TAILQ_NEXT(np, np_history_link)) != NULL)
-    nav_select(nav, next);
+    nav_select(nav, next, NULL);
 }
 
 
@@ -437,11 +438,11 @@ nav_eventsink(void *opaque, prop_event_t event, ...)
     nav_fwd(nav);
 
   } else if(event_is_action(e, ACTION_HOME)) {
-    nav_open0(nav, NAV_HOME, NULL);
+    nav_open0(nav, NAV_HOME, NULL, NULL);
 
   } else if(event_is_type(e, EVENT_OPENURL)) {
     ou = (event_openurl_t *)e;
-    nav_open0(nav, ou->url, ou->view);
+    nav_open0(nav, ou->url, ou->view, ou->origin);
   }
 }
 

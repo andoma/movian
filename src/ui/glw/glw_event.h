@@ -61,7 +61,8 @@ int glw_event_map_intercept(glw_t *w, event_t *e);
  *
  */
 glw_event_map_t *glw_event_map_navOpen_create(const char *url,
-					      const char *view);
+					      const char *view,
+					      prop_t *origin);
 
 
 /**

@@ -2926,6 +2926,25 @@ prop_follow(prop_t *p)
 /**
  *
  */
+int
+prop_compare(const prop_t *a, const prop_t *b)
+{
+  hts_mutex_lock(&prop_mutex);
+
+  while(a->hp_originator != NULL)
+    a = a->hp_originator;
+
+  while(b->hp_originator != NULL)
+    b = b->hp_originator;
+
+  hts_mutex_unlock(&prop_mutex);
+  return a == b;
+}
+
+
+/**
+ *
+ */
 void
 prop_select_ex(prop_t *p, prop_t *extra, prop_sub_t *skipme)
 {

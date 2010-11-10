@@ -1127,7 +1127,7 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
   glw_signal_handler_register(c->c_w, cloner_sig_handler, c, 1000);
 
   if(flags & PROP_ADD_SELECTED)
-    parent->glw_class->gc_select_child(parent, c->c_w);
+    parent->glw_class->gc_select_child(parent, c->c_w, NULL);
 
   clone_update(c);
 }
@@ -1231,7 +1231,7 @@ cloner_del_child(sub_cloner_t *sc, prop_t *p, glw_t *parent)
 
     if(TAILQ_NEXT(w, glw_parent_link) != NULL)
       sc->sc_positions_valid = 0;
-    glw_detach(w);
+    glw_retire_child(w);
 
     prop_ref_dec(c->c_prop);
     free(c);
@@ -1257,12 +1257,12 @@ cloner_select_child(sub_cloner_t *sc, prop_t *p, glw_t *parent, prop_t *extra)
 {
   clone_t *c;
   if(p == NULL) {
-    parent->glw_class->gc_select_child(parent, NULL);
+    parent->glw_class->gc_select_child(parent, NULL, extra);
     return;
   }
 
   if((c = prop_tag_get(p, sc)) != NULL) {
-    parent->glw_class->gc_select_child(parent, c->c_w);
+    parent->glw_class->gc_select_child(parent, c->c_w, extra);
     sc->sc_pending_select = NULL;
     return;
   }
@@ -2025,7 +2025,7 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
   while((w = TAILQ_PREV((glw_t *)self->t_extra, 
 			glw_queue, glw_parent_link)) != NULL &&
 	w->glw_originating_prop != NULL)
-    glw_detach(w);
+    glw_retire_child(w);
 
   if(a->type == TOKEN_DIRECTORY) {
     sub_cloner_t *sc = (sub_cloner_t *)a->propsubr;
@@ -2274,11 +2274,12 @@ static int
 glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
 	     token_t **argv, unsigned int argc)
 {
-  token_t *a, *b, *r;
+  token_t *a, *b, *c, *r;
   const char *url;
   const char *view = NULL;
+  prop_t *origin = NULL;
 
-  if(argc < 1 || argc > 2)
+  if(argc < 1 || argc > 3)
     return glw_view_seterr(ec->ei, self, "navOpen(): Invalid number of args");
 
   if((a = token_resolve(ec, argv[0])) == NULL)
@@ -2294,7 +2295,7 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
     return glw_view_seterr(ec->ei, a, "navOpen(): "
 			    "First argument is not a string, link or (void)");
 
-  if(argc == 2) {
+  if(argc > 1) {
     if((b = token_resolve(ec, argv[1])) == NULL)
       return -1;
 
@@ -2307,8 +2308,18 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
 			     "Second argument is not a string or (void)");
   }
 
+  if(argc > 2) {
+    if((c = resolve_property_name2(ec, argv[2])) == NULL)
+      return -1;
+    
+    if(c->type != TOKEN_PROPERTY_REF)
+      return glw_view_seterr(ec->ei, c, "navOpen(): "
+			     "Third argument is not a property");
+    origin = c->t_prop;
+  }
+
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  r->t_gem = glw_event_map_navOpen_create(url, view);
+  r->t_gem = glw_event_map_navOpen_create(url, view, origin);
   eval_push(ec, r);
   return 0;
 }

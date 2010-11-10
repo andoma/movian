@@ -16,29 +16,25 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <assert.h>
+
 #include "glw.h"
 #include "glw_transitions.h"
+
 
 /**
  *
  */
 typedef struct {
   glw_t w;
-  glw_t *prev; // Widget we are transitioning from
-
-  glw_transition_type_t efx_conf;
-  float time;
-  float delta;
-  
-  float v;
-  char rev;
-
   char fsmode;
+
+  float speed;
 
 } glw_playfield_t;
 
-
-
+#define glw_parent_detached    glw_parent_val[0].ptr
+#define glw_parent_amount      glw_parent_val[1].f
 
 /**
  *
@@ -74,28 +70,55 @@ glw_playfield_update_constraints(glw_playfield_t *p)
 }
 
 
+
 /**
  *
  */
-static void
-setprev(glw_playfield_t *gd, glw_t *c)
+static glw_t *
+find_by_prop(glw_t *w, prop_t *p)
 {
-  glw_t *l = gd->w.glw_selected;
-  glw_t *p;
-  int rev = 0;
-
-  gd->prev = l;
-  if(c == NULL)
-    return;
-
-  for(p = TAILQ_NEXT(c, glw_parent_link); p != NULL;
-      p = TAILQ_NEXT(p, glw_parent_link)) {
-    if(p == l) {
-      rev = 1;
-      break;
-    }
+  glw_t *c, *r;
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    if(c->glw_originating_prop != NULL &&
+       prop_compare(c->glw_originating_prop, p))
+      return c;
+    if((r = find_by_prop(c, p)) != NULL)
+      return r;
   }
-  gd->rev = rev;
+  return NULL;
+}
+
+
+/**
+ *
+ */
+static glw_t *
+find_detachable(glw_t *w)
+{
+  glw_t *c, *r;
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    if(c->glw_class->gc_detach_control != NULL)
+      return c;
+    if((r = find_detachable(c)) != NULL)
+      return r;
+  }
+  return NULL;
+}
+
+
+/**
+ *
+ */
+static int
+destroy_detached_callback(glw_t *w, void *opaque,
+			  glw_signal_t signal, void *extra)
+{
+  glw_t *s = opaque;
+  if(signal == GLW_SIGNAL_DESTROY) {
+    assert(s->glw_parent_detached == w);
+    s->glw_parent_detached = NULL;
+  }
+  return 0;
 }
 
 
@@ -103,22 +126,59 @@ setprev(glw_playfield_t *gd, glw_t *c)
  *
  */
 static void
-playfield_select_child(glw_t *w, glw_t *c)
+detach(glw_t *s, glw_t *d)
+{
+  if(s->glw_parent_detached != NULL) {
+    glw_t *p = s->glw_parent_detached;
+    p->glw_class->gc_detach_control(p, 0);
+    glw_signal_handler_unregister(p, destroy_detached_callback, s);
+  }
+
+  s->glw_parent_detached = d;
+  if(d != NULL) {
+    d->glw_class->gc_detach_control(d, 1);
+    glw_signal_handler_register(d, destroy_detached_callback, s, 1000);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+playfield_select_child(glw_t *w, glw_t *c, prop_t *origin)
 {
   glw_playfield_t *p = (glw_playfield_t *)w;
+  float speed = 0.1;
 
-  setprev(p, c);
+  if(origin && w->glw_selected != NULL &&
+     TAILQ_NEXT(w->glw_selected, glw_parent_link) == c) {
+    glw_t *x = find_by_prop(w->glw_selected, origin);
+    glw_t *d = x ? find_detachable(x) : NULL;
+    if(d != NULL) {
+      detach(w->glw_selected, d);
+      speed = 0.025;
+    }
+  }
+  
+  if(c != NULL) {
+    if(w->glw_selected == NULL && w->glw_flags & GLW_NO_INITIAL_TRANS) 
+      c->glw_parent_amount = 1;
+
+    if(c->glw_parent_detached)
+      speed = 0.025;
+  }
+
+  p->speed = speed;
   w->glw_selected = c;
-  if(w->glw_selected != NULL) {
-    glw_focus_open_path_close_all_other(w->glw_selected);
+
+  if(c != NULL) {
+    glw_focus_open_path_close_all_other(c);
     glw_playfield_update_constraints(p);
   } else {
     clear_constraints(w);
   }
 
-  if(p->efx_conf != GLW_TRANS_NONE &&
-     (p->prev != NULL || !(w->glw_flags & GLW_NO_INITIAL_TRANS)))
-    p->v = 0;
 }
 
 
@@ -130,53 +190,45 @@ glw_playfield_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_playfield_t *p = (glw_playfield_t *)w;
   glw_rctx_t *rc = extra;
-  glw_t *c, *n;
-  event_t *e;
+  glw_t *c;
+  int v = 0;
+  float s;
 
   switch(signal) {
   default:
     break;
 
   case GLW_SIGNAL_LAYOUT:
-    p->delta = 1 / (p->time * (1000000 / w->glw_root->gr_frameduration));
-
     if(w->glw_alpha < 0.01)
       break;
 
-    p->v = GLW_MIN(p->v + p->delta, 1.0);
-    if(p->v == 1)
-      p->prev = NULL;
+    TAILQ_FOREACH_REVERSE(c, &w->glw_childs, glw_queue, glw_parent_link) {
 
-    if(w->glw_selected != NULL)
-      glw_layout0(w->glw_selected, rc);
-    if(p->prev != NULL)
-      glw_layout0(p->prev, rc);
+      if(w->glw_selected == c) 
+	v = 1;
+      else if(v == 1)
+	v = 2;
+
+      s = p->speed;
+
+      if(c->glw_parent_amount < v) {
+	c->glw_parent_amount = GLW_MIN(v, c->glw_parent_amount + s);
+      } else if(c->glw_parent_amount > v) {
+	c->glw_parent_amount = GLW_MAX(v, c->glw_parent_amount - s);
+      }
+
+      if(c->glw_parent_amount <= 1 && c->glw_parent_detached)
+	detach(c, NULL);
+
+      if(c->glw_parent_amount > 0 && c->glw_parent_amount < 2)
+	glw_layout0(c, rc);
+    }
     break;
 
   case GLW_SIGNAL_EVENT:
-    if(w->glw_selected != NULL) {
-      if(glw_signal0(w->glw_selected, GLW_SIGNAL_EVENT, extra))
-	return 1;
-    }
-
-    if((c = w->glw_selected) == NULL)
-      return 0;
-    
-    /* Respond to some events ourselfs */
-    e = extra;
-
-    if(event_is_action(e, ACTION_INCR)) {
-      n = glw_get_next_n(c, 1);
-    } else if(event_is_action(e, ACTION_DECR)) {
-      n = glw_get_prev_n(c, 1);
-    } else {
-      break;
-    }
-
-    if(n != c && n != NULL)
-      glw_select(w, n);
-
-    return 1;
+    if(w->glw_selected != NULL)
+      return glw_signal0(w->glw_selected, GLW_SIGNAL_EVENT, extra);
+    break;
 
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
     if(w->glw_selected == extra)
@@ -187,32 +239,10 @@ glw_playfield_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     c = extra;
     if(w->glw_selected == extra)
       clear_constraints(w);
-
-    if(p->prev == extra)
-      p->prev = NULL;
-
-    return 0;
+    break;
   }
 
   return 0;
-}
-
-/**
- *
- */
-static void
-playfield_render(glw_rctx_t *rc, glw_playfield_t *gd, glw_t *w, float v)
-{
-  if(gd->efx_conf != GLW_TRANS_NONE) {
-    glw_rctx_t rc0 = *rc;
-    if(gd->rev)
-      v = 1 - (v + 1);
-    glw_transition_render(gd->efx_conf, v, 
-			  rc->rc_alpha * gd->w.glw_alpha, &rc0);
-    w->glw_class->gc_render(w, &rc0);
-  } else {
-    w->glw_class->gc_render(w, rc);
-  }
 }
 
 
@@ -222,32 +252,49 @@ playfield_render(glw_rctx_t *rc, glw_playfield_t *gd, glw_t *w, float v)
 static void 
 glw_playfield_render(glw_t *w, glw_rctx_t *rc)
 {
-  glw_playfield_t *gd = (glw_playfield_t *)w;
+  glw_t *c, *d;
+  glw_rctx_t rc0, rc1;
 
   if(w->glw_alpha < 0.01)
     return;
 
-  if(gd->prev != NULL)
-    playfield_render(rc, gd, gd->prev, gd->v);
+  rc0 = *rc;
 
-  if(w->glw_selected != NULL)
-    playfield_render(rc, gd, w->glw_selected, -1 + gd->v);
-}
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
 
+    if(c->glw_parent_amount > 0 && c->glw_parent_amount < 2) {
+      rc1 = rc0;
+      rc1.rc_alpha *= 1 - fabs(c->glw_parent_amount - 1);
+      glw_render0(c, &rc1);
+    }
 
-/**
- *
- */
-static void
-set_page(glw_playfield_t *gd, int n)
-{
-  glw_t *c;
-  TAILQ_FOREACH(c, &gd->w.glw_childs, glw_parent_link) {
-    if(!n--)
-      break;
+    if((d = c->glw_parent_detached) != NULL) {
+      glw_t *dd;
+      glw_rctx_t rc2, rc3;
+      float a = GLW_MIN(c->glw_parent_amount, 1);
+      if(a > 0) {
+	float v = GLW_MAX(c->glw_parent_amount - 1, 0);
+      
+	v = GLW_S(v);
+      
+	glw_LerpMatrix(rc0.rc_mtx, v, d->glw_matrix, rc0.rc_mtx);
+      
+	if((dd = TAILQ_FIRST(&d->glw_childs)) != NULL) {
+
+	  glw_Rotatef(&rc0, v * 180, 1, 0, 0);
+	  rc3 = rc0;
+	  d->glw_class->gc_get_rctx(d, &rc2);
+	  rc3.rc_width = rc2.rc_width;
+	  rc3.rc_height = rc2.rc_height;
+	  rc3.rc_alpha *= a;
+	  glw_render0(dd, &rc3);
+	  glw_Rotatef(&rc0, 180, 1, 0, 0);
+	}
+      }
+    }
   }
-  playfield_select_child(&gd->w, c);
 }
+
 
 
 
@@ -258,26 +305,16 @@ set_page(glw_playfield_t *gd, int n)
 static void 
 glw_playfield_set(glw_t *w, int init, va_list ap)
 {
-  glw_playfield_t *gd = (glw_playfield_t *)w;
+  //  glw_playfield_t *gd = (glw_playfield_t *)w;
   glw_attribute_t attrib;
 
   if(init) {
-    gd->v = 1.0;
     clear_constraints(w);
   }
 
   do {
     attrib = va_arg(ap, int);
     switch(attrib) {
-    case GLW_ATTRIB_TRANSITION_EFFECT:
-      gd->efx_conf = va_arg(ap, int);
-      break;
-    case GLW_ATTRIB_TIME:
-      gd->time = va_arg(ap, double);
-      break;
-    case GLW_ATTRIB_PAGE:
-      set_page(gd, va_arg(ap, int));
-      break;
     default:
       GLW_ATTRIB_CHEW(attrib, ap);
       break;

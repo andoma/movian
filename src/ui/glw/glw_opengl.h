@@ -128,11 +128,7 @@ typedef struct glw_backend_root {
   (root)->gr_be.gbr_renderer_draw(gr, root, rc, be_tex, rgb, alpha)
 
 
-typedef struct {
-  float gbr_mtx[16]; // ModelView matrix
-} glw_backend_rctx_t;
-
-
+typedef float Mtx[16];
 
 /**
  * Renderer cache

@@ -151,6 +151,8 @@ void prop_destroy_by_name(prop_t *parent, const char *name);
 
 prop_t *prop_follow(prop_t *p);
 
+int prop_compare(const prop_t *a, const prop_t *b);
+
 void prop_move(prop_t *p, prop_t *before);
 
 void prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str,

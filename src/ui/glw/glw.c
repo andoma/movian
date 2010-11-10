@@ -917,11 +917,11 @@ glw_flush(glw_root_t *gr)
  *
  */
 void
-glw_detach(glw_t *w)
+glw_retire_child(glw_t *w)
 {
   glw_t *p = w->glw_parent;
-  if(p != NULL && p->glw_class->gc_detach != NULL) {
-    p->glw_class->gc_detach(p, w);
+  if(p != NULL && p->glw_class->gc_retire_child != NULL) {
+    p->glw_class->gc_retire_child(p, w);
     return;
   }
   glw_destroy(w);

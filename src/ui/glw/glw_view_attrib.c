@@ -415,14 +415,14 @@ set_args(glw_view_eval_context_t *ec, const token_attrib_t *a,
  *
  */
 static int
-set_parent(glw_view_eval_context_t *ec, const token_attrib_t *a,
+set_propref(glw_view_eval_context_t *ec, const token_attrib_t *a,
 	   struct token *t)
 {
   if(t->type != TOKEN_PROPERTY_REF)
     return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a property ref",
 			   a->name);
 
-  glw_set_i(ec->w, GLW_ATTRIB_PROP_PARENT, t->t_prop, NULL);
+  glw_set_i(ec->w, a->attrib, t->t_prop, NULL);
   return 0;
 }
 
@@ -439,7 +439,6 @@ static const token_attrib_t attribtab[] = {
   {"debug",                   set_generic_flag, GLW_DEBUG},
   {"filterConstraintX",       set_generic_flag, GLW_CONSTRAINT_IGNORE_X},
   {"filterConstraintY",       set_generic_flag, GLW_CONSTRAINT_IGNORE_Y},
-  {"filterConstraintAspect",  set_generic_flag, GLW_CONSTRAINT_IGNORE_A},
   {"filterConstraintWeight",  set_generic_flag, GLW_CONSTRAINT_IGNORE_W},
   {"hidden",                  set_generic_flag, GLW_HIDDEN},
   {"noInitialTransform",      set_generic_flag, GLW_NO_INITIAL_TRANS},
@@ -506,7 +505,7 @@ static const token_attrib_t attribtab[] = {
   {"effect",          set_transition_effect,  0},
 
   {"args",            set_args,  0},
-  {"parent",          set_parent, 0},
+  {"parent",          set_propref, GLW_ATTRIB_PROP_PARENT},
 };
 
 

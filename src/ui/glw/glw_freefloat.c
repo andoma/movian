@@ -192,7 +192,7 @@ glw_freefloat_layout(glw_freefloat_t *ff, glw_rctx_t *rc)
  *
  */
 static void
-glw_freefloat_detach(glw_t *w, glw_t *c)
+glw_freefloat_retire_child(glw_t *w, glw_t *c)
 {
   glw_freefloat_t *ff = (glw_freefloat_t *)w;
   if(is_visible(ff, c)) {
@@ -262,7 +262,7 @@ static glw_class_t glw_freefloat = {
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_set = glw_freefloat_set,
   .gc_render = glw_freefloat_render,
-  .gc_detach = glw_freefloat_detach,
+  .gc_retire_child = glw_freefloat_retire_child,
   .gc_signal_handler = glw_freefloat_callback,
 };
 

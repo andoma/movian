@@ -355,9 +355,9 @@ typedef struct glw_class {
   void (*gc_render)(struct glw *w, struct glw_rctx *rc);
 
   /**
-   * Ask widget to detach the given child
+   * Ask widget to retire the given child
    */
-  void (*gc_detach)(struct glw *w, struct glw *c);
+  void (*gc_retire_child)(struct glw *w, struct glw *c);
 
   /**
    * Finalize a widget
@@ -419,7 +419,19 @@ typedef struct glw_class {
   /**
    * Select a child
    */
-  void (*gc_select_child)(struct glw *w, struct glw *c);
+  void (*gc_select_child)(struct glw *w, struct glw *c, struct prop *origin);
+
+  /**
+   * detachable widget control
+   */
+  void (*gc_detach_control)(struct glw *w, int on);
+
+
+  /**
+   *
+   */
+  void (*gc_get_rctx)(struct glw *w, struct glw_rctx *rc);
+
 
   /**
    * Registration link
@@ -568,10 +580,8 @@ typedef struct glw_rctx {
   uint8_t rc_inhibit_matrix_store; // Avoid storing matrix in mirrored view, etc
 
 
-  /**
-   * Backend specifics
-   */ 
-  glw_backend_rctx_t rc_be;
+  // Current ModelView Matrix
+  Mtx rc_mtx;
 
 } glw_rctx_t;
 
@@ -630,6 +640,7 @@ typedef struct glw {
   union { 
     int i32;
     float f;
+    void *ptr;
   } glw_parent_val[6];
 
 
@@ -660,7 +671,7 @@ typedef struct glw {
 
 #define GLW_HIDDEN               0x400
 
-#define GLW_DETACHED             0x800
+#define GLW_RETIRED              0x800
 #define GLW_NO_INITIAL_TRANS     0x1000
 #define GLW_CAN_SCROLL           0x2000
 #define GLW_CONSTRAINT_CONF_XY   0x4000
@@ -675,8 +686,8 @@ typedef struct glw {
   // must be consecutive, see glw_filter_constraints()
 #define GLW_CONSTRAINT_IGNORE_X  0x100000
 #define GLW_CONSTRAINT_IGNORE_Y  0x200000
-#define GLW_CONSTRAINT_IGNORE_A  0x400000
-#define GLW_CONSTRAINT_IGNORE_W  0x800000
+#define GLW_CONSTRAINT_IGNORE_W  0x400000
+#define GLW_CONSTRAINT_IGNORE_F  0x800000
 
 #define GLW_CONSTRAINT_FLAGS (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y | \
                               GLW_CONSTRAINT_W | GLW_CONSTRAINT_F )
@@ -753,7 +764,7 @@ void glw_prepare_frame(glw_root_t *gr, int flags);
 
 void glw_cond_wait(glw_root_t *gr, hts_cond_t *c);
 
-void glw_detach(glw_t *w);
+void glw_retire_child(glw_t *w);
 
 void glw_move(glw_t *w, glw_t *b);
 

@@ -88,7 +88,7 @@ setprev(glw_deck_t *gd, glw_t *c)
  *
  */
 static void
-deck_select_child(glw_t *w, glw_t *c)
+deck_select_child(glw_t *w, glw_t *c, prop_t *origin)
 {
   glw_deck_t *gd = (glw_deck_t *)w;
   setprev(gd, c);
@@ -231,7 +231,7 @@ set_page(glw_deck_t *gd, int n)
     if(!n--)
       break;
   }
-  deck_select_child(&gd->w, c);
+  deck_select_child(&gd->w, c, NULL);
 }
 
 
