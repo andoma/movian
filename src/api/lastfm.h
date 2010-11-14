@@ -19,13 +19,13 @@
 #ifndef LASTFM_H__
 #define LASTFM_H__
 
+#include <misc/rstr.h>
+
 struct prop;
-struct rstr;
 
-void lastfm_artistpics_init(struct prop *prop, struct rstr *artist);
+void lastfm_artistpics_init(struct prop *prop, rstr_t *artist);
 
-void lastfm_albumart_init(struct prop *prop, struct rstr *artist,
-			  struct rstr *album);
+void lastfm_albumart_init(struct prop *prop, rstr_t *artist, rstr_t *album);
 
 void lastfm_init(void);
 
