@@ -113,6 +113,8 @@ ui_trampoline(void *aux)
 {
   struct uiboot *ub = aux;
   ub->ui->ui_start(ub->ui, ub->argc, ub->argv, 0);
+  free(ub->argv[0]);
+  free(ub);
   return NULL;
 }
 
@@ -123,8 +125,8 @@ int
 ui_start(int argc, const char *argv[], const char *argv00)
 {
   ui_t *ui;
-  int i;
-  char *argv0 = strdup(argv00);
+  int i, r;
+  char *argv0 = mystrdupa(argv00);
   struct uiboot *ub, *prim = NULL;
 
   TAILQ_HEAD(, uiboot) ubs;
@@ -203,7 +205,10 @@ ui_start(int argc, const char *argv[], const char *argv00)
   TAILQ_FOREACH(ub, &ubs, link)
     hts_thread_create_detached(ub->ui->ui_title, ui_trampoline, ub);
 
-  return prim->ui->ui_start(prim->ui, prim->argc, prim->argv, 1);
+  r = prim->ui->ui_start(prim->ui, prim->argc, prim->argv, 1);
+  free(prim->argv[0]);
+  free(prim);
+  return r;
 }
 
 
