@@ -400,6 +400,7 @@ plugin_finalize(JSContext *cx, JSObject *obj)
   LIST_REMOVE(jsp, jsp_link);
   
   free(jsp->jsp_url);
+  free(jsp->jsp_id);
   free(jsp);
 }
 
