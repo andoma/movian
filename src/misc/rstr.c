@@ -44,4 +44,40 @@ rstr_allocl(const char *in, size_t len)
   return rs;
 }
 
+#else
+
+rstr_t *
+rstr_dup(rstr_t *in)
+{
+  return in ? strdup(in) : NULL;
+}
+
+void
+rstr_release(rstr_t *x)
+{
+  free(x);
+}
+
+
+rstr_t *
+rstr_alloc(const char *in)
+{
+  if(in)
+    return strdup(in);
+  else
+    return NULL;
+}
+
+rstr_t *
+rstr_allocl(const char *in, size_t len)
+{
+  char *r = malloc(len + 1);
+
+  if(in)
+    memcpy(r, in, len);
+  r[len] = 0;
+  return r;
+}
+
+
 #endif

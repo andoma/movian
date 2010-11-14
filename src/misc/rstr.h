@@ -68,31 +68,17 @@ static inline void rstr_release(rstr_t *rs)
 
 typedef char rstr_t;
 
-#define rstr_release(n) free(n)
+void rstr_release(rstr_t *);
 
-#define rstr_dup(n) ((n) ? strdup(n) : NULL)
+rstr_t *rstr_dup(rstr_t *);
 
 #define rstr_get(n) (n)
 
 #define rstr_data(n) (n)
 
-static inline rstr_t *rstr_alloc(const char *in)
-{
-  if(in)
-    return strdup(in);
-  else
-    return NULL;
-}
+rstr_t *rstr_alloc(const char *in);
 
-static inline rstr_t *rstr_allocl(const char *in, size_t len)
-{
-  char *r = malloc(len + 1);
-
-  if(in)
-    memcpy(r, in, len);
-  r[len] = 0;
-  return r;
-}
+rstr_t *rstr_allocl(const char *in, size_t len);
 
 #endif
 
