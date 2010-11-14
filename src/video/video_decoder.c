@@ -229,7 +229,7 @@ video_deliver_frame(video_decoder_t *vd, media_pipe_t *mp, media_buf_t *mb,
   ets->pts = pts;
   ets->dts = dts;
   mp_enqueue_event(mp, &ets->h);
-  event_unref(&ets->h);
+  event_release(&ets->h);
 
   vd->vd_interlaced |=
     frame->interlaced_frame && !mb->mb_disable_deinterlacer;

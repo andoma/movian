@@ -245,15 +245,9 @@ event_t *event_create_action_multi(const action_type_t *actions, size_t numactio
 
 void *event_create_int(event_type_t type, int val);
 
-void event_enqueue(event_queue_t *eq, event_t *e);
+void event_release(event_t *e);
 
-event_t *event_get(event_queue_t *eq);
-
-void event_unref(event_t *e);
-
-void event_initqueue(event_queue_t *eq);
-
-void event_flushqueue(event_queue_t *eq);
+void event_addref(event_t *e);
 
 event_t *event_create_str(event_type_t et, const char *url);
 

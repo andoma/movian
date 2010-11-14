@@ -60,15 +60,15 @@ video_player_idle(void *aux)
 		   ep->url, errbuf);
 	prop_set_string(errprop, errbuf);
       }
-      event_unref(e);
+      event_release(e);
       e = next;
       continue;
 
     } else if(event_is_type(e, EVENT_EXIT)) {
-      event_unref(e);
+      event_release(e);
       break;
     }
-    event_unref(e);
+    event_release(e);
     e = NULL;
   }
   prop_ref_dec(errprop);
@@ -98,11 +98,8 @@ video_playback_destroy(video_playback_t *vp)
   event_t *e = event_create_type(EVENT_EXIT);
 
   mp_enqueue_event(vp->vp_mp, e);
-  event_unref(e);
+  event_release(e);
 
   hts_thread_join(&vp->vp_thread);
-
-  
-
   free(vp);
 }

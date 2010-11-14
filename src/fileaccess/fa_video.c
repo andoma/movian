@@ -478,7 +478,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec, media_pipe_t *mp
 	      event_is_type(e, EVENT_PLAY_URL)) {
       break;
     }
-    event_unref(e);
+    event_release(e);
   }
 
   if(mb != NULL)

@@ -1365,7 +1365,7 @@ be_sidplayer_play(const char *url0, media_pipe_t *mp,
       mp_flush(mp, 0);
       break;
     }
-    event_unref(e);
+    event_release(e);
   }  
 
   return e;

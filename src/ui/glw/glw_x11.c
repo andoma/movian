@@ -1280,13 +1280,11 @@ glw_x11_dispatch_event(uii_t *uii, event_t *e)
   
   if(event_is_action(e, ACTION_FULLSCREEN_TOGGLE)) {
     settings_toggle_bool(gx11->fullscreen_setting);
-
   } else {
     /* Pass it on to GLW */
     glw_dispatch_event(uii, e);
-    return;
   }
-  event_unref(e);
+  event_release(e);
 }
 
 

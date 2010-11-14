@@ -256,7 +256,7 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
   } else if(event_is_action(e, ACTION_STOP)) {
     mp_set_playstatus_stop(mp);
   }
-  event_unref(e);
+  event_release(e);
   return NULL;
 }
 

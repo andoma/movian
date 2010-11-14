@@ -129,7 +129,7 @@ eventsink(void *opaque, prop_event_t event, ...)
     return;
 
   if(*ep)
-    event_unref(*ep);
+    event_release(*ep);
   e = va_arg(ap, event_t *);
   atomic_add(&e->e_refcount, 1);
   *ep = e;
@@ -199,6 +199,6 @@ message_popup(const char *message, int flags)
   else
     rval = 0;
 
-  event_unref(e);
+  event_release(e);
   return rval;
 }

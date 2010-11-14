@@ -431,7 +431,7 @@ gu_playqueue_send_event(gu_tab_t *gt, event_t *e)
 
   prop_send_ext_event(p, e);
   prop_ref_dec(p);
-  event_unref(e);
+  event_release(e);
 }
 
 
@@ -457,7 +457,7 @@ gu_tab_send_event(gu_tab_t *gt, event_t *e)
 
   prop_send_ext_event(p, e);
   prop_ref_dec(p);
-  event_unref(e);
+  event_release(e);
 }
 
 

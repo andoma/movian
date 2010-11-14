@@ -929,7 +929,7 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
     return e;
   } 
 
-  event_unref(e);
+  event_release(e);
   return NULL;
 }
 

@@ -169,7 +169,7 @@ glw_video_set_source(glw_video_t *gv, const char *url, int primary)
 
   e = event_create_playurl(url, primary, gv->gv_priority);
   mp_enqueue_event(gv->gv_mp, e);
-  event_unref(e);
+  event_release(e);
 }
 
 
@@ -369,7 +369,7 @@ glw_video_set(glw_t *w, int init, va_list ap)
 
       e = event_create_int(EVENT_PLAYBACK_PRIORITY, gv->gv_priority);
       mp_enqueue_event(gv->gv_mp, e);
-      event_unref(e);
+      event_release(e);
       break;
 
     default:

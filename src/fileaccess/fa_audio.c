@@ -319,7 +319,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 	    mp_flush(mp, 0);
 	    break;
 	  }
-	  event_unref(e);
+	  event_release(e);
 	}
 	if(e == NULL)
 	  e = event_create_type(EVENT_EOF);
@@ -459,7 +459,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       mp_flush(mp, 0);
       break;
     }
-    event_unref(e);
+    event_release(e);
   }
 
   if(mb != NULL)

@@ -258,7 +258,7 @@ mp_destroy(media_pipe_t *mp)
 
   while((e = TAILQ_FIRST(&mp->mp_eq)) != NULL) {
     TAILQ_REMOVE(&mp->mp_eq, e, e_link);
-    event_unref(e);
+    event_release(e);
   }
 
   mq_destroy(&mp->mp_audio);
@@ -855,7 +855,7 @@ mp_set_primary(media_pipe_t *mp)
   media_primary = mp;
   event_t *e = event_create_type(EVENT_MP_IS_PRIMARY);
   mp_enqueue_event(mp, e);
-  event_unref(e);
+  event_release(e);
 
   prop_select(mp->mp_prop_root);
   prop_link(mp->mp_prop_root, media_prop_current);
@@ -1094,7 +1094,7 @@ seek_by_propchange(void *opaque, prop_event_t event, ...)
   ets = event_create(EVENT_SEEK, sizeof(event_ts_t));
   ets->pts = t;
   mp_enqueue_event_locked(mp, &ets->h);
-  event_unref(&ets->h);
+  event_release(&ets->h);
 }
 
 

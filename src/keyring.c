@@ -130,10 +130,10 @@ keyring_lookup(const char *id, char **username, char **password,
     if(event_is_action(e, ACTION_CANCEL)) {
       /* return CANCEL to caller */
       hts_mutex_unlock(&keyring_mutex);
-      event_unref(e);
+      event_release(e);
       return -1;
     }
-    event_unref(e);
+    event_release(e);
   }
 
   if((m = htsmsg_get_map(keyring, id)) == NULL) {

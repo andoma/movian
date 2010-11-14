@@ -145,7 +145,7 @@ pqe_play(playqueue_entry_t *pqe, event_type_t how)
 {
   event_t *e = pqe_event_createx(pqe, how);
   mp_enqueue_event(playqueue_mp, e);
-  event_unref(e);
+  event_release(e);
 }
 
 
@@ -979,7 +979,7 @@ player_thread(void *aux)
 	hts_mutex_unlock(&playqueue_mutex);
       }
 
-      event_unref(e);
+      event_release(e);
     }
 
     if(pqe->pqe_url == NULL) {
@@ -1057,7 +1057,7 @@ player_thread(void *aux)
     } else {
       abort();
     }
-    event_unref(e);
+    event_release(e);
   }
 }
 

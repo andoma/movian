@@ -393,7 +393,7 @@ prop_notify_free(prop_notify_t *n)
     break;
 
   case PROP_EXT_EVENT:
-    event_unref(n->hpn_ext_event);
+    event_release(n->hpn_ext_event);
     break;
 
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
@@ -614,7 +614,7 @@ prop_notify_dispatch(struct prop_notify_queue *q)
 	pt(s, n->hpn_event, n->hpn_ext_event);
       else
 	cb(s->hps_opaque, n->hpn_event, n->hpn_ext_event);
-      event_unref(n->hpn_ext_event);
+      event_release(n->hpn_ext_event);
       break;
 
     case PROP_SUBSCRIPTION_MONITOR_ACTIVE:

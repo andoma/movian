@@ -162,7 +162,7 @@ glw_video_overlay_pointer_event(video_decoder_t *vd, int width, int height,
 
   e->e_payload[0] = best;
   mp_enqueue_event(mp, e);
-  event_unref(e);
+  event_release(e);
 #endif
   return 1;
 }

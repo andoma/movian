@@ -30,10 +30,9 @@ event_bubble(glw_t *w, event_t *e)
 {
   while(w != NULL) {
     if(glw_signal0(w, GLW_SIGNAL_EVENT_BUBBLE, e))
-      return; /* Taker gets our refcount */
+      return;
     w = w->glw_parent;
   }
-  event_unref(e); /* Nobody took it */
 }
 
 
@@ -80,6 +79,7 @@ glw_event_map_navOpen_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   
   e->e_mapped = 1;
   event_bubble(w, e);
+  event_release(e);
 }
 
 
@@ -418,15 +418,13 @@ glw_event_map_internal_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
 
     if((t = glw_event_find_target(w, g->target)) == NULL) {
       TRACE(TRACE_ERROR, "GLW", "Targeted widget %s not found\n", g->target);
-      event_unref(e);
-      return;
+    } else {
+      glw_signal0(t, GLW_SIGNAL_EVENT, e);
     }
-
-    glw_signal0(t, GLW_SIGNAL_EVENT, e);
-    event_unref(e);
   } else {
     event_bubble(w, e);
   }
+  event_release(e);
 }
 
 

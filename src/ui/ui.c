@@ -234,9 +234,8 @@ ui_primary_event(event_t *e)
 {
   uii_t *uii = primary_uii;
 
-  if(uii == NULL) {
-    event_unref(e);
-  } else {
+  if(uii != NULL)
     uii->uii_ui->ui_dispatch_event(uii, e);
-  }
+  else
+    event_release(e);
 }

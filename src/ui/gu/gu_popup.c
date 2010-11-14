@@ -58,7 +58,7 @@ popup_send_result(popup_t *pop, action_type_t res)
   if(p != NULL) {
     event_t *e = event_create_action(res);
     prop_send_ext_event(p, e);
-    event_unref(e);
+    event_release(e);
     prop_ref_dec(p);
   }
 }

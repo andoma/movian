@@ -3228,11 +3228,11 @@ be_spotify_play(const char *url, media_pipe_t *mp,
 
       delta_seek(mp,  15000000);
     }
-    event_unref(e);
+    event_release(e);
   }
 
   if(eof != NULL)
-    event_unref(eof);
+    event_release(eof);
 
   if(hold) {
     // If we were paused, release playback again.

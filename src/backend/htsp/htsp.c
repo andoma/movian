@@ -1480,7 +1480,7 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
 	      event_is_type(e, EVENT_PLAY_URL))
       break;
 
-    event_unref(e);
+    event_release(e);
 
     if(chid == -1)
       return NULL;

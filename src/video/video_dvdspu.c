@@ -367,7 +367,7 @@ dvdspu_decoder_dispatch(video_decoder_t *vd, media_buf_t *mb, media_pipe_t *mp)
     e = event_create(EVENT_DVD_PCI, sizeof(event_t) + sizeof(pci_t));
     memcpy(e->e_payload, mb->mb_data, sizeof(pci_t));
     mp_enqueue_event(mp, e);
-    event_unref(e);
+    event_release(e);
     break;
       
   case MB_DVD_HILITE:

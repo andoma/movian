@@ -69,33 +69,9 @@ event_create_int(event_type_t type, int sym)
  *
  */
 void
-event_enqueue(event_queue_t *eq, event_t *e)
+event_addref(event_t *e)
 {
   atomic_add(&e->e_refcount, 1);
-  hts_mutex_lock(&eq->eq_mutex);
-  TAILQ_INSERT_TAIL(&eq->eq_q, e, e_link);
-  hts_cond_signal(&eq->eq_cond);
-  hts_mutex_unlock(&eq->eq_mutex);
-}
-
-
-/**
- *
- * @param timeout Timeout in milliseconds
- */
-event_t *
-event_get(event_queue_t *eq)
-{
-  event_t *e;
-
-  hts_mutex_lock(&eq->eq_mutex);
-
-  while((e = TAILQ_FIRST(&eq->eq_q)) == NULL)
-    hts_cond_wait(&eq->eq_cond, &eq->eq_mutex);
-
-  TAILQ_REMOVE(&eq->eq_q, e, e_link);
-  hts_mutex_unlock(&eq->eq_mutex);
-  return e;
 }
 
 
@@ -103,40 +79,10 @@ event_get(event_queue_t *eq)
  *
  */
 void
-event_unref(event_t *e)
+event_release(event_t *e)
 {
   if(atomic_add(&e->e_refcount, -1) == 1)
     e->e_dtor(e);
-}
-
-
-/**
- *
- */
-void
-event_initqueue(event_queue_t *eq)
-{
-  TAILQ_INIT(&eq->eq_q);
-  hts_cond_init(&eq->eq_cond);
-  hts_mutex_init(&eq->eq_mutex);
-}
-
-
-/**
- *
- */
-void
-event_flushqueue(event_queue_t *eq)
-{
-  event_t *e;
-
-  hts_mutex_lock(&eq->eq_mutex);
-
-  while((e = TAILQ_FIRST(&eq->eq_q)) != NULL) {
-    TAILQ_REMOVE(&eq->eq_q, e, e_link);
-    event_unref(e);
-  }
-  hts_mutex_unlock(&eq->eq_mutex);
 }
 
 
@@ -445,10 +391,9 @@ event_dispatch(event_t *e)
   prop_t *p;
   event_int_t *eu = (event_int_t *)e;
 
-  
   if(event_is_type(e, EVENT_UNICODE) && eu->val == 32) {
     // Convert [space] into playpause
-    event_unref(e);
+    event_release(e);
     e = event_create_action(ACTION_PLAYPAUSE);
   }
   
@@ -508,6 +453,6 @@ event_dispatch(event_t *e)
 
   }
 
-  event_unref(e);
+  event_release(e);
 }
 

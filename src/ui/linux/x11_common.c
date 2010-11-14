@@ -187,7 +187,7 @@ vo_set_url(void *opaque, const char *url)
 
   e = event_create_playurl(url, 1, 0);
   mp_enqueue_event(vo->vo_mp, e);
-  event_unref(e);
+  event_release(e);
 }
 
 #if ENABLE_LIBXV

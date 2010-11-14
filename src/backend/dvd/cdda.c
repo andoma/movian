@@ -538,7 +538,7 @@ playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
       eject = 1;
       break;
     }
-    event_unref(e);
+    event_release(e);
   }
 
   if(mb != NULL)

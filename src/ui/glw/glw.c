@@ -82,8 +82,8 @@ top_event_handler(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
 
   if(event_is_action(e, ACTION_ENABLE_SCREENSAVER)) {
     gr->gr_screensaver_force_enable = 1;
-    event_unref(e);
   } else {
+    event_addref(e);
     event_dispatch(e);
   }
 
@@ -1402,8 +1402,7 @@ glw_focus_step(glw_t *w, int forward)
 	break;
     }
   }
-
-  event_unref(e);
+  event_release(e);
   return 1;
 }
 
@@ -1515,7 +1514,7 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
 	    glw_path_modify(w, 0, GLW_IN_PRESSED_PATH, NULL);
 	    e = event_create_action(ACTION_ACTIVATE);
 	    glw_event_to_widget(w, e, 0);
-	    event_unref(e);
+	    event_release(e);
 
 	  }
 	  return 1;
@@ -1727,7 +1726,6 @@ glw_dispatch_event(uii_t *uii, event_t *e)
     }
 
     e2 = keymapper_resolve(e->e_payload);
-    event_unref(e);
 
     glw_unlock(gr);
 
@@ -1760,7 +1758,6 @@ glw_dispatch_event(uii_t *uii, event_t *e)
        event_is_type(e, EVENT_SELECT_TRACK))) {
     
     if(glw_kill_screensaver(gr)) {
-      event_unref(e);
       glw_unlock(gr);
       return;
     }
@@ -1768,21 +1765,18 @@ glw_dispatch_event(uii_t *uii, event_t *e)
 
   if(event_is_action(e, ACTION_RELOAD_UI)) {
     glw_load_universe(gr);
-    event_unref(e);
     glw_unlock(gr);
     return;
 
   } else if(event_is_action(e, ACTION_ZOOM_UI_INCR)) {
 
     settings_add_int(gr->gr_setting_fontsize, 1);
-    event_unref(e);
     glw_unlock(gr);
     return;
 
   } else if(event_is_action(e, ACTION_ZOOM_UI_DECR)) {
 
     settings_add_int(gr->gr_setting_fontsize, -1);
-    event_unref(e);
     glw_unlock(gr);
     return;
 
@@ -1791,8 +1785,10 @@ glw_dispatch_event(uii_t *uii, event_t *e)
   r = glw_event(gr, e);
   glw_unlock(gr);
 
-  if(!r)
+  if(!r) {
+    event_addref(e);
     event_dispatch(e);
+  }
 }
 
 const glw_vertex_t align_vertices[GLW_ALIGN_num] = 
