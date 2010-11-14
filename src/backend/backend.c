@@ -64,6 +64,20 @@ backend_init(void)
 /**
  *
  */
+void
+backend_fini(void)
+{
+  backend_t *be;
+
+  LIST_FOREACH(be, &backends, be_global_link)
+    if(be->be_fini != NULL)
+      be->be_fini();
+}
+
+
+/**
+ *
+ */
 event_t *
 backend_play_video(const char *url, struct media_pipe *mp,
 		   int primary, int priority, char *errbuf, size_t errlen)

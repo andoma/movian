@@ -48,6 +48,8 @@ typedef struct backend {
 
   int (*be_init)(void);
 
+  void (*be_fini)(void);
+
   int (*be_canhandle)(const char *ur);
 
   int (*be_open)(prop_t *page, const char *url);
@@ -79,6 +81,8 @@ typedef struct backend {
  *
  */
 void backend_init(void);
+
+void backend_fini(void);
 
 int backend_open(struct prop *page, const char *url)
      __attribute__ ((warn_unused_result));

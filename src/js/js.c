@@ -387,41 +387,6 @@ js_RichText(JSContext *cx, JSObject *obj,
 /**
  *
  */
-static int
-js_init(void)
-{
-  JSContext *cx;
-
-  JS_SetCStringsAreUTF8();
-
-  runtime = JS_NewRuntime(0x100000); 
-
-  cx = js_newctx();
-
-  JS_BeginRequest(cx);
-
-  showtimeobj = JS_NewObject(cx, &showtime_class, NULL, NULL);
-  JS_DefineFunctions(cx, showtimeobj, showtime_functions);
-
-  JSFunction *fn = JS_DefineFunction(cx, showtimeobj, "RichText",
-				     js_RichText, 1, 0);
-  RichText = JS_GetFunctionObject(fn);
-	     
-  JS_AddNamedRoot(cx, &showtimeobj, "showtime");
-
-  JS_EndRequest(cx);
-  JS_DestroyContext(cx);
-
-  return 0;
-}
-
-
-
-
-
-/**
- *
- */
 static void
 plugin_finalize(JSContext *cx, JSObject *obj)
 {
@@ -604,6 +569,66 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
 
 
 
+/**
+ *
+ */
+static int
+js_init(void)
+{
+  JSContext *cx;
+
+  JS_SetCStringsAreUTF8();
+
+  runtime = JS_NewRuntime(0x100000); 
+
+  cx = js_newctx();
+
+  JS_BeginRequest(cx);
+
+  showtimeobj = JS_NewObject(cx, &showtime_class, NULL, NULL);
+  JS_DefineFunctions(cx, showtimeobj, showtime_functions);
+
+  JSFunction *fn = JS_DefineFunction(cx, showtimeobj, "RichText",
+				     js_RichText, 1, 0);
+  RichText = JS_GetFunctionObject(fn);
+	     
+  JS_AddNamedRoot(cx, &showtimeobj, "showtime");
+
+  JS_EndRequest(cx);
+  JS_DestroyContext(cx);
+
+  return 0;
+}
+
+
+
+/**
+ *
+ */
+static void
+js_fini(void)
+{
+  js_plugin_t *jsp, *n;
+  JSContext *cx;
+
+  cx = js_newctx();
+  JS_BeginRequest(cx);
+
+  for(jsp = LIST_FIRST(&js_plugins); jsp != NULL; jsp = n) {
+    n = LIST_NEXT(jsp, jsp_link);
+    js_plugin_unload(cx, jsp);
+  }
+
+  JS_RemoveRoot(cx, &showtimeobj);
+
+  JS_EndRequest(cx);
+  JS_GC(cx);
+  JS_DestroyContext(cx);
+
+  JS_DestroyRuntime(runtime);
+  JS_ShutDown();
+}
+
 
 
 
@@ -613,6 +638,7 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
  */
 static backend_t be_js = {
   .be_init = js_init,
+  .be_fini = js_fini,
   .be_flags = BACKEND_OPEN_CHECKS_URI,
   .be_open = js_backend_open,
   .be_search = js_backend_search,
