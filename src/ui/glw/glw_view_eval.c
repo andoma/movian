@@ -2167,7 +2167,7 @@ glw_event_map_eval_block_dtor(glw_event_map_t *gem)
 {
   glw_event_map_eval_block_t *b = (glw_event_map_eval_block_t *)gem;
 
-  glw_view_token_free(b->block);
+  glw_view_free_chain(b->block);
 
   if(b->prop)
     prop_ref_dec(b->prop);
