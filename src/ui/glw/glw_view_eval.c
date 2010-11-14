@@ -29,6 +29,8 @@
 #include "misc/pixmap.h"
 #include "settings.h"
 
+LIST_HEAD(clone_list, clone);
+
 static token_t t_zero = {
   .type = TOKEN_INT,
 };
@@ -101,6 +103,8 @@ typedef struct sub_cloner {
 
   char sc_have_more;
 
+  struct clone_list sc_clones;
+
 } sub_cloner_t;
 
 
@@ -115,8 +119,38 @@ typedef struct sub_counter {
 
 
 
+/**
+ *
+ */
+typedef struct clone {
+  LIST_ENTRY(clone) c_link;
+  sub_cloner_t *c_sc;
+  glw_t *c_w;
+  int c_pos;
+  prop_t *c_prop;
+
+  char c_visible;      // Set if clone should visible to parent
+  char c_evaluated;
+  char c_active;       // Set if widget is visible on screen
+
+} clone_t;
+
+
 static int subscribe_prop(glw_view_eval_context_t *ec, struct token *self,
 			  int type);
+
+
+/**
+ *
+ */
+static void
+clone_free(clone_t *c)
+{
+  LIST_REMOVE(c, c_link);
+  prop_ref_dec(c->c_prop);
+  free(c);
+}
+
 
 /**
  *
@@ -126,6 +160,7 @@ glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l)
 {
   glw_prop_sub_t *gps;
   sub_cloner_t *sc;
+  clone_t *c;
 
   while((gps = LIST_FIRST(l)) != NULL) {
 
@@ -145,8 +180,13 @@ glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l)
     case GPS_CLONER:
       sc = (sub_cloner_t *)gps;
  
+      while((c = LIST_FIRST(&sc->sc_clones)) != NULL) {
+	prop_tag_clear(c->c_prop, sc);
+	clone_free(c);
+      }
+
       if(sc->sc_cloner_body != NULL)
-	glw_view_token_free(sc->sc_cloner_body);
+	glw_view_free_chain(sc->sc_cloner_body);
     
       if(sc->sc_originating_prop)
 	prop_ref_dec(sc->sc_originating_prop);
@@ -916,21 +956,6 @@ eval_dynamic(glw_t *w, token_t *rpn)
 }
 
 
-/**
- *
- */
-typedef struct clone {
-  sub_cloner_t *c_sc;
-  glw_t *c_w;
-  int c_pos;
-  prop_t *c_prop;
-
-  char c_visible;      // Set if clone should visible to parent
-  char c_evaluated;
-  char c_active;       // Set if widget is visible on screen
-
-} clone_t;
-
 
 static void cloner_resequence(sub_cloner_t *sc);
 
@@ -1101,6 +1126,8 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
   glw_t *b;
   clone_t *c = calloc(1, sizeof(clone_t));
 
+  LIST_INSERT_HEAD(&sc->sc_clones, c, c_link);
+
   if(before != NULL) {
     clone_t *bb = prop_tag_get(before, sc);
     assert(bb != NULL);
@@ -1233,8 +1260,7 @@ cloner_del_child(sub_cloner_t *sc, prop_t *p, glw_t *parent)
       sc->sc_positions_valid = 0;
     glw_retire_child(w);
 
-    prop_ref_dec(c->c_prop);
-    free(c);
+    clone_free(c);
     return;
   }
 
@@ -1624,9 +1650,7 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
     abort();
   }
 
-
-
-
+  gps->gps_type = type;
 
 #ifdef GLW_VIEW_ERRORINFO
   gps->gps_file = rstr_dup(self->file);
@@ -1949,7 +1973,7 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
 		     GLW_ATTRIB_PARENT, ec->w,
 		     GLW_ATTRIB_PROPROOTS, ec->prop, ec->prop_parent,
 		     NULL);
-  
+
   n.sublist = &n.w->glw_prop_subscriptions;
 
   r = glw_view_eval_block(b, &n);
