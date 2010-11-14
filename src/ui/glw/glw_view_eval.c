@@ -198,6 +198,9 @@ glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l)
 	prop_ref_dec(sc->sc_view_args);
       break;
     }
+#ifdef GLW_VIEW_ERRORINFO
+    rstr_release(gps->gps_file);
+#endif
     free(gps);
   }
 }
@@ -695,7 +698,7 @@ resolve_property_name(glw_view_eval_context_t *ec, token_t *a, int follow_links)
   
   glw_view_free_chain(a->child);
   a->child = NULL;
-  
+  rstr_release(a->t_rstring);
   a->type = TOKEN_PROPERTY_REF;
   a->t_prop = p;
   return 0;
@@ -1307,8 +1310,7 @@ prop_callback_alloc_token(glw_prop_sub_t *gps, token_type_t type)
   t->type = type;
 
 #ifdef GLW_VIEW_ERRORINFO
-  if(gps->gps_file != NULL)
-    t->file = rstr_dup(gps->gps_file);
+  t->file = rstr_dup(gps->gps_file);
   t->line = gps->gps_line;
 #endif    
   return t;
