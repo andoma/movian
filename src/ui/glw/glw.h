@@ -762,6 +762,8 @@ void *glw_get_opaque(glw_t *w, glw_callback_t *func);
 
 void glw_prepare_frame(glw_root_t *gr, int flags);
 
+void glw_reap(glw_root_t *gr);
+
 void glw_cond_wait(glw_root_t *gr, hts_cond_t *c);
 
 void glw_retire_child(glw_t *w);

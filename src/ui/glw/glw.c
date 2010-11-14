@@ -531,6 +531,31 @@ glw_screensaver_is_active(glw_root_t *gr)
 }
 
 
+/**
+ *
+ */
+void
+glw_reap(glw_root_t *gr)
+{
+  glw_t *w;
+
+  LIST_MOVE(&gr->gr_active_flush_list, &gr->gr_active_list, glw_active_link);
+  LIST_INIT(&gr->gr_active_list);
+
+  glw_tex_purge(gr);
+
+  glw_tex_autoflush(gr);
+
+  while((w = TAILQ_FIRST(&gr->gr_destroyer_queue)) != NULL) {
+    TAILQ_REMOVE(&gr->gr_destroyer_queue, w, glw_parent_link);
+
+    if(w->glw_class->gc_dtor != NULL)
+      w->glw_class->gc_dtor(w);
+
+    glw_signal_handler_clean(w);
+    glw_unref(w);
+  }
+}
 
 /**
  *
@@ -575,23 +600,7 @@ glw_prepare_frame(glw_root_t *gr, int flags)
     glw_signal0(w, GLW_SIGNAL_INACTIVE, NULL);
   }
 
-  LIST_MOVE(&gr->gr_active_flush_list, &gr->gr_active_list, glw_active_link);
-  LIST_INIT(&gr->gr_active_list);
-
-  glw_tex_purge(gr);
-
-  glw_tex_autoflush(gr);
-
-  while((w = TAILQ_FIRST(&gr->gr_destroyer_queue)) != NULL) {
-    TAILQ_REMOVE(&gr->gr_destroyer_queue, w, glw_parent_link);
-
-    if(w->glw_class->gc_dtor != NULL)
-      w->glw_class->gc_dtor(w);
-
-    glw_signal_handler_clean(w);
-
-    glw_unref(w);
-  }
+  glw_reap(gr);
 
   if(gr->gr_mouse_valid) {
     glw_pointer_event_t gpe;
