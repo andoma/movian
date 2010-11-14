@@ -120,6 +120,14 @@ glw_throbber_render(glw_t *w, glw_rctx_t *rc)
 }
 
 
+static void
+glw_throbber_dtor(glw_t *w)
+{
+  glw_throbber3d_t *gt = (glw_throbber3d_t *)w;
+  glw_renderer_free(&gt->renderer);
+
+}
+
 /**
  *
  */
@@ -128,6 +136,7 @@ static glw_class_t glw_throbber3d = {
   .gc_instance_size = sizeof(glw_throbber3d_t),
   .gc_render = glw_throbber_render,
   .gc_signal_handler = glw_throbber_callback,
+  .gc_dtor = glw_throbber_dtor,
 };
 
 GLW_REGISTER_CLASS(glw_throbber3d);
