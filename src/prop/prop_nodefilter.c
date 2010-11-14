@@ -613,6 +613,7 @@ nf_del_node(prop_nf_t *nf, nfnode_t *nfn)
   while((nfnp = LIST_FIRST(&nfn->preds)) != NULL)
     nfnp_destroy(nfnp);
   
+  rstr_release(nfn->sortkey);
   free(nfn);
 }
 
