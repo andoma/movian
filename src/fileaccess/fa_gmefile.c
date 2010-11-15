@@ -318,7 +318,7 @@ fa_gme_playfile_internal(media_pipe_t *mp, void *fh,
       mp_flush(mp, 0);
       break;
     }
-    event_unref(e);
+    event_release(e);
   }  
 
   gme_delete(emu);

@@ -98,7 +98,7 @@ openspc_play(media_pipe_t *mp, void *fh, char *errbuf, size_t errlen)
 	    mp_flush(mp, 0);
 	    break;
 	  }
-	  event_unref(e);
+	  event_release(e);
 	}
 	if(e == NULL)
 	  e = event_create_type(EVENT_EOF);
@@ -164,7 +164,7 @@ openspc_play(media_pipe_t *mp, void *fh, char *errbuf, size_t errlen)
       mp_flush(mp, 0);
       break;
     }
-    event_unref(e);
+    event_release(e);
   }
 
   free(buf);
