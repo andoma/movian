@@ -416,7 +416,7 @@ net_get_interfaces(void)
   
   for(ifa = ifa_list; ifa != NULL; ifa = ifa->ifa_next) {
     if((ifa->ifa_flags & (IFF_UP | IFF_LOOPBACK)) != IFF_UP ||
-       ifa->ifa_addr->sa_family != AF_INET)
+       ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET)
 	 continue;
 
     n->ipv4 = ntohl(((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr);
