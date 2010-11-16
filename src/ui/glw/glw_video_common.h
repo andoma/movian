@@ -144,7 +144,8 @@ typedef struct glw_video {
   glw_video_overlay_t gv_spu; // DVD SPU 
   glw_video_overlay_t gv_sub; // Subtitles
 
-  float gv_cmatrix[9];
+  float gv_cmatrix_cur[16];
+  float gv_cmatrix_tgt[16];
   
   glw_video_config_t gv_cfg_cur;
   glw_video_config_t gv_cfg_req;

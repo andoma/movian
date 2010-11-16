@@ -1,19 +1,20 @@
 uniform sampler2D u_t0;
 uniform sampler2D u_t1;
 uniform sampler2D u_t2;
-uniform mat3      u_colormtx;
+uniform mat4      u_colormtx;
 uniform vec4      u_color;
 
 varying vec2 f_tex0;
 
 void main()
 {
-  vec3 yuv;
+  vec4 yuva;
 
-  yuv = vec3(texture2D(u_t0, f_tex0).r - 0.0625,
-	     texture2D(u_t2, f_tex0).r - 0.5,
-	     texture2D(u_t1, f_tex0).r - 0.5);
+  yuva = vec4(texture2D(u_t0, f_tex0).r,
+	      texture2D(u_t2, f_tex0).r,
+	      texture2D(u_t1, f_tex0).r,
+	      u_color.a);
   
-  gl_FragColor = vec4(u_colormtx * yuv, u_color.a);
+  gl_FragColor = u_colormtx * yuva;
 }
 

@@ -119,6 +119,8 @@ yuvp_init(glw_video_t *gv)
   const glw_video_config_t *gvc = &gv->gv_cfg_cur;
   int i;
 
+  memset(gv->gv_cmatrix_cur, 0, sizeof(float) * 16);
+
   for(i = 0; i < gvc->gvc_nsurfaces; i++)
     surface_init(gv, &gv->gv_surfaces[i], gvc);
   return 0;
@@ -229,21 +231,26 @@ gv_surface_pixmap_release(glw_video_t *gv, glw_video_surface_t *gvs,
 }
 
 
-/**
- *
- */
-static float cmatrix_color[9] = {
-  1.1643,  0,        1.5958,
-  1.1643, -0.39173, -0.81290,
-  1.1643,  2.017,    0
+static const float cmatrix_ITUR_BT_601[16] = {
+  1.164400,   1.164400, 1.164400, 0,
+  0.000000,  -0.391800, 2.017200, 0,
+  1.596000,  -0.813000, 0.000000, 0, 
+ -0.874190,   0.531702,-1.085616, 1
 };
-#if 0
-static float cmatrix_bw[9] = {
-  1.1643,  0,        0,
-  1.1643,  0,        0,
-  1.1643,  0,        0
+
+static const float cmatrix_ITUR_BT_709[16] = {
+  1.164400,  1.164400,  1.164400, 0,
+  0.000000, -0.213200,  2.112400, 0,
+  1.792700, -0.532900,  0.000000, 0,
+ -0.972926,  0.301453, -1.133402, 1
 };
-#endif
+
+static const float cmatrix_SMPTE_240M[16] = {
+  1.164400,  1.164400,  1.164400, 0,
+  0.000000, -0.257800,  2.078700, 0,
+  1.793900, -0.542500,  0.000000, 0,
+ -0.973528,  0.328659, -1.116486, 1
+};
 
 
 
@@ -251,19 +258,41 @@ static float cmatrix_bw[9] = {
  *
  */
 static void
-gv_color_matrix_update(glw_video_t *gv, media_pipe_t *mp)
+gv_color_matrix_set(glw_video_t *gv, const struct frame_info *fi)
 {
-  float *f;
-  int i;
+  const float *f;
 
-  //  f = mp_get_playstatus(mp) == MP_PAUSE ? cmatrix_bw : cmatrix_color;
-  f = cmatrix_color;
+  switch(fi->color_space) {
+  case AVCOL_SPC_BT709:
+    f = cmatrix_ITUR_BT_709;
+    break;
 
-  for(i = 0; i < 9; i++)
-    gv->gv_cmatrix[i] = (gv->gv_cmatrix[i] * 15.0 + f[i]) / 16.0;
+  case AVCOL_SPC_BT470BG:
+  case AVCOL_SPC_SMPTE170M:
+    f = cmatrix_ITUR_BT_601;
+    break;
 
+  case AVCOL_SPC_SMPTE240M:
+    f = cmatrix_SMPTE_240M;
+    break;
+
+  default:
+    f = fi->height < 720 ? cmatrix_ITUR_BT_601 : cmatrix_ITUR_BT_709;
+    break;
+  }
+
+  memcpy(gv->gv_cmatrix_tgt, f, sizeof(float) * 16);
 }
 
+
+static void
+gv_color_matrix_update(glw_video_t *gv)
+{
+  int i;
+  for(i = 0; i < 16; i++)
+    gv->gv_cmatrix_cur[i] = (gv->gv_cmatrix_cur[i] * 15.0 +
+			     gv->gv_cmatrix_tgt[i]) / 16.0;
+}
 
 
 /**
@@ -332,7 +361,7 @@ yuvp_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
   int frame_duration = gv->w.glw_root->gr_frameduration;
   int epoch = 0;
 
-  gv_color_matrix_update(gv, mp);
+  gv_color_matrix_update(gv);
   output_duration = glw_video_compute_output_duration(vd, frame_duration);
 
   
@@ -458,7 +487,7 @@ render_video_quad(int interlace, int rectmode, int width, int height,
   if(gp->gp_uniform_blend != -1)
     glUniform1f(gp->gp_uniform_blend, gv->gv_blend);
 
-  glUniformMatrix3fv(gp->gp_uniform_colormtx, 1, GL_TRUE, gv->gv_cmatrix);
+  glUniformMatrix4fv(gp->gp_uniform_colormtx, 1, GL_FALSE, gv->gv_cmatrix_cur);
      
   glVertexAttribPointer(gp->gp_attribute_texcoord, 3, GL_FLOAT, 0, 0, tc);
   glVertexAttribPointer(gp->gp_attribute_position, 2, GL_FLOAT, 0, 0, vertices);
@@ -604,6 +633,8 @@ glw_video_input_yuvp(glw_video_t *gv,
 			 fi->interlaced ? (GVC_YHALF | GVC_CUTBORDER) : 0))
     return;
   
+  gv_color_matrix_set(gv, fi);
+
   if((s = glw_video_get_surface(gv)) == NULL)
     return;
 
