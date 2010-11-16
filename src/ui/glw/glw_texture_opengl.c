@@ -446,6 +446,13 @@ glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex,
     tex->type  = GLW_TEXTURE_TYPE_NO_ALPHA;
     break;
 
+  case GLW_TEXTURE_FORMAT_I8A8:
+    format     = GL_LUMINANCE4_ALPHA4;
+    ext_format = GL_LUMINANCE_ALPHA;
+    ext_type   = GL_UNSIGNED_BYTE;
+    tex->type  = GLW_TEXTURE_TYPE_NORMAL;
+    break;
+
   default:
     return;
   }
