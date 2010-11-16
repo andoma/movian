@@ -3564,6 +3564,8 @@ be_spotify_canhandle(const char *url)
 static void
 spotify_shutdown_early(void *opaque, int exitcode)
 {
+  pending_login = 1;
+
   hts_mutex_lock(&spotify_mutex);
 
   if(is_logged_in)
@@ -3579,9 +3581,10 @@ spotify_shutdown_early(void *opaque, int exitcode)
 static void
 spotify_shutdown_late(void *opaque, int exitcode)
 {
+  int i;
   hts_mutex_lock(&spotify_mutex);
 
-  while(is_logged_in)
+  for(i = 0; i < 50 && is_logged_in; i++)
     usleep(100000);
 
   hts_mutex_unlock(&spotify_mutex);
