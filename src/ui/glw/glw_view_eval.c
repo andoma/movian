@@ -139,18 +139,7 @@ typedef struct clone {
 static int subscribe_prop(glw_view_eval_context_t *ec, struct token *self,
 			  int type);
 
-
-/**
- *
- */
-static void
-clone_free(clone_t *c)
-{
-  LIST_REMOVE(c, c_link);
-  prop_ref_dec(c->c_prop);
-  free(c);
-}
-
+static void clone_free(clone_t *c);
 
 /**
  *
@@ -1248,6 +1237,21 @@ cloner_move_child(sub_cloner_t *sc, prop_t *p, prop_t *before,
  *
  */
 static void
+clone_free(clone_t *c)
+{
+  glw_t *w = c->c_w;
+
+  glw_signal_handler_unregister(w, cloner_sig_handler, c);
+  LIST_REMOVE(c, c_link);
+  prop_ref_dec(c->c_prop);
+  free(c);
+}
+
+
+/**
+ *
+ */
+static void
 cloner_del_child(sub_cloner_t *sc, prop_t *p, glw_t *parent)
 {
   clone_t *c;
@@ -1256,8 +1260,6 @@ cloner_del_child(sub_cloner_t *sc, prop_t *p, glw_t *parent)
   if((c = prop_tag_clear(p, sc)) != NULL) {
     sc->sc_entries--;
     glw_t *w = c->c_w;
-
-    glw_signal_handler_unregister(w, cloner_sig_handler, c);
 
     if(TAILQ_NEXT(w, glw_parent_link) != NULL)
       sc->sc_positions_valid = 0;
