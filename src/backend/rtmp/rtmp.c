@@ -311,6 +311,9 @@ get_packet_v(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
   enum CodecID id;
   int d = 0;
 
+  if(r->r->m_read.flags & RTMP_READ_SEEKING)
+    return NULL; 
+
   if(size < 2)
     return NULL;
 
@@ -376,6 +379,7 @@ get_packet_v(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
     return NULL;
   }
 
+
   int skip = 0;
 
   int64_t pts = 1000LL * (dts + d);
@@ -406,6 +410,9 @@ get_packet_a(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
   uint8_t flags;
   uint8_t type = 0;
   enum CodecID id;
+
+  if(r->r->m_read.flags & RTMP_READ_SEEKING)
+    return NULL; 
 
   if(size < 2)
     return NULL;
@@ -461,9 +468,9 @@ get_packet_a(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
 
   dts *= 1000;
 
-  if(dts < r->seekpos) {
+  if(dts < r->seekpos)
     return NULL;
-  }
+
 
   if(mc->parser_ctx == NULL)
     return sendpkt(r, &mp->mp_audio, mc, 
