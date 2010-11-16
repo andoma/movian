@@ -2659,6 +2659,14 @@ spotify_search_done(sp_search *result, void *userdata)
 {
   spotify_search_t *ss = userdata;
 
+  TRACE(TRACE_DEBUG, "spotify",
+	"Search '%s' completed (%s) %d tracks, %d albums, %d artists",
+	ss->ss_query,
+	f_sp_error_message(f_sp_search_error(result)),
+	f_sp_search_num_tracks(result),
+	f_sp_search_num_albums(result),
+	f_sp_search_num_artists(result));
+
   ss_fill_tracks(result,  &ss->ss_reqs[SS_TRACKS]);
   ss_fill_albums(result,  &ss->ss_reqs[SS_ALBUMS]);
   ss_fill_artists(result, &ss->ss_reqs[SS_ARTISTS]);
@@ -2736,6 +2744,9 @@ spotify_search(spotify_search_t *ss)
 		     PROP_TAG_COURIER, spotify_courier,
 		     NULL);
   }
+
+  TRACE(TRACE_DEBUG, "spotify",
+	"Initial search for '%s'", ss->ss_query);
 
   f_sp_search_create(spotify_session, ss->ss_query,
 		     0, SEARCH_LIMIT, 0, SEARCH_LIMIT, 0, SEARCH_LIMIT,
