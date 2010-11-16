@@ -76,6 +76,7 @@ static int is_logged_in;
 static int is_rootlist_loaded;
 static int is_thread_running;
 static int login_rejected_by_user;
+static int pending_login;
 
 static prop_t *prop_status;
 static prop_t *prop_syncing_playlists;
@@ -518,6 +519,10 @@ spotify_try_login(sp_session *s, int retry, const char *reason, int silent)
   char *username;
   char *password;
   int r;
+
+  if(pending_login)
+    return;
+
   reason = reason ?: "Enter login credentials";
 
   prop_set_string(prop_status, "Attempting login");
@@ -544,6 +549,7 @@ spotify_try_login(sp_session *s, int retry, const char *reason, int silent)
   }
 
   f_sp_session_login(s, username, password);
+  pending_login = 1;
 
   free(username);
   free(password);
@@ -579,7 +585,7 @@ static void
 spotify_logged_in(sp_session *sess, sp_error error)
 {
   sp_user *user;
-
+  pending_login = 0;
   if(error == 0) {
     
     is_logged_in = 1;
@@ -618,6 +624,7 @@ spotify_logged_out(sp_session *sess)
 {
   notify_add(NOTIFY_INFO, NULL, 5, "Spotify: Logged out");
 
+  pending_login = 0;
   is_logged_in = 0;
   is_rootlist_loaded = 0;
   fail_pending_messages("Logged out");
