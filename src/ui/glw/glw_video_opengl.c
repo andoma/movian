@@ -92,7 +92,7 @@ surface_init(glw_video_t *gv, glw_video_surface_t *gvs,
 
   glGenBuffers(3, gvs->gvs_pbo);
   glGenTextures(3, gvs->gvs_textures);
-
+  gvs->gvs_uploaded = 0;
   for(i = 0; i < 3; i++) {
 
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, gvs->gvs_pbo[i]);
