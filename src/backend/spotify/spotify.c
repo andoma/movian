@@ -188,6 +188,7 @@ typedef enum {
   SPOTIFY_GET_IMAGE,
   SPOTIFY_OPEN_PAGE,
   SPOTIFY_SEARCH,
+  SPOTIFY_RESOLVE_ITEM,
 } spotify_msg_type_t;
 
 /**
@@ -243,6 +244,7 @@ typedef struct spotify_page {
 } spotify_page_t;
 
 static LIST_HEAD(, spotify_page) pending_album_queries;
+static LIST_HEAD(, spotify_page) pending_track_item_resolve;
 
 /**
  * Message for communication with main thread
@@ -318,7 +320,7 @@ static playlist_t *pl_create(sp_playlist *plist, int withtracks,
 static void spotify_shutdown_early(void *opaque, int retcode);
 static void spotify_shutdown_late(void *opaque, int retcode);
 
-static void spotify_try_pending_albums(void);
+static void spotify_try_pending(void);
 
 /**
  *
@@ -375,25 +377,25 @@ spotify_msg_enq(spotify_msg_t *sm)
 static void
 spotify_page_destroy(spotify_page_t *sp)
 {
-  prop_ref_dec(sp->sp_model);
-  prop_ref_dec(sp->sp_type);
-  prop_ref_dec(sp->sp_error);
-  prop_ref_dec(sp->sp_loading);
-  prop_ref_dec(sp->sp_contents);
-  prop_ref_dec(sp->sp_title);
-  prop_ref_dec(sp->sp_album_name);
-  prop_ref_dec(sp->sp_album_year);
-  prop_ref_dec(sp->sp_album_art);
-  prop_ref_dec(sp->sp_artist_name);
-  prop_ref_dec(sp->sp_urlprop);
+  prop_ref_dec_nullchk(sp->sp_model);
+  prop_ref_dec_nullchk(sp->sp_type);
+  prop_ref_dec_nullchk(sp->sp_error);
+  prop_ref_dec_nullchk(sp->sp_loading);
+  prop_ref_dec_nullchk(sp->sp_contents);
+  prop_ref_dec_nullchk(sp->sp_title);
+  prop_ref_dec_nullchk(sp->sp_album_name);
+  prop_ref_dec_nullchk(sp->sp_album_year);
+  prop_ref_dec_nullchk(sp->sp_album_art);
+  prop_ref_dec_nullchk(sp->sp_artist_name);
+  prop_ref_dec_nullchk(sp->sp_urlprop);
 
-  prop_ref_dec(sp->sp_nodes);
-  prop_ref_dec(sp->sp_items);
-  prop_ref_dec(sp->sp_filter);
-  prop_ref_dec(sp->sp_canFilter);
+  prop_ref_dec_nullchk(sp->sp_nodes);
+  prop_ref_dec_nullchk(sp->sp_items);
+  prop_ref_dec_nullchk(sp->sp_filter);
+  prop_ref_dec_nullchk(sp->sp_canFilter);
 
-  prop_ref_dec(sp->sp_numtracks);
-  prop_ref_dec(sp->sp_canDelete);
+  prop_ref_dec_nullchk(sp->sp_numtracks);
+  prop_ref_dec_nullchk(sp->sp_canDelete);
 
   free(sp->sp_url);
 
@@ -410,8 +412,10 @@ spotify_page_destroy(spotify_page_t *sp)
 static void
 spotify_open_page_fail(spotify_page_t *sp, const char *msg)
 {
-  prop_set_string(sp->sp_type, "openerror");
-  prop_set_string(sp->sp_error, msg);
+  if(sp->sp_error != NULL) {
+    prop_set_string(sp->sp_error, msg);
+    prop_set_string(sp->sp_type, "openerror");
+  }
   prop_set_int(sp->sp_loading, 0);
   spotify_page_destroy(sp);
 }
@@ -490,6 +494,7 @@ fail_pending_messages(const char *msg)
     case SPOTIFY_PAUSE:
       break;
     case SPOTIFY_OPEN_PAGE:
+    case SPOTIFY_RESOLVE_ITEM:
       spotify_open_page_fail(sm->sm_ptr, msg);
       break;
     case SPOTIFY_PLAY_TRACK:
@@ -1041,7 +1046,7 @@ spotify_metadata_updated(sp_session *sess)
     metadata_update(m);
 
   spotify_play_track_try();
-  spotify_try_pending_albums();
+  spotify_try_pending();
 }
 
 
@@ -1582,6 +1587,39 @@ try_get_album(spotify_page_t *sp)
 }
 
 
+/**
+ *
+ */  
+static void
+try_resolve_track_item(spotify_page_t *sp)
+{
+  sp_error err = f_sp_track_error(sp->sp_track);
+  sp_album *album;
+  char url[URL_MAX];
+
+  if(err == SP_ERROR_IS_LOADING)
+    return;
+
+  LIST_REMOVE(sp, sp_query_link);
+
+  if(err != SP_ERROR_OK)
+    return;
+  prop_set_string(sp->sp_type, "audio");
+
+  prop_set_string(sp->sp_title, f_sp_track_name(sp->sp_track));
+
+  album = f_sp_track_album(sp->sp_track);
+  if(album != NULL) {
+    spotify_make_link(f_sp_link_create_from_album(album), url, sizeof(url));
+    prop_set_link(sp->sp_album_name, f_sp_album_name(album), url);
+    set_image_uri(sp->sp_album_art, f_sp_album_cover(album));
+    prop_set_int(sp->sp_album_year, f_sp_album_year(album));
+  }
+
+  spotify_page_destroy(sp);
+}
+
+
 
 /**
  * Fill sp->sp_root with info from sp->sp_url
@@ -1648,6 +1686,38 @@ spotify_open_page(spotify_page_t *sp)
     f_sp_link_release(l);
   }
 }
+
+
+/**
+ *
+ */
+static void
+spotify_resolve_item(spotify_page_t *sp)
+{
+  sp_link *l;
+  sp_linktype type;
+
+  if((l = f_sp_link_create_from_string(sp->sp_url)) == NULL) {
+    spotify_open_page_fail(sp, "Invalid Spotify URI");
+    return;
+  }
+
+  type = f_sp_link_type(l);
+
+  switch(type) {
+  case SP_LINKTYPE_TRACK:
+    sp->sp_track = f_sp_link_as_track(l);
+    f_sp_track_add_ref(sp->sp_track);
+    LIST_INSERT_HEAD(&pending_track_item_resolve, sp, sp_query_link);
+    try_resolve_track_item(sp);
+    break;
+    
+  default:
+    break;
+  }
+  f_sp_link_release(l);
+}
+
 
 
 /**
@@ -2758,13 +2828,18 @@ spotify_search(spotify_search_t *ss)
  *
  */
 static void
-spotify_try_pending_albums(void)
+spotify_try_pending(void)
 {
   spotify_page_t *sp, *next;
 
   for(sp = LIST_FIRST(&pending_album_queries); sp != NULL; sp = next) {
     next = LIST_NEXT(sp, sp_query_link);
     try_get_album(sp);
+  }
+
+  for(sp = LIST_FIRST(&pending_track_item_resolve); sp != NULL; sp = next) {
+    next = LIST_NEXT(sp, sp_query_link);
+    try_resolve_track_item(sp);
   }
 }
 
@@ -2907,6 +2982,9 @@ spotify_thread(void *aux)
       case SPOTIFY_OPEN_PAGE:
 	spotify_open_page(sm->sm_ptr);
 	break;
+      case SPOTIFY_RESOLVE_ITEM:
+	spotify_resolve_item(sm->sm_ptr);
+	break;
       case SPOTIFY_PLAY_TRACK:
 	spotify_play_track(sm->sm_ptr);
 	break;
@@ -3016,6 +3094,34 @@ startpage(prop_t *page)
 /**
  *
  */
+static void
+add_metadata_props(spotify_page_t *sp)
+{
+  prop_t *m = prop_create(sp->sp_model, "metadata");
+
+  sp->sp_title = prop_create(m, "title");
+  prop_ref_inc(sp->sp_title);
+
+  sp->sp_album_name = prop_create(m, "album_name");
+  prop_ref_inc(sp->sp_album_name);
+
+  sp->sp_album_year = prop_create(m, "album_year");
+  prop_ref_inc(sp->sp_album_year);
+
+  sp->sp_album_art  = prop_create(m, "album_art");
+  prop_ref_inc(sp->sp_album_art);
+
+  sp->sp_artist_name = prop_create(m, "aritst_name");
+  prop_ref_inc(sp->sp_artist_name);
+
+  sp->sp_numtracks = prop_create(m, "tracks");
+  prop_ref_inc(sp->sp_numtracks);
+}
+
+
+/**
+ *
+ */
 static int
 be_spotify_open(prop_t *page, const char *url)
 {
@@ -3066,26 +3172,7 @@ be_spotify_open(prop_t *page, const char *url)
   sp->sp_canDelete = prop_create(sp->sp_model, "canDelete");
   prop_ref_inc(sp->sp_canDelete);
   
-  prop_t *m = prop_create(sp->sp_model, "metadata");
-
-  sp->sp_title = prop_create(m, "title");
-  prop_ref_inc(sp->sp_title);
-
-  sp->sp_album_name = prop_create(m, "album_name");
-  prop_ref_inc(sp->sp_album_name);
-
-  sp->sp_album_year = prop_create(m, "album_year");
-  prop_ref_inc(sp->sp_album_year);
-
-  sp->sp_album_art  = prop_create(m, "album_art");
-  prop_ref_inc(sp->sp_album_art);
-
-  sp->sp_artist_name = prop_create(m, "aritst_name");
-  prop_ref_inc(sp->sp_artist_name);
-
-  sp->sp_numtracks = prop_create(m, "tracks");
-  prop_ref_inc(sp->sp_numtracks);
-
+  add_metadata_props(sp);
   prop_set_int(sp->sp_loading, 1);
   spotify_msg_enq(spotify_msg_build(SPOTIFY_OPEN_PAGE, sp));
   return 0;
@@ -3633,6 +3720,31 @@ be_spotify_search(prop_t *source, const char *query)
 /**
  *
  */
+static int
+be_resolve_item(const char *url, prop_t *item)
+{
+  if(spotify_start(NULL, 0, 0))
+    return -1;
+
+  spotify_page_t *sp = calloc(1, sizeof(spotify_page_t));
+
+  sp->sp_url = strdup(url);
+
+  sp->sp_model = item;
+  prop_ref_inc(sp->sp_model);
+
+  sp->sp_type    = prop_create(sp->sp_model, "type");
+  prop_ref_inc(sp->sp_type);
+
+  add_metadata_props(sp);
+  spotify_msg_enq(spotify_msg_build(SPOTIFY_RESOLVE_ITEM, sp));
+  return 0;
+}
+
+
+/**
+ *
+ */
 static backend_t be_spotify = {
   .be_init = be_spotify_init,
   .be_canhandle = be_spotify_canhandle,
@@ -3641,6 +3753,7 @@ static backend_t be_spotify = {
   .be_list = be_spotify_list,
   .be_imageloader = be_spotify_imageloader,
   .be_search = be_spotify_search,
+  .be_resolve_item = be_resolve_item,
 };
 
 BE_REGISTER(spotify);
