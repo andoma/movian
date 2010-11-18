@@ -237,26 +237,35 @@ js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
 	      jsval *argv, jsval *rval)
 {
   const char *url;
-  const char *type;
+  const char *type = NULL;
   JSObject *metaobj = NULL;
-  prop_t *item;
   js_model_t *parent = JS_GetPrivate(cx, obj);
 
-  if(!JS_ConvertArguments(cx, argc, argv, "ss/o", &url, &type, &metaobj))
+  if(!JS_ConvertArguments(cx, argc, argv, "s/so", &url, &type, &metaobj))
     return JS_FALSE;
 
-  item = prop_create(NULL, NULL);
-
-  if(metaobj)
-    js_prop_from_object(cx, metaobj, prop_create(item, "metadata"));
-
+  prop_t *item = prop_create(NULL, NULL);
   prop_set_string(prop_create(item, "url"), url);
-  prop_set_string(prop_create(item, "type"), type);
+
+  *rval = JSVAL_VOID;
+
+  if(type != NULL) {
+    prop_set_string(prop_create(item, "type"), type);
+
+    if(metaobj)
+      js_prop_from_object(cx, metaobj, prop_create(item, "metadata"));
+
+  } else {
+
+    if(backend_resolve_item(url, item)) {
+      prop_destroy(item);
+      return JS_TRUE;
+    }
+  }
 
   if(prop_set_parent(item, parent->jm_nodes))
     prop_destroy(item);
 
-  *rval = JSVAL_VOID;
   return JS_TRUE;
 }
 
@@ -482,7 +491,7 @@ js_page_error(JSContext *cx, JSObject *obj, uintN argc,
  *
  */
 static JSFunctionSpec page_functions[] = {
-    JS_FS("appendItem",         js_appendItem,   3, 0, 0),
+    JS_FS("appendItem",         js_appendItem,   1, 0, 0),
     JS_FS("appendModel",        js_appendModel,  2, 0, 0),
     JS_FS("onEvent",            js_onEvent,      2, 0, 0),
     JS_FS("error",              js_page_error,   1, 0, 0),
