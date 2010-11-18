@@ -266,6 +266,20 @@ backend_open(prop_t *page, const char *url)
 /**
  *
  */
+int
+backend_resolve_item(const char *url, prop_t *item)
+{
+  backend_t *be = backend_canhandle(url);
+  if(be == NULL || be->be_resolve_item == NULL)
+    return -1;
+
+  return be->be_resolve_item(url, item);
+}
+
+
+/**
+ *
+ */
 void
 backend_search(prop_t *model, const char *url)
 {

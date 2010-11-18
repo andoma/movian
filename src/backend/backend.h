@@ -73,6 +73,8 @@ typedef struct backend {
 
   void (*be_search)(struct prop *model, const char *query);
 
+  int (*be_resolve_item)(const char *url, prop_t *item);
+
 } backend_t;
 
 
@@ -119,6 +121,10 @@ void backend_register(backend_t *be);
 
 int backend_open_video(prop_t *page, const char *url)
      __attribute__ ((warn_unused_result));
+
+int backend_resolve_item(const char *url, prop_t *item)
+     __attribute__ ((warn_unused_result));
+
 
 void backend_search(prop_t *model, const char *url);
 
