@@ -350,6 +350,21 @@ event_create_action(action_type_t action)
 }
 
 
+
+/**
+ *
+ */
+event_t *
+event_create_action_str(const char *str)
+{
+  action_type_t a = action_str2code(str);
+
+  if(a == -1)
+    return event_create_str(EVENT_DYNAMIC_ACTION, str);
+  return event_create_action(a);
+}
+
+
 /**
  *
  */

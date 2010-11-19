@@ -241,6 +241,8 @@ event_t *event_create_action(action_type_t action);
 
 event_t *event_create_action_multi(const action_type_t *actions, size_t numactions);
 
+event_t *event_create_action_str(const char *str);
+
 #define event_create_type(type) event_create(type, sizeof(event_t))
 
 void *event_create_int(event_type_t type, int val);

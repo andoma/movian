@@ -256,15 +256,12 @@ glw_event_map_deliverEvent_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
 {
   glw_event_deliverEvent_t *de = (glw_event_deliverEvent_t *)gem;
 
-  if(de->action != NULL) {
-    action_type_t a = action_str2code(rstr_get(de->action));
-
-    if(a == -1)
-      src = event_create_str(EVENT_DYNAMIC_ACTION, rstr_get(de->action));
-    else
-      src = event_create_action(a);
-  }
+  if(de->action == NULL)
+    return prop_send_ext_event(de->target, src);
+  
+  src = event_create_action_str(rstr_get(de->action));
   prop_send_ext_event(de->target, src);
+  event_release(src);
 }
 
 
