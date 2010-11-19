@@ -1095,6 +1095,9 @@ prop_send_ext_event0(prop_t *p, event_t *e)
   prop_sub_t *s;
   prop_notify_t *n;
 
+  while(p->hp_originator != NULL)
+    p = p->hp_originator;
+
   LIST_FOREACH(s, &p->hp_value_subscriptions, hps_value_prop_link) {
     n = get_notify(s);
 
