@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <assert.h>
 #include <string.h>
 #include <regex.h>
 #include "js.h"
@@ -29,6 +30,7 @@
 #include "prop/prop_nodefilter.h"
 
 LIST_HEAD(js_event_handler_list, js_event_handler);
+LIST_HEAD(js_item_list, js_item);
 
 static struct js_route_list js_routes;
 static struct js_searcher_list js_searchers;
@@ -104,10 +106,72 @@ typedef struct js_model {
 
   struct js_event_handler_list jm_event_handlers;
 
+  struct js_item_list jm_items;
+
+  int jm_subs;
+
 } js_model_t;
 
 
 static JSObject *make_model_object(JSContext *cx, js_model_t *jm);
+
+/**
+ *
+ */
+static void
+destroy_event_handlers(JSContext *cx, struct js_event_handler_list *list)
+{
+  js_event_handler_t *jeh;
+
+  while((jeh = LIST_FIRST(list)) != NULL) {
+    LIST_REMOVE(jeh, jeh_link);
+    JS_RemoveRoot(cx, &jeh->jeh_function);
+    free(jeh->jeh_action);
+    free(jeh);
+  }
+}
+
+
+
+/**
+ *
+ */
+static void
+js_event_dispatch_action(JSContext *cx, struct js_event_handler_list *list,
+			 const char *action, JSObject *this)
+{
+  js_event_handler_t *jeh;
+  jsval result;
+  if(action == NULL)
+    return;
+
+  LIST_FOREACH(jeh, list, jeh_link) {
+    if(!strcmp(jeh->jeh_action, action)) {
+      JS_CallFunctionValue(cx, this, jeh->jeh_function, 0, NULL, &result);
+      return;
+    }
+  }
+}
+
+
+/**
+ *
+ */
+static void
+js_event_dispatch(JSContext *cx, struct js_event_handler_list *list,
+		  event_t *e, JSObject *this)
+{
+  if(event_is_type(e, EVENT_ACTION_VECTOR)) {
+  event_action_vector_t *eav = (event_action_vector_t *)e;
+  int i;
+  for(i = 0; i < eav->num; i++)
+    js_event_dispatch_action(cx, list, action_code2str(eav->actions[i]), this);
+    
+  } else if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
+    js_event_dispatch_action(cx, list, e->e_payload, this);
+  }
+}
+
 
 /**
  *
@@ -228,6 +292,136 @@ js_setLoading(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 }
 
 
+/**
+ *
+ */
+typedef struct js_item {
+  js_model_t *ji_model;
+  LIST_ENTRY(js_item) ji_link;
+  prop_t *ji_root;
+  struct js_event_handler_list ji_event_handlers;
+  prop_sub_t *ji_eventsub;
+  jsval ji_this;
+} js_item_t;
+
+
+/**
+ *
+ */
+static void
+item_finalize(JSContext *cx, JSObject *obj)
+{
+  js_item_t *ji = JS_GetPrivate(cx, obj);
+  assert(LIST_FIRST(&ji->ji_event_handlers) == NULL);
+  LIST_REMOVE(ji, ji_link);
+  prop_ref_dec(ji->ji_root);
+  free(ji);
+}
+
+
+/**
+ *
+ */
+static JSClass item_class = {
+  "item", JSCLASS_HAS_PRIVATE,
+  JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,
+  JS_EnumerateStub,JS_ResolveStub,JS_ConvertStub, item_finalize,
+  JSCLASS_NO_OPTIONAL_MEMBERS
+};
+
+
+/**
+ *
+ */
+static void
+js_item_eventsub(void *opaque, prop_event_t event, ...)
+{
+  js_item_t *ji = opaque;
+  va_list ap;
+
+  va_start(ap, event);
+
+  switch(event) {
+  default:
+    break;
+
+  case PROP_DESTROYED:
+    destroy_event_handlers(ji->ji_model->jm_cx, &ji->ji_event_handlers);
+    prop_unsubscribe(ji->ji_eventsub);
+    ji->ji_eventsub = NULL;
+    ji->ji_model->jm_subs--;
+    JS_RemoveRoot(ji->ji_model->jm_cx, &ji->ji_this);
+    break;
+
+  case PROP_EXT_EVENT:
+    js_event_dispatch(ji->ji_model->jm_cx, &ji->ji_event_handlers,
+		      va_arg(ap, event_t *), JSVAL_TO_OBJECT(ji->ji_this));
+    break;
+  }
+  va_end(ap);
+}
+
+
+/**
+ *
+ */
+static JSBool 
+js_item_onEvent(JSContext *cx, JSObject *obj,
+		uintN argc, jsval *argv, jsval *rval)
+{
+  js_item_t *ji = JS_GetPrivate(cx, obj);
+  js_event_handler_t *jeh;
+
+  if(!JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[1]))) {
+    JS_ReportError(cx, "Argument is not a function");
+    return JS_FALSE;
+  }
+
+  if(ji->ji_eventsub == NULL) {
+    ji->ji_eventsub = 
+      prop_subscribe(PROP_SUB_TRACK_DESTROY,
+		     PROP_TAG_CALLBACK, js_item_eventsub, ji,
+		     PROP_TAG_ROOT, ji->ji_root,
+		     PROP_TAG_COURIER, ji->ji_model->jm_pc,
+		     NULL);
+    ji->ji_model->jm_subs++;
+    ji->ji_this = OBJECT_TO_JSVAL(obj);
+    JS_AddNamedRoot(cx, &ji->ji_this, "item_this");
+  }
+
+  jeh = malloc(sizeof(js_event_handler_t));
+  jeh->jeh_action = strdup(JS_GetStringBytes(JS_ValueToString(cx, argv[0])));
+  jeh->jeh_function = argv[1];
+  JS_AddNamedRoot(cx, &jeh->jeh_function, "eventhandler");
+  LIST_INSERT_HEAD(&ji->ji_event_handlers, jeh, jeh_link);
+
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSBool 
+js_item_destroy(JSContext *cx, JSObject *obj,
+		uintN argc, jsval *argv, jsval *rval)
+{
+  js_item_t *ji = JS_GetPrivate(cx, obj);
+  prop_destroy(ji->ji_root);
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+/**
+ *
+ */
+static JSFunctionSpec item_functions[] = {
+  JS_FS("onEvent",            js_item_onEvent,      2, 0, 0),
+  JS_FS("destroy",            js_item_destroy,      0, 0, 0),
+  JS_FS_END
+};
+
 
 /**
  *
@@ -239,7 +433,7 @@ js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
   const char *url;
   const char *type = NULL;
   JSObject *metaobj = NULL;
-  js_model_t *parent = JS_GetPrivate(cx, obj);
+  js_model_t *model = JS_GetPrivate(cx, obj);
 
   if(!JS_ConvertArguments(cx, argc, argv, "s/so", &url, &type, &metaobj))
     return JS_FALSE;
@@ -262,10 +456,20 @@ js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
       return JS_TRUE;
     }
   }
-
-  if(prop_set_parent(item, parent->jm_nodes))
+  
+  if(prop_set_parent(item, model->jm_nodes)) {
     prop_destroy(item);
-
+  } else {
+    JSObject *robj = JS_NewObjectWithGivenProto(cx, &item_class, NULL, NULL);
+    *rval =  OBJECT_TO_JSVAL(robj);
+    JS_DefineFunctions(cx, robj, item_functions);
+    js_item_t *ji = calloc(1, sizeof(js_item_t));
+    ji->ji_model = model;
+    ji->ji_root = item;
+    LIST_INSERT_HEAD(&model->jm_items, ji, ji_link);
+    prop_ref_inc(ji->ji_root);
+    JS_SetPrivate(cx, robj, ji);
+  }
   return JS_TRUE;
 }
 
@@ -339,62 +543,6 @@ js_appendModel(JSContext *cx, JSObject *obj, uintN argc,
 }
 
 
-/**
- *
- */
-static void
-jm_destroy_event_handlers(js_model_t *jm)
-{
-  js_event_handler_t *jeh;
-
-  while((jeh = LIST_FIRST(&jm->jm_event_handlers)) != NULL) {
-    LIST_REMOVE(jeh, jeh_link);
-    JS_RemoveRoot(jm->jm_cx, &jeh->jeh_function);
-    free(jeh->jeh_action);
-    free(jeh);
-  }
-}
-
-
-/**
- *
- */
-static void
-js_model_dispatch_action(js_model_t *jm, const char *action)
-{
-  js_event_handler_t *jeh;
-  jsval result;
-
-  if(action == NULL)
-    return;
-
-  LIST_FOREACH(jeh, &jm->jm_event_handlers, jeh_link) {
-    if(!strcmp(jeh->jeh_action, action)) {
-      JS_CallFunctionValue(jm->jm_cx, NULL, jeh->jeh_function,
-			   0, NULL, &result);
-      return;
-    }
-  }
-}
-
-
-/**
- *
- */
-static void
-js_model_dispatch_event(js_model_t *jm, event_t *e)
-{
-  if(event_is_type(e, EVENT_ACTION_VECTOR)) {
-  event_action_vector_t *eav = (event_action_vector_t *)e;
-  int i;
-  for(i = 0; i < eav->num; i++)
-    js_model_dispatch_action(jm, action_code2str(eav->actions[i]));
-    
-  } else if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
-    js_model_dispatch_action(jm, e->e_payload);
-  }
-}
-
 
 /**
  *
@@ -412,13 +560,15 @@ js_model_eventsub(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_DESTROYED:
-    jm_destroy_event_handlers(jm);
+    destroy_event_handlers(jm->jm_cx, &jm->jm_event_handlers);
     prop_unsubscribe(jm->jm_eventsub);
     jm->jm_eventsub = NULL;
+    jm->jm_subs--;
     break;
 
   case PROP_EXT_EVENT:
-    js_model_dispatch_event(jm, va_arg(ap, event_t *));
+    js_event_dispatch(jm->jm_cx, &jm->jm_event_handlers, va_arg(ap, event_t *),
+		      NULL);
     break;
   }
   va_end(ap);
@@ -429,7 +579,8 @@ js_model_eventsub(void *opaque, prop_event_t event, ...)
  *
  */
 static JSBool 
-js_onEvent(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+js_page_onEvent(JSContext *cx, JSObject *obj,
+		uintN argc, jsval *argv, jsval *rval)
 {
   js_model_t *jm = JS_GetPrivate(cx, obj);
   js_event_handler_t *jeh;
@@ -451,6 +602,7 @@ js_onEvent(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 		     PROP_TAG_ROOT, jm->jm_eventsink,
 		     PROP_TAG_COURIER, jm->jm_pc,
 		     NULL);
+    jm->jm_subs++;
   }
 
   jeh = malloc(sizeof(js_event_handler_t));
@@ -493,7 +645,7 @@ js_page_error(JSContext *cx, JSObject *obj, uintN argc,
 static JSFunctionSpec page_functions[] = {
     JS_FS("appendItem",         js_appendItem,   1, 0, 0),
     JS_FS("appendModel",        js_appendModel,  2, 0, 0),
-    JS_FS("onEvent",            js_onEvent,      2, 0, 0),
+    JS_FS("onEvent",            js_page_onEvent, 2, 0, 0),
     JS_FS("error",              js_page_error,   1, 0, 0),
     JS_FS_END
 };
@@ -554,6 +706,7 @@ js_model_nodesub(void *opaque, prop_event_t event, ...)
     JS_RemoveRoot(jm->jm_cx, &jm->jm_paginator);
     prop_unsubscribe(jm->jm_nodesub);
     jm->jm_nodesub = NULL;
+    jm->jm_subs--;
     break;
 
   case PROP_WANT_MORE_CHILDS:
@@ -578,6 +731,7 @@ js_setPaginator(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
     return JS_FALSE;
   }
 
+  jm->jm_subs++;
   jm->jm_nodesub = 
     prop_subscribe(PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_CALLBACK, js_model_nodesub, jm,
@@ -693,7 +847,7 @@ js_open_trampoline(void *arg)
 
   jm->jm_cx = cx;
 
-  while(jm->jm_nodesub || jm->jm_eventsub) {
+  while(jm->jm_subs) {
     struct prop_notify_queue exp, nor;
     jsrefcount s = JS_SuspendRequest(cx);
     prop_courier_wait(jm->jm_pc, &nor, &exp);
