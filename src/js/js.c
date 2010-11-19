@@ -15,9 +15,11 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include <sys/types.h>
 #include <string.h>
 #include <assert.h>
+#include <unistd.h>
 
 #include "js.h"
 
@@ -338,6 +340,27 @@ js_message(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 /**
  *
  */
+static JSBool 
+js_sleep(JSContext *cx, JSObject *obj,
+	 uintN argc, jsval *argv, jsval *rval)
+{
+  int msec;
+
+  if (!JS_ConvertArguments(cx, argc, argv, "u", &msec))
+    return JS_FALSE;
+
+  jsrefcount s = JS_SuspendRequest(cx);
+  usleep(msec * 1000);
+  JS_ResumeRequest(cx, s);
+
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
 static JSFunctionSpec showtime_functions[] = {
     JS_FS("trace",            js_trace,    1, 0, 0),
     JS_FS("print",            js_print,    1, 0, 0),
@@ -350,6 +373,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("canHandle",        js_canHandle, 1, 0, 0),
     JS_FS("getAuthCredentials",  js_getAuthCredentials, 4, 0, 0),
     JS_FS("message",          js_message, 3, 0, 0),
+    JS_FS("sleep",            js_sleep, 1, 0, 0),
     JS_FS_END
 };
 
