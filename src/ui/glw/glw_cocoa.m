@@ -870,10 +870,8 @@ glw_cocoa_dispatch_event(uii_t *uii, event_t *e)
     settings_toggle_bool(gc->fullscreen_setting);
   } else {
     glw_dispatch_event(uii, e);
-    return;
   }
-  
-  event_unref(e);
+  event_release(e);
 }
 
 ui_t glw_ui = {
