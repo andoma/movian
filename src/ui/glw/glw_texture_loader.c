@@ -243,14 +243,6 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
     return -1;
   }
   
-
-  if(ctx->width == 0 || ctx->height == 0) {
-    av_free(ctx);
-    pixmap_release(pm);
-    TRACE(TRACE_INFO, "glw", "%s: invalid picture dimensions", url);
-    return -1;
-  }
-
   frame = avcodec_alloc_frame();
 
 #ifdef WII
@@ -265,6 +257,16 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
 	  url, 1 << ctx->lowres);
 
   r = avcodec_decode_video(ctx, frame, &got_pic, pm->pm_data,  pm->pm_size);
+
+  if(ctx->width == 0 || ctx->height == 0) {
+    av_free(ctx);
+    pixmap_release(pm);
+    avcodec_close(ctx);
+    av_free(frame);
+    TRACE(TRACE_INFO, "glw", "%s: invalid picture dimensions", url);
+    return -1;
+  }
+
 
   if(want_thumb && pm->pm_flags & PIXMAP_THUMBNAIL) {
     w = 160;
