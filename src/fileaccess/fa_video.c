@@ -37,7 +37,15 @@
 #include "notifications.h"
 #include "video/subtitles.h"
 #include "api/opensubtitles.h"
+#include "htsmsg/htsmsg_xml.h"
+#include "backend/backend.h"
 
+static event_t *playlist_play(fa_handle_t *fh,media_pipe_t *mp, int primary,
+			      int priority, char *errbuf, size_t errlen);
+
+/**
+ *
+ */
 static void
 scan_subtitles(prop_t *prop, const char *url)
 {
@@ -501,6 +509,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp, int primary, int priority,
   event_t *e;
   struct fa_stat fs;
   fa_handle_t *fh;
+  char buf[64];
 
   uint64_t hash;
   uint64_t fsize;
@@ -521,8 +530,21 @@ be_file_playvideo(const char *url, media_pipe_t *mp, int primary, int priority,
     return NULL;
   }
 
+
+  /**
+   * Check file type
+   */
   if((fh = fa_open(url, errbuf, errlen)) == NULL)
     return NULL;
+
+  if(fa_read(fh, buf, sizeof(buf)) == sizeof(buf)) {
+    if(!memcmp(buf, "<showtimeplaylist", strlen("<showtimeplaylist"))) {
+      e = playlist_play(fh, mp, primary, priority, errbuf, errlen);
+      fa_close(fh);
+      return e;
+    }
+  }
+
 
   if(fa_probe_iso(NULL, fh) == 0) {
     fa_close(fh);
@@ -639,4 +661,70 @@ be_file_playvideo(const char *url, media_pipe_t *mp, int primary, int priority,
 
   media_format_deref(fw);
   return e;
+}
+
+
+/**
+ *
+ */
+static event_t *
+playlist_play(fa_handle_t *fh, media_pipe_t *mp, int primary,
+	      int priority, char *errbuf, size_t errlen)
+{
+  size_t size;
+  char *mem;
+  htsmsg_t *xml, *urls, *c;
+  event_t *e;
+  const char *s, *url;
+  int loop;
+  htsmsg_field_t *f;
+  int played_something;
+
+  fa_seek(fh, 0, SEEK_SET);
+
+  size = fa_fsize(fh);
+  mem = malloc(size + 1);
+  if(fa_read(fh, mem, size) != size) {
+    free(mem);
+    snprintf(errbuf, errlen, "Unable to read XML playlist");
+    return NULL;
+  }
+  mem[size] = 0;
+
+  if((xml = htsmsg_xml_deserialize(mem, errbuf, errlen)) == NULL)
+    return NULL;
+
+  s = htsmsg_get_str_multi(xml, "tags", "showtimeplaylist",
+			   "attrib", "loop", NULL);
+  loop = s != NULL && atoi(s);
+
+  urls = htsmsg_get_map_multi(xml, "tags", "showtimeplaylist", "tags", NULL);
+
+  if(urls == NULL) {
+    htsmsg_destroy(xml);
+    snprintf(errbuf, errlen, "No <url> tags in playlist");
+    return NULL;
+  }
+
+  do {
+    played_something = 0;
+
+    HTSMSG_FOREACH(f, urls) {
+      if(strcmp(f->hmf_name, "url") ||
+	 (c = htsmsg_get_map_by_field(f)) == NULL)
+	continue;
+      url = htsmsg_get_str(c, "cdata");
+      if(url == NULL)
+	continue;
+      e = backend_play_video(url, mp, primary, priority, errbuf, errlen);
+      if(!event_is_type(e, EVENT_EOF)) {
+	htsmsg_destroy(xml);
+	return e;
+      }
+      played_something = 1;
+    }
+  } while(played_something && loop);
+  
+  htsmsg_destroy(xml);
+  return event_create_type(EVENT_EOF);
 }
