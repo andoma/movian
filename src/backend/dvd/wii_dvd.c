@@ -141,7 +141,7 @@ be_dvd_canhandle(struct backend *be, const char *url)
  */
 static event_t *
 be_dvd_play(struct backend *be, const char *url, media_pipe_t *mp,
-	    int primary, int priority,
+	    int flags, int priority,
 	    char *errstr, size_t errlen)
 {
   event_t *e;

@@ -51,8 +51,11 @@ video_player_idle(void *aux)
     if(event_is_type(e, EVENT_PLAY_URL)) {
       prop_set_void(errprop);
       event_playurl_t *ep = (event_playurl_t *)e;
+      int flags = 0;
+      if(ep->primary)
+	flags |= BACKEND_VIDEO_PRIMARY;
 
-      next = backend_play_video(ep->url, mp, ep->primary, ep->priority,
+      next = backend_play_video(ep->url, mp, flags, ep->priority,
 				errbuf, sizeof(errbuf));
 
       if(next == NULL) {

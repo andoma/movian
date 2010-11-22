@@ -1522,7 +1522,7 @@ htsp_free_streams(htsp_subscription_t *hs)
  *
  */
 static event_t *
-be_htsp_playvideo(const char *url, media_pipe_t *mp, int primary, int priority,
+be_htsp_playvideo(const char *url, media_pipe_t *mp, int flags, int priority,
 		  char *errbuf, size_t errlen)
 {
   htsp_connection_t *hc;
@@ -1531,7 +1531,7 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp, int primary, int priority,
   event_t *e;
   char *tag = NULL;
   int chid;
-
+  int primary = !!(flags & BACKEND_VIDEO_PRIMARY);
 
   TRACE(TRACE_DEBUG, "HTSP",
 	"Starting video playback %s primary=%s, priority=%d",

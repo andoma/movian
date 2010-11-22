@@ -36,6 +36,9 @@ typedef enum {
   BACKEND_PROBE_FAIL,
 } backend_probe_result_t;
 
+#define BACKEND_VIDEO_PRIMARY  0x1
+#define BACKEND_VIDEO_NO_AUDIO 0x2
+
 /**
  *
  */
@@ -55,7 +58,7 @@ typedef struct backend {
   int (*be_open)(prop_t *page, const char *url);
 
   struct event *(*be_play_video)(const char *url, struct media_pipe *mp,
-				 int primary, int priority, 
+				 int flags, int priority,
 				 char *errbuf, size_t errlen);
 
   struct event *(*be_play_audio)(const char *url, struct media_pipe *mp,
@@ -90,7 +93,7 @@ int backend_open(struct prop *page, const char *url)
      __attribute__ ((warn_unused_result));
 
 struct event *backend_play_video(const char *url, struct media_pipe *mp,
-				 int primary, int priority,
+				 int flags, int priority,
 				 char *errbuf, size_t errlen)
   __attribute__ ((warn_unused_result));
 

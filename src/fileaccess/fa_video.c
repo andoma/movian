@@ -41,7 +41,7 @@
 #include "backend/backend.h"
 
 static event_t *playlist_play(fa_handle_t *fh,media_pipe_t *mp, int primary,
-			      int priority, char *errbuf, size_t errlen);
+			      int flags, char *errbuf, size_t errlen);
 
 /**
  *
@@ -497,7 +497,7 @@ add_off_stream(prop_t *prop, const char *id)
  *
  */
 event_t *
-be_file_playvideo(const char *url, media_pipe_t *mp, int primary, int priority,
+be_file_playvideo(const char *url, media_pipe_t *mp, int flags, int priority,
 		  char *errbuf, size_t errlen)
 {
   AVFormatContext *fctx;
@@ -539,7 +539,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp, int primary, int priority,
 
   if(fa_read(fh, buf, sizeof(buf)) == sizeof(buf)) {
     if(!memcmp(buf, "<showtimeplaylist", strlen("<showtimeplaylist"))) {
-      e = playlist_play(fh, mp, primary, priority, errbuf, errlen);
+      e = playlist_play(fh, mp, flags, priority, errbuf, errlen);
       fa_close(fh);
       return e;
     }
@@ -630,11 +630,17 @@ be_file_playvideo(const char *url, media_pipe_t *mp, int primary, int priority,
 	mp->mp_video.mq_stream = i;
     }
 
-    if(mp->mp_audio.mq_stream == -1 && ctx->codec_type == CODEC_TYPE_AUDIO)
-      mp->mp_audio.mq_stream = i;
+    if(ctx->codec_type == CODEC_TYPE_AUDIO) {
 
-    if(ctx->codec_id == CODEC_ID_DTS)
-      ctx->channels = 0;
+      if(flags & BACKEND_VIDEO_NO_AUDIO)
+	continue;
+
+      if(mp->mp_audio.mq_stream == -1)
+	mp->mp_audio.mq_stream = i;
+
+      if(ctx->codec_id == CODEC_ID_DTS)
+	ctx->channels = 0;
+    }
 
     cwvec[i] = media_codec_create(ctx->codec_id,
 				  ctx->codec_type, 0, fw, ctx, &mcp, mp);
@@ -668,7 +674,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp, int primary, int priority,
  *
  */
 static event_t *
-playlist_play(fa_handle_t *fh, media_pipe_t *mp, int primary,
+playlist_play(fa_handle_t *fh, media_pipe_t *mp, int flags,
 	      int priority, char *errbuf, size_t errlen)
 {
   size_t size;
@@ -713,10 +719,17 @@ playlist_play(fa_handle_t *fh, media_pipe_t *mp, int primary,
       if(strcmp(f->hmf_name, "url") ||
 	 (c = htsmsg_get_map_by_field(f)) == NULL)
 	continue;
+      int flags2 = flags;
+
+      s = htsmsg_get_str_multi(c, "attrib", "noaudio", NULL);
+
+      if(s && atoi(s))
+	flags2 |= BACKEND_VIDEO_NO_AUDIO;
+
       url = htsmsg_get_str(c, "cdata");
       if(url == NULL)
 	continue;
-      e = backend_play_video(url, mp, primary, priority, errbuf, errlen);
+      e = backend_play_video(url, mp, flags2, priority, errbuf, errlen);
       if(!event_is_type(e, EVENT_EOF)) {
 	htsmsg_destroy(xml);
 	return e;
