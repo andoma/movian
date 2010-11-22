@@ -21,8 +21,8 @@
 
 #include <arch/threads.h>
 #include "prop/prop.h"
-#include "event.h"
 #include "ui/ui.h"
+#include "event.h"
 
 LIST_HEAD(keymap_entry_list, keymap_entry);
 
@@ -66,7 +66,9 @@ typedef struct keymap {
  *
  */
 struct uii;
-event_t *keymapper_resolve(const char *str);
+struct event;
+
+struct event *keymapper_resolve(const char *str);
 
 keymap_t *keymapper_create(prop_t *settingsparent, const char *name,
 			   const char *title, const keymap_defmap_t *def);

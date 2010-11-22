@@ -22,9 +22,8 @@
 #include <stdlib.h>
 #include <libavformat/avformat.h>
 #include <arch/atomic.h>
-
-#include "event.h"
 #include "prop/prop.h"
+#include "event.h"
 
 void media_init(void);
 struct media_buf;
@@ -294,15 +293,15 @@ void mp_ref_dec(media_pipe_t *mp);
 
 int mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
 			int auxtype);
-event_t *mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, 
+struct event *mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, 
 				media_buf_t *mb);
 void mb_enqueue_always(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
 
-void mp_enqueue_event(media_pipe_t *mp, event_t *e);
-event_t *mp_dequeue_event(media_pipe_t *mp);
-event_t *mp_dequeue_event_deadline(media_pipe_t *mp, int timeout);
+void mp_enqueue_event(media_pipe_t *mp, struct event *e);
+struct event *mp_dequeue_event(media_pipe_t *mp);
+struct event *mp_dequeue_event_deadline(media_pipe_t *mp, int timeout);
 
-event_t *mp_wait_for_empty_queues(media_pipe_t *mp, int limit);
+struct event *mp_wait_for_empty_queues(media_pipe_t *mp, int limit);
 
 
 void mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd);

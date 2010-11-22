@@ -18,6 +18,7 @@
 
 #include "glw.h"
 #include "glw_transitions.h"
+#include "event.h"
 
 /**
  *

@@ -21,6 +21,7 @@
 #include <arch/threads.h>
 
 #include "showtime.h"
+#include "event.h"
 #include "ui.h"
 
 

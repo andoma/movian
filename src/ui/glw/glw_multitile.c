@@ -17,6 +17,7 @@
  */
 
 #include <assert.h>
+#include "event.h"
 #include "glw.h"
 
 #define NLANES 8

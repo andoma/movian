@@ -33,7 +33,8 @@ void notify_destroy(void *);
 void notifications_init(void);
 
 // Displays popup defined by proptree 'p' and return event
-event_t *popup_display(prop_t *p);
+struct event;
+struct event *popup_display(prop_t *p);
 
 #define MESSAGE_POPUP_OK     0x1
 #define MESSAGE_POPUP_CANCEL 0x2

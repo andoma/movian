@@ -17,9 +17,10 @@
  */
 #include <assert.h>
 
+#include "showtime.h"
 #include "navigator.h"
 #include "gu.h"
-#include "showtime.h"
+#include "event.h"
 
 #include <gdk/gdkkeysyms.h>
 #include <X11/Xlib.h>
@@ -424,7 +425,7 @@ gu_fullwindow_update(gu_window_t *gw)
  *
  */
 static void
-gu_playqueue_send_event(gu_tab_t *gt, event_t *e)
+gu_playqueue_send_event(gu_tab_t *gt, struct event *e)
 {
   prop_t *p = prop_get_by_name(PNVEC("global", "playqueue", "eventsink"), 1,
 			       NULL);

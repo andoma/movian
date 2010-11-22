@@ -18,9 +18,9 @@
 
 #include <string.h>
 
+#include "event.h"
 #include "glw.h"
 #include "glw_event.h"
-
 
 /**
  *

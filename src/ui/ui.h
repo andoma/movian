@@ -19,8 +19,6 @@
 #ifndef UI_H__
 #define UI_H__
 
-#include "event.h"
-
 LIST_HEAD(ui_list,  ui);
 LIST_HEAD(uii_list, uii);
 
@@ -56,7 +54,7 @@ typedef struct ui {
 
   int (*ui_start)(struct ui *ui, int argc, char **argv, int primary);
 
-  void (*ui_dispatch_event)(uii_t *uii, event_t *e);
+  void (*ui_dispatch_event)(uii_t *uii, struct event *e);
 
   void (*ui_stop)(uii_t *uii);
 
@@ -72,7 +70,7 @@ void uii_register(uii_t *uii, int primary);
 
 int ui_shutdown(void);
 
-void ui_primary_event(event_t *e);
+void ui_primary_event(struct event *e);
 
 
 /**

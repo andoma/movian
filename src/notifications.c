@@ -23,6 +23,7 @@
 #include "prop/prop.h"
 #include "notifications.h"
 #include "misc/callout.h"
+#include "event.h"
 
 static prop_t *notify_prop_entries;
 

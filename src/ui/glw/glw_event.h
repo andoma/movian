@@ -21,7 +21,6 @@
 
 #include "event.h"
 
-
 /** 
  *
  */
@@ -30,7 +29,7 @@ typedef struct glw_event_map {
 
   action_type_t gem_action;
 
-  void (*gem_fire)(glw_t *w, struct glw_event_map *gem, event_t *src);
+  void (*gem_fire)(glw_t *w, struct glw_event_map *gem, struct event *src);
   void (*gem_dtor)(struct glw_event_map *gem);
 
 } glw_event_map_t;
@@ -54,7 +53,7 @@ void glw_event_map_destroy(glw_event_map_t *gem);
 /**
  *
  */
-int glw_event_map_intercept(glw_t *w, event_t *e);
+int glw_event_map_intercept(glw_t *w, struct event *e);
 
 
 /**

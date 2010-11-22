@@ -29,10 +29,11 @@
 
 #include "misc/queue.h"
 #include "prop/prop.h"
-#include "event.h"
 #include "ui/ui.h"
 #include "showtime.h"
 #include "settings.h"
+
+struct event;
 
 TAILQ_HEAD(glw_queue, glw);
 LIST_HEAD(glw_head, glw);
@@ -776,7 +777,7 @@ void glw_lock(glw_root_t *gr);
 
 void glw_unlock(glw_root_t *gr);
 
-void glw_dispatch_event(uii_t *uii, event_t *e);
+void glw_dispatch_event(uii_t *uii, struct event *e);
 
 
 /**
@@ -981,9 +982,9 @@ glw_t *glw_get_prev_n_all(glw_t *c, int count);
 
 glw_t *glw_get_next_n_all(glw_t *c, int count);
 
-int glw_event(glw_root_t *gr, event_t *e);
+int glw_event(glw_root_t *gr, struct event *e);
 
-int glw_event_to_widget(glw_t *w, event_t *e, int local);
+int glw_event_to_widget(glw_t *w, struct event *e, int local);
 
 void glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe);
 
@@ -991,7 +992,7 @@ int glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
 		       glw_t **hp, float *p, float *dir);
 
 
-int glw_navigate(glw_t *w, event_t *e, int local);
+int glw_navigate(glw_t *w, struct event *e, int local);
 
 glw_t *glw_find_neighbour(glw_t *w, const char *id);
 

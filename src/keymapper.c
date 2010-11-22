@@ -24,6 +24,7 @@
 #include "showtime.h"
 #include "keymapper.h"
 #include "settings.h"
+#include "event.h"
 
 static keymap_t *global_km;
 

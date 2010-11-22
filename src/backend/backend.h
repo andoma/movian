@@ -19,12 +19,12 @@
 #ifndef BACKEND_H__
 #define BACKEND_H__
 
-#include "event.h"
 #include "prop/prop.h"
 
 struct pixmap;
 struct media_pipe;
 struct navigator;
+struct event;
 
 /**
  * Kept in sync with service_status_t
@@ -54,12 +54,12 @@ typedef struct backend {
 
   int (*be_open)(prop_t *page, const char *url);
 
-  event_t *(*be_play_video)(const char *url, struct media_pipe *mp,
-			    int primary, int priority, 
-			    char *errbuf, size_t errlen);
+  struct event *(*be_play_video)(const char *url, struct media_pipe *mp,
+				 int primary, int priority, 
+				 char *errbuf, size_t errlen);
 
-  event_t *(*be_play_audio)(const char *url, struct media_pipe *mp,
-			    char *errbuf, size_t errlen, int paused);
+  struct event *(*be_play_audio)(const char *url, struct media_pipe *mp,
+				 char *errbuf, size_t errlen, int paused);
 
   prop_t *(*be_list)(const char *url, char *errbuf, size_t errsize);
 
@@ -89,15 +89,15 @@ void backend_fini(void);
 int backend_open(struct prop *page, const char *url)
      __attribute__ ((warn_unused_result));
 
-event_t *backend_play_video(const char *url, struct media_pipe *mp,
-			    int primary, int priority,
-			    char *errbuf, size_t errlen)
-     __attribute__ ((warn_unused_result));
+struct event *backend_play_video(const char *url, struct media_pipe *mp,
+				 int primary, int priority,
+				 char *errbuf, size_t errlen)
+  __attribute__ ((warn_unused_result));
 
 
-event_t *backend_play_audio(const char *url, struct media_pipe *mp,
-			    char *errbuf, size_t errlen, int paused)
-     __attribute__ ((warn_unused_result));
+struct event *backend_play_audio(const char *url, struct media_pipe *mp,
+				 char *errbuf, size_t errlen, int paused)
+  __attribute__ ((warn_unused_result));
 
 
 prop_t *backend_list(const char *url, char *errbuf, size_t errlen)

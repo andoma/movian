@@ -17,8 +17,10 @@
  */
 
 #include <string.h>
-#include "gu.h"
+
 #include "showtime.h"
+#include "event.h"
+#include "gu.h"
 
 typedef struct popup {
   LIST_ENTRY(popup) link;

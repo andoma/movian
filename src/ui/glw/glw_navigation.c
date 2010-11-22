@@ -17,6 +17,7 @@
  */
 
 #include "glw.h"
+#include "event.h"
 #include "glw_event.h"
 
 typedef struct query {

@@ -17,6 +17,7 @@
  */
 
 #include "misc/string.h"
+#include "event.h"
 #include "glw.h"
 #include <libavutil/common.h>
 

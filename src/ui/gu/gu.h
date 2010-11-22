@@ -24,6 +24,7 @@
 #include <prop/prop.h>
 #include <ui/ui.h>
 
+struct event;
 LIST_HEAD(gu_nav_page_list, gu_nav_page);
 LIST_HEAD(gu_window_list, gu_window);
 LIST_HEAD(gu_tab_list, gu_tab);
@@ -113,7 +114,7 @@ gu_tab_t *gu_tab_create(gu_window_t *gw, prop_t *nav, int select);
 
 void gu_tab_destroy(gu_tab_t *gu);
 
-void gu_tab_send_event(gu_tab_t *gw, event_t *e);
+void gu_tab_send_event(gu_tab_t *gw, struct event *e);
 
 void gu_tab_open(gu_tab_t *gt, const char *url);
 

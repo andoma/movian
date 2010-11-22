@@ -30,6 +30,7 @@
 #include "prop_i.h"
 #include "misc/pixmap.h"
 #include "misc/string.h"
+#include "event.h"
 
 hts_mutex_t prop_mutex;
 hts_mutex_t prop_tag_mutex;
@@ -111,7 +112,7 @@ typedef struct prop_notify {
       prop_str_type_t type;
     } rstr;
     struct pixmap *pp;
-    event_t *e;
+    struct event *e;
     struct {
       rstr_t *rtitle;
       rstr_t *rurl;

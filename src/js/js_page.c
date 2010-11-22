@@ -28,6 +28,7 @@
 #include "navigator.h"
 #include "misc/string.h"
 #include "prop/prop_nodefilter.h"
+#include "event.h"
 
 LIST_HEAD(js_event_handler_list, js_event_handler);
 LIST_HEAD(js_item_list, js_item);

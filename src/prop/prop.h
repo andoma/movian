@@ -21,7 +21,6 @@
 
 #include <stdlib.h>
 
-#include "event.h"
 #include "arch/threads.h"
 #include "misc/queue.h"
 #include "htsmsg/htsmsg.h"
@@ -310,7 +309,9 @@ prop_t *prop_get_by_names(prop_t *parent, ...)
 
 htsmsg_t *prop_tree_to_htsmsg(prop_t *p);
 
-void prop_send_ext_event(prop_t *p, event_t *e);
+struct event;
+
+void prop_send_ext_event(prop_t *p, struct event *e);
 
 
 /**
