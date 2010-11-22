@@ -827,17 +827,17 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
       const static glw_rgb_t black = {0,0,0};
       
       glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, &rc0, 
-			&gtb->gtb_texture, &black, alpha * 0.75);
+			&gtb->gtb_texture, &black, alpha * 0.75, 0);
     }
     glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, rc, 
-		      &gtb->gtb_texture, &gtb->gtb_color, alpha);
+		      &gtb->gtb_texture, &gtb->gtb_color, alpha, 0);
   }
 
   if(gtb->gtb_paint_cursor) {
     glw_root_t *gr = w->glw_root;
     float a = cos((gr->gr_frames & 2047) * (360.0 / 2048.0)) * 0.5 + 0.5;
     glw_renderer_draw(&gtb->gtb_cursor_renderer, w->glw_root, rc,
-		      NULL, NULL, alpha * a);
+		      NULL, NULL, alpha * a, 0);
   }
 }
 

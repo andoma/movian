@@ -25,11 +25,13 @@
 
 static void glw_renderer_shader(glw_renderer_t *gr, glw_root_t *root,
 				glw_rctx_t *rc, glw_backend_texture_t *be_tex,
-				const glw_rgb_t *rgb, float alpha);
+				const glw_rgb_t *rgb, float alpha,
+				int flags);
 
 static void glw_renderer_ff    (glw_renderer_t *gr, glw_root_t *root,
 				glw_rctx_t *rc, glw_backend_texture_t *be_tex,
-				const glw_rgb_t *rgb, float alpha);
+				const glw_rgb_t *rgb, float alpha,
+				int flags);
 
 
 // #define DEBUG_SHADERS
@@ -93,6 +95,8 @@ glw_opengl_init_context(glw_root_t *gr)
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_CULL_FACE);
+  gbr->gbr_cull_face = 1;
+
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
   if(check_gl_ext(s, "GL_ARB_texture_non_power_of_two")) {
@@ -897,9 +901,18 @@ get_cache_id(glw_root_t *root, glw_renderer_t *gr)
 static void
 glw_renderer_ff(glw_renderer_t *gr, glw_root_t *root,
 		glw_rctx_t *rc, glw_backend_texture_t *be_tex,
-		const glw_rgb_t *rgb, float alpha)
+		const glw_rgb_t *rgb, float alpha, int flags)
 {
   glw_backend_root_t *gbr = &root->gr_be;
+
+  if(!(flags & GLW_RENDER_NO_CULL_FACE) == gbr->gbr_cull_face) {
+    gbr->gbr_cull_face = !!(flags & GLW_RENDER_NO_CULL_FACE);
+    if(gbr->gbr_cull_face) {
+      glEnable(GL_CULL_FACE);
+    } else {
+      glDisable(GL_CULL_FACE);
+    }
+  }
 
   glLoadMatrixf(rc->rc_mtx);
 
@@ -998,11 +1011,20 @@ glw_renderer_ff(glw_renderer_t *gr, glw_root_t *root,
 static void
 glw_renderer_shader(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc, 
 		    glw_backend_texture_t *be_tex,
-		    const glw_rgb_t *rgb, float alpha)
+		    const glw_rgb_t *rgb, float alpha, int flags)
 {
   glw_backend_root_t *gbr = &root->gr_be;
   glw_program_t *gp;
   int reenable_blend = 0;
+
+  if(!(flags & GLW_RENDER_NO_CULL_FACE) == gbr->gbr_cull_face) {
+    if(gbr->gbr_cull_face) {
+      glEnable(GL_CULL_FACE);
+    } else {
+      glDisable(GL_CULL_FACE);
+    }
+    gbr->gbr_cull_face = !gbr->gbr_cull_face;
+  }
 
   if(be_tex == NULL) {
     gp = gbr->gbr_renderer_flat;

@@ -169,6 +169,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
   glw_loadable_texture_t *glt = gi->gi_current;
   float alpha_self;
   glw_rctx_t rc0;
+  int renderflags;
 
   if(glt == NULL || glt->glt_state != GLT_STATE_VALID)
     return;
@@ -177,6 +178,9 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     alpha_self = 0;
   else
     alpha_self = rc->rc_alpha * w->glw_alpha * gi->gi_alpha_self;
+
+  renderflags = (gi->gi_bitmap_flags & GLW_IMAGE_DUAL_SIDED) ? 
+    GLW_RENDER_NO_CULL_FACE : 0;
 
   if(gi->gi_mode == GI_MODE_NORMAL || gi->gi_mode == GI_MODE_ALPHA_EDGES) {
 
@@ -208,12 +212,12 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 	static const glw_rgb_t black = {0,0,0};
 
 	glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0, &glt->glt_texture,
-			  &black, alpha_self * 0.75);
+			  &black, alpha_self * 0.75, renderflags);
 	glw_Translatef(&rc0, -xd, -yd, 0.0);
       }
 
       glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0, &glt->glt_texture,
-			&gi->gi_color, alpha_self);
+			&gi->gi_color, alpha_self, renderflags);
 
     }
 
@@ -226,7 +230,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 
     if(alpha_self > 0.01)
       glw_renderer_draw(&gi->gi_gr, w->glw_root, rc, &glt->glt_texture,
-			&gi->gi_color, alpha_self);
+			&gi->gi_color, alpha_self, renderflags);
 
     render_child_autocentered(gi, rc);
 
