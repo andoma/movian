@@ -345,7 +345,7 @@ glw_video_set(glw_t *w, int init, va_list ap)
     case GLW_ATTRIB_FREEZE:
       gv->gv_freezed = va_arg(ap, int);
 
-      if(gv->gv_pending_url && gv->gv_pending_url) {
+      if(gv->gv_pending_url) {
 	glw_video_set_source(gv, gv->gv_pending_url, 
 			     !!(gv->gv_flags & GLW_VIDEO_PRIMARY));
 	mystrset(&gv->gv_pending_url, NULL);
