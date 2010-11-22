@@ -894,6 +894,19 @@ get_cache_id(glw_root_t *root, glw_renderer_t *gr)
 }
 
 
+static void
+set_face_culling(glw_backend_root_t *gbr, int flags)
+{
+  if(!(flags & GLW_RENDER_NO_CULL_FACE) == gbr->gbr_cull_face) {
+    if(gbr->gbr_cull_face) {
+      glEnable(GL_CULL_FACE);
+    } else {
+      glDisable(GL_CULL_FACE);
+    }
+    gbr->gbr_cull_face = !gbr->gbr_cull_face;
+  }
+}
+
 
 /**
  * 
@@ -905,14 +918,7 @@ glw_renderer_ff(glw_renderer_t *gr, glw_root_t *root,
 {
   glw_backend_root_t *gbr = &root->gr_be;
 
-  if(!(flags & GLW_RENDER_NO_CULL_FACE) == gbr->gbr_cull_face) {
-    gbr->gbr_cull_face = !!(flags & GLW_RENDER_NO_CULL_FACE);
-    if(gbr->gbr_cull_face) {
-      glEnable(GL_CULL_FACE);
-    } else {
-      glDisable(GL_CULL_FACE);
-    }
-  }
+  set_face_culling(gbr, flags);
 
   glLoadMatrixf(rc->rc_mtx);
 
@@ -1017,14 +1023,7 @@ glw_renderer_shader(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
   glw_program_t *gp;
   int reenable_blend = 0;
 
-  if(!(flags & GLW_RENDER_NO_CULL_FACE) == gbr->gbr_cull_face) {
-    if(gbr->gbr_cull_face) {
-      glEnable(GL_CULL_FACE);
-    } else {
-      glDisable(GL_CULL_FACE);
-    }
-    gbr->gbr_cull_face = !gbr->gbr_cull_face;
-  }
+  set_face_culling(gbr, flags);
 
   if(be_tex == NULL) {
     gp = gbr->gbr_renderer_flat;
