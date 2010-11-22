@@ -19,59 +19,9 @@
 #ifndef KEYMAPPER_H
 #define KEYMAPPER_H
 
-#include <arch/threads.h>
-#include "prop/prop.h"
-#include "ui/ui.h"
-#include "event.h"
-
-LIST_HEAD(keymap_entry_list, keymap_entry);
-
-
-typedef struct keymap_defmap {
-  action_type_t kd_action;
-  const char *kd_keycode;
-} keymap_defmap_t;
-
-
-/**
- * A keymap entry is used to translate a keycode (ascii-string)
- * into an event
- */
-typedef struct keymap_entry {
-  LIST_ENTRY(keymap_entry) ke_link;
-  char *ke_keycode1;
-  char *ke_keycode2;
-  action_type_t ke_action;
-  prop_t *ke_prop;
-
-  prop_sub_t *ke_sub_keycode;
-
-  struct keymap *ke_km;
-
-} keymap_entry_t;
-
-
-/**
- * We support having multiple keymaps, one global, and locals per
- * user interface instance
- */
-typedef struct keymap {
-  struct keymap_entry_list km_entries;
-  char *km_name;
-  prop_t *km_settings;   /* Pointer to settings in settings tree */
-} keymap_t;
-
-
-/**
- *
- */
-struct uii;
 struct event;
 
 struct event *keymapper_resolve(const char *str);
-
-keymap_t *keymapper_create(prop_t *settingsparent, const char *name,
-			   const char *title, const keymap_defmap_t *def);
 
 void keymapper_init(void);
 
