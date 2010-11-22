@@ -124,22 +124,6 @@ subtitle_decode(AVFormatContext *fctx, AVCodecContext *ctx,
     mb->mb_size = pkt->size;
     mb->mb_cw = media_codec_ref(mc);
     break;
-
-
-#if 0
-    printf("Codec type %x not supported\n", ctx->codec_id);
-
-    /* Subtitles */
-    printf("%d bytes\n", pkt->size);
-    
-    int k;
-    char *sub = (char *)pkt->data;
-    for(k = 0; k < pkt->size; k++)
-      printf("%c", sub[k] >= 32 ? sub[k] : '.');
-    printf("\n");
-#endif
-   
-    return NULL;
   }
   return mb;
 }
