@@ -161,13 +161,16 @@ glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp,
  *
  */
 static void
-glw_video_set_source(glw_video_t *gv, const char *url, int primary)
+glw_video_set_source(glw_video_t *gv, const char *url)
 {
   event_t *e;
   
   mystrset(&gv->gv_current_url, url);
 
-  e = event_create_playurl(url, primary, gv->gv_priority);
+  e = event_create_playurl(url, 
+			   !!(gv->gv_flags & GLW_VIDEO_PRIMARY),
+			   gv->gv_priority,
+			   !!(gv->gv_flags & GLW_VIDEO_NO_AUDIO));
   mp_enqueue_event(gv->gv_mp, e);
   event_release(e);
 }
@@ -247,8 +250,7 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 	rc = extra;
 
 	if(!rc->rc_final) {
-	  glw_video_set_source(gv, gv->gv_pending_url,
-			       !!(gv->gv_flags & GLW_VIDEO_PRIMARY));
+	  glw_video_set_source(gv, gv->gv_pending_url);
 	  mystrset(&gv->gv_pending_url, NULL);
 	}
 
@@ -346,8 +348,7 @@ glw_video_set(glw_t *w, int init, va_list ap)
       gv->gv_freezed = va_arg(ap, int);
 
       if(gv->gv_pending_url) {
-	glw_video_set_source(gv, gv->gv_pending_url, 
-			     !!(gv->gv_flags & GLW_VIDEO_PRIMARY));
+	glw_video_set_source(gv, gv->gv_pending_url);
 	mystrset(&gv->gv_pending_url, NULL);
 	gv->gv_pending_set_source_cnt = 0;
       }
@@ -383,7 +384,7 @@ glw_video_set(glw_t *w, int init, va_list ap)
       gv->gv_pending_set_source_cnt = 5;
       mystrset(&gv->gv_pending_url, filename);
     } else {
-      glw_video_set_source(gv, filename, !!(gv->gv_flags & GLW_VIDEO_PRIMARY));
+      glw_video_set_source(gv, filename);
     }
   }
 }

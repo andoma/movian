@@ -203,12 +203,13 @@ event_playurl_dtor(event_t *e)
  *
  */
 event_t *
-event_create_playurl(const char *url, int primary, int priority)
+event_create_playurl(const char *url, int primary, int priority, int no_audio)
 {
   event_playurl_t *ep =  event_create(EVENT_PLAY_URL, sizeof(event_playurl_t));
   ep->url = strdup(url);
   ep->primary = primary;
   ep->priority = priority;
+  ep->no_audio = no_audio;
   ep->h.e_dtor = event_playurl_dtor;
   return &ep->h;
 }

@@ -458,6 +458,7 @@ static const token_attrib_t attribtab[] = {
   {"ellipsize",       set_text_flag,  GTB_ELLIPSIZE},
 
   {"primary",         set_video_flag, GLW_VIDEO_PRIMARY},
+  {"noAudio",         set_video_flag, GLW_VIDEO_NO_AUDIO},
 
   {"alpha",           set_float,  GLW_ATTRIB_ALPHA},
   {"alphaSelf",       set_float,  GLW_ATTRIB_ALPHA_SELF},

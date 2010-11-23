@@ -54,6 +54,8 @@ video_player_idle(void *aux)
       int flags = 0;
       if(ep->primary)
 	flags |= BACKEND_VIDEO_PRIMARY;
+      if(ep->no_audio)
+	flags |= BACKEND_VIDEO_NO_AUDIO;
 
       next = backend_play_video(ep->url, mp, flags, ep->priority,
 				errbuf, sizeof(errbuf));
