@@ -111,22 +111,6 @@ backend_play_audio(const char *url, struct media_pipe *mp,
 
 
 /**
- *
- */
-prop_t *
-backend_list(const char *url, char *errbuf, size_t errlen)
-{
-  backend_t *nb = backend_canhandle(url);
-  
-  if(nb == NULL || nb->be_list == NULL) {
-    snprintf(errbuf, errlen, "No backend for URL");
-    return NULL;
-  }
-  return nb->be_list(url, errbuf, errlen);
-}
-
-
-/**
  * Static content
  */
 static int

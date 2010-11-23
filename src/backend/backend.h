@@ -64,8 +64,6 @@ typedef struct backend {
   struct event *(*be_play_audio)(const char *url, struct media_pipe *mp,
 				 char *errbuf, size_t errlen, int paused);
 
-  prop_t *(*be_list)(const char *url, char *errbuf, size_t errsize);
-
   struct pixmap *(*be_imageloader)(const char *url, int want_thumb,
 				   const char *theme,
 				   char *errbuf, size_t errlen);
@@ -101,10 +99,6 @@ struct event *backend_play_video(const char *url, struct media_pipe *mp,
 struct event *backend_play_audio(const char *url, struct media_pipe *mp,
 				 char *errbuf, size_t errlen, int paused)
   __attribute__ ((warn_unused_result));
-
-
-prop_t *backend_list(const char *url, char *errbuf, size_t errlen)
-     __attribute__ ((warn_unused_result));
 
 
 struct pixmap *backend_imageloader(const char *url, int want_thumb,

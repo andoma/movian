@@ -200,25 +200,12 @@ be_file_open(prop_t *page, const char *url)
 /**
  *
  */
-static prop_t *
-be_list(const char *url, char *errbuf, size_t errsize)
-{
-  prop_t *p = prop_create(NULL, NULL);
-  fa_scanner(url, p, NULL);
-  return p;
-}
-
-
-/**
- *
- */
 backend_t be_file = {
   .be_init = fileaccess_init,
   .be_canhandle = be_file_canhandle,
   .be_open = be_file_open,
   .be_play_video = be_file_playvideo,
   .be_play_audio = be_file_playaudio,
-  .be_list = be_list,
   .be_imageloader = fa_imageloader,
   .be_normalize = fa_normalize,
   .be_probe = fa_check_url,

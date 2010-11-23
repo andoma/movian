@@ -348,32 +348,6 @@ openpage(prop_t *page, const char *url)
   return 0;
 }
 
-/**
- *
- */
-static prop_t *
-listdisc(const char *url, char *errstr, size_t errlen)
-{
-  prop_t *p;
-  char device[32];
-
-  if(parse_audiocd_url(url, device, sizeof(device)) != 0) {
-    snprintf(errstr, errlen, "Invalid URL");
-    return NULL;
-  }
-
-  cd_meta_t *cm = get_cd_meta(device);
-  if(cm == NULL) {
-    snprintf(errstr, errlen, "Unable to open CD");
-    return NULL;
-  }
-
-  p = prop_create(NULL, NULL);
-  prop_link(cm->cm_nodes, prop_create(p, "nodes"));
-  return p;
-}
-
-
 
 /**
  *
@@ -560,7 +534,6 @@ playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
 static backend_t be_cdda = {
   .be_canhandle = canhandle,
   .be_open = openpage,
-  .be_list = listdisc,
   .be_play_audio = playaudio,
 };
 

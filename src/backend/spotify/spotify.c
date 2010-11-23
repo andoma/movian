@@ -3351,19 +3351,6 @@ be_spotify_play(const char *url, media_pipe_t *mp,
 }
 
 
-
-/**
- *
- */
-static prop_t *
-be_spotify_list(const char *url, char *errbuf, size_t errlen)
-{
-  prop_t *p = prop_create(NULL, NULL);
-  be_spotify_open(p, url);
-  return p;
-}
-
-
 /**
  *
  */
@@ -3750,7 +3737,6 @@ static backend_t be_spotify = {
   .be_canhandle = be_spotify_canhandle,
   .be_open = be_spotify_open,
   .be_play_audio = be_spotify_play,
-  .be_list = be_spotify_list,
   .be_imageloader = be_spotify_imageloader,
   .be_search = be_spotify_search,
   .be_resolve_item = be_resolve_item,

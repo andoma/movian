@@ -3599,11 +3599,14 @@ glwf_browse(glw_view_eval_context_t *ec, struct token *self,
     if(be->p)
       prop_destroy(be->p);
 
-    be->p = backend_list(rstr_get(url), errbuf, sizeof(errbuf));
-    if(be->p == NULL) 
+    be->p = prop_create(NULL, NULL);
+
+    if(backend_open(be->p, rstr_get(url))) {
+      prop_destroy(be->p);
+      be->p = NULL;
       return glw_view_seterr(ec->ei, a, "browse(%s): %s", 
 			     rstr_get(url), errbuf);
-    
+    }
     be->url = rstr_dup(url);
   }
 
