@@ -3613,6 +3613,7 @@ glwf_browse(glw_view_eval_context_t *ec, struct token *self,
   r = eval_alloc(self, ec, TOKEN_PROPERTY_REF);
   r->t_prop = be->p;
   prop_ref_inc(be->p);
+  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
   eval_push(ec, r);
   return 0;
 }
