@@ -685,6 +685,9 @@ prop_nf_release0(struct prop_nf *pnf)
   if(pnf->pnf_refcount > 0)
     return;
 
+  prop_unsubscribe0(pnf->dstsub);
+  prop_destroy0(pnf->dst);
+
   assert(TAILQ_FIRST(&pnf->in) == NULL);
   assert(TAILQ_FIRST(&pnf->out) == NULL);
 
@@ -825,9 +828,7 @@ prop_nf_dst_cb(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_DESTROYED:
-    prop_unsubscribe0(nf->dstsub);
-    nf->dstsub = NULL;
-    prop_nf_release0(nf);
+    abort();
     break;
 
   case PROP_WANT_MORE_CHILDS:
@@ -881,7 +882,7 @@ prop_nf_create(prop_t *dst, prop_t *src, prop_t *filter,
   TAILQ_INIT(&nf->in);
   TAILQ_INIT(&nf->out);
 
-  nf->dst = dst;
+  nf->dst = prop_xref_addref(dst);
   nf->src = src;
 
   nf->defsortpath = defsortpath ? strvec_split(defsortpath, '.') : NULL;
@@ -894,10 +895,10 @@ prop_nf_create(prop_t *dst, prop_t *src, prop_t *filter,
 				   PROP_TAG_ROOT, filter,
 				   NULL);
 
-  nf->dstsub = prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_TRACK_DESTROY |
+  nf->dstsub = prop_subscribe(PROP_SUB_INTERNAL | 
 			      PROP_SUB_NOLOCK,
 			      PROP_TAG_CALLBACK, prop_nf_dst_cb, nf,
-			      PROP_TAG_ROOT, dst,
+			      PROP_TAG_ROOT, nf->dst,
 			      NULL);
 
   nf->srcsub = prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_TRACK_DESTROY |
@@ -906,7 +907,7 @@ prop_nf_create(prop_t *dst, prop_t *src, prop_t *filter,
 			      PROP_TAG_ROOT, src,
 			      NULL);
 
-  nf->pnf_refcount = 3;
+  nf->pnf_refcount = 2;
 
   hts_mutex_unlock(&prop_mutex);
 
