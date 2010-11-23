@@ -187,6 +187,7 @@ opensub_login(int force, char *errbuf, size_t errlen)
 
     free(opensub_token);
     opensub_token = strdup(token);
+    htsmsg_destroy(out);
   }
   hts_mutex_unlock(&opensub_mutex);
   return 0;

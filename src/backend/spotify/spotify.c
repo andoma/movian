@@ -143,7 +143,6 @@ typedef struct playlist {
   sp_playlist *pl_playlist;
   sp_playlist_type pl_type;
   uint64_t pl_folder_id;
-  char *pl_intname;
   char *pl_url;
   ptrvec_t pl_tracks;
 
@@ -1962,8 +1961,6 @@ playlist_name_update(sp_playlist *plist, playlist_t *pl)
 
   snprintf(buf, sizeof(buf),
 	   "%s 0x%016"PRId64, name, pl->pl_folder_id);
-  mystrset(&pl->pl_intname, buf);
-
   return name;
 }
 
@@ -2117,7 +2114,6 @@ playlist_destroy_sub(void *opaque, prop_event_t event, ...)
 
   free(pl->pl_tracks.vec);
   free(pl->pl_url);
-  free(pl->pl_intname);
   free(pl);
 }
 
@@ -2409,7 +2405,6 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
 
   snprintf(url, sizeof(url),
 	   "%s 0x%016"PRId64, name, pl->pl_folder_id);
-  pl->pl_intname = strdup(url);
 
   pl->pl_type = type;
 
@@ -2443,7 +2438,6 @@ playlist_removed(sp_playlistcontainer *pc, sp_playlist *plist,
 
     prop_destroy(pl->pl_prop_root);
   default:
-    free(pl->pl_intname);
     free(pl);
     break;
   }

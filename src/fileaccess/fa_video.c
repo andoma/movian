@@ -74,6 +74,7 @@ scan_subtitles(prop_t *prop, const char *url)
       prop_set_string(prop_create(p, "title"), fde->fde_filename);
     }
   }
+  fa_dir_free(fd);
 }
 
 
