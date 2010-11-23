@@ -8,13 +8,14 @@ varying vec2 f_tex0;
 
 void main()
 {
-  vec4 yuva;
+  vec3 rgb;
 
-  yuva = vec4(texture2D(u_t0, f_tex0).r,
-	      texture2D(u_t2, f_tex0).r,
-	      texture2D(u_t1, f_tex0).r,
-	      u_color.a);
+
+  rgb = u_colormtx * vec4(texture2D(u_t0, f_tex0).r,
+			  texture2D(u_t2, f_tex0).r,
+			  texture2D(u_t1, f_tex0).r,
+			  1);
   
-  gl_FragColor = u_colormtx * yuva;
+  gl_FragColor = vec4(rgb, u_color.a);
 }
 

@@ -12,15 +12,15 @@ varying vec2 f_tex0, f_tex1;
 
 void main()
 {
-  vec4 rgbA = u_colormtx * vec4(texture2D(u_t0, f_tex0).r,
+  vec3 rgb1 = u_colormtx * vec4(texture2D(u_t0, f_tex0).r,
 				texture2D(u_t2, f_tex0).r,
 				texture2D(u_t1, f_tex0).r,
-				u_color.a);
+				1);
   
-  vec4 rgbB = u_colormtx * vec4(texture2D(u_t3, f_tex1).r,
+  vec3 rgb2 = u_colormtx * vec4(texture2D(u_t3, f_tex1).r,
 				texture2D(u_t5, f_tex1).r,
 				texture2D(u_t4, f_tex1).r,
-				u_color.a);
+				1);
 
-  gl_FragColor = mix(rgbB, rgbA, u_blend);
+  gl_FragColor = vec4(mix(rgb2, rgb1, u_blend), u_color.a);
 }	
