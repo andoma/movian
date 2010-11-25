@@ -85,6 +85,7 @@ typedef struct js_model {
   jsval jm_openfunc;
 
   prop_t *jm_nodes;
+  prop_t *jm_root;
 
   prop_t *jm_loading;
   prop_t *jm_type;
@@ -200,6 +201,7 @@ js_model_destroy(js_model_t *jm)
   if(jm->jm_eventsub != NULL)
     prop_unsubscribe(jm->jm_eventsub);
 
+  if(jm->jm_root)      prop_ref_dec(jm->jm_root);
   if(jm->jm_loading)   prop_ref_dec(jm->jm_loading);
   if(jm->jm_nodes)     prop_ref_dec(jm->jm_nodes);
   if(jm->jm_type)      prop_ref_dec(jm->jm_type);
@@ -638,16 +640,41 @@ js_page_error(JSContext *cx, JSObject *obj, uintN argc,
 }
 
 
+/**
+ *
+ */
+static JSBool 
+js_page_dump(JSContext *cx, JSObject *obj, uintN argc,
+	      jsval *argv, jsval *rval)
+{
+  js_model_t *jm = JS_GetPrivate(cx, obj);
+
+  prop_print_tree(jm->jm_root, 1);
+
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+
+
+
+/**
+ *
+ */
+static JSFunctionSpec model_functions[] = {
+    JS_FS("appendItem",         js_appendItem,   1, 0, 0),
+    JS_FS("appendModel",        js_appendModel,  2, 0, 0),
+    JS_FS_END
+};
 
 
 /**
  *
  */
 static JSFunctionSpec page_functions[] = {
-    JS_FS("appendItem",         js_appendItem,   1, 0, 0),
-    JS_FS("appendModel",        js_appendModel,  2, 0, 0),
     JS_FS("onEvent",            js_page_onEvent, 2, 0, 0),
     JS_FS("error",              js_page_error,   1, 0, 0),
+    JS_FS("dump",               js_page_dump,    0, 0, 0),
     JS_FS_END
 };
 
@@ -757,7 +784,7 @@ make_model_object(JSContext *cx, js_model_t *jm)
   JS_SetPrivate(cx, obj, jm);
   atomic_add(&jm->jm_refcount, 1);
 
-  JS_DefineFunctions(cx, obj, page_functions);
+  JS_DefineFunctions(cx, obj, model_functions);
 
   if(jm->jm_entries != NULL)
     JS_DefineProperty(cx, obj, "entries", JSVAL_VOID,
@@ -802,6 +829,7 @@ js_open_invoke(JSContext *cx, js_model_t *jm)
   char argfmt[10];
   int i = 0, argc;
   JSObject *obj = make_model_object(cx, jm);
+  JS_DefineFunctions(cx, obj, page_functions);
 
   if(jm->jm_args != NULL) {
     argfmt[0] = 'o';
@@ -910,7 +938,8 @@ js_backend_open(prop_t *page, const char *url)
   prop_ref_inc(jm->jm_url     = prop_create(page, "url"));
   prop_ref_inc(jm->jm_eventsink = prop_create(page, "eventSink"));
   prop_ref_inc(jm->jm_loading = prop_create(model, "loading"));
-
+  prop_ref_inc(jm->jm_root = page);
+  
   model_launch(jm);
   return 0;
 }
