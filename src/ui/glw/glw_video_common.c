@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <assert.h>
 #include "showtime.h"
 #include "media.h"
 #include "glw_video_common.h"
@@ -357,7 +358,7 @@ glw_video_set(glw_t *w, int init, va_list ap)
 
     case GLW_ATTRIB_PROPROOTS:
       p = va_arg(ap, void *);
-
+      assert(p != NULL);
       p2 = prop_create(p, "media");
       
       prop_link(gv->gv_mp->mp_prop_root, p2);
