@@ -2565,6 +2565,7 @@ spotify_got_image(sp_image *image, void *userdata)
   si->si_errcode = 0;
   hts_cond_broadcast(&spotify_cond_image);
   hts_mutex_unlock(&spotify_mutex);
+  f_sp_image_release(image);
 }
 
 
