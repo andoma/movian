@@ -223,7 +223,7 @@ glw_unload_universe(glw_root_t *gr)
 void
 glw_load_universe(glw_root_t *gr)
 {
-  prop_t *page = prop_create(gr->gr_uii.uii_prop, "page");
+  prop_t *page = prop_create(gr->gr_uii.uii_prop, "root");
   glw_unload_universe(gr);
 
   gr->gr_universe = glw_view_create(gr,
