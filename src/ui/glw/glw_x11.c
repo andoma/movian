@@ -80,7 +80,8 @@ typedef struct glw_x11 {
   int req_width;
   int req_height;
   int fixed_window_size;
-
+  int no_screensaver;
+  
   XIM im;
   XIC ic;
   Status status;
@@ -920,7 +921,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
 		 PROP_TAG_ROOT, gx11->gr.gr_uii.uii_prop,
 		 NULL);
 
-  if(!gx11->wm_flags)
+  if(!gx11->wm_flags || gx11->no_screensaver)
     // No window manager, disable screensaver right away
     gx11->sss = x11_screensaver_suspend(gx11->display);
 
@@ -944,7 +945,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
     if(gx11->fullwindow)
       autohide_cursor(gx11);
 
-    if(gx11->wm_flags) {
+    if(gx11->wm_flags && !gx11->no_screensaver) {
 
       if(gx11->fullwindow && gx11->sss == NULL)
 	gx11->sss = x11_screensaver_suspend(gx11->display);
@@ -1173,6 +1174,7 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
   char confname[PATH_MAX];
   const char *theme_path = SHOWTIME_GLW_DEFAULT_THEME_URL;
   const char *displayname_title  = NULL;
+  int force_fs = 0;
 
   gx11->displayname_real = getenv("DISPLAY");
   snprintf(confname, sizeof(confname), "glw/x11/default");
@@ -1209,6 +1211,14 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
     } else if(!strcmp(argv[0], "--height") && argc > 1) {
       gx11->req_height = atoi(argv[1]);
       argc -= 2; argv += 2;
+      continue;
+    } else if(!strcmp(argv[0], "--fullscreen")) {
+      force_fs = 1;
+      argc -= 1; argv += 1;
+      continue;
+    } else if(!strcmp(argv[0], "--no-screensaver")) {
+      gx11->no_screensaver = 1;
+      argc -= 1; argv += 1;
       continue;
     } else {
       break;
@@ -1257,6 +1267,8 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
 			 SETTINGS_INITIAL_UPDATE, gr->gr_courier,
 			 glw_settings_save, gr);
   }
+
+  gx11->want_fullscreen |= force_fs;
 
   update_gpu_info(gx11);
   glw_load_universe(gr);
