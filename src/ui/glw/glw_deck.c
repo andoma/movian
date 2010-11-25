@@ -133,10 +133,11 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     if(gd->v == 1)
       gd->prev = NULL;
 
-    if(w->glw_selected != NULL)
-      glw_layout0(w->glw_selected, rc);
-    if(gd->prev != NULL)
-      glw_layout0(gd->prev, rc);
+    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+      if(c == w->glw_selected || c == gd->prev || 
+	 c->glw_flags2 & GLW2_ALWAYS_LAYOUT)
+	glw_layout0(c, rc);
+    }
     break;
 
   case GLW_SIGNAL_EVENT:
