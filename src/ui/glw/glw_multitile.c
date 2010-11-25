@@ -426,7 +426,7 @@ glw_multitile_layout(glw_multitile_t *sf, glw_rctx_t *rc)
       if(c->glw_class->gc_ready != NULL && !c->glw_class->gc_ready(c)) {
 	// Not yet ready
 	c->glw_parent_timeout++;
-	if(c->glw_parent_timeout == 120) {
+	if(c->glw_parent_timeout == 180) {
 	  reap_child(c);
 	  continue;
 	}
@@ -451,7 +451,7 @@ glw_multitile_layout(glw_multitile_t *sf, glw_rctx_t *rc)
       lane++;
 
     case CHILD_RUNNING:
-      c->glw_parent_value += 0.0015;
+      c->glw_parent_value += 0.0010;
 
       if(c->glw_parent_value < 1)
 	break;
