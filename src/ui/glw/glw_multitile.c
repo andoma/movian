@@ -133,7 +133,7 @@ starwars_local(glw_rctx_t *rc, glw_multitile_t *mt, glw_t *c)
 		 11 - 13 * c->glw_parent_value,
 		 -1);
   
-  rc->rc_alpha = c->glw_parent_value;
+  rc->rc_alpha *= c->glw_parent_value;
 }
 
 
@@ -167,7 +167,7 @@ rain_local(glw_rctx_t *rc, glw_multitile_t *mt, glw_t *c)
   
   glw_Scalef(rc, 0.75, 0.75, 1.0);
 
-  rc->rc_alpha = 1 - c->glw_parent_value;
+  rc->rc_alpha *= 1 - c->glw_parent_value;
 }
 
 
@@ -205,7 +205,7 @@ tunnel_local(glw_rctx_t *rc, glw_multitile_t *mt, glw_t *c)
   glw_Rotatef(rc, 90, 0, 1, 0);
 
   
-  rc->rc_alpha = c->glw_parent_value;
+  rc->rc_alpha *= c->glw_parent_value;
 }
 
 
@@ -241,7 +241,7 @@ rollercoaster_local(glw_rctx_t *rc, glw_multitile_t *mt, glw_t *c)
   
   glw_Rotatef(rc, -65, -1,0,0);
 
-  rc->rc_alpha = 1 - c->glw_parent_value;
+  rc->rc_alpha *= 1 - c->glw_parent_value;
 }
 
 
