@@ -112,3 +112,84 @@ js_object_from_prop(JSContext *cx, prop_t *p)
   JS_SetPrivate(cx, obj, p);
   return obj;
 }
+
+typedef struct {
+  jsval value;
+  int done;
+} wfv_t;
+
+
+/**
+ *
+ */
+static void
+vfw_setval(void *opaque, prop_event_t event, ...)
+{
+  wfv_t *wfv = opaque;
+  va_list ap;
+  rstr_t *r;
+  
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_SET_VOID:
+    if(JSVAL_IS_NULL(wfv->value) || JSVAL_IS_VOID(wfv->value))
+      break;
+    return;
+
+  case PROP_SET_RSTRING:
+    if(!JSVAL_IS_STRING(wfv->value))
+      return;
+
+    r = va_arg(ap, rstr_t *);
+    if(strcmp(JS_GetStringBytes(JSVAL_TO_STRING(wfv->value)), rstr_get(r)))
+      return;
+    break;
+
+  default:
+    return;
+  }
+  wfv->done = 1;
+}
+
+
+/**
+ *
+ */
+JSBool
+js_wait_for_value(JSContext *cx, prop_t *root, const char *subname,
+		  jsval value, jsval *rval)
+{
+  prop_courier_t *pc = prop_courier_create_waitable();
+  prop_sub_t *s;
+  wfv_t wfv;
+  wfv.value = value;
+  wfv.done = 0;
+
+  s = prop_subscribe(0,
+		     PROP_TAG_ROOT, root,
+		     PROP_TAG_COURIER, pc,
+		     PROP_TAG_CALLBACK, vfw_setval, &wfv,
+		     PROP_TAG_NAMESTR, subname,
+		     NULL);
+
+  if(s == NULL) {
+    JS_ReportError(cx, "Unable to subscribe to %s", subname);
+    return JS_FALSE;
+  }
+  *rval = JSVAL_TRUE;
+
+  while(!wfv.done) {
+
+    struct prop_notify_queue exp, nor;
+    jsrefcount s = JS_SuspendRequest(cx);
+    prop_courier_wait(pc, &nor, &exp);
+    JS_ResumeRequest(cx, s);
+    prop_notify_dispatch(&exp);
+    prop_notify_dispatch(&nor);
+  }
+
+  prop_unsubscribe(s);
+  prop_courier_destroy(pc);
+  return JS_TRUE;
+}

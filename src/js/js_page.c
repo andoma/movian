@@ -656,6 +656,23 @@ js_page_dump(JSContext *cx, JSObject *obj, uintN argc,
 }
 
 
+/**
+ *
+ */
+static JSBool 
+js_page_wfv(JSContext *cx, JSObject *obj, uintN argc,
+	    jsval *argv, jsval *rval)
+{
+  js_model_t *jm = JS_GetPrivate(cx, obj);
+  const char *str;
+  jsval value;
+  if (!JS_ConvertArguments(cx, argc, argv, "sv", &str, &value))
+    return JS_FALSE;
+
+  return js_wait_for_value(cx, jm->jm_root, str, value, rval);
+}
+
+
 
 
 /**
@@ -675,6 +692,7 @@ static JSFunctionSpec page_functions[] = {
     JS_FS("onEvent",            js_page_onEvent, 2, 0, 0),
     JS_FS("error",              js_page_error,   1, 0, 0),
     JS_FS("dump",               js_page_dump,    0, 0, 0),
+    JS_FS("waitForValue",       js_page_wfv,     2, 0, 0),
     JS_FS_END
 };
 

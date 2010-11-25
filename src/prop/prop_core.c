@@ -1868,7 +1868,41 @@ prop_subscribe(int flags, ...)
     tag = va_arg(ap, int);
     switch(tag) {
     case PROP_TAG_NAME_VECTOR:
-      name = va_arg(ap, const char **);
+      name = va_arg(ap,  const char **);
+      break;
+
+    case PROP_TAG_NAMESTR:
+      do {
+	const char *s, *s0 = va_arg(ap, const char *);
+	int segments = 1, ptr = 0, len;
+	char **nv;
+
+	for(s = s0; *s != 0; s++)
+	  if(*s == '.')
+	    segments++;
+
+	nv = alloca((segments + 1) * sizeof(char *));
+	name = (void *)nv;
+
+	for(s = s0; *s != 0; s++) {
+	  if(*s == '.') {
+	    if(s == s0)
+	      return NULL;
+	    len = s - s0;
+	    nv[ptr] = alloca(len + 1);
+	    memcpy(nv[ptr], s0, len);
+	    nv[ptr++][len] = 0;
+	    s0 = s + 1;
+	  }
+	}
+
+	len = s - s0;
+	nv[ptr] = alloca(len + 1);
+	memcpy(nv[ptr], s0, len);
+	nv[ptr++][len] = 0;
+	assert(ptr == segments);
+	nv[segments] = NULL;
+      } while(0);
       break;
 
     case PROP_TAG_CALLBACK:

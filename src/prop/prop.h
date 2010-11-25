@@ -21,6 +21,7 @@
 
 #include <stdlib.h>
 
+#include "event.h"
 #include "arch/threads.h"
 #include "misc/queue.h"
 #include "htsmsg/htsmsg.h"
@@ -128,6 +129,7 @@ enum {
   PROP_TAG_NAMED_ROOT,
   PROP_TAG_MUTEX,
   PROP_TAG_EXTERNAL_LOCK,
+  PROP_TAG_NAMESTR,
 };
 
 #define PROP_TAG_NAME(name...) \
@@ -309,9 +311,7 @@ prop_t *prop_get_by_names(prop_t *parent, ...)
 
 htsmsg_t *prop_tree_to_htsmsg(prop_t *p);
 
-struct event;
-
-void prop_send_ext_event(prop_t *p, struct event *e);
+void prop_send_ext_event(prop_t *p, event_t *e);
 
 
 /**

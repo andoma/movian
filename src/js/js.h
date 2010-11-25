@@ -66,4 +66,7 @@ void js_page_flush_from_plugin(JSContext *cx, js_plugin_t *jp);
 
 JSObject *js_object_from_prop(JSContext *cx, prop_t *p);
 
+JSBool js_wait_for_value(JSContext *cx, prop_t *root, const char *subname,
+			 jsval value, jsval *rval);
+
 #endif // JS_H__ 
