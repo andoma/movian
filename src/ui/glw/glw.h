@@ -709,16 +709,17 @@ typedef struct glw {
 
 #define GLW_SHADOW               0x8000000
 
-#define GLW_LEFT_EDGE            0x10000000
-#define GLW_TOP_EDGE             0x20000000
-#define GLW_RIGHT_EDGE           0x40000000
-#define GLW_BOTTOM_EDGE          0x80000000
-
 
   int glw_flags2;
 #define GLW2_ENABLED        0x1
 #define GLW2_FLOATING_FOCUS 0x2
 #define GLW2_ALWAYS_LAYOUT  0x4
+
+#define GLW2_LEFT_EDGE            0x10000000
+#define GLW2_TOP_EDGE             0x20000000
+#define GLW2_RIGHT_EDGE           0x40000000
+#define GLW2_BOTTOM_EDGE          0x80000000
+
 
   float glw_norm_weight;             /* Relative weight (normalized) */
   float glw_alpha;                   /* Alpha set by user */

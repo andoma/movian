@@ -171,24 +171,24 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
     }
 
     if(column == 0) {
-      c->glw_flags |= GLW_LEFT_EDGE;
+      c->glw_flags2 |= GLW2_LEFT_EDGE;
     } else {
-      c->glw_flags &= ~GLW_LEFT_EDGE;
+      c->glw_flags2 &= ~GLW2_LEFT_EDGE;
     }
 
     if(column == a->xentries - 1) {
-      c->glw_flags |= GLW_RIGHT_EDGE;
+      c->glw_flags2 |= GLW2_RIGHT_EDGE;
     } else {
-      c->glw_flags &= ~GLW_RIGHT_EDGE;
+      c->glw_flags2 &= ~GLW2_RIGHT_EDGE;
     }
 
     if(topedge) {
-      c->glw_flags |= GLW_TOP_EDGE;
+      c->glw_flags2 |= GLW2_TOP_EDGE;
     } else {
-      c->glw_flags &= ~GLW_TOP_EDGE;
+      c->glw_flags2 &= ~GLW2_TOP_EDGE;
     }
 
-    c->glw_flags &= ~GLW_BOTTOM_EDGE; // Will be set later
+    c->glw_flags2 &= ~GLW2_BOTTOM_EDGE; // Will be set later
 
     column++;
     if(column == a->xentries) {
@@ -204,11 +204,11 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
 
   last = TAILQ_LAST(&w->glw_childs, glw_queue);
   if(last != NULL) {
-    last->glw_flags |= GLW_BOTTOM_EDGE | GLW_RIGHT_EDGE;
+    last->glw_flags2 |= GLW2_BOTTOM_EDGE | GLW2_RIGHT_EDGE;
     c = last;
     while((c = TAILQ_PREV(c, glw_queue, glw_parent_link)) != NULL) {
       if(c->glw_parent_pos_y == last->glw_parent_pos_y)
-	c->glw_flags |= GLW_BOTTOM_EDGE;
+	c->glw_flags2 |= GLW2_BOTTOM_EDGE;
       else
 	break;
     }
