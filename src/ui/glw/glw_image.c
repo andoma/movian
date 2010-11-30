@@ -457,6 +457,10 @@ glw_image_update_constraints(glw_image_t *gi)
     glw_set_constraints(&gi->w, siz, siz, 0,
 			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
 
+  } else if(gi->w.glw_class == &glw_image) {
+    float aspect = (float)glt->glt_xs / glt->glt_ys;
+    glw_set_constraints(&gi->w, 0, 0, -aspect,
+			GLW_CONSTRAINT_W, 0);
   }
 }
 
