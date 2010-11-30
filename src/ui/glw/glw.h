@@ -174,6 +174,10 @@ typedef enum {
 #define GLW_IMAGE_HQ_SCALING    0x1
 #define GLW_IMAGE_FIXED_SIZE    0x2
 #define GLW_IMAGE_DUAL_SIDED    0x4
+#define GLW_IMAGE_BEVEL_LEFT    0x8
+#define GLW_IMAGE_BEVEL_TOP     0x10
+#define GLW_IMAGE_BEVEL_RIGHT   0x20
+#define GLW_IMAGE_BEVEL_BOTTOM  0x40
 
 /**
  * Video flags

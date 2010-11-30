@@ -454,6 +454,10 @@ static const token_attrib_t attribtab[] = {
   {"hqScaling",       set_image_flag, GLW_IMAGE_HQ_SCALING},
   {"fixedSize",       set_image_flag, GLW_IMAGE_FIXED_SIZE},
   {"dualSided",       set_image_flag, GLW_IMAGE_DUAL_SIDED},
+  {"bevelLeft",       set_image_flag, GLW_IMAGE_BEVEL_LEFT},
+  {"bevelTop",        set_image_flag, GLW_IMAGE_BEVEL_TOP},
+  {"bevelRight",      set_image_flag, GLW_IMAGE_BEVEL_RIGHT},
+  {"bevelBottom",     set_image_flag, GLW_IMAGE_BEVEL_BOTTOM},
 
   {"password",        set_text_flag,  GTB_PASSWORD},
   {"ellipsize",       set_text_flag,  GTB_ELLIPSIZE},

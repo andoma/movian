@@ -37,6 +37,7 @@ typedef struct glw_gradient {
   int16_t gg_height;
   int16_t gg_height2;
   int16_t gg_tiles;
+  int gg_image_flags;
 
 } glw_gradient_t;
 
@@ -84,27 +85,38 @@ glw_gradient_render(glw_t *w, glw_rctx_t *rc)
 
 #define GRAD_BPP 3
 
+#define BEVEL_STRENGTH 32
+
 /**
  *
  */
 static void
-bevel_horizontal(uint8_t *p0, int w, int h)
+bevel_top(uint8_t *p0, int w, int h)
 {
   int x;
   uint8_t *p = p0;
 
   for(x = 0; x < w; x++) {
-    *p = GLW_MIN((int)*p + 64, 255);  p++;
-    *p = GLW_MIN((int)*p + 64, 255);  p++;
-    *p = GLW_MIN((int)*p + 64, 255);  p++;
+    *p = GLW_MIN((int)*p + BEVEL_STRENGTH, 255);  p++;
+    *p = GLW_MIN((int)*p + BEVEL_STRENGTH, 255);  p++;
+    *p = GLW_MIN((int)*p + BEVEL_STRENGTH, 255);  p++;
   }
+}
 
-  p = p0 + w * GRAD_BPP * (h - 1);
+
+/**
+ *
+ */
+static void
+bevel_bottom(uint8_t *p0, int w, int h)
+{
+  int x;
+  uint8_t *p = p0 + w * GRAD_BPP * (h - 1);
 
   for(x = 0; x < w; x++) {
-    *p = GLW_MAX((int)*p - 64, 0);  p++;
-    *p = GLW_MAX((int)*p - 64, 0);  p++;
-    *p = GLW_MAX((int)*p - 64, 0);  p++;
+    *p = GLW_MAX((int)*p - BEVEL_STRENGTH, 0);  p++;
+    *p = GLW_MAX((int)*p - BEVEL_STRENGTH, 0);  p++;
+    *p = GLW_MAX((int)*p - BEVEL_STRENGTH, 0);  p++;
   }
 }
 
@@ -118,9 +130,9 @@ bevel_left(uint8_t *p0, int w, int h)
   uint8_t *p = p0;
   int y;
   for(y = 0; y < h; y++) {
-    *p = GLW_MIN((int)*p + 64, 255);  p++;
-    *p = GLW_MIN((int)*p + 64, 255);  p++;
-    *p = GLW_MIN((int)*p + 64, 255);  p++;
+    *p = GLW_MIN((int)*p + BEVEL_STRENGTH, 255);  p++;
+    *p = GLW_MIN((int)*p + BEVEL_STRENGTH, 255);  p++;
+    *p = GLW_MIN((int)*p + BEVEL_STRENGTH, 255);  p++;
 
     p+= (w - 1) * GRAD_BPP;
   }
@@ -137,9 +149,9 @@ bevel_right(uint8_t *p0, int w, int h)
   int y;
   for(y = 0; y < h; y++) {
     p+= (w - 1) * GRAD_BPP;
-    *p = GLW_MAX((int)*p - 64, 0);  p++;
-    *p = GLW_MAX((int)*p - 64, 0);  p++;
-    *p = GLW_MAX((int)*p - 64, 0);  p++;
+    *p = GLW_MAX((int)*p - BEVEL_STRENGTH, 0);  p++;
+    *p = GLW_MAX((int)*p - BEVEL_STRENGTH, 0);  p++;
+    *p = GLW_MAX((int)*p - BEVEL_STRENGTH, 0);  p++;
   }
 }
 
@@ -178,7 +190,12 @@ repaint(glw_gradient_t *gg, glw_root_t *gr, int tile, int w, int h, int tiles)
     m = m * 1664525 + 1013904223;
   }
 
-  if(0) bevel_horizontal(pixmap, w, h);
+  if(gg->gg_image_flags & GLW_IMAGE_BEVEL_TOP)
+    bevel_top(pixmap, w, h);
+
+  if(gg->gg_image_flags & GLW_IMAGE_BEVEL_BOTTOM)
+    bevel_bottom(pixmap, w, h);
+
   glw_tex_upload(gr, &gg->gg_tex[0], pixmap, GLW_TEXTURE_FORMAT_RGB, w, h, 
 		 GLW_TEX_REPEAT);
 
@@ -186,12 +203,14 @@ repaint(glw_gradient_t *gg, glw_root_t *gr, int tile, int w, int h, int tiles)
     p = malloc(s);
 
     memcpy(p, pixmap, s);
-    bevel_left(p, w, h);
+    if(gg->gg_image_flags & GLW_IMAGE_BEVEL_LEFT)
+      bevel_left(p, w, h);
     glw_tex_upload(gr, &gg->gg_tex[1], p, GLW_TEXTURE_FORMAT_RGB, w, h, 
 		   GLW_TEX_REPEAT);
 
     memcpy(p, pixmap, s);
-    bevel_right(p, w, h);
+    if(gg->gg_image_flags & GLW_IMAGE_BEVEL_RIGHT)
+      bevel_right(p, w, h);
     glw_tex_upload(gr, &gg->gg_tex[2], p, GLW_TEXTURE_FORMAT_RGB, w, h, 
 		   GLW_TEX_REPEAT);
 
@@ -215,7 +234,8 @@ glw_gradient_layout(glw_t *W, glw_rctx_t *rc)
 
   w = rc->rc_width;
   h = rc->rc_height;
-  tiles = 1;
+  tiles = gg->gg_image_flags & (GLW_IMAGE_BEVEL_LEFT | GLW_IMAGE_BEVEL_RIGHT)
+    ? 3 : 1;
 
   for(i = gg->gg_tiles; i < tiles; i++) {
     glw_renderer_init_quad(&gg->gg_gr[i]);
@@ -366,6 +386,16 @@ glw_gradient_set(glw_t *w, int init, va_list ap)
       gg->gg_col2[0] = GLW_CLAMP(gg->gg_col2[0], 0, 1);
       gg->gg_col2[1] = GLW_CLAMP(gg->gg_col2[1], 0, 1);
       gg->gg_col2[2] = GLW_CLAMP(gg->gg_col2[2], 0, 1);
+      gg->gg_repaint = 1;
+      break;
+
+    case GLW_ATTRIB_SET_IMAGE_FLAGS:
+      gg->gg_image_flags |= va_arg(ap, int);
+      gg->gg_repaint = 1;
+      break;
+
+    case GLW_ATTRIB_CLR_IMAGE_FLAGS:
+      gg->gg_image_flags &= ~va_arg(ap, int);
       gg->gg_repaint = 1;
       break;
 
