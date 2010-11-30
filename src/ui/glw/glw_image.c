@@ -627,7 +627,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
       }
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_HQ_SCALING && gi->gi_pending == NULL &&
-	 gi->gi_pending_filename == NULL) {
+	 gi->gi_pending_filename == NULL && rc->rc_width && rc->rc_height) {
 
 	int xs = -1, ys = -1, rescale;
 	
