@@ -177,16 +177,24 @@ glw_init_settings(glw_root_t *gr, const char *instance,
  *
  */
 int
-glw_init(glw_root_t *gr, const char *theme, ui_t *ui, int primary,
+glw_init(glw_root_t *gr, const char *theme, const char *skin,
+	 ui_t *ui, int primary, 
 	 const char *instance, const char *instance_title)
 {
+  char buf[256];
+
+  skin = skin ?: "grey"; // Read from theme
+
+  snprintf(buf, sizeof(buf), "%s/skins/%s", theme, skin);
 
   hts_mutex_init(&gr->gr_mutex);
   gr->gr_courier = prop_courier_create_passive();
 
   gr->gr_vpaths[0] = "theme";
   gr->gr_vpaths[1] = theme;
-  gr->gr_vpaths[2] = NULL;
+  gr->gr_vpaths[2] = "skin";
+  gr->gr_vpaths[3] = buf;
+  gr->gr_vpaths[4] = NULL;
 
   gr->gr_uii.uii_ui = ui;
   gr->gr_uii.uii_prop = prop_create(NULL, "ui");
