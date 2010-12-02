@@ -47,7 +47,7 @@
 
   var opensearch = new Namespace("http://a9.com/-/spec/opensearch/1.1/");
   var svtplay    = new Namespace("http://xml.svtplay.se/ns/playrss");
-  var media      = new Namespace("http://search.yahoo.com/mrss");
+  var media      = new Namespace("http://search.yahoo.com/mrss/");
 
   // Loop over an item and return the best (highest bitrate) available media
   function bestMedia(item) {
