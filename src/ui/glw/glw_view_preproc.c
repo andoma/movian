@@ -113,64 +113,118 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	    break;
 
 	if(m != NULL) {
+	  // Macro invokation
 	  consumetoken(); /* identifier */
 	  consumetoken(); /* left parenthesis */
 
 	  x = p;
-
 	  c = p->next; /* Pointer to argument list, used for freeing later */
 
-	  TAILQ_FOREACH(ma, &m->args, link) {
-	    ma->first = p->next;
+	  if(p->next->type == TOKEN_IDENTIFIER &&
+	     p->next->next->type == TOKEN_ASSIGNMENT) {
 
-	    if(ma->first->type == TOKEN_RIGHT_PARENTHESIS) {
+	    TAILQ_FOREACH(ma, &m->args, link)
 	      ma->first = NULL;
-	      break;
-	    }
+	    p = p->next;
 
 	    while(1) {
-	      t = p->next;
-	      if(t->type == TOKEN_END)
-		return glw_view_seterr(ei, t, "Unexpected end of input in "
-				       "macro invokation");
-	      
-	      if(t->type == TOKEN_RIGHT_PARENTHESIS && balance == 0) {
+	      TAILQ_FOREACH(ma, &m->args, link)
+		if(!strcmp(rstr_get(ma->rname), rstr_get(p->t_rstring)))
+		  break;
+	      if(ma == NULL)
+		return glw_view_seterr(ei, p->next, 
+				       "Undefined named argument %s",
+				       rstr_get(p->next->t_rstring));
 
-		macro_arg_t *x = TAILQ_NEXT(ma, link);
-		// Clear remaining arguments
-		while(x != NULL) {
-		  x->first = NULL;
-		  x = TAILQ_NEXT(x, link);
-		}
+	      p = p->next;
+	      ma->first = p->next;
+	      while(1) {
+		t = p->next;
+		if(t->type == TOKEN_END)
+		  return glw_view_seterr(ei, t, "Unexpected end of input in "
+					 "macro invokation");
+		
+		if(t->type == TOKEN_RIGHT_PARENTHESIS && balance == 0)
+		  break;
+
+		if(t->type == TOKEN_BLOCK_CLOSE ||
+		   t->type == TOKEN_RIGHT_PARENTHESIS ||
+		   t->type == TOKEN_RIGHT_BRACKET) {
+		  balance--;
+		} else if(t->type == TOKEN_BLOCK_OPEN ||
+			  t->type == TOKEN_LEFT_PARENTHESIS ||
+			  t->type == TOKEN_LEFT_BRACKET) {
+		  balance++;
+
+		} else if(t->type == TOKEN_SEPARATOR && balance == 0)
+		  break;
+		p = p->next;
+	      }
+	      ma->last = p;
+	      if(t->type == TOKEN_RIGHT_PARENTHESIS)
+		break;
+	      p = t->next;
+
+	      if(p->type != TOKEN_IDENTIFIER ||
+		 p->next->type != TOKEN_ASSIGNMENT)
+		return glw_view_seterr(ei, p, 
+				       "Mixing named and unnamed arguments "
+				       "is not supported");
+	    }
+
+	  } else {
+
+	    TAILQ_FOREACH(ma, &m->args, link) {
+	      ma->first = p->next;
+
+	      if(ma->first->type == TOKEN_RIGHT_PARENTHESIS) {
+		ma->first = NULL;
 		break;
 	      }
 
-	      if(t->type == TOKEN_BLOCK_CLOSE ||
-		 t->type == TOKEN_RIGHT_PARENTHESIS ||
-		 t->type == TOKEN_RIGHT_BRACKET) {
-		balance--;
-	      } else if(t->type == TOKEN_BLOCK_OPEN ||
-			t->type == TOKEN_LEFT_PARENTHESIS ||
-			t->type == TOKEN_LEFT_BRACKET) {
-		balance++;
+	      while(1) {
+		t = p->next;
+		if(t->type == TOKEN_END)
+		  return glw_view_seterr(ei, t, "Unexpected end of input in "
+					 "macro invokation");
+	      
+		if(t->type == TOKEN_RIGHT_PARENTHESIS && balance == 0) {
 
-	      } else if(t->type == TOKEN_SEPARATOR && balance == 0)
+		  macro_arg_t *x = TAILQ_NEXT(ma, link);
+		  // Clear remaining arguments
+		  while(x != NULL) {
+		    x->first = NULL;
+		    x = TAILQ_NEXT(x, link);
+		  }
+		  break;
+		}
+
+		if(t->type == TOKEN_BLOCK_CLOSE ||
+		   t->type == TOKEN_RIGHT_PARENTHESIS ||
+		   t->type == TOKEN_RIGHT_BRACKET) {
+		  balance--;
+		} else if(t->type == TOKEN_BLOCK_OPEN ||
+			  t->type == TOKEN_LEFT_PARENTHESIS ||
+			  t->type == TOKEN_LEFT_BRACKET) {
+		  balance++;
+
+		} else if(t->type == TOKEN_SEPARATOR && balance == 0)
+		  break;
+		p = p->next;
+	      }
+
+	      ma->last = p;
+
+	      if(t->type == TOKEN_RIGHT_PARENTHESIS)
 		break;
 	      p = p->next;
 	    }
 
-	    ma->last = p;
-
-	    if(t->type == TOKEN_RIGHT_PARENTHESIS)
-	      break;
-	    p = p->next;
+	    if(t->type != TOKEN_RIGHT_PARENTHESIS)
+	      return glw_view_seterr(ei, t, 
+				     "Too many arguments to macro %s",
+				     rstr_get(m->rname));
 	  }
-
-	  if(t->type != TOKEN_RIGHT_PARENTHESIS)
-	    return glw_view_seterr(ei, t, 
-				   "Too many arguments to macro %s",
-				   rstr_get(m->rname));
-
 	  d = t->next;
 	  t->next = NULL;
 
@@ -219,15 +273,12 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	    b->next = d;
 
 	  p = x;
-
 	  glw_view_free_chain(c);
 
 	  continue;
-
 	}
       }
     }
-
 
 
 
