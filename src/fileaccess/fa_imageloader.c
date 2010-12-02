@@ -60,7 +60,7 @@ jpeginfo_mem_reader(void *handle, void *buf, off_t offset, size_t size)
  * Faster than open+read+close.
  */
 static pixmap_t *
-fa_imageloader2(const char *url, const char *theme,
+fa_imageloader2(const char *url, const char **vpaths,
 		char *errbuf, size_t errlen)
 {
   uint8_t *p;
@@ -69,7 +69,7 @@ fa_imageloader2(const char *url, const char *theme,
   enum CodecID codec;
   int width = -1, height = -1, orientation = 0;
 
-  if((p = fa_quickload(url, &fs, theme, errbuf, errlen)) == NULL) 
+  if((p = fa_quickload(url, &fs, vpaths, errbuf, errlen)) == NULL) 
     return NULL;
 
   mi.data = p;
@@ -134,7 +134,7 @@ jpeginfo_reader(void *handle, void *buf, off_t offset, size_t size)
  *
  */
 pixmap_t *
-fa_imageloader(const char *url, int want_thumb, const char *theme,
+fa_imageloader(const char *url, int want_thumb, const char **vpaths,
 	       char *errbuf, size_t errlen)
 {
   fa_handle_t *fh;
@@ -144,9 +144,9 @@ fa_imageloader(const char *url, int want_thumb, const char *theme,
   int width = -1, height = -1, orientation = 0;
 
   if(!want_thumb)
-    return fa_imageloader2(url, theme, errbuf, errlen);
+    return fa_imageloader2(url, vpaths, errbuf, errlen);
 
-  if((fh = fa_open_theme(url, theme)) == NULL) {
+  if((fh = fa_open_vpaths(url, vpaths)) == NULL) {
     snprintf(errbuf, errlen, "%s: Unable to open file", url);
     return NULL;
   }

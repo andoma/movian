@@ -210,7 +210,7 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
     want_thumb = 0;
   }
 
-  pixmap_t *pm = backend_imageloader(url, want_thumb, gr->gr_theme, errbuf, 
+  pixmap_t *pm = backend_imageloader(url, want_thumb, gr->gr_vpaths, errbuf, 
 				     sizeof(errbuf));
   if(pm == NULL) {
     TRACE(TRACE_DEBUG, "GLW", "Unable to load %s -- %s", url, errbuf);

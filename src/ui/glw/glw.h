@@ -469,7 +469,7 @@ typedef struct glw_root {
 
   LIST_HEAD(, glw_cached_view) gr_views;
 
-  const char *gr_theme;
+  const char *gr_vpaths[5];
 
   hts_thread_t gr_thread;
   hts_mutex_t gr_mutex;

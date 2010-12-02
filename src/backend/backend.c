@@ -152,7 +152,7 @@ BE_REGISTER(page);
  *
  */
 struct pixmap *
-backend_imageloader(const char *url, int want_thumb, const char *theme,
+backend_imageloader(const char *url, int want_thumb, const char **vpaths,
 		    char *errbuf, size_t errlen)
 {
   backend_t *nb = backend_canhandle(url);
@@ -160,7 +160,7 @@ backend_imageloader(const char *url, int want_thumb, const char *theme,
     snprintf(errbuf, errlen, "No backend for URL");
     return NULL;
   }
-  return nb->be_imageloader(url, want_thumb, theme, errbuf, errlen);
+  return nb->be_imageloader(url, want_thumb, vpaths, errbuf, errlen);
 }
 
 

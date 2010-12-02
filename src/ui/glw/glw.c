@@ -183,7 +183,10 @@ glw_init(glw_root_t *gr, const char *theme, ui_t *ui, int primary,
 
   hts_mutex_init(&gr->gr_mutex);
   gr->gr_courier = prop_courier_create_passive();
-  gr->gr_theme = theme;
+
+  gr->gr_vpaths[0] = "theme";
+  gr->gr_vpaths[1] = theme;
+  gr->gr_vpaths[2] = NULL;
 
   gr->gr_uii.uii_ui = ui;
   gr->gr_uii.uii_prop = prop_create(NULL, "ui");

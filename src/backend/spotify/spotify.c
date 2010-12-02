@@ -3401,7 +3401,7 @@ parse_image_url(uint8_t *out, const char *url)
  *
  */
 static pixmap_t *
-be_spotify_imageloader(const char *url, int want_thumb, const char *theme,
+be_spotify_imageloader(const char *url, int want_thumb, const char **vpaths,
 		       char *errbuf, size_t errlen)
 {
   spotify_image_t si;

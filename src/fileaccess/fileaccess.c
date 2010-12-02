@@ -51,8 +51,7 @@ static URLProtocol fa_lavf_proto;
  */
 static char *
 fa_resolve_proto(const char *url, fa_protocol_t **p,
-		 const char *x_proto, const char *x_url,
-		 char *errbuf, size_t errsize)
+		 const char **vpaths, char *errbuf, size_t errsize)
 {
   extern fa_protocol_t fa_protocol_fs;
   struct fa_stat fs;
@@ -79,10 +78,17 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
 
   url += 3;
 
-  if(x_proto != NULL && !strcmp(x_proto, buf)) {
-    snprintf(buf, sizeof(buf), "%s%s%s", 
-	     x_url, x_url[strlen(x_url) - 1] == '/' ? "" : "/", url);
-    return fa_resolve_proto(buf, p, NULL, NULL, errbuf, errsize);
+  if(vpaths != NULL) {
+    
+    while(*vpaths != NULL) {
+      if(!strcmp(vpaths[0], buf)) {
+	const char *pfx = vpaths[1];
+	snprintf(buf, sizeof(buf), "%s%s%s", 
+		 pfx, pfx[strlen(pfx) - 1] == '/' ? "" : "/", url);
+	return fa_resolve_proto(buf, p, NULL, errbuf, errsize);
+      }
+      vpaths += 2;
+    }
   }
 
   LIST_FOREACH(fap, &fileaccess_all_protocols, fap_link) {
@@ -107,8 +113,7 @@ fa_can_handle(const char *url, char *errbuf, size_t errsize)
   if(!strncmp(url, "theme://", strlen("theme://")))
     return 1;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL,
-				  errbuf, errsize)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
     return 0;
   free(filename);
   return 1;
@@ -125,7 +130,7 @@ fa_normalize(const char *url, char *dst, size_t dstlen)
   char *filename;
   int r;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, NULL, 0)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) == NULL)
     return -1;
   
   r = fap->fap_normalize ? fap->fap_normalize(fap, url, dst, dstlen) : -1;
@@ -144,8 +149,7 @@ fa_open(const char *url, char *errbuf, size_t errsize)
   char *filename;
   fa_handle_t *fh;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL,
-				  errbuf, errsize)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
     return NULL;
   
   fh = fap->fap_open(fap, filename, errbuf, errsize);
@@ -159,14 +163,13 @@ fa_open(const char *url, char *errbuf, size_t errsize)
  *
  */
 void *
-fa_open_theme(const char *url, const char *themepath)
+fa_open_vpaths(const char *url, const char **vpaths)
 {
   fa_protocol_t *fap;
   char *filename;
   fa_handle_t *fh;
 
-  if((filename = fa_resolve_proto(url, &fap, "theme", themepath,
-				  NULL, 0)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, vpaths, NULL, 0)) == NULL)
     return NULL;
   
   fh = fap->fap_open(fap, filename, NULL, 0);
@@ -225,8 +228,7 @@ fa_stat(const char *url, struct fa_stat *buf, char *errbuf, size_t errsize)
   char *filename;
   int r;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL,
-				  errbuf, errsize)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
     return AVERROR_NOENT;
 
   r = fap->fap_stat(fap, filename, buf, errbuf, errsize, 0);
@@ -248,8 +250,7 @@ fa_scandir(const char *url, char *errbuf, size_t errsize)
   fa_dir_t *fd;
   char *filename;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL,
-				  errbuf, errsize)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
     return NULL;
 
   if(fap->fap_scan != NULL) {
@@ -296,8 +297,7 @@ fa_scandir_recursive(const char *url, char *errbuf, size_t errsize,
   char *filename;
   fa_dir_entry_t *fde;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL,
-				  errbuf, errsize)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
     return NULL;
 
   if(fap->fap_scan != NULL) {
@@ -379,8 +379,7 @@ fa_reference(const char *url)
   char *filename;
   fa_handle_t *fh;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL,
-				  NULL, 0)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) == NULL)
     return NULL;
 
   fh = fap->fap_reference != NULL ? fap->fap_reference(fap, filename) : NULL;
@@ -418,8 +417,7 @@ fa_notify(const char *url, void *opaque,
   fa_protocol_t *fap;
   char *filename;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL,
-				  NULL, 0)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) == NULL)
     return -1;
 
   if(fap->fap_notify == NULL) {
@@ -569,7 +567,7 @@ fa_lavf_open(URLContext *h, const char *url, int flags)
 
   av_strstart(url, "showtime:", &url);  
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, NULL, 0)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) == NULL)
     return AVERROR_NOENT;
   
   fh = fap->fap_open(fap, filename, NULL, 0);
@@ -704,7 +702,7 @@ fa_ffmpeg_error_to_txt(int err)
  *
  */
 void *
-fa_quickload(const char *url, struct fa_stat *fs, const char *theme,
+fa_quickload(const char *url, struct fa_stat *fs, const char **vpaths,
 	     char *errbuf, size_t errlen)
 {
   fa_protocol_t *fap;
@@ -720,8 +718,7 @@ fa_quickload(const char *url, struct fa_stat *fs, const char *theme,
     return data;
   }
 
-  if((filename = fa_resolve_proto(url, &fap, theme ? "theme" : NULL, theme,
-				  errbuf, errlen)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, vpaths, errbuf, errlen)) == NULL)
     return NULL;
 
   if(fap->fap_quickload != NULL) {
@@ -806,8 +803,7 @@ fa_check_url(const char *url, char *errbuf, size_t errlen)
   int r;
   struct fa_stat fs;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL,
-				  errbuf, errlen)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errlen)) == NULL)
     return BACKEND_PROBE_NO_HANDLER;
 
   
@@ -850,7 +846,7 @@ fa_url_get_last_component(char *dst, size_t dstlen, const char *url)
   if(dstlen == 0)
     return;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, NULL, 0)) != NULL) {
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) != NULL) {
     if(fap->fap_get_last_component != NULL) {
       fap->fap_get_last_component(fap, filename, dst, dstlen);
       free(filename);

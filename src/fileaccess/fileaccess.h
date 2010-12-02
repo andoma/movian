@@ -127,7 +127,7 @@ fa_dir_t *fa_scandir_recursive(const char *url, char *errbuf, size_t errsize,
 			       int flags);
 
 void *fa_open(const char *url, char *errbuf, size_t errsize);
-void *fa_open_theme(const char *url, const char *themepath);
+void *fa_open_vpaths(const char *url, const char **vpaths);
 void fa_close(void *fh);
 int fa_read(void *fh, void *buf, size_t size);
 int64_t fa_seek(void *fh, int64_t pos, int whence);
@@ -153,7 +153,7 @@ const char *fa_ffmpeg_error_to_txt(int err);
 
 void fa_scanner(const char *url, prop_t *model, const char *playme);
 
-void *fa_quickload(const char *url, struct fa_stat *fs, const char *theme,
+void *fa_quickload(const char *url, struct fa_stat *fs, const char **vpaths,
 		   char *errbuf, size_t errlen);
 
 int fa_parent(char *dst, size_t dstlen, const char *url);
