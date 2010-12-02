@@ -897,7 +897,7 @@ get_cache_id(glw_root_t *root, glw_renderer_t *gr)
 static void
 set_face_culling(glw_backend_root_t *gbr, int flags)
 {
-  if(!(flags & GLW_RENDER_NO_CULL_FACE) == gbr->gbr_cull_face) {
+  if(!(flags & GLW_IMAGE_DUAL_SIDED) == gbr->gbr_cull_face) {
     if(gbr->gbr_cull_face) {
       glEnable(GL_CULL_FACE);
     } else {
@@ -1040,7 +1040,8 @@ glw_renderer_shader(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
 
     case GLW_TEXTURE_TYPE_NO_ALPHA:
       gp = gbr->gbr_renderer_tex;
-      if(alpha > 0.99 && !gr->gr_blended_attributes) {
+      if(alpha > 0.99 && !gr->gr_blended_attributes &&
+	 !(flags & GLW_IMAGE_ADDITIVE)) {
 	glDisable(GL_BLEND);
 	reenable_blend = 1;
       }
@@ -1054,6 +1055,9 @@ glw_renderer_shader(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
 
   if(gp == NULL)
     return;
+
+  if(flags & GLW_IMAGE_ADDITIVE)
+    glw_blendmode(GLW_BLEND_ADDITIVE);
 
   glw_load_program(gbr, gp);
 
@@ -1114,6 +1118,9 @@ glw_renderer_shader(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
 
   if(reenable_blend)
     glEnable(GL_BLEND);
+
+  if(flags & GLW_IMAGE_ADDITIVE)
+    glw_blendmode(GLW_BLEND_NORMAL);
 }
 
 

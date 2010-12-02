@@ -458,6 +458,8 @@ static const token_attrib_t attribtab[] = {
   {"bevelTop",        set_image_flag, GLW_IMAGE_BEVEL_TOP},
   {"bevelRight",      set_image_flag, GLW_IMAGE_BEVEL_RIGHT},
   {"bevelBottom",     set_image_flag, GLW_IMAGE_BEVEL_BOTTOM},
+  {"aspectConstraint",set_image_flag, GLW_IMAGE_SET_ASPECT},
+  {"additive",        set_image_flag, GLW_IMAGE_ADDITIVE},
 
   {"password",        set_text_flag,  GTB_PASSWORD},
   {"ellipsize",       set_text_flag,  GTB_ELLIPSIZE},

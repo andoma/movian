@@ -127,8 +127,6 @@ typedef struct glw_backend_root {
 
 } glw_backend_root_t;
 
-#define GLW_RENDER_NO_CULL_FACE 0x1
-
 #define glw_renderer_draw(gr, root, rc, be_tex, rgb, alpha, flags)\
   (root)->gr_be.gbr_renderer_draw(gr, root, rc, be_tex, rgb, alpha, flags)
 
@@ -226,7 +224,7 @@ void glw_rtt_destroy(struct glw_root *gr, glw_rtt_t *grtt);
  *
  */
 
-#define GLW_BLEND_ADDITIVE GL_SRC_ALPHA, GL_ONE
+#define GLW_BLEND_ADDITIVE GL_SRC_COLOR, GL_ONE
 #define GLW_BLEND_NORMAL   GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA
 
 #define glw_blendmode(m) glBlendFunc(m)

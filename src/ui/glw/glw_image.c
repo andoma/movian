@@ -169,7 +169,6 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
   glw_loadable_texture_t *glt = gi->gi_current;
   float alpha_self;
   glw_rctx_t rc0;
-  int renderflags;
 
   if(glt == NULL || glt->glt_state != GLT_STATE_VALID)
     return;
@@ -178,9 +177,6 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     alpha_self = 0;
   else
     alpha_self = rc->rc_alpha * w->glw_alpha * gi->gi_alpha_self;
-
-  renderflags = (gi->gi_bitmap_flags & GLW_IMAGE_DUAL_SIDED) ? 
-    GLW_RENDER_NO_CULL_FACE : 0;
 
   if(gi->gi_mode == GI_MODE_NORMAL || gi->gi_mode == GI_MODE_ALPHA_EDGES) {
 
@@ -212,12 +208,12 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 	static const glw_rgb_t black = {0,0,0};
 
 	glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0, &glt->glt_texture,
-			  &black, alpha_self * 0.75, renderflags);
+			  &black, alpha_self * 0.75, gi->gi_bitmap_flags);
 	glw_Translatef(&rc0, -xd, -yd, 0.0);
       }
 
       glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0, &glt->glt_texture,
-			&gi->gi_color, alpha_self, renderflags);
+			&gi->gi_color, alpha_self, gi->gi_bitmap_flags);
 
     }
 
@@ -230,10 +226,9 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 
     if(alpha_self > 0.01)
       glw_renderer_draw(&gi->gi_gr, w->glw_root, rc, &glt->glt_texture,
-			&gi->gi_color, alpha_self, renderflags);
+			&gi->gi_color, alpha_self, gi->gi_bitmap_flags);
 
     render_child_autocentered(gi, rc);
-
   }
 }
 
@@ -457,7 +452,8 @@ glw_image_update_constraints(glw_image_t *gi)
     glw_set_constraints(&gi->w, siz, siz, 0,
 			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
 
-  } else if(gi->w.glw_class == &glw_image && glt != NULL) {
+  } else if(gi->w.glw_class == &glw_image && glt != NULL &&
+	    gi->gi_bitmap_flags & GLW_IMAGE_SET_ASPECT) {
     float aspect = (float)glt->glt_xs / glt->glt_ys;
     glw_set_constraints(&gi->w, 0, 0, -aspect,
 			GLW_CONSTRAINT_W, 0);
