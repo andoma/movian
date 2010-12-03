@@ -131,13 +131,10 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	      TAILQ_FOREACH(ma, &m->args, link)
 		if(!strcmp(rstr_get(ma->rname), rstr_get(p->t_rstring)))
 		  break;
-	      if(ma == NULL)
-		return glw_view_seterr(ei, p->next, 
-				       "Undefined named argument %s",
-				       rstr_get(p->next->t_rstring));
 
 	      p = p->next;
-	      ma->first = p->next;
+	      if(ma != NULL)
+		ma->first = p->next;
 	      while(1) {
 		t = p->next;
 		if(t->type == TOKEN_END)
@@ -160,7 +157,8 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 		  break;
 		p = p->next;
 	      }
-	      ma->last = p;
+	      if(ma != NULL)
+		ma->last = p;
 	      if(t->type == TOKEN_RIGHT_PARENTHESIS)
 		break;
 	      p = t->next;
@@ -234,7 +232,7 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 
 	  for(a = m->body; a != NULL; a = a->next) {
 
-	    if(a->tmp != NULL) {
+	    if(a->tmp != NULL && a->next->type != TOKEN_ASSIGNMENT) {
 	      ma = a->tmp;
 	      e = ma->first;
 
