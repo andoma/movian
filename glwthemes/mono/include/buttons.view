@@ -158,7 +158,7 @@
       PLATE_GFX4();
       
       onEvent(activate, {
-	PROP = !PROP;
+	(PROP) = !PROP;
       });
       
       widget(label, {
@@ -178,7 +178,7 @@
       PLATE_GFX4();
       
       onEvent(activate, {
-	PROP = !PROP;
+	(PROP) = !PROP;
       });
       
       widget(label, {
