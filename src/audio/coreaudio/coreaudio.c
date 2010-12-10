@@ -38,7 +38,7 @@
 
 #define PROPERRID(id, func, prop, s) \
   CATRACE(TRACE_DEBUG, \
-    "id %d %s " #prop " failed (%x '%4.4s')", id, func, s, (char *)&s)
+    "id %u %s " #prop " failed (%x '%4.4s')", id, func, s, (char *)&s)
 
 #define PROPERR(func, prop, s) \
   CATRACE(TRACE_DEBUG, \
@@ -405,14 +405,14 @@ coreaudio_probe_device(AudioDeviceID id)
   UInt32 outputs;
   char uid[200], name[200];  
   
-  CATRACE(TRACE_DEBUG, "Probing device id %d", id);
+  CATRACE(TRACE_DEBUG, "Probing device id %u", id);
   
   /* probe number of output streams */
   AudioBufferList *abl;
   DEVPROP(id, kAudioDevicePropertyStreamConfiguration, count, abl);
   outputs = 0;
-  for(j = 0; j < abl->mNumberBuffers; j++)
-    outputs += abl->mBuffers[j].mNumberChannels;
+  for(i = 0; i < abl->mNumberBuffers; i++)
+    outputs += abl->mBuffers[i].mNumberChannels;
   free(abl);
 
   CFStringRef *cfuid;
@@ -428,7 +428,7 @@ coreaudio_probe_device(AudioDeviceID id)
   free(cfname);
   
   CATRACE(TRACE_DEBUG,
-          "%s: UID %s with %d output channels", name, uid, outputs);
+          "%s: UID %s with %u output channels", name, uid, outputs);
   if(outputs == 0) {
     CATRACE(TRACE_DEBUG, "%s: No outputs, skipping", name);
     return;
@@ -439,42 +439,38 @@ coreaudio_probe_device(AudioDeviceID id)
   frame_size = *frame_sizep;
   free(frame_sizep);
   
-  AudioChannelLayout *layouts;
-  DEVPROPLIST(id, kAudioDevicePropertyPreferredChannelLayout, count, layouts);
-  /* TODO: layout */
-  for(i = 0; i < count; i++) {
-    CATRACE(TRACE_DEBUG, "%d: tag=%d numdesc=%d",
-            i, layouts[i].mChannelLayoutTag,
-            layouts[i].mNumberChannelDescriptions);
-    
-    for(j = 0; j < layouts[i].mNumberChannelDescriptions; j++) {
-      CATRACE(TRACE_DEBUG, "desc %d: label=%x flags=%x",
-              j,
-              layouts[i].mChannelDescriptions[j].mChannelLabel,
-              layouts[i].mChannelDescriptions[j].mChannelFlags);
-    }
-    
-    if(layouts[i].mNumberChannelDescriptions == 2)
-      formats |= AM_FORMAT_PCM_STEREO;
+  AudioChannelLayout *layout;
+  DEVPROP(id, kAudioDevicePropertyPreferredChannelLayout, count, layout);
+  CATRACE(TRACE_DEBUG, "%d: tag=%u numdesc=%u",
+	  i, layout->mChannelLayoutTag,
+	  layout->mNumberChannelDescriptions);
+  for(i = 0; i < layout->mNumberChannelDescriptions; i++) {
+    CATRACE(TRACE_DEBUG, "desc %u: label=%x flags=%x",
+	    i,
+	    layout->mChannelDescriptions[i].mChannelLabel,
+	    layout->mChannelDescriptions[i].mChannelFlags);
   }
+  if(layout->mNumberChannelDescriptions == 2)
+    formats |= AM_FORMAT_PCM_STEREO;
+  free(layout);
+  
   if(!formats) {
     CATRACE(TRACE_DEBUG, "%s: No usable channel configurations",
             name);
     return;
   }
-  free(layouts);
   
   rates = 0;
   AudioStreamID *streamids;
   DEVPROPLIST(id, kAudioDevicePropertyStreams, count, streamids);
-  CATRACE(TRACE_DEBUG, "%d streams found for device", count);
+  CATRACE(TRACE_DEBUG, "%u streams found for device", count);
   for(i = 0; i < count; i++) {    
     AudioStreamBasicDescription *fmts;
     UInt32 fmtCount;
     
     STREAMPROPLIST(streamids[i],
                    kAudioStreamPropertyPhysicalFormats, fmtCount, fmts);
-    CATRACE(TRACE_DEBUG, "Stream %d has %d formats", streamids[i], fmtCount);
+    CATRACE(TRACE_DEBUG, "Stream %u has %u formats", streamids[i], fmtCount);
     
     for(j = 0; j < fmtCount; j++) {
       if(fmts[j].mFormatID != kAudioFormatLinearPCM) {
@@ -517,7 +513,7 @@ coreaudio_probe_devices(AudioDeviceID skipid)
   HWPROPLIST(kAudioHardwarePropertyDevices, count, devices);
   for(i = 0; i < count; i++) {    
     if(devices[i] == skipid) {
-      CATRACE(TRACE_DEBUG, "Skipping default device id %d", skipid);
+      CATRACE(TRACE_DEBUG, "Skipping default device id %u", skipid);
       continue;
     }
 
@@ -543,7 +539,7 @@ coreaudio_default_output_device(void)
     return kAudioDeviceUnknown;
   }
 
-  CATRACE(TRACE_DEBUG, "Default output device id %d", id);  
+  CATRACE(TRACE_DEBUG, "Default output device id %u", id);  
   
   /* id can be kAudioDeviceUnknown here */
   
