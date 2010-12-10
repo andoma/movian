@@ -282,7 +282,7 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
   IH = 1.0 / rc->rc_height;
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
-    float cw;
+    float cw = 0;
 
     if(c->glw_flags & GLW_HIDDEN)
       continue;
