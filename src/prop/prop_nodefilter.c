@@ -675,9 +675,6 @@ nf_destroy_preds(prop_nf_t *nf)
 /**
  *
  */
-/**
- *
- */
 static void
 prop_nf_release0(struct prop_nf *pnf)
 {
@@ -811,6 +808,7 @@ nf_translate_del_multi(prop_nf_t *nf, prop_vec_t *in)
   prop_vec_release(out);
 }
 
+
 /**
  *
  */
@@ -867,7 +865,6 @@ nf_set_filter(void *opaque, const char *str)
     nf_update_egress(nf, nfn);
   }
 }
-
 
 
 /**
@@ -927,9 +924,6 @@ prop_nf_release(struct prop_nf *pnf)
 }
 
 
-
-
-
 /**
  *
  */
@@ -982,7 +976,6 @@ prop_nf_pred_add(struct prop_nf *nf,
     TAILQ_FOREACH(nfn, &nf->in, in_link)
       nf_update_egress(nf, nfn);
   }
-
 }
 
 
@@ -1003,10 +996,6 @@ prop_nf_pred_str_add(struct prop_nf *nf,
 }
 
 
-
-
-
-
 /**
  *
  */
@@ -1022,10 +1011,3 @@ prop_nf_pred_int_add(struct prop_nf *nf,
   prop_nf_pred_add(nf, path, cf, enable, mode, pnp);
   hts_mutex_unlock(&prop_mutex);
 }
-
-
-
-
-
-
-
