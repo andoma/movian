@@ -231,7 +231,7 @@ lgtv_init(serdev_t *sd, int curpower)
   lg->sd = sd;
   lg->prior_input = -1;
 
-  s = settings_add_dir(NULL, "lgtv", "LG Television set", NULL);
+  s = settings_add_dir(NULL, "LG Television set", NULL);
 
   lg->store = htsmsg_store_load(CONFNAME) ?: htsmsg_create_map();
   lg->prior_input = -1;

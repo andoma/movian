@@ -3546,7 +3546,7 @@ be_spotify_init(void)
     return 1;
 #endif
 
-  s = settings_add_dir(NULL, "spotify", "Spotify", "audio");
+  s = settings_add_dir(NULL, "Spotify", "audio");
 
   spotify_courier = prop_courier_create_notify(courier_notify, NULL);
 

@@ -105,7 +105,7 @@ static void
 init_autostandby(void)
 {
 
-  prop_t *s = settings_add_dir(NULL, "runcontrol", "Run control", NULL);
+  prop_t *s = settings_add_dir(NULL, "Run control", NULL);
 
   htsmsg_t *store = htsmsg_store_load("runcontrol");
   if(store == NULL)

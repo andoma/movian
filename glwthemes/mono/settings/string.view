@@ -4,7 +4,7 @@ widget(container_x, {
     .filterConstraintX = true;
     .weight = 1.0;
     .align = left;
-    .caption = $self.model.title;
+    .caption = $self.model.metadata.title;
   });
   
   widget(backdrop, {

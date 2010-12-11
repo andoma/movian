@@ -28,6 +28,7 @@
 #include "event.h"
 #include "navigator.h"
 #include "backend/backend.h"
+#include "backend/backend_prop.h"
 #include "prop/prop_nodefilter.h"
 
 #define SETTINGS_URL "settings:"
@@ -61,42 +62,9 @@ struct setting {
  *
  */
 static void
-set_title(prop_t *src, const char *title)
+set_title(prop_t *model, const char *title)
 {
-  prop_set_string(prop_create(src, "title"), title);
-  prop_set_string(prop_create(prop_create(src, "metadata"), "title"), title);
-}
-
-
-/**
- *
- */
-static void
-settings_set_url(prop_t *p)
-{
-  char url[URL_MAX];
-  prop_vec_t *a;
-  int i;
-  const char *slash = "";
-
-  a = prop_get_ancestors(p);
-  i = prop_vec_len(a);
-
-  assert(i > 3);
-  i-=4;
-
-  snprintf(url, sizeof(url), SETTINGS_URL);
-
-  while(i >= 0) {
-    
-    snprintf(url + strlen(url), sizeof(url) - strlen(url), 
-	     "%s%s", slash, prop_get_name(prop_vec_get(a, i)));
-    slash="/";
-    i-=3;
-  }
-
-  prop_vec_release(a);
-  prop_set_string(prop_create(p, "url"), url);
+  prop_set_string(prop_create(prop_create(model, "metadata"), "title"), title);
 }
 
 
@@ -104,26 +72,23 @@ settings_set_url(prop_t *p)
  *
  */
 static prop_t *
-setting_add(prop_t *parent, const char *id, 
-	    const char *title, const char *type)
+setting_add(prop_t *parent, const char *title, const char *type)
 {
-  prop_t *p, *src;
+  prop_t *p, *model;
+  char url[100];
 
   if(parent != NULL) {
     p = prop_create(parent, "nodes");
   } else {
     p = settings_nodes;
   }
-  p = prop_create(p, id);
+  p = prop_create(p, NULL);
 
-  settings_set_url(p);
-
-  src = prop_create(p, "model");
-
-  if(id != NULL)
-    prop_set_string(prop_create(src, "id"), id);
-  set_title(src, title);
-  prop_set_string(prop_create(src, "type"), type);
+  model = prop_create(p, "model");
+  backend_prop_make(model, url, sizeof(url));
+  prop_set_string(prop_create(p, "url"), url);
+  set_title(model, title);
+  prop_set_string(prop_create(model, "type"), type);
   return p;
 }
 
@@ -132,11 +97,10 @@ setting_add(prop_t *parent, const char *id,
  *
  */
 prop_t *
-settings_add_dir(prop_t *parent, const char *id, const char *title,
-		 const char *subtype)
+settings_add_dir(prop_t *parent, const char *title, const char *subtype)
 {
   parent = parent ? prop_create(parent, "model") : NULL;
-  prop_t *r = setting_add(parent, id, title, "settings");
+  prop_t *r = setting_add(parent, title, "settings");
   prop_t *m = prop_create(r, "model");
   prop_set_string(prop_create(m, "subtype"), subtype);
   return r;
@@ -172,7 +136,7 @@ settings_create_bool(prop_t *parent, const char *id, const char *title,
 		     settings_saver_t *saver, void *saver_opaque)
 {
   prop_t *r = prop_create(setting_add(prop_create(parent, "model"),
-				      id, title, "bool"), "model");
+				      title, "bool"), "model");
   prop_t *v = prop_create(r, "value");
   setting_t *s = calloc(1, sizeof(setting_t));
   prop_sub_t *sub;
@@ -237,7 +201,7 @@ settings_create_int(prop_t *parent, const char *id, const char *title,
 		    settings_saver_t *saver, void *saver_opaque)
 {
   prop_t *r = prop_create(setting_add(prop_create(parent, "model"),
-				      id, title, "integer"), "model");
+				      title, "integer"), "model");
   prop_t *v = prop_create(r, "value");
   setting_t *s = calloc(1, sizeof(setting_t));
   prop_sub_t *sub;
@@ -339,7 +303,7 @@ settings_create_multiopt(prop_t *parent, const char *id, const char *title,
 			 prop_callback_string_t *cb, void *opaque)
 {
   prop_t *r = prop_create(setting_add(prop_create(parent, "model"),
-				      id, title, "multiopt"), "model");
+				      title, "multiopt"), "model");
   prop_t *o = prop_create(r, "options");
   setting_t *s = calloc(1, sizeof(setting_t));
   prop_sub_t *sub;
@@ -435,7 +399,7 @@ settings_create_string(prop_t *parent, const char *id, const char *title,
 		       settings_saver_t *saver, void *saver_opaque)
 {
   prop_t *r = prop_create(setting_add(prop_create(parent, "model"),
-				      id, title, "string"), "model");
+				      title, "string"), "model");
   prop_t *v = prop_create(r, "value");
   setting_t *s = calloc(1, sizeof(setting_t));
   prop_sub_t *sub;
@@ -480,7 +444,7 @@ settings_create_info(prop_t *parent, const char *image,
 		     const char *description)
 {
   prop_t *r = prop_create(setting_add(prop_create(parent, "model"),
-				      NULL, "Info", "info"), "model");
+				      "Info", "info"), "model");
   prop_set_string(prop_create(r, "description"), description);
   prop_set_string(prop_create(r, "image"), image);
 }
@@ -495,7 +459,7 @@ settings_create_action(prop_t *parent, const char *id, const char *title,
 		       prop_courier_t *pc)
 {
   prop_t *r = prop_create(setting_add(prop_create(parent, "model"),
-				      id, title, "action"), "model");
+				      title, "action"), "model");
   prop_t *v = prop_create(r, "action");
   setting_t *s = calloc(1, sizeof(setting_t));
   prop_sub_t *sub;
@@ -545,10 +509,10 @@ settings_init(void)
 {
   settings_root = prop_create(prop_get_global(), "settings");
 
-  settings_nodes = prop_create(settings_root, "sources");
+  settings_nodes = prop_create(NULL, "sources");
 
   prop_nf_create(prop_create(settings_root, "nodes"),
-		 settings_nodes, NULL, "node.model.title",
+		 settings_nodes, NULL, "node.model.metadata.title",
 		 PROP_NF_AUTODESTROY);
 
   prop_set_string(prop_create(settings_root, "type"), "settings");
@@ -575,37 +539,8 @@ be_settings_canhandle(const char *url)
 static int
 be_settings_open(prop_t *page, const char *url0)
 {
-  prop_t *p = NULL;
-  const char *url = url0 + strlen(SETTINGS_URL);
-  char buf[100];
-  int l;
-
-  if(!*url) {
-    prop_link(settings_root, prop_create(page, "model"));
-    return 0;
-   }
-
-  while(*url) {
-    l = 0;
-    while(*url && *url != '/' && l < sizeof(buf) - 2) {
-      buf[l++] = *url++;
-    }
-    buf[l] = 0;
-    if(*url == '/')
-      url++;
-    
-
-    if(p == NULL) {
-      p = settings_root;
-      p = prop_create(settings_root, "sources");
-    } else {
-      p = prop_create(p, "model");
-      p = prop_create(p, "nodes");
-    }
-    p = prop_create(p, buf);
-  }
-  
-  prop_link(prop_create(p, "model"), prop_create(page, "model"));
+  prop_link(settings_root, prop_create(page, "model"));
+  prop_print_tree(page, 1);
   return 0;
 }
 

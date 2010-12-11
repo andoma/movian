@@ -292,7 +292,7 @@ js_createSettings(JSContext *cx, JSObject *obj, uintN argc,
   jss->jss_spath = strdup(spath);
   jss->jss_store = htsmsg_store_load(spath) ?: htsmsg_create_map();
 
-  jss->jss_p = settings_add_dir(NULL, title, title, type);
+  jss->jss_p = settings_add_dir(NULL, title, type);
 
   robj = JS_NewObjectWithGivenProto(cx, &setting_class, NULL, obj);
   *rval = OBJECT_TO_JSVAL(robj);

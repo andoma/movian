@@ -140,7 +140,7 @@ glw_init_settings(glw_root_t *gr, const char *instance,
     snprintf(title, sizeof(title), "Display and user interface");
   }
 
-  gr->gr_settings = settings_add_dir(NULL, "display", title, "display");
+  gr->gr_settings = settings_add_dir(NULL, title, "display");
 
   gr->gr_setting_fontsize =
     settings_create_int(gr->gr_settings, "fontsize",

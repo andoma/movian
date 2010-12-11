@@ -36,8 +36,8 @@ typedef struct settings_multiopt {
   const char *icon;
 } settings_multiopt_t;
 
-prop_t *settings_add_dir(prop_t *parent, const char *id, 
-			 const char *title, const char *subtype);
+prop_t *settings_add_dir(prop_t *parent, const char *title,
+			 const char *subtype);
 
 prop_t *settings_get_dirlist(prop_t *parent);
 
