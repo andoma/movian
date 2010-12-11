@@ -78,7 +78,6 @@ static int is_thread_running;
 static int login_rejected_by_user;
 static int pending_login;
 
-static prop_t *prop_status;
 static prop_t *prop_syncing_playlists;
 
 static sp_session *spotify_session;
@@ -529,7 +528,6 @@ spotify_try_login(sp_session *s, int retry, const char *reason, int silent)
 
   reason = reason ?: "Enter login credentials";
 
-  prop_set_string(prop_status, "Attempting login");
   TRACE(TRACE_DEBUG, "spotify", "Attempting to login");
 
   r = keyring_lookup("spotify", &username, &password, NULL,
@@ -595,10 +593,6 @@ spotify_logged_in(sp_session *sess, sp_error error)
     is_logged_in = 1;
 
     user = f_sp_session_user(sess);
-
-    prop_set_stringf(prop_status, "Logged in as user: %s",
-		     f_sp_user_display_name(user));
-
     load_initial_playlists(sess);
 
   } else {
@@ -608,7 +602,6 @@ spotify_logged_in(sp_session *sess, sp_error error)
     is_logged_in = 0;
 
     notify_add(NOTIFY_ERROR, NULL, 5, "Spotify: Login failed -- %s", msg);
-    prop_set_stringf(prop_status, "Login failed: %s ", msg);
 
     if(is_permanent_error(error)) {
 
@@ -3492,8 +3485,7 @@ static void
 spotify_enable(void)
 {
   if(spotify_service == NULL)
-    spotify_service = service_create("Spotify",
-				     "spotify:start",
+    spotify_service = service_create("Spotify", "spotify:start",
 				     "music", SPOTIFY_LOGO_URL, 0);
 }
 

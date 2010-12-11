@@ -2210,6 +2210,9 @@ void
 prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str,
 		   prop_str_type_t type)
 {
+  if(p == NULL)
+    return;
+
   if(str == NULL) {
     prop_set_void_ex(p, skipme);
     return;
