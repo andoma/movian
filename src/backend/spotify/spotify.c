@@ -1226,7 +1226,8 @@ bh_create(spotify_page_t *sp, const char *playme)
   prop_set_string(sp->sp_type, "directory");
   
   bh->sp = sp;
-  pnf = prop_nf_create(sp->sp_nodes, sp->sp_items, sp->sp_filter, NULL);
+  pnf = prop_nf_create(sp->sp_nodes, sp->sp_items, sp->sp_filter, NULL,
+		       PROP_NF_AUTODESTROY);
   prop_set_int(sp->sp_canFilter, 1);
   prop_nf_release(pnf);
 
@@ -1478,7 +1479,8 @@ spotify_open_rootlist(spotify_page_t *sp)
   prop_set_string(sp->sp_title, "Spotify playlists");
   prop_link(prop_syncing_playlists, sp->sp_loading);
 
-  pnf = prop_nf_create(sp->sp_nodes, prop_rootlist_nodes, sp->sp_filter, NULL);
+  pnf = prop_nf_create(sp->sp_nodes, prop_rootlist_nodes, sp->sp_filter, NULL,
+		       PROP_NF_AUTODESTROY);
   prop_set_int(sp->sp_canFilter, 1);
   prop_nf_release(pnf);
 }
@@ -2170,7 +2172,8 @@ pl_create(sp_playlist *plist, int withtracks, const char *name,
 
     struct prop_nf *pnf;
 
-    pnf = prop_nf_create(nodes, pl->pl_prop_tracks, filter, NULL);
+    pnf = prop_nf_create(nodes, pl->pl_prop_tracks, filter, NULL,
+			 PROP_NF_AUTODESTROY);
 
     prop_nf_pred_int_add(pnf, "node.metadata.available",
 			 PROP_NF_CMP_EQ, 0, NULL, 
@@ -3491,7 +3494,7 @@ spotify_enable(void)
   if(spotify_service == NULL)
     spotify_service = service_create("Spotify",
 				     "spotify:start",
-				     SVC_TYPE_MUSIC, SPOTIFY_LOGO_URL, 0);
+				     "music", SPOTIFY_LOGO_URL, 0);
 }
 
 
