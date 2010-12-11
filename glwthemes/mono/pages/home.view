@@ -5,14 +5,13 @@ $page.glw.title = "Home";
 
 #define COL() {[0.45, 0.45, 0.5]}
 
-#define SERVICE_TYPE_LISTER(TITLE, NODES, HIDDEN, ICON, COLOR, P1) {
+#define SERVICE_TYPE_LISTER(TITLE, NODES, ICON, COLOR) {
   widget(container_y, {
     .align = center;
-    (P1) = isFocused();
+    $clone.focus = isFocused();
     .width = $ui.fontsize * 10;
-    .hidden = HIDDEN;
     widget(image, {
-      .color = select(P1, [1.0, 1.0, 1.0], COLOR);
+      .color = select($clone.focus, [1.0, 1.0, 1.0], COLOR);
       .shadow = true;
       .source = ICON;
       .height = $ui.fontsize * 4;
@@ -22,7 +21,7 @@ $page.glw.title = "Home";
    
     widget(list_y, {
       .height = 128;
-      cloner(NODES, backdrop, {
+      cloner(propSorter(NODES, "node.title"), backdrop, {
 
 	PLATE_GFX();
 
@@ -41,16 +40,6 @@ $page.glw.title = "Home";
 	    .caption = $self.title;
 	    .color = select(isFocused(), [1.0, 1.0, 1.0], COLOR);
 	  });
-/*
-	  widget(icon, {
-	    .align = right;
-	    .shadow = true;
-	    .source = $self.icon;
-	    .sizeBias = -4;
-	    .hqScaling = true;
-	    .alpha = select(isFocused(), 1.0, 0.2);
-	  });
-*/
 	});
       });
     });
@@ -108,33 +97,23 @@ widget(container_y, {
 
   widget(container_x, {
     .align = center;
-    
-    SERVICE_TYPE_LISTER("Music", $global.services.music.nodes,
-			!count($global.services.music.nodes),
-			"theme://icons/mediasources/music.png",
-			PLATE_COLOR_AUDIO(), $view.musicFocused);
-			
+    cloner(propSorter(propGrouper($global.sources, "node.type"), "node.name"),
+		      container_z, {
+      SERVICE_TYPE_LISTER($self.name, $self.nodes,
+			  "theme://icons/mediasources/" + 
+			  translate($self.name,  "other.png",
+				    "music",     "music.png",
+				    "video",     "movies.png",
+				    "tv",        "tv.png",
+				    "photos",    "pictures.png"),
 
-    SERVICE_TYPE_LISTER("Video", $global.services.video.nodes,
-			!count($global.services.video.nodes),
-			"theme://icons/mediasources/movies.png",
-			PLATE_COLOR_VIDEO(), $view.videoFocused);
-
-    SERVICE_TYPE_LISTER("TV", $global.services.tv.nodes,
-			!count($global.services.tv.nodes),
-			"theme://icons/mediasources/tv.png",
-			PLATE_COLOR_TV(), $view.tvFocused);
-
-    SERVICE_TYPE_LISTER("Photos", $global.services.image.nodes,
-			!count($global.services.image.nodes),
-			"theme://icons/mediasources/pictures.png",
-			PLATE_COLOR_IMAGE(), $view.photosFocused);
-
-    SERVICE_TYPE_LISTER("Other", $global.services.other.nodes,
-			!count($global.services.other.nodes),
-			"theme://icons/mediasources/other.png",
-			PLATE_COLOR_OTHER(), $view.otherFocused);
-   });
+			  translate($self.name,  PLATE_COLOR_OTHER(),
+				    "music",     PLATE_COLOR_AUDIO(),
+				    "video",     PLATE_COLOR_VIDEO(),
+				    "tv",        PLATE_COLOR_TV(),
+				    "photos",    PLATE_COLOR_IMAGE()));
+    });
+  });
 
     HORIZONTAL_SEPARATOR();
 

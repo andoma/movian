@@ -28,6 +28,8 @@
 #include "backend/backend.h"
 #include "misc/pixmap.h"
 #include "settings.h"
+#include "prop/prop_grouper.h"
+#include "prop/prop_nodefilter.h"
 
 LIST_HEAD(clone_list, clone);
 
@@ -132,6 +134,8 @@ typedef struct clone {
   char c_visible;      // Set if clone should visible to parent
   char c_evaluated;
   char c_active;       // Set if widget is visible on screen
+
+  prop_t *c_clone_root;
 
 } clone_t;
 
@@ -283,7 +287,8 @@ token_resolve_ex(glw_view_eval_context_t *ec, token_t *t, int type)
     return NULL;
   }
 
-  if(t->type == TOKEN_PROPERTY_VALUE_NAME && subscribe_prop(ec, t, type))
+  if((t->type == TOKEN_PROPERTY_VALUE_NAME ||
+      t->type == TOKEN_PROPERTY_REF) && subscribe_prop(ec, t, type))
     return NULL;
   
   if(t->type == TOKEN_PROPERTY_SUBSCRIPTION) {
@@ -675,7 +680,8 @@ resolve_property_name(glw_view_eval_context_t *ec, token_t *a, int follow_links)
   p = prop_get_by_name(pname, follow_links,
 		       PROP_TAG_NAMED_ROOT, ec->prop, "self",
 		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
-		       PROP_TAG_NAMED_ROOT, ec->prop_view, "view",
+		       PROP_TAG_NAMED_ROOT, ec->prop_viewx, "view",
+		       PROP_TAG_NAMED_ROOT, ec->prop_clone, "clone",
 		       PROP_TAG_NAMED_ROOT, ec->prop_args, "args",
 		       PROP_TAG_ROOT, ui,
 		       NULL);
@@ -773,7 +779,8 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self)
     n.w = ec->w;
     n.prop = ec->prop;
     n.prop_parent = ec->prop_parent;
-    n.prop_view = ec->prop_view;
+    n.prop_viewx = ec->prop_viewx;
+    n.prop_clone = ec->prop_clone;
     n.prop_args = ec->prop_args;
     n.ei = ec->ei;
     n.gr = ec->gr;
@@ -978,7 +985,8 @@ clone_eval(clone_t *c)
   memset(&n, 0, sizeof(n));
   n.prop = c->c_prop;
   n.prop_parent = sc->sc_originating_prop;
-  n.prop_view = sc->sc_view_prop;
+  n.prop_viewx = sc->sc_view_prop;
+  n.prop_clone = c->c_clone_root;
   n.prop_args = sc->sc_view_args;
 
   n.gr = c->c_w->glw_root;
@@ -1135,6 +1143,8 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
 
   sc->sc_entries++;
 
+  c->c_clone_root = prop_create(NULL, NULL);
+
   c->c_w = glw_create_i(parent->glw_root, sc->sc_cloner_class,
 			GLW_ATTRIB_PARENT_BEFORE, parent, b,
 			GLW_ATTRIB_PROPROOTS, p, sc->sc_originating_prop,
@@ -1244,6 +1254,7 @@ clone_free(clone_t *c)
   glw_signal_handler_unregister(w, cloner_sig_handler, c);
   LIST_REMOVE(c, c_link);
   prop_ref_dec(c->c_prop);
+  prop_destroy(c->c_clone_root);
   free(c);
 }
 
@@ -1605,15 +1616,26 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
   token_t *t;
   const char *propname[16];
   prop_callback_t *cb;
+  prop_t *prop = NULL;
 
   if(w == NULL) 
     return glw_view_seterr(ec->ei, self, 
 			    "Properties can not be mapped in this scope");
-  
-  for(t = self; t != NULL && i < 15; t = t->child)
-    propname[i++]  = rstr_get(t->t_rstring);
 
-  propname[i] = NULL;
+  switch(self->type) {
+  case TOKEN_PROPERTY_VALUE_NAME:
+    for(t = self; t != NULL && i < 15; t = t->child)
+      propname[i++]  = rstr_get(t->t_rstring);
+    propname[i] = NULL;
+    break;
+
+  case TOKEN_PROPERTY_REF:
+    prop = self->t_prop;
+    break;
+
+  default:
+    abort();
+  }
 
 
   switch(type) {
@@ -1632,9 +1654,9 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
       if(ec->prop != NULL)
 	prop_ref_inc(ec->prop);
       
-      sc->sc_view_prop = ec->prop_view;
-      if(ec->prop_view != NULL)
-	prop_ref_inc(ec->prop_view);
+      sc->sc_view_prop = ec->prop_viewx;
+      if(ec->prop_viewx != NULL)
+	prop_ref_inc(ec->prop_viewx);
 
       sc->sc_view_args = ec->prop_args;
       if(ec->prop_args != NULL)
@@ -1669,16 +1691,28 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
   if(ec->debug || ec->w->glw_flags & GLW_DEBUG)
     f |= PROP_SUB_DEBUG;
 
-  s = prop_subscribe(f,
-		     PROP_TAG_CALLBACK, cb, gps,
-		     PROP_TAG_NAME_VECTOR, propname,
-		     PROP_TAG_COURIER, w->glw_root->gr_courier,
-		     PROP_TAG_NAMED_ROOT, ec->prop, "self",
-		     PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
-		     PROP_TAG_NAMED_ROOT, ec->prop_view, "view",
-		     PROP_TAG_NAMED_ROOT, ec->prop_args, "args",
-		     PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
-		     NULL);
+  if(prop != NULL) {
+
+    s = prop_subscribe(f,
+		       PROP_TAG_CALLBACK, cb, gps,
+		       PROP_TAG_COURIER, w->glw_root->gr_courier,
+		       PROP_TAG_ROOT, prop,
+		       NULL);
+
+  } else {
+
+    s = prop_subscribe(f,
+		       PROP_TAG_CALLBACK, cb, gps,
+		       PROP_TAG_NAME_VECTOR, propname,
+		       PROP_TAG_COURIER, w->glw_root->gr_courier,
+		       PROP_TAG_NAMED_ROOT, ec->prop, "self",
+		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
+		       PROP_TAG_NAMED_ROOT, ec->prop_viewx, "view",
+		       PROP_TAG_NAMED_ROOT, ec->prop_args, "args",
+		       PROP_TAG_NAMED_ROOT, ec->prop_clone, "clone",
+		       PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
+		       NULL);
+  }
 
   gps->gps_sub = s;
 
@@ -1687,13 +1721,14 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
 
   gps->gps_rpn = ec->passive_subscriptions ? NULL : ec->rpn;
 
-  rstr_release(self->t_rstring);
+  if(self->type == TOKEN_PROPERTY_VALUE_NAME) {
+    rstr_release(self->t_rstring);
+    glw_view_free_chain(self->child);
+    self->child = NULL;
+  }
+
   self->propsubr = gps;
-
   self->type = TOKEN_PROPERTY_SUBSCRIPTION;
-
-  glw_view_free_chain(self->child);
-  self->child = NULL;
   return 0;
 }
 
@@ -1860,7 +1895,8 @@ glw_view_eval_rpn(token_t *t, glw_view_eval_context_t *pec, int *copyp)
   ec.ei = pec->ei;
   ec.prop = pec->prop;
   ec.prop_parent = pec->prop_parent;
-  ec.prop_view = pec->prop_view;
+  ec.prop_viewx = pec->prop_viewx;
+  ec.prop_clone = pec->prop_clone;
   ec.prop_args = pec->prop_args;
   ec.w = pec->w;
   ec.rpn = t;
@@ -1967,7 +2003,8 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
   memset(&n, 0, sizeof(n));
   n.prop = ec->prop;
   n.prop_parent = ec->prop_parent;
-  n.prop_view = ec->prop_view;
+  n.prop_viewx = ec->prop_viewx;
+  n.prop_clone = ec->prop_clone;
   n.prop_args = ec->prop_args;
   n.ei = ec->ei;
   n.gr = ec->gr;
@@ -2014,7 +2051,7 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
 
   if((a = token_resolve_ex(ec, a, GPS_CLONER)) == NULL)
     return -1;
-
+    
   if(b->type != TOKEN_IDENTIFIER)
     return glw_view_seterr(ec->ei, self, 
 			    "cloner: Invalid second argument, "
@@ -2128,6 +2165,7 @@ typedef struct glw_event_map_eval_block {
   prop_t *prop_parent;
   prop_t *prop_view;
   prop_t *prop_args;
+  prop_t *prop_clone;
 } glw_event_map_eval_block_t;
 
 
@@ -2147,7 +2185,8 @@ glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   memset(&n, 0, sizeof(n));
   n.prop = b->prop;
   n.prop_parent = b->prop_parent;
-  n.prop_view = b->prop_view;
+  n.prop_viewx = b->prop_view;
+  n.prop_clone = b->prop_clone;
   n.prop_args = b->prop_args;
   n.gr = w->glw_root;
   n.w = w;
@@ -2183,6 +2222,9 @@ glw_event_map_eval_block_dtor(glw_event_map_t *gem)
   if(b->prop_args)
     prop_ref_dec(b->prop_args);
 
+  if(b->prop_clone)
+    prop_ref_dec(b->prop_clone);
+
   free(b);
 }
 
@@ -2207,9 +2249,13 @@ glw_event_map_eval_block_create(glw_view_eval_context_t *ec,
   if(b->prop_parent)
     prop_ref_inc(b->prop_parent);
 
-  b->prop_view = ec->prop_view;
+  b->prop_view = ec->prop_viewx;
   if(b->prop_view)
     prop_ref_inc(b->prop_view);
+
+  b->prop_clone = ec->prop_clone;
+  if(b->prop_clone)
+    prop_ref_inc(b->prop_clone);
 
   b->prop_args = ec->prop_args;
   if(b->prop_args)
@@ -3290,15 +3336,16 @@ glwf_bind(glw_view_eval_context_t *ec, struct token *self,
       propname[i++]  = rstr_get(t->t_rstring);
     propname[i] = NULL;
 
-    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY,
-	      ec->prop, propname, ec->prop_view, ec->prop_args, NULL);
+    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY5,
+	      ec->prop, propname, ec->prop_viewx, ec->prop_args,
+	      ec->prop_clone, NULL);
 
   } else if(a != NULL && a->type == TOKEN_STRING) {
     glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_ID, rstr_get(a->t_rstring), NULL);
 
   } else {
-    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY, 
-	      NULL, NULL, NULL, NULL, NULL);
+    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY5, 
+	      NULL, NULL, NULL, NULL, NULL, NULL);
   }
   return 0;
 }
@@ -3343,7 +3390,8 @@ glwf_delta(glw_view_eval_context_t *ec, struct token *self,
   p = prop_get_by_name(propname, 0, 
 		       PROP_TAG_NAMED_ROOT, ec->prop, "self",
 		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
-		       PROP_TAG_NAMED_ROOT, ec->prop_view, "view",
+		       PROP_TAG_NAMED_ROOT, ec->prop_viewx, "view",
+		       PROP_TAG_NAMED_ROOT, ec->prop_clone, "clone",
 		       PROP_TAG_NAMED_ROOT, ec->prop_args, "args",
 		       PROP_TAG_ROOT, ec->w->glw_root->gr_uii.uii_prop,
 		       NULL);
@@ -3622,7 +3670,7 @@ glwf_browse(glw_view_eval_context_t *ec, struct token *self,
  *
  */
 static void
-glwf_setting_ctor(struct token *self)
+glwf_null_ctor(struct token *self)
 {
   self->t_extra = NULL;
 }
@@ -3944,6 +3992,98 @@ glwf_count(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
+static void
+glwf_propGrouper_dtor(struct token *self)
+{
+  if(self->t_extra != NULL)
+    prop_grouper_destroy(self->t_extra);
+}
+
+
+
+/**
+ *
+ */
+static int
+glwf_propGrouper(glw_view_eval_context_t *ec, struct token *self,
+		 token_t **argv, unsigned int argc)
+{
+  token_t *a, *b, *r;
+
+  if((a = resolve_property_name2(ec, argv[0])) == NULL)
+    return -1;
+  if((b = token_resolve(ec, argv[1])) == NULL)
+    return -1;
+
+  if(b->type != TOKEN_STRING)
+    return glw_view_seterr(ec->ei, a, "propGrouper(): "
+			   "Second argument is not a string");
+  
+  if(self->t_extra != NULL)
+    prop_grouper_destroy(self->t_extra);
+
+  r = eval_alloc(self, ec, TOKEN_PROPERTY_REF);
+  r->t_prop = prop_create(NULL, NULL);
+  prop_ref_inc(r->t_prop);
+  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
+  eval_push(ec, r);
+
+  self->t_extra = prop_grouper_create(r->t_prop, a->t_prop,
+				      rstr_get(b->t_rstring),
+				      PROP_GROUPER_TAKE_DST_OWNERSHIP);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+glwf_propSorter_dtor(struct token *self)
+{
+  if(self->t_extra != NULL)
+    prop_nf_release(self->t_extra);
+}
+
+
+/**
+ *
+ */
+static int
+glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
+		token_t **argv, unsigned int argc)
+{
+  token_t *a, *b, *r;
+
+  if((a = resolve_property_name2(ec, argv[0])) == NULL)
+    return -1;
+  if((b = token_resolve(ec, argv[1])) == NULL)
+    return -1;
+
+  if(b->type != TOKEN_STRING)
+    return glw_view_seterr(ec->ei, a, "propSorter(): "
+			   "Second argument is not a string");
+  
+  if(self->t_extra != NULL)
+    prop_nf_release(self->t_extra);
+
+  r = eval_alloc(self, ec, TOKEN_PROPERTY_REF);
+  r->t_prop = prop_create(NULL, NULL);
+  prop_ref_inc(r->t_prop);
+  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
+  eval_push(ec, r);
+
+  self->t_extra = prop_nf_create(r->t_prop, a->t_prop, NULL,
+				 rstr_get(b->t_rstring),
+				 PROP_GROUPER_TAKE_DST_OWNERSHIP);
+  return 0;
+}
+
+
+
+/**
+ *
+ */
 static const token_func_t funcvec[] = {
   {"widget", 2, glwf_widget},
   {"cloner", -1, glwf_cloner},
@@ -3980,8 +4120,8 @@ static const token_func_t funcvec[] = {
   {"select", 3, glwf_select},
   {"trace", 2, glwf_trace},
   {"browse", 1, glwf_browse, glwf_browse_ctor, glwf_browse_dtor},
-  {"settingInt", 8, glw_settingInt, glwf_setting_ctor, glwf_setting_dtor},
-  {"settingBool", 4, glw_settingBool, glwf_setting_ctor, glwf_setting_dtor},
+  {"settingInt", 8, glw_settingInt, glwf_null_ctor, glwf_setting_dtor},
+  {"settingBool", 4, glw_settingBool, glwf_null_ctor, glwf_setting_dtor},
   {"isLink", 1, glwf_isLink},
   {"sin", 1, glwf_sin},
   {"monotime", 0, glwf_monotime},
@@ -3991,6 +4131,8 @@ static const token_func_t funcvec[] = {
   {"focusDistance", 0, glwf_focusDistance},
   {"count", 1, glwf_count},
   {"deliverEvent", -1, glwf_deliverEvent},
+  {"propGrouper", 2, glwf_propGrouper, glwf_null_ctor, glwf_propGrouper_dtor},
+  {"propSorter", 2, glwf_propSorter, glwf_null_ctor, glwf_propSorter_dtor},
 };
 
 

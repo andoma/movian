@@ -120,10 +120,7 @@ static void
 set_type(void *opaque, const char *str)
 {
   bookmark_t *bm = opaque;
-  service_type_t type = service_str2type(str);
-  if(type == -1)
-    type = SVC_TYPE_OTHER;
-  service_set_type(bm->bm_service, type);
+  service_set_type(bm->bm_service, str);
   bookmark_save();
 }
 
@@ -150,20 +147,17 @@ bookmark_add_prop(prop_t *parent, const char *name, const char *value,
  *
  */
 static void
-bookmark_add(const char *title, const char *url, const char *svctype)
+bookmark_add(const char *title, const char *url, const char *type)
 {
   bookmark_t *bm = calloc(1, sizeof(bookmark_t));
   prop_t *p = prop_create(NULL, NULL);
   prop_t *src = prop_create(p, "model");
-  service_type_t type = service_str2type(svctype);
-  if(type == -1)
-    type = SVC_TYPE_OTHER;
  
   prop_set_string(prop_create(src, "type"), "bookmark");
 
   bm->bm_title_sub = bookmark_add_prop(src, "title",    title,   bm, set_title);
   bm->bm_url_sub   = bookmark_add_prop(src, "url",      url,     bm, set_url);
-  bm->bm_type_sub  = bookmark_add_prop(src, "svctype",  svctype, bm, set_type);
+  bm->bm_type_sub  = bookmark_add_prop(src, "svctype",  type,    bm, set_type);
 
   bm->bm_service = service_create(title, url, type, NULL, 1);
 

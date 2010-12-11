@@ -1120,7 +1120,7 @@ make_model(prop_t *parent, const char *title, prop_t *nodes)
   pnf = prop_nf_create(prop_create(model, "nodes"),
 		       nodes,
 		       prop_create(model, "filter"),
-		       NULL);
+		       NULL, PROP_NF_AUTODESTROY);
   prop_set_int(prop_create(model, "canFilter"), 1);
 
   prop_nf_release(pnf);
@@ -1145,7 +1145,7 @@ make_model2(prop_t *parent, prop_t *sourcemodel)
   pnf = prop_nf_create(prop_create(model, "nodes"),
 		       prop_create(sourcemodel, "nodes"),
 		       prop_create(model, "filter"),
-		       NULL);
+		       NULL, PROP_NF_AUTODESTROY);
   prop_set_int(prop_create(model, "canFilter"), 1);
 
   prop_nf_release(pnf);

@@ -107,7 +107,7 @@ typedef enum {
   GLW_ATTRIB_PROPROOTS,
   GLW_ATTRIB_TRANSITION_EFFECT,
   GLW_ATTRIB_EXPANSION,
-  GLW_ATTRIB_BIND_TO_PROPERTY,
+  GLW_ATTRIB_BIND_TO_PROPERTY5,
   GLW_ATTRIB_BIND_TO_ID,
   GLW_ATTRIB_SIZE_SCALE,
   GLW_ATTRIB_SIZE_BIAS,
@@ -874,7 +874,8 @@ do {						\
     (void)va_arg(ap, void *);			\
     (void)va_arg(ap, int);			\
     break;                                      \
-  case GLW_ATTRIB_BIND_TO_PROPERTY:		\
+  case GLW_ATTRIB_BIND_TO_PROPERTY5:		\
+    (void)va_arg(ap, void *);			\
     (void)va_arg(ap, void *);			\
     (void)va_arg(ap, void *);			\
   case GLW_ATTRIB_PARENT_BEFORE:		\

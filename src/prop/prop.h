@@ -115,7 +115,7 @@ void prop_init(void);
 #define PROP_SUB_EXPEDITE             0x20
 #define PROP_SUB_MULTI                0x40
 #define PROP_SUB_INTERNAL             0x80
-#define PROP_SUB_NOLOCK               0x100
+#define PROP_SUB_DONTLOCK             0x100
 
 enum {
   PROP_TAG_END = 0,
@@ -362,11 +362,14 @@ void prop_tag_set(prop_t *p, void *key, void *value);
 
 void *prop_tag_clear(prop_t *p, void *key);
 
-/* DEBUGish */
 const char *propname(prop_t *p);
 
 void prop_print_tree(prop_t *p, int followlinks);
 
 void prop_test(void);
+
+#ifdef PROP_DEBUG
+extern int prop_trace;
+#endif
 
 #endif /* PROP_H__ */

@@ -82,25 +82,8 @@ sd_add_service_htsp(service_instance_t *si, const char *name,
     return;
 
   snprintf(url, sizeof(url), "htsp://%s:%d", host, port);
-  si->si_services[0] =
-    service_create(name, url, SVC_TYPE_TV, NULL, 0);
+  si->si_services[0] = service_create(name, url, "tv", NULL, 0);
 }
-
-
-static struct strtab contents2type_tab[] = {
-  { "music",    SVC_TYPE_MUSIC },
-  { "audio",    SVC_TYPE_MUSIC },
-  { "video",    SVC_TYPE_VIDEO },
-  { "videos",   SVC_TYPE_VIDEO },
-  { "movie",    SVC_TYPE_VIDEO },
-  { "movies",   SVC_TYPE_VIDEO },
-  { "image",    SVC_TYPE_IMAGE },
-  { "images",   SVC_TYPE_IMAGE },
-  { "photo",    SVC_TYPE_IMAGE },
-  { "photos",   SVC_TYPE_IMAGE },
-  { "pictures", SVC_TYPE_IMAGE },
-  { "picture",  SVC_TYPE_IMAGE },
-};
 
 
 /**
@@ -112,7 +95,6 @@ sd_add_service_webdav(service_instance_t *si, const char *name,
 		      const char *contents)
 {
   char url[URL_MAX];
-  service_type_t type;
 
   if(si->si_services[0] != NULL)
     return;
@@ -121,12 +103,7 @@ sd_add_service_webdav(service_instance_t *si, const char *name,
 	   host, port, path == NULL || path[0] != '/' ? "/" : "",
 	   path ? path : "");
 
-  type = contents ? str2val(contents, contents2type_tab) : -1;
-  
-  if(type == -1)
-    type = SVC_TYPE_OTHER;
-
-  si->si_services[0] = service_create(name, url, type, NULL, 1);
+  si->si_services[0] = service_create(name, url, contents, NULL, 1);
 }
 
 /**

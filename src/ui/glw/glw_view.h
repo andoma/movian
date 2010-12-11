@@ -195,7 +195,7 @@ typedef struct glw_view_eval_context {
   errorinfo_t *ei;
   token_t *alloc;
   struct glw *w;
-  struct prop *prop, *prop_parent, *prop_view, *prop_args;
+  struct prop *prop, *prop_parent, *prop_viewx, *prop_args, *prop_clone;
   struct glw_root *gr;
   
   int dynamic_eval;

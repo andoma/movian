@@ -23,24 +23,16 @@
 #include "service.h"
 #include "misc/strtab.h"
 #include "prop/prop_nodefilter.h"
+#include "prop/prop_grouper.h"
 #include "backend/backend.h"
 
+LIST_HEAD(service_type_list, service_type);
+
 static prop_t *all_services;
-
-
-
-static const char *type2str[] = {
-  [SVC_TYPE_MUSIC] = "music",
-  [SVC_TYPE_IMAGE] = "image",
-  [SVC_TYPE_VIDEO] = "video",
-  [SVC_TYPE_TV]    = "tv",
-  [SVC_TYPE_OTHER] = "other"
-};
 
 struct service_list services;
 hts_mutex_t service_mutex;
 static hts_cond_t service_cond;
-
 
 /**
  *
@@ -56,23 +48,6 @@ static struct strtab status_tab[] = {
 
 static void *service_probe_loop(void *aux);
 
-/**
- *
- */
-static void
-add_service_type(prop_t *root, service_type_t type)
-{
-  struct prop_nf *pnf;
-  const char *name = type2str[type];
-
-  pnf = prop_nf_create(prop_create(prop_create(root, name), "nodes"),
-		       all_services, NULL, "node.title");
-
-  prop_nf_pred_str_add(pnf, "node.type",
-		       PROP_NF_CMP_NEQ, name, NULL, 
-		       PROP_NF_MODE_EXCLUDE);
-}
-
 
 /**
  *
@@ -85,18 +60,7 @@ service_init(void)
 
   hts_thread_create_detached("service probe", service_probe_loop, NULL);
 
-  all_services = prop_create(NULL, NULL);
-
-  prop_nf_create(prop_create(prop_get_global(), "sources"),
-		 all_services, NULL, "node.title");
-
-  prop_t *p = prop_create(prop_get_global(), "services");
-
-  add_service_type(p, SVC_TYPE_MUSIC);
-  add_service_type(p, SVC_TYPE_IMAGE);
-  add_service_type(p, SVC_TYPE_VIDEO);
-  add_service_type(p, SVC_TYPE_TV);
-  add_service_type(p, SVC_TYPE_OTHER);
+  all_services = prop_create(prop_get_global(), "sources");
 }
 
 
@@ -155,14 +119,13 @@ seturl(service_t *s, const char *url)
 service_t *
 service_create(const char *title,
 	       const char *url,
-	       service_type_t type,
+	       const char *type,
 	       const char *icon,
 	       int probe)
 {
   service_t *s = calloc(1, sizeof(service_t));
   prop_t *p;
   s->s_ref = 1;
-  s->s_type = type;
 
   p = s->s_root = prop_create(NULL, NULL);
   seturl(s, url);
@@ -172,7 +135,7 @@ service_create(const char *title,
   prop_set_string(prop_create(p, "url"), url);
 
   s->s_prop_type = prop_create(p, "type");
-  prop_set_string(s->s_prop_type, type2str[type]);
+  prop_set_string(s->s_prop_type, type);
 
   s->s_prop_status = prop_create(p, "status");
   prop_set_string(s->s_prop_status, "ok");
@@ -215,9 +178,9 @@ service_get_statustxt_prop(service_t *s)
  *
  */
 void 
-service_set_type(service_t *s, service_type_t type)
+service_set_type(service_t *s, const char *type)
 {
-  prop_set_string(s->s_prop_type, type2str[type]);
+  prop_set_string(s->s_prop_type, type);
 }
 
 
@@ -320,35 +283,4 @@ service_probe_loop(void *aux)
     }
   }
   return NULL;
-}
-
-
-/**
- *
- */
-static struct strtab strtype_tab[] = {
-  { "music",    SVC_TYPE_MUSIC },
-  { "video",    SVC_TYPE_VIDEO },
-  { "tv",       SVC_TYPE_TV },
-  { "image",    SVC_TYPE_IMAGE },
-  { "other",    SVC_TYPE_OTHER },
-};
-
-/**
- *
- */
-service_type_t
-service_str2type(const char *str)
-{
-  return str ? str2val(str, strtype_tab) : SVC_TYPE_OTHER;
-}
-
-
-/**
- *
- */
-const char *
-service_type2str(service_type_t type)
-{
-  return val2str(type, strtype_tab);
 }

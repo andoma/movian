@@ -56,6 +56,7 @@ SRCS += src/main.c \
 	src/prop/prop_nodefilter.c \
 	src/prop/prop_tags.c \
 	src/prop/prop_vector.c \
+	src/prop/prop_grouper.c \
 
 ifeq ($(PLATFORM), linux)
 SRCS += src/arch/linux.c

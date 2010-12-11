@@ -494,7 +494,7 @@ init_model_props(js_model_t *jm, prop_t *model)
   pnf = prop_nf_create(prop_create(model, "nodes"),
 		       jm->jm_nodes,
 		       prop_create(model, "filter"),
-		       NULL);
+		       NULL, PROP_NF_AUTODESTROY);
 
   prop_set_int(prop_create(model, "canFilter"), 1);
 

@@ -97,6 +97,7 @@ typedef struct prop_nf_pred {
 typedef struct prop_nf {
 
   int pnf_refcount;
+  int flags;
 
   prop_t *src;
   prop_t *dst;
@@ -342,7 +343,7 @@ nf_update_multisub(prop_nf_t *nf, nfnode_t *nfn)
   if(nf->filter) {
 
     nfn->multisub =
-      prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_MULTI | PROP_SUB_NOLOCK,
+      prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_MULTI | PROP_SUB_DONTLOCK,
 		     PROP_TAG_CALLBACK, nf_multi_filter, nfn,
 		     PROP_TAG_ROOT, nfn->in,
 		     NULL);
@@ -429,14 +430,14 @@ nfn_insert_preds(prop_nf_t *nf, nfnode_t *nfn)
 
     if(pnp->pnp_str != NULL) {
       nfnp->nfnp_sub = 
-	prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_NOLOCK,
+	prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_DONTLOCK,
 		       PROP_TAG_CALLBACK_STRING, nfnp_update_str, nfnp,
 		       PROP_TAG_NAMED_ROOT, nfn->in, "node",
 		       PROP_TAG_NAME_VECTOR, pnp->pnp_path,
 		       NULL);
     } else {
       nfnp->nfnp_sub = 
-	prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_NOLOCK,
+	prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_DONTLOCK,
 		       PROP_TAG_CALLBACK_INT, nfnp_update_int, nfnp,
 		       PROP_TAG_NAMED_ROOT, nfn->in, "node",
 		       PROP_TAG_NAME_VECTOR, pnp->pnp_path,
@@ -508,7 +509,7 @@ nf_update_order(prop_nf_t *nf, nfnode_t *nfn)
 
   } else {
     nfn->sortsub =
-      prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_NOLOCK |
+      prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_DONTLOCK |
 		     PROP_SUB_DIRECT_UPDATE,
 		     PROP_TAG_CALLBACK, nf_set_sortkey, nfn,
 		     PROP_TAG_NAMED_ROOT, nfn->in, "node",
@@ -672,6 +673,23 @@ nf_destroy_preds(prop_nf_t *nf)
 }
 
 
+
+/**
+ *
+ */
+static void
+nf_clear(prop_nf_t *nf)
+{
+  nfnode_t *nfn;
+
+  while((nfn = TAILQ_FIRST(&nf->in)) != NULL) {
+    prop_tag_clear(nfn->in, nf);
+    nf_del_node(nf, nfn);
+  }
+  nf->pos_valid = 1;
+}
+
+
 /**
  *
  */
@@ -681,6 +699,12 @@ prop_nf_release0(struct prop_nf *pnf)
   pnf->pnf_refcount--;
   if(pnf->pnf_refcount > 0)
     return;
+
+  if(pnf->srcsub != NULL)
+    prop_unsubscribe0(pnf->srcsub);
+
+  if(!(pnf->flags & PROP_NF_AUTODESTROY))
+    nf_clear(pnf);
 
   prop_unsubscribe0(pnf->dstsub);
   prop_destroy0(pnf->dst);
@@ -699,20 +723,6 @@ prop_nf_release0(struct prop_nf *pnf)
   nf_destroy_preds(pnf);
 
   free(pnf);
-}
-
-
-/**
- *
- */
-static void
-nf_clear(prop_nf_t *nf)
-{
-  nfnode_t *nfn;
-
-  while((nfn = TAILQ_FIRST(&nf->in)) != NULL)
-    nf_del_node(nf, nfn);
-  nf->pos_valid = 1;
 }
 
 
@@ -872,14 +882,15 @@ nf_set_filter(void *opaque, const char *str)
  */
 struct prop_nf *
 prop_nf_create(prop_t *dst, prop_t *src, prop_t *filter, 
-	       const char *defsortpath)
+	       const char *defsortpath, int flags)
 {
+  
   prop_nf_t *nf = calloc(1, sizeof(prop_nf_t));
-
+  nf->flags = flags;
   TAILQ_INIT(&nf->in);
   TAILQ_INIT(&nf->out);
 
-  nf->dst = prop_xref_addref(dst);
+  nf->dst = flags & PROP_NF_TAKE_DST_OWNERSHIP ? dst : prop_xref_addref(dst);
   nf->src = src;
 
   nf->defsortpath = defsortpath ? strvec_split(defsortpath, '.') : NULL;
@@ -887,24 +898,24 @@ prop_nf_create(prop_t *dst, prop_t *src, prop_t *filter,
   hts_mutex_lock(&prop_mutex);
 
   if(filter != NULL)
-    nf->filtersub = prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_NOLOCK,
+    nf->filtersub = prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_DONTLOCK,
 				   PROP_TAG_CALLBACK_STRING, nf_set_filter, nf,
 				   PROP_TAG_ROOT, filter,
 				   NULL);
 
-  nf->dstsub = prop_subscribe(PROP_SUB_INTERNAL | 
-			      PROP_SUB_NOLOCK,
+  nf->dstsub = prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_DONTLOCK,
 			      PROP_TAG_CALLBACK, prop_nf_dst_cb, nf,
 			      PROP_TAG_ROOT, nf->dst,
 			      NULL);
 
-  nf->srcsub = prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_TRACK_DESTROY |
-			      PROP_SUB_NOLOCK,
+  nf->srcsub = prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_DONTLOCK | 
+			      (flags & PROP_NF_AUTODESTROY ? 
+			       PROP_SUB_TRACK_DESTROY : 0),
 			      PROP_TAG_CALLBACK, prop_nf_src_cb, nf,
 			      PROP_TAG_ROOT, src,
 			      NULL);
 
-  nf->pnf_refcount = 2;
+  nf->pnf_refcount = 1 + (flags & PROP_NF_AUTODESTROY ? 1 : 0);
 
   hts_mutex_unlock(&prop_mutex);
 
@@ -965,7 +976,7 @@ prop_nf_pred_add(struct prop_nf *nf,
 
   if(enable != NULL) {
     pnp->pnp_enable_sub = 
-      prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_NOLOCK,
+      prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_DONTLOCK,
 		     PROP_TAG_CALLBACK_INT, pnp_set_enable, pnp,
 		     PROP_TAG_ROOT, enable,
 		     NULL);

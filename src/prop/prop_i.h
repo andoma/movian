@@ -324,4 +324,8 @@ void prop_have_more_childs0(prop_t *p);
 
 void prop_want_more_childs0(prop_sub_t *s);
 
+
+void prop_set_string_exl(prop_t *p, prop_sub_t *skipme, const char *str,
+			 prop_str_type_t type);
+
 #endif // PROP_I_H__

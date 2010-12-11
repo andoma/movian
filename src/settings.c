@@ -548,7 +548,8 @@ settings_init(void)
   settings_nodes = prop_create(settings_root, "sources");
 
   prop_nf_create(prop_create(settings_root, "nodes"),
-		 settings_nodes, NULL, "node.model.title");
+		 settings_nodes, NULL, "node.model.title",
+		 PROP_NF_AUTODESTROY);
 
   prop_set_string(prop_create(settings_root, "type"), "settings");
   set_title(settings_root, "Global settings");

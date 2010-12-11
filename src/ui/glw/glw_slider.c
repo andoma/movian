@@ -471,7 +471,7 @@ glw_slider_set(glw_t *w, int init, va_list ap)
 {
   glw_slider_t *s = (glw_slider_t *)w;
   glw_attribute_t attrib;
-  prop_t *p, *view, *args;
+  prop_t *p, *view, *args, *clone;
   const char **pname;
   const char *n;
 
@@ -495,11 +495,12 @@ glw_slider_set(glw_t *w, int init, va_list ap)
       slider_bind_by_id(s, n);
       break;
 
-    case GLW_ATTRIB_BIND_TO_PROPERTY:
+    case GLW_ATTRIB_BIND_TO_PROPERTY5:
       p = va_arg(ap, prop_t *);
       pname = va_arg(ap, void *);
       view = va_arg(ap, void *);
       args = va_arg(ap, void *);
+      clone = va_arg(ap, void *);
 
       slider_unbind(s);
 
@@ -510,6 +511,7 @@ glw_slider_set(glw_t *w, int init, va_list ap)
 			      PROP_TAG_NAMED_ROOT, p, "self",
 			      PROP_TAG_NAMED_ROOT, view, "view",
 			      PROP_TAG_NAMED_ROOT, args, "args",
+			      PROP_TAG_NAMED_ROOT, clone, "clone",
 			      PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
 			      NULL);
       break;

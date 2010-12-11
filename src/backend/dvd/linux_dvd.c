@@ -82,14 +82,14 @@ set_status(disc_scanner_t *ds, disc_status_t status, const char *title)
   case DISC_AUDIO:
     snprintf(buf, sizeof(buf), "Audio CD");
     snprintf(url, sizeof(url), "audiocd:%s", ds->ds_dev);
-    ds->ds_svc = service_create(buf, url, SVC_TYPE_MUSIC, NULL, 0);
+    ds->ds_svc = service_create(buf, url, "music", NULL, 0);
     break;
 
   case DISC_ISOFS:
     snprintf(buf, sizeof(buf), "DVD: %s", title);
     snprintf(url, sizeof(url), "dvd:%s", ds->ds_dev);
 
-    ds->ds_svc = service_create(buf, url, SVC_TYPE_VIDEO, NULL, 0);
+    ds->ds_svc = service_create(buf, url, "video", NULL, 0);
     break;
 
   case DISC_UNKNOWN_TYPE:

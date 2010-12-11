@@ -58,7 +58,7 @@ js_createService(JSContext *cx, JSObject *obj, uintN argc,
 			   &title, &url, &type, &icon))
     return JS_FALSE;
 
-  s = service_create(title, url, service_str2type(type), icon, 0);
+  s = service_create(title, url, type, icon, 0);
   robj = JS_NewObjectWithGivenProto(cx, &service_class, NULL, NULL);
   JS_SetPrivate(cx, robj, s);
   *rval = OBJECT_TO_JSVAL(robj);

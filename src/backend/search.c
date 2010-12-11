@@ -123,7 +123,8 @@ search_open(prop_t *page, const char *url0)
 
   pnf = prop_nf_create(prop_create(model, "nodes"),
 		       prop_create(source, "nodes"),
-		       NULL, "node.metadata.title");
+		       NULL, "node.metadata.title",
+		       PROP_NF_AUTODESTROY);
 
   prop_nf_pred_int_add(pnf, "node.entries",
 		       PROP_NF_CMP_EQ, 0, NULL, 

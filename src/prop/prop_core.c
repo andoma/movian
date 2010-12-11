@@ -32,6 +32,10 @@
 #include "misc/string.h"
 #include "event.h"
 
+#ifdef PROP_DEBUG
+int prop_trace;
+#endif
+
 hts_mutex_t prop_mutex;
 hts_mutex_t prop_tag_mutex;
 static prop_t *prop_global;
@@ -972,7 +976,6 @@ prop_build_notify_child(prop_sub_t *s, prop_t *p, prop_event_t event,
   if(direct || s->hps_flags & PROP_SUB_INTERNAL) {
     prop_callback_t *cb = s->hps_callback;
     prop_trampoline_t *pt = s->hps_trampoline;
-
     if(pt != NULL)
       pt(s, event, p, flags);
     else
@@ -1463,6 +1466,20 @@ prop_destroy0(prop_t *p)
   prop_t *c, *next, *parent;
   prop_sub_t *s;
 
+#ifdef PROP_DEBUG
+  if(prop_trace) {
+    int csubs = 0, psubs = 0;
+    LIST_FOREACH(s, &p->hp_canonical_subscriptions, hps_canonical_prop_link)
+      csubs++;
+    LIST_FOREACH(s, &p->hp_value_subscriptions, hps_value_prop_link)
+      psubs++;
+
+    printf("Entering prop_destroy0(%s) [type=%d, refcnt=%d, xref=%d, csubs=%d, psubs=%d]\n",
+	   propname(p), p->hp_type, p->hp_refcount, p->hp_xref,
+	   csubs, psubs);
+  }
+#endif
+
   if(p->hp_type == PROP_ZOMBIE)
     return 0;
 
@@ -1523,6 +1540,12 @@ prop_destroy0(prop_t *p)
 
   if(p->hp_originator != NULL)
     prop_remove_from_originator(p);
+
+#ifdef PROP_DEBUG
+  if(prop_trace)
+    printf("Leaving prop_destroy0(%s) parent=%p\n", propname(p),
+	   p->hp_parent);
+#endif
 
   if(p->hp_parent != NULL) {
     prop_notify_child(p, p->hp_parent, PROP_DEL_CHILD, NULL, 0);
@@ -1857,7 +1880,7 @@ prop_subscribe(int flags, ...)
   struct prop_root_list proproots;
   void *cb = NULL;
   prop_trampoline_t *trampoline = NULL;
-  int dolock = !(flags & PROP_SUB_NOLOCK);
+  int dolock = !(flags & PROP_SUB_DONTLOCK);
 
   va_list ap;
   va_start(ap, flags);
@@ -2155,38 +2178,19 @@ prop_set_epilogue(prop_sub_t *skipme, prop_t *p, const char *origin)
 }
 
 
-
-/**
- *
- */
 void
-prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str,
-		   prop_str_type_t type)
+prop_set_string_exl(prop_t *p, prop_sub_t *skipme, const char *str,
+		    prop_str_type_t type)
 {
-  if(p == NULL)
+  if(p->hp_type == PROP_ZOMBIE)
     return;
-
-  if(str == NULL) {
-    prop_set_void_ex(p, skipme);
-    return;
-  }
-
-  hts_mutex_lock(&prop_mutex);
-
-  if(p->hp_type == PROP_ZOMBIE) {
-    hts_mutex_unlock(&prop_mutex);
-    return;
-  }
 
   if(p->hp_type != PROP_STRING) {
 
-    if(prop_clean(p)) {
-      hts_mutex_unlock(&prop_mutex);
+    if(prop_clean(p))
       return;
-    }
 
   } else if(!strcmp(rstr_get(p->hp_rstring), str)) {
-    hts_mutex_unlock(&prop_mutex);
     return;
   } else {
     rstr_release(p->hp_rstring);
@@ -2196,8 +2200,24 @@ prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str,
   p->hp_type = PROP_STRING;
 
   p->hp_rstrtype = type;
+  prop_notify_value(p, skipme, "prop_set_string()");
+}
 
-  prop_set_epilogue(skipme, p, "prop_set_string()");
+/**
+ *
+ */
+void
+prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str,
+		   prop_str_type_t type)
+{
+  if(str == NULL) {
+    prop_set_void_ex(p, skipme);
+    return;
+  }
+
+  hts_mutex_lock(&prop_mutex);
+  prop_set_string_exl(p, skipme, str, type);
+  hts_mutex_unlock(&prop_mutex);
 }
 
 

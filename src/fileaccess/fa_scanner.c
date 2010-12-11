@@ -647,7 +647,7 @@ fa_scanner(const char *url, prop_t *model, const char *playme)
   prop_nf_release(prop_nf_create(prop_create(model, "nodes"),
 				 source,
 				 prop_create(model, "filter"),
-				 "node.filename"));
+				 "node.filename", PROP_NF_AUTODESTROY));
 
   prop_set_int(prop_create(model, "canFilter"), 1);
 
