@@ -250,7 +250,7 @@ keymapper_entry_add(keymap_t *km, const char *kc1, const char *kc2,
 		   NULL);
 
 
-  p = prop_create(src, "title");
+  p = prop_create(prop_create(src, "metadata"), "title");
   prop_set_string(p, eventname);
 
   if(prop_set_parent(ke->ke_prop, prop_create(km->km_settings, "nodes")))

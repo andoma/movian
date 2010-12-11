@@ -540,7 +540,6 @@ static int
 be_settings_open(prop_t *page, const char *url0)
 {
   prop_link(settings_root, prop_create(page, "model"));
-  prop_print_tree(page, 1);
   return 0;
 }
 
