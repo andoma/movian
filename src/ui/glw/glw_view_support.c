@@ -348,6 +348,9 @@ token2name(token_t *t)
   case TOKEN_PROPERTY_SUBSCRIPTION:
     return "property subscription";
 
+  case TOKEN_PROPERTY_REF:
+    return "property ref";
+
   case TOKEN_PROPERTY_VALUE_NAME:
   case TOKEN_PROPERTY_CANONICAL_NAME:
     snprintf(buf, sizeof(buf), "<property> %s", rstr_get(t->t_rstring));
@@ -401,7 +404,8 @@ token2name(token_t *t)
   case TOKEN_RIGHT_BRACKET:  return "]";
 
   default:
-    abort();
+    snprintf(buf, sizeof(buf), "Tokentype<%d>", t->type);
+    return buf;
   }
 }
 
