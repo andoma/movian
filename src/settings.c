@@ -409,7 +409,7 @@ settings_create_string(prop_t *parent, const char *id, const char *title,
   s->s_opaque = opaque;
 
   if(store != NULL)
-    initial = htsmsg_get_str(store, id);
+    initial = htsmsg_get_str(store, id) ?: initial;
 
   if(initial != NULL)
     prop_set_string(v, initial);
