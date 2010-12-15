@@ -12,15 +12,26 @@ typedef enum {
   SERVICE_WEBDAV,
 } service_class_t;
 
-#define SI_MAX_SERVICES 1
-
 typedef struct service_instance {
   LIST_ENTRY(service_instance) si_link;
-  
+
   char *si_id;
   void *si_opaque;
 
-  struct service *si_services[SI_MAX_SERVICES];
+  char *si_url;
+
+  prop_t *si_settings;
+  char *si_settings_path;
+  struct htsmsg *si_settings_store;
+
+  struct setting *si_setting_enabled;
+  struct setting *si_setting_title;
+  struct setting *si_setting_type;
+
+  int si_probe;
+  int si_enabled;
+
+  struct service *si_service;
 
 } service_instance_t;
 

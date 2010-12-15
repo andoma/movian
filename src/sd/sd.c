@@ -25,6 +25,7 @@
 #include "showtime.h"
 #include "service.h"
 #include "misc/strtab.h"
+#include "settings.h"
 
 #ifdef CONFIG_AVAHI
 #include "avahi.h"
@@ -34,12 +35,11 @@
 #endif
 
 
-extern prop_t *global_sources;
-
-
+/**
+ *
+ */
 service_instance_t *
-si_find(struct service_instance_list *services,
-        const char *id)
+si_find(struct service_instance_list *services, const char *id)
 {
   service_instance_t *si;
   
@@ -57,16 +57,129 @@ si_find(struct service_instance_list *services,
 void
 si_destroy(service_instance_t *si)
 {
-  int i;
-  for(i = 0; i < SI_MAX_SERVICES; i++)
-    if(si->si_services[i] != NULL)
-      service_destroy(si->si_services[i]);
+  if(si->si_service != NULL)
+    service_destroy(si->si_service);
+
+  setting_destroy(si->si_setting_enabled);
+  setting_destroy(si->si_setting_title);
+  setting_destroy(si->si_setting_type);
+
+  prop_destroy(si->si_settings);
+  free(si->si_settings_path);
+  htsmsg_destroy(si->si_settings_store);
+
+  LIST_REMOVE(si, si_link);
 
   free(si->si_id);
-  LIST_REMOVE(si, si_link);
+  free(si->si_url);
   free(si);
 }
 
+
+
+/**
+ *
+ */
+static void
+update_service(service_instance_t *si)
+{
+  if(si->si_service == NULL && si->si_enabled &&
+     si->si_setting_title && si->si_setting_type) {
+    si->si_service = service_create(NULL, si->si_url, NULL, NULL,
+				     si->si_probe);
+    prop_link(settings_get_value(si->si_setting_title), 
+	      prop_create(si->si_service->s_root, "title"));
+    prop_link(settings_get_value(si->si_setting_type), 
+	      prop_create(si->si_service->s_root, "type"));
+    return;
+  }
+
+  if(si->si_service != NULL && !si->si_enabled) {
+    service_destroy(si->si_service);
+    si->si_service = NULL;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+remove_bad_chars(char *s)
+{
+  while(*s) {
+    if(*s == ':' || *s == '/')
+      *s = '_';
+    s++;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+sd_settings_saver(void *opaque, htsmsg_t *msg)
+{
+  service_instance_t *si = opaque;
+  htsmsg_store_save(msg, si->si_settings_path);
+}
+
+
+/**
+ *
+ */
+static void
+enable_cb(void *opaque, int enabled)
+{
+  service_instance_t *si = opaque;
+  si->si_enabled = enabled;
+  update_service(si);
+}
+
+
+/**
+ *
+ */
+static void
+sd_add_service(service_instance_t *si, const char *title,
+	       const char *url, const char *contents, int probe)
+{
+  si->si_probe = probe;
+  if(si->si_settings == NULL) {
+    char tmp[100];
+
+    si->si_url = strdup(url);
+    
+    snprintf(tmp, sizeof(tmp), "sd/%s", url);
+    remove_bad_chars(tmp+3);
+
+    si->si_settings_path = strdup(tmp);
+    si->si_settings_store = htsmsg_store_load(tmp) ?: htsmsg_create_map();
+
+    si->si_settings = settings_add_dir(settings_sd, title, NULL, NULL);
+    
+    si->si_setting_enabled = 
+      settings_create_bool(si->si_settings, "enabled", "Enabled", 1,
+			   si->si_settings_store, enable_cb, si,
+			   SETTINGS_INITIAL_UPDATE, NULL,
+			   sd_settings_saver, si);
+
+    si->si_setting_title = 
+      settings_create_string(si->si_settings, "title", "Name", title,
+			     si->si_settings_store, NULL, NULL,
+			     SETTINGS_INITIAL_UPDATE, NULL,
+			     sd_settings_saver, si);
+
+    si->si_setting_type = 
+      settings_create_string(si->si_settings, "type", "Type", contents,
+			     si->si_settings_store, NULL, NULL,
+			     SETTINGS_INITIAL_UPDATE, NULL,
+			     sd_settings_saver, si);
+  }
+
+  update_service(si);
+}
 
 /**
  * HTSP service creator
@@ -76,13 +189,8 @@ sd_add_service_htsp(service_instance_t *si, const char *name,
 		    const char *host, int port)
 {
   char url[URL_MAX];
-
-
-  if(si->si_services[0] != NULL)
-    return;
-
   snprintf(url, sizeof(url), "htsp://%s:%d", host, port);
-  si->si_services[0] = service_create(name, url, "tv", NULL, 0);
+  sd_add_service(si, name, url, "tv", 0);
 }
 
 
@@ -95,15 +203,9 @@ sd_add_service_webdav(service_instance_t *si, const char *name,
 		      const char *contents)
 {
   char url[URL_MAX];
-
-  if(si->si_services[0] != NULL)
-    return;
-
-  snprintf(url, sizeof(url), "webdav://%s:%d%s%s",
-	   host, port, path == NULL || path[0] != '/' ? "/" : "",
-	   path ? path : "");
-
-  si->si_services[0] = service_create(name, url, contents, NULL, 1);
+  snprintf(url, sizeof(url), "webdav://%s:%d%s%s", host, port,
+	   path == NULL || path[0] != '/' ? "/" : "", path ? path : "");
+  sd_add_service(si, name, url, contents, 1);
 }
 
 /**

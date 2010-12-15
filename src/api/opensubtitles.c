@@ -81,7 +81,7 @@ opensub_init(void)
   prop_t *s;
   hts_mutex_init(&opensub_mutex);
 
-  s = settings_add_dir(NULL, "Opensubtitles.org", NULL);
+  s = settings_add_dir(NULL, "Opensubtitles.org", NULL, NULL);
 
   htsmsg_t *store = htsmsg_store_load("opensubtitles");
   if(store == NULL)

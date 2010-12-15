@@ -230,7 +230,7 @@ bookmarks_init(void)
 
   hts_mutex_init(&bookmark_mutex);
 
-  bookmarks = prop_create(settings_add_dir(NULL, "Bookmarks", "bookmark"),
+  bookmarks = prop_create(settings_add_dir(NULL, "Bookmarks", "bookmark", NULL),
 			  "model");
 
   prop_set_int(prop_create(bookmarks, "mayadd"), 1);

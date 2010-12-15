@@ -36,6 +36,7 @@
 static prop_t *settings_root;
 static prop_t *settings_nodes;
 
+prop_t *settings_apps, *settings_sd;
 
 /**
  *
@@ -87,16 +88,22 @@ setting_add(prop_t *parent, const char *title, const char *type)
  *
  */
 prop_t *
-settings_add_dir(prop_t *parent, const char *title, const char *subtype)
+settings_add_dir(prop_t *parent, const char *title, const char *subtype,
+		 const char *icon)
 {
   char url[100];
   prop_t *p = setting_add(parent ? prop_create(parent, "model") : NULL,
 			  title, "settings");
   prop_t *model = prop_create(p, "model");
+  prop_t *metadata = prop_create(model, "metadata");
 
   prop_set_string(prop_create(model, "subtype"), subtype);
   backend_prop_make(model, url, sizeof(url));
   prop_set_string(prop_create(p, "url"), url);
+  if(icon != NULL) {
+    prop_set_string(prop_create(metadata, "icon"), icon);
+    prop_print_tree(p, 1);
+  }
   return p;
 }
 
@@ -511,6 +518,10 @@ settings_init(void)
 
   prop_set_string(prop_create(settings_root, "type"), "settings");
   set_title(settings_root, "Global settings");
+
+  settings_apps = settings_add_dir(NULL, "Plugins", "settings", NULL);
+  settings_sd = settings_add_dir(NULL, "Autodiscoverd services",
+				 "settings", NULL);
 }
 
 

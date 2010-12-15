@@ -79,7 +79,7 @@ search_get_settings(void)
   static prop_t *p;
 
   if(p == NULL)
-    p = settings_add_dir(NULL, "Search", "search");
+    p = settings_add_dir(NULL, "Search", "search", NULL);
   return p;
 }
 

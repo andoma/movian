@@ -365,7 +365,7 @@ keymapper_create(prop_t *settingsparent, const char *name, const char *title,
 
   km->km_name = strdup(name);
   km->km_settings = prop_create(settings_add_dir(settingsparent, title,
-						 "keymap"), "model");
+						 "keymap", NULL), "model");
 
   keymapper_create_entries(km, def);
   return km;

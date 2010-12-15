@@ -37,7 +37,7 @@ typedef struct settings_multiopt {
 } settings_multiopt_t;
 
 prop_t *settings_add_dir(prop_t *parent, const char *title,
-			 const char *subtype);
+			 const char *subtype, const char *icon);
 
 prop_t *settings_get_dirlist(prop_t *parent);
 
@@ -100,5 +100,8 @@ void settings_generic_set_bool(void *opaque, int value);
 
 void settings_create_info(prop_t *parent, const char *image,
 			  const char *description);
+
+extern prop_t *settings_apps;
+extern prop_t *settings_sd;
 
 #endif /* SETTINGS_H__ */

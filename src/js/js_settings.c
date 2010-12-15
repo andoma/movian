@@ -277,14 +277,13 @@ js_createSettings(JSContext *cx, JSObject *obj, uintN argc,
 {
   const char *title;
   const char *type;
+  const char *icon = NULL;
   char spath[URL_MAX];
 
-   if(!JS_ConvertArguments(cx, argc, argv, "ss", &title, &type))
+  if(!JS_ConvertArguments(cx, argc, argv, "ss/s", &title, &type, &icon))
     return JS_FALSE;
-
-  
-   js_plugin_t *jsp = JS_GetPrivate(cx, obj);
-   snprintf(spath, sizeof(spath), "plugins/%s", jsp->jsp_id);
+  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
+  snprintf(spath, sizeof(spath), "plugins/%s", jsp->jsp_id);
 
   js_setting_t *jss = calloc(1, sizeof(js_setting_t));
   JSObject *robj;
@@ -292,7 +291,7 @@ js_createSettings(JSContext *cx, JSObject *obj, uintN argc,
   jss->jss_spath = strdup(spath);
   jss->jss_store = htsmsg_store_load(spath) ?: htsmsg_create_map();
 
-  jss->jss_p = settings_add_dir(NULL, title, type);
+  jss->jss_p = settings_add_dir(settings_apps, title, type, icon);
 
   robj = JS_NewObjectWithGivenProto(cx, &setting_class, NULL, obj);
   *rval = OBJECT_TO_JSVAL(robj);
