@@ -75,7 +75,7 @@ static prop_t *
 setting_add(prop_t *parent, const char *title, const char *type)
 {
   prop_t *p, *model;
-  p = prop_create(parent ? prop_create(parent, "node") : settings_nodes, NULL);
+  p = prop_create(parent ? prop_create(parent, "nodes") : settings_nodes, NULL);
   model = prop_create(p, "model");
   set_title(model, title);
   prop_set_string(prop_create(model, "type"), type);
