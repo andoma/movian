@@ -552,7 +552,11 @@ fileaccess_init(void)
     if(fap->fap_init != NULL)
       fap->fap_init();
 
+#if LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT(52, 69, 0)
   av_register_protocol2(&fa_lavf_proto, sizeof(fa_lavf_proto));
+#else
+  av_register_protocol(&fa_lavf_proto);
+#endif
   return 0;
 }
 
