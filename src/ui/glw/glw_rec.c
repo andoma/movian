@@ -52,7 +52,7 @@ glw_rec_init(const char *filename, int width, int height, int fps)
   gr->height = height;
   gr->fps = fps;
   
-  gr->fmt = guess_format(NULL, filename, NULL);
+  gr->fmt = av_guess_format(NULL, filename, NULL);
   if(gr->fmt == NULL) {
     TRACE(TRACE_ERROR, "GLWREC",
 	  "Unable to record to %s -- Unknown file format",
