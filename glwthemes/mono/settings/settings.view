@@ -5,7 +5,7 @@
 LIST_ITEM_SIMPLE($self.model.metadata.title,
 
 		 translate($self.model.subtype,
-			   "theme://icons/48x48/Settings.png",
+			   $self.model.metadata.icon ?? "theme://icons/48x48/Settings.png",
 			   "sound", "theme://icons/48x48/Sound.png",
 			   "audio", "theme://icons/48x48/Music.png",
 			   "video", "theme://icons/48x48/Movie.png",
