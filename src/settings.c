@@ -75,18 +75,8 @@ static prop_t *
 setting_add(prop_t *parent, const char *title, const char *type)
 {
   prop_t *p, *model;
-  char url[100];
-
-  if(parent != NULL) {
-    p = prop_create(parent, "nodes");
-  } else {
-    p = settings_nodes;
-  }
-  p = prop_create(p, NULL);
-
+  p = prop_create(parent ? prop_create(parent, "node") : settings_nodes, NULL);
   model = prop_create(p, "model");
-  backend_prop_make(model, url, sizeof(url));
-  prop_set_string(prop_create(p, "url"), url);
   set_title(model, title);
   prop_set_string(prop_create(model, "type"), type);
   return p;
@@ -99,11 +89,15 @@ setting_add(prop_t *parent, const char *title, const char *type)
 prop_t *
 settings_add_dir(prop_t *parent, const char *title, const char *subtype)
 {
-  parent = parent ? prop_create(parent, "model") : NULL;
-  prop_t *r = setting_add(parent, title, "settings");
-  prop_t *m = prop_create(r, "model");
-  prop_set_string(prop_create(m, "subtype"), subtype);
-  return r;
+  char url[100];
+  prop_t *p = setting_add(parent ? prop_create(parent, "model") : NULL,
+			  title, "settings");
+  prop_t *model = prop_create(p, "model");
+
+  prop_set_string(prop_create(model, "subtype"), subtype);
+  backend_prop_make(model, url, sizeof(url));
+  prop_set_string(prop_create(p, "url"), url);
+  return p;
 }
 
 
