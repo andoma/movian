@@ -8,7 +8,8 @@ widget(container_x, {
   });
   
   widget(backdrop, {
-
+    .filterConstraintX = true;
+      
     .alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
     .color = [0.45, 0.45, 0.5];
     .source = "theme://graphics/shadedplate.png";
@@ -16,7 +17,6 @@ widget(container_x, {
     .padding = [0, -4, 0, -4];
 
     widget(text, {
-      .filterConstraintX = true;
       .align = left;
       .focusable = true;
       .password = $self.model.password;
