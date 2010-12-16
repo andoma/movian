@@ -27,6 +27,7 @@
 #define CHILD_RUNNING 2
 #define CHILD_ZOMBIE  3
 
+#define TBS 1000
 
 typedef struct glw_multitile {
   glw_t w;
@@ -48,12 +49,15 @@ typedef struct glw_multitile {
   int transmode;
   int transcnt;
 
+  int did_render;
+
 } glw_multitile_t;
 
 
 typedef struct glw_tile_transformer {
   void (*global)(glw_rctx_t *rc, glw_multitile_t *mt);
   void (*local)(glw_rctx_t *rc, glw_multitile_t *mt, glw_t *c);
+  int reverse;
 } glw_tile_transformer_t;
 
 
@@ -130,7 +134,7 @@ starwars_local(glw_rctx_t *rc, glw_multitile_t *mt, glw_t *c)
 {
   glw_Translatef(rc,
 		 -1 + (1.0f / NLANES) + c->glw_parent_lane * (2.0f / NLANES),
-		 11 - 13 * c->glw_parent_value,
+		 11 - 17 * c->glw_parent_value,
 		 -1);
   
   rc->rc_alpha *= c->glw_parent_value;
@@ -191,7 +195,7 @@ tunnel_local(glw_rctx_t *rc, glw_multitile_t *mt, glw_t *c)
 {
   float a = mt->w.glw_root->gr_frames % 360;
 
-  float screw = sin(2 * a * M_PI * 2 / 360) * 180;
+  float screw = sin(1 * a * M_PI * 2 / 360) * 180;
 
   glw_Rotatef(rc, 
 	      (1 - c->glw_parent_value) * screw + 
@@ -214,6 +218,42 @@ static glw_tile_transformer_t tunnel = {
   .local  = tunnel_local,
 };
 
+
+
+static void
+hyperdrive_local(glw_rctx_t *rc, glw_multitile_t *mt, glw_t *c)
+{
+  float x, y;
+
+  x = -0.75 + (1.5 * c->glw_parent_r0);
+  y = -0.75 + (1.5 * c->glw_parent_r1);
+
+  float d = (1 - c->glw_parent_value) * 10;
+  d = d * d;
+
+  float s = 1 + 0.05 * d;
+
+  glw_Translatef(rc,
+		 x * s,
+		 y * s,
+		 1 -d);
+
+  float alpha;
+
+  if(c->glw_parent_value > 0.9) {
+    alpha = 1 - (c->glw_parent_value - 0.95) * 20;
+  } else {
+    alpha = c->glw_parent_value * (1 / 0.95);
+  }
+ 
+  rc->rc_alpha *= alpha;
+}
+
+
+
+static glw_tile_transformer_t hyperdrive = {
+  .local  = hyperdrive_local,
+};
 
 
 /**
@@ -246,7 +286,7 @@ rollercoaster_local(glw_rctx_t *rc, glw_multitile_t *mt, glw_t *c)
 
 
 
-static glw_tile_transformer_t rollercoaster = {
+static glw_tile_transformer_t rollercoaster  __attribute__((unused)) = {
   .global = rollercoaster_global,
   .local  = rollercoaster_local,
 };
@@ -283,7 +323,7 @@ glw_multitile_render(glw_t *w, glw_rctx_t *rc)
   rc_mix.rc_width  = sf->child_width;
   rc_mix.rc_height = sf->child_height;
 
-  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+  TAILQ_FOREACH_REVERSE(c, &w->glw_childs, glw_queue, glw_parent_link) {
 
     if(c->glw_parent_state != CHILD_RUNNING)
       continue;
@@ -310,6 +350,7 @@ glw_multitile_render(glw_t *w, glw_rctx_t *rc)
 
     glw_render0(c, &rc_mix);
   }
+  sf->did_render = 1;
 }
 
 
@@ -367,8 +408,8 @@ dotransmode(glw_multitile_t *sf)
     switch(sf->transmode) {
     default: sf->transmode = 0;
     case 0: next = &starwars;  break;
-    case 1: next = &rain;      break;
-    case 2: next = &rollercoaster;    break;
+    case 1: next = &hyperdrive;  break;
+    case 2: next = &rain;      break;
     case 3: next = &starwars2; break;
     case 4: next = &tunnel;    break;
     }
@@ -379,7 +420,7 @@ dotransmode(glw_multitile_t *sf)
 
   if(sf->xfade > 1) {
     sf->xfade = 0;
-    sf->transcnt = 600;
+    sf->transcnt = TBS;
     sf->current = sf->next;
     sf->next = NULL;
   }
@@ -407,7 +448,8 @@ glw_multitile_layout(glw_multitile_t *sf, glw_rctx_t *rc)
   sf->child_height = sf->child_width;
 
   if(sf->pending_release > 0) {
-    sf->pending_release--;
+    if(sf->did_render)
+      sf->pending_release--;
   } else {
     if(sf->all_lanes_loaded) {
       sf->pending_release = 30;
@@ -415,8 +457,10 @@ glw_multitile_layout(glw_multitile_t *sf, glw_rctx_t *rc)
     }
   }
 
-  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+  int num = -1;
 
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    num++;
     switch(c->glw_parent_state) {
     case CHILD_NEW:
       c->glw_parent_state = CHILD_PENDING;
@@ -426,7 +470,7 @@ glw_multitile_layout(glw_multitile_t *sf, glw_rctx_t *rc)
       if(c->glw_class->gc_ready != NULL && !c->glw_class->gc_ready(c)) {
 	// Not yet ready
 	c->glw_parent_timeout++;
-	if(c->glw_parent_timeout == 180) {
+	if(c->glw_parent_timeout == 1000) {
 	  reap_child(c);
 	  continue;
 	}
@@ -451,7 +495,8 @@ glw_multitile_layout(glw_multitile_t *sf, glw_rctx_t *rc)
       lane++;
 
     case CHILD_RUNNING:
-      c->glw_parent_value += 0.0010;
+      if(sf->did_render)
+	c->glw_parent_value += 0.0010;
 
       if(c->glw_parent_value < 1)
 	break;
@@ -468,6 +513,7 @@ glw_multitile_layout(glw_multitile_t *sf, glw_rctx_t *rc)
     rc0.rc_height = sf->child_height;
     glw_layout0(c, &rc0);
   }
+  sf->did_render = 0;
 }
 
 
@@ -503,7 +549,7 @@ glw_multitile_set(glw_t *w, int init, va_list ap)
 
   if(init) {
     sf->current = &starwars;
-    sf->transcnt = 600;
+    sf->transcnt = TBS;
   }
 }
 
