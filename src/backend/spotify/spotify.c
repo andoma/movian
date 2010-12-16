@@ -48,7 +48,6 @@
 #include "api/lastfm.h"
 
 #define SPOTIFY_ICON_URL "bundle://resources/spotify/spotify_icon.png"
-#define SPOTIFY_LOGO_URL "bundle://resources/spotify/spotify-core-logo-96x96.png"
 
 #ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
 #include <dlfcn.h>
@@ -223,6 +222,7 @@ typedef struct spotify_page {
   prop_t *sp_loading;
   prop_t *sp_contents;
   prop_t *sp_title;
+  prop_t *sp_icon;
   prop_t *sp_album_name;
   prop_t *sp_album_year;
   prop_t *sp_album_art;
@@ -307,6 +307,7 @@ static playlist_t *pl_create(sp_playlist *plist, int withtracks,
 			     prop_t *loading,
 			     prop_t *type,
 			     prop_t *title,
+			     prop_t *icon,
 			     prop_t *canDelete,
 			     prop_t *url,
 			     prop_t *numtracks,
@@ -381,6 +382,7 @@ spotify_page_destroy(spotify_page_t *sp)
   prop_ref_dec_nullchk(sp->sp_loading);
   prop_ref_dec_nullchk(sp->sp_contents);
   prop_ref_dec_nullchk(sp->sp_title);
+  prop_ref_dec_nullchk(sp->sp_icon);
   prop_ref_dec_nullchk(sp->sp_album_name);
   prop_ref_dec_nullchk(sp->sp_album_year);
   prop_ref_dec_nullchk(sp->sp_album_art);
@@ -1514,6 +1516,7 @@ spotify_open_album(sp_album *alb, spotify_page_t *sp, const char *playme)
   metadata_create(sp->sp_album_name,  METADATA_ALBUM_NAME, alb);
   metadata_create(sp->sp_album_year,  METADATA_ALBUM_YEAR, alb);
   metadata_create(sp->sp_album_art,   METADATA_ALBUM_IMAGE, alb);
+  metadata_create(sp->sp_icon,        METADATA_ALBUM_IMAGE, alb);
   metadata_create(sp->sp_artist_name, METADATA_ALBUM_ARTIST_NAME, alb);
 
   prop_set_string(sp->sp_contents, "albumTracks");
@@ -1531,6 +1534,7 @@ spotify_open_playlist(spotify_page_t *sp, sp_playlist *plist, const char *name)
 	    sp->sp_loading,
 	    sp->sp_type,
 	    sp->sp_title,
+	    sp->sp_icon,
 	    sp->sp_canDelete,
 	    sp->sp_urlprop,
 	    sp->sp_numtracks,
@@ -2112,6 +2116,7 @@ pl_create(sp_playlist *plist, int withtracks, const char *name,
 	  prop_t *loading,
 	  prop_t *type,
 	  prop_t *title,
+	  prop_t *icon,
 	  prop_t *canDelete,
 	  prop_t *url,
 	  prop_t *numtracks,
@@ -2319,6 +2324,7 @@ pl_create2(sp_playlist *plist)
 			     prop_create(model, "loading"),
 			     prop_create(model, "type"),
 			     prop_create(metadata, "title"),
+			     prop_create(metadata, "icon"),
 			     prop_create(model, "canDelete"),
 			     prop_create(model, "url"),
 			     prop_create(metadata, "tracks"),
@@ -3061,7 +3067,7 @@ startpage(prop_t *page)
 
   prop_set_string(prop_create(model, "type"), "directory");
   prop_set_string(prop_create(model, "contents"), "items");
-  prop_set_string(prop_create(metadata, "logo"), SPOTIFY_LOGO_URL);
+  prop_set_string(prop_create(metadata, "logo"), SPOTIFY_ICON_URL);
 
   prop_t *nodes = prop_create(model, "nodes");
 
@@ -3080,8 +3086,13 @@ add_metadata_props(spotify_page_t *sp)
 {
   prop_t *m = prop_create(sp->sp_model, "metadata");
 
+
   sp->sp_title = prop_create(m, "title");
   prop_ref_inc(sp->sp_title);
+
+  sp->sp_icon = prop_create(m, "logo");
+  prop_ref_inc(sp->sp_icon);
+  prop_set_string(sp->sp_icon, SPOTIFY_ICON_URL);
 
   sp->sp_album_name = prop_create(m, "album_name");
   prop_ref_inc(sp->sp_album_name);
@@ -3476,7 +3487,7 @@ spotify_enable(void)
 {
   if(spotify_service == NULL)
     spotify_service = service_create("Spotify", "spotify:start",
-				     "music", SPOTIFY_LOGO_URL, 0);
+				     "music", SPOTIFY_ICON_URL, 0);
 }
 
 
