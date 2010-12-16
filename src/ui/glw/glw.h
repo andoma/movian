@@ -133,6 +133,8 @@ typedef enum {
   GLW_ATTRIB_FILL,
   GLW_ATTRIB_MAXLINES,
   GLW_ATTRIB_SPACING,
+  GLW_ATTRIB_X_SPACING,
+  GLW_ATTRIB_Y_SPACING,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -917,6 +919,8 @@ do {						\
   case GLW_ATTRIB_PRIORITY:                     \
   case GLW_ATTRIB_MAXLINES:                     \
   case GLW_ATTRIB_SPACING:                      \
+  case GLW_ATTRIB_X_SPACING:                    \
+  case GLW_ATTRIB_Y_SPACING:                    \
     (void)va_arg(ap, int);			\
     break;					\
   case GLW_ATTRIB_BORDER:                       \

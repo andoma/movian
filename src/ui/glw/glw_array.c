@@ -46,6 +46,9 @@ typedef struct glw_array {
   int16_t saved_height;
   int16_t saved_width;
 
+  int16_t xspacing;
+  int16_t yspacing;
+
 } glw_array_t;
 
 #define glw_parent_pos_x glw_parent_val[0].i32
@@ -108,22 +111,45 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
 
   if(a->child_tiles_x && a->child_tiles_y) {
 
+    xspacing = a->xspacing;
+    yspacing = a->yspacing;
+
     a->xentries = a->child_tiles_x;
     a->yentries = a->child_tiles_y;
 
-    a->child_width_px  = rc->rc_width  / a->xentries;
-    a->child_height_px = rc->rc_height / a->yentries;
-    
+    a->child_width_px  = (rc->rc_width - (a->xentries - 1) * xspacing) /
+      a->xentries;
+
+    a->child_height_px = (rc->rc_height - (a->yentries - 1) * yspacing) /
+      a->yentries;
+
+    if(a->child_width_fixed && a->child_width_px > a->child_width_fixed) {
+      int e = a->child_width_px - a->child_width_fixed;
+      xspacing += (e * a->xentries) / (a->xentries - 1);
+      a->child_width_px = a->child_width_fixed;
+    }
+
+    if(a->child_height_fixed && a->child_height_px > a->child_height_fixed) {
+      int e = a->child_height_px - a->child_height_fixed;
+      yspacing += (e * a->yentries) / (a->yentries - 1);
+      a->child_height_px = a->child_height_fixed;
+    }
+      
+
+
   } else {
 
-    a->xentries = GLW_MAX(1, rc->rc_width  / a->child_width_fixed);
-    a->yentries = GLW_MAX(1, rc->rc_height / a->child_height_fixed);
+    int width  = a->child_width_fixed  ?: 100;
+    int height = a->child_height_fixed ?: 100;
 
-    a->child_width_px  = a->child_width_fixed;
-    a->child_height_px = a->child_height_fixed;
+    a->xentries = GLW_MAX(1, rc->rc_width  / width);
+    a->yentries = GLW_MAX(1, rc->rc_height / height);
 
-    int xspill = rc->rc_width  - (a->xentries * a->child_width_fixed);
-    int yspill = rc->rc_height - (a->yentries * a->child_height_fixed);
+    a->child_width_px  = width;
+    a->child_height_px = height;
+
+    int xspill = rc->rc_width  - (a->xentries * width);
+    int yspill = rc->rc_height - (a->yentries * height);
 
     xspacing = xspill / (a->xentries + 1);
     yspacing = yspill / (a->yentries + 1);
@@ -145,14 +171,14 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
 
   rc0.rc_width  = a->child_width_px;
   rc0.rc_height = a->child_height_px;
-  ypos = yspacing;
+  ypos = 0;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
 
     c->glw_parent_pos_y = ypos;
-    c->glw_parent_pos_x = column * (xspacing + a->child_width_px) + xspacing;
+    c->glw_parent_pos_x = column * (xspacing + a->child_width_px);
 
     if(ypos - a->filtered_pos > -rc->rc_height &&
        ypos - a->filtered_pos <  rc->rc_height * 2)
@@ -359,8 +385,6 @@ glw_array_set(glw_t *w, int init, va_list ap)
 
   if(init) {
     // Just something
-    a->child_width_fixed  = 100;
-    a->child_height_fixed = 100;
     w->glw_flags2 |= GLW2_FLOATING_FOCUS;
   }
 
@@ -378,6 +402,12 @@ glw_array_set(glw_t *w, int init, va_list ap)
       break;
     case GLW_ATTRIB_CHILD_TILES_Y:
       a->child_tiles_y = va_arg(ap, int);
+      break;
+    case GLW_ATTRIB_X_SPACING:
+      a->xspacing = va_arg(ap, int);
+      break;
+    case GLW_ATTRIB_Y_SPACING:
+      a->yspacing = va_arg(ap, int);
       break;
 
     default:
@@ -414,4 +444,3 @@ static glw_class_t glw_array = {
 };
 
 GLW_REGISTER_CLASS(glw_array);
-
