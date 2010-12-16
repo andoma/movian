@@ -100,10 +100,8 @@ settings_add_dir(prop_t *parent, const char *title, const char *subtype,
   prop_set_string(prop_create(model, "subtype"), subtype);
   backend_prop_make(model, url, sizeof(url));
   prop_set_string(prop_create(p, "url"), url);
-  if(icon != NULL) {
+  if(icon != NULL)
     prop_set_string(prop_create(metadata, "icon"), icon);
-    prop_print_tree(p, 1);
-  }
   return p;
 }
 
