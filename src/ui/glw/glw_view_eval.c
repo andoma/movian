@@ -926,6 +926,7 @@ eval_dynamic(glw_t *w, token_t *rpn)
   memset(&ec, 0, sizeof(ec));
   ec.w = w;
   ec.gr = w->glw_root;
+  ec.sublist = &w->glw_prop_subscriptions;
 
   glw_view_eval_rpn0(rpn, &ec);
 
