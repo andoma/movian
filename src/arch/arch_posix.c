@@ -323,7 +323,7 @@ arch_set_cachepath(void)
   const char *homedir = getenv("HOME");
   char buf[PATH_MAX];
 
-  snprintf(buf, sizeof(buf), "%s/.hts/showtimecache", homedir);
+  snprintf(buf, sizeof(buf), "%s/.cache/showtime", homedir);
   showtime_cache_path = strdup(buf);
 }
 
