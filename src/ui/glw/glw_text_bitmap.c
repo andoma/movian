@@ -1205,8 +1205,8 @@ gtb_caption_has_changed(glw_text_bitmap_t *gtb)
     str = gtb->gtb_caption;
   }
   
-  gtb->gtb_uc_buffer = realloc(gtb->gtb_uc_buffer, l * sizeof(int));
   gtb->gtb_uc_size = l;
+  gtb->gtb_uc_buffer = realloc(gtb->gtb_uc_buffer, l * sizeof(int));
   
   if(str != NULL) {
 
@@ -1222,6 +1222,8 @@ gtb_caption_has_changed(glw_text_bitmap_t *gtb)
     default:
       abort();
     }
+  } else {
+    gtb->gtb_uc_len = 0;
   }
 
   if(gtb->w.glw_class == &glw_text) {
@@ -1297,7 +1299,7 @@ glw_text_bitmap_set(glw_t *w, int init, va_list ap)
   const char **pname, *caption;
 
   if(init) {
-    w->glw_flags |= GLW_FOCUS_ON_CLICK | GLW_SHADOW;
+    w->glw_flags |= GLW_FOCUS_ON_CLICK | GLW_SHADOW | GLW_HIDDEN;
     gtb->gtb_edit_ptr = -1;
     gtb->gtb_int_step = 1;
     gtb->gtb_int_min = INT_MIN;
@@ -1317,6 +1319,7 @@ glw_text_bitmap_set(glw_t *w, int init, va_list ap)
     switch(attrib) {
     case GLW_ATTRIB_VALUE:
       gtb->gtb_int = va_arg(ap, double);
+      w->glw_flags &= ~GLW_HIDDEN;
       update = 1;
       break;
 
@@ -1341,6 +1344,10 @@ glw_text_bitmap_set(glw_t *w, int init, va_list ap)
       gtb->gtb_caption = caption != NULL ? strdup(caption) : NULL;
       gtb->gtb_type = va_arg(ap, int);
       assert(gtb->gtb_type == 0 || gtb->gtb_type == 1);
+      if(caption == NULL)
+	w->glw_flags |= GLW_HIDDEN;
+      else
+	w->glw_flags &= ~GLW_HIDDEN;
       break;
 
     case GLW_ATTRIB_INT_STEP:
@@ -1403,6 +1410,7 @@ glw_text_bitmap_set(glw_t *w, int init, va_list ap)
 		       PROP_TAG_NAMED_ROOT, clone, "clone",
 		       PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
 		       NULL);
+      w->glw_flags &= ~GLW_HIDDEN;
 
       break;
 

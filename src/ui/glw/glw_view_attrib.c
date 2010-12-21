@@ -79,7 +79,7 @@ set_typed_string(glw_view_eval_context_t *ec, const token_attrib_t *a,
 
   switch(t->type) {
   case TOKEN_VOID:
-    str = "";
+    str = NULL;
     break;
 
   case TOKEN_STRING:
