@@ -166,7 +166,6 @@ EOF
 
 if [ "x$CC" != "x" ]; then
     echo >${CONFIG_MAK} "CC=$CC"
-    CC_FFMPEG="--cc=$CC"
 else
     CC=cc
 fi
@@ -195,6 +194,53 @@ fi
 
 
 echo >>${CONFIG_MAK} $CC_CONFIG_MAK 
+
+
+#
+# libavcodec
+#
+if pkg-config --atleast-version 52.72.0 libavcodec; then
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libavcodec`
+    echo "Using libavcodec:      `pkg-config --modversion libavcodec`"
+else
+    echo "libavcodec 52.72.0 or newer not found."
+    die
+fi
+
+#
+# libavformat
+#
+if pkg-config --atleast-version 52.64.0 libavformat; then
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libavformat`
+    echo "Using libavformat:     `pkg-config --modversion libavformat`"
+else
+    echo "libavformat 52.64.0 or newer not found."
+    die
+fi
+
+
+#
+# libavutil
+#
+if pkg-config --atleast-version 50.15.0 libavutil; then
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libavutil`
+    echo "Using libavutil:       `pkg-config --modversion libavutil`"
+else
+    echo "libavutil 50.15.0 or newer not found."
+    die
+fi
+
+
+#
+# libswscale
+#
+if pkg-config  --atleast-version 0.11.0 libswscale; then
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libswscale`
+    echo "Using libswscale:      `pkg-config --modversion libswscale`"
+else
+    echo "libswscale 0.11.0 or newer not found."
+    die
+fi
 
 
 #
@@ -571,10 +617,7 @@ if enabled libsidplay2; then
 fi
 
 
-#
-# configure ffmpeg
-#
-setup_ffmpeg --cpu=${CPU} --enable-pthreads --enable-encoder=ffv1 --enable-muxer=avi --enable-protocol=file --enable-encoder=ffvhuff
+
 
 
 #

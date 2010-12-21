@@ -210,54 +210,6 @@ PLATFORM ?= $PLATFORM
 EOF
 }
 
-setup_ffmpeg() {
-    
-    if [ "x${FFMPEG_PATH}" != "x" ]; then
-	echo "Using FFmpeg from:     ${FFMPEG_PATH}"
-
-	cat >> ${CONFIG_MAK} << EOF 
-CFLAGS_cfg  += -I${FFMPEG_PATH}/include
-LDFLAGS_cfg += -L${FFMPEG_PATH}/lib -Wl,-rpath=${FFMPEG_PATH}/lib
-LDFLAGS_cfg += -lswscale -lavformat -lavcodec -lavcore -lavutil
-EOF
-
-    else
-
-	echo "Configuring FFmpeg"
-	mkdir -p ${BUILDDIR}/ffmpeg/build
-	rm -rf ${BUILDDIR}/ffmpeg/install
-
-	(cd ${BUILDDIR}/ffmpeg/build && \
-	    ${TOPDIR}/ext/ffmpeg/configure  \
-	    $CC_FFMPEG \
-	    --enable-gpl \
-	    --disable-encoders \
-	    --disable-muxers \
-	    --disable-devices \
-	    --disable-protocols \
-	    --disable-network \
-	    --disable-stripping \
-	    --disable-static \
-	    --disable-shared \
-	    --enable-static \
-	    --prefix=${BUILDDIR}/ffmpeg/install \
-	    --disable-ffserver \
-	    --disable-ffmpeg \
-	    --disable-ffplay \
-	    --disable-ffprobe \
-	    --disable-bzlib \
-	    --disable-vaapi \
-	    "$@"
-	)
-
-	cat >> ${CONFIG_MAK} << EOF 
-CFLAGS_cfg  += -I${BUILDDIR}/ffmpeg/install/include
-LDFLAGS_cfg += -L${BUILDDIR}/ffmpeg/install/lib
-LDFLAGS_cfg += -lswscale -lavformat -lavcodec -lavcore -lavutil
-FFBUILDDEP   = ${BUILDDIR}/ffmpeg/install
-EOF
-    fi
-}
 
 spotify_setup() {
     enable spotify
