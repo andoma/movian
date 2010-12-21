@@ -518,7 +518,7 @@ settings_init(void)
   set_title(settings_root, "Global settings");
 
   settings_apps = settings_add_dir(NULL, "Plugins", "settings", NULL);
-  settings_sd = settings_add_dir(NULL, "Autodiscoverd services",
+  settings_sd = settings_add_dir(NULL, "Autodiscovered services",
 				 "settings", NULL);
 }
 
