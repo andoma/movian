@@ -589,7 +589,7 @@ audio_pa_init(void)
   pa_audio_mode_t *pam;
   audio_mode_t *am;
 
-  TRACE(TRACE_INFO, "PA", "Headerversion: %s, library: %s",
+  TRACE(TRACE_DEBUG, "PA", "Headerversion: %s, library: %s",
 	pa_get_headers_version(), pa_get_library_version());
 
   mainloop = pa_threaded_mainloop_new();
