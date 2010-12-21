@@ -27,7 +27,7 @@ APPDIR=${BUILDDIR}/Showtime.app
 
 show_help(){
   common_help
-  echo "  --prefix=PREFIX          install in PREFIX [$PREFIX]"
+  echo "  --prefix=PREFIX          Install in PREFIX [$PREFIX]"
   echo "  --arch=arch              Build for this architecture [$ARCH]"
   echo "  --cpu=cpu                Build and optimize for specific CPU"
   echo "  --cc=CC                  Build using the given compiler"
@@ -220,26 +220,6 @@ if enabled appleremote; then
 fi
 
 #
-# configure ffmpeg
-#
-if [ "$ARCH" = "powerpc" ]; then
-    setup_ffmpeg \
-        --enable-pthreads \
-        --enable-cross-compile \
-        --arch=powerpc \
-        --disable-altivec \
-        --extra-cflags="$MACOSXSDK_CFLAGS" \
-        --extra-ldflags="$MACOSXSDK_LDFLAGS" \
-        --cc="$CC"
-else
-    setup_ffmpeg \
-        --cpu=${CPU} \
-        --enable-pthreads \
-        --extra-cflags="$MACOSXSDK_CFLAGS" \
-        --extra-ldflags="$MACOSXSDK_LDFLAGS" \
-        --cc="$CC"
-fi
-#
 # pkg-config, set LIBDIR to makes pkg-config only search that path
 #
 if [ ! -x "$PKGCONFIG" ] ; then
@@ -254,6 +234,42 @@ if [ ! -d "$PKGCONFIGDIR" ] ; then
 fi
 export PKG_CONFIG_LIBDIR=$PKGCONFIGDIR
 PKGS=""
+
+#
+# libavformat
+#
+if pkg-config --atleast-version 52.64.0 libavformat; then
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libavformat`
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags libavformat`
+    echo "Using libavformat:     `pkg-config --modversion libavformat`"
+else
+    echo "libavformat 52.64.0 or newer not found."
+    die
+fi
+
+#
+# libavutil
+#
+if pkg-config --atleast-version 50.15.0 libavutil; then
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libavutil`
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags libavutil`
+    echo "Using libavutil:       `pkg-config --modversion libavutil`"
+else
+    echo "libavutil 50.15.0 or newer not found."
+    die
+fi
+
+#
+# libswscale
+#
+if pkg-config  --atleast-version 0.11.0 libswscale; then
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libswscale`
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags libswscale`
+    echo "Using libswscale:      `pkg-config --modversion libswscale`"
+else
+    echo "libswscale 0.11.0 or newer not found."
+    die
+fi
 
 #
 # libfreetype2
@@ -279,6 +295,13 @@ if enabled ssl; then
 	die
     fi
 fi
+
+#
+# libsmbclient
+#
+#if enabled libsmbclient; then
+#    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -libsmbclient" 
+#fi
 
 
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg_config_static $PKGS`
