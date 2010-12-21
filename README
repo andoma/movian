@@ -2,7 +2,7 @@
 			 Showtime mediaplayer
 			 ====================
 
-		 (c) 2006 - 2009 Andreas Öman, et al.
+		 (c) 2006 - 2010 Andreas Öman, et al.
 
 
 Settings are stored in ~/.hts/showtime
@@ -27,6 +27,36 @@ Build the binary, after build the binary resides in 'build.linux/'.
 Thus, to start it, just type:
 
 $ build.linux/showtime
+
+If you need/want to build with a recent version of FFmpeg without
+installing it on your system:
+
+Create an ffmpeg directory somewhere, perhaps in your home dir:
+
+$ mkdir ffmpeg
+$ svn co svn://svn.ffmpeg.org/ffmpeg/trunk src
+$ cd src
+
+Configure FFmpeg to install itself one directory up. Note that this
+will build static libraries so you don't need to mess around with
+LD_LIBRARY_PATH when running the binary. IF you enable shared libraries,
+remember to set that up as well.
+
+$ ./configure --prefix=$(cd .. && pwd)
+
+Build and install it in the ffmpeg directory you created in step #1
+
+$ make && make install
+
+Now go back and reconfigure Showtime with PKG_CONFIG_PATH set to the
+directories where the .pc files resides from the FFmpeg install:
+
+$ cd showtime 
+$ PKG_CONFIG_PATH=/the/path/to/ffmpeg/lib/pkgconfig ./configure
+$ make
+
+
+
 
 
 How to build for Mac OS X
