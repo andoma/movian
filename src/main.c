@@ -142,7 +142,7 @@ main(int argc, char **argv)
   int can_poweroff = 0;
   int r;
 
-  trace_level = TRACE_ERROR;
+  trace_level = TRACE_INFO;
 
   gettimeofday(&tv, NULL);
   srand(tv.tv_usec);
@@ -164,7 +164,7 @@ main(int argc, char **argv)
 	     "\n"
 	     "  Options:\n"
 	     "   -h, --help        - This help text.\n"
-	     "   -d, -dd           - Increase debug level.\n"
+	     "   -d                - Enable debug output.\n"
 	     "   --ffmpeglog       - Print ffmpeg log messages.\n"
 	     "   --with-standby    - Enable system standby.\n"
 	     "   --with-poweroff   - Enable system power-off.\n"
@@ -190,10 +190,6 @@ main(int argc, char **argv)
 
     } else if(!strcmp(argv[0], "-d")) {
       trace_level++;
-      argc -= 1; argv += 1;
-      continue;
-    } else if(!strcmp(argv[0], "-dd")) {
-      trace_level+=2;
       argc -= 1; argv += 1;
       continue;
     } else if(!strcmp(argv[0], "--ffmpeglog")) {
