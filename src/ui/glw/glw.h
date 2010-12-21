@@ -109,7 +109,6 @@ typedef enum {
   GLW_ATTRIB_SIZE_SCALE,
   GLW_ATTRIB_SIZE_BIAS,
   GLW_ATTRIB_PIXMAP,
-  GLW_ATTRIB_ORIGINATING_PROP,
   GLW_ATTRIB_FOCUS_WEIGHT,
   GLW_ATTRIB_CHILD_ASPECT,
   GLW_ATTRIB_HEIGHT,
@@ -887,7 +886,6 @@ do {						\
   case GLW_ATTRIB_ID:         			\
   case GLW_ATTRIB_BIND_TO_ID: 			\
   case GLW_ATTRIB_PIXMAP: 			\
-  case GLW_ATTRIB_ORIGINATING_PROP: 		\
     (void)va_arg(ap, void *);			\
     break;					\
   case GLW_ATTRIB_ALIGNMENT:			\
@@ -958,11 +956,8 @@ int glw_widget_unproject(const float *m, float *x, float *y,
 			 const float *p, const float *dir);
 
 glw_t *glw_create(glw_root_t *gr, const glw_class_t *class,
-		  glw_t *parent, glw_t *before, va_list ap);
-
-glw_t *glw_create_i(glw_root_t *gr, const glw_class_t *class,
-		    glw_t *parent, glw_t *before, ...)
-  __attribute__((__sentinel__(0)));
+		  glw_t *parent, glw_t *before, prop_t *originator,
+		  ...) __attribute__((__sentinel__(0)));
 
 #define glw_lock_assert() glw_lock_check(__FILE__, __LINE__)
 

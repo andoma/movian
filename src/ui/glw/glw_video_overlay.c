@@ -374,14 +374,14 @@ glw_video_sub_layout_text(video_decoder_t *vd, glw_video_overlay_t *gvo,
   if(gvo->gvo_child != NULL)
     glw_destroy(gvo->gvo_child);
 
-  gvo->gvo_child = glw_create_i(gr, 
-				glw_class_find_by_name("label"),
-				parent, NULL,
-				GLW_ATTRIB_CAPTION, s->s_text, 0,
-				GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_BOTTOM,
-				GLW_ATTRIB_SIZE_SCALE, 2.0,
-				GLW_ATTRIB_PADDING, 0.0, 0.0, 0.0, 20.0,
-				NULL);
+  gvo->gvo_child = glw_create(gr, 
+			      glw_class_find_by_name("label"),
+			      parent, NULL, NULL,
+			      GLW_ATTRIB_CAPTION, s->s_text, 0,
+			      GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_BOTTOM,
+			      GLW_ATTRIB_SIZE_SCALE, 2.0,
+			      GLW_ATTRIB_PADDING, 0.0, 0.0, 0.0, 20.0,
+			      NULL);
 
   glw_signal_handler_register(gvo->gvo_child, child_callback, gvo, 1000);
 }

@@ -1146,10 +1146,9 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
 
   c->c_clone_root = prop_create(NULL, NULL);
 
-  c->c_w = glw_create_i(parent->glw_root, sc->sc_cloner_class, parent, b,
-			GLW_ATTRIB_PROPROOTS, p, sc->sc_originating_prop,
-			GLW_ATTRIB_ORIGINATING_PROP, p,
-			NULL);
+  c->c_w = glw_create(parent->glw_root, sc->sc_cloner_class, parent, b, p,
+		      GLW_ATTRIB_PROPROOTS, p, sc->sc_originating_prop,
+		      NULL);
 
   prop_tag_set(p, sc, c);
 
@@ -2008,10 +2007,10 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
   n.prop_args = ec->prop_args;
   n.ei = ec->ei;
   n.gr = ec->gr;
-  n.w = glw_create_i(ec->gr, c, ec->w, NULL,
-		     GLW_ATTRIB_FREEZE, 1,
-		     GLW_ATTRIB_PROPROOTS, ec->prop, ec->prop_parent,
-		     NULL);
+  n.w = glw_create(ec->gr, c, ec->w, NULL, NULL,
+		   GLW_ATTRIB_FREEZE, 1,
+		   GLW_ATTRIB_PROPROOTS, ec->prop, ec->prop_parent,
+		   NULL);
 
   n.sublist = &n.w->glw_prop_subscriptions;
 
@@ -2076,9 +2075,9 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
     if(dummy == NULL)
       dummy = glw_class_find_by_name("dummy");
     
-    self->t_extra = glw_create_i(ec->gr, dummy, parent, NULL,
-				 GLW_ATTRIB_SET_FLAGS, GLW_HIDDEN,
-				 NULL);
+    self->t_extra = glw_create(ec->gr, dummy, parent, NULL, NULL,
+			       GLW_ATTRIB_SET_FLAGS, GLW_HIDDEN,
+			       NULL);
   }
 
 
@@ -2140,9 +2139,9 @@ glwf_space(glw_view_eval_context_t *ec, struct token *self,
   if(dummy == NULL)
     dummy = glw_class_find_by_name("dummy");
 
-  glw_create_i(ec->gr, dummy, ec->w, NULL,
-	       GLW_ATTRIB_WEIGHT, token2float(a),
-	       NULL);
+  glw_create(ec->gr, dummy, ec->w, NULL, NULL,
+	     GLW_ATTRIB_WEIGHT, token2float(a),
+	     NULL);
   return 0;
 }
 

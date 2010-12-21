@@ -389,13 +389,6 @@ glw_attrib_set(glw_t *w, int init, va_list ap)
 	w->glw_focus_weight = 0;
       break;
 
-    case GLW_ATTRIB_ORIGINATING_PROP:
-      assert(w->glw_originating_prop == NULL);
-      w->glw_originating_prop = va_arg(ap, void *);
-      if(w->glw_originating_prop != NULL)
-	prop_ref_inc(w->glw_originating_prop);
-      break;
-
     default:
       GLW_ATTRIB_CHEW(attrib, ap);
       break;
@@ -416,9 +409,12 @@ glw_attrib_set(glw_t *w, int init, va_list ap)
  */
 glw_t *
 glw_create(glw_root_t *gr, const glw_class_t *class,
-	   glw_t *parent, glw_t *before, va_list ap)
+	   glw_t *parent, glw_t *before, prop_t *originator, ...)
 {
   glw_t *w; 
+  va_list ap;
+
+  va_start(ap, originator);
 
   /* Common initializers */
   w = calloc(1, class->gc_instance_size);
@@ -437,6 +433,10 @@ glw_create(glw_root_t *gr, const glw_class_t *class,
 
   TAILQ_INIT(&w->glw_childs);
 
+  w->glw_originating_prop = originator;
+  if(w->glw_originating_prop != NULL)
+    prop_ref_inc(w->glw_originating_prop);
+
   w->glw_parent = parent;
   if(parent != NULL) {
     update_in_path(w);
@@ -453,22 +453,6 @@ glw_create(glw_root_t *gr, const glw_class_t *class,
   
   glw_attrib_set(w, 1, ap);
 
-  return w;
-}
-
-/*
- *
- */
-
-glw_t *
-glw_create_i(glw_root_t *gr, const glw_class_t *class,
-	     glw_t *parent, glw_t *before, ...)
-{
-  glw_t *w; 
-  va_list ap;
-
-  va_start(ap, before);
-  w = glw_create(gr, class, parent, before, ap);
   va_end(ap);
   return w;
 }
