@@ -361,7 +361,7 @@ nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin)
 		   PROP_TAG_COURIER, nav->nav_pc,
 		   NULL);
   
-  TRACE(TRACE_DEBUG, "navigator", "Opening %s", url);
+  TRACE(TRACE_INFO, "navigator", "Opening %s", url);
   if(backend_open(np->np_prop_root, url))
     nav_open_errorf(np->np_prop_root, url, "No handler for URL");
 
