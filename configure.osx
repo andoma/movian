@@ -296,14 +296,6 @@ if enabled ssl; then
     fi
 fi
 
-#
-# libsmbclient
-#
-#if enabled libsmbclient; then
-#    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -libsmbclient" 
-#fi
-
-
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg_config_static $PKGS`
 echo >>${CONFIG_MAK} "CFLAGS_cfg +=" `$PKGCONFIG --cflags $PKGS`
 
