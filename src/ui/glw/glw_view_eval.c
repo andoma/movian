@@ -2037,7 +2037,7 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
   glw_prop_sub_pending_t *gpsp;
   int f;
   const glw_class_t *cl;
-  glw_t *parent = ec->w, *w;
+  glw_t *parent = ec->w;
 
   if(argc < 3)
     return glw_view_seterr(ec->ei, self, "Cloner not enough arguments");
