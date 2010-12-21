@@ -96,9 +96,9 @@ static glw_t *
 find_detachable(glw_t *w)
 {
   glw_t *c, *r;
+  if(w->glw_class->gc_detach_control != NULL)
+    return w;
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-    if(c->glw_class->gc_detach_control != NULL)
-      return c;
     if((r = find_detachable(c)) != NULL)
       return r;
   }
