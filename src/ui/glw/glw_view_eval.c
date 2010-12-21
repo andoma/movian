@@ -2080,13 +2080,6 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
 			       NULL);
   }
 
-
-  /* Destroy any previous cloned entries */
-  while((w = TAILQ_PREV((glw_t *)self->t_extra, 
-			glw_queue, glw_parent_link)) != NULL &&
-	w->glw_originating_prop != NULL)
-    glw_retire_child(w);
-
   if(a->type == TOKEN_DIRECTORY) {
     sub_cloner_t *sc = (sub_cloner_t *)a->propsubr;
     sc->sc_anchor = self->t_extra;
