@@ -56,9 +56,6 @@ $ PKG_CONFIG_PATH=/the/path/to/ffmpeg/lib/pkgconfig ./configure
 $ make
 
 
-
-
-
 How to build for Mac OS X
 =========================
 
@@ -80,14 +77,14 @@ If you choose the custome script way, please continue to read osx/README
 MacPorts way:
 
 Install freetype using MacPorts:
-$ sudo /opt/local/bin/port install freetype 
+$ sudo /opt/local/bin/port install freetype ffmpeg
 
 Now run configure
 $ ./configure
 Or if you build for release
 $ ./configure --release
 
-If configured successfully
+If configured successfully run:
 $ make
 
 Run showtime binary from build directory
@@ -96,15 +93,16 @@ $ build.osx/Showtime.app/Contents/MacOS/showtime
 Run showtime application from build directory
 $ open build.osx/Showtime.app
 
-Optionally you can build Showtime.dmg disk image. Note that you should probably
-run configure with --release to embed theme files or else the binary will
-include paths your local build tree.
+Optionally you can build Showtime.dmg disk image. Note that you should
+configure with --release to embed theme files or else the binary will
+include paths to your local build tree.
 $ make Showtime.dmg
 
 For more information read osx/README
 
 TODO: universal binary, cant be done i one step as ffmpeg does not
 build when using multiple arch arguments to gcc
+
 
 How to build for Nintendo Wii
 =============================
