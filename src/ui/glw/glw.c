@@ -267,13 +267,12 @@ update_in_path(glw_t *w)
 /**
  *
  */
-int
+void
 glw_attrib_set(glw_t *w, int init, va_list ap)
 {
   glw_attribute_t attrib;
-  glw_t *p, *b;
   void *v, *o;
-  int pri, a, r = 0;
+  int pri, a;
   float f;
 
   va_list apx;
@@ -296,43 +295,6 @@ glw_attrib_set(glw_t *w, int init, va_list ap)
 	glw_signal_handler_unregister(w, v, o);
       else
 	glw_signal_handler_register(w, v, o, pri);
-      break;
-
-    case GLW_ATTRIB_PARENT:
-    case GLW_ATTRIB_PARENT_HEAD:
-    case GLW_ATTRIB_PARENT_BEFORE:
-      if(w->glw_parent != NULL) {
-
-	glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_DESTROYED, w);
-
-	if(w->glw_parent->glw_selected == w)
-	  w->glw_parent->glw_selected = TAILQ_NEXT(w, glw_parent_link);
-
-	TAILQ_REMOVE(&w->glw_parent->glw_childs, w, glw_parent_link);
-
-      }
-      p = va_arg(ap, void *);
-
-      w->glw_parent = p;
-      if(p != NULL) {
-	
-	update_in_path(w);
-
-	if(attrib == GLW_ATTRIB_PARENT_BEFORE) {
-	  b = va_arg(ap, void *);
-	  if(b == NULL) {
-	    TAILQ_INSERT_TAIL(&w->glw_parent->glw_childs, w, glw_parent_link);
-	  } else {
-	    TAILQ_INSERT_BEFORE(b, w, glw_parent_link);
-	  }
-
-	} else if(attrib == GLW_ATTRIB_PARENT_HEAD) {
-	  TAILQ_INSERT_HEAD(&w->glw_parent->glw_childs, w, glw_parent_link);
-	} else {
-	  TAILQ_INSERT_TAIL(&w->glw_parent->glw_childs, w, glw_parent_link);
-	}
-	glw_signal0(p, GLW_SIGNAL_CHILD_CREATED, w);
-      }
       break;
 
     case GLW_ATTRIB_WEIGHT:
@@ -447,14 +409,14 @@ glw_attrib_set(glw_t *w, int init, va_list ap)
     w->glw_class->gc_set(w, init, apx);
 
   va_end(apx);
-  return r;
 }
 
 /**
  *
  */
 glw_t *
-glw_create(glw_root_t *gr, const glw_class_t *class, va_list ap)
+glw_create(glw_root_t *gr, const glw_class_t *class,
+	   glw_t *parent, glw_t *before, va_list ap)
 {
   glw_t *w; 
 
@@ -475,12 +437,21 @@ glw_create(glw_root_t *gr, const glw_class_t *class, va_list ap)
 
   TAILQ_INIT(&w->glw_childs);
 
+  w->glw_parent = parent;
+  if(parent != NULL) {
+    update_in_path(w);
+    
+    if(before != NULL)
+      TAILQ_INSERT_BEFORE(before, w, glw_parent_link);
+    else
+      TAILQ_INSERT_TAIL(&parent->glw_childs, w, glw_parent_link);
+
+    glw_signal0(parent, GLW_SIGNAL_CHILD_CREATED, w);
+  }
+
   /* Parse arguments */
   
-  if(glw_attrib_set(w, 1, ap) < 0) {
-    glw_destroy(w);
-    return NULL;
-  }
+  glw_attrib_set(w, 1, ap);
 
   return w;
 }
@@ -490,13 +461,14 @@ glw_create(glw_root_t *gr, const glw_class_t *class, va_list ap)
  */
 
 glw_t *
-glw_create_i(glw_root_t *gr, const glw_class_t *class, ...)
+glw_create_i(glw_root_t *gr, const glw_class_t *class,
+	     glw_t *parent, glw_t *before, ...)
 {
   glw_t *w; 
   va_list ap;
 
-  va_start(ap, class);
-  w = glw_create(gr, class, ap);
+  va_start(ap, before);
+  w = glw_create(gr, class, parent, before, ap);
   va_end(ap);
   return w;
 }

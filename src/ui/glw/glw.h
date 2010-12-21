@@ -69,9 +69,6 @@ LIST_HEAD(glw_video_list, glw_video);
 
 typedef enum {
   GLW_ATTRIB_END = 0,
-  GLW_ATTRIB_PARENT,
-  GLW_ATTRIB_PARENT_HEAD,
-  GLW_ATTRIB_PARENT_BEFORE,
   GLW_ATTRIB_SIGNAL_HANDLER,
   GLW_ATTRIB_WEIGHT,
   GLW_ATTRIB_CAPTION,
@@ -880,11 +877,8 @@ do {						\
     (void)va_arg(ap, void *);			\
     (void)va_arg(ap, void *);			\
     (void)va_arg(ap, void *);			\
-  case GLW_ATTRIB_PARENT_BEFORE:		\
   case GLW_ATTRIB_PROPROOTS:         		\
     (void)va_arg(ap, void *);			\
-  case GLW_ATTRIB_PARENT:			\
-  case GLW_ATTRIB_PARENT_HEAD:			\
   case GLW_ATTRIB_SOURCE:			\
   case GLW_ATTRIB_ARGS:				\
   case GLW_ATTRIB_PROP_PARENT:			\
@@ -963,17 +957,18 @@ void glw_print_tree(glw_t *w);
 int glw_widget_unproject(const float *m, float *x, float *y, 
 			 const float *p, const float *dir);
 
-glw_t *glw_create(glw_root_t *gr, const glw_class_t *class, va_list ap);
+glw_t *glw_create(glw_root_t *gr, const glw_class_t *class,
+		  glw_t *parent, glw_t *before, va_list ap);
 
-glw_t *glw_create_i(glw_root_t *gr, 
-		    const glw_class_t *class, ...)
+glw_t *glw_create_i(glw_root_t *gr, const glw_class_t *class,
+		    glw_t *parent, glw_t *before, ...)
   __attribute__((__sentinel__(0)));
 
 #define glw_lock_assert() glw_lock_check(__FILE__, __LINE__)
 
 void glw_lock_check(const char *file, const int line);
 
-int glw_attrib_set(glw_t *w, int init, va_list ap);
+void glw_attrib_set(glw_t *w, int init, va_list ap);
 
 void glw_set_i(glw_t *w, ...) __attribute__((__sentinel__(0)));
 
