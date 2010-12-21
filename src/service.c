@@ -277,10 +277,8 @@ service_probe_loop(void *aux)
       else
 	prop_set_void(s->s_prop_status_txt);
     }
-    if(--s->s_ref == 0) {
-      printf("free %p\n", s);
+    if(--s->s_ref == 0)
       free(s);
-    }
   }
   return NULL;
 }
