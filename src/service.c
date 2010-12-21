@@ -104,7 +104,7 @@ seturl(service_t *s, const char *url)
   char urlbuf[URL_MAX];
   backend_t *be;
 
-  be = backend_canhandle(url);
+  be = url ? backend_canhandle(url) : NULL;
   if(be != NULL && be->be_normalize != NULL &&
      !be->be_normalize(url, urlbuf, sizeof(urlbuf)))
     mystrset(&s->s_url, urlbuf);
