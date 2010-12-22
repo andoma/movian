@@ -780,8 +780,8 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
       x1 = -1.0f + 2.0f * left   / (float)rc->rc_width;
       x2 = -1.0f + 2.0f * right  / (float)rc->rc_width;
-      y1 = -0.9;
-      y2 =  0.9;
+      y1 = -0.9f;
+      y2 =  0.9f;
 
       glw_renderer_vtx_pos(&gtb->gtb_cursor_renderer, 0, x1, y1, 0.0);
       glw_renderer_vtx_pos(&gtb->gtb_cursor_renderer, 1, x2, y1, 0.0);
@@ -809,7 +809,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
   alpha = rc->rc_alpha * w->glw_alpha;
 
-  if(alpha < 0.01)
+  if(alpha < 0.01f)
     return;
 
   if(w->glw_flags & GLW_DEBUG)
@@ -818,8 +818,8 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
   if(glw_is_tex_inited(&gtb->gtb_texture) && gtb->gtb_data.gtbd_width > 0) {
 
     if(w->glw_flags & GLW_SHADOW && !rc->rc_inhibit_shadows) {
-      float xd =  2.0 / rc->rc_width;
-      float yd = -2.0 / rc->rc_height;
+      float xd =  2.0f / rc->rc_width;
+      float yd = -2.0f / rc->rc_height;
       glw_rctx_t rc0 = *rc;
 
       glw_Translatef(&rc0, xd, yd, 0.0);
@@ -827,7 +827,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
       const static glw_rgb_t black = {0,0,0};
       
       glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, &rc0, 
-			&gtb->gtb_texture, &black, alpha * 0.75, 0);
+			&gtb->gtb_texture, &black, alpha * 0.75f, 0);
     }
     glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, rc, 
 		      &gtb->gtb_texture, &gtb->gtb_color, alpha, 0);
@@ -835,7 +835,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 
   if(gtb->gtb_paint_cursor) {
     glw_root_t *gr = w->glw_root;
-    float a = cos((gr->gr_frames & 2047) * (360.0 / 2048.0)) * 0.5 + 0.5;
+    float a = cos((gr->gr_frames & 2047) * (360.0f / 2048.0f)) * 0.5f + 0.5f;
     glw_renderer_draw(&gtb->gtb_cursor_renderer, w->glw_root, rc,
 		      NULL, NULL, alpha * a, 0);
   }

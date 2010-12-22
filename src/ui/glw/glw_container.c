@@ -115,7 +115,7 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
   float fixscale;   // Scaling to apply to fixed width requests
                     // Used if the available width < sum of requested width
 
-  if(co->w.glw_alpha < 0.01)
+  if(co->w.glw_alpha < 0.01f)
     return 0;
 
   rc0.rc_height = rc->rc_height - co->co_padding_top - co->co_padding_bottom;
@@ -144,7 +144,7 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
 
   int right, left = rintf(pos);
 
-  IW = 1.0 / rc->rc_width;
+  IW = 1.0f / rc->rc_width;
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
     float cw;
@@ -217,7 +217,7 @@ glw_container_y_constraints(glw_container_t *co, glw_t *skip)
       if(c->glw_req_weight > 0)
 	weight += c->glw_req_weight;
     } else {
-      weight += 1.0;
+      weight += 1.0f;
     }
     elements++;
   }
@@ -250,7 +250,7 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
   float fixscale;   // Scaling to apply to fixed height requests
                     // Used if the available height < sum of requested height
   
-  if(co->w.glw_alpha < 0.01)
+  if(co->w.glw_alpha < 0.01f)
     return 0;
 
   rc0.rc_width = rc->rc_width - co->co_padding_left - co->co_padding_right;
@@ -279,7 +279,7 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
   }
 
   int bottom, top = rintf(pos);
-  IH = 1.0 / rc->rc_height;
+  IH = 1.0f / rc->rc_height;
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
     float cw = 0;
@@ -355,7 +355,7 @@ glw_container_z_layout(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c;
 
-  if(w->glw_alpha < 0.01)
+  if(w->glw_alpha < 0.01f)
     return 0;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
@@ -378,7 +378,7 @@ glw_container_y_render(glw_t *w, glw_rctx_t *rc)
   glw_container_t *co = (glw_container_t *)w;
   glw_rctx_t rc0;
 
-  if(alpha < 0.01)
+  if(alpha < 0.01f)
     return;
   
   if(glw_is_focusable(w))
@@ -422,7 +422,7 @@ glw_container_x_render(glw_t *w, glw_rctx_t *rc)
   glw_container_t *co = (glw_container_t *)w;
   glw_rctx_t rc0;
 
-  if(alpha < 0.01)
+  if(alpha < 0.01f)
     return;
   
   if(glw_is_focusable(w))
@@ -466,7 +466,7 @@ glw_container_z_render(glw_t *w, glw_rctx_t *rc)
 
   glw_rctx_t rc0;
 
-  if(alpha < 0.01)
+  if(alpha < 0.01f)
     return;
   
   if(glw_is_focusable(w))

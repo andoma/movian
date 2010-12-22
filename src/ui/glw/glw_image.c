@@ -153,7 +153,7 @@ glw_scale_to_pixels(glw_rctx_t *rc, int w, int h)
   float xs = (float)w / rc->rc_width;
   float ys = (float)h / rc->rc_height;
 
-  glw_Scalef(rc, xs, ys, 1.0);
+  glw_Scalef(rc, xs, ys, 1.0f);
   rc->rc_width  = w;
   rc->rc_height = h;
 }
@@ -197,19 +197,19 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     if(glw_is_focusable(w))
       glw_store_matrix(w, &rc0);
 
-    if(alpha_self > 0.01) {
+    if(alpha_self > 0.01f) {
 
       if(w->glw_flags & GLW_SHADOW && !rc0.rc_inhibit_shadows) {
-	float xd =  3.0 / rc0.rc_width;
-	float yd = -3.0 / rc0.rc_height;
+	float xd =  3.0f / rc0.rc_width;
+	float yd = -3.0f / rc0.rc_height;
 
-	glw_Translatef(&rc0, xd, yd, 0.0);
+	glw_Translatef(&rc0, xd, yd, 0.0f);
 	
 	static const glw_rgb_t black = {0,0,0};
 
 	glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0, &glt->glt_texture,
-			  &black, alpha_self * 0.75, gi->gi_bitmap_flags);
-	glw_Translatef(&rc0, -xd, -yd, 0.0);
+			  &black, alpha_self * 0.75f, gi->gi_bitmap_flags);
+	glw_Translatef(&rc0, -xd, -yd, 0.0f);
       }
 
       glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0, &glt->glt_texture,
@@ -224,7 +224,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     if(glw_is_focusable(w))
       glw_store_matrix(w, rc);
 
-    if(alpha_self > 0.01)
+    if(alpha_self > 0.01f)
       glw_renderer_draw(&gi->gi_gr, w->glw_root, rc, &glt->glt_texture,
 			&gi->gi_color, alpha_self, gi->gi_bitmap_flags);
 
@@ -245,37 +245,37 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
   int x, y, i = 0;
 
   if(gr->gr_normalized_texture_coords) {
-    tex[0][0] = 0.0;
-    tex[1][0] = 0.0 + (float)gi->gi_border_left  / glt->glt_xs;
+    tex[0][0] = 0.0f;
+    tex[1][0] = 0.0f + (float)gi->gi_border_left  / glt->glt_xs;
     tex[2][0] = glt->glt_s - (float)gi->gi_border_right / glt->glt_xs;
     tex[3][0] = glt->glt_s;
 
-    tex[0][1] = 0.0;
-    tex[1][1] = 0.0 + (float)gi->gi_border_top    / glt->glt_ys;
+    tex[0][1] = 0.0f;
+    tex[1][1] = 0.0f + (float)gi->gi_border_top    / glt->glt_ys;
     tex[2][1] = glt->glt_t - (float)gi->gi_border_bottom / glt->glt_ys;
     tex[3][1] = glt->glt_t;
   } else {
-    tex[0][0] = 0.0;
+    tex[0][0] = 0.0f;
     tex[1][0] = gi->gi_border_left;
     tex[2][0] = glt->glt_xs - gi->gi_border_right;
     tex[3][0] = glt->glt_xs;
 
-    tex[0][1] = 0.0;
+    tex[0][1] = 0.0f;
     tex[1][1] = gi->gi_border_top;
     tex[2][1] = glt->glt_ys - gi->gi_border_bottom;
     tex[3][1] = glt->glt_ys;
   }
 
 
-  vex[0][0] = -1.0;
-  vex[1][0] = GLW_MIN(-1.0 + 2.0 * gi->gi_border_left  / rc->rc_width, 0.0);
-  vex[2][0] = GLW_MAX( 1.0 - 2.0 * gi->gi_border_right / rc->rc_width, 0.0);
-  vex[3][0] = 1.0;
+  vex[0][0] = -1.0f;
+  vex[1][0] = GLW_MIN(-1.0f + 2.0f * gi->gi_border_left  / rc->rc_width, 0.0f);
+  vex[2][0] = GLW_MAX( 1.0f - 2.0f * gi->gi_border_right / rc->rc_width, 0.0f);
+  vex[3][0] = 1.0f;
     
-  vex[0][1] = 1.0;
-  vex[1][1] = GLW_MAX( 1.0 - 2.0 * gi->gi_border_top    / rc->rc_height, 0.0);
-  vex[2][1] = GLW_MIN(-1.0 + 2.0 * gi->gi_border_bottom / rc->rc_height, 0.0);
-  vex[3][1] = -1.0;
+  vex[0][1] = 1.0f;
+  vex[1][1] = GLW_MAX( 1.0f - 2.0f * gi->gi_border_top  / rc->rc_height, 0.0f);
+  vex[2][1] = GLW_MIN(-1.0f + 2.0f *gi->gi_border_bottom / rc->rc_height, 0.0f);
+  vex[3][1] = -1.0f;
 
   for(y = 0; y < 4; y++) {
     for(x = 0; x < 4; x++) {
@@ -306,36 +306,36 @@ glw_image_layout_alpha_edges(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
   int x, y, i = 0;
 
   if(gr->gr_normalized_texture_coords) {
-    tex[0][0] = 0.0;
-    tex[1][0] = 0.0 + (float)gi->gi_alpha_edge / glt->glt_xs;
+    tex[0][0] = 0.0f;
+    tex[1][0] = 0.0f + (float)gi->gi_alpha_edge / glt->glt_xs;
     tex[2][0] = glt->glt_s - (float)gi->gi_alpha_edge / glt->glt_xs;
     tex[3][0] = glt->glt_s;
 
-    tex[0][1] = 0.0;
-    tex[1][1] = 0.0 + (float)gi->gi_alpha_edge / glt->glt_ys;
+    tex[0][1] = 0.0f;
+    tex[1][1] = 0.0f + (float)gi->gi_alpha_edge / glt->glt_ys;
     tex[2][1] = glt->glt_t - (float)gi->gi_alpha_edge / glt->glt_ys;
     tex[3][1] = glt->glt_t;
   } else {
-    tex[0][0] = 0.0;
+    tex[0][0] = 0.0f;
     tex[1][0] = gi->gi_alpha_edge;
     tex[2][0] = glt->glt_xs - gi->gi_alpha_edge;
     tex[3][0] = glt->glt_xs;
 
-    tex[0][1] = 0.0;
+    tex[0][1] = 0.0f;
     tex[1][1] = gi->gi_alpha_edge;
     tex[2][1] = glt->glt_ys - gi->gi_alpha_edge;
     tex[3][1] = glt->glt_ys;
   }
 
-  vex[0][0] = -1.0;
-  vex[1][0] = GLW_MIN(-1.0 + 2.0 * gi->gi_alpha_edge / rc->rc_width, 0.0);
-  vex[2][0] = GLW_MAX( 1.0 - 2.0 * gi->gi_alpha_edge / rc->rc_width, 0.0);
-  vex[3][0] = 1.0;
+  vex[0][0] = -1.0f;
+  vex[1][0] = GLW_MIN(-1.0f + 2.0f * gi->gi_alpha_edge / rc->rc_width, 0.0f);
+  vex[2][0] = GLW_MAX( 1.0f - 2.0f * gi->gi_alpha_edge / rc->rc_width, 0.0f);
+  vex[3][0] = 1.0f;
     
-  vex[0][1] = 1.0;
-  vex[1][1] = GLW_MAX( 1.0 - 2.0 * gi->gi_alpha_edge / rc->rc_height, 0.0);
-  vex[2][1] = GLW_MIN(-1.0 + 2.0 * gi->gi_alpha_edge / rc->rc_height, 0.0);
-  vex[3][1] = -1.0;
+  vex[0][1] = 1.0f;
+  vex[1][1] = GLW_MAX( 1.0f - 2.0f * gi->gi_alpha_edge / rc->rc_height, 0.0f);
+  vex[2][1] = GLW_MIN(-1.0f + 2.0f * gi->gi_alpha_edge / rc->rc_height, 0.0f);
+  vex[3][1] = -1.0f;
 
   for(y = 0; y < 4; y++) {
     for(x = 0; x < 4; x++) {

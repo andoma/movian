@@ -55,7 +55,7 @@ glw_list_update_metrics(glw_list_t *l)
 
   l->w.glw_flags &= ~GLW_UPDATE_METRICS;
 
-  v = GLW_MIN(1.0, (float)l->page_size / l->total_size);
+  v = GLW_MIN(1.0f, (float)l->page_size / l->total_size);
 
   if(v != l->metrics.knob_size) {
     do_update = 1;
@@ -95,7 +95,7 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
   glw_t *c, *w = &l->w;
   int ypos = 0;
   glw_rctx_t rc0 = *rc;
-  float IH = 1.0 / rc->rc_height;
+  float IH = 1.0f / rc->rc_height;
 
   if(l->saved_height != rc->rc_height) {
     l->saved_height = rc->rc_height;
@@ -172,13 +172,13 @@ glw_list_render_y(glw_t *w, glw_rctx_t *rc)
   int t, b;
   float y;
 
-  if(rc->rc_alpha < 0.01)
+  if(rc->rc_alpha < 0.01f)
     return;
 
   glw_store_matrix(w, rc);
 
   rc0 = *rc;
-  glw_Translatef(&rc0, 0, 2.0 * l->filtered_pos / rc->rc_height, 0);
+  glw_Translatef(&rc0, 0, 2.0f * l->filtered_pos / rc->rc_height, 0);
   
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
