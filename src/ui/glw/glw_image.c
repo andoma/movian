@@ -726,6 +726,20 @@ glw_image_ctor(glw_t *w)
 /**
  *
  */
+static void
+glw_image_set_rgb(glw_t *w, const float *rgb)
+{
+  glw_image_t *gi = (void *)w;
+  gi->gi_color.r = rgb[0];
+  gi->gi_color.g = rgb[1];
+  gi->gi_color.b = rgb[2];
+}
+
+
+
+/**
+ *
+ */
 static void 
 glw_image_set(glw_t *w, va_list ap)
 {
@@ -818,12 +832,6 @@ glw_image_set(glw_t *w, va_list ap)
       gi->gi_update = 1;
       break;
 
-    case GLW_ATTRIB_RGB:
-      gi->gi_color.r = va_arg(ap, double);
-      gi->gi_color.g = va_arg(ap, double);
-      gi->gi_color.b = va_arg(ap, double);
-      break;
-
     case GLW_ATTRIB_SIZE_SCALE:
       gi->gi_size_scale = va_arg(ap, double);
       break;
@@ -878,6 +886,7 @@ static glw_class_t glw_image = {
   .gc_signal_handler = glw_image_callback,
   .gc_default_alignment = GLW_ALIGN_CENTER,
   .gc_ready = glw_image_ready,
+  .gc_set_rgb = glw_image_set_rgb,
 };
 
 GLW_REGISTER_CLASS(glw_image);
@@ -895,6 +904,7 @@ static glw_class_t glw_icon = {
   .gc_set = glw_image_set,
   .gc_signal_handler = glw_image_callback,
   .gc_default_alignment = GLW_ALIGN_CENTER,
+  .gc_set_rgb = glw_image_set_rgb,
 };
 
 GLW_REGISTER_CLASS(glw_icon);
@@ -912,6 +922,7 @@ static glw_class_t glw_backdrop = {
   .gc_set = glw_image_set,
   .gc_signal_handler = glw_image_callback,
   .gc_default_alignment = GLW_ALIGN_CENTER,
+  .gc_set_rgb = glw_image_set_rgb,
 };
 
 GLW_REGISTER_CLASS(glw_backdrop);
@@ -930,6 +941,7 @@ static glw_class_t glw_repeatedimage = {
   .gc_set = glw_image_set,
   .gc_signal_handler = glw_image_callback,
   .gc_default_alignment = GLW_ALIGN_CENTER,
+  .gc_set_rgb = glw_image_set_rgb,
 };
 
 GLW_REGISTER_CLASS(glw_repeatedimage);

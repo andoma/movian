@@ -242,6 +242,7 @@ typedef struct token_attrib {
   int (*set)(glw_view_eval_context_t *ec, const struct token_attrib *a, 
 	     struct token *t);
   int attrib;
+  void *fn;
 } token_attrib_t;
 
 

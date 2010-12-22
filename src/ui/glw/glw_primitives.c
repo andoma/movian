@@ -74,28 +74,13 @@ glw_quad_init(glw_t *w)
  *
  */
 static void 
-glw_quad_set(glw_t *w, va_list ap)
+glw_quad_set_rgb(glw_t *w, const float *rgb)
 {
   glw_quad_t *q = (void *)w;
-  glw_attribute_t attrib;
-
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
-
-    case GLW_ATTRIB_RGB:
-      q->color.r = va_arg(ap, double);
-      q->color.g = va_arg(ap, double);
-      q->color.b = va_arg(ap, double);
-      break;
-
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
+  q->color.r = rgb[0];
+  q->color.g = rgb[1];
+  q->color.b = rgb[2];
 }
-
 
 
 static glw_class_t glw_quad = {
@@ -104,7 +89,7 @@ static glw_class_t glw_quad = {
   .gc_ctor = glw_quad_init,
   .gc_render = glw_quad_render,
   .gc_signal_handler = glw_quad_callback,
-  .gc_set = glw_quad_set,
+  .gc_set_rgb = glw_quad_set_rgb,
 };
 
 
@@ -196,38 +181,26 @@ glw_raster_ctor(glw_t *w)
 
 /**
  *
- */ 
+ */
 static void 
-glw_raster_set(glw_t *w, va_list ap)
+glw_raster_set_rgb(glw_t *w, const float *rgb)
 {
   glw_raster_t *q = (void *)w;
-  glw_attribute_t attrib;
-
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
-
-    case GLW_ATTRIB_RGB:
-      q->color.r = va_arg(ap, double);
-      q->color.g = va_arg(ap, double);
-      q->color.b = va_arg(ap, double);
-      break;
-
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
+  q->color.r = rgb[0];
+  q->color.g = rgb[1];
+  q->color.b = rgb[2];
 }
 
 
-
+/**
+ *
+ */
 static glw_class_t glw_raster = {
   .gc_name = "raster",
   .gc_instance_size = sizeof(glw_raster_t),
   .gc_render = glw_raster_render,
-  .gc_set = glw_raster_set,
   .gc_ctor = glw_raster_ctor,
+  .gc_set_rgb = glw_raster_set_rgb,
 };
 
 

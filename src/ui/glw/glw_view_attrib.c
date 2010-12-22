@@ -192,13 +192,30 @@ set_float3(glw_view_eval_context_t *ec, const token_attrib_t *a,
     return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a vec3",
 			    a->name);
 
-  glw_set_i(ec->w, a->attrib, 
-	    t->t_float_vector[0],
-	    t->t_float_vector[1],
-	    t->t_float_vector[2],
-	    NULL);
+  if(a->fn) {
+    void (*fn)(struct glw *w, const float *v3) = a->fn;
+    fn(ec->w, t->t_float_vector);
+  } else {
+    glw_set_i(ec->w, a->attrib, 
+	      t->t_float_vector[0],
+	      t->t_float_vector[1],
+	      t->t_float_vector[2],
+	      NULL);
+  }
   return 0;
 }
+
+
+/**
+ *
+ */
+static void
+set_rgb(glw_t *w, const float *rgb)
+{
+  if(w->glw_class->gc_set_rgb != NULL)
+    w->glw_class->gc_set_rgb(w, rgb);
+}
+
 
 
 /**
@@ -502,7 +519,7 @@ static const token_attrib_t attribtab[] = {
   {"Xspacing",        set_int,    GLW_ATTRIB_X_SPACING},
   {"Yspacing",        set_int,    GLW_ATTRIB_Y_SPACING},
 
-  {"color",           set_float3, GLW_ATTRIB_RGB},
+  {"color",           set_float3, 0, set_rgb},
   {"translation",     set_float3, GLW_ATTRIB_TRANSLATION},
   {"scaling",         set_float3, GLW_ATTRIB_SCALING},
   {"color1",          set_float3, GLW_ATTRIB_COLOR1},

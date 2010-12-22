@@ -96,7 +96,6 @@ typedef enum {
   GLW_ATTRIB_SET_VIDEO_FLAGS,
   GLW_ATTRIB_CLR_VIDEO_FLAGS,
   GLW_ATTRIB_ID,
-  GLW_ATTRIB_RGB,
   GLW_ATTRIB_TIME,
   GLW_ATTRIB_INT_STEP,
   GLW_ATTRIB_INT_MIN,
@@ -441,6 +440,11 @@ typedef struct glw_class {
    *
    */
   void (*gc_get_rctx)(struct glw *w, struct glw_rctx *rc);
+
+  /**
+   *
+   */
+  void (*gc_set_rgb)(struct glw *w, const float *rgb);
 
 
   /**
@@ -925,7 +929,6 @@ do {						\
     (void)va_arg(ap, double);			\
   case GLW_ATTRIB_COLOR1:                       \
   case GLW_ATTRIB_COLOR2:                       \
-  case GLW_ATTRIB_RGB:                          \
   case GLW_ATTRIB_SCALING:                      \
   case GLW_ATTRIB_TRANSLATION:			\
     (void)va_arg(ap, double);			\

@@ -1312,6 +1312,20 @@ glw_text_bitmap_ctor(glw_t *w)
  *
  */
 static void 
+glw_text_bitmap_set_rgb(glw_t *w, const float *rgb)
+{
+  glw_text_bitmap_t *gtb = (void *)w;
+
+  gtb->gtb_color.r = rgb[0];
+  gtb->gtb_color.g = rgb[1];
+  gtb->gtb_color.b = rgb[2];
+}
+
+
+/**
+ *
+ */
+static void 
 glw_text_bitmap_set(glw_t *w, va_list ap)
 {
   glw_text_bitmap_t *gtb = (void *)w;
@@ -1378,12 +1392,6 @@ glw_text_bitmap_set(glw_t *w, va_list ap)
       gtb->gtb_size_bias = va_arg(ap, double);
       if(!(gtb->w.glw_flags & GLW_CONSTRAINT_Y)) // Only update if yet unset
 	gtb_set_constraints(gtb->w.glw_root, gtb);
-      break;
-
-    case GLW_ATTRIB_RGB:
-      gtb->gtb_color.r = va_arg(ap, double);
-      gtb->gtb_color.g = va_arg(ap, double);
-      gtb->gtb_color.b = va_arg(ap, double);
       break;
 
     case GLW_ATTRIB_SET_TEXT_FLAGS:
@@ -1701,6 +1709,7 @@ static glw_class_t glw_label = {
   .gc_signal_handler = glw_text_bitmap_callback,
   .gc_get_text = glw_text_bitmap_get_text,
   .gc_default_alignment = GLW_ALIGN_LEFT,
+  .gc_set_rgb = glw_text_bitmap_set_rgb,
 };
 
 GLW_REGISTER_CLASS(glw_label);
@@ -1719,6 +1728,7 @@ static glw_class_t glw_text = {
   .gc_signal_handler = glw_text_bitmap_callback,
   .gc_get_text = glw_text_bitmap_get_text,
   .gc_default_alignment = GLW_ALIGN_LEFT,
+  .gc_set_rgb = glw_text_bitmap_set_rgb,
 };
 
 GLW_REGISTER_CLASS(glw_text);
