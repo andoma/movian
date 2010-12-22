@@ -373,20 +373,23 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 }
 
 
+/**
+ *
+ */
+static void
+glw_array_ctor(glw_t *w)
+{
+  w->glw_flags2 |= GLW2_FLOATING_FOCUS;
+}
 
 /**
  *
  */
 static void 
-glw_array_set(glw_t *w, int init, va_list ap)
+glw_array_set(glw_t *w, va_list ap)
 {
   glw_array_t *a = (glw_array_t *)w;
   glw_attribute_t attrib;
-
-  if(init) {
-    // Just something
-    w->glw_flags2 |= GLW2_FLOATING_FOCUS;
-  }
 
   do {
     attrib = va_arg(ap, int);
@@ -438,6 +441,7 @@ static glw_class_t glw_array = {
   .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
   .gc_nav_search_mode = GLW_NAV_SEARCH_ARRAY,
   .gc_render = glw_array_render,
+  .gc_ctor = glw_array_ctor,
   .gc_set = glw_array_set,
   .gc_signal_handler = glw_array_callback,
   .gc_get_num_children_x = glw_array_get_num_children_x,

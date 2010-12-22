@@ -543,14 +543,11 @@ glw_multitile_callback(glw_t *w, void *opaque, glw_signal_t signal,
  *
  */
 static void 
-glw_multitile_set(glw_t *w, int init, va_list ap)
+glw_multitile_ctor(glw_t *w)
 {
   glw_multitile_t *sf = (glw_multitile_t *)w;
-
-  if(init) {
-    sf->current = &starwars;
-    sf->transcnt = TBS;
-  }
+  sf->current = &starwars;
+  sf->transcnt = TBS;
 }
 
 
@@ -563,7 +560,7 @@ static glw_class_t glw_multitile = {
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_render = glw_multitile_render,
   .gc_signal_handler = glw_multitile_callback,
-  .gc_set = glw_multitile_set,
+  .gc_ctor = glw_multitile_ctor,
 };
 
 GLW_REGISTER_CLASS(glw_multitile);

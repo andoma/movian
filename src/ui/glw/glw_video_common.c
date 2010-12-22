@@ -288,44 +288,50 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
  *
  */
 static void
-glw_video_set(glw_t *w, int init, va_list ap)
+glw_video_ctor(glw_t *w)
 {
   glw_video_t *gv = (glw_video_t *)w;
   glw_root_t *gr = w->glw_root;
+
+
+  gv->gv_cfg_req.gvc_engine = &glw_video_blank;
+  gv->gv_cfg_cur.gvc_engine = &glw_video_blank;
+
+  TAILQ_INIT(&gv->gv_avail_queue);
+  TAILQ_INIT(&gv->gv_displaying_queue);
+  TAILQ_INIT(&gv->gv_decoded_queue);
+
+  hts_mutex_init(&gv->gv_surface_mutex);
+  hts_cond_init(&gv->gv_avail_queue_cond);
+  hts_cond_init(&gv->gv_reconf_cond);
+
+  gv->gv_mp = mp_create("Video decoder", "video", MP_VIDEO);
+#if CONFIG_GLW_BACKEND_OPENGL
+  if(gr->gr_be.gbr_enable_vdpau)
+    gv->gv_mp->mp_vdpau_dev = gr->gr_be.gbr_vdpau_dev;
+#endif
+
+  LIST_INSERT_HEAD(&gr->gr_video_decoders, gv, gv_global_link);
+
+  gv->gv_vd = video_decoder_create(gv->gv_mp, glw_video_input, gv);
+  gv->gv_vp = video_playback_create(gv->gv_mp);
+
+  // We like fullwindow mode if possible (should be confiurable perhaps)
+  glw_set_constraints(w, 0, 0, 0, GLW_CONSTRAINT_F, 0);
+}
+
+/**
+ *
+ */
+static void
+glw_video_set(glw_t *w, va_list ap)
+{
+  glw_video_t *gv = (glw_video_t *)w;
   glw_attribute_t attrib;
   const char *filename = NULL;
   prop_t *p, *p2;
   event_t *e;
   int f;
-
-  if(init) {
-
-    gv->gv_cfg_req.gvc_engine = &glw_video_blank;
-    gv->gv_cfg_cur.gvc_engine = &glw_video_blank;
-
-    TAILQ_INIT(&gv->gv_avail_queue);
-    TAILQ_INIT(&gv->gv_displaying_queue);
-    TAILQ_INIT(&gv->gv_decoded_queue);
-
-    hts_mutex_init(&gv->gv_surface_mutex);
-    hts_cond_init(&gv->gv_avail_queue_cond);
-    hts_cond_init(&gv->gv_reconf_cond);
-
-    gv->gv_mp = mp_create("Video decoder", "video", MP_VIDEO);
-#if CONFIG_GLW_BACKEND_OPENGL
-    if(gr->gr_be.gbr_enable_vdpau)
-      gv->gv_mp->mp_vdpau_dev = gr->gr_be.gbr_vdpau_dev;
-#endif
-
-    LIST_INSERT_HEAD(&gr->gr_video_decoders, gv, gv_global_link);
-
-    gv->gv_vd = video_decoder_create(gv->gv_mp, glw_video_input, gv);
-    gv->gv_vp = video_playback_create(gv->gv_mp);
-
-    // We like fullwindow mode if possible (should be confiurable perhaps)
-    glw_set_constraints(w, 0, 0, 0, GLW_CONSTRAINT_F, 0);
-    
-  }
 
   do {
     attrib = va_arg(ap, int);
@@ -442,6 +448,7 @@ static glw_class_t glw_video = {
   .gc_name = "video",
   .gc_instance_size = sizeof(glw_video_t),
   .gc_set = glw_video_set,
+  .gc_ctor = glw_video_ctor,
   .gc_dtor = glw_video_dtor,
   .gc_render = glw_video_render,
   .gc_newframe = glw_video_newframe,

@@ -56,17 +56,28 @@ glw_quad_callback(glw_t *w, void *opaque, glw_signal_t signal,
   return 0;
 }
 
+
+/**
+ *
+ */
 static void 
-glw_quad_set(glw_t *w, int init, va_list ap)
+glw_quad_init(glw_t *w)
+{
+  glw_quad_t *q = (void *)w;
+  q->color.r = 1.0;
+  q->color.g = 1.0;
+  q->color.b = 1.0;
+}
+
+
+/**
+ *
+ */
+static void 
+glw_quad_set(glw_t *w, va_list ap)
 {
   glw_quad_t *q = (void *)w;
   glw_attribute_t attrib;
-
-  if(init) {
-    q->color.r = 1.0;
-    q->color.g = 1.0;
-    q->color.b = 1.0;
-  }
 
   do {
     attrib = va_arg(ap, int);
@@ -90,6 +101,7 @@ glw_quad_set(glw_t *w, int init, va_list ap)
 static glw_class_t glw_quad = {
   .gc_name = "quad",
   .gc_instance_size = sizeof(glw_quad_t),
+  .gc_ctor = glw_quad_init,
   .gc_render = glw_quad_render,
   .gc_signal_handler = glw_quad_callback,
   .gc_set = glw_quad_set,
@@ -171,25 +183,25 @@ glw_raster_render(glw_t *w, glw_rctx_t *rc)
 
 /**
  *
- */
-static int
-glw_raster_callback(glw_t *w, void *opaque, glw_signal_t signal,
-		  void *extra)
+ */ 
+static void 
+glw_raster_ctor(glw_t *w)
 {
-  return 0;
+  glw_raster_t *q = (void *)w;
+  q->color.r = 1.0;
+  q->color.g = 1.0;
+  q->color.b = 1.0;
 }
 
+
+/**
+ *
+ */ 
 static void 
-glw_raster_set(glw_t *w, int init, va_list ap)
+glw_raster_set(glw_t *w, va_list ap)
 {
   glw_raster_t *q = (void *)w;
   glw_attribute_t attrib;
-
-  if(init) {
-    q->color.r = 1.0;
-    q->color.g = 1.0;
-    q->color.b = 1.0;
-  }
 
   do {
     attrib = va_arg(ap, int);
@@ -214,8 +226,8 @@ static glw_class_t glw_raster = {
   .gc_name = "raster",
   .gc_instance_size = sizeof(glw_raster_t),
   .gc_render = glw_raster_render,
-  .gc_signal_handler = glw_raster_callback,
   .gc_set = glw_raster_set,
+  .gc_ctor = glw_raster_ctor,
 };
 
 

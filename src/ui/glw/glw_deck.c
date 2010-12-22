@@ -238,20 +238,25 @@ set_page(glw_deck_t *gd, int n)
 
 
 
+/**
+ *
+ */
+static void
+glw_deck_ctor(glw_t *w)
+{
+  glw_deck_t *gd = (glw_deck_t *)w;
+  gd->v = 1.0;
+  clear_constraints(w);
+}
 
 /**
  *
  */
 static void 
-glw_deck_set(glw_t *w, int init, va_list ap)
+glw_deck_set(glw_t *w, va_list ap)
 {
   glw_deck_t *gd = (glw_deck_t *)w;
   glw_attribute_t attrib;
-
-  if(init) {
-    gd->v = 1.0;
-    clear_constraints(w);
-  }
 
   do {
     attrib = va_arg(ap, int);
@@ -282,6 +287,7 @@ static glw_class_t glw_deck = {
   .gc_nav_descend_mode = GLW_NAV_DESCEND_SELECTED,
   .gc_render = glw_deck_render,
   .gc_set = glw_deck_set,
+  .gc_ctor = glw_deck_ctor,
   .gc_signal_handler = glw_deck_callback,
   .gc_select_child = deck_select_child,
 };

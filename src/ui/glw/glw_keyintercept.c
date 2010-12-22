@@ -198,7 +198,7 @@ prop_callback(void *opaque, prop_event_t event, ...)
  *
  */
 static void 
-glw_keyintercept_set(glw_t *w, int init, va_list ap)
+glw_keyintercept_set(glw_t *w, va_list ap)
 {
   glw_keyintercept_t *ki = (glw_keyintercept_t *)w;
   glw_attribute_t attrib;

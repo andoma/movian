@@ -213,14 +213,22 @@ glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
  *
  */
 static void
-glw_slideshow_set(glw_t *w, int init, va_list ap)
+glw_slideshow_ctor(glw_t *w)
+{
+  glw_slideshow_t *s = (glw_slideshow_t *)w;
+  s->time = 5.0;
+}
+
+
+/**
+ *
+ */
+static void
+glw_slideshow_set(glw_t *w, va_list ap)
 {
   glw_slideshow_t *s = (glw_slideshow_t *)w;
   glw_attribute_t attrib;
   prop_t *p;
-
-  if(init)
-    s->time = 5.0;
 
   do {
     attrib = va_arg(ap, int);
@@ -254,6 +262,7 @@ static glw_class_t glw_slideshow = {
   .gc_name = "slideshow",
   .gc_instance_size = sizeof(glw_slideshow_t),
   .gc_flags = GLW_CAN_HIDE_CHILDS,
+  .gc_ctor = glw_slideshow_ctor,
   .gc_set = glw_slideshow_set,
   .gc_render = glw_slideshow_render,
   .gc_signal_handler = glw_slideshow_callback,

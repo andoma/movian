@@ -566,7 +566,7 @@ glw_container_z_callback(glw_t *w, void *opaque, glw_signal_t signal,
  *
  */
 static void
-glw_container_set(glw_t *w, int init, va_list ap)
+glw_container_set(glw_t *w, va_list ap)
 {
   glw_attribute_t attrib;
   glw_container_t *co = (glw_container_t *)w;

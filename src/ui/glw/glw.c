@@ -267,8 +267,8 @@ update_in_path(glw_t *w)
 /**
  *
  */
-void
-glw_attrib_set(glw_t *w, int init, va_list ap)
+static void
+glw_attrib_set(glw_t *w, va_list ap)
 {
   glw_attribute_t attrib;
   void *v, *o;
@@ -399,7 +399,7 @@ glw_attrib_set(glw_t *w, int init, va_list ap)
     glw_signal_handler_int(w, w->glw_class->gc_signal_handler);
 
   if(w->glw_class->gc_set != NULL)
-    w->glw_class->gc_set(w, init, apx);
+    w->glw_class->gc_set(w, apx);
 
   va_end(apx);
 }
@@ -449,9 +449,12 @@ glw_create(glw_root_t *gr, const glw_class_t *class,
     glw_signal0(parent, GLW_SIGNAL_CHILD_CREATED, w);
   }
 
+  if(w->glw_class->gc_ctor != NULL)
+    w->glw_class->gc_ctor(w);
+
   /* Parse arguments */
   
-  glw_attrib_set(w, 1, ap);
+  glw_attrib_set(w, ap);
 
   va_end(ap);
   return w;
@@ -467,7 +470,7 @@ glw_set_i(glw_t *w, ...)
   va_list ap;
 
   va_start(ap, w);
-  glw_attrib_set(w, 0, ap);
+  glw_attrib_set(w, ap);
   va_end(ap);
 }
 

@@ -133,20 +133,27 @@ glw_displacement_render(glw_t *w, glw_rctx_t *rc)
   glw_render0(c, &rc0);
 }
 
+
 /**
  *
  */
 static void 
-glw_displacement_set(glw_t *w, int init, va_list ap)
+glw_displacement_ctor(glw_t *w)
+{
+  glw_displacement_t *gd = (glw_displacement_t *)w;
+  gd->gd_scale_x = 1;
+  gd->gd_scale_y = 1;
+  gd->gd_scale_z = 1;
+}
+
+/**
+ *
+ */
+static void 
+glw_displacement_set(glw_t *w, va_list ap)
 {
   glw_displacement_t *gd = (glw_displacement_t *)w;
   glw_attribute_t attrib;
-
-  if(init) {
-    gd->gd_scale_x = 1;
-    gd->gd_scale_y = 1;
-    gd->gd_scale_z = 1;
-  }
 
   do {
     attrib = va_arg(ap, int);
@@ -193,6 +200,7 @@ static glw_class_t glw_displacement = {
   .gc_name = "displacement",
   .gc_instance_size = sizeof(glw_displacement_t),
   .gc_set = glw_displacement_set,
+  .gc_ctor = glw_displacement_ctor,
   .gc_render = glw_displacement_render,
   .gc_signal_handler = glw_displacement_callback,
 };

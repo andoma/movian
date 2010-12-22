@@ -163,18 +163,25 @@ glw_view_loader_retire_child(glw_t *w, glw_t *c)
  *
  */
 static void 
-glw_view_loader_set(glw_t *w, int init, va_list ap)
+glw_view_loader_ctor(glw_t *w)
+{
+  glw_view_loader_t *a = (void *)w;
+  a->time = 1.0;
+  a->args = prop_create(NULL, "args");
+}
+
+
+/**
+ *
+ */
+static void 
+glw_view_loader_set(glw_t *w, va_list ap)
 {
   glw_view_loader_t *a = (void *)w;
 
   glw_attribute_t attrib;
   const char *filename = NULL;
   glw_t *c;
-
-  if(init) {
-    a->time = 1.0;
-    a->args = prop_create(NULL, "args");
-  }
 
   do {
     attrib = va_arg(ap, int);
@@ -237,6 +244,7 @@ static glw_class_t glw_view_loader = {
   .gc_name = "loader",
   .gc_flags = GLW_EXPEDITE_SUBSCRIPTIONS,
   .gc_instance_size = sizeof(glw_view_loader_t),
+  .gc_ctor = glw_view_loader_ctor,
   .gc_set = glw_view_loader_set,
   .gc_render = glw_view_loader_render,
   .gc_retire_child = glw_view_loader_retire_child,

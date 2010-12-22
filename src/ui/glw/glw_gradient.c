@@ -355,16 +355,22 @@ glw_gradient_callback(glw_t *w, void *opaque, glw_signal_t signal,
  *
  */
 static void 
-glw_gradient_set(glw_t *w, int init, va_list ap)
+glw_gradient_ctor(glw_t *w)
+{
+  glw_gradient_t *gg = (glw_gradient_t *)w;
+  gg->gg_height = -1;
+  gg->gg_width = -1;
+}
+
+
+/**
+ *
+ */
+static void 
+glw_gradient_set(glw_t *w, va_list ap)
 {
   glw_gradient_t *gg = (glw_gradient_t *)w;
   glw_attribute_t attrib;
-
-  if(init) {
-    gg->gg_height = -1;
-    gg->gg_width = -1;
-  }
-
 
   do {
     attrib = va_arg(ap, int);
@@ -417,6 +423,7 @@ static glw_class_t glw_gradient = {
   .gc_instance_size = sizeof(glw_gradient_t),
   .gc_render = glw_gradient_render,
   .gc_set = glw_gradient_set,
+  .gc_ctor = glw_gradient_ctor,
   .gc_dtor = glw_gradient_dtor,
   .gc_signal_handler = glw_gradient_callback,
 };

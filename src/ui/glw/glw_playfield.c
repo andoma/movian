@@ -296,34 +296,6 @@ glw_playfield_render(glw_t *w, glw_rctx_t *rc)
 }
 
 
-
-
-
-/**
- *
- */
-static void 
-glw_playfield_set(glw_t *w, int init, va_list ap)
-{
-  //  glw_playfield_t *gd = (glw_playfield_t *)w;
-  glw_attribute_t attrib;
-
-  if(init) {
-    clear_constraints(w);
-  }
-
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
-
- }
-
-
 /**
  *
  */
@@ -333,7 +305,7 @@ static glw_class_t glw_playfield = {
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_nav_descend_mode = GLW_NAV_DESCEND_SELECTED,
   .gc_render = glw_playfield_render,
-  .gc_set = glw_playfield_set,
+  .gc_ctor = clear_constraints,
   .gc_signal_handler = glw_playfield_callback,
   .gc_select_child = playfield_select_child,
 };

@@ -350,10 +350,14 @@ typedef struct glw_class {
 
 
   /**
-   * Set attributes GLW_ATTRIB_... for the widget.
-   * Upon widget construction 'init' is also set to 1
+   * Constructor
    */
-  void (*gc_set)(struct glw *w, int init, va_list ap);
+  void (*gc_ctor)(struct glw *w);
+
+  /**
+   * Set attributes GLW_ATTRIB_... for the widget.
+   */
+  void (*gc_set)(struct glw *w, va_list ap);
 
   /**
    * Ask widget to render itself in the current render context
@@ -962,8 +966,6 @@ glw_t *glw_create(glw_root_t *gr, const glw_class_t *class,
 #define glw_lock_assert() glw_lock_check(__FILE__, __LINE__)
 
 void glw_lock_check(const char *file, const int line);
-
-void glw_attrib_set(glw_t *w, int init, va_list ap);
 
 void glw_set_i(glw_t *w, ...) __attribute__((__sentinel__(0)));
 

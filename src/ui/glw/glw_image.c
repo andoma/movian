@@ -702,27 +702,37 @@ glw_image_callback(glw_t *w, void *opaque, glw_signal_t signal,
   return 0;
 }
 
-/*
+
+
+/**
  *
  */
 static void 
-glw_image_set(glw_t *w, int init, va_list ap)
+glw_image_ctor(glw_t *w)
+{
+  glw_image_t *gi = (void *)w;
+
+  gi->gi_alpha_self = 1;
+  gi->gi_color.r = 1.0;
+  gi->gi_color.g = 1.0;
+  gi->gi_color.b = 1.0;
+  gi->gi_size_scale = 1.0;
+
+  if(w->glw_class == &glw_repeatedimage)
+    gi->gi_mode = GI_MODE_REPEATED_TEXTURE;
+}
+
+
+/**
+ *
+ */
+static void 
+glw_image_set(glw_t *w, va_list ap)
 {
   glw_image_t *gi = (void *)w;
   glw_attribute_t attrib;
   const char *filename = NULL;
   glw_root_t *gr = w->glw_root;
-
-  if(init) {
-    gi->gi_alpha_self = 1;
-    gi->gi_color.r = 1.0;
-    gi->gi_color.g = 1.0;
-    gi->gi_color.b = 1.0;
-    gi->gi_size_scale = 1.0;
-
-    if(w->glw_class == &glw_repeatedimage)
-      gi->gi_mode = GI_MODE_REPEATED_TEXTURE;
-  }
 
   do {
     attrib = va_arg(ap, int);
@@ -863,6 +873,7 @@ static glw_class_t glw_image = {
   .gc_instance_size = sizeof(glw_image_t),
   .gc_render = glw_image_render,
   .gc_dtor = glw_image_dtor,
+  .gc_ctor = glw_image_ctor,
   .gc_set = glw_image_set,
   .gc_signal_handler = glw_image_callback,
   .gc_default_alignment = GLW_ALIGN_CENTER,
@@ -879,6 +890,7 @@ static glw_class_t glw_icon = {
   .gc_name = "icon",
   .gc_instance_size = sizeof(glw_image_t),
   .gc_render = glw_image_render,
+  .gc_ctor = glw_image_ctor,
   .gc_dtor = glw_image_dtor,
   .gc_set = glw_image_set,
   .gc_signal_handler = glw_image_callback,
@@ -895,6 +907,7 @@ static glw_class_t glw_backdrop = {
   .gc_name = "backdrop",
   .gc_instance_size = sizeof(glw_image_t),
   .gc_render = glw_image_render,
+  .gc_ctor = glw_image_ctor,
   .gc_dtor = glw_image_dtor,
   .gc_set = glw_image_set,
   .gc_signal_handler = glw_image_callback,
@@ -912,6 +925,7 @@ static glw_class_t glw_repeatedimage = {
   .gc_name = "repeatedimage",
   .gc_instance_size = sizeof(glw_image_t),
   .gc_render = glw_image_render,
+  .gc_ctor = glw_image_ctor,
   .gc_dtor = glw_image_dtor,
   .gc_set = glw_image_set,
   .gc_signal_handler = glw_image_callback,

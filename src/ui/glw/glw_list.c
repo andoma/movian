@@ -326,16 +326,12 @@ glw_list_set(glw_t *w, va_list ap)
  *
  */
 static void
-glw_list_set_y(glw_t *w, int init, va_list ap)
+glw_list_y_ctor(glw_t *w)
 {
   glw_list_t *l = (void *)w;
-
-  if(init) {
-    l->child_aspect = 20;
-    w->glw_flags2 |= GLW2_FLOATING_FOCUS;
-  }
-
-  glw_list_set(w, ap);
+  
+  l->child_aspect = 20;
+  w->glw_flags2 |= GLW2_FLOATING_FOCUS;
 }
 
 /**
@@ -367,7 +363,8 @@ static glw_class_t glw_list_y = {
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING,
 
   .gc_render = glw_list_render_y,
-  .gc_set = glw_list_set_y,
+  .gc_set = glw_list_set,
+  .gc_ctor = glw_list_y_ctor,
   .gc_signal_handler = glw_list_callback_y,
   .gc_escape_score = 100,
   .gc_suggest_focus = glw_list_suggest_focus,

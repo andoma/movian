@@ -242,14 +242,11 @@ glw_freefloat_callback(glw_t *w, void *opaque, glw_signal_t signal,
  *
  */
 static void
-glw_freefloat_set(glw_t *w, int init, va_list ap)
+glw_freefloat_ctor(glw_t *w)
 {
   glw_freefloat_t *ff = (glw_freefloat_t *)w;
-
-  if(init) {
-    ff->rand = showtime_get_ts();
-    ff->num_visible = GLW_FREEFLOAT_MAX_VISIBLE;
-  }
+  ff->rand = showtime_get_ts();
+  ff->num_visible = GLW_FREEFLOAT_MAX_VISIBLE;
 }
 
 
@@ -260,7 +257,7 @@ static glw_class_t glw_freefloat = {
   .gc_name = "freefloat",
   .gc_instance_size = sizeof(glw_freefloat_t),
   .gc_flags = GLW_CAN_HIDE_CHILDS,
-  .gc_set = glw_freefloat_set,
+  .gc_ctor = glw_freefloat_ctor,
   .gc_render = glw_freefloat_render,
   .gc_retire_child = glw_freefloat_retire_child,
   .gc_signal_handler = glw_freefloat_callback,

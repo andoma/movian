@@ -135,7 +135,7 @@ glw_bar_callback(glw_t *w, void *opaque, glw_signal_t signal,
  *
  */
 static void 
-glw_bar_set(glw_t *w, int init, va_list ap)
+glw_bar_set(glw_t *w, va_list ap)
 {
   glw_bar_t *gb = (glw_bar_t *)w;
   glw_attribute_t attrib;

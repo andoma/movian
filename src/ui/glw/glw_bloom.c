@@ -254,23 +254,27 @@ bflush(void *aux)
 }
 
 
-/*
+/**
  *
  */
 static void 
-glw_bloom_set(glw_t *w, int init, va_list ap)
+glw_bloom_ctor(glw_t *w)
+{
+  glw_bloom_t *b = (void *)w;
+  b->b_flushctrl.opaque = b;
+  b->b_flushctrl.flush = bflush;
+  glw_gf_register(&b->b_flushctrl);
+
+}
+
+/**
+ *
+ */
+static void 
+glw_bloom_set(glw_t *w, va_list ap)
 {
   glw_bloom_t *b = (void *)w;
   glw_attribute_t attrib;
-
-  if(init) {
-    glw_signal_handler_int(w, glw_bloom_callback);
-
-    /* Flush due to opengl shutdown */
-    b->b_flushctrl.opaque = b;
-    b->b_flushctrl.flush = bflush;
-    glw_gf_register(&b->b_flushctrl);
-  }
 
   do {
     attrib = va_arg(ap, int);
@@ -293,6 +297,7 @@ glw_bloom_set(glw_t *w, int init, va_list ap)
 static glw_class_t glw_bloom = {
   .gc_name = "bloom",
   .gc_instance_size = sizeof(glw_bloom_t),
+  .gc_ctor = glw_bloom_ctor,
   .gc_set = glw_bloom_set,
   .gc_render = glw_bloom_render,
   .gc_dtor = glw_bloom_dtor,

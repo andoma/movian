@@ -1289,30 +1289,36 @@ prop_callback(void *opaque, prop_event_t event, ...)
  *
  */
 static void 
-glw_text_bitmap_set(glw_t *w, int init, va_list ap)
+glw_text_bitmap_ctor(glw_t *w)
 {
   glw_text_bitmap_t *gtb = (void *)w;
   glw_root_t *gr = w->glw_root;
+
+  w->glw_flags |= GLW_FOCUS_ON_CLICK | GLW_SHADOW | GLW_HIDDEN;
+  gtb->gtb_edit_ptr = -1;
+  gtb->gtb_int_step = 1;
+  gtb->gtb_int_min = INT_MIN;
+  gtb->gtb_int_max = INT_MAX;
+  gtb->gtb_size_scale = 1.0;
+  gtb->gtb_color.r = 1.0;
+  gtb->gtb_color.g = 1.0;
+  gtb->gtb_color.b = 1.0;
+  gtb->gtb_maxlines = 1;
+  LIST_INSERT_HEAD(&gr->gr_gtbs, gtb, gtb_global_link);
+}
+
+
+/**
+ *
+ */
+static void 
+glw_text_bitmap_set(glw_t *w, va_list ap)
+{
+  glw_text_bitmap_t *gtb = (void *)w;
   glw_attribute_t attrib;
   int update = 0;
   prop_t *p, *view, *args, *clone;
   const char **pname, *caption;
-
-  if(init) {
-    w->glw_flags |= GLW_FOCUS_ON_CLICK | GLW_SHADOW | GLW_HIDDEN;
-    gtb->gtb_edit_ptr = -1;
-    gtb->gtb_int_step = 1;
-    gtb->gtb_int_min = INT_MIN;
-    gtb->gtb_int_max = INT_MAX;
-    gtb->gtb_size_scale = 1.0;
-    gtb->gtb_color.r = 1.0;
-    gtb->gtb_color.g = 1.0;
-    gtb->gtb_color.b = 1.0;
-    gtb->gtb_maxlines = 1;
-
-    update = 1;
-    LIST_INSERT_HEAD(&gr->gr_gtbs, gtb, gtb_global_link);
-  }
 
   do {
     attrib = va_arg(ap, int);
@@ -1690,6 +1696,7 @@ static glw_class_t glw_label = {
   .gc_instance_size = sizeof(glw_text_bitmap_t),
   .gc_render = glw_text_bitmap_render,
   .gc_set = glw_text_bitmap_set,
+  .gc_ctor = glw_text_bitmap_ctor,
   .gc_dtor = glw_text_bitmap_dtor,
   .gc_signal_handler = glw_text_bitmap_callback,
   .gc_get_text = glw_text_bitmap_get_text,
@@ -1707,6 +1714,7 @@ static glw_class_t glw_text = {
   .gc_instance_size = sizeof(glw_text_bitmap_t),
   .gc_render = glw_text_bitmap_render,
   .gc_set = glw_text_bitmap_set,
+  .gc_ctor = glw_text_bitmap_ctor,
   .gc_dtor = glw_text_bitmap_dtor,
   .gc_signal_handler = glw_text_bitmap_callback,
   .gc_get_text = glw_text_bitmap_get_text,

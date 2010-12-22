@@ -463,26 +463,31 @@ slider_bind_by_id(glw_slider_t *s, const char *name)
   t->glw_flags |= GLW_UPDATE_METRICS;
 }
 
+
 /**
  *
  */
 static void
-glw_slider_set(glw_t *w, int init, va_list ap)
+glw_slider_ctor(glw_t *w)
+{
+  glw_slider_t *s = (glw_slider_t *)w;
+  s->max = 1.0;
+  s->step_i = 0.1;
+  s->step = 0.1;
+}
+
+
+/**
+ *
+ */
+static void
+glw_slider_set(glw_t *w, va_list ap)
 {
   glw_slider_t *s = (glw_slider_t *)w;
   glw_attribute_t attrib;
   prop_t *p, *view, *args, *clone;
   const char **pname;
   const char *n;
-
-  if(init) {
-    glw_signal_handler_int(w, glw_slider_callback);
-    s->min = 0.0;
-    s->max = 1.0;
-    s->step_i = 0.1;
-    s->step = 0.1;
-    s->knob_pos_px = 0;
-  }
 
   do {
     attrib = va_arg(ap, int);
@@ -546,6 +551,7 @@ static glw_class_t glw_slider_x = {
   .gc_instance_size = sizeof(glw_slider_t),
   .gc_render = glw_slider_render_x,
   .gc_set = glw_slider_set,
+  .gc_ctor = glw_slider_ctor,
   .gc_signal_handler = glw_slider_callback,
 };
 
@@ -554,6 +560,7 @@ static glw_class_t glw_slider_y = {
   .gc_instance_size = sizeof(glw_slider_t),
   .gc_render = glw_slider_render_y,
   .gc_set = glw_slider_set,
+  .gc_ctor = glw_slider_ctor,
   .gc_signal_handler = glw_slider_callback,
 };
 

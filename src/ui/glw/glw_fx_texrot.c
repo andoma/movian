@@ -255,24 +255,32 @@ fxflush(void *aux)
 }
 
 
-/*
+/**
  *
  */
 static void 
-glw_fx_texrot_set(glw_t *w, int init, va_list ap)
+glw_fx_texrot_ctor(glw_t *w)
+{
+  glw_fx_texrot_t *fx = (void *)w;
+
+  glw_fx_texrot_init(fx);
+
+  /* Flush due to opengl shutdown */
+  fx->fx_flushctrl.opaque = fx;
+  fx->fx_flushctrl.flush = fxflush;
+  glw_gf_register(&fx->fx_flushctrl);
+}
+
+
+/**
+ *
+ */
+static void 
+glw_fx_texrot_set(glw_t *w, va_list ap)
 {
   glw_fx_texrot_t *fx = (void *)w;
   glw_attribute_t attrib;
   const char *filename = NULL;
-
-  if(init) {
-    glw_fx_texrot_init(fx);
-
-    /* Flush due to opengl shutdown */
-    fx->fx_flushctrl.opaque = fx;
-    fx->fx_flushctrl.flush = fxflush;
-    glw_gf_register(&fx->fx_flushctrl);
-  }
 
   do {
     attrib = va_arg(ap, int);
@@ -304,6 +312,7 @@ static glw_class_t glw_fx_texrot = {
   .gc_name = "fx_texrot",
   .gc_instance_size = sizeof(glw_fx_texrot_t),
   .gc_set = glw_fx_texrot_set,
+  .gc_ctor = glw_fx_texrot_ctor,
   .gc_render = glw_fx_texrot_render,
   .gc_dtor = glw_fx_texrot_dtor,
   .gc_signal_handler = glw_fx_texrot_callback,
