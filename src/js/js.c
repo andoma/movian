@@ -369,7 +369,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("readFile",         js_readFile, 1, 0, 0),
     JS_FS("queryStringSplit", js_queryStringSplit, 1, 0, 0),
     JS_FS("httpEscape",       js_httpEscape, 1, 0, 0),
-    JS_FS("createService",    js_createService, 3, 0, 0),
+    JS_FS("createService",    js_createService, 4, 0, 0),
     JS_FS("canHandle",        js_canHandle, 1, 0, 0),
     JS_FS("getAuthCredentials",  js_getAuthCredentials, 4, 0, 0),
     JS_FS("message",          js_message, 3, 0, 0),
@@ -455,7 +455,7 @@ js_forceUnload(JSContext *cx, JSObject *obj,
  *
  */
 static JSBool 
-jsp_setEnabled(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
+jsp_setEnableURIRoute(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 { 
   js_plugin_t *jsp = JS_GetPrivate(cx, obj);
   JSBool on;
@@ -463,10 +463,30 @@ jsp_setEnabled(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
   if(!JS_ValueToBoolean(cx, *vp, &on))
     return JS_FALSE;
 
-  jsp->jsp_enabled = on;
+  jsp->jsp_enable_uri_routing = on;
 
-  TRACE(TRACE_DEBUG, "plugins", 
-	"Plugin %s %sabled", jsp->jsp_id, jsp->jsp_enabled ? "en" : "dis");
+  TRACE(TRACE_DEBUG, "plugins", "Plugin %s %sabled URI routing",
+	jsp->jsp_id, on ? "en" : "dis");
+
+  return JS_TRUE;
+}
+
+/**
+ *
+ */
+static JSBool 
+jsp_setEnableSearch(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
+{ 
+  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
+  JSBool on;
+
+  if(!JS_ValueToBoolean(cx, *vp, &on))
+    return JS_FALSE;
+
+  jsp->jsp_enable_search = on;
+
+  TRACE(TRACE_DEBUG, "plugins", "Plugin %s %sabled search",
+	jsp->jsp_id, on ? "en" : "dis");
 
   return JS_TRUE;
 }
@@ -566,8 +586,11 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
     JS_SetProperty(cx, confobj, "path", &val);
   }
 
-  JS_DefineProperty(cx, confobj, "enabled", BOOLEAN_TO_JSVAL(1),
-		    NULL, jsp_setEnabled, JSPROP_PERMANENT);
+  JS_DefineProperty(cx, confobj, "URIRouting", BOOLEAN_TO_JSVAL(1),
+		    NULL, jsp_setEnableURIRoute, JSPROP_PERMANENT);
+
+  JS_DefineProperty(cx, confobj, "search", BOOLEAN_TO_JSVAL(1),
+		    NULL, jsp_setEnableSearch, JSPROP_PERMANENT);
 
   s = JS_CompileScript(cx, pobj, sbuf, fs.fs_size, url, 1);
   free(sbuf);

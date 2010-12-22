@@ -55,7 +55,8 @@ service_t *service_create(const char *title,
 			  const char *url,
 			  const char *type,
 			  const char *icon,
-			  int probe);
+			  int probe,
+			  int enabled);
 
 void service_set_type(service_t *svc, const char *type);
 
@@ -64,6 +65,8 @@ void service_set_title(service_t *svc, const char *title);
 void service_set_icon(service_t *svc, const char *icon);
 
 void service_set_url(service_t *svc, const char *url);
+
+void service_set_enabled(service_t *svc, int v);
 
 void service_set_status(service_t *svc, service_status_t status);
 

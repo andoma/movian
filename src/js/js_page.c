@@ -935,7 +935,7 @@ js_backend_open(prop_t *page, const char *url)
   prop_t *model;
 
   LIST_FOREACH(jsr, &js_routes, jsr_global_link)
-    if(jsr->jsr_jsp->jsp_enabled &&
+    if(jsr->jsr_jsp->jsp_enable_uri_routing &&
        !regexec(&jsr->jsr_regex, url, 8, matches, 0))
       break;
 
@@ -974,7 +974,7 @@ js_backend_search(struct prop *model, const char *query)
   js_model_t *jm;
 
   LIST_FOREACH(jss, &js_searchers, jss_global_link) {
-    if(!jss->jss_jsp->jsp_enabled)
+    if(!jss->jss_jsp->jsp_enable_search)
       continue;
 
     jm = js_model_create(jss->jss_openfunc);

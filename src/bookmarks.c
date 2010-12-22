@@ -159,7 +159,7 @@ bookmark_add(const char *title, const char *url, const char *type)
   bm->bm_url_sub   = bookmark_add_prop(src, "url",      url,     bm, set_url);
   bm->bm_type_sub  = bookmark_add_prop(src, "svctype",  type,    bm, set_type);
 
-  bm->bm_service = service_create(title, url, type, NULL, 1);
+  bm->bm_service = service_create(title, url, type, NULL, 1, 1);
 
   prop_link(service_get_status_prop(bm->bm_service),
 	    prop_create(src, "status"));

@@ -22,6 +22,10 @@
 
 (function(plugin) {
 
+  plugin.service =
+    showtime.createService("SVT Play", "svtplay:start", "tv", false,
+			   plugin.config.path + "svtplay_square.png");
+  
   plugin.settings = plugin.createSettings("SVT Play", "video");
 
   plugin.settings.createInfo("info",
@@ -29,21 +33,10 @@
 			     "Sveriges Television online");
 
   plugin.settings.createBool("enabled", "Enable SVT Play", false, function(v) {
-
-    plugin.config.enabled = v;
-    if(v) {
-      plugin.service = showtime.createService("SVT Play",
-					      "svtplay:start", "tv",
-					      plugin.config.path + "svtplay_square.png");
-
-    } else {
-      delete plugin.service;
-    }
+    plugin.config.URIRouting = v;
+    plugin.config.search = v;
+    plugin.service.enabled = v;
   });
-
-
-
-
 
   var opensearch = new Namespace("http://a9.com/-/spec/opensearch/1.1/");
   var svtplay    = new Namespace("http://xml.svtplay.se/ns/playrss");

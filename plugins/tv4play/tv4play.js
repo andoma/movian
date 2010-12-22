@@ -3,7 +3,12 @@
 
 (function(plugin) {
 
-    var maxBandwidth = 10000; //probably more than tv4 will ever provide with. 1500, 800 and 300 have been spotted.
+  var maxBandwidth = 10000; //probably more than tv4 will ever provide with. 1500, 800 and 300 have been spotted.
+  var startURL = "http://wwwb.tv4play.se/?view=xml";
+
+  plugin.service =
+    showtime.createService("TV4 Play",
+			   "tv4play:categorylist:0:" + startURL + ":Tv4play", "tv", false, plugin.config.path + "tv4play.jpg");
 
   plugin.settings = plugin.createSettings("TV4 Play", "video");
 
@@ -12,18 +17,9 @@
 			     "TV4 Play");
 
   plugin.settings.createBool("enabled", "Enable TV4 Play", false, function(v) {
-
-    plugin.config.enabled = v;
-    if(v) {
-	var startURL = "http://wwwb.tv4play.se/?view=xml";
-
-      plugin.service = showtime.createService("TV4 Play",
-					      "tv4play:categorylist:0:" + startURL + ":Tv4play", "tv",
-					      plugin.config.path + "tv4play.jpg");
-
-    } else {
-      delete plugin.service;
-    }
+    plugin.config.URIRouting = v;
+    plugin.config.search = v;
+    plugin.service.enabled = v;
   });
 
 

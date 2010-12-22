@@ -55,12 +55,21 @@ static void *service_probe_loop(void *aux);
 void
 service_init(void)
 {
+  struct prop_nf *pnf;
+
   hts_mutex_init(&service_mutex);
   hts_cond_init(&service_cond);
 
   hts_thread_create_detached("service probe", service_probe_loop, NULL);
 
-  all_services = prop_create(prop_get_global(), "sources");
+  all_services = prop_create(NULL, NULL);
+
+  pnf = prop_nf_create(prop_create(prop_get_global(), "sources"), all_services,
+		       NULL, NULL, 0);
+  
+  prop_nf_pred_int_add(pnf, "node.enabled",
+		       PROP_NF_CMP_EQ, 0, NULL, 
+		       PROP_NF_MODE_EXCLUDE);
 }
 
 
@@ -121,7 +130,8 @@ service_create(const char *title,
 	       const char *url,
 	       const char *type,
 	       const char *icon,
-	       int probe)
+	       int probe,
+	       int enabled)
 {
   service_t *s = calloc(1, sizeof(service_t));
   prop_t *p;
@@ -133,6 +143,7 @@ service_create(const char *title,
   prop_set_string(prop_create(p, "title"), title);
   prop_set_string(prop_create(p, "icon"), icon);
   prop_set_string(prop_create(p, "url"), url);
+  prop_set_int(prop_create(p, "enabled"), enabled);
 
   s->s_prop_type = prop_create(p, "type");
   prop_set_string(s->s_prop_type, type);
@@ -201,6 +212,16 @@ void
 service_set_icon(service_t *s, const char *icon)
 {
   prop_set_string(prop_create(s->s_root, "icon"), icon);
+}
+
+
+/**
+ *
+ */
+void
+service_set_enabled(service_t *s, int v)
+{
+  prop_set_int(prop_create(s->s_root, "enabled"), v);
 }
 
 

@@ -83,20 +83,19 @@ si_destroy(service_instance_t *si)
 static void
 update_service(service_instance_t *si)
 {
-  if(si->si_service == NULL && si->si_enabled &&
-     si->si_setting_title && si->si_setting_type) {
+  if(si->si_service == NULL &&
+     si->si_setting_enabled &&
+     si->si_setting_title &&
+     si->si_setting_type) {
+
     si->si_service = service_create(NULL, si->si_url, NULL, NULL,
-				     si->si_probe);
+				    si->si_probe, 0);
     prop_link(settings_get_value(si->si_setting_title), 
 	      prop_create(si->si_service->s_root, "title"));
     prop_link(settings_get_value(si->si_setting_type), 
 	      prop_create(si->si_service->s_root, "type"));
-    return;
-  }
-
-  if(si->si_service != NULL && !si->si_enabled) {
-    service_destroy(si->si_service);
-    si->si_service = NULL;
+    prop_link(settings_get_value(si->si_setting_enabled), 
+	      prop_create(si->si_service->s_root, "enabled"));
   }
 }
 
@@ -130,18 +129,6 @@ sd_settings_saver(void *opaque, htsmsg_t *msg)
  *
  */
 static void
-enable_cb(void *opaque, int enabled)
-{
-  service_instance_t *si = opaque;
-  si->si_enabled = enabled;
-  update_service(si);
-}
-
-
-/**
- *
- */
-static void
 sd_add_service(service_instance_t *si, const char *title,
 	       const char *url, const char *contents, int probe)
 {
@@ -161,7 +148,7 @@ sd_add_service(service_instance_t *si, const char *title,
     
     si->si_setting_enabled = 
       settings_create_bool(si->si_settings, "enabled", "Enabled", 1,
-			   si->si_settings_store, enable_cb, si,
+			   si->si_settings_store, NULL, NULL,
 			   SETTINGS_INITIAL_UPDATE, NULL,
 			   sd_settings_saver, si);
 

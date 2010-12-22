@@ -39,6 +39,21 @@ static JSClass service_class = {
   JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
+/**
+ *
+ */
+static JSBool 
+setEnabled(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
+{ 
+  JSBool on;
+
+  if(!JS_ValueToBoolean(cx, *vp, &on))
+    return JS_FALSE;
+
+  service_set_enabled(JS_GetPrivate(cx, obj), on);
+  return JS_TRUE;
+}
+
 
 /**
  *
@@ -52,16 +67,22 @@ js_createService(JSContext *cx, JSObject *obj, uintN argc,
   const char *type;
   const char *icon = NULL;
   JSObject *robj;
+  JSBool enabled;
   service_t *s;
 
-  if (!JS_ConvertArguments(cx, argc, argv, "sss/s",
-			   &title, &url, &type, &icon))
+  if (!JS_ConvertArguments(cx, argc, argv, "sssb/s",
+			   &title, &url, &type, &enabled, &icon))
     return JS_FALSE;
 
-  s = service_create(title, url, type, icon, 0);
+  s = service_create(title, url, type, icon, 0, !!enabled);
   robj = JS_NewObjectWithGivenProto(cx, &service_class, NULL, NULL);
-  JS_SetPrivate(cx, robj, s);
   *rval = OBJECT_TO_JSVAL(robj);
+
+  JS_SetPrivate(cx, robj, s);
+
+  JS_DefineProperty(cx, robj, "enabled", BOOLEAN_TO_JSVAL(enabled),
+		    NULL, setEnabled, JSPROP_PERMANENT);
+
   return JS_TRUE;
 }
 

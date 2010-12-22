@@ -5,6 +5,11 @@
 
 (function(plugin) {
 
+  plugin.service =
+    showtime.createService("Viasat Play", "viastream:start", "tv", false,
+			   plugin.config.path + "viasatimage.jpg");
+
+
   plugin.settings = plugin.createSettings("Viasat Play", "video");
 
   plugin.settings.createInfo("info",
@@ -12,16 +17,9 @@
 			     "Viasat Play");
 
   plugin.settings.createBool("enabled", "Enable Viasat Play", false, function(v) {
-
-    plugin.config.enabled = v;
-    if(v) {
-      plugin.service = showtime.createService("Viasat Play",
-					      "viastream:start", "tv",
-					      plugin.config.path + "viasatimage.jpg");
-
-    } else {
-      delete plugin.service;
-    }
+    plugin.config.URIRouting = v;
+    plugin.config.search = v;
+    plugin.service.enabled = v;
   });
 
   function extractGeoblockUrl(url) {

@@ -23,6 +23,10 @@
 (function(plugin) {
   var PREFIX = "headweb:"
 
+  plugin.service =
+    showtime.createService("Headweb", PREFIX + "genres", "video", false,
+			   plugin.config.path + "headweb_square.png");
+  
   plugin.settings = plugin.createSettings("Headweb", "video");
 
   plugin.settings.createInfo("info",
@@ -31,15 +35,9 @@
 			     "For more information, visit http://www.headweb.se\n\n");
 
   plugin.settings.createBool("enabled", "Enable headweb", false, function(v) {
-
-    plugin.config.enabled = v;
-    if(v) {
-      plugin.service = showtime.createService("Headweb",
-					      PREFIX + "genres", "video",
-					     plugin.config.path + "headweb_square.png");
-    } else {
-      delete plugin.service;
-    }
+    plugin.config.URIRouting = v;
+    plugin.config.search = v;
+    plugin.service.enabled = v;
   });
 
   /**
