@@ -3480,8 +3480,7 @@ glwf_canScroll(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
- * Return 1 if the current widget is needs to be scrolled in order to
- * display all its contents
+ * Return 1 if the current widget wants full screen
  */
 static int 
 glwf_wantFullWindow(glw_view_eval_context_t *ec, struct token *self,
