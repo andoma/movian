@@ -69,7 +69,6 @@ LIST_HEAD(glw_video_list, glw_video);
 
 typedef enum {
   GLW_ATTRIB_END = 0,
-  GLW_ATTRIB_WEIGHT,
   GLW_ATTRIB_CAPTION,
   GLW_ATTRIB_VALUE,
   GLW_ATTRIB_SOURCE,
@@ -107,8 +106,6 @@ typedef enum {
   GLW_ATTRIB_PIXMAP,
   GLW_ATTRIB_FOCUS_WEIGHT,
   GLW_ATTRIB_CHILD_ASPECT,
-  GLW_ATTRIB_HEIGHT,
-  GLW_ATTRIB_WIDTH,
   GLW_ATTRIB_CHILD_HEIGHT,
   GLW_ATTRIB_CHILD_WIDTH,
   GLW_ATTRIB_CHILD_TILES_X,
@@ -948,7 +945,6 @@ do {						\
   case GLW_ATTRIB_Y_SPACING:                    \
     (void)va_arg(ap, int);			\
     break;					\
-  case GLW_ATTRIB_WEIGHT:			\
   case GLW_ATTRIB_ALPHA:			\
   case GLW_ATTRIB_ALPHA_SELF:			\
   case GLW_ATTRIB_ANGLE:			\
@@ -962,8 +958,6 @@ do {						\
   case GLW_ATTRIB_SIZE_BIAS:                    \
   case GLW_ATTRIB_FOCUS_WEIGHT:                 \
   case GLW_ATTRIB_CHILD_ASPECT:                 \
-  case GLW_ATTRIB_HEIGHT:                       \
-  case GLW_ATTRIB_WIDTH:                        \
   case GLW_ATTRIB_FILL:                         \
     (void)va_arg(ap, double);			\
     break;					\

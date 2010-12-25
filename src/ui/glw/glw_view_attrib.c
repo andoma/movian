@@ -117,32 +117,46 @@ static int
 set_float(glw_view_eval_context_t *ec, const token_attrib_t *a, 
 	  struct token *t)
 {
-  double d;
+  float v;
 
   switch(t->type) {
   case TOKEN_STRING:
   case TOKEN_LINK:
-    d = strtod(rstr_get(t->t_rstring), NULL);
+    v = strtod(rstr_get(t->t_rstring), NULL);
     break;
 
   case TOKEN_FLOAT:
-    d = t->t_float;
+    v = t->t_float;
     break;
 
   case TOKEN_INT:
-    d = t->t_int;
+    v = t->t_int;
     break;
 
   case TOKEN_VOID:
-    d = 0;
+    v = 0.0f;
     break;
   default:
     return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a scalar",
 			    a->name);
   }
 
-  glw_set(ec->w, a->attrib, d, NULL);
+  void (*fn)(struct glw *w, float v) = a->fn;
+  if(fn)
+    fn(ec->w, v);
+  else
+  glw_set(ec->w, a->attrib, v, NULL);
   return 0;
+}
+
+
+/**
+ *
+ */
+static void
+set_weight(glw_t *w, float v)
+{
+  glw_set_constraints(w, 0, 0, v, GLW_CONSTRAINT_W, GLW_CONSTRAINT_CONF_WF);
 }
 
 /**
@@ -176,8 +190,48 @@ set_int(glw_view_eval_context_t *ec, const token_attrib_t *a,
 			    a->name);
   }
 
-  glw_set(ec->w, a->attrib, v, NULL);
+  void (*fn)(struct glw *w, int v) = a->fn;
+  if(fn)
+    fn(ec->w, v);
+  else
+    glw_set(ec->w, a->attrib, v, NULL);
   return 0;
+}
+
+
+/**
+ *
+ */
+static void
+set_width(glw_t *w, int v)
+{
+  glw_set_constraints(w, 
+		      v,
+		      w->glw_req_size_y, 
+		      0,
+		      GLW_CONSTRAINT_X | 
+		      (w->glw_flags & GLW_CONSTRAINT_CONF_XY ?
+		       w->glw_flags & GLW_CONSTRAINT_Y : 0),
+		      GLW_CONSTRAINT_CONF_XY);
+  
+}
+
+
+/**
+ *
+ */
+static void
+set_height(glw_t *w, int v)
+{
+  glw_set_constraints(w, 
+		      w->glw_req_size_x, 
+		      v,
+		      0,
+		      GLW_CONSTRAINT_Y | 
+		      (w->glw_flags & GLW_CONSTRAINT_CONF_XY ?
+		       w->glw_flags & GLW_CONSTRAINT_X : 0),
+		      GLW_CONSTRAINT_CONF_XY);
+
 }
 
 
@@ -548,7 +602,7 @@ static const token_attrib_t attribtab[] = {
 
   {"alpha",           set_float,  GLW_ATTRIB_ALPHA},
   {"alphaSelf",       set_float,  GLW_ATTRIB_ALPHA_SELF},
-  {"weight",          set_float,  GLW_ATTRIB_WEIGHT},
+  {"weight",          set_float,  0, set_weight},
   {"time",            set_float,  GLW_ATTRIB_TIME},
   {"angle",           set_float,  GLW_ATTRIB_ANGLE},
   {"expansion",       set_float,  GLW_ATTRIB_EXPANSION},
@@ -561,8 +615,8 @@ static const token_attrib_t attribtab[] = {
   {"focusable",       set_float,  GLW_ATTRIB_FOCUS_WEIGHT},
   {"childAspect",     set_float,  GLW_ATTRIB_CHILD_ASPECT},
 
-  {"height",          set_float,  GLW_ATTRIB_HEIGHT},
-  {"width",           set_float,  GLW_ATTRIB_WIDTH},
+  {"height",          set_int,  0, set_height},
+  {"width",           set_int,  0, set_width},
 
   {"fill",            set_float,  GLW_ATTRIB_FILL},
 

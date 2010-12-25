@@ -300,34 +300,6 @@ glw_attrib_set(glw_t *w, va_list ap)
     assert(attrib >= 0 && attrib < GLW_ATTRIB_num);
 
     switch(attrib) {
-
-    case GLW_ATTRIB_WEIGHT:
-      glw_set_constraints(w, 0, 0, va_arg(ap, double), GLW_CONSTRAINT_W,
-			  GLW_CONSTRAINT_CONF_WF);
-      break;
-
-    case GLW_ATTRIB_WIDTH:
-      glw_set_constraints(w, 
-			  va_arg(ap, double), 
-			  w->glw_req_size_y, 
-			  0,
-			  GLW_CONSTRAINT_X | 
-			  (w->glw_flags & GLW_CONSTRAINT_CONF_XY ?
-			   w->glw_flags & GLW_CONSTRAINT_Y : 0),
-			  GLW_CONSTRAINT_CONF_XY);
-      break;
-
-    case GLW_ATTRIB_HEIGHT:
-      glw_set_constraints(w, 
-			  w->glw_req_size_x, 
-			  va_arg(ap, double),
-			  0,
-			  GLW_CONSTRAINT_Y | 
-			  (w->glw_flags & GLW_CONSTRAINT_CONF_XY ?
-			   w->glw_flags & GLW_CONSTRAINT_X : 0),
-			  GLW_CONSTRAINT_CONF_XY);
-      break;
-
     case GLW_ATTRIB_ID:
       v = va_arg(ap, char *);
       free((void *)w->glw_id);
