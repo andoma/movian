@@ -240,9 +240,7 @@ glw_load_universe(glw_root_t *gr)
 				    "theme://universe.view", NULL, page,
 				    NULL, NULL, 0);
 
-  glw_set(gr->gr_universe,
-	  GLW_ATTRIB_SIGNAL_HANDLER, top_event_handler, gr, 1000,
-	  NULL);
+  glw_signal_handler_register(gr->gr_universe, top_event_handler, gr, 1000);
 }
 
 /**
@@ -271,8 +269,8 @@ static void
 glw_attrib_set(glw_t *w, va_list ap)
 {
   glw_attribute_t attrib;
-  void *v, *o;
-  int pri, a;
+  void *v;
+  int a;
   float f;
 
   va_list apx;
@@ -285,17 +283,6 @@ glw_attrib_set(glw_t *w, va_list ap)
     assert(attrib >= 0 && attrib < GLW_ATTRIB_num);
 
     switch(attrib) {
-
-    case GLW_ATTRIB_SIGNAL_HANDLER:
-      v   = va_arg(ap, void *);
-      o   = va_arg(ap, void *);
-      pri = va_arg(ap, int);
-
-      if(pri == -1)
-	glw_signal_handler_unregister(w, v, o);
-      else
-	glw_signal_handler_register(w, v, o, pri);
-      break;
 
     case GLW_ATTRIB_WEIGHT:
       glw_set_constraints(w, 0, 0, va_arg(ap, double), GLW_CONSTRAINT_W,

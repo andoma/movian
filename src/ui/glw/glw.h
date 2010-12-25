@@ -69,7 +69,6 @@ LIST_HEAD(glw_video_list, glw_video);
 
 typedef enum {
   GLW_ATTRIB_END = 0,
-  GLW_ATTRIB_SIGNAL_HANDLER,
   GLW_ATTRIB_WEIGHT,
   GLW_ATTRIB_CAPTION,
   GLW_ATTRIB_VALUE,
@@ -902,8 +901,6 @@ do {						\
     break;					\
   case GLW_ATTRIB_num ... UINT32_MAX:           \
     abort();                                    \
-  case GLW_ATTRIB_SIGNAL_HANDLER:               \
-    (void)va_arg(ap, void *);			\
   case GLW_ATTRIB_CAPTION:			\
     (void)va_arg(ap, void *);			\
     (void)va_arg(ap, int);			\
