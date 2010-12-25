@@ -575,13 +575,6 @@ glw_container_set(glw_t *w, va_list ap)
     attrib = va_arg(ap, int);
     switch(attrib) {
 
-    case GLW_ATTRIB_PADDING:
-      co->co_padding_left   = va_arg(ap, double);
-      co->co_padding_top    = va_arg(ap, double);
-      co->co_padding_right  = va_arg(ap, double);
-      co->co_padding_bottom = va_arg(ap, double);
-      break;
-
     case GLW_ATTRIB_SPACING:
       co->co_spacing = va_arg(ap, int);
       break;
@@ -591,6 +584,20 @@ glw_container_set(glw_t *w, va_list ap)
       break;
     }
   } while(attrib);
+}
+
+
+/**
+ *
+ */
+static void
+set_padding(glw_t *w, const float *v)
+{
+  glw_container_t *co = (glw_container_t *)w;
+  co->co_padding_left   = v[0];
+  co->co_padding_top    = v[1];
+  co->co_padding_right  = v[2];
+  co->co_padding_bottom = v[3];
 }
 
 
@@ -607,6 +614,7 @@ static glw_class_t glw_container_x = {
   .gc_child_orientation = GLW_ORIENTATION_HORIZONTAL,
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION,
   .gc_default_alignment = GLW_ALIGN_LEFT,
+  .gc_set_padding = set_padding,
 };
 
 static glw_class_t glw_container_y = {
@@ -619,6 +627,7 @@ static glw_class_t glw_container_y = {
   .gc_child_orientation = GLW_ORIENTATION_VERTICAL,
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION,
   .gc_default_alignment = GLW_ALIGN_TOP,
+  .gc_set_padding = set_padding,
 };
 
 static glw_class_t glw_container_z = {

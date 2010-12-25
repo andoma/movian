@@ -381,8 +381,10 @@ glw_video_sub_layout_text(video_decoder_t *vd, glw_video_overlay_t *gvo,
 	  GLW_ATTRIB_CAPTION, s->s_text, 0,
 	  GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_BOTTOM,
 	  GLW_ATTRIB_SIZE_SCALE, 2.0,
-	  GLW_ATTRIB_PADDING, 0.0, 0.0, 0.0, 20.0,
 	  NULL);
+
+  gvo->gvo_child->glw_class->gc_set_padding(gvo->gvo_child,
+					    (const float []){0,0,0,20});
 
   glw_signal_handler_register(gvo->gvo_child, child_callback, gvo, 1000);
 }

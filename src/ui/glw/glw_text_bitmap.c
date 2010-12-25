@@ -1325,6 +1325,24 @@ glw_text_bitmap_set_rgb(glw_t *w, const float *rgb)
 /**
  *
  */
+static void
+set_padding(glw_t *w, const float *v)
+{
+  glw_text_bitmap_t *gtb = (void *)w;
+  gtb->gtb_padding_left   = v[0];
+  gtb->gtb_padding_top    = v[1];
+  gtb->gtb_padding_right  = v[2];
+  gtb->gtb_padding_bottom = v[3];
+  if(!(gtb->w.glw_flags & GLW_CONSTRAINT_Y)) // Only update if yet unset
+    gtb_set_constraints(gtb->w.glw_root, gtb);
+  gtb->gtb_need_layout = 1;
+}
+
+
+
+/**
+ *
+ */
 static void 
 glw_text_bitmap_set(glw_t *w, va_list ap)
 {
@@ -1426,16 +1444,6 @@ glw_text_bitmap_set(glw_t *w, va_list ap)
 		       NULL);
       w->glw_flags &= ~GLW_HIDDEN;
 
-      break;
-
-   case GLW_ATTRIB_PADDING:
-      gtb->gtb_padding_left   = va_arg(ap, double);
-      gtb->gtb_padding_top    = va_arg(ap, double);
-      gtb->gtb_padding_right  = va_arg(ap, double);
-      gtb->gtb_padding_bottom = va_arg(ap, double);
-      if(!(gtb->w.glw_flags & GLW_CONSTRAINT_Y)) // Only update if yet unset
-	gtb_set_constraints(gtb->w.glw_root, gtb);
-      gtb->gtb_need_layout = 1;
       break;
 
    case GLW_ATTRIB_MAXLINES:
@@ -1710,6 +1718,7 @@ static glw_class_t glw_label = {
   .gc_get_text = glw_text_bitmap_get_text,
   .gc_default_alignment = GLW_ALIGN_LEFT,
   .gc_set_rgb = glw_text_bitmap_set_rgb,
+  .gc_set_padding = set_padding,
 };
 
 GLW_REGISTER_CLASS(glw_label);
@@ -1729,6 +1738,7 @@ static glw_class_t glw_text = {
   .gc_get_text = glw_text_bitmap_get_text,
   .gc_default_alignment = GLW_ALIGN_LEFT,
   .gc_set_rgb = glw_text_bitmap_set_rgb,
+  .gc_set_padding = set_padding,
 };
 
 GLW_REGISTER_CLASS(glw_text);

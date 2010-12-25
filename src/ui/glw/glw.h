@@ -87,8 +87,6 @@ typedef enum {
   GLW_ATTRIB_PREVIEW,
   GLW_ATTRIB_CONTENT,
   GLW_ATTRIB_MODE,
-  GLW_ATTRIB_BORDER,
-  GLW_ATTRIB_PADDING,
   GLW_ATTRIB_SET_IMAGE_FLAGS,
   GLW_ATTRIB_CLR_IMAGE_FLAGS,
   GLW_ATTRIB_SET_TEXT_FLAGS,
@@ -117,7 +115,6 @@ typedef enum {
   GLW_ATTRIB_CHILD_TILES_X,
   GLW_ATTRIB_CHILD_TILES_Y,
   GLW_ATTRIB_FREEZE,
-  GLW_ATTRIB_ROTATION,
   GLW_ATTRIB_PAGE,
   GLW_ATTRIB_ALPHA_EDGES,
   GLW_ATTRIB_PRIORITY,
@@ -461,6 +458,21 @@ typedef struct glw_class {
    *
    */
   void (*gc_set_scaling)(struct glw *w, const float *xyz);
+
+  /**
+   *
+   */
+  void (*gc_set_border)(struct glw *w, const float *v);
+
+  /**
+   *
+   */
+  void (*gc_set_padding)(struct glw *w, const float *v);
+
+  /**
+   *
+   */
+  void (*gc_set_rotation)(struct glw *w, const float *v);
 
 
   /**
@@ -939,12 +951,6 @@ do {						\
   case GLW_ATTRIB_Y_SPACING:                    \
     (void)va_arg(ap, int);			\
     break;					\
-  case GLW_ATTRIB_BORDER:                       \
-  case GLW_ATTRIB_PADDING:                      \
-  case GLW_ATTRIB_ROTATION:			\
-    (void)va_arg(ap, double);			\
-    (void)va_arg(ap, double);			\
-    (void)va_arg(ap, double);			\
   case GLW_ATTRIB_WEIGHT:			\
   case GLW_ATTRIB_ALPHA:			\
   case GLW_ATTRIB_ALPHA_SELF:			\

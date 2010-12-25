@@ -147,40 +147,6 @@ glw_displacement_ctor(glw_t *w)
 }
 
 
-/**
- *
- */
-static void 
-glw_displacement_set(glw_t *w, va_list ap)
-{
-  glw_displacement_t *gd = (glw_displacement_t *)w;
-  glw_attribute_t attrib;
-
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
- 
-   case GLW_ATTRIB_BORDER:
-      gd->gd_border_left   = va_arg(ap, double);
-      gd->gd_border_top    = va_arg(ap, double);
-      gd->gd_border_right  = va_arg(ap, double);
-      gd->gd_border_bottom = va_arg(ap, double);
-      break;
-
-   case GLW_ATTRIB_ROTATION:
-     gd->gd_rotate_a = va_arg(ap, double);
-     gd->gd_rotate_x = va_arg(ap, double);
-     gd->gd_rotate_y = va_arg(ap, double);
-     gd->gd_rotate_z = va_arg(ap, double);
-     break;
-
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
-}
-
 
 /**
  *
@@ -212,16 +178,46 @@ set_scaling(glw_t *w, const float *xyz)
 /**
  *
  */
+static void
+set_border(glw_t *w, const float *v)
+{
+  glw_displacement_t *gd = (glw_displacement_t *)w;
+  
+  gd->gd_border_left   = v[0];
+  gd->gd_border_top    = v[1];
+  gd->gd_border_right  = v[2];
+  gd->gd_border_bottom = v[3];
+}
+
+
+/**
+ *
+ */
+static void
+set_rotation(glw_t *w, const float *v)
+{
+  glw_displacement_t *gd = (glw_displacement_t *)w;
+  
+  gd->gd_rotate_a = v[0];
+  gd->gd_rotate_x = v[1];
+  gd->gd_rotate_y = v[2];
+  gd->gd_rotate_z = v[3];
+}
+
+
+/**
+ *
+ */
 static glw_class_t glw_displacement = {
   .gc_name = "displacement",
   .gc_instance_size = sizeof(glw_displacement_t),
-  .gc_set = glw_displacement_set,
   .gc_ctor = glw_displacement_ctor,
   .gc_render = glw_displacement_render,
   .gc_signal_handler = glw_displacement_callback,
   .gc_set_translation = set_translation,
   .gc_set_scaling = set_scaling,
-
+  .gc_set_border = set_border,
+  .gc_set_rotation = set_rotation,
 };
 
 GLW_REGISTER_CLASS(glw_displacement);

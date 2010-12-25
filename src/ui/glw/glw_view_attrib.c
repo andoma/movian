@@ -238,6 +238,7 @@ set_scaling(glw_t *w, const float *xyz)
     w->glw_class->gc_set_scaling(w, xyz);
 }
 
+
 /**
  *
  */
@@ -261,13 +262,42 @@ set_float4(glw_view_eval_context_t *ec, const token_attrib_t *a,
     return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a vec4",
 			    a->name);
 
-  glw_set(ec->w, a->attrib, 
-	  t->t_float_vector[0],
-	  t->t_float_vector[1],
-	  t->t_float_vector[2],
-	  t->t_float_vector[3],
-	  NULL);
+  void (*fn)(struct glw *w, const float *v4) = a->fn;
+  fn(ec->w, t->t_float_vector);
   return 0;
+}
+
+
+/**
+ *
+ */
+static void
+set_padding(glw_t *w, const float *xyz)
+{
+  if(w->glw_class->gc_set_padding != NULL)
+    w->glw_class->gc_set_padding(w, xyz);
+}
+
+
+/**
+ *
+ */
+static void
+set_border(glw_t *w, const float *xyz)
+{
+  if(w->glw_class->gc_set_border != NULL)
+    w->glw_class->gc_set_border(w, xyz);
+}
+
+
+/**
+ *
+ */
+static void
+set_rotation(glw_t *w, const float *xyz)
+{
+  if(w->glw_class->gc_set_rotation != NULL)
+    w->glw_class->gc_set_rotation(w, xyz);
 }
 
 
@@ -557,9 +587,9 @@ static const token_attrib_t attribtab[] = {
   {"color1",          set_float3, 0, set_color1},
   {"color2",          set_float3, 0, set_color2},
 
-  {"border",          set_float4, GLW_ATTRIB_BORDER},
-  {"padding",         set_float4, GLW_ATTRIB_PADDING},
-  {"rotation",        set_float4, GLW_ATTRIB_ROTATION},
+  {"border",          set_float4, 0, set_border},
+  {"padding",         set_float4, 0, set_padding},
+  {"rotation",        set_float4, 0, set_rotation},
 
   {"align",           set_align,  0},
   {"effect",          set_transition_effect,  0},

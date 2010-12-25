@@ -736,6 +736,40 @@ glw_image_set_rgb(glw_t *w, const float *rgb)
 }
 
 
+/**
+ *
+ */
+static void
+set_border(glw_t *w, const float *v)
+{
+  glw_image_t *gi = (void *)w;
+
+  gi->gi_mode = GI_MODE_BORDER_SCALING;
+  gi->gi_border_left   = v[0];
+  gi->gi_border_top    = v[1];
+  gi->gi_border_right  = v[2];
+  gi->gi_border_bottom = v[3];
+  gi->gi_update = 1;
+  glw_image_update_constraints(gi);
+}
+
+
+/**
+ *
+ */
+static void
+set_padding(glw_t *w, const float *v)
+{
+  glw_image_t *gi = (void *)w;
+
+  gi->gi_padding_left   = v[0];
+  gi->gi_padding_top    = v[1];
+  gi->gi_padding_right  = v[2];
+  gi->gi_padding_bottom = v[3];
+  gi->gi_update = 1;
+  glw_image_update_constraints(gi);
+}
+
 
 /**
  *
@@ -754,26 +788,6 @@ glw_image_set(glw_t *w, va_list ap)
     case GLW_ATTRIB_FREEZE:
       gi->gi_frozen = va_arg(ap, int);
       break;
-
-    case GLW_ATTRIB_BORDER:
-      gi->gi_mode = GI_MODE_BORDER_SCALING;
-      gi->gi_border_left   = va_arg(ap, double);
-      gi->gi_border_top    = va_arg(ap, double);
-      gi->gi_border_right  = va_arg(ap, double);
-      gi->gi_border_bottom = va_arg(ap, double);
-      gi->gi_update = 1;
-      glw_image_update_constraints(gi);
-      break;
-
-    case GLW_ATTRIB_PADDING:
-      gi->gi_padding_left   = va_arg(ap, double);
-      gi->gi_padding_top    = va_arg(ap, double);
-      gi->gi_padding_right  = va_arg(ap, double);
-      gi->gi_padding_bottom = va_arg(ap, double);
-      gi->gi_update = 1;
-      glw_image_update_constraints(gi);
-      break;
-      
 
     case GLW_ATTRIB_SET_FLAGS:
       (void)va_arg(ap, int);
@@ -887,6 +901,7 @@ static glw_class_t glw_image = {
   .gc_default_alignment = GLW_ALIGN_CENTER,
   .gc_ready = glw_image_ready,
   .gc_set_rgb = glw_image_set_rgb,
+  .gc_set_padding = set_padding,
 };
 
 GLW_REGISTER_CLASS(glw_image);
@@ -905,6 +920,7 @@ static glw_class_t glw_icon = {
   .gc_signal_handler = glw_image_callback,
   .gc_default_alignment = GLW_ALIGN_CENTER,
   .gc_set_rgb = glw_image_set_rgb,
+  .gc_set_padding = set_padding,
 };
 
 GLW_REGISTER_CLASS(glw_icon);
@@ -923,6 +939,8 @@ static glw_class_t glw_backdrop = {
   .gc_signal_handler = glw_image_callback,
   .gc_default_alignment = GLW_ALIGN_CENTER,
   .gc_set_rgb = glw_image_set_rgb,
+  .gc_set_padding = set_padding,
+  .gc_set_border = set_border,
 };
 
 GLW_REGISTER_CLASS(glw_backdrop);
@@ -942,6 +960,7 @@ static glw_class_t glw_repeatedimage = {
   .gc_signal_handler = glw_image_callback,
   .gc_default_alignment = GLW_ALIGN_CENTER,
   .gc_set_rgb = glw_image_set_rgb,
+  .gc_set_padding = set_padding,
 };
 
 GLW_REGISTER_CLASS(glw_repeatedimage);
