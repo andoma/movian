@@ -382,9 +382,6 @@ glw_attrib_set(glw_t *w, va_list ap)
     }
   } while(attrib);
 
-  if(w->glw_class->gc_signal_handler != NULL)
-    glw_signal_handler_int(w, w->glw_class->gc_signal_handler);
-
   if(w->glw_class->gc_set != NULL)
     w->glw_class->gc_set(w, apx);
 
@@ -433,8 +430,11 @@ glw_create(glw_root_t *gr, const glw_class_t *class,
     glw_signal0(parent, GLW_SIGNAL_CHILD_CREATED, w);
   }
 
-  if(w->glw_class->gc_ctor != NULL)
-    w->glw_class->gc_ctor(w);
+  if(class->gc_ctor != NULL)
+    class->gc_ctor(w);
+
+  if(class->gc_signal_handler != NULL)
+    glw_signal_handler_int(w, class->gc_signal_handler);
 
    return w;
 }
