@@ -192,16 +192,8 @@ set_float3(glw_view_eval_context_t *ec, const token_attrib_t *a,
     return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a vec3",
 			    a->name);
 
-  if(a->fn) {
-    void (*fn)(struct glw *w, const float *v3) = a->fn;
-    fn(ec->w, t->t_float_vector);
-  } else {
-    glw_set(ec->w, a->attrib, 
-	    t->t_float_vector[0],
-	    t->t_float_vector[1],
-	    t->t_float_vector[2],
-	    NULL);
-  }
+  void (*fn)(struct glw *w, const float *v3) = a->fn;
+  fn(ec->w, t->t_float_vector);
   return 0;
 }
 
@@ -214,6 +206,46 @@ set_rgb(glw_t *w, const float *rgb)
 {
   if(w->glw_class->gc_set_rgb != NULL)
     w->glw_class->gc_set_rgb(w, rgb);
+}
+
+/**
+ *
+ */
+static void
+set_color1(glw_t *w, const float *rgb)
+{
+  if(w->glw_class->gc_set_color1 != NULL)
+    w->glw_class->gc_set_color1(w, rgb);
+}
+
+/**
+ *
+ */
+static void
+set_color2(glw_t *w, const float *rgb)
+{
+  if(w->glw_class->gc_set_color2 != NULL)
+    w->glw_class->gc_set_color2(w, rgb);
+}
+
+/**
+ *
+ */
+static void
+set_scaling(glw_t *w, const float *xyz)
+{
+  if(w->glw_class->gc_set_scaling != NULL)
+    w->glw_class->gc_set_scaling(w, xyz);
+}
+
+/**
+ *
+ */
+static void
+set_translation(glw_t *w, const float *xyz)
+{
+  if(w->glw_class->gc_set_translation != NULL)
+    w->glw_class->gc_set_translation(w, xyz);
 }
 
 
@@ -520,10 +552,10 @@ static const token_attrib_t attribtab[] = {
   {"Yspacing",        set_int,    GLW_ATTRIB_Y_SPACING},
 
   {"color",           set_float3, 0, set_rgb},
-  {"translation",     set_float3, GLW_ATTRIB_TRANSLATION},
-  {"scaling",         set_float3, GLW_ATTRIB_SCALING},
-  {"color1",          set_float3, GLW_ATTRIB_COLOR1},
-  {"color2",          set_float3, GLW_ATTRIB_COLOR2},
+  {"translation",     set_float3, 0, set_translation},
+  {"scaling",         set_float3, 0, set_scaling},
+  {"color1",          set_float3, 0, set_color1},
+  {"color2",          set_float3, 0, set_color2},
 
   {"border",          set_float4, GLW_ATTRIB_BORDER},
   {"padding",         set_float4, GLW_ATTRIB_PADDING},

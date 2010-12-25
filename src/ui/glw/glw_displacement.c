@@ -146,6 +146,7 @@ glw_displacement_ctor(glw_t *w)
   gd->gd_scale_z = 1;
 }
 
+
 /**
  *
  */
@@ -173,23 +174,38 @@ glw_displacement_set(glw_t *w, va_list ap)
      gd->gd_rotate_z = va_arg(ap, double);
      break;
 
-   case GLW_ATTRIB_TRANSLATION:
-     gd->gd_translate_x = va_arg(ap, double);
-     gd->gd_translate_y = va_arg(ap, double);
-     gd->gd_translate_z = va_arg(ap, double);
-     break;
-
-   case GLW_ATTRIB_SCALING:
-     gd->gd_scale_x = va_arg(ap, double);
-     gd->gd_scale_y = va_arg(ap, double);
-     gd->gd_scale_z = va_arg(ap, double);
-     break;
-
     default:
       GLW_ATTRIB_CHEW(attrib, ap);
       break;
     }
   } while(attrib);
+}
+
+
+/**
+ *
+ */
+static void
+set_translation(glw_t *w, const float *xyz)
+{
+  glw_displacement_t *gd = (glw_displacement_t *)w;
+  gd->gd_translate_x = xyz[0];
+  gd->gd_translate_y = xyz[1];
+  gd->gd_translate_z = xyz[2];
+}
+
+
+/**
+ *
+ */
+static void
+set_scaling(glw_t *w, const float *xyz)
+{
+  glw_displacement_t *gd = (glw_displacement_t *)w;
+
+  gd->gd_scale_x = xyz[0];
+  gd->gd_scale_y = xyz[1];
+  gd->gd_scale_z = xyz[2];
 }
 
 
@@ -203,6 +219,9 @@ static glw_class_t glw_displacement = {
   .gc_ctor = glw_displacement_ctor,
   .gc_render = glw_displacement_render,
   .gc_signal_handler = glw_displacement_callback,
+  .gc_set_translation = set_translation,
+  .gc_set_scaling = set_scaling,
+
 };
 
 GLW_REGISTER_CLASS(glw_displacement);

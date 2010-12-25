@@ -375,26 +375,6 @@ glw_gradient_set(glw_t *w, va_list ap)
   do {
     attrib = va_arg(ap, int);
     switch(attrib) {
-    case GLW_ATTRIB_COLOR1:
-      gg->gg_col1[0] = va_arg(ap, double);
-      gg->gg_col1[1] = va_arg(ap, double);
-      gg->gg_col1[2] = va_arg(ap, double);
-      gg->gg_col1[0] = GLW_CLAMP(gg->gg_col1[0], 0, 1);
-      gg->gg_col1[1] = GLW_CLAMP(gg->gg_col1[1], 0, 1);
-      gg->gg_col1[2] = GLW_CLAMP(gg->gg_col1[2], 0, 1);
-      gg->gg_repaint = 1;
-      break;
-
-    case GLW_ATTRIB_COLOR2:
-      gg->gg_col2[0] = va_arg(ap, double);
-      gg->gg_col2[1] = va_arg(ap, double);
-      gg->gg_col2[2] = va_arg(ap, double);
-      gg->gg_col2[0] = GLW_CLAMP(gg->gg_col2[0], 0, 1);
-      gg->gg_col2[1] = GLW_CLAMP(gg->gg_col2[1], 0, 1);
-      gg->gg_col2[2] = GLW_CLAMP(gg->gg_col2[2], 0, 1);
-      gg->gg_repaint = 1;
-      break;
-
     case GLW_ATTRIB_SET_IMAGE_FLAGS:
       gg->gg_image_flags |= va_arg(ap, int);
       gg->gg_repaint = 1;
@@ -412,6 +392,33 @@ glw_gradient_set(glw_t *w, va_list ap)
   } while(attrib);
 }
 
+/**
+ *
+ */
+static void
+set_color1(glw_t *w, const float *rgb)
+{
+  glw_gradient_t *gg = (glw_gradient_t *)w;
+  gg->gg_col1[0] = GLW_CLAMP(rgb[0], 0, 1);
+  gg->gg_col1[1] = GLW_CLAMP(rgb[1], 0, 1);
+  gg->gg_col1[2] = GLW_CLAMP(rgb[2], 0, 1);
+  gg->gg_repaint = 1;
+}
+
+
+/**
+ *
+ */
+static void
+set_color2(glw_t *w, const float *rgb)
+{
+  glw_gradient_t *gg = (glw_gradient_t *)w;
+  gg->gg_col2[0] = GLW_CLAMP(rgb[0], 0, 1);
+  gg->gg_col2[1] = GLW_CLAMP(rgb[1], 0, 1);
+  gg->gg_col2[2] = GLW_CLAMP(rgb[2], 0, 1);
+  gg->gg_repaint = 1;
+}
+
 
 
 /**
@@ -426,6 +433,8 @@ static glw_class_t glw_gradient = {
   .gc_ctor = glw_gradient_ctor,
   .gc_dtor = glw_gradient_dtor,
   .gc_signal_handler = glw_gradient_callback,
+  .gc_set_color1 = set_color1,
+  .gc_set_color2 = set_color2,
 };
 
 GLW_REGISTER_CLASS(glw_gradient);
