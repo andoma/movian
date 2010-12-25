@@ -61,7 +61,7 @@ set_string(glw_view_eval_context_t *ec, const token_attrib_t *a,
 			    a->name);
   }
 
-  glw_set_i(ec->w, a->attrib, str, NULL);
+  glw_set(ec->w, a->attrib, str, NULL);
   return 0;
 }
 
@@ -105,7 +105,7 @@ set_typed_string(glw_view_eval_context_t *ec, const token_attrib_t *a,
 			    a->name);
   }
 
-  glw_set_i(ec->w, a->attrib, str, type, NULL);
+  glw_set(ec->w, a->attrib, str, type, NULL);
   return 0;
 }
 
@@ -141,7 +141,7 @@ set_float(glw_view_eval_context_t *ec, const token_attrib_t *a,
 			    a->name);
   }
 
-  glw_set_i(ec->w, a->attrib, d, NULL);
+  glw_set(ec->w, a->attrib, d, NULL);
   return 0;
 }
 
@@ -176,7 +176,7 @@ set_int(glw_view_eval_context_t *ec, const token_attrib_t *a,
 			    a->name);
   }
 
-  glw_set_i(ec->w, a->attrib, v, NULL);
+  glw_set(ec->w, a->attrib, v, NULL);
   return 0;
 }
 
@@ -196,11 +196,11 @@ set_float3(glw_view_eval_context_t *ec, const token_attrib_t *a,
     void (*fn)(struct glw *w, const float *v3) = a->fn;
     fn(ec->w, t->t_float_vector);
   } else {
-    glw_set_i(ec->w, a->attrib, 
-	      t->t_float_vector[0],
-	      t->t_float_vector[1],
-	      t->t_float_vector[2],
-	      NULL);
+    glw_set(ec->w, a->attrib, 
+	    t->t_float_vector[0],
+	    t->t_float_vector[1],
+	    t->t_float_vector[2],
+	    NULL);
   }
   return 0;
 }
@@ -229,12 +229,12 @@ set_float4(glw_view_eval_context_t *ec, const token_attrib_t *a,
     return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a vec4",
 			    a->name);
 
-  glw_set_i(ec->w, a->attrib, 
-	    t->t_float_vector[0],
-	    t->t_float_vector[1],
-	    t->t_float_vector[2],
-	    t->t_float_vector[3],
-	    NULL);
+  glw_set(ec->w, a->attrib, 
+	  t->t_float_vector[0],
+	  t->t_float_vector[1],
+	  t->t_float_vector[2],
+	  t->t_float_vector[3],
+	  NULL);
   return 0;
 }
 
@@ -264,7 +264,7 @@ set_align(glw_view_eval_context_t *ec, const token_attrib_t *a,
   if(t->type != TOKEN_IDENTIFIER || (v = str2val(rstr_get(t->t_rstring), aligntab)) < 0)
     return glw_view_seterr(ec->ei, t, "Invalid assignment for attribute %s",
 			    a->name);
-  glw_set_i(ec->w, GLW_ATTRIB_ALIGNMENT, v, NULL);
+  glw_set(ec->w, GLW_ATTRIB_ALIGNMENT, v, NULL);
   return 0;
 }
 
@@ -291,7 +291,7 @@ set_transition_effect(glw_view_eval_context_t *ec, const token_attrib_t *a,
 						 transitiontab)) < 0)
     return glw_view_seterr(ec->ei, t, "Invalid assignment for attribute %s",
 			    a->name);
-  glw_set_i(ec->w, GLW_ATTRIB_TRANSITION_EFFECT, v, NULL);
+  glw_set(ec->w, GLW_ATTRIB_TRANSITION_EFFECT, v, NULL);
   return 0;
 }
 
@@ -316,9 +316,9 @@ set_flag(glw_view_eval_context_t *ec, const token_attrib_t *a,
 			    a->name);
 
   if(set)
-    glw_set_i(ec->w, setter, a->attrib, NULL);
+    glw_set(ec->w, setter, a->attrib, NULL);
   else
-    glw_set_i(ec->w, clearer, a->attrib, NULL);
+    glw_set(ec->w, clearer, a->attrib, NULL);
 
   return 0;
 }
@@ -391,16 +391,16 @@ set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
 {
   switch(t->type) {
   case TOKEN_VOID:
-    glw_set_i(ec->w, GLW_ATTRIB_SOURCE, NULL, NULL);
+    glw_set(ec->w, GLW_ATTRIB_SOURCE, NULL, NULL);
     break;
 
   case TOKEN_STRING:
   case TOKEN_LINK:
-    glw_set_i(ec->w, GLW_ATTRIB_SOURCE, rstr_get(t->t_rstring), NULL);
+    glw_set(ec->w, GLW_ATTRIB_SOURCE, rstr_get(t->t_rstring), NULL);
     break;
 
   case TOKEN_PIXMAP:
-    glw_set_i(ec->w, GLW_ATTRIB_PIXMAP, t->t_pixmap, NULL);
+    glw_set(ec->w, GLW_ATTRIB_PIXMAP, t->t_pixmap, NULL);
     break;
 
   default:
@@ -423,7 +423,7 @@ set_args(glw_view_eval_context_t *ec, const token_attrib_t *a,
     return glw_view_seterr(ec->ei, t, "Attribute '%s' expects block",
 			   a->name);
 
-  glw_set_i(ec->w, GLW_ATTRIB_ARGS, t->t_prop, NULL);
+  glw_set(ec->w, GLW_ATTRIB_ARGS, t->t_prop, NULL);
   return 0;
 }
 
@@ -439,7 +439,7 @@ set_propref(glw_view_eval_context_t *ec, const token_attrib_t *a,
     return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a property ref",
 			   a->name);
 
-  glw_set_i(ec->w, a->attrib, t->t_prop, NULL);
+  glw_set(ec->w, a->attrib, t->t_prop, NULL);
   return 0;
 }
 

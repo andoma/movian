@@ -240,9 +240,9 @@ glw_load_universe(glw_root_t *gr)
 				    "theme://universe.view", NULL, page,
 				    NULL, NULL, 0);
 
-  glw_set_i(gr->gr_universe,
-	    GLW_ATTRIB_SIGNAL_HANDLER, top_event_handler, gr, 1000,
-	    NULL);
+  glw_set(gr->gr_universe,
+	  GLW_ATTRIB_SIGNAL_HANDLER, top_event_handler, gr, 1000,
+	  NULL);
 }
 
 /**
@@ -409,14 +409,11 @@ glw_attrib_set(glw_t *w, va_list ap)
  */
 glw_t *
 glw_create(glw_root_t *gr, const glw_class_t *class,
-	   glw_t *parent, glw_t *before, prop_t *originator, ...)
+	   glw_t *parent, glw_t *before, prop_t *originator)
 {
   glw_t *w; 
-  va_list ap;
-
-  va_start(ap, originator);
-
-  /* Common initializers */
+ 
+   /* Common initializers */
   w = calloc(1, class->gc_instance_size);
   w->glw_root = gr;
   w->glw_class = class;
@@ -452,12 +449,7 @@ glw_create(glw_root_t *gr, const glw_class_t *class,
   if(w->glw_class->gc_ctor != NULL)
     w->glw_class->gc_ctor(w);
 
-  /* Parse arguments */
-  
-  glw_attrib_set(w, ap);
-
-  va_end(ap);
-  return w;
+   return w;
 }
 
 
@@ -465,7 +457,7 @@ glw_create(glw_root_t *gr, const glw_class_t *class,
  *
  */
 void
-glw_set_i(glw_t *w, ...)
+glw_set(glw_t *w, ...)
 {
   va_list ap;
 

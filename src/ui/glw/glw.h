@@ -963,14 +963,13 @@ int glw_widget_unproject(const float *m, float *x, float *y,
 			 const float *p, const float *dir);
 
 glw_t *glw_create(glw_root_t *gr, const glw_class_t *class,
-		  glw_t *parent, glw_t *before, prop_t *originator,
-		  ...) __attribute__((__sentinel__(0)));
+		  glw_t *parent, glw_t *before, prop_t *originator);
 
 #define glw_lock_assert() glw_lock_check(__FILE__, __LINE__)
 
 void glw_lock_check(const char *file, const int line);
 
-void glw_set_i(glw_t *w, ...) __attribute__((__sentinel__(0)));
+void glw_set(glw_t *w, ...) __attribute__((__sentinel__(0)));
 
 void glw_destroy(glw_t *w);
 

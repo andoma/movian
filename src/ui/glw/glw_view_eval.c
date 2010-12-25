@@ -981,7 +981,7 @@ clone_eval(clone_t *c)
 
   c->c_evaluated = 1;
 
-  glw_set_i(c->c_w, GLW_ATTRIB_FREEZE, 1, NULL);
+  glw_set(c->c_w, GLW_ATTRIB_FREEZE, 1, NULL);
 
   memset(&n, 0, sizeof(n));
   n.prop = c->c_prop;
@@ -998,7 +998,7 @@ clone_eval(clone_t *c)
   glw_view_eval_block(body, &n);
   glw_view_free_chain(body);
 
-  glw_set_i(c->c_w, GLW_ATTRIB_FREEZE, 0, NULL);
+  glw_set(c->c_w, GLW_ATTRIB_FREEZE, 0, NULL);
 }
 
 
@@ -1023,9 +1023,9 @@ clone_update(clone_t *c)
     if(!c->c_evaluated)
       clone_eval(c);
 
-    glw_set_i(c->c_w, GLW_ATTRIB_CLR_FLAGS, GLW_HIDDEN, NULL);
+    glw_set(c->c_w, GLW_ATTRIB_CLR_FLAGS, GLW_HIDDEN, NULL);
   } else {
-    glw_set_i(c->c_w, GLW_ATTRIB_SET_FLAGS, GLW_HIDDEN, NULL);
+    glw_set(c->c_w, GLW_ATTRIB_SET_FLAGS, GLW_HIDDEN, NULL);
   }
 }
 
@@ -1146,9 +1146,11 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
 
   c->c_clone_root = prop_create(NULL, NULL);
 
-  c->c_w = glw_create(parent->glw_root, sc->sc_cloner_class, parent, b, p,
-		      GLW_ATTRIB_PROPROOTS, p, sc->sc_originating_prop,
-		      NULL);
+  c->c_w = glw_create(parent->glw_root, sc->sc_cloner_class, parent, b, p);
+
+  glw_set(c->c_w,
+	  GLW_ATTRIB_PROPROOTS, p, sc->sc_originating_prop,
+	  NULL);
 
   prop_tag_set(p, sc, c);
 
@@ -2007,16 +2009,18 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
   n.prop_args = ec->prop_args;
   n.ei = ec->ei;
   n.gr = ec->gr;
-  n.w = glw_create(ec->gr, c, ec->w, NULL, NULL,
-		   GLW_ATTRIB_FREEZE, 1,
-		   GLW_ATTRIB_PROPROOTS, ec->prop, ec->prop_parent,
-		   NULL);
+  n.w = glw_create(ec->gr, c, ec->w, NULL, NULL);
+
+  glw_set(n.w,
+	  GLW_ATTRIB_FREEZE, 1,
+	  GLW_ATTRIB_PROPROOTS, ec->prop, ec->prop_parent,
+	  NULL);
 
   n.sublist = &n.w->glw_prop_subscriptions;
 
   r = glw_view_eval_block(b, &n);
 
-  glw_set_i(n.w, GLW_ATTRIB_FREEZE, 0, NULL);
+  glw_set(n.w, GLW_ATTRIB_FREEZE, 0, NULL);
 
   return r ? -1 : 0;
 }
@@ -2075,9 +2079,11 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
     if(dummy == NULL)
       dummy = glw_class_find_by_name("dummy");
     
-    self->t_extra = glw_create(ec->gr, dummy, parent, NULL, NULL,
-			       GLW_ATTRIB_SET_FLAGS, GLW_HIDDEN,
-			       NULL);
+    self->t_extra = glw_create(ec->gr, dummy, parent, NULL, NULL);
+
+    glw_set(self->t_extra,
+	    GLW_ATTRIB_SET_FLAGS, GLW_HIDDEN,
+	    NULL);
   }
 
   if(a->type == TOKEN_DIRECTORY) {
@@ -2132,9 +2138,8 @@ glwf_space(glw_view_eval_context_t *ec, struct token *self,
   if(dummy == NULL)
     dummy = glw_class_find_by_name("dummy");
 
-  glw_create(ec->gr, dummy, ec->w, NULL, NULL,
-	     GLW_ATTRIB_WEIGHT, token2float(a),
-	     NULL);
+  glw_t *w = glw_create(ec->gr, dummy, ec->w, NULL, NULL);
+  glw_set(w, GLW_ATTRIB_WEIGHT, token2float(a), NULL);
   return 0;
 }
 
@@ -3322,16 +3327,16 @@ glwf_bind(glw_view_eval_context_t *ec, struct token *self,
       propname[i++]  = rstr_get(t->t_rstring);
     propname[i] = NULL;
 
-    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY5,
-	      ec->prop, propname, ec->prop_viewx, ec->prop_args,
-	      ec->prop_clone, NULL);
+    glw_set(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY5,
+	    ec->prop, propname, ec->prop_viewx, ec->prop_args,
+	    ec->prop_clone, NULL);
 
   } else if(a != NULL && a->type == TOKEN_STRING) {
-    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_ID, rstr_get(a->t_rstring), NULL);
+    glw_set(ec->w, GLW_ATTRIB_BIND_TO_ID, rstr_get(a->t_rstring), NULL);
 
   } else {
-    glw_set_i(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY5, 
-	      NULL, NULL, NULL, NULL, NULL, NULL);
+    glw_set(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY5, 
+	    NULL, NULL, NULL, NULL, NULL, NULL);
   }
   return 0;
 }
