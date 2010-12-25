@@ -1035,18 +1035,7 @@ int glw_signal0(glw_t *w, glw_signal_t sig, void *extra);
 
 #define glw_render0(w, rc) ((w)->glw_class->gc_render(w, rc))
 
-static inline void 
-glw_layout0(glw_t *w, glw_rctx_t *rc)
-{
-  glw_root_t *gr = w->glw_root;
-  LIST_REMOVE(w, glw_active_link);
-  LIST_INSERT_HEAD(&gr->gr_active_list, w, glw_active_link);
-  if(!(w->glw_flags & GLW_ACTIVE)) {
-    w->glw_flags |= GLW_ACTIVE;
-    glw_signal0(w, GLW_SIGNAL_ACTIVE, NULL);
-  }
-  glw_signal0(w, GLW_SIGNAL_LAYOUT, rc);
-}
+void glw_layout0(glw_t *w, glw_rctx_t *rc);
 
 void glw_rctx_init(glw_rctx_t *rc, int width, int height);
 
@@ -1062,27 +1051,9 @@ void glw_scale_to_aspect(glw_rctx_t *rc, float t_aspect);
 
 void glw_reposition(glw_rctx_t *rc, int left, int top, int right, int bottom);
 
-extern const glw_vertex_t align_vertices[GLW_ALIGN_num];
+void glw_align_1(glw_rctx_t *rc, glw_alignment_t a);
 
-static inline void
-glw_align_1(glw_rctx_t *rc, glw_alignment_t a)
-{
-  if(a != GLW_ALIGN_CENTER)
-    glw_Translatef(rc, 
-		   align_vertices[a].x, 
-		   align_vertices[a].y, 
-		   align_vertices[a].z);
-}
-
-static inline void
-glw_align_2(glw_rctx_t *rc, glw_alignment_t a)
-{
-  if(a != GLW_ALIGN_CENTER)
-    glw_Translatef(rc, 
-		   -align_vertices[a].x, 
-		   -align_vertices[a].y, 
-		   -align_vertices[a].z);
-}
+void glw_align_2(glw_rctx_t *rc, glw_alignment_t a);
 
 /**
  * Render interface abstraction
@@ -1141,62 +1112,13 @@ void glw_copy_constraints(glw_t *w, glw_t *src);
 
 void glw_clear_constraints(glw_t *w);
 
+glw_t *glw_next_widget(glw_t *w);
 
-/**
- *
- */
-static inline glw_t *
-glw_next_widget(glw_t *w)
-{
-  do {
-    w = TAILQ_NEXT(w, glw_parent_link);
-  } while (w != NULL && w->glw_flags & GLW_HIDDEN);
-  return w;
-}
+glw_t *glw_prev_widget(glw_t *w);
 
+glw_t *glw_first_widget(glw_t *w);
 
-/**
- *
- */
-static inline glw_t *
-glw_prev_widget(glw_t *w)
-{
-  do {
-    w = TAILQ_PREV(w, glw_queue, glw_parent_link);
-  } while (w != NULL && w->glw_flags & GLW_HIDDEN);
-  return w;
-}
-
-
-/**
- *
- */
-static inline glw_t *
-glw_first_widget(glw_t *w)
-{
-  w = TAILQ_FIRST(&w->glw_childs);
-
-  while(w != NULL && w->glw_flags & GLW_HIDDEN)
-    w = TAILQ_NEXT(w, glw_parent_link);
-
-  return w;
-}
-
-
-/**
- *
- */
-static inline glw_t *
-glw_last_widget(glw_t *w)
-{
-  w = TAILQ_LAST(&w->glw_childs, glw_queue);
-
-  while(w != NULL && w->glw_flags & GLW_HIDDEN)
-    w = TAILQ_PREV(w, glw_queue, glw_parent_link);
-
-
-  return w;
-}
+glw_t *glw_last_widget(glw_t *w);
 
 void glw_set_fullscreen(glw_root_t *gr, int fullscreen);
 
