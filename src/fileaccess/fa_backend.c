@@ -155,7 +155,7 @@ file_open_file(prop_t *page, const char *url, struct fa_stat *fs)
   case CONTENT_ARCHIVE:
   case CONTENT_ALBUM:
     prop_destroy(meta);
-    return file_open_dir(page, url);
+    return file_open_dir(page, redir);
 
   case CONTENT_AUDIO:
     if(!file_open_audio(page, url)) {
