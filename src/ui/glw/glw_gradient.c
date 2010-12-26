@@ -366,31 +366,15 @@ glw_gradient_ctor(glw_t *w)
 /**
  *
  */
-static void 
-glw_gradient_set(glw_t *w, va_list ap)
+static void
+mod_image_flags(glw_t *w, int set, int clr)
 {
   glw_gradient_t *gg = (glw_gradient_t *)w;
-  glw_attribute_t attrib;
-
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
-    case GLW_ATTRIB_SET_IMAGE_FLAGS:
-      gg->gg_image_flags |= va_arg(ap, int);
-      gg->gg_repaint = 1;
-      break;
-
-    case GLW_ATTRIB_CLR_IMAGE_FLAGS:
-      gg->gg_image_flags &= ~va_arg(ap, int);
-      gg->gg_repaint = 1;
-      break;
-
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
+  gg->gg_image_flags = (gg->gg_image_flags | set) & ~clr;
+  gg->gg_repaint = 1;
 }
+
+
 
 /**
  *
@@ -429,12 +413,12 @@ static glw_class_t glw_gradient = {
   .gc_flags = GLW_UNCONSTRAINED,
   .gc_instance_size = sizeof(glw_gradient_t),
   .gc_render = glw_gradient_render,
-  .gc_set = glw_gradient_set,
   .gc_ctor = glw_gradient_ctor,
   .gc_dtor = glw_gradient_dtor,
   .gc_signal_handler = glw_gradient_callback,
   .gc_set_color1 = set_color1,
   .gc_set_color2 = set_color2,
+  .gc_mod_image_flags = mod_image_flags,
 };
 
 GLW_REGISTER_CLASS(glw_gradient);

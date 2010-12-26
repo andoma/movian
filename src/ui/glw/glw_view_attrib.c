@@ -61,8 +61,16 @@ set_string(glw_view_eval_context_t *ec, const token_attrib_t *a,
 			    a->name);
   }
 
-  glw_set(ec->w, a->attrib, str, NULL);
+  void (*fn)(struct glw *w, const char *str) = a->fn;
+  fn(ec->w, str);
   return 0;
+}
+
+
+static void
+set_id(glw_t *w, const char *str)
+{
+  mystrset(&w->glw_id, str);
 }
 
 
@@ -145,7 +153,7 @@ set_float(glw_view_eval_context_t *ec, const token_attrib_t *a,
   if(fn)
     fn(ec->w, v);
   else
-  glw_set(ec->w, a->attrib, v, NULL);
+    glw_set(ec->w, a->attrib, v, NULL);
   return 0;
 }
 
@@ -158,6 +166,14 @@ set_weight(glw_t *w, float v)
 {
   glw_set_constraints(w, 0, 0, v, GLW_CONSTRAINT_W, GLW_CONSTRAINT_CONF_WF);
 }
+
+static void
+set_alpha(glw_t *w, float v)
+{
+  w->glw_alpha = v;
+}
+
+
 
 /**
  *
@@ -380,7 +396,7 @@ set_align(glw_view_eval_context_t *ec, const token_attrib_t *a,
   if(t->type != TOKEN_IDENTIFIER || (v = str2val(rstr_get(t->t_rstring), aligntab)) < 0)
     return glw_view_seterr(ec->ei, t, "Invalid assignment for attribute %s",
 			    a->name);
-  glw_set(ec->w, GLW_ATTRIB_ALIGNMENT, v, NULL);
+  ec->w->glw_alignment = v;
   return 0;
 }
 
@@ -416,87 +432,91 @@ set_transition_effect(glw_view_eval_context_t *ec, const token_attrib_t *a,
  *
  */
 static int
-set_flag(glw_view_eval_context_t *ec, const token_attrib_t *a, 
-	 struct token *t, glw_attribute_t setter, glw_attribute_t clearer)
+mod_flag(glw_view_eval_context_t *ec, const token_attrib_t *a, 
+	 struct token *t)
 {
-  int set = 0;
+  int v = 0;
 
   if(t->type == TOKEN_INT)
-    set = t->t_int;
+    v = t->t_int;
   else if(t->type == TOKEN_FLOAT)
-    set = t->t_float > 0.5;
+    v = t->t_float > 0.5;
   else if(t->type == TOKEN_VOID)
-    set = 0;
+    v = 0;
   else
     return glw_view_seterr(ec->ei, t, "Invalid assignment for attribute %s",
 			    a->name);
 
-  if(set)
-    glw_set(ec->w, setter, a->attrib, NULL);
-  else
-    glw_set(ec->w, clearer, a->attrib, NULL);
+  void (*fn)(glw_t *w, int set, int clr) = a->fn;
 
+  if(v)
+    fn(ec->w, a->attrib, 0);
+  else
+    fn(ec->w, 0, a->attrib);
   return 0;
 }
 
+
 /**
  *
  */
-static int
-set_generic_flag(glw_view_eval_context_t *ec, const token_attrib_t *a, 
-	       struct token *t)
+static void
+mod_flags1(glw_t *w, int set, int clr)
 {
-  return set_flag(ec, a, t, GLW_ATTRIB_SET_FLAGS,
-		  GLW_ATTRIB_CLR_FLAGS);
+  set &= ~w->glw_flags; // Mask out already set flags
+  w->glw_flags |= set;
+
+  if(set & GLW_HIDDEN)
+    glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_HIDDEN, w);
+
+  clr &= w->glw_flags;
+  w->glw_flags &= ~clr;
+  
+  if(clr & GLW_HIDDEN)
+    glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_UNHIDDEN, w);
+}
+
+/**
+ *
+ */
+static void
+mod_flags2(glw_t *w, int set, int clr)
+{
+  w->glw_flags2 = (w->glw_flags2 | set) & ~clr;
 }
 
 
 /**
  *
  */
-static int
-set_generic_flag2(glw_view_eval_context_t *ec, const token_attrib_t *a, 
-	       struct token *t)
+static void
+mod_text_flags(glw_t *w, int set, int clr)
 {
-  return set_flag(ec, a, t, GLW_ATTRIB_SET_FLAGS2,
-		  GLW_ATTRIB_CLR_FLAGS2);
+  if(w->glw_class->gc_mod_text_flags != NULL)
+    w->glw_class->gc_mod_text_flags(w, set, clr);
 }
 
 
 /**
  *
  */
-static int
-set_image_flag(glw_view_eval_context_t *ec, const token_attrib_t *a, 
-	       struct token *t)
+static void
+mod_img_flags(glw_t *w, int set, int clr)
 {
-  return set_flag(ec, a, t, GLW_ATTRIB_SET_IMAGE_FLAGS,
-		  GLW_ATTRIB_CLR_IMAGE_FLAGS);
-}
-
-/**
- *
- */
-static int
-set_text_flag(glw_view_eval_context_t *ec, const token_attrib_t *a, 
-	       struct token *t)
-{
-  return set_flag(ec, a, t, GLW_ATTRIB_SET_TEXT_FLAGS,
-		  GLW_ATTRIB_CLR_TEXT_FLAGS);
+  if(w->glw_class->gc_mod_image_flags != NULL)
+    w->glw_class->gc_mod_image_flags(w, set, clr);
 }
 
 
 /**
  *
  */
-static int
-set_video_flag(glw_view_eval_context_t *ec, const token_attrib_t *a, 
-	       struct token *t)
+static void
+mod_video_flags(glw_t *w, int set, int clr)
 {
-  return set_flag(ec, a, t, GLW_ATTRIB_SET_VIDEO_FLAGS,
-		  GLW_ATTRIB_CLR_VIDEO_FLAGS);
+  if(w->glw_class->gc_mod_video_flags != NULL)
+    w->glw_class->gc_mod_video_flags(w, set, clr);
 }
-
 
 /**
  *
@@ -565,42 +585,42 @@ set_propref(glw_view_eval_context_t *ec, const token_attrib_t *a,
  *
  */
 static const token_attrib_t attribtab[] = {
-  {"id",              set_string, GLW_ATTRIB_ID},
+  {"id",              set_string, 0, set_id},
   {"caption",         set_typed_string, GLW_ATTRIB_CAPTION},
   {"source",          set_source, 0},
 
-  {"debug",                   set_generic_flag, GLW_DEBUG},
-  {"filterConstraintX",       set_generic_flag, GLW_CONSTRAINT_IGNORE_X},
-  {"filterConstraintY",       set_generic_flag, GLW_CONSTRAINT_IGNORE_Y},
-  {"filterConstraintWeight",  set_generic_flag, GLW_CONSTRAINT_IGNORE_W},
-  {"hidden",                  set_generic_flag, GLW_HIDDEN},
-  {"noInitialTransform",      set_generic_flag, GLW_NO_INITIAL_TRANS},
-  {"shadow",                  set_generic_flag, GLW_SHADOW},
-  {"focusOnClick",            set_generic_flag, GLW_FOCUS_ON_CLICK},
-  {"autoRefocusable",         set_generic_flag, GLW_AUTOREFOCUSABLE},
-  {"navFocusable",            set_generic_flag, GLW_NAV_FOCUSABLE},
-  {"homogenous",              set_generic_flag, GLW_HOMOGENOUS},
+  {"debug",                   mod_flag, GLW_DEBUG, mod_flags1},
+  {"filterConstraintX",       mod_flag, GLW_CONSTRAINT_IGNORE_X, mod_flags1},
+  {"filterConstraintY",       mod_flag, GLW_CONSTRAINT_IGNORE_Y, mod_flags1},
+  {"filterConstraintWeight",  mod_flag, GLW_CONSTRAINT_IGNORE_W, mod_flags1},
+  {"hidden",                  mod_flag, GLW_HIDDEN, mod_flags1},
+  {"noInitialTransform",      mod_flag, GLW_NO_INITIAL_TRANS, mod_flags1},
+  {"shadow",                  mod_flag, GLW_SHADOW, mod_flags1},
+  {"focusOnClick",            mod_flag, GLW_FOCUS_ON_CLICK, mod_flags1},
+  {"autoRefocusable",         mod_flag, GLW_AUTOREFOCUSABLE, mod_flags1},
+  {"navFocusable",            mod_flag, GLW_NAV_FOCUSABLE, mod_flags1},
+  {"homogenous",              mod_flag, GLW_HOMOGENOUS, mod_flags1},
 
-  {"enabled",                 set_generic_flag2, GLW2_ENABLED},
-  {"alwaysLayout",            set_generic_flag2, GLW2_ALWAYS_LAYOUT},
+  {"enabled",                 mod_flag, GLW2_ENABLED, mod_flags2},
+  {"alwaysLayout",            mod_flag, GLW2_ALWAYS_LAYOUT, mod_flags2},
 
-  {"hqScaling",       set_image_flag, GLW_IMAGE_HQ_SCALING},
-  {"fixedSize",       set_image_flag, GLW_IMAGE_FIXED_SIZE},
-  {"dualSided",       set_image_flag, GLW_IMAGE_DUAL_SIDED},
-  {"bevelLeft",       set_image_flag, GLW_IMAGE_BEVEL_LEFT},
-  {"bevelTop",        set_image_flag, GLW_IMAGE_BEVEL_TOP},
-  {"bevelRight",      set_image_flag, GLW_IMAGE_BEVEL_RIGHT},
-  {"bevelBottom",     set_image_flag, GLW_IMAGE_BEVEL_BOTTOM},
-  {"aspectConstraint",set_image_flag, GLW_IMAGE_SET_ASPECT},
-  {"additive",        set_image_flag, GLW_IMAGE_ADDITIVE},
+  {"hqScaling",       mod_flag, GLW_IMAGE_HQ_SCALING, mod_img_flags},
+  {"fixedSize",       mod_flag, GLW_IMAGE_FIXED_SIZE, mod_img_flags},
+  {"dualSided",       mod_flag, GLW_IMAGE_DUAL_SIDED, mod_img_flags},
+  {"bevelLeft",       mod_flag, GLW_IMAGE_BEVEL_LEFT, mod_img_flags},
+  {"bevelTop",        mod_flag, GLW_IMAGE_BEVEL_TOP, mod_img_flags},
+  {"bevelRight",      mod_flag, GLW_IMAGE_BEVEL_RIGHT, mod_img_flags},
+  {"bevelBottom",     mod_flag, GLW_IMAGE_BEVEL_BOTTOM, mod_img_flags},
+  {"aspectConstraint",mod_flag, GLW_IMAGE_SET_ASPECT, mod_img_flags},
+  {"additive",        mod_flag, GLW_IMAGE_ADDITIVE, mod_img_flags},
 
-  {"password",        set_text_flag,  GTB_PASSWORD},
-  {"ellipsize",       set_text_flag,  GTB_ELLIPSIZE},
+  {"password",        mod_flag,  GTB_PASSWORD, mod_text_flags},
+  {"ellipsize",       mod_flag,  GTB_ELLIPSIZE, mod_text_flags},
 
-  {"primary",         set_video_flag, GLW_VIDEO_PRIMARY},
-  {"noAudio",         set_video_flag, GLW_VIDEO_NO_AUDIO},
+  {"primary",         mod_flag, GLW_VIDEO_PRIMARY, mod_video_flags},
+  {"noAudio",         mod_flag, GLW_VIDEO_NO_AUDIO, mod_video_flags},
 
-  {"alpha",           set_float,  GLW_ATTRIB_ALPHA},
+  {"alpha",           set_float,  0, set_alpha},
   {"alphaSelf",       set_float,  GLW_ATTRIB_ALPHA_SELF},
   {"weight",          set_float,  0, set_weight},
   {"time",            set_float,  GLW_ATTRIB_TIME},
@@ -612,7 +632,7 @@ static const token_attrib_t attribtab[] = {
   {"value",           set_float,  GLW_ATTRIB_VALUE},
   {"sizeScale",       set_float,  GLW_ATTRIB_SIZE_SCALE},
   {"sizeBias",        set_float,  GLW_ATTRIB_SIZE_BIAS},
-  {"focusable",       set_float,  GLW_ATTRIB_FOCUS_WEIGHT},
+  {"focusable",       set_float,  0, glw_set_focus_weight},
   {"childAspect",     set_float,  GLW_ATTRIB_CHILD_ASPECT},
 
   {"height",          set_int,  0, set_height},

@@ -74,24 +74,10 @@ typedef enum {
   GLW_ATTRIB_SOURCE,
   GLW_ATTRIB_ARGS,
   GLW_ATTRIB_PROP_PARENT,
-  GLW_ATTRIB_ALPHA,
   GLW_ATTRIB_ALPHA_SELF,
   GLW_ATTRIB_ANGLE,
-  GLW_ATTRIB_ALIGNMENT,
-  GLW_ATTRIB_SET_FLAGS,
-  GLW_ATTRIB_CLR_FLAGS,
-  GLW_ATTRIB_SET_FLAGS2,
-  GLW_ATTRIB_CLR_FLAGS2,
-  GLW_ATTRIB_PREVIEW,
   GLW_ATTRIB_CONTENT,
   GLW_ATTRIB_MODE,
-  GLW_ATTRIB_SET_IMAGE_FLAGS,
-  GLW_ATTRIB_CLR_IMAGE_FLAGS,
-  GLW_ATTRIB_SET_TEXT_FLAGS,
-  GLW_ATTRIB_CLR_TEXT_FLAGS,
-  GLW_ATTRIB_SET_VIDEO_FLAGS,
-  GLW_ATTRIB_CLR_VIDEO_FLAGS,
-  GLW_ATTRIB_ID,
   GLW_ATTRIB_TIME,
   GLW_ATTRIB_INT_STEP,
   GLW_ATTRIB_INT_MIN,
@@ -104,7 +90,6 @@ typedef enum {
   GLW_ATTRIB_SIZE_SCALE,
   GLW_ATTRIB_SIZE_BIAS,
   GLW_ATTRIB_PIXMAP,
-  GLW_ATTRIB_FOCUS_WEIGHT,
   GLW_ATTRIB_CHILD_ASPECT,
   GLW_ATTRIB_CHILD_HEIGHT,
   GLW_ATTRIB_CHILD_WIDTH,
@@ -470,6 +455,20 @@ typedef struct glw_class {
    */
   void (*gc_set_rotation)(struct glw *w, const float *v);
 
+  /**
+   *
+   */
+  void (*gc_mod_image_flags)(struct glw *w, int set, int clr);
+
+  /**
+   *
+   */
+  void (*gc_mod_video_flags)(struct glw *w, int set, int clr);
+
+  /**
+   *
+   */
+  void (*gc_mod_text_flags)(struct glw *w, int set, int clr);
 
   /**
    * Registration link
@@ -851,6 +850,8 @@ void glw_focus_suggest(glw_t *w);
 
 glw_t *glw_focus_by_path(glw_t *w);
 
+void glw_set_focus_weight(glw_t *w, float f);
+
 
 /**
  * Clipping
@@ -911,26 +912,13 @@ do {						\
   case GLW_ATTRIB_SOURCE:			\
   case GLW_ATTRIB_ARGS:				\
   case GLW_ATTRIB_PROP_PARENT:			\
-  case GLW_ATTRIB_PREVIEW:			\
   case GLW_ATTRIB_CONTENT:			\
-  case GLW_ATTRIB_ID:         			\
   case GLW_ATTRIB_BIND_TO_ID: 			\
   case GLW_ATTRIB_PIXMAP: 			\
     (void)va_arg(ap, void *);			\
     break;					\
-  case GLW_ATTRIB_ALIGNMENT:			\
   case GLW_ATTRIB_FREEZE:			\
-  case GLW_ATTRIB_SET_FLAGS:			\
-  case GLW_ATTRIB_CLR_FLAGS:			\
-  case GLW_ATTRIB_SET_FLAGS2:			\
-  case GLW_ATTRIB_CLR_FLAGS2:			\
   case GLW_ATTRIB_MODE:                         \
-  case GLW_ATTRIB_SET_IMAGE_FLAGS:              \
-  case GLW_ATTRIB_CLR_IMAGE_FLAGS:              \
-  case GLW_ATTRIB_SET_TEXT_FLAGS:               \
-  case GLW_ATTRIB_CLR_TEXT_FLAGS:               \
-  case GLW_ATTRIB_SET_VIDEO_FLAGS:              \
-  case GLW_ATTRIB_CLR_VIDEO_FLAGS:              \
   case GLW_ATTRIB_TRANSITION_EFFECT:            \
   case GLW_ATTRIB_CHILD_TILES_X:                \
   case GLW_ATTRIB_CHILD_TILES_Y:                \
@@ -945,7 +933,6 @@ do {						\
   case GLW_ATTRIB_Y_SPACING:                    \
     (void)va_arg(ap, int);			\
     break;					\
-  case GLW_ATTRIB_ALPHA:			\
   case GLW_ATTRIB_ALPHA_SELF:			\
   case GLW_ATTRIB_ANGLE:			\
   case GLW_ATTRIB_TIME:                         \
@@ -956,7 +943,6 @@ do {						\
   case GLW_ATTRIB_INT_MAX:                      \
   case GLW_ATTRIB_SIZE_SCALE:                   \
   case GLW_ATTRIB_SIZE_BIAS:                    \
-  case GLW_ATTRIB_FOCUS_WEIGHT:                 \
   case GLW_ATTRIB_CHILD_ASPECT:                 \
   case GLW_ATTRIB_FILL:                         \
     (void)va_arg(ap, double);			\
@@ -1117,5 +1103,9 @@ glw_t *glw_last_widget(glw_t *w);
 void glw_set_fullscreen(glw_root_t *gr, int fullscreen);
 
 int glw_kill_screensaver(glw_root_t *gr);
+
+void glw_hide(glw_t *w);
+
+void glw_unhide(glw_t *w);
 
 #endif /* GLW_H */

@@ -320,6 +320,18 @@ glw_video_ctor(glw_t *w)
   glw_set_constraints(w, 0, 0, 0, GLW_CONSTRAINT_F, 0);
 }
 
+
+/**
+ *
+ */
+static void 
+mod_video_flags(glw_t *w, int set, int clr)
+{
+  glw_video_t *gv = (glw_video_t *)w;
+  gv->gv_flags = (gv->gv_flags | set) & ~clr;
+}
+
+
 /**
  *
  */
@@ -331,7 +343,6 @@ glw_video_set(glw_t *w, va_list ap)
   const char *filename = NULL;
   prop_t *p, *p2;
   event_t *e;
-  int f;
 
   do {
     attrib = va_arg(ap, int);
@@ -339,16 +350,6 @@ glw_video_set(glw_t *w, va_list ap)
 
     case GLW_ATTRIB_SOURCE:
       filename = va_arg(ap, char *);
-      break;
-
-    case GLW_ATTRIB_SET_VIDEO_FLAGS:
-      f = va_arg(ap, int) & ~gv->gv_flags;
-      gv->gv_flags |= f;
-      break;
-
-    case GLW_ATTRIB_CLR_VIDEO_FLAGS:
-      f = va_arg(ap, int) & gv->gv_flags;
-      gv->gv_flags &= ~f;
       break;
 
     case GLW_ATTRIB_FREEZE:
@@ -453,6 +454,7 @@ static glw_class_t glw_video = {
   .gc_render = glw_video_render,
   .gc_newframe = glw_video_newframe,
   .gc_signal_handler = glw_video_widget_callback,
+  .gc_mod_video_flags = mod_video_flags,
 };
 
 GLW_REGISTER_CLASS(glw_video);

@@ -774,6 +774,18 @@ set_padding(glw_t *w, const float *v)
 /**
  *
  */
+static void
+mod_image_flags(glw_t *w, int set, int clr)
+{
+  glw_image_t *gi = (void *)w;
+  gi->gi_bitmap_flags = (gi->gi_bitmap_flags | set) & ~clr;
+  gi->gi_update = 1;
+}
+
+
+/**
+ *
+ */
 static void 
 glw_image_set(glw_t *w, va_list ap)
 {
@@ -787,11 +799,6 @@ glw_image_set(glw_t *w, va_list ap)
     switch(attrib) {
     case GLW_ATTRIB_FREEZE:
       gi->gi_frozen = va_arg(ap, int);
-      break;
-
-    case GLW_ATTRIB_SET_FLAGS:
-      (void)va_arg(ap, int);
-      glw_image_update_constraints((glw_image_t *)w);
       break;
 
     case GLW_ATTRIB_ANGLE:
@@ -834,16 +841,6 @@ glw_image_set(glw_t *w, va_list ap)
 
       gi->gi_pending = glw_tex_create_from_pixmap(w->glw_root, 
 						  va_arg(ap, pixmap_t *));
-      break;
-
-    case GLW_ATTRIB_SET_IMAGE_FLAGS:
-      gi->gi_bitmap_flags |= va_arg(ap, int);
-      gi->gi_update = 1;
-      break;
-
-    case GLW_ATTRIB_CLR_IMAGE_FLAGS:
-      gi->gi_bitmap_flags &= ~va_arg(ap, int);
-      gi->gi_update = 1;
       break;
 
     case GLW_ATTRIB_SIZE_SCALE:
@@ -902,6 +899,7 @@ static glw_class_t glw_image = {
   .gc_ready = glw_image_ready,
   .gc_set_rgb = glw_image_set_rgb,
   .gc_set_padding = set_padding,
+  .gc_mod_image_flags = mod_image_flags,
 };
 
 GLW_REGISTER_CLASS(glw_image);
@@ -921,6 +919,7 @@ static glw_class_t glw_icon = {
   .gc_default_alignment = GLW_ALIGN_CENTER,
   .gc_set_rgb = glw_image_set_rgb,
   .gc_set_padding = set_padding,
+  .gc_mod_image_flags = mod_image_flags,
 };
 
 GLW_REGISTER_CLASS(glw_icon);
@@ -941,6 +940,7 @@ static glw_class_t glw_backdrop = {
   .gc_set_rgb = glw_image_set_rgb,
   .gc_set_padding = set_padding,
   .gc_set_border = set_border,
+  .gc_mod_image_flags = mod_image_flags,
 };
 
 GLW_REGISTER_CLASS(glw_backdrop);
@@ -961,6 +961,7 @@ static glw_class_t glw_repeatedimage = {
   .gc_default_alignment = GLW_ALIGN_CENTER,
   .gc_set_rgb = glw_image_set_rgb,
   .gc_set_padding = set_padding,
+  .gc_mod_image_flags = mod_image_flags,
 };
 
 GLW_REGISTER_CLASS(glw_repeatedimage);

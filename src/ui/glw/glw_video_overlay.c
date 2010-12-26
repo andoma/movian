@@ -379,9 +379,10 @@ glw_video_sub_layout_text(video_decoder_t *vd, glw_video_overlay_t *gvo,
 			      parent, NULL, NULL);
   glw_set(gvo->gvo_child,
 	  GLW_ATTRIB_CAPTION, s->s_text, 0,
-	  GLW_ATTRIB_ALIGNMENT, GLW_ALIGN_BOTTOM,
 	  GLW_ATTRIB_SIZE_SCALE, 2.0,
 	  NULL);
+
+  gvo->gvo_child->glw_alignment = GLW_ALIGN_BOTTOM;
 
   gvo->gvo_child->glw_class->gc_set_padding(gvo->gvo_child,
 					    (const float []){0,0,0,20});
@@ -442,8 +443,5 @@ glw_video_overlay_layout(glw_video_t *gv, int64_t pts, video_decoder_t *vd)
   if(vd->vd_pci.hli.hl_gi.hli_ss)
     want_focus = 1;
 #endif
-
-  glw_set(&gv->w,
-	  GLW_ATTRIB_FOCUS_WEIGHT, want_focus ? 1.0 : 0.0, 
-	  NULL);
+  glw_set_focus_weight(&gv->w, want_focus ? 1.0 : 0.0);
 }

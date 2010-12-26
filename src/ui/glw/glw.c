@@ -282,104 +282,6 @@ glw_layout0(glw_t *w, glw_rctx_t *rc)
 /**
  *
  */
-static void
-glw_attrib_set(glw_t *w, va_list ap)
-{
-  glw_attribute_t attrib;
-  void *v;
-  int a;
-  float f;
-
-  va_list apx;
-
-  va_copy(apx, ap);
-
-  do {
-    attrib = va_arg(ap, int);
-    
-    assert(attrib >= 0 && attrib < GLW_ATTRIB_num);
-
-    switch(attrib) {
-    case GLW_ATTRIB_ID:
-      v = va_arg(ap, char *);
-      free((void *)w->glw_id);
-      w->glw_id = v ? strdup(v) : NULL;
-      break;
-
-    case GLW_ATTRIB_ALPHA:
-      w->glw_alpha = va_arg(ap, double);
-      break;
-
-    case GLW_ATTRIB_ALIGNMENT:
-      w->glw_alignment = va_arg(ap, int);
-      break;
-
-    case GLW_ATTRIB_SET_FLAGS:
-      a = va_arg(ap, int);
-
-      a &= ~w->glw_flags; // Mask out already set flags
-
-
-      w->glw_flags |= a;
-
-      if(a & GLW_HIDDEN)
-	glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_HIDDEN, w);
-
-      break;
-
-    case GLW_ATTRIB_CLR_FLAGS:
-      a = va_arg(ap, int);
-
-      a &= w->glw_flags; // Mask out already cleared flags
-
-      w->glw_flags &= ~a;
-
-      if(a & GLW_HIDDEN)
-	glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_UNHIDDEN, w);
-      break;
-
-    case GLW_ATTRIB_SET_FLAGS2:
-      a = va_arg(ap, int);
-      a &= ~w->glw_flags2; // Mask out already set flags
-      w->glw_flags2 |= a;
-      break;
-
-    case GLW_ATTRIB_CLR_FLAGS2:
-      a = va_arg(ap, int);
-      a &= w->glw_flags2; // Mask out already cleared flags
-      w->glw_flags2 &= ~a;
-      break;
-
-    case GLW_ATTRIB_FOCUS_WEIGHT:
-      f = va_arg(ap, double);
-
-      if(f == w->glw_focus_weight)
-	break;
-
-      if(w->glw_focus_weight > 0 && w->glw_root->gr_current_focus == w)
-	glw_focus_leave(w);
-
-      if(f > 0)
-	glw_focus_init_widget(w, f);
-      else
-	w->glw_focus_weight = 0;
-      break;
-
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
-
-  if(w->glw_class->gc_set != NULL)
-    w->glw_class->gc_set(w, apx);
-
-  va_end(apx);
-}
-
-/**
- *
- */
 glw_t *
 glw_create(glw_root_t *gr, const glw_class_t *class,
 	   glw_t *parent, glw_t *before, prop_t *originator)
@@ -438,7 +340,9 @@ glw_set(glw_t *w, ...)
   va_list ap;
 
   va_start(ap, w);
-  glw_attrib_set(w, ap);
+
+  if(w->glw_class->gc_set != NULL)
+    w->glw_class->gc_set(w, ap);
   va_end(ap);
 }
 
@@ -966,6 +870,24 @@ glw_root_set_hover(glw_root_t *gr, glw_t *w)
     glw_path_modify(w, GLW_IN_HOVER_PATH, 0, com);
 }
 
+
+/**
+ *
+ */
+void
+glw_set_focus_weight(glw_t *w, float f)
+{
+  if(f == w->glw_focus_weight)
+    return;
+
+  if(w->glw_focus_weight > 0 && w->glw_root->gr_current_focus == w)
+    glw_focus_leave(w);
+  
+  if(f > 0)
+    glw_focus_init_widget(w, f);
+  else
+    w->glw_focus_weight = 0;
+}
 
 /**
  *
@@ -2013,4 +1935,24 @@ glw_last_widget(glw_t *w)
     w = TAILQ_PREV(w, glw_queue, glw_parent_link);
 
   return w;
+}
+
+
+void
+glw_hide(glw_t *w)
+{
+  if(w->glw_flags & GLW_HIDDEN)
+    return;
+  w->glw_flags |= GLW_HIDDEN;
+  glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_HIDDEN, w);
+}
+
+
+void
+glw_unhide(glw_t *w)
+{
+  if(!(w->glw_flags & GLW_HIDDEN))
+    return;
+  w->glw_flags &= ~GLW_HIDDEN;
+  glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_UNHIDDEN, w);
 }

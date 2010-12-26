@@ -1023,9 +1023,9 @@ clone_update(clone_t *c)
     if(!c->c_evaluated)
       clone_eval(c);
 
-    glw_set(c->c_w, GLW_ATTRIB_CLR_FLAGS, GLW_HIDDEN, NULL);
+    glw_unhide(c->c_w);
   } else {
-    glw_set(c->c_w, GLW_ATTRIB_SET_FLAGS, GLW_HIDDEN, NULL);
+    glw_hide(c->c_w);
   }
 }
 
@@ -2081,9 +2081,7 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
     
     self->t_extra = glw_create(ec->gr, dummy, parent, NULL, NULL);
 
-    glw_set(self->t_extra,
-	    GLW_ATTRIB_SET_FLAGS, GLW_HIDDEN,
-	    NULL);
+    glw_hide(self->t_extra);
   }
 
   if(a->type == TOKEN_DIRECTORY) {

@@ -1338,6 +1338,23 @@ set_padding(glw_t *w, const float *v)
   gtb->gtb_need_layout = 1;
 }
 
+/**
+ *
+ */
+static void
+mod_text_flags(glw_t *w, int set, int clr)
+{
+  glw_text_bitmap_t *gtb = (void *)w;
+  gtb->gtb_flags = (gtb->gtb_flags | set) & ~clr;
+
+
+  if(gtb->gtb_frozen) {
+    gtb->gtb_pending_update = 1;
+  } else {
+    gtb_caption_has_changed(gtb);
+    gtb->gtb_pending_update = 0;
+  }
+}
 
 
 /**
@@ -1410,16 +1427,6 @@ glw_text_bitmap_set(glw_t *w, va_list ap)
       gtb->gtb_size_bias = va_arg(ap, double);
       if(!(gtb->w.glw_flags & GLW_CONSTRAINT_Y)) // Only update if yet unset
 	gtb_set_constraints(gtb->w.glw_root, gtb);
-      break;
-
-    case GLW_ATTRIB_SET_TEXT_FLAGS:
-      gtb->gtb_flags |= va_arg(ap, int);
-      update = 1;
-      break;
-
-    case GLW_ATTRIB_CLR_IMAGE_FLAGS:
-      gtb->gtb_flags &= ~va_arg(ap, int);
-      update = 1;
       break;
 
    case GLW_ATTRIB_BIND_TO_PROPERTY5:
@@ -1719,6 +1726,7 @@ static glw_class_t glw_label = {
   .gc_default_alignment = GLW_ALIGN_LEFT,
   .gc_set_rgb = glw_text_bitmap_set_rgb,
   .gc_set_padding = set_padding,
+  .gc_mod_text_flags = mod_text_flags,
 };
 
 GLW_REGISTER_CLASS(glw_label);
@@ -1739,6 +1747,7 @@ static glw_class_t glw_text = {
   .gc_default_alignment = GLW_ALIGN_LEFT,
   .gc_set_rgb = glw_text_bitmap_set_rgb,
   .gc_set_padding = set_padding,
+  .gc_mod_text_flags = mod_text_flags,
 };
 
 GLW_REGISTER_CLASS(glw_text);
