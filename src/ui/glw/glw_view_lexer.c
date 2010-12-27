@@ -285,17 +285,18 @@ lexer(const char *src, errorinfo_t *ei, rstr_t *f, token_t *prev)
     start = src;
 
 
-    if(*src == '"') {
+    if(*src == '"' || *src == '\'') {
       /* A quoted string " ... " */
+      char stop = *src;
       src++;
       start++;
 
-      while((*src != '"' || src[-1] == '\\') && *src != 0) {
+      while((*src != stop || src[-1] == '\\') && *src != 0) {
 	if(*src == '\n')
 	  line++;
 	src++;
       }
-      if(*src != '"') {
+      if(*src != stop) {
 	snprintf(ei->error, sizeof(ei->error), "Unterminated quote");
 	snprintf(ei->file,  sizeof(ei->file),  "%s", rstr_get(f));
 	ei->line = line;
@@ -303,11 +304,13 @@ lexer(const char *src, errorinfo_t *ei, rstr_t *f, token_t *prev)
       }
 
       prev = lexer_add_token_string(prev, f, line, start, src, TOKEN_STRING);
+      if(stop == '\'')
+	prev->t_rstrtype = PROP_STR_RICH;
       src++;
       continue;
     }
 
-  
+
     if(lex_isalpha(*src)) {
       /* Alphanumeric string */
       while(lex_isalnum(*src))
