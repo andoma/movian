@@ -38,6 +38,7 @@ struct event *popup_display(prop_t *p);
 
 #define MESSAGE_POPUP_OK     0x1
 #define MESSAGE_POPUP_CANCEL 0x2
+#define MESSAGE_POPUP_RICH_TEXT 0x4
 
 int message_popup(const char *message, int flags);
  

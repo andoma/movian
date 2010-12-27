@@ -184,7 +184,9 @@ message_popup(const char *message, int flags)
   p = prop_create(NULL, NULL);
 
   prop_set_string(prop_create(p, "type"), "message");
-  prop_set_string(prop_create(p, "message"), message);
+  prop_set_string_ex(prop_create(p, "message"), NULL, message,
+		     flags & MESSAGE_POPUP_RICH_TEXT ?
+		     PROP_STR_RICH : PROP_STR_UTF8);
   if(flags & MESSAGE_POPUP_CANCEL)
     prop_set_int(prop_create(p, "cancel"), 1);
   if(flags & MESSAGE_POPUP_OK)

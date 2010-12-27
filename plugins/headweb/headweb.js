@@ -200,7 +200,7 @@
     if(login(true))
       return false;
 
-    if(!showtime.message('Are you sure want to rent\n' + title + '\nFor ' +
+    if(!showtime.message('<center>Are you sure want to rent<br>' + title + '<br>For ' +
 			 price, true, true))
       return false;
 

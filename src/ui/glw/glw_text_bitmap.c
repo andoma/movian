@@ -38,8 +38,10 @@
 
 
 
-#define RS_P_START   0x7f000001
-#define RS_P_NEWLINE 0x7f000002
+#define RS_P_START      0x7f000001
+#define RS_P_NEWLINE    0x7f000002
+#define RS_P_CENTER_ON  0x7f000003
+#define RS_P_CENTER_OFF 0x7f000004
 
 /**
  *
@@ -312,6 +314,7 @@ typedef struct line {
   int count;
   int width;
   int xspace;
+  char center;
 
 } line_t;
 
@@ -327,7 +330,7 @@ typedef struct pos {
  */
 static int
 gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face, 
-	     int *uc, int len, int flags, int docur, float scale,
+	     uint32_t *uc, int len, int flags, int docur, float scale,
 	     float bias, int max_width, int debug, int maxlines,
 	     int doellipsize)
 {
@@ -380,6 +383,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   pos = malloc(sizeof(pos_t) * len);
 
   int out = 0;
+  int center = 0;
 
   for(i = 0; i < len; i++) {
 
@@ -388,17 +392,38 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
       li->start = -1;
       li->count = 0;
       li->xspace = 0;
+      li->center = center;
       TAILQ_INSERT_TAIL(&lq, li, link);
       prev = 0;
       pen_x = 0;
     }
 
-    if(uc[i] == '\n' || uc[i] == RS_P_NEWLINE ||
-       (i != 0 && uc[i] == RS_P_START)) {
+    switch(uc[i]) {
+    case RS_P_START:
+      if(i != 0)
+	li = NULL;
+      continue;
+
+    case '\n':
+    case RS_P_NEWLINE:
       li = NULL;
       continue;
+      
+    case RS_P_CENTER_ON:
+      li->center = 1;
+      center = 1;
+      continue;
+
+    case RS_P_CENTER_OFF:
+      li->center = 1;
+      center = 0;
+      continue;
+
+    default:
+      break;
     }
-    if(uc[i] >= 0x7f000000)
+
+    if(uc[i] > 0x7f000000)
       continue;
 
     uc[out] = uc[i];
@@ -511,6 +536,9 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 
   if(maxlines > 1) {
     TAILQ_FOREACH(li, &lq, link) {
+      if(li->center)
+	continue;
+
       int spaces = 0;
       int spill = siz_x - li->width;
       for(i = li->start; i < li->start + li->count; i++) {
@@ -567,10 +595,16 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
     gtbd->gtbd_cursor_pos = NULL;
   }
 
-  pen_x = 0;
   pen_y = 0;
 
   TAILQ_FOREACH(li, &lq, link) {
+    pen_x = 0;
+    
+    if(li->center) {
+      pen_x += (siz_x - li->width) / 2;
+    }
+
+
     for(i = li->start; i < li->start + li->count; i++) {
       g = get_glyph(face, uc[i], pixelheight);
       if(g == NULL)
@@ -603,7 +637,6 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 
     }
     pen_y -= height;
-    pen_x = 0;
   }
 
   if(docur) {
@@ -1132,6 +1165,9 @@ tag_to_code(char *s)
   if(!endtag && !strcmp(tag, "br")) 
     return RS_P_NEWLINE;
 
+  if(!strcmp(tag, "center")) 
+    return endtag ? RS_P_CENTER_OFF : RS_P_CENTER_ON;
+
   return 0;
 }
 
@@ -1543,7 +1579,7 @@ font_render_thread(void *aux)
 {
   glw_root_t *gr = aux;
   glw_text_bitmap_t *gtb;
-  int *uc, len, docur, i;
+  uint32_t *uc, len, docur, i;
   glw_text_bitmap_data_t d;
   float scale, bias;
   int max_width, debug, doellipsize, maxlines;
