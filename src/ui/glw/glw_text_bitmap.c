@@ -56,6 +56,10 @@ typedef struct glw_text_bitmap_data {
   int16_t gtbd_texture_width;
   int16_t gtbd_texture_height;
 
+  int16_t gtbd_linesize;
+  uint8_t gtbd_bpp;
+  uint8_t gtbd_ellipsized;
+
   int *gtbd_cursor_pos;
   int16_t gtbd_lines;
 
@@ -241,7 +245,7 @@ get_glyph(FT_Face face, int uc, int size)
  */
 static void
 draw_glyph(glw_text_bitmap_data_t *gtbd, FT_Bitmap *bmp, uint8_t *dst, 
-	   int left, int top, int index, int stride)
+	   int left, int top, int index)
 {
   const uint8_t *src = bmp->buffer;
   int x, y;
@@ -265,13 +269,34 @@ draw_glyph(glw_text_bitmap_data_t *gtbd, FT_Bitmap *bmp, uint8_t *dst,
   if(w < 0 || h < 0)
     return;
 
-  dst += x1 + y1 * stride;
+  dst += x1 * gtbd->gtbd_bpp + y1 * gtbd->gtbd_linesize;
 
-  for(y = 0; y < h; y++) {
-    for(x = 0; x < w; x++)
-      dst[x] += src[x];
-    src += bmp->pitch;
-    dst += stride;
+  switch(gtbd->gtbd_bpp) {
+
+  case 1:
+    // Luma channel only
+    for(y = 0; y < h; y++) {
+      for(x = 0; x < w; x++)
+	dst[x] += src[x];
+      src += bmp->pitch;
+      dst += gtbd->gtbd_linesize;
+    }
+    break;
+
+  case 2:
+    // Luma + Alpha channel
+    for(y = 0; y < h; y++) {
+      for(x = 0; x < w; x++) {
+	dst[x*2 + 0] += src[x] ? 0xff : 0;
+	dst[x*2 + 1] += src[x];
+      }
+      src += bmp->pitch;
+      dst += gtbd->gtbd_linesize;
+    }
+    break;
+
+  default:
+    abort();
   }
 }
 
@@ -326,6 +351,8 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   line_t *li, *lix;
   struct line_queue lq;
   pos_t *pos;
+
+  gtbd->gtbd_ellipsized = 0;
 
   max_width *= 64;
 
@@ -460,6 +487,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 	
 	uc[li->start + j] = HORIZONTAL_ELLIPSIS_UNICODE;
 	pos[li->start + j].kerning = 0;
+	gtbd->gtbd_ellipsized = 1;
 
 	w += ellipsize_width;
 	li->count = j + 1;
@@ -514,20 +542,24 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   start_y = 0;
 
   /* Allocate drawing area */
+  gtbd->gtbd_bpp = 1;
+  gtbd->gtbd_linesize = gtbd->gtbd_texture_width * gtbd->gtbd_bpp;
 
-  data = calloc(1, gtbd->gtbd_texture_width * gtbd->gtbd_texture_height);
+  data = calloc(1, gtbd->gtbd_linesize * gtbd->gtbd_texture_height);
   gtbd->gtbd_width  = target_width;
   gtbd->gtbd_height = target_height;
 
+#if 0
   if(debug) {
     for(i = 0; i < target_height / 2; i+=3)
-      memset(data + i * target_width, 0xcc, target_width);
+      memset(data + i * linesize, 0xcc, linesize);
     for(;i < target_height; i++) {
       int x;
       for(x = 0; x < target_width; x+= 3)
-	data[i * target_width + x] = 0xcc;
+	data[i * linesize + x] = 0xcc;
     }
   }
+#endif
 
   if(docur) {
     gtbd->gtbd_cursor_pos = malloc(2 * (1 + len) * sizeof(int));
@@ -554,10 +586,8 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
       pen.y &= ~63;
       err = FT_Glyph_To_Bitmap((FT_Glyph*)&bmp, FT_RENDER_MODE_NORMAL, &pen, 0);
       if(err == 0) {
-	draw_glyph(gtbd, &bmp->bitmap, data, 
-		   bmp->left + 1,
-		   target_height - 1 - origin_y - bmp->top, 
-		   i, gtbd->gtbd_texture_width);
+	draw_glyph(gtbd, &bmp->bitmap, data, bmp->left + 1,
+		   target_height - 1 - origin_y - bmp->top, i);
 	FT_Done_Glyph((FT_Glyph)bmp);
       }
 
@@ -615,7 +645,16 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   }
 
   gtbd->gtbd_data = data;
-  gtbd->gtbd_pixel_format = GLW_TEXTURE_FORMAT_I8;
+
+  switch(gtbd->gtbd_bpp) {
+  case 1:
+    gtbd->gtbd_pixel_format = GLW_TEXTURE_FORMAT_I8;
+    break;
+  case 2:
+    gtbd->gtbd_pixel_format = GLW_TEXTURE_FORMAT_I8A8;
+    break;
+  }
+
   free(pos);
   return 0;
 }
@@ -630,24 +669,6 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
   glw_text_bitmap_t *gtb = (void *)w;
   glw_root_t *gr = w->glw_root;
   glw_text_bitmap_data_t *gtbd = &gtb->gtb_data;
-
-  int sizechange =
-    gtb->gtb_saved_width  != rc->rc_width || 
-    gtb->gtb_saved_height != rc->rc_height; 
-
-  gtb->gtb_saved_width  = rc->rc_width;
-  gtb->gtb_saved_height = rc->rc_height;
-
-  if(gtb->gtb_status == GTB_NEED_RERENDER ||
-     (gtb->gtb_flags & GTB_ELLIPSIZE && gtb->gtb_status == GTB_VALID && 
-      sizechange)) {
-
-    TAILQ_INSERT_TAIL(&gr->gr_gtb_render_queue, gtb, gtb_workq_link);
-    gtb->gtb_status = GTB_ON_QUEUE;
-
-    hts_cond_signal(&gr->gr_gtb_render_cond);
-    return;
-  }
 
   // Initialize renderers
 
@@ -671,7 +692,33 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
     gtb->gtb_need_layout = 1;
   }
 
-  if(gtb->gtb_need_layout || sizechange || gtb->gtb_update_cursor) {
+  // Check if we need to repaint
+
+  if(gtb->gtb_saved_width  != rc->rc_width || 
+     gtb->gtb_saved_height != rc->rc_height) {
+
+    if(gtb->gtb_status == GTB_VALID && gtb->gtb_flags & GTB_ELLIPSIZE) {
+      
+      if(gtbd->gtbd_ellipsized) {
+	gtb->gtb_status = GTB_NEED_RERENDER;
+      } else {
+	if(rc->rc_width - gtb->gtb_padding_right - gtb->gtb_padding_left <
+	   gtbd->gtbd_width)
+	  gtb->gtb_status = GTB_NEED_RERENDER;
+	
+	if(rc->rc_height - gtb->gtb_padding_top - gtb->gtb_padding_bottom <
+	   gtbd->gtbd_height)
+	  gtb->gtb_status = GTB_NEED_RERENDER;
+      }
+    }
+
+    gtb->gtb_saved_width  = rc->rc_width;
+    gtb->gtb_saved_height = rc->rc_height;
+    gtb->gtb_need_layout = 1;
+  }
+
+
+  if(gtb->gtb_need_layout || gtb->gtb_update_cursor) {
 
     int left   =                 gtb->gtb_padding_left;
     int top    = rc->rc_height - gtb->gtb_padding_top;
@@ -680,6 +727,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
     
     int text_width  = gtbd->gtbd_width;
     int text_height = gtbd->gtbd_height;
+    
     float x1, y1, x2, y2;
 
     // Horizontal 
@@ -792,6 +840,15 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
   gtb->gtb_paint_cursor = w->glw_class == &glw_text && glw_is_focused(w);
   gtb->gtb_need_layout = 0;
+
+
+  if(gtb->gtb_status != GTB_NEED_RERENDER)
+    return;
+
+  TAILQ_INSERT_TAIL(&gr->gr_gtb_render_queue, gtb, gtb_workq_link);
+  gtb->gtb_status = GTB_ON_QUEUE;
+  
+  hts_cond_signal(&gr->gr_gtb_render_cond);
 }
 
 
@@ -1536,11 +1593,7 @@ font_render_thread(void *aux)
     if(uc == NULL || uc[0] == 0 || 
        gtb_make_tex(gr, &d, gr->gr_gtb_face, uc, len, 0, docur, scale, bias,
 		    max_width, debug, maxlines, doellipsize)) {
-      d.gtbd_data = NULL;
-      d.gtbd_width = 0;
-      d.gtbd_height = 0;
-      d.gtbd_cursor_pos = NULL;
-      d.gtbd_lines = 0;
+      memset(&d, 0, sizeof(d));
     }
 
     free(uc);
