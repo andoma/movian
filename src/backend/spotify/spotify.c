@@ -3478,32 +3478,6 @@ courier_notify(void *opaque)
 static service_t *spotify_service;
 static int spotify_autologin;
 
-
-/**
- *
- */
-static void
-spotify_enable(void)
-{
-  if(spotify_service == NULL)
-    spotify_service = service_create("Spotify", "spotify:start",
-				     "music", SPOTIFY_ICON_URL, 0);
-}
-
-
-/**
- *
- */
-static void
-spotify_disable(void)
-{
-  if(spotify_service != NULL) {
-    service_destroy(spotify_service);
-    spotify_service = NULL;
-  }
-}
-
-
 /**
  *
  */
@@ -3511,11 +3485,6 @@ static void
 spotify_set_enable(void *opaque, int value)
 {
   spotify_is_enabled = value;
-
-  if(value) 
-    spotify_enable();
-  else
-    spotify_disable();
 }
 
 
@@ -3541,6 +3510,7 @@ be_spotify_init(void)
 {
   prop_t *spotify;
   prop_t *s;
+  setting_t *ena;
 
 #ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
   if(be_spotify_dlopen())
@@ -3582,11 +3552,13 @@ be_spotify_init(void)
 		       "when first accessing any of the Spotify features "
 		       "in Showtime.");
 
+  spotify_service = service_create("Spotify", "spotify:start",
+				   "music", SPOTIFY_ICON_URL, 0, 0);
 
-  settings_create_bool(s, "enable", "Enable Spotify", 0, 
-		       store, spotify_set_enable, NULL,
-		       SETTINGS_INITIAL_UPDATE, NULL,
-		       settings_generic_save_settings, (void *)"spotify");
+  ena = settings_create_bool(s, "enable", "Enable Spotify", 0, 
+			     store, spotify_set_enable, NULL,
+			     SETTINGS_INITIAL_UPDATE, NULL,
+			     settings_generic_save_settings, (void *)"spotify");
 
   settings_create_bool(s, "autologin", 
 		       "Automatic login when Showtime starts", 1, 
@@ -3598,6 +3570,9 @@ be_spotify_init(void)
 		       store, spotify_set_bitrate, NULL,
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, (void *)"spotify");
+
+  prop_link(settings_get_value(ena),
+	    prop_create(spotify_service->s_root, "enabled"));
 
   if(spotify_is_enabled && spotify_autologin) {
     TRACE(TRACE_DEBUG, "spotify", "Autologin");
