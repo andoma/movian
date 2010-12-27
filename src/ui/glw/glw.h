@@ -84,7 +84,6 @@ typedef enum {
   GLW_ATTRIB_PROPROOTS,
   GLW_ATTRIB_TRANSITION_EFFECT,
   GLW_ATTRIB_EXPANSION,
-  GLW_ATTRIB_BIND_TO_PROPERTY5,
   GLW_ATTRIB_BIND_TO_ID,
   GLW_ATTRIB_SIZE_SCALE,
   GLW_ATTRIB_SIZE_BIAS,
@@ -473,6 +472,16 @@ typedef struct glw_class {
    *
    */
   void (*gc_set_caption)(struct glw *w, const char *str, int type);
+
+  /**
+   *
+   */
+  void (*gc_bind_to_property)(struct glw *w,
+			      prop_t *p,
+			      const char **pname,
+			      prop_t *view,
+			      prop_t *args,
+			      prop_t *clone);
 
   /**
    * Registration link
@@ -903,10 +912,6 @@ do {						\
     break;					\
   case GLW_ATTRIB_num ... UINT32_MAX:           \
     abort();                                    \
-  case GLW_ATTRIB_BIND_TO_PROPERTY5:		\
-    (void)va_arg(ap, void *);			\
-    (void)va_arg(ap, void *);			\
-    (void)va_arg(ap, void *);			\
   case GLW_ATTRIB_PROPROOTS:         		\
     (void)va_arg(ap, void *);			\
   case GLW_ATTRIB_SOURCE:			\

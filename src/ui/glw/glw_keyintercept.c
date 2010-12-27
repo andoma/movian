@@ -198,44 +198,23 @@ prop_callback(void *opaque, prop_event_t event, ...)
  *
  */
 static void 
-glw_keyintercept_set(glw_t *w, va_list ap)
+bind_to_property(glw_t *w, prop_t *p, const char **pname,
+		 prop_t *view, prop_t *args, prop_t *clone)
 {
   glw_keyintercept_t *ki = (glw_keyintercept_t *)w;
-  glw_attribute_t attrib;
-  prop_t *p, *pname, *view, *args, *clone;
+  ki_unbind(ki);
 
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
-
-    case GLW_ATTRIB_BIND_TO_PROPERTY5:
-      p = va_arg(ap, prop_t *);
-      pname = va_arg(ap, void *);
-      view = va_arg(ap, prop_t *);
-      args = va_arg(ap, prop_t *);
-      clone = va_arg(ap, prop_t *);
-      
-      ki_unbind(ki);
-
-      ki->sub = 
-	prop_subscribe(PROP_SUB_DIRECT_UPDATE,
-		       PROP_TAG_NAME_VECTOR, pname, 
-		       PROP_TAG_CALLBACK, prop_callback, ki, 
-		       PROP_TAG_COURIER, w->glw_root->gr_courier,
-		       PROP_TAG_NAMED_ROOT, p, "self",
- 		       PROP_TAG_NAMED_ROOT, view, "view",
- 		       PROP_TAG_NAMED_ROOT, args, "args",
- 		       PROP_TAG_NAMED_ROOT, clone, "clone",
-		       PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
-		       NULL);
-
-      break;
-
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
+  ki->sub = 
+    prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+		   PROP_TAG_NAME_VECTOR, pname, 
+		   PROP_TAG_CALLBACK, prop_callback, ki, 
+		   PROP_TAG_COURIER, w->glw_root->gr_courier,
+		   PROP_TAG_NAMED_ROOT, p, "self",
+		   PROP_TAG_NAMED_ROOT, view, "view",
+		   PROP_TAG_NAMED_ROOT, args, "args",
+		   PROP_TAG_NAMED_ROOT, clone, "clone",
+		   PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
+		   NULL);
 }
 
 
@@ -247,7 +226,7 @@ static glw_class_t glw_keyintercept = {
   .gc_instance_size = sizeof(glw_keyintercept_t),
   .gc_render = glw_keyintercept_render,
   .gc_signal_handler = glw_keyintercept_callback,
-  .gc_set = glw_keyintercept_set,
+  .gc_bind_to_property = bind_to_property,
 };
 
 GLW_REGISTER_CLASS(glw_keyintercept);

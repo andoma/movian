@@ -480,13 +480,34 @@ glw_slider_ctor(glw_t *w)
 /**
  *
  */
+static void 
+bind_to_property(glw_t *w, prop_t *p, const char **pname,
+		 prop_t *view, prop_t *args, prop_t *clone)
+{
+  glw_slider_t *s = (glw_slider_t *)w;
+  slider_unbind(s);
+
+  s->sub = prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+			  PROP_TAG_NAME_VECTOR, pname,
+			  PROP_TAG_CALLBACK, prop_callback, s,
+			  PROP_TAG_COURIER, w->glw_root->gr_courier, 
+			  PROP_TAG_NAMED_ROOT, p, "self",
+			  PROP_TAG_NAMED_ROOT, view, "view",
+			  PROP_TAG_NAMED_ROOT, args, "args",
+			  PROP_TAG_NAMED_ROOT, clone, "clone",
+			  PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
+			  NULL);
+}
+
+
+/**
+ *
+ */
 static void
 glw_slider_set(glw_t *w, va_list ap)
 {
   glw_slider_t *s = (glw_slider_t *)w;
   glw_attribute_t attrib;
-  prop_t *p, *view, *args, *clone;
-  const char **pname;
   const char *n;
 
   do {
@@ -498,27 +519,6 @@ glw_slider_set(glw_t *w, va_list ap)
       n = va_arg(ap, const char *);
 
       slider_bind_by_id(s, n);
-      break;
-
-    case GLW_ATTRIB_BIND_TO_PROPERTY5:
-      p = va_arg(ap, prop_t *);
-      pname = va_arg(ap, void *);
-      view = va_arg(ap, void *);
-      args = va_arg(ap, void *);
-      clone = va_arg(ap, void *);
-
-      slider_unbind(s);
-
-      s->sub = prop_subscribe(PROP_SUB_DIRECT_UPDATE,
-			      PROP_TAG_NAME_VECTOR, pname,
-			      PROP_TAG_CALLBACK, prop_callback, s,
-			      PROP_TAG_COURIER, w->glw_root->gr_courier, 
-			      PROP_TAG_NAMED_ROOT, p, "self",
-			      PROP_TAG_NAMED_ROOT, view, "view",
-			      PROP_TAG_NAMED_ROOT, args, "args",
-			      PROP_TAG_NAMED_ROOT, clone, "clone",
-			      PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
-			      NULL);
       break;
 
     case GLW_ATTRIB_INT_MIN:
@@ -553,6 +553,7 @@ static glw_class_t glw_slider_x = {
   .gc_set = glw_slider_set,
   .gc_ctor = glw_slider_ctor,
   .gc_signal_handler = glw_slider_callback,
+  .gc_bind_to_property = bind_to_property,
 };
 
 static glw_class_t glw_slider_y = {
@@ -562,6 +563,7 @@ static glw_class_t glw_slider_y = {
   .gc_set = glw_slider_set,
   .gc_ctor = glw_slider_ctor,
   .gc_signal_handler = glw_slider_callback,
+  .gc_bind_to_property = bind_to_property,
 };
 
 GLW_REGISTER_CLASS(glw_slider_x);

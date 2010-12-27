@@ -1490,13 +1490,35 @@ set_caption(glw_t *w, const char *caption, int type)
  *
  */
 static void 
+bind_to_property(glw_t *w, prop_t *p, const char **pname,
+		 prop_t *view, prop_t *args, prop_t *clone)
+{
+  glw_text_bitmap_t *gtb = (void *)w;
+  gtb_unbind(gtb);
+
+  gtb->gtb_sub = 
+    prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+		   PROP_TAG_NAME_VECTOR, pname, 
+		   PROP_TAG_CALLBACK, prop_callback, gtb, 
+		   PROP_TAG_COURIER, w->glw_root->gr_courier,
+		   PROP_TAG_NAMED_ROOT, p, "self",
+		   PROP_TAG_NAMED_ROOT, view, "view",
+		   PROP_TAG_NAMED_ROOT, args, "args",
+		   PROP_TAG_NAMED_ROOT, clone, "clone",
+		   PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
+		   NULL);
+  w->glw_flags &= ~GLW_HIDDEN;
+}
+
+/**
+ *
+ */
+static void 
 glw_text_bitmap_set(glw_t *w, va_list ap)
 {
   glw_text_bitmap_t *gtb = (void *)w;
   glw_attribute_t attrib;
   int update = 0;
-  prop_t *p, *view, *args, *clone;
-  const char **pname;
 
   do {
     attrib = va_arg(ap, int);
@@ -1541,29 +1563,6 @@ glw_text_bitmap_set(glw_t *w, va_list ap)
 	gtb_set_constraints(gtb->w.glw_root, gtb);
       break;
 
-   case GLW_ATTRIB_BIND_TO_PROPERTY5:
-      p = va_arg(ap, prop_t *);
-      pname = va_arg(ap, void *);
-      view = va_arg(ap, prop_t *);
-      args = va_arg(ap, prop_t *);
-      clone = va_arg(ap, prop_t *);
-
-      gtb_unbind(gtb);
-
-      gtb->gtb_sub = 
-	prop_subscribe(PROP_SUB_DIRECT_UPDATE,
-		       PROP_TAG_NAME_VECTOR, pname, 
-		       PROP_TAG_CALLBACK, prop_callback, gtb, 
-		       PROP_TAG_COURIER, w->glw_root->gr_courier,
-		       PROP_TAG_NAMED_ROOT, p, "self",
-		       PROP_TAG_NAMED_ROOT, view, "view",
-		       PROP_TAG_NAMED_ROOT, args, "args",
-		       PROP_TAG_NAMED_ROOT, clone, "clone",
-		       PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
-		       NULL);
-      w->glw_flags &= ~GLW_HIDDEN;
-
-      break;
 
    case GLW_ATTRIB_MAXLINES:
      gtb->gtb_maxlines = va_arg(ap, int);
@@ -1836,6 +1835,7 @@ static glw_class_t glw_label = {
   .gc_set_padding = set_padding,
   .gc_mod_text_flags = mod_text_flags,
   .gc_set_caption = set_caption,
+  .gc_bind_to_property = bind_to_property,
 };
 
 GLW_REGISTER_CLASS(glw_label);
@@ -1858,6 +1858,7 @@ static glw_class_t glw_text = {
   .gc_set_padding = set_padding,
   .gc_mod_text_flags = mod_text_flags,
   .gc_set_caption = set_caption,
+  .gc_bind_to_property = bind_to_property,
 };
 
 GLW_REGISTER_CLASS(glw_text);

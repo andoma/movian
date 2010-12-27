@@ -3326,16 +3326,19 @@ glwf_bind(glw_view_eval_context_t *ec, struct token *self,
       propname[i++]  = rstr_get(t->t_rstring);
     propname[i] = NULL;
 
-    glw_set(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY5,
-	    ec->prop, propname, ec->prop_viewx, ec->prop_args,
-	    ec->prop_clone, NULL);
+    if(ec->w->glw_class->gc_bind_to_property != NULL)
+      ec->w->glw_class->gc_bind_to_property(ec->w,
+					    ec->prop, propname,
+					    ec->prop_viewx, ec->prop_args,
+					    ec->prop_clone);
 
   } else if(a != NULL && a->type == TOKEN_STRING) {
     glw_set(ec->w, GLW_ATTRIB_BIND_TO_ID, rstr_get(a->t_rstring), NULL);
 
   } else {
-    glw_set(ec->w, GLW_ATTRIB_BIND_TO_PROPERTY5, 
-	    NULL, NULL, NULL, NULL, NULL, NULL);
+    if(ec->w->glw_class->gc_bind_to_property != NULL)
+      ec->w->glw_class->gc_bind_to_property(ec->w,
+					    NULL, NULL, NULL, NULL, NULL);
   }
   return 0;
 }
