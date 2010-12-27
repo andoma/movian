@@ -78,8 +78,8 @@ set_id(glw_t *w, const char *str)
  *
  */
 static int
-set_typed_string(glw_view_eval_context_t *ec, const token_attrib_t *a,
-		 struct token *t)
+set_caption(glw_view_eval_context_t *ec, const token_attrib_t *a,
+	    struct token *t)
 {
   char buf[30];
   const char *str;
@@ -113,7 +113,8 @@ set_typed_string(glw_view_eval_context_t *ec, const token_attrib_t *a,
 			    a->name);
   }
 
-  glw_set(ec->w, a->attrib, str, type, NULL);
+  if(ec->w->glw_class->gc_set_caption != NULL)
+    ec->w->glw_class->gc_set_caption(ec->w, str, type);
   return 0;
 }
 
@@ -586,7 +587,7 @@ set_propref(glw_view_eval_context_t *ec, const token_attrib_t *a,
  */
 static const token_attrib_t attribtab[] = {
   {"id",              set_string, 0, set_id},
-  {"caption",         set_typed_string, GLW_ATTRIB_CAPTION},
+  {"caption",         set_caption, 0},
   {"source",          set_source, 0},
 
   {"debug",                   mod_flag, GLW_DEBUG, mod_flags1},

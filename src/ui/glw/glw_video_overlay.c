@@ -378,9 +378,10 @@ glw_video_sub_layout_text(video_decoder_t *vd, glw_video_overlay_t *gvo,
 			      glw_class_find_by_name("label"),
 			      parent, NULL, NULL);
   glw_set(gvo->gvo_child,
-	  GLW_ATTRIB_CAPTION, s->s_text, 0,
 	  GLW_ATTRIB_SIZE_SCALE, 2.0,
 	  NULL);
+
+  gvo->gvo_child->glw_class->gc_set_caption(gvo->gvo_child, s->s_text, 0);
 
   gvo->gvo_child->glw_alignment = GLW_ALIGN_BOTTOM;
 

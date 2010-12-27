@@ -112,8 +112,7 @@ glw_view_error(glw_root_t *gr, errorinfo_t *ei, glw_t *parent)
 	   ei->file, ei->line, ei->error);
 
   w = glw_create(gr, glw_class_find_by_name("label"), parent, NULL, NULL);
-
-  glw_set(w, GLW_ATTRIB_CAPTION, buf, 0, NULL);
+  w->glw_class->gc_set_caption(w, buf, 0);
   return w;
 }
 
@@ -187,7 +186,7 @@ glw_view_create(glw_root_t *gr, const char *src,
   memset(&ec, 0, sizeof(ec));
 
   r = glw_create(gr, &glw_view, parent, NULL, NULL);
-  glw_set(r, GLW_ATTRIB_CAPTION, src,0, NULL);
+  //  glw_set(r, GLW_ATTRIB_CAPTION, src, 0, NULL);
 
   v = (glw_view_t *)r;
   ec.gr = gr;

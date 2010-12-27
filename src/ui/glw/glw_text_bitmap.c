@@ -1431,6 +1431,22 @@ set_padding(glw_t *w, const float *v)
   gtb->gtb_need_layout = 1;
 }
 
+
+/**
+ *
+ */
+static void
+gtb_update(glw_text_bitmap_t *gtb)
+{
+  if(gtb->gtb_frozen) {
+    gtb->gtb_pending_update = 1;
+  } else {
+    gtb_caption_has_changed(gtb);
+    gtb->gtb_pending_update = 0;
+  }
+}
+
+
 /**
  *
  */
@@ -1439,14 +1455,34 @@ mod_text_flags(glw_t *w, int set, int clr)
 {
   glw_text_bitmap_t *gtb = (void *)w;
   gtb->gtb_flags = (gtb->gtb_flags | set) & ~clr;
+  
+  gtb_update(gtb);
+}
 
 
-  if(gtb->gtb_frozen) {
-    gtb->gtb_pending_update = 1;
-  } else {
-    gtb_caption_has_changed(gtb);
-    gtb->gtb_pending_update = 0;
-  }
+/**
+ *
+ */
+static void
+set_caption(glw_t *w, const char *caption, int type)
+{
+  glw_text_bitmap_t *gtb = (void *)w;
+
+  gtb_unbind(gtb);
+
+  const int update = strcmp(caption ?: "", gtb->gtb_caption ?: "");
+
+  free(gtb->gtb_caption);
+  gtb->gtb_caption = caption != NULL ? strdup(caption) : NULL;
+  gtb->gtb_type = type;
+  assert(gtb->gtb_type == 0 || gtb->gtb_type == 1);
+  if(caption == NULL)
+    w->glw_flags |= GLW_HIDDEN;
+  else
+    w->glw_flags &= ~GLW_HIDDEN;
+  
+  if(update)
+    gtb_update(gtb);
 }
 
 
@@ -1460,7 +1496,7 @@ glw_text_bitmap_set(glw_t *w, va_list ap)
   glw_attribute_t attrib;
   int update = 0;
   prop_t *p, *view, *args, *clone;
-  const char **pname, *caption;
+  const char **pname;
 
   do {
     attrib = va_arg(ap, int);
@@ -1479,23 +1515,6 @@ glw_text_bitmap_set(glw_t *w, va_list ap)
 	  update = 1;
 	gtb->gtb_frozen = 0;
       }
-      break;
-
-    case GLW_ATTRIB_CAPTION:
-      caption = va_arg(ap, char *);
-
-      gtb_unbind(gtb);
-
-      update = strcmp(caption ?: "", gtb->gtb_caption ?: "");
-
-      free(gtb->gtb_caption);
-      gtb->gtb_caption = caption != NULL ? strdup(caption) : NULL;
-      gtb->gtb_type = va_arg(ap, int);
-      assert(gtb->gtb_type == 0 || gtb->gtb_type == 1);
-      if(caption == NULL)
-	w->glw_flags |= GLW_HIDDEN;
-      else
-	w->glw_flags &= ~GLW_HIDDEN;
       break;
 
     case GLW_ATTRIB_INT_STEP:
@@ -1816,6 +1835,7 @@ static glw_class_t glw_label = {
   .gc_set_rgb = glw_text_bitmap_set_rgb,
   .gc_set_padding = set_padding,
   .gc_mod_text_flags = mod_text_flags,
+  .gc_set_caption = set_caption,
 };
 
 GLW_REGISTER_CLASS(glw_label);
@@ -1837,6 +1857,7 @@ static glw_class_t glw_text = {
   .gc_set_rgb = glw_text_bitmap_set_rgb,
   .gc_set_padding = set_padding,
   .gc_mod_text_flags = mod_text_flags,
+  .gc_set_caption = set_caption,
 };
 
 GLW_REGISTER_CLASS(glw_text);
