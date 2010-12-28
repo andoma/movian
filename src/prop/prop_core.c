@@ -3230,6 +3230,19 @@ prop_courier_wait(prop_courier_t *pc,
  *
  */
 void
+prop_courier_wait_and_dispatch(prop_courier_t *pc)
+{
+  struct prop_notify_queue exp, nor;
+  prop_courier_wait(pc, &nor, &exp);
+  prop_notify_dispatch(&exp);
+  prop_notify_dispatch(&nor);
+}
+
+
+/**
+ *
+ */
+void
 prop_courier_destroy(prop_courier_t *pc)
 {
   if(pc->pc_run) {

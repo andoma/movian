@@ -159,12 +159,8 @@ popup_display(prop_t *p)
     abort();
   }
 
-  while(e == NULL) {
-    struct prop_notify_queue exp, nor;
-    prop_courier_wait(pc, &nor, &exp);
-    prop_notify_dispatch(&exp);
-    prop_notify_dispatch(&nor);
-  }
+  while(e == NULL)
+    prop_courier_wait_and_dispatch(pc);
 
   prop_unsubscribe(s);
   return e;
