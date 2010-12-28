@@ -31,12 +31,14 @@
 
 #include "upnp.h"
 #include "upnp_scpd.h"
-
+#include "settings.h"
+#include "service.h"
+#include "backend/backend.h"
 
 hts_mutex_t upnp_lock;
 
 static char *upnp_uuid;
-static struct upnp_device_list upnp_devices;
+struct upnp_device_list upnp_devices;
 
 
 /**
@@ -58,9 +60,39 @@ dev_find(const char *url)
  *
  */
 static void
+us_destroy(upnp_service_t *us)
+{
+  LIST_REMOVE(us, us_link);
+
+  free(us->us_id);
+  free(us->us_event_url);
+  free(us->us_control_url);
+  free(us->us_local_url);
+
+  setting_destroy(us->us_setting_enabled);
+  setting_destroy(us->us_setting_title);
+  setting_destroy(us->us_setting_type);
+  prop_destroy(us->us_settings);
+
+  free(us->us_settings_path);
+  htsmsg_destroy(us->us_settings_store);
+  free(us);
+}
+
+/**
+ *
+ */
+static void
 dev_destroy(upnp_device_t *ud)
 {
+  upnp_service_t *us;
+  while((us = LIST_FIRST(&ud->ud_services)) != NULL)
+    us_destroy(us);
+
   LIST_REMOVE(ud, ud_link);
+  free(ud->ud_friendlyName);
+  free(ud->ud_manufacturer);
+  free(ud->ud_modelDescription);
   free(ud->ud_url);
   free(ud);
 }
@@ -336,6 +368,86 @@ upnp_service_guess(const char *url)
   return NULL;
 }
 
+/**
+ *
+ */
+static void
+remove_bad_chars(char *s)
+{
+  while(*s) {
+    if(*s == ':' || *s == '/')
+      *s = '_';
+    s++;
+  }
+}
+
+
+
+
+/**
+ *
+ */
+static void
+upnp_settings_saver(void *opaque, htsmsg_t *msg)
+{
+  upnp_service_t *us = opaque;
+  htsmsg_store_save(msg, us->us_settings_path);
+}
+
+
+/**
+ *
+ */
+static void
+add_content_directory(upnp_service_t *us)
+{
+  upnp_device_t *ud = us->us_device;
+
+  char svcid[URL_MAX];
+  snprintf(svcid, sizeof(svcid),
+	   "upnp/upnp:%s:%s:0", ud->ud_uuid, us->us_id);
+  us->us_local_url = strdup(svcid + 5);
+  remove_bad_chars(svcid);
+
+  us->us_settings_path = strdup(svcid);
+  us->us_settings_store = htsmsg_store_load(svcid) ?: htsmsg_create_map();
+
+  const char *title = ud->ud_friendlyName ?: "UPnP content directory";
+  us->us_settings = settings_add_dir(settings_sd, title, NULL, NULL);
+
+  us->us_setting_enabled = 
+    settings_create_bool(us->us_settings, "enabled",
+			 "Enabled on home screen", 1,
+			 us->us_settings_store, NULL, NULL,
+			 SETTINGS_INITIAL_UPDATE, NULL,
+			 upnp_settings_saver, us);
+
+  us->us_setting_title =
+    settings_create_string(us->us_settings, "title", "Name", title,
+			   us->us_settings_store, NULL, NULL,
+			   SETTINGS_INITIAL_UPDATE, NULL,
+			   upnp_settings_saver, us);
+  
+  const char *contents = "other";
+
+  us->us_setting_type = 
+    settings_create_string(us->us_settings, "type", "Type", contents,
+			   us->us_settings_store, NULL, NULL,
+			   SETTINGS_INITIAL_UPDATE, NULL,
+			   upnp_settings_saver, us);
+
+  us->us_service = service_create(NULL, us->us_local_url, NULL, NULL, 1, 0);
+
+  prop_link(settings_get_value(us->us_setting_title), 
+	    prop_create(us->us_service->s_root, "title"));
+  prop_link(settings_get_value(us->us_setting_type), 
+	    prop_create(us->us_service->s_root, "type"));
+  prop_link(settings_get_value(us->us_setting_enabled), 
+	    prop_create(us->us_service->s_root, "enabled"));
+
+
+}
+
 
 /**
  *
@@ -362,6 +474,7 @@ introspect_service(upnp_device_t *ud, htsmsg_t *svc)
   
   if((us = service_find(ud, id)) == NULL) {
     us = calloc(1, sizeof(upnp_service_t));
+    us->us_device = ud;
     us->us_id = strdup(id);
     LIST_INSERT_HEAD(&ud->ud_services, us, us_link);
   }
@@ -375,6 +488,15 @@ introspect_service(upnp_device_t *ud, htsmsg_t *svc)
 
   free(us->us_control_url);
   us->us_control_url = url_resolve_relative(proto, hostname, port, path, c_url);
+
+  switch(us->us_type) {
+  case UPNP_SERVICE_CONTENT_DIRECTORY_1:
+  case UPNP_SERVICE_CONTENT_DIRECTORY_2:
+    add_content_directory(us);
+    break;
+  default:
+    break;
+  }
 }
 
 
@@ -387,7 +509,7 @@ introspect_device(upnp_device_t *ud)
   char *xmldata;
   size_t xmlsize;
   char errbuf[200];
-  htsmsg_t *m, *svclist;
+  htsmsg_t *m, *svclist, *dev;
   const char *uuid;
 
   if(http_request(ud->ud_url, NULL, &xmldata, &xmlsize, errbuf, sizeof(errbuf),
@@ -403,11 +525,13 @@ introspect_device(upnp_device_t *ud)
     return;
   }
 
-  uuid = htsmsg_get_str_multi(m,
-			      "tags", "root",
-			      "tags", "device",
-			      "tags", "UDN",
-			      "cdata", NULL);
+  dev = htsmsg_get_map_multi(m, "tags", "root", "tags", "device", NULL);
+  if(dev == NULL) {
+    htsmsg_destroy(m);
+    return;
+  }
+
+  uuid = htsmsg_get_str_multi(dev, "tags", "UDN", "cdata", NULL);
 
   if(uuid == NULL) {
     htsmsg_destroy(m);
@@ -416,9 +540,18 @@ introspect_device(upnp_device_t *ud)
 
   ud->ud_uuid = strdup(uuid);
 
-  svclist = htsmsg_get_map_multi(m,
-				 "tags", "root",
-				 "tags", "device",
+
+  mystrset(&ud->ud_friendlyName, 
+	   htsmsg_get_str_multi(dev, "tags", "friendlyName", "cdata", NULL));
+
+  mystrset(&ud->ud_manufacturer, 
+	   htsmsg_get_str_multi(dev, "tags", "manufacturer", "cdata", NULL));
+
+  mystrset(&ud->ud_modelDescription, 
+	   htsmsg_get_str_multi(dev, "tags", "modelDescription", "cdata", NULL));
+
+
+  svclist = htsmsg_get_map_multi(dev,
 				 "tags", "serviceList",
 				 "tags", NULL);
   if(svclist == NULL) {
@@ -484,3 +617,25 @@ upnp_del_device(const char *url)
   hts_mutex_unlock(&upnp_lock);
 }
 
+
+/**
+ *
+ */
+static int
+be_upnp_canhandle(const char *url)
+{
+  if(!strncmp(url, "upnp:", strlen("upnp:")))
+    return 1;
+  return 0;
+}
+
+
+/**
+ *
+ */
+static backend_t be_upnp = {
+  .be_canhandle = be_upnp_canhandle,
+  .be_open = be_upnp_browse,
+};
+
+BE_REGISTER(upnp);

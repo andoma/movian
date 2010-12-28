@@ -43,6 +43,7 @@ typedef enum {
  */
 typedef struct upnp_service {
   LIST_ENTRY(upnp_service) us_link;
+  struct upnp_device *us_device;
 
   char *us_id;
 
@@ -50,6 +51,18 @@ typedef struct upnp_service {
 
   char *us_event_url;
   char *us_control_url;
+  char *us_local_url;
+
+  char *us_settings_path;
+  htsmsg_t *us_settings_store;
+
+  struct prop *us_settings;
+  struct setting *us_setting_enabled;
+  struct setting *us_setting_title;
+  struct setting *us_setting_type;
+  
+  struct service *us_service;
+
 } upnp_service_t;
 
 
@@ -62,7 +75,10 @@ typedef struct upnp_device {
   LIST_ENTRY(upnp_device) ud_link;
   char *ud_url;
   char *ud_uuid;
-  
+  char *ud_friendlyName;
+  char *ud_manufacturer;
+  char *ud_modelDescription;
+
   struct upnp_service_list ud_services;
 
   char ud_interesting;
@@ -133,6 +149,7 @@ int upnp_browse_children(const char *uri, const char *id, struct prop *nodes,
 			 const char *trackid, struct prop **trackp);
 
 
+
 /**
  * Event / Subscription handling
  */
@@ -144,5 +161,10 @@ int upnp_subscribe(struct http_connection *hc, const char *remain, void *opaque,
 		   http_cmd_t method);
 
 extern hts_mutex_t upnp_lock;
+extern struct upnp_device_list upnp_devices;
+
+int be_upnp_browse(struct prop *page, const char *url0);
+
+void be_upnp_search(struct prop *source, const char *query);
 
 #endif // UPNP_H__
