@@ -145,6 +145,24 @@ static int subscribe_prop(glw_view_eval_context_t *ec, struct token *self,
 
 static void clone_free(clone_t *c);
 
+
+/**
+ *
+ */
+static void
+cloner_cleanup(sub_cloner_t *sc)
+{
+  clone_t *c;
+
+  while((c = LIST_FIRST(&sc->sc_clones)) != NULL) {
+    prop_tag_clear(c->c_prop, sc);
+    clone_free(c);
+  }
+
+  if(sc->sc_cloner_body != NULL)
+    glw_view_free_chain(sc->sc_cloner_body);
+}
+
 /**
  *
  */
@@ -153,7 +171,6 @@ glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l)
 {
   glw_prop_sub_t *gps;
   sub_cloner_t *sc;
-  clone_t *c;
 
   while((gps = LIST_FIRST(l)) != NULL) {
 
@@ -173,14 +190,6 @@ glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l)
     case GPS_CLONER:
       sc = (sub_cloner_t *)gps;
  
-      while((c = LIST_FIRST(&sc->sc_clones)) != NULL) {
-	prop_tag_clear(c->c_prop, sc);
-	clone_free(c);
-      }
-
-      if(sc->sc_cloner_body != NULL)
-	glw_view_free_chain(sc->sc_cloner_body);
-    
       if(sc->sc_originating_prop)
 	prop_ref_dec(sc->sc_originating_prop);
 
@@ -2091,8 +2100,7 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
     sc->sc_offset = d ? token2int(d) : 0;
     sc->sc_limit  = e ? token2int(e) : INT_MAX;
 
-    if(sc->sc_cloner_body != NULL)
-      glw_view_free_chain(sc->sc_cloner_body);
+    cloner_cleanup(sc);
 
     sc->sc_cloner_body = glw_view_clone_chain(c);
     sc->sc_cloner_class = cl;
