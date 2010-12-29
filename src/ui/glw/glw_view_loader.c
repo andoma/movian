@@ -70,10 +70,7 @@ glw_view_loader_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extr
 	  glw_copy_constraints(w, c);
 	}
       } else {
-	glw_rctx_t rc0 = *rc;
-	rc0.rc_final = c->glw_parent_vl_cur > 0;
-
-	glw_layout0(c, &rc0);
+	glw_layout0(c, rc);
       }
     }
     return 0;

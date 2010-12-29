@@ -250,10 +250,8 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
       if(gv->gv_pending_set_source_cnt == 0) {
 	rc = extra;
 
-	if(!rc->rc_final) {
-	  glw_video_set_source(gv, gv->gv_pending_url);
-	  mystrset(&gv->gv_pending_url, NULL);
-	}
+	glw_video_set_source(gv, gv->gv_pending_url);
+	mystrset(&gv->gv_pending_url, NULL);
 
       } else {
 	gv->gv_pending_set_source_cnt--;
