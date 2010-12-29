@@ -606,13 +606,9 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
   }
 
   JS_RemoveRoot(cx, &pobj);
- 
   JS_EndRequest(cx);
-
   JS_GC(cx);
-
   JS_DestroyContext(cx);
-
   return 0;
 }
 
