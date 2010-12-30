@@ -715,7 +715,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
   // Upload texture
 
-  if(gtbd->gtbd_data != NULL) {
+  if(gtbd->gtbd_data != NULL && gtb->gtb_status == GTB_VALID) {
     glw_tex_upload(gr, &gtb->gtb_texture, gtbd->gtbd_data, 
 		   gtbd->gtbd_pixel_format,
 		   gtbd->gtbd_texture_width, gtbd->gtbd_texture_height ,0);
@@ -751,7 +751,8 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
   }
 
 
-  if(gtb->gtb_need_layout || gtb->gtb_update_cursor) {
+  if(gtb->gtb_status == GTB_VALID &&
+     (gtb->gtb_need_layout || gtb->gtb_update_cursor)) {
 
     int left   =                 gtb->gtb_padding_left;
     int top    = rc->rc_height - gtb->gtb_padding_top;
