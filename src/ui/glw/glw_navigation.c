@@ -399,7 +399,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
 
   if(t != NULL) {
-    glw_focus_set(t->glw_root, t, 1);
+    glw_focus_set(t->glw_root, t, GLW_FOCUS_SET_INTERACTIVE);
     return 1;
   } else if(retried == 0 && 
 	    r != NULL && query.orientation == GLW_ORIENTATION_HORIZONTAL) {

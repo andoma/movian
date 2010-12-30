@@ -345,7 +345,7 @@ glw_list_suggest_focus(glw_t *w, glw_t *c)
   if(l->suggested == w->glw_focused || l->suggest_cnt > 0) {
     c = glw_focus_by_path(c);
     if(c != NULL)
-      glw_focus_set(c->glw_root, c, 1);
+      glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_SUGGESTED);
     l->suggest_cnt = 1;
   }
   l->suggested = c;

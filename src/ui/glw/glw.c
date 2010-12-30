@@ -931,23 +931,24 @@ get_originating_prop(glw_t *w)
  *
  */
 void
-glw_focus_set(glw_root_t *gr, glw_t *w, int interactive)
+glw_focus_set(glw_root_t *gr, glw_t *w, int how)
 {
   glw_t *x, *y, *com;
   glw_signal_t sig;
   float weight = w ? w->glw_focus_weight : 0;
 
-  if(interactive) {
-    sig = GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE;
-  } else {
+  if(how == GLW_FOCUS_SET_AUTOMATIC) {
     sig = GLW_SIGNAL_FOCUS_CHILD_AUTOMATIC;
+  } else {
+    sig = GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE;
   }
 
   if(w != NULL) {
 
     for(x = w; x->glw_parent != NULL; x = x->glw_parent) {
 
-      if(!interactive && x->glw_flags & GLW_FOCUS_BLOCKED)
+      if(how != GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE &&
+	 x->glw_flags & GLW_FOCUS_BLOCKED)
 	return;
 
       if(x->glw_parent->glw_focused != x) {
@@ -968,7 +969,8 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int interactive)
 	  x == TAILQ_FIRST(&p->glw_childs) && 
 	  TAILQ_NEXT(x, glw_parent_link) == p->glw_focused;
 
-	if(y == NULL || interactive || weight > y->glw_focus_weight || 
+	if(y == NULL || how != GLW_FOCUS_SET_AUTOMATIC ||
+	   weight > y->glw_focus_weight || 
 	   (ff && weight == y->glw_focus_weight)) {
 	  x->glw_parent->glw_focused = x;
 	  glw_signal0(x->glw_parent, sig, x);
@@ -995,7 +997,7 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int interactive)
   glw_path_modify(w, GLW_IN_FOCUS_PATH, 0, com);
 
   
-  if(interactive) {
+  if(how) {
     prop_t *p = get_originating_prop(w);
 
     if(p != NULL) {
@@ -1098,7 +1100,7 @@ glw_focus_leave(glw_t *w)
     }
     w = w->glw_parent;
   }
-  glw_focus_set(w->glw_root, r, 1);
+  glw_focus_set(w->glw_root, r, GLW_FOCUS_SET_INTERACTIVE);
 }
 
 
@@ -1176,7 +1178,7 @@ glw_focus_crawl(glw_t *w, int forward)
     r = glw_focus_crawl1(w, forward);
 
   if(r != NULL)
-    glw_focus_set(w->glw_root, r, 1);
+    glw_focus_set(w->glw_root, r, GLW_FOCUS_SET_INTERACTIVE);
 }
 
 
@@ -1196,7 +1198,7 @@ glw_focus_open_path_close_all_other(glw_t *w)
   c = glw_focus_by_path(w);
 
   if(c != NULL)
-    glw_focus_set(w->glw_root, c, 0);
+    glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_AUTOMATIC);
   else
     TRACE(TRACE_DEBUG, "GLW", "Nothing can be (re-)focused");
 }
@@ -1220,7 +1222,7 @@ glw_focus_open_path(glw_t *w)
 
   assert(c != NULL);
 
-  glw_focus_set(w->glw_root, c, 0);
+  glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_AUTOMATIC);
 }
 
 
@@ -1358,7 +1360,7 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
 	switch(gpe->type) {
 
 	case GLW_POINTER_RIGHT_PRESS:
-	  glw_focus_set(gr, w, 1);
+	  glw_focus_set(gr, w, GLW_FOCUS_SET_INTERACTIVE);
 	  return 1;
 
 	case GLW_POINTER_LEFT_PRESS:
@@ -1369,7 +1371,7 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
 	case GLW_POINTER_LEFT_RELEASE:
 	  if(gr->gr_pointer_press == w) {
 	    if(w->glw_flags & GLW_FOCUS_ON_CLICK)
-	      glw_focus_set(gr, w, 1); 
+	      glw_focus_set(gr, w, GLW_FOCUS_SET_INTERACTIVE); 
 
 	    glw_path_modify(w, 0, GLW_IN_PRESSED_PATH, NULL);
 	    e = event_create_action(ACTION_ACTIVATE);

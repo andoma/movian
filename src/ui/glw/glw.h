@@ -840,7 +840,11 @@ void glw_dispatch_event(uii_t *uii, struct event *e);
 
 void glw_store_matrix(glw_t *w, glw_rctx_t *rc);
 
-void glw_focus_set(glw_root_t *gr, glw_t *w, int interactive);
+#define GLW_FOCUS_SET_AUTOMATIC   0
+#define GLW_FOCUS_SET_INTERACTIVE 1
+#define GLW_FOCUS_SET_SUGGESTED   2
+
+void glw_focus_set(glw_root_t *gr, glw_t *w, int how);
 
 void glw_focus_open_path(glw_t *w);
 
@@ -851,8 +855,6 @@ void glw_focus_close_path(glw_t *w);
 void glw_focus_crawl(glw_t *w, int forward);
 
 int glw_focus_step(glw_t *w, int forward);
-
-void glw_focus_set_current_by_path(glw_t *w, int interactive);
 
 void glw_focus_suggest(glw_t *w);
 
