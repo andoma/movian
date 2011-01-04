@@ -66,6 +66,9 @@ int concurrency;
 int trace_level;
 int trace_to_syslog;
 int listen_on_stdin;
+#if ENABLE_SERDEV
+int enable_serdev;
+#endif
 static int ffmpeglog;
 static int showtime_retcode;
 char *remote_logtarget; // Used on Wii
@@ -172,11 +175,14 @@ main(int argc, char **argv)
 	     "   --ui <ui>         - Use specified user interface.\n"
 	     "   -L <ip>           - Send log messages to remote <ip>.\n"
 	     "   --syslog          - Send log messages to syslog.\n"
-#if CONFIG_STDIN
+#if ENABLE_STDIN
 	     "   --stdin           - Listen on stdin for events.\n"
 #endif
 	     "   -v <view>         - Use specific view for <url>.\n"
 	     "   --cache <path>    - Set path for cache [%s].\n"
+#if ENABLE_SERDEV
+	     "   --serdev          - Probe service ports for devices.\n"
+#endif
 	     "\n"
 	     "  URL is any URL-type supported by Showtime, "
 	     "e.g., \"file:///...\"\n"
@@ -204,6 +210,12 @@ main(int argc, char **argv)
       listen_on_stdin = 1;
       argc -= 1; argv += 1;
       continue;
+#if ENABLE_SERDEV
+    } else if(!strcmp(argv[0], "--serdev")) {
+      enable_serdev = 1;
+      argc -= 1; argv += 1;
+      continue;
+#endif
     } else if(!strcmp(argv[0], "--with-standby")) {
       can_standby = 1;
       argc -= 1; argv += 1;
