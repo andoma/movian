@@ -792,12 +792,7 @@ spotify_play_track_try(void)
   spotify_mp->mp_audio.mq_stream = 0; // Must be set to somthing != -1
   play_position = 0;
 
-  if((err = f_sp_session_player_play(spotify_session, 1))) {
-    snprintf(su->su_errbuf, su->su_errlen, "Unable to play track:\n%s",
-	     f_sp_error_message(err));
-    spotify_uri_return(su, 1);
-    return;
-  }
+  f_sp_session_player_play(spotify_session, 1);
 
   su_playing = su;
   spotify_uri_return(su, 0);
@@ -2520,7 +2515,7 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
   sp_playlist_type type = f_sp_playlistcontainer_playlist_type(pc, position);
   playlist_t *pl;
   prop_t *metadata;
-  char url[200];
+  char url[200], buf[200];
   const char *name;
 
   switch(type) {
@@ -2532,8 +2527,8 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
 
   case SP_PLAYLIST_TYPE_START_FOLDER:
     pl = calloc(1, sizeof(playlist_t));
-    name = f_sp_playlistcontainer_playlist_folder_name(pc, position);
-    name = mystrdupa(name); // bug in libspotify
+    f_sp_playlistcontainer_playlist_folder_name(pc, position, buf, sizeof(buf));
+    name = buf;
 
     pl->pl_folder_id = f_sp_playlistcontainer_playlist_folder_id(pc, position);
 
@@ -3051,6 +3046,8 @@ spotify_thread(void *aux)
   char cache[PATH_MAX];
   int high_bitrate = 0;
 
+  memset(&sesconf, 0, sizeof(sesconf));
+
   sesconf.api_version = SPOTIFY_API_VERSION;
 
   if(find_cachedir(cache, sizeof(cache)))
@@ -3155,7 +3152,7 @@ spotify_thread(void *aux)
 	mp_flush(spotify_mp, 0);
 	
 	seek_pos = sm->sm_int;
-	error = f_sp_session_player_seek(s, sm->sm_int);
+	f_sp_session_player_seek(s, sm->sm_int);
 	break;
 
       case SPOTIFY_PAUSE:

@@ -3,16 +3,16 @@
 static const char*(*f_sp_error_message)(sp_error error);
 static sp_error(*f_sp_session_create)(const sp_session_config *config, sp_session **sess);
 static void(*f_sp_session_release)(sp_session *sess);
-static sp_error(*f_sp_session_login)(sp_session *session, const char *username, const char *password);
+static void(*f_sp_session_login)(sp_session *session, const char *username, const char *password);
 static sp_user *(*f_sp_session_user)(sp_session *session);
-static sp_error(*f_sp_session_logout)(sp_session *session);
+static void(*f_sp_session_logout)(sp_session *session);
 static sp_connectionstate(*f_sp_session_connectionstate)(sp_session *session);
 static void *(*f_sp_session_userdata)(sp_session *session);
 static void(*f_sp_session_set_cache_size)(sp_session *session, size_t size);
 static void(*f_sp_session_process_events)(sp_session *session, int *next_timeout);
 static sp_error(*f_sp_session_player_load)(sp_session *session, sp_track *track);
-static sp_error(*f_sp_session_player_seek)(sp_session *session, int offset);
-static sp_error(*f_sp_session_player_play)(sp_session *session, bool play);
+static void(*f_sp_session_player_seek)(sp_session *session, int offset);
+static void(*f_sp_session_player_play)(sp_session *session, bool play);
 static void(*f_sp_session_player_unload)(sp_session *session);
 static sp_error(*f_sp_session_player_prefetch)(sp_session *session, sp_track *track);
 static sp_playlistcontainer *(*f_sp_session_playlistcontainer)(sp_session *session);
@@ -133,6 +133,8 @@ static sp_track *(*f_sp_playlist_track)(sp_playlist *playlist, int index);
 static int(*f_sp_playlist_track_create_time)(sp_playlist *playlist, int index);
 static sp_user *(*f_sp_playlist_track_creator)(sp_playlist *playlist, int index);
 static bool(*f_sp_playlist_track_seen)(sp_playlist *playlist, int index);
+static sp_error(*f_sp_playlist_track_set_seen)(sp_playlist *playlist, int index, bool seen);
+static const char *(*f_sp_playlist_track_message)(sp_playlist *playlist, int index);
 static const char *(*f_sp_playlist_name)(sp_playlist *playlist);
 static sp_error(*f_sp_playlist_rename)(sp_playlist *playlist, const char *new_name);
 static sp_user *(*f_sp_playlist_owner)(sp_playlist *playlist);
@@ -145,6 +147,12 @@ static bool(*f_sp_playlist_has_pending_changes)(sp_playlist *playlist);
 static sp_error(*f_sp_playlist_add_tracks)(sp_playlist *playlist, const sp_track **tracks, int num_tracks, int position, sp_session *session);
 static sp_error(*f_sp_playlist_remove_tracks)(sp_playlist *playlist, const int *tracks, int num_tracks);
 static sp_error(*f_sp_playlist_reorder_tracks)(sp_playlist *playlist, const int *tracks, int num_tracks, int new_position);
+static unsigned int(*f_sp_playlist_num_subscribers)(sp_playlist *playlist);
+static sp_subscribers *(*f_sp_playlist_subscribers)(sp_playlist *playlist);
+static void(*f_sp_playlist_subscribers_free)(sp_subscribers *subscribers);
+static void(*f_sp_playlist_update_subscribers)(sp_session *session, sp_playlist *playlist);
+static bool(*f_sp_playlist_is_in_ram)(sp_session *session, sp_playlist *playlist);
+static void(*f_sp_playlist_set_in_ram)(sp_session *session, sp_playlist *playlist, bool in_ram);
 static sp_playlist *(*f_sp_playlist_create)(sp_session *session, sp_link *link);
 static void(*f_sp_playlist_add_ref)(sp_playlist *playlist);
 static void(*f_sp_playlist_release)(sp_playlist *playlist);
@@ -153,12 +161,13 @@ static void(*f_sp_playlistcontainer_remove_callbacks)(sp_playlistcontainer *pc, 
 static int(*f_sp_playlistcontainer_num_playlists)(sp_playlistcontainer *pc);
 static sp_playlist *(*f_sp_playlistcontainer_playlist)(sp_playlistcontainer *pc, int index);
 static sp_playlist_type(*f_sp_playlistcontainer_playlist_type)(sp_playlistcontainer *pc, int index);
-static const char *(*f_sp_playlistcontainer_playlist_folder_name)(sp_playlistcontainer *pc, int index);
+static sp_error(*f_sp_playlistcontainer_playlist_folder_name)(sp_playlistcontainer *pc, int index, char *buffer, int buffer_size);
 static sp_uint64(*f_sp_playlistcontainer_playlist_folder_id)(sp_playlistcontainer *pc, int index);
 static sp_playlist *(*f_sp_playlistcontainer_add_new_playlist)(sp_playlistcontainer *pc, const char *name);
 static sp_playlist *(*f_sp_playlistcontainer_add_playlist)(sp_playlistcontainer *pc, sp_link *link);
 static sp_error(*f_sp_playlistcontainer_remove_playlist)(sp_playlistcontainer *pc, int index);
-static sp_error(*f_sp_playlistcontainer_move_playlist)(sp_playlistcontainer *pc, int index, int new_position);
+static sp_error(*f_sp_playlistcontainer_move_playlist)(sp_playlistcontainer *pc, int index, int new_position, bool dry_run);
+static sp_error(*f_sp_playlistcontainer_add_folder)(sp_playlistcontainer *pc, int index, const char *name);
 static sp_user *(*f_sp_playlistcontainer_owner)(sp_playlistcontainer *pc);
 static const char *(*f_sp_user_canonical_name)(sp_user *user);
 static const char *(*f_sp_user_display_name)(sp_user *user);
@@ -179,7 +188,7 @@ static int(*f_sp_toplistbrowse_num_albums)(sp_toplistbrowse *tlb);
 static sp_album *(*f_sp_toplistbrowse_album)(sp_toplistbrowse *tlb, int index);
 static int(*f_sp_toplistbrowse_num_tracks)(sp_toplistbrowse *tlb);
 static sp_track *(*f_sp_toplistbrowse_track)(sp_toplistbrowse *tlb, int index);
-static sp_inbox *(*f_sp_inbox_post_tracks)(sp_session *session, const char *user, sp_track * const *tracks, int num_tracks, inboxpost_complete_cb *callback, void *userdata);
+static sp_inbox *(*f_sp_inbox_post_tracks)(sp_session *session, const char *user, sp_track * const *tracks, int num_tracks, const char *message, inboxpost_complete_cb *callback, void *userdata);
 static sp_error(*f_sp_inbox_error)(sp_inbox *inbox);
 static void(*f_sp_inbox_add_ref)(sp_inbox *inbox);
 static void(*f_sp_inbox_release)(sp_inbox *inbox);
@@ -317,6 +326,8 @@ if((f_sp_playlist_track=dlsym(handle,"sp_playlist_track"))==NULL) return "sp_pla
 if((f_sp_playlist_track_create_time=dlsym(handle,"sp_playlist_track_create_time"))==NULL) return "sp_playlist_track_create_time";
 if((f_sp_playlist_track_creator=dlsym(handle,"sp_playlist_track_creator"))==NULL) return "sp_playlist_track_creator";
 if((f_sp_playlist_track_seen=dlsym(handle,"sp_playlist_track_seen"))==NULL) return "sp_playlist_track_seen";
+if((f_sp_playlist_track_set_seen=dlsym(handle,"sp_playlist_track_set_seen"))==NULL) return "sp_playlist_track_set_seen";
+if((f_sp_playlist_track_message=dlsym(handle,"sp_playlist_track_message"))==NULL) return "sp_playlist_track_message";
 if((f_sp_playlist_name=dlsym(handle,"sp_playlist_name"))==NULL) return "sp_playlist_name";
 if((f_sp_playlist_rename=dlsym(handle,"sp_playlist_rename"))==NULL) return "sp_playlist_rename";
 if((f_sp_playlist_owner=dlsym(handle,"sp_playlist_owner"))==NULL) return "sp_playlist_owner";
@@ -329,6 +340,12 @@ if((f_sp_playlist_has_pending_changes=dlsym(handle,"sp_playlist_has_pending_chan
 if((f_sp_playlist_add_tracks=dlsym(handle,"sp_playlist_add_tracks"))==NULL) return "sp_playlist_add_tracks";
 if((f_sp_playlist_remove_tracks=dlsym(handle,"sp_playlist_remove_tracks"))==NULL) return "sp_playlist_remove_tracks";
 if((f_sp_playlist_reorder_tracks=dlsym(handle,"sp_playlist_reorder_tracks"))==NULL) return "sp_playlist_reorder_tracks";
+if((f_sp_playlist_num_subscribers=dlsym(handle,"sp_playlist_num_subscribers"))==NULL) return "sp_playlist_num_subscribers";
+if((f_sp_playlist_subscribers=dlsym(handle,"sp_playlist_subscribers"))==NULL) return "sp_playlist_subscribers";
+if((f_sp_playlist_subscribers_free=dlsym(handle,"sp_playlist_subscribers_free"))==NULL) return "sp_playlist_subscribers_free";
+if((f_sp_playlist_update_subscribers=dlsym(handle,"sp_playlist_update_subscribers"))==NULL) return "sp_playlist_update_subscribers";
+if((f_sp_playlist_is_in_ram=dlsym(handle,"sp_playlist_is_in_ram"))==NULL) return "sp_playlist_is_in_ram";
+if((f_sp_playlist_set_in_ram=dlsym(handle,"sp_playlist_set_in_ram"))==NULL) return "sp_playlist_set_in_ram";
 if((f_sp_playlist_create=dlsym(handle,"sp_playlist_create"))==NULL) return "sp_playlist_create";
 if((f_sp_playlist_add_ref=dlsym(handle,"sp_playlist_add_ref"))==NULL) return "sp_playlist_add_ref";
 if((f_sp_playlist_release=dlsym(handle,"sp_playlist_release"))==NULL) return "sp_playlist_release";
@@ -343,6 +360,7 @@ if((f_sp_playlistcontainer_add_new_playlist=dlsym(handle,"sp_playlistcontainer_a
 if((f_sp_playlistcontainer_add_playlist=dlsym(handle,"sp_playlistcontainer_add_playlist"))==NULL) return "sp_playlistcontainer_add_playlist";
 if((f_sp_playlistcontainer_remove_playlist=dlsym(handle,"sp_playlistcontainer_remove_playlist"))==NULL) return "sp_playlistcontainer_remove_playlist";
 if((f_sp_playlistcontainer_move_playlist=dlsym(handle,"sp_playlistcontainer_move_playlist"))==NULL) return "sp_playlistcontainer_move_playlist";
+if((f_sp_playlistcontainer_add_folder=dlsym(handle,"sp_playlistcontainer_add_folder"))==NULL) return "sp_playlistcontainer_add_folder";
 if((f_sp_playlistcontainer_owner=dlsym(handle,"sp_playlistcontainer_owner"))==NULL) return "sp_playlistcontainer_owner";
 if((f_sp_user_canonical_name=dlsym(handle,"sp_user_canonical_name"))==NULL) return "sp_user_canonical_name";
 if((f_sp_user_display_name=dlsym(handle,"sp_user_display_name"))==NULL) return "sp_user_display_name";
@@ -502,6 +520,8 @@ return NULL;}
 #define f_sp_playlist_track_create_time sp_playlist_track_create_time
 #define f_sp_playlist_track_creator sp_playlist_track_creator
 #define f_sp_playlist_track_seen sp_playlist_track_seen
+#define f_sp_playlist_track_set_seen sp_playlist_track_set_seen
+#define f_sp_playlist_track_message sp_playlist_track_message
 #define f_sp_playlist_name sp_playlist_name
 #define f_sp_playlist_rename sp_playlist_rename
 #define f_sp_playlist_owner sp_playlist_owner
@@ -514,6 +534,12 @@ return NULL;}
 #define f_sp_playlist_add_tracks sp_playlist_add_tracks
 #define f_sp_playlist_remove_tracks sp_playlist_remove_tracks
 #define f_sp_playlist_reorder_tracks sp_playlist_reorder_tracks
+#define f_sp_playlist_num_subscribers sp_playlist_num_subscribers
+#define f_sp_playlist_subscribers sp_playlist_subscribers
+#define f_sp_playlist_subscribers_free sp_playlist_subscribers_free
+#define f_sp_playlist_update_subscribers sp_playlist_update_subscribers
+#define f_sp_playlist_is_in_ram sp_playlist_is_in_ram
+#define f_sp_playlist_set_in_ram sp_playlist_set_in_ram
 #define f_sp_playlist_create sp_playlist_create
 #define f_sp_playlist_add_ref sp_playlist_add_ref
 #define f_sp_playlist_release sp_playlist_release
@@ -528,6 +554,7 @@ return NULL;}
 #define f_sp_playlistcontainer_add_playlist sp_playlistcontainer_add_playlist
 #define f_sp_playlistcontainer_remove_playlist sp_playlistcontainer_remove_playlist
 #define f_sp_playlistcontainer_move_playlist sp_playlistcontainer_move_playlist
+#define f_sp_playlistcontainer_add_folder sp_playlistcontainer_add_folder
 #define f_sp_playlistcontainer_owner sp_playlistcontainer_owner
 #define f_sp_user_canonical_name sp_user_canonical_name
 #define f_sp_user_display_name sp_user_display_name
