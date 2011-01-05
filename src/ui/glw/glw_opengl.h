@@ -77,10 +77,6 @@ typedef struct glw_program {
 
 typedef struct glw_backend_root {
 
-  int gbr_sysfeatures;
-#define GLW_OPENGL_PBO       0x1
-#define GLW_OPENGL_FRAG_PROG 0x2
-
   enum {
     GLW_OPENGL_TEXTURE_SIMPLE,
     GLW_OPENGL_TEXTURE_RECTANGLE,

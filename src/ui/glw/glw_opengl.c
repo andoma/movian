@@ -78,19 +78,10 @@ glw_opengl_init_context(glw_root_t *gr)
   GLint tu = 0;
   glw_backend_root_t *gbr = &gr->gr_be;
   const	GLubyte	*s;
-  int x = 0;
   int rectmode;
   /* Check OpenGL extensions we would like to have */
 
   s = glGetString(GL_EXTENSIONS);
-
-  x |= check_gl_ext(s, "GL_ARB_pixel_buffer_object") ?
-    GLW_OPENGL_PBO : 0;
-
-  x |= check_gl_ext(s, "GL_ARB_fragment_program") ?
-    GLW_OPENGL_FRAG_PROG : 0;
-
-  gbr->gbr_sysfeatures = x;
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -133,8 +124,16 @@ glw_opengl_init_context(glw_root_t *gr)
   }
   TRACE(TRACE_DEBUG, "GLW", "%d texture image units available", tu);
 
+  const char *vendor   = (const char *)glGetString(GL_VENDOR);
+  const char *renderer = (const char *)glGetString(GL_RENDERER);
+  TRACE(TRACE_INFO, "GLW", "OpenGL Renderer: '%s' by '%s'", renderer, vendor);
 
-  if(1) {
+  int use_shaders = 1;
+
+  if(strstr(renderer, "Mesa"))
+      use_shaders = 0;
+  
+  if(use_shaders) {
 
     GLuint vs, fs;
 
