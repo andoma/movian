@@ -1063,7 +1063,7 @@ cloner_pagination_check(sub_cloner_t *sc)
  *
  */
 static int
-cloner_sig_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
+clone_sig_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   clone_t *c = opaque;
   sub_cloner_t *sc = c->c_sc;
@@ -1116,7 +1116,7 @@ cloner_resequence(sub_cloner_t *sc)
   int pos = 0;
   TAILQ_FOREACH(w, &sc->sc_sub.gps_widget->glw_childs, glw_parent_link) {
     LIST_FOREACH(gsh, &w->glw_signal_handlers, gsh_link) {
-      if(gsh->gsh_func == cloner_sig_handler) {
+      if(gsh->gsh_func == clone_sig_handler) {
 	clone_t *c = gsh->gsh_opaque;
 	c->c_pos = pos;
 	break;
@@ -1168,7 +1168,7 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
 
   prop_tag_set(p, sc, c);
 
-  glw_signal_handler_register(c->c_w, cloner_sig_handler, c, 1000);
+  glw_signal_handler_register(c->c_w, clone_sig_handler, c, 1000);
 
   if(flags & PROP_ADD_SELECTED)
     parent->glw_class->gc_select_child(parent, c->c_w, NULL);
@@ -1266,7 +1266,7 @@ clone_free(clone_t *c)
 {
   glw_t *w = c->c_w;
 
-  glw_signal_handler_unregister(w, cloner_sig_handler, c);
+  glw_signal_handler_unregister(w, clone_sig_handler, c);
   glw_retire_child(w);
 
   LIST_REMOVE(c, c_link);
