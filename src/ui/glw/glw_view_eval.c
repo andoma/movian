@@ -190,6 +190,8 @@ glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l)
     case GPS_CLONER:
       sc = (sub_cloner_t *)gps;
  
+      cloner_cleanup(sc);
+
       if(sc->sc_originating_prop)
 	prop_ref_dec(sc->sc_originating_prop);
 
@@ -1093,6 +1095,9 @@ cloner_sig_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     cloner_pagination_check(sc);
     break;
 
+  case GLW_SIGNAL_DESTROY:
+    abort();
+
   default:
     break;
   }
@@ -1262,6 +1267,8 @@ clone_free(clone_t *c)
   glw_t *w = c->c_w;
 
   glw_signal_handler_unregister(w, cloner_sig_handler, c);
+  glw_retire_child(w);
+
   LIST_REMOVE(c, c_link);
   prop_ref_dec(c->c_prop);
   prop_destroy(c->c_clone_root);
@@ -1284,7 +1291,6 @@ cloner_del_child(sub_cloner_t *sc, prop_t *p, glw_t *parent)
 
     if(TAILQ_NEXT(w, glw_parent_link) != NULL)
       sc->sc_positions_valid = 0;
-    glw_retire_child(w);
 
     clone_free(c);
     return;
