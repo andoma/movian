@@ -23,11 +23,19 @@
 
 struct glw_root;
 struct glw_rctx;
+struct glw_renderer;
+struct glw_rgb;
+
+#define NUM_CLIPPLANES 6
 
 /**
  *
  */
 typedef struct glw_backend_root {
+
+  // XXX merge to glw_backend
+  float gbr_clip[NUM_CLIPPLANES][4];
+  int gbr_active_clippers;
 
 } glw_backend_root_t;
 
@@ -35,7 +43,7 @@ typedef struct glw_backend_root {
 /**
  *
  */
-typedef struct {
+typedef struct glw_backend_texture {
   GXTexObj obj;
   void *mem;  // Use obj.userdata ?
   int initialized;
@@ -99,6 +107,12 @@ void *gx_convert_argb(const uint8_t *src, int linesize,
 
 #define glw_frontface(x) GX_SetCullMode(x)
 
+
+void glw_renderer_draw(struct glw_renderer *gr, struct glw_root *root,
+		       struct glw_rctx *rc,
+		       struct glw_backend_texture *be_tex,
+		       const struct glw_rgb *rgb, float alpha,
+		       int flags);
 
 
 #endif /* GLW_GX_H__ */

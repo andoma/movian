@@ -45,3 +45,12 @@ glw_LoadMatrixf(glw_rctx_t *rc, float *src)
 {
   memcpy(rc->rc_mtx, src, sizeof(float) * 12);
 }
+
+static inline void
+glw_LerpMatrix(Mtx out, float v, Mtx a, Mtx b)
+{
+  int y, x;
+  for(y = 0; y < 3; y++)
+    for(x = 0; x < 4; x++)
+      out[y][x] = GLW_LERP(v, a[y][x], b[y][x]);
+}

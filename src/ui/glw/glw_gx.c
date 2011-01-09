@@ -21,6 +21,26 @@
 #include "glw.h"
 #include "glw_cursor.h"
 
+
+/**
+ *
+ */
+void
+glw_rctx_init(glw_rctx_t *rc, int width, int height)
+{
+  memset(rc, 0, sizeof(glw_rctx_t));
+  rc->rc_width  = width;
+  rc->rc_height = height;
+  rc->rc_alpha = 1.0f;
+
+  guMtxIdentity(rc->rc_mtx);
+  guMtxTransApply(rc->rc_mtx, rc->rc_mtx, 0, 0, -1 / tan(45 * M_PI / 360));
+}
+
+
+/**
+ *
+ */
 void
 glw_store_matrix(glw_t *w, glw_rctx_t *rc)
 {
@@ -31,7 +51,7 @@ glw_store_matrix(glw_t *w, glw_rctx_t *rc)
   if(w->glw_matrix == NULL)
     w->glw_matrix = malloc(sizeof(float) * 16);
 
-  memcpy(w->glw_matrix, rc->rc_be.gbr_model_matrix, sizeof(float) * 12);
+  memcpy(w->glw_matrix, rc->rc_mtx, sizeof(float) * 12);
 
   if(glw_is_focused(w) && gcp != NULL) {
     gcp->gcp_alpha  = rc->rc_alpha;
@@ -52,11 +72,54 @@ glw_check_system_features(glw_root_t *gr)
 /**
  *
  */
-int
-glw_clip_enable(glw_rctx_t *rc, glw_clip_boundary_t how)
+static const float clip_planes[4][4] = {
+  [GLW_CLIP_TOP]    = { 0.0, -1.0, 0.0, 1.0},
+  [GLW_CLIP_BOTTOM] = { 0.0,  1.0, 0.0, 1.0},
+  [GLW_CLIP_LEFT]   = {-1.0,  0.0, 0.0, 1.0},
+  [GLW_CLIP_RIGHT]  = { 1.0,  0.0, 0.0, 1.0},
+};
+
+
+static inline void
+mtx_trans_mul_vec4(float *dst, Mtx mt,
+		   float x, float y, float z, float w)
 {
-  // XXX: TODO
-  return 0;
+  dst[0] = mt[0][0] * x + mt[1][0] * y + mt[2][0] * z + 0 * w;
+  dst[1] = mt[0][1] * x + mt[1][1] * y + mt[2][1] * z + 0 * w;
+  dst[2] = mt[0][2] * x + mt[1][2] * y + mt[2][2] * z + 0 * w;
+  dst[3] = mt[0][3] * x + mt[1][3] * y + mt[2][3] * z + 1 * w;
+}
+
+
+/**
+ *
+ */
+int
+glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t how)
+{
+  int i;
+  return -1; // for now
+
+  for(i = 0; i < NUM_CLIPPLANES; i++)
+    if(!(gr->gr_be.gbr_active_clippers & (1 << i)))
+      break;
+
+  if(i == NUM_CLIPPLANES)
+    return -1;
+
+  Mtx inv;
+
+  if(!guMtxInverse(rc->rc_mtx, inv))
+    return -1;
+
+  mtx_trans_mul_vec4(gr->gr_be.gbr_clip[i], inv, 
+		     clip_planes[how][0],
+		     clip_planes[how][1],
+		     clip_planes[how][2],
+		     clip_planes[how][3]);
+
+  gr->gr_be.gbr_active_clippers |= (1 << i);
+  return i;
 }
 
 
@@ -64,10 +127,14 @@ glw_clip_enable(glw_rctx_t *rc, glw_clip_boundary_t how)
  *
  */
 void
-glw_clip_disable(glw_rctx_t *rc, int which)
+glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which)
 {
-  // XXX: TODO
+  if(which == -1)
+    return;
+
+  gr->gr_be.gbr_active_clippers &= ~(1 << which);
 }
+
 
 /**
  * m   Model matrix
@@ -154,11 +221,6 @@ glw_rtt_enter(struct glw_root *gr, glw_rtt_t *grtt, struct glw_rctx *rc)
 {
   glw_rctx_init(rc, grtt->grtt_width, grtt->grtt_height);
 
-  guMtxIdentity(rc->rc_be.gbr_model_matrix);
-  guMtxTransApply(rc->rc_be.gbr_model_matrix,
-		  rc->rc_be.gbr_model_matrix,
-		  0, 0, -2.4142);
-
   GX_SetViewport(0, 0, grtt->grtt_width, grtt->grtt_height, -10, 10);
   GX_SetScissor(0, 0, grtt->grtt_width, grtt->grtt_height);
 }
@@ -226,12 +288,25 @@ glw_blendmode(int mode)
  * XXX TODO
  */
 void
-glw_wirebox(glw_rctx_t *rc)
+glw_wirebox(glw_root_t *gr, glw_rctx_t *rc)
 {
+
+}
+
+/**
+ * XXX TODO
+ */
+void
+glw_wirecube(glw_root_t *gr, glw_rctx_t *rc)
+{
+
 }
 
 
+
 #define float_to_byte(f) GLW_MAX(0, GLW_MIN(255, (int)(f * 255.0)))
+
+#if 0
 
 /**
  * 
@@ -396,3 +471,4 @@ glw_render(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
     break;
   }
 }
+#endif
