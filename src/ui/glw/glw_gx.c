@@ -144,15 +144,13 @@ glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which)
  * dir Mouse pointer direction vector
  */
 int
-glw_widget_unproject(const float *m, float *xp, float *yp, 
+glw_widget_unproject(Mtx mt, float *xp, float *yp, 
 		     const float *p, const float *dir)
 {
-  Mtx mt, inv;
+  Mtx inv;
    
   guVector u, v, n, w0, T0, T1, T2, out, I, A, pointer, direction;
   float b;
-
-  memcpy(mt, m, sizeof(float) * 12);
 
   A.x = -1;  A.y = -1;  A.z = 0;
   guVecMultiply(mt, &A, &T0);
