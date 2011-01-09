@@ -17,7 +17,7 @@ DEFAULT_UI="glw"
 
 source support/configure.inc
 DEVKITPRO="${TOPDIR}/wiisupport/devkitpro"
-LIBFREETYPEPATH="${TOPDIR}/wiisupport/freetype-ppc"
+FFMPEG="${TOPDIR}/wiisupport/ffmpeg"
 
 enable embedded_resources
 enable tinysmb
@@ -27,7 +27,7 @@ enable dvd_wii
 show_help(){
   common_help
   echo "  --devkitpro=PATH         Path to devkitpro [$DEVKITPRO]"
-  echo "  --freetype=PATH          Path to freetype [$LIBFREETYPEPATH]"
+  echo "  --ffmpeg=PATH            Path to FFmpeg [$FFMPEG]"
   exit 1
 }
 
@@ -37,8 +37,6 @@ for opt do
   --help) show_help
   ;;
   --devkitpro=*) DEVKITPRO="$optval"
-  ;;
-  --freetype=*) LIBFREETYPEPATH="$optval"
   ;;
   *)
   common_opt $opt $optval
@@ -60,7 +58,11 @@ cat >> ${CONFIG_MAK} <<EOF
 CC=${DEVKITPPC}/bin/powerpc-eabi-gcc
 STRIP=${DEVKITPPC}/bin/powerpc-eabi-strip
 
-CFLAGS_cfg += -I${LIBOGC}/include -I${PORTLIBS}/include
+CFLAGS_cfg += -I${LIBOGC}/include
+CFLAGS_cfg += -I${PORTLIBS}/include
+CFLAGS_cfg += -I${PORTLIBS}/include/freetype2
+CFLAGS_cfg += -I${FFMPEG}/include
+
 CFLAGS_cfg += -DWII -DEABI -mrvl -mcpu=750 -meabi -mhard-float
 
 LDFLAGS_cfg += -DEABI -mrvl -mcpu=750 -meabi -mhard-float
@@ -76,29 +78,9 @@ fi
 
 
 #
-# configure ffmpeg
-#
-setup_ffmpeg --extra-cflags="-I${LIBOGC}/include -I${PORTLIBS}/include -D__LARGE64_FILES -include ${TOPDIR}/support/nostrictansi.h" \
-    --extra-ldflags="-L${DEVKITPRO}/libogc/lib/wii -L${PORTLIBS}/lib" \
-    --cross-prefix=${DEVKITPPC}/bin/powerpc-eabi- \
-    --enable-cross-compile \
-    --arch=powerpc \
-    --target-os=none \
-    --cpu=750 \
-    --disable-altivec \
-    --enable-small \
-    --disable-decoder=twinvq \
-    --disable-decoder=snow \
-    --disable-decoder=cavs
-
-#
 # 
 #
 cat >> ${CONFIG_MAK} <<EOF
-LDFLAGS_cfg  +=  -L${PORTLIBS}/lib -lz
-LDFLAGS_cfg  +=  -L${LIBFREETYPEPATH}/lib -lfreetype
-CFLAGS_cfg += -I${LIBFREETYPEPATH}/include -DWORDS_BIGENDIAN
-CFLAGS_cfg += -I${LIBFREETYPEPATH}/include/freetype2
 LDFLAGS_cfg  += -L${DEVKITPRO}/libogc/lib/wii -lfat -ldi -lwiikeyboard -lwiiuse -lbte -logc
 EOF
 

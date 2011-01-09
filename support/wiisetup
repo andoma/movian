@@ -1,22 +1,39 @@
 #!/bin/bash
 set -e
 set -u
+
+##
+PARALLEL=-j6
+DEVKITPPC_REV=22
+LIBOGC_VER=1.8.6
+LIBFAT_VER=1.0.7
+ZLIB_VER=1.2.4
+FREETYPE_VER=2.4.2
+
+##
+
 TOPDIR=${PWD}
 WIISUPPORT=${PWD}/wiisupport
+
+MACHINE=`uname -m`
 
 mkdir -p ${WIISUPPORT}
 
 export DEVKITPRO=${WIISUPPORT}/devkitpro
 export DEVKITPPC=${DEVKITPRO}/devkitPPC
 export PORTLIBS=${DEVKITPRO}/portlibs/ppc
+export FFMPEG=${WIISUPPORT}/ffmpeg
 
 mkdir -p ${PORTLIBS}
+
+
 
 if ! test -e ${DEVKITPPC} ; then
     mkdir -p ${DEVKITPRO}
     cd ${DEVKITPRO}
-    wget http://sunet.dl.sourceforge.net/sourceforge/devkitpro/devkitPPC_r21-i686-linux.tar.bz2
-    tar xvf devkitPPC_r21-i686-linux.tar.bz2
+    rm -f devkitPPC_r${DEVKITPPC_REV}-${MACHINE}-linux.tar.bz2
+    wget http://sunet.dl.sourceforge.net/sourceforge/devkitpro/devkitPPC_r${DEVKITPPC_REV}-${MACHINE}-linux.tar.bz2
+    tar xvf devkitPPC_r${DEVKITPPC_REV}-${MACHINE}-linux.tar.bz2
 fi
 
 ### Get and compile libogc
@@ -25,45 +42,74 @@ fi
 if ! test -e ${DEVKITPRO}/libogc/lib/wii ; then
     mkdir -p ${DEVKITPRO}/libogc
     cd ${DEVKITPRO}/libogc
-    wget http://downloads.sourceforge.net/project/devkitpro/libogc/libogc-src-1.8.3.tar.bz2
-    tar xvf libogc-src-1.8.3.tar.bz2
+    rm -f libogc-src-${LIBOGC_VER}.tar.bz2
+    wget http://downloads.sourceforge.net/project/devkitpro/libogc/libogc-src-${LIBOGC_VER}.tar.bz2
+    tar xvf libogc-src-${LIBOGC_VER}.tar.bz2
 
-    cp ${TOPDIR}/support/lwp_config.h ${DEVKITPRO}/libogc/gc/ogc/lwp_config.h
-    make wii install-headers
+#    cp ${TOPDIR}/support/lwp_config.h ${DEVKITPRO}/libogc/gc/ogc/lwp_config.h
+    make wii ${PARALLEL}
+    make install-headers
 
     # And libfat
     cd ${DEVKITPRO}/libogc
-    wget http://sunet.dl.sourceforge.net/sourceforge/devkitpro/libfat-ogc-1.0.5.tar.bz2
-    tar xvf libfat-ogc-1.0.5.tar.bz2
+    rm -f libfat-ogc-${LIBFAT_VER}.tar.bz2
+    wget http://sunet.dl.sourceforge.net/sourceforge/devkitpro/libfat-ogc-${LIBFAT_VER}.tar.bz2
+    tar xvf libfat-ogc-${LIBFAT_VER}.tar.bz2
 fi
 
-### Get and compile zlib
-
-
+### Get zlib
 if ! test -e ${PORTLIBS}/include/zlib.h ; then
     cd ${PORTLIBS}
-    wget http://downloads.sourceforge.net/project/devkitpro/portlibs/zlib-1.2.4-ppc.tar.bz2
-    tar xvf zlib-1.2.4-ppc.tar.bz2
+    rm -f zlib-${ZLIB_VER}-ppc.tar.bz2
+    wget http://downloads.sourceforge.net/project/devkitpro/portlibs/zlib-${ZLIB_VER}-ppc.tar.bz2
+    tar xvf zlib-${ZLIB_VER}-ppc.tar.bz2
 fi
-
 
 ### Get freetype
-
-if ! test -e ${WIISUPPORT}/freetype-ppc ; then
-    cd ${WIISUPPORT}
-    wget http://mirrors.zerg.biz/nongnu/freetype/freetype-2.3.9.tar.bz2
-    tar xvf freetype-2.3.9.tar.bz2
-    cd ${WIISUPPORT}/freetype-2.3.9
-    OBJDUMP="${DEVKITPRO}/devkitPPC/bin/powerpc-eabi-objdump" \
-	LD="${DEVKITPRO}/devkitPPC/bin/powerpc-eabi-ld" \
-	STRIP="${DEVKITPRO}/devkitPPC/bin/powerpc-eabi-strip" \
-	RANLIB="${DEVKITPRO}/devkitPPC/bin/powerpc-eabi-ranlib" \
-	AR="${DEVKITPRO}/devkitPPC/bin/powerpc-eabi-ar" \
-	CFLAGS="-mcpu=750 -O2" \
-	CC="${DEVKITPRO}/devkitPPC/bin/powerpc-eabi-gcc" \
-	./configure --host=ppc --prefix=${WIISUPPORT}/freetype-ppc \
-	--disable-static 
-
-    make && make install
+if ! test -e ${PORTLIBS}/lib/libfreetype.a ; then
+    cd ${PORTLIBS}
+    rm -f  freetype-${FREETYPE_VER}-ppc.tar.bz2
+    wget http://sunet.dl.sourceforge.net/project/devkitpro/portlibs/freetype-${FREETYPE_VER}-ppc.tar.bz2
+    tar xvf freetype-${FREETYPE_VER}-ppc.tar.bz2
 fi
 
+if ! test -e ${FFMPEG}/include/libavcodec/avcodec.h ; then
+    cd ${FFMPEG}
+#    svn co svn://svn.ffmpeg.org/ffmpeg/trunk src
+    echo Configuring FFmpeg...
+
+    src/configure \
+        --disable-encoders \
+        --disable-bsfs \
+        --disable-filters \
+        --disable-muxers \
+        --disable-devices \
+        --disable-protocols \
+        --disable-network \
+        --disable-stripping \
+        --disable-static \
+        --disable-shared \
+        --enable-static \
+        --prefix=${FFMPEG} \
+        --disable-ffserver \
+        --disable-ffmpeg \
+        --disable-ffplay \
+        --disable-ffprobe \
+        --disable-bzlib \
+	--extra-cflags="-I${DEVKITPRO}/libogc/include -I${PORTLIBS}/include -D__LARGE64_FILES -include ${TOPDIR}/support/nostrictansi.h" \
+	--extra-ldflags="-L${DEVKITPRO}/libogc/lib/wii -L${PORTLIBS}/lib" \
+	--cross-prefix=${DEVKITPPC}/bin/powerpc-eabi- \
+	--enable-cross-compile \
+	--arch=powerpc \
+	--target-os=none \
+	--cpu=750 \
+	--disable-altivec \
+	--enable-small \
+	--disable-decoder=twinvq \
+	--disable-decoder=snow \
+	--disable-decoder=cavs 
+
+    make ${PARALLEL}
+    make install
+
+fi
