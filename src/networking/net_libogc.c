@@ -116,7 +116,7 @@ net_try_setup(void)
  *
  */
 void
-net_setup(void)
+net_initialize(void)
 {
 
   hts_mutex_init(&net_resolve_mutex);

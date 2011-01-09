@@ -34,25 +34,25 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <malloc.h>
+#include <stdarg.h>
 
 #include "threads.h"
 
 #include "showtime.h"
 #include "arch.h"
 
-#include <stdarg.h>
 #include "prop/prop.h"
 
 #include "service.h"
 #include "misc/callout.h"
 #include "notifications.h"
+#include "networking/net.h"
 
 extern int concurrency;
 
 void *wii_xfb[2];
 GXRModeObj wii_vmode;
 
-extern void net_setup(void);
 extern char *remote_logtarget;
 
 int rlog_socket = -1;
@@ -200,7 +200,7 @@ arch_init(void)
 
   VIDEO_WaitVSync();
 
-  net_setup();
+  net_initialize();
 
   wii_sd_mounted = fatMountSimple("sd", &__io_wiisd);
 
