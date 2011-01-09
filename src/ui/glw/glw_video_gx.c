@@ -101,7 +101,7 @@ surface_init(glw_video_t *gv, glw_video_surface_t *gvs,
 /**
  *
  */
-static void
+static int
 yuvp_init(glw_video_t *gv)
 {
   const glw_video_config_t *gvc = &gv->gv_cfg_cur;
@@ -109,6 +109,7 @@ yuvp_init(glw_video_t *gv)
 
   for(i = 0; i < gvc->gvc_nsurfaces; i++)
     surface_init(gv, &gv->gv_surfaces[i], gvc);
+  return 0;
 }
 
 
@@ -186,7 +187,7 @@ gv_compute_blend(glw_video_t *gv, glw_video_surface_t *sa,
  *
  */
 static int64_t
-yuvp_newframe(glw_video_t *gv, video_decoder_t *vd)
+yuvp_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
 {
   glw_root_t *gr = gv->w.glw_root;
   glw_video_surface_t *sa, *sb, *s;
@@ -252,7 +253,7 @@ yuvp_newframe(glw_video_t *gv, video_decoder_t *vd)
 static void
 render_video_1f(glw_video_t *gv, glw_video_surface_t *sa, glw_rctx_t *rc)
 {
-  GX_LoadPosMtxImm(rc->rc_be.gbr_model_matrix, GX_PNMTX0);
+  GX_LoadPosMtxImm(rc->rc_mtx, GX_PNMTX0);
     
  // setup the vertex descriptor
   GX_ClearVtxDesc();
@@ -477,8 +478,7 @@ extern void videotiler_asm(void *dst,
 void
 glw_video_input_yuvp(glw_video_t *gv,
 		     uint8_t * const data[], const int pitch[],
-		     int width, int height, int pix_fmt,
-		     int64_t pts, int epoch, int duration, int flags)
+		     const frame_info_t *fi)
 {
   int hvec[3], wvec[3];
   int i;
@@ -486,14 +486,14 @@ glw_video_input_yuvp(glw_video_t *gv,
   glw_video_surface_t *s;
   const int ilace = 0; // !!(flags & VD_INTERLACED);
 
-  avcodec_get_chroma_sub_sample(pix_fmt, &hshift, &vshift);
+  avcodec_get_chroma_sub_sample(fi->pix_fmt, &hshift, &vshift);
 
-  wvec[0] = width;
-  wvec[1] = width >> hshift;
-  wvec[2] = width >> hshift;
-  hvec[0] = height >> ilace;
-  hvec[1] = height >> (vshift + ilace);
-  hvec[2] = height >> (vshift + ilace);
+  wvec[0] = fi->width;
+  wvec[1] = fi->width >> hshift;
+  wvec[2] = fi->width >> hshift;
+  hvec[0] = fi->height >> ilace;
+  hvec[1] = fi->height >> (vshift + ilace);
+  hvec[2] = fi->height >> (vshift + ilace);
 
   if(glw_video_configure(gv, &glw_video_gx, wvec, hvec, 3,
 			 ilace ? GVC_CUTBORDER : 0))
@@ -516,6 +516,6 @@ glw_video_input_yuvp(glw_video_t *gv,
 		   hvec[i]  / 8,
 		   4 * pitch[i] - hvec[i]);
 
-  glw_video_put_surface(gv, s, pts, epoch, duration, 0);
+  glw_video_put_surface(gv, s, fi->pts, fi->epoch, fi->duration, 0);
   perftimer_stop(&pt, "framexfer");
 }
