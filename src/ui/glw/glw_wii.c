@@ -498,7 +498,7 @@ glw_wii_loop(glw_wii_t *gwii)
     if(KEYBOARD_GetEvent(&event))
       process_keyboard_event(gwii, &event);
 
-    glw_prepare_frame(&gwii->gr);
+    glw_prepare_frame(&gwii->gr, 0);
 
     glw_rctx_init(&rc, 
 		  gwii->gr.gr_width * (gwii->wide ? 1.3333 : 1),
@@ -569,7 +569,7 @@ glw_wii_start(ui_t *ui, int argc, char *argv[], int primary)
 
   glw_root_t *gr = &gwii->gr;
 
-  if(glw_init(gr, theme_path, ui, primary, "wii", NULL)) {
+  if(glw_init(gr, theme_path, NULL, ui, primary, "wii", NULL)) {
     printf("GLW failed to init\n");
     sleep(3);
     exit(0);
