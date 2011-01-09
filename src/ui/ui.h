@@ -22,6 +22,7 @@
 LIST_HEAD(ui_list,  ui);
 LIST_HEAD(uii_list, uii);
 
+struct event;
 
 /**
  * User interface instance
