@@ -66,7 +66,7 @@ check_disc_type(disc_scanner_t *ds)
     
     snprintf(title, sizeof(title), "DVD: %s", buf + 40);
     ds->ds_service = service_create(title, "dvd:/dev/di",
-				    SVC_TYPE_VIDEO, NULL, 0);
+				    "video", NULL, 0, 1);
     ds->ds_disc_ready = 1;
   }
   free(buf);
@@ -130,7 +130,7 @@ dvdprobe(callout_t *co, void *aux)
  *
  */
 static int
-be_dvd_canhandle(struct backend *be, const char *url)
+be_dvd_canhandle(const char *url)
 {
   return !strcmp(url, "dvd:/dev/di");
 }
@@ -140,7 +140,7 @@ be_dvd_canhandle(struct backend *be, const char *url)
  *
  */
 static event_t *
-be_dvd_play(struct backend *be, const char *url, media_pipe_t *mp,
+be_dvd_play(const char *url, media_pipe_t *mp,
 	    int flags, int priority,
 	    char *errstr, size_t errlen)
 {

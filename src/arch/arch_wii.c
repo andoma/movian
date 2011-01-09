@@ -317,8 +317,7 @@ void
 arch_sd_init(void)
 {
   if(wii_sd_mounted)
-    service_create("Front SD card", "file://sd:/",
-		   SVC_TYPE_OTHER, NULL, 0);
+    service_create("Front SD card", "file://sd:/", "other", NULL, 0, 1);
 }
 /**
  *
