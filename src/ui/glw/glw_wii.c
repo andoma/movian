@@ -348,10 +348,9 @@ wpad_render(glw_wii_t *gwii)
 
     glw_Rotatef(&rc, gwii->cursor_a, 0, 0, -1.0);
 
-    glw_render(&gwii->cursor_renderer, &gwii->gr, &rc, GLW_RENDER_MODE_QUADS,
-	       GLW_RENDER_ATTRIBS_TEX,
-	       &gwii->cursors[i + grab * 2]->glt_texture, 1, 1, 1,
-	       gwii->cursor_alpha);
+    glw_renderer_draw(&gwii->cursor_renderer, &gwii->gr, &rc, 
+		      &gwii->cursors[i + grab * 2]->glt_texture, NULL,
+		      gwii->cursor_alpha, 0);
   }
 }
 
@@ -452,17 +451,17 @@ glw_wii_loop(glw_wii_t *gwii)
   WPAD_SetDataFormat(0, WPAD_FMT_BTNS_ACC_IR);
   WPAD_SetVRes(0, wii_vmode.fbWidth, wii_vmode.xfbHeight);
 
-  glw_render_init(&gwii->cursor_renderer, 4, GLW_RENDER_ATTRIBS_TEX);
+  glw_renderer_init_quad(&gwii->cursor_renderer);
 
-  glw_render_vtx_pos(&gwii->cursor_renderer, 0, -1.0, -1.0, 0.0);
-  glw_render_vtx_pos(&gwii->cursor_renderer, 1,  1.0, -1.0, 0.0);
-  glw_render_vtx_pos(&gwii->cursor_renderer, 2,  1.0,  1.0, 0.0);
-  glw_render_vtx_pos(&gwii->cursor_renderer, 3, -1.0,  1.0, 0.0);
+  glw_renderer_vtx_pos(&gwii->cursor_renderer, 0, -1.0, -1.0, 0.0);
+  glw_renderer_vtx_pos(&gwii->cursor_renderer, 1,  1.0, -1.0, 0.0);
+  glw_renderer_vtx_pos(&gwii->cursor_renderer, 2,  1.0,  1.0, 0.0);
+  glw_renderer_vtx_pos(&gwii->cursor_renderer, 3, -1.0,  1.0, 0.0);
 
-  glw_render_vtx_st(&gwii->cursor_renderer, 0, 0.0, 1.0);
-  glw_render_vtx_st(&gwii->cursor_renderer, 1, 1.0, 1.0);
-  glw_render_vtx_st(&gwii->cursor_renderer, 2, 1.0, 0.0);
-  glw_render_vtx_st(&gwii->cursor_renderer, 3, 0.0, 0.0);
+  glw_renderer_vtx_st(&gwii->cursor_renderer, 0, 0.0, 1.0);
+  glw_renderer_vtx_st(&gwii->cursor_renderer, 1, 1.0, 1.0);
+  glw_renderer_vtx_st(&gwii->cursor_renderer, 2, 1.0, 0.0);
+  glw_renderer_vtx_st(&gwii->cursor_renderer, 3, 0.0, 0.0);
 
 
   gwii->cursors[0] =
