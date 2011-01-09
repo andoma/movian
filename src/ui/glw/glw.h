@@ -776,7 +776,7 @@ typedef struct glw {
 
   struct token *glw_dynamic_expressions;
 
-  float *glw_matrix;
+  Mtx *glw_matrix;
 
 } glw_t;
 
@@ -955,7 +955,7 @@ const char *glw_get_a_name(glw_t *w);
 
 void glw_print_tree(glw_t *w);
 
-int glw_widget_unproject(const float *m, float *x, float *y, 
+int glw_widget_unproject(Mtx m, float *x, float *y, 
 			 const float *p, const float *dir);
 
 glw_t *glw_create(glw_root_t *gr, const glw_class_t *class,

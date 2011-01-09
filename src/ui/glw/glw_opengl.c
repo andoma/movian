@@ -341,7 +341,7 @@ typedef float Vector[3];
  * dir Mouse pointer direction vector
  */
 int
-glw_widget_unproject(const float *m, float *xp, float *yp, 
+glw_widget_unproject(Mtx m, float *xp, float *yp, 
 		     const float *p, const float *dir)
 {
   Vector u, v, n, w0, T0, T1, T2, out, I;
