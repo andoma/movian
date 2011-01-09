@@ -1343,7 +1343,7 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
 
   if(w->glw_matrix != NULL) {
 
-    if(glw_widget_unproject(w->glw_matrix, &x, &y, p, dir) &&
+    if(glw_widget_unproject(*w->glw_matrix, &x, &y, p, dir) &&
        x <= 1 && y <= 1 && x >= -1 && y >= -1) {
       gpe0.type = gpe->type;
       gpe0.x = x;
@@ -1444,7 +1444,7 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
     prop_set_int(gr->gr_pointer_visible, 1);
 
     if((w = gr->gr_pointer_grab) != NULL && w->glw_matrix != NULL) {
-      glw_widget_unproject(w->glw_matrix, &x, &y, p, dir);
+      glw_widget_unproject(*w->glw_matrix, &x, &y, p, dir);
       gpe0.type = GLW_POINTER_FOCUS_MOTION;
       gpe0.x = x;
       gpe0.y = y;
@@ -1453,7 +1453,7 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
     }
 
     if((w = gr->gr_pointer_press) != NULL && w->glw_matrix != NULL) {
-      if(!glw_widget_unproject(w->glw_matrix, &x, &y, p, dir) ||
+      if(!glw_widget_unproject(*w->glw_matrix, &x, &y, p, dir) ||
 	 x < -1 || y < -1 || x > 1 || y > 1) {
 	// Moved outside button, release 
 
