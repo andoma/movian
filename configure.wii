@@ -78,9 +78,11 @@ fi
 
 
 #
-# 
+# libs
 #
 cat >> ${CONFIG_MAK} <<EOF
+LDFLAGS_cfg  += -L${PORTLIBS}/lib -lfreetype
+LDFLAGS_cfg  += -L${FFMPEG}/lib -lswscale -lavformat -lavcodec -lavcore -lavutil
 LDFLAGS_cfg  += -L${DEVKITPRO}/libogc/lib/wii -lfat -ldi -lwiikeyboard -lwiiuse -lbte -logc
 EOF
 
