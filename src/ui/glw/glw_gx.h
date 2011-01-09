@@ -35,12 +35,6 @@ typedef struct glw_backend_root {
 /**
  *
  */
-typedef struct glw_backend_rctx {
-  Mtx gbr_model_matrix;
-
-} glw_backend_rctx_t;
-
-
 typedef struct {
   GXTexObj obj;
   void *mem;  // Use obj.userdata ?
