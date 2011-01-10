@@ -1,0 +1,56 @@
+#!/bin/bash
+#
+# HTS configure script for PS3 with PSL1GHT toolchain
+#
+# Copyright (c) 2011 Andreas Öman
+#
+# Based on FFmpeg's configure script:
+#
+# Copyright (c) 2000-2002 Fabrice Bellard
+# Copyright (c) 2005-2008 Diego Biurrun
+# Copyright (c) 2005-2008 Mans Rullgard
+#
+
+PLATFORM="ps3"
+OSENV="ps3"
+DEFAULT_UI="glw"
+
+source support/configure.inc
+TOOLCHAIN="${PS3DEV}/ppu/bin/ppu-"
+FFMPEG="${TOPDIR}/ps3support/ffmpeg"
+
+enable psl1ght
+enable embedded_resources
+
+show_help(){
+  common_help
+  exit 1
+}
+
+for opt do
+  optval="${opt#*=}"
+  case "$opt" in
+  --help) show_help
+  ;;
+  *)
+  common_opt $opt $optval
+  esac
+done
+
+setup_env "$@"
+
+cat >> ${CONFIG_MAK} <<EOF
+CC=${TOOLCHAIN}gcc
+STRIP=${TOOLCHAIN}strip
+CFLAGS_cfg += -I${PSL1GHT}/include
+CFLAGS_cfg += -I${FFMPEG}/include
+EOF
+
+#
+# 
+#
+cat >> ${CONFIG_MAK} <<EOF
+LDFLAGS_cfg  += -L${FFMPEG}/lib -lswscale -lavformat -lavcodec -lavcore -lavutil
+EOF
+
+finalize

@@ -69,6 +69,7 @@ CONFIG_LIST="
  libxrandr
  libsidplay2
  httpserver
+ psl1ght
 "
 
 die() {
