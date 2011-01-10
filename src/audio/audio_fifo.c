@@ -140,7 +140,7 @@ void
 audio_fifo_init(audio_fifo_t *af, int maxlen, int hysteresis)
 {
   hts_mutex_init(&af->af_lock);
-  hts_cond_init(&af->af_cond);
+  hts_cond_init(&af->af_cond, &af->af_lock);
   TAILQ_INIT(&af->af_queue);
   af->af_satisfied = 0;
   af->af_hysteresis = hysteresis;

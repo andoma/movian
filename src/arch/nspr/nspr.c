@@ -38,7 +38,7 @@ PR_NewCondVar(PRLock *lock)
 {
   PRCondVar *c = malloc(sizeof(PRCondVar));
   c->mtx = lock;
-  hts_cond_init(&c->cond);
+  hts_cond_init(&c->cond, c->mtx);
   return c;
 }
 

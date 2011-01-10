@@ -39,7 +39,7 @@ typedef pthread_mutex_t hts_mutex_t;
  * Condition variables
  */
 typedef pthread_cond_t hts_cond_t;
-#define hts_cond_init(c)               pthread_cond_init((c), NULL)
+#define hts_cond_init(c, m)            pthread_cond_init((c), NULL)
 #define hts_cond_signal(c)             pthread_cond_signal(c)
 #define hts_cond_broadcast(c)          pthread_cond_broadcast(c)
 #define hts_cond_wait(c, m)            pthread_cond_wait(c, m)
