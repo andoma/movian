@@ -180,7 +180,7 @@ callout_init(void)
   prop_t *clock;
 
   hts_mutex_init(&callout_mutex);
-  hts_cond_init(&callout_cond);
+  hts_cond_init(&callout_cond, &callout_mutex);
 
   hts_thread_create_detached("callout", callout_loop, NULL);
 

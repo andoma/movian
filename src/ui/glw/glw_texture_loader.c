@@ -128,7 +128,7 @@ lacreate(glw_root_t *gr, int i)
   TAILQ_INIT(la->q);
 
   la->cond = &gr->gr_tex_load_cond[i];
-  hts_cond_init(la->cond);
+  hts_cond_init(la->cond, &gr->gr_mutex);
   return la;
 }
 

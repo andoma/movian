@@ -1073,11 +1073,11 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
 
     
   hts_mutex_init(&hc->hc_rpc_mutex);
-  hts_cond_init(&hc->hc_rpc_cond);
+  hts_cond_init(&hc->hc_rpc_cond, &hc->hc_rpc_mutex);
   TAILQ_INIT(&hc->hc_rpc_queue);
 
   hts_mutex_init(&hc->hc_worker_mutex);
-  hts_cond_init(&hc->hc_worker_cond);
+  hts_cond_init(&hc->hc_worker_cond, &hc->hc_worker_mutex);
   TAILQ_INIT(&hc->hc_worker_queue);
 
   hts_mutex_init(&hc->hc_subscription_mutex);

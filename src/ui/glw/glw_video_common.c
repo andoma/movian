@@ -300,8 +300,8 @@ glw_video_ctor(glw_t *w)
   TAILQ_INIT(&gv->gv_decoded_queue);
 
   hts_mutex_init(&gv->gv_surface_mutex);
-  hts_cond_init(&gv->gv_avail_queue_cond);
-  hts_cond_init(&gv->gv_reconf_cond);
+  hts_cond_init(&gv->gv_avail_queue_cond, &gv->gv_surface_mutex);
+  hts_cond_init(&gv->gv_reconf_cond, &gv->gv_surface_mutex);
 
   gv->gv_mp = mp_create("Video decoder", "video", MP_VIDEO);
 #if CONFIG_GLW_BACKEND_OPENGL
