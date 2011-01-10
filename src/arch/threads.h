@@ -121,6 +121,51 @@ extern void hts_thread_create_joinable(const char *, hts_thread_t *p,
 
 #define hts_thread_current()     LWP_GetSelf()
 
+#elif CONFIG_PSL1GHT
+
+#include <sys/thread.h>
+
+/**
+ * Mutexes
+ */
+
+typedef sys_mutex_t hts_mutex_t;
+
+#define hts_mutex_init(m)     sys_mutex_create(m, NULL);
+#define hts_mutex_lock(m)     sys_mutex_lock(*(m), 0);
+#define hts_mutex_unlock(m)   sys_mutex_unlock(*(m))
+#define hts_mutex_destroy(m)  sys_mutex_destroy(*(m))
+
+/**
+ * Condition variables
+ */
+typedef sys_cond_t hts_cond_t;
+
+#define hts_cond_init(c, m)   sys_cond_create(c, *(m), NULL)
+#define hts_cond_destroy(c)   sys_cond_destroy(*(c))
+#define hts_cond_signal(c)    sys_cond_signal(*(c))
+#define hts_cond_broadcast(c) sys_cond_signal_all(*(c))
+#define hts_cond_wait(c, m)   sys_cond_wait(*(c), 0)
+#define hts_cond_wait_timeout(c, m, d) sys_cond_wait(*(c), d * 1000LL)
+
+/**
+ * Threads
+ */
+typedef sys_ppu_thread_t hts_thread_t;
+
+
+extern void hts_thread_create_detached(const char *, void *(*)(void *), void *);
+
+extern void hts_thread_create_joinable(const char *, hts_thread_t *p,
+				       void *(*)(void *), void *);
+
+#define hts_thread_join(t)   sys_ppu_thread_join(*(t), NULL)
+
+#define hts_thread_detach(t) sys_ppu_thread_detach(*(t))
+
+extern hts_thread_t hts_thread_current(void);
+
+
 #else
 
 #error No threading support
