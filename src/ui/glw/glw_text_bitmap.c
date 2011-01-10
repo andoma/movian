@@ -1785,7 +1785,7 @@ glw_text_bitmap_init(glw_root_t *gr)
 
   FT_Select_Charmap(gr->gr_gtb_face, FT_ENCODING_UNICODE);
 
-  hts_cond_init(&gr->gr_gtb_render_cond);
+  hts_cond_init(&gr->gr_gtb_render_cond, &gr->gr_mutex);
 
   glw_font_change_size(gr, 20);
 

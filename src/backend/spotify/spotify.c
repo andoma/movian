@@ -3531,9 +3531,9 @@ be_spotify_init(void)
   TAILQ_INIT(&spotify_msgs);
 
   hts_mutex_init(&spotify_mutex);
-  hts_cond_init(&spotify_cond_main);
-  hts_cond_init(&spotify_cond_uri);
-  hts_cond_init(&spotify_cond_image);
+  hts_cond_init(&spotify_cond_main, &spotify_mutex);
+  hts_cond_init(&spotify_cond_uri, &spotify_mutex);
+  hts_cond_init(&spotify_cond_image, &spotify_mutex);
 
   // Configuration
 
