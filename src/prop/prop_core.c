@@ -3157,7 +3157,7 @@ prop_courier_create_thread(hts_mutex_t *entrymutex, const char *name)
   snprintf(buf, sizeof(buf), "PC:%s", name);
 
   pc->pc_has_cond = 1;
-  hts_cond_init(&pc->pc_cond, entrymutex);
+  hts_cond_init(&pc->pc_cond, &prop_mutex);
 
   pc->pc_run = 1;
   hts_thread_create_joinable(buf, &pc->pc_thread, prop_courier, pc);
