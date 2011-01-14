@@ -220,30 +220,6 @@ glw_opengl_init_context(glw_root_t *gr)
  *
  */
 void
-glw_rctx_init(glw_rctx_t *rc, int width, int height)
-{
-  memset(rc, 0, sizeof(glw_rctx_t));
-  rc->rc_width  = width;
-  rc->rc_height = height;
-  rc->rc_alpha = 1.0f;
-
-  memset(&rc->rc_mtx, 0, sizeof(Mtx));
-  
-  rc->rc_mtx[0]  = 1;
-  rc->rc_mtx[5]  = 1;
-  rc->rc_mtx[10] = 1;
-  rc->rc_mtx[15] = 1;
-
-  glw_Translatef(rc, 0, 0, -1 / tan(45 * M_PI / 360));
-}
-
-
-
-
-/**
- *
- */
-void
 glw_wirebox(glw_root_t *gr, glw_rctx_t *rc)
 {
 #if CONFIG_GLW_BACKEND_OPENGL

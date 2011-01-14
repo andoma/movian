@@ -28,6 +28,7 @@ glw_Scalef(glw_rctx_t *rc, float x, float y, float z)
 }
 
 void glw_Rotatef(glw_rctx_t *rc, float a, float x, float y, float z);
+void glw_LoadIdentity(glw_rctx_t *rc);
 
 static inline void 
 glw_LoadMatrixf(glw_rctx_t *rc, float *src)
