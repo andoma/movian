@@ -72,7 +72,6 @@ typedef struct glw_program {
 } glw_program_t;
 
 
-#define NUM_CLIPPLANES 6
 
 
 typedef struct glw_backend_root {
@@ -104,13 +103,10 @@ typedef struct glw_backend_root {
 #endif
   int gbr_enable_vdpau;
 
-  float gbr_clip[NUM_CLIPPLANES][4];
-  int gbr_active_clippers;
-  int gbr_soft_clippers;
-
   struct glw_program *gbr_renderer_tex;
   struct glw_program *gbr_renderer_flat;
 
+  int gbr_culling;
 
   void (*gbr_renderer_draw)(struct glw_renderer *gr, struct glw_root *root,
 			    struct glw_rctx *rc,
@@ -118,7 +114,6 @@ typedef struct glw_backend_root {
 			    const struct glw_rgb *rgb, float alpha,
 			    int flags);
 
-  int gbr_cull_face;
 
 } glw_backend_root_t;
 

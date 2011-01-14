@@ -33,6 +33,8 @@
 #include "showtime.h"
 #include "settings.h"
 
+#define NUM_CLIPPLANES 6
+
 struct event;
 
 TAILQ_HEAD(glw_queue, glw);
@@ -603,6 +605,14 @@ typedef struct glw_root {
   setting_t *gr_setting_fontsize;
 
   setting_t *gr_setting_screensaver;
+
+
+  /**
+   * Rendering
+   */
+  float gr_clip[NUM_CLIPPLANES][4];
+  int gr_active_clippers;
+  char gr_sw_clipping;
 
 } glw_root_t;
 

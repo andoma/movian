@@ -86,7 +86,7 @@ glw_opengl_init_context(glw_root_t *gr)
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_CULL_FACE);
-  gbr->gbr_cull_face = 1;
+  gbr->gbr_culling = 1;
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
@@ -135,6 +135,8 @@ glw_opengl_init_context(glw_root_t *gr)
   
   if(use_shaders) {
 
+    gr->gr_sw_clipping = 1;
+
     GLuint vs, fs;
 
     vs = glw_compile_shader("bundle://src/ui/glw/glsl/v1.glsl",
@@ -153,7 +155,6 @@ glw_opengl_init_context(glw_root_t *gr)
     glDeleteShader(vs);
 
     gbr->gbr_renderer_draw = glw_renderer_shader;
-    gbr->gbr_soft_clippers = 1;
 
 
     // Video renderer
@@ -818,12 +819,11 @@ clip_tesselate(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
 
   memcpy(grc->grc_mtx, rc->rc_mtx, sizeof(Mtx));
 
-  grc->grc_active_clippers = root->gr_be.gbr_active_clippers;
+  grc->grc_active_clippers = root->gr_active_clippers;
 
   for(i = 0; i < NUM_CLIPPLANES; i++)
-    if((1 << i) & root->gr_be.gbr_active_clippers)
-      memcpy(grc->grc_clip[i], root->gr_be.gbr_clip[i], 
-	     sizeof(float) * 4);
+    if((1 << i) & root->gr_active_clippers)
+      memcpy(grc->grc_clip[i], root->gr_clip[i], sizeof(float) * 4);
 
   for(i = 0; i < gr->gr_triangles; i++) {
     int v1 = *ip++;
@@ -858,13 +858,12 @@ grc_clippers_cmp(glw_renderer_cache_t *grc, glw_root_t *root)
 {
   int i;
 
-  if(grc->grc_active_clippers != root->gr_be.gbr_active_clippers)
+  if(grc->grc_active_clippers != root->gr_active_clippers)
     return 1;
 
   for(i = 0; i < NUM_CLIPPLANES; i++)
-    if((1 << i) & root->gr_be.gbr_active_clippers)
-      if(memcmp(grc->grc_clip[i], root->gr_be.gbr_clip[i], 
-		sizeof(float) * 4))
+    if((1 << i) & root->gr_active_clippers)
+      if(memcmp(grc->grc_clip[i], root->gr_clip[i], sizeof(float) * 4))
 	return 1;
   return 0;
 }
@@ -890,13 +889,13 @@ get_cache_id(glw_root_t *root, glw_renderer_t *gr)
 static void
 set_face_culling(glw_backend_root_t *gbr, int flags)
 {
-  if(!(flags & GLW_IMAGE_DUAL_SIDED) == gbr->gbr_cull_face) {
-    if(gbr->gbr_cull_face) {
+  if(!(flags & GLW_IMAGE_DUAL_SIDED) == gbr->gbr_culling) {
+    if(gbr->gbr_culling) {
       glEnable(GL_CULL_FACE);
     } else {
       glDisable(GL_CULL_FACE);
     }
-    gbr->gbr_cull_face = !gbr->gbr_cull_face;
+    gbr->gbr_culling = !gbr->gbr_culling;
   }
 }
 
@@ -1061,7 +1060,7 @@ glw_renderer_shader(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
   else
     glw_program_set_uniform_color(gbr, 1, 1, 1, alpha);
 
-  if(gbr->gbr_active_clippers) {
+  if(root->gr_active_clippers) {
     int cacheid = get_cache_id(root, gr);
 
     if(gr->gr_dirty || gr->gr_cache[cacheid] == NULL ||
@@ -1191,20 +1190,20 @@ glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t how)
 {
   int i;
   for(i = 0; i < NUM_CLIPPLANES; i++)
-    if(!(gr->gr_be.gbr_active_clippers & (1 << i)))
+    if(!(gr->gr_active_clippers & (1 << i)))
       break;
 
   if(i == NUM_CLIPPLANES)
     return -1;
 
-  if(gr->gr_be.gbr_soft_clippers) {
+  if(gr->gr_sw_clipping) {
 
     float inv[16];
 
     if(!mtx_invert(inv, rc->rc_mtx))
       return -1;
 
-    mtx_trans_mul_vec4(gr->gr_be.gbr_clip[i], inv, 
+    mtx_trans_mul_vec4(gr->gr_clip[i], inv, 
 		       clip_planes[how][0],
 		       clip_planes[how][1],
 		       clip_planes[how][2],
@@ -1224,7 +1223,7 @@ glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t how)
     glEnable(GL_CLIP_PLANE0 + i);
   }
 
-  gr->gr_be.gbr_active_clippers |= (1 << i);
+  gr->gr_active_clippers |= (1 << i);
   return i;
 }
 
@@ -1238,10 +1237,10 @@ glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which)
   if(which == -1)
     return;
 
-  if(!gr->gr_be.gbr_soft_clippers)
+  if(!gr->gr_sw_clipping)
     glDisable(GL_CLIP_PLANE0 + which);
 
-  gr->gr_be.gbr_active_clippers &= ~(1 << which);
+  gr->gr_active_clippers &= ~(1 << which);
 }
 
 
