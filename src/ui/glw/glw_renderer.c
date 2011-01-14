@@ -453,3 +453,68 @@ glw_renderer_get_cache_id(glw_root_t *root, glw_renderer_t *gr)
   
   return gr->gr_cacheptr;
 }
+
+
+
+
+/**
+ *
+ */
+static const float clip_planes[4][4] = {
+  [GLW_CLIP_TOP]    = { 0.0, -1.0, 0.0, 1.0},
+  [GLW_CLIP_BOTTOM] = { 0.0,  1.0, 0.0, 1.0},
+  [GLW_CLIP_LEFT]   = {-1.0,  0.0, 0.0, 1.0},
+  [GLW_CLIP_RIGHT]  = { 1.0,  0.0, 0.0, 1.0},
+};
+
+
+/**
+ *
+ */
+int
+glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t how)
+{
+  int i;
+  for(i = 0; i < NUM_CLIPPLANES; i++)
+    if(!(gr->gr_active_clippers & (1 << i)))
+      break;
+
+  if(i == NUM_CLIPPLANES)
+    return -1;
+
+  if(gr->gr_set_hw_clipper != NULL) {
+    gr->gr_set_hw_clipper(rc, i, clip_planes[how]);
+
+  } else {
+    float inv[16];
+
+    if(!glw_mtx_invert(inv, rc->rc_mtx))
+      return -1;
+
+    glw_mtx_trans_mul_vec4(gr->gr_clip[i], inv, 
+			   clip_planes[how][0],
+			   clip_planes[how][1],
+			   clip_planes[how][2],
+			   clip_planes[how][3]);
+  }
+
+  gr->gr_active_clippers |= (1 << i);
+  return i;
+}
+
+
+/**
+ *
+ */
+void
+glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which)
+{
+  if(which == -1)
+    return;
+
+  if(gr->gr_set_hw_clipper != NULL)
+    gr->gr_set_hw_clipper(rc, which, NULL);
+
+  gr->gr_active_clippers &= ~(1 << which);
+}
+

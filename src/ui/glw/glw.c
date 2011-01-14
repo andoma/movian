@@ -1975,3 +1975,20 @@ glw_store_matrix(glw_t *w, glw_rctx_t *rc)
   
   memcpy(w->glw_matrix, rc->rc_mtx, sizeof(Mtx));
 }
+
+
+
+/**
+ *
+ */
+void
+glw_rctx_init(glw_rctx_t *rc, int width, int height)
+{
+  memset(rc, 0, sizeof(glw_rctx_t));
+  rc->rc_width  = width;
+  rc->rc_height = height;
+  rc->rc_alpha = 1.0f;
+
+  glw_LoadIdentity(rc);
+  glw_Translatef(rc, 0, 0, -1 / tan(45 * M_PI / 360));
+}

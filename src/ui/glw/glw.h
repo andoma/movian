@@ -612,7 +612,7 @@ typedef struct glw_root {
    */
   float gr_clip[NUM_CLIPPLANES][4];
   int gr_active_clippers;
-  char gr_sw_clipping;
+  void (*gr_set_hw_clipper)(struct glw_rctx *rc, int which, const float *vec);
 
 } glw_root_t;
 
@@ -646,7 +646,7 @@ typedef struct glw_rctx {
 #endif
 
 #ifdef CONFIG_GLW_BACKEND_OPENGL
-#include "glw_opengl_ops.h"
+#include "glw_common_ops.h"
 #endif
 
 
