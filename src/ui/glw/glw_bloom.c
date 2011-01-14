@@ -21,6 +21,7 @@
 
 #include "glw.h"
 #include "glw_texture.h"
+#include "glw_renderer.h"
 
 #define EDGE_SIZE 16.0
 #define BLOOM_COUNT 3

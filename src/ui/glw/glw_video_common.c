@@ -17,13 +17,17 @@
  */
 
 #include <assert.h>
+#include <libavutil/pixdesc.h>
+
 #include "showtime.h"
 #include "media.h"
+#include "video/video_playback.h"
+
+#include "glw.h"
 #include "glw_video_common.h"
 #include "glw_video_overlay.h"
+#include "glw_renderer.h"
 #include "glw_texture.h"
-#include "video/video_playback.h"
-#include <libavutil/pixdesc.h>
 
 static glw_video_engine_t glw_video_blank;
 

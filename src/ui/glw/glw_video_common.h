@@ -20,6 +20,7 @@
 #define GLW_VIDEO_COMMON_H
 
 #include "glw.h"
+#include "glw_renderer.h"
 #include "media.h"
 #include "video/video_playback.h"
 #include "video/video_decoder.h"

@@ -72,7 +72,6 @@ typedef struct glw_program {
 } glw_program_t;
 
 
-#define NUM_CLIPPLANES 6
 
 
 typedef struct glw_backend_root {
@@ -104,14 +103,10 @@ typedef struct glw_backend_root {
 #endif
   int gbr_enable_vdpau;
 
-  float gbr_clip[NUM_CLIPPLANES][4];
-  int gbr_active_clippers;
-  int gbr_soft_clippers;
-
   struct glw_program *gbr_renderer_tex;
-  struct glw_program *gbr_renderer_alpha_tex;
   struct glw_program *gbr_renderer_flat;
 
+  int gbr_culling;
 
   void (*gbr_renderer_draw)(struct glw_renderer *gr, struct glw_root *root,
 			    struct glw_rctx *rc,
@@ -119,7 +114,6 @@ typedef struct glw_backend_root {
 			    const struct glw_rgb *rgb, float alpha,
 			    int flags);
 
-  int gbr_cull_face;
 
 } glw_backend_root_t;
 
@@ -129,46 +123,6 @@ typedef struct glw_backend_root {
 
 typedef float Mtx[16];
 
-/**
- * Renderer cache
- */
-typedef struct glw_renderer_cache {
-  union {
-    float grc_mtx[16]; // ModelView matrix
-    float grc_rgba[4];
-  };
-  int grc_active_clippers;
-  float grc_clip[NUM_CLIPPLANES][4];
-
-  float *grc_array;
-  int grc_size;     // In triangles
-  int grc_capacity; // In triangles
-} glw_renderer_cache_t;
-
-/**
- * Renderer
- */
-
-
-typedef struct glw_renderer {
-  uint16_t gr_vertices;
-  uint16_t gr_triangles;
-  char gr_static_indices;
-  char gr_dirty;
-  char gr_blended_attributes;
-  char gr_color_attributes;
-  unsigned char gr_framecmp;
-  unsigned char gr_cacheptr;
-
-  float *gr_array;
-  uint16_t *gr_indices;
-
-#define GLW_RENDERER_CACHES 4
-
-  glw_renderer_cache_t *gr_cache[GLW_RENDERER_CACHES];
-  
-} glw_renderer_t;
-
 
 /**
  *
@@ -177,8 +131,7 @@ typedef struct glw_backend_texture {
   GLuint tex;
   char type;
 #define GLW_TEXTURE_TYPE_NORMAL   0
-#define GLW_TEXTURE_TYPE_ALPHA    1
-#define GLW_TEXTURE_TYPE_NO_ALPHA 2
+#define GLW_TEXTURE_TYPE_NO_ALPHA 1
 } glw_backend_texture_t;
 
 

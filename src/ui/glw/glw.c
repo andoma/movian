@@ -1958,3 +1958,20 @@ glw_unhide(glw_t *w)
   w->glw_flags &= ~GLW_HIDDEN;
   glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_UNHIDDEN, w);
 }
+
+
+
+/**
+ *
+ */
+void
+glw_store_matrix(glw_t *w, glw_rctx_t *rc)
+{
+  if(rc->rc_inhibit_matrix_store)
+    return;
+
+  if(w->glw_matrix == NULL)
+    w->glw_matrix = malloc(sizeof(Mtx));
+  
+  memcpy(w->glw_matrix, rc->rc_mtx, sizeof(Mtx));
+}
