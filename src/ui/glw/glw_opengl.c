@@ -548,62 +548,6 @@ glw_renderer_shader(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
 }
 
 
-/**
- *
- */
-void
-glw_Rotatef(glw_rctx_t *rc, float a, float x, float y, float z)
-{
-  float s = sinf(GLW_DEG2RAD(a));
-  float c = cosf(GLW_DEG2RAD(a));
-  float t = 1.0 - c;
-  float n = 1 / sqrtf(x*x + y*y + z*z);
-  float m[16];
-  float *o = rc->rc_mtx;
-  float p[16];
-
-  x *= n;
-  y *= n;
-  z *= n;
-  
-  m[ 0] = t * x * x + c;
-  m[ 4] = t * x * y - s * z;
-  m[ 8] = t * x * z + s * y;
-  m[12] = 0;
-
-  m[ 1] = t * y * x + s * z;
-  m[ 5] = t * y * y + c;
-  m[ 9] = t * y * z - s * x;
-  m[13] = 0;
-
-  m[ 2] = t * z * x - s * y;
-  m[ 6] = t * z * y + s * x;
-  m[10] = t * z * z + c;
-  m[14] = 0;
-
-  p[0]  = o[0]*m[0]  + o[4]*m[1]  + o[8]*m[2];
-  p[4]  = o[0]*m[4]  + o[4]*m[5]  + o[8]*m[6];
-  p[8]  = o[0]*m[8]  + o[4]*m[9]  + o[8]*m[10];
-  p[12] = o[0]*m[12] + o[4]*m[13] + o[8]*m[14] + o[12];
- 
-  p[1]  = o[1]*m[0]  + o[5]*m[1]  + o[9]*m[2];
-  p[5]  = o[1]*m[4]  + o[5]*m[5]  + o[9]*m[6];
-  p[9]  = o[1]*m[8]  + o[5]*m[9]  + o[9]*m[10];
-  p[13] = o[1]*m[12] + o[5]*m[13] + o[9]*m[14] + o[13];
-  
-  p[2]  = o[2]*m[0]  + o[6]*m[1]  + o[10]*m[2];
-  p[6]  = o[2]*m[4]  + o[6]*m[5]  + o[10]*m[6];
-  p[10] = o[2]*m[8]  + o[6]*m[9]  + o[10]*m[10];
-  p[14] = o[2]*m[12] + o[6]*m[13] + o[10]*m[14] + o[14];
-
-  p[ 3] = 0;
-  p[ 7] = 0;
-  p[11] = 0;
-  p[15] = 1;
-
-  memcpy(o, p, sizeof(float) * 16);
-}
-
 
 
 /**

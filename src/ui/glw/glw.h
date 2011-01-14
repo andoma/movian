@@ -646,7 +646,7 @@ typedef struct glw_rctx {
 #endif
 
 #ifdef CONFIG_GLW_BACKEND_OPENGL
-#include "glw_opengl_ops.h"
+#include "glw_common_ops.h"
 #endif
 
 
