@@ -69,6 +69,29 @@ const static float projection[16] = {
   0.000000,0.000000,2.033898,0.000000
 };
 
+
+/**
+ *
+ */
+static void
+hw_clip_conf(struct glw_rctx *rc, int which, const float v[4])
+{
+  if(v != NULL) {
+    double plane[4];
+    int j;
+    
+    for(j = 0; j < 4; j++)
+      plane[j] = v[j];
+
+    glLoadMatrixf(rc->rc_mtx);
+
+    glClipPlane(GL_CLIP_PLANE0 + which, plane);
+    glEnable(GL_CLIP_PLANE0 + which);
+  } else {
+    glDisable(GL_CLIP_PLANE0 + which);
+  }
+}
+
 /**
  *
  */
@@ -132,10 +155,8 @@ glw_opengl_init_context(glw_root_t *gr)
 
   if(strstr(renderer, "Mesa"))
       use_shaders = 0;
-  
-  if(use_shaders) {
 
-    gr->gr_sw_clipping = 1;
+  if(use_shaders) {
 
     GLuint vs, fs;
 
@@ -177,6 +198,8 @@ glw_opengl_init_context(glw_root_t *gr)
 
   } else {
 
+    gr->gr_set_hw_clipper = hw_clip_conf;
+    
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
@@ -581,80 +604,6 @@ glw_Rotatef(glw_rctx_t *rc, float a, float x, float y, float z)
   memcpy(o, p, sizeof(float) * 16);
 }
 
-
-
-
-/**
- *
- */
-static const float clip_planes[4][4] = {
-  [GLW_CLIP_TOP]    = { 0.0, -1.0, 0.0, 1.0},
-  [GLW_CLIP_BOTTOM] = { 0.0,  1.0, 0.0, 1.0},
-  [GLW_CLIP_LEFT]   = {-1.0,  0.0, 0.0, 1.0},
-  [GLW_CLIP_RIGHT]  = { 1.0,  0.0, 0.0, 1.0},
-};
-
-
-/**
- *
- */
-int
-glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t how)
-{
-  int i;
-  for(i = 0; i < NUM_CLIPPLANES; i++)
-    if(!(gr->gr_active_clippers & (1 << i)))
-      break;
-
-  if(i == NUM_CLIPPLANES)
-    return -1;
-
-  if(gr->gr_sw_clipping) {
-
-    float inv[16];
-
-    if(!glw_mtx_invert(inv, rc->rc_mtx))
-      return -1;
-
-    glw_mtx_trans_mul_vec4(gr->gr_clip[i], inv, 
-			   clip_planes[how][0],
-			   clip_planes[how][1],
-			   clip_planes[how][2],
-			   clip_planes[how][3]);
-
-  } else {
-
-    double plane[4];
-    int j;
-    
-    for(j = 0; j < 4; j++)
-      plane[j] = clip_planes[how][j];
-
-    glLoadMatrixf(rc->rc_mtx);
-
-    glClipPlane(GL_CLIP_PLANE0 + i, plane);
-    glEnable(GL_CLIP_PLANE0 + i);
-  }
-
-  gr->gr_active_clippers |= (1 << i);
-  return i;
-}
-
-
-/**
- *
- */
-void
-glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which)
-{
-  if(which == -1)
-    return;
-
-  if(!gr->gr_sw_clipping)
-    glDisable(GL_CLIP_PLANE0 + which);
-
-  gr->gr_active_clippers &= ~(1 << which);
-}
 
 
 /**
