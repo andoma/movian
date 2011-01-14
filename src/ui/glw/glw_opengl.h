@@ -109,7 +109,6 @@ typedef struct glw_backend_root {
   int gbr_soft_clippers;
 
   struct glw_program *gbr_renderer_tex;
-  struct glw_program *gbr_renderer_alpha_tex;
   struct glw_program *gbr_renderer_flat;
 
 
@@ -177,8 +176,7 @@ typedef struct glw_backend_texture {
   GLuint tex;
   char type;
 #define GLW_TEXTURE_TYPE_NORMAL   0
-#define GLW_TEXTURE_TYPE_ALPHA    1
-#define GLW_TEXTURE_TYPE_NO_ALPHA 2
+#define GLW_TEXTURE_TYPE_NO_ALPHA 1
 } glw_backend_texture_t;
 
 

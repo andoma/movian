@@ -145,12 +145,6 @@ glw_opengl_init_context(glw_root_t *gr)
     gbr->gbr_renderer_tex = glw_make_program(gbr, "Texture", vs, fs);
     glDeleteShader(fs);
 
-    fs = glw_compile_shader("bundle://src/ui/glw/glsl/f_alpha_tex.glsl",
-			    GL_FRAGMENT_SHADER);
-    gbr->gbr_renderer_alpha_tex = glw_make_program(gbr, "Alpha texture",
-						   vs, fs);
-    glDeleteShader(fs);
-
     fs = glw_compile_shader("bundle://src/ui/glw/glsl/f_flat.glsl",
 			    GL_FRAGMENT_SHADER);
     gbr->gbr_renderer_flat = glw_make_program(gbr, "Flat", vs, fs);
@@ -1029,10 +1023,6 @@ glw_renderer_shader(glw_renderer_t *gr, glw_root_t *root, glw_rctx_t *rc,
   } else {
 
     switch(be_tex->type) {
-    case GLW_TEXTURE_TYPE_ALPHA:
-      gp = gbr->gbr_renderer_alpha_tex;
-      break;
-
     case GLW_TEXTURE_TYPE_NORMAL:
       gp = gbr->gbr_renderer_tex;
       break;
