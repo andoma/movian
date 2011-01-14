@@ -1046,31 +1046,6 @@ void glw_align_1(glw_rctx_t *rc, glw_alignment_t a);
 
 void glw_align_2(glw_rctx_t *rc, glw_alignment_t a);
 
-/**
- * Render interface abstraction
- */
-
-void glw_renderer_init(glw_renderer_t *gr, int vertices, int triangles,
-		       uint16_t *indices);
-
-void glw_renderer_init_quad(glw_renderer_t *gr);
-
-void glw_renderer_triangle(glw_renderer_t *gr, int element, 
-			   uint16_t a, uint16_t b, uint16_t c);
-
-int glw_renderer_initialized(glw_renderer_t *gr);
-
-void glw_renderer_free(glw_renderer_t *gr);
-
-void glw_renderer_vtx_pos(glw_renderer_t *gr, int vertex,
-			  float x, float y, float z);
-
-void glw_renderer_vtx_st(glw_renderer_t *gr, int vertex,
-			 float s, float t);
-
-void glw_renderer_vtx_col(glw_renderer_t *gr, int vertex,
-			  float r, float g, float b, float a);
-
 void glw_wirebox(glw_root_t *gr, glw_rctx_t *rc);
 
 void glw_wirecube(glw_root_t *gr, glw_rctx_t *rc);

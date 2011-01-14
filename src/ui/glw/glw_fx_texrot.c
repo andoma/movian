@@ -20,8 +20,7 @@
 #include <string.h>
 
 #include "glw.h"
-
-
+#include "glw_renderer.h"
 #include "glw_texture.h"
 
 struct fxplate {

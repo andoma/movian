@@ -30,6 +30,7 @@
 
 #include "glw.h"
 #include "glw_texture.h"
+#include "glw_renderer.h"
 #include "glw_text_bitmap.h"
 #include "glw_unicode.h"
 #include "fileaccess/fileaccess.h"

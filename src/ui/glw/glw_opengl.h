@@ -123,46 +123,6 @@ typedef struct glw_backend_root {
 
 typedef float Mtx[16];
 
-/**
- * Renderer cache
- */
-typedef struct glw_renderer_cache {
-  union {
-    float grc_mtx[16]; // ModelView matrix
-    float grc_rgba[4];
-  };
-  int grc_active_clippers;
-  float grc_clip[NUM_CLIPPLANES][4];
-
-  float *grc_array;
-  int grc_size;     // In triangles
-  int grc_capacity; // In triangles
-} glw_renderer_cache_t;
-
-/**
- * Renderer
- */
-
-
-typedef struct glw_renderer {
-  uint16_t gr_vertices;
-  uint16_t gr_triangles;
-  char gr_static_indices;
-  char gr_dirty;
-  char gr_blended_attributes;
-  char gr_color_attributes;
-  unsigned char gr_framecmp;
-  unsigned char gr_cacheptr;
-
-  float *gr_array;
-  uint16_t *gr_indices;
-
-#define GLW_RENDERER_CACHES 4
-
-  glw_renderer_cache_t *gr_cache[GLW_RENDERER_CACHES];
-  
-} glw_renderer_t;
-
 
 /**
  *
