@@ -19,7 +19,6 @@
 #include <string.h>
 
 #include "glw.h"
-#include "glw_cursor.h"
 
 #include "fileaccess/fileaccess.h"
 
@@ -214,27 +213,6 @@ glw_rctx_init(glw_rctx_t *rc, int width, int height)
   glw_Translatef(rc, 0, 0, -1 / tan(45 * M_PI / 360));
 }
 
-
-/**
- *
- */
-void
-glw_store_matrix(glw_t *w, glw_rctx_t *rc)
-{
-  glw_cursor_painter_t *gcp = rc->rc_cursor_painter;
-  if(rc->rc_inhibit_matrix_store)
-    return;
-
-  if(w->glw_matrix == NULL)
-    w->glw_matrix = malloc(sizeof(float) * 16);
-  
-  memcpy(w->glw_matrix, rc->rc_mtx, sizeof(Mtx));
-
-  if(glw_is_focused(w) && gcp != NULL) {
-    gcp->gcp_alpha  = rc->rc_alpha;
-    memcpy(gcp->gcp_m, w->glw_matrix, sizeof(Mtx));
-  }
-}
 
 
 static void
