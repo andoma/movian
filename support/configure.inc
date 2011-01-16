@@ -33,9 +33,11 @@ CONFIG_LIST="
  glw
  glw_frontend_x11
  glw_frontend_wii
+ glw_frontend_ps3
  glw_frontend_cocoa
  glw_backend_opengl
  glw_backend_gx
+ glw_backend_rsx
  gu
  libogc
  spotify
