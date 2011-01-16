@@ -209,7 +209,7 @@ audio_deliver_passthru(media_buf_t *mb, audio_decoder_t *ad, int format,
   ab = af_alloc(mb->mb_size, mp);
   ab->ab_channels = 2;
   ab->ab_format   = format;
-  ab->ab_rate     = AM_SR_48000;
+  ab->ab_samplerate= 48000;
   ab->ab_frames   = mb->mb_size;
   ab->ab_pts      = mb->mb_pts;
   ab->ab_epoch    = mb->mb_epoch;
@@ -708,7 +708,10 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
   /**
    * Resampling
    */
-  if(!(rf & am->am_sample_rates)) {
+  if(rf & am->am_sample_rates || am->am_sample_rates & AM_SR_ANY) {
+    close_resampler(ad);
+    audio_mix2(ad, am, channels, rate, data0, frames, pts, epoch, mp);
+  } else {
 
     int dstrate = 48000;
     int consumed;
@@ -753,9 +756,6 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
       if(consumed == 0 && written == 0)
 	break;
     }
-  } else {
-    close_resampler(ad);
-    audio_mix2(ad, am, channels, rate, data0, frames, pts, epoch, mp);
   }
 }
 
@@ -911,7 +911,6 @@ audio_deliver(audio_decoder_t *ad, audio_mode_t *am, int16_t *src,
   int c, r;
 
   int format;
-  int rf = audio_rateflag_from_rate(rate);
 
   switch(channels) {
   case 2: format = AM_FORMAT_PCM_STEREO; break;
@@ -934,7 +933,7 @@ audio_deliver(audio_decoder_t *ad, audio_mode_t *am, int16_t *src,
       ab->ab_channels = channels;
       ab->ab_alloced = outsize;
       ab->ab_format = format;
-      ab->ab_rate = rf;
+      ab->ab_samplerate = rate;
       ab->ab_frames = 0;
       ab->ab_pts = AV_NOPTS_VALUE;
     }

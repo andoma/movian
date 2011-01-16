@@ -95,15 +95,6 @@ alsa_open(alsa_audio_mode_t *aam, int format, int rate)
   snd_pcm_hw_params_set_access(h, hwp, SND_PCM_ACCESS_RW_INTERLEAVED);
   snd_pcm_hw_params_set_format(h, hwp, aam->aam_format);
 
-  switch(rate) {
-  default:
-  case AM_SR_96000: rate = 96000; break;
-  case AM_SR_48000: rate = 48000; break;
-  case AM_SR_44100: rate = 44100; break;
-  case AM_SR_32000: rate = 32000; break;
-  case AM_SR_24000: rate = 24000; break;
-  }
-
   snd_pcm_hw_params_set_rate(h, hwp, rate, 0);
   
   aam->aam_sample_rate = rate;
@@ -388,10 +379,11 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
       continue;
     }
 
-    if(h == NULL || ab->ab_format != cur_format || ab->ab_rate != cur_rate) {
+    if(h == NULL ||
+       ab->ab_format != cur_format ||
+       ab->ab_samplerate != cur_rate) {
 
-      if(!(ab->ab_format & am->am_formats) || 
-	 !(ab->ab_rate & am->am_sample_rates)) {
+      if(!(ab->ab_format & am->am_formats)) {
 	/* Rate / format is not supported by this mode */
 	ab_free(ab);
 	if(h == NULL)
@@ -404,7 +396,7 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
 	snd_pcm_close(h);
 
       cur_format = ab->ab_format;
-      cur_rate   = ab->ab_rate;
+      cur_rate   = ab->ab_samplerate;
 
       pts = AV_NOPTS_VALUE;
 

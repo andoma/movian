@@ -27,7 +27,7 @@ typedef struct audio_buf {
   TAILQ_ENTRY(audio_buf) link;
   unsigned int ab_flush;
   unsigned int ab_format;
-  unsigned int ab_rate;
+  unsigned int ab_samplerate;
   unsigned int ab_channels;
   int64_t ab_pts;
   int ab_epoch;
