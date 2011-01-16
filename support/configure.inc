@@ -74,6 +74,7 @@ CONFIG_LIST="
  psl1ght
  timegm
  inotify
+ realpath
 "
 
 die() {
