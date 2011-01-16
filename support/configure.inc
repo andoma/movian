@@ -69,6 +69,8 @@ CONFIG_LIST="
  libxrandr
  libsidplay2
  httpserver
+ timegm
+ inotify
 "
 
 die() {

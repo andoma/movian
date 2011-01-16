@@ -70,10 +70,10 @@ http_ctime(time_t *tp, const char *d)
       break;
     }
   
-#ifdef WII
-  *tp = mktime(&tm);
-#else
+#if ENABLE_TIMEGM
   *tp = timegm(&tm);
+#else
+  *tp = mktime(&tm);
 #endif
   return 0;
 }
