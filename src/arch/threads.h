@@ -128,25 +128,65 @@ extern void hts_thread_create_joinable(const char *, hts_thread_t *p,
 /**
  * Mutexes
  */
-
+// #define PS3_DEBUG_MUTEX
 typedef sys_mutex_t hts_mutex_t;
 
-#define hts_mutex_init(m)     sys_mutex_create(m, NULL);
-#define hts_mutex_lock(m)     sys_mutex_lock(*(m), 0);
+#ifndef PS3_DEBUG_MUTEX
+
+extern void hts_mutex_init(hts_mutex_t *m);
+#define hts_mutex_lock(m)     sys_mutex_lock(*(m), 0)
 #define hts_mutex_unlock(m)   sys_mutex_unlock(*(m))
 #define hts_mutex_destroy(m)  sys_mutex_destroy(*(m))
+
+#else
+
+extern void hts_mutex_initx(hts_mutex_t *m, const char *file, int line);
+extern void hts_mutex_lockx(hts_mutex_t *m, const char *file, int line);
+extern void hts_mutex_unlockx(hts_mutex_t *m, const char *file, int line);
+extern void hts_mutex_destroyx(hts_mutex_t *m, const char *file, int line);
+
+#define hts_mutex_init(m) hts_mutex_initx(m, __FILE__, __LINE__)
+#define hts_mutex_lock(m) hts_mutex_lockx(m, __FILE__, __LINE__)
+#define hts_mutex_unlock(m) hts_mutex_unlockx(m, __FILE__, __LINE__)
+#define hts_mutex_destroy(m) hts_mutex_destroyx(m, __FILE__, __LINE__)
+
+#endif
 
 /**
  * Condition variables
  */
+// #define PS3_DEBUG_COND
 typedef sys_cond_t hts_cond_t;
 
-#define hts_cond_init(c, m)   sys_cond_create(c, *(m), NULL)
-#define hts_cond_destroy(c)   sys_cond_destroy(*(c))
-#define hts_cond_signal(c)    sys_cond_signal(*(c))
+
+#ifndef PS3_DEBUG_COND
+
+extern void hts_cond_init(hts_cond_t *c, hts_mutex_t *m);
+#define hts_cond_destroy(c) sys_cond_destroy(*(c))
+#define hts_cond_signal(c) sys_cond_signal(*(c))
 #define hts_cond_broadcast(c) sys_cond_signal_all(*(c))
-#define hts_cond_wait(c, m)   sys_cond_wait(*(c), 0)
-#define hts_cond_wait_timeout(c, m, d) sys_cond_wait(*(c), d * 1000LL)
+#define hts_cond_wait(c,m ) sys_cond_wait(*(c), 0)
+extern int hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delay);
+
+
+#else // condvar debugging
+
+extern void hts_cond_initx(hts_cond_t *c, hts_mutex_t *m, const char *file, int line);
+extern void hts_cond_destroyx(hts_cond_t *c, const char *file, int line);
+extern void hts_cond_signalx(hts_cond_t *c, const char *file, int line);
+extern void hts_cond_broadcastx(hts_cond_t *c, const char *file, int line);
+extern void hts_cond_waitx(hts_cond_t *c, hts_mutex_t *m, const char *file, int line);
+extern int hts_cond_wait_timeoutx(hts_cond_t *c, hts_mutex_t *m, int delay, const char *file, int line);
+
+#define hts_cond_init(c, m) hts_cond_initx(c, m, __FILE__, __LINE__)
+#define hts_cond_destroy(c) hts_cond_destroyx(c, __FILE__, __LINE__)
+#define hts_cond_signal(c)     hts_cond_signalx(c, __FILE__, __LINE__)
+#define hts_cond_broadcast(c)  hts_cond_broadcastx(c, __FILE__, __LINE__)
+#define hts_cond_wait(c, m) hts_cond_waitx(c, m,  __FILE__, __LINE__)
+#define hts_cond_wait_timeout(c, m, d) hts_cond_wait_timeoutx(c, m, d, __FILE__, __LINE__) 
+
+#endif
+
 
 /**
  * Threads
