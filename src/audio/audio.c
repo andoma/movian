@@ -42,6 +42,9 @@ static void *audio_output_thread(void *aux);
 static void audio_mastervol_init(void);
 
 static char *audio_stored_device;
+static int audio_run = 1;
+
+static hts_thread_t audio_thread_id;
 
 /**
  *
@@ -177,9 +180,21 @@ audio_init(void)
 
   audio_dummy_init();
 
-  hts_thread_create_detached("audio output", audio_output_thread, NULL);
+  audio_run = 1;
+  hts_thread_create_joinable("audio output", &audio_thread_id, 
+			     audio_output_thread, NULL);
 }
 
+
+void
+audio_fini(void)
+{
+  audio_mode_current = NULL;
+  audio_run = 0;
+  TRACE(TRACE_DEBUG, "AUDIO", "Waiting for audio output thread to terminate");
+  hts_thread_join(&audio_thread_id);
+  TRACE(TRACE_DEBUG, "AUDIO", "Audio system finialized");
+}
 
 /**
  *
@@ -199,7 +214,7 @@ audio_output_thread(void *aux)
 
   am = audio_mode_current;
 
-  while(1) {
+  while(audio_run) {
     r = am->am_entry(am, af);
     am = audio_mode_current;
 
@@ -210,11 +225,10 @@ audio_output_thread(void *aux)
       */
       sleep(1);
     } else {
-
-      notify_add(NOTIFY_INFO, NULL, 5, "Switching audio output to %s", 
-		 am->am_title);
+      if(am)
+	notify_add(NOTIFY_INFO, NULL, 5, "Switching audio output to %s", 
+		   am->am_title);
     }
-
   }
   return NULL;
 }
