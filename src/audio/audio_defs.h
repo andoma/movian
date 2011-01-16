@@ -88,6 +88,7 @@ const char *audio_format_to_string(int format);
 void audio_mode_register(audio_mode_t *am);
 
 void audio_init(void);
+void audio_fini(void);
 
 extern prop_t *prop_mastervol, *prop_mastermute;
 

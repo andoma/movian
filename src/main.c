@@ -428,6 +428,7 @@ showtime_shutdown(int retcode)
 static void
 finalize(void)
 {
+  audio_fini();
   backend_fini();
   shutdown_hook_run(0);
   arch_exit(showtime_retcode);
