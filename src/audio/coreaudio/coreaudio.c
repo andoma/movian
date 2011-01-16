@@ -31,7 +31,7 @@
 #include <CoreAudio/CoreAudio.h>
 
 #include "showtime.h"
-#include "audio/audio.h"
+#include "audio/audio_defs.h"
 
 
 #define CATRACE(level, fmt...) TRACE(level, "CoreAudio", fmt)

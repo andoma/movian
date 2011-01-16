@@ -25,8 +25,7 @@
 
 #include "showtime.h"
 #include "settings.h"
-#include "audio.h"
-#include "audio_ui.h"
+#include "audio_defs.h"
 #include "audio_fifo.h"
 #include "audio_decoder.h"
 #include "notifications.h"

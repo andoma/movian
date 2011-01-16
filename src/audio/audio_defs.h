@@ -16,8 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef AUDIO_H
-#define AUDIO_H
+#pragma once
 
 #include "audio_fifo.h"
 
@@ -103,5 +102,3 @@ extern int audio_pa_init(void);
 extern void audio_alsa_init(int);
 extern void audio_coreaudio_init(void);
 extern void audio_dummy_init(void);
-
-#endif /* AUDIO__H */

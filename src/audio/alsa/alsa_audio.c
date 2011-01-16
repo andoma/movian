@@ -28,8 +28,7 @@
 #include <alsa/asoundlib.h>
 
 #include "showtime.h"
-#include "audio/audio.h"
-#include "audio/audio_ui.h"
+#include "audio/audio_defs.h"
 #include "audio/audio_iec958.h"
 
 /* seams to only be defined in modern versions of endian.h */
