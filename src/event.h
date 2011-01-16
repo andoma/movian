@@ -20,6 +20,7 @@
 #define EVENT_H__
 
 #include <inttypes.h>
+#include <stddef.h>
 #include "misc/queue.h"
 #include "arch/threads.h"
 #include "arch/atomic.h"

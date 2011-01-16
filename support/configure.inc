@@ -72,6 +72,8 @@ CONFIG_LIST="
  libsidplay2
  httpserver
  psl1ght
+ timegm
+ inotify
 "
 
 die() {

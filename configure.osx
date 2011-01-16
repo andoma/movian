@@ -76,6 +76,7 @@ enable spotlight
 enable spidermonkey
 enable stdin
 enable httpserver
+enable timegm
 
 for opt do
   optval="${opt#*=}"

@@ -184,7 +184,7 @@ fs_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 /**
  * FS change notification 
  */
-#ifdef linux
+#if ENABLE_INOTIFY
 #include <sys/inotify.h>
 #include <poll.h>
 
@@ -307,7 +307,6 @@ fs_notify(struct fa_protocol *fap, const char *url,
 
 #endif
 
-#ifndef WII
 /**
  *
  */
@@ -321,7 +320,6 @@ fs_normalize(struct fa_protocol *fap, const char *url, char *dst, size_t dstlen)
   snprintf(dst, dstlen, "file://%s", res);
   return 0;
 }
-#endif
 
 
 fa_protocol_t fa_protocol_fs = {
@@ -333,12 +331,10 @@ fa_protocol_t fa_protocol_fs = {
   .fap_seek  = fs_seek,
   .fap_fsize = fs_fsize,
   .fap_stat  = fs_stat,
-#ifdef linux
+#if ENABLE_INOTIFY
   .fap_notify = fs_notify,
 #endif
-#ifndef WII
   .fap_normalize = fs_normalize,
-#endif
 };
 
 FAP_REGISTER(fs);
