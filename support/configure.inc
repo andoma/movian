@@ -71,6 +71,7 @@ CONFIG_LIST="
  httpserver
  timegm
  inotify
+ realpath
 "
 
 die() {

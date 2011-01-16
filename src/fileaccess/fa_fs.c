@@ -307,6 +307,7 @@ fs_notify(struct fa_protocol *fap, const char *url,
 
 #endif
 
+#if ENABLE_REALPATH
 /**
  *
  */
@@ -320,6 +321,7 @@ fs_normalize(struct fa_protocol *fap, const char *url, char *dst, size_t dstlen)
   snprintf(dst, dstlen, "file://%s", res);
   return 0;
 }
+#endif
 
 
 fa_protocol_t fa_protocol_fs = {
@@ -334,7 +336,9 @@ fa_protocol_t fa_protocol_fs = {
 #if ENABLE_INOTIFY
   .fap_notify = fs_notify,
 #endif
+#if ENABLE_REALPATH
   .fap_normalize = fs_normalize,
+#endif
 };
 
 FAP_REGISTER(fs);
