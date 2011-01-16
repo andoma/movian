@@ -181,8 +181,8 @@ audioDeviceIOProc(AudioDeviceID inDevice,
   audio_buf_t *ab;
   float vol = cam->cam_master_volume;
   
-  ab = af_deq(cam->cam_af, 0 /* no wait */);
-  if(ab == NULL) {
+  ab = af_deq2(cam->cam_af, 0 /* no wait */, am);
+  if(ab == NULL || ab == AF_EXIT) {
     /* outOutputData is zeroed out by default */
     return 0;
   }
