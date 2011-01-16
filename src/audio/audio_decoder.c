@@ -365,11 +365,11 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
       break;
     case SAMPLE_FMT_FLT:
       for(i = 0; i < frames; i++)
-	ad->ad_outbuf[i] = rintf(((float *)ad->ad_outbuf)[i]) * (1 << 15);
+	ad->ad_outbuf[i] = rintf(((float *)ad->ad_outbuf)[i] * 32768);
       break;
     case SAMPLE_FMT_DBL:
       for(i = 0; i < frames; i++)
-	ad->ad_outbuf[i] = rint(((float *)ad->ad_outbuf)[i]) * (1 << 15);
+	ad->ad_outbuf[i] = rint(((float *)ad->ad_outbuf)[i] * 32768);
       break;
     }
 
