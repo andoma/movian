@@ -59,7 +59,7 @@ typedef struct audio_mode {
 #define AM_SR_44100 0x4
 #define AM_SR_32000 0x8
 #define AM_SR_24000 0x10
-
+#define AM_SR_ANY   0x20
   unsigned int am_sample_rate;
 
   char *am_title;
