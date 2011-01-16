@@ -25,7 +25,7 @@
 
 #include "showtime.h"
 #include "audio_decoder.h"
-#include "audio.h"
+#include "audio_defs.h"
 #include "event.h"
 #include "misc/strtab.h"
 

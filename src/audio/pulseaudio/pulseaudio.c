@@ -19,7 +19,7 @@
 #include <pulse/pulseaudio.h>
 
 #include "showtime.h"
-#include "audio/audio.h"
+#include "audio/audio_defs.h"
 #include "notifications.h"
 
 static pa_threaded_mainloop *mainloop;

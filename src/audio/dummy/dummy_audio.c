@@ -24,7 +24,7 @@
 #include <errno.h>
 
 #include "showtime.h"
-#include "audio/audio.h"
+#include "audio/audio_defs.h"
 
 static int
 dummy_audio_start(audio_mode_t *am, audio_fifo_t *af)
