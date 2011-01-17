@@ -39,11 +39,20 @@ done
 
 setup_env "$@"
 
+
+enable glw_frontend_ps3
+enable glw_backend_rsx
+enable glw
+
+
 cat >> ${CONFIG_MAK} <<EOF
 CC=${TOOLCHAIN}gcc
 STRIP=${TOOLCHAIN}strip
 CFLAGS_cfg += -I${PSL1GHT}/include
 CFLAGS_cfg += -I${FFMPEG}/include
+CFLAGS_cfg += -I${PS3DEV}/ppu/include
+CFLAGS_cfg += -I${PS3DEV}/ppu/include/freetype2
+CFLAGS_cfg += -DPATH_MAX=512
 EOF
 
 #
@@ -51,6 +60,9 @@ EOF
 #
 cat >> ${CONFIG_MAK} <<EOF
 LDFLAGS_cfg  += -L${FFMPEG}/lib -lswscale -lavformat -lavcodec -lavcore -lavutil
+LDFLAGS_cfg  += -T ${PSL1GHT}/lib/linker.x -B${PSL1GHT}/lib -B${PS3DEV}/ppu/lib
+LDFLAGS_cfg  += -lgcm_sys -laudio -lreality -lsysutil -lio -lnet -lsysmodule
+LDFLAGS_cfg  += -lfreetype
 EOF
 
 finalize

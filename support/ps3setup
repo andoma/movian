@@ -1,0 +1,50 @@
+#!/bin/bash
+set -e
+set -u
+
+PARALLEL=-j6
+
+TOPDIR=${PWD}
+PS3SUPPORT=${PWD}/ps3support
+
+export FFMPEG=${PS3SUPPORT}/ffmpeg
+
+mkdir -p ${FFMPEG}
+
+if ! test -e ${FFMPEG}/include/libavcodec/avcodec.h ; then
+    cd ${FFMPEG}
+    svn co svn://svn.ffmpeg.org/ffmpeg/trunk src
+    echo Configuring FFmpeg...
+
+    src/configure \
+        --disable-encoders \
+        --disable-bsfs \
+        --disable-filters \
+        --disable-muxers \
+        --disable-devices \
+        --disable-protocols \
+        --disable-network \
+        --disable-stripping \
+        --disable-static \
+        --disable-shared \
+        --enable-static \
+        --prefix=${PS3SUPPORT}/ffmpeg \
+	--extra-cflags="-I${PSL1GHT}/include -I${PS3DEV}/ppu/include -include ${TOPDIR}/support/nostrictansi.h" \
+	--extra-ldflags="-T ${PSL1GHT}/lib/linker.x -B${PSL1GHT}/lib -B${PS3DEV}/ppu/lib" \
+        --disable-ffserver \
+        --disable-ffmpeg \
+        --disable-ffplay \
+        --disable-ffprobe \
+        --disable-bzlib \
+	--cross-prefix=${PS3DEV}/ppu/bin/ppu- \
+	--enable-cross-compile \
+	--arch=powerpc \
+	--target-os=none \
+	--disable-decoder=twinvq \
+	--disable-decoder=snow \
+	--disable-decoder=cavs 
+
+    make ${PARALLEL}
+    make install
+
+fi

@@ -49,6 +49,8 @@ LIST_HEAD(glw_video_list, glw_video);
 #include "glw_opengl.h"
 #elif CONFIG_GLW_BACKEND_GX
 #include "glw_gx.h"
+#elif CONFIG_GLW_BACKEND_RSX
+#include "glw_rsx.h"
 #else
 #error No backend for glw
 #endif
@@ -646,6 +648,10 @@ typedef struct glw_rctx {
 #endif
 
 #ifdef CONFIG_GLW_BACKEND_OPENGL
+#include "glw_common_ops.h"
+#endif
+
+#ifdef CONFIG_GLW_BACKEND_RSX
 #include "glw_common_ops.h"
 #endif
 

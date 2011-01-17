@@ -575,7 +575,7 @@ glw_video_input(uint8_t * const data[], const int pitch[],
   case PIX_FMT_YUVJ422P:
   case PIX_FMT_YUVJ444P:
   case PIX_FMT_YUVJ440P:
-    glw_video_input_yuvp(gv, data, pitch, fi);
+    //    glw_video_input_yuvp(gv, data, pitch, fi);
     break;
 
 #if ENABLE_VDPAU
