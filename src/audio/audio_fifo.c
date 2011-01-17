@@ -24,6 +24,10 @@
 
 #include "showtime.h"
 #include "audio_fifo.h"
+#include "audio_defs.h"
+
+extern audio_mode_t *audio_mode_current;
+
 
 /**
  *
@@ -101,12 +105,18 @@ af_remove(audio_fifo_t *af, audio_buf_t *ab)
  *
  */
 audio_buf_t *
-af_deq(audio_fifo_t *af, int wait)
+af_deq2(audio_fifo_t *af, int wait, struct audio_mode *am)
 {
-  audio_buf_t *ab;
+  audio_buf_t *ab = NULL;
 
   af_lock(af);
   while(1) {
+
+    if(am != audio_mode_current) {
+      af_unlock(af);
+      return AF_EXIT;
+    }
+
     ab = af_peek(af);
     
     if(ab != NULL || !wait)

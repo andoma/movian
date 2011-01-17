@@ -349,16 +349,11 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
 
   while(1) {
 
-    ab = af_deq(af, h == NULL); /* wait if PCM device is not open */
+    ab = af_deq2(af, h == NULL, am); /* wait if PCM device is not open */
 
-    if(am != audio_mode_current) {
-      /* We're not the selected audio output anymore, return.
-	 We will lose the current audio block, but who cares ? */
-      ab_free(ab);
-
+    if(ab == AF_EXIT) {
       if(h != NULL)
 	snd_pcm_close(h);
-
       break;
     }
 

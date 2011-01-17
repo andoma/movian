@@ -423,7 +423,6 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
   }
 
  /* Need at least one packet of audio */
-  ab = af_deq(af, 1);
 
   /* Subscribe to updates of master volume */
   pam->sub_mvol = 
@@ -441,12 +440,15 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
 		   PROP_TAG_EXTERNAL_LOCK, mainloop, prop_pa_lockmgr,
 		   NULL);
  
-  while(am == audio_mode_current) {
+  while(1) {
 
-    if(ab == NULL) {
-      pa_threaded_mainloop_unlock(mainloop);
-      ab = af_deq(af, 1);
-      pa_threaded_mainloop_lock(mainloop);
+    pa_threaded_mainloop_unlock(mainloop);
+    ab = af_deq2(af, 1, am);
+    pa_threaded_mainloop_lock(mainloop);
+
+    if(ab == AF_EXIT) {
+      ab = NULL;
+      break;
     }
 
     if(pa_context_get_state(pam->context) == PA_CONTEXT_TERMINATED ||

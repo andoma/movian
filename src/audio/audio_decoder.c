@@ -30,6 +30,8 @@
 #include "misc/strtab.h"
 
 extern audio_fifo_t *thefifo;
+extern audio_mode_t *audio_mode_current;
+
 
 static void audio_mix1(audio_decoder_t *ad, audio_mode_t *am, 
 		       int channels, int rate, int64_t chlayout,

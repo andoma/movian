@@ -45,6 +45,7 @@ static char *audio_stored_device;
 static int audio_run = 1;
 
 static hts_thread_t audio_thread_id;
+audio_fifo_t af0, *thefifo;
 
 /**
  *
@@ -62,21 +63,6 @@ audio_rateflag_from_rate(int rate)
   }
 }
 
-/**
- *
- */
-int
-audio_rate_from_rateflag(int flag)
-{
-  switch(flag) {
-    case AM_SR_96000: return 96000; break;
-    case AM_SR_48000: return 48000; break;
-    case AM_SR_44100: return 44100; break;
-    case AM_SR_32000: return 32000; break;
-    case AM_SR_24000: return 24000; break;
-    default: return 0; break;
-  }
-}
 
 const char *
 audio_format_to_string(int format)
@@ -123,6 +109,19 @@ audio_global_load_settings(void)
   htsmsg_destroy(m);
 }
 
+
+/**
+ *
+ */
+static void
+audio_mode_set(audio_mode_t *am)
+{
+  af_lock(&af0);
+  audio_mode_current = am;
+  hts_cond_broadcast(&af0.af_cond);
+  af_unlock(&af0);
+}
+
 /**
  *
  */
@@ -133,7 +132,7 @@ audio_change_output_device(void *opaque, const char *string)
  
   TAILQ_FOREACH(am, &audio_modes, am_link)
     if(!strcmp(string, am->am_id))
-      audio_mode_current = am;
+      audio_mode_set(am);
 
   audio_global_save_settings();
 }
@@ -199,9 +198,21 @@ audio_fini(void)
 /**
  *
  */
-audio_fifo_t *thefifo;
-audio_fifo_t af0;
+void
+audio_fini(void)
+{
+  audio_run = 0;
 
+  audio_mode_set(NULL);
+
+  TRACE(TRACE_DEBUG, "AUDIO", "Waiting for audio output thread to terminate");
+  hts_thread_join(&audio_thread_id);
+  TRACE(TRACE_DEBUG, "AUDIO", "Audio system finialized");
+}
+
+/**
+ *
+ */
 static void *
 audio_output_thread(void *aux)
 {
@@ -338,7 +349,7 @@ audio_mode_register(audio_mode_t *am)
 
   if(audio_mode_current == NULL ||
      (audio_stored_device && !strcmp(audio_stored_device, am->am_id)))
-    audio_mode_current = am;
+    audio_mode_set(am);
   
   settings_multiopt_add_opt(audio_settings_current_device,
 			    am->am_id, am->am_title, am == audio_mode_current);
