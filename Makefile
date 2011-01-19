@@ -51,7 +51,6 @@ SRCS += src/main.c \
 	src/ui/ui.c \
 	src/keymapper.c \
 	src/plugins.c \
-	src/blobcache.c \
 	src/prop/prop_core.c \
 	src/prop/prop_nodefilter.c \
 	src/prop/prop_tags.c \

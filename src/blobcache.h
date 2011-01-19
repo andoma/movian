@@ -20,6 +20,26 @@
 #ifndef BLOBCACHE_H__
 #define BLOBCACHE_H__
 
+#if 1
+
+static inline void *
+blobcache_get(const char *key, const char *stash, size_t *sizep, int pad)
+{
+  return NULL;
+}
+
+
+static inline void blobcache_put(const char *key, const char *stash,
+				 const void *data,
+				 size_t size, int maxage)
+{
+  return;
+}
+
+#define blobcache_init()
+
+#else
+
 void *blobcache_get(const char *key, const char *stash, size_t *sizep, int pad);
 
 void blobcache_put(const char *key, const char *stash, const void *data,
@@ -27,5 +47,6 @@ void blobcache_put(const char *key, const char *stash, const void *data,
 
 void blobcache_init(void);
 
+#endif
 
 #endif // BLOBCACHE_H__
