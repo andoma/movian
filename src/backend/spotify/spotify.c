@@ -102,7 +102,6 @@ typedef enum {
  */
 typedef struct metadata {
   LIST_ENTRY(metadata) m_link;
-  struct playlist_track *m_plt;
   void *m_source;
   metadata_type_t m_type;
   int m_flags;
@@ -1165,12 +1164,10 @@ metadata_prop_cb(void *opaque, prop_event_t event, ...)
 
 
 static void
-metadata_create0(prop_t *p, metadata_type_t type, void *source,
-		 playlist_track_t *plt)
+metadata_create0(prop_t *p, metadata_type_t type, void *source)
 {
   metadata_t *m = calloc(1, sizeof(metadata_t));
 
-  m->m_plt = plt;
   m->m_type = type;
   m->m_source = source;
 
@@ -1236,7 +1233,7 @@ metadata_create0(prop_t *p, metadata_type_t type, void *source,
 static void
 metadata_create(prop_t *p, metadata_type_t type, void *source)
 {
-  metadata_create0(p, type, source, NULL);
+  metadata_create0(p, type, source);
 }
 
 
@@ -1929,21 +1926,16 @@ tracks_added(sp_playlist *plist, sp_track * const * tracks,
   playlist_t *pl = userdata;
   sp_track *t;
   playlist_track_t *plt, *before;
-  int i, pos, pos2;
+  int i, pos;
   char url[URL_MAX];
   sp_user *u;
 
   for(i = 0; i < num_tracks; i++) {
-    pos2 = pos = position + i;
+    pos = position + i;
     plt = calloc(1, sizeof(playlist_track_t));
     plt->plt_pl = pl;
     t = (sp_track *)tracks[i];
     
-    // Find next non-hidden property to insert before
-    while((before = ptrvec_get_entry(&pl->pl_tracks, pos2)) != NULL &&
-	  before->plt_prop_root == NULL)
-      pos2++;
-      
     plt->plt_prop_root = prop_create(NULL, NULL);
     plt->plt_track = t;
 
@@ -1966,7 +1958,7 @@ tracks_added(sp_playlist *plist, sp_track * const * tracks,
       abort();
     }
 
-    metadata_create0(plt->plt_prop_metadata, METADATA_TRACK, t, plt);
+    metadata_create0(plt->plt_prop_metadata, METADATA_TRACK, t);
     track_attach_action_handler(plt->plt_prop_root, t);
 
     ptrvec_insert_entry(&pl->pl_tracks, pos, plt);
@@ -2016,8 +2008,7 @@ tracks_removed(sp_playlist *plist, const int *tracks,
 
   for(i = 0; i < num_tracks; i++) {
     plt = ptrvec_remove_entry(&pl->pl_tracks, positions[i]);
-    if(plt->plt_prop_root != NULL)
-      prop_destroy(plt->plt_prop_root);
+    prop_destroy(plt->plt_prop_root);
     free(plt);
   }
   prop_set_int(pl->pl_prop_num_tracks, f_sp_playlist_num_tracks(plist));
@@ -2044,7 +2035,7 @@ tracks_moved(sp_playlist *plist, const int *tracks,
 	     int num_tracks, int new_position, void *userdata)
 {
   playlist_t *pl = userdata;
-  int i, pos2;
+  int i;
   int *positions;
   playlist_track_t *plt, *before, **vec;
 
@@ -2063,13 +2054,7 @@ tracks_moved(sp_playlist *plist, const int *tracks,
   }
   for(i = num_tracks - 1; i >= 0; i--) {
     plt = vec[i];
-
-    pos2 = new_position;
-    while((before = ptrvec_get_entry(&pl->pl_tracks, pos2)) != NULL &&
-	  before->plt_prop_root == NULL)
-      pos2++;
-
-    before = ptrvec_get_entry(&pl->pl_tracks, pos2);
+    before = ptrvec_get_entry(&pl->pl_tracks, new_position);
     ptrvec_insert_entry(&pl->pl_tracks, new_position, plt);
 
     if(plt->plt_prop_root != NULL)
