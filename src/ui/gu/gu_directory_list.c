@@ -885,6 +885,9 @@ gu_directory_list_create(gu_tab_t *gt, prop_t *root, int flags)
   if(flags & GU_DIR_COL_POPULARITY)
     init_bar_col(d, "Popularity", GDS_COL_POPULARITY);
 
+  if(flags & GU_DIR_COL_USER)
+    init_text_col(d,     "User",    GDS_COL_USER, 1, 1);
+
   g_signal_connect(G_OBJECT(d->tree), "row-activated", 
 		   G_CALLBACK(row_activated), d);
 

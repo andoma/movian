@@ -34,6 +34,7 @@ static const GType coltypes[] = {
   [GDS_COL_TRACKINDEX] = G_TYPE_INT,
   [GDS_COL_POPULARITY] = G_TYPE_FLOAT,
   [GDS_COL_STARRED]    = G_TYPE_INT,
+  [GDS_COL_USER]       = G_TYPE_STRING,
 };
 
 /**
@@ -50,6 +51,7 @@ static const char **subpaths[] = {
   [GDS_COL_TRACKINDEX] = PNVEC("self", "metadata", "trackindex"),
   [GDS_COL_POPULARITY] = PNVEC("self", "metadata", "popularity"),
   [GDS_COL_STARRED]    = PNVEC("self", "metadata", "starred"),
+  [GDS_COL_USER]       = PNVEC("self", "metadata", "user", "name"),
 };
 
 

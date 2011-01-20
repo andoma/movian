@@ -70,7 +70,8 @@ set_contents(void *opaque, const char *str)
 				 GU_DIR_COL_DURATION |
 				 GU_DIR_COL_NUM_TRACKS |
 				 GU_DIR_COL_ALBUM |
-				 GU_DIR_COL_POPULARITY);
+				 GU_DIR_COL_POPULARITY |
+				 GU_DIR_COL_USER);
   }
 
   gd->gd_curview = w;
