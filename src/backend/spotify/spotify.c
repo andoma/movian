@@ -162,6 +162,7 @@ typedef struct playlist {
   prop_t *pl_prop_tracks;
   prop_t *pl_prop_title;
   prop_t *pl_prop_num_tracks;
+  prop_t *pl_prop_user;
   prop_t *pl_prop_childs;
 
   prop_sub_t *pl_node_sub;
@@ -240,6 +241,7 @@ typedef struct spotify_page {
   prop_t *sp_album_art;
   prop_t *sp_artist_name;
   prop_t *sp_numtracks;
+  prop_t *sp_user;
 
   prop_t *sp_nodes;
   prop_t *sp_items;
@@ -326,7 +328,8 @@ static playlist_t *pl_create(sp_playlist *plist, int withtracks,
 			     prop_t *nodes,
 			     prop_t *items,
 			     prop_t *filter,
-			     prop_t *canFilter);
+			     prop_t *canFilter,
+			     prop_t *user);
 
 static void spotify_shutdown_early(void *opaque, int retcode);
 static void spotify_shutdown_late(void *opaque, int retcode);
@@ -406,6 +409,7 @@ spotify_page_destroy(spotify_page_t *sp)
   prop_ref_dec_nullchk(sp->sp_filter);
   prop_ref_dec_nullchk(sp->sp_canFilter);
 
+  prop_ref_dec_nullchk(sp->sp_user);
   prop_ref_dec_nullchk(sp->sp_numtracks);
   prop_ref_dec_nullchk(sp->sp_canDelete);
 
@@ -1609,7 +1613,8 @@ spotify_open_playlist(spotify_page_t *sp, sp_playlist *plist, const char *name)
 	    sp->sp_nodes,
 	    sp->sp_items,
 	    sp->sp_filter,
-	    sp->sp_canFilter);
+	    sp->sp_canFilter,
+	    sp->sp_user);
 }
 
 
@@ -2116,9 +2121,8 @@ static void
 playlist_update_meta(playlist_t *pl)
 {
   sp_playlist *plist = pl->pl_playlist;
-
-  int ownedself = f_sp_playlist_owner(pl->pl_playlist) == 
-    f_sp_session_user(spotify_session);
+  sp_user *owner = f_sp_playlist_owner(pl->pl_playlist);
+  const int ownedself = owner == f_sp_session_user(spotify_session);
 
   int colab = f_sp_playlist_is_collaborative(pl->pl_playlist);
 
@@ -2133,6 +2137,11 @@ playlist_update_meta(playlist_t *pl)
       pl->pl_url = strdup(url);
       prop_set_string(pl->pl_prop_url, url);
     }
+  }
+
+  if(!ownedself) {
+    spotify_user_t *su = find_user(owner);
+    prop_link(su->su_prop, pl->pl_prop_user);
   }
 }
 
@@ -2268,7 +2277,8 @@ pl_create(sp_playlist *plist, int withtracks, const char *name,
 	  prop_t *nodes,
 	  prop_t *items,
 	  prop_t *filter,
-	  prop_t *canFilter)
+	  prop_t *canFilter,
+	  prop_t *user)
 {
   playlist_t *pl = calloc(1, sizeof(playlist_t));
   int i, n;
@@ -2288,6 +2298,7 @@ pl_create(sp_playlist *plist, int withtracks, const char *name,
   prop_ref_inc(pl->pl_prop_canDelete = canDelete);
   prop_ref_inc(pl->pl_prop_url = url);
   prop_ref_inc(pl->pl_prop_num_tracks = numtracks);
+  prop_ref_inc(pl->pl_prop_user = user);
 
   if(name != NULL) {
     prop_set_string(pl->pl_prop_title, name);
@@ -2476,7 +2487,8 @@ pl_create2(sp_playlist *plist)
 			     prop_create(model, "nodes"),
 			     prop_create(model, "items"),
 			     prop_create(model, "filter"),
-			     prop_create(model, "canFilter"));
+			     prop_create(model, "canFilter"),
+			     prop_create(metadata, "user"));
   pl->pl_prop_root = model;
   return pl;
 }    
@@ -3254,6 +3266,9 @@ add_metadata_props(spotify_page_t *sp)
 
   sp->sp_numtracks = prop_create(m, "tracks");
   prop_ref_inc(sp->sp_numtracks);
+
+  sp->sp_user = prop_create(m, "user");
+  prop_ref_inc(sp->sp_user);
 }
 
 
