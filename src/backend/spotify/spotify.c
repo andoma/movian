@@ -108,8 +108,6 @@ typedef struct metadata {
   int m_flags;
 #define METADATA_ARTIST_IMAGES_SCRAPPED 0x1
 
-  prop_sub_t *m_starred_sub;
-
   prop_t *m_available;
   prop_t *m_title;
   prop_t *m_trackindex;
@@ -859,21 +857,90 @@ set_image_uri(prop_t *p, const uint8_t *id)
 /**
  *
  */
-static void
-metadata_prop_starred(void *opaque, prop_event_t event, ...)
-{
-  metadata_t *m = opaque;
-  const sp_track *track = m->m_source;
-  int v;
-  va_list ap;
+typedef struct track_action_ctrl {
+  prop_t *prop_star;
+  sp_track *t;
 
-  if(event != PROP_SET_INT)
-    return;
+} track_action_ctrl_t;
+
+
+/**
+ *
+ */
+static void
+dispatch_action(track_action_ctrl_t *tac, const char *action)
+{
+  if(!strcmp(action, "starToggle")) {
+    int on = f_sp_track_is_starred(spotify_session, tac->t);
+    f_sp_track_set_starred(spotify_session, (const sp_track **)&tac->t, 1, !on);
+    prop_set_int(tac->prop_star, !on);
+  } else {
+    TRACE(TRACE_DEBUG, "Spotify", "Unknown action '%s' on track", action);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+track_action_handler(void *opaque, prop_event_t event, ...)
+{
+  track_action_ctrl_t *tac = opaque;
+  va_list ap;
+  event_t *e;
 
   va_start(ap, event);
-  v = va_arg(ap, int);
-  f_sp_track_set_starred(spotify_session, &track, 1, !!v);
+
+  switch(event) {
+  case PROP_DESTROYED:
+    f_sp_track_release(tac->t);
+    prop_ref_dec(tac->prop_star);
+    free(tac);
+    break;
+
+  case PROP_EXT_EVENT:
+    e =  va_arg(ap, event_t *);
+
+    if(event_is_type(e, EVENT_ACTION_VECTOR)) {
+      event_action_vector_t *eav = (event_action_vector_t *)e;
+      int i;
+      for(i = 0; i < eav->num; i++)
+	dispatch_action(tac, action_code2str(eav->actions[i]));
+    
+    } else if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
+      dispatch_action(tac, e->e_payload);
+    }
+    break;
+
+  default:
+    break;
+  }
+
+  va_end(ap);
 }
+
+
+/**
+ *
+ */
+static void
+track_attach_action_handler(prop_t *p, sp_track *t)
+{
+  track_action_ctrl_t *tac = calloc(1, sizeof(track_action_ctrl_t));
+
+  tac->prop_star = prop_create(prop_create(p, "metadata"), "starred");
+  prop_ref_inc(tac->prop_star);
+
+  tac->t = t;
+  f_sp_track_add_ref(t);
+  prop_subscribe(PROP_SUB_TRACK_DESTROY,
+		 PROP_TAG_CALLBACK, track_action_handler, tac,
+		 PROP_TAG_COURIER, spotify_courier,
+		 PROP_TAG_ROOT, p,
+		 NULL);
+}
+
 
 /**
  *
@@ -933,17 +1000,7 @@ spotify_metadata_update_track(metadata_t *m)
 			   rstr_alloc(f_sp_artist_name(artist)));
   }
 
-  if(m->m_starred_sub == NULL) {
-    m->m_starred_sub = 
-      prop_subscribe(0,
-		     PROP_TAG_CALLBACK, metadata_prop_starred, m,
-		     PROP_TAG_COURIER, spotify_courier,
-		     PROP_TAG_ROOT, m->m_starred,
-		     NULL);
-  }
-
-  prop_set_int_ex(m->m_starred, m->m_starred_sub,
-		  f_sp_track_is_starred(spotify_session, track));
+  prop_set_int(m->m_starred, f_sp_track_is_starred(spotify_session, track));
 }
 
  
@@ -1069,9 +1126,6 @@ metadata_prop_cb(void *opaque, prop_event_t event, ...)
   s = va_arg(ap, prop_sub_t *);
 
   prop_unsubscribe(s);
-
-  if(m->m_starred_sub != NULL)
-    prop_unsubscribe(m->m_starred_sub);
 
   LIST_REMOVE(m, m_link);
   prop_ref_dec_nullchk(m->m_available);
@@ -1268,6 +1322,7 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
       prop_set_string(prop_create(p, "url"), url);
       prop_set_string(prop_create(p, "type"), "audio");
       metadata_create(prop_create(p, "metadata"), METADATA_TRACK, track);
+      track_attach_action_handler(p, track);
 
       if(prop_set_parent(p, bh->sp->sp_items))
 	prop_destroy(p);
@@ -1912,6 +1967,7 @@ tracks_added(sp_playlist *plist, sp_track * const * tracks,
     }
 
     metadata_create0(plt->plt_prop_metadata, METADATA_TRACK, t, plt);
+    track_attach_action_handler(plt->plt_prop_root, t);
 
     ptrvec_insert_entry(&pl->pl_tracks, pos, plt);
   }
@@ -2703,6 +2759,7 @@ ss_fill_tracks(sp_search *result, spotify_search_request_t *ssr)
     prop_set_string(prop_create(p, "type"), "audio");
     metadata = prop_create(p, "metadata");
     metadata_create(metadata, METADATA_TRACK, track);
+    track_attach_action_handler(p, track);
 
     if(prop_set_parent(p, ssr->ssr_nodes)) {
       prop_destroy(p);

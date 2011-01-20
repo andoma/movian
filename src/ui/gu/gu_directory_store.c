@@ -874,10 +874,9 @@ void
 gu_dir_store_toggle_star(GuDirStore *gds, GtkTreeIter *iter)
 {
   gds_row_t *gr = iter->user_data;
-  prop_t *metadata = prop_create(gr->gr_root, "metadata");
-  prop_t *starred  = prop_create(metadata,    "starred");
-
-  prop_toggle_int(starred);
+  event_t *e = event_create_action_str("starToggle");
+  prop_send_ext_event(gr->gr_root, e);
+  event_release(e);
 }
 
 
