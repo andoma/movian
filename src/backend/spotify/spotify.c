@@ -129,6 +129,21 @@ static LIST_HEAD(, metadata) metadatas;
 
 
 /**
+ *
+ */
+typedef struct spotify_user {
+  LIST_ENTRY(spotify_user) su_link;
+  sp_user *su_user;
+  prop_t *su_prop;
+
+  prop_t *su_prop_name;
+  prop_t *su_prop_picture;
+} spotify_user_t;
+
+static LIST_HEAD(, spotify_user) spotify_users;
+
+
+/**
  * Playlist support
  */
 prop_t *prop_rootlist_nodes;
@@ -596,6 +611,7 @@ spotify_logged_in(sp_session *sess, sp_error error)
 
     user = f_sp_session_user(sess);
     load_initial_playlists(sess);
+    f_sp_session_num_friends(sess); // Trig enable of social features
 
   } else {
 
@@ -1765,6 +1781,69 @@ spotify_log_message(sp_session *session, const char *msg)
   TRACE(TRACE_DEBUG, "libspotify", "%s", s);
 }
 
+/**
+ *
+ */
+static void
+update_userdata(spotify_user_t *su)
+{
+  char url[200];
+  const char *name = f_sp_user_full_name(su->su_user);
+  if(name == NULL)
+    name = f_sp_user_display_name(su->su_user);
+  if(name == NULL)
+    name = f_sp_user_canonical_name(su->su_user);
+
+  sp_link *l = f_sp_link_create_from_user(su->su_user);
+  f_sp_link_as_string(l, url, sizeof(url));
+  prop_set_link(su->su_prop_name, name, url);
+  f_sp_link_release(l);
+
+  prop_set_string(su->su_prop_picture, f_sp_user_picture(su->su_user));
+}
+
+
+/**
+ *
+ */
+static spotify_user_t *
+find_user(sp_user *u)
+{
+  spotify_user_t *su;
+
+  LIST_FOREACH(su, &spotify_users, su_link) {
+    if(su->su_user == u) {
+      LIST_REMOVE(su, su_link);
+      break;
+    }
+  }
+
+  if(su == NULL) {
+    su = malloc(sizeof(spotify_user_t));
+    f_sp_user_add_ref(u);
+    su->su_user = u;
+    su->su_prop = prop_create(NULL, NULL);
+    su->su_prop_name = prop_create(su->su_prop, "name");
+    su->su_prop_picture = prop_create(su->su_prop, "picture");
+
+    update_userdata(su);
+  }
+  LIST_INSERT_HEAD(&spotify_users, su, su_link);
+  return su;
+}
+
+
+/**
+ *
+ */
+static void
+spotify_userinfo_updated(sp_session *session)
+{
+  spotify_user_t *su;
+  LIST_FOREACH(su, &spotify_users, su_link)
+    update_userdata(su);
+}
+
 
 /**
  * Session callbacks
@@ -1779,6 +1858,7 @@ static const sp_session_callbacks spotify_session_callbacks = {
   .play_token_lost     = spotify_play_token_lost,
   .end_of_track        = spotify_end_of_track,
   .log_message         = spotify_log_message,
+  .userinfo_updated    = spotify_userinfo_updated,
 };
 
 
@@ -1796,6 +1876,7 @@ tracks_added(sp_playlist *plist, sp_track * const * tracks,
   playlist_track_t *plt, *before;
   int i, pos, pos2;
   char url[URL_MAX];
+  sp_user *u;
 
   for(i = 0; i < num_tracks; i++) {
     pos2 = pos = position + i;
@@ -1817,6 +1898,12 @@ tracks_added(sp_playlist *plist, sp_track * const * tracks,
     prop_set_string(prop_create(plt->plt_prop_root, "url"), url);
 
     plt->plt_prop_metadata = prop_create(plt->plt_prop_root, "metadata");
+
+    u = f_sp_playlist_track_creator(plist, pos);
+    if(u != NULL) {
+      spotify_user_t *su = find_user(u);
+      prop_link(su->su_prop, prop_create(plt->plt_prop_metadata, "user"));
+    }
 
     if(prop_set_parent_ex(plt->plt_prop_root, pl->pl_prop_tracks,
 			  before ? before->plt_prop_root : NULL,
@@ -1934,6 +2021,22 @@ tracks_moved(sp_playlist *plist, const int *tracks,
   }
 }
 
+
+/**
+ *
+ */
+static void
+track_update_created(sp_playlist *playlist, int position, sp_user *user,
+		     int when, void *userdata)
+{
+  playlist_t *pl = userdata;
+  playlist_track_t *plt = ptrvec_get_entry(&pl->pl_tracks, position);
+  spotify_user_t *su = find_user(user);
+  prop_link(su->su_prop, prop_create(plt->plt_prop_metadata, "user"));
+}
+
+
+
 /**
  *
  */
@@ -2024,6 +2127,7 @@ static sp_playlist_callbacks pl_callbacks_withtracks = {
   .tracks_moved     = tracks_moved,
   .playlist_renamed = playlist_renamed,
   .playlist_state_changed = playlist_state_changed,
+  .track_created_changed = track_update_created,
 };
 
 
