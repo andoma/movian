@@ -32,6 +32,18 @@ typedef float Mtx[16];
 
 typedef struct glw_backend_root {
   gcmContextData *be_ctx;
+
+  struct rsx_vp *be_vp_current;
+  struct rsx_fp *be_fp_current;
+
+  
+  struct rsx_vp *be_vp_1;
+  struct rsx_fp *be_fp_tex;
+  struct rsx_fp *be_fp_flat;
+
+
+
+
 } glw_backend_root_t;
 
 void glw_renderer_draw(struct glw_renderer *gr, struct glw_root *root,

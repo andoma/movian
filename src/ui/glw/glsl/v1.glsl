@@ -10,8 +10,10 @@ const mat4 projection = mat4(2.414213,0.000000,0.000000,0.000000,
 			     0.000000,0.000000,1.033898,-1.000000,
 			     0.000000,0.000000,2.033898,0.000000);
 
-varying vec2 f_tex;
+// The ordering of these are important to match the varying variables
+// in the fragment shaders. GLHF
 varying vec4 f_col;
+varying vec2 f_tex;
 
 void main()
 {

@@ -251,7 +251,7 @@ drawFrame(glw_ps3_t *gp, int buffer)
   setupRenderTarget(gp, buffer);
 
   // set the clear color
-  realitySetClearColor(gp->gr.gr_be.be_ctx, 0x00444400);
+  realitySetClearColor(gp->gr.gr_be.be_ctx, 0x00000000);
 
   realitySetClearDepthValue(gp->gr.gr_be.be_ctx, 0xffff);
 
@@ -262,6 +262,11 @@ drawFrame(glw_ps3_t *gp, int buffer)
 		      REALITY_CLEAR_BUFFERS_COLOR_B |
 		      NV30_3D_CLEAR_BUFFERS_COLOR_A | 
 		      REALITY_CLEAR_BUFFERS_DEPTH);
+
+
+  // XMB may overwrite currently loaded shaders, so clear them out
+  gp->gr.gr_be.be_vp_current = NULL;
+  gp->gr.gr_be.be_fp_current = NULL;
 
   glw_lock(&gp->gr);
   glw_prepare_frame(&gp->gr, 0);
@@ -291,7 +296,6 @@ glw_ps3_mainloop(glw_ps3_t *gp)
 
   sysRegisterCallback(EVENT_SLOT0, eventHandle, gp);
   while(!gp->stop) {
-
     // Check the pads.
     ioPadGetInfo(&padinfo);
     for(i=0; i<MAX_PADS; i++){

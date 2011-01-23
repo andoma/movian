@@ -1,7 +1,7 @@
 uniform sampler2D u_t0;
 
-varying vec2 f_tex;
 varying vec4 f_col;
+varying vec2 f_tex;
 
 void main()
 {
