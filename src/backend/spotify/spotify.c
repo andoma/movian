@@ -391,27 +391,27 @@ spotify_msg_enq(spotify_msg_t *sm)
 static void
 spotify_page_destroy(spotify_page_t *sp)
 {
-  prop_ref_dec_nullchk(sp->sp_model);
-  prop_ref_dec_nullchk(sp->sp_type);
-  prop_ref_dec_nullchk(sp->sp_error);
-  prop_ref_dec_nullchk(sp->sp_loading);
-  prop_ref_dec_nullchk(sp->sp_contents);
-  prop_ref_dec_nullchk(sp->sp_title);
-  prop_ref_dec_nullchk(sp->sp_icon);
-  prop_ref_dec_nullchk(sp->sp_album_name);
-  prop_ref_dec_nullchk(sp->sp_album_year);
-  prop_ref_dec_nullchk(sp->sp_album_art);
-  prop_ref_dec_nullchk(sp->sp_artist_name);
-  prop_ref_dec_nullchk(sp->sp_urlprop);
+  prop_ref_dec(sp->sp_model);
+  prop_ref_dec(sp->sp_type);
+  prop_ref_dec(sp->sp_error);
+  prop_ref_dec(sp->sp_loading);
+  prop_ref_dec(sp->sp_contents);
+  prop_ref_dec(sp->sp_title);
+  prop_ref_dec(sp->sp_icon);
+  prop_ref_dec(sp->sp_album_name);
+  prop_ref_dec(sp->sp_album_year);
+  prop_ref_dec(sp->sp_album_art);
+  prop_ref_dec(sp->sp_artist_name);
+  prop_ref_dec(sp->sp_urlprop);
 
-  prop_ref_dec_nullchk(sp->sp_nodes);
-  prop_ref_dec_nullchk(sp->sp_items);
-  prop_ref_dec_nullchk(sp->sp_filter);
-  prop_ref_dec_nullchk(sp->sp_canFilter);
+  prop_ref_dec(sp->sp_nodes);
+  prop_ref_dec(sp->sp_items);
+  prop_ref_dec(sp->sp_filter);
+  prop_ref_dec(sp->sp_canFilter);
 
-  prop_ref_dec_nullchk(sp->sp_user);
-  prop_ref_dec_nullchk(sp->sp_numtracks);
-  prop_ref_dec_nullchk(sp->sp_canDelete);
+  prop_ref_dec(sp->sp_user);
+  prop_ref_dec(sp->sp_numtracks);
+  prop_ref_dec(sp->sp_canDelete);
 
   free(sp->sp_url);
 
@@ -932,8 +932,8 @@ track_attach_action_handler(prop_t *p, sp_track *t)
 {
   track_action_ctrl_t *tac = calloc(1, sizeof(track_action_ctrl_t));
 
-  tac->prop_star = prop_create(prop_create(p, "metadata"), "starred");
-  prop_ref_inc(tac->prop_star);
+  tac->prop_star =
+    prop_ref_inc(prop_create(prop_create(p, "metadata"), "starred"));
 
   tac->t = t;
   f_sp_track_add_ref(t);
@@ -1131,18 +1131,18 @@ metadata_prop_cb(void *opaque, prop_event_t event, ...)
   prop_unsubscribe(s);
 
   LIST_REMOVE(m, m_link);
-  prop_ref_dec_nullchk(m->m_available);
-  prop_ref_dec_nullchk(m->m_title);
-  prop_ref_dec_nullchk(m->m_trackindex);
-  prop_ref_dec_nullchk(m->m_duration);
-  prop_ref_dec_nullchk(m->m_popularity);
-  prop_ref_dec_nullchk(m->m_album);
-  prop_ref_dec_nullchk(m->m_album_art);
-  prop_ref_dec_nullchk(m->m_album_year);
-  prop_ref_dec_nullchk(m->m_artist);
-  prop_ref_dec_nullchk(m->m_additional_artists);
-  prop_ref_dec_nullchk(m->m_artist_images);
-  prop_ref_dec_nullchk(m->m_starred);
+  prop_ref_dec(m->m_available);
+  prop_ref_dec(m->m_title);
+  prop_ref_dec(m->m_trackindex);
+  prop_ref_dec(m->m_duration);
+  prop_ref_dec(m->m_popularity);
+  prop_ref_dec(m->m_album);
+  prop_ref_dec(m->m_album_art);
+  prop_ref_dec(m->m_album_year);
+  prop_ref_dec(m->m_artist);
+  prop_ref_dec(m->m_additional_artists);
+  prop_ref_dec(m->m_artist_images);
+  prop_ref_dec(m->m_starred);
 
   switch(m->m_type) {
   case METADATA_TRACK:
@@ -1177,44 +1177,45 @@ metadata_create0(prop_t *p, metadata_type_t type, void *source)
 
   switch(m->m_type) {
   case METADATA_TRACK:
-    prop_ref_inc(m->m_available         = prop_create(p, "available"));
-    prop_ref_inc(m->m_title             = prop_create(p, "title"));
-    prop_ref_inc(m->m_trackindex        = prop_create(p, "trackindex"));
-    prop_ref_inc(m->m_duration          = prop_create(p, "duration"));
-    prop_ref_inc(m->m_popularity        = prop_create(p, "popularity"));
-    prop_ref_inc(m->m_album             = prop_create(p, "album"));
-    prop_ref_inc(m->m_album_art         = prop_create(p, "album_art"));
-    prop_ref_inc(m->m_album_year        = prop_create(p, "album_year"));
-    prop_ref_inc(m->m_artist            = prop_create(p, "artist"));
-    prop_ref_inc(m->m_additional_artists= prop_create(p, "additional_artists"));
-    prop_ref_inc(m->m_artist_images     = prop_create(p, "artist_images"));
-    prop_ref_inc(m->m_starred           = prop_create(p, "starred"));
+    m->m_available         = prop_ref_inc(prop_create(p, "available"));
+    m->m_title             = prop_ref_inc(prop_create(p, "title"));
+    m->m_trackindex        = prop_ref_inc(prop_create(p, "trackindex"));
+    m->m_duration          = prop_ref_inc(prop_create(p, "duration"));
+    m->m_popularity        = prop_ref_inc(prop_create(p, "popularity"));
+    m->m_album             = prop_ref_inc(prop_create(p, "album"));
+    m->m_album_art         = prop_ref_inc(prop_create(p, "album_art"));
+    m->m_album_year        = prop_ref_inc(prop_create(p, "album_year"));
+    m->m_artist            = prop_ref_inc(prop_create(p, "artist"));
+    m->m_additional_artists= prop_ref_inc(prop_create(p, "additional_artists"));
+    m->m_artist_images     = prop_ref_inc(prop_create(p, "artist_images"));
+    m->m_starred           = prop_ref_inc(prop_create(p, "starred"));
+
 
     f_sp_track_add_ref(source);
     break;
     
   case METADATA_ALBUM_NAME:
-    prop_ref_inc(m->m_album = p);
+    m->m_album = prop_ref_inc(p);
     f_sp_album_add_ref(source);
     break;
 
   case METADATA_ALBUM_YEAR:
-    prop_ref_inc(m->m_album_year = p);
+    m->m_album_year = prop_ref_inc(p);
     f_sp_album_add_ref(source);
     break;
 
   case METADATA_ALBUM_IMAGE:
-    prop_ref_inc(m->m_album_art = p);
+    m->m_album_art = prop_ref_inc(p);
     f_sp_album_add_ref(source);
     break;
 
   case METADATA_ALBUM_ARTIST_NAME:
-    prop_ref_inc(m->m_artist = p);
+    m->m_artist = prop_ref_inc(p);
     f_sp_album_add_ref(source);
     break;
 
   case METADATA_ARTIST_NAME:
-    prop_ref_inc(m->m_artist = p);
+    m->m_artist = prop_ref_inc(p);
     f_sp_artist_add_ref(source);
     break;
   }
@@ -2294,11 +2295,11 @@ pl_create(sp_playlist *plist, int withtracks, const char *name,
 
   prop_set_string(type, withtracks ? "directory" : "playlist");
 
-  prop_ref_inc(pl->pl_prop_title = title);
-  prop_ref_inc(pl->pl_prop_canDelete = canDelete);
-  prop_ref_inc(pl->pl_prop_url = url);
-  prop_ref_inc(pl->pl_prop_num_tracks = numtracks);
-  prop_ref_inc(pl->pl_prop_user = user);
+  pl->pl_prop_title = prop_ref_inc(title);
+  pl->pl_prop_canDelete = prop_ref_inc(canDelete);
+  pl->pl_prop_url = prop_ref_inc(url);
+  pl->pl_prop_num_tracks = prop_ref_inc(numtracks);
+  pl->pl_prop_user = prop_ref_inc(user);
 
   if(name != NULL) {
     prop_set_string(pl->pl_prop_title, name);
@@ -2312,7 +2313,7 @@ pl_create(sp_playlist *plist, int withtracks, const char *name,
 
   if(withtracks) {
 
-    prop_ref_inc(pl->pl_prop_tracks = items);
+    pl->pl_prop_tracks = prop_ref_inc(items);
 
     struct prop_nf *pnf;
 
@@ -3245,30 +3246,20 @@ add_metadata_props(spotify_page_t *sp)
   prop_t *m = prop_create(sp->sp_model, "metadata");
 
 
-  sp->sp_title = prop_create(m, "title");
-  prop_ref_inc(sp->sp_title);
-
-  sp->sp_icon = prop_create(m, "logo");
-  prop_ref_inc(sp->sp_icon);
+  sp->sp_title = prop_ref_inc(prop_create(m, "title"));
+  sp->sp_icon = prop_ref_inc(prop_create(m, "logo"));
   prop_set_string(sp->sp_icon, SPOTIFY_ICON_URL);
 
-  sp->sp_album_name = prop_create(m, "album_name");
-  prop_ref_inc(sp->sp_album_name);
+  sp->sp_album_name = prop_ref_inc(prop_create(m, "album_name"));
+  sp->sp_album_year = prop_ref_inc(prop_create(m, "album_year"));
 
-  sp->sp_album_year = prop_create(m, "album_year");
-  prop_ref_inc(sp->sp_album_year);
+  sp->sp_album_art  = prop_ref_inc(prop_create(m, "album_art"));
 
-  sp->sp_album_art  = prop_create(m, "album_art");
-  prop_ref_inc(sp->sp_album_art);
+  sp->sp_artist_name = prop_ref_inc(prop_create(m, "aritst_name"));
 
-  sp->sp_artist_name = prop_create(m, "aritst_name");
-  prop_ref_inc(sp->sp_artist_name);
+  sp->sp_numtracks = prop_ref_inc(prop_create(m, "tracks"));
 
-  sp->sp_numtracks = prop_create(m, "tracks");
-  prop_ref_inc(sp->sp_numtracks);
-
-  sp->sp_user = prop_create(m, "user");
-  prop_ref_inc(sp->sp_user);
+  sp->sp_user = prop_ref_inc(prop_create(m, "user"));
 }
 
 
@@ -3292,38 +3283,17 @@ be_spotify_open(prop_t *page, const char *url)
 
   sp->sp_url = strdup(url);
 
-  sp->sp_urlprop = prop_create(page, "url");
-  prop_ref_inc(sp->sp_urlprop);
-
-  sp->sp_model   = prop_create(page, "model");
-  prop_ref_inc(sp->sp_model);
-
-  sp->sp_type    = prop_create(sp->sp_model, "type");
-  prop_ref_inc(sp->sp_type);
-
-  sp->sp_error   = prop_create(sp->sp_model, "error");
-  prop_ref_inc(sp->sp_error);
-
-  sp->sp_loading = prop_create(sp->sp_model, "loading");
-  prop_ref_inc(sp->sp_loading);
-
-  sp->sp_contents = prop_create(sp->sp_model, "contents");
-  prop_ref_inc(sp->sp_contents);
-
-  sp->sp_nodes = prop_create(sp->sp_model, "nodes");
-  prop_ref_inc(sp->sp_nodes);
-
-  sp->sp_items = prop_create(sp->sp_model, "items");
-  prop_ref_inc(sp->sp_items);
-
-  sp->sp_filter = prop_create(sp->sp_model, "filter");
-  prop_ref_inc(sp->sp_filter);
-
-  sp->sp_canFilter = prop_create(sp->sp_model, "canFilter");
-  prop_ref_inc(sp->sp_canFilter);
-
-  sp->sp_canDelete = prop_create(sp->sp_model, "canDelete");
-  prop_ref_inc(sp->sp_canDelete);
+  sp->sp_urlprop = prop_ref_inc(prop_create(page, "url"));
+  sp->sp_model   = prop_ref_inc(prop_create(page, "model"));
+  sp->sp_type    = prop_ref_inc(prop_create(sp->sp_model, "type"));
+  sp->sp_error   = prop_ref_inc(prop_create(sp->sp_model, "error"));
+  sp->sp_loading = prop_ref_inc(prop_create(sp->sp_model, "loading"));
+  sp->sp_contents = prop_ref_inc(prop_create(sp->sp_model, "contents"));
+  sp->sp_nodes = prop_ref_inc(prop_create(sp->sp_model, "nodes"));
+  sp->sp_items = prop_ref_inc(prop_create(sp->sp_model, "items"));
+  sp->sp_filter = prop_ref_inc(prop_create(sp->sp_model, "filter"));
+  sp->sp_canFilter = prop_ref_inc(prop_create(sp->sp_model, "canFilter"));
+  sp->sp_canDelete = prop_ref_inc(prop_create(sp->sp_model, "canDelete"));
   
   add_metadata_props(sp);
   prop_set_int(sp->sp_loading, 1);
@@ -3844,11 +3814,9 @@ be_resolve_item(const char *url, prop_t *item)
 
   sp->sp_url = strdup(url);
 
-  sp->sp_model = item;
-  prop_ref_inc(sp->sp_model);
-
-  sp->sp_type    = prop_create(sp->sp_model, "type");
-  prop_ref_inc(sp->sp_type);
+  sp->sp_model = prop_ref_inc(item);
+  
+  sp->sp_type = prop_ref_inc(prop_create(sp->sp_model, "type"));
 
   add_metadata_props(sp);
   spotify_msg_enq(spotify_msg_build(SPOTIFY_RESOLVE_ITEM, sp));

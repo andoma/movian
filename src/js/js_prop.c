@@ -108,8 +108,7 @@ js_object_from_prop(JSContext *cx, prop_t *p)
 {
   JSObject *obj = JS_NewObjectWithGivenProto(cx, &prop_bridge_class,
 					     NULL, NULL);
-  prop_ref_inc(p);
-  JS_SetPrivate(cx, obj, p);
+  JS_SetPrivate(cx, obj, prop_ref_inc(p));
   return obj;
 }
 

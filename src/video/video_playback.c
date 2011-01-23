@@ -38,9 +38,7 @@ video_player_idle(void *aux)
   event_t *e = NULL, *next;
   media_pipe_t *mp = vp->vp_mp;
   char errbuf[256];
-  prop_t *errprop = prop_create(mp->mp_prop_root, "error");
-
-  prop_ref_inc(errprop);
+  prop_t *errprop = prop_ref_inc(prop_create(mp->mp_prop_root, "error"));
 
   while(run) {
 

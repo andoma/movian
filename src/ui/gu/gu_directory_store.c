@@ -568,8 +568,7 @@ gds_row_add(GuDirStore *gds, prop_t *p, prop_t *p_before)
   int i, pos;
 
   gr->gr_gds = gds;
-  gr->gr_root = p;
-  prop_ref_inc(p);
+  gr->gr_root = prop_ref_inc(p);
   
   if(p_before == NULL) {
     // Add at tail, common operation

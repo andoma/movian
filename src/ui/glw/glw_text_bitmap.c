@@ -1355,13 +1355,9 @@ prop_callback(void *opaque, prop_event_t event, ...)
     return;
   }
 
-  if(gtb->gtb_p != NULL)
-    prop_ref_dec(gtb->gtb_p);
+  prop_ref_dec(gtb->gtb_p);
+  gtb->gtb_p = prop_ref_inc(p);
 
-  gtb->gtb_p = p;
-  if(p != NULL)
-    prop_ref_inc(p);
-  
   free(gtb->gtb_caption);
   gtb->gtb_caption = caption != NULL ? strdup(caption) : NULL;
   gtb_caption_has_changed(gtb);

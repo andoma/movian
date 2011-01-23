@@ -1154,7 +1154,7 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
   }
   c->c_sc = sc;
 
-  prop_ref_inc(c->c_prop = p);
+  c->c_prop = prop_ref_inc(p);
 
   sc->sc_entries++;
 
@@ -1201,8 +1201,7 @@ cloner_add_child(sub_cloner_t *sc, prop_t *p, prop_t *before,
   b = before ? prop_tag_get(before, &sc->sc_pending) : NULL;
 
   gpsp = malloc(sizeof(glw_prop_sub_pending_t));
-  gpsp->gpsp_prop = p;
-  prop_ref_inc(p);
+  gpsp->gpsp_prop = prop_ref_inc(p);
 
   prop_tag_set(p, &sc->sc_pending, gpsp);
 
@@ -1511,8 +1510,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
     t = prop_callback_alloc_token(gps, TOKEN_PROPERTY_REF);
     t->propsubr = gps;
     rpn = gps->gps_rpn;
-    t->t_prop = va_arg(ap, prop_t *);
-    prop_ref_inc(t->t_prop);
+    t->t_prop = prop_ref_inc(va_arg(ap, prop_t *));
     break;
 
   case PROP_ADD_CHILD:
@@ -1666,17 +1664,9 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
 
       sc->sc_have_more = 1;
 
-      sc->sc_originating_prop = ec->prop;
-      if(ec->prop != NULL)
-	prop_ref_inc(ec->prop);
-      
-      sc->sc_view_prop = ec->prop_viewx;
-      if(ec->prop_viewx != NULL)
-	prop_ref_inc(ec->prop_viewx);
-
-      sc->sc_view_args = ec->prop_args;
-      if(ec->prop_args != NULL)
-	prop_ref_inc(ec->prop_args);
+      sc->sc_originating_prop = prop_ref_inc(ec->prop);
+      sc->sc_view_prop        = prop_ref_inc(ec->prop_viewx);
+      sc->sc_view_args        = prop_ref_inc(ec->prop_args);
       
       TAILQ_INIT(&sc->sc_pending);
     } while(0);
@@ -2245,25 +2235,11 @@ glw_event_map_eval_block_create(glw_view_eval_context_t *ec,
 
   b->block = glw_view_clone_chain(block);
 
-  b->prop = ec->prop;
-  if(b->prop)
-    prop_ref_inc(b->prop);
-
-  b->prop_parent = ec->prop_parent;
-  if(b->prop_parent)
-    prop_ref_inc(b->prop_parent);
-
-  b->prop_view = ec->prop_viewx;
-  if(b->prop_view)
-    prop_ref_inc(b->prop_view);
-
-  b->prop_clone = ec->prop_clone;
-  if(b->prop_clone)
-    prop_ref_inc(b->prop_clone);
-
-  b->prop_args = ec->prop_args;
-  if(b->prop_args)
-    prop_ref_inc(b->prop_args);
+  b->prop        = prop_ref_inc(ec->prop);
+  b->prop_parent = prop_ref_inc(ec->prop_parent);
+  b->prop_view   = prop_ref_inc(ec->prop_viewx);
+  b->prop_clone  = prop_ref_inc(ec->prop_clone);
+  b->prop_args   = prop_ref_inc(ec->prop_args);
 
   b->map.gem_dtor = glw_event_map_eval_block_dtor;
   b->map.gem_fire = glw_event_map_eval_block_fire;
@@ -3275,8 +3251,7 @@ glwf_focusedChild(glw_view_eval_context_t *ec, struct token *self,
   c = w->glw_focused;
   if(c != NULL && c->glw_originating_prop != NULL) {
     r = eval_alloc(self, ec, TOKEN_PROPERTY_REF);
-    r->t_prop = c->glw_originating_prop;
-    prop_ref_inc(r->t_prop);
+    r->t_prop = prop_ref_inc(c->glw_originating_prop);
     eval_push(ec, r);
     return 0;
   }
@@ -3665,8 +3640,7 @@ glwf_browse(glw_view_eval_context_t *ec, struct token *self,
   }
 
   r = eval_alloc(self, ec, TOKEN_PROPERTY_REF);
-  r->t_prop = be->p;
-  prop_ref_inc(be->p);
+  r->t_prop = prop_ref_inc(be->p);
   ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
   eval_push(ec, r);
   return 0;
@@ -4029,8 +4003,7 @@ glwf_propGrouper(glw_view_eval_context_t *ec, struct token *self,
     prop_grouper_destroy(self->t_extra);
 
   r = eval_alloc(self, ec, TOKEN_PROPERTY_REF);
-  r->t_prop = prop_create(NULL, NULL);
-  prop_ref_inc(r->t_prop);
+  r->t_prop = prop_ref_inc(prop_create(NULL, NULL));
   ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
   eval_push(ec, r);
 
@@ -4074,8 +4047,7 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
     prop_nf_release(self->t_extra);
 
   r = eval_alloc(self, ec, TOKEN_PROPERTY_REF);
-  r->t_prop = prop_create(NULL, NULL);
-  prop_ref_inc(r->t_prop);
+  r->t_prop = prop_ref_inc(prop_create(NULL, NULL));
   ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
   eval_push(ec, r);
 

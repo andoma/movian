@@ -95,8 +95,7 @@ gu_nav_page_create(gu_tab_t *gt, prop_t *p)
   gtk_ui_t *gu = gt->gt_gw->gw_gu;
 
   gnp->gnp_gt = gt;
-  gnp->gnp_prop = p;
-  prop_ref_inc(p);
+  gnp->gnp_prop = prop_ref_inc(p);
 
   gnp->gnp_pagebin = gtk_vbox_new(FALSE, 0);
   gtk_widget_show(gnp->gnp_pagebin);

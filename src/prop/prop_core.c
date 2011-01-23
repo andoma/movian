@@ -174,6 +174,9 @@ struct prop_ref_trace {
 void
 prop_ref_dec_traced(prop_t *p, const char *file, int line)
 {
+  if(p == NULL)
+    return;
+
   if(p->hp_flags & PROP_REF_TRACED) {
     struct prop_ref_trace *prt = malloc(sizeof(struct prop_ref_trace));
     prt->file = file;
@@ -202,19 +205,12 @@ prop_ref_dec_traced(prop_t *p, const char *file, int line)
 /**
  *
  */
-void
-prop_ref_dec_nullchk_traced(prop_t *p, const char *file, int line)
-{
-  if(p)
-    prop_ref_dec_traced(p, file, line);
-}
-
-/**
- *
- */
-void
+prop_t *
 prop_ref_inc_traced(prop_t *p, const char *file, int line)
 {
+  if(p == NULL)
+    return NULL;
+
   atomic_add(&p->hp_refcount, 1);
   if(p->hp_flags & PROP_REF_TRACED) {
     struct prop_ref_trace *prt = malloc(sizeof(struct prop_ref_trace));
@@ -263,7 +259,7 @@ prop_print_trace(prop_t *p)
 void
 prop_ref_dec(prop_t *p)
 {
-  if(atomic_add(&p->hp_refcount, -1) > 1)
+  if(p == NULL || atomic_add(&p->hp_refcount, -1) > 1)
     return;
   assert(p->hp_type == PROP_ZOMBIE);
   assert(p->hp_tags == NULL);
@@ -276,20 +272,12 @@ prop_ref_dec(prop_t *p)
 /**
  *
  */
-void
-prop_ref_dec_nullchk(prop_t *p)
-{
-  if(p)
-    prop_ref_dec(p);
-}
-
-/**
- *
- */
-void
+prop_t *
 prop_ref_inc(prop_t *p)
 {
-  atomic_add(&p->hp_refcount, 1);
+  if(p != NULL)
+    atomic_add(&p->hp_refcount, 1);
+  return p;
 }
 
 
@@ -851,8 +839,7 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
 
   n = get_notify(s);
 
-  n->hpn_prop2 = p;
-  prop_ref_inc(p);
+  n->hpn_prop2 = prop_ref_inc(p);
 
   switch(p->hp_type) {
   case PROP_STRING:
@@ -1842,8 +1829,7 @@ prop_get_by_name(const char **name, int follow_symlinks, ...)
   hts_mutex_lock(&prop_mutex);
   p = prop_subfind(p, name, follow_symlinks);
 
-  if(p != NULL)
-    prop_ref_inc(p);
+  p = prop_ref_inc(p);
 
   hts_mutex_unlock(&prop_mutex);
   return p;
@@ -2978,7 +2964,7 @@ prop_follow(prop_t *p)
   while(p->hp_originator != NULL)
     p = p->hp_originator;
   
-  prop_ref_inc(p);
+  p = prop_ref_inc(p);
   hts_mutex_unlock(&prop_mutex);
   return p;
 }
@@ -3075,8 +3061,7 @@ prop_get_by_names(prop_t *p, ...)
     p = c;
   }
   
-  if(c != NULL)
-    prop_ref_inc(c);
+  c = prop_ref_inc(c);
   hts_mutex_unlock(&prop_mutex);
   return c;
 }

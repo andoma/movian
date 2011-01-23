@@ -439,9 +439,8 @@ add_from_source(prop_t *p, playqueue_entry_t *before)
   playqueue_entry_t *pqe;
 
   pqe = calloc(1, sizeof(playqueue_entry_t));
-  prop_ref_inc(p);
   pqe->pqe_refcount = 1;
-  pqe->pqe_originator = p;
+  pqe->pqe_originator = prop_ref_inc(p);
 
   if(playqueue_startme != NULL) {
     prop_t *q = prop_follow(p);
@@ -466,7 +465,7 @@ add_from_source(prop_t *p, playqueue_entry_t *before)
     TAILQ_INSERT_TAIL(&playqueue_source_entries, pqe, pqe_source_link);
   }
 
-  prop_ref_inc(p);
+  p = prop_ref_inc(p); // TODO: do we need this?
 
   pqe->pqe_node = prop_create(NULL, NULL);
   prop_link(p, pqe->pqe_node);

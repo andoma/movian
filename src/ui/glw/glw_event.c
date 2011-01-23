@@ -57,7 +57,7 @@ glw_event_map_navOpen_dtor(glw_event_map_t *gem)
   glw_event_navOpen_t *no = (glw_event_navOpen_t *)gem;
 
   if(no->origin)
-    prop_ref_inc(no->origin);
+    prop_ref_dec(no->origin);
 
   free(no->url);
   free(no->view);
@@ -93,9 +93,7 @@ glw_event_map_navOpen_create(const char *url, const char *view, prop_t *origin)
   
   no->url      = url    ? strdup(url)    : NULL;
   no->view     = view   ? strdup(view)   : NULL;
-  no->origin   = origin;
-  if(no->origin)
-    prop_ref_inc(no->origin);
+  no->origin   = prop_ref_inc(origin);
 
   no->map.gem_dtor = glw_event_map_navOpen_dtor;
   no->map.gem_fire = glw_event_map_navOpen_fire;
@@ -153,13 +151,10 @@ glw_event_map_playTrack_create(prop_t *track, prop_t *source, int mode)
 {
   glw_event_playTrack_t *g = malloc(sizeof(glw_event_playTrack_t));
 
-  g->track  = track;
-  g->source = source;
+  g->track  = prop_ref_inc(track);
+  g->source = prop_ref_inc(source);
   g->mode   = mode;
-  
-  prop_ref_inc(track);
-  if(source != NULL)
-    prop_ref_inc(source);
+
   g->map.gem_dtor = glw_event_map_playTrack_dtor;
   g->map.gem_fire = glw_event_map_playTrack_fire;
   return &g->map;
@@ -273,8 +268,7 @@ glw_event_map_deliverEvent_create(prop_t *target, rstr_t *action)
 {
   glw_event_deliverEvent_t *de = malloc(sizeof(glw_event_deliverEvent_t));
   
-  de->target = target;
-  prop_ref_inc(target);
+  de->target = prop_ref_inc(target);
   de->action = rstr_dup(action);
 
   de->map.gem_dtor = glw_event_map_deliverEvent_dtor;
